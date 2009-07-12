@@ -1,3 +1,21 @@
+// DQ (6/25/2009): Added comments to this file.
+
+// This file contains the code to classify files as being either user files or system files.
+// The classification levesl are more envolved but this support allows users to extress
+// rules that apply to there own code differently than to the STL for example.  The
+// approach is to associate a classification with files based on their location and 
+// sometimes also the filename. Thus analysis can be done for user code that checks
+// a rule but skips non-user code where that rule might not be valid.
+
+// DQ (6/25/2009): Greg White reported that the file locations for STL (and other system files)
+// are not correctly interpreted when soft-links are used.  Need to use "lstat()" and "readlink()"
+// to chase down and resolved links so that we can more robustly classify files.  
+// Note that system files used in ROSE are in fact links to the system files used in the
+// back-end vendor compiler, so this is important for classification of system files
+// used in processing software using ROSE.
+
+
+
 // DQ (3/22/2009): Added MSVS support for ROSE.
 #include "rose_msvc.h"
 

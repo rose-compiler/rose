@@ -34,6 +34,36 @@ std::string nodeLabel(SgGraphNode* node)
     return "some label";
 };
 
+struct OnlyCurrentDirectory : public std::unary_function<bool,SgFunctionDeclaration*>
+{
+  bool operator() (SgFunctionDeclaration* node) const
+  {
+    std::string stringToFilter = ROSE_COMPILE_TREE_PATH+std::string("/tests"); 
+    if(string(node->get_file_info()->get_filename()).substr(0,stringToFilter.size()) == stringToFilter  )
+      return true;
+    else
+      return false;
+  };
+}; 
+
+struct OnlyNonCompilerGenerated : public std::unary_function<bool,SgFunctionDeclaration*>
+   {
+     bool operator() (SgFunctionDeclaration* node) const
+        {
+       // false will filter out ALL nodes
+          bool filterNode = true;
+#if 1
+          SgFunctionDeclaration *fct = isSgFunctionDeclaration( node );
+          if ( fct != NULL )
+             {
+               bool ignoreFunction = (fct->get_file_info()->isCompilerGenerated() == true);
+               if ( ignoreFunction == true )
+                    filterNode = false;
+             }
+#endif
+          return filterNode;
+        }
+   };
 
 int
 main( int argc, char * argv[] ) {
@@ -64,9 +94,15 @@ main( int argc, char * argv[] ) {
    SgProject* project = new SgProject(argvList);
 
    CallGraphBuilder CGBuilder( project, var_SOLVE_FUNCTION_CALLS_IN_DB );
-   CGBuilder.buildCallGraph();
 
-   //  GenerateDotGraph(CGBuilder.getGraph(),"callgraph.dot");
+#if 0
+   CGBuilder.buildCallGraph();
+#else
+// CGBuilder.buildCallGraph( OnlyCurrentDirectory() );
+   CGBuilder.buildCallGraph( OnlyNonCompilerGenerated() );
+#endif
+
+// GenerateDotGraph(CGBuilder.getGraph(),"callgraph.dot");
 
    ClassHierarchyWrapper hier( project );
 
@@ -112,6 +148,8 @@ main( int argc, char * argv[] ) {
 
    }
 
+#if 0
+// DQ (7/12/2009): old code
    ostringstream st;
    st << "DATABASE.dot";
    cout << "Generating DOT...\n";
@@ -120,6 +158,30 @@ main( int argc, char * argv[] ) {
    generateDOT( *project );
    cout << "Done with DOT\n";
    GenerateDotGraph(newGraph, st.str());
+#else
+
+// Generate a filename for this whole project (even if it has more than one file)
+   string generatedProjectName = SageInterface::generateProjectName( project );
+
+   printf ("generatedProjectName            = %s \n",generatedProjectName.c_str());
+   printf ("project->get_outputFileName()   = %s \n",project->get_outputFileName().c_str());
+   printf ("project->get_dataBaseFilename() = %s \n",project->get_dataBaseFilename().c_str());
+ 
+// DQ (7/12/2009): Modified to use string instead of ostringstream.
+   string uncoloredFileName = generatedProjectName + "_callgraph.dot";
+   string coloredFileName   = generatedProjectName + "_colored_callgraph.dot";
+
+// Example of how to generate a modified Call Graph
+   OutputDot::writeToDOTFile(newGraph, coloredFileName.c_str(),"Incidence Graph", nodeLabel,edgeLabel );
+
+// This generated the dot file for the AST.
+   generateDOT( *project );
+
+// This generates the dot file for the Call Graph
+   GenerateDotGraph(newGraph, uncoloredFileName.c_str());
+
+   cout << "Done with DOT\n";
+#endif
 
    printf ("\nLeaving main program ... \n");
 

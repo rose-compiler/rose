@@ -422,9 +422,9 @@ CustomMemoryPoolDOTGenerationData::additionalEdgeOptions(SgNode* from, SgNode* t
           if (from->get_parent() == to)
              {
             // Note that labelfontcolor does not appear to work
-            // returnString = "color=\"Blue\" decorate labelfontcolor=blue4";
-            // returnString = "color=\"Blue\" decorate";
-               returnString = "color=\"Blue\" decorate labelfontcolor=\"blue4\"";
+            // returnString = "color=\"blue\" decorate labelfontcolor=blue4";
+            // returnString = "color=\"blue\" decorate";
+               returnString = "color=\"blue\" decorate labelfontcolor=\"blue4\"";
              }
 
        // DQ (3/5/2007): color the scope edges green (that are explicitly stored in the AST)
@@ -434,8 +434,8 @@ CustomMemoryPoolDOTGenerationData::additionalEdgeOptions(SgNode* from, SgNode* t
              {
                if (statement->hasExplicitScope() == true && statement->get_scope() == to)
                   {
-                 // returnString = "color=\"Green\" decorate labelfontcolor=green4";
-                    returnString = "color=\"Green\" decorate";
+                 // returnString = "color=\"green\" decorate labelfontcolor=green4";
+                    returnString = "color=\"green\" decorate";
                   }
              }
      
@@ -444,8 +444,8 @@ CustomMemoryPoolDOTGenerationData::additionalEdgeOptions(SgNode* from, SgNode* t
              {
                if (initializedName->get_scope() == to)
                   {
-                 // returnString = "color=\"Green\" decorate labelfontcolor=green4";
-                    returnString = "color=\"Green\" decorate";
+                 // returnString = "color=\"green\" decorate labelfontcolor=green4";
+                    returnString = "color=\"green\" decorate";
                   }
              }
 
@@ -473,9 +473,9 @@ CustomMemoryPoolDOTGenerationData::additionalEdgeOptions(SgNode* from, SgNode* t
      if (from->get_parent() == to && label == "parent")
         {
        // Note that labelfontcolor does not appear to work
-       // returnString = "color=\"Blue\" decorate labelfontcolor=blue4";
-       // returnString = "color=\"Blue\" decorate labelfontcolor=\"blue4\"";
-          returnString = "color=\"Blue\" decorate ";
+       // returnString = "color=\"blue\" decorate labelfontcolor=blue4";
+       // returnString = "color=\"blue\" decorate labelfontcolor=\"blue4\"";
+          returnString = "color=\"blue\" decorate ";
         }
 
   // DQ (3/5/2007): color the scope edges green (that are explicitly stored in the AST)
@@ -485,8 +485,8 @@ CustomMemoryPoolDOTGenerationData::additionalEdgeOptions(SgNode* from, SgNode* t
         {
           if (statement->hasExplicitScope() == true && statement->get_scope() == to && label == "scope")
              {
-            // returnString = "color=\"Green\" decorate labelfontcolor=green4";
-               returnString = "color=\"Green\" decorate ";
+            // returnString = "color=\"green\" decorate labelfontcolor=green4";
+               returnString = "color=\"green\" decorate ";
              }
         }
      
@@ -495,8 +495,8 @@ CustomMemoryPoolDOTGenerationData::additionalEdgeOptions(SgNode* from, SgNode* t
         {
           if (initializedName->get_scope() == to && label == "scope")
              {
-            // returnString = "color=\"Green\" decorate labelfontcolor=green4";
-               returnString = "color=\"Green\" decorate ";
+            // returnString = "color=\"green\" decorate labelfontcolor=green4";
+               returnString = "color=\"green\" decorate ";
              }
         }
 
@@ -1065,7 +1065,7 @@ CustomMemoryPoolDOTGeneration::frontendCompatabilityFilter(SgNode* node)
 #if 0
             else
              {
-               string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"Blue\",fillcolor=cyan4,fontname=\"7x13bold\",fontcolor=black,style=filled";
+               string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"blue\",fillcolor=cyan4,fontname=\"7x13bold\",fontcolor=black,style=filled";
             // Make this statement different in the generated dot graph
                string labelWithSourceCode = "\\n" + currentNodeFileInfo->get_filenameString() + 
                                             "\\n" +  StringUtility::numberToString(currentNodeFileInfo) + "  ";
@@ -1080,7 +1080,7 @@ CustomMemoryPoolDOTGeneration::frontendCompatabilityFilter(SgNode* node)
 #if 0
      if (isSgType(node) != NULL)
         {
-          string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=3,peripheries=1,color=\"Blue\",fillcolor=yellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
+          string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=3,peripheries=1,color=\"blue\",fillcolor=yellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
        // Make this statement different in the generated dot graph
           
           string labelWithSourceCode;
@@ -1176,7 +1176,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                case V_SgTemplateInstantiationMemberFunctionDecl:
                   {
                     SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(node);
-                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"Blue\",fillcolor=RoyalBlue,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=royalblue,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     string forwardFlagString = (functionDeclaration->isForward() == true) ? "isForward" : "!isForward";
                     string friendFlagString = (functionDeclaration->get_declarationModifier().isFriend() == true) ? "isFriend" : "!isFriend";
                     labelWithSourceCode = string("\\n  ") + functionDeclaration->get_name().getString() +
@@ -1190,7 +1190,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                case V_SgTemplateDeclaration:
                   {
                     SgTemplateDeclaration* templateDeclaration = isSgTemplateDeclaration(node);
-                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"Blue\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"blue\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     labelWithSourceCode = "\\n  " + templateDeclaration->get_name().getString() + 
                                           "\\n  " +  StringUtility::numberToString(templateDeclaration) + "  ";
                     break;
@@ -1201,7 +1201,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                case V_SgTemplateInstantiationDecl:
                   {
                     SgClassDeclaration* classDeclaration = isSgClassDeclaration(node);
-                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"Blue\",fillcolor=peru,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"blue\",fillcolor=peru,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     string flagString = (classDeclaration->isForward() == true) ? "isForward" : "!isForward";
                     labelWithSourceCode = "\\n  " + classDeclaration->get_name().getString() + 
                                           "\\n  " + flagString +
@@ -1213,7 +1213,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                case V_SgTypedefDeclaration:
                   {
                     SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(node);
-                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"Blue\",fillcolor=peru,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"blue\",fillcolor=peru,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     labelWithSourceCode = "\\n  " + typedefDeclaration->get_name().getString() + 
                                           "\\n  " +  StringUtility::numberToString(typedefDeclaration) + "  ";
                     break;
@@ -1222,7 +1222,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                case V_SgEnumDeclaration:
                   {
                     SgEnumDeclaration* enumDeclaration = isSgEnumDeclaration(node);
-                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"Blue\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"blue\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     labelWithSourceCode = "\\n  " + enumDeclaration->get_name().getString() + 
                                           "\\n  " +  StringUtility::numberToString(enumDeclaration) + "  ";
                     break;
@@ -1231,7 +1231,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                default:
                   {
                  // It appears that we can't unparse one of these (not implemented)
-                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"Blue\",fillcolor=SkyBlue,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=skyblue,fontname=\"7x13bold\",fontcolor=black,style=filled";
                  // labelWithSourceCode = string("\\n  ") + functionDeclaration->get_name().getString() + "  ";
                     labelWithSourceCode = string("\\n  ") + StringUtility::numberToString(node) + "  ";
 #if 0
@@ -1251,7 +1251,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 
      if (isSgExpression(node) != NULL)
         {
-          string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"Blue\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
+          string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"blue\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
        // Make this statement different in the generated dot graph
 
        // DQ (5/14/2006): this is an error when processing stdio.h
@@ -1290,7 +1290,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 
      if (isSgType(node) != NULL)
         {
-          string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=3,peripheries=1,color=\"Blue\",fillcolor=yellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
+          string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=3,peripheries=1,color=\"blue\",fillcolor=yellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
 
        // Make this statement different in the generated dot graph
        // string labelWithSourceCode = string("\\n  ") + node->unparseToString() + "  ";
@@ -1322,7 +1322,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                case V_SgProject:
                   {
                     SgProject* project = isSgProject(node);
-                    additionalNodeOptions = "shape=ellipse,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=3,color=\"Blue\",fillcolor=pink,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=ellipse,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=3,color=\"blue\",fillcolor=pink,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     labelWithSourceCode = string("\\n  ") + project->get_outputFileName() + "  ";
                  // printf ("########## SgProject = %s \n",project->get_outputFileName().c_str());
                     break;
@@ -1333,7 +1333,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                case V_SgBinaryFile:
                   {
                     SgFile* file = isSgFile(node);
-                    additionalNodeOptions = "shape=ellipse,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"Blue\",fillcolor=pink,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=ellipse,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"blue\",fillcolor=pink,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     labelWithSourceCode = string("\\n  ") + file->get_sourceFileNameWithPath() + "  ";
                  // printf ("########## SgFile = %s \n",file->get_sourceFileNameWithPath().c_str());
                     ROSE_ASSERT(SgNode::get_globalFunctionTypeTable() != NULL);
@@ -1354,8 +1354,8 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                             }
                            else
                             {
-                           // additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"Blue\",fillcolor=cyan4,fontname=\"7x13bold\",fontcolor=black,style=filled";
-                              additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"Blue\",fillcolor=brown,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                           // additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"blue\",fillcolor=cyan4,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                              additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"blue\",fillcolor=brown,fontname=\"7x13bold\",fontcolor=black,style=filled";
                            // Make this statement different in the generated dot graph
                               labelWithSourceCode = 
                                  "\\n" + currentNodeFileInfo->get_filenameString() + 
@@ -1372,7 +1372,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                case V_SgInitializedName:
                   {
                     SgInitializedName* initializedName = isSgInitializedName(node);
-                    additionalNodeOptions = "shape=house,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"Blue\",fillcolor=darkturquoise,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=house,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=darkturquoise,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     labelWithSourceCode = string("\\n  ") + initializedName->get_name().getString() +
                                           string("\\n  ") + StringUtility::numberToString(initializedName) + "  ";
                  // printf ("########## initializedName->get_name() = %s \n",initializedName->get_name().str());
@@ -1382,7 +1382,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                case V_SgSymbolTable:
                   {
                     SgSymbolTable* symbolTable = isSgSymbolTable(node);
-                    additionalNodeOptions = "shape=house,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"Blue\",fillcolor=orange,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=house,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=orange,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     string symbolTableName = "Unnamed Symbol Table";
                     if (symbolTable->get_no_name() == true)
                          symbolTableName = symbolTable->get_name().getString();
@@ -1395,7 +1395,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                case V_SgTypedefSeq:
                   {
                     SgTypedefSeq* typedefSeq = isSgTypedefSeq(node);
-                    additionalNodeOptions = "shape=house,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"Blue\",fillcolor=red,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=house,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=red,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     labelWithSourceCode = string("\\n  ") + StringUtility::numberToString(typedefSeq) + "  ";
                  // printf ("########## typedefSeq->get_name() = %s \n",typedefSeq->get_name().str());
                     break;
@@ -1404,14 +1404,14 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                case V_SgTemplateArgument:
                   {
                     SgTemplateArgument* templateArgument = isSgTemplateArgument(node);
-                    additionalNodeOptions = "shape=circle,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"Blue\",fillcolor=yellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=circle,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=yellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     labelWithSourceCode = string("\\n  ") + StringUtility::numberToString(templateArgument) + "  ";
                     break;
                   }
 
                default:
                   {
-                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=4,peripheries=1,color=\"Blue\",fillcolor=red,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=4,peripheries=1,color=\"blue\",fillcolor=red,fontname=\"7x13bold\",fontcolor=black,style=filled";
                  // labelWithSourceCode;
                     break;
                   }
@@ -1424,7 +1424,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 #if 1
      if (isSgSymbol(node) != NULL)
         {
-          string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=1,color=\"Blue\",fillcolor=purple,fontname=\"7x13bold\",fontcolor=black,style=filled";
+          string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=1,color=\"blue\",fillcolor=purple,fontname=\"7x13bold\",fontcolor=black,style=filled";
        // Make this statement different in the generated dot graph
        // string labelWithSourceCode = string("\\n  ") + node->unparseToString() + "  ";
           string labelWithSourceCode;
@@ -1440,7 +1440,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
      if (isSgToken(node) != NULL)
         {
           SgToken* token = isSgToken(node);
-          string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=1,color=\"Blue\",fillcolor=moccasin,fontname=\"7x13bold\",fontcolor=black,style=filled";
+          string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=1,color=\"blue\",fillcolor=moccasin,fontname=\"7x13bold\",fontcolor=black,style=filled";
        // Make this statement different in the generated dot graph
        // string labelWithSourceCode = string("\\n  ") + node->unparseToString() + "  ";
           string labelWithSourceCode;
@@ -1457,7 +1457,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 
      if (isSgAsmType(node) != NULL)
         {
-          string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=3,peripheries=1,color=\"Blue\",fillcolor=yellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
+          string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=3,peripheries=1,color=\"blue\",fillcolor=yellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
 
        // Make this statement different in the generated dot graph
        // string labelWithSourceCode = string("\\n  ") + node->unparseToString() + "  ";
@@ -1493,7 +1493,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                case V_SgAsmLESection:
                   {
                     SgAsmGenericSection* genericSection = isSgAsmGenericSection(node);
-                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"Blue\",fillcolor=RoyalBlue,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=royalblue,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     labelWithSourceCode = string("\\n  ") + genericSection->get_name()->get_string() +
                                           "\\n  " +  StringUtility::numberToString(genericSection) + "  ";
                  // printf ("########## genericSection->get_name() = %s \n",genericSection->get_name().c_str());
@@ -1507,7 +1507,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                case V_SgAsmDOSFileHeader:
                   {
                     SgAsmGenericHeader* genericHeader = isSgAsmGenericHeader(node);
-                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"Blue\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"blue\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     labelWithSourceCode = "\\n  " + genericHeader->get_name()->get_string() + 
                                           "\\n  " +  StringUtility::numberToString(genericHeader) + "  ";
                     break;
@@ -1518,14 +1518,14 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                case V_SgAsmNESectionTableEntry:
                case V_SgAsmLESectionTableEntry:
                   {
-                    additionalNodeOptions = "shape=house,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"Blue\",fillcolor=darkturquoise,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=house,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=darkturquoise,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     labelWithSourceCode = "\\n  " +  StringUtility::numberToString(node) + "  ";
                     break;
                   }
 
                case V_SgAsmElfSegmentTableEntry:
                   {
-                    additionalNodeOptions = "shape=house,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"Blue\",fillcolor=red,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=house,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=red,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     labelWithSourceCode = "\\n  " +  StringUtility::numberToString(node) + "  ";
                     break;
                   }
@@ -1534,7 +1534,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                case V_SgAsmCoffSymbol:
                   {
                     SgAsmGenericSymbol* genericSymbol = isSgAsmGenericSymbol(node);
-                    additionalNodeOptions = "shape=circle,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"Blue\",fillcolor=yellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=circle,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=yellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     labelWithSourceCode = "\\n  " + genericSymbol->get_name()->get_string() + 
                                           "\\n  " +  StringUtility::numberToString(genericSymbol) + "  ";
                     break;
@@ -1543,7 +1543,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                default:
                   {
                  // It appears that we can't unparse one of these (not implemented)
-                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"Blue\",fillcolor=SkyBlue,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"blue\",fillcolor=skyblue,fontname=\"7x13bold\",fontcolor=black,style=filled";
                  // labelWithSourceCode = string("\\n  ") + functionDeclaration->get_name().getString() + "  ";
                     labelWithSourceCode = string("\\n  ") + StringUtility::numberToString(node) + "  ";
 #if 0
@@ -1568,7 +1568,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
      if (node->get_parent() != NULL)
         {
           printf ("Adding a colored edge to the parent from = %p to = %p \n",node,node->get_parent());
-          string additionalEdgeOptions = "color=\"Blue\" decorate labelfontcolor=\"Red\"";
+          string additionalEdgeOptions = "color=\"blue\" decorate labelfontcolor=\"red\"";
           EdgeType graphEdge(node,node->get_parent(),"",additionalEdgeOptions);
           addEdge(graphEdge);
         }
@@ -1579,7 +1579,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
   // DQ (3/5/2007): color the parent edges blue
      if (node->get_parent() != NULL)
         {
-          returnString = "color=\"Blue\"";
+          returnString = "color=\"blue\"";
         }
 
   // DQ (3/5/2007): color the scope edges green (that are explicitly stored in the AST)
@@ -1589,7 +1589,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
         {
           if (statement->hasExplicitScope() == true && statement->get_scope() == to)
              {
-               returnString = "color=\"Green\"";
+               returnString = "color=\"green\"";
              }
         }
      
@@ -1598,14 +1598,14 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
         {
           if (initializedName->get_scope() == to)
              {
-               returnString = "color=\"Green\"";
+               returnString = "color=\"green\"";
              }
         }
 
      SgType* type = isSgType(to);
      if (type != NULL)
         {
-          returnString = "color=\"Yellow\"";
+          returnString = "color=\"yellow\"";
         }
 #endif
    }
@@ -1672,7 +1672,7 @@ SimpleColorMemoryPoolTraversal::markFirstAST ()
      set<SgNode*>::iterator i = setOfIRnodes.begin();
      while (i != setOfIRnodes.end())
         {
-          string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"Blue\",fillcolor=peru,fontname=\"7x13bold\",fontcolor=black,style=filled";
+          string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"blue\",fillcolor=peru,fontname=\"7x13bold\",fontcolor=black,style=filled";
        // Make this statement different in the generated dot graph
 
        // DQ (5/14/2006): this is an error when processing stdio.h
@@ -1682,7 +1682,7 @@ SimpleColorMemoryPoolTraversal::markFirstAST ()
           NodeType graphNode(*i,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
 #if 0
-          additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"Blue\",fillcolor=peru,fontname=\"7x13bold\",fontcolor=white,style=filled";
+          additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"blue\",fillcolor=peru,fontname=\"7x13bold\",fontcolor=white,style=filled";
        // Make this statement different in the generated dot graph
 
        // DQ (5/14/2006): this is an error when processing stdio.h
@@ -1767,7 +1767,7 @@ SimpleColorMemoryPoolTraversal::visit(SgNode* node)
             else
              {
                string additionalNodeOptions;
-            // string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"Blue\",fillcolor=cyan4,fontname=\"7x13bold\",fontcolor=black,style=filled";
+            // string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"blue\",fillcolor=cyan4,fontname=\"7x13bold\",fontcolor=black,style=filled";
             // Make this statement different in the generated dot graph
                string labelWithSourceCode = 
                                  "\\n" + currentNodeFileInfo->get_filenameString() + 
@@ -1786,7 +1786,7 @@ SimpleColorMemoryPoolTraversal::visit(SgNode* node)
   // Color this IR node differently if it in NOT in the original AST
      if (setOfIRnodes.find(node) == setOfIRnodes.end())
         {
-          string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"Blue\",fillcolor=greenyellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
+          string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"blue\",fillcolor=greenyellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
        // Make this statement different in the generated dot graph
 
           string labelWithSourceCode = "\\n" +  StringUtility::numberToString(node) + "  ";
@@ -1829,11 +1829,11 @@ const int SimpleColorFilesInheritedAttribute::maxSize = 5;
 
 // colors that will be represented as "black": azure1
 const string SimpleColorFilesInheritedAttribute::additionalNodeOptionsArray[SimpleColorFilesInheritedAttribute::maxSize] = 
-   { "shape=ellipse,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"Blue\",fillcolor=blue1,fontname=\"7x13bold\",fontcolor=black,style=filled",
-     "shape=ellipse,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"Blue\",fillcolor=greenyellow,fontname=\"7x13bold\",fontcolor=black,style=filled",
-     "shape=ellipse,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"Blue\",fillcolor=red,fontname=\"7x13bold\",fontcolor=black,style=filled",
-     "shape=ellipse,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"Blue\",fillcolor=gold1,fontname=\"7x13bold\",fontcolor=black,style=filled",
-     "shape=ellipse,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"Blue\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled"
+   { "shape=ellipse,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"blue\",fillcolor=blue1,fontname=\"7x13bold\",fontcolor=black,style=filled",
+     "shape=ellipse,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"blue\",fillcolor=greenyellow,fontname=\"7x13bold\",fontcolor=black,style=filled",
+     "shape=ellipse,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"blue\",fillcolor=red,fontname=\"7x13bold\",fontcolor=black,style=filled",
+     "shape=ellipse,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"blue\",fillcolor=gold1,fontname=\"7x13bold\",fontcolor=black,style=filled",
+     "shape=ellipse,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"blue\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled"
    };
 
 
@@ -1904,7 +1904,7 @@ SimpleColorFilesTraversal::evaluateInheritedAttribute (
      if (project != NULL)
         {
           inheritedAttribute.currentNodeOptions =
-             "shape=circle,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=3,color=\"Blue\",fillcolor=cyan4,fontname=\"12x24bold\",fontcolor=black,style=filled";
+             "shape=circle,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=3,color=\"blue\",fillcolor=cyan4,fontname=\"12x24bold\",fontcolor=black,style=filled";
         }
 
      ROSE_ASSERT(inheritedAttribute.currentNodeOptions.size() < 4000);
@@ -1926,7 +1926,7 @@ SimpleColorFilesTraversal::evaluateInheritedAttribute (
      if (inheritedAttribute.sharedSubTree == true)
         {
           inheritedAttribute.currentNodeOptions =
-             "shape=diamond,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"Blue\",fillcolor=magenta1,fontname=\"12x24bold\",fontcolor=black,style=filled";
+             "shape=diamond,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"blue\",fillcolor=magenta1,fontname=\"12x24bold\",fontcolor=black,style=filled";
         }
      ROSE_ASSERT(inheritedAttribute.currentNodeOptions.size() < 4000);
 
@@ -1957,7 +1957,7 @@ SimpleColorFilesTraversal::evaluateInheritedAttribute (
      if (specialNodeList.find(node) != specialNodeList.end())
         {
           inheritedAttribute.currentNodeOptions =
-             "shape=circle,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=3,color=\"Blue\",fillcolor=black,fontname=\"12x24bold\",fontcolor=white,style=filled";
+             "shape=circle,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=3,color=\"blue\",fillcolor=black,fontname=\"12x24bold\",fontcolor=white,style=filled";
           ROSE_ASSERT(inheritedAttribute.currentNodeOptions.size() < 4000);
         }
      ROSE_ASSERT(inheritedAttribute.currentNodeOptions.size() < 4000);

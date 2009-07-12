@@ -159,7 +159,8 @@ LibraryIdentification::libraryIdentificationDataBaseSupport( string databaseName
      printf ("*********************************** \n");
      printf ("Traverse the AST to find functions: \n");
      printf ("*********************************** \n");
-     int counter = 0;
+
+  // int counter = 0;
      for (Rose_STL_Container<SgNode*>::iterator j = binaryInterpretationList.begin(); j != binaryInterpretationList.end(); j++)
         {
        // Build a pointer to the current type so that we can call the get_name() member function.
@@ -248,6 +249,8 @@ LibraryIdentification::generateLibraryIdentificationDataBase( string databaseNam
 void
 LibraryIdentification::FlattenAST::visit(SgNode* n)
    {
+  // This is the older function which just generated the opcodes for each instruction (un-normalized).
+
      SgAsmInstruction* asmInstruction = isSgAsmInstruction(n);
      if (asmInstruction != NULL)
         {
@@ -259,6 +262,10 @@ LibraryIdentification::FlattenAST::visit(SgNode* n)
 
        // Get the op-code for each instruction and append them to the STL data vector.
           SgUnsignedCharList opCodeString = asmInstruction->get_raw_bytes();
+
+       // DQ (7/11/2009): Adding code to zero out the offsets that support immediates.
+       // if SgAsmValueExpression::p_bit_size is nonzero { zero out corresponding bits of checksum buffer }
+
           for (size_t i=0; i < opCodeString.size(); i++)
              {
                data.push_back(opCodeString[i]);
@@ -266,9 +273,126 @@ LibraryIdentification::FlattenAST::visit(SgNode* n)
 
        // Always update the endAddress (and add the length of the last instruction)
           endAddress = instructionAddress + opCodeString.size();
+
+          printf ("asmInstruction->get_mnemonic() = %s size = %zu \n",asmInstruction->get_mnemonic().c_str(),opCodeString.size());
+        }
+
+     SgAsmExpression* asmExpression = isSgAsmExpression(n);
+     if (asmExpression != NULL)
+        {
+          printf ("   asmExpression->get_bit_size() = %zu asmExpression->get_bit_offset() = %zu \n",asmExpression->get_bit_size(),asmExpression->get_bit_offset());
         }
 
   // ROSE_ASSERT(endAddress != startAddress);
+   }
+
+LibraryIdentification::FlattenAST_SynthesizedAttribute
+// FlattenAST_AndResetImmediateValues::evaluateSynthesizedAttribute ( SgNode* n, FlattenAST_AndResetImmediateValues::SynthesizedAttributesList childAttributes )
+LibraryIdentification::FlattenAST_AndResetImmediateValues::evaluateSynthesizedAttribute ( SgNode* n, SynthesizedAttributesList childAttributes )
+   {
+  // Build the return value
+     LibraryIdentification::FlattenAST_SynthesizedAttribute localResult;
+
+  // Collect all the bit offset ranges and bit range sizes and accumulate them into localResult
+     SynthesizedAttributesList::iterator i = childAttributes.begin();
+     while (i != childAttributes.end())
+        {
+          std::vector<std::pair<unsigned char,unsigned char> >::iterator j = i->rangeList.begin();
+          while (j != i->rangeList.end())
+             {
+               localResult.rangeList.push_back(*j);
+
+               j++;
+             }
+          i++;
+        }
+
+#if 0
+  // Debugging code
+     if (localResult.rangeList.size() > 0)
+          printf ("localResult.rangeList.size() = %zu \n",localResult.rangeList.size());
+#endif
+
+     SgAsmInstruction* asmInstruction = isSgAsmInstruction(n);
+     if (asmInstruction != NULL)
+        {
+       // printf ("asmInstruction = %p \n",asmInstruction);
+
+          size_t instructionAddress = asmInstruction->get_address();
+          if (startAddress == 0)
+               startAddress = instructionAddress;
+
+       // Get the op-code for each instruction and append them to the STL data vector.
+          SgUnsignedCharList opCodeString = asmInstruction->get_raw_bytes();
+
+       // DQ (7/11/2009): Adding code to zero out the offsets that support immediates.
+       // if SgAsmValueExpression::p_bit_size is nonzero { zero out corresponding bits of checksum buffer }
+
+          for (size_t i=0; i < opCodeString.size(); i++)
+             {
+               data.push_back(opCodeString[i]);
+             }
+
+       // Always update the endAddress (and add the length of the last instruction)
+          endAddress = instructionAddress + opCodeString.size();
+
+          printf ("asmInstruction->get_mnemonic() = %s size = %zu \n",asmInstruction->get_mnemonic().c_str(),opCodeString.size());
+
+          std::vector<std::pair<unsigned char,unsigned char> >::iterator k = localResult.rangeList.begin();
+          while (k != localResult.rangeList.end())
+             {
+            // localResult.rangeList.push_back(*k);
+               unsigned char bit_size   = k->first;
+               unsigned char bit_offset = k->second;
+
+#if 0
+            // Debugging code
+               printf ("   bit_size = %u bit_offset = %u \n",bit_size,bit_offset);
+#endif
+               unsigned char offset_div_8 = bit_offset / 8;
+               unsigned char size_div_8   = bit_size   / 8;
+
+            // unsigned char offset_mod_8 = bit_offset % 8;
+            // unsigned char size_mod_8   = bit_size   % 8;
+
+               for (int i = 0; i < size_div_8; i++)
+                  {
+                    printf ("Setting byte #%u of instruction op-code to zero \n",offset_div_8+i);
+
+                 // For now just reset the relevant bytes (this is sufficent for x86, but we really want the more general solution).
+                 // Enforce this using an assert.
+                    ROSE_ASSERT(bit_size % 8 == 0);
+
+                    opCodeString[offset_div_8+i] = 0;
+#if 0
+                 // What we really want to do is set the relevant bits to zero, but debug this later.
+                    for (int i = start; i < end; i++)
+                       {
+                         opCodeString[index] = opCodeString[index] & 1 << i;
+                       }
+#endif
+                  }
+
+               k++;
+             }
+        }
+
+     SgAsmExpression* asmExpression = isSgAsmExpression(n);
+     if (asmExpression != NULL)
+        {
+          unsigned char size   = asmExpression->get_bit_size();
+          unsigned char offset = asmExpression->get_bit_offset();
+
+          if (size > 0)
+             {
+#if 0
+               printf ("   asmExpression->get_bit_size() = %u asmExpression->get_bit_offset() = %u \n",size,offset);
+#endif
+               localResult.rangeList.push_back(std::pair<unsigned char,unsigned char> (size,offset) );
+             }
+        }
+
+     return localResult;
    }
 
 
@@ -278,10 +402,19 @@ LibraryIdentification::generateOpCodeVector(SgAsmInterpretation* asmInterpretati
      ROSE_ASSERT(asmInterpretation != NULL);
 
      SgUnsignedCharList s;
+#if 0
+  // This generates the opcode byte array (non-normalized)
      FlattenAST t(s);
 
      printf ("Traverse the AST for this function to generate byte stream, node = %p \n",node);
      t.traverse(node,preorder);
+#else
+  // This generates the opcode byte array in a normalized for (zeroed bit locations where imediates are coded).
+     FlattenAST_AndResetImmediateValues t(s);
+
+     printf ("Synthesized attribute traverse the AST for this function to generate byte stream, node = %p \n",node);
+     t.traverse(node);
+#endif
      printf ("DONE: Traverse the AST for this function to generate byte stream s.size() = %zu \n",s.size());
 
      size_t startAddress = t.startAddress;
@@ -291,40 +424,43 @@ LibraryIdentification::generateOpCodeVector(SgAsmInterpretation* asmInterpretati
 
      if (s.empty() == false)
         {
-  // Compute the offset from the address...
-  // Need to compute these from the adress...
-  // Use: size_t fileOffset = rva - section->get_mapped_rva() + section->get_offset();
+       // Compute the offset from the address...
+       // Need to compute these from the adress...
+       // Use: size_t fileOffset = rva - section->get_mapped_rva() + section->get_offset();
 
 #if 0
-     /* There are lots of other disassembler methods now. I'm not sure why we want a new AsmFileWithData, unless it was
-      * just for finding the section that goes with an address.  The SgAsmGenericHeader::get_best_section_by_va() and related
-      * methods are the correct ones to call for that info. [RPM 2009-06-23] */
-  // Build a AsmFileWithData object with the relevant SgAsmInterpretation
-  // Later we can record a list of them.
-     DisassemblerCommon::AsmFileWithData asmFileInformation (asmInterpretation);
+       /* There are lots of other disassembler methods now. I'm not sure why we want a new AsmFileWithData, unless it was
+        * just for finding the section that goes with an address.  The SgAsmGenericHeader::get_best_section_by_va() and related
+        * methods are the correct ones to call for that info. [RPM 2009-06-23] */
+       // Build a AsmFileWithData object with the relevant SgAsmInterpretation
+       // Later we can record a list of them.
+          DisassemblerCommon::AsmFileWithData asmFileInformation (asmInterpretation);
 #endif
 
-  // We need a DisassemblerCommon::AsmFileWithData object to call getSectionOfAddress()
-  // SgAsmGenericSection* section = DisassemblerCommon::AsmFileWithData::getSectionOfAddress(t.startAddress);
-     SgAsmGenericHeader* fhdr = asmInterpretation->get_header();
-     ROSE_ASSERT(fhdr != NULL);
-     SgAsmGenericSection* section = fhdr->get_best_section_by_va(fhdr->get_base_va()+t.startAddress);
-     ROSE_ASSERT(section != NULL);
+       // We need a DisassemblerCommon::AsmFileWithData object to call getSectionOfAddress()
+       // SgAsmGenericSection* section = DisassemblerCommon::AsmFileWithData::getSectionOfAddress(t.startAddress);
+          SgAsmGenericHeader* fhdr = asmInterpretation->get_header();
+          ROSE_ASSERT(fhdr != NULL);
+          SgAsmGenericSection* section = fhdr->get_best_section_by_va(fhdr->get_base_va()+t.startAddress);
+          ROSE_ASSERT(section != NULL);
 
-     /* This code assumes that the entire sequence of instructions is present in a single section, or a group of sections that
-      * are mapped in such a way that that file layout mirrors virtual memory layout. This isn't always the case. In fact, the
-      * disassembler is now able to disassemble instructions that even span two sections such that the first bytes of the
-      * instruction are at one file offset and the last few bytes are at a wildly different offset. [RPM 2009-06-23] */
-     startOffset = startAddress - section->get_mapped_rva() + section->get_offset();
-     endOffset   = endAddress - section->get_mapped_rva() + section->get_offset();
+       /* This code assumes that the entire sequence of instructions is present in a single section, or a group of sections that
+        * are mapped in such a way that that file layout mirrors virtual memory layout. This isn't always the case. In fact, the
+        * disassembler is now able to disassemble instructions that even span two sections such that the first bytes of the
+        * instruction are at one file offset and the last few bytes are at a wildly different offset. [RPM 2009-06-23] */
+          startOffset = startAddress - section->get_mapped_rva() + section->get_offset();
+          endOffset   = endAddress - section->get_mapped_rva() + section->get_offset();
 
-     printf ("---- function %p addresses: (start = %p, end = %p) file offsets: (start = %zu, end = %zu) \n",node,(void*)startAddress,(void*)endAddress,startOffset,endOffset);
+          printf ("---- function %p addresses: (start = %p, end = %p) file offsets: (start = %zu, end = %zu) \n",node,(void*)startAddress,(void*)endAddress,startOffset,endOffset);
 
-     size_t lengthOfOpcodeVectorByAddress = endAddress - startAddress;
-     size_t lengthOfOpcodeVectorBySize    = s.size();
+          size_t lengthOfOpcodeVectorByAddress = endAddress - startAddress;
+          size_t lengthOfOpcodeVectorBySize    = s.size();
 
-     printf ("---- lengthOfOpcodeVectorByAddress = %zu lengthOfOpcodeVectorBySize = %zu \n",lengthOfOpcodeVectorByAddress,lengthOfOpcodeVectorBySize);
-     ROSE_ASSERT(lengthOfOpcodeVectorByAddress == lengthOfOpcodeVectorBySize);
+          printf ("---- lengthOfOpcodeVectorByAddress = %zu lengthOfOpcodeVectorBySize = %zu \n",lengthOfOpcodeVectorByAddress,lengthOfOpcodeVectorBySize);
+
+       // DQ (7/11/2009): See the email from Robb (7/10/2009) for an explaination of why this is an inapropriate 
+       // thing to assert (I think it used to be fine under the previous implementation)
+       // ROSE_ASSERT(lengthOfOpcodeVectorByAddress == lengthOfOpcodeVectorBySize);
         }
        else
         {

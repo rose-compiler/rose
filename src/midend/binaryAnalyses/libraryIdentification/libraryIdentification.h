@@ -84,6 +84,31 @@ namespace LibraryIdentification
                void visit(SgNode* n);
         };
 
+  // DQ (7/11/2009): We need to use a synthesized attribute to gather the list of bit ranges 
+     class FlattenAST_SynthesizedAttribute
+        {
+          public:
+            // Save the list of ranges of where offsets are stored in each instruction's opcode (used to represent immediates).
+               std::vector<std::pair<unsigned char,unsigned char> > rangeList;
+        };
+
+  // DQ (7/11/2009): We need to use a synthesized attribute to gather the list of bit ranges form any nested 
+  // SgAsmExpression IR nodes where the opcode stores values (offsets) used to store immediate values (coded 
+  // values in the instruction's op-codes.
+     class FlattenAST_AndResetImmediateValues: public AstBottomUpProcessing<FlattenAST_SynthesizedAttribute>
+        {
+          public:
+            // Save flattended AST in reference initialized at construction.
+               SgUnsignedCharList & data;
+
+               size_t startAddress;
+               size_t endAddress;
+
+               FlattenAST_AndResetImmediateValues(SgUnsignedCharList & s) : data(s),startAddress(0),endAddress(0) {}
+
+               FlattenAST_SynthesizedAttribute evaluateSynthesizedAttribute ( SgNode* n, SynthesizedAttributesList childAttributes );
+        };
+
  //! This function calls the traversal defined by the FlattenAST class.
      SgUnsignedCharList generateOpCodeVector(SgAsmInterpretation* asmInterpretation, SgNode* node, size_t & startOffset, size_t & endOffset);
 

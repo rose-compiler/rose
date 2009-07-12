@@ -1406,6 +1406,8 @@ developersScratchSpace/Dan/SimPoints_tests/Makefile
 developersScratchSpace/Dan/SimPoints_tests/runpinpoints.sh
 developersScratchSpace/Dan/SimPoints_tests/Step2.sh
 developersScratchSpace/Dan/graph_tests/Makefile
+developersScratchSpace/Dan/fileLocation_tests/Makefile
+developersScratchSpace/Dan/callGraph_tests/Makefile
 developersScratchSpace/Robb/Makefile
 developersScratchSpace/Robb/BinaryTools/Makefile
 developersScratchSpace/Robb/DynamicLinking/Makefile

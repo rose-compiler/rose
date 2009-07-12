@@ -1,0 +1,9 @@
+Runtime Error Detection (RTED) Project
+
+This is a project to detect the use of undefined langauge use and
+report it to the user in a constistant way across all languages and
+compilers. 
+
+
+
+
