@@ -11,6 +11,8 @@
 
 // $REPLACE_ME_WITH_MACRO_DEFINITIONS
 
+/* DQ (7/11/2009): fix emacs coloring... with a '$' */
+
 /* Turn on use of restrict in EDG front-end using --edg:restrict */
 #ifdef __GNUC__
 /* for GNU g++ */
@@ -494,5 +496,25 @@ was just float or double for complex<float> or complex<double>.
 /* DQ (6/19/2007): I think we can comment this out now, since it is better defined above!
    DQ (1/31/2007): GNU modifier required to handle code using the offsetof macro in C++ g++ 3.4 and greater */
 /* #define __offsetof__ */
+
+#if 0
+/* DQ (7/11/2009) Added macros to define away new GNU C++ extension (not required for newer EDG 4.0 use */
+#define __has_nothrow_assign (type)
+#define __has_nothrow_copy (type)
+#define __has_nothrow_constructor (type)
+#define __has_trivial_assign (type)
+#define __has_trivial_copy (type)
+#define __has_trivial_constructor (type)
+#define __has_trivial_destructor (type)
+#define __has_virtual_destructor (type)
+#define __is_abstract (type)
+#define __is_base_of (base_type, derived_type)
+#define __is_class (type)
+#define __is_empty (type)
+#define __is_enum (type)
+#define __is_pod (type)
+#define __is_polymorphic (type)
+#define __is_union (type)
+#endif
 
 #endif // !ROSE_USE_NEW_EDG_INTERFACE

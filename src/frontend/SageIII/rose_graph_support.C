@@ -294,7 +294,7 @@ SgGraph::addEdge( SgGraphEdge* edge )
 #endif
 
        // Initialize the node index --> SgGraphEdge* multimap.
-          printf ("In SgGraph::addEdge(): Insert edge (%d,%d) on node %d \n",node_index_first,node_index_second,node_index_first);
+       // printf ("In SgGraph::addEdge(): Insert edge (%d,%d) on node %d \n",node_index_first,node_index_second,node_index_first);
           p_node_index_to_edge_multimap.insert(std::pair<int,SgGraphEdge*>(node_index_first,edge));
         }
        else

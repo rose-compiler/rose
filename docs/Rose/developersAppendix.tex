@@ -977,6 +977,8 @@ echo "############ make source_with_binary_edg_dist done"
 fi
 \end{verbatim}
 
+% DQ (7/11/2009): Added '$' so get the coloring correct in my emacs (an annoying issue).
+
 As shown in the script above, the steps to build a binary distribution of ROSE are:
 \begin{enumerate}
    \item Configure and build ROSE normally, using configure (use all options that you
@@ -1396,9 +1398,9 @@ verview of the options:
  \item {\tt TITLE} - The title of the test
  \item {\tt DESCRIPTION} - Short text to describe the test
  \item {\tt PREREQS} - Define what software this run needs. The prereqs available
-                       can be seen by navigating to 
-                       \url{http://nmi-s005.cs.wisc.edu/nmi/index.php?page=pool/platform}
-                       and clicking on the platforms you whish to use.
+                       can be seen by navigating to: \\
+                       \url{http://nmi-s005.cs.wisc.edu/nmi/index.php?page=pool/platform} \\
+                       and clicking on the platforms you want to use.
  \item {\tt CONFIGURE\_OPTIONS} - Define which options you want to pass to configure
                                   most likely you want at least point to the right
                                   boost directory

@@ -75,6 +75,11 @@ $(RoseDoxygenDocumentation): $(RoseDocsDependencies) $(ROSE_MAINPAGE_DOCUMENTATI
 	cd $(top_builddir)/src/frontend/SageIII; $(MAKE) sage.docs
 	doxygen rose.cfg
 
+# DQ (7/11/2009): Added rule to force generation of Doxygen documentation.
+doxygen_docs: $(RoseDocsDependencies) $(ROSE_MAINPAGE_DOCUMENTATION) rose.cfg
+	cd $(top_builddir)/src/frontend/SageIII; $(MAKE) sage.docs
+	doxygen rose.cfg
+
 # We can't specify the source directory to latex so we have to build
 # links to the files in the source directory.  Other ideas?
 latexFiles = preface.tex acknowledgments.tex introduction.tex \
