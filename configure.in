@@ -1443,9 +1443,9 @@ AC_CONFIG_COMMANDS([default],[[
 ]],[[
 ]])
 
-# Generate rose_paths.c
-AC_CONFIG_COMMANDS([rose_paths.c], [[
-	make src/util/rose_paths.c
+# Generate rose_paths.C
+AC_CONFIG_COMMANDS([rose_paths.C], [[
+	make src/util/rose_paths.C
 ]])
 
 # echo "Calling AC OUTPUT in configure.in file"
