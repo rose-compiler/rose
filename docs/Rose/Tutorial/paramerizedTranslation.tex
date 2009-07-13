@@ -1,0 +1,202 @@
+\chapter{Parameterized Code Translation}
+This chapter gives examples of using ROSE's high level loop translation
+interfaces to perform parameterized loop transformations, including loop
+unrolling, interchanging and tiling. 
+The motivation is to give users the maximized flexibility to orchestrate
+code transformations on the targets they want, the order they
+want, and the parameters they want.
+One typical application scenario is to support generating desired code
+variants for empirical tuning. 
+
+The ROSE internal interfaces (declared within the SageInterface namespace) to call loop transformations are:
+\begin{itemize}
+\item \textit{bool loopUnrolling (SgForStatement *loop, size\_t
+unrolling\_factor)}: 
+This function needs two parameters: one for the loop to be
+unrolled and the other for the unrolling factor. 
+\item \textit{bool  loopInterchange (SgForStatement *loop, size\_t depth,
+size\_t lexicoOrder)}:
+The loop interchange function has three parameters, the first one to
+specify a loop which starts a perfectly-nested loop and is to be
+interchanged, the 2nd for the depth of the loop nest to be interchanged, and finally the
+lexicographical order for the permutation. 
+\item \textit{bool  loopTiling (SgForStatement *loopNest, size\_t
+targetLevel, size\_t tileSize)}
+The loop tiling interface needs to know the loop nest to be tiled, which
+loop level to tile, and the tile size for the level. 
+\end{itemize} 
+For efficiency concerns, those functions only perform the specified
+translations without doing any legitimacy check. 
+It is up to the users to
+make sure the transformations won't generate wrong code.
+We will soon provide interfaces to do the eligibility check for each
+transformation. 
+
+We also provide standalone executable programs
+(loopUnrolling,loopInterchange, and loopTiling under ROSE\_INSTALL/bin) for the
+transformations mentioned above so users can directly use them via command
+lines and abstract handles (explained in Chapter~\ref{chap:handles}) to orchestrate transformations they want.
+%=====================================
+\section{Loop Unrolling}
+Figure~\ref{Tutorial:exampleInputCode_LoopUnrollingp} gives an example
+input code for loopUnrolling.
+
+\begin{figure}[!h]
+{\indent
+  {\mySmallFontSize
+      \begin{latexonly}
+    \lstinputlisting{\TOPSRCDIR/tests/roseTests/astInterfaceTests/inputloopUnrolling.C}
+    \end{latexonly}
+      \begin{htmlonly}
+    \verbatiminput{\TOPSRCDIR/tests/roseTests/astInterfaceTests/inputloopUnrolling.C}
+    \end{htmlonly}
+  }
+}
+\caption{Example source code used as input to loopUnrolling }
+    \label{Tutorial:exampleInputCode_LoopUnrollingp}
+\end{figure}
+
+An example command line to invoke loop unrolling on the example can look
+like the following:
+\begin{verbatim}
+# unroll a for statement 5 times. The loop is a statement at line 6 within
+# an input file.
+loopUnrolling -c inputloopUnrolling.C \
+-rose:loopunroll:abstract_handle "Statement<position,6>" -rose:loopunroll:factor 5
+\end{verbatim}
+
+Two kinds of output can be expected after loop unrolling.
+One (Shown in Figure~\ref{Tutorial:exampleOutput_LoopUnrollingpEven}) is the case that the loop iteration count is known at compile-time and
+can be evenly divisible by the unrolling factor.
+The other case (Shown in
+Figure~\ref{Tutorial:exampleOutput_LoopUnrollingpNonEven} is when the divisibility is unknown and a fringe loop has to
+be generated to run possible leftover iterations.
+%----------------------------- evenly divisible case------------
+\begin{figure}[!h]
+{\indent
+  {\mySmallFontSize
+      \begin{latexonly}
+    \lstinputlisting{\TOPBUILDDIR/tests/roseTests/astInterfaceTests/rose_inputloopUnrolling1.C}
+    \end{latexonly}
+      \begin{htmlonly}
+    \verbatiminput{\TOPBUILDDIR/tests/roseTests/astInterfaceTests/rose_inputloopUnrolling1.C}
+    \end{htmlonly}
+  }
+}
+\caption{Output for a unrolling factor which can divide the iteration space evenly}
+    \label{Tutorial:exampleOutput_LoopUnrollingpEven}
+\end{figure}
+%----------------------------- non evenly divisible case------------
+\begin{figure}[!h]
+{\indent
+  {\mySmallFontSize
+      \begin{latexonly}
+    \lstinputlisting{\TOPBUILDDIR/tests/roseTests/astInterfaceTests/rose_inputloopUnrolling2.C}
+    \end{latexonly}
+      \begin{htmlonly}
+    \verbatiminput{\TOPBUILDDIR/tests/roseTests/astInterfaceTests/rose_inputloopUnrolling2.C}
+    \end{htmlonly}
+  }
+}
+\caption{Output for the case when divisibility is unknown at compile-time}
+    \label{Tutorial:exampleOutput_LoopUnrollingpNonEven}
+\end{figure}
+
+%========================================================
+\clearpage % enforce all previous figures to be shown
+\section{Loop Interchange}
+
+Figure~\ref{Tutorial:exampleInputCode_LoopInterchangep} gives an example
+input code for loopInterchange.
+
+\begin{figure}[!h]
+{\indent
+  {\mySmallFontSize
+      \begin{latexonly}
+    \lstinputlisting{\TOPSRCDIR/tests/roseTests/astInterfaceTests/inputloopInterchange.C}
+    \end{latexonly}
+      \begin{htmlonly}
+    \verbatiminput{\TOPSRCDIR/tests/roseTests/astInterfaceTests/inputloopInterchange.C}
+    \end{htmlonly}
+  }
+}
+\caption{Example source code used as input to loopInterchange}
+    \label{Tutorial:exampleInputCode_LoopInterchangep}
+\end{figure}
+
+
+An example command line to invoke loop interchange:
+\begin{verbatim}
+# interchange a loop nest starting from the first loop within the input file, 
+# interchange depth is 4 and 
+# the lexicographical order is 1 (swap the innermost two levels)
+loopInterchange -c inputloopInterchange.C -rose:loopInterchange:abstract_handle \
+"ForStatement<numbering,1>" -rose:loopInterchange:depth 4 \
+-rose:loopInterchange:order 1
+\end{verbatim}
+
+Figure~\ref{Tutorial:exampleOutput_LoopInterchangep} shows the output.
+%------------------------------------------
+\begin{figure}[!h]
+{\indent
+  {\mySmallFontSize
+      \begin{latexonly}
+    \lstinputlisting{\TOPBUILDDIR/tests/roseTests/astInterfaceTests/rose_inputloopInterchange.C}
+    \end{latexonly}
+      \begin{htmlonly}
+    \verbatiminput{\TOPBUILDDIR/tests/roseTests/astInterfaceTests/rose_inputloopInterchange.C}
+    \end{htmlonly}
+  }
+}
+\caption{Output for loop interchange}
+    \label{Tutorial:exampleOutput_LoopInterchangep}
+\end{figure}
+
+%========================================================
+\clearpage
+\section{Loop Tiling}
+Figure~\ref{Tutorial:exampleInputCode_LoopTilingp} gives an example
+input code for loopTiling.
+
+\begin{figure}[!h]
+{\indent
+  {\mySmallFontSize
+      \begin{latexonly}
+    \lstinputlisting{\TOPSRCDIR/tests/roseTests/astInterfaceTests/inputloopTiling.C}
+    \end{latexonly}
+      \begin{htmlonly}
+    \verbatiminput{\TOPSRCDIR/tests/roseTests/astInterfaceTests/inputloopTiling.C}
+    \end{htmlonly}
+  }
+}
+\caption{Example source code used as input to loopTiling}
+    \label{Tutorial:exampleInputCode_LoopTilingp}
+\end{figure}
+
+
+An example command line to invoke loop tiling:
+\begin{verbatim}
+# Tile the loop with a depth of 3 within the first loop of the input file 
+# tile size is 5
+loopTiling -c inputloopTiling.C -rose:loopTiling:abstract_handle \
+"ForStatement<numbering,1>" -rose:loopTiling:depth 3 -rose:loopTiling:tilesize 5
+
+\end{verbatim}
+Figure~\ref{Tutorial:exampleOutput_LoopTilingp} shows the output.
+%------------------------------------------
+\begin{figure}[!h]
+{\indent
+  {\mySmallFontSize
+      \begin{latexonly}
+    \lstinputlisting{\TOPBUILDDIR/tests/roseTests/astInterfaceTests/rose_inputloopTiling.C}
+    \end{latexonly}
+      \begin{htmlonly}
+    \verbatiminput{\TOPBUILDDIR/tests/roseTests/astInterfaceTests/rose_inputloopTiling.C}
+    \end{htmlonly}
+  }
+}
+\caption{Output for loop tiling}
+    \label{Tutorial:exampleOutput_LoopTilingp}
+\end{figure}
+
+

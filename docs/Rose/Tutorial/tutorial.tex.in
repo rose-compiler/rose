@@ -44,7 +44,10 @@
 % \newcommand{\TranslatorExampleCompileTreeDirectory}{@top_pwd@/ExampleTranslator/DocumentedExamples/SimpleTranslatorExamples}
 % \newcommand{\AstRewriteExampleDirectory}{@top_srcdir@/ExampleTranslator/DocumentedExamples/AstRewriteExamples}
 % \newcommand{\DatabaseExampleDirectory}{/home/dquinlan/ROSE/NEW_ROSE/ExampleTranslator/DocumentedExamples/DataBaseExamples}
-
+% Liao, 7/13/2009, need them to access any other directories in source and
+% build tree
+\newcommand{\TOPSRCDIR}{@top_srcdir@}
+\newcommand{\TOPBUILDDIR}{@top_builddir@}
 \newcommand{\TranslatorExampleDirectory}{@top_srcdir@/exampleTranslators/documentedExamples/simpleTranslatorExamples}
 \newcommand{\TranslatorExampleCompileTreeDirectory}{@top_pwd@/exampleTranslators/documentedExamples/simpleTranslatorExamples}
 \newcommand{\AstRewriteExampleDirectory}{@top_srcdir@/exampleTranslators/documentedExamples/AstRewriteExamples}
@@ -371,6 +374,8 @@ our own use on large scale applications.}
 \input{parallelChecker}
 
 \input{abstractHandle}
+
+\input{paramerizedTranslation}
 
 \input{binaryConstruction}
 

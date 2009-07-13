@@ -5650,8 +5650,8 @@ bool SageInterface::loopUnrolling(SgForStatement* target_loop, size_t unrolling_
    string fringe_name = "_lu_fringe";
    SgVariableDeclaration* fringe_decl = buildVariableDeclaration(fringe_name, buildIntType(),buildAssignInitializer(initor), scope);
    insertStatementBefore(target_loop, fringe_decl);
-   attachComment(fringe_decl, "//iter_count = (ub-lb+1)%step ==0?(ub-lb+1)/step: (ub-lb+1)/step+1;");
-   attachComment(fringe_decl, "//fringe = iter_count%unroll_factor==0 ? 0:unroll_factor*step");
+   attachComment(fringe_decl, "iter_count = (ub-lb+1)%step ==0?(ub-lb+1)/step: (ub-lb+1)/step+1;");
+   attachComment(fringe_decl, "fringe = iter_count%unroll_factor==0 ? 0:unroll_factor*step");
 
   // compile-time evaluate to see if initor is a constant of value 0
   // if so, the iteration count can be divided even by the unrolling factor
