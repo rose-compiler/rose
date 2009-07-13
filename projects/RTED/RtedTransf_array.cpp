@@ -368,6 +368,8 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
   // the left hand side of an assignment.
   // And it should not be an argument to a function
   // if true, we add it to the list of variables being accessed
+	//cerr << " Visiting VarRefExp : " << n->unparseToString() <<
+	//	"  Symbol : " << n->get_symbol() << endl;
 
 #if 0
 	   SgNode* parent = isSgVarRefExp(n)->get_parent();

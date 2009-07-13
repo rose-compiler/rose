@@ -64,7 +64,7 @@ class RtedTransformation : public AstSimpleProcessing {
   SgFunctionSymbol* roseEnterScope;
   SgFunctionSymbol* roseExitScope;
   SgFunctionSymbol* roseRegisterTypeCall;
-
+  SgType* size_t_member;
 
   // FUNCTIONS ------------------------------------------------------------
   // Helper function

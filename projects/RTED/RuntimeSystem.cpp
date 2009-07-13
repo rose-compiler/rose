@@ -14,7 +14,10 @@
 //#include "RuntimeSystem.h"
 #include "CppRuntimeSystem/CppRuntimeSystem.h"
 #include "rted_qt/rted_qt.h"
-
+#include <stddef.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 
 int rs_initialized = 0;
@@ -638,7 +641,9 @@ RuntimeSystem_roseConvertIntToString(int t) {
 
 void 
 RuntimeSystem_roseRegisterTypeCall(int count, ...) {
-
+  printf("Test");
 }
+
+
 
 // vim:sw=2 ts=2 et sta:

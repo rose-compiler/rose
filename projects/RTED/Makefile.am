@@ -26,13 +26,6 @@ endif
 # This test program does not require the rest of ROSE so it can be handled locally
 bin_PROGRAMS  = runtimeCheck
 
-noinst_PROGRAMS = test
-test_SOURCES = test.C
-test_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
-
-TEST_CXXFLAGS = -rose:verbose 0 --edg:no_warnings -g3
-run_test:test
-	./test$(EXEEXT) $(TEST_CXXFLAGS) $(srcdir)/buffer2.c 
 
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -ldl 
@@ -192,7 +185,7 @@ rted_source/%_rose.c: runtimeCheck rted_source/%.c rted_source/%_s.c $(srcdir)/$
 	@echo " done."
 	@echo -n "    running transformation ... "
 	@./runtimeCheck 2 $(filter rted_source/%.c, $^) \
-			  -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@))
+			  -rose:C_only -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@))
 	@echo " done."
 	@echo -n "   adding line information ... "
 	@cat rose_$(notdir $(patsubst %_rose.c, %.c, $@ ) ) \
@@ -209,7 +202,7 @@ rted_source/%_rose.c: runtimeCheck rted_source/%.c $(srcdir)/$(RTS) $(srcdir)/Ru
 	@rm $(patsubst %_rose.c, %.bin, $@)
 	@echo " done."
 	@echo -n "    running transformation ... "
-	@./runtimeCheck 2 $(filter rted_source/%.c, $^) -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@))
+	@./runtimeCheck 2 $(filter rted_source/%.c, $^) -rose:C_only -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@))
 	@echo " done."
 	@echo -n "   adding line information ... "
 	@cat rose_$(notdir $(filter rted_source/%.c, $^)) | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > $@

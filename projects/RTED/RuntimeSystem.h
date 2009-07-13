@@ -194,8 +194,9 @@ void RuntimeSystem_roseAccessVariable( const char* name,
 				       const char* stmtStr);
 
 // handle structs and classes
-void 
-RuntimeSystem_roseRegisterTypeCall(int count, ...);
+void RuntimeSystem_roseRegisterTypeCall(int count, ...);
+
+
 
 
 // USE GUI for debugging

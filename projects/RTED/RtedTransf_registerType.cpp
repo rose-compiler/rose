@@ -19,6 +19,9 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* cdef) {
   for (;itMem!=members.end();++itMem) {
     SgDeclarationStatement* sgElement = *itMem;
     RtedClassElement* el = new RtedClassElement("name","type",sgElement);
+    //if (isSgVariableDeclaration(sgElement))
+    //	cerr << " SYMBOL VAR DECL : " << sgElement->unparseToString() <<
+	//	SageInterface::getFirstVarSym(isSgVariableDeclaration(sgElement)) << endl;
     elements.push_back(el);
   }
 
@@ -76,19 +79,39 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
       std::vector<RtedClassElement*> elementsC = rtedClass->elements;
       std::vector<RtedClassElement*>::const_iterator itClass = elementsC.begin();
       for (;itClass!=elementsC.end();++itClass) {
-	RtedClassElement* element = *itClass;
-	  const char* manglElementName = element->manglElementName;
-	  const char* elementType= element->elementType;
-	  SgDeclarationStatement* sgElement = element->sgElement;
-	  SgExpression* elemName = buildString(manglElementName);
-	  SgExpression* elemType = buildString(elementType);
+			  RtedClassElement* element = *itClass;
+			  const char* manglElementName = element->manglElementName;
+			  const char* elementType= element->elementType;
+			  SgDeclarationStatement* sgElement = element->sgElement;
+			  //SgExpression* sgElementCopy = deepCopy(sgElement);
+			  SgExpression* elemName = buildString(manglElementName);
+			  SgExpression* elemType = buildString(elementType);
 	  // build a function call for offsetof(A,d);
-	  // fixme, how do we get the symbol for offsetof ?
+	      appendExpression(arg_list, elemName);
+	      appendExpression(arg_list, elemType);
+
+	  // build  (size_t )(&( *((struct A *)0)).x);
+			  ROSE_ASSERT(rtedClass->classDef);
+	     // cerr << " Type: " <<  rtedClass->classDef->get_declaration()->get_type()->class_name() << endl;
+	      SgExpression* nullPointer = buildCastExp(buildIntVal(0),
+	    		  buildPointerType(rtedClass->classDef->get_declaration()->get_type()));
+	      SgExpression* derefPointer = buildPointerDerefExp(nullPointer);
+	      SgVariableDeclaration* varDecl =	isSgVariableDeclaration(sgElement);
+		  if (varDecl) {
+			  SgVarRefExp* varref = buildVarRefExp(varDecl);
+			  SgExpression* dotExp = buildDotExp(derefPointer,varref);
+			  SgExpression* andOp = buildAddressOfOp(dotExp);
+			  SgExpression* castOp = buildCastExp(andOp, size_t_member);
+			  appendExpression(arg_list, castOp);
+			  //}
+		  } else {
+			  cerr << " Declarationstatement not handled : " << sgElement->class_name() << endl;
+
+		  }
       }
 
 
       ROSE_ASSERT(roseRegisterTypeCall);
-      string symbolName2 = roseRegisterTypeCall->get_name().str();
       //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
       SgFunctionRefExp* memRef_r = buildFunctionRefExp(  roseRegisterTypeCall);
       SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
