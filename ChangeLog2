@@ -1,3 +1,89 @@
+2009-07-13 18:14  dquinlan
+
+	* [r6527]
+	  /trunk/ROSE/developersScratchSpace/Dan/callGraph_tests/Makefile.am:
+	  Added nodist rule to fix makefile reference to source in other
+	  directory.
+
+2009-07-13 17:35  dquinlan
+
+	* [r6526]
+	  /trunk/ROSE/developersScratchSpace/Dan/fileLocation_tests/Makefile.am:
+	  Fixed problem with new file location tests.
+
+2009-07-13 17:34  hamilton37
+
+	* [r6525] /trunk/ROSE/docs/Rose/developersAppendix.tex: Fixed
+	  trivial link error in documentation.
+
+2009-07-13 17:26  heller9
+
+	* [r6524]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_deb_4.0/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_deb_5.0/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_fc_4/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_rhas_4/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_sles_9/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_deb_3.1/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_deb_4.0/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_deb_5.0/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_rhas_3/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_rhas_4/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_sles_8,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_sles_9/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_slf_3/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_suse_10.0/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_ubuntu_5.10,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_ubuntu_5.10/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/cronjobs,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/glue.pl: NMI Build and
+	  testfarm update
+	  
+	  - update build configurations to run with the correct of autoconf
+	  and
+	  automake
+	  - added ubuntu 5.10 minimal test
+
+2009-07-13 16:45  dquinlan
+
+	* [r6523]
+	  /trunk/ROSE/developersScratchSpace/Dan/fileLocation_tests/Makefile.am:
+	  Fixed problem with new file location tests.
+
+2009-07-13 16:33  liao6
+
+	* [r6522] /trunk/ROSE/docs/Rose/Makefile.am: Enforce the required
+	  read/execute permission for web pages
+
+2009-07-13 15:28  dquinlan
+
+	* [r6521] /trunk/ROSE/src/midend/astOutlining/NOTES,
+	  /trunk/ROSE/src/midend/programAnalysis/CallGraphAnalysis/CallGraph.h:
+	  Fixed bug in call graph analysis (only effects some versions of
+	  g++).
+
+2009-07-13 15:01  dquinlan
+
+	* [r6520]
+	  /trunk/ROSE/developersScratchSpace/Dan/fileLocation_tests,
+	  /trunk/ROSE/developersScratchSpace/Dan/fileLocation_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/fileLocation_tests/fileLocation.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/fileLocation_tests/input_fileLocation.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/fileLocation_tests/lstat_example.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/fileLocation_tests/readlink_example.C:
+	  Fixed developersScratchSpace/Dan/fileLocation_tests in SVN.
+
+2009-07-13 14:46  dquinlan
+
+	* [r6519] /trunk/ROSE/configure.in: Fixed handling of rose_paths.c
+	  to be rose_paths.C.
+
+2009-07-13 14:12  dquinlan
+
+	* [r6518]
+	  /trunk/ROSE/developersScratchSpace/Dan/callGraph_tests/Makefile.am:
+	  Fixed bug in running make distcheck (building the distribution).
+
 2009-07-12 23:29  dquinlan
 
 	* [r6516]
