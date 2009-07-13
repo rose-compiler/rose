@@ -77,6 +77,34 @@ die "Task $name not found" unless $found;
 die "Task $name has failed" if $return;
 exit 0;
 
+# task to display platform information
+sub platform_info {
+   print "Environment Variables\n";
+   for my $e ( sort keys %ENV )
+   {
+      print "\t$e=" . $ENV{$e} . "\n";
+   }
+   print "\n";
+
+   print "program versions:\n\n";
+
+   print "Gnu Compiler edition:\n";
+   system( "g++ --version" );
+   print "\n";
+   print "libtool:\n";
+   system( "libtool --version" );
+   print "\n";
+   print "autoconf:\n";
+   system( "autoconf --version" );
+   print "\n";
+   print "automake:\n";
+   system( "automake --version" );
+   print "\n";
+
+   return 0;
+}
+
+# task to run configure
 sub configure {
    my ($taskhook) = @_;
    my $args = assemble($taskhook,"args");
@@ -104,33 +132,7 @@ sub configure {
    return $return
 }
 
-sub platform_info {
-   print "Environment Variables\n";
-   for my $e ( sort keys %ENV )
-   {
-      next unless $e =~ m!NMI_!;
-      print "\t$e=" . $ENV{$e} . "\n";
-   }
-   print "\n";
-
-   print "program versions:\n\n";
-
-   print "Gnu Compiler edition:\n";
-   system( "g++ --version" );
-   print "\n";
-   print "libtool:\n";
-   system( "libtool --version" );
-   print "\n";
-   print "autoconf:\n";
-   system( "autoconf --version" );
-   print "\n";
-   print "automake:\n";
-   system( "automake --version" );
-   print "\n";
-
-   return 0;
-}
-
+#task to run make
 sub make {
    my ($taskhook) = @_;
    my $args = assemble($taskhook,"args");
@@ -142,6 +144,7 @@ sub make {
    return $return
 }
 
+# task to run make check
 sub check {
    my ($taskhook) = @_;
     my $args = assemble($taskhook,"args");
@@ -149,10 +152,6 @@ sub check {
    my $command = "make $args check >& /dev/stdout | tee check.log; exit \${PIPESTATUS[0]}";
    print "Executing [$command] in builddir ($builddir)\n";
    chdir $builddir;
-   system( "pwd" );
-   print $startdir;
-   system( "ls -a $startdir" );
-   system( "ls -a" );
    my $return = system($command);
    chdir $startdir;
    return $return
