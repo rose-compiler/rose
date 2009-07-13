@@ -10,7 +10,7 @@
 # 10/29/2008
 # set -e: will have problem with grep
 #---------variable definition-------------
-SVN=/nfs/apps/subversion/1.5.1/bin/svn
+SVN=/nfs/apps/subversion/1.5.5/bin/svn
 
 SOURCE_REPOS=https://outreach.scidac.gov/svn/rose/trunk
 # top dir for rose's source and build directories 

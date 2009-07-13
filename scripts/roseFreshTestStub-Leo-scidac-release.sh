@@ -6,13 +6,7 @@
 # the internal one with EDG source files. 
 # Liao 10/29/2008
 
-export JAVA_HOME=/usr/apps/java/jdk1.5.0_11
-export BOOST_ROOT="/home/liao6/opt/boost_1_35_0"
-export LD_LIBRARY_PATH="/usr/apps/java/jdk1.5.0_11/lib:${JAVA_HOME}/jre/lib/i386/server:$LD_LIBRARY_PATH"
-export LD_LIBRARY_PATH="${BOOST_ROOT}/lib:${LD_LIBRARY_PATH}"
-
-source /usr/apps/gcc/4.2.2/setup.sh
-export PATH="/usr/apps/automake/1.9.6/bin:$JAVA_HOME/bin:$PATH"
+source /home/liao6/rose/scripts/roseFreshTestStub-Leo-common.sh
 
 # using a time stamp to avoid overwriting previous tests
 TIMESTAMP=$(date +%Y%m%d_%H%M%S) 
@@ -27,7 +21,6 @@ ROSE_SVNROOT=https://outreach.scidac.gov/svn/rose/trunk
 MAILADDRS="liaoch@llnl.gov quinlan1@llnl.gov"
 
 # the right version of subversion is essential!!
-SVN=/nfs/apps/subversion/1.5.1/bin/svn
 # avoid .svn directories
 SVNOP=export
 #SVNOP=checkout
