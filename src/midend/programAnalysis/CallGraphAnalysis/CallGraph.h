@@ -226,7 +226,7 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
   ClassHierarchyWrapper classHierarchy( project );
   Rose_STL_Container<SgNode *>::iterator i = functionList.begin();
 
-  printf ("Inside of buildCallGraph functionList.size() = %zu \n",functionList.size());
+// printf ("Inside of buildCallGraph functionList.size() = %zu \n",functionList.size());
 
   while ( i != functionList.end() )
   {
@@ -503,8 +503,8 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
       Rose_STL_Container<SgFunctionDeclaration*> & functionList = (*j)->functionList;
       Rose_STL_Container<SgFunctionDeclaration*>::iterator k = functionList.begin();
 
-       printf ("Now iterate over the list (size = %d) for function %s \n",
-       (int)functionList.size(),(*j)->functionDeclaration->get_name().str());
+      printf ("Now iterate over the list (size = %zu) for function %s \n",functionList.size(),(*j)->functionDeclaration->get_name().str());
+
       while (k != functionList.end())
       {
         SgGraphNode   *endingNode = findNode( nodeList, *k, var_SOLVE_FUNCTION_CALLS_IN_DB );

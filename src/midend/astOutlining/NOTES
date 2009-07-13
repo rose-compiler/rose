@@ -1,0 +1,27 @@
+This outlining has been modified to support outlining to a separate file.
+This introduces the first case of an AST transformation that scatters
+the AST across multiple files.  As a result we have discovered a number
+of problems that need to be addressed:
+  1) The definition of a proper AST is a file based concept since the 
+     SgFile IR nodes for leaves of the SgProject root node.
+  2) For the AST to be a proper tree (and be traversed as a tree)
+     there can be no reference between file subtrees in the transformed 
+     AST. Reasons include:
+       a) Operations on files would be contaminated.
+       b) unparsing of separate files is compromised.
+  3) The AST copy mechanism will not work properly when parts of what is being copied is
+     spanning multiple files.
+
+To combat these problems we need AST multi-file consistancy tests.
+These should:
+   1) Enforce the definind and non defining declarations are in the same file.
+   2) symbols in the symbol table of a scope in one file do not reference 
+      declarations in another file.
+   3) 
+
+
+
+Need tests:
+  1) for defining and non-defining declarations in the same file
+  2) declarations and their scopes in the same file
+
