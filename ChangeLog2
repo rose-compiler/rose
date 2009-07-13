@@ -1,3 +1,49 @@
+2009-07-12 23:29  dquinlan
+
+	* [r6516]
+	  /trunk/ROSE/config/rose_edg_required_macros_and_functions.h.in,
+	  /trunk/ROSE/configure.in,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2001_10.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_13.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_14.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_15.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Pin_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Pin_tests/README,
+	  /trunk/ROSE/developersScratchSpace/Dan/Pin_tests/staticCallGraphEmbeddedTraceBinaryAnalysis.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/callGraph_tests,
+	  /trunk/ROSE/developersScratchSpace/Dan/callGraph_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/callGraph_tests/callGraphExampleInput.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/callGraph_tests/cgtest2007_01.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/callGraph_tests/cgtest2007_02.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/graph_test_3.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/graph_test_4.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/translator_tests/RB_double.H,
+	  /trunk/ROSE/docs/Rose/Makefile.am,
+	  /trunk/ROSE/docs/Rose/developersAppendix.tex,
+	  /trunk/ROSE/projects/RTED/README,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/new_sage_gen_be.C,
+	  /trunk/ROSE/src/frontend/SageIII/astVisualization/wholeAST.C,
+	  /trunk/ROSE/src/frontend/SageIII/rose_graph_support.C,
+	  /trunk/ROSE/src/midend/binaryAnalyses/libraryIdentification/libraryIdentification.h,
+	  /trunk/ROSE/src/midend/binaryAnalyses/libraryIdentification/libraryIdentification_writer.C,
+	  /trunk/ROSE/src/util/stringSupport/FileNameClassifier.C,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/testCallGraph.C:
+	  Added some tests and fixed more bugs:
+	  
+	  Detailed changes in this commit:
+	  1) Fixed capitalization problem for dot graphs using zgrviewer
+	  2) Added test code for the call graph analysis.
+	  3) Fixed FLIRT using work by Robb to identify op-code bit
+	  sequences
+	  for data in immediate instrcutions.
+	  4) Added more PIN support.
+	  5) Added unfinished support for chasing links of filenames
+	  refernced
+	  in source position information.
+	  6) Fixed a number of minor bugs.
+
 2009-07-12 01:34  saebjornsen1
 
 	* [r6514] /trunk/ROSE/tutorial/buildCG.C,
