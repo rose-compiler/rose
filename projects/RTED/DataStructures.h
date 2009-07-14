@@ -10,12 +10,12 @@
  * -----------------------------------------------------------*/
 class RtedClassElement {
  public:
-  const char* manglElementName;
-  const char* elementType;
+	std::string manglElementName;
+	std::string elementType;
   SgDeclarationStatement* sgElement;
   
-  RtedClassElement(const char* _elementName,
-		   const char* _elementType,
+  RtedClassElement(std::string _elementName,
+		  std::string _elementType,
 		   SgDeclarationStatement* _sgElement) {
     manglElementName = _elementName;
     elementType = _elementType;
@@ -34,18 +34,21 @@ class RtedClassElement {
 class RtedClassDefinition {
  public:
   SgClassDefinition* classDef;
-  const char* manglClassName;
+  std::string manglClassName;
+  std::string classType;
   unsigned int nrOfElements;
   unsigned int sizeClass;
   std::vector<RtedClassElement*> elements;
   
   RtedClassDefinition(SgClassDefinition* _classDef,
-		      const char* _className,
+		  std::string _className,
+		  std::string _classType,
 		      unsigned int _elementsSize,
 		      unsigned int _sizeClass, 
 		      std::vector<RtedClassElement*> _elements) {
     classDef = _classDef;
     manglClassName = _className;
+    classType = _classType;
     nrOfElements = _elementsSize;
     sizeClass = _sizeClass;
     elements = _elements;

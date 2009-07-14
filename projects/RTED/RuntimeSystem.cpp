@@ -641,7 +641,26 @@ RuntimeSystem_roseConvertIntToString(int t) {
 
 void 
 RuntimeSystem_roseRegisterTypeCall(int count, ...) {
-  printf("Test");
+	  // handle the parameters within this call
+	  va_list vl;
+	  va_start(vl,count);
+	  const char* nameC = va_arg(vl,const char*);
+	  const char* typeC = va_arg(vl,const char*);
+	  unsigned long long sizeC = va_arg(vl,unsigned long long);
+	  cerr << " Register Class : " << nameC << " Type: " << typeC << " size : " << sizeC << endl;
+	  int i=0;
+	  for ( i=3;i<count;i++)    {
+		if ((i%3)==0) {
+			cerr << " Var Name : " << va_arg(vl,const char*) << endl;
+		}
+		if ((i%3)==1) {
+			cerr << " Var Type : " << va_arg(vl,const char*) << endl;
+		}
+		if ((i%3)==2) {
+			cerr << " Var offset : " << va_arg(vl,unsigned long long) << endl;
+		}
+	  }
+	  va_end(vl);
 }
 
 

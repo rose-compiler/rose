@@ -18,15 +18,27 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* cdef) {
   Rose_STL_Container<SgDeclarationStatement*>::const_iterator itMem = members.begin();
   for (;itMem!=members.end();++itMem) {
     SgDeclarationStatement* sgElement = *itMem;
-    RtedClassElement* el = new RtedClassElement("name","type",sgElement);
-    //if (isSgVariableDeclaration(sgElement))
-    //	cerr << " SYMBOL VAR DECL : " << sgElement->unparseToString() <<
-	//	SageInterface::getFirstVarSym(isSgVariableDeclaration(sgElement)) << endl;
-    elements.push_back(el);
+    ROSE_ASSERT(sgElement);
+    SgVariableDeclaration* varDecl = isSgVariableDeclaration(sgElement);
+    if (varDecl) {
+		Rose_STL_Container<SgInitializedName*> vars = varDecl->get_variables();
+		Rose_STL_Container<SgInitializedName*>::const_iterator itvar = vars.begin();
+		for (;itvar!=vars.end();++itvar) {
+			SgInitializedName* initName = *itvar;
+			string name = initName->get_mangled_name();
+			string type = initName->get_type()->class_name();
+			RtedClassElement* el = new RtedClassElement(name,type,sgElement);
+			elements.push_back(el);
+		}
+    } else {
+    	cerr << " Declaration not handled : " << sgElement->class_name() << endl;
+		exit(1);
+    }
   }
 
   RtedClassDefinition* cd = new RtedClassDefinition(cdef,
-						    "name", 
+						    cdef->get_mangled_name().str(),
+						    cdef->get_declaration()->get_type()->class_name(),
 						    elements.size(),
 						    sizeof(cdef),
 						    elements);
@@ -45,6 +57,7 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
   if (isSgStatement(stmt)) {
     SgScopeStatement* scope = stmt->get_scope();
     string name = rtedClass->manglClassName;
+    string typeC = rtedClass->classType;
 
     ROSE_ASSERT(scope);
     if (isSgBasicBlock(scope)) {
@@ -64,7 +77,7 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
 
       int elements = rtedClass->nrOfElements; // elements passed to function
       elements*=3; // for each element pass name, type and offset
-      elements+=2; // ClassName and sizeOfClass
+      elements+=3; // ClassName , ClassType and sizeOfClass
       SgExpression* nrElements = buildIntVal(elements);
 
       SgExpression* sizeOfClass = buildUnsignedLongLongIntVal(rtedClass->sizeClass); 
@@ -73,6 +86,7 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
       SgExprListExp* arg_list = buildExprListExp();
       appendExpression(arg_list, nrElements);
       appendExpression(arg_list, buildString(name));
+      appendExpression(arg_list, buildString(typeC));
       appendExpression(arg_list, sizeOfClass);
       
       // go through each element and add name, type and offset
@@ -80,8 +94,8 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
       std::vector<RtedClassElement*>::const_iterator itClass = elementsC.begin();
       for (;itClass!=elementsC.end();++itClass) {
 			  RtedClassElement* element = *itClass;
-			  const char* manglElementName = element->manglElementName;
-			  const char* elementType= element->elementType;
+			  string manglElementName = element->manglElementName;
+			  string elementType= element->elementType;
 			  SgDeclarationStatement* sgElement = element->sgElement;
 			  //SgExpression* sgElementCopy = deepCopy(sgElement);
 			  SgExpression* elemName = buildString(manglElementName);
