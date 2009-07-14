@@ -243,5 +243,5 @@ check-local:
 	@echo "***********************************************************************************************************"
 
 clean-local:
-	rm -f *.o test*.C rose_*.c rose_*.C rose_*.f rose_*.cpp *.C.pdf *.c.pdf testfile525.cpp testfile626.cpp rose_*.upc abiStuffTestDone *.dot
+	rm -f *.o test*.C rose_*.c rose_*.C rose_*.f rose_*.cpp *.C.pdf *.c.pdf testfile525.cpp testfile626.cpp rose_*.upc abiStuffTestDone *.dot rose_*
 
