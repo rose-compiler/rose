@@ -1,3 +1,61 @@
+2009-07-13 23:55  bauer25
+
+	* [r6534] /trunk/ROSE/projects/RTED/CppRuntimeSystem/Makefile.am,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsTypes.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/TypeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/TypeSystem.h,
+	  /trunk/ROSE/projects/RTED/TypeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/TypeSystem.h: Started to implement
+	  TypeSystem for RTED
+	  
+	  - wrote classes for tracking arrays, classes and basic types
+
+2009-07-13 23:29  panas2
+
+	* [r6533] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedSymbols.cpp,
+	  /trunk/ROSE/projects/RTED/RtedSymbols.h,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_registerType.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: Work to get the Types
+	  right during the Transformation for RTED. For each struct and
+	  class definition, we call the runtimesystem with the variables
+	  and their offset
+
+2009-07-13 23:28  panas2
+
+	* [r6532]
+	  /trunk/ROSE/projects/RTED/tests/C/panasTests/testOffsetof.c: Work
+	  to get the Types right during the Transformation for RTED. For
+	  each struct and class definition, we call the runtimesystem with
+	  the variables and their offset
+
+2009-07-13 21:31  liao6
+
+	* [r6531] /trunk/ROSE/scripts/makeAndReleaseROSE.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-common.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-head-qm.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-head.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-scidac-release.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-scidac.sh: Updated test
+	  scripts stub to use tux268's RHL 5 environment
+
+2009-07-13 20:48  liao6
+
+	* [r6530] /trunk/ROSE/docs/Rose/Tutorial/binaryAnalysis.tex,
+	  /trunk/ROSE/docs/Rose/Tutorial/paramerizedTranslation.tex,
+	  /trunk/ROSE/docs/Rose/Tutorial/tutorial.tex.in,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/inputloopInterchange.C:
+	  Added a tutorial chapter about parameterized code translation
+	  using the new standalone loop translation interfaces and
+	  programs.
+
 2009-07-13 18:14  dquinlan
 
 	* [r6527]
