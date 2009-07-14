@@ -254,11 +254,28 @@ void RtedTransformation::appendAddressAndSize(SgInitializedName* initName,
         buildUnsignedLongLongType()
       )
     );
-	appendExpression(
-	    arg_list,
-	    buildSizeOfOp( varRefE)
-	  );
 
+    // consider, e.g.
+    //
+    //      char* s1;
+    //      char s2[20];
+    //
+    //      s1 = s2 + 3;
+    //      
+    //  we only want to access s2..s2+sizeof(char), not s2..s2+sizeof(s2)
+    //
+    //  but we do want to create the array as s2..s2+sizeof(s2)     
+    if( appendType & 2 && isSgArrayType( varRefE->get_type() )) {
+        appendExpression(
+            arg_list,
+            buildSizeOfOp( isSgArrayType( varRefE->get_type() )->get_base_type())
+        );
+    } else {
+        appendExpression(
+            arg_list,
+            buildSizeOfOp( varRefE )
+        );
+    }
     }
 
 }
@@ -412,10 +429,10 @@ void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE,
       appendExpression(arg_list, callName);
 #if 1
       if (derefExp)
-    	  appendAddressAndSize(initName, derefExp, stmt, arg_list,0);
+    	  appendAddressAndSize(initName, derefExp, stmt, arg_list,2);
       else
 #endif
-    	  appendAddressAndSize(initName, varRefE, stmt, arg_list,0);
+    	  appendAddressAndSize(initName, varRefE, stmt, arg_list,2);
 
       SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
       SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
