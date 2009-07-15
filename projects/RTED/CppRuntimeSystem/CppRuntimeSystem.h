@@ -74,11 +74,11 @@ class RuntimeSystem
         /// @param startAdress  the return value of malloc/new
         /// @param size         size of the allocated memory area
         /// @param pos          position of allocation (needed to inform the user when this allocation is never freed)
-        void createMemory(addr_type startAddress, size_t size);
+        void createMemory(addr_type startAddress, size_t size, bool onStack = false);
 
         /// Call this function when a free/delete occurs in monitored code
         /// @param startAddress the address to be freed (argument of free/delete)
-        void freeMemory(addr_type startAddress);
+        void freeMemory(addr_type startAddress, bool onStack = false);
 
 
         /// Call this function when the value of a pointer changed i.e. the address a pointer points to

@@ -26,7 +26,7 @@ VariablesType::VariablesType(const std::string & name_,
 
 VariablesType::~VariablesType()
 {
-    RuntimeSystem::instance()->freeMemory(address);
+    RuntimeSystem::instance()->freeMemory(address, true);
 
     if(pointerTarget != 0)
     {

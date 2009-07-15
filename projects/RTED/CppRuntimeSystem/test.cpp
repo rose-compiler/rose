@@ -193,6 +193,25 @@ void testInvalidFree()
     CLEANUP
 }
 
+void testInvalidStackFree()
+{
+    TEST_INIT("Testing invalid Free outside allocated Block");
+
+    // freeing heap memory should be fine
+    rs->createMemory(42,10);
+    rs->freeMemory(42);
+
+    // but freeing stack memory is not okay
+    rs->createMemory(42,10,true);
+    try  {  rs->freeMemory(42);   }
+    TEST_CATCH(RuntimeViolation::INVALID_FREE)
+
+    // test cleanup
+    rs->freeMemory(42,true);
+
+    CLEANUP
+}
+
 void testDoubleFree()
 {
     TEST_INIT("Testing Double Free");
@@ -777,6 +796,7 @@ int main(int argc, char ** argv)
 
         testFreeInsideBlock();
         testInvalidFree();
+        testInvalidStackFree();
         testDoubleFree();
         testDoubleAllocation();
         testMemoryLeaks();

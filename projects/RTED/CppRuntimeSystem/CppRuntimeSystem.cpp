@@ -27,16 +27,16 @@ RuntimeSystem::RuntimeSystem()
 // --------------------- Mem Checking ---------------------------------
 
 
-void RuntimeSystem::createMemory(addr_type startAddress, size_t size)
+void RuntimeSystem::createMemory(addr_type startAddress, size_t size, bool onStack)
 {
     // the created MemoryType is freed by memory manager
-    memManager.allocateMemory(new MemoryType(startAddress,size,curPos));
+    memManager.allocateMemory(new MemoryType(startAddress,size,curPos,onStack));
 }
 
 
-void RuntimeSystem::freeMemory(addr_type startAddress)
+void RuntimeSystem::freeMemory(addr_type startAddress, bool onStack)
 {
-    memManager.freeMemory(startAddress);
+    memManager.freeMemory(startAddress, onStack);
 }
 
 
@@ -92,7 +92,7 @@ void RuntimeSystem::createVariable(VariablesType * var)
     // Track the memory area where the variable is stored
     // special case when static array, then createMemory is called anyway
     if(var->getType() != "SgArrayType")
-        RuntimeSystem::instance()->createMemory(var->getAddress(),var->getSize());
+        RuntimeSystem::instance()->createMemory(var->getAddress(),var->getSize(), true);
 
 
     // every variable has to part of scope

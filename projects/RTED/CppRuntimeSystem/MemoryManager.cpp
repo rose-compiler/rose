@@ -13,23 +13,24 @@ using namespace std;
 // -----------------------    MemoryType  --------------------------------------
 
 
-MemoryType::MemoryType(addr_type _addr, size_t _size, const SourcePosition & _pos)
-    : startAddress(_addr), size(_size), allocPos(_pos)
+MemoryType::MemoryType(addr_type _addr, size_t _size, const SourcePosition & _pos, bool _onStack)
+    : startAddress(_addr), size(_size), allocPos(_pos), onStack(_onStack)
 {
     // not memory has been initialized by default
     initialized.assign(size,false);
 }
 
-MemoryType::MemoryType(addr_type _addr, size_t _size,
+MemoryType::MemoryType(addr_type _addr, size_t _size, bool _onStack,
                        const std::string & file, int line1, int line2)
     : startAddress(_addr),
       size(_size),
-      allocPos(file,line1,line2)
+      allocPos(file,line1,line2),
+      onStack(_onStack)
 {
 }
 
-MemoryType::MemoryType(addr_type addr)
-    : startAddress(addr), size(0), allocPos("unknown",-1,-1)
+MemoryType::MemoryType(addr_type addr, bool _onStack)
+    : startAddress(addr), size(0), allocPos("unknown",-1,-1), onStack(_onStack)
 {
 }
 
@@ -238,7 +239,7 @@ void MemoryManager::allocateMemory(MemoryType * alloc)
 }
 
 
-void MemoryManager::freeMemory(addr_type addr)
+void MemoryManager::freeMemory(addr_type addr, bool onStack)
 {
     RuntimeSystem * rs = RuntimeSystem::instance();
 
@@ -262,6 +263,17 @@ void MemoryManager::freeMemory(addr_type addr)
         desc << "Free was called with an address inside of allocated block (Offset:"
              << "0x" << hex << addr - m->getAddress() <<")" << endl;
         desc << "Allocated Block: " << *m << endl;
+
+        rs->violationHandler(RuntimeViolation::INVALID_FREE, desc.str());
+        return;
+    }
+
+    // free stack memory explicitly (i.e. not via exitScope)
+    if(m->isOnStack() && !onStack)
+    {
+        stringstream desc;
+        desc << "Stack memory was explicitly freed (0x" 
+             << *m << endl;
 
         rs->violationHandler(RuntimeViolation::INVALID_FREE, desc.str());
         return;
