@@ -3,8 +3,8 @@
 
 #include <const.h>
 #include <LoopTreeShadow.h>
-
 #include <CompSlice.h>
+#include <cstdio>
 
 class CompSliceLoop : public LoopTreeShadowNode, public LoopTreeObserver
 {

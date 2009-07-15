@@ -1,6 +1,6 @@
 #include <unistd.h>
 #include "AstPerformance.h"
-
+#include <cstdio>
 // Fix suggested by Brian White (to allow "sleep()" to be defined)
 // #include <unistd.h>
 

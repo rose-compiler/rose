@@ -13,6 +13,7 @@
 #include <CopyArrayAnal.h>
 #include <LoopTransformOptions.h>
 #include <GraphIO.h>
+#include <cstdio>
 
 using namespace std;
 

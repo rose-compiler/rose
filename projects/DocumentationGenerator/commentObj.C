@@ -3,6 +3,7 @@
 #include <sstream>
 #include <iostream>
 #include <stdlib.h>
+#include <cstdio>
 
 using namespace std;
 

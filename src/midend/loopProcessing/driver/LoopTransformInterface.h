@@ -7,6 +7,7 @@
 #include "AstInterface.h"
 #include "SymbolicVal.h"
 #include "AnalysisInterface.h"
+#include <cstdio>
 
 //! Base pure virtual interface to Array, Used by ArrayInterface, ArrayUseAccessFunction etc.
 class ArrayAbstractionInterface {

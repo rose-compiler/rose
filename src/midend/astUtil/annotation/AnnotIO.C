@@ -1,6 +1,7 @@
 #include "AnnotIO.h"
 #include "CommandOptions.h"
 #include <string.h>
+#include <cstdio> // Liao, 7/10/2009, required by GCC 4.4.0
 
 using namespace std;
 

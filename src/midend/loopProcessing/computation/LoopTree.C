@@ -7,7 +7,7 @@
 #include <CommandOptions.h>
 #include <LoopTransformInterface.h>
 #include <SymbolicBound.h>
-
+#include <cstdio> // Liao, 7/10/2009, needed by GCC 4.4.0
 bool LoopTreeLoopNode :: SelfRemove() 
 { 
   LoopTreeGetVarBound f(this);
