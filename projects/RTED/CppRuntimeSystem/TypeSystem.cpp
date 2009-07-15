@@ -2,9 +2,24 @@
 
 #include <cassert>
 
+using namespace std;
 
 TypeSystem::TypeSystem()
 {
+    //call clear, to register all base types
+    clear();
+}
+
+TypeSystem::~TypeSystem()
+{
+    for(TypeSet::iterator i = types.begin(); i != types.end(); ++i)
+        delete *i;
+}
+
+void TypeSystem::clear()
+{
+    types.clear();
+
     // Register all Base-Types
     int count = RsBasicType::getBaseTypeCount();
     for(int i=0; i<count; i++)
@@ -15,16 +30,61 @@ TypeSystem::TypeSystem()
     }
 }
 
-TypeSystem::~TypeSystem()
-{
-    for(TypeSet::iterator i = types.begin(); i != types.end(); ++i)
-        delete *i;
-}
-
 
 bool TypeSystem::registerType(RsType * t)
 {
-    //TODO
-    return true;
+    pair<TypeSet::iterator, bool> res;
+    res =types.insert(t);
+    return res.second;
 }
+
+RsType * TypeSystem::getTypeInfo(const string & name)
+{
+    InvalidType comparisonObject(name);
+
+    TypeSet::iterator i = types.find(&comparisonObject);
+    if(i == types.end())
+        return NULL;
+    else
+        return *i;
+}
+
+RsType * TypeSystem::getArrayType(const string & name, size_t size)
+{
+    RsType * bt = getTypeInfo(name);
+    string arrName (RsArrayType::getArrayTypeName(bt,size));
+    InvalidType comparisonObject(arrName);
+
+    TypeSet::iterator i = types.find(&comparisonObject);
+    if(i == types.end())
+    {
+        //Not yet needed -> create it
+        RsArrayType * at = new RsArrayType(bt,size);
+        registerType(at);
+        return at;
+    }
+    else
+        return *i;
+}
+
+
+
+void TypeSystem::print(ostream & os) const
+{
+    os << "--------------  All Registered Types -----------------------" << endl;
+    for(TypeSet::iterator it = types.begin(); it != types.end(); ++it)
+        os << *it;
+
+    os << "------------------------------------------------------------" << endl;
+
+}
+
+
+std::ostream& operator<< (std::ostream &os, const TypeSystem & m)
+{
+    m.print(os);
+    return os;
+}
+
+
 

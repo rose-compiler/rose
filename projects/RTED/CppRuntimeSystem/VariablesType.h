@@ -20,13 +20,13 @@ class VariablesType
 
         ~VariablesType();
 
-        const std::string & getName()        const  { return name;}
+        const std::string & getName()        const  { return name;        }
         const std::string & getMangledName() const  { return mangledName; }
-        const std::string & getType()        const  { return type; }
+        const std::string & getType()        const  { return type;        }
 
         addr_type           getAddress()     const  { return address; }
 
-        size_t              getSize()        const  { return size; }
+        size_t              getSize()        const  { return size;    }
 
 
         /// Marks this variable as pointer and stores the address it points to
@@ -54,8 +54,6 @@ class VariablesType
         void print(std::ostream & os) const;
 
     private:
-
-
         /// stack variable name
         std::string name;
 

@@ -42,6 +42,7 @@ std::ostream& operator<< (std::ostream &os, const SourcePosition & m);
 
 
 
+#include <sstream>
 
 class RuntimeViolation
 {
@@ -67,17 +68,22 @@ class RuntimeViolation
                                          // (may be an error if changed by pointer arithmetic)
 				INVALID_MEM_OVERLAP,     // some memory chunk overlaps with some
 									     // other memory chunk illegaly, e.g. in arguments to memcpy
+				INVALID_TYPE_ACCESS,     // invalid access to "typed" memory
         };
 
 
         explicit RuntimeViolation(Type type, const std::string& desc = "");
         explicit RuntimeViolation(Type type, const std::stringstream & descStream);
+        RuntimeViolation(const RuntimeViolation & other);
 
         virtual ~RuntimeViolation() throw() {}
 
 
         const std::string & getShortDesc() const { return shortDesc; }
-        const std::string & getLongDesc()  const { return longDesc; }
+        std::string getLongDesc()  const { return longDesc.str(); }
+
+        std::stringstream & descStream()             { return longDesc; }
+        const std::stringstream & descStream() const { return longDesc; }
 
         void setPosition(const SourcePosition & sourcePos)  { pos=sourcePos; }
         const SourcePosition & getPos() const               { return pos; }
@@ -93,7 +99,7 @@ class RuntimeViolation
         SourcePosition pos;
         Type type;
         std::string shortDesc;
-        std::string longDesc;
+        std::stringstream longDesc;
 };
 
 std::ostream& operator<< (std::ostream &os, const RuntimeViolation & m);

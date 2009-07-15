@@ -107,6 +107,155 @@ void MemoryType::deregisterPointer(VariablesType * var, bool doChecks)
 }
 
 
+void MemoryType::setTypeInfo(addr_type offset, RsType * type)
+{
+    TypeInfoMap::iterator itLower = findPossibleTypeMatch(offset);
+    TypeInfoMap::iterator itUpper = typeInfo.lower_bound(offset);
+
+    stringstream ss;
+    ss << "Tried to access the same memory region with different types" << endl;
+
+    RuntimeViolation vio(RuntimeViolation::INVALID_TYPE_ACCESS,ss.str());
+
+
+    int newTiStart = offset;
+    int newTiEnd = offset + type->getByteSize();
+
+
+    vio.descStream() << "When trying to access (" << newTiStart << "," << newTiEnd << ") " <<
+                        "as type " << type->getName() << endl;
+
+
+    RsType * containingType = NULL;
+    int      containingOffset =0;
+    int      containingStart  = -1;
+
+    if(itLower != typeInfo.end())
+    {
+        int lowerStart = itLower->first;
+        int lowerEnd = lowerStart + itLower->second->getByteSize();
+        if(newTiStart < lowerEnd  ) // Check for overlapping with previous
+        {
+            //Test if oldInfo contains the whole newInfo
+            if(newTiEnd <= lowerEnd)
+            {
+                containingType = itLower->second;
+                containingStart = lowerStart;
+            }
+            else
+            {
+                vio.descStream() << "Previously registered  (" << lowerStart << "," << lowerEnd << ") " <<
+                                    "as " << itLower->second->getName() << endl;
+                RuntimeSystem::instance()->violationHandler(vio);
+                return;
+            }
+        }
+    }
+
+    if(itUpper != typeInfo.end())
+    {
+        int upperStart = itUpper->first;
+        int upperEnd = upperStart + itUpper->second->getByteSize();
+        if(upperStart < newTiEnd) // Check for overlapping with next chunk
+        {
+            //Test if oldInfo contains the whole newInfo
+            if(newTiStart >= upperStart)
+            {
+                containingType = itUpper->second;
+                containingStart = upperStart;
+            }
+            else
+            {
+                vio.descStream() << "Previously registered  (" << upperStart << "," << upperEnd << ") " <<
+                                    "as " << itUpper->second->getName() << endl;
+
+                RuntimeSystem::instance()->violationHandler(vio);
+                return;
+            }
+        }
+    }
+
+    if(containingType)
+    {
+        RsType * sub = containingType->getSubtypeRecursive(offset-containingStart,type->getByteSize());
+        if(sub != type )
+        {
+            vio.descStream() << "Previously registered Type overlapps in a nonconsistent way:" << endl
+                             << "Containing Type " << containingType->getName()
+                             << " (" << containingStart << "," << containingStart + containingType->getByteSize() << ")" << endl;
+            RuntimeSystem::instance()->violationHandler(vio);
+        }
+
+        return;
+    }
+
+    typeInfo.insert(make_pair<int,RsType*>(offset,type));
+}
+
+RsType * MemoryType::getTypeInfo(addr_type searchOffset)
+{
+    TypeInfoMap::iterator it = findPossibleTypeMatch(searchOffset);
+
+    if (it == typeInfo.end() )
+        return NULL;
+
+    addr_type curTypeOffset = it->first;
+    RsType *  curType       = it->second;
+    int off = searchOffset - curTypeOffset;
+
+    // Check if a type registration has been found
+    if ( off < 0 || off >= curType->getByteSize() )
+        return NULL;
+
+    RsType *  refinedType;
+    addr_type refinedOffset;
+    RsType::getTypeAt<RsArrayType>(curType,off,refinedType,refinedOffset);
+
+    if(!refinedType) //search offset was in padding mem
+    {
+        RuntimeSystem * rs = RuntimeSystem::instance();
+        stringstream ss;
+        ss << "Tried to access padded memory-area" << endl;
+        ss << "Allocated type:" << curType->getName() <<
+              " at offset " << off << endl;
+
+        rs->violationHandler(RuntimeViolation::INVALID_TYPE_ACCESS, ss.str());
+    }
+
+    return refinedType;
+}
+
+MemoryType::TypeInfoMap::iterator MemoryType::findPossibleTypeMatch(addr_type offset)
+{
+    if(typeInfo.size() ==0 )
+        return typeInfo.end();
+
+    TypeInfoMap::iterator it = typeInfo.lower_bound(offset);
+
+    // case 0: we are at the end and map.size>0, so return last element
+    if(it == typeInfo.end())
+    {
+        --it;
+        return it;
+    }
+
+    //case 1: offset is startAdress of a chunk, exact match
+    if( it->first == offset )
+    {
+        return it;
+    }
+
+    //case 2: offset is greater than a type's startaddress
+    //        try to get next smaller one
+    assert( it->first > offset);
+
+    if( it == typeInfo.begin())
+        return typeInfo.end();
+
+    --it;
+
+    return it;
+}
 
 
 
@@ -134,7 +283,21 @@ void MemoryType::print(ostream & os) const
 
 
     os << "0x" << setfill('0')<< setw(6) << hex << startAddress
-       << " Size " << dec << size <<  "\t" << init << "\tAllocated at " << allocPos ;
+       << " Size " << dec << size <<  "\t" << init << "\tAllocated at " << allocPos << endl ;
+
+    if(pointerSet.size() > 0)
+    {
+        os << "\tPointer: ";
+        for(set<VariablesType*>::const_iterator i = pointerSet.begin(); i!= pointerSet.end(); ++i)
+            os << "\t" << (*i)->getName() << " ";
+    }
+
+    if(typeInfo.size() > 0)
+    {
+        os << "\t" << "Type Info" << endl;
+        for(TypeInfoMap::const_iterator i = typeInfo.begin(); i != typeInfo.end(); ++i)
+            os << "\t" << i->first << "\t" << i->second->getName() << endl;
+    }
 
 }
 

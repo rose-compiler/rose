@@ -784,6 +784,62 @@ void test_range_overlap()
 }
 
 
+
+void testTypeSystem()
+{
+    TEST_INIT("Testing TypeSystem: nested type detection")
+
+    TypeSystem * ts = rs->getTypeSystem();
+
+    /*
+     * class A { int a1; char a2, double a3; }
+     * class B { A a[10]; char b1; int b2;
+     */
+    RsClassType * typeA = new RsClassType("A",16);
+    typeA->addMember("a1",ts->getTypeInfo("SgTypeInt"),0);
+    typeA->addMember("a2",ts->getTypeInfo("SgTypeChar"),4);
+    typeA->addMember("a3",ts->getTypeInfo("SgTypeDouble"),8);
+
+    ts->registerType(typeA);
+
+    RsClassType * typeB = new RsClassType("B",10*16 + 8);
+
+    typeB->addMember("a",ts->getArrayType("A",10),0);
+    typeB->addMember("b1",ts->getTypeInfo("SgTypeChar"),10*16    );
+    typeB->addMember("b2",ts->getTypeInfo("SgTypeInt"), 10*16 + 4);
+
+    ts->registerType(typeB);
+
+
+    rs->createMemory(42,10000);
+    MemoryType * mt = rs->getMemManager()->getMemoryType(42);
+    mt->setTypeInfo(0,ts->getTypeInfo("A"));
+    mt->setTypeInfo(16,ts->getTypeInfo("B"));
+    mt->setTypeInfo(32+4+4,ts->getTypeInfo("SgTypeDouble"));
+
+    //Access to padded area
+    try {mt->setTypeInfo(32+4+1,ts->getTypeInfo("SgTypeChar")); }
+    TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
+
+    //Wrong type
+    try {mt->setTypeInfo(0,ts->getTypeInfo("B")); }
+    TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
+
+    //Wrong basic type
+    mt->setTypeInfo(32+4,ts->getTypeInfo("SgTypeChar"));
+    try {mt->setTypeInfo(32+4,ts->getTypeInfo("SgTypeInt")); }
+    TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
+
+    rs->log() << "Type System Status after test" << endl;
+    ts->print(rs->log());
+
+    rs->freeMemory(42);
+
+    CLEANUP
+}
+
+
+
 int main(int argc, char ** argv)
 {
     try
@@ -791,6 +847,8 @@ int main(int argc, char ** argv)
         RuntimeSystem * rs = RuntimeSystem::instance();
         rs->setTestingMode(true);
         rs->setOutputFile("test_output.txt");
+
+        testTypeSystem();
 
         testSuccessfulMallocFree();
 

@@ -59,12 +59,20 @@ RuntimeViolation::RuntimeViolation(Type _type, const std::stringstream & descStr
 {
 }
 
+RuntimeViolation::RuntimeViolation(const RuntimeViolation & other)
+    : pos(other.pos),
+      type(other.type),
+      shortDesc(other.shortDesc),
+      longDesc(other.longDesc.str())
+{
+}
+
 
 std::ostream& operator<< (std::ostream &os, const RuntimeViolation & m)
 {
 	os << "Violation: ";
     os << m.getShortDesc() << " at " << m.getPos() << endl;
-    os << m.getLongDesc() << endl;
+    os << m.descStream().str() << endl;
     return os;
 }
 
@@ -88,6 +96,7 @@ std::string RuntimeViolation::getShortDescFromType(Type type)
         case MEM_WITHOUT_POINTER:     return "A Memory Region cannot be reached by any pointer";
         case POINTER_CHANGED_MEMAREA: return "Pointer changed Target-MemoryRegion";
 		case INVALID_MEM_OVERLAP:	  return "Illegal Memory Overlap";
+	    case INVALID_TYPE_ACCESS:     return "Invalid access to \"typed\" memory";
         default:
             // handle all possible violations!
             assert(false);

@@ -6,16 +6,17 @@
 #include <iostream>
 #include <vector>
 #include <set>
+#include <map>
 #include <cassert>
+
 
 #include "CStdLibManager.h"
 #include "Util.h"
 
 
-
 class RuntimeSystem;
 class VariablesType;
-
+class RsType;
 /**
  * This class represents a memory allocation, made by malloc/new or just on the stack
  */
@@ -79,6 +80,15 @@ class MemoryType
             return static_cast<T*>(charAddress);
         }
 
+        /// Registers the information at which offset which type is stored
+        void setTypeInfo(addr_type offset, RsType * type);
+
+        /// Returns type information,
+        /// if no type information for this position is known NULL is returned
+        /// returns an RsBasicType or RsArrayType
+        RsType* getTypeInfo(addr_type offset);
+
+
 
     private:
         addr_type         startAddress; ///< address where memory chunk starts
@@ -87,8 +97,17 @@ class MemoryType
         std::vector<bool> initialized;  ///< stores for every byte if it was initialized
 		bool			  onStack;		///< Whether the memory lives on the stack or not (i.e. on the heap)
 
+
+
+        /// A entry in this map means, that on offset <key> is stored the type <value>
+        typedef std::map<addr_type, RsType*> TypeInfoMap;
+        TypeInfoMap typeInfo;
+
         /// Set of pointers which currently point into this memory chunk
         std::set<VariablesType*> pointerSet;
+
+        TypeInfoMap::iterator  findPossibleTypeMatch(addr_type offset);
+
 };
 std::ostream& operator<< (std::ostream &os, const MemoryType & m);
 

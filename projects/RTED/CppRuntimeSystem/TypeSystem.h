@@ -3,8 +3,10 @@
 #define TYPESYSTEM_H
 
 #include <set>
+#include <iostream>
+
 #include "Util.h"
-#include "RsTypes.h"
+#include "RsType.h"
 
 class TypeSystem
 {
@@ -21,14 +23,27 @@ class TypeSystem
         /// @return false if type with that name already exists
         bool registerType(RsType * type);
 
+
+
         /// Returns type-information for a registered type
         /// or NULL if type is unknown
         RsType * getTypeInfo(const std::string & name);
 
-    protected:
 
+        RsType * getArrayType(const std::string & baseTypeName, size_t size);
+
+        /// Removes all registered datatypes, and adds the base datatypes
+        void clear();
+
+        void print(std::ostream & os) const;
+
+    protected:
         typedef std::set<RsType*,PointerCmpFunc<RsType> > TypeSet;
         TypeSet types;
 };
+
+std::ostream& operator<< (std::ostream &os, const TypeSystem & m);
+
+
 
 #endif

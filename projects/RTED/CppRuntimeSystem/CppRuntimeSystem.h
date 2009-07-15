@@ -16,6 +16,7 @@
 #include "MemoryManager.h"
 #include "VariablesType.h"
 #include "CStdLibManager.h"
+#include "TypeSystem.h"
 
 /**
  * RuntimeSystem is responsible for keeping track of all variable allocations and memory operations
@@ -55,6 +56,7 @@ class RuntimeSystem
 
         MemoryManager * getMemManager()   { return & memManager;  }
         FileManager   * getFileManager()  { return & fileManager; }
+        TypeSystem    * getTypeSystem()   { return & typeSystem;  }
 
         // ---------------------------------  Register Functions ------------------------------------------------------------
 
@@ -201,6 +203,8 @@ class RuntimeSystem
         FileManager fileManager;
         /// Class to check arguments to certain cstdlib functions   
         CStdLibManager cstdlibManager;
+        /// Class for managing all known types
+        TypeSystem typeSystem;
 
         //  ------------ Tracking of stack and scope ------------------
         struct ScopeInfo

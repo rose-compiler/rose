@@ -1,15 +1,58 @@
-#include "RsTypes.h"
+#include "RsType.h"
 
 #include <cassert>
+#include <sstream>
 
 using namespace std;
+
+
+
+RsType *  RsType::getSubtypeRecursive(addr_type offset,  size_t size)
+{
+    RsType * result = this;
+
+    //cout << "Refining " << getName() << " at offset " << offset <<  " search of size " << size << endl;
+
+    while(result->getByteSize() > size)
+    {
+        int subTypeId = result->getSubtypeIdAt(offset);
+        if(subTypeId == -1)
+            return NULL;
+
+        offset -= result->getSubtypeOffset(subTypeId);
+        result  = result->getSubtype(subTypeId);
+
+        //cout << "Refined to type " << result->getName() << " Offset:" << offset << endl;
+
+    }
+
+    if (result->getByteSize() != size || offset != 0)
+        return NULL;
+
+    //cout << "Refinement successful " << result->getName() << " Offset" << offset<< endl;
+
+    return result;
+}
+
+
+std::ostream& operator<< (std::ostream &os, const RsType * m)
+{
+    m->print(os);
+    return os;
+}
+
+std::ostream& operator<< (std::ostream &os, const RsType & m)
+{
+    m.print(os);
+    return os;
+}
 
 
 // ---------------------------------- RsArrayType ------------------------------------------
 
 
 RsArrayType::RsArrayType(RsType * baseType_, size_t elementCount_)
-    : RsType("SgArrayType"),
+    : RsType(getArrayTypeName(baseType_,elementCount_)),
       baseType(baseType_),
       elementCount(elementCount_)
 {
@@ -74,10 +117,17 @@ bool  RsArrayType::isValidOffset(addr_type offset) const
         return true;
 }
 
+
+string RsArrayType::getArrayTypeName(RsType * basetype, size_t size)
+{
+    stringstream s;
+    s << "__array_" << basetype->getName() << "_" << size;
+    return s.str();
+}
+
 void RsArrayType::print(ostream & os) const
 {
-    os << "SgArrayType Size " << elementCount << " of type:" << endl;
-    baseType->print(os);
+    os << "ArrayType Size " << elementCount << " of type: "  << baseType->getName() << endl;
 }
 
 
@@ -94,8 +144,26 @@ RsClassType::RsClassType(const string & name, size_t byteSize_)
 
 int RsClassType::addMember(const std::string & name, RsType * type, addr_type offset)
 {
+    if(type==NULL)
+    {
+        cerr << "Tried to register MemberPointer with NULL type" << endl;
+        return -1;
+    }
+
+    if(members.size() >0)
+    {
+        Member & last = members.back();
+        assert(last.offset + last.type->getByteSize() <= offset);
+    }
+
     members.push_back(Member(name,type,offset));
+
+    assert(members.back().offset + members.back().type->getByteSize() <= byteSize);
+
+    return members.size()-1;
 }
+
+
 
 int RsClassType::getSubtypeCount() const
 {
@@ -158,13 +226,12 @@ bool RsClassType::isValidOffset(addr_type offset) const
 void RsClassType::print(ostream & os) const
 {
     os << "Class " << getName() << " Size: " << byteSize <<endl;
-    os << "Members:" << endl;
 
     for(int i=0; i < members.size(); i++)
     {
-        os << members[i].offset << " " <<
-              members[i].name << "\t" <<
-              members[i].type->getName() << endl;
+        os << "  " << members[i].offset << " " <<
+                      members[i].name << "\t" <<
+                      members[i].type->getName() << endl;
     }
 }
 
