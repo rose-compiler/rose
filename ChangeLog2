@@ -1,3 +1,105 @@
+2009-07-15 17:56  liao6
+
+	* [r6553]
+	  /trunk/ROSE/config/rose_edg_required_macros_and_functions.h.in,
+	  /trunk/ROSE/projects/DocumentationGenerator/commentObj.C,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/sys_predef.c,
+	  /trunk/ROSE/src/frontend/SageIII/rose_attributes_list.h,
+	  /trunk/ROSE/src/frontend/SageIII/sage3.h,
+	  /trunk/ROSE/src/midend/astUtil/annotation/AnnotIO.C,
+	  /trunk/ROSE/src/midend/loopProcessing/computation/LoopTree.C,
+	  /trunk/ROSE/src/midend/loopProcessing/driver/LoopTransformInterface.h,
+	  /trunk/ROSE/src/midend/loopProcessing/driver/TransformComputation.C,
+	  /trunk/ROSE/src/midend/loopProcessing/slicing/CompSliceImpl.h,
+	  /trunk/ROSE/tests/roseTests/astPerformanceTests/testPerformance.C:
+	  Various fixes and workaround to allow ROSE to be compiled by GCC
+	  4.3 and 4.4
+	  
+	  * use different builtin function prototypes for different GCC
+	  versions
+	  * shadow new C++ extension type traits introduced since GCC 4.3
+	  with macro definitions to sizeof
+	  http://gcc.gnu.org/onlinedocs/gcc-4.3.3/gcc/Type-Traits.html
+	  A full fix to this problem requires upgrading our EDG frontend to
+	  4.0, that has full support
+	  for those new GNU C++ type traits extensions.
+	  * added some headers which are required to be explicitly included
+	  * still work in progress due to bug 357: some unparsed C++
+	  template code is no longer legal.
+
+2009-07-15 17:29  bauer25
+
+	* [r6552]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsTypes.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/TypeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/TypeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/Util.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/Util.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/VariablesType.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp: RTED:
+	  TypeSystem is now used by MemoryManager
+	  
+	  - detection and correct handling of 'nested' types
+	  - added tests for TypeSystem
+
+2009-07-15 02:04  hamilton37
+
+	* [r6546]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/VariablesType.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp: RTED: Memory
+	  manager now understands stack memory, and that freeing it is
+	  illegal.
+	  
+	  A flag was added to MemoryType to indicate whether the memory is
+	  on the stack or
+	  the heap. Calls to freeMemory that do not explicitly state they
+	  are freeing
+	  stack memory (i.e. calls from endScope) will fail if freeing
+	  memory flagged as
+	  on the stack. In calls to freeMemory that claim to be freeing
+	  stack memory, but
+	  actually aren't, the flag is simply ignored, although this is
+	  probably wrong as
+	  it's likely an error in the runtime system.
+	  
+	  As a result of the above, we now pass more of the
+	  allocation_deallocation tests.
+
+2009-07-15 00:38  liao6
+
+	* [r6545] /trunk/ROSE/scripts/svn_load_dirs.1.4.5.pl: minor update
+
+2009-07-15 00:16  hamilton37
+
+	* [r6543] /trunk/ROSE/projects/RTED/RtedSymbols.cpp,
+	  /trunk/ROSE/projects/RTED/RtedSymbols.h,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: RTED: Track calls to
+	  free and misc. cleanup.
+	  
+	  This allows us to pass some of the allocation_deallocation tests.
+
+2009-07-14 21:19  hamilton37
+
+	* [r6541] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp: RTED: Fixed
+	  problem with var access for stack arrays.
+	  
+	  Now all of the string_errors tests pass.
+
 2009-07-14 17:02  liao6
 
 	* [r6537]
