@@ -35,7 +35,8 @@ $Text::Wrap::columns = 72;
 
 # Specify the location of the svn command.
 #my $svn = '@SVN_BINDIR@/svn';
-my $svn = '/nfs/apps/subversion/1.4.5/bin/svn';
+my $svn = '/nfs/apps/subversion/1.5.5/bin/svn';
+#my $svn = '/nfs/apps/subversion/1.4.5/bin/svn';
 # Process the command line options.
 
 # The base URL for the portion of the repository to work in.  Note
