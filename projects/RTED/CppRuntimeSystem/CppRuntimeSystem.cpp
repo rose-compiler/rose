@@ -81,17 +81,16 @@ void RuntimeSystem::endScope()
 void RuntimeSystem::createVariable(addr_type address,
                                    const std::string & name,
                                    const std::string & mangledName,
-                                   const std::string & typeString,
-                                   size_t size)
+                                   const std::string & typeString)
 {
-    createVariable(new VariablesType(name,mangledName,typeString,address,size));
+    createVariable(new VariablesType(name,mangledName,typeString,address));
 }
 
 void RuntimeSystem::createVariable(VariablesType * var)
 {
     // Track the memory area where the variable is stored
     // special case when static array, then createMemory is called anyway
-    if(var->getType() != "SgArrayType")
+    if(var->getType()->getName() != "SgArrayType")
         RuntimeSystem::instance()->createMemory(var->getAddress(),var->getSize(), true);
 
 

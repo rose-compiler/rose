@@ -80,17 +80,24 @@ class MemoryType
             return static_cast<T*>(charAddress);
         }
 
-        /// Registers the information at which offset which type is stored
-        void setTypeInfo(addr_type offset, RsType * type);
 
-        /// Returns type information,
-        /// if no type information for this position is known NULL is returned
-        /// returns an RsBasicType or RsArrayType
-        RsType* getTypeInfo(addr_type offset);
+        void accessMemWithType(addr_type offset, RsType * type);
 
 
+        /// A entry in this map means, that on offset <key> is stored the type <value>
+        typedef std::map<addr_type, RsType*> TypeInfoMap;
+        typedef TypeInfoMap::iterator TiIter;
+        typedef std::pair<TiIter,TiIter> TiIterPair;
+
+        /// Determines all typeinfos which intersect the defined offset-range [from,to)
+        /// "to" is exclusive - typeInfos with startOffset==to , are not included
+        /// TODO only public because of debugging purposes
+        TiIterPair getOverlappingTypeInfos(addr_type from, addr_type to);
 
     private:
+
+        void insertType(addr_type offset,RsType * type);
+
         addr_type         startAddress; ///< address where memory chunk starts
         size_t            size;         ///< Size of allocation
         SourcePosition    allocPos;     ///< Position in source file where malloc/new was called
@@ -99,14 +106,14 @@ class MemoryType
 
 
 
-        /// A entry in this map means, that on offset <key> is stored the type <value>
-        typedef std::map<addr_type, RsType*> TypeInfoMap;
+
         TypeInfoMap typeInfo;
 
         /// Set of pointers which currently point into this memory chunk
         std::set<VariablesType*> pointerSet;
 
-        TypeInfoMap::iterator  findPossibleTypeMatch(addr_type offset);
+
+        std::vector< TypeInfoMap::iterator > getTypeEntriesInRange;
 
 };
 std::ostream& operator<< (std::ostream &os, const MemoryType & m);

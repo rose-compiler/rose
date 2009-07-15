@@ -293,6 +293,7 @@ void RsBasicType::resolveTypeInfo(const std::string & typeStr)
     else if (typeStr=="SgTypeUnsignedShort")    setTypeInfo(SgTypeUnsignedShort,    sizeof(unsigned short));
     else if (typeStr=="SgTypeString")           setTypeInfo(SgTypeString,           sizeof(char*));
     else if (typeStr=="SgPointerType")          setTypeInfo(SgPointerType,          sizeof(void*));
+    else if (typeStr=="SgArrayType")            setTypeInfo(SgArrayType,            sizeof(void*));
     else                                        setTypeInfo(Unknown, 0);
 }
 
@@ -321,6 +322,7 @@ void RsBasicType::resolveTypeInfo(RsBasicType::SgType type_)
     else if (type==SgTypeUnsignedShort)    setTypeInfo("SgTypeUnsignedShort",    sizeof(unsigned short));
     else if (type==SgTypeString)           setTypeInfo("SgTypeString",           sizeof(char*));
     else if (type==SgPointerType)          setTypeInfo("SgPointerType",          sizeof(void*));
+    else if (type==SgArrayType)            setTypeInfo("SgArrayType",            sizeof(void*));
     else                                   setTypeInfo("Unknown", 0);
 
 }

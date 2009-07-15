@@ -107,155 +107,136 @@ void MemoryType::deregisterPointer(VariablesType * var, bool doChecks)
 }
 
 
-void MemoryType::setTypeInfo(addr_type offset, RsType * type)
+
+void MemoryType::accessMemWithType(addr_type offset, RsType * type)
 {
-    TypeInfoMap::iterator itLower = findPossibleTypeMatch(offset);
-    TypeInfoMap::iterator itUpper = typeInfo.lower_bound(offset);
-
-    stringstream ss;
-    ss << "Tried to access the same memory region with different types" << endl;
-
-    RuntimeViolation vio(RuntimeViolation::INVALID_TYPE_ACCESS,ss.str());
-
+    if(typeInfo.size() ==0) // no types registered yet
+    {
+        typeInfo.insert(make_pair<int,RsType*>(offset,type));
+        return;
+    }
 
     int newTiStart = offset;
     int newTiEnd = offset + type->getByteSize();
 
 
-    vio.descStream() << "When trying to access (" << newTiStart << "," << newTiEnd << ") " <<
-                        "as type " << type->getName() << endl;
+    RuntimeSystem * rs = RuntimeSystem::instance();
+    stringstream ss;
+    ss << "Tried to access the same memory region with different types" << endl;
+    ss << "When trying to access (" << newTiStart << "," << newTiEnd << ") "
+       << "as type " << type->getName()
+       << "Memory Region Info: " << endl << *this << endl;
+
+    RuntimeViolation vio(RuntimeViolation::INVALID_TYPE_ACCESS,ss.str());
 
 
-    RsType * containingType = NULL;
-    int      containingOffset =0;
-    int      containingStart  = -1;
+    // Get a range of entries which overlap with [newTiStart,newTiEnd)
+    TiIterPair res = getOverlappingTypeInfos(newTiStart,newTiEnd);
+    TiIter itLower = res.first;
+    TiIter itUpper = res.second;
 
-    if(itLower != typeInfo.end())
+    //  Case 1: New entry is overlapped by one old entry,
+    //  i.e. [itLower,itUpper) contains only one entry
+    TiIter incrementedLower = itLower;
+    ++incrementedLower;
+
+    if(incrementedLower == itUpper)
     {
-        int lowerStart = itLower->first;
-        int lowerEnd = lowerStart + itLower->second->getByteSize();
-        if(newTiStart < lowerEnd  ) // Check for overlapping with previous
+        int oldTiStart = itLower->first;
+        int oldTiEnd = oldTiStart + itLower->second->getByteSize();
+        RsType * oldType = itLower->second;
+        if( oldTiStart <= newTiStart && oldTiEnd >= newTiEnd )
         {
-            //Test if oldInfo contains the whole newInfo
-            if(newTiEnd <= lowerEnd)
+            //Check if new entry is consistent with old one
+            RsType * sub =  oldType->getSubtypeRecursive(newTiStart - oldTiStart,type->getByteSize());
+            if(sub != type)
             {
-                containingType = itLower->second;
-                containingStart = lowerStart;
+                vio.descStream() << "Previously registered Type completely overlaps new Type in an inconsistent way:" << endl
+                                 << "Containing Type " << oldType->getName()
+                                 << " (" << oldTiStart << "," << oldTiEnd << ")" << endl;
+                rs->violationHandler(vio);
+                return;
             }
             else
             {
-                vio.descStream() << "Previously registered  (" << lowerStart << "," << lowerEnd << ") " <<
-                                    "as " << itLower->second->getName() << endl;
-                RuntimeSystem::instance()->violationHandler(vio);
+                //successful
+                typeInfo.insert(make_pair<int,RsType*>(offset,type));
                 return;
             }
         }
     }
 
-    if(itUpper != typeInfo.end())
+    // Case 2: Iterate over overlapping old types and check consistency
+    for(TypeInfoMap::iterator i = itLower; i != itUpper; ++i )
     {
-        int upperStart = itUpper->first;
-        int upperEnd = upperStart + itUpper->second->getByteSize();
-        if(upperStart < newTiEnd) // Check for overlapping with next chunk
-        {
-            //Test if oldInfo contains the whole newInfo
-            if(newTiStart >= upperStart)
-            {
-                containingType = itUpper->second;
-                containingStart = upperStart;
-            }
-            else
-            {
-                vio.descStream() << "Previously registered  (" << upperStart << "," << upperEnd << ") " <<
-                                    "as " << itUpper->second->getName() << endl;
+        RsType * curType = i->second;
+        int curStart     = i->first;
+        int curEnd       = curStart + curType->getByteSize();
 
-                RuntimeSystem::instance()->violationHandler(vio);
-                return;
-            }
-        }
-    }
-
-    if(containingType)
-    {
-        RsType * sub = containingType->getSubtypeRecursive(offset-containingStart,type->getByteSize());
-        if(sub != type )
+        if(curStart < newTiStart || curEnd > newTiEnd )
         {
-            vio.descStream() << "Previously registered Type overlapps in a nonconsistent way:" << endl
-                             << "Containing Type " << containingType->getName()
-                             << " (" << containingStart << "," << containingStart + containingType->getByteSize() << ")" << endl;
-            RuntimeSystem::instance()->violationHandler(vio);
+            vio.descStream() << "Previously registered Type overlaps new Type in an inconsistent way:" << endl
+                             << "Overlapping Type " << curType->getName()
+                             << " (" << curStart << "," << curEnd << ")" << endl;
+            rs->violationHandler(vio);
+            return;
         }
 
-        return;
+        RsType * sub =  type->getSubtypeRecursive(curStart - newTiStart,curType->getByteSize());
+        if (sub != curType)
+        {
+            vio.descStream() << "Newly registered Type completely overlaps a previous registered Type in an inconsistent way:" << endl
+                            << "Overlapping Type " << curType->getName()
+                            << " (" << curStart << "," << curEnd << ")" << endl;
+
+            rs->violationHandler(vio);
+            return;
+        }
     }
+    //All consistent - old typeInfos are replaced by big new typeInfo (merging)
+    typeInfo.erase(itLower,itUpper);
 
     typeInfo.insert(make_pair<int,RsType*>(offset,type));
+    return;
 }
 
-RsType * MemoryType::getTypeInfo(addr_type searchOffset)
+
+
+
+
+MemoryType::TiIterPair MemoryType::getOverlappingTypeInfos(addr_type from, addr_type to)
 {
-    TypeInfoMap::iterator it = findPossibleTypeMatch(searchOffset);
+    // This function assumes that the typeInfo ranges do not overlap
+    //cerr << "Current status";
+    //RuntimeSystem::instance()->getMemManager()->print(cerr);
+    //cerr << "Searching for offset " << from << ","  << to << endl;
 
-    if (it == typeInfo.end() )
-        return NULL;
-
-    addr_type curTypeOffset = it->first;
-    RsType *  curType       = it->second;
-    int off = searchOffset - curTypeOffset;
-
-    // Check if a type registration has been found
-    if ( off < 0 || off >= curType->getByteSize() )
-        return NULL;
-
-    RsType *  refinedType;
-    addr_type refinedOffset;
-    RsType::getTypeAt<RsArrayType>(curType,off,refinedType,refinedOffset);
-
-    if(!refinedType) //search offset was in padding mem
-    {
-        RuntimeSystem * rs = RuntimeSystem::instance();
-        stringstream ss;
-        ss << "Tried to access padded memory-area" << endl;
-        ss << "Allocated type:" << curType->getName() <<
-              " at offset " << off << endl;
-
-        rs->violationHandler(RuntimeViolation::INVALID_TYPE_ACCESS, ss.str());
-    }
-
-    return refinedType;
-}
-
-MemoryType::TypeInfoMap::iterator MemoryType::findPossibleTypeMatch(addr_type offset)
-{
+    // catch the case that map is empty
     if(typeInfo.size() ==0 )
-        return typeInfo.end();
+        return make_pair<TiIter,TiIter>(typeInfo.end(), typeInfo.end());
 
-    TypeInfoMap::iterator it = typeInfo.lower_bound(offset);
+    // end is the iterator which points to typeInfo with offset >= to
+    TiIter end = typeInfo.lower_bound(to);
 
-    // case 0: we are at the end and map.size>0, so return last element
-    if(it == typeInfo.end())
-    {
+    // the same for the beginning, but there we need the previous map entry
+    TiIter it = typeInfo.lower_bound(from);
+
+    if(it == typeInfo.end() ) //we are at the end and map.size>0, take last element
         --it;
-        return it;
-    }
+    if(it->first > from && it != typeInfo.begin())
+        --it;
 
-    //case 1: offset is startAdress of a chunk, exact match
-    if( it->first == offset )
-    {
-        return it;
-    }
+    // range not overlapping
+    if(it != end && it->first + it->second->getByteSize() <= from)
+        ++it;
 
-    //case 2: offset is greater than a type's startaddress
-    //        try to get next smaller one
-    assert( it->first > offset);
+    //for(TiIter i = it; i != end; ++i)
+    //    cerr  << "\t "<< i->first  << "\t" << i->second->getName() << endl ;
 
-    if( it == typeInfo.begin())
-        return typeInfo.end();
 
-    --it;
-
-    return it;
+    return make_pair<TiIter,TiIter>(it, end);
 }
+
 
 
 

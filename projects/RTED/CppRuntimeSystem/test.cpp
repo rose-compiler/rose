@@ -440,8 +440,7 @@ void testScopeFreesStack()
         (addr_type) 4,
         "my_var",
         "mangled_my_var",
-        "SgIntVal",
-        sizeof( int)
+        "SgTypeInt"
     );
     rs->endScope();
 
@@ -459,8 +458,7 @@ void testImplicitScope()
         (addr_type) 4,
         "my_var",
         "mangled_my_var",
-        "SgIntVal",
-        sizeof( int)
+        "SgTypeInt"
     );
 
     CLEANUP
@@ -478,15 +476,15 @@ void testLostMemRegion()
 
     addr_type addr=100;
     rs->beginScope("Scope1");
-        rs->createVariable(addr+=4,"p1_to_10","mangled","SgPointerType",4);
+        rs->createVariable(addr+=4,"p1_to_10","mangled","SgPointerType");
         rs->createPointer("p1_to_10",10);
 
-        rs->createVariable(addr+=4,"p1_to_20","mangled","SgPointerType",4);
+        rs->createVariable(addr+=4,"p1_to_20","mangled","SgPointerType");
         rs->createPointer("p1_to_20",20);
 
 
         rs->beginScope("Scope2");
-            rs->createVariable(addr+=4,"p2_to_10","mangled","SgPointerType",4);
+            rs->createVariable(addr+=4,"p2_to_10","mangled","SgPointerType");
             rs->createPointer("p2_to_10",10);
         rs->endScope();
 
@@ -785,7 +783,7 @@ void test_range_overlap()
 
 
 
-void testTypeSystem()
+void testTypeSystemDetectNested()
 {
     TEST_INIT("Testing TypeSystem: nested type detection")
 
@@ -813,21 +811,22 @@ void testTypeSystem()
 
     rs->createMemory(42,10000);
     MemoryType * mt = rs->getMemManager()->getMemoryType(42);
-    mt->setTypeInfo(0,ts->getTypeInfo("A"));
-    mt->setTypeInfo(16,ts->getTypeInfo("B"));
-    mt->setTypeInfo(32+4+4,ts->getTypeInfo("SgTypeDouble"));
+    mt->accessMemWithType(0,ts->getTypeInfo("A"));
+    mt->accessMemWithType(16,ts->getTypeInfo("B"));
+    mt->accessMemWithType(32+4+4,ts->getTypeInfo("SgTypeDouble"));
+
 
     //Access to padded area
-    try {mt->setTypeInfo(32+4+1,ts->getTypeInfo("SgTypeChar")); }
+    try {mt->accessMemWithType(32+4+1,ts->getTypeInfo("SgTypeChar")); }
     TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
 
     //Wrong type
-    try {mt->setTypeInfo(0,ts->getTypeInfo("B")); }
+    try {mt->accessMemWithType(0,ts->getTypeInfo("B")); }
     TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
 
     //Wrong basic type
-    mt->setTypeInfo(32+4,ts->getTypeInfo("SgTypeChar"));
-    try {mt->setTypeInfo(32+4,ts->getTypeInfo("SgTypeInt")); }
+    mt->accessMemWithType(32+4,ts->getTypeInfo("SgTypeChar"));
+    try {mt->accessMemWithType(32+4,ts->getTypeInfo("SgTypeInt")); }
     TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
 
     rs->log() << "Type System Status after test" << endl;
@@ -838,6 +837,40 @@ void testTypeSystem()
     CLEANUP
 }
 
+void testTypeSystemMerge()
+{
+    TEST_INIT("Testing TypeSystem: Merging basic types into a struct ")
+    TypeSystem * ts = rs->getTypeSystem();
+
+    RsClassType * typeTwoInts = new RsClassType("A",12);
+    typeTwoInts->addMember("a1",ts->getTypeInfo("SgTypeInt"),0);
+    typeTwoInts->addMember("a2",ts->getTypeInfo("SgTypeInt"),4);
+    typeTwoInts->addMember("a2",ts->getTypeInfo("SgTypeFloat"),8);
+
+
+    ts->registerType(typeTwoInts);
+
+    rs->createMemory(42,100);
+
+        MemoryType * mt = rs->getMemManager()->getMemoryType(42);
+        //first part in mem is a double
+        mt->accessMemWithType(0,ts->getTypeInfo("SgTypeDouble"));
+
+        //then two ints are accessed
+        mt->accessMemWithType(sizeof(double),ts->getTypeInfo("SgTypeInt"));
+        mt->accessMemWithType(sizeof(double)+sizeof(int),ts->getTypeInfo("SgTypeInt") );
+        //then the same location is accessed with an struct of two int -> has to merge
+        mt->accessMemWithType(sizeof(double),typeTwoInts);
+
+        // because of struct access it is known that after the two ints a float follows -> access with int failes
+        try {mt->accessMemWithType(sizeof(double)+2*sizeof(int),ts->getTypeInfo("SgTypeInt")); }
+        TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
+
+
+    rs->freeMemory(42);
+
+    CLEANUP
+}
 
 
 int main(int argc, char ** argv)
@@ -848,7 +881,8 @@ int main(int argc, char ** argv)
         rs->setTestingMode(true);
         rs->setOutputFile("test_output.txt");
 
-        testTypeSystem();
+        testTypeSystemDetectNested();
+        testTypeSystemMerge();
 
         testSuccessfulMallocFree();
 

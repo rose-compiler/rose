@@ -272,6 +272,7 @@ class RsBasicType : public RsType
             SgTypeUnsignedShort,
             SgTypeString,
             SgPointerType,
+            SgArrayType,
             Unknown //Unknown always has to be last entry
         };
 

@@ -292,8 +292,7 @@ void RuntimeSystem_ensure_allocated_and_initialized( const void* mem, size_t siz
       (addr_type) mem,
       "StringConstant",
       "MangledStringConstant",
-      "SgArrayType",
-      size
+      "SgArrayType"
   );
   rs->createMemory( (addr_type) mem, size);
   rs->checkMemWrite( (addr_type) mem, size);
@@ -561,8 +560,8 @@ void RuntimeSystem_roseCreateVariable( const char* name,
 				      const char* mangled_name,
 				      const char* type,
 				      const char* basetype,
-              unsigned long int address,
-              unsigned int size,
+				      unsigned long int address,
+				      unsigned int size,
 				      int init,
 				      const char* fOpen,
 				      const char* filename, const char* line,
@@ -571,7 +570,7 @@ void RuntimeSystem_roseCreateVariable( const char* name,
 
 	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
 	rs->checkpoint( SourcePosition(filename,atoi(line), atoi(lineTransformed)));
-	rs->createVariable(address,name,mangled_name,type,size);
+	rs->createVariable(address,name,mangled_name,type);
 
 }
 

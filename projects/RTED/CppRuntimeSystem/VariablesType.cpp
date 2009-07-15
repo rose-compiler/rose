@@ -13,16 +13,35 @@ VariablesType::VariablesType(const std::string & name_,
                              const std::string & mangledName_,
                              const std::string & typeStr_,
                              addr_type address_,
-                             size_t size_) :
+                             RsType * pointerType_) :
     name(name_),
     mangledName(mangledName_),
-    size(size_),
-    type(typeStr_),
     address(address_),
-    pointerTarget(0)
+    pointerTarget(0),
+    pointerType(pointerType_)
 {
-
+    TypeSystem * ts = RuntimeSystem::instance()->getTypeSystem();
+    type = ts->getTypeInfo(typeStr_);
+    assert(type); //type of this variable not yet registered
 }
+
+VariablesType::VariablesType(const std::string & name_,
+                             const std::string & mangledName_,
+                             RsType * type_,
+                             addr_type address_,
+                             RsType * pointerType_) :
+    name(name_),
+    mangledName(mangledName_),
+    type(type_),
+    address(address_),
+    pointerTarget(0),
+    pointerType(pointerType_)
+{
+    assert(type);
+}
+
+
+
 
 VariablesType::~VariablesType()
 {
@@ -44,7 +63,8 @@ MemoryType * VariablesType::getAllocation() const
     MemoryType * mt =mm->getMemoryType(address);
 
     assert(mt);
-    assert(mt->getSize() == size);
+    //assert that in this chunk only this variable is stored
+    assert(mt->getSize() == type->getByteSize());
 
     return mt;
 }
@@ -53,6 +73,8 @@ MemoryType * VariablesType::getAllocation() const
 
 void VariablesType::setPointerTarget(addr_type newAddr, bool doChecks)
 {
+    assert(pointerType); //this variable was not registered as a pointer
+
     if(pointerTarget==0)//inital assignment -> no checks possible
         doChecks=false;
 
@@ -61,8 +83,7 @@ void VariablesType::setPointerTarget(addr_type newAddr, bool doChecks)
     RuntimeSystem * rs = RuntimeSystem::instance();
     MemoryManager * mm = rs->getMemManager();
 
-    //TODO 1 as size just as heuristics, do better when typesystem is available
-    MemoryType * newMem = mm->findContainingMem(newAddr,1);
+    MemoryType * newMem = mm->findContainingMem(newAddr,pointerType->getByteSize() );
 
     if(!newMem && newAddr != 0) //new address is invalid
     {
@@ -75,8 +96,7 @@ void VariablesType::setPointerTarget(addr_type newAddr, bool doChecks)
 
     if(pointerTarget!= 0)
     {
-        //TODO 1 as size just as heuristics, do better when typesystem is available
-        MemoryType * oldMem = mm->findContainingMem(pointerTarget,1);
+        MemoryType * oldMem = mm->findContainingMem(pointerTarget,pointerType->getByteSize());
         if(oldMem == newMem) //pointer just changed offset
             return;
 
@@ -117,11 +137,14 @@ MemoryType * VariablesType::getTargetAllocation() const
     return mt;
 }
 
-
+size_t  VariablesType::getSize() const
+{
+    return type->getByteSize();
+}
 
 void VariablesType::print(ostream & os) const
 {
-    os << "0x" << hex <<setw(6) << setfill('0') << address << "\t" << name << "(" << mangledName <<")" << " Type: " << type  ;
+    os << "0x" << hex <<setw(6) << setfill('0') << address << "\t" << name << "(" << mangledName <<")" << " Type: " << type->getName()  ;
 }
 
 

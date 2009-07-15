@@ -8,6 +8,7 @@
 #include "Util.h"
 
 class MemoryType;
+class RsType;
 
 class VariablesType
 {
@@ -16,17 +17,23 @@ class VariablesType
                       const std::string & mangledName,
                       const std::string & typeStr,
                       addr_type address,
-                      size_t size);
+                      RsType * pointerType=NULL);
+
+        VariablesType(const std::string & name,
+                      const std::string & mangledName,
+                      RsType * type,
+                      addr_type address,
+                      RsType * pointerType=NULL);
 
         ~VariablesType();
 
         const std::string & getName()        const  { return name;        }
         const std::string & getMangledName() const  { return mangledName; }
-        const std::string & getType()        const  { return type;        }
+        RsType *            getType()        const  { return type;        }
 
         addr_type           getAddress()     const  { return address; }
 
-        size_t              getSize()        const  { return size;    }
+        size_t              getSize()        const;
 
 
         /// Marks this variable as pointer and stores the address it points to
@@ -60,18 +67,19 @@ class VariablesType
         /// mangled name
         std::string mangledName;
 
-        /// Size of variable in memory
-        size_t size;
-
         /// string with class name of rose-type
-        std::string type;
+        RsType * type;
 
         /// address of this variable in memory
         addr_type address;
 
+
         /// Is 0 when var is not a pointer
         /// or the target address if this var was registered as pointer
         addr_type pointerTarget;
+
+        /// Type of the pointerTarget, or NULL if not a pointer
+        RsType * pointerType;
 };
 
 

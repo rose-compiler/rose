@@ -68,8 +68,7 @@ class RuntimeSystem
         void createVariable(addr_type address,
                             const std::string & name,
                             const std::string & mangledName,
-                            const std::string & typeString,
-                            size_t size);
+                            const std::string & typeString);
 
 
         /// Call this function after when a malloc or new occurs in monitored code
