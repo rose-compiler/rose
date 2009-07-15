@@ -311,8 +311,37 @@ long double __builtin_powil (long double __builtin__x, int __builtin__y);
 #define __builtin_nanl(string) 0
 */
 
+/* DQ and Liao (7/11/2009) Added macros to define away new GNU C++ extension (not required for newer EDG 4.0 use */
+// Only for GCC 4.3.0 and above
+#if __GNUC__ > 4 || \
+  (__GNUC__ == 4 && (__GNUC_MINOR__ > 3 || \
+		     (__GNUC_MINOR__ == 3 && \
+		      __GNUC_PATCHLEVEL__ >= 0)))
 
+#define __has_nothrow_assign sizeof
+#define __has_nothrow_copy sizeof
+#define __has_nothrow_constructor sizeof
+#define __has_trivial_assign sizeof
+#define __has_trivial_copy  sizeof
+#define __has_trivial_constructor sizeof
+#define __has_trivial_destructor sizeof
+#define __has_virtual_destructor sizeof
+#define __is_abstract sizeof
+//#define __is_base_of (base_type, derived_type)
+#define __is_class sizeof
+#define __is_empty sizeof
+#define __is_enum sizeof
+#define __is_pod sizeof 
+#define __is_polymorphic sizeof
+#define __is_union sizeof
+void* __builtin_memmove(void * target, const void * source, unsigned long long nBytes);
+void* __builtin_memchr(const  void * ptr, int value, unsigned long long num);
+void* __builtin_memcpy (void * destination, const void * source, unsigned long long num );
+int __builtin_memcmp ( const void * ptr1, const void * ptr2, unsigned long long num );
+// changed it in edg 3.3/src/sys_predef.c instead since va_list is not declared here
+//int __builtin_vsnprintf(char *str, unsigned long long size, const char *format, va_list ap);
 
+#endif
 /*
 Target specific builtin functions are available at:
   http://gcc.gnu.org/onlinedocs/gcc-4.0.3/gcc/Target-Builtins.html
