@@ -35,6 +35,8 @@ class RtedTransformation : public AstSimpleProcessing {
   // ------------------------ string -----------------------------------
   // handle call to functioncall
   std::vector<RtedArguments*> function_call;
+  // function calls to free
+  std::vector<SgFunctionCallExp*> frees;
 
   std::vector<SgFunctionDefinition*> function_definitions;
 
@@ -49,6 +51,7 @@ class RtedTransformation : public AstSimpleProcessing {
   SgFunctionSymbol* roseCreateArray;
   SgFunctionSymbol* roseArrayAccess;
   SgFunctionSymbol* roseFunctionCall;
+  SgFunctionSymbol* roseFreeMemory;
   SgFunctionSymbol* roseIOFunctionCall;
   SgFunctionSymbol* roseConvertIntToString;
   SgClassSymbol* runtimeClassSymbol;
@@ -73,9 +76,11 @@ class RtedTransformation : public AstSimpleProcessing {
   SgStatement* getSurroundingStatement(SgNode* n);
   // insert: RuntimeSystem* runtimeSystem = new RuntimeSystem();
   void insertRuntimeSystemClass();
+  void insertFreeCall( SgFunctionCallExp* exp );
   SgExpression* buildString(std::string name);
   std::string getMangledNameOfExpression(SgExpression* expr);
   SgExpression* getExprBelowAssignment(SgExpression* exp, int& derefCounter);
+  void appendFileInfo( SgNode* n, SgExprListExp* arg_list );
 
 
 

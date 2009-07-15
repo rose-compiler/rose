@@ -13,6 +13,7 @@ public:
 	SgFunctionSymbol* roseArrayAccess;
 	SgFunctionSymbol* roseRtedClose;
 	SgFunctionSymbol* roseFunctionCall;
+	SgFunctionSymbol* roseFreeMemory;
 	SgFunctionSymbol* roseConvertIntToString;
 	SgFunctionSymbol* roseCallStack;
 	SgFunctionSymbol* roseCreateVariable;
@@ -28,6 +29,8 @@ public:
 		roseCreateArray = NULL;
 		roseArrayAccess = NULL;
 		roseRtedClose = NULL;
+        roseFunctionCall = NULL;
+        roseFreeMemory = NULL;
 		roseConvertIntToString=NULL;
 		roseCallStack = NULL;
 		roseCreateVariable = NULL;

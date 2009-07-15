@@ -403,6 +403,38 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
 }
 
 
+void
+RtedTransformation::insertFreeCall( SgFunctionCallExp* free_call ) {
+
+	// stmt wraps a call to free -- most likely an expression statement
+	// alert the RTS before the call to detect errors such as double-free
+	SgStatement* stmt = getSurroundingStatement( free_call );
+
+	Rose_STL_Container< SgExpression* > args = free_call->get_args()->get_expressions();
+	ROSE_ASSERT( args.size() > 0 );
+
+	SgExpression* address_expression = args[ 0 ];
+	
+	ROSE_ASSERT( stmt );
+	ROSE_ASSERT( address_expression );
+
+
+	// roseFree( ptr, source info );
+    SgExprListExp* arg_list = buildExprListExp();
+	appendExpression( arg_list, address_expression );
+	appendFileInfo( stmt, arg_list );
+
+	// have to check validity of call to free before the call itself
+	insertStatementBefore(
+		stmt, 
+		buildExprStatement(
+			buildFunctionCallExp(
+				buildFunctionRefExp( roseFreeMemory),
+				arg_list
+	)));
+}
+
+
 /***************************************************************
  * Get the variable on the left hand side of an assignment
  * starting on the right hand side below the assignment in the tree
@@ -480,7 +512,9 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
       SgStatement* fncallStmt = getSurroundingStatement( fcexp);
       ROSE_ASSERT( fncallStmt);
       scopes.push_back( fncallStmt);
-    }
+    } else if( "free" == name ) {
+		frees.push_back( fcexp );
+	}
   }
 
 }

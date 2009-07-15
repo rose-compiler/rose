@@ -37,6 +37,7 @@ void RtedTransformation::transform(SgProject* project) {
   roseCreateArray = symbols->roseCreateArray;
   roseArrayAccess = symbols->roseArrayAccess;
   roseFunctionCall = symbols->roseFunctionCall;
+  roseFreeMemory = symbols->roseFreeMemory;
   roseRtedClose = symbols->roseRtedClose;
   roseConvertIntToString=symbols->roseConvertIntToString;
   roseCallStack = symbols->roseCallStack;
@@ -51,6 +52,8 @@ void RtedTransformation::transform(SgProject* project) {
 
   ROSE_ASSERT(roseCreateArray);
   ROSE_ASSERT(roseArrayAccess);
+  ROSE_ASSERT(roseFunctionCall);
+  ROSE_ASSERT(roseFreeMemory);
   ROSE_ASSERT(roseConvertIntToString);
   ROSE_ASSERT(roseRtedClose);
   ROSE_ASSERT(roseCallStack);
@@ -224,6 +227,12 @@ void RtedTransformation::transform(SgProject* project) {
       // add other internal function calls, such as push variable on stack
       insertStackCall(funcs);
     }
+  }
+
+  cerr << "\n Number of Elements in frees  : " << frees.size() << endl;
+  std::vector< SgFunctionCallExp* >::const_iterator it_frees = frees.begin();
+  for (; it_frees != frees.end(); it_frees++) {
+    insertFreeCall( *it_frees );
   }
 
   cerr << "Inserting main close call" << endl;

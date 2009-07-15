@@ -147,6 +147,12 @@ void RuntimeSystem_roseIOFunctionCall(const char* funcname,
 					const char* filename, const char* line,
 					const char* lineTransformed, const char* stmtStr, const char* leftHandSideVar, FILE* file,
 					const char* arg1, const char* arg2);
+void RuntimeSystem_roseFreeMemory(
+  void* ptr,
+  const char* filename,
+  const char* line,
+  const char* lineTransformed
+);
 
 
 void RuntimeSystem_roseFunctionCall(int count, ...);

@@ -663,6 +663,22 @@ RuntimeSystem_roseRegisterTypeCall(int count, ...) {
 	  va_end(vl);
 }
 
+void
+RuntimeSystem_roseFreeMemory(
+      void* ptr,
+      const char* filename,
+      const char* line,
+      const char* lineTransformed
+) {
+
+	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
+	rs->checkpoint(
+    SourcePosition( filename, atoi( line ),atoi( lineTransformed ) )
+  );
+
+	rs->freeMemory( (addr_type) ptr );
+}
+
 
 
 // vim:sw=2 ts=2 et sta:

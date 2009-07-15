@@ -330,3 +330,20 @@ bool RtedTransformation::isGlobalExternVariable(SgStatement* stmt) {
 #endif
   return externQual;
 }
+
+
+/*************************************************
+ * This function adds some very common arguments
+ * to instrumented function calls for constructing
+ * SourcePosition objects.
+ ************************************************/
+void RtedTransformation::appendFileInfo( SgNode* node, SgExprListExp* arg_list) {
+
+    SgExpression* filename = buildString( node->get_file_info()->get_filename() );
+    SgExpression* linenr = buildString( RoseBin_support::ToString( node->get_file_info()->get_line() ));
+    SgExpression* linenrTransformed = buildString("x%%x");
+
+    appendExpression( arg_list, filename );
+    appendExpression( arg_list, linenr );
+    appendExpression( arg_list, linenrTransformed );
+}

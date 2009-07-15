@@ -1,10 +1,10 @@
 #include "rose.h"
 #include "RtedSymbols.h"
 
-#define LOOKUP(__x,__v, __z) \
+#define LOOKUP(__x,__v) \
     SgFunctionSymbol* __v = isSgScopeStatement(n)->lookup_function_symbol("RuntimeSystem_" #__x); \
     if( isSgFunctionSymbol( __v)) {\
-      __z = isSgFunctionSymbol( __v);\
+      __x = isSgFunctionSymbol( __v);\
       cerr << "Found MemberName : " #__x << endl;\
     } 
 
@@ -21,21 +21,20 @@ void RtedSymbols::visit(SgNode* n) {
 
   if (isSgScopeStatement(n)) {
 
-    LOOKUP( roseCreateArray, func1,roseCreateArray);
-    LOOKUP( roseArrayAccess, func2,roseArrayAccess);
-    LOOKUP( roseRtedClose, func3,roseRtedClose);
-    LOOKUP( roseFunctionCall, func4,roseFunctionCall);
-    LOOKUP( roseConvertIntToString, func5,roseConvertIntToString);
-    LOOKUP( roseCallStack, func6,roseCallStack);
-    LOOKUP( roseCreateVariable, func7,roseCreateVariable);
-    LOOKUP( roseInitVariable, func8,roseInitVariable);
-    LOOKUP( roseEnterScope, func9,roseEnterScope);
-    LOOKUP( roseExitScope, fund10,roseExitScope);
-    LOOKUP( roseAccessVariable, fund11,roseAccessVariable);
-    LOOKUP( roseIOFunctionCall, func12,roseIOFunctionCall);
-    LOOKUP( roseRegisterTypeCall, func13,roseRegisterTypeCall);
-
-
+    LOOKUP( roseCreateArray, func1);
+    LOOKUP( roseArrayAccess, func2);
+    LOOKUP( roseRtedClose, func3);
+    LOOKUP( roseFunctionCall, func4);
+    LOOKUP( roseConvertIntToString, func5);
+    LOOKUP( roseCallStack, func6);
+    LOOKUP( roseCreateVariable, func7);
+    LOOKUP( roseInitVariable, func8);
+    LOOKUP( roseEnterScope, func9);
+    LOOKUP( roseExitScope, fund10);
+    LOOKUP( roseAccessVariable, fund11);
+    LOOKUP( roseIOFunctionCall, func12);
+    LOOKUP( roseRegisterTypeCall, func13);
+    LOOKUP( roseFreeMemory, func14);
   }
 
   if (isSgTypedefDeclaration(n)) {
