@@ -6,6 +6,9 @@
 
 class SgNode;
 class SgProject;
+class SgFile;
+
+SgFile *getSgFile( SgNode *node );
 
 bool isBinaryNode( SgNode *node );
 bool isSourceNode( SgNode *node );

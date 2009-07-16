@@ -1,4 +1,5 @@
 # Rose Widgets Makefile.am
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS = AsmInstructionBar\
           AsmView\
@@ -26,13 +27,11 @@ if ROSE_WITH_ROSEQT
 
 noinst_LTLIBRARIES = libRoseQtWidgets.la
 
+INCLUDES = $(ROSE_INCLUDES)
 
 buildDir = $(top_builddir)/src/roseExtensions/qtWidgets
 
-
 libRoseQtWidgets_la_SOURCES  =  DummyForAutotools.cpp 
-  
-
 
 libRoseQtWidgets_la_LIBADD   =  $(buildDir)/AsmInstructionBar/libAsmInstructionBar.la \
                                 $(buildDir)/AsmView/libAsmView.la \
@@ -54,6 +53,5 @@ libRoseQtWidgets_la_LIBADD   =  $(buildDir)/AsmInstructionBar/libAsmInstructionB
                                 $(buildDir)/SrcBinView/libSrcBinView.la \
                                 $(buildDir)/TaskSystem/libTaskSystem.la \
                                 $(buildDir)/util/libutil.la
-                         
 
 endif

@@ -113,18 +113,10 @@ class AstNodeLinkAttribute
         virtual ~AstNodeLinkAttribute()
         {}
 
-        virtual SgNode *getNode()
-        {
-            return node;
-        }
-
         virtual AstNodeLinkAttribute *copy()
         {
             return new AstNodeLinkAttribute( *this );
         }
-
-    protected:
-        SgNode *node;
 };
 
 class AstSourceNodeLink

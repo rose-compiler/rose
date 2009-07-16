@@ -17,6 +17,10 @@ class SgNode;
 class SgBinaryFile;
 class SgSourceFile;
 
+class QDropEvent;
+class QDragMoveEvent;
+class QDragEnterEvent;
+
 struct SourceRange
 {
     std::pair<int, int> start;
@@ -43,6 +47,13 @@ class SrcBinView
         SrcBinView( QWidget *parent = NULL );
 
         virtual ~SrcBinView();
+        
+        virtual bool eventFilter( QObject *object, QEvent *event );
+    
+    protected:
+        virtual void dropEvent( QDropEvent * ev);
+        virtual void dragMoveEvent( QDragMoveEvent * ev);
+        virtual void dragEnterEvent( QDragEnterEvent * ev);
 
     private slots:
         void setSourceNode( SgNode *node, bool setCodeEdit = true );

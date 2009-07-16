@@ -17,7 +17,6 @@ class Task : public QObject
                      FINISHED_SUCCESS,
                      FINISHED_ERROR  };
 
-
     public:
         /// Returns a parser object, which parses the task-output
         /// and provides (localized) error messages
@@ -36,7 +35,6 @@ class Task : public QObject
         /// Emitted when task has finished, call getState()
         /// to get status (success /error)
         void finished();
-
 };
 
 class QIODevice;

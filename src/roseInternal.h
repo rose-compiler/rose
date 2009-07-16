@@ -17,6 +17,10 @@
 
 #include <cstdlib>
 
+
+// TH(2009-07-15): moving definitions of ROSE_ASSERT and ROSE_ABORT to util/processSupport.(h|C)
+#include "processSupport.h"
+/*
 // These are supported this way so that they can be redefined as required
 #ifndef ROSE_ASSERT
 #ifndef NDEBUG
@@ -28,6 +32,7 @@
 #ifndef ROSE_ABORT
 #define ROSE_ABORT  abort
 #endif
+*/
 
 #define ROSE_INTERNAL_DEBUG false
 

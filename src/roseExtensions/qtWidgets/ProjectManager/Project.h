@@ -21,7 +21,7 @@ class QWidget;
 class ProjectManager : public ItemTreeNode
 {
     public:
-        ~ProjectManager();
+        virtual ~ProjectManager();
 
         static ProjectManager * instance();
 
@@ -57,9 +57,6 @@ class ProjectManager : public ItemTreeNode
         TaskList * taskListWdg;
         QWidget * taskOutputWdg;
 };
-
-
-
 
 
 class ProjectManagerRootNode : public ItemTreeNode
@@ -163,7 +160,7 @@ class SourceFileNode : public QObject, public ItemTreeNode
     friend class ProjectNode;
 
     public:
-        ~SourceFileNode();
+        virtual ~SourceFileNode();
 
 
         const QString & getPath() const          { return path;}
@@ -213,7 +210,7 @@ class BinaryFileNode : public QObject, public ItemTreeNode
 
     friend class ProjectNode;
     public:
-        ~BinaryFileNode();
+        virtual ~BinaryFileNode();
 
         virtual QVariant data(int role, int column=0) const;
 

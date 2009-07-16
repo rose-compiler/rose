@@ -1,20 +1,18 @@
 #include "rose_msvc.h"
 
+#include "processSupport.h"
+
 #if !ROSE_MICROSOFT_OS
 #include <sys/stat.h>
 #include <sys/wait.h>
 #endif
 
-#include <vector>
-#include <string>
-
 #if !ROSE_MICROSOFT_OS
 #include <unistd.h>
 #include <cassert>
 #endif
-#include <cstdio>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 
 // DQ (3/22/2009): This should be required, but only MSVS catches it.
 #include <assert.h>
@@ -100,4 +98,21 @@ int pcloseFromVector(FILE* f) { // Assumes there is only one child process
   return status;
 }
 
+rose_exception::rose_exception( const char *what )
+    : what_( what )
+{}
 
+const char *rose_exception::what() const throw()
+{
+    return what_;
+}
+
+void ROSE_ABORT()
+{
+    throw rose_exception( "abort" );
+}
+
+void ROSE_ABORT( const char *message )
+{
+    throw rose_exception( message );
+}

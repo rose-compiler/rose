@@ -15,10 +15,10 @@ GetOptions(
 );
 my @args  = @ARGV;
 my %table = (
+   platform_info  => \&platform_info,
    configure      => \&configure,
    make           => \&make,
    check          => \&check,
-   platform_info  => \&platform_info,
    remote_declare => \&generate_tasklist_nmi,
    remote_post    => \&generate_results_file,
 );

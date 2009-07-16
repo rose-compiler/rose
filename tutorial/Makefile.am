@@ -36,6 +36,7 @@ TUTORIAL_EXAMPLES = \
    bin_example \
    binaryAnalysis \
    binaryAnalysis_symbolTable \
+   binaryFileRead \
    sb_callgraphAnalysis \
    buildCFG \
    buildCG \
@@ -116,6 +117,8 @@ else
   noinst_PROGRAMS = $(TUTORIAL_EXAMPLES) sharedMemoryTraversals
   sharedMemoryTraversals_SOURCES = sharedMemoryTraversals.C
 endif
+
+binaryFileRead_SOURCES = binaryFileRead.C
 
 ASTGraphGenerator_SOURCES = ASTGraphGenerator.C
 

@@ -354,6 +354,8 @@ void MetricsKiviat::contextMenuEvent( QContextMenuEvent *ev)
     {
         qDebug() << "Unknown action ...";
     }
+    
+    delete parent;
 }
 
 void MetricsKiviat::dropEvent( QDropEvent *ev )
