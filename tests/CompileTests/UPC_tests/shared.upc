@@ -2,7 +2,6 @@
 examples for shared and unshared, global and static data in UPC
 Liao, 7/7/2008
 */
-
 /* ---------- unshared data (TLD)--------------------------*/
 /*Unshared global variables , with extern */
 extern int quux;
@@ -14,7 +13,7 @@ int counter2 = 100;
 double myarray[10];
 double myarray2[5]={0.0, 1.1, 2.2,3.3,4.4};
 
-  /*special case: private to shared ,can be handled with shared data ??*/
+  /*special case: private to shared */
 shared[4] int * p2s_p1; 
 shared[4] int * p2s_p2 = 0; 
 
@@ -26,7 +25,7 @@ shared int global_counter2 = 2;
 
 /* shared arrays */
 shared[5] double array[100*THREADS];
-/* Berkeley UPC compiler does not yet fully implement this: their bug 36 opened in 2003: 
+/* Berkeley UPC compiler does not yet fully implement this. See their bug 36
 */
 shared[5] double array2[10*THREADS]={1.1, 2.2};
 
@@ -34,10 +33,8 @@ shared[5] double array2[10*THREADS]={1.1, 2.2};
 shared int* shared[10] s2s_p4; /*shared to shared */
 shared[10] int* shared s2s_p44; /*shared to shared */
 shared[5] int* shared[8] s2s_p444; /*shared to shared */
-
 int *shared s2p_p3; /*shared to private */
 int *shared[5] s2p_p33; /*shared to private */
-
 int foo()
 {
 /* -------unshared static data -----------*/

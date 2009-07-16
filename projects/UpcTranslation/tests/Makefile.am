@@ -17,9 +17,21 @@ rose_hello.c:../roseupcc
 # various shared variables
 rose_shared_1.c:../roseupcc
 	../roseupcc -c $(ROSEUPCC_FLAGS) $(srcdir)/shared_1.upc
-
+rose_shared_1.c.aa: rose_shared_1.c
+	split -67 rose_shared_1.c rose_shared_1.c.
+	test -f rose_shared_1.c.aa
+	fold rose_shared_1.c.aa > rose_shared_1.c.aaf
+	test -f rose_shared_1.c.ab
+	fold rose_shared_1.c.ab > rose_shared_1.c.abf
+	
 rose_unshared_1.c:../roseupcc
 	../roseupcc -c $(ROSEUPCC_FLAGS) $(srcdir)/unshared_1.upc
+	split -67 rose_unshared_1.c rose_unshared_1.c.
+	test -f rose_unshared_1.c.aa
+	fold rose_unshared_1.c.aa > rose_unshared_1.c.aaf
+	test -f rose_unshared_1.c.ab
+	fold rose_unshared_1.c.ab > rose_unshared_1.c.abf
+
 #unshared_1.upc refers to an extern variable defined in extern.upc
 rose_extern.c:../roseupcc
 	../roseupcc -c $(ROSEUPCC_FLAGS) $(srcdir)/extern.upc
@@ -43,7 +55,9 @@ check-local:
 	$(MAKE) rose_barrier.c
 	$(MAKE) rose_hello.c
 	$(MAKE) rose_shared_1.c
+	$(MAKE) rose_shared_1.c.aa
 	$(MAKE) rose_unshared_1.c
+	$(MAKE) rose_unshared_1.c.aa
 	$(MAKE) rose_extern.c
 	$(MAKE) rose_unshared_2.c
 	$(MAKE) rose_bupcr_magic.c

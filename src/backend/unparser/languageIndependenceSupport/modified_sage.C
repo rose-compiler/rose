@@ -698,6 +698,9 @@ int GetPrecedence(int variant)
           case V_SgUnsignedLongLongIntVal: return 0;
           case V_SgUnsignedLongVal:  return 0;
           case V_SgComplexVal:       return 0;
+     // Liao, 7/15/2009, UPC nodes     
+          case V_SgUpcThreads:       return 0;
+          case V_SgUpcMythread:       return 0;
 #if 0
        // Template
           case V_:              return 0;

@@ -1510,9 +1510,9 @@ querySolverGrammarElementFromVariantVector (
           case V_SgAsteriskShapeExp:
           case V_SgDesignatedInitializer:
          // Liao, 8/28/2008, ignore  UPC nodes for now
-          case V_SgUpcLocalsizeofExpression:
-          case V_SgUpcBlocksizeofExpression:
-          case V_SgUpcElemsizeofExpression:
+          case V_SgUpcLocalsizeof:
+          case V_SgUpcBlocksizeof:
+          case V_SgUpcElemsizeof:
           case V_SgUpcNotifyStatement:
           case V_SgUpcWaitStatement:
           case V_SgUpcBarrierStatement:

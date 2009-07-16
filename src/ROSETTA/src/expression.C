@@ -30,9 +30,9 @@ Grammar::setUpExpressions ()
 
 #if USE_UPC_IR_NODES
   // DQ and Liao (6/10/2008): Added new IR nodes specific to UPC.
-     NEW_TERMINAL_MACRO (UpcLocalsizeofExpression,    "UpcLocalsizeofExpression",    "UPC_LOCAL_SIZEOF_EXPR" );
-     NEW_TERMINAL_MACRO (UpcBlocksizeofExpression,    "UpcBlocksizeofExpression",    "UPC_BLOCK_SIZEOF_EXPR" );
-     NEW_TERMINAL_MACRO (UpcElemsizeofExpression,     "UpcElemsizeofExpression",     "UPC_ELEM_SIZEOF_EXPR" );
+     NEW_TERMINAL_MACRO (UpcLocalsizeof,    "UpcLocalsizeof",    "UPC_LOCAL_SIZEOF_EXPR" );
+     NEW_TERMINAL_MACRO (UpcBlocksizeof,    "UpcBlocksizeof",    "UPC_BLOCK_SIZEOF_EXPR" );
+     NEW_TERMINAL_MACRO (UpcElemsizeof,     "UpcElemsizeof",     "UPC_ELEM_SIZEOF_EXPR" );
 #endif
 
   // DQ (2/5/2004): EDG 3.3 now separates out vararg functions explicitly in the AST 
@@ -221,7 +221,7 @@ Grammar::setUpExpressions ()
      NEW_NONTERMINAL_MACRO (Expression,
           UnaryOp             | BinaryOp                | ExprListExp         | VarRefExp           | ClassNameRefExp          |
           FunctionRefExp      | MemberFunctionRefExp    | ValueExp            | FunctionCallExp     | SizeOfOp                 |
-          UpcLocalsizeofExpression | UpcBlocksizeofExpression | UpcElemsizeofExpression |
+          UpcLocalsizeof| UpcBlocksizeof| UpcElemsizeof|
           TypeIdOp            | ConditionalExp          | NewExp              | DeleteExp           | ThisExp                  |
           RefExp              | Initializer             | VarArgStartOp       | VarArgOp            | VarArgEndOp              |
           VarArgCopyOp        | VarArgStartOneOperandOp | NullExpression      | VariantExpression   | SubscriptExpression      |
@@ -346,16 +346,16 @@ Grammar::setUpExpressions ()
 
 #if USE_UPC_IR_NODES
   // DQ and Liao (6/10/2008): Added new IR nodes specific to UPC.
-     UpcLocalsizeofExpression.setFunctionPrototype ( "HEADER_UPC_LOCAL_SIZEOF_EXPRESSION", "../Grammar/Expression.code" );
-     UpcLocalsizeofExpression.setDataPrototype ( "SgExpression*", "expression", "= NULL",
+     UpcLocalsizeof.setFunctionPrototype ( "HEADER_UPC_LOCAL_SIZEOF_EXPRESSION", "../Grammar/Expression.code" );
+     UpcLocalsizeof.setDataPrototype ( "SgExpression*", "expression", "= NULL",
             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-     UpcBlocksizeofExpression.setFunctionPrototype ( "HEADER_UPC_BLOCK_SIZEOF_EXPRESSION", "../Grammar/Expression.code" );
-     UpcBlocksizeofExpression.setDataPrototype ( "SgExpression*", "expression", "= NULL",
+     UpcBlocksizeof.setFunctionPrototype ( "HEADER_UPC_BLOCK_SIZEOF_EXPRESSION", "../Grammar/Expression.code" );
+     UpcBlocksizeof.setDataPrototype ( "SgExpression*", "expression", "= NULL",
             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-     UpcElemsizeofExpression.setFunctionPrototype  ( "HEADER_UPC_ELEM_SIZEOF_EXPRESSION",  "../Grammar/Expression.code" );
-     UpcElemsizeofExpression.setDataPrototype ( "SgExpression*", "expression", "= NULL",
+     UpcElemsizeof.setFunctionPrototype  ( "HEADER_UPC_ELEM_SIZEOF_EXPRESSION",  "../Grammar/Expression.code" );
+     UpcElemsizeof.setDataPrototype ( "SgExpression*", "expression", "= NULL",
             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
 
@@ -1624,9 +1624,9 @@ Grammar::setUpExpressions ()
 
 #if USE_UPC_IR_NODES
   // DQ and Liao (6/10/2008): Added new IR nodes specific to UPC.
-     UpcLocalsizeofExpression.setFunctionSource ( "SOURCE_UPC_LOCAL_SIZEOF_EXPRESSION", "../Grammar/Expression.code" );
-     UpcBlocksizeofExpression.setFunctionSource ( "SOURCE_UPC_BLOCK_SIZEOF_EXPRESSION", "../Grammar/Expression.code" );
-     UpcElemsizeofExpression.setFunctionSource  ( "SOURCE_UPC_ELEM_SIZEOF_EXPRESSION",  "../Grammar/Expression.code" );
+     UpcLocalsizeof.setFunctionSource ( "SOURCE_UPC_LOCAL_SIZEOF_EXPRESSION", "../Grammar/Expression.code" );
+     UpcBlocksizeof.setFunctionSource ( "SOURCE_UPC_BLOCK_SIZEOF_EXPRESSION", "../Grammar/Expression.code" );
+     UpcElemsizeof.setFunctionSource  ( "SOURCE_UPC_ELEM_SIZEOF_EXPRESSION",  "../Grammar/Expression.code" );
 #endif
 
      UserDefinedUnaryOp.setFunctionSource  ( "SOURCE_USER_DEFINED_UNARY_EXPRESSION",  "../Grammar/Expression.code" );
