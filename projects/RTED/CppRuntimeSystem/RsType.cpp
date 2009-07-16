@@ -7,7 +7,7 @@ using namespace std;
 
 
 
-RsType *  RsType::getSubtypeRecursive(addr_type offset,  size_t size)
+RsType *  RsType::getSubtypeRecursive(addr_type offset,  size_t size, bool stopAtArray)
 {
     RsType * result = this;
 
@@ -15,6 +15,16 @@ RsType *  RsType::getSubtypeRecursive(addr_type offset,  size_t size)
 
     while(result->getByteSize() > size)
     {
+        if(stopAtArray)
+        {
+            RsArrayType * arr = dynamic_cast<RsArrayType*> (result);
+            if(arr && arr->getBaseType()->getByteSize() == size)
+            {
+                int index = arr->arrayIndex(offset);
+                return index == -1 ? NULL : result;
+            }
+        }
+
         int subTypeId = result->getSubtypeIdAt(offset);
         if(subTypeId == -1)
             return NULL;
@@ -33,7 +43,6 @@ RsType *  RsType::getSubtypeRecursive(addr_type offset,  size_t size)
 
     return result;
 }
-
 
 std::ostream& operator<< (std::ostream &os, const RsType * m)
 {
@@ -117,13 +126,26 @@ bool  RsArrayType::isValidOffset(addr_type offset) const
         return true;
 }
 
-
 string RsArrayType::getArrayTypeName(RsType * basetype, size_t size)
 {
     stringstream s;
     s << "__array_" << basetype->getName() << "_" << size;
     return s.str();
 }
+
+int RsArrayType::arrayIndex(addr_type offset) const
+{
+    size_t baseSize = baseType->getByteSize();
+
+    if(offset % baseSize != 0)
+        return -1; //invalid (in between elements)
+
+    if( offset >= elementCount * baseSize)
+        return -1; //invalid (behind array)
+
+    return offset / baseSize;
+}
+
 
 void RsArrayType::print(ostream & os) const
 {
@@ -139,6 +161,7 @@ RsClassType::RsClassType(const string & name, size_t byteSize_)
     : RsType(name),
       byteSize(byteSize_)
 {
+    assert(byteSize > 0);
 }
 
 
@@ -163,6 +186,32 @@ int RsClassType::addMember(const std::string & name, RsType * type, addr_type of
     return members.size()-1;
 }
 
+bool RsClassType::isComplete(bool verbose) const
+{
+    if(verbose)
+    {
+        cout << "Padding info for type " << stringId << endl;
+        for(int i=1; i<members.size(); i++)
+        {
+
+            int diff = members[i].offset;
+            diff -= members[i-1].offset + members[i-1].type->getByteSize();
+            if(diff > 0)
+            {
+                cout << "Padding between "
+                     << members[i-1].name  <<  " (" << members[i-1].type->getName() << ")  and "
+                     << members[i]  .name  <<  " (" << members[i].  type->getName() << ") "
+                     << diff << " Bytes" << endl;
+            }
+         }
+    }
+
+    if(members.size()==0)
+        return false;
+
+    return (members.back().offset + members.back().type->getByteSize() == byteSize);
+
+}
 
 
 int RsClassType::getSubtypeCount() const

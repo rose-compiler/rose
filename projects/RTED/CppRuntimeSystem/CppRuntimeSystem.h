@@ -68,7 +68,8 @@ class RuntimeSystem
         void createVariable(addr_type address,
                             const std::string & name,
                             const std::string & mangledName,
-                            const std::string & typeString);
+                            const std::string & typeString,
+                            const std::string & pointerType="");
 
 
         /// Call this function after when a malloc or new occurs in monitored code
@@ -86,12 +87,10 @@ class RuntimeSystem
         /// this also includes "pseudo" pointers, for example if on code "int ** a" this function has to be called twice
         /// with var="a" and var="*a"
         /// pointer information is deleted when the variable goes out of scope
-        void createPointer(const std::string & var, addr_type targetAddress);
-
-        /// Call this function if a pointer was manipulated via arithmetic operations
-        /// when this function is called and the pointer changes the memory-chunk
-        /// it points to, a violation/warning is printed
-        void registerPointerChange(const std::string & var, addr_type newAddress);
+        /// @param checks if true, it is checked if the pointer changed the memory area it points to
+        ///               which is fine, if pointer was changed by assignment, and which might be an "error"
+        ///               if it was changed via pointer arithmetic
+        void registerPointerChange(const std::string & var, addr_type targetAddress, bool checks=false);
 
 
         /// Each variable is associated with a scope, use this function to create a new scope

@@ -33,7 +33,7 @@ class TypeSystem
         RsType * getArrayType(const std::string & baseTypeName, size_t size);
 
         /// Removes all registered datatypes, and adds the base datatypes
-        void clear();
+        void clearStatus();
 
         void print(std::ostream & os) const;
 

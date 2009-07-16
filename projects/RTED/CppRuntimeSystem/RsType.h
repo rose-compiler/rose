@@ -42,7 +42,7 @@ class RsType
         /// Returns the subtype at an offset, which is of specified size
         /// recursively resolves subtypes
         /// return NULL if no such subtype exists
-        virtual RsType *     getSubtypeRecursive(addr_type offset,  size_t size);
+        virtual RsType *     getSubtypeRecursive(addr_type offset,  size_t size, bool stopAtArray=false);
 
         /// Checks if a given offset is valid (not too big, and not in a padding region)
         virtual bool  isValidOffset(addr_type offset) const =0;
@@ -143,6 +143,10 @@ class RsArrayType : public RsType
         /// this is done by this function
         static std::string getArrayTypeName(RsType * basetype, size_t size);
 
+
+        RsType * getBaseType() const          { return baseType; }
+        int      arrayIndex(addr_type offset) const;
+
     protected:
         RsType * baseType;
         size_t   elementCount;
@@ -194,9 +198,12 @@ class RsClassType : public RsType
         /// Checks if a given offset is valid (not too big, and not in a padding region)
         virtual bool         isValidOffset(addr_type offset) const;
 
+        /// Checks if all members have been registered (all member-sizes add up to byteSize)
+        /// @param verbose if true all padding areas are written to stdout
+        virtual bool         isComplete(bool verbose=false) const;
+
         /// Print type information to a stream
         virtual void  print(std::ostream & os) const;
-
 
     protected:
         size_t byteSize;

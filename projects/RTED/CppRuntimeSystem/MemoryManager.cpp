@@ -13,6 +13,8 @@ using namespace std;
 // -----------------------    MemoryType  --------------------------------------
 
 
+bool MemoryType::checkMemWithoutPointer= true;
+
 MemoryType::MemoryType(addr_type _addr, size_t _size, const SourcePosition & _pos, bool _onStack)
     : startAddress(_addr), size(_size), allocPos(_pos), onStack(_onStack)
 {
@@ -34,6 +36,14 @@ MemoryType::MemoryType(addr_type addr, bool _onStack)
 {
 }
 
+MemoryType::~MemoryType()
+{
+    for(set<VariablesType*>::iterator it = pointerSet.begin();
+        it != pointerSet.end(); ++it)
+    {
+        (*it)->invalidatePointer();
+    }
+}
 
 bool MemoryType::containsAddress(addr_type queryAddress)
 {
@@ -86,8 +96,9 @@ void MemoryType::registerPointer(VariablesType * var)
     pointerSet.insert(var);
 }
 
-void MemoryType::deregisterPointer(VariablesType * var, bool doChecks)
+void MemoryType::deregisterPointer(VariablesType * var)
 {
+    bool doChecks = checkMemWithoutPointer;
     size_t erasedElements= pointerSet.erase(var);
     if(erasedElements==0)
     {
@@ -99,7 +110,7 @@ void MemoryType::deregisterPointer(VariablesType * var, bool doChecks)
         RuntimeSystem * rs = RuntimeSystem::instance();
         stringstream ss;
         ss << "No pointer to allocated memory region: " << endl;
-        ss << *this << endl << " because this pointer has changed: " <<endl;
+        ss << *this << endl << "because this pointer has changed: " <<endl;
         ss << *var << endl;
 
         rs->violationHandler(RuntimeViolation::MEM_WITHOUT_POINTER, ss.str());
@@ -159,8 +170,7 @@ void MemoryType::accessMemWithType(addr_type offset, RsType * type)
             }
             else
             {
-                //successful
-                typeInfo.insert(make_pair<int,RsType*>(offset,type));
+                //successful, no need to add because the type is already contained in bigger one
                 return;
             }
         }
@@ -186,8 +196,8 @@ void MemoryType::accessMemWithType(addr_type offset, RsType * type)
         if (sub != curType)
         {
             vio.descStream() << "Newly registered Type completely overlaps a previous registered Type in an inconsistent way:" << endl
-                            << "Overlapping Type " << curType->getName()
-                            << " (" << curStart << "," << curEnd << ")" << endl;
+                             << "Overlapping Type " << curType->getName()
+                             << " (" << curStart << "," << curEnd << ")" << endl;
 
             rs->violationHandler(vio);
             return;
@@ -200,6 +210,29 @@ void MemoryType::accessMemWithType(addr_type offset, RsType * type)
     return;
 }
 
+
+RsType * MemoryType::getTypeAt(addr_type offset, size_t size)
+{
+    TiIterPair res = getOverlappingTypeInfos(offset,offset+size);
+    TiIter itLower = res.first;
+    TiIter itUpper = res.second;
+
+    if(itLower== typeInfo.end())
+        return NULL;
+
+
+    // makes only sense if range contains exactly one type
+    TiIter incrementedLower = itLower;
+    ++incrementedLower;
+
+    if(incrementedLower == itUpper)
+    {
+        assert(offset >= itLower->first);
+        return itLower->second->getSubtypeRecursive(offset - itLower->first,size,true);
+    }
+
+    return NULL;
+}
 
 
 
@@ -268,9 +301,10 @@ void MemoryType::print(ostream & os) const
 
     if(pointerSet.size() > 0)
     {
-        os << "\tPointer: ";
+        os << "\tPointer to this chunk: ";
         for(set<VariablesType*>::const_iterator i = pointerSet.begin(); i!= pointerSet.end(); ++i)
             os << "\t" << (*i)->getName() << " ";
+        os << endl;
     }
 
     if(typeInfo.size() > 0)
@@ -425,7 +459,9 @@ void MemoryManager::freeMemory(addr_type addr, bool onStack)
 
     // successful free, erase allocation info from map
     mem.erase(m);
+    delete m;
 }
+
 
 
 

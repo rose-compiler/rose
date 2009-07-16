@@ -470,41 +470,96 @@ void testImplicitScope()
 void testLostMemRegion()
 {
     TEST_INIT("Testing detection of lost mem-regions");
-    rs->createMemory(10,5);
-    rs->createMemory(20,5);
-
+    rs->createMemory(10,2*sizeof(int));
+    rs->createMemory(18,2*sizeof(int));
 
     addr_type addr=100;
+    int ptrSize = sizeof(void*);
     rs->beginScope("Scope1");
-        rs->createVariable(addr+=4,"p1_to_10","mangled","SgPointerType");
-        rs->createPointer("p1_to_10",10);
+        rs->createVariable(addr+=ptrSize,"p1_to_10","mangled","SgPointerType","SgTypeInt");
+        rs->registerPointerChange("p1_to_10",10);
 
-        rs->createVariable(addr+=4,"p1_to_20","mangled","SgPointerType");
-        rs->createPointer("p1_to_20",20);
-
+        rs->createVariable(addr+=ptrSize,"p1_to_18","mangled","SgPointerType","SgTypeInt");
+        rs->registerPointerChange("p1_to_18",18);
 
         rs->beginScope("Scope2");
-            rs->createVariable(addr+=4,"p2_to_10","mangled","SgPointerType");
-            rs->createPointer("p2_to_10",10);
+            rs->createVariable(addr+=ptrSize,"p2_to_10","mangled","SgPointerType","SgTypeInt");
+            rs->registerPointerChange("p2_to_10",10);
         rs->endScope();
 
-        try{ rs->createPointer("p1_to_10",NULL); }
+        /*
+        rs->freeMemory(10);
+        rs->freeMemory(18);
+        rs->registerPointerChange("p1_to_10",NULL);
+        rs->registerPointerChange("p1_to_20",NULL);
+        */
+        try{ rs->registerPointerChange("p1_to_10",NULL); }
         TEST_CATCH(RuntimeViolation::MEM_WITHOUT_POINTER)
 
-        try{ rs->createPointer("p1_to_20",NULL); }
+        try{ rs->registerPointerChange("p1_to_18",NULL); }
         TEST_CATCH(RuntimeViolation::MEM_WITHOUT_POINTER)
 
     rs->endScope();
 
     rs->freeMemory(10);
-    rs->freeMemory(20);
+    rs->freeMemory(18);
 
     CLEANUP
 }
 
 void testPointerChanged()
 {
-    TEST_INIT("Testing detection of lost mem-regions");
+    TEST_INIT("Pointer Tracking test: Pointer changes chunks");
+
+    rs->createMemory(10,2*sizeof(int));
+    rs->createMemory(18,2*sizeof(int));
+
+
+    // Case1: change of allocation chunk
+    addr_type addr=100;
+    int ptrSize = sizeof(void*);
+    rs->beginScope("Scope1");
+        rs->createVariable(addr+=ptrSize,"p1_to_10","mangled","SgPointerType","SgTypeInt");
+        rs->registerPointerChange("p1_to_10",10);
+
+        rs->createVariable(addr+=ptrSize,"p2_to_10","mangled","SgPointerType","SgTypeInt");
+        rs->registerPointerChange("p2_to_10",10);
+
+        rs->createVariable(addr+=ptrSize,"p1_to_18","mangled","SgPointerType","SgTypeInt");
+        rs->registerPointerChange("p1_to_18",18);
+
+
+        try{ rs->registerPointerChange("p1_to_10",18,true); }
+        TEST_CATCH(RuntimeViolation::POINTER_CHANGED_MEMAREA )
+
+        rs->registerPointerChange("p1_to_18",18+sizeof(int));
+
+        rs->freeMemory(10);
+        rs->freeMemory(18);
+    rs->endScope();
+
+
+    // Case2: change of "type-chunk"
+    rs->beginScope("Scope2");
+        struct A { int arr[10]; int behindArr; };
+        TypeSystem * ts = rs->getTypeSystem();
+        RsClassType * typeA = new RsClassType("A",sizeof(A));
+        typeA->addMember("arr",ts->getArrayType("SgTypeInt",10), offsetof(A,arr));
+        typeA->addMember("behindArr",ts->getTypeInfo("SgTypeInt"),offsetof(A,behindArr));
+        assert(typeA->isComplete());
+        ts->registerType(typeA);
+
+        // Create an instance of A on stack
+        rs->createVariable(0x42,"instanceOfA","mangled","A");
+
+        rs->createVariable(0x100,"intPtr","mangled","SgPointerType","SgTypeInt");
+        rs->registerPointerChange("intPtr",0x42);
+
+        rs->registerPointerChange("intPtr",0x42 + 9*sizeof(int),true);
+
+    rs->endScope();
+
+
 
     CLEANUP
 }
@@ -516,6 +571,26 @@ void testInvalidPointerAssign()
     CLEANUP
 }
 
+void testPointerTracking()
+{
+    TEST_INIT("Testing Pointer tracking")
+    TypeSystem * ts = rs->getTypeSystem();
+
+    // class A { int arr[2]; int intBehindArr; }
+    RsClassType * type = new RsClassType("A",3*sizeof(int));
+    type->addMember("arr",ts->getArrayType("SgTypeInt",2));
+    type->addMember("intBehindArr",ts->getTypeInfo("SgTypeInt"));
+    ts->registerType(type);
+
+    rs->beginScope("TestScope");
+    rs->createVariable(42,"instanceOfA","mangled","A");
+
+    rs->createVariable(100,"pointer","mangledPointer","SgPointerType","A");
+
+    rs->endScope();
+
+    CLEANUP
+}
 
 // -------------------------------------- CStdLib Tests ------------------------------------------
 
@@ -789,35 +864,43 @@ void testTypeSystemDetectNested()
 
     TypeSystem * ts = rs->getTypeSystem();
 
-    /*
-     * class A { int a1; char a2, double a3; }
-     * class B { A a[10]; char b1; int b2;
-     */
-    RsClassType * typeA = new RsClassType("A",16);
-    typeA->addMember("a1",ts->getTypeInfo("SgTypeInt"),0);
-    typeA->addMember("a2",ts->getTypeInfo("SgTypeChar"),4);
-    typeA->addMember("a3",ts->getTypeInfo("SgTypeDouble"),8);
-
+    // Register Struct A
+    struct A { int a1; char a2; double a3; };
+    RsClassType * typeA = new RsClassType("A",sizeof(A));
+    typeA->addMember("a1",ts->getTypeInfo("SgTypeInt"),   offsetof(A,a1));
+    typeA->addMember("a2",ts->getTypeInfo("SgTypeChar"),  offsetof(A,a2));
+    typeA->addMember("a3",ts->getTypeInfo("SgTypeDouble"),offsetof(A,a3));
+    assert(typeA->isComplete());
     ts->registerType(typeA);
 
-    RsClassType * typeB = new RsClassType("B",10*16 + 8);
-
-    typeB->addMember("a",ts->getArrayType("A",10),0);
-    typeB->addMember("b1",ts->getTypeInfo("SgTypeChar"),10*16    );
-    typeB->addMember("b2",ts->getTypeInfo("SgTypeInt"), 10*16 + 4);
-
+    // Register Struct B
+    struct B { A arr[10]; char b1; int b2; };
+    RsClassType * typeB = new RsClassType("B",sizeof(B));
+    typeB->addMember("arr",ts->getArrayType("A",10),    offsetof(B,arr));
+    typeB->addMember("b1",ts->getTypeInfo("SgTypeChar"),offsetof(B,b1) );
+    typeB->addMember("b2",ts->getTypeInfo("SgTypeInt"), offsetof(B,b2));
+    assert(typeB->isComplete());
     ts->registerType(typeB);
 
 
-    rs->createMemory(42,10000);
-    MemoryType * mt = rs->getMemManager()->getMemoryType(42);
+    // Create Memory with first an A and then a B
+    const addr_type ADDR = 42;
+    rs->createMemory(ADDR,sizeof(A)+sizeof(B));
+    MemoryType * mt = rs->getMemManager()->getMemoryType(ADDR);
     mt->accessMemWithType(0,ts->getTypeInfo("A"));
-    mt->accessMemWithType(16,ts->getTypeInfo("B"));
-    mt->accessMemWithType(32+4+4,ts->getTypeInfo("SgTypeDouble"));
+    mt->accessMemWithType(sizeof(A),ts->getTypeInfo("B"));
+    mt->accessMemWithType(sizeof(A)+offsetof(A,a3),
+                          ts->getTypeInfo("SgTypeDouble"));
 
+    /*
+    RsType * type1 = mt->getTypeAt(sizeof(A)+offsetof(B,arr),sizeof(A));
+    RsType * type2 = mt->getTypeAt(sizeof(A)+offsetof(B,arr) + 5*sizeof(A)+1,sizeof(A));
+    cout << "Type1 " << (type1 ? type1->getName() : "NULL") << endl;
+    cout << "Type2 " << (type2 ? type2->getName() : "NULL") << endl;
+    */
 
     //Access to padded area
-    try {mt->accessMemWithType(32+4+1,ts->getTypeInfo("SgTypeChar")); }
+    try {mt->accessMemWithType(offsetof(A,a2)+1,ts->getTypeInfo("SgTypeChar")); }
     TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
 
     //Wrong type
@@ -825,8 +908,8 @@ void testTypeSystemDetectNested()
     TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
 
     //Wrong basic type
-    mt->accessMemWithType(32+4,ts->getTypeInfo("SgTypeChar"));
-    try {mt->accessMemWithType(32+4,ts->getTypeInfo("SgTypeInt")); }
+    mt->accessMemWithType(offsetof(A,a2),ts->getTypeInfo("SgTypeChar"));
+    try {mt->accessMemWithType(offsetof(A,a2),ts->getTypeInfo("SgTypeInt")); }
     TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
 
     rs->log() << "Type System Status after test" << endl;
@@ -842,35 +925,41 @@ void testTypeSystemMerge()
     TEST_INIT("Testing TypeSystem: Merging basic types into a struct ")
     TypeSystem * ts = rs->getTypeSystem();
 
-    RsClassType * typeTwoInts = new RsClassType("A",12);
-    typeTwoInts->addMember("a1",ts->getTypeInfo("SgTypeInt"),0);
-    typeTwoInts->addMember("a2",ts->getTypeInfo("SgTypeInt"),4);
-    typeTwoInts->addMember("a2",ts->getTypeInfo("SgTypeFloat"),8);
+    struct A { int a1; int a2; float a3; };
+    RsClassType * typeA = new RsClassType("A",sizeof(A));
+    typeA->addMember("a1",ts->getTypeInfo("SgTypeInt"),  offsetof(A,a1));
+    typeA->addMember("a2",ts->getTypeInfo("SgTypeInt"),  offsetof(A,a2));
+    typeA->addMember("a3",ts->getTypeInfo("SgTypeFloat"),offsetof(A,a3));
+    assert(typeA->isComplete());
+    ts->registerType(typeA);
 
+    const addr_type ADDR = 42;
+    rs->createMemory(ADDR,100);
 
-    ts->registerType(typeTwoInts);
-
-    rs->createMemory(42,100);
-
-        MemoryType * mt = rs->getMemManager()->getMemoryType(42);
+        MemoryType * mt = rs->getMemManager()->getMemoryType(ADDR);
         //first part in mem is a double
         mt->accessMemWithType(0,ts->getTypeInfo("SgTypeDouble"));
 
         //then two ints are accessed
-        mt->accessMemWithType(sizeof(double),ts->getTypeInfo("SgTypeInt"));
-        mt->accessMemWithType(sizeof(double)+sizeof(int),ts->getTypeInfo("SgTypeInt") );
+        mt->accessMemWithType(sizeof(double)+offsetof(A,a1),ts->getTypeInfo("SgTypeInt"));
+        mt->accessMemWithType(sizeof(double)+offsetof(A,a2),ts->getTypeInfo("SgTypeInt") );
         //then the same location is accessed with an struct of two int -> has to merge
-        mt->accessMemWithType(sizeof(double),typeTwoInts);
+        mt->accessMemWithType(sizeof(double),typeA);
 
         // because of struct access it is known that after the two ints a float follows -> access with int failes
-        try {mt->accessMemWithType(sizeof(double)+2*sizeof(int),ts->getTypeInfo("SgTypeInt")); }
+        try {mt->accessMemWithType(sizeof(double)+offsetof(A,a3),ts->getTypeInfo("SgTypeInt")); }
         TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
 
 
-    rs->freeMemory(42);
+
+
+    rs->freeMemory(ADDR);
 
     CLEANUP
 }
+
+
+
 
 
 int main(int argc, char ** argv)
@@ -880,6 +969,10 @@ int main(int argc, char ** argv)
         RuntimeSystem * rs = RuntimeSystem::instance();
         rs->setTestingMode(true);
         rs->setOutputFile("test_output.txt");
+
+
+        //testPointerChanged();
+        //abort();
 
         testTypeSystemDetectNested();
         testTypeSystemMerge();
@@ -904,9 +997,10 @@ int main(int argc, char ** argv)
         testScopeFreesStack();
         testImplicitScope();
 
-        //testLostMemRegion();
-        //testPointerChanged();
-        //testInvalidPointerAssign();
+        testLostMemRegion();
+        testPointerChanged();
+        testInvalidPointerAssign();
+        testPointerTracking();
 
         test_memcpy();
         test_memmove();

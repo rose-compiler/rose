@@ -30,7 +30,7 @@ class MemoryType
         // constructor which initialized only the address, used for comparison purposes
         MemoryType(addr_type addr, bool onStack = false);
 
-        ~MemoryType() {}
+        ~MemoryType();
         /// Checks if an address lies in this memory chunk
         bool containsAddress(addr_type addr);
         /// Checks if a memory area is part of this allocation
@@ -62,7 +62,7 @@ class MemoryType
         /// Notifies the Chunk that a certain pointer does not pointer there anymore
         /// if doChecks is true, and the last pointer to the chunk is removed
         /// a violation is created
-        void deregisterPointer(VariablesType * var, bool doChecks);
+        void deregisterPointer(VariablesType * var);
 
 
         /// Prints info about this allocation
@@ -80,21 +80,38 @@ class MemoryType
             return static_cast<T*>(charAddress);
         }
 
-
+        /// This functions checks and registers typed access to memory
+        /// the first time memory is accessed with a specific type,
+        /// this type is associated with this mem-region,
+        /// and if its later on accessed with a different type, a violation is reported
+        /// however it is possible to access the mem-region later with "containing" types
+        /// f.e. first access with int-pointer, then with struct pointer, which as as first member an int
         void accessMemWithType(addr_type offset, RsType * type);
 
 
-        /// A entry in this map means, that on offset <key> is stored the type <value>
+        /// Returns the TypeInfo, or the CONTAINING ARRAY which is associated with that offset
+        /// to distinguish between nested types (class with has members of other classes)
+        /// an additional size parameter is needed
+        /// if not TypeInfo is found, NULL is returned
+        RsType * getTypeAt(addr_type offset, size_t size);
+
+
+        /// If set to true a violation is reported if the last pointer
+        /// which pointed to a mem region changes (i.e. mem region not reachable any more)
+        /// is not necessary an error, f.e. p=malloc(3); p+=1000; p-=1000; free(p)
+        /// this code is valid but would report a violation, because after the "+="
+        /// no pointer points to the chunk any more
+        /// per default these errors are reported
+        static void setViolationOnMemWithoutPointer(bool val) {checkMemWithoutPointer = val; }
+        static bool violationOnMemWithoutPointer()            { return checkMemWithoutPointer; }
+
+
+    private:
+
         typedef std::map<addr_type, RsType*> TypeInfoMap;
         typedef TypeInfoMap::iterator TiIter;
         typedef std::pair<TiIter,TiIter> TiIterPair;
 
-        /// Determines all typeinfos which intersect the defined offset-range [from,to)
-        /// "to" is exclusive - typeInfos with startOffset==to , are not included
-        /// TODO only public because of debugging purposes
-        TiIterPair getOverlappingTypeInfos(addr_type from, addr_type to);
-
-    private:
 
         void insertType(addr_type offset,RsType * type);
 
@@ -105,15 +122,18 @@ class MemoryType
 		bool			  onStack;		///< Whether the memory lives on the stack or not (i.e. on the heap)
 
 
+        /// Determines all typeinfos which intersect the defined offset-range [from,to)
+        /// "to" is exclusive - typeInfos with startOffset==to , are not included
+        TiIterPair getOverlappingTypeInfos(addr_type from, addr_type to);
 
-
+        /// A entry in this map means, that on offset <key> is stored the type <value>
         TypeInfoMap typeInfo;
 
         /// Set of pointers which currently point into this memory chunk
         std::set<VariablesType*> pointerSet;
 
+        static bool checkMemWithoutPointer;
 
-        std::vector< TypeInfoMap::iterator > getTypeEntriesInRange;
 
 };
 std::ostream& operator<< (std::ostream &os, const MemoryType & m);
@@ -166,6 +186,7 @@ class MemoryManager
         /// Returns mem-area which overlaps with given area, or NULL if nothing found
         MemoryType * findOverlappingMem(addr_type addr, size_t size);
 
+
     private:
         /// Queries the map for a potential matching memory area
         /// finds the memory region with next lower or equal address
@@ -175,7 +196,8 @@ class MemoryManager
         typedef std::set<MemoryType*,PointerCmpFunc<MemoryType> > MemoryTypeSet;
         MemoryTypeSet mem;
 
-	friend class CStdLibManager;
+
+        friend class CStdLibManager;
 };
 
 std::ostream& operator<< (std::ostream &os, const MemoryManager & m);

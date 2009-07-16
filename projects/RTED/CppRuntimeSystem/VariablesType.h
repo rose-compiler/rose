@@ -5,6 +5,7 @@
 
 #include <string>
 #include <iostream>
+#include <cassert>
 #include "Util.h"
 
 class MemoryType;
@@ -38,14 +39,15 @@ class VariablesType
 
         /// Marks this variable as pointer and stores the address it points to
         /// @param newAddr  the new target-address of this pointer
-        /// @param doChecks if true a violation is created when the pointer changes
+        /// @param memChunkChangeCheck if true a violation is created when the pointer changes
         ///                 the memory-chunk it points to, normally not wanted if pointer
         ///                 is assigned, only when pointer arithmetic is done
         ///                 heuristic: after operation with pointer it should still point to same mem-chunk
-        void setPointerTarget(addr_type newAddr, bool doChecks);
+        void setPointerTarget(addr_type newAddr,
+                              bool memChunkChangeCheck);
 
         /// Is called by memory-chunk when it gets freed
-        void invalidatePointer() { setPointerTarget(0,false); }
+        void invalidatePointer();
 
         /// Returns the Memory Chunk this pointer points to
         /// or NULL if this variable is not a pointer
@@ -58,7 +60,10 @@ class VariablesType
         MemoryType *        getAllocation()  const;
 
 
+        bool isPointer() const  { return pointerType != NULL; }
+
         void print(std::ostream & os) const;
+
 
     private:
         /// stack variable name

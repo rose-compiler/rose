@@ -304,6 +304,17 @@ run/%: rted_source/%.bin rted_source/%_debug.bin rted_source/%.expected-output
 		exit 1; \
 	    fi 
 	@echo " done."
+       
+run_log/%: rted_source/%.bin rted_source/%.expected-output 
+	@echo -n "   running runtime error detection ... "
+	@$(filter rted_source/%.bin, $^); \
+	if [ $$? -ne 0 ]; \ 
+	then \
+		echo " $@ failed" >> test_log.txt;\
+	else\
+	echo " $@ passed" >> test_log.txt;\
+	fi 
+	@echo " done."  
 
 #------------------------------------------------------------------------------
 
@@ -317,6 +328,9 @@ run: $(patsubst $(rted_path)/%.c, run/%, $(RTED_ORIGSOURCES) )
 run_debug: $(patsubst $(rted_path)/%.c, run_debug/%, $(RTED_ORIGSOURCES) )
 
 run_checkonly: $(patsubst $(rted_path)/%.c, run_checkonly/%, $(RTED_ORIGSOURCES) )
+
+run_log: $(patsubst $(rted_path)/%.c, run_log/%, $(RTED_ORIGSOURCES) )
+
 
 #------------------------------------------------------------------------------
 

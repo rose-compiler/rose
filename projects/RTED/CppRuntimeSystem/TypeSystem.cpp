@@ -7,7 +7,7 @@ using namespace std;
 TypeSystem::TypeSystem()
 {
     //call clear, to register all base types
-    clear();
+    clearStatus();
 }
 
 TypeSystem::~TypeSystem()
@@ -16,7 +16,7 @@ TypeSystem::~TypeSystem()
         delete *i;
 }
 
-void TypeSystem::clear()
+void TypeSystem::clearStatus()
 {
     types.clear();
 
@@ -35,6 +35,10 @@ bool TypeSystem::registerType(RsType * t)
 {
     pair<TypeSet::iterator, bool> res;
     res =types.insert(t);
+
+    if(!res.second)
+        cerr << "Warning: tried to register type " << t->getName() << " twice!" << endl;
+
     return res.second;
 }
 

@@ -53,9 +53,17 @@ VariablesType::~VariablesType()
         MemoryType * mt =mm->findContainingMem(pointerTarget,1);
         assert(mt);
 
-        mt->deregisterPointer(this,true);
+        mt->deregisterPointer(this);
     }
 }
+
+void VariablesType::invalidatePointer()
+{
+    assert(pointerType);
+    //cout << "Invalidated Pointer " << name << " with pointed to " << pointerTarget <<  endl ;
+    pointerTarget=0;
+}
+
 
 MemoryType * VariablesType::getAllocation() const
 {
@@ -91,33 +99,63 @@ void VariablesType::setPointerTarget(addr_type newAddr, bool doChecks)
         ss << "Tried to assign non allocated address 0x" << hex << newAddr;
         ss << " to pointer " << name;
         rs->violationHandler(RuntimeViolation::INVALID_PTR_ASSIGN,ss.str());
+        pointerTarget=0;
         return;
     }
 
-    if(pointerTarget!= 0)
+    addr_type oldPointerTarget = pointerTarget;
+    pointerTarget = newAddr;
+    MemoryType * oldMem = mm->findContainingMem(oldPointerTarget,pointerType->getByteSize());
+
+    if(newMem)
     {
-        MemoryType * oldMem = mm->findContainingMem(pointerTarget,pointerType->getByteSize());
-        if(oldMem == newMem) //pointer just changed offset
-            return;
+        // If a pointer points to that memory region, assume that his mem-region if of right type
+        // even if actual error would only happen on deref
+        newMem->accessMemWithType(newAddr-newMem->getAddress(),pointerType);
 
-        if(doChecks && newAddr != 0) // memory region changed (may be error)
-        {
-            stringstream ss;
-            ss << "A pointer changed the memory area which it points to (may be an error)" << endl;
-            ss << "Pointer:     " << *this << endl;
-            ss << "Old MemArea: " << *oldMem << endl;
-            ss << "New MemArea: " << *newMem << endl;
-            rs->violationHandler(RuntimeViolation::POINTER_CHANGED_MEMAREA);
-        }
-
-        // deregister old target
-        oldMem->deregisterPointer(this,doChecks);
+        if(oldMem != newMem)
+            newMem->registerPointer(this);
     }
 
-    if(newAddr!= 0)
-        newMem->registerPointer(this);
 
-    pointerTarget = newAddr;
+    // if old target was valid
+    if(oldPointerTarget != 0)
+    {
+        assert(oldMem);  //has to be valid, because checked when set
+
+        if(oldMem != newMem)
+            oldMem->deregisterPointer(this);
+
+        // old and new address is valid
+        if( newMem && doChecks )
+        {
+            RsType * newTypeChunk = newMem->getTypeAt(newAddr-newMem->getAddress(),pointerType->getByteSize());
+            RsType * oldTypeChunk = oldMem->getTypeAt(oldPointerTarget - oldMem->getAddress(),pointerType->getByteSize());
+
+            if(oldTypeChunk == newTypeChunk && oldMem ==newMem)
+                return; //pointer just changed offset in an array
+
+            if(newAddr != 0) // memory region changed (may be error)
+            {
+                int oldOffset = oldPointerTarget - oldMem->getAddress();
+                int newOffset = newAddr-newMem->getAddress();
+
+                stringstream ss;
+                ss << "A pointer changed the memory area (array or variable) which it points to (may be an error)" << endl << endl;
+
+                ss << "Pointer:     " << *this << endl << endl;
+                ss << "Old Target:  " <<  oldTypeChunk->getName()<< "Offset(" << oldOffset << ") in this Mem-Region:" <<  endl
+                                      << *oldMem << endl;
+
+                ss << "New Target: " << newTypeChunk->getName() << " Offset:" << newOffset << ") in this Mem-Region:" <<  endl
+                                      << *oldMem << endl;
+
+                rs->violationHandler(RuntimeViolation::POINTER_CHANGED_MEMAREA,ss.str());
+            }
+        }
+    }
+
+
 }
 
 
@@ -145,6 +183,9 @@ size_t  VariablesType::getSize() const
 void VariablesType::print(ostream & os) const
 {
     os << "0x" << hex <<setw(6) << setfill('0') << address << "\t" << name << "(" << mangledName <<")" << " Type: " << type->getName()  ;
+
+    if(pointerType)
+        os << " points to " << pointerType->getName() << " at address 0x" << hex << setw(6) << setfill('0') << pointerTarget;
 }
 
 

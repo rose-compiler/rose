@@ -66,11 +66,23 @@ void RuntimeSystem::endScope()
     ScopeInfo lastScope = scope.back();
     scope.pop_back();
 
+    vector<VariablesType * > toDelete;
+
     for(int i=stack.size()-1; i >= lastScope.stackIndex ; i--)
     {
-        delete stack.back();
+        // First delete the variables then the pointer
+        // otherwise there are lots of errors about no pointer to allocated mem-region
+        if(stack.back()->isPointer())
+            toDelete.push_back(stack.back());
+        else
+            delete stack.back();
+
         stack.pop_back();
     }
+
+    for(int i=0; i<toDelete.size(); i++)
+        delete toDelete[i];
+
     assert(stack.size() == lastScope.stackIndex);
 }
 
@@ -81,9 +93,18 @@ void RuntimeSystem::endScope()
 void RuntimeSystem::createVariable(addr_type address,
                                    const std::string & name,
                                    const std::string & mangledName,
-                                   const std::string & typeString)
+                                   const std::string & typeString,
+                                   const std::string & pointerType)
 {
-    createVariable(new VariablesType(name,mangledName,typeString,address));
+    RsType * pt =NULL;
+    if(pointerType.size() > 0)
+    {
+        pt = typeSystem.getTypeInfo(pointerType);
+        if(!pt)
+            cerr << "Couldn't find type " << pointerType << " when registering pointer-type" << endl;
+    }
+
+    createVariable(new VariablesType(name,mangledName,typeString,address,pt));
 }
 
 void RuntimeSystem::createVariable(VariablesType * var)
@@ -91,7 +112,11 @@ void RuntimeSystem::createVariable(VariablesType * var)
     // Track the memory area where the variable is stored
     // special case when static array, then createMemory is called anyway
     if(var->getType()->getName() != "SgArrayType")
-        RuntimeSystem::instance()->createMemory(var->getAddress(),var->getSize(), true);
+    {
+        createMemory(var->getAddress(),var->getSize(), true);
+        // tell the memManager the type of this memory chunk
+        var->getAllocation()->accessMemWithType(0,var->getType());
+    }
 
 
     // every variable has to part of scope
@@ -102,19 +127,12 @@ void RuntimeSystem::createVariable(VariablesType * var)
 
 // --------------------- Pointer Tracking---------------------------------
 
-void RuntimeSystem::createPointer(const string & varName, addr_type targetAddress)
+
+void RuntimeSystem::registerPointerChange(const string & varName, addr_type targetAddress, bool checks)
 {
     VariablesType * var = findVarByName(varName);
     assert(var); // create the variable first!
-    var->setPointerTarget(targetAddress,false);
-}
-
-
-void RuntimeSystem::registerPointerChange(const string & varName, addr_type targetAddress)
-{
-    VariablesType * var = findVarByName(varName);
-    assert(var); // create the variable first!
-    var->setPointerTarget(targetAddress,true);
+    var->setPointerTarget(targetAddress,checks);
 }
 
 VariablesType * RuntimeSystem::findVarByName(const string & name)
@@ -122,7 +140,6 @@ VariablesType * RuntimeSystem::findVarByName(const string & name)
     for(int i=0; i< stack.size(); i++)
         if(name == stack[i]->getName() )
             return stack[i];
-
 
     return NULL;
 }
@@ -190,6 +207,7 @@ void RuntimeSystem::clearStatus()
 {
     memManager.clearStatus();
     fileManager.clearStatus();
+    typeSystem.clearStatus();
 
     while(scope.size() > 0)
         endScope();
