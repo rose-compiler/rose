@@ -228,6 +228,9 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
 
 // printf ("Inside of buildCallGraph functionList.size() = %zu \n",functionList.size());
 
+  Rose_STL_Container<SgNode *> resultingFunctions;
+
+
   while ( i != functionList.end() )
   {
     SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration( *i );
@@ -256,11 +259,15 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
 
     ROSE_ASSERT(functionData->properties->functionDeclaration != NULL);
     //AS(032806) Filter out functions baced on criteria in predicate
-    if(pred(functionDeclaration)==true) 
+    if(pred(functionDeclaration)==true)
+    {
+      resultingFunctions.push_back(*i);
       callGraphData.push_back( functionData );
+    }
     i++;
   }
 
+  functionList = resultingFunctions;
   // Build the graph
   SgIncidenceDirectedGraph *returnGraph = new SgIncidenceDirectedGraph();
   ROSE_ASSERT (returnGraph != NULL);
@@ -360,6 +367,14 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
       else
       {
         SgGraphNode *endNode = findNode( nodeList, ( *k )->functionDeclaration, var_SOLVE_FUNCTION_CALLS_IN_DB );
+   
+        //This function has been filtered out
+        if(pred((*k)->functionDeclaration)==false)
+        {
+          k++;
+          continue;
+        }
+ 
         ROSE_ASSERT ( endNode );
         if(findEdge(returnGraph,startingNode,endNode)==NULL)
         {
