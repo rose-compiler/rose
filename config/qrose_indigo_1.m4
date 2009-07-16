@@ -110,12 +110,15 @@ dnl DQ (9/12/2008): Only test for failure if we have configured for QRose use.
 dnl This prevents failing when we find Qt3 and we have not configured
 dnl ROSE to use QRose. Also fixed in code below.
 dnl if test "x$with_QRose" != xno && test "$qt_incdir" = NONE; then
+
+dnl Gabriel (7/7/2009): Added Qt3 support for the ROSE components - we need to define QT3_SUPPORT , 
+dnl                     but I am not sure where to put it, so I have placed it below with the includes
   if test "x$with_QRose" != xno; then
      if test "$qt_incdir" = NONE; then
         AC_MSG_ERROR([ Qt headers not found,  use --with-qt=DIR or --with-qt-includes=DIR])
      fi
   fi
-  QT_INCLUDES="-I$qt_incdir/QtCore -I$qt_incdir/QtGui -I$qt_incdir/QtXml -I$qt_incdir"
+  QT_INCLUDES="-DQT3_SUPPORT -I$qt_incdir/QtCore -I$qt_incdir/QtGui -I$qt_incdir/Qt3Support -I$qt_incdir/QtXml -I$qt_incdir"
   AC_SUBST(QT_INCLUDES)
 
 dnl ---------------------------[check Qt Libraries]------------
@@ -127,8 +130,8 @@ dnl if test "$with_QRose" != no && test "$qt_libdir" = NONE; then
         AC_MSG_ERROR([ Qt libraries not found,  use --with-qt=DIR or --with-qt-libraries=DIR ])
      fi
   fi
-dnl  LIB_QT="-lQtCore -lQtGui"
-  QT_LDFLAGS="-L$qt_libdir -lQtCore -lQtGui -lQtXml -lQtUiTools"
+dnl  LIB_QT="-lQtCore -lQtGui -lQt3Support"
+  QT_LDFLAGS="-L$qt_libdir -lQtCore -lQtGui -lQt3Support -lQtXml -lQtUiTools"
 dnl  AC_SUBST(LIB_QT)
 
   AM_CONDITIONAL(ROSE_USE_QT,test "$with_qt" != no)

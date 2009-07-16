@@ -1,7 +1,7 @@
 /***************************************************************************
-    Jose Gabriel de Figueiredo Coutinho                                   
-    jgfc@doc.ic.ac.uk                                                     
-    Class: QROSE     
+    Jose Gabriel de Figueiredo Coutinho
+    jgfc@doc.ic.ac.uk
+    Class: QROSE
     Description: Frontend class for the framework module
  ***************************************************************************/
 
@@ -18,9 +18,10 @@ class QObject;
 namespace qrs {
 
 class QRWindow;
+class QRGroup;
 
 class QROSE {
-             
+
 public:
     // used to define whether orientation of widgets goes from top to down, or
     // left to right.
@@ -50,11 +51,14 @@ public:
    static QRWindow* findWindow(const std::string &name);
    // gets parent window for a particular widget
    static QRWindow* getQRWindow(QWidget *widget);
-   // show a message box 
+   // show a message box
    static int msgBox(const char *fmt, ...);
    // converts printf style arguments to a string
    static std::string format(const char *fmt, ...);
-           
+   // input box
+   static bool inputBox(std::string caption, std::string label, std::string &return_text, std::string default_text = std::string());
+
+
 //  ============================================================[ widget attributes ]======
    static std::string getName(const QWidget *widget);
    static void setName(const QWidget *widget, std::string);
@@ -67,22 +71,26 @@ public:
    static bool canConnect(const QObject *sender, const char *signal, const QObject *receiver,
                            const char *slot);
 
-   // like Qt's connect, but will not complain if slot is not available. 
+   // like Qt's connect, but will not complain if slot is not available.
    static void connect_ex(const QObject *sender, const char *signal, const QObject *receiver,
                            const char *slot);
    static void disconnect_ex(const QObject *sender, const char *signal, const QObject *receiver,
                            const char *slot);
-    
+
    // QROSE's version of "connect"- allows to connect a signal to a method/function instead of
    // a slot. This means that is not necessary to run Qt's metacompiler.
    static void link(QObject *obj, const char *signal, CBVoidType cbf, void *data = 0);
    static void link(QObject *obj, const char *signal, CBBoolType cbf, void *data = 0);
    static void link(QObject *obj, const char *signal, CBIntType cbf, void *data = 0);
+   static void link(QObject *obj, const char *signal, CBIntBoolType cbf, void *data = 0);
    static void link(QObject *obj, const char *signal, CBInt2Type cbf, void *data = 0);
    static void link(QObject *obj, const char *signal, CBInt3Type cbf, void *data = 0);
    static void link(QObject *obj, const char *signal, CBInt4Type cbf, void *data = 0);
    static void link(QObject *obj, const char *signal, CBStrType cbf, void *data = 0);
    static void unlink(QObject *obj, const char *signal);
+
+   //  ============================================================[ group management ]======
+   static QRGroup* getGroup(unsigned id);
 
    // whenever inside a callback, cbSender returns the object
    // that emitted the signal

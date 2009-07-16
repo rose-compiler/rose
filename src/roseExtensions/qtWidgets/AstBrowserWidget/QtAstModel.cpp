@@ -72,7 +72,7 @@ QVariant QtAstModel::ModelNode::data(int role, int column) const
         switch(column)
         {
             case 0 : return dispName;
-            case 1 : return sg ? sg->class_name().c_str() : QString("NULL");
+            case 1 : return sg ? QString( sg->class_name().c_str() ) : QString("NULL");
             default: return QVariant();
         }
     }

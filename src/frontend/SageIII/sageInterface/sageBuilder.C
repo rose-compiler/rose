@@ -3555,7 +3555,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
   // SgSourceFile* result = new SgSourceFile (arglist, nextErrorCode, 0, project);
      //SgSourceFile* result = isSgSourceFile(determineFileType(arglist, nextErrorCode, project));
      // TH (2009-07-15): changed to more generig isSgFile, this also supports SgBinaryFile
-     SgFile* result = isSgFile(determineFileType(arglist, nextErrorCode, project));
+     SgFile* result = determineFileType(arglist, nextErrorCode, project);
      ROSE_ASSERT(result != NULL);
 
 #if 0

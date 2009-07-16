@@ -1,14 +1,15 @@
 /***************************************************************************
-    Jose Gabriel de Figueiredo Coutinho                                   
-    jgfc@doc.ic.ac.uk                                                     
-    Classes:     
-    Description:                                                     
+    Jose Gabriel de Figueiredo Coutinho
+    jgfc@doc.ic.ac.uk
+    Classes:
+    Description:
  ***************************************************************************/
 
 #include <QRMain.h>
 #include <QRMain_p.h>
 #include <QRWindow.h>
 #include <QRException.h>
+#include <QRGroup.h>
 
 #include <QApplication>
 #include <QMetaMethod>
@@ -20,7 +21,7 @@ namespace qrs {
 QRExec::QRExec() {
    m_isExec = false;
 }
-   
+
 bool QRExec::isExec() {
    return m_isExec;
 }
@@ -28,11 +29,11 @@ bool QRExec::isExec() {
 void QRExec::beforeExec() {
    m_isExec = true;
 }
-   
+
 void QRExec::afterExec() {
    m_isExec = false;
 }
-      
+
 QRCBSession::QRCBSession() {
    m_valid = false;
 }
@@ -58,8 +59,8 @@ bool QRCBSession::isValid() {
 QRCallbackMgr::QRCallbackMgr() {
 }
 
-QRCallback::QRCallback(QObject *obj, CBNormalizedType cbf, void *data) { 
-   m_sender = obj; 
+QRCallback::QRCallback(QObject *obj, CBNormalizedType cbf, void *data) {
+   m_sender = obj;
    m_cbf = cbf;
    m_data = data;
 }
@@ -81,7 +82,7 @@ QRCallbackMgr::~QRCallbackMgr() {
          QRCallback *cb = iter1->second;
          delete cb;
       }
-   } 
+   }
 }
 
 int QRCallbackMgr::disconnect(QObject *obj, const char *signal) {
@@ -92,13 +93,13 @@ int QRCallbackMgr::disconnect(QObject *obj, const char *signal) {
    }
 
 	const char *sgn;
-	if (signal[0] >= '0' && signal[0] <= '9') 
+	if (signal[0] >= '0' && signal[0] <= '9')
 		sgn =  &(signal[1]);
 	else
 		sgn = signal;
-	
+
    string normalized_signal = QMetaObject::normalizedSignature(sgn).data();
-   
+
    int index_signal = mtobj->indexOfSignal(normalized_signal.c_str());
    if (index_signal == -1) {
       throw QRException("callback error: invalid signal %s", signal);
@@ -122,14 +123,14 @@ void QRCallbackMgr::connect(QObject *obj, const char *signal, int id, QRCallback
    // registering cb
    map<int, QRCallback *> &map_c = m_cbs[obj];
    map_c[id] = cb;
-   
+
    // preparing signal
 	const char *sgn;
-	if (signal[0] >= '0' && signal[0] <= '9') 
+	if (signal[0] >= '0' && signal[0] <= '9')
 		sgn =  &(signal[1]);
 	else
 		sgn = signal;
-		
+
    string normalized_signal = QMetaObject::normalizedSignature(sgn).data();
    string sg = string(SIGNAL()) + normalized_signal;
 
@@ -163,7 +164,7 @@ void QRCallbackMgr::connect(QObject *obj, const char *signal, int id, QRCallback
    if (!found_slot) {
       throw QRException("connect callback error: cannot find a compatible dispatcher slot for signal %s", sgn);
    }
-       
+
    QObject::connect(obj, sg.c_str(), cb, slt.c_str());
 }
 
@@ -176,7 +177,7 @@ QRWindowsMap::~QRWindowsMap() {
          QROSE::init(argc, argv);
          QRWindow *mainWindow = new QRWindow("mainWindow",  QROSE::TopDown);
          (*mainWindow) << new QTableView;
-   
+
    map<string, QRWindow *>::iterator iter = m_windows.begin();
    while (iter != m_windows.end()) {
       delete iter->second;
@@ -193,7 +194,7 @@ void QRWindowsMap::registerWindow(const string &name, QRWindow *win) {
    m_windows[name] = win;
 }
 
-void QRWindowsMap::unregisterWindow(const string &name) {  
+void QRWindowsMap::unregisterWindow(const string &name) {
    map<string, QRWindow *>::iterator iter = m_windows.find(name);
    if (iter == m_windows.end())
       throw QRException("unregistering window - window [%s] does not exist!", name.c_str());
@@ -228,9 +229,23 @@ void QRWindowsMap::preExec() {
    }
 }
 
+QRGroup* QROSE_P::getGroup(unsigned id) {
+    QRGroup *grp;
+    map<unsigned, QRGroup *>::iterator iter = m_groups.find(id);
+    if (iter == m_groups.end()) {
+	   grp = new QRGroup(id);
+        m_groups[id] = grp;
+    } else {
+	   grp = iter->second;
+    }
+    return grp;
+}
+
+
 QRExec QROSE_P::m_exec;
 QRWindowsMap QROSE_P::m_windows;
 QRCallbackMgr QROSE_P::m_callbackMgr;
 QRCBSession QROSE_P::m_cbSession;
+map<unsigned, QRGroup *> QROSE_P::m_groups;
 
 } // namespace qrs

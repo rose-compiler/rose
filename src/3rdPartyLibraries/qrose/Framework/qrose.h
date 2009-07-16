@@ -1,6 +1,6 @@
 /***************************************************************************
-    Jose Gabriel de Figueiredo Coutinho                                   
-    jgfc@doc.ic.ac.uk                                                     
+    Jose Gabriel de Figueiredo Coutinho
+    jgfc@doc.ic.ac.uk
  ***************************************************************************/
 
 #ifndef QROSE_H
@@ -13,8 +13,8 @@
 #include <QRWindow.h>
 #include <QRPanel.h>
 #include <QRSpaceWidget.h>
- // widgets
 
+// widgets
 #include <QRButtons.h>
 #include <QRToolBar.h>
 #include <QRTable.h>
@@ -23,6 +23,12 @@
 #include <QRProgress.h>
 #include <QRSeparator.h>
 #include <QRTree.h>
+
 // ROSE components
+#include <QRQueryBox.h>
+#include <QRTreeBox.h>
+#include <QRSourceBox.h>
+#include <QRIcons.h>
+#include <QRPixmap.h>
 
 #endif
