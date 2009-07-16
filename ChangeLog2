@@ -1,3 +1,63 @@
+2009-07-16 17:34  liao6
+
+	* [r6568] /trunk/ROSE/docs/Rose/Makefile.am,
+	  /trunk/ROSE/docs/Rose/UPCsupport.tex,
+	  /trunk/ROSE/docs/Rose/bibliography.tex,
+	  /trunk/ROSE/docs/Rose/binaryAnalysis.tex,
+	  /trunk/ROSE/docs/Rose/manual.tex.in,
+	  /trunk/ROSE/projects/UpcTranslation/tests/Makefile.am,
+	  /trunk/ROSE/projects/UpcTranslation/tests/barrier.upc,
+	  /trunk/ROSE/projects/compass/extensions/checkers/allowedFunctions/variantT_enums.txt,
+	  /trunk/ROSE/projects/palette/rose.P,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Expression.code,
+	  /trunk/ROSE/src/ROSETTA/astNodeList,
+	  /trunk/ROSE/src/ROSETTA/src/expression.C,
+	  /trunk/ROSE/src/backend/unparser/languageIndependenceSupport/modified_sage.C,
+	  /trunk/ROSE/src/midend/astQuery/queryVariant.C,
+	  /trunk/ROSE/tests/CompileTests/UPC_tests/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/UPC_tests/barrier.upc,
+	  /trunk/ROSE/tests/CompileTests/UPC_tests/hello.upc,
+	  /trunk/ROSE/tests/CompileTests/UPC_tests/shared.upc: Cleaned up
+	  some UPC node names and added a new Manual chapter for ROSE's UPC
+	  support
+
+2009-07-16 16:08  heller9
+
+	* [r6567] /trunk/ROSE/config/Makefile.for.ROSE.includes.and.libs,
+	  /trunk/ROSE/configure.in,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.c,
+	  /trunk/ROSE/projects/RoseQt/MainWindow.cpp,
+	  /trunk/ROSE/projects/RoseQt/Makefile.am,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/glue.pl,
+	  /trunk/ROSE/src/Makefile.am,
+	  /trunk/ROSE/src/frontend/SageIII/sage3.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/MetricsKiviat/MetricsKiviat.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/ProjectManager/Project.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/ProjectManager/Project.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/SrcBinView/SrcBinView.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/SrcBinView/SrcBinView.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/TaskSystem/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/TaskSystem/RoseFrontendTask.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/TaskSystem/TaskInterface.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/AsmToSourceMapper.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/SageMimeData.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/SgNodeUtil.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/SgNodeUtil.h,
+	  /trunk/ROSE/src/roseInternal.h,
+	  /trunk/ROSE/src/util/processSupport.C,
+	  /trunk/ROSE/src/util/processSupport.h,
+	  /trunk/ROSE/src/util/stringSupport/string_functions.cpp,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/buildFile.C,
+	  /trunk/ROSE/tutorial/Makefile.am: Changed ROSE_ABORT to throw
+	  exception instead of abort
+	  
+	  fixed buildFile to be able to load binary files
+	  minot bugfixes in qtWidgets
+
 2009-07-15 22:20  bauer25
 
 	* [r6558]
