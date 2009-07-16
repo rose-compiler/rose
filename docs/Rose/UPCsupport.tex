@@ -1,0 +1,296 @@
+\chapter{UPC Support}
+\label{chap::upcsupport}
+
+%-------------------------------------------------------------
+%-------------------------------------------------------------
+\section{Introduction}
+ROSE supports Unified Parallel C (UPC) programs.
+UPC~\cite{UPC:Web} is a famous extension of the C99 programming language to support high performance computing using a partitioned global address space (PGAS) memory model.
+ROSE leverages the EDG frontend to parse input UPC programs and generate EDG IR with UPC extensions.
+It then converts the EDG IR into ROSE's internal AST and provides unparsing support for the AST.
+An example UPC-to-C translator is also provided to demonstrate how one can use ROSE to 
+translate some UPC programs into C programs with runtime calls to the Berkeley UPC (BUPC) runtime system V. 2.6.0~\cite{BUPC:Web}.
+
+%-------------------------------------------------------------
+%-------------------------------------------------------------
+\section{Supported UPC Constructs}
+ROSE currently supports UPC constructs as defined in UPC 1.1.1.
+The supported version is limited by the UPC version supported by the EDG frontend,which only supports UPC 1.1.1 (\lstinline{__UPC_VERSION__} string is defined as 200310L)
+\footnote{ROSE uses EDG 3.3 currently and it originally only supported UPC 1.0. 
+We merged the UPC 1.1.1 support from EDG 3.10 into our EDG 3.3 frontend. We
+are upgrading ROSE to use the latest EDG 4.0 but it seems like it still
+only supports UPC 1.1.1.}.
+A list of those UPC constructs and their corresponding ROSE AST representations are given below:
+\begin{verbatim}
+MYTHREAD                SgUpcMythread
+THREADS                 SgUpcThreads
+upc_barrier             SgUpcBarrierStatement
+upc_blocksizeof         SgUpcBlocksizeofExpression
+upc_elemsizeof          SgUpcElemsizeofExpression
+upc_fence               SgUpcFenceStatement
+upc_forall              SgUpcForAllStatement
+upc_localsizeof         SgUpcLocalsizeofExpression
+upc_notify              SgUpcNotifyStatement
+upc_wait                SgUpcWaitStatement
+strict/relaxed/shared   SgUPC_AccessModifier
+UPC_MAX_BLOCKSIZE       1073741823 (~1GB)
+\end{verbatim}
+As we can see, most UPC constructs are represented by their corresponding dedicated ROSE AST nodes. 
+\lstinline{strict}, \lstinline{relaxed} and \lstinline{shared} are
+represented as instances of \lstinline{SgUPC_AccessModifier}.
+\lstinline{UPC_MAX_BLOCKSIZE} is treated as a macro and is expanded to a predefined integer constant value.
+
+%-------------------------------------------------------------
+%-------------------------------------------------------------
+\section{Command Line Options}
+ROSE can automatically recognize a source file with a suffix of \textit{.upc} as a UPC input and turn on its UPC support.
+For other UPC files without the \textit{.upc} extension, a command line
+option (\textit{-rose:UPC\_only or -rose:UPC}) is available to turn on the
+UPC support explicitly.
+In addition, \textit{-rose:upc\_threads n} can be used to enable ROSE'S
+support for UPC static threads compilation with n threads.
+
+%-------------------------------------------------------------
+%-------------------------------------------------------------
+\section{Example UPC Code Acceptable for ROSE}
+We give some output after ROSE's source-to-source translation of some example UPC input. 
+These UPC input are actually some of ROSE's daily regression test input available from \textit{ROSE/tests/CompileTests/UPC\_tests}.
+
+Figure~\ref{Manual:UPC:hello} shows the handling of a hello program in UPC.
+\begin{figure}[!h]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopBuildDirectory/tests/CompileTests/UPC_tests/rose_hello.upc}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopBuildDirectory/tests/tests/CompileTests/UPC_tests/rose_hello.upc}
+    \end{htmlonly}
+  }
+}
+\caption{Output of UPC hello}
+\label{Manual:UPC:hello}
+\end{figure}
+
+Figure~\ref{Manual:UPC:strict} shows the handling of a UPC pragma to
+specify memory consistency. 
+\begin{figure}[!h]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopBuildDirectory/tests/CompileTests/UPC_tests/rose_consistency.upc}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopBuildDirectory/tests/tests/CompileTests/UPC_tests/rose_consistency.upc}
+    \end{htmlonly}
+  }
+}
+\caption{Output for UPC strict}
+\label{Manual:UPC:strict}
+\end{figure}
+
+
+Figure~\ref{Manual:UPC:forall1} shows the use of \lstinline{upc_forall}
+with \lstinline{continue} and Figure~\ref{Manual:UPC:forall2} shows the use
+of \lstinline{upc_forall} with \lstinline{affinity}.
+
+\begin{figure}[!h]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopBuildDirectory/tests/CompileTests/UPC_tests/rose_forall_continue.upc}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopBuildDirectory/tests/tests/CompileTests/UPC_tests/rose_forall_continue.upc}
+    \end{htmlonly}
+  }
+}
+\caption{Output for upc\_forall with continue}
+\label{Manual:UPC:forall1}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopBuildDirectory/tests/CompileTests/UPC_tests/rose_forall_affinity.upc}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopBuildDirectory/tests/tests/CompileTests/UPC_tests/rose_forall_affinity.upc}
+    \end{htmlonly}
+  }
+}
+\caption{Output for upc\_forall with affinity }
+\label{Manual:UPC:forall2}
+\end{figure}
+
+ROSE's support for various uses of \lstinline{shared} is given in
+Figure~\ref{Manual:UPC:shared}. 
+\begin{figure}[!h]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopBuildDirectory/tests/CompileTests/UPC_tests/rose_shared.upc}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopBuildDirectory/tests/tests/CompileTests/UPC_tests/rose_shared.upc}
+    \end{htmlonly}
+  }
+}
+\caption{Output for UPC shared}
+\label{Manual:UPC:shared}
+\end{figure}
+
+Support for UPC \lstinline{lock}s is demonstrated in
+Figure~\ref{Manual:UPC:lock}. 
+\begin{figure}[!h]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopBuildDirectory/tests/CompileTests/UPC_tests/rose_lock.upc}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopBuildDirectory/tests/tests/CompileTests/UPC_tests/rose_lock.upc}
+    \end{htmlonly}
+  }
+}
+\caption{Output for UPC Locks}
+\label{Manual:UPC:lock}
+\end{figure}
+
+%-------------------------------------------------------------
+%-------------------------------------------------------------
+\clearpage
+\section{An Example UPC-to-C Translator Using ROSE}
+An example UPC-to-C translator, namely roseupcc, is provided to 
+demonstrate how one can use ROSE to build a translator translating UPC
+programs into C programs with runtime calls to the Berkeley UPC (BUPC)
+runtime system V. 2.6.0. 
+
+roseupcc follows the BUPC runtime interface specification 3.10~\cite{BUPC3.10} so
+we don't reiterate why the translation is done in a certain way here. 
+Please be advised that only a subset of the UPC 1.1.1 constructs is
+translated currently since the translator is meant to be a starting example.
+
+Translation result for the UPC hello program (shown in
+Figure~\ref{Manual:UPC:hello}) is given in Figure~\ref{Manual:UPC:hello-trans}. 
+\begin{figure}[!h]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopBuildDirectory/projects/UpcTranslation/tests/rose_hello.c}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopBuildDirectory/projects/UpcTranslation/tests/rose_hello.c}
+    \end{htmlonly}
+  }
+}
+\caption{Translation of upc hello}
+\label{Manual:UPC:hello-trans}
+\end{figure}
+
+\clearpage
+Translation of \lstinline{shared} variables is demonstrated in
+Figure~\ref{Manual:UPC:shared1-transaa} and
+Figure~\ref{Manual:UPC:shared1-transab} for an input code shown in
+Figure~\ref{Manual:UPC:shared1}.
+
+\begin{figure}[!h]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopSourceDirectory/projects/UpcTranslation/tests/shared_1.upc}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopSourceDirectory/projects/UpcTranslation/tests/shared_1.upc}
+    \end{htmlonly}
+  }
+}
+\caption{Example input for shared variables}
+\label{Manual:UPC:shared1}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopBuildDirectory/projects/UpcTranslation/tests/rose_shared_1.c.aaf}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopBuildDirectory/projects/UpcTranslation/tests/rose_shared_1.c.aaf}
+    \end{htmlonly}
+  }
+}
+\caption{Translation of UPC shared variables, part A}
+\label{Manual:UPC:shared1-transaa}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopBuildDirectory/projects/UpcTranslation/tests/rose_shared_1.c.abf}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopBuildDirectory/projects/UpcTranslation/tests/rose_shared_1.c.abf}
+    \end{htmlonly}
+  }
+}
+\caption{Translation of UPC shared variables, part B}
+\label{Manual:UPC:shared1-transab}
+\end{figure}
+
+
+\clearpage
+Translation of non-\lstinline{shared} variables is demonstrated in
+Figure~\ref{Manual:UPC:unshared1-transaa} and
+Figure~\ref{Manual:UPC:unshared1-transab} for an input code shown in
+Figure~\ref{Manual:UPC:unshared1}.
+
+\begin{figure}[!h]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopSourceDirectory/projects/UpcTranslation/tests/unshared_1.upc}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopSourceDirectory/projects/UpcTranslation/tests/unshared_1.upc}
+    \end{htmlonly}
+  }
+}
+\caption{Example input for non-shared variables}
+\label{Manual:UPC:unshared1}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopBuildDirectory/projects/UpcTranslation/tests/rose_unshared_1.c.aaf}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopBuildDirectory/projects/UpcTranslation/tests/rose_unshared_1.c.aaf}
+    \end{htmlonly}
+  }
+}
+\caption{Translation of UPC non-shared variables, part A}
+\label{Manual:UPC:unshared1-transaa}
+\end{figure}
+
+\begin{figure}[!h]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopBuildDirectory/projects/UpcTranslation/tests/rose_unshared_1.c.abf}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopBuildDirectory/projects/UpcTranslation/tests/rose_unshared_1.c.abf}
+    \end{htmlonly}
+  }
+}
+\caption{Translation of UPC non-shared variables, part B}
+\label{Manual:UPC:unshared1-transab}
+\end{figure}
+
+
+

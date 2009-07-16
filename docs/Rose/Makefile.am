@@ -89,7 +89,7 @@ latexFiles = preface.tex acknowledgments.tex introduction.tex \
              rose-processing-phases.pdf testing.tex \
              writingYourFirstTranslator.tex overviewOfRose.tex \
              developersAppendix.tex astMerge.tex installRose.tex \
-             binaryAnalysis.tex demo.tex
+             binaryAnalysis.tex demo.tex UPCsupport.tex
 
 # DQ (3/4/2009): Removed requirements.tex since it is not longer used.
 # requirements.tex

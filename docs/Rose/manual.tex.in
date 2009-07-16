@@ -52,6 +52,7 @@
 \newcommand{\TutorialExampleDirectory}{@top_srcdir@/tutorial}
 \newcommand{\TutorialExampleBuildDirectory}{@top_builddir@/tutorial}
 \newcommand{\TopSourceDirectory}{@top_srcdir@}
+\newcommand{\TopBuildDirectory}{@top_builddir@}
 
 \newcommand{\DatabaseExampleDirectory}{@top_srcdir@/exampleTranslators/documentedExamples/dataBaseExamples}
 
@@ -278,6 +279,9 @@
 
 % DQ (2/10/2007): Documentation for the AST Merge mechanism to support whole program analysis
 \input{astMerge}
+
+% Liao, 7/15/2009: describing the support of UPC
+\input{UPCsupport}
 
 \input{binaryAnalysis}
 
