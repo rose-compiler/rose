@@ -805,8 +805,11 @@ StringUtility::readFile ( const string& fileName )
      inputFile.open( fileName.c_str(), ios::binary );
      if (inputFile.good() != true)
 	{
-	  printf ("ERROR: File not found -- %s \n",fileName.c_str());
-	  ROSE_ABORT();
+	  //printf ("ERROR: File not found -- %s \n",fileName.c_str());
+	  //ROSE_ABORT();
+            std::string s( "ERROR: File not found -- " );
+            s += fileName;
+            throw s;
 	}
 
      ROSE_ASSERT (inputFile.good() == true);
@@ -854,10 +857,13 @@ StringUtility::readFileWithPos ( const string& fileName )
      ifstream inputFile;
      inputFile.open( fileName.c_str(), ios::binary );
      if (inputFile.good() != true)
-   {
-	  printf ("ERROR: File not found -- %s \n",fileName.c_str());
-	  ROSE_ABORT();
-	}
+     {
+	  //printf ("ERROR: File not found -- %s \n",fileName.c_str());
+	  //ROSE_ABORT();
+            std::string s( "ERROR: File not found -- " );
+            s += fileName;
+            throw s;
+     }
 
      ROSE_ASSERT (inputFile.good() == true);
 

@@ -131,7 +131,7 @@ librose_la_LIBADD = $(libroseLibraries) $(LIB_QT) $(JAVA_JVM_FLAGS) -lm $(RT_LIB
 		    $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) \
 		    $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_REGEX_LIB) \
 		    $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \
-		    $(BOOST_WAVE_LIB) \
+		    $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIBS) \
 		    -L$(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src -lhpdf \
 		    $(OPT_SQLITE3_LDFLAGS) 
 # librose_la_LDFLAGS = -no-undefined --rpath $(INTEL_PIN_PATH)/intel64/lib-ext

@@ -1501,7 +1501,6 @@ void RuntimeSystem_roseCreateVariable( const char* name,
   rtsi()->runtimeVariables[rtsi()->runtimeVariablesEndIndex].arrays=0;
   rtsi()->runtimeVariablesEndIndex++;
 
-
   Rted_debugDialog(filename, atoi(line),atoi(lineTransformed));
 
   printMessage("CreateVariable: You have just created a run-time variable:\n");

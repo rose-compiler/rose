@@ -198,12 +198,6 @@ void MainWindow::restoreMdiState()
     s.endGroup();
 }
 
-
-
-
-
-
-
 void MainWindow::on_actionEditorSettings_triggered()
 {
     RoseCodeEdit::showEditorSettingsDialog();

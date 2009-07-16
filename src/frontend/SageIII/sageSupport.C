@@ -5571,8 +5571,8 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
             else
              {
             // Exit because there are errors in the input program
-               cout << "Errors in Processing: (frontend_failed)" << endl;
-               ROSE_ABORT();
+               //cout << "Errors in Processing: (frontend_failed)" << endl;
+               ROSE_ABORT("Errors in Processing: (frontend_failed)");
              }
         }
 

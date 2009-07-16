@@ -26,7 +26,7 @@ int main (int argc, char *argv[])
 #if 1
 //case 1. Calling it with project available, but input file does not exist 
   remove (fileName.c_str());
-  SgSourceFile *sgfile = buildFile(fileName,fileName,project);
+  SgSourceFile *sgfile = isSgSourceFile( buildFile(fileName,fileName,project) );
 
   // try to add something into the new file
   SgGlobal* global = sgfile->get_globalScope();
@@ -45,7 +45,7 @@ int main (int argc, char *argv[])
 #if 1
 // case 2. Calling it without the project parameter and without input file 
   remove (fileName2.c_str());
-  SgSourceFile *sgfile2 = buildFile(fileName2,fileName2);
+  SgSourceFile *sgfile2 = isSgSourceFile( buildFile(fileName2,fileName2) );
 
   // try to add something into the new file
   SgGlobal* global2 = sgfile2->get_globalScope();
@@ -66,7 +66,7 @@ int main (int argc, char *argv[])
 
 #if 1
 // case 3. Input File already exists, load it and do some transformation, project exists  
-  SgSourceFile * sgfile3 = buildFile(fileName2,fileName3,project);   
+  SgSourceFile * sgfile3 = isSgSourceFile( buildFile(fileName2,fileName3,project) );
   SgGlobal* global3 = sgfile3->get_globalScope();
   SgVariableDeclaration *varDecl3 = buildVariableDeclaration("y", buildIntType());
   appendStatement (varDecl3,isSgScopeStatement(global3));
@@ -81,7 +81,7 @@ int main (int argc, char *argv[])
 
 #if 1
 // case 4. Input File already exists, but project does not.  
-   SgSourceFile *sgfile4 = buildFile(fileName,fileName4);
+   SgSourceFile *sgfile4 = isSgSourceFile( buildFile(fileName,fileName4) );
 
   // try to add something into the new file
   SgGlobal* global4 = sgfile4->get_globalScope();

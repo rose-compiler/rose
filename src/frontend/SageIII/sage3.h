@@ -84,9 +84,9 @@
 // DQ (12/7/2003): g++ 3.x prefers to see <fstream> and use of <fstream> 
 //                 or <fstream.h> is setup in config.h so use it here.
 #include <fstream>
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h> // For abort()
+#include <cassert>
+#include <cstdio>
+#include <cstdlib> // For abort()
 
 // DQ (9/24/2004): Try again to remove use of set parent side effect in EDG/Sage III connection! This works!!!
 #define REMOVE_SET_PARENT_FUNCTION
@@ -224,11 +224,16 @@ namespace rose_hash
 // Include ROSE common utility function library
 #include "string_functions.h"
 #include "escape.h"
-#include "processSupport.h"
+// TH(2009-07-15): including roseInternal.h instead of processSupport.h
+//                 roseInternal.h includes processSupport.h
+//#include "processSupport.h"
+#include "roseInternal.h"
 
 // Include support for Brian Gunney's command line parser tool (nice work)
 #include "sla.h"
 
+// TH(2009-07-15): moving definitions of ROSE_ASSERT and ROSE_ABORT to util/processSupport.(h|C)
+/*
 // These are supported this way so that they can be redefined as required
 #ifndef ROSE_ASSERT
 #ifndef NDEBUG
@@ -240,6 +245,7 @@ namespace rose_hash
 #ifndef ROSE_ABORT
 #define ROSE_ABORT  (std::abort)
 #endif
+*/
 
 // DQ (3/29/2006): I sure would like to remove this since it 
 // has a potential to effect other files from other projects

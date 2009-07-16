@@ -423,7 +423,7 @@ SgIncidenceDirectedGraph * ProjectNode::getCallGraph()
 {
     if(callGraph==NULL)
     {
-        CallGraphBuilder cgb (sgProject);
+        CallGraphBuilder cgb (sgProject, false );
         cgb.buildCallGraph();
 
         callGraph = cgb.getGraph();
@@ -502,10 +502,14 @@ void SourceFileNode::rebuild()
 void SourceFileNode::buildTaskFinished()
 {
     Q_ASSERT(!sgSourceFile);
-    sgSourceFile = dynamic_cast<SgSourceFile*>(task->getResult());
-    Q_ASSERT(sgSourceFile);
 
-    BAstNode::generate(sgSourceFile,NULL,this);
+    if( task->getState() == Task::FINISHED_SUCCESS )
+    {
+        sgSourceFile = dynamic_cast<SgSourceFile*>(task->getResult());
+        Q_ASSERT(sgSourceFile);
+
+        BAstNode::generate(sgSourceFile,NULL,this);
+    }
 
 
     disconnect(this,SLOT(buildTaskFinished()));
@@ -597,8 +601,8 @@ void BinaryFileNode::submitFrontendTask()
     ProjectNode * pn = dynamic_cast<ProjectNode*>(getParent()->getParent() );
     Q_ASSERT(pn);
 
-    frontendTask = new RoseFrontendTask(pn->getSgProject(),path);
-    connect(frontendTask,SIGNAL(finished()), SLOT(frontendTaskFinished()));
+    frontendTask = new RoseFrontendTask( pn->getSgProject(), path );
+    connect( frontendTask, SIGNAL( finished() ), SLOT( frontendTaskFinished() ) );
 
     ProjectManager::instance()->taskListWidget()->submitTask(frontendTask);
 }
@@ -606,8 +610,11 @@ void BinaryFileNode::submitFrontendTask()
 void BinaryFileNode::frontendTaskFinished()
 {
     Q_ASSERT(!sgBinaryFile);
-    sgBinaryFile = dynamic_cast<SgBinaryFile*>(frontendTask->getResult());
-    Q_ASSERT(sgBinaryFile);
+    if( frontendTask->getState() == Task::FINISHED_SUCCESS )
+    {
+        sgBinaryFile = dynamic_cast<SgBinaryFile*>(frontendTask->getResult());
+        Q_ASSERT(sgBinaryFile);
+    }
 
 
     disconnect(this,SLOT(frontendTaskFinished()));

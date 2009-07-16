@@ -5,10 +5,11 @@
 
 #include <QDataStream>
 #include <QMimeData>
+#include <QStringList>
 #include <QDebug>
 
 template< typename LinkType >
-static void writeLinks( QDataStream &s, AstAttributeMechanism *attrMech )
+static void writeLinks( QDataStream &s, AstAttributeMechanism *attrMech, QByteArray &d_ )
 {
     if( !attrMech ) return;
     
@@ -20,8 +21,14 @@ static void writeLinks( QDataStream &s, AstAttributeMechanism *attrMech )
 
         if( attr )
         {
-            SgNode *link( attr->getNode() );
-            s.writeRawData( ( const char * ) &link, sizeof( SgNode * ) );
+            for( typename LinkType::iterator j( attr->begin() ); j != attr->end(); ++j )
+            {
+                SgNode *link( j->first );
+                int bytesWritten( s.writeRawData( ( const char * ) &link,
+                                                  sizeof( SgNode * ) ) );
+                
+                assert( bytesWritten == sizeof( SgNode * ) );
+            }
         }
     }
 }
@@ -32,15 +39,18 @@ QMimeData *createSageMimeData( SgNode *node )
 
     // write node into into QByteArray
     QByteArray d;
-    QDataStream s(&d, QIODevice::Unbuffered | QIODevice::ReadWrite);
-    s.writeRawData((const char*) & node, sizeof(SgNode*));
+    QDataStream s( &d, QIODevice::Unbuffered | QIODevice::ReadWrite );
+    
+    int bytesWritten( s.writeRawData( ( const char * ) & node, sizeof( SgNode * ) ) );
+            
+    assert( bytesWritten == sizeof( SgNode * ) );
 
     data->setData( SG_NODE_MIMETYPE, d );
 
     // if SgNode is a SgProject just return with only general set
     if( isSgProject( node ) )
         return data;
-
+    
     // traverse up until we find a SgFile
     SgNode *parent( node );
     while( !isSgFile( parent ) && parent )
@@ -49,25 +59,25 @@ QMimeData *createSageMimeData( SgNode *node )
     }
     
     AstAttributeMechanism *attrMech( node->get_attributeMechanism() );
-
+    
     if( isSgSourceFile( parent ) )
     {
         data->setData( SG_NODE_SOURCE_MIMETYPE, d );
 
-        QByteArray d;
-        QDataStream s( &d, QIODevice::Unbuffered | QIODevice::ReadWrite );
-        writeLinks<AstBinaryNodeLink>( s, attrMech );
-        if( !d.isEmpty() ) data->setData( SG_NODE_BINARY_MIMETYPE, d );
+        QByteArray d_;
+        QDataStream s_( &d_, QIODevice::Unbuffered | QIODevice::ReadWrite );
+        writeLinks<AstBinaryNodeLink>( s_, attrMech, d_ );
+        if( !d_.isEmpty() ) data->setData( SG_NODE_BINARY_MIMETYPE, d_ );
     }
 
     if( isSgBinaryFile( parent ) )
     {
         data->setData( SG_NODE_BINARY_MIMETYPE, d );
         
-        QByteArray d;
-        QDataStream s( &d, QIODevice::Unbuffered | QIODevice::ReadWrite );
-        writeLinks<AstSourceNodeLink>( s, attrMech );
-        if( !d.isEmpty() ) data->setData( SG_NODE_SOURCE_MIMETYPE, d );
+        QByteArray d_;
+        QDataStream s_( &d_, QIODevice::Unbuffered | QIODevice::ReadWrite );
+        writeLinks<AstSourceNodeLink>( s_, attrMech, d_ );
+        if( !d_.isEmpty() ) data->setData( SG_NODE_SOURCE_MIMETYPE, d_ );
     }
 
     return data;
@@ -101,7 +111,7 @@ SgNodeVector getNodes( const QMimeData *data, const QString& type )
     QByteArray d( data->data( type ) );
     
     QDataStream s (d);
-    
+
     while( !s.atEnd() )
     {
         SgNode * node = 0;

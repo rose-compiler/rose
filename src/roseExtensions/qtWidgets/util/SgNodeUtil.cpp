@@ -10,7 +10,7 @@
 
 using namespace std;
 
-static SgFile *getSgFile( SgNode *node )
+SgFile *getSgFile( SgNode *node )
 {
     if( isSgProject( node ) )
     {
@@ -55,7 +55,10 @@ static std::vector<SgNode *> getLinkedNodes( SgNode *node )
 
         if( attr )
         {
-            res.push_back( attr->getNode() );
+            for( typename LinkType::iterator j( attr->begin() ); j != attr->end(); ++j )
+            {
+                res.push_back( j->first );
+            }
         }
     }
 

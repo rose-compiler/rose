@@ -3,6 +3,16 @@
 
 #include <iostream>
 
+#include <QMenu>
+#include <QAction>
+#include <QDropEvent>
+#include <QDragMoveEvent>
+#include <QDragEnterEvent>
+
+#include <QDebug>
+
+#include "SgNodeUtil.h"
+#include "SageMimeData.h"
 #include "AsmToSourceMapper.h"
 
 #include "SrcBinView.h"
@@ -35,13 +45,15 @@ SrcBinView::SrcBinView( QWidget *parent )
     srcBinView->roseCodeEdit->setNode( srcFile );
     srcBinView->asmView->setNode( binFile );*/
 
+    srcBinView->asmView->installEventFilter( this );
+    srcBinView->asmView->viewport()->installEventFilter( this );
+    srcBinView->roseCodeEdit->installEventFilter( this );
+    srcBinView->roseCodeEdit->viewport()->installEventFilter( this );
+
     connect( srcBinView->asmView         , SIGNAL( clicked( SgNode * ) ),
              this                        , SLOT  ( setBinaryNode( SgNode * ) ) );
     connect( srcBinView->roseCodeEdit    , SIGNAL( cursorPositionChanged() ),
              this                        , SLOT  ( getCursorPosition() ) );
-
-    fillMap( srcFile );
-
 }
 
 SrcBinView::~SrcBinView()
@@ -168,4 +180,111 @@ void SrcBinView::fillMap( SgNode *node )
         
         lineColToSgNode.insert( make_pair( range, node ) );
     }
+}
+
+bool SrcBinView::eventFilter( QObject *object, QEvent *event )
+{
+    if( object == srcBinView->asmView ||
+        object == srcBinView->asmView->viewport() ||
+        object == srcBinView->roseCodeEdit ||
+        object == srcBinView->roseCodeEdit->viewport() )
+    {
+        if( event->type() == QEvent::Drop )
+        {
+            dropEvent( static_cast<QDropEvent *>( event ) );
+            return true;
+        }
+        if( event->type() == QEvent::DragEnter )
+        {
+            dragEnterEvent( static_cast<QDragEnterEvent *>( event ) );
+            return true;
+        }
+        if( event->type() == QEvent::DragMove )
+        {
+            dragMoveEvent( static_cast<QDragMoveEvent *>( event ) );
+            return true;
+        }
+    }
+    return false;
+}
+
+void SrcBinView::dropEvent( QDropEvent *ev )
+{
+    if( ev->source()==this )
+        return;
+
+    SgNodeVector srcNodes( getSourceNodes( ev->mimeData() ) );
+    SgNodeVector binNodes( getBinaryNodes( ev->mimeData() ) );
+
+    
+
+    /*QMenu *ctxMenu( new QMenu() );
+
+    QMenu *srcMenu( ctxMenu->addMenu( "Source Node" ) );
+    QMenu *binMenu( ctxMenu->addMenu( "Binary Node" ) );
+
+    QActionGroup *srcGroup( new QActionGroup(ctxMenu) );
+    QActionGroup *binGroup( new QActionGroup(ctxMenu) );
+
+    for( SgNodeVector::const_iterator it( srcNodes.begin() );
+         it != srcNodes.end();
+         ++it )
+    {
+        QAction *tmp( srcGroup->addAction( (*it)->class_name().c_str() ) );
+
+        tmp->setCheckable( true );
+
+        tmp->setChecked( true );
+
+        ctxMenu->addAction( tmp );
+    }
+    srcGroup->setExclusive( true );
+
+    for( SgNodeVector::const_iterator it( binNodes.begin() );
+         it != binNodes.end();
+         ++it )
+    {
+        QAction *tmp( binGroup->addAction( (*it)->class_name().c_str() ) );
+        
+        tmp->setCheckable( true );
+        
+        tmp->setChecked( true );
+
+        ctxMenu->addAction( tmp );
+    }
+    binGroup->setExclusive( true );
+
+    ctxMenu->exec( mapToGlobal( ev->pos() ) );
+
+    delete ctxMenu;*/
+
+    srcFile = dynamic_cast<SgSourceFile *>( getSgFile( srcNodes.at( 0 ) ) );
+    binFile = dynamic_cast<SgBinaryFile *>( getSgFile( binNodes.at( 0 ) ) );
+    
+    AsmToSourceMapper map( binFile );
+    map.annotate( srcFile );
+
+    srcBinView->roseCodeEdit->setNode( srcFile );
+    srcBinView->asmView->setNode( binFile );
+    
+    fillMap( srcFile );
+}
+
+void SrcBinView::dragMoveEvent( QDragMoveEvent *ev )
+{
+    QWidget::dragMoveEvent( ev );
+}
+
+void SrcBinView::dragEnterEvent( QDragEnterEvent *ev )
+{
+    if ( ev->mimeData()->hasFormat( SG_NODE_SOURCE_MIMETYPE ) &&
+         ev->mimeData()->hasFormat( SG_NODE_BINARY_MIMETYPE ) )
+    {
+        if( this != ev->source() )
+        {
+            ev->accept();
+        }
+    }
+    else
+        ev->ignore();
 }

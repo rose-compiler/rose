@@ -5,6 +5,7 @@ if ROSE_WITH_ROSEQT
 
 ROSEHPCT_BUILD_ROOT = $(top_builddir)/src/roseExtensions/roseHPCToolkit
 
+CXXFLAGS += -DFRONTEND_CALL=\"$(top_builddir)/src/roseExtensions/qtWidgets/frontend_process\"
       
 #INCLUDES += $(ROSEQT_INCLUDES) $(QT_INCLUDES) $(ROSE_INCLUDES) $(ROSEHPCT_DEP_INCLUDES)
 INCLUDES +=  $(ROSEHPCT_DEP_INCLUDES) -I$(top_srcdir)/src/roseExtensions/roseHPCToolkit/include

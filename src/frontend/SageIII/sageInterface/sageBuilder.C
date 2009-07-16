@@ -3471,7 +3471,7 @@ SgEnumDeclaration * SageBuilder::buildEnumDeclaration_nfi(const SgName& name, Sg
   } //buildEnumDeclaration_nfi()
 
   //! Build a SgFile node
-SgSourceFile*
+SgFile*
 SageBuilder::buildFile(const std::string& inputFileName, const std::string& outputFileName, SgProject* project/*=NULL*/)
    {
      ROSE_ASSERT(inputFileName.size()!=0);// empty file name is not allowed.
@@ -3553,7 +3553,9 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
   // AS(10/04/08) Because of refactoring we require the determineFileType function to be called 
   // to construct the node.
   // SgSourceFile* result = new SgSourceFile (arglist, nextErrorCode, 0, project);
-     SgSourceFile* result = isSgSourceFile(determineFileType(arglist, nextErrorCode, project));
+     //SgSourceFile* result = isSgSourceFile(determineFileType(arglist, nextErrorCode, project));
+     // TH (2009-07-15): changed to more generig isSgFile, this also supports SgBinaryFile
+     SgFile* result = isSgFile(determineFileType(arglist, nextErrorCode, project));
      ROSE_ASSERT(result != NULL);
 
 #if 0
