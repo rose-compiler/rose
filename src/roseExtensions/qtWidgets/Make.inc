@@ -39,9 +39,9 @@ ROSE_QT_WIDGETS_INCLUDES =   -I$(ROSE_QT_WIDGETS_ROOT)\
 
 INCLUDES = -I. \
            -I$(ROSE_QT_WIDGETS_ROOT)\
+           $(ROSE_QT_WIDGETS_INCLUDES)\
            $(ROSE_INCLUDES)\
-           $(QT_INCLUDES)\
-           $(ROSE_QT_WIDGETS_INCLUDES)
+           $(QT_INCLUDES)
               
 # ------------- MOC ---------------------
 

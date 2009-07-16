@@ -7,19 +7,16 @@ INCLUDES = $(ROSE_INCLUDES) $(QT_INCLUDES)
   
 #LD_FLAGS = @LIB_ROSE@ @ROSE_LDFLAGS@  @LIB_QT@ @QT_LDFLAGS@
 METASOURCES = auto
-include_HEADERS = qrose.h QRMacros.h QRMain.h QRException.h QRTiledWidget.h QRWidgetAccess.h QRWindow.h QRPanel.h QRSpaceWidget.h 
-noinst_LTLIBRARIES = libqrframework.la
+include_HEADERS = qrose.h QRMacros.h QRMain.h QRException.h QRTiledWidget.h QRWidgetAccess.h QRWindow.h QRPanel.h QRSpaceWidget.h QRGroup.h
+noinst_LTLIBRARIES = libqrframework.la 
 
-MOC_SOURCES = moc_QRMain_p.C moc_QRWindow.C moc_QRTiledWidget.C moc_QRSpaceWidget.C
+MOC_SOURCES = moc_QRMain_p.C moc_QRWindow.C moc_QRTiledWidget.C moc_QRSpaceWidget.C moc_QRGroup.C
 
 # DQ (2/11/2009): Using nodist_ rule to support specification of files to be built at compile time and not distrivuted in the distribution.
-# libqrframework_la_SOURCES = $(MOC_SOURCES) QRMain.C QRMain_p.C QRException.C QRTiledWidget.C QRWidgetAccess.C QRWindow.C QRPanel.C QRSpaceWidget.C
-libqrframework_la_SOURCES = QRMain.C QRMain_p.C QRException.C QRTiledWidget.C QRWidgetAccess.C QRWindow.C QRPanel.C QRSpaceWidget.C
+libqrframework_la_SOURCES = QRMain.C QRMain_p.C QRException.C QRTiledWidget.C QRWidgetAccess.C QRWindow.C QRPanel.C QRSpaceWidget.C QRGroup.C
 nodist_libqrframework_la_SOURCES = $(MOC_SOURCES)
 
 CLEANFILES = moc_*.C
-
-
 
 if QROSE_USE_WINDOWS
 moc_%.C: $(srcdir)/%.h 
@@ -51,6 +48,6 @@ EXTRA_DIST = QRException.h \
              QRSpaceWidget.h \
              QRTiledWidget.h \
              QRWidgetAccess.h \
-             QRWidgetX.h \
-             QRWindow.h
+             QRWindow.h \
+             QRGroup.h
 

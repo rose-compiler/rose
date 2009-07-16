@@ -1,4 +1,5 @@
 #------------ widgets Makefile.am -----------
+
 include $(top_srcdir)/src/roseExtensions/qtWidgets/Make.inc 
 
 if ROSE_WITH_ROSEQT
@@ -7,7 +8,6 @@ noinst_LTLIBRARIES = libwidgets.la
 
 
 # Contents of Makefile.am.pre
-INCLUDES += -I$(srcdir)/..  -I$(srcdir)/../document -I$(srcdir)/../qnfa 
 
 # End of Makefile.am.pre Content
 

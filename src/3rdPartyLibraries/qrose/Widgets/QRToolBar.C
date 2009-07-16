@@ -13,7 +13,7 @@ using namespace std;
 
 namespace qrs {
 
-   
+
 class QRToolBar_p {
    friend class QRToolBar;
    private:
@@ -56,7 +56,7 @@ class QRToolBar_p {
       unsigned numButtons() const {
          return _actions.size();
       }
-     
+
    protected:
       std::vector<QAction *> _actions;
 };
@@ -101,7 +101,7 @@ int QRToolBar::addButton(string caption, string icon_filename) {
 
   return id;
 }
-  
+
 int QRToolBar::addButton(string caption, const char *icon_xpm[]) {
   int id = _private->addButton(this);
 
@@ -114,7 +114,7 @@ int QRToolBar::addButton(string caption, const char *icon_xpm[]) {
 
   return id;
 }
-    
+
 int QRToolBar::addToggleButton(string caption, string icon_filename) {
   int id = addButton(caption, icon_filename);
   QAction *action = getAction(id);
@@ -127,7 +127,7 @@ int QRToolBar::addToggleButton(std::string caption, const char *icon_xpm[]) {
    QAction *action = getAction(id);
    action->setCheckable(true);
    return id;
-}  
+}
 
 void QRToolBar::insertSeparator() {
    addSeparator();
@@ -136,14 +136,14 @@ void QRToolBar::insertSeparator() {
 
 void QRToolBar::setCaption(int id, string caption) {
    eAssert(id < (int) numButtons(), ("index (%d) out of bounds (0..%d) for QRToolBar::setCaption!",
-                               id, numButtons()-1)); 
+                               id, numButtons()-1));
    QAction *action = getAction(id);
    action->setText(caption.c_str());
 }
 
 void QRToolBar::setPicture(int id, string filename) {
    eAssert(id < (int) numButtons(), ("index (%d) out of bounds (0..%d) for QRToolBar::setPicture!",
-           id, numButtons()-1)); 
+           id, numButtons()-1));
    QAction *action = getAction(id);
    QIcon icon(filename.c_str());
    action->setIcon(icon);
@@ -151,7 +151,7 @@ void QRToolBar::setPicture(int id, string filename) {
 
 void QRToolBar::setPicture(int id, const char *xpm[]) {
    eAssert(id < (int) numButtons(), ("index (%d) out of bounds (0..%d) for QRToolBar::setPicture!",
-           id, numButtons()-1));   
+           id, numButtons()-1));
    QAction *action = getAction(id);
    QIcon icon(xpm);
    action->setIcon(icon);
@@ -163,17 +163,17 @@ void QRToolBar::setEnabled(int id, bool enable) {
    QAction *action = getAction(id);
    action->setEnabled(enable);
 }
-   
+
 bool QRToolBar::isEnabled(int id) const {
    eAssert(id < (int) numButtons(), ("index (%d) out of bounds (0..%d) for QRToolBar::isEnabled!",
-           id, numButtons()-1)); 
+           id, numButtons()-1));
    QAction *action = getAction(id);
    return action->isEnabled();
 }
 
 void QRToolBar::setChecked(int id, bool checked) {
    eAssert(id < (int) numButtons(), ("index (%d) out of bounds (0..%d) for QRToolBar::setChecked!",
-           id, numButtons()-1)); 
+           id, numButtons()-1));
    QAction *action = getAction(id);
    eAssert(action->isCheckable(), ("cannot set checked state to button %s[%d], as it is not-checkable type!", QROSE::getName(this).c_str(), id));
    action->setChecked(checked);
@@ -190,9 +190,30 @@ bool QRToolBar::isChecked(int id) const {
 
 bool QRToolBar::isCheckable(int id) const {
    eAssert(id < (int) numButtons(), ("index (%d) out of bounds (0..%d) for QRToolBar::isCheckable!",
-           id, numButtons()-1)); 
+           id, numButtons()-1));
    QAction *action = getAction(id);
    return action->isCheckable();
+}
+
+void QRToolBar::setHidden(bool enable) {
+	QWidget::setHidden(enable);
+}
+bool QRToolBar::isHidden() const {
+	return QWidget::isHidden();
+}
+
+void QRToolBar::setHidden(int id, bool enable) {
+   eAssert(id < (int) numButtons(), ("index (%d) out of bounds (0..%d) for QRToolBar::isCheckable!",
+	       id, numButtons()-1));
+   QAction *action = getAction(id);
+   action->setVisible(!enable);
+}
+
+bool QRToolBar::isHidden(int id) const {
+   eAssert(id < (int) numButtons(), ("index (%d) out of bounds (0..%d) for QRToolBar::isCheckable!",
+	      id, numButtons()-1));
+   QAction *action = getAction(id);
+   return !action->isVisible();
 }
 
 unsigned QRToolBar::numButtons() const {
@@ -201,14 +222,14 @@ unsigned QRToolBar::numButtons() const {
 
 QAction* QRToolBar::getAction(int id) const {
    return _private->getAction(id);
-}  
+}
 
 int QRToolBar::getId(QAction *action) const {
    return _private->getId(action);
 }
- 
+
 void QRToolBar::clickEvent(int id) {
-   
+
 }
 
 } /* namespace qrs */

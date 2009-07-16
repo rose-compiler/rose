@@ -92,10 +92,8 @@ VALGRIND_BINARY = @VALGRIND_BINARY@
 # Conditional support for Gabriel's QRose GUI Library 
 if ROSE_USE_QT
 #  ROSE_GUI_INCLUDE =   -I${QROSE_PREFIX}/include
-  ROSE_GUI_INCLUDE =  -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Framework -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Widgets 
-
-
-  
+  ROSE_GUI_INCLUDE =  -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Framework -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Widgets -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Components/Common -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Components/QueryBox -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Components/TreeBox -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Components/QueryBox -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Components/SourceBox
+ 
 # ROSE_GUI_LIBS = -lqrose
 #  ROSE_GUI_LIBS_WITH_PATH = -L${QROSE_PREFIX}/lib -lqrose
 #  ROSE_GUI_LIBS_WITH_PATH =  -L${top_builddir}/src/3rdPartyLibraries/qrose/QRoseLib/  -lqrose

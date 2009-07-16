@@ -1,8 +1,8 @@
 /***************************************************************************
-    Jose Gabriel de Figueiredo Coutinho                                   
-    jgfc@doc.ic.ac.uk                                                     
-    Class: QRToolBar     
-    Description: 
+    Jose Gabriel de Figueiredo Coutinho
+    jgfc@doc.ic.ac.uk
+    Class: QRToolBar
+    Description:
  ***************************************************************************/
 
 #ifndef QRTOOLBAR_H
@@ -22,7 +22,7 @@ class QRToolBar: public QToolBar {
   Q_OBJECT
 
   friend class QRToolBar_p;
-      
+
   public:
     QRToolBar(QROSE::Orientation orientation, bool showText = true,
               bool showPic = true, bool picBesidesText = true);
@@ -38,10 +38,14 @@ class QRToolBar: public QToolBar {
     void setPicture(int id, std::string filename);
     void setPicture(int id, const char *xpm[]);
     void setEnabled(int id, bool enable);
-    bool isEnabled(int id) const;    
+    bool isEnabled(int id) const;
     void setChecked(int id, bool checked);
     bool isChecked(int id) const;
     bool isCheckable(int id) const;
+    void setHidden(bool enable);
+    bool isHidden() const;
+    void setHidden(int id, bool enable);
+    bool isHidden(int id) const;
 
     unsigned numButtons() const;
 
@@ -50,10 +54,10 @@ class QRToolBar: public QToolBar {
 
   protected slots:
     virtual void clickEvent(int id);
-   
+
   signals:
     void clicked(int id);
-    
+
   protected:
      QRToolBar_p *_private;
 };

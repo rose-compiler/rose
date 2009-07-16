@@ -168,9 +168,9 @@
 // using the hash_map and modify the section below
 // for that.
 // Liao, 7/10/2009 
-//#if __GNUC__ > 4 || \
-//  (__GNUC__ == 4 && (__GNUC_MINOR__ > 3 || \
-//		     (__GNUC_MINOR__ == 3 && \
+//#if __GNUC__ > 4 || 
+//  (__GNUC__ == 4 && (__GNUC_MINOR__ > 3 || 
+//		     (__GNUC_MINOR__ == 3 && 
 //		      __GNUC_PATCHLEVEL__ >= 0)))
 //#include <unordered_map>
 //#else   

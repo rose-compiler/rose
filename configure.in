@@ -1015,6 +1015,11 @@ src/3rdPartyLibraries/qrose/Makefile
 src/3rdPartyLibraries/qrose/Framework/Makefile
 src/3rdPartyLibraries/qrose/QRoseLib/Makefile
 src/3rdPartyLibraries/qrose/Widgets/Makefile
+src/3rdPartyLibraries/qrose/Components/Makefile
+src/3rdPartyLibraries/qrose/Components/Common/Makefile
+src/3rdPartyLibraries/qrose/Components/QueryBox/Makefile
+src/3rdPartyLibraries/qrose/Components/SourceBox/Makefile
+src/3rdPartyLibraries/qrose/Components/TreeBox/Makefile
 src/ROSETTA/Makefile
 src/ROSETTA/src/Makefile
 src/frontend/Makefile
@@ -1368,6 +1373,7 @@ tools/Makefile
 proposals/Makefile
 scripts/Makefile
 demo/Makefile
+demo/qrose/Makefile
 developersScratchSpace/Makefile
 developersScratchSpace/Dan/Makefile
 developersScratchSpace/Dan/C_tests/Makefile

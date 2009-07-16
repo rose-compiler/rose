@@ -1,6 +1,6 @@
 /***************************************************************************
-    Jose Gabriel de Figueiredo Coutinho                                   
-    jgfc@doc.ic.ac.uk                                                     
+    Jose Gabriel de Figueiredo Coutinho
+    jgfc@doc.ic.ac.uk
     Description: the low-level details of the QROSE class go here
  ***************************************************************************/
 
@@ -15,8 +15,9 @@
 
 
 namespace qrs {
-   
+
 class QRWindow;
+class QRGroup;
 
 // state of execution
 // it records whether execution
@@ -31,8 +32,8 @@ public:
    bool isExec();
 
 public:
-   void beforeExec(); 
-   void afterExec(); 
+   void beforeExec();
+   void afterExec();
 
 protected:
    bool m_isExec;
@@ -42,34 +43,34 @@ protected:
 /*******************************************************************************************[Callback mechanism]************/
 class QRCBSession {
    friend class QROSE_P;
-   
+
 private:
    QRCBSession();
-   
+
 public:
    void setSession(QObject *sender, void *data);
    QObject *getCBSender();
    void* getCBData();
    bool isValid();
-   
+
 protected:
    QObject *m_sender;
    void *m_data;
-   bool m_valid; 
+   bool m_valid;
 };
 
 typedef void (*CBNormalizedType)();
 
 class QRCallback: public QObject {
    friend class QRCallbackMgr;
-   
+
 protected:
    QRCallback(QObject *obj, CBNormalizedType cbf, void *data);
 
 protected:
    void prepareDispatcher();
    void endDispatcher();
-   
+
 protected:
    QObject *m_sender;
    CBNormalizedType m_cbf;
@@ -77,13 +78,13 @@ protected:
 };
 
 class QRCBVoid: public QRCallback {
-   Q_OBJECT   
-  
+   Q_OBJECT
+
    friend class QRCallbackMgr;
-            
+
 private:
    QRCBVoid(QObject *obj, CBNormalizedType cbf, void *data): QRCallback(obj, cbf, data) { }
-		
+
 protected slots:
    void dispatcher() {
       prepareDispatcher();
@@ -94,12 +95,12 @@ protected slots:
 
 class QRCBBool: public QRCallback {
    Q_OBJECT
-  
+
    friend class QRCallbackMgr;
-            
+
 private:
    QRCBBool(QObject *obj, CBNormalizedType cbf, void *data): QRCallback(obj, cbf, data) { }
-        
+
 protected slots:
    void dispatcher(bool b) {
       prepareDispatcher();
@@ -108,14 +109,30 @@ protected slots:
    }
 };
 
+class QRCBIntBool: public QRCallback {
+   Q_OBJECT
+
+   friend class QRCallbackMgr;
+
+private:
+   QRCBIntBool(QObject *obj, CBNormalizedType cbf, void *data): QRCallback(obj, cbf, data) { }
+
+protected slots:
+   void dispatcher(int i, bool b) {
+      prepareDispatcher();
+      ((CBIntBoolType) m_cbf) (i, b);
+      endDispatcher();
+   }
+};
+
 class QRCBInt: public QRCallback {
    Q_OBJECT
-  
+
    friend class QRCallbackMgr;
-            
+
 private:
    QRCBInt(QObject *obj, CBNormalizedType cbf, void *data): QRCallback(obj, cbf, data) { }
-        
+
 protected slots:
    void dispatcher(int i) {
       prepareDispatcher();
@@ -126,12 +143,12 @@ protected slots:
 
 class QRCBInt2: public QRCallback {
    Q_OBJECT
-  
+
    friend class QRCallbackMgr;
-            
+
 private:
    QRCBInt2(QObject *obj, CBNormalizedType cbf, void *data): QRCallback(obj, cbf, data) { }
-        
+
 protected slots:
    void dispatcher(int i, int j) {
       prepareDispatcher();
@@ -142,17 +159,17 @@ protected slots:
       prepareDispatcher();
       ((CBInt2Type) m_cbf) (p.x(), p.y());
       endDispatcher();
-   }   
+   }
 };
 
 class QRCBInt3: public QRCallback {
    Q_OBJECT
-  
+
    friend class QRCallbackMgr;
-            
+
 private:
    QRCBInt3(QObject *obj, CBNormalizedType cbf, void *data): QRCallback(obj, cbf, data) { }
-        
+
 protected slots:
    void dispatcher(int i, int j, int k) {
       prepareDispatcher();
@@ -164,12 +181,12 @@ protected slots:
 
 class QRCBInt4: public QRCallback {
    Q_OBJECT
-  
+
    friend class QRCallbackMgr;
-            
+
 private:
    QRCBInt4(QObject *obj, CBNormalizedType cbf, void *data): QRCallback(obj, cbf, data) { }
-        
+
 protected slots:
    void dispatcher(int i, int j, int k, int l) {
       prepareDispatcher();
@@ -180,12 +197,12 @@ protected slots:
 
 class QRCBStr: public QRCallback {
    Q_OBJECT
-  
+
    friend class QRCallbackMgr;
-            
+
 private:
    QRCBStr(QObject *obj, CBNormalizedType cbf, void *data): QRCallback(obj, cbf, data) { }
-        
+
 protected slots:
    void dispatcher(const QString &str) {
       prepareDispatcher();
@@ -193,19 +210,19 @@ protected slots:
       endDispatcher();
    }
    void dispatcher(const char *str) {
-      prepareDispatcher();      
+      prepareDispatcher();
       ((CBStrType) m_cbf) (str);
       endDispatcher();
-   }   
+   }
 };
 
-class QRCallbackMgr {   
+class QRCallbackMgr {
 
    friend class QROSE_P;
-   
+
 private:
    QRCallbackMgr();
-            
+
 public:
    ~QRCallbackMgr();
 
@@ -218,28 +235,28 @@ public:
       connect(obj, signal, id, cb);
       return id;
    }
-   
+
    void connect(QObject *obj, const char *signal, int id, QRCallback *cb);
-   
+
 protected:
-   std::map<QObject*, std::map<int, QRCallback *> > m_cbs;   
+   std::map<QObject*, std::map<int, QRCallback *> > m_cbs;
 };
 
-// contains the list of windows 
+// contains the list of windows
 class QRWindowsMap {
 
    friend class QROSE_P;
 
 private:
    QRWindowsMap();
-         
+
 public:
    ~QRWindowsMap();
    void registerWindow(const std::string &name, QRWindow *win);
    void unregisterWindow(const std::string &name);
    QRWindow* findWindow(const std::string &name);
    void preExec();
-       
+
 protected:
    std::map<std::string, QRWindow *> m_windows;
 };
@@ -251,12 +268,16 @@ public:
     static QRWindowsMap *getWindowsMap() { return &m_windows; }
     static QRCallbackMgr *getCallbackMgr() { return &m_callbackMgr; }
     static QRCBSession *getCBSession() { return &m_cbSession; }
-    
+
+    static QRGroup* getGroup(unsigned id);
+
 protected:
     static QRWindowsMap m_windows;
     static QRExec m_exec;
     static QRCallbackMgr m_callbackMgr;
     static QRCBSession m_cbSession;
+    static std::map<unsigned, QRGroup *> m_groups;
+
 };
 
 } // namespace qrs;

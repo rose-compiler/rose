@@ -1,5 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+SUBDIRS = qrose
+
 # Demo of binary executable functionality. See binaryTests/Makefile.am for the complete list.
 # This demo does not require Qt.
 demo_1:

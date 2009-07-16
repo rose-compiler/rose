@@ -8,14 +8,13 @@ INCLUDES = $(ROSE_INCLUDES) $(QT_INCLUDES)
 #LD_FLAGS = @LIB_ROSE@ @ROSE_LDFLAGS@  @LIB_QT@ @QT_LDFLAGS@
 METASOURCES = auto
 
-include_HEADERS = QRButtons.h QRToolBar.h QRTable.h QREdit.h QRSelect.h QRProgress.h QRSeparator.h QRTree.h
+include_HEADERS = QRButtons.h QRToolBar.h QRTable.h QREdit.h QRSelect.h QRProgress.h QRSeparator.h QRTree.h 
 
 noinst_LTLIBRARIES = libqrwidgets.la
 
-MOC_SOURCES = moc_QRButtons.C moc_QRToolBar.C moc_QRTable.C moc_QREdit.C moc_QRSelect.C moc_QRProgress.C moc_QRSeparator.C moc_QRSelect_p.C moc_QRTree.C
+MOC_SOURCES = moc_QRButtons.C moc_QRToolBar.C moc_QRTable.C moc_QREdit.C moc_QRSelect.C moc_QRProgress.C moc_QRSeparator.C moc_QRSelect_p.C moc_QRTree.C 
 
-#libqrwidgets_la_SOURCES = $(MOC_SOURCES) QRTable_p.C QREdit_p.C QRProgress_p.C QRSeparator_p.C QRButtons.C QRToolBar.C QRTable.C  QREdit.C  QRSelect.C QRSelect_p.C QRProgress.C QRSeparator.C QRTree.C
-libqrwidgets_la_SOURCES = QRTable_p.C QREdit_p.C QRProgress_p.C QRSeparator_p.C QRButtons.C QRToolBar.C QRTable.C  QREdit.C  QRSelect.C QRSelect_p.C QRProgress.C QRSeparator.C QRTree.C
+libqrwidgets_la_SOURCES = QRTable_p.C QREdit_p.C QRProgress_p.C QRSeparator_p.C QRButtons.C QRButtons_p.C QRToolBar.C QRTable.C  QREdit.C  QRSelect.C QRSelect_p.C QRProgress.C QRSeparator.C QRTree.C 
 nodist_libqrwidgets_la_SOURCES = $(MOC_SOURCES)
 
 CLEANFILES = moc_*.C
@@ -41,4 +40,4 @@ EXTRA_DIST = QRButtons.h  \
              QRSelect.h \
              QRSeparator.h \
              QRTable.h \
-             QRToolBar.h
+             QRToolBar.h 
