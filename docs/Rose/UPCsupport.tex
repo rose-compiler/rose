@@ -15,11 +15,15 @@ translate some UPC programs into C programs with runtime calls to the Berkeley U
 %-------------------------------------------------------------
 \section{Supported UPC Constructs}
 ROSE currently supports UPC constructs as defined in UPC 1.1.1.
-The supported version is limited by the UPC version supported by the EDG frontend,which only supports UPC 1.1.1 (\lstinline{__UPC_VERSION__} string is defined as 200310L)
-\footnote{ROSE uses EDG 3.3 currently and it originally only supported UPC 1.0. 
-We merged the UPC 1.1.1 support from EDG 3.10 into our EDG 3.3 frontend. We
-are upgrading ROSE to use the latest EDG 4.0 but it seems like it still
-only supports UPC 1.1.1.}.
+\footnote{
+The supported version is limited by the EDG
+frontend, which only supports UPC 1.1.1 (\lstinline{__UPC_VERSION__} string
+is defined as 200310L).
+ROSE uses EDG 3.3 currently and it originally only supported UPC 1.0. 
+We merged the UPC 1.1.1 support from EDG 3.10 into our EDG 3.3 frontend. 
+It seems like that the latest EDG 4.0 still only supports UPC 1.1.1 but we
+can easily extend it to support UPC 1.2 given the minor language changes
+from 1.1.1 to 1.2.}.
 A list of those UPC constructs and their corresponding ROSE AST representations are given below:
 \begin{verbatim}
 MYTHREAD                SgUpcMythread
@@ -56,7 +60,8 @@ support for UPC static threads compilation with n threads.
 We give some output after ROSE's source-to-source translation of some example UPC input. 
 These UPC input are actually some of ROSE's daily regression test input available from \textit{ROSE/tests/CompileTests/UPC\_tests}.
 
-Figure~\ref{Manual:UPC:hello} shows the handling of a hello program in UPC.
+Figure~\ref{Manual:UPC:hello} shows the output of the ROSE
+identityTranslator handling of a hello program in UPC.
 \begin{figure}[!h]
 {\indent
   {\mySmallFontSize
@@ -68,12 +73,12 @@ Figure~\ref{Manual:UPC:hello} shows the handling of a hello program in UPC.
     \end{htmlonly}
   }
 }
-\caption{Output of UPC hello}
+\caption{Output of an UPC hello program}
 \label{Manual:UPC:hello}
 \end{figure}
 
-Figure~\ref{Manual:UPC:strict} shows the handling of a UPC pragma to
-specify memory consistency. 
+Figure~\ref{Manual:UPC:strict} shows the handling of UPC language
+constructs related to memory consistency. 
 \begin{figure}[!h]
 {\indent
   {\mySmallFontSize
@@ -124,23 +129,43 @@ of \lstinline{upc_forall} with \lstinline{affinity}.
 \label{Manual:UPC:forall2}
 \end{figure}
 
-ROSE's support for various uses of \lstinline{shared} is given in
-Figure~\ref{Manual:UPC:shared}. 
+\clearpage
+ROSE's support for various uses of \lstinline{shared} and unshared UPC
+variables is given in
+Figure~\ref{Manual:UPC:sharedaa} and Figure~\ref{Manual:UPC:sharedab}. 
+All cases of shared, shared to shared, shared to private, and private to
+shared pointers can be parsed and unparsed faithfully.
 \begin{figure}[!h]
 {\indent
   {\mySmallFontSize
     \begin{latexonly}
-    \lstinputlisting{\TopBuildDirectory/tests/CompileTests/UPC_tests/rose_shared.upc}
+    \lstinputlisting{\TopBuildDirectory/tests/CompileTests/UPC_tests/rose_shared.upc.aa}
     \end{latexonly}
     \begin{htmlonly}
-    \verbatiminput{\TopBuildDirectory/tests/tests/CompileTests/UPC_tests/rose_shared.upc}
+    \verbatiminput{\TopBuildDirectory/tests/tests/CompileTests/UPC_tests/rose_shared.upc.aa}
     \end{htmlonly}
   }
 }
-\caption{Output for UPC shared}
-\label{Manual:UPC:shared}
+\caption{Output for UPC shared: part A}
+\label{Manual:UPC:sharedaa}
 \end{figure}
 
+\begin{figure}[!h]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopBuildDirectory/tests/CompileTests/UPC_tests/rose_shared.upc.ab}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopBuildDirectory/tests/tests/CompileTests/UPC_tests/rose_shared.upc.ab}
+    \end{htmlonly}
+  }
+}
+\caption{Output for UPC shared: part B}
+\label{Manual:UPC:sharedab}
+\end{figure}
+
+\clearpage
 Support for UPC \lstinline{lock}s is demonstrated in
 Figure~\ref{Manual:UPC:lock}. 
 \begin{figure}[!h]
@@ -166,14 +191,32 @@ An example UPC-to-C translator, namely roseupcc, is provided to
 demonstrate how one can use ROSE to build a translator translating UPC
 programs into C programs with runtime calls to the Berkeley UPC (BUPC)
 runtime system V. 2.6.0. 
-
-roseupcc follows the BUPC runtime interface specification 3.10~\cite{BUPC3.10} so
-we don't reiterate why the translation is done in a certain way here. 
-Please be advised that only a subset of the UPC 1.1.1 constructs is
+roseupcc follows the BUPC runtime interface specification
+3.10~\cite{BUPC3.10}.
+%we don't reiterate details about why the translation is done in a certain way here. 
+Please be advised that only a subset of the UPC constructs, specially
+variable uses, is
 translated currently since the translator is meant to be a starting example.
+Also variable handling is arguably the most difficult part of a UPC
+implementation.
 
 Translation result for the UPC hello program (shown in
 Figure~\ref{Manual:UPC:hello}) is given in Figure~\ref{Manual:UPC:hello-trans}. 
+Mostly, high level \lstinline{SageInterface} functions are used to
+easily translate the ROSE AST. 
+BUPC-specified preprocessing directives, such as \lstinline{#include "upcr.h"} 
+and \lstinline{#define UPCR_WANT_MAJOR 3}, are inserted.
+The original user main function is rewritten to \lstinline{user_main} with
+runtime initialization (\lstinline{UPCR_BEGIN_FUNCTION}) and termination 
+(\lstinline{UPCR_EXIT_FUNCTION}) functions. 
+\lstinline{upc_barrier} is simply replaced with a call to its corresponding
+runtime function \lstinline{upcr_barrier()}.
+\lstinline{UPCRI_ALLOC_filename_xxx()} handles per file UPCRI allocation of
+possible shared variables (none here).  
+\lstinline{UPCRI_INIT_filename_xxx()} function is used for per-file initialization of
+shared and unshared (thread local) data.
+
+
 \begin{figure}[!h]
 {\indent
   {\mySmallFontSize
@@ -190,11 +233,27 @@ Figure~\ref{Manual:UPC:hello}) is given in Figure~\ref{Manual:UPC:hello-trans}.
 \end{figure}
 
 \clearpage
-Translation of \lstinline{shared} variables is demonstrated in
+Implementing various UPC variable accesses is complex due to the two level
+memory scheme used by the partitioned global memory address space.
+The translation has to handle variable declaration, memory allocation,
+value initialization, variable access, and so on. 
+
+UPC variables can be roughly categorized as shared and unshared (or thread
+local) variables. 
+For shared variables, they can be divided into two categories:
+statically allocated shared variables (including global shared variables
+and local static shared variables) and dynamically allocated shared
+variables. 
+%Runtime library routines are sufficient to support dynamically allocated
+%shared variables. 
+We focus on statically allocated shared variables here as
+an example.
+%But extra compiler translation is needed for
+%implementing statically allocated shared variables. 
+Translation of statically allocated \lstinline{shared} variables is demonstrated in
 Figure~\ref{Manual:UPC:shared1-transaa} and
 Figure~\ref{Manual:UPC:shared1-transab} for an input code shown in
 Figure~\ref{Manual:UPC:shared1}.
-
 \begin{figure}[!h]
 {\indent
   {\mySmallFontSize
@@ -225,6 +284,54 @@ Figure~\ref{Manual:UPC:shared1}.
 \label{Manual:UPC:shared1-transaa}
 \end{figure}
 
+The BUPC runtime distinguishes between phaseless (blocksize ==1 or 0 or
+unspecified) and phased (all other cases) shared
+pointers for better performance. 
+So two types of global scoped proxy pointers (\lstinline{upcr_pshared_ptr_t}
+and \lstinline{upcr_shared_ptr_t}) are used to represent static shared variables. 
+Global static shared variables directly use their names as the proxy
+pointer names (such as \lstinline{global_counter}).
+Local static variables use their mangled name (e.g. \lstinline{_lsscounter3769188422_}) for those pointers to
+avoid name collision.
+Accesses to shared variables are implemented by a set of runtime library
+calls, such as \lstinline{UPCR_GET_SHARED()} and
+\lstinline{UPCR_PUT_SHARED_VAL}.
+Again, as shown in Figure~\ref{Manual:UPC:shared1-transab}, \lstinline{UPCRI_ALLOC_filename_xxx()} handles per file UPCRI allocation of shared variables and 
+\lstinline{UPCRI_INIT_filename_xxx()} function is used for per-file
+initialization of those data.
+
+ROSE provides a set of AST interface functions to help developers handle
+UPC-specific types and facilitate translation. Those functions include 
+\lstinline{bool isUpcSharedType()}, 
+\lstinline{bool isUpcSharedArrayType()}, 
+\lstinline{bool isUpcPhaseLessSharedType()}, 
+\lstinline{bool isUpcPrivateToSharedType()}, etc. 
+A type mangling function (\lstinline{mangleType()}) is also provided
+to implement the Itanium C++ ABI specification~\cite{ItaniumCppABI}. 
+
+Unshared variables in UPC (also called Thread local data, or TLD) consists
+of local auto variables and global ( and static local) variables.
+Local auto variables do not need special translation. 
+But global and static local variables do. 
+Implementation details for them vary depending on their scope, internal or
+external linkage, if they are scalar or array types, if they point to
+shared data, if they have initializers, and so on.
+But the basic scheme for variable declaration, allocation/initialization, and
+accesses is similar to the handling of shared UPC variables.
+Please refer to the BUPC runtime interface specification
+3.10~\cite{BUPC3.10} for details.
+We only provide a translation example in
+Figure~\ref{Manual:UPC:unshared1-transaa} and
+Figure~\ref{Manual:UPC:unshared1-transab} for an input code shown in
+Figure~\ref{Manual:UPC:unshared1}.
+
+%No translations are needed for extern global unshared variables unless they
+%are pointers to shared data. 
+%Local static unshared variables are promoted to non-static type at global
+%scope using lstinline{UPCR_TLD_DEFINE or UPCR_TLD_DEFINE_TENTATIVE})
+%Unshared pointer to shared data 
+
+
 \begin{figure}[!h]
 {\indent
   {\mySmallFontSize
@@ -239,13 +346,6 @@ Figure~\ref{Manual:UPC:shared1}.
 \caption{Translation of UPC shared variables, part B}
 \label{Manual:UPC:shared1-transab}
 \end{figure}
-
-
-\clearpage
-Translation of non-\lstinline{shared} variables is demonstrated in
-Figure~\ref{Manual:UPC:unshared1-transaa} and
-Figure~\ref{Manual:UPC:unshared1-transab} for an input code shown in
-Figure~\ref{Manual:UPC:unshared1}.
 
 \begin{figure}[!h]
 {\indent
@@ -273,7 +373,7 @@ Figure~\ref{Manual:UPC:unshared1}.
     \end{htmlonly}
   }
 }
-\caption{Translation of UPC non-shared variables, part A}
+\caption{Translation of UPC unshared variables, part A}
 \label{Manual:UPC:unshared1-transaa}
 \end{figure}
 
@@ -288,9 +388,12 @@ Figure~\ref{Manual:UPC:unshared1}.
     \end{htmlonly}
   }
 }
-\caption{Translation of UPC non-shared variables, part B}
+\caption{Translation of UPC unshared variables, part B}
 \label{Manual:UPC:unshared1-transab}
 \end{figure}
 
 
+%-------------------------------------------------------------
+%-------------------------------------------------------------
+%\section{Summary}
 

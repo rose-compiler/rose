@@ -65,6 +65,11 @@ $(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.upc)
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
 
+rose_shared.upc.aa:rose_shared.upc
+	split -36 rose_shared.upc rose_shared.upc.
+	test -f rose_shared.upc.aa
+	test -f rose_shared.upc.ab
+
 QMTEST_Objects = ${ALL_TESTCODES:.upc=.qmt}
 
 # Make rule to build the QMTest database files
@@ -82,11 +87,12 @@ EXTRA_DIST = $(ALL_TESTCODES) upc.h upc_relaxed.h upc_strict.h upc_collective.h
 check-local:
 	@echo "Tests for UPC examples."
 	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) rose_shared.upc.aa
 	@echo "***********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/UPC_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************"
 
 clean-local:
-	rm -f *.o rose_*.[cC] rose_*.upc
+	rm -f *.o rose_*.[cC] rose_*.upc rose_*
 	rm -rf QMTest
 

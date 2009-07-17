@@ -26,7 +26,7 @@ rose_shared_1.c.aa: rose_shared_1.c
 	
 rose_unshared_1.c:../roseupcc
 	../roseupcc -c $(ROSEUPCC_FLAGS) $(srcdir)/unshared_1.upc
-	split -67 rose_unshared_1.c rose_unshared_1.c.
+	split -60 rose_unshared_1.c rose_unshared_1.c.
 	test -f rose_unshared_1.c.aa
 	fold rose_unshared_1.c.aa > rose_unshared_1.c.aaf
 	test -f rose_unshared_1.c.ab
