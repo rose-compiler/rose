@@ -1,3 +1,220 @@
+2009-07-17 03:58  matzke
+
+	* [r6581] /trunk/ROSE/scripts/rosegit/bin/rosegit-svncommit:
+	  rosegit-svncommit makes sure local repo is up to date
+
+2009-07-17 03:58  matzke
+
+	* [r6580] /trunk/ROSE/scripts/rosegit/config/rat.trunk.conf: Added
+	  Thomas Heller to test failure notification
+
+2009-07-17 03:58  matzke
+
+	* [r6579]
+	  /trunk/ROSE/scripts/rosegit/bin/rosegit-filter-make-error:
+	  Improvements to emailed make output
+	  
+	  If an error occurs deep within recursive makes, then we print
+	  only the
+	  output from the inner-most make (at the leaf). The old behaviour
+	  was to
+	  print the output from the inner-most make and output from the
+	  makes
+	  that are on the branch to the leaf where the error occurred (but
+	  suppressing output from makes on other branches).
+
+2009-07-17 00:58  liao6
+
+	* [r6577] /trunk/ROSE/projects/UpcTranslation/tests/unshared_1.upc:
+	  Used a better name
+
+2009-07-17 00:29  liao6
+
+	* [r6576] /trunk/ROSE/demo/qrose/Makefile.in,
+	  /trunk/ROSE/docs/Rose/UPCsupport.tex: minor changes
+	  Removed a unnecessary Makefile.in file
+
+2009-07-17 00:13  liao6
+
+	* [r6575] /trunk/ROSE/docs/Rose/UPCsupport.tex: more edits for the
+	  UPC manual
+
+2009-07-17 00:02  liao6
+
+	* [r6574] /trunk/ROSE/docs/Rose/UPCsupport.tex,
+	  /trunk/ROSE/docs/Rose/bibliography.tex,
+	  /trunk/ROSE/projects/UpcTranslation/tests/Makefile.am,
+	  /trunk/ROSE/projects/UpcTranslation/tests/hello.upc,
+	  /trunk/ROSE/tests/CompileTests/UPC_tests/Makefile.am: More edits
+	  on the UPC support in the ROSE manual
+
+2009-07-16 21:20  bauer25
+
+	* [r6573]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/TypeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/TypeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/VariablesType.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/VariablesType.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp: Worked on RTED
+	  pointer tracking
+
+2009-07-16 21:16  saebjornsen1
+
+	* [r6572]
+	  /trunk/ROSE/src/midend/programAnalysis/CallGraphAnalysis/CallGraph.h:
+	  Fixed call graph construction problem
+
+2009-07-16 20:42  heller9
+
+	* [r6571] /trunk/ROSE/config/Makefile.for.ROSE.includes.and.libs,
+	  /trunk/ROSE/config/qrose_indigo_1.m4, /trunk/ROSE/configure.in,
+	  /trunk/ROSE/demo/Makefile.am, /trunk/ROSE/demo/qrose,
+	  /trunk/ROSE/demo/qrose/Makefile.am,
+	  /trunk/ROSE/demo/qrose/Makefile.in,
+	  /trunk/ROSE/demo/qrose/icons.h,
+	  /trunk/ROSE/demo/qrose/simple.cpp,
+	  /trunk/ROSE/demo/qrose/t1_window.C,
+	  /trunk/ROSE/demo/qrose/t2_layout.C,
+	  /trunk/ROSE/demo/qrose/t3_buttons.C,
+	  /trunk/ROSE/demo/qrose/t4_events.C,
+	  /trunk/ROSE/demo/qrose/t5_components.C,
+	  /trunk/ROSE/demo/qrose/t6_query1.C,
+	  /trunk/ROSE/demo/qrose/test.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/translator_tests/reverseTraversal.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/Makefile.am,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/QRAstInfo.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/QRAstInfo.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/QRAttribute.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/QRAttribute.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/QRCoords.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/QRCoords.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/QRIcons.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/QRIcons.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/QRPixmap.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/QRPixmap.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/QRoseComponent.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/QRoseComponent.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/icons,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/icons/Makefile.am,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/icons/cachebroadcast.xpm,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/icons/cacheclear.xpm,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/icons/cachecollect.xpm,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/icons/cacheview.xpm,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/icons/class_decl.xpm,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/icons/clear_results.xpm,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/icons/default.xpm,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/icons/doquery.xpm,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/icons/empty.xpm,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/icons/func_decl.xpm,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/icons/func_defn.xpm,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/icons/gotoline.xpm,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/icons/highlight.xpm,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/icons/lookup.xpm,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/icons/method_npublic_decl.xpm,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/icons/method_npublic_defn.xpm,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/icons/method_public_decl.xpm,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/icons/method_public_defn.xpm,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/icons/no.xpm,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/icons/project.xpm,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/icons/setdomain.xpm,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/icons/source_c.xpm,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/icons/target.xpm,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/icons/typedf.xpm,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/icons/var.xpm,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/icons/yes.xpm,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/icons/zoomin.xpm,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/icons/zoomout.xpm,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Makefile.am,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/QueryBox,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/QueryBox/Makefile.am,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/QueryBox/QRQueryBox.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/QueryBox/QRQueryBox.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/QueryBox/QRQueryDomain.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/QueryBox/QRQueryDomain.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/QueryBox/QRQueryOp.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/QueryBox/QRQueryOp.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/QueryBox/QRQueryRange.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/QueryBox/QRQueryRange.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/Makefile.am,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/QRSourceBox.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/QRSourceBox.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/QRUnparser.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/QRUnparser.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/cindent.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/cindent.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/cpp_colorizer.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/cpp_colorizer.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/levelwidget.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/levelwidget.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/linenumberwidget.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/linenumberwidget.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/markerwidget.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/markerwidget.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/paragdata.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/paragdata.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/parenmatcher.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/parenmatcher.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/q3richtext_px.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/q3richtext_px.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/q3richtextx.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/qeditor.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/qeditor.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/qeditor_indenter.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/qeditor_indenter.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/qsourcecolorizer.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/qsourcecolorizer.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/simple_indent.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/simple_indent.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/yyindent.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/TreeBox,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/TreeBox/Makefile.am,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/TreeBox/QRListViewItem.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/TreeBox/QRListViewItem.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/TreeBox/QRTreeBox.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/TreeBox/QRTreeBox.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/TreeBox/QRTreeVisitor.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/TreeBox/QRTreeVisitor.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/Makefile.am,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/QRGroup.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/QRGroup.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/QRMacros.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/QRMain.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/QRMain.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/QRMain_p.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/QRMain_p.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/QRWidgetAccess.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/QRWidgetAccess.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/qrose.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Makefile.am,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/QRoseLib/Makefile.am,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/Makefile.am,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/QRButtons_p.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/QRButtons_p.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/QRToolBar.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/QRToolBar.h,
+	  /trunk/ROSE/src/frontend/SageIII/sage3.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.C,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstBrowserWidget/QtAstModel.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/Make.inc,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/RoseCodeEdit/QCodeEdit/widgets/Makefile.am:
+	  svn merge -r411:415
+	  https://outreach.scidac.gov/svn/rose/branches/imperial
+	  
+	  merged qrose branch into main trunk.
+	  minor bugfixes
+
 2009-07-16 17:34  liao6
 
 	* [r6568] /trunk/ROSE/docs/Rose/Makefile.am,
