@@ -9,12 +9,12 @@ UPC~\cite{UPC:Web} is a famous extension of the C99 programming language to supp
 ROSE leverages the EDG frontend to parse input UPC programs and generate EDG IR with UPC extensions.
 It then converts the EDG IR into ROSE's internal AST and provides unparsing support for the AST.
 An example UPC-to-C translator is also provided to demonstrate how one can use ROSE to 
-translate some UPC programs into C programs with runtime calls to the Berkeley UPC (BUPC) runtime system V. 2.6.0~\cite{BUPC:Web}.
+translate UPC programs into C programs with runtime calls to the Berkeley UPC (BUPC) runtime system V. 2.6.0~\cite{BUPC:Web}.
 
 %-------------------------------------------------------------
 %-------------------------------------------------------------
 \section{Supported UPC Constructs}
-ROSE currently supports UPC constructs as defined in UPC 1.1.1.
+ROSE currently supports all UPC constructs as defined in UPC 1.1.1.
 \footnote{
 The supported version is limited by the EDG
 frontend, which only supports UPC 1.1.1 (\lstinline{__UPC_VERSION__} string
@@ -40,8 +40,8 @@ strict/relaxed/shared   SgUPC_AccessModifier
 UPC_MAX_BLOCKSIZE       1073741823 (~1GB)
 \end{verbatim}
 As we can see, most UPC constructs are represented by their corresponding dedicated ROSE AST nodes. 
-\lstinline{strict}, \lstinline{relaxed} and \lstinline{shared} are
-represented as instances of \lstinline{SgUPC_AccessModifier}.
+A few others, such as \lstinline{strict}, \lstinline{relaxed} and
+\lstinline{shared}, are represented as instances of \lstinline{SgUPC_AccessModifier}.
 \lstinline{UPC_MAX_BLOCKSIZE} is treated as a macro and is expanded to a predefined integer constant value.
 
 %-------------------------------------------------------------
@@ -51,7 +51,7 @@ ROSE can automatically recognize a source file with a suffix of \textit{.upc} as
 For other UPC files without the \textit{.upc} extension, a command line
 option (\textit{-rose:UPC\_only or -rose:UPC}) is available to turn on the
 UPC support explicitly.
-In addition, \textit{-rose:upc\_threads n} can be used to enable ROSE'S
+In addition, \textit{-rose:upc\_threads n} can be used to enable ROSE's
 support for UPC static threads compilation with n threads.
 
 %-------------------------------------------------------------
@@ -61,7 +61,7 @@ We give some output after ROSE's source-to-source translation of some example UP
 These UPC input are actually some of ROSE's daily regression test input available from \textit{ROSE/tests/CompileTests/UPC\_tests}.
 
 Figure~\ref{Manual:UPC:hello} shows the output of the ROSE
-identityTranslator handling of a hello program in UPC.
+identityTranslator handling a hello program in UPC.
 \begin{figure}[!h]
 {\indent
   {\mySmallFontSize
@@ -133,8 +133,8 @@ of \lstinline{upc_forall} with \lstinline{affinity}.
 ROSE's support for various uses of \lstinline{shared} and unshared UPC
 variables is given in
 Figure~\ref{Manual:UPC:sharedaa} and Figure~\ref{Manual:UPC:sharedab}. 
-All cases of shared, shared to shared, shared to private, and private to
-shared pointers can be parsed and unparsed faithfully.
+All kinds of shared, shared to shared, shared to private, and private to
+shared variables can be correctly parsed and unparsed.
 \begin{figure}[!h]
 {\indent
   {\mySmallFontSize
@@ -191,13 +191,12 @@ An example UPC-to-C translator, namely roseupcc, is provided to
 demonstrate how one can use ROSE to build a translator translating UPC
 programs into C programs with runtime calls to the Berkeley UPC (BUPC)
 runtime system V. 2.6.0. 
-The source files for roseupcc are located in
+The source files of roseupcc are located in
 \textit{ROSE/projects/UpcTranslation}.
 %roseupcc follows the BUPC runtime interface specification
 %3.10~\cite{BUPC3.10}.
 %we don't reiterate details about why the translation is done in a certain way here. 
-Please be advised that only a subset of the UPC constructs, specially
-variable uses, is
+Please be advised that only a subset of UPC (including variable handling) is
 translated currently since the translator is meant to be a starting example.
 Also variable handling is arguably the most difficult part of a UPC
 implementation.
