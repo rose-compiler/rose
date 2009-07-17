@@ -1,9 +1,10 @@
+#include <rose.h>
+
 #include <qpainter.h>
 
 #include <QRListViewItem.h>
 #include <QRTreeBox.h>
 
-#include <rose.h>
 
 using namespace std;
 

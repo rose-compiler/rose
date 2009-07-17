@@ -3,8 +3,9 @@
  *   jgfc@doc.ic.ac.uk                                                     *
  ***************************************************************************/
 
-#include <QRQueryRange.h>
 #include <rose.h>
+
+#include <QRQueryRange.h>
 
 using namespace std;
 

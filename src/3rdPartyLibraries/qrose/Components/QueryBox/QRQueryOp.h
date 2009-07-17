@@ -6,9 +6,11 @@
 #ifndef QRQUERYOP_H
 #define QRQUERYOP_H
 
-#include <rose.h>
+//#include <rose.h>
 #include <QRQueryDomain.h>
 #include <QRQueryRange.h>
+
+class SgNode;
 
 namespace qrs {
 /**

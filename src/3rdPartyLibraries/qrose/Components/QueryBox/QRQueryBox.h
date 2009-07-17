@@ -17,13 +17,14 @@
 #include <QRQueryOp.h>
 #include <QRQueryRange.h>
 
-#include <rose.h>
+//#include <rose.h>
 #include <set>
 #include <map>
 
 #include <QObject>
 #include <QWidget>
 
+class SgNode;
 
 namespace qrs {
 

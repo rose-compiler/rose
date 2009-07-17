@@ -3,9 +3,10 @@
  *   jgfc@doc.ic.ac.uk                                                     *
  ***************************************************************************/
 
+#include <rose.h>
+
 #include <QRQueryDomain.h>
 #include <vector>
-#include <rose.h>
 using namespace std;
 
 namespace qrs {

@@ -2,10 +2,12 @@
 #define QRTREEVISITOR_H
 
 
-#include <rose.h>
+//#include <rose.h>
 #include <QRListViewItem.h>
 
 #include <map>
+
+class SgNode;
 
 namespace qrs {
 
