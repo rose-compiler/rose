@@ -75,7 +75,7 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( AsmFunctionDeclaration      , "AsmFunctionDeclaration",      "AsmFunctionDeclarationTag" );
      NEW_TERMINAL_MACRO ( AsmFieldDeclaration         , "AsmFieldDeclaration",         "AsmFieldDeclarationTag" );
 
-     NEW_NONTERMINAL_MACRO ( AsmDeclaration, AsmDataStructureDeclaration | AsmFunctionDeclaration | 
+     NEW_NONTERMINAL_MACRO ( AsmDeclaration, AsmDataStructureDeclaration | AsmFunctionDeclaration |
                              AsmFieldDeclaration, "AsmDeclaration", "AsmDeclarationTag", false );
 
      NEW_NONTERMINAL_MACRO ( AsmStatement, AsmDeclaration | AsmBlock | AsmInstruction, "AsmStatement", "AsmStatementTag", false );
@@ -98,10 +98,10 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( AsmBinaryAsr, "AsmBinaryAsr", "AsmBinaryAsrTag" );
      NEW_TERMINAL_MACRO ( AsmBinaryRor, "AsmBinaryRor", "AsmBinaryRorTag" );
 
-     NEW_NONTERMINAL_MACRO ( AsmBinaryExpression, AsmBinaryAdd               | AsmBinarySubtract      | AsmBinaryMultiply           | 
+     NEW_NONTERMINAL_MACRO ( AsmBinaryExpression, AsmBinaryAdd               | AsmBinarySubtract      | AsmBinaryMultiply           |
                                                   AsmBinaryDivide            | AsmBinaryMod           | AsmBinaryAddPreupdate       |
-                                                  AsmBinarySubtractPreupdate | AsmBinaryAddPostupdate | AsmBinarySubtractPostupdate | 
-                                                  AsmBinaryLsl               | AsmBinaryLsr           | AsmBinaryAsr                | 
+                                                  AsmBinarySubtractPreupdate | AsmBinaryAddPostupdate | AsmBinarySubtractPostupdate |
+                                                  AsmBinaryLsl               | AsmBinaryLsr           | AsmBinaryAsr                |
                                                   AsmBinaryRor, "AsmBinaryExpression", "AsmBinaryExpressionTag", false );
 
      NEW_TERMINAL_MACRO ( AsmUnaryPlus , "AsmUnaryPlus",  "AsmUnaryPlusTag" );
@@ -117,7 +117,7 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( Asmx86RegisterReferenceExpression , "Asmx86RegisterReferenceExpression", "Asmx86RegisterReferenceExpressionTag" );
      NEW_TERMINAL_MACRO ( AsmArmRegisterReferenceExpression , "AsmArmRegisterReferenceExpression", "AsmArmRegisterReferenceExpressionTag" );
      NEW_TERMINAL_MACRO ( AsmPowerpcRegisterReferenceExpression , "AsmPowerpcRegisterReferenceExpression", "AsmPowerpcRegisterReferenceExpressionTag" );
-     NEW_NONTERMINAL_MACRO ( AsmRegisterReferenceExpression , 
+     NEW_NONTERMINAL_MACRO ( AsmRegisterReferenceExpression ,
                              Asmx86RegisterReferenceExpression | AsmArmRegisterReferenceExpression | AsmPowerpcRegisterReferenceExpression,
                             "AsmRegisterReferenceExpression", "AsmRegisterReferenceExpressionTag" , false);
 
@@ -129,9 +129,9 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( AsmDoubleFloatValueExpression , "AsmDoubleFloatValueExpression", "AsmDoubleFloatValueExpressionTag" );
      NEW_TERMINAL_MACRO ( AsmVectorValueExpression      , "AsmVectorValueExpression",      "AsmVectorValueExpressionTag" );
 
-     NEW_NONTERMINAL_MACRO ( AsmValueExpression, AsmByteValueExpression | AsmWordValueExpression | 
-                             AsmDoubleWordValueExpression | AsmQuadWordValueExpression | 
-                             AsmSingleFloatValueExpression | AsmDoubleFloatValueExpression | 
+     NEW_NONTERMINAL_MACRO ( AsmValueExpression, AsmByteValueExpression | AsmWordValueExpression |
+                             AsmDoubleWordValueExpression | AsmQuadWordValueExpression |
+                             AsmSingleFloatValueExpression | AsmDoubleFloatValueExpression |
                              AsmVectorValueExpression, "AsmValueExpression", "AsmValueExpressionTag", false );
 
      NEW_TERMINAL_MACRO (AsmExprListExp,            "AsmExprListExp",            "AsmExprListExpTag" );
@@ -139,8 +139,8 @@ Grammar::setUpBinaryInstructions ()
 				     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
-     NEW_NONTERMINAL_MACRO ( AsmExpression, AsmValueExpression | AsmBinaryExpression | AsmUnaryExpression | 
-                             AsmMemoryReferenceExpression | AsmRegisterReferenceExpression | AsmControlFlagsExpression | 
+     NEW_NONTERMINAL_MACRO ( AsmExpression, AsmValueExpression | AsmBinaryExpression | AsmUnaryExpression |
+                             AsmMemoryReferenceExpression | AsmRegisterReferenceExpression | AsmControlFlagsExpression |
                              AsmCommonSubExpression | AsmExprListExp, "AsmExpression", "AsmExpressionTag", false );
 
   // These are attached to the SgAsmNode object (the root for the IR used for binaries)
@@ -166,9 +166,9 @@ Grammar::setUpBinaryInstructions ()
      AsmType80bitFloat.setDataPrototype     ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      AsmType128bitFloat.setDataPrototype    ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
-     NEW_NONTERMINAL_MACRO ( AsmType, AsmTypeByte        | AsmTypeWord           | AsmTypeDoubleWord  | 
-                                      AsmTypeQuadWord    | AsmTypeDoubleQuadWord | AsmType80bitFloat  | 
-                                      AsmType128bitFloat | AsmTypeSingleFloat    | AsmTypeDoubleFloat | 
+     NEW_NONTERMINAL_MACRO ( AsmType, AsmTypeByte        | AsmTypeWord           | AsmTypeDoubleWord  |
+                                      AsmTypeQuadWord    | AsmTypeDoubleQuadWord | AsmType80bitFloat  |
+                                      AsmType128bitFloat | AsmTypeSingleFloat    | AsmTypeDoubleFloat |
                                       AsmTypeVector, "AsmType", "AsmTypeTag", false /* canHaveInstances = false */ );
 
      NEW_TERMINAL_MACRO ( AsmGenericDLL,           "AsmGenericDLL",           "AsmGenericDLLTag");
@@ -234,8 +234,8 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO    ( AsmLEEntryTable,   "AsmLEEntryTable",   "AsmLEEntryTableTag"   );
      NEW_TERMINAL_MACRO    ( AsmLERelocTable,   "AsmLERelocTable",   "AsmLERelocTableTag"   );
 
-     NEW_NONTERMINAL_MACRO ( AsmGenericSection, 
-            AsmGenericHeader | 
+     NEW_NONTERMINAL_MACRO ( AsmGenericSection,
+            AsmGenericHeader |
             AsmElfSection    | AsmElfSectionTable | AsmElfSegmentTable     |
             AsmPESection     | AsmPESectionTable  | AsmDOSExtendedHeader   | AsmCoffSymbolTable  |
             AsmNESection     | AsmNESectionTable  | AsmNENameTable         | AsmNEModuleTable    |
@@ -295,8 +295,8 @@ Grammar::setUpBinaryInstructions ()
   // NEW_TERMINAL_MACRO ( AsmGenericSegmentList, "AsmGenericSegmentList", "AsmGenericSegmentListTag" );
   // NEW_TERMINAL_MACRO ( AsmElfSegment,         "AsmElfSegment",         "AsmElfSegmentTag" );
   // NEW_NONTERMINAL_MACRO ( AsmGenericSegment, AsmElfSegment, "AsmGenericSegment", "AsmGenericSegmentTag", false );
-  // NEW_NONTERMINAL_MACRO ( AsmGenericSupport, AsmGenericFile        | AsmGenericHeader | AsmGenericSection      | 
-  //                                            AsmGenericSegment     | AsmGenericFormat | 
+  // NEW_NONTERMINAL_MACRO ( AsmGenericSupport, AsmGenericFile        | AsmGenericHeader | AsmGenericSection      |
+  //                                            AsmGenericSegment     | AsmGenericFormat |
   //                                            AsmGenericSectionList | AsmGenericSegmentList,
   //                         "AsmGenericSupport",    "AsmGenericSupportTag", false );
 
@@ -321,8 +321,8 @@ Grammar::setUpBinaryInstructions ()
 
   // These are a subset (but most of) the possible Dwarf Tags, I have skipped some of the
   // architecture specific tags (except for GNU).  There are about 63 new IR nodes here.
-  // These are kinds of language constructs that are stored in the ".debug_info" section 
-  // when dwarf debug information is available (generated by the compiler) in the binary 
+  // These are kinds of language constructs that are stored in the ".debug_info" section
+  // when dwarf debug information is available (generated by the compiler) in the binary
   // executable.
      NEW_TERMINAL_MACRO ( AsmDwarfArrayType, "AsmDwarfArrayType", "AsmDwarfArrayTypeTag" );
      NEW_TERMINAL_MACRO ( AsmDwarfClassType, "AsmDwarfClassType", "AsmDwarfClassTypeTag" );
@@ -391,16 +391,16 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( AsmDwarfUnknownConstruct, "AsmDwarfUnknownConstruct", "AsmDwarfUnknownConstructTag" );
 
      NEW_NONTERMINAL_MACRO ( AsmDwarfConstruct,
-               AsmDwarfArrayType | AsmDwarfClassType | AsmDwarfEntryPoint | AsmDwarfEnumerationType | AsmDwarfFormalParameter | AsmDwarfImportedDeclaration | 
-               AsmDwarfLabel | AsmDwarfLexicalBlock | AsmDwarfMember | AsmDwarfPointerType | AsmDwarfReferenceType | AsmDwarfCompilationUnit | AsmDwarfStringType | 
-               AsmDwarfStructureType | AsmDwarfSubroutineType | AsmDwarfTypedef | AsmDwarfUnionType | AsmDwarfUnspecifiedParameters | AsmDwarfVariant | 
-               AsmDwarfCommonBlock | AsmDwarfCommonInclusion | AsmDwarfInheritance | AsmDwarfInlinedSubroutine | AsmDwarfModule | AsmDwarfPtrToMemberType | 
-               AsmDwarfSetType | AsmDwarfSubrangeType | AsmDwarfWithStmt | AsmDwarfAccessDeclaration | AsmDwarfBaseType | AsmDwarfCatchBlock | AsmDwarfConstType | 
-               AsmDwarfConstant | AsmDwarfEnumerator | AsmDwarfFileType | AsmDwarfFriend | AsmDwarfNamelist | AsmDwarfNamelistItem | AsmDwarfPackedType | 
+               AsmDwarfArrayType | AsmDwarfClassType | AsmDwarfEntryPoint | AsmDwarfEnumerationType | AsmDwarfFormalParameter | AsmDwarfImportedDeclaration |
+               AsmDwarfLabel | AsmDwarfLexicalBlock | AsmDwarfMember | AsmDwarfPointerType | AsmDwarfReferenceType | AsmDwarfCompilationUnit | AsmDwarfStringType |
+               AsmDwarfStructureType | AsmDwarfSubroutineType | AsmDwarfTypedef | AsmDwarfUnionType | AsmDwarfUnspecifiedParameters | AsmDwarfVariant |
+               AsmDwarfCommonBlock | AsmDwarfCommonInclusion | AsmDwarfInheritance | AsmDwarfInlinedSubroutine | AsmDwarfModule | AsmDwarfPtrToMemberType |
+               AsmDwarfSetType | AsmDwarfSubrangeType | AsmDwarfWithStmt | AsmDwarfAccessDeclaration | AsmDwarfBaseType | AsmDwarfCatchBlock | AsmDwarfConstType |
+               AsmDwarfConstant | AsmDwarfEnumerator | AsmDwarfFileType | AsmDwarfFriend | AsmDwarfNamelist | AsmDwarfNamelistItem | AsmDwarfPackedType |
                AsmDwarfSubprogram | AsmDwarfTemplateTypeParameter | AsmDwarfTemplateValueParameter | AsmDwarfThrownType | AsmDwarfTryBlock | AsmDwarfVariantPart |
                AsmDwarfVariable | AsmDwarfVolatileType | AsmDwarfDwarfProcedure | AsmDwarfRestrictType | AsmDwarfInterfaceType | AsmDwarfNamespace |
-               AsmDwarfImportedModule | AsmDwarfUnspecifiedType | AsmDwarfPartialUnit | AsmDwarfImportedUnit | AsmDwarfMutableType | AsmDwarfCondition | 
-               AsmDwarfSharedType | AsmDwarfFormatLabel | AsmDwarfFunctionTemplate | AsmDwarfClassTemplate | AsmDwarfUpcSharedType | AsmDwarfUpcStrictType | 
+               AsmDwarfImportedModule | AsmDwarfUnspecifiedType | AsmDwarfPartialUnit | AsmDwarfImportedUnit | AsmDwarfMutableType | AsmDwarfCondition |
+               AsmDwarfSharedType | AsmDwarfFormatLabel | AsmDwarfFunctionTemplate | AsmDwarfClassTemplate | AsmDwarfUpcSharedType | AsmDwarfUpcStrictType |
                AsmDwarfUpcRelaxedType | AsmDwarfUnknownConstruct, "AsmDwarfConstruct", "AsmDwarfConstructTag", false /* canHaveInstances = false */ );
 
      NEW_TERMINAL_MACRO ( AsmDwarfConstructList, "AsmDwarfConstructList", "AsmDwarfConstructListTag" );
@@ -425,7 +425,7 @@ Grammar::setUpBinaryInstructions ()
                AsmElfSectionTableEntry | AsmElfSegmentTableEntry | AsmElfSymbolList            | AsmPEImportILTEntry      |
                AsmElfRelocEntry        | AsmElfRelocEntryList    | AsmPEExportEntry            | AsmPEExportEntryList     |
                AsmElfDynamicEntry      | AsmElfDynamicEntryList  | AsmElfSegmentTableEntryList | AsmStringStorage         |
-               AsmElfNoteEntry         | AsmElfNoteEntryList     | 
+               AsmElfNoteEntry         | AsmElfNoteEntryList     |
                AsmPEImportDirectory    | AsmPEImportHNTEntry     | AsmPESectionTableEntry      | AsmPEExportDirectory     |
                AsmPERVASizePair        | AsmCoffSymbolList       | AsmPERVASizePairList        | AsmElfEHFrameEntryCI     |
                AsmPEImportHNTEntryList | AsmPEImportILTEntryList | AsmPEImportLookupTable      | AsmPEImportDirectoryList |
@@ -434,7 +434,7 @@ Grammar::setUpBinaryInstructions ()
                AsmDwarfInformation, "AsmExecutableFileFormat", "AsmExecutableFileFormatTag", false /* canHaveInstances = false */);
 
 
-  // This is the IR node for a binary executable that loosely corresponds to the SgFile IR node for 
+  // This is the IR node for a binary executable that loosely corresponds to the SgFile IR node for
   // source code. The kinds of information that we want to save for each is really quire different.
      NEW_TERMINAL_MACRO ( AsmFile, "AsmFile", "AsmFileTag" );
      NEW_TERMINAL_MACRO ( AsmInterpretation, "AsmInterpretation", "AsmInterpretationTag" );
@@ -482,7 +482,7 @@ Grammar::setUpBinaryInstructions ()
   // AsmInstruction.setDataPrototype("long","basic_block_id","= -1",
   //                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 
-  // DQ (8/30/2008): since there can be NULL values in the definition of the instructions, std::string is not 
+  // DQ (8/30/2008): since there can be NULL values in the definition of the instructions, std::string is not
   // as good of a container for the raw bytes as the SgUnsignedCharList, which is designed for this purpose.
   // AsmInstruction.setDataPrototype("std::string","raw_bytes","= \"\"",
   //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
@@ -534,15 +534,15 @@ Grammar::setUpBinaryInstructions ()
      AsmFile.setDataPrototype("SgAsmInterpretationPtrList","interpretations","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-  // DQ (11/5/2008): This currently added to the SgBinaryFile instead of the SgAsmFile, we may want to 
-  // move it later.  For now we can't add it to SgAsmFile becuase we could not traverse both a list and 
+  // DQ (11/5/2008): This currently added to the SgBinaryFile instead of the SgAsmFile, we may want to
+  // move it later.  For now we can't add it to SgAsmFile becuase we could not traverse both a list and
   // a data member in the definition of an AST traversal.
   // AsmFile.setDataPrototype("SgAsmDwarfCompilationUnit*","dwarf_info","= NULL",
   //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-  // DQ (11/6/2008): Moved Dwarf support to AsmInterpretation from SgBinaryFile. Moved ahead of the 
-  // SgAsmGenericHeader so that maps (of instructions to source) built in the Dwarf section can be 
-  // used in analysis in the instruction sections. since Dwarf is meant to be read-only (at least 
+  // DQ (11/6/2008): Moved Dwarf support to AsmInterpretation from SgBinaryFile. Moved ahead of the
+  // SgAsmGenericHeader so that maps (of instructions to source) built in the Dwarf section can be
+  // used in analysis in the instruction sections. since Dwarf is meant to be read-only (at least
   // for now) this is a simpler design and avoids redundant traversals.
      AsmInterpretation.setDataPrototype("SgAsmDwarfCompilationUnitList*","dwarf_info","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -615,12 +615,12 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfFileHeader.setDataPrototype("unsigned long","e_shstrndx","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (8/17/2008): Note that SgAsmElfSectionTable is a SgAsmGenericSection, so it is traversed from 
+  // DQ (8/17/2008): Note that SgAsmElfSectionTable is a SgAsmGenericSection, so it is traversed from
   // the SgAsmGenericSectionList, so set to: NO_TRAVERSAL.
      AsmElfFileHeader.setDataPrototype("SgAsmElfSectionTable*","section_table","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (8/17/2008): This points to an IR node that is in the SgAsmGenericFile::section list so we can't 
-  // traverse it here or we will be traversing this subtree twice in a single traversal (the dot graphs 
+  // DQ (8/17/2008): This points to an IR node that is in the SgAsmGenericFile::section list so we can't
+  // traverse it here or we will be traversing this subtree twice in a single traversal (the dot graphs
   // show this nicely).  So set as: NO_TRAVERSAL
      AsmElfFileHeader.setDataPrototype("SgAsmElfSegmentTable*","segment_table","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -672,7 +672,7 @@ Grammar::setUpBinaryInstructions ()
 
      AsmElfStringSection.setFunctionPrototype("HEADER_ELF_STRING_SECTION", "../Grammar/BinaryInstruction.code");
      AsmElfStringSection.setAutomaticGenerationOfDestructor(false);
-     AsmElfStringSection.setDataPrototype("SgAsmElfStrtab*", "strtab", "= NULL", 
+     AsmElfStringSection.setDataPrototype("SgAsmElfStrtab*", "strtab", "= NULL",
                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
@@ -682,7 +682,7 @@ Grammar::setUpBinaryInstructions ()
 
      AsmPEStringSection.setFunctionPrototype("HEADER_PE_STRING_SECTION", "../Grammar/BinaryInstruction.code");
      AsmPEStringSection.setAutomaticGenerationOfDestructor(false);
-     AsmPEStringSection.setDataPrototype("SgAsmCoffStrtab*", "strtab", "= NULL", 
+     AsmPEStringSection.setDataPrototype("SgAsmCoffStrtab*", "strtab", "= NULL",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AsmCoffStrtab.setFunctionPrototype      ( "HEADER_COFF_STRING_TABLE", "../Grammar/BinaryInstruction.code");
@@ -691,9 +691,9 @@ Grammar::setUpBinaryInstructions ()
 
 
      AsmElfRelocSection.setFunctionPrototype("HEADER_ELF_RELOC_SECTION", "../Grammar/BinaryInstruction.code");
-     AsmElfRelocSection.setDataPrototype("bool", "uses_addend", "= true", 
+     AsmElfRelocSection.setDataPrototype("bool", "uses_addend", "= true",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfRelocSection.setDataPrototype("SgAsmElfRelocEntryList*", "entries", "= NULL", 
+     AsmElfRelocSection.setDataPrototype("SgAsmElfRelocEntryList*", "entries", "= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
@@ -742,7 +742,7 @@ Grammar::setUpBinaryInstructions ()
 
      /* ELF Notes */
      AsmElfNoteSection.setFunctionPrototype("HEADER_ELF_NOTE_SECTION", "../Grammar/BinaryInstruction.code");
-     AsmElfNoteSection.setDataPrototype("SgAsmElfNoteEntryList*", "entries", "= NULL", 
+     AsmElfNoteSection.setDataPrototype("SgAsmElfNoteEntryList*", "entries", "= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
@@ -831,7 +831,7 @@ Grammar::setUpBinaryInstructions ()
 
 
      AsmElfSegmentTableEntry.setFunctionPrototype("HEADER_ELF_SEGMENT_TABLE_ENTRY", "../Grammar/BinaryInstruction.code");
-     AsmElfSegmentTableEntry.setDataPrototype("size_t", "index", "= 0", 
+     AsmElfSegmentTableEntry.setDataPrototype("size_t", "index", "= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSegmentTableEntry.setDataPrototype("SgAsmElfSegmentTableEntry::SegmentType","type",
                                               "= SgAsmElfSegmentTableEntry::PT_LOAD",
@@ -964,11 +964,11 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("SgAsmPERVASizePairList*","rvasize_pairs","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-  // DQ (8/17/2008): Note that SgAsmPESectionTable is a SgAsmGenericSection, so it is traversed from 
+  // DQ (8/17/2008): Note that SgAsmPESectionTable is a SgAsmGenericSection, so it is traversed from
   // the SgAsmGenericSectionList, so set to: NO_TRAVERSAL.
      AsmPEFileHeader.setDataPrototype("SgAsmPESectionTable*","section_table","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (8/17/2008): Note that SgAsmCoffSymbolTable is a SgAsmGenericSection, so it is traversed from 
+  // DQ (8/17/2008): Note that SgAsmCoffSymbolTable is a SgAsmGenericSection, so it is traversed from
   // the SgAsmGenericSectionList, so set to: NO_TRAVERSAL.
      AsmPEFileHeader.setDataPrototype("SgAsmCoffSymbolTable*","coff_symtab","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -980,7 +980,7 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPERVASizePair.setDataPrototype("rose_addr_t","e_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPERVASizePair.setDataPrototype("SgAsmGenericSection*", "section", "= NULL", 
+     AsmPERVASizePair.setDataPrototype("SgAsmGenericSection*", "section", "= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
@@ -1043,13 +1043,13 @@ Grammar::setUpBinaryInstructions ()
 
 
      AsmPEExportEntry.setFunctionPrototype("HEADER_PE_EXPORT_ENTRY", "../Grammar/BinaryInstruction.code");
-     AsmPEExportEntry.setDataPrototype("SgAsmGenericString*", "name", "= NULL", 
+     AsmPEExportEntry.setDataPrototype("SgAsmGenericString*", "name", "= NULL",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     AsmPEExportEntry.setDataPrototype("unsigned", "ordinal", "= 0", 
+     AsmPEExportEntry.setDataPrototype("unsigned", "ordinal", "= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEExportEntry.setDataPrototype("rose_rva_t", "export_rva", "= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEExportEntry.setDataPrototype("SgAsmGenericString*", "forwarder", "= NULL", 
+     AsmPEExportEntry.setDataPrototype("SgAsmGenericString*", "forwarder", "= NULL",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
@@ -1059,7 +1059,7 @@ Grammar::setUpBinaryInstructions ()
      AsmCoffSymbolTable.setDataPrototype("SgAsmCoffSymbolList*","symbols","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-  // DQ (8/17/2008): Note that strtab is a SgAsmGenericSection, so it is traversed from 
+  // DQ (8/17/2008): Note that strtab is a SgAsmGenericSection, so it is traversed from
   // the SgAsmGenericSectionList, so set to: NO_TRAVERSAL.
      AsmCoffSymbolTable.setDataPrototype("SgAsmGenericSection*","strtab","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1088,7 +1088,7 @@ Grammar::setUpBinaryInstructions ()
      AsmCoffSymbol.setDataPrototype("SgUnsignedCharList","aux_data","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // This is the IR node to hold a list of symbols (needed because we can't mix children from data 
+  // This is the IR node to hold a list of symbols (needed because we can't mix children from data
   // members with children from containers).
      AsmCoffSymbolList.setFunctionPrototype ( "HEADER_PE_COFF_SYMBOL_LIST", "../Grammar/BinaryInstruction.code");
      AsmCoffSymbolList.setDataPrototype("SgAsmCoffSymbolPtrList","symbols","",
@@ -1109,7 +1109,7 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEImportDirectory.setDataPrototype("rose_rva_t","dll_name_rva","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEImportDirectory.setDataPrototype("SgAsmGenericString*", "dll_name", "=0", 
+     AsmPEImportDirectory.setDataPrototype("SgAsmGenericString*", "dll_name", "=0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEImportDirectory.setDataPrototype("rose_rva_t","iat_rva","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1119,7 +1119,7 @@ Grammar::setUpBinaryInstructions ()
 
 
      AsmPEImportILTEntry.setFunctionPrototype("HEADER_PE_IMPORT_ILT_ENTRY", "../Grammar/BinaryInstruction.code");
-     AsmPEImportILTEntry.setDataPrototype("SgAsmPEImportILTEntry::ILTEntryType", "entry_type", "=ILT_ORDINAL", 
+     AsmPEImportILTEntry.setDataPrototype("SgAsmPEImportILTEntry::ILTEntryType", "entry_type", "=ILT_ORDINAL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEImportILTEntry.setDataPrototype("unsigned","ordinal","= 0",                   /*if entry_type==ILT_ORDINAL*/
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1255,7 +1255,7 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmNEFileHeader.setDataPrototype("SgAsmDOSExtendedHeader*","dos2_header","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-  // DQ (8/17/2008): Note that SgAsmNESectionTable is a SgAsmGenericSection, so it is traversed from 
+  // DQ (8/17/2008): Note that SgAsmNESectionTable is a SgAsmGenericSection, so it is traversed from
   // the SgAsmGenericSectionList, so set to: NO_TRAVERSAL.
      AsmNEFileHeader.setDataPrototype("SgAsmNESectionTable*","section_table","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1484,7 +1484,7 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmLEFileHeader.setDataPrototype("SgAsmDOSExtendedHeader*","dos2_header","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-  // DQ (8/17/2008): Note that SgAsmLESectionTable is a SgAsmGenericSection, so it is traversed from 
+  // DQ (8/17/2008): Note that SgAsmLESectionTable is a SgAsmGenericSection, so it is traversed from
   // the SgAsmGenericSectionList, so set to: NO_TRAVERSAL.
      AsmLEFileHeader.setDataPrototype("SgAsmLESectionTable*","section_table","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1670,9 +1670,9 @@ Grammar::setUpBinaryInstructions ()
 
   // DQ (8/15/2008): Put this back since the sections are in a list and the list is not in the header
   // (as I thought).  The list is in the SgAsmGenericFile which has a SgAsmFile as a parent.
-  // DQ (8/14/2008): The get_header() function is now implemented in terms of the "get_parent()" function 
+  // DQ (8/14/2008): The get_header() function is now implemented in terms of the "get_parent()" function
   // so that we can remove redundant representation of pointers to IR nodes. parent pointers are
-  // a standard part of the design of the ROSE IR and this detail was not accounted for in the 
+  // a standard part of the design of the ROSE IR and this detail was not accounted for in the
   // design of the executable format support.
   // AsmGenericSection.setDataPrototype("SgAsmGenericHeader*","header","= NULL",
   //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1686,7 +1686,7 @@ Grammar::setUpBinaryInstructions ()
      AsmGenericSection.setDataPrototype("rose_addr_t","offset","= 0",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   /* Required file alignment; zero and one both imply byte alignment */
-     AsmGenericSection.setDataPrototype("rose_addr_t", "file_alignment", "= 0", 
+     AsmGenericSection.setDataPrototype("rose_addr_t", "file_alignment", "= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   /* Original content of just this section; points into file's content */
      AsmGenericSection.setDataPrototype("SgFileContentList","data","",
@@ -1707,7 +1707,7 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericSection.setDataPrototype("rose_addr_t","mapped_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmGenericSection.setDataPrototype("rose_addr_t", "mapped_alignment", "= 0", 
+     AsmGenericSection.setDataPrototype("rose_addr_t", "mapped_alignment", "= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericSection.setDataPrototype("bool","mapped_rperm","= false",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1729,18 +1729,18 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (2/4/2009): The new code must have an address where it can be mapped, but clearly since it is
-  // from a section marked non-mapped (and not even executable), these are addresses that we are assigning 
+  // from a section marked non-mapped (and not even executable), these are addresses that we are assigning
   // arbitrarily.
      AsmGenericSection.setDataPrototype("rose_addr_t","rose_mapped_rva","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     
+
   // DQ (8/2/2008): This was removed from the design by Robb.
   /* All segments belonging within this section */
   // AsmGenericSection.setDataPrototype("SgAsmGenericSegmentPtrListPtr","segmentsList","= NULL",
   //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (8/17/2008): SgAsmGenericHeader are derived from the SgAsmGenericSection and so already appear 
+  // DQ (8/17/2008): SgAsmGenericHeader are derived from the SgAsmGenericSection and so already appear
   // in the AsmGenericFile::sections list, so set to: NO_TRAVERSAL.
   // RPM (8/30/2008): AST-wise, headers are children of SgAsmGenericFile, and the children of each header are
   // the sections that belong to that header. So we now do need to traverse the headers.
@@ -1749,14 +1749,14 @@ Grammar::setUpBinaryInstructions ()
 
      AsmGenericDLLList.setFunctionPrototype ( "HEADER_GENERIC_DLL_LIST", "../Grammar/BinaryInstruction.code");
 
-  // DQ (8/23/2008): I think we should consider traversing this or building an ELF version 
+  // DQ (8/23/2008): I think we should consider traversing this or building an ELF version
   // of the list so that we can traverse it similarly to the PE DLL list.
      AsmGenericDLLList.setDataPrototype("SgAsmGenericDLLPtrList","dlls","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AsmGenericSymbolList.setFunctionPrototype ( "HEADER_GENERIC_SYMBOL_LIST", "../Grammar/BinaryInstruction.code");
 
-  // DQ (8/17/2008): Set to NO_TRAVERSAL to avoid visiting symbols twice (also travered from 
+  // DQ (8/17/2008): Set to NO_TRAVERSAL to avoid visiting symbols twice (also travered from
   // SgAsmElfSymbolList and SgAsmPESymbolList for ELF or PE formats).
      AsmGenericSymbolList.setDataPrototype("SgAsmGenericSymbolPtrList","symbols","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1898,7 +1898,7 @@ Grammar::setUpBinaryInstructions ()
 
      AsmGenericStrtab.setFunctionPrototype("HEADER_GENERIC_STRTAB", "../Grammar/BinaryInstruction.code");
      AsmGenericStrtab.setAutomaticGenerationOfDestructor(false);
-     AsmGenericStrtab.setDataPrototype("SgAsmGenericSection*", "container", "= NULL", 
+     AsmGenericStrtab.setDataPrototype("SgAsmGenericSection*", "container", "= NULL",
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericStrtab.setDataPrototype("SgAsmGenericStrtab::referenced_t","storage_list","",
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -2020,13 +2020,13 @@ Grammar::setUpBinaryInstructions ()
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Asmx86RegisterReferenceExpression.setDataPrototype("X86PositionInRegister","position_in_register","= x86_regpos_unknown",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     
+
 
 
      AsmArmRegisterReferenceExpression.setFunctionPrototype("HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION",
                                                             "../Grammar/BinaryInstruction.code");
      AsmArmRegisterReferenceExpression.setDataPrototype("SgAsmArmRegisterReferenceExpression::arm_register_enum",
-                                                        "arm_register_code", 
+                                                        "arm_register_code",
                                                         "= SgAsmArmRegisterReferenceExpression::undefined_arm_register",
                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -2042,7 +2042,7 @@ Grammar::setUpBinaryInstructions ()
      AsmPowerpcRegisterReferenceExpression.setDataPrototype("PowerpcConditionRegisterAccessGranularity",
                                                             "conditionRegisterGranularity", "= powerpc_condreggranularity_whole",
                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     
+
 
 
   // This might better be an STL std::vector<bool> type.
