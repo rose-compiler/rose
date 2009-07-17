@@ -45,26 +45,25 @@ ostream& operator<< (ostream &os, const SourcePosition & m)
 RuntimeViolation::RuntimeViolation(Type _type, const std::string& desc)
     : /* runtime_error("\n" + getShortDescFromType(_type) + "\n" + desc + "\n"), */
       type(_type),
-      shortDesc(getShortDescFromType(_type)),
-      longDesc(desc)
+      shortDesc(getShortDescFromType(_type))
 {
-
+    longDesc << desc;
 }
 
 RuntimeViolation::RuntimeViolation(Type _type, const std::stringstream & descStream)
     : /* runtime_error("\n" + getShortDescFromType(_type) + "\n" + descStream.str() + "\n"), */
       type(_type),
-      shortDesc(getShortDescFromType(_type)),
-      longDesc(descStream.str())
+      shortDesc(getShortDescFromType(_type))
 {
+    longDesc << descStream.str();
 }
 
 RuntimeViolation::RuntimeViolation(const RuntimeViolation & other)
     : pos(other.pos),
       type(other.type),
-      shortDesc(other.shortDesc),
-      longDesc(other.longDesc.str())
+      shortDesc(other.shortDesc)
 {
+    longDesc << other.longDesc.str();
 }
 
 

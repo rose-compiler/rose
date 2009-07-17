@@ -7,9 +7,12 @@ using namespace std;
 
 
 
-RsType *  RsType::getSubtypeRecursive(addr_type offset,  size_t size, bool stopAtArray)
+RsType *  RsType::getSubtypeRecursive(addr_type offset,  size_t size, bool stopAtArray, string * navString)
 {
     RsType * result = this;
+
+    if(navString)
+        *navString = getName();
 
     //cout << "Refining " << getName() << " at offset " << offset <<  " search of size " << size << endl;
 
@@ -29,15 +32,20 @@ RsType *  RsType::getSubtypeRecursive(addr_type offset,  size_t size, bool stopA
         if(subTypeId == -1)
             return NULL;
 
+        if(navString)
+            (*navString) += "." + result->getSubTypeString(subTypeId);
+
         offset -= result->getSubtypeOffset(subTypeId);
         result  = result->getSubtype(subTypeId);
 
         //cout << "Refined to type " << result->getName() << " Offset:" << offset << endl;
-
     }
 
     if (result->getByteSize() != size || offset != 0)
         return NULL;
+
+    //if(navString)
+    //    cout << "NavString" << *navString << endl;
 
     //cout << "Refinement successful " << result->getName() << " Offset" << offset<< endl;
 
@@ -132,6 +140,16 @@ string RsArrayType::getArrayTypeName(RsType * basetype, size_t size)
     s << "__array_" << basetype->getName() << "_" << size;
     return s.str();
 }
+
+
+string RsArrayType::getSubTypeString(int id) const
+{
+    assert(id >=0 && id < elementCount);
+    stringstream ss;
+    ss << "[" << id << "]";
+    return ss.str();
+}
+
 
 int RsArrayType::arrayIndex(addr_type offset) const
 {
@@ -270,6 +288,13 @@ bool RsClassType::isValidOffset(addr_type offset) const
 
     return getSubtypeIdAt(offset) != -1;
 }
+
+string RsClassType::getSubTypeString(int id) const
+{
+    assert(id >=0 && id < members.size());
+    return members[id].name;
+}
+
 
 
 void RsClassType::print(ostream & os) const

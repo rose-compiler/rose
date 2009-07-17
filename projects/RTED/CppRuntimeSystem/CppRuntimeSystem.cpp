@@ -79,7 +79,6 @@ void RuntimeSystem::endScope()
 
         stack.pop_back();
     }
-
     for(int i=0; i<toDelete.size(); i++)
         delete toDelete[i];
 

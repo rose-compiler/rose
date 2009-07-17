@@ -555,7 +555,8 @@ void testPointerChanged()
         rs->createVariable(0x100,"intPtr","mangled","SgPointerType","SgTypeInt");
         rs->registerPointerChange("intPtr",0x42);
 
-        rs->registerPointerChange("intPtr",0x42 + 9*sizeof(int),true);
+        try{ rs->registerPointerChange("intPtr",0x42 + 10*sizeof(int),true); }
+        TEST_CATCH(RuntimeViolation::POINTER_CHANGED_MEMAREA )
 
     rs->endScope();
 
@@ -567,7 +568,15 @@ void testPointerChanged()
 void testInvalidPointerAssign()
 {
     TEST_INIT("Testing Invalid Pointer assign");
+    rs->beginScope("Scope2");
+        // Create an instance of A on stack
+        rs->createVariable(0x42,"instanceOfA","mangled","SgTypeDouble");
+        rs->createVariable(0x100,"intPtr","mangled","SgPointerType","SgTypeInt");
+        // Try to access double with an int ptr
+        try { rs->registerPointerChange("intPtr",0x42); }
+        TEST_CATCH ( RuntimeViolation::INVALID_TYPE_ACCESS )
 
+    rs->endScope();
     CLEANUP
 }
 
@@ -971,8 +980,6 @@ int main(int argc, char ** argv)
         rs->setOutputFile("test_output.txt");
 
 
-        //testPointerChanged();
-        //abort();
 
         testTypeSystemDetectNested();
         testTypeSystemMerge();

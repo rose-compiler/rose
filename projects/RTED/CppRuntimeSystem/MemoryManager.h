@@ -89,11 +89,13 @@ class MemoryType
         void accessMemWithType(addr_type offset, RsType * type);
 
 
-        /// Returns the TypeInfo, or the CONTAINING ARRAY which is associated with that offset
+        /// Returns the type-name , or the CONTAINING ARRAY name which is associated with that offset
         /// to distinguish between nested types (class with has members of other classes)
         /// an additional size parameter is needed
         /// if not TypeInfo is found, NULL is returned
-        RsType * getTypeAt(addr_type offset, size_t size);
+        /// example: returns "typeName.member.submember", where subMember has the specified size
+        ///          or subMember is an array, and one element has specified size
+        std::string getTypeAt(addr_type offset, size_t size);
 
 
         /// If set to true a violation is reported if the last pointer

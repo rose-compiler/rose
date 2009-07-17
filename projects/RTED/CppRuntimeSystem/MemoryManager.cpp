@@ -140,7 +140,6 @@ void MemoryType::accessMemWithType(addr_type offset, RsType * type)
 
     RuntimeViolation vio(RuntimeViolation::INVALID_TYPE_ACCESS,ss.str());
 
-
     // Get a range of entries which overlap with [newTiStart,newTiEnd)
     TiIterPair res = getOverlappingTypeInfos(newTiStart,newTiEnd);
     TiIter itLower = res.first;
@@ -165,6 +164,7 @@ void MemoryType::accessMemWithType(addr_type offset, RsType * type)
                 vio.descStream() << "Previously registered Type completely overlaps new Type in an inconsistent way:" << endl
                                  << "Containing Type " << oldType->getName()
                                  << " (" << oldTiStart << "," << oldTiEnd << ")" << endl;
+
                 rs->violationHandler(vio);
                 return;
             }
@@ -211,7 +211,7 @@ void MemoryType::accessMemWithType(addr_type offset, RsType * type)
 }
 
 
-RsType * MemoryType::getTypeAt(addr_type offset, size_t size)
+string MemoryType::getTypeAt(addr_type offset, size_t size)
 {
     TiIterPair res = getOverlappingTypeInfos(offset,offset+size);
     TiIter itLower = res.first;
@@ -228,7 +228,9 @@ RsType * MemoryType::getTypeAt(addr_type offset, size_t size)
     if(incrementedLower == itUpper)
     {
         assert(offset >= itLower->first);
-        return itLower->second->getSubtypeRecursive(offset - itLower->first,size,true);
+        string typeStr;
+        itLower->second->getSubtypeRecursive(offset - itLower->first,size,true,&typeStr);
+        return typeStr;
     }
 
     return NULL;

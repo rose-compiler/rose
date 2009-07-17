@@ -109,12 +109,12 @@ void VariablesType::setPointerTarget(addr_type newAddr, bool doChecks)
 
     if(newMem)
     {
+        if(oldMem != newMem)
+            newMem->registerPointer(this);
+
         // If a pointer points to that memory region, assume that his mem-region if of right type
         // even if actual error would only happen on deref
         newMem->accessMemWithType(newAddr-newMem->getAddress(),pointerType);
-
-        if(oldMem != newMem)
-            newMem->registerPointer(this);
     }
 
 
@@ -129,8 +129,8 @@ void VariablesType::setPointerTarget(addr_type newAddr, bool doChecks)
         // old and new address is valid
         if( newMem && doChecks )
         {
-            RsType * newTypeChunk = newMem->getTypeAt(newAddr-newMem->getAddress(),pointerType->getByteSize());
-            RsType * oldTypeChunk = oldMem->getTypeAt(oldPointerTarget - oldMem->getAddress(),pointerType->getByteSize());
+            string newTypeChunk = newMem->getTypeAt(newAddr-newMem->getAddress(),pointerType->getByteSize());
+            string oldTypeChunk = oldMem->getTypeAt(oldPointerTarget - oldMem->getAddress(),pointerType->getByteSize());
 
             if(oldTypeChunk == newTypeChunk && oldMem ==newMem)
                 return; //pointer just changed offset in an array
@@ -144,10 +144,10 @@ void VariablesType::setPointerTarget(addr_type newAddr, bool doChecks)
                 ss << "A pointer changed the memory area (array or variable) which it points to (may be an error)" << endl << endl;
 
                 ss << "Pointer:     " << *this << endl << endl;
-                ss << "Old Target:  " <<  oldTypeChunk->getName()<< "Offset(" << oldOffset << ") in this Mem-Region:" <<  endl
+                ss << "Old Target:  " <<  oldTypeChunk << " at offset " << oldOffset << " in this Mem-Region:" <<  endl
                                       << *oldMem << endl;
 
-                ss << "New Target: " << newTypeChunk->getName() << " Offset:" << newOffset << ") in this Mem-Region:" <<  endl
+                ss << "New Target: " << newTypeChunk << " at offset " << newOffset << " in this Mem-Region:" <<  endl
                                       << *oldMem << endl;
 
                 rs->violationHandler(RuntimeViolation::POINTER_CHANGED_MEMAREA,ss.str());

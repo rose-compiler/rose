@@ -41,8 +41,12 @@ class RsType
 
         /// Returns the subtype at an offset, which is of specified size
         /// recursively resolves subtypes
+        /// nav is a string output parameter filled with: "typename.member1.submember" etc.
         /// return NULL if no such subtype exists
-        virtual RsType *     getSubtypeRecursive(addr_type offset,  size_t size, bool stopAtArray=false);
+        virtual RsType *     getSubtypeRecursive(addr_type offset,
+                                                 size_t size,
+                                                 bool stopAtArray=false,
+                                                 std::string * nav = NULL ) ;
 
         /// Checks if a given offset is valid (not too big, and not in a padding region)
         virtual bool  isValidOffset(addr_type offset) const =0;
@@ -56,6 +60,8 @@ class RsType
         /// Less operator uses stringId
         virtual bool operator< (const RsType & other) const { return stringId < other.stringId; }
 
+        /// For classes returns name of member, for arrays just "[subtypeId]"
+        virtual std::string getSubTypeString(int id) const =0;
 
         /// Refines a subtype (i.e. member of classes)
         /// the template parameter specifies at which RsType should be stopped
@@ -138,10 +144,15 @@ class RsArrayType : public RsType
         /// Print type information to a stream
         virtual void  print(std::ostream & os) const;
 
+        /// Returns "[id]"
+        virtual std::string getSubTypeString(int id) const;
+
+
         /// Each type has a name, only arrays don't have one
         /// therefore a pseudo-name is generated __array_baseTypeName_size;
         /// this is done by this function
         static std::string getArrayTypeName(RsType * basetype, size_t size);
+
 
 
         RsType * getBaseType() const          { return baseType; }
@@ -198,6 +209,10 @@ class RsClassType : public RsType
         /// Checks if a given offset is valid (not too big, and not in a padding region)
         virtual bool         isValidOffset(addr_type offset) const;
 
+        /// Returns member-name of id'th member
+        virtual std::string getSubTypeString(int id) const;
+
+
         /// Checks if all members have been registered (all member-sizes add up to byteSize)
         /// @param verbose if true all padding areas are written to stdout
         virtual bool         isComplete(bool verbose=false) const;
@@ -241,6 +256,7 @@ class RsTypeDef : public RsType
         virtual int          getSubtypeIdAt(addr_type offset)     { return refType->getSubtypeIdAt(offset);}
         virtual RsType *     getSubtypeAt  (addr_type offset)     { return refType->getSubtypeAt(offset);}
         virtual bool         isValidOffset(addr_type offset) const{ return refType->isValidOffset(offset);}
+        std::string          getSubTypeString(int id) const       { return refType->getSubTypeString(id); }
 
         /// Print type information to a stream
         virtual void  print(std::ostream & os) const;
@@ -298,6 +314,8 @@ class RsBasicType : public RsType
         virtual int          getSubtypeIdAt(addr_type offset)const { return -1;       }
         virtual RsType *     getSubtypeAt  (addr_type offset)      { return NULL;     }
         virtual bool         isValidOffset(addr_type offset) const { return offset < byteSize;}
+        std::string          getSubTypeString(int id) const        { return ""; }
+
 
         /// Print type information to a stream
         virtual void  print(std::ostream & os) const;
@@ -333,6 +351,7 @@ class InvalidType : public RsType
         virtual int          getSubtypeIdAt(addr_type offset)const { assert(false); return -1;    }
         virtual RsType *     getSubtypeAt  (addr_type offset)      { assert(false); return NULL;  }
         virtual bool         isValidOffset(addr_type offset) const { assert(false); return false; }
+        std::string          getSubTypeString(int id) const        { assert(false); return ""; }
 
         /// Print type information to a stream
         virtual void  print(std::ostream & os) const               { os << "Invalid Type" << std::endl; }
