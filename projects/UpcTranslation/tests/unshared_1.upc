@@ -19,13 +19,12 @@ double myarray[10];
 double myarray2[5]={0.0, 1.1, 2.2,3.3,4.4};
 
 /* structure */
-struct gun
+struct mystruct
 	{
 	char name[50];
-	int magazinesize;
 	float calibre;
 	};
-struct gun ak47;
+struct mystruct ms1;
 
 /* union , with embedded declaration*/
 union item_u
@@ -59,6 +58,6 @@ int main()
   counter ++;
 
   item.i = 9;
-  ak47.calibre = 0.7;
+  ms1.calibre = 0.7;
   return 0;
 }
