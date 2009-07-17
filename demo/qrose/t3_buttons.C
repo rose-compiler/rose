@@ -1,3 +1,4 @@
+#include "rose.h"
 #include <qrose.h>
 
 // QROSE is under namespace qrs
