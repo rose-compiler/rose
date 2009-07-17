@@ -97,7 +97,7 @@ public slots:
    virtual void domainClear();
           /// Sets domain to target mode (every node received from other components is part of the domain)
    virtual void domainTarget(bool isOn);
-          /// Sets domain expansion mode type
+   /*/// Sets domain expansion mode type*/
    virtual void domainSetExpMode(QRQueryDomain::TypeDomainExpansion id);
           /// Performs query with specified domain
    virtual void opPerformQuery();
