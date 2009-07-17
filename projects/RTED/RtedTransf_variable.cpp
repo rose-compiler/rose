@@ -143,7 +143,6 @@ RtedTransformation::buildVariableCreateCallStmt( SgInitializedName* initName, Sg
     SgExpression* callName = buildString(initName->get_name().str());
     //SgExpression* callName = buildStringVal(initName->get_name().str());
     SgExpression* callNameExp = buildString(name);
-    SgExpression* typeName = buildString(initName->get_type()->class_name());
     SgInitializer* initializer = initName->get_initializer();
     SgExpression* fileOpen = buildString("no");
     bool initb = false;
@@ -188,6 +187,15 @@ RtedTransformation::buildVariableCreateCallStmt( SgInitializedName* initName, Sg
     appendExpression(arg_list, initBool);
     appendExpression(arg_list, fileOpen);
 
+    SgExpression*  className = NULL;
+    SgClassType* sgClass = isSgClassType(initName->get_type());
+    if (sgClass) {
+    	///fixme : add className
+    	className= buildString(initName->get_type()->class_name());
+    }
+
+    appendExpression(arg_list, className);
+
     SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
     SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
     appendExpression(arg_list, filename);
@@ -221,7 +229,7 @@ void RtedTransformation::appendAddressAndSize(SgInitializedName* initName,
     SgType* type = initName->get_type();
     ROSE_ASSERT(type);
     SgType* basetype = NULL;
-    SgExpression* basetypeStr = buildString("no base");
+    SgExpression* basetypeStr = buildString("");
     if (isSgPointerType(type)) {
 	//	typestr="pointer";
 	basetype = isSgPointerType(type)->get_base_type();

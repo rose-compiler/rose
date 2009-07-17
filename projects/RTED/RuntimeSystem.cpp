@@ -292,7 +292,8 @@ void RuntimeSystem_ensure_allocated_and_initialized( const void* mem, size_t siz
       (addr_type) mem,
       "StringConstant",
       "MangledStringConstant",
-      "SgArrayType"
+      "SgArrayType",
+      "SgIntType" // tps: added this
   );
   rs->createMemory( (addr_type) mem, size);
   rs->checkMemWrite( (addr_type) mem, size);
@@ -564,13 +565,14 @@ void RuntimeSystem_roseCreateVariable( const char* name,
 				      unsigned int size,
 				      int init,
 				      const char* fOpen,
+				      const char* className,
 				      const char* filename, const char* line,
 				      const char* lineTransformed) {
 
 
 	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
 	rs->checkpoint( SourcePosition(filename,atoi(line), atoi(lineTransformed)));
-	rs->createVariable(address,name,mangled_name,type);
+	rs->createVariable(address,name,mangled_name,type, className, basetype);
 }
 
 
@@ -647,18 +649,22 @@ RuntimeSystem_roseRegisterTypeCall(int count, ...) {
 	  unsigned long long sizeC = va_arg(vl,unsigned long long);
 	  cerr << " Register Class : " << nameC << " Type: " << typeC << " size : " << sizeC << endl;
 	  int i=0;
-	  for ( i=3;i<count;i++)    {
-		if ((i%3)==0) {
-			cerr << " Var Name : " << va_arg(vl,const char*) << endl;
-		}
-		if ((i%3)==1) {
-			cerr << " Var Type : " << va_arg(vl,const char*) << endl;
-		}
-		if ((i%3)==2) {
-			cerr << " Var offset : " << va_arg(vl,unsigned long long) << endl;
-		}
+
+
+	  RsClassType * classType = new RsClassType(nameC,sizeC);
+	  for ( i=3;i<count;i+=3)
+	  {
+		  string name = va_arg(vl,const char*);
+		  string type = va_arg(vl,const char*);
+		  addr_type offset = va_arg(vl,unsigned long long);
+		  RsType* t= RuntimeSystem::instance()->getTypeSystem()->getTypeInfo(type);
+		  classType->addMember(name,t,(addr_type)offset);
+		  cerr << "Registering Member " << name << " of type " << type << " at offset" << offset << endl;
 	  }
 	  va_end(vl);
+
+
+	  RuntimeSystem::instance()->getTypeSystem()->registerType(classType);
 }
 
 void

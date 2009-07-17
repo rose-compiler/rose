@@ -175,7 +175,8 @@ void RuntimeSystem_callExit(const char* filename, const char* line, const char* 
 void RuntimeSystem_roseCreateVariable(const char* name, const char*
 				      mangled_name, const char* type, const char* basetype, 
 				      unsigned long int address, unsigned int
-				      size, int init, const char* fOpen, const char* filename, const char* line,
+				      size, int init, const char* fOpen,
+				      const char* className, const char* filename, const char* line,
 				      const char*
 				      lineTransformed);
 void RuntimeSystem_increaseSizeRuntimeVariables();

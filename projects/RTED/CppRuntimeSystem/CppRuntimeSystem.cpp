@@ -93,9 +93,12 @@ void RuntimeSystem::createVariable(addr_type address,
                                    const std::string & name,
                                    const std::string & mangledName,
                                    const std::string & typeString,
+                                   const std::string & className,
                                    const std::string & pointerType)
 {
     RsType * pt =NULL;
+
+
     if(pointerType.size() > 0)
     {
         pt = typeSystem.getTypeInfo(pointerType);
@@ -103,7 +106,10 @@ void RuntimeSystem::createVariable(addr_type address,
             cerr << "Couldn't find type " << pointerType << " when registering pointer-type" << endl;
     }
 
-    createVariable(new VariablesType(name,mangledName,typeString,address,pt));
+    if(typeString == "SgClassType")
+        createVariable(new VariablesType(name,mangledName,className,address,pt));
+    else
+    	createVariable(new VariablesType(name,mangledName,typeString,address,pt));
 }
 
 void RuntimeSystem::createVariable(VariablesType * var)
