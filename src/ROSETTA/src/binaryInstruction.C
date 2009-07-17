@@ -46,8 +46,6 @@ Grammar::setUpBinaryInstructions ()
                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
      Asmx86Instruction.setDataPrototype("bool", "lockPrefix", "= false",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-     Asmx86Instruction.setDataPrototype("X86RepeatPrefix", "repeatPrefix", "= x86_repeat_none",
-                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
      Asmx86Instruction.setDataPrototype("X86BranchPrediction", "branchPrediction", "= x86_branch_prediction_none",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
      Asmx86Instruction.setDataPrototype("X86SegmentRegister", "segmentOverride", "= x86_segreg_none",
