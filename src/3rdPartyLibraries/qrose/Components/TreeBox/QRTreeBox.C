@@ -3,6 +3,8 @@
  *   jgfc@doc.ic.ac.uk                                                     *
  ***************************************************************************/
 
+#include <rose.h>
+
 #include <QRTreeBox.h>
 #include <QRListViewItem.h>
 #include <QRTreeVisitor.h>

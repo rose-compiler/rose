@@ -6,7 +6,6 @@
 #ifndef QRQUERYOP_H
 #define QRQUERYOP_H
 
-//#include <rose.h>
 #include <QRQueryDomain.h>
 #include <QRQueryRange.h>
 
@@ -129,6 +128,7 @@ protected:
     virtual void terminateQuery();
 
 protected:
+
     VariantVector m_variantVector;
 };
 

@@ -23,7 +23,7 @@ moc_%.C: $(srcdir)/%.h
 	$(MOC) -o $@ `cygpath -w $<` -p$(srcdir)
 else
 moc_%.C: $(srcdir)/%.h 
-	$(MOC) -o $@ $<
+	$(MOC) -o $@ $< -frose.h -f$(notdir $<)
 endif 
 
 endif

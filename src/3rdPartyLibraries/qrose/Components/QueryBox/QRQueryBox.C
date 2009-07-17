@@ -3,6 +3,8 @@
  *   jgfc@doc.ic.ac.uk                                                     *
  ***************************************************************************/
 
+#include "rose.h"
+
 #include <QRMain.h>
 #include <QRQueryBox.h>
 #include <QRAstInfo.h>

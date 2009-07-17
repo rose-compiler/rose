@@ -1,4 +1,6 @@
 
+#include <rose.h>
+
 #include <QRTreeVisitor.h>
 #include <QRMain.h>
 #include <QRTreeBox.h>

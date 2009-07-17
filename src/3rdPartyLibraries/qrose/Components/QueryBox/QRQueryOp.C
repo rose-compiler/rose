@@ -3,6 +3,8 @@
  *   jgfc@doc.ic.ac.uk                                                     *
  ***************************************************************************/
 
+#include <rose.h>
+
 #include <QRQueryOp.h>
 
 using namespace std;

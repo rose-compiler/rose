@@ -41,28 +41,22 @@ void RoseFrontendTask::start()
         {
             ROSE_ABORT( "unable to create pipe" );
         }
+    }
+    catch( std::exception& e )
+    {
+        output << e.what();
+    }
 
-        // duplicating stdout
-        dup2( out_pipe[1], STDOUT_FILENO );
-        close( out_pipe[1] );
+    // duplicating stdout
+    dup2( out_pipe[1], STDOUT_FILENO );
+    close( out_pipe[1] );
 
+    try
+    {
         // creating file ... (platform independent, hopefully)
         sgFile = SageBuilder::buildFile( file.toStdString(), std::string(), sgProject );
-
-        fflush( stdout );
-
-        typedef io::file_descriptor_source source;
-        source src( out_pipe[0] );
-    // end platform specific
-    // ------------------------------------------------------------------------
-
-        io::stream<source>  input( src );
-        input >> std::noskipws;
-        
-        std::istream_iterator<char> begin(input), end ;
-        std::copy( begin, end, std::ostream_iterator<char>(output) ) ;
     }
-    catch( rose_exception& e )
+    catch( std::exception& e )
     {
         output << e.what();
     }
@@ -70,6 +64,19 @@ void RoseFrontendTask::start()
     {
         output << "Unkown exception caught ...";
     }
+
+    fflush( stdout );
+
+    typedef io::file_descriptor_source source;
+    source src( out_pipe[0] );
+    // end platform specific
+    // ------------------------------------------------------------------------
+
+    io::stream<source>  input( src );
+    input >> std::noskipws;
+    
+    std::istream_iterator<char> begin(input), end ;
+    std::copy( begin, end, std::ostream_iterator<char>(output) ) ;
 
     // restoring stdout file descriptor
     dup2( saved_stdout, STDOUT_FILENO );
