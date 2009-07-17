@@ -198,44 +198,28 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
 /* -----------------------------------------------------------
  * Perform Transformation: insertArrayCreateAccessCall
  * -----------------------------------------------------------*/
-void RtedTransformation::insertArrayAccessCall(SgVarRefExp* varRef,
+void RtedTransformation::insertArrayAccessCall(SgExpression* arrayExp,
 					       RTedArray* value) {
-  ROSE_ASSERT(varRef);
-  SgStatement* stmt = getSurroundingStatement(varRef);
-  SgVariableSymbol* varSymbol = varRef->get_symbol();
-  ROSE_ASSERT(varSymbol);
-  SgInitializedName* initName = varSymbol->get_declaration();
-  ROSE_ASSERT(initName);
-  if (stmt)
-    cerr <<"   Processing call : " << stmt->unparseToString() << " " << initName->unparseToString() << endl;
-  insertArrayAccessCall(stmt, initName, value);
+  ROSE_ASSERT(arrayExp);
+  SgStatement* stmt = getSurroundingStatement(arrayExp);
+  insertArrayAccessCall(stmt, arrayExp, value);
 }
 
 void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
-					       SgInitializedName* initName, RTedArray* array) {
+					       SgExpression* arrayExp, RTedArray* array) {
   std::vector<SgExpression*> value;
   array->getIndices(value);
 
   if (isSgStatement(stmt)) {
     SgScopeStatement* scope = stmt->get_scope();
     ROSE_ASSERT(scope);
-    // if the initName is part of the function parameter
-    // then we use the short name instead of mangled name
-    // this mechanism is used in order to determine the right
-    // variable from the function that is being called
-    SgNode* parent = initName->get_parent();
-    ROSE_ASSERT(parent);
-    string name = initName->get_mangled_name().str();
-    if (isSgFunctionParameterList(parent))
-      name = initName->get_name();
-    SgExpression* callNameExp = buildString(name);
+    SgExpression* callNameExp = buildString(arrayExp->unparseToString());
 
     SgExprListExp* arg_list = buildExprListExp();
     appendExpression(arg_list, callNameExp);
     appendExpression(arg_list, array->indx1);
     SgExpression* expr = NULL;
 
-    SgVarRefExp* var_ref = buildVarRefExp( initName, scope);    
     if (array->indx2)
       appendExpression(arg_list, array->indx2);
     else {
@@ -248,7 +232,7 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
     SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
     SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
     appendExpression(arg_list, filename);
-    appendAddressAndSize(initName, var_ref, stmt, arg_list,0); 
+    appendAddressAndSize(NULL, arrayExp, stmt, arg_list,0); 
 
 
     appendExpression(arg_list, linenr);
@@ -950,7 +934,7 @@ ROSE_ASSERT(varRef);
 	   << create_array_access_call.size() << "  -- "
 	   << array->unparseToString() << " : "
 	   << arrRefExp->unparseToString() << endl;
-      create_array_access_call[varRef] = array;
+      create_array_access_call[left] = array;
     }
   }
 

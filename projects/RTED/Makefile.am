@@ -236,8 +236,9 @@ rted_source/%_debug.bin: rted_qt rted_source/%_rose.c $(srcdir)/$(RTS) $(srcdir)
 
 rted_source/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SCRIPT)
 	@OUTPUT_SRC='$(strip $(patsubst rted_source/%.expected-output, $(rted_path)/%.ok_msg, $@))';\
+		TEST_FILE='$(strip $(patsubst rted_source/%.expected-output, $(rted_path)/%.c, $@))';\
 		if [ -f "$$OUTPUT_SRC" ]; then \
-			$(EXTRACT_EXPECTED_ERROR) $$OUTPUT_SRC > $@;\
+			echo ===`wc -l $$TEST_FILE`=== | $(EXTRACT_EXPECTED_ERROR) - $$OUTPUT_SRC > $@;\
 		fi
 
 rted_source/%.bin: rted_source/%_rose.c rted_source/%_s_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h

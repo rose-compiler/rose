@@ -104,7 +104,11 @@ struct RuntimeSystem  {
 struct RuntimeSystem* rtsi();
 // Constructor - Destructor
 void RuntimeSystem_Const_RuntimeSystem();
-void RuntimeSystem_roseRtedClose();
+void RuntimeSystem_roseRtedClose(
+  const char* filename,
+  const char* line,
+  const char* lineTransformed
+);
 
 // helper functions
 char* RuntimeSystem_findLastUnderscore(char* s);
@@ -149,6 +153,13 @@ void RuntimeSystem_roseIOFunctionCall(const char* funcname,
 					const char* arg1, const char* arg2);
 void RuntimeSystem_roseFreeMemory(
   void* ptr,
+  const char* filename,
+  const char* line,
+  const char* lineTransformed
+);
+void RuntimeSystem_roseReallocateMemory(
+  void* ptr,
+  unsigned long int size,
   const char* filename,
   const char* line,
   const char* lineTransformed

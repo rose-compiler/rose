@@ -16,7 +16,7 @@ class RtedTransformation : public AstSimpleProcessing {
   // The array of callArray calls that need to be inserted
   std::map<SgVarRefExp*, RTedArray*> create_array_define_varRef_multiArray;
   std::map<SgInitializedName*, RTedArray*> create_array_define_varRef_multiArray_stack;
-  std::map<SgVarRefExp*, RTedArray*> create_array_access_call;
+  std::map<SgExpression*, RTedArray*> create_array_access_call;
   // remember variables that were used to create an array. These cant be reused for array usage calls
   std::vector<SgVarRefExp*> variablesUsedForArray;
   // this vector is used to check which variables have been marked as initialized (through assignment)
@@ -37,6 +37,8 @@ class RtedTransformation : public AstSimpleProcessing {
   std::vector<RtedArguments*> function_call;
   // function calls to free
   std::vector<SgFunctionCallExp*> frees;
+  // function calls to realloc
+  std::vector<SgFunctionCallExp*> reallocs;
 
   std::vector<SgFunctionDefinition*> function_definitions;
 
@@ -52,14 +54,17 @@ class RtedTransformation : public AstSimpleProcessing {
   SgFunctionSymbol* roseArrayAccess;
   SgFunctionSymbol* roseFunctionCall;
   SgFunctionSymbol* roseFreeMemory;
+  SgFunctionSymbol* roseReallocateMemory;
   SgFunctionSymbol* roseIOFunctionCall;
   SgFunctionSymbol* roseConvertIntToString;
   SgClassSymbol* runtimeClassSymbol;
   SgScopeStatement* rememberTopNode;
   SgStatement* mainLast;
   SgStatement* mainFirst;
+  Sg_File_Info* mainEnd;
   SgFunctionSymbol* roseRtedClose;
-  bool insertMainBeforeLast;
+  bool mainEndsWithReturn;
+  SgReturnStmt* mainReturnStmt;
   SgFunctionSymbol* roseCallStack;
   SgFunctionSymbol* roseCreateVariable;
   SgFunctionSymbol* roseInitVariable;
@@ -77,10 +82,12 @@ class RtedTransformation : public AstSimpleProcessing {
   // insert: RuntimeSystem* runtimeSystem = new RuntimeSystem();
   void insertRuntimeSystemClass();
   void insertFreeCall( SgFunctionCallExp* exp );
+  void insertReallocateCall( SgFunctionCallExp* exp );
   SgExpression* buildString(std::string name);
   std::string getMangledNameOfExpression(SgExpression* expr);
   SgExpression* getExprBelowAssignment(SgExpression* exp, int& derefCounter);
-  void appendFileInfo( SgNode* n, SgExprListExp* arg_list );
+  void appendFileInfo( SgNode* n, SgExprListExp* arg_list);
+  void appendFileInfo( Sg_File_Info* n, SgExprListExp* arg_list);
 
 
 
@@ -106,9 +113,9 @@ class RtedTransformation : public AstSimpleProcessing {
   void insertArrayCreateCall(SgInitializedName* initName,  RTedArray* value);
   void insertArrayCreateCall(SgStatement* stmt,SgInitializedName* initName,  RTedArray* value);
 
-  void insertArrayAccessCall(SgVarRefExp* n, RTedArray* value);
+  void insertArrayAccessCall(SgExpression* arrayExp, RTedArray* value);
   void insertArrayAccessCall(SgStatement* stmt,
-			SgInitializedName* initName, RTedArray* array);
+			SgExpression* arrayExp, RTedArray* array);
 
   std::pair<SgInitializedName*,SgVarRefExp*> getRightOfDot(SgDotExp* dot , std::string str, SgVarRefExp* varRef);
   std::pair<SgInitializedName*,SgVarRefExp*> getRightOfArrow(SgArrowExp* arrow , std::string str, SgVarRefExp* varRef);
@@ -160,13 +167,15 @@ class RtedTransformation : public AstSimpleProcessing {
     globalScope=NULL;
     roseCreateArray=NULL;
     roseArrayAccess=NULL;
+    roseRtedClose=NULL;
     roseFunctionCall=NULL;
     roseConvertIntToString=NULL;
     roseCallStack=NULL;
     symbols = new RtedSymbols();
     mainFirst=NULL;
+    mainEnd=NULL;
     mainLast=NULL;
-    insertMainBeforeLast=false;
+    mainEndsWithReturn=false;
     roseCreateVariable=NULL;
     roseInitVariable=NULL;
     roseAccessVariable=NULL;

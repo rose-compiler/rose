@@ -97,7 +97,8 @@ RtedTransformation::isFunctionCallOnIgnoreList(std::string name) {
   bool interesting=false;
   if (name=="printf" ||
       name=="malloc" ||
-      name=="free"
+      name=="free" ||
+	  name=="realloc"
       )
     interesting=true;
   return interesting;
@@ -434,6 +435,40 @@ RtedTransformation::insertFreeCall( SgFunctionCallExp* free_call ) {
 	)));
 }
 
+void
+RtedTransformation::insertReallocateCall( SgFunctionCallExp* realloc_call ) {
+
+	// stmt wraps a call to realloc -- most likely an expression statement
+	// alert the RTS before the call
+	SgStatement* stmt = getSurroundingStatement( realloc_call );
+
+	Rose_STL_Container< SgExpression* > args = realloc_call->get_args()->get_expressions();
+	ROSE_ASSERT( args.size() > 1 );
+
+	SgExpression* address_expression = args[ 0 ];
+	SgExpression* size_expression = args[ 1 ];
+	
+	ROSE_ASSERT( stmt );
+	ROSE_ASSERT( address_expression );
+	ROSE_ASSERT( size_expression );
+
+
+	// roseReallocate( ptr, source info );
+    SgExprListExp* arg_list = buildExprListExp();
+	appendExpression( arg_list, address_expression );
+	appendExpression( arg_list, size_expression );
+	appendFileInfo( stmt, arg_list );
+
+	// have to check validity of call to realloc before the call itself
+	insertStatementBefore(
+		stmt, 
+		buildExprStatement(
+			buildFunctionCallExp(
+				buildFunctionRefExp( roseReallocateMemory),
+				arg_list
+	)));
+}
+
 
 /***************************************************************
  * Get the variable on the left hand side of an assignment
@@ -514,6 +549,8 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
       scopes.push_back( fncallStmt);
     } else if( "free" == name ) {
 		frees.push_back( fcexp );
+    } else if( "realloc" == name ) {
+		reallocs.push_back( fcexp );
 	}
   }
 

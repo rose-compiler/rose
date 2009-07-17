@@ -192,9 +192,10 @@ RtedTransformation::buildVariableCreateCallStmt( SgInitializedName* initName, Sg
     if (sgClass) {
     	///fixme : add className
     	className= buildString(sgClass->class_name());
+        appendExpression(arg_list, className);
+    } else {
+        appendExpression(arg_list, buildString(""));
     }
-
-    appendExpression(arg_list, className);
 
     SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
     SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
@@ -226,23 +227,27 @@ void RtedTransformation::appendAddressAndSize(SgInitializedName* initName,
 					      int appendType
 					      ) {
 
-    SgType* type = initName->get_type();
-    ROSE_ASSERT(type);
+    SgScopeStatement* scope = NULL;
     SgType* basetype = NULL;
-    SgExpression* basetypeStr = buildString("");
-    if (isSgPointerType(type)) {
-	//	typestr="pointer";
-	basetype = isSgPointerType(type)->get_base_type();
-	if (basetype)
-	  basetypeStr = buildString(basetype->class_name());
-    }
-    SgExpression* ctypeStr = buildString(type->class_name());
-    if (appendType==1) {
-    	appendExpression(arg_list, ctypeStr);
-	  	appendExpression(arg_list, basetypeStr);
-    }
 
-    SgScopeStatement* scope = initName->get_scope();
+    if( initName) {
+        SgType* type = initName->get_type();
+        ROSE_ASSERT(type);
+        SgExpression* basetypeStr = buildString("");
+        if (isSgPointerType(type)) {
+        //	typestr="pointer";
+        basetype = isSgPointerType(type)->get_base_type();
+        if (basetype)
+          basetypeStr = buildString(basetype->class_name());
+        }
+        SgExpression* ctypeStr = buildString(type->class_name());
+        if (appendType==1) {
+            appendExpression(arg_list, ctypeStr);
+            appendExpression(arg_list, basetypeStr);
+        }
+
+        scope = initName->get_scope();
+    }
     if (isSgClassType(basetype) ||
 	  isSgTypedefType(basetype) ||
 	  isSgClassDefinition(scope)

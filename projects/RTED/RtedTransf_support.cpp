@@ -338,9 +338,13 @@ bool RtedTransformation::isGlobalExternVariable(SgStatement* stmt) {
  * SourcePosition objects.
  ************************************************/
 void RtedTransformation::appendFileInfo( SgNode* node, SgExprListExp* arg_list) {
+    ROSE_ASSERT( node );
+    appendFileInfo( node->get_file_info(), arg_list );
+}
+void RtedTransformation::appendFileInfo( Sg_File_Info* file_info, SgExprListExp* arg_list) {
 
-    SgExpression* filename = buildString( node->get_file_info()->get_filename() );
-    SgExpression* linenr = buildString( RoseBin_support::ToString( node->get_file_info()->get_line() ));
+    SgExpression* filename = buildString( file_info->get_filename() );
+    SgExpression* linenr = buildString( RoseBin_support::ToString( file_info->get_line() ));
     SgExpression* linenrTransformed = buildString("x%%x");
 
     appendExpression( arg_list, filename );

@@ -14,6 +14,7 @@ public:
 	SgFunctionSymbol* roseRtedClose;
 	SgFunctionSymbol* roseFunctionCall;
 	SgFunctionSymbol* roseFreeMemory;
+	SgFunctionSymbol* roseReallocateMemory;
 	SgFunctionSymbol* roseConvertIntToString;
 	SgFunctionSymbol* roseCallStack;
 	SgFunctionSymbol* roseCreateVariable;
@@ -31,6 +32,7 @@ public:
 		roseRtedClose = NULL;
         roseFunctionCall = NULL;
         roseFreeMemory = NULL;
+        roseReallocateMemory = NULL;
 		roseConvertIntToString=NULL;
 		roseCallStack = NULL;
 		roseCreateVariable = NULL;

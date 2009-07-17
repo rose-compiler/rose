@@ -22,18 +22,57 @@ RtedTransformation::insertMainCloseCall(SgStatement* stmt) {
       string symbolName = varRef_l->get_symbol()->get_name().str();
 #endif
       ROSE_ASSERT(roseRtedClose);
+
+      SgExprListExp* arg_list = buildExprListExp();
+      appendFileInfo( mainEnd , arg_list );
+
       string symbolName2 = roseRtedClose->get_name().str();
       //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
       SgFunctionRefExp* memRef_r = buildFunctionRefExp(
 								   roseRtedClose);
       //      SgArrowExp* sgArrowExp = buildArrowExp(varRef_l, memRef_r);
       SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
-							    NULL);
+							    arg_list);
       SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
-      //cerr << " Last statement in main : " << stmt->class_name() << "  insertBefore : " << insertMainBeforeLast << endl;
-      if (insertMainBeforeLast)
-	insertStatementBefore(isSgStatement(stmt), exprStmt);
-      else
+      //cerr << " Last statement in main : " << stmt->class_name() << "  insertBefore : " << mainEndsWithReturn << endl;
+      if (mainEndsWithReturn) {
+          // consider e.g.
+          //    int main() {
+          //        return foo();
+          //    }
+          //
+          //  we must translate this to:
+          //
+          //    int main() {
+          //        int rv = foo();
+          //        RuntimeSystem_roseRtedClose();
+          //        return rv;
+          //    }
+
+        SgScopeStatement* scope = stmt->get_scope();
+        // FIXME 2: better to create a guaranteed unique name
+        SgName returnValueName = SgName( "RuntimeSystem_return_value" );
+
+        // build the new function call
+        //      int RuntimeSystem_return_value = <exp>;
+        SgStatement* newFnCallStmt = buildVariableDeclaration(
+            returnValueName,
+            SgTypeInt::createType(),
+            buildAssignInitializer( mainReturnStmt->get_expression() ),
+            scope
+        );
+
+        // build the new return stmt
+        //      return RuntimeSystem_return_value;
+        SgStatement* newRtnStmt = buildReturnStmt(
+            buildVarRefExp( returnValueName, scope )
+        );
+
+
+        insertStatementBefore( stmt, newFnCallStmt );
+        insertStatementBefore(isSgStatement(stmt), exprStmt);
+        replaceStatement( stmt, newRtnStmt );
+      } else
 	insertStatementAfter(isSgStatement(stmt), exprStmt);
       string comment = "RS : Insert Finalizing Call to Runtime System to check if error was detected (needed for automation)";
       attachComment(exprStmt,comment,PreprocessingInfo::before);
@@ -129,16 +168,18 @@ void RtedTransformation::visit_checkIsMain(SgNode* n) {
     Rose_STL_Container<SgStatement*> stmts = block->get_statements();
     SgStatement* first = stmts.front();
     SgStatement* last = stmts.back();
-    if (isSgReturnStmt(last)) 
-      insertMainBeforeLast = true;
-    else
-      insertMainBeforeLast=false;
+    if (isSgReturnStmt(last))  {
+      mainEndsWithReturn = true;
+      mainReturnStmt = isSgReturnStmt( last );
+    } else
+      mainEndsWithReturn=false;
     //cerr << " Last statement in main : " << last->class_name() << "  insertBefore : " << 
-    //	RoseBin_support::resBool(insertMainBeforeLast) << endl;
+    //	RoseBin_support::resBool(mainEndsWithReturn) << endl;
     ROSE_ASSERT(last);
     // insert call to close before last statement (could be return)
     mainLast = last;
     mainFirst = first;
+    mainEnd = block->get_endOfConstruct();
   }
 
 }

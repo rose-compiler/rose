@@ -38,6 +38,7 @@ void RtedTransformation::transform(SgProject* project) {
   roseArrayAccess = symbols->roseArrayAccess;
   roseFunctionCall = symbols->roseFunctionCall;
   roseFreeMemory = symbols->roseFreeMemory;
+  roseReallocateMemory = symbols->roseReallocateMemory;
   roseRtedClose = symbols->roseRtedClose;
   roseConvertIntToString=symbols->roseConvertIntToString;
   roseCallStack = symbols->roseCallStack;
@@ -54,6 +55,7 @@ void RtedTransformation::transform(SgProject* project) {
   ROSE_ASSERT(roseArrayAccess);
   ROSE_ASSERT(roseFunctionCall);
   ROSE_ASSERT(roseFreeMemory);
+  ROSE_ASSERT(roseReallocateMemory);
   ROSE_ASSERT(roseConvertIntToString);
   ROSE_ASSERT(roseRtedClose);
   ROSE_ASSERT(roseCallStack);
@@ -195,10 +197,10 @@ void RtedTransformation::transform(SgProject* project) {
 
   cerr << "\n Number of Elements in create_array_access_call  : "
        << create_array_access_call.size() << endl;
-  std::map<SgVarRefExp*, RTedArray*>::const_iterator ita =
+  std::map<SgExpression*, RTedArray*>::const_iterator ita =
     create_array_access_call.begin();
   for (; ita != create_array_access_call.end(); ita++) {
-    SgVarRefExp* array_node = ita->first;
+    SgExpression* array_node = ita->first;
     RTedArray* array_size = ita->second;
     insertArrayAccessCall(array_node, array_size);
   }
@@ -233,6 +235,12 @@ void RtedTransformation::transform(SgProject* project) {
   std::vector< SgFunctionCallExp* >::const_iterator it_frees = frees.begin();
   for (; it_frees != frees.end(); it_frees++) {
     insertFreeCall( *it_frees );
+  }
+
+  cerr << "\n Number of Elements in reallocs  : " << reallocs.size() << endl;
+  std::vector< SgFunctionCallExp* >::const_iterator it_reallocs = reallocs.begin();
+  for (; it_reallocs != reallocs.end(); it_reallocs++) {
+    insertReallocateCall( *it_reallocs );
   }
 
   cerr << "Inserting main close call" << endl;

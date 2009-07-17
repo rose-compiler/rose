@@ -35,6 +35,7 @@ void RtedSymbols::visit(SgNode* n) {
     LOOKUP( roseIOFunctionCall, func12);
     LOOKUP( roseRegisterTypeCall, func13);
     LOOKUP( roseFreeMemory, func14);
+    LOOKUP( roseReallocateMemory, func15);
   }
 
   if (isSgTypedefDeclaration(n)) {

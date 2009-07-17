@@ -40,10 +40,17 @@ RuntimeSystem_getRuntimeSystem() {
  * This function is closed when RTED finishes (Destructor)
  ********************************************************/
 void
-RuntimeSystem_roseRtedClose() {
+RuntimeSystem_roseRtedClose(
+      const char* filename,
+      const char* line,
+      const char* lineTransformed
+) {
 
 
 	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
+	rs->checkpoint(
+    SourcePosition( filename, atoi( line ),atoi( lineTransformed ) )
+  );
 	rs->doProgramExitChecks();
 
   // The runtime system would have exited if it had found an error
@@ -91,9 +98,9 @@ RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dime
 	   if (!checkAddress(address)) return; 
   if( 0 == strcmp("SgArrayType", type)) 
     if (dimension==1)
-      rs->createMemory(address, sizeA);
+      rs->createMemory(address, sizeA, true);
     else
-      rs->createMemory(address, sizeA*sizeB);
+      rs->createMemory(address, sizeA*sizeB, true);
   else if( 0 == strcmp("SgPointerType", type))
     // address refers to the address of the variable (i.e. the pointer).
     // we want the address of the newly allocated memory on the heap
@@ -578,6 +585,11 @@ void RuntimeSystem_roseCreateVariable( const char* name,
 	    typeName = className;
 
 	rs->createVariable(address,name,mangled_name,typeName, basetype);
+  if( 1 == init ) {
+    // e.g. int x = 3
+    // we should flag &x..&x+sizeof(x) as initialized
+    rs->checkMemWrite( address, size );
+  }
 }
 
 
@@ -687,6 +699,26 @@ RuntimeSystem_roseFreeMemory(
 
 	rs->freeMemory( (addr_type) ptr );
 }
+
+
+void
+RuntimeSystem_roseReallocateMemory(
+      void* ptr,
+      unsigned long int size,
+      const char* filename,
+      const char* line,
+      const char* lineTransformed
+) {
+
+	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
+	rs->checkpoint(
+    SourcePosition( filename, atoi( line ),atoi( lineTransformed ) )
+  );
+
+	rs->freeMemory( (addr_type) ptr );
+  rs->createMemory( (addr_type) ptr, size);
+}
+
 
 
 
