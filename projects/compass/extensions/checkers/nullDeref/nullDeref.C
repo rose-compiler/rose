@@ -247,7 +247,7 @@ CompassAnalyses::NullDeref::Traversal::expressionIsNull(SgExpression* expr) {
     break;
   }
   case V_SgAddressOfOp: {
-    result.first = false; // FIXME
+    result.first = false;
     break;
   }
   case V_SgIntVal: {

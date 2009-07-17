@@ -308,7 +308,7 @@ run/%: rted_source/%.bin rted_source/%_debug.bin rted_source/%.expected-output
 run_log/%: rted_source/%.bin rted_source/%.expected-output 
 	@echo -n "   running runtime error detection ... "
 	@$(filter rted_source/%.bin, $^); \
-	if [ $$? -ne 0 ]; \ 
+	if [ $$? -ne 0 ]; \
 	then \
 		echo " $@ failed" >> test_log.txt;\
 	else\

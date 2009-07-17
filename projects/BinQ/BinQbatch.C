@@ -81,6 +81,7 @@ int BinQbatch::addRemainingAnalyses() {
     analyses.push_back(*it);    
   }
 
+  if (isSgProject(fileA)) {
   analyses.push_back(new DwarfFileInfo(algo));
   analyses.push_back(new BinCallGraph());
   analyses.push_back(new DiffAlgo());
@@ -88,6 +89,7 @@ int BinQbatch::addRemainingAnalyses() {
   analyses.push_back(new AlignFunction());
   analyses.push_back(new BinControlFlowAnalysis());
   analyses.push_back(new InterruptAnalysis(algo));
+  }
   return before;
 }
 

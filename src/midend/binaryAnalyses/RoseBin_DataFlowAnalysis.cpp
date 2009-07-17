@@ -301,7 +301,6 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgGraphNode*>& rootNodes,
 	if (RoseBin_support::DEBUG_MODE())
 	  std::cout << " exceptionCallNode : " << exceptionCallNode << " exceptionCallNext : " << exceptionCallNext << endl;
 	// if function call is call to malloc we have an exception and follow the call path
-	// fixme -- revisit this once the malloc analysis works again
 	if ((exceptionCallNode && !exceptionCallNext)) {
 	} else if (
 		   //if (

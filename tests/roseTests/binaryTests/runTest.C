@@ -112,7 +112,6 @@ int main(int argc, char** argv) {
   cerr << " Number of edges == " << callanalysis->edgesVisited() << endl;
   // tps (25 Aug 2008) : changed this because of results from IDAPro
   //ROSE_ASSERT(callanalysis->nodesVisited()==16 || callanalysis->nodesVisited()==10 || callanalysis->nodesVisited()==13);
-  // tps (1May 2009) : changed this due to new Graph Interface. todo : make sure this still works!!!
   ROSE_ASSERT(callanalysis->nodesVisited()==20 ||
 	      callanalysis->nodesVisited()==16 || callanalysis->nodesVisited()==10 || callanalysis->nodesVisited()==13);
     ROSE_ASSERT(callanalysis->edgesVisited()==20 || callanalysis->edgesVisited()==8  || callanalysis->edgesVisited()==13);
@@ -135,7 +134,7 @@ int main(int argc, char** argv) {
   cerr << " Number of uses == " << dfanalysis->nrOfUses() << endl;
   // values for old implementation -- using objdump
 
-  // tps (1May 2009) : changed this due to new Graph Interface. todo : make sure this still works!!!
+
   // These assertions are very sensitive to the heuristics used to find instructions and functions.
 #if 1
   ROSE_ASSERT(dfanalysis->nodesVisited()==218 || dfanalysis->nodesVisited()==211 || dfanalysis->nodesVisited()==200 || dfanalysis->nodesVisited()==209);

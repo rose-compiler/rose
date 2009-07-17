@@ -257,7 +257,6 @@ DynamicInfo::run(SgNode* fileA, SgNode* fileB) {
       Rose_STL_Container<SgAsmElfSymbol*>::const_iterator it = list.begin();
       for (;it!=list.end();++it) {
 	SgAsmElfSymbol* entry = *it;
-	//fixme
 	//	rose_addr_t  addr = entry->get_st_name();
 	rose_addr_t  addr = 0;
 	string name = entry->get_name()->get_string();
