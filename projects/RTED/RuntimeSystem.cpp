@@ -572,7 +572,12 @@ void RuntimeSystem_roseCreateVariable( const char* name,
 
 	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
 	rs->checkpoint( SourcePosition(filename,atoi(line), atoi(lineTransformed)));
-	rs->createVariable(address,name,mangled_name,type, className, basetype);
+
+	string typeName = type;
+	if(type=="SgClassType")
+	    typeName = className;
+
+	rs->createVariable(address,name,mangled_name,typeName, basetype);
 }
 
 

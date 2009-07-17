@@ -347,9 +347,11 @@ endef
 ${foreach rted_dir, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(rted_path)/%, run/%, $(rted_dir)}, ${patsubst $(rted_path)/%.c, run/%, ${wildcard $(rted_dir)/*[!_s].c} } } } }
 ${foreach rted_dir, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(rted_path)/%, run_debug/%, $(rted_dir)}, ${patsubst $(rted_path)/%.c, run_debug/%, ${wildcard $(rted_dir)/*[!_s].c} } } } }
 ${foreach rted_dir, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(rted_path)/%, run_checkonly/%, $(rted_dir)}, ${patsubst $(rted_path)/%.c, run_checkonly/%, ${wildcard $(rted_dir)/*[!_s].c} } } } }
+${foreach rted_dir, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(rted_path)/%, run_log/%, $(rted_dir)}, ${patsubst $(rted_path)/%.c, run_log/%, ${wildcard $(rted_dir)/*[!_s].c} } } } }
 ${foreach rted_dir, ${filter $(srcdir)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(srcdir)/%, run/%, $(rted_dir)}, ${patsubst $(srcdir)/%.c, run/%, ${wildcard $(rted_dir)/*[!_s].c} } } } }
 ${foreach rted_dir, ${filter $(srcdir)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(srcdir)/%, run_debug/%, $(rted_dir)}, ${patsubst $(srcdir)/%.c, run_debug/%, ${wildcard $(rted_dir)/*[!_s].c} } } } }
 ${foreach rted_dir, ${filter $(srcdir)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(srcdir)/%, run_checkonly/%, $(rted_dir)}, ${patsubst $(srcdir)/%.c, run_checkonly/%, ${wildcard $(rted_dir)/*[!_s].c} } } } }
+${foreach rted_dir, ${filter $(srcdir)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(srcdir)/%, run_log/%, $(rted_dir)}, ${patsubst $(srcdir)/%.c, run_log/%, ${wildcard $(rted_dir)/*[!_s].c} } } } }
 	
 #------------------------------------------------------------------------------
 

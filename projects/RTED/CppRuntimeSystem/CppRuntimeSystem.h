@@ -69,7 +69,6 @@ class RuntimeSystem
                             const std::string & name,
                             const std::string & mangledName,
                             const std::string & typeString,
-                            const std::string & className,
                             const std::string & pointerType="");
 
 
