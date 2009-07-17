@@ -440,8 +440,7 @@ void testScopeFreesStack()
         (addr_type) 4,
         "my_var",
         "mangled_my_var",
-        "SgTypeInt",
-        ""
+        "SgTypeInt"
     );
     rs->endScope();
 
@@ -459,8 +458,7 @@ void testImplicitScope()
         (addr_type) 4,
         "my_var",
         "mangled_my_var",
-        "SgTypeInt",
-        ""
+        "SgTypeInt"
     );
 
     CLEANUP
@@ -471,6 +469,7 @@ void testImplicitScope()
 
 void testLostMemRegion()
 {
+    //
     TEST_INIT("Testing detection of lost mem-regions");
     rs->createMemory(10,2*sizeof(int));
     rs->createMemory(18,2*sizeof(int));
@@ -552,7 +551,7 @@ void testPointerChanged()
         ts->registerType(typeA);
 
         // Create an instance of A on stack
-        rs->createVariable(0x42,"instanceOfA","mangled","A","SgClassType");
+        rs->createVariable(0x42,"instanceOfA","mangled","A");
 
         rs->createVariable(0x100,"intPtr","mangled","SgPointerType","SgTypeInt");
         rs->registerPointerChange("intPtr",0x42);
@@ -572,8 +571,8 @@ void testInvalidPointerAssign()
     TEST_INIT("Testing Invalid Pointer assign");
     rs->beginScope("Scope2");
         // Create an instance of A on stack
-        rs->createVariable(0x42,"instanceOfA","mangled","SgTypeDouble","");
-        rs->createVariable(0x100,"intPtr","mangled","SgPointerType","SgTypeInt","");
+        rs->createVariable(0x42,"instanceOfA","mangled","SgTypeDouble");
+        rs->createVariable(0x100,"intPtr","mangled","SgPointerType","SgTypeInt");
         // Try to access double with an int ptr
         try { rs->registerPointerChange("intPtr",0x42); }
         TEST_CATCH ( RuntimeViolation::INVALID_TYPE_ACCESS )
@@ -594,9 +593,9 @@ void testPointerTracking()
     ts->registerType(type);
 
     rs->beginScope("TestScope");
-    rs->createVariable(42,"instanceOfA","mangled","A","SgClassType");
+    rs->createVariable(42,"instanceOfA","mangled","A");
 
-    rs->createVariable(100,"pointer","mangledPointer","SgPointerType","A","SgClassType");
+    rs->createVariable(100,"pointer","mangledPointer","SgPointerType","A");
 
     rs->endScope();
 
