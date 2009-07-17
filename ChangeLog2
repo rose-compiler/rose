@@ -1,3 +1,103 @@
+2009-07-17 18:48  panas2
+
+	* [r6594] /trunk/ROSE/projects/BinQ/BinDynamicInfo.C,
+	  /trunk/ROSE/projects/BinQ/BinQAbstract.C,
+	  /trunk/ROSE/projects/BinQ/BinQbatch.C,
+	  /trunk/ROSE/projects/BinQ/DwarfFileInfo.h,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/compass/extensions/checkers/newDelete/newDelete.C,
+	  /trunk/ROSE/projects/compass/extensions/checkers/nullDeref/nullDeref.C,
+	  /trunk/ROSE/src/midend/binaryAnalyses/RoseBin_DataFlowAnalysis.cpp,
+	  /trunk/ROSE/tests/roseTests/binaryTests/runTest.C: Small cleanup
+
+2009-07-17 18:17  bauer25
+
+	* [r6592]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/Util.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/VariablesType.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp: Added tests
+	  for RTED pointer tracking and removed some bugs
+
+2009-07-17 17:45  heller9
+
+	* [r6591]
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/QueryBox/Makefile.am,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/QueryBox/QRQueryBox.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/QueryBox/QRQueryBox.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/QueryBox/QRQueryOp.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/QueryBox/QRQueryOp.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/QRUnparser.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/TreeBox/QRTreeBox.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/TreeBox/QRTreeVisitor.C,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/TaskSystem/RoseFrontendTask.cpp:
+	  qrose fix
+
+2009-07-17 16:24  matzke
+
+	* [r6590] /trunk/ROSE/src/ROSETTA/src/binaryInstruction.C: Revert
+	  "Added SgAsmx86Instruction::p_repeatPrefix"
+	  
+	  This reverts commit 133158b33f14189b3dbb7c2c63fa8960718ac40f.
+	  (subversion r6587)
+	  
+	  This should have been on the assembler branch (to be checked in
+	  later)
+	  rather than the bugfix branch.
+
+2009-07-17 15:48  heller9
+
+	* [r6589]
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/QRAstInfo.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/QRAttribute.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/QRCoords.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/Common/QRoseComponent.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/QueryBox/QRQueryBox.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/QueryBox/QRQueryDomain.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/QueryBox/QRQueryOp.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/QueryBox/QRQueryRange.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/SourceBox/QRUnparser.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/TreeBox/QRListViewItem.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/TreeBox/QRListViewItem.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/TreeBox/QRTreeVisitor.h:
+	  fixed qrose includes
+
+2009-07-17 12:32  matzke
+
+	* [r6587] /trunk/ROSE/src/ROSETTA/src/binaryInstruction.C: Added
+	  SgAsmx86Instruction::p_repeatPrefix
+
+2009-07-17 12:31  matzke
+
+	* [r6586] /trunk/ROSE/src/ROSETTA/src/binaryInstruction.C: Removed
+	  spaces from ends of lines
+
+2009-07-17 12:31  matzke
+
+	* [r6585] /trunk/ROSE/src/frontend/SageIII/sage3.h: Fixed a
+	  compiler warning
+
+2009-07-17 12:31  matzke
+
+	* [r6584] /trunk/ROSE/docs/testDoxygen/SgAsmValueExpression.docs,
+	  /trunk/ROSE/src/ROSETTA/src/binaryInstruction.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerX86.C,
+	  /trunk/ROSE/src/midend/binaryAnalyses/libraryIdentification/libraryIdentification_writer.C:
+	  Reduced size of SgAsmExpression
+	  
+	  Moved p_bit_offset and p_bit_size from SgAsmExpression to
+	  SgAsmValueExpression and changed their types from size_t to
+	  unsigned
+	  short.
+	  
+	  Added documentation for p_bit_size and p_big_offset
+	  
+	  Added comment about the p_replacement data member.
+
 2009-07-17 03:58  matzke
 
 	* [r6581] /trunk/ROSE/scripts/rosegit/bin/rosegit-svncommit:
