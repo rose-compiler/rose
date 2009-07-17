@@ -3,10 +3,11 @@
  *   jgfc@doc.ic.ac.uk                                                     *
  ***************************************************************************/
 
+#include <rose.h>
+
 #include <QRAstInfo.h>
 #include <QRPixmap.h>
 #include <QRIcons.h>
-#include <rose.h>
 
 using namespace std;
 

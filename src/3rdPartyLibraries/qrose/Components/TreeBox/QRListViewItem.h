@@ -4,6 +4,7 @@
 #include <Q3ListView>
 #include <Q3ListViewItem>
 #include <QRAttribute.h>
+
 class SgNode;
 
 namespace qrs {

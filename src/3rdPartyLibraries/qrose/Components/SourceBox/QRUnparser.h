@@ -21,7 +21,7 @@
 #ifndef QRUNPARSER_H
 #define QRUNPARSER_H
 
-#include <rose.h>
+//#include <rose.h>
 #include <unparser.h>
 #include <QRCoords.h>
 #include <sstream>
@@ -30,6 +30,8 @@
 #include <stack>
 #include <list>
 #include <vector>
+
+class SgNode;
 
 namespace qrs {
 
