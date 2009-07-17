@@ -191,8 +191,10 @@ An example UPC-to-C translator, namely roseupcc, is provided to
 demonstrate how one can use ROSE to build a translator translating UPC
 programs into C programs with runtime calls to the Berkeley UPC (BUPC)
 runtime system V. 2.6.0. 
-roseupcc follows the BUPC runtime interface specification
-3.10~\cite{BUPC3.10}.
+The source files for roseupcc are located in
+\textit{ROSE/projects/UpcTranslation}.
+%roseupcc follows the BUPC runtime interface specification
+%3.10~\cite{BUPC3.10}.
 %we don't reiterate details about why the translation is done in a certain way here. 
 Please be advised that only a subset of the UPC constructs, specially
 variable uses, is
@@ -216,7 +218,6 @@ possible shared variables (none here).
 \lstinline{UPCRI_INIT_filename_xxx()} function is used for per-file initialization of
 shared and unshared (thread local) data.
 
-
 \begin{figure}[!h]
 {\indent
   {\mySmallFontSize
@@ -232,7 +233,8 @@ shared and unshared (thread local) data.
 \label{Manual:UPC:hello-trans}
 \end{figure}
 
-\clearpage
+
+%\clearpage
 Implementing various UPC variable accesses is complex due to the two level
 memory scheme used by the partitioned global memory address space.
 The translation has to handle variable declaration, memory allocation,
