@@ -2,6 +2,7 @@
  *   Copyright (C) 2005 by Jose G de Figueiredo Coutinho                   *
  ***************************************************************************/
 
+#include "rose.h"
 #include <qrose.h>
 
 using namespace qrs;

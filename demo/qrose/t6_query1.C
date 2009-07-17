@@ -3,8 +3,8 @@
  *   jgfc@doc.ic.ac.uk                                                     *
  ***************************************************************************/
 
-#include <qrose.h>
 #include <rose.h>
+#include <qrose.h>
 
 using namespace qrs;
 using namespace std;
