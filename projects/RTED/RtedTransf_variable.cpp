@@ -191,7 +191,7 @@ RtedTransformation::buildVariableCreateCallStmt( SgInitializedName* initName, Sg
     SgClassType* sgClass = isSgClassType(initName->get_type());
     if (sgClass) {
     	///fixme : add className
-    	className= buildString(initName->get_type()->class_name());
+    	className= buildString(sgClass->class_name());
     }
 
     appendExpression(arg_list, className);
