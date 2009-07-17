@@ -1,3 +1,7 @@
+/*-------------------------------------------------------------------------------------------------------------------------------
+ * NOTICE: Some of these classes and their data members are documented in *.docs files in docs/testDoxygen where '*' is the
+ *         name of the class.  Be sure to update that documentation if you change this file!
+ *-----------------------------------------------------------------------------------------------------------------------------*/
 
 #include "ROSETTA_macros.h"
 #include "grammar.h"
@@ -1972,6 +1976,10 @@ Grammar::setUpBinaryInstructions ()
   // Store the expression tree from any constant folding (this can be ignored until later)
      AsmValueExpression.setDataPrototype("SgAsmValueExpression*","unfolded_expression_tree","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AsmValueExpression.setDataPrototype("unsigned short", "bit_offset", "= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmValueExpression.setDataPrototype("unsigned short", "bit_size", "= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
      AsmBinaryExpression.setDataPrototype("SgAsmExpression*","lhs","= NULL",
@@ -2060,14 +2068,16 @@ Grammar::setUpBinaryInstructions ()
 
 
 
+     /* FIXME: p_replacement is only set by RoseBin_IDAPRO_buildTree::resolveRecursivelyExpression() and appears to be used
+      *        only in a couple of files in src/midend/binaryAnalsyses (and elsewhere only for converting a SgAsmExpression to
+      *        a string). It seems to hold the name of a function, such as "_malloc" or "malloc@plt" for branch instructions.
+      *        It should be possible to obtain the function name by looking up the instruction at the branch target and then
+      *        following parent links in the AST until we reach the SgAsmFunctionDeclaration node, which has a get_name()
+      *        method. [RPM 2009-07-16]. */
      AsmExpression.setFunctionPrototype("HEADER_BINARY_EXPRESSION", "../Grammar/BinaryInstruction.code");
      AsmExpression.setDataPrototype("std::string", "replacement", "= \"\"",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmExpression.setDataPrototype("std::string", "comment", "= \"\"",
-                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmExpression.setDataPrototype("size_t", "bit_offset", "= 0", /*starting position in instruction's p_raw_bytes*/
-                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmExpression.setDataPrototype("size_t", "bit_size", "= 0", /*size in bits in instruction's p_raw_bytes*/
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 

@@ -277,10 +277,10 @@ LibraryIdentification::FlattenAST::visit(SgNode* n)
           printf ("asmInstruction->get_mnemonic() = %s size = %zu \n",asmInstruction->get_mnemonic().c_str(),opCodeString.size());
         }
 
-     SgAsmExpression* asmExpression = isSgAsmExpression(n);
+     SgAsmValueExpression* asmExpression = isSgAsmValueExpression(n);
      if (asmExpression != NULL)
         {
-          printf ("   asmExpression->get_bit_size() = %zu asmExpression->get_bit_offset() = %zu \n",asmExpression->get_bit_size(),asmExpression->get_bit_offset());
+          printf ("   asmExpression->get_bit_size() = %u asmExpression->get_bit_offset() = %u \n",asmExpression->get_bit_size(),asmExpression->get_bit_offset());
         }
 
   // ROSE_ASSERT(endAddress != startAddress);
@@ -377,7 +377,7 @@ LibraryIdentification::FlattenAST_AndResetImmediateValues::evaluateSynthesizedAt
              }
         }
 
-     SgAsmExpression* asmExpression = isSgAsmExpression(n);
+     SgAsmValueExpression* asmExpression = isSgAsmValueExpression(n);
      if (asmExpression != NULL)
         {
           unsigned char size   = asmExpression->get_bit_size();

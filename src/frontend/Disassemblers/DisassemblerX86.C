@@ -342,7 +342,7 @@ DisassemblerX86::sizeToType(X86InstructionSize s)
 SgAsmExpression *
 DisassemblerX86::makeAddrSizeValue(int64_t val, size_t bit_offset, size_t bit_size)
 {
-    SgAsmExpression *retval = NULL;
+    SgAsmValueExpression *retval = NULL;
     switch (effectiveAddressSize()) {
         case x86_insnsize_16:
             retval = SageBuilderAsm::makeWordValue((uint16_t)val);
@@ -554,9 +554,10 @@ DisassemblerX86::decodeModrmMemory()
         if (modeField == 0 && rmField == 6) {
             /* Special case */
             size_t bit_offset = 8*insnbufat;
-            addressExpr = SageBuilderAsm::makeWordValue(getWord());
-            addressExpr->set_bit_offset(bit_offset);
-            addressExpr->set_bit_size(32);
+            SgAsmValueExpression *ve = SageBuilderAsm::makeWordValue(getWord());
+            ve->set_bit_offset(bit_offset);
+            ve->set_bit_size(32);
+            addressExpr = ve;
         } else {
             switch (rmField) {
                 case 0:
@@ -599,7 +600,7 @@ DisassemblerX86::decodeModrmMemory()
                 case 1: {
                     size_t bit_offset = 8*insnbufat;
                     uint8_t offset = getByte();
-                    SgAsmExpression *wv = SageBuilderAsm::makeWordValue((int16_t)(int8_t)offset);
+                    SgAsmValueExpression *wv = SageBuilderAsm::makeWordValue((int16_t)(int8_t)offset);
                     wv->set_bit_offset(bit_offset);
                     wv->set_bit_size(8);
                     addressExpr = SageBuilderAsm::makeAdd(addressExpr, wv);
@@ -608,7 +609,7 @@ DisassemblerX86::decodeModrmMemory()
                 case 2: {
                     size_t bit_offset = 8*insnbufat;
                     uint16_t offset = getWord();
-                    SgAsmExpression *wv = SageBuilderAsm::makeWordValue(offset);
+                    SgAsmValueExpression *wv = SageBuilderAsm::makeWordValue(offset);
                     wv->set_bit_offset(bit_offset);
                     wv->set_bit_size(16);
                     addressExpr = SageBuilderAsm::makeAdd(addressExpr, wv);
@@ -758,7 +759,7 @@ DisassemblerX86::makeModrmRegister(RegisterMode m, SgAsmType* mrType)
 SgAsmExpression *
 DisassemblerX86::getImmByte() {
     size_t bit_offset = 8*insnbufat;
-    SgAsmExpression *retval = SageBuilderAsm::makeByteValue(getByte());
+    SgAsmValueExpression *retval = SageBuilderAsm::makeByteValue(getByte());
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(8);
     return retval;
@@ -767,7 +768,7 @@ DisassemblerX86::getImmByte() {
 SgAsmExpression *
 DisassemblerX86::getImmWord() {
     size_t bit_offset = 8*insnbufat;
-    SgAsmExpression *retval = SageBuilderAsm::makeWordValue(getWord());
+    SgAsmValueExpression *retval = SageBuilderAsm::makeWordValue(getWord());
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(16);
     return retval;
@@ -776,7 +777,7 @@ DisassemblerX86::getImmWord() {
 SgAsmExpression *
 DisassemblerX86::getImmDWord() {
     size_t bit_offset = 8*insnbufat;
-    SgAsmExpression *retval = SageBuilderAsm::makeDWordValue(getDWord());
+    SgAsmValueExpression *retval = SageBuilderAsm::makeDWordValue(getDWord());
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(32);
     return retval;
@@ -785,7 +786,7 @@ DisassemblerX86::getImmDWord() {
 SgAsmExpression *
 DisassemblerX86::getImmQWord() {
     size_t bit_offset = 8*insnbufat;
-    SgAsmExpression *retval = SageBuilderAsm::makeQWordValue(getQWord());
+    SgAsmValueExpression *retval = SageBuilderAsm::makeQWordValue(getQWord());
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(64);
     return retval;
@@ -828,7 +829,7 @@ DisassemblerX86::getImmJz()
         val = IntegerOps::signExtend<32, 64>((uint64_t)val2);
     }
     uint64_t target = ip + insnbufat + val;
-    SgAsmExpression *retval = SageBuilderAsm::makeQWordValue(target);
+    SgAsmValueExpression *retval = SageBuilderAsm::makeQWordValue(target);
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(bit_size);
     return retval;
@@ -837,7 +838,7 @@ DisassemblerX86::getImmJz()
 SgAsmExpression *
 DisassemblerX86::getImmByteAsIv()
 {
-    SgAsmExpression *retval = NULL;
+    SgAsmValueExpression *retval = NULL;
     size_t bit_offset = 8*insnbufat;
     uint8_t val = getByte();
     switch (effectiveOperandSize()) {
@@ -869,7 +870,7 @@ DisassemblerX86::getImmIzAsIv()
         case x86_insnsize_64: {
             size_t bit_offset = 8*insnbufat;
             uint32_t val = getDWord();
-            SgAsmExpression *retval = SageBuilderAsm::makeQWordValue(IntegerOps::signExtend<32, 64>((uint64_t)val));
+            SgAsmValueExpression *retval = SageBuilderAsm::makeQWordValue(IntegerOps::signExtend<32, 64>((uint64_t)val));
             retval->set_bit_offset(bit_offset);
             retval->set_bit_size(32);
             return retval;
@@ -885,7 +886,7 @@ DisassemblerX86::getImmJb()
     size_t bit_offset = 8*insnbufat;
     uint8_t val = getByte();
     uint64_t target = ip + insnbufat + IntegerOps::signExtend<8, 64>((uint64_t)val);
-    SgAsmExpression *retval = SageBuilderAsm::makeQWordValue(target);
+    SgAsmValueExpression *retval = SageBuilderAsm::makeQWordValue(target);
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(8);
     return retval;
