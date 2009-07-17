@@ -37,6 +37,7 @@ repo="$1"; shift
 [ -d "$repo/.git" ] || rosegit_die "not a repository: $repo/.git"
 repo=$(cd $repo && pwd)
 namespace=$(rosegit_namespace)
+(cd $repo && git svn fetch) || rosegit_die "git svn fetch failed"
 trunk=$(cd $repo && git rev-parse trunk)
 [ -n "$trunk" ] || rosegit_die "no 'trunk' branch found"
 branch=$(rosegit_branch_of $repo HEAD)
