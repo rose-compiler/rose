@@ -232,8 +232,53 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
     SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
     SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
     appendExpression(arg_list, filename);
-    appendAddressAndSize(NULL, arrayExp, stmt, arg_list,0); 
 
+
+    SgPntrArrRefExp* arrRefExp = isSgPntrArrRefExp( arrayExp );
+    ROSE_ASSERT( arrRefExp );
+
+    int read_value = 1;
+    SgNode* iter = arrayExp;
+    do {
+        SgNode* child = iter;
+        iter = iter->get_parent();
+        SgBinaryOp* binop = isSgBinaryOp( iter );
+
+        if( isSgAssignOp( iter )) {
+            ROSE_ASSERT( binop );
+
+            // lhs write only, rhs read only
+            if( binop->get_lhs_operand() == child )
+                read_value = 2;
+            // regardless of which side arrayExp was on, we can stop now
+            break;
+        } else if(  isSgAndAssignOp( iter ) 
+                    || isSgDivAssignOp( iter ) 
+                    || isSgIorAssignOp( iter )
+                    || isSgLshiftAssignOp( iter )
+                    || isSgMinusAssignOp( iter )
+                    || isSgModAssignOp( iter )
+                    || isSgMultAssignOp( iter )
+                    || isSgPlusAssignOp( iter )
+                    || isSgPointerAssignOp( iter )
+                    || isSgRshiftAssignOp( iter )
+                    || isSgXorAssignOp( iter)) {
+        
+            ROSE_ASSERT( binop );
+            // lhs read & write, rhs read only
+            if( binop->get_lhs_operand() == child )
+                read_value = 3;
+            // regardless of which side arrayExp was on, we can stop now
+            break;
+        } else if( isSgPntrArrRefExp( iter )) {
+            // outer[ inner[ ix ]] = val;
+            //  inner[ ix ]  is only a read
+            break;
+        }
+    } while( iter );
+
+    appendAddressAndSize(NULL, arrRefExp, stmt, arg_list,0); 
+    appendExpression( arg_list, buildIntVal( read_value ) );
 
     appendExpression(arg_list, linenr);
 
@@ -255,7 +300,7 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
     insertStatementBefore(isSgStatement(stmt), exprStmt);
     string empty_comment = "";
     attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
-    string comment = "RS : Access Array Variable, paramaters : (name, dim 1 location, dim 2 location, filename, linenr, linenrTransformed, part of error message)";
+    string comment = "RS : Access Array Variable, paramaters : (name, dim 1 location, dim 2 location, is_read, filename, linenr, linenrTransformed, part of error message)";
     attachComment(exprStmt,comment,PreprocessingInfo::before);
 
     //    }
@@ -934,7 +979,7 @@ ROSE_ASSERT(varRef);
 	   << create_array_access_call.size() << "  -- "
 	   << array->unparseToString() << " : "
 	   << arrRefExp->unparseToString() << endl;
-      create_array_access_call[left] = array;
+      create_array_access_call[ arrRefExp ] = array;
     }
   }
 

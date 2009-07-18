@@ -137,6 +137,7 @@ void RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int
 
 void RuntimeSystem_roseArrayAccess(const char* name, int posA, int posB, const char* filename, 
 				   unsigned long int address, long int size, 
+				   int read_write_mask,		// 1 = read, 2 = write
 				   const char* line, const char* lineTransformed, const char* stmtStr);
 
 

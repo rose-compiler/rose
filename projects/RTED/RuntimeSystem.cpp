@@ -97,10 +97,7 @@ RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dime
 
 	   if (!checkAddress(address)) return; 
   if( 0 == strcmp("SgArrayType", type)) 
-    if (dimension==1)
-      rs->createMemory(address, sizeA, true);
-    else
-      rs->createMemory(address, sizeA*sizeB, true);
+      rs->createMemory(address, size, true);
   else if( 0 == strcmp("SgPointerType", type))
     // address refers to the address of the variable (i.e. the pointer).
     // we want the address of the newly allocated memory on the heap
@@ -126,19 +123,18 @@ RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dime
  ********************************************************/
 void
 RuntimeSystem_roseArrayAccess(const char* name, int posA, int posB, const char* filename,
-			      unsigned long int address, long int size, 
+			      unsigned long int address, long int size, int read_write_mask,
 			      const char* line, const char* lineTransformed, const char* stmtStr){
 
 
 	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
 	rs->checkpoint(SourcePosition(filename,atoi(line),atoi(lineTransformed)));
-	//fixme: we do not know yet wheather array access
-	//is a read or write
-	bool read = true;
 	if (!checkAddress(address)) return; 
-	if (read)
-	  rs->checkMemRead(address,size);
 
+	if ( read_write_mask & 1 )
+	  rs->checkMemRead( address, size );
+	if ( read_write_mask & 2 )
+    rs->checkMemWrite( address, size );
 }
 
 // ***************************************** ARRAY FUNCTIONS *************************************
