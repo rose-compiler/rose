@@ -6,6 +6,8 @@ use File::Spec;
 use Cwd;
 use Time::localtime;
 
+require 'env.pl';
+
 my ( $platform, $taskhook ) = ( 'NOT DEFINED', 'NOT DEFINED' );
 my $fail;
 
@@ -35,16 +37,16 @@ my $startdir = cwd();
 my $builddir = "build";
 $platform = $ENV{'NMI_PLATFORM'};
 
-if ( $platform =~ /^x86_[^0-9]{2}/ )
+if ( $platform =~ /x86(?!_[0-9]{2})/ )
 {
-   $ENV{'LD_LIBRARY_PATH'} = $ENV{'JAVA_HOME'}."/jre/lib/i368/server:".$ENV{'LD_LIBRARY_PATH'};
-   $ENV{'DYLD_LIBRARY_PATH'} = $ENV{'JAVA_HOME'}."/jre/lib/i368/server:".$ENV{'DYLD_LIBRARY_PATH'};
-   $ENV{'LD_LIBRARY64_PATH'} = $ENV{'JAVA_HOME'}."/jre/lib/i368/server:".$ENV{'LD_LIBRARY64_PATH'};
-   $ENV{'LD_LIBRARYN32_PATH'} = $ENV{'JAVA_HOME'}."/jre/lib/i368/server:".$ENV{'LD_LIBRARYN32_PATH'};
-   $ENV{'LIBPATH'} = $ENV{'JAVA_HOME'}."/jre/lib/i368/server:".$ENV{'LIBPATH'};
-   $ENV{'SHLIB_PATH'} = $ENV{'JAVA_HOME'}."/jre/lib/i368/server:".$ENV{'SHLIB_PATH'};
+   $ENV{'LD_LIBRARY_PATH'} = $ENV{'JAVA_HOME'}."/jre/lib/i386/server:".$ENV{'LD_LIBRARY_PATH'};
+   $ENV{'DYLD_LIBRARY_PATH'} = $ENV{'JAVA_HOME'}."/jre/lib/i386/server:".$ENV{'DYLD_LIBRARY_PATH'};
+   $ENV{'LD_LIBRARY64_PATH'} = $ENV{'JAVA_HOME'}."/jre/lib/i386/server:".$ENV{'LD_LIBRARY64_PATH'};
+   $ENV{'LD_LIBRARYN32_PATH'} = $ENV{'JAVA_HOME'}."/jre/lib/i386/server:".$ENV{'LD_LIBRARYN32_PATH'};
+   $ENV{'LIBPATH'} = $ENV{'JAVA_HOME'}."/jre/lib/i386/server:".$ENV{'LIBPATH'};
+   $ENV{'SHLIB_PATH'} = $ENV{'JAVA_HOME'}."/jre/lib/i386/server:".$ENV{'SHLIB_PATH'};
 }
-elsif ( $platform =~ /^x86_[0-9]{2}/ )
+elsif ( $platform =~ /x86_[0-9]{2}/ )
 {
    $ENV{'LD_LIBRARY_PATH'} = $ENV{'JAVA_HOME'}."/jre/lib/amd64/server:".$ENV{'LD_LIBRARY_PATH'};
    $ENV{'DYLD_LIBRARY_PATH'} = $ENV{'JAVA_HOME'}."/jre/lib/amd64/server:".$ENV{'DYLD_LIBRARY_PATH'};
@@ -84,6 +86,10 @@ sub platform_info {
    {
       print "\t$e=" . $ENV{$e} . "\n";
    }
+   print "\n";
+
+   print "Host: ";
+   system("hostname");
    print "\n";
 
    print "program versions:\n\n";

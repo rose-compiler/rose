@@ -6,7 +6,7 @@ description = $(DESCRIPTION)
 
 run_type = build
 
-inputs = $(SUBMITDIR)/rose.svn, $(SUBMITDIR)/glue.scp
+inputs = $(SUBMITDIR)/rose.svn, $(SUBMITDIR)/glue.scp, $(SUBMITDIR)/env.scp
 
 remote_declare = glue.pl
 remote_declare_args = -taskhook=remote_declare

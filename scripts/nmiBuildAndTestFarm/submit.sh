@@ -58,6 +58,12 @@ export _NMI_HOSTNAME=$HOSTNAME
 export _NMI_SUBMITDIR=$PWD
 
 
+# create env.pl
+touch env.pl
+echo "#!/usr/bin/env perl" > env.pl
+echo '$ENV{JAVA_HOME} = "'${JAVA_HOME}'";' >> env.pl
+
+
 
 # submit the build job
 echo "Submitting the build job ..."
