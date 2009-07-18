@@ -15,6 +15,7 @@ public:
     virtual Disassembler *can_disassemble(SgAsmGenericHeader*) const;
     virtual SgAsmInstruction *disassembleOne(const unsigned char *buf, const RvaFileMap &map, rose_addr_t start_va,
                                              AddressSet *successors=NULL);
+    virtual void assembleOne(SgAsmInstruction*, SgUnsignedCharList&) {abort();}
     virtual SgAsmInstruction *make_unknown_instruction(const Exception&);
 private:
     /** Same as Disassembler::Exception except with a different constructor for ease of use in DisassemblerPowerpc. This

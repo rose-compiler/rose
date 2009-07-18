@@ -663,12 +663,17 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
           static void unparseBinaryFormat(const std::string &name, SgAsmFile *asmFile);
 	  static void unparseBinaryFormat(std::ostream&, SgAsmFile*);
 
-       // DQ (11/8/2008): used in the PE support.
-       // Looking for function: hexdump(_IO_FILE*&, long unsigned int, const char[5], SgCharList&, size_t&)
-          static void hexdump(FILE *f, addr_t base_addr, const char *prefix, const unsigned char *data, size_t n);
-       // static void hexdump(FILE *f, addr_t base_addr, const std::string &prefix, const SgCharList &data);
-          static void hexdump(FILE *f, addr_t base_addr, const std::string &prefix, const SgUnsignedCharList &data);
-          static void hexdump(FILE *f, addr_t base_addr, const std::string &prefix, const SgFileContentList &data);
+        /** Displays binary data in a fashion similar to the "hexdump -C" command in Unix: an address, numeric byte values,
+         *  character byte values.  The format of the output is configurable through the HexdumpFormat argument. */
+	static void hexdump(FILE *f, rose_addr_t base_addr, const unsigned char *data, size_t n, const HexdumpFormat &fmt);
+
+        /** Container version of basic hexdump function.  If @p multiline is true (the default) then the prefix is output
+         *  before the first line and the output is terminated by a line feed in addition to the normal emitting of the prefix
+         *  between internal line feeds. */
+        static void hexdump(FILE *f, addr_t base_addr, const std::string &prefix, const SgUnsignedCharList &data,
+                            bool multiline=true);
+        static void hexdump(FILE *f, addr_t base_addr, const std::string &prefix, const SgFileContentList &data,
+                            bool multiline=true);
 
        /* Return byte order of caller */
           static SgAsmExecutableFileFormat::ByteOrder host_order();

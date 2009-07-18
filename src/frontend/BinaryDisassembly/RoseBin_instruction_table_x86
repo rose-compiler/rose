@@ -175,11 +175,9 @@ les -> Les
 lfs -> Lfs
 lgs -> Lgs
 lss -> Lss
-esc -> Esc
 lock -> Lock
 wait -> Wait
 hlt -> Hlt
-data16 -> Data16
 f2xm1 -> F2xm1
 fabs -> Fabs
 fadd faddl fadds -> Fadd
@@ -217,7 +215,6 @@ fnop -> Fnop
 fpatan -> Fpatan
 fprem -> Fprem
 fptan -> Fptan
-fsave -> Fsave
 fscale -> Fscale
 fsin -> Fsin
 fsqrt -> Fsqrt
@@ -241,13 +238,22 @@ verr -> Verr
 verw -> Verw
 sldt sldtl -> Sldt
 pxor -> Pxor
-psubb psubw psubd -> Psub
-psrlw psrld psrlq -> Psrl
-psllw pslld psllq -> Psll
+psubb -> Psubb
+psubw -> Psubw
+psubd -> Psubd
+psrlw -> Psrlw
+psrld -> Psrld
+psrlq -> Psrlq
+psllw -> Psllw
+pslld -> Pslld
+psllq -> Psllq
 pause -> Pause
 pand -> Pand
 pandn -> Pandn
-paddb paddw paddd paddq -> Padd
+paddb -> Paddb
+paddw -> Paddw
+paddd -> Paddd
+paddq -> Paddq
 movntq -> Movntq
 movdqu -> Movdqu
 arpl -> Arpl

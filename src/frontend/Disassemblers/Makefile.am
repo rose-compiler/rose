@@ -9,8 +9,12 @@ libroseDisassemblers_la_DEPENDENCIES =
 
 libroseDisassemblers_la_SOURCES = \
 	Partitioner.C \
-        Disassembler.C DisassemblerArm.C DisassemblerPowerpc.C DisassemblerX86.C
+        Disassembler.C DisassemblerArm.C DisassemblerPowerpc.C DisassemblerX86.C \
+	Assembler.C AssemblerX86.C AssemblerX86Init.C
 
-include_HEADERS = Disassembler.h DisassemblerArm.h DisassemblerPowerpc.h DisassemblerX86.h Partitioner.h
+include_HEADERS = \
+	Partitioner.h \
+	Disassembler.h DisassemblerArm.h DisassemblerPowerpc.h DisassemblerX86.h \
+	Assembler.h AssemblerX86.h AssemblerX86Init.h 
 
 dist_include_HEADERS =

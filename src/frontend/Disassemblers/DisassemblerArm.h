@@ -20,9 +20,12 @@ public:
     /** See Disassembler::can_disassemble */
     virtual Disassembler *can_disassemble(SgAsmGenericHeader*) const;
 
-    /** See Disassembler::can_disassemble */
+    /** See Disassembler::disassembleOne */
     virtual SgAsmInstruction *disassembleOne(const unsigned char *buf, const RvaFileMap &map, rose_addr_t start_va,
                                              AddressSet *successors=NULL);
+
+    /** See Disassembler::assembleOne */
+    virtual void assembleOne(SgAsmInstruction*, SgUnsignedCharList&) {abort();}
 
     /** See Disassembler::can_disassemble */
     virtual SgAsmInstruction *make_unknown_instruction(const Exception&);

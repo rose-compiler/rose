@@ -288,7 +288,6 @@ bool x86InstructionIsDataTransfer(SgAsmx86Instruction* inst) {
     case x86_fptan:
     case x86_frndint:
     case x86_frstor:
-    case x86_fsave:
     case x86_fscale:
     case x86_fsin:
     case x86_fsincos:
@@ -316,7 +315,9 @@ bool x86InstructionIsDataTransfer(SgAsmx86Instruction* inst) {
     case x86_imul:
     case x86_in:
     case x86_inc:
-    case x86_ins:
+    case x86_insb:
+    case x86_insw:
+    case x86_insd:
     case x86_lahf:
     case x86_lar:
     case x86_ldmxcsr:
@@ -325,7 +326,10 @@ bool x86InstructionIsDataTransfer(SgAsmx86Instruction* inst) {
     case x86_les:
     case x86_lfs:
     case x86_lgs:
-    case x86_lods:
+    case x86_lodsb:
+    case x86_lodsw:
+    case x86_lodsd:
+    case x86_lodsq:
     case x86_lsl:
     case x86_lss:
     case x86_lzcnt:
@@ -334,7 +338,10 @@ bool x86InstructionIsDataTransfer(SgAsmx86Instruction* inst) {
     case x86_movdqu:
     case x86_movlpd:
     case x86_movntq:
-    case x86_movs:
+    case x86_movsb:
+    case x86_movsw:
+    case x86_movsd:
+    case x86_movsq:
     case x86_movss:
     case x86_movsx:
     case x86_movsxd:
@@ -343,19 +350,28 @@ bool x86InstructionIsDataTransfer(SgAsmx86Instruction* inst) {
     case x86_neg:
     case x86_not:
     case x86_or:
-    case x86_padd:
-    case x86_paddus:
+    case x86_paddb:
+    case x86_paddw:
+    case x86_paddd:
+    case x86_paddq:
     case x86_pand:
     case x86_pandn:
-    case x86_pcmpeq:
     case x86_pop:
     case x86_popa:
     case x86_popcnt:
     case x86_popf:
-    case x86_psll:
-    case x86_psrl:
-    case x86_psub:
-    case x86_psubus:
+    case x86_psllw:
+    case x86_pslld:
+    case x86_psllq:
+    case x86_psrlw:
+    case x86_psrld:
+    case x86_psrlq:
+    case x86_psubb:
+    case x86_psubw:
+    case x86_psubd:
+    case x86_psubq:
+    case x86_psubusb:
+    case x86_psubusw:
     case x86_pxor:
     case x86_rcl:
     case x86_rcr:

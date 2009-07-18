@@ -177,7 +177,7 @@ DisassemblerX86::getByte()
 {
     if (insnbufat>=15)
         throw ExceptionX86("instruction longer than 15 bytes", this);
-    if (insnbufat>=insnbufsz)
+    if (insnbufat>=insnbuf.size())
         throw ExceptionX86("short read", this);
     return insnbuf[insnbufat++];
 }
@@ -205,7 +205,6 @@ DisassemblerX86::getQWord()
     uint64_t hi = getDWord();
     return (hi<<32) | lo;
 }
-
 
 
 
@@ -261,21 +260,21 @@ DisassemblerX86::MMPrefix
 DisassemblerX86::mmPrefix() const
 {
     switch (repeatPrefix) {
-        case rpNone: {
+        case x86_repeat_none: {
             if (operandSizeOverride) {
                 return mm66;
             } else {
                 return mmNone;
             }
         }
-        case rpRepne: {
+        case x86_repeat_repne: {
             if (operandSizeOverride) {
                 throw ExceptionX86("bad combination of repeat prefix and operand size override", this);
             } else {
                 return mmF2;
             }
         }
-        case rpRepe: {
+        case x86_repeat_repe: {
             if (operandSizeOverride) {
                 throw ExceptionX86("bad combination of repeat prefix and operand size override", this);
             } else {
@@ -369,7 +368,8 @@ DisassemblerX86::makeInstruction(X86InstructionKind kind, const std::string &mne
                                                         effectiveAddressSize());
     ROSE_ASSERT(insn);
     insn->set_lockPrefix(lock);
-    insn->set_raw_bytes(SgUnsignedCharList(insnbuf, insnbuf+insnbufat));
+    insn->set_repeatPrefix(repeatPrefix);
+    insn->set_raw_bytes(SgUnsignedCharList(&(insnbuf[0]), &(insnbuf[0])+insnbufat));
     insn->set_segmentOverride(segOverride);
     if (branchPredictionEnabled)
         insn->set_branchPrediction(branchPrediction);
@@ -757,7 +757,8 @@ DisassemblerX86::makeModrmRegister(RegisterMode m, SgAsmType* mrType)
  *========================================================================================================================*/
 
 SgAsmExpression *
-DisassemblerX86::getImmByte() {
+DisassemblerX86::getImmByte()
+{
     size_t bit_offset = 8*insnbufat;
     SgAsmValueExpression *retval = SageBuilderAsm::makeByteValue(getByte());
     retval->set_bit_offset(bit_offset);
@@ -766,7 +767,8 @@ DisassemblerX86::getImmByte() {
 }
 
 SgAsmExpression *
-DisassemblerX86::getImmWord() {
+DisassemblerX86::getImmWord()
+{
     size_t bit_offset = 8*insnbufat;
     SgAsmValueExpression *retval = SageBuilderAsm::makeWordValue(getWord());
     retval->set_bit_offset(bit_offset);
@@ -775,7 +777,8 @@ DisassemblerX86::getImmWord() {
 }
 
 SgAsmExpression *
-DisassemblerX86::getImmDWord() {
+DisassemblerX86::getImmDWord()
+{
     size_t bit_offset = 8*insnbufat;
     SgAsmValueExpression *retval = SageBuilderAsm::makeDWordValue(getDWord());
     retval->set_bit_offset(bit_offset);
@@ -784,7 +787,8 @@ DisassemblerX86::getImmDWord() {
 }
 
 SgAsmExpression *
-DisassemblerX86::getImmQWord() {
+DisassemblerX86::getImmQWord()
+{
     size_t bit_offset = 8*insnbufat;
     SgAsmValueExpression *retval = SageBuilderAsm::makeQWordValue(getQWord());
     retval->set_bit_offset(bit_offset);
@@ -1551,10 +1555,10 @@ DisassemblerX86::disassemble()
         }
         case 0x6C: {
             switch (repeatPrefix) {
-                case rpNone:
+                case x86_repeat_none:
                     insn = makeInstruction(x86_insb, "insb");
                     goto done;
-                case rpRepe:
+                case x86_repeat_repe:
                     insn = makeInstruction(x86_rep_insb, "rep_insb");
                     goto done;
                 default:
@@ -1565,10 +1569,10 @@ DisassemblerX86::disassemble()
             switch (effectiveOperandSize()) {
                 case x86_insnsize_16:
                     switch (repeatPrefix) {
-                        case rpNone:
+                        case x86_repeat_none:
                             insn = makeInstruction(x86_insw, "insw");
                             goto done;
-                        case rpRepe:
+                        case x86_repeat_repe:
                             insn = makeInstruction(x86_rep_insw, "rep_insw");
                             goto done;
                         default:
@@ -1577,10 +1581,10 @@ DisassemblerX86::disassemble()
                 case x86_insnsize_32:
                 case x86_insnsize_64:
                     switch (repeatPrefix) {
-                        case rpNone:
+                        case x86_repeat_none:
                             insn = makeInstruction(x86_insd, "insd");
                             goto done;
-                        case rpRepe:
+                        case x86_repeat_repe:
                             insn = makeInstruction(x86_rep_insd, "rep_insd");
                             goto done;
                         default:
@@ -1591,10 +1595,10 @@ DisassemblerX86::disassemble()
         }
         case 0x6E: {
             switch (repeatPrefix) {
-                case rpNone:
+                case x86_repeat_none:
                     insn = makeInstruction(x86_outsb, "outsb");
                     goto done;
-                case rpRepe:
+                case x86_repeat_repe:
                     insn = makeInstruction(x86_rep_outsb, "rep_outsb");
                     goto done;
                 default:
@@ -1605,10 +1609,10 @@ DisassemblerX86::disassemble()
             switch (effectiveOperandSize()) {
                 case x86_insnsize_16:
                     switch (repeatPrefix) {
-                        case rpNone:
+                        case x86_repeat_none:
                             insn = makeInstruction(x86_outsw, "outsw");
                             goto done;
-                        case rpRepe:
+                        case x86_repeat_repe:
                             insn = makeInstruction(x86_rep_outsw, "rep_outsw");
                             goto done;
                         default:
@@ -1617,10 +1621,10 @@ DisassemblerX86::disassemble()
                 case x86_insnsize_32:
                 case x86_insnsize_64:
                     switch (repeatPrefix) {
-                        case rpNone:
+                        case x86_repeat_none:
                             insn = makeInstruction(x86_outsd, "outsd");
                             goto done;
-                        case rpRepe:
+                        case x86_repeat_repe:
                             insn = makeInstruction(x86_rep_outsd, "rep_outsd");
                             goto done;
                         default:
@@ -1818,7 +1822,7 @@ DisassemblerX86::disassemble()
             if (rexB) {
                 insn = makeInstruction(x86_xchg, "xchg", makeRegisterEffective(8), makeRegisterEffective(0));
                 goto done;
-            } else if (repeatPrefix == rpRepe) {
+            } else if (repeatPrefix == x86_repeat_repe) {
                 insn = makeInstruction(x86_pause, "pause");
                 goto done;
             } else {
@@ -1963,10 +1967,10 @@ DisassemblerX86::disassemble()
         }
         case 0xA4: {
             switch (repeatPrefix) {
-                case rpNone:
+                case x86_repeat_none:
                     insn = makeInstruction(x86_movsb, "movsb");
                     goto done;
-                case rpRepe:
+                case x86_repeat_repe:
                     insn = makeInstruction(x86_rep_movsb, "rep_movsb");
                     goto done;
                 default:
@@ -1977,10 +1981,10 @@ DisassemblerX86::disassemble()
             switch (effectiveOperandSize()) {
                 case x86_insnsize_16:
                     switch (repeatPrefix) {
-                        case rpNone:
+                        case x86_repeat_none:
                             insn = makeInstruction(x86_movsw, "movsw");
                             goto done;
-                        case rpRepe:
+                        case x86_repeat_repe:
                             insn = makeInstruction(x86_rep_movsw, "rep_movsw");
                             goto done;
                         default:
@@ -1988,10 +1992,10 @@ DisassemblerX86::disassemble()
                     }
                 case x86_insnsize_32:
                     switch (repeatPrefix) {
-                        case rpNone:
+                        case x86_repeat_none:
                             insn = makeInstruction(x86_movsd, "movsd");
                             goto done;
-                        case rpRepe:
+                        case x86_repeat_repe:
                             insn = makeInstruction(x86_rep_movsd, "rep_movsd");
                             goto done;
                         default:
@@ -1999,10 +2003,10 @@ DisassemblerX86::disassemble()
                     }
                 case x86_insnsize_64:
                     switch (repeatPrefix) {
-                        case rpNone:
+                        case x86_repeat_none:
                             insn = makeInstruction(x86_movsq, "movsq");
                             goto done;
-                        case rpRepe:
+                        case x86_repeat_repe:
                             insn = makeInstruction(x86_rep_movsq, "rep_movsq");
                             goto done;
                         default:
@@ -2013,13 +2017,13 @@ DisassemblerX86::disassemble()
         }
         case 0xA6: {
             switch (repeatPrefix) {
-                case rpNone:
+                case x86_repeat_none:
                     insn = makeInstruction(x86_cmpsb, "cmpsb");
                     goto done;
-                case rpRepe:
+                case x86_repeat_repe:
                     insn = makeInstruction(x86_repe_cmpsb, "repe_cmpsb");
                     goto done;
-                case rpRepne:
+                case x86_repeat_repne:
                     insn = makeInstruction(x86_repne_cmpsb, "repne_cmpsb");
                     goto done;
                 default:
@@ -2030,13 +2034,13 @@ DisassemblerX86::disassemble()
             switch (effectiveOperandSize()) {
                 case x86_insnsize_16:
                     switch (repeatPrefix) {
-                        case rpNone:
+                        case x86_repeat_none:
                             insn = makeInstruction(x86_cmpsw, "cmpsw");
                             goto done;
-                        case rpRepe:
+                        case x86_repeat_repe:
                             insn = makeInstruction(x86_repe_cmpsw, "repe_cmpsw");
                             goto done;
-                        case rpRepne:
+                        case x86_repeat_repne:
                             insn = makeInstruction(x86_repne_cmpsw, "repne_cmpsw");
                             goto done;
                         default:
@@ -2044,13 +2048,13 @@ DisassemblerX86::disassemble()
                     }
                 case x86_insnsize_32:
                     switch (repeatPrefix) {
-                        case rpNone:
+                        case x86_repeat_none:
                             insn = makeInstruction(x86_cmpsd, "cmpsd");
                             goto done;
-                        case rpRepe:
+                        case x86_repeat_repe:
                             insn = makeInstruction(x86_repe_cmpsd, "repe_cmpsd");
                             goto done;
-                        case rpRepne:
+                        case x86_repeat_repne:
                             insn = makeInstruction(x86_repne_cmpsd, "repne_cmpsd");
                             goto done;
                         default:
@@ -2058,13 +2062,13 @@ DisassemblerX86::disassemble()
                     }
                 case x86_insnsize_64:
                     switch (repeatPrefix) {
-                        case rpNone:
+                        case x86_repeat_none:
                             insn = makeInstruction(x86_cmpsq, "cmpsq");
                             goto done;
-                        case rpRepe:
+                        case x86_repeat_repe:
                             insn = makeInstruction(x86_repe_cmpsq, "repe_cmpsq");
                             goto done;
-                        case rpRepne:
+                        case x86_repeat_repne:
                             insn = makeInstruction(x86_repne_cmpsq, "repne_cmpsq");
                             goto done;
                         default:
@@ -2085,10 +2089,10 @@ DisassemblerX86::disassemble()
         }
         case 0xAA: {
             switch (repeatPrefix) {
-                case rpNone:
+                case x86_repeat_none:
                     insn = makeInstruction(x86_stosb, "stosb");
                     goto done;
-                case rpRepe:
+                case x86_repeat_repe:
                     insn = makeInstruction(x86_rep_stosb, "rep_stosb");
                     goto done;
                 default:
@@ -2099,10 +2103,10 @@ DisassemblerX86::disassemble()
             switch (effectiveOperandSize()) {
                 case x86_insnsize_16:
                     switch (repeatPrefix) {
-                        case rpNone:
+                        case x86_repeat_none:
                             insn = makeInstruction(x86_stosw, "stosw");
                             goto done;
-                        case rpRepe:
+                        case x86_repeat_repe:
                             insn = makeInstruction(x86_rep_stosw, "rep_stosw");
                             goto done;
                         default:
@@ -2110,10 +2114,10 @@ DisassemblerX86::disassemble()
                     }
                 case x86_insnsize_32:
                     switch (repeatPrefix) {
-                        case rpNone:
+                        case x86_repeat_none:
                             insn = makeInstruction(x86_stosd, "stosd");
                             goto done;
-                        case rpRepe:
+                        case x86_repeat_repe:
                             insn = makeInstruction(x86_rep_stosd, "rep_stosd");
                             goto done;
                         default:
@@ -2121,10 +2125,10 @@ DisassemblerX86::disassemble()
                     }
                 case x86_insnsize_64:
                     switch (repeatPrefix) {
-                        case rpNone:
+                        case x86_repeat_none:
                             insn = makeInstruction(x86_stosq, "stosq");
                             goto done;
-                        case rpRepe:
+                        case x86_repeat_repe:
                             insn = makeInstruction(x86_rep_stosq, "rep_stosq");
                             goto done;
                         default: throw ExceptionX86("bad repeat prefix for stosq", this);
@@ -2135,10 +2139,10 @@ DisassemblerX86::disassemble()
         }
         case 0xAC: {
             switch (repeatPrefix) {
-                case rpNone:
+                case x86_repeat_none:
                     insn = makeInstruction(x86_lodsb, "lodsb");
                     goto done;
-                case rpRepe:
+                case x86_repeat_repe:
                     insn = makeInstruction(x86_rep_lodsb, "rep_lodsb");
                     goto done;
                 default:
@@ -2149,10 +2153,10 @@ DisassemblerX86::disassemble()
             switch (effectiveOperandSize()) {
                 case x86_insnsize_16:
                     switch (repeatPrefix) {
-                        case rpNone:
+                        case x86_repeat_none:
                             insn = makeInstruction(x86_lodsw, "lodsw");
                             goto done;
-                        case rpRepe:
+                        case x86_repeat_repe:
                             insn = makeInstruction(x86_rep_lodsw, "rep_lodsw");
                             goto done;
                         default:
@@ -2160,10 +2164,10 @@ DisassemblerX86::disassemble()
                     }
                 case x86_insnsize_32:
                     switch (repeatPrefix) {
-                        case rpNone:
+                        case x86_repeat_none:
                             insn = makeInstruction(x86_lodsd, "lodsd");
                             goto done;
-                        case rpRepe:
+                        case x86_repeat_repe:
                             insn = makeInstruction(x86_rep_lodsd, "rep_lodsd");
                             goto done;
                         default:
@@ -2171,10 +2175,10 @@ DisassemblerX86::disassemble()
                     }
                 case x86_insnsize_64:
                     switch (repeatPrefix) {
-                        case rpNone:
+                        case x86_repeat_none:
                             insn = makeInstruction(x86_lodsq, "lodsq");
                             goto done;
-                        case rpRepe:
+                        case x86_repeat_repe:
                             insn = makeInstruction(x86_rep_lodsq, "rep_lodsq");
                             goto done;
                         default:
@@ -2185,13 +2189,13 @@ DisassemblerX86::disassemble()
         }
         case 0xAE: {
             switch (repeatPrefix) {
-                case rpNone:
+                case x86_repeat_none:
                     insn = makeInstruction(x86_scasb, "scasb");
                     goto done;
-                case rpRepe:
+                case x86_repeat_repe:
                     insn = makeInstruction(x86_repe_scasb, "repe_scasb");
                     goto done;
-                case rpRepne:
+                case x86_repeat_repne:
                     insn = makeInstruction(x86_repne_scasb, "repne_scasb");
                     goto done;
                 default:
@@ -2202,13 +2206,13 @@ DisassemblerX86::disassemble()
             switch (effectiveOperandSize()) {
                 case x86_insnsize_16:
                     switch (repeatPrefix) {
-                        case rpNone:
+                        case x86_repeat_none:
                             insn = makeInstruction(x86_scasw, "scasw");
                             goto done;
-                        case rpRepe:
+                        case x86_repeat_repe:
                             insn = makeInstruction(x86_repe_scasw, "repe_scasw");
                             goto done;
-                        case rpRepne:
+                        case x86_repeat_repne:
                             insn = makeInstruction(x86_repne_scasw, "repne_scasw");
                             goto done;
                         default:
@@ -2216,13 +2220,13 @@ DisassemblerX86::disassemble()
                     }
                 case x86_insnsize_32:
                     switch (repeatPrefix) {
-                        case rpNone:
+                        case x86_repeat_none:
                             insn = makeInstruction(x86_scasd, "scasd");
                             goto done;
-                        case rpRepe:
+                        case x86_repeat_repe:
                             insn = makeInstruction(x86_repe_scasd, "repe_scasd");
                             goto done;
-                        case rpRepne:
+                        case x86_repeat_repne:
                             insn = makeInstruction(x86_repne_scasd, "repne_scasd");
                             goto done;
                         default:
@@ -2230,13 +2234,13 @@ DisassemblerX86::disassemble()
                     }
                 case x86_insnsize_64:
                     switch (repeatPrefix) {
-                        case rpNone:
+                        case x86_repeat_none:
                             insn = makeInstruction(x86_scasq, "scasq");
                             goto done;
-                        case rpRepe:
+                        case x86_repeat_repe:
                             insn = makeInstruction(x86_repe_scasq, "repe_scasq");
                             goto done;
-                        case rpRepne:
+                        case x86_repeat_repne:
                             insn = makeInstruction(x86_repne_scasq, "repne_scasq");
                             goto done;
                         default:
@@ -2590,12 +2594,12 @@ DisassemblerX86::disassemble()
             goto done;
         }
         case 0xF2: {
-            repeatPrefix = rpRepne;
+            repeatPrefix = x86_repeat_repne;
             insn = disassemble();
             goto done;
         }
         case 0xF3: {
-            repeatPrefix = rpRepe;
+            repeatPrefix = x86_repeat_repe;
             insn = disassemble();
             goto done;
         }
@@ -2926,26 +2930,18 @@ DisassemblerX86::decodeOpcode0F()
             getModRegRM(rmLegacyByte, rmLegacyByte, BYTET);
             return decodeGroup16();
         case 0x19:
-            getModRegRM(rmReturnNull, rmReturnNull, NULL);
-            return makeInstruction(x86_nop, "nop");
         case 0x1A:
-            getModRegRM(rmReturnNull, rmReturnNull, NULL);
-            return makeInstruction(x86_nop, "nop");
         case 0x1B:
-            getModRegRM(rmReturnNull, rmReturnNull, NULL);
-            return makeInstruction(x86_nop, "nop");
         case 0x1C:
-            getModRegRM(rmReturnNull, rmReturnNull, NULL);
-            return makeInstruction(x86_nop, "nop");
         case 0x1D:
-            getModRegRM(rmReturnNull, rmReturnNull, NULL);
-            return makeInstruction(x86_nop, "nop");
         case 0x1E:
+            /* Undocumented no-ops */
             getModRegRM(rmReturnNull, rmReturnNull, NULL);
             return makeInstruction(x86_nop, "nop");
         case 0x1F:
-            getModRegRM(rmReturnNull, rmReturnNull, NULL);
-            return makeInstruction(x86_nop, "nop");
+            /* Documented no-op */
+            getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
+            return makeInstruction(x86_nop, "nop", modrm);
 
         case 0x20:
             /* BUG: The mode and type fields should forced to the current processor number of bits instead of the size
@@ -4223,7 +4219,7 @@ DisassemblerX86::decodeOpcode0F()
             return makeInstruction(x86_bsf, "bsf", reg, modrm);
         case 0xBD:
             getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
-            if (repeatPrefix == rpRepe) return makeInstruction(x86_lzcnt, "lzcnt", reg, modrm);
+            if (repeatPrefix == x86_repeat_repe) return makeInstruction(x86_lzcnt, "lzcnt", reg, modrm);
             else return makeInstruction(x86_bsr, "bsr", reg, modrm);
         case 0xBE:
             getModRegRM(effectiveOperandMode(), rmLegacyByte, BYTET);
@@ -4943,6 +4939,8 @@ DisassemblerX86::decodeOpcode0F()
             }
         }
         case 0xF7: {
+            /* FIXME: The MOVNTQ and MOVNTDQ are at 0F E7 instead. This should be MASKMOVDQU. See Intel documentation.
+             *        [RPM 2009-07-02] */
             switch (mmPrefix()) {
                 case mmNone:
                     getModRegRM(rmMM, rmMM, QWORDT);

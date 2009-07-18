@@ -2242,7 +2242,11 @@ SgAsmGenericSection::write(std::ostream &f, addr_t offset, size_t bufsize, const
             fprintf(stderr, "in [%d] \"%s\"\n", get_id(), get_name()->c_str());
             fprintf(stderr, "section is at file offset 0x%08"PRIx64" (%"PRIu64"), size 0x%"PRIx64" (%"PRIu64") bytes\n", 
                     get_offset(), get_offset(), get_size(), get_size());
-            hexdump(stderr, get_offset()+offset, "      ", (const unsigned char*)buf, bufsize);
+            fprintf(stderr, "      ");
+            HexdumpFormat hf;
+            hf.prefix = "      ";
+            hexdump(stderr, get_offset()+offset, (const unsigned char*)buf, bufsize, hf);
+            fprintf(stderr, "\n");
             abort(); /*DEBUGGING*/
 #endif
             throw SgAsmGenericFile::ShortWrite(this, offset, bufsize, mesg);
@@ -3778,49 +3782,93 @@ SgAsmExecutableFileFormat::host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex
     ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
 }
 
-/* Works like hexdump -C to display N bytes of DATA. The "prefix" can be used for whitespace to intent the output. */
 void
-SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const char *prefix, const unsigned char *data, size_t n)
+SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const unsigned char *data, size_t n, const HexdumpFormat &fmt)
 {
+    /* Provide default formats. This is done here so that the header file doesn't depend on <inttypes.h> */
+    const char *addr_fmt = fmt.addr_fmt ? fmt.addr_fmt : "0x%08"PRIx64":";
+    const char *numeric_fmt = fmt.numeric_fmt ? fmt.numeric_fmt : " %02x";
+    const char *prefix = fmt.prefix ? fmt.prefix : "";
 
-    for (size_t i=0; i<n; i+=16) {
-        fprintf(f, "%s0x%08"PRIx64": ", prefix, base_addr+i);
-        for (size_t j=0; j<16; j++) {
-            if (8==j) fputc(' ', f);
-            if (i+j<n) {
-                fprintf(f, " %02x", data[i+j]);
-            } else {
-                fputs("   ", f);
+    char s[1024];
+    sprintf(s, numeric_fmt, 0u);
+    int numeric_width = strlen(s);
+
+    if (fmt.multiline)
+        fputs(prefix, f);
+
+    for (size_t i=0; i<n; i+=fmt.width) {
+        /* Prefix and/or address */
+        if (i>0) {
+            fputc('\n', f);
+            fputs(prefix, f);
+        }
+        fprintf(f, addr_fmt, base_addr+i);
+
+        /* Numeric byte values */
+        if (fmt.show_numeric) {
+            for (size_t j=0; j<fmt.width; j++) {
+                if (i+j<n) {
+                    if (j>0 && 0 == j % fmt.colsize)
+                        fputc(' ', f);
+                    fprintf(f, numeric_fmt, data[i+j]);
+                } else if (fmt.pad_numeric) {
+                    if (j>0 && 0 == j % fmt.colsize)
+                        fputc(' ', f);
+                    fprintf(f, "%*s", numeric_width, "");
+                }
             }
         }
-        fprintf(f, "  |");
-        for (size_t j=0; j<16 && i+j<n; j++) {
-            if (isprint(data[i+j])) {
-                fputc(data[i+j], f);
-            } else {
-                fputc('.', f);
+
+        if (fmt.show_numeric && fmt.show_chars)
+            fputs("  |", f);
+        
+        /* Character byte values */
+        if (fmt.show_chars) {
+            for (size_t j=0; j<fmt.width; j++) {
+                if (i+j>=n) {
+                    if (fmt.pad_chars)
+                        fputc(' ', f);
+                } else if (isprint(data[i+j])) {
+                    fputc(data[i+j], f);
+                } else {
+                    fputc('.', f);
+                }
             }
+            fputc('|', f);
         }
-        fputs("|\n", f);
     }
+
+    if (fmt.multiline)
+        fputc('\n', f);
 }
 
 // DQ (11/8/2008): Alternative interface that works better for ROSE IR nodes
-// void SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const std::string &prefix, const SgCharList &data)
 void
-SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const std::string &prefix, const SgUnsignedCharList &data)
+SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const std::string &prefix, const SgUnsignedCharList &data, 
+                                   bool multiline)
 {
-    if (data.empty() == false)
-        hexdump(f, base_addr, prefix.c_str(), &(data[0]), data.size());
+    if (!data.empty()) {
+        HexdumpFormat fmt;
+        fmt.multiline = multiline;
+        fmt.prefix = prefix.c_str();
+        hexdump(f, base_addr, &(data[0]), data.size(), fmt);
+    }
 }
 
 // DQ (8/31/2008): This is the newest interface function (could not remove the one based on SgUnsignedCharList since it
 // is used in the symbol support).
 void
-SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const std::string &prefix, const SgFileContentList &data)
+SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const std::string &prefix, const SgFileContentList &data, 
+                                   bool multiline)
 {
-    if (data.empty() == false)
-        hexdump(f, base_addr, prefix.c_str(), &(data[0]), data.size());
+    if (!data.empty()) {
+        HexdumpFormat fmt;
+        fmt.multiline = multiline;
+        fmt.prefix = prefix.c_str();
+        hexdump(f, base_addr, &(data[0]), data.size(), fmt);
+
+    }
 }
 
 /** Writes a new file from the IR node for a parse executable file. Warning: This function might modify the AST by calling

@@ -1,0 +1,79 @@
+This file describes instructions that are not documented by the Intel "Instruction Set Reference." It is parsed
+by the same IntelAssemblyBuilder script as the aforementioned Intel documentation. At this time (Jul 2009) some of
+these defintions might be incomplete, but are necessary because the disassembler uses the X86InstructionEnum constants
+that are defined here.
+
+-------------------------------------------------------------------------------------------------------------------------------
+Group 7 instructions at 0F 01
+Opcode                   Instruction
+0F 01 C4                 VMOFF              Valid Invalid  VMX Instruction; ModR/M=0304 (0xc4)
+0F 01 D8                 VMRUN              Valid Invalid  VMX Instruction; ModR/M=0330 (0xd8)
+0F 01 D9                 VMMCALL            Valid Invalid  VMX Instruction; ModR/M=0331 (0xd9)
+0F 01 DA                 VMLOAD             Valid Invalid  VMX Instruction; ModR/M=0332 (0xda)
+0F 01 DB                 VMSAVE             Valid Invalid  VMX Instruction; ModR/M=0333 (0xdb)
+0F 01 DC                 STGI               Valid Invalid  VMX Instruction; ModR/M=0334 (0xdc)
+0F 01 DD                 CLGI               Valid Invalid  VMX Instruction; ModR/M=0335 (0xdd)
+0F 01 DE                 SKINIT             Valid Invalid  VMX Instruction; ModR/M=0336 (0xde)
+0F 01 DF                 INVLPGA            Valid Invalid  VMX Instruction; ModR/M=0337 (0xdf)
+
+
+-------------------------------------------------------------------------------------------------------------------------------
+AMD 3DNow! instructions at 0F 0F
+Opcode                   Instruction
+0F 0F 0C                 PI2FW              Invalid Invalid  AMD 3DNow!
+0F 0F 0D                 PI2FD              Invalid Invalid  AMD 3DNow!
+0F 0F 1C                 PF2IW              Invalid Invalid  AMD 3DNow!
+0F 0F 1D                 PF2ID              Invalid Invalid  AMD 3DNow!
+0F 0F 8A                 PFNACC             Invalid Invalid  AMD 3DNow!
+0F 0F 8E                 PFPNACC            Invalid Invalid  AMD 3DNow!
+0F 0F 90                 PFCMPGE            Invalid Invalid  AMD 3DNow!
+0F 0F 94                 PFMIN              Invalid Invalid  AMD 3DNow!
+0F 0F 96                 PFRCP              Invalid Invalid  AMD 3DNow!
+0F 0F 97                 PFRSQRT            Invalid Invalid  AMD 3DNow!
+0F 0F 9A                 PFSUB              Invalid Invalid  AMD 3DNow!
+0F 0F 9E                 PFADD              Invalid Invalid  AMD 3DNow!
+0F 0F A0                 PFCMPGT            Invalid Invalid  AMD 3DNow!
+0F 0F A4                 PFMAX              Invalid Invalid  AMD 3DNow!
+0F 0F A6                 PFRCPIT1           Invalid Invalid  AMD 3DNow!
+0F 0F A7                 PFRSQIT1           Invalid Invalid  AMD 3DNow!
+0F 0F AA                 PFSUBR             Invalid Invalid  AMD 3DNow!
+0F 0F AE                 PFACC              Invalid Invalid  AMD 3DNow!
+0F 0F B0                 PFCMPEQ            Invalid Invalid  AMD 3DNow!
+0F 0F B4                 PFMUL              Invalid Invalid  AMD 3DNow!
+0F 0F B6                 PFRCPIT2           Invalid Invalid  AMD 3DNow!
+0F 0F B7                 PMULHRW            Invalid Invalid  AMD 3DNow!
+0F 0F BB                 PSWAPD             Invalid Invalid  AMD 3DNow!
+0F 0F BF                 PAVGUSB            Invalid Invalid  AMD 3DNow!
+
+-------------------------------------------------------------------------------------------------------------------------------
+LZCNT -- repeated bit scan reverse
+Opcode                   Instruction
+F3 0F BD /r              LZCNT r16, r/m16   Valid   Valid    Alias for REPE BSR
+F3 0F BD /r              LZCNT r32, r/m32   Valid   Valid    Alias for REPE BSR
+F3 REX.W + 0F BD         LZCNT r64, r/m64   Valid   N.E.     Alias for REPE BSR
+
+-------------------------------------------------------------------------------------------------------------------------------
+Aliases for repeated MOVNTPS
+Opcode                   Instruction
+F2 0F 2B /r              MOVNTSD m128       Valid   Valid    Alias for REPNE MOVNTPS
+F3 0F 2B /r              MOVNTSS m128       Valid   Valid    Alias for REPE MOVNTPS
+
+
+-------------------------------------------------------------------------------------------------------------------------------
+Miscellaneous instructions
+Opcode                   Instruction
+0F 0D /1                 PREFETCHW          Invalid Invalid  Not documented
+0F 0D /3                 PREFETCHW          Invalid Invalid  Not documented
+0F 0E                    FEMMS              Invalid Invalid  Undocumented by Intel or OIR
+0F 18                    PREFETCH           Invalid Invalid  See PREFETCH(0|1|2|NTA) instead
+0F 37                    GETSEC             Valid   Invalid  Safer mode extensions. See Intel Instruction Set Reference, section 6
+0F 73 /4                 PSRAQ r/m64 imm8   Invalid Invalid  Not documented; ModR/M=034x
+F2 0F 78                 INSERTQ imm8 imm8  Invalid Invalid  Undocumented by Intel or OIR
+66 0F 79 /0              EXTRQ imm8 imm8    Invalid Invalid  Undocumented by Intel or OIR
+66 90			 NOP		    Valid   Valid    2-byte form of no-operation
+0F 99                    SETNS r/m8         Invalid Invalid  Set byte condition not signed
+REX + 0F 99              SETNS r/m8         Invalid N.E.     Set byte condition not signed
+0F B8 /r                 JMPE               Invalid Invalid  Used to enter IA64 mode on Itanium architecture
+REX.W + 0F BE /r         MOVSX r64, r/m8    Valid   Invalid  Intel docs have wrong REX byte
+D6                       SALC               Invalid Invalid  Not documented
+F1                       INT1               Invalid Invalid  Undocumented by Intel

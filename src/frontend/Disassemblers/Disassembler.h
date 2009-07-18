@@ -53,24 +53,29 @@ public:
     public:
         /** A bare exception not bound to any particular instruction. */
         Exception(const std::string &reason)
-            : mesg(reason), ip(0), bit(0)
+            : mesg(reason), ip(0), bit(0), insn(NULL)
             {}
-        /** An exception bound to a virtual address but no raw data. */
+        /** An exception bound to a virtual address but no raw data or instruction. */
         Exception(const std::string &reason, rose_addr_t ip)
-            : mesg(reason), ip(ip), bit(0)
+            : mesg(reason), ip(ip), bit(0), insn(NULL)
             {}
-        /** An exception bound to a particular instruction. */
+        /** An exception bound to a particular instruction being disassembled. */
         Exception(const std::string &reason, rose_addr_t ip, const SgUnsignedCharList &raw_data, size_t bit)
-            : mesg(reason), ip(ip), bytes(raw_data), bit(bit)
+            : mesg(reason), ip(ip), bytes(raw_data), bit(bit), insn(NULL)
+            {}
+        /** An exception bound to a particular instruction being assembled. */
+        Exception(const std::string &reason, SgAsmInstruction *insn)
+            : mesg(reason), ip(insn->get_address()), bit(0), insn(insn)
             {}
 
         std::string mesg;               /**< Reason that disassembly failed. */
         rose_addr_t ip;                 /**< Virtual address where failure occurred; zero if no associated instruction */
-        SgUnsignedCharList bytes;       /**< Bytes (partial) of failed instruction, including byte at failure. Empty if the
+        SgUnsignedCharList bytes;       /**< Bytes (partial) of failed disassembly, including byte at failure. Empty if the
                                          *   exception is not associated with a particular byte sequence, such as if an
                                          *   attempt was made to disassemble at an invalid address. */
         size_t bit;                     /**< Bit offset in instruction byte sequence where disassembly failed (bit/8 is the
                                          *   index into the "bytes" list, while bit%8 is the bit within that byte. */
+        SgAsmInstruction *insn;         /**< Instruction associated with an assembly error. */
     };
 
     /** Heuristics used to find instructions to disassemble. The set of heuristics to try can be set by calling the
@@ -403,7 +408,7 @@ private:
     /*==========================================================================================================================
      * Data members
      *========================================================================================================================== */
-private:
+protected:
     class Partitioner *p_partitioner;                   /**< Partitioner used for placing instructions into blocks and functions.*/
     unsigned p_search;                                  /**< Mask of SearchHeuristic bits specifying instruction searching. */
     FILE *p_debug;                                      /**< Set to non-null to get debugging info. */

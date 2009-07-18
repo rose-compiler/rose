@@ -407,7 +407,6 @@ SgAsmInstruction *
 Disassembler::find_instruction_containing(const InstructionMap &insns, rose_addr_t va)
 {
     const size_t max_insns_size = 16;
-    SgAsmInstruction *retval;
     InstructionMap::const_iterator ii=insns.upper_bound(va);
     if (ii==insns.begin())
         return NULL;

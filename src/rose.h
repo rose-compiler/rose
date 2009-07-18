@@ -113,6 +113,7 @@ namespace ELF{
 
 #include "AST_BIN_Traversal.h"
 
+#include "AssemblerX86Init.h"
 #include "x86InstructionEnum.h"
 #include "x86InstructionProperties.h"
 
@@ -127,6 +128,8 @@ namespace ELF{
 #include "DisassemblerPowerpc.h"
 #include "DisassemblerX86.h"
 #include "Partitioner.h"
+#include "Assembler.h"
+#include "AssemblerX86.h"
 
 // Files in src/backend/asmUnparser
 #include "unparseAsm.h"

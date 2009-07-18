@@ -1,0 +1,474 @@
+#!/usr/bin/perl
+#
+# Purpose: Reads the Intel "Instruction Set Reference" PDF documentation and produces C++ code for initializing the ROSE x86
+# assembler.  The names of the PDF files are given on the command line; C++ output is generated on stdout.  A header file
+# will also be generated if the "--header=FILENAME" switch is supplied on the command-line. The pdftotext program must be in
+# the $PATH.
+#
+use strict;
+my $verbose = 1; # true causes generated file to contain the actual tables from documentation
+my @defns;       # all definitions processed (excludes suppressed rows)
+my ($basename,$date,$chapter,$page) = ("unknown", "unknown", "?", "?");
+my $header = "/dev/null"; # use --header=FILENAME to change
+my ($intel_version); # version date for Intel PDF documentation
+
+# Some instructions have more than one mnemonic depending on types of arguments, etc. ROSE defines just one for each kind of
+# instruction, so this map is necessary.
+my %kind_map = (cmovna=>'cmovbe', cmovnae=>'cmovb', cmovnb=>'cmovae', cmovnbe=>'cmova', cmovc  =>'cmovb', cmovnc=>'cmovae',
+                cmovng=>'cmovle', cmovnge=>'cmovl', cmovnl=>'cmovge', cmovnle=>'cmovg', cmovnp=>'cmovpo', cmovnz=>'cmovne',
+                cmovp=>'cmovpe', cmovz=>'cmove', iretd=>'iret', iretq=>'iret', jc=>'jb', jna=>'jbe', jnae=>'jb', jnb=>'jae',
+                jnbe=>'ja', jnc=>'jae', jng=>'jle', jnge=>'jl', jnl=>'jge', jnle=>'jg', jnp=>'jpo', jnz=>'jne', jp=>'jpe',
+                jz=>'je', loope=>'loopz', loopne=>'loopnz', setc=>'setb', setna=>'setbe', setnae=>'setb', setnb=>'setae',
+                setnbe=>'seta', setnc=>'setae', setng=>'setle', setnge=>'setl', setnl=>'setge', setnle=>'setg',
+                setnp=>'setpo', setnz=>'setne', setp=>'setpe', setz=>'sete', sal=>'shl', xlat=>'xlatb'
+               );
+
+# These opcodes should be suppressed. For example, Intel documentation provides two versions of the FPU instructions: those
+# beginning with the 0x9b prefix and those without. They also treat 0x9b as a separate instruction (WAIT), which is the approach
+# that ROSE takes.
+my %suppress_opcode = ('660ff7'=>"See MASKMOVQ with 0x66 prefix instead.",
+		       '9bdbe2'=>"See WAIT instead.",
+                       '9bdbe3'=>"See WAIT instead.",
+                       '9bd9'  =>"See WAIT instead.",
+                       '9bdd'  =>"See WAIT instead.",
+                       '9bdfe0'=>"See WAIT instead.",
+                      );
+
+# These mnemonics should be suppressed. For instance, "cmps m8,m8" is an assembly-level statement corresponding to "cmpsb" at the
+# opcode level. The "m8" operands only serve to specify that bytes are compared and the addresses are not actually used--the
+# instruction always calculates addresses from specific registers. The lookup occurs after the %kind_map is applied.
+my %suppress_kind = (cmps      	=> "See CMPSB, CMPSW, CMPSD, or CMPSQ instead.",
+		     ins       	=> "See INSB, INSW, or INSD instead.",
+		     lods      	=> "See LODSB, LODSW, LODSD, or LODSQ instead.",
+		     movs      	=> "See MOVSB, MOVSW, MOVSD, or MOVSQ instead.",
+		     scas      	=> "See SCASB, SCASW, SCASD, or SCASQ instead.",
+		    );
+
+sub build_lexer {
+  my($line) = @_;
+  return sub {
+    my($class) = @_;
+    for ($line) {
+      /\G[,*\s]+/cg;
+      if ($class eq 'opcode') {
+        /\GREX(?:.([RW]))?(\**\s*\+)?/cg               and return "od_rex".lc($1);
+        /\G([0-9A-F]{2})\b/cg                          and return $1;
+        /\G(0f)\b/cg                                   and return "0F"; # wrong case for PMOVSXBW
+        /\G\/([0-7])\b/cg                              and return "od_e$1";
+        /\G\/r\b/cg                                    and return "od_modrm";
+        /\G(c[bwdpot])\b/cg                            and return "od_$1";
+        /\G(i[bwdo])\b/cg                              and return "od_$1";
+        /\G\+\s*(r[bwdo])\b/cg                         and return "od_$1";
+        /\G\+i\b/cg                                    and return "od_i";
+      } elsif ($class eq 'mnemonic') {
+        /\GREP\s+(INS|MOVS|OUTS|LODS|STOS|CMPS)\b/cg and return lc "rep_$1";
+        /\G(REPN?E)\s+(CMPS|SCAS)\b/cg                 and return lc($1."_".$2);
+        /\G([A-Z][A-Z0-9]*)\b/cg                       and return lc $1;
+        /\G(\(No\s+mnemonic\))/cg                      and return "";
+      } elsif ($class eq 'operand') {
+        /\Gm16&(16|32|64)\b/cg                         and return "od_m16a$1";
+        /\Gm32&32\b/cg                                 and return "od_m32a32";
+        /\G(ptr16|m16):(16|32|64)\b/cg                 and return "od_$1_$2";
+        /\Gr(16|32|64)\/m(8|16)\b/cg                   and return "od_r$1_m$2";
+        /\G(r32\/m161)\b/cg                            and return "od_r32_m16"; # See LAR (typo?)
+        /\Gr(eg)?\/m(8|16|32|64)\b/cg                  and return "od_r_m$2";   # See EXTRACTPS for "reg" (typo for "r"?)
+        /\G((r|rel|imm|m|moffs)(8|16|32|64))\b/cg      and return "od_$1";
+        /\G(AL|AX|EAX|RAX)\b/cg                        and return "od_$1";
+        /\G(CL)\b/cg                                   and return "od_$1";
+        /\G(Sreg)\b/cg                                 and return "od_sreg";
+        /\G(CS|DS|ES|SS|FS|GS)\b/cg                    and return "od_$1";
+        /\G(DX|DR0DR7)\b/cg                            and return "od_$1";
+        /\G(CR[078]|CR0CR7)\b/cg                       and return "od_$1";
+        /\G(m(32|64|80)fp)\b/cg                        and return "od_$1";
+        /\G(m(16|32|64)int)\b/cg                       and return "od_m$2"; # alias for m16, m32, m64
+        /\GST\(([i0-7])\)/cg                           and return "od_st$1";
+        /\GST\b/cg                                     and return "od_st0";
+        /\G(m80|m80bcd|dec)\b/cg                       and return "od_$1"; # see FBLD and FBSTP
+        /\G(m(2|512)byte)\b/cg                         and return "od_$1"; # See FLDCW and FXRSTOR
+        /\G(m14\/28byte)\b/cg                          and return "od_m14_28byte"; # See FLDENV
+        /\G(m94\/108byte)\b/cg                         and return "od_m94_108byte"; # See FRSTOR
+        /\G([01])\b/cg                                 and return "od_$1"; # See ENTER
+        /\G(3)\b/cg                                    and return "od_$1"; # See INT
+        /\G(m|mem)\b/cg                                and return "od_m";  # See LDDQU where "mem" is apparent typo for "m"
+        /\G(reg)\b/cg                                  and return "od_$1"; # See MOVMSKPD
+        /\G(m128)\b/cg                                 and return "od_$1"; # See MOVNTDQ
+        /\G(mm)2?\/m(32|64)\b/cg                       and return "od_$1_m$2"; #reg num. is only for arg ident in commen text
+        /\G(mm)[12]?\b/cg                              and return "od_mm"; # reg num. is only for arg ident in comment text
+        /\G(xmm)[0-7]?\/m(16|32|64|128)\b/cg           and return "od_$1_m$2"; # reg num. is only for arg ident in comment text
+        /\G(xmm)[0-7]?\b/cg                            and return "od_$1"; # reg num. is only for arg ident in comment text
+        /\G<(XMM[0-7])>/cg                             and return "od_$1";
+      } elsif ($class eq 'compat') {
+        /\GValid\b/cg                                  and return 1;
+        /\GInv(\.|alid\b)/cg                           and return 0;
+        /\GN\.\s*([EPIS])\.\**/cg                      and return 0;
+      } elsif ($class eq 'remainder') {
+        /\G(.*)/cg                                     and return $1;
+      } elsif ($class eq 'position') {
+        return pos;
+      } else {
+        die "bad token class \"$class\"";
+      }
+      return undef;
+    }
+  }
+}
+
+# Parse one complete table row and return a hash reference or error string.
+sub table_row {
+  my($line) = @_;
+  local($_);
+  my $retval = {opcode=>[], mnemonic=>"", operands=>[], sixtyfour=>"", legacy=>"", comment=>"", ccol=>undef};
+  my $lexer = build_lexer $line;
+  push @{$retval->{opcode}}, $_ while defined ($_ = &{$lexer}('opcode'));
+  return "no opcode at \"@{[&{$lexer}('remainder')]}\"" unless @{$retval->{opcode}};
+  return "no mnemonic at \"@{[&{$lexer}('remainder')]}\"" unless defined ($retval->{mnemonic} = &{$lexer}('mnemonic'));
+  push @{$retval->{operands}}, $_ while defined ($_ = &{$lexer}('operand'));
+  if ($chapter == 5) {
+    # Intel Instruction Reference Manual Chapter 5 is "VMX Instruction Reference" and the compatibility columns are
+    # missing; assumed to be valid for 64-Bit Mode and invalid for Legacy Mode.
+    $retval->{sixtyfour} = 1;
+    $retval->{legacy}    = 0;
+  } else {
+    defined ($retval->{sixtyfour} = &{$lexer}('compat')) or
+      return "no 64-bit compatibility indicator at \"@{[&{$lexer}('remainder')]}\"";
+    defined ($retval->{legacy} = &{$lexer}('compat')) or
+      return "no legacy compatibility indicator at \"@{[&{$lexer}('remainder')]}\"";
+  }
+  $retval->{ccol} = &{$lexer}('position');
+  $retval->{comment} = &{$lexer}('remainder');
+  return $retval;
+}
+
+# Parse a table continuation row. Returns true on success, false on failure.
+sub table_cont {
+  my($line,$row) = @_;
+  local($_);
+  die unless ref $row;
+
+  # Remove the comment field first because it often begins with things that look like operand types. Fortunately, the
+  # comments are about the only thing that always lines up vertically in the table!
+  die unless $row->{ccol} > 0;
+  my $comment = substr $line, $row->{ccol};
+  $comment =~ s/^\s+//;
+  substr($line, $row->{ccol}) = "" if length($line) > $row->{ccol};
+  $row->{comment} .= " " . $comment if $comment ne "";
+
+  # Remainder of line should contain only opcodes and operand types
+  my $lexer = build_lexer $line;
+  push @{$row->{opcode}}, $_ while defined ($_ = &{$lexer}('opcode'));
+  push @{$row->{operands}}, $_ while defined ($_ = &{$lexer}('operand'));
+  my $remainder = &{$lexer}('remainder');
+  return undef if $remainder =~ /\S/;
+  return 1;
+}
+
+sub fixup_row {
+  my($row) = @_;
+
+  $row->{location} = "$basename, page $page";
+  $row->{mnemonic} = $kind_map{$row->{mnemonic}} if exists $kind_map{$row->{mnemonic}};
+  $row->{kind} = $row->{mnemonic};
+
+  # Some of the tables are missing the "ib", "iw", "id", or "io" opcode qualifiers even though the instruction has
+  # an imm8, imm16, imm32, or imm64 operand.  We'll add them here.
+  my @imm   = grep {/^od_imm(8|16|32|64)$/} @{$row->{operands}};
+  if (1==@imm) {
+    my @iqual = grep {/^od_i[bwdo]$/} @{$row->{opcode}};
+    my %map = (od_imm8=>'od_ib', od_imm16=>'od_iw', od_imm32=>'od_id', od_imm64=>'od_io');
+    push @{$row->{opcode}}, $map{$imm[0]} if !@iqual;
+  }
+
+  # The tables for non-REP/REPE/REPNE versions of CMPS, INS, LODS, MOVS, OUTS, SCAS, and STOS describe both the versions that take
+  # a extra operand(s) to describe the type and the versions that add a letter (B, W, D, or Q) to the mnemonic.  We simply ignore
+  # the versions with the extra type operands. On the other hand, the table for the repeated instructions describes only the
+  # versions that have the extra type operands. Therefore, we need to generate the type-suffixed versions from them.
+  if ($row->{mnemonic} =~ /^rep(e|ne)?_(cmps|ins|lods|movs|outs|scas|stos)$/) {
+    my(@operands,$type);
+    for (@{$row->{operands}}) {
+      if ($_ eq 'od_m8' || $_ eq 'od_r_m8' || $_ eq 'od_AL') {
+	$type = 'b';
+      } elsif ($_ eq 'od_m16' || $_ eq 'od_r_m16' || $_ eq 'od_AX') {
+	$type = 'w';
+      } elsif ($_ eq 'od_m32' || $_ eq 'od_r_m32' || $_ eq 'od_EAX') {
+	$type = 'd';
+      } elsif ($_ eq 'od_m64' || $_ eq 'od_r_m64' || $_ eq 'od_RAX') {
+	$type = 'q';
+      } else {
+	push @operands, $_;
+      }
+    }
+    @{$row->{operands}} = @operands;
+    $row->{mnemonic} .= $type;
+    $row->{kind} .= $type;
+  }
+
+  # An operand of type od_3 causes the "3" to be appended to the mnemonic and kind
+  for (my $i=0; $i<@{$row->{operands}}; $i++) {
+    if ($row->{operands}[$i] eq 'od_3') {
+      $row->{mnemonic} .= '3';
+      $row->{kind} .= '3';
+      splice @{$row->{operands}}, $i, 1;
+      last;
+    }
+  }
+
+  # There are two instructions with the mnemonic MOVSD: opcode F2 0F 10 (or F2 0F 11) which is an SSE instruction to move
+  # a scalar double-precision floating-point value from xmm2/m64 to xmm1 register, and opcode A5 which moves a dword from address
+  # DS:(E)SI to ES:(E)DI or from address (R|E)SI to (R|E)DI.  Rose calls the former x86_movsd and the latter x86_movsd_sse.
+  $row->{kind} .= "_sse" if $row->{mnemonic} eq 'movsd' && @{$row->{operands}}>0;
+
+  # The reference manual doesn't have separate mnemonics for near vs. far calls and jumps since the distinction can be made
+  # by looking at the operands.
+  $row->{kind} = "far" . $row->{kind} if $row->{mnemonic} =~ /^(call|jmp)$/ && $row->{comment} =~ /\bfar\b/;
+
+  # The reference manual doesn't have seperate mnemonics for near vs. far returns.
+  $row->{kind} .= "f" if $row->{mnemonic} eq 'ret' && $row->{comment} =~ /\bfar\b/i;
+
+  # The reference manual has a mistake for the SUB instruction. There is no "SUB r/m64, r32" instruction as indicated. It
+  # should be "SUB r/m64, r64" instead.  The comment column makes this clear.
+  if ($row->{kind} eq 'sub' && $row->{operands}[0] eq 'od_r_m64' && $row->{operands}[1] eq 'od_r32') {
+    $row->{operands}[1] = 'od_r64';
+  }
+}
+
+# Emit C++ code for a table row
+sub emit_code {
+  my($row) = @_;
+  return unless $row;
+  die unless ref $row;
+  fixup_row $row;
+
+  my $prefix = "    ";
+  my $kind = $row->{kind};
+  my $mnemonic = $row->{mnemonic};
+  my $opcode = lc join "", grep {/^[0-9A-F]{2}$/} @{$row->{opcode}};
+
+  my $suppress = $suppress_kind{$kind} || $suppress_opcode{$opcode};
+  if (defined $suppress) {
+    return unless $verbose;
+    print $prefix, "// $suppress\n";
+    $prefix .= "// ";
+  } else {
+    push @defns, $row;
+  }
+
+  #print "\n/* $row->{comment} */\n";
+  print $prefix, "defn = new InsnDefn(";
+  printf "%-9s %-13s", "\"$mnemonic\",", "x86_$kind, ";
+  printf "0x%02x, ", $row->{sixtyfour}*2 + $row->{legacy};
+  print "0x", $opcode;
+  print ", ", (join "|", grep {!/^[0-9A-F]{2}$/} @{$row->{opcode}})||"od_none";
+  print ", $_" for @{$row->{operands}};
+  print ");\n";
+  print $prefix, "defn->set_location(\"$row->{location}\");\n";
+  print $prefix, "define(defn);\n";
+}
+
+sub emit_to_str {
+  my %enum;
+  $enum{$_->{kind}} = $_->{location} for @defns;
+  my $cases = join "\n", map {sprintf "        case x86_%-16s return %-18s break;", "$_:", "\"$_\";"} sort keys %enum;
+  print <<"EOF";
+std::string
+AssemblerX86::to_str(X86InstructionKind kind)
+{
+    switch (kind) {
+$cases
+        default: abort(); //should not happen since this is machine generated!
+    }
+}
+EOF
+}
+
+sub emit_warning {
+  my($fh) = @_;
+  print $fh <<EOF;
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                       D O   N O T   E D I T                                                      //
+//------------------------------------------------------------------------------------------------------------------//
+//                                                                                                                  //
+// This file was generated automatically from Intel PDF documentation. Its purpose is to intialize the ROSE x86     //
+// assembler with information about how to encode each x86 instruction.                                             //
+//                                                                                                                  //
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+EOF
+}
+
+# Generate the header file
+sub emit_header {
+  my($fh) = @_;
+  open HDR, ">", $header or die "cannot create header file: $header";
+  emit_warning \*HDR;
+  print HDR <<"EOF";
+#ifndef ROSE_DISASSEMBLER_X86_INIT_H
+#define ROSE_DISASSEMBLER_X86_INIT_H
+
+/* Generated by $0 from @{[map {"\n * $_"} @ARGV]} */
+
+/** List of all x86 instructions known to the ROSE disassembler/assembler. There is one member of this enumeration for
+ *  each instruction mnemonic. The AssemblerX86::to_str(X86InstructionKind) static method can be used convert the
+ *  enumeration constant to a string for printing.  Documentation for each instruction can be found on the specified page
+ *  of the "Instruction Set Reference" available from the Intel web site, version $intel_version. */
+enum X86InstructionKind {
+EOF
+  my($i,%enum)=(0);
+  $enum{$_->{kind}} = $_->{location} for @defns;
+  printf HDR "    x86_%-23s = 0x%04x,\n", "unknown_instruction", $i++;
+  printf HDR "    x86_%-23s = 0x%04x, // %1s\n", $_, $i++, $enum{$_} for sort keys %enum;
+  printf HDR "    x86_%-23s = 0x%04x\n", "last_instruction", $i;
+  print HDR "};\n\n";
+  print HDR "#endif\n\n";
+  emit_warning \*HDR;
+  close HDR;
+}
+
+sub cleanup {
+  local($_) = @_;
+  #print STDERR $_; # DEBUGGING
+  chomp;
+  s/[\000-\037\177-\377]//g;
+  s/\s+$//;
+  ($chapter) = $1         if /^\s*CHAPTER\s+(\d+)$/;
+
+  # Page numbers
+  if (/Vol\.\s+2[AB]\s+(\d+)-(\d+)$/) {
+    ($page) = $1."-".($2+1);
+    $_ = "";
+  } elsif (/^\s*(\d+)-(\d+)\s+Vol\.\s+2[AB]\s+/) {
+    ($page) = $1."-".($2+1);
+    $_ = "";
+  } elsif (/^-{127}$/) {
+    $page++; # ROSE's extra instructions
+  }
+
+  # Page headers
+  $_ = "" if /^\s*INSTRUCTION SET REFERENCE, (A-M|N-Z)$/;
+
+  # The reference manual has a mistake for the CMPXCHG8B instruction: "m64" is an operand type, not an opcode modifer,
+  # so remove it from the opcode column of the table.
+  $_ = "$1   $2" if /^(\s*0F C7 \/1 )m64(\s+CMPXCHG8B m64.*)/;
+
+  # The "xmm2/m128" is split across two lines for MPSADBW as "xmm2/m12" and "8"
+  s/^(\s*xmm2\/m12)\s\s(\s+xmm2\/m128 and writes the results in xmm1\.)$/${1}8,$2/;
+  s/^(\s*)8,(\s*imm8\s+Starting offsets within xmm1 and xmm2\/m128)/$1  $2/;
+
+  # The "xmm2/m128" is split across two lines for PSHUFHW as "xmm2/" and "m128"
+  s/^(\s*F3 0F 70 \/r ib\s+PSHUFHW xmm1, xmm2\/)\s{4}(\s+Valid\s+Valid\s+Shuffle the high words in)$/${1}m128$2/;
+  s/^(\s+)m128,(\s*imm8\s+xmm2\/m128 based on the)/$1     $2/;
+
+  # The "xmm2/m128" is split across two lines for PCMPGTQ as "xmm2/m1" and "28";
+  s/^(\s*37 \/r\s+xmm1,xmm2\/m1)\s\s(\s+xmm2\/m128 and xmm1 for greater)$/${1}28$2/;
+  s/^(\s+)28(\s+than\.)$/$1  $2/;
+
+  return $_;
+}
+
+sub is_pdf {
+  my($filename) = @_;
+  open F, "<", $filename or die "$0: cannot open $filename: $!\n";
+  local $_ = <F>;
+  close F;
+  return /^%(PDF)/ ? 1 : undef;
+}
+
+###############################################################################################################################
+###############################################################################################################################
+###############################################################################################################################
+
+if ($ARGV[0] =~ /^--header=(.+)/) {
+  $header = $1;
+  shift;
+}
+
+emit_warning \*STDOUT;
+print <<EOF;
+#include "rose.h"
+
+/* Generated by $0 from @{[map {"\n * $_"} @ARGV]} */
+void
+AssemblerX86::initAssemblyRules()
+{
+    AssemblerX86::InsnDefn *defn = NULL;
+EOF
+for my $file (@ARGV) {
+  ($basename) = $file =~ /([^\/]+)$/;
+  ($date,$chapter,$page) = ("unknown","?","?");
+
+  my $is_pdf = is_pdf $file;
+  if ($is_pdf) {
+    # Convert the PDF document to text, doing our best to visually preserve table layouts.
+    open DOC, "pdftotext -layout $file -|" or die "$0: failed to run pdftotext on $file\ndied";
+  } else {
+    open DOC, "<", $file or die "$0: cannot open $file: $!\ndied";
+  }
+
+  # Discard prologue info until we get to the instruction defintion chapters. This is necessary because there are example tables at
+  # the beginning of Chapter 3 that we don't want to process.
+  print "\n", "    //", "-" x 114, "\n";
+  if ($is_pdf) {
+    $page = "?";
+    while (<DOC>) {
+      if (/^\s+Order\s+Number:\s+(.*?)$/) {
+	$_ = <DOC>;
+	$date = $intel_version = $1 if /^\s+(.*)$/;
+	print "    // The following definitions are from $basename, version $date.\n";
+      }
+      last if /^3\.2\s+INSTRUCTIONS\s+\(A-M\)$/ || /^\s+CHAPTER 4$/;
+    }
+  } else {
+    $page = 0;
+    my $mtime = (stat $file)[9];
+    my($d,$m,$y) = (localtime ((stat $file)[9]))[3,4,5];
+    print "    // The following definitions are from $basename, modified $d ";
+    print ((qw/Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec/)[$m], " ", 1900+$y, "\n");
+  }
+  print "    //", "-" x 114, "\n\n";
+
+
+  # Look for and process each instruction definition table
+  my($state,$row) = ('before');
+  while (<DOC>) {
+    $_ = cleanup $_;
+    if ($state eq 'before' && /^\s*Opcode\**\s+Instruction\b/) {
+      # All tables start with this pattern. Subsequent column headers are problematic to match because they can be continued
+      # across multiple lines of text.
+      $state = 'table';
+      emit_code $row;
+      $row = undef;
+      die "no page number info (check re above)" unless $page =~ /^\d+/;
+      print "\n", substr("    //--- page $page of $basename " . "-" x 120, 0, 120), "\n";
+    } elsif ($state eq 'before' && /^\s+CHAPTER 6$/) {
+      last;
+    } elsif ($state eq 'table' && /^\s*(NOTE.*|Description|DESCRIPTION|-{127})$/) {
+      $state = 'before';
+    } elsif ($state eq 'table') {
+      # The first lines of a table can be continued headers, so skip the line if it only contains
+      # words that appear in the column headers.  Otherwise try to parse a complete row, and failing that try to parse
+      # the line as if it is a continuation of the previous row.  The multiple "print" statements are to get the comment
+      # lines output before the C++ code that defines that instruction.
+      next if /^(\s*(Opcode\**|Instruction|64-Bit|bit|Bit|Compat\/?|Description|\/?Leg|Mode\**|SMM))+$/;
+      next unless /\S/;
+      my $newrow = table_row $_;
+      if (ref $newrow) {
+        $newrow->{mnemonic} ||= $row->{mnemonic};
+        emit_code $row;
+        $row = $newrow;
+        print "    // $_\n" if $verbose;
+      } elsif ($row && table_cont $_, $row) {
+        print "    // $_\n" if $verbose;
+      } else {
+        print "    // $_\n" if $verbose;
+	print STDERR $_, "\n";
+        die "$newrow\n";
+      }
+    }
+  }
+  emit_code $row;
+  close DOC;
+}
+print "}\n\n";
+emit_to_str;
+emit_warning \*STDOUT;
+emit_header;
+print STDERR "$0: emitted ", scalar(@defns), " definitions.\n";
+exit 0;

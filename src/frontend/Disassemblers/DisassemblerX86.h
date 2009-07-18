@@ -35,8 +35,6 @@ public:
     virtual SgAsmInstruction *make_unknown_instruction(const Exception&);
 
 
-
-
     /*========================================================================================================================
      * Data types
      *========================================================================================================================*/
@@ -48,10 +46,10 @@ private:
     class ExceptionX86: public Exception {
     public:
         ExceptionX86(const std::string &mesg, const DisassemblerX86 *d)
-            : Exception(mesg, d->ip, SgUnsignedCharList(d->insnbuf, d->insnbuf+d->insnbufat), 8*d->insnbufat)
+            : Exception(mesg, d->ip, d->insnbuf, 8*d->insnbufat)
             {}
         ExceptionX86(const std::string &mesg, const DisassemblerX86 *d, size_t bit)
-            : Exception(mesg, d->ip, SgUnsignedCharList(d->insnbuf, d->insnbuf+d->insnbufat), bit)
+            : Exception(mesg, d->ip, d->insnbuf, bit)
             {}
     };
 
@@ -60,17 +58,14 @@ private:
         rmLegacyByte, rmRexByte, rmWord, rmDWord, rmQWord, rmSegment, rmST, rmMM, rmXMM, rmControl, rmDebug, rmReturnNull
     };
 
-    /** Kinds of repeat prefixes; see repeatPrefix data member */
-    enum RepeatPrefix {rpNone, rpRepne, rpRepe};
-
     /* MMX registers? See mmPrefix method */
     enum MMPrefix {mmNone, mmF3, mm66, mmF2};
 
 
 
+
     /*========================================================================================================================
-     * Methods for reading bytes of the instruction.  These keep track of how much has been read, which in turn is used by
-     * the makeInstruction method.
+     * Methods for reading and writing bytes of the instruction.  These keep track of how much has been read or written.
      *========================================================================================================================*/
 private:
 
@@ -94,14 +89,10 @@ private:
      *  than 15 bytes. The longest possible x86 instruction is 15 bytes. */
     uint64_t getQWord();
 
-
-
-
     /*========================================================================================================================
      * Miscellaneous helper methods
      *========================================================================================================================*/
 private:
-
     /** Constructs a register reference expression for the current data segment based on whether a segment override prefix has
      *  been encountered. */
     SgAsmExpression *currentDataSegment() const;
@@ -264,6 +255,7 @@ private:
 
 
 
+
     /*========================================================================================================================
      * Main disassembly functions, each generally containing a huge "switch" statement based on one of the opcode bytes.
      *========================================================================================================================*/
@@ -348,15 +340,25 @@ private:
     /*========================================================================================================================
      * Data members and their initialization.
      *========================================================================================================================*/
+private:
 
     /** Initialize instances of this class. Called by constructor. */
     void init(SgAsmGenericHeader*);
 
-    /** Resets disassembler state to beginning of an instruction. */
+    /** Resets disassembler state to beginning of an instruction for assembly. */
+    void startInstruction(SgAsmx86Instruction *insn) {
+        startInstruction(insn->get_address(), NULL, 0);
+        insnSize = insn->get_baseSize();
+        lock = insn->get_lockPrefix();
+        branchPrediction = insn->get_branchPrediction();
+        branchPredictionEnabled = branchPrediction != x86_branch_prediction_none;
+        segOverride = insn->get_segmentOverride();
+    }
+    
+    /** Resets disassembler state to beginning of an instruction for disassembly. */
     void startInstruction(rose_addr_t start_va, const uint8_t *buf, size_t bufsz) {
         ip = start_va;
-        insnbuf = buf;
-        insnbufsz = bufsz;
+        insnbuf = SgUnsignedCharList(buf, buf+bufsz);
         insnbufat = 0;
 
         /* Prefix flags */
@@ -368,7 +370,7 @@ private:
         operandSizeOverride = false;
         addressSizeOverride = false;
         lock = false;
-        repeatPrefix = rpNone;
+        repeatPrefix = x86_repeat_none;
         modregrmByteSet = false;
         modregrmByte = modeField = regField = rmField = 0; /*arbitrary since modregrmByteSet is false*/
         modrm = reg = NULL;
@@ -376,13 +378,12 @@ private:
     }
 
     /* Per-disassembler settings; see init() */
-    X86InstructionSize insnSize;                /* default size of instructions, based on architecture; see init() */
+    X86InstructionSize insnSize;                /**< Default size of instructions, based on architecture; see init() */
 
     /* Per-instruction settings; see startInstruction() */
     uint64_t ip;                                /**< Virtual address for start of instruction */
-    const uint8_t *insnbuf;                     /**< Buffer containing bytes of instruction to be disassembled */
-    size_t insnbufsz;                           /**< Number of bytes pointed to by insnbuf data member */
-    size_t insnbufat;                           /**< Index of next byte to be read from insnbuf */
+    SgUnsignedCharList insnbuf;                 /**< Buffer containing bytes of instruction */
+    size_t insnbufat;                           /**< Index of next byte to be read from or write to insnbuf */
 
     /* Temporary flags set by the instruction; initialized by startInstruction() */
     X86SegmentRegister segOverride;             /**< Set to other than x86_segreg_none by 0x26,0x2e,0x36,0x3e,0x64,0x65 prefixes */
@@ -393,7 +394,7 @@ private:
     bool operandSizeOverride;                   /**< Set by the 0x66 prefix; used by effectiveOperandSize() and mmPrefix() */
     bool addressSizeOverride;                   /**< Set by the 0x67 prefix; used by effectiveAddressSize() */
     bool lock;                                  /**< Set by the 0xf0 prefix */
-    RepeatPrefix repeatPrefix;                  /**< Set by 0xf2 (repne) and 0xf3 (repe) prefixes */
+    X86RepeatPrefix repeatPrefix;               /**< Set by 0xf2 (repne) and 0xf3 (repe) prefixes */
     bool modregrmByteSet;                       /**< True if modregrmByte is initialized */
     uint8_t modregrmByte;                       /**< Set by instructions that use ModR/M when the ModR/M byte is read */
     uint8_t modeField;                          /**< Value (0-3) of high-order two bits of modregrmByte; see getModRegRM() */

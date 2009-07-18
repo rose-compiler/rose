@@ -779,6 +779,7 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "X86RegisterClass" ) ||
                  ( varTypeString == "X86SegmentRegister" ) ||
                  ( varTypeString == "X86BranchPrediction" ) ||
+                 ( varTypeString == "X86RepeatPrefix" ) ||
                  ( varTypeString == "X86PositionInRegister" ) ||
                  ( varTypeString == "X86InstructionSize" ) ||
                  ( varTypeString == "ArmInstructionKind" ) ||

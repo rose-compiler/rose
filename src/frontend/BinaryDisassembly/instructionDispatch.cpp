@@ -210,13 +210,6 @@ SgAsmx86Instruction* createx86Instruction(uint64_t address, const std::string& m
             default: break;
           }
         break;}
-        case 'e': { // 'e'
-          if (mnemonic[1] == 's') { // 'es'
-            if (mnemonic[2] == 'c') { // 'esc'
-              insn->set_kind(x86_esc);
-            }
-          }
-        break;}
         case 'f': { // 'f'
           switch (mnemonic[1]) {
             case 'l': { // 'fl'
@@ -1352,13 +1345,6 @@ SgAsmx86Instruction* createx86Instruction(uint64_t address, const std::string& m
             break;}
             case 's': { // 'fs'
               switch (mnemonic[2]) {
-                case 'a': { // 'fsa'
-                  if (mnemonic[3] == 'v') { // 'fsav'
-                    if (mnemonic[4] == 'e') { // 'fsave'
-                      insn->set_kind(x86_fsave);
-                    }
-                  }
-                break;}
                 case 'q': { // 'fsq'
                   if (mnemonic[3] == 'r') { // 'fsqr'
                     if (mnemonic[4] == 't') { // 'fsqrt'
@@ -1596,16 +1582,16 @@ SgAsmx86Instruction* createx86Instruction(uint64_t address, const std::string& m
                   if (mnemonic[3] == 'd') { // 'padd'
                     switch (mnemonic[4]) {
                       case 'b': { // 'paddb'
-                        insn->set_kind(x86_padd); insn->set_mnemonic("padd");
+                        insn->set_kind(x86_paddb);
                       break;}
                       case 'd': { // 'paddd'
-                        insn->set_kind(x86_padd); insn->set_mnemonic("padd");
+                        insn->set_kind(x86_paddd);
                       break;}
                       case 'q': { // 'paddq'
-                        insn->set_kind(x86_padd); insn->set_mnemonic("padd");
+                        insn->set_kind(x86_paddq);
                       break;}
                       case 'w': { // 'paddw'
-                        insn->set_kind(x86_padd); insn->set_mnemonic("padd");
+                        insn->set_kind(x86_paddw);
                       break;}
                       default: break;
                     }
@@ -1657,13 +1643,13 @@ SgAsmx86Instruction* createx86Instruction(uint64_t address, const std::string& m
                   if (mnemonic[3] == 'l') { // 'psll'
                     switch (mnemonic[4]) {
                       case 'd': { // 'pslld'
-                        insn->set_kind(x86_psll); insn->set_mnemonic("psll");
+                        insn->set_kind(x86_pslld);
                       break;}
                       case 'q': { // 'psllq'
-                        insn->set_kind(x86_psll); insn->set_mnemonic("psll");
+                        insn->set_kind(x86_psllq);
                       break;}
                       case 'w': { // 'psllw'
-                        insn->set_kind(x86_psll); insn->set_mnemonic("psll");
+                        insn->set_kind(x86_psllw);
                       break;}
                       default: break;
                     }
@@ -1673,13 +1659,13 @@ SgAsmx86Instruction* createx86Instruction(uint64_t address, const std::string& m
                   if (mnemonic[3] == 'l') { // 'psrl'
                     switch (mnemonic[4]) {
                       case 'd': { // 'psrld'
-                        insn->set_kind(x86_psrl); insn->set_mnemonic("psrl");
+                        insn->set_kind(x86_psrld);
                       break;}
                       case 'q': { // 'psrlq'
-                        insn->set_kind(x86_psrl); insn->set_mnemonic("psrl");
+                        insn->set_kind(x86_psrlq);
                       break;}
                       case 'w': { // 'psrlw'
-                        insn->set_kind(x86_psrl); insn->set_mnemonic("psrl");
+                        insn->set_kind(x86_psrlw);
                       break;}
                       default: break;
                     }
@@ -1689,13 +1675,13 @@ SgAsmx86Instruction* createx86Instruction(uint64_t address, const std::string& m
                   if (mnemonic[3] == 'b') { // 'psub'
                     switch (mnemonic[4]) {
                       case 'b': { // 'psubb'
-                        insn->set_kind(x86_psub); insn->set_mnemonic("psub");
+                        insn->set_kind(x86_psubb);
                       break;}
                       case 'd': { // 'psubd'
-                        insn->set_kind(x86_psub); insn->set_mnemonic("psub");
+                        insn->set_kind(x86_psubd);
                       break;}
                       case 'w': { // 'psubw'
-                        insn->set_kind(x86_psub); insn->set_mnemonic("psub");
+                        insn->set_kind(x86_psubw);
                       break;}
                       default: break;
                     }
@@ -2024,19 +2010,6 @@ SgAsmx86Instruction* createx86Instruction(uint64_t address, const std::string& m
                     }
                   break;}
                   default: break;
-                }
-              }
-            }
-          }
-        break;}
-        case 'd': { // 'd'
-          if (mnemonic[1] == 'a') { // 'da'
-            if (mnemonic[2] == 't') { // 'dat'
-              if (mnemonic[3] == 'a') { // 'data'
-                if (mnemonic[4] == '1') { // 'data1'
-                  if (mnemonic[5] == '6') { // 'data16'
-                    insn->set_kind(x86_data16);
-                  }
                 }
               }
             }
