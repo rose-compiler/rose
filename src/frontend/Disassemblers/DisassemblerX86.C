@@ -5166,10 +5166,10 @@ DisassemblerX86::decodeX87InstructionD9()
                 ROSE_ASSERT(false);
       }
     } else if (regField == 0 || regField == 1) { // FLD and FXCH on registers
-        modrm = makeModrmRegister(rmST);
+        modrm = makeModrmNormal(rmST, NULL);
         switch (regField) {
-            case 0: return makeInstruction(x86_fld, "fld", makeRegister(0, rmST), modrm);
-            case 1: return makeInstruction(x86_fxch, "fxch", makeRegister(0, rmST), modrm);
+            case 0: return makeInstruction(x86_fld, "fld", modrm);
+            case 1: return makeInstruction(x86_fxch, "fxch", modrm);
             default: ROSE_ASSERT(false);
         }
     } else {
