@@ -3061,7 +3061,7 @@ DisassemblerX86::decodeOpcode0F()
                     getModRegRM(rmMM, rmXMM, V2DOUBLET, V2DWORDT);
                     return makeInstruction(x86_cvttpd2pi, "cvttpd2pi", reg, modrm);
                 case mmF2:
-                    getModRegRM(effectiveOperandMode(), rmXMM, V2DOUBLET, effectiveOperandType());
+                    getModRegRM(effectiveOperandMode(), rmXMM, DOUBLET, effectiveOperandType());
                     return makeInstruction(x86_cvttsd2si, "cvttsd2si", reg, modrm);
             }
         }
