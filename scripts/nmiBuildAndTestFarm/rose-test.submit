@@ -27,4 +27,4 @@ remote_post_args = -taskhook=remote_post
 
 platforms = $(PLATFORMS)
 
-notify = heller9@llnl.gov
+notify = hamilton37@llnl.gov
