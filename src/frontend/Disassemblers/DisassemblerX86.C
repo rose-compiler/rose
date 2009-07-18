@@ -5418,7 +5418,7 @@ DisassemblerX86::decodeX87InstructionDF()
             default: ROSE_ASSERT(false);
         }
     } else {
-        modrm = makeModrmRegister(rmST);
+        modrm = makeModrmNormal(rmST, NULL);
         switch (regField) {
             case 0: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdf", this);
             case 1: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdf", this);
