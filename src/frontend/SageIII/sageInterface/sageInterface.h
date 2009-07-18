@@ -80,8 +80,11 @@ extern int gensym_counter;
 // tps : 28 Oct 2008 - support for finding the main interpretation
  SgAsmInterpretation* getMainInterpretation(SgAsmFile* file);
 
- // Get the value of a disassembled constant
- uint64_t getAsmConstant(SgAsmValueExpression* e);
+//! Get the unsigned value of a disassembled constant.
+uint64_t getAsmConstant(SgAsmValueExpression* e);
+
+//! Get the signed value of a disassembled constant.
+int64_t getAsmSignedConstant(SgAsmValueExpression *e);
 
 //! Function to add "C" style comment to statement.
  void addMessageStatement( SgStatement* stmt, std::string message );

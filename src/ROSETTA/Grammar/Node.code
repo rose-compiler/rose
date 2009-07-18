@@ -91,6 +91,31 @@ class ExtentMap : public std::map<rose_addr_t,rose_addr_t> {
 		static char category(const ExtentPair &a, const ExtentPair &b);
 };
 
+/** Settings that control how the lowest-level SgAsmExecutableFileFormat::hexdump function behaves. */
+struct HexdumpFormat {
+    HexdumpFormat()
+        : prefix(NULL), width(16), colsize(8), addr_fmt(NULL), multiline(false),
+          show_numeric(true), numeric_fmt(NULL), pad_numeric(true),
+          show_chars(true), pad_chars(false)
+        {}
+    /* General settings */
+    const char *prefix;         /**< Characters to emit after internal linefeeds. */
+    size_t width;               /**< Bytes per line of output (default 16). */
+    size_t colsize;             /**< Bytes per column group (default 8). */
+    const char *addr_fmt;       /**< Printf format for addresses (default "0x%08llx:"). */
+    bool multiline;             /**< Emit prefix at beginning and line feed at end of output. */
+
+    /* Settings for numeric output of bytes */
+    bool show_numeric;		/**< Show numeric format of bytes (default true). */
+    const char *numeric_fmt;    /**< Printf format for bytes (default " %02x"). */
+    bool pad_numeric;           /**< Pad numeric part of output with spaces for partial final line (default true). */
+
+    /* Settings for ASCII output of bytes */
+    bool show_chars;            /**< Show ASCII characters after bytes (default true). */
+    bool pad_chars;             /**< Pad character part of output with spaces for partial final line (default true). */
+};
+
+
 // DQ (8/21/2008): these are from the GenericExec.h (from before we used Robb's work in the new IR nodes).
 #define NELMTS(X)       (sizeof(X)/sizeof((X)[0]))      /* number of elements in a static-sized array */
 #define DUMP_FIELD_WIDTH        64                      /* min columns to use for member names in dump() functions */
