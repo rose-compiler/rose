@@ -5301,14 +5301,14 @@ DisassemblerX86::decodeX87InstructionDC()
         }
     } else { // Two-operand register forms
         switch (regField & 7) {
-            case 0: return makeInstruction(x86_fadd, "fadd",   modrm, makeRegister(0, rmST));
-            case 1: return makeInstruction(x86_fmul, "fmul",   modrm, makeRegister(0, rmST));
+            case 0: return makeInstruction(x86_fadd,  "fadd",  modrm, makeRegister(0, rmST));
+            case 1: return makeInstruction(x86_fmul,  "fmul",  modrm, makeRegister(0, rmST));
             case 2: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdc", this);
             case 3: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdc", this);
-            case 4: return makeInstruction(x86_fsub, "fsub",   modrm, makeRegister(0, rmST));
-            case 5: return makeInstruction(x86_fsubr, "fsubr", modrm, makeRegister(0, rmST));
-            case 6: return makeInstruction(x86_fdiv, "fdiv",   modrm, makeRegister(0, rmST));
-            case 7: return makeInstruction(x86_fdivr, "fdivr", modrm, makeRegister(0, rmST));
+            case 4: return makeInstruction(x86_fsubr, "fsubr", modrm, makeRegister(0, rmST));
+            case 5: return makeInstruction(x86_fsub,  "fsub",  modrm, makeRegister(0, rmST));
+            case 6: return makeInstruction(x86_fdivr, "fdivr", modrm, makeRegister(0, rmST));
+            case 7: return makeInstruction(x86_fdiv,  "fdiv",  modrm, makeRegister(0, rmST));
             default: ROSE_ASSERT(false);
         }
     }
