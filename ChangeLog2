@@ -1,3 +1,108 @@
+2009-07-18 01:23  hamilton37
+
+	* [r6607] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: RTED: Improvements to
+	  array bounds checking.
+	  
+	  We now pass more array bounds checking tests, such as c_E_1_1_b.
+	  
+	  * Array ref ancestors are now scanned to determine if the array
+	  ref is a read,
+	  write or both.
+	  
+	  * RoseArrayRef calls now pass address and size of the expression,
+	  rather than
+	  the array's name, e.g. &( array[ ix ]), sizeof( array[ ix ]).
+	  
+	  * RoseCreateArray now calls createMemory passing in address/size,
+	  rather than
+	  trying to calculate the size from the dimensions.
+	  
+	  * allocation_deallocation_errors were added to check-local, since
+	  they pass.
+
+2009-07-18 00:13  hamilton37
+
+	* [r6606]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/rose-build.submit,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/rose-test.submit: NMI:
+	  Changed notification email from Thomas's to my own.
+
+2009-07-18 00:11  hamilton37
+
+	* [r6605]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_fc_8/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_rhap_5/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_ubuntu_5.10/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_ubuntu_5.10/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/env.scp,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/glue.pl,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/rose-build.submit,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/submit.sh: NMI: Improved
+	  suppoort for java configurations.
+	  
+	  glue.pl now properly sets up LD_LIBRARY_PATH for java, and tests
+	  have a
+	  mechanism to pass JAVA_HOME as an environment variable to
+	  glue.pl. This is done
+	  by submit.sh, which creates env.pl, a file that glue.pl requires.
+	  JAVA_HOME can
+	  then be set in a build_configuration options file.
+	  
+	  There still isn't a working configuration, although
+	  x86_rhap_5/default is pretty
+	  close (configure and make pass, and make check gets far, but
+	  fails in the
+	  fortran compile tests).
+
+2009-07-17 23:23  hamilton37
+
+	* [r6604] /trunk/ROSE/docs/Rose/developersAppendix.tex: Trivial
+	  fixes.
+
+2009-07-17 23:21  hamilton37
+
+	* [r6603] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedSymbols.cpp,
+	  /trunk/ROSE/projects/RTED/RtedSymbols.h,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_prolog.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/extract-expected-error.sed: RTED: Now
+	  we pass all the allocation_deallocation_errors tests.
+	  
+	  * calls to realloc are now tracked.
+	  
+	  * rtedclose now checks source position at the end of main (i.e.
+	  the line with
+	  the closing brace). This gives us an expected error line for
+	  memory leaks.
+	  
+	  * expected error line extraction now handles cases where the
+	  expected error
+	  line is "at the end," as in memory leaks cases.
+	  
+	  * main functions ending in return statements are now handled
+	  properly.
+	  Previously the call to rtedclose would end up before the return
+	  statement,
+	  thus not checking the return expression. Now the return statement
+	  is split
+	  up and the call to rtedclose properly placed.
+
+2009-07-17 23:05  bauer25
+
+	* [r6601] /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp: RTED
+	  small fix
+
 2009-07-17 22:34  bauer25
 
 	* [r6600]
