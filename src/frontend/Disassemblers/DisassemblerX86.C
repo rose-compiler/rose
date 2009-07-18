@@ -663,7 +663,7 @@ DisassemblerX86::decodeModrmMemory()
                     if (sibBaseField == 4)
                         defaultSeg = x86_segreg_ss;
                 }
-                if (sibIndexField == 4) {
+                if (sibIndexField == 4 && !rexX) {
                     addressExpr = sibBase;
                 } else if (actualScale == 1) {
                     addressExpr = SageBuilderAsm::makeAdd(sibBase, makeOperandRegisterFull(rexX, sibIndexField));
