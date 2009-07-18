@@ -5264,7 +5264,7 @@ DisassemblerX86::decodeX87InstructionDB()
             default: ROSE_ASSERT(false);
         }
     } else if (regField <= 3 || regField == 5 || regField == 6) { // FCMOV{NB,NE,NBE,NU}, FUCOMI, FCOMI
-        modrm = makeModrmRegister(rmST);
+        modrm = makeModrmNormal(rmST, NULL);
         switch (regField) {
             case 0: return makeInstruction(x86_fcmovnb, "fcmovnb", makeRegister(0, rmST), modrm);
             case 1: return makeInstruction(x86_fcmovne, "fcmovne", makeRegister(0, rmST), modrm);
