@@ -1,3 +1,148 @@
+2009-07-18 17:30  matzke
+
+	* [r6621]
+	  /trunk/ROSE/src/frontend/Disassemblers/IntelAssemblyBuilder:
+	  Added a few more comments in IntelAssemblyBuilder
+
+2009-07-18 17:18  matzke
+
+	* [r6620] /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Node.code,
+	  /trunk/ROSE/src/ROSETTA/src/binaryInstruction.C,
+	  /trunk/ROSE/src/ROSETTA/src/buildStorageClasses.C,
+	  /trunk/ROSE/src/frontend/BinaryDisassembly/RoseBin_instruction_table_x86,
+	  /trunk/ROSE/src/frontend/BinaryDisassembly/instructionDispatch.cpp,
+	  /trunk/ROSE/src/frontend/BinaryDisassembly/x86InstructionEnum.h,
+	  /trunk/ROSE/src/frontend/BinaryDisassembly/x86InstructionProperties.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/Assembler.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/Assembler.h,
+	  /trunk/ROSE/src/frontend/Disassemblers/AssemblerX86.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/AssemblerX86.h,
+	  /trunk/ROSE/src/frontend/Disassemblers/AssemblerX86Init.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/AssemblerX86Init.h,
+	  /trunk/ROSE/src/frontend/Disassemblers/Disassembler.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/Disassembler.h,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerArm.h,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerPowerpc.h,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerX86.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerX86.h,
+	  /trunk/ROSE/src/frontend/Disassemblers/ExtraInstructions.txt,
+	  /trunk/ROSE/src/frontend/Disassemblers/IntelAssemblyBuilder,
+	  /trunk/ROSE/src/frontend/Disassemblers/Makefile.am,
+	  /trunk/ROSE/src/frontend/Disassemblers/x86-InstructionSetReference-AM.pdf,
+	  /trunk/ROSE/src/frontend/Disassemblers/x86-InstructionSetReference-NZ.pdf,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecGeneric.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface_asm.C,
+	  /trunk/ROSE/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_DataFlowAbstract.cpp,
+	  /trunk/ROSE/src/rose.h,
+	  /trunk/ROSE/tests/roseTests/binaryTests/disassemble.C,
+	  /trunk/ROSE/tests/roseTests/binaryTests/test_disassemble.ans:
+	  Added an X86 Assembler
+	  
+	  This work is not complete yet, but the assembler is able to
+	  correctly
+	  reassemble all the executables in my 64-bit /bin directory.
+	  
+	  Top-level assembly class is "Assembler" with subclasses for each
+	  architecture dependency (same layout as for the disassembler).
+	  
+	  The x86 assembler is rule-driven and the rule table is populated
+	  by a
+	  script in the src/frontend/Disassemblers directory which reads
+	  the Intel
+	  Instruction Set Reference PDF documentation and generates
+	  AssemblerX86Init.[Ch].
+	  
+	  The X86InstructionEnum (list of each "kind" of x86 instruction)
+	  is now
+	  machine generated and cross referenced to the Intel Instruction
+	  Set
+	  Reference. There's also a to_str() function that returns the
+	  string
+	  representation of the enumerated constants.
+	  
+	  Also enhanced the SgAsmExecutableFileFormat::hexdump methods by
+	  making
+	  their output more flexible. The cut-and-pasted version for
+	  printing
+	  instructions can now be removed.
+
+2009-07-18 17:14  matzke
+
+	* [r6619] /trunk/ROSE/src/frontend/Disassemblers/DisassemblerX86.C:
+	  Fixed x86 disassembler bug for CVTTSD2SI
+	  
+	  The second operand should have been a 64-bit double floating
+	  point
+	  rather than a vector of two such values.
+
+2009-07-18 17:14  matzke
+
+	* [r6618] /trunk/ROSE/src/frontend/Disassemblers/DisassemblerX86.C:
+	  Fixed x86 disassembler bugs for FSUB/FSUBR and FDIV/FDIVR
+	  
+	  The 0xdc opcode, 2-register instructions were messed up: they
+	  were using
+	  wrong mnemonics and kinds.
+
+2009-07-18 17:14  matzke
+
+	* [r6617] /trunk/ROSE/src/frontend/Disassemblers/DisassemblerX86.C:
+	  Fixed x86 disassembler bugs for FCMOV{NB,NE,BE,NU}, FUCOMI, FCOMI
+	  
+	  The 0xdb opcode versions of these instructions obtained the
+	  second
+	  argument, ST(i), from the ModR/M "reg" field rather than the "rm"
+	  field.
+	  The reg field for these instructions contains an opcode
+	  extension.
+
+2009-07-18 17:14  matzke
+
+	* [r6616] /trunk/ROSE/src/frontend/Disassemblers/DisassemblerX86.C:
+	  Fixed x86 disassembler bug for FLD and FXCH
+	  
+	  The d9 opcode versions of FLD and FXCH had the wrong number of
+	  operands
+	  according to the Intel Instruction Set Reference,
+	  and the ST(i) operand was decoded from the wrong ModR/M field
+	  (should
+	  have been from the "rm" field, not the "reg" field -- the "reg"
+	  always
+	  has a constant value for these instructions).
+
+2009-07-18 17:14  matzke
+
+	* [r6615] /trunk/ROSE/src/frontend/Disassemblers/DisassemblerX86.C:
+	  Fixed x86 disassembler bug for FUCOMIP
+	  
+	  The disassembly for FUCOMIP was incorrect--it took the ST(i)
+	  register
+	  from the ModR/M.reg field rather than the rm field. The reg field
+	  always
+	  has the value 5 for this instruction.
+
+2009-07-18 17:14  matzke
+
+	* [r6614] /trunk/ROSE/src/frontend/Disassemblers/DisassemblerX86.C:
+	  Fixed x86 disassembler bug for REX.X with SIB index==4
+	  
+	  The special handling for SIB.index==4 should only happen when
+	  REX.X is
+	  zero since REX.X provides and extra bit for SIB.index, changing
+	  the 0x4
+	  to an 0xC (0xC is register r12).
+	  
+	  This bug manifested itself in the incorrect disassembly of
+	  instructions
+	  like the following:
+	  
+	  4a 8d 44 23 ff: lea rax, [rbx + r12 - 1]
+	  
+	  which was incorrectly disassembled having the second operand
+	  "[rbx - 1]".
+
 2009-07-18 01:23  hamilton37
 
 	* [r6607] /trunk/ROSE/projects/RTED/Makefile.am,
