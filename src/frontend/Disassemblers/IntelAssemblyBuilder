@@ -3,7 +3,7 @@
 # Purpose: Reads the Intel "Instruction Set Reference" PDF documentation and produces C++ code for initializing the ROSE x86
 # assembler.  The names of the PDF files are given on the command line; C++ output is generated on stdout.  A header file
 # will also be generated if the "--header=FILENAME" switch is supplied on the command-line. The pdftotext program must be in
-# the $PATH.
+# the $PATH.  The inputs can also be text files (see ExtraInstructions.txt in this directory for an example).
 #
 use strict;
 my $verbose = 1; # true causes generated file to contain the actual tables from documentation
@@ -162,6 +162,8 @@ sub table_cont {
   return 1;
 }
 
+# Fix mistakes in the Intel documentation and make some adjustments for ROSE. $row refers to a parsed row of a table from an
+# Intel PDF file.
 sub fixup_row {
   my($row) = @_;
 
@@ -214,7 +216,7 @@ sub fixup_row {
 
   # There are two instructions with the mnemonic MOVSD: opcode F2 0F 10 (or F2 0F 11) which is an SSE instruction to move
   # a scalar double-precision floating-point value from xmm2/m64 to xmm1 register, and opcode A5 which moves a dword from address
-  # DS:(E)SI to ES:(E)DI or from address (R|E)SI to (R|E)DI.  Rose calls the former x86_movsd and the latter x86_movsd_sse.
+  # DS:(E)SI to ES:(E)DI or from address (R|E)SI to (R|E)DI.  Rose calls the former x86_movsd_sse and the latter x86_movsd.
   $row->{kind} .= "_sse" if $row->{mnemonic} eq 'movsd' && @{$row->{operands}}>0;
 
   # The reference manual doesn't have separate mnemonics for near vs. far calls and jumps since the distinction can be made
@@ -264,6 +266,7 @@ sub emit_code {
   print $prefix, "define(defn);\n";
 }
 
+# Generate the AssemblerX86::to_str() class method for converting an enumeration constant to a string.
 sub emit_to_str {
   my %enum;
   $enum{$_->{kind}} = $_->{location} for @defns;
@@ -280,6 +283,7 @@ $cases
 EOF
 }
 
+# Generate the warning comment placed at the top and bottom of each generated file.
 sub emit_warning {
   my($fh) = @_;
   print $fh <<EOF;
@@ -322,6 +326,8 @@ EOF
   close HDR;
 }
 
+# Process a line from the input file, looking for page numbers and fixing a variety of textual problems prior to lexical
+# analysis. Takes a string as input and returns the fixed-up string.
 sub cleanup {
   local($_) = @_;
   #print STDERR $_; # DEBUGGING
@@ -363,6 +369,7 @@ sub cleanup {
   return $_;
 }
 
+# Returns true if the name file appears to be a PDF file.
 sub is_pdf {
   my($filename) = @_;
   open F, "<", $filename or die "$0: cannot open $filename: $!\n";
@@ -425,7 +432,7 @@ for my $file (@ARGV) {
   print "    //", "-" x 114, "\n\n";
 
 
-  # Look for and process each instruction definition table
+  # Look for and process each instruction definition table. $state can be 'before' (outside a table) or 'table' (inside a table).
   my($state,$row) = ('before');
   while (<DOC>) {
     $_ = cleanup $_;
@@ -450,7 +457,7 @@ for my $file (@ARGV) {
       next unless /\S/;
       my $newrow = table_row $_;
       if (ref $newrow) {
-        $newrow->{mnemonic} ||= $row->{mnemonic};
+        $newrow->{mnemonic} ||= $row->{mnemonic}; # naively handles "(no mnemonic)" cases; see also &fixup_row
         emit_code $row;
         $row = $newrow;
         print "    // $_\n" if $verbose;
