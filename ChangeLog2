@@ -1,3 +1,25 @@
+2009-07-20 12:39  matzke
+
+	* [r6626] /trunk/ROSE/src/frontend/Disassemblers/AssemblerX86.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/Disassembler.C: Fixed a
+	  compiler error and warning
+
+2009-07-20 12:39  matzke
+
+	* [r6625] /trunk/ROSE/scripts/rosegit/bin/rosegit-functions.sh,
+	  /trunk/ROSE/scripts/rosegit/bin/rosegit-mail-commits,
+	  /trunk/ROSE/scripts/rosegit/bin/rosegit-svncommit: Some code
+	  reorganization in rosegit scripts
+	  
+	  Mailing of commit messages has bee split off from
+	  rosegit-svncommit and
+	  into rosegit-mail-commits. This was necessary because if a
+	  rosegit-svncommit fails due to a dropped network connection then
+	  the
+	  emails might not be sent. Now its possible to send the emails
+	  whenever
+	  we like.
+
 2009-07-18 17:30  matzke
 
 	* [r6621]
