@@ -49,7 +49,9 @@ echo ""
 echo "Rose Project Management."
 echo "*******************************************************************************************"
 
-aclocal -I ./config -I ./acmacros -I /usr/share/aclocal || : exit 1
+# DJH (20 July 2009): Some macros may be installed in non-standard locations
+# (e.g. libxml's on NMI build machines)
+aclocal -I ./config -I ./acmacros -I /usr/share/aclocal $ACLOCAL_INCLUDES || : exit 1
 
 # autoheader --warnings=obsolete,all || : exit 1
 autoheader || : exit 1

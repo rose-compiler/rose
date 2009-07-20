@@ -62,6 +62,7 @@ export _NMI_SUBMITDIR=$PWD
 touch env.pl
 echo "#!/usr/bin/env perl" > env.pl
 echo '$ENV{JAVA_HOME} = "'${JAVA_HOME}'";' >> env.pl
+echo '$ENV{ACLOCAL_INCLUDES} = "'${ACLOCAL_INCLUDES}'";' >> env.pl
 
 
 
