@@ -167,6 +167,7 @@ make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-U
 	cp -f $(srcdir)/rose.html ROSE_WebPages/rose.html
 	cp -f $(srcdir)/rose.html ROSE_WebPages/index.html
 	cp -f $(srcdir)/projects.html ROSE_WebPages/projects.html
+	cp -f $(srcdir)/news.html ROSE_WebPages/news.html
 	cp -f $(srcdir)/regressionTest.html ROSE_WebPages/regressionTest.html
 	cp -f $(COMPASS_MANUAL) ROSE_WebPages/
 #	cp -r $(top_srcdir)/ROSE_ResearchPapers ROSE_WebPages/ROSE_ResearchPapers

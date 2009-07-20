@@ -3,6 +3,7 @@
         <tr>
           <td width="221" class="Header3"><p>&nbsp;</p>
             <p class="style3"><a href="index.html" target="_blank">Home</a></p>
+            <p class="style3"><a href="news.html" target="_blank">News</a></p>
             <p class="style3"><a href="ROSE_InstallationInstructions.pdf" target="_blank">Installation Guide (pdf)</a></p>
             <p class="style3"><a href="ROSE_DeveloperInstructions.pdf" target="_blank">Developer's Guide (pdf)</a></p>
             <p class="style3"><a href="ROSE_UserManual/ROSE-@VERSION@-UserManual.pdf" target="_blank">ROSE User Manual (pdf)</p>
