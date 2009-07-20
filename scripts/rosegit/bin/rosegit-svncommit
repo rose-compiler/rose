@@ -37,7 +37,9 @@ repo="$1"; shift
 [ -d "$repo/.git" ] || rosegit_die "not a repository: $repo/.git"
 repo=$(cd $repo && pwd)
 namespace=$(rosegit_namespace)
-(cd $repo && git svn fetch) || rosegit_die "git svn fetch failed"
+if ( -n "$dry_run"); then
+    (cd $repo && git svn fetch) || rosegit_die "git svn fetch failed"
+fi
 trunk=$(cd $repo && git rev-parse trunk)
 [ -n "$trunk" ] || rosegit_die "no 'trunk' branch found"
 branch=$(rosegit_branch_of $repo HEAD)
@@ -59,39 +61,7 @@ fi
 # Send e-mail for each commit. Note that the "git svn dcommit" made some changes:
 #    1. The commits from the old trunk to the old HEAD have been rewritten and the old HEAD has been removed.
 #    2. The trunk has been fast forwarded to the new HEAD, but our $trunk still points to the original
-for commit in $(cd $repo && git rev-list --reverse HEAD ^$trunk); do
-    # Subject contains revision number and commit title (i.e., first line of commit message)
-    subject=$(cd $repo && git log --pretty=oneline $commit^..$commit |cut -c42-255)
-    svnid=$(cd $repo && git log $commit^..$commit |grep 'git-svn-id')
-    if [ -n "$svnid" ]; then
-	subject="rev $(echo $svnid |sed -r 's/.*@([0-9]+).*/\1/'): $subject"
-    else
-	subject="rev $(echo $commit |cut -c1-8): $subject"
-    fi
-
-    # Body contains commit header and diff stats. If the diff is small then it will be included also.
-    bodyfile=/tmp/rosegit.$$
-    (cd $repo && git log --stat=100 $commit^..$commit) >$bodyfile
-    nchanges=$(cd $repo && git diff $commit^..$commit |wc -l)
-    if [ $nchanges -lt 100 ]; then
-	echo >>$bodyfile
-	(cd $repo && git diff $commit^..$commit) >> $bodyfile
-    else
-	echo >>$bodyfile
-	echo "Large patch. See repository if you're interested." >>$bodyfile
-    fi
-
-    # Show the message or e-mail it.
-    if [ -n "$dry_run" ]; then
-	echo "Subject: $subject"
-	cat $bodyfile
-	echo; echo
-    else
-	echo "mailing $subject"
-	rosegit_mail COMMIT "$subject" $bodyfile
-    fi
-    rm -f $bodyfile
-done
+$mydir/rosegit-mail-commits $repo $(cd $repo && git rev-list --reverse HEAD ^$trunk)
 exit 0
 
 

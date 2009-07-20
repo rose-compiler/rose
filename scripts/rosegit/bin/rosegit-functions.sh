@@ -41,6 +41,34 @@ rosegit_branch_of () {
 rosegit_checkargs () {
     perl -e 'print STDERR join(" ",map {"[$_]"} @ARGV), "\n"' -- "$@"
 }
+
+# Generates an e-mail message on standard output for a commit. The first line is a subject and the rest is the body.
+# Arguments are the repositoroy and the commit ID.
+rosegit_commit_mail () {
+    local repo="$1";
+    local commit="$2";
+
+    # Subject contains revision number and commit title (i.e., first line of commit message)
+    local subject=$(cd $repo && git log --pretty=oneline $commit^..$commit |cut -c42-255)
+    local svnid=$(cd $repo && git log $commit^..$commit |grep 'git-svn-id')
+    if [ -n "$svnid" ]; then
+	subject="rev $(echo $svnid |sed -r 's/.*@([0-9]+).*/\1/'): $subject"
+    else
+	subject="rev $(echo $commit |cut -c1-8): $subject"
+    fi
+    echo "$subject"
+
+    # Body contains commit header and diff stats. If the diff is small then it will be included also.
+    (cd $repo && git log --stat=100 $commit^..$commit)
+    local nchanges=$(cd $repo && git diff $commit^..$commit |wc -l)
+    if [ $nchanges -lt 100 ]; then
+	echo
+	(cd $repo && git diff $commit^..$commit)
+    else
+	echo
+	echo "Large patch. See repository if you're interested."
+    fi
+}    
     
 # Dies with a message
 rosegit_die () {

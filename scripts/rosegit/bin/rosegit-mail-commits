@@ -1,0 +1,60 @@
+#!/bin/bash
+
+# Mails commit messages to ROSEGIT_MAIL_COMMIT_TO addresses for the commits specified as arguments. The first argument is the
+# location of the Git repository.
+
+mydir=${0%/*}
+source $mydir/rosegit-functions.sh || exit 1
+
+# Command-line switches
+config= dry_run=
+while [ "$#" -gt 0 ]; do
+    case "$1" in 
+	--config=*)    config="${1#--config=}"; shift ;;
+	--dry-run)     dry_run=yes; shift ;;
+	--namespace=*) ROSEGIT_NAMESPACE="${1#--namespace=}"; shift ;;
+	--)            shift; break ;;
+	-*)            rosegit_die "unknown switch: $1" ;;
+	*)             break ;;
+    esac
+done
+[ "$#" -gt 0 ] || rosegit_die "no repository specified"
+[ "$#" -gt 1 ] || rosegit_die "no commit IDs specified"
+repo="$1"; shift
+
+
+# Sanity checks and other initializations
+[ -d "$repo/.git" ] || rosegit_die "not a repository: $repo/.git"
+repo=$(cd $repo && pwd)
+namespace=$(rosegit_namespace)
+branch=$(rosegit_branch_of $repo HEAD)
+rosegit_load_config $repo $namespace $branch $config
+
+# Send (or print if --dry-run) e-mail for each commit
+for commit in $*; do
+    tmpfile=/tmp/rosegit.$$
+    rosegit_commit_mail $repo $commit >$tmpfile
+    subject=$(head -n1 $tmpfile)
+    if [ -n "$dry_run" ]; then
+	x=$(rosegit_mail_var COMMIT)
+	if [ -z "$x" -o "$x" = "no" -o "$x" = "false" ]; then
+	    echo "Mail for commits is turned off in this configuration! (See ROSEGIT_MAIL_COMMIT env. var.)"
+	else
+	    to="$(rosegit_mail_var COMMIT TO)"
+	    if [ -z "$to" ]; then
+		echo "Mail address list is empty in this configuration! (See ROSEGIT_MAIL_COMMIT_TO env. var.)"
+	    else
+		echo "would mail:"
+		echo "  Subject: $subject"
+		echo "  To:      $to"
+		echo
+		sed 's/^/  /' <$tmpfile
+		echo; echo
+	    fi
+	fi
+    else
+	echo "mailing $subject"
+	rosegit_mail COMMIT "$subject" $tmpfile
+    fi
+    rm -f $tmpfile
+done
