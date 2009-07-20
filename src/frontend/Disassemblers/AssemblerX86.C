@@ -307,7 +307,7 @@ AssemblerX86::InsnDefn::to_str() const
         strcat(buf, " + ");
     }
 
-    ROSE_ASSERT(opcode <= 0xffffffffff);
+    ROSE_ASSERT(opcode <= 0xffffffffffLLU);
     if (opcode > 0xffffffff)
         sprintf(buf+strlen(buf), "%02X", (unsigned)((opcode>>32) & 0xff));
     if (opcode > 0xffffff)
