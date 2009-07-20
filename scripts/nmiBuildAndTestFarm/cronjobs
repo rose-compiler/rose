@@ -8,30 +8,31 @@ PATH=/bin:/usr/bin:/nmi/bin
 ###############################################################################
 # Contribute here:
 ###############################################################################
-
-# run the minimal_default test every day at 1 am
+# run each config test every day at 1 am
 0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_deb_4.0/minimal_default >> update.log 2>> update.err
 0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_deb_5.0/minimal_default >> update.log 2>> update.err
 0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_fc_4/minimal_default >> update.log 2>> update.err
 0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_fc_5/minimal_default >> update.log 2>> update.err
+0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_fc_8/default >> update.log 2>> update.err
 0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_fc_8/minimal_default >> update.log 2>> update.err
 0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_fc_9/minimal_default >> update.log 2>> update.err
-0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_rhap_5/minimal_default >> update.log 2>> update.err
 0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_rhap_5.2/minimal_default >> update.log 2>> update.err
-0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_rhas_3/minimal_default >> update.log 2>> update.err
+0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_rhap_5/minimal_default >> update.log 2>> update.err
 0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_rhas_4/minimal_default >> update.log 2>> update.err
-0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_sles_8/minimal_default >> update.log 2>> update.err
 0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_sles_9/minimal_default >> update.log 2>> update.err
 0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_cent_4.2/minimal_default >> update.log 2>> update.err
 0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_deb_3.1/minimal_default >> update.log 2>> update.err
 0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_deb_4.0/minimal_default >> update.log 2>> update.err
 0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_deb_5.0/minimal_default >> update.log 2>> update.err
 0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_fc_5/minimal_default >> update.log 2>> update.err
+0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_rhap_5/default >> update.log 2>> update.err
 0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_rhap_5/minimal_default >> update.log 2>> update.err
 0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_rhas_3/minimal_default >> update.log 2>> update.err
 0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_rhas_4/minimal_default >> update.log 2>> update.err
-#0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_sl_4.4/minimal_default >> update.log 2>> update.err
+0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_sl_4.4/minimal_default >> update.log 2>> update.err
 0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_sles_9/minimal_default >> update.log 2>> update.err
 0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_slf_3/minimal_default >> update.log 2>> update.err
 0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_suse_10.0/minimal_default >> update.log 2>> update.err
-0 0 * * * cd ${CWD}; ./submit.sh build_configs/x86_suse_10.2/minimal_default >> update.log 2>> update.err
+0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_suse_10.2/minimal_default >> update.log 2>> update.err
+0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_ubuntu_5.10/default >> update.log 2>> update.err
+0 1 * * * cd ${CWD}; ./submit.sh build_configs/x86_ubuntu_5.10/minimal_default >> update.log 2>> update.err
