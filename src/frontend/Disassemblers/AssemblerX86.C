@@ -1115,6 +1115,87 @@ AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmx86Instruction *insn, size_
 }
 
 SgUnsignedCharList
+AssemblerX86::fixup_prefix_bytes(SgAsmx86Instruction *insn, SgUnsignedCharList source)
+{
+    /* What prefixes are present in the source encoding? */
+    std::set<uint8_t> present;
+    for (size_t i=0; i<source.size(); i++) {
+        switch (source[i]) {
+            case 0xf0: /* Group 1: LOCK */
+            case 0xf2: /*          REPNE/REPNZ */
+            case 0xf3: /*          REPE/REPZ */
+            case 0x2e: /* Group 2: CS segment override or Branch not taken */
+            case 0x36: /*          SS segment override */
+            case 0x3e: /*          DS segment override or Branch taken */
+            case 0x26: /*          ES segment override */
+            case 0x64: /*          FS segment override */
+            case 0x65: /*          GS segment override */
+            case 0x66: /* Group 3: Operand size override */
+            case 0x67: /* Group 4: Address size override */
+                present.insert(source[i]);
+                break;
+            default:
+                break;
+        }
+    }
+
+    /* Copy target prefixes into return value provided they're present in the source. */
+    std::set<uint8_t> pushed;
+    SgUnsignedCharList reordered;
+    const SgUnsignedCharList &target = insn->get_raw_bytes();
+    for (size_t i=0; i<target.size(); i++) {
+        switch (target[i]) {
+            case 0x2e:
+            case 0x3e:
+                /* Group 2 branch hints. These are apparently(?) ignored in 64-bit unless the instruction is a conditional
+                 * branch (Jcc), in which case they are branch taken/not-taken hints. Therefore we'll allow them as prefixes
+                 * for non-jump instructions even if they aren't present in the source. See
+                 * DisassemblerX86::makeSegmentRegister(). */
+                if (insn->get_baseSize()!=x86_insnsize_64 ||
+                    (insn->get_baseSize()==x86_insnsize_64 && x86InstructionIsConditionalBranch(insn))) {
+                    if (present.find(target[i])!=present.end()) {
+                        reordered.push_back(target[i]);
+                        pushed.insert(target[i]);
+                    }
+                } else {
+                    reordered.push_back(target[i]);
+                    pushed.insert(target[i]);
+                }
+                break;
+
+            case 0xf0:
+            case 0xf2:
+            case 0xf3:
+            case 0x36:
+            case 0x26:
+            case 0x64:
+            case 0x65:
+            case 0x66:
+            case 0x67:
+                /* Group 1, Group 2 segment overrides, Group 3, Group 4 */
+                if (present.find(target[i])!=present.end()) {
+                    reordered.push_back(target[i]);
+                    pushed.insert(target[i]);
+                }
+                break;
+
+            default:
+                /* Not a known prefix. Therefore this must the the end of the prefixes. */
+                goto done;
+        }
+    }
+done:
+
+    /* Append source prefixes to the return value if they're not present in the target. */
+    for (size_t i=0; i<source.size(); i++) {
+        if (pushed.find(source[i])==pushed.end())
+            reordered.push_back(source[i]);
+    }
+
+    return reordered;
+}
+
+SgUnsignedCharList
 AssemblerX86::assemble(SgAsmx86Instruction *insn, const InsnDefn *defn) 
 {
     SgUnsignedCharList retval;
@@ -1179,6 +1260,8 @@ AssemblerX86::assemble(SgAsmx86Instruction *insn, const InsnDefn *defn)
                 break;
         }
     }
+    if (get_encoding_type()==ET_MATCHES)
+        retval = fixup_prefix_bytes(insn, retval);
 
     /* REX byte if necessary (64-bit only), output delayed */
     if (defn->opcode_modifiers & od_rex_pres)
