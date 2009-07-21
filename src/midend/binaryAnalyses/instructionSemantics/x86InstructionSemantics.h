@@ -200,7 +200,7 @@ struct X86InstructionSemantics {
             case V_SgAsmWordValueExpression:
             case V_SgAsmDoubleWordValueExpression:
             case V_SgAsmQuadWordValueExpression: {
-                uint64_t val = SageInterface::getAsmConstant(isSgAsmValueExpression(e));
+                uint64_t val = SageInterface::getAsmSignedConstant(isSgAsmValueExpression(e));
                 return number<8>(val & 0xFFU);
             }
             default: {
@@ -251,7 +251,7 @@ struct X86InstructionSemantics {
             case V_SgAsmWordValueExpression:
             case V_SgAsmDoubleWordValueExpression:
             case V_SgAsmQuadWordValueExpression: {
-                uint64_t val = SageInterface::getAsmConstant(isSgAsmValueExpression(e));
+                uint64_t val = SageInterface::getAsmSignedConstant(isSgAsmValueExpression(e));
                 return number<16>(val & 0xFFFFU);
             }
             default: {
@@ -311,7 +311,7 @@ struct X86InstructionSemantics {
             case V_SgAsmWordValueExpression:
             case V_SgAsmDoubleWordValueExpression:
             case V_SgAsmQuadWordValueExpression: {
-                uint64_t val = SageInterface::getAsmConstant(isSgAsmValueExpression(e));
+                uint64_t val = SageInterface::getAsmSignedConstant(isSgAsmValueExpression(e));
                 return number<32>(val & 0xFFFFFFFFU);
             }
             default: {
