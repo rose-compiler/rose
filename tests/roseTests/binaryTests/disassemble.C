@@ -12,6 +12,7 @@ main(int argc, char *argv[])
     bool show_bad = false;
     bool do_debug = false;
     bool do_reassemble = false;
+    int exit_status = 0;
 
     char **new_argv = (char**)calloc(argc+2, sizeof(char*));
     int new_argc=0;
@@ -138,6 +139,7 @@ main(int argc, char *argv[])
                 }
             }
             if (assembly_failures>0) {
+                exit_status = 1;
                 printf("reassembly failed for %zu instruction%s.%s\n",
                        assembly_failures, 1==assembly_failures?"":"s", 
                        show_bad ? "" : " (use --show-bad to see details)");
@@ -148,5 +150,6 @@ main(int argc, char *argv[])
     }
 
     printf("running back end...\n");
-    return backend(project);
+    int ecode = backend(project);
+    return ecode>0 ? ecode : exit_status;
 }
