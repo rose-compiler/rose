@@ -640,10 +640,29 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
             throw Exception("m16&16, m16&32, m32&32, m16&64 not implemented", insn);
 
         case od_moffs8:
+            if (mre && isSgAsmTypeByte(mre->get_type()) && isSgAsmValueExpression(mre->get_address())) {
+                *imm_p = SageInterface::getAsmSignedConstant(isSgAsmValueExpression(mre->get_address()));
+                return true;
+            }
+            return false;
         case od_moffs16:
+            if (mre && isSgAsmTypeWord(mre->get_type()) && isSgAsmValueExpression(mre->get_address())) {
+                *imm_p = SageInterface::getAsmSignedConstant(isSgAsmValueExpression(mre->get_address()));
+                return true;
+            }
+            return false;
         case od_moffs32:
+            if (mre && isSgAsmTypeDoubleWord(mre->get_type()) && isSgAsmValueExpression(mre->get_address())) {
+                *imm_p = SageInterface::getAsmSignedConstant(isSgAsmValueExpression(mre->get_address()));
+                return true;
+            }
+            return false;
         case od_moffs64:
-            throw Exception("moffs8, moffs16, moffs32, moffs64 not implemented", insn);
+            if (mre && isSgAsmTypeQuadWord(mre->get_type()) && isSgAsmValueExpression(mre->get_address())) {
+                *imm_p = SageInterface::getAsmSignedConstant(isSgAsmValueExpression(mre->get_address()));
+                return true;
+            }
+            return false;
 
         case od_sreg:
             throw Exception("sreg not implemented", insn);
@@ -1364,6 +1383,32 @@ AssemblerX86::assemble(SgAsmx86Instruction *insn, const InsnDefn *defn)
         }
     }
 
+    /* Output moffs8, moffs16, moffs32, or moffs64 operand for MOV instruction. The value was loaded into "immediate" when we
+     * matched the instruction. */
+    if (defn->kind==x86_mov) {
+        for (size_t i=0; i<defn->operands.size(); i++) {
+            switch (defn->operands[i]) {
+                case od_moffs8:
+                case od_moffs16:
+                case od_moffs32:
+                case od_moffs64:
+                    retval.push_back(immediate & 0xff);
+                    retval.push_back((immediate>>8) & 0xff);
+                    retval.push_back((immediate>>16) & 0xff);
+                    retval.push_back((immediate>>24) & 0xff);
+                    if (x86_insnsize_64==insn->get_baseSize()) {
+                        retval.push_back((immediate>>32) & 0xff);
+                        retval.push_back((immediate>>40) & 0xff);
+                        retval.push_back((immediate>>48) & 0xff);
+                        retval.push_back((immediate>>56) & 0xff);
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
     /* Output immediate */
     if (defn->opcode_modifiers & od_i_mask) {
         switch (defn->opcode_modifiers & od_i_mask) {
@@ -1394,6 +1439,7 @@ AssemblerX86::assemble(SgAsmx86Instruction *insn, const InsnDefn *defn)
                 abort();
         }
     }
+
     return retval;
 }
 
