@@ -105,33 +105,44 @@ main(int argc, char *argv[])
 
         /* Test assembler */
         if (do_reassemble) {
+            size_t assembly_failures = 0;
+
+            /* Choose an encoding that must match the encoding used originally by the disassembler. If such an encoding cannot
+             * be found by the assembler then assembleOne() will throw an exception. */
             AssemblerX86 ass;
+            ass.set_encoding_type(Assembler::ET_MATCHES);
+            ass.set_honor_operand_types(true);
+
             std::vector<SgNode*> insns = NodeQuery::querySubTree(project, V_SgAsmInstruction);
             printf("reassembling to check consistency...\n");
             for (size_t j=0; j<insns.size(); j++) {
-                SgAsmInstruction *insn = isSgAsmInstruction(insns[j]);
-
-                /* Choose an encoding that must match the encoding used originally by the disassembler. If such an encoding cannot
-                 * be found by the assembler then assembleOne() will throw an exception. However, NOP instructions are used for
-                 * padding and therefore are not always encoded like other instructions (the assembler doesn't try every single
-                 * possible encoding), so we won't enforce a strict matching for them. */
-                if (x86_nop==isSgAsmx86Instruction(insn)->get_kind()) {
-                    ass.set_encoding_type(Assembler::ET_SHORTEST);
-                } else {
-                    ass.set_encoding_type(Assembler::ET_MATCHES);
-                }
-
                 /* Attempt to encode the instruction silently since most attempts succeed and we only want to produce
                  * diagnostics for failures.  If there's a failure, turn on diagnostics and do the same thing again. */
+                SgAsmInstruction *insn = isSgAsmInstruction(insns[j]);
                 SgUnsignedCharList bytes;
                 try {
                     bytes = ass.assembleOne(insn);
                 } catch(const Assembler::Exception &e) {
-                    fprintf(stderr, "assembly failed at 0x%08"PRIx64": %s\n", insn->get_address(), e.mesg.c_str());
-                    ass.set_debug(stderr);
-                    (void)ass.assembleOne(insn);
-                    ROSE_ASSERT(!"an exception should have been thrown!");
+                    assembly_failures++;
+                    if (show_bad) {
+                        fprintf(stderr, "assembly failed at 0x%08"PRIx64": %s\n", insn->get_address(), e.mesg.c_str());
+                        FILE *old_debug = ass.get_debug();
+                        ass.set_debug(stderr);
+                        try {
+                            (void)ass.assembleOne(insn);
+                        } catch(...) {
+                            /*void*/
+                        }
+                        ass.set_debug(old_debug);
+                    }
                 }
+            }
+            if (assembly_failures>0) {
+                printf("reassembly failed for %zu instruction%s.%s\n",
+                       assembly_failures, 1==assembly_failures?"":"s", 
+                       show_bad ? "" : " (use --show-bad to see details)");
+            } else {
+                printf("reassembly succeeded for all instructions.\n");
             }
         }
     }
