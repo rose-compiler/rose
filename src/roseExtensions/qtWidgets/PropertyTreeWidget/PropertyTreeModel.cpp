@@ -64,29 +64,19 @@ QStringList PropertyTreeModel::ItemTreeHeaderNode::sectionHeader() const
 
 
 
-
-
-
-
 // ------------------ PropValue Node  -----------------------------
 
 
-class PropertyTreeModel::ItemTreePropValueNode : public ItemTreeNode
+class PropertyTreeModel::ItemTreePropValueNode : public PropertyValueNode
 {
-	public:
-		ItemTreePropValueNode(const QString & property, const QVariant & value);
+    public:
+        ItemTreePropValueNode(const QString & p, const QVariant & v);
 
-		virtual QVariant data(int role, int column=0) const;
-
-		int getSectionId() const;
-
-	protected:
-		QString prop;
-		QVariant val;
+        virtual QVariant data(int role, int column=0) const;
+        int getSectionId() const;
 };
-
 PropertyTreeModel::ItemTreePropValueNode::ItemTreePropValueNode(const QString & p, const QVariant & v)
-	: prop(p), val(v)
+    : PropertyValueNode(p,v)
 {
 }
 
@@ -113,18 +103,12 @@ int PropertyTreeModel::ItemTreePropValueNode::getSectionId() const
 
 QVariant PropertyTreeModel::ItemTreePropValueNode::data(int role, int column) const
 {
-	switch(role)
-	{
-		case Qt::DisplayRole:
-			if      (column==0)  return prop;
-			else if (column==1)  return val;
-			else                 return QVariant();
-		case Qt::UserRole:
-			return getSectionId();
-		default:
-			return QVariant();
-	}
+    if(role == Qt::UserRole)
+        return getSectionId();
+    else
+        return PropertyValueNode::data(role,column);
 }
+
 
 
 
