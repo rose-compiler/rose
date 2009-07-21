@@ -565,34 +565,42 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
 
         case od_imm8:
             if (ve) {
-                if (honor_operand_types)
-                    return NULL!=isSgAsmByteValueExpression(ve);
                 *imm_p = SageInterface::getAsmSignedConstant(ve);
-                return *imm_p>=-128 && *imm_p<=127;
+                if (honor_operand_types) {
+                    return NULL!=isSgAsmByteValueExpression(ve);
+                } else {
+                    return *imm_p>=-128 && *imm_p<=127;
+                }
             }
             return false;
         case od_imm16:
             if (ve) {
-                if (honor_operand_types)
-                    return NULL!=isSgAsmWordValueExpression(ve);
                 *imm_p = SageInterface::getAsmSignedConstant(ve);
-                return *imm_p>=-32768 && *imm_p<=32767;
+                if (honor_operand_types) {
+                    return NULL!=isSgAsmWordValueExpression(ve);
+                } else {
+                    return *imm_p>=-32768 && *imm_p<=32767;
+                }
             }
             return false;
         case od_imm32:
             if (ve) {
-                if (honor_operand_types)
-                    return NULL!=isSgAsmDoubleWordValueExpression(ve);
                 *imm_p = SageInterface::getAsmSignedConstant(ve);
-                return *imm_p>=-2147483648L && *imm_p<=2147483647L;
+                if (honor_operand_types) {
+                    return NULL!=isSgAsmDoubleWordValueExpression(ve);
+                } else {
+                    return *imm_p>=-2147483648L && *imm_p<=2147483647L;
+                }
             }
             return false;
         case od_imm64:
             if (ve) {
-                if (honor_operand_types)
-                    return NULL!=isSgAsmQuadWordValueExpression(ve);
                 *imm_p = SageInterface::getAsmSignedConstant(ve);
-                return true;
+                if (honor_operand_types) {
+                    return NULL!=isSgAsmQuadWordValueExpression(ve);
+                } else {
+                    return true;
+                }
             }
             return false;
 

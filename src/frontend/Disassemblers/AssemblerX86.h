@@ -16,6 +16,20 @@ public:
     /** Assemble an instruction (SgAsmInstruction) into byte code. The new bytes are added to the end of the vector. */
     virtual SgUnsignedCharList assembleOne(SgAsmInstruction*);
     
+    /** Causes the assembler to honor (if true) or disregard (if false) the data types of operands when assembling. For
+     *  instance, when honoring operand data types, if an operand is of type SgAsmWordValueExpression then the assembler will
+     *  attempt to encode it as four bytes even if its value could be encoded as a single byte. */
+    void set_honor_operand_types(bool b) {
+        honor_operand_types = b;
+    }
+
+    /** Returns true if the assembler is honoring operand data types, or false if the assembler is using the smallest possible
+     *  encoding. */
+    bool get_honor_operand_types() const {
+        return honor_operand_types;
+    }
+
+
     /*========================================================================================================================
      * Members for defining instructions.
      *========================================================================================================================*/
@@ -382,7 +396,6 @@ private:
 
     /** Adjusts the "reg" field of the ModR/M byte and adjusts the REX prefix byte if necessary. */
     void build_modreg(const InsnDefn*, SgAsmx86Instruction*, size_t argno, uint8_t *modrm, uint8_t *rex) const;
-
 
     static InsnDictionary defns;                /** Instruction assembly definitions organized by X86InstructionKind. */
     bool honor_operand_types;                   /**< If true, operand types rather than values determine assembled form. */
