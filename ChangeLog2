@@ -1,3 +1,44 @@
+2009-07-20 23:07  hamilton37
+
+	* [r6635]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_deb_5.0/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_ubuntu_5.10/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/submit.sh: NMI: Added
+	  libxml dependency to debian 5.0.
+
+2009-07-20 21:17  hamilton37
+
+	* [r6633] /trunk/ROSE/build,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_ubuntu_5.10/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_ubuntu_5.10/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/cronjobs,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/submit.sh: NMI: Added
+	  support for configurations with non-standard m4 macro libraries.
+	  
+	  build will now pass the environment variable ACLOCAL_INCLUDES to
+	  aclocal. This
+	  should help the NMI ubuntu build, since the libxml m4 macros are
+	  not in
+	  /usr/share/aclocal.
+
+2009-07-20 20:59  liao6
+
+	* [r6632] /trunk/ROSE/docs/Rose/news.html,
+	  /trunk/ROSE/docs/Rose/projects.html,
+	  /trunk/ROSE/docs/Rose/regressionTest.html: Adjusted website's
+	  layout to be compatible with IE.
+
+2009-07-20 20:25  liao6
+
+	* [r6631] /trunk/ROSE/docs/Rose/news.html: minor layout adjustment
+
+2009-07-20 20:20  liao6
+
+	* [r6630] /trunk/ROSE/docs/Rose/Makefile.am,
+	  /trunk/ROSE/docs/Rose/leftmenu.html.in,
+	  /trunk/ROSE/docs/Rose/news.html, /trunk/ROSE/docs/Rose/rose.html:
+	  Added the news section.
+
 2009-07-20 12:39  matzke
 
 	* [r6626] /trunk/ROSE/src/frontend/Disassemblers/AssemblerX86.C,
