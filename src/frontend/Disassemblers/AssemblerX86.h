@@ -368,6 +368,13 @@ private:
      *  x86_retf). */
     static std::string to_str(X86InstructionKind);
 
+    /** Rewrites the prefix bytes stored in the original @p source to be in the same order (and same repeat counts) as stored
+     *  in the target, or p_raw_bytes data member of the instruction. The @p source should contain only prefix bytes from
+     *  groups 1 through 4 as listed in section 2.1.1 of the Intel Instruction Set Reference. It should not contain the REX
+     *  byte. Any source prefix that does not appear in the original instruction will be placed at the end of the result; any
+     *  prefix that appears in the original instruction but not the source will be dropped. */
+    SgUnsignedCharList fixup_prefix_bytes(SgAsmx86Instruction *insn, SgUnsignedCharList source);
+
     SgUnsignedCharList assemble(SgAsmx86Instruction *insn, const InsnDefn *defn);
 
     /** Attempts to match an instruction with a definition. An exception is thrown if the instruction and definition do not
