@@ -1,3 +1,151 @@
+2009-07-21 18:23  bauer25
+
+	* [r6648] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/MainWindow.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/MainWindow.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/MainWindow.ui,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/Makefile.am,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/MemoryTypeDisplay.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/MemoryTypeDisplay.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/RtedDebug.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/RtedDebug.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/TypeInfoDisplay.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/TypeInfoDisplay.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/VariablesTypeDisplay.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/VariablesTypeDisplay.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/icons,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/icons/allocation.gif,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/icons/application-exit.png,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/icons/array.gif,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/icons/arrow.png,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/icons/basic_type.gif,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/icons/document-open.png,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/icons/document-properties.png,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/icons/document-save-as.png,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/icons/document-save.png,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/icons/file.png,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/icons/scope.gif,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/icons/variable.gif,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/res.qrc,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/Makefile.am,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/TypeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/Util.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/Util.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/VariablesType.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C/panasTests/testCreateVar.c,
+	  /trunk/ROSE/projects/RoseQt/CMakeLists.txt,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/PropertyTreeWidget/PropertyTreeModel.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/TaskSystem/RoseFrontendTask.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/ItemTreeNode.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/ItemTreeNode.h,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/test8a.C,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/test8a.h,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/test8b.C:
+	  RTED Qt Debugger
+	  
+	  - Added support for new datastructures of RuntimeSytem to
+	  Qt-Debugger
+	  -> Allocated Memory
+	  -> Variables grouped by scope
+	  -> RsTypes
+	  
+	  - Changes on ItemTreeNode (new class PropertyValueNode)
+	  as convenience class
+	  
+	  - Added checkForSameChunk to RuntimeSystem
+	  
+	  
+	  - wrote Testcase for CallGraphAnalysis, which tests explicit call
+	  to base-class, function pointers
+	  and calls of constructor/destructor
+
+2009-07-21 18:18  matzke
+
+	* [r6646] /trunk/ROSE/src/frontend/Disassemblers/DisassemblerX86.C,
+	  /trunk/ROSE/tests/roseTests/binaryTests/test_disassemble.ans,
+	  /trunk/ROSE/tests/roseTests/binaryTests/test_findConstants.ans:
+	  x86 disassembler returns correct data types
+	  
+	  The data types for x86 instruction operands are consistent with
+	  the
+	  encoding of those operands in the machine instructions. For
+	  instance, if
+	  an instruction has an "imm8" (8-bit immediate) operand then the
+	  disassembler will create a SgAsmByteValueExpression rather than a
+	  SgAsmQuadWordValueExpression.
+	  
+	  Also updated test results since the string representation of an
+	  assembly
+	  instruction changed slightly due to the smaller values returned
+	  by the
+	  disassembler. For instance:
+	  add eax, 0xffffff80
+	  becomes
+	  add eax, 0x80
+	  if the 0x80 was stored as a single byte in the machine code.
+
+2009-07-21 18:18  matzke
+
+	* [r6645]
+	  /trunk/ROSE/src/midend/binaryAnalyses/instructionSemantics/x86InstructionSemantics.h:
+	  Bugfix in instruction semantics
+	  
+	  There were three places that didn't sign extend a value. This
+	  became
+	  apparent when the disassembler started returning values smaller
+	  than
+	  four bytes.
+
+2009-07-21 18:18  matzke
+
+	* [r6644] /trunk/ROSE/tests/roseTests/binaryTests/disassemble.C:
+	  Disassembler/assembler test keeps going after errors
+	  
+	  The disassemble program, when used with the --reassemble switch,
+	  no
+	  longer aborts when it encounters an instruction that doesn't
+	  assemble
+	  back to the identical bytes that were disassembled.
+	  
+	  The assembly failure will not produce diagnostics unless the
+	  --show-bad
+	  switch is also turned on. This matches the behaviour for
+	  disassembly.
+
+2009-07-21 18:18  matzke
+
+	* [r6643] /trunk/ROSE/src/frontend/Disassemblers/AssemblerX86.C:
+	  Implemented additional x86 addressing modes
+	  
+	  Implemented moffs8, moffs16, moffs32, and moffs64 which are used
+	  by some
+	  variants of the MOV instruction.
+
+2009-07-21 18:18  matzke
+
+	* [r6642] /trunk/ROSE/src/frontend/Disassemblers/AssemblerX86.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/AssemblerX86.h: Added
+	  accessor for AssemblerX86 data member
+	  
+	  Added accessors for AssemblerX86::honor_operand_types
+	  
+	  Fixed a problem with assembly of immeidate operands when
+	  honor_operand_types is set. It was always emitting zero bytes
+	  rather
+	  than the immediate value.
+
+2009-07-21 18:18  matzke
+
+	* [r6641] /trunk/ROSE/scripts/rosegit/bin/rosegit-svncommit: Fixed
+	  a syntax error in rosegit-svncommit
+
 2009-07-20 23:07  hamilton37
 
 	* [r6635]
