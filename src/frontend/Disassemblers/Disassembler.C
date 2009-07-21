@@ -245,7 +245,7 @@ Disassembler::disassembleBuffer(const unsigned char *buf, const RvaFileMap &map,
 
             /* Per-basicblock search methods */
             if (p_search & SEARCH_FOLLOWING)
-                search_following(&worklist, bb, bad);
+                search_following(&worklist, bb, map, bad);
             if (p_search & SEARCH_IMMEDIATE)
                 search_immediate(&worklist, bb, map, bad);
         }
@@ -265,7 +265,7 @@ Disassembler::disassembleBuffer(const unsigned char *buf, const RvaFileMap &map,
 
 /* Add basic block following address to work list. */
 void
-Disassembler::search_following(AddressSet *worklist, const InstructionMap &bb, const BadMap *bad)
+Disassembler::search_following(AddressSet *worklist, const InstructionMap &bb, const RvaFileMap &map, const BadMap *bad)
 {
     if (bb.size()==0)
         return;
@@ -273,7 +273,7 @@ Disassembler::search_following(AddressSet *worklist, const InstructionMap &bb, c
     --bbi;
     SgAsmInstruction *last_insn = bbi->second;
     rose_addr_t following_va = last_insn->get_address() + last_insn->get_raw_bytes().size();
-    if ((!bad || bad->find(following_va)==bad->end())) {
+    if (map.findVA(following_va) && (!bad || bad->find(following_va)==bad->end())) {
         if (p_debug && worklist->find(following_va)==worklist->end()) {
             rose_addr_t va = bb.begin()->first;
             fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: SEARCH_FOLLOWING added 0x%08"PRIx64"\n", va, following_va);
