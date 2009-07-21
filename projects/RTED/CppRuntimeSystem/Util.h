@@ -31,6 +31,8 @@ struct SourcePosition
     SourcePosition(const std::string & file);
     SourcePosition(const std::string & file,int line1, int line2);
 
+    std::string toString() const;
+
     std::string file;   ///< Absolute Path of source-file
     int line1;          ///< line number in sourcefile
     int line2;          ///< line number in transformed sourcefile

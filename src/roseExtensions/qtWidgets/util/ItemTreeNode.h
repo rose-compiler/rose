@@ -97,4 +97,30 @@ class ItemTreeNode
 };
 
 
+#include <QIcon>
+class PropertyValueNode : public ItemTreeNode
+{
+    public:
+        PropertyValueNode(const QString & property, const QVariant & value);
+
+         virtual QVariant data(int role, int column=0) const;
+         virtual QStringList sectionHeader() const;
+
+         virtual bool isFirstColumnSpanned () const    { return firstColumnSpanned; }
+         virtual void setFirstColumnSpanned(bool b)    { firstColumnSpanned = b;    }
+
+         const QIcon & getIcon() const { return icon; }
+         void setIcon(const QIcon & i) { icon=i; }
+
+     protected:
+         QString prop;
+         QVariant val;
+
+         QIcon icon;
+
+         bool firstColumnSpanned;
+};
+
+
+
 #endif

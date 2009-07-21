@@ -26,60 +26,8 @@ void RoseFrontendTask::start()
 
     std::stringstream output;
     
-    // ------------------------------------------------------------------------
-    // begin platform specific, only works on posix systems
-    int out_pipe[2];
-    int saved_stdout;
+    sgFile = SageBuilder::buildFile( file.toStdString(), std::string(), sgProject );
 
-    // saving stdout file descriptor
-    saved_stdout = dup( STDOUT_FILENO );
-
-    try
-    {
-        // creating pipe
-        if( pipe( out_pipe ) != 0 )
-        {
-            ROSE_ABORT( "unable to create pipe" );
-        }
-    }
-    catch( std::exception& e )
-    {
-        output << e.what();
-    }
-
-    // duplicating stdout
-    dup2( out_pipe[1], STDOUT_FILENO );
-    close( out_pipe[1] );
-
-    try
-    {
-        // creating file ... (platform independent, hopefully)
-        sgFile = SageBuilder::buildFile( file.toStdString(), std::string(), sgProject );
-    }
-    catch( std::exception& e )
-    {
-        output << e.what();
-    }
-    catch( ... )
-    {
-        output << "Unkown exception caught ...";
-    }
-
-    fflush( stdout );
-
-    typedef io::file_descriptor_source source;
-    source src( out_pipe[0] );
-    // end platform specific
-    // ------------------------------------------------------------------------
-
-    io::stream<source>  input( src );
-    input >> std::noskipws;
-    
-    std::istream_iterator<char> begin(input), end ;
-    std::copy( begin, end, std::ostream_iterator<char>(output) ) ;
-
-    // restoring stdout file descriptor
-    dup2( saved_stdout, STDOUT_FILENO );
 
     /*QFileInfo fileInfo(file);
     if(! fileInfo.exists())
@@ -103,7 +51,8 @@ void RoseFrontendTask::start()
     std::cout << std::endl;
 
     int nextErrorCode = 0;
-    sgFile = isSgFile(determineFileType(arglist, nextErrorCode, sgProject));
+    SgNode * temp = determineFileType(arglist, nextErrorCode, sgProject);
+    sgFile = isSgFile(temp);
     if(!sgFile)
     {
         qWarning() << "ProjectNode::addFile - failed to create SgFile";

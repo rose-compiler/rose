@@ -45,11 +45,14 @@ class RuntimeSystem
 
         /// call this function to inform the runtimesystem what the current position in sourcecode is
         /// this information is used for printing errors/warnings
-        void checkpoint(const SourcePosition & pos)  { curPos = pos; }
+        void checkpoint(const SourcePosition & pos) ;
 
         /// if testing mode is true exceptions are thrown when a violations occurs
         /// otherwise abort is called, default false
         void setTestingMode(bool b) { testingMode = b;}
+
+        /// Switches the Qt-Debugger on/off (works only if compiled with ROSE_WITH_ROSEQT)
+        void enableQtDebugger(bool b) { qtDebugger = b; }
 
 
         CStdLibManager * getCStdLibManager() { return &cstdlibManager; }
@@ -92,6 +95,9 @@ class RuntimeSystem
         ///               if it was changed via pointer arithmetic
         void registerPointerChange(const std::string & var, addr_type targetAddress, bool checks=false);
 
+        /// Checks if two addresses lie in the same "typed chunk"
+        /// equivalent to the check which is done on registerPointerChange
+        void checkForSameChunk(addr_type addr1, addr_type addr2, const std::string & type );
 
         /// Each variable is associated with a scope, use this function to create a new scope
         /// @param name  string description of scope, may be function name or "for-loop" ...
@@ -187,6 +193,14 @@ class RuntimeSystem
         void printStack    () const  { printStack    (*defaultOutStr); }
 
 
+        // Access to variables/scopes
+        int                 getScopeCount()     const;
+        const std::string & getScopeName(int i) const;
+
+        typedef std::vector<VariablesType*>::const_iterator VariableIter;
+        VariableIter variablesBegin(int scopeId) const;
+        VariableIter variablesEnd(int scopeId)   const;
+
     private:
 
         static RuntimeSystem* single;
@@ -222,6 +236,8 @@ class RuntimeSystem
         /// otherwise abort is called, default false
         bool testingMode;
 
+        /// Store if qt-debugger is enabled (called at every checkpoint)
+        bool qtDebugger;
 
         //  -----------  Members which are used for output -------------
 

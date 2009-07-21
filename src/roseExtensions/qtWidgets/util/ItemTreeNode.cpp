@@ -156,4 +156,31 @@ void ItemTreeNode::setNotifyModel(ItemTreeModel * m)
 
 
 
+// -------------------- Property Value Node -----------------------------------------
+
+PropertyValueNode::PropertyValueNode(const QString & p, const QVariant & v)
+    : prop(p),val(v),firstColumnSpanned(false)
+{
+}
+
+QVariant PropertyValueNode::data(int role, int column) const
+{
+    switch(role)
+    {
+        case Qt::DisplayRole:
+            if      (column==0)  return prop;
+            else if (column==1)  return val;
+        case Qt::DecorationRole:
+            if( column ==0)      return icon;
+        default:
+            return QVariant();
+    }
+    return QVariant();
+}
+
+QStringList PropertyValueNode::sectionHeader() const
+{
+    return QStringList() << QObject::tr("Property") << QObject::tr("Value");
+}
+
 

@@ -1,0 +1,16 @@
+<RCC>
+  <qresource prefix="/" >
+    <file>icons/allocation.gif</file>
+    <file>icons/application-exit.png</file>
+    <file>icons/array.gif</file>
+    <file>icons/basic_type.gif</file>
+    <file>icons/document-open.png</file>
+    <file>icons/document-properties.png</file>
+    <file>icons/document-save-as.png</file>
+    <file>icons/document-save.png</file>
+    <file>icons/file.png</file>
+    <file>icons/scope.gif</file>
+    <file>icons/arrow.png</file>
+    <file>icons/variable.gif</file>
+  </qresource>
+</RCC>

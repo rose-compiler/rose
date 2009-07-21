@@ -1,9 +1,11 @@
-
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 RuntimeSystemlibdir = $(libdir)
 RuntimeSystemlib_LTLIBRARIES = libCppRuntimeSystem.la
 
+SUBDIRS = DebuggerQt
 
+INCLUDES = .  $(ROSE_INCLUDES)
 
 libCppRuntimeSystem_la_SOURCES = CppRuntimeSystem.cpp \
                                  FileManager.cpp \
@@ -16,11 +18,23 @@ libCppRuntimeSystem_la_SOURCES = CppRuntimeSystem.cpp \
 
 
 
+if ROSE_WITH_ROSEQT
+        libCppRuntimeSystem_la_LIBADD = DebuggerQt/libDebuggerQt.la
+        libCppRuntimeSystem_la_CPPFLAGS = -DROSE_WITH_ROSEQT
+endif
+
 bin_PROGRAMS  = RuntimeSystemCppTest
 
 RuntimeSystemCppTest_SOURCES = test.cpp
-RuntimeSystemCppTest_LDADD   = libCppRuntimeSystem.la
+RuntimeSystemCppTest_LDADD   = libCppRuntimeSystem.la 
+
+
+
+#DebuggerQt/libDebuggerQt.la
 
 
 check-local:
 	./RuntimeSystemCppTest
+
+
+

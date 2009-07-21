@@ -530,6 +530,11 @@ void testPointerChanged()
         rs->registerPointerChange("p1_to_18",18);
 
 
+        //rs->enableQtDebugger(true);
+        //rs->checkpoint(SourcePosition());
+        //rs->enableQtDebugger(false);
+
+
         try{ rs->registerPointerChange("p1_to_10",18,true); }
         TEST_CATCH(RuntimeViolation::POINTER_CHANGED_MEMAREA )
 
@@ -902,6 +907,7 @@ void testTypeSystemDetectNested()
     mt->accessMemWithType(sizeof(A)+offsetof(A,a3),
                           ts->getTypeInfo("SgTypeDouble"));
 
+
     /*
     RsType * type1 = mt->getTypeAt(sizeof(A)+offsetof(B,arr),sizeof(A));
     RsType * type2 = mt->getTypeAt(sizeof(A)+offsetof(B,arr) + 5*sizeof(A)+1,sizeof(A));
@@ -981,7 +987,6 @@ int main(int argc, char ** argv)
         rs->setOutputFile("test_output.txt");
 
 
-
         testTypeSystemDetectNested();
         testTypeSystemMerge();
 
@@ -1030,6 +1035,8 @@ int main(int argc, char ** argv)
         out << "Unexpected Error: " << endl << e;
         exit( 1);
     }
+
+    int a [10];
 
     return 0;
 }

@@ -274,9 +274,7 @@ MemoryType::TiIterPair MemoryType::getOverlappingTypeInfos(addr_type from, addr_
 
 
 
-
-// extra print function because operator<< cannot be member-> no access to privates
-void MemoryType::print(ostream & os) const
+string MemoryType::getInitString() const
 {
     std::string init = "Part. initialized";
     bool allInit  = true;
@@ -296,10 +294,14 @@ void MemoryType::print(ostream & os) const
     if(noneInit)
         init = "Not initialized  ";
 
+    return init;
+}
 
-
+// extra print function because operator<< cannot be member-> no access to privates
+void MemoryType::print(ostream & os) const
+{
     os << "0x" << setfill('0')<< setw(6) << hex << startAddress
-       << " Size " << dec << size <<  "\t" << init << "\tAllocated at " << allocPos << endl ;
+       << " Size " << dec << size <<  "\t" << getInitString() << "\tAllocated at " << allocPos << endl ;
 
     if(pointerSet.size() > 0)
     {

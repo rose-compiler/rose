@@ -16,5 +16,5 @@ add_executable        ( roseQtDemo ${DEMO_CPP_FILES} ${DEMO_MOC_OUTPUT} ${DEMO_U
 target_link_libraries ( roseQtDemo rose_widgets  )
 target_link_libraries ( roseQtDemo xml2 )
 target_link_libraries ( roseQtDemo rose rosehpct )
-target_link_libraries ( roseQtDemo ${QT_LIBRARIES} )
+target_link_libraries ( roseQtDemo ${QT_LIBRARIES} ${Boost_LIBRARIES}  )
 target_link_libraries ( roseQtDemo elf dwarf )

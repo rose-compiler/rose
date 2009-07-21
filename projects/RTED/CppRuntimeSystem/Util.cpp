@@ -29,13 +29,19 @@ SourcePosition::SourcePosition(const std::string & _file,int _line1, int _line2)
 {}
 
 
-
+std::string SourcePosition::toString() const
+{
+    stringstream stream;
+    stream << *this;
+    return stream.str();
+}
 
 ostream& operator<< (ostream &os, const SourcePosition & m)
 {
     os << m.file << "(" << m.line1 << "," << m.line2 << ")";
     return os;
 }
+
 
 
 

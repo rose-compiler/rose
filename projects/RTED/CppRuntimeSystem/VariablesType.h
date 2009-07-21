@@ -46,6 +46,10 @@ class VariablesType
         void setPointerTarget(addr_type newAddr,
                               bool memChunkChangeCheck);
 
+        addr_type getPointerTarget() const { return pointerTarget; }
+
+        RsType * getPointerType() const    { return pointerType;   }
+
         /// Is called by memory-chunk when it gets freed
         void invalidatePointer();
 

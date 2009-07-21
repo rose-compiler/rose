@@ -1,9 +1,16 @@
 #include "CppRuntimeSystem.h"
 #include <cassert>
-
 #include <sstream>
 #include <iomanip>
+
+#ifdef ROSE_WITH_ROSEQT
+#include "DebuggerQt/RtedDebug.h"
+#endif
+
+
 using namespace std;
+
+
 
 
 RuntimeSystem * RuntimeSystem::single = NULL;
@@ -17,11 +24,20 @@ RuntimeSystem* RuntimeSystem::instance()
 }
 
 RuntimeSystem::RuntimeSystem()
-    : defaultOutStr(&cout),testingMode(false)
+    : defaultOutStr(&cout),testingMode(false),qtDebugger(false)
 {
     beginScope("Globals");
 }
 
+void RuntimeSystem::checkpoint(const SourcePosition & pos)
+{
+    curPos = pos;
+
+#ifdef ROSE_WITH_ROSEQT
+    if(qtDebugger)
+        RtedDebug::instance()->startGui();
+#endif
+}
 
 
 // --------------------- Mem Checking ---------------------------------
@@ -85,6 +101,40 @@ void RuntimeSystem::endScope()
     assert(stack.size() == lastScope.stackIndex);
 }
 
+int   RuntimeSystem::getScopeCount()  const
+{
+    return scope.size();
+}
+
+const std::string & RuntimeSystem::getScopeName(int i) const
+{
+    assert(i >=0 );
+    assert(i < scope.size());
+    return scope[i].name;
+}
+
+RuntimeSystem::VariableIter RuntimeSystem::variablesBegin(int i) const
+{
+    assert(i >=0 );
+    assert(i < scope.size());
+
+    return stack.begin() + scope[i].stackIndex;
+}
+
+RuntimeSystem::VariableIter RuntimeSystem::variablesEnd(int i) const
+{
+    assert(i >=0 );
+    assert(i < scope.size());
+
+    if(i-1 == scope.size())
+        return stack.end();
+    else
+        return stack.begin() + scope[i+1].stackIndex;
+}
+
+
+
+
 
 // --------------------- Stack Variables ---------------------------------
 
@@ -135,6 +185,49 @@ void RuntimeSystem::registerPointerChange(const string & varName, addr_type targ
     VariablesType * var = findVarByName(varName);
     assert(var); // create the variable first!
     var->setPointerTarget(targetAddress,checks);
+}
+
+
+void RuntimeSystem::checkForSameChunk(addr_type addr1, addr_type addr2, const string & type)
+{
+    size_t typeSize = typeSystem.getTypeInfo(type)->getByteSize();
+    MemoryType * mem1 = memManager.findContainingMem(addr1,typeSize);
+    MemoryType * mem2 = memManager.findContainingMem(addr2,typeSize);
+
+
+    if(mem1 != mem2 || !mem1 || !mem2)
+    {
+        stringstream ss;
+        ss << "Pointer changed memory block from 0x" << hex << addr1 << " to "
+                                                     << hex << addr2 << endl;
+
+        if(!mem1)  ss << "No allocation found at addr1" << endl;
+        if(!mem2)  ss << "No allocation found at addr2" << endl;
+
+        ss << "Where the two memory regions are not the same" << endl;
+        violationHandler(RuntimeViolation::INVALID_PTR_ASSIGN,ss.str());
+        return;
+    }
+
+    int off1 = addr1 - mem1->getAddress();
+    int off2 = addr2 - mem2->getAddress();
+    string chunk1 = mem1->getTypeAt(off1,typeSize);
+    string chunk2 = mem2->getTypeAt(off2,typeSize);
+
+    if(chunk1 == chunk2 && mem1 ==mem2)
+        return; //pointer just changed offset in an array
+
+
+    stringstream ss;
+    ss << "A pointer changed the memory area (array or variable) which it points to (may be an error)" << endl << endl;
+
+    ss << "Region1:  " <<  chunk1 << " at offset " << off1 << " in this Mem-Region:" <<  endl
+                          << *mem1 << endl;
+
+    ss << "Region2: " << chunk2 << " at offset " << off2 << " in this Mem-Region:" <<  endl
+                          << *mem2 << endl;
+
+    violationHandler(RuntimeViolation::POINTER_CHANGED_MEMAREA,ss.str());
 }
 
 VariablesType * RuntimeSystem::findVarByName(const string & name)

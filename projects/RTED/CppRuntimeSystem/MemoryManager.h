@@ -23,6 +23,13 @@ class RsType;
 class MemoryType
 {
     public:
+
+        typedef std::map<addr_type, RsType*> TypeInfoMap;
+        typedef TypeInfoMap::iterator TiIter;
+
+
+
+
         MemoryType(addr_type addr, size_t size, const SourcePosition & pos, bool onStack);
         MemoryType(addr_type addr, size_t size, bool onStack,
                    const std::string & file, int line1, int line2);
@@ -53,6 +60,10 @@ class MemoryType
 
         /// Initialized a part of memory
         void  initialize   (int offsetFrom, int offsetTo) ;
+
+        /// Returns "Initialized" "Not initialized" or "Partially initialized"
+        /// only for display purposes
+        std::string getInitString() const;
 
 
         /// Notifies the Chunk that a pointer points to it
@@ -98,6 +109,13 @@ class MemoryType
         std::string getTypeAt(addr_type offset, size_t size);
 
 
+        const TypeInfoMap & getTypeInfoMap() const { return typeInfo; }
+
+        /// Returns a set with pointer-variables which point into this allocation
+        typedef std::set<VariablesType*> VariableSet;
+        const VariableSet & getPointerSet() const  { return pointerSet; }
+
+
         /// If set to true a violation is reported if the last pointer
         /// which pointed to a mem region changes (i.e. mem region not reachable any more)
         /// is not necessary an error, f.e. p=malloc(3); p+=1000; p-=1000; free(p)
@@ -109,9 +127,6 @@ class MemoryType
 
 
     private:
-
-        typedef std::map<addr_type, RsType*> TypeInfoMap;
-        typedef TypeInfoMap::iterator TiIter;
         typedef std::pair<TiIter,TiIter> TiIterPair;
 
 
@@ -132,7 +147,7 @@ class MemoryType
         TypeInfoMap typeInfo;
 
         /// Set of pointers which currently point into this memory chunk
-        std::set<VariablesType*> pointerSet;
+        VariableSet pointerSet;
 
         static bool checkMemWithoutPointer;
 
@@ -189,13 +204,15 @@ class MemoryManager
         MemoryType * findOverlappingMem(addr_type addr, size_t size);
 
 
+        typedef std::set<MemoryType*,PointerCmpFunc<MemoryType> > MemoryTypeSet;
+        const  MemoryTypeSet & getAllocationSet() const { return mem; }
+
     private:
         /// Queries the map for a potential matching memory area
         /// finds the memory region with next lower or equal address
         MemoryType * findPossibleMemMatch(addr_type addr);
 
 
-        typedef std::set<MemoryType*,PointerCmpFunc<MemoryType> > MemoryTypeSet;
         MemoryTypeSet mem;
 
 

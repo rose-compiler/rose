@@ -187,7 +187,7 @@ RtedTransformation::buildVariableCreateCallStmt( SgInitializedName* initName, Sg
     appendExpression(arg_list, initBool);
     appendExpression(arg_list, fileOpen);
 
-    SgExpression*  className = NULL;
+    SgExpression*  className = buildString("");
     SgClassType* sgClass = isSgClassType(initName->get_type());
     if (sgClass) {
     	///fixme : add className

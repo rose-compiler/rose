@@ -37,8 +37,12 @@ class TypeSystem
 
         void print(std::ostream & os) const;
 
-    protected:
         typedef std::set<RsType*,PointerCmpFunc<RsType> > TypeSet;
+        typedef TypeSet::const_iterator const_iterator;
+
+        const_iterator begin() const { return types.begin(); }
+        const_iterator end()   const { return types.end();   }
+    protected:
         TypeSet types;
 };
 
