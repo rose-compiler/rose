@@ -194,6 +194,16 @@ RoseToProlog::isUpper(const char c) {
   return (('A' <= c) && ('Z' >= c));
 }
 
+/** check whether we have seen the type before, and store it for future
+ * queries */
+bool
+RoseToProlog::typeWasDeclaredBefore(std::string type) {
+  /* std::set::insert returns a pair where the second component tells us
+   * whether the object actually needed to be inserted (i.e., was *not*
+   * present before) */
+  return !declaredTypes.insert(type).second;
+}
+
 /**
  * class: SgFunctionDeclaration
  * term: function_declaration_annotation(type,name)
@@ -300,7 +310,16 @@ RoseToProlog::getEnumTypeSpecific(SgType* mtype) {
   PrologCompTerm* t = new PrologCompTerm("enum_type");
   ROSE_ASSERT(t != NULL);
   /*add base type*/
-  t->addSubterm(traverseSingleNode(ctype->get_declaration()));	
+  string id = ctype->get_name().str();
+  if (id == "") {
+    /* nameless enum declarations can occur in typedefs */
+    SgTypedefDeclaration *td;
+    if (td = isSgTypedefDeclaration(ctype->get_declaration()->get_parent())) {
+      id = td->get_mangled_name().str();
+    }
+  }
+  ROSE_ASSERT(id != "" && id != "''");
+  t->addSubterm(new PrologAtom(id));
   return t;
 }
 
@@ -608,8 +627,9 @@ RoseToProlog::getValueExpSpecific(SgValueExp* astNode) {
     /* name of value*/
     t->addSubterm(new PrologAtom(n->get_name().getString()));
     /* name of declaration*/
-    t->addSubterm(traverseSingleNode(n->get_declaration()));
-		
+    SgEnumType *type = isSgEnumDeclaration(n->get_declaration())->get_type();
+    ROSE_ASSERT(type != NULL);
+    t->addSubterm(getEnumTypeSpecific(type));
   }
   /* float types */
   else if (SgFloatVal* n = dynamic_cast<SgFloatVal*>(astNode)) {
@@ -745,6 +765,8 @@ RoseToProlog::getClassDeclarationSpecific(SgClassDeclaration* cd) {
   /* add name and type*/
   t->addSubterm(new PrologAtom(cd->get_name().str()));
   t->addSubterm(getEnum(cd->get_class_type(), re.class_types));
+  PrologTerm *typet = getTypeSpecific(cd->get_type());
+  typeWasDeclaredBefore(typet->getRepresentation());
   t->addSubterm(getTypeSpecific(cd->get_type()));
   return t;
 }
@@ -858,12 +880,22 @@ PrologCompTerm*
 RoseToProlog::getEnumDeclarationSpecific(SgEnumDeclaration* d) {
   //get Enum name
   string ename = d->get_name().getString();
+  if (ename == "") {
+    /* nameless enum declarations can occur in typedefs */
+    SgTypedefDeclaration *td;
+    if (td = isSgTypedefDeclaration(d->get_parent())) {
+      ename = td->get_mangled_name().str();
+    }
+  }
+  ROSE_ASSERT(ename != "");
   //create term
   PrologCompTerm* t = new PrologCompTerm("enum_declaration_annotation");
   ROSE_ASSERT(t != NULL);
   t->addSubterm(new PrologAtom(ename));
   t->addSubterm(getDeclarationAttributes(d));
   t->addSubterm(new PrologInt(d->get_embedded()));
+  PrologTerm *typet = getTypeSpecific(d->get_type());
+  typeWasDeclaredBefore(typet->getRepresentation());
   return t;
 }
 
@@ -923,6 +955,35 @@ RoseToProlog::getVariableDeclarationSpecific(SgVariableDeclaration* d) {
   /* create annotation term*/
   PrologCompTerm* t = new PrologCompTerm("variable_declaration_specific");
   t->addSubterm(getDeclarationModifierSpecific(&(d->get_declarationModifier())));
+
+  /* add base type forward declaration */
+  SgNode *baseTypeDecl = NULL;
+  if (d->get_variableDeclarationContainsBaseTypeDefiningDeclaration()) {
+    baseTypeDecl = d->get_baseTypeDefiningDeclaration();
+  } else {
+    /* The complication is that in the AST, the type declaration member is
+     * only set if it is a type definition, not if it is a forward
+     * declaration. So we need to check whether the base type (possibly
+     * below layers of pointers) is a class type, and whether its first
+     * declaration appears to be hidden here in the variable declaration. */
+    SgClassType *ctype = isSgClassType(d->get_variables().front()
+                                       ->get_type()->findBaseType());
+    if (ctype) {
+      /* See if the type is declared in the scope where it belongs. If no,
+       * then the declaration is apparently inside this variable
+       * declaration, so we add it as a subterm. */
+      SgDeclarationStatement *cdecl = ctype->get_declaration();
+      SgSymbol *symbol = cdecl->get_symbol_from_symbol_table();
+      if (!typeWasDeclaredBefore(
+           getTypeSpecific(symbol->get_type())->getRepresentation())) {
+        baseTypeDecl = cdecl;
+      }
+    }
+  }
+  t->addSubterm(baseTypeDecl != NULL
+                  ? traverseSingleNode(baseTypeDecl)
+                  : new PrologAtom("null"));
+
   return t;
 }
 
@@ -1325,12 +1386,8 @@ RoseToProlog::getTypedefDeclarationSpecific(SgTypedefDeclaration* d) {
   t->addSubterm(new PrologAtom(d->get_name().getString()));
   /*get base type*/
   t->addSubterm(getTypeSpecific(d->get_base_type()));
-  /*get declaration*/
-  if(d->get_declaration() != NULL) {
-    t->addSubterm(traverseSingleNode(d->get_declaration()));
-  } else {
-    t->addSubterm(new PrologAtom("null"));
-  }
+  /* the base type declaration is no longer in the typedef annotation; it is
+   * now a child of the typedef declaration itself */
   return t;
 	
 }

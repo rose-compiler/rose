@@ -73,7 +73,8 @@ private:
   SgMemberFunctionDeclaration* createDummyMemberFunctionDeclaration(std::string s,int c_type); /* TODO */
   SgBitVector* createBitVector(PrologTerm*, std::map<std::string, int>);
   int createEnum(PrologTerm*, std::map<std::string, int>);
-  SgFunctionDeclaration* setFunctionDeclarationBody(SgNode*, SgNode*);
+  SgFunctionDeclaration* setFunctionDeclarationBody(SgFunctionDeclaration*, SgNode*);
+  SgClassDeclaration* setClassDeclarationBody(SgClassDeclaration*, SgNode*);
 
   SgLabelStatement* makeLabel(Sg_File_Info*, std::string);
   PrologInt* isPrologInt(PrologTerm*);
@@ -152,7 +153,7 @@ private:
   SgBasicBlock* createBasicBlock(Sg_File_Info*, std::deque<SgNode*>*);
   SgGlobal* createGlobal(Sg_File_Info*, std::deque<SgNode*>*);
   SgProject* createProject(Sg_File_Info*, std::deque<SgNode*>*);
-  SgVariableDeclaration* createVariableDeclaration(Sg_File_Info*, std::deque<SgNode*>*, PrologCompTerm*);
+  SgVariableDeclaration* createVariableDeclaration(Sg_File_Info*, std::deque<SgNode*>*, PrologCompTerm*, SgDeclarationStatement*);
   SgForInitStatement* createForInitStatement(Sg_File_Info*, std::deque<SgNode*>*);
   SgClassDefinition* createClassDefinition(Sg_File_Info*, std::deque<SgNode*>*, PrologCompTerm* t);
   SgCtorInitializerList* createCtorInitializerList(Sg_File_Info*, std::deque<SgNode*>*);

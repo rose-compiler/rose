@@ -69,10 +69,37 @@ public:
 
     if (SgVariableDeclaration *vardecl = isSgVariableDeclaration(n))
       setInitNameScopes(vardecl->get_variables(), vardecl->get_scope());
-    if (SgEnumDeclaration *edecl = isSgEnumDeclaration(n))
+    if (SgEnumDeclaration *edecl = isSgEnumDeclaration(n)) {
       setInitNameScopes(edecl->get_enumerators(), edecl->get_scope());
+    }
     if (SgFunctionParameterList *plist = isSgFunctionParameterList(n))
       setInitNameScopes(plist->get_args(), plist->get_scope());
+    if (SgClassDeclaration *cdecl = isSgClassDeclaration(n)) {
+      if (cdecl->get_scope() == NULL) {
+        cdecl->set_scope(scope);
+      }
+      SgClassDeclaration *fnd
+        = isSgClassDeclaration(cdecl->get_firstNondefiningDeclaration());
+      if (fnd != NULL && fnd->get_scope() == NULL) {
+        fnd->set_scope(cdecl->get_scope());
+      }
+    }
+    if (SgEnumDeclaration *edecl = isSgEnumDeclaration(n)) {
+      if (edecl->get_scope() == NULL) {
+        edecl->set_scope(scope);
+      }
+      SgEnumDeclaration *fnd
+        = isSgEnumDeclaration(edecl->get_firstNondefiningDeclaration());
+      if (fnd != NULL && fnd->get_scope() == NULL) {
+        fnd->set_scope(edecl->get_scope());
+      }
+    }
+    if (SgTypedefDeclaration *td = isSgTypedefDeclaration(n)) {
+      SgDeclarationStatement *d = td->get_baseTypeDefiningDeclaration();
+      if (d != NULL && d->get_scope() == NULL) {
+        d->set_scope(scope);
+      }
+    }
 
     if (SgInitializedName *iname = isSgInitializedName(n))
     {
@@ -90,6 +117,7 @@ public:
     // scopes is more easily achieved above. I think.
     // Parent
     //ROSE_ASSERT(n->get_parent() == attr.parent);
+#if 0
     for (SgNode* n1 = n; 
 	 isSgInitializedName(n) && 
 	   (!isSgFunctionParameterList(   n->get_parent()) &&
@@ -115,6 +143,7 @@ public:
       //std::cerr<<"Setting parent of "<<n->class_name()
       //         <<" to "<<n->get_parent()->class_name()<<std::endl;
     } 
+#endif
 
     if (isSgVariableDeclaration(n) && isSgForInitStatement(attr.parent))
       n->set_parent(attr.parent->get_parent());

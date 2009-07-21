@@ -21,6 +21,9 @@ public:
   PrologCompTerm* getFileInfo(Sg_File_Info*);
   static std::string prologize(std::string);
 private:
+  static PrologTerm* traverseSingleNode(SgNode*);
+  bool typeWasDeclaredBefore(std::string type);
+  std::set<std::string> declaredTypes;
   RoseEnums re;
   PrologCompTerm* getPreprocessingInfo(AttachedPreprocessingInfoType*);
   PrologCompTerm* getFunctionDeclarationSpecific(SgFunctionDeclaration*);
@@ -46,7 +49,6 @@ private:
   PrologCompTerm* getConditionalExpSpecific(SgConditionalExp*);
   PrologCompTerm* getEnumDeclarationSpecific(SgEnumDeclaration*);
   PrologCompTerm* getDeclarationAttributes(SgDeclarationStatement*);
-  PrologTerm* traverseSingleNode(SgNode*);
   PrologCompTerm* getDeleteExpSpecific(SgDeleteExp*);
   PrologCompTerm* getRefExpSpecific(SgRefExp*);
   PrologCompTerm* getVarArgSpecific(SgExpression*);

@@ -100,8 +100,8 @@ pragma_declaration ::=
     pragma_declaration(todo).
 
 typedef_declaration ::=
-    typedef_declaration(declaration_statement?, typedef_annotation,
-                        analysis_info, file_info).
+    typedef_declaration(declaration_statement? /* base type definition */,
+                        typedef_annotation, analysis_info, file_info).
 
 variable_declaration ::=
     variable_declaration([initialized_name], variable_declaration_specific,
@@ -304,6 +304,7 @@ class_definition_annotation ::=
 
 variable_declaration_specific ::=
     variable_declaration_specific(todo /* declaration modifier */,
+                                  declaration_statement? /* base type decl */,
                                   preprocessing_info).
 
 label_annotation ::=
@@ -328,7 +329,7 @@ var_ref_exp_annotation ::=
                            scope_name?, preprocessing_info).
 
 typedef_annotation ::=
-    typedef_annotation(name, type, declaration_statement?, preprocessing_info).
+    typedef_annotation(name, type, preprocessing_info).
 
 function_ref_exp_annotation ::=
     function_ref_exp_annotation(name, type, preprocessing_info).

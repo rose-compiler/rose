@@ -419,7 +419,21 @@ TermPrinter<DFI_STORE_TYPE>::listTerm(SgNode* astNode, SynthesizedAttributesList
   PrologList* l = new PrologList();
   SynthesizedAttributesList::reverse_iterator it;
   it = synList.rbegin();
-  while(it !=synList.rend()) {
+  SynthesizedAttributesList::reverse_iterator end;
+  end = synList.rend();
+
+  /* Special case for variable declarations: The first traversal successor
+   * may be a type declaration or definition. In the ROSE AST, it is an
+   * argument by itself, not one of the initialized names in the list. This
+   * is the only node type that is a mixture of "list node" and "fixed-arity
+   * node". In the Termite term, we will add this subterm in the variable
+   * declaration's annotation term (variable_declaration_specific). */
+  if (isSgVariableDeclaration(astNode)) {
+    /* skip the first element in the loop below */
+    --end;
+  }
+
+  while(it != end) {
     /* strip "null" Atoms */
     PrologAtom* atom = dynamic_cast<PrologAtom*>(*it);
     if (!(atom && (atom->getName() == "null")))
