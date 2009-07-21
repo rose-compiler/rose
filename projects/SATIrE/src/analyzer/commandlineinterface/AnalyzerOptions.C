@@ -38,6 +38,8 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo(""),_n
     "   -I<path>                 specify path for include files\n"
     "   --input-binary-ast=<FILENAME> read AST from binary file instead of a\n"
     "                            source file\n"
+    "   --input-termite-ast=<FILENAME> read AST from TERMITE term instead of\n"
+    "                            a source file\n"
     "   --verbatim-args          trailing arguments passed to front end verbatim\n"
     "\n"
     " General analysis options:\n"

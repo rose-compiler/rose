@@ -22,6 +22,8 @@ V0.?.? ? AP,...
     is empty (arity used to be broken).
   - Added preprocessing info nodes.
   - Integration of clang frontend from LLVM project.
+  - Analyzers can now take TERMITE files as input. (New option
+	--input-termite-ast=<FILE>)
   - New termite_lint utility checks for sanity of Termite terms.
 
 * Building SATIrE without PAG [GB]

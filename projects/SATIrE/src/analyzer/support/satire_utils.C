@@ -30,16 +30,24 @@ SgProject *createRoseAst(AnalyzerOptions *options)
     SgProject *astRoot;
 
     /* Run frontend or binary AST input mechanism, depending on options. */
-    if (!options->inputBinaryAst())
-    {
-        astRoot = frontend(options->getCommandLineNum(),
-                           options->getCommandLineCarray());
-    }
-    else
+    if (options->inputBinaryAst())
     {
         astRoot = AST_FILE_IO::readASTFromFile(
                            options->getInputBinaryAstFileName());
     }
+    else if (options->inputTermiteAst())
+    {
+        PrologToRose conv;
+	astRoot = dynamic_cast<SgProject*>
+	  (conv.toRose(options->getInputTermiteAstFileName().c_str()));
+	ROSE_ASSERT(astRoot);
+    }
+    else 
+    {
+        astRoot = frontend(options->getCommandLineNum(),
+                           options->getCommandLineCarray());
+    }
+
 
     /* Perform sanity checks on the AST if requested. */
     if (options->checkRoseAst())

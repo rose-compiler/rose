@@ -85,6 +85,9 @@ BOOL_ATTR(outputBinaryAst, Off)
 STRING_ATTR(InputBinaryAstFileName, "")
 STRING_ATTR(OutputBinaryAstFileName, "")
 
+BOOL_ATTR(inputTermiteAst, Off)
+STRING_ATTR(InputTermiteAstFileName, "")
+
 BOOL_ATTR(runPointsToAnalysis, Off)
 BOOL_ATTR(resolveFuncPtrCalls, Off)
 BOOL_ATTR(outputPointsToGraph, Off)

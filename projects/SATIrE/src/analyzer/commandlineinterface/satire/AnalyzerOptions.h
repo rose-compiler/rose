@@ -1,7 +1,5 @@
-// Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl, Viktor Pavlu
+// Copyright 2005-2009 Markus Schordan, Gergo Barany, Adrian Prantl, Viktor Pavlu
 // $Id: AnalyzerOptions.h,v 1.7 2008-06-02 11:26:01 gergo Exp $
-
-// Author: Markus Schordan, 2006.
 
 #ifndef ANALYZEROPTIONS_H
 #define ANALYZEROPTIONS_H

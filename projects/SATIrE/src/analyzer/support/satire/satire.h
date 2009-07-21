@@ -10,6 +10,7 @@
 
 #include "satire_rose.h"
 #include "termite.h"
+#include "TermToRose.h"
 
 #include "satire_file_utils.h"
 

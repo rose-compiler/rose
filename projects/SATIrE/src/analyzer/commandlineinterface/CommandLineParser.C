@@ -41,7 +41,9 @@ void CommandLineParser::parse(AnalyzerOptions *cl, int argc, char**argv) {
   if(cl->optionsError()) {
     exitError(cl->getOptionsErrorMessage());
    }
-  if (cl->getNumberOfInputFiles() == 0 && !cl->inputBinaryAst()) {
+  if (cl->getNumberOfInputFiles() == 0 &&
+      !cl->inputBinaryAst() && 
+      !cl->inputTermiteAst()) {
     exitError("no input files to analyze");
   } else if (cl->getNumberOfInputFiles() != 0 && cl->inputBinaryAst()) {
     exitError("both source and binary input files");
@@ -233,6 +235,17 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     }
     cl->outputBinaryAstOn();
     cl->setOutputBinaryAstFileName(strdup(argv[i]+prefixLength));
+  } else if (optionMatchPrefix(argv[i], "--input-termite-ast=")) {
+    if (cl->inputTermiteAst()) {
+      cl->setOptionsErrorMessage("--input-termite-ast specified more than once");
+      return 1;
+    }
+    if (cl->inputBinaryAst()) {
+      cl->setOptionsErrorMessage("--input-termite-ast and --input-binary-ast specified at the same time");
+      return 1;
+    }
+    cl->inputTermiteAstOn();
+    cl->setInputTermiteAstFileName(strdup(argv[i]+prefixLength));
   } else if (optionMatchPrefix(argv[i], "--gnu:")) {
     /* process gnu options: pass through without '--gnu:' */
     cl->appendCommandLine(string(argv[i]+6));
