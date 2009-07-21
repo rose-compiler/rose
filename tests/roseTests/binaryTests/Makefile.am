@@ -131,7 +131,7 @@ demo_disassemble: disassemble demo_findConstants
 #
 # Each passing test creates a *.passed file so that a subsequent "make" doesn't need to rerun the test.
 ###############################################################################################################################
-TEST_PASSED_TARGETS=$(patsubst %,test_%.passed,$(noinst_PROGRAMS))
+TEST_PASSED_TARGETS=$(patsubst %,test_%.passed,$(noinst_PROGRAMS)) test_assembler.passed
 
 test_execFormatsTest.passed: execFormatsTest
 	: $< not currently tested
@@ -215,6 +215,13 @@ test_disassemble.passed: disassemble
 	@if diff -u {$(srcdir),.}/test_disassemble.ans; then :; else echo "Answer differs from expected"; exit 1; fi
 	@touch $@
 
+# disassemble will exit non-zero if the assembly doesn't result in an encoding identical to the original
+# We're using the buffer2.bin from projects/BinQ for now because it's 64-bit; the one in our own srcdir is 32-bit and
+# the assembler isn't completely working yet for 32-bit. [RPM 2009-07-21]
+test_assembler.passed: disassemble
+	$(VALGRIND) ./disassemble --reassemble --show-bad $(top_srcdir)/projects/BinQ/buffer2.bin
+	@touch $@
+
 ###############################################################################################################################
 # Miscellaneous....
 ###############################################################################################################################
@@ -225,7 +232,8 @@ MOSTLYCLEANFILES = $(TEST_PASSED_TARGETS) test_testElfSchulz-{1,2}.passed \
 	arm-poweroff.{dump,new,new.dump,new.new} rose_arm-ctrlaltdel.{s,new.s} rose_arm-poweroff.{s,new.s} \
 	rose_schulz-sample{1,2}-p.so.s rose_schulz-sample{1,2}.so.new.s rose_schulz-sample{1,2}.so.s \
 	schulz-sample{1,2}-p.so.{dump,new} schulz-sample{1,2}.so.{dump,new,new.dump,new.new} test_findConstants.ans \
-	test_disassemble.ans i686-test1.O0.bin.{dump,new} rose_i686-test1.O0.bin.s
+	test_disassemble.ans i686-test1.O0.bin.{dump,new} rose_i686-test1.O0.bin.s \
+	buffer2.bin.{dump,new} rose_buffer2.bin.s
 
 ###############################################################################################################################
 # The older part of this makefile...
@@ -288,6 +296,7 @@ else
 # I have left the rule in place so that we can have it availalbe for testing (but it only 
 # works if BinQ is built which is not the default configuration).
 # check-local: runTest test1 $(TEST_PASSED_TARGETS) test_so_file
+# Caution: runTest generates the same output files as some $(TEST_PASSED_TARGETS) [RPM 2009-07-21]
 check-local: runTest test1 $(TEST_PASSED_TARGETS)
 	./runTest $(srcdir)/buffer2.bin > output
 	@echo "*********************************************************************"
