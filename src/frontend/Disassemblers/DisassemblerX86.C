@@ -683,17 +683,19 @@ DisassemblerX86::decodeModrmMemory()
                 case 1: {
                     size_t bit_offset = 8*insnbufat;
                     uint8_t offset = getByte();
-                    addressExpr = SageBuilderAsm::makeAdd(addressExpr,
-                                                          makeAddrSizeValue(IntegerOps::signExtend<8, 64>((uint64_t)offset), 
-                                                                            bit_offset, 8));
+                    SgAsmByteValueExpression *offsetExpr = SageBuilderAsm::makeByteValue(offset);
+                    offsetExpr->set_bit_offset(bit_offset);
+                    offsetExpr->set_bit_size(8);
+                    addressExpr = SageBuilderAsm::makeAdd(addressExpr, offsetExpr);
                     break;
                 }
                 case 2: {
                     size_t bit_offset = 8*insnbufat;
                     uint32_t offset = getDWord();
-                    addressExpr = SageBuilderAsm::makeAdd(addressExpr,
-                                                          makeAddrSizeValue(IntegerOps::signExtend<32, 64>((uint64_t)offset), 
-                                                                            bit_offset, 32));
+                    SgAsmDoubleWordValueExpression *offsetExpr = SageBuilderAsm::makeDWordValue(offset);
+                    offsetExpr->set_bit_offset(bit_offset);
+                    offsetExpr->set_bit_size(32);
+                    addressExpr = SageBuilderAsm::makeAdd(addressExpr, offsetExpr);
                     break;
                 }
                 default:
@@ -845,19 +847,7 @@ DisassemblerX86::getImmByteAsIv()
     SgAsmValueExpression *retval = NULL;
     size_t bit_offset = 8*insnbufat;
     uint8_t val = getByte();
-    switch (effectiveOperandSize()) {
-        case x86_insnsize_16:
-            retval = SageBuilderAsm::makeWordValue(IntegerOps::signExtend<8, 16>((uint64_t)val));
-            break;
-        case x86_insnsize_32:
-            retval = SageBuilderAsm::makeDWordValue(IntegerOps::signExtend<8, 32>((uint64_t)val));
-            break;
-        case x86_insnsize_64:
-            retval = SageBuilderAsm::makeQWordValue(IntegerOps::signExtend<8, 64>((uint64_t)val));
-            break;
-        default:
-            ROSE_ASSERT(false);
-    }
+    retval = SageBuilderAsm::makeByteValue(val);
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(8);
     return retval;
@@ -872,12 +862,7 @@ DisassemblerX86::getImmIzAsIv()
         case x86_insnsize_32:
             return getImmDWord();
         case x86_insnsize_64: {
-            size_t bit_offset = 8*insnbufat;
-            uint32_t val = getDWord();
-            SgAsmValueExpression *retval = SageBuilderAsm::makeQWordValue(IntegerOps::signExtend<32, 64>((uint64_t)val));
-            retval->set_bit_offset(bit_offset);
-            retval->set_bit_size(32);
-            return retval;
+            return getImmDWord();
         }
         default:
             ROSE_ASSERT(false);

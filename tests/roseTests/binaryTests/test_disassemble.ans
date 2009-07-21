@@ -4104,9 +4104,9 @@ Output the disassembled instructions:
 0x08048035 00 00             |..    | :: 0x8048035:add    BYTE PTR ds:[eax], al
 0x08048037 00 34 00          |.4.   | :: 0x8048037:add    BYTE PTR ds:[eax + eax], dh
 0x0804803a 00 00             |..    | :: 0x804803a:add    BYTE PTR ds:[eax], al
-0x0804803c 34 80             |4.    | :: 0x804803c:xor    al, 0xffffff80
+0x0804803c 34 80             |4.    | :: 0x804803c:xor    al, 0x80
 0x0804803e 04 08             |..    | :: 0x804803e:add    al, 0x8
-0x08048040 34 80             |4.    | :: 0x8048040:xor    al, 0xffffff80
+0x08048040 34 80             |4.    | :: 0x8048040:xor    al, 0x80
 0x08048042 04 08             |..    | :: 0x8048042:add    al, 0x8
 0x08048044 e0 00             |..    | :: 0x8048044:loopnz 0x8048046
 /* Block 0x8048046 */
@@ -4121,9 +4121,9 @@ Output the disassembled instructions:
 0x08048055 00 00             |..    | :: 0x8048055:add    BYTE PTR ds:[eax], al
 0x08048057 00 14 01          |...   | :: 0x8048057:add    BYTE PTR ds:[ecx + eax], dl
 0x0804805a 00 00             |..    | :: 0x804805a:add    BYTE PTR ds:[eax], al
-0x0804805c 14 81             |..    | :: 0x804805c:adc    al, 0xffffff81
+0x0804805c 14 81             |..    | :: 0x804805c:adc    al, 0x81
 0x0804805e 04 08             |..    | :: 0x804805e:add    al, 0x8
-0x08048060 14 81             |..    | :: 0x8048060:adc    al, 0xffffff81
+0x08048060 14 81             |..    | :: 0x8048060:adc    al, 0x81
 0x08048062 04 08             |..    | :: 0x8048062:add    al, 0x8
 0x08048064 13 00             |..    | :: 0x8048064:adc    eax, DWORD PTR ds:[eax]
 0x08048066 00 00             |..    | :: 0x8048066:add    BYTE PTR ds:[eax], al
@@ -4511,7 +4511,7 @@ Output the disassembled instructions:
 0x08048340 31 ed             |1.    | :: 0x8048340:xor    ebp, ebp
 0x08048342 5e                |^     | :: 0x8048342:pop    esi
 0x08048343 89 e1             |..    | :: 0x8048343:mov    ecx, esp
-0x08048345 83 e4 f0          |...   | :: 0x8048345:and    esp, 0xfffffff0
+0x08048345 83 e4 f0          |...   | :: 0x8048345:and    esp, 0xf0
 0x08048348 50                |P     | :: 0x8048348:push   eax
 0x08048349 54                |T     | :: 0x8048349:push   esp
 0x0804834a 52                |R     | :: 0x804834a:push   edx
@@ -4654,7 +4654,7 @@ Output the disassembled instructions:
 0x0804845b 55                |U     | :: 0x804845b:push   ebp
 0x0804845c 89 e5             |..    | :: 0x804845c:mov    ebp, esp
 0x0804845e 83 ec 08          |...   | :: 0x804845e:sub    esp, 0x8
-0x08048461 83 e4 f0          |...   | :: 0x8048461:and    esp, 0xfffffff0
+0x08048461 83 e4 f0          |...   | :: 0x8048461:and    esp, 0xf0
 0x08048464 b8 00 00 00 00    |..... | :: 0x8048464:mov    eax, 0x0
 0x08048469 29 c4             |).    | :: 0x8048469:sub    esp, eax
 0x0804846b c7 44 24 04 2f 84 |.D$./.|
@@ -4695,7 +4695,7 @@ Output the disassembled instructions:
 0x080484b0 8d 93 20 ff ff ff |.. ...| :: 0x80484b0:lea    edx, [ebx + 0xffffff20]
 0x080484b6 29 d0             |).    | :: 0x80484b6:sub    eax, edx
 0x080484b8 c1 f8 02          |...   | :: 0x80484b8:sar    eax, 0x2
-0x080484bb 89 45 f0          |.E.   | :: 0x80484bb:mov    DWORD PTR ss:[ebp + 0xfffffff0], eax
+0x080484bb 89 45 f0          |.E.   | :: 0x80484bb:mov    DWORD PTR ss:[ebp + 0xf0], eax
 0x080484be 75 10             |u.    | :: 0x80484be:jne    0x80484d0
 /* Block 0x80484c0 */
 0x080484c0 83 c4 0c          |...   | :: 0x80484c0:add    esp, 0xc
@@ -4718,7 +4718,7 @@ Output the disassembled instructions:
 /* Block 0x80484e2 */
 0x080484e2 47                |G     | :: 0x80484e2:inc    edi
 0x080484e3 83 c6 04          |...   | :: 0x80484e3:add    esi, 0x4
-0x080484e6 3b 7d f0          |;}.   | :: 0x80484e6:cmp    edi, DWORD PTR ss:[ebp + 0xfffffff0]
+0x080484e6 3b 7d f0          |;}.   | :: 0x80484e6:cmp    edi, DWORD PTR ss:[ebp + 0xf0]
 0x080484e9 72 f5             |r.    | :: 0x80484e9:jb     0x80484e0
 /* Block 0x80484eb */
 0x080484eb 83 c4 0c          |...   | :: 0x80484eb:add    esp, 0xc
@@ -4747,9 +4747,9 @@ Output the disassembled instructions:
 0x0804851b 8d 93 20 ff ff ff |.. ...| :: 0x804851b:lea    edx, [ebx + 0xffffff20]
 0x08048521 29 d0             |).    | :: 0x8048521:sub    eax, edx
 0x08048523 c1 f8 02          |...   | :: 0x8048523:sar    eax, 0x2
-0x08048526 89 45 f0          |.E.   | :: 0x8048526:mov    DWORD PTR ss:[ebp + 0xfffffff0], eax
+0x08048526 89 45 f0          |.E.   | :: 0x8048526:mov    DWORD PTR ss:[ebp + 0xf0], eax
 0x08048529 48                |H     | :: 0x8048529:dec    eax
-0x0804852a 83 f8 ff          |...   | :: 0x804852a:cmp    eax, 0xffffffff
+0x0804852a 83 f8 ff          |...   | :: 0x804852a:cmp    eax, 0xff
 0x0804852d 74 1c             |t.    | :: 0x804852d:je     0x804854b
 /* Block 0x804852f */
 0x0804852f 8d 34 82          |.4.   | :: 0x804852f:lea    esi, [edx + eax*0x4]
@@ -4761,7 +4761,7 @@ Output the disassembled instructions:
 /* Block 0x8048542 */
 0x08048542 47                |G     | :: 0x8048542:inc    edi
 0x08048543 83 ee 04          |...   | :: 0x8048543:sub    esi, 0x4
-0x08048546 39 7d f0          |9}.   | :: 0x8048546:cmp    DWORD PTR ss:[ebp + 0xfffffff0], edi
+0x08048546 39 7d f0          |9}.   | :: 0x8048546:cmp    DWORD PTR ss:[ebp + 0xf0], edi
 0x08048549 75 f5             |u.    | :: 0x8048549:jne    0x8048540
 /* Block 0x804854b */
 0x0804854b e8 40 00 00 00    |.@... | :: 0x804854b:call   0x8048590
@@ -4789,7 +4789,7 @@ Output the disassembled instructions:
 0x08048564 83 ec 04          |...   | :: 0x8048564:sub    esp, 0x4
 0x08048567 bb c8 95 04 08    |..... | :: 0x8048567:mov    ebx, 0x80495c8
 0x0804856c a1 c8 95 04 08    |..... | :: 0x804856c:mov    eax, DWORD PTR ds:[0x80495c8]
-0x08048571 83 f8 ff          |...   | :: 0x8048571:cmp    eax, 0xffffffff
+0x08048571 83 f8 ff          |...   | :: 0x8048571:cmp    eax, 0xff
 0x08048574 74 16             |t.    | :: 0x8048574:je     0x804858c
 /* Block 0x8048576 */
 0x08048576 8d 76 00          |.v.   | :: 0x8048576:lea    esi, [esi + 0x0]
@@ -4800,7 +4800,7 @@ Output the disassembled instructions:
 0x08048583 ff d0             |..    | :: 0x8048583:call   eax
 /* Block 0x8048585 */
 0x08048585 8b 03             |..    | :: 0x8048585:mov    eax, DWORD PTR ds:[ebx]
-0x08048587 83 f8 ff          |...   | :: 0x8048587:cmp    eax, 0xffffffff
+0x08048587 83 f8 ff          |...   | :: 0x8048587:cmp    eax, 0xff
 0x0804858a 75 f4             |u.    | :: 0x804858a:jne    0x8048580
 /* Block 0x804858c */
 0x0804858c 58                |X     | :: 0x804858c:pop    eax

@@ -1086,12 +1086,12 @@ Constant propagation in function "_start"
     nt = v2025
     ?15 = v2026
     memory = {}
-0x8048345:and    esp, 0xfffffff0
+0x8048345:and    esp, 0xf0
     ax = v1997
     cx = v2001+0x4 [from 0x8048342:pop    esi]
     dx = v1999
     bx = v2000
-    sp = v2152 [from 0x8048345:and    esp, 0xfffffff0]
+    sp = v2152 [from 0x8048345:and    esp, 0xf0]
     bp = 0x0 [from 0x8048340:xor    ebp, ebp]
     si = v2086 [from 0x8048342:pop    esi]
     di = v2004
@@ -1101,18 +1101,18 @@ Constant propagation in function "_start"
     ds = v2008
     fs = v2009
     gs = v2010
-    cf = 0x0 [from 0x8048345:and    esp, 0xfffffff0]
+    cf = 0x0 [from 0x8048345:and    esp, 0xf0]
     ?1 = v2012
-    pf = -v2168-0x1 [from 0x8048345:and    esp, 0xfffffff0]
+    pf = -v2168-0x1 [from 0x8048345:and    esp, 0xf0]
     ?3 = v2014
     af = <top>
     ?5 = v2016
-    zf = v2171 [from 0x8048345:and    esp, 0xfffffff0]
-    sf = v2170 [from 0x8048345:and    esp, 0xfffffff0]
+    zf = v2171 [from 0x8048345:and    esp, 0xf0]
+    sf = v2170 [from 0x8048345:and    esp, 0xf0]
     tf = v2019
     if = v2020
     df = v2021
-    of = 0x0 [from 0x8048345:and    esp, 0xfffffff0]
+    of = 0x0 [from 0x8048345:and    esp, 0xf0]
     iopl0 = v2023
     iopl1 = v2024
     nt = v2025
@@ -1133,18 +1133,18 @@ Constant propagation in function "_start"
     ds = v2008
     fs = v2009
     gs = v2010
-    cf = 0x0 [from 0x8048345:and    esp, 0xfffffff0]
+    cf = 0x0 [from 0x8048345:and    esp, 0xf0]
     ?1 = v2012
-    pf = -v2168-0x1 [from 0x8048345:and    esp, 0xfffffff0]
+    pf = -v2168-0x1 [from 0x8048345:and    esp, 0xf0]
     ?3 = v2014
     af = <top>
     ?5 = v2016
-    zf = v2171 [from 0x8048345:and    esp, 0xfffffff0]
-    sf = v2170 [from 0x8048345:and    esp, 0xfffffff0]
+    zf = v2171 [from 0x8048345:and    esp, 0xf0]
+    sf = v2170 [from 0x8048345:and    esp, 0xf0]
     tf = v2019
     if = v2020
     df = v2021
-    of = 0x0 [from 0x8048345:and    esp, 0xfffffff0]
+    of = 0x0 [from 0x8048345:and    esp, 0xf0]
     iopl0 = v2023
     iopl1 = v2024
     nt = v2025
@@ -1167,18 +1167,18 @@ Constant propagation in function "_start"
     ds = v2008
     fs = v2009
     gs = v2010
-    cf = 0x0 [from 0x8048345:and    esp, 0xfffffff0]
+    cf = 0x0 [from 0x8048345:and    esp, 0xf0]
     ?1 = v2012
-    pf = -v2168-0x1 [from 0x8048345:and    esp, 0xfffffff0]
+    pf = -v2168-0x1 [from 0x8048345:and    esp, 0xf0]
     ?3 = v2014
     af = <top>
     ?5 = v2016
-    zf = v2171 [from 0x8048345:and    esp, 0xfffffff0]
-    sf = v2170 [from 0x8048345:and    esp, 0xfffffff0]
+    zf = v2171 [from 0x8048345:and    esp, 0xf0]
+    sf = v2170 [from 0x8048345:and    esp, 0xf0]
     tf = v2019
     if = v2020
     df = v2021
-    of = 0x0 [from 0x8048345:and    esp, 0xfffffff0]
+    of = 0x0 [from 0x8048345:and    esp, 0xf0]
     iopl0 = v2023
     iopl1 = v2024
     nt = v2025
@@ -1202,18 +1202,18 @@ Constant propagation in function "_start"
     ds = v2008
     fs = v2009
     gs = v2010
-    cf = 0x0 [from 0x8048345:and    esp, 0xfffffff0]
+    cf = 0x0 [from 0x8048345:and    esp, 0xf0]
     ?1 = v2012
-    pf = -v2168-0x1 [from 0x8048345:and    esp, 0xfffffff0]
+    pf = -v2168-0x1 [from 0x8048345:and    esp, 0xf0]
     ?3 = v2014
     af = <top>
     ?5 = v2016
-    zf = v2171 [from 0x8048345:and    esp, 0xfffffff0]
-    sf = v2170 [from 0x8048345:and    esp, 0xfffffff0]
+    zf = v2171 [from 0x8048345:and    esp, 0xf0]
+    sf = v2170 [from 0x8048345:and    esp, 0xf0]
     tf = v2019
     if = v2020
     df = v2021
-    of = 0x0 [from 0x8048345:and    esp, 0xfffffff0]
+    of = 0x0 [from 0x8048345:and    esp, 0xf0]
     iopl0 = v2023
     iopl1 = v2024
     nt = v2025
@@ -1238,18 +1238,18 @@ Constant propagation in function "_start"
     ds = v2008
     fs = v2009
     gs = v2010
-    cf = 0x0 [from 0x8048345:and    esp, 0xfffffff0]
+    cf = 0x0 [from 0x8048345:and    esp, 0xf0]
     ?1 = v2012
-    pf = -v2168-0x1 [from 0x8048345:and    esp, 0xfffffff0]
+    pf = -v2168-0x1 [from 0x8048345:and    esp, 0xf0]
     ?3 = v2014
     af = <top>
     ?5 = v2016
-    zf = v2171 [from 0x8048345:and    esp, 0xfffffff0]
-    sf = v2170 [from 0x8048345:and    esp, 0xfffffff0]
+    zf = v2171 [from 0x8048345:and    esp, 0xf0]
+    sf = v2170 [from 0x8048345:and    esp, 0xf0]
     tf = v2019
     if = v2020
     df = v2021
-    of = 0x0 [from 0x8048345:and    esp, 0xfffffff0]
+    of = 0x0 [from 0x8048345:and    esp, 0xf0]
     iopl0 = v2023
     iopl1 = v2024
     nt = v2025
@@ -1275,18 +1275,18 @@ Constant propagation in function "_start"
     ds = v2008
     fs = v2009
     gs = v2010
-    cf = 0x0 [from 0x8048345:and    esp, 0xfffffff0]
+    cf = 0x0 [from 0x8048345:and    esp, 0xf0]
     ?1 = v2012
-    pf = -v2168-0x1 [from 0x8048345:and    esp, 0xfffffff0]
+    pf = -v2168-0x1 [from 0x8048345:and    esp, 0xf0]
     ?3 = v2014
     af = <top>
     ?5 = v2016
-    zf = v2171 [from 0x8048345:and    esp, 0xfffffff0]
-    sf = v2170 [from 0x8048345:and    esp, 0xfffffff0]
+    zf = v2171 [from 0x8048345:and    esp, 0xf0]
+    sf = v2170 [from 0x8048345:and    esp, 0xf0]
     tf = v2019
     if = v2020
     df = v2021
-    of = 0x0 [from 0x8048345:and    esp, 0xfffffff0]
+    of = 0x0 [from 0x8048345:and    esp, 0xf0]
     iopl0 = v2023
     iopl1 = v2024
     nt = v2025
@@ -1313,18 +1313,18 @@ Constant propagation in function "_start"
     ds = v2008
     fs = v2009
     gs = v2010
-    cf = 0x0 [from 0x8048345:and    esp, 0xfffffff0]
+    cf = 0x0 [from 0x8048345:and    esp, 0xf0]
     ?1 = v2012
-    pf = -v2168-0x1 [from 0x8048345:and    esp, 0xfffffff0]
+    pf = -v2168-0x1 [from 0x8048345:and    esp, 0xf0]
     ?3 = v2014
     af = <top>
     ?5 = v2016
-    zf = v2171 [from 0x8048345:and    esp, 0xfffffff0]
-    sf = v2170 [from 0x8048345:and    esp, 0xfffffff0]
+    zf = v2171 [from 0x8048345:and    esp, 0xf0]
+    sf = v2170 [from 0x8048345:and    esp, 0xf0]
     tf = v2019
     if = v2020
     df = v2021
-    of = 0x0 [from 0x8048345:and    esp, 0xfffffff0]
+    of = 0x0 [from 0x8048345:and    esp, 0xf0]
     iopl0 = v2023
     iopl1 = v2024
     nt = v2025
@@ -1352,18 +1352,18 @@ Constant propagation in function "_start"
     ds = v2008
     fs = v2009
     gs = v2010
-    cf = 0x0 [from 0x8048345:and    esp, 0xfffffff0]
+    cf = 0x0 [from 0x8048345:and    esp, 0xf0]
     ?1 = v2012
-    pf = -v2168-0x1 [from 0x8048345:and    esp, 0xfffffff0]
+    pf = -v2168-0x1 [from 0x8048345:and    esp, 0xf0]
     ?3 = v2014
     af = <top>
     ?5 = v2016
-    zf = v2171 [from 0x8048345:and    esp, 0xfffffff0]
-    sf = v2170 [from 0x8048345:and    esp, 0xfffffff0]
+    zf = v2171 [from 0x8048345:and    esp, 0xf0]
+    sf = v2170 [from 0x8048345:and    esp, 0xf0]
     tf = v2019
     if = v2020
     df = v2021
-    of = 0x0 [from 0x8048345:and    esp, 0xfffffff0]
+    of = 0x0 [from 0x8048345:and    esp, 0xf0]
     iopl0 = v2023
     iopl1 = v2024
     nt = v2025
@@ -1392,18 +1392,18 @@ Constant propagation in function "_start"
     ds = v2008
     fs = v2009
     gs = v2010
-    cf = 0x0 [from 0x8048345:and    esp, 0xfffffff0]
+    cf = 0x0 [from 0x8048345:and    esp, 0xf0]
     ?1 = v2012
-    pf = -v2168-0x1 [from 0x8048345:and    esp, 0xfffffff0]
+    pf = -v2168-0x1 [from 0x8048345:and    esp, 0xf0]
     ?3 = v2014
     af = <top>
     ?5 = v2016
-    zf = v2171 [from 0x8048345:and    esp, 0xfffffff0]
-    sf = v2170 [from 0x8048345:and    esp, 0xfffffff0]
+    zf = v2171 [from 0x8048345:and    esp, 0xf0]
+    sf = v2170 [from 0x8048345:and    esp, 0xf0]
     tf = v2019
     if = v2020
     df = v2021
-    of = 0x0 [from 0x8048345:and    esp, 0xfffffff0]
+    of = 0x0 [from 0x8048345:and    esp, 0xf0]
     iopl0 = v2023
     iopl1 = v2024
     nt = v2025
@@ -1433,18 +1433,18 @@ Constant propagation in function "_start"
     ds = v2008
     fs = v2009
     gs = v2010
-    cf = 0x0 [from 0x8048345:and    esp, 0xfffffff0]
+    cf = 0x0 [from 0x8048345:and    esp, 0xf0]
     ?1 = v2012
-    pf = -v2168-0x1 [from 0x8048345:and    esp, 0xfffffff0]
+    pf = -v2168-0x1 [from 0x8048345:and    esp, 0xf0]
     ?3 = v2014
     af = <top>
     ?5 = v2016
-    zf = v2171 [from 0x8048345:and    esp, 0xfffffff0]
-    sf = v2170 [from 0x8048345:and    esp, 0xfffffff0]
+    zf = v2171 [from 0x8048345:and    esp, 0xf0]
+    sf = v2170 [from 0x8048345:and    esp, 0xf0]
     tf = v2019
     if = v2020
     df = v2021
-    of = 0x0 [from 0x8048345:and    esp, 0xfffffff0]
+    of = 0x0 [from 0x8048345:and    esp, 0xf0]
     iopl0 = v2023
     iopl1 = v2024
     nt = v2025
@@ -4125,12 +4125,12 @@ Constant propagation in function "main"
     memory = {
         size=4; addr=v5783-0x4 [from 0x8048410:push   ebp]; value=v5784
     }
-0x804841b:and    esp, 0xfffffff0
+0x804841b:and    esp, 0xf0
     ax = v5779
     cx = v5780
     dx = 0x8048480 [from 0x8048411:mov    edx, 0x8048480]
     bx = v5782
-    sp = v5981 [from 0x804841b:and    esp, 0xfffffff0]
+    sp = v5981 [from 0x804841b:and    esp, 0xf0]
     bp = v5783-0x4 [from 0x8048410:push   ebp]
     si = v5785
     di = v5786
@@ -4140,18 +4140,18 @@ Constant propagation in function "main"
     ds = v5790
     fs = v5791
     gs = v5792
-    cf = 0x0 [from 0x804841b:and    esp, 0xfffffff0]
+    cf = 0x0 [from 0x804841b:and    esp, 0xf0]
     ?1 = v5794
-    pf = -v5997-0x1 [from 0x804841b:and    esp, 0xfffffff0]
+    pf = -v5997-0x1 [from 0x804841b:and    esp, 0xf0]
     ?3 = v5796
     af = <top>
     ?5 = v5798
-    zf = v6000 [from 0x804841b:and    esp, 0xfffffff0]
-    sf = v5999 [from 0x804841b:and    esp, 0xfffffff0]
+    zf = v6000 [from 0x804841b:and    esp, 0xf0]
+    sf = v5999 [from 0x804841b:and    esp, 0xf0]
     tf = v5801
     if = v5802
     df = v5803
-    of = 0x0 [from 0x804841b:and    esp, 0xfffffff0]
+    of = 0x0 [from 0x804841b:and    esp, 0xf0]
     iopl0 = v5805
     iopl1 = v5806
     nt = v5807
@@ -4164,7 +4164,7 @@ Constant propagation in function "main"
     cx = v5780
     dx = 0x8048480 [from 0x8048411:mov    edx, 0x8048480]
     bx = v5782
-    sp = v5981 [from 0x804841b:and    esp, 0xfffffff0]
+    sp = v5981 [from 0x804841b:and    esp, 0xf0]
     bp = v5783-0x4 [from 0x8048410:push   ebp]
     si = v5785
     di = v5786
@@ -4174,18 +4174,18 @@ Constant propagation in function "main"
     ds = v5790
     fs = v5791
     gs = v5792
-    cf = 0x0 [from 0x804841b:and    esp, 0xfffffff0]
+    cf = 0x0 [from 0x804841b:and    esp, 0xf0]
     ?1 = v5794
-    pf = -v5997-0x1 [from 0x804841b:and    esp, 0xfffffff0]
+    pf = -v5997-0x1 [from 0x804841b:and    esp, 0xf0]
     ?3 = v5796
     af = <top>
     ?5 = v5798
-    zf = v6000 [from 0x804841b:and    esp, 0xfffffff0]
-    sf = v5999 [from 0x804841b:and    esp, 0xfffffff0]
+    zf = v6000 [from 0x804841b:and    esp, 0xf0]
+    sf = v5999 [from 0x804841b:and    esp, 0xf0]
     tf = v5801
     if = v5802
     df = v5803
-    of = 0x0 [from 0x804841b:and    esp, 0xfffffff0]
+    of = 0x0 [from 0x804841b:and    esp, 0xf0]
     iopl0 = v5805
     iopl1 = v5806
     nt = v5807
@@ -4198,7 +4198,7 @@ Constant propagation in function "main"
     cx = v5780
     dx = 0x8048480 [from 0x8048411:mov    edx, 0x8048480]
     bx = v5782
-    sp = v5981 [from 0x804841b:and    esp, 0xfffffff0]
+    sp = v5981 [from 0x804841b:and    esp, 0xf0]
     bp = v5783-0x4 [from 0x8048410:push   ebp]
     si = v5785
     di = v5786
@@ -4208,24 +4208,24 @@ Constant propagation in function "main"
     ds = v5790
     fs = v5791
     gs = v5792
-    cf = 0x0 [from 0x804841b:and    esp, 0xfffffff0]
+    cf = 0x0 [from 0x804841b:and    esp, 0xf0]
     ?1 = v5794
-    pf = -v5997-0x1 [from 0x804841b:and    esp, 0xfffffff0]
+    pf = -v5997-0x1 [from 0x804841b:and    esp, 0xf0]
     ?3 = v5796
     af = <top>
     ?5 = v5798
-    zf = v6000 [from 0x804841b:and    esp, 0xfffffff0]
-    sf = v5999 [from 0x804841b:and    esp, 0xfffffff0]
+    zf = v6000 [from 0x804841b:and    esp, 0xf0]
+    sf = v5999 [from 0x804841b:and    esp, 0xf0]
     tf = v5801
     if = v5802
     df = v5803
-    of = 0x0 [from 0x804841b:and    esp, 0xfffffff0]
+    of = 0x0 [from 0x804841b:and    esp, 0xf0]
     iopl0 = v5805
     iopl1 = v5806
     nt = v5807
     ?15 = v5808
     memory = {
-        size=4; addr=v5981 [from 0x804841b:and    esp, 0xfffffff0]; value=0xa [from 0x8048422:mov    DWORD PTR ss:[esp], 0xa]
+        size=4; addr=v5981 [from 0x804841b:and    esp, 0xf0]; value=0xa [from 0x8048422:mov    DWORD PTR ss:[esp], 0xa]
         size=4; addr=v5981+0x4 [from 0x804841e:mov    DWORD PTR ss:[esp + 0x4], edx]; value=0x8048480 [from 0x8048411:mov    edx, 0x8048480]
     }
 0x8048429:call   0x80482f0
@@ -4243,24 +4243,24 @@ Constant propagation in function "main"
     ds = v5790
     fs = v5791
     gs = v5792
-    cf = 0x0 [from 0x804841b:and    esp, 0xfffffff0]
+    cf = 0x0 [from 0x804841b:and    esp, 0xf0]
     ?1 = v5794
-    pf = -v5997-0x1 [from 0x804841b:and    esp, 0xfffffff0]
+    pf = -v5997-0x1 [from 0x804841b:and    esp, 0xf0]
     ?3 = v5796
     af = <top>
     ?5 = v5798
-    zf = v6000 [from 0x804841b:and    esp, 0xfffffff0]
-    sf = v5999 [from 0x804841b:and    esp, 0xfffffff0]
+    zf = v6000 [from 0x804841b:and    esp, 0xf0]
+    sf = v5999 [from 0x804841b:and    esp, 0xf0]
     tf = v5801
     if = v5802
     df = v5803
-    of = 0x0 [from 0x804841b:and    esp, 0xfffffff0]
+    of = 0x0 [from 0x804841b:and    esp, 0xf0]
     iopl0 = v5805
     iopl1 = v5806
     nt = v5807
     ?15 = v5808
     memory = {
-        size=4; addr=v5981 [from 0x804841b:and    esp, 0xfffffff0]; value=0xa [from 0x8048422:mov    DWORD PTR ss:[esp], 0xa]
+        size=4; addr=v5981 [from 0x804841b:and    esp, 0xf0]; value=0xa [from 0x8048422:mov    DWORD PTR ss:[esp], 0xa]
         size=4; addr=v5981+0x4 [from 0x804841e:mov    DWORD PTR ss:[esp + 0x4], edx]; value=0x8048480 [from 0x8048411:mov    edx, 0x8048480]
         size=4; addr=v5981-0x4 [from 0x8048429:call   0x80482f0]; value=0x804842e [from 0x8048429:call   0x80482f0]
     }
@@ -6226,7 +6226,7 @@ Constant propagation in function "__libc_csu_init"
     nt = <top>
     ?15 = <top>
     memory =     <top>
-0x80484db:mov    DWORD PTR ss:[ebp + 0xfffffff0], eax
+0x80484db:mov    DWORD PTR ss:[ebp + 0xf0], eax
     ax = <top>
     cx = <top>
     dx = <top>
@@ -6788,7 +6788,7 @@ Constant propagation in function "__libc_csu_init"
     nt = <top>
     ?15 = <top>
     memory =     <top>
-0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xfffffff0]
+0x8048506:cmp    edi, DWORD PTR ss:[ebp + 0xf0]
     ax = <top>
     cx = <top>
     dx = <top>
@@ -7590,7 +7590,7 @@ Constant propagation in function "__libc_csu_fini"
         size=4; addr=v10278-0x8 [from 0x8048523:push   edi]; value=v10281
         size=4; addr=v10278-0x4 [from 0x8048520:push   ebp]; value=v10279
     }
-0x8048546:mov    DWORD PTR ss:[ebp + 0xfffffff0], eax
+0x8048546:mov    DWORD PTR ss:[ebp + 0xf0], eax
     ax = 0x0 [from 0x8048543:sar    eax, 0x2]
     cx = v10275
     dx = 0x80495e8 [from 0x804853b:lea    edx, [ebx + 0xffffff20]]
@@ -7623,7 +7623,7 @@ Constant propagation in function "__libc_csu_fini"
     ?15 = v10303
     memory = {
         size=4; addr=v10278-0x20 [from 0x8048529:call   0x804852e]; value=0x804852e [from 0x8048529:call   0x804852e]
-        size=4; addr=v10278-0x14 [from 0x8048546:mov    DWORD PTR ss:[ebp + 0xfffffff0], eax]; value=0x0 [from 0x8048543:sar    eax, 0x2]
+        size=4; addr=v10278-0x14 [from 0x8048546:mov    DWORD PTR ss:[ebp + 0xf0], eax]; value=0x0 [from 0x8048543:sar    eax, 0x2]
         size=4; addr=v10278-0x10 [from 0x8048525:push   ebx]; value=v10277
         size=4; addr=v10278-0xc [from 0x8048524:push   esi]; value=v10280
         size=4; addr=v10278-0x8 [from 0x8048523:push   edi]; value=v10281
@@ -7662,13 +7662,13 @@ Constant propagation in function "__libc_csu_fini"
     ?15 = v10303
     memory = {
         size=4; addr=v10278-0x20 [from 0x8048529:call   0x804852e]; value=0x804852e [from 0x8048529:call   0x804852e]
-        size=4; addr=v10278-0x14 [from 0x8048546:mov    DWORD PTR ss:[ebp + 0xfffffff0], eax]; value=0x0 [from 0x8048543:sar    eax, 0x2]
+        size=4; addr=v10278-0x14 [from 0x8048546:mov    DWORD PTR ss:[ebp + 0xf0], eax]; value=0x0 [from 0x8048543:sar    eax, 0x2]
         size=4; addr=v10278-0x10 [from 0x8048525:push   ebx]; value=v10277
         size=4; addr=v10278-0xc [from 0x8048524:push   esi]; value=v10280
         size=4; addr=v10278-0x8 [from 0x8048523:push   edi]; value=v10281
         size=4; addr=v10278-0x4 [from 0x8048520:push   ebp]; value=v10279
     }
-0x804854a:cmp    eax, 0xffffffff
+0x804854a:cmp    eax, 0xff
     ax = 0xffffffff (-0x1) [from 0x8048549:dec    eax]
     cx = v10275
     dx = 0x80495e8 [from 0x804853b:lea    edx, [ebx + 0xffffff20]]
@@ -7683,25 +7683,25 @@ Constant propagation in function "__libc_csu_fini"
     ds = v10285
     fs = v10286
     gs = v10287
-    cf = 0x0 [from 0x804854a:cmp    eax, 0xffffffff]
+    cf = 0x0 [from 0x804854a:cmp    eax, 0xff]
     ?1 = v10289
-    pf = 0x1 (-0x1) [from 0x804854a:cmp    eax, 0xffffffff]
+    pf = 0x1 (-0x1) [from 0x804854a:cmp    eax, 0xff]
     ?3 = v10291
-    af = 0x0 [from 0x804854a:cmp    eax, 0xffffffff]
+    af = 0x0 [from 0x804854a:cmp    eax, 0xff]
     ?5 = v10293
-    zf = 0x1 (-0x1) [from 0x804854a:cmp    eax, 0xffffffff]
-    sf = 0x0 [from 0x804854a:cmp    eax, 0xffffffff]
+    zf = 0x1 (-0x1) [from 0x804854a:cmp    eax, 0xff]
+    sf = 0x0 [from 0x804854a:cmp    eax, 0xff]
     tf = v10296
     if = v10297
     df = v10298
-    of = 0x0 [from 0x804854a:cmp    eax, 0xffffffff]
+    of = 0x0 [from 0x804854a:cmp    eax, 0xff]
     iopl0 = v10300
     iopl1 = v10301
     nt = v10302
     ?15 = v10303
     memory = {
         size=4; addr=v10278-0x20 [from 0x8048529:call   0x804852e]; value=0x804852e [from 0x8048529:call   0x804852e]
-        size=4; addr=v10278-0x14 [from 0x8048546:mov    DWORD PTR ss:[ebp + 0xfffffff0], eax]; value=0x0 [from 0x8048543:sar    eax, 0x2]
+        size=4; addr=v10278-0x14 [from 0x8048546:mov    DWORD PTR ss:[ebp + 0xf0], eax]; value=0x0 [from 0x8048543:sar    eax, 0x2]
         size=4; addr=v10278-0x10 [from 0x8048525:push   ebx]; value=v10277
         size=4; addr=v10278-0xc [from 0x8048524:push   esi]; value=v10280
         size=4; addr=v10278-0x8 [from 0x8048523:push   edi]; value=v10281
@@ -7722,25 +7722,25 @@ Constant propagation in function "__libc_csu_fini"
     ds = v10285
     fs = v10286
     gs = v10287
-    cf = 0x0 [from 0x804854a:cmp    eax, 0xffffffff]
+    cf = 0x0 [from 0x804854a:cmp    eax, 0xff]
     ?1 = v10289
-    pf = 0x1 (-0x1) [from 0x804854a:cmp    eax, 0xffffffff]
+    pf = 0x1 (-0x1) [from 0x804854a:cmp    eax, 0xff]
     ?3 = v10291
-    af = 0x0 [from 0x804854a:cmp    eax, 0xffffffff]
+    af = 0x0 [from 0x804854a:cmp    eax, 0xff]
     ?5 = v10293
-    zf = 0x1 (-0x1) [from 0x804854a:cmp    eax, 0xffffffff]
-    sf = 0x0 [from 0x804854a:cmp    eax, 0xffffffff]
+    zf = 0x1 (-0x1) [from 0x804854a:cmp    eax, 0xff]
+    sf = 0x0 [from 0x804854a:cmp    eax, 0xff]
     tf = v10296
     if = v10297
     df = v10298
-    of = 0x0 [from 0x804854a:cmp    eax, 0xffffffff]
+    of = 0x0 [from 0x804854a:cmp    eax, 0xff]
     iopl0 = v10300
     iopl1 = v10301
     nt = v10302
     ?15 = v10303
     memory = {
         size=4; addr=v10278-0x20 [from 0x8048529:call   0x804852e]; value=0x804852e [from 0x8048529:call   0x804852e]
-        size=4; addr=v10278-0x14 [from 0x8048546:mov    DWORD PTR ss:[ebp + 0xfffffff0], eax]; value=0x0 [from 0x8048543:sar    eax, 0x2]
+        size=4; addr=v10278-0x14 [from 0x8048546:mov    DWORD PTR ss:[ebp + 0xf0], eax]; value=0x0 [from 0x8048543:sar    eax, 0x2]
         size=4; addr=v10278-0x10 [from 0x8048525:push   ebx]; value=v10277
         size=4; addr=v10278-0xc [from 0x8048524:push   esi]; value=v10280
         size=4; addr=v10278-0x8 [from 0x8048523:push   edi]; value=v10281
@@ -7972,7 +7972,7 @@ Constant propagation in function "__libc_csu_fini"
     nt = <top>
     ?15 = <top>
     memory =     <top>
-0x8048566:cmp    DWORD PTR ss:[ebp + 0xfffffff0], edi
+0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0], edi
     ax = <top>
     cx = <top>
     dx = <top>
@@ -8051,25 +8051,25 @@ Constant propagation in function "__libc_csu_fini"
     ds = v10285
     fs = v10286
     gs = v10287
-    cf = 0x0 [from 0x804854a:cmp    eax, 0xffffffff]
+    cf = 0x0 [from 0x804854a:cmp    eax, 0xff]
     ?1 = v10289
-    pf = 0x1 (-0x1) [from 0x804854a:cmp    eax, 0xffffffff]
+    pf = 0x1 (-0x1) [from 0x804854a:cmp    eax, 0xff]
     ?3 = v10291
-    af = 0x0 [from 0x804854a:cmp    eax, 0xffffffff]
+    af = 0x0 [from 0x804854a:cmp    eax, 0xff]
     ?5 = v10293
-    zf = 0x1 (-0x1) [from 0x804854a:cmp    eax, 0xffffffff]
-    sf = 0x0 [from 0x804854a:cmp    eax, 0xffffffff]
+    zf = 0x1 (-0x1) [from 0x804854a:cmp    eax, 0xff]
+    sf = 0x0 [from 0x804854a:cmp    eax, 0xff]
     tf = v10296
     if = v10297
     df = v10298
-    of = 0x0 [from 0x804854a:cmp    eax, 0xffffffff]
+    of = 0x0 [from 0x804854a:cmp    eax, 0xff]
     iopl0 = v10300
     iopl1 = v10301
     nt = v10302
     ?15 = v10303
     memory = {
         size=4; addr=v10278-0x20 [from 0x804856b:call   0x80485b0]; value=0x8048570 [from 0x804856b:call   0x80485b0]
-        size=4; addr=v10278-0x14 [from 0x8048546:mov    DWORD PTR ss:[ebp + 0xfffffff0], eax]; value=0x0 [from 0x8048543:sar    eax, 0x2]
+        size=4; addr=v10278-0x14 [from 0x8048546:mov    DWORD PTR ss:[ebp + 0xf0], eax]; value=0x0 [from 0x8048543:sar    eax, 0x2]
         size=4; addr=v10278-0x10 [from 0x8048525:push   ebx]; value=v10277
         size=4; addr=v10278-0xc [from 0x8048524:push   esi]; value=v10280
         size=4; addr=v10278-0x8 [from 0x8048523:push   edi]; value=v10281
@@ -8734,7 +8734,7 @@ Constant propagation in function "__do_global_ctors_aux"
         size=4; addr=v12196-0x8 [from 0x8048583:push   ebx]; value=v12195
         size=4; addr=v12196-0x4 [from 0x8048580:push   ebp]; value=v12197
     }
-0x8048591:cmp    eax, 0xffffffff
+0x8048591:cmp    eax, 0xff
     ax = v12431 [from 0x804858c:mov    eax, DWORD PTR ds:[0x80495e8]]
     cx = v12193
     dx = v12194
@@ -8749,18 +8749,18 @@ Constant propagation in function "__do_global_ctors_aux"
     ds = v12203
     fs = v12204
     gs = v12205
-    cf = -v12496-0x1 [from 0x8048591:cmp    eax, 0xffffffff]
+    cf = -v12496-0x1 [from 0x8048591:cmp    eax, 0xff]
     ?1 = v12207
-    pf = -v12490-0x1 [from 0x8048591:cmp    eax, 0xffffffff]
+    pf = -v12490-0x1 [from 0x8048591:cmp    eax, 0xff]
     ?3 = v12209
-    af = -v12494-0x1 [from 0x8048591:cmp    eax, 0xffffffff]
+    af = -v12494-0x1 [from 0x8048591:cmp    eax, 0xff]
     ?5 = v12211
-    zf = v12493 [from 0x8048591:cmp    eax, 0xffffffff]
-    sf = v12492 [from 0x8048591:cmp    eax, 0xffffffff]
+    zf = v12493 [from 0x8048591:cmp    eax, 0xff]
+    sf = v12492 [from 0x8048591:cmp    eax, 0xff]
     tf = v12214
     if = v12215
     df = v12216
-    of = v12500 [from 0x8048591:cmp    eax, 0xffffffff]
+    of = v12500 [from 0x8048591:cmp    eax, 0xff]
     iopl0 = v12218
     iopl1 = v12219
     nt = v12220
@@ -8784,18 +8784,18 @@ Constant propagation in function "__do_global_ctors_aux"
     ds = v12203
     fs = v12204
     gs = v12205
-    cf = -v12496-0x1 [from 0x8048591:cmp    eax, 0xffffffff]
+    cf = -v12496-0x1 [from 0x8048591:cmp    eax, 0xff]
     ?1 = v12207
-    pf = -v12490-0x1 [from 0x8048591:cmp    eax, 0xffffffff]
+    pf = -v12490-0x1 [from 0x8048591:cmp    eax, 0xff]
     ?3 = v12209
-    af = -v12494-0x1 [from 0x8048591:cmp    eax, 0xffffffff]
+    af = -v12494-0x1 [from 0x8048591:cmp    eax, 0xff]
     ?5 = v12211
-    zf = v12493 [from 0x8048591:cmp    eax, 0xffffffff]
-    sf = v12492 [from 0x8048591:cmp    eax, 0xffffffff]
+    zf = v12493 [from 0x8048591:cmp    eax, 0xff]
+    sf = v12492 [from 0x8048591:cmp    eax, 0xff]
     tf = v12214
     if = v12215
     df = v12216
-    of = v12500 [from 0x8048591:cmp    eax, 0xffffffff]
+    of = v12500 [from 0x8048591:cmp    eax, 0xff]
     iopl0 = v12218
     iopl1 = v12219
     nt = v12220
@@ -8819,18 +8819,18 @@ Constant propagation in function "__do_global_ctors_aux"
     ds = v12203
     fs = v12204
     gs = v12205
-    cf = -v12496-0x1 [from 0x8048591:cmp    eax, 0xffffffff]
+    cf = -v12496-0x1 [from 0x8048591:cmp    eax, 0xff]
     ?1 = v12207
-    pf = -v12490-0x1 [from 0x8048591:cmp    eax, 0xffffffff]
+    pf = -v12490-0x1 [from 0x8048591:cmp    eax, 0xff]
     ?3 = v12209
-    af = -v12494-0x1 [from 0x8048591:cmp    eax, 0xffffffff]
+    af = -v12494-0x1 [from 0x8048591:cmp    eax, 0xff]
     ?5 = v12211
-    zf = v12493 [from 0x8048591:cmp    eax, 0xffffffff]
-    sf = v12492 [from 0x8048591:cmp    eax, 0xffffffff]
+    zf = v12493 [from 0x8048591:cmp    eax, 0xff]
+    sf = v12492 [from 0x8048591:cmp    eax, 0xff]
     tf = v12214
     if = v12215
     df = v12216
-    of = v12500 [from 0x8048591:cmp    eax, 0xffffffff]
+    of = v12500 [from 0x8048591:cmp    eax, 0xff]
     iopl0 = v12218
     iopl1 = v12219
     nt = v12220
@@ -8854,18 +8854,18 @@ Constant propagation in function "__do_global_ctors_aux"
     ds = v12203
     fs = v12204
     gs = v12205
-    cf = -v12496-0x1 [from 0x8048591:cmp    eax, 0xffffffff]
+    cf = -v12496-0x1 [from 0x8048591:cmp    eax, 0xff]
     ?1 = v12207
-    pf = -v12490-0x1 [from 0x8048591:cmp    eax, 0xffffffff]
+    pf = -v12490-0x1 [from 0x8048591:cmp    eax, 0xff]
     ?3 = v12209
-    af = -v12494-0x1 [from 0x8048591:cmp    eax, 0xffffffff]
+    af = -v12494-0x1 [from 0x8048591:cmp    eax, 0xff]
     ?5 = v12211
-    zf = v12493 [from 0x8048591:cmp    eax, 0xffffffff]
-    sf = v12492 [from 0x8048591:cmp    eax, 0xffffffff]
+    zf = v12493 [from 0x8048591:cmp    eax, 0xff]
+    sf = v12492 [from 0x8048591:cmp    eax, 0xff]
     tf = v12214
     if = v12215
     df = v12216
-    of = v12500 [from 0x8048591:cmp    eax, 0xffffffff]
+    of = v12500 [from 0x8048591:cmp    eax, 0xff]
     iopl0 = v12218
     iopl1 = v12219
     nt = v12220
@@ -8977,7 +8977,7 @@ Constant propagation in function "__do_global_ctors_aux"
     nt = <top>
     ?15 = <top>
     memory =     <top>
-0x80485a7:cmp    eax, 0xffffffff
+0x80485a7:cmp    eax, 0xff
     ax = <top>
     cx = <top>
     dx = <top>
@@ -9056,18 +9056,18 @@ Constant propagation in function "__do_global_ctors_aux"
     ds = v12203
     fs = v12204
     gs = v12205
-    cf = -v12496-0x1 [from 0x8048591:cmp    eax, 0xffffffff]
+    cf = -v12496-0x1 [from 0x8048591:cmp    eax, 0xff]
     ?1 = v12207
-    pf = -v12490-0x1 [from 0x8048591:cmp    eax, 0xffffffff]
+    pf = -v12490-0x1 [from 0x8048591:cmp    eax, 0xff]
     ?3 = v12209
-    af = -v12494-0x1 [from 0x8048591:cmp    eax, 0xffffffff]
+    af = -v12494-0x1 [from 0x8048591:cmp    eax, 0xff]
     ?5 = v12211
-    zf = v12493 [from 0x8048591:cmp    eax, 0xffffffff]
-    sf = v12492 [from 0x8048591:cmp    eax, 0xffffffff]
+    zf = v12493 [from 0x8048591:cmp    eax, 0xff]
+    sf = v12492 [from 0x8048591:cmp    eax, 0xff]
     tf = v12214
     if = v12215
     df = v12216
-    of = v12500 [from 0x8048591:cmp    eax, 0xffffffff]
+    of = v12500 [from 0x8048591:cmp    eax, 0xff]
     iopl0 = v12218
     iopl1 = v12219
     nt = v12220
@@ -9091,18 +9091,18 @@ Constant propagation in function "__do_global_ctors_aux"
     ds = v12203
     fs = v12204
     gs = v12205
-    cf = -v12496-0x1 [from 0x8048591:cmp    eax, 0xffffffff]
+    cf = -v12496-0x1 [from 0x8048591:cmp    eax, 0xff]
     ?1 = v12207
-    pf = -v12490-0x1 [from 0x8048591:cmp    eax, 0xffffffff]
+    pf = -v12490-0x1 [from 0x8048591:cmp    eax, 0xff]
     ?3 = v12209
-    af = -v12494-0x1 [from 0x8048591:cmp    eax, 0xffffffff]
+    af = -v12494-0x1 [from 0x8048591:cmp    eax, 0xff]
     ?5 = v12211
-    zf = v12493 [from 0x8048591:cmp    eax, 0xffffffff]
-    sf = v12492 [from 0x8048591:cmp    eax, 0xffffffff]
+    zf = v12493 [from 0x8048591:cmp    eax, 0xff]
+    sf = v12492 [from 0x8048591:cmp    eax, 0xff]
     tf = v12214
     if = v12215
     df = v12216
-    of = v12500 [from 0x8048591:cmp    eax, 0xffffffff]
+    of = v12500 [from 0x8048591:cmp    eax, 0xff]
     iopl0 = v12218
     iopl1 = v12219
     nt = v12220
@@ -9126,18 +9126,18 @@ Constant propagation in function "__do_global_ctors_aux"
     ds = v12203
     fs = v12204
     gs = v12205
-    cf = -v12496-0x1 [from 0x8048591:cmp    eax, 0xffffffff]
+    cf = -v12496-0x1 [from 0x8048591:cmp    eax, 0xff]
     ?1 = v12207
-    pf = -v12490-0x1 [from 0x8048591:cmp    eax, 0xffffffff]
+    pf = -v12490-0x1 [from 0x8048591:cmp    eax, 0xff]
     ?3 = v12209
-    af = -v12494-0x1 [from 0x8048591:cmp    eax, 0xffffffff]
+    af = -v12494-0x1 [from 0x8048591:cmp    eax, 0xff]
     ?5 = v12211
-    zf = v12493 [from 0x8048591:cmp    eax, 0xffffffff]
-    sf = v12492 [from 0x8048591:cmp    eax, 0xffffffff]
+    zf = v12493 [from 0x8048591:cmp    eax, 0xff]
+    sf = v12492 [from 0x8048591:cmp    eax, 0xff]
     tf = v12214
     if = v12215
     df = v12216
-    of = v12500 [from 0x8048591:cmp    eax, 0xffffffff]
+    of = v12500 [from 0x8048591:cmp    eax, 0xff]
     iopl0 = v12218
     iopl1 = v12219
     nt = v12220
@@ -9161,18 +9161,18 @@ Constant propagation in function "__do_global_ctors_aux"
     ds = v12203
     fs = v12204
     gs = v12205
-    cf = -v12496-0x1 [from 0x8048591:cmp    eax, 0xffffffff]
+    cf = -v12496-0x1 [from 0x8048591:cmp    eax, 0xff]
     ?1 = v12207
-    pf = -v12490-0x1 [from 0x8048591:cmp    eax, 0xffffffff]
+    pf = -v12490-0x1 [from 0x8048591:cmp    eax, 0xff]
     ?3 = v12209
-    af = -v12494-0x1 [from 0x8048591:cmp    eax, 0xffffffff]
+    af = -v12494-0x1 [from 0x8048591:cmp    eax, 0xff]
     ?5 = v12211
-    zf = v12493 [from 0x8048591:cmp    eax, 0xffffffff]
-    sf = v12492 [from 0x8048591:cmp    eax, 0xffffffff]
+    zf = v12493 [from 0x8048591:cmp    eax, 0xff]
+    sf = v12492 [from 0x8048591:cmp    eax, 0xff]
     tf = v12214
     if = v12215
     df = v12216
-    of = v12500 [from 0x8048591:cmp    eax, 0xffffffff]
+    of = v12500 [from 0x8048591:cmp    eax, 0xff]
     iopl0 = v12218
     iopl1 = v12219
     nt = v12220
