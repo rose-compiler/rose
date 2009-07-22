@@ -185,6 +185,11 @@ class CStdLibManager {
             size_t num, 
             const string& description = ""
         );
+        void check_allocation_overlap(
+            const void* ptr1, 
+            const void* ptr2, 
+            const string& description = ""
+        );
         void check_overlap(
             const void* ptr1, 
             size_t size1, 

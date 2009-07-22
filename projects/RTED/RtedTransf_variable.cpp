@@ -248,24 +248,26 @@ void RtedTransformation::appendAddressAndSize(SgInitializedName* initName,
 
         scope = initName->get_scope();
     }
-    if (isSgClassType(basetype) ||
-	  isSgTypedefType(basetype) ||
-	  isSgClassDefinition(scope)
-	  ) 	      {
-			// cant handle struct yet
-	     appendExpression(arg_list, buildIntVal(66));
-	     appendExpression(arg_list, buildIntVal(66));
-    } else {
-	//int derefCounter=0;//getTypeOfPointer(initName);
-	//SgExpression* fillExp = getExprBelowAssignment(varRefE, derefCounter);
-	//ROSE_ASSERT(fillExp);
+
+    SgExpression* exp = varRefE;
+    if (    isSgClassType(basetype) ||
+            isSgTypedefType(basetype) ||
+            isSgClassDefinition(scope)) {
+
+        // member -> &( var.member )
+        exp = getUppermostLvalue( varRefE );
+    }
+
+    //int derefCounter=0;//getTypeOfPointer(initName);
+    //SgExpression* fillExp = getExprBelowAssignment(varRefE, derefCounter);
+    //ROSE_ASSERT(fillExp);
 
     appendExpression(
-      arg_list,
-      buildCastExp(
-        buildAddressOfOp( varRefE),
-        buildUnsignedLongLongType()
-      )
+        arg_list,
+        buildCastExp(
+            buildAddressOfOp( exp ),
+            buildUnsignedLongLongType()
+        )
     );
 
     // consider, e.g.
@@ -286,11 +288,9 @@ void RtedTransformation::appendAddressAndSize(SgInitializedName* initName,
     } else {
         appendExpression(
             arg_list,
-            buildSizeOfOp( varRefE )
+            buildSizeOfOp( exp )
         );
     }
-    }
-
 }
 
 

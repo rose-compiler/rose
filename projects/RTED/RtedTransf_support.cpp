@@ -224,6 +224,21 @@ RtedTransformation::getSurroundingStatement(SgNode* n) {
   return isSgStatement(stat);
 }
 
+SgExpression* RtedTransformation::getUppermostLvalue( SgExpression* exp ) {
+    SgExpression* parent = isSgExpression( exp->get_parent() );
+    
+    while( parent
+            && (isSgDotExp( parent )
+                || isSgArrowExp( parent )
+                || isSgPointerDerefExp( parent )
+                || isSgPntrArrRefExp( parent ))) {
+        exp = parent;
+        parent = isSgExpression( parent->get_parent() );
+    }
+
+    return exp;
+}
+
 SgVarRefExp*
 RtedTransformation::resolveToVarRefRight(SgExpression* expr) {
   SgVarRefExp* result = NULL;

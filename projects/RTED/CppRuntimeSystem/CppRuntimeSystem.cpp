@@ -158,9 +158,24 @@ void RuntimeSystem::createVariable(addr_type address,
 
     createVariable(new VariablesType(name,mangledName,typeString,address,pt));
 }
+void RuntimeSystem::createArray(    addr_type address,
+                                    const std::string & name,
+                                    const std::string & mangledName,
+                                    const std::string & baseType,
+                                    size_t size)
+{
+    // TODO 1: impl create array
+    // Create Variable, Type: array, but handled as a pointer
+    
+    //createVariable(new VariablesType(
+
+}
 
 void RuntimeSystem::createVariable(VariablesType * var)
 {
+	// TODO 1: kill this check -- stack arrays are now created with createArray,
+	// not createVariable, 
+	//
     // Track the memory area where the variable is stored
     // special case when static array, then createMemory is called anyway
     if(var->getType()->getName() != "SgArrayType")
@@ -180,16 +195,18 @@ void RuntimeSystem::createVariable(VariablesType * var)
 // --------------------- Pointer Tracking---------------------------------
 
 
-void RuntimeSystem::registerPointerChange(const string & varName, addr_type targetAddress, bool checks)
+void RuntimeSystem::registerPointerChange(const string & mangledVarName, addr_type targetAddress, bool checks)
 {
-    VariablesType * var = findVarByName(varName);
+    VariablesType * var = findVarByMangledName(mangledVarName);
     assert(var); // create the variable first!
     var->setPointerTarget(targetAddress,checks);
 }
 
 
-void RuntimeSystem::checkForSameChunk(addr_type addr1, addr_type addr2, const string & type)
+void RuntimeSystem::checkPointerDereference( const std::string & mangled_var_name, addr_type derefed_address )
 {
+    // TODO 1: implement checkptrderef
+    /*
     size_t typeSize = typeSystem.getTypeInfo(type)->getByteSize();
     MemoryType * mem1 = memManager.findContainingMem(addr1,typeSize);
     MemoryType * mem2 = memManager.findContainingMem(addr2,typeSize);
@@ -228,12 +245,13 @@ void RuntimeSystem::checkForSameChunk(addr_type addr1, addr_type addr2, const st
                           << *mem2 << endl;
 
     violationHandler(RuntimeViolation::POINTER_CHANGED_MEMAREA,ss.str());
+    */
 }
 
-VariablesType * RuntimeSystem::findVarByName(const string & name)
+VariablesType * RuntimeSystem::findVarByMangledName(const string & name)
 {
     for(int i=0; i< stack.size(); i++)
-        if(name == stack[i]->getName() )
+        if(name == stack[i]->getMangledName() )
             return stack[i];
 
     return NULL;

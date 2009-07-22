@@ -74,6 +74,12 @@ class RuntimeSystem
                             const std::string & typeString,
                             const std::string & pointerType="");
 
+        void createArray(   addr_type address,
+                            const std::string & name,
+                            const std::string & mangledName,
+                            const std::string & baseType,
+                            size_t size);
+
 
         /// Call this function after when a malloc or new occurs in monitored code
         /// @param startAdress  the return value of malloc/new
@@ -85,6 +91,16 @@ class RuntimeSystem
         /// @param startAddress the address to be freed (argument of free/delete)
         void freeMemory(addr_type startAddress, bool onStack = false);
 
+        // TODO 3: internally, dereferencable memory is tracked via variables.
+        // This is wrong -- consider the following:
+        //
+        //      int **dp;
+        //      *dp = <some address>
+        //
+        //  *dp is dereferencable, but is not a variable.
+
+        // TODO 2: registerPointerChange & checkPointerDereference should lookup
+        // vars by address rather than string.
 
         /// Call this function when the value of a pointer changed i.e. the address a pointer points to
         /// this also includes "pseudo" pointers, for example if on code "int ** a" this function has to be called twice
@@ -93,11 +109,11 @@ class RuntimeSystem
         /// @param checks if true, it is checked if the pointer changed the memory area it points to
         ///               which is fine, if pointer was changed by assignment, and which might be an "error"
         ///               if it was changed via pointer arithmetic
-        void registerPointerChange(const std::string & var, addr_type targetAddress, bool checks=false);
+        void registerPointerChange( const std::string & mangled_var_name, addr_type targetAddress, bool checks=false);
 
         /// Checks if two addresses lie in the same "typed chunk"
         /// equivalent to the check which is done on registerPointerChange
-        void checkForSameChunk(addr_type addr1, addr_type addr2, const std::string & type );
+        void checkPointerDereference( const std::string & mangled_var_name, addr_type derefed_address );
 
         /// Each variable is associated with a scope, use this function to create a new scope
         /// @param name  string description of scope, may be function name or "for-loop" ...
@@ -207,7 +223,7 @@ class RuntimeSystem
         RuntimeSystem();
 
 
-        VariablesType * findVarByName(const std::string & name);
+        VariablesType * findVarByMangledName(const std::string & name);
 
         /// Class to track state of memory (which areas are allocated etc)
         MemoryManager memManager;

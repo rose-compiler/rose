@@ -131,8 +131,9 @@ int checkMemoryLeakIssues(int pos, int address, const char* filename, const char
 int RuntimeSystem_findArrayName(const char* mangled_name);
 //void RuntimeSystem_increaseSizeArray();                                               
 void RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dimension,// int stack, 
-				   const char* type, const char* basetype,
-				   unsigned long int address, long int size, long int sizeA, long int sizeB, int ismalloc, const char* filename, 
+				   const char* type, const char* basetype, unsigned long int
+				   address, long int size, long int sizeA, long int sizeB, 
+				   int ismalloc, long int mallocSize, const char* filename,
 				   const char* line, const char* lineTransformed);
 
 void RuntimeSystem_roseArrayAccess(const char* name, int posA, int posB, const char* filename, 

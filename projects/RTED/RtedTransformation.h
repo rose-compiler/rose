@@ -79,6 +79,9 @@ class RtedTransformation : public AstSimpleProcessing {
   SgStatement* getStatement(SgExpression* exp);
   // Transformation specific Helper Functions
   SgStatement* getSurroundingStatement(SgNode* n);
+  // returns greatest lvalue expression ancestor (e.g the operand of an
+  // expression statement or assign op).
+  SgExpression* getUppermostLvalue( SgExpression* n );
   // insert: RuntimeSystem* runtimeSystem = new RuntimeSystem();
   void insertRuntimeSystemClass();
   void insertFreeCall( SgFunctionCallExp* exp );

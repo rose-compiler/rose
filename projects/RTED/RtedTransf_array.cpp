@@ -9,9 +9,6 @@ using namespace SageInterface;
 using namespace SageBuilder;
 
 
-// TODO 2: remove or set to 0 when rts has user type information
-#define ENABLE_STRUCT_DECOMPOSITION 1
-
 
 /* -----------------------------------------------------------
  * Is the Initialized Name already known as an array element ?
@@ -128,10 +125,14 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
 	ROSE_ASSERT(expr);
 	appendExpression(arg_list, expr);
       }
-      SgIntVal* ismalloc = buildIntVal(0);
-      if (array->ismalloc)
-	ismalloc = buildIntVal(1);
-      appendExpression(arg_list, ismalloc);
+      SgIntVal* ismalloc = buildIntVal( 0 );
+      SgExpression* size = buildIntVal( 0 );
+      if (array->ismalloc) {
+        ismalloc = buildIntVal(1);
+        size = buildCastExp( array -> size, buildLongLongType());
+      }
+      appendExpression( arg_list, ismalloc );
+      appendExpression( arg_list, size );
 
       SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
       SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
@@ -237,48 +238,55 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
     SgPntrArrRefExp* arrRefExp = isSgPntrArrRefExp( arrayExp );
     ROSE_ASSERT( arrRefExp );
 
-    int read_value = 1;
-    SgNode* iter = arrayExp;
-    do {
-        SgNode* child = iter;
-        iter = iter->get_parent();
-        SgBinaryOp* binop = isSgBinaryOp( iter );
+    int read_write_mask = 0;
+    // arr[ ix ].member = foo; is not an array read or write -- this will be
+    // handled by initvar.  However, we still have to do a bounds check.
+    if( !isSgDotExp( arrRefExp -> get_parent() )) {
+        // determine whether this array access is a read or write
+        SgNode* iter = arrayExp;
+        do {
+            SgNode* child = iter;
+            iter = iter->get_parent();
+            SgBinaryOp* binop = isSgBinaryOp( iter );
 
-        if( isSgAssignOp( iter )) {
-            ROSE_ASSERT( binop );
+            if( isSgAssignOp( iter )) {
+                ROSE_ASSERT( binop );
 
-            // lhs write only, rhs read only
-            if( binop->get_lhs_operand() == child )
-                read_value = 2;
-            // regardless of which side arrayExp was on, we can stop now
-            break;
-        } else if(  isSgAndAssignOp( iter ) 
-                    || isSgDivAssignOp( iter ) 
-                    || isSgIorAssignOp( iter )
-                    || isSgLshiftAssignOp( iter )
-                    || isSgMinusAssignOp( iter )
-                    || isSgModAssignOp( iter )
-                    || isSgMultAssignOp( iter )
-                    || isSgPlusAssignOp( iter )
-                    || isSgPointerAssignOp( iter )
-                    || isSgRshiftAssignOp( iter )
-                    || isSgXorAssignOp( iter)) {
-        
-            ROSE_ASSERT( binop );
-            // lhs read & write, rhs read only
-            if( binop->get_lhs_operand() == child )
-                read_value = 3;
-            // regardless of which side arrayExp was on, we can stop now
-            break;
-        } else if( isSgPntrArrRefExp( iter )) {
-            // outer[ inner[ ix ]] = val;
-            //  inner[ ix ]  is only a read
-            break;
-        }
-    } while( iter );
+                // lhs write only, rhs read only
+                if( binop->get_lhs_operand() == child )
+                    read_write_mask |= 2;
+                // regardless of which side arrayExp was on, we can stop now
+                break;
+            } else if(  isSgAndAssignOp( iter ) 
+                        || isSgDivAssignOp( iter ) 
+                        || isSgIorAssignOp( iter )
+                        || isSgLshiftAssignOp( iter )
+                        || isSgMinusAssignOp( iter )
+                        || isSgModAssignOp( iter )
+                        || isSgMultAssignOp( iter )
+                        || isSgPlusAssignOp( iter )
+                        || isSgPointerAssignOp( iter )
+                        || isSgRshiftAssignOp( iter )
+                        || isSgXorAssignOp( iter)) {
+            
+                ROSE_ASSERT( binop );
+                // lhs read & write, rhs read only
+                if( binop->get_lhs_operand() == child )
+                    read_write_mask |= 3;
+                // regardless of which side arrayExp was on, we can stop now
+                break;
+            } else if( isSgPntrArrRefExp( iter )) {
+                // outer[ inner[ ix ]] = val;
+                //  inner[ ix ]  is only a read
+                break;
+            }
+        } while( iter );
+    }
+    // always do a bounds check
+    read_write_mask |= 4;
 
     appendAddressAndSize(NULL, arrRefExp, stmt, arg_list,0); 
-    appendExpression( arg_list, buildIntVal( read_value ) );
+    appendExpression( arg_list, buildIntVal( read_write_mask ) );
 
     appendExpression(arg_list, linenr);
 
@@ -300,7 +308,7 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
     insertStatementBefore(isSgStatement(stmt), exprStmt);
     string empty_comment = "";
     attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
-    string comment = "RS : Access Array Variable, paramaters : (name, dim 1 location, dim 2 location, is_read, filename, linenr, linenrTransformed, part of error message)";
+    string comment = "RS : Access Array Variable, paramaters : (name, dim 1 location, dim 2 location, read_write_mask, filename, linenr, linenrTransformed, part of error message)";
     attachComment(exprStmt,comment,PreprocessingInfo::before);
 
     //    }
@@ -585,23 +593,12 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
     }
   } // ------------------------------------------------------------
   else if (isSgDotExp(expr_l)) {
-#if ENABLE_STRUCT_DECOMPOSITION
     std::pair<SgInitializedName*,SgVarRefExp*> mypair = getRightOfDot(isSgDotExp(expr_l),
 								      "Right of Dot  - line: " + expr_l->unparseToString() + " ", varRef);
     initName = mypair.first;
     varRef = mypair.second;
     if (initName)
       ROSE_ASSERT(varRef);
-#else
-    // do nothing -- do not decompose user types
-    //  e.g.
-    //
-    //    struct typ { int a; int b; } v;
-    //    v.a = 2;
-    //
-    //  do not track a as initialized -- we just say all of v is initialized
-    return;
-#endif
   }// ------------------------------------------------------------
   else if (isSgArrowExp(expr_l)) {
     std::pair<SgInitializedName*,SgVarRefExp*> mypair  = getRightOfArrow(isSgArrowExp(expr_l),
@@ -691,6 +688,7 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
       SgTreeCopy treeCopy;
       SgExprListExp* size = isSgExprListExp(funcc->get_args()->copy(treeCopy));
       ROSE_ASSERT(size);
+
       // find if sizeof present in size operator
       vector<SgNode*> results = NodeQuery::querySubTree(size,V_SgSizeOfOp);
       SgSizeOfOp* sizeofOp = NULL;
@@ -730,6 +728,13 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
 	if (ismalloc) {
 	  ROSE_ASSERT(initName);
 	  ROSE_ASSERT(varRef);
+
+      // copy the argument to malloc so we know how much memory was allocated
+      ROSE_ASSERT( size->get_expressions().size() > 0 );
+      SgExpression* size_orig = 
+          isSgExprListExp( size -> copy( treeCopy ))->get_expressions()[ 0 ];
+
+
 	  // what is the dimension of the array?
 	  dimension = getDimension(initName);
 	  if (dimension!=derefCounter && derefCounter>0) {
@@ -795,7 +800,7 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
 	  // we are creating a new array variable based on the malloc call
 	  RTedArray* array = new RTedArray(false, dimension,
 					   initName, indx1, indx2,
-					   ismalloc);
+					   ismalloc, size_orig);
 	  // varRef can not be a array access, its only an array Create
 	  variablesUsedForArray.push_back(varRef);
 	  create_array_define_varRef_multiArray[varRef] = array;
@@ -888,7 +893,11 @@ void RtedTransformation::addPaddingToAllocatedMemory(SgStatement* stmt,  RTedArr
 void RtedTransformation::visit_isArrayPntrArrRefExp(SgNode* n) {
   SgPntrArrRefExp* arrRefExp = isSgPntrArrRefExp(n);
   // make sure the parent is not another pntr array (pntr->pntr), we only want the top one
-  if (!isSgPntrArrRefExp(arrRefExp->get_parent())) {
+  // also, ensure we don't count arr[ix].member as an array access, e.g. in the
+  // following:
+  //    arr[ix].member = 2;
+  // we need only checkwrite &( arr[ix].member ), which is handled by init var.
+  if ( !isSgPntrArrRefExp( arrRefExp->get_parent() )) {
 
     int dimension = 1;
     SgExpression* left = arrRefExp->get_lhs_operand();
@@ -906,20 +915,8 @@ void RtedTransformation::visit_isArrayPntrArrRefExp(SgNode* n) {
 	varRef = isSgVarRefExp(arrow->get_rhs_operand());
 	ROSE_ASSERT(varRef);
       } else if (dot) {
-
-#if ENABLE_STRUCT_DECOMPOSITION
-varRef = isSgVarRefExp(dot->get_rhs_operand());
-ROSE_ASSERT(varRef);
-#else
-        // do nothing -- do not decompose user types
-        //  e.g.
-        //
-        //    struct typ { int a; int b; } v;
-        //    v.a = 2;
-        //
-        //  do not track a as initialized -- we just say all of v is initialized
-        return;
-#endif
+        varRef = isSgVarRefExp(dot->get_rhs_operand());
+        ROSE_ASSERT(varRef);
       } else if (pointerDeref) {
 	varRef = isSgVarRefExp(pointerDeref->get_operand());
 	ROSE_ASSERT(varRef);

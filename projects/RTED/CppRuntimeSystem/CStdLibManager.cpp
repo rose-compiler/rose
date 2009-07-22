@@ -21,6 +21,33 @@ check_overlap(
     return check_overlap( ptr1, size, ptr2, size, desc);
 }
 
+// check that the memory allocated at ptr1 and ptr2 doesn't overlap
+void CStdLibManager::
+check_allocation_overlap(
+        const void* ptr1, 
+        const void* ptr2, 
+        const string& desc
+) {
+
+    MemoryManager* mm = RuntimeSystem::instance()->getMemManager();
+
+    MemoryType* p1_mem = mm->findContainingMem( (addr_type) ptr1 );
+    MemoryType* p2_mem = mm->findContainingMem( (addr_type) ptr2 );
+
+    // if either source or dest is NULL or missing, we'll catch it in subsequent
+    // checks to write/read
+    if( p1_mem && p2_mem )
+        check_overlap(
+            ptr1, 
+            p1_mem->getSize(), 
+            ptr2, 
+            p2_mem->getSize(), 
+            "in call to memcpy"
+        );
+
+
+}
+
 void CStdLibManager::
 check_overlap(
         const void* ptr1, 
@@ -104,7 +131,7 @@ check_memcpy( void* destination, const void* source, size_t num) {
     MemoryManager* mm = RuntimeSystem::instance()->getMemManager();
 
     // check no-overlap
-    check_overlap( destination, source, num, "in call to memcpy");
+    check_allocation_overlap( destination, source );
 
     // checkmem   dest .. dest + num
     mm->checkWrite( (addr_type) destination, num);
@@ -153,7 +180,15 @@ check_strncpy( char* destination, const char* source, size_t num) {
     mm->checkRead( (addr_type) source, num);
 
     // check no-overlap
-    check_overlap( destination, source, num, "in call to strncpy");
+    // 
+    // DJH - doing check_allocation_overlap instead of check_overlap will raise
+    // violations for copying substrings where the copied ranges don't overlap,
+    // but the allocated ranges do (e.g. copying the first n characters of a
+    // string to somewhere later in the string).
+    //
+    // the RTED tests imply that such a copy is indeed a violation, but this
+    // isn't clear to me.
+    check_allocation_overlap( destination, source, "in call to strncpy");
 
     // check that destination was allocated
     mm->checkWrite( (addr_type) destination, num);

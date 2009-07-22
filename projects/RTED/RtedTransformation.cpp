@@ -93,18 +93,6 @@ void RtedTransformation::transform(SgProject* project) {
 	  bracketWithScopeEnterExit( *stmtIt);
   }
 
-  cerr
-    << "\n Number of Elements in class_definitions  : "
-    << class_definitions.size() << endl;
-  std::map<SgClassDefinition*,RtedClassDefinition*> ::const_iterator refIt =
-    class_definitions.begin();
-  for (; refIt != class_definitions.end(); refIt++) {
-    SgClassDefinition* classDef = refIt->first;
-    RtedClassDefinition* rtedClass = refIt->second;
-    ROSE_ASSERT(rtedClass);
-    insertRegisterTypeCall(rtedClass);
-  }
-
 
 #if 0
   // before we insert the intitialized variables,
@@ -155,6 +143,20 @@ void RtedTransformation::transform(SgProject* project) {
   for (; it1 != variable_declarations.end(); it1++) {
     SgInitializedName* node = *it1;
     insertVariableCreateCall(node);
+  }
+
+  // make sure register types wind up before variable create, so that types are
+  // always available
+  cerr
+    << "\n Number of Elements in class_definitions  : "
+    << class_definitions.size() << endl;
+  std::map<SgClassDefinition*,RtedClassDefinition*> ::const_iterator refIt =
+    class_definitions.begin();
+  for (; refIt != class_definitions.end(); refIt++) {
+    SgClassDefinition* classDef = refIt->first;
+    RtedClassDefinition* rtedClass = refIt->second;
+    ROSE_ASSERT(rtedClass);
+    insertRegisterTypeCall(rtedClass);
   }
 
   cerr << "\n Number of Elements in variable_access_varref  : "

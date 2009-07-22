@@ -62,17 +62,6 @@ RuntimeSystem_roseRtedClose(
 // ***************************************** ARRAY FUNCTIONS *************************************
 
 
-bool checkAddress(unsigned long int address) {
-  bool valid=true;
-	if (address==66) {
-	  // fixme: cannot handle right now!!
-	  // we can not handle structs and classes right now
-	  valid=false;
-	}
-	return valid;
-}
-
-
 /*********************************************************
  * This function is called when an array is created
  * name      : variable name
@@ -89,22 +78,18 @@ void
 RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dimension,  
 				   const char* type, const char* basetype,
 			      unsigned long int address, long int size, long int sizeA, long int sizeB,
-			      int ismalloc, const char* filename, const char* line, const char* lineTransformed){
+			      int ismalloc, long int mallocSize, const char* filename, const char* line, const char* lineTransformed){
 
 
 	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
 	rs->checkpoint(SourcePosition(filename,atoi(line),atoi(lineTransformed)));
 
-	   if (!checkAddress(address)) return; 
   if( 0 == strcmp("SgArrayType", type)) 
       rs->createMemory(address, size, true);
   else if( 0 == strcmp("SgPointerType", type))
     // address refers to the address of the variable (i.e. the pointer).
     // we want the address of the newly allocated memory on the heap
-    if (dimension==1)
-      rs->createMemory(  *((addr_type*)address), sizeA);
-    else
-      rs->createMemory(  *((addr_type*)address), sizeA*sizeB);
+    rs->createMemory( *((addr_type*)address), mallocSize );
   else {
     cerr << "Unexpected Array Type: " << type << endl;
     exit( 1);
@@ -129,7 +114,6 @@ RuntimeSystem_roseArrayAccess(const char* name, int posA, int posB, const char* 
 
 	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
 	rs->checkpoint(SourcePosition(filename,atoi(line),atoi(lineTransformed)));
-	if (!checkAddress(address)) return; 
 
 	if ( read_write_mask & 1 )
 	  rs->checkMemRead( address, size );
@@ -296,7 +280,7 @@ void RuntimeSystem_ensure_allocated_and_initialized( const void* mem, size_t siz
       "StringConstant",
       "MangledStringConstant",
       "SgArrayType",
-      "SgIntType" // tps: added this
+      "SgCharType" // tps: added this
   );
   rs->createMemory( (addr_type) mem, size);
   rs->checkMemWrite( (addr_type) mem, size);
@@ -304,7 +288,8 @@ void RuntimeSystem_ensure_allocated_and_initialized( const void* mem, size_t siz
 
 #define NUM_ARG( i )                                                          \
   strtol(                                                                     \
-    isdigit( args[ i + 1 ][ 0 ]) ? args[ i + 1 ] : args[ i ],                 \
+    i < argsSize - 1 && isdigit( args[ i + 1 ][ 0 ])                          \
+      ? args[ i + 1 ] : args[ i ],                                            \
     NULL,                                                                     \
     10                                                                        \
   )
@@ -342,13 +327,13 @@ RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, in
     rs->check_memcpy(
       (void*) args[0], 
       (const void*) args[2], 
-      NUM_ARG( 4)
+      (int) NUM_ARG( 4)
     );
   } else if ( 0 == strcmp("memmove", fname)) {
     rs->check_memmove(
       (void*) args[0], 
       (const void*) args[2], 
-      NUM_ARG( 4)
+      (int) NUM_ARG( 4)
     );
   } else if ( 0 == strcmp("strcpy", fname)) {
     HANDLE_STRING_CONSTANT( 0);
@@ -490,7 +475,7 @@ RuntimeSystem_roseFunctionCall(int count, ...) {
   const char* leftVar=NULL;
   //cerr << "arguments : " <<  count << endl;
   int i=0;
-  for ( i=0;i<=count;i++)    {
+  for ( i=0;i<count;i++)    {
     const char* val=  va_arg(vl,const char*);
     //    if (val)
     //  printMessage("  %d      val : '%s' ---",i,val);
@@ -672,7 +657,7 @@ RuntimeSystem_roseRegisterTypeCall(int count, ...) {
 		  addr_type offset = va_arg(vl,unsigned long long);
 		  RsType* t= RuntimeSystem::instance()->getTypeSystem()->getTypeInfo(type);
 		  classType->addMember(name,t,(addr_type)offset);
-		  cerr << "Registering Member " << name << " of type " << type << " at offset" << offset << endl;
+		  cerr << "Registering Member " << name << " of type " << type << " at offset " << offset << endl;
 	  }
 	  va_end(vl);
 

@@ -477,15 +477,15 @@ void testLostMemRegion()
     addr_type addr=100;
     int ptrSize = sizeof(void*);
     rs->beginScope("Scope1");
-        rs->createVariable(addr+=ptrSize,"p1_to_10","mangled","SgPointerType","SgTypeInt");
-        rs->registerPointerChange("p1_to_10",10);
+        rs->createVariable(addr+=ptrSize,"p1_to_10","mangled_p1_to_10","SgPointerType","SgTypeInt");
+        rs->registerPointerChange("mangled_p1_to_10",10);
 
-        rs->createVariable(addr+=ptrSize,"p1_to_18","mangled","SgPointerType","SgTypeInt");
-        rs->registerPointerChange("p1_to_18",18);
+        rs->createVariable(addr+=ptrSize,"p1_to_18","mangled_p1_to_18","SgPointerType","SgTypeInt");
+        rs->registerPointerChange("mangled_p1_to_18",18);
 
         rs->beginScope("Scope2");
-            rs->createVariable(addr+=ptrSize,"p2_to_10","mangled","SgPointerType","SgTypeInt");
-            rs->registerPointerChange("p2_to_10",10);
+            rs->createVariable(addr+=ptrSize,"p2_to_10","mangled_p2_to_10","SgPointerType","SgTypeInt");
+            rs->registerPointerChange("mangled_p2_to_10",10);
         rs->endScope();
 
         /*
@@ -494,10 +494,10 @@ void testLostMemRegion()
         rs->registerPointerChange("p1_to_10",NULL);
         rs->registerPointerChange("p1_to_20",NULL);
         */
-        try{ rs->registerPointerChange("p1_to_10",NULL); }
+        try{ rs->registerPointerChange("mangled_p1_to_10",NULL); }
         TEST_CATCH(RuntimeViolation::MEM_WITHOUT_POINTER)
 
-        try{ rs->registerPointerChange("p1_to_18",NULL); }
+        try{ rs->registerPointerChange("mangled_p1_to_18",NULL); }
         TEST_CATCH(RuntimeViolation::MEM_WITHOUT_POINTER)
 
     rs->endScope();
@@ -520,14 +520,14 @@ void testPointerChanged()
     addr_type addr=100;
     int ptrSize = sizeof(void*);
     rs->beginScope("Scope1");
-        rs->createVariable(addr+=ptrSize,"p1_to_10","mangled","SgPointerType","SgTypeInt");
-        rs->registerPointerChange("p1_to_10",10);
+        rs->createVariable(addr+=ptrSize,"mangled_p1_to_10","mangled_p1_to_10","SgPointerType","SgTypeInt");
+        rs->registerPointerChange("mangled_p1_to_10",10);
 
-        rs->createVariable(addr+=ptrSize,"p2_to_10","mangled","SgPointerType","SgTypeInt");
-        rs->registerPointerChange("p2_to_10",10);
+        rs->createVariable(addr+=ptrSize,"p2_to_10","mangled_p2_to_10","SgPointerType","SgTypeInt");
+        rs->registerPointerChange("mangled_p2_to_10",10);
 
-        rs->createVariable(addr+=ptrSize,"p1_to_18","mangled","SgPointerType","SgTypeInt");
-        rs->registerPointerChange("p1_to_18",18);
+        rs->createVariable(addr+=ptrSize,"p1_to_18","mangled_p1_to_18","SgPointerType","SgTypeInt");
+        rs->registerPointerChange("mangled_p1_to_18",18);
 
 
         //rs->enableQtDebugger(true);
@@ -535,10 +535,10 @@ void testPointerChanged()
         //rs->enableQtDebugger(false);
 
 
-        try{ rs->registerPointerChange("p1_to_10",18,true); }
+        try{ rs->registerPointerChange("mangled_p1_to_10",18,true); }
         TEST_CATCH(RuntimeViolation::POINTER_CHANGED_MEMAREA )
 
-        rs->registerPointerChange("p1_to_18",18+sizeof(int));
+        rs->registerPointerChange("mangled_p1_to_18",18+sizeof(int));
 
         rs->freeMemory(10);
         rs->freeMemory(18);
@@ -558,10 +558,10 @@ void testPointerChanged()
         // Create an instance of A on stack
         rs->createVariable(0x42,"instanceOfA","mangled","A");
 
-        rs->createVariable(0x100,"intPtr","mangled","SgPointerType","SgTypeInt");
-        rs->registerPointerChange("intPtr",0x42);
+        rs->createVariable(0x100,"intPtr","mangled_intPtr","SgPointerType","SgTypeInt");
+        rs->registerPointerChange("mangled_intPtr",0x42);
 
-        try{ rs->registerPointerChange("intPtr",0x42 + 10*sizeof(int),true); }
+        try{ rs->registerPointerChange("mangled_intPtr",0x42 + 10*sizeof(int),true); }
         TEST_CATCH(RuntimeViolation::POINTER_CHANGED_MEMAREA )
 
     rs->endScope();
@@ -577,9 +577,9 @@ void testInvalidPointerAssign()
     rs->beginScope("Scope2");
         // Create an instance of A on stack
         rs->createVariable(0x42,"instanceOfA","mangled","SgTypeDouble");
-        rs->createVariable(0x100,"intPtr","mangled","SgPointerType","SgTypeInt");
+        rs->createVariable(0x100,"intPtr","mangled_intPtr","SgPointerType","SgTypeInt");
         // Try to access double with an int ptr
-        try { rs->registerPointerChange("intPtr",0x42); }
+        try { rs->registerPointerChange("mangled_intPtr",0x42); }
         TEST_CATCH ( RuntimeViolation::INVALID_TYPE_ACCESS )
 
     rs->endScope();
@@ -799,6 +799,30 @@ void test_strlen()
 
     TRY_BODY
     TEST_STRING_CLEANUP( str)
+
+    CLEANUP
+}
+
+void test_memcpy_strict_overlap()
+{
+    TEST_INIT(  "Testing that memcpy complains about overlap for allocated "
+                "ranges, not merely for the copied ranges.")
+
+    char* s1;
+    char* s2 = "here is string 2";
+
+
+    rs->createMemory( (addr_type) s2, 16 * sizeof( char ));
+    rs->checkMemWrite( (addr_type) s2, 16 * sizeof( char ));
+
+    s1 = &s2[ 7 ];
+
+    // even though there's no overlap with the copied ranges, memcpy shouldn't
+    // be called when the allocated blocks overlap
+    try { rs->check_memcpy( s1, s2, 3);}
+    TEST_CATCH( RuntimeViolation::INVALID_MEM_OVERLAP)
+
+    rs->freeMemory( (addr_type) s2);
 
     CLEANUP
 }
@@ -1027,6 +1051,7 @@ int main(int argc, char ** argv)
         test_strstr();
         test_strlen();
 
+        test_memcpy_strict_overlap();
         test_meminit_nullterm_included();
         test_range_overlap();
     }

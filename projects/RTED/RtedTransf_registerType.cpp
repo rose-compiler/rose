@@ -40,7 +40,7 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* cdef) {
 						    cdef->get_mangled_name().str(),
 						    cdef->get_declaration()->get_type()->class_name(),
 						    elements.size(),
-						    sizeof(cdef),
+                buildSizeOfOp( cdef->get_declaration()->get_type() ),
 						    elements);
   std::map<SgClassDefinition*,RtedClassDefinition*>::const_iterator it =
     class_definitions.find(cdef);
@@ -52,7 +52,22 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* cdef) {
 void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
 						) {
   ROSE_ASSERT(rtedClass);
-  SgStatement* stmt = mainFirst;
+  SgStatement* stmt;
+
+  // FIXME 2: This will cause multiple invocations to registertype
+  //    e.g. int foo() { struct t { int x; } v; }
+  //         int main() { foo(); foo(); }
+  //
+  // we want to call register type before type is used, but where it's in
+  // scope
+  stmt = getSurroundingStatement( rtedClass->classDef );
+  while(  isSgClassDefinition( stmt )
+          || isSgClassDeclaration( stmt )) {
+
+    stmt = isSgStatement( stmt -> get_parent());
+  }
+  if( !stmt )
+      stmt = mainFirst;
 
   if (isSgStatement(stmt)) {
     SgScopeStatement* scope = stmt->get_scope();
@@ -80,14 +95,12 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
       elements+=3; // ClassName , ClassType and sizeOfClass
       SgExpression* nrElements = buildIntVal(elements);
 
-      SgExpression* sizeOfClass = buildUnsignedLongLongIntVal(rtedClass->sizeClass); 
-
 
       SgExprListExp* arg_list = buildExprListExp();
       appendExpression(arg_list, nrElements);
       appendExpression(arg_list, buildString(name));
       appendExpression(arg_list, buildString(typeC));
-      appendExpression(arg_list, sizeOfClass);
+      appendExpression(arg_list, rtedClass->sizeClass);
       
       // go through each element and add name, type and offset
       std::vector<RtedClassElement*> elementsC = rtedClass->elements;
@@ -131,8 +144,7 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
       SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
 							    arg_list);
       SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
-      insertStatementBefore(isSgStatement(stmt), exprStmt);
-
+      insertStatementAfter( isSgStatement( stmt ), exprStmt );
     }
     else {
       cerr
