@@ -30,8 +30,6 @@ GNU General Public License for more details.
 
 :- use_module(callgraph).
 
-:- guitracer.
-
 %-----------------------------------------------------------------------
 % GRAPH Printing
 %-----------------------------------------------------------------------

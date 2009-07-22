@@ -86,7 +86,7 @@ int main(int argc, char** argv) {
 
   init_termite(argc, argv);
 
-  PrologToRose conv;
+  TermToRose conv;
   SgNode* p = conv.toRose(infile);
 
   if (dot_flag) {

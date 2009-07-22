@@ -117,7 +117,7 @@ private:
   PrologTerm* rootTerm;
 
   /** the converter */
-  RoseToProlog termConv;
+  RoseToTerm termConv;
 
 #if HAVE_SATIRE_ICFG
   /** the CFG */

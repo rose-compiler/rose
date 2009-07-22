@@ -37,7 +37,7 @@ SgProject *createRoseAst(AnalyzerOptions *options)
     }
     else if (options->inputTermiteAst())
     {
-        PrologToRose conv;
+        TermToRose conv;
 	astRoot = dynamic_cast<SgProject*>
 	  (conv.toRose(options->getInputTermiteAstFileName().c_str()));
 	ROSE_ASSERT(astRoot);

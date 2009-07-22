@@ -15,7 +15,7 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
  * Class supporting generation of PROLOG trees representing ROSE-IR
  *
  */
-class RoseToProlog {
+class RoseToTerm {
 public:
   void addSpecific(SgNode*,PrologCompTerm*);
   PrologCompTerm* getFileInfo(Sg_File_Info*);

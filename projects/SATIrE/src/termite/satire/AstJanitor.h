@@ -15,17 +15,17 @@
 class InheritedAttribute
 {
 public:
-  PrologToRose* ptr;
+  TermToRose* conv;
   SgScopeStatement* scope;
   SgNode* parent;
   // Specific constructors are required
-  InheritedAttribute(PrologToRose* conv, 
+  InheritedAttribute(TermToRose* c, 
 		     SgScopeStatement* s = NULL, 
 		     SgNode* p = NULL)
-    : ptr(conv), scope(s), parent(p) 
+    : conv(c), scope(s), parent(p) 
   {};
   InheritedAttribute(const InheritedAttribute& X)
-    : ptr(X.ptr), scope(X.scope), parent(X.parent) 
+    : conv(X.conv), scope(X.scope), parent(X.parent) 
   {};
 };
 
@@ -64,7 +64,7 @@ public:
 	ROSE_ASSERT(scope != NULL);
 	decl->set_scope(scope);
       }
-      PrologToRose::addSymbol(scope, decl);
+      TermToRose::addSymbol(scope, decl);
     }
 
     if (SgVariableDeclaration *vardecl = isSgVariableDeclaration(n))
@@ -136,7 +136,7 @@ public:
 	vdec->set_parent(glob);
 	//vdec->setForward();
 	vdec->set_definingDeclaration(vdec);
-	n->set_parent(attr.ptr->createDummyNondefDecl(vdec, FI, "", 
+	n->set_parent(attr.conv->createDummyNondefDecl(vdec, FI, "", 
 					      iname->get_typeptr(), 
 					      iname->get_initializer()));
       }
@@ -148,7 +148,7 @@ public:
     if (isSgVariableDeclaration(n) && isSgForInitStatement(attr.parent))
       n->set_parent(attr.parent->get_parent());
 
-    return InheritedAttribute(attr.ptr, scope, n);
+    return InheritedAttribute(attr.conv, scope, n);
   };
 
 private:

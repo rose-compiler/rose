@@ -18,10 +18,10 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
  * Class for creating a ROSE-IR (made for unparsing)
  * from its PROLOG term-representation
  */
-class PrologToRose {
+class TermToRose {
 public:
-  PrologToRose() {};
-  ~PrologToRose() {};
+  TermToRose() {};
+  ~TermToRose() {};
   void unparse(std::string, std::string, std::string, SgNode*);
   SgNode* toRose(PrologTerm*);
   SgNode* toRose(const char* filename);
