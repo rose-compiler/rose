@@ -1,3 +1,26 @@
+2009-07-22 18:28  hamilton37
+
+	* [r6663]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/FileManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/FileManager.h,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp: RTED: Minor changes
+	  to wrapper that gets input_output_errors passing.
+
+2009-07-22 16:51  hamilton37
+
+	* [r6661] /trunk/ROSE/projects/RTED/tests/C/memoverlap,
+	  /trunk/ROSE/projects/RTED/tests/C/memoverlap/heap_array.c,
+	  /trunk/ROSE/projects/RTED/tests/C/memoverlap/heap_array_in_struct.c,
+	  /trunk/ROSE/projects/RTED/tests/C/memoverlap/heap_array_in_struct_in_array.c,
+	  /trunk/ROSE/projects/RTED/tests/C/memoverlap/stack_array.c,
+	  /trunk/ROSE/projects/RTED/tests/C/memoverlap/stack_array_in_struct.c,
+	  /trunk/ROSE/projects/RTED/tests/C/memoverlap/stack_array_in_struct_in_array.c:
+	  RTED: Added some tests for mem-overlap checking.
+
 2009-07-22 01:21  hamilton37
 
 	* [r6655]
