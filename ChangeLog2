@@ -1,3 +1,23 @@
+2009-07-22 18:58  hamilton37
+
+	* [r6665] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/extract-expected-error.sed: RTED: Tweak
+	  extraction scripts to treat all memory leaks as end-of-program
+	  errors.
+	  
+	  We now pass the memory_leaks tests, but not very well. In
+	  particular, we don't
+	  identify the line number that causes the leak, we just identify
+	  that a leak
+	  occured at the end of the program.
+	  
+	  I believe that passing these tests properly will require dataflow
+	  analysis in
+	  the RTS to identify those addresses that are "leaked" (i.e. not
+	  pointed to by
+	  anywhere in memory, nor reliably computable from somewhere in
+	  memory).
+
 2009-07-22 18:28  hamilton37
 
 	* [r6663]
