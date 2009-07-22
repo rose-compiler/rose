@@ -63,10 +63,7 @@ int main(int argc, char** argv) {
      
     switch (c) {
     case 'o': outfile = optarg; break;
-     
-    default:
-      usage(argv[0]);
-      return 1; 
+    default: ; /* ignore - pass to frontend */
     }
   }
   if (optind < argc) {
