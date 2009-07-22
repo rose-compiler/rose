@@ -1,3 +1,123 @@
+2009-07-22 01:21  hamilton37
+
+	* [r6655]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CStdLibManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CStdLibManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp,
+	  /trunk/ROSE/projects/RTED/DataStructures.h,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_registerType.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: RTED: Progress on
+	  array bounds checking and type information.
+	  
+	  * Removed array bounds and file tests from check-local. Now make
+	  check
+	  passes, and should be run before commits. Obviously, array bounds
+	  and file
+	  tests should be added back as soon as they pass.
+	  
+	  * Type member sizes are now registered correctly.
+	  
+	  * Type member access is now tracked with the correct address,
+	  e.g.
+	  
+	  struct t {
+	  int b;
+	  } v;
+	  v.b = 2;
+	  
+	  is now properly tracked as a write to &( v.b ).
+	  
+	  * Type registration is now scope-sensitive, so types defined in
+	  functions
+	  (e.g. some structs) will be registered immediately after they're
+	  defined,
+	  resolving some compilation errors in RTED tests.
+	  
+	  * Discussed the runtime interface with Martin, for handling
+	  pointer tracking,
+	  dereferencing and arrays. Some comments annotate TODOs for
+	  implementing
+	  this.
+	  
+	  * Variable lookup in the type system now uses the mangled name to
+	  avoid
+	  conflicts.
+
+2009-07-21 21:50  matzke
+
+	* [r6654] /trunk/ROSE/tests/roseTests/binaryTests/Makefile.am:
+	  Added test for x86-64 assembler
+	  
+	  This test is executed by "make check"
+
+2009-07-21 21:49  matzke
+
+	* [r6653] /trunk/ROSE/tests/roseTests/binaryTests/disassemble.C:
+	  Disassembler exits non-zero if it can't reassemble perfectly
+	  
+	  If the --reassemble switch is given and any instruction can't be
+	  assembled to have an encoding identical to the original encoding
+	  then
+	  the disassembler exits with a non-zero status.
+
+2009-07-21 21:49  matzke
+
+	* [r6652] /trunk/ROSE/src/frontend/Disassemblers/AssemblerX86.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/AssemblerX86.h: Added
+	  better x86 prefix matching
+	  
+	  When the assembler is operating in a mode where it's trying to
+	  generate
+	  an encoding that matches the original bytes used to disassemble
+	  an
+	  instruction (i.e., Assembler::get_encoding_type()==ET_MATCHES),
+	  it tries
+	  harder to generate x86 instruction prefixes in the same order and
+	  repetition as the original encoding.
+	  
+	  This fixes problems encountered often with NOP instructions where
+	  the
+	  compiler has padded the NOP encoding to make it a particular
+	  size. Some
+	  compilers add 0x66 (Operand Size Override) prefixes, others
+	  insert
+	  segment overrides, others change operand sizes. But the fix is
+	  not
+	  particular to NOPs--it applies equally to all kinds of x86
+	  instructions.
+
+2009-07-21 21:49  matzke
+
+	* [r6651] /trunk/ROSE/src/frontend/Disassemblers/Disassembler.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/Disassembler.h: Fine tuned
+	  SEARCH_FOLLOWING mode for disassembler
+	  
+	  This mode of disassembly causes the disassembler to start
+	  disassembling
+	  after each basic block, regardless of whether the address is a
+	  known
+	  successor (for instance, disassemble even after a HLT
+	  instruction).
+	  
+	  The fine tuning is that the address is not disassembled if it
+	  falls
+	  outside the mapping from virtual address to file offset (such as
+	  when
+	  the address is past the end of the file or within a
+	  non-executable
+	  section). This change makes SEARCH_FOLLOWING behave more like the
+	  other
+	  search methods.
+
 2009-07-21 18:23  bauer25
 
 	* [r6648] /trunk/ROSE/configure.in,
