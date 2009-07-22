@@ -5,6 +5,7 @@
 source /usr/apps/subversion/1.5.5/setup.sh
 export XERCESCROOT=/home/liao6/opt/xerces-c-3.0.1
 source /usr/apps/graphviz/2.20.3/setup.sh
+source /usr/apps/qt/4.5.1/setup.sh
 
 # QT and QROSE
 source /usr/apps/qt/4.5.1/setup.sh
