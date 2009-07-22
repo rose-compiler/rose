@@ -16,7 +16,8 @@ SUBDIRS="AsmInstructionBar \
           RoseCodeEdit \
           RoseFileSelector \
           TaskSystem \
-          util"
+          util \
+          WidgetCreator"
 
          
 QROSEDIRS=". document qnfa widgets"

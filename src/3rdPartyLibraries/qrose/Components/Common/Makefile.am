@@ -1,5 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-#SUBDIRS=icons
+
+SUBDIRS=icons
 
 if ROSE_USE_QT
 
@@ -18,4 +19,3 @@ CLEANFILES =
 endif
 
 EXTRA_DIST = QRAstInfo.h QRCoords.h  QRIcons.h QRPixmap.h QRAttribute.h  QRoseComponent.h
-   

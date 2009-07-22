@@ -1017,6 +1017,7 @@ src/3rdPartyLibraries/qrose/QRoseLib/Makefile
 src/3rdPartyLibraries/qrose/Widgets/Makefile
 src/3rdPartyLibraries/qrose/Components/Makefile
 src/3rdPartyLibraries/qrose/Components/Common/Makefile
+src/3rdPartyLibraries/qrose/Components/Common/icons/Makefile
 src/3rdPartyLibraries/qrose/Components/QueryBox/Makefile
 src/3rdPartyLibraries/qrose/Components/SourceBox/Makefile
 src/3rdPartyLibraries/qrose/Components/TreeBox/Makefile
@@ -1129,6 +1130,7 @@ src/roseExtensions/qtWidgets/MetricsKiviat/Makefile
 src/roseExtensions/qtWidgets/NodeInfoWidget/Makefile
 src/roseExtensions/qtWidgets/ProjectManager/Makefile
 src/roseExtensions/qtWidgets/PropertyTreeWidget/Makefile
+src/roseExtensions/qtWidgets/QtGradientEditor/Makefile
 src/roseExtensions/qtWidgets/RoseCodeEdit/Makefile
 src/roseExtensions/qtWidgets/RoseCodeEdit/QCodeEdit/Makefile
 src/roseExtensions/qtWidgets/RoseCodeEdit/QCodeEdit/document/Makefile
@@ -1138,6 +1140,7 @@ src/roseExtensions/qtWidgets/RoseFileSelector/Makefile
 src/roseExtensions/qtWidgets/SrcBinView/Makefile
 src/roseExtensions/qtWidgets/TaskSystem/Makefile
 src/roseExtensions/qtWidgets/util/Makefile
+src/roseExtensions/qtWidgets/WidgetCreator/Makefile
 src/roseExtensions/roseHPCToolkit/Makefile
 src/roseExtensions/roseHPCToolkit/src/Makefile
 src/roseExtensions/roseHPCToolkit/include/Makefile

@@ -45,7 +45,7 @@ class ProjectManager : public ItemTreeNode
         int getIdFromSgProject(SgProject * proj);
 
         void storeProjectState();
-        void loadProjectState();
+        void loadProjectState( int argc, char **argv );
 
     private:
         //singleton

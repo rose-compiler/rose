@@ -19,6 +19,8 @@ libqnfa_la_SOURCES = qnfa.cpp\
 
 
 
+EXTRA_DIST = 
+
 # Target for installing header 
 headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/QCodeEdit
 headerTarget_HEADERS = light_vector.h\

@@ -15,6 +15,8 @@ nodist_libPropertyTreeWidget_la_SOURCES = moc_PropertyTreeModel.cxx\
 
 
 
+EXTRA_DIST = 
+
 # Target for installing header 
 headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = PropertyTreeModel.h\

@@ -11,9 +11,7 @@
 #include <QToolButton>
 #include <QLinearGradient>
 
-#ifdef ROSEQT_EXPERIMENTAL
 #include "qtgradientdialog.h"
-#endif
 
 #include "ui_MetricBgDelegateConfig.h"
 
@@ -67,7 +65,6 @@ QColor MetricBgDelegate::getColor(double val) const
 
 void MetricBgDelegate::setupConfigWidget( QWidget *parent )
 {
-#ifdef ROSEQT_EXPERIMENTAL
     Ui::MetricBgDelegateConfig configWidget;
 
     configWidget.setupUi( parent );
@@ -106,12 +103,10 @@ void MetricBgDelegate::setupConfigWidget( QWidget *parent )
     int bgId = infoBox->findData( metricsName );
     if( bgId == -1 ) bgId = 0;
     infoBox->setCurrentIndex( bgId );
-#endif
 }
 
 void MetricBgDelegate::applyConfigWidget( QWidget *parent )
 {
-#ifdef ROSEQT_EXPERIMENTAL
     QComboBox *infoBox( parent->findChild<QComboBox *>() );
     assert( infoBox );
     QtGradientDialog *gradientDialog( parent->findChild<QtGradientDialog *>() );
@@ -135,7 +130,6 @@ void MetricBgDelegate::applyConfigWidget( QWidget *parent )
         metricsName = infoBox->itemData( idx ).toString();
         metricsInf = metricsConfig.getMetricsInfo( metricsName );
     }
-#endif
 }
 
 void MetricBgDelegate::paint ( QPainter * painter,
@@ -233,7 +227,6 @@ void MetricBgDelegate::paint ( QPainter * painter,
 
 void MetricBgDelegate::gradientFinished( int result )
 {
-#ifdef ROSEQT_EXPERIMENTAL
     if( result != QDialog::Accepted || sender() == NULL )
         return;
 
@@ -251,5 +244,4 @@ void MetricBgDelegate::gradientFinished( int result )
     painter.fillRect( 0, 0, 100, 100, QBrush( gradientDialog->gradient() ) );
     gradientButton->setIconSize( QSize( 100, 16 ) );
     gradientButton->setIcon( QIcon( iconPix ) );
-#endif
 }

@@ -16,7 +16,7 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
-     <widget class="QMdiArea" name="mdiArea"/>
+     <widget class="SubWindowFactory" name="subWindowArea" native="true"/>
     </item>
    </layout>
   </widget>
@@ -58,16 +58,6 @@
      <property name="title">
       <string>New Sub Window</string>
      </property>
-     <addaction name="actionNewAssemblerView"/>
-     <addaction name="actionNewCodeEditor"/>
-     <addaction name="actionNewSrcBinView"/>
-     <addaction name="separator"/>
-     <addaction name="actionNewGraphWidget"/>
-     <addaction name="actionNewCallGraphWidget"/>
-     <addaction name="separator"/>
-     <addaction name="actionNewAstBrowser"/>
-     <addaction name="actionNewPropertyView"/>
-     <addaction name="actionNewMetricsKiviat"/>
     </widget>
     <addaction name="separator"/>
     <addaction name="actionTile"/>
@@ -317,18 +307,10 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
-   <addaction name="actionNewAstBrowser"/>
-   <addaction name="actionNewPropertyView"/>
-   <addaction name="actionNewGraphWidget"/>
-   <addaction name="actionNewCallGraphWidget"/>
-   <addaction name="actionNewMetricsKiviat"/>
-   <addaction name="actionNewCodeEditor"/>
-   <addaction name="actionNewAssemblerView"/>
-   <addaction name="actionNewSrcBinView"/>
   </widget>
   <action name="actionQuit">
    <property name="icon">
-    <iconset resource="../widgets/util/util.qrc">
+    <iconset resource="../../src/roseExtensions/qtWidgets/util/util.qrc">
      <normaloff>:/AppIcons/application-exit.png</normaloff>:/AppIcons/application-exit.png</iconset>
    </property>
    <property name="text">
@@ -352,7 +334,7 @@
   </action>
   <action name="actionNewAssemblerView">
    <property name="icon">
-    <iconset resource="../widgets/util/util.qrc">
+    <iconset resource="../../src/roseExtensions/qtWidgets/util/util.qrc">
      <normaloff>:/util/NodeIcons/binaryfile.gif</normaloff>:/util/NodeIcons/binaryfile.gif</iconset>
    </property>
    <property name="text">
@@ -361,8 +343,8 @@
   </action>
   <action name="actionNewCodeEditor">
    <property name="icon">
-    <iconset resource="../widgets/util/util.qrc">
-     <normaloff>:/util/NodeIcons/sourcefile.gif</normaloff>:/util/NodeIcons/sourcefile.gif</iconset>
+    <iconset resource="../../src/roseExtensions/qtWidgets/util/util.qrc">
+     <normaloff>:/util/NodeIcons/sourcefiles.gif</normaloff>:/util/NodeIcons/sourcefiles.gif</iconset>
    </property>
    <property name="text">
     <string>New Code Editor</string>
@@ -468,7 +450,7 @@
   </action>
   <action name="actionNewGraphWidget">
    <property name="icon">
-    <iconset resource="../widgets/util/util.qrc">
+    <iconset resource="../../src/roseExtensions/qtWidgets/util/util.qrc">
      <normaloff>:/util/WidgetIcons/Graph.gif</normaloff>:/util/WidgetIcons/Graph.gif</iconset>
    </property>
    <property name="text">
@@ -477,7 +459,7 @@
   </action>
   <action name="actionNewMetricsKiviat">
    <property name="icon">
-    <iconset resource="../widgets/util/util.qrc">
+    <iconset resource="../../src/roseExtensions/qtWidgets/util/util.qrc">
      <normaloff>:/util/WidgetIcons/Kiviat.gif</normaloff>:/util/WidgetIcons/Kiviat.gif</iconset>
    </property>
    <property name="text">
@@ -486,7 +468,7 @@
   </action>
   <action name="actionNewAstBrowser">
    <property name="icon">
-    <iconset resource="../widgets/util/util.qrc">
+    <iconset resource="../../src/roseExtensions/qtWidgets/util/util.qrc">
      <normaloff>:/util/NodeIcons/project.gif</normaloff>:/util/NodeIcons/project.gif</iconset>
    </property>
    <property name="text">
@@ -495,7 +477,7 @@
   </action>
   <action name="actionNewPropertyView">
    <property name="icon">
-    <iconset resource="../widgets/util/util.qrc">
+    <iconset resource="../../src/roseExtensions/qtWidgets/util/util.qrc">
      <normaloff>:/util/WidgetIcons/PropTreeWidget.gif</normaloff>:/util/WidgetIcons/PropTreeWidget.gif</iconset>
    </property>
    <property name="text">
@@ -504,7 +486,7 @@
   </action>
   <action name="actionNewCallGraphWidget">
    <property name="icon">
-    <iconset resource="../widgets/util/util.qrc">
+    <iconset resource="../../src/roseExtensions/qtWidgets/util/util.qrc">
      <normaloff>:/util/WidgetIcons/CallGraph.gif</normaloff>:/util/WidgetIcons/CallGraph.gif</iconset>
    </property>
    <property name="text">
@@ -513,7 +495,7 @@
   </action>
   <action name="actionNewSrcBinView">
    <property name="icon">
-    <iconset resource="../widgets/util/util.qrc">
+    <iconset resource="../../src/roseExtensions/qtWidgets/util/util.qrc">
      <normaloff>:/util/NodeIcons/sourcefiles.gif</normaloff>:/util/NodeIcons/sourcefiles.gif</iconset>
    </property>
    <property name="text">
@@ -581,9 +563,15 @@
    <extends>QListWidget</extends>
    <header>TaskList.h</header>
   </customwidget>
+  <customwidget>
+   <class>SubWindowFactory</class>
+   <extends>QWidget</extends>
+   <header>SubWindowFactory.h</header>
+   <container>1</container>
+  </customwidget>
  </customwidgets>
  <resources>
-  <include location="../widgets/util/util.qrc"/>
+  <include location="../../src/roseExtensions/qtWidgets/util/util.qrc"/>
  </resources>
  <connections>
   <connection>

@@ -18,6 +18,8 @@ class QCodeEdit;
 
 class ProjectManager;
 
+class QMdiSubWindow;
+
 //#include <QtScript>
 //#include <QtScriptTools/QScriptEngineDebugger>
 
@@ -29,14 +31,14 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
     public:
-        MainWindow( QWidget * parent= 0);
+        MainWindow( int argc, char **argv, QWidget * parent= 0);
         virtual ~MainWindow();
 
     public slots:
         void setFilter1( AstFilterInterface *filter );
         void setFilter2( AstFilterInterface *filter );
 
-        void on_actionNewAssemblerView_triggered();
+        /*void on_actionNewAssemblerView_triggered();
         void on_actionNewCodeEditor_triggered();
         void on_actionNewGraphWidget_triggered();
         void on_actionNewMetricsKiviat_triggered();
@@ -44,7 +46,7 @@ class MainWindow : public QMainWindow
         void on_actionNewPropertyView_triggered();
         void on_actionNewCallGraphWidget_triggered();
         void on_actionNewSrcBinView_triggered();
-
+        void on_actionNewSourceBox_triggered();*/
 
         void on_actionSaveAs_triggered();
         void on_actionOpen_triggered();
@@ -70,7 +72,7 @@ class MainWindow : public QMainWindow
 
         void emitFilterChanged();
 
-        QMdiSubWindow* addMdiSubWidget(QWidget * widget, const QString & caption);
+        //QMdiSubWindow* addMdiSubWidget(QWidget * widget, const QString & caption);
         void buildupEditorToolbar(QWidget * w);
         ProjectManager *pm;
 

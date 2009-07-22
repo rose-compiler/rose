@@ -14,6 +14,8 @@ libFlopCounter_la_SOURCES = FlopCounter.cpp\
 
 
 
+EXTRA_DIST = 
+
 # Target for installing header 
 headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = FlopCounter.h\

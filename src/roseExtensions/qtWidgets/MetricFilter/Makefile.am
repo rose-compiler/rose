@@ -14,6 +14,8 @@ nodist_libMetricFilter_la_SOURCES = moc_MetricFilter.cxx\
 
 BUILT_SOURCES = ui_MetricFilter.h
 
+EXTRA_DIST = MetricFilter.ui
+
 # Target for installing header 
 headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = MetricFilter.h

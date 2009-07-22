@@ -15,6 +15,8 @@ nodist_libAsmView_la_SOURCES = moc_AsmView.cxx\
 
 BUILT_SOURCES = ui_ConfigureAsmViewDelegate.h
 
+EXTRA_DIST = ConfigureAsmViewDelegate.ui
+
 # Target for installing header 
 headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = AsmTreeNode.h\

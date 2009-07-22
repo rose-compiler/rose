@@ -149,7 +149,7 @@ void ProjectManager::storeProjectState()
     s.endGroup();
 }
 
-void ProjectManager::loadProjectState()
+void ProjectManager::loadProjectState( int argc, char **argv )
 {
     QSettings s;
 
@@ -163,6 +163,12 @@ void ProjectManager::loadProjectState()
         QString projName = s.value("Name").toString();
         ProjectNode * projNode = new ProjectNode(projName);
         rootNode->addChild(projNode);
+        
+        QStringList l;
+        for( int i( 0 ); i < argc; ++i )
+            l << argv[i];
+
+        projNode->setCommandLine( l );
 
         //projNode->addToCommandLine( "-rose:verbose 2" );
         //cprojNode->addToCommandLine( "-DBOOST_NO_INT64_T" );
@@ -375,9 +381,12 @@ void ProjectNode::addToCommandLine(const QString & s)
 
 void ProjectNode::setCommandLine(const QStringList & sl)
 {
-    sgProject->get_originalCommandLineArgumentList().clear();
+    std::vector<std::string> cmd;
+
     foreach(const QString curStr, sl)
-        sgProject->get_originalCommandLineArgumentList().push_back(curStr.toStdString());
+        cmd.push_back( curStr.toStdString() );
+
+    sgProject->processCommandLine( cmd );
 }
 
 int ProjectNode::getSourceFileCount() const

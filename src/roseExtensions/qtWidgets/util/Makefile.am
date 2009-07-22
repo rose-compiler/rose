@@ -16,6 +16,7 @@ libutil_la_SOURCES = AsmToSourceMapper.cpp\
                      LCS.cpp\
                      MetricAttributeCollector.cpp\
                      MetricBgDelegate.cpp\
+                     QRoseComponentProxy.cpp\
                      RoseGraphicsView.cpp\
                      RoseTreeView.cpp\
                      SageMimeData.cpp\
@@ -24,12 +25,38 @@ libutil_la_SOURCES = AsmToSourceMapper.cpp\
 nodist_libutil_la_SOURCES = moc_ItemTreeModel.cxx\
                             moc_MetricAttributeCollector.cxx\
                             moc_MetricBgDelegate.cxx\
+                            moc_QRoseComponentProxy.cxx\
                             moc_RoseGraphicsView.cxx\
                             moc_RoseTreeView.cxx\
                             qrc_util.cpp\
                             ui_MetricBgDelegateConfig.h
 
 BUILT_SOURCES = ui_MetricBgDelegateConfig.h
+
+EXTRA_DIST = MetricBgDelegateConfig.ui \
+	util.qrc \
+	AppIcons/info.png \
+	AppIcons/document-properties.png \
+	AppIcons/document-save.png \
+	AppIcons/application-exit.png \
+	AppIcons/document-save-as.png \
+	AppIcons/document-open.png \
+	NodeIcons/loop.png \
+	NodeIcons/sourcefiles.gif \
+	NodeIcons/sourcefile.gif \
+	NodeIcons/class.gif \
+	NodeIcons/namespace.gif \
+	NodeIcons/project.gif \
+	NodeIcons/binaryfiles.gif \
+	NodeIcons/binaryfile.gif \
+	NodeIcons/function.gif \
+	NodeIcons/includes.gif \
+	NodeIcons/include.gif \
+	WidgetIcons/Kiviat.gif \
+	WidgetIcons/PropTreeWidget.gif \
+	WidgetIcons/Rose.gif \
+	WidgetIcons/CallGraph.gif \
+	WidgetIcons/Graph.gif
 
 # Target for installing header 
 headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
@@ -42,6 +69,7 @@ headerTarget_HEADERS = AsmToSourceMapper.h\
                        LCS.h\
                        MetricAttributeCollector.h\
                        MetricBgDelegate.h\
+                       QRoseComponentProxy.h\
                        RoseGraphicsView.h\
                        RoseTreeView.h\
                        SageMimeData.h\

@@ -18,6 +18,8 @@ nodist_libProjectManager_la_SOURCES = moc_DependencyInfo.cxx\
 
 
 
+EXTRA_DIST = 
+
 # Target for installing header 
 headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = DependencyInfo.h\

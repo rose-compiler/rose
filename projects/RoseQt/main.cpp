@@ -115,10 +115,10 @@ QWidget * setupGuiUiFile(SgProject * project)
 #endif //USE_QROSE
 
 
-QWidget * setupGuiWithCompiledUi()
+QWidget * setupGuiWithCompiledUi( int argc, char **argv )
 {
     // everything is done by the MainWindow-Class
-    return new MainWindow();
+    return new MainWindow( argc, argv );
 }
 
 
@@ -197,7 +197,9 @@ int main(int argc, char** argv)
     InstructionCountAnnotator::annotate(project,vector<string> ());
     qDebug() << "Done";*/
 
+
     QApplication app(argc, argv);
+
     QCoreApplication::setOrganizationName("LLNL");
     QCoreApplication::setOrganizationDomain("ROSE");
     QCoreApplication::setApplicationName("demo");
@@ -210,7 +212,7 @@ int main(int argc, char** argv)
     //-----------------------------------------
     //main = setupGuiManually(project);
     //main = setupGuiUiFile(project);
-    main = setupGuiWithCompiledUi();
+    main = setupGuiWithCompiledUi( argc, argv );
     //-----------------------------------------
 
     main->show();

@@ -78,9 +78,9 @@ void AsmView::updateModel()
     header()->resizeSection(0,0);
     header()->resizeSection(1,0);
     header()->resizeSection(2,0);
+    header()->resizeSection(3,0);
     header()->resizeSections(QHeaderView::ResizeToContents);
 
-    header()->setResizeMode(4,QHeaderView::Fixed);
     header()->resizeSection(4,3);
 
     ProjectManager * pm = ProjectManager::instance();
@@ -95,6 +95,7 @@ void AsmView::updateModel()
     }
     if(curNode2)
     {
+        header()->setResizeMode(4,QHeaderView::Fixed);
         SgProject * project = getProjectOf(curNode2);
         for(int i=5; i < 9; i++)
         {
@@ -273,16 +274,4 @@ void AsmView::addArrows(int drawColumn,int addressColumn, const QModelIndex & st
     }
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
 

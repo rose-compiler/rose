@@ -18,6 +18,7 @@
 #include "Project.h"
 
 #include "QCodeEdit/qcodeedit.h"
+#include "RoseCodeEdit.h"
 
 
 #include <CallGraph.h>
@@ -25,15 +26,16 @@
 
 #include <QMdiSubWindow>
 
+#include "AsmViewCreator.h"
+#include "AstBrowserWidgetCreator.h"
+#include "NodeInfoWidgetCreator.h"
+#include "AstGraphWidgetCreator.h"
+#include "MetricsKiviatCreator.h"
+#include "RoseCodeEditCreator.h"
+#include "CallGraphWidgetCreator.h"
+#include "SrcBinViewCreator.h"
 
-#include "AsmView.h"
-#include "AstGraphWidget.h"
-#include "MetricsKiviat.h"
-#include "RoseCodeEdit.h"
-#include "CallGraphWidget.h"
-#include "SrcBinView.h"
-
-MainWindow::MainWindow( QWidget * p )
+MainWindow::MainWindow( int argc, char **argv, QWidget * p )
 	: QMainWindow(p),
           f1( new AstFilterAll() ),
           f2( new AstFilterAll() ),
@@ -46,11 +48,11 @@ MainWindow::MainWindow( QWidget * p )
 
     pm->setTaskListWidget(ui.taskList);
     pm->setTaskMsgOutputWidget(ui.wdgTaskOutput);
-    pm->loadProjectState();
+
+    pm->loadProjectState( argc, argv );
 
     if(pm->getProjectCount() <1)
         pm->addProject("Project1");
-
 
     ui.roseFileCmbBox->setProject( pm->getProject(0)->getSgProject());
 
@@ -60,13 +62,13 @@ MainWindow::MainWindow( QWidget * p )
     connect( ui.actionQuit             , SIGNAL( triggered() ),
              qApp                      , SLOT  ( quit() ) );
     connect( ui.actionCascade          , SIGNAL( triggered() ),
-             ui.mdiArea                , SLOT  (cascadeSubWindows() ) );
+             ui.subWindowArea          , SLOT  (cascadeSubWindows() ) );
     connect( ui.actionTile             , SIGNAL( triggered() ),
-             ui.mdiArea                , SLOT  (tileSubWindows() ) );
+             ui.subWindowArea          , SLOT  (tileSubWindows() ) );
     connect( ui.actionMetric_Attributes, SIGNAL( triggered() ),
              pm->getMetricsConfig( 0 ) , SLOT  ( configureSingle() ) );
 
-    ui.mdiArea->tileSubWindows();
+    ui.subWindowArea->tileSubWindows();
 
     //ui.kvtMetrics->init( project );
 
@@ -80,6 +82,19 @@ MainWindow::MainWindow( QWidget * p )
     //ui.kvtInfo->setKiviat( ui.kvtMetrics );
     //connect( ui.kvtInfo   , SIGNAL( clicked( SgNode * ) ),
     //         ui.kvtMetrics, SLOT  ( updateView( SgNode * ) ) );
+
+    // setup SubWindowFactory
+    ui.subWindowArea->registerSubWindow( new AsmViewCreator() );
+    ui.subWindowArea->registerSubWindow( new RoseCodeEditCreator() );
+    ui.subWindowArea->registerSubWindow( new AstGraphWidgetCreator() );
+    ui.subWindowArea->registerSubWindow( new MetricsKiviatCreator() );
+    ui.subWindowArea->registerSubWindow( new AstBrowserWidgetCreator() );
+    ui.subWindowArea->registerSubWindow( new NodeInfoWidgetCreator() );
+    ui.subWindowArea->registerSubWindow( new CallGraphWidgetCreator() );
+    ui.subWindowArea->registerSubWindow( new SrcBinViewCreator() );
+    
+
+    ui.subWindowArea->fillMenu( ui.menuNew_SubWindow );
 
 
     //Restore State (Positions of dock-windows etc)
@@ -121,7 +136,7 @@ void MainWindow::saveMdiState()
 {
     QSettings settings;
 
-    settings.remove("MdiArea");
+    /*settings.remove("MdiArea");
 
     settings.beginGroup("MdiArea");
     QList<QMdiSubWindow *> subWdgs = ui.mdiArea->subWindowList();
@@ -152,13 +167,13 @@ void MainWindow::saveMdiState()
         else qDebug() << "Unknown WidgetType in MdiArea, cannot be stored";
     }
     settings.endArray();
-    settings.endGroup();
+    settings.endGroup();*/
 }
 
 void MainWindow::restoreMdiState()
 {
     QSettings s;
-    s.beginGroup("MdiArea");
+    /*s.beginGroup("MdiArea");
 
     int size = s.beginReadArray("SubWidgets");
     for(int i=0; i<size; i++)
@@ -195,7 +210,7 @@ void MainWindow::restoreMdiState()
     }
     s.endArray();
 
-    s.endGroup();
+    s.endGroup();*/
 }
 
 void MainWindow::on_actionEditorSettings_triggered()
@@ -235,7 +250,7 @@ void MainWindow::emitFilterChanged()
 }
 
 
-void MainWindow::on_actionNewAssemblerView_triggered()
+/*void MainWindow::on_actionNewAssemblerView_triggered()
 {
     addMdiSubWidget(new AsmView(), "Assembler View");
 }
@@ -275,30 +290,32 @@ void MainWindow::on_actionNewCallGraphWidget_triggered()
 void MainWindow::on_actionNewSrcBinView_triggered()
 {
     addMdiSubWidget(new SrcBinView(), "Source to Assembly Demo");
-}
+}*/
 
 void MainWindow::on_actionSaveAs_triggered()
 {
+    /*
     RoseCodeEdit * codeEdit = ui.mdiArea->activeSubWindow()->findChild<RoseCodeEdit*>();
     Q_ASSERT(codeEdit);
     QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"),
                                "", tr("C++ files (*.cpp *.C *.h)"));
 
     codeEdit->save(fileName);
+    */
 }
 
 void MainWindow::on_actionOpen_triggered()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),
+    /*QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),
                                "", tr("C++ files (*.cpp *.C *.h)"));
 
     RoseCodeEdit * w = new RoseCodeEdit();
     addMdiSubWidget(w, "Code Editor");
 
-    w->loadCppFile(fileName);
+    w->loadCppFile(fileName);*/
 }
 
-QMdiSubWindow * MainWindow::addMdiSubWidget(QWidget * widget,const QString & caption)
+/*QMdiSubWindow * MainWindow::addMdiSubWidget(QWidget * widget,const QString & caption)
 {
     widget->setWindowTitle(caption);
     QWidget * subWidget = new QWidget();
@@ -314,8 +331,7 @@ QMdiSubWindow * MainWindow::addMdiSubWidget(QWidget * widget,const QString & cap
     widget->show();
 
     return res;
-}
-
+}*/
 
 
 

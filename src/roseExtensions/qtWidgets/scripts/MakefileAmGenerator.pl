@@ -97,7 +97,16 @@ for ($argnum=0; $argnum < $#ARGV ; $argnum++)
 @ui_files     = <*.ui>;
 @res_files    = <*.qrc>;
 
-
+# scan all subdirectories ...
+use File::Find;
+my (@icons) = ();
+find( \&search_images, "." );
+sub search_images
+{
+    $_ = $File::Find::name;
+    s/^(\.\/)(.*)/$+/;
+    push (@icons, $_) if(!-d && /.*\.(gif|png|jpg)$/);
+}
 
 $dirName = basename(cwd);
 $libName = "lib" . $dirName; 
@@ -123,11 +132,6 @@ foreach $file (@ui_files) {
 push( @nodist_sources,@moc_source_files);
 push( @nodist_sources,@qrc_source_files);
 push( @nodist_sources,@ui_header_files);
-
-
-
-
-
 
 print "#------------ $dirName Makefile.am -----------\n" ;
 
@@ -158,6 +162,9 @@ if($printLibTarget)
     printArray( $libName . "_la_SOURCES", \@cpp_files );
     printArray( "nodist_" . $libName . "_la_SOURCES", \@nodist_sources );
     printArray( "BUILT_SOURCES",\@ui_header_files);
+
+    @extra_dist = join( " \\\n\t", @ui_files, @res_files, @icons );
+    printArray( "EXTRA_DIST", \@extra_dist );
 }
 
 
