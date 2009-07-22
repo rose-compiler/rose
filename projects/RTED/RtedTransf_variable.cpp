@@ -187,6 +187,8 @@ RtedTransformation::buildVariableCreateCallStmt( SgInitializedName* initName, Sg
     appendExpression(arg_list, initBool);
     appendExpression(arg_list, fileOpen);
 
+	// TODO djh 1: append classname if basetype is SgClassType as well
+	// 		see appendAddressAndSize, which handles the basetype stuff
     SgExpression*  className = buildString("");
     SgClassType* sgClass = isSgClassType(initName->get_type());
     if (sgClass) {
@@ -237,9 +239,11 @@ void RtedTransformation::appendAddressAndSize(SgInitializedName* initName,
         if (isSgPointerType(type)) {
         //	typestr="pointer";
         basetype = isSgPointerType(type)->get_base_type();
+        } else if( isSgArrayType( type )) {
+			basetype = isSgArrayType( type )->get_base_type();
+		}
         if (basetype)
           basetypeStr = buildString(basetype->class_name());
-        }
         SgExpression* ctypeStr = buildString(type->class_name());
         if (appendType==1) {
             appendExpression(arg_list, ctypeStr);

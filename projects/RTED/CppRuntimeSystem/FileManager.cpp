@@ -54,7 +54,7 @@ ostream& operator<< ( ostream &os, const FileInfo & m)
 
 void FileManager::openFile(FileHandle handle,
                            const std::string & fileName,
-                           int mode,
+                           OpenMode mode,
                            const SourcePosition & pos)
 {
     RuntimeSystem * rs = RuntimeSystem::instance();
@@ -80,6 +80,27 @@ void FileManager::openFile(FileHandle handle,
 
     openFiles.insert( FileInfo(handle,fileName,mode,pos));
 }
+
+void FileManager::openFile(FileHandle handle,
+                           const std::string & fileName,
+                           const std::string & mode_str,
+                           const SourcePosition & pos)
+{
+	unsigned int mode = (unsigned int) INVALID_OPEN_MODE;
+
+	if( mode_str.find( 'r' ) != string::npos )
+		mode |= READ;
+
+	if( mode_str.find( 'w' ) != string::npos )
+		mode |= WRITE;
+
+	if( mode_str.find( 'a' ) != string::npos )
+		mode |= APPEND;
+
+	openFile( handle, fileName, (OpenMode) mode, pos );
+}
+
+
 
 void FileManager::closeFile(FileHandle handle)
 {

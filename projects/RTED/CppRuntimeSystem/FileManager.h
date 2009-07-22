@@ -36,6 +36,7 @@ class FileInfo
         const SourcePosition & getPos()      const      { return openPos;  }
 
     protected:
+
         friend class FileManager;
 
         /// Creates an invalid FileInfo, only used to get comparison objects in FileManager
@@ -68,7 +69,12 @@ class FileManager
         /// Registers that a file was opened
         void openFile(FileHandle handle,
                       const std::string & fileName,
-                      int openMode,
+                      OpenMode mode,
+                      const SourcePosition & pos);
+
+        void openFile(FileHandle handle,
+                      const std::string & fileName,
+                      const std::string & mode,
                       const SourcePosition & pos);
 
         /// Registers that a file was closed
@@ -81,7 +87,7 @@ class FileManager
 
         /// Should be called at end of program, to check if there are any open files
         void checkForOpenFiles();
-
+ 
         /// Deletes all collected data
         /// normally only needed for debug purposes
         void clearStatus() { openFiles.clear(); }

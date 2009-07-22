@@ -84,6 +84,7 @@ RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dime
 	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
 	rs->checkpoint(SourcePosition(filename,atoi(line),atoi(lineTransformed)));
 
+  // TODO 1 djh: kill this, change to createArray in roseCreateVariable
   if( 0 == strcmp("SgArrayType", type)) 
       rs->createMemory(address, size, true);
   else if( 0 == strcmp("SgPointerType", type))
@@ -119,6 +120,9 @@ RuntimeSystem_roseArrayAccess(const char* name, int posA, int posB, const char* 
 	  rs->checkMemRead( address, size );
 	if ( read_write_mask & 2 )
     rs->checkMemWrite( address, size );
+
+  // TODO 1 djh: if rwm & 4, do bounds check, i.e
+  //  rs->checkPointerDereference( mangled_name, address );
 }
 
 // ***************************************** ARRAY FUNCTIONS *************************************
@@ -420,25 +424,68 @@ RuntimeSystem_roseIOFunctionCall(const char* fname,
     //fixme - we need to create a new function call that
     // will have FILE* as parameter
     RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
-  rs->checkpoint(SourcePosition(filename,atoi(line),atoi(lineTransformed)));
-  if (strcmp(fname,"fopen")==0) {
-    string filen = arg1;
-    string mode = arg2;
-    int openMode=-1;
-    if (strcmp(fname,"r")==0)
-      openMode=READ;
-    if (strcmp(fname,"w")==0)
-      openMode=WRITE;
-    rs->registerFileOpen(file, filen, openMode);
-  } else if (strcmp(fname,"fgetc")==0) {
-    rs->checkFileAccess(file, true);
-  } else if (strcmp(fname,"fputc")==0) {
-    rs->checkFileAccess(file, false);
-  } else if (strcmp(fname,"fclose")==0) {
-    rs->registerFileClose(file);
-  }
+    rs->checkpoint(SourcePosition(filename,atoi(line),atoi(lineTransformed)));
 
-  
+    // not handled (yet?)
+    //  fclearerr
+    //  feof
+    //  ferror
+    //  fgetpos
+    //  fpos
+    //  freopen
+    //  fseek
+    //  fsetpos
+    //  ftell
+    //  getchar
+    //  putchar
+    //  remove
+    //  rename
+    //  rewind
+    //  scanf
+    //  setbuf
+    //  setvbuf
+    //  sprintf
+    //  sscanf
+    //  tmpfile
+    //  tmpnam
+    //  ungetc
+    //  vfprintf
+    //  vprintf
+    //  vsprintf
+    if ( 0 == strcmp("fclose", fname)) {
+      rs -> registerFileClose( file );
+    } else if ( 0 == strcmp("fflush", fname)) {
+      rs -> checkFileAccess( file, false /* is_read? */);
+    } else if ( 0 == strcmp("fgetc", fname)) {
+      rs -> checkFileAccess( file, true /* is_read? */);
+    } else if ( 0 == strcmp("fgets", fname)) {
+      rs -> checkFileAccess( file, true /* is_read? */);
+    } else if ( 0 == strcmp("fopen", fname)) {
+      const char *filen = arg1;
+      const char *mode = arg2;
+      int openMode=-1;
+      if (strcmp(mode,"r")==0)
+        openMode=READ;
+      if (strcmp(mode,"w")==0)
+        openMode=WRITE;
+      rs->registerFileOpen(file, filen, openMode);
+    } else if ( 0 == strcmp("fprintf", fname)) {
+      rs -> checkFileAccess( file, false /* is_read? */);
+    } else if ( 0 == strcmp("fputc", fname)) {
+      rs -> checkFileAccess( file, false /* is_read? */);
+    } else if ( 0 == strcmp("fputs", fname)) {
+      rs -> checkFileAccess( file, false /* is_read? */);
+    } else if ( 0 == strcmp("fread", fname)) {
+      rs -> checkFileAccess( file, true /* is_read? */);
+    } else if ( 0 == strcmp("fscanf", fname)) {
+      rs -> checkFileAccess( file, true /* is_read? */);
+    } else if ( 0 == strcmp("fwrite", fname)) {
+      rs -> checkFileAccess( file, false /* is_read? */);
+    } else if ( 0 == strcmp("getc", fname)) {
+      rs -> checkFileAccess( file, true /* is_read? */);
+    } else if ( 0 == strcmp("putc", fname)) {
+      rs -> checkFileAccess( file, false /* is_read? */);
+    }
 
 }
 

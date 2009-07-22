@@ -261,7 +261,12 @@ VariablesType * RuntimeSystem::findVarByMangledName(const string & name)
 
 void RuntimeSystem::registerFileOpen(FILE * file,const string & openendFile, int mode)
 {
-    fileManager.openFile(file, openendFile,mode, curPos);
+    fileManager.openFile(file, openendFile,(FileOpenMode)mode, curPos);
+}
+
+void RuntimeSystem::registerFileOpen(FILE * file,const string & openendFile, const string & mode_str)
+{
+    fileManager.openFile(file, openendFile,mode_str, curPos);
 }
 
 void RuntimeSystem::registerFileClose(FILE* file)

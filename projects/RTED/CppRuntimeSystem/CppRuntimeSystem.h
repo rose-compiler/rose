@@ -126,6 +126,7 @@ class RuntimeSystem
         //// Call this function if a file is opened
         /// @param openMode combination of FileOpenMode flags
         void registerFileOpen (FILE * file, const std::string & openedFile, int openMode);
+        void registerFileOpen (FILE * file, const std::string & openedFile, const std::string & openMode);
         void registerFileClose(FILE * file);
 
 
