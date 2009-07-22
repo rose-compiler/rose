@@ -362,7 +362,7 @@ deleteAllbinfiles:
 c-compile-runtimesystem:
 	@echo "Make sure that RuntimeSystem compiles with C"
 
-check-local: rted_qt runtimeCheck $(TESTCODES) c-compile-runtimesystem run_checkonly/C/string_errors run_checkonly/C/allocation_deallocation_errors run_checkonly/C/input_output_errors
+check-local: rted_qt runtimeCheck $(TESTCODES) c-compile-runtimesystem run_checkonly/C/string_errors run_checkonly/C/allocation_deallocation_errors run_checkonly/C/input_output_errors run_checkonly/C/memory_leaks
 	@echo "***************************************************************************************"
 	@echo "*** ROSE/projects/runtimeErrorCheck: make check rule complete (terminated normally) ***"
 	@echo "***************************************************************************************"
