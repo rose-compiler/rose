@@ -7,11 +7,10 @@
     <file>AppIcons/document-save.png</file>
     <file>AppIcons/info.png</file>
   </qresource>
-  <qresource prefix="util" >
+  <qresource prefix="/util" >
+    <file>WidgetIcons/CallGraph.gif</file>
     <file>WidgetIcons/Graph.gif</file>
     <file>WidgetIcons/Kiviat.gif</file>
-    <file>WidgetIcons/Graph.gif</file>
-    <file>WidgetIcons/CallGraph.gif</file>
     <file>WidgetIcons/PropTreeWidget.gif</file>
     <file>WidgetIcons/Rose.gif</file>
     <file>NodeIcons/binaryfile.gif</file>

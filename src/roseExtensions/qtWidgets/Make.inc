@@ -30,6 +30,7 @@ ROSE_QT_WIDGETS_INCLUDES =   -I$(ROSE_QT_WIDGETS_ROOT)\
                              -I$(ROSE_QT_WIDGETS_ROOT)/InstructionCountAnnotator\
                              -I$(ROSE_QT_WIDGETS_ROOT)/TaskSystem\
                              -I$(ROSE_QT_WIDGETS_ROOT)/util\
+                             -I$(ROSE_QT_WIDGETS_ROOT)/WidgetCreator \
                              -I$(intern_codeEdit)\
                              -I$(intern_codeEdit)/widgets\
                              -I$(intern_codeEdit)/document\
@@ -50,7 +51,7 @@ moc_%.cxx: $(srcdir)/%.h
 	$(MOC) $(INCLUDES) -o  $@ `cygpath -w $<` -p$(srcdir)
 else
 moc_%.cxx: $(srcdir)/%.h 
-	@echo "  Qt-MOC $(notdir $< )" && $(MOC) $(QT_INCLUDES) -o  $@ $<
+	@echo "  Qt-MOC $(notdir $< )" && $(MOC) $(QT_INCLUDES) -o  $@ $< -frose.h -f$<
 endif 
 
 

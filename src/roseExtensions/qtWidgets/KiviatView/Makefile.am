@@ -13,6 +13,8 @@ nodist_libKiviatView_la_SOURCES = moc_KiviatView.cxx
 
 
 
+EXTRA_DIST = 
+
 # Target for installing header 
 headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = KiviatView.h

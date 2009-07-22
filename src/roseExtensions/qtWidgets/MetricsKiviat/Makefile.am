@@ -18,6 +18,9 @@ nodist_libMetricsKiviat_la_SOURCES = moc_KiviatInfo.cxx\
 BUILT_SOURCES = ui_KiviatInfo.h\
                 ui_MetricsWidget.h
 
+EXTRA_DIST = KiviatInfo.ui \
+	MetricsWidget.ui
+
 # Target for installing header 
 headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = KiviatInfo.h\

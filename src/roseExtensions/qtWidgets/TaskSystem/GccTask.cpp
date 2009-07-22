@@ -291,17 +291,3 @@ QStringList GccOutputParser::parseLine(const QString& outputLine, ParsedLine& li
        return modifiedFiles;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -23,6 +23,13 @@ nodist_libAstGraphWidget_la_SOURCES = moc_AstGraphWidget.cxx\
 
 BUILT_SOURCES = ui_LayoutControl.h
 
+EXTRA_DIST = LayoutControl.ui \
+	icons.qrc \
+	icons/start-here.png \
+	icons/media-playback-pause.png \
+	icons/view-refresh.png \
+	icons/media-playback-start.png
+
 # Target for installing header 
 headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = AstGraphWidget.h\

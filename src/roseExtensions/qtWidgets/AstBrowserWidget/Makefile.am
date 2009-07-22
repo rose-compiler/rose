@@ -15,6 +15,8 @@ nodist_libAstBrowserWidget_la_SOURCES = moc_AstBrowserWidget.cxx\
 
 
 
+EXTRA_DIST = 
+
 # Target for installing header 
 headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = AstBrowserWidget.h\

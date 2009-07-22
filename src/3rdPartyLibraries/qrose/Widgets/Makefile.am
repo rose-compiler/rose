@@ -30,6 +30,7 @@ endif
 endif
 
 EXTRA_DIST = QRButtons.h  \
+	     QRButtons_p.h \
              QREdit_p.h \
              QRProgress_p.h \
              QRSelect_p.h \

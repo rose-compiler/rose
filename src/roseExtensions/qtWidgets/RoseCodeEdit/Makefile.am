@@ -20,6 +20,46 @@ nodist_libRoseCodeEdit_la_SOURCES = moc_RoseCodeEdit.cxx\
 
 
 
+EXTRA_DIST = example.qrc \
+	QCodeEdit.qrc \
+	goto.png \
+	copy.png \
+	open.png \
+	bold.png \
+	paste.png \
+	break.png \
+	new.png \
+	package_settings.png \
+	undo.png \
+	uncomment.png \
+	formats.png \
+	settings.png \
+	indent.png \
+	reload.png \
+	exit.png \
+	comment.png \
+	error.png \
+	strikeout.png \
+	fillcolor.png \
+	find.png \
+	replace.png \
+	unindent.png \
+	editor.png \
+	print.png \
+	closeall.png \
+	italic.png \
+	redo.png \
+	strokecolor.png \
+	cut.png \
+	warning.png \
+	up.png \
+	debug-resume.png \
+	textcolor.png \
+	saveas.png \
+	save.png \
+	down.png \
+	underline.png
+
 # Target for installing header 
 headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = RoseCodeEdit.h
