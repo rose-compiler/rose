@@ -54,8 +54,8 @@ class MetricsKiviat : public KiviatView
       void init( SgNode *root );
 
    signals:
-      void clicked( SgNode *astNode );
-      void nodeAdded( SgNode *astNode );
+      void nodeActivated   ( SgNode *astNode );
+      void nodeActivatedAlt( SgNode *astNode );
 
    public slots:
       void updateView( SgNode *astNode );
@@ -66,6 +66,11 @@ class MetricsKiviat : public KiviatView
       void delNode( int nodeId );
 
       void configureMetrics( bool dialog = true );
+
+      void setNode ( SgNode *astNode )
+      { addNode( astNode ); }
+      void gotoNode( SgNode *astNode )
+      { updateView( astNode ); }
 
    protected:
       virtual void mousePressEvent( QMouseEvent *ev);

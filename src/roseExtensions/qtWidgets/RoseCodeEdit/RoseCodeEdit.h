@@ -36,6 +36,9 @@ class QDESIGNER_WIDGET_EXPORT RoseCodeEdit : public QEditor
         /// and the cursor is set to start position of this SgNode
         /// If node is SgFile the file is opened and cursor is set to beginning of file
         void setNode(SgNode * sgNode);
+        // same as setNode, for convenience with the link mechanism
+        void gotoNode( SgNode *sgNode )
+        { setNode( sgNode ); }
 
         /// Loads a file and forces C++ code highlighting (independent from file ending)
         /// if automatic detection of language is needed (based on filename-ending) use

@@ -14,9 +14,10 @@ class SrcBinViewCreator
 
     public:
         SrcBinViewCreator()
-            : WidgetCreatorInterface( QIcon( ":/util/WidgetIcons/Rose.gif" ), "Source-Assembly Comparision" )
+            : WidgetCreatorInterface( QIcon( ":/util/WidgetIcons/Rose.gif" ), "Source-Assembly Comparison" )
         {}
 
+    protected:
         virtual QWidget *createWidget( QWidget *parent = NULL );
 };
 

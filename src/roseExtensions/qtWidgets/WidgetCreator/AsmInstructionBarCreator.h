@@ -17,6 +17,7 @@ class AsmInstructionBarCreator
             : WidgetCreatorInterface( QIcon( ":/util/NodeIcons/binaryfiles.gif" ), "Assembler Instruction Bar" )
         {}
 
+    protected:
         virtual QWidget *createWidget( QWidget *parent = NULL );
 };
 

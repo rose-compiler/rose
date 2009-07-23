@@ -3,6 +3,7 @@
 #define SUBWINDOWFACTORY_H
 
 #include <QMdiArea>
+#include <QMap>
 
 class WidgetCreatorInterface;
 class QMenu;
@@ -21,14 +22,21 @@ class SubWindowFactory
 
         void registerSubWindow( WidgetCreatorInterface *winInterface );
 
-        void fillMenu( QMenu *menu );
+        QList<QAction *> getActions() const;
 
     private slots:
         void addSubWindow();
+        void linkAction();
 
     private:
+        bool eventFilter( QObject *object, QEvent *event );
+
+        void rebuildSystemMenus();
 
         QList<WidgetCreatorInterface *> interfaces;
+
+        QMap<QMdiSubWindow *, QWidget *> openWidgets;
+        QMap<QPair<QWidget *, QWidget *>, bool> linked;        
 };
 
 #endif

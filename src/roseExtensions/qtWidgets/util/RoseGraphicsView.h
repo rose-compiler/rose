@@ -31,12 +31,18 @@ class RoseGraphicsView : public QGraphicsView
 
     public slots:
         void setNode(SgNode * sgNode);
+
+        // TODO: implement proper goto mechanism
+        void gotoNode( SgNode *sgNode )
+        { setNode( sgNode ); }
+
         void setFilter(AstFilterInterface * filter);
         void setFileFilter(int id);
 
 
     signals:
-        void clicked(SgNode * node);
+        void nodeActivated(SgNode * node);
+        void nodeActivatedAlt(SgNode * node);
         void clicked(const QString & filename, int line, int column);
         void nodeDropped(SgNode * node, QPoint pos);
 

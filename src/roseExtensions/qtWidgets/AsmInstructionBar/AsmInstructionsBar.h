@@ -43,7 +43,8 @@ class AsmInstructionsBar
 
    signals:
       // emit current active node
-      void clicked( SgNode *node );
+      void nodeActivated( SgNode *node );
+      void nodeActivatedAlt( SgNode *node );
       // emit current active node id, again the id is the position in the
       // array of Assembler Blocks
       void clicked( int id );

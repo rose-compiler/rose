@@ -17,6 +17,7 @@ class AstGraphWidgetCreator
             : WidgetCreatorInterface( QIcon( ":/util/WidgetIcons/Graph.gif" ), "AST Tree View" )
         {}
 
+    protected:
         virtual QWidget *createWidget( QWidget *parent = NULL );
 };
 

@@ -77,7 +77,7 @@ void RoseGraphicsView::mousePressEvent(QMouseEvent * ev)
     if(node)
     {
         SgNode * sgNode = node->getSgNode();
-        clicked(sgNode);
+        nodeActivated(sgNode);
 
         SgLocatedNode* sgLocNode = isSgLocatedNode(sgNode);
         if(sgLocNode)

@@ -18,6 +18,7 @@ class AsmViewCreator
                                       "Assembler View" )
         {}
 
+    protected:
         virtual QWidget *createWidget( QWidget *parent = NULL );
 };
 

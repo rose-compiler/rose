@@ -17,6 +17,7 @@ class RoseFileSelectorCreator
             : WidgetCreatorInterface( QIcon( ":/util/WidgetIcons/Rose.gif" ), "Select File" )
         {}
 
+    protected:
         virtual QWidget *createWidget( QWidget *parent = NULL );
 };
 

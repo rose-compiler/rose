@@ -7,10 +7,15 @@
 
 #include <QMdiSubWindow>
 
+#include <QEvent>
+
 #include <QDebug>
 
 #include "SubWindowFactory.h"
 #include "WidgetCreatorInterface.h"
+
+typedef QPair<QWidget *, QWidget *> WidgetPair;
+Q_DECLARE_METATYPE( WidgetPair );
 
 SubWindowFactory::~SubWindowFactory()
 {
@@ -27,12 +32,16 @@ void SubWindowFactory::registerSubWindow( WidgetCreatorInterface *winInterface )
              this                        , SLOT  ( addSubWindow() ) );
 }
 
-void SubWindowFactory::fillMenu( QMenu *menu )
+QList<QAction *> SubWindowFactory::getActions() const
 {
+    QList<QAction *> res;
+
     foreach( WidgetCreatorInterface *widgets, interfaces )
     {
-        menu->addAction( widgets->createAction() );
+        res.push_back( widgets->createAction() );
     }
+
+    return res;
 }
 
 void SubWindowFactory::addSubWindow()
@@ -43,26 +52,145 @@ void SubWindowFactory::addSubWindow()
     {
         if( widgets->createAction() == sender() )
         {
-            QWidget *subWidget = new QWidget();
-            QWidget *widget( widgets->createWidget( subWidget ) );
+            QWidget *parent = new QWidget();
+            QWidget *widget( widgets->addWidget( parent ) );
 
-            QVBoxLayout * layout = new QVBoxLayout( subWidget );
+            QVBoxLayout * layout = new QVBoxLayout( parent );
             layout->addWidget( widget );
 
-            QMdiSubWindow *win = QMdiArea::addSubWindow( subWidget );
+            QMdiSubWindow *win = QMdiArea::addSubWindow( parent );
             win->setWindowTitle( widget->windowTitle() );
             win->setWindowIcon( widget->windowIcon() );
 
-            subWidget->show();
+            parent->show();
             widget->show();
 
-            widgets->registerCloseEvent( win );
+            win->installEventFilter( this );
+            openWidgets.insert( win, widget );
 
-            /*QMenu *sysMenu( win->systemMenu() );
-            sysMenu->addSeparator();
-            QMenu *linkMenu( sysMenu->addMenu( "Link To ..." ) );*/
+            rebuildSystemMenus();
 
             break;
         }
+    }
+}
+
+void SubWindowFactory::linkAction()
+{
+    QAction *action( dynamic_cast<QAction *>( sender() ) );
+    if( action == NULL ) return;
+
+    QPair<QWidget *, QWidget *> pair(
+            qVariantValue<QPair<QWidget *, QWidget *> >( action->data() ) );
+
+    if( action->isChecked() )
+    {
+        connect( pair.first, SIGNAL( nodeActivated( SgNode * ) ),
+                 pair.second, SLOT( gotoNode( SgNode * ) ) );
+        connect( pair.first, SIGNAL( nodeActivatedAlt( SgNode * ) ),
+                 pair.second, SLOT( setNode( SgNode * ) ) );
+
+        linked[pair] = true;
+    }
+    else
+    {
+        disconnect( pair.first, SIGNAL( nodeActivated( SgNode * ) ),
+                    pair.second, SLOT( gotoNode( SgNode * ) ) );
+        disconnect( pair.first, SIGNAL( nodeActivatedAlt( SgNode * ) ),
+                    pair.second, SLOT( setNode( SgNode * ) ) );
+
+        linked[pair] = false;
+    }
+}
+
+bool SubWindowFactory::eventFilter( QObject *object, QEvent *event )
+{
+    if( event->type() == QEvent::Close )
+    {
+        QMap<QMdiSubWindow *, QWidget *>::iterator it( 
+                openWidgets.find( dynamic_cast<QMdiSubWindow *>( object ) ) );
+
+        if( it != openWidgets.end() )
+        {
+            openWidgets.remove( it );
+
+            foreach( QWidget *w, openWidgets )
+            {
+                QPair<QWidget *, QWidget *> linkedPair( it.value(), w );
+
+                QMap<QPair<QWidget *, QWidget *>, bool>::iterator
+                    jt( linked.find( linkedPair ) );
+
+                if( jt != linked.end() )
+                {
+                    linked.remove( jt );
+                }
+            }
+            rebuildSystemMenus();
+        }
+    }
+
+    return false;
+}
+
+void SubWindowFactory::rebuildSystemMenus()
+{
+
+    QMap<QMdiSubWindow *, QWidget *>::iterator pair(
+            openWidgets.begin() );
+
+    while( pair != openWidgets.end() )
+    {
+        QMenu *sysMenu( pair.key()->systemMenu() );
+        QMenu *linkMenu( NULL );
+        
+        linkMenu = sysMenu->findChild<QMenu *>( "linkMenu" );
+
+        if( linkMenu == NULL )
+        {
+            if( openWidgets.size() == 1 ) return;
+
+            sysMenu->addSeparator();
+            linkMenu = sysMenu->addMenu( "Link To ..." );
+            linkMenu->setObjectName( "linkMenu" );
+        }
+        else
+        {
+            if( openWidgets.size() == 1 )
+            {
+                delete linkMenu;
+                return;
+            }
+            linkMenu->clear();
+        }
+
+        // TODO: check if action exists, make window titles unique
+        
+        QMap<QMdiSubWindow *, QWidget *>::iterator otherPair(
+                openWidgets.begin() );
+        while( otherPair != openWidgets.end() )
+        {
+            if( otherPair.key() != pair.key() )
+            {
+                QAction *action( linkMenu->addAction( otherPair.key()->windowTitle() ) );
+
+                QVariant variant;
+                QPair<QWidget *, QWidget *> linkPair( pair.value(), otherPair.value() );
+                qVariantSetValue( variant, linkPair );
+                action->setData( variant );
+                action->setCheckable( true );
+
+                if( linked[linkPair] )
+                {
+                    action->setChecked( true );
+                }
+
+                connect( action, SIGNAL( triggered() ),
+                         this  , SLOT  ( linkAction() ) );
+            }
+            ++otherPair;
+        }
+
+        ++pair;
     }
 }

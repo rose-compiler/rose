@@ -1,20 +1,20 @@
 
-#ifndef BASTVIEWCREATOR_H
-#define BASTVIEWCREATOR_H
+#ifndef CALLGRAPHWIDGETCREATOR_H
+#define CALLGRAPHWIDGETCREATOR_H
 
 #include "WidgetCreatorInterface.h"
 
 class QWidget;
 class QEvent;
 
-class BeautifiedAstCreator
+class CallGraphWidgetCreator
     : public WidgetCreatorInterface
 {
     Q_OBJECT
 
     public:
-        BeautifiedAstCreator()
-            : WidgetCreatorInterface( QIcon( ":/util/NodeIcons/project.gif" ), "Beautified AST View" )
+        CallGraphWidgetCreator()
+            : WidgetCreatorInterface( QIcon( ":/util/WidgetIcons/CallGraph.gif" ), "Call Graph View" )
         {}
 
     protected:
