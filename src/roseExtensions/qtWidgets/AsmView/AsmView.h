@@ -20,7 +20,7 @@ class AsmView : public RoseTreeView
     public slots:
         /// Sets the Item corresponding to the node as currentIndex
         /// (i.e. selects it, scrolls that the item is visible)
-        bool gotoNode(SgNode * node);
+        virtual bool gotoNode( SgNode *node );
 
     protected slots:
         void asmNodeDropped(SgNode * node);

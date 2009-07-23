@@ -49,16 +49,17 @@ class RoseTreeView : public QTreeView
         virtual void setNode(SgNode * node);
         virtual void setFilter(AstFilterInterface * filter);
         virtual bool gotoNode( SgNode *node );
+
     signals:
         /// Emitted if clicked on an Entry
         /// warning: may be null (appropriate action would be to clear the attached view)
-        void clicked(SgNode * node);
+        void nodeActivated   (SgNode * node);
+        void nodeActivatedAlt( SgNode * node );
 
         /// Emitted when clicked, provides the sourcefile and position of the SgNode (can be connected to an editor)
         void clicked(const QString & file, int startRow, int startCol,
                                            int endRow, int endCol);
 
-        void doubleClicked( SgNode * node );
 
         void nodeDropped(SgNode * node, const QPoint & p);
 

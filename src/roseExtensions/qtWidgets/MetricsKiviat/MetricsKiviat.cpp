@@ -106,7 +106,7 @@ void MetricsKiviat::addNode( SgNode *astNode )
 
     drawData( astNode );
 
-    emit nodeAdded( astNode );
+    emit nodeActivatedAlt( astNode );
 
     currentNode = astNode;
 }
@@ -332,7 +332,7 @@ void MetricsKiviat::drawData( SgNode *astNode )
     scene.setSceneRect( QRectF() );
 
     resizeEvent( NULL );
-    emit clicked( astNode );
+    emit nodeActivated( astNode );
 }
 
 void MetricsKiviat::contextMenuEvent( QContextMenuEvent *ev)

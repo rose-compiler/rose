@@ -17,6 +17,7 @@ class MetricsKiviatCreator
             : WidgetCreatorInterface( QIcon( ":/util/WidgetIcons/Kiviat.gif" ), "Metrics Kiviat" )
         {}
 
+    protected:
         virtual QWidget *createWidget( QWidget *parent = NULL );
 };
 

@@ -52,9 +52,9 @@ class MainWindow : public QMainWindow
         void on_actionOpen_triggered();
 
         //void on_cmdExecScript_clicked();
-        void on_cmdSubmitTest_clicked();
+        /*void on_cmdSubmitTest_clicked();*/
 
-        void on_mdiArea_subWindowActivated(QMdiSubWindow * wnd);
+        /*void on_mdiArea_subWindowActivated(QMdiSubWindow * wnd);*/
         void on_actionEditorSettings_triggered();
 
 

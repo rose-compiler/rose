@@ -12,7 +12,8 @@ class WidgetCreatorInterface
 {
     public:
         WidgetCreatorInterface( const QIcon &icon, const QString &text )
-            : create_action( new QAction( icon, text, 0 ) )
+            : create_action( new QAction( icon, text, 0 ) ),
+              counter( 0 )
         {}
 
         virtual void loadState()
@@ -28,16 +29,15 @@ class WidgetCreatorInterface
         QAction *createAction() const
         { return create_action; }
 
-        virtual QWidget *createWidget( QWidget *parent = NULL ) = 0;
 
-        void registerCloseEvent( QWidget *w );
+        QWidget *addWidget( QWidget *parent = NULL );
 
     protected:
-        virtual bool eventFilter( QObject *object, QEvent *event );
+        virtual QWidget *createWidget( QWidget *parent = NULL ) = 0;
 
         QAction *create_action;
 
-        QList<QWidget *> widgets;
+        size_t counter;
 };
 
 #endif

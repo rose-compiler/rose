@@ -17,6 +17,7 @@ class NodeInfoWidgetCreator
             : WidgetCreatorInterface( QIcon( ":/util/WidgetIcons/PropTreeWidget.gif" ), "SgNode Properties" )
         {}
 
+    protected:
         virtual QWidget *createWidget( QWidget *parent = NULL );
 };
 

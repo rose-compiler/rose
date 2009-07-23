@@ -14,7 +14,6 @@ class DisplayGraph;
 class QDragEnterEvent;
 class QDropEvent;
 
-class DisplayCallGraph;
 /**
  *  Layout of an ast in a graphicsview (similar to zgrViewer )
  *

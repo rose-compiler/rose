@@ -26,8 +26,10 @@ AsmView::AsmView(QWidget * par)
 {
     setRootIsDecorated(false);
     setAcceptDrops(true);
+
     connect(this, SIGNAL( clicked(const QModelIndex & )),
             this, SLOT(viewClicked(const QModelIndex&)));
+
     connect(this, SIGNAL(nodeDropped(SgNode*,const QPoint&)),
             this, SLOT(on_nodeDropped(SgNode*,const QPoint&)));
 }

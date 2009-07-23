@@ -61,13 +61,3 @@ void AstGraphWidget::updateGraph(SgNode * node, AstFilterInterface * filter)
 
 	root->setScene(scene);
 }
-
-
-
-
-
-
-
-
-
-

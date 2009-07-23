@@ -83,7 +83,7 @@ void RoseTreeView::viewClicked(const QModelIndex & ind)
     SgNode * node= qvariant_cast<SgNode*>( nodeAsVariant);
     if( node == NULL ) return;
 
-    emit clicked(node);
+    emit nodeActivated(node);
 
     SgLocatedNode* sgLocNode = isSgLocatedNode(node);
     if(sgLocNode)
@@ -114,7 +114,7 @@ void RoseTreeView::viewDoubleClicked( const QModelIndex & ind )
 
     SgNode * node= qvariant_cast<SgNode*>( nodeAsVariant);
     Q_ASSERT(node);
-    emit doubleClicked(node);
+    emit nodeActivatedAlt(node);
 }
 
 
@@ -317,18 +317,3 @@ void RoseTreeView::drawArrowBezier(const QPoint & p1, const QPoint & p2, QPainte
     head.lineTo(QPointF(0,0));
     painter->drawPath(head);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

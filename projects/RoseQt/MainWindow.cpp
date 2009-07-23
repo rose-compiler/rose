@@ -54,10 +54,6 @@ MainWindow::MainWindow( int argc, char **argv, QWidget * p )
     if(pm->getProjectCount() <1)
         pm->addProject("Project1");
 
-    ui.roseFileCmbBox->setProject( pm->getProject(0)->getSgProject());
-
-    ui.toolBar->addWidget(ui.asmInstructionsBar);
-
     //Menu
     connect( ui.actionQuit             , SIGNAL( triggered() ),
              qApp                      , SLOT  ( quit() ) );
@@ -65,18 +61,16 @@ MainWindow::MainWindow( int argc, char **argv, QWidget * p )
              ui.subWindowArea          , SLOT  (cascadeSubWindows() ) );
     connect( ui.actionTile             , SIGNAL( triggered() ),
              ui.subWindowArea          , SLOT  (tileSubWindows() ) );
-    connect( ui.actionMetric_Attributes, SIGNAL( triggered() ),
-             pm->getMetricsConfig( 0 ) , SLOT  ( configureSingle() ) );
 
     ui.subWindowArea->tileSubWindows();
 
     //ui.kvtMetrics->init( project );
 
     // And Filter
-    connect( ui.roseFileCmbBox, SIGNAL( selectedFileChanged( AstFilterInterface * ) ),
-             this             , SLOT  ( setFilter1( AstFilterInterface * ) ) );
-    connect( ui.metricFilter  , SIGNAL( filterChanged( AstFilterInterface * ) )      ,
-             this             , SLOT  ( setFilter2( AstFilterInterface * ) ) );
+    //connect( ui.roseFileCmbBox, SIGNAL( selectedFileChanged( AstFilterInterface * ) ),
+             //this             , SLOT  ( setFilter1( AstFilterInterface * ) ) );
+    //connect( ui.metricFilter  , SIGNAL( filterChanged( AstFilterInterface * ) )      ,
+             //this             , SLOT  ( setFilter2( AstFilterInterface * ) ) );
 
     // Kiviat Info
     //ui.kvtInfo->setKiviat( ui.kvtMetrics );
@@ -94,8 +88,11 @@ MainWindow::MainWindow( int argc, char **argv, QWidget * p )
     ui.subWindowArea->registerSubWindow( new SrcBinViewCreator() );
     
 
-    ui.subWindowArea->fillMenu( ui.menuNew_SubWindow );
-
+    foreach( QAction *action, ui.subWindowArea->getActions() )
+    {
+        ui.menuNew_SubWindow->addAction( action );
+        ui.toolBarNewSubWidget->addAction( action );
+    }
 
     //Restore State (Positions of dock-windows etc)
     QSettings settings;
@@ -243,10 +240,10 @@ void MainWindow::setFilter2( AstFilterInterface *filter )
 
 void MainWindow::emitFilterChanged()
 {
-    AstFilterAnd filter( f1, f2 );
+    //AstFilterAnd filter( f1, f2 );
 
-    ui.astBrowserWidget->setFilter( &filter );
-    ui.bAstView->setFilter( &filter );
+    //ui.astBrowserWidget->setFilter( &filter );
+    //ui.bAstView->setFilter( &filter );
 }
 
 
@@ -392,20 +389,20 @@ void MainWindow::buildupEditorToolbar(QWidget * wnd)
     ui.menuEdit->addAction(edit->action("paste"));
 }
 
-void MainWindow::on_mdiArea_subWindowActivated(QMdiSubWindow * wnd)
-{
-    buildupEditorToolbar(wnd);
-}
+//void MainWindow::on_mdiArea_subWindowActivated(QMdiSubWindow * wnd)
+//{
+    //buildupEditorToolbar(wnd);
+//}
 
 
-#include "GccTask.h"
+//#include "GccTask.h"
 
-void MainWindow::on_cmdSubmitTest_clicked()
-{
-    QStringList args;
-    args << "-Wall" <<"inputTestErr.cpp";
-    ui.taskList->submitTask( new GccCompileTask("inputTestErr.cpp","inputTest.out"));
-}
+//void MainWindow::on_cmdSubmitTest_clicked()
+//{
+    //QStringList args;
+    //args << "-Wall" <<"inputTestErr.cpp";
+    //ui.taskList->submitTask( new GccCompileTask("inputTestErr.cpp","inputTest.out"));
+//}
 
 /*
 void MainWindow::on_cmdExecScript_clicked()

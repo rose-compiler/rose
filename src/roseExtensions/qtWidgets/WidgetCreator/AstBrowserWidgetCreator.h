@@ -17,6 +17,7 @@ class AstBrowserWidgetCreator
             : WidgetCreatorInterface( QIcon( ":/util/NodeIcons/project.gif" ), "AST Browser" )
         {}
 
+    protected:
         virtual QWidget *createWidget( QWidget *parent = NULL );
 };
 

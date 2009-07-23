@@ -17,6 +17,7 @@ class RoseCodeEditCreator
             : WidgetCreatorInterface( QIcon(":/util/NodeIcons/sourcefile.gif" ), "Source Code" )
         {}
 
+    protected:
         virtual QWidget *createWidget( QWidget *parent = NULL );
 };
 

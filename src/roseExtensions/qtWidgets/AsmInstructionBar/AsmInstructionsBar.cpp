@@ -190,7 +190,7 @@ void AsmInstructionsBar::setNode( SgNode *node )
             currentBlock = block;
             setIndicator();
 
-            emit clicked( node );
+            emit nodeActivated( node );
             emit clicked( id );
             return;
         }
@@ -206,7 +206,7 @@ void AsmInstructionsBar::setNode( int id )
     currentBlock = blockList[id];
     setIndicator();
 
-    emit clicked( qvariant_cast<SgNode *>( currentBlock->data( SgNodeRole ) ) );
+    emit nodeActivated( qvariant_cast<SgNode *>( currentBlock->data( SgNodeRole ) ) );
     emit clicked( id );
 }
 
@@ -334,7 +334,7 @@ void AsmInstructionsBar::updatePosition( const QPoint& pos )
     SgNode *node = qvariant_cast<SgNode *>( clickedBlock->data( SgNodeRole ) );
     int id = clickedBlock->data( Qt::UserRole ).toInt();
 
-    emit clicked( node );
+    emit nodeActivated( node );
     emit clicked( id );
 }
 

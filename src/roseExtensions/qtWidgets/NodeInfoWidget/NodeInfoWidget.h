@@ -31,6 +31,8 @@ class NodeInfoWidget : public PropertyTreeWidget
 
 	public slots:
 		void setNode(SgNode * node);
+                void gotoNode( SgNode *node )
+                { setNode( node ); }
 
 	protected:
 	    SgNode * curNode;

@@ -33,8 +33,10 @@ class QDESIGNER_WIDGET_EXPORT AstBrowserWidget : public RoseTreeView
 		virtual ~AstBrowserWidget();
 
 	public slots:
-        /// Sets the root node of the View
+                /// Sets the root node of the View
 		virtual void setNode(SgNode * node);
+                virtual bool gotoNode( SgNode *node )
+                { return false; }
 
 		/** Filters the view by using an AstFilterInterface
 		 *   @param newFilter the filter, for resetting (show all nodes) use NULL */
