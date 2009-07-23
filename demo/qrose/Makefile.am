@@ -13,7 +13,7 @@ t3_buttons_SOURCES = t3_buttons.C
 t4_events_SOURCES = t4_events.C
 t5_components_SOURCES = t5_components.C
 t6_query1_SOURCES = t6_query1.C
-t7_qtcompat_SOURCES = t7_qtcompat.C moc_t7_qtcompat.cxx
+t7_qtcompat_SOURCES = t7_qtcompat.C
 
 t1_window_LDADD =  $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) 
 t2_layout_LDADD =  $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) 
