@@ -171,6 +171,13 @@ void RsArrayType::print(ostream & os) const
 }
 
 
+std::string RsArrayType::getDisplayName() const
+{
+    stringstream s;
+    s << "Array of " << baseType->getDisplayName() << " Size:" << elementCount;
+    return s.str();
+}
+
 
 // ---------------------------------------- RsClassType ---------------------------------------
 
@@ -342,6 +349,37 @@ void RsBasicType::print(ostream & os) const
 }
 
 
+string RsBasicType::getDisplayName() const
+{
+    switch(type)
+    {
+        case SgTypeBool:             return "bool";
+        case SgTypeChar:             return "char";
+        case SgTypeDouble:           return "double";
+        case SgTypeFloat:            return "float";
+        case SgTypeInt:              return "int";
+        case SgTypeLong:             return "long";
+        case SgTypeLongDouble:       return "long double";
+        case SgTypeLongLong:         return "long long";
+        case SgTypeShort:            return "short";
+        case SgTypeSignedChar:       return "signed char";
+        case SgTypeSignedInt:        return "signed int";
+        case SgTypeSignedLong:       return "signed long";
+        case SgTypeSignedLongLong:   return "signed long long";
+        case SgTypeSignedShort:      return "signed short";
+        case SgTypeUnsignedChar:     return "unsigned char";
+        case SgTypeUnsignedInt:      return "unsigned int";
+        case SgTypeUnsignedLong:     return "unsigned long";
+        case SgTypeUnsignedLongLong: return "unsigned long long";
+        case SgTypeUnsignedShort:    return "unsigned short";
+        case SgTypeString:           return "string";
+        case SgPointerType:          return "pointer";
+        default:                     return "Unknown";
+    }
+}
+
+
+
 void RsBasicType::resolveTypeInfo(const std::string & typeStr)
 {
     stringId = typeStr;
@@ -367,38 +405,38 @@ void RsBasicType::resolveTypeInfo(const std::string & typeStr)
     else if (typeStr=="SgTypeUnsignedShort")    setTypeInfo(SgTypeUnsignedShort,    sizeof(unsigned short));
     else if (typeStr=="SgTypeString")           setTypeInfo(SgTypeString,           sizeof(char*));
     else if (typeStr=="SgPointerType")          setTypeInfo(SgPointerType,          sizeof(void*));
-    else if (typeStr=="SgArrayType")            setTypeInfo(SgArrayType,            sizeof(void*));
     else                                        setTypeInfo(Unknown, 0);
 }
 
 void RsBasicType::resolveTypeInfo(RsBasicType::SgType type_)
 {
-    type = type;
+    type = type_;
 
-    if      (type==SgTypeBool)             setTypeInfo("SgTypeBool",             sizeof(bool));
-    else if (type==SgTypeChar)             setTypeInfo("SgTypeChar",             sizeof(char));
-    else if (type==SgTypeDouble)           setTypeInfo("SgTypeDouble",           sizeof(double));
-    else if (type==SgTypeFloat)            setTypeInfo("SgTypeFloat",            sizeof(float));
-    else if (type==SgTypeInt)              setTypeInfo("SgTypeInt",              sizeof(int));
-    else if (type==SgTypeLong)             setTypeInfo("SgTypeLong",             sizeof(long));
-    else if (type==SgTypeLongDouble)       setTypeInfo("SgTypeLongDouble",       sizeof(long double));
-    else if (type==SgTypeLongLong)         setTypeInfo("SgTypeLongLong",         sizeof(long long));
-    else if (type==SgTypeShort)            setTypeInfo("SgTypeShort",            sizeof(short));
-    else if (type==SgTypeSignedChar)       setTypeInfo("SgTypeSignedChar",       sizeof(signed char));
-    else if (type==SgTypeSignedInt)        setTypeInfo("SgTypeSignedInt",        sizeof(signed int));
-    else if (type==SgTypeSignedLong)       setTypeInfo("SgTypeSignedLong",       sizeof(signed long));
-    else if (type==SgTypeSignedLongLong)   setTypeInfo("SgTypeSignedLongLong",   sizeof(signed long long));
-    else if (type==SgTypeSignedShort)      setTypeInfo("SgTypeSignedShort",      sizeof(signed short));
-    else if (type==SgTypeUnsignedChar)     setTypeInfo("SgTypeUnsignedChar",     sizeof(unsigned char));
-    else if (type==SgTypeUnsignedInt)      setTypeInfo("SgTypeUnsignedInt",      sizeof(unsigned int));
-    else if (type==SgTypeUnsignedLong)     setTypeInfo("SgTypeUnsignedLong",     sizeof(unsigned long));
-    else if (type==SgTypeUnsignedLongLong) setTypeInfo("SgTypeUnsignedLongLong", sizeof(unsigned long long));
-    else if (type==SgTypeUnsignedShort)    setTypeInfo("SgTypeUnsignedShort",    sizeof(unsigned short));
-    else if (type==SgTypeString)           setTypeInfo("SgTypeString",           sizeof(char*));
-    else if (type==SgPointerType)          setTypeInfo("SgPointerType",          sizeof(void*));
-    else if (type==SgArrayType)            setTypeInfo("SgArrayType",            sizeof(void*));
-    else                                   setTypeInfo("Unknown", 0);
-
+    switch(type)
+    {
+        case SgTypeBool:             setTypeInfo("SgTypeBool",             sizeof(bool));            break;
+        case SgTypeChar:             setTypeInfo("SgTypeChar",             sizeof(char));            break;
+        case SgTypeDouble:           setTypeInfo("SgTypeDouble",           sizeof(double));          break;
+        case SgTypeFloat:            setTypeInfo("SgTypeFloat",            sizeof(float));           break;
+        case SgTypeInt:              setTypeInfo("SgTypeInt",              sizeof(int));             break;
+        case SgTypeLong:             setTypeInfo("SgTypeLong",             sizeof(long));            break;
+        case SgTypeLongDouble:       setTypeInfo("SgTypeLongDouble",       sizeof(long double));     break;
+        case SgTypeLongLong:         setTypeInfo("SgTypeLongLong",         sizeof(long long));       break;
+        case SgTypeShort:            setTypeInfo("SgTypeShort",            sizeof(short));           break;
+        case SgTypeSignedChar:       setTypeInfo("SgTypeSignedChar",       sizeof(signed char));     break;
+        case SgTypeSignedInt:        setTypeInfo("SgTypeSignedInt",        sizeof(signed int));      break;
+        case SgTypeSignedLong:       setTypeInfo("SgTypeSignedLong",       sizeof(signed long));     break;
+        case SgTypeSignedLongLong:   setTypeInfo("SgTypeSignedLongLong",   sizeof(signed long long));break;
+        case SgTypeSignedShort:      setTypeInfo("SgTypeSignedShort",      sizeof(signed short));    break;
+        case SgTypeUnsignedChar:     setTypeInfo("SgTypeUnsignedChar",     sizeof(unsigned char));   break;
+        case SgTypeUnsignedInt:      setTypeInfo("SgTypeUnsignedInt",      sizeof(unsigned int));    break;
+        case SgTypeUnsignedLong:     setTypeInfo("SgTypeUnsignedLong",     sizeof(unsigned long));   break;
+        case SgTypeUnsignedLongLong: setTypeInfo("SgTypeUnsignedLongLong", sizeof(unsigned long long)); break;
+        case SgTypeUnsignedShort:    setTypeInfo("SgTypeUnsignedShort",    sizeof(unsigned short));  break;
+        case SgTypeString:           setTypeInfo("SgTypeString",           sizeof(char*));           break;
+        case SgPointerType:          setTypeInfo("SgPointerType",          sizeof(void*));           break;
+        default:                     setTypeInfo("Unknown", 0);
+    }
 }
 
 

@@ -12,11 +12,14 @@
 
 
 #include "Util.h"
+
 #include "FileManager.h"
 #include "MemoryManager.h"
 #include "VariablesType.h"
 #include "CStdLibManager.h"
 #include "TypeSystem.h"
+#include "StackManager.h"
+#include "PointerManager.h"
 
 /**
  * RuntimeSystem is responsible for keeping track of all variable allocations and memory operations
@@ -52,27 +55,40 @@ class RuntimeSystem
         void setTestingMode(bool b) { testingMode = b;}
 
         /// Switches the Qt-Debugger on/off (works only if compiled with ROSE_WITH_ROSEQT)
-        void enableQtDebugger(bool b) { qtDebugger = b; }
+        void setQtDebuggerEnabled(bool b) { qtDebugger = b; }
 
 
         CStdLibManager * getCStdLibManager() { return &cstdlibManager; }
 
-        MemoryManager * getMemManager()   { return & memManager;  }
-        FileManager   * getFileManager()  { return & fileManager; }
-        TypeSystem    * getTypeSystem()   { return & typeSystem;  }
+        MemoryManager * getMemManager()     { return & memManager;     }
+        FileManager   * getFileManager()    { return & fileManager;    }
+        TypeSystem    * getTypeSystem()     { return & typeSystem;     }
+        StackManager  * getStackManager()   { return & stackManager;   }
+        PointerManager* getPointerManager() { return & pointerManager; }
 
         // ---------------------------------  Register Functions ------------------------------------------------------------
 
         /// Notifies the runtime-system that a variable was created
         /// creates this variable on the stack and handles allocation right
         /// the VariablesType is deleted when the var goes out of scope
-        void createVariable(VariablesType * var);
 
         void createVariable(addr_type address,
                             const std::string & name,
                             const std::string & mangledName,
+                            const std::string & typeString);
+
+        /// Convenience function which also calls createPointer
+        void createVariable(addr_type address,
+                            const std::string & name,
+                            const std::string & mangledName,
                             const std::string & typeString,
-                            const std::string & pointerType="");
+                            const std::string & pointerType);
+
+        void createVariable(addr_type address,
+                            const std::string & name,
+                            const std::string & mangledName,
+                            RsType *  type);
+
 
         void createArray(   addr_type address,
                             const std::string & name,
@@ -80,40 +96,50 @@ class RuntimeSystem
                             const std::string & baseType,
                             size_t size);
 
+        void createArray(   addr_type address,
+                            const std::string & name,
+                            const std::string & mangledName,
+                            RsType * baseType,
+                            size_t size);
+
+
 
         /// Call this function after when a malloc or new occurs in monitored code
         /// @param startAdress  the return value of malloc/new
         /// @param size         size of the allocated memory area
         /// @param pos          position of allocation (needed to inform the user when this allocation is never freed)
-        void createMemory(addr_type startAddress, size_t size, bool onStack = false);
+        void createMemory(addr_type addr, size_t size,bool onStack = false, RsType * type=NULL);
+        /// this version creates stackmemory, of given type
+        void createStackMemory(addr_type addr, size_t size,const std::string & type);
+
 
         /// Call this function when a free/delete occurs in monitored code
         /// @param startAddress the address to be freed (argument of free/delete)
         void freeMemory(addr_type startAddress, bool onStack = false);
 
-        // TODO 3: internally, dereferencable memory is tracked via variables.
-        // This is wrong -- consider the following:
-        //
-        //      int **dp;
-        //      *dp = <some address>
-        //
-        //  *dp is dereferencable, but is not a variable.
 
-        // TODO 2: registerPointerChange & checkPointerDereference should lookup
-        // vars by address rather than string.
+
+        /// Tells the RuntimeSystem that at sourceAddr another address is stored
+        /// @param type RsType of target type
+        void createPointer(addr_type sourceAddr, RsType * type);
+        void createPointer(addr_type sourceAddr, const std::string & typeStr);
 
         /// Call this function when the value of a pointer changed i.e. the address a pointer points to
-        /// this also includes "pseudo" pointers, for example if on code "int ** a" this function has to be called twice
-        /// with var="a" and var="*a"
-        /// pointer information is deleted when the variable goes out of scope
+        /// this concept applies not only to pointer, but to all memory regions which can be dereferenced
+        /// pointer information is deleted when the memory where srcAddress lies in is deleted
         /// @param checks if true, it is checked if the pointer changed the memory area it points to
         ///               which is fine, if pointer was changed by assignment, and which might be an "error"
         ///               if it was changed via pointer arithmetic
-        void registerPointerChange( const std::string & mangled_var_name, addr_type targetAddress, bool checks=false);
+        void registerPointerChange( addr_type sourceAddress, addr_type targetAddress, bool checks=false);
+
+        /// Convenience function which takes mangledName instead of sourceAddress
+        void registerPointerChange( const std::string & mangledName, addr_type targetAddress, bool checks=false);
 
         /// Checks if two addresses lie in the same "typed chunk"
         /// equivalent to the check which is done on registerPointerChange
-        void checkPointerDereference( const std::string & mangled_var_name, addr_type derefed_address );
+        void checkPointerDereference( addr_type sourceAddress, addr_type derefed_address );
+
+
 
         /// Each variable is associated with a scope, use this function to create a new scope
         /// @param name  string description of scope, may be function name or "for-loop" ...
@@ -123,6 +149,8 @@ class RuntimeSystem
         /// from the stack, tests for
         void endScope ();
 
+
+
         //// Call this function if a file is opened
         /// @param openMode combination of FileOpenMode flags
         void registerFileOpen (FILE * file, const std::string & openedFile, int openMode);
@@ -130,15 +158,17 @@ class RuntimeSystem
         void registerFileClose(FILE * file);
 
 
+
         // --------------------------------  Check Functions ------------------------------------------------------------
 
         /// Checks if a specific memory region can be read (useful to check pointer derefs)
         /// true when region lies in allocated and initialized memory chunk
-        void checkMemRead(addr_type addr, size_t length);
+        void checkMemRead(addr_type addr, size_t length, RsType * t = NULL);
 
         /// Checks if a specific memory region can be safely written
         /// true when region lies in allocated memory chunk
-        void checkMemWrite(addr_type addr, size_t length);
+        void checkMemWrite(addr_type addr, size_t length, RsType * t = NULL);
+
 
 
         /// Call this function on program end, to list resources which have not been freed
@@ -200,15 +230,16 @@ class RuntimeSystem
         std::ostream & log()               { return (*defaultOutStr); }
 
         // Printing of RuntimeSystem status
-        void printOpenFiles(std::ostream & os) const  { fileManager.print(os); }
-        void printMemStatus(std::ostream & os) const  { memManager.print(os);  }
-        void printStack    (std::ostream & os) const;
+        void printOpenFiles(std::ostream & os) const  { fileManager.print(os);    }
+        void printMemStatus(std::ostream & os) const  { memManager.print(os);     }
+        void printStack    (std::ostream & os) const  { stackManager.print(os);   }
+        void printPointer  (std::ostream & os) const  { pointerManager.print(os); }
 
         // all functions again, print the status to registered outputstream
         void printOpenFiles() const  { printOpenFiles(*defaultOutStr); }
         void printMemStatus() const  { printMemStatus(*defaultOutStr); }
         void printStack    () const  { printStack    (*defaultOutStr); }
-
+        void printPointer  () const  { printPointer  (*defaultOutStr); }
 
         // Access to variables/scopes
         int                 getScopeCount()     const;
@@ -224,8 +255,6 @@ class RuntimeSystem
         RuntimeSystem();
 
 
-        VariablesType * findVarByMangledName(const std::string & name);
-
         /// Class to track state of memory (which areas are allocated etc)
         MemoryManager memManager;
         /// Class to track all opened files and file-accesses
@@ -234,20 +263,10 @@ class RuntimeSystem
         CStdLibManager cstdlibManager;
         /// Class for managing all known types
         TypeSystem typeSystem;
-
-        //  ------------ Tracking of stack and scope ------------------
-        struct ScopeInfo
-        {
-            ScopeInfo( const std::string & _name, int index)
-                : name(_name),stackIndex(index)
-            {}
-
-            std::string name;        /// description of scope, either function-name or something like "for-loop"
-            int         stackIndex;  /// index in stack-array where this scope starts
-        };
-        std::vector<ScopeInfo> scope;
-
-        std::vector<VariablesType *> stack;
+        /// Class which keeps track of all variables and the stack-layout
+        StackManager stackManager;
+        /// Keeps track of Memory Regions which are dereferentiable
+        PointerManager pointerManager;
 
         /// if true exceptions are thrown when a violations occurs
         /// otherwise abort is called, default false

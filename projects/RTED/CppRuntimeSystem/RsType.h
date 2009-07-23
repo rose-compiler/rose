@@ -56,6 +56,8 @@ class RsType
 
         /// Returns the type-name (class name, or for basic types Sg*)
         virtual const std::string& getName() const { return stringId; }
+        /// Possibility to display another (more userfriendly) string than getName()
+        virtual std::string getDisplayName() const { return stringId; }
 
         /// Less operator uses stringId
         virtual bool operator< (const RsType & other) const { return stringId < other.stringId; }
@@ -152,6 +154,9 @@ class RsArrayType : public RsType
         /// therefore a pseudo-name is generated __array_baseTypeName_size;
         /// this is done by this function
         static std::string getArrayTypeName(RsType * basetype, size_t size);
+
+
+        virtual std::string getDisplayName() const;
 
 
 
@@ -295,7 +300,6 @@ class RsBasicType : public RsType
             SgTypeUnsignedShort,
             SgTypeString,
             SgPointerType,
-            SgArrayType,
             Unknown //Unknown always has to be last entry
         };
 
@@ -316,13 +320,14 @@ class RsBasicType : public RsType
         virtual bool         isValidOffset(addr_type offset) const { return offset < byteSize;}
         std::string          getSubTypeString(int id) const        { return ""; }
 
+        virtual std::string getDisplayName() const;
+
 
         /// Print type information to a stream
         virtual void  print(std::ostream & os) const;
 
         static int    getBaseTypeCount()  { return Unknown;   }
         static SgType getBaseType(int i);
-
 
     protected:
 

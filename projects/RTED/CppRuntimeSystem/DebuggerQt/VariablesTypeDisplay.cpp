@@ -18,7 +18,8 @@ VariablesTypeDisplay::VariablesTypeDisplay(VariablesType * vt_, bool displayMem)
     addChild( new PVN("Address",addrStr));
     addChild( RsTypeDisplay::build(vt->getType(),-1,"Type:"));
 
-
+    //TODO show pointer infos
+    /*
     if(vt->isPointer())
     {
         PVN * pointerInfoSection = new PVN("Pointer Info","");
@@ -34,6 +35,7 @@ VariablesTypeDisplay::VariablesTypeDisplay(VariablesType * vt_, bool displayMem)
         if(displayMem)
             pointerInfoSection->addChild(new MemoryTypeDisplay(vt->getTargetAllocation(),false));
     }
+    */
 }
 
 
@@ -57,21 +59,21 @@ QStringList VariablesTypeDisplay::sectionHeader() const
 }
 
 
-VariablesTypeDisplay * VariablesTypeDisplay::build(RuntimeSystem * rs)
+VariablesTypeDisplay * VariablesTypeDisplay::build(StackManager * sm)
 {
     typedef PropertyValueNode PVN;
 
     VariablesTypeDisplay * root = new VariablesTypeDisplay();
 
-    for(int i=0; i < rs->getScopeCount(); i++)
+    for(int i=0; i < sm->getScopeCount(); i++)
     {
-        PVN * curScope = new PVN(rs->getScopeName(i).c_str(),"");
+        PVN * curScope = new PVN(sm->getScopeName(i).c_str(),"");
         curScope->setFirstColumnSpanned(true);
         curScope->setIcon(QIcon(":/icons/scope.gif"));
         root->addChild(curScope);
 
-        RuntimeSystem::VariableIter it = rs->variablesBegin(i);
-        for(; it != rs->variablesEnd(i); ++it)
+        RuntimeSystem::VariableIter it = sm->variablesBegin(i);
+        for(; it != sm->variablesEnd(i); ++it)
             curScope->addChild(new VariablesTypeDisplay(*it));
 
     }

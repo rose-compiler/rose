@@ -12,7 +12,6 @@
 #include <assert.h>
 
 #include "CppRuntimeSystem/CppRuntimeSystem.h"
-#include "rted_qt/rted_qt.h"
 #include <stddef.h>
 #include <string.h>
 #include <stdio.h>

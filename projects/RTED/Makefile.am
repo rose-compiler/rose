@@ -11,16 +11,10 @@ EXTRACT_EXPECTED_ERROR_SCRIPT=$(srcdir)/extract-expected-error.sed
 EXTRACT_EXPECTED_ERROR=sed -n -f $(EXTRACT_EXPECTED_ERROR_SCRIPT)
 EXTRACT_ACTUAL_ERROR=sed -n -f $(srcdir)/extract-actual-error.sed
 
-if ROSE_WITH_ROSEQT
-#    LINK_QT_DEBUGGER=./rted_qt/.libs/libRtedQt.a $(QT_LDFLAGS) $(ROSE_DWARF_LIBS_WITH_PATH)  -L$(top_builddir)/projects/roseQt/widgets/.libs/ -lRoseQtWidgets -Wl,-rpath,`pwd`/$(top_builddir)/projects/roseQt/widgets/.libs -DROSE_WITH_ROSEQT
-if ROSE_USE_DWARF
-    LINK_QT_DEBUGGER=$(top_builddir)/src/librose.la ./rted_qt/libRtedQt.la $(QT_LDFLAGS) -L$(dwarf_path) -ldwarf -lelf -DROSE_WITH_ROSEQT
-else
-    LINK_QT_DEBUGGER=$(top_builddir)/src/librose.la ./rted_qt/libRtedQt.la $(QT_LDFLAGS) -DROSE_WITH_ROSEQT
-endif
-else
-    LINK_QT_DEBUGGER=
-endif
+
+# Qt Debugger is now linked into CppRuntimeSystem
+LINK_QT_DEBUGGER=
+
 
 
 # This test program does not require the rest of ROSE so it can be handled locally
@@ -32,8 +26,8 @@ LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -ldl
 
 RTS=RuntimeSystem.cpp
 RTED_CXX = $(CXXLINK)
-RTED_CC = $(LIBTOOL) --tag=CC --mode=link gcc $(AM_CXXFLAGS) \
-	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+RTED_CC = $(LIBTOOL) --tag=CC --mode=link --quiet gcc $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@ 
 RTED_LIB=CppRuntimeSystem/libCppRuntimeSystem.la
 runtimeCheck_SOURCES = runtimeCheck.cpp \
                        RtedTransformation.cpp \
@@ -47,7 +41,7 @@ runtimeCheck_SOURCES = runtimeCheck.cpp \
 
 
 
-SUBDIRS = rted_qt tests CppRuntimeSystem
+SUBDIRS = tests CppRuntimeSystem
 
 runtimeCheck_LDADD =  $(ROSE_LIBS) CppRuntimeSystem/libCppRuntimeSystem.la
 #if ROSE_WITH_ROSEQT
@@ -188,7 +182,7 @@ rted_source/%_rose.c: runtimeCheck rted_source/%.c rted_source/%_s.c $(srcdir)/$
 	@echo " done."
 	@echo -n "    running transformation ... "
 	@./runtimeCheck 2 $(filter rted_source/%.c, $^) \
-			  -rose:C_only -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@))
+			  -rose:C_only -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) 2> /dev/null
 	@echo " done."
 	@echo -n "   adding line information ... "
 	@cat rose_$(notdir $(patsubst %_rose.c, %.c, $@ ) ) \
@@ -205,8 +199,8 @@ rted_source/%_rose.c: runtimeCheck rted_source/%.c $(srcdir)/$(RTS) $(srcdir)/Ru
 	@rm $(patsubst %_rose.c, %.bin, $@)
 	@echo " done."
 	@echo -n "    running transformation ... "
-	@./runtimeCheck 2 $(filter rted_source/%.c, $^) -rose:C_only -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@))
-	@echo " done."
+	@./runtimeCheck 2 $(filter rted_source/%.c, $^) -rose:C_only -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@))  2> /dev/null
+	@echo " done." > /dev/null
 	@echo -n "   adding line information ... "
 	@cat rose_$(notdir $(filter rted_source/%.c, $^)) | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > $@
 	@rm rose_$(notdir $(filter rted_source/%.c, $^))

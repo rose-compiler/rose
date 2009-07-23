@@ -202,7 +202,7 @@ void testInvalidStackFree()
     rs->freeMemory(42);
 
     // but freeing stack memory is not okay
-    rs->createMemory(42,10,true);
+    rs->createStackMemory(42,sizeof(int),"SgTypeInt");
     try  {  rs->freeMemory(42);   }
     TEST_CATCH(RuntimeViolation::INVALID_FREE)
 
@@ -435,6 +435,7 @@ void testScopeFreesStack()
 {
     TEST_INIT("Testing that exiting a scope frees stack variables")
 
+
     rs->beginScope("main");
     rs->createVariable(
         (addr_type) 4,
@@ -449,7 +450,7 @@ void testScopeFreesStack()
 
 // Tests that an implicit scope exists, i.e. main's scope.  Calling
 // createVariable without ever calling beginScope or endScope should not result
-// in memory errors.
+// in memory errors.addr_type
 void testImplicitScope()
 {
     TEST_INIT("Testing that an implicit scope exists for globals/main")
@@ -482,6 +483,7 @@ void testLostMemRegion()
 
         rs->createVariable(addr+=ptrSize,"p1_to_18","mangled_p1_to_18","SgPointerType","SgTypeInt");
         rs->registerPointerChange("mangled_p1_to_18",18);
+
 
         rs->beginScope("Scope2");
             rs->createVariable(addr+=ptrSize,"p2_to_10","mangled_p2_to_10","SgPointerType","SgTypeInt");
@@ -520,7 +522,7 @@ void testPointerChanged()
     addr_type addr=100;
     int ptrSize = sizeof(void*);
     rs->beginScope("Scope1");
-        rs->createVariable(addr+=ptrSize,"mangled_p1_to_10","mangled_p1_to_10","SgPointerType","SgTypeInt");
+        rs->createVariable(addr+=ptrSize,"p1_to_10","mangled_p1_to_10","SgPointerType","SgTypeInt");
         rs->registerPointerChange("mangled_p1_to_10",10);
 
         rs->createVariable(addr+=ptrSize,"p2_to_10","mangled_p2_to_10","SgPointerType","SgTypeInt");
@@ -528,12 +530,6 @@ void testPointerChanged()
 
         rs->createVariable(addr+=ptrSize,"p1_to_18","mangled_p1_to_18","SgPointerType","SgTypeInt");
         rs->registerPointerChange("mangled_p1_to_18",18);
-
-
-        //rs->enableQtDebugger(true);
-        //rs->checkpoint(SourcePosition());
-        //rs->enableQtDebugger(false);
-
 
         try{ rs->registerPointerChange("mangled_p1_to_10",18,true); }
         TEST_CATCH(RuntimeViolation::POINTER_CHANGED_MEMAREA )
@@ -601,6 +597,42 @@ void testPointerTracking()
     rs->createVariable(42,"instanceOfA","mangled","A");
 
     rs->createVariable(100,"pointer","mangledPointer","SgPointerType","A");
+
+    rs->endScope();
+
+    CLEANUP
+}
+
+
+void testArrayAccess()
+{
+    TEST_INIT("Testing Heap Array")
+
+    addr_type heapAddr =0x42;
+    rs->createMemory(heapAddr,10*sizeof(int));
+    rs->createMemory(heapAddr+10*sizeof(int),10); //allocate second chunk directly afterwards
+
+    rs->beginScope("Scope");
+
+    addr_type pointerAddr = 0x100;
+    rs->createVariable(0x100,"intPointer","mangled_intPointer","SgPointerType","SgTypeInt");
+    rs->registerPointerChange(pointerAddr,heapAddr,false);
+
+    //simulate iteration over array
+    for(int i=0; i<10 ; i++)
+        rs->registerPointerChange(pointerAddr,heapAddr+ i*sizeof(int),true);
+
+
+    // write in second allocation ( not allowed to changed mem-chunk)
+    try { rs->registerPointerChange(pointerAddr,heapAddr+ 10*sizeof(int),true); }
+    TEST_CATCH ( RuntimeViolation::POINTER_CHANGED_MEMAREA )
+
+    // write in illegal mem region before
+    try { rs->registerPointerChange(pointerAddr,heapAddr - sizeof(int),true); }
+    TEST_CATCH ( RuntimeViolation::INVALID_PTR_ASSIGN )
+
+    rs->freeMemory(heapAddr);
+    rs->freeMemory(heapAddr+10*sizeof(int));
 
     rs->endScope();
 
@@ -932,6 +964,9 @@ void testTypeSystemDetectNested()
                           ts->getTypeInfo("SgTypeDouble"));
 
 
+    //rs->setQtDebuggerEnabled(true);
+    //rs->checkpoint(SourcePosition());
+    //rs->setQtDebuggerEnabled(false);
     /*
     RsType * type1 = mt->getTypeAt(sizeof(A)+offsetof(B,arr),sizeof(A));
     RsType * type2 = mt->getTypeAt(sizeof(A)+offsetof(B,arr) + 5*sizeof(A)+1,sizeof(A));
@@ -1008,9 +1043,14 @@ int main(int argc, char ** argv)
     {
         RuntimeSystem * rs = RuntimeSystem::instance();
         rs->setTestingMode(true);
+
+#if 1
         rs->setOutputFile("test_output.txt");
-
-
+#else
+        testArrayAccess();
+        cerr<< endl << "!!!!  Success  !!!! " << endl << endl;
+        abort();
+#endif
         testTypeSystemDetectNested();
         testTypeSystemMerge();
 
@@ -1038,6 +1078,8 @@ int main(int argc, char ** argv)
         testPointerChanged();
         testInvalidPointerAssign();
         testPointerTracking();
+        testArrayAccess();
+
 
         test_memcpy();
         test_memmove();

@@ -14,7 +14,9 @@ libCppRuntimeSystem_la_SOURCES = CppRuntimeSystem.cpp \
 				 CStdLibManager.cpp \
                                  VariablesType.cpp\
                                  RsType.cpp\
-                                 TypeSystem.cpp
+                                 TypeSystem.cpp\
+                                 PointerManager.cpp\
+			         StackManager.cpp
 
 
 

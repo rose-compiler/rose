@@ -4,7 +4,7 @@
 #include "ItemTreeNode.h"
 
 class VariablesType;
-class RuntimeSystem;
+class StackManager;
 
 class VariablesTypeDisplay : public ItemTreeNode
 {
@@ -15,7 +15,7 @@ class VariablesTypeDisplay : public ItemTreeNode
         virtual QStringList sectionHeader() const;
 
 
-        static VariablesTypeDisplay * build(RuntimeSystem  * rs);
+        static VariablesTypeDisplay * build(StackManager  * sm);
 
     protected:
         VariablesTypeDisplay() : vt(NULL) {}

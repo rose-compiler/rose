@@ -10,10 +10,9 @@
 
 using namespace std;
 
+
 // -----------------------    MemoryType  --------------------------------------
 
-
-bool MemoryType::checkMemWithoutPointer= true;
 
 MemoryType::MemoryType(addr_type _addr, size_t _size, const SourcePosition & _pos, bool _onStack)
     : startAddress(_addr), size(_size), allocPos(_pos), onStack(_onStack)
@@ -38,11 +37,7 @@ MemoryType::MemoryType(addr_type addr, bool _onStack)
 
 MemoryType::~MemoryType()
 {
-    for(set<VariablesType*>::iterator it = pointerSet.begin();
-        it != pointerSet.end(); ++it)
-    {
-        (*it)->invalidatePointer();
-    }
+
 }
 
 bool MemoryType::containsAddress(addr_type queryAddress)
@@ -88,33 +83,6 @@ void MemoryType::initialize(int offsetFrom, int offsetTo)
 
     for(int i=offsetFrom; i<offsetTo; i++)
         initialized[i]=true;
-}
-
-
-void MemoryType::registerPointer(VariablesType * var)
-{
-    pointerSet.insert(var);
-}
-
-void MemoryType::deregisterPointer(VariablesType * var)
-{
-    bool doChecks = checkMemWithoutPointer;
-    size_t erasedElements= pointerSet.erase(var);
-    if(erasedElements==0)
-    {
-        cerr << "Warning: Tried to deregister a pointer which has not been registered" << endl;
-    }
-
-    if(pointerSet.size()==0 && doChecks)
-    {
-        RuntimeSystem * rs = RuntimeSystem::instance();
-        stringstream ss;
-        ss << "No pointer to allocated memory region: " << endl;
-        ss << *this << endl << "because this pointer has changed: " <<endl;
-        ss << *var << endl;
-
-        rs->violationHandler(RuntimeViolation::MEM_WITHOUT_POINTER, ss.str());
-    }
 }
 
 
@@ -218,7 +186,7 @@ string MemoryType::getTypeAt(addr_type offset, size_t size)
     TiIter itUpper = res.second;
 
     if(itLower== typeInfo.end())
-        return NULL;
+        return "";
 
 
     // makes only sense if range contains exactly one type
@@ -233,15 +201,33 @@ string MemoryType::getTypeAt(addr_type offset, size_t size)
         return typeStr;
     }
 
-    return NULL;
+    return "";
 }
 
+bool MemoryType::isArrayPossible(addr_type o1, addr_type o2, RsType *t)
+{
+    size_t size = t->getByteSize();
+    TiIterPair res = getOverlappingTypeInfos(o1,o2+size);
 
+
+    for(TiIter i = res.first; i != res.second; ++i)
+    {
+        addr_type offset = i->first;
+        RsType * curType = i->second;
+        if(curType != t)
+            return false;
+        if(offset % size != 0)
+            return false;
+    }
+
+    return true;
+}
 
 
 MemoryType::TiIterPair MemoryType::getOverlappingTypeInfos(addr_type from, addr_type to)
 {
     // This function assumes that the typeInfo ranges do not overlap
+
     //cerr << "Current status";
     //RuntimeSystem::instance()->getMemManager()->print(cerr);
     //cerr << "Searching for offset " << from << ","  << to << endl;
@@ -303,11 +289,21 @@ void MemoryType::print(ostream & os) const
     os << "0x" << setfill('0')<< setw(6) << hex << startAddress
        << " Size " << dec << size <<  "\t" << getInitString() << "\tAllocated at " << allocPos << endl ;
 
-    if(pointerSet.size() > 0)
+    PointerManager * pm = RuntimeSystem::instance()->getPointerManager();
+    typedef PointerManager::TargetToPointerMapIter Iter;
+    Iter it =  pm->targetRegionIterBegin(startAddress);
+    Iter end = pm->targetRegionIterEnd(startAddress+size);
+    if(it != end)
     {
         os << "\tPointer to this chunk: ";
-        for(set<VariablesType*>::const_iterator i = pointerSet.begin(); i!= pointerSet.end(); ++i)
-            os << "\t" << (*i)->getName() << " ";
+        for(; it != end; ++it)
+        {
+            VariablesType * vt =  it->second->getVariable();
+            if(vt)
+                os << "\t" << vt->getName() << " ";
+            else
+                os << "\t" << "Addr:0x" << hex << it->second->getSourceAddress() << " ";
+        }
         os << endl;
     }
 
@@ -461,6 +457,14 @@ void MemoryManager::freeMemory(addr_type addr, bool onStack)
         return;
     }
 
+
+    PointerManager * pm = rs->getPointerManager();
+
+    addr_type from = m->getAddress();
+    addr_type to = from + m->getSize();
+    pm->deletePointerInRegion(from,to);
+    pm->invalidatePointerToRegion(from,to);
+
     // successful free, erase allocation info from map
     mem.erase(m);
     delete m;
@@ -468,27 +472,41 @@ void MemoryManager::freeMemory(addr_type addr, bool onStack)
 
 
 
-
-void MemoryManager::checkRead(addr_type addr, size_t size)
+void MemoryManager::checkAccess(addr_type addr, size_t size, RsType * t, MemoryType * & mt, RuntimeViolation::Type vioType)
 {
     RuntimeSystem * rs = RuntimeSystem::instance();
 
 
-    MemoryType * mt = findContainingMem(addr,size);
+    mt = findContainingMem(addr,size);
     if(!mt)
     {
         stringstream desc;
-        desc    << "Trying to read from non-allocated MemoryRegion "
-                << "(Address " << "0x" << hex << addr 
+        desc    << "Trying to access non-allocated MemoryRegion "
+                << "(Address " << "0x" << hex << addr
                 <<" of size " << dec << size << ")" << endl;
 
         MemoryType * possMatch = findPossibleMemMatch(addr);
         if(possMatch)
-            desc << "Did you try to read this region:" << endl << *possMatch << endl;
+            desc << "Did you try to access this region:" << endl << *possMatch << endl;
 
-        rs->violationHandler(RuntimeViolation::INVALID_READ,desc.str());
-        return;
+        rs->violationHandler(vioType,desc.str());
     }
+
+    if(t)
+        mt->accessMemWithType(addr - mt->getAddress(),t);
+
+}
+
+
+
+
+void MemoryManager::checkRead(addr_type addr, size_t size, RsType * t)
+{
+    RuntimeSystem * rs = RuntimeSystem::instance();
+
+    MemoryType * mt = NULL;
+    checkAccess(addr,size,t,mt,RuntimeViolation::INVALID_READ);
+    assert(mt);
 
     assert(addr >= mt->getAddress());
     int from = addr - mt->getAddress();
@@ -503,30 +521,75 @@ void MemoryManager::checkRead(addr_type addr, size_t size)
     }
 }
 
-void MemoryManager::checkWrite(addr_type addr, size_t size)
+
+
+void MemoryManager::checkWrite(addr_type addr, size_t size, RsType * t)
 {
     RuntimeSystem * rs = RuntimeSystem::instance();
 
-    MemoryType * mt = findContainingMem(addr,size);
-    if(!mt)
-    {
-        stringstream desc;
-        desc    << "Trying to write to non-allocated MemoryRegion "
-                << "(Address " << "0x" << hex << addr 
-                <<" of size " << dec << size << ")" << endl;
-
-        MemoryType * possMatch = findPossibleMemMatch(addr);
-        if(possMatch)
-            desc << "Did you try to write to this region:" << endl << *possMatch << endl;
-
-        rs->violationHandler(RuntimeViolation::INVALID_WRITE,desc.str());
-        return;
-    }
+    MemoryType * mt = NULL;
+    checkAccess(addr,size,t,mt,RuntimeViolation::INVALID_WRITE);
+    assert(mt);
 
     assert(addr >= mt->getAddress());
     int from = addr - mt->getAddress();
     mt->initialize(from,from + size);
 }
+
+
+void MemoryManager::checkIfSameChunk(addr_type addr1, addr_type addr2, RsType * type)
+{
+    RuntimeSystem * rs = RuntimeSystem::instance();
+
+    size_t typeSize = type->getByteSize();
+
+    MemoryType * mem1 = NULL;
+    MemoryType * mem2 = NULL;
+
+    checkAccess(addr1,typeSize,type,mem1,RuntimeViolation::INVALID_READ);
+    checkAccess(addr2,typeSize,type,mem2,RuntimeViolation::INVALID_READ);
+    assert(mem1 && mem2);
+
+    if(mem1 != mem2)
+    {
+        stringstream ss;
+        ss << "Pointer changed allocation block from "
+           << "0x" << hex << addr1 << " to "
+           << "0x" << hex << addr2 << endl;
+
+        rs->violationHandler(RuntimeViolation::POINTER_CHANGED_MEMAREA,ss.str());
+        return;
+    }
+
+    MemoryType * mem = mem1;
+    int off1 = addr1 - mem->getAddress();
+    int off2 = addr2 - mem->getAddress();
+
+    if(mem->isArrayPossible(off1,off2,type) )
+        return;
+
+    string chunk1 = mem1->getTypeAt(off1,typeSize);
+    string chunk2 = mem2->getTypeAt(off2,typeSize);
+
+    if(chunk1 == chunk2 && mem1 ==mem2)
+        return; //pointer just changed offset in an array
+
+
+    stringstream ss;
+    ss << "A pointer changed the memory area (array or variable) which it points to (may be an error)" << endl << endl;
+
+    ss << "Region1:  " <<  chunk1 << " at offset " << off1 << " in this Mem-Region:" <<  endl
+                          << *mem1 << endl;
+
+    ss << "Region2: " << chunk2 << " at offset " << off2 << " in this Mem-Region:" <<  endl
+                          << *mem2 << endl;
+
+    rs->violationHandler(RuntimeViolation::POINTER_CHANGED_MEMAREA,ss.str());
+}
+
+
+
+
 
 
 void MemoryManager::checkForNonFreedMem() const

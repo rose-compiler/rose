@@ -206,11 +206,19 @@ void DbgMainWindow::updateMemoryDisplay()
     memProxyModel->setSourceModel(memModel);
 
     ui->treeMemorySystem->setModel(memProxyModel);
+
+
+    // GraphicsView
+    MemoryManager * mm = RuntimeSystem::instance()->getMemManager();
+    if (mm->getAllocationSet().begin() != mm->getAllocationSet().end())
+    {
+        ui->memGraphicsView->setMemoryType(*(mm->getAllocationSet().begin()));
+    }
 }
 
 void DbgMainWindow::updateStackDisplay()
 {
-    ItemTreeNode * stackRoot = VariablesTypeDisplay::build(rs);
+    ItemTreeNode * stackRoot = VariablesTypeDisplay::build(rs->getStackManager());
     stackModel->setRoot(stackRoot);
 
     if(stackProxyModel)

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1505</width>
-    <height>791</height>
+    <width>1357</width>
+    <height>903</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -31,7 +31,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1505</width>
+     <width>1357</width>
      <height>26</height>
     </rect>
    </property>
@@ -102,6 +102,9 @@
         <bool>true</bool>
        </property>
       </widget>
+     </item>
+     <item row="4" column="0">
+      <widget class="MemoryGraphicsView" name="memGraphicsView"/>
      </item>
     </layout>
    </widget>
@@ -266,6 +269,11 @@
    <extends>QFrame</extends>
    <header>RoseCodeEdit.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>MemoryGraphicsView</class>
+   <extends>QGraphicsView</extends>
+   <header>MemoryGraphicsView.h</header>
   </customwidget>
  </customwidgets>
  <resources>

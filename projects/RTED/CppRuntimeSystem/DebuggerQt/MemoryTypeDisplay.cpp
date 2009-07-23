@@ -27,16 +27,23 @@ MemoryTypeDisplay::MemoryTypeDisplay(MemoryType * mt_, bool displayPointer)
     for(; it != mt->getTypeInfoMap().end();  ++it)
         typeInfoSection->addChild( RsTypeDisplay::build(it->second,it->first));
 
-    Pvn * pointer = new Pvn("Pointer to this Allocation","");
-
-    pointer->setFirstColumnSpanned(true);
     //pointer->setIcon(QIcon(":/icons/arrow.png"));
+
 
     if(displayPointer)
     {
+        Pvn * pointerIn = new Pvn("Pointer to this Allocation","");
+        pointerIn->setFirstColumnSpanned(true);
+
+
+
+        //TODO pointer structure has changed -> adapt display
+        //Pointer into this
+        /*
         MemoryType::VariableSet::const_iterator i = mt->getPointerSet().begin();
         for(; i != mt->getPointerSet().end(); ++i)
             pointer->addChild( new VariablesTypeDisplay(*i,false) );
+         */
     }
 }
 

@@ -28,8 +28,6 @@ class MemoryType
         typedef TypeInfoMap::iterator TiIter;
 
 
-
-
         MemoryType(addr_type addr, size_t size, const SourcePosition & pos, bool onStack);
         MemoryType(addr_type addr, size_t size, bool onStack,
                    const std::string & file, int line1, int line2);
@@ -66,16 +64,6 @@ class MemoryType
         std::string getInitString() const;
 
 
-        /// Notifies the Chunk that a pointer points to it
-        /// when the mem-chunk is freed the registered pointer is invalidated
-        void registerPointer  (VariablesType * var);
-
-        /// Notifies the Chunk that a certain pointer does not pointer there anymore
-        /// if doChecks is true, and the last pointer to the chunk is removed
-        /// a violation is created
-        void deregisterPointer(VariablesType * var);
-
-
         /// Prints info about this allocation
         void print(std::ostream & os) const;
 
@@ -103,27 +91,18 @@ class MemoryType
         /// Returns the type-name , or the CONTAINING ARRAY name which is associated with that offset
         /// to distinguish between nested types (class with has members of other classes)
         /// an additional size parameter is needed
-        /// if not TypeInfo is found, NULL is returned
+        /// if no TypeInfo is found, the empty string is returned
         /// example: returns "typeName.member.submember", where subMember has the specified size
         ///          or subMember is an array, and one element has specified size
         std::string getTypeAt(addr_type offset, size_t size);
 
+        /// Checks if the range offset1 until offset2+type->getByteSize()
+        /// an array of given type is possible
+        /// if nothing is registered true is returned, because an array is possible
+        bool isArrayPossible(addr_type offset1, addr_type offset2, RsType * type);
+
 
         const TypeInfoMap & getTypeInfoMap() const { return typeInfo; }
-
-        /// Returns a set with pointer-variables which point into this allocation
-        typedef std::set<VariablesType*> VariableSet;
-        const VariableSet & getPointerSet() const  { return pointerSet; }
-
-
-        /// If set to true a violation is reported if the last pointer
-        /// which pointed to a mem region changes (i.e. mem region not reachable any more)
-        /// is not necessary an error, f.e. p=malloc(3); p+=1000; p-=1000; free(p)
-        /// this code is valid but would report a violation, because after the "+="
-        /// no pointer points to the chunk any more
-        /// per default these errors are reported
-        static void setViolationOnMemWithoutPointer(bool val) {checkMemWithoutPointer = val; }
-        static bool violationOnMemWithoutPointer()            { return checkMemWithoutPointer; }
 
 
     private:
@@ -140,18 +119,11 @@ class MemoryType
 
 
         /// Determines all typeinfos which intersect the defined offset-range [from,to)
-        /// "to" is exclusive - typeInfos with startOffset==to , are not included
+        /// "to" is exclusive i.e. typeInfos with startOffset==to are not included
         TiIterPair getOverlappingTypeInfos(addr_type from, addr_type to);
 
         /// A entry in this map means, that on offset <key> is stored the type <value>
         TypeInfoMap typeInfo;
-
-        /// Set of pointers which currently point into this memory chunk
-        VariableSet pointerSet;
-
-        static bool checkMemWithoutPointer;
-
-
 };
 std::ostream& operator<< (std::ostream &os, const MemoryType & m);
 
@@ -178,15 +150,27 @@ class MemoryManager
 
         /// Check if memory region is allocated and initialized
         /// @param size     size=sizeof(DereferencedType)
-        void checkRead  (addr_type addr, size_t size);
+        void checkRead  (addr_type addr, size_t size, RsType * t=NULL);
 
         /// Checks if memory at position can be safely written, i.e. is allocated
         /// if true it marks that memory region as initialized
         /// that means this function should be called on every write!
-        void checkWrite (addr_type addr, size_t size);
+        void checkWrite (addr_type addr, size_t size, RsType * t=NULL);
 
 
 
+        /// This check is intended to detect array out of bounds
+        /// even if the plain memory access is legal (
+        /// Example: struct{ int arr[10]; int i}; ) -> detect s.arr[11] as error
+        /// The check is done if a pointer changes via arithmetic or on array access
+        /// @param a1 address of the pointer before (or base of array); in example &arr[0]
+        /// @param a2 the new pointer target address, or derefed addr; in example &arr[11]
+        /// There a two kinds of violation: change of allocation chunk
+        ///                                 change of "typed-chunk" (see example)
+        void checkIfSameChunk(addr_type a1, addr_type a2, RsType * t);
+
+        /// Reports a violation for all non freed memory locations
+        /// call this function at end of program
         void checkForNonFreedMem() const;
 
         /// Deletes all collected data
@@ -208,6 +192,19 @@ class MemoryManager
         const  MemoryTypeSet & getAllocationSet() const { return mem; }
 
     private:
+
+        /**
+         * Checks if memory region is allocated
+         * @param addr  startAddress
+         * @param size  size of chunk
+         * @param t     if t != NULL, a accessMemWithType is called
+         *              (which registers type and if there is already a type registered checks for consistency)
+         * @param mt    return value -> the allocated memory chunk
+         * @param vio   the violation which is thrown if the chunk is not allocated
+         *              (should be INVALID_READ or INVALID_WRITE)
+         */
+        void checkAccess(addr_type addr, size_t size, RsType * t, MemoryType * & mt,RuntimeViolation::Type vio);
+
         /// Queries the map for a potential matching memory area
         /// finds the memory region with next lower or equal address
         MemoryType * findPossibleMemMatch(addr_type addr);

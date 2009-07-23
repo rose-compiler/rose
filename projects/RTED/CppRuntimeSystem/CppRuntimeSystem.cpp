@@ -26,7 +26,6 @@ RuntimeSystem* RuntimeSystem::instance()
 RuntimeSystem::RuntimeSystem()
     : defaultOutStr(&cout),testingMode(false),qtDebugger(false)
 {
-    beginScope("Globals");
 }
 
 void RuntimeSystem::checkpoint(const SourcePosition & pos)
@@ -43,11 +42,37 @@ void RuntimeSystem::checkpoint(const SourcePosition & pos)
 // --------------------- Mem Checking ---------------------------------
 
 
-void RuntimeSystem::createMemory(addr_type startAddress, size_t size, bool onStack)
+void RuntimeSystem::createMemory(addr_type addr, size_t size, bool onStack, RsType * type)
 {
     // the created MemoryType is freed by memory manager
-    memManager.allocateMemory(new MemoryType(startAddress,size,curPos,onStack));
+    MemoryType * mt = new MemoryType(addr,size,curPos,onStack);
+
+    if(onStack)
+    {
+        if(type)
+        {
+            mt->accessMemWithType(0,type);
+            assert(type->getByteSize() == size);
+        }
+        else //TODO make error to assert, if registration is done correct
+            cerr << "Warning: Stack Memory registered without type!" << endl;
+    }
+
+    memManager.allocateMemory(mt);
 }
+
+void RuntimeSystem::createStackMemory(addr_type addr, size_t size,const std::string & strType)
+{
+    MemoryType * mt = new MemoryType(addr,size,curPos,true);
+
+    RsType * type = typeSystem.getTypeInfo(strType);
+    assert(type);
+
+    mt->accessMemWithType(0,type);
+
+    memManager.allocateMemory(mt);
+}
+
 
 
 void RuntimeSystem::freeMemory(addr_type startAddress, bool onStack)
@@ -56,206 +81,129 @@ void RuntimeSystem::freeMemory(addr_type startAddress, bool onStack)
 }
 
 
-void RuntimeSystem::checkMemRead(addr_type addr, size_t size)
+void RuntimeSystem::checkMemRead(addr_type addr, size_t size, RsType * t)
 {
-    memManager.checkRead(addr,size);
+    memManager.checkRead(addr,size,t);
 }
 
-void RuntimeSystem::checkMemWrite(addr_type addr, size_t size)
+void RuntimeSystem::checkMemWrite(addr_type addr, size_t size, RsType * t)
 {
-    memManager.checkWrite(addr,size);
+    memManager.checkWrite(addr,size,t);
 }
-
-
-// --------------------- Scopes ---------------------------------
-
-
-void RuntimeSystem::beginScope(const std::string & name)
-{
-    scope.push_back(ScopeInfo(name,stack.size()));
-}
-
-void RuntimeSystem::endScope()
-{
-    assert( scope.size() > 0);
-
-    ScopeInfo lastScope = scope.back();
-    scope.pop_back();
-
-    vector<VariablesType * > toDelete;
-
-    for(int i=stack.size()-1; i >= lastScope.stackIndex ; i--)
-    {
-        // First delete the variables then the pointer
-        // otherwise there are lots of errors about no pointer to allocated mem-region
-        if(stack.back()->isPointer())
-            toDelete.push_back(stack.back());
-        else
-            delete stack.back();
-
-        stack.pop_back();
-    }
-    for(int i=0; i<toDelete.size(); i++)
-        delete toDelete[i];
-
-    assert(stack.size() == lastScope.stackIndex);
-}
-
-int   RuntimeSystem::getScopeCount()  const
-{
-    return scope.size();
-}
-
-const std::string & RuntimeSystem::getScopeName(int i) const
-{
-    assert(i >=0 );
-    assert(i < scope.size());
-    return scope[i].name;
-}
-
-RuntimeSystem::VariableIter RuntimeSystem::variablesBegin(int i) const
-{
-    assert(i >=0 );
-    assert(i < scope.size());
-
-    return stack.begin() + scope[i].stackIndex;
-}
-
-RuntimeSystem::VariableIter RuntimeSystem::variablesEnd(int i) const
-{
-    assert(i >=0 );
-    assert(i < scope.size());
-
-    if(i-1 == scope.size())
-        return stack.end();
-    else
-        return stack.begin() + scope[i+1].stackIndex;
-}
-
-
-
 
 
 // --------------------- Stack Variables ---------------------------------
 
 
 void RuntimeSystem::createVariable(addr_type address,
-                                   const std::string & name,
-                                   const std::string & mangledName,
-                                   const std::string & typeString,
-                                   const std::string & pointerType)
+                                   const string & name,
+                                   const string & mangledName,
+                                   const string & typeString)
 {
-    RsType * pt =NULL;
-
-
-    if(pointerType.size() > 0)
-    {
-        pt = typeSystem.getTypeInfo(pointerType);
-        if(!pt)
-            cerr << "Couldn't find type " << pointerType << " when registering pointer-type" << endl;
-    }
-
-
-    createVariable(new VariablesType(name,mangledName,typeString,address,pt));
+    stackManager.addVariable(new VariablesType(name,mangledName,typeString,address));
 }
+
+void RuntimeSystem::createVariable(addr_type address,
+                                   const string & name,
+                                   const string & mangledName,
+                                   RsType *  type)
+{
+    stackManager.addVariable(new VariablesType(name,mangledName,type,address));
+}
+
+
+/// Convenience function which also calls createPointer
+void RuntimeSystem::createVariable( addr_type address,
+                                    const string & name,
+                                    const string & mangledName,
+                                    const string & typeString,
+                                    const string & pointerType)
+{
+    stackManager.addVariable(new VariablesType(name,mangledName,typeString,address));
+    if(pointerType.size() > 0)
+        createPointer(address,pointerType);
+}
+
+void RuntimeSystem::createArray( addr_type address,
+                                 const std::string & name,
+                                 const std::string & mangledName,
+                                 const std::string & baseType,
+                                 size_t size)
+{
+    RsType * t = typeSystem.getTypeInfo(baseType);
+    createArray(address,name,mangledName,t,size);
+}
+
+
 void RuntimeSystem::createArray(    addr_type address,
                                     const std::string & name,
                                     const std::string & mangledName,
-                                    const std::string & baseType,
+                                    RsType * baseType,
                                     size_t size)
 {
-    // TODO 1: impl create array
-    // Create Variable, Type: array, but handled as a pointer
-    
-    //createVariable(new VariablesType(
+    RsType * arrType = typeSystem.getArrayType(baseType,size);
 
+    stackManager.addVariable(new VariablesType(name,mangledName,arrType,address));
+    pointerManager.createPointer(address, baseType);
+    // View an array as a pointer, which is stored at the address and which points at the address
+    pointerManager.registerPointerChange(address,address,false);
 }
 
-void RuntimeSystem::createVariable(VariablesType * var)
+
+
+
+
+void RuntimeSystem::beginScope(const std::string & name)
 {
-	// TODO 1: kill this check -- stack arrays are now created with createArray,
-	// not createVariable, 
-	//
-    // Track the memory area where the variable is stored
-    // special case when static array, then createMemory is called anyway
-    if(var->getType()->getName() != "SgArrayType")
-    {
-        createMemory(var->getAddress(),var->getSize(), true);
-        // tell the memManager the type of this memory chunk
-        var->getAllocation()->accessMemWithType(0,var->getType());
-    }
+    stackManager.beginScope(name);
+}
 
-
-    // every variable has to part of scope
-    assert(scope.size() >0);
-    stack.push_back(var);
+void RuntimeSystem::endScope ()
+{
+    stackManager.endScope();
 }
 
 
 // --------------------- Pointer Tracking---------------------------------
 
-
-void RuntimeSystem::registerPointerChange(const string & mangledVarName, addr_type targetAddress, bool checks)
+void RuntimeSystem::createPointer(addr_type sourceAddr, RsType * type)
 {
-    VariablesType * var = findVarByMangledName(mangledVarName);
-    assert(var); // create the variable first!
-    var->setPointerTarget(targetAddress,checks);
+    pointerManager.createPointer(sourceAddr,type);
 }
 
-
-void RuntimeSystem::checkPointerDereference( const std::string & mangled_var_name, addr_type derefed_address )
+void RuntimeSystem::createPointer(addr_type sourceAddr, const string & typeStr)
 {
-    // TODO 1: implement checkptrderef
-    /*
-    size_t typeSize = typeSystem.getTypeInfo(type)->getByteSize();
-    MemoryType * mem1 = memManager.findContainingMem(addr1,typeSize);
-    MemoryType * mem2 = memManager.findContainingMem(addr2,typeSize);
-
-
-    if(mem1 != mem2 || !mem1 || !mem2)
+    RsType * type = typeSystem.getTypeInfo(typeStr);
+    if(!type)    //TODO make this as assert
     {
-        stringstream ss;
-        ss << "Pointer changed memory block from 0x" << hex << addr1 << " to "
-                                                     << hex << addr2 << endl;
-
-        if(!mem1)  ss << "No allocation found at addr1" << endl;
-        if(!mem2)  ss << "No allocation found at addr2" << endl;
-
-        ss << "Where the two memory regions are not the same" << endl;
-        violationHandler(RuntimeViolation::INVALID_PTR_ASSIGN,ss.str());
+        cerr << "SEVERE WARNING: Called createPointer with unknown type " << typeStr << endl;
+        cerr << "Pointer is not created" << endl;
         return;
     }
 
-    int off1 = addr1 - mem1->getAddress();
-    int off2 = addr2 - mem2->getAddress();
-    string chunk1 = mem1->getTypeAt(off1,typeSize);
-    string chunk2 = mem2->getTypeAt(off2,typeSize);
 
-    if(chunk1 == chunk2 && mem1 ==mem2)
-        return; //pointer just changed offset in an array
-
-
-    stringstream ss;
-    ss << "A pointer changed the memory area (array or variable) which it points to (may be an error)" << endl << endl;
-
-    ss << "Region1:  " <<  chunk1 << " at offset " << off1 << " in this Mem-Region:" <<  endl
-                          << *mem1 << endl;
-
-    ss << "Region2: " << chunk2 << " at offset " << off2 << " in this Mem-Region:" <<  endl
-                          << *mem2 << endl;
-
-    violationHandler(RuntimeViolation::POINTER_CHANGED_MEMAREA,ss.str());
-    */
+    pointerManager.createPointer(sourceAddr,type);
 }
 
-VariablesType * RuntimeSystem::findVarByMangledName(const string & name)
+
+void RuntimeSystem::registerPointerChange(addr_type source, addr_type target, bool checks)
 {
-    for(int i=0; i< stack.size(); i++)
-        if(name == stack[i]->getMangledName() )
-            return stack[i];
-
-    return NULL;
+    pointerManager.registerPointerChange(source,target,checks);
 }
+
+void RuntimeSystem::registerPointerChange( const std::string & mangledName, addr_type target, bool checks)
+{
+    addr_type source = stackManager.getVariable(mangledName)->getAddress();
+    pointerManager.registerPointerChange(source,target,checks);
+}
+
+
+
+void RuntimeSystem::checkPointerDereference( addr_type source, addr_type derefed_address )
+{
+    pointerManager.checkPointerDereference(source,derefed_address);
+}
+
 
 // --------------------- File Management ---------------------------------
 
@@ -308,11 +256,11 @@ void RuntimeSystem::violationHandler(RuntimeViolation & vio)  throw (RuntimeViol
 void RuntimeSystem::doProgramExitChecks()
 {
     // exit global scope
-    endScope();
+    stackManager.endScope();
     // allows you to call doProgramExitChecks but then keep going without first
     // calling clearStatus.  Convenient for testing, but not generally
     // recommended.
-    beginScope("Globals");
+    stackManager.beginScope("Globals");
 
 
     // Check for memory leaks
@@ -326,17 +274,11 @@ void RuntimeSystem::clearStatus()
     memManager.clearStatus();
     fileManager.clearStatus();
     typeSystem.clearStatus();
-
-    while(scope.size() > 0)
-        endScope();
-
-    assert(stack.size() ==0);
+    stackManager.clearStatus();
+    pointerManager.clearStatus();
 
     curPos = SourcePosition();
-    beginScope("Globals");
 }
-
-
 
 
 // --------------------- Output Handling ---------------------------------
@@ -356,24 +298,7 @@ void RuntimeSystem::setOutputFile(const std::string & filename)
 }
 
 
-void RuntimeSystem::printStack(ostream & os) const
-{
-    os << endl;
-    os << "------------------------------- Stack Status --------------------------------------" << endl << endl;
 
-    for(int sc=0; sc < scope.size(); sc++)
-    {
-        os << scope[sc].name << ":" << endl;
-
-        int endIndex = (sc == scope.size()-1) ? stack.size() : scope[sc+1].stackIndex;
-
-        for(int i=scope[sc].stackIndex; i< endIndex; i++)
-             os << "\t" << *(stack[i]) << endl;
-
-    }
-
-    os << endl;
-}
 
 
 
