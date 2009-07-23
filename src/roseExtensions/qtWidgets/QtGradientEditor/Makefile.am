@@ -47,7 +47,7 @@ libQtGradientEditor.la: $(QTGRADIENT_MOC_FILES) $(libQtGradientEditor_la_OBJECTS
 	$(CXXLINK) $(am_libQtGradientEditor_la_rpath) $(libQtGradientEditor_la_LDFLAGS) $(libQtGradientEditor_la_OBJECTS) $(libQtGradientEditor_la_LIBADD) $(LIBS)
 
 # Target for installing header 
-headerTargetdir    =  $(roseQtWidgetsIncPath)/
+headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = qtcolorbutton.h \
 		       qtcolorline.h \
 		       qtgradientdialog.h \
