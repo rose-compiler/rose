@@ -11,13 +11,19 @@
 #include <stdarg.h>
 #include <assert.h>
 
-//#include "RuntimeSystem.h"
 #include "CppRuntimeSystem/CppRuntimeSystem.h"
 #include "rted_qt/rted_qt.h"
 #include <stddef.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+extern "C" {
+  #include "RuntimeSystem.h"
+}
+
+enum ReadWriteMask { Read = 1, Write = 2, BoundsCheck = 4 };
+
 
 
 int rs_initialized = 0;
@@ -116,10 +122,7 @@ RuntimeSystem_roseArrayAccess(const char* name, int posA, int posB, const char* 
 	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
 	rs->checkpoint(SourcePosition(filename,atoi(line),atoi(lineTransformed)));
 
-	if ( read_write_mask & 1 )
-	  rs->checkMemRead( address, size );
-	if ( read_write_mask & 2 )
-    rs->checkMemWrite( address, size );
+  RuntimeSystem_checkMemoryAccess( address, size, read_write_mask );
 
   // TODO 1 djh: if rwm & 4, do bounds check, i.e
   //  rs->checkPointerDereference( mangled_name, address );
@@ -128,6 +131,15 @@ RuntimeSystem_roseArrayAccess(const char* name, int posA, int posB, const char* 
 // ***************************************** ARRAY FUNCTIONS *************************************
 
 
+void RuntimeSystem_checkMemoryAccess( unsigned long int address, long int size, int read_write_mask ) {
+
+	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
+
+	if ( read_write_mask & Read )
+	  rs->checkMemRead( address, size );
+	if ( read_write_mask & Write )
+    rs->checkMemWrite( address, size );
+}
 
 
 
@@ -609,7 +621,7 @@ void RuntimeSystem_roseCreateVariable( const char* name,
 	rs->checkpoint( SourcePosition(filename,atoi(line), atoi(lineTransformed)));
 
 	string typeName = type;
-	if(type=="SgClassType")
+	if( typeName == "SgClassType" )
 	    typeName = className;
 
 	rs->createVariable(address,name,mangled_name,typeName, basetype);
@@ -661,8 +673,10 @@ void RuntimeSystem_roseAccessVariable( const char* name,
 
 	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
 	rs->checkpoint( SourcePosition(filename,atoi(line),atoi(lineTransformed)));
-	rs->checkMemRead(address, size);
 
+  // TODO 1 djh: generate read_write_mask for var access, as with array access
+  int read_write_mask = 1;
+  RuntimeSystem_checkMemoryAccess( address, size, read_write_mask );
 }
 
 // ***************************************** VARIABLE DECLARATIONS *************************************
@@ -746,8 +760,6 @@ RuntimeSystem_roseReallocateMemory(
 	rs->freeMemory( (addr_type) ptr );
   rs->createMemory( (addr_type) ptr, size);
 }
-
-
 
 
 // vim:sw=2 ts=2 et sta:

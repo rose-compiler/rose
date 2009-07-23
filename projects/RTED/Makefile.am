@@ -31,7 +31,9 @@ bin_PROGRAMS  = runtimeCheck
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -ldl 
 
 RTS=RuntimeSystem.cpp
-RTED_CXX=$(CXXLINK)
+RTED_CXX = $(CXXLINK)
+RTED_CC = $(LIBTOOL) --tag=CC --mode=link gcc $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 RTED_LIB=CppRuntimeSystem/libCppRuntimeSystem.la
 runtimeCheck_SOURCES = runtimeCheck.cpp \
                        RtedTransformation.cpp \
@@ -179,7 +181,7 @@ rted_source/%_s_rose.c: rted_source/%_s.c
 
 rted_source/%_rose.c: runtimeCheck rted_source/%.c rted_source/%_s.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	@echo -n "    testing if files compiles with gcc (with _s) ... "
-	@$(RTED_CXX) -g -o $(patsubst %_rose.c, %.bin, $@) $(filter rted_source/%.c, $^) \
+	@$(RTED_CC) -g -o $(patsubst %_rose.c, %.bin, $@) $(filter rted_source/%.c, $^) \
 		$(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) \
 		$(RTED_LIB)
 	@rm $(patsubst %_rose.c, %.bin, $@)
@@ -199,7 +201,7 @@ rted_source/%_rose.c: runtimeCheck rted_source/%.c rted_source/%_s.c $(srcdir)/$
 
 rted_source/%_rose.c: runtimeCheck rted_source/%.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	@echo -n "    testing if file compiles with gcc ... "
-	@$(RTED_CXX) -g -o $(patsubst %_rose.c, %.bin, $@) $(filter rted_source/%.c, $^) $(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) $(RTED_LIB)
+	@$(RTED_CC) -g -o $(patsubst %_rose.c, %.bin, $@) $(filter rted_source/%.c, $^) $(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) $(RTED_LIB)
 	@rm $(patsubst %_rose.c, %.bin, $@)
 	@echo " done."
 	@echo -n "    running transformation ... "
@@ -225,13 +227,13 @@ rted_source/%_rose.c: runtimeCheck rted_source/%.c $(srcdir)/$(RTS) $(srcdir)/Ru
 
 rted_source/%_debug.bin: rted_qt rted_source/%_rose.c rted_source/%_s_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	@echo -n "   compiling instrumented debugger code (with _s) ... "
-	@$(RTED_CXX) -g -o $@ $(filter rted_source/%.c, $^) \
+	@$(RTED_CC) -g -o $@ $(filter rted_source/%.c, $^) \
 		     $(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER) $(RTED_LIB)
 	@echo " done."
 
 rted_source/%_debug.bin: rted_qt rted_source/%_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	@echo -n "   compiling instrumented debugger code ... "
-	@$(RTED_CXX) -g -o $@ $(filter rted_source/%.c, $^) $(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER) $(RTED_LIB)
+	@$(RTED_CC) -g -o $@ $(filter rted_source/%.c, $^) $(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER) $(RTED_LIB)
 	@echo " done."
 
 rted_source/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SCRIPT)
@@ -243,14 +245,14 @@ rted_source/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SCRIPT)
 
 rted_source/%.bin: rted_source/%_rose.c rted_source/%_s_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	@echo -n "   compiling instrumented code (with _s) ... "
-	@$(RTED_CXX) -g -o $@ $(filter rted_source/%.c, $^) \
+	@$(RTED_CC) -g -o $@ $(filter rted_source/%.c, $^) \
 		     $(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) \
 			 $(RTED_LIB)
 	@echo " done."
 
 rted_source/%.bin: rted_source/%_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	@echo -n "   compiling instrumented code ... "
-	@$(RTED_CXX) -g -o $@ $(filter rted_source/%.c, $^) $(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) $(RTED_LIB)
+	@$(RTED_CC) -g -o $@ $(filter rted_source/%.c, $^) $(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) $(RTED_LIB)
 	@echo " done."
 
 #------------------------------------------------------------------------------
@@ -362,7 +364,7 @@ deleteAllbinfiles:
 c-compile-runtimesystem:
 	@echo "Make sure that RuntimeSystem compiles with C"
 
-check-local: rted_qt runtimeCheck $(TESTCODES) c-compile-runtimesystem run_checkonly/C/string_errors run_checkonly/C/allocation_deallocation_errors run_checkonly/C/input_output_errors run_checkonly/C/memory_leaks
+check-local: rted_qt runtimeCheck $(TESTCODES) c-compile-runtimesystem run_checkonly/C/string_errors run_checkonly/C/allocation_deallocation_errors run_checkonly/C/input_output_errors
 	@echo "***************************************************************************************"
 	@echo "*** ROSE/projects/runtimeErrorCheck: make check rule complete (terminated normally) ***"
 	@echo "***************************************************************************************"

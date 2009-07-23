@@ -114,7 +114,7 @@ class RtedTransformation : public AstSimpleProcessing {
   // Function that inserts call to array : runtimeSystem->callArray
   void insertArrayCreateCall(SgVarRefExp* n, RTedArray* value);
   void insertArrayCreateCall(SgInitializedName* initName,  RTedArray* value);
-  void insertArrayCreateCall(SgStatement* stmt,SgInitializedName* initName,  RTedArray* value);
+  void insertArrayCreateCall(SgStatement* stmt,SgInitializedName* initName,  SgVarRefExp* varRef, RTedArray* value);
 
   void insertArrayAccessCall(SgExpression* arrayExp, RTedArray* value);
   void insertArrayAccessCall(SgStatement* stmt,

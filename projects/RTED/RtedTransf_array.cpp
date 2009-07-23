@@ -46,7 +46,7 @@ void RtedTransformation::insertArrayCreateCall(SgVarRefExp* n, RTedArray* value)
   SgInitializedName* initName = n->get_symbol()->get_declaration();
   ROSE_ASSERT(initName);
   SgStatement* stmt = getSurroundingStatement(n);
-  insertArrayCreateCall(stmt, initName, value);
+  insertArrayCreateCall(stmt, initName, n, value);
 }
 
 void RtedTransformation::insertArrayCreateCall(SgInitializedName* initName,
@@ -54,12 +54,15 @@ void RtedTransformation::insertArrayCreateCall(SgInitializedName* initName,
   ROSE_ASSERT(value);
   ROSE_ASSERT(initName);
   SgStatement* stmt = getSurroundingStatement(initName);
-  insertArrayCreateCall(stmt, initName, value);
+
+  SgVarRefExp* var_ref = buildVarRefExp( initName, stmt->get_scope());
+  insertArrayCreateCall(stmt, initName, var_ref, value);
 }
 
 
 void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
 					       SgInitializedName* initName, 
+                           SgVarRefExp* varRef,
 					       RTedArray* array) {
   // make sure there is no extern in front of stmt
   bool externQual = isGlobalExternVariable(stmt);
@@ -112,9 +115,8 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
       appendExpression(arg_list, plainname);
       appendExpression(arg_list, callNameExp);
       appendExpression(arg_list, dimExpr);
-    SgVarRefExp* var_ref = buildVarRefExp( initName, scope);
 
-    appendAddressAndSize(initName, var_ref, stmt, arg_list,1); 
+      appendAddressAndSize(initName, varRef, stmt, arg_list,1); 
 
 
       std::vector<SgExpression*>::const_iterator it = value.begin();
@@ -331,7 +333,11 @@ void RtedTransformation::visit_isArraySgInitializedName(SgNode* n) {
   SgType* type = initName->get_typeptr();
   ROSE_ASSERT(type);
   SgArrayType* array = isSgArrayType(type);
-  if (array) {
+  // something like:
+  // 	struct type { int before; char c[ 10 ]; int after; }
+  // does not need a createarray call, as the type is registered and any array
+  // information will be tracked when variables of that type are created
+  if ( array && !( isSgClassDefinition( n -> get_parent() -> get_parent() ))) {
     SgExpression * expr = array->get_index();
     SgExpression * expr2 = NULL;
     SgType* basetype = array->get_base_type();

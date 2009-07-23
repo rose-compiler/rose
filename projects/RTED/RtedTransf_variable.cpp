@@ -189,12 +189,12 @@ RtedTransformation::buildVariableCreateCallStmt( SgInitializedName* initName, Sg
 
 	// TODO djh 1: append classname if basetype is SgClassType as well
 	// 		see appendAddressAndSize, which handles the basetype stuff
-    SgExpression*  className = buildString("");
     SgClassType* sgClass = isSgClassType(initName->get_type());
     if (sgClass) {
-    	///fixme : add className
-    	className= buildString(sgClass->class_name());
-        appendExpression(arg_list, className);
+        appendExpression(arg_list, buildString(
+			isSgClassDeclaration( sgClass -> get_declaration() ) 
+				-> get_mangled_name() )
+		);
     } else {
         appendExpression(arg_list, buildString(""));
     }
@@ -215,7 +215,7 @@ RtedTransformation::buildVariableCreateCallStmt( SgInitializedName* initName, Sg
     SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
     string empty_comment = "";
     attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
-    string comment = "RS : Create Variable, paramaters : (name, mangl_name, type, address, sizeof, initialized, fileOpen, filename, linenr, linenrTransformed)";
+    string comment = "RS : Create Variable, paramaters : (name, mangl_name, type, basetype, address, sizeof, initialized, fileOpen, classname, filename, linenr, linenrTransformed)";
     attachComment(exprStmt,comment,PreprocessingInfo::before);
 
     return exprStmt;
@@ -406,6 +406,14 @@ void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE,
 	SgStatement* stmt = getSurroundingStatement(varRefE);
   // make sure there is no extern in front of stmt
   SgInitializedName* initName = varRefE->get_symbol()->get_declaration();
+
+  SgDotExp* parent_dot = isSgDotExp( varRefE -> get_parent() );
+  if(	parent_dot
+		&& parent_dot -> get_lhs_operand() == varRefE ) {
+	  //	x = s.y
+	  // does not need a var ref to y, only to s
+	  return;
+  }
 
   if (isSgStatement(stmt)) {
     SgScopeStatement* scope = stmt->get_scope();
