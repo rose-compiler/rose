@@ -136,6 +136,10 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
       appendExpression( arg_list, ismalloc );
       appendExpression( arg_list, size );
 
+
+      appendClassName( arg_list, initName -> get_type() );
+
+
       SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
       SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
       appendExpression(arg_list, filename);
@@ -203,8 +207,11 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
  * -----------------------------------------------------------*/
 void RtedTransformation::insertArrayAccessCall(SgExpression* arrayExp,
 					       RTedArray* value) {
-  ROSE_ASSERT(arrayExp);
-  SgStatement* stmt = getSurroundingStatement(arrayExp);
+  SgStatement* stmt = value->surroundingStatement;
+  if( !stmt )
+      stmt = getSurroundingStatement( arrayExp );
+  ROSE_ASSERT( arrayExp );
+  ROSE_ASSERT( stmt );
   insertArrayAccessCall(stmt, arrayExp, value);
 }
 
@@ -287,6 +294,7 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
     // always do a bounds check
     read_write_mask |= 4;
 
+    appendAddress( arg_list, arrRefExp -> get_lhs_operand() ); 
     appendAddressAndSize(NULL, arrRefExp, stmt, arg_list,0); 
     appendExpression( arg_list, buildIntVal( read_write_mask ) );
 
@@ -368,7 +376,7 @@ void RtedTransformation::visit_isArraySgInitializedName(SgNode* n) {
       if (expr2)
 	cerr << "   Expr2 : " << expr2->unparseToString() << endl;
       ROSE_ASSERT(dimension>0);
-      RTedArray* arrayRted = new RTedArray(true, dimension, initName,
+      RTedArray* arrayRted = new RTedArray(true, dimension, initName, NULL,
 					   expr, expr2,false);
       cerr << " The problem: " << n->get_parent()->class_name() << " :: " << n->get_parent()->unparseToString() << endl;
       if (!isSgFunctionParameterList(n->get_parent()))
@@ -391,7 +399,7 @@ void RtedTransformation::visit_isArraySgInitializedName(SgNode* n) {
       // create the array variable
       ROSE_ASSERT(dimension>0);
       SgIntVal* sizeExp = buildIntVal(length);
-      RTedArray* arrayRted = new RTedArray(true, dimension, initName,
+      RTedArray* arrayRted = new RTedArray(true, dimension, initName, NULL,
 					   sizeExp, expr2,false);
       create_array_define_varRef_multiArray_stack[initName] = arrayRted;
 
@@ -805,7 +813,7 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
 
 	  // we are creating a new array variable based on the malloc call
 	  RTedArray* array = new RTedArray(false, dimension,
-					   initName, indx1, indx2,
+					   initName, getSurroundingStatement( varRef ), indx1, indx2,
 					   ismalloc, size_orig);
 	  // varRef can not be a array access, its only an array Create
 	  variablesUsedForArray.push_back(varRef);
@@ -971,10 +979,10 @@ void RtedTransformation::visit_isArrayPntrArrRefExp(SgNode* n) {
 	dimension=dim;
       RTedArray* array = NULL;
       if (right2 == NULL) {
-	array = new RTedArray(false, dimension, initName, right1,
+	array = new RTedArray(false, dimension, initName, getSurroundingStatement( n ), right1,
 			      NULL, false);
       } else {
-	array = new RTedArray(false, dimension, initName, right2,
+	array = new RTedArray(false, dimension, initName, getSurroundingStatement( n ), right2,
 			      right1, false);
       }
       cerr << "!! CALL : " << varRef << " - "

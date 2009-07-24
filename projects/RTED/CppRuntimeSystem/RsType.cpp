@@ -362,6 +362,8 @@ string RsBasicType::getDisplayName() const
     {
         case SgTypeBool:             return "bool";
         case SgTypeChar:             return "char";
+        // FIXME 2: typedef should be removed (see todo in RsType.h)
+        case SgTypedefType:          return "typedef";
         case SgTypeDouble:           return "double";
         case SgTypeFloat:            return "float";
         case SgTypeInt:              return "int";
@@ -393,6 +395,8 @@ void RsBasicType::resolveTypeInfo(const std::string & typeStr)
 
     if      (typeStr=="SgTypeBool")             setTypeInfo(SgTypeBool,             sizeof(bool));
     else if (typeStr=="SgTypeChar")             setTypeInfo(SgTypeChar,             sizeof(char));
+    // FIXME 2: typedef should be removed (see todo in RsType.h)
+    else if (typeStr=="SgTypedefType")          setTypeInfo(SgTypedefType,          sizeof(void*));
     else if (typeStr=="SgTypeDouble")           setTypeInfo(SgTypeDouble,           sizeof(double));
     else if (typeStr=="SgTypeFloat")            setTypeInfo(SgTypeFloat,            sizeof(float));
     else if (typeStr=="SgTypeInt")              setTypeInfo(SgTypeInt,              sizeof(int));
@@ -423,6 +427,8 @@ void RsBasicType::resolveTypeInfo(RsBasicType::SgType type_)
     {
         case SgTypeBool:             setTypeInfo("SgTypeBool",             sizeof(bool));            break;
         case SgTypeChar:             setTypeInfo("SgTypeChar",             sizeof(char));            break;
+        // FIXME 2: typedef should be removed (see todo in RsType.h)
+        case SgTypedefType:          setTypeInfo("SgTypedefType",          sizeof(void*));           break;
         case SgTypeDouble:           setTypeInfo("SgTypeDouble",           sizeof(double));          break;
         case SgTypeFloat:            setTypeInfo("SgTypeFloat",            sizeof(float));           break;
         case SgTypeInt:              setTypeInfo("SgTypeInt",              sizeof(int));             break;

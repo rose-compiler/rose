@@ -189,15 +189,8 @@ RtedTransformation::buildVariableCreateCallStmt( SgInitializedName* initName, Sg
 
 	// TODO djh 1: append classname if basetype is SgClassType as well
 	// 		see appendAddressAndSize, which handles the basetype stuff
-    SgClassType* sgClass = isSgClassType(initName->get_type());
-    if (sgClass) {
-        appendExpression(arg_list, buildString(
-			isSgClassDeclaration( sgClass -> get_declaration() ) 
-				-> get_mangled_name() )
-		);
-    } else {
-        appendExpression(arg_list, buildString(""));
-    }
+
+	appendClassName( arg_list, initName -> get_type() );
 
     SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
     SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
@@ -266,13 +259,7 @@ void RtedTransformation::appendAddressAndSize(SgInitializedName* initName,
     //SgExpression* fillExp = getExprBelowAssignment(varRefE, derefCounter);
     //ROSE_ASSERT(fillExp);
 
-    appendExpression(
-        arg_list,
-        buildCastExp(
-            buildAddressOfOp( exp ),
-            buildUnsignedLongLongType()
-        )
-    );
+	appendAddress( arg_list, exp );
 
     // consider, e.g.
     //
@@ -297,6 +284,34 @@ void RtedTransformation::appendAddressAndSize(SgInitializedName* initName,
     }
 }
 
+
+void RtedTransformation::appendAddress(SgExprListExp* arg_list, SgExpression* exp) {
+    appendExpression(
+        arg_list,
+        buildCastExp(
+            buildAddressOfOp( exp ),
+            buildUnsignedLongLongType()
+        )
+    );
+}
+
+void RtedTransformation::appendClassName( SgExprListExp* arg_list, SgType* type ) {
+    SgClassType* sgClass = isSgClassType( type );
+	if( !sgClass ) {
+		SgArrayType* arr = isSgArrayType( type );
+		if( arr )
+			sgClass = isSgClassType( arr -> get_base_type() );
+	}
+
+    if (sgClass) {
+        appendExpression(arg_list, buildString(
+			isSgClassDeclaration( sgClass -> get_declaration() ) 
+				-> get_mangled_name() )
+		);
+    } else {
+        appendExpression(arg_list, buildString(""));
+    }
+}
 
 void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
 						  SgVarRefExp* varRefE,

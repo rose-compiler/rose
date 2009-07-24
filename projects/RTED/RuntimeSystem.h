@@ -38,10 +38,11 @@ int RuntimeSystem_findArrayName(const char* mangled_name);
 void RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dimension,// int stack, 
 				   const char* type, const char* basetype, unsigned long int
 				   address, long int size, long int sizeA, long int sizeB, 
-				   int ismalloc, long int mallocSize, const char* filename,
+				   int ismalloc, long int mallocSize, const char* class_name, const char* filename,
 				   const char* line, const char* lineTransformed);
 
 void RuntimeSystem_roseArrayAccess(const char* name, int posA, int posB, const char* filename, 
+				   unsigned long int base_address, // &( array[ 0 ])
 				   unsigned long int address, long int size, 
 				   int read_write_mask,		// 1 = read, 2 = write
 				   const char* line, const char* lineTransformed, const char* stmtStr);

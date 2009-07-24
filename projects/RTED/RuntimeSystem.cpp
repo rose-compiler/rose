@@ -83,22 +83,32 @@ void
 RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dimension,  
 				   const char* type, const char* basetype,
 			      unsigned long int address, long int size, long int sizeA, long int sizeB,
-			      int ismalloc, long int mallocSize, const char* filename, const char* line, const char* lineTransformed){
+			      int ismalloc, long int mallocSize, const char* class_name, const char* filename, const char* line, const char* lineTransformed){
 
 
 	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
 	rs->checkpoint(SourcePosition(filename,atoi(line),atoi(lineTransformed)));
 
-  // TODO 1 djh: kill this, change to createArray in roseCreateVariable
-  if( 0 == strcmp("SgArrayType", type)) 
-      rs->createMemory(address, size, true);
-  else if( 0 == strcmp("SgPointerType", type))
-    // address refers to the address of the variable (i.e. the pointer).
-    // we want the address of the newly allocated memory on the heap
-    rs->createMemory( *((addr_type*)address), mallocSize );
-  else {
+	string type_name = type;
+	if( type_name == "SgClassType" )
+	    type_name = class_name;
+
+  string base_type = basetype;
+	if( base_type == "SgClassType" )
+	    base_type = class_name;
+
+
+  if( type_name == "SgArrayType" ) {
+    rs -> getTypeSystem() -> getArrayType( base_type, size );
+    // no need to do anything special for stack arrays
+    return;
+  } else if( type_name == "SgPointerType") {
+    addr_type heap_address = *((addr_type*) address);
+    rs -> createMemory( heap_address, mallocSize );
+    rs -> registerPointerChange( address, heap_address );
+  } else {
     cerr << "Unexpected Array Type: " << type << endl;
-    exit( 1);
+    exit( 1 );
   }
 
 }
@@ -114,8 +124,8 @@ RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dime
  ********************************************************/
 void
 RuntimeSystem_roseArrayAccess(const char* name, int posA, int posB, const char* filename,
-			      unsigned long int address, long int size, int read_write_mask,
-			      const char* line, const char* lineTransformed, const char* stmtStr){
+			      unsigned long int base_address, unsigned long int address, long int size, 
+            int read_write_mask, const char* line, const char* lineTransformed, const char* stmtStr){
 
 
 	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
@@ -123,8 +133,9 @@ RuntimeSystem_roseArrayAccess(const char* name, int posA, int posB, const char* 
 
   RuntimeSystem_checkMemoryAccess( address, size, read_write_mask );
 
-  // TODO 1 djh: if rwm & 4, do bounds check, i.e
-  //  rs->checkPointerDereference( mangled_name, address );
+  if( read_write_mask & BoundsCheck ) {
+    rs -> checkPointerDereference( base_address, address );
+  }
 }
 
 // ***************************************** ARRAY FUNCTIONS *************************************
@@ -611,7 +622,7 @@ void RuntimeSystem_roseCreateVariable( const char* name,
 				      unsigned int size,
 				      int init,
 				      const char* fOpen,
-				      const char* className,
+				      const char* class_name,
 				      const char* filename, const char* line,
 				      const char* lineTransformed) {
 
@@ -619,11 +630,20 @@ void RuntimeSystem_roseCreateVariable( const char* name,
 	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
 	rs->checkpoint( SourcePosition(filename,atoi(line), atoi(lineTransformed)));
 
-	string typeName = type;
-	if( typeName == "SgClassType" )
-	    typeName = className;
+	string type_name = type;
+	if( type_name == "SgClassType" )
+	    type_name = class_name;
 
-	rs->createVariable(address,name,mangled_name,typeName, basetype);
+  string base_type = basetype;
+	if( base_type == "SgClassType" )
+	    base_type = class_name;
+
+
+  if( type_name == "SgArrayType" ) {
+    rs -> createArray( address, name, mangled_name, base_type, size );
+  } else {
+    rs->createVariable(address,name,mangled_name,type_name, basetype);
+  }
   if( 1 == init ) {
     // e.g. int x = 3
     // we should flag &x..&x+sizeof(x) as initialized
@@ -652,9 +672,17 @@ RuntimeSystem_roseInitVariable(const char* name,
 
 	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
 	rs->checkpoint( SourcePosition(filename,atoi(line),atoi(lineTransformed)));
-	//fixme: the size will not work for structs yet!
 	rs->checkMemWrite(address,size);
 
+  // This assumes roseInitVariable is called after the assignment has taken
+  // place (otherwise we wouldn't get the new heap address).
+  //
+  // Note that we cannot call registerPointerChange until after the memory
+  // creation is registered, which is done in roseCreateArray.
+  if( ismalloc != 1 && 0 == strcmp( "SgPointerType", typeOfVar2 )) {
+    addr_type heap_address = *((addr_type*) address);
+    rs -> registerPointerChange( address, heap_address );
+  }
 }
 
 
@@ -703,9 +731,9 @@ RuntimeSystem_roseRegisterTypeCall(int count, ...) {
 	  va_list vl;
 	  va_start(vl,count);
 	  const char* nameC = va_arg(vl,const char*);
-	  const char* typeC = va_arg(vl,const char*);
+	  /*const char* typeC = */ va_arg(vl,const char*);
 	  unsigned long long sizeC = va_arg(vl,unsigned long long);
-	  cerr << " Register Class : " << nameC << " Type: " << typeC << " size : " << sizeC << endl;
+	  //cerr << " Register Class : " << nameC << " Type: " << typeC << " size : " << sizeC << endl;
 	  int i=0;
 
 
@@ -717,7 +745,7 @@ RuntimeSystem_roseRegisterTypeCall(int count, ...) {
 		  addr_type offset = va_arg(vl,unsigned long long);
 		  RsType* t= RuntimeSystem::instance()->getTypeSystem()->getTypeInfo(type);
 		  classType->addMember(name,t,(addr_type)offset);
-		  cerr << "Registering Member " << name << " of type " << type << " at offset " << offset << endl;
+		  //cerr << "Registering Member " << name << " of type " << type << " at offset " << offset << endl;
 	  }
 	  va_end(vl);
 

@@ -10,13 +10,13 @@ INCLUDES = .  $(ROSE_INCLUDES)
 libCppRuntimeSystem_la_SOURCES = CppRuntimeSystem.cpp \
                                  FileManager.cpp \
                                  Util.cpp \
-                                 MemoryManager.cpp \
-				 CStdLibManager.cpp \
-                                 VariablesType.cpp\
-                                 RsType.cpp\
-                                 TypeSystem.cpp\
-                                 PointerManager.cpp\
-			         StackManager.cpp
+								 MemoryManager.cpp \
+								 CStdLibManager.cpp \
+								 VariablesType.cpp\
+								 RsType.cpp\
+								 TypeSystem.cpp\
+								 PointerManager.cpp\
+								 StackManager.cpp
 
 
 

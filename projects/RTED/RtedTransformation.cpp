@@ -145,20 +145,6 @@ void RtedTransformation::transform(SgProject* project) {
     insertVariableCreateCall(node);
   }
 
-  // make sure register types wind up before variable create, so that types are
-  // always available
-  cerr
-    << "\n Number of Elements in class_definitions  : "
-    << class_definitions.size() << endl;
-  std::map<SgClassDefinition*,RtedClassDefinition*> ::const_iterator refIt =
-    class_definitions.begin();
-  for (; refIt != class_definitions.end(); refIt++) {
-    SgClassDefinition* classDef = refIt->first;
-    RtedClassDefinition* rtedClass = refIt->second;
-    ROSE_ASSERT(rtedClass);
-    insertRegisterTypeCall(rtedClass);
-  }
-
   cerr << "\n Number of Elements in variable_access_varref  : "
        << variable_access_varref.size() << endl;
   std::vector<SgVarRefExp*>::const_iterator itAccess =
@@ -195,6 +181,20 @@ void RtedTransformation::transform(SgProject* project) {
     //		<< array_node->unparseToString() << "  size : "
     //		<< array_size->unparseToString() << endl;
     insertArrayCreateCall(array_node, array_size);
+  }
+
+  // make sure register types wind up before variable & array create, so that
+  // types are always available
+  cerr
+    << "\n Number of Elements in class_definitions  : "
+    << class_definitions.size() << endl;
+  std::map<SgClassDefinition*,RtedClassDefinition*> ::const_iterator refIt =
+    class_definitions.begin();
+  for (; refIt != class_definitions.end(); refIt++) {
+    SgClassDefinition* classDef = refIt->first;
+    RtedClassDefinition* rtedClass = refIt->second;
+    ROSE_ASSERT(rtedClass);
+    insertRegisterTypeCall(rtedClass);
   }
 
   cerr << "\n Number of Elements in create_array_access_call  : "

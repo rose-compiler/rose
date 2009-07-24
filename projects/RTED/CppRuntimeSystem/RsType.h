@@ -281,6 +281,12 @@ class RsBasicType : public RsType
         {
             SgTypeBool,
             SgTypeChar,
+            // TODO 2: Remove typedef as a basic type, and either expand the
+            // type or treat it as a user-defined type.
+            //
+            // The effect of treating typedef as a basic type is to collapse all
+            // typedef-d types into one.
+            SgTypedefType,
             SgTypeDouble,
             SgTypeFloat,
             SgTypeInt,

@@ -63,6 +63,7 @@ RsType * TypeSystem::getTypeInfo(const string & name_)
 RsType * TypeSystem::getArrayType(const string & name, size_t size)
 {
     RsType * bt = getTypeInfo(name);
+    assert( bt );
     getArrayType(bt,size);
 }
 

@@ -131,6 +131,7 @@ void RuntimeSystem::createArray( addr_type address,
                                  size_t size)
 {
     RsType * t = typeSystem.getTypeInfo(baseType);
+	assert( t );
     createArray(address,name,mangledName,t,size);
 }
 
@@ -242,6 +243,17 @@ void RuntimeSystem::violationHandler(RuntimeViolation::Type v, const std::string
 void RuntimeSystem::violationHandler(RuntimeViolation & vio)  throw (RuntimeViolation)
 {
     vio.setPosition(curPos);
+
+	// TODO 3: Replace this hard-coded policy with a configuration that maps
+	// types to actions (e.g. none, warn, exit)
+	if( !testingMode )
+		switch( vio.getType() ) {
+			case RuntimeViolation::INVALID_PTR_ASSIGN:
+				return;
+			default:
+				// handle normally
+				break;
+		}
 
     (*defaultOutStr) << vio  << endl;
 

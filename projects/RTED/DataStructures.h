@@ -90,15 +90,17 @@ class RTedArray {
   bool stack;
   int dimension;
   SgInitializedName* initName;
+  SgStatement* surroundingStatement;
   SgExpression* indx1;
   SgExpression* indx2;
   bool ismalloc;
   SgExpression* size;
-  RTedArray(bool s, int dim, SgInitializedName* init, SgExpression* idx1, 
+  RTedArray(bool s, int dim, SgInitializedName* init, SgStatement* stmt, SgExpression* idx1, 
 	    SgExpression* idx2, bool mal, SgExpression* _size = NULL) {
           stack = s;
 	  dimension = dim;
 	  initName = init;
+      surroundingStatement = stmt;
 	  indx1=idx1;
 	  indx2=idx2;
 	  ismalloc=mal;
