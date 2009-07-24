@@ -39,16 +39,7 @@ if WITH_SWI_PROLOG
 INCLUDES += -I$(SWI_PROLOG_INCLUDE_DIR)
 endif
 
-#noinst_LTLIBRARIES = libsatire_driver.la
-#libsatire_driver_la_SOURCES =
-#libsatire_driver_la_LIBADD = \
-#    libsatire.la \
-#    termite/libtermsupport.la \
-#    analyzer/astaccess/libpagdatatypes.la
-
-bin_PROGRAMS = satire_driver
-satire_driver_SOURCES = analyzer/support/satire_driver.C
-satire_driver_LDADD = \
+binprograms_ldadd = \
 	libsatire.la \
 	analyzer/provided/dataflow/libsatiredfa.la \
 	analyzer/astaccess/satire/libsyntree.la \
@@ -56,14 +47,25 @@ satire_driver_LDADD = \
 	analyzer/astaccess/libpagdatatypes.la \
 	-lrose
 if WITH_PAG
-satire_driver_LDADD += -lpag
+binprograms_ldadd += -lpag
 endif
 if WITH_SWI_PROLOG
-satire_driver_LDADD += $(SWI_PROLOG_LIBS) $(SWI_PROLOG_LDADD)
+binprograms_ldadd += $(SWI_PROLOG_LIBS) $(SWI_PROLOG_LDADD)
 endif
-satire_driver_LDFLAGS = \
+binprograms_ldflags = \
     -L$(ROSE_LIB_DIR) -Wl,-rpath $(ROSE_LIB_DIR) \
     -L$(BOOST_LIB_DIR) -Wl,-rpath $(BOOST_LIB_DIR)
 if WITH_PAG
-satire_driver_LDFLAGS += -L$(PAG_LIB_DIR) -Wl,-rpath $(PAG_LIB_DIR)
+binprograms_ldflags += -L$(PAG_LIB_DIR) -Wl,-rpath $(PAG_LIB_DIR)
 endif
+
+bin_PROGRAMS = satire_driver ais_annotator
+satire_driver_SOURCES = $(top_srcdir)/src/analyzer/support/satire_driver.C
+ais_annotator_SOURCES = \
+			$(top_srcdir)/src/analyzer/provided/ais_annotator/ais_annotator.C
+
+satire_driver_LDADD = $(binprograms_ldadd)
+ais_annotator_LDADD = $(binprograms_ldadd)
+
+satire_driver_LDFLAGS = $(binprograms_ldflags)
+ais_annotator_LDFLAGS = $(binprograms_ldflags)
