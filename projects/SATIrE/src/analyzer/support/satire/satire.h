@@ -37,4 +37,6 @@
 
 #include "satire_analysis_driver.h"
 
+#include "pointsto.h"
+
 #endif

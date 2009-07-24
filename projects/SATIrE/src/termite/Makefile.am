@@ -10,6 +10,7 @@ INCLUDES = -I$(top_srcdir)/src/satire \
 	   -I$(top_srcdir)/src/analyzer/astnumbering/satire \
            -I$(top_srcdir)/src/analyzer/annotation/satire \
 	   -I$(top_srcdir)/src/analyzer/commandlineinterface/satire \
+	   -I$(top_srcdir)/src/analyzer/provided/pointsto/satire \
 	   -I$(top_srcdir)/src/analyzer/support \
 	   -I$(top_srcdir)/src/analyzer/support/satire \
 	   -I$(ROSE_INCLUDE_DIR) \
