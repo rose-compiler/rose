@@ -100,10 +100,10 @@ tests: $(TESTS_WITH_PAG) $(TESTS_WITHOUT_PAG)
 else
 tests: $(TESTS_WITHOUT_PAG)
 	@echo
-	@echo "========================================================================"
+	@echo "================================================================"
 	@echo "The following tests were not run because SATIrE was built without PAG:"
 	@echo "$(TESTS_WITH_PAG)"
-	@echo "========================================================================"
+	@echo "================================================================"
 endif
 
 init.token:
@@ -138,9 +138,9 @@ init.token:
 
 termite: init.token
 	@echo
-	@echo "========================================================================"
+	@echo "================================================================"
 	@echo "TERMITE tests"
-	@echo "========================================================================"
+	@echo "================================================================"
 #	cp $(top_srcdir)/examples/*/tests/* $(testdir)
 	@echo "TERMITE language C:"
 	$(MAKE) -j1 $(patsubst %.c,%.termite,$(wildcard $(top_srcdir)/examples/*/tests/*.c))
@@ -200,6 +200,9 @@ pointsto_live_variables: init.token
 	find `dirname $<` -name '*.h' -exec cp '{}' $(testdir)/interval ';'
 	@chmod u+w $(testdir)/interval/intvltest.c
 	@cd $(testdir)/interval; ./interval --run-pointsto-analysis --callstringlength=1 --output-term=intvltest.term intvltest.c
+	@echo "testing termite -> icfgbuilder..."
+	@cd $(testdir)/interval; ./interval --run-pointsto-analysis --callstringlength=1 --input-termite-ast=intvltest.term
+	@echo "generating assertions..."
 	@cd $(testdir)/interval; export TERMITE_LIB=$(datadir)/termite; $(SWI_PL) -q -O -t main -f validator.pl < intvltest.term > intvltest1.term
 	@cd $(testdir)/interval; $(DESTDIR)/$(bindir)/termite_lint intvltest1.term; if [ $$? -ne 0 ]; then echo "*** termite_lint was not quite satisfied with that term!"; fi
 	@cd $(testdir)/interval; $(DESTDIR)/$(bindir)/term2c intvltest1.term -o intvlassert.c

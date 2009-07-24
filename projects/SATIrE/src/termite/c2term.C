@@ -40,18 +40,46 @@ void usage(const char* me)
 }
 
 int main(int argc, char** argv) {
+  // Turn off the frontend's warnings; they are distracting in the
+  // automated test outputs.
+  vector<char*> argv1;
+  char warningOpt[] = "-edg:w";
+  argv1.push_back(argv[0]);
+  argv1.push_back(warningOpt);
+  for (int i = 1; i < argc; ++i)
+    argv1.push_back(argv[i]);
+
+  // Run the EDG frontend
+  SgProject* project = frontend(argc+1,&argv1[0]);
+
+
+  // Process our own options
   const char* outfile = NULL;
   int dot_flag = 0;
   int pdf_flag = 0;
 
+  static struct option long_options[] = {
+    /* These options set a flag. */
+    {"dot", no_argument, &dot_flag, 1},
+    {"pdf", no_argument, &pdf_flag, 1},
+    {"output", required_argument, 0, 'o'},
+    {0, 0, 0, 0}
+  };
+
+  // Surely not the most efficient thing to do, but we need to remove
+  // those pesky -I... and -D... options to not confuse getopt
+  for (int i = 1; i < argc; ++i) {
+    if (argv[i][0] == '-') {
+      char empty[] = "";
+      bool edg_opt = true;
+      for (struct option *opt = long_options; opt->name; ++opt)
+	if (argv[i][1] == *opt->name) edg_opt = false;
+      if (edg_opt)
+	argv[i] = empty;
+    }
+  }
+
   while (1) {
-    static struct option long_options[] = {
-      /* These options set a flag. */
-      {"dot", no_argument, &dot_flag, 1},
-      {"pdf", no_argument, &pdf_flag, 1},
-      {"output", required_argument, 0, 'o'},
-      {0, 0, 0, 0}
-    };
     /* getopt_long stores the option index here. */
     int option_index = 0;
      
@@ -73,18 +101,6 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  // Turn off the frontend's warnings; they are distracting in the
-  // automated test outputs.
-  vector<char*> argv1;
-  char warningOpt[] = "-edg:w";
-  argv1.push_back(argv[0]);
-  argv1.push_back(warningOpt);
-  for (int i = 1; i < argc; ++i)
-    argv1.push_back(argv[i]);
-
-
-  // Run the EDG frontend
-  SgProject* project = frontend(argc+1,&argv1[0]);
 
   if (dot_flag) {
     //  Create dot and pdf files
