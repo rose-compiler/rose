@@ -1,3 +1,84 @@
+2009-07-24 00:54  bauer25
+
+	* [r6678]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/MainWindow.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/MainWindow.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/MainWindow.ui,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/Makefile.am,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/MemoryGraphicsView.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/MemoryTypeDisplay.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/ModelRoles.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/PointerDisplay.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/PointerDisplay.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/RtedDebug.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/VariablesTypeDisplay.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/PointerManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/VariablesType.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/VariablesType.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp: Worked on
+	  RTED Qt-Debugger
+	  
+	  - support for new PointerManager and StackManager
+	  - MemoryGraphicsView is now updated by clicking on MemRegions
+
+2009-07-23 23:30  bauer25
+
+	* [r6677]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/MainWindow.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/MainWindow.ui,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/Makefile.am,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/MemoryGraphicsView.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/MemoryGraphicsView.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/MemoryTypeDisplay.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/VariablesTypeDisplay.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/VariablesTypeDisplay.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/Makefile.am,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/PointerManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/PointerManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/StackManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/StackManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/TypeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/TypeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/VariablesType.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/VariablesType.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/rted_qt: Pointer Tracking in RTED
+	  
+	  - PointerManager
+	  -> pointer information not coupled to variables any more, makes
+	  tracking of double pointer possible
+	  ( more general concept of "dereferentiable memory")
+	  -> arrays on heap are now detected correctly
+	  
+	  - StackManager
+	  -> extra StackManager class for Variable handling (not in
+	  RuntimeSystem any more)
+	  -> lookup of variables now by address not by name (faster)
+	  extra map introduced, from address to VariablesType
+	  
+	  - QtDebugger
+	  -> new widget to display the TypeInformation of a memory chunk
+	  
+
+2009-07-23 21:32  heller9
+
+	* [r6676]
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QtGradientEditor/Makefile.am:
+	  fixed qtWidgets install error
+
+2009-07-23 20:34  heller9
+
+	* [r6675] /trunk/ROSE/demo/qrose/Makefile.am: fixed build error
+
 2009-07-23 18:08  heller9
 
 	* [r6673] /trunk/ROSE/projects/RoseQt/MainWindow.cpp,
