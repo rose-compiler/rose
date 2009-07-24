@@ -126,6 +126,8 @@ public:
     std::pair<int, int> statementEntryExitLabels(SgStatement *);
     std::set<int> statementAllLabels(SgStatement *);
     void registerStatementLabel(int label, SgStatement *stmt);
+    bool nodeHasCorrespondingAstStatement(int label);
+    SgStatement *labeledStatement(int label);
  // debugging
     void print_map() const;
 

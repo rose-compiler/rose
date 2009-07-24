@@ -132,8 +132,13 @@ void outputRoseAst(SgProject *astRoot, AnalyzerOptions *options)
         {
             SgFile &file = astRoot->get_file(0);
             TimingPerformance timer("Output (single) source file:");
-            file.set_unparse_output_filename(
-                    options->getOutputSourceFileName());
+            std::string filename = options->getOutputSourceFileName();
+            if (filename == "")
+            {
+                filename = options->getOutputFilePrefix()
+                         + file.get_sourceFileNameWithoutPath();
+            }
+            file.set_unparse_output_filename(filename);
             unparseFile(&file, 0, 0);
         }
         else if (numberOfFiles >= 1)

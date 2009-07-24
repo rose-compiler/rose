@@ -881,6 +881,18 @@ CFG::registerStatementLabel(int label, SgStatement *stmt)
     stmt_blocks_map[stmt].insert(label);
 }
 
+bool
+CFG::nodeHasCorrespondingAstStatement(int label)
+{
+    return block_stmt_map.find(label) != block_stmt_map.end();
+}
+
+SgStatement *
+CFG::labeledStatement(int label)
+{
+    return block_stmt_map[label];
+}
+
 void 
 CFG::print_map() const
 {
