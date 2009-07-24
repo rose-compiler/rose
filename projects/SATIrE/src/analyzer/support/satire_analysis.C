@@ -3,6 +3,12 @@
 namespace SATIrE
 {
 
+bool
+Analysis::query(std::string, ...) const
+{
+    return false;
+}
+
 void
 Analysis::dependsOnAnalysis(Analysis *analysis)
 {

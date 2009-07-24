@@ -24,6 +24,14 @@ public:
  // default.
     virtual void processResults(Program *program) = 0;
 
+ // A very general interface for arbitrary queries against the analysis
+ // data; this helps us circumvent the static type and compilation systems
+ // of C++. The string argument identifies the query, the ... can be filled
+ // with appropriate in or out arguments. This method is intended to return
+ // true if the concrete analyzer instance supports this query. The default
+ // implementation simply returns false.
+    virtual bool query(std::string query, ...) const;
+
  // Dependencies between analyses: If analysis B depends on analysis A, then
  // calling B will run A first. The user need not run analysis A manually.
  // These functions provide an interface to manipulate the dependencies of

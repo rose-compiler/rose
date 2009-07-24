@@ -68,7 +68,11 @@ main-support.o: main-support.C main-support.h $(ANALYSIS).a Makefile
 	$(CXX) $(CXXFLAGS) $(D_FLAGS) $(CUSTOM_CFLAGS) -c main-support.C
 
 $(ANALYSIS)_implementation.o: $(ANALYSIS)_implementation.h $(ANALYSIS)_implementation.C $(ANALYSIS).a Makefile
-	$(CXX) $(CXXFLAGS) $(D_FLAGS) $(CUSTOM_CFLAGS) -c $(ANALYSIS)_implementation.C
+	if [ -r analysis_query.C ]; then \
+		$(CXX) $(CXXFLAGS) $(D_FLAGS) -DOVERRIDE_ANALYSIS_QUERY_METHOD $(CUSTOM_CFLAGS) -c $(ANALYSIS)_implementation.C; \
+	else \
+		$(CXX) $(CXXFLAGS) $(D_FLAGS) $(CUSTOM_CFLAGS) -c $(ANALYSIS)_implementation.C; \
+	fi
 
 $(ANALYSIS): $(ANALYSIS).a $(ANALYSIS)_implementation.o main.o main-support.o $(OTHERANALYSISLIBS)
 	$(CXX) $(CXXFLAGS) $(D_FLAGS) $(CUSTOM_CFLAGS) $(ANALYSIS)_implementation.o main.o main-support.o -o $(ANALYSIS) $(LPATH) $(LIBS) 

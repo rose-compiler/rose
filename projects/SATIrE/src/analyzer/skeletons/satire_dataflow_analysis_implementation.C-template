@@ -461,6 +461,16 @@ Implementation::outputAnalysisVisualization(Program *program, bool prefixFiles)
     }
 }
 
+#ifdef OVERRIDE_ANALYSIS_QUERY_METHOD
+#include "analysis_query.C"
+#else
+bool
+Implementation::query(std::string, va_list) const
+{
+    return false;
+}
+#endif
+
 
 } // namespace ANALYSIS
 

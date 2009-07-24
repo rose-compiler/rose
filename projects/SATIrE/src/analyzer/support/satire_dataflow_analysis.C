@@ -92,6 +92,16 @@ DataFlowAnalysis::processResultsWithPrefix(Program *program, bool prefixFiles)
 #endif
 }
 
+bool
+DataFlowAnalysis::query(std::string query, ...)
+{
+    va_list args;
+    va_start(args, query);
+    bool result = p_impl->query(query, args);
+    va_end(args);
+    return result;
+}
+
 DataFlowAnalysis::DataFlowAnalysis(
         DataFlowAnalysis::Implementation *implementation)
   : p_impl(implementation)

@@ -36,6 +36,8 @@ public:
     void outputAnalysisVisualization(
             Program *program, bool prefixFiles = true);
 
+    bool query(std::string query, va_list args) const;
+
 protected:
  // This member holds the information computed by the analysis; it is really
  // of some type called DFI_STORE, but we do not want to export DFI_STORE's
