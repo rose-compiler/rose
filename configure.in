@@ -1220,7 +1220,6 @@ projects/DistributedMemoryAnalysisCompass/Makefile
 projects/DocumentationGenerator/Makefile
 projects/runtimeErrorCheck/Makefile
 projects/RTED/Makefile
-projects/RTED/rted_qt/Makefile
 projects/RTED/tests/Makefile
 projects/RTED/CppRuntimeSystem/Makefile
 projects/RTED/CppRuntimeSystem/DebuggerQt/Makefile
