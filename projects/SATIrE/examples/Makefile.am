@@ -122,18 +122,18 @@ init.token:
 	find `dirname $<` -name '*.h' -exec cp '{}' $(testdir) ';'
 	find $(testdir) -name '*.h' -exec chmod u+w '{}' ';'
 
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term -I$(shell dirname $<) TEST0.c  TEST1.pl
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term -I$(shell dirname $<) TEST0.c -o TEST1.pl
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.pl -o TEST2.c
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term -I$(shell dirname $<) TEST2.c  TEST3.pl
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term -I$(shell dirname $<) TEST2.c -o TEST3.pl
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST3.pl -o TEST4.c
 
 %.termite: %.C
 	@echo "TERMITE: performing a translation circle of" $<
 	cp $< $(testdir)/TEST0.C
 	chmod u+w $(testdir)/TEST0.C
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term -I$(shell dirname $<) TEST0.C  TEST1.pl
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term -I$(shell dirname $<) TEST0.C -o TEST1.pl
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.pl -o TEST2.C
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term -I$(shell dirname $<) TEST2.C  TEST3.pl
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term -I$(shell dirname $<) TEST2.C -o TEST3.pl
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST3.pl -o TEST4.C
 
 termite: init.token
