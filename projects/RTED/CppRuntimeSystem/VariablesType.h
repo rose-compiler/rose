@@ -10,6 +10,8 @@
 
 class MemoryType;
 class RsType;
+class PointerInfo;
+
 
 class VariablesType
 {
@@ -39,6 +41,8 @@ class VariablesType
 
         void print(std::ostream & os) const;
 
+        /// If this variable is registered as a pointer the PointerInfo is return, else NULL
+        PointerInfo * getPointerInfo() const ;
 
     private:
         /// stack variable name

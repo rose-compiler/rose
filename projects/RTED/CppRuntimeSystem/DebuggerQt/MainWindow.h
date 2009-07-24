@@ -7,6 +7,7 @@
 
 class RtedDebug;
 class PropertyTreeWidget;
+class QModelIndex;
 
 #include "CppRuntimeSystem.h"
 
@@ -48,11 +49,13 @@ class DbgMainWindow : public QMainWindow
         void on_chkShowStack_toggled();
         void on_chkShowHeap_toggled();
 
+        void on_treeMemorySystem_clicked(const QModelIndex & index);
     protected:
 
         void updateTypeDisplay();
         void updateMemoryDisplay();
         void updateStackDisplay();
+        void updatePointerDisplay();
 
         RuntimeSystem * rs;
         RtedDebug *     dbgObj;
@@ -72,6 +75,10 @@ class DbgMainWindow : public QMainWindow
         // Stack variables
         ItemTreeModel * stackModel;
         QSortFilterProxyModel * stackProxyModel;
+
+        // Pointer
+        ItemTreeModel * pointerModel;
+        QSortFilterProxyModel * pointerProxyModel;
 
 
 };

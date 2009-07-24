@@ -38,7 +38,7 @@ void * RtedDebug::guiMain(void * rtedVoid)
     r->gui.id=pthread_self();
 
 
-    qDebug() << "In Gui Thread - starting" << pthread_self();
+    //qDebug() << "In Gui Thread - starting" << pthread_self();
 
     r->app = new QApplication(0,NULL);
     r->dlg = new DbgMainWindow(r);
@@ -130,6 +130,8 @@ void RtedDebug::leaveThread (ThreadData & cur, ThreadData & other )
 
 void RtedDebug::printDbg(const QString & s)
 {
+    return;
+
     if(gui.id== -1 || rtsi.id== -1)
     {
         qDebug() << "Not yet initialized" << gui.id << rtsi.id ;

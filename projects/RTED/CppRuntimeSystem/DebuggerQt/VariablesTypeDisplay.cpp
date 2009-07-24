@@ -4,6 +4,9 @@
 #include "TypeInfoDisplay.h"
 #include "VariablesTypeDisplay.h"
 #include "MemoryTypeDisplay.h"
+#include "PointerDisplay.h"
+
+#include "ModelRoles.h"
 
 #include <QIcon>
 
@@ -18,24 +21,14 @@ VariablesTypeDisplay::VariablesTypeDisplay(VariablesType * vt_, bool displayMem)
     addChild( new PVN("Address",addrStr));
     addChild( RsTypeDisplay::build(vt->getType(),-1,"Type:"));
 
-    //TODO show pointer infos
-    /*
-    if(vt->isPointer())
+
+
+    PointerInfo * pi = vt->getPointerInfo();
+    if(pi)
     {
-        PVN * pointerInfoSection = new PVN("Pointer Info","");
-        //pointerInfoSection->setIcon(QIcon(":/icons/pointer.png"));
-        pointerInfoSection->setFirstColumnSpanned(true);
-        addChild( pointerInfoSection);
-
-        QString targetAddrStr = QString("0x%1").arg(vt->getPointerTarget(),0,16);
-        pointerInfoSection->addChild( new PVN("Target Address",targetAddrStr));
-
-        pointerInfoSection->addChild(RsTypeDisplay::build(vt->getPointerType(),-1,"Pointer Target Type"));
-
-        if(displayMem)
-            pointerInfoSection->addChild(new MemoryTypeDisplay(vt->getTargetAllocation(),false));
+        addChild(new PointerDisplay(pi));
     }
-    */
+
 }
 
 
@@ -47,6 +40,9 @@ QVariant VariablesTypeDisplay::data(int role, int column) const
         if(column == 0)
             return vt->getName().c_str();
     }
+    if(role == VariablesTypeRole)
+        return QVariant::fromValue<VariablesType*>(vt);
+
     if(role == Qt::DecorationRole && column ==0)
         return QIcon(":/icons/variable.gif");
 

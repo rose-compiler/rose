@@ -7,6 +7,7 @@
 #include <QDebug>
 #include <QSortFilterProxyModel>
 #include <QDialogButtonBox>
+#include <QModelIndex>
 
 #include <QListWidgetItem>
 
@@ -19,8 +20,12 @@
 #include "TypeInfoDisplay.h"
 #include "MemoryTypeDisplay.h"
 #include "VariablesTypeDisplay.h"
+#include "PointerDisplay.h"
 
 #include "ItemTreeModel.h"
+
+#include "ModelRoles.h"
+
 
 DbgMainWindow::DbgMainWindow(RtedDebug * dbgObj_,
                              QWidget * par)
@@ -31,7 +36,9 @@ DbgMainWindow::DbgMainWindow(RtedDebug * dbgObj_,
       memModel(new ItemTreeModel(this)),
       memProxyModel(NULL),
       stackModel(new ItemTreeModel(this)),
-      stackProxyModel(NULL)
+      stackProxyModel(NULL),
+      pointerModel(new ItemTreeModel(this)),
+      pointerProxyModel(NULL)
 {
     ui = new Ui::MainWindow();
     ui->setupUi(this);
@@ -170,6 +177,7 @@ void DbgMainWindow::updateAllRsData()
     updateTypeDisplay();
     updateMemoryDisplay();
     updateStackDisplay();
+    updatePointerDisplay();
 }
 void DbgMainWindow::updateTypeDisplay()
 {
@@ -187,6 +195,14 @@ void DbgMainWindow::updateTypeDisplay()
 
     ui->treeTypeSystem->setModel(typeProxyModel);
 }
+
+
+void DbgMainWindow::on_treeMemorySystem_clicked(const QModelIndex & ind)
+{
+    MemoryType * mt = qvariant_cast<MemoryType*>( ind.model()->data(ind,MemoryTypeRole));
+    ui->memGraphicsView->setMemoryType(mt);
+}
+
 
 void DbgMainWindow::updateMemoryDisplay()
 {
@@ -234,4 +250,20 @@ void DbgMainWindow::updateStackDisplay()
 }
 
 
+void DbgMainWindow::updatePointerDisplay()
+{
+    ItemTreeNode * pointerRoot = PointerDisplay::build(rs->getPointerManager());
+    pointerModel->setRoot(pointerRoot);
+
+    if(pointerProxyModel)
+        delete pointerProxyModel;
+
+    pointerProxyModel = new QSortFilterProxyModel(this);
+    connect(ui->txtPointerFilter,SIGNAL(textChanged(const QString&)),
+            pointerProxyModel, SLOT(setFilterWildcard(const QString&)));
+
+    pointerProxyModel->setSourceModel(pointerModel);
+
+    ui->treePointer->setModel(pointerProxyModel);
+}
 

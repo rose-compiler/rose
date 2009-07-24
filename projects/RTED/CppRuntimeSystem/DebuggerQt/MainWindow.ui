@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1357</width>
-    <height>903</height>
+    <width>1260</width>
+    <height>928</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -31,7 +31,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1357</width>
+     <width>1260</width>
      <height>26</height>
     </rect>
    </property>
@@ -81,7 +81,11 @@
       <widget class="QLineEdit" name="txtMemFilter"/>
      </item>
      <item row="3" column="0">
-      <widget class="QTreeView" name="treeMemorySystem"/>
+      <widget class="QTreeView" name="treeMemorySystem">
+       <property name="headerHidden">
+        <bool>false</bool>
+       </property>
+      </widget>
      </item>
      <item row="1" column="0">
       <widget class="QCheckBox" name="chkShowStack">
@@ -195,6 +199,32 @@
      </item>
      <item row="1" column="0">
       <widget class="QTreeView" name="treeTypeSystem"/>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockWidget_5">
+   <property name="windowTitle">
+    <string>Pointer</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_8">
+    <layout class="QVBoxLayout" name="verticalLayout_2">
+     <item>
+      <widget class="QLineEdit" name="txtPointerFilter">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QTreeView" name="treePointer">
+       <property name="headerHidden">
+        <bool>false</bool>
+       </property>
+      </widget>
      </item>
     </layout>
    </widget>

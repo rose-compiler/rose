@@ -6,6 +6,9 @@
 #include <QGraphicsRectItem>
 #include <QGraphicsSimpleTextItem>
 
+
+#include <QDebug>
+
 const float MemoryGraphicsView::BOX_WIDTH = 20;
 const float MemoryGraphicsView::BOX_HEIGHT = 20;
 
@@ -58,6 +61,7 @@ void MemoryGraphicsView::setMemoryType(MemoryType * _mt)
 
 void MemoryGraphicsView::paintTypeInfo(RsType * t, addr_type offset, int layer)
 {
+    qDebug() << "Painting type " << t->getName().c_str() << " Offset" << offset << "layer" << layer;
     qreal x = offset * BOX_WIDTH;
     qreal y = (SPACE_BOX_TYPEINFO + BOX_HEIGHT) + (layer * (BOX_HEIGHT +  SPACE_TYPEINFO_TYPEINFO));
     qreal width = t->getByteSize() * BOX_WIDTH;
@@ -80,7 +84,10 @@ void MemoryGraphicsView::paintTypeInfo(RsType * t, addr_type offset, int layer)
 
     // Paint all subtypes
     for(int i=0; i< t->getSubtypeCount(); i++)
+    {
+        qDebug() << "Subtype offset" << i << t->getSubtypeOffset(i);
         paintTypeInfo(t->getSubtype(i), t->getSubtypeOffset(i)+offset,layer+1);
+    }
 
 }
 

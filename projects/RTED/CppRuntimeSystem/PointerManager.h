@@ -108,6 +108,8 @@ class PointerManager
         TargetToPointerMapIter targetRegionIterEnd (addr_type targetAddr);
 
 
+        const PointerSet & getPointerSet() const { return pointerInfoSet; }
+
         /// Print status to a stream
         void print(std::ostream & os) const;
 

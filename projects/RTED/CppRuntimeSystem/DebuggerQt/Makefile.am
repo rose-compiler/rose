@@ -11,7 +11,8 @@ libDebuggerQt_la_SOURCES = MainWindow.cpp\
                            TypeInfoDisplay.cpp\
                            MemoryTypeDisplay.cpp\
                            VariablesTypeDisplay.cpp\
-                           MemoryGraphicsView.cpp
+                           MemoryGraphicsView.cpp\
+                           PointerDisplay.cpp
 
 
 nodist_libDebuggerQt_la_SOURCES = moc_MainWindow.cxx\

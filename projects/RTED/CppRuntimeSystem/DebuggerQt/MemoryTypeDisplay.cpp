@@ -1,5 +1,11 @@
 #include "MemoryTypeDisplay.h"
 #include "MemoryManager.h"
+#include "PointerDisplay.h"
+#include "PointerManager.h"
+#include "CppRuntimeSystem.h"
+
+
+#include "ModelRoles.h"
 
 #include "TypeInfoDisplay.h"
 #include "VariablesTypeDisplay.h"
@@ -32,18 +38,31 @@ MemoryTypeDisplay::MemoryTypeDisplay(MemoryType * mt_, bool displayPointer)
 
     if(displayPointer)
     {
-        Pvn * pointerIn = new Pvn("Pointer to this Allocation","");
-        pointerIn->setFirstColumnSpanned(true);
 
+        PointerManager * pm = RuntimeSystem::instance()->getPointerManager();
 
+        {
+            Pvn * pointerIn = new Pvn("Pointer to this Allocation","");
+            pointerIn->setFirstColumnSpanned(true);
 
-        //TODO pointer structure has changed -> adapt display
-        //Pointer into this
-        /*
-        MemoryType::VariableSet::const_iterator i = mt->getPointerSet().begin();
-        for(; i != mt->getPointerSet().end(); ++i)
-            pointer->addChild( new VariablesTypeDisplay(*i,false) );
-         */
+            PointerManager::PointerSetIter i   = pm->sourceRegionIter(mt->getAddress());
+            PointerManager::PointerSetIter end = pm->sourceRegionIter(mt->getAddress()+mt->getSize());
+
+            for(; i != end; ++i)
+                pointerIn->addChild(new PointerDisplay(*i));
+        }
+
+        {
+            Pvn * pointerOut = new Pvn("Pointer into this Allocation","");
+            pointerOut->setFirstColumnSpanned(true);
+
+            PointerManager::TargetToPointerMapIter i   = pm->targetRegionIterBegin(mt->getAddress());
+            PointerManager::TargetToPointerMapIter end = pm->targetRegionIterEnd(mt->getAddress()+mt->getSize());
+
+            for(; i!= end; ++i)
+                pointerOut->addChild(new PointerDisplay(i->second));
+        }
+
     }
 }
 
@@ -63,6 +82,9 @@ QVariant MemoryTypeDisplay::data(int role, int column) const
         else if (column == 1)
             return mt->getPos().toString().c_str();
     }
+    if ( role == MemoryTypeRole)
+        return QVariant::fromValue<MemoryType*>(mt);
+
     if(role == Qt::DecorationRole && column ==0)
     {
         return mt->isOnStack() ? QIcon(":/icons/variable.gif") : QIcon(":/icons/allocation.gif");

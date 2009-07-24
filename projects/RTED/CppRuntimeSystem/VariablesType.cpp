@@ -77,6 +77,20 @@ size_t  VariablesType::getSize() const
     return type->getByteSize();
 }
 
+
+PointerInfo * VariablesType::getPointerInfo() const
+{
+    PointerManager * pm = RuntimeSystem::instance()->getPointerManager();
+    PointerManager::PointerSetIter it = pm->sourceRegionIter(getAddress());
+
+    if( (*it)->getSourceAddress() == getAddress())
+        return *it;
+    else
+        return NULL;
+}
+
+
+
 void VariablesType::print(ostream & os) const
 {
     os << "0x" << hex <<setw(6) << setfill('0') << address << "\t" << name << "(" << mangledName <<")" << " Type: " << type->getName()  ;

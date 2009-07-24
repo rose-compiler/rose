@@ -598,6 +598,10 @@ void testPointerTracking()
 
     rs->createVariable(100,"pointer","mangledPointer","SgPointerType","A");
 
+    //rs->setQtDebuggerEnabled(true);
+    //rs->checkpoint(SourcePosition());
+
+
     rs->endScope();
 
     CLEANUP

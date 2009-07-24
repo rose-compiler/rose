@@ -198,6 +198,13 @@ int RsClassType::addMember(const std::string & name, RsType * type, addr_type of
         return -1;
     }
 
+    if(offset==-1)
+    {
+        offset=0;
+        if(members.size() > 0)
+            offset = members.back().offset + members.back().type->getByteSize();
+    }
+
     if(members.size() >0)
     {
         Member & last = members.back();
