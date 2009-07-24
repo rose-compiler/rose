@@ -42,14 +42,8 @@ bool TypeSystem::registerType(RsType * t)
     return res.second;
 }
 
-RsType * TypeSystem::getTypeInfo(const string & name_)
+RsType * TypeSystem::getTypeInfo(const string & name)
 {
-    //TODO apparently SgCharType and SgTypeChar exist?!
-    string name = name_;
-    if(name == "SgCharType")
-        name = "SgTypeChar";
-
-
     InvalidType comparisonObject(name);
 
     TypeSet::iterator i = types.find(&comparisonObject);

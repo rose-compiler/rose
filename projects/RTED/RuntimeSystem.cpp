@@ -306,7 +306,7 @@ void RuntimeSystem_ensure_allocated_and_initialized( const void* mem, size_t siz
       "StringConstant",
       "MangledStringConstant",
       "SgArrayType",
-      "SgCharType" // tps: added this
+      "SgTypeChar" // tps: added this
   );
   rs->createMemory( (addr_type) mem, size);
   rs->checkMemWrite( (addr_type) mem, size);
