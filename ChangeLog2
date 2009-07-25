@@ -1,3 +1,33 @@
+2009-07-24 21:21  heller9
+
+	* [r6684] /trunk/ROSE/demo/qrose/Makefile.am: demo/qrose
+	  Makefile.am fix
+
+2009-07-24 21:07  hamilton37
+
+	* [r6683]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/TypeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp: RTED: Fixed broken
+	  constant and needless workaround.
+
+2009-07-24 20:49  hamilton37
+
+	* [r6682]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/Makefile.am,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/TypeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/DataStructures.h,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: RTED: Improvements to
+	  array handling. We still don't quite pass all of the
+	  array bounds checks.
+
 2009-07-24 17:39  bauer25
 
 	* [r6680] /trunk/ROSE/configure.in: Delete rted_qt from
