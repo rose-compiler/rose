@@ -1,0 +1,53 @@
+#!/usr/bin/env ruby
+
+
+def args!
+    if ARGV.size != 1
+         puts "
+            Usage: #{File.basename( __FILE__ )} <runid>
+         ".gsub( /^\s+/, '' )
+
+         exit 1
+    end
+
+    return ARGV.first
+end
+
+def get_runhost( run_id )
+    url = "http://localhost/nmi/index.php?page=results/runDetails&runid=#{run_id}&MetronomeSessID=qhr7buvggpva74m3kf04t8h6f1&opt_project=rose+compiler"
+    response = `wget -O - '#{url}' 2> /dev/null`
+    response =~ %r{remote_task.*?<td>.*?<a.*?"View Host Information".*?>(.*?)</a>.*?</td>}m
+
+    $1
+end
+
+def main
+    run_id = args!
+
+    puts "Downloading run host information from nmi website"
+    run_host = get_runhost( run_id ) 
+
+    run_dir = (
+        `nmi_rundir #{run_id}` =~ /\d+: (.*)/;
+        $1
+    )
+
+    puts "Copying and extracting results.tar.gz and setting up .nmi-postmortem"
+    # FIXME 3: It would probably be better to fail graciously 
+    # if #{run_host}:.ssh/rc already exists
+    system [
+        "ssh #{run_host} 'rm -fr run; mkdir -p run; mkdir -p .ssh'",
+        "scp #{run_dir}/userdir/nmi*/results.tar.gz #{run_host}:run/ > /dev/null 2>/dev/null",
+        "ssh #{run_host} 'cd run && tar xfz results.tar.gz'",
+        %Q{ssh #{run_host} 'touch .bashrc; grep -q .nmi-postmortem .bashrc || echo "if [ -f .nmi-postmortem ]; then source .nmi-postmortem; fi" >> .bashrc'},
+        %Q{ssh #{run_host} 'echo "cd run && source env.sh" > .nmi-postmortem'},
+    ].join( " && " )
+
+    puts "Connecting to #{run_host}"
+    exec "ssh #{run_host}"
+end
+
+
+main #if $__FILE__ == $0
+
+# vim:et sta ai sw=4 ts=4:
