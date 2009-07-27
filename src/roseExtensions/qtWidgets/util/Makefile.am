@@ -11,8 +11,6 @@ libutil_la_SOURCES = AsmToSourceMapper.cpp\
                      AstDisplayInfo.cpp\
                      AstFilters.cpp\
                      ItemModelHelper.cpp\
-                     ItemTreeModel.cpp\
-                     ItemTreeNode.cpp\
                      LCS.cpp\
                      MetricAttributeCollector.cpp\
                      MetricBgDelegate.cpp\
@@ -22,8 +20,7 @@ libutil_la_SOURCES = AsmToSourceMapper.cpp\
                      SageMimeData.cpp\
                      SgNodeUtil.cpp
 
-nodist_libutil_la_SOURCES = moc_ItemTreeModel.cxx\
-                            moc_MetricAttributeCollector.cxx\
+nodist_libutil_la_SOURCES = moc_MetricAttributeCollector.cxx\
                             moc_MetricBgDelegate.cxx\
                             moc_QRoseComponentProxy.cxx\
                             moc_RoseGraphicsView.cxx\
@@ -64,8 +61,6 @@ headerTarget_HEADERS = AsmToSourceMapper.h\
                        AstDisplayInfo.h\
                        AstFilters.h\
                        ItemModelHelper.h\
-                       ItemTreeModel.h\
-                       ItemTreeNode.h\
                        LCS.h\
                        MetricAttributeCollector.h\
                        MetricBgDelegate.h\

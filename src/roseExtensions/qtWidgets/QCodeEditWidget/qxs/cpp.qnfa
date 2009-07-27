@@ -1,0 +1,164 @@
+<!DOCTYPE QNFA>
+<QNFA language="C++" extensions="c;cc;cxx;cpp;h;hxx;hpp;hh;C" defaultLineMark="breakpoint">
+	<embed target="Doxygen"/>
+	
+	<context id="comment/multi" format="comment">
+		<start parenthesis="cppcomment:open" indent="1" fold="1">/\*</start>
+		<stop parenthesis="cppcomment:close" indent="1" fold="1">\*/</stop>
+	</context>
+	
+	<context id="comment/single" format="comment" >
+		<start>//</start>
+		<stop exclusive="false">\n</stop>
+		
+		<context id="evilJump" format="danger" >
+			<start>\\\n</start>
+			<stop exclusive="false">\n</stop>
+			<escape>\\</escape>
+		</context>
+	</context>
+	
+	<context id="preprocessor" format="preprocessor" transparency="true" stayOnLine="true" >
+		<start>#</start>
+		<stop exclusive="false">\n</stop>
+		<escape>\\</escape>
+	</context>
+	
+	<context id="data/string" format="text" >
+		<start>&quot;</start>
+		<stop>&quot;</stop>
+		<stop exclusive="false">\n</stop>
+		<sequence id="escape" format="escapeseq" >\\[nrtvf\\"'\n]</sequence>
+	</context>
+	
+	<context id="data/chars" format="text" >
+		<start>'</start>
+		<stop>'</stop>
+		<stop exclusive="false">\n</stop>
+		<sequence id="escape" format="escapeseq" >\\[nrtvf\\"'\n]</sequence>
+	</context>
+	
+	<sequence parenthesis="round:open">(</sequence>
+	<sequence parenthesis="round:close">)</sequence>
+	<sequence parenthesis="curly:open" indent="1" fold="1">{</sequence>
+	<sequence parenthesis="curly:close" indent="1" fold="1">}</sequence>
+	<sequence parenthesis="square:open">\[</sequence>
+	<sequence parenthesis="square:close">\]</sequence>
+	
+	<list id="keywords/visibility" format="keyword">
+		<word parenthesis="visibility:boundary" fold="1" indent="1">public</word>
+		<word parenthesis="visibility:boundary" fold="1" indent="1">protected</word>
+		<word parenthesis="visibility:boundary" fold="1" indent="1">private</word>
+	</list>
+	
+	<list id="keywords/storage" format="keyword">
+		<word>const</word>
+		<word>volatile</word>
+		<word>extern</word>
+		<word>static</word>
+		<word>mutable</word>
+		<word>auto</word>
+		<word>register</word>
+		<word>inline</word>
+	</list>
+	
+	<list id="keywords/data" format="keyword">
+		<word>signed</word>
+		<word>unsigned</word>
+		<word>bool</word>
+		<word>char</word>
+		<word>int</word>
+		<word>long</word>
+		<word>float</word>
+		<word>double</word>
+		<word>enum</word>
+		<word>union</word>
+		<word>wchar_t</word>
+		<word>void</word>
+	</list>
+	
+	<list id="keywords/blocks" format="keyword">
+		<word>for</word>
+		<word>while</word>
+		<word>do</word>
+		<word>if</word>
+		<word>else</word>
+		<word>switch</word>
+		<word parenthesis="case:boundary" fold="1" indent="1" >case</word>
+		<word parenthesis="case:boundary" fold="1" indent="1" >default</word>
+		<word>break</word>
+		<word>continue</word>
+		<word>try</word>
+		<word>catch</word>
+		<word>throw</word>
+		<word>goto</word>
+		<word>foreach</word>
+		<word>forever</word>
+	</list>
+	
+	<list id="keywords/oop" format="keyword">
+		<word>new</word>
+		<word>delete</word>
+		<word>class</word>
+		<word>struct</word>
+		<word>const_cast</word>
+		<word>dynamic_cast</word>
+		<word>static_cast</word>
+		<word>reinterpret_cast</word>
+		<word>operator</word>
+		<word>virtual</word>
+		<word>this</word>
+		<word>explicit</word>
+		<word>friend</word>
+		<word>namespace</word>
+		<word>using</word>
+	</list>
+	
+	<list id="keywords/others" format="keyword">
+		<word>asm</word>
+		<word>false</word>
+		<word>true</word>
+		<word>template</word>
+		<word>typename</word>
+		<word>return</word>
+		<word>sizeof</word>
+		<word>typeid</word>
+		<word>typedef</word>
+	</list>
+	
+	<list id="keywords/Qt" format="extra-keyword">
+		<word>foreach</word>
+		<word>forever</word>
+		<word>emit</word>
+		<word>signals</word>
+		<word>slots</word>
+		<word>connect</word>
+		<word>SIGNAL</word>
+		<word>SLOT</word>
+		<word>Q_OBJECT</word>
+		<word>Q_ENUM</word>
+		<word>Q_PROPERTY</word>
+		<word>Q_SIGNALS</word>
+		<word>Q_SLOTS</word>
+	</list>
+	
+	<list id="ansi/trigraph" format="extra-keyword">
+		<prefix>\?\?</prefix>
+		<word>\(</word>
+		<word>\)</word>
+		<word>&lt;</word>
+		<word>&gt;</word>
+		<word>=</word>
+		<word>/</word>
+		<word>&apos;</word>
+		<word>!</word>
+		<word>-</word>
+	</list>
+	
+	<word id="QtCasts" format="extra-keyword">q$w+_cast</word>
+	
+	<word id="data/float" format="numbers">-?[0-9]*.[0-9]+f?</word>
+	<word id="data/hexadecimal" format="numbers">0[xX][0-9a-fA-F]+[ulUL]*</word>
+	<word id="data/octal" format="numbers">0[0-7]+</word>
+	<word id="data/decimal" format="numbers">-?[0-9]+[ulUL]*</word>
+</QNFA>

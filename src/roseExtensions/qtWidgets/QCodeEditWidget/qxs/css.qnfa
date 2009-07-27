@@ -1,0 +1,362 @@
+<!DOCTYPE QNFA>
+<QNFA language="CSS" extensions="css" >
+
+    <context id="comment/single/0" format="comment">
+        <start>@</start>
+        <stop exclusive="false">\n</stop>
+    </context>
+	
+    <context id="comment/multi/0" format="comment">
+        <start parenthesis="CSScomment0:open" fold="1">/\*</start>
+        <stop parenthesis="CSScomment0:close" fold="1">\*/</stop>
+    </context>
+	
+	<context id="data/url" format="text" >
+		<start parenthesis="CSSurl:open" format="keyword" >url(</start>
+		<stop parenthesis="CSSurl:close" format="keyword" >)</stop>
+	</context>
+	
+	<sequence parenthesis="round:open">(</sequence>
+	<sequence parenthesis="round:close">)</sequence>
+	<sequence parenthesis="curly:open" indent="1" fold="1">{</sequence>
+	<sequence parenthesis="curly:close" indent="1" fold="1">}</sequence>
+	<sequence parenthesis="square:open">\[</sequence>
+	<sequence parenthesis="square:close">\]</sequence>
+	
+    <list id="keywords/1" format="keyword">
+        <word>aqua</word>
+        <word>azimuth</word>
+        <word>background-attachment</word>
+        <word>background-color</word>
+        <word>background-image</word>
+        <word>background-position</word>
+        <word>background-repeat</word>
+        <word>background</word>
+        <word>black</word>
+        <word>blue</word>
+        <word>border-bottom-color</word>
+        <word>border-bottom-style</word>
+        <word>border-bottom-width</word>
+        <word>border-left-color</word>
+        <word>border-left-style</word>
+        <word>border-left-width</word>
+        <word>border-right</word>
+        <word>border-right-color</word>
+        <word>border-right-style</word>
+        <word>border-right-width</word>
+        <word>border-top-color</word>
+        <word>border-top-style</word>
+        <word>border-top-width</word>
+        <word>border-bottom</word>
+        <word>border-collapse</word>
+        <word>border-left</word>
+        <word>border-width</word>
+        <word>border-color</word>
+        <word>border-spacing</word>
+        <word>border-style</word>
+        <word>border-top</word>
+        <word>border</word>
+        <word>caption-side</word>
+        <word>clear</word>
+        <word>clip</word>
+        <word>color</word>
+        <word>content</word>
+        <word>counter-increment</word>
+        <word>counter-reset</word>
+        <word>cue-after</word>
+        <word>cue-before</word>
+        <word>cue</word>
+        <word>cursor</word>
+        <word>direction</word>
+        <word>display</word>
+        <word>elevation</word>
+        <word>empty-cells</word>
+        <word>float</word>
+        <word>font-family</word>
+        <word>font-size</word>
+        <word>font-size-adjust</word>
+        <word>font-stretch</word>
+        <word>font-style</word>
+        <word>font-variant</word>
+        <word>font-weight</word>
+        <word>font</word>
+        <word>line-height</word>
+        <word>letter-spacing</word>
+        <word>list-style</word>
+        <word>list-style-image</word>
+        <word>list-style-position</word>
+        <word>list-style-type</word>
+        <word>margin-bottom</word>
+        <word>margin-left</word>
+        <word>margin-right</word>
+        <word>margin-top</word>
+        <word>margin</word>
+        <word>marker-offset</word>
+        <word>marks</word>
+        <word>max-height</word>
+        <word>max-width</word>
+        <word>min-height</word>
+        <word>min-width</word>
+        <word>orphans</word>
+        <word>outline</word>
+        <word>outline-color</word>
+        <word>outline-style</word>
+        <word>outline-width</word>
+        <word>overflow</word>
+        <word>padding-bottom</word>
+        <word>padding-left</word>
+        <word>padding-right</word>
+        <word>padding-top</word>
+        <word>padding</word>
+        <word>page</word>
+        <word>page-break-after</word>
+        <word>page-break-before</word>
+        <word>page-break-inside</word>
+        <word>pause-after</word>
+        <word>pause-before</word>
+        <word>pause</word>
+        <word>pitch</word>
+        <word>pitch-range</word>
+        <word>play-during</word>
+        <word>position</word>
+        <word>quotes</word>
+        <word>richness</word>
+        <word>right</word>
+        <word>size</word>
+        <word>speak-header</word>
+        <word>speak-numeral</word>
+        <word>speak-punctuation</word>
+        <word>speak</word>
+        <word>speech-rate</word>
+        <word>stress</word>
+        <word>table-layout</word>
+        <word>text-align</word>
+        <word>text-decoration</word>
+        <word>text-indent</word>
+        <word>text-shadow</word>
+        <word>text-transform</word>
+        <word>top</word>
+        <word>unicode-bidi</word>
+        <word>vertical-align</word>
+        <word>visibility</word>
+        <word>voice-family</word>
+        <word>volume</word>
+        <word>white-space</word>
+        <word>widows</word>
+        <word>width</word>
+        <word>word-spacing</word>
+        <word>z-index</word>
+        <word>bottom</word>
+        <word>left</word>
+        <word>height</word>
+    </list>
+    <list id="keywords/2" format="keyword">
+        <word>above</word>
+        <word>absolute</word>
+        <word>always</word>
+        <word>armenian</word>
+        <word>aural</word>
+        <word>auto</word>
+        <word>avoid</word>
+        <word>baseline</word>
+        <word>behind</word>
+        <word>below</word>
+        <word>bidi-override</word>
+        <word>blink</word>
+        <word>block</word>
+        <word>bold</word>
+        <word>bolder</word>
+        <word>both</word>
+        <word>capitalize</word>
+        <word>center-left</word>
+        <word>center-right</word>
+        <word>center</word>
+        <word>circle</word>
+        <word>cjk-ideographic</word>
+        <word>close-quote</word>
+        <word>collapse</word>
+        <word>condensed</word>
+        <word>continuous</word>
+        <word>crop</word>
+        <word>crosshair</word>
+        <word>cross</word>
+        <word>cursive</word>
+        <word>dashed</word>
+        <word>decimal-leading-zero</word>
+        <word>decimal</word>
+        <word>default</word>
+        <word>digits</word>
+        <word>disc</word>
+        <word>dotted</word>
+        <word>double</word>
+        <word>e-resize</word>
+        <word>embed</word>
+        <word>extra-condensed</word>
+        <word>extra-expanded</word>
+        <word>expanded</word>
+        <word>fantasy</word>
+        <word>far-left</word>
+        <word>far-right</word>
+        <word>faster</word>
+        <word>fast</word>
+        <word>fixed</word>
+        <word>fuchsia</word>
+        <word>georgian</word>
+        <word>gray</word>
+        <word>green</word>
+        <word>groove</word>
+        <word>hebrew</word>
+        <word>help</word>
+        <word>hidden</word>
+        <word>hide</word>
+        <word>higher</word>
+        <word>high</word>
+        <word>hiragana-iroha</word>
+        <word>hiragana</word>
+        <word>icon</word>
+        <word>inherit</word>
+        <word>inline-table</word>
+        <word>inline</word>
+        <word>inset</word>
+        <word>inside</word>
+        <word>invert</word>
+        <word>italic</word>
+        <word>justify</word>
+        <word>katakana-iroha</word>
+        <word>katakana</word>
+        <word>landscape</word>
+        <word>larger</word>
+        <word>large</word>
+        <word>left-side</word>
+        <word>leftwards</word>
+        <word>level</word>
+        <word>lighter</word>
+        <word>lime</word>
+        <word>line-through</word>
+        <word>list-item</word>
+        <word>loud</word>
+        <word>lower-alpha</word>
+        <word>lower-greek</word>
+        <word>lower-roman</word>
+        <word>lowercase</word>
+        <word>ltr</word>
+        <word>lower</word>
+        <word>low</word>
+        <word>maroon</word>
+        <word>medium</word>
+        <word>message-box</word>
+        <word>middle</word>
+        <word>mix</word>
+        <word>monospace</word>
+        <word>n-resize</word>
+        <word>narrower</word>
+        <word>navy</word>
+        <word>ne-resize</word>
+        <word>no-close-quote</word>
+        <word>no-open-quote</word>
+        <word>no-repeat</word>
+        <word>none</word>
+        <word>normal</word>
+        <word>nowrap</word>
+        <word>nw-resize</word>
+        <word>oblique</word>
+        <word>olive</word>
+        <word>once</word>
+        <word>open-quote</word>
+        <word>outset</word>
+        <word>outside</word>
+        <word>overline</word>
+        <word>pointer</word>
+        <word>portrait</word>
+        <word>purple</word>
+        <word>px</word>
+        <word>red</word>
+        <word>relative</word>
+        <word>repeat-x</word>
+        <word>repeat-y</word>
+        <word>repeat</word>
+        <word>rgb</word>
+        <word>ridge</word>
+        <word>right-side</word>
+        <word>rightwards</word>
+        <word>s-resize</word>
+        <word>sans-serif</word>
+        <word>scroll</word>
+        <word>se-resize</word>
+        <word>semi-condensed</word>
+        <word>semi-expanded</word>
+        <word>separate</word>
+        <word>serif</word>
+        <word>show</word>
+        <word>silent</word>
+        <word>silver</word>
+        <word>slow</word>
+        <word>slower</word>
+        <word>small-caps</word>
+        <word>small-caption</word>
+        <word>smaller</word>
+        <word>soft</word>
+        <word>solid</word>
+        <word>spell-out</word>
+        <word>square</word>
+        <word>static</word>
+        <word>status-bar</word>
+        <word>super</word>
+        <word>sw-resize</word>
+        <word>table-caption</word>
+        <word>table-cell</word>
+        <word>table-column</word>
+        <word>table-column-group</word>
+        <word>table-footer-group</word>
+        <word>table-header-group</word>
+        <word>table-row</word>
+        <word>table-row-group</word>
+        <word>teal</word>
+        <word>text</word>
+        <word>text-bottom</word>
+        <word>text-top</word>
+        <word>thick</word>
+        <word>thin</word>
+        <word>transparent</word>
+        <word>ultra-condensed</word>
+        <word>ultra-expanded</word>
+        <word>underline</word>
+        <word>upper-alpha</word>
+        <word>upper-latin</word>
+        <word>upper-roman</word>
+        <word>uppercase</word>
+        <word>visible</word>
+        <word>w-resize</word>
+        <word>wait</word>
+        <word>white</word>
+        <word>wider</word>
+        <word>x-fast</word>
+        <word>x-high</word>
+        <word>x-large</word>
+        <word>x-loud</word>
+        <word>x-low</word>
+        <word>x-small</word>
+        <word>x-soft</word>
+        <word>xx-large</word>
+        <word>xx-small</word>
+        <word>yellow</word>
+        <word>yes</word>
+    </list>
+    <word format="extra-keyword">#[a-zA-Z0-9-_]+</word>
+    <word format="extra-keyword">\.[a-zA-Z0-9-_]+</word>
+    <!--<word format="extra-keyword">:[a-zA-Z0-9-]+</word>-->
+    <word format="numbers">$d+e[mx]</word>
+    <word format="numbers">$d+p[tx]</word>
+    <word format="numbers">$d+cm</word>
+    <word format="numbers">$d+in</word>
+    <word format="numbers">$d+%?</word>
+    <word id="regex/3" format="number">$d+\.$d+%?</word>
+    <word id="regex/3" format="number">$d+\.$d+in</word>
+    <word id="regex/3" format="number">$d+\.$d+cm</word>
+    <word id="regex/3" format="number">$d+\.$d+p[tx]</word>
+    <word id="regex/3" format="number">$d+\.$d+e[mx]</word>
+	<!--
+    <word id="regex/3" format="number">$d+$s*(e[mx]|p[tx]|cm|in|%)</word>
+    <word id="regex/3" format="number">$d+\.$d+$s*(e[mx]|p[tx]|cm|in|%)</word>
+	-->
+</QNFA>

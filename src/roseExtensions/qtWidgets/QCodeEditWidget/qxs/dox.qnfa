@@ -1,0 +1,133 @@
+<!DOCTYPE QNFA>
+<QNFA language="Doxygen" extensions="dox" >
+	
+	<context id="multi" format="doxygen">
+		<start parenthesis="doxycomment:open" indent="1" fold="1">/\*[*!][^*]</start>
+		<stop parenthesis="doxycomment:close" indent="1" fold="1">\*/</stop>
+		
+		<embed target="XML" />
+		
+		<list format="doxygen/keyword">
+			<prefix>@</prefix>
+			<prefix>\\</prefix>
+			
+			<word>a</word>
+			<word>dot</word>
+			<word>addindex</word>
+			<word>dotfile</word>
+			<word>addtogroup</word>
+			<word>e</word>
+			<word>anchor</word>
+			<word>else</word>
+			<word>arg</word>
+			<word>elseif</word>
+			<word>attention</word>
+			<word>em</word>
+			<word>author</word>
+			<word>endcode</word>
+			<word>b</word>
+			<word>endcond</word>
+			<word>brief</word>
+			<word>enddot</word>
+			<word>bug</word>
+			<word>endhtmlonly</word>
+			<word>c</word>
+			<word>endif</word>
+			<word>callgraph</word>
+			<word>endlatexonly</word>
+			<word>category</word>
+			<word>endlink</word>
+			<word>class</word>
+			<word>endmanonly</word>
+			<word>code</word>
+			<word>endverbatim</word>
+			<word>cond</word>
+			<word>endxmlonly</word>
+			<word>copydoc</word>
+			<word>enum</word>
+			<word>date</word>
+			<word>example</word>
+			<word>def</word>
+			<word>exception</word>
+			<word>defgroup</word>
+			<word>deprecated</word>
+			<word>dir</word>
+			<word>dontinclude</word>
+			<word>file</word>
+			<word>fn</word>
+			<word>protocol</word>
+			<word>hideinitializer</word>
+			<word>htmlinclude</word>
+			<word>htmlonly</word>
+			<word>ref</word>
+			<word>if</word>
+			<word>relates</word>
+			<word>ifnot</word>
+			<word>relatesalso</word>
+			<word>image</word>
+			<word>remarks</word>
+			<word>include</word>
+			<word>return</word>
+			<word>includelineno</word>
+			<word>retval</word>
+			<word>ingroup</word>
+			<word>sa</word>
+			<word>internal</word>
+			<word>section</word>
+			<word>invariant</word>
+			<word>see</word>
+			<word>interface</word>
+			<word>showinitializer</word>
+			<word>test</word>
+			<word>namespace</word>
+			<word>throw</word>
+			<word>nosubgrouping</word>
+			<word>todo</word>
+			<word>note</word>
+			<word>typedef</word>
+			<word>overload</word>
+			<word>union</word>
+			<word>p</word>
+			<word>until</word>
+			<word>package</word>
+			<word>var</word>
+			<word>page</word>
+			<word>verbatim</word>
+			<word>par</word>
+			<word>verbinclude</word>
+			<word>paragraph</word>
+			<word>version</word>
+			<word>param</word>
+			<word>warning</word>
+			<word>post</word>
+			<word>weakgroup</word>
+			<word>pre</word>
+			<word>xmlonly</word>
+			<word>xrefitem</word>
+			<word>property</word>
+			<word>mainpage</word>
+		
+			<word>&amp;</word>
+			<word>@</word>
+			<word>\$</word>
+			<word>\\</word>
+			<word>%</word>
+			<word>#</word>
+			<word>~</word>
+			<word>&lt;</word>
+			<word>&gt;</word>
+			<word>{</word>
+			<word>}</word>
+			<word>f\$</word>
+			<word>f\[</word>
+			<word>f\]</word>
+		</list>
+	</context>
+	
+	<context id="single" format="doxygen">
+		<start>//[/!]</start>
+		<stop>\n</stop>
+		<embed target="Doxygen:multi"/>
+	</context>
+	
+</QNFA>

@@ -1,0 +1,29 @@
+<RCC>
+  <qresource prefix="QCodeEdit" >
+    <file>qxs/bibtex.qnfa</file>
+    <file>qxs/bibtex.qxf</file>
+    <file>qxs/cpp.qnfa</file>
+    <file>qxs/cpp.qxf</file>
+    <file>qxs/csharp.qnfa</file>
+    <file>qxs/csharp.qxf</file>
+    <file>qxs/css.qnfa</file>
+    <file>qxs/css.qxf</file>
+    <file>qxs/dox.qnfa</file>
+    <file>qxs/dox.qxf</file>
+    <file>qxs/formats.qxf</file>
+    <file>qxs/marks.qxm</file>
+    <file>qxs/php.qnfa</file>
+    <file>qxs/php.qxf</file>
+    <file>qxs/pro.qnfa</file>
+    <file>qxs/pro.qxf</file>
+    <file>qxs/python.qnfa</file>
+    <file>qxs/python.qxf</file>
+    <file>qxs/qtscript.qnfa</file>
+    <file>qxs/qtscript.qxf</file>
+    <file>qxs/snippet.qnfa</file>
+    <file>qxs/tex.qnfa</file>
+    <file>qxs/tex.qxf</file>
+    <file>qxs/xml.qnfa</file>
+    <file>qxs/xml.qxf</file>
+  </qresource>
+</RCC>

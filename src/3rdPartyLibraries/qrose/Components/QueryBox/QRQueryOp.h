@@ -10,6 +10,7 @@
 #include <QRQueryRange.h>
 
 class SgNode;
+class VariantVector;
 
 namespace qrs {
 /**

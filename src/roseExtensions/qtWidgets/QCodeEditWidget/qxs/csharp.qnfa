@@ -1,0 +1,123 @@
+<!DOCTYPE QNFA>
+<QNFA language="C#" extensions="cs" defaultLineMark="breakpoint">
+	
+	<context id="comment/multi" format="comment">
+		<start parenthesis="csharpcomment:open" indent="1" fold="1">/\*</start>
+		<stop parenthesis="csharpcomment:close" indent="1" fold="1">\*/</stop>
+	</context>
+	
+	<context id="comment/single" format="comment" stayOnLine="true" >
+		<start>//</start>
+		<stop exclusive="false">\n</stop>
+	</context>
+	
+	<context id="preprocessor" format="preprocessor" transparency="true" stayOnLine="true" >
+		<start>#</start>
+		<stop exclusive="false">\n</stop>
+		<escape>\\</escape>
+	</context>
+	
+	<context id="data/string" format="text" stayOnLine="true" >
+		<start>@?&quot;</start>
+		<stop>&quot;</stop>
+		<escape>\\</escape>
+	</context>
+	
+	<sequence parenthesis="round:open">(</sequence>
+	<sequence parenthesis="round:close">)</sequence>
+	<sequence parenthesis="curly:open" indent="1" fold="1">{</sequence>
+	<sequence parenthesis="curly:close" indent="1" fold="1">}</sequence>
+	<sequence parenthesis="square:open">\[</sequence>
+	<sequence parenthesis="square:close">\]</sequence>
+	
+	<list id="keywords/visibility" format="keyword">
+		<word>public</word>
+		<word>protected</word>
+		<word>private</word>
+	</list>
+	
+	<list id="keywords" format="keyword">
+		<word>abstract</word>
+		<word>as</word>
+		<word>base</word>
+		<word>bool</word>
+		<word>break</word>
+		<word>byte</word>
+		<word>case</word>
+		<word>catch</word>
+		<word>char</word>
+		<word>checked</word>
+		<word>class</word>
+		<word>const</word>
+		<word>continue</word>
+		<word>decimal</word>
+		<word>default</word>
+		<word>delegate</word>
+		<word>do</word>
+		<word>double</word>
+		<word>else</word>
+		<word>enum</word>
+		<word>event</word>
+		<word>explicit</word>
+		<word>extern</word>
+		<word>false</word>
+		<word>finally</word>
+		<word>fixed</word>
+		<word>float</word>
+		<word>for</word>
+		<word>foreach</word>
+		<word>goto</word>
+		<word>if</word>
+		<word>implicit</word>
+		<word>in</word>
+		<word>int</word>
+		<word>interface</word>
+		<word>internal</word>
+		<word>is</word>
+		<word>lock</word>
+		<word>long</word>
+		<word>namespace</word>
+		<word>new</word>
+		<word>null</word>
+		<word>object</word>
+		<word>operator</word>
+		<word>out</word>
+		<word>override</word>
+		<word>params</word>
+		<word>private</word>
+		<word>protected</word>
+		<word>public</word>
+		<word>readonly</word>
+		<word>ref</word>
+		<word>return</word>
+		<word>sbyte</word>
+		<word>sealed</word>
+		<word>short</word>
+		<word>sizeof</word>
+		<word>stackalloc</word>
+		<word>static</word>
+		<word>string</word>
+		<word>struct</word>
+		<word>switch</word>
+		<word>this</word>
+		<word>throw</word>
+		<word>true</word>
+		<word>try</word>
+		<word>typeof</word>
+		<word>uint</word>
+		<word>ulong</word>
+		<word>unchecked</word>
+		<word>unsafe</word>
+		<word>ushort</word>
+		<word>using</word>
+		<word>virtual</word>
+		<word>void</word>
+		<word>volatile</word>
+		<word>while</word>
+	</list>
+	
+	<word id="data/float" format="floats">-?[0-9]*.[0-9]+f?</word>
+	<word id="data/hexadecimal" format="numbers">0x[0-9a-fA-F]+</word>
+	<word id="data/octal" format="numbers">0[0-7]+</word>
+	<word id="data/decimal" format="numbers">-?[0-9]+</word>
+</QNFA>

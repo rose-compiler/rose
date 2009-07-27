@@ -1,5 +1,4 @@
-#include "rose.h"
-#include "RoseCodeEdit.h"
+#include "QCodeEditWidget.h"
 
 #include <QCodeEdit/qcodeedit.h>
 #include <QCodeEdit/qformatscheme.h>
@@ -8,8 +7,6 @@
 #include <QCodeEdit/document/qdocumentline.h>
 #include <QCodeEdit/widgets/qlinemarkpanel.h>
 
-#include <QDragEnterEvent>
-#include <QDropEvent>
 #include <QAction>
 #include <QDialogButtonBox>
 #include <QDialog>
@@ -19,14 +16,12 @@
 
 #include <QDebug>
 
-#include "SgNodeUtil.h"
-#include "SageMimeData.h"
 
 #include "qeditconfig.h"
 
-QLanguageFactory * RoseCodeEdit::m_languages=NULL;
+QLanguageFactory * QCodeEditWidget::m_languages=NULL;
 
-void RoseCodeEdit::init()
+void QCodeEditWidget::init()
 {
 
     QString qxsPath = ":/QCodeEdit/qxs";
@@ -71,7 +66,7 @@ void RoseCodeEdit::init()
 
 }
 
-QList<int> RoseCodeEdit::getBreakPoints()
+QList<int> QCodeEditWidget::getBreakPoints()
 {
     QList<int> result;
 
@@ -81,14 +76,14 @@ QList<int> RoseCodeEdit::getBreakPoints()
 
     int line=-1;
     while( (line = d->findNextMark(bpId,line+1)) != -1 )
-        result.push_back(line);
+        result.push_back(line+1);
 
 
     return result;
 }
 
 
-void RoseCodeEdit::enableBreakPointEdit(bool enable)
+void QCodeEditWidget::enableBreakPointEdit(bool enable)
 {
     QList<QPanel*> panels = editorWrapper->panels("Line marks");
     if(panels.isEmpty())
@@ -99,70 +94,52 @@ void RoseCodeEdit::enableBreakPointEdit(bool enable)
         p->setDisableClicks(!enable);
 }
 
-void RoseCodeEdit::markAsError(int line)
+/*
+void QCodeEditWidget::markAsError(int line)
 {
     QLineMarksInfoCenter * lm = QLineMarksInfoCenter::instance();
+    markLine(lm->markTypeId("error"),line);
+}
+
+void QCodeEditWidget::markAsBreakpoint(int line)
+{
+    QLineMarksInfoCenter * lm = QLineMarksInfoCenter::instance();
+    markLine(lm->markTypeId("breakpoint"),line);
+}
+
+void QCodeEditWidget::markAsWarning(int line)
+{
+    QLineMarksInfoCenter * lm = QLineMarksInfoCenter::instance();
+    markLine(lm->markTypeId("warning"),line);
+}
+*/
+void QCodeEditWidget::markLine(const QString & markStrId, int line)
+{
+    QLineMarksInfoCenter * lm = QLineMarksInfoCenter::instance();
+    int markId = lm->markTypeId(markStrId);
 
     QDocumentLine l = document()->line(line-1);
 
-    int markId = lm->markTypeId("error");
     if(! l.hasMark(markId))
         l.addMark(markId);
 
 }
 
-void RoseCodeEdit::markAsWarning(int line)
-{
-    QLineMarksInfoCenter * lm = QLineMarksInfoCenter::instance();
-
-    QDocumentLine l = document()->line(line-1);
-
-    int markId = lm->markTypeId("warning");
-    if(! l.hasMark(markId))
-        l.addMark(markId);
-}
-
-void RoseCodeEdit::loadCppFile(const QString & filename)
+void QCodeEditWidget::loadCppFile(const QString & filename)
 {
     // hack to always have C++ highlighting (problem: include files without ending)
     m_languages->setLanguage(this, filename + ".cpp");
     load(filename);
 }
 
-void RoseCodeEdit::gotoPosition(int row, int col)
+void QCodeEditWidget::gotoPosition(int row, int col)
 {
     QDocumentCursor cursor(document(),row-1,col-1);
     setCursor(cursor);
 }
 
-void RoseCodeEdit::setNode(SgNode * node)
-{
 
-    if(node==NULL)
-    {
-        //remove contents
-        load("");
-    }
-
-    if(isSgFile(node))
-    {
-        loadCppFile(node->get_file_info()->get_filenameString().c_str());
-        return;
-    }
-
-    SgLocatedNode* sgLocNode = isSgLocatedNode(node);
-    if(sgLocNode)
-    {
-        Sg_File_Info* fi = sgLocNode->get_startOfConstruct();
-
-        loadCppFile(fi->get_filenameString().c_str());
-        gotoPosition(fi->get_line(), fi->get_col());
-    }
-
-}
-
-
-void RoseCodeEdit::showEditorSettingsDialog()
+void QCodeEditWidget::showEditorSettingsDialog()
 {
     QDialog settingsDlg;
     QEditConfig * ec = new QEditConfig(&settingsDlg);
@@ -186,7 +163,7 @@ void RoseCodeEdit::showEditorSettingsDialog()
         ec->cancel();
 }
 
-QAction * RoseCodeEdit::getDisabledActions(const QString & name)
+QAction * QCodeEditWidget::getDisabledActions(const QString & name)
 {
     static QAction * actUndo  = new QAction(QIcon(":/undo.png"),QString(),0);
     static QAction * actRedo  = new QAction(QIcon(":/redo.png"),QString(),0);
@@ -203,34 +180,4 @@ QAction * RoseCodeEdit::getDisabledActions(const QString & name)
     if(name=="paste") return actPaste;
 
     return NULL;
-}
-
-
-// ---------------------- Drop Functionality -----------------------------------
-
-void RoseCodeEdit::dragEnterEvent(QDragEnterEvent * ev)
-{
-    if (ev->mimeData()->hasFormat(SG_NODE_MIMETYPE))
-    {
-        if( this != ev->source())
-        {
-            if(getSourceNodes(ev->mimeData()).size() > 0 )
-                ev->accept();
-            else
-                ev->ignore();
-        }
-    }
-}
-
-
-void RoseCodeEdit::dropEvent(QDropEvent *ev)
-{
-    if(ev->source()==this)
-        return;
-
-    SgNodeVector  nodes = getSourceNodes(ev->mimeData());
-    if(nodes.size()==0)
-        return;
-
-    setNode(nodes[0]);
 }

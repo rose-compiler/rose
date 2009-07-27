@@ -112,7 +112,7 @@ bool SubWindowFactory::eventFilter( QObject *object, QEvent *event )
 
         if( it != openWidgets.end() )
         {
-            openWidgets.remove( it );
+            openWidgets.erase( it );
 
             foreach( QWidget *w, openWidgets )
             {
@@ -123,7 +123,7 @@ bool SubWindowFactory::eventFilter( QObject *object, QEvent *event )
 
                 if( jt != linked.end() )
                 {
-                    linked.remove( jt );
+                    linked.erase( jt );
                 }
             }
             rebuildSystemMenus();
