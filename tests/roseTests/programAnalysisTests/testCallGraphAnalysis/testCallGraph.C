@@ -39,7 +39,11 @@ struct OnlyCurrentDirectory : public std::unary_function<bool,SgFunctionDeclarat
   bool operator() (SgFunctionDeclaration* node) const
   {
     std::string stringToFilter = ROSE_COMPILE_TREE_PATH+std::string("/tests"); 
+    std::string srcDir = ROSE_AUTOMAKE_TOP_SRCDIR; 
+
     if(string(node->get_file_info()->get_filename()).substr(0,stringToFilter.size()) == stringToFilter  )
+      return true;
+    else if( string(node->get_file_info()->get_filename()).substr(0,srcDir.size()) == srcDir  )
       return true;
     else
       return false;
@@ -128,6 +132,8 @@ main( int argc, char * argv[] ) {
 
      std::vector<std::string> keepDirs;
      keepDirs.push_back( ROSE_COMPILE_TREE_PATH+std::string("%") );
+     keepDirs.push_back(ROSE_AUTOMAKE_TOP_SRCDIR + std::string("%") ); 
+
      filterNodesKeepPaths(*gDB, keepDirs);
 
      std::vector<std::string> removeFunctions;
@@ -148,17 +154,6 @@ main( int argc, char * argv[] ) {
 
    }
 
-#if 0
-// DQ (7/12/2009): old code
-   ostringstream st;
-   st << "DATABASE.dot";
-   cout << "Generating DOT...\n";
-  
-   OutputDot::writeToDOTFile(newGraph, st.str()+"2","Incidence Graph", nodeLabel,edgeLabel );
-   generateDOT( *project );
-   cout << "Done with DOT\n";
-   GenerateDotGraph(newGraph, st.str());
-#else
 
 // Generate a filename for this whole project (even if it has more than one file)
    string generatedProjectName = SageInterface::generateProjectName( project );
@@ -181,7 +176,6 @@ main( int argc, char * argv[] ) {
    GenerateDotGraph(newGraph, uncoloredFileName.c_str());
 
    cout << "Done with DOT\n";
-#endif
 
    printf ("\nLeaving main program ... \n");
 

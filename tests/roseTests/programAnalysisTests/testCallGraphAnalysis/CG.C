@@ -184,7 +184,11 @@ struct OnlyCurrentDirectory : public std::unary_function<bool,SgFunctionDeclarat
   bool operator() (SgFunctionDeclaration* node) const
   {
     std::string stringToFilter = ROSE_COMPILE_TREE_PATH+std::string("/tests"); 
+    std::string srcDir = ROSE_AUTOMAKE_TOP_SRCDIR; 
+
     if(string(node->get_file_info()->get_filename()).substr(0,stringToFilter.size()) == stringToFilter  )
+      return true;
+    else if( string(node->get_file_info()->get_filename()).substr(0,srcDir.size()) == srcDir  )
       return true;
     else
       return false;
@@ -262,6 +266,7 @@ int main (int argc, char **argv){
     std::vector<std::string> keepDirs;
     keepDirs.push_back( ROSE_COMPILE_TREE_PATH+std::string("/tests%") );
 
+    keepDirs.push_back(ROSE_AUTOMAKE_TOP_SRCDIR + std::string("%") ); 
     filterNodesKeepPaths(*gDB, keepDirs);
 
     /*
