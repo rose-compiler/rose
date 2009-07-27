@@ -4,7 +4,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 roseQtWidgetsHeaderInstallPath = $(includedir)/qtWidgets
 
 ROSE_QT_WIDGETS_ROOT = $(top_srcdir)/src/roseExtensions/qtWidgets
-intern_codeEdit = $(ROSE_QT_WIDGETS_ROOT)/RoseCodeEdit/QCodeEdit
+intern_codeEdit = $(ROSE_QT_WIDGETS_ROOT)/QCodeEditWidget/QCodeEdit
 
 ROSE_QT_WIDGETS_INCLUDES =   -I$(ROSE_QT_WIDGETS_ROOT)\
                              -I$(ROSE_QT_WIDGETS_ROOT)/AsmInstructionBar\
@@ -23,12 +23,14 @@ ROSE_QT_WIDGETS_INCLUDES =   -I$(ROSE_QT_WIDGETS_ROOT)\
                              -I$(ROSE_QT_WIDGETS_ROOT)/ProjectManager\
                              -I$(ROSE_QT_WIDGETS_ROOT)/PropertyTreeWidget\
                              -I$(ROSE_QT_WIDGETS_ROOT)/QtGradientEditor\
+                             -I$(ROSE_QT_WIDGETS_ROOT)/QCodeEditWidget\
                              -I$(ROSE_QT_WIDGETS_ROOT)/RoseCodeEdit\
                              -I$(ROSE_QT_WIDGETS_ROOT)/RoseFileSelector\
                              -I$(ROSE_QT_WIDGETS_ROOT)/ProjectManager\
                              -I$(ROSE_QT_WIDGETS_ROOT)/SrcBinView\
                              -I$(ROSE_QT_WIDGETS_ROOT)/InstructionCountAnnotator\
                              -I$(ROSE_QT_WIDGETS_ROOT)/TaskSystem\
+                             -I$(ROSE_QT_WIDGETS_ROOT)/TreeModel\
                              -I$(ROSE_QT_WIDGETS_ROOT)/util\
                              -I$(ROSE_QT_WIDGETS_ROOT)/WidgetCreator \
                              -I$(intern_codeEdit)\

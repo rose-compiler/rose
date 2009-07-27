@@ -31,6 +31,7 @@ DbgMainWindow::DbgMainWindow(RtedDebug * dbgObj_,
                              QWidget * par)
     : QMainWindow(par),
       dbgObj(dbgObj_),
+      singleStep(true),
       typeModel(new ItemTreeModel(this)),
       typeProxyModel(NULL),
       memModel(new ItemTreeModel(this)),
@@ -120,20 +121,40 @@ void DbgMainWindow::on_actionOpen_triggered()
 
 void DbgMainWindow::on_actionEditorSettings_triggered()
 {
-    RoseCodeEdit::showEditorSettingsDialog();
+    QCodeEditWidget::showEditorSettingsDialog();
 }
+
+
 
 void DbgMainWindow::on_actionSingleStep_triggered()
 {
-	breakPoints = ui->codeEdit2->getBreakPoints();
-    dbgObj->on_singleStep();
+	singleStep=true;
+	breakPoints1[file1] = ui->codeEdit1->getBreakPoints();
+	breakPoints2[file2] = ui->codeEdit2->getBreakPoints();
+
+    dbgObj->startRtsi();
 }
 
 void DbgMainWindow::on_actionResume_triggered()
 {
-    breakPoints = ui->codeEdit2->getBreakPoints();
-    dbgObj->on_resume();
+    singleStep=false;
+    breakPoints1[file1] = ui->codeEdit1->getBreakPoints();
+    breakPoints2[file2] = ui->codeEdit2->getBreakPoints();
+
+    cout << "Saved Breakpoints:" << endl;
+    foreach(int bp, breakPoints1[file1])
+        cout << bp << " ";
+
+    qDebug() << "bp2";
+    foreach(int bp, breakPoints2[file2])
+        cout << bp << " ";
+
+
+    dbgObj->startRtsi();
 }
+
+
+
 
 
 void DbgMainWindow::on_chkShowStack_toggled()
@@ -147,37 +168,52 @@ void DbgMainWindow::on_chkShowHeap_toggled()
 }
 
 
-/*
-void DbgMainWindow::setEditorMark1(const QString & file, int row)
-{
-	qDebug() << "Setting mark file1 at" << row;
-    ui->codeEdit1->loadCppFile(file);
-    ui->codeEdit1->markAsWarning(row);
-    ui->codeEdit1->gotoPosition(row,0);
-}
-
-void DbgMainWindow::setEditorMark2(const QString & file, int row)
-{
-	qDebug() << "Setting mark file2 at" << row;
-
-    ui->codeEdit2->loadCppFile(file);
-    ui->codeEdit2->markAsWarning(row);
-    ui->codeEdit2->gotoPosition(row,0);
-}*/
-
-void DbgMainWindow::showIfBreakpoint(int lineNr)
-{
-	if(breakPoints.contains(lineNr))
-		show();
-}
 
 
 void DbgMainWindow::updateAllRsData()
 {
+
+    file1 = rs->getCodePosition().getFile().c_str();
+    file2 = rs->getCodePosition().getTransformedFile().c_str();
+
+
+    int row1 = rs->getCodePosition().getLineInOrigFile();
+    int row2 = rs->getCodePosition().getLineInTransformedFile();
+
+
+
+    if(!singleStep &&
+       !breakPoints1[file1].contains(row1) &&
+       !breakPoints2[file2].contains(row2))
+    {
+        dbgObj->startRtsi();
+        return;
+    }
+
+
+    ui->codeEdit1->loadCppFile(file1);
+    ui->codeEdit2->loadCppFile(file2);
+
+    foreach(int bp, breakPoints1[file1])
+        ui->codeEdit1->markAsBreakpoint(bp);
+
+    foreach(int bp, breakPoints2[file2])
+        ui->codeEdit2->markAsBreakpoint(bp);
+
+
+    ui->codeEdit1->gotoPosition(row1,0);
+    ui->codeEdit2->gotoPosition(row2,0);
+
+    ui->codeEdit1->markAsWarning(row1);
+    ui->codeEdit2->markAsWarning(row2);
+
+
+
     updateTypeDisplay();
     updateMemoryDisplay();
     updateStackDisplay();
     updatePointerDisplay();
+
 }
 void DbgMainWindow::updateTypeDisplay()
 {

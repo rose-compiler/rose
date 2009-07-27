@@ -55,19 +55,14 @@ void * RtedDebug::guiMain(void * rtedVoid)
 }
 
 
-void RtedDebug::on_singleStep()
+void RtedDebug::startRtsi()
 {
     leaveGui();
     enterGui();
+    cout << "StartRtsi" << endl;
     updateDialogData();
 }
 
-void RtedDebug::on_resume()
-{
-    leaveGui();
-    enterGui();
-    updateDialogData();
-}
 
 void RtedDebug::startGui()
 {

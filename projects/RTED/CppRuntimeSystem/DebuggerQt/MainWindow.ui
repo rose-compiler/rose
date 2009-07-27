@@ -20,8 +20,8 @@
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
-      <widget class="RoseCodeEdit" name="codeEdit1"/>
-      <widget class="RoseCodeEdit" name="codeEdit2"/>
+      <widget class="QCodeEditWidget" name="codeEdit1"/>
+      <widget class="QCodeEditWidget" name="codeEdit2"/>
      </widget>
     </item>
    </layout>
@@ -140,6 +140,9 @@
    </widget>
   </widget>
   <widget class="QToolBar" name="debugToolbar">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="windowTitle">
     <string>toolBar</string>
    </property>
@@ -295,10 +298,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>RoseCodeEdit</class>
+   <class>QCodeEditWidget</class>
    <extends>QFrame</extends>
-   <header>RoseCodeEdit.h</header>
-   <container>1</container>
+   <header>QCodeEditWidget.h</header>
   </customwidget>
   <customwidget>
    <class>MemoryGraphicsView</class>

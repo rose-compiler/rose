@@ -10,17 +10,20 @@ list_subdirectories( subdirs ${CMAKE_CURRENT_SOURCE_DIR} 1  EXCLUDE rose.h.gch Q
 #list_subdirectories( WIDGETS_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR} 0  EXCLUDE rose.h.gch QtGradientEditor )
 
 
-LIST( APPEND subdirs RoseCodeEdit/QCodeEdit 
-                     RoseCodeEdit/QCodeEdit/document
-                     RoseCodeEdit/QCodeEdit/qnfa
-                     RoseCodeEdit/QCodeEdit/widgets )
+LIST( APPEND subdirs QCodeEditWidget/QCodeEdit 
+                     QCodeEditWidget/QCodeEdit/document
+                     QCodeEditWidget/QCodeEdit/qnfa
+                     QCodeEditWidget/QCodeEdit/widgets )
 
 # All found folders are globbed for source-files
 add_qt_folders( WIDGETS_FILES ${subdirs})
 
 # Here some source files can be removed from library
 remove_files_from_list ( WIDGETS_FILES AsmSourceMapper/main.cpp
-                                       AstGraphWidget/treeTest.cpp )
+                                       AstGraphWidget/treeTest.cpp
+                                       util/QRoseComponentProxy.h
+                                       util/QRoseComponentProxy.cpp 
+                                       util/moc_QRoseComponentProxy.cxx)
                                 
 add_subdirectory ( QtGradientEditor )
                                         
@@ -32,8 +35,6 @@ include_directories( ${subdirs} QtGradientEditor )
 # Include build-dir (for generated ui_*.h files)
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} ${ROSE_INCLUDE_DIRS} )
 
-# QCodeEdit has own CMakeLists
-#add_subdirectory ( RoseCodeEdit/QCodeEdit )
 
 # -------------------------------- WIDGETS LIBRARY ---- -------------------------------
 

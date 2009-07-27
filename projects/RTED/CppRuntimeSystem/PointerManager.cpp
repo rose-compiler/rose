@@ -37,6 +37,7 @@ bool PointerInfo::operator< (const PointerInfo & other ) const
     return source < other.source;
 }
 
+
 void PointerInfo::setTargetAddress(addr_type newAddr, bool doChecks)
 {
     RuntimeSystem * rs = RuntimeSystem::instance();
@@ -111,13 +112,37 @@ ostream& operator<< (ostream &os, const PointerInfo & m)
 // -------------------------- PointerManager -------------------------------
 
 
-void PointerManager::createPointer(addr_type sourceAddress, RsType * type)
+void PointerManager::createDereferentiableMem(addr_type sourceAddress, RsType * type)
 {
     PointerInfo * pi = new PointerInfo(sourceAddress,0,type);
-    pointerInfoSet.insert(pi);
+    pair<PointerSet::iterator, bool>  res = pointerInfoSet.insert(pi);
+    if(!res.second)//pointer was already registered
+    {
+        delete pi;
+        return;
+    }
+
 
     typedef TargetToPointerMap::value_type ValType;
     targetToPointerMap.insert(ValType(0,pi));
+}
+
+
+void PointerManager::createPointer(addr_type baseAddr, RsType * type)
+{
+    // If type is a pointer regsiter it
+    RsPointerType * pt = dynamic_cast<RsPointerType*>(type);
+    if(pt)
+        createDereferentiableMem(baseAddr,pt->getBaseType());
+
+    // arrays are 'pseudo-pointers'
+    RsArrayType * at = dynamic_cast<RsArrayType*>(type);
+    if(at)
+        createDereferentiableMem(baseAddr,at->getBaseType());
+
+    // If compound type, break down to basic types
+    for(int i = 0; i < type->getSubtypeCount(); i++)
+        createPointer(baseAddr + type->getSubtypeOffset(i), type->getSubtype(i) );
 }
 
 

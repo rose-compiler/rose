@@ -100,6 +100,7 @@ void RuntimeSystem::createVariable(addr_type address,
                                    const string & mangledName,
                                    const string & typeString)
 {
+    //TODO deprecated, because with typeString no pointer and arrays can be registered
     stackManager.addVariable(new VariablesType(name,mangledName,typeString,address));
 }
 
@@ -112,17 +113,7 @@ void RuntimeSystem::createVariable(addr_type address,
 }
 
 
-/// Convenience function which also calls createPointer
-void RuntimeSystem::createVariable( addr_type address,
-                                    const string & name,
-                                    const string & mangledName,
-                                    const string & typeString,
-                                    const string & pointerType)
-{
-    stackManager.addVariable(new VariablesType(name,mangledName,typeString,address));
-    if(pointerType.size() > 0)
-        createPointer(address,pointerType);
-}
+
 
 void RuntimeSystem::createArray( addr_type address,
                                  const std::string & name,
@@ -166,25 +157,6 @@ void RuntimeSystem::endScope ()
 
 
 // --------------------- Pointer Tracking---------------------------------
-
-void RuntimeSystem::createPointer(addr_type sourceAddr, RsType * type)
-{
-    pointerManager.createPointer(sourceAddr,type);
-}
-
-void RuntimeSystem::createPointer(addr_type sourceAddr, const string & typeStr)
-{
-    RsType * type = typeSystem.getTypeInfo(typeStr);
-    if(!type)    //TODO make this as assert
-    {
-        cerr << "SEVERE WARNING: Called createPointer with unknown type " << typeStr << endl;
-        cerr << "Pointer is not created" << endl;
-        return;
-    }
-
-
-    pointerManager.createPointer(sourceAddr,type);
-}
 
 
 void RuntimeSystem::registerPointerChange(addr_type source, addr_type target, bool checks)

@@ -21,21 +21,9 @@ nodist_libDebuggerQt_la_SOURCES = moc_MainWindow.cxx\
 BUILT_SOURCES = ui_MainWindow.h
 
 
-#libRtedQt_la_LIBADD = $(top_builddir)/src/roseExtensions/qtWidgets/libRoseQtWidgets.la
-libDebuggerQt_la_LIBADD = $(ROSE_LIBS)
+libDebuggerQt_la_LIBADD = $(top_builddir)/src/roseExtensions/qtWidgets/TreeModel/libTreeModel.la\
+                      $(top_builddir)/src/roseExtensions/qtWidgets/QCodeEditWidget/libQCodeEditWidget.la\
+		      $(QT_LDFLAGS) 
+		       
 
-
-
-#bin_PROGRAMS = rtedQt
-
-#rtedQt_SOURCES = CustomListModels.cpp\
-#                 DebugDialog.cpp\
-#                 rted_qt.cpp 
-
-#nodist_rtedQt_SOURCES = moc_DebugDialog.cxx\
-#                        ui_DebugDialog.h\
-#                        qrc_res.cpp
-
-#rtedQt_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS)                              
-                              
 endif

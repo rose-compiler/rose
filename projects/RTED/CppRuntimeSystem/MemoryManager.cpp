@@ -175,6 +175,10 @@ void MemoryType::accessMemWithType(addr_type offset, RsType * type)
     typeInfo.erase(itLower,itUpper);
 
     typeInfo.insert(make_pair<int,RsType*>(offset,type));
+
+    // if we have knowledge about the type in memory, we also need to update the
+    // information about "dereferentiable" memory regions i.e. pointer
+    RuntimeSystem::instance()->getPointerManager()->createPointer(startAddress+offset,type);
     return;
 }
 

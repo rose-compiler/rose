@@ -10,7 +10,18 @@ class MemoryType;
 class RsType;
 
 
+/*
+#include <QGraphicsRectItem>
 
+class RsTypeRect : public QGraphicsRectItem
+{
+    public:
+        RsTypeRect(RsType * t, QGraphicsItem * parent);
+
+
+    protected:
+        RsType * t;
+};*/
 
 class MemoryGraphicsView : public QGraphicsView
 {

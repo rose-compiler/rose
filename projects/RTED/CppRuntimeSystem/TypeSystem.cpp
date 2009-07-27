@@ -44,6 +44,14 @@ bool TypeSystem::registerType(RsType * t)
 
 RsType * TypeSystem::getTypeInfo(const string & name)
 {
+
+    //TODO remove SgPointerType and SgArrayType from BasicTypes
+    if(name == "SgPointerType" || name == "SgArrayType" )
+    {
+        cerr << "getTypeInfo for " << name << "was called:" << endl;
+        cerr << "SEVERE WARNING: Pointer and Arrays have now be registered differently!" << endl;
+    }
+
     InvalidType comparisonObject(name);
 
     TypeSet::iterator i = types.find(&comparisonObject);
@@ -54,14 +62,66 @@ RsType * TypeSystem::getTypeInfo(const string & name)
 }
 
 
-RsType * TypeSystem::getArrayType(const string & name, size_t size)
+RsArrayType * TypeSystem::getArrayType(const string & name, size_t size)
 {
     RsType * bt = getTypeInfo(name);
+
     assert( bt );
-    getArrayType(bt,size);
+    return getArrayType(bt,size);
 }
 
 
+RsArrayType * TypeSystem::getArrayType(RsType * bt, size_t size)
+{
+    map<size_t, RsArrayType*> & m = arrTypeMap[bt];
+
+    map<size_t,RsArrayType*>::iterator it = m.find(size);
+    if( it == m.end() )
+    {
+        RsArrayType * arrType = new RsArrayType(bt,size);
+        m.insert(make_pair<size_t,RsArrayType*>(size,arrType));
+        return arrType;
+    }
+    else
+        return it->second;
+}
+
+RsPointerType * TypeSystem::getPointerType(const string & name, size_t indirection)
+{
+    RsType * bt = getTypeInfo(name);
+    return getPointerType(bt,indirection);
+}
+
+
+RsPointerType * TypeSystem::getPointerType(RsType * bt, size_t indirection)
+{
+    assert(indirection >= 1);
+
+    map<size_t, RsPointerType * > & m = ptrTypeMap[bt];
+
+    map<size_t,RsPointerType*>::iterator it = m.find(indirection);
+    if( it == m.end() )
+    {
+        RsType * base = NULL;
+        // multiple pointers are represented as pointer which have a pointer basetype
+        // build these base-types recursively
+        if(indirection > 1)
+            base = getPointerType(bt,indirection-1);
+        else
+            base = bt;
+
+        RsPointerType * ptrType = new RsPointerType(base);
+        m.insert(make_pair<size_t,RsPointerType*>(indirection,ptrType));
+        return ptrType;
+    }
+    else
+        return it->second;
+
+}
+
+
+
+/*
 RsType * TypeSystem::getArrayType(RsType * bt, size_t size)
 {
     string arrName (RsArrayType::getArrayTypeName(bt,size));
@@ -77,7 +137,8 @@ RsType * TypeSystem::getArrayType(RsType * bt, size_t size)
     }
     else
         return *i;
-}
+}*/
+
 
 
 

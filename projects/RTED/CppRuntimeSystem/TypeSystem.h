@@ -3,6 +3,7 @@
 #define TYPESYSTEM_H
 
 #include <set>
+#include <map>
 #include <iostream>
 
 #include "Util.h"
@@ -30,8 +31,13 @@ class TypeSystem
         RsType * getTypeInfo(const std::string & name);
 
 
-        RsType * getArrayType(RsType * baseType, size_t size);
-        RsType * getArrayType(const std::string & baseTypeName, size_t size);
+        RsArrayType * getArrayType(RsType * baseType, size_t size);
+        RsArrayType * getArrayType(const std::string & baseTypeName, size_t size);
+
+
+        RsPointerType * getPointerType(RsType * baseType, size_t levelOfIndirection=1);
+        RsPointerType * getPointerType(const std::string & baseTypeName, size_t levelOfIndirection=1);
+
 
         /// Removes all registered datatypes, and adds the base datatypes
         void clearStatus();
@@ -45,6 +51,13 @@ class TypeSystem
         const_iterator end()   const { return types.end();   }
     protected:
         TypeSet types;
+
+        ///arrTypeMap[baseType][arraySize] returns the ArrayType
+        std::map<RsType *,std::map<size_t, RsArrayType*> >   arrTypeMap;
+
+        ///ptrTypeMap[baseType][indirectionLevel] return PointerType
+        std::map<RsType *,std::map<size_t, RsPointerType*> > ptrTypeMap;
+
 };
 
 std::ostream& operator<< (std::ostream &os, const TypeSystem & m);

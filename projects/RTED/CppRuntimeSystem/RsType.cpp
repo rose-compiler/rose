@@ -472,6 +472,19 @@ RsBasicType::SgType RsBasicType::getBaseType(int i)
 }
 
 
+// ----------------------------------- RsPointerType --------------------------------------
+
+
+RsPointerType::RsPointerType(RsType * baseType_)
+    : RsBasicType(SgPointerType),
+      baseType(baseType_)
+{
+}
+
+string RsPointerType::getDisplayName() const
+{
+    return baseType->getDisplayName() + "*";
+}
 
 
 

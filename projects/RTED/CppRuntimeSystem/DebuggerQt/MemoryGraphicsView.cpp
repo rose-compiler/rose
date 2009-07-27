@@ -50,6 +50,15 @@ void MemoryGraphicsView::setMemoryType(MemoryType * _mt)
         p.setWidth(2);
         byteBoxes[b]->setBrush(bgBrush);
         byteBoxes[b]->setPen(p);
+
+        //Addr label
+        addr_type curAddr = mt->getAddress() +b;
+        if( curAddr % 4 ==0 )
+        {
+            QString addrStr = QString("0x%1").arg(curAddr,0,16);
+            QGraphicsTextItem * ti = new QGraphicsTextItem(addrStr, byteBoxes[b]);
+            ti->moveBy(- ti->boundingRect().width()/2, -BOX_HEIGHT);
+        }
     }
 
     MemoryType::TypeInfoMap::const_iterator it = mt->getTypeInfoMap().begin();

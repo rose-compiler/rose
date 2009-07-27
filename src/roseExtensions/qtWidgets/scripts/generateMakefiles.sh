@@ -13,9 +13,11 @@ SUBDIRS="AsmInstructionBar \
           NodeInfoWidget \
           ProjectManager \
           PropertyTreeWidget \
+          QCodeEditWidget\
           RoseCodeEdit \
           RoseFileSelector \
           TaskSystem \
+          TreeModel \
           util \
           WidgetCreator"
 
@@ -52,7 +54,7 @@ done
 for folder in $QROSEDIRS
 do
     echo "Writing Makefile to " ${folder}
-    cd ${srcdir}/RoseCodeEdit/QCodeEdit/${folder} && ${genScript} headertarget QCodeEdit > Makefile.am
+    cd ${srcdir}/QCodeEditWidget/QCodeEdit/${folder} && ${genScript} headertarget QCodeEdit > Makefile.am
 done
      
 

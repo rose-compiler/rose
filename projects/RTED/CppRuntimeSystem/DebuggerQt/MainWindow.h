@@ -2,7 +2,7 @@
 #define DEBUG_DIALOG_H
 
 #include <QMainWindow>
-
+#include <QMap>
 
 
 class RtedDebug;
@@ -31,7 +31,7 @@ class DbgMainWindow : public QMainWindow
         void addMessage(const QString & msg);
 
         /// shows the dialog if a breakpoint was set in instrumented file
-        void showIfBreakpoint(int lineNr);
+        //void showIfBreakpoint(int lineNr);
 
 
         void updateAllRsData();
@@ -50,6 +50,7 @@ class DbgMainWindow : public QMainWindow
         void on_chkShowHeap_toggled();
 
         void on_treeMemorySystem_clicked(const QModelIndex & index);
+
     protected:
 
         void updateTypeDisplay();
@@ -60,7 +61,13 @@ class DbgMainWindow : public QMainWindow
         RuntimeSystem * rs;
         RtedDebug *     dbgObj;
 
-        QList<int> breakPoints;
+        QString file1;
+        QString file2;
+
+        bool singleStep;
+
+        QMap<QString, QList<int> > breakPoints1;
+        QMap<QString, QList<int> > breakPoints2;
 
         Ui::MainWindow * ui;
 

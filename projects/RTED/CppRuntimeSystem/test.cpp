@@ -472,21 +472,23 @@ void testLostMemRegion()
 {
     //
     TEST_INIT("Testing detection of lost mem-regions");
+    TypeSystem * ts = rs->getTypeSystem();
+
     rs->createMemory(10,2*sizeof(int));
     rs->createMemory(18,2*sizeof(int));
 
     addr_type addr=100;
     int ptrSize = sizeof(void*);
     rs->beginScope("Scope1");
-        rs->createVariable(addr+=ptrSize,"p1_to_10","mangled_p1_to_10","SgPointerType","SgTypeInt");
+        rs->createVariable(addr+=ptrSize,"p1_to_10","mangled_p1_to_10",ts->getPointerType("SgTypeInt"));
         rs->registerPointerChange("mangled_p1_to_10",10);
 
-        rs->createVariable(addr+=ptrSize,"p1_to_18","mangled_p1_to_18","SgPointerType","SgTypeInt");
+        rs->createVariable(addr+=ptrSize,"p1_to_18","mangled_p1_to_18",ts->getPointerType("SgTypeInt"));
         rs->registerPointerChange("mangled_p1_to_18",18);
 
 
         rs->beginScope("Scope2");
-            rs->createVariable(addr+=ptrSize,"p2_to_10","mangled_p2_to_10","SgPointerType","SgTypeInt");
+            rs->createVariable(addr+=ptrSize,"p2_to_10","mangled_p2_to_10",ts->getPointerType("SgTypeInt"));
             rs->registerPointerChange("mangled_p2_to_10",10);
         rs->endScope();
 
@@ -517,18 +519,20 @@ void testPointerChanged()
     rs->createMemory(10,2*sizeof(int));
     rs->createMemory(18,2*sizeof(int));
 
+    TypeSystem * ts = rs->getTypeSystem();
 
     // Case1: change of allocation chunk
     addr_type addr=100;
     int ptrSize = sizeof(void*);
     rs->beginScope("Scope1");
-        rs->createVariable(addr+=ptrSize,"p1_to_10","mangled_p1_to_10","SgPointerType","SgTypeInt");
+
+        rs->createVariable(addr+=ptrSize,"p1_to_10","mangled_p1_to_10", ts->getPointerType("SgTypeInt"));
         rs->registerPointerChange("mangled_p1_to_10",10);
 
-        rs->createVariable(addr+=ptrSize,"p2_to_10","mangled_p2_to_10","SgPointerType","SgTypeInt");
+        rs->createVariable(addr+=ptrSize,"p2_to_10","mangled_p2_to_10",ts->getPointerType("SgTypeInt"));
         rs->registerPointerChange("mangled_p2_to_10",10);
 
-        rs->createVariable(addr+=ptrSize,"p1_to_18","mangled_p1_to_18","SgPointerType","SgTypeInt");
+        rs->createVariable(addr+=ptrSize,"p1_to_18","mangled_p1_to_18",ts->getPointerType("SgTypeInt"));
         rs->registerPointerChange("mangled_p1_to_18",18);
 
         try{ rs->registerPointerChange("mangled_p1_to_10",18,true); }
@@ -544,7 +548,6 @@ void testPointerChanged()
     // Case2: change of "type-chunk"
     rs->beginScope("Scope2");
         struct A { int arr[10]; int behindArr; };
-        TypeSystem * ts = rs->getTypeSystem();
         RsClassType * typeA = new RsClassType("A",sizeof(A));
         typeA->addMember("arr",ts->getArrayType("SgTypeInt",10), offsetof(A,arr));
         typeA->addMember("behindArr",ts->getTypeInfo("SgTypeInt"),offsetof(A,behindArr));
@@ -554,7 +557,7 @@ void testPointerChanged()
         // Create an instance of A on stack
         rs->createVariable(0x42,"instanceOfA","mangled","A");
 
-        rs->createVariable(0x100,"intPtr","mangled_intPtr","SgPointerType","SgTypeInt");
+        rs->createVariable(0x100,"intPtr","mangled_intPtr",ts->getPointerType("SgTypeInt"));
         rs->registerPointerChange("mangled_intPtr",0x42);
 
         try{ rs->registerPointerChange("mangled_intPtr",0x42 + 10*sizeof(int),true); }
@@ -570,10 +573,13 @@ void testPointerChanged()
 void testInvalidPointerAssign()
 {
     TEST_INIT("Testing Invalid Pointer assign");
+
+    TypeSystem * ts = rs->getTypeSystem();
+
     rs->beginScope("Scope2");
         // Create an instance of A on stack
         rs->createVariable(0x42,"instanceOfA","mangled","SgTypeDouble");
-        rs->createVariable(0x100,"intPtr","mangled_intPtr","SgPointerType","SgTypeInt");
+        rs->createVariable(0x100,"intPtr","mangled_intPtr",ts->getPointerType("SgTypeInt"));
         // Try to access double with an int ptr
         try { rs->registerPointerChange("mangled_intPtr",0x42); }
         TEST_CATCH ( RuntimeViolation::INVALID_TYPE_ACCESS )
@@ -585,6 +591,7 @@ void testInvalidPointerAssign()
 void testPointerTracking()
 {
     TEST_INIT("Testing Pointer tracking")
+
     TypeSystem * ts = rs->getTypeSystem();
 
     // class A { int arr[2]; int intBehindArr; }
@@ -596,7 +603,7 @@ void testPointerTracking()
     rs->beginScope("TestScope");
     rs->createVariable(42,"instanceOfA","mangled","A");
 
-    rs->createVariable(100,"pointer","mangledPointer","SgPointerType","A");
+    rs->createVariable(100,"pointer","mangledPointer",ts->getPointerType("A"));
 
     //rs->setQtDebuggerEnabled(true);
     //rs->checkpoint(SourcePosition());
@@ -611,6 +618,7 @@ void testPointerTracking()
 void testArrayAccess()
 {
     TEST_INIT("Testing Heap Array")
+    TypeSystem * ts = rs->getTypeSystem();
 
     addr_type heapAddr =0x42;
     rs->createMemory(heapAddr,10*sizeof(int));
@@ -619,7 +627,7 @@ void testArrayAccess()
     rs->beginScope("Scope");
 
     addr_type pointerAddr = 0x100;
-    rs->createVariable(0x100,"intPointer","mangled_intPointer","SgPointerType","SgTypeInt");
+    rs->createVariable(0x100,"intPointer","mangled_intPointer",ts->getPointerType("SgTypeInt"));
     rs->registerPointerChange(pointerAddr,heapAddr,false);
 
     //simulate iteration over array
@@ -1107,9 +1115,15 @@ int main(int argc, char ** argv)
         exit( 1);
     }
 
-    int a [10];
-
     return 0;
 }
 
+
+
 // vim:sw=4 ts=4 tw=80 et sta fdm=marker:
+
+
+
+
+
+

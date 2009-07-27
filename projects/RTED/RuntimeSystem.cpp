@@ -301,14 +301,19 @@ void RuntimeSystem_ensure_allocated_and_initialized( const void* mem, size_t siz
   if( NULL != rs->getMemManager()->findContainingMem( (addr_type) mem))
     return;
 
+
+  rs->createArray((addr_type)mem,
+                  "StringConstant",
+                  "MangledStringConstant",
+                  "SgTypeChar",size);
+
+  /*
   rs->createVariable(
       (addr_type) mem,
       "StringConstant",
       "MangledStringConstant",
-      "SgArrayType",
-      "SgTypeChar" // tps: added this
-  );
-  rs->createMemory( (addr_type) mem, size);
+       rs->getTypeSystem()->getPointerType("SgTypeChar")
+  );*/
   rs->checkMemWrite( (addr_type) mem, size);
 }
 
@@ -630,25 +635,38 @@ void RuntimeSystem_roseCreateVariable( const char* name,
 	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
 	rs->checkpoint( SourcePosition(filename,atoi(line), atoi(lineTransformed)));
 
+
 	string type_name = type;
-	if( type_name == "SgClassType" )
-	    type_name = class_name;
+    if (type_name == "SgClassType")
+        type_name = class_name;
 
-  string base_type = basetype;
-	if( base_type == "SgClassType" )
-	    base_type = class_name;
+    string base_type = basetype;
+    if (base_type == "SgClassType")
+        base_type = class_name;
 
 
-  if( type_name == "SgArrayType" ) {
-    rs -> createArray( address, name, mangled_name, base_type, size );
-  } else {
-    rs->createVariable(address,name,mangled_name,type_name, basetype);
-  }
-  if( 1 == init ) {
-    // e.g. int x = 3
-    // we should flag &x..&x+sizeof(x) as initialized
-    rs->checkMemWrite( address, size );
-  }
+    if(type_name == "SgArrayType")
+    {
+        rs->createArray( address, name, mangled_name, base_type, size );
+    }
+    else
+    {
+        RsType * rsType;
+        if(string(basetype) != "")
+            rsType = rs->getTypeSystem()->getPointerType(basetype);
+        else
+            rsType = rs->getTypeSystem()->getTypeInfo(type);
+
+        rs->createVariable(address,name,mangled_name,rsType);
+    }
+
+
+    if (1 == init)
+    {
+        // e.g. int x = 3
+        // we should flag &x..&x+sizeof(x) as initialized
+        rs->checkMemWrite(address, size);
+    }
 }
 
 

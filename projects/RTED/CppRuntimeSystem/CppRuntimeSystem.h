@@ -50,6 +50,8 @@ class RuntimeSystem
         /// this information is used for printing errors/warnings
         void checkpoint(const SourcePosition & pos) ;
 
+        const SourcePosition & getCodePosition() const {return curPos; }
+
         /// if testing mode is true exceptions are thrown when a violations occurs
         /// otherwise abort is called, default false
         void setTestingMode(bool b) { testingMode = b;}
@@ -76,13 +78,6 @@ class RuntimeSystem
                             const std::string & name,
                             const std::string & mangledName,
                             const std::string & typeString);
-
-        /// Convenience function which also calls createPointer
-        void createVariable(addr_type address,
-                            const std::string & name,
-                            const std::string & mangledName,
-                            const std::string & typeString,
-                            const std::string & pointerType);
 
         void createVariable(addr_type address,
                             const std::string & name,
@@ -117,12 +112,6 @@ class RuntimeSystem
         /// @param startAddress the address to be freed (argument of free/delete)
         void freeMemory(addr_type startAddress, bool onStack = false);
 
-
-
-        /// Tells the RuntimeSystem that at sourceAddr another address is stored
-        /// @param type RsType of target type
-        void createPointer(addr_type sourceAddr, RsType * type);
-        void createPointer(addr_type sourceAddr, const std::string & typeStr);
 
         /// Call this function when the value of a pointer changed i.e. the address a pointer points to
         /// this concept applies not only to pointer, but to all memory regions which can be dereferenced

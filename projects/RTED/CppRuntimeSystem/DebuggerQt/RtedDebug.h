@@ -45,8 +45,7 @@ class RtedDebug
         /// this function is called only from runtimeSystem thread
         void startGui();
 
-        void on_singleStep();
-        void on_resume();
+        void startRtsi();
 
     protected:
         static void * guiMain(void* rtedQt);

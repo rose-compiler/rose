@@ -38,10 +38,23 @@ std::string SourcePosition::toString() const
 
 ostream& operator<< (ostream &os, const SourcePosition & m)
 {
-    os << m.file << "(" << m.line1 << "," << m.line2 << ")";
+    os << m.getFile() << "("
+       << m.getLineInOrigFile() << ","
+       << m.getLineInTransformedFile() << ")";
     return os;
 }
 
+string SourcePosition::getTransformedFile() const
+{
+    int pos = file.find_last_of(".");
+    string fileWithoutSuffix  = file.substr(0,pos);
+
+    string suffix;
+    if(pos <= file.size() )
+        suffix = file.substr(pos);
+
+    return fileWithoutSuffix + "_rose" + suffix;
+}
 
 
 

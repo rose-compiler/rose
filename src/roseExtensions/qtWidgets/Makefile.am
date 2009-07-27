@@ -19,10 +19,12 @@ SUBDIRS = AsmInstructionBar\
           ProjectManager\
           PropertyTreeWidget\
 	  QtGradientEditor\
+          QCodeEditWidget\
           RoseCodeEdit\
           RoseFileSelector\
 	  SrcBinView \
           TaskSystem\
+          TreeModel\
           util \
 	  WidgetCreator
                     
@@ -51,12 +53,14 @@ libRoseQtWidgets_la_LIBADD   =  $(buildDir)/AsmInstructionBar/libAsmInstructionB
                                 $(buildDir)/MetricsKiviat/libMetricsKiviat.la \
                                 $(buildDir)/NodeInfoWidget/libNodeInfoWidget.la \
                                 $(buildDir)/ProjectManager/libProjectManager.la \
+                                $(buildDir)/QCodeEditWidget/libQCodeEditWidget.la\
 				$(buildDir)/QtGradientEditor/libQtGradientEditor.la \
                                 $(buildDir)/PropertyTreeWidget/libPropertyTreeWidget.la \
                                 $(buildDir)/RoseCodeEdit/libRoseCodeEdit.la \
                                 $(buildDir)/RoseFileSelector/libRoseFileSelector.la \
                                 $(buildDir)/SrcBinView/libSrcBinView.la \
                                 $(buildDir)/TaskSystem/libTaskSystem.la \
+			        $(buildDir)/TreeModel/libTreeModel.la \
                                 $(buildDir)/util/libutil.la \
 				$(buildDir)/WidgetCreator/libWidgetCreator.la
 

@@ -347,6 +347,36 @@ class RsBasicType : public RsType
         SgType      type;
 };
 
+/**
+ * Info structure for pointers
+ *     the type of the BasicType still stays SgPointerType ( so the size information is still correct)
+ *     additionally the target/base-type is stored
+ */
+class RsPointerType : public RsBasicType
+{
+    public:
+        RsPointerType(RsType * baseType);
+        virtual ~RsPointerType() {}
+
+
+        virtual std::string getDisplayName() const;
+
+        RsType * getBaseType() const  { return baseType; }
+
+    protected:
+        /// Type the pointer points to
+        /// pointer may point to other RsPointerType's
+        /// to represent double/multiple pointers
+        RsType * baseType;
+};
+
+
+
+
+
+
+
+
 #include <cassert>
 /// Class with has a valid name
 /// mostly used for lookup as comparison object

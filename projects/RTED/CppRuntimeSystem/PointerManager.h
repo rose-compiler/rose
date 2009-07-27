@@ -59,9 +59,17 @@ std::ostream& operator<< (std::ostream &os, const PointerInfo & m);
 class PointerManager
 {
     public:
-        /// Registers a memory region which stores another address
-        /// second parameter specifies the type of the pointer-Target
-        void createPointer(addr_type sourceAddress, RsType * type);
+        /// Registers a memory region  from sourceAddress to sourceAddress+sizeof(void*)
+        /// which stores another address
+        /// second parameter specifies the type of the target
+        void createDereferentiableMem(addr_type sourceAddress, RsType * targetType);
+
+        /// Call this function if a class was instantiated
+        /// it iterates over the subtypes and if they are pointer or arrays
+        /// they get registered as dereferentiable mem-regions
+        /// @param classBaseAddr  the address where the class was instantiated
+        /// @param type class type
+        void createPointer(addr_type classBaseAddr, RsType * type);
 
         /// Delete a registered pointer
         void deletePointer(addr_type sourceAddress);

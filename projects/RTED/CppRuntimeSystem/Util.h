@@ -25,17 +25,26 @@ struct PointerCmpFunc
 /**
  * This class represents a position in a sourcefile
  */
-struct SourcePosition
+class SourcePosition
 {
-    SourcePosition();
-    SourcePosition(const std::string & file);
-    SourcePosition(const std::string & file,int line1, int line2);
+    public:
+        SourcePosition();
+        SourcePosition(const std::string & file);
+        SourcePosition(const std::string & file,int line1, int line2);
 
-    std::string toString() const;
+        std::string toString() const;
 
-    std::string file;   ///< Absolute Path of source-file
-    int line1;          ///< line number in sourcefile
-    int line2;          ///< line number in transformed sourcefile
+        std::string getTransformedFile() const;
+
+        const std::string & getFile() const { return file; }
+
+        int getLineInOrigFile() const        { return line1; }
+        int getLineInTransformedFile() const { return line2; }
+
+    protected:
+        std::string file;   ///< Absolute Path of source-file
+        int line1;          ///< line number in sourcefile
+        int line2;          ///< line number in transformed sourcefile
 };
 std::ostream& operator<< (std::ostream &os, const SourcePosition & m);
 
