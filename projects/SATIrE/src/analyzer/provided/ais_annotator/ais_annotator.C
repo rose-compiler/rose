@@ -191,6 +191,133 @@ void addUnreachabilityAnnotations(Program *program)
 
 void addDataPointstoAnnotations(Program *program)
 {
+    class DataPointstoAnnotator: private IcfgTraversal,
+                                 private AstSimpleProcessing
+    {
+    public:
+        void run()
+        {
+            IcfgTraversal::traverse(icfg);
+        }
+
+        DataPointstoAnnotator(Program *program)
+          : program(program), icfg(program->icfg),
+            pto(icfg->contextSensitivePointsToAnalysis),
+            globalVarsyms(icfg->globals.begin(), icfg->globals.end()),
+            currentContext(0, 0, icfg)
+        {
+        }
+
+    private:
+        Program *program;
+        CFG *icfg;
+        PointsToAnalysis *pto;
+
+        std::set<ContextInformation::Context> contextsWithNonglobalDerefs;
+        std::map<ContextInformation::Context,
+                 std::set<SgVariableSymbol *> > contextDerefMap;
+        std::set<SgVariableSymbol *> globalVarsyms;
+        ContextInformation::Context currentContext;
+
+        void icfgVisit(SgNode *node)
+        {
+            if (is_icfg_statement())
+            {
+                int arity = kfg_arity_id(get_node_id());
+                for (int position = 0; position < arity; position++)
+                {
+                    currentContext = ContextInformation::Context(
+                            get_node_procnum(), position, icfg);
+                 // no need to traverse in contexts that we have already
+                 // given up on
+                    if (contextsWithNonglobalDerefs.find(currentContext) !=
+                        contextsWithNonglobalDerefs.end())
+                        continue;
+                    else
+                        AstSimpleProcessing::traverse(node, preorder);
+                }
+            }
+        }
+
+        void visit(SgNode *node)
+        {
+         // inside an AST fragment
+            switch (node->variantT())
+            {
+            case V_SgPointerDerefExp:
+                dereferenceChild(node, SgPointerDerefExp_operand_i);
+                break;
+            case V_SgPntrArrRefExp:
+             // assume the pointer operand is on the lhs
+                dereferenceChild(node, SgPntrArrRefExp_lhs_operand_i);
+                break;
+            case V_SgArrowExp:
+                dereferenceChild(node, SgArrowExp_lhs_operand_i);
+                break;
+            }
+        }
+
+        void dereferenceChild(SgNode *node, size_t index)
+        {
+            SgExpression *expression
+                = isSgExpression(node->get_traversalSuccessorByIndex(index));
+            PointsToAnalysis::Location *loc
+                = pto->base_location(
+                        pto->expressionLocation(expression, currentContext));
+            const std::list<SgSymbol *> &symbols = pto->location_symbols(loc);
+            std::list<SgSymbol *>::const_iterator s;
+            for (s = symbols.begin(); s != symbols.end(); ++s)
+            {
+                if (SgVariableSymbol *varsym = isSgVariableSymbol(*s))
+                {
+                    if (globalVarsyms.find(varsym) != globalVarsyms.end())
+                        contextDerefMap[currentContext].insert(varsym);
+                    else
+                        contextsWithNonglobalDerefs.insert(currentContext);
+                }
+            }
+        }
+
+        void atIcfgTraversalEnd()
+        {
+            std::map<ContextInformation::Context,
+                     std::set<SgVariableSymbol *> >::const_iterator i;
+            for (i = contextDerefMap.begin(); i != contextDerefMap.end(); ++i)
+            {
+                const ContextInformation::Context &context = i->first;
+                const std::set<SgVariableSymbol *> &variables = i->second;
+                if (contextsWithNonglobalDerefs.find(context) ==
+                    contextsWithNonglobalDerefs.end())
+                {
+                    std::stringstream annotation;
+                    annotation
+                        << "accesses default \"" << context.procName
+                        << "\" to ";
+                    std::set<SgVariableSymbol *>::const_iterator v;
+                    v = variables.begin();
+                    while (v != variables.end())
+                    {
+                        SgVariableSymbol *sym = *v;
+                        annotation << '"' << sym->get_name().str() << '"';
+                        if (++v != variables.end())
+                            annotation << ", ";
+                    }
+                    annotation
+                        << " if @ctx_pos = " << context.position << ";";
+                    Procedure *p = (*icfg->procedures)[context.procnum];
+                    SgFunctionDeclaration *decl
+                        = isSgFunctionDeclaration(
+                                p->decl->get_definingDeclaration());
+                    SgStatement *functionBody
+                        = decl->get_definition()->get_body();
+                    addAisComment(annotation.str(), before, functionBody);
+                }
+            }
+        }
+    };
+
+    DataPointstoAnnotator dpa(program);
+    dpa.run();
 }
 
 void addFunctionPointstoAnnotations(Program *program)
