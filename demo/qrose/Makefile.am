@@ -6,7 +6,11 @@ if ROSE_USE_QT
 
 #METASOURCES = auto
 
-noinst_PROGRAMS = t1_window t2_layout t3_buttons t4_events t5_components t6_query1 t7_qtcompat
+noinst_PROGRAMS = t1_window t2_layout t3_buttons t4_events t5_components t6_query1
+if ROSE_WITH_ROSEQT
+noinst_PROGRAMS += t7_qtcompat
+endif
+
 t1_window_SOURCES = t1_window.C 
 t2_layout_SOURCES = t2_layout.C
 t3_buttons_SOURCES = t3_buttons.C
