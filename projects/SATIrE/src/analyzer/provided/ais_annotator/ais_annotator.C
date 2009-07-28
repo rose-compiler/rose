@@ -11,6 +11,12 @@
 // context-sensitivity; the program prints a friendly reminder if the user
 // did not ask for context-sensitivity.
 
+// TODO:
+// - Allow the user to specify the entry point(s) of the analysis (this
+//   should be a SATIrE feature, really).
+// - Allow the user to specify a prefix for function names, for the case
+//   where a compiler mangles function name "foo" into symbol "_foo".
+
 #include <satire.h>
 
 using namespace SATIrE;
@@ -109,16 +115,136 @@ void addAisAnnotations(Program *program)
     addFunctionPointstoAnnotations(program);
 }
 
+void externalCallTargets(
+        BasicBlock *bb, int procnum, PointsToAnalysis *pto, CFG *icfg,
+        std::map<int, const std::list<SgFunctionSymbol *> *> &positionFuncMap);
+std::string callSiteRegisterName(Procedure *);
+std::string contextCondition(ContextInformation::Context context, CFG *icfg);
 void addAisComment(std::string what, enum where where, SgStatement *stmt);
 
 void addContextAnnotations(Program *program)
 {
-    // before and after calls
-    // need at least a @function_N_pos save register to save the caller's
-    // position; but if functions can be recursive, we need even more... and
-    // I'm not sure what that "more" is
+    // Use "call site registers" where @function_N_foobar_callsite = M if
+    // ICFG node M can call to function foobar (with procnum N).
+    // For non-recursive programs, we don't need an arbitrarily deep stack;
+    // a table recording whether each function is on the stack suffices. If
+    // there are several permutations of call paths to a function -- for
+    // example, function h is reachable through f->g->h and g->f->h -- then
+    // we need additional numbering (but actually only if f and g may be
+    // called from the same site, through some pointer -- that seems highly
+    // unlikely). Let's go for this if there is not much recursion in the
+    // case study code!
+    // TODO: Identify recursion in a program, and report how much recursion
+    // there is in the case study code. Although possibly (think more about
+    // this!) simply overwriting a function's call site register might be
+    // benign; no condition will match, so aiT will assume conservative
+    // information, which should be fine.
+    class ContextAnnotator: private IcfgTraversal
+    {
+    public:
+        void run()
+        {
+            traverse(icfg);
+        }
 
-    // exploit bijectivity of context <-> callstring mapping... if possible
+        ContextAnnotator(Program *program)
+          : program(program), icfg(program->icfg),
+            pto(icfg->contextSensitivePointsToAnalysis)
+        {
+        }
+
+    private:
+        Program *program;
+        CFG *icfg;
+        PointsToAnalysis *pto;
+        std::map<SgStatement *, std::map<Procedure *, std::set<int> > >
+            callSiteMap;
+
+        void icfgVisit(SgNode *node)
+        {
+            if (isExternalCall(node))
+            {
+                SgStatement *stmt = icfg->labeledStatement(get_node_id());
+                BasicBlock *bb = icfg->nodes[get_node_id()];
+                int procnum = get_node_procnum();
+                std::map<int, const std::list<SgFunctionSymbol *> *> map;
+                externalCallTargets(bb, procnum, pto, icfg, map);
+                std::map<int, const std::list<SgFunctionSymbol *> *>::iterator
+                    pos;
+                for (pos = map.begin(); pos != map.end(); ++pos)
+                {
+                 // pos->first is the context number; we will ignore it
+                 // here. Strictly speaking, we would not need to add
+                 // call site register annotations for calls that are
+                 // infeasible in the current context; but on the other
+                 // hand, it shouldn't hurt.
+                    std::list<SgFunctionSymbol *>::const_iterator f;
+                    for (f=pos->second->begin(); f!=pos->second->end(); ++f)
+                    {
+                        std::string func = (*f)->get_name().str();
+                        recordCallSite(stmt, func, get_node_id());
+                    }
+                }
+            }
+            else if (FunctionCall *call = isFunctionCall(node))
+            {
+                SgStatement *stmt = icfg->labeledStatement(get_node_id());
+                std::string func = call->get_funcname();
+                recordCallSite(stmt, func, get_node_id());
+            }
+        }
+
+        void atIcfgTraversalEnd()
+        {
+         // annotate the collected statements with the collected
+         // information: set (and reset?) call site registers
+            std::map<SgStatement *, std::map<Procedure *, std::set<int> > >
+                :: iterator site;
+            for (site = callSiteMap.begin(); site != callSiteMap.end(); ++site)
+            {
+                SgStatement *stmt = site->first;
+                std::map<Procedure *, std::set<int> > &targets = site->second;
+                std::map<Procedure *, std::set<int> >::iterator tgt;
+                for (tgt = targets.begin(); tgt != targets.end(); ++tgt)
+                {
+                    std::stringstream annotation;
+                    if (tgt->second.size() == 1)
+                    {
+                        int node = *tgt->second.begin();
+                        annotation
+                            << "instruction here is entered with "
+                            << callSiteRegisterName(tgt->first)
+                            << " = " << node << ";";
+                    }
+                    else if (tgt->second.size() > 1)
+                    {
+                        int min = *tgt->second.begin();
+                        int max = *tgt->second.rbegin();
+                        annotation
+                            << "instruction here is entered with "
+                            << callSiteRegisterName(tgt->first)
+                            << " = " << min << ".." << max << ";";
+                    }
+                    addAisComment(annotation.str(), before, stmt);
+                }
+            }
+        }
+
+        void recordCallSite(SgStatement *stmt, std::string func, int node_id)
+        {
+            std::multimap<std::string, Procedure *>::iterator
+                p,
+                low = icfg->proc_map.lower_bound(func),
+                high = icfg->proc_map.upper_bound(func);
+            for (p = low; p != high; ++p)
+            {
+                callSiteMap[stmt][p->second].insert(node_id);
+            }
+        }
+    };
+
+    ContextAnnotator ca(program);
+    ca.run();
 }
 
 void addUnreachabilityAnnotations(Program *program)
@@ -177,8 +303,14 @@ void addUnreachabilityAnnotations(Program *program)
                 {
                     std::stringstream annotation;
                     annotation
-                        << "snippet here is never executed if @ctx_pos = "
-                        << position << ";";
+                        << "snippet here is never executed";
+                    std::string condition
+                        = contextCondition(ContextInformation::Context(
+                                    bb->procnum, position, icfg), icfg);
+                    if (condition != "")
+                        annotation << " if " << condition;
+                    annotation
+                        << ";";
                     addAisComment(annotation.str(), before, stmt);
                 }
             }
@@ -261,6 +393,15 @@ void addDataPointstoAnnotations(Program *program)
         {
             SgExpression *expression
                 = isSgExpression(node->get_traversalSuccessorByIndex(index));
+
+         // only consider dereferences of pointers (not arrays)
+            SgType *t = expression->get_type()->stripType(
+                                            SgType::STRIP_MODIFIER_TYPE
+                                          | SgType::STRIP_REFERENCE_TYPE
+                                          | SgType::STRIP_TYPEDEF_TYPE);
+            if (!isSgPointerType(t))
+                return;
+
             PointsToAnalysis::Location *loc
                 = pto->base_location(
                         pto->expressionLocation(expression, currentContext));
@@ -302,8 +443,10 @@ void addDataPointstoAnnotations(Program *program)
                         if (++v != variables.end())
                             annotation << ", ";
                     }
-                    annotation
-                        << " if @ctx_pos = " << context.position << ";";
+                    std::string condition = contextCondition(context, icfg);
+                    if (condition != "")
+                        annotation << " if " << condition;
+                    annotation << ";";
                     Procedure *p = (*icfg->procedures)[context.procnum];
                     SgFunctionDeclaration *decl
                         = isSgFunctionDeclaration(
@@ -345,53 +488,34 @@ void addFunctionPointstoAnnotations(Program *program)
         {
             if (ExternalCall *call = isExternalCall(node))
             {
-                SgExpression *sourceCallTarget = call->get_function();
                 BasicBlock *bb = icfg->nodes[get_node_id()];
-                SgExpression *callTarget = bb->call_target;
-                if (callTarget == NULL)
-                {
-                    std::cerr
-                        << "*** error: unknown call target for external call "
-                        << " node " << get_node_id()
-                        << " in procedure " << get_node_procnum()
-                        << std::endl;
-                }
                 int procnum = get_node_procnum();
-                int arity = kfg_arity_id(get_node_id());
-                int position;
-                for (position = 0; position < arity; position++)
+                std::map<int, const std::list<SgFunctionSymbol *> *> map;
+                externalCallTargets(bb, procnum, pto, icfg, map);
+
+                std::map<int, const std::list<SgFunctionSymbol *> *>::iterator
+                    pos;
+                for (pos = map.begin(); pos != map.end(); ++pos)
                 {
                     std::stringstream annotation;
-                    annotation << "instruction here calls ";
+                    annotation << "instruction here + 1 call calls ";
 
-                    ContextInformation::Context ctx(procnum, position, icfg);
-                    PointsToAnalysis::Location *targetLocation
-                        = pto->base_location(
-                                pto->expressionLocation(callTarget, ctx));
-                    const std::list<SgFunctionSymbol *> &fs
-                        = pto->location_funcsymbols(targetLocation);
-                    if (fs.empty())
-                    {
-                        std::cerr
-                            << "*** error: no call targets for external call "
-                            << Ir::fragmentToString(callTarget)
-                            << " node " << get_node_id()
-                            << " in procedure " << get_node_procnum()
-                            << std::endl;
-                        std::abort();
-                    }
                     std::list<SgFunctionSymbol *>::const_iterator f;
-                    f = fs.begin();
-                    while (f != fs.end())
+                    f = pos->second->begin();
+                    while (f != pos->second->end())
                     {
                         SgFunctionSymbol *sym = *f;
                         annotation << '"' << sym->get_name().str() << '"';
-                        if (++f != fs.end())
+                        if (++f != pos->second->end())
                             annotation << ", ";
                     }
 
-                    annotation
-                        << " if @ctx_pos = " << position << ";";
+                    std::string condition =
+                        contextCondition(ContextInformation::Context(
+                                    bb->procnum, pos->first, icfg), icfg);
+                    if (condition != "")
+                        annotation << " if " << condition;
+                    annotation << ";";
 
                     SgStatement *stmt = icfg->labeledStatement(get_node_id());
                     addAisComment(annotation.str(), before, stmt);
@@ -402,6 +526,70 @@ void addFunctionPointstoAnnotations(Program *program)
 
     FunctionPointstoAnnotator fpa(program);
     fpa.run();
+}
+
+void externalCallTargets(
+        BasicBlock *bb, int procnum, PointsToAnalysis *pto, CFG *icfg,
+        std::map<int, const std::list<SgFunctionSymbol *> *> &positionFuncMap)
+{
+    SgExpression *callTarget = bb->call_target;
+    if (callTarget == NULL)
+    {
+        std::cerr
+            << "*** error: unknown call target for external call "
+            << " node " << bb->id << " in procedure " << procnum
+            << std::endl;
+    }
+    int arity = kfg_arity_id(bb->id);
+    int position;
+    for (position = 0; position < arity; position++)
+    {
+        ContextInformation::Context ctx(procnum, position, icfg);
+        PointsToAnalysis::Location *targetLocation
+            = pto->base_location(
+                    pto->expressionLocation(callTarget, ctx));
+        const std::list<SgFunctionSymbol *> &fs
+            = pto->location_funcsymbols(targetLocation);
+        if (fs.empty())
+        {
+            std::cerr
+                << "*** error: no call targets for external call "
+                << Ir::fragmentToString(callTarget)
+                << " node " << bb->id << " in procedure " << procnum
+                << std::endl;
+            std::abort();
+        }
+        positionFuncMap[position] = &fs;
+    }
+}
+
+std::string callSiteRegisterName(Procedure *p)
+{
+    std::stringstream name;
+    name
+        << "@routine_" << p->procnum << "_" << p->name
+        << "_callsite";
+    return name.str();
+}
+
+std::string contextCondition(ContextInformation::Context context, CFG *icfg)
+{
+    std::stringstream result;
+    const ContextInformation::CallString &callString
+        = icfg->contextInformation->contextCallString(context);
+    std::vector<ContextInformation::CallSite>::const_iterator site;
+    site = callString.callstring.begin();
+    while(site != callString.callstring.end())
+    {
+        Procedure *proc = (*icfg->procedures)[site->target_procnum];
+        result
+            << callSiteRegisterName(proc) << " = "
+            << site->node_id;
+
+        if (++site != callString.callstring.end())
+            result << " and ";
+    }
+    return result.str();
 }
 
 void addAisComment(std::string what, enum where where, SgStatement *stmt)
@@ -421,7 +609,7 @@ void addAisComment(std::string what, enum where where, SgStatement *stmt)
     }
     PreprocessingInfo *commentInfo
         = new PreprocessingInfo(PreprocessingInfo::C_StyleComment,
-                                "/* " + what + " */",
+                                "/* ai: " + what + " */",
                                 fileName, lineNo, colNo,
                                 /* number of lines = */ 1, position);
     stmt->addToAttachedPreprocessingInfo(commentInfo);
