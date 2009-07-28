@@ -25,6 +25,8 @@ class RoseFrontendOutput
 
     public slots:
         virtual void readData( QIODevice *io );
+        void itemClicked( const QString &file, int line )
+        { emit itemSelected( file, line, 0 ); }
 
     signals:
         virtual void itemSelected( const QString &file, int line, int column );

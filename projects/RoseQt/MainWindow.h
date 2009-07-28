@@ -5,6 +5,7 @@
 #include "ui_MainWindow.h"
 
 #include <QMainWindow>
+#include <QPointer>
 
 
 class QFormatScheme;
@@ -14,7 +15,7 @@ class SgNode;
 class AstFilterInterface;
 
 
-class QCodeEdit;
+class RoseCodeEdit;
 
 class ProjectManager;
 
@@ -54,9 +55,10 @@ class MainWindow : public QMainWindow
         //void on_cmdExecScript_clicked();
         /*void on_cmdSubmitTest_clicked();*/
 
-        /*void on_mdiArea_subWindowActivated(QMdiSubWindow * wnd);*/
+        void on_subWindowArea_subWindowActivated(QMdiSubWindow * wnd);
         void on_actionEditorSettings_triggered();
 
+        void showCompilerOutput( const QString &file, int line );
 
     protected:
 
@@ -76,7 +78,7 @@ class MainWindow : public QMainWindow
         void buildupEditorToolbar(QWidget * w);
         ProjectManager *pm;
 
-        QCodeEdit * editorWrapper;
+        QPointer<RoseCodeEdit> compilerEditor;
         //QScriptEngine * scriptEngine;
         //QScriptEngineDebugger * scriptDebugger;
 };

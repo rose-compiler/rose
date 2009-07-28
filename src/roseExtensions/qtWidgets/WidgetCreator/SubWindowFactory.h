@@ -25,7 +25,7 @@ class SubWindowFactory
         QList<QAction *> getActions() const;
 
     private slots:
-        void addSubWindow();
+        void addSubWindowAction();
         void linkAction();
 
     private:

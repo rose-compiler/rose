@@ -59,6 +59,9 @@ void TaskList::on_itemClicked(QListWidgetItem * item)
     TaskListItem * curItem = dynamic_cast<TaskListItem*> (item);
     TaskOutputInfo *outInfo = curItem->getTask()->getOutputInfo();
 
+    connect( outInfo, SIGNAL( itemSelected( const QString &, int, int ) ),
+             this   , SLOT  ( taskOutputClicked( const QString &, int ) ) );
+
     if(outInfo)
     {
         lastClickedItem=curItem;

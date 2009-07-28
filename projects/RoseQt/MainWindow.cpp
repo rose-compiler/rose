@@ -20,6 +20,7 @@
 #include "QCodeEdit/qcodeedit.h"
 #include "RoseCodeEdit.h"
 
+#include "CompilerOutputWidget.h"
 
 #include <CallGraph.h>
 #include <GraphUpdate.h>
@@ -34,12 +35,16 @@
 #include "RoseCodeEditCreator.h"
 #include "CallGraphWidgetCreator.h"
 #include "SrcBinViewCreator.h"
+#include "QRSourceBoxCreator.h"
+#include "QRQueryBoxCreator.h"
+#include "QRTreeBoxCreator.h"
 
 MainWindow::MainWindow( int argc, char **argv, QWidget * p )
 	: QMainWindow(p),
           f1( new AstFilterAll() ),
           f2( new AstFilterAll() ),
-          pm( ProjectManager::instance() )
+          pm( ProjectManager::instance() ),
+          compilerEditor( NULL )
 {
     //dbgFunc();
 
@@ -86,6 +91,9 @@ MainWindow::MainWindow( int argc, char **argv, QWidget * p )
     ui.subWindowArea->registerSubWindow( new NodeInfoWidgetCreator() );
     ui.subWindowArea->registerSubWindow( new CallGraphWidgetCreator() );
     ui.subWindowArea->registerSubWindow( new SrcBinViewCreator() );
+    ui.subWindowArea->registerSubWindow( new QRSourceBoxCreator() );
+    ui.subWindowArea->registerSubWindow( new QRQueryBoxCreator() );
+    ui.subWindowArea->registerSubWindow( new QRTreeBoxCreator() );
     
 
     foreach( QAction *action, ui.subWindowArea->getActions() )
@@ -106,6 +114,9 @@ MainWindow::MainWindow( int argc, char **argv, QWidget * p )
     restoreMdiState();
 
     buildupEditorToolbar(NULL);
+
+    connect( pm->taskListWidget(), SIGNAL( clicked( const QString &, int ) ),
+             this,    SLOT  ( showCompilerOutput( const QString &, int ) ) );
 }
 
 
@@ -119,7 +130,7 @@ void MainWindow::closeEvent ( QCloseEvent * e)
   QSettings settings;
   settings.beginGroup("WindowState");
   settings.setValue("mainwindow",saveState());
-  //settings.setValue("mdiview",ui.mdiArea->saveGeometry());
+  //settings.setValue("mdiview",ui.subWindowArea->saveGeometry());
   settings.endGroup();
 
   saveMdiState();
@@ -136,7 +147,7 @@ void MainWindow::saveMdiState()
     /*settings.remove("MdiArea");
 
     settings.beginGroup("MdiArea");
-    QList<QMdiSubWindow *> subWdgs = ui.mdiArea->subWindowList();
+    QList<QMdiSubWindow *> subWdgs = ui.subWindowArea->subWindowList();
     settings.beginWriteArray("SubWidgets");
     for(int i=0; i<subWdgs.size(); i++)
     {
@@ -292,7 +303,7 @@ void MainWindow::on_actionNewSrcBinView_triggered()
 void MainWindow::on_actionSaveAs_triggered()
 {
     /*
-    RoseCodeEdit * codeEdit = ui.mdiArea->activeSubWindow()->findChild<RoseCodeEdit*>();
+    RoseCodeEdit * codeEdit = ui.subWindowArea->activeSubWindow()->findChild<RoseCodeEdit*>();
     Q_ASSERT(codeEdit);
     QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"),
                                "", tr("C++ files (*.cpp *.C *.h)"));
@@ -322,7 +333,7 @@ void MainWindow::on_actionOpen_triggered()
 
     subWidget->setWindowTitle(widget->windowTitle());
 
-    QMdiSubWindow * res = ui.mdiArea->addSubWindow(subWidget);
+    QMdiSubWindow * res = ui.subWindowArea->addSubWindow(subWidget);
 
     subWidget->show();
     widget->show();
@@ -389,27 +400,33 @@ void MainWindow::buildupEditorToolbar(QWidget * wnd)
     ui.menuEdit->addAction(edit->action("paste"));
 }
 
-//void MainWindow::on_mdiArea_subWindowActivated(QMdiSubWindow * wnd)
-//{
-    //buildupEditorToolbar(wnd);
-//}
-
-
-//#include "GccTask.h"
-
-//void MainWindow::on_cmdSubmitTest_clicked()
-//{
-    //QStringList args;
-    //args << "-Wall" <<"inputTestErr.cpp";
-    //ui.taskList->submitTask( new GccCompileTask("inputTestErr.cpp","inputTest.out"));
-//}
-
-/*
-void MainWindow::on_cmdExecScript_clicked()
+void MainWindow::on_subWindowArea_subWindowActivated(QMdiSubWindow * wnd)
 {
-    scriptEngine->evaluate(ui.txtScriptInput->toPlainText());
+    buildupEditorToolbar(wnd);
+}
 
-}*/
 
+void MainWindow::showCompilerOutput( const QString &file, int line )
+{
+    if( compilerEditor == NULL )
+    {
+        QWidget * subWidget = new QWidget( );
+        compilerEditor = new RoseCodeEdit( subWidget );
+        
+        QVBoxLayout * verticalLayout = new QVBoxLayout(subWidget);
+        verticalLayout->addWidget( compilerEditor );
 
+        subWidget->setWindowTitle( QString( "Source Code: ") + file );
+        subWidget->setWindowIcon( QIcon( ":/util/NodeIcons/sourcefile.gif" ) );
+
+        QMdiSubWindow * res = ui.subWindowArea->addSubWindow( subWidget );
+
+        subWidget->show();
+        compilerEditor->show();
+    }
+
+    compilerEditor->loadCppFile( file );
+    compilerEditor->gotoPosition( line, 0 );
+    compilerEditor->markAsWarning( line );
+}
 

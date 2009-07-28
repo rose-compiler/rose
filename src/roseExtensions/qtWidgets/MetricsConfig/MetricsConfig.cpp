@@ -206,8 +206,8 @@ namespace impl {
         execDialog( dialog, configureId );
         MetricsInfoIterator itrBegin( begin( configureId ) );
         MetricsInfoIterator itrEnd( end( configureId ) );
-        assert( itrBegin != itrEnd );
-        /*const MetricsInfo& metricsInfo;
+        /*assert( itrBegin != itrEnd );
+        const MetricsInfo& metricsInfo;
         if( begin != end )
             metricsInfo = *begin;*/
 

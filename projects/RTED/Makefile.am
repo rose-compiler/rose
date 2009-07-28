@@ -99,17 +99,41 @@ RTED_TEST_DIRS = $(rted_path)/C/array_index_out_of_bound \
 		 $(srcdir)/tests/C/nomemoryleaks \
 		 $(srcdir)/tests/C/panasTests
 
-RTED_ORIGSOURCES = ${foreach RTED_TEST_DIR, $(RTED_TEST_DIRS), ${wildcard $(RTED_TEST_DIR)/*[!_s].c} }
-RTED_COPYSOURCES = ${foreach RTED_TEST_DIR, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${patsubst $(rted_path)/%, rted_source/%, ${wildcard $(RTED_TEST_DIR)/*.c} } }
-RTED_LOCAL_COPYSOURCES = ${foreach RTED_TEST_DIR, ${filter $(srcdir)%, $(RTED_TEST_DIRS)}, ${patsubst $(srcdir)/%, rted_source/%, ${wildcard $(RTED_TEST_DIR)/*.c} } }
-RTED_ROSESOURCES = ${patsubst %.c, %_rose.c, $(RTED_COPYSOURCES) }
-RTED_LOCAL_ROSESOURCES = ${patsubst %.c, %_rose.c, $(RTED_LOCAL_COPYSOURCES) }
-RTED_BINFILES = ${patsubst $(rted_path)/%.c, rted_source/%.bin, ${filter $(rted_path)%, $(RTED_ORIGSOURCES)}}
-RTED_LOCAL_BINFILES = ${patsubst $(srcdir)/%.c, rted_source/%.bin, ${filter $(srcdir)%, $(RTED_ORIGSOURCES)}}
-RTED_DEBUGBINFILES = ${patsubst $(rted_path)/%.c, rted_source/%_debug.bin, ${filter $(rted_path)%, $(RTED_ORIGSOURCES)}}
-RTED_LOCAL_DEBUGBINFILES = ${patsubst $(srcdir)/%.c, rted_source/%_debug.bin, ${filter $(srcdir)%, $(RTED_ORIGSOURCES)}}
-RTED_ACTUALOUTPUTFILES = ${patsubst $(rted_path)/%.c, rted_source/%.actual-output, $(RTED_ORIGSOURCES)}
-RTED_EXPECTEDOUTPUTFILES = ${patsubst $(rted_path)/%.c, rted_source/%.expected-output, $(RTED_ORIGSOURCES)}
+RTED_ORIGSOURCES_C = ${foreach RTED_TEST_DIR, $(RTED_TEST_DIRS), ${wildcard $(RTED_TEST_DIR)/*[!_s].c} }
+RTED_COPYSOURCES_C = ${foreach RTED_TEST_DIR, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${patsubst $(rted_path)/%.c, rted_source/%.cpp, ${wildcard $(RTED_TEST_DIR)/*.c} } }
+RTED_LOCAL_COPYSOURCES_C = ${foreach RTED_TEST_DIR, ${filter $(srcdir)%, $(RTED_TEST_DIRS)}, ${patsubst $(srcdir)/%.c, rted_source/%.cpp, ${wildcard $(RTED_TEST_DIR)/*.c} } }
+RTED_ROSESOURCES_C = ${patsubst %.c, %_rose.cpp, $(RTED_COPYSOURCES_C) }
+RTED_LOCAL_ROSESOURCES_C = ${patsubst %.c, %_rose.cpp, $(RTED_LOCAL_COPYSOURCES_C) }
+RTED_BINFILES_C = ${patsubst $(rted_path)/%.cpp, rted_source/%.bin, ${filter $(rted_path)%, $(RTED_ORIGSOURCES_C)}}
+RTED_LOCAL_BINFILES_C = ${patsubst $(srcdir)/%.cpp, rted_source/%.bin, ${filter $(srcdir)%, $(RTED_ORIGSOURCES_C)}}
+RTED_DEBUGBINFILES_C = ${patsubst $(rted_path)/%.cpp, rted_source/%_debug.bin, ${filter $(rted_path)%, $(RTED_ORIGSOURCES_C)}}
+RTED_LOCAL_DEBUGBINFILES_C = ${patsubst $(srcdir)/%.cpp, rted_source/%_debug.bin, ${filter $(srcdir)%, $(RTED_ORIGSOURCES_C)}}
+RTED_ACTUALOUTPUTFILES_C = ${patsubst $(rted_path)/%.cpp, rted_source/%.actual-output, $(RTED_ORIGSOURCES_C)}
+RTED_EXPECTEDOUTPUTFILES_C = ${patsubst $(rted_path)/%.cpp, rted_source/%.expected-output, $(RTED_ORIGSOURCES_C)}
+
+RTED_ORIGSOURCES_CPP = ${foreach RTED_TEST_DIR, $(RTED_TEST_DIRS), ${wildcard $(RTED_TEST_DIR)/*[!_s].cpp} }
+RTED_COPYSOURCES_CPP = ${foreach RTED_TEST_DIR, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${patsubst $(rted_path)/%, rted_source/%, ${wildcard $(RTED_TEST_DIR)/*.cpp} } }
+RTED_LOCAL_COPYSOURCES_CPP = ${foreach RTED_TEST_DIR, ${filter $(srcdir)%, $(RTED_TEST_DIRS)}, ${patsubst $(srcdir)/%, rted_source/%, ${wildcard $(RTED_TEST_DIR)/*.cpp} } }
+RTED_ROSESOURCES_CPP = ${patsubst %.cpp, %_rose.cpp, $(RTED_COPYSOURCES_CPP) }
+RTED_LOCAL_ROSESOURCES_CPP = ${patsubst %.cpp, %_rose.cpp, $(RTED_LOCAL_COPYSOURCES_CPP) }
+RTED_BINFILES_CPP = ${patsubst $(rted_path)/%.cpp, rted_source/%.bin, ${filter $(rted_path)%, $(RTED_ORIGSOURCES_CPP)}}
+RTED_LOCAL_BINFILES_CPP = ${patsubst $(srcdir)/%.cpp, rted_source/%.bin, ${filter $(srcdir)%, $(RTED_ORIGSOURCES_CPP)}}
+RTED_DEBUGBINFILES_CPP = ${patsubst $(rted_path)/%.cpp, rted_source/%_debug.bin, ${filter $(rted_path)%, $(RTED_ORIGSOURCES_CPP)}}
+RTED_LOCAL_DEBUGBINFILES_CPP = ${patsubst $(srcdir)/%.cpp, rted_source/%_debug.bin, ${filter $(srcdir)%, $(RTED_ORIGSOURCES_CPP)}}
+RTED_ACTUALOUTPUTFILES_CPP = ${patsubst $(rted_path)/%.cpp, rted_source/%.actual-output, $(RTED_ORIGSOURCES_CPP)}
+RTED_EXPECTEDOUTPUTFILES_CPP = ${patsubst $(rted_path)/%.cpp, rted_source/%.expected-output, $(RTED_ORIGSOURCES_CPP)}
+
+RTED_ORIGSOURCES = $(RTED_ORIGSOURCES_CPP) $(RTED_ORIGSOURCES_C)
+RTED_COPYSOURCES = $(RTED_COPYSOURCES_CPP) $(RTED_COPYSOURCES_C)
+RTED_LOCAL_COPYSOURCES = $(RTED_LOCAL_COPYSOURCES_CPP) $(RTED_LOCAL_COPYSOURCES_C)
+RTED_ROSESOURCES = $(RTED_ROSESOURCES_CPP) $(RTED_ROSESOURCES_C)
+RTED_LOCAL_ROSESOURCES = $(RTED_LOCAL_ROSESOURCES_CPP) $(RTED_LOCAL_ROSESOURCES_C)
+RTED_BINFILES = $(RTED_BINFILES_CPP) $(RTED_BINFILES_C)
+RTED_LOCAL_BINFILES = $(RTED_LOCAL_BINFILES_CPP) $(RTED_LOCAL_BINFILES_C)
+RTED_DEBUGBINFILES = $(RTED_DEBUGBINFILES_CPP) $(RTED_DEBUGBINFILES_C)
+RTED_LOCAL_DEBUGBINFILES = $(RTED_LOCAL_DEBUGBINFILES_CPP) $(RTED_LOCAL_DEBUGBINFILES_C)
+RTED_ACTUALOUTPUTFILES = $(RTED_ACTUALOUTPUTFILES_CPP) $(RTED_ACTUALOUTPUTFILES_C)
+RTED_EXPECTEDOUTPUTFILES = $(RTED_EXPECTEDOUTPUTFILES_CPP) $(RTED_EXPECTEDOUTPUTFILES_C)
 
 .SECONDARY: $(RTED_BINFILES) $(RTED_DEBUGBINFILES) $(RTED_COPYSOURCES) $(RTED_ROSESOURCES) $(RTED_ACTUALOUTPUTFILES) $(RTED_EXPECTEDOUTPUTFILES)\
 	    $(RTED_LOCAL_BINFILES) $(RTED_LOCAL_DEBUGBINFILES) $(RTED_LOCAL_COPYSOURCES) $(RTED_LOCAL_ROSESOURCES)
@@ -117,9 +141,7 @@ RTED_EXPECTEDOUTPUTFILES = ${patsubst $(rted_path)/%.c, rted_source/%.expected-o
 	   $(RTED_LOCAL_BINFILES) $(RTED_LOCAL_DEBUGBINFILES) $(RTED_LOCAL_COPYSOURCES) $(RTED_LOCAL_ROSESOURCES)
 
 print:
-	@echo $(RTED_LOCAL_COPYSOURCES)
-	@echo $(wildcard $(top_srcdir)/projects/RTED/tests/C/memoryleaks/*.c)
-	$(foreach RTED_TEST_DIR, $(filter $(top_srcdir)%, $(RTED_TEST_DIRS)), @echo $(patsubst $(top_srcdir)%, rted_source%, $(wildcard $(RTED_TEST_DIR)/*.c ) ) )
+	@echo $(RTED_ORIGSOURCES)
 
 check-C-array: run/C/array_index_out_of_bound
 
@@ -140,8 +162,8 @@ check-C-C99specific: run/C/C99_specific_errors
 rted_source:
 	@cp -f $(srcdir)/index_array.txt .
 	@cp -f $(srcdir)/file_read.txt .
-	mkdir -p $(foreach rted_dir,$(filter $(rted_path)%, $(RTED_TEST_DIRS) ), $(patsubst $(rted_path)/%, rted_source/%, $(rted_dir) ) )
-	mkdir -p $(foreach local_test_dir,$(filter $(srcdir)%, $(RTED_TEST_DIRS) ), $(patsubst $(srcdir)/%, rted_source/%, $(local_test_dir) ) )
+	@mkdir -p $(foreach rted_dir,$(filter $(rted_path)%, $(RTED_TEST_DIRS) ), $(patsubst $(rted_path)/%, rted_source/%, $(rted_dir) ) )
+	@mkdir -p $(foreach local_test_dir,$(filter $(srcdir)%, $(RTED_TEST_DIRS) ), $(patsubst $(srcdir)/%, rted_source/%, $(local_test_dir) ) )
 
 #------------------------------------------------------------------------------
 # rule to copy the sources into our current working directory

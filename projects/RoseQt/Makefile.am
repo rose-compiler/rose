@@ -27,5 +27,4 @@ roseQt_LDADD = $(ROSEHPCT_BUILD_ROOT)/src/librosehpct.la \
                $(ROSEHPCT_DEP_LIBS)\
                $(ROSE_SEPARATE_LIBS)\
                $(LIBS_WITH_RPATH)
-                   
 endif
