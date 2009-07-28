@@ -1,3 +1,11 @@
+2009-07-28 15:46  saebjornsen1
+
+	* [r6700] /trunk/ROSE/src/midend/astProcessing/AstDOTGeneration.C,
+	  /trunk/ROSE/src/midend/astProcessing/AstDOTGeneration.h,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/CG.C,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/testCallGraph.C:
+	  Added new dot generation mechanism
+
 2009-07-28 02:19  hamilton37
 
 	* [r6696] /trunk/ROSE/configure.in,
