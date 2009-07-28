@@ -55,7 +55,87 @@ test02: testCG stressTestFactory
 
 testMultipleFiles: testCG stressTestFactoryMultipleFiles.pl
 	$(srcdir)/testMultipleFiles.sh $(srcdir) . 20 4
-			
+
+TESTS_STILL_TOO_HARD = \
+test2004_35.C \
+test2004_43.C \
+test2004_45.C \
+test2004_77.C \
+test2005_06.C \
+test2005_82.C \
+test2005_98.C \
+test2007_56.C \
+test2007_90.C 
+
+TESTS_STILL_TOO_HARD_USING_DATABASE_AND_FILTER = \
+test2004_11.C \
+test2004_18.C \
+test2004_48.C \
+test2004_85.C \
+test2004_120.C \
+test2004_127.C \
+test2004_129.C \
+test2004_130.C \
+test2004_141.C \
+test2004_142.C \
+test2004_143.C \
+test2004_145.C \
+test2004_149.C \
+test2004_157.C \
+test2005_10.C \
+test2005_12.C \
+test2005_17.C \
+test2005_28.C \
+test2005_34.C \
+test2005_35.C \
+test2005_39.C \
+test2005_42.C \
+test2005_46.C \
+test2005_63.C \
+test2005_71.C \
+test2005_76.C \
+test2005_77.C \
+test2005_93.C \
+test2005_103.C \
+test2005_128.C \
+test2005_129.C \
+test2005_130.C \
+test2005_131.C \
+test2005_132.C \
+test2005_133.C \
+test2005_136.C \
+test2005_138.C \
+test2005_139.C \
+test2005_142.C \
+test2005_146.C \
+test2005_152.C \
+test2005_156.C \
+test2005_161.C \
+test2005_175.C \
+test2005_181.C \
+test2006_04.C \
+test2006_20.C \
+test2006_54.C \
+test2006_78.C \
+test2006_79.C \
+test2006_84.C \
+test2006_107.C \
+test2006_124.C \
+test2006_141.C \
+test2007_81.C \
+test2007_82.C \
+test2007_141.C
+
+
+EXTRA_ALL_TESTCODES = $(EXTRA_TESTCODES_REQUIRED_TO_PASS) $(TESTS_STILL_TOO_HARD_USING_DATABASE_AND_FILTER)
+
+EXTRA_TEST_Objects = ${EXTRA_ALL_TESTCODES:.C=.C.dot}
+
+$(EXTRA_TEST_Objects): testCallGraph
+#	@echo "Copy the file to the local build tree so that we can change the file name suffix (to be a C language file) ..." # Not true anymore
+	$(VALGRIND) ./testCallGraph $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -db:name $(@:.dot=.database) -c $(top_srcdir)/developersScratchSpace/Dan/Cxx_tests/$(@:.dot=)
+
+
 TESTCODES = test1.C test2.C  test3.C  test4.C  test5.C  test6.C test7.C
 
 # Build the list of object files
@@ -79,6 +159,7 @@ EXTRA_DIST = $(TESTCODES) functions.h main.C f1.C f2.C stressTestFactory
 
 # DQ (7/25/2005): The current changes to the AST break these test programs:
 check-local:
+	@$(MAKE) $(EXTRA_TEST_Objects)
 	@$(MAKE) $(TEST_Objects)
 	@$(MAKE) test01 test02
 	@echo "***********************************************************************************************************************"
