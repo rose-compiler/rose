@@ -295,6 +295,26 @@ void RtedTransformation::appendAddress(SgExprListExp* arg_list, SgExpression* ex
     );
 }
 
+
+void RtedTransformation::appendBaseType( SgExprListExp* arg_list, SgType* type ) {
+	SgType* base_type = NULL;
+
+	SgArrayType* arr = isSgArrayType( type );
+	SgPointerType* ptr = isSgPointerType( type );
+
+	if( arr )
+		base_type = arr -> get_base_type();
+	else if ( ptr )
+		base_type = ptr -> get_base_type();
+
+	if( base_type )
+        appendExpression(arg_list, buildString(
+			base_type -> class_name()
+		));
+	else
+        appendExpression(arg_list, buildString(""));
+}
+
 void RtedTransformation::appendClassName( SgExprListExp* arg_list, SgType* type ) {
     SgClassType* sgClass = isSgClassType( type );
 	if( !sgClass ) {

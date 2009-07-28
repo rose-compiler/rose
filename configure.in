@@ -1221,7 +1221,6 @@ projects/DistributedMemoryAnalysisCompass/Makefile
 projects/DocumentationGenerator/Makefile
 projects/runtimeErrorCheck/Makefile
 projects/RTED/Makefile
-projects/RTED/tests/Makefile
 projects/RTED/CppRuntimeSystem/Makefile
 projects/RTED/CppRuntimeSystem/DebuggerQt/Makefile
 projects/taintcheck/Makefile

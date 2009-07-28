@@ -201,6 +201,7 @@ class RtedTransformation : public AstSimpleProcessing {
 
   void appendAddressAndSize(SgInitializedName* initName, SgExpression* varRef, SgStatement* stmt, SgExprListExp* arg_list, int appendType);
   void appendAddress( SgExprListExp* arg_list, SgExpression* exp );
+  void appendBaseType( SgExprListExp* arg_list, SgType* type );
   void appendClassName( SgExprListExp* arg_list, SgType* type );
 
   bool isGlobalExternVariable(SgStatement* stmt);

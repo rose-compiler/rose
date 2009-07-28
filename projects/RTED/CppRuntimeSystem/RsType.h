@@ -118,7 +118,7 @@ void RsType::getTypeAt(RsType * courseType,  addr_type offset,
 class RsArrayType : public RsType
 {
     public:
-        RsArrayType(RsType * baseType, size_t elementCount);
+        RsArrayType(RsType * baseType, size_t size);
         virtual ~RsArrayType() {}
 
 

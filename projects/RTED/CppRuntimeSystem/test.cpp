@@ -549,7 +549,7 @@ void testPointerChanged()
     rs->beginScope("Scope2");
         struct A { int arr[10]; int behindArr; };
         RsClassType * typeA = new RsClassType("A",sizeof(A));
-        typeA->addMember("arr",ts->getArrayType("SgTypeInt",10), offsetof(A,arr));
+        typeA->addMember("arr",ts->getArrayType("SgTypeInt",10 * sizeof(int)), offsetof(A,arr));
         typeA->addMember("behindArr",ts->getTypeInfo("SgTypeInt"),offsetof(A,behindArr));
         assert(typeA->isComplete());
         ts->registerType(typeA);
@@ -596,7 +596,7 @@ void testPointerTracking()
 
     // class A { int arr[2]; int intBehindArr; }
     RsClassType * type = new RsClassType("A",3*sizeof(int));
-    type->addMember("arr",ts->getArrayType("SgTypeInt",2));
+    type->addMember("arr",ts->getArrayType("SgTypeInt",2 * sizeof(int)));
     type->addMember("intBehindArr",ts->getTypeInfo("SgTypeInt"));
     ts->registerType(type);
 
@@ -959,7 +959,7 @@ void testTypeSystemDetectNested()
     // Register Struct B
     struct B { A arr[10]; char b1; int b2; };
     RsClassType * typeB = new RsClassType("B",sizeof(B));
-    typeB->addMember("arr",ts->getArrayType("A",10),    offsetof(B,arr));
+    typeB->addMember("arr",ts->getArrayType("A",10 * sizeof(struct A)),    offsetof(B,arr));
     typeB->addMember("b1",ts->getTypeInfo("SgTypeChar"),offsetof(B,b1) );
     typeB->addMember("b2",ts->getTypeInfo("SgTypeInt"), offsetof(B,b2));
     assert(typeB->isComplete());

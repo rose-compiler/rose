@@ -306,14 +306,6 @@ void RuntimeSystem_ensure_allocated_and_initialized( const void* mem, size_t siz
                   "StringConstant",
                   "MangledStringConstant",
                   "SgTypeChar",size);
-
-  /*
-  rs->createVariable(
-      (addr_type) mem,
-      "StringConstant",
-      "MangledStringConstant",
-       rs->getTypeSystem()->getPointerType("SgTypeChar")
-  );*/
   rs->checkMemWrite( (addr_type) mem, size);
 }
 
@@ -653,9 +645,9 @@ void RuntimeSystem_roseCreateVariable( const char* name,
     {
         RsType * rsType;
         if(string(basetype) != "")
-            rsType = rs->getTypeSystem()->getPointerType(basetype);
+            rsType = rs->getTypeSystem()->getPointerType( base_type );
         else
-            rsType = rs->getTypeSystem()->getTypeInfo(type);
+            rsType = rs->getTypeSystem()->getTypeInfo( type_name );
 
         rs->createVariable(address,name,mangled_name,rsType);
     }
@@ -756,12 +748,22 @@ RuntimeSystem_roseRegisterTypeCall(int count, ...) {
 
 
 	  RsClassType * classType = new RsClassType(nameC,sizeC);
-	  for ( i=3;i<count;i+=3)
+	  for ( i=5;i<count;i+=5)
 	  {
 		  string name = va_arg(vl,const char*);
 		  string type = va_arg(vl,const char*);
+      string base_type = va_arg(vl,const char*);
 		  addr_type offset = va_arg(vl,unsigned long long);
-		  RsType* t= RuntimeSystem::instance()->getTypeSystem()->getTypeInfo(type);
+      size_t size = va_arg(vl,size_t);
+
+      RsType* t;
+      if( type == "SgArrayType" ) { 
+        t = RuntimeSystem::instance()->getTypeSystem()->getArrayType( base_type, size );
+      } else if( type == "SgPointerType" ) {
+        t = RuntimeSystem::instance()->getTypeSystem()->getPointerType( base_type );
+      } else {
+        t = RuntimeSystem::instance()->getTypeSystem()->getTypeInfo( type );
+      }
 		  classType->addMember(name,t,(addr_type)offset);
 		  //cerr << "Registering Member " << name << " of type " << type << " at offset " << offset << endl;
 	  }

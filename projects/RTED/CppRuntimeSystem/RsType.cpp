@@ -68,13 +68,17 @@ std::ostream& operator<< (std::ostream &os, const RsType & m)
 // ---------------------------------- RsArrayType ------------------------------------------
 
 
-RsArrayType::RsArrayType(RsType * baseType_, size_t elementCount_)
-    : RsType(getArrayTypeName(baseType_,elementCount_)),
-      baseType(baseType_),
-      elementCount(elementCount_)
+RsArrayType::RsArrayType(RsType * baseType_, size_t size__)
+    : RsType(getArrayTypeName(baseType_,size__)),
+      baseType(baseType_)
 {
-    assert(elementCount>0);
     assert(baseType != NULL);
+
+    size_t base_size = baseType -> getByteSize();
+    assert( 0 == size__ % base_size );
+    elementCount = size__ / base_size;
+
+    assert(elementCount>0);
 }
 
 size_t RsArrayType::getByteSize() const

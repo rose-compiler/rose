@@ -41,7 +41,7 @@ runtimeCheck_SOURCES = runtimeCheck.cpp \
 
 
 
-SUBDIRS = tests CppRuntimeSystem
+SUBDIRS = CppRuntimeSystem
 
 runtimeCheck_LDADD =  $(ROSE_LIBS) CppRuntimeSystem/libCppRuntimeSystem.la
 #if ROSE_WITH_ROSEQT
@@ -318,7 +318,7 @@ run_log/%: rted_source/%.bin rted_source/%.expected-output
 	if [ $$? -ne 0 ]; \
 	then \
 		echo " $@ failed" >> test_log.txt;\
-	else\
+	else \
 	echo " $@ passed" >> test_log.txt;\
 	fi 
 	@echo " done."  

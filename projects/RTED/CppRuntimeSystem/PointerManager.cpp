@@ -135,10 +135,15 @@ void PointerManager::createPointer(addr_type baseAddr, RsType * type)
     if(pt)
         createDereferentiableMem(baseAddr,pt->getBaseType());
 
-    // arrays are 'pseudo-pointers'
+    // arrays are 'pseudo-pointers' whose target and source addresses are the
+    // same, i.e.
+    //  type x[ element_count ];
+    //  &x == x         // this is true
     RsArrayType * at = dynamic_cast<RsArrayType*>(type);
-    if(at)
+    if(at) {
         createDereferentiableMem(baseAddr,at->getBaseType());
+        registerPointerChange( baseAddr, baseAddr );
+    }
 
     // If compound type, break down to basic types
     for(int i = 0; i < type->getSubtypeCount(); i++)

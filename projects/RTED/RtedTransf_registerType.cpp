@@ -91,8 +91,8 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
       */
 
       int elements = rtedClass->nrOfElements; // elements passed to function
-      elements*=3; // for each element pass name, type and offset
-      elements+=3; // ClassName , ClassType and sizeOfClass
+      elements*=5; // for each element pass name, type and offset
+      elements+=5; // ClassName , ClassType and sizeOfClass
       SgExpression* nrElements = buildIntVal(elements);
 
 
@@ -102,7 +102,7 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
       appendExpression(arg_list, buildString(typeC));
       appendExpression(arg_list, rtedClass->sizeClass);
       
-      // go through each element and add name, type and offset
+      // go through each element and add name, type, basetype and offset
       std::vector<RtedClassElement*> elementsC = rtedClass->elements;
       std::vector<RtedClassElement*>::const_iterator itClass = elementsC.begin();
       for (;itClass!=elementsC.end();++itClass) {
@@ -126,10 +126,16 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
 	      SgVariableDeclaration* varDecl =	isSgVariableDeclaration(sgElement);
 		  if (varDecl) {
 			  SgVarRefExp* varref = buildVarRefExp(varDecl);
+
+			  // append the base type (if any) of pointers and arrays
+			  SgType* type = varDecl->get_variables()[ 0 ]->get_type();
+			  appendBaseType( arg_list, type );
+
 			  SgExpression* dotExp = buildDotExp(derefPointer,varref);
 			  SgExpression* andOp = buildAddressOfOp(dotExp);
 			  SgExpression* castOp = buildCastExp(andOp, size_t_member);
 			  appendExpression(arg_list, castOp);
+			  appendExpression(arg_list, buildSizeOfOp( dotExp ));
 			  //}
 		  } else {
 			  cerr << " Declarationstatement not handled : " << sgElement->class_name() << endl;
