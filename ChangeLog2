@@ -1,3 +1,317 @@
+2009-07-28 02:19  hamilton37
+
+	* [r6696] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/PointerManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_registerType.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Makefile.am: RTED: Improvements
+	  towards passing array bounds checks. Array types in classes
+	  now registered properly, plus some misc. cleanup.
+	  
+	  We still don't pass all of the array bounds checks. Presently we
+	  fail on
+	  multi-dimensional arrays, but much of the infrastructure for
+	  dealing with them
+	  is in place. The instrumentation and wrapper needs to determine
+	  and pass the
+	  indirection level for types with base types (i.e. pointers and
+	  arrays).
+	  
+	  * When PointerManager creates array type pseudo-pointers, they're
+	  immediately
+	  set to the source address.
+	  * RsArrayType's second argument, size, now actually treats the
+	  arg as size
+	  rather than element count.
+	  * Class registration instrumentation now adds the size of members
+	  (needed for
+	  SgArrayType), as well as their base type.
+	  
+	  * tests was removed as a subdir, along with its Makefile.
+	  * removed some dead code.
+
+2009-07-28 01:22  panas2
+
+	* [r6695]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/Makefile.am,
+	  /trunk/ROSE/projects/RTED/Makefile.am: Added new tests
+
+2009-07-27 23:15  hamilton37
+
+	* [r6694] /trunk/ROSE/scripts/nmiBuildAndTestFarm/glue.pl,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/nmi-postmortem,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/rose-build.submit: NMI:
+	  Added nmi-postmortem script.
+	  
+	  nmi-postmortem can be run on a submission host (at present, only
+	  s005) with a
+	  run-id to copy and extract results.tar.gz to the run machine and
+	  setup a
+	  source-able script .nmi-postmortem, which will source the run
+	  environment and cd
+	  the user to the userdir. The script ends by exec-sshing to the
+	  run machine and
+	  sourcing .nmi-postmortem (indirectly, via bashrc).
+	  
+	  Example Usage:
+	  ./nmi-postmortem 169831
+
+2009-07-27 23:11  hamilton37
+
+	* [r6693]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_deb_5.0/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_rhap_5.2/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_cent_4.2/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_rhas_3/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_ubuntu_5.10/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_ubuntu_5.10/minimal_default:
+	  NMI: Added rhap x86_64 with java, minor tweaks to other prereqs.
+
+2009-07-27 22:16  saebjornsen1
+
+	* [r6692]
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/CG.C,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/testCallGraph.C:
+	  fixed over-eager filtering
+
+2009-07-27 21:30  bauer25
+
+	* [r6691] /trunk/ROSE/src/roseExtensions/qtWidgets/RoseCodeEdit,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/RoseCodeEdit/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/RoseCodeEdit/RoseCodeEdit.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/RoseCodeEdit/RoseCodeEdit.h:
+	  Fixed issues with last qtWidgets commit
+
+2009-07-27 21:05  bauer25
+
+	* [r6690] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/projects/QtDesignerPlugins/Makefile.am,
+	  /trunk/ROSE/projects/QtDesignerPlugins/Makefile.am.pre,
+	  /trunk/ROSE/projects/QtDesignerPlugins/QCodeEditWidgetPlugin.cpp,
+	  /trunk/ROSE/projects/QtDesignerPlugins/QCodeEditWidgetPlugin.h,
+	  /trunk/ROSE/projects/QtDesignerPlugins/RoseWidgetsCollection.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/MainWindow.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/MainWindow.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/MainWindow.ui,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/Makefile.am,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/MemoryGraphicsView.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/MemoryGraphicsView.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/RtedDebug.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/RtedDebug.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/Makefile.am,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/PointerManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/PointerManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/StackManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/TypeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/TypeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/Util.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/Util.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Components/QueryBox/QRQueryOp.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/CMakeLists.txt,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/Make.inc,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/Makefile.am.pre,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit.qrc,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/CMakeLists.txt,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/Makefile.am.pre,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/VersionInfo,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/document,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/document/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/document/Makefile.am.pre,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/document/qdocument.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/document/qdocument.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/document/qdocument_p.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/document/qdocumentbuffer.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/document/qdocumentbuffer.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/document/qdocumentcommand.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/document/qdocumentcommand.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/document/qdocumentcursor.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/document/qdocumentcursor.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/document/qdocumentcursor_p.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/document/qdocumentline.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/document/qdocumentline.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/document/qdocumentline_p.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/document/qdocumentsearch.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/document/qdocumentsearch.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qce-config.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qcodecompletionengine.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qcodecompletionengine.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qcodeedit.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qcodeedit.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qeditor.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qeditor.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qeditorfactory.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qeditorfactory.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qeditsession.cpp.notused,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qeditsession.h.notused,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qformat.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qformatfactory.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qformatscheme.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qformatscheme.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qlanguagedefinition.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qlanguagedefinition.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qlanguagefactory.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qlanguagefactory.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qlinemarksinfocenter.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qlinemarksinfocenter.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qnfa,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qnfa/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qnfa/Makefile.am.pre,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qnfa/light_vector.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qnfa/qnfa.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qnfa/qnfa.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qnfa/qnfadefinition.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qnfa/qnfadefinition.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qnfa/xml2qnfa.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qpanellayout.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qpanellayout.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qreliablefilewatch.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qreliablefilewatch.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/Makefile.am.pre,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/editconfig.ui,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/formatconfig.ui,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/gotoline.ui,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/qcalltip.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/qcalltip.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/qeditconfig.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/qeditconfig.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/qfoldpanel.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/qfoldpanel.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/qformatconfig.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/qformatconfig.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/qgotolinedialog.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/qgotolinedialog.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/qlinechangepanel.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/qlinechangepanel.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/qlinemarkpanel.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/qlinemarkpanel.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/qlinenumberpanel.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/qlinenumberpanel.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/qpanel.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/qpanel.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/qsearchreplacepanel.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/qsearchreplacepanel.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/qsimplecolorpicker.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/qsimplecolorpicker.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/qstatuspanel.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/qstatuspanel.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/searchreplace.ui,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEditWidget.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEditWidget.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/bold.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/break.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/closeall.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/comment.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/copy.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/cut.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/debug-resume.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/down.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/editor.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/error.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/example.qrc,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/exit.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/fillcolor.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/find.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/formats.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/goto.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/indent.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/italic.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/new.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/open.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/package_settings.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/paste.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/print.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/qxs,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/qxs/bibtex.qnfa,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/qxs/bibtex.qxf,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/qxs/cpp.qnfa,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/qxs/cpp.qxf,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/qxs/csharp.qnfa,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/qxs/csharp.qxf,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/qxs/css.qnfa,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/qxs/css.qxf,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/qxs/dox.qnfa,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/qxs/dox.qxf,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/qxs/formats.qxf,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/qxs/marks.qxm,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/qxs/php.qnfa,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/qxs/php.qxf,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/qxs/pro.qnfa,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/qxs/pro.qxf,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/qxs/python.qnfa,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/qxs/python.qxf,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/qxs/qtscript.qnfa,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/qxs/qtscript.qxf,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/qxs/snippet.qnfa,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/qxs/tex.qnfa,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/qxs/tex.qxf,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/qxs/xml.qnfa,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/qxs/xml.qxf,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/redo.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/reload.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/replace.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/save.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/saveas.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/settings.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/strikeout.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/strokecolor.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/textcolor.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/uncomment.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/underline.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/undo.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/unindent.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/up.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/warning.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/RoseCodeEdit,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/TreeModel,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/TreeModel/ItemTreeModel.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/TreeModel/ItemTreeModel.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/TreeModel/ItemTreeNode.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/TreeModel/ItemTreeNode.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/TreeModel/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/WidgetCreator/SubWindowFactory.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/scripts/generateMakefiles.sh,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/ItemTreeModel.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/ItemTreeModel.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/ItemTreeNode.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/ItemTreeNode.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/Makefile.am: RTED
+	  Pointer Tracking - Refactoring of qtWidgets
+	  
+	  - made RTED independent of librose by refactoring qtWidgets
+	  -> now two CodeEditors: QCodeEditWidget and RoseCodeEdit
+	  -> Qt- TreeModel convenience classes in extra lib
+	  
+	  - improved Pointer Tracking, Pointer in classes are registered
+	  correctly
+
+2009-07-27 20:55  heller9
+
+	* [r6689] /trunk/ROSE/config/Makefile.for.ROSE.includes.and.libs,
+	  /trunk/ROSE/configure.in, /trunk/ROSE/demo/qrose/Makefile.am,
+	  /trunk/ROSE/src/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/Fortran_tests/README: fixed some
+	  build errors
+
 2009-07-24 21:21  heller9
 
 	* [r6684] /trunk/ROSE/demo/qrose/Makefile.am: demo/qrose
