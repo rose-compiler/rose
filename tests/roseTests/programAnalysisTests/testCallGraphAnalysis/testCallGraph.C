@@ -69,6 +69,77 @@ struct OnlyNonCompilerGenerated : public std::unary_function<bool,SgFunctionDecl
         }
    };
 
+
+class SecurityVulnerabilityAttribute : public AstAttribute
+   {
+
+     public:
+
+       SgDirectedGraphEdge* edge;
+       SgGraphNode* node;
+
+       SecurityVulnerabilityAttribute(SgGraphNode*);
+       SecurityVulnerabilityAttribute(SgDirectedGraphEdge*);
+          virtual std::vector<AstAttribute::AttributeEdgeInfo> additionalEdgeInfo();
+          virtual std::vector<AstAttribute::AttributeNodeInfo> additionalNodeInfo();
+
+   };
+
+SecurityVulnerabilityAttribute::SecurityVulnerabilityAttribute(SgGraphNode* n)
+  : edge(NULL),node(n)
+{
+
+};
+SecurityVulnerabilityAttribute::SecurityVulnerabilityAttribute(SgDirectedGraphEdge* e)
+  : edge(e),node(NULL)
+
+{
+
+};
+
+  vector<AstAttribute::AttributeEdgeInfo>
+SecurityVulnerabilityAttribute::additionalEdgeInfo()
+{
+  vector<AstAttribute::AttributeEdgeInfo> v;
+
+  if( edge != NULL )
+  {
+
+    string vulnerabilityName  = edge->get_name()  ;
+    string vulnerabilityColor   = "green";
+    string vulnerabilityOptions = " arrowsize=7.0 style=\"setlinewidth(7)\" constraint=false fillcolor=" + vulnerabilityColor + ",style=filled ";
+
+    // AstAttribute::AttributeNodeInfo vulnerabilityNode ( (SgNode*) vulnerabilityPointer, "SecurityVulnerabilityAttribute"," fillcolor=\"red\",style=filled ");
+    AstAttribute::AttributeEdgeInfo vulnerabilityNode ( edge->get_from(),edge->get_to(), vulnerabilityName, vulnerabilityOptions);
+    v.push_back(vulnerabilityNode);
+
+  }
+
+  return v;
+}
+
+  std::vector<AstAttribute::AttributeNodeInfo>
+SecurityVulnerabilityAttribute::additionalNodeInfo()
+{
+
+  vector<AstAttribute::AttributeNodeInfo> v;
+  if(node != NULL){
+
+
+
+    string vulnerabilityName    = node->get_name() ;
+    string vulnerabilityColor   = "blue";
+    string vulnerabilityOptions = " arrowsize=7.0 style=\"setlinewidth(7)\" constraint=false fillcolor=" + vulnerabilityColor + ",style=filled ";
+
+    // AstAttribute::AttributeNodeInfo vulnerabilityNode ( (SgNode*) vulnerabilityPointer, "SecurityVulnerabilityAttribute"," fillcolor=\"red\",style=filled ");
+    AstAttribute::AttributeNodeInfo vulnerabilityNode ( node, vulnerabilityName, vulnerabilityOptions);
+    v.push_back(vulnerabilityNode);
+  }
+  return v;
+}
+
+
+
 int
 main( int argc, char * argv[] ) {
    RoseTestTranslator test;
@@ -167,13 +238,58 @@ main( int argc, char * argv[] ) {
    string coloredFileName   = generatedProjectName + "_colored_callgraph.dot";
 
 // Example of how to generate a modified Call Graph
-   OutputDot::writeToDOTFile(newGraph, coloredFileName.c_str(),"Incidence Graph", nodeLabel,edgeLabel );
+ //  OutputDot::writeToDOTFile(newGraph, coloredFileName.c_str(),"Incidence Graph", nodeLabel,edgeLabel );
 
 // This generated the dot file for the AST.
    generateDOT( *project );
 
 // This generates the dot file for the Call Graph
-   GenerateDotGraph(newGraph, uncoloredFileName.c_str());
+   //GenerateDotGraph(newGraph, uncoloredFileName.c_str());
+   {
+     AstDOTGeneration dotgen;
+
+     dotgen.writeIncidenceGraphToDOTFile(newGraph, uncoloredFileName.c_str());
+
+   }
+   
+   //Generate colored graph
+       rose_graph_integer_node_hash_map & nodes =
+      newGraph->get_node_index_to_node_map ();
+
+
+    for( rose_graph_integer_node_hash_map::iterator it = nodes.begin();
+        it != nodes.end(); ++it )
+    {
+      SgGraphNode* node = it->second;
+     AstAttribute* newAttribute = new SecurityVulnerabilityAttribute(node);
+     ROSE_ASSERT(newAttribute != NULL);
+
+     node->addNewAttribute("SecurityVulnerabilityAttribute",newAttribute);
+
+   }
+
+    rose_graph_integer_edge_hash_multimap & outEdges
+      = newGraph->get_node_index_to_edge_multimap_edgesOut ();
+
+
+    for( rose_graph_integer_edge_hash_multimap::const_iterator outEdgeIt = outEdges.begin();
+        outEdgeIt != outEdges.end(); ++outEdgeIt )
+    {
+      SgDirectedGraphEdge* graphEdge = isSgDirectedGraphEdge(outEdgeIt->second);
+      ROSE_ASSERT(graphEdge!=NULL);
+
+      AstAttribute* newAttribute = new SecurityVulnerabilityAttribute(graphEdge);
+      ROSE_ASSERT(newAttribute != NULL);
+
+      graphEdge->addNewAttribute("SecurityVulnerabilityAttribute",newAttribute);
+
+    }
+
+    {
+      AstDOTGeneration dotgen;
+
+      dotgen.writeIncidenceGraphToDOTFile(newGraph, coloredFileName.c_str());
+    }
 
    cout << "Done with DOT\n";
 

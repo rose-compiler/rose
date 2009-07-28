@@ -295,7 +295,11 @@ int main (int argc, char **argv){
 
 
 
-  OutputDot::writeToDOTFile(newGraph, outFileName.c_str(), "Call Graph");
+  AstDOTGeneration dotgen;
+
+  dotgen.writeIncidenceGraphToDOTFile(newGraph, outFileName.c_str());
+
+//  OutputDot::writeToDOTFile(newGraph, outFileName.c_str(), "Call Graph");
   //GenerateDotGraph (newGraph,outFileName.c_str());
 
 
