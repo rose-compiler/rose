@@ -2033,6 +2033,9 @@ PointsToAnalysis::Implementation::join(
                 << std::endl;
 #endif
             mainInfo->disjointSets.link(a_set, b_set);
+            b_set->symbols.splice(b_set->symbols.begin(), a_set->symbols);
+            b_set->func_symbols.splice(b_set->func_symbols.begin(),
+                                       a_set->func_symbols);
 #if VERBOSE_DEBUG
             std::cout
                 << "a = " << (void *) a
@@ -2100,7 +2103,8 @@ PointsToAnalysis::Implementation::join(
             << "a->basevars: " << names(a->baseLocation()->symbols)
                 << std::endl
             << "b->basevars: " << names(b->baseLocation()->symbols)
-                << std::endl;
+                << std::endl
+            << std::endl;
 #endif
     }
     if (a->return_location != NULL && b->return_location != NULL)
