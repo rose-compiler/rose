@@ -85,6 +85,16 @@ RTED_TEST_DIRS = $(rted_path)/C/array_index_out_of_bound \
 		 $(rted_path)/C/memory_leaks \
 		 $(rted_path)/C/uninitialized_variables \
 		 $(rted_path)/C/C99_specific_errors \
+		 $(rted_path)/C/floating_point_errors \
+		 $(rted_path)/C/pointer_errors \
+		 $(rted_path)/C++/array_index_out_of_bound \
+		 $(rted_path)/C++/string_errors \
+		 $(rted_path)/C++/allocation_deallocation_errors \
+		 $(rted_path)/C++/floating_point_errors \
+		 $(rted_path)/C++/pointer_errors \
+		 $(rted_path)/C++/input_output_errors \
+		 $(rted_path)/C++/memory_leaks \
+		 $(rted_path)/C++/uninitialized_variables \
 		 $(srcdir)/tests/C/memoryleaks \
 		 $(srcdir)/tests/C/nomemoryleaks \
 		 $(srcdir)/tests/C/panasTests

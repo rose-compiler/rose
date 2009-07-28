@@ -24,6 +24,5 @@ BUILT_SOURCES = ui_MainWindow.h
 libDebuggerQt_la_LIBADD = $(top_builddir)/src/roseExtensions/qtWidgets/TreeModel/libTreeModel.la\
                       $(top_builddir)/src/roseExtensions/qtWidgets/QCodeEditWidget/libQCodeEditWidget.la\
 		      $(QT_LDFLAGS) 
-		       
 
 endif
