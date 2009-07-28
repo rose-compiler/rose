@@ -17,6 +17,9 @@ class AstDOTGeneration : public DOTGeneration<SgNode*>
           void generateInputFiles(SgProject* node, traversalType tt=TOPDOWNBOTTOMUP, std::string filenamePostfix="");
           void generateWithinFile(SgFile* node, traversalType tt=TOPDOWNBOTTOMUP, std::string filenamePostfix="");
 
+          void writeIncidenceGraphToDOTFile(SgIncidenceDirectedGraph* graph,  const std::string& filename);
+          void addAdditionalNodesAndEdges(SgNode* node);
+
      protected:
           DOTInheritedAttribute evaluateInheritedAttribute(SgNode* node, DOTInheritedAttribute ia);
           DOTSynthesizedAttribute evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribute ia, SubTreeSynthesizedAttributes l);
