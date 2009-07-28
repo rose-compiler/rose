@@ -126,7 +126,7 @@ if ROSE_USE_OPEN_FORTRAN_PARSER
 endif
 
 librose_la_SOURCES = dummyCppFileForLibrose.C
-librose_la_LIBADD = $(libroseLibraries) $(LIB_QT) $(JAVA_JVM_FLAGS) -lm $(RT_LIBS) \
+librose_la_LIBADD = $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB_QT) -lm $(RT_LIBS) \
                     $(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB) \
 		    $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) \
 		    $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_REGEX_LIB) \

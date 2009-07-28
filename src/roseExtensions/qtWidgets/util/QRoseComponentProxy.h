@@ -2,27 +2,35 @@
 #ifndef QROSECOMPONENTPROXY_H
 #define QROSECOMPONENTPROXY_H
 
-#include <QObject>
+#include <QWidget>
 
-#include <qrose.h>
+//#include <qrose.h>
+
+class QBoxLayout;
 
 namespace qrs
 {
 
+class QRoseComponent;
+class QRGroupWidget;
+class QRMessage;
+
+
 class QRoseComponentProxy
-    : public QObject
+    : public QWidget
 {
     Q_OBJECT
 
     public:
-        QRoseComponentProxy( QRoseComponent *comp );
+        QRoseComponentProxy( QRoseComponent *comp, ::QWidget *parent );
 
         template< typename ComponentType >
         ComponentType *component() const
         { return dynamic_cast<ComponentType *>( comp_ ); }
 
     signals:
-        void clicked( SgNode *node );
+        void nodeActivated( SgNode *node );
+        void nodeActivatedAlt( SgNode *node );
 
     public slots:
         void setNode( SgNode *node );
@@ -34,8 +42,10 @@ class QRoseComponentProxy
         void getBroadcast( QRGroupWidget *emitter, QRMessage *msg );
 
     private:
+        QBoxLayout *layout;
         QRoseComponent *comp_;
 
+        
 };
 
 }

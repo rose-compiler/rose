@@ -4,6 +4,12 @@
 #include "RoseFrontendTask.h"
 #include "CompilerOutputWidget.h"
 
+// annotators
+#include "FlopCounter.h"
+#include "AsmToSourceMapper.h"
+#include "InstructionCountAnnotator.h"
+// ----
+
 #include <iostream>
 #include <sstream>
 #include <unistd.h>
@@ -12,6 +18,68 @@
 #include <QFileInfo>
 #include <QDebug>
 
+// ---------------------- begin annotations ------------------------------
+
+// TODO: proper, general mechanism
+
+void annotateFiles( SgProject *project, SgFile *file )
+{
+    ///////////////////////////////////////////////////////////////////////////
+    // annotators which work for all kind of SgFiles
+    ///////////////////////////////////////////////////////////////////////////
+    
+    ///////////////////////////////////////////////////////////////////////////
+
+
+    ///////////////////////////////////////////////////////////////////////////
+    // annotators which only work for SgSourceFile
+    ///////////////////////////////////////////////////////////////////////////
+    
+    SgSourceFile *srcFile( isSgSourceFile( file ) );
+    if( srcFile )
+    {
+        FlopCounterProcessor flops;
+        flops.traverse( file );
+
+        for( int i( 0 ); i < project->numberOfFiles(); ++i )
+        {
+            SgBinaryFile *otherBinFile( isSgBinaryFile( (*project)[i] ) );
+
+            if( otherBinFile == NULL ) continue;
+
+            AsmToSourceMapper mapper( otherBinFile );
+            mapper.annotate( srcFile );
+        }
+    }
+    ///////////////////////////////////////////////////////////////////////////
+
+
+    ///////////////////////////////////////////////////////////////////////////
+    // annotators which only work for SgBinaryFile
+    ///////////////////////////////////////////////////////////////////////////
+
+    SgBinaryFile *binFile( isSgBinaryFile( file ) );
+    if( binFile )
+    {
+        std::string pinFileName( binFile->getFileName() );
+        pinFileName += ".pin";
+        InstructionCountAnnotator::annotate( binFile, pinFileName );
+
+        AsmToSourceMapper mapper( binFile );
+        for( int i( 0 ); i < project->numberOfFiles(); ++i )
+        {
+            SgSourceFile *otherSrcFile( isSgSourceFile( (*project)[i] ) );
+
+            if( otherSrcFile == NULL ) continue;
+            
+            mapper.annotate( otherSrcFile );
+        }
+        
+    }
+    ///////////////////////////////////////////////////////////////////////////
+}
+
+// ---------------------- end annotations --------------------------------
 
 RoseFrontendTask::RoseFrontendTask(SgProject * proj,const QString & filename)
     : sgFile(NULL),sgProject(proj),file(filename),state(BEFORE_START)
@@ -54,7 +122,7 @@ void RoseFrontendTask::start()
 
     try
     {
-        // creating file ... (platform independent, hopefully)
+        // creating SgFile ... (platform independent, hopefully)
         sgFile = SageBuilder::buildFile( file.toStdString(), std::string(), sgProject );
     }
     catch( ... )
@@ -64,12 +132,10 @@ void RoseFrontendTask::start()
     }
 
     fflush( stdout );
+    fflush( stderr );
 
     /*typedef io::file_descriptor_source source;
     source src( out_pipe[0] );*/
-
-    QFile output;
-    output.open( out_pipe[0], QIODevice::ReadOnly );
 
     // restoring stdout
     dup2( saved_stdout, STDOUT_FILENO );
@@ -78,8 +144,12 @@ void RoseFrontendTask::start()
     // end platform specific
     // ------------------------------------------------------------------------
 
+    QFile output;
+    output.open( out_pipe[0], QIODevice::ReadOnly | QIODevice::Text );
 
     out.readData( &output );
+
+    annotateFiles( sgProject, sgFile );
 
     state = FINISHED_SUCCESS;
     emit finished();
@@ -94,6 +164,8 @@ RoseFrontendOutput::RoseFrontendOutput( QWidget *par )
     : TaskOutputInfo( par ),
       outputWidget( new CompilerOutputWidget )
 {
+    connect( outputWidget, SIGNAL( taskClicked( const QString &, int ) ),
+             this,         SLOT  ( itemClicked( const QString &, int ) ) );
 }
 
 RoseFrontendOutput::~RoseFrontendOutput()
@@ -121,17 +193,47 @@ void RoseFrontendOutput::readData( QIODevice *io )
 {
     QTextStream stream(io);
 
-    QString line;
+    QRegExp rx( "\"(.+)\", line (\\d+): (warning|error):.*" );
 
     int i( 0 );
+    //while( !stream.atEnd() )
     while( ++i )
     {
-        line=stream.readLine();
-        if(line.isNull())
-            return;
-    
-        outputWidget->addItem( CompilerOutputWidget::Unknown,
-                               line, "...", i );
+        //++i;
+        QString line = stream.readLine();
+
+        if( line.isNull() ) return;
+
+        int pos( 0 );
+        if( rx.exactMatch( line ) )
+        {
+            //qDebug() << "found match ...";
+
+            //qDebug() << "file" << rx.cap( 1 );
+            //qDebug() << "line" << rx.cap( 2 );
+            //qDebug() << "type" << rx.cap( 3 );
+
+            const QString &file( rx.cap( 1 ) );
+            const QString &lineNo( rx.cap( 2 ) );
+            const QString &type( rx.cap( 3 ) );
+            const QString &message( stream.readLine() );
+
+            if( message.isNull() ) return;
+
+            if( type == "warning" )
+            {
+                outputWidget->addItem( CompilerOutputWidget::Warning,
+                                       message, file, lineNo.toInt() );
+            }
+            if( type == "error" )
+            {
+                outputWidget->addItem( CompilerOutputWidget::Error,
+                                       message, file, lineNo.toInt() );
+            }
+        }
+
+        //outputWidget->addItem( CompilerOutputWidget::Unknown,
+        //line, "...", i );
     }
 
 }

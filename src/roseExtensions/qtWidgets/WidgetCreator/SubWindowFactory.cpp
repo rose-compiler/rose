@@ -29,7 +29,7 @@ void SubWindowFactory::registerSubWindow( WidgetCreatorInterface *winInterface )
     interfaces.push_back( winInterface );
 
     connect( winInterface->createAction(), SIGNAL( triggered() ),
-             this                        , SLOT  ( addSubWindow() ) );
+             this                        , SLOT  ( addSubWindowAction() ) );
 }
 
 QList<QAction *> SubWindowFactory::getActions() const
@@ -44,7 +44,7 @@ QList<QAction *> SubWindowFactory::getActions() const
     return res;
 }
 
-void SubWindowFactory::addSubWindow()
+void SubWindowFactory::addSubWindowAction()
 {
     assert( sender() );
 
@@ -164,8 +164,6 @@ void SubWindowFactory::rebuildSystemMenus()
             linkMenu->clear();
         }
 
-        // TODO: check if action exists, make window titles unique
-        
         QMap<QMdiSubWindow *, QWidget *>::iterator otherPair(
                 openWidgets.begin() );
         while( otherPair != openWidgets.end() )

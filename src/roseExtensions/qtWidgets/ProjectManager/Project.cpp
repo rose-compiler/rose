@@ -12,11 +12,6 @@
 #include "SgNodeUtil.h"
 #include "MetricsConfig.h"
 
-// annotators
-#include "FlopCounter.h"
-#include "AsmToSourceMapper.h"
-#include "InstructionCountAnnotator.h"
-
 #include <QFileInfo>
 #include <QIcon>
 #include <QDebug>
@@ -28,9 +23,9 @@
 
 #include "GccTask.h"
 #include "BAstNode.h"
+
+
 // ---------------------- ProjectManager ---------------------------------
-
-
 
 ProjectManager * ProjectManager::single = NULL;
 
@@ -170,10 +165,6 @@ void ProjectManager::loadProjectState( int argc, char **argv )
 
         projNode->setCommandLine( l );
 
-        //projNode->addToCommandLine( "-rose:verbose 2" );
-        //cprojNode->addToCommandLine( "-DBOOST_NO_INT64_T" );
-        //projNode->addToCommandLine( "-I/home/heller9/opt/boost/include/boost-1_39" );
-
         int size = s.beginReadArray("files");
         for(int i=0; i < size; i++)
         {
@@ -182,38 +173,6 @@ void ProjectManager::loadProjectState( int argc, char **argv )
             projNode->addFile( file );
         }
         s.endArray();
-
-        // Annotations temporaly go here ...
-        // TODO: proper mechanism
-        for( int i = 0; i < projNode->getSourceFileCount(); ++i )
-        {
-            SgSourceFile *srcFile( projNode->getSourceFile( i )->getSgSourceFile() );
-
-            FlopCounterProcessor flops;
-            flops.traverse( srcFile );
-        }
-
-        for( int i = 0; i < projNode->getBinaryFileCount(); ++i )
-        {
-            SgBinaryFile *binFile( projNode->getBinaryFile( i )->getSgBinaryFile() );
-
-            // Annotate with mapping from assembly code to C++ Code
-            AsmToSourceMapper mapper( binFile );
-            // map to every source file ... for now ...
-            for( int j = 0; j < projNode->getSourceFileCount(); ++j )
-            {
-                SgSourceFile *srcFile( projNode->getSourceFile( j )->getSgSourceFile() );
-                mapper.annotate( srcFile );
-            }
-
-            // annotate with Intel Pin Information ...
-            // assumes that /path/to/filename.pin exists and is in the correct format ...
-            std::string pinFileName( binFile->getFileName() );
-            pinFileName += ".pin";
-            InstructionCountAnnotator::annotate( binFile, pinFileName );
-        }
-
-        projNode->getMetricsConfig()->setRoot( projNode->getSgProject() );
     }
     s.endArray();
 
@@ -322,7 +281,7 @@ bool ProjectNode::addFile(const QString & file)
         qWarning() << "ProjectNode::addFile - unrecognized file type";
         return false;
     }
-    //metricsConfig->setRoot( sgProject );
+    metricsConfig->setRoot( sgProject );
 
     qDebug() << "done";
 

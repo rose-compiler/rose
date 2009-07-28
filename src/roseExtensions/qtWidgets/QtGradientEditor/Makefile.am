@@ -32,16 +32,22 @@ libQtGradientEditor_la_SOURCES = qtcolorbutton.cpp \
                                  qtgradientutils.cpp \
                                  qtgradientview.cpp \
                                  qtgradientviewdialog.cpp \
-                                 qtgradientwidget.cpp \
-				 ui_qtgradientdialog.h \
-				 ui_qtgradienteditor.h \
-				 ui_qtgradientviewdialog.h \
-				 ui_qtgradientview.h
+                                 qtgradientwidget.cpp
+
+nodist_libQtGradientEditor_la_SOURCES = ui_qtgradientdialog.h \
+		ui_qtgradienteditor.h \
+		ui_qtgradientviewdialog.h \
+		ui_qtgradientview.h 
 
 BUILT_SOURCES = ui_qtgradientdialog.h \
 		ui_qtgradienteditor.h \
 		ui_qtgradientviewdialog.h \
 		ui_qtgradientview.h 
+
+EXTRA_DIST = qtgradientdialog.ui \
+	     qtgradienteditor.ui \
+	     qtgradientviewdialog.ui \
+	     qtgradientview.ui
 
 libQtGradientEditor.la: $(QTGRADIENT_MOC_FILES) $(libQtGradientEditor_la_OBJECTS)
 	$(CXXLINK) $(am_libQtGradientEditor_la_rpath) $(libQtGradientEditor_la_LDFLAGS) $(libQtGradientEditor_la_OBJECTS) $(libQtGradientEditor_la_LIBADD) $(LIBS)

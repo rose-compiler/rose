@@ -41,6 +41,8 @@ class TaskList : public QListWidget
 
     protected slots:
         void on_itemClicked ( QListWidgetItem * item );
+        void taskOutputClicked( const QString &file, int line )
+        { emit clicked( file, line ); }
 
     protected:
         TaskListItem * lastClickedItem;

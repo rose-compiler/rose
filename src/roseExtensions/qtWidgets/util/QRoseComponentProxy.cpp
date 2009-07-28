@@ -2,12 +2,25 @@
 #include "rose.h"
 #include "QRoseComponentProxy.h"
 
+#include "qrose.h"
+
+#include <QHBoxLayout>
+#include <QWidget>
+
 namespace qrs {
 
-QRoseComponentProxy::QRoseComponentProxy( QRoseComponent *comp )
-: comp_( comp )
+QRoseComponentProxy::QRoseComponentProxy( QRoseComponent *comp, ::QWidget *parent )
+: QWidget( parent ),
+  layout( new QHBoxLayout() ),
+  comp_( comp )
 {
     assert( comp_ != NULL );
+
+    QWidget *w( dynamic_cast<QWidget *>( comp ) );
+    assert( w );
+
+    setLayout( layout );
+    layout->addWidget( w );
 
     QRLink *link( comp_->getLink(-1) );
 
@@ -31,7 +44,7 @@ void QRoseComponentProxy::getBroadcast( QRGroupWidget *, QRMessage *msg )
         case QRoseComponent::msg_node:
             {
                 SgNode *node = ((QRoseComponent::SgNodeMsg *) msg)->getNode();
-                emit clicked( node );
+                emit nodeActivated( node );
             }
             break;
         case QRoseComponent::msg_nodes:
