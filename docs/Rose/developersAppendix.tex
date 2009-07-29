@@ -1390,10 +1390,12 @@ For every test a build and test run is started.
 
 \subsection{Adding a test}
 To add a test which can be run on the Compile Farm you need to add an options
-file to the svn repository. This options file sets some bash variables
-which control the conditions and name the test is run. The right place to put
-those files is <rose\_dir>/scripts/nmiBuildAndTestFarm/build\_configs/<platform>/. \\
-verview of the options:
+file to the svn repository. This options file sets some bash variables which
+control the conditions and name the test is run. The right place to put those
+files is {\tt <rose\_dir>/scripts/nmiBuildAndTestFarm/build\_configs/<platform>/
+}. \\ 
+
+Overview of the options:
 \begin{itemize}
  \item {\tt TITLE} - The title of the test
  \item {\tt DESCRIPTION} - Short text to describe the test
@@ -1404,6 +1406,10 @@ verview of the options:
  \item {\tt CONFIGURE\_OPTIONS} - Define which options you want to pass to configure
                                   most likely you want at least point to the right
                                   boost directory
+
+ \item {\tt JAVA\_HOME} - If {\tt java} is included in the prereqs, {\tt
+						 JAVA\_HOME} should be specified.  This will be passed
+						 to the environment of the running test.
 \end{itemize}
 
 Example options file:
@@ -1415,13 +1421,26 @@ CONFIGURE_OPTIONS="--with-boost=/prereq/boost-1.35.0 --with-CXX_WARNINGS=-Wall -
 \end{verbatim}
 
 \subsection{Manually submitting tests}
+
+At the time of this writing, ROSE developers share an account on the NMI test
+farm.  It is therefore important to work in your own directory when submitting
+tests manually.  To setup your own directory using the public configuration, you
+can invoke the following command on the NMI submit host ({\tt
+nmi-s005.cs.wisc.edu}):\\
+
+{\tt svn checkout
+https://outreach.scidac.gov/svn/rose/trunk/scripts/nmiBuildAndTestFarm
+<your-name>-rose-nmi}\\
+If you are working on the NMI scripts it will be more convenient to {\tt scp}
+your local copy of the {\tt nmiBuildAndTestFarm} directory (hereafter {\tt nmi})
+to the NMI submit host, rather than checkout from the public repository.  The
+directory {\tt rose\_nmi} is used for the automated nightly (cron) runs, and
+should not be used for manually submitting tests, except to debug the cron jobs.
+Once you have your own copy of the {\tt nmi} directory on the submit host,
+manually submitting tests can be done as follows:
+
 \begin{enumerate}
  \item Log on to nmi-s005.cs.wisc.edu
- \item Get the latest submission scripts:
- \begin{itemize}
-  \item {\tt svn checkout https://outreach.scidac.gov/svn/rose/trunk/scripts/nmi rose\_nmi }
-  \item OR: {\tt cd rose\_nmi; svn up }
- \end{itemize}
  \item See whats already there: 
  \begin{itemize}
   \item {\tt ls build\_configs}
@@ -1432,18 +1451,20 @@ CONFIGURE_OPTIONS="--with-boost=/prereq/boost-1.35.0 --with-CXX_WARNINGS=-Wall -
        {\tt ./submit.sh build\_configs/<platform>/<options\_file>}
        to submit test.
  \item Point your browser to: 
-       \url{http://nmi-web.cs.wisc.edu/nmi/index.php?page=results\%2Foverview\&opt\_project=rose+compiler}
-       To open the results overview page. Your submitted test should be shown as "running"
+	   \url{http://nmi-web.cs.wisc.edu/nmi/index.php?page=results\%2Foverview\&opt\_project=rose+compiler}
+	   To open the results overview page. Your submitted test should be shown as
+	   "running."
 \end{enumerate}
 
 \subsection{Cron automated tests}
-Jobs can be added to the cronjobs file in the directory <rose\_dir>/scripts/nmi
-These cronjobs will be loaded every night into the crontab file on the submission
-host (this is done by the first entry, which executes update.sh). In order to
-add your own build tests, simply add a line there (see {\tt man 5 crontab} for
-more information). Be sure to test your submission before adding it to the cronjobs.
+Jobs can be added to the cronjobs file in the directory {\tt
+<rose\_dir>/scripts/nmi } These cronjobs will be loaded every night into the
+crontab file on the submission host (this is done by the first entry, which
+executes update.sh). In order to add your own build tests, simply add a line
+there (see {\tt man 5 crontab} for more information). Be sure to test your
+submission before adding it to the cronjobs.
 
-{\bf NOTE:} If you want your cronjobs to be permanent, ad this to your local svn
+{\bf NOTE:} If you want your cronjobs to be permanent, add this to your local svn
 copy, and not the checkout on the submit machines. Also be sure to add the 
 options file that specify the test to the svn repository.
 
@@ -1452,3 +1473,42 @@ Example entry:
 # run the minimal_default test every day at midnight
 0 0 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_deb_4.0/minimal_default
 \end{verbatim}
+
+
+\subsection{Troubleshooting with {\tt nmi-postmortem}}
+
+If a run fails, it can be helpful to examine the environment that it ran on.
+There is a small program, {\tt nmi-postmortem}, that aims to automate some of
+the tedium of doing this.  On the results page for a run, you can find the {\tt
+runid}.
+With this, you can invoke the following on the submit host:\\
+\ {\tt nmi-postmortem <runid>}\\
+This will do the following:
+\begin{itemize}
+	\item Determine the machine the test ran on.
+
+	\item Copy {\tt results.tar.gz} to the run machine and extract it there in a
+	directory called {\tt run}.  {\tt WARNING}: Any previous run directory on
+	that machine will be removed first.
+
+	\item {\tt ssh} you onto the run machine, {\tt cd} to the run directory and
+	source the environment file for the run.  At this point you should be able
+	to investigate in an environment very close to the one the actual run failed
+	on.
+\end{itemize}
+
+{\tt NOTE}: {\tt nmi-postmortem} invokes {\tt ssh} a lot.  There are two things
+to keep in mind because of this:
+\begin{enumerate}
+	\item You will have to have connected to the run machine at least once to
+	ensure that a home directory is created for you.
+
+	\item It will be extremely convenient to have an ssh public key in the {\tt
+	authorized\_keys} list on the target machine, and to invoke {\tt ssh-add}
+	before running {\tt nmi-postmortem}.  At the time of this writing, the
+	shared account automatically starts up with {\tt ssh-agent}, so all that is
+	required to invoke {\tt ssh-add} once per login session before invoking {\tt
+	nmi-postmortem}.
+\end{enumerate}
+
+
