@@ -1,3 +1,87 @@
+2009-07-29 01:10  hamilton37
+
+	* [r6707] /trunk/ROSE/scripts/nmiBuildAndTestFarm/nmi-postmortem:
+	  NMI: nmi-postmortem now complains if ssh keys haven't been added
+	  to ssh-agent.
+	  
+	  The program calls ssh a lot, so it's best for users to first
+	  invoke ssh-add.
+
+2009-07-29 00:45  hamilton37
+
+	* [r6706]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp,
+	  /trunk/ROSE/projects/RTED/DataStructures.h,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: RTED: Progress towards
+	  multidimensional stack array handling and arbitrary
+	  pointer indirection management.
+	  
+	  Presently the wrapper sets up array types correctly, but the type
+	  lookup in
+	  checkPointerDeref doesn't handle address type ambiguity for
+	  multidimensional
+	  arrays (i.e. it is assumed that the same address does not have
+	  two types
+	  associated with it, which is incorrect for stack arrays). A test
+	  case
+	  illustrating this deficiency is in CppRuntimeSystem/test.cpp, the
+	  function
+	  testMultidimensionalStackArrayAccess.
+	  
+	  The transformation and wrappers now handle stack arrays of
+	  arbitrary dimensions
+	  (rather than arrays of up to two dimensions).
+	  
+	  Additionally, some indirection level information is given to the
+	  type system, to
+	  handle arbitrary pointer type depth (type ****ptr).
+
+2009-07-28 23:27  heller9
+
+	* [r6705] /trunk/ROSE/config/Makefile.for.ROSE.includes.and.libs,
+	  /trunk/ROSE/demo/qrose/t7_qtcompat.C,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RoseQt/MainWindow.cpp,
+	  /trunk/ROSE/projects/RoseQt/MainWindow.h,
+	  /trunk/ROSE/projects/RoseQt/Makefile.am,
+	  /trunk/ROSE/projects/RoseQt/inputTest.cpp,
+	  /trunk/ROSE/src/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/MetricsConfig/MetricsConfig.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/ProjectManager/Project.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QtGradientEditor/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/TaskSystem/RoseFrontendTask.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/TaskSystem/RoseFrontendTask.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/TaskSystem/TaskList.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/TaskSystem/TaskList.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/WidgetCreator/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/WidgetCreator/SubWindowFactory.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/WidgetCreator/SubWindowFactory.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/QRoseComponentProxy.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/QRoseComponentProxy.h:
+	  integrated qrose components into qtWidgets
+	  
+	  minor bugfixes
+
+2009-07-28 22:57  dquinlan
+
+	* [r6704]
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/Makefile.am:
+	  Fixed Makefile to include the rest of the tests and reference
+	  only the tests/CompileTests/Cxx_tests.
+
+2009-07-28 22:03  saebjornsen1
+
+	* [r6703]
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/Makefile.am:
+	  Added extra tests of callgraph
+
 2009-07-28 15:46  saebjornsen1
 
 	* [r6700] /trunk/ROSE/src/midend/astProcessing/AstDOTGeneration.C,
