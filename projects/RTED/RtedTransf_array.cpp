@@ -73,9 +73,7 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
 
 
 
-  std::vector<SgExpression*> value;
-  array->getIndices(value);
-  int dimension = array->dimension;
+  std::vector<SgExpression*> value = array -> getIndices();
   //bool stack = array->stack;
   if (isSgStatement(stmt)) {
     SgScopeStatement* scope = stmt->get_scope();
@@ -108,25 +106,16 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
       // build the function call : runtimeSystem-->createArray(params); ---------------------------
       SgExpression* plainname = buildString(initName->get_name());
       SgExpression* callNameExp = buildString(name);
-      SgIntVal* dimExpr = buildIntVal(dimension);
       //SgBoolValExp* stackExpr = buildBoolValExp(stack);
 
       SgExprListExp* arg_list = buildExprListExp();
       appendExpression(arg_list, plainname);
       appendExpression(arg_list, callNameExp);
-      appendExpression(arg_list, dimExpr);
 
-      appendAddressAndSize(initName, varRef, stmt, arg_list,1); 
+      appendTypeInformation( initName, arg_list );
+      appendAddressAndSize(initName, varRef, stmt, arg_list,0); 
 
 
-      std::vector<SgExpression*>::const_iterator it = value.begin();
-      for (; it != value.end(); ++it) {
-	SgExpression* expr = isSgExpression(*it);
-	if (expr == NULL)
-	  expr = buildIntVal(-1);
-	ROSE_ASSERT(expr);
-	appendExpression(arg_list, expr);
-      }
       SgIntVal* ismalloc = buildIntVal( 0 );
       SgExpression* size = buildIntVal( 0 );
       if (array->ismalloc) {
@@ -147,6 +136,17 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
 
       SgExpression* linenrTransformed = buildString("x%%x");
       appendExpression(arg_list, linenrTransformed);
+
+      appendExpression(arg_list, buildIntVal( array -> getDimension() ));
+      std::vector<SgExpression*>::const_iterator it = value.begin();
+      for (; it != value.end(); ++it) {
+          SgExpression* expr = isSgExpression(*it);
+          if (expr == NULL)
+              expr = buildIntVal(-1);
+          ROSE_ASSERT(expr);
+          appendExpression(arg_list, expr);
+      }
+
 
       //      appendExpression(arg_list, buildString(stmt->unparseToString()));
       ROSE_ASSERT(roseCreateArray);
@@ -217,8 +217,6 @@ void RtedTransformation::insertArrayAccessCall(SgExpression* arrayExp,
 
 void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
 					       SgExpression* arrayExp, RTedArray* array) {
-  std::vector<SgExpression*> value;
-  array->getIndices(value);
 
   if (isSgStatement(stmt)) {
     SgScopeStatement* scope = stmt->get_scope();
@@ -227,18 +225,12 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
 
     SgExprListExp* arg_list = buildExprListExp();
     appendExpression(arg_list, callNameExp);
-    appendExpression(arg_list, array->indx1);
-    SgExpression* expr = NULL;
 
-    if (array->indx2)
-      appendExpression(arg_list, array->indx2);
-    else {
-      if (array->dimension==1)
-	expr = buildIntVal(-1); // call [i,-1]
-      else
-	expr = buildIntVal(0); // call [i,0]
-      appendExpression(arg_list, expr);
-    }
+    // TODO 3: remove
+    // posA, posB, neither are used or needed as this is handled by address
+    appendExpression( arg_list, buildIntVal( -1 ) );
+    appendExpression( arg_list, buildIntVal( -1 ) );
+
     SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
     SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
     appendExpression(arg_list, filename);
@@ -332,6 +324,52 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
 }
 
 
+void RtedTransformation::populateDimensions( RTedArray* array, SgInitializedName* init, SgArrayType* type_ ) {
+    std::vector< SgExpression* >& indices = array -> getIndices();
+
+    SgType* type = type_;
+    while( isSgArrayType( type )) {
+        SgExpression* index = isSgArrayType( type ) -> get_index();
+        if( index )
+            indices.push_back( index );
+        type = isSgArrayType( type ) -> get_base_type();
+    }
+
+    // handle implicit first dimension for array initializers
+    // for something like
+    //      int p[][2][3] = {{{ 1, 2, 3 }, { 4, 5, 6 }}}
+    //  we can calculate the first dimension as
+    //      sizeof( p ) / ( sizeof( int ) * 2 * 3 )
+    if( isSgAssignInitializer( init -> get_initptr() )) {
+        SgType* uint = buildUnsignedIntType();
+        Sg_File_Info* file_info = init -> get_file_info();
+
+        std::vector< SgExpression* >::iterator i = indices.begin();
+        SgExpression* denominator = buildSizeOfOp( type );
+        while( i != indices.end() ) {
+            denominator = new SgMultiplyOp( file_info, denominator, *i, uint );
+            ++i;
+        }
+        assert( denominator != NULL );
+
+        indices.insert(
+            indices.begin(),
+            new SgDivideOp(
+                file_info,
+                buildSizeOfOp(
+                    buildVarRefExp(
+                        init,
+                        getSurroundingStatement( init ) -> get_scope()
+                    )
+                ),
+                denominator,
+                uint
+            )
+        );
+    }
+}
+
+
 void RtedTransformation::visit_isArraySgInitializedName(SgNode* n) {
   SgInitializedName* initName = isSgInitializedName(n);
   ROSE_ASSERT(initName);
@@ -346,71 +384,10 @@ void RtedTransformation::visit_isArraySgInitializedName(SgNode* n) {
   // does not need a createarray call, as the type is registered and any array
   // information will be tracked when variables of that type are created
   if ( array && !( isSgClassDefinition( n -> get_parent() -> get_parent() ))) {
-    SgExpression * expr = array->get_index();
-    SgExpression * expr2 = NULL;
-    SgType* basetype = array->get_base_type();
-    SgArrayType* array2 = isSgArrayType(basetype);
-    cerr << " unparse : " << array->unparseToString() << "   " << n->unparseToString() << endl;
-    if (array2) {
-      dimension++;
-      expr2=array2->get_index();
-      cerr << " --------------------- Two dimensional Array array2 : "<<array2->class_name()<<" expr2 : " << expr2->unparseToString() << endl;
-      ROSE_ASSERT(expr2);
-    } else {
-      cerr << " file : " << initName->get_file_info()->get_filename() << "  line  : " << initName->get_file_info()->get_line()<<endl;
-      cerr << " --------------------- One Dimensional Array  Type : " << type->class_name() <<endl;
-    }
-
-    if (expr) {
-      cerr << " >>> Found expression -- expr : " << expr->class_name() << 
-	"   initName : " << initName << "  array : " << array << endl;
-    } else {
-      cerr << " >>> Found expression -- expr : NULL "  << 
-	"   initName : " << initName << "  array : " << array << endl;
-    }
-    if (expr != NULL) {
-      cerr << "... Found stack array: " << initName->unparseToString()
-	   << " " << type->class_name() << " array expr: "
-	   << expr->unparseToString() << "  dim: " << dimension
-	   << endl;
-      if (expr2)
-	cerr << "   Expr2 : " << expr2->unparseToString() << endl;
-      ROSE_ASSERT(dimension>0);
-      RTedArray* arrayRted = new RTedArray(true, dimension, initName, NULL,
-					   expr, expr2,false);
-      cerr << " The problem: " << n->get_parent()->class_name() << " :: " << n->get_parent()->unparseToString() << endl;
-      if (!isSgFunctionParameterList(n->get_parent()))
-    	  create_array_define_varRef_multiArray_stack[initName] = arrayRted;
-    } else if (isSgAssignInitializer(initName->get_initptr())) {
-      cerr << "... Found Array AssignInitializer ... " << endl;
-      SgExpression* operand = isSgAssignInitializer(initName->get_initptr())->get_operand();
-      ROSE_ASSERT(operand);
-      cerr << "... Found operand : " << operand->class_name() << endl;
-      string arrayValue ="";
-      int length=0;
-      if (isSgStringVal(operand)) {
-	arrayValue=isSgStringVal(operand)->get_value();
-	length=arrayValue.size()+1;
-      } else {
-	cerr << "...Unknown type of operand :   arr[] = ...unknown... " << endl;
-	ROSE_ASSERT(false);
-      }
-      // now that we know what the array is initialized with and the length,
-      // create the array variable
-      ROSE_ASSERT(dimension>0);
-      SgIntVal* sizeExp = buildIntVal(length);
-      RTedArray* arrayRted = new RTedArray(true, dimension, initName, NULL,
-					   sizeExp, expr2,false);
+      RTedArray* arrayRted = new RTedArray(true, initName, NULL, false);
+      populateDimensions( arrayRted, initName, array );
       create_array_define_varRef_multiArray_stack[initName] = arrayRted;
-
-      array->set_index(buildIntVal(length));
-
-    } else {
-      cerr << "... There is a problem detecting this array ... " << initName->get_initptr()->class_name() << endl;
-      ROSE_ASSERT(false);
-    }
   }
-
 }
 
 
@@ -514,7 +491,6 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
   // varRef [indx1]([]) = malloc (size); // indx2 array alloc
   SgExpression* indx1 = NULL;
   SgExpression* indx2 = NULL;
-  int dimension = 0;
 
   cerr <<"   ::: Checking assignment : " << n->unparseToString()<<endl;
 
@@ -746,75 +722,9 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
       // copy the argument to malloc so we know how much memory was allocated
       ROSE_ASSERT( size->get_expressions().size() > 0 );
       SgExpression* size_orig = 
-          isSgExprListExp( size -> copy( treeCopy ))->get_expressions()[ 0 ];
+          isSgExprListExp( size ) -> get_expressions()[ 0 ];
 
-
-	  // what is the dimension of the array?
-	  dimension = getDimension(initName);
-	  if (dimension!=derefCounter && derefCounter>0) {
-	    cout << ">>>>>>>>> WARNING Dimension changed : " << dimension << " to " << derefCounter << endl;
-	    dimension=derefCounter;
-	  }
-	  string idx1_s = "";
-	  if (indx1)
-	    idx1_s = indx1->unparseToString();
-	  string idx2_s = "";
-	  if (indx2)
-	    idx2_s = indx2->unparseToString();
-	  cerr << "... Creating  malloc with initName : "
-	       << initName->unparseToString() << "  size:"
-	       << size->unparseToString() << "  dimension : "
-	       << dimension << "  indx1 : " << idx1_s
-	       << "  indx2 : " << idx2_s 
-	       << "  dimension based on derefCounter: " << derefCounter << endl;
-	  ROSE_ASSERT(dimension>0);
-	  // remove the sizeof allocation
-	  SgNode* parentOfSizeof = sizeofOp->get_parent();
-	  ROSE_ASSERT(parentOfSizeof);
-	  // the parent of sizeof is usally A Value, and thereafter Mul or Div
-	  parentOfSizeof = parentOfSizeof->get_parent();
-	  ROSE_ASSERT(parentOfSizeof);
-	  if (isSgBinaryOp(parentOfSizeof)) {
-	    SgBinaryOp* bin = isSgBinaryOp(parentOfSizeof);
-	    if (!(isSgDivideOp(bin) || isSgMultiplyOp(bin))) {
-	      cerr << "The operand above sizeof is not of type multiply or divide. Not handled" << endl;
-	      exit (1);
-	    }
-	    SgExpression* val = buildIntVal(1);
-	    if (bin->get_rhs_operand()==sizeofOp->get_parent()) {
-	      bin->set_rhs_operand(val);
-	    } else {
-	      bin->set_lhs_operand(val);
-	    }
-	    delete sizeofOp->get_parent();
-	  } 
-#if 0
-	  else {
-	    cerr << "Unhandled Operand for sizeof parent. " << parentOfSizeof->class_name() << endl;
-	    exit(1);
-	  }
-#endif
-	  if (indx1 == NULL && indx2 == NULL) {
-	    // array initialized to pointer: pntr = malloc (size)
-	    indx1 = size; // / divider;
-	  } else if (indx1 != NULL && indx2 == NULL) {
-	    // array : pntr[i] = malloc (size)
-	    indx1 = indx1;
-	    indx2 = size;
-	  } else if (indx1 != NULL && indx2 != NULL) {
-	    // array : pntr[i][j] = malloc
-	    indx1 = indx1;
-	    indx2 = indx2;
-	    // This should right now not happend for array creation
-	    ROSE_ASSERT(false);
-	  } else {
-	    ROSE_ASSERT(false);
-	  }
-
-	  // we are creating a new array variable based on the malloc call
-	  RTedArray* array = new RTedArray(false, dimension,
-					   initName, getSurroundingStatement( varRef ), indx1, indx2,
-					   ismalloc, size_orig);
+	  RTedArray* array = new RTedArray(false, initName, getSurroundingStatement( varRef ), ismalloc, size_orig);
 	  // varRef can not be a array access, its only an array Create
 	  variablesUsedForArray.push_back(varRef);
 	  create_array_define_varRef_multiArray[varRef] = array;
@@ -867,10 +777,10 @@ void RtedTransformation::addPaddingToAllocatedMemory(SgStatement* stmt,  RTedArr
   }
   
   // since this is mainly to handle char* correctly, we only deal with one dim array for now
-  if (cont && array->dimension==1) {
+  if (cont && array->getDimension()==1) {
     // allocated size
     SgScopeStatement* scope = stmt->get_scope();
-    SgExpression* size = array->indx1;
+    SgExpression* size = array->getIndices()[ 0 ];
     pushScopeStack (scope);
     // int i;
     SgVariableDeclaration* stmt1 = buildVariableDeclaration("i",buildIntType(),NULL); 
@@ -970,21 +880,9 @@ void RtedTransformation::visit_isArrayPntrArrRefExp(SgNode* n) {
     }
     if (create_access_call) {
       SgInitializedName* initName =
-	varRef->get_symbol()->get_declaration();
+	  varRef->get_symbol()->get_declaration();
       ROSE_ASSERT(initName);
-      // check dimension again, because it could be 2dim but a call like this : arr[i] = ... (arr[i][0])
-      // to check the dimension, we check if this variable was created.
-      int dim = getDimension(initName, varRef);
-      if (dim!=-1)
-	dimension=dim;
-      RTedArray* array = NULL;
-      if (right2 == NULL) {
-	array = new RTedArray(false, dimension, initName, getSurroundingStatement( n ), right1,
-			      NULL, false);
-      } else {
-	array = new RTedArray(false, dimension, initName, getSurroundingStatement( n ), right2,
-			      right1, false);
-      }
+	  RTedArray* array = new RTedArray(false, initName, getSurroundingStatement( n ), false);
       cerr << "!! CALL : " << varRef << " - "
 	   << varRef->unparseToString() << "    size : "
 	   << create_array_access_call.size() << "  -- "

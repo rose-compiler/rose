@@ -88,37 +88,39 @@ class RTedVariableType {
 class RTedArray {
  public:
   bool stack;
-  int dimension;
   SgInitializedName* initName;
   SgStatement* surroundingStatement;
-  SgExpression* indx1;
-  SgExpression* indx2;
   bool ismalloc;
   SgExpression* size;
-  RTedArray(bool s, int dim, SgInitializedName* init, SgStatement* stmt, SgExpression* idx1, 
-	    SgExpression* idx2, bool mal, SgExpression* _size = NULL) {
-          stack = s;
-	  dimension = dim;
+  std::vector<SgExpression*> indices;
+
+  RTedArray(bool s, SgInitializedName* init, SgStatement* stmt,
+	    bool mal, SgExpression* _size = NULL) {
+      stack = s;
 	  initName = init;
       surroundingStatement = stmt;
-	  indx1=idx1;
-	  indx2=idx2;
 	  ismalloc=mal;
       size = _size;
   }
   virtual ~RTedArray() {}
 
-  void getIndices(std::vector  <SgExpression*>& vec ) {
-	  vec.push_back(indx1);
-	  vec.push_back(indx2);
+  std::vector<SgExpression*> & getIndices() {
+      return indices;
+  }
+
+  int getDimension() {
+      return indices.size();
   }
 
   std::string unparseToString() {
 	  std::string res = "";
-	  if (indx1!=NULL)
-		  res = indx1->unparseToString();
-	  if (indx2!=NULL)
-		res+=", "+indx2->unparseToString();
+      std::vector< SgExpression* >::iterator i = indices.begin();
+      while( i != indices.end() ) {
+          res += (*i) -> unparseToString();
+          ++i;
+          if( i != indices.end() )
+              res += ", ";
+      }
 	  return res;
   }
 };

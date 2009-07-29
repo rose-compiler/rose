@@ -80,10 +80,11 @@ RuntimeSystem_roseRtedClose(
  * line      : linenumber
  ********************************************************/
 void
-RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dimension,  
-				   const char* type, const char* basetype,
-			      unsigned long int address, long int size, long int sizeA, long int sizeB,
-			      int ismalloc, long int mallocSize, const char* class_name, const char* filename, const char* line, const char* lineTransformed){
+RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name,
+				   const char* type, const char* basetype, size_t indirection_level,
+			      unsigned long int address, long int size,
+			      int ismalloc, long int mallocSize, const char* class_name, const char* filename, const char* line, const char* lineTransformed,
+            int dimensionality, ...){
 
 
 	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
@@ -99,9 +100,33 @@ RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dime
 
 
   if( type_name == "SgArrayType" ) {
-    rs -> getTypeSystem() -> getArrayType( base_type, size );
-    // no need to do anything special for stack arrays
-    return;
+    // collect dimension information
+    va_list vl;
+    va_start( vl, dimensionality );
+
+    size_t elements = 1;
+    std::vector< size_t > dimensions;
+    for( int i = 0; i < dimensionality; ++i ) {
+      dimensions.push_back( va_arg( vl, size_t ));
+      elements *= dimensions.back();
+    }
+    size_t base_size = size / elements;
+
+    // recursively compute types bottom-up
+    RsType* type = rs -> getTypeSystem() -> getTypeInfo( base_type );
+    assert( type != NULL );
+
+    size_t current_size = base_size;
+    std::vector< size_t >::reverse_iterator itr = dimensions.rbegin();
+    while( itr != dimensions.rend() ) {
+      // however large the base type is, the type of the array is N times as
+      // large
+      current_size *= *itr;
+      type = rs -> getTypeSystem() -> getArrayType( type, current_size );
+      ++itr;
+    }
+    // create an array of arrays of arrays ... of basetype
+    rs -> createArray( address, name, mangl_name, static_cast<RsArrayType*>(type) );
   } else if( type_name == "SgPointerType") {
     addr_type heap_address = *((addr_type*) address);
     rs -> createMemory( heap_address, mallocSize );
@@ -615,6 +640,7 @@ void RuntimeSystem_roseCreateVariable( const char* name,
 				      const char* mangled_name,
 				      const char* type,
 				      const char* basetype,
+              size_t indirection_level,
 				      unsigned long int address,
 				      unsigned int size,
 				      int init,
@@ -637,15 +663,12 @@ void RuntimeSystem_roseCreateVariable( const char* name,
         base_type = class_name;
 
 
-    if(type_name == "SgArrayType")
-    {
-        rs->createArray( address, name, mangled_name, base_type, size );
-    }
-    else
-    {
+    // stack arrays are handled in create array, which is given the dimension
+    // information
+    if(type_name != "SgArrayType") {
         RsType * rsType;
         if(string(basetype) != "")
-            rsType = rs->getTypeSystem()->getPointerType( base_type );
+            rsType = rs->getTypeSystem()->getPointerType( base_type, indirection_level );
         else
             rsType = rs->getTypeSystem()->getTypeInfo( type_name );
 
@@ -672,6 +695,7 @@ RuntimeSystem_roseInitVariable(const char* name,
 			       const char* mangled_name,
 			       const char* typeOfVar2,
 			       const char* baseType,
+             size_t indirection_level,
 			       unsigned long long address,
 			       unsigned int size,
 			       int ismalloc,
@@ -760,6 +784,7 @@ RuntimeSystem_roseRegisterTypeCall(int count, ...) {
       if( type == "SgArrayType" ) { 
         t = RuntimeSystem::instance()->getTypeSystem()->getArrayType( base_type, size );
       } else if( type == "SgPointerType" ) {
+        // TODO 1 djh: need indirection level
         t = RuntimeSystem::instance()->getTypeSystem()->getPointerType( base_type );
       } else {
         t = RuntimeSystem::instance()->getTypeSystem()->getTypeInfo( type );

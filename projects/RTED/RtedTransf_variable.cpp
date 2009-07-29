@@ -180,8 +180,8 @@ RtedTransformation::buildVariableCreateCallStmt( SgInitializedName* initName, Sg
 
     appendExpression(arg_list, callName);
     appendExpression(arg_list, callNameExp);
-    //appendExpression(arg_list, typeName);
-    appendAddressAndSize(initName, isSgVarRefExp(var_ref), stmt, arg_list,1);
+    appendTypeInformation( initName, arg_list );
+    appendAddressAndSize(initName, isSgVarRefExp(var_ref), stmt, arg_list,0);
 
 
     appendExpression(arg_list, initBool);
@@ -215,6 +215,36 @@ RtedTransformation::buildVariableCreateCallStmt( SgInitializedName* initName, Sg
 }
 
 
+void RtedTransformation::appendTypeInformation( SgInitializedName* initName, SgExprListExp* arg_list ) {
+    SgType* basetype = NULL;
+
+    if( !initName ) return;
+
+    SgType* type = initName->get_type();
+    ROSE_ASSERT(type);
+
+    SgExpression* basetypeStr = buildString("");
+    size_t indirection_level = 0;
+
+    basetype = type;
+    while( true )
+        if (isSgPointerType( basetype )) {
+            basetype = isSgPointerType( basetype )->get_base_type();
+            ++indirection_level;
+        } else if( isSgArrayType( basetype )) {
+            basetype = isSgArrayType( basetype )->get_base_type();
+            ++indirection_level;
+        } else break;
+
+    if ( indirection_level > 0 )
+        basetypeStr = buildString( basetype->class_name() );
+
+    SgExpression* ctypeStr = buildString(type->class_name());
+    appendExpression(arg_list, ctypeStr);
+    appendExpression(arg_list, basetypeStr);
+    appendExpression(arg_list, buildIntVal( indirection_level ));
+}
+
 void RtedTransformation::appendAddressAndSize(SgInitializedName* initName,
 					      SgExpression* varRefE,
 					      SgStatement* stmt,
@@ -228,21 +258,9 @@ void RtedTransformation::appendAddressAndSize(SgInitializedName* initName,
     if( initName) {
         SgType* type = initName->get_type();
         ROSE_ASSERT(type);
-        SgExpression* basetypeStr = buildString("");
-        if (isSgPointerType(type)) {
-        //	typestr="pointer";
-        basetype = isSgPointerType(type)->get_base_type();
-        } else if( isSgArrayType( type )) {
-			basetype = isSgArrayType( type )->get_base_type();
-		}
-        if (basetype)
-          basetypeStr = buildString(basetype->class_name());
-        SgExpression* ctypeStr = buildString(type->class_name());
-        if (appendType==1) {
-            appendExpression(arg_list, ctypeStr);
-            appendExpression(arg_list, basetypeStr);
-        }
 
+        if( isSgPointerType( type ) )
+            basetype = isSgPointerType(type)->get_base_type();
         scope = initName->get_scope();
     }
 
@@ -383,7 +401,8 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
       SgExpression* callName = buildString(initName->get_mangled_name().str());
       appendExpression(arg_list, callName);
 
-      appendAddressAndSize(initName, varRefE, stmt, arg_list,1);
+      appendTypeInformation( initName, arg_list );
+      appendAddressAndSize(initName, varRefE, stmt, arg_list,0);
 
 
       SgIntVal* ismallocV = buildIntVal(0);

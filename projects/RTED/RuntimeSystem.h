@@ -35,11 +35,11 @@ int checkMemoryLeakIssues(int pos, int address, const char* filename, const char
 // array functions
 int RuntimeSystem_findArrayName(const char* mangled_name);
 //void RuntimeSystem_increaseSizeArray();                                               
-void RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dimension,// int stack, 
-				   const char* type, const char* basetype, unsigned long int
-				   address, long int size, long int sizeA, long int sizeB, 
+void RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name,
+				   const char* type, const char* basetype, size_t indirection_level, unsigned long int
+				   address, long int size, 
 				   int ismalloc, long int mallocSize, const char* class_name, const char* filename,
-				   const char* line, const char* lineTransformed);
+				   const char* line, const char* lineTransformed, int dimensions, ...);
 
 void RuntimeSystem_roseArrayAccess(const char* name, int posA, int posB, const char* filename, 
 				   unsigned long int base_address, // &( array[ 0 ])
@@ -92,7 +92,7 @@ void RuntimeSystem_callExit(const char* filename, const char* line, const char* 
 
 // functions dealing with variables
 void RuntimeSystem_roseCreateVariable(const char* name, const char*
-				      mangled_name, const char* type, const char* basetype, 
+				      mangled_name, const char* type, const char* basetype, size_t indirection_level,
 				      unsigned long int address, unsigned int
 				      size, int init, const char* fOpen,
 				      const char* className, const char* filename, const char* line,
@@ -104,6 +104,7 @@ void RuntimeSystem_roseInitVariable(const char* name,
 				    const char* mangled_name,
 				    const char* typeOfVar2,
 				    const char* baseType2,
+					size_t indirection_level,
 				    unsigned long long address,
 				    unsigned int size,
 				    int ismalloc,

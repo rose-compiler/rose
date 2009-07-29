@@ -97,6 +97,11 @@ class RuntimeSystem
                             RsType * baseType,
                             size_t size);
 
+        void createArray(   addr_type address,
+                            const std::string & name,
+                            const std::string & mangledName,
+                            RsArrayType * type);
+
 
 
         /// Call this function after when a malloc or new occurs in monitored code

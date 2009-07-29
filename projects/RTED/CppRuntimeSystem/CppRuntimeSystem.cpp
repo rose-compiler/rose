@@ -133,12 +133,22 @@ void RuntimeSystem::createArray(    addr_type address,
                                     RsType * baseType,
                                     size_t size)
 {
-    RsType * arrType = typeSystem.getArrayType(baseType,size);
+    RsArrayType * arrType = typeSystem.getArrayType(baseType,size);
 
-    stackManager.addVariable(new VariablesType(name,mangledName,arrType,address));
-    pointerManager.createPointer(address, baseType);
+	createArray( address, name, mangledName, arrType);
+}
+
+
+void RuntimeSystem::createArray(    addr_type address,
+                                    const std::string & name,
+                                    const std::string & mangledName,
+                                    RsArrayType * type)
+{
+    stackManager.addVariable( new VariablesType( name, mangledName, type, address ));
+    pointerManager.createPointer( address, type -> getBaseType() );
+
     // View an array as a pointer, which is stored at the address and which points at the address
-    pointerManager.registerPointerChange(address,address,false);
+    pointerManager.registerPointerChange( address, address, false );
 }
 
 

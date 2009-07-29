@@ -262,8 +262,6 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
 	    cerr << " Found 00 - btype : " << array->get_base_type()->class_name() << 
 	      "  index type: " << expr << endl;
 	    if (expr==NULL) {
-	      // assert for now
-	      ROSE_ASSERT(expr);
 	      expr = buildString("00");
 	    } else
 	      expr = buildString(expr->unparseToString()+"\0");

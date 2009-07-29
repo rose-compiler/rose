@@ -100,6 +100,8 @@ class RtedTransformation : public AstSimpleProcessing {
   virtual void visit(SgNode* n);
 
   void insertMainCloseCall(SgStatement* main);
+  void populateDimensions( RTedArray* array, SgInitializedName* init, SgArrayType* type );
+
   void visit_checkIsMain(SgNode* n);
   void visit_isArraySgInitializedName(SgNode* n);
   void visit_isArraySgAssignOp(SgNode* n);
@@ -199,6 +201,7 @@ class RtedTransformation : public AstSimpleProcessing {
   // Run frontend and return project
   SgProject* parse(int argc, char** argv);
 
+  void appendTypeInformation(SgInitializedName* initName, SgExprListExp* arg_list);
   void appendAddressAndSize(SgInitializedName* initName, SgExpression* varRef, SgStatement* stmt, SgExprListExp* arg_list, int appendType);
   void appendAddress( SgExprListExp* arg_list, SgExpression* exp );
   void appendBaseType( SgExprListExp* arg_list, SgType* type );

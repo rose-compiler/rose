@@ -614,6 +614,39 @@ void testPointerTracking()
     CLEANUP
 }
 
+void testMultidimensionalStackArrayAccess()
+{
+    TEST_INIT("Testing Multidimensional Array Access")
+
+    TypeSystem * ts = rs->getTypeSystem();
+
+    // int x[ 2 ][ 3 ]
+    //  type array of array of int
+    RsArrayType * type = ts -> getArrayType(
+        ts -> getArrayType( "SgTypeInt", 3 * sizeof( int )),
+        2 * 3 * sizeof( int )
+    );
+
+    rs->beginScope("TestScope");
+
+    rs -> createArray( 0x100, "array[2][3]", "mangled_array[2][3]", type );
+
+    // check at aligned address x[ 0 ][ 0 ] 
+    //  base &x[ 0 ], element &x[ 0 ][ 0 ]
+    //  -- this should work for types int or int[3]
+    rs -> checkPointerDereference( 0x100, 0x100 );
+    
+    // check at non-aligned address x[ 0 ][ 1 ] 
+    //  base &x[ 0 ][ 0 ], element &x[ 0 ][ 1 ]
+    //  -- this should work for int type, but will be non-aligned for int[3]
+    //  type
+    rs -> checkPointerDereference( 0x100, 0x100 + sizeof( int ));
+
+    rs->endScope();
+
+    CLEANUP
+}
+
 
 void testArrayAccess()
 {
@@ -1091,6 +1124,7 @@ int main(int argc, char ** argv)
         testInvalidPointerAssign();
         testPointerTracking();
         testArrayAccess();
+        //testMultidimensionalStackArrayAccess();
 
 
         test_memcpy();
