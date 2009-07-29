@@ -13,6 +13,19 @@ def args!
     return ARGV.first
 end
 
+def check_ssh_agent!
+    system( "ssh-add -l > /dev/null 2> /dev/null" )
+    unless $?.success?
+        puts "
+            You do not have ssh-agent running, or you haven't added your key.
+            This program calls ssh several times, so you are well advised to
+            invoke ssh-add before nmi-postmortem.
+        ".gsub( /^\s+/, '' )
+
+        exit $?.exitstatus
+    end
+end
+
 def get_runhost( run_id )
     url = "http://localhost/nmi/index.php?page=results/runDetails&runid=#{run_id}&MetronomeSessID=qhr7buvggpva74m3kf04t8h6f1&opt_project=rose+compiler"
     response = `wget -O - '#{url}' 2> /dev/null`
@@ -23,6 +36,7 @@ end
 
 def main
     run_id = args!
+    check_ssh_agent!
 
     puts "Downloading run host information from nmi website"
     run_host = get_runhost( run_id ) 
