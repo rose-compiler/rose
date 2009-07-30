@@ -100,16 +100,16 @@ RTED_TEST_DIRS = $(rted_path)/C/array_index_out_of_bound \
 		 $(srcdir)/tests/C/panasTests
 
 RTED_ORIGSOURCES_C = ${foreach RTED_TEST_DIR, $(RTED_TEST_DIRS), ${wildcard $(RTED_TEST_DIR)/*[!_s].c} }
-RTED_COPYSOURCES_C = ${foreach RTED_TEST_DIR, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${patsubst $(rted_path)/%.c, rted_source/%.cpp, ${wildcard $(RTED_TEST_DIR)/*.c} } }
-RTED_LOCAL_COPYSOURCES_C = ${foreach RTED_TEST_DIR, ${filter $(srcdir)%, $(RTED_TEST_DIRS)}, ${patsubst $(srcdir)/%.c, rted_source/%.cpp, ${wildcard $(RTED_TEST_DIR)/*.c} } }
-RTED_ROSESOURCES_C = ${patsubst %.c, %_rose.cpp, $(RTED_COPYSOURCES_C) }
-RTED_LOCAL_ROSESOURCES_C = ${patsubst %.c, %_rose.cpp, $(RTED_LOCAL_COPYSOURCES_C) }
-RTED_BINFILES_C = ${patsubst $(rted_path)/%.cpp, rted_source/%.bin, ${filter $(rted_path)%, $(RTED_ORIGSOURCES_C)}}
-RTED_LOCAL_BINFILES_C = ${patsubst $(srcdir)/%.cpp, rted_source/%.bin, ${filter $(srcdir)%, $(RTED_ORIGSOURCES_C)}}
-RTED_DEBUGBINFILES_C = ${patsubst $(rted_path)/%.cpp, rted_source/%_debug.bin, ${filter $(rted_path)%, $(RTED_ORIGSOURCES_C)}}
-RTED_LOCAL_DEBUGBINFILES_C = ${patsubst $(srcdir)/%.cpp, rted_source/%_debug.bin, ${filter $(srcdir)%, $(RTED_ORIGSOURCES_C)}}
-RTED_ACTUALOUTPUTFILES_C = ${patsubst $(rted_path)/%.cpp, rted_source/%.actual-output, $(RTED_ORIGSOURCES_C)}
-RTED_EXPECTEDOUTPUTFILES_C = ${patsubst $(rted_path)/%.cpp, rted_source/%.expected-output, $(RTED_ORIGSOURCES_C)}
+RTED_COPYSOURCES_C = ${foreach RTED_TEST_DIR, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${patsubst $(rted_path)/%.c, rted_source/%.c, ${wildcard $(RTED_TEST_DIR)/*.c} } }
+RTED_LOCAL_COPYSOURCES_C = ${foreach RTED_TEST_DIR, ${filter $(srcdir)%, $(RTED_TEST_DIRS)}, ${patsubst $(srcdir)/%.c, rted_source/%.c, ${wildcard $(RTED_TEST_DIR)/*.c} } }
+RTED_ROSESOURCES_C = ${patsubst %.c, %_rose.c, $(RTED_COPYSOURCES_C) }
+RTED_LOCAL_ROSESOURCES_C = ${patsubst %.c, %_rose.c, $(RTED_LOCAL_COPYSOURCES_C) }
+RTED_BINFILES_C = ${patsubst $(rted_path)/%.c, rted_source/%.bin, ${filter $(rted_path)%, $(RTED_ORIGSOURCES_C)}}
+RTED_LOCAL_BINFILES_C = ${patsubst $(srcdir)/%.c, rted_source/%.bin, ${filter $(srcdir)%, $(RTED_ORIGSOURCES_C)}}
+RTED_DEBUGBINFILES_C = ${patsubst $(rted_path)/%.c, rted_source/%_debug.bin, ${filter $(rted_path)%, $(RTED_ORIGSOURCES_C)}}
+RTED_LOCAL_DEBUGBINFILES_C = ${patsubst $(srcdir)/%.c, rted_source/%_debug.bin, ${filter $(srcdir)%, $(RTED_ORIGSOURCES_C)}}
+RTED_ACTUALOUTPUTFILES_C = ${patsubst $(rted_path)/%.c, rted_source/%.actual-output, $(RTED_ORIGSOURCES_C)}
+RTED_EXPECTEDOUTPUTFILES_C = ${patsubst $(rted_path)/%.c, rted_source/%.expected-output, $(RTED_ORIGSOURCES_C)}
 
 RTED_ORIGSOURCES_CPP = ${foreach RTED_TEST_DIR, $(RTED_TEST_DIRS), ${wildcard $(RTED_TEST_DIR)/*[!_s].cpp} }
 RTED_COPYSOURCES_CPP = ${foreach RTED_TEST_DIR, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${patsubst $(rted_path)/%, rted_source/%, ${wildcard $(RTED_TEST_DIR)/*.cpp} } }
@@ -165,6 +165,9 @@ rted_source:
 	@mkdir -p $(foreach rted_dir,$(filter $(rted_path)%, $(RTED_TEST_DIRS) ), $(patsubst $(rted_path)/%, rted_source/%, $(rted_dir) ) )
 	@mkdir -p $(foreach local_test_dir,$(filter $(srcdir)%, $(RTED_TEST_DIRS) ), $(patsubst $(srcdir)/%, rted_source/%, $(local_test_dir) ) )
 
+
+
+
 #------------------------------------------------------------------------------
 # rule to copy the sources into our current working directory
 #------------------------------------------------------------------------------
@@ -183,18 +186,37 @@ rted_source/tests/%.c: rted_source $(top_srcdir)/projects/RTED/tests/%.c
 	@echo " done."
 
 #testcases in rted distribution
-rted_source/%.c: rted_source $(rted_path)/%.c
-	@echo -e Checking $(patsubst $(rted_path)/%.c, %, $(filter $(rted_path)%, $^)) ...
-	@echo -n "    copying input file ... "
-	@cp $(filter $(rted_path)/%.c, $^) $(dir $@)
-	@echo " done."
-	@echo -n "    inserting #include \"RuntimeSystem.h\" ... "
-	@sed -i '1i\#include \"RuntimeSystem.h\"' $@
-	@echo " done."
-	@echo -n "    inserting #define EXITCODE_OK 0 ... "
-	@sed -i '1i\#define EXITCODE_OK 0' $@
-	@echo " done."
 
+COPYING_FILE = @SOURCE_FILE='$(strip $(patsubst rted_source/%, $(rted_path)/%, $(1)))';\
+		if [ -f $$SOURCE_FILE ]; then\
+			echo -n "    copying input file ... ";\
+			cp $$SOURCE_FILE $(dir $(1));\
+			echo " done.";\
+			echo -n "    inserting include \"RuntimeSystem.h\" ... ";\
+			sed -i '1i\#include \"RuntimeSystem.h\"' $(1);\
+			echo " done.";\
+			echo -n "    inserting define EXITCODE_OK 0 ... ";\
+			sed -i '1i\#define EXITCODE_OK 0' $(1);\
+			echo " done.";\
+		else\
+			echo -n "    not copying fake dependency $(1) ... ";\
+		fi
+
+#TODO 1: comment this magic
+#	must match %.c{pp}
+#	must not match _rose.c{pp}
+#	must not match %.bin
+rted_source/%.c: rted_source $(rted_path)/%.c
+	$(call COPYING_FILE, $@)
+
+rted_source/%.cpp: rted_source $(rted_path)/%.cpp
+	$(call COPYING_FILE, $@)
+
+rted_source/%.c: rted_source $(rted_path)/%.cpp
+	$(call COPYING_FILE, $@)
+
+rted_source/%.cpp: rted_source $(rted_path)/%.c
+	$(call COPYING_FILE, $@)
 #------------------------------------------------------------------------------
 
 
@@ -205,7 +227,8 @@ rted_source/%.c: rted_source $(rted_path)/%.c
 rted_source/%_s_rose.c: rted_source/%_s.c
 	@touch $@
 
-rted_source/%_rose.c: runtimeCheck rted_source/%.c rted_source/%_s.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
+
+rted_source/%_rose.c rted_source/%_rose.cpp: runtimeCheck rted_source/%.c rted_source/%.cpp rted_source/%_s.c rted_source/%_s.cpp $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	@echo -n "    testing if files compiles with gcc (with _s) ... "
 	@$(RTED_CC) -g -o $(patsubst %_rose.c, %.bin, $@) $(filter rted_source/%.c, $^) \
 		$(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) \
@@ -280,9 +303,6 @@ rted_source/%.bin: rted_source/%_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem
 	@echo -n "   compiling instrumented code ... "
 	@$(RTED_CC) -g -o $@ $(filter rted_source/%.c, $^) $(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) $(RTED_LIB)
 	@echo " done."
-
-#------------------------------------------------------------------------------
-
 
 #------------------------------------------------------------------------------
 
