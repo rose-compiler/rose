@@ -9,7 +9,7 @@ TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 ROSE_TOP=/home/liao6/daily-test-rose/${TIMESTAMP}
 
 # for regular build and tests
-CONFIGURE_FLAGS=( --with-boost=${BOOST_ROOT} --with-bddbddb --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --prefix=${ROSE_TOP}/install "$@")
+CONFIGURE_FLAGS=( --with-boost=${BOOST_ROOT} --with-bddbddb --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-qt=/usr/apps/qt/4.5.1 --prefix=${ROSE_TOP}/install "$@")
 
 #ROSE_SVNROOT=file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
 ROSE_SVNROOT=https://outreach.scidac.gov/svn/rose/trunk
