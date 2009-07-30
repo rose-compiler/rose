@@ -14,8 +14,6 @@ libInstructionCountAnnotator_la_SOURCES = InstructionCountAnnotator.cpp\
 
 
 
-EXTRA_DIST = 
-
 # Target for installing header 
 headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = InstructionCountAnnotator.h\
@@ -23,3 +21,6 @@ headerTarget_HEADERS = InstructionCountAnnotator.h\
 
 
 endif
+
+EXTRA_DIST = 
+

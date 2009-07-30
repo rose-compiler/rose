@@ -30,6 +30,25 @@ nodist_libutil_la_SOURCES = moc_MetricAttributeCollector.cxx\
 
 BUILT_SOURCES = ui_MetricBgDelegateConfig.h
 
+# Target for installing header 
+headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
+headerTarget_HEADERS = AsmToSourceMapper.h\
+                       AstDisplayInfo.h\
+                       AstFilters.h\
+                       ItemModelHelper.h\
+                       LCS.h\
+                       MetricAttributeCollector.h\
+                       MetricBgDelegate.h\
+                       QRoseComponentProxy.h\
+                       RoseGraphicsView.h\
+                       RoseTreeView.h\
+                       SageMimeData.h\
+                       SgNodeUtil.h\
+                       StreamRedirector.h
+
+
+endif
+
 EXTRA_DIST = MetricBgDelegateConfig.ui \
 	util.qrc \
 	AppIcons/info.png \
@@ -55,21 +74,3 @@ EXTRA_DIST = MetricBgDelegateConfig.ui \
 	WidgetIcons/CallGraph.gif \
 	WidgetIcons/Graph.gif
 
-# Target for installing header 
-headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
-headerTarget_HEADERS = AsmToSourceMapper.h\
-                       AstDisplayInfo.h\
-                       AstFilters.h\
-                       ItemModelHelper.h\
-                       LCS.h\
-                       MetricAttributeCollector.h\
-                       MetricBgDelegate.h\
-                       QRoseComponentProxy.h\
-                       RoseGraphicsView.h\
-                       RoseTreeView.h\
-                       SageMimeData.h\
-                       SgNodeUtil.h\
-                       StreamRedirector.h
-
-
-endif

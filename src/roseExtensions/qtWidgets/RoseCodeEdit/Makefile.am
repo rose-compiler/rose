@@ -13,11 +13,12 @@ libRoseCodeEdit_la_SOURCES = RoseCodeEdit.cpp
 
 
 
-EXTRA_DIST = 
-
 # Target for installing header 
 headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = RoseCodeEdit.h
 
 
 endif
+
+EXTRA_DIST = 
+

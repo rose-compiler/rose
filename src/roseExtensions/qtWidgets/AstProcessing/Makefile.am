@@ -13,8 +13,6 @@ libAstProcessing_la_SOURCES = NewAstProcessing.cpp
 
 
 
-EXTRA_DIST = 
-
 # Target for installing header 
 headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = AstProcessing_BottomUp_impl.h\
@@ -24,3 +22,6 @@ headerTarget_HEADERS = AstProcessing_BottomUp_impl.h\
 
 
 endif
+
+EXTRA_DIST = 
+

@@ -21,6 +21,13 @@ nodist_libQCodeEditWidget_la_SOURCES = moc_QCodeEditWidget.cxx\
 
 
 
+# Target for installing header 
+headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
+headerTarget_HEADERS = QCodeEditWidget.h
+
+
+endif
+
 EXTRA_DIST = example.qrc \
 	QCodeEdit.qrc \
 	goto.png \
@@ -61,9 +68,3 @@ EXTRA_DIST = example.qrc \
 	down.png \
 	underline.png
 
-# Target for installing header 
-headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
-headerTarget_HEADERS = QCodeEditWidget.h
-
-
-endif

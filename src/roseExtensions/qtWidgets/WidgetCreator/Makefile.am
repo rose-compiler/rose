@@ -15,9 +15,9 @@ libWidgetCreator_la_SOURCES = AsmInstructionBarCreator.cpp\
                               CallGraphWidgetCreator.cpp\
                               MetricsKiviatCreator.cpp\
                               NodeInfoWidgetCreator.cpp\
-			      QRSourceBoxCreator.cpp \
-			      QRQueryBoxCreator.cpp \
-			      QRTreeBoxCreator.cpp \
+                              QRQueryBoxCreator.cpp\
+                              QRSourceBoxCreator.cpp\
+                              QRTreeBoxCreator.cpp\
                               RoseCodeEditCreator.cpp\
                               RoseFileSelectorCreator.cpp\
                               SrcBinViewCreator.cpp\
@@ -32,15 +32,15 @@ nodist_libWidgetCreator_la_SOURCES = moc_AsmInstructionBarCreator.cxx\
                                      moc_CallGraphWidgetCreator.cxx\
                                      moc_MetricsKiviatCreator.cxx\
                                      moc_NodeInfoWidgetCreator.cxx\
-				     moc_QRSourceBoxCreator.cpp \
-				     moc_QRQueryBoxCreator.cpp \
-				     moc_QRTreeBoxCreator.cpp \
+                                     moc_QRQueryBoxCreator.cxx\
+                                     moc_QRSourceBoxCreator.cxx\
+                                     moc_QRTreeBoxCreator.cxx\
                                      moc_RoseCodeEditCreator.cxx\
                                      moc_RoseFileSelectorCreator.cxx\
                                      moc_SrcBinViewCreator.cxx\
                                      moc_SubWindowFactory.cxx
 
-EXTRA_DIST = 
+
 
 # Target for installing header 
 headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
@@ -52,9 +52,9 @@ headerTarget_HEADERS = AsmInstructionBarCreator.h\
                        CallGraphWidgetCreator.h\
                        MetricsKiviatCreator.h\
                        NodeInfoWidgetCreator.h\
-		       QRSourceBoxCreator.h \
-		       QRQueryBoxCreator.h \
-		       QRTreeBoxCreator.h \
+                       QRQueryBoxCreator.h\
+                       QRSourceBoxCreator.h\
+                       QRTreeBoxCreator.h\
                        RoseCodeEditCreator.h\
                        RoseFileSelectorCreator.h\
                        SrcBinViewCreator.h\
@@ -63,3 +63,6 @@ headerTarget_HEADERS = AsmInstructionBarCreator.h\
 
 
 endif
+
+EXTRA_DIST = 
+
