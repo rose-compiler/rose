@@ -1,19 +1,5 @@
 \documentclass[10pt]{book}
 
-%\usepackage{epsfig}
-%\usepackage{graphicx}
-%\usepackage{amsmath}
-%\usepackage{html,color,makeidx}
-%\usepackage{amsmath}
-%\usepackage{verbatim}
-%\usepackage{moreverb}
-%\usepackage{graphics}    
-%\usepackage{epsfig}    
-%\usepackage{multicol}
-%\usepackage{color}
-%\usepackage{subfigure}
-%\usepackage{multirow}
-
 % Fixme margin note package (turn on draft mode)
 %\usepackage[final]{fixme}
 \usepackage[draft]{fixme}
@@ -27,23 +13,9 @@
 
 \usepackage{moreverb}
 
-% I could not make these work well with pdflatex
-%\usepackage{epsfig}
-%\usepackage{psfig}
-
-% required by listings package???
-%\usepackage{keyval}
-
-% \psfigdriver{dvips}
-
 \newcommand{\mySmallFontSize}{\scriptsize}
 \newcommand{\mySmallestFontSize}{\tiny}
 
-% New commands to represent the location of example files (used in latex documentation)
-% \newcommand{\TranslatorExampleDirectory}{@top_srcdir@/ExampleTranslator/DocumentedExamples/SimpleTranslatorExamples}
-% \newcommand{\TranslatorExampleCompileTreeDirectory}{@top_pwd@/ExampleTranslator/DocumentedExamples/SimpleTranslatorExamples}
-% \newcommand{\AstRewriteExampleDirectory}{@top_srcdir@/ExampleTranslator/DocumentedExamples/AstRewriteExamples}
-% \newcommand{\DatabaseExampleDirectory}{/home/dquinlan/ROSE/NEW_ROSE/ExampleTranslator/DocumentedExamples/DataBaseExamples}
 % Liao, 7/13/2009, need them to access any other directories in source and
 % build tree
 \newcommand{\TOPSRCDIR}{@top_srcdir@}
@@ -98,16 +70,6 @@
 \addtolength{\oddsidemargin}{-1.0in}
 \addtolength{\evensidemargin}{-1.0in}
 \addtolength{\textwidth}{1.0in}
-
-% Old values
-%\addtolength{\textwidth}{1.0in}
-%\addtolength{\topmargin}{-0.5in}
-%\addtolength{\textheight}{1.5in}
-
-% \pagenumbering{roman}
-% \pagestyle{empty}
-% \setcounter{page}{0}
-% \thispagestyle{empty}
 
 %\sloppy
 
