@@ -50,7 +50,9 @@ if [ "x$SESSION" = "x" ]; then
 fi
 
 # This needs to match the browser you used to log in to Outreach; find it from http://browserspy.dk/useragent.php
-USERAGENT='Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.8.1.18) Gecko/20081029 Firefox/2.0.0.18'
+# this is also set in scidac-login.sh now, 7/30/2009, Liao
+USERAGENT='Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.12) Gecko/2009070610 Firefox/3.0.12'
+#USERAGENT='Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.8.1.18) Gecko/20081029 Firefox/2.0.0.18'
 # The actual content to be filled into the web form
 
 #RELEASENAME="0.9.3a-multiplatform-2484"
