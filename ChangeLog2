@@ -1,3 +1,15 @@
+2009-07-30 17:01  heller9
+
+	* [r6713]
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/WidgetCreator/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/WidgetCreator/QRQueryBoxCreator.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/WidgetCreator/QRQueryBoxCreator.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/WidgetCreator/QRSourceBoxCreator.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/WidgetCreator/QRSourceBoxCreator.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/WidgetCreator/QRTreeBoxCreator.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/WidgetCreator/QRTreeBoxCreator.h:
+	  added missing files
+
 2009-07-30 00:20  hamilton37
 
 	* [r6711] /trunk/ROSE/projects/RTED/Makefile.am: RTED: Some work
