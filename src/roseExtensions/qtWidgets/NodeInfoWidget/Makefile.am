@@ -13,11 +13,12 @@ nodist_libNodeInfoWidget_la_SOURCES = moc_NodeInfoWidget.cxx
 
 
 
-EXTRA_DIST = 
-
 # Target for installing header 
 headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = NodeInfoWidget.h
 
 
 endif
+
+EXTRA_DIST = 
+

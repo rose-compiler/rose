@@ -163,8 +163,6 @@ if($printLibTarget)
     printArray( "nodist_" . $libName . "_la_SOURCES", \@nodist_sources );
     printArray( "BUILT_SOURCES",\@ui_header_files);
 
-    @extra_dist = join( " \\\n\t", @ui_files, @res_files, @icons );
-    printArray( "EXTRA_DIST", \@extra_dist );
 }
 
 
@@ -177,3 +175,6 @@ if($printHeaderTarget)
 }
 
 print "endif\n";
+
+@extra_dist = join( " \\\n\t", @ui_files, @res_files, @icons );
+printArray( "\nEXTRA_DIST", \@extra_dist );

@@ -14,8 +14,6 @@ nodist_libTreeModel_la_SOURCES = moc_ItemTreeModel.cxx
 
 
 
-EXTRA_DIST = 
-
 # Target for installing header 
 headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = ItemTreeModel.h\
@@ -23,3 +21,6 @@ headerTarget_HEADERS = ItemTreeModel.h\
 
 
 endif
+
+EXTRA_DIST = 
+

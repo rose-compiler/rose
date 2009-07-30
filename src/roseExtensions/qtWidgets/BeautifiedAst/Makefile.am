@@ -17,6 +17,15 @@ nodist_libBeautifiedAst_la_SOURCES = moc_BAstModel.cxx\
 
 
 
+# Target for installing header 
+headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
+headerTarget_HEADERS = BAstModel.h\
+                       BAstNode.h\
+                       BAstView.h
+
+
+endif
+
 EXTRA_DIST = BeautifiedAst.qrc \
 	icons/loop.png \
 	icons/sourcefile.gif \
@@ -27,11 +36,3 @@ EXTRA_DIST = BeautifiedAst.qrc \
 	icons/includes.gif \
 	icons/include.gif
 
-# Target for installing header 
-headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
-headerTarget_HEADERS = BAstModel.h\
-                       BAstNode.h\
-                       BAstView.h
-
-
-endif

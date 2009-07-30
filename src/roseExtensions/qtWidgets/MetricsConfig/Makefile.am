@@ -15,8 +15,6 @@ nodist_libMetricsConfig_la_SOURCES = moc_MetricsConfig.cxx\
 
 BUILT_SOURCES = ui_MetricsConfig.h
 
-EXTRA_DIST = MetricsConfig.ui
-
 # Target for installing header 
 headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = MetricsConfig.h\
@@ -24,3 +22,6 @@ headerTarget_HEADERS = MetricsConfig.h\
 
 
 endif
+
+EXTRA_DIST = MetricsConfig.ui
+

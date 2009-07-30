@@ -21,12 +21,6 @@ nodist_libTaskSystem_la_SOURCES = moc_CompilerOutputWidget.cxx\
 
 
 
-EXTRA_DIST = res.qrc \
-	images/gears.gif \
-	images/compile_warning.png \
-	images/compile_error.png \
-	images/compile_unspecified.png
-
 # Target for installing header 
 headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = CompilerOutputWidget.h\
@@ -37,3 +31,10 @@ headerTarget_HEADERS = CompilerOutputWidget.h\
 
 
 endif
+
+EXTRA_DIST = res.qrc \
+	images/gears.gif \
+	images/compile_warning.png \
+	images/compile_error.png \
+	images/compile_unspecified.png
+

@@ -13,11 +13,12 @@ nodist_libAsmInstructionBar_la_SOURCES = moc_AsmInstructionsBar.cxx
 
 
 
-EXTRA_DIST = 
-
 # Target for installing header 
 headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = AsmInstructionsBar.h
 
 
 endif
+
+EXTRA_DIST = 
+

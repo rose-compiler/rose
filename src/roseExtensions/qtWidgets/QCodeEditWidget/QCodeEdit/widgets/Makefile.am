@@ -45,11 +45,6 @@ BUILT_SOURCES = ui_editconfig.h\
                 ui_gotoline.h\
                 ui_searchreplace.h
 
-EXTRA_DIST = editconfig.ui \
-	formatconfig.ui \
-	gotoline.ui \
-	searchreplace.ui
-
 # Target for installing header 
 headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/QCodeEdit
 headerTarget_HEADERS = qcalltip.h\
@@ -67,3 +62,9 @@ headerTarget_HEADERS = qcalltip.h\
 
 
 endif
+
+EXTRA_DIST = editconfig.ui \
+	formatconfig.ui \
+	gotoline.ui \
+	searchreplace.ui
+

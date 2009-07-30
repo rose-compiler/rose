@@ -13,11 +13,12 @@ nodist_libRoseFileSelector_la_SOURCES = moc_RoseFileComboBox.cxx
 
 
 
-EXTRA_DIST = 
-
 # Target for installing header 
 headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = RoseFileComboBox.h
 
 
 endif
+
+EXTRA_DIST = 
+
