@@ -1,0 +1,13 @@
+include Cfront.code
+include opt.pi
+
+<parameter unrollI type=1.._ default=2 message="unroll factor for 
+innermost loop I"/>
+<trace target,nestI/>
+<input from="OUT__1__6755__orig.c" to=target parse=FunctionDefn/>
+<eval
+    INSERT(nestI, target);
+    UnrollLoops[factor=unrollI](nestI[Nest.body],nestI);
+ />
+<output from=target to="OUT__1__6755__.c"/>
+

@@ -1,0 +1,59 @@
+#!/bin/bash 
+#DIM    1
+#LB     1
+#UB     32
+
+# number of executions to find the best result for this variant 
+ITER=4
+
+# command line validation
+# should have x parameters when calling this script
+# x= number of dimensions for each point
+if [ "$1" = "" ]; then
+  echo "0.0"
+  exit
+fi
+
+# convert points to transformation parameters
+# Not necessary in this example
+
+# remove previous variant of the kernel and result 
+/bin/rm -f out_1_6755__.c /tmp/peri.result
+
+# generate a variant of the kernel using the transformation parameters
+/home/liao/download/qing/POET/src/pcg -punrollI=$1 -L/home/liao/download/qing/PO
+ET/lib my.pt > /dev/null 2>&1
+
+# build a .so for the kernel variant
+# To redirect stdout to NULL is required
+# since the search engine looks for stdout for the evaluation result
+make -f makefile-lib > /dev/null 2>&1
+cp OUT__1__6755__.so /home/liao/svnrepos/benchmarks/smg2000/struct_ls/.
+
+# generate a program to execute and timing the kernel
+# Handled by ROSE 
+
+best_time="999999999.0"
+
+# run the program multiple times
+for (( i="1" ; i <= "$ITER" ; i = i + "1" ))
+do
+  # again redirecting is essential for the search engine to 
+  # grab the desired stdout: best_time in the end
+  cr_restart /home/liao/svnrepos/benchmarks/smg2000/test/dump.yy > /dev/null 2>&
+1
+  if [ $? -ne 0 ]; then
+    echo "Error: cr_restart finishes abnormally!"
+    exit 1
+  else
+    test -f /tmp/peri.result 
+    if [ $? -ne 0 ]; then
+       echo "Error: The temp file storing timing informaiton does not exist!"
+       exit 1
+    fi
+    time=`tail -1 /tmp/peri.result | cut -f 1`
+    best_time=`echo ${time} ${best_time} | awk '{print ($1 < $2) ? $1 : $2}'`
+  fi
+done
+
+echo $best_time 

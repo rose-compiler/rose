@@ -1172,6 +1172,7 @@ projects/autoParallelization/Makefile
 projects/autoParallelization/tests/Makefile
 projects/autoTuning/Makefile
 projects/autoTuning/tests/Makefile
+projects/autoTuning/doc/Makefile
 projects/BinQ/Makefile
 projects/compass/Makefile
 projects/compass/src/Makefile

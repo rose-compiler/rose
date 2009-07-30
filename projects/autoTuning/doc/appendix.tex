@@ -1,0 +1,111 @@
+\section{Appendix}
+This section gives some quick instructions for installing the needed software packages to establish the end-to-end autotuning system. 
+Please consult individual software releases for detailed installation guidance. 
+
+\subsection{Patching Linux Kernels with perfctr}
+This is required before you can install PAPI on Linux/x86 and Linux/x86\_64 platforms. 
+Take PAPI 3.6.2 as an example, the steps to patch your kernel are:
+\begin{itemize}
+\item Find the latest patch matching your Linux distribution from \textit{papi-3.6.2/src/perfctr-2.6.x/patches}. For RedHat Enterprise Linux 5 (or Centos 5), the latest kernel patch is \textit{patch-kernel-2.6.18-92.el5-redhat}.
+\item Get the kernel source matching the latest kernel patch provided by perfctr shipped with PAPI. You can find kernel source rpm packages from one of the many mirror sites. For example, 
+\textit{wget http://altruistic.lbl.gov/mirrors/centos/5.2/updates/SRPMS/kernel-2.6.18-92.1.22.el5.src.rpm}
+\item Install the kernel source rpm package. With a root privilege, You can simply type: 
+\begin{verbatim}
+rpm -ivh kernel*.src.rpm
+\end{verbatim}
+A set of patch files will be generated under \textit{/usr/src/redhat/SOURCES}
+\item Generate the kernel source tree from the patch files. 
+This step may require the \textit{rpm-build} and \textit{redhat-rpm-config} packages to be installed first. 
+\begin{verbatim}
+yum install rpm-build redhat-rpm-config      # with the root privilege 
+cd /usr/src/redhat/SPECS
+rpmbuild -bp --target=i686 kernel-2.6.spec   # for x86 platforms    
+rpmbuild -bp --target=x86_64 kernel-2.6.spec #for x86_64 platforms
+\end{verbatim}
+
+\item Copy the kernel source files and create a soft link. Type 
+\begin{verbatim}
+cp -a /usr/src/redhat/BUILD/kernel-2.6.9/linux-2.6.9 /usr/src
+ln -s /usr/src/linux-2.6.9 /usr/src/linux
+\end{verbatim}
+
+\item Now you can patch the kernel source files to support perfctr. Type 
+\begin{verbatim}
+cd /usr/src/linux
+/path/to/papi-3.6.2/src/perfctr-2.6.x/update-kernel \
+     --patch=2.6.18-92.el5-redhat
+\end{verbatim}
+
+\item Configure your kernel to support hardware counters.
+\begin{verbatim}
+cd /usr/src/linux 
+make clean
+make mrproper 
+yum install ncurses-devel 
+make menuconfig
+\end{verbatim}
+Enable all items for \textit{performance-monitoring counters support} under the menu item of \textit{processor type and features}.
+\item Build and install your patched kernel. 
+\begin{verbatim}
+make -j4 && make modules -j4 && make modules_install && make install
+\end{verbatim}
+\item Configure perfctr as a device that is automatically loaded each time you boot up your machine.
+\begin{verbatim}
+cd /home/liao6/download/papi-3.6.2/src/perfctr-2.6.x
+cp etc/perfctr.rules /etc/udev/rules.d/99-perfctr.rules
+cp etc/perfctr.rc /etc/rc.d/init.d/perfctr
+chmod 755 /etc/rc.d/init.d/perfctr
+/sbin/chkconfig --add perfctr
+\end{verbatim}
+\end{itemize}
+With the kernel patched, it is straightforward to install PAPI. 
+\begin{verbatim}
+cd /home/liao6/download/papi-3.6.2/src
+./configure
+make
+make test
+make install # with a root privilege
+\end{verbatim}
+\subsection{Installing BLCR}
+BLCR's installation guide can be found at
+\url{http://upc-bugs.lbl.gov/blcr/doc/html/BLCR_Admin_Guide.html}.
+We complement it with some Linux-specific information here.
+It is recommended to use a separate build tree to compile the Berkeley Lab Checkpoint/Restart (BLCR) library.
+\begin{verbatim}
+mkdir buildblcr
+cd buildblcr
+# explicitly provide the Linux kernel source path 
+../blcr-0.8.2/configure --with-linux=/usr/src/linux-2.6.18.x86_64/
+make
+# using a root account
+make install
+make insmod check
+
+# Doublecheck kernel module installation 
+# You should find two module files: blcr_imports.ko blcr.ko 
+ls /usr/local/lib/blcr/2.6.9-perfctr/ 
+\end{verbatim}
+To configure your system to load BLCR kernel modules at bootup:
+\begin{verbatim}
+# copy the sample service script to the right place
+cp blcr-0.8.2/etc/blcr.rc /etc/init.d/.
+# change the module path inside of it 
+vi /etc/init.d/blcr.rc
+  #module_dir=@MODULE_DIR@
+  module_dir=/usr/local/lib/blcr/2.6.18-prep/
+#run the blcr service each time you boot up your machine
+chkconfig --level 2345 blcr.rc on
+
+# manually start the service 
+# error messages like "FATAL: Module blcr not found." can be ignored. 
+/etc/init.d/blcr.rc restart
+Unloading BLCR: FATAL: Module blcr not found.
+FATAL: Module blcr_imports not found.
+                                                           [  OK  ]
+Loading BLCR: FATAL: Module blcr_imports not found.
+FATAL: Module blcr not found.
+                                                           [  OK  ]
+
+\end{verbatim}
+
+
