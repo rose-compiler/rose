@@ -40,8 +40,6 @@ nodist_libWidgetCreator_la_SOURCES = moc_AsmInstructionBarCreator.cxx\
                                      moc_SrcBinViewCreator.cxx\
                                      moc_SubWindowFactory.cxx
 
-
-
 EXTRA_DIST = 
 
 # Target for installing header 
