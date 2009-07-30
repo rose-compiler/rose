@@ -159,6 +159,8 @@ private:
     SgType *ptr_to_void_type;
  // the number of "auxiliary traversals" that have this info
     unsigned int auxctr;
+ // A global scope node needed for variables we generate (allocation sites).
+    SgGlobal *dummyGlobalScope;
 
  // context-sensitive stuff
 #if HAVE_PAG

@@ -126,6 +126,7 @@ PointsToAnalysis::Implementation::atIcfgTraversalStart()
     fsn->ellipsis_location = fsn->arg_locations.front();
     assign(fsn->return_location, fsn->ellipsis_location);
     mainInfo->functionSummaryNode = createLocation(fsn);
+    mainInfo->dummyGlobalScope = new SgGlobal();
 
     CFG *icfg = icfgTraversal->get_icfg();
     std::deque<Procedure *> &procedures = *icfg->procedures;
@@ -2812,6 +2813,7 @@ PointsToAnalysis::Implementation::newAllocationSite()
     SgInitializedName *initname
         = new SgInitializedName(symfinfo, symname, mainInfo->ptr_to_void_type,
                                 NULL, NULL, NULL, NULL);
+    initname->set_scope(mainInfo->dummyGlobalScope);
     SgVariableSymbol *sym = new SgVariableSymbol(initname);
 #if HAVE_PAG
     addVariableIdForSymbol(sym);
@@ -4195,7 +4197,7 @@ PointsToAnalysis::Implementation::function_location(
             assert(func_location->arg_locations.back() != NULL);
             func_location->ellipsis_location
                 = func_location->arg_locations.back();
-#if DEBUG
+#if VERBOSE_DEBUG
             std::cout
                 << "setting ellipsis location for function location "
                 << func_location->id << ": ellipsis is location "

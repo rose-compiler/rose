@@ -2197,6 +2197,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
    // GB (2008-03-26): Ignore function declarations and typedefs as well.
       case V_SgFunctionDeclaration:
       case V_SgTypedefDeclaration:
+      case V_SgClassDeclaration:
       case V_SgNullStatement: {
 	/*
 	  new_block = allocate_new_block(new_block, after);
