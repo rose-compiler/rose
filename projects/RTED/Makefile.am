@@ -423,10 +423,10 @@ run_log/%: rted_source/%.bin rted_source/%.expected-output
 # rules to run all tests in the directories listed in RTED_ORIGSOURCES
 #------------------------------------------------------------------------------
 
-RTED_ORIGSOURCES_C_GLOBAL = ${filter $(rted_path)%, $(RTED_ORIGSOURCES_C)}
-RTED_ORIGSOURCES_C_LOCAL = ${filter $(srcdir)%, $(RTED_ORIGSOURCES_C)}
-RTED_ORIGSOURCES_CPP_GLOBAL = ${filter $(rted_path)%, $(RTED_ORIGSOURCES_CPP)}
-RTED_ORIGSOURCES_CPP_LOCAL = ${filter $(srcdir)%, $(RTED_ORIGSOURCES_CPP)}
+RTED_ORIGSOURCES_GLOBAL_C = ${filter $(rted_path)%, $(RTED_ORIGSOURCES_C)}
+RTED_ORIGSOURCES_LOCAL_C = ${filter $(srcdir)%, $(RTED_ORIGSOURCES_C)}
+RTED_ORIGSOURCES_GLOBAL_CPP = ${filter $(rted_path)%, $(RTED_ORIGSOURCES_CPP)}
+RTED_ORIGSOURCES_LOCAL_CPP = ${filter $(srcdir)%, $(RTED_ORIGSOURCES_CPP)}
 
 GENERATE_RTED_RUN_TARGET = ${patsubst ${strip $(4)}/%${strip $(1)}, $(2)/%, ${strip $(3)}}
 RUN_TARGETS  = ${call GENERATE_RTED_RUN_TARGET, .c, run, $(RTED_ORIGSOURCES_GLOBAL_C), $(rted_path)}
