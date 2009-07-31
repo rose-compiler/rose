@@ -105,31 +105,37 @@ GENERATE_RTED_BINFILES = ${patsubst ${strip $(2)}/%${strip $(1)}, rted_source/%.
 GENERATE_RTED_DEBUGBINFILES = ${patsubst ${strip $(2)}/%${strip $(1)}, rted_source/%_debug.bin, ${filter ${strip $(2)}%, ${strip $(3)}}}
 GENERATE_RTED_OUTPUTFILES = ${patsubst $(rted_path)/%${strip $(1)}, rted_source/%.${strip $(2)}-output, ${strip $(3)}}
 
-RTED_ORIGSOURCES  = ${call GENERATE_RTED_ORIGSOURCES, .c}
-RTED_ORIGSOURCES += ${call GENERATE_RTED_ORIGSOURCES, .cpp}
+RTED_ORIGSOURCES_C   = ${call GENERATE_RTED_ORIGSOURCES, .c}
+RTED_ORIGSOURCES_CPP = ${call GENERATE_RTED_ORIGSOURCES, .cpp}
+RTED_ORIGSOURCES = $(RTED_ORIGSOURCES_C) $(RTED_ORIGSOURCES_CPP)
 
-RTED_COPYSOURCES  = ${call GENERATE_RTED_COPYSOURCES, .c, $(rted_path)}
-RTED_COPYSOURCES += ${call GENERATE_RTED_COPYSOURCES, .c, $(srcdir)}
-RTED_COPYSOURCES += ${call GENERATE_RTED_COPYSOURCES, .cpp, $(rted_path)}
-RTED_COPYSOURCES += ${call GENERATE_RTED_COPYSOURCES, .cpp, $(srcdir)}
+RTED_COPYSOURCES_GLOBAL_C = ${call GENERATE_RTED_COPYSOURCES, .c, $(rted_path)}
+RTED_COPYSOURCES_LOCAL_C  = ${call GENERATE_RTED_COPYSOURCES, .c, $(srcdir)}
+RTED_COPYSOURCES_GLOBAL_CPP = ${call GENERATE_RTED_COPYSOURCES, .cpp, $(rted_path)}
+RTED_COPYSOURCES_LOCAL_CPP  = ${call GENERATE_RTED_COPYSOURCES, .cpp, $(srcdir)}
+RTED_COPYSOURCES_GLOBAL = $(RTED_COPYSOURCES_GLOBAL_C) $(RTED_COPYSOURCES_GLOBAL_CPP)
+RTED_COPYSOURCES_LOCAL = $(RTED_COPYSOURCES_LOCAL_C) $(RTED_COPYSOURCES_LOCAL_CPP)
+RTED_COPYSOURCES_C = $(RTED_COPYSOURCES_LOCAL_C) $(RTED_COPYSOURCES_GLOBAL_C)
+RTED_COPYSOURCES_CPP = $(RTED_COPYSOURCES_LOCAL_CPP) $(RTED_COPYSOURCES_GLOBAL_CPP)
+RTED_COPYSOURCES = $(RTED_COPYSOURCES_GLOBAL) $(RTED_COPYSOURCES_LOCAL)
 
-RTED_ROSESOURCES  = ${call GENERATE_RTED_ROSESOURCES, .c, ${filter %.c, $(RTED_COPYSOURCES)}} 
-RTED_ROSESOURCES += ${call GENERATE_RTED_ROSESOURCES, .cpp, ${filter %.cpp, $(RTED_COPYSOURCES)}}
+RTED_ROSESOURCES  = ${call GENERATE_RTED_ROSESOURCES, .c, $(RTED_COPYSOURCES_C)}
+RTED_ROSESOURCES += ${call GENERATE_RTED_ROSESOURCES, .cpp, $(RTED_COPYSOURCES_CPP)}
 
-RTED_BINFILES  = ${call GENERATE_RTED_BINFILES, .c, $(rted_path), ${filter %.c, $(RTED_ORIGSOURCES)}}
-RTED_BINFILES += ${call GENERATE_RTED_BINFILES, .c, $(srcdir), ${filter %.c, $(RTED_ORIGSOURCES)}}
-RTED_BINFILES += ${call GENERATE_RTED_BINFILES, .cpp, $(rted_path), ${filter %.cpp, $(RTED_ORIGSOURCES)}}
-RTED_BINFILES += ${call GENERATE_RTED_BINFILES, .cpp, $(srcdir), ${filter %.cpp, $(RTED_ORIGSOURCES)}}
+RTED_BINFILES  = ${call GENERATE_RTED_BINFILES, .c, $(rted_path), $(RTED_ORIGSOURCES_C)}
+RTED_BINFILES += ${call GENERATE_RTED_BINFILES, .c, $(srcdir), $(RTED_ORIGSOURCES_C)}
+RTED_BINFILES += ${call GENERATE_RTED_BINFILES, .cpp, $(rted_path), $(RTED_ORIGSOURCES_CPP)}
+RTED_BINFILES += ${call GENERATE_RTED_BINFILES, .cpp, $(srcdir), $(RTED_ORIGSOURCES_CPP)}
 
-RTED_DEBUGBINFILES  = ${call GENERATE_RTED_DEBUGBINFILES, .c, $(rted_path), ${filter %.c, $(RTED_ORIGSOURCES)}}
-RTED_DEBUGBINFILES += ${call GENERATE_RTED_DEBUGBINFILES, .c, $(srcdir), ${filter %.c, $(RTED_ORIGSOURCES)}}
-RTED_DEBUGBINFILES += ${call GENERATE_RTED_DEBUGBINFILES, .cpp, $(rted_path), ${filter %.cpp, $(RTED_ORIGSOURCES)}}
-RTED_DEBUGBINFILES += ${call GENERATE_RTED_DEBUGBINFILES, .cpp, $(srcdir), ${filter %.cpp, $(RTED_ORIGSOURCES)}}
+RTED_DEBUGBINFILES  = ${call GENERATE_RTED_DEBUGBINFILES, .c, $(rted_path), $(RTED_ORIGSOURCES_C)}
+RTED_DEBUGBINFILES += ${call GENERATE_RTED_DEBUGBINFILES, .c, $(srcdir), $(RTED_ORIGSOURCES_C)}
+RTED_DEBUGBINFILES += ${call GENERATE_RTED_DEBUGBINFILES, .cpp, $(rted_path), $(RTED_ORIGSOURCES_CPP)}
+RTED_DEBUGBINFILES += ${call GENERATE_RTED_DEBUGBINFILES, .cpp, $(srcdir), $(RTED_ORIGSOURCES_CPP)}
 
-RTED_OUTPUTFILES  = ${call GENERATE_RTED_OUTPUTFILES, .c, actual, ${filter %.c, $(RTED_ORIGSOURCES)}}
-RTED_OUTPUTFILES += ${call GENERATE_RTED_OUTPUTFILES, .c, expected, ${filter %.c, $(RTED_ORIGSOURCES)}}
-RTED_OUTPUTFILES += ${call GENERATE_RTED_OUTPUTFILES, .cpp, actual, ${filter %.cpp, $(RTED_ORIGSOURCES)}}
-RTED_OUTPUTFILES += ${call GENERATE_RTED_OUTPUTFILES, .cpp, expected, ${filter %.cpp, $(RTED_ORIGSOURCES)}}
+RTED_OUTPUTFILES  = ${call GENERATE_RTED_OUTPUTFILES, .c, actual, $(RTED_ORIGSOURCES_C)}
+RTED_OUTPUTFILES += ${call GENERATE_RTED_OUTPUTFILES, .c, expected, $(RTED_ORIGSOURCES_C)}
+RTED_OUTPUTFILES += ${call GENERATE_RTED_OUTPUTFILES, .cpp, actual, $(RTED_ORIGSOURCES_CPP)}
+RTED_OUTPUTFILES += ${call GENERATE_RTED_OUTPUTFILES, .cpp, expected, $(RTED_ORIGSOURCES_CPP)}
 
 .SECONDARY: $(RTED_BINFILES) $(RTED_DEBUGBINFILES) $(RTED_COPYSOURCES) $(RTED_ROSESOURCES) $(RTED_OUTPUTFILES)
 .PRECIOUS: $(RTED_BINFILES) $(RTED_DEBUGBINFILES) $(RTED_COPYSOURCES) $(RTED_ROSESOURCES) $(RTED_OUTPUTFILES)
@@ -417,23 +423,28 @@ run_log/%: rted_source/%.bin rted_source/%.expected-output
 # rules to run all tests in the directories listed in RTED_ORIGSOURCES
 #------------------------------------------------------------------------------
 
+RTED_ORIGSOURCES_C_GLOBAL = ${filter $(rted_path)%, $(RTED_ORIGSOURCES_C)}
+RTED_ORIGSOURCES_C_LOCAL = ${filter $(srcdir)%, $(RTED_ORIGSOURCES_C)}
+RTED_ORIGSOURCES_CPP_GLOBAL = ${filter $(rted_path)%, $(RTED_ORIGSOURCES_CPP)}
+RTED_ORIGSOURCES_CPP_LOCAL = ${filter $(srcdir)%, $(RTED_ORIGSOURCES_CPP)}
+
 GENERATE_RTED_RUN_TARGET = ${patsubst ${strip $(4)}/%${strip $(1)}, $(2)/%, ${strip $(3)}}
-RUN_TARGETS  = ${call GENERATE_RTED_RUN_TARGET, .c, run, ${filter $(rted_path)%.c, $(RTED_ORIGSOURCES)}, $(rted_path)}
-RUN_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .c, run, ${filter $(srcdir)%.c, $(RTED_ORIGSOURCES)}, $(srcdir)}
-RUN_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run, ${filter $(rted_path)%.cpp, $(RTED_ORIGSOURCES)}, $(rted_path)}
-RUN_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run, ${filter $(srcdir)%.cpp, $(RTED_ORIGSOURCES)}, $(srcdir)}
-RUN_DEBUG_TARGETS  = ${call GENERATE_RTED_RUN_TARGET, .c, run_debug, ${filter $(rted_path)%.c, $(RTED_ORIGSOURCES)}, $(rted_path)}
-RUN_DEBUG_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .c, run_debug, ${filter $(srcdir)%.c, $(RTED_ORIGSOURCES)}, $(srcdir)}
-RUN_DEBUG_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run_debug, ${filter $(rted_path)%.cpp, $(RTED_ORIGSOURCES)}, $(rted_path)}
-RUN_DEBUG_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run_debug, ${filter $(srcdir)%.cpp, $(RTED_ORIGSOURCES)}, $(srcdir)}
-RUN_CHECKONLY_TARGETS  = ${call GENERATE_RTED_RUN_TARGET, .c, run_checkonly, ${filter $(rted_path)%.c, $(RTED_ORIGSOURCES)}, $(rted_path)}
-RUN_CHECKONLY_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .c, run_checkonly, ${filter $(srcdir)%.c, $(RTED_ORIGSOURCES)}, $(srcdir)}
-RUN_CHECKONLY_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run_checkonly, ${filter $(rted_path)%.cpp, $(RTED_ORIGSOURCES)}, $(rted_path)}
-RUN_CHECKONLY_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run_checkonly, ${filter $(srcdir)%.cpp, $(RTED_ORIGSOURCES)}, $(srcdir)}
-RUN_LOG_TARGETS  = ${call GENERATE_RTED_RUN_TARGET, .c, run_log, ${filter $(rted_path)%.c, $(RTED_ORIGSOURCES)}, $(rted_path)}
-RUN_LOG_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .c, run_log, ${filter $(srcdir)%.c, $(RTED_ORIGSOURCES)}, $(srcdir)}
-RUN_LOG_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run_log, ${filter $(rted_path)%.cpp, $(RTED_ORIGSOURCES)}, $(rted_path)}
-RUN_LOG_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run_log, ${filter $(srcdir)%.cpp, $(RTED_ORIGSOURCES)}, $(srcdir)}
+RUN_TARGETS  = ${call GENERATE_RTED_RUN_TARGET, .c, run, $(RTED_ORIGSOURCES_GLOBAL_C), $(rted_path)}
+RUN_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .c, run, $(RTED_ORIGSOURCES_LOCAL_C), $(srcdir)}
+RUN_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run, $(RTED_ORIGSOURCES_GLOBAL_CPP), $(rted_path)}
+RUN_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run, $(RTED_ORIGSOURCES_LOCAL_CPP), $(srcdir)}
+RUN_DEBUG_TARGETS  = ${call GENERATE_RTED_RUN_TARGET, .c, run_debug, $(RTED_ORIGSOURCES_GLOBAL_C), $(rted_path)}
+RUN_DEBUG_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .c, run_debug, $(RTED_ORIGSOURCES_LOCAL_C), $(srcdir)}
+RUN_DEBUG_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run_debug, $(RTED_ORIGSOURCES_GLOBAL_CPP), $(rted_path)}
+RUN_DEBUG_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run_debug, $(RTED_ORIGSOURCES_LOCAL_CPP), $(srcdir)}
+RUN_CHECKONLY_TARGETS  = ${call GENERATE_RTED_RUN_TARGET, .c, run_checkonly, $(RTED_ORIGSOURCES_GLOBAL_C), $(rted_path)}
+RUN_CHECKONLY_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .c, run_checkonly, $(RTED_ORIGSOURCES_LOCAL_C), $(srcdir)}
+RUN_CHECKONLY_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run_checkonly, $(RTED_ORIGSOURCES_GLOBAL_CPP), $(rted_path)}
+RUN_CHECKONLY_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run_checkonly, $(RTED_ORIGSOURCES_LOCAL_CPP), $(srcdir)}
+RUN_LOG_TARGETS  = ${call GENERATE_RTED_RUN_TARGET, .c, run_log, $(RTED_ORIGSOURCES_GLOBAL_C), $(rted_path)}
+RUN_LOG_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .c, run_log, $(RTED_ORIGSOURCES_LOCAL_C), $(srcdir)}
+RUN_LOG_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run_log, $(RTED_ORIGSOURCES_GLOBAL_CPP), $(rted_path)}
+RUN_LOG_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run_log, $(RTED_ORIGSOURCES_LOCAL_CPP), $(srcdir)}
 
 run: $(RUN_TARGETS)
 
