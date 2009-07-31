@@ -83,6 +83,9 @@ PointerInfo * VariablesType::getPointerInfo() const
     PointerManager * pm = RuntimeSystem::instance()->getPointerManager();
     PointerManager::PointerSetIter it = pm->sourceRegionIter(getAddress());
 
+    if(it == pm->getPointerSet().end())
+        return NULL;
+
     if( (*it)->getSourceAddress() == getAddress())
         return *it;
     else

@@ -158,6 +158,8 @@ class MemoryManager
         void checkWrite (addr_type addr, size_t size, RsType * t=NULL);
 
 
+        bool  isInitialized(addr_type addr, size_t size);
+
 
         /// This check is intended to detect array out of bounds
         /// even if the plain memory access is legal (
@@ -182,14 +184,24 @@ class MemoryManager
         MemoryType * getMemoryType(addr_type addr);
 
         /// Returns mem-area which contains a given area, or NULL if nothing found
-        MemoryType * findContainingMem(addr_type addr, size_t size = 1);
+        MemoryType * findContainingMem(addr_type addr, size_t size = 1) ;
 
         /// Returns mem-area which overlaps with given area, or NULL if nothing found
-        MemoryType * findOverlappingMem(addr_type addr, size_t size);
+        MemoryType * findOverlappingMem(addr_type addr, size_t size) ;
 
 
         typedef std::set<MemoryType*,PointerCmpFunc<MemoryType> > MemoryTypeSet;
         const  MemoryTypeSet & getAllocationSet() const { return mem; }
+
+
+        template<typename T>
+        T * readMemory(addr_type address)
+        {
+            MemoryType * mt = NULL;
+            checkRead(address,sizeof(T));
+            return reinterpret_cast<T*>(address);
+        }
+
 
     private:
 

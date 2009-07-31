@@ -668,7 +668,7 @@ void RuntimeSystem_roseCreateVariable( const char* name,
         if(string(basetype) != "")
             rsType = rs->getTypeSystem()->getPointerType( base_type, indirection_level );
         else
-            rsType = rs->getTypeSystem()->getTypeInfo( type_name );
+            rsType = rs->getTypeSystem()->getTypeInfo(type_name);
 
         rs->createVariable(address,name,mangled_name,rsType);
     }

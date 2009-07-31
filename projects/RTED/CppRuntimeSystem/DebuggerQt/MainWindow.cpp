@@ -83,21 +83,33 @@ DbgMainWindow::DbgMainWindow(RtedDebug * dbgObj_,
 
 DbgMainWindow::~DbgMainWindow()
 {
+    delete ui;
+}
+
+
+void DbgMainWindow::closeEvent(QCloseEvent * ev)
+{
     QSettings settings;
     settings.beginGroup("WindowState");
     settings.setValue("mainwindow",saveState());
     settings.endGroup();
 
     qDebug() << "MainWindow settings stored";
-    delete ui;
 }
 
 
 void DbgMainWindow::addMessage(const QString &  msg)
 {
-    new QListWidgetItem(QIcon(":/util/AppIcons/info.png"),msg,ui->lstMessages);
+    new QListWidgetItem(QIcon(":/AppIcons/info.png"),msg,ui->lstMessages);
     ui->lstMessages->setCurrentRow(ui->lstMessages->count()-1);
 }
+
+void DbgMainWindow::addErrorMessage(const QString &  msg)
+{
+    new QListWidgetItem(QIcon(":/icons/application-exit.png"),msg,ui->lstMessages);
+    ui->lstMessages->setCurrentRow(ui->lstMessages->count()-1);
+}
+
 
 void DbgMainWindow::on_actionSave_triggered()
 {
@@ -170,7 +182,7 @@ void DbgMainWindow::on_chkShowHeap_toggled()
 
 
 
-void DbgMainWindow::updateAllRsData()
+void DbgMainWindow::updateAllRsData(bool showAlways)
 {
 
     file1 = rs->getCodePosition().getFile().c_str();
@@ -182,7 +194,7 @@ void DbgMainWindow::updateAllRsData()
 
 
 
-    if(!singleStep &&
+    if(!singleStep && !showAlways &&
        !breakPoints1[file1].contains(row1) &&
        !breakPoints2[file2].contains(row2))
     {

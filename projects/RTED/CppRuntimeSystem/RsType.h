@@ -65,6 +65,7 @@ class RsType
         /// For classes returns name of member, for arrays just "[subtypeId]"
         virtual std::string getSubTypeString(int id) const =0;
 
+
         /// Refines a subtype (i.e. member of classes)
         /// the template parameter specifies at which RsType should be stopped
         /// i.e. of which type   the refinedType is (mostly used SgBasicType an SgArrayType)
@@ -328,6 +329,10 @@ class RsBasicType : public RsType
 
         virtual std::string getDisplayName() const;
 
+
+        /// Interprets memory at specified address as this basic type
+        /// and writes value into string for displaying
+        std::string readValueAt(addr_type address) const;
 
         /// Print type information to a stream
         virtual void  print(std::ostream & os) const;

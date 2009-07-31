@@ -10,18 +10,46 @@ class MemoryType;
 class RsType;
 
 
-/*
+
 #include <QGraphicsRectItem>
 
-class RsTypeRect : public QGraphicsRectItem
+class RsTypeGraphicsRect : public QGraphicsRectItem
 {
     public:
-        RsTypeRect(RsType * t, QGraphicsItem * parent);
+        RsTypeGraphicsRect(RsType * t, addr_type addr, QGraphicsItem * parent=0);
 
+
+        virtual void paint(QPainter *painter,
+                           const QStyleOptionGraphicsItem *option,
+                           QWidget *widget);
+
+        virtual QRectF boundingRect() const;
+
+
+        static float BOX_WIDTH;
+        static float BOX_HEIGHT;
 
     protected:
         RsType * t;
-};*/
+        addr_type address;
+
+        QPoint textOffset; ///< offset in pixel where to draw the typename
+
+        QString text;   ///< typename
+        QFont font;     ///< font to draw typename
+
+
+        void buildInfoBox();
+
+        virtual void hoverEnterEvent ( QGraphicsSceneHoverEvent * event );
+        virtual void hoverLeaveEvent ( QGraphicsSceneHoverEvent * event );
+        virtual void hoverMoveEvent ( QGraphicsSceneHoverEvent * event );
+
+
+        QColor getTypeColor();
+
+        QGraphicsItem * infoBox;
+};
 
 class MemoryGraphicsView : public QGraphicsView
 {

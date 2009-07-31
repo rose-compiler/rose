@@ -18,10 +18,13 @@ RtedDebug * RtedDebug::instance()
 
 RtedDebug::RtedDebug()
 {
+    showAlways=false;
+
     //here we are in rtsi thread
     rtsi.id = pthread_self();
     rtsi.running=false;
     gui.running=true;
+
 
     // creates a new thread for gui, which starts at guiMain
     pthread_create( & gui.id, NULL, &RtedDebug::guiMain, this );
@@ -64,8 +67,9 @@ void RtedDebug::startRtsi()
 }
 
 
-void RtedDebug::startGui()
+void RtedDebug::startGui(bool sa)
 {
+    showAlways = sa;
     leaveRtsi();
     enterRtsi();
 }
@@ -75,14 +79,27 @@ void RtedDebug::updateDialogData()
     Q_ASSERT(gui.running);
 
     for(int i=0; i<messages.size(); i++)
-    	dlg->addMessage(messages[i].second);
+    {
+        if(messages[i].first == ERROR)
+            dlg->addErrorMessage(messages[i].second);
+        else
+            dlg->addMessage(messages[i].second);
+    }
 
-    dlg->updateAllRsData();
+    dlg->updateAllRsData(showAlways);
+    showAlways=false;
 
     messages.clear();
 }
 
+void RtedDebug::addMessage(const QString & msg, MessageType type)
+{
+    QString msgCopy=msg;
+    while(msgCopy.endsWith('\n'))
+        msgCopy.remove(msgCopy.size()-1,1);
 
+    messages.push_back(qMakePair(type,msgCopy));
+}
 
 
 // --------------------- Thread Stuff ------------------------

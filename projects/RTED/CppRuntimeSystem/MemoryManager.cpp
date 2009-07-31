@@ -541,6 +541,16 @@ void MemoryManager::checkWrite(addr_type addr, size_t size, RsType * t)
 }
 
 
+bool MemoryManager::isInitialized(addr_type addr, size_t size)
+{
+    MemoryType * mt = NULL;
+    checkAccess(addr,size,NULL,mt,RuntimeViolation::INVALID_READ);
+
+    int offset = addr - mt->getAddress();
+    return mt->isInitialized(offset,offset+size);
+}
+
+
 void MemoryManager::checkIfSameChunk(addr_type addr1, addr_type addr2, RsType * type)
 {
     RuntimeSystem * rs = RuntimeSystem::instance();

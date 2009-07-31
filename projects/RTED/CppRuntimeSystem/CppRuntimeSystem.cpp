@@ -3,14 +3,14 @@
 #include <sstream>
 #include <iomanip>
 
+#include <fstream>
+
 #ifdef ROSE_WITH_ROSEQT
 #include "DebuggerQt/RtedDebug.h"
 #endif
 
 
 using namespace std;
-
-
 
 
 RuntimeSystem * RuntimeSystem::single = NULL;
@@ -26,7 +26,36 @@ RuntimeSystem* RuntimeSystem::instance()
 RuntimeSystem::RuntimeSystem()
     : defaultOutStr(&cout),testingMode(false),qtDebugger(false)
 {
+    readConfigFile();
 }
+
+
+void RuntimeSystem::readConfigFile()
+{
+    ifstream file;
+    file.open("RTED.cfg",ifstream::in);
+
+    if(!file)
+        file.open("~/RTED.cfg",ifstream::in);
+    if(!file)
+    {
+        cerr << "No RTED.cfg found" << endl;
+        return;
+    }
+
+    while(file.good())
+    {
+        string key;
+        bool value;
+        file >> key;
+        file >> value;
+        if(key == "qtDebugger")       qtDebugger=value;
+        else                          cerr << "Unknown key " << key << endl;
+    }
+
+    file.close();
+}
+
 
 void RuntimeSystem::checkpoint(const SourcePosition & pos)
 {
@@ -38,6 +67,78 @@ void RuntimeSystem::checkpoint(const SourcePosition & pos)
 #endif
 }
 
+
+
+// --------------------- Violations ---------------------------------
+
+
+void RuntimeSystem::violationHandler(RuntimeViolation::Type v, const std::string & description)  throw (RuntimeViolation)
+{
+    RuntimeViolation vio(v,description);
+    violationHandler(vio);
+}
+
+void RuntimeSystem::violationHandler(RuntimeViolation & vio)  throw (RuntimeViolation)
+{
+    vio.setPosition(curPos);
+
+    // TODO 3: Replace this hard-coded policy with a configuration that maps
+    // types to actions (e.g. none, warn, exit)
+    if( !testingMode )
+        switch( vio.getType() ) {
+            case RuntimeViolation::INVALID_PTR_ASSIGN:
+                return;
+            default:
+                // handle normally
+                break;
+        }
+
+    (*defaultOutStr) << vio  << endl;
+
+#ifdef ROSE_WITH_ROSEQT
+    if(qtDebugger)
+    {
+        //Display the Debugger after violation occured
+        stringstream s;
+        s << vio;
+        RtedDebug::instance()->addMessage(s.str().c_str(),RtedDebug::ERROR);
+        RtedDebug::instance()->startGui(qtDebugger);
+    }
+#endif
+
+
+    if(testingMode)
+        throw vio;
+    else
+        exit(0);
+}
+
+void RuntimeSystem::doProgramExitChecks()
+{
+    // exit global scope
+    stackManager.endScope();
+    // allows you to call doProgramExitChecks but then keep going without first
+    // calling clearStatus.  Convenient for testing, but not generally
+    // recommended.
+    stackManager.beginScope("Globals");
+
+
+    // Check for memory leaks
+    memManager.checkForNonFreedMem();
+    fileManager.checkForOpenFiles();
+}
+
+
+void RuntimeSystem::clearStatus()
+{
+    memManager.clearStatus();
+    fileManager.clearStatus();
+    typeSystem.clearStatus();
+    stackManager.clearStatus();
+    pointerManager.clearStatus();
+
+    curPos = SourcePosition();
+}
 
 // --------------------- Mem Checking ---------------------------------
 
@@ -212,67 +313,6 @@ void RuntimeSystem::checkFileAccess(FILE * file, bool read)
 }
 
 
-
-// --------------------- Violations ---------------------------------
-
-
-void RuntimeSystem::violationHandler(RuntimeViolation::Type v, const std::string & description)  throw (RuntimeViolation)
-{
-    RuntimeViolation vio(v,description);
-    violationHandler(vio);
-}
-
-void RuntimeSystem::violationHandler(RuntimeViolation & vio)  throw (RuntimeViolation)
-{
-    vio.setPosition(curPos);
-
-	// TODO 3: Replace this hard-coded policy with a configuration that maps
-	// types to actions (e.g. none, warn, exit)
-	if( !testingMode )
-		switch( vio.getType() ) {
-			case RuntimeViolation::INVALID_PTR_ASSIGN:
-				return;
-			default:
-				// handle normally
-				break;
-		}
-
-    (*defaultOutStr) << vio  << endl;
-
-    if(testingMode)
-    	throw vio;
-    else
-    	exit(0);
-}
-
-
-
-void RuntimeSystem::doProgramExitChecks()
-{
-    // exit global scope
-    stackManager.endScope();
-    // allows you to call doProgramExitChecks but then keep going without first
-    // calling clearStatus.  Convenient for testing, but not generally
-    // recommended.
-    stackManager.beginScope("Globals");
-
-
-    // Check for memory leaks
-    memManager.checkForNonFreedMem();
-    fileManager.checkForOpenFiles();
-}
-
-
-void RuntimeSystem::clearStatus()
-{
-    memManager.clearStatus();
-    fileManager.clearStatus();
-    typeSystem.clearStatus();
-    stackManager.clearStatus();
-    pointerManager.clearStatus();
-
-    curPos = SourcePosition();
-}
 
 
 // --------------------- Output Handling ---------------------------------

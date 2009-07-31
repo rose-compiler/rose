@@ -1071,8 +1071,6 @@ void testTypeSystemMerge()
         TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
 
 
-
-
     rs->freeMemory(ADDR);
 
     CLEANUP
@@ -1092,7 +1090,7 @@ int main(int argc, char ** argv)
 #if 1
         rs->setOutputFile("test_output.txt");
 #else
-        testArrayAccess();
+        testTypeSystemMerge();
         cerr<< endl << "!!!!  Success  !!!! " << endl << endl;
         abort();
 #endif

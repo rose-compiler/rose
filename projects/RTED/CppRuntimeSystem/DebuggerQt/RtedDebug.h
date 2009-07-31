@@ -40,10 +40,12 @@ class RtedDebug
         QList<QPair<MessageType,QString> > messages;
 
 
+        void addMessage(const QString & msg, MessageType type);
+
         /// Starts debug dialog
         /// runtimeSystem is blocked until singleStep or resume was clicked
         /// this function is called only from runtimeSystem thread
-        void startGui();
+        void startGui(bool showAlways=false);
 
         void startRtsi();
 
@@ -63,6 +65,8 @@ class RtedDebug
 
         ThreadData gui;
         ThreadData rtsi;
+
+        bool showAlways;
 
         void enterGui()  { enterThread(gui,rtsi); printDbg("After Entering Gui"); }
         void leaveGui()  { printDbg("Before Leaving Gui");   leaveThread(gui,rtsi); }

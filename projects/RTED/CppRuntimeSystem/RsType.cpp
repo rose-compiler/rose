@@ -456,6 +456,47 @@ void RsBasicType::resolveTypeInfo(RsBasicType::SgType type_)
     }
 }
 
+#include "CppRuntimeSystem.h"
+
+string RsBasicType::readValueAt(addr_type addr) const
+{
+    stringstream str;
+
+    MemoryManager * m = RuntimeSystem::instance()->getMemManager();
+    if(! m->isInitialized(addr, getByteSize()))
+        return "Not initialized";
+
+
+    switch(type)
+    {
+        case SgTypeBool:             str <<  *m->readMemory<bool>(addr);                break;
+        case SgTypeChar:             str <<  *m->readMemory<char>(addr);                break;
+        case SgTypeDouble:           str <<  *m->readMemory<double>(addr);              break;
+        case SgTypeFloat:            str <<  *m->readMemory<float>(addr);               break;
+        case SgTypeInt:              str <<  *m->readMemory<int>(addr);                 break;
+        case SgTypeLong:             str <<  *m->readMemory<long>(addr);                break;
+        case SgTypeLongDouble:       str <<  *m->readMemory<long double>(addr);         break;
+        case SgTypeLongLong:         str <<  *m->readMemory<long long>(addr);           break;
+        case SgTypeShort:            str <<  *m->readMemory<short>(addr);               break;
+        case SgTypeSignedChar:       str <<  *m->readMemory<signed char>(addr);         break;
+        case SgTypeSignedInt:        str <<  *m->readMemory<signed int>(addr);          break;
+        case SgTypeSignedLong:       str <<  *m->readMemory<signed long>(addr);         break;
+        case SgTypeSignedLongLong:   str <<  *m->readMemory<signed long long>(addr);    break;
+        case SgTypeSignedShort:      str <<  *m->readMemory<signed short>(addr);        break;
+        case SgTypeUnsignedChar:     str <<  *m->readMemory<unsigned char>(addr);       break;
+        case SgTypeUnsignedInt:      str <<  *m->readMemory<unsigned int>(addr);        break;
+        case SgTypeUnsignedLong:     str <<  *m->readMemory<unsigned long>(addr);       break;
+        case SgTypeUnsignedLongLong: str <<  *m->readMemory<unsigned long long>(addr);  break;
+        case SgTypeUnsignedShort:    str <<  *m->readMemory<unsigned short>(addr);      break;
+        case SgTypeString:           str <<  *m->readMemory<char*>(addr);               break;
+        default:                     cerr << "RsBasicType::readValueAt with unknown type";
+    }
+
+    return str.str();
+}
+
+
+
 
 void RsBasicType::setTypeInfo(const string & name, size_t size)
 {
@@ -474,6 +515,8 @@ RsBasicType::SgType RsBasicType::getBaseType(int i)
     assert(i>=0 && i < RsBasicType::Unknown);
     return (SgType)i;
 }
+
+
 
 
 // ----------------------------------- RsPointerType --------------------------------------

@@ -249,6 +249,8 @@ class RuntimeSystem
         RuntimeSystem();
 
 
+        void readConfigFile();
+
         /// Class to track state of memory (which areas are allocated etc)
         MemoryManager memManager;
         /// Class to track all opened files and file-accesses

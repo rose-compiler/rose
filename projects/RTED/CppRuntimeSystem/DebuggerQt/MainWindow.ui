@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1260</width>
+    <width>1182</width>
     <height>928</height>
    </rect>
   </property>
@@ -14,11 +14,11 @@
    <string>RTED RuntimeSystem Debugger</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QHBoxLayout" name="horizontalLayout">
+   <layout class="QVBoxLayout" name="verticalLayout_3">
     <item>
      <widget class="QSplitter" name="splitter">
       <property name="orientation">
-       <enum>Qt::Horizontal</enum>
+       <enum>Qt::Vertical</enum>
       </property>
       <widget class="QCodeEditWidget" name="codeEdit1"/>
       <widget class="QCodeEditWidget" name="codeEdit2"/>
@@ -31,7 +31,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1260</width>
+     <width>1182</width>
      <height>26</height>
     </rect>
    </property>
@@ -76,18 +76,11 @@
     <number>2</number>
    </attribute>
    <widget class="QWidget" name="dockWidgetContents_4">
-    <layout class="QGridLayout" name="gridLayout_3">
-     <item row="0" column="0">
+    <layout class="QVBoxLayout" name="verticalLayout_5">
+     <item>
       <widget class="QLineEdit" name="txtMemFilter"/>
      </item>
-     <item row="3" column="0">
-      <widget class="QTreeView" name="treeMemorySystem">
-       <property name="headerHidden">
-        <bool>false</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
+     <item>
       <widget class="QCheckBox" name="chkShowStack">
        <property name="text">
         <string>Show Stack</string>
@@ -97,7 +90,7 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="0">
+     <item>
       <widget class="QCheckBox" name="chkShowHeap">
        <property name="text">
         <string>Show Heap</string>
@@ -107,8 +100,12 @@
        </property>
       </widget>
      </item>
-     <item row="4" column="0">
-      <widget class="MemoryGraphicsView" name="memGraphicsView"/>
+     <item>
+      <widget class="QTreeView" name="treeMemorySystem">
+       <property name="headerHidden">
+        <bool>false</bool>
+       </property>
+      </widget>
      </item>
     </layout>
    </widget>
@@ -228,6 +225,21 @@
         <bool>false</bool>
        </property>
       </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockMemGraphicsView">
+   <property name="windowTitle">
+    <string>Memory Visualization</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>8</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_5">
+    <layout class="QVBoxLayout" name="verticalLayout_4">
+     <item>
+      <widget class="MemoryGraphicsView" name="memGraphicsView"/>
      </item>
     </layout>
    </widget>

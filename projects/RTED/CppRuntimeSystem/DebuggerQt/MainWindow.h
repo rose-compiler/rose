@@ -29,12 +29,13 @@ class DbgMainWindow : public QMainWindow
 
 
         void addMessage(const QString & msg);
+        void addErrorMessage(const QString & msg);
 
         /// shows the dialog if a breakpoint was set in instrumented file
         //void showIfBreakpoint(int lineNr);
 
 
-        void updateAllRsData();
+        void updateAllRsData(bool showAlways=false);
 
     protected slots:
         void on_actionSave_triggered();
@@ -57,6 +58,9 @@ class DbgMainWindow : public QMainWindow
         void updateMemoryDisplay();
         void updateStackDisplay();
         void updatePointerDisplay();
+
+
+        virtual void closeEvent(QCloseEvent * event);
 
         RuntimeSystem * rs;
         RtedDebug *     dbgObj;

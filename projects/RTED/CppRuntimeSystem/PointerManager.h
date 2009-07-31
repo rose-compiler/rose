@@ -32,6 +32,7 @@ class PointerInfo
         bool operator< (const PointerInfo & other) const;
 
         void print(std::ostream & os) const;
+
     protected:
         PointerInfo(addr_type source, addr_type target,RsType * type);
 
