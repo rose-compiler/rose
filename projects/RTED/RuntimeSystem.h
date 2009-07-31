@@ -4,6 +4,11 @@
 //#include <cstdio>
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 enum Error {
 	PTR_OUT_OF_SCOPE,
 	PTR_REASSIGNED
@@ -130,6 +135,9 @@ void RuntimeSystem_roseRegisterTypeCall(int count, ...);
 // USE GUI for debugging
 void Rted_debugDialog(const char* filename, int line, int lineTransformed);
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif
 

@@ -20,14 +20,13 @@ LINK_QT_DEBUGGER=
 # This test program does not require the rest of ROSE so it can be handled locally
 bin_PROGRAMS  = runtimeCheck
 
-
-
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -ldl 
 
 RTS=RuntimeSystem.cpp
-RTED_CXX = $(CXXLINK)
-RTED_CC = $(LIBTOOL) --tag=CC --mode=link --quiet gcc $(AM_CXXFLAGS) \
-	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@ 
+RTED_CXX = $(LIBTOOL) --tag=CXX --mode=link g++ $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS)
+RTED_CC = $(LIBTOOL) --tag=CC --mode=link gcc $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS)
 RTED_LIB=CppRuntimeSystem/libCppRuntimeSystem.la
 runtimeCheck_SOURCES = runtimeCheck.cpp \
                        RtedTransformation.cpp \
@@ -99,49 +98,44 @@ RTED_TEST_DIRS = $(rted_path)/C/array_index_out_of_bound \
 		 $(srcdir)/tests/C/nomemoryleaks \
 		 $(srcdir)/tests/C/panasTests
 
-RTED_ORIGSOURCES_C = ${foreach RTED_TEST_DIR, $(RTED_TEST_DIRS), ${wildcard $(RTED_TEST_DIR)/*[!_s].c} }
-RTED_COPYSOURCES_C = ${foreach RTED_TEST_DIR, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${patsubst $(rted_path)/%.c, rted_source/%.c, ${wildcard $(RTED_TEST_DIR)/*.c} } }
-RTED_LOCAL_COPYSOURCES_C = ${foreach RTED_TEST_DIR, ${filter $(srcdir)%, $(RTED_TEST_DIRS)}, ${patsubst $(srcdir)/%.c, rted_source/%.c, ${wildcard $(RTED_TEST_DIR)/*.c} } }
-RTED_ROSESOURCES_C = ${patsubst %.c, %_rose.c, $(RTED_COPYSOURCES_C) }
-RTED_LOCAL_ROSESOURCES_C = ${patsubst %.c, %_rose.c, $(RTED_LOCAL_COPYSOURCES_C) }
-RTED_BINFILES_C = ${patsubst $(rted_path)/%.c, rted_source/%.bin, ${filter $(rted_path)%, $(RTED_ORIGSOURCES_C)}}
-RTED_LOCAL_BINFILES_C = ${patsubst $(srcdir)/%.c, rted_source/%.bin, ${filter $(srcdir)%, $(RTED_ORIGSOURCES_C)}}
-RTED_DEBUGBINFILES_C = ${patsubst $(rted_path)/%.c, rted_source/%_debug.bin, ${filter $(rted_path)%, $(RTED_ORIGSOURCES_C)}}
-RTED_LOCAL_DEBUGBINFILES_C = ${patsubst $(srcdir)/%.c, rted_source/%_debug.bin, ${filter $(srcdir)%, $(RTED_ORIGSOURCES_C)}}
-RTED_ACTUALOUTPUTFILES_C = ${patsubst $(rted_path)/%.c, rted_source/%.actual-output, $(RTED_ORIGSOURCES_C)}
-RTED_EXPECTEDOUTPUTFILES_C = ${patsubst $(rted_path)/%.c, rted_source/%.expected-output, $(RTED_ORIGSOURCES_C)}
+GENERATE_RTED_ORIGSOURCES = ${foreach RTED_TEST_DIR, $(RTED_TEST_DIRS), ${wildcard $(RTED_TEST_DIR)/*[!_s]${strip $(1)}} }
+GENERATE_RTED_COPYSOURCES = ${foreach RTED_TEST_DIR, ${filter ${strip $(2)}%, $(RTED_TEST_DIRS)}, ${patsubst ${strip $(2)}/%${strip $(1)}, rted_source/%${strip $(1)}, ${wildcard $(RTED_TEST_DIR)/*${strip $(1)}} } }
+GENERATE_RTED_ROSESOURCES = ${patsubst %${strip $(1)}, %_rose${strip $(1)}, $(2) }
+GENERATE_RTED_BINFILES = ${patsubst ${strip $(2)}/%${strip $(1)}, rted_source/%.bin, ${filter ${strip $(2)}%, ${strip $(3)}}}
+GENERATE_RTED_DEBUGBINFILES = ${patsubst ${strip $(2)}/%${strip $(1)}, rted_source/%_debug.bin, ${filter ${strip $(2)}%, ${strip $(3)}}}
+GENERATE_RTED_OUTPUTFILES = ${patsubst $(rted_path)/%${strip $(1)}, rted_source/%.${strip $(2)}-output, ${strip $(3)}}
 
-RTED_ORIGSOURCES_CPP = ${foreach RTED_TEST_DIR, $(RTED_TEST_DIRS), ${wildcard $(RTED_TEST_DIR)/*[!_s].cpp} }
-RTED_COPYSOURCES_CPP = ${foreach RTED_TEST_DIR, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${patsubst $(rted_path)/%, rted_source/%, ${wildcard $(RTED_TEST_DIR)/*.cpp} } }
-RTED_LOCAL_COPYSOURCES_CPP = ${foreach RTED_TEST_DIR, ${filter $(srcdir)%, $(RTED_TEST_DIRS)}, ${patsubst $(srcdir)/%, rted_source/%, ${wildcard $(RTED_TEST_DIR)/*.cpp} } }
-RTED_ROSESOURCES_CPP = ${patsubst %.cpp, %_rose.cpp, $(RTED_COPYSOURCES_CPP) }
-RTED_LOCAL_ROSESOURCES_CPP = ${patsubst %.cpp, %_rose.cpp, $(RTED_LOCAL_COPYSOURCES_CPP) }
-RTED_BINFILES_CPP = ${patsubst $(rted_path)/%.cpp, rted_source/%.bin, ${filter $(rted_path)%, $(RTED_ORIGSOURCES_CPP)}}
-RTED_LOCAL_BINFILES_CPP = ${patsubst $(srcdir)/%.cpp, rted_source/%.bin, ${filter $(srcdir)%, $(RTED_ORIGSOURCES_CPP)}}
-RTED_DEBUGBINFILES_CPP = ${patsubst $(rted_path)/%.cpp, rted_source/%_debug.bin, ${filter $(rted_path)%, $(RTED_ORIGSOURCES_CPP)}}
-RTED_LOCAL_DEBUGBINFILES_CPP = ${patsubst $(srcdir)/%.cpp, rted_source/%_debug.bin, ${filter $(srcdir)%, $(RTED_ORIGSOURCES_CPP)}}
-RTED_ACTUALOUTPUTFILES_CPP = ${patsubst $(rted_path)/%.cpp, rted_source/%.actual-output, $(RTED_ORIGSOURCES_CPP)}
-RTED_EXPECTEDOUTPUTFILES_CPP = ${patsubst $(rted_path)/%.cpp, rted_source/%.expected-output, $(RTED_ORIGSOURCES_CPP)}
+RTED_ORIGSOURCES  = ${call GENERATE_RTED_ORIGSOURCES, .c}
+RTED_ORIGSOURCES += ${call GENERATE_RTED_ORIGSOURCES, .cpp}
 
-RTED_ORIGSOURCES = $(RTED_ORIGSOURCES_CPP) $(RTED_ORIGSOURCES_C)
-RTED_COPYSOURCES = $(RTED_COPYSOURCES_CPP) $(RTED_COPYSOURCES_C)
-RTED_LOCAL_COPYSOURCES = $(RTED_LOCAL_COPYSOURCES_CPP) $(RTED_LOCAL_COPYSOURCES_C)
-RTED_ROSESOURCES = $(RTED_ROSESOURCES_CPP) $(RTED_ROSESOURCES_C)
-RTED_LOCAL_ROSESOURCES = $(RTED_LOCAL_ROSESOURCES_CPP) $(RTED_LOCAL_ROSESOURCES_C)
-RTED_BINFILES = $(RTED_BINFILES_CPP) $(RTED_BINFILES_C)
-RTED_LOCAL_BINFILES = $(RTED_LOCAL_BINFILES_CPP) $(RTED_LOCAL_BINFILES_C)
-RTED_DEBUGBINFILES = $(RTED_DEBUGBINFILES_CPP) $(RTED_DEBUGBINFILES_C)
-RTED_LOCAL_DEBUGBINFILES = $(RTED_LOCAL_DEBUGBINFILES_CPP) $(RTED_LOCAL_DEBUGBINFILES_C)
-RTED_ACTUALOUTPUTFILES = $(RTED_ACTUALOUTPUTFILES_CPP) $(RTED_ACTUALOUTPUTFILES_C)
-RTED_EXPECTEDOUTPUTFILES = $(RTED_EXPECTEDOUTPUTFILES_CPP) $(RTED_EXPECTEDOUTPUTFILES_C)
+RTED_COPYSOURCES  = ${call GENERATE_RTED_COPYSOURCES, .c, $(rted_path)}
+RTED_COPYSOURCES += ${call GENERATE_RTED_COPYSOURCES, .c, $(srcdir)}
+RTED_COPYSOURCES += ${call GENERATE_RTED_COPYSOURCES, .cpp, $(rted_path)}
+RTED_COPYSOURCES += ${call GENERATE_RTED_COPYSOURCES, .cpp, $(srcdir)}
 
-.SECONDARY: $(RTED_BINFILES) $(RTED_DEBUGBINFILES) $(RTED_COPYSOURCES) $(RTED_ROSESOURCES) $(RTED_ACTUALOUTPUTFILES) $(RTED_EXPECTEDOUTPUTFILES)\
-	    $(RTED_LOCAL_BINFILES) $(RTED_LOCAL_DEBUGBINFILES) $(RTED_LOCAL_COPYSOURCES) $(RTED_LOCAL_ROSESOURCES)
-.PRECIOUS: $(RTED_BINFILES) $(RTED_DEBUGBINFILES) $(RTED_COPYSOURCES) $(RTED_ROSESOURCES) $(RTED_ACTUALOUTPUTFILES) $(RTED_EXPECTEDOUTPUTFILES)\
-	   $(RTED_LOCAL_BINFILES) $(RTED_LOCAL_DEBUGBINFILES) $(RTED_LOCAL_COPYSOURCES) $(RTED_LOCAL_ROSESOURCES)
+RTED_ROSESOURCES  = ${call GENERATE_RTED_ROSESOURCES, .c, ${filter %.c, $(RTED_COPYSOURCES)}} 
+RTED_ROSESOURCES += ${call GENERATE_RTED_ROSESOURCES, .cpp, ${filter %.cpp, $(RTED_COPYSOURCES)}}
+
+RTED_BINFILES  = ${call GENERATE_RTED_BINFILES, .c, $(rted_path), ${filter %.c, $(RTED_ORIGSOURCES)}}
+RTED_BINFILES += ${call GENERATE_RTED_BINFILES, .c, $(srcdir), ${filter %.c, $(RTED_ORIGSOURCES)}}
+RTED_BINFILES += ${call GENERATE_RTED_BINFILES, .cpp, $(rted_path), ${filter %.cpp, $(RTED_ORIGSOURCES)}}
+RTED_BINFILES += ${call GENERATE_RTED_BINFILES, .cpp, $(srcdir), ${filter %.cpp, $(RTED_ORIGSOURCES)}}
+
+RTED_DEBUGBINFILES  = ${call GENERATE_RTED_DEBUGBINFILES, .c, $(rted_path), ${filter %.c, $(RTED_ORIGSOURCES)}}
+RTED_DEBUGBINFILES += ${call GENERATE_RTED_DEBUGBINFILES, .c, $(srcdir), ${filter %.c, $(RTED_ORIGSOURCES)}}
+RTED_DEBUGBINFILES += ${call GENERATE_RTED_DEBUGBINFILES, .cpp, $(rted_path), ${filter %.cpp, $(RTED_ORIGSOURCES)}}
+RTED_DEBUGBINFILES += ${call GENERATE_RTED_DEBUGBINFILES, .cpp, $(srcdir), ${filter %.cpp, $(RTED_ORIGSOURCES)}}
+
+RTED_OUTPUTFILES  = ${call GENERATE_RTED_OUTPUTFILES, .c, actual, ${filter %.c, $(RTED_ORIGSOURCES)}}
+RTED_OUTPUTFILES += ${call GENERATE_RTED_OUTPUTFILES, .c, expected, ${filter %.c, $(RTED_ORIGSOURCES)}}
+RTED_OUTPUTFILES += ${call GENERATE_RTED_OUTPUTFILES, .cpp, actual, ${filter %.cpp, $(RTED_ORIGSOURCES)}}
+RTED_OUTPUTFILES += ${call GENERATE_RTED_OUTPUTFILES, .cpp, expected, ${filter %.cpp, $(RTED_ORIGSOURCES)}}
+
+.SECONDARY: $(RTED_BINFILES) $(RTED_DEBUGBINFILES) $(RTED_COPYSOURCES) $(RTED_ROSESOURCES) $(RTED_OUTPUTFILES)
+.PRECIOUS: $(RTED_BINFILES) $(RTED_DEBUGBINFILES) $(RTED_COPYSOURCES) $(RTED_ROSESOURCES) $(RTED_OUTPUTFILES)
 
 print:
-	@echo $(RTED_ORIGSOURCES)
+	@echo $(RTED_ROSESOURCES)
 
 check-C-array: run/C/array_index_out_of_bound
 
@@ -165,9 +159,6 @@ rted_source:
 	@mkdir -p $(foreach rted_dir,$(filter $(rted_path)%, $(RTED_TEST_DIRS) ), $(patsubst $(rted_path)/%, rted_source/%, $(rted_dir) ) )
 	@mkdir -p $(foreach local_test_dir,$(filter $(srcdir)%, $(RTED_TEST_DIRS) ), $(patsubst $(srcdir)/%, rted_source/%, $(local_test_dir) ) )
 
-
-
-
 #------------------------------------------------------------------------------
 # rule to copy the sources into our current working directory
 #------------------------------------------------------------------------------
@@ -189,7 +180,7 @@ rted_source/tests/%.c: rted_source $(top_srcdir)/projects/RTED/tests/%.c
 
 COPYING_FILE = @SOURCE_FILE='$(strip $(patsubst rted_source/%, $(rted_path)/%, $(1)))';\
 		if [ -f $$SOURCE_FILE ]; then\
-			echo -n "    copying input file ... ";\
+			echo -n "    copying input file $(1)... ";\
 			cp $$SOURCE_FILE $(dir $(1));\
 			echo " done.";\
 			echo -n "    inserting include \"RuntimeSystem.h\" ... ";\
@@ -212,11 +203,6 @@ rted_source/%.c: rted_source $(rted_path)/%.c
 rted_source/%.cpp: rted_source $(rted_path)/%.cpp
 	$(call COPYING_FILE, $@)
 
-rted_source/%.c: rted_source $(rted_path)/%.cpp
-	$(call COPYING_FILE, $@)
-
-rted_source/%.cpp: rted_source $(rted_path)/%.c
-	$(call COPYING_FILE, $@)
 #------------------------------------------------------------------------------
 
 
@@ -227,39 +213,68 @@ rted_source/%.cpp: rted_source $(rted_path)/%.c
 rted_source/%_s_rose.c: rted_source/%_s.c
 	@touch $@
 
+rted_source/%_s_rose.cpp: rted_source/%_s.cpp
+	@touch $@
 
-rted_source/%_rose.c rted_source/%_rose.cpp: runtimeCheck rted_source/%.c rted_source/%.cpp rted_source/%_s.c rted_source/%_s.cpp $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
-	@echo -n "    testing if files compiles with gcc (with _s) ... "
-	@$(RTED_CC) -g -o $(patsubst %_rose.c, %.bin, $@) $(filter rted_source/%.c, $^) \
-		$(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) \
-		$(RTED_LIB)
-	@rm $(patsubst %_rose.c, %.bin, $@)
-	@echo " done."
-	@echo -n "    running transformation ... "
-	@./runtimeCheck 2 $(filter rted_source/%.c, $^) \
-			  -rose:C_only -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) 2> /dev/null
-	@echo " done."
-	@echo -n "   adding line information ... "
-	@cat rose_$(notdir $(patsubst %_rose.c, %.c, $@ ) ) \
-	    | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > $@
-	@rm rose_$(notdir $(patsubst %_rose.c, %.c, $@ ) )
-	@cat rose_$(notdir $(patsubst %_rose.c, %_s.c, $@ ) ) \
-	    | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > $(patsubst %_rose.c, %_s_rose.c, $@ )
-	@rm rose_$(notdir $(patsubst %_rose.c, %_s.c, $@ ) )
-	@echo " done."
+# parameters:
+#  1: file extension (.c, .cpp, .f, ... )
+#  2: compile command
+#  3: rose option, for example: C_Only
+TRANSFORMING_FILES = @echo -n "    testing if files compiles with gcc (with _s) ... ";
+
+TRANSFORMING_FILES += $(2) \
+		      -g \
+		      -o $(patsubst %_rose$(strip $(1)), %.bin, $@) \
+		      $(filter rted_source/%$(strip $(1)), $^) \
+		      $(srcdir)/$(RTS) $(INCLUDES) \
+		      -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) \
+		      -I$(top_builddir) -I$(srcdir) $(RTED_LIB);
+
+TRANSFORMING_FILES += if [ $$? -ne 0 ]; then exit 1; fi;
+
+TRANSFORMING_FILES += rm $(patsubst %_rose$(strip $(1)), %.bin, $@);
+TRANSFORMING_FILES += echo " done.";
+TRANSFORMING_FILES += echo -n "    running transformation ... ";
+
+TRANSFORMING_FILES += ./runtimeCheck 2 $(filter rted_source/%$(strip $(1)), $^) \
+				       -rose:$(strip $(3)) \
+				       -c \
+				       $(INCLUDES) \
+				       -I$(top_builddir) \
+				       -I$(srcdir) \
+				       -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@));
+TRANSFORMING_FILES += if [ $$? -ne 0 ]; then exit 1; fi;
+
+TRANSFORMING_FILES += echo " done.";
+TRANSFORMING_FILES += echo -n "   adding line information ... ";
+TRANSFORMING_FILES += cat rose_$(notdir $(patsubst %_rose$(strip $(1)), %$(strip $(1)), $@ ) ) | \
+			  nl -p -b 'a' | \
+			  sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > $@;
+
+TRANSFORMING_FILES += rm rose_$(notdir $(patsubst %_rose$(strip $(1)), %$(strip $(1)), $@ ) );
+
+TRANSFORMING_FILES += SUPPORT_FILE='rose_$(notdir $(patsubst %_rose$(strip $(1)), %_s$(strip $(1)), $@ ) )'; \
+		      if [ -f $$SUPPORT_FILE ]; \
+		      then \
+			cat $$SUPPORT_FILE | \
+			    nl -p -b 'a' | \
+			    sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > $(patsubst %_rose$(strip $(1)), %_s_rose$(strip $(1)), $@ ); \
+		      fi;
+
+TRANSFORMING_FILES += rm -f rose_$(notdir $(patsubst %_rose$(strip $(1)), %_s$(strip $(1)), $@ ) );
+TRANSFORMING_FILES += echo " done.";
+
+rted_source/%_rose.c: runtimeCheck rted_source/%.c rted_source/%_s.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
+	$(call TRANSFORMING_FILES, .c, $(RTED_CC), C_Only)
+
+rted_source/%_rose.cpp: runtimeCheck rted_source/%.cpp rted_source/%_s.cpp $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
+	$(call TRANSFORMING_FILES, .cpp, $(RTED_CXX), Cxx)
 
 rted_source/%_rose.c: runtimeCheck rted_source/%.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
-	@echo -n "    testing if file compiles with gcc ... "
-	@$(RTED_CC) -g -o $(patsubst %_rose.c, %.bin, $@) $(filter rted_source/%.c, $^) $(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) $(RTED_LIB)
-	@rm $(patsubst %_rose.c, %.bin, $@)
-	@echo " done."
-	@echo -n "    running transformation ... "
-	@./runtimeCheck 2 $(filter rted_source/%.c, $^) -rose:C_only -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@))  2> /dev/null
-	@echo " done." > /dev/null
-	@echo -n "   adding line information ... "
-	@cat rose_$(notdir $(filter rted_source/%.c, $^)) | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > $@
-	@rm rose_$(notdir $(filter rted_source/%.c, $^))
-	@echo " done."
+	$(call TRANSFORMING_FILES, .c, $(RTED_CC), C_Only)
+
+rted_source/%_rose.cpp: runtimeCheck rted_source/%.cpp $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
+	$(call TRANSFORMING_FILES, .cpp, $(RTED_CXX), Cxx)
 
 #------------------------------------------------------------------------------
 
@@ -274,36 +289,66 @@ rted_source/%_rose.c: runtimeCheck rted_source/%.c $(srcdir)/$(RTS) $(srcdir)/Ru
 #rted_source/%_debug.bin: rted_source/%_rose.c
 #	@touch $@
 
+# parameters:
+#  1: file extension (.c, .cpp, .f, ... )
+#  2: compile command
+#  3: additional parameters, like linking against debugger ...
+COMPILING_RUNTIME_SYSTEM = @echo -n "   compiling instrumented debugger code (with _s) ... "; \
+			   $(2) -g -o $@ $(filter rted_source/%$(strip $(1)), $^) \
+				      $(srcdir)/$(RTS) \
+				      $(INCLUDES) \
+				      -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) \
+				      -I$(top_builddir) \
+				      -I$(srcdir) \
+				      $(3) $(RTED_LIB); \
+			   if [ $$? -ne 0 ]; then exit 1; fi; \
+			   echo " done."
+
 rted_source/%_debug.bin: rted_qt rted_source/%_rose.c rted_source/%_s_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
-	@echo -n "   compiling instrumented debugger code (with _s) ... "
-	@$(RTED_CC) -g -o $@ $(filter rted_source/%.c, $^) \
-		     $(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER) $(RTED_LIB)
-	@echo " done."
+	$(call COMPILING_RUNTIME_SYSTEM, .c, $(RTED_CC), $(LINK_QT_DEBUGGER))
 
 rted_source/%_debug.bin: rted_qt rted_source/%_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
-	@echo -n "   compiling instrumented debugger code ... "
-	@$(RTED_CC) -g -o $@ $(filter rted_source/%.c, $^) $(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER) $(RTED_LIB)
-	@echo " done."
-
-rted_source/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SCRIPT)
-	@OUTPUT_SRC='$(strip $(patsubst rted_source/%.expected-output, $(rted_path)/%.ok_msg, $@))';\
-		TEST_FILE='$(strip $(patsubst rted_source/%.expected-output, $(rted_path)/%.c, $@))';\
-		if [ -f "$$OUTPUT_SRC" ]; then \
-			echo ===`wc -l $$TEST_FILE`=== | $(EXTRACT_EXPECTED_ERROR) - $$OUTPUT_SRC > $@;\
-		fi
-
+	$(call COMPILING_RUNTIME_SYSTEM, .c, $(RTED_CC), $(LINK_QT_DEBUGGER))
+#
 rted_source/%.bin: rted_source/%_rose.c rted_source/%_s_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
-	@echo -n "   compiling instrumented code (with _s) ... "
-	@$(RTED_CC) -g -o $@ $(filter rted_source/%.c, $^) \
-		     $(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) \
-			 $(RTED_LIB)
-	@echo " done."
+	$(call COMPILING_RUNTIME_SYSTEM, .c, $(RTED_CC))
 
 rted_source/%.bin: rted_source/%_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
-	@echo -n "   compiling instrumented code ... "
-	@$(RTED_CC) -g -o $@ $(filter rted_source/%.c, $^) $(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) $(RTED_LIB)
-	@echo " done."
+	$(call COMPILING_RUNTIME_SYSTEM, .c, $(RTED_CC))
 
+rted_source/%_debug.bin: rted_qt rted_source/%_rose.cpp rted_source/%_s_rose.cpp $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
+	$(call COMPILING_RUNTIME_SYSTEM, .cpp, $(RTED_CXX), $(LINK_QT_DEBUGGER))
+
+rted_source/%_debug.bin: rted_qt rted_source/%_rose.cpp $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
+	$(call COMPILING_RUNTIME_SYSTEM, .cpp, $(RTED_CXX), $(LINK_QT_DEBUGGER))
+
+rted_source/%.bin: rted_source/%_rose.cpp rted_source/%_s_rose.cpp $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
+	$(call COMPILING_RUNTIME_SYSTEM, .cpp, $(RTED_CXX))
+
+rted_source/%.bin: rted_source/%_rose.cpp $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
+	$(call COMPILING_RUNTIME_SYSTEM, .cpp, $(RTED_CXX))
+
+# TODO: make this aware of different file extensions ...
+
+# parameters:
+#  1: file extension (.c, .cpp, .f, ... )
+GENERATE_EXPECTED_OUTPUT = @OUTPUT_SRC='$(strip $(patsubst rted_source/%.expected-output, $(rted_path)/%.ok_msg, $@))';\
+			   TEST_FILE='$(strip $(patsubst rted_source/%.expected-output, $(rted_path)/%$(strip $(1)), $@))';\
+			   if [ -f "$$OUTPUT_SRC" ]; then \
+				echo ===`wc -l $$TEST_FILE`=== | $(EXTRACT_EXPECTED_ERROR) - $$OUTPUT_SRC > $@;\
+			   fi
+
+rted_source/C/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SCRIPT)
+	$(call GENERATE_EXPECTED_OUTPUT, .c )
+
+rted_source/C++/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SCRIPT)
+	$(call GENERATE_EXPECTED_OUTPUT, .cpp )
+
+#@OUTPUT_SRC='$(strip $(patsubst rted_source/%.expected-output, $(rted_path)/%.ok_msg, $@))';\
+#TEST_FILE='$(strip $(patsubst rted_source/%.expected-output, $(rted_path)/%, $@))';\
+#if [ -f "$$OUTPUT_SRC" ]; then \
+#echo ===`wc -l $$TEST_FILE`=== | $(EXTRACT_EXPECTED_ERROR) - $$OUTPUT_SRC > $@;\
+#fi
 #------------------------------------------------------------------------------
 
 #------------------------------------------------------------------------------
@@ -372,14 +417,31 @@ run_log/%: rted_source/%.bin rted_source/%.expected-output
 # rules to run all tests in the directories listed in RTED_ORIGSOURCES
 #------------------------------------------------------------------------------
 
-run: $(patsubst $(rted_path)/%.c, run/%, $(RTED_ORIGSOURCES) )
+GENERATE_RTED_RUN_TARGET = ${patsubst ${strip $(4)}/%${strip $(1)}, $(2)/%, ${strip $(3)}}
+RUN_TARGETS  = ${call GENERATE_RTED_RUN_TARGET, .c, run, ${filter $(rted_path)%.c, $(RTED_ORIGSOURCES)}, $(rted_path)}
+RUN_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .c, run, ${filter $(srcdir)%.c, $(RTED_ORIGSOURCES)}, $(srcdir)}
+RUN_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run, ${filter $(rted_path)%.cpp, $(RTED_ORIGSOURCES)}, $(rted_path)}
+RUN_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run, ${filter $(srcdir)%.cpp, $(RTED_ORIGSOURCES)}, $(srcdir)}
+RUN_DEBUG_TARGETS  = ${call GENERATE_RTED_RUN_TARGET, .c, run_debug, ${filter $(rted_path)%.c, $(RTED_ORIGSOURCES)}, $(rted_path)}
+RUN_DEBUG_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .c, run_debug, ${filter $(srcdir)%.c, $(RTED_ORIGSOURCES)}, $(srcdir)}
+RUN_DEBUG_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run_debug, ${filter $(rted_path)%.cpp, $(RTED_ORIGSOURCES)}, $(rted_path)}
+RUN_DEBUG_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run_debug, ${filter $(srcdir)%.cpp, $(RTED_ORIGSOURCES)}, $(srcdir)}
+RUN_CHECKONLY_TARGETS  = ${call GENERATE_RTED_RUN_TARGET, .c, run_checkonly, ${filter $(rted_path)%.c, $(RTED_ORIGSOURCES)}, $(rted_path)}
+RUN_CHECKONLY_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .c, run_checkonly, ${filter $(srcdir)%.c, $(RTED_ORIGSOURCES)}, $(srcdir)}
+RUN_CHECKONLY_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run_checkonly, ${filter $(rted_path)%.cpp, $(RTED_ORIGSOURCES)}, $(rted_path)}
+RUN_CHECKONLY_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run_checkonly, ${filter $(srcdir)%.cpp, $(RTED_ORIGSOURCES)}, $(srcdir)}
+RUN_LOG_TARGETS  = ${call GENERATE_RTED_RUN_TARGET, .c, run_log, ${filter $(rted_path)%.c, $(RTED_ORIGSOURCES)}, $(rted_path)}
+RUN_LOG_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .c, run_log, ${filter $(srcdir)%.c, $(RTED_ORIGSOURCES)}, $(srcdir)}
+RUN_LOG_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run_log, ${filter $(rted_path)%.cpp, $(RTED_ORIGSOURCES)}, $(rted_path)}
+RUN_LOG_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run_log, ${filter $(srcdir)%.cpp, $(RTED_ORIGSOURCES)}, $(srcdir)}
 
-run_debug: $(patsubst $(rted_path)/%.c, run_debug/%, $(RTED_ORIGSOURCES) )
+run: $(RUN_TARGETS)
 
-run_checkonly: $(patsubst $(rted_path)/%.c, run_checkonly/%, $(RTED_ORIGSOURCES) )
+run_debug: $(RUN_DEBUG_TARGETS)
 
-run_log: $(patsubst $(rted_path)/%.c, run_log/%, $(RTED_ORIGSOURCES) )
+run_checkonly: $(RUN_CHECKONLY_TARGETS)
 
+run_log: $(RUN_DEBUG_TARGETS)
 
 #------------------------------------------------------------------------------
 
@@ -389,19 +451,31 @@ run_log: $(patsubst $(rted_path)/%.c, run_log/%, $(RTED_ORIGSOURCES) )
 #------------------------------------------------------------------------------
 
 define RUN_TARGET
-$(1): $(2)
-	@echo $(1) complete
+RUN = $(patsubst %, run%, $(1))
+RUN_DEBUG = $(patsubst %, run_debug%, $(1))
+RUN_CHECKONLY = $(patsubst %, run_checkonly%, $(1))
+RUN_LOG = $(patsubst %, run_log%, $(1))
+
+$(RUN): $(filter $(RUN)%, $(RUN_TARGETS))
+	@echo $(RUN) complete
+
+$(RUN_DEBUG): $(filter $(RUN_DEBUG)%, $(RUN_DEBUG_TARGETS))
+	@echo $(RUN_DEBUG) complete
+
+$(RUN_CHECKONLY): $(filter $(RUN_CHECKONLY)%, $(RUN_CHECKONLY_TARGETS))
+	@echo $(RUN_CHECKONLY) complete
+
+$(RUN_LOG): $(filter $(RUN_LOG)%, $(RUN_LOG_TARGETS))
+	@echo $(RUN_LOG) complete
 endef
 
-${foreach rted_dir, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(rted_path)/%, run/%, $(rted_dir)}, ${patsubst $(rted_path)/%.c, run/%, ${wildcard $(rted_dir)/*[!_s].c} } } } }
-${foreach rted_dir, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(rted_path)/%, run_debug/%, $(rted_dir)}, ${patsubst $(rted_path)/%.c, run_debug/%, ${wildcard $(rted_dir)/*[!_s].c} } } } }
-${foreach rted_dir, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(rted_path)/%, run_checkonly/%, $(rted_dir)}, ${patsubst $(rted_path)/%.c, run_checkonly/%, ${wildcard $(rted_dir)/*[!_s].c} } } } }
-${foreach rted_dir, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(rted_path)/%, run_log/%, $(rted_dir)}, ${patsubst $(rted_path)/%.c, run_log/%, ${wildcard $(rted_dir)/*[!_s].c} } } } }
-${foreach rted_dir, ${filter $(srcdir)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(srcdir)/%, run/%, $(rted_dir)}, ${patsubst $(srcdir)/%.c, run/%, ${wildcard $(rted_dir)/*[!_s].c} } } } }
-${foreach rted_dir, ${filter $(srcdir)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(srcdir)/%, run_debug/%, $(rted_dir)}, ${patsubst $(srcdir)/%.c, run_debug/%, ${wildcard $(rted_dir)/*[!_s].c} } } } }
-${foreach rted_dir, ${filter $(srcdir)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(srcdir)/%, run_checkonly/%, $(rted_dir)}, ${patsubst $(srcdir)/%.c, run_checkonly/%, ${wildcard $(rted_dir)/*[!_s].c} } } } }
-${foreach rted_dir, ${filter $(srcdir)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(srcdir)/%, run_log/%, $(rted_dir)}, ${patsubst $(srcdir)/%.c, run_log/%, ${wildcard $(rted_dir)/*[!_s].c} } } } }
-	
+print_t:
+	$(foreach rted_dir, $(filter $(rted_path)%, $(RTED_TEST_DIRS)), echo $(patsubst $(rted_path)/%, %, $(rted_dir);))
+
+
+${foreach rted_dir, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(rted_path)%, %, $(rted_dir)}}}}
+${foreach rted_dir, ${filter $(srcdir)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(srcdir)%, %, $(rted_dir)}}}}
+
 #------------------------------------------------------------------------------
 
 deleteAllbinfiles:

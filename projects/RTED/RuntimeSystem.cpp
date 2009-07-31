@@ -17,9 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-extern "C" {
-  #include "RuntimeSystem.h"
-}
+#include "RuntimeSystem.h"
 
 enum ReadWriteMask { Read = 1, Write = 2, BoundsCheck = 4 };
 
