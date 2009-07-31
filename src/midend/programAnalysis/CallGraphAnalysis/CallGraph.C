@@ -720,7 +720,7 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
         inputFunctionDeclaration : isSgFunctionDeclaration( properties->functionDeclaration->get_definingDeclaration() )
        );
 
-     if( inputFunctionDeclaration != defDecl )
+     if( inputFunctionDeclaration == defDecl )
        std::cout << " **** If you see this error message. Report to the ROSE team that a function declaration ****\n"
                  << " **** has the defining declaration erroneously attached to the nondef decl               ****\n";
       
@@ -844,6 +844,7 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
 		     if ( nonDefDecl )
 		       memberFunctionDeclaration = nonDefDecl;
 
+                     std::cout << "SgArrowExp" << std::endl;
 		     fctProps->functionDeclaration = memberFunctionDeclaration;
 		     ROSE_ASSERT ( isSgFunctionDeclaration( memberFunctionDeclaration ) );
 		     fctProps->functionType = fctProps->functionDeclaration->get_type()->findBaseType();
