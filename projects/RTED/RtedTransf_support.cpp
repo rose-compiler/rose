@@ -308,7 +308,7 @@ RtedTransformation::getDimension(SgInitializedName* initName, SgVarRefExp* varRe
     RTedArray* array = it->second;
     SgInitializedName* init = array->initName;
     if (init==initName) {
-      dim=array->dimension;
+      dim=array->getDimension();
       cerr << "Found init : " << init->unparseToString() << " dim : " << dim << "  compare to : " << initName->unparseToString()<<endl;
     }
   }
@@ -318,7 +318,7 @@ RtedTransformation::getDimension(SgInitializedName* initName, SgVarRefExp* varRe
     RTedArray* array = it2->second;
     SgInitializedName* init = array->initName;
     if (init==initName) {
-      dim=array->dimension;
+      dim=array->getDimension();
     }
   }
   cerr << " -------------------------- resizing dimension to : " << dim << "  for : " << varRef->unparseToString() << endl;
