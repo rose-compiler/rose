@@ -715,7 +715,23 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
      hasDefinition = false;
      properties = new Properties(inputFunctionDeclaration);
      SgFunctionDeclaration *defDecl =
-       isSgFunctionDeclaration( properties->functionDeclaration->get_definingDeclaration() );
+       (
+        inputFunctionDeclaration->get_definition() != NULL ? 
+        inputFunctionDeclaration : isSgFunctionDeclaration( properties->functionDeclaration->get_definingDeclaration() )
+       );
+
+     if( inputFunctionDeclaration != defDecl )
+       std::cout << " **** If you see this error message. Report to the ROSE team that a function declaration ****\n"
+                 << " **** has the defining declaration erroneously attached to the nondef decl               ****\n";
+      
+     if(defDecl != NULL  && defDecl->get_definition() == NULL)
+     {
+       defDecl = NULL;
+       std::cout << " **** If you see this error message. Report to the ROSE team that a function declaration ****\n"
+                 << " **** has a defining declaration but no definition                                       ****\n";
+
+     }
+
 
      //cout << "!!!" << inputFunctionDeclaration->get_name().str() << " has definition " << defDecl << "\n";
      //     cout << "Input declaration: " << inputFunctionDeclaration << " as opposed to " << functionDeclaration << "\n"; 
@@ -724,6 +740,7 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
      if ( defDecl )
        {
 	 SgFunctionDefinition* functionDefinition = defDecl->get_definition();
+         ROSE_ASSERT ( defDecl );
 	 ROSE_ASSERT ( functionDefinition != NULL );
 	 hasDefinition = true;
 	 Rose_STL_Container<SgNode*> functionCallExpList;
