@@ -1,3 +1,99 @@
+2009-07-31 01:48  liao6
+
+	* [r6721]
+	  /trunk/ROSE/projects/autoTuning/doc/codeTriageTransformation.tex:
+	  Fixed minor line space problems
+
+2009-07-31 01:43  liao6
+
+	* [r6720] /trunk/ROSE/projects/autoTuning/doc/autoTuning.tex,
+	  /trunk/ROSE/projects/autoTuning/doc/codeTriageTransformation.tex,
+	  /trunk/ROSE/projects/autoTuning/doc/introduction.tex,
+	  /trunk/ROSE/projects/autoTuning/doc/preparation.tex: More text
+	  for the autotuning tutorial
+
+2009-07-31 00:55  saebjornsen1
+
+	* [r6719]
+	  /trunk/ROSE/src/midend/programAnalysis/CallGraphAnalysis/CallGraph.C:
+	  Worked around ROSE bugs
+
+2009-07-30 23:07  liao6
+
+	* [r6718] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/docs/Rose/Tutorial/tutorial.tex.in,
+	  /trunk/ROSE/projects/autoTuning/Makefile.am,
+	  /trunk/ROSE/projects/autoTuning/doc,
+	  /trunk/ROSE/projects/autoTuning/doc/Makefile.am,
+	  /trunk/ROSE/projects/autoTuning/doc/activeHarmony.tex,
+	  /trunk/ROSE/projects/autoTuning/doc/activeHarmony2.png,
+	  /trunk/ROSE/projects/autoTuning/doc/activeHarmony_offline.png,
+	  /trunk/ROSE/projects/autoTuning/doc/appendix.tex,
+	  /trunk/ROSE/projects/autoTuning/doc/autoTuning.tex,
+	  /trunk/ROSE/projects/autoTuning/doc/codeTriageTransformation.tex,
+	  /trunk/ROSE/projects/autoTuning/doc/empiricalTuning.tex,
+	  /trunk/ROSE/projects/autoTuning/doc/eval_smg.fold,
+	  /trunk/ROSE/projects/autoTuning/doc/hpctoolkit-smg2000.png,
+	  /trunk/ROSE/projects/autoTuning/doc/introduction.tex,
+	  /trunk/ROSE/projects/autoTuning/doc/minidb.bib,
+	  /trunk/ROSE/projects/autoTuning/doc/my.pt.fold,
+	  /trunk/ROSE/projects/autoTuning/doc/phase12.pdf,
+	  /trunk/ROSE/projects/autoTuning/doc/phase3.pdf,
+	  /trunk/ROSE/projects/autoTuning/doc/preparation.tex,
+	  /trunk/ROSE/projects/autoTuning/doc/smg2000_checkpoint.c,
+	  /trunk/ROSE/projects/autoTuning/doc/smg2000_checkpoint2.c,
+	  /trunk/ROSE/projects/autoTuning/doc/smg2000_dlopen.c,
+	  /trunk/ROSE/projects/autoTuning/doc/smg2000_harmony.c,
+	  /trunk/ROSE/projects/autoTuning/doc/smg2000_outlined.c,
+	  /trunk/ROSE/projects/autoTuning/doc/smg2000_outlined.fold.c,
+	  /trunk/ROSE/projects/autoTuning/doc/smg2000_outlined.orig.c,
+	  /trunk/ROSE/projects/autoTuning/doc/summary.tex: Added the
+	  autotuning tutorial
+
+2009-07-30 20:28  heller9
+
+	* [r6717]
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AsmInstructionBar/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AsmView/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstBrowserWidget/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstGraphWidget/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstProcessing/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/BeautifiedAst/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/FlopCounter/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/InstructionCountAnnotator/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/KiviatView/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/MetricFilter/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/MetricsConfig/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/MetricsKiviat/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/NodeInfoWidget/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/ProjectManager/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/PropertyTreeWidget/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/document/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qnfa/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/RoseCodeEdit/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/RoseFileSelector/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/TaskSystem/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/TreeModel/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/WidgetCreator/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/scripts/MakefileAmGenerator.pl,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/Makefile.am: fixed
+	  qtWidgets distribution
+
+2009-07-30 20:27  liao6
+
+	* [r6716]
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-amd64-scidac.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-scidac.sh: Enabled
+	  QROSE tests for the external repository
+
+2009-07-30 20:18  liao6
+
+	* [r6715] /trunk/ROSE/scripts/makeRelease.sh: Updated the auto
+	  release script to work with firefox 3.x
+
 2009-07-30 17:01  heller9
 
 	* [r6713]
