@@ -192,11 +192,16 @@ checkForIncrementOrDecrement(SgExpression *expr)
     SgBinaryOp *dot = NULL;
     if (isSgDotExp(call->get_function()) || isSgArrowExp(call->get_function()))
       dot = isSgBinaryOp(call->get_function());
-    SgMemberFunctionRefExp *mfref = isSgMemberFunctionRefExp(dot->get_rhs_operand_i());
-    if (mfref && std::string(mfref->get_symbol()->get_name().str()) == "operator++")
-      return true;
-    if (mfref && std::string(mfref->get_symbol()->get_name().str()) == "operator--")
-      return true;
+
+ // DQ (7/26/2009): For C code "dot" can be a NULL pointer and so we have to skip the following code.
+    if (dot != NULL)
+       {
+         SgMemberFunctionRefExp *mfref = isSgMemberFunctionRefExp(dot->get_rhs_operand_i());
+         if (mfref && std::string(mfref->get_symbol()->get_name().str()) == "operator++")
+           return true;
+         if (mfref && std::string(mfref->get_symbol()->get_name().str()) == "operator--")
+           return true;
+       }
   }
 
   return false;

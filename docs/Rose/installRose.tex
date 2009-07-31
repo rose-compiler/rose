@@ -325,8 +325,10 @@ subsection \ref{gettingStarted:DeveloperInstructions}), but in summary the steps
 \label{gettingStarted:BOOST}
 
 The following is a quick guide on how to install BOOST. For more details please 
-refer to \htmladdnormallink{www.boost.org}{http://www.boost.org/}:
+refer to \htmladdnormallink{www.boost.org}{http://www.boost.org/}.
+{\em Note that the install process is different for boost versions starting with 1.39.}
 
+For Boost versions 1.35 through 1.38:
 \begin{enumerate}
      \item Download BOOST. \\
        Download BOOST at \htmladdnormallink{www.boost.org/users/download}{http://www.boost.org/users/download/}.
@@ -338,7 +340,7 @@ refer to \htmladdnormallink{www.boost.org}{http://www.boost.org/}:
 %           Type {\tt mkdir compileTree} to build a location for the object files and
 %           documentation (use any name you like for this directory, e.g. BOOST\_BUILD).
      \item Create a separate install tree. \\
-           Type {\tt mkdir installTree} to create a location for the install filesto reside (e.g. BOOST\_INSTALL).
+           Type {\tt mkdir installTree} to create a location for the install files to reside (e.g. BOOST\_INSTALL).
 % DQ (10/20/2008): Removed as suggested by Andy stone, separate compile tree for boost is
 %                  more complex than required and can exhibit a bug in Boost.
 %     \item Change directory to the new compile tree directory. \\
@@ -355,6 +357,36 @@ refer to \htmladdnormallink{www.boost.org}{http://www.boost.org/}:
            Type {\tt make install} to copy all build files into the install directory. BOOST is now available in your 
            installTree (e.g. BOOST\_INSTALL) to be used by ROSE.
 \end{enumerate}
+
+
+Starting with Boost 1.39, Boost has a slightly different built process which
+will locted directories used by ROSE in to different locations (not copy them to the
+install tree). For Boost versions 1.39 or greater:
+\begin{enumerate}
+     \item Download BOOST. \\
+       Download BOOST at \htmladdnormallink{www.boost.org/users/download}{http://www.boost.org/users/download/}.
+     \item Untar BOOST. \\
+       Type {\tt tar -zxf BOOST-[VersionNumber].tar.gz} to untar the BOOST distribution.
+     \item Create a separate install tree. \\
+           Type {\tt mkdir installTree} to create a location for the install files to reside (e.g. BOOST\_INSTALL).
+     \item Run the {\tt bootstrap.sh} script. \\
+           Type {\tt ./bootstrap.sh --prefix=[installTree]} 
+           to run the BOOST {\tt bootstrap.sh} script.  The path to the bootstrap.sh script 
+           may be either relative or absolute. The prefix option specifies the
+           installation directory (e.g. BOOST\_INSTALL). Note that 
+           {\tt ./bootstrap.sh --help} can be used to provide more information about how
+           to install Boost.
+     \item Run {\tt bjam}. \\
+           Type {\tt ./bjam install --prefix=[installTree] --libdir=[installTree]/lib} to
+           copy all build files into the install directory. BOOST is now available in your 
+           installTree (e.g. BOOST\_INSTALL) to be used by ROSE.
+           Note that that {\tt ./bjam install} (without the {\tt --libdir} option) will
+           install the include files into the prefix directory, but not install the libs
+           into the lib directory.
+\end{enumerate}
+
+Use the BOOST\_INSTALL directory on the configure line for ROSE using: {\tt --with-boost=BOOST\_INSTALL}.
+
 
 % DQ (7/19/2008): Added the subject which stopped at least one user from LSU.
   Note that the installation of Boost will frequently output 
