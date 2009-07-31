@@ -1718,15 +1718,16 @@ SimpleColorMemoryPoolTraversal::visit(SgNode* node)
      defaultFilter(node);
 #endif
 
-#if 1
+#if 0
   // DQ (3/1/2009): Uncommented to allow filtering of types.
      typeFilter(node);
 #endif
 
-#if 1
+#if 0
   // DQ (3/2/2009): Remove some more nodes to make the graphs more clear.
      expressionFilter(node);
 #endif
+
 #if 0
      emptySymbolTableFilter(node);
 #endif
