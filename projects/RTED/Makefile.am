@@ -30,7 +30,6 @@ RTED_CC = $(LIBTOOL) --tag=CC --mode=link gcc $(AM_CXXFLAGS) \
 RTED_LIB=CppRuntimeSystem/libCppRuntimeSystem.la
 runtimeCheck_SOURCES = runtimeCheck.cpp \
                        RtedTransformation.cpp \
-                       $(RTS) \
                        RtedSymbols.cpp RtedTransf_registerType.cpp \
                        RtedTransf_array.cpp RtedTransf_prolog.cpp \
                        RtedTransf_support.cpp RtedTransf_funccall.cpp \
@@ -232,7 +231,7 @@ TRANSFORMING_FILES += $(2) \
 		      -g \
 		      -o $(patsubst %_rose$(strip $(1)), %.bin, $@) \
 		      $(filter rted_source/%$(strip $(1)), $^) \
-		      $(srcdir)/$(RTS) $(INCLUDES) \
+		      $(INCLUDES) \
 		      -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) \
 		      -I$(top_builddir) -I$(srcdir) $(RTED_LIB);
 

@@ -166,6 +166,11 @@ class RtedTransformation : public AstSimpleProcessing {
 
   std::string removeSpecialChar(std::string str);
 
+
+  /// Renames the original main function
+  /// copied from projects/UpcTranslation/upc_translation.C
+  void renameMain(SgFunctionDeclaration * sg_func);
+
  public:
   RtedTransformation() {
     //inputFiles=files;

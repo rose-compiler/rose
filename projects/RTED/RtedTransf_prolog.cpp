@@ -157,32 +157,81 @@ void RtedTransformation::insertRuntimeSystemClass() {
 
 
 
-void RtedTransformation::visit_checkIsMain(SgNode* n) {
-  SgFunctionDefinition* mainFunc = isSgFunctionDefinition(n);
-  ROSE_ASSERT(mainFunc);
-  string funcname = mainFunc->get_declaration()->get_name().str();
-  if (funcname == "main") {
-    // find the last statement
-    SgBasicBlock* block = mainFunc->get_body();
-    ROSE_ASSERT(block);
-    Rose_STL_Container<SgStatement*> stmts = block->get_statements();
-    SgStatement* first = stmts.front();
-    SgStatement* last = stmts.back();
-    if (isSgReturnStmt(last))  {
-      mainEndsWithReturn = true;
-      mainReturnStmt = isSgReturnStmt( last );
-    } else
-      mainEndsWithReturn=false;
-    //cerr << " Last statement in main : " << last->class_name() << "  insertBefore : " << 
-    //	RoseBin_support::resBool(mainEndsWithReturn) << endl;
-    ROSE_ASSERT(last);
-    // insert call to close before last statement (could be return)
-    mainLast = last;
-    mainFirst = first;
-    mainEnd = block->get_endOfConstruct();
-  }
+void RtedTransformation::visit_checkIsMain(SgNode* n)
+{
+    SgFunctionDefinition* mainFunc = isSgFunctionDefinition(n);
+    ROSE_ASSERT(mainFunc);
+    string funcname = mainFunc->get_declaration()->get_name().str();
+    if (funcname == "main")
+    {
+        renameMain(mainFunc->get_declaration());
+
+        // find the last statement
+        SgBasicBlock* block = mainFunc->get_body();
+        ROSE_ASSERT(block);
+        Rose_STL_Container<SgStatement*> stmts = block->get_statements();
+        SgStatement* first = stmts.front();
+        SgStatement* last = stmts.back();
+        if (isSgReturnStmt(last))
+        {
+            mainEndsWithReturn = true;
+            mainReturnStmt = isSgReturnStmt( last );
+        }
+        else
+        mainEndsWithReturn=false;
+        //cerr << " Last statement in main : " << last->class_name() << "  insertBefore : " <<
+        //	RoseBin_support::resBool(mainEndsWithReturn) << endl;
+        ROSE_ASSERT(last);
+        // insert call to close before last statement (could be return)
+        mainLast = last;
+        mainFirst = first;
+        mainEnd = block->get_endOfConstruct();
+    }
 
 }
 
+
+void RtedTransformation::renameMain(SgFunctionDeclaration* sg_func)
+{
+    ROSE_ASSERT(isMain(sg_func));
+
+    // grab symbol before any modifications.
+    SgGlobal* global_scope = isSgGlobal(sg_func->get_scope());
+    ROSE_ASSERT(global_scope);
+    SgFunctionSymbol * symbol = global_scope->lookup_function_symbol(SgName("main"), sg_func->get_type());
+
+    ROSE_ASSERT(symbol == sg_func->get_symbol_from_symbol_table());
+    global_scope->remove_symbol(symbol);
+    delete (symbol); // avoid dangling symbol!!
+
+    // rename it
+    SgName new_name = SgName("RuntimeSystem_original_main");
+    sg_func->set_name(new_name);
+    sg_func->get_declarationModifier().get_storageModifier().setExtern();
+
+    // check if main has argc, argv, envp
+    SgInitializedNamePtrList args = sg_func->get_args();
+    SgFunctionParameterList * parameterList = sg_func->get_parameterList();
+
+
+    SgPointerType *pType1= new SgPointerType(SgTypeChar::createType());
+    SgPointerType *pType2= new SgPointerType(pType1);
+
+    if(args.size() < 1) //add argc
+        appendArg(parameterList, buildInitializedName(SgName("argc"),SgTypeInt::createType()));
+
+
+    if(args.size() < 2) //add argc_v
+        appendArg(parameterList, buildInitializedName(SgName("argv"),pType2));
+
+
+    if(args.size() < 3) //add env_p
+        appendArg(parameterList, buildInitializedName(SgName("envp"),pType2));
+
+
+    //handle function symbol:remove the original one, insert a new one
+    symbol = new SgFunctionSymbol(sg_func);
+    global_scope->insert_symbol(new_name, symbol);
+}
 
 

@@ -130,6 +130,7 @@ void RuntimeSystem_checkMemoryAccess( unsigned long int address, long int size, 
 void RuntimeSystem_roseRegisterTypeCall(int count, ...);
 
 
+extern int RuntimeSystem_original_main(int argc, char**argv, char**envp);
 
 
 // USE GUI for debugging

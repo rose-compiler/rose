@@ -1077,10 +1077,9 @@ void testTypeSystemMerge()
 }
 
 
+#include "../RuntimeSystem.h"
 
-
-
-int main(int argc, char ** argv)
+extern int RuntimeSystem_original_main(int argc, char ** argv, char ** envp)
 {
     try
     {

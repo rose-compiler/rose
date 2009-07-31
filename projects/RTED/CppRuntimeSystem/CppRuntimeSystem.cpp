@@ -5,6 +5,8 @@
 
 #include <fstream>
 
+#include <cstdlib> //needed for getenv("HOME") to read config file
+
 #ifdef ROSE_WITH_ROSEQT
 #include "DebuggerQt/RtedDebug.h"
 #endif
@@ -26,6 +28,15 @@ RuntimeSystem* RuntimeSystem::instance()
 RuntimeSystem::RuntimeSystem()
     : defaultOutStr(&cout),testingMode(false),qtDebugger(false)
 {
+
+    // by default abort on all violations except INVALID_PTR_ASSIGN
+    for(int i=0; i< RuntimeViolation::UNKNOWN_VIOLATION; i++)
+    {
+        RuntimeViolation::Type t = static_cast<RuntimeViolation::Type>(i);
+        vioAbortInfoMap[t]=true;
+    }
+    vioAbortInfoMap[RuntimeViolation::INVALID_PTR_ASSIGN] = false;
+
     readConfigFile();
 }
 
@@ -36,21 +47,35 @@ void RuntimeSystem::readConfigFile()
     file.open("RTED.cfg",ifstream::in);
 
     if(!file)
-        file.open("~/RTED.cfg",ifstream::in);
+    {
+        string path( getenv("HOME") );
+        path += "/RTED.cfg";
+        file.open(path.c_str(),ifstream::in);
+    }
     if(!file)
     {
         cerr << "No RTED.cfg found" << endl;
         return;
     }
 
-    while(file.good())
+    string line;
+    while( getline(file,line))
     {
+        stringstream lineStream(line);
         string key;
         bool value;
-        file >> key;
-        file >> value;
-        if(key == "qtDebugger")       qtDebugger=value;
-        else                          cerr << "Unknown key " << key << endl;
+        lineStream >> key;
+        lineStream >> value;
+        if(key == "qtDebugger")
+            qtDebugger=value;
+        else
+        {
+            RuntimeViolation::Type t = RuntimeViolation::getViolationByString(key);
+            if (t == RuntimeViolation::UNKNOWN_VIOLATION)\
+                cerr << "Unknown key " << key << endl;
+            else
+                vioAbortInfoMap[t]=value;
+        }
     }
 
     file.close();
@@ -82,18 +107,10 @@ void RuntimeSystem::violationHandler(RuntimeViolation & vio)  throw (RuntimeViol
 {
     vio.setPosition(curPos);
 
-    // TODO 3: Replace this hard-coded policy with a configuration that maps
-    // types to actions (e.g. none, warn, exit)
-    if( !testingMode )
-        switch( vio.getType() ) {
-            case RuntimeViolation::INVALID_PTR_ASSIGN:
-                return;
-            default:
-                // handle normally
-                break;
-        }
-
     (*defaultOutStr) << vio  << endl;
+
+
+
 
 #ifdef ROSE_WITH_ROSEQT
     if(qtDebugger)
@@ -101,10 +118,20 @@ void RuntimeSystem::violationHandler(RuntimeViolation & vio)  throw (RuntimeViol
         //Display the Debugger after violation occured
         stringstream s;
         s << vio;
-        RtedDebug::instance()->addMessage(s.str().c_str(),RtedDebug::ERROR);
+
+        if(vioAbortInfoMap[vio.getType()])
+            RtedDebug::instance()->addMessage(s.str().c_str(),RtedDebug::ERROR);
+        else
+            RtedDebug::instance()->addMessage(s.str().c_str(),RtedDebug::WARNING);
+
         RtedDebug::instance()->startGui(qtDebugger);
     }
 #endif
+
+    // check if we ought to abort on this type of violation
+    // testing mode aborts on all violations
+    if(! testingMode && !vioAbortInfoMap[vio.getType()])
+        return;
 
 
     if(testingMode)

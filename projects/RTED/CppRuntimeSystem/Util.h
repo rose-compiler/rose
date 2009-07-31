@@ -80,6 +80,7 @@ class RuntimeViolation
 				INVALID_MEM_OVERLAP,     // some memory chunk overlaps with some
 									     // other memory chunk illegaly, e.g. in arguments to memcpy
 				INVALID_TYPE_ACCESS,     // invalid access to "typed" memory
+				UNKNOWN_VIOLATION
         };
 
 
@@ -102,6 +103,8 @@ class RuntimeViolation
 
         Type getType() const { return type; }
 
+
+        static Type getViolationByString(const std::string & s);
 
     protected:
 

@@ -833,3 +833,11 @@ RuntimeSystem_roseReallocateMemory(
 
 
 // vim:sw=2 ts=2 et sta:
+
+extern int RuntimeSystem_original_main(int argc, char**argv, char**envp);
+
+int main(int argc, char **argv, char ** envp)
+{
+
+    return RuntimeSystem_original_main(argc, argv, envp);
+}

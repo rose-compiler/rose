@@ -271,8 +271,15 @@ class RuntimeSystem
         /// Store if qt-debugger is enabled (called at every checkpoint)
         bool qtDebugger;
 
-        //  -----------  Members which are used for output -------------
 
+        /// Each violation type has a bool associated, which specifies if
+        /// the program is aborted when this violation occurs
+        /// TODO there are certain violations where the RuntimeSystem is in
+        ///      inconsistent state after they have occured
+        ///      determine which Violations have this problem and prevent switching them off
+        std::map<RuntimeViolation::Type, bool> vioAbortInfoMap;
+
+        //  -----------  Members which are used for output -------------
 
         SourcePosition curPos;
 

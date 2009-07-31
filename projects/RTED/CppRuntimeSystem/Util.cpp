@@ -122,4 +122,27 @@ std::string RuntimeViolation::getShortDescFromType(Type type)
 }
 
 
+RuntimeViolation::Type RuntimeViolation::getViolationByString(const string & s)
+{
+    if       (s == "DOUBLE_ALLOCATION")        return DOUBLE_ALLOCATION;
+    else if  (s == "INVALID_FREE")             return INVALID_FREE;
+    else if  (s == "MEMORY_LEAK")              return MEMORY_LEAK;
+    else if  (s == "EMPTY_ALLOCATION")         return EMPTY_ALLOCATION;
+    else if  (s == "INVALID_READ")             return INVALID_READ;
+    else if  (s == "INVALID_WRITE")            return INVALID_WRITE;
+    else if  (s == "INVALID_FILE_OPEN")        return INVALID_FILE_OPEN;
+    else if  (s == "DOUBLE_FILE_OPEN")         return DOUBLE_FILE_OPEN;
+    else if  (s == "INVALID_FILE_CLOSE")       return INVALID_FILE_CLOSE;
+    else if  (s == "INVALID_FILE_ACCESS")      return INVALID_FILE_ACCESS;
+    else if  (s == "UNCLOSED_FILES")           return UNCLOSED_FILES;
+    else if  (s == "INVALID_PTR_ASSIGN")       return INVALID_PTR_ASSIGN;
+    else if  (s == "MEM_WITHOUT_POINTER")      return MEM_WITHOUT_POINTER;
+    else if  (s == "POINTER_CHANGED_MEMAREA")  return POINTER_CHANGED_MEMAREA;
+    else if  (s == "INVALID_MEM_OVERLAP")      return INVALID_MEM_OVERLAP;
+    else if  (s == "INVALID_TYPE_ACCESS")      return INVALID_TYPE_ACCESS;
+    else                                       return UNKNOWN_VIOLATION;
+}
+
+
+
 
