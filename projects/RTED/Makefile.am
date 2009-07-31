@@ -315,7 +315,7 @@ rted_source/%_debug.bin: rted_qt rted_source/%_rose.c rted_source/%_s_rose.c $(s
 
 rted_source/%_debug.bin: rted_qt rted_source/%_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	$(call COMPILING_RUNTIME_SYSTEM, .c, $(RTED_CC), $(LINK_QT_DEBUGGER))
-#
+
 rted_source/%.bin: rted_source/%_rose.c rted_source/%_s_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	$(call COMPILING_RUNTIME_SYSTEM, .c, $(RTED_CC))
 
@@ -347,7 +347,13 @@ GENERATE_EXPECTED_OUTPUT = @OUTPUT_SRC='$(strip $(patsubst rted_source/%.expecte
 rted_source/C/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SCRIPT)
 	$(call GENERATE_EXPECTED_OUTPUT, .c )
 
+rted_source/tests/C/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SCRIPT)
+	$(call GENERATE_EXPECTED_OUTPUT, .c )
+
 rted_source/C++/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SCRIPT)
+	$(call GENERATE_EXPECTED_OUTPUT, .cpp )
+
+rted_source/tests/C++/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SCRIPT)
 	$(call GENERATE_EXPECTED_OUTPUT, .cpp )
 
 #@OUTPUT_SRC='$(strip $(patsubst rted_source/%.expected-output, $(rted_path)/%.ok_msg, $@))';\
@@ -428,31 +434,31 @@ RTED_ORIGSOURCES_LOCAL_C = ${filter $(srcdir)%, $(RTED_ORIGSOURCES_C)}
 RTED_ORIGSOURCES_GLOBAL_CPP = ${filter $(rted_path)%, $(RTED_ORIGSOURCES_CPP)}
 RTED_ORIGSOURCES_LOCAL_CPP = ${filter $(srcdir)%, $(RTED_ORIGSOURCES_CPP)}
 
-GENERATE_RTED_RUN_TARGET = ${patsubst ${strip $(4)}/%${strip $(1)}, $(2)/%, ${strip $(3)}}
-RUN_TARGETS  = ${call GENERATE_RTED_RUN_TARGET, .c, run, $(RTED_ORIGSOURCES_GLOBAL_C), $(rted_path)}
-RUN_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .c, run, $(RTED_ORIGSOURCES_LOCAL_C), $(srcdir)}
-RUN_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run, $(RTED_ORIGSOURCES_GLOBAL_CPP), $(rted_path)}
-RUN_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run, $(RTED_ORIGSOURCES_LOCAL_CPP), $(srcdir)}
-RUN_DEBUG_TARGETS  = ${call GENERATE_RTED_RUN_TARGET, .c, run_debug, $(RTED_ORIGSOURCES_GLOBAL_C), $(rted_path)}
-RUN_DEBUG_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .c, run_debug, $(RTED_ORIGSOURCES_LOCAL_C), $(srcdir)}
-RUN_DEBUG_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run_debug, $(RTED_ORIGSOURCES_GLOBAL_CPP), $(rted_path)}
-RUN_DEBUG_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run_debug, $(RTED_ORIGSOURCES_LOCAL_CPP), $(srcdir)}
-RUN_CHECKONLY_TARGETS  = ${call GENERATE_RTED_RUN_TARGET, .c, run_checkonly, $(RTED_ORIGSOURCES_GLOBAL_C), $(rted_path)}
-RUN_CHECKONLY_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .c, run_checkonly, $(RTED_ORIGSOURCES_LOCAL_C), $(srcdir)}
-RUN_CHECKONLY_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run_checkonly, $(RTED_ORIGSOURCES_GLOBAL_CPP), $(rted_path)}
-RUN_CHECKONLY_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run_checkonly, $(RTED_ORIGSOURCES_LOCAL_CPP), $(srcdir)}
-RUN_LOG_TARGETS  = ${call GENERATE_RTED_RUN_TARGET, .c, run_log, $(RTED_ORIGSOURCES_GLOBAL_C), $(rted_path)}
-RUN_LOG_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .c, run_log, $(RTED_ORIGSOURCES_LOCAL_C), $(srcdir)}
-RUN_LOG_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run_log, $(RTED_ORIGSOURCES_GLOBAL_CPP), $(rted_path)}
-RUN_LOG_TARGETS += ${call GENERATE_RTED_RUN_TARGET, .cpp, run_log, $(RTED_ORIGSOURCES_LOCAL_CPP), $(srcdir)}
+GENERATE_RTED_RUN_TARGET = ${patsubst ${strip $(4)}/%${strip $(1)}, ${strip $(2)}/%, $(3)}
+RUN_TARGETS_GLOBAL_C = ${call GENERATE_RTED_RUN_TARGET, .c, run, $(RTED_ORIGSOURCES_GLOBAL_C), $(rted_path)}
+RUN_TARGETS_LOCAL_C = ${call GENERATE_RTED_RUN_TARGET, .c, run, $(RTED_ORIGSOURCES_LOCAL_C), $(srcdir)}
+RUN_TARGETS_GLOBAL_CPP = ${call GENERATE_RTED_RUN_TARGET, .cpp, run, $(RTED_ORIGSOURCES_GLOBAL_CPP), $(rted_path)}
+RUN_TARGETS_LOCAL_CPP = ${call GENERATE_RTED_RUN_TARGET, .cpp, run, $(RTED_ORIGSOURCES_LOCAL_CPP), $(srcdir)}
+RUN_DEBUG_TARGETS_GLOBAL_C  = ${call GENERATE_RTED_RUN_TARGET, .c, run_debug, $(RTED_ORIGSOURCES_GLOBAL_C), $(rted_path)}
+RUN_DEBUG_TARGETS_LOCAL_C = ${call GENERATE_RTED_RUN_TARGET, .c, run_debug, $(RTED_ORIGSOURCES_LOCAL_C), $(srcdir)}
+RUN_DEBUG_TARGETS_GLOBAL_CPP = ${call GENERATE_RTED_RUN_TARGET, .cpp, run_debug, $(RTED_ORIGSOURCES_GLOBAL_CPP), $(rted_path)}
+RUN_DEBUG_TARGETS_LOCAL_CPP = ${call GENERATE_RTED_RUN_TARGET, .cpp, run_debug, $(RTED_ORIGSOURCES_LOCAL_CPP), $(srcdir)}
+RUN_CHECKONLY_TARGETS_GLOBAL_C  = ${call GENERATE_RTED_RUN_TARGET, .c, run_checkonly, $(RTED_ORIGSOURCES_GLOBAL_C), $(rted_path)}
+RUN_CHECKONLY_TARGETS_LOCAL_C = ${call GENERATE_RTED_RUN_TARGET, .c, run_checkonly, $(RTED_ORIGSOURCES_LOCAL_C), $(srcdir)}
+RUN_CHECKONLY_TARGETS_GLOBAL_CPP = ${call GENERATE_RTED_RUN_TARGET, .cpp, run_checkonly, $(RTED_ORIGSOURCES_GLOBAL_CPP), $(rted_path)}
+RUN_CHECKONLY_TARGETS_LOCAL_CPP = ${call GENERATE_RTED_RUN_TARGET, .cpp, run_checkonly, $(RTED_ORIGSOURCES_LOCAL_CPP), $(srcdir)}
+RUN_LOG_TARGETS_GLOBAL_C = ${call GENERATE_RTED_RUN_TARGET, .c, run_log, $(RTED_ORIGSOURCES_GLOBAL_C), $(rted_path)}
+RUN_LOG_TARGETS_LOCAL_C = ${call GENERATE_RTED_RUN_TARGET, .c, run_log, $(RTED_ORIGSOURCES_LOCAL_C), $(srcdir)}
+RUN_LOG_TARGETS_GLOBAL_CPP = ${call GENERATE_RTED_RUN_TARGET, .cpp, run_log, $(RTED_ORIGSOURCES_GLOBAL_CPP), $(rted_path)}
+RUN_LOG_TARGETS_LOCAL_CPP = ${call GENERATE_RTED_RUN_TARGET, .cpp, run_log, $(RTED_ORIGSOURCES_LOCAL_CPP), $(srcdir)}
 
-run: $(RUN_TARGETS)
+run: $(RUN_TARGETS_GLOBAL_C) $(RUN_TARGETS_LOCAL_C) $(RUN_TARGETS_GLOBAL_CPP) $(RUN_TARGETS_LOCAL_CPP)
 
-run_debug: $(RUN_DEBUG_TARGETS)
+run_debug: $(RUN_DEBUG_TARGETS_GLOBAL_C) $(RUN_DEBUG_TARGETS_LOCAL_C) $(RUN_DEBUG_TARGETS_GLOBAL_CPP) $(RUN_DEBUG_TARGETS_LOCAL_CPP)
 
-run_checkonly: $(RUN_CHECKONLY_TARGETS)
+run_checkonly: $(RUN_CHECKONLY_TARGETS_GLOBAL_C) $(RUN_CHECKONLY_TARGETS_LOCAL_C) $(RUN_CHECKONLY_TARGETS_GLOBAL_CPP) $(RUN_CHECKONLY_TARGETS_LOCAL_CPP)
 
-run_log: $(RUN_DEBUG_TARGETS)
+run_log: $(RUN_DEBUG_TARGETS_GLOBAL_C) $(RUN_DEBUG_TARGETS_LOCAL_C) $(RUN_DEBUG_TARGETS_GLOBAL_CPP) $(RUN_DEBUG_TARGETS_LOCAL_CPP)
 
 #------------------------------------------------------------------------------
 
@@ -461,31 +467,65 @@ run_log: $(RUN_DEBUG_TARGETS)
 # rules to run all tests in a directory listed in RTED_ORIGSOURCES
 #------------------------------------------------------------------------------
 
-define RUN_TARGET
-RUN = $(patsubst %, run%, $(1))
-RUN_DEBUG = $(patsubst %, run_debug%, $(1))
-RUN_CHECKONLY = $(patsubst %, run_checkonly%, $(1))
-RUN_LOG = $(patsubst %, run_log%, $(1))
+#define RUN_TARGET
+#$(1): $(filter $(1)%, $(RUN_TARGETS_GLOBAL_C))
+#@echo $(1) complete
+#
+#endef
 
-$(RUN): $(filter $(RUN)%, $(RUN_TARGETS))
-	@echo $(RUN) complete
+run/C/%: $(filter %, $(RUN_TARGETS_GLOBAL_C))
+	@echo $@ complete
 
-$(RUN_DEBUG): $(filter $(RUN_DEBUG)%, $(RUN_DEBUG_TARGETS))
-	@echo $(RUN_DEBUG) complete
+run/tests/C%: $(filter %, $(RUN_TARGETS_LOCAL_C))
+	@echo $@ complete
 
-$(RUN_CHECKONLY): $(filter $(RUN_CHECKONLY)%, $(RUN_CHECKONLY_TARGETS))
-	@echo $(RUN_CHECKONLY) complete
+run/C++/%: $(filter %, $(RUN_TARGETS_GLOBAL_CPP))
+	@echo $@ complete
 
-$(RUN_LOG): $(filter $(RUN_LOG)%, $(RUN_LOG_TARGETS))
-	@echo $(RUN_LOG) complete
-endef
+run/tests/C++/%: $(filter %, $(RUN_TARGETS_LOCAL_CPP))
+	@echo $@ complete
+
+run_debug/C/%: $(filter %, $(RUN_DEBUG_TARGETS_GLOBAL_C))
+	@echo $@ complete
+
+run_debug/tests/C%: $(filter %, $(RUN_DEBUG_TARGETS_LOCAL_C))
+	@echo $@ complete
+
+run_debug/C++/%: $(filter %, $(RUN_DEBUG_TARGETS_GLOBAL_CPP))
+	@echo $@ complete
+
+run_debug/tests/C++/%: $(filter %, $(RUN_DEBUG_TARGETS_LOCAL_CPP))
+	@echo $@ complete
+
+run_checkonly/C/%: $(filter %, $(RUN_CHECKONLY_TARGETS_GLOBAL_C))
+	@echo $@ complete
+
+run_checkonly/tests/C%: $(filter %, $(RUN_CHECKONLY_TARGETS_LOCAL_C))
+	@echo $@ complete
+
+run_checkonly/C++/%: $(filter %, $(RUN_CHECKONLY_TARGETS_GLOBAL_CPP))
+	@echo $@ complete
+
+run_checkonly/tests/C++/%: $(filter %, $(RUN_CHECKONLY_TARGETS_LOCAL_CPP))
+	@echo $@ complete
+
+run_log/C/%: $(filter %, $(RUN_LOG_TARGETS_GLOBAL_C))
+	@echo $@ complete
+
+run_log/tests/C%: $(filter %, $(RUN_LOG_TARGETS_LOCAL_C))
+	@echo $@ complete
+
+run_log/C++/%: $(filter %, $(RUN_LOG_TARGETS_GLOBAL_CPP))
+	@echo $@ complete
+
+run_log/tests/C++/%: $(filter %, $(RUN_LOG_TARGETS_LOCAL_CPP))
+	@echo $@ complete
 
 print_t:
-	$(foreach rted_dir, $(filter $(rted_path)%, $(RTED_TEST_DIRS)), echo $(patsubst $(rted_path)/%, %, $(rted_dir);))
+	@echo $(RUN_TARGETS_LOCAL_C)
 
-
-${foreach rted_dir, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(rted_path)%, %, $(rted_dir)}}}}
-${foreach rted_dir, ${filter $(srcdir)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(srcdir)%, %, $(rted_dir)}}}}
+#${foreach rted_dir, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(rted_path)%, run%, $(rted_dir)}}}}
+#${foreach rted_dir, ${filter $(srcdir)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(srcdir)%, %, $(rted_dir)}}}}
 
 #------------------------------------------------------------------------------
 
