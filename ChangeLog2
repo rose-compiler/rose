@@ -1,3 +1,79 @@
+2009-08-01 18:41  dquinlan
+
+	* [r6734]
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/Makefile-fail.inc,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/Makefile-pass.inc,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/Makefile.am:
+	  Modified makefile to include only tests that are a part of the
+	  distribution. Several tests fail, Andreas will fix these.
+
+2009-07-31 22:14  bauer25
+
+	* [r6733]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/Util.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/Util.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_prolog.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: RTED: instrumentation
+	  now renames main function
+
+2009-07-31 22:12  saebjornsen1
+
+	* [r6732]
+	  /trunk/ROSE/src/midend/programAnalysis/CallGraphAnalysis/CallGraph.C:
+	  Improved callgraph
+
+2009-07-31 21:30  heller9
+
+	* [r6731] /trunk/ROSE/projects/RTED/Makefile.am: RETD: Makefile
+	  performance improvement
+
+2009-07-31 19:13  dquinlan
+
+	* [r6730]
+	  /trunk/ROSE/config/rose_edg_required_macros_and_functions.h.in,
+	  /trunk/ROSE/configure.in,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_16.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_17.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_18.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_19.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/constructName_tests,
+	  /trunk/ROSE/developersScratchSpace/Dan/constructName_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/constructName_tests/README,
+	  /trunk/ROSE/developersScratchSpace/Dan/constructName_tests/input_nameTests.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/constructName_tests/nameTests.C,
+	  /trunk/ROSE/docs/Rose/installRose.tex,
+	  /trunk/ROSE/projects/compass/extensions/checkers/preferAlgorithms/preferAlgorithms.C,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/host_envir.c,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/Makefile.am,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/sage_il_to_str.C,
+	  /trunk/ROSE/src/frontend/SageIII/astVisualization/wholeAST.C,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/ALT_Makefile.am:
+	  Added some tests and fixed more bugs:
+	  
+	  Detailed changes in this commit:
+	  1) Fixed C++ bug for casts of member function pointers to base
+	  classes.
+	  2) Added tests for close matching of user defined language
+	  construct names (work in progress).
+	  3) Fixed a number of minor bugs.
+	  4) Added installation documentaiton for boost 1.39 (different
+	  from previous versions of Boost)
+
+2009-07-31 19:05  liao6
+
+	* [r6729]
+	  /trunk/ROSE/projects/autoTuning/doc/codeTriageTransformation.tex,
+	  /trunk/ROSE/projects/autoTuning/doc/smg2000_outlined.fold.c: more
+	  edits to the autotuning tutorial
+
 2009-07-31 17:46  heller9
 
 	* [r6727] /trunk/ROSE/projects/RTED/Makefile.am: RETD: Makefile
