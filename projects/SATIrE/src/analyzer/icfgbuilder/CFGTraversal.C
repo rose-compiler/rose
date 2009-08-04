@@ -1952,12 +1952,12 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 	if (returns->get_expression() == NULL) {
 	  new_block->statements.push_front(returns);
 	  after = new_block;
-	  new_block = NULL;
-	  break;
 	}
-    new_block->call_target = Ir::createFunctionRefExp(proc->funcsym);
-	SgExpression *new_expr 
-	  = isSgExpression(Ir::deepCopy(returns->get_expression()));
+    else
+    {
+      new_block->call_target = Ir::createFunctionRefExp(proc->funcsym);
+      SgExpression *new_expr
+          = isSgExpression(Ir::deepCopy(returns->get_expression()));
 #if 0
 	ExprLabeler el(expnum);
 	el.traverse(new_expr, preorder);
@@ -1969,12 +1969,12 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 	  cfg->registerStatementLabel(z, current_statement);
 	}
 #else
-    ExprTransformer et(node_id, proc->procnum, expnum, cfg, new_block,
-            current_statement);
-    new_expr = et.transformExpression(new_expr, returns->get_expression());
+      ExprTransformer et(node_id, proc->procnum, expnum, cfg, new_block,
+              current_statement);
+      new_expr = et.transformExpression(new_expr, returns->get_expression());
 #endif
-	node_id = et.get_node_id();
-	expnum = et.get_expnum();
+      node_id = et.get_node_id();
+      expnum = et.get_expnum();
 
 #if 0
 	if (et.get_root_var() != NULL) {
@@ -1982,36 +1982,38 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 	}
 #endif
 
-	SgVarRefExp* varref1
+      SgVarRefExp* varref1
    // GB (2008-06-23): Trying unique global return variable instead of the
    // procedure-specific ones.
    // = Ir::createVarRefExp(proc->returnvar);
-      = Ir::createVarRefExp(cfg->global_return_variable_symbol);
+        = Ir::createVarRefExp(cfg->global_return_variable_symbol);
  // GB (2008-11-12): In addition to adding a call target to the block
  // containing this return variable expression, we also annotate it directly
  // so that we can arrive at the corresponding location directly from the
  // var ref exp without having to go through the enclosing block.
-    varref1->addNewAttribute("SATIrE: call target",
-                             new CallAttribute(new_block->call_target));
+      varref1->addNewAttribute("SATIrE: call target",
+                               new CallAttribute(new_block->call_target));
 
-	SgExprStatement* exprstat
-	  = Ir::createExprStatement(Ir::createAssignOp(varref1, new_expr));
-	new_block->statements.push_front(exprstat);
-    new_block->isReturnStmt = true;
-	
-	/* incoming information is at the incoming edge of
-	 * the code produced by et */
-	stmt_start = new StatementAttribute(et.get_after(), POS_PRE);
-	/* outgoing information is at the outgoing edge of
-	 * the return block, i.e. new_block */
-	stmt_end = new StatementAttribute(new_block, POS_POST);
-	
-	if (after != et.get_after()) {
-	  after = et.get_after();
-	  new_block = NULL;
-	}
+      SgExprStatement* exprstat
+        = Ir::createExprStatement(Ir::createAssignOp(varref1, new_expr));
+      new_block->statements.push_front(exprstat);
+      new_block->isReturnStmt = true;
+
+      if (after != et.get_after()) {
+        after = et.get_after();
+        new_block = NULL;
       }
-	break;
+    }
+
+    /* incoming information is at the incoming edge of
+     * the code produced by et */
+    stmt_start = new StatementAttribute(after, POS_PRE);
+    /* outgoing information is at the outgoing edge of
+     * the return block, i.e. new_block */
+    stmt_end = new StatementAttribute(new_block, POS_POST);
+    new_block = NULL;
+    }
+    break;
 
       case V_SgVariableDeclaration: {
 	stmt_end = new StatementAttribute(after, POS_PRE);
