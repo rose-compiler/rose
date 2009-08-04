@@ -36,6 +36,7 @@ assign \-\>
 /* kudos to kregexpeditor: */
 token (::)?[_a-zA-Z\$][A-Za-z_0-9\$]*(::[a-zA-Z][A-Za-z_0-9]*)?
 undef \<undefined\ dfi\>
+site \<allocation\ site\ [0-9]+\>
 labels labels
 from_to \.\.
 edge Edge
@@ -63,6 +64,7 @@ ws [ \t\r\n]
 {token} { //cerr<<"TOKEN "<<yytext<<endl; 
           dfilval.strValue = new string(dfitext); 
 	  return(TOKEN); }
+{site}  { dfilval.strValue = new string(dfitext); return TOKEN; }
 \,\}    { //cerr<<"my }"<< endl;
           return '}'; /* don't want to deal with this ugliness in the parser*/}
 {ws}    ;
