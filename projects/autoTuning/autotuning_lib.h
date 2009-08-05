@@ -6,6 +6,8 @@
 extern "C" {
 #endif
 
+//TODO
+//at_begin_timing() and at_end_timing()
 typedef void (*funcPointerT)(void **argv);
 
 // dlopen support  

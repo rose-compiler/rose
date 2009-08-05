@@ -32,7 +32,7 @@ OUT__1__6755__(__out_argv1__1527__);
 // The outlined function generated from the target loop
 // Saved into a separated file named OUT__1__6755__.c
 
-void OUT__1__6119__(void **__out_argv)
+void OUT__1__6755__(void **__out_argv)
 {
   int Ai =  *((int *)(__out_argv[20]));
   int xi =  *((int *)(__out_argv[19]));

@@ -1,5 +1,5 @@
 \section{Empirical Tuning}
-The actual empirical tuning is conducted via the cooperation of several
+The actual empirical tuning (shown in Fig.~\ref{fig:phase3}) is conducted via the cooperation of several
 components: a search engine, a parameterized transformation tool, and 
 the previously introduced checkpointing/restarting library.
 The basic idea is that:
@@ -9,12 +9,21 @@ The basic idea is that:
 2) the search engine evaluates points from the search space by driving the parameterized
    transformation tool to generate kernel variants and restarting the checkpointed binary
    to run the variants one by one.
+\begin{figure}[htbp]
+       \centering
+               \includegraphics[width=1.2\textwidth]{phase3.pdf}
+       \caption{Phase 3 of the autotuning system}
+       \label{fig:phase3}
+\end{figure}
 
 %--------------------------------------------------
-\subsection{The Parameterized Transformation Tool}
-We have selected POET as the parameterized transformation tool for our empirical
-optimizing system. POET (Parameterized Optimizations for Empirical
-Tuning)~\cite{YiPOET2007} developed by Dr.~Qing~Yi under contract with University of
+\subsection{Parameterized Transformation Tools}
+Several choices exist to generate kernel variants, they include
+POET~\cite{YiPOET2007},
+CHiLL~\cite{ChenCHiLL2008}, and the ROSE loop translators. We take POET as an example here. 
+
+POET (Parameterized Optimizations for Empirical
+Tuning) developed by Dr.~Qing~Yi under contract with University of
 Texas at San Antonio (UTSA), is an efficient language and tool to express hundreds or
 thousands of complex code transformations and their configurations using a small set
 of parameters.  It is especially relevant to the evaluation of large-scale search spaces
@@ -26,55 +35,83 @@ Also, the target kernel has to be instrumented to aid POET in the process.
 Detailed POET user instructions can be found at its official website~\cite{poetWeb}.
 For example, the SMG2000 kernel has the following format to support
 POET:
+\begin{figure}[!ht]
+\centering
 \lstset{language=C, basicstyle=\scriptsize}
 \begin{lstlisting}
 void
 OUT__1__6755__ (void **__out_argv)
 {
-  int *Ai = (int *) (__out_argv[20]);
-  int *xi = (int *) (__out_argv[19]);
-  int *ri = (int *) (__out_argv[18]);
-  double **Ap = (double **) (__out_argv[17]);
-  double **xp = (double **) (__out_argv[16]);
-  double **rp = (double **) (__out_argv[15]);
-  int loopi = *(int *) (__out_argv[14]);
-  int loopj = *(int *) (__out_argv[13]);
-  int loopk = *(int *) (__out_argv[12]);
-  int *hypre__sx1 = (int *) (__out_argv[11]);
-  int *hypre__sy1 = (int *) (__out_argv[10]);
-  int *hypre__sz1 = (int *) (__out_argv[9]);
-  int *hypre__sx2 = (int *) (__out_argv[8]);
-  int *hypre__sy2 = (int *) (__out_argv[7]);
-  int *hypre__sz2 = (int *) (__out_argv[6]);
-  int *hypre__sx3 = (int *) (__out_argv[5]);
-  int *hypre__sy3 = (int *) (__out_argv[4]);
-  int *hypre__sz3 = (int *) (__out_argv[3]);
-  int *hypre__nx = (int *) (__out_argv[2]);
-  int *hypre__ny = (int *) (__out_argv[1]);
-  int *hypre__nz = (int *) (__out_argv[0]);
-  for (loopk = 0; loopk < *hypre__nz; loopk+=1)
+  int Ai =  *((int *)(__out_argv[20]));
+  int xi =  *((int *)(__out_argv[19]));
+  int ri =  *((int *)(__out_argv[18]));
+  double *Ap =  *((double **)(__out_argv[17]));
+  double *xp =  *((double **)(__out_argv[16]));
+  double *rp =  *((double **)(__out_argv[15]));
+  int loopi =  *((int *)(__out_argv[14]));
+  int loopj =  *((int *)(__out_argv[13]));
+  int loopk =  *((int *)(__out_argv[12]));
+  int hypre__sx1 =  *((int *)(__out_argv[11]));
+  int hypre__sy1 =  *((int *)(__out_argv[10]));
+  int hypre__sz1 =  *((int *)(__out_argv[9]));
+  int hypre__sx2 =  *((int *)(__out_argv[8]));
+  int hypre__sy2 =  *((int *)(__out_argv[7]));
+  int hypre__sz2 =  *((int *)(__out_argv[6]));
+  int hypre__sx3 =  *((int *)(__out_argv[5]));
+  int hypre__sy3 =  *((int *)(__out_argv[4]));
+  int hypre__sz3 =  *((int *)(__out_argv[3]));
+  int hypre__nx =  *((int *)(__out_argv[2]));
+  int hypre__ny =  *((int *)(__out_argv[1]));
+  int hypre__nz =  *((int *)(__out_argv[0]));
+  for (loopk = 0; loopk < hypre__nz; loopk+=1) 
+  {
+    for (loopj = 0; loopj < hypre__ny; loopj+=1) 
     {
-      for (loopj = 0; loopj < *hypre__ny; loopj+=1)
+      for (loopi = 0; loopi < hypre__nx; loopi+=1)  //@BEGIN(nestI)
+      {
         {
-          for (loopi = 0; loopi < *hypre__nx; loopi+=1) //@BEGIN(nestI)
-            {
-              {
-                (*rp)[*ri] -= (((*Ap)[*Ai]) * ((*xp)[*xi]));
-              }
-              *Ai += *hypre__sx1;
-              *xi += *hypre__sx2;
-              *ri += *hypre__sx3;
-            }                                               //@END(nestI:Nest)
-          *Ai += (*hypre__sy1 - (*hypre__nx * *hypre__sx1));
-          *xi += (*hypre__sy2 - (*hypre__nx * *hypre__sx2));
-          *ri += (*hypre__sy3 - (*hypre__nx * *hypre__sx3));
+          rp[ri] -= ((Ap[Ai]) * (xp[xi]));
         }
-      *Ai += (*hypre__sz1 - (*hypre__ny * *hypre__sy1));
-      *xi += (*hypre__sz2 - (*hypre__ny * *hypre__sy2));
-      *ri += (*hypre__sz3 - (*hypre__ny * *hypre__sy3));
-    }
+        Ai += hypre__sx1;
+        xi += hypre__sx2;
+        ri += hypre__sx3;
+      }
+      Ai += (hypre__sy1 - (hypre__nx * hypre__sx1));
+      xi += (hypre__sy2 - (hypre__nx * hypre__sx2));
+      ri += (hypre__sy3 - (hypre__nx * hypre__sx3));
+    }                                             //@END(nestI:Nest)
+    Ai += (hypre__sz1 - (hypre__ny * hypre__sy1));
+    xi += (hypre__sz2 - (hypre__ny * hypre__sy2));
+    ri += (hypre__sz3 - (hypre__ny * hypre__sy3));
+  }
+ // some code omitted here...
 }
 \end{lstlisting}
+  \caption{the SMG 2000 kernel}
+    \label{Fig:smg2000kernel}
+\end{figure}
+%  for (loopk = 0; loopk < *hypre__nz; loopk+=1)
+%    {
+%      for (loopj = 0; loopj < *hypre__ny; loopj+=1)
+%        {
+%          for (loopi = 0; loopi < *hypre__nx; loopi+=1) //@BEGIN(nestI)
+%            {
+%              {
+%                (*rp)[*ri] -= (((*Ap)[*Ai]) * ((*xp)[*xi]));
+%              }
+%              *Ai += *hypre__sx1;
+%              *xi += *hypre__sx2;
+%              *ri += *hypre__sx3;
+%            }                                               //@END(nestI:Nest)
+%          *Ai += (*hypre__sy1 - (*hypre__nx * *hypre__sx1));
+%          *xi += (*hypre__sy2 - (*hypre__nx * *hypre__sx2));
+%          *ri += (*hypre__sy3 - (*hypre__nx * *hypre__sx3));
+%        }
+%      *Ai += (*hypre__sz1 - (*hypre__ny * *hypre__sy1));
+%      *xi += (*hypre__sz2 - (*hypre__ny * *hypre__sy2));
+%      *ri += (*hypre__sz3 - (*hypre__ny * *hypre__sy3));
+%    }
+ 
 \fixme{TODO:the input is manually changed from the kernel generated by
 the autoTuning translator. POET expects normalized loops
 with special tags, integer loop control variables and $++$ operator is not allowed. 
@@ -103,9 +140,10 @@ parameter, the following command line specifies unrolling 5 times.
 \fixme{TODO The generation of .pt files it not yet automated currently.}
 
 %--------------------------------------------------
-\subsection{The Search Engine}
-Currently, we adopt the search engine~\cite{Youeffective2005} from University of Tennessee
-at Knoxville as the external search engine used in our system.  It has been connected with
+\subsection{Search Engines}
+Currently, we adopt the GCO (Generic Code Optimization) search engine~\cite{Youeffective2005} from University of Tennessee
+at Knoxville as the external search engine used in our system.  
+It has been connected with
 a specific version of POET (not yet fully updated to the latest POET release
 unfortunately) to explore code transformations using several popular search policies,
 such as random search, exhaustive search, simulated anneal search, genetic algorithm,

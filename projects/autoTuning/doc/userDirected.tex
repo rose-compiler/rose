@@ -1,0 +1,378 @@
+\clearpage
+\section{User-Directed Autotuning}
+While fully automated autotuning can be feasible in some cases, many
+applications need users' expertise to obtain significant performance improvements. 
+We revisit the SMG2000 benchmark in this section to see how one can use our autotuning system to have a user-directed empirical tuning process.
+%-------------------------------------
+\subsection{Manual Code Triage}
+The SMG2000 kernel (shown in Fig.~\ref{Fig:smg2000kernel}) that is automatically identified by our simple code triage may not be the best tuning target. 
+It is actually only a portion of a bigger computation kernel that is very
+hard to be automatically identified. 
+Also, the bigger kernel has a very complex form which impedes most
+compilers or tools for further analyses and transformations. 
+With the help from Rich Vuduc, who is a former postdoc with us, we manually transform the code (via code specification) to obtain a representative kernel which captures the core computation algorithm of the benchmark. 
+We then put the outlining pragma (\lstinline{#pragma rose_outline}) before
+the new kernel and invoked the ROSE outliner to separate it out into a new
+source file, as shown below.
+
+\lstset{language=C, basicstyle=\scriptsize}
+\begin{lstlisting}
+#include "autotuning_lib.h"
+static double time1, time2;
+void OUT__1__6119__(void **__out_argv);
+typedef int hypre_MPI_Comm;
+typedef int hypre_MPI_Datatype;
+typedef int hypre_Index[3];
+
+typedef struct hypre_Box_struct
+{
+   hypre_Index imin;
+   hypre_Index imax;
+} hypre_Box;
+
+typedef struct hypre_BoxArray_struct
+{
+   hypre_Box *boxes;
+   int size;
+   int alloc_size;
+} hypre_BoxArray;
+
+typedef struct hypre_RankLink_struct
+{
+   int rank;
+   struct hypre_RankLink_struct *next;
+} hypre_RankLink;
+
+typedef hypre_RankLink *hypre_RankLinkArray[3][3][3];
+
+typedef struct hypre_BoxNeighbors_struct
+{
+   hypre_BoxArray *boxes;
+   int *procs;
+   int *ids;
+   int first_local;
+   int num_local;
+   int num_periodic;
+   hypre_RankLinkArray *rank_links;
+} hypre_BoxNeighbors;
+
+typedef struct hypre_StructGrid_struct
+{
+   hypre_MPI_Comm comm;
+   int dim;
+   hypre_BoxArray *boxes;
+   int *ids;
+   hypre_BoxNeighbors *neighbors;
+   int max_distance;
+   hypre_Box *bounding_box;
+   int local_size;
+   int global_size;
+   hypre_Index periodic;
+   int ref_count;
+} hypre_StructGrid;
+
+typedef struct hypre_StructStencil_struct
+{
+   hypre_Index *shape;
+   int size;
+   int max_offset;
+   int dim;
+   int ref_count;
+} hypre_StructStencil;
+
+typedef struct hypre_CommTypeEntry_struct
+{
+   hypre_Index imin;
+   hypre_Index imax;
+   int offset;
+   int dim;
+   int length_array[4];
+   int stride_array[4];
+} hypre_CommTypeEntry;
+
+typedef struct hypre_CommType_struct
+{
+   hypre_CommTypeEntry **comm_entries;
+   int num_entries;
+} hypre_CommType;
+
+typedef struct hypre_CommPkg_struct
+{
+   int num_values;
+   hypre_MPI_Comm comm;
+   int num_sends;
+   int num_recvs;
+   int *send_procs;
+   int *recv_procs;
+   hypre_CommType **send_types;
+   hypre_CommType **recv_types;
+   hypre_MPI_Datatype *send_mpi_types;
+   hypre_MPI_Datatype *recv_mpi_types;
+   hypre_CommType *copy_from_type;
+   hypre_CommType *copy_to_type;
+} hypre_CommPkg;
+
+typedef struct hypre_StructMatrix_struct
+{
+  hypre_MPI_Comm comm;
+  hypre_StructGrid *grid;
+  hypre_StructStencil *user_stencil;
+  hypre_StructStencil *stencil;
+  int num_values;
+  hypre_BoxArray *data_space;
+  double *data;
+  int data_alloced;
+  int data_size;
+  int **data_indices;
+  int symmetric;
+  int *symm_elements;
+  int num_ghost[6];
+  int global_size;
+  hypre_CommPkg *comm_pkg;
+  int ref_count;
+} hypre_StructMatrix;
+
+void OUT__1__6119__(void **__out_argv)
+{
+  static int counter =0 ;
+  hypre_StructMatrix *A =  *((hypre_StructMatrix **)(__out_argv[20]));
+  int ri =  *((int *)(__out_argv[19]));
+  double *rp =  *((double **)(__out_argv[18]));
+  int stencil_size =  *((int *)(__out_argv[17]));
+  int i =  *((int *)(__out_argv[16]));
+  int (*dxp_s)[15UL] = (int (*)[15UL])(__out_argv[15]);
+  int hypre__sy1 =  *((int *)(__out_argv[14]));
+  int hypre__sz1 =  *((int *)(__out_argv[13]));
+  int hypre__sy2 =  *((int *)(__out_argv[12]));
+  int hypre__sz2 =  *((int *)(__out_argv[11]));
+  int hypre__sy3 =  *((int *)(__out_argv[10]));
+  int hypre__sz3 =  *((int *)(__out_argv[9]));
+  int hypre__mx =  *((int *)(__out_argv[8]));
+  int hypre__my =  *((int *)(__out_argv[7]));
+  int hypre__mz =  *((int *)(__out_argv[6]));
+  int si =  *((int *)(__out_argv[5]));
+  int ii =  *((int *)(__out_argv[4]));
+  int jj =  *((int *)(__out_argv[3]));
+  int kk =  *((int *)(__out_argv[2]));
+  const double *Ap_0 =  *((const double **)(__out_argv[1]));
+  const double *xp_0 =  *((const double **)(__out_argv[0]));
+
+  at_begin_timing(); // begin timing
+
+  for (si = 0; si < stencil_size; si++)
+    for (kk = 0; kk < hypre__mz; kk++)
+      for (jj = 0; jj < hypre__my; jj++)
+        for (ii = 0; ii < hypre__mx; ii++)
+          rp[(ri + ii) + (jj * hypre__sy3) + (kk * hypre__sz3)] -= 
+             Ap_0[ii + (jj * hypre__sy1) + (kk * hypre__sz1) +  A -> data_indices[i][si]] *
+             xp_0[ii + (jj * hypre__sy2) + (kk * hypre__sz2) + ( *dxp_s)[si]];
+  at_end_timing(); //end timing
+
+   *((int *)(__out_argv[2])) = kk;
+   *((int *)(__out_argv[3])) = jj;
+   *((int *)(__out_argv[4])) = ii;
+   *((int *)(__out_argv[5])) = si;
+   *((double **)(__out_argv[18])) = rp;
+   *((hypre_StructMatrix **)(__out_argv[20])) = A;
+}
+
+\end{lstlisting}
+
+As we can see, the new kernel directly and indirectly depends on some user defined types. 
+The ROSE outliner was able to recursively find and copy them into the new
+file in a right order.
+%The header (autotuning\_lib.h) provides prototypes of timing and checkpointing/restarting 
+%-------------------------------------------------------------
+\subsection{Parameterized ROSE Loop Translators}
+ROSE provides several standalone executable programs
+(loopUnrolling, loopInterchange, and loopTiling under ROSE\_INSTALL/bin) for loop
+transformations.
+So autotuning users can use them via command
+lines with abstract handles to create desired kernel variants.
+
+These translators use ROSE's internal loop translation interfaces (declared within the SageInterface namespace). They are:
+
+\begin{itemize}
+\item \textit{bool loopUnrolling (SgForStatement *loop, size\_t
+unrolling\_factor)}:
+This function needs two parameters: one for the loop to be
+unrolled and the other for the unrolling factor.
+\item \textit{bool  loopInterchange (SgForStatement *loop, size\_t depth,
+size\_t lexicoOrder)}:
+The loop interchange function has three parameters, the first one to
+specify a loop which starts a perfectly-nested loop and is to be
+interchanged, the 2nd for the depth of the loop nest to be interchanged, and finally the
+lexicographical order for the permutation.
+\item \textit{bool  loopTiling (SgForStatement *loopNest, size\_t
+targetLevel, size\_t tileSize)}:
+The loop tiling interface needs to know the loop nest to be tiled, which
+loop level to tile, and the tile size for the level.
+\end{itemize}
+For efficiency concerns, these functions only perform the specified
+translations without doing any legitimacy check.
+It is up to the users to
+make sure the transformations won't generate wrong code.
+%We will soon provide interfaces to do the eligibility check for each transformation.
+
+Example command lines using the programs are given below:
+
+{\scriptsize
+\begin{verbatim}
+# unroll a for statement 5 times. The loop is a statement at line 6 within an input file.
+
+loopUnrolling -c inputloopUnrolling.C \
+-rose:loopunroll:abstract_handle "Statement<position,6>" -rose:loopunroll:factor 5
+
+# interchange a loop nest starting from the first loop within the input file,
+# interchange depth is 4 and
+# the lexicographical order is 1 (swap the innermost two levels)
+
+loopInterchange -c inputloopInterchange.C -rose:loopInterchange:abstract_handle \
+"ForStatement<numbering,1>" -rose:loopInterchange:depth 4 \
+-rose:loopInterchange:order 1
+
+# tile the loop with a depth of 3 within the first loop of the input file
+# tile size is 5
+
+loopTiling -c inputloopTiling.C -rose:loopTiling:abstract_handle \
+"ForStatement<numbering,1>" -rose:loopTiling:depth 3 -rose:loopTiling:tilesize 5
+
+\end{verbatim}
+}
+
+%-------------------------------------------------------------
+\subsection{Connecting to the Search Engine}
+We applied several standard loop optimizations to the new kernel.
+They are, in the actual order applied,
+loop tiling on i, j and k levels (each level has a same tiling size from 0
+to 55 and a stride of 5),
+loop interchange of i, j, k and si levels (with a lexicographical permutation order ranging from 0 to 4! -1),
+and finally loop unrolling on the innermost loop only.
+For all optimizations, a parameter
+value of 0 means no such optimization is applied.
+So the total search space has 14400 ($12*4!*50$) points.
+
+The bash script used by the GCO search engine to conduct point evaluation is given blow. 
+Note that a transformation command needs to consider previous transformations' side effects on the kernel. 
+We also extended GCO to accept strides (using \textit{\#ST} in the script) for dimensions of search space.  
+{\scriptsize
+\begin{verbatim}  
+$ cat eval_smg_combined
+#!/bin/bash
+#DIM    3
+#LB     0 0 0
+#UB     55 23 49
+#ST     5 1 1
+
+# number of executions to find the best result for this variant
+ITER=3
+
+# command line validation
+# should have x parameters when calling this script
+# x= number of dimensions for each point
+if [ "$3" = "" ]; then
+  echo "Fatal error: not enough  parameters are provided for all search dimensions"
+  exit
+fi
+
+# convert points to transformation parameters
+# Not necessary in this example
+
+# target application path
+APP_PATH=/home/liao6/svnrepos/benchmarks/smg2000
+KERNEL_VARIANT_FILE=OUT__1__6119__.c
+# remove previous variant of the kernel and result
+/bin/rm -f $APP_PATH/struct_ls/$KERNEL_VARIANT_FILE /tmp/peri.result $APP_PATH/*.so *.so
+
+# ------------ tiling i, j, k ----------------------
+# first tiling is always needed.
+loopTiling -c $APP_PATH/struct_ls/OUT__1__6119__perfectNest.c  -rose:loopTiling:abstract_handle "ForStatement<numbering,1>"\
+ -rose:loopTiling:depth 4 -rose:loopTiling:tilesize $1 -rose:output $KERNEL_VARIANT_FILE
+
+if [ $1 -ne 0 ]; then
+loopTiling -c $KERNEL_VARIANT_FILE -rose:loopTiling:abstract_handle "ForStatement<numbering,1>" -rose:loopTiling:depth 4 \
+-rose:loopTiling:tilesize $1 -rose:output $KERNEL_VARIANT_FILE loopTiling -c $KERNEL_VARIANT_FILE \
+-rose:loopTiling:abstract_handle "ForStatement<numbering,1>" -rose:loopTiling:depth 4 -rose:loopTiling:tilesize $1 \
+-rose:output $KERNEL_VARIANT_FILE
+
+fi
+# -------------- interchange si, k, j, i--------------
+if [ $1 -ne 0 ]; then
+loopInterchange -c $KERNEL_VARIANT_FILE -rose:output $KERNEL_VARIANT_FILE \
+-rose:loopInterchange:abstract_handle 'ForStatement<numbering,4>' \
+ -rose:loopInterchange:depth 4 -rose:loopInterchange:order $2
+else
+# No tiling happens, start from 1
+loopInterchange -c $KERNEL_VARIANT_FILE -rose:output $KERNEL_VARIANT_FILE \
+-rose:loopInterchange:abstract_handle 'ForStatement<numbering,4>' \
+-rose:loopInterchange:depth 1 -rose:loopInterchange:order $2
+fi
+
+# ------------ unrolling innermost only -------------------
+# generate a variant of the kernel using the transformation parameters
+# unrolling the innermost level, must redirect to avoid mess up search engine
+if [ $1 -ne 0 ]; then
+loopUnrolling -c $KERNEL_VARIANT_FILE  -rose:loopunroll:abstract_handle "ForStatement<numbering,7>" \
+-rose:loopunroll:factor $3 -rose:output $KERNEL_VARIANT_FILE > /dev/null 2>&1
+else
+loopUnrolling -c $KERNEL_VARIANT_FILE  -rose:loopunroll:abstract_handle "ForStatement<numbering,4>" \
+-rose:loopunroll:factor $3 -rose:output $KERNEL_VARIANT_FILE > /dev/null 2>&1
+fi
+
+# build a .so for the kernel variant
+# To redirect stdout to NULL is required
+# since the search engine looks for stdout for the evaluation result
+make -f makefile-lib  filename=OUT__1__6119__ > /dev/null 2>&1
+cp OUT__1__6119__.so $APP_PATH/struct_ls/.
+
+# generate a program to execute and timing the kernel
+# Handled by ROSE
+
+best_time="999999999.0"
+
+# run the program multiple times
+for (( i="1" ; i <= "$ITER" ; i = i + "1" ))
+do
+
+  # The tuned kernel will write timing information into /tmp/peri.result
+   $APP_PATH/test/smg2000 -n 120 120 120 -d 3 > /dev/null 2>&1
+  if [ $? -ne 0 ]; then
+    echo "Error: program finishes abnormally!"
+    exit 1
+  else
+    test -f /tmp/peri.result
+    if [ $? -ne 0 ]; then
+       echo "Error: The temp file storing timing information does not exist!"
+       exit 1
+    fi
+    time=`tail -1 /tmp/peri.result | cut -f 1`
+# select the smaller one
+    best_time=`echo ${time} ${best_time} | awk '{print ($1 < $2) ? $1 : $2}'`
+  fi
+  # remove the temp file, the best time is kept by the script already
+  /bin/rm -f  /tmp/peri.result
+done
+
+# report the evaluation result to the search engine
+echo $best_time
+
+\end{verbatim}
+} % end scriptsize
+%-------------------------------------------------------------
+\subsection{Results}
+%With the help from the checkpointing/restarting library and 
+The new SMG2000 kernel is invoked thousands of times during a typical execution.
+So instead of using checkpointing/restarting, we used a counter to reduce
+the point evaluation time. The counter was set to be 1600, which means the
+execution is terminated once the kernel is be called 1600 times.
+By doing this, an exhaustive search using GCO
+became feasible within 40 hours for an input data size of $120*120*120$.
+
+The best performance was achieved at point (0,8,0), which means loop
+interchange using the lexicographical number 8 (corresponding to an order of $[k,j,si,i]$) improved the
+performance while tiling and unrolling did not help at all.
+The best searched point achieved a 1.43x speedup for the kernel (1.18 for the whole
+benchmark) when compared to the execution time using Intel C/C++ compiler v. 9.1.045 with option \textit{-O2}
+on the Dell T5400 workstation.
+
+
