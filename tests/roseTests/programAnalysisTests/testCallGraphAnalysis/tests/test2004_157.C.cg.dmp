@@ -1,0 +1,7 @@
+foo -> foobar A::operator[]
+A::A ->
+A::A ->
+foobar ->
+A::operator* ->
+A::operator-> ->
+A::operator[] ->

@@ -1,0 +1,11 @@
+foo -> myVector::norm myVector::operator/
+min ->
+myVector::norm ->
+myVector::myVector ->
+myVector::myVector ->
+myVector::operator* ->
+myVector::operator+ ->
+myVector::operator- ->
+myVector::operator/ ->
+myVector::operator/ ->
+myVector::operator= ->

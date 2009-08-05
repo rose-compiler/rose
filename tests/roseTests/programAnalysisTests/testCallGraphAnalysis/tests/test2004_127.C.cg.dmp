@@ -1,0 +1,3 @@
+foo -> globalFunction std::out_of_range
+globalFunction ->
+std::out_of_range ->

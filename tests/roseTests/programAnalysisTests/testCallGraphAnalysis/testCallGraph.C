@@ -165,6 +165,7 @@ main( int argc, char * argv[] ) {
    std::cout << "Analyzing outside DATABASE" << std::endl;
 
 #endif
+   var_SOLVE_FUNCTION_CALLS_IN_DB = false;
 
    SgProject* project = new SgProject(argvList);
 
@@ -174,7 +175,10 @@ main( int argc, char * argv[] ) {
    CGBuilder.buildCallGraph();
 #else
 // CGBuilder.buildCallGraph( OnlyCurrentDirectory() );
-   CGBuilder.buildCallGraph( OnlyNonCompilerGenerated() );
+//   CGBuilder.buildCallGraph( OnlyNonCompilerGenerated() );
+
+   CGBuilder.buildCallGraph( );
+
 #endif
 
 // GenerateDotGraph(CGBuilder.getGraph(),"callgraph.dot");

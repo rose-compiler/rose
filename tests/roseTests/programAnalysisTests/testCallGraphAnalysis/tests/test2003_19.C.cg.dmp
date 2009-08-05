@@ -1,0 +1,8 @@
+main -> foo_int foo_char foo_long foo_float foo_double foo_void_ptr foo_const_char
+foo_int ->
+foo_char ->
+foo_long ->
+foo_float ->
+foo_double ->
+foo_void_ptr ->
+foo_const_char ->

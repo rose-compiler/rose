@@ -1,0 +1,4 @@
+eq ->
+A::A ->
+main -> eq operator==
+operator== ->

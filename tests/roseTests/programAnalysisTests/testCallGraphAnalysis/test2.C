@@ -7,9 +7,21 @@ public:
 };
 
 int (A::*k)();
+int foo(){
+
+};
+
+//
+int bar()
+{
+foo();
+};
+
 
 int main()
 {
+
+
 A a;
 k = &A::f1;
 (a.*k)();

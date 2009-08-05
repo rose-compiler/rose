@@ -1,0 +1,5 @@
+EtherAppSrv__create ->
+cModuleType::setOwner ->
+__EtherAppSrv__mod_code -> cModuleType::setOwner cModuleType::doSomething
+cModuleType::cModuleType ->
+cModuleType::doSomething ->

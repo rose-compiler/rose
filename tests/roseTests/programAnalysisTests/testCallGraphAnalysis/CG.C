@@ -96,8 +96,21 @@ void sortedCallGraphDump(string fileName, SgIncidenceDirectedGraph* cg)
 
   //Otuput the call graph in a unique graph-dump
 
+
   rose_graph_integer_edge_hash_multimap & outEdges
     = cg->get_node_index_to_edge_multimap_edgesOut ();
+
+  {
+    int i = 0;
+    for( rose_graph_integer_edge_hash_multimap::const_iterator outEdgeIt = outEdges.begin();
+        outEdgeIt != outEdges.end(); ++outEdgeIt )
+    {
+      i++;
+
+    }
+
+    std::cout << "We have output " << i << std::endl;
+  }
 
   for (list<pair<SgGraphNode *,int> >::iterator it=cgNodes.begin();it!=cgNodes.end();it++)
   {
@@ -105,14 +118,16 @@ void sortedCallGraphDump(string fileName, SgIncidenceDirectedGraph* cg)
     //get list over the end-points for which this node points to
     list<SgGraphNode*> calledNodes;
 
-
-    for( rose_graph_integer_edge_hash_multimap::const_iterator outEdgeIt = outEdges.find(it->second);
+    for( rose_graph_integer_edge_hash_multimap::const_iterator outEdgeIt = outEdges.begin();
         outEdgeIt != outEdges.end(); ++outEdgeIt )
     {
 
-      SgDirectedGraphEdge* graphEdge = isSgDirectedGraphEdge(outEdgeIt->second);
-      ROSE_ASSERT(graphEdge!=NULL);
-      calledNodes.push_back(graphEdge->get_to());
+      if(outEdgeIt->first == it->second)
+      {
+        SgDirectedGraphEdge* graphEdge = isSgDirectedGraphEdge(outEdgeIt->second);
+        ROSE_ASSERT(graphEdge!=NULL);
+        calledNodes.push_back(graphEdge->get_to());
+      }
     }
 
     calledNodes.sort(nodeCompareGraph);
@@ -241,15 +256,10 @@ int main (int argc, char **argv){
 
   outFileName=((project->get_outputFileName())+".dot");
 
-
-
-
   cout << "Writing Callgraph to: "<<outFileName<<endl;
   cout << "Writing custom compare to: "<<graphCompareOutput<<endl;
 
   //CallGraphDotOutput output( *(cgb.getGraph()) );
-
-
 
   SgIncidenceDirectedGraph *newGraph;
 
@@ -279,21 +289,16 @@ int main (int argc, char **argv){
 
     newGraph = loadCallGraphFromDB(*gDB);
 
-    sortedCallGraphDump(graphCompareOutput,newGraph);	
 
 #endif
   }else{
     // Not SQL Database case
-    printf ("Not using the SQLite Database ... \n");
-
-
     newGraph = cgb.getGraph();
-
-    sortedCallGraphDump(graphCompareOutput,newGraph);	
-
+    printf ("Not using the SQLite Database ... \n");
   }
 
 
+  sortedCallGraphDump(graphCompareOutput,newGraph);	
 
   AstDOTGeneration dotgen;
 

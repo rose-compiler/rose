@@ -77,9 +77,13 @@ EXTRA_TEST_Objects = ${EXTRA_TESTCODES_REQUIRED_TO_PASS:.C=.C.dot}
 ## Include the path to A++ and the transformation specification
 TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
 
-$(EXTRA_TEST_Objects): testCallGraph
+$(EXTRA_TEST_Objects): testCG
 #	@echo "Copy the file to the local build tree so that we can change the file name suffix (to be a C language file) ..." # Not true anymore
-	$(VALGRIND) ./testCallGraph $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests $(TESTCODE_INCLUDES) -db:name $(@:.dot=.database) -c $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.dot=)
+#	$(TEST_TRANSLATOR) $(INCLUDES) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C) -o $(@:.o=) -db:name $(@:.o=.db)
+	$(VALGRIND) ./testCG $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests $(TESTCODE_INCLUDES) -db:name $(@:.dot=.database) -c $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.dot=) -o $(@:.C.dot=.o) -DTEST_STRING_MACRO="\"test\""
+#	cp  $(@:.C.dot=.o.cg.dmp)  $(srcdir)/$(@:.dot=.cg.dmp)
+#	@if diff -U5 $(srcdir)/tests/$(@:.dot=.cg.dmp) $(@:.C.dot=.o.cg.dmp); then :; else echo "Files differ; byte order test failed"; exit 1; fi
+	rm -f  $(@:.o=.db)
 
 
 TESTCODES = test1.C test2.C  test3.C  test4.C  test5.C  test6.C test7.C
@@ -90,24 +94,25 @@ TEST_Objects = ${TESTCODES:.C=.o}
 ROSE_FLAGS = -rose:verbose 0
 # ROSE_FLAGS = 
 
-TEST_TRANSLATOR = ./testCallGraph $(ROSE_FLAGS)
+TEST_TRANSLATOR = ./testCG $(ROSE_FLAGS)
 # TESTCODE_INCLUDES =
 
 # DQ (7/12/2004): Modified to run with make -j4 options
-$(TEST_Objects): testCallGraph $(TESTCODES) 
+$(TEST_Objects): testCG $(TESTCODES) 
 	@echo "Compiling test code using $(TEST_TRANSLATOR) ..."
 	rm -f  $(@:.o=.db)
 	$(TEST_TRANSLATOR) $(INCLUDES) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C) -o $(@:.o=) -db:name $(@:.o=.db)
+#	@if diff -U5 $(srcdir)/tests/$(@:.o=.C.cg.dmp) $(@:.o=.cg.dmp); then :; else echo "Files differ; byte order test failed"; exit 1; fi
 	rm -f  $(@:.o=.db)
 
 
-EXTRA_DIST = $(TESTCODES) functions.h main.C f1.C f2.C stressTestFactory
+EXTRA_DIST = $(TESTCODES) functions.h main.C f1.C f2.C stressTestFactory $(srcdir)/tests
 
 # DQ (7/25/2005): The current changes to the AST break these test programs:
 check-local:
-	@$(MAKE) $(EXTRA_TEST_Objects)
 	@$(MAKE) $(TEST_Objects)
 	@$(MAKE) test01 test02
+	@$(MAKE) $(EXTRA_TEST_Objects)
 	@echo "***********************************************************************************************************************"
 	@echo "*** ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis: make check rule complete (terminated normally) ***"
 	@echo "***********************************************************************************************************************"

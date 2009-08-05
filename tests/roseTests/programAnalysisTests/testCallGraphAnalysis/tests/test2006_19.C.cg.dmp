@@ -1,0 +1,2 @@
+gen_asm_decl -> write_tok_str
+write_tok_str ->

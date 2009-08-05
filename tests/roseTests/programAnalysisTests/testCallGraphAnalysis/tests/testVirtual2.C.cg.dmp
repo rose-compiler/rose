@@ -1,0 +1,4 @@
+foo2 -> B::foo
+main -> B::foo
+A::foo ->
+B::foo ->

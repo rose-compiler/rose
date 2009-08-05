@@ -1,0 +1,3 @@
+prod ->
+foobar -> prod
+foo::prod -> prod

@@ -1,0 +1,5 @@
+foo4 ->
+main -> foo4 foo4 < int >  foo3 < char >  foo4 < double > 
+foo4 < int >  ->
+foo3 < char >  ->
+foo4 < double >  ->
