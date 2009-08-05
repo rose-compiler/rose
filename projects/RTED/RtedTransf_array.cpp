@@ -443,18 +443,20 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
 
 
 #else
-  SgNode* parent = isSgVarRefExp(n)->get_parent();
+	   SgNode* parent = isSgVarRefExp(n);
   SgNode* last = parent;
   bool hitRoof=false;
+  //cerr << "*********************************** DEBUGGING  " << n->unparseToString() << endl;
   while (!isSgProject(parent)) {
     last=parent;
     parent=parent->get_parent();
-
+    //cerr << "*********************************** DEBUGGING  parent (loop) = " << parent->class_name() << endl;
   if( isSgProject(parent) ||
       isSgFunctionCallExp(parent) ||
       isSgDotExp(parent))
     { // do nothing 
       hitRoof=true;
+      //cerr << "*********************************** DEBUGGING   parent = (project) " << parent->class_name() << endl;
 	  break;
     }
   else if (isSgAssignOp(parent)) {
@@ -463,6 +465,7 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
     if (right==last)
       variable_access_varref.push_back(n);
     hitRoof=true;
+    //cerr << "*********************************** DEBUGGING   parent (assign) = " << parent->class_name() << endl;
     break;
   }
   else if (isSgAssignInitializer(parent)) {
@@ -471,10 +474,14 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
     if (right==last)
     	variable_access_varref.push_back(n);
     hitRoof=true;
+    //cerr << "*********************************** DEBUGGING   parent (assigniniit) = " << parent->class_name() << endl;
     break;
   } else if (isSgPointerDerefExp(parent)) {
 	  cerr << "------------ Found Pointer deref : " << parent->unparseToString() << endl;
+	  //cerr << "*********************************** DEBUGGING   parent (deref) = " << parent->class_name() << endl;
 	  variable_access_pointerderef[isSgPointerDerefExp(parent)]=n;
+  } else {
+    //cerr << "*********************************** DEBUGGING   parent (else) = " << parent->class_name() << endl;
   }
   } //while
 

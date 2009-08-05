@@ -280,14 +280,59 @@ rted_source/%_rose.cpp: runtimeCheck rted_source/%.cpp $(srcdir)/$(RTS) $(srcdir
 #------------------------------------------------------------------------------
 
 
+
+#------------------------------------------------------------------------------
+# rules to create _rose.cpp and _s_rose.cpp files
+#------------------------------------------------------------------------------
+
+rted_source/%_s_rose.cpp: rted_source/%_s.cpp
+	@touch $@
+
+rted_source/%_rose.cpp: runtimeCheck rted_source/%.cpp rted_source/%_s.cpp $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
+	@echo -n "    testing if files compiles with gcc (with _s) ... "
+	@$(RTED_CC) -g -o $(patsubst %_rose.cpp, %.bin, $@) $(filter rted_source/%.cpp, $^) \
+		$(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) \
+		$(RTED_LIB)
+	@rm $(patsubst %_rose.cpp, %.bin, $@)
+	@echo " done."
+	@echo -n "    running transformation ... "
+	@./runtimeCheck 2 $(filter rted_source/%.cpp, $^) \
+			  -rose:C_only -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) 2> /dev/null
+	@echo " done."
+	@echo -n "   adding line information ... "
+	@cat rose_$(notdir $(patsubst %_rose.cpp, %.cpp, $@ ) ) \
+	    | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > $@
+	@rm rose_$(notdir $(patsubst %_rose.cpp, %.cpp, $@ ) )
+	@cat rose_$(notdir $(patsubst %_rose.cpp, %_s.cpp, $@ ) ) \
+	    | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > $(patsubst %_rose.cpp, %_s_rose.cpp, $@ )
+	@rm rose_$(notdir $(patsubst %_rose.cpp, %_s.cpp, $@ ) )
+	@echo " done."
+
+rted_source/%_rose.cpp: runtimeCheck rted_source/%.cpp $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
+	@echo -n "    testing if file compiles with gcc ... "
+	@$(RTED_CC) -g -o $(patsubst %_rose.cpp, %.bin, $@) $(filter rted_source/%.cpp, $^) $(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) $(RTED_LIB)
+	@rm $(patsubst %_rose.cpp, %.bin, $@)
+	@echo " done."
+	@echo -n "    running transformation ... "
+	@./runtimeCheck 2 $(filter rted_source/%.cpp, $^) -rose:C_only -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@))  2> /dev/null
+	@echo " done." > /dev/null
+	@echo -n "   adding line information ... "
+	@cat rose_$(notdir $(filter rted_source/%.cpp, $^)) | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > $@
+	@rm rose_$(notdir $(filter rted_source/%.cpp, $^))
+	@echo " done."
+
+#------------------------------------------------------------------------------
+
+
+
 #------------------------------------------------------------------------------
 # rules to create the binary files
 #------------------------------------------------------------------------------
 
-#rted_source/%_debug.bin: rted_source/%_rose.c rted_source/%_s_rose.c
+#rted_source/%_debug.bin: rted_source/%_rose.c rted_source/%_s_rose.c  
 #	@touch $@
 
-#rted_source/%_debug.bin: rted_source/%_rose.c
+#rted_source/%_debug.bin: rted_source/%_rose.c 
 #	@touch $@
 
 # parameters:
