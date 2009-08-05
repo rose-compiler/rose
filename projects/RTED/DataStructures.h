@@ -1,6 +1,5 @@
 #ifndef RTED_DS_H
 #define RTED_DS_H
-#include <rose.h>
 #include <boost/foreach.hpp>
 #include <string>
 
