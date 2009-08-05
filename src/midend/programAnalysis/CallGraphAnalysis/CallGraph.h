@@ -534,9 +534,9 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
         {
           ROSE_ASSERT (endingNode != NULL);
 
-            if(findEdge(returnGraph,startingNode,endingNode)==NULL)
-
+          if(findEdge(returnGraph,startingNode,endingNode)==NULL)
             returnGraph->addDirectedEdge(startingNode,endingNode, isSgFunctionDeclaration(endingNode->get_SgNode())->get_name().getString());
+
           totEdges++;
         }
         else

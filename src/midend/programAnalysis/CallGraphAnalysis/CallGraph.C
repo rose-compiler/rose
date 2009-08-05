@@ -650,12 +650,15 @@ solveMemberFunctionCall( SgClassType *crtClass, ClassHierarchyWrapper *classHier
     } // end if virtual
   // non virtual (standard) member function or call not polymorphic (or both)
   else
+#if 0
     if ( functionDeclarationInClass->get_declarationModifier().get_storageModifier().isStatic() )
       {
 	cout << "Found static function declaration called as member function " << functionDeclarationInClass << "\n";
-	exit( 1 );
+        functionDeclarationInClass->get_file_info()->display("Error");
+	ROSE_ASSERT(false);
       }
     else
+#endif
       {
 	// always pushing the in-class declaration, so we need to find that one
 	SgDeclarationStatement *nonDefDeclInClass = NULL;
@@ -947,9 +950,27 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration, bo
   properties = new Properties(inputFunctionDeclaration);
 
   ROSE_ASSERT( functionDeclaration != NULL );
+  //SgFunctionDeclaration *defDecl =
+  //  isSgFunctionDeclaration( functionDeclaration->get_definingDeclaration() );
   SgFunctionDeclaration *defDecl =
-    isSgFunctionDeclaration( functionDeclaration->get_definingDeclaration() );
-  
+    (
+     inputFunctionDeclaration->get_definition() != NULL ? 
+     inputFunctionDeclaration : isSgFunctionDeclaration( properties->functionDeclaration->get_definingDeclaration() )
+    );
+
+  if( inputFunctionDeclaration == defDecl )
+    std::cout << " **** If you see this error message. Report to the ROSE team that a function declaration ****\n"
+      << " **** has the defining declaration erroneously attached to the nondef decl               ****\n";
+
+  if(defDecl != NULL  && defDecl->get_definition() == NULL)
+  {
+    defDecl = NULL;
+    std::cout << " **** If you see this error message. Report to the ROSE team that a function declaration ****\n"
+      << " **** has a defining declaration but no definition                                       ****\n";
+
+  }
+
+
   //cout << " " << functionDeclaration->get_name().str() << " has definition " << functionDefinition << "\n";
   // cout << "Input declaration: " << inputFunctionDeclaration << " as opposed to " << functionDeclaration << "\n";
   
@@ -1051,8 +1072,8 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration, bo
                         SgExprListExp* expLst = isSgExprListExp(isSgConstructorInitializer(leftSide)->get_args());
                         ROSE_ASSERT(expLst!=NULL);
                         ROSE_ASSERT(expLst->get_expressions().size()==1);
-                        SgClassType* lhsClassType = isSgClassType(isSgFunctionCallExp(*expLst->get_expressions().begin())->get_type());
-                        
+                        SgClassType* lhsClassType = isSgClassType(isSgFunctionCallExp(*expLst->get_expressions().begin())->get_type()->stripType(SgType::STRIP_TYPEDEF_TYPE) );
+//                        std::cout << "expLst:" << expLst->unparseToString() << " " << (*expLst->get_expressions().begin())->get_type(SgType::STRIP_TYPEDEF_TYPE)->class_name()  << std::endl;
                         crtClass = lhsClassType;
                         }
 
@@ -1146,7 +1167,7 @@ findNode(SgGraph* graph, std::string nid)
 
     iItr++;
 
-    int i = 2;
+    int i = 0;
     for(;iItr != nidToInt.end(); ++iItr )
     {
           i++;
@@ -1196,18 +1217,13 @@ findNode ( Rose_STL_Container<SgGraphNode*> & nodeList, SgFunctionDeclaration* f
 
      SgGraphNode* returnNode = NULL;
 
-     bool found = false;
-     while ( !found && (k != nodeList.end()) )
+     while ( k != nodeList.end() )
         {
 
-          if ( ( var_SOLVE_FUNCTION_CALLS_IN_DB == true &&
-                 (*k)->get_SgNode() == functionDeclaration ) 
-               ||
-               ( var_SOLVE_FUNCTION_CALLS_IN_DB == false && 
-                 (*k)->get_SgNode() == functionDeclaration) )
+          if ( (*k)->get_SgNode() == functionDeclaration )
              {
                returnNode = *k;
-               found = true;
+               break;
              }
           k++;
         }
@@ -1422,7 +1438,7 @@ writeSubgraphToDB( sqlite3x::sqlite3_connection& gDB, SgIncidenceDirectedGraph* 
             to_property->functionDeclaration->get_mangled_name().getString();
         }
 
-        //std::cout << "Creating edge between " << mnglName << " " << n2mnglName << std::endl;
+        std::cout << "Creating edge between " << mnglName << " " << n2mnglName << std::endl;
         st << "INSERT INTO Edges VALUES (\"" << mnglName << "\", \"" << n2mnglName << "\", \"" << edge->get_name()
           << "\", \"" << to_property->functionType->get_mangled( ).getString() << "\", \"" << cls << "\");";
         //cout << st.str() << "\n";
