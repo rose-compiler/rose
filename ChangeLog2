@@ -1,3 +1,33 @@
+2009-08-05 00:08  hamilton37
+
+	* [r6736]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp,
+	  /trunk/ROSE/projects/RTED/DataStructures.h,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_registerType.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: RTED: Work on
+	  n-dimensional heap arrays and type registration.
+	  
+	  Array creation in the wrapper is now done correctly for
+	  n-dimensional arrays (so
+	  for `int** p; p[0] = malloc`, we create an array at p[0], and not
+	  p). There are
+	  still problems in the PointerManager, illustrated by the test
+	  `testDoubleArrayHeapAccess`.
+	  
+	  Class/Struct types with n-dimensional array members now have
+	  their dimensions
+	  registered correctly.
+	  
+	  SgArrayType function parameters are now treated as pointers.
+
 2009-08-01 18:41  dquinlan
 
 	* [r6734]
