@@ -684,6 +684,37 @@ void testArrayAccess()
     CLEANUP
 }
 
+void testDoubleArrayHeapAccess()
+{
+    TEST_INIT("Testing Heap Double Array (e.g. int**)")
+    TypeSystem * ts = rs -> getTypeSystem();
+
+	RsType* int_ptr = ts -> getPointerType( "SgTypeInt", 1 );
+	RsType* int_ptr_ptr = ts -> getPointerType( "SgTypeInt", 2 );
+
+	addr_type var_addr = 0x7ffb0;
+	addr_type heap_addr_outer = 0x42;
+	addr_type heap_addr_inner = 0x24601;
+
+	rs -> createMemory( heap_addr_outer, 2 * sizeof( int* ));
+	rs -> createMemory( heap_addr_inner, 2 * sizeof( int ));
+
+	// int** ptr;
+	rs -> createVariable( var_addr, "int**", "mangled_int**", int_ptr_ptr );
+	// ptr = (int**) malloc( 2 * sizeof( int* ));
+	rs -> registerPointerChange( var_addr, heap_addr_outer, false );
+
+	// ptr[ 0 ] = (int*) malloc( 2 * sizeof( int ));
+	rs -> checkMemWrite( heap_addr_outer, sizeof( int* ), int_ptr );
+	rs -> registerPointerChange( heap_addr_outer, heap_addr_inner );
+
+
+    rs -> freeMemory( heap_addr_inner );
+    rs -> freeMemory( heap_addr_outer );
+
+    CLEANUP
+}
+
 // -------------------------------------- CStdLib Tests ------------------------------------------
 
 void test_memcpy()
@@ -1121,7 +1152,8 @@ extern int RuntimeSystem_original_main(int argc, char ** argv, char ** envp)
         testInvalidPointerAssign();
         testPointerTracking();
         testArrayAccess();
-        //testMultidimensionalStackArrayAccess();
+		//testDoubleArrayHeapAccess();
+        testMultidimensionalStackArrayAccess();
 
 
         test_memcpy();

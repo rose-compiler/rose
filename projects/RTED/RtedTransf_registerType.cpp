@@ -1,5 +1,6 @@
 #include <rose.h>
 #include <string>
+#include <boost/foreach.hpp>
 #include "RtedSymbols.h"
 #include "DataStructures.h"
 #include "RtedTransformation.h"
@@ -27,7 +28,15 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* cdef) {
 			SgInitializedName* initName = *itvar;
 			string name = initName->get_mangled_name();
 			string type = initName->get_type()->class_name();
-			RtedClassElement* el = new RtedClassElement(name,type,sgElement);
+
+			RtedClassElement* el;
+			if( isSgArrayType( initName -> get_type() )) {
+				RTedArray* arrayRted = new RTedArray( true, initName, NULL, false );
+				populateDimensions( arrayRted, initName, isSgArrayType( initName -> get_type() ));
+				el = new RtedClassArrayElement( name, type, sgElement, arrayRted );
+			} else {
+				el = new RtedClassElement(name,type,sgElement);
+			}
 			elements.push_back(el);
 		}
     } else {
@@ -91,8 +100,13 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
       */
 
       int elements = rtedClass->nrOfElements; // elements passed to function
-      elements*=5; // for each element pass name, type and offset
-      elements+=5; // ClassName , ClassType and sizeOfClass
+      elements*=6; // for each element pass name, type, basetype, indirection_level and offset
+      elements+=3; // ClassName , ClassType and sizeOfClass
+
+	  BOOST_FOREACH( RtedClassElement* element, rtedClass -> elements ) {
+		  elements += element -> extraArgSize();
+	  }
+
       SgExpression* nrElements = buildIntVal(elements);
 
 
@@ -102,20 +116,17 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
       appendExpression(arg_list, buildString(typeC));
       appendExpression(arg_list, rtedClass->sizeClass);
       
-      // go through each element and add name, type, basetype and offset
+      // go through each element and add name, type, basetype, offset and size
       std::vector<RtedClassElement*> elementsC = rtedClass->elements;
       std::vector<RtedClassElement*>::const_iterator itClass = elementsC.begin();
       for (;itClass!=elementsC.end();++itClass) {
 			  RtedClassElement* element = *itClass;
 			  string manglElementName = element->manglElementName;
-			  string elementType= element->elementType;
 			  SgDeclarationStatement* sgElement = element->sgElement;
 			  //SgExpression* sgElementCopy = deepCopy(sgElement);
 			  SgExpression* elemName = buildString(manglElementName);
-			  SgExpression* elemType = buildString(elementType);
 	  // build a function call for offsetof(A,d);
 	      appendExpression(arg_list, elemName);
-	      appendExpression(arg_list, elemType);
 
 	  // build  (size_t )(&( *((struct A *)0)).x);
 			  ROSE_ASSERT(rtedClass->classDef);
@@ -129,13 +140,16 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
 
 			  // append the base type (if any) of pointers and arrays
 			  SgType* type = varDecl->get_variables()[ 0 ]->get_type();
-			  appendBaseType( arg_list, type );
+			  appendTypeInformation( NULL, type, arg_list );
 
 			  SgExpression* dotExp = buildDotExp(derefPointer,varref);
 			  SgExpression* andOp = buildAddressOfOp(dotExp);
 			  SgExpression* castOp = buildCastExp(andOp, size_t_member);
 			  appendExpression(arg_list, castOp);
 			  appendExpression(arg_list, buildSizeOfOp( dotExp ));
+
+			  // add extra type info (e.g. array dimensions)
+			  element -> appendExtraArgs( arg_list );
 			  //}
 		  } else {
 			  cerr << " Declarationstatement not handled : " << sgElement->class_name() << endl;

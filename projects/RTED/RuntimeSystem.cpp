@@ -1,3 +1,4 @@
+// vim:sw=2 ts=2 et sta:
 /*
  * RuntimeSystem.cpp
  *
@@ -18,6 +19,9 @@
 #include <stdlib.h>
 
 #include "RuntimeSystem.h"
+
+
+#define CHECKPOINT rs -> checkpoint( SourcePosition( filename, atoi( line ), atoi( lineTransformed ))); 
 
 enum ReadWriteMask { Read = 1, Write = 2, BoundsCheck = 4 };
 
@@ -51,9 +55,8 @@ RuntimeSystem_roseRtedClose(
 
 
 	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
-	rs->checkpoint(
-    SourcePosition( filename, atoi( line ),atoi( lineTransformed ) )
-  );
+    CHECKPOINT
+
 	rs->doProgramExitChecks();
 
   // The runtime system would have exited if it had found an error
@@ -63,6 +66,64 @@ RuntimeSystem_roseRtedClose(
 
 
 // ***************************************** ARRAY FUNCTIONS *************************************
+
+
+// TODO 3 djh: doxygenify
+/* 
+ * Returns an RsArrayType* whose dimensionality dimensions are given in vl and
+ * whose base non-array type is base_type.
+ */
+RsArrayType* RuntimeSystem_getRsArrayType(
+        va_list vl,
+        size_t dimensionality,
+        long int size,
+        string base_type) {
+
+  assert( dimensionality > 0 );
+
+  TypeSystem* ts = RuntimeSystem_getRuntimeSystem() -> getTypeSystem();
+
+  // collect dimension information
+  size_t elements = 1;
+  std::vector< size_t > dimensions;
+  for( unsigned int i = 0; i < dimensionality; ++i ) {
+    dimensions.push_back( va_arg( vl, size_t ));
+    elements *= dimensions.back();
+  }
+  size_t base_size = size / elements;
+
+  // recursively compute types bottom-up
+  RsType* type = ts -> getTypeInfo( base_type );
+  assert( type != NULL );
+
+  size_t current_size = base_size;
+  std::vector< size_t >::reverse_iterator itr = dimensions.rbegin();
+  while( itr != dimensions.rend() ) {
+    // however large the base type is, the type of the array is N times as
+    // large
+    current_size *= *itr;
+    type = ts -> getArrayType( type, current_size );
+    ++itr;
+  }
+
+  return static_cast<RsArrayType*>( type );
+}
+
+RsType* RuntimeSystem_getRsType(
+        std::string type,
+        std::string base_type,
+        size_t indirection_level) {
+
+     if( type == "SgPointerType" ) {
+         assert( indirection_level > 0 );
+         return RuntimeSystem::instance() -> getTypeSystem() 
+                -> getPointerType( base_type, indirection_level );
+     } else {
+         return RuntimeSystem::instance() -> getTypeSystem()
+                -> getTypeInfo( type );
+     }
+
+}
 
 
 /*********************************************************
@@ -86,53 +147,40 @@ RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name,
 
 
 	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
-	rs->checkpoint(SourcePosition(filename,atoi(line),atoi(lineTransformed)));
+	CHECKPOINT
 
 	string type_name = type;
 	if( type_name == "SgClassType" )
 	    type_name = class_name;
 
-  string base_type = basetype;
-	if( base_type == "SgClassType" )
-	    base_type = class_name;
+    string base_type = basetype;
+    if( base_type == "SgClassType" )
+        base_type = class_name;
 
 
-  if( type_name == "SgArrayType" ) {
-    // collect dimension information
-    va_list vl;
-    va_start( vl, dimensionality );
+    if( type_name == "SgArrayType" ) {
+        va_list vl;
+        va_start( vl, dimensionality );
+        RsArrayType* type = RuntimeSystem_getRsArrayType( vl, dimensionality, size, base_type );
 
-    size_t elements = 1;
-    std::vector< size_t > dimensions;
-    for( int i = 0; i < dimensionality; ++i ) {
-      dimensions.push_back( va_arg( vl, size_t ));
-      elements *= dimensions.back();
+        rs -> createArray( address, name, mangl_name, type );
+    } else if( type_name == "SgPointerType") {
+        addr_type heap_address = *((addr_type*) address);
+        rs -> createMemory( heap_address, mallocSize );
+        rs -> checkMemWrite(
+            address,
+            size,
+            RuntimeSystem_getRsType(
+                std::string( type ),
+                std::string( basetype ),
+                indirection_level
+            )
+        );
+        rs -> registerPointerChange( address, heap_address );
+    } else {
+        cerr << "Unexpected Array Type: " << type << endl;
+        exit( 1 );
     }
-    size_t base_size = size / elements;
-
-    // recursively compute types bottom-up
-    RsType* type = rs -> getTypeSystem() -> getTypeInfo( base_type );
-    assert( type != NULL );
-
-    size_t current_size = base_size;
-    std::vector< size_t >::reverse_iterator itr = dimensions.rbegin();
-    while( itr != dimensions.rend() ) {
-      // however large the base type is, the type of the array is N times as
-      // large
-      current_size *= *itr;
-      type = rs -> getTypeSystem() -> getArrayType( type, current_size );
-      ++itr;
-    }
-    // create an array of arrays of arrays ... of basetype
-    rs -> createArray( address, name, mangl_name, static_cast<RsArrayType*>(type) );
-  } else if( type_name == "SgPointerType") {
-    addr_type heap_address = *((addr_type*) address);
-    rs -> createMemory( heap_address, mallocSize );
-    rs -> registerPointerChange( address, heap_address );
-  } else {
-    cerr << "Unexpected Array Type: " << type << endl;
-    exit( 1 );
-  }
 
 }
 
@@ -152,13 +200,13 @@ RuntimeSystem_roseArrayAccess(const char* name, int posA, int posB, const char* 
 
 
 	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
-	rs->checkpoint(SourcePosition(filename,atoi(line),atoi(lineTransformed)));
+	CHECKPOINT
 
-  RuntimeSystem_checkMemoryAccess( address, size, read_write_mask );
+    RuntimeSystem_checkMemoryAccess( address, size, read_write_mask );
 
-  if( read_write_mask & BoundsCheck ) {
-    rs -> checkPointerDereference( base_address, address );
-  }
+    if( read_write_mask & BoundsCheck ) {
+        rs -> getMemManager() -> checkIfSameChunk( base_address, address, size );
+    }
 }
 
 // ***************************************** ARRAY FUNCTIONS *************************************
@@ -166,12 +214,12 @@ RuntimeSystem_roseArrayAccess(const char* name, int posA, int posB, const char* 
 
 void RuntimeSystem_checkMemoryAccess( unsigned long int address, long int size, int read_write_mask ) {
 
-	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
+    RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
 
-	if ( read_write_mask & Read )
-	  rs->checkMemRead( address, size );
-	if ( read_write_mask & Write )
-    rs->checkMemWrite( address, size );
+    if ( read_write_mask & Read )
+        rs->checkMemRead( address, size );
+    if ( read_write_mask & Write )
+        rs->checkMemWrite( address, size );
 }
 
 
@@ -362,7 +410,7 @@ RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, in
 
 
 	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
-	rs->checkpoint(SourcePosition(filename,atoi(line),atoi(lineTransformed)));
+	CHECKPOINT
 
   // FIXME 2: The current transformation outsputs num (for, e.g. strncat) as
   //    (expr), (size in str)
@@ -466,7 +514,7 @@ RuntimeSystem_roseIOFunctionCall(const char* fname,
     //fixme - we need to create a new function call that
     // will have FILE* as parameter
     RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
-    rs->checkpoint(SourcePosition(filename,atoi(line),atoi(lineTransformed)));
+    CHECKPOINT
 
     // not handled (yet?)
     //  fclearerr
@@ -610,7 +658,7 @@ RuntimeSystem_roseFunctionCall(int count, ...) {
 void RuntimeSystem_roseEnterScope(const char* name) {
 
 
-	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
+    RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
     rs->beginScope(name);
 
 }
@@ -618,8 +666,8 @@ void RuntimeSystem_roseEnterScope(const char* name) {
 void RuntimeSystem_roseExitScope( const char* filename, const char* line, const char* stmtStr) {
 
 
-	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
-	rs->endScope();
+    RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
+    rs->endScope();
 
 }
 
@@ -635,24 +683,24 @@ void RuntimeSystem_roseExitScope( const char* filename, const char* line, const 
  * we store the type of the variable and whether it has been intialized
  ********************************************************/
 void RuntimeSystem_roseCreateVariable( const char* name,
-				      const char* mangled_name,
-				      const char* type,
-				      const char* basetype,
-              size_t indirection_level,
-				      unsigned long int address,
-				      unsigned int size,
-				      int init,
-				      const char* fOpen,
-				      const char* class_name,
-				      const char* filename, const char* line,
-				      const char* lineTransformed) {
+                    const char* mangled_name,
+                    const char* type,
+                    const char* basetype,
+                    size_t indirection_level,
+                    unsigned long int address,
+                    unsigned int size,
+                    int init,
+                    const char* fOpen,
+                    const char* class_name,
+                    const char* filename, const char* line,
+                    const char* lineTransformed) {
 
 
-	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
-	rs->checkpoint( SourcePosition(filename,atoi(line), atoi(lineTransformed)));
+    RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
+    CHECKPOINT
 
 
-	string type_name = type;
+    string type_name = type;
     if (type_name == "SgClassType")
         type_name = class_name;
 
@@ -664,12 +712,11 @@ void RuntimeSystem_roseCreateVariable( const char* name,
     // stack arrays are handled in create array, which is given the dimension
     // information
     if(type_name != "SgArrayType") {
-        RsType * rsType;
-        if(string(basetype) != "")
-            rsType = rs->getTypeSystem()->getPointerType( base_type, indirection_level );
-        else
-            rsType = rs->getTypeSystem()->getTypeInfo(type_name);
-
+        RsType * rsType = RuntimeSystem_getRsType(
+            type_name,
+            base_type,
+            indirection_level
+        );
         rs->createVariable(address,name,mangled_name,rsType);
     }
 
@@ -690,31 +737,45 @@ void RuntimeSystem_roseCreateVariable( const char* name,
  ********************************************************/
 void
 RuntimeSystem_roseInitVariable(const char* name,
-			       const char* mangled_name,
-			       const char* typeOfVar2,
-			       const char* baseType,
-             size_t indirection_level,
-			       unsigned long long address,
-			       unsigned int size,
-			       int ismalloc,
-			       const char* filename,
-			       const char* line,
-			       const char* lineTransformed, const char* stmtStr) {
+                    const char* mangled_name,
+                    const char* typeOfVar2,
+                    const char* baseType,
+                    size_t indirection_level,
+                    unsigned long long address,
+                    unsigned int size,
+                    int ismalloc,
+                    int pointer_changed,
+                    const char* filename,
+                    const char* line,
+                    const char* lineTransformed,
+                    const char* stmtStr) {
 
 
 	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
-	rs->checkpoint( SourcePosition(filename,atoi(line),atoi(lineTransformed)));
-	rs->checkMemWrite(address,size);
+	CHECKPOINT
+	rs -> checkMemWrite(
+        address,
+        size,
+        RuntimeSystem_getRsType(
+            std::string( typeOfVar2 ),
+            std::string( baseType ),
+            indirection_level
+        )
+    );
 
-  // This assumes roseInitVariable is called after the assignment has taken
-  // place (otherwise we wouldn't get the new heap address).
-  //
-  // Note that we cannot call registerPointerChange until after the memory
-  // creation is registered, which is done in roseCreateArray.
-  if( ismalloc != 1 && 0 == strcmp( "SgPointerType", typeOfVar2 )) {
-    addr_type heap_address = *((addr_type*) address);
-    rs -> registerPointerChange( address, heap_address );
-  }
+
+    // This assumes roseInitVariable is called after the assignment has taken
+    // place (otherwise we wouldn't get the new heap address).
+    //
+    // Note that we cannot call registerPointerChange until after the memory
+    // creation is registered, which is done in roseCreateArray.
+    if(     ismalloc != 1 
+            && pointer_changed == 1 
+            && 0 == strcmp( "SgPointerType", typeOfVar2 )) {
+
+        addr_type heap_address = *((addr_type*) address);
+        rs -> registerPointerChange( address, heap_address );
+    }
 }
 
 
@@ -731,7 +792,7 @@ void RuntimeSystem_roseAccessVariable( const char* name,
 
 
 	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
-	rs->checkpoint( SourcePosition(filename,atoi(line),atoi(lineTransformed)));
+	CHECKPOINT
 
   // TODO 1 djh: generate read_write_mask for var access, as with array access
   int read_write_mask = 1;
@@ -770,23 +831,23 @@ RuntimeSystem_roseRegisterTypeCall(int count, ...) {
 
 
 	  RsClassType * classType = new RsClassType(nameC,sizeC);
-	  for ( i=5;i<count;i+=5)
+	  for ( i=3;i<count;i+=6)
 	  {
 		  string name = va_arg(vl,const char*);
 		  string type = va_arg(vl,const char*);
-      string base_type = va_arg(vl,const char*);
+		  string base_type = va_arg(vl,const char*);
+		  int indirection_level = va_arg( vl, int );
 		  addr_type offset = va_arg(vl,unsigned long long);
-      size_t size = va_arg(vl,size_t);
+		  size_t size = va_arg(vl,size_t);
 
-      RsType* t;
-      if( type == "SgArrayType" ) { 
-        t = RuntimeSystem::instance()->getTypeSystem()->getArrayType( base_type, size );
-      } else if( type == "SgPointerType" ) {
-        // TODO 1 djh: need indirection level
-        t = RuntimeSystem::instance()->getTypeSystem()->getPointerType( base_type );
-      } else {
-        t = RuntimeSystem::instance()->getTypeSystem()->getTypeInfo( type );
-      }
+		  RsType* t;
+		  if( type == "SgArrayType" ) {
+			  unsigned int dimensionality = va_arg( vl, unsigned int );
+			  i += dimensionality + 1;
+			  t = RuntimeSystem_getRsArrayType( vl, dimensionality, size, base_type );
+		  } else {
+              t = RuntimeSystem_getRsType( type, base_type, indirection_level );
+          }
 		  classType->addMember(name,t,(addr_type)offset);
 		  //cerr << "Registering Member " << name << " of type " << type << " at offset " << offset << endl;
 	  }
@@ -805,9 +866,7 @@ RuntimeSystem_roseFreeMemory(
 ) {
 
 	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
-	rs->checkpoint(
-    SourcePosition( filename, atoi( line ),atoi( lineTransformed ) )
-  );
+    CHECKPOINT
 
 	rs->freeMemory( (addr_type) ptr );
 }
@@ -822,17 +881,13 @@ RuntimeSystem_roseReallocateMemory(
       const char* lineTransformed
 ) {
 
-	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
-	rs->checkpoint(
-    SourcePosition( filename, atoi( line ),atoi( lineTransformed ) )
-  );
+    RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
+    CHECKPOINT
 
-	rs->freeMemory( (addr_type) ptr );
-  rs->createMemory( (addr_type) ptr, size);
+    rs->freeMemory( (addr_type) ptr );
+    rs->createMemory( (addr_type) ptr, size);
 }
 
-
-// vim:sw=2 ts=2 et sta:
 
 extern int RuntimeSystem_original_main(int argc, char**argv, char**envp);
 

@@ -181,7 +181,7 @@ RtedTransformation::buildVariableCreateCallStmt( SgInitializedName* initName, Sg
     appendExpression(arg_list, callName);
     appendExpression(arg_list, callNameExp);
     appendTypeInformation( initName, arg_list );
-    appendAddressAndSize(initName, isSgVarRefExp(var_ref), stmt, arg_list,0);
+    appendAddressAndSize(initName, isSgVarRefExp(var_ref), arg_list,0);
 
 
     appendExpression(arg_list, initBool);
@@ -212,143 +212,6 @@ RtedTransformation::buildVariableCreateCallStmt( SgInitializedName* initName, Sg
     attachComment(exprStmt,comment,PreprocessingInfo::before);
 
     return exprStmt;
-}
-
-
-void RtedTransformation::appendTypeInformation( SgInitializedName* initName, SgExprListExp* arg_list ) {
-    SgType* basetype = NULL;
-
-    if( !initName ) return;
-
-    SgType* type = initName->get_type();
-    ROSE_ASSERT(type);
-
-    SgExpression* basetypeStr = buildString("");
-    size_t indirection_level = 0;
-
-    basetype = type;
-    while( true )
-        if (isSgPointerType( basetype )) {
-            basetype = isSgPointerType( basetype )->get_base_type();
-            ++indirection_level;
-        } else if( isSgArrayType( basetype )) {
-            basetype = isSgArrayType( basetype )->get_base_type();
-            ++indirection_level;
-        } else break;
-
-    if ( indirection_level > 0 )
-        basetypeStr = buildString( basetype->class_name() );
-
-    SgExpression* ctypeStr = buildString(type->class_name());
-    appendExpression(arg_list, ctypeStr);
-    appendExpression(arg_list, basetypeStr);
-    appendExpression(arg_list, buildIntVal( indirection_level ));
-}
-
-void RtedTransformation::appendAddressAndSize(SgInitializedName* initName,
-					      SgExpression* varRefE,
-					      SgStatement* stmt,
-					      SgExprListExp* arg_list,
-					      int appendType
-					      ) {
-
-    SgScopeStatement* scope = NULL;
-    SgType* basetype = NULL;
-
-    if( initName) {
-        SgType* type = initName->get_type();
-        ROSE_ASSERT(type);
-
-        if( isSgPointerType( type ) )
-            basetype = isSgPointerType(type)->get_base_type();
-        scope = initName->get_scope();
-    }
-
-    SgExpression* exp = varRefE;
-    if (    isSgClassType(basetype) ||
-            isSgTypedefType(basetype) ||
-            isSgClassDefinition(scope)) {
-
-        // member -> &( var.member )
-        exp = getUppermostLvalue( varRefE );
-    }
-
-    //int derefCounter=0;//getTypeOfPointer(initName);
-    //SgExpression* fillExp = getExprBelowAssignment(varRefE, derefCounter);
-    //ROSE_ASSERT(fillExp);
-
-	appendAddress( arg_list, exp );
-
-    // consider, e.g.
-    //
-    //      char* s1;
-    //      char s2[20];
-    //
-    //      s1 = s2 + 3;
-    //      
-    //  we only want to access s2..s2+sizeof(char), not s2..s2+sizeof(s2)
-    //
-    //  but we do want to create the array as s2..s2+sizeof(s2)     
-    if( appendType & 2 && isSgArrayType( varRefE->get_type() )) {
-        appendExpression(
-            arg_list,
-            buildSizeOfOp( isSgArrayType( varRefE->get_type() )->get_base_type())
-        );
-    } else {
-        appendExpression(
-            arg_list,
-            buildSizeOfOp( exp )
-        );
-    }
-}
-
-
-void RtedTransformation::appendAddress(SgExprListExp* arg_list, SgExpression* exp) {
-    appendExpression(
-        arg_list,
-        buildCastExp(
-            buildAddressOfOp( exp ),
-            buildUnsignedLongLongType()
-        )
-    );
-}
-
-
-void RtedTransformation::appendBaseType( SgExprListExp* arg_list, SgType* type ) {
-	SgType* base_type = NULL;
-
-	SgArrayType* arr = isSgArrayType( type );
-	SgPointerType* ptr = isSgPointerType( type );
-
-	if( arr )
-		base_type = arr -> get_base_type();
-	else if ( ptr )
-		base_type = ptr -> get_base_type();
-
-	if( base_type )
-        appendExpression(arg_list, buildString(
-			base_type -> class_name()
-		));
-	else
-        appendExpression(arg_list, buildString(""));
-}
-
-void RtedTransformation::appendClassName( SgExprListExp* arg_list, SgType* type ) {
-    SgClassType* sgClass = isSgClassType( type );
-	if( !sgClass ) {
-		SgArrayType* arr = isSgArrayType( type );
-		if( arr )
-			sgClass = isSgClassType( arr -> get_base_type() );
-	}
-
-    if (sgClass) {
-        appendExpression(arg_list, buildString(
-			isSgClassDeclaration( sgClass -> get_declaration() ) 
-				-> get_mangled_name() )
-		);
-    } else {
-        appendExpression(arg_list, buildString(""));
-    }
 }
 
 void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
@@ -401,14 +264,36 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
       SgExpression* callName = buildString(initName->get_mangled_name().str());
       appendExpression(arg_list, callName);
 
-      appendTypeInformation( initName, arg_list );
-      appendAddressAndSize(initName, varRefE, stmt, arg_list,0);
+      // with
+      //    arr[ ix ] = value;
+      // we want the type of (arr[ ix ]), not arr, as that is the type being
+      // written
+      SgExpression* exp = getExprBelowAssignment( varRefE );
+
+      appendTypeInformation(
+            NULL,
+            exp -> get_type(),
+            arg_list
+      );
+      appendAddressAndSize(initName, exp, arg_list,0);
 
 
       SgIntVal* ismallocV = buildIntVal(0);
       if (ismalloc)
         ismallocV = buildIntVal(1);
       appendExpression(arg_list, ismallocV);
+
+      // with
+      //    int* p;
+      // this is a pointer change
+      //    p = (int*) malloc(sizeof(int));
+      // but this is not
+      //    *p = 10;
+      int is_pointer_change = 
+            isSgExprStatement( stmt ) 
+            && isSgPointerType( isSgExprStatement( stmt ) 
+                    -> get_expression() -> get_type() );
+      appendExpression( arg_list, buildIntVal( is_pointer_change ));
 
       SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
       SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
@@ -428,7 +313,7 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
       SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
       string empty_comment = "";
       attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
-      string comment = "RS : Init Variable, paramaters : (name, mangl_name, tpye, basetype, address, size, ismalloc, filename, line, linenrTransformed, error line)";
+      string comment = "RS : Init Variable, paramaters : (name, mangl_name, tpye, basetype, address, size, ismalloc, is_pointer_change, filename, line, linenrTransformed, error line)";
       attachComment(exprStmt,comment,PreprocessingInfo::before);
 
       // insert new stmt (exprStmt) before (old) stmt
@@ -508,10 +393,10 @@ void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE,
       appendExpression(arg_list, callName);
 #if 1
       if (derefExp)
-    	  appendAddressAndSize(initName, derefExp, stmt, arg_list,2);
+    	  appendAddressAndSize(initName, derefExp, arg_list,2);
       else
 #endif
-    	  appendAddressAndSize(initName, varRefE, stmt, arg_list,2);
+    	  appendAddressAndSize(initName, varRefE, arg_list,2);
 
       SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
       SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));

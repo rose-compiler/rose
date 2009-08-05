@@ -25,33 +25,30 @@ RtedTransformation::getStatement(SgExpression* exp) {
 
 
 SgExpression*
-RtedTransformation::getExprBelowAssignment(SgExpression* exp, int& derefCounter) {
-  SgExpression* fillExp = exp;
-  // if the parent is a dot expression (a.ss) then we need to add that one instead
-  // but there could be an array or cast inbetween, therefore we go up until we find a SgAssignOp
-  SgExpression* tmpExp = exp;
-  cerr << " tmpExp : " << tmpExp->unparseToString() << endl;
-  while (!(isSgAssignOp(tmpExp) || isSgAssignInitializer(tmpExp))
-	 && isSgExpression(tmpExp)
-	 ) {
-    fillExp=tmpExp;
-    cerr << "tmpExp : " << tmpExp << "  parent : " << tmpExp->get_parent() << "  expr : " 
-	 << isSgExpression(tmpExp->get_parent()) << 
-      "   assignInit : " << isSgAssignInitializer(tmpExp) << endl;
-    tmpExp=isSgExpression(tmpExp->get_parent());
-    //cerr << " iterate - tmpExp parent : " << tmpExp->unparseToString() << endl;
-    if (isSgPointerDerefExp(tmpExp))
-      derefCounter++;
-    if (isSgPntrArrRefExp(tmpExp)) {
-      cerr <<"Found NULL"<< endl;
-      // dont handle arrays
-      //fixme
+RtedTransformation::getExprBelowAssignment( SgExpression* exp ) {
+    SgExpression* parent = isSgExpression( exp->get_parent() );
+    
+    while(  parent
+            && !(
+                isSgAssignOp( parent )
+                || isSgAndAssignOp( parent ) 
+                || isSgDivAssignOp( parent ) 
+                || isSgIorAssignOp( parent )
+                || isSgLshiftAssignOp( parent )
+                || isSgMinusAssignOp( parent )
+                || isSgModAssignOp( parent )
+                || isSgMultAssignOp( parent )
+                || isSgPlusAssignOp( parent )
+                || isSgPointerAssignOp( parent )
+                || isSgRshiftAssignOp( parent )
+                || isSgXorAssignOp( parent)
+            )) {
+
+        exp = parent;
+        parent = isSgExpression( parent->get_parent() );
     }
-  }
-  if ( !isSgExpression(tmpExp))
-    fillExp=exp;
-  cerr << "returning : " << fillExp << endl;
-  return fillExp;
+
+    return exp;
 }
 
 
@@ -365,4 +362,149 @@ void RtedTransformation::appendFileInfo( Sg_File_Info* file_info, SgExprListExp*
     appendExpression( arg_list, filename );
     appendExpression( arg_list, linenr );
     appendExpression( arg_list, linenrTransformed );
+}
+
+
+void RtedTransformation::appendTypeInformation( SgInitializedName* initName, SgExprListExp* arg_list ) {
+    if( !initName ) return;
+
+    appendTypeInformation( initName, initName -> get_type(), arg_list );
+}
+void RtedTransformation::appendTypeInformation( SgInitializedName* initName, SgType* type, SgExprListExp* arg_list ) {
+    SgType* basetype = NULL;
+    ROSE_ASSERT(type);
+
+    SgExpression* basetypeStr = buildString("");
+    size_t indirection_level = 0;
+
+    basetype = type;
+    while( true )
+        if (isSgPointerType( basetype )) {
+            basetype = isSgPointerType( basetype )->get_base_type();
+            ++indirection_level;
+        } else if( isSgArrayType( basetype )) {
+            basetype = isSgArrayType( basetype )->get_base_type();
+            ++indirection_level;
+        } else break;
+
+    if ( indirection_level > 0 )
+        basetypeStr = buildString( basetype->class_name() );
+
+    SgExpression* ctypeStr = buildString(type->class_name());
+    // arrays in parameters are actually passed as pointers, so we shouldn't
+    // treat them as stack arrays
+    if(     initName
+            && isSgFunctionParameterList( getSurroundingStatement( initName ))
+            &&  type->class_name() == "SgArrayType" )
+        ctypeStr = buildString( "SgPointerType" );
+
+    appendExpression(arg_list, ctypeStr);
+    appendExpression(arg_list, basetypeStr);
+    appendExpression(arg_list, buildIntVal( indirection_level ));
+}
+
+void RtedTransformation::appendAddressAndSize(SgInitializedName* initName,
+					      SgExpression* varRefE,
+					      SgExprListExp* arg_list,
+					      int appendType
+					      ) {
+
+    SgScopeStatement* scope = NULL;
+    SgType* basetype = NULL;
+
+    if( initName) {
+        SgType* type = initName->get_type();
+        ROSE_ASSERT(type);
+
+        if( isSgPointerType( type ) )
+            basetype = isSgPointerType(type)->get_base_type();
+        scope = initName->get_scope();
+    }
+
+    SgExpression* exp = varRefE;
+    if (    isSgClassType(basetype) ||
+            isSgTypedefType(basetype) ||
+            isSgClassDefinition(scope)) {
+
+        // member -> &( var.member )
+        exp = getUppermostLvalue( varRefE );
+    }
+
+	appendAddress( arg_list, exp );
+
+    SgTreeCopy copy;
+    // consider, e.g.
+    //
+    //      char* s1;
+    //      char s2[20];
+    //
+    //      s1 = s2 + 3;
+    //      
+    //  we only want to access s2..s2+sizeof(char), not s2..s2+sizeof(s2)
+    //
+    //  but we do want to create the array as s2..s2+sizeof(s2)     
+    if( appendType & 2 && isSgArrayType( varRefE->get_type() )) {
+        appendExpression(
+            arg_list,
+            buildSizeOfOp(
+                isSgType(
+                    isSgArrayType( varRefE -> get_type() ) 
+                        -> get_base_type() -> copy( copy )))
+        );
+    } else {
+        appendExpression(
+            arg_list,
+            buildSizeOfOp( isSgExpression( exp -> copy( copy )))
+        );
+    }
+}
+
+
+void RtedTransformation::appendAddress(SgExprListExp* arg_list, SgExpression* exp) {
+    SgTreeCopy copy;
+    appendExpression(
+        arg_list,
+        buildCastExp(
+            buildAddressOfOp( isSgExpression( exp -> copy( copy ))),
+            buildUnsignedLongLongType()
+        )
+    );
+}
+
+
+void RtedTransformation::appendBaseType( SgExprListExp* arg_list, SgType* type ) {
+	SgType* base_type = NULL;
+
+	SgArrayType* arr = isSgArrayType( type );
+	SgPointerType* ptr = isSgPointerType( type );
+
+	if( arr )
+		base_type = arr -> get_base_type();
+	else if ( ptr )
+		base_type = ptr -> get_base_type();
+
+	if( base_type )
+        appendExpression(arg_list, buildString(
+			base_type -> class_name()
+		));
+	else
+        appendExpression(arg_list, buildString(""));
+}
+
+void RtedTransformation::appendClassName( SgExprListExp* arg_list, SgType* type ) {
+    SgClassType* sgClass = isSgClassType( type );
+	if( !sgClass ) {
+		SgArrayType* arr = isSgArrayType( type );
+		if( arr )
+			sgClass = isSgClassType( arr -> get_base_type() );
+	}
+
+    if (sgClass) {
+        appendExpression(arg_list, buildString(
+			isSgClassDeclaration( sgClass -> get_declaration() ) 
+				-> get_mangled_name() )
+		);
+    } else {
+        appendExpression(arg_list, buildString(""));
+    }
 }

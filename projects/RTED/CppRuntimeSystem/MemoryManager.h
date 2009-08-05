@@ -170,6 +170,7 @@ class MemoryManager
         /// There a two kinds of violation: change of allocation chunk
         ///                                 change of "typed-chunk" (see example)
         void checkIfSameChunk(addr_type a1, addr_type a2, RsType * t);
+        void checkIfSameChunk(addr_type a1, addr_type a2, size_t size);
 
         /// Reports a violation for all non freed memory locations
         /// call this function at end of program

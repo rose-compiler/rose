@@ -540,7 +540,6 @@ void MemoryManager::checkWrite(addr_type addr, size_t size, RsType * t)
     mt->initialize(from,from + size);
 }
 
-
 bool MemoryManager::isInitialized(addr_type addr, size_t size)
 {
     MemoryType * mt = NULL;
@@ -553,15 +552,18 @@ bool MemoryManager::isInitialized(addr_type addr, size_t size)
 
 void MemoryManager::checkIfSameChunk(addr_type addr1, addr_type addr2, RsType * type)
 {
-    RuntimeSystem * rs = RuntimeSystem::instance();
+	checkIfSameChunk( addr1, addr2, type->getByteSize() );
+}
 
-    size_t typeSize = type->getByteSize();
+void MemoryManager::checkIfSameChunk(addr_type addr1, addr_type addr2, size_t typeSize)
+{
+    RuntimeSystem * rs = RuntimeSystem::instance();
 
     MemoryType * mem1 = NULL;
     MemoryType * mem2 = NULL;
 
-    checkAccess(addr1,typeSize,type,mem1,RuntimeViolation::INVALID_READ);
-    checkAccess(addr2,typeSize,type,mem2,RuntimeViolation::INVALID_READ);
+    checkAccess(addr1,typeSize,NULL,mem1,RuntimeViolation::INVALID_READ);
+    checkAccess(addr2,typeSize,NULL,mem2,RuntimeViolation::INVALID_READ);
     assert(mem1 && mem2);
 
     if(mem1 != mem2)
@@ -579,14 +581,19 @@ void MemoryManager::checkIfSameChunk(addr_type addr1, addr_type addr2, RsType * 
     int off1 = addr1 - mem->getAddress();
     int off2 = addr2 - mem->getAddress();
 
-    if(mem->isArrayPossible(off1,off2,type) )
-        return;
-
     string chunk1 = mem1->getTypeAt(off1,typeSize);
     string chunk2 = mem2->getTypeAt(off2,typeSize);
 
     if(chunk1 == chunk2 && mem1 ==mem2)
         return; //pointer just changed offset in an array
+    else if( mem1 == mem2 && ( chunk1 == "" || chunk2 == "" ))
+        // with the following 
+        //      int* p = (int*) malloc( 10 * sizeof( int ));
+        //      *p = 1;
+        //      p[ 1 ] = 1;
+        // p[ 1 ] should still be the "same chunk" as p[ 0 ], as we simply
+        // haven't written the type information for that element yet
+        return; // unknown type is always legal
 
 
     stringstream ss;

@@ -1,6 +1,71 @@
 #ifndef RTED_DS_H
 #define RTED_DS_H
+#include <rose.h>
+#include <boost/foreach.hpp>
 #include <string>
+
+using namespace SageInterface;
+using namespace SageBuilder;
+
+
+/* -----------------------------------------------------------
+ * This class represents a runtime array
+ * it stores information about the dimension of the array
+ * whether its allocated on the stack or heap
+ * and the size for both dimensions
+ * Finally, there is a bollean to indicate if this array is created with malloc
+ * -----------------------------------------------------------*/
+class RTedArray {
+ public:
+  bool stack;
+  SgInitializedName* initName;
+  SgStatement* surroundingStatement;
+  bool ismalloc;
+  SgExpression* size;
+  std::vector<SgExpression*> indices;
+
+  RTedArray(bool s, SgInitializedName* init, SgStatement* stmt,
+	    bool mal, SgExpression* _size = NULL) {
+      stack = s;
+	  initName = init;
+      surroundingStatement = stmt;
+	  ismalloc=mal;
+      size = _size;
+  }
+  virtual ~RTedArray() {}
+
+  std::vector<SgExpression*> & getIndices() {
+      return indices;
+  }
+
+  int getDimension() {
+      return indices.size();
+  }
+
+  void appendDimensionInformation( SgExprListExp* arg_list ) {
+      appendExpression( arg_list, buildIntVal( getDimension() ));
+      BOOST_FOREACH( SgExpression* expr, getIndices() ) {
+          if ( expr == NULL )
+              expr = buildIntVal( -1 );
+          ROSE_ASSERT( expr );
+          appendExpression( arg_list, expr );
+      }
+  }
+
+  std::string unparseToString() {
+	  std::string res = "";
+      std::vector< SgExpression* >::iterator i = indices.begin();
+      while( i != indices.end() ) {
+          res += (*i) -> unparseToString();
+          ++i;
+          if( i != indices.end() )
+              res += ", ";
+      }
+	  return res;
+  }
+};
+
+
 
 /* -----------------------------------------------------------
  * This class stores information about one Element
@@ -23,6 +88,32 @@ class RtedClassElement {
     ROSE_ASSERT(sgElement);
   }
   virtual ~RtedClassElement(){}
+
+  virtual size_t extraArgSize() { return 0; }
+  virtual void appendExtraArgs( SgExprListExp* arg_list ) {}
+};
+
+class RtedClassArrayElement : public RtedClassElement {
+  private:
+      RTedArray* array;
+  public:
+      RtedClassArrayElement(
+            std::string elementName,
+            std::string elementType,
+            SgDeclarationStatement* sgElement,
+            RTedArray* array
+      ) : RtedClassElement( elementName, elementType, sgElement ) {
+
+          this -> array = array;
+      }
+
+      size_t extraArgSize() { 
+          // dimensionality, then each dimension
+          return (array -> getDimension() + 1);
+      }
+      void appendExtraArgs( SgExprListExp* arg_list ) {
+          array -> appendDimensionInformation( arg_list );
+      }
 };
 
 
@@ -78,52 +169,6 @@ class RTedVariableType {
 };
 #endif
 
-/* -----------------------------------------------------------
- * This class represents a runtime array
- * it stores information about the dimension of the array
- * whether its allocated on the stack or heap
- * and the size for both dimensions
- * Finally, there is a bollean to indicate if this array is created with malloc
- * -----------------------------------------------------------*/
-class RTedArray {
- public:
-  bool stack;
-  SgInitializedName* initName;
-  SgStatement* surroundingStatement;
-  bool ismalloc;
-  SgExpression* size;
-  std::vector<SgExpression*> indices;
-
-  RTedArray(bool s, SgInitializedName* init, SgStatement* stmt,
-	    bool mal, SgExpression* _size = NULL) {
-      stack = s;
-	  initName = init;
-      surroundingStatement = stmt;
-	  ismalloc=mal;
-      size = _size;
-  }
-  virtual ~RTedArray() {}
-
-  std::vector<SgExpression*> & getIndices() {
-      return indices;
-  }
-
-  int getDimension() {
-      return indices.size();
-  }
-
-  std::string unparseToString() {
-	  std::string res = "";
-      std::vector< SgExpression* >::iterator i = indices.begin();
-      while( i != indices.end() ) {
-          res += (*i) -> unparseToString();
-          ++i;
-          if( i != indices.end() )
-              res += ", ";
-      }
-	  return res;
-  }
-};
 
 
 /* -----------------------------------------------------------

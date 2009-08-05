@@ -45,7 +45,9 @@ void RtedTransformation::insertArrayCreateCall(SgVarRefExp* n, RTedArray* value)
   ROSE_ASSERT(value);
   SgInitializedName* initName = n->get_symbol()->get_declaration();
   ROSE_ASSERT(initName);
-  SgStatement* stmt = getSurroundingStatement(n);
+  SgStatement* stmt = value->surroundingStatement;
+  if( !stmt )
+      stmt = getSurroundingStatement(n);
   insertArrayCreateCall(stmt, initName, n, value);
 }
 
@@ -53,7 +55,9 @@ void RtedTransformation::insertArrayCreateCall(SgInitializedName* initName,
 					       RTedArray* value) {
   ROSE_ASSERT(value);
   ROSE_ASSERT(initName);
-  SgStatement* stmt = getSurroundingStatement(initName);
+  SgStatement* stmt = value->surroundingStatement;
+  if( !stmt )
+      stmt = getSurroundingStatement(initName);
 
   SgVarRefExp* var_ref = buildVarRefExp( initName, stmt->get_scope());
   insertArrayCreateCall(stmt, initName, var_ref, value);
@@ -112,8 +116,8 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
       appendExpression(arg_list, plainname);
       appendExpression(arg_list, callNameExp);
 
-      appendTypeInformation( initName, arg_list );
-      appendAddressAndSize(initName, varRef, stmt, arg_list,0); 
+      appendTypeInformation( NULL, getExprBelowAssignment( varRef ) -> get_type(), arg_list );
+      appendAddressAndSize(initName, getExprBelowAssignment( varRef ), arg_list,0); 
 
 
       SgIntVal* ismalloc = buildIntVal( 0 );
@@ -137,16 +141,7 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
       SgExpression* linenrTransformed = buildString("x%%x");
       appendExpression(arg_list, linenrTransformed);
 
-      appendExpression(arg_list, buildIntVal( array -> getDimension() ));
-      std::vector<SgExpression*>::const_iterator it = value.begin();
-      for (; it != value.end(); ++it) {
-          SgExpression* expr = isSgExpression(*it);
-          if (expr == NULL)
-              expr = buildIntVal(-1);
-          ROSE_ASSERT(expr);
-          appendExpression(arg_list, expr);
-      }
-
+      array -> appendDimensionInformation( arg_list );
 
       //      appendExpression(arg_list, buildString(stmt->unparseToString()));
       ROSE_ASSERT(roseCreateArray);
@@ -286,8 +281,12 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
     // always do a bounds check
     read_write_mask |= 4;
 
-    appendAddress( arg_list, arrRefExp -> get_lhs_operand() ); 
-    appendAddressAndSize(NULL, arrRefExp, stmt, arg_list,0); 
+	// for contiguous array, base is at &array[0] whether on heap or on stack
+	SgTreeCopy tree_copy;
+	SgPntrArrRefExp* array_base = isSgPntrArrRefExp( arrRefExp -> copy( tree_copy ));
+	array_base -> set_rhs_operand( buildIntVal( 0 ));
+	appendAddress( arg_list, array_base ); 
+    appendAddressAndSize(NULL, arrRefExp, arg_list,0); 
     appendExpression( arg_list, buildIntVal( read_write_mask ) );
 
     appendExpression(arg_list, linenr);
@@ -379,11 +378,21 @@ void RtedTransformation::visit_isArraySgInitializedName(SgNode* n) {
   SgType* type = initName->get_typeptr();
   ROSE_ASSERT(type);
   SgArrayType* array = isSgArrayType(type);
+
+
+  SgNode* gp = n -> get_parent() -> get_parent();
+  SgFunctionDeclaration* fndec = isSgFunctionDeclaration( gp );
   // something like:
   // 	struct type { int before; char c[ 10 ]; int after; }
   // does not need a createarray call, as the type is registered and any array
   // information will be tracked when variables of that type are created
-  if ( array && !( isSgClassDefinition( n -> get_parent() -> get_parent() ))) {
+  //
+  // ignore arrays in parameter lists as they're actually pointers, not stack
+  // arrays
+  if (  array 
+        && !( isSgClassDefinition( gp ))
+        && !( fndec )) {
+
       RTedArray* arrayRted = new RTedArray(true, initName, NULL, false);
       populateDimensions( arrayRted, initName, array );
       create_array_define_varRef_multiArray_stack[initName] = arrayRted;
@@ -656,15 +665,6 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
 	 << expr_l->unparseToString() << endl;
     ROSE_ASSERT(false);
   }
-
-
-  // varRef contains variable
-  int derefCounter = 0;
-  // derefCounter counts the number of dereferences within the expression
-  // based on that we decide if it is a one or two dim array
-  // if derefCounter == 1 assume 1dim array otherwise 2dim
-  getExprBelowAssignment(varRef, derefCounter);
-
 
   // handle MALLOC
   bool ismalloc=false;

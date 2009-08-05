@@ -198,10 +198,6 @@ COPYING_FILE = @SOURCE_FILE='$(strip $(patsubst rted_source/%, $(rted_path)/%, $
 			echo -n "    not copying fake dependency $(1) ... ";\
 		fi
 
-#TODO 1: comment this magic
-#	must match %.c{pp}
-#	must not match _rose.c{pp}
-#	must not match %.bin
 rted_source/%.c: rted_source $(rted_path)/%.c
 	$(call COPYING_FILE, $@)
 

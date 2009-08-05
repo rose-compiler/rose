@@ -88,7 +88,7 @@ class RtedTransformation : public AstSimpleProcessing {
   void insertReallocateCall( SgFunctionCallExp* exp );
   SgExpression* buildString(std::string name);
   std::string getMangledNameOfExpression(SgExpression* expr);
-  SgExpression* getExprBelowAssignment(SgExpression* exp, int& derefCounter);
+  SgExpression* getExprBelowAssignment(SgExpression* exp);
   void appendFileInfo( SgNode* n, SgExprListExp* arg_list);
   void appendFileInfo( Sg_File_Info* n, SgExprListExp* arg_list);
 
@@ -207,7 +207,8 @@ class RtedTransformation : public AstSimpleProcessing {
   SgProject* parse(int argc, char** argv);
 
   void appendTypeInformation(SgInitializedName* initName, SgExprListExp* arg_list);
-  void appendAddressAndSize(SgInitializedName* initName, SgExpression* varRef, SgStatement* stmt, SgExprListExp* arg_list, int appendType);
+  void appendTypeInformation(SgInitializedName* initName, SgType* type, SgExprListExp* arg_list);
+  void appendAddressAndSize(SgInitializedName* initName, SgExpression* varRef, SgExprListExp* arg_list, int appendType);
   void appendAddress( SgExprListExp* arg_list, SgExpression* exp );
   void appendBaseType( SgExprListExp* arg_list, SgType* type );
   void appendClassName( SgExprListExp* arg_list, SgType* type );

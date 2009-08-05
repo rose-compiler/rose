@@ -113,6 +113,7 @@ void RuntimeSystem_roseInitVariable(const char* name,
 				    unsigned long long address,
 				    unsigned int size,
 				    int ismalloc,
+                    int pointer_changed,
 				    const char* filename, 
 				    const char* line, const char* lineTransformed, 
 				    const char* stmtStr);
