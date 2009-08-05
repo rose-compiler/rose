@@ -99,8 +99,11 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName
       cerr << "++++++++++++ stmt :"<<stmt << " mainFirst:"<<mainFirst<<
       "   initName->get_scope():"<<initName->get_scope() <<
       "   mainFirst->get_scope():"<<mainFirst->get_scope()<<endl;
+      // FIXME 2: stmt == mainFirst is probably wrong for cases where the
+      // statment we want to instrument really is the first one in main (and not
+      // merely one in the global scope)
       if( stmt == mainFirst && initName->get_scope()!=mainFirst->get_scope()) {
-        insertStatementBefore(isSgStatement(stmt), exprStmt);
+		  mainBody -> prepend_statement( exprStmt );
         cerr << "+++++++ insert Before... "<<endl;
       } else {
         // insert new stmt (exprStmt) after (old) stmt
@@ -187,9 +190,6 @@ RtedTransformation::buildVariableCreateCallStmt( SgInitializedName* initName, Sg
     appendExpression(arg_list, initBool);
     appendExpression(arg_list, fileOpen);
 
-	// TODO djh 1: append classname if basetype is SgClassType as well
-	// 		see appendAddressAndSize, which handles the basetype stuff
-
 	appendClassName( arg_list, initName -> get_type() );
 
     SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
@@ -275,6 +275,7 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
             exp -> get_type(),
             arg_list
       );
+	  appendClassName( arg_list, exp -> get_type() );
       appendAddressAndSize(initName, exp, arg_list,0);
 
 
@@ -313,7 +314,7 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
       SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
       string empty_comment = "";
       attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
-      string comment = "RS : Init Variable, paramaters : (name, mangl_name, tpye, basetype, address, size, ismalloc, is_pointer_change, filename, line, linenrTransformed, error line)";
+      string comment = "RS : Init Variable, paramaters : (name, mangl_name, tpye, basetype, class_name, address, size, ismalloc, is_pointer_change, filename, line, linenrTransformed, error line)";
       attachComment(exprStmt,comment,PreprocessingInfo::before);
 
       // insert new stmt (exprStmt) before (old) stmt
@@ -392,8 +393,13 @@ void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE,
       SgExpression* callName = buildString(initName->get_mangled_name().str());
       appendExpression(arg_list, callName);
 #if 1
+      // consider
+      //    int *p;
+      //    *p = 24601;
+      //  It is necessary that &p, sizeof(p) is readable, but not 
+      //  &(*p), sizeof(*p).
       if (derefExp)
-    	  appendAddressAndSize(initName, derefExp, arg_list,2);
+    	  appendAddressAndSize(initName, derefExp -> get_operand(), arg_list,2);
       else
 #endif
     	  appendAddressAndSize(initName, varRefE, arg_list,2);

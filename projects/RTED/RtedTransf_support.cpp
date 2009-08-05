@@ -492,19 +492,23 @@ void RtedTransformation::appendBaseType( SgExprListExp* arg_list, SgType* type )
 }
 
 void RtedTransformation::appendClassName( SgExprListExp* arg_list, SgType* type ) {
-    SgClassType* sgClass = isSgClassType( type );
-	if( !sgClass ) {
-		SgArrayType* arr = isSgArrayType( type );
-		if( arr )
-			sgClass = isSgClassType( arr -> get_base_type() );
-	}
 
-    if (sgClass) {
+    if( isSgClassType( type )) {
         appendExpression(arg_list, buildString(
-			isSgClassDeclaration( sgClass -> get_declaration() ) 
+			isSgClassDeclaration( isSgClassType( type ) -> get_declaration() )
 				-> get_mangled_name() )
 		);
+    } else if( isSgArrayType( type )) {
+
+        appendClassName( arg_list, isSgArrayType( type ) -> get_base_type() );
+
+    } else if( isSgPointerType( type )) {
+
+        appendClassName( arg_list, isSgPointerType( type ) -> get_base_type() );
+
     } else {
-        appendExpression(arg_list, buildString(""));
+
+        appendExpression( arg_list, buildString( "" ));
     }
 }
+

@@ -107,7 +107,13 @@ void RuntimeSystem::violationHandler(RuntimeViolation & vio)  throw (RuntimeViol
 {
     vio.setPosition(curPos);
 
-    (*defaultOutStr) << vio  << endl;
+    // vioAbortInfoMap maps types to bool, giving us two policies, 
+    //      { ignore, exit }
+    // it would be good to add a third policy (warn).  Doing so would require
+    // modifying either the makefile or sed scripts to ensure that the expected
+    // and actual errors still matched.
+    if( vioAbortInfoMap[ vio.getType() ])
+        (*defaultOutStr) << vio  << endl;
 
 
 

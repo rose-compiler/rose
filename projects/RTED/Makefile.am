@@ -453,7 +453,7 @@ run_debug: $(RUN_DEBUG_TARGETS_GLOBAL_C) $(RUN_DEBUG_TARGETS_LOCAL_C) $(RUN_DEBU
 
 run_checkonly: $(RUN_CHECKONLY_TARGETS_GLOBAL_C) $(RUN_CHECKONLY_TARGETS_LOCAL_C) $(RUN_CHECKONLY_TARGETS_GLOBAL_CPP) $(RUN_CHECKONLY_TARGETS_LOCAL_CPP)
 
-run_log: $(RUN_DEBUG_TARGETS_GLOBAL_C) $(RUN_DEBUG_TARGETS_LOCAL_C) $(RUN_DEBUG_TARGETS_GLOBAL_CPP) $(RUN_DEBUG_TARGETS_LOCAL_CPP)
+run_log: $(RUN_LOG_TARGETS_GLOBAL_C) $(RUN_LOG_TARGETS_LOCAL_C) $(RUN_LOG_TARGETS_GLOBAL_CPP) $(RUN_LOG_TARGETS_LOCAL_CPP)
 
 #------------------------------------------------------------------------------
 
@@ -462,64 +462,36 @@ run_log: $(RUN_DEBUG_TARGETS_GLOBAL_C) $(RUN_DEBUG_TARGETS_LOCAL_C) $(RUN_DEBUG_
 # rules to run all tests in a directory listed in RTED_ORIGSOURCES
 #------------------------------------------------------------------------------
 
-#define RUN_TARGET
-#$(1): $(filter $(1)%, $(RUN_TARGETS_GLOBAL_C))
-#@echo $(1) complete
-#
-#endef
+define RUN_TARGET
+$(1): $(filter $(1)%, $(RUN_TARGETS_GLOBAL_C))
+	@echo $(1) complete
+endef
 
-run/C/%: $(filter %, $(RUN_TARGETS_GLOBAL_C))
-	@echo $@ complete
+define RUN_CHECKONLY_TARGET
+$(1): $(filter $(1)%, $(RUN_CHECKONLY_TARGETS_GLOBAL_C))
+	@echo $(1) complete
+endef
 
-run/tests/C%: $(filter %, $(RUN_TARGETS_LOCAL_C))
-	@echo $@ complete
+define RUN_DEBUG_TARGET
+$(1): $(filter $(1)%, $(RUN_DEBUG_TARGETS_GLOBAL_C))
+	@echo $(1) complete
+endef
 
-run/C++/%: $(filter %, $(RUN_TARGETS_GLOBAL_CPP))
-	@echo $@ complete
+define RUN_LOG_TARGET
+$(1): $(filter $(1)%, $(RUN_LOG_TARGETS_GLOBAL_C))
+	@echo $(1) complete
+endef
 
-run/tests/C++/%: $(filter %, $(RUN_TARGETS_LOCAL_CPP))
-	@echo $@ complete
-
-run_debug/C/%: $(filter %, $(RUN_DEBUG_TARGETS_GLOBAL_C))
-	@echo $@ complete
-
-run_debug/tests/C%: $(filter %, $(RUN_DEBUG_TARGETS_LOCAL_C))
-	@echo $@ complete
-
-run_debug/C++/%: $(filter %, $(RUN_DEBUG_TARGETS_GLOBAL_CPP))
-	@echo $@ complete
-
-run_debug/tests/C++/%: $(filter %, $(RUN_DEBUG_TARGETS_LOCAL_CPP))
-	@echo $@ complete
-
-run_checkonly/C/%: $(filter %, $(RUN_CHECKONLY_TARGETS_GLOBAL_C))
-	@echo $@ complete
-
-run_checkonly/tests/C%: $(filter %, $(RUN_CHECKONLY_TARGETS_LOCAL_C))
-	@echo $@ complete
-
-run_checkonly/C++/%: $(filter %, $(RUN_CHECKONLY_TARGETS_GLOBAL_CPP))
-	@echo $@ complete
-
-run_checkonly/tests/C++/%: $(filter %, $(RUN_CHECKONLY_TARGETS_LOCAL_CPP))
-	@echo $@ complete
-
-run_log/C/%: $(filter %, $(RUN_LOG_TARGETS_GLOBAL_C))
-	@echo $@ complete
-
-run_log/tests/C%: $(filter %, $(RUN_LOG_TARGETS_LOCAL_C))
-	@echo $@ complete
-
-run_log/C++/%: $(filter %, $(RUN_LOG_TARGETS_GLOBAL_CPP))
-	@echo $@ complete
-
-run_log/tests/C++/%: $(filter %, $(RUN_LOG_TARGETS_LOCAL_CPP))
-	@echo $@ complete
 
 print_t:
-	@echo $(RUN_TARGETS_LOCAL_C)
+	@echo $(RUN_CHECKONLY_TARGETS_GLOBAL_C)
 
-#${foreach rted_dir, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(rted_path)%, run%, $(rted_dir)}}}}
+# OPTIMIZE: eval/call is slow (make nothing ~1.1s -> 2.3s with run, check,
+# 	log, debug)
+${foreach rted_dir, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(rted_path)%, run%, $(rted_dir)}}}}
+${foreach rted_dir, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_CHECKONLY_TARGET, ${patsubst $(rted_path)%, run_checkonly%, $(rted_dir)}}}}
+${foreach rted_dir, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_LOG_TARGET, ${patsubst $(rted_path)%, run_log%, $(rted_dir)}}}}
+${foreach rted_dir, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_DEBUG_TARGET, ${patsubst $(rted_path)%, run_debug%, $(rted_dir)}}}}
 #${foreach rted_dir, ${filter $(srcdir)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(srcdir)%, %, $(rted_dir)}}}}
 
 #------------------------------------------------------------------------------

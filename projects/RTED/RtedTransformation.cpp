@@ -136,15 +136,6 @@ void RtedTransformation::transform(SgProject* project) {
     insertArrayCreateCall(array_node, array_size);
   }
 
-  cerr << "\n Number of Elements in variable_declarations  : "
-       << variable_declarations.size() << endl;
-  std::vector<SgInitializedName*>::const_iterator it1 =
-    variable_declarations.begin();
-  for (; it1 != variable_declarations.end(); it1++) {
-    SgInitializedName* node = *it1;
-    insertVariableCreateCall(node);
-  }
-
   cerr << "\n Number of Elements in variable_access_varref  : "
        << variable_access_varref.size() << endl;
   std::vector<SgVarRefExp*>::const_iterator itAccess =
@@ -181,6 +172,15 @@ void RtedTransformation::transform(SgProject* project) {
     //		<< array_node->unparseToString() << "  size : "
     //		<< array_size->unparseToString() << endl;
     insertArrayCreateCall(array_node, array_size);
+  }
+
+  cerr << "\n Number of Elements in variable_declarations  : "
+       << variable_declarations.size() << endl;
+  std::vector<SgInitializedName*>::const_iterator it1 =
+    variable_declarations.begin();
+  for (; it1 != variable_declarations.end(); it1++) {
+    SgInitializedName* node = *it1;
+    insertVariableCreateCall(node);
   }
 
   // make sure register types wind up before variable & array create, so that

@@ -61,6 +61,7 @@ class RtedTransformation : public AstSimpleProcessing {
   SgScopeStatement* rememberTopNode;
   SgStatement* mainLast;
   SgStatement* mainFirst;
+  SgBasicBlock* mainBody;
   Sg_File_Info* mainEnd;
   SgFunctionSymbol* roseRtedClose;
   bool mainEndsWithReturn;
@@ -185,6 +186,7 @@ class RtedTransformation : public AstSimpleProcessing {
     mainFirst=NULL;
     mainEnd=NULL;
     mainLast=NULL;
+    mainBody = NULL;
     mainEndsWithReturn=false;
     roseCreateVariable=NULL;
     roseInitVariable=NULL;

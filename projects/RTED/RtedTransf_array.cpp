@@ -77,6 +77,7 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
 
 
 
+  bool global_stmt = false;
   std::vector<SgExpression*> value = array -> getIndices();
   //bool stack = array->stack;
   if (isSgStatement(stmt)) {
@@ -100,11 +101,8 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
     }
     // what is there is an array creation in a global scope
     else if (isSgGlobal(scope)) {
-      cerr <<"RuntimeInstrumentation :: WARNING - Scope not handled!!! : " << name << " : " << scope->class_name() << endl;
-      // We need to add this new statement to the beginning of main
-      // get the first statement in main as stmt
-      stmt = mainFirst;
-      scope=stmt->get_scope();
+      scope = mainBody;
+	  global_stmt = true;
     }
     if (isSgBasicBlock(scope)) {
       // build the function call : runtimeSystem-->createArray(params); ---------------------------
@@ -158,8 +156,8 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
       cerr << "++++++++++++ stmt :"<<stmt << " mainFirst:"<<mainFirst<<
       "   initName->get_scope():"<<initName->get_scope() <<
       "   mainFirst->get_scope():"<<mainFirst->get_scope()<<endl;
-      if( stmt == mainFirst && initName->get_scope()!=mainFirst->get_scope()) {
-        insertStatementBefore(isSgStatement(stmt), exprStmt);
+      if( global_stmt && initName->get_scope()!=mainFirst->get_scope()) {
+		  mainBody -> prepend_statement( exprStmt );
         cerr << "+++++++ insert Before... "<<endl;
       } else {
         // insert new stmt (exprStmt) after (old) stmt
@@ -462,7 +460,12 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
   else if (isSgAssignOp(parent)) {
     // make sure that we came from the right hand side of the assignment
     SgExpression* right = isSgAssignOp(parent)->get_rhs_operand();
-    if (right==last)
+	// consider
+	//		int arr[2];
+	//		int *x = arr;
+	// the assignment is not a var ref of arr since arr's address is statically
+	// determined
+    if ( right == last && !isSgArrayType( right -> get_type() ))
       variable_access_varref.push_back(n);
     hitRoof=true;
     //cerr << "*********************************** DEBUGGING   parent (assign) = " << parent->class_name() << endl;

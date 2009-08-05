@@ -185,6 +185,7 @@ void RtedTransformation::visit_checkIsMain(SgNode* n)
         // insert call to close before last statement (could be return)
         mainLast = last;
         mainFirst = first;
+        mainBody = block;
         mainEnd = block->get_endOfConstruct();
     }
 

@@ -109,23 +109,39 @@ RsArrayType* RuntimeSystem_getRsArrayType(
   return static_cast<RsArrayType*>( type );
 }
 
+
 RsType* RuntimeSystem_getRsType(
         std::string type,
         std::string base_type,
+        std::string class_name,
         size_t indirection_level) {
 
-     if( type == "SgPointerType" ) {
-         assert( indirection_level > 0 );
-         return RuntimeSystem::instance() -> getTypeSystem() 
-                -> getPointerType( base_type, indirection_level );
-     } else {
-         return RuntimeSystem::instance() -> getTypeSystem()
-                -> getTypeInfo( type );
-     }
+    if( type == "SgClassType" )
+        type = class_name;
+    else if( base_type == "SgClassType" ) {
+        base_type = class_name;
+        assert( base_type != "" );
+    }
+    assert( type != "" );
 
+
+    if( type == "SgPointerType" ) {
+        assert( indirection_level > 0 );
+        return RuntimeSystem::instance() -> getTypeSystem() 
+            -> getPointerType( base_type, indirection_level );
+    } else {
+        return RuntimeSystem::instance() -> getTypeSystem()
+            -> getTypeInfo( type );
+    }
 }
 
 
+// FIXME 3: This is not threadsafe.  At the moment, because createVariable and
+// createArray are called for stack and pointer arrays and because
+// createVariable can't call rs -> createArray without the dimension
+// information, this hack exists.  It will not be necessary after the
+// transformation is refactored.
+bool initialize_next_array = false;
 /*********************************************************
  * This function is called when an array is created
  * name      : variable name
@@ -164,6 +180,11 @@ RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name,
         RsArrayType* type = RuntimeSystem_getRsArrayType( vl, dimensionality, size, base_type );
 
         rs -> createArray( address, name, mangl_name, type );
+
+        if( initialize_next_array ) {
+            rs -> checkMemWrite( address, size );
+            initialize_next_array = false;
+        }
     } else if( type_name == "SgPointerType") {
         addr_type heap_address = *((addr_type*) address);
         rs -> createMemory( heap_address, mallocSize );
@@ -171,8 +192,9 @@ RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name,
             address,
             size,
             RuntimeSystem_getRsType(
-                std::string( type ),
-                std::string( basetype ),
+                type,
+                basetype,
+                class_name,
                 indirection_level
             )
         );
@@ -181,7 +203,6 @@ RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name,
         cerr << "Unexpected Array Type: " << type << endl;
         exit( 1 );
     }
-
 }
 
 /*********************************************************
@@ -703,29 +724,29 @@ void RuntimeSystem_roseCreateVariable( const char* name,
     string type_name = type;
     if (type_name == "SgClassType")
         type_name = class_name;
-
-    string base_type = basetype;
-    if (base_type == "SgClassType")
-        base_type = class_name;
-
+    assert( type_name != "" );
 
     // stack arrays are handled in create array, which is given the dimension
     // information
     if(type_name != "SgArrayType") {
         RsType * rsType = RuntimeSystem_getRsType(
             type_name,
-            base_type,
+            basetype,
+            class_name,
             indirection_level
         );
         rs->createVariable(address,name,mangled_name,rsType);
     }
 
 
-    if (1 == init)
-    {
+    if ( 1 == init ) {
         // e.g. int x = 3
         // we should flag &x..&x+sizeof(x) as initialized
-        rs->checkMemWrite(address, size);
+
+        if( type_name == "SgArrayType" )
+            initialize_next_array = true;
+        else
+            rs -> checkMemWrite( address, size );
     }
 }
 
@@ -741,6 +762,7 @@ RuntimeSystem_roseInitVariable(const char* name,
                     const char* typeOfVar2,
                     const char* baseType,
                     size_t indirection_level,
+                    const char* class_name,
                     unsigned long long address,
                     unsigned int size,
                     int ismalloc,
@@ -757,8 +779,9 @@ RuntimeSystem_roseInitVariable(const char* name,
         address,
         size,
         RuntimeSystem_getRsType(
-            std::string( typeOfVar2 ),
-            std::string( baseType ),
+            typeOfVar2,
+            baseType,
+            class_name,
             indirection_level
         )
     );
@@ -846,7 +869,8 @@ RuntimeSystem_roseRegisterTypeCall(int count, ...) {
 			  i += dimensionality + 1;
 			  t = RuntimeSystem_getRsArrayType( vl, dimensionality, size, base_type );
 		  } else {
-              t = RuntimeSystem_getRsType( type, base_type, indirection_level );
+              // FIXME 2: should have class name
+              t = RuntimeSystem_getRsType( type, base_type, "", indirection_level );
           }
 		  classType->addMember(name,t,(addr_type)offset);
 		  //cerr << "Registering Member " << name << " of type " << type << " at offset " << offset << endl;
