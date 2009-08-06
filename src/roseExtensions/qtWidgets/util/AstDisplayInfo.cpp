@@ -2,7 +2,7 @@
 
 
 #include "AstDisplayInfo.h"
-
+#include <string>
 namespace AstDisplayInfo
 {
     NodeType getType(SgNode* node)
@@ -22,41 +22,58 @@ namespace AstDisplayInfo
         else if (sgNSDef)              return NAMESPACE;
         else if (sgAsmFunctionDecl)    return FUNCTION;
         else                           return UNKNOWN;
-
     }
 
 
     QString getShortNodeNameDesc(SgNode * node)
     {
         SgClassDefinition * sgClassDefinition        = isSgClassDefinition(node);
+        SgClassDeclaration* sgClassDeclaration       = isSgClassDeclaration(node);
         SgFunctionDefinition * sgFunctionDefinition  = isSgFunctionDefinition(node);
         SgFunctionDeclaration * sgFunctionDecl       = isSgFunctionDeclaration(node);
         SgNamespaceDefinitionStatement * sgNSDef     = isSgNamespaceDefinitionStatement(node);
+        SgNamespaceDeclarationStatement * sgNsDecl   = isSgNamespaceDeclarationStatement(node);
+
+
+        SgFile * sgFile                              = isSgFile(node);
+        SgProject * sgProject                        = isSgProject(node);
+
+        SgVariableDeclaration * sgVarDecl            = isSgVariableDeclaration(node);
+        SgInitializedName * sgInitName               = isSgInitializedName(node);
+
+        SgTypedefDeclaration * sgTypeDefDecl         = isSgTypedefDeclaration(node);
+        SgEnumDeclaration *   sgEnumDecl             = isSgEnumDeclaration(node);
+        SgPragmaDeclaration * sgPragmaDecl           = isSgPragmaDeclaration(node);
 
         //Assembler Nodes
-        SgAsmFunctionDeclaration * sgAsmFunctionDecl= isSgAsmFunctionDeclaration(node);
+        SgAsmFunctionDeclaration * sgAsmFunctionDecl  = isSgAsmFunctionDeclaration(node);
 
-        SgName name;
+        std::string s;
 
-
-        if(sgClassDefinition)          name = sgClassDefinition->get_declaration()->get_name();
-        else if (sgFunctionDefinition) name = sgFunctionDefinition->get_declaration()->get_name();
-        else if (sgNSDef)              name = sgNSDef->get_namespaceDeclaration()->get_name();
-        else if (sgFunctionDecl)       name = sgFunctionDecl->get_name();
-        else if (sgAsmFunctionDecl)    name = sgAsmFunctionDecl->get_name();
+        if(sgClassDefinition)          s = sgClassDefinition->get_declaration()->get_name().getString();
+        else if (sgClassDeclaration)   s = sgClassDeclaration->get_name().getString();
+        else if (sgFunctionDefinition) s = sgFunctionDefinition->get_declaration()->get_name().getString();
+        else if (sgNSDef)              s = sgNSDef->get_namespaceDeclaration()->get_name().getString();
+        else if (sgNsDecl)             s = "namespace " + sgNsDecl->get_name().getString();
+        else if (sgFunctionDecl)       s = sgFunctionDecl->get_name().getString();
+        else if (sgAsmFunctionDecl)    s = StringUtility::demangledName( sgAsmFunctionDecl->get_name());
+        else if (sgTypeDefDecl)        s = "typedef " + sgTypeDefDecl->get_name().getString();
+        else if (sgEnumDecl)           s = "enum " + sgEnumDecl->get_name().getString();
+        else if (sgPragmaDecl)         s = "pragma " + sgPragmaDecl->get_pragma()->get_name();
+        else if (sgVarDecl)            s = "Variable Declaration";
+        else if (sgInitName)           s = sgInitName->get_name().getString();
+        else if (sgFile)               s = sgFile->get_sourceFileNameWithoutPath();
+        else if (sgProject)            s = "Project";
         else                           return getShortNodeTypeDesc(node);
 
-        const std::string & s = name.getString();
 
-        if (sgAsmFunctionDecl)
-            return QString( StringUtility::demangledName(s).c_str());
-        else
-            return QString(s.c_str());
+        return QString(s.c_str());
     }
 
     QString getShortNodeTypeDesc(SgNode * node)
     {
         SgClassDefinition * sgClassDefinition       = isSgClassDefinition(node);
+
         SgFunctionDefinition * sgFunctionDefinition = isSgFunctionDefinition(node);
         SgFunctionDeclaration * sgFunctionDecl      = isSgFunctionDeclaration(node);
         SgNamespaceDefinitionStatement * sgNSDef    = isSgNamespaceDefinitionStatement(node);
@@ -81,22 +98,49 @@ namespace AstDisplayInfo
     QIcon nodeIcon(SgNode * node)
     {
         SgClassDefinition * sgClassDefinition       = isSgClassDefinition(node);
+        SgClassDeclaration* sgClassDeclaration      = isSgClassDeclaration(node);
+
         SgFunctionDefinition * sgFunctionDefinition = isSgFunctionDefinition(node);
         SgFunctionDeclaration * sgFunctionDecl      = isSgFunctionDeclaration(node);
         SgNamespaceDefinitionStatement * sgNSDef    = isSgNamespaceDefinitionStatement(node);
+        SgNamespaceDeclarationStatement * sgNsDecl  = isSgNamespaceDeclarationStatement(node);
+
         SgForStatement * sgForStatement             = isSgForStatement(node);
         SgWhileStmt * sgWhileStatement              = isSgWhileStmt(node);
+
+        SgTypedefDeclaration * sgTypeDefDecl        = isSgTypedefDeclaration(node);
+        SgEnumDeclaration *   sgEnumDecl            = isSgEnumDeclaration(node);
+        SgPragmaDeclaration * sgPragmaDecl          = isSgPragmaDeclaration(node);
+
+        SgVariableDeclaration * sgVarDecl           = isSgVariableDeclaration(node);
+        SgInitializedName * sgInitName              = isSgInitializedName(node);
+
+
+        SgSourceFile * sgSrcFile                    = isSgSourceFile(node);
+        SgBinaryFile * sgBinFile                    = isSgBinaryFile(node);
+        SgProject * sgProject                       = isSgProject(node);
+
 
         //Assembler Nodes
         SgAsmFunctionDeclaration * sgAsmFunctionDecl= isSgAsmFunctionDeclaration(node);
 
         if      (sgClassDefinition)     return QIcon(":/util/NodeIcons/class.gif");
+        else if (sgClassDeclaration)    return QIcon(":/util/NodeIcons/class.gif");
         else if (sgFunctionDefinition)  return QIcon(":/util/NodeIcons/function.gif");
         else if (sgFunctionDecl)        return QIcon(":/util/NodeIcons/function.gif");
         else if (sgNSDef)               return QIcon(":/util/NodeIcons/namespace.gif");
+        else if (sgNsDecl)              return QIcon(":/util/NodeIcons/namespace.gif");
         else if (sgForStatement)        return QIcon(":/util/NodeIcons/loop.png");
         else if (sgWhileStatement)      return QIcon(":/util/NodeIcons/loop.png");
         else if (sgAsmFunctionDecl)     return QIcon(":/util/NodeIcons/function.gif");
+        else if (sgSrcFile)             return QIcon(":/util/NodeIcons/sourcefile.gif");
+        else if (sgBinFile)             return QIcon(":/util/NodeIcons/binaryfiles.gif");
+        else if (sgProject)             return QIcon(":/util/NodeIcons/project.gif");
+        else if (sgTypeDefDecl)         return QIcon(":/util/NodeIcons/typedef.gif");
+        else if (sgEnumDecl)            return QIcon(":/util/NodeIcons/enum.gif");
+        else if (sgPragmaDecl)          return QIcon(":/util/NodeIcons/pragma.gif");
+        else if (sgVarDecl)             return QIcon(":/util/NodeIcons/variable.gif");
+        else if (sgInitName)            return QIcon(":/util/NodeIcons/variable.gif");
         else                            return QIcon();
     }
 

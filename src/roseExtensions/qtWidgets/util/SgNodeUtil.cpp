@@ -115,7 +115,8 @@ bool findNextInstruction(SgNode * node, rose_addr_t & out)
        mn != "call" &&
        mn != "je" &&
        mn != "jle" &&
-       mn != "jge")
+       mn != "jge" &&
+       mn != "jl")
     {
         return false;
     }

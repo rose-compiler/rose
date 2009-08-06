@@ -129,6 +129,7 @@ void RoseFrontendTask::start()
     {
         state = FINISHED_ERROR;
         emit finished();
+        return;
     }
 
     fflush( stdout );

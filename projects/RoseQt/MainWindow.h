@@ -36,24 +36,6 @@ class MainWindow : public QMainWindow
         virtual ~MainWindow();
 
     public slots:
-        void setFilter1( AstFilterInterface *filter );
-        void setFilter2( AstFilterInterface *filter );
-
-        /*void on_actionNewAssemblerView_triggered();
-        void on_actionNewCodeEditor_triggered();
-        void on_actionNewGraphWidget_triggered();
-        void on_actionNewMetricsKiviat_triggered();
-        void on_actionNewAstBrowser_triggered();
-        void on_actionNewPropertyView_triggered();
-        void on_actionNewCallGraphWidget_triggered();
-        void on_actionNewSrcBinView_triggered();
-        void on_actionNewSourceBox_triggered();*/
-
-        void on_actionSaveAs_triggered();
-        void on_actionOpen_triggered();
-
-        //void on_cmdExecScript_clicked();
-        /*void on_cmdSubmitTest_clicked();*/
 
         void on_subWindowArea_subWindowActivated(QMdiSubWindow * wnd);
         void on_actionEditorSettings_triggered();
@@ -63,18 +45,10 @@ class MainWindow : public QMainWindow
     protected:
 
         Ui::MainWindow ui;
-        AstFilterInterface *f1;
-        AstFilterInterface *f2;
 
         virtual void closeEvent( QCloseEvent * e);
 
     private:
-        void restoreMdiState();
-        void saveMdiState();
-
-        void emitFilterChanged();
-
-        //QMdiSubWindow* addMdiSubWidget(QWidget * widget, const QString & caption);
         void buildupEditorToolbar(QWidget * w);
         ProjectManager *pm;
 

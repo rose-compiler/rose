@@ -297,38 +297,13 @@ void CompassMainWindow::on_tblViolations_clicked(const QModelIndex & proxyInd)
             continue;
 
         for(int line= vio->getLineStart(); line <= vio->getLineEnd(); line++)
-            ui->codeEdit->markAsWarning(line-1);
+            ui->codeEdit->markAsWarning(line);
 
 
         if( vio->getLineEnd() < vio->getLineStart())
-            ui->codeEdit->markAsWarning(vio->getLineStart() -1);
+            ui->codeEdit->markAsWarning(vio->getLineStart());
 
     }
-
-    /*    QLineMarksInfoCenter * lm = QLineMarksInfoCenter::instance();
-    QLineMark mark("",0,lm->markTypeId("warning"));
-    for(int i=0; i< checker->getNumViolations(); i++)
-    {
-        const CompassViolation * vio = checker->getViolation(i);
-
-
-        for(int line= vio->getLineStart(); line <= vio->getLineEnd(); line++)
-        {
-            mark.file = vio->getFilename().c_str();
-            mark.line=line;
-            lm->addLineMark(mark);
-            //ui->codeEdit->markAsWarning(line-1);
-        }
-
-        if( vio->getLineEnd() < vio->getLineStart())
-        {
-            mark.file = vio->getFilename().c_str();
-            mark.line=vio->getLineStart();
-            lm->addLineMark(mark);
-            //ui->codeEdit->markAsWarning(vio->getLineStart() -1);
-        }
-
-    }*/
 
 }
 

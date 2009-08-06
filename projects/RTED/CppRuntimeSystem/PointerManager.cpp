@@ -75,7 +75,7 @@ void PointerInfo::setTargetAddress(addr_type newAddr, bool doChecks)
     // If a pointer points to that memory region, assume that his mem-region if of right type
     // even if actual error would only happen on deref
     if(newMem)
-        newMem->accessMemWithType(newAddr-newMem->getAddress(),baseType);
+        newMem->registerMemType(newAddr-newMem->getAddress(),baseType);
 
 
     // if old target was valid
@@ -130,7 +130,7 @@ void PointerManager::createDereferentiableMem(addr_type sourceAddress, RsType * 
 
 void PointerManager::createPointer(addr_type baseAddr, RsType * type)
 {
-    // If type is a pointer regsiter it
+    // If type is a pointer register it
     RsPointerType * pt = dynamic_cast<RsPointerType*>(type);
     if(pt)
         createDereferentiableMem(baseAddr,pt->getBaseType());
@@ -197,7 +197,10 @@ void PointerManager::registerPointerChange( addr_type src, addr_type target, boo
 {
     PointerInfo dummy(src);
     PointerSetIter i = pointerInfoSet.find(&dummy);
-    assert(pointerInfoSet.find(&dummy) != pointerInfoSet.end()); //forgot to call createPointer?
+
+    //forgot to call createPointer? , or automatic pointer registration in MemManager is wrong
+    assert(pointerInfoSet.find(&dummy) != pointerInfoSet.end());
+
     PointerInfo * pi = *i;
 
     addr_type oldTarget = pi->getTargetAddress();

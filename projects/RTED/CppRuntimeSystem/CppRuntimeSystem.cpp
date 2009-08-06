@@ -180,31 +180,25 @@ void RuntimeSystem::createMemory(addr_type addr, size_t size, bool onStack, RsTy
 {
     // the created MemoryType is freed by memory manager
     MemoryType * mt = new MemoryType(addr,size,curPos,onStack);
+    memManager.allocateMemory(mt);
 
     if(onStack)
     {
         if(type)
         {
-            mt->accessMemWithType(0,type);
+            mt->registerMemType(0,type);
             assert(type->getByteSize() == size);
         }
         else //TODO make error to assert, if registration is done correct
             cerr << "Warning: Stack Memory registered without type!" << endl;
     }
-
-    memManager.allocateMemory(mt);
 }
+
 
 void RuntimeSystem::createStackMemory(addr_type addr, size_t size,const std::string & strType)
 {
-    MemoryType * mt = new MemoryType(addr,size,curPos,true);
-
     RsType * type = typeSystem.getTypeInfo(strType);
-    assert(type);
-
-    mt->accessMemWithType(0,type);
-
-    memManager.allocateMemory(mt);
+    createMemory(addr,size,true,type);
 }
 
 

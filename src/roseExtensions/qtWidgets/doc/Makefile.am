@@ -1,0 +1,4 @@
+
+
+docs:
+	doxygen doc.doxyfile

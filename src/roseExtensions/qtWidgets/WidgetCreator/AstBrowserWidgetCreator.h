@@ -7,6 +7,9 @@
 class QWidget;
 class QEvent;
 
+/**
+ * \brief Creator for AstBrowserWidget - see SubWindowFactory
+ */
 class AstBrowserWidgetCreator
     : public WidgetCreatorInterface
 {

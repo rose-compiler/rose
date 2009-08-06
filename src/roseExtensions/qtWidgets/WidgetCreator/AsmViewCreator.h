@@ -7,6 +7,9 @@
 class QWidget;
 class QEvent;
 
+/**
+ * \brief Creator for AsmView - see SubWindowFactory
+ */
 class AsmViewCreator
     : public WidgetCreatorInterface
 {

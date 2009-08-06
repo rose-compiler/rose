@@ -7,6 +7,9 @@
 class QWidget;
 class QEvent;
 
+/**
+ * \brief Creator for CallGraphWidget - see SubWindowFactory
+ */
 class CallGraphWidgetCreator
     : public WidgetCreatorInterface
 {

@@ -15,6 +15,14 @@ class TaskList;
 
 class QMouseEvent;
 
+/**
+ * \brief Display of ProjectManager Status
+ *
+ *  \image html ProjectView.jpg
+ *
+ *  - Shows the state of the ProjectManager, user can add/remove files to project, edit command line options etc.
+ *  - BAstNodes integrated to show an outline of the loaded source files
+ */
 class ProjectView : public RoseTreeView
 {
     Q_OBJECT

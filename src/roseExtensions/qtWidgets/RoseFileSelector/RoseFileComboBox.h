@@ -8,7 +8,7 @@ class SgProject;
 class AstFilterInterface;
 
 /**
- * 	ComboBox which displays all files associated with an SgProject
+ * 	\brief ComboBox which displays all files associated with an SgProject
  *  User can select a file, and according signals are emitted
  */
 class RoseFileComboBox : public QComboBox

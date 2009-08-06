@@ -3,6 +3,12 @@
 
 #include "DisplayNode.h"
 
+/**
+ * \brief Display Information for a Graph Node
+ *
+ *   This class currently is used to display CallGraphs
+ *   Every node is responsible for deleting it's outgoing edges, so that a graph can be cleaned up in a clean way without double free's
+ */
 class DisplayGraphNode : public DisplayNode
 {
     public:
@@ -65,6 +71,14 @@ class SgGraphNode;
 class rose_graph_integer_edge_hash_multimap;
 class rose_graph_integer_node_hash_map;
 
+/**
+ * \brief Manages the display and layouting of a Graph
+ *
+ *  This class manages a graph consisting of DisplayGraphNode 's
+ *  The graph can be displayed and layouted in a QGraphicsScene.
+ *  For layouting a spring embedder algorithm is used, additional a control widget can be rendered into the QGraphicsView
+ *  which can be used to control parameters of the spring embedder
+ */
 class DisplayGraph : public QObject
 {
     Q_OBJECT
@@ -95,8 +109,6 @@ class DisplayGraph : public QObject
 
         static DisplayGraph * generateTestGraph(QGraphicsScene * sc,
                                                 QObject * par=0);
-
-
 
         virtual void deleteNode(DisplayNode * n);
 
@@ -160,6 +172,14 @@ class DisplayGraph : public QObject
 };
 
 
+/**
+ * \brief Display information for a callgraph
+ *
+ *  Extends the DisplayGraph class to build display a CallGraph
+ *  The class is written in a way that partial callgraphs can be displayed
+ *  i.e. beginning from a node, all nodes are added with have a distance (measured in edges) nearer than a threshold
+ *
+ */
 class DisplayCallGraph : public DisplayGraph
 {
     public:
@@ -176,6 +196,7 @@ class DisplayCallGraph : public DisplayGraph
         /// if node is not a function declaration or definition the function does nothing
         void addFunction(SgNode * node, int depth);
 
+        /// set the call graph pointer which is used when addFunction() is called
         void setCg(SgIncidenceDirectedGraph * cg_);
 
         void clear();

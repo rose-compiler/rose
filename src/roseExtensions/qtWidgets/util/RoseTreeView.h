@@ -16,7 +16,7 @@ class AstFilterInterface;
 
 
 /**
- * TreeView displaying an ItemTreeModel
+ * \brief TreeView displaying an ItemTreeModel
  *
  * Features:
  *  - Drag and Drop of SgNodes (when model provides data for SgNodeRole)
@@ -45,6 +45,7 @@ class RoseTreeView : public QTreeView
 
         void addArrow(const QModelIndex & i1, const QModelIndex & i2);
         void removeAllArrows();
+
     public slots:
         virtual void setNode(SgNode * node);
         virtual void setFilter(AstFilterInterface * filter);
@@ -66,8 +67,9 @@ class RoseTreeView : public QTreeView
 
 
     protected slots:
-        virtual void viewClicked(const QModelIndex & ind);
-        void viewDoubleClicked( const QModelIndex & ind );
+        virtual void viewClicked      (const QModelIndex & ind);
+        void         viewDoubleClicked( const QModelIndex & ind );
+
 
     protected:
         virtual void dragEnterEvent(QDragEnterEvent * ev);

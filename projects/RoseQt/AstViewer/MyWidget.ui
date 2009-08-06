@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MyWidget</class>
+ <widget class="QWidget" name="MyWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>530</width>
+    <height>610</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout">
+   <item>
+    <widget class="BAstView" name="bAstView"/>
+   </item>
+   <item>
+    <widget class="NodeInfoWidget" name="nodeInfoWidget"/>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>BAstView</class>
+   <extends>QTreeView</extends>
+   <header>BAstView.h</header>
+  </customwidget>
+  <customwidget>
+   <class>NodeInfoWidget</class>
+   <extends>PropertyTreeWidget</extends>
+   <header>NodeInfoWidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>PropertyTreeWidget</class>
+   <extends>QTreeView</extends>
+   <header>PropertyTreeWidget.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>bAstView</sender>
+   <signal>nodeActivated(SgNode*)</signal>
+   <receiver>nodeInfoWidget</receiver>
+   <slot>setNode(SgNode*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>164</x>
+     <y>279</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>409</x>
+     <y>279</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

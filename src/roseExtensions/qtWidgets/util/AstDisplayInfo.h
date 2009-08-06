@@ -5,7 +5,7 @@
 #include <QIcon>
 
 /**
- * Returns display information for SgNodes
+ * \brief Returns display information for SgNodes
  */
 namespace AstDisplayInfo
 {

@@ -539,6 +539,7 @@ void testPointerChanged()
         try{ rs->registerPointerChange("mangled_p1_to_10",18,true); }
         TEST_CATCH(RuntimeViolation::POINTER_CHANGED_MEMAREA )
 
+        rs->checkpoint(SourcePosition());
         rs->registerPointerChange("mangled_p1_to_18",18+sizeof(int));
 
         rs->freeMemory(10);
@@ -715,6 +716,7 @@ void testDoubleArrayHeapAccess()
 
     // ptr[ 0 ] = (int*) malloc( 2 * sizeof( int ));
     rs -> checkMemWrite( heap_addr_outer, sizeof( int* ), int_ptr );
+    rs->checkpoint(SourcePosition());
     rs -> registerPointerChange( heap_addr_outer, heap_addr_inner );
 
 
@@ -1043,9 +1045,9 @@ void testTypeSystemDetectNested()
     const addr_type ADDR = 42;
     rs->createMemory(ADDR,sizeof(A)+sizeof(B));
     MemoryType * mt = rs->getMemManager()->getMemoryType(ADDR);
-    mt->accessMemWithType(0,ts->getTypeInfo("A"));
-    mt->accessMemWithType(sizeof(A),ts->getTypeInfo("B"));
-    mt->accessMemWithType(sizeof(A)+offsetof(A,a3),
+    mt->registerMemType(0,ts->getTypeInfo("A"));
+    mt->registerMemType(sizeof(A),ts->getTypeInfo("B"));
+    mt->registerMemType(sizeof(A)+offsetof(A,a3),
                           ts->getTypeInfo("SgTypeDouble"));
 
 
@@ -1060,16 +1062,16 @@ void testTypeSystemDetectNested()
     */
 
     //Access to padded area
-    try {mt->accessMemWithType(offsetof(A,a2)+1,ts->getTypeInfo("SgTypeChar")); }
+    try {mt->registerMemType(offsetof(A,a2)+1,ts->getTypeInfo("SgTypeChar")); }
     TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
 
     //Wrong type
-    try {mt->accessMemWithType(0,ts->getTypeInfo("B")); }
+    try {mt->registerMemType(0,ts->getTypeInfo("B")); }
     TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
 
     //Wrong basic type
-    mt->accessMemWithType(offsetof(A,a2),ts->getTypeInfo("SgTypeChar"));
-    try {mt->accessMemWithType(offsetof(A,a2),ts->getTypeInfo("SgTypeInt")); }
+    mt->registerMemType(offsetof(A,a2),ts->getTypeInfo("SgTypeChar"));
+    try {mt->registerMemType(offsetof(A,a2),ts->getTypeInfo("SgTypeInt")); }
     TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
 
     rs->log() << "Type System Status after test" << endl;
@@ -1098,16 +1100,16 @@ void testTypeSystemMerge()
 
         MemoryType * mt = rs->getMemManager()->getMemoryType(ADDR);
         //first part in mem is a double
-        mt->accessMemWithType(0,ts->getTypeInfo("SgTypeDouble"));
+        mt->registerMemType(0,ts->getTypeInfo("SgTypeDouble"));
 
         //then two ints are accessed
-        mt->accessMemWithType(sizeof(double)+offsetof(A,a1),ts->getTypeInfo("SgTypeInt"));
-        mt->accessMemWithType(sizeof(double)+offsetof(A,a2),ts->getTypeInfo("SgTypeInt") );
+        mt->registerMemType(sizeof(double)+offsetof(A,a1),ts->getTypeInfo("SgTypeInt"));
+        mt->registerMemType(sizeof(double)+offsetof(A,a2),ts->getTypeInfo("SgTypeInt") );
         //then the same location is accessed with an struct of two int -> has to merge
-        mt->accessMemWithType(sizeof(double),typeA);
+        mt->registerMemType(sizeof(double),typeA);
 
         // because of struct access it is known that after the two ints a float follows -> access with int failes
-        try {mt->accessMemWithType(sizeof(double)+offsetof(A,a3),ts->getTypeInfo("SgTypeInt")); }
+        try {mt->registerMemType(sizeof(double)+offsetof(A,a3),ts->getTypeInfo("SgTypeInt")); }
         TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
 
 
@@ -1129,7 +1131,7 @@ extern int RuntimeSystem_original_main(int argc, char ** argv, char ** envp)
 #if 1
         rs->setOutputFile("test_output.txt");
 #else
-        testTypeSystemMerge();
+        testPointerChanged();
         cerr<< endl << "!!!!  Success  !!!! " << endl << endl;
         abort();
 #endif
@@ -1161,7 +1163,7 @@ extern int RuntimeSystem_original_main(int argc, char ** argv, char ** envp)
         testInvalidPointerAssign();
         testPointerTracking();
         testArrayAccess();
-        //testDoubleArrayHeapAccess();
+        testDoubleArrayHeapAccess();
         testMultidimensionalStackArrayAccess();
 
 

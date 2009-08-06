@@ -7,6 +7,14 @@
 
 class DisplayNode;
 
+/**
+ * \brief Display information for an edge
+ *
+ * used to render a edge, each edge has a source and destination node
+ * The nodes notifiy the edge when they have changed position
+ * Each edge may have a caption which is printed at the "center" of the edge
+ *
+ */
 class DisplayEdge : public QGraphicsItem
 {
 	public:
@@ -24,12 +32,18 @@ class DisplayEdge : public QGraphicsItem
 		enum { EdgeType = UserType + 2 };
 		int type() const { return EdgeType; }
 
-
+		/// Changes the edge color
 		void setColor(const QColor & c)  { color=c; }
+		/// Changes edge width
 		void setWidth(double width)		 { penWidth=1; }
 
-		enum PaintMode { STRAIGHT, RECTANGULAR, BEZIER_QUAD,BEZIER_CUBIC };
+		enum PaintMode { STRAIGHT,    ///< rendered as straight line between nodes
+		                 RECTANGULAR, ///< edge is splitted up into two lines, which are parallel to x/y axis, (half of a rectangle)
+		                 BEZIER_QUAD, ///< quadratic bezier curve
+		                 BEZIER_CUBIC ///< cubic bezier curve
+		};
 
+        ///Changes the painting mode
 		void setPaintMode(PaintMode m) { paintMode=m; }
 
 

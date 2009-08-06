@@ -30,7 +30,15 @@ class SgAsmStatement
 
 namespace InstructionCountAnnotator  {
 
-
+/**
+ * \brief Execution Count annotation based on \c ptrace()
+ *
+ *  This module is only built when ROSEQT_EXPERIMENTAL is set, because it's UNIX specific (problems when building on MAC)
+ *  If you want to use this functionality in a architecture independent way use the IntelPIN mechanism: InstructionCountAnnotator::annotate()
+ *
+ *  This Module operates on a Binary AST - it traverses all SgAsmInstructions, and inserts a breakpoint at the corresponding addresses
+ *  Therefore the ptrace() system-call is used. Then the binary is executed and the execution count for each instruction is logged and annotated
+ */
 class PTracer
 {
 

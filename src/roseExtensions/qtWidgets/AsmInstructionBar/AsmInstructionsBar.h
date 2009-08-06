@@ -14,6 +14,12 @@ class QWheelEvent;
 class QGraphicsRectItem;
 class QGraphicsPolygonItem;
 
+
+/**
+ * \brief Navigation-Bar for fast browsing through a Binary
+ *
+ * Bar where each section in a binary is encoded with a different color, can be used for navigation in a binary
+ */
 class AsmInstructionsBar
    : public QGraphicsView
 {
@@ -27,26 +33,26 @@ class AsmInstructionsBar
 
    public slots:
       //slots to set new nodes:
-      // if the given node is a binary node, everything is fine
-      // if it is source, the associated binary node will be used
-      // Use the AsmToSourceMapper to link binary nodes with source nodes
 
-      // set new root node.
+      /// if the given node is a binary node, everything is fine
+      /// if it is source, the associated binary node will be used
+      /// Use the AsmToSourceMapper to link binary nodes with source nodes
+      /// set new root node.
       void setRoot( SgNode *node );
 
-      // set current active node
+      /// set current active node
       void setNode( SgNode *node );
 
-      // set current active node by id, i.e. the position in the array of
-      // Assembler Blocks
+      /// set current active node by id, i.e. the position in the array of
+      /// Assembler Blocks
       void setNode( int id );
 
    signals:
-      // emit current active node
+      /// emit current active node
       void nodeActivated( SgNode *node );
       void nodeActivatedAlt( SgNode *node );
-      // emit current active node id, again the id is the position in the
-      // array of Assembler Blocks
+      /// emit current active node id, again the id is the position in the
+      /// array of Assembler Blocks
       void clicked( int id );
 
    protected:

@@ -11,10 +11,7 @@ AstBrowserWidget::AstBrowserWidget(QWidget*par)
 {
 	model=new QtAstModel(NULL);
 	setModel(model);
-	connect(this,SIGNAL(clicked(const QModelIndex &)),
-                     SLOT(viewClicked(const QModelIndex &)));
-	connect(this,SIGNAL(doubleClicked(const QModelIndex &)),
-                     SLOT(viewDoubleClicked(const QModelIndex &)));
+
 	connect(this,SIGNAL(nodeDropped(SgNode *, const QPoint &)),
                      SLOT(setNode( SgNode *)));
 }

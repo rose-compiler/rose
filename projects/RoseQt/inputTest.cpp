@@ -14,11 +14,11 @@
 //#include <boost/generator_iterator.hpp>
 
 //#include <boost/random.hpp>
-#include <boost/random/linear_congruential.hpp>
+//#include <boost/random/linear_congruential.hpp>
 //#include <boost/random/minstd_rand.hpp>
-#include <boost/random/normal_distribution.hpp>
-#include <boost/random/variate_generator.hpp>
-#include <boost/generator_iterator.hpp>
+//#include <boost/random/normal_distribution.hpp>
+//#include <boost/random/variate_generator.hpp>
+//#include <boost/generator_iterator.hpp>
 
 using namespace std;
 

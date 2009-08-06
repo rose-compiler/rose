@@ -20,10 +20,20 @@ add_qt_folders( WIDGETS_FILES ${subdirs})
 
 # Here some source files can be removed from library
 remove_files_from_list ( WIDGETS_FILES AsmSourceMapper/main.cpp
-                                       AstGraphWidget/treeTest.cpp
+                                       AstGraphWidget/treeTest.cpp 
                                        util/QRoseComponentProxy.h
                                        util/QRoseComponentProxy.cpp 
-                                       util/moc_QRoseComponentProxy.cxx)
+                                       util/moc_QRoseComponentProxy.cxx 
+                                       WidgetCreator/QRQueryBoxCreator.h
+                                       WidgetCreator/QRQueryBoxCreator.cpp
+                                       WidgetCreator/moc_QRQueryBoxCreator.cxx
+                                       WidgetCreator/QRSourceBoxCreator.h
+                                       WidgetCreator/QRSourceBoxCreator.cpp
+                                       WidgetCreator/moc_QRSourceBoxCreator.cxx 
+                                       WidgetCreator/QRTreeBoxCreator.h
+                                       WidgetCreator/QRTreeBoxCreator.cpp                                                                               
+                                       WidgetCreator/moc_QRTreeBoxCreator.cxx 
+                                       )
                                 
 add_subdirectory ( QtGradientEditor )
                                         

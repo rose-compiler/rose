@@ -121,82 +121,8 @@ QWidget * setupGuiWithCompiledUi( int argc, char **argv )
     return new MainWindow( argc, argv );
 }
 
-
-SgFile * addFileToSgProject(const QString & file, SgProject * proj)
-{
-    // Adapted from src/frontend/SageIII/sageBuilder.C  function buildFile
-    // with the change that it should also handle binary files
-
-    proj->get_sourceFileNameList().push_back(file.toStdString());
-
-    Rose_STL_Container<std::string> arglist;
-    arglist = proj->get_originalCommandLineArgumentList();
-    arglist.push_back(file.toStdString());
-
-
-    int nextErrorCode = 0;
-    SgFile* result = isSgFile(determineFileType(arglist, nextErrorCode, proj));
-
-    result->set_parent(proj);
-
-    proj->set_file(*result);
-
-    proj->set_frontendErrorCode(max(proj->get_frontendErrorCode(), nextErrorCode));
-
-    return result;
-}
-
-
-SgProject * buildOwnProject()
-{
-    SgProject * proj = new SgProject();
-    proj->get_fileList().clear();
-
-    //Set command line:
-    //proj->set_originalCommandLineArgumentList();
-
-    Rose_STL_Container<std::string> arglist;
-
-    arglist.push_back("cc");
-    arglist.push_back("-c");
-    proj->set_originalCommandLineArgumentList (arglist);
-
-    addFileToSgProject("inputTest.cpp",proj);
-    addFileToSgProject("inputTest",proj);
-
-
-    return proj;
-}
-
-
 int main(int argc, char** argv)
 {
-    //vector<string> argvList(argv, argv + argc);
-    //qDebug() << "Loading HPCToolkit or Gprof profiling data..." << endl;
-    //RoseHPCT::ProgramTreeList_t profiles =
-    //RoseHPCT::loadProfilingFiles(argvList);
-
-    //qDebug() << "Done";
-
-    //qDebug() << "Calling ROSE frontend...";
-    //SgProject * project = frontend(argvList);
-    //SgProject * project = 0;
-
-    //qDebug() << "Done";
-
-    //qDebug() << "Attaching HPCToolkit metrics to Sage IR tree..." << endl;
-    //RoseHPCT::attachMetrics(profiles, project, true);
-    //qDebug() << "Done";
-
-    //qDebug() << "Annotate AST with Flop Counts ...";
-    //FlopCounterProcessor flops;
-    //flops.traverse(project);
-    //qDebug() << "Done";
-
-    /*qDebug() << "Annotate AST with ASM-Instruction Exec-Counts ...";
-    InstructionCountAnnotator::annotate(project,vector<string> ());
-    qDebug() << "Done";*/
-
 
     QApplication app(argc, argv);
 

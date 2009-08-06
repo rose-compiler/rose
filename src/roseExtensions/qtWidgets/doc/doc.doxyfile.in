@@ -455,7 +455,7 @@ WARN_LOGFILE =
 # directories like "/usr/src/myproject". Separate the files or directories 
 # with spaces.
 
-INPUT = ..
+INPUT = @top_srcdir@/src/roseExtensions/qtWidgets
 
 # This tag can be used to specify the character encoding of the source files that 
 # doxygen parses. Internally doxygen uses the UTF-8 encoding, which is also the default 
@@ -483,7 +483,10 @@ RECURSIVE = YES
 # excluded from the INPUT source files. This way you can easily exclude a 
 # subdirectory from a directory tree whose root is specified with the INPUT tag.
 
-EXCLUDE = ../RoseCodeEdit/QCodeEdit ../QtDesignerPlugins ../doc
+EXCLUDE  = @top_srcdir@/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit  
+EXCLUDE += @top_srcdir@/src/roseExtensions/qtWidgets/QtGradientEditor
+EXCLUDE += @top_srcdir@/src/roseExtensions/qtWidgets/AstProcessing
+
 
 # The EXCLUDE_SYMLINKS tag can be used select whether or not files or 
 # directories that are symbolic links (a Unix filesystem feature) are excluded 
@@ -497,7 +500,7 @@ EXCLUDE_SYMLINKS = NO
 # against the file with absolute path, so to exclude all test directories 
 # for example use the pattern */test/*
 
-EXCLUDE_PATTERNS = inputTest.cpp ui_*
+EXCLUDE_PATTERNS = inputTest.cpp ui_* moc_*
 
 # The EXCLUDE_SYMBOLS tag can be used to specify one or more symbol names 
 # (namespaces, classes, functions, etc.) that should be excluded from the output. 
@@ -530,7 +533,7 @@ EXAMPLE_RECURSIVE = NO
 # directories that contain image that are included in the documentation (see 
 # the \image command).
 
-IMAGE_PATH = 
+IMAGE_PATH = @top_srcdir@/src/roseExtensions/qtWidgets/doc/images
 
 # The INPUT_FILTER tag can be used to specify a program that doxygen should 
 # invoke to filter for each input file. Doxygen will invoke the filter program 
@@ -675,7 +678,7 @@ HTML_FOOTER =
 # the style sheet file to the HTML output directory, so don't put your own 
 # stylesheet in the HTML output directory as well, or it will be erased!
 
-HTML_STYLESHEET = doxygen.css
+HTML_STYLESHEET = @top_srcdir@/src/roseExtensions/qtWidgets/doc/doxygen.css
 
 # If the HTML_ALIGN_MEMBERS tag is set to YES, the members of classes, 
 # files or namespaces will be aligned in HTML using tables. If set to 

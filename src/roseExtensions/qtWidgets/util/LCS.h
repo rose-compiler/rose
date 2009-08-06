@@ -5,6 +5,10 @@
 #include <vector>
 #include <string>
 #include <map>
+
+/**
+ * \brief Longest common subsequence algorithm used for BinaryDiff
+ */
 namespace LCS
 {
     template<typename T>

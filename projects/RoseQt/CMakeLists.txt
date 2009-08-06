@@ -18,3 +18,5 @@ target_link_libraries ( roseQtDemo xml2 )
 target_link_libraries ( roseQtDemo rose rosehpct )
 target_link_libraries ( roseQtDemo ${QT_LIBRARIES} ${Boost_LIBRARIES}  )
 target_link_libraries ( roseQtDemo elf dwarf )
+
+set_target_properties ( roseQtDemo PROPERTIES COMPILE_FLAGS "-DWITHOUT_QROSE")

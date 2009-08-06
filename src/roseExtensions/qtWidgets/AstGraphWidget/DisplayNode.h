@@ -14,7 +14,7 @@ class SgGraphicsScene;
 class DisplayEdge;
 
 /**
- * Class for drawing a Node on a QGraphicsScene
+ * \brief Class for drawing a Node on a QGraphicsScene
  * each node may have a caption and an SgNode associated to it
  */
 class DisplayNode : public QGraphicsItem
@@ -103,6 +103,8 @@ class DisplayNode : public QGraphicsItem
 
 
 /**
+ * \brief A DisplayNode used to manage a tree
+ *
  * A DisplayTreeNode is a DisplayGraphNode which has only outputEdges (children)
  * and a dedicated inputEdge (parent)
  * - The memory handling is done by the parent node (when parent is deleted the whole
@@ -180,6 +182,11 @@ class DisplayTreeNode : public DisplayNode
 
 #include "AstFilters.h"
 
+/**
+ * \brief Class to build up a tree out of DisplayTreeNode 's
+ *
+ * has no real members - functions should be static functions of DisplayTreeNode (TODO - refactor)
+ */
 class DisplayTreeGenerator
 {
 	public:

@@ -5,7 +5,7 @@
 #include "DisplayNode.h"
 
 /**
- * Layout of Tree according to Reingold and Tilford
+ * \brief Layout of Tree according to Reingold and Tilford
  *
  *   - bottom up approach: two subtrees are merged
  *   - for merging subtrees, the right outline of the left subtree \n

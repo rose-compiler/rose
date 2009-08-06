@@ -1114,6 +1114,8 @@ src/roseExtensions/databaseConnection/GlobalDatabaseConnection.C
 src/roseExtensions/dataStructureTraversal/Makefile
 src/roseExtensions/highLevelGrammar/Makefile
 src/roseExtensions/qtWidgets/Makefile
+src/roseExtensions/qtWidgets/doc/Makefile
+src/roseExtensions/qtWidgets/doc/doc.doxyfile
 src/roseExtensions/qtWidgets/AsmInstructionBar/Makefile
 src/roseExtensions/qtWidgets/AsmView/Makefile
 src/roseExtensions/qtWidgets/AstBrowserWidget/Makefile
@@ -1254,6 +1256,7 @@ projects/UpcTranslation/tests/Makefile
 projects/MacroRewrapper/Makefile
 projects/QtDesignerPlugins/Makefile
 projects/RoseQt/Makefile
+projects/RoseQt/AstViewer/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile

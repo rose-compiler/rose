@@ -6,6 +6,9 @@
 class SgNode;
 class AstFilterInterface;
 
+/**
+ * \brief The Qt-Model representing a beautified AST
+ */
 class BAstModel : public ItemTreeModel
 {
     Q_OBJECT

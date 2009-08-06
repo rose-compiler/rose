@@ -19,7 +19,9 @@ class MetricsConfig;
 class KiviatInfo;
 
 /**
- * Extension of KiviatView for showing metric attributes
+ * \brief Extension of KiviatView for showing metric attributes
+ *
+ * \image html Kiviat.jpg
  */
 class MetricsKiviat : public KiviatView
 {

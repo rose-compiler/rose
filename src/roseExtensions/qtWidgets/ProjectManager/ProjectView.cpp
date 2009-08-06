@@ -61,7 +61,7 @@ void ProjectView::displayContextMenu(const QPoint & pos, ItemTreeNode * node)
     BinaryFileHeaderNode * binaryHeader = dynamic_cast<BinaryFileHeaderNode*>(node);
     SourceFileHeaderNode * sourceHeader = dynamic_cast<SourceFileHeaderNode*>(node);
 
-
+    QAction * actCmdLineDlg = 0;
     QAction * actAddFile    = 0; // add a source or binary file to project, src or bin
     QAction * actAddBinFile = 0; // add a binary file to project ( via BinaryFileHeaderNode)
     QAction * actAddSrcFile = 0; // add a source file to project ( via SourceFileHeaderNode)
@@ -76,7 +76,9 @@ void ProjectView::displayContextMenu(const QPoint & pos, ItemTreeNode * node)
     if(project)
     {
         actAddFile = new QAction(tr("Add File"), menu);
+        actCmdLineDlg = new QAction(tr("Edit ROSE CommandLine"),menu);
         menu->addAction(actAddFile);
+        menu->addAction(actCmdLineDlg);
     }
     else if(source)
     {
@@ -147,7 +149,8 @@ void ProjectView::displayContextMenu(const QPoint & pos, ItemTreeNode * node)
         binary->rebuild();
     else if (res == actRebuildSrc)
         source->rebuild();
-
+    else if ( res == actCmdLineDlg)
+        project->showCmdLineDialog();
 
     delete menu;
 }

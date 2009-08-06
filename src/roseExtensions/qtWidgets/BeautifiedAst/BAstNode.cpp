@@ -23,6 +23,8 @@ BAstNode::BAstNode(AstDisplayInfo::NodeType t,
     icon(ico)
 {
     sg = getFunctionDeclaration( sgNode );
+
+
 }
 
 BAstNode::BAstNode(AstDisplayInfo::NodeType t,

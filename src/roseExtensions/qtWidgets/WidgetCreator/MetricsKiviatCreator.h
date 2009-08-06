@@ -7,6 +7,9 @@
 class QWidget;
 class QEvent;
 
+/**
+ * \brief Creator for MetricsKiviat - see SubWindowFactory
+ */
 class MetricsKiviatCreator
     : public WidgetCreatorInterface
 {

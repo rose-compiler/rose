@@ -7,6 +7,13 @@
 #include <QString>
 #include <QIcon>
 
+/**
+ * \brief Interface for WidgetCreators
+ *
+ * used by SubWindowFactory to create a widget
+ * to create a widget the pure virtual function createWidget() has to be reimplemented
+ * additionally a name and icon have to be specified for each widget
+ */
 class WidgetCreatorInterface
     : public QObject
 {

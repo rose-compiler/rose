@@ -7,6 +7,9 @@
 class QWidget;
 class QEvent;
 
+/**
+ * \brief Creator for NodeInfoWidget - see SubWindowFactory
+ */
 class NodeInfoWidgetCreator
     : public WidgetCreatorInterface
 {

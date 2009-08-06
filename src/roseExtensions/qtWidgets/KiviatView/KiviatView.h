@@ -12,9 +12,9 @@ class QGraphicsPolygonItem;
 
 
 /**
- * Generic Qt-Widget for displaying kiviats (polar diagrams)
+ * \brief Generic Qt-Widget for displaying Kiviats (polar diagrams)
  *
- *  <img src="../Kiviat.jpg"  alt="Screenshot">
+ * \image html KiviatTester.jpg
  *
  * This class doesn't depend on rose, the rose specific version for
  * displaying MetricAttributes is MetricsKiviat

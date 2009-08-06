@@ -7,6 +7,9 @@
 
 class SgNode;
 
+/**
+ * \brief Mapping Info for AsmToSourceMapper
+ */
 class AsmMappingInfo
 {
     public:
@@ -101,6 +104,9 @@ class AsmMappingInfo
         int line_;
 };
 
+/**
+ * \brief Attribute which represents a link to another AST
+ */
 class AstNodeLinkAttribute
     : public AstAttribute,
       public std::vector< std::pair<SgNode *, SgNode *> >
@@ -119,6 +125,9 @@ class AstNodeLinkAttribute
         }
 };
 
+/**
+ * \brief Attribute which represents a link to a SourceAST
+ */
 class AstSourceNodeLink
     : public AstNodeLinkAttribute
 {
@@ -136,6 +145,9 @@ class AstSourceNodeLink
         }
 };
 
+/**
+ * \brief Attribute which represents a link to a BinaryAST
+ */
 class AstBinaryNodeLink
     : public AstNodeLinkAttribute
 {
@@ -153,6 +165,9 @@ class AstBinaryNodeLink
         }
 };
 
+/**
+ * \brief Creates Annotation with mapping: Source AST <-> Binary AST
+ */
 class AsmToSourceMapper
 {
     public:
@@ -164,9 +179,9 @@ class AsmToSourceMapper
     private:
 
         /// holds mapping data
-        //  order by fileId and line number.
-        //  needs to be a multiset because every source file line could correspond
-        //  to more than one dwarf line information
+        /// order by fileId and line number.
+        /// needs to be a multiset because every source file line could correspond
+        /// to more than one dwarf line information
         std::multiset<AsmMappingInfo> asmMappingInfos;
 
         SgBinaryFile *file;

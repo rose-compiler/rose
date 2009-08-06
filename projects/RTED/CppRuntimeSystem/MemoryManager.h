@@ -85,7 +85,7 @@ class MemoryType
         /// and if its later on accessed with a different type, a violation is reported
         /// however it is possible to access the mem-region later with "containing" types
         /// f.e. first access with int-pointer, then with struct pointer, which as as first member an int
-        void accessMemWithType(addr_type offset, RsType * type);
+        void registerMemType(addr_type offset, RsType * type);
 
 
         /// Returns the type-name , or the CONTAINING ARRAY name which is associated with that offset

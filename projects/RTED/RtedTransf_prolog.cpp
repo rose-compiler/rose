@@ -188,7 +188,6 @@ void RtedTransformation::visit_checkIsMain(SgNode* n)
         mainBody = block;
         mainEnd = block->get_endOfConstruct();
     }
-
 }
 
 

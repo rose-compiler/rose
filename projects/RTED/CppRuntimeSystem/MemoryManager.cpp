@@ -87,11 +87,15 @@ void MemoryType::initialize(int offsetFrom, int offsetTo)
 
 
 
-void MemoryType::accessMemWithType(addr_type offset, RsType * type)
+void MemoryType::registerMemType(addr_type offset, RsType * type)
 {
     if(typeInfo.size() ==0) // no types registered yet
     {
         typeInfo.insert(make_pair<int,RsType*>(offset,type));
+        // if we have knowledge about the type in memory, we also need to update the
+        // information about "dereferentiable" memory regions i.e. pointer
+        RuntimeSystem::instance()->getPointerManager()->createPointer(startAddress+offset,type);
+
         return;
     }
 
@@ -175,6 +179,7 @@ void MemoryType::accessMemWithType(addr_type offset, RsType * type)
     typeInfo.erase(itLower,itUpper);
 
     typeInfo.insert(make_pair<int,RsType*>(offset,type));
+
 
     // if we have knowledge about the type in memory, we also need to update the
     // information about "dereferentiable" memory regions i.e. pointer
@@ -497,7 +502,7 @@ void MemoryManager::checkAccess(addr_type addr, size_t size, RsType * t, MemoryT
     }
 
     if(t)
-        mt->accessMemWithType(addr - mt->getAddress(),t);
+        mt->registerMemType(addr - mt->getAddress(),t);
 
 }
 

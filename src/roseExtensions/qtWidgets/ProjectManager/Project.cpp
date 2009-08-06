@@ -12,6 +12,8 @@
 #include "SgNodeUtil.h"
 #include "MetricsConfig.h"
 
+#include "CmdLineEditDialog.h"
+
 #include <QFileInfo>
 #include <QIcon>
 #include <QDebug>
@@ -338,6 +340,7 @@ void ProjectNode::addToCommandLine(const QString & s)
     sgProject->processCommandLine( cmd );
 }
 
+
 void ProjectNode::setCommandLine(const QStringList & sl)
 {
     std::vector<std::string> cmd;
@@ -346,6 +349,18 @@ void ProjectNode::setCommandLine(const QStringList & sl)
         cmd.push_back( curStr.toStdString() );
 
     sgProject->processCommandLine( cmd );
+}
+
+
+void ProjectNode::showCmdLineDialog()
+{
+    CmdLineEditDialog dlg;
+    dlg.setCurrentCmdLine(getCommandLine());
+
+    if( dlg.exec() == QDialog::Accepted)
+    {
+        setCommandLine(dlg.getResult());
+    }
 }
 
 int ProjectNode::getSourceFileCount() const

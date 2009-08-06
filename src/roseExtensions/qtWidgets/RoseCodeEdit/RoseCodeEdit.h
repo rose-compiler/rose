@@ -8,6 +8,13 @@
 class SgNode;
 
 
+/**
+ * \brief Class which extends QCodeEditWidget to support SgNode's
+ *
+ * Uses node->get_file_info() to display the original source code (NOT the unparsed code)
+ * setNode() and getNode() load the file where the SgNode occures in and
+ * sets the cursor at the right position (start_of_construct)
+ */
 class QDESIGNER_WIDGET_EXPORT RoseCodeEdit : public QCodeEditWidget
 {
     public:
@@ -22,10 +29,8 @@ class QDESIGNER_WIDGET_EXPORT RoseCodeEdit : public QCodeEditWidget
         /// and the cursor is set to start position of this SgNode
         /// If node is SgFile the file is opened and cursor is set to beginning of file
         void setNode(SgNode * sgNode);
-        // same as setNode, for convenience with the link mechanism
-        void gotoNode( SgNode *sgNode )
-        { setNode( sgNode ); }
-
+        /// same as setNode, for convenience with the link mechanism
+        void gotoNode( SgNode *sgNode )  {   setNode( sgNode );    }
 
     protected:
         virtual void dragEnterEvent(QDragEnterEvent * ev);

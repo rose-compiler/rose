@@ -866,16 +866,27 @@ RuntimeSystem_roseReallocateMemory(
 
 
 
+
 /*********************************************************
  * Convert an integer to const char*
  ********************************************************/
 
 
 
+
 extern int RuntimeSystem_original_main(int argc, char**argv, char**envp);
+
+//#ifdef ROSE_WITH_ROSEQT
+//    #include <QApplication>
+//#endif
 
 int main(int argc, char **argv, char ** envp)
 {
+
+//    #ifdef ROSE_WITH_ROSEQT
+//        QApplication app(argc,argv);
+//    #endif
+
 
     return RuntimeSystem_original_main(argc, argv, envp);
 }

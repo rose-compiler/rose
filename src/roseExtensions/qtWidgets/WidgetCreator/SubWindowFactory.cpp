@@ -24,7 +24,7 @@ SubWindowFactory::~SubWindowFactory()
 
 void SubWindowFactory::registerSubWindow( WidgetCreatorInterface *winInterface )
 {
-    assert( winInterface );
+    Q_ASSERT( winInterface );
 
     interfaces.push_back( winInterface );
 

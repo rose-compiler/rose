@@ -1,6 +1,8 @@
 #------------ demo Makefile.am -----------
 include $(top_srcdir)/src/roseExtensions/qtWidgets/Make.inc
 
+SUBDIRS = AstViewer
+
 if ROSE_WITH_ROSEQT
 
 ROSEHPCT_BUILD_ROOT = $(top_builddir)/src/roseExtensions/roseHPCToolkit
