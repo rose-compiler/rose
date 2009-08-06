@@ -305,10 +305,10 @@ COMPILING_RUNTIME_SYSTEM = @echo -n "   compiling instrumented debugger code (wi
 			   if [ $$? -ne 0 ]; then exit 1; fi; \
 			   echo " done."
 
-rted_source/%_debug.bin: rted_qt rted_source/%_rose.c rted_source/%_s_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
+rted_source/%_debug.bin: rted_source/%_rose.c rted_source/%_s_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	$(call COMPILING_RUNTIME_SYSTEM, .c, $(RTED_CC), $(LINK_QT_DEBUGGER))
 
-rted_source/%_debug.bin: rted_qt rted_source/%_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
+rted_source/%_debug.bin: rted_source/%_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	$(call COMPILING_RUNTIME_SYSTEM, .c, $(RTED_CC), $(LINK_QT_DEBUGGER))
 
 rted_source/%.bin: rted_source/%_rose.c rted_source/%_s_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
@@ -317,10 +317,10 @@ rted_source/%.bin: rted_source/%_rose.c rted_source/%_s_rose.c $(srcdir)/$(RTS) 
 rted_source/%.bin: rted_source/%_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	$(call COMPILING_RUNTIME_SYSTEM, .c, $(RTED_CC))
 
-rted_source/%_debug.bin: rted_qt rted_source/%_rose.cpp rted_source/%_s_rose.cpp $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
+rted_source/%_debug.bin: rted_source/%_rose.cpp rted_source/%_s_rose.cpp $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	$(call COMPILING_RUNTIME_SYSTEM, .cpp, $(RTED_CXX), $(LINK_QT_DEBUGGER))
 
-rted_source/%_debug.bin: rted_qt rted_source/%_rose.cpp $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
+rted_source/%_debug.bin: rted_source/%_rose.cpp $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	$(call COMPILING_RUNTIME_SYSTEM, .cpp, $(RTED_CXX), $(LINK_QT_DEBUGGER))
 
 rted_source/%.bin: rted_source/%_rose.cpp rted_source/%_s_rose.cpp $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
@@ -502,7 +502,7 @@ deleteAllbinfiles:
 c-compile-runtimesystem:
 	@echo "Make sure that RuntimeSystem compiles with C"
 
-check-local: rted_qt runtimeCheck $(TESTCODES) c-compile-runtimesystem run_checkonly/C/string_errors run_checkonly/C/allocation_deallocation_errors run_checkonly/C/input_output_errors
+check-local: runtimeCheck $(TESTCODES) c-compile-runtimesystem run_checkonly/C/string_errors run_checkonly/C/allocation_deallocation_errors run_checkonly/C/input_output_errors
 	@echo "***************************************************************************************"
 	@echo "*** ROSE/projects/runtimeErrorCheck: make check rule complete (terminated normally) ***"
 	@echo "***************************************************************************************"
