@@ -118,13 +118,13 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
       appendAddressAndSize(initName, getExprBelowAssignment( varRef ), arg_list,0); 
 
 
-      SgIntVal* ismalloc = buildIntVal( 0 );
+      //SgIntVal* ismalloc = buildIntVal( 0 );
       SgExpression* size = buildIntVal( 0 );
       if (array->ismalloc) {
-        ismalloc = buildIntVal(1);
+        //ismalloc = buildIntVal(1);
         size = buildCastExp( array -> size, buildLongLongType());
       }
-      appendExpression( arg_list, ismalloc );
+      //appendExpression( arg_list, ismalloc );
       appendExpression( arg_list, size );
 
 
@@ -214,15 +214,11 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
   if (isSgStatement(stmt)) {
     SgScopeStatement* scope = stmt->get_scope();
     ROSE_ASSERT(scope);
-    SgExpression* callNameExp = buildString(arrayExp->unparseToString());
 
     SgExprListExp* arg_list = buildExprListExp();
-    appendExpression(arg_list, callNameExp);
 
-    // TODO 3: remove
-    // posA, posB, neither are used or needed as this is handled by address
-    appendExpression( arg_list, buildIntVal( -1 ) );
-    appendExpression( arg_list, buildIntVal( -1 ) );
+
+
 
     SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
     SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
@@ -292,7 +288,7 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
     SgExpression* linenrTransformed = buildString("x%%x");
     appendExpression(arg_list, linenrTransformed);
 
-    appendExpression(arg_list, buildString(removeSpecialChar(stmt->unparseToString())));
+
 
     ROSE_ASSERT(roseArrayAccess);
     string symbolName2 = roseArrayAccess->get_name().str();
@@ -449,12 +445,17 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
 	  cerr << "------------ Found Pointer deref : " << parent->unparseToString() << endl;
 	 // cerr << "*********************************** DEBUGGING   parent (deref) = " << parent->class_name() << endl;
 	  variable_access_pointerderef[isSgPointerDerefExp(parent)]=n;
-  } else if (isSgFunctionCallExp(parent)) {
+  } else if (isSgExprListExp(parent) && isSgFunctionCallExp(parent->get_parent())) {
 	  cerr << " Found Function call - lets handle its parameters." << endl;
+	  SgType* type = isSgExpression(last)->get_type();
+	  if (type && isSgArrayType(type))
+		  hitRoof=true;
 	  break;
-  } else {
+  } else if (isSgAddressOfOp(parent)) {
+	//  addressOfOpFound=true;
+  }  else {
     //cerr << "*********************************** DEBUGGING   parent (else) = " << parent->class_name() << endl;
-  }
+	  }
   } //while
 
   if (!hitRoof) {

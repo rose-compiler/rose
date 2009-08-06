@@ -158,7 +158,8 @@ void
 RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name,
 				   const char* type, const char* basetype, size_t indirection_level,
 			      unsigned long int address, long int size,
-			      int ismalloc, long int mallocSize, const char* class_name, const char* filename, const char* line, const char* lineTransformed,
+			       long int mallocSize, const char* class_name,
+			      const char* filename, const char* line, const char* lineTransformed,
             int dimensionality, ...){
 
 
@@ -166,15 +167,13 @@ RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name,
 	CHECKPOINT
 
 	string type_name = type;
-	if( type_name == "SgClassType" )
-	    type_name = class_name;
-
     string base_type = basetype;
     if( base_type == "SgClassType" )
         base_type = class_name;
 
 
     if( type_name == "SgArrayType" ) {
+    	// Aug 6 : TODO : move this to createVariable
         va_list vl;
         va_start( vl, dimensionality );
         RsArrayType* type = RuntimeSystem_getRsArrayType( vl, dimensionality, size, base_type );
@@ -215,9 +214,9 @@ RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name,
  * stmtStr   : unparsed version of the line to be used for error message
  ********************************************************/
 void
-RuntimeSystem_roseArrayAccess(const char* name, int posA, int posB, const char* filename,
+RuntimeSystem_roseArrayAccess(const char* filename,
 			      unsigned long int base_address, unsigned long int address, long int size, 
-            int read_write_mask, const char* line, const char* lineTransformed, const char* stmtStr){
+            int read_write_mask, const char* line, const char* lineTransformed){
 
 
 	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
@@ -251,19 +250,7 @@ void RuntimeSystem_checkMemoryAccess( unsigned long int address, long int size, 
 // ***************************************** FUNCTION CALL *************************************
 
 
-/*********************************************************
- * This function is called when a variable is put or dropped from stack
- * stack variables are used to keep track of what variables are passed
- * to functions. Their mangled_names help to identify the real definitions.
- * name         : variable name if it is a variable to be put on the stack
- * mangled_name : mangled name of the above
- * insertBefore : Indicates whether to push or pop a variable form the stack
- ********************************************************/
-void
-RuntimeSystem_roseCallStack(const char* name, const char* mangl_name,
-			    const char* beforeStr,
-			    const char* filename, const char* line) {
-}
+
 
 
 
@@ -292,6 +279,7 @@ RuntimeSystem_isInterestingFunctionCall(const char* name) {
 }
 
 
+#if 0
 /*********************************************************
  * Check if a function call is a call to a function
  * on our ignore list. We do not want to check those
@@ -312,7 +300,7 @@ RuntimeSystem_isFileIOFunctionCall(const char* name) {
   }
   return interesting;
 }
-
+#endif
 
 
 
@@ -608,16 +596,16 @@ RuntimeSystem_roseFunctionCall(int count, ...) {
   va_end(vl);
 
 
-  if (RuntimeSystem_isInterestingFunctionCall(name)==1) {
+  //if (RuntimeSystem_isInterestingFunctionCall(name)==1) {
     // if the string name is one of the above, we handle it specially
     RuntimeSystem_handleSpecialFunctionCalls(name, args, posArgs, filename, line, lineTransf, stmtStr, leftVar);
-  } else if (RuntimeSystem_isFileIOFunctionCall(name)==1) {
+ // } else if (RuntimeSystem_isFileIOFunctionCall(name)==1) {
     // this will be replaced by a direct call
     //RuntimeSystem_handleIOFunctionCall(name, args, posArgs, filename, line, lineTransf, stmtStr, leftVar, NULL);
-  } else {
+  //} else {
     //printMessage("Unknown Function call to RuntimeSystem!\n");
-    exit(1);
-  }
+  //  exit(1);
+  //}
 }
 
 
@@ -663,7 +651,7 @@ void RuntimeSystem_roseCreateVariable( const char* name,
                     unsigned long int address,
                     unsigned int size,
                     int init,
-                    const char* fOpen,
+
                     const char* class_name,
                     const char* filename, const char* line,
                     const char* lineTransformed) {
@@ -674,8 +662,6 @@ void RuntimeSystem_roseCreateVariable( const char* name,
 
 
     string type_name = type;
-    if (type_name == "SgClassType")
-        type_name = class_name;
     assert( type_name != "" );
 
     // stack arrays are handled in create array, which is given the dimension
@@ -757,13 +743,12 @@ RuntimeSystem_roseInitVariable(const char* name,
 /*********************************************************
  * This function tells the runtime system that a variable is used
  ********************************************************/
-void RuntimeSystem_roseAccessVariable( const char* name,
-				       const char* mangled_name,
+void RuntimeSystem_roseAccessVariable(
 				       unsigned long long address, 
 				       unsigned int size,
 				       const char* filename, const char* line,
-				       const char* lineTransformed,
-				       const char* stmtStr) {
+				       const char* lineTransformed
+				       ) {
 
 
 	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();

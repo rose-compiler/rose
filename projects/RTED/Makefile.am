@@ -93,8 +93,6 @@ RTED_TEST_DIRS = $(rted_path)/C/array_index_out_of_bound \
 		 $(rted_path)/C++/input_output_errors \
 		 $(rted_path)/C++/memory_leaks \
 		 $(rted_path)/C++/uninitialized_variables \
-		 $(srcdir)/tests/C/memoryleaks \
-		 $(srcdir)/tests/C/nomemoryleaks \
 		 $(srcdir)/tests/C/panasTests
 
 GENERATE_RTED_ORIGSOURCES = ${foreach RTED_TEST_DIR, $(RTED_TEST_DIRS), ${wildcard $(RTED_TEST_DIR)/*[!_s]${strip $(1)}} }

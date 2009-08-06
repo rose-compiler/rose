@@ -132,7 +132,8 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName
 
 
 SgExprStatement*
-RtedTransformation::buildVariableCreateCallStmt( SgInitializedName* initName, SgStatement* stmt, bool forceinit) {
+RtedTransformation::buildVariableCreateCallStmt( SgInitializedName* initName, SgStatement* stmt,
+												bool forceinit) {
     string name = initName->get_mangled_name().str();
     SgScopeStatement* scope = stmt->get_scope();
 
@@ -147,7 +148,7 @@ RtedTransformation::buildVariableCreateCallStmt( SgInitializedName* initName, Sg
     //SgExpression* callName = buildStringVal(initName->get_name().str());
     SgExpression* callNameExp = buildString(name);
     SgInitializer* initializer = initName->get_initializer();
-    SgExpression* fileOpen = buildString("no");
+    //SgExpression* fileOpen = buildString("no");
     bool initb = false;
     if (initializer) initb=true;
     SgExpression* initBool = buildIntVal(0);
@@ -188,7 +189,7 @@ RtedTransformation::buildVariableCreateCallStmt( SgInitializedName* initName, Sg
 
 
     appendExpression(arg_list, initBool);
-    appendExpression(arg_list, fileOpen);
+    //appendExpression(arg_list, fileOpen);
 
 	appendClassName( arg_list, initName -> get_type() );
 
@@ -388,11 +389,11 @@ void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE,
 	isSgForStatement(scope)) {
       // build the function call : runtimeSystem-->createArray(params); ---------------------------
       SgExprListExp* arg_list = buildExprListExp();
-      SgExpression* simplename = buildString(initName->get_name().str());
-      appendExpression(arg_list, simplename);
-      SgExpression* callName = buildString(initName->get_mangled_name().str());
-      appendExpression(arg_list, callName);
-#if 1
+      //SgExpression* simplename = buildString(initName->get_name().str());
+      //appendExpression(arg_list, simplename);
+      //SgExpression* callName = buildString(initName->get_mangled_name().str());
+      //appendExpression(arg_list, callName);
+
       // consider
       //    int *p;
       //    *p = 24601;
@@ -401,7 +402,6 @@ void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE,
       if (derefExp)
     	  appendAddressAndSize(initName, derefExp -> get_operand(), arg_list,2);
       else
-#endif
     	  appendAddressAndSize(initName, varRefE, arg_list,2);
 
       SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
@@ -412,7 +412,7 @@ void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE,
       SgExpression* linenrTransformed = buildString("x%%x");
       appendExpression(arg_list, linenrTransformed);
 
-      appendExpression(arg_list, buildString(removeSpecialChar(stmt->unparseToString())));
+     // appendExpression(arg_list, buildString(removeSpecialChar(stmt->unparseToString())));
 
       ROSE_ASSERT(roseAccessVariable);
       string symbolName2 = roseAccessVariable->get_name().str();
