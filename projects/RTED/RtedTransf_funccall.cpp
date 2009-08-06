@@ -107,72 +107,6 @@ RtedTransformation::isFunctionCallOnIgnoreList(std::string name) {
 
 
 
-/***************************************************************
- * When a function is called, all variables are put on stack
- **************************************************************/
-void 
-RtedTransformation::insertStackCall(RtedArguments* args  ) {
-  insertStackCall(args,true);
-  //insertFuncCall(args);
-  insertStackCall(args,false);
-}
-
-/***************************************************************
- * When a function is called, all variables are put on stack
- **************************************************************/
-void 
-RtedTransformation::insertStackCall(RtedArguments* args, bool before  ) {
-  //  SgStatement* stmt = getSurroundingStatement(args->varRefExp);
-  SgStatement* stmt = args->stmt;
-  ROSE_ASSERT(stmt);
-  if (isSgStatement(stmt)) {
-    SgScopeStatement* scope = stmt->get_scope();
-    ROSE_ASSERT(scope);
-
-    SgExpression* callNameExp = buildString(args->d_name);
-    SgExpression* callNameExp2 = buildString(args->d_mangled_name);
-    SgExpression* boolVal = buildString("true");
-    if (before==false) {
-      delete boolVal;
-      boolVal = buildString("false");
-    }
-    //cerr << " >>>>>>>> Symbol VarRef: " << symbolName << endl;
-    ROSE_ASSERT(roseCallStack);
-
-    SgExprListExp* arg_list = buildExprListExp();
-    appendExpression(arg_list, callNameExp);
-    appendExpression(arg_list, callNameExp2);
-    appendExpression(arg_list, boolVal);
-    SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
-    SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
-    appendExpression(arg_list, filename);
-    appendExpression(arg_list, linenr);
-
-    string symbolName2 = roseCallStack->get_name().str();
-    //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
-    SgFunctionRefExp* memRef_r = buildFunctionRefExp(
-						     roseCallStack);
-    SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
-							  arg_list);
-    SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
-    if (before)
-      insertStatementBefore(isSgStatement(stmt), exprStmt);
-    else
-      insertStatementAfter(isSgStatement(stmt), exprStmt);
-    string empty_comment = "";
-    attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
-    string comment = "RS : Putting variables on stack)";
-    if (!before)
-      comment = "RS : Popping variables from stack)";
-    attachComment(exprStmt,comment,PreprocessingInfo::before);
-  } else {
-    cerr
-      << "RuntimeInstrumentation :: Stack : Surrounding Statement could not be found! "
-      << endl;
-    exit(0);
-  }
-
-}
 
 void 
 RtedTransformation::insertFuncCall(RtedArguments* args  ) {
@@ -492,6 +426,9 @@ RtedTransformation::getVariableLeftOfAssignmentFromChildOnRight(SgNode* n){
  **************************************************************/
 void RtedTransformation::visit_isFunctionCall(SgNode* n) {
   SgFunctionCallExp* fcexp = isSgFunctionCallExp(n);
+  // handle arguments for any function call
+  //handle_function_call_arguments.push_back(fcexp->get_args());
+
   if (fcexp) {
     SgExprListExp* exprlist = isSgExprListExp(fcexp->get_args());
     SgFunctionRefExp* refExp = isSgFunctionRefExp(fcexp->get_function());
@@ -536,7 +473,8 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
           stmt,
           args,
           varOnLeftStr,
-          varOnLeft
+          varOnLeft,
+          exprlist
           );
       ROSE_ASSERT(funcCall);
       cerr << " Is a interesting function : " << name << endl;

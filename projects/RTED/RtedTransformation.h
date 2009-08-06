@@ -32,6 +32,7 @@ class RtedTransformation : public AstSimpleProcessing {
   // We need to store the variables that are being accessed
   std::vector<SgVarRefExp*> variable_access_varref;
   std::map<SgPointerDerefExp*,SgVarRefExp*> variable_access_pointerderef;
+
   // ------------------------ string -----------------------------------
   // handle call to functioncall
   std::vector<RtedArguments*> function_call;
@@ -138,8 +139,6 @@ class RtedTransformation : public AstSimpleProcessing {
   bool isVarRefInCreateArray(SgInitializedName* search);
   void insertFuncCall(RtedArguments* args);
   void insertIOFuncCall(RtedArguments* args);
-  void insertStackCall(RtedArguments* args);
-  void insertStackCall(RtedArguments* args, bool before);
   void visit_isFunctionCall(SgNode* n);
   void visit_isFunctionDefinition(SgNode* n);
   bool isStringModifyingFunctionCall(std::string name);

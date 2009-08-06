@@ -865,6 +865,13 @@ RuntimeSystem_roseReallocateMemory(
 }
 
 
+
+/*********************************************************
+ * Convert an integer to const char*
+ ********************************************************/
+
+
+
 extern int RuntimeSystem_original_main(int argc, char**argv, char**envp);
 
 int main(int argc, char **argv, char ** envp)

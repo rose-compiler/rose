@@ -79,6 +79,7 @@ void RtedTransformation::transform(SgProject* project) {
   // ---------------------------------------
 
 
+
   // bracket function calls and scope statements with calls to enterScope and
   // exitScope.  
   //
@@ -109,6 +110,7 @@ void RtedTransformation::transform(SgProject* project) {
     insertStatementAfter(old,newS);
   }
 #endif
+
 
   std::map<SgVarRefExp*,std::pair<SgInitializedName*,bool> >::const_iterator it5 =
     variableIsInitialized.begin();
@@ -229,10 +231,9 @@ void RtedTransformation::transform(SgProject* project) {
       // dont do anything.
     } else {
       // add other internal function calls, such as push variable on stack
-      insertStackCall(funcs);
+      //insertStackCall(funcs);
     }
   }
-
   cerr << "\n Number of Elements in frees  : " << frees.size() << endl;
   std::vector< SgFunctionCallExp* >::const_iterator it_frees = frees.begin();
   for (; it_frees != frees.end(); it_frees++) {
@@ -305,15 +306,20 @@ void RtedTransformation::visit(SgNode* n) {
     // checks for array access
     visit_isArrayPntrArrRefExp(n);
   } // pntrarrrefexp
+  /*
   else if (isSgVarRefExp(n) && 
 	   (isSgExprListExp(isSgVarRefExp(n)->get_parent()) ||
 	    isSgExprListExp(isSgVarRefExp(n)->get_parent()->get_parent()))  ) {
     // handles calls to functions that contain array varRefExp
     // and puts the varRefExp on stack to be used by RuntimeSystem
-    visit_isArrayExprListExp(n);
-  } else if (isSgVarRefExp(n)) {
+	  // should now be handled by all expressions at function level
+    //visit_isArrayExprListExp(n);
+  }
+  */
+  else if (isSgVarRefExp(n)) {
     // if this is a varrefexp and it is not initialized, we flag it.
     // do only if it is by itself or on right hand side of assignment
+	  cerr << " @@@@@@@@@ DETECTED Variable access : " << n->unparseToString() << endl;
     visit_isSgVarRefExp(isSgVarRefExp(n));
   }
   // *********************** DETECT ALL array accesses ***************
@@ -322,6 +328,7 @@ void RtedTransformation::visit(SgNode* n) {
   // *********************** DETECT ALL scope statements ***************
   else if (isSgScopeStatement(n)) {
     // if, while, do, etc., where we need to check for locals going out of scope
+
     visit_isSgScopeStatement(n);
 
     // *********************** DETECT structs and class definitions ***************
@@ -340,6 +347,7 @@ void RtedTransformation::visit(SgNode* n) {
   // *********************** DETECT ALL function calls ***************
   else if (isSgFunctionCallExp(n)) {
     // call to a specific function that needs to be checked
+
     visit_isFunctionCall(n);
   }
   // *********************** DETECT ALL function calls ***************
@@ -347,8 +355,10 @@ void RtedTransformation::visit(SgNode* n) {
 
 
 
+  else {
+	 // cerr << " @@ Skipping : " << n->unparseToString() << "   " << n->class_name() << endl;
 
-
+  }
 
 
   // ******************** DETECT functions in input program  *********************************************************************
