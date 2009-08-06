@@ -6,6 +6,12 @@
 #include <QObject>
 
 
+/**
+ * \brief Class for managing build-dependencies
+ *
+ * Planned to integrate in ProjectManager for dependency management - not yet finished
+ *  TODO
+ */
 class DependencyInfo : public QObject
 {
     Q_OBJECT

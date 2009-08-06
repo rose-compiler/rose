@@ -301,9 +301,9 @@ void AsmToSourceMapper::annotate( SgNode *node, const std::string &srcId, const 
                             if( *itr_prev_end == it->start() )
                             {
                                 prev_range.second = it->end();
-                                cout << "new end: " << it->end() << " " 
-                                     << address_ranges[address_ranges.size()-1].second
-                                     << endl;
+                                //cout << "new end: " << it->end() << " "
+                                //     << address_ranges[address_ranges.size()-1].second
+                                //     << endl;
                             }
                         }
                     }

@@ -7,9 +7,16 @@
 
 #include "ItemTreeNode.h"
 #include "ItemModelHelper.h"
+
+#include "AstDisplayInfo.h"
+
 // ------------------ ModelNode ------------------------
 
-
+/**
+ * \brief Node for a tree consisting of DisplayInformation of an Ast
+ *
+ *  Supports the on-demand building of the tree
+ */
 class QtAstModel::ModelNode : public ItemTreeNode
 {
 	public:
@@ -23,21 +30,37 @@ class QtAstModel::ModelNode : public ItemTreeNode
 
 		QtAstModel::ModelNode * addChild(const QString & name,SgNode * s);
 
-
 		virtual QVariant data(int role, int column=0) const;
 
-
+		/// returns if this node is buildup
 		bool isBuildUp() const  { return buildUp; }
+
 		/// Call this function when you added all childnodes
 		void buildUpFinished()  { buildUp=true; }
 
 		virtual void deleteChildren();
 
 	protected:
+
 		ModelNode() {}
 
+		/// Icon which is displayed in the first column
+		QIcon icon;
+
+		/// Associated SgNode
 		SgNode * sg;
+
+
+		/* this member is shown in the first column of the view
+		 * it usually is some description obtained by AstDisplayInfo,
+		 * but if there is none available it's set to the successorName
+		 * see SgNode function get_traversalSuccessorNamesContainer() */
 		QString dispName;
+
+		/// Sets the dispName, and icon according to type of SgNode,
+		/// if no description is found in AstDisplayInfo dispName is not changed
+		/// dispName is set to the successorName (out of ROSE traversal) as default
+		void setInfo(SgNode * node);
 
 		// the tree structure is build up "on demand" from the rose AST
 		// in the row() function, the children are added and finalized is set to true
@@ -45,14 +68,16 @@ class QtAstModel::ModelNode : public ItemTreeNode
 		bool buildUp;
 };
 
-QtAstModel::ModelNode::ModelNode(SgNode * proj)
+QtAstModel::ModelNode::ModelNode(SgNode * s)
 {
-	sg=proj;
+	sg=s;
 
-	if(proj)
-		dispName= proj->class_name().c_str();
+
+	if(s)
+		setInfo(s);
 	else
 		dispName=tr("Empty");
+
 
 	buildUp=false;
 }
@@ -80,6 +105,9 @@ QVariant QtAstModel::ModelNode::data(int role, int column) const
     {
         return sg ? QVariant::fromValue<SgNode*>(sg) : QVariant();
     }
+    else if (role == Qt::DecorationRole && column ==0)
+        return icon;
+
 
     return QVariant();
 }
@@ -98,9 +126,20 @@ QtAstModel::ModelNode * QtAstModel::ModelNode::addChild(const QString & name,SgN
 	newChild->dispName=name;
 	newChild->buildUp=false;
 
+	newChild->setInfo(s);
+
 	return newChild;
 }
 
+void QtAstModel::ModelNode::setInfo(SgNode * s)
+{
+    icon = AstDisplayInfo::nodeIcon(s);
+
+    QString newName = AstDisplayInfo::getShortNodeNameDesc(s);
+    if(! newName.isEmpty())
+        dispName=newName;
+
+}
 
 // ------------------ ASTTreeModel ------------------------
 

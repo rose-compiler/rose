@@ -14,7 +14,12 @@ class SgAsmInstruction;
 
 class AstFilterInterface;
 
-
+/**
+ * \brief Helper Class for AsmView
+ *
+ *  Used for the (invisible) root-node - is the parent of all AsmTreeFunctionNode 's
+ *
+ */
 class AsmTreeRootNode : public ItemTreeNode
 {
     public:
@@ -30,6 +35,10 @@ class AsmTreeRootNode : public ItemTreeNode
 
 };
 
+/**
+ * \brief Helper Class for AsmView - Displays FunctionName
+ *
+ */
 class AsmTreeFunctionNode : public ItemTreeNode
 {
     public:
@@ -50,6 +59,10 @@ class AsmTreeFunctionNode : public ItemTreeNode
 
 };
 
+/**
+ * \brief Helper Class for AsmView - Displays Instruction
+ *
+ */
 class AsmTreeInstructionNode : public ItemTreeNode
 {
     public:
@@ -84,8 +97,10 @@ class AsmTreeInstructionNode : public ItemTreeNode
 
 class AstFilterInterface;
 
+/// Build up the ItemTree which is used in AsmView
 ItemTreeNode *  buildAsmTree(SgNode * node, AstFilterInterface * filter);
 
+/// Build up the ItemTree which is used in AsmView, diff-view of two binaries
 ItemTreeNode * buildAsmTreeDiff(SgNode * node1, SgNode * node2,
                                 AstFilterInterface * filter1, AstFilterInterface * filter2);
 

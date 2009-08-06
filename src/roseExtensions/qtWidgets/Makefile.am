@@ -63,5 +63,11 @@ libRoseQtWidgets_la_LIBADD   =  $(buildDir)/AsmInstructionBar/libAsmInstructionB
 			        $(buildDir)/TreeModel/libTreeModel.la \
                                 $(buildDir)/util/libutil.la \
 				$(buildDir)/WidgetCreator/libWidgetCreator.la
+#docs: 
+#	rm -rf doc
+#	mkdir doc 
+#	cp  $(top_srcdir)/src/roseExtensions/qtWidgets/doc/* doc/
+#	doxygen $(top_srcdir)/src/roseExtensions/qtWidgets/doc/doc.doxyfile
+
 
 endif

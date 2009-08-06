@@ -29,7 +29,7 @@ VOID Instruction(INS ins, VOID *v)
 // This function is called when the application exits
 void Fini(INT32 code, void *v)
 {
-    ofstream fStream ("itrace.out");
+    ofstream fStream ("itrace.pin");
     
 
     map<unsigned long long,unsigned long>::iterator it = instMap.begin();

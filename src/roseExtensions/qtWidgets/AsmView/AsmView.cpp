@@ -27,11 +27,9 @@ AsmView::AsmView(QWidget * par)
     setRootIsDecorated(false);
     setAcceptDrops(true);
 
-    connect(this, SIGNAL( clicked(const QModelIndex & )),
-            this, SLOT(viewClicked(const QModelIndex&)));
-
     connect(this, SIGNAL(nodeDropped(SgNode*,const QPoint&)),
             this, SLOT(on_nodeDropped(SgNode*,const QPoint&)));
+
 }
 
 AsmView::~AsmView()
@@ -244,10 +242,10 @@ void AsmView::selectionChanged(const QItemSelection & selected, const QItemSelec
     if(selected.size() ==1 && selected.front().height() ==1)
     {
         QModelIndex ind = selected.front().bottomRight();
-        //addArrows(3,0, ind);
-        // TODO make it work in diffview
-        //if(model->columnCount() > 5)
-        //    addArrows(8,5,ind);
+        addArrows(3,0, ind);
+        // TODO check if it works in diffview
+        if(model->columnCount() > 5)
+            addArrows(8,5,ind);
     }
 
     RoseTreeView::selectionChanged(selected,deselected);

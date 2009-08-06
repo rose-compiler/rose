@@ -7,6 +7,9 @@
 class QWidget;
 class QEvent;
 
+/**
+ * \brief Creator for BAstView - see SubWindowFactory
+ */
 class BeautifiedAstCreator
     : public WidgetCreatorInterface
 {

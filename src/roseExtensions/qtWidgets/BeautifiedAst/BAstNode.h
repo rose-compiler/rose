@@ -9,11 +9,22 @@
 class SgNode;
 class AstFilterInterface;
 
-
+/**
+ * \brief A treenode of a Beautified AST
+ *
+ *  This class represents the display information of a tree node in a Beautified AST
+ *  A beautified AST shows only function, classes, namespace etc.
+ *   the "beautified" ast's are ment to shown to a user which is not familiar with ROSE datastructures
+ */
 class BAstNode : public ItemTreeNode
 {
 
     public:
+        /// Generates a new tree
+        static ItemTreeNode * generate(SgNode * sgRoot,AstFilterInterface * filter, ItemTreeNode * root = NULL);
+
+
+
         BAstNode(AstDisplayInfo::NodeType type,
                  const QString & caption,
                  const QString & tooltip,
@@ -41,8 +52,6 @@ class BAstNode : public ItemTreeNode
 
 
         virtual QStringList sectionHeader() const;
-
-        static ItemTreeNode * generate(SgNode * sgRoot,AstFilterInterface * filter, ItemTreeNode * root = NULL);
 
     protected:
         static void generationVisit(SgNode * node,

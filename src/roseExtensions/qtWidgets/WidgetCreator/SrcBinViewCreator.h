@@ -7,6 +7,9 @@
 class QWidget;
 class QEvent;
 
+/**
+ * \brief Creator for SrcBinView - see SubWindowFactory
+ */
 class SrcBinViewCreator
     : public WidgetCreatorInterface
 {

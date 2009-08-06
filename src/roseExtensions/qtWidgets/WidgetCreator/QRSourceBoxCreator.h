@@ -8,6 +8,9 @@
 class QWidget;
 class QEvent;
 
+/**
+ * \brief Creator for QRSourceBox - see SubWindowFactory
+ */
 class QRSourceBoxCreator
     : public WidgetCreatorInterface
 {

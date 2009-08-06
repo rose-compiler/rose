@@ -10,9 +10,9 @@ class SgDeclarationModifier;
 class SgSpecialFunctionModifier;
 
 /**
- * Shows information about an SgNode (similar to pdf generator)
+ * \brief Shows information about an SgNode (similar to pdf generator)
  *
- * <img src="../NodeInfoWidget.jpg"  alt="Screenshot">
+ * \image html NodeInfoWidget.jpg
  *
  * Shows following information about an SgNode:
  * - Location Info if node is an SgLocatedNode

@@ -8,6 +8,9 @@ namespace Ui { class KiviatInfo; }
 class MetricsKiviat;
 class SgNode;
 
+/**
+ * \brief Widget to configure a MetricsKiviat
+ */
 class KiviatInfo
     : public QWidget
 {

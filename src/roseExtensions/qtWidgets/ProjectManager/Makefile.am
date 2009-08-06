@@ -7,20 +7,24 @@ noinst_LTLIBRARIES = libProjectManager.la
 
 
 
-libProjectManager_la_SOURCES = DependencyInfo.cpp\
+libProjectManager_la_SOURCES = CmdLineEditDialog.cpp\
+                               DependencyInfo.cpp\
                                Project.cpp\
                                ProjectManager.cpp\
                                ProjectView.cpp
 
-nodist_libProjectManager_la_SOURCES = moc_DependencyInfo.cxx\
+nodist_libProjectManager_la_SOURCES = moc_CmdLineEditDialog.cxx\
+                                      moc_DependencyInfo.cxx\
                                       moc_Project.cxx\
-                                      moc_ProjectView.cxx
+                                      moc_ProjectView.cxx\
+                                      ui_CmdLineEditDialog.h
 
-
+BUILT_SOURCES = ui_CmdLineEditDialog.h
 
 # Target for installing header 
 headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
-headerTarget_HEADERS = DependencyInfo.h\
+headerTarget_HEADERS = CmdLineEditDialog.h\
+                       DependencyInfo.h\
                        Project.h\
                        ProjectManager.h\
                        ProjectView.h
@@ -28,5 +32,5 @@ headerTarget_HEADERS = DependencyInfo.h\
 
 endif
 
-EXTRA_DIST = 
+EXTRA_DIST = CmdLineEditDialog.ui
 

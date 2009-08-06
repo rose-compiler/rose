@@ -13,8 +13,10 @@ BAstView::BAstView(QWidget * par)
 
     setModel(model);
 
-    connect(this, SIGNAL( clicked(const QModelIndex & )),
-            this, SLOT(viewClicked(const QModelIndex&)));
+    // call setNode when node is dropped
+    connect(this,SIGNAL(nodeDropped(SgNode *, const QPoint &)),
+                     SLOT(setNode( SgNode *)));
+
 }
 
 

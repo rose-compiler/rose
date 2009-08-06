@@ -50,7 +50,7 @@ SrcBinView::SrcBinView( QWidget *parent )
     srcBinView->roseCodeEdit->installEventFilter( this );
     srcBinView->roseCodeEdit->viewport()->installEventFilter( this );
 
-    connect( srcBinView->asmView         , SIGNAL( clicked( SgNode * ) ),
+    connect( srcBinView->asmView         , SIGNAL( nodeActivated( SgNode * ) ),
              this                        , SLOT  ( setBinaryNode( SgNode * ) ) );
     connect( srcBinView->roseCodeEdit    , SIGNAL( cursorPositionChanged() ),
              this                        , SLOT  ( getCursorPosition() ) );

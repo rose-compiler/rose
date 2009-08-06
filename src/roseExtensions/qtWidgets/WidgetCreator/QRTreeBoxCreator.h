@@ -7,6 +7,9 @@
 class QWidget;
 class QEvent;
 
+/**
+ * \brief Creator for QRTreeBox - see SubWindowFactory
+ */
 class QRTreeBoxCreator
     : public WidgetCreatorInterface
 {

@@ -18,6 +18,21 @@ class MetricsConfig;
 class TaskList;
 class QWidget;
 
+/**
+ * \brief Central (singleton) class for managing SgProjects
+ *
+ * Singleton class for management of SgProject's
+ * is derived from ItemTreeNode because it's also used for displaying a project-tree in ProjectView
+ *
+ * Usage:
+ *      - Singleton class, call instance()
+ *      - the project manager needs two extern widgets for displaying information
+ *        before you can call any other functions, set theses two widgets:
+ *             setTaskListWidget() and setTaskMsgOutputWidget
+ *      - the ProjectManager has a list of multiple Projects, you can get them by calling getProject()
+ *
+ * \sa ProjectNode
+ */
 class ProjectManager : public ItemTreeNode
 {
     public:
@@ -58,7 +73,9 @@ class ProjectManager : public ItemTreeNode
         QWidget * taskOutputWdg;
 };
 
-
+/**
+ * \brief 'Dummy' class used as Root Display Node
+ */
 class ProjectManagerRootNode : public ItemTreeNode
 {
     public:
@@ -79,6 +96,7 @@ class BinaryFileNode;
 class SourceFileHeaderNode;
 class BinaryFileHeaderNode;
 class SgIncidenceDirectedGraph;
+
 
 class ProjectNode : public ItemTreeNode
 {
@@ -105,6 +123,7 @@ class ProjectNode : public ItemTreeNode
         QStringList getCommandLine() const;
         void addToCommandLine(const QString & string);
         void setCommandLine(const QStringList & l);
+        void showCmdLineDialog();
 
 
         SgProject * getSgProject()   { return sgProject; }
@@ -144,6 +163,9 @@ class ProjectNode : public ItemTreeNode
         BinaryFileHeaderNode * binFileHeaderNode;
 };
 
+/**
+ * \brief Helper class for ProjectManager - RootNode of all SourceFiles
+ */
 class SourceFileHeaderNode : public ItemTreeNode
 {
     public:
@@ -154,6 +176,9 @@ class SourceFileHeaderNode : public ItemTreeNode
 class ProjectNode;
 class RoseFrontendTask;
 
+/**
+ * \brief Node in ProjectManager which represents a SourceFile
+ */
 class SourceFileNode : public QObject, public ItemTreeNode
 {
     Q_OBJECT
@@ -193,7 +218,9 @@ class SourceFileNode : public QObject, public ItemTreeNode
 
 
 
-
+/**
+ * \brief Helper class for ProjectManager - RootNode of all BinaryFiles
+ */
 class BinaryFileHeaderNode :   public ItemTreeNode
 {
     public:
@@ -204,6 +231,9 @@ class BinaryFileHeaderNode :   public ItemTreeNode
 class ProjectNode;
 class GccCompileTask;
 
+/**
+ * \brief Node in ProjectManager which represents a BinaryFile
+ */
 class BinaryFileNode : public QObject, public ItemTreeNode
 {
     Q_OBJECT

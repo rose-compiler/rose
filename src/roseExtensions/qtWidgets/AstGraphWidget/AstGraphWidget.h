@@ -15,18 +15,15 @@ class QDragEnterEvent;
 class QDropEvent;
 
 /**
- *  Layout of an ast in a graphicsview (similar to zgrViewer )
+ *  \brief Layout of an AST in a graphicsview (similar to zgrViewer )
  *
- *  <img src="../AstGraphView.jpg"  alt="Screenshot">
+ *  \image html AstGraphView.jpg
  *
  *  This widget shows the AST layouted as a tree. For actual layouting
  *  the class TreeLayoutGenerator is used, but this can be replaced easily
  *  (for example to use different algorithms, or layout a general graph instead of a tree)
  *
- *  For displaying Qt's QGraphicsView is used. Therefore two custom QGraphicsItem's are introduced:
- *  DisplayEdge to  render the edges, and DisplayNode for node-rendering. The nodes are responsible for
- *  updating the adjacent edges.
- *
+ *  The actual code for displaying the nodes and edges is implemented in DisplayTreeNode and DisplayEdge
 */
 class AstGraphWidget : public RoseGraphicsView
 {
@@ -38,7 +35,6 @@ class AstGraphWidget : public RoseGraphicsView
 
 
 	protected:
-
         virtual void updateGraph(SgNode * node, AstFilterInterface * filter);
 
 		QGraphicsScene * scene;

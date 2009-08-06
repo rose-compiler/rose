@@ -38,8 +38,15 @@ struct SourceRange
     }
 };
 
-class SrcBinView
-    : public QWidget
+/**
+ * \brief Displays Source and Binary  side-by-side
+ *
+ *  - Relies on AsmToSourceMapper annotations
+ *  - has own (hacky) mechanism to map from a SourceCode location (cursor-location) to the according SgNode,
+ *    and from there with AsmToSourceMapper annotation to the binary
+ *    TODO use mechanism here which is used in QRSourceBox
+ */
+class SrcBinView : public QWidget
 {
     Q_OBJECT;
 

@@ -33,8 +33,11 @@ RoseTreeView::RoseTreeView(QWidget * par)
 
     setModel(model);
 
-    /*connect(this, SIGNAL( clicked(const QModelIndex & )),
-            this, SLOT(viewClicked(const QModelIndex&)));*/
+    connect(this,SIGNAL(clicked(const QModelIndex &)),
+                 SLOT(viewClicked(const QModelIndex &)));
+    connect(this,SIGNAL(doubleClicked(const QModelIndex &)),
+                 SLOT(viewDoubleClicked(const QModelIndex &)));
+
 }
 
 
@@ -63,7 +66,7 @@ bool RoseTreeView::gotoNode( SgNode *node )
 
     if( !pos.isValid() )
     {
-        qDebug() << "invalid position ...";
+        qDebug() << "RoseTreeView::gotoNode - no node found";
         return false;
     }
 
@@ -216,6 +219,7 @@ void RoseTreeView::removeAllArrows()
 
 void RoseTreeView::paintEvent(QPaintEvent * pEv)
 {
+    QTreeView::paintEvent(pEv);
     QPainter painter(viewport());
     painter.setClipRegion(QRegion(QRect(0,0,100000,100000)),Qt::NoClip);
     painter.setClipping(false);
@@ -238,8 +242,8 @@ void RoseTreeView::paintEvent(QPaintEvent * pEv)
 
     //Paint original window
     // TODO
-    QPaintEvent newPe(QRect(0,0,1000,1000));
-    QTreeView::paintEvent(&newPe);
+    //QPaintEvent newPe(QRect(0,0,1000,1000));
+    //QTreeView::paintEvent(&newPe);
 
 }
 

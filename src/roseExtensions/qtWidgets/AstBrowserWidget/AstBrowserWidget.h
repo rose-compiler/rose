@@ -11,17 +11,20 @@ class QtASTModel;
 class AstFilterInterface;
 
 /**
- * Treeview for browsing a Sage-AST
+ * \brief Treeview for browsing a Sage-AST
  *
- * <img src="../AstBrowserWidget.jpg"  alt="Screenshot">
+ * \image html AstBrowserWidget.jpg
  *
  * This view shows a Qt-TreeView of a Sage-AST. \n
- * To set the parent node call setNode() \n
- * Signals are sent when the user clicks or doubleclicks ( see clicked() ) .  \n
- * These signals have parameters with the current SgNode clicked on,
- * or as alternative the source-code file and location.
+ * For changing the display call setNode() which sets a new rootNode or gotoNode() which selects a given node
  *
- * It's possible to filter the view with an AstFilterInterface
+ * If the user clicks on a node the signal nodeActivated() is emitted, on when double clicking nodeActivatedAlt() is called
+ *
+ * It's possible to filter the view with an AstFilterInterface. For example filtering out all nodes which are part of header files etc.
+ *
+ * To get icons and node-descriptions the functions in namespace AstDisplayInfo are used
+ *
+ * A custom model is used for respresenting the AST: QtAstModel
  */
 class QDESIGNER_WIDGET_EXPORT AstBrowserWidget : public RoseTreeView
 {
@@ -35,7 +38,7 @@ class QDESIGNER_WIDGET_EXPORT AstBrowserWidget : public RoseTreeView
 	public slots:
                 /// Sets the root node of the View
 		virtual void setNode(SgNode * node);
-                virtual bool gotoNode( SgNode *node )
+        virtual bool gotoNode( SgNode *node )
                 { return false; }
 
 		/** Filters the view by using an AstFilterInterface

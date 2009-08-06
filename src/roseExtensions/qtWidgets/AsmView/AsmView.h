@@ -9,6 +9,16 @@ class AstFilterInterface;
 class ItemTreeModel;
 class SgNode;
 
+/**
+ * \brief Displays a disassembled binary
+ * \image html AsmView.jpg
+ *
+ * Features:
+ *   - displaying address, instruction and arguments
+ *   - functions can be collapesed (double click on function title)
+ *   - jump targets are shown with red arrows
+ *   - diff-view on two binaries
+ */
 class AsmView : public RoseTreeView
 {
     Q_OBJECT

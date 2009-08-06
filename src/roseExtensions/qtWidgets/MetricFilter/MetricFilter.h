@@ -10,7 +10,7 @@ class MetricsConfig;
 namespace Ui { class MetricFilter; }
 
 /**
- *  Widget for filtering according to metric attribute (show "hot regions" of code)
+ *  \brief Widget for filtering according to metric attribute (show "hot regions" of code)
  */
 class MetricFilter
     : public QWidget

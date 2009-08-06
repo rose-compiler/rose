@@ -8,6 +8,10 @@
     <file>AppIcons/info.png</file>
   </qresource>
   <qresource prefix="/util" >
+    <file>NodeIcons/variable.gif</file>
+    <file>NodeIcons/pragma.gif</file>
+    <file>NodeIcons/typedef.gif</file>
+    <file>NodeIcons/enum.gif</file>
     <file>WidgetIcons/CallGraph.gif</file>
     <file>WidgetIcons/Graph.gif</file>
     <file>WidgetIcons/Kiviat.gif</file>

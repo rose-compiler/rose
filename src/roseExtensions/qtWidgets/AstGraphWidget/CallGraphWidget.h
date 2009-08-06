@@ -7,6 +7,14 @@
 class QMouseEvent;
 class DisplayCallGraph;
 
+/**
+ * \brief Displays a call-graph
+ *
+ * \image html CallGraphWidget.jpg
+ *
+ *  Displays a callgraph associated with a project, and layouts it with a spring embedder algorithm
+ *  uses the ProjectManager to build up a callgraph
+ */
 class CallGraphWidget : public RoseGraphicsView
 {
         Q_OBJECT
@@ -17,7 +25,6 @@ class CallGraphWidget : public RoseGraphicsView
 
         protected:
             virtual void mouseReleaseEvent(QMouseEvent * ev);
-
 
             virtual void updateGraph(SgNode * node, AstFilterInterface * filter);
 

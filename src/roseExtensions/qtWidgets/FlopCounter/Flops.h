@@ -11,7 +11,7 @@
 #include "sage3.h"
 
 /**
- *  Helper Class for Flop-Counter
+ * \brief Helper Class for FlopCounter
  *  Accumulates occurance of VariantT given in constructor
  */
 class Flops : public AstAttribute

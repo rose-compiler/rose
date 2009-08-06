@@ -6,6 +6,9 @@
 
 class SgNode;
 
+/**
+ * \brief Stores MetricAttribute Normalization
+ */
 class MetricsInfo
 {
     public:

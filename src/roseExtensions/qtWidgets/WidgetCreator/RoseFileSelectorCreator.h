@@ -7,6 +7,9 @@
 class QWidget;
 class QEvent;
 
+/**
+ * \brief Creator for RoseFileSelector - see SubWindowFactory
+ */
 class RoseFileSelectorCreator
     : public WidgetCreatorInterface
 {

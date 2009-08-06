@@ -11,10 +11,17 @@ class QLanguageFactory;
 class QCodeEdit;
 
 /**
- * C++ Editor Widget, using QCodeEdit ( http://qcodeedit.edyuk.org )
+ * \brief C++ Editor Widget, using QCodeEdit ( http://qcodeedit.edyuk.org )
  *
- * This is just derived from QEditor, and added some convenience functions
+ * \image html QCodeEditWidget.jpg
+ *
+ * This is just a small wrapper around QEditor, and added some convenience functions
  * for detailed description look at documentation of QEditor
+ *
+ * It has some convenience function for marking errors and warnings, breakpoint-edit and loading of c++ files
+ * It also creates a QCodeEdit wrapper for the editor to show the line-mark and line-number panels
+ *
+ * for a ROSE specific version see RoseCodeEdit
  */
 class QDESIGNER_WIDGET_EXPORT QCodeEditWidget : public QEditor
 {
@@ -68,8 +75,6 @@ class QDESIGNER_WIDGET_EXPORT QCodeEditWidget : public QEditor
     protected:
 
         void init();
-
-
 
         QCodeEdit * editorWrapper;
 

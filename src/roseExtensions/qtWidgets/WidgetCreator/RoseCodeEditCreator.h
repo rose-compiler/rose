@@ -7,6 +7,9 @@
 class QWidget;
 class QEvent;
 
+/**
+ * \brief Creator for RoseCodeEdit - see SubWindowFactory
+ */
 class RoseCodeEditCreator
     : public WidgetCreatorInterface
 {

@@ -9,7 +9,9 @@
 class PropertyTreeModel;
 
 /**
- * Generic Qt Class for displaying Property-Value pairs
+ * \brief Generic Qt Class for displaying Property-Value pairs
+ *
+ * \image html PropertyTreeWidget.jpg
  *
  * The properties can be grouped, each group is displayed in a different color.
  * The view was inspired by the property-editor of Qt-Designer (and uses the same colors)
@@ -26,22 +28,36 @@ class PropertyTreeWidget : public QTreeView
 		virtual ~PropertyTreeWidget();
 
 
-		// Each section has a Background-Col and an alternating Bg-color
-		// which is used when alternatingRowColors=true
+		/// Each section has a Background-Col and an alternating Bg-color
+		/// which is used when alternatingRowColors=true
 		int addSection(const QString & sectionName,
 				       const QColor & bgColor,
 				       const QColor & altBgColor);
 
+		/// Adds a new section
+		/// @param sectionName Title of sections
+		/// @param colorNr     which color to use, there are 6 different predefined colors, use 0 to 6
+		///                    if parameter is negative (default) the next "free" color is used
 		int addSection(const QString & sectionName, int colorNr=-1);
 
+		/// Adds a Property-Value pair to a section
+		/// @param sectionId the return value of addSection()
+		/// @param property String of the property
+		/// @param value  value as an QVariant
+		/// @return modelIndex of the Prop-value pair
 		QModelIndex addEntryToSection(int sectionId,
 									  const QString & property,
 									  const QVariant & value);
 
+		/// This method can be used to have a tree structure of prop-value pairs
+		/// @param parent the return value of a previous addEntry() or addEntryToSection()
+        /// @param property String of the property
+        /// @param value  value as an QVariant
 		QModelIndex addEntry (const QModelIndex & parent,
 							    const QString & property,
 							    const QVariant & value);
 
+		/// Removes all sections and entries
 		void clear();
 
 	protected:

@@ -10,32 +10,38 @@
 // TODO: make it compile again!
 bool inFileToTraverse(SgNode* node, bool traversalConstraint, SgFile* fileToVisit);
 
-namespace AstProcessing {
-   // ============================================================================
-   // Traversal Classes
-   //
-   // Three seperate traversal classes to provide the different traversals.
-   // Each of them takes two types of template parameters:
-   //   1. Evaluator:
-   //           Acts as a callback class. Has to implement the evaluate* Functions
-   //   2. (Inherited|Synthesized)Attribute:
-   //           Types for the Inherited or Synthesized Attribute
-   //
-   // By having three base classes, the actual traversal can be done with less
-   // if statements
-   //
-   // By supplying the Base class as a template paramater, one can get rid of
-   // virtual function calls completely.
-   //
-   // The general idea behind the redesign is, that the evaluate functions don't
-   // have references as formal parameters. With this new design, the only restriction
-   // is, that the return and formal paramaeters must match by basic type (i.e.
-   // they can be by reference, by const reference, or by value).
-   // However, during the tests it was found out that const references are nto always
-   // the best choices (especially the StackFrameVector copy ctor is faster than passing
-   // by reference.
-   // ============================================================================
 
+/**
+ * The following classes are not really part of the QtWidgets and are only used in FlopCounter
+ * they are just at this location out of "historical" reasons
+ * they implement a faster traversal mechanism for the AST than currently is implemented in the libRose
+ */
+namespace AstProcessing {
+/**
+    Traversal Classes
+
+    Three seperate traversal classes to provide the different traversals.
+    Each of them takes two types of template parameters:
+      1. Evaluator:
+              Acts as a callback class. Has to implement the evaluate* Functions
+      2. (Inherited|Synthesized)Attribute:
+              Types for the Inherited or Synthesized Attribute
+
+    By having three base classes, the actual traversal can be done with less
+    if statements
+
+    By supplying the Base class as a template paramater, one can get rid of
+    virtual function calls completely.
+
+    The general idea behind the redesign is, that the evaluate functions don't
+    have references as formal parameters. With this new design, the only restriction
+    is, that the return and formal paramaeters must match by basic type (i.e.
+    they can be by reference, by const reference, or by value).
+    However, during the tests it was found out that const references are nto always
+    the best choices (especially the StackFrameVector copy ctor is faster than passing
+    by reference.
+      ============================================================================
+*/
    // TopDown Traversal
    // Evaluator needs:
    //   - InheritedAttribute evaluateInheritedAttribute( SgNode*, InheritedAttribute )
@@ -194,14 +200,14 @@ namespace AstProcessing {
 } // namespace AstProcessing
 // ============================================================================
 
-// ============================================================================
-// Old Style Wrapper Classes
-//
-// To Emulate the old design, one evaluator is needed to provide the pure
-// virtual evaluate function, and a Wrapper which acts as the interface to the
-// traversals. Typedefs are not an option here, because they can"t be templated.
-// ============================================================================
 
+/**
+  Old Style Wrapper Classes
+
+  To Emulate the old design, one evaluator is needed to provide the pure
+  virtual evaluate function, and a Wrapper which acts as the interface to the
+  traversals. Typedefs are not an option here, because they can"t be templated.
+*/
 //-----------------------------------------------------------------------------
 // AstTopDownWrapper
 template< typename InheritedAttribute >

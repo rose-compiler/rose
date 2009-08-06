@@ -7,11 +7,16 @@ class SgNode;
 #include <vector>
 #include <string>
 
+/**
+ * \brief Annotates each SgAsmInstruction which its execution count using data from IntelPIN
+ */
 namespace InstructionCountAnnotator
 {
 
   /** Annotates each SgAsmInstruction with a number
    *  indicating how often this instruction was executed
+   *
+   *  the needed pin tool which generates this file can be found in  util/pin/my_itrace.cpp
    *
    * @param proj the (binary) SgProject to annotate
    * @param instfile path of file with pairs of address - execCount

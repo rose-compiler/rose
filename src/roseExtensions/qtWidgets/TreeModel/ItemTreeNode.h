@@ -10,8 +10,9 @@
 class ItemTreeModel;
 
 /**
- * Can be used to build a QT-TreeModel
- * to subclass from QAbstractTreeModel
+ * \brief Node for building a tree which can be used to implement QAbstractItemModel
+ * For usage example see on of the many derived classes
+ * A similar class is provided now by Qt in the QTreeWidget - consider using QTreeWidget instead of QTreeView
  */
 class ItemTreeNode
 {
@@ -21,6 +22,9 @@ class ItemTreeNode
         ItemTreeNode();
         virtual ~ItemTreeNode();
 
+        /// Returns the data of this node i.e. what is displayed, has to be reimplemented!
+        /// @param role a combination of enum Qt::ItemDataRole
+        /// @param column the column where this QVariant is displayed
         virtual QVariant data(int role, int column=0) const;
 
         virtual ItemTreeNode * getParent() const 	   { return parent; }
@@ -98,6 +102,10 @@ class ItemTreeNode
 
 
 #include <QIcon>
+
+/**
+ * \brief Node which displays a Property-Value pair with optional icon
+ */
 class PropertyValueNode : public ItemTreeNode
 {
     public:

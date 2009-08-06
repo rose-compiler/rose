@@ -7,6 +7,9 @@
 class QWidget;
 class QEvent;
 
+/**
+ * \brief Creator for AstGraphWidget - see SubWindowFactory
+ */
 class AstGraphWidgetCreator
     : public WidgetCreatorInterface
 {
