@@ -1,3 +1,4 @@
+// vim:sw=4 ts=4 tw=80 et sta fdm=marker:
 #include "CppRuntimeSystem.h"
 #include <iostream>
 #include <cassert>
@@ -618,29 +619,30 @@ void testMultidimensionalStackArrayAccess()
 {
     TEST_INIT("Testing Multidimensional Array Access")
 
-    TypeSystem * ts = rs->getTypeSystem();
+        TypeSystem * ts = rs -> getTypeSystem();
+    MemoryManager* mm = rs -> getMemManager();
+
+    size_t intsz = sizeof( int );
 
     // int x[ 2 ][ 3 ]
     //  type array of array of int
     RsArrayType * type = ts -> getArrayType(
-        ts -> getArrayType( "SgTypeInt", 3 * sizeof( int )),
-        2 * 3 * sizeof( int )
-    );
+            ts -> getArrayType( "SgTypeInt", 3 * intsz),
+            2 * 3 * sizeof( int )
+            );
 
     rs->beginScope("TestScope");
 
     rs -> createArray( 0x100, "array[2][3]", "mangled_array[2][3]", type );
 
-    // check at aligned address x[ 0 ][ 0 ] 
-    //  base &x[ 0 ], element &x[ 0 ][ 0 ]
-    //  -- this should work for types int or int[3]
-    rs -> checkPointerDereference( 0x100, 0x100 );
-    
-    // check at non-aligned address x[ 0 ][ 1 ] 
-    //  base &x[ 0 ][ 0 ], element &x[ 0 ][ 1 ]
-    //  -- this should work for int type, but will be non-aligned for int[3]
-    //  type
-    rs -> checkPointerDereference( 0x100, 0x100 + sizeof( int ));
+    // check legal memory read from same memory region, but out of bounds on
+    // inner array, i.e check
+    //  x[ 0 ][ 3 ]     // actually x[ 1 ][ 0 ]
+    try { mm -> checkIfSameChunk( 0x100, 0x100 + 3 * intsz, intsz); }
+    TEST_CATCH ( RuntimeViolation::POINTER_CHANGED_MEMAREA )
+
+    // as above, but this time legally access the sub array
+    mm -> checkIfSameChunk( 0x100 + 3 * intsz, 0x100 + 3 * intsz, intsz);
 
     rs->endScope();
 
@@ -1183,7 +1185,6 @@ extern int RuntimeSystem_original_main(int argc, char ** argv, char ** envp)
 
 
 
-// vim:sw=4 ts=4 tw=80 et sta fdm=marker:
 
 
 
