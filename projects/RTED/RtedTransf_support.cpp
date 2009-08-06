@@ -432,6 +432,26 @@ void RtedTransformation::appendAddressAndSize(SgInitializedName* initName,
 
 	appendAddress( arg_list, exp );
 
+    // for pointer arithmetic variable access in expressions, we want the
+    // equivalent expression that computes the new value.
+    //
+    // e.g., with
+    //  int a[] = { 7, 8 };
+    //  int *p = &a[ 0 ];
+    //  int q = *(p++);
+    //
+    // we want the last assignment to check that (p + 1) is a valid address to
+    // read
+    if(     isSgPlusPlusOp( exp )
+            || isSgMinusMinusOp( exp )) {
+
+        exp = isSgUnaryOp( exp ) -> get_operand();
+    } else if( isSgPlusAssignOp( exp )
+                || isSgMinusAssignOp( exp )) {
+
+        exp = isSgBinaryOp( exp ) -> get_lhs_operand();
+    }
+
     SgTreeCopy copy;
     // consider, e.g.
     //
@@ -459,16 +479,53 @@ void RtedTransformation::appendAddressAndSize(SgInitializedName* initName,
     }
 }
 
-
+/*
+ * Appends the address of exp.  If exp is ++, +=, -- or -=, the address of the
+ * pointer after the assignment is appended to arg_list.
+ */
 void RtedTransformation::appendAddress(SgExprListExp* arg_list, SgExpression* exp) {
     SgTreeCopy copy;
-    appendExpression(
-        arg_list,
+
+
+    SgIntVal* offset = NULL;
+    if( isSgPlusPlusOp( exp )) {
+        offset = buildIntVal( 1 );
+        exp = isSgUnaryOp( exp ) -> get_operand();
+    } else if( isSgMinusMinusOp( exp )) {
+        offset = buildIntVal( -1 );
+        exp = isSgUnaryOp( exp ) -> get_operand();
+    } else if( isSgPlusAssignOp( exp )) {
+        offset = isSgIntVal( isSgBinaryOp( exp ) ->get_rhs_operand());
+        exp = isSgBinaryOp( exp ) -> get_lhs_operand();
+    } else if( isSgMinusAssignOp( exp )) {
+        offset = buildIntVal(
+            -1 * 
+            isSgIntVal( isSgBinaryOp( exp ) ->get_rhs_operand()) -> get_value()
+        );
+        exp = isSgBinaryOp( exp ) -> get_lhs_operand();
+    }
+
+    SgExpression *arg;
+    SgCastExp *cast_op = 
         buildCastExp(
             buildAddressOfOp( isSgExpression( exp -> copy( copy ))),
             buildUnsignedLongLongType()
-        )
-    );
+        );
+
+    if( offset != NULL ) {
+        ROSE_ASSERT( exp != NULL );
+        arg = new SgAddOp(
+            exp -> get_file_info(), cast_op,
+            new SgMultiplyOp(
+                exp -> get_file_info(),
+                offset,
+                buildSizeOfOp( exp )
+            )
+        );
+    } else
+        arg = cast_op;
+
+    appendExpression( arg_list, arg );
 }
 
 

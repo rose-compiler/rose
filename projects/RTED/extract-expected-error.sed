@@ -14,7 +14,7 @@
 # ever more precise, then this rule is unnecessary, i.e. memory leak errors
 # other than ones "upon exiting the program," should have their proper line
 # number extracted.
-/ERROR: memory leak/,$ {
+/ERROR: memory block not freed/,$ {
     x
     P
 	q
