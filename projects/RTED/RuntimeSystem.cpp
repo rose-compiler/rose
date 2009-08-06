@@ -291,54 +291,6 @@ RuntimeSystem_isInterestingFunctionCall(const char* name) {
   return interesting;
 }
 
-/*********************************************************
- * Check if the function that is called is modifying
- * i.e. whether it changes memory or just accesses it.
- * If it accesses memory, we need to ensure that the
- * memory is NULL terminated if const char*
- * we assume that parameter 2 than has the \0 token
- ********************************************************/
-int
-RuntimeSystem_isModifyingOp(const char* name) {
-  int modifying=0;//false;
-  // we do not need the actualLength of the
-  // first parameter for the following
-  if ( ( strcmp(name,"memcpy")==0 ||
-	 strcmp(name ,"memmove")==0 ||
-	 strcmp(name ,"strcpy")==0 ||
-	 strcmp(name ,"strncpy")==0
-	 )) {
-    modifying=1;
-  }
-  return modifying;
-}
-
-/*********************************************************
- * Return the number of parameters for a specific function call
- ********************************************************/
-int
-RuntimeSystem_getParamtersForFuncCall(const char* name) {
-  int dim=0;
-  if ( ( strcmp(name,"memcpy")==0 ||
-	 strcmp(name ,"memmove")==0 ||
-	 strcmp(name ,"strncat")==0 )) {
-    dim=3;
-  } else if ((
-	      strcmp(name ,"strncpy")==0 ||
-	      strcmp(name ,"strcpy")==0 ||
-	      strcmp(name ,"strchr")==0 ||
-	      strcmp(name ,"strpbrk")==0 ||
-	      strcmp(name ,"strspn")==0  ||
-	      strcmp(name ,"strstr")==0  ||
-	      strcmp(name ,"strcat")==0 )) {
-    dim=2;
-  } else if ((
-	      strcmp(name ,"strlen")==0
-	      )) {
-    dim=1;
-  }
-  return dim;
-}
 
 /*********************************************************
  * Check if a function call is a call to a function
@@ -823,22 +775,6 @@ void RuntimeSystem_roseAccessVariable( const char* name,
 }
 
 // ***************************************** VARIABLE DECLARATIONS *************************************
-
-
-/*********************************************************
- * Convert an integer to const char*
- ********************************************************/
-const char*
-RuntimeSystem_roseConvertIntToString(int t) {
-  int size = sizeof(int);
-  char* text = (char*)malloc(size+1);
-  if (text)
-    sprintf(text,"%d",t);
-  //printMessage("String converted from int : %s ",text);
-  return text;
-}
-
-
 
 
 void 

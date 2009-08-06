@@ -9,36 +9,7 @@ extern "C"
 {
 #endif
 
-enum Error {
-	PTR_OUT_OF_SCOPE,
-	PTR_REASSIGNED
-};
 
-
-// Constructor - Destructor
-void RuntimeSystem_Const_RuntimeSystem();
-void RuntimeSystem_roseRtedClose(
-  const char* filename,
-  const char* line,
-  const char* lineTransformed
-);
-
-// helper functions
-char* RuntimeSystem_findLastUnderscore(char* s);
-const char* RuntimeSystem_resBool(int val);
-const char* RuntimeSystem_roseConvertIntToString(int t);
-int RuntimeSystem_isInterestingFunctionCall(const char* name);
-int RuntimeSystem_getParamtersForFuncCall(const char* name);
-int getSizeOfSgType(const char* type);
-
-// memory handling
-void RuntimeSystem_increaseSizeMemory();
-void RuntimeSystem_increaseSizeMemoryVariables(  int pos);
-int checkMemoryLeakIssues(int pos, int address, const char* filename, const char* line, const char* stmtStr, enum Error msg);
-
-
-// array functions
-int RuntimeSystem_findArrayName(const char* mangled_name);
 //void RuntimeSystem_increaseSizeArray();                                               
 void RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name,
 				   const char* type, const char* basetype, size_t indirection_level, unsigned long int
@@ -54,8 +25,6 @@ void RuntimeSystem_roseArrayAccess(const char* name, int posA, int posB, const c
 
 
 // function calls 
-const char* RuntimeSystem_findVariablesOnStack(const char* name);
-void RuntimeSystem_increaseSizeRuntimeVariablesOnStack();                                               
 void RuntimeSystem_roseCallStack(const char* name, const char* mangl_name, const char* beforeStr,const char* filename, const char* line);
 
 void RuntimeSystem_handleSpecialFunctionCalls(const char* funcname,const char** args, int argsSize, const char* filename, const char* line, 
@@ -80,8 +49,6 @@ void RuntimeSystem_roseReallocateMemory(
 
 
 void RuntimeSystem_roseFunctionCall(int count, ...);
-int  RuntimeSystem_isSizeOfVariableKnown(const char* name);
-int  RuntimeSystem_isModifyingOp(const char* name);
 int RuntimeSystem_isFileIOFunctionCall(const char* name);
 
 // handle scopes (so we can detect when locals go out of scope, free up the
@@ -89,7 +56,6 @@ int RuntimeSystem_isFileIOFunctionCall(const char* name);
 // memory)
 void RuntimeSystem_roseEnterScope( const char* scope_name);
 void RuntimeSystem_roseExitScope( const char* filename, const char* line, const char* stmtStr);
-void RuntimeSystem_expandScopeStackIfNecessary();
 
 
 // function used to indicate error
@@ -103,8 +69,6 @@ void RuntimeSystem_roseCreateVariable(const char* name, const char*
 				      const char* className, const char* filename, const char* line,
 				      const char*
 				      lineTransformed);
-void RuntimeSystem_increaseSizeRuntimeVariables();
-int RuntimeSystem_findVariablesPos(const char* mangled_name, int* isarray);
 void RuntimeSystem_roseInitVariable(const char* name,
 				    const char* mangled_name,
 				    const char* typeOfVar2,
