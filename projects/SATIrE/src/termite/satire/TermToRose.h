@@ -1,6 +1,6 @@
 /* -*- C++ -*-
 Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
-          2008 Adrian Prantl <adrian@complang.tuwien.ac.at>
+          2008-2009 Adrian Prantl <adrian@complang.tuwien.ac.at>
 */
 #ifndef PROLOGTOROSE_H_
 #define PROLOGTOROSE_H_
@@ -206,7 +206,7 @@ public:
       ROSE_ASSERT(*decl != NULL);
     } else if (fail) {
       std::cerr<<"**ERROR: Symbol lookup failed: ("
-	/*<<decl->class_name()<<"*)*/<<id<<std::endl;
+	       <<decl->class_name()<<"*) "<<id<<std::endl;
       ROSE_ASSERT(false);
       *decl = NULL;
     }
@@ -222,7 +222,7 @@ public:
       ROSE_ASSERT(*type != NULL || t == NULL); // allow NULL pointer
     } else if (fail) {
       std::cerr<<"**ERROR: Symbol lookup failed: ("
-	/*<<type->class_name()<<"*)*/<<id<<std::endl;
+	       <<type->class_name()<<"*)"<<id<<std::endl;
       ROSE_ASSERT(false);
       *type = NULL;
     }

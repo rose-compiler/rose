@@ -49,6 +49,7 @@ termite_lint: term_lint.pl termite_spec.pl
 	$(SWI_PL) -q -t main -o termite_lint -c $(srcdir)/term_lint.pl
 endif
 
+AM_CXXFLAGS=
 AM_YFLAGS = -d
 
 lib_LTLIBRARIES = libtermsupport.la
@@ -62,7 +63,7 @@ CLEANFILES = termpretty.c++ \
              dfiparser.tab.c++ dfiparser.tab.h++
 
 if WITH_SWI_PROLOG
-CXXFLAGS += -DSWI_HOME_DIR='"$(SWI_PROLOG_HOME_DIR)"'
+AM_CXXFLAGS += -DSWI_HOME_DIR='"$(SWI_PROLOG_HOME_DIR)"'
 INCLUDES += -I$(SWI_PROLOG_INCLUDE_DIR) 
 ROSELDFLAGS += $(SWI_PROLOG_LIBS) $(SWI_PROLOG_LDADD)
 nobase_dist_data_DATA =  termite/ast_properties.pl  termite/loops.pl \

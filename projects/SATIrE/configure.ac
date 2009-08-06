@@ -219,6 +219,7 @@ docs/Makefile
 docs/manual/manual_vars.tex
 src/termite/Makefile
 src/termite/satire/termite.h
+src/termite/clang/BUILD-clang.sh
 src/analyzer/annotation/Makefile
 src/analyzer/astaccess/Makefile
 src/analyzer/astnumbering/Makefile
@@ -239,7 +240,6 @@ tools/icfgbuilder/Makefile
 tools/loopbounds/Makefile
 tools/loopbounds/lb.sh
 ])
-
 
 AC_OUTPUT
 

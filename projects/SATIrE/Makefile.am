@@ -20,6 +20,8 @@ endif
 docs:
 	$(MAKE) -C docs docs
 
+clang:
+	cd $(top_builddir)/src/termite/clang && sh BUILD-clang.sh
 EXTRA_DIST= README LICENSE ChangeLog KNOWN_BUGS BugLog \
         docs/satire_cfgconstruction.pdf \
 	docs/satire_overview.pdf \
