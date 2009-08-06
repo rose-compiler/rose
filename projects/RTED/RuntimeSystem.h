@@ -10,7 +10,16 @@ extern "C"
 #endif
 
 
-//void RuntimeSystem_increaseSizeArray();                                               
+// helper functions
+const char* RuntimeSystem_roseConvertIntToString(int t);
+
+
+void RuntimeSystem_roseRtedClose(
+  const char* filename,
+  const char* line,
+  const char* lineTransformed
+);
+
 void RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name,
 				   const char* type, const char* basetype, size_t indirection_level, unsigned long int
 				   address, long int size, 

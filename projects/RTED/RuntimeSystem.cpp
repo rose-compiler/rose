@@ -777,6 +777,22 @@ void RuntimeSystem_roseAccessVariable( const char* name,
 // ***************************************** VARIABLE DECLARATIONS *************************************
 
 
+/*********************************************************
+ * Convert an integer to const char*
+ ********************************************************/
+const char*
+RuntimeSystem_roseConvertIntToString(int t) {
+  int size = sizeof(int);
+  char* text = (char*)malloc(size+1);
+  if (text)
+    sprintf(text,"%d",t);
+  //printMessage("String converted from int : %s ",text);
+  return text;
+}
+
+
+
+
 void 
 RuntimeSystem_roseRegisterTypeCall(int count, ...) {
 	  // handle the parameters within this call
