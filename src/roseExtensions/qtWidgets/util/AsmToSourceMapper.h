@@ -9,6 +9,9 @@ class SgNode;
 
 /**
  * \brief Mapping Info for AsmToSourceMapper
+ * One AsmMappingInfo object represents one line in source-code
+ * it stores the line-nr and filename (i.e. a position in source-code)
+ * plus a range of SgAsmInstruction 's which where generated out of this source-line 
  */
 class AsmMappingInfo
 {
@@ -112,9 +115,6 @@ class AstNodeLinkAttribute
       public std::vector< std::pair<SgNode *, SgNode *> >
 {
     public:
-        /*AstNodeLinkAttribute( SgNode *node_ )
-            : node( node_ )
-        {}*/
 
         virtual ~AstNodeLinkAttribute()
         {}
@@ -127,14 +127,13 @@ class AstNodeLinkAttribute
 
 /**
  * \brief Attribute which represents a link to a SourceAST
+ *    This class basically stores a set of SgNode's which are associated
+ *    with the node, where this class was annotated to.
  */
 class AstSourceNodeLink
     : public AstNodeLinkAttribute
 {
     public:
-        /*AstSourceNodeLink( SgNode *node )
-            : AstNodeLinkAttribute( node )
-        {}*/
 
         virtual ~AstSourceNodeLink()
         {}
@@ -147,15 +146,13 @@ class AstSourceNodeLink
 
 /**
  * \brief Attribute which represents a link to a BinaryAST
+ *    This class basically stores a set of SgNode's which are associated
+ *    with the node, where this class was annotated to.
  */
 class AstBinaryNodeLink
     : public AstNodeLinkAttribute
 {
     public:
-        /*AstBinaryNodeLink( SgNode *node )
-            : AstNodeLinkAttribute( node )
-        {}*/
-
         virtual ~AstBinaryNodeLink()
         {}
 
@@ -166,14 +163,26 @@ class AstBinaryNodeLink
 };
 
 /**
- * \brief Creates Annotation with mapping: Source AST <-> Binary AST
+ * \brief Creates Annotation with mapping: Source AST <-> Binary AST using dwarf information
+ * 
+ *  Usage: \n
+ *  Create a new AsmToSourceMapper object for every binary file, and add
+ *  the sourcefile via addFile(). This class uses dwarf information which is 
+ *  included in the binary if it was compiled with the \c -g option.
+ *  The annotation is stored in the AST as annotation objects i.e.
+ *  AstBinaryNodeLink / AstSourceNodeLink
  */
 class AsmToSourceMapper
 {
     public:
 
+        /// Constructor, extracts the dwarf information from the binary
+        /// and stores them in
         AsmToSourceMapper( SgBinaryFile *file );
         
+        
+        /// This function annotates the Source and the binary AST with the
+        /// mapping information
         void annotate( SgSourceFile *file );
 
     private:

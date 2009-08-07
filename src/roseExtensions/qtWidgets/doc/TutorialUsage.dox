@@ -53,12 +53,26 @@ This example is part of the ROSE-svn, you can find it at \c projects/RoseQt/AstV
     \endcode
 
     First the .h file which was created from the .ui has to be included. If you use the provided makefile-rules its name is
-    \c ui_NameOfUiFile.h . Then a new \QApplication and \QWidget is created, the configuration object, which was created by QtDesigner is used
+    \c ui_NameOfUiFile.h . Then a new \c QApplication and \c QWidget is created, the configuration object, which was created by QtDesigner is used
     to setup the main-widget. Finally the exec() function of the QApplication is called, which starts the GUI.
 
 \section tutorial_buildSystem BuildSystem
+    Here is the \c Makefile.am  which you need in order to build this example project. For a more detailed description of how to use Qt and autotools see  \ref autotools_setup
+   
+   \code
+    include $(top_srcdir)/src/roseExtensions/qtWidgets/Make.inc
 
+    if ROSE_WITH_ROSEQT
 
-    For a more detailed description see \ref autotools_setup
+    INCLUDES += . $(ROSE_INCLUDES)
+    bin_PROGRAMS = AstProperties
+    AstProperties_SOURCES = main.cpp
+    nodist_AstProperties_SOURCES =  ui_MyWidget.h
+    BUILT_SOURCES = ui_MyWidget.h
+    AstProperties_LDADD = $(ROSE_LIBS)
+
+    endif
+
+   \endcode    
 */
 

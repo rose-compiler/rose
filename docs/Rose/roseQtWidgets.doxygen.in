@@ -486,6 +486,7 @@ RECURSIVE = YES
 EXCLUDE  = @top_srcdir@/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit  
 EXCLUDE += @top_srcdir@/src/roseExtensions/qtWidgets/QtGradientEditor
 EXCLUDE += @top_srcdir@/src/roseExtensions/qtWidgets/AstProcessing
+EXCLUDE += @top_srcdir@/src/roseExtensions/qtWidgets/cmakeBuildEnvironment
 
 
 # The EXCLUDE_SYMLINKS tag can be used select whether or not files or 

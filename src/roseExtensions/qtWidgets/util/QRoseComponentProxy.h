@@ -15,7 +15,10 @@ class QRoseComponent;
 class QRGroupWidget;
 class QRMessage;
 
-
+/**
+ * \brief Proxy class to use QRose widgets in the RoseGui
+ * 
+ */
 class QRoseComponentProxy
     : public QWidget
 {

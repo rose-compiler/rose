@@ -3,10 +3,8 @@
 
      \htmlonly <center> \endhtmlonly
 
-    \c libRoseQtWidgets.so provides Qt-Widgets which can display internal datastructures of ROSE. \n
-       They can be used like the native Qt-Widgets, even integration into Qt-Designer is possible. \n
-       RoseQt is a GUI for ROSE which uses all these widgets and is able to manage and display an SgProject \n \n
-
+    \c libRoseQtWidgets provides Qt-Widgets which can display internal datastructures of ROSE. \n
+       These Qt-Widgets make it easy to build a GUI for your own ROSE project.\n
      \htmlonly </center> \endhtmlonly
 
 
@@ -24,8 +22,8 @@
 \section location_in_rose Location in ROSE distribution
     The project is split up into several directories:
     - Library with all widgets is located at \c src/roseExtensions/qtWidgets
-    - Plugin library for Qt-Designer at \c projects/QtDesignerPlugins
-    - Main Application  \c projects/RoseQt
+    - Plugin library for Qt-Designer at \c projects/QtDesignerPlugins  
+    - RoseQt is a application which uses all these widgets, it's located at  \c projects/RoseQt
 
    \image html overview.jpg "RoseQt GUI"
 

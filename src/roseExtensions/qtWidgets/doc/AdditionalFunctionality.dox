@@ -1,24 +1,54 @@
 /**
 \page additional_functionaliy Additional functionality of Widgets Library
 
-general blabla work in progress / should get extended in future
+In addition to providing a set of ROSE specific widgets, the roseQtWidgets library provides some 'advanced' functionality which might be helpful in writing a GUI for your ROSE-project.
+\n \n 
+The roseQtWidgets library was designed with the idea of having a general GUI for ROSE,
+which is also able to do project management ( add/remove files from an existing SgProject ),
+management of AST-Annotators, and has support for mapping between a source and binary AST. \n
+These additional features of the roseQtWidget library, which are used in the RoseQt GUI
+are described here.\n \n
+
+
 
 \section additional_functionality_ProjectManager ProjectManager
+    \image html ProjectView.jpg "View of the ProjectManager"
+    \copydoc ProjectManager
 
 \section additional_functionality_MetricsSystem TaskSystem
 
-\section additional_functionality_MetricsSystem MetricsSystem
+
 
 \section additional_functionality_QRoseProxy QRose Proxy
+       The QRoseComponentProxy class was implemented for using QRose widgets in the RoseQt GUI. So it is possible to link QRose widgets to other RoseQt widgets. 
 
-
-\section additional_functionality_Annotator AST-Annotator
+\section additional_functionality_Annotator AST-Annotators
 
     \subsection annotator_overview Overview
 
+       The RoseQt Gui uses the AST annotation mechanism to implement certain features. It supports the display of MetricAttributes (Kiviat diagram, and coloring of RoseTreeView 's)  and uses annotation-objects to store a mapping between source and binary AST's . Thats why some annotators are part of the qt library, even if they do not depend on any Qt functionality. If more annotators for metric attributes are written, it would be a good idea to create a separate project for the annotation. This project than could implement a general framework for AST annotation which then can also handle dependencies between annotators. (For example some MetricAttribute annotator may want to use the Binary-Source mapping i.e. would depend on the mapping annotator). \n \n 
+       Currently the annotation happens in RoseFrontendTask, the Flop instruction annotator is executed by default, the PIN annotation takes place when a file with the same name as the sourcefile, but with the ending .pin , exists. The AsmToSourceMapper is also executed by default and relies on the fact, that all files added to a project are related. \n \n
+       A convenient way to see which attributes are annotated to which node,
+       is to use the AstBrowserWidget connected to a NodeInfoWidget (which can display the annotation objects).
     \subsection annotator_AsmToSource           Binary-AST to Source-AST Mapper
-
+        Implemented in AsmToSourceMapper : \n 
+        \copydoc AsmToSourceMapper
     \subsection annotator_pin                   Intel-PIN execution counter
+        This annotator is based on a pin-tool which you can find in 
+        \c src/roseExtensions/qtWidgets/util/pin \n 
+        For instructions how to use  and compile pin-tools see the IntelPin documentation. \n
+        This pin-tool counts how often every annotation was executed and writes this information to a file called \c itrace.pin . It has a very simple format: each line represents an instruction, and has first the address of the instruction, then separated by whitespaces how often this instruction was executed. Rename that file to YourBinaryName.pin and put it in the same folder as your binary. Then, when you load this binary in the RoseQt gui the annotation is done automatically (see RoseFrontendTask). 
     \subsection annotator_FlopCounter           Flop Instruction Counter
-
+        Implemented in FlopCounter \n 
+        \copydoc FlopCounter 
+       
+       
+       
+\section additional_functionality_MetricsSystem Metrics System
+        The Metrics system provides functionality for normalizing AstAttributes and a common interface for all widgets which use the metric attributes. \n
+       
+       Relevant classes:  
+       - MetricsConfig
+       - ProjectManager ( in order to get the global MetricsConfig object)
+       - MetricFilter
  */

@@ -11,7 +11,7 @@ class ItemTreeModel;
 
 /**
  * \brief Node for building a tree which can be used to implement QAbstractItemModel
- * For usage example see on of the many derived classes
+ * For usage example see on of the many derived classes. \n
  * A similar class is provided now by Qt in the QTreeWidget - consider using QTreeWidget instead of QTreeView
  */
 class ItemTreeNode
