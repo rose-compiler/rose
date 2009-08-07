@@ -156,10 +156,15 @@ COMPASS_MANUAL = $(compass_build_tooldir)/compass/doc/compass.pdf
 $(COMPASS_MANUAL):
 	cd $(compass_build_tooldir)/compass/doc && $(MAKE) docs
 
+# Liao, 8/6/2009. tutorial for autotuning	
+AUTOTUNING_MANUAL = $(top_builddir)/projects/autoTuning/doc/autoTuning.pdf
+$(AUTOTUNING_MANUAL):
+	cd $(top_builddir)/projects/autoTuning/doc && $(MAKE) docs
+
 RoseQtDoc:
 	doxygen roseQtWidgets.doxygen
 
-make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf ROSE_DeveloperInstructions.pdf ROSE_DemoGuide.pdf footer.html leftmenu.html $(COMPASS_MANUAL) RoseQtDoc
+make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf ROSE_DeveloperInstructions.pdf ROSE_DemoGuide.pdf footer.html leftmenu.html $(COMPASS_MANUAL) $(AUTOTUNING_MANUAL) RoseQtDoc
 	cd Tutorial; $(MAKE) make-web-pages
 	mkdir -p ROSE_WebPages
 	mkdir -p ROSE_WebPages/ROSE_HTML_Reference;
@@ -173,6 +178,7 @@ make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-U
 	cp -f $(srcdir)/news.html ROSE_WebPages/news.html
 	cp -f $(srcdir)/regressionTest.html ROSE_WebPages/regressionTest.html
 	cp -f $(COMPASS_MANUAL) ROSE_WebPages/
+	cp -f $(AUTOTUNING_MANUAL) ROSE_WebPages/
 #	cp -r $(top_srcdir)/ROSE_ResearchPapers ROSE_WebPages/ROSE_ResearchPapers
 	cp -fr $(top_srcdir)/ROSE_ResearchPapers ROSE_WebPages/
 	cp -f ROSE_InstallationInstructions.pdf ROSE_WebPages/ROSE_InstallationInstructions.pdf

@@ -38,15 +38,17 @@
         Compass is based on the ROSE compiler infrastructure and demonstrates the use of ROSE 
         to build many simple pattern detectors for analysis of C, C++, and Fortran 
         source code. See the current <a href="compass.pdf">Compass Manual</a> for details. </LI>
-        <LI> Loop optimizer: support for aggressive loop optimizations such as loop fusion,
-        fission, unrolling and blocking. An extended dependence analysis algorithm has been implemented to support both perfectly nested loops and irregular loop nests. </LI>
-        <LI> OpenMP: a project to support OpenMP using ROSE. ROSE already has a lightweight parser for OpenMP C/C++ pragmas and a translator for OpenMP 2.5 constructs. We are extending it to support Fortran and the new OpenMP 3.0 specification. </LI>
-        <LI> UPC: ongoing work to support UPC using ROSE. We are leveraging the existing UPC support available in the EDG frontend to build an environment for program analysis and optimizations for UPC applications. </LI>
         <LI> Whole-program empirical optimization: participation in the <a href="http://www.peri-scidac.org/perci/">PERI</a> project.
         ROSE is a central component in the PERI project to enable performance portability of DOE applications 
         through an empirical optimization system, 
         which incorporates a set of external tools interacting with ROSE to 
-        support the entire life-cycle of automated empirical optimization.</LI>
+        support the entire life-cycle of automated empirical optimization.
+        See the current draft <a href="autoTuning.pdf">autotuning tutorial</a> for details.
+        </LI>
+        <LI> Loop optimizer: support for aggressive loop optimizations such as loop fusion,
+        fission, unrolling and blocking. An extended dependence analysis algorithm has been implemented to support both perfectly nested loops and irregular loop nests. </LI>
+        <LI> OpenMP: a project to support OpenMP using ROSE. ROSE already has a lightweight parser for OpenMP C/C++ pragmas and a translator for OpenMP 2.5 constructs. We are extending it to support Fortran and the new OpenMP 3.0 specification. </LI>
+        <LI> UPC: ongoing work to support UPC using ROSE. We are leveraging the existing UPC support available in the EDG frontend to build an environment for program analysis and optimizations for UPC applications. </LI>
         </UL></p>
       </td>
       </tr>
