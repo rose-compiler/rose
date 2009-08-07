@@ -302,6 +302,11 @@ void RuntimeSystem::registerPointerChange(addr_type source, addr_type target, bo
     pointerManager.registerPointerChange(source,target,checks);
 }
 
+void RuntimeSystem::registerPointerChange(addr_type source, addr_type target,RsType * bt, bool checks)
+{
+    pointerManager.registerPointerChange(source,target,bt,checks);
+}
+
 void RuntimeSystem::registerPointerChange( const std::string & mangledName, addr_type target, bool checks)
 {
     addr_type source = stackManager.getVariable(mangledName)->getAddress();

@@ -82,6 +82,10 @@ class PointerManager
         /// sourceAddress has to be registered first with createPointer
         void registerPointerChange( addr_type sourceAddress, addr_type targetAddress, bool checks=false);
 
+        /// This function behaves like the previous implementation
+        /// except when no pointer was found at this address it creates a new one with the given baseType
+        void registerPointerChange( addr_type sourceAddress, addr_type targetAddress, RsType * baseType, bool checks=false);
+
         /// Behaves like registerPointerChange(sourceAddress,deref_address,true), but after the
         /// function the same targetAddress is registered for the pointer,
         /// Example: *(p++)  call registerPointerChange()

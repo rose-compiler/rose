@@ -125,6 +125,8 @@ class RuntimeSystem
         ///               which is fine, if pointer was changed by assignment, and which might be an "error"
         ///               if it was changed via pointer arithmetic
         void registerPointerChange( addr_type sourceAddress, addr_type targetAddress, bool checks=false);
+        /// for documentation see PointerManager::registerPointerChange()
+        void registerPointerChange( addr_type sourceAddress, addr_type targetAddress, RsType * bt, bool checks=false);
 
         /// Convenience function which takes mangledName instead of sourceAddress
         void registerPointerChange( const std::string & mangledName, addr_type targetAddress, bool checks=false);

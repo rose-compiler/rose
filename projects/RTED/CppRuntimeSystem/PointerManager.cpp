@@ -193,12 +193,31 @@ void PointerManager::deletePointerInRegion(addr_type from, addr_type to)
 }
 
 
+void PointerManager::registerPointerChange( addr_type src, addr_type target, RsType * bt, bool checks)
+{
+    PointerInfo dummy(src);
+    PointerSetIter i = pointerInfoSet.find(&dummy);
+
+    if(pointerInfoSet.find(&dummy) != pointerInfoSet.end())
+    {
+        // if pointer exists already, make sure that baseTypes match
+        assert((*i)->baseType=bt);
+    }
+    else
+    {
+        // create the pointer
+        createDereferentiableMem(src,bt);
+        registerPointerChange(src,target,checks);
+    }
+}
+
 void PointerManager::registerPointerChange( addr_type src, addr_type target, bool checks)
 {
     PointerInfo dummy(src);
     PointerSetIter i = pointerInfoSet.find(&dummy);
 
-    //forgot to call createPointer? , or automatic pointer registration in MemManager is wrong
+    // forgot to call createPointer?
+    // call the overloaded registerPointerChange() instead which does not require createPointer()
     assert(pointerInfoSet.find(&dummy) != pointerInfoSet.end());
 
     PointerInfo * pi = *i;
