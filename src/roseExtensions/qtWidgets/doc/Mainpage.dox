@@ -10,6 +10,7 @@
 
 \section toc Table of Contents
 
+    - \subpage roseQtUsage 
     - \subpage widgets
     - \subpage tutorial_usage
     - \subpage additional_functionaliy
@@ -23,7 +24,7 @@
     The project is split up into several directories:
     - Library with all widgets is located at \c src/roseExtensions/qtWidgets
     - Plugin library for Qt-Designer at \c projects/QtDesignerPlugins  
-    - RoseQt is a application which uses all these widgets, it's located at  \c projects/RoseQt
+    - RoseQt is a application which uses all these widgets, it is located at  \c projects/RoseQt
 
    \image html overview.jpg "RoseQt GUI"
 

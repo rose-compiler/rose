@@ -16,7 +16,12 @@ are described here.\n \n
     \copydoc ProjectManager
 
 \section additional_functionality_MetricsSystem TaskSystem
+    \image html TaskSystem.jpg "TaskList and TaskOutput-Widget:
 
+     Relevant classes:
+    - Task
+    - RoseFrontendTask
+    - GccCompileTask  
 
 
 \section additional_functionality_QRoseProxy QRose Proxy

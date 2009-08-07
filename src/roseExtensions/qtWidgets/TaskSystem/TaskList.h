@@ -7,7 +7,9 @@
 #include "TaskInterface.h"
 
 
-
+/**
+ * \brief Item of the TaskList widget
+ */
 class TaskListItem : public QListWidgetItem
 {
     public:
@@ -20,7 +22,7 @@ class TaskListItem : public QListWidgetItem
 };
 
 /**
- * List of (running, paused, done) processes
+ * \brief List of (running, paused, done) processes
  * - the process is setup before, and the signals finished* are connected
  * - the list calls the RoseProcess::run
  * - processes items exist until the user removes them

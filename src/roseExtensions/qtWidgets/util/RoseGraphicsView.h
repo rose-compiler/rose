@@ -9,7 +9,11 @@
 class SgNode;
 class AstFilterInterface;
 
-
+/**
+ * \brief GraphicsView which can display trees or graphs
+ * 
+ *  implementation of drag&drop and handling of SgNode's is done here 
+ */
 class RoseGraphicsView : public QGraphicsView
 {
     Q_OBJECT

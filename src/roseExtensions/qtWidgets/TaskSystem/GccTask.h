@@ -17,6 +17,10 @@ class QVBoxLayout;
 
 
 class TaskList;
+
+/**
+ * \brief Parses output of the gcc/g++ to get position of errors or warnings
+ */
 class GccOutputParser : public TaskOutputInfo
 {
     Q_OBJECT
@@ -71,7 +75,9 @@ class GccOutputParser : public TaskOutputInfo
 };
 
 
-
+/**
+ * \brief Task which uses gcc to compile a source file
+ */
 class GccCompileTask : public Task
 {
     Q_OBJECT

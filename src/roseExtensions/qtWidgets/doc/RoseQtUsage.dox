@@ -1,0 +1,22 @@
+/**
+ \page roseQtUsage Usage of the RoseQt GUI
+   
+   
+ \image html LinkMechanism.jpg "Linking Menu"
+
+ \section rostQtUsage_general General Usage     
+   - If you've build ROSE with   \c --with-roseQt you can find the RoseQt GUI
+     the folder \c projects/RoseQt/roseQt
+  -  When you start the GUI the first time an empty project is created 
+     where you can add source and binary files ( by right clicking on "Project1" in the ProjectManager)
+  -  the status of the GUI (open projects, and which files are in there) is stored in \c ~/.config/LLNL/demo.conf 
+  -  open some new sub-windows by using the "View" menu or the toolbar
+  -  SgNodes can be dragged from the ProjectManager to the sub windows
+  -  subwindows can be linked to each other by clicking on the window menu
+     in the upper left corner of the subwidget
+
+  \section rostQtUsage_annotators Annotators     
+ 
+   see  \ref additional_functionality_Annotator
+   
+*/

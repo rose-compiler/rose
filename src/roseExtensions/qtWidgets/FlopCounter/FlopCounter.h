@@ -17,8 +17,8 @@
  *
  * Usage example for annotation:
  * \code
- *      FlopCounterProcessor flops;
-        flops.traverse( file );
+   FlopCounterProcessor flops;
+   flops.traverse( file );
    \endcode
  */
 class FlopCounter
