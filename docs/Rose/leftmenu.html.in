@@ -10,6 +10,7 @@
             <p class="style3"><a href="ROSE_Tutorial/ROSE-@VERSION@-Tutorial.pdf" target="_blank">ROSE Tutorial (pdf)</p>
             <p class="style3"><a href="projects.html" target="_blank">Internal ROSE Projects</p>
             <p class="style3"><a href="ROSE_HTML_Reference/index.html" target="_blank">Doxygen Documentation</p>
+            <p class="style3"><a href="RoseQtWidgets/index.html" target="_blank">Qt GUI Support</p> 
             <p class="style3"><a href="ROSE_HTML_Reference/ProjectPublications.html" target="_blank">Publications</p>
             <!-- <p class="style3"><a href="ROSE_HTML_Reference/Gallery.html"> Gallery</p> -->
             <p class="style3"><a href="https://outreach.scidac.gov/projects/rose/" target="_blank">Download Software</p>

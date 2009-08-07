@@ -1114,8 +1114,6 @@ src/roseExtensions/databaseConnection/GlobalDatabaseConnection.C
 src/roseExtensions/dataStructureTraversal/Makefile
 src/roseExtensions/highLevelGrammar/Makefile
 src/roseExtensions/qtWidgets/Makefile
-src/roseExtensions/qtWidgets/doc/Makefile
-src/roseExtensions/qtWidgets/doc/doc.doxyfile
 src/roseExtensions/qtWidgets/AsmInstructionBar/Makefile
 src/roseExtensions/qtWidgets/AsmView/Makefile
 src/roseExtensions/qtWidgets/AstBrowserWidget/Makefile
@@ -1370,6 +1368,7 @@ docs/Rose/ROSE_DeveloperInstructions.tex
 docs/Rose/ROSE_DemoGuide.tex
 docs/Rose/gettingStarted.tex
 docs/Rose/rose.cfg
+docs/Rose/roseQtWidgets.doxygen
 docs/Rose/sage.cfg
 docs/Rose/Tutorial/Makefile
 docs/Rose/Tutorial/tutorial.tex

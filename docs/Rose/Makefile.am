@@ -156,7 +156,10 @@ COMPASS_MANUAL = $(compass_build_tooldir)/compass/doc/compass.pdf
 $(COMPASS_MANUAL):
 	cd $(compass_build_tooldir)/compass/doc && $(MAKE) docs
 
-make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf ROSE_DeveloperInstructions.pdf ROSE_DemoGuide.pdf footer.html leftmenu.html $(COMPASS_MANUAL)
+RoseQtDoc:
+	doxygen roseQtWidgets.doxygen
+
+make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf ROSE_DeveloperInstructions.pdf ROSE_DemoGuide.pdf footer.html leftmenu.html $(COMPASS_MANUAL) RoseQtDoc
 	cd Tutorial; $(MAKE) make-web-pages
 	mkdir -p ROSE_WebPages
 	mkdir -p ROSE_WebPages/ROSE_HTML_Reference;
@@ -232,7 +235,7 @@ html-docs: html
 
 EXTRA_DIST = \
    WEB_DOCS_README AvailableDocumentation.docs.in \
-   sage.cfg.in rose.cfg.in \
+   sage.cfg.in rose.cfg.in roseQtWidgets.doxygen.in \
    fixme.sty  acknowledgments.tex \
    bibliography.tex  examples.tex fd-docs.tex overviewOfRose.tex pre-docs.tex loopTransformDoc.tex  \
    mm.tex preprocessorDesign.tex tridvpk.tex writingYourFirstTranslator.tex appendix.tex \
