@@ -1,0 +1,64 @@
+/**
+\page tutorial_usage Tutorial for using ROSE Qt-Widgets in your project
+
+This small tutorial shows how easy it is to create a small GUI using the Rose-QtWidgets.
+This is a step-by-step tutorial which creates two widgets, a AstBrowserWidget an a NodeInfoWidget, connects them such that the
+user can browse through the abstract syntax tree of rose an view the properties of each node. Of course the same can be done using
+the RoseQt GUI. \n
+
+This example is part of the ROSE-svn, you can find it at \c projects/RoseQt/AstViewer
+
+\section tutorial_qtDesigner Create .ui file in Qt-Designer
+    Make sure that you have installed the QtDesigner integration library as described at \ref qtdesigner_integration \n
+
+    \image html Tutorial_QtDesigner.jpg
+
+    - Create a new empty widget, drag an "AstBrowserWidget" and "NodeInfoWidget" into it
+      (you can find them in the Widget Box, under "Rose Specific Widgets" )
+    - you can layout them in any way you want and connect them with other Qt-Widgets, in this example they a horizontal layout was used.
+      You can create a layout by right clicking on the top-widget
+    - optionally you can create links via signals/slots in QtDesigner (can also be done in the code)
+      in this example the \c setNode() signal of the AstBrowser was connected to the \n setNode() of the NodeInfoWidget. Every time
+      the user clicks on a node in the AstBrowser it's properties are shown.
+    - Set the name of the widget, by clicking on it, and then change the objectName in the Property Editor (this name is needed to access the form in the code)
+
+   You can find the example ui-file which creation is described here, in the \c AstViewer directory (\c MyWidget.ui)
+
+\section tutorial_code Code
+
+    This is all the code to get the example running:
+    \code
+    #include "rose.h"
+    #include "ui_MyWidget.h"
+
+    #include <QApplication>
+
+    int main(int argc, char**argv)
+    {
+            SgProject * proj = frontend(argc,argv);
+            QApplication app (argc,argv);
+
+            QWidget * wdg = new QWidget();
+
+            Ui::MyWidget ui;
+            ui.setupUi(wdg);
+
+            wdg->show();
+            ui.astBrowserWidget->setNode(proj);
+
+            app.exec();
+
+            return 0;
+    };
+    \endcode
+
+    First the .h file which was created from the .ui has to be included. If you use the provided makefile-rules its name is
+    \c ui_NameOfUiFile.h . Then a new \QApplication and \QWidget is created, the configuration object, which was created by QtDesigner is used
+    to setup the main-widget. Finally the exec() function of the QApplication is called, which starts the GUI.
+
+\section tutorial_buildSystem BuildSystem
+
+
+    For a more detailed description see \ref autotools_setup
+*/
+

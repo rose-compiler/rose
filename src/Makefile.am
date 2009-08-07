@@ -32,7 +32,8 @@ else
 endif
 
 if ROSE_WITH_ROSEQT
-libroseQtExtension = $(top_builddir)/src/roseExtensions/qtWidgets/libRoseQtWidgets.la
+libroseQtExtension = $(top_builddir)/src/roseExtensions/qtWidgets/libRoseQtWidgets.la \
+                     $(top_builddir)/src/3rdPartyLibraries/qrose/QRoseLib/libqrose.la
 else
 libroseQtExtension =
 endif

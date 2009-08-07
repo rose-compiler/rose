@@ -1,0 +1,73 @@
+/**
+ \page widgets List of Widgets and Basic Usage
+
+
+\section widgets_overview Usage
+
+    \subsection widgets_overview_signals Signal and Slot interface
+
+        Each widget which is described in the next section is designed such that it can be used
+        like any other standard Qt-Widget.\n
+        Some widgets use ROSE data structures ( see \ref widgets_rose_list), some don't ( \ref widgets_general_list ).
+        These general widgets are used as super-classes for the ROSE-widgets.
+
+        All ROSE-specific widgets can handle/display SgNode's and have some common signals and slots.
+        There are two SgNode "input"-functions (slots) and two "output"-functions (signals) which every ROSE-widget should have.
+        The link mechanism  (see \ref widgets_mdi_mechanism) uses these signals/slots to connect two ROSE-widgets together.
+            - slot \c setNode()   Takes the given node as base for the whole display. TreeView's usually set the new node as root.
+            - slot \c gotoNode()  Selects the given node (and in tree-view expands until this node is visible), and highlights it, the displayed data set does not change
+            - signal \c nodeActivated()    This signal is usually sent when the user clicks on some node
+            - signal \c nodeActivatedAlt() Alternative way of activating a node, mostly double-click (but may vary from view to view)
+
+        Normally \c setNode() is connected with \c nodeActivated() and \c gotoNode() with \c nodeActivatedAlt()
+
+    \subsection widgets_overview_dragNdrop Drag & Drop Interface
+        Additionally to the signal and slot mechanism, the SgNode's can be exchanged from window-to window by
+        drag & drop. The exchange of data via D&D is handled by mime-data. There are some convenience functions to
+        build QMimeData objects out of SgNode's in the file SageMimeData.h \n
+        Theses functions can use the annotations created by the AsmToSourceMapper
+        to put also the associated SgNode's of the linked Binary/Source Tree in the QMimeData object.
+        \n see also \ref impl_guide
+
+    \subsection widgets_overview_filter Filter for SgNode's
+        Some of the widgets have a function called \c setFilter() which can be used to show only part's of the AST.
+        For a more detailed documentation see AstFilterInterface and the derived classes. \n
+        To set a filter for a widget, create a new AstFilter on the heap (possibly combine them with AstFilterAnd,
+        and pass the pointer to the filter to \c setFilter(). The class should take ownership of the filter and free it
+        when it's not needed any more.
+
+
+\section widgets_general_list General widgets
+
+        Widgets which are used as base-classes for ROSE specific widgets
+            - PropertyTreeWidget\n \copydetails PropertyTreeWidget
+            - QCodeEditWidget\n    \copydetails QCodeEditWidget
+
+
+\section widgets_rose_list ROSE specific widgets
+
+            - RoseCodeEdit\n       \copydoc RoseCodeEdit
+            - AsmView \n           \copydoc AsmView
+            - AstBrowserWidget\n   \copydoc AstBrowserWidget
+            - AstGraphWidget\n     \copydoc AstGraphWidget
+            - CallGraphWidget\n    \copydoc CallGraphWidget
+            - BAstView\n           \copydoc BAstView
+            - KiviatView\n         \copydoc KiviatView
+            - MetricsKiviat\n      \copydoc MetricsKiviat
+            - MetricsConfig\n      \copydoc MetricsConfig
+            - MetricFilter\n       \copydoc MetricFilter
+            - NodeInfoWidget\n     \copydoc NodeInfoWidget
+            - RoseFileComboBox\n   \copydoc RoseFileComboBox
+            - ProjectView \n       \copydoc ProjectView
+
+\section widgets_mdi_mechanism MDI-Widget-Creator Interface
+
+        There is a common mechanism for creating all these ROSE-specific widgets and give the
+        user the possibility to link them together. As an example you can look at the MdiView of
+        the RoseQt GUI which uses this mechanism. The Mechanism described below is responsible for
+        creating new widgets, and the custom link-menu in the top-left of each sub-widget.
+
+        You can use this mechanism in your GUI by creating a SubWindowFactory which is a QMdiArea.
+        For a more detailed description see the documentation of SubWindowFactory and WidgetCreatorInterface.
+
+ */
