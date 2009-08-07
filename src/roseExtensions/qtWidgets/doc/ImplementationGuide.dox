@@ -14,11 +14,14 @@
         - ItemTreeModel \n \copydoc ItemTreeModel
 		
     \subsection util_classes_baseclasses Common base classes for Rose-Widgets
-          
+         \image html AstBrowserWidget.jpg "AstBrowserWidget which uses RoseTreeView"
         - RoseTreeView     \n \copydoc RoseTreeView 
         - RoseGraphicsView \n \copydoc RoseGraphicsView
 
     \subsection util_tree_graph Tree and Graph Drawing
+   
+       \image html CallGraphWidget.jpg "Call Graph View"
+        
        If you are planning to implement widgets which use Tree/Graph drawing on a QGraphicsView the
        following classes may help you:  
     	- DisplayNode      \n \copydoc DisplayNode

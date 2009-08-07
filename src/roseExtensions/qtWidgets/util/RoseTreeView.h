@@ -78,12 +78,12 @@ class RoseTreeView : public QTreeView
         virtual void mousePressEvent(QMouseEvent *event);
         virtual void mouseMoveEvent(QMouseEvent *event);
 
-        // handler to decide wether to accept a certain mime data
-        // default is to accept application/SgNode
-        // to support application/SgNode-* overwrite these two
-        // functions in the derived class
+        /// handler to decide wether to accept a certain mime data
+        /// default is to accept application/SgNode
+        /// to support application/SgNode-* overwrite these two
+        /// functions in the derived class
         virtual bool acceptMimeData( const QMimeData *mimeData );
-        // extracts and takes proper action for the arrived mimeData
+        /// extracts and takes proper action for the arrived mimeData
         virtual void handleMimeData( const QMimeData *mimeData, const QPoint& pos );
 
         // drawing of arrows
