@@ -206,7 +206,7 @@ public:
       ROSE_ASSERT(*decl != NULL);
     } else if (fail) {
       std::cerr<<"**ERROR: Symbol lookup failed: ("
-	       <<decl->class_name()<<"*) "<<id<<std::endl;
+	       <<((SgNode*)decl)->class_name()<<"*) "<<id<<std::endl;
       ROSE_ASSERT(false);
       *decl = NULL;
     }
@@ -222,7 +222,7 @@ public:
       ROSE_ASSERT(*type != NULL || t == NULL); // allow NULL pointer
     } else if (fail) {
       std::cerr<<"**ERROR: Symbol lookup failed: ("
-	       <<type->class_name()<<"*)"<<id<<std::endl;
+	       <<((SgNode*)type)->class_name()<<"*)"<<id<<std::endl;
       ROSE_ASSERT(false);
       *type = NULL;
     }
