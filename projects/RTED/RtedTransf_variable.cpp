@@ -260,10 +260,10 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
 	isSgForStatement(scope)) {
       // build the function call : runtimeSystem-->createArray(params); ---------------------------
       SgExprListExp* arg_list = buildExprListExp();
-      SgExpression* simplename = buildString(initName->get_name().str());
-      appendExpression(arg_list, simplename);
-      SgExpression* callName = buildString(initName->get_mangled_name().str());
-      appendExpression(arg_list, callName);
+      //SgExpression* simplename = buildString(initName->get_name().str());
+      //appendExpression(arg_list, simplename);
+      //SgExpression* callName = buildString(initName->get_mangled_name().str());
+      //appendExpression(arg_list, callName);
 
       // with
       //    arr[ ix ] = value;
@@ -304,7 +304,7 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
       SgExpression* linenrTransformed = buildString("x%%x");
       appendExpression(arg_list, linenrTransformed);
 
-      appendExpression(arg_list, buildString(removeSpecialChar(stmt->unparseToString())));
+      //appendExpression(arg_list, buildString(removeSpecialChar(stmt->unparseToString())));
 
       ROSE_ASSERT(roseInitVariable);
       string symbolName2 = roseInitVariable->get_name().str();

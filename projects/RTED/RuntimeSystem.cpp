@@ -279,28 +279,7 @@ RuntimeSystem_isInterestingFunctionCall(const char* name) {
 }
 
 
-#if 0
-/*********************************************************
- * Check if a function call is a call to a function
- * on our ignore list. We do not want to check those
- * functions right now.
- * This check makes sure that we dont push variables
- * on the stack for functions that we dont check
- * and hence the generated code is cleaner
- ********************************************************/
-int
-RuntimeSystem_isFileIOFunctionCall(const char* name) {
-  int interesting=0;//false;
-  if ( ( strcmp(name,"fopen")==0 ||
-	 strcmp(name ,"fgetc")==0 ||
-	 strcmp(name ,"fputc")==0 ||
-	 strcmp(name ,"fclose")==0
-	 )) {
-    interesting=1;
-  }
-  return interesting;
-}
-#endif
+
 
 
 
@@ -695,8 +674,7 @@ void RuntimeSystem_roseCreateVariable( const char* name,
  * in the pool of variables created and return mangled_name
  ********************************************************/
 void
-RuntimeSystem_roseInitVariable(const char* name,
-                    const char* mangled_name,
+RuntimeSystem_roseInitVariable(
                     const char* typeOfVar2,
                     const char* baseType,
                     size_t indirection_level,
@@ -707,8 +685,7 @@ RuntimeSystem_roseInitVariable(const char* name,
                     int pointer_changed,
                     const char* filename,
                     const char* line,
-                    const char* lineTransformed,
-                    const char* stmtStr) {
+                    const char* lineTransformed) {
 
 
 	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
