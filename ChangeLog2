@@ -1,3 +1,45 @@
+2009-08-07 17:14  bauer25
+
+	* [r6767]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/PointerManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/PointerManager.h:
+	  RTED: new impl of registerPointerChange
+
+2009-08-07 16:39  hamilton37
+
+	* [r6766] /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h: RTED: Tweaked
+	  pointer dereference checks for the sake of pointer errors, but
+	  respecting writes to avoid stomping an allocation_deallocation
+	  test.
+	  
+	  Now we treat the following as a var ref of &(*b)
+	  int a = *b;
+	  But the following as a var ref of &(b)
+	  *b = 2;
+
+2009-08-07 16:28  liao6
+
+	* [r6765] /trunk/ROSE/docs/Rose/Makefile.am,
+	  /trunk/ROSE/docs/Rose/news.html,
+	  /trunk/ROSE/docs/Rose/projects.html,
+	  /trunk/ROSE/docs/Rose/rose.html,
+	  /trunk/ROSE/projects/autoTuning/doc/userDirected.tex: Put the
+	  autotuning tutorial into our website
+
+2009-08-07 16:05  bauer25
+
+	* [r6764] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/docs/Rose/Makefile.am,
+	  /trunk/ROSE/docs/Rose/leftmenu.html.in,
+	  /trunk/ROSE/docs/Rose/roseQtWidgets.doxygen.in,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/doc/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/doc/doc.doxyfile.in:
+	  Added RoseQt documentation to the webpages
+
 2009-08-07 01:29  panas2
 
 	* [r6762] /trunk/ROSE/projects/RTED/Makefile.am: Updated Makefile
