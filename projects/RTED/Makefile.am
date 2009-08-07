@@ -502,7 +502,7 @@ c-compile-runtimesystem:
 
 check-local: runtimeCheck $(TESTCODES) c-compile-runtimesystem run_checkonly/C/string_errors \
              run_checkonly/C/allocation_deallocation_errors run_checkonly/C/input_output_errors \
-             run_checkonly/C/memory_leaks run_checkonly/C/array_index_out_of_bound
+             run_checkonly/C/array_index_out_of_bound
 	@echo "***************************************************************************************"
 	@echo "*** ROSE/projects/runtimeErrorCheck: make check rule complete (terminated normally) ***"
 	@echo "***************************************************************************************"
