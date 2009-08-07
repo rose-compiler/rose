@@ -173,20 +173,17 @@ Rejected modifications for ROSE:
     can be used this is application specific. More discussion on this subject is welcome.
 
 
-
-
-
    Currently tested ROSE
    -# excludes CompilerTests (commented out to speed up the tests)
 
-\section{Plum Hall C/C++ Compiler Test suite}
+\section Plum Hall C/C++ Compiler Test suite
 
-   A number of negative tests pass, and ROSE should be fixed so that there fail propoerly.
+   A number of negative tests pass, and ROSE should be fixed so that there fail properly.
    - Nonexistant header file in #include statement.  This fails in EDG, but is recorded as
      a pass in ROSE when -rose:negative_test is used.
    - An source file with no definition (n09003.c), should be an error.  It is however not
-     an error in EDG or GNU (and it should be under ANSI C mode).  We could inforce it in 
-     ROSE, but we have not defined a place in ROSE to semantic analysis not hanlded by the 
+     an error in EDG or GNU (and it should be under ANSI C mode).  We could enforce it in 
+     ROSE, but we have not defined a place in ROSE to semantic analysis not handled by the 
      frontend, but this could be done.
 
 

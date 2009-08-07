@@ -10,10 +10,11 @@ completeness.  It is hoped that the underlying goal within each paper
 of supporting the use of high-level abstractions will be clear together with
 our attempts to address the performance issues required for the use of 
 high-level abstractions within scientific computing.  A selectedpapers.bib 
-is included (ROSE/ROSE_ResearchPapers/selectedpapers.bib) to make it easy 
+is included <a href="../ROSE_ResearchPapers/selectedpapers.bib"> (download here) </a> to make it easy 
 to reference the latest papers.
 
 Best papers:
+   -# IWOMP2009-ExtendingAutoParToOptimizeAbstractions.pdf
    -# ICS05BrianWhiteAndCast.pdf
    -# LCPC2004-OptimizationsOfObjectOrientedAbstractionsThroughClassificationOfSemantics.pdf
    -# JMLC2003-RoseArchitecture.ps
@@ -22,6 +23,14 @@ Best papers:
    -# HIPS2001-LibrariesAsDomainSpecificLanguages.ps
 
 \section LabelA Brief descriptions of the several papers that we have included
+<a href="../ROSE_ResearchPapers/IWOMP2009-ExtendingAutoParToOptimizeAbstractions.pdf"> 
+     IWOMP2009-ExtendingAutoParToOptimizeAbstractions.pdf </a>. \n
+     This paper describes an approach to extending automatic parallelization to optimize 
+     applications written using high level abstractions.
+     This work exemplifies a typical usage of ROSE and an initial work by us on the
+     general subject of how to leverage semantics associated with high level of abstractions to 
+     enable more optimizations.
+
 <a href="../ROSE_ResearchPapers/LCPC2004-OptimizationsOfObjectOrientedAbstractionsThroughClassificationOfSemantics.pdf"> 
      LCPC2004-OptimizationsOfObjectOrientedAbstractionsThroughClassificationOfSemantics.pdf </a>. \n
      This paper outlines an approach to the optimization of user-defined abstractions.
@@ -36,7 +45,7 @@ Best papers:
 <a href="../ROSE_ResearchPapers/Vienna2006-AutomatedTuning.pdf">
      Vienna2006-AutomatedTuning.pdf </a>. \n
      This represent some recent work on empirical optimization (not yet published).
-     this entry should likely be removed until it is published.
+     This entry should likely be removed until it is published.
 
 <a href="../ROSE_ResearchPapers/ICS05BrianWhiteAndCast.pdf"> ICS05BrianWhiteAndCast.pdf </a>. \n
      This paper is about the optimization of unstructured grid applications and represent
@@ -114,7 +123,9 @@ Best papers:
 
 
 \section LabelB References to the included papers:
-
+-# Chunhua Liao, Daniel J. Quinlan, Jeremiah J. Willcock and Thomas Panas,
+"Extending Automatic Parallelization to Optimize High-Level Abstractions for Multicore,"
+In Proceedings of the 5th international Workshop on OpenMP: Evolving OpenMP in An Age of Extreme Parallelism (Dresden, Germany, June 03 - 05, 2009).
 -# Quinlan, Schordan, Yi, de Supinski,
 "Semantic-Driven Parallelization of Loops Operating on User-Defined Containers,"
 Proceedings of Languages and Compilers for High-Performance Computing (LCPC), 
