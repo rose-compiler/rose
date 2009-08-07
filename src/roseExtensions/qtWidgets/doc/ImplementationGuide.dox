@@ -4,32 +4,47 @@
 
 \section impl_guide_utility_classes Utility classes
     \subsection util_classes_model_view Model-View classes
-		There a a couple of utitliy classes which may be convenient to use, if you want to create your own widgets.
-		- ItemTreeNode \n \copydoc ItemTreeNode
-		- ItemTreeModel \n \copydoc ItemTreeModel
+        Qt provides a powerful Model-View  Framework. You should read the documentation for that
+        before looking at the ROSE specific implementations of it: http://doc.qtsoftware.com/4.5/model-view-programming.html
+        \n
+           
+        The following two classes are helper classes for implementing the QAbstractItemModel for a
+        tree like datastructure.          
+        - ItemTreeNode \n  \copydoc ItemTreeNode
+        - ItemTreeModel \n \copydoc ItemTreeModel
 		
     \subsection util_classes_baseclasses Common base classes for Rose-Widgets
+          
+        - RoseTreeView     \n \copydoc RoseTreeView 
         - RoseGraphicsView \n \copydoc RoseGraphicsView
-        - RoseTreeView  \n \copydoc RoseTreeView
-         
 
     \subsection util_tree_graph Tree and Graph Drawing
-    	- DisplayNode \n \copydoc Displ
+       If you are planning to implement widgets which use Tree/Graph drawing on a QGraphicsView the
+       following classes may help you:  
+    	- DisplayNode      \n \copydoc DisplayNode
+      - DisplayEdge      \n \copydoc DisplayEdge
+      - DisplayGraphNode \n \copydoc DisplayGraphNode
+      - DisplayTreeNode  \n \copydoc DisplayTreeNode
 
-\section impl_guide_AstDisplayInfo Displaying SgNode's
-		- ItemTreeNode \n \copydoc ItemTreeNode
-		- ItemTreeModel \n \copydoc ItemTreeModel
-		- 
 
 \section impl_guide_filters AST-Filters
-		    	Filtering mechanism for AST's
-    	- AbstractFilterInterface \n \copydoc AbstractFilterInterface
+		Filtering mechanism for AST's which is supported in many ROSE widgets, to display only certain
+      parts of the AST. \n
+      For a documentation of the filter interface have a look at the following classes
+      - AbstractFilterInterface \n \copydoc AstFilterInterface
+      - AstFilterAll            \n \copydoc AstFilterAll
+      - AstFilterAnd            \n \copydoc AstFilterAnd
+      - AstFilterFileByName     \n \copydoc AstFilterFileByName
+      - AstFilterFileById       \n \copydoc AstFilterFileById
+      - AstFilterMetricAttributeByThreshold \n \copydoc AstFilterMetricAttributeByThreshold
 		
 
 \section impl_guide_buildsystem BuildSystem
     \subsection impl_guide_buildsystem_autotools Autotools scripts
-    	There are script for automatic Makefile.am generation in \c src/roseExtension/qtWidgets/scripts
+      There are script for automatic Makefile.am generation in \c src/roseExtension/qtWidgets/scripts
     \subsection impl_guide_buildsystem_cmake     cmake build
-		
-
+      roseQtWidgets can also be build with cmake. Therefore you have to configure ROSE without Qt, install it
+      and build the qtWidgets and the RoseGUI separatly in the folder \c  src/roseExtension/qtWidgets/cmakeEnvironment \n
+     
+ 
  */

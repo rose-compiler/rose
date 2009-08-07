@@ -30,7 +30,7 @@ class QWidget;
  *        before you can call any other functions, set theses two widgets:
  *             setTaskListWidget() and setTaskMsgOutputWidget
  *      - the ProjectManager has a list of multiple Projects, you can get them by calling getProject()
- *
+ *      
  * \sa ProjectNode
  */
 class ProjectManager : public ItemTreeNode
@@ -40,15 +40,23 @@ class ProjectManager : public ItemTreeNode
 
         static ProjectManager * instance();
 
+        /// Creates an empty project with given name
+        /// @return a project id, can be used to get projectNode: getProject()
         int addProject(const QString & projectName);
 
+        /// Access function for getting information
         ProjectNode * getProject(int id);
         int getProjectCount() const;
         SgProject * getSgProject(int id);
+        
+        /// Returns the MetricsConfig object for a project
+        /// this object holds information about normalization of all 
+        /// MetricsAttributes  in the project
         MetricsConfig * getMetricsConfig(int id);
-
+        
         MetricsConfig *getMetricsConfig( SgNode *node );
 
+        /// Each 
         void setTaskListWidget     (TaskList * l)   { taskListWdg = l; }
         void setTaskMsgOutputWidget(QWidget * wdg)  { taskOutputWdg = wdg; }
 
@@ -98,6 +106,12 @@ class BinaryFileHeaderNode;
 class SgIncidenceDirectedGraph;
 
 
+/**
+ * \brief Class for representing one (Sg)Project in the GUI
+ * 
+ * Used for displaying the node which represents a project in the ProjectView,
+ * but has also functionality for adding and removing files from a SgProject
+ */
 class ProjectNode : public ItemTreeNode
 {
     public:
@@ -123,10 +137,12 @@ class ProjectNode : public ItemTreeNode
         QStringList getCommandLine() const;
         void addToCommandLine(const QString & string);
         void setCommandLine(const QStringList & l);
+        
+        /// Shows a dialog where the use can edit the rose frontend options
         void showCmdLineDialog();
 
 
-        SgProject * getSgProject()   { return sgProject; }
+        SgProject * getSgProject()         { return sgProject; }
         MetricsConfig * getMetricsConfig() { return metricsConfig; }
 
 
@@ -136,15 +152,18 @@ class ProjectNode : public ItemTreeNode
         int getBinaryFileCount() const;
         BinaryFileNode * getBinaryFile(int id) const;
 
+        
+                /// returns the callgraph associated with this Project
+        /// TODO update graph when files are added
+        SgIncidenceDirectedGraph * getCallGraph();
+        
         //  ----  Implementation of ItemTreeNode Interface  ---------
         virtual QVariant data(int role, int column=0) const;
 
 
         const QString & getName() const { return name;}
 
-        /// returns the callgraph associated with this Project
-        /// TODO update graph when files are added
-        SgIncidenceDirectedGraph * getCallGraph();
+
 
     protected:
         QString name;
@@ -178,6 +197,7 @@ class RoseFrontendTask;
 
 /**
  * \brief Node in ProjectManager which represents a SourceFile
+ *  for calling the rose-frontend RoseFrontendTask is used
  */
 class SourceFileNode : public QObject, public ItemTreeNode
 {

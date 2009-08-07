@@ -1,7 +1,7 @@
 # Rose Widgets Makefile.am
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-EXTRA_DIST = doc
+EXTRA_DIST = doc cmakeBuildEnvironment
 
 SUBDIRS = AsmInstructionBar\
           AsmView\
