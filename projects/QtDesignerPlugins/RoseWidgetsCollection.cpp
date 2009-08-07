@@ -16,6 +16,7 @@
 RoseWidgetsCollection::RoseWidgetsCollection(QObject * par)
     : QObject(par)
 {
+    widgets.append(new AstBrowserWidgetPlugin(this));
     widgets.append(new AstGraphWidgetPlugin(this));
     widgets.append(new AsmViewPlugin(this));
     widgets.append(new BAstViewPlugin(this));

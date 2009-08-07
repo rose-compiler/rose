@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>530</width>
-    <height>610</height>
+    <width>601</width>
+    <height>517</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,7 +15,7 @@
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
    <item>
-    <widget class="BAstView" name="bAstView"/>
+    <widget class="AstBrowserWidget" name="astBrowserWidget"/>
    </item>
    <item>
     <widget class="NodeInfoWidget" name="nodeInfoWidget"/>
@@ -24,9 +24,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>BAstView</class>
+   <class>AstBrowserWidget</class>
    <extends>QTreeView</extends>
-   <header>BAstView.h</header>
+   <header>AstBrowserWidget.h</header>
   </customwidget>
   <customwidget>
    <class>NodeInfoWidget</class>
@@ -42,18 +42,18 @@
  <resources/>
  <connections>
   <connection>
-   <sender>bAstView</sender>
+   <sender>astBrowserWidget</sender>
    <signal>nodeActivated(SgNode*)</signal>
    <receiver>nodeInfoWidget</receiver>
    <slot>setNode(SgNode*)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>164</x>
-     <y>279</y>
+     <x>135</x>
+     <y>304</y>
     </hint>
     <hint type="destinationlabel">
-     <x>409</x>
-     <y>279</y>
+     <x>394</x>
+     <y>304</y>
     </hint>
    </hints>
   </connection>

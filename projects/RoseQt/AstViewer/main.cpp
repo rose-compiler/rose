@@ -16,7 +16,7 @@ int main(int argc, char**argv)
 	ui.setupUi(wdg);
 	
 	wdg->show();
-	ui.bAstView->setNode(proj);
+	ui.astBrowserWidget->setNode(proj);
 
 	app.exec();	
 	

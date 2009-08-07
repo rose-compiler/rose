@@ -1,0 +1,35 @@
+/**
+\page impl_guide Implementation Guide for own ROSE-widgets
+
+
+\section impl_guide_utility_classes Utility classes
+    \subsection util_classes_model_view Model-View classes
+		There a a couple of utitliy classes which may be convenient to use, if you want to create your own widgets.
+		- ItemTreeNode \n \copydoc ItemTreeNode
+		- ItemTreeModel \n \copydoc ItemTreeModel
+		
+    \subsection util_classes_baseclasses Common base classes for Rose-Widgets
+        - RoseGraphicsView \n \copydoc RoseGraphicsView
+        - RoseTreeView  \n \copydoc RoseTreeView
+         
+
+    \subsection util_tree_graph Tree and Graph Drawing
+    	- DisplayNode \n \copydoc Displ
+
+\section impl_guide_AstDisplayInfo Displaying SgNode's
+		- ItemTreeNode \n \copydoc ItemTreeNode
+		- ItemTreeModel \n \copydoc ItemTreeModel
+		- 
+
+\section impl_guide_filters AST-Filters
+		    	Filtering mechanism for AST's
+    	- AbstractFilterInterface \n \copydoc AbstractFilterInterface
+		
+
+\section impl_guide_buildsystem BuildSystem
+    \subsection impl_guide_buildsystem_autotools Autotools scripts
+    	There are script for automatic Makefile.am generation in \c src/roseExtension/qtWidgets/scripts
+    \subsection impl_guide_buildsystem_cmake     cmake build
+		
+
+ */
