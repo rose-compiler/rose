@@ -1,3 +1,6 @@
+/**
+ * \file RtedTransformation.h
+ */
 #ifndef RTEDTRANS_H
 #define RTEDTRANS_H
 
@@ -90,6 +93,11 @@ class RtedTransformation : public AstSimpleProcessing {
   void insertReallocateCall( SgFunctionCallExp* exp );
   SgExpression* buildString(std::string name);
   std::string getMangledNameOfExpression(SgExpression* expr);
+  /**
+   * @return @c true @b iff @c exp is a descendent of an assignment expression
+   * (such as @ref SgAssignmentOp or @ref SgPlusAssignOp)
+   */
+  bool isUsedAsLvalue( SgExpression* exp );
   SgExpression* getExprBelowAssignment(SgExpression* exp);
   void appendFileInfo( SgNode* n, SgExprListExp* arg_list);
   void appendFileInfo( Sg_File_Info* n, SgExprListExp* arg_list);

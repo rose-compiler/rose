@@ -394,15 +394,20 @@ void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE,
       //SgExpression* callName = buildString(initName->get_mangled_name().str());
       //appendExpression(arg_list, callName);
 
-      // consider
-      //    int *p;
-      //    *p = 24601;
-      //  It is necessary that &p, sizeof(p) is readable, but not 
-      //  &(*p), sizeof(*p).
-      if (derefExp)
-    	  appendAddressAndSize(initName, derefExp -> get_operand(), arg_list,2);
-      else
-    	  appendAddressAndSize(initName, varRefE, arg_list,2);
+
+      SgExpression* accessed_exp = varRefE;
+      if( derefExp ) {
+          // consider
+          //    int *p;
+          //    *p = 24601;
+          //  It is necessary that &p, sizeof(p) is readable, but not 
+          //  &(*p), sizeof(*p).
+          if( isUsedAsLvalue( derefExp ))
+              accessed_exp = derefExp -> get_operand();
+          else
+              accessed_exp = derefExp;
+      }
+      appendAddressAndSize(initName, accessed_exp, arg_list,2);
 
       SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
       SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));

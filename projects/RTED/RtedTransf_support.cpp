@@ -51,6 +51,17 @@ RtedTransformation::getExprBelowAssignment( SgExpression* exp ) {
     return exp;
 }
 
+bool
+RtedTransformation::isUsedAsLvalue( SgExpression* exp ) {
+    if( NULL == exp ) return false;
+
+    SgExpression* ancestor = getExprBelowAssignment( exp );
+    SgBinaryOp* assign = isSgBinaryOp( ancestor -> get_parent() );
+    return(
+        assign && assign -> get_lhs_operand() == ancestor
+    );
+}
+
 
 SgExpression*
 RtedTransformation::buildString(std::string name) {
