@@ -91,7 +91,7 @@ Index: Driver/TermDumper.cpp
 ===================================================================
 --- Driver/TermDumper.cpp	(revision 0)
 +++ Driver/TermDumper.cpp	(revision 0)
-@@ -0,0 +1,1960 @@
+@@ -0,0 +1,1961 @@
 +
 +//===--- StmtTermDumper.cpp - TermDumping implementation for Stmt ASTs ----===//
 +//
@@ -1031,6 +1031,7 @@ Index: Driver/TermDumper.cpp
 +    PrologTerm * make_variable_declaration_term(const Decl *D) {
 +      PrologCompTerm *specifics = new PrologCompTerm("variable_declaration_specific");
 +      specifics->addSubterm(make_declaration_modifier(D));
++      specifics->addSubterm(make_null_atom()); // FIXME: base type definition
 +      if(D->getKind() == Decl::Var)
 +        specifics->addSubterm(make_preprocessing_info(D->getLocation()));
 +      else
