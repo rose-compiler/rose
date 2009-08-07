@@ -1,3 +1,45 @@
+2009-08-06 17:29  panas2
+
+	* [r6755] /trunk/ROSE/projects/RTED/DataStructures.h,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: Fixed handling of
+	  function call parameters
+
+2009-08-06 17:14  hamilton37
+
+	* [r6754] /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp:
+	  RTED: documented case that isn't handled well, but doesn't really
+	  affect the
+	  RTED tests.
+
+2009-08-06 17:10  hamilton37
+
+	* [r6753] /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp:
+	  RTED: Improved testMultidimensionalStackArrayAccess to be
+	  consistent with usage
+	  in runtimesystem.
+
+2009-08-06 16:00  hamilton37
+
+	* [r6749] /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: RTED: fixed
+	  over-aggressive pruning.
+
+2009-08-06 15:56  hamilton37
+
+	* [r6748] /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: RTED: Removed some
+	  obsolete functions from old runtime system.
+
+2009-08-06 15:49  hamilton37
+
+	* [r6747] /trunk/ROSE/projects/RTED/Makefile.am: RTED: Fixed broken
+	  makefile -- removed obsolete dependency.
+
 2009-08-06 00:42  hamilton37
 
 	* [r6744] /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
