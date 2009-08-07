@@ -110,8 +110,8 @@ statements_guarded([S|Ss], [guard(S)|Gs]) :-
 stmt_decls_infos_asserted(Statement, Decls, AI, FI, AssertedStatement) :-
   DA = default_annotation(null, preprocessing_info([])),
   AI = analysis_info(AIs),
-  member(pre_info(PreInfo), AIs),
-  member(post_info(PostInfo), AIs),
+  member(pre_info(interval, PreInfo), AIs),
+  member(post_info(interval, PostInfo), AIs),
   info_decls_assertions(PreInfo, Decls, PreAssertions),
   info_decls_assertions(PostInfo, Decls, PostAssertions),
   chain_up(PreAssertions, DA, AI, FI, PreStmt),

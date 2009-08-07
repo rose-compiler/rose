@@ -389,7 +389,8 @@ Implementation::outputAnnotatedProgram(Program *program, bool prefixFiles)
         if (program->prologTerm == NULL)
         {
             TimingPerformance timer("Output Termite term:");
-            TermPrinter<DFI_STORE> tp((DFI_STORE) analysisInfo, program->icfg);
+            TermPrinter<DFI_STORE> tp((DFI_STORE) analysisInfo, identifier(),
+                                      program->icfg);
 
             if (program->options->analysisWholeProgram())
                 tp.traverse(program->astRoot);

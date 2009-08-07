@@ -13,6 +13,7 @@ extern char* dfitext;
 extern int   dfilineno;
 PrologCompTerm*  dfiterm;
 const char* dfi_name;
+const char* dfi_analysisname;
 
 void dfierror(const char *);
 
@@ -67,6 +68,7 @@ start:
 dfiseq:
   dfis {
     dfiterm = new PrologCompTerm(dfi_name);
+    dfiterm->addSubterm(new PrologAtom(dfi_analysisname));
     dfiterm->addSubterm(new PrologList(*$1));
     $$ = dfiterm;
   }

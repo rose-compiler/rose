@@ -243,7 +243,7 @@ var_interval(analysis_info(AnalysisInfo),
 	     var_ref_exp(var_ref_exp_annotation(Type, Name, _Val, _, _),
 			 _Ai, _Fi),
 	     interval(Min,Max)) :-
-  member(pre_info(Contexts), AnalysisInfo),
+  member(pre_info(interval, Contexts), AnalysisInfo),
   member(merged:map(_,Intvls),Contexts),
   member(Name->[Min1,Max1],Intvls),
   (  number(Min1)

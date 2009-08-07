@@ -184,7 +184,7 @@ void outputProgramRepresentation(Program *program, AnalyzerOptions *options)
         if (program->prologTerm == NULL)
         {
             TimingPerformance timer("Output Prolog term:");
-            TermPrinter<void *> tp(NULL, program->icfg);
+            TermPrinter<void *> tp(NULL, "", program->icfg);
             if (options->analysisWholeProgram())
                 tp.traverse(program->astRoot);
             else

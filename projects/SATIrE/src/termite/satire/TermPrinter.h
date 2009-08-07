@@ -50,21 +50,18 @@ class TermPrinter: public AstBottomUpProcessing<PrologTerm*>
 {
 public:
   TermPrinter(DFI_STORE_TYPE analysis_info = 0
+            , std::string analysisname_ = ""
 #if HAVE_SATIRE_ICFG
             , CFG *cfg = 0
 #endif
             )
-#if HAVE_PAG || HAVE_SATIRE_ICFG
       :
-#endif
 #if HAVE_PAG
-      pagDfiTextPrinter(analysis_info)
+      pagDfiTextPrinter(analysis_info),
 #endif
-#if HAVE_PAG && HAVE_SATIRE_ICFG
-      ,
-#endif
+      analysisname(analysisname_ != "" ? analysisname_ : "unknown")
 #if HAVE_SATIRE_ICFG
-      cfg(cfg)
+    , cfg(cfg)
 #endif
   { 
 #if HAVE_SWI_PROLOG
@@ -119,13 +116,16 @@ private:
   /** the converter */
   RoseToTerm termConv;
 
+  /** the name of the analysis, if available */
+  std::string analysisname;
 #if HAVE_SATIRE_ICFG
   /** the CFG */
   CFG *cfg;
 #endif
 
   PrologCompTerm* getAnalysisResult(SgStatement* stmt);  
-  PrologCompTerm* pagToProlog(std::string name, std::string dfi);
+  PrologCompTerm* pagToProlog(std::string name, std::string analysis,
+                              std::string dfi);
 };
 
 typedef TermPrinter<void*> BasicTermPrinter;
@@ -310,8 +310,10 @@ TermPrinter<DFI_STORE_TYPE>::getAnalysisResult(SgStatement* stmt)
 #if HAVE_PAG
   if (withPagAnalysisResults && stmt->get_attributeMechanism()) {
     PrologTerm *preInfo, *postInfo;
-     preInfo = pagToProlog("pre_info", pagDfiTextPrinter.getPreInfo(stmt));
-    postInfo = pagToProlog("post_info",pagDfiTextPrinter.getPostInfo(stmt));
+     preInfo = pagToProlog("pre_info",  analysisname,
+                           pagDfiTextPrinter.getPreInfo(stmt));
+    postInfo = pagToProlog("post_info", analysisname,
+                           pagDfiTextPrinter.getPostInfo(stmt));
     infos->addFirstElement(postInfo);
     infos->addFirstElement(preInfo);
   }
@@ -337,15 +339,18 @@ TermPrinter<DFI_STORE_TYPE>::getAnalysisResult(SgStatement* stmt)
 extern const char* dfi_input;
 extern const char* dfi_input_start;
 extern const char* dfi_name;
+extern const char* dfi_analysisname;
 extern int dfiparse (void);
 extern void dfirestart(FILE*);
 extern PrologCompTerm* dfiterm;
 
 template<typename DFI_STORE_TYPE>
 PrologCompTerm*
-TermPrinter<DFI_STORE_TYPE>::pagToProlog(std::string name, std::string dfi) {
+TermPrinter<DFI_STORE_TYPE>::pagToProlog(
+        std::string name, std::string analysis, std::string dfi) {
   // Initialize and call the parser
   dfi_name = name.c_str();
+  dfi_analysisname = analysis.c_str();
   dfi_input = dfi_input_start = dfi.c_str();
   dfirestart(0);
   dfiparse();
