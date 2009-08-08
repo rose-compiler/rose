@@ -1,3 +1,59 @@
+2009-08-07 23:24  bauer25
+
+	* [r6772]
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/FlopCounter/FlopCounter.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/TaskSystem/GccTask.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/TaskSystem/RoseFrontendTask.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/TaskSystem/TaskInterface.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/TaskSystem/TaskList.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/doc/AdditionalFunctionality.dox,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/doc/ImplementationGuide.dox,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/doc/Mainpage.dox,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/doc/RoseQtUsage.dox,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/doc/Widgets.dox,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/doc/images/LinkMechanism.jpg,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/doc/images/TaskSystem.jpg,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/RoseGraphicsView.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/RoseTreeView.h:
+	  Worked on documentation for roseQtWidgets
+
+2009-08-07 23:11  liao6
+
+	* [r6771]
+	  /trunk/ROSE/ROSE_ResearchPapers/IWOMP2009-ExtendingAutoParToOptimizeAbstractions.pdf,
+	  /trunk/ROSE/ROSE_ResearchPapers/selectedpapers.bib,
+	  /trunk/ROSE/docs/Rose/Makefile.am,
+	  /trunk/ROSE/docs/Rose/documents.html,
+	  /trunk/ROSE/docs/Rose/leftmenu.html.in,
+	  /trunk/ROSE/docs/Rose/news.html,
+	  /trunk/ROSE/docs/testDoxygen/ProjectToDoList.docs,
+	  /trunk/ROSE/docs/testDoxygen/Publications.docs: Rearranged
+	  website menu items and updated the publication page
+
+2009-08-07 22:15  bauer25
+
+	* [r6769] /trunk/ROSE/docs/Rose/roseQtWidgets.doxygen.in,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/ProjectManager/Project.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/TreeModel/ItemTreeNode.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/cmakeBuildEnvironment,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/cmakeBuildEnvironment/CMakeLists.txt,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/cmakeBuildEnvironment/cmake,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/cmakeBuildEnvironment/cmake/AddQtFolders.cmake,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/cmakeBuildEnvironment/cmake/FindRose.cmake,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/cmakeBuildEnvironment/cmake/PrecompiledHeaders.cmake,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/cmakeBuildEnvironment/cmake/add_widget.cmake,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/cmakeBuildEnvironment/demo,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/cmakeBuildEnvironment/qrose,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/cmakeBuildEnvironment/widgets,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/doc/AdditionalFunctionality.dox,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/doc/ImplementationGuide.dox,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/doc/Mainpage.dox,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/doc/TutorialUsage.dox,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/AsmToSourceMapper.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/QRoseComponentProxy.h:
+	  Worked on documentation
+
 2009-08-07 17:14  bauer25
 
 	* [r6767]
