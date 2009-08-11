@@ -23,47 +23,43 @@ Best papers:
    -# HIPS2001-LibrariesAsDomainSpecificLanguages.ps
 
 \section LabelA Brief descriptions of the several papers that we have included
-<a href="../ROSE_ResearchPapers/IWOMP2009-ExtendingAutoParToOptimizeAbstractions.pdf"> 
-     IWOMP2009-ExtendingAutoParToOptimizeAbstractions.pdf </a>. \n
+- Chunhua Liao, Daniel J. Quinlan, Jeremiah J. Willcock and Thomas Panas,
+"Extending Automatic Parallelization to Optimize High-Level Abstractions for Multicore,"
+In Proceedings of the 5th international Workshop on OpenMP: Evolving OpenMP in An Age of Extreme Parallelism (Dresden, Germany, June 03 - 05, 2009). <a href="../ROSE_ResearchPapers/IWOMP2009-ExtendingAutoParToOptimizeAbstractions.pdf"> pdf </a>. \n
      This paper describes an approach to extending automatic parallelization to optimize 
      applications written using high level abstractions.
      This work exemplifies a typical usage of ROSE and an initial work by us on the
      general subject of how to leverage semantics associated with high level of abstractions to 
      enable more optimizations.
 
-<a href="../ROSE_ResearchPapers/LCPC2004-OptimizationsOfObjectOrientedAbstractionsThroughClassificationOfSemantics.pdf"> 
-     LCPC2004-OptimizationsOfObjectOrientedAbstractionsThroughClassificationOfSemantics.pdf </a>. \n
+- Qing Yi, Daniel J. Quinlan: Applying Loop Optimizations to Object-Oriented Abstractions Through General Classification of Array Semantics. LCPC 2004: 253-267 <a href="../ROSE_ResearchPapers/LCPC2004-OptimizationsOfObjectOrientedAbstractionsThroughClassificationOfSemantics.pdf">pdf </a>. \n
      This paper outlines an approach to the optimization of user-defined abstractions.
      This work represents a substantial goal for ROSE and an initial work by us on the
-     general subject of how to write code an a very high level of abstraction and have the 
+     general subject of how to write code at a very high level of abstraction and have the 
      lower level code required to get good performance be automatically generated.
-
-<a href="../ROSE_ResearchPapers/ISOLA2004-ClassificationAndUtilizationOfAbstractionsForOptimization.ps"> 
-     ISOLA2004-ClassificationAndUtilizationOfAbstractionsForOptimization.ps </a>. \n
-     This paper is a general introduction to recent work in the ROSE project.
-
-<a href="../ROSE_ResearchPapers/Vienna2006-AutomatedTuning.pdf">
-     Vienna2006-AutomatedTuning.pdf </a>. \n
-     This represent some recent work on empirical optimization (not yet published).
-     This entry should likely be removed until it is published.
-
-<a href="../ROSE_ResearchPapers/ICS05BrianWhiteAndCast.pdf"> ICS05BrianWhiteAndCast.pdf </a>. \n
-     This paper is about the optimization of unstructured grid applications and represent
-     preparatory work for future automated transformations specific to unstructured grid
-     applications within DOE using ROSE.
-
-<a href="../ROSE_ResearchPapers/LCPC2004-OptimizationsOfObjectOrientedAbstractionsThroughClassificationOfSemantics.pdf"> 
-     LCPC2004-OptimizationsOfObjectOrientedAbstractionsThroughClassificationOfSemantics.pdf </a>. \n
      This paper covers the details of optimizing object-oriented abstractions using ROSE.
      Unfortunately, ROSE is not mentioned anywhere in the paper, a ridiculous oversight,
      but oh well.  The subject is the optimization, not the ROSE compiler infrastructure.
 
-<a href="../ROSE_ResearchPapers/JMLC2003-RoseArchitecture.ps"> JMLC2003-RoseArchitecture.ps </a>. \n
+- Daniel J. Quinlan, Markus Schordan, Qing Yi, Andreas Sæbjørnsen: Classification and Utilization of Abstractions for Optimization. ISoLA 2004: 57-73 <a href="../ROSE_ResearchPapers/ISOLA2004-ClassificationAndUtilizationOfAbstractionsForOptimization.ps"> ps </a>. \n
+     This paper is a general introduction to recent work in the ROSE project.
+
+- Parameterization and Search-space Exploitation of Loop Fusion, 2006 <a href="../ROSE_ResearchPapers/Vienna2006-AutomatedTuning.pdf">
+     pdf </a>. \n
+     This represent some recent work on empirical optimization (not yet published).
+     This entry should likely be removed until it is published.
+
+- White, B. S., McKee, S. A., de Supinski, B. R., Miller, B., Quinlan, D., and Schulz, M. 2005. Improving the computational intensity of unstructured mesh applications. In Proceedings of the 19th Annual international Conference on Supercomputing (Cambridge, Massachusetts, June 20 - 22, 2005). ICS '05. ACM, New York, NY, 341-350. DOI= http://doi.acm.org/10.1145/1088149.1088195 
+<a href="../ROSE_ResearchPapers/ICS05BrianWhiteAndCast.pdf"> pdf </a>. \n
+     This paper is about the optimization of unstructured grid applications and represent
+     preparatory work for future automated transformations specific to unstructured grid
+     applications within DOE using ROSE.
+
+- Schordan M., Quinlan D., "A Source-To-Source Architecture for User-Defined Optimizations", Joint Modular Languages Conference held in conjunction with EuroPar'03, Austria, August 2003 <a href="../ROSE_ResearchPapers/JMLC2003-RoseArchitecture.ps"> ps </a>. \n
     This paper covers the architecture of ROSE as a project.  It is one of the best
     and most up to date papers on ROSE.
 
-<a href="../ROSE_ResearchPapers/LCPC03-ParallelOptimizationOfContainers.ps"> 
-     LCPC03-ParallelOptimizationOfContainers.ps </a>. \n
+- Daniel J. Quinlan, Markus Schordan, Qing Yi, Bronis R. de Supinski: Semantic-Driven Parallelization of Loops Operating on User-Defined Containers. LCPC 2003: 524-538 <a href="../ROSE_ResearchPapers/LCPC03-ParallelOptimizationOfContainers.ps"> ps </a>. \n
      This paper is the informal proceedings version and demonstrates the optimization 
      of generalized container abstractions and
      is related to Active Library research (or so I understand).  It is also related to 
@@ -71,44 +67,49 @@ Best papers:
      in ROSE and has served an an introduction for the authors into the optimization of 
      the STL library more generally.
 
-<a href="../ROSE_ResearchPapers/WOMPAT2003-OpenMPTranslation.ps"> WOMPAT2003-OpenMPTranslation.ps </a>. \n
+- Daniel J. Quinlan, Markus Schordan, Qing Yi, Bronis R. de Supinski: A C++ Infrastructure for Automatic Introduction and Translation of OpenMP Directives. WOMPAT 2003: 13-25 <a href="../ROSE_ResearchPapers/WOMPAT2003-OpenMPTranslation.ps"> ps </a>. \n
     This paper demonstrates the use of ROSE to recognize OpenMP pragmas and, using the
     Nanos OpenMP runtime library, build a subset of an OpenMP specific compiler for C++.
 
-<a href="../ROSE_ResearchPapers/HIPS2001-LibrariesAsDomainSpecificLanguages.ps"> 
-     HIPS2001-LibrariesAsDomainSpecificLanguages.ps </a>. \n
+- Quinlan, D. J., Miller, B., Philip, B., and Schordan, M. 2002. Treating a User-Defined Parallel Library as a Domain-Specific Language. In Proceedings of the 16th international Parallel and Distributed Processing Symposium (April 15 - 19, 2002). IEEE Computer Society, Washington, DC, 324. <a href="../ROSE_ResearchPapers/HIPS2001-LibrariesAsDomainSpecificLanguages.ps"> ps </a>. \n
      This paper is specific to compile-time optimization of array classes.  It demonstrates
      what was at the time the most current work on the compile-time optimization of an
      array class library.  ROSE is more general, but this paper is very specific to
      the optimization of a single library.
 
+- Quinlan, D., "ROSE: Compiler Support for Object-Oriented Frameworks"
+Proceedings of Conference on Parallel Compilers (CPC2000), Aussois, France, January 2000.
+Also published in special issue of Parallel Processing Letters, Vol. 10. 
 <a href="../ROSE_ResearchPapers/CPC2000-SupportForObjectOrientedFrameworks.ps"> 
-     CPC2000-SupportForObjectOrientedFrameworks.ps </a>. \n
+     ps </a>. \n
      This paper was an introduction to the work being done at the time on ROSE complete
      with a more detailed motivation for compile-time optimization of specific libraries.
 
-<a href="../ROSE_ResearchPapers/CPC2001-Concurrency2003.ps"> CPC2001-Concurrency2003.ps </a>. \n
+- Quinlan, D. Schordan, M. Philip, B. Kowarschik, M. "Parallel Object-Oriented Framework Optimization", Special Issue of Concurrency: Practice and Experience (2003), also in Proceedings of Conference on Parallel Compilers (CPC2001), Edinburgh, Scotland, June 2001.
+<a href="../ROSE_ResearchPapers/CPC2001-Concurrency2003.ps"> ps </a>. \n
     This is one of the first papers on ROSE presented at CPC2001 and later updated for
     publication into the Journal of Concurrency, Practice, and Experience.
 
+- Quinlan, D., Schordan, M. Philip, B. Kowarschik, M. "The Specification of Source-To-Source Transformations for the Compile-Time Optimization of Parallel Object-Oriented Scientific Applications", Submitted to Parallel Processing Letters, also in Proceedings of 14th Workshop on Languages and Compilers for Parallel Computing (LCPC2001), Cumberland Falls, KY, August 1-3 2001.
 <a href="../ROSE_ResearchPapers/LCPC2001-SpecificationOfTransformations.ps"> 
-     LCPC2001-SpecificationOfTransformations.ps </a>. \n
+     ps </a>. \n
      This was a paper which specified some elements of what later became the string based
      AST rewrite mechanism used in ROSE.
 
-<a href="../ROSE_ResearchPapers/PDPTA2001-ROSETTA.ps"> PDPTA2001-ROSETTA.ps </a>. \n
+- D. Quinlan and B. Philip, "ROSETTA: The Compile-Time Recognition of Object-Oriented Library Abstractions and Their Use Within User Applications", in Proceedings of the International Conference on Parallel and Distributed Processing Techniques and Applications (PDPTA 2001), 2001 <a href="../ROSE_ResearchPapers/PDPTA2001-ROSETTA.ps"> ps </a>. \n
     This paper describes the development of a tool, ROSETTA, which build object-oriented
     Intermediate Representations (IRs) for compilers.  It is a tool used within ROSE to
     build the SAGE III IR which we use internally with the EDG front-end.  It is specific
     to details of the internal ROSE compiler infrastructure.
 
-<a href="../ROSE_ResearchPapers/SCI1999-OptimizingArrayClassLibraries.ps"> SCI1999-OptimizingArrayClassLibraries.ps </a>. \n
+
+- Kei Davis and Dan Quinlan, ROSE II: An Optimizing Code Transformer for C++ Object-Oriented Array Class Libraries, 
+World Multiconference on Systemics, Cybernetics and Informatics and 5th International Conference on Information Systems Analysis and Synthesis Vol.5: Computer Science and Engineering, Jul 31-Aug 4, 1999, Orlando, Florida 
+<a href="../ROSE_ResearchPapers/SCI1999-OptimizingArrayClassLibraries.ps"> ps </a>. \n
     This paper present preliminary work on the compile-time optimization of array 
     class libraries.
 
-
-<a href="../ROSE_ResearchPapers/IPPS1997-ExpressionTemplatePerformanceIssues.ps"> 
-     IPPS1997-ExpressionTemplatePerformanceIssues.ps </a>. \n
+- F. Bassetti, K. Davis, D. Quinlan, "C++ Expression Templates Performance Issues in Scientific Computing," ipps, pp.0635, 12th. International Parallel Processing Symposium, 1998 <a href="../ROSE_ResearchPapers/IPPS1997-ExpressionTemplatePerformanceIssues.ps"> ps </a>. \n
      Discusses the different approaches to the
      optimization of array class libraries.  Optimization of array class libraries led 
      to the development of ROSE as a project, though ROSE is not at all specific to array 
@@ -120,45 +121,6 @@ Best papers:
      for scientific computing.  Several papers on the details of template use were 
      written, this is the most complete of them.  It is included with these papers to
      provide a bit of perspective (currently historical).
-
-
-\section LabelB References to the included papers:
--# Chunhua Liao, Daniel J. Quinlan, Jeremiah J. Willcock and Thomas Panas,
-"Extending Automatic Parallelization to Optimize High-Level Abstractions for Multicore,"
-In Proceedings of the 5th international Workshop on OpenMP: Evolving OpenMP in An Age of Extreme Parallelism (Dresden, Germany, June 03 - 05, 2009).
--# Quinlan, Schordan, Yi, de Supinski,
-"Semantic-Driven Parallelization of Loops Operating on User-Defined Containers,"
-Proceedings of Languages and Compilers for High-Performance Computing (LCPC), 
-College Station, Texas, October 2-4, 2003.
--# Quinlan, Schordan, Yi, de Supinski,
-"A C++ Infrastructure for Automatic Introduction and Translation of OpenMP Directives,"
-(to appear soon) Springer Lecture Notes, 2003.  Also presented at
-Workshop on OpenMP Applications and Tools, Toronto, Canada June 2003.
--# {jmlc2003} Schordan M., Quinlan D.,
-"A Source-To-Source Architecture for User-Defined Optimizations",
-Joint Modular Languages Conference held in conjunction with EuroPar'03, 
-Austria, August 2003
--# {HIPS02} Quinlan, D. Miller, B. Philip, B. Schordan, M.
-"Treating a User-Defined Parallel Library as a Domain-Specific Language"
-7th International Workshop on High-Level Parallel Programming Models and
-Supportive Environments, part of the 17th International Parallel and
-Distributed Processing Symposium (IPPS), Ft. Lauderdale, April 15-19, 2002
--# {LCPC2001} Quinlan, D., Schordan, M. Philip, B. Kowarschik, M.
-"The Specification of Source-To-Source Transformations for the Compile-Time Optimization of 
-        Parallel Object-Oriented Scientific Applications",
-Submitted to Parallel Processing Letters, also in Proceedings of
-14th Workshop on Languages and Compilers for Parallel Computing (LCPC2001), Cumberland Falls, KY, August 1-3 2001.
--# {cpc2001} Quinlan, D. Schordan, M. Philip, B. Kowarschik, M.
-"Parallel Object-Oriented Framework Optimization",
-Special Issue of Concurrency: Practice and  Experience (2003), also in 
-Proceedings of Conference on Parallel Compilers (CPC2001), Edinburgh, Scotland, June 2001.
--# Quinlan, D., Philip, B.
-"ROSETTA: The Compile-Time Recognition Of Object-Oriented 
-Library Abstractions And Their Use Within Applications,"
-Proceedings of the PDPTA'2001 Conference, Las Vegas, Nevada, June 24-27 2001
--# Quinlan, D., "ROSE: Compiler Support for Object-Oriented Frameworks"
-Proceedings of Conference on Parallel Compilers (CPC2000), Aussois, France, January 2000.
-Also published in special issue of Parallel Processing Letters, Vol. 10.
 
 \subsection relatedPapers Related A++/P++ Papers
 -# Dan Quinlan and Rebecca Parsons, A++/P++ array classes for architecture independent finite
