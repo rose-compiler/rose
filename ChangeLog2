@@ -1,3 +1,12 @@
+2009-08-10 21:22  collingbourne2
+
+	* [r6793] /trunk/ROSE/demo/qrose/Makefile.am: Fixed external build
+
+2009-08-10 21:03  liao6
+
+	* [r6792] /trunk/ROSE/docs/Rose/news.html: Updated the web link to
+	  RD100
+
 2009-08-07 23:24  bauer25
 
 	* [r6772]
