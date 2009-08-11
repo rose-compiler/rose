@@ -73,18 +73,19 @@ class PointerManager
         void createPointer(addr_type classBaseAddr, RsType * type);
 
         /// Delete a registered pointer
-        void deletePointer(addr_type sourceAddress);
+        void deletePointer(addr_type sourceAddress, bool checks = false );
 
         /// Deletes all pointer with startaddress>=from and startaddress < to
-        void deletePointerInRegion(addr_type from, addr_type to);
+        /// @param checks   if true, also test for memory leaks
+        void deletePointerInRegion( addr_type from, addr_type to, bool checks = false );
 
         /// Registers that targetAddress is stored at sourceAddress, and the type of targetAddress
         /// sourceAddress has to be registered first with createPointer
-        void registerPointerChange( addr_type sourceAddress, addr_type targetAddress, bool checks=false);
+        void registerPointerChange( addr_type sourceAddress, addr_type targetAddress, bool checkPointerMove=false, bool checkMemLeaks=true);
 
         /// This function behaves like the previous implementation
         /// except when no pointer was found at this address it creates a new one with the given baseType
-        void registerPointerChange( addr_type sourceAddress, addr_type targetAddress, RsType * baseType, bool checks=false);
+        void registerPointerChange( addr_type sourceAddress, addr_type targetAddress, RsType * baseType, bool checks=false, bool checkMemLeaks=true);
 
         /// Behaves like registerPointerChange(sourceAddress,deref_address,true), but after the
         /// function the same targetAddress is registered for the pointer,
@@ -133,6 +134,13 @@ class PointerManager
         /// Removes the a PointerInfo from targetToPointerMap
         /// @return false if not found in map
         bool removeFromRevMap(PointerInfo * p);
+
+        // TODO 1 djh: comment
+        bool checkForMemoryLeaks( PointerInfo* pointer_begin_removed );
+        bool checkForMemoryLeaks(
+            addr_type       address,
+            size_t          type_size,
+            PointerInfo*    pointer_to_blame = NULL);
 
 
         PointerSet pointerInfoSet;

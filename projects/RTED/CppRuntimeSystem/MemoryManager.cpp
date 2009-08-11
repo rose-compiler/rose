@@ -471,7 +471,7 @@ void MemoryManager::freeMemory(addr_type addr, bool onStack)
 
     addr_type from = m->getAddress();
     addr_type to = from + m->getSize();
-    pm->deletePointerInRegion(from,to);
+    pm->deletePointerInRegion( from, to, true );
     pm->invalidatePointerToRegion(from,to);
 
     // successful free, erase allocation info from map

@@ -187,17 +187,18 @@ RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name,
     } else if( type_name == "SgPointerType") {
         addr_type heap_address = *((addr_type*) address);
         rs -> createMemory( heap_address, mallocSize );
-        rs -> checkMemWrite(
+        rs -> registerPointerChange(
             address,
-            size,
+            heap_address,
             RuntimeSystem_getRsType(
                 type,
                 basetype,
                 class_name,
                 indirection_level
-            )
+            ),
+            false,
+            true
         );
-        rs -> registerPointerChange( address, heap_address );
     } else {
         cerr << "Unexpected Array Type: " << type << endl;
         exit( 1 );
@@ -597,18 +598,16 @@ RuntimeSystem_roseFunctionCall(int count, ...) {
 
 void RuntimeSystem_roseEnterScope(const char* name) {
 
-
     RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
-    rs->beginScope(name);
+    rs -> beginScope( name );
 
 }
 
-void RuntimeSystem_roseExitScope( const char* filename, const char* line, const char* stmtStr) {
-
+void RuntimeSystem_roseExitScope( const char* filename, const char* line, const char* lineTransformed, const char* stmtStr) {
 
     RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
-    rs->endScope();
-
+    CHECKPOINT
+    rs -> endScope();
 }
 
 
@@ -675,8 +674,8 @@ void RuntimeSystem_roseCreateVariable( const char* name,
  ********************************************************/
 void
 RuntimeSystem_roseInitVariable(
-                    const char* typeOfVar2,
-                    const char* baseType,
+                    const char* type,
+                    const char* base_type,
                     size_t indirection_level,
                     const char* class_name,
                     unsigned long long address,
@@ -694,8 +693,8 @@ RuntimeSystem_roseInitVariable(
         address,
         size,
         RuntimeSystem_getRsType(
-            typeOfVar2,
-            baseType,
+            type,
+            base_type,
             class_name,
             indirection_level
         )
@@ -709,10 +708,11 @@ RuntimeSystem_roseInitVariable(
     // creation is registered, which is done in roseCreateArray.
     if(     ismalloc != 1 
             && pointer_changed == 1 
-            && 0 == strcmp( "SgPointerType", typeOfVar2 )) {
+            && 0 == strcmp( "SgPointerType", type )) {
 
+        // TODO 1 djh: add type info
         addr_type heap_address = *((addr_type*) address);
-        rs -> registerPointerChange( address, heap_address );
+        rs -> registerPointerChange( address, heap_address, false, true );
     }
 }
 

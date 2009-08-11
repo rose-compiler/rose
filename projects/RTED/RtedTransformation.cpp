@@ -86,10 +86,27 @@ void RtedTransformation::transform(SgProject* project) {
   // exitScope is called.
   cerr << "\n Number of Elements in scopes  : "
        << scopes.size() << endl;
-  std::vector<SgStatement*>::const_iterator stmtIt =
-    scopes.begin();
-  for (; stmtIt != scopes.end(); stmtIt++) {
-	  bracketWithScopeEnterExit( *stmtIt);
+  BOOST_FOREACH( StatementNodePair i, scopes ) {
+    SgStatement* stmt_to_bracket = i.first;
+    SgNode* end_of_scope = i.second;
+
+    ROSE_ASSERT( stmt_to_bracket );
+    ROSE_ASSERT( end_of_scope );
+
+    bool skip_scope = false;
+    if( isSgFunctionCallExp( end_of_scope )) {
+        SgFunctionDefinition* fn_def = 
+          isSgFunctionCallExp( end_of_scope ) 
+            -> getAssociatedFunctionDeclaration() -> get_definition();
+        
+        if( fn_def )
+          end_of_scope = fn_def -> get_body();
+        else
+          skip_scope = true;
+    }
+
+    if( !skip_scope )
+      bracketWithScopeEnterExit( stmt_to_bracket, end_of_scope );
   }
 
 

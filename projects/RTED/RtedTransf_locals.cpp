@@ -10,7 +10,7 @@ using namespace SageBuilder;
 
 
 void 
-RtedTransformation::bracketWithScopeEnterExit( SgStatement* stmt) {
+RtedTransformation::bracketWithScopeEnterExit( SgStatement* stmt, SgNode* end_of_scope) {
     ROSE_ASSERT( stmt);
     ROSE_ASSERT( roseEnterScope);
 
@@ -34,16 +34,21 @@ RtedTransformation::bracketWithScopeEnterExit( SgStatement* stmt) {
       )
     );
 
+    Sg_File_Info* exit_file_info = end_of_scope -> get_endOfConstruct();
 
-    // exitScope( (char*) filename, (char*) line, (char*) stmtStr);
+    // exitScope( (char*) filename, (char*) line, (char*) lineTransformed, (char*) stmtStr);
     SgExprListExp* exit_scope_args = buildExprListExp();
     appendExpression(
       exit_scope_args,
-      buildString( stmt->get_file_info()->get_filename())
+      buildString( exit_file_info -> get_filename() )
     );
     appendExpression(
       exit_scope_args,
-      buildString( RoseBin_support::ToString( stmt->get_file_info()->get_line()))
+      buildString( RoseBin_support::ToString( exit_file_info -> get_line() ))
+    );
+    appendExpression(
+      exit_scope_args,
+      buildString( "x%%x" )
     );
     appendExpression(
       exit_scope_args,
@@ -66,7 +71,7 @@ RtedTransformation::bracketWithScopeEnterExit( SgStatement* stmt) {
     );
     attachComment(
         exit_scope_call,
-        "RS : exitScope, parameters : ( filename, line, error line)",
+        "RS : exitScope, parameters : ( filename, line, lineTransformed, error stmt)",
         PreprocessingInfo::before
     );
 }

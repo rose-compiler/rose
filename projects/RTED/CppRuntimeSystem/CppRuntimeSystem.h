@@ -121,15 +121,18 @@ class RuntimeSystem
         /// Call this function when the value of a pointer changed i.e. the address a pointer points to
         /// this concept applies not only to pointer, but to all memory regions which can be dereferenced
         /// pointer information is deleted when the memory where srcAddress lies in is deleted
-        /// @param checks if true, it is checked if the pointer changed the memory area it points to
+        /// @param checkPointerMove if true, it is checked if the pointer changed the memory area it points to
         ///               which is fine, if pointer was changed by assignment, and which might be an "error"
         ///               if it was changed via pointer arithmetic
-        void registerPointerChange( addr_type sourceAddress, addr_type targetAddress, bool checks=false);
+        /// @param checkMemLeaks if true, and the pointer at sourceAddress
+        ///               pointed at some memory, checks are made that pointers
+        ///               still exist that reference the old memory
+        void registerPointerChange( addr_type sourceAddress, addr_type targetAddress, bool checkPointerMove=false, bool checkMemLeaks=true);
         /// for documentation see PointerManager::registerPointerChange()
-        void registerPointerChange( addr_type sourceAddress, addr_type targetAddress, RsType * bt, bool checks=false);
+        void registerPointerChange( addr_type sourceAddress, addr_type targetAddress, RsType * type, bool checkPointerMove=false, bool checkMemLeaks=true);
 
         /// Convenience function which takes mangledName instead of sourceAddress
-        void registerPointerChange( const std::string & mangledName, addr_type targetAddress, bool checks=false);
+        void registerPointerChange( const std::string & mangledName, addr_type targetAddress, bool checkPointerMove=false, bool checkMemLeaks=true);
 
         /// Checks if two addresses lie in the same "typed chunk"
         /// equivalent to the check which is done on registerPointerChange

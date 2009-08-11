@@ -21,6 +21,6 @@ RtedTransformation::visit_isSgScopeStatement( SgNode* n) {
         )
     ) {
       ROSE_ASSERT( stmt);
-      scopes.push_back( stmt);
+      scopes[ stmt ] = n;
     }
 }

@@ -47,7 +47,9 @@ class RtedTransformation : public AstSimpleProcessing {
   std::vector<SgFunctionDefinition*> function_definitions;
 
   // what statements we need to bracket with enter/exit scope calls
-  std::vector<SgStatement*> scopes;
+  std::map<SgStatement*, SgNode*> scopes;
+  typedef std::pair<SgStatement*, SgNode*> StatementNodePair;
+
   // store all classdefinitions found
   std::map<SgClassDefinition*,RtedClassDefinition*> class_definitions;
 
@@ -157,7 +159,7 @@ class RtedTransformation : public AstSimpleProcessing {
 
   // simple scope handling
   std::string scope_name( SgStatement* n);
-  void bracketWithScopeEnterExit( SgStatement* n);
+  void bracketWithScopeEnterExit( SgStatement* stmt, SgNode* end_of_scope);
 
 
   // is it a variable?

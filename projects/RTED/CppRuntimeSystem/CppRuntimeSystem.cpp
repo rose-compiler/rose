@@ -276,7 +276,7 @@ void RuntimeSystem::createArray(    addr_type address,
     pointerManager.createPointer( address, type -> getBaseType() );
 
     // View an array as a pointer, which is stored at the address and which points at the address
-    pointerManager.registerPointerChange( address, address, false );
+    pointerManager.registerPointerChange( address, address, false, false);
 }
 
 
@@ -297,20 +297,22 @@ void RuntimeSystem::endScope ()
 // --------------------- Pointer Tracking---------------------------------
 
 
-void RuntimeSystem::registerPointerChange(addr_type source, addr_type target, bool checks)
+void RuntimeSystem::registerPointerChange(addr_type source, addr_type target, bool checkPointerMove, bool checkMemLeaks)
 {
-    pointerManager.registerPointerChange(source,target,checks);
+    pointerManager.registerPointerChange(source,target,checkPointerMove, checkMemLeaks);
 }
 
-void RuntimeSystem::registerPointerChange(addr_type source, addr_type target,RsType * bt, bool checks)
+void RuntimeSystem::registerPointerChange(addr_type source, addr_type target,RsType * type, bool checkPointerMove, bool checkMemLeaks)
 {
-    pointerManager.registerPointerChange(source,target,bt,checks);
+    RsPointerType* pt = dynamic_cast<RsPointerType*>( type );
+    assert( pt );
+    pointerManager.registerPointerChange(source,target,pt -> getBaseType(),checkPointerMove, checkMemLeaks);
 }
 
-void RuntimeSystem::registerPointerChange( const std::string & mangledName, addr_type target, bool checks)
+void RuntimeSystem::registerPointerChange( const std::string & mangledName, addr_type target, bool checkPointerMove, bool checkMemLeaks)
 {
     addr_type source = stackManager.getVariable(mangledName)->getAddress();
-    pointerManager.registerPointerChange(source,target,checks);
+    pointerManager.registerPointerChange(source,target,checkPointerMove, checkMemLeaks);
 }
 
 

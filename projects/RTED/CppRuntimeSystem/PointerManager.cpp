@@ -1,3 +1,4 @@
+// vim:sta et:
 #include "PointerManager.h"
 #include "CppRuntimeSystem.h"
 
@@ -151,7 +152,7 @@ void PointerManager::createPointer(addr_type baseAddr, RsType * type)
 }
 
 
-void PointerManager::deletePointer(addr_type src)
+void PointerManager::deletePointer( addr_type src, bool checks )
 {
     PointerInfo dummy (src);
     PointerSetIter i = pointerInfoSet.find(&dummy);
@@ -164,11 +165,15 @@ void PointerManager::deletePointer(addr_type src)
 
     // Delete from set
     pointerInfoSet.erase(i);
+
+    if( checks )
+        checkForMemoryLeaks( pi );
+
     delete pi;
 }
 
 
-void PointerManager::deletePointerInRegion(addr_type from, addr_type to)
+void PointerManager::deletePointerInRegion( addr_type from, addr_type to, bool checks)
 {
     if(to <= from)
         return;
@@ -181,19 +186,24 @@ void PointerManager::deletePointerInRegion(addr_type from, addr_type to)
 
     // First store all pointer which have to be deleted
     // erase(it,end) doesn't work because the pointer need to be removed from map
-    vector<addr_type> toDelete;
+    vector< PointerInfo* > toDelete;
     for(; it != end; ++it)
-        toDelete.push_back((*it)->getSourceAddress());
+        toDelete.push_back( *it );
 
     for(int i=0; i<toDelete.size(); i++ )
     {
+        bool check_this_pointer = 
+            checks && (
+                toDelete[ i ] -> getTargetAddress() < from
+                || toDelete[ i ] -> getTargetAddress() > to
+            );
         //cout << "Deleting pointer at " << toDelete[i] << endl;
-        deletePointer(toDelete[i]);
+        deletePointer( toDelete[i] -> getSourceAddress(), check_this_pointer );
     }
 }
 
 
-void PointerManager::registerPointerChange( addr_type src, addr_type target, RsType * bt, bool checks)
+void PointerManager::registerPointerChange( addr_type src, addr_type target, RsType * bt, bool checkPointerMove, bool checkMemLeaks)
 {
     PointerInfo dummy(src);
     PointerSetIter i = pointerInfoSet.find(&dummy);
@@ -201,17 +211,18 @@ void PointerManager::registerPointerChange( addr_type src, addr_type target, RsT
     if(pointerInfoSet.find(&dummy) != pointerInfoSet.end())
     {
         // if pointer exists already, make sure that baseTypes match
-        assert((*i)->baseType=bt);
+        assert( (*i) -> baseType = bt );
     }
     else
     {
         // create the pointer
         createDereferentiableMem(src,bt);
-        registerPointerChange(src,target,checks);
     }
+
+    registerPointerChange(src,target,checkPointerMove, checkMemLeaks);
 }
 
-void PointerManager::registerPointerChange( addr_type src, addr_type target, bool checks)
+void PointerManager::registerPointerChange( addr_type src, addr_type target, bool checkPointerMove, bool checkMemLeaks)
 {
     PointerInfo dummy(src);
     PointerSetIter i = pointerInfoSet.find(&dummy);
@@ -246,39 +257,55 @@ void PointerManager::registerPointerChange( addr_type src, addr_type target, boo
 
 
 
-    if(checks)
+    if( checkPointerMove )
     {
         MemoryManager * mm = RuntimeSystem::instance()->getMemManager();
         mm->checkIfSameChunk(oldTarget,target,pi->getBaseType());
     }
 
-    bool memLeakChecks=true;
-    if(memLeakChecks)
-    {
-        MemoryManager * mm = RuntimeSystem::instance()->getMemManager();
-        MemoryType * oldMem = mm->findContainingMem(oldTarget,pi->getBaseType()->getByteSize());
-
-        if(oldMem && !oldMem->isOnStack()) // no memory leaks on stack
-        {
-            // find other pointer still pointing to this region
-            TargetToPointerMapIter begin = targetRegionIterBegin(oldMem->getAddress());
-            TargetToPointerMapIter end   = targetRegionIterBegin(oldMem->getAddress() + oldMem->getSize());
-
-            // if nothing found create violation
-            if(begin == end)
-            {
-                RuntimeSystem * rs = RuntimeSystem::instance();
-                stringstream ss;
-                ss << "No pointer to allocated memory region: " << endl;
-                ss << *oldMem << endl << "because this pointer has changed: " <<endl;
-                ss << *pi << endl;
-                rs->violationHandler(RuntimeViolation::MEM_WITHOUT_POINTER, ss.str());
-            }
-
-        }
-    }
+    if( checkMemLeaks )
+        checkForMemoryLeaks( oldTarget, pi -> getBaseType() -> getByteSize() );
 }
 
+
+bool PointerManager::checkForMemoryLeaks( PointerInfo* pi )
+{
+    return checkForMemoryLeaks(
+        pi -> getTargetAddress(),
+        pi -> getBaseType() -> getByteSize(),
+        pi
+    );
+}
+
+bool PointerManager::checkForMemoryLeaks( addr_type address, size_t type_size, PointerInfo* pointer_to_blame )
+{
+    bool found_leaks = false;
+    MemoryManager * mm = RuntimeSystem::instance() -> getMemManager();
+    MemoryType * mem = mm->findContainingMem( address, type_size );
+
+    if( mem && !mem->isOnStack() ) // no memory leaks on stack
+    {
+        // find other pointer still pointing to this region
+        TargetToPointerMapIter begin = targetRegionIterBegin( mem -> getAddress() );
+        TargetToPointerMapIter end   = targetRegionIterBegin( mem -> getAddress() + mem->getSize() );
+
+        // if nothing found create violation
+        if(begin == end)
+        {
+            found_leaks = true;
+            RuntimeSystem * rs = RuntimeSystem::instance();
+            stringstream ss;
+            ss << "No pointer to allocated memory region: " << endl;
+            if( pointer_to_blame ) {
+                ss << *mem << endl << "because this pointer has changed: " <<endl;
+                ss << *pointer_to_blame << endl;
+            }
+            rs->violationHandler(RuntimeViolation::MEM_WITHOUT_POINTER, ss.str());
+        }
+
+    }
+    return found_leaks;
+}
 
 
 void PointerManager::checkPointerDereference( addr_type src, addr_type deref_addr)

@@ -99,7 +99,6 @@ GENERATE_RTED_ORIGSOURCES = ${foreach RTED_TEST_DIR, $(RTED_TEST_DIRS), ${wildca
 GENERATE_RTED_COPYSOURCES = ${foreach RTED_TEST_DIR, ${filter ${strip $(2)}%, $(RTED_TEST_DIRS)}, ${patsubst ${strip $(2)}/%${strip $(1)}, rted_source/%${strip $(1)}, ${wildcard $(RTED_TEST_DIR)/*${strip $(1)}} } }
 GENERATE_RTED_ROSESOURCES = ${patsubst %${strip $(1)}, %_rose${strip $(1)}, $(2) }
 GENERATE_RTED_BINFILES = ${patsubst ${strip $(2)}/%${strip $(1)}, rted_source/%.bin, ${filter ${strip $(2)}%, ${strip $(3)}}}
-GENERATE_RTED_DEBUGBINFILES = ${patsubst ${strip $(2)}/%${strip $(1)}, rted_source/%_debug.bin, ${filter ${strip $(2)}%, ${strip $(3)}}}
 GENERATE_RTED_OUTPUTFILES = ${patsubst $(rted_path)/%${strip $(1)}, rted_source/%.${strip $(2)}-output, ${strip $(3)}}
 
 RTED_ORIGSOURCES_C   = ${call GENERATE_RTED_ORIGSOURCES, .c}
@@ -124,18 +123,13 @@ RTED_BINFILES += ${call GENERATE_RTED_BINFILES, .c, $(srcdir), $(RTED_ORIGSOURCE
 RTED_BINFILES += ${call GENERATE_RTED_BINFILES, .cpp, $(rted_path), $(RTED_ORIGSOURCES_CPP)}
 RTED_BINFILES += ${call GENERATE_RTED_BINFILES, .cpp, $(srcdir), $(RTED_ORIGSOURCES_CPP)}
 
-RTED_DEBUGBINFILES  = ${call GENERATE_RTED_DEBUGBINFILES, .c, $(rted_path), $(RTED_ORIGSOURCES_C)}
-RTED_DEBUGBINFILES += ${call GENERATE_RTED_DEBUGBINFILES, .c, $(srcdir), $(RTED_ORIGSOURCES_C)}
-RTED_DEBUGBINFILES += ${call GENERATE_RTED_DEBUGBINFILES, .cpp, $(rted_path), $(RTED_ORIGSOURCES_CPP)}
-RTED_DEBUGBINFILES += ${call GENERATE_RTED_DEBUGBINFILES, .cpp, $(srcdir), $(RTED_ORIGSOURCES_CPP)}
-
 RTED_OUTPUTFILES  = ${call GENERATE_RTED_OUTPUTFILES, .c, actual, $(RTED_ORIGSOURCES_C)}
 RTED_OUTPUTFILES += ${call GENERATE_RTED_OUTPUTFILES, .c, expected, $(RTED_ORIGSOURCES_C)}
 RTED_OUTPUTFILES += ${call GENERATE_RTED_OUTPUTFILES, .cpp, actual, $(RTED_ORIGSOURCES_CPP)}
 RTED_OUTPUTFILES += ${call GENERATE_RTED_OUTPUTFILES, .cpp, expected, $(RTED_ORIGSOURCES_CPP)}
 
-.SECONDARY: $(RTED_BINFILES) $(RTED_DEBUGBINFILES) $(RTED_COPYSOURCES) $(RTED_ROSESOURCES) $(RTED_OUTPUTFILES)
-.PRECIOUS: $(RTED_BINFILES) $(RTED_DEBUGBINFILES) $(RTED_COPYSOURCES) $(RTED_ROSESOURCES) $(RTED_OUTPUTFILES)
+.SECONDARY: $(RTED_BINFILES)$(RTED_COPYSOURCES) $(RTED_ROSESOURCES) $(RTED_OUTPUTFILES)
+.PRECIOUS: $(RTED_BINFILES) $(RTED_COPYSOURCES) $(RTED_ROSESOURCES) $(RTED_OUTPUTFILES)
 
 print:
 	@echo $(RTED_ROSESOURCES)
@@ -282,12 +276,6 @@ rted_source/%_rose.cpp: runtimeCheck rted_source/%.cpp $(srcdir)/$(RTS) $(srcdir
 # rules to create the binary files
 #------------------------------------------------------------------------------
 
-#rted_source/%_debug.bin: rted_source/%_rose.c rted_source/%_s_rose.c
-#	@touch $@
-
-#rted_source/%_debug.bin: rted_source/%_rose.c
-#	@touch $@
-
 # parameters:
 #  1: file extension (.c, .cpp, .f, ... )
 #  2: compile command
@@ -303,23 +291,11 @@ COMPILING_RUNTIME_SYSTEM = @echo -n "   compiling instrumented debugger code (wi
 			   if [ $$? -ne 0 ]; then exit 1; fi; \
 			   echo " done."
 
-rted_source/%_debug.bin: rted_source/%_rose.c rted_source/%_s_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
-	$(call COMPILING_RUNTIME_SYSTEM, .c, $(RTED_CC), $(LINK_QT_DEBUGGER))
-
-rted_source/%_debug.bin: rted_source/%_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
-	$(call COMPILING_RUNTIME_SYSTEM, .c, $(RTED_CC), $(LINK_QT_DEBUGGER))
-
 rted_source/%.bin: rted_source/%_rose.c rted_source/%_s_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	$(call COMPILING_RUNTIME_SYSTEM, .c, $(RTED_CC))
 
 rted_source/%.bin: rted_source/%_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	$(call COMPILING_RUNTIME_SYSTEM, .c, $(RTED_CC))
-
-rted_source/%_debug.bin: rted_source/%_rose.cpp rted_source/%_s_rose.cpp $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
-	$(call COMPILING_RUNTIME_SYSTEM, .cpp, $(RTED_CXX), $(LINK_QT_DEBUGGER))
-
-rted_source/%_debug.bin: rted_source/%_rose.cpp $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
-	$(call COMPILING_RUNTIME_SYSTEM, .cpp, $(RTED_CXX), $(LINK_QT_DEBUGGER))
 
 rted_source/%.bin: rted_source/%_rose.cpp rted_source/%_s_rose.cpp $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	$(call COMPILING_RUNTIME_SYSTEM, .cpp, $(RTED_CXX))
@@ -360,12 +336,7 @@ rted_source/tests/C++/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SC
 # rules to run arbitrary tests from the rted distribution
 #------------------------------------------------------------------------------
 
-run_debug/%: rted_source/%_debug.bin rted_source/%.expected-output 
-	@echo -n "   running runtime error detection debugger ... "
-	@./$(filter rted_source/%_debug.bin, $?)
-	@echo " done."
-
-run_checkonly/%: rted_source/%.bin rted_source/%.expected-output 
+run/%: rted_source/%.bin rted_source/%.expected-output 
 	@echo -n "   running runtime error detection ... "
 	@OUTPUT_SRC='$(strip $(filter %.expected-output, $?))';\
 		if [ -f "$$OUTPUT_SRC" ]; then\
@@ -390,18 +361,6 @@ run_checkonly/%: rted_source/%.bin rted_source/%.expected-output
 		else\
 			./$(filter rted_source/%.bin, $?);\
 		fi;
-	@echo " done."
-
-run/%: rted_source/%.bin rted_source/%_debug.bin rted_source/%.expected-output 
-	@echo -n "   running runtime error detection ... "
-	@$(patsubst %_debug.bin, ./%.bin, $(filter rted_source/%_debug.bin, $^) ); \
-	    if [ $$? -ne 0 ]; \
-	    then \
-		echo " failed."; \
-		echo "   running debugger ... "; \
-		$(patsubst %.bin, ./%_debug.bin, $^); \
-		exit 1; \
-	    fi 
 	@echo " done."
        
 run_log/%: rted_source/%.bin rted_source/%.expected-output 
@@ -428,18 +387,10 @@ RTED_ORIGSOURCES_GLOBAL_CPP = ${filter $(rted_path)%, $(RTED_ORIGSOURCES_CPP)}
 RTED_ORIGSOURCES_LOCAL_CPP = ${filter $(srcdir)%, $(RTED_ORIGSOURCES_CPP)}
 
 GENERATE_RTED_RUN_TARGET = ${patsubst ${strip $(4)}/%${strip $(1)}, ${strip $(2)}/%, $(3)}
-RUN_TARGETS_GLOBAL_C = ${call GENERATE_RTED_RUN_TARGET, .c, run, $(RTED_ORIGSOURCES_GLOBAL_C), $(rted_path)}
+RUN_TARGETS_GLOBAL_C  = ${call GENERATE_RTED_RUN_TARGET, .c, run, $(RTED_ORIGSOURCES_GLOBAL_C), $(rted_path)}
 RUN_TARGETS_LOCAL_C = ${call GENERATE_RTED_RUN_TARGET, .c, run, $(RTED_ORIGSOURCES_LOCAL_C), $(srcdir)}
 RUN_TARGETS_GLOBAL_CPP = ${call GENERATE_RTED_RUN_TARGET, .cpp, run, $(RTED_ORIGSOURCES_GLOBAL_CPP), $(rted_path)}
 RUN_TARGETS_LOCAL_CPP = ${call GENERATE_RTED_RUN_TARGET, .cpp, run, $(RTED_ORIGSOURCES_LOCAL_CPP), $(srcdir)}
-RUN_DEBUG_TARGETS_GLOBAL_C  = ${call GENERATE_RTED_RUN_TARGET, .c, run_debug, $(RTED_ORIGSOURCES_GLOBAL_C), $(rted_path)}
-RUN_DEBUG_TARGETS_LOCAL_C = ${call GENERATE_RTED_RUN_TARGET, .c, run_debug, $(RTED_ORIGSOURCES_LOCAL_C), $(srcdir)}
-RUN_DEBUG_TARGETS_GLOBAL_CPP = ${call GENERATE_RTED_RUN_TARGET, .cpp, run_debug, $(RTED_ORIGSOURCES_GLOBAL_CPP), $(rted_path)}
-RUN_DEBUG_TARGETS_LOCAL_CPP = ${call GENERATE_RTED_RUN_TARGET, .cpp, run_debug, $(RTED_ORIGSOURCES_LOCAL_CPP), $(srcdir)}
-RUN_CHECKONLY_TARGETS_GLOBAL_C  = ${call GENERATE_RTED_RUN_TARGET, .c, run_checkonly, $(RTED_ORIGSOURCES_GLOBAL_C), $(rted_path)}
-RUN_CHECKONLY_TARGETS_LOCAL_C = ${call GENERATE_RTED_RUN_TARGET, .c, run_checkonly, $(RTED_ORIGSOURCES_LOCAL_C), $(srcdir)}
-RUN_CHECKONLY_TARGETS_GLOBAL_CPP = ${call GENERATE_RTED_RUN_TARGET, .cpp, run_checkonly, $(RTED_ORIGSOURCES_GLOBAL_CPP), $(rted_path)}
-RUN_CHECKONLY_TARGETS_LOCAL_CPP = ${call GENERATE_RTED_RUN_TARGET, .cpp, run_checkonly, $(RTED_ORIGSOURCES_LOCAL_CPP), $(srcdir)}
 RUN_LOG_TARGETS_GLOBAL_C = ${call GENERATE_RTED_RUN_TARGET, .c, run_log, $(RTED_ORIGSOURCES_GLOBAL_C), $(rted_path)}
 RUN_LOG_TARGETS_LOCAL_C = ${call GENERATE_RTED_RUN_TARGET, .c, run_log, $(RTED_ORIGSOURCES_LOCAL_C), $(srcdir)}
 RUN_LOG_TARGETS_GLOBAL_CPP = ${call GENERATE_RTED_RUN_TARGET, .cpp, run_log, $(RTED_ORIGSOURCES_GLOBAL_CPP), $(rted_path)}
@@ -447,11 +398,14 @@ RUN_LOG_TARGETS_LOCAL_CPP = ${call GENERATE_RTED_RUN_TARGET, .cpp, run_log, $(RT
 
 run: $(RUN_TARGETS_GLOBAL_C) $(RUN_TARGETS_LOCAL_C) $(RUN_TARGETS_GLOBAL_CPP) $(RUN_TARGETS_LOCAL_CPP)
 
-run_debug: $(RUN_DEBUG_TARGETS_GLOBAL_C) $(RUN_DEBUG_TARGETS_LOCAL_C) $(RUN_DEBUG_TARGETS_GLOBAL_CPP) $(RUN_DEBUG_TARGETS_LOCAL_CPP)
-
-run_checkonly: $(RUN_CHECKONLY_TARGETS_GLOBAL_C) $(RUN_CHECKONLY_TARGETS_LOCAL_C) $(RUN_CHECKONLY_TARGETS_GLOBAL_CPP) $(RUN_CHECKONLY_TARGETS_LOCAL_CPP)
-
 run_log: $(RUN_LOG_TARGETS_GLOBAL_C) $(RUN_LOG_TARGETS_LOCAL_C) $(RUN_LOG_TARGETS_GLOBAL_CPP) $(RUN_LOG_TARGETS_LOCAL_CPP)
+
+run_log/c:		$(RUN_LOG_TARGETS_GLOBAL_C)
+
+run_log/cpp:	$(RUN_LOG_TARGETS_GLOBAL_CPP)
+
+test:
+	@echo $(RUN_LOG_TARGETS_GLOBAL_CPP)
 
 #------------------------------------------------------------------------------
 
@@ -465,31 +419,13 @@ $(1): $(filter $(1)%, $(RUN_TARGETS_GLOBAL_C))
 	@echo $(1) complete
 endef
 
-define RUN_CHECKONLY_TARGET
-$(1): $(filter $(1)%, $(RUN_CHECKONLY_TARGETS_GLOBAL_C))
-	@echo $(1) complete
-endef
-
-define RUN_DEBUG_TARGET
-$(1): $(filter $(1)%, $(RUN_DEBUG_TARGETS_GLOBAL_C))
-	@echo $(1) complete
-endef
-
 define RUN_LOG_TARGET
 $(1): $(filter $(1)%, $(RUN_LOG_TARGETS_GLOBAL_C))
 	@echo $(1) complete
 endef
 
-
-print_t:
-	@echo $(RUN_CHECKONLY_TARGETS_GLOBAL_C)
-
-# OPTIMIZE: eval/call is slow (make nothing ~1.1s -> 2.3s with run, check,
-# 	log, debug)
 ${foreach rted_dir, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(rted_path)%, run%, $(rted_dir)}}}}
-${foreach rted_dir, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_CHECKONLY_TARGET, ${patsubst $(rted_path)%, run_checkonly%, $(rted_dir)}}}}
 ${foreach rted_dir, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_LOG_TARGET, ${patsubst $(rted_path)%, run_log%, $(rted_dir)}}}}
-${foreach rted_dir, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_DEBUG_TARGET, ${patsubst $(rted_path)%, run_debug%, $(rted_dir)}}}}
 #${foreach rted_dir, ${filter $(srcdir)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(srcdir)%, %, $(rted_dir)}}}}
 
 #------------------------------------------------------------------------------
@@ -500,9 +436,9 @@ deleteAllbinfiles:
 c-compile-runtimesystem:
 	@echo "Make sure that RuntimeSystem compiles with C"
 
-check-local: runtimeCheck $(TESTCODES) c-compile-runtimesystem run_checkonly/C/string_errors \
-             run_checkonly/C/allocation_deallocation_errors run_checkonly/C/input_output_errors \
-             run_checkonly/C/array_index_out_of_bound
+check-local: runtimeCheck $(TESTCODES) c-compile-runtimesystem run/C/string_errors \
+				run/C/allocation_deallocation_errors run/C/input_output_errors \
+				run/C/array_index_out_of_bound
 	@echo "***************************************************************************************"
 	@echo "*** ROSE/projects/runtimeErrorCheck: make check rule complete (terminated normally) ***"
 	@echo "***************************************************************************************"

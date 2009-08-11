@@ -482,7 +482,7 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
     } else if(!isFunctionCallOnIgnoreList( name)){
       SgStatement* fncallStmt = getSurroundingStatement( fcexp);
       ROSE_ASSERT( fncallStmt);
-      scopes.push_back( fncallStmt);
+      scopes[ fncallStmt ] = fcexp;
     } else if( "free" == name ) {
 		frees.push_back( fcexp );
     } else if( "realloc" == name ) {

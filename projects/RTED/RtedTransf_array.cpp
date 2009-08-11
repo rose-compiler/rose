@@ -452,7 +452,11 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
 		  hitRoof=true;
 	  break;
   } else if (isSgAddressOfOp(parent)) {
-	//  addressOfOpFound=true;
+	  // consider, e.g.
+	  // 	int x;
+	  // 	int* y = &x;
+	  // it is not necessary for x to be initialized
+	  hitRoof = true;
   }  else {
     //cerr << "*********************************** DEBUGGING   parent (else) = " << parent->class_name() << endl;
 	  }

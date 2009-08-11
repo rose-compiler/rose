@@ -40,6 +40,7 @@ ostream & out = cout;
     }                                                              \
     errorFound=false;                                              \
 
+#define CHECKPOINT rs -> checkpoint( SourcePosition( "", __LINE__, __LINE__ ));
 
 
 #define CLEANUP  { rs->doProgramExitChecks();  rs->clearStatus(); }
@@ -469,7 +470,7 @@ void testImplicitScope()
 
 // -------------------------------------- Pointer Tracking Tests ------------------------------------------
 
-void testLostMemRegion()
+ void testLostMemRegion()
 {
     //
     TEST_INIT("Testing detection of lost mem-regions");
@@ -509,6 +510,42 @@ void testLostMemRegion()
 
     rs->freeMemory(10);
     rs->freeMemory(18);
+
+    CLEANUP
+}
+
+void testLostMemRegionFromDoublePointer()
+{
+    TEST_INIT(  "Testing detection of lost mem region, which was previously "
+                "pointed to by heap ptr")
+    TypeSystem * ts = rs -> getTypeSystem();
+
+    RsType* int_ptr = ts -> getPointerType( "SgTypeInt", 1 );
+    RsType* int_ptr_ptr = ts -> getPointerType( "SgTypeInt", 2 );
+
+    addr_type var_addr = 0x7ffb0;
+    addr_type heap_addr_outer = 0x42;
+    addr_type heap_addr_inner = 0x24601;
+
+    rs -> createMemory( heap_addr_outer, 2 * sizeof( int* ));
+    rs -> createMemory( heap_addr_inner, 2 * sizeof( int ));
+
+    // int** ptr;
+    rs -> createVariable( var_addr, "int**", "mangled_int**", int_ptr_ptr );
+    // ptr = (int**) malloc( 2 * sizeof( int* ));
+    rs -> registerPointerChange( var_addr, heap_addr_outer, false );
+
+    // ptr[ 0 ] = (int*) malloc( 2 * sizeof( int ));
+    rs -> checkMemWrite( heap_addr_outer, sizeof( int* ), int_ptr );
+    rs->checkpoint( SourcePosition() );
+    rs -> registerPointerChange( heap_addr_outer, heap_addr_inner, false );
+
+
+    try{ rs -> freeMemory( heap_addr_outer ); }
+    TEST_CATCH( RuntimeViolation::MEM_WITHOUT_POINTER )
+
+    rs -> freeMemory( heap_addr_inner );
+    rs -> freeMemory( heap_addr_outer );
 
     CLEANUP
 }
@@ -1041,6 +1078,7 @@ void testTypeSystemDetectNested()
     ts->registerType(typeB);
 
 
+    CHECKPOINT
     // Create Memory with first an A and then a B
     const addr_type ADDR = 42;
     rs->createMemory(ADDR,sizeof(A)+sizeof(B));
@@ -1077,6 +1115,7 @@ void testTypeSystemDetectNested()
     rs->log() << "Type System Status after test" << endl;
     ts->print(rs->log());
 
+    CHECKPOINT
     rs->freeMemory(42);
 
     CLEANUP
@@ -1095,6 +1134,7 @@ void testTypeSystemMerge()
     assert(typeA->isComplete());
     ts->registerType(typeA);
 
+    rs -> checkpoint( SourcePosition() );
     const addr_type ADDR = 42;
     rs->createMemory(ADDR,100);
 
@@ -1113,6 +1153,7 @@ void testTypeSystemMerge()
         TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
 
 
+    rs -> checkpoint( SourcePosition() );
     rs->freeMemory(ADDR);
 
     CLEANUP
@@ -1159,6 +1200,7 @@ extern int RuntimeSystem_original_main(int argc, char ** argv, char ** envp)
         testImplicitScope();
 
         testLostMemRegion();
+        testLostMemRegionFromDoublePointer();
         testPointerChanged();
         testInvalidPointerAssign();
         testPointerTracking();

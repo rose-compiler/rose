@@ -66,7 +66,7 @@ void RuntimeSystem_checkMemoryAccess(unsigned long int address, long int size,
 // memory and possibly complain if the local was the last var pointing to some
 // memory)
 void RuntimeSystem_roseEnterScope(const char* scope_name);
-void RuntimeSystem_roseExitScope(const char* filename, const char* line,
+void RuntimeSystem_roseExitScope(const char* filename, const char* line, const char* lineTransformed,
 		const char* stmtStr);
 /***************************** SCOPE *************************************/
 
