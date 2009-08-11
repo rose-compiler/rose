@@ -1,3 +1,42 @@
+2009-08-11 16:46  liao6
+
+	* [r6799] /trunk/ROSE/docs/testDoxygen/Publications.docs:
+	  Reorganized the publication page
+
+2009-08-11 16:25  hamilton37
+
+	* [r6798]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/PointerManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/PointerManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_locals.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_scopestmt.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: RTED: Work on memory
+	  leak errors, support for double (or n-level) pointers.
+	  
+	  PointerManager will now check memory leaks on pointer deletion,
+	  which catches
+	  some leaks from implied pointers (.e.g with `int **x`, *x is a
+	  pointer, but not
+	  a variable). This will give false positives for "computable
+	  pointers", which we
+	  need data flow analysis to avoid.
+	  
+	  Some work on tweaking scope code so that the error line numbers
+	  match better,
+	  and a couple of helper tasks added to the makefile, namely:
+	  run_log/c
+	  run_log/cpp
+
 2009-08-10 21:22  collingbourne2
 
 	* [r6793] /trunk/ROSE/demo/qrose/Makefile.am: Fixed external build
