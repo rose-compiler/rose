@@ -86,6 +86,11 @@ class RtedTransformation : public AstSimpleProcessing {
   SgStatement* getStatement(SgExpression* exp);
   // Transformation specific Helper Functions
   SgStatement* getSurroundingStatement(SgNode* n);
+  // Returns the defining definition for the function called by fn_call, if
+  // possible.  If the direct link does not exist, will do a memory pool
+  // traversal to find the definition.  May still return NULL if the definition
+  // cannot be determined statically.
+  SgFunctionDeclaration* getDefiningDeclaration( SgFunctionCallExp* fn_call );
   // returns greatest lvalue expression ancestor (e.g the operand of an
   // expression statement or assign op).
   SgExpression* getUppermostLvalue( SgExpression* n );

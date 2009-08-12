@@ -18,9 +18,20 @@ RtedTransformation::visit_isSgScopeStatement( SgNode* n) {
           || isSgIfStmt( n)
           || isSgForStatement( n)
           || isSgDoWhileStmt( n)
+                // if we have a basic block in another basic block, then it
+                // won't be covered by switch, function body, etc., but it does
+                // introduce a new scope, as in the following case:
+                //      void foo() {
+                //          int x;
+                //          {
+                //              float x;
+                //          }
+                //      }
+          ||    ( isSgBasicBlock( n )
+                    && isSgBasicBlock( n -> get_parent() ))
         )
     ) {
       ROSE_ASSERT( stmt);
       scopes[ stmt ] = n;
-    }
+    } 
 }

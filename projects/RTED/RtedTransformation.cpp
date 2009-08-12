@@ -93,20 +93,23 @@ void RtedTransformation::transform(SgProject* project) {
     ROSE_ASSERT( stmt_to_bracket );
     ROSE_ASSERT( end_of_scope );
 
-    bool skip_scope = false;
     if( isSgFunctionCallExp( end_of_scope )) {
-        SgFunctionDefinition* fn_def = 
-          isSgFunctionCallExp( end_of_scope ) 
-            -> getAssociatedFunctionDeclaration() -> get_definition();
+        SgFunctionDeclaration* fn_decl = 
+          getDefiningDeclaration( isSgFunctionCallExp( end_of_scope ));
+
+        SgFunctionDefinition* fn_def = NULL; 
+        // at this point we've parsed the entire project.  If there's no
+        // function definition here, then the project probably doesn't compile,
+        // or runtimeCheck wasn't invoked correctly.
+        if( fn_decl )
+          fn_def = isSgFunctionCallExp( end_of_scope ) 
+                      -> getAssociatedFunctionDeclaration() -> get_definition();
         
         if( fn_def )
           end_of_scope = fn_def -> get_body();
-        else
-          skip_scope = true;
     }
 
-    if( !skip_scope )
-      bracketWithScopeEnterExit( stmt_to_bracket, end_of_scope );
+    bracketWithScopeEnterExit( stmt_to_bracket, end_of_scope );
   }
 
 

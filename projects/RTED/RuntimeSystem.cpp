@@ -687,33 +687,31 @@ RuntimeSystem_roseInitVariable(
                     const char* lineTransformed) {
 
 
-	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
-	CHECKPOINT
-	rs -> checkMemWrite(
-        address,
-        size,
-        RuntimeSystem_getRsType(
-            type,
-            base_type,
-            class_name,
-            indirection_level
-        )
-    );
+  RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
+  CHECKPOINT
+
+    RsType* rs_type = 
+    RuntimeSystem_getRsType(
+        type,
+        base_type,
+        class_name,
+        indirection_level
+        );
+  rs -> checkMemWrite( address, size, rs_type );
 
 
-    // This assumes roseInitVariable is called after the assignment has taken
-    // place (otherwise we wouldn't get the new heap address).
-    //
-    // Note that we cannot call registerPointerChange until after the memory
-    // creation is registered, which is done in roseCreateArray.
-    if(     ismalloc != 1 
-            && pointer_changed == 1 
-            && 0 == strcmp( "SgPointerType", type )) {
+  // This assumes roseInitVariable is called after the assignment has taken
+  // place (otherwise we wouldn't get the new heap address).
+  //
+  // Note that we cannot call registerPointerChange until after the memory
+  // creation is registered, which is done in roseCreateArray.
+  if(     ismalloc != 1 
+      && pointer_changed == 1 
+      && 0 == strcmp( "SgPointerType", type )) {
 
-        // TODO 1 djh: add type info
-        addr_type heap_address = *((addr_type*) address);
-        rs -> registerPointerChange( address, heap_address, false, true );
-    }
+    addr_type heap_address = *((addr_type*) address);
+    rs -> registerPointerChange( address, heap_address, rs_type, false, true );
+  }
 }
 
 

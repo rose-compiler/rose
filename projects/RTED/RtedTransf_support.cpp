@@ -247,6 +247,46 @@ SgExpression* RtedTransformation::getUppermostLvalue( SgExpression* exp ) {
     return exp;
 }
 
+SgFunctionDeclaration* RtedTransformation::getDefiningDeclaration( SgFunctionCallExp* fn_call ) {
+    SgFunctionDeclaration* fn_decl = fn_call -> getAssociatedFunctionDeclaration();
+    ROSE_ASSERT( fn_decl );
+
+    SgFunctionDeclaration* rv = 
+        isSgFunctionDeclaration( fn_decl -> get_definingDeclaration() );
+    if( rv ) return rv;
+
+
+    // fn_decl wasn't the defining declaration and the definition wasn't in the
+    // same AST.  Time to search.
+    class anon : public ROSE_VisitTraversal {
+
+        SgFunctionDeclaration* & rv_ref;
+        const SgName mangled_name;
+
+        public:
+            anon( SgFunctionDeclaration* & _rv, const SgName & _mangled_name ) 
+                : rv_ref( _rv ), mangled_name( _mangled_name ) {}
+
+            void visit( SgNode* node ) {
+                SgFunctionDefinition*  fn_def = isSgFunctionDefinition( node );
+                ROSE_ASSERT( fn_def );
+                SgFunctionDeclaration* fn_decl = fn_def -> get_declaration();
+                ROSE_ASSERT( fn_decl );
+
+                if( mangled_name == fn_decl -> get_mangled_name()) {
+                    rv_ref = fn_decl;
+                }
+            }
+    } visitor( rv, fn_decl -> get_mangled_name() );
+    SgFunctionDefinition::traverseMemoryPoolNodes( visitor );
+
+    // may as well set the reference while we're here, in case of multiple call
+    // sites for the same declaration
+    fn_call -> getAssociatedFunctionDeclaration() -> set_definingDeclaration( rv );
+
+    return rv;
+}
+
 SgVarRefExp*
 RtedTransformation::resolveToVarRefRight(SgExpression* expr) {
   SgVarRefExp* result = NULL;

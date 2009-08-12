@@ -480,9 +480,19 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
       cerr << " Is a interesting function : " << name << endl;
       function_call.push_back(funcCall);
     } else if(!isFunctionCallOnIgnoreList( name)){
-      SgStatement* fncallStmt = getSurroundingStatement( fcexp);
-      ROSE_ASSERT( fncallStmt);
-      scopes[ fncallStmt ] = fcexp;
+      SgStatement* fncallStmt = getSurroundingStatement( fcexp );
+      ROSE_ASSERT( fncallStmt );
+
+	  // if we're able to, use the function definition's body as the end of
+	  // scope (for line number complaints).  If not, the callsite is good too.
+	  SgNode* end_of_scope = getDefiningDeclaration( fcexp );
+	  if( end_of_scope )
+		  end_of_scope = 
+			  isSgFunctionDeclaration( end_of_scope ) 
+			  	-> get_definition() -> get_body();
+	  else
+		  end_of_scope = fcexp;
+      scopes[ fncallStmt ] = end_of_scope;
     } else if( "free" == name ) {
 		frees.push_back( fcexp );
     } else if( "realloc" == name ) {
