@@ -1,3 +1,36 @@
+2009-08-12 00:23  hamilton37
+
+	* [r6804]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/PointerManager.h:
+	  RTED: some documentation
+
+2009-08-12 00:10  hamilton37
+
+	* [r6803] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_scopestmt.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp: RTED: Improved
+	  line-number reporting for errors at scope exit. Also handle
+	  basic block with basic block parent case.
+	  
+	  We now do a better job of finding function definitions for
+	  callsites, to give
+	  better line number reporting.
+	  
+	  We also add enter/exit scope calls for code such as the
+	  following:
+	  
+	  void foo() {
+	  int* x;
+	  {
+	  // new scope, have to check for memory leaks on exit
+	  int* x = (int*) malloc( sizeof( int ));
+	  }
+	  }
+
 2009-08-11 16:46  liao6
 
 	* [r6799] /trunk/ROSE/docs/testDoxygen/Publications.docs:
