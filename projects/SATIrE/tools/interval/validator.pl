@@ -43,12 +43,6 @@
 
 %-----------------------------------------------------------------------
 
-default_values(PPI, DA, AI, FI) :-
-  PPI = preprocessing_info([]),
-  DA = default_annotation(null, PPI),
-  AI = analysis_info([]),
-  FI = file_info('compilerGenerated', 0, 0).
-
 % don't compare against top
 compval(top, V, V, _, _, _) :- !.
 compval(Val, _, int_val(null, value_annotation(Val, PPI), AI, FI), PPI, AI, FI).

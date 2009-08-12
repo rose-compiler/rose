@@ -43,13 +43,16 @@ GNU General Public License for more details.
 
 %% dup(+A, +Num, -As) is det.
 %% dup(?A, ?Num, ?As) is nondet.
-% something like repeat in Haskell
-% FIXME delete?
-dup(_, 0, []).
-dup(A, N, B) :-
-  append(A, Bs, B),
-  N1 is N-1,
-  dup(A, N1, Bs).
+% something like repeat in Haskell:
+%   dup(A, Num, As) :- length(As, Num), maplist(=(A),As).
+dup(A, Num, As) :-
+  length(As, Num),
+  maplist(=(A),As).
+% dup(_, 0, []).
+% dup(A, N, B) :-
+%   append(A, Bs, B),
+%   N1 is N-1,
+%   dup(A, N1, Bs).
 
 foldl1([F|Fs], Pred, V) :-
   foldl(Fs, Pred, F, V).
@@ -170,9 +173,9 @@ term_mod([T|Ts], M, [TM|TMs]) :- !,
   term_mod(Ts, M, TMs).
 
 term_mod(Term, M, Mod) :- 
-  M =.. [Functor|Args],
-  append(Args, [Term, Term1], Args1),
-  Pred =.. [Functor|Args1],
+  M =.. L1,
+  append(L1, [Term, Term1], L2),
+  Pred =.. L2,
   Pred,
 
   (var(Term1)

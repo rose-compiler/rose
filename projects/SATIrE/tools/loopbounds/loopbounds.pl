@@ -1,44 +1,47 @@
 #!/usr/bin/pl -q  -O  -L64M -G64M -t main -f 
 % -*- prolog -*-
 
+:- module(loopbounds,[main/0]).
+
 %-----------------------------------------------------------------------
-% loopbounds.pl
-%
-% This program analyzes loop bounds of C (and some C++) programs.
-% This source code was extraced from the TuBound WCET analysis tool
-% [1] and is now distributed with SATIrE to serve as an example of
-% what you can do with TERMITE.
-%
-% A detailed description of the algorithm can be found in the appendix
-% of [2].
-%
-%
-% References
-% [1] http://www.complang.tuwien.ac.at/adrian/
-%
-% [2] A. Prantl, J. Knoop, M. Schordan and M. Triska.
-%     Constraint solving for high-level WCET analysis.
-%     The 18th Workshop on Logic-based methods in Programming
-%     Environments (WLPE 2008). Udine, Italy, December 12, 2008.
-%
-%
-% Authors
-% -------
-%
-% Copyright (C) 2007-2009, Adrian Prantl
-%
-% License
-% -------
-%
-% This program is free software; you can redistribute it and/or modify
-% it under the terms of the GNU General Public License as published by
-% the Free Software Foundation; version 3 of the License.
-% 
-% This program is distributed in the hope that it will be useful,
-% but WITHOUT ANY WARRANTY; without even the implied warranty of
-% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-% GNU General Public License for more details.
-%
+/** <module> Loop analysis
+loopbounds.pl
+
+This program analyzes loop bounds of C (and some C++) programs.
+This source code was extraced from the TuBound WCET analysis tool
+[1] and is now distributed with SATIrE to serve as an example of
+what you can do with TERMITE.
+
+A detailed description of the algorithm can be found in the appendix
+of [2].
+
+
+References
+[1] http://www.complang.tuwien.ac.at/adrian/
+
+[2] A. Prantl, J. Knoop, M. Schordan and M. Triska.
+    Constraint solving for high-level WCET analysis.
+    The 18th Workshop on Logic-based methods in Programming
+    Environments (WLPE 2008). Udine, Italy, December 12, 2008.
+
+
+Authors
+-------
+
+Copyright (C) 2007-2009, Adrian Prantl
+
+License
+-------
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; version 3 of the License.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+*/
 %-----------------------------------------------------------------------
 
 :- getenv('PWD', CurDir),
@@ -68,12 +71,9 @@
 %-----------------------------------------------------------------------
 
 %-----------------------------------------------------------------------
-% merge_info/3
+%% merge_info(+Info, +(Var-Interval), -Merged) is det.
 % replaces has() and equiv() info with new data
 %
-% FIXME: Rewrite this more efficiently using assoc
-%
-
 merge_info(Info, Var-Interval, Merged) :-
   put_assoc(Var, Info, Interval, Merged).
 merge_info(Info1, Info2, Merged) :- 
@@ -91,7 +91,7 @@ interval_of(_-Info, Var, Interval) :-
   ), !.
 
 %-----------------------------------------------------------------------
-% reduce/3:
+%% reduce(+Info, +Expr, -ExprRed) is det.
 % try to reduce an AST expression into an interval(Min, Max)
 % analysis information Info
 
@@ -148,21 +148,13 @@ reduce(_, or_op(interval(Min1, Max1), E1, _, _, _), interval(Min2, Max2)) :-
   Min2 is Min1 \/ Mask,
   Max2 is Max1 \/ Mask.
 
-% Minimum function
-reduce(Info, Min2Func, I) :-
-  isMin2Func(Min2Func, Expr1, Expr2),
-  reduce(Info, Expr1, I1),
-  reduce(Info, Expr2, I2),
-  wc_min(I1,I2,I).
-  %write('min('), write(I1), write(', '), write(I2), write(') = '), writeln(I).
-
 reduce(Info, Var, Interval) :-
    % Use this rule only if we cannot determine a result otherwise
   Var = var_ref_exp(_, _, _),
   interval_of(Info, Var, Interval).
 
 %-----------------------------------------------------------------------
-% simplification_fixpoint/2:
+%% simplification_fixpoint(+Expr, -Interval).
 % transform until we reach a fixpoint
 %
 simplification_fixpoint(E, Efix) :-
@@ -174,17 +166,8 @@ simplification_fixpoint(E, E).
   %\+ simplification(E, _).
 
 %-----------------------------------------------------------------------
-% simplify/2
+%% simplify(+Expr, -ExprSimple).
 % recurse simplification
-simplify(E, Et) :-
-  simplification_fixpoint(E, Ewk),
-  isMin2Func(Ewk, E1, E2),
-  simplify(E1, E1t),
-  simplify(E2, E2t),
-  isMin2Func(Et, E1t, E2t).
-  %write('#simplifyed '), unparse(E), write(' INTO '), unparse(Ewk2), nl,
-  %simplify(Ewk2, Et),
-  %(E \= Et -> write('>simplifyed1 '), unparse(E), write(' INTO '), unparse(Et), nl).
 simplify(E, Et) :-
   simplification_fixpoint(E, Ewk),
   isBinNode(Ewk, F, E1, E2, A, Ai, Fi), 
@@ -201,7 +184,7 @@ simplify(E, Et) :- simplification_fixpoint(E, Et).
 simplify(E, E).
 
 %-----------------------------------------------------------------------
-% simplification/2
+%% simplification(+Expr, -ExprSimple).
 % In here, we define a set of simplification rules that allow us to reason
 % about loop bound information.
 % All simplification rules have to satisfy the following conditions:
@@ -306,35 +289,11 @@ simplification(add_op(add_op(E1, E2, _, _, _), E3, _, _, _),
   % Hints on when to apply this rule
   isIntVal(E1,I1), isIntVal(E3,I2), I is I1+I2, isIntVal(R, I).
 
-% bring the min2 function to the top-most level
-simplification(subtract_op(MinFunc, Var, _, _, _), MinFuncT) :-
-  isVar(Var, _), % Hint  
-  isMin2Func(MinFunc, Expr1, Expr2), 
-  isMin2Func(MinFuncT, subtract_op(Expr1, Var, _, _, _), subtract_op(Expr2, Var, _, _, _)).  
-simplification(subtract_op(MinFunc, Int, _, _, _), MinFuncT) :-
-  isIntVal(Int, _), % Hint  
-  isMin2Func(MinFunc, Expr1, Expr2), 
-  isMin2Func(MinFuncT, subtract_op(Expr1, Int, _, _, _), subtract_op(Expr2, Int, _, _, _)).  
-simplification(add_op(Int, MinFunc, _, _, _), MinFuncT) :-
-  isIntVal(Int, _), % Hint  
-  isMin2Func(MinFunc, Expr1, Expr2), 
-  isMin2Func(MinFuncT, add_op(Expr1, Int, _, _, _), subtract_op(Expr2, Int, _, _, _)).
-
 simplification(assign_op(V1, subtract_op(V1, E1, _, _, _), _, _, _),
 	       minus_assign_op(V1, E1, _, _, _)).
 
 simplification(assign_op(V1, add_op(V1, E1, _, _, _), _, _, _),
 	       plus_assign_op(V1, E1, _, _, _)).
-%simplification(E, E). - not necessary any more; see simplification_fixpoint
-
-%-----------------------------------------------------------------------
-% wc_min/3:
-% Get the worst-case of the min function
-wc_min(interval(Xmin, Xmax), interval(Ymin, Ymax), interval(Min, Max)) :-
-  Zmin is min(Xmin, Ymin),
-  Zmax is min(Xmax, Ymax),
-  Min is min(Zmin, Zmax),
-  Max is max(Zmin, Zmax).
 
 % Worstcase minimal stepsize for unsigned variable increments
 isUnsignedVarStep(Info, plus_assign_op(InductionVar, Var, _, _, _),
@@ -343,7 +302,7 @@ isUnsignedVarStep(Info, plus_assign_op(InductionVar, Var, _, _, _),
   Min >= 0.
 
 %-----------------------------------------------------------------------
-% is_real_for_loop/7
+%% is_real_for_loop(+ForStmt,+Info,-Ai,-Body,-IterationVar,-Interval,-Step).
 % Determine wether a given for loop is a "simple", counter-based loop and
 % extract its parameters
 is_real_for_loop(for_statement(ForInit,
@@ -429,7 +388,7 @@ find_iv_interval(Info, InfoInner, PostCondition, I, Base, End) :-
  %	     PostCondition).%,   write('post '), writeln(PostCondition).
 
 %-----------------------------------------------------------------------
-% get_loopbound/6:
+%% get_loopbound(+Fs, -Bound, -I, +Info, -InfoInner, -PostCondition).
 % This is the heart of the loop_bounds/4 predicate.
 % Algorithm:
 %   1. transform(loop_end - loop_start)
@@ -503,7 +462,7 @@ insert_annot(while_stmt(Expr,basic_block(XS, A1, Fi1), A2, Fi2),
   append(XS, [Annot], XS1).
 
 % get_annot_term/3:
-% Example: get_annot(+Stmts, ?Annotterm, ?Pragma)
+%% get_annot_term(+Stmts, ?Annotterm, ?Pragma) is semidet.
 % quicker version of get_annot/3 without string conversion
 get_annot_term(Stmts, AnnotTerm, Pragma) :-
   pragma_text(Pragma, AnnotTerm),
@@ -526,6 +485,7 @@ replace_loopbody(for_statement(Init, Test, Incr,
 %-----------------------------------------------------------------------
 % Annotate the easy loop bounds
 
+%% loop_bounds(+Info, -InfoInner, -InfoPost, +Fs, -Fs_Annot).
 loop_bounds(Info, InfoInner, InfoPost, Fs, Fs_Annot) :- 
   get_loopbound(Fs, Bound, /*InductionVar*/_, Info, InfoIn, _InfoPo), !,
   A = wcet_loopbound(Bound), write('% '), pragma_text(Annot, A), writeln(A),
@@ -551,6 +511,7 @@ loop_bounds(I, I, I, Term, Term).
 % Constraints ...
 %-----------------------------------------------------------------------
 
+%% markers(+Stem, -Stem, -Stem, +Bb, -Bb1).
 %-----------------------------------------------------------------------
 % FIXME use Inner and next instead of counter()
 markers(Stem, Stem, Stem,
@@ -565,7 +526,7 @@ markers(Stem, Stem, Stem,
 markers(I, I, I, Term, Term).
 
 
-
+%% expr_constr(+Expr, +(Ar-Map), -Expr1) is det.
 expr_constr(add_op(E1, E2, _, _, _), Map, Expr) :-
   expr_constr(E1, Map, Expr1),
   expr_constr(E2, Map, Expr2),
@@ -671,7 +632,7 @@ lookup(Var, _AR-Map, Constraint) :-
 
 
 is_for_loop(Fs, InductionVars, ForInit, ForTest, ForStep, Body) :-
-  is_simple_for_loop(Fs, _, ForInit, ForTest, ForStep, Body),
+  is_fortran_multicond_for_loop(Fs, _, ForInit, ForTest, ForStep, Body),
   iv(ForTest, Body, InductionVars).
 
 iv(expr_statement(E1, _, _, _), Body, IVs) :-
@@ -693,6 +654,7 @@ gen_varmap([InductionVar|IVs], Map, Map2) :-
   put_assoc(InductionVar, Map, _Var, Map1),
   gen_varmap(IVs, Map1, Map2).
 
+%% loop_constraints(+Fs, -Fs_Annot, +RootMarker, +Map).
 loop_constraints(Fs, Fs_Annot, RootMarker, Map) :-
   Fs = for_statement(_, _, _, _, _An, Aipre, _Fi),
 
@@ -742,11 +704,12 @@ iter_children([], [], _, _).
 
 %-----------------------------------------------------------------------
 % Annotate Constraints
+%% constraints(?I, ?I, ?I, +Fs, -Fs_Annot).
 constraints(I, I, I, Fs, [/*Scope,*/ Fs_Annot]) :-
   % We need to guarantee that Fs is an induction-variable-
   % based loop, and that the induction variable I is transp().
   %term_stripped(Fsc, Fs),
-  is_simple_for_loop(Fs, _, _, _, _, _), 
+  is_fortran_multicond_for_loop(Fs, _, _, _, _, _), 
   Fs = for_statement(_,_,_, basic_block(Stmts, _, _, _), _, _, _),
 
   % We employ our own "interpretation traversal", so don't traverse this

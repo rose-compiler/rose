@@ -2,7 +2,8 @@
 % -*- mode: prolog; truncate-lines: true; -*-
 
 :- module(ast_transform,
-	  [simple_form_of/2,
+	  [default_values/4,
+	   simple_form_of/2,
            ast_node/6,
 	   transformed_with/5,
 	   transformed_with/6,
@@ -41,6 +42,15 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 */
 %-----------------------------------------------------------------------
+
+%% simple_form_of(-PreprocessingInfo, -DefaultAnnotation, -AnalysisInfo, -FileInfo) is det.
+% Generate default annotations for generated AST nodes
+default_values(PPI, DA, AI, FI) :-
+  PPI = preprocessing_info([]),
+  DA = default_annotation(null, PPI),
+  AI = analysis_info([]),
+  FI = file_info('compilerGenerated', 0, 0).
+
 
 % Conversion utilities
 %-----------------------------------------------------------------------

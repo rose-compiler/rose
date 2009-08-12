@@ -13,11 +13,12 @@
 
 	   isStepsize/3,
 
-	   is_simple_for_loop/6,
+	   is_fortran_for_loop/6,
+	   is_fortran_multicond_for_loop/6,
 	   is_const_val/2
 ]).
 
-:- use_module(library(types)).
+:- use_module([library(types),library(ast_properties)]).
 
 %-----------------------------------------------------------------------
 /** <module> Properties of loops
@@ -67,8 +68,11 @@ isStepsize(comma_op_exp(E1, E2, _, _, _), InductionVar, Val) :-
   isStepsize(Op1, InductionVar, Val),
   guarantee(Op2, is_transp(InductionVar, local)).
 
-%% is_simple_for_loop(+ForStatement, +Info, ForInit, ForTest, ForStep, Body)
-is_simple_for_loop(for_statement(ForInit,
+%% is_fortran_multicond_for_loop(+ForStatement, +I, ForInit,
+%% ForTest, ForStep, Body)
+% generate multiple ForTest on backtracking if multiple conditions are
+% combined with logical and operators
+is_fortran_multicond_for_loop(for_statement(ForInit,
 			     ForTest,
 			     ForStep,
 			     Body,
@@ -76,16 +80,15 @@ is_simple_for_loop(for_statement(ForInit,
 		   I, ForInit, ForTest, ForStep, Body) :-
   % ForInit may be empty
   isSimpleForInit(ForInit, I, _Base),
-  isForTestOp(ForTest, TestOp),
+  isForMultiTestOp(ForTest, TestOp),
   isBinOpRhs(TestOp, _End), 
   % Assure we only have one induction variable
   isBinOpLhs(TestOp, I2), var_stripped(I2, I),
   isStepsize(ForStep, I3, _Increment), var_stripped(I3, I),
 
-  %simple_form_of(BodyNorm, Body),
   guarantee(Body, is_transp(I, local)).
 
-is_simple_for_loop(for_statement(ForInit,
+is_fortran_multicond_for_loop(for_statement(ForInit,
 			     ForTest,
 			     ForStep,
 			     Body,
@@ -99,7 +102,39 @@ is_simple_for_loop(for_statement(ForInit,
   isBinOpLhs(LeOp, I1), var_stripped(I1, I),
   isStepsize(ForStep, I2, _Increment), var_stripped(I2, I),
 
-  %simple_form_of(BodyNorm, Body),
+  guarantee(Body, is_transp(I, local)).
+
+%% is_fortran_for_loop(+ForStatement, +I, ForInit, ForTest, ForStep, Body)
+is_fortran_for_loop(for_statement(ForInit,
+			     ForTest,
+			     ForStep,
+			     Body,
+			     _, _, _),
+		   I, ForInit, ForTest, ForStep, Body) :-
+  % ForInit may be empty
+  isSimpleForInit(ForInit, I, _Base),
+  isForTestOp(ForTest, TestOp),
+  isBinOpRhs(TestOp, _End), 
+  % Assure we only have one induction variable
+  isBinOpLhs(TestOp, I2), var_stripped(I2, I),
+  isStepsize(ForStep, I3, _Increment), var_stripped(I3, I),
+
+  guarantee(Body, is_transp(I, local)).
+
+is_fortran_for_loop(for_statement(ForInit,
+			     ForTest,
+			     ForStep,
+			     Body,
+			     _, _, _),
+		   I, ForInit, ForTest, ForStep, Body) :-
+  % ForInit may be empty
+  isEmptyForInit(ForInit),
+  isForTestLE(ForTest, LeOp),
+  isBinOpRhs(LeOp, _End),
+  % Assure we only have one induction variable
+  isBinOpLhs(LeOp, I1), var_stripped(I1, I),
+  isStepsize(ForStep, I2, _Increment), var_stripped(I2, I),
+
   guarantee(Body, is_transp(I, local)).
 
 
@@ -163,9 +198,15 @@ isForTestOp(N, Op) :- isForTestLE(N, Op).
 isForTestOp(N, Op) :- isForTestGE(N, Op).
 isForTestOp(N, Op) :- isForTestNE(N, Op).
 
+%% isForMultiTestOp(+TestOp, -TestOp) is nondet.
 % generate two solutions for an AND condition
-isForTestOp(and_op(N1, _, _, _, _), Op) :- isForTestOp(N1, Op).
-isForTestOp(and_op(_, N2, _, _, _), Op) :- isForTestOp(N2, Op).
+isForMultiTestOp(expr_statement(TestOp, _, _, _), Op) :-
+  isForMultiTestOp(TestOp, Op).
+isForMultiTestOp(N, Op) :- isForMultiTestLE(N, Op).
+isForMultiTestOp(N, Op) :- isForMultiTestGE(N, Op).
+isForMultiTestOp(N, Op) :- isForMultiTestNE(N, Op).
+isForMultiTestOp(and_op(N1, _, _, _, _), Op) :- isForMultiTestOp(N1, Op).
+isForMultiTestOp(and_op(_, N2, _, _, _), Op) :- isForMultiTestOp(N2, Op).
 
 %% isWhileStatement(+WhileStmt,-Condition,-Var,-Body,-Annot,-Ai,-Fi) is semidet.
 %% isWhileStatement(-WhileStmt,+Condition,+Var,+Body,+Annot,+Ai,+Fi) is det.
