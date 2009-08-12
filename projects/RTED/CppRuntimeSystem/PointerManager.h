@@ -135,8 +135,17 @@ class PointerManager
         /// @return false if not found in map
         bool removeFromRevMap(PointerInfo * p);
 
-        // TODO 1 djh: comment
+        /// Checks to see if pointer_being_removed was the last pointer pointing
+        /// to some memory chunk.  Note that this will give false positives for
+        /// memory chunks, pointers to which are "computable", e.g. if the user
+        /// stores some fixed offset to its address.  Avoiding such false
+        /// positives will require data flow analysis on our part.
         bool checkForMemoryLeaks( PointerInfo* pointer_begin_removed );
+        /// Checks to see if any pointer exists that points to address, and
+        /// whose base type is of size type_size.  If not, a violation is
+        /// raised.  If a violation is raised and pointer_to_blame is specified,
+        /// the destruction of its value is reported as the source of the memory
+        /// leak.
         bool checkForMemoryLeaks(
             addr_type       address,
             size_t          type_size,
