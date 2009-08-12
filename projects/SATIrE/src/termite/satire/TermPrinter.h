@@ -281,6 +281,96 @@ TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, Synth
       }
 #endif
 
+      /* points-to information, if appropriate */
+#if HAVE_SATIRE_ICFG && HAVE_PAG
+      if (isSgProject(astNode) && cfg != NULL
+          && cfg->contextSensitivePointsToAnalysis != NULL) {
+        using SATIrE::Analyses::PointsToAnalysis;
+        // PointsToAnalysis *merged_pto = cfg->pointsToAnalysis;
+        PointsToAnalysis *pto = cfg->contextSensitivePointsToAnalysis;
+
+        /* mapping: locations to their contents; this automagically defines
+         * the set of all locations */
+        PrologCompTerm *locationInfo = new PrologCompTerm("locations");
+        PrologList *locations = new PrologList();
+        std::vector<PointsToAnalysis::Location *> locs;
+        pto->interesting_locations(locs);
+        std::vector<PointsToAnalysis::Location *>::const_iterator loc;
+        for (loc = locs.begin(); loc != locs.end(); ++loc) {
+          PrologCompTerm *loct = new PrologCompTerm("location_varids_funcs");
+          loct->addSubterm(new PrologInt(pto->location_id(*loc)));
+          PrologList *varids = new PrologList();
+          PrologList *funcs = new PrologList();
+          const std::list<SgSymbol *> &syms = pto->location_symbols(*loc);
+          std::list<SgSymbol *>::const_iterator s;
+          for (s = syms.begin(); s != syms.end(); ++s) {
+            if (SgVariableSymbol *varsym = isSgVariableSymbol(*s)) {
+              varids->addFirstElement(varidTerm(varsym));
+            } else if (SgFunctionSymbol *funsym = isSgFunctionSymbol(*s)) {
+              funcs->addFirstElement(new PrologAtom(funsym->get_name().str()));
+            } else { // {{{ error handling
+              std::cerr
+                << "* unexpected symbol type in points-to location: "
+                << (*s)->class_name()
+                << " <" << (*s)->get_name().str() << ">"
+                << std::endl;
+              std::abort(); // }}}
+            }
+          }
+          loct->addSubterm(varids);
+          loct->addSubterm(funcs);
+          locations->addFirstElement(loct);
+        }
+        locationInfo->addSubterm(locations);
+        results->addFirstElement(locationInfo);
+
+        /* mapping: variables to locations in each context */
+        PrologCompTerm *variable_locations
+          = new PrologCompTerm("variable_locations");
+        PrologList *vlocs = new PrologList();
+        std::map<SgVariableSymbol *, unsigned long>::const_iterator v;
+        for (v = cfg->varsyms_ids.begin(); v != cfg->varsyms_ids.end(); ++v) {
+          const std::vector<ContextInformation::Context> &ctxs
+            = cfg->contextInformation->allContexts();
+          std::vector<ContextInformation::Context>::const_iterator ctx;
+          for (ctx = ctxs.begin(); ctx != ctxs.end(); ++ctx) {
+            if (pto->symbol_has_location(v->first, *ctx)) {
+              PrologCompTerm *vcl
+                = new PrologCompTerm("varid_context_location");
+              vcl->addSubterm(varidTerm(v->first));
+              vcl->addSubterm(ctx->toPrologTerm());
+              vcl->addSubterm(new PrologInt(
+                  pto->location_id(pto->symbol_location(v->first, *ctx))));
+              vlocs->addFirstElement(vcl);
+            }
+          }
+        }
+        variable_locations->addSubterm(vlocs);
+        results->addFirstElement(variable_locations);
+
+        /* mapping (or graph...): points-to relationships */
+        PrologCompTerm *points_to_relations
+          = new PrologCompTerm("points_to_relations");
+        PrologList *points_tos = new PrologList();
+        for (loc = locs.begin(); loc != locs.end(); ++loc) {
+          PointsToAnalysis::Location *base = pto->base_location(*loc);
+          if (pto->valid_location(base)) {
+            PrologCompTerm *points_to = new PrologCompTerm("->");
+            points_to->addSubterm(new PrologInt(pto->location_id(*loc)));
+            points_to->addSubterm(new PrologInt(pto->location_id(base)));
+            points_tos->addFirstElement(points_to);
+          }
+        }
+        points_to_relations->addSubterm(points_tos);
+        results->addFirstElement(points_to_relations);
+
+        /* mapping: function nodes to return and argument locations */
+
+        /* mapping: structure locations to named members */
+        // "structlocation_member_location" terms
+      }
+#endif
+
       ar->addSubterm(results);
       ((PrologCompTerm*)t)->addSubterm(ar);
     }
