@@ -153,9 +153,9 @@ assignments:
 ;
 
 assignment:
-  TOKEN ASSIGN value { 
+  value ASSIGN value { 
     PrologInfixOperator* ifx = new PrologInfixOperator("->");
-    ifx->addSubterm(new PrologAtom(*$1));
+    ifx->addSubterm($1);
     ifx->addSubterm($3);
     delete $1;
     $$ = ifx;
