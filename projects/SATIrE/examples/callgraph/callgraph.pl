@@ -1,7 +1,7 @@
 #!/usr/local/mstools/bin/pl -q -t main -f
 % -*- prolog -*-
 %-----------------------------------------------------------------------
-/** <module> Create a call graph from an AST
+/** <module> Create an abgridged call graph from an AST
 
 @author
 

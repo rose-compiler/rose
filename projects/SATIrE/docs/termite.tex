@@ -1,0 +1,71 @@
+\documentclass[10pt,twoside]{scrreprt}
+\usepackage{pldoc}
+
+% Dummy condition for HTML vs. PDF
+\def \xMode \xPDF
+
+\usepackage{pl}
+\usepackage{logo}
+\usepackage{html}
+\usepackage{plpage}
+
+\makeindex
+\ifx \xMode \xHTML
+
+% Configure latex2html
+\htmloutput{termite-html} % Output directory
+\htmlmainfile{index} % Main document file
+\bodycolor{white} % Page colour
+\linkimage{home}{home.gif} % Images for links
+\linkimage{index}{yellow_pages.gif}
+\linkimage{contents}{index.gif}
+\linkimage{up}{up.gif}
+\linkimage{previous}{prev.gif}
+\linkimage{next}{next.gif}
+\linkimage{summary}{info.gif}
+
+\fi
+
+\title{The TERMITE library}
+
+\author{Adrian Prantl\\
+  Institut f\"{u}r Computersprachen\\
+  Technische Universit\"{a}t Wien\\
+  E-Mail: \email{adrian@complang.tuwien.ac.at}
+}
+
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\chapter{Introduction}
+
+The TERM Iteration and Transformation Environment (Termite) is a
+Prolog library that allows easy manipulation and analysis of C++
+Programs that are in the SATIrE term representation.
+
+\section{The SATIrE term representation}
+
+SATIrE can export an external term representation of the abstract
+syntax tree (AST) of a C++ program. This term representation contains
+all information that is necessary to correctly unparse the program,
+including line and column information of every expression. The terms
+are also annotated with the results of any preceding PAG analysis. The
+syntax of the term representation was designed to match the syntax of
+Prolog terms. This allows it to be manipulated by Prolog programs very
+naturally.
+
+
+\chapter{Library Reference}
+
+% DO NOT REMOVE THE FOLLOWING LINES:
+
+    %%INPUTS%%
+
+% THANK YOU
+
+\end{document}
