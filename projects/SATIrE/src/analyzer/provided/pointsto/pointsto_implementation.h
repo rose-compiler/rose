@@ -199,6 +199,7 @@ public:
     const std::list<SgFunctionSymbol *> &location_funcsymbols(Location *) const;
     unsigned long location_id(Location *loc) const;
     Location *location_representative(Location *loc) const;
+    bool interesting(Location *loc) const;
 
     const CallGraph &getCallGraph();
 
@@ -233,9 +234,12 @@ private:
     PointsToInformation::PointsToInformation *mainInfo;
 
     Location *symbol_location(SgSymbol *sym);
+    bool symbol_has_location(SgSymbol *sym);
 #if HAVE_PAG
     Location *symbol_location(SgSymbol *sym,
                               const ContextInformation::Context &context);
+    bool symbol_has_location(SgSymbol *sym,
+                             const ContextInformation::Context &context);
 #endif
     Location *function_location(SgFunctionDeclaration *fd,
                                 Location *argDummy = NULL);

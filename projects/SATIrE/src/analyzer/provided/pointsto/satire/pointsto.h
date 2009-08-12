@@ -106,6 +106,8 @@ public:
 #if HAVE_PAG
     Location *symbol_location(SgSymbol *sym,
                               const ContextInformation::Context &context);
+    bool symbol_has_location(SgSymbol *sym,
+                             const ContextInformation::Context &context);
 #endif
  // Whether the given location may be aliased, i.e. whether some other
  // location may point to it.
@@ -129,6 +131,10 @@ public:
  // valid_location(base_location(l)).
     Location *base_location(Location *loc);
     bool valid_location(Location *loc) const;
+
+ // List of all "interesting" locations that might be returned by
+ // symbol_location, base_location etc.
+    void interesting_locations(std::vector<Location *> &locs) const;
 
     PointsToAnalysis(bool contextSensitive = false);
     ~PointsToAnalysis();

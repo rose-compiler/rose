@@ -49,6 +49,19 @@ PointsToAnalysis::Location::baseLocation() const
     return base_location;
 }
 
+bool
+PointsToAnalysis::Implementation::interesting(Location *loc) const
+{
+    bool result = false;
+    if (loc != NULL && !loc->dummy && location_representative(loc) == loc
+        && (!loc->symbols.empty() || !loc->func_symbols.empty()
+            || loc->mayBeAliased))
+    {
+        result = true;
+    }
+    return result;
+}
+
 
 // ========== useful function templates ==========
 
@@ -4089,6 +4102,37 @@ PointsToAnalysis::Implementation::symbol_location(SgSymbol *sym)
     return result;
 }
 
+bool
+PointsToAnalysis::Implementation::symbol_has_location(SgSymbol *sym)
+{
+ // FIXME: this only does variable symbols for now; add function symbols at
+ // some point
+ // FIXME: this shares code with symbol_location; refactor at some point
+    bool result = false;
+ // Global and static variables must be looked up in a central place, which
+ // is the mainInfo. We temporarily switch to another info if necessary.
+    if (info != NULL)
+    {
+        PointsToInformation *tmpInfo = info;
+        if (SgVariableSymbol *varsym = isSgVariableSymbol(sym))
+        {
+            if (isSgGlobal(varsym->get_scope())
+             || varsym->get_declaration()->get_storageModifier().isStatic())
+            {
+                info = mainInfo;
+            }
+        }
+
+        std::map<SgSymbol *, Location *>::iterator i;
+        i = info->symbol_locations.find(sym);
+        result = (i != info->symbol_locations.end());
+     // Restore old value.
+        info = tmpInfo;
+    }
+
+    return result;
+}
+
 #if HAVE_PAG
 PointsToAnalysis::Location *
 PointsToAnalysis::Implementation::symbol_location(
@@ -4097,6 +4141,17 @@ PointsToAnalysis::Implementation::symbol_location(
     PointsToInformation *old_info = info;
     info = allInfos[ctx];
     Location *result = symbol_location(sym);
+    info = old_info;
+    return result;
+}
+
+bool
+PointsToAnalysis::Implementation::symbol_has_location(
+        SgSymbol *sym, const ContextInformation::Context &ctx)
+{
+    PointsToInformation *old_info = info;
+    info = allInfos[ctx];
+    bool result = symbol_has_location(sym);
     info = old_info;
     return result;
 }
@@ -4528,7 +4583,10 @@ PointsToAnalysis::Implementation::print(
                     << (location->collapseBase? "\\n[collapseBase]" : "")
                     << "\""
              // there should be no dummy locations anymore, show as red
-                << (location->dummy ? ", color=red" : "")
+                << (location->dummy ? ", color=red"
+                  : !interesting(location)
+                        ? ", color=gray85, labelfontcolor=gray85"
+                  : "")
                 << "]"
                 << lineend << std::endl;
          // edge from location to base location, if any
@@ -4548,6 +4606,7 @@ PointsToAnalysis::Implementation::print(
                     << post
                     << " -> "
                     << pre << base->ownerInfo->prefix << base->id << post
+                    << (!interesting(location) ? " [color=gray85]" : "")
                     << lineend << std::endl;
             }
          // edges from location to argument locations, if any
@@ -4590,7 +4649,7 @@ PointsToAnalysis::Implementation::print(
                     << post
                     << " -> "
                     << pre << ecr->ownerInfo->prefix << ecr->id << post
-                    << " [style=dashed]"
+                    << " [style=dashed, color=gray85]"
                     << lineend << std::endl;
             }
          // edges to struct member locations
@@ -4631,7 +4690,7 @@ PointsToAnalysis::Implementation::print(
                         << post
                         << " -> "
                         << pre << (*p)->ownerInfo->prefix << (*p)->id << post
-                        << " [color=blue, constraint=false]"
+                        << " [color=aliceblue, constraint=false]"
                         << lineend << std::endl;
                 }
             }

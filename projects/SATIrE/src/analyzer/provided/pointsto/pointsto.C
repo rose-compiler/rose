@@ -5,17 +5,6 @@
 // Assignments. PLDI 2000.
 // But first, this is just Steensgaard's algorithm.
 
-// Immediate TODOs:
-// - Implement a "may be aliased" check for variables; by setting a flag
-//   whenever a node becomes the target of another node? Does that work
-//   correctly with unification? (For the latter, we could always or the two
-//   unificands' flags.)
-// - Implement a function to find the location referenced by some
-//   expression. In the first version, it should suffice to handle variable
-//   references, dereferences (*, [], ->), and struct accesses (->, .). Make
-//   the function complain if some expression is not as expected.
-// - Implement a usable "dereference" function.
-
 #include <memory>
 #include <boost/pending/disjoint_sets.hpp>
 // Relevant functions provided by Boost's disjoint sets data structure:
@@ -135,6 +124,13 @@ PointsToAnalysis::symbol_location(
 {
     return location_representative(p_impl->symbol_location(sym, context));
 }
+
+bool
+PointsToAnalysis::symbol_has_location(
+        SgSymbol *sym, const ContextInformation::Context &context)
+{
+    return p_impl->symbol_has_location(sym, context);
+}
 #endif
 
 bool
@@ -195,6 +191,19 @@ PointsToAnalysis::valid_location(Location *loc) const
         std::cout << "loc 0!";
 #endif
     return (loc != NULL && !loc->dummy);
+}
+
+void
+PointsToAnalysis::interesting_locations(std::vector<Location *> &locs) const
+{
+    locs.clear();
+    const std::vector<Location *> &locations = get_locations();
+    std::vector<Location *>::const_iterator loc;
+    for (loc = locations.begin(); loc != locations.end(); ++loc)
+    {
+        if(p_impl->interesting(*loc))
+            locs.push_back(*loc);
+    }
 }
 
 } // namespace Analyses
