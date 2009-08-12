@@ -161,6 +161,9 @@ AUTOTUNING_MANUAL = $(top_builddir)/projects/autoTuning/doc/autoTuning.pdf
 $(AUTOTUNING_MANUAL):
 	cd $(top_builddir)/projects/autoTuning/doc && $(MAKE) docs
 
+# Liao, 8/11/2009. QROSE Manual
+QROSE_MANUAL = $(top_srcdir)/src/3rdPartyLibraries/qrose/docs/QROSE.pdf
+
 RoseQtDoc:
 	doxygen roseQtWidgets.doxygen
 
@@ -180,6 +183,7 @@ make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-U
 	cp -f $(srcdir)/regressionTest.html ROSE_WebPages/regressionTest.html
 	cp -f $(COMPASS_MANUAL) ROSE_WebPages/
 	cp -f $(AUTOTUNING_MANUAL) ROSE_WebPages/
+	cp -f $(QROSE_MANUAL) ROSE_WebPages/
 #	cp -r $(top_srcdir)/ROSE_ResearchPapers ROSE_WebPages/ROSE_ResearchPapers
 	cp -fr $(top_srcdir)/ROSE_ResearchPapers ROSE_WebPages/
 	cp -f ROSE_InstallationInstructions.pdf ROSE_WebPages/ROSE_InstallationInstructions.pdf
