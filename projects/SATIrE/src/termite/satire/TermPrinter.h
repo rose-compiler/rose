@@ -62,6 +62,8 @@ public:
       analysisname(analysisname_ != "" ? analysisname_ : "unknown")
 #if HAVE_SATIRE_ICFG
     , cfg(cfg)
+#else
+    , cfg(NULL)
 #endif
   { 
 #if HAVE_SWI_PROLOG
@@ -118,9 +120,16 @@ private:
 
   /** the name of the analysis, if available */
   std::string analysisname;
+
 #if HAVE_SATIRE_ICFG
   /** the CFG */
   CFG *cfg;
+
+  /** create integer term with variable ID or "null" atom */
+  PrologTerm* varidTerm(SgVariableSymbol *symbol);
+#else
+  /** dummy member */
+  void *cfg;
 #endif
 
   PrologCompTerm* getAnalysisResult(SgStatement* stmt);  
@@ -237,17 +246,9 @@ TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, Synth
       if (SgInitializedName *in = isSgInitializedName(astNode))
         sym = isSgVariableSymbol(in->get_symbol_from_symbol_table());
       if (sym != NULL) {
-        CFG *icfg = get_global_cfg();
-        if (icfg != NULL && !icfg->varsyms_ids.empty()) {
+        if (cfg != NULL && !cfg->varsyms_ids.empty()) {
           PrologCompTerm *varid_annot = new PrologCompTerm("variable_id");
-          std::map<SgVariableSymbol *, unsigned long>::iterator s;
-          s = icfg->varsyms_ids.find(sym);
-          if (s != icfg->varsyms_ids.end()) {
-            unsigned long id = s->second;
-            varid_annot->addSubterm(new PrologInt(id));
-          } else {
-            varid_annot->addSubterm(new PrologAtom("null"));
-          }
+          varid_annot->addSubterm(varidTerm(sym));
           results->addFirstElement(varid_annot);
         }
       }
@@ -256,13 +257,13 @@ TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, Synth
       /* function call sites, if appropriate */
 #if HAVE_SATIRE_ICFG
       if (SgFunctionCallExp *fc = isSgFunctionCallExp(astNode)) {
-        CFG *icfg = get_global_cfg();
-        if (icfg != NULL) {
+        if (cfg != NULL) {
           CallSiteAttribute *csa = (CallSiteAttribute *)
                 fc->getAttribute("SATIrE ICFG call block");
           PrologCompTerm *callsite_annot = new PrologCompTerm("call_site");
           callsite_annot->addSubterm(new PrologInt(csa->bb->id));
           results->addFirstElement(callsite_annot);
+          /* TODO: add information on possible call targets? */
         }
       }
 #endif
@@ -270,9 +271,8 @@ TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, Synth
       /* call strings, if appropriate */
 #if HAVE_SATIRE_ICFG && HAVE_PAG
       if (isSgProject(astNode)) {
-        CFG *icfg = get_global_cfg();
-        if (icfg != NULL && icfg->contextInformation != NULL) {
-          PrologTerm *callStrings = icfg->contextInformation->toPrologTerm();
+        if (cfg != NULL && cfg->contextInformation != NULL) {
+          PrologTerm *callStrings = cfg->contextInformation->toPrologTerm();
           PrologCompTerm *callStringInfo
               = new PrologCompTerm("callstringinfo");
           callStringInfo->addSubterm(callStrings);
@@ -449,5 +449,23 @@ TermPrinter<DFI_STORE_TYPE>::listTerm(SgNode* astNode, SynthesizedAttributesList
   t->addSubterm(l);
   return t;
 }
+
+#if HAVE_SATIRE_ICFG
+template<typename DFI_STORE_TYPE>
+PrologTerm*
+TermPrinter<DFI_STORE_TYPE>::varidTerm(SgVariableSymbol *sym)
+{
+  PrologTerm *result = NULL;
+  std::map<SgVariableSymbol *, unsigned long>::iterator s;
+  if (cfg != NULL
+      && (s = cfg->varsyms_ids.find(sym)) != cfg->varsyms_ids.end()) {
+    unsigned long id = s->second;
+    result = new PrologInt(id);
+  } else {
+    result = new PrologAtom("null");
+  }
+  return result;
+}
+#endif
 
 #endif
