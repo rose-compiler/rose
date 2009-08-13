@@ -11,6 +11,7 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
 #include <cstdio>
 #include <satire_rose.h>
 #include "termite.h"
+#include <climits>
 
 // GB (2009-02-25): Want to build with ICFG support unless explicitly told
 // (by c2term.C) not to.
@@ -243,8 +244,17 @@ TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, Synth
       SgVariableSymbol *sym = NULL;
       if (SgVarRefExp *v = isSgVarRefExp(astNode))
         sym = v->get_symbol();
-      if (SgInitializedName *in = isSgInitializedName(astNode))
+      if (SgInitializedName *in = isSgInitializedName(astNode)) {
         sym = isSgVariableSymbol(in->get_symbol_from_symbol_table());
+        if (sym == NULL) {
+          /* ROSE has NULL symbols for some unused things; for example,
+           * argument names in forward function declarations. We invent a
+           * number for these and hope that nothing breaks. */
+          PrologCompTerm *varid_annot = new PrologCompTerm("variable_id");
+          varid_annot->addSubterm(new PrologInt(INT_MAX));
+          results->addFirstElement(varid_annot);
+        }
+      }
       if (sym != NULL) {
         if (cfg != NULL && !cfg->varsyms_ids.empty()) {
           PrologCompTerm *varid_annot = new PrologCompTerm("variable_id");
