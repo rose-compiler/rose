@@ -44,7 +44,11 @@ GNU General Public License for more details.
 %% dup(+A, +Num, -As) is det.
 %% dup(?A, ?Num, ?As) is nondet.
 % something like repeat in Haskell:
-%   dup(A, Num, As) :- length(As, Num), maplist(=(A),As).
+% ==
+%    dup(A, Num, As) :-
+%      length(As, Num),
+%      maplist(=(A),As).
+% ==
 dup(A, Num, As) :-
   length(As, Num),
   maplist(=(A),As).

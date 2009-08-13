@@ -68,7 +68,8 @@ docs-termite: HTML termite.pdf mostlyclean
 clean-termite: 
 	rm -f termite-pdf.dvi termite-pdf.idx termite-pdf.log termite-pdf.aux \
 	      termite-pdf.out termite-pdf.toc $(TEXFILES) $(INPUTFILES) \
-	      termite-html.tex termite-pdf.tex
+	      termite-html.tex termite-pdf.tex \
+	      termspec.tex
 	rm -rf termite.pdf termite-html
 
 %.tex: %.pl
@@ -80,8 +81,21 @@ clean-termite:
 	                     [stand_alone(false),public_only(true)]), \
 	      close(wstrm)." | pl
 
-termite-pdf.tex: termite.tex
-	sed s/%%INPUTS%%/$(patsubst %.tex,\\\\input{%}\,$(TEXFILES))/ $< >$@
+# Sadly, ltx2html does not understand the listings package...
+termspec.tex: $(top_srcdir)/src/termite/termite_spec.pl
+	sed -e '1,/Grammar rules./ c \\\\begin{verbatim}' \
+	    -e 's/^.*::=/\\end{verbatim}\n\\begin{verbatim}\n\0/g' \
+	    -e 's/^%\(.*\)/\\end{verbatim}\n\1\\\\\n\\begin{verbatim}\n/g' \
+	    -e 's/---\(.*\)--- *\\\\/\\subsection{\1}/g' \
+             $< | \
+	awk 'BEGIN {FS="\n"} {                                                                 if ($$1 ~ /\\begin{verbatim}/) {                                                    l1=$$1; do getline; while ($$1 ~ /^$$/);                                           if ($$1 !~ /\\end{verbatim}/) { print l1; print }                             } else print }' \
+	    | grep . >$@ 
+	echo '\end{verbatim}' >>$@
+
+termite-pdf.tex: termite.tex $(SRCFILES) termspec.tex
+	sed -e s/%%INPUTS%%/$(patsubst %.tex,\\\\input{%}\,$(TEXFILES))/ \
+	    -e '/GRAMMAR/ r termspec.tex' \
+	    $< >$@
 
 termite-html.tex: termite-pdf.tex
 	sed s/xPDF/xHTML/ $< >$@
@@ -91,6 +105,7 @@ HTML: termite-html.tex $(TEXFILES)
 
 termite.pdf: termite-pdf.tex $(TEXFILES)
 	env TEXINPUTS=$(MYTEXINPUT):$$TEXINPUTS pdflatex $<
+	makeindex $(patsubst %.tex,%,$<)
 	env TEXINPUTS=$(MYTEXINPUT):$$TEXINPUTS pdflatex $<
 	env TEXINPUTS=$(MYTEXINPUT):$$TEXINPUTS pdflatex $<
 	mv termite-pdf.pdf $@
