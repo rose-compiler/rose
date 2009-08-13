@@ -252,6 +252,7 @@ private:
     Location *createLocation(Location *t, Location *return_location = NULL);
     Location *createLocation();
     Location *createFunctionLocation();
+    Location *makeFunctionLocationFrom(Location *l);
     Location *createLiteralLocation();
     Location *createDummyLocation(Location *base = NULL);
     void freeDummyLocation(Location *t);

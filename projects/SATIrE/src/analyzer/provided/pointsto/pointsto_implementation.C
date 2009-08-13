@@ -4220,7 +4220,10 @@ PointsToAnalysis::Implementation::function_location(
      // argument locations.
      // any mention of a function must be treated like a pointer to the
      // function!
-        Location *func_location = createFunctionLocation();
+     // Location *func_location = createFunctionLocation();
+     // As the dummy location is not freed and not used otherwise, we simply
+     // turn it into the function location!
+        Location *func_location = makeFunctionLocationFrom(argDummy);
         Location *location = createLocation(func_location);
 #if VERBOSE_DEBUG
         std::cout
@@ -4240,11 +4243,13 @@ PointsToAnalysis::Implementation::function_location(
             << std::endl;
 #endif
 
+#if 0
      // setup argument list from the argDummy location
         std::vector<Location *> &args = argDummy->arg_locations;
         std::vector<Location *>::iterator a;
         for (a = args.begin(); a != args.end(); ++a)
             func_location->arg_locations.push_back(*a);
+#endif
      // record the ellipsis location for this function, if any
         SgInitializedNamePtrList &params = fd->get_args();
         if (!params.empty() && isSgTypeEllipse(params.back()->get_type()))
@@ -4392,6 +4397,15 @@ PointsToAnalysis::Location *
 PointsToAnalysis::Implementation::createFunctionLocation()
 {
     return createLocation(NULL, createLocation());
+}
+
+PointsToAnalysis::Location *
+PointsToAnalysis::Implementation::makeFunctionLocationFrom(Location *l)
+{
+    l->dummy = false;
+    if (l->return_location == NULL)
+        l->return_location = createLocation();
+    return l;
 }
 
 PointsToAnalysis::Location *
@@ -4690,7 +4704,7 @@ PointsToAnalysis::Implementation::print(
                         << post
                         << " -> "
                         << pre << (*p)->ownerInfo->prefix << (*p)->id << post
-                        << " [color=aliceblue, constraint=false]"
+                        << " [color=azure2, constraint=false]"
                         << lineend << std::endl;
                 }
             }
