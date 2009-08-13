@@ -1,3 +1,9 @@
+2009-08-13 21:00  liao6
+
+	* [r6824] /trunk/ROSE/src/roseExtensions/qtWidgets/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/cmakeBuildEnvironment:
+	  Removed the recursive garbage cmake directory
+
 2009-08-12 17:17  liao6
 
 	* [r6810] /trunk/ROSE/docs/Rose/Makefile.am,
