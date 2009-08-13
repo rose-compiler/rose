@@ -228,6 +228,9 @@ varid_location :: VariableId -> Location;
     determine the abstract memory location corresponding to a variable;
     program variables have locations, SATIrE's temporary variables do not
 
+varid_has_location_cs :: VariableId, ContextInfo -> bool;
+    determine whether the variable has a location in a given context
+
 exprid_has_location :: ExpressionId -> bool;
 exprid_location :: ExpressionId -> Location;
     determine the abstract memory location corresponding to an expression,

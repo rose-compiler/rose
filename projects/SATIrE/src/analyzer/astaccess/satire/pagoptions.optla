@@ -70,6 +70,7 @@ extern noprefix   is_integer_type          :: Type -> bool;
 extern noprefix   stmt_asttext             :: Statement -> str;
 extern noprefix   expr_asttext             :: Expression -> str;
 extern noprefix   varid_has_location       :: VariableId -> bool;
+extern noprefix   varid_has_location_cs :: VariableId, ContextInfo -> bool;
 extern noprefix   varid_location           :: VariableId -> Location;
 extern noprefix   varid_location_cs  :: VariableId, ContextInfo -> Location;
 extern noprefix   exprid_has_location      :: ExpressionId -> bool;

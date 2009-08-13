@@ -3,6 +3,7 @@
 
 // Support for the following functions:
 // varid_has_location :: VariableId -> bool;
+// varid_has_location_cs :: VariableId * ContextInfo -> bool;
 // varid_location :: VariableId -> Location;
 // varid_location_cs :: VariableId * ContextInfo -> Location;
 // exprid_has_location :: ExpressionId -> bool;
@@ -328,6 +329,20 @@ extern "C" FLO_BOOL o_varid_has_location(void *vp)
     PointsToAnalysis::Location *loc
         = get_icfgPointsToAnalysis()->symbol_location(sym);
     return (loc != NULL ? FLO_TRUE : FLO_FALSE);
+}
+
+extern "C" FLO_BOOL o_varid_has_location_cs(void *vp, void *cp)
+{
+    if (o_is_tmpvarid(vp) == FLO_TRUE)
+        return FLO_FALSE;
+
+    VariableId *v = (VariableId *) vp;
+    SgVariableSymbol *sym = get_global_cfg()->ids_varsyms[v->id];
+    ContextInfo *ctx = (ContextInfo *) cp;
+    ContextInformation::Context context(ctx->procnum, ctx->position,
+                                        get_global_cfg());
+    bool res = get_icfgPointsToAnalysis()->symbol_has_location(sym, context);
+    return (res == true ? FLO_TRUE : FLO_FALSE);
 }
 
 extern "C" void *o_varid_location(void *vp)

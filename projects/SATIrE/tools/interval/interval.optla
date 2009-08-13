@@ -1014,7 +1014,7 @@ isglobalprogramvar(var) = varmember(var, globals);
 isglobal(var) = is_tmpvarid(var) || isglobalprogramvar(var);
 islocal(var) = !isglobal(var);
 isaliasedlocal(var, ctx) =
-    let result = islocal(var) && varid_has_location(var)
+    let result = islocal(var) && varid_has_location_cs(var, ctx)
                               && may_be_aliased(varid_location_cs(var, ctx));
     in  // -- println("checking aliasing of var ", var, " in context ", ctx,
         // --         " -> ", result)

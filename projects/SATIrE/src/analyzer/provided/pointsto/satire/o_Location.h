@@ -39,6 +39,7 @@ public:
 
 #if HAVE_PAG
 EXTERN_C FLO_BOOL o_varid_has_location(void *vp);
+EXTERN_C FLO_BOOL o_varid_has_location_cs(void *vp, void *cp);
 EXTERN_C void *o_varid_location(void *vp);
 EXTERN_C FLO_BOOL o_exprid_has_location(void *ep);
 EXTERN_C void *o_exprid_location(void *ep);

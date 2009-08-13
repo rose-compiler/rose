@@ -738,6 +738,9 @@ automatically included in any analyzer created with SATIrE.
     determine the abstract memory location corresponding to a variable;
     program variables have locations, SATIrE's temporary variables do not
 
+\ttitem{varid\_has\_location\_cs :: VariableId, ContextInfo -> bool;}
+    determine whether the variable has a location in a given context
+
 \ttitemX{exprid\_has\_location :: ExpressionId -> bool;}
 \ttitem{exprid\_location :: ExpressionId -> Location;}
     determine the abstract memory location corresponding to an expression,
