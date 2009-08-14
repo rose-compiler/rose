@@ -4222,16 +4222,16 @@ DisassemblerX86::decodeOpcode0F()
             switch (mmPrefix()) {
                 case mmNone:
                     getModRegRM(rmXMM, rmXMM, V4FLOATT);
-                    return makeInstruction(x86_cmpps, "cmpps", reg, modrm);
+                    return makeInstruction(x86_cmpps, "cmpps", reg, modrm, getImmByte());
                 case mmF3:
                     getModRegRM(rmXMM, rmXMM, FLOATT);
-                    return makeInstruction(x86_cmpss, "cmpss", reg, modrm);
+                    return makeInstruction(x86_cmpss, "cmpss", reg, modrm, getImmByte());
                 case mm66:
                     getModRegRM(rmXMM, rmXMM, V2DOUBLET);
-                    return makeInstruction(x86_cmppd, "cmppd", reg, modrm);
+                    return makeInstruction(x86_cmppd, "cmppd", reg, modrm, getImmByte());
                 case mmF2:
                     getModRegRM(rmXMM, rmXMM, DOUBLET);
-                    return makeInstruction(x86_cmpsd, "cmpsd", reg, modrm);
+                    return makeInstruction(x86_cmpsd, "cmpsd", reg, modrm, getImmByte());
             }
         }
         case 0xC3: {
