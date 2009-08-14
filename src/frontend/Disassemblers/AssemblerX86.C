@@ -1533,11 +1533,14 @@ AssemblerX86::assembleOne(SgAsmInstruction *_insn)
     SgAsmx86Instruction *insn = isSgAsmx86Instruction(_insn);
     ROSE_ASSERT(insn);
 
+    if (get_encoding_type()==ET_MATCHES)
+        set_honor_operand_types(true);
+
     SgUnsignedCharList best;
 
     static size_t nassembled=0;
     if (0==++nassembled % 10000)
-        fprintf(stderr, "Assembler[va 0x%08"PRIx64"]: assembled %zu instructions\n", insn->get_address(), nassembled);
+        fprintf(stderr, "AssemblerX86[va 0x%08"PRIx64"]: assembled %zu instructions\n", insn->get_address(), nassembled);
 
     /* Instruction */
     if (p_debug) {
