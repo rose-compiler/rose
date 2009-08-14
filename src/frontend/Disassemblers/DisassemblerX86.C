@@ -242,9 +242,19 @@ DisassemblerX86::effectiveOperandSize() const
 {
     if (operandSizeOverride) {
         switch (insnSize) {
-            case x86_insnsize_16: return x86_insnsize_32;
-            case x86_insnsize_32: return x86_insnsize_16;
-            case x86_insnsize_64: return x86_insnsize_16;
+            case x86_insnsize_16:
+                return x86_insnsize_32;
+            case x86_insnsize_32:
+                return x86_insnsize_16;
+            case x86_insnsize_64: {
+                /* Some instructions (e.g., MOVD/MOVQ) have both the operandSizeOverride prefix (0x66) along with the REX.W
+                 * bit. These instructions are inherently 32-bit and they use the REX.W bit to specify 64-bit operands. Also,
+                 * for instructions that don't have 0x66 as part of the opcode but which are inherently 32-bit and use the
+                 * REX.W bit to select 64-bit operands, the CPU seems to ignore extraneous 0x66 prefixes when REX.W is set. */
+                if (rexPresent && rexW)
+                    return x86_insnsize_64;
+                return x86_insnsize_16;
+            }
             default: ROSE_ASSERT(false);
         }
     } else {
