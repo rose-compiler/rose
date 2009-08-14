@@ -1,3 +1,190 @@
+2009-08-14 17:16  liao6
+
+	* [r6853] /trunk/ROSE/scripts/importRoseDistributionToSVN: Enabled
+	  debugging info. temporarily
+
+2009-08-14 15:34  matzke
+
+	* [r6850] /trunk/ROSE/src/frontend/Disassemblers/Partitioner.h:
+	  Disassembler: more doxygen docs for Partitioner
+	  
+	  In particular, the commentary for BasicBlockStarts and
+	  FunctionStarts
+	  were added to doxygen.
+
+2009-08-14 15:34  matzke
+
+	* [r6849] /trunk/ROSE/src/frontend/Disassemblers/AssemblerX86.C:
+	  Assembler: m32 and m64 addressing modes accept floats
+	  
+	  These addressing modes are used by some floating point
+	  instructions as
+	  described in the Intel Instruction Set Reference rather than the
+	  usual
+	  m32fp and m64fp modes.
+
+2009-08-14 15:34  matzke
+
+	* [r6848] /trunk/ROSE/src/frontend/Disassemblers/AssemblerX86.C:
+	  Assembler: adjustment to xmm/m64 addressing mode
+	  
+	  Besides matching a vector of four single-precision floating-point
+	  values
+	  or a vector of two double-precision floating-point values, it can
+	  also
+	  match a single double-quad-word.
+
+2009-08-14 15:33  matzke
+
+	* [r6847]
+	  /trunk/ROSE/src/frontend/Disassemblers/AssemblerX86Init.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/IntelAssemblyBuilder:
+	  Assembler: fixed encoding for various MM-register instructions
+	  
+	  Instructions that take an MM register and an immediate and have
+	  an
+	  opcode extension did not assemble correctly because the Intel
+	  documentation didn't indicate that the ModR/M byte should be
+	  generated.
+
+2009-08-14 15:33  matzke
+
+	* [r6846] /trunk/ROSE/src/frontend/Disassemblers/AssemblerX86.C:
+	  Assembler: added x86 MM register addressing
+	  
+	  Added MM register addressing.
+	  
+	  Combined two loops for calculating the ModR/M byte.
+
+2009-08-14 15:33  matzke
+
+	* [r6845] /trunk/ROSE/src/frontend/Disassemblers/AssemblerX86.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/AssemblerX86.h: Assembler:
+	  segment overrides mostly working now
+
+2009-08-14 15:33  matzke
+
+	* [r6844] /trunk/ROSE/src/frontend/Disassemblers/AssemblerX86.C:
+	  Assembler: x86 high-byte registers encoded correctly
+
+2009-08-14 15:33  matzke
+
+	* [r6843]
+	  /trunk/ROSE/src/frontend/Disassemblers/AssemblerX86Init.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/AssemblerX86Init.h,
+	  /trunk/ROSE/src/frontend/Disassemblers/IntelAssemblyBuilder:
+	  Assembler: work around error in Intel manual
+	  
+	  The Intel Instruction Set Reference PDF manual has an error for
+	  the
+	  64-bit ROL instruction on page 4-311. The opcode is missing the
+	  REX.W
+	  specifier.
+	  
+	  Regenerated files.
+
+2009-08-14 15:33  matzke
+
+	* [r6842]
+	  /trunk/ROSE/src/frontend/Disassemblers/ExtraInstructions.txt:
+	  Assembler: added definition for MOV with 0x66 prefix
+	  
+	  The operand size override prefix (0x66) is optional in 64-bit
+	  mode for a
+	  MOV instruction using REX.W to specify 64-bit operands. This
+	  fixes an
+	  encoding error for /usr/bin/etex on my machine:
+	  
+	  66 66 66 64 48 8b 04 25 00 00 00 00 | mov rax, QUADWORD PTR
+	  fs:[0]
+
+2009-08-14 15:33  matzke
+
+	* [r6841] /trunk/ROSE/src/frontend/Disassemblers/DisassemblerX86.C:
+	  Disassembler: bugfix for x86 MOV etc.
+	  
+	  The operand size override prefix (0x66) is ignored if the REX.W
+	  bit is
+	  set. This fixes decoding of things like:
+	  
+	  66 66 66 64 48 8b 04 25 00 00 00 00
+	  
+	  which ROSE disassembled as "mov ax WORD PTR fs:[0]" rather than
+	  "mov rax, QUADWORD PTR fs:[0]"
+
+2009-08-14 15:32  matzke
+
+	* [r6840] /trunk/ROSE/src/frontend/Disassemblers/DisassemblerX86.C:
+	  Disassembler: bugfix for x86 MOVD and MOVQ
+	  
+	  The disassembler was constructing MOVD instructions for opcodes
+	  that
+	  should have been MOVQ.
+	  
+	  48 0f 6e MOVQ
+	  48 0f 7e MOVQ
+	  66 48 0f 6e MOVQ
+	  66 48 0f 7e MOVQ
+
+2009-08-14 15:32  matzke
+
+	* [r6839] /trunk/ROSE/src/frontend/Disassemblers/DisassemblerX86.C:
+	  Disassembler: bugfix for x86 CMPPS CMPSS CMPPD and CMPSD
+	  
+	  The third operand was not disassembled for these instructions.
+
+2009-08-14 15:32  matzke
+
+	* [r6838] /trunk/ROSE/src/frontend/Disassemblers/DisassemblerX86.C:
+	  Disassembler: bugfix for x86 CVTTSS2SI
+	  
+	  The source operand of the 32-bit version was being disassembled
+	  as a
+	  vector of four single-precision floats rather than a scalar.
+
+2009-08-14 15:32  matzke
+
+	* [r6837] /trunk/ROSE/src/frontend/Disassemblers/Assembler.h,
+	  /trunk/ROSE/src/frontend/Disassemblers/AssemblerX86.h,
+	  /trunk/ROSE/src/frontend/Disassemblers/Disassembler.h,
+	  /trunk/ROSE/src/frontend/Disassemblers/Partitioner.h: Assembler:
+	  Updated some doxygen documentation
+
+2009-08-14 15:32  matzke
+
+	* [r6836] /trunk/ROSE/src/frontend/Disassemblers/Assembler.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/Assembler.h,
+	  /trunk/ROSE/src/frontend/Disassemblers/AssemblerX86.C,
+	  /trunk/ROSE/tests/roseTests/binaryTests/disassemble.C: Assembler:
+	  Changed constructor
+	  
+	  Assemblers are constructed like disassemblers: they use a factory
+	  method
+	  that looks at a binary file header or interpretation to decide
+	  what kind
+	  of assembler to create. This will eventually allow end-users to
+	  augment ROSE's assemblers at runtime just like what they can
+	  already do
+	  now for disassemblers.
+	  
+	  Also, if the ET_MATCHES encoding type is set for an x86
+	  assembler, then
+	  the AssemblerX86::p_honor_operand_types property is also set.
+
+2009-08-14 15:32  matzke
+
+	* [r6835] /trunk/ROSE/src/frontend/Disassemblers/Disassembler.C:
+	  Disassembler: bugfix for instruction searching
+	  
+	  If the SEARCH_ALLBYTES or SEARCH_UNUSED address searching methods
+	  are
+	  used and no initial disassembly address was given, the
+	  disassemblerBuffer method would return without doing anything.
+	  
+	  The new behavior is that it starts disassembling with the first
+	  address
+	  defined in the virtual address to file offset mapping.
+
 2009-08-14 00:26  saebjornsen1
 
 	* [r6828]
