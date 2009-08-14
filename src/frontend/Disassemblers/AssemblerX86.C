@@ -694,9 +694,12 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
             return rre && x86_regclass_st==rre->get_register_class();
 
         case od_mm:
+            return rre && x86_regclass_mm==rre->get_register_class();
+
         case od_mm_m32:
+            return matches(od_mm, expr, insn, disp_p, imm_p) || matches(od_m32, expr, insn, disp_p, imm_p);
         case od_mm_m64:
-            throw Exception("mm, mm1, mm2, mm/m32, mm/m64, mm2/m64 not implemented", insn);
+            return matches(od_mm, expr, insn, disp_p, imm_p) || matches(od_m64, expr, insn, disp_p, imm_p);
 
         case od_xmm:
             return rre && x86_regclass_xmm==rre->get_register_class();
@@ -858,6 +861,7 @@ AssemblerX86::build_modreg(const InsnDefn *defn, SgAsmx86Instruction *insn, size
         case od_r16:
         case od_r32:
         case od_r64:
+        case od_mm:
         case od_xmm:
             break;
         default:
@@ -901,6 +905,9 @@ AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmx86Instruction *insn, size_
         case od_m32:
         case od_m64:
         case od_m:
+        case od_mm:
+        case od_mm_m32:
+        case od_mm_m64:
         case od_xmm:
         case od_xmm_m32:
         case od_xmm_m64:
@@ -964,6 +971,8 @@ AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmx86Instruction *insn, size_
                     ROSE_ASSERT(!"not implemented");
                 }
             }
+        } else if (rre->get_register_class()==x86_regclass_mm) {
+            rm = rre->get_register_number() % 8;
         } else if (rre->get_register_class()==x86_regclass_xmm) {
             rm = rre->get_register_number() % 8;
             if (rre->get_register_number() >= 8)
@@ -1108,11 +1117,6 @@ AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmx86Instruction *insn, size_
         return false;
     }
     
-    if (defn->opcode_modifiers & od_e_mask) {
-        ROSE_ASSERT(reg==0);
-        reg = od_e_val(defn->opcode_modifiers);
-    }
-
     *sib = build_sib(ss, index, base);
     return build_modrm(mod, reg, rm);
 }
@@ -1227,6 +1231,7 @@ AssemblerX86::assemble(SgAsmx86Instruction *insn, const InsnDefn *defn)
     SgUnsignedCharList retval;
     uint8_t modrm = 0;                          /* The ModR/M byte */
     bool modrm_defined = false;                 /* True if "modrm" is defined */
+    bool reg_defined = false;                   /* True if the "reg" field of the ModR/M byte is defined */
     uint8_t sib;                                /* SIB byte */
     int64_t displacement = 0;                   /* Displacement for ModR/M, as in "DWORD PTR ds:[rip+0x216417]" */
     uint8_t rex_byte = 0;                       /* REX byte; valid only if non-zero */
@@ -1341,8 +1346,7 @@ AssemblerX86::assemble(SgAsmx86Instruction *insn, const InsnDefn *defn)
     
     /* Calculate the mod and r/m fields (bits 0307) of the ModR/M byte for any operand that's an appropriate type. There can
      * be only one such operand. If we find that the operand refers to a 64-bit register then we also adjust the REX byte. Any
-     * displacement value is also returned and displacement_defined is set accordingly.  This also takes care of the case when
-     * the reg field (bits 070) contains an opcode extension. */
+     * displacement value is also returned and displacement_defined is set accordingly. */
     for (size_t i=0; i<defn->operands.size(); i++) {
         switch (defn->operands[i]) {
             case od_r_m8:
@@ -1354,6 +1358,8 @@ AssemblerX86::assemble(SgAsmx86Instruction *insn, const InsnDefn *defn)
             case od_m32:
             case od_m64:
             case od_m:
+            case od_mm_m32:
+            case od_mm_m64:
             case od_xmm_m32:
             case od_xmm_m64:
             case od_xmm_m128:
@@ -1371,29 +1377,42 @@ AssemblerX86::assemble(SgAsmx86Instruction *insn, const InsnDefn *defn)
         }
     }
 
-    /* If the definition opcode "/r" bit is set then we need to encode a full ModR/M byte.  This means we need to look for an
-     * operand of type r8, r16, r32, or r64 and set the appropriate "reg" field (bits 070) of the ModR/M byte. */
+    /* If a full ModR/M byte is indicated then look for a register operand. If we didn't see a previous register-or-memory
+     * operand then the first register operand is placed in the "mod" and "rm" fields of the ModR/M byte. Otherwise the
+     * register is placed in the "reg" field. */
     if (defn->opcode_modifiers & od_modrm) {
-        ROSE_ASSERT(0 == (defn->opcode_modifiers & od_e_mask)); /*reg number and opcode extension are mutually exclusive*/
-        ROSE_ASSERT(modrm_defined);
-        ROSE_ASSERT(0 == (modrm & 070));
-        bool reg_defined=false;
         for (size_t i=0; i<defn->operands.size(); i++) {
             switch (defn->operands[i]) {
                 case od_r8:
                 case od_r16:
                 case od_r32:
                 case od_r64:
+                case od_mm:
                 case od_xmm:
-                    if (reg_defined)
-                        throw Exception("multiple ModR/M-affecting register operands", insn);
-                    build_modreg(defn, insn, i, &modrm, &rex_byte);
-                    reg_defined = true;
+                    if (modrm_defined) {
+                        if (reg_defined)
+                            throw Exception("too many ModR/M-affecting operands", insn);
+                        if (defn->opcode_modifiers & od_e_mask)
+                            throw Exception("register and opcode extension are mutually exclusive", insn);
+                        build_modreg(defn, insn, i, &modrm, &rex_byte);
+                        reg_defined = true;
+                    } else {
+                        modrm = build_modrm(defn, insn, i, &sib, &displacement, &rex_byte);
+                        modrm_defined = true;
+                    }
                     break;
                 default:
                     break;
             }
         }
+    }
+    
+    /* Opcode extension in the "reg" field of the ModR/M byte. */
+    if (defn->opcode_modifiers & od_e_mask) {
+        ROSE_ASSERT(modrm_defined);
+        ROSE_ASSERT(!reg_defined);
+        ROSE_ASSERT(0==modrm_reg(modrm));
+        modrm = build_modrm(modrm_mod(modrm), od_e_val(defn->opcode_modifiers), modrm_rm(modrm));
     }
 
     /* Output REX byte */
