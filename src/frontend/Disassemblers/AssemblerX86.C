@@ -627,9 +627,9 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
         case od_m16:
             return mre && isSgAsmTypeWord(mre->get_type());
         case od_m32:
-            return mre && isSgAsmTypeDoubleWord(mre->get_type());
+            return mre && (isSgAsmTypeDoubleWord(mre->get_type()) || isSgAsmTypeSingleFloat(mre->get_type()));
         case od_m64:
-            return mre && isSgAsmTypeQuadWord(mre->get_type());
+            return mre && (isSgAsmTypeQuadWord(mre->get_type()) || isSgAsmTypeDoubleFloat(mre->get_type()));
         case od_m128:
             throw Exception("m128 not implemented", insn);
 
@@ -705,9 +705,9 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
             return rre && x86_regclass_xmm==rre->get_register_class();
 
         case od_xmm_m32:
-            return matches(od_xmm, expr, insn, disp_p, imm_p) || matches(od_m32fp, expr, insn, disp_p, imm_p);
+            return matches(od_xmm, expr, insn, disp_p, imm_p) || matches(od_m32, expr, insn, disp_p, imm_p);
         case od_xmm_m64:
-            return matches(od_xmm, expr, insn, disp_p, imm_p) || matches(od_m64fp, expr, insn, disp_p, imm_p);
+            return matches(od_xmm, expr, insn, disp_p, imm_p) || matches(od_m64, expr, insn, disp_p, imm_p);
         case od_xmm_m128: {
             /* An XMM register or memory with one of the following data types:
              *   - a vector of four single-precision floating-point values
