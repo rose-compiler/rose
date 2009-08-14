@@ -714,6 +714,38 @@ RuntimeSystem_roseInitVariable(
   }
 }
 
+// we want to catch errors like the following:
+//    int x[2] = { 0, 1 };
+//    int y;
+//    int *p = x[1];
+//    p++;
+//
+//    int q = *p;
+void
+RuntimeSystem_roseMovePointer(
+                unsigned long long address,
+                const char* type,
+                const char* base_type,
+                size_t indirection_level,
+                const char* class_name,
+                const char* filename,
+                const char* line,
+                const char* lineTransformed) {
+
+  RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
+  CHECKPOINT
+
+  addr_type heap_address = *((addr_type*) address);
+  RsType* rs_type = 
+    RuntimeSystem_getRsType(
+        type,
+        base_type,
+        class_name,
+        indirection_level
+    );
+  rs -> registerPointerChange( address, heap_address, rs_type, true, false );
+}
+
 
 /*********************************************************
  * This function tells the runtime system that a variable is used
@@ -721,6 +753,9 @@ RuntimeSystem_roseInitVariable(
 void RuntimeSystem_roseAccessVariable(
 				       unsigned long long address, 
 				       unsigned int size,
+               unsigned long long write_address,
+               unsigned int write_size,
+               int read_write_mask,
 				       const char* filename, const char* line,
 				       const char* lineTransformed
 				       ) {
@@ -729,9 +764,8 @@ void RuntimeSystem_roseAccessVariable(
 	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
 	CHECKPOINT
 
-  // TODO 1 djh: generate read_write_mask for var access, as with array access
-  int read_write_mask = 1;
-  RuntimeSystem_checkMemoryAccess( address, size, read_write_mask );
+  RuntimeSystem_checkMemoryAccess( address, size, read_write_mask & Read );
+  RuntimeSystem_checkMemoryAccess( write_address, write_size, read_write_mask & Write );
 }
 
 // ***************************************** VARIABLE DECLARATIONS *************************************

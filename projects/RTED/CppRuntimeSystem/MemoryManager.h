@@ -1,3 +1,4 @@
+// vim:et sta sw=4 ts=4
 #ifndef MEMORYMANAGER_H
 #define MEMORYMANAGER_H
 
@@ -88,19 +89,11 @@ class MemoryType
         void registerMemType(addr_type offset, RsType * type);
 
 
-        /// Returns the type-name , or the CONTAINING ARRAY name which is associated with that offset
+        /// Returns the RsType, or the CONTAINING ARRAY type which is associated with that offset
         /// to distinguish between nested types (class with has members of other classes)
         /// an additional size parameter is needed
-        /// if no TypeInfo is found, the empty string is returned
-        /// example: returns "typeName.member.submember", where subMember has the specified size
-        ///          or subMember is an array, and one element has specified size
-        std::string getTypeAt(addr_type offset, size_t size);
-
-        /// Checks if the range offset1 until offset2+type->getByteSize()
-        /// an array of given type is possible
-        /// if nothing is registered true is returned, because an array is possible
-        bool isArrayPossible(addr_type offset1, addr_type offset2, RsType * type);
-
+        /// if no TypeInfo is found, null is returned
+        RsType* getTypeAt(addr_type offset, size_t size);
 
         const TypeInfoMap & getTypeInfoMap() const { return typeInfo; }
 
@@ -115,7 +108,7 @@ class MemoryType
         size_t            size;         ///< Size of allocation
         SourcePosition    allocPos;     ///< Position in source file where malloc/new was called
         std::vector<bool> initialized;  ///< stores for every byte if it was initialized
-		bool			  onStack;		///< Whether the memory lives on the stack or not (i.e. on the heap)
+        bool			  onStack;		///< Whether the memory lives on the stack or not (i.e. on the heap)
 
 
         /// Determines all typeinfos which intersect the defined offset-range [from,to)
@@ -124,6 +117,18 @@ class MemoryType
 
         /// A entry in this map means, that on offset <key> is stored the type <value>
         TypeInfoMap typeInfo;
+
+        /// Computes an @c RsCompoundType for offset, size pairs for which a type
+        /// could not be found.  The compound type will have as much information
+        /// as possible filled in.  A compound type is not necessary a class --
+        /// it could still be an array (e.g. int at offset 0, int at offset 20).
+        ///
+        /// @c rv is set to point to the newly constructed @c RsCompoundType.
+        /// This object will be on the heap and callers are responsible for
+        /// deleting it.
+        void computeCompoundTypeAt(addr_type offset, size_t size, RsType* &rv);
+
+        friend class MemoryManager;
 };
 std::ostream& operator<< (std::ostream &os, const MemoryType & m);
 
@@ -167,10 +172,13 @@ class MemoryManager
         /// The check is done if a pointer changes via arithmetic or on array access
         /// @param a1 address of the pointer before (or base of array); in example &arr[0]
         /// @param a2 the new pointer target address, or derefed addr; in example &arr[11]
+        /// @return true if both addresses are from the same chunk, false
+        ///         otherwise.
         /// There a two kinds of violation: change of allocation chunk
         ///                                 change of "typed-chunk" (see example)
-        void checkIfSameChunk(addr_type a1, addr_type a2, RsType * t);
-        void checkIfSameChunk(addr_type a1, addr_type a2, size_t size);
+        bool checkIfSameChunk(addr_type a1, addr_type a2, RsType * t);
+        bool checkIfSameChunk(addr_type a1, addr_type a2, size_t size);
+        bool checkIfSameChunk(addr_type a1, addr_type a2, size_t size, RuntimeViolation::Type violation);
 
         /// Reports a violation for all non freed memory locations
         /// call this function at end of program
@@ -198,7 +206,6 @@ class MemoryManager
         template<typename T>
         T * readMemory(addr_type address)
         {
-            MemoryType * mt = NULL;
             checkRead(address,sizeof(T));
             return reinterpret_cast<T*>(address);
         }
@@ -221,6 +228,8 @@ class MemoryManager
         /// Queries the map for a potential matching memory area
         /// finds the memory region with next lower or equal address
         MemoryType * findPossibleMemMatch(addr_type addr);
+
+        void failNotSameChunk( RsType*, RsType*, addr_type, addr_type, MemoryType*, MemoryType*, RuntimeViolation::Type violation);
 
 
         MemoryTypeSet mem;

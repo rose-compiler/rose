@@ -35,6 +35,7 @@
 
 # Print out the line number
 /at line [0-9]\+/I {
+    # In the normal case we just output the line number.
     s/^.*at line \([0-9]\+\).*$/\1/I
     P
 }

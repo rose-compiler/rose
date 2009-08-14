@@ -1,5 +1,6 @@
 // vim:sw=4 ts=4 tw=80 et sta fdm=marker:
 #include "CppRuntimeSystem.h"
+#include <boost/foreach.hpp>
 #include <iostream>
 #include <cassert>
 #include <cstdlib>
@@ -574,7 +575,7 @@ void testPointerChanged()
         rs->registerPointerChange("mangled_p1_to_18",18);
 
         try{ rs->registerPointerChange("mangled_p1_to_10",18,true); }
-        TEST_CATCH(RuntimeViolation::POINTER_CHANGED_MEMAREA )
+        TEST_CATCH(RuntimeViolation::INVALID_PTR_ASSIGN )
 
         rs->checkpoint(SourcePosition());
         rs->registerPointerChange("mangled_p1_to_18",18+sizeof(int));
@@ -600,7 +601,7 @@ void testPointerChanged()
         rs->registerPointerChange("mangled_intPtr",0x42);
 
         try{ rs->registerPointerChange("mangled_intPtr",0x42 + 10*sizeof(int),true); }
-        TEST_CATCH(RuntimeViolation::POINTER_CHANGED_MEMAREA )
+        TEST_CATCH(RuntimeViolation::INVALID_PTR_ASSIGN )
 
     rs->endScope();
 
@@ -686,6 +687,7 @@ void testMultidimensionalStackArrayAccess()
     try { mm -> checkIfSameChunk( 0x100, 0x100 + 3 * intsz, intsz); }
     TEST_CATCH ( RuntimeViolation::POINTER_CHANGED_MEMAREA )
 
+    CHECKPOINT
     // as above, but this time legally access the sub array
     mm -> checkIfSameChunk( 0x100 + 3 * intsz, 0x100 + 3 * intsz, intsz);
 
@@ -708,8 +710,10 @@ void testArrayAccess()
 
     addr_type pointerAddr = 0x100;
     rs->createVariable(0x100,"intPointer","mangled_intPointer",ts->getPointerType("SgTypeInt"));
+    CHECKPOINT
     rs->registerPointerChange(pointerAddr,heapAddr,false);
 
+    CHECKPOINT
     //simulate iteration over array
     for(int i=0; i<10 ; i++)
         rs->registerPointerChange(pointerAddr,heapAddr+ i*sizeof(int),true);
@@ -717,7 +721,7 @@ void testArrayAccess()
 
     // write in second allocation ( not allowed to changed mem-chunk)
     try { rs->registerPointerChange(pointerAddr,heapAddr+ 10*sizeof(int),true); }
-    TEST_CATCH ( RuntimeViolation::POINTER_CHANGED_MEMAREA )
+    TEST_CATCH ( RuntimeViolation::INVALID_PTR_ASSIGN )
 
     // write in illegal mem region before
     try { rs->registerPointerChange(pointerAddr,heapAddr - sizeof(int),true); }
@@ -1099,14 +1103,19 @@ void testTypeSystemDetectNested()
     cout << "Type2 " << (type2 ? type2->getName() : "NULL") << endl;
     */
 
+    CHECKPOINT
     //Access to padded area
     try {mt->registerMemType(offsetof(A,a2)+1,ts->getTypeInfo("SgTypeChar")); }
     TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
 
+    CHECKPOINT
+    //Access to padded area
     //Wrong type
     try {mt->registerMemType(0,ts->getTypeInfo("B")); }
     TEST_CATCH( RuntimeViolation::INVALID_TYPE_ACCESS)
 
+    CHECKPOINT
+    //Access to padded area
     //Wrong basic type
     mt->registerMemType(offsetof(A,a2),ts->getTypeInfo("SgTypeChar"));
     try {mt->registerMemType(offsetof(A,a2),ts->getTypeInfo("SgTypeInt")); }
@@ -1159,6 +1168,129 @@ void testTypeSystemMerge()
     CLEANUP
 }
 
+void testPartialTypeSystemArrayAccess() {
+    TEST_INIT("Testing types: array access of type with subtype overlap")
+
+    MemoryManager *mm = rs -> getMemManager();
+    TypeSystem *ts = rs -> getTypeSystem();
+
+    // register type(s)
+    struct Typ { char a; int b; };
+    RsClassType *typ = new RsClassType( "Typ", sizeof( Typ ));
+    typ -> addMember( "a", ts -> getTypeInfo( "SgTypeInt" ), offsetof( Typ, a ));
+    typ -> addMember( "b", ts -> getTypeInfo( "SgTypeInt" ), offsetof( Typ, b ));
+
+    assert( typ -> isComplete() );
+    ts -> registerType( typ );
+
+    addr_type Addr = 0x42;
+    size_t el2_offset = sizeof( Typ );
+    size_t el2_a_offset = el2_offset + offsetof( Typ, a );
+
+    rs -> createMemory( Addr, 2 * sizeof( Typ ) ); 
+    // register known memory
+    //
+    //  0       8   12  16
+    //  ////[int]////[int]
+    //  [  Typ  ]/////////
+    MemoryType *mt = mm -> getMemoryType( Addr );
+    mt -> registerMemType( 0, typ );
+    mt -> registerMemType( el2_a_offset, ts -> getTypeInfo( "SgTypeInt" ));
+
+    // Check array access of larger type.  So far we have no reason to complain:
+    // we don't know the full type at 8..16, but the part we do know is
+    // consistent with the requested type.
+    //
+    //  0       8   12  16
+    //          [  Typ?  ]
+    CHECKPOINT 
+    mm -> checkIfSameChunk( Addr, Addr + el2_offset, sizeof( Typ )); 
+
+    rs -> freeMemory( Addr );
+    CLEANUP
+}
+
+void testTypeConsistencyChecking() {
+    TEST_INIT("Testing type consistency checking")
+
+    TypeSystem *ts = rs -> getTypeSystem();
+
+    // register user types
+    struct Typ { char a; int b; };
+    RsClassType *typ = new RsClassType( "TypA", sizeof( Typ ));
+    typ -> addMember( "a", ts -> getTypeInfo( "SgTypeChar" ), offsetof( Typ, a ));
+    typ -> addMember( "b", ts -> getTypeInfo( "SgTypeInt" ), offsetof( Typ, b ));
+    assert( typ -> isComplete() );
+    ts -> registerType( typ );
+
+    typ = new RsClassType( "TypB", sizeof( Typ ));
+    typ -> addMember( "a", ts -> getTypeInfo( "SgTypeChar" ), offsetof( Typ, a ));
+    typ -> addMember( "b", ts -> getTypeInfo( "SgTypeInt" ), offsetof( Typ, b ));
+    assert( typ -> isComplete() );
+    ts -> registerType( typ );
+
+    // gather types
+    const RsType & int_typ = *(ts -> getTypeInfo( "SgTypeInt" ));
+    const RsType & typA = *(ts -> getTypeInfo( "TypA" ));
+    const RsType & typB = *(ts -> getTypeInfo( "TypB" ));
+
+    vector< RsType* > to_delete;
+    // char, 4 unknown
+    RsCompoundType* compound = new RsCompoundType( "", sizeof( Typ ));
+    RsType &compound_char = *compound;
+    to_delete.push_back( compound );
+    compound -> addMember( "", ts -> getTypeInfo( "SgTypeChar" ), offsetof( Typ, a ));
+
+    // 1 unknown, int
+    compound = new RsCompoundType( "", sizeof( Typ ));
+    RsType &compound_int = *compound;
+    to_delete.push_back( compound );
+    compound -> addMember( "", ts -> getTypeInfo( "SgTypeInt" ), offsetof( Typ, b ));
+
+    // 5 char
+    compound = new RsCompoundType( "", sizeof( Typ ));
+    RsType &compound_array = *compound;
+    to_delete.push_back( compound );
+    compound 
+        -> addMember(
+            "",
+            ts -> getArrayType( "SgTypeChar", 5 * sizeof( char )),
+            offsetof( Typ, a ));
+
+    assert( !( int_typ.isConsistentWith( typA )));
+    assert( !( typA.isConsistentWith( int_typ )));
+    assert( !( int_typ.isConsistentWith( typB )));
+
+    // even though typeA and typB have the same members, if we know something is
+    // a "TypB" then it cannot be a "TypA"
+    assert( !( typA.isConsistentWith( typB )));
+
+    assert( typA.isConsistentWith( compound_char ));
+    assert( typA.isConsistentWith( compound_int ));
+    assert( !(typA.isConsistentWith( compound_array )));
+    assert( compound_char.isConsistentWith( typA ));
+    assert( compound_int.isConsistentWith( typA ));
+
+    assert( compound_char.isConsistentWith( compound_int ));
+    assert( compound_char.isConsistentWith( compound_array ));
+
+    assert( compound_int.isConsistentWith( compound_char ));
+    assert( !( compound_int.isConsistentWith( compound_array )));
+
+    // FIXME 3: we don't handle this case (see
+    // RsCompoundType::checkConsistencyWith )
+    // [ int ]
+    // ? [int ]
+    // not consistent b/c of space in the type for the char
+    // assert( !(compound_int.isConsistentWith( int_typ )));
+    assert( !(compound_char.isConsistentWith( int_typ )));
+
+    BOOST_FOREACH( RsType* target, to_delete ) {
+        delete target;
+    }
+    CLEANUP
+}
+
 
 #include "../RuntimeSystem.h"
 
@@ -1168,16 +1300,14 @@ extern int RuntimeSystem_original_main(int argc, char ** argv, char ** envp)
     {
         RuntimeSystem * rs = RuntimeSystem::instance();
         rs->setTestingMode(true);
-
-#if 1
         rs->setOutputFile("test_output.txt");
-#else
-        testPointerChanged();
-        cerr<< endl << "!!!!  Success  !!!! " << endl << endl;
-        abort();
-#endif
+
+
+        testTypeConsistencyChecking();
+
         testTypeSystemDetectNested();
         testTypeSystemMerge();
+        testPartialTypeSystemArrayAccess();
 
         testSuccessfulMallocFree();
 

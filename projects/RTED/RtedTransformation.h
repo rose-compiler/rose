@@ -13,6 +13,8 @@
  * -----------------------------------------------------------*/
 class RtedTransformation : public AstSimpleProcessing {
  private:
+  enum ReadWriteMask { Read = 1, Write = 2, BoundsCheck = 4 };
+
   // VARIABLES ------------------------------------------------------------
   SgGlobal* globalScope;
   // ------------------------ array ------------------------------------
@@ -35,6 +37,9 @@ class RtedTransformation : public AstSimpleProcessing {
   // We need to store the variables that are being accessed
   std::vector<SgVarRefExp*> variable_access_varref;
   std::map<SgPointerDerefExp*,SgVarRefExp*> variable_access_pointerderef;
+
+  // Track pointer arithmetic, e.g. ++, --
+  std::vector< SgExpression* > pointer_movements;
 
   // ------------------------ string -----------------------------------
   // handle call to functioncall
@@ -75,6 +80,7 @@ class RtedTransformation : public AstSimpleProcessing {
   SgFunctionSymbol* roseCallStack;
   SgFunctionSymbol* roseCreateVariable;
   SgFunctionSymbol* roseInitVariable;
+  SgFunctionSymbol* roseMovePointer;
   SgFunctionSymbol* roseAccessVariable;
   SgFunctionSymbol* roseEnterScope;
   SgFunctionSymbol* roseExitScope;
@@ -162,6 +168,17 @@ class RtedTransformation : public AstSimpleProcessing {
   bool isFileIOFunctionCall(std::string name) ;
   SgExpression* getVariableLeftOfAssignmentFromChildOnRight(SgNode* n);
 
+
+	/// Visit pointer assignments whose lhs is computed from the original value of
+	/// the pointer by virtue of the operator alone (e.g. ++, --)  As a heuristic,
+	/// we say that such operations should not change the @e "Memory Chunk", i.e.
+	/// the array the pointer refers to.
+  void visit_pointer_movement( SgNode* node );
+	/// Insert calls to registerPointerChange.  Don't worry about checkMemReads,
+	/// those should be handled elsewhere (i.e. varref), but after the assignment,
+	/// even if the memory was readable, ensure we stayed within array bounds.
+  void insert_pointer_change( SgExpression* op );
+
   // simple scope handling
   std::string scope_name( SgStatement* n);
   void bracketWithScopeEnterExit( SgStatement* stmt, SgNode* end_of_scope);
@@ -204,6 +221,7 @@ class RtedTransformation : public AstSimpleProcessing {
     mainEndsWithReturn=false;
     roseCreateVariable=NULL;
     roseInitVariable=NULL;
+    roseMovePointer=NULL;
     roseAccessVariable=NULL;
 
   };

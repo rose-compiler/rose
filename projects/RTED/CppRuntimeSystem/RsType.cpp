@@ -1,10 +1,14 @@
+// vim:sw=4 ts=4:
 #include "RsType.h"
 
+#include <boost/foreach.hpp>
 #include <cassert>
 #include <sstream>
 
 using namespace std;
 
+
+RsType &RsType::UnknownType = *(new RsCompoundType( "Unknown", 0 ));
 
 
 RsType *  RsType::getSubtypeRecursive(addr_type offset,  size_t size, bool stopAtArray, string * navString)
@@ -52,6 +56,16 @@ RsType *  RsType::getSubtypeRecursive(addr_type offset,  size_t size, bool stopA
     return result;
 }
 
+bool RsType::isConsistentWith( const RsType &other ) const {
+    if( checkConsistencyWith( other ))
+        return true;
+    if( typeid( *this ) != typeid( other ))
+        return other.checkConsistencyWith( *this );
+
+    return false;
+}
+
+
 std::ostream& operator<< (std::ostream &os, const RsType * m)
 {
     m->print(os);
@@ -91,7 +105,7 @@ int RsArrayType::getSubtypeCount() const
     return elementCount;
 }
 
-RsType * RsArrayType::getSubtype(int i)
+RsType * RsArrayType::getSubtype(int i) const
 {
     if(i>=0 && i<elementCount)
         return baseType;
@@ -115,7 +129,7 @@ int RsArrayType::getSubtypeIdAt(addr_type offset) const
     return offset / baseType->getByteSize();
 }
 
-RsType * RsArrayType::getSubtypeAt ( addr_type offset)
+RsType * RsArrayType::getSubtypeAt ( addr_type offset) const
 {
     if( ! isValidOffset(offset))
         return NULL;
@@ -182,6 +196,23 @@ std::string RsArrayType::getDisplayName() const
     return s.str();
 }
 
+bool RsArrayType::checkConsistencyWith( const RsType &other ) const {
+    return RsType::checkConsistencyWith( other )
+            || other.isConsistentWith( *getBaseType() );
+}
+
+int RsArrayType::getKnownSubtypesOverlappingRange(
+        addr_type range_start, addr_type range_end ) const {
+
+    int rv = 0;
+
+    int span = range_end - range_start;
+    if( span > 0 )
+        rv += span / (getBaseType() -> getByteSize());
+
+    return rv;
+}
+
 
 // ---------------------------------------- RsClassType ---------------------------------------
 
@@ -190,7 +221,6 @@ RsClassType::RsClassType(const string & name, size_t byteSize_)
     : RsType(name),
       byteSize(byteSize_)
 {
-    assert(byteSize > 0);
 }
 
 
@@ -256,7 +286,7 @@ int RsClassType::getSubtypeCount() const
 }
 
 
-RsType * RsClassType::getSubtype(int i)
+RsType * RsClassType::getSubtype(int i) const
 {
     assert(i>=0 && i<members.size());
     return members[i].type;
@@ -285,11 +315,10 @@ int RsClassType::getSubtypeIdAt(addr_type offset) const
                 return i;
         }
     }
-    assert(false); // this case should be caught by offset>= getByteSize()
     return -1;
 }
 
-RsType * RsClassType::getSubtypeAt(addr_type offset)
+RsType * RsClassType::getSubtypeAt(addr_type offset) const
 {
     int id = getSubtypeIdAt(offset);
     if(id==-1)
@@ -325,6 +354,75 @@ void RsClassType::print(ostream & os) const
                       members[i].name << "\t" <<
                       members[i].type->getName() << endl;
     }
+}
+
+int RsClassType::getKnownSubtypesOverlappingRange(
+        addr_type range_start, addr_type range_end ) const {
+
+    int rv = 0;
+
+    int span = range_end - range_start;
+    if( span > 0 )
+        BOOST_FOREACH( Member m, members ) {
+            addr_type m_start = m.offset;
+            addr_type m_end = m.offset + m.type -> getByteSize();
+
+            if( m_start < range_end && m_end > range_start )
+                ++rv;
+        }
+
+    return rv;
+}
+
+bool RsClassType::checkConsistencyWith( const RsType &other ) const {
+
+    if( !relaxed )
+        return RsType::checkConsistencyWith( other );
+
+    BOOST_FOREACH( Member m, members ) {
+        RsType &type = *(m.type);
+
+        // Range is m.offset..m.offset=m.size
+        // if other has 1 known type there, and >= 0 unknown types, check consistency
+        // if other has > 1 non-unknown types
+        //      my type must be consistent with all of other's types
+        // if other has 0 types, offset is illegal, fail
+        RsType *partner = other.getSubtypeAt( m.offset );
+
+        if( !partner )
+            // Other has no type at that offset
+            return false;
+        if( other.getKnownSubtypesOverlappingRange(
+                    m.offset + partner -> getByteSize(),
+                    m.offset + m.type -> getByteSize()) > 0 )
+            // Our single type overlaps multiple other non-unknown types
+            // e.g. int[2] overlapping int, char or int, int
+            return false;
+
+        // Our member type is the same width as other's, minus space of unknown
+        // type, but it may still be inconsistent (e.g. char[4] vs. int)
+        if( !type.isConsistentWith( *partner ))
+            return false;
+    }
+
+    // we didn't find any inconsistency
+    return true;
+}
+
+// ----------------------------------- RsCompoundType-----------------------------------
+
+int RsCompoundType::addMember(const std::string & name, RsType * type, addr_type offset) {
+    if( this -> byteSize < offset + type -> getByteSize() )
+        this -> byteSize += type -> getByteSize();
+    return RsClassType::addMember( name, type, offset );
+}
+
+RsType* RsCompoundType::getSubtypeAt( addr_type offset ) const {
+    RsType* type = RsClassType::getSubtypeAt( offset );
+    if( type )
+        return type;
+
+    return &RsType::UnknownType;
 }
 
 

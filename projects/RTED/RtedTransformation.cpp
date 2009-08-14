@@ -43,6 +43,7 @@ void RtedTransformation::transform(SgProject* project) {
   roseConvertIntToString=symbols->roseConvertIntToString;
   roseCreateVariable = symbols->roseCreateVariable;
   roseInitVariable = symbols->roseInitVariable;
+  roseMovePointer = symbols->roseMovePointer;
   roseAccessVariable = symbols->roseAccessVariable;
   roseEnterScope = symbols->roseEnterScope;
   roseExitScope = symbols->roseExitScope;
@@ -59,6 +60,7 @@ void RtedTransformation::transform(SgProject* project) {
   ROSE_ASSERT(roseRtedClose);
   ROSE_ASSERT(roseCreateVariable);
   ROSE_ASSERT(roseInitVariable);
+  ROSE_ASSERT(roseMovePointer);
   ROSE_ASSERT(roseAccessVariable);
   ROSE_ASSERT(roseEnterScope);
   ROSE_ASSERT(roseExitScope);
@@ -110,6 +112,12 @@ void RtedTransformation::transform(SgProject* project) {
     }
 
     bracketWithScopeEnterExit( stmt_to_bracket, end_of_scope );
+  }
+
+  // add calls to register pointer change after pointer arithmetic
+  BOOST_FOREACH( SgExpression* op, pointer_movements ) {
+    ROSE_ASSERT( op );
+    insert_pointer_change( op );
   }
 
 
@@ -371,7 +379,14 @@ void RtedTransformation::visit(SgNode* n) {
   // *********************** DETECT ALL function calls ***************
 
 
-
+  // *********************** Detect pointer movements, e.g ++, -- *********
+  else if(  isSgPlusPlusOp( n )
+            || isSgMinusMinusOp( n )
+            || isSgMinusAssignOp( n )
+            || isSgPlusAssignOp( n )) {
+    visit_pointer_movement( n );
+  }
+  // *********************** Detect pointer movements, e.g ++, -- *********
 
   else {
 	 // cerr << " @@ Skipping : " << n->unparseToString() << "   " << n->class_name() << endl;

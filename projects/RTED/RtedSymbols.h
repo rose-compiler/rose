@@ -18,6 +18,7 @@ public:
 	SgFunctionSymbol* roseConvertIntToString;
 	SgFunctionSymbol* roseCreateVariable;
 	SgFunctionSymbol* roseInitVariable;
+	SgFunctionSymbol* roseMovePointer;
 	SgFunctionSymbol* roseAccessVariable;
 	SgFunctionSymbol* roseEnterScope;
 	SgFunctionSymbol* roseExitScope;

@@ -1,3 +1,4 @@
+// vim:sta et ts=4 sw=4:
 #include "CppRuntimeSystem.h"
 #include <cassert>
 #include <sstream>
@@ -33,9 +34,9 @@ RuntimeSystem::RuntimeSystem()
     for(int i=0; i< RuntimeViolation::UNKNOWN_VIOLATION; i++)
     {
         RuntimeViolation::Type t = static_cast<RuntimeViolation::Type>(i);
-        vioAbortInfoMap[t]=true;
+        violationTypePolicy[t] = Exit;
     }
-    vioAbortInfoMap[RuntimeViolation::INVALID_PTR_ASSIGN] = false;
+    violationTypePolicy[RuntimeViolation::INVALID_PTR_ASSIGN] = InvalidatePointer;
 
     readConfigFile();
 }
@@ -58,23 +59,33 @@ void RuntimeSystem::readConfigFile()
         return;
     }
 
+   
     string line;
     while( getline(file,line))
     {
         stringstream lineStream(line);
         string key;
-        bool value;
+        string value_name;
         lineStream >> key;
-        lineStream >> value;
+        lineStream >> value_name;
+        ViolationPolicy value = getPolicyFromString( value_name );
+
         if(key == "qtDebugger")
-            qtDebugger=value;
+            qtDebugger = (
+                value_name == "1" 
+                || value_name == "yes" 
+                || value_name == "on" 
+                || value_name == "true"
+            );
         else
         {
             RuntimeViolation::Type t = RuntimeViolation::getViolationByString(key);
             if (t == RuntimeViolation::UNKNOWN_VIOLATION)\
                 cerr << "Unknown key " << key << endl;
+            else if( value == Invalid )
+                cerr << "Unknown Policy" << value_name << endl;
             else
-                vioAbortInfoMap[t]=value;
+                violationTypePolicy[t]=value;
         }
     }
 
@@ -96,6 +107,13 @@ void RuntimeSystem::checkpoint(const SourcePosition & pos)
 
 // --------------------- Violations ---------------------------------
 
+RuntimeSystem::ViolationPolicy RuntimeSystem::getPolicyFromString( std::string &name ) const {
+    if      ( "Exit"                == name ) return Exit;
+    else if ( "Warn"                == name ) return Warn;
+    else if ( "Ignore"              == name ) return Ignore;
+    else if ( "InvalidatePointer"   == name ) return InvalidatePointer;
+    else                                      return Invalid;
+}
 
 void RuntimeSystem::violationHandler(RuntimeViolation::Type v, const std::string & description)  throw (RuntimeViolation)
 {
@@ -106,16 +124,15 @@ void RuntimeSystem::violationHandler(RuntimeViolation::Type v, const std::string
 void RuntimeSystem::violationHandler(RuntimeViolation & vio)  throw (RuntimeViolation)
 {
     vio.setPosition(curPos);
+    ViolationPolicy policy = violationTypePolicy[ vio.getType() ];
 
-    // vioAbortInfoMap maps types to bool, giving us two policies, 
-    //      { ignore, exit }
-    // it would be good to add a third policy (warn).  Doing so would require
-    // modifying either the makefile or sed scripts to ensure that the expected
-    // and actual errors still matched.
-    if( vioAbortInfoMap[ vio.getType() ])
-        (*defaultOutStr) << vio  << endl;
-
-
+    switch( policy ) {
+        case Exit:
+        case Warn:
+            (*defaultOutStr) << vio  << endl;
+        default:
+            ;// do nothing
+    }
 
 
 #ifdef ROSE_WITH_ROSEQT
@@ -125,7 +142,7 @@ void RuntimeSystem::violationHandler(RuntimeViolation & vio)  throw (RuntimeViol
         stringstream s;
         s << vio;
 
-        if(vioAbortInfoMap[vio.getType()])
+        if( Exit == policy )
             RtedDebug::instance()->addMessage(s.str().c_str(),RtedDebug::ERROR);
         else
             RtedDebug::instance()->addMessage(s.str().c_str(),RtedDebug::WARNING);
@@ -134,16 +151,13 @@ void RuntimeSystem::violationHandler(RuntimeViolation & vio)  throw (RuntimeViol
     }
 #endif
 
-    // check if we ought to abort on this type of violation
-    // testing mode aborts on all violations
-    if(! testingMode && !vioAbortInfoMap[vio.getType()])
-        return;
-
-
-    if(testingMode)
+    if( testingMode )
         throw vio;
-    else
-        exit(0);
+
+    if( Exit == policy )
+        exit( 0 );
+
+    return;
 }
 
 void RuntimeSystem::doProgramExitChecks()

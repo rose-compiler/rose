@@ -260,8 +260,24 @@ void PointerManager::registerPointerChange( addr_type src, addr_type target, boo
     if( checkPointerMove )
     {
         MemoryManager * mm = RuntimeSystem::instance()->getMemManager();
-        mm->checkIfSameChunk(oldTarget,target,pi->getBaseType());
+        bool legal = mm -> checkIfSameChunk(
+                oldTarget,
+                target,
+                pi -> getBaseType() -> getByteSize(),
+                RuntimeViolation::INVALID_PTR_ASSIGN );
+
+        if(     !legal 
+                && RuntimeSystem::instance() 
+                        -> violationTypePolicy[ RuntimeViolation::INVALID_PTR_ASSIGN ]
+                    == RuntimeSystem::InvalidatePointer) {
+            // Don't complain now, but invalidate the pointer so that subsequent
+            // reads or writes without first registering a pointer change will
+            // be treated as invalid
+            pi -> setTargetAddressForce( 0 );
+            *((int*) (pi -> getSourceAddress())) = NULL;
+        }
     }
+
 
     if( checkMemLeaks )
         checkForMemoryLeaks( oldTarget, pi -> getBaseType() -> getByteSize() );

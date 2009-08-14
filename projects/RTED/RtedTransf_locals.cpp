@@ -9,6 +9,9 @@ using namespace SageInterface;
 using namespace SageBuilder;
 
 
+/// add @c beginScope before @c stmt and @c endScope after @c stmt.
+/// use @c end_of_scope to determine the @c Sg_File_Info to use for reporting
+/// error location.
 void 
 RtedTransformation::bracketWithScopeEnterExit( SgStatement* stmt, SgNode* end_of_scope) {
     ROSE_ASSERT( stmt);
@@ -77,6 +80,8 @@ RtedTransformation::bracketWithScopeEnterExit( SgStatement* stmt, SgNode* end_of
 }
 
 
+/// Determines a nice scope name for @c stmt.  This is only used for convenience
+/// in the debugger, and does not affect any checks.
 std::string
 RtedTransformation::scope_name( SgStatement* stmt) {
 

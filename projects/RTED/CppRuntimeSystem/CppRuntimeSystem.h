@@ -277,19 +277,46 @@ class RuntimeSystem
         bool qtDebugger;
 
 
-        /// Each violation type has a bool associated, which specifies if
-        /// the program is aborted when this violation occurs
-        /// TODO there are certain violations where the RuntimeSystem is in
-        ///      inconsistent state after they have occured
-        ///      determine which Violations have this problem and prevent switching them off
-        std::map<RuntimeViolation::Type, bool> vioAbortInfoMap;
-
         //  -----------  Members which are used for output -------------
 
         SourcePosition curPos;
 
         std::ostream * defaultOutStr;
         std::ofstream outFile;
+
+
+        enum ViolationPolicy {
+            Exit,
+            Warn,
+            Ignore,
+            InvalidatePointer,
+
+            Invalid
+        };
+
+        /// A @c map of violation types to policies.  Policies include:
+        ///
+        ///     Exit (default)  -   Report the violation and terminate the
+        ///                         process.
+        ///     Warn            -   Report the violation and continue.
+        ///     Ignore          -   Do nothing about the violation.
+        ///
+        ///     InvalidatePointer-  Only valid for INVALID_PTR_ASSIGN.  Do
+        ///                         not report the violation, but invalidate the
+        ///                         pointer, both the real one and our tracked 
+        ///                         pointer info, by setting the target to NULL.
+        ///                         If an attempt is made to read or write to the
+        ///                         pointer without registering a pointer change,
+        //                          a different violation will occur.
+        ///     
+        /// TODO there are certain violations where the RuntimeSystem is in
+        ///      inconsistent state after they have occured
+        ///      determine which Violations have this problem and prevent switching them off
+        std::map<RuntimeViolation::Type, ViolationPolicy> violationTypePolicy;
+
+        ViolationPolicy getPolicyFromString( std::string & name ) const;
+
+    friend class PointerManager;
 };
 
 

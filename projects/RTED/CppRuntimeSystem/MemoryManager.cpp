@@ -1,6 +1,6 @@
 #include "MemoryManager.h"
 
-
+#include <boost/foreach.hpp>
 #include <sstream>
 #include <iostream>
 #include <iomanip>
@@ -188,50 +188,53 @@ void MemoryType::registerMemType(addr_type offset, RsType * type)
 }
 
 
-string MemoryType::getTypeAt(addr_type offset, size_t size)
+RsType* MemoryType::getTypeAt(addr_type offset, size_t size)
 {
-    TiIterPair res = getOverlappingTypeInfos(offset,offset+size);
-    TiIter itLower = res.first;
-    TiIter itUpper = res.second;
+    TiIterPair type_infos = getOverlappingTypeInfos( offset, offset + size );
+    TiIter first_addr_type = type_infos.first;
+    TiIter end = type_infos.second;
 
-    if(itLower== typeInfo.end())
-        return "";
+    if( first_addr_type == typeInfo.end() )
+        // We know nothing about the types at offset..+size
+        return &RsType::UnknownType;
 
+    TiIter second_addr_type = first_addr_type;
+    ++second_addr_type;
 
-    // makes only sense if range contains exactly one type
-    TiIter incrementedLower = itLower;
-    ++incrementedLower;
-
-    if(incrementedLower == itUpper)
-    {
-        assert(offset >= itLower->first);
-        string typeStr;
-        itLower->second->getSubtypeRecursive(offset - itLower->first,size,true,&typeStr);
-        return typeStr;
+    if( second_addr_type == end ) {
+        // We know only something about one type in this range
+        RsType* first_type = first_addr_type -> second;
+        RsType* maybe_return = 
+            first_type 
+                -> getSubtypeRecursive(
+                        offset - first_addr_type -> first,
+                        size,
+                        true );
+       if( maybe_return )
+           // We know about a type that fills the entire range offset..size
+           // This might be a member of a class.
+           return maybe_return;
     }
-
-    return "";
+    return NULL;
 }
 
-bool MemoryType::isArrayPossible(addr_type o1, addr_type o2, RsType *t)
-{
-    size_t size = t->getByteSize();
-    TiIterPair res = getOverlappingTypeInfos(o1,o2+size);
+void MemoryType::computeCompoundTypeAt( addr_type offset, size_t size, RsType* &rv ) {
+    TiIterPair type_infos = getOverlappingTypeInfos( offset, offset + size );
+    TiIter first_addr_type = type_infos.first;
+    TiIter end = type_infos.second;
 
+    // We don't know the complete type of the range, but we do know something.
+    // Construct a compound type with the information we have.
+    RsCompoundType &computed_type = 
+        *( new RsCompoundType( "Partially Known Type", size ));
+    for( TiIter i = first_addr_type; i != end; ++i) {
+        addr_type subtype_offset = i -> first - offset;
+        RsType* type = i -> second;
 
-    for(TiIter i = res.first; i != res.second; ++i)
-    {
-        addr_type offset = i->first;
-        RsType * curType = i->second;
-        if(curType != t)
-            return false;
-        if(offset % size != 0)
-            return false;
+        computed_type.addMember( "", type, subtype_offset );
     }
-
-    return true;
+    rv = &computed_type;
 }
-
 
 MemoryType::TiIterPair MemoryType::getOverlappingTypeInfos(addr_type from, addr_type to)
 {
@@ -262,7 +265,6 @@ MemoryType::TiIterPair MemoryType::getOverlappingTypeInfos(addr_type from, addr_
 
     //for(TiIter i = it; i != end; ++i)
     //    cerr  << "\t "<< i->first  << "\t" << i->second->getName() << endl ;
-
 
     return make_pair<TiIter,TiIter>(it, end);
 }
@@ -555,13 +557,22 @@ bool MemoryManager::isInitialized(addr_type addr, size_t size)
 }
 
 
-void MemoryManager::checkIfSameChunk(addr_type addr1, addr_type addr2, RsType * type)
+bool MemoryManager::checkIfSameChunk(addr_type addr1, addr_type addr2, RsType * type)
 {
-	checkIfSameChunk( addr1, addr2, type->getByteSize() );
+	return checkIfSameChunk( addr1, addr2, type->getByteSize() );
 }
 
-void MemoryManager::checkIfSameChunk(addr_type addr1, addr_type addr2, size_t typeSize)
+bool MemoryManager::checkIfSameChunk(addr_type addr1, addr_type addr2, size_t typeSize)
 {
+	return checkIfSameChunk( addr1, addr2, typeSize, RuntimeViolation::POINTER_CHANGED_MEMAREA );
+}
+
+bool MemoryManager::checkIfSameChunk(
+		addr_type addr1,
+		addr_type addr2,
+		size_t typeSize,
+		RuntimeViolation::Type violation) {
+
     RuntimeSystem * rs = RuntimeSystem::instance();
 
     MemoryType * mem1 = NULL;
@@ -578,39 +589,70 @@ void MemoryManager::checkIfSameChunk(addr_type addr1, addr_type addr2, size_t ty
            << "0x" << hex << addr1 << " to "
            << "0x" << hex << addr2 << endl;
 
-        rs->violationHandler(RuntimeViolation::POINTER_CHANGED_MEMAREA,ss.str());
-        return;
+        rs->violationHandler( violation, ss.str() );
+        return false;
     }
 
     MemoryType * mem = mem1;
     int off1 = addr1 - mem->getAddress();
     int off2 = addr2 - mem->getAddress();
 
-    string chunk1 = mem1->getTypeAt(off1,typeSize);
-    string chunk2 = mem2->getTypeAt(off2,typeSize);
+    RsType* type1 = mem1 -> getTypeAt( off1, typeSize );
+    RsType* type2 = mem2 -> getTypeAt( off2, typeSize );
 
-    if(chunk1 == chunk2 && mem1 ==mem2)
-        return; //pointer just changed offset in an array
-    else if( mem1 == mem2 && ( chunk1 == "" || chunk2 == "" ))
-        // with the following 
-        //      int* p = (int*) malloc( 10 * sizeof( int ));
-        //      *p = 1;
-        //      p[ 1 ] = 1;
-        // p[ 1 ] should still be the "same chunk" as p[ 0 ], as we simply
-        // haven't written the type information for that element yet
-        return; // unknown type is always legal
+    vector< RsType* > to_delete;
+    if( !type1 ) {
+        mem1 -> computeCompoundTypeAt( off1, typeSize, type1 );
+        to_delete.push_back( type1 );
+    } if( !type2 ) {
+        mem1 -> computeCompoundTypeAt( off2, typeSize, type2 );
+        to_delete.push_back( type2 );
+    }
 
+    assert( type1 );
+    assert( type2 );
+
+    bool failed = false;
+    if( type1 -> isConsistentWith( *type2 )) {
+       
+        RsArrayType* array = dynamic_cast< RsArrayType* >( type1 );
+        if( array && !( off1 + array -> getByteSize() >= off2 + typeSize ))
+            // out of bounds error (e.g. int[2][3], ref [0][3])
+            failed = true;
+    } else
+        failed = true;
+
+    if( failed )
+        failNotSameChunk( type1, type2, off1, off2, mem1, mem2, violation );
+
+    BOOST_FOREACH( RsType* target, to_delete ) {
+        delete target;
+    }
+
+	return !failed;
+}
+
+void MemoryManager::failNotSameChunk(
+        RsType* type1, 
+        RsType* type2,
+        addr_type off1,
+        addr_type off2,
+        MemoryType* mem1,
+        MemoryType* mem2,
+		RuntimeViolation::Type violation) {
+
+    RuntimeSystem * rs = RuntimeSystem::instance();
 
     stringstream ss;
     ss << "A pointer changed the memory area (array or variable) which it points to (may be an error)" << endl << endl;
 
-    ss << "Region1:  " <<  chunk1 << " at offset " << off1 << " in this Mem-Region:" <<  endl
+    ss << "Region1:  " <<  *type1 << " at offset " << off1 << " in this Mem-Region:" <<  endl
                           << *mem1 << endl;
 
-    ss << "Region2: " << chunk2 << " at offset " << off2 << " in this Mem-Region:" <<  endl
+    ss << "Region2: " << *type2 << " at offset " << off2 << " in this Mem-Region:" <<  endl
                           << *mem2 << endl;
 
-    rs->violationHandler(RuntimeViolation::POINTER_CHANGED_MEMAREA,ss.str());
+    rs->violationHandler( violation ,ss.str() );
 }
 
 

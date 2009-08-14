@@ -98,8 +98,23 @@ void RuntimeSystem_roseInitVariable(const char* typeOfVar2,
 		int ismalloc, int pointer_changed, const char* filename,
 		const char* line, const char* lineTransformed);
 
-void RuntimeSystem_roseAccessVariable(unsigned long long address,
-		unsigned int size, const char* filename, const char* line,
+void RuntimeSystem_roseMovePointer(
+                unsigned long long address,
+                const char* type,
+                const char* base_type,
+                size_t indirection_level,
+                const char* class_name,
+                const char* filename,
+                const char* line,
+                const char* lineTransformed);
+
+void RuntimeSystem_roseAccessVariable(
+        unsigned long long address,
+		unsigned int size, 
+        unsigned long long write_address, 
+        unsigned int write_size,
+        int read_write_mask, //1 = read, 2 = write
+        const char* filename, const char* line,
 		const char* lineTransformed);
 /***************************** VARIABLES *************************************/
 

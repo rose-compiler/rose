@@ -244,7 +244,7 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
 
                 // lhs write only, rhs read only
                 if( binop->get_lhs_operand() == child )
-                    read_write_mask |= 2;
+                    read_write_mask |= Write;
                 // regardless of which side arrayExp was on, we can stop now
                 break;
             } else if(  isSgAndAssignOp( iter ) 
@@ -262,7 +262,7 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
                 ROSE_ASSERT( binop );
                 // lhs read & write, rhs read only
                 if( binop->get_lhs_operand() == child )
-                    read_write_mask |= 3;
+                    read_write_mask |= (Read | Write);
                 // regardless of which side arrayExp was on, we can stop now
                 break;
             } else if( isSgPntrArrRefExp( iter )) {
@@ -273,7 +273,7 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
         } while( iter );
     }
     // always do a bounds check
-    read_write_mask |= 4;
+    read_write_mask |= BoundsCheck;
 
 	// for contiguous array, base is at &array[0] whether on heap or on stack
 	SgTreeCopy tree_copy;
@@ -281,7 +281,7 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
 	array_base -> set_rhs_operand( buildIntVal( 0 ));
 	appendAddress( arg_list, array_base ); 
     appendAddressAndSize(NULL, arrRefExp, arg_list,0); 
-    appendExpression( arg_list, buildIntVal( read_write_mask ) );
+    appendExpression( arg_list, buildIntVal( read_write_mask ));
 
     appendExpression(arg_list, linenr);
 

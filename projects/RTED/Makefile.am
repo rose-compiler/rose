@@ -35,7 +35,7 @@ runtimeCheck_SOURCES = runtimeCheck.cpp \
                        RtedTransf_support.cpp RtedTransf_funccall.cpp \
                        RtedTransf_locals.cpp RtedTransf_scopestmt.cpp \
                        RtedTransf_funcdef.cpp RtedTransf_variable.cpp \
-                       RtedTransf_iofunccall.cpp
+                       RtedTransf_iofunccall.cpp RtedTransf_operators.cpp
 
 
 
@@ -88,11 +88,11 @@ RTED_TEST_DIRS = $(rted_path)/C/array_index_out_of_bound \
 		 $(rted_path)/C++/array_index_out_of_bound \
 		 $(rted_path)/C++/string_errors \
 		 $(rted_path)/C++/allocation_deallocation_errors \
-		 $(rted_path)/C++/floating_point_errors \
-		 $(rted_path)/C++/pointer_errors \
 		 $(rted_path)/C++/input_output_errors \
 		 $(rted_path)/C++/memory_leaks \
 		 $(rted_path)/C++/uninitialized_variables \
+		 $(rted_path)/C++/floating_point_errors \
+		 $(rted_path)/C++/pointer_errors \
 		 $(srcdir)/tests/C/panasTests
 
 GENERATE_RTED_ORIGSOURCES = ${foreach RTED_TEST_DIR, $(RTED_TEST_DIRS), ${wildcard $(RTED_TEST_DIR)/*[!_s]${strip $(1)}} }
@@ -436,10 +436,13 @@ deleteAllbinfiles:
 c-compile-runtimesystem:
 	@echo "Make sure that RuntimeSystem compiles with C"
 
+# run/C/subprogram_call_errors
+# run/C/uninitialized_variables
+# run/C/floating_point_errors
 check-local: runtimeCheck $(TESTCODES) c-compile-runtimesystem \
 				run/C/array_index_out_of_bound run/C/string_errors \
 				run/C/allocation_deallocation_errors run/C/input_output_errors \
-				run/C/memory_leaks
+				run/C/memory_leaks run/C/C99_specific_errors run/C/pointer_errors
 	@echo "***************************************************************************************"
 	@echo "*** ROSE/projects/runtimeErrorCheck: make check rule complete (terminated normally) ***"
 	@echo "***************************************************************************************"
