@@ -5,7 +5,6 @@
 
 %-----------------------------------------------------------------------
 /** <module> Loop analysis
-loopbounds.pl
 
 This program analyzes loop bounds of C (and some C++) programs.
 This source code was extraced from the TuBound WCET analysis tool
@@ -16,7 +15,10 @@ A detailed description of the algorithm can be found in the appendix
 of [2].
 
 
+@see
+
 References
+
 [1] http://www.complang.tuwien.ac.at/adrian/
 
 [2] A. Prantl, J. Knoop, M. Schordan and M. Triska.
@@ -24,14 +26,13 @@ References
     The 18th Workshop on Logic-based methods in Programming
     Environments (WLPE 2008). Udine, Italy, December 12, 2008.
 
+    http://costa.tuwien.ac.at/papers/wlpe08.pdf
 
-Authors
--------
+@author 
 
-Copyright (C) 2007-2009, Adrian Prantl
+Copyright (C) 2007-2009, Adrian Prantl <adrian@complang.tuwien.ac.at>
 
-License
--------
+@license 
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -54,16 +55,15 @@ GNU General Public License for more details.
    ),
    asserta(library_directory(TermitePath)).
 
-:- use_module(library(apply_macros)),
-   use_module(library(ast_transform)),
-   use_module(library(ast_properties)),
-   use_module(library(loops)),
-   use_module(library(types)),
-   use_module(library(utils)),
-   use_module(while2for),
-   use_module(comefrom),
-   use_module(library(assoc)),
+:- use_module([library(apply_macros),
+	       library(ast_transform),
+	       library(ast_properties),
+	       library(loops),
+	       library(utils)]).
+:- use_module([while2for,comefrom]).
+:- use_module(library(assoc)),
    use_module(library(clpfd)).
+:- use_module(library(types)).
 %   use_module(library(swi/pce_profile)).
 
 %-----------------------------------------------------------------------
@@ -525,8 +525,8 @@ markers(Stem, Stem, Stem,
   append(List, [Marker], ListPrime).
 markers(I, I, I, Term, Term).
 
-
-%% expr_constr(+Expr, +(Ar-Map), -Expr1) is det.
+%% expr_constr(+Expr, +AM, -Expr1) is det.
+% AM is (Analysisresult-Map)
 expr_constr(add_op(E1, E2, _, _, _), Map, Expr) :-
   expr_constr(E1, Map, Expr1),
   expr_constr(E2, Map, Expr2),

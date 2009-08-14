@@ -23,12 +23,13 @@
 %-----------------------------------------------------------------------
 /** <module> Properties of abstract syntax trees
 
-This module defines commonly-used transformation utilities
-for the AST exported by SATIrE.
+This module defines commonly-used transformation utilities for
+C/C++/Objective C ASTs given in the TERMITE term representation
+as exported by SATIrE.
 
 @author
 
-Copyright 2007-2009 Adrian Prantl <adrian@complang.tuwien.ac.at>
+Copyright (C) 2007-2009 Adrian Prantl <adrian@complang.tuwien.ac.at>
 
 @license 
 
@@ -55,12 +56,18 @@ default_values(PPI, DA, AI, FI) :-
 % Conversion utilities
 %-----------------------------------------------------------------------
 
-%% simple_form_of(+Term, -SimpleTerm) is det.
-%% simple_form_of(-Term, +SimpleTerm) is det.
+%% simple_form_of(?Term, ?SimpleTerm).
+% This function is obsoleted, since SATIrE>0.7 defaults to the
+% compact representation.
+%
 % simple_form_of/2 is used to convert the verbose *nary_node() terms
 % to a more compact representation
 %
-% Example: unary_node(int_val, foo ...) <-> int_val(foo, ...)
+% Example:
+%
+% ==
+%  unary_node(int_val, foo ...) <-> int_val(foo, ...)
+% ==
 
 simple_form_of(null, null).
 simple_form_of([], []).
@@ -132,8 +139,10 @@ simple_form_of(leaf_node(Type, An, Ai, Fi), Term) :-
 %-----------------------------------------------------------------------
 
 %% ast_node(?Node, ?Type, ?Children, ?Annot, ?Ai, ?Fi) is nondet.
-% ast_node/6 deconstruct an AST node
+% ast_node/6 (de)construct an AST node
 %
+% Since all AST nodes follow the same structure, this predicate can be
+% used to quickly compose or decompse a node.
 
 ast_node(Node, Type, Children, Annot, Ai, Fi) :-
   var(Node), !, % avoid unneccesary backtracking in this direction
@@ -147,24 +156,34 @@ ast_node(Node, Type, Children, Annot, Ai, Fi) :-
 %-----------------------------------------------------------------------
 
 %% transformed_with(+Node, +Transformation, +Info, -Info1, -NodeT).
-%  Traversal support:
-% transformed_with(OriginalNode, Transformation, Info, InfoPost TransformedNode)
-% -> apply <Transformation, Info> on <OriginalNode> yields <TransformedNode>
-%
-% Warning: InfoPost works only in a sequential fashion - no merging et al.
-% TODO: replace this with an attribute grammer system
-%
-% Backwards compatibility:
-%   if it is used with arity 4, default to preorder
+% Backwards compatibile version of transformed_with/5:
+% * if it is used with arity 4, default to preorder
 transformed_with(Node, Transformation, Info, Info1, NodeT) :-
   transformed_with(Node, Transformation, preorder, Info, Info1, NodeT).
 
-transformed_with(null, _, _, Info, Info, null) :- !. % [green cut] just a speedup for debugging
+%% transformed_with(+Node, +Transformation, +Order, +Info, ?InfoInner, -InfoPost, -NodeT).
+% Traversal support:
+%
+% call Transformation(Info, InfoInner, InfoPost, OriginalNode, TransformedNode)
+%
+% ==
+%   transformation(Info, InfoInner, InfoPost, Node, NodeTransformed) :-
+%       ...
+%
+%   ...
+%   transformed_with(OriginalNode, transformation,
+%                    Info, InfoInner, InfoPost, TransformedNode).
+% ==
+%
+% Warning: InfoPost works only in a sequential fashion - no merging et al.
+%
+% Todo: replace this with an attribute grammer system
+%
 
-transformed_with(Atom, _, _, Info, Info, Atom) :-
-  atom(Atom).
+%transformed_with(null, _, _, Info, Info, null) :- !. % [green cut] just a speedup for debugging
 
-%% transformed_with(+Node, +Transformation, +Order, +Info, -Info1, -NodeT).
+%transformed_with(Atom, _, _, Info, Info, Atom) :-
+%  atom(Atom).
 
 % preorder ---------------------------------------
 transformed_with(ListNode, Transformation, preorder, Info, InfoPost, 
@@ -235,12 +254,16 @@ transform_children([C|Cs], Transformation, Order, Info0, InfoT, [CT|CTs]) :-
 %-----------------------------------------------------------------------
 
 %% unparse_to_atom(+Term, -Atom) is det.
-% Unparse the program Term and put the output in the atom Atom
+% Unparse the program Term using unparse/1 and put the output in the
+% atom Atom.
 unparse_to_atom(Term, Atom) :- with_output_to(Atom, unparse(Term)).
 
 %% unparse(+Term) is det.
-% This is a debugging function that prints a textual representation
-% of a program that is given in simple form.
+% This predicate prints the original textual (source code)
+% representation of the program encoded in Term.  Output is written on
+% stdout.
+%
+% This predicate is especially useful for debugging purposes.
 unparse(Node) :- unparse(fi(0, 0, []), Node).
 
 % FIXME implement replacement write/1 that uses col/line
@@ -699,16 +722,21 @@ unparse_storage_modifier(9) :- !, write('asm ').
 unparse_storage_modifier(_) :- !.
 
 %% needs_semicolon(+Node) is det.
+% Succeeds if Node needs a semicolon ';' after itself during unparsing.
 needs_semicolon(typedef_declaration(_,_,_,_)).
 needs_semicolon(variable_declaration(_,_,_,_)).
 needs_semicolon(class_declaration(_,_,_,_)).
 needs_semicolon(enum_declaration(_,_,_,_)).
 
 %% needs_comma(+Node) is det.
+% Succeeds if Node needs a comma ',' after itself during unparsing.
 needs_comma(initialized_name(_,_,_,_)).
 
 %% replace_types(+InitializedNames, +FuncDecl, -InitializedNames1) is det.
-% replace the instatiated types with the original types from the function decl
+% Replace the instatiated types with the original types from the
+% function declaration.
+%
+% Needed during unparsing.
 replace_types([], function_type(_, _, []), []) :- !.
 replace_types([I|Is],
 	      function_type(ReturnT, NumParams, [Type|Ts]),
@@ -719,12 +747,14 @@ replace_types([I|Is],
 replace_types(_,_,_) :- trace.
 
 %% indent(+FileInfo) is det.
-% Output indentation
+% Output the indentation that is encoded in FileInfo.
 indent(file_info(_,0,0)) :- !, write('    '). % dummy
 indent(file_info(_Filename,_Line,Col)) :- tab(Col).
 
 %% unparse_ppi(+Location, +PPIs) is det.
-% Print all PPIs at Location (before, after, inside)
+% Print all preprocessing information(s) PPIs at Location.
+%
+% Location must be one of [before, after, inside].
 unparse_ppi(_, []).
 unparse_ppi(Location, [PPI|PPIs]) :-
   PPI =.. [_Type, Text, Location, Fi], !,

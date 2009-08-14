@@ -41,8 +41,8 @@
 %-----------------------------------------------------------------------
 /** <module> Properties of abstract syntax trees
 
-This module defines commonly-used queries about the AST exported by
-SATIrE.
+This module defines commonly-used queries about C/C++/Objective C ASTs
+given in the TERMITE term representation as exported by SATIrE.
 
 @author
 
@@ -64,9 +64,9 @@ GNU General Public License for more details.
 %% ast_equiv(+Expr1, +Expr2) is semidet.
 %
 % Compare two expressions disregarding the file information
-% Expects simple form.
-% @todo rewrite this!
+% Expects compact form.
 %
+% Todo: rewrite this!
 ast_equiv(Expr, Expr).
 
 ast_equiv(I1, I2) :-
@@ -142,9 +142,10 @@ ast_equiv([A|As], [B|Bs]) :-
 %-----------------------------------------------------------------------
 
 
-%% is_transp(+Expr, +Var, +Scope) is semidet.
-% Goal succeeds if <Var> is not written to by <Node>
-% the first parameter specifies whether <Var> is global or local
+%% is_transp(+Expr, +Var, +Scope).
+% Goal succeeds if Var is not written to by Expr.
+% * Expr must be an Expression.
+% * Scope specifies whether Var is global or local.
 
 is_transp(function_call_exp(_,_,_,_,_), _, global) :- !, fail.
 is_transp(assign_op(LHS,_,_,_,_), Var, _) :- LHS = Var, !, fail.
@@ -165,8 +166,9 @@ is_transp(address_of_op(Var,_,_,_), Var, _) :- !, fail.
 is_transp(_, _, _).
 %-----------------------------------------------------------------------
 
-%% is_complex_statement(+Node) is semidet.
-% Goal succeeds if <Node> introduces new edges into the cfg
+%% is_complex_statement(+Node).
+% Goal succeeds if Node introduces new edges into the control flow
+% graph (CFG).
 is_complex_statement(expr_statement(N, _, _, _)) :- 
   guarantee(N, is_complex_statement).
 is_complex_statement(expression_root(N, _, _, _)) :- 
@@ -194,7 +196,7 @@ is_scope_statement(do_while_stmt(_, _, _, _)).
 %-----------------------------------------------------------------------
 
 %% guarantee(+Node, +Pred).
-% Recursively test a predicate Pred on an AST
+% Recursively test a predicate Pred on an AST Node.
 %
 guarantee(Node, Pred) :-
   ast_node(Node, _, Children, _, _, _),
@@ -220,14 +222,18 @@ do_check(Node, F) :-
 %-----------------------------------------------------------------------
 
 %% strip_file_info(_,_,_,+Term1,-Term2)
-% Necessary to compare terms:
-% remove file_info from VarRefExps
+% Repace file_info(...) with null in all VarRefExps. This facilitates
+% the comparison of AST nodes.
+%
+% Use this with transformed_with/4
 strip_file_info(_,_,_,
   var_ref_exp(var_ref_exp_annotation(Type, Name, Val, An, PPI), _Ai, _Fi),
   var_ref_exp(var_ref_exp_annotation(Type, Name, Val, An, PPI),null, null)).
 strip_file_info(_,_,_, Term, Term).
 
 %% var_stripped(+VarRefExp, -VarRefExpStripped)
+%
+% Non-traversal version of strip_file_info/5.
 var_stripped(
   var_ref_exp(var_ref_exp_annotation(Type, Name, Val, A1, PPI), _Ai, _Fi),
   var_ref_exp(var_ref_exp_annotation(Type, Name, Val, A1, PPI),null,null)) :- !.
@@ -238,7 +244,8 @@ var_stripped(cast_exp(V, _, _A, _Ai, _Fi), V1) :- !,
 var_stripped(Term, Term).
 
 %% var_interval(+AnalysisInfo, +VarRefExp, -Interval)
-% employ the analysis result/type info to yield an interval for the VarRefExp
+% Employ the analysis result/type info to yield an interval for the
+% VarRefExp.
 var_interval(analysis_info(AnalysisInfo),
 	     var_ref_exp(var_ref_exp_annotation(Type, Name, _Val, _, _),
 			 _Ai, _Fi),
@@ -267,7 +274,8 @@ term_stripped(Term, Stripped) :-
 term_interval(AnalysisInfo, Term, TermC) :-
   term_mod(Term, var_interval(AnalysisInfo), TermC), !.
 
-%% isIntVal(?IntVal, ?Value) is nondet.
+%% isIntVal(?IntVal, ?Value) is noned.
+% Convert between int_val nodes and integer values.
 isIntVal(                   int_val(_,value_annotation(Value,_), _, _), Value).
 isIntVal(		  short_val(_,value_annotation(Value,_), _, _), Value).
 isIntVal(	      short_int_val(_,value_annotation(Value,_), _, _), Value).
@@ -297,18 +305,20 @@ isIntVal(unsigned_char_val(_,value_annotation(String, _), _, _), Value) :-
   atom_codes(Atom, [Value]).
 
 %% isVar(?VarRefExp, ?Name) is nondet.
+% True if VarRefExp is a var_ref_exp or a cast_exp. Name is the name
+% of the variable.
 isVar(var_ref_exp(var_ref_exp_annotation(_, Name, _, _, _), _, _), Name).
 isVar(cast_exp(var_ref_exp(var_ref_exp_annotation(_, Name, _, _, _), _, _),
 	       null, _, _, _),
       Name).
 
 %% var_type(?VarRefExp, ?Type) is nondet.
-%  allows access to the Type of VarRefExp
+%  Allows access to the Type of VarRefExp.
 var_type(var_ref_exp(var_ref_exp_annotation(Type, _, _, _, _), _, _), Type).
 
 %% var_typemod(?VarRefExp, ?ConstVolatile) is nondet.
-%  allows access to the ConstVolatile modifier of VarRefExp
-%  values for ConstVolatile are 'const' and 'volatil' (sic!)
+%  Allows access to the ConstVolatile modifier of VarRefExp.
+%  Values for ConstVolatile are 'const' and 'volatil' (sic!).
 var_typemod(VarRefExp, ConstVolatile) :-
   VarRefExp = var_ref_exp(var_ref_exp_annotation(Type, _, _, _, _), _, _),
   Type = modifier_type(_, type_modifier(_Restrict, 1, CV, 1)),
@@ -317,7 +327,9 @@ var_typemod(VarRefExp, ConstVolatile) :-
   ).
 
 %% isBinNode(+Node, -Name, -E1, -E2, -Annot, -Ai, -Fi) is semidet.
+% Decompose a binary node Node.
 %% isBinNode(-Node, +Name, +E1, +E2, +Annot, +Ai, +Fi) is det.
+% Compose a binary node Node.
 isBinNode(N, Name, E1, E2, Annot, Ai, Fi) :-
   functor(N, Name, 5),
   arg(1, N, E1),
@@ -326,75 +338,82 @@ isBinNode(N, Name, E1, E2, Annot, Ai, Fi) :-
   arg(4, N, Ai),
   arg(5, N, Fi).
 
-%% isBinOpLhs(+BinOp, -Lhs) is semidet.
-%% isBinOpLhs(-BinOp, +Lhs) is det.
+%% isBinOpLhs(?BinOp, ?Lhs)
+% Bind Lhs to the left-hand-side (1) operator of BinOp.
 isBinOpLhs(BinOp, Lhs) :- arg(1, BinOp, Lhs).
 
-%% isBinOpRhs(+BinOp, -Rhs) is semidet.
-%% isBinOpRhs(-BinOp, +Rhs) is det.
+%% isBinOpRhs(?BinOp, ?Rhs)
+% Bind Rhs to the right-hand-side (2) operator of BinOp.
 isBinOpRhs(BinOp, Rhs) :- arg(2, BinOp, Rhs).
 
-%% scope_statement(+Term) is semidet.
-scope_statement(basic_block(_, _, _, _)).
-scope_statement(catch_option_stmt(_, _, _, _)).
-scope_statement(class_definition(_, _, _, _)).
-scope_statement(do_while_stmt(_, _, _, _, _)).
-scope_statement(for_statement(_, _, _, _, _, _, _)).
-scope_statement(function_definition(_, _, _, _, _)).
-scope_statement(global(_, _, _, _)).
-scope_statement(if_stmt(_, _, _, _, _, _)).
-scope_statement(namespace_definition_statment(_, _, _, _)).
-scope_statement(switch_statement(_, _, _, _, _)).
-scope_statement(while_stmt(_, _, _, _, _)).
+%% scope_statement(+Node)
+% True, if Node is a scope statement.
+%
+%Scope statements are
+%    basic_block, catch_option_stmt, class_definition, do_while_stmt,
+%    for_statement,function_definition, global, if_stmt,
+%    namespace_definition_statment, switch_statement, while_stmt
+scope_statement(Node) :-
+  functor(Node, F, _),
+  member(F, [basic_block, catch_option_stmt, class_definition,
+	     do_while_stmt, for_statement,function_definition, global, if_stmt,
+	     namespace_definition_statment, switch_statement, while_stmt]).
+% scope_statement(basic_block(_, _, _, _)).
+% scope_statement(catch_option_stmt(_, _, _, _)).
+% scope_statement(class_definition(_, _, _, _)).
+% scope_statement(do_while_stmt(_, _, _, _, _)).
+% scope_statement(for_statement(_, _, _, _, _, _, _)).
+% scope_statement(function_definition(_, _, _, _, _)).
+% scope_statement(global(_, _, _, _)).
+% scope_statement(if_stmt(_, _, _, _, _, _)).
+% scope_statement(namespace_definition_statment(_, _, _, _)).
+% scope_statement(switch_statement(_, _, _, _, _)).
+% scope_statement(while_stmt(_, _, _, _, _)).
 
-%% analysis_info(+Term, -Fi)
-% Extract the analysis info from <Term>
+%% analysis_info(+Term, -Ai)
+% Extract the analysis info Ai from Term.
 analysis_info(N, Ai) :-
   functor(N, _, NArgs),
   NArgs1 is NArgs - 1,
   arg(NArgs1, N, Ai).
 
 %% file_info(+Term, -Fi)
-% Extract the file info from <Term>
+% Extract the file info Fi from Term.
 file_info(N, Fi) :-
   functor(N, _, NArgs),
   Fi = file_info(_, _, _),
   arg(NArgs, N, Fi).
 
-%% function_signature(+FunctionDecl, -Type, -Name, -Modifier) is semidet.
-%% function_signature(-FunctionDecl, +Type, +Name, +Modifier) is det.
-% converts between signatures and terms
+%% function_signature(?FunctionDecl, ?Type, ?Name, ?Modifier)
+% Convert between signatures and terms.
 function_signature(FunctionDecl, Type, Name, Modifier) :-
   FunctionDecl = function_declaration(_Params, _Def, DeclAnnot, _, _),
   DeclAnnot = function_declaration_annotation(Type, Name, Modifier, _).
 
-%% is_function_call(+Term, -Name, -Type) is semidet.
-%% is_function_call(-Term, +Name, +Type) is nondet.
-% construct a function call
+%% is_function_call(?Term, ?Name, ?Type).
+% (De-)construct a function call.
 is_function_call(expr_statement(function_call_exp(
                    function_ref_exp(
                      function_ref_exp_annotation(Name, Type, _), _Ai1, _Fi1), 
                    _ExprListExp, _A2, _Ai2, _Fi2),
                  _A3, _Ai3, _Fi3), Name, Type).
 
-%% is_function_call_exp(+Term, -Name, -Type) is semidet.
+%% is_function_call_exp(?Term, -Name, -Type)
+% (De-)construct a function call expression.
 is_function_call_exp(function_call_exp(function_ref_exp(
                      function_ref_exp_annotation(Name, Type, _), _Ai1, _Fi1), 
 				       _ExprListExp, _A2, _Ai2, _Fi2),
 		     Name, Type).
 
-
-%% function_body(+Term, -Body) is semidet.
-%% function_body(-Term, +Body) is det.
-% get the function body
+%% function_body(?FuncDecl, ?Body)
+% Get the function body Body from a function declaration FuncDecl.
 function_body(function_declaration(_, function_definition(Body, _, _,_),
 				   _, _, _),
 	      Body).
 
-%% pragma_text(+Pragma, -Text) is semidet.
-%% pragma_text(-Pragma, +Text) is det.
+%% pragma_text(?Pragma, ?Text)
 % pragma_text/2 defines the relation between a pragma statement
-% and the String S inside the #pragma <S> Statement
+% and the String Text inside the "#pragma Text" Statement.
 
 % -Pragma +Text
 pragma_text(Pragma, Text) :-
@@ -410,9 +429,8 @@ pragma_text(pragma_declaration(pragma(pragma_annotation(String, _), _, _),
 			       _, _, _),
 	    String).
 
-%% get_preprocessing_infos(+Node, -PPIs) det.
-% FIXME  move to annot.pl!
-
+%% get_preprocessing_infos(+Node, -PPIs)
+% Todo: move to annot.pl!
 get_preprocessing_infos(Node, PPIs) :- 
   functor(Node, _, Arity1), Arity1 > 2,
   N2 is Arity1-2, arg(N2, Node, Annot),

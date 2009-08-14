@@ -52,7 +52,142 @@ visualizations. Termite builds upon the intermediate representation of
 SATIrE. More information on SATIrE can be found at
 \url{http://www.complang.tuwien.ac.at/satire}.
 
-\section{The SATIrE term representation}
+\section{Using Termite}
+
+Depending on the desired architecture there are several ways to
+integrate Termite into the work flow of a larger tool. For a flexible
+recombination of several analyses and/or transformations it is best to
+treat Termite programs as interpreted scripts that read/write AST
+terms from the standard input an output. If performance and stability
+are sought for, it is also possible to call Termite programs
+transparently from a SATIrE analyzer.
+
+\subsection{As a standalone process}
+The most flexible and convenient way to work with the Termite library
+is by using it to define filter operations on streams of source
+code. This way one can follow the UNIX tradition of having a
+collection of small self-contained programs that can be combined to
+create larger work flows. Depending on the expected input and
+generated output, the following signatures of Termite programs can be
+distinguished:
+\begin{enumerate}
+\item Source-to-source transformer: This is a program that reads in an
+  AST, then performs some transformation and outputs the transformed
+  AST. (Example: loop unrolling)
+\item Analyzer: This is a program that reads in an AST, performs some
+  analysis and outputs the analysis result as attributes of the
+  AST. (Example: loop bound analysis)
+\item Visualization: This is a program that reads in an AST and
+  outputs something e.g.~in a GUI window or a postscript
+  file. (Example: Call-graph $\rightarrow$ Dotty)
+\item Source Generator: This program reads in a specification and
+  outputs an AST.
+\end{enumerate}
+In order to generate a Termite term from one or more source files a
+compiler front end must be invoked. Currently there are two
+possibilities, both of which are available in the SATIrE distribution.
+
+\subsubsection{EDG C/C++ front end from the ROSE compiler}
+If SATIrE was configured with the ROSE connection
+enabled\footnote{ROSE must be installed separately beforehand and is
+  available at \url{http://www.rosecompiler.org}}, conversion tools
+are available to translate source code to term files and vice versa.
+To translate source code into a Termite term the program
+\texttt{c2term} is available:
+
+\paragraph{$>$ c2term}
+% DO NOT REMOVE THE FOLLOWING LINE:
+%% C2TERM:
+% THANK YOU
+The \texttt{c2term} program invokes the commercial EDG C++ front end
+embedded into the ROSE compiler to parse one or more source files. The
+abstract syntax tree (AST) is then translated into the ROSE immediate
+representation which in turn is converted into the textual term
+linearization. The program passes additional options to the EDG front
+end.
+
+The opposite direction is managed by the \texttt{term2c} conversion
+utility. It works by reading in a term file and then rebuilds the ROSE
+intermediate representation. Finally, this data structure is passed to
+the ROSE unparser. The EDG front end is not involved in this step any
+more.
+
+\paragraph{$>$ term2c}
+% DO NOT REMOVE THE FOLLOWING LINE:
+%% TERM2C:
+% THANK YOU
+
+\bigskip
+
+Since both converters use standard input and output per default it is
+possible to concatenate multiple Termite programs with the help of
+UNIX pipes.
+
+\paragraph{Example:}
+\begin{verbatim}
+c2term a.c b.c | ./transform1.pl | term2c -s '.transformed'
+\end{verbatim}
+This way it is possible to build new chains of program transformations
+or analyzers on the fly without having to recompile the whole project.
+
+\subsubsection{Using the Clang C/Objective C front end}
+While the commercial EDG front end offers a high-quality C++ parser,
+license restrictions encumber its free distribution together with
+other tools. Most notably, the ROSE compiler redistributes only a
+32-Bit precompiled binary version of the EDG front end. It is,
+however, possible to buy other licenses from the Edison Design Group.
+
+If C++ support is not needed, there is a free alternative available
+from the LLVM compiler project. Designed especially for use with LLVM
+a front end for C-like languages called \texttt{clang} is published
+under a BSD-style license. The \texttt{clang} front end can be
+downloaded at \url{http://clang.llvm.org/}. The front end is written
+in C++ and creates an intermediate representation very similar to that
+of ROSE and therefore makes a good candidate to replace the
+EDG front end in SATIrE. The C99 and Objective C languages are
+supported very well by \texttt{clang}, whereas C++ support is a
+feature that was announced to be available in a few years.
+
+In order to connect SATIrE with the \texttt{clang} front end, we
+decided to take the route via the Termite representation. This way,
+the front end is cleanly decoupled from the rest of the system and
+uses the Termite terms as a stable interface. The Termite term
+generator is implemented as a pass over the \texttt{clang}
+intermediate representation and is available under the
+\verb|-emit-term| command line option. The term generator is not
+integrated with upstream \texttt{clang}, but distributed as a patch
+against a current SVN version together with SATIrE. 
+
+To build the \texttt{clang} front end a special \verb|make clang|
+target is available at the toplevel which fetches the needed version
+of \texttt{clang} from the subversion repository, applies the patch,
+and compiles and installs the patched front end to \verb|$prefix/bin|.
+
+\subsubsection{Uparsing Termite terms without SATIrE}
+Invoking the \texttt{term2c} program is sometimes too cumbersome, for
+example, when only a few expressions should be unparsed for debugging
+purposes. For these occasions an independent term$\rightarrow$C
+converter is implemented in pure Prolog and available both in the
+Termite library and as a stand-alone script. The predicate is called
+\verb|unparse/1| and expects a Termite term as argument.
+
+\subsection{As part of a SATIrE analyzer}
+
+If execution speed is an issue, the steps of writing the Termite
+representation to disk (or a pipe) and parsing the terms (which, when
+output as a text, are significantly larger than the original source
+files) can be optimized away. If SATIrE was configured with SWI-Prolog
+support enabled, the term representation will be built in memory using
+the external interface of an embedded SWI-Prolog interpreter. Using
+this in-memory term, a Termite program can be executed without leaving
+the current process. The resulting term can again be translated to the
+ROSE intermediate representation directly from memory using the
+SWI-Prolog interface.
+
+Using this work flow, the whole analyzer (or transformer, ...) can be
+distributed as a single self-contained executable.
+
+\chapter{The Termite  term representation}
 
 SATIrE can export an external term representation of the abstract
 syntax tree (AST) of a C++ program. This term representation contains
@@ -63,11 +198,16 @@ syntax of the term representation was designed to match the syntax of
 Prolog terms. This allows it to be manipulated by Prolog programs very
 naturally.
 
-\subsection{Grammar of TERMITE terms}
+\section{Grammar of TERMITE terms}
+
+The following section gives a formal definition of the grammar of
+Termite terms as it is used by the program \verb|termite_lint.pl|
+which can be used to verify the validity of arbitrary terms.
 
 % DO NOT REMOVE THE FOLLOWING LINE:
 %% GRAMMAR:
 % THANK YOU
+
 \chapter{Library Reference}
 
 % DO NOT REMOVE THE FOLLOWING LINE:

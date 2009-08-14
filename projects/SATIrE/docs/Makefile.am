@@ -1,11 +1,11 @@
-PDFS=cfgconstruction.pdf pig-doc.pdf pag-interface.pdf manual.pdf termite.pdf
-nobase_dist_data=$(PDFS)
+PDFS=cfgconstruction.pdf pig-doc.pdf pag-interface.pdf manual.pdf
+nobase_dist_data=$(PDFS)  termite.pdf
 nodist_EXTRA_data=manual/manual_vars.tex.in
 
-dist-local: docs docs-termite
+dist-local: docs
 
 .PHONY: docs
-docs:
+docs: docs-termite
 	for f in $(PDFS); do \
 		dir=`basename $$f .pdf` ; \
 		cp -r $(top_srcdir)/docs/$$dir $$dir.build ; \
@@ -42,13 +42,14 @@ BIBTEX = :
 # TERMITE documentation
 # ---------------------------------------------------------------------
 
+TERMITE_DIR=$(top_srcdir)/src/termite/termite
 SRCFILES= \
-  $(top_srcdir)/src/termite/termite/ast_transform.pl \
-  $(top_srcdir)/src/termite/termite/ast_properties.pl \
-  $(top_srcdir)/src/termite/termite/ast_walk.pl \
-  $(top_srcdir)/src/termite/termite/callgraph.pl \
-  $(top_srcdir)/src/termite/termite/utils.pl \
-  $(top_srcdir)/src/termite/termite/loops.pl \
+  $(TERMITE_DIR)/ast_transform.pl \
+  $(TERMITE_DIR)/ast_properties.pl \
+  $(TERMITE_DIR)/ast_walk.pl \
+  $(TERMITE_DIR)/callgraph.pl \
+  $(TERMITE_DIR)/utils.pl \
+  $(TERMITE_DIR)/loops.pl \
   $(top_srcdir)/tools/loopbounds/loopbounds.pl
 
 # underscores confuse the machina!
@@ -68,13 +69,14 @@ docs-termite: HTML termite.pdf mostlyclean
 clean-termite: 
 	rm -f termite-pdf.dvi termite-pdf.idx termite-pdf.log termite-pdf.aux \
 	      termite-pdf.out termite-pdf.toc $(TEXFILES) $(INPUTFILES) \
+              termite-pdf.ind termite-pdf.ilg \
 	      termite-html.tex termite-pdf.tex \
-	      termspec.tex
+	      termspec.tex c2term.txt term2c.txt
 	rm -rf termite.pdf termite-html
 
 %.tex: %.pl
 	export TERMITE_LIB=$(datarootdir)/termite && \
-	echo "use_module(library(doc_latex)), \
+	echo " use_module(library(doc_latex)), \
 	      consult('$*'), \
 	      open('$@', write, _, [alias(wstrm)]),\
               latex_for_file('$<', wstrm, \
@@ -92,9 +94,25 @@ termspec.tex: $(top_srcdir)/src/termite/termite_spec.pl
 	    | grep . >$@ 
 	echo '\end{verbatim}' >>$@
 
-termite-pdf.tex: termite.tex $(SRCFILES) termspec.tex
+c2term.txt: $(bindir)/c2term
+	echo '\begin{verbatim}' >$@
+	$< &>__tmp || true
+	cat __tmp | sed -e 's!$(bindir)/!!' >>$@
+	rm -f __tmp
+	echo '\end{verbatim}' >>$@
+
+term2c.txt: $(bindir)/term2c
+	echo '\begin{verbatim}' >$@
+	$< &>__tmp || true
+	cat __tmp | sed -e 's!$(bindir)/!!' >>$@
+	rm -f __tmp
+	echo '\end{verbatim}' >>$@
+
+termite-pdf.tex: termite.tex $(SRCFILES) termspec.tex c2term.txt term2c.txt
 	sed -e s/%%INPUTS%%/$(patsubst %.tex,\\\\input{%}\,$(TEXFILES))/ \
 	    -e '/GRAMMAR/ r termspec.tex' \
+	    -e '/C2TERM/ r c2term.txt' \
+	    -e '/TERM2C/ r term2c.txt' \
 	    $< >$@
 
 termite-html.tex: termite-pdf.tex
