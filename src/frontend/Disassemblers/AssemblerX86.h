@@ -440,6 +440,10 @@ private:
     /** Adjusts the "reg" field of the ModR/M byte and adjusts the REX prefix byte if necessary. */
     void build_modreg(const InsnDefn*, SgAsmx86Instruction*, size_t argno, uint8_t *modrm, uint8_t *rex) const;
 
+    /** Calculates the segment override from the instruction operands rather than obtaining it from the p_segmentOverride data
+     *  member. Returns zero if no segment override is necessary. */
+    uint8_t segment_override(SgAsmx86Instruction*);
+
     static InsnDictionary defns;                /**< Instruction assembly definitions organized by X86InstructionKind. */
     bool honor_operand_types;                   /**< If true, operand types rather than values determine assembled form. */
 };
