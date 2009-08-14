@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 #!/bin/bash -v
 #
 # This script locates a distribution package in a ROSE test directory.
