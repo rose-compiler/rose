@@ -231,6 +231,12 @@ sub fixup_row {
   if ($row->{kind} eq 'sub' && $row->{operands}[0] eq 'od_r_m64' && $row->{operands}[1] eq 'od_r32') {
     $row->{operands}[1] = 'od_r64';
   }
+
+  # The reference manual has a mistake for 64-bit ROL: it is missing the REX.W bit.
+  if ($row->{kind} eq 'rol' && $row->{operands}[0] eq 'od_r_m64' && $row->{operands}[1] eq 'od_imm8' &&
+      0==grep {$_ eq 'od_rexw'} @{$row->{opcode}}) {
+    unshift @{$row->{opcode}}, 'od_rexw';
+  }
 }
 
 # Emit C++ code for a table row

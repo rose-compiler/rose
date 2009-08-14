@@ -239,7 +239,7 @@ enum X86InstructionKind {
     x86_insertq                 = 0x00d9, // ExtraInstructions.txt, page 5
     x86_insw                    = 0x00da, // x86-InstructionSetReference-AM.pdf, page 3-505
     x86_int                     = 0x00db, // x86-InstructionSetReference-AM.pdf, page 3-512
-    x86_int1                    = 0x00dc, // ExtraInstructions.txt, page 5
+    x86_int1                    = 0x00dc, // ExtraInstructions.txt, page 6
     x86_int3                    = 0x00dd, // x86-InstructionSetReference-AM.pdf, page 3-512
     x86_into                    = 0x00de, // x86-InstructionSetReference-AM.pdf, page 3-527
     x86_invd                    = 0x00df, // x86-InstructionSetReference-AM.pdf, page 3-529
@@ -307,7 +307,7 @@ enum X86InstructionKind {
     x86_minsd                   = 0x011d, // x86-InstructionSetReference-AM.pdf, page 3-634
     x86_minss                   = 0x011e, // x86-InstructionSetReference-AM.pdf, page 3-637
     x86_monitor                 = 0x011f, // x86-InstructionSetReference-AM.pdf, page 3-640
-    x86_mov                     = 0x0120, // x86-InstructionSetReference-AM.pdf, page 3-651
+    x86_mov                     = 0x0120, // ExtraInstructions.txt, page 6
     x86_movapd                  = 0x0121, // x86-InstructionSetReference-AM.pdf, page 3-654
     x86_movaps                  = 0x0122, // x86-InstructionSetReference-AM.pdf, page 3-657
     x86_movbe                   = 0x0123, // x86-InstructionSetReference-AM.pdf, page 3-660
