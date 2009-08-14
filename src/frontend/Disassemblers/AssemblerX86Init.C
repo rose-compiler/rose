@@ -6979,7 +6979,7 @@ AssemblerX86::initAssemblyRules()
     define(defn);
     //  C1 /0 ib         ROL r/m64,        Valid        N.E.         Rotate 64 bits r/m64 left imm8
     //                   imm8                                        times. Uses a 6 bit count.
-    defn = new InsnDefn("rol",    x86_rol,     0x02, 0xc1, od_e0|od_ib, od_r_m64, od_imm8);
+    defn = new InsnDefn("rol",    x86_rol,     0x02, 0xc1, od_rexw|od_e0|od_ib, od_r_m64, od_imm8);
     defn->set_location("x86-InstructionSetReference-NZ.pdf, page 4-311");
     define(defn);
     //  D0 /1            ROR r/m8, 1       Valid        Valid        Rotate 8 bits r/m8 right once.
@@ -9070,7 +9070,7 @@ AssemblerX86::initAssemblyRules()
     define(defn);
 
     //------------------------------------------------------------------------------------------------------------------
-    // The following definitions are from ExtraInstructions.txt, modified 15 Jul 2009
+    // The following definitions are from ExtraInstructions.txt, modified 13 Aug 2009
     //------------------------------------------------------------------------------------------------------------------
 
 
@@ -9293,7 +9293,13 @@ AssemblerX86::initAssemblyRules()
     define(defn);
     // F1                       INT1               Invalid Invalid  Undocumented by Intel
     defn = new InsnDefn("int1",   x86_int1,    0x00, 0xf1, od_none);
-    defn->set_location("ExtraInstructions.txt, page 5");
+    defn->set_location("ExtraInstructions.txt, page 6");
+    define(defn);
+
+    //--- page 6 of ExtraInstructions.txt ------------------------------------------------------------------------------
+    // 66 REX.W 8B /r           MOV r64, r/m64     Valid   N.E.     0x66 is ignored when REX.W is present
+    defn = new InsnDefn("mov",    x86_mov,     0x02, 0x668b, od_rexw|od_modrm, od_r64, od_r_m64);
+    defn->set_location("ExtraInstructions.txt, page 6");
     define(defn);
 }
 
