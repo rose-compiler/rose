@@ -40,8 +40,8 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* cdef) {
 			elements.push_back(el);
 		}
     } else {
+        // TODO 2: handle this case
     	cerr << " Declaration not handled : " << sgElement->class_name() << endl;
-		exit(1);
     }
   }
 

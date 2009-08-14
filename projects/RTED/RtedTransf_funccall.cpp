@@ -432,6 +432,8 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
   if (fcexp) {
     SgExprListExp* exprlist = isSgExprListExp(fcexp->get_args());
     SgFunctionRefExp* refExp = isSgFunctionRefExp(fcexp->get_function());
+    // TODO 2: This can be a DotExp (see
+    // C++/array_index_out_of_bound/C_E_1_3_a_i)
     ROSE_ASSERT(refExp);
     SgFunctionDeclaration* decl = isSgFunctionDeclaration(refExp->getAssociatedFunctionDeclaration ());
     ROSE_ASSERT(decl);

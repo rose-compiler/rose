@@ -616,7 +616,12 @@ bool MemoryManager::checkIfSameChunk(
     if( type1 -> isConsistentWith( *type2 )) {
        
         RsArrayType* array = dynamic_cast< RsArrayType* >( type1 );
-        if( array && !( off1 + array -> getByteSize() >= off2 + typeSize ))
+        if(		array 
+				&& !(
+					// the array element might be after the array [ N ]...
+					off1 + array -> getByteSize() >= off2 + typeSize
+					// ... or before it [ -1 ]
+					&& off2 >= off1 ))
             // out of bounds error (e.g. int[2][3], ref [0][3])
             failed = true;
     } else

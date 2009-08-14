@@ -686,6 +686,9 @@ void testMultidimensionalStackArrayAccess()
     //  x[ 0 ][ 3 ]     // actually x[ 1 ][ 0 ]
     try { mm -> checkIfSameChunk( 0x100, 0x100 + 3 * intsz, intsz); }
     TEST_CATCH ( RuntimeViolation::POINTER_CHANGED_MEMAREA )
+    // as above, but out of bounds in the other direction
+    try { mm -> checkIfSameChunk( 0x100 + 3 * intsz, 0x100 + 2 * intsz, intsz); }
+    TEST_CATCH ( RuntimeViolation::POINTER_CHANGED_MEMAREA )
 
     CHECKPOINT
     // as above, but this time legally access the sub array

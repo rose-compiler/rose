@@ -75,7 +75,7 @@ EXTRA_DIST = example.C \
 
 CLEANFILES = *.out *.ti *.pdf test_runtime* *.txt rose_test_c_E_1_1_a
 
-RTED_TEST_DIRS = $(rted_path)/C/array_index_out_of_bound \
+RTED_C_TEST_DIRS = $(rted_path)/C/array_index_out_of_bound \
 		 $(rted_path)/C/string_errors \
 		 $(rted_path)/C/subprogram_call_errors \
 		 $(rted_path)/C/allocation_deallocation_errors \
@@ -85,15 +85,16 @@ RTED_TEST_DIRS = $(rted_path)/C/array_index_out_of_bound \
 		 $(rted_path)/C/C99_specific_errors \
 		 $(rted_path)/C/floating_point_errors \
 		 $(rted_path)/C/pointer_errors \
-		 $(rted_path)/C++/array_index_out_of_bound \
+		 $(srcdir)/tests/C/panasTests
+RTED_CPP_TEST_DIRS = $(rted_path)/C++/array_index_out_of_bound \
 		 $(rted_path)/C++/string_errors \
 		 $(rted_path)/C++/allocation_deallocation_errors \
 		 $(rted_path)/C++/input_output_errors \
 		 $(rted_path)/C++/memory_leaks \
 		 $(rted_path)/C++/uninitialized_variables \
 		 $(rted_path)/C++/floating_point_errors \
-		 $(rted_path)/C++/pointer_errors \
-		 $(srcdir)/tests/C/panasTests
+		 $(rted_path)/C++/pointer_errors
+RTED_TEST_DIRS=$(RTED_C_TEST_DIRS) $(RTED_CPP_TEST_DIRS)
 
 GENERATE_RTED_ORIGSOURCES = ${foreach RTED_TEST_DIR, $(RTED_TEST_DIRS), ${wildcard $(RTED_TEST_DIR)/*[!_s]${strip $(1)}} }
 GENERATE_RTED_COPYSOURCES = ${foreach RTED_TEST_DIR, ${filter ${strip $(2)}%, $(RTED_TEST_DIRS)}, ${patsubst ${strip $(2)}/%${strip $(1)}, rted_source/%${strip $(1)}, ${wildcard $(RTED_TEST_DIR)/*${strip $(1)}} } }
@@ -414,18 +415,30 @@ test:
 # rules to run all tests in a directory listed in RTED_ORIGSOURCES
 #------------------------------------------------------------------------------
 
-define RUN_TARGET
+define RUN_TARGET_C
 $(1): $(filter $(1)%, $(RUN_TARGETS_GLOBAL_C))
 	@echo $(1) complete
 endef
 
-define RUN_LOG_TARGET
+define RUN_LOG_TARGET_C
 $(1): $(filter $(1)%, $(RUN_LOG_TARGETS_GLOBAL_C))
 	@echo $(1) complete
 endef
 
-${foreach rted_dir, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(rted_path)%, run%, $(rted_dir)}}}}
-${foreach rted_dir, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_LOG_TARGET, ${patsubst $(rted_path)%, run_log%, $(rted_dir)}}}}
+define RUN_TARGET_CPP
+$(1): $(filter $(1)%, $(RUN_TARGETS_GLOBAL_CPP))
+	@echo $(1) complete
+endef
+
+define RUN_LOG_TARGET_CPP
+$(1): $(filter $(1)%, $(RUN_LOG_TARGETS_GLOBAL_CPP))
+	@echo $(1) complete
+endef
+
+${foreach rted_dir, ${filter $(rted_path)%, $(RTED_C_TEST_DIRS)}, ${eval ${call RUN_TARGET_C, ${patsubst $(rted_path)%, run%, $(rted_dir)}}}}
+${foreach rted_dir, ${filter $(rted_path)%, $(RTED_C_TEST_DIRS)}, ${eval ${call RUN_LOG_TARGET_C, ${patsubst $(rted_path)%, run_log%, $(rted_dir)}}}}
+${foreach rted_dir, ${filter $(rted_path)%, $(RTED_CPP_TEST_DIRS)}, ${eval ${call RUN_TARGET_CPP, ${patsubst $(rted_path)%, run%, $(rted_dir)}}}}
+${foreach rted_dir, ${filter $(rted_path)%, $(RTED_CPP_TEST_DIRS)}, ${eval ${call RUN_LOG_TARGET_CPP, ${patsubst $(rted_path)%, run_log%, $(rted_dir)}}}}
 #${foreach rted_dir, ${filter $(srcdir)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(srcdir)%, %, $(rted_dir)}}}}
 
 #------------------------------------------------------------------------------
