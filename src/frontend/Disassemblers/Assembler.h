@@ -37,6 +37,14 @@ public:
 
     virtual ~Assembler() {}
 
+    /** Creates an assembler that is appropriate for assembling instructions in the specified interpretation. */
+    static Assembler *create(SgAsmInterpretation *interp) {
+        return create(interp->get_header());
+    }
+
+    /** Creates an assembler that is appropriate for assembling instructions in the specified header. */
+    static Assembler *create(SgAsmGenericHeader*);
+
     /*==========================================================================================================================
      * Main public assembly methods
      *========================================================================================================================== */

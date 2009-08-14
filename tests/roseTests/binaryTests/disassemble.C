@@ -110,11 +110,10 @@ main(int argc, char *argv[])
 
             /* Choose an encoding that must match the encoding used originally by the disassembler. If such an encoding cannot
              * be found by the assembler then assembleOne() will throw an exception. */
-            AssemblerX86 ass;
-            ass.set_encoding_type(Assembler::ET_MATCHES);
-            ass.set_honor_operand_types(true);
+            Assembler *asmb = Assembler::create(interp);
+            asmb->set_encoding_type(Assembler::ET_MATCHES);
 
-            std::vector<SgNode*> insns = NodeQuery::querySubTree(project, V_SgAsmInstruction);
+            std::vector<SgNode*> insns = NodeQuery::querySubTree(interp, V_SgAsmInstruction);
             printf("reassembling to check consistency...\n");
             for (size_t j=0; j<insns.size(); j++) {
                 /* Attempt to encode the instruction silently since most attempts succeed and we only want to produce
@@ -122,19 +121,19 @@ main(int argc, char *argv[])
                 SgAsmInstruction *insn = isSgAsmInstruction(insns[j]);
                 SgUnsignedCharList bytes;
                 try {
-                    bytes = ass.assembleOne(insn);
+                    bytes = asmb->assembleOne(insn);
                 } catch(const Assembler::Exception &e) {
                     assembly_failures++;
                     if (show_bad) {
                         fprintf(stderr, "assembly failed at 0x%08"PRIx64": %s\n", insn->get_address(), e.mesg.c_str());
-                        FILE *old_debug = ass.get_debug();
-                        ass.set_debug(stderr);
+                        FILE *old_debug = asmb->get_debug();
+                        asmb->set_debug(stderr);
                         try {
-                            (void)ass.assembleOne(insn);
+                            (void)asmb->assembleOne(insn);
                         } catch(...) {
                             /*void*/
                         }
-                        ass.set_debug(old_debug);
+                        asmb->set_debug(old_debug);
                     }
                 }
             }
@@ -146,7 +145,9 @@ main(int argc, char *argv[])
             } else {
                 printf("reassembly succeeded for all instructions.\n");
             }
+            delete asmb;
         }
+        delete d;
     }
 
     printf("running back end...\n");
