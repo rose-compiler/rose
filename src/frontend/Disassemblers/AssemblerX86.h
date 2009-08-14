@@ -3,6 +3,22 @@
 #ifndef ROSE_ASSEMBLER_X86_H
 #define ROSE_ASSEMBLER_X86_H
 
+/** This class contains methods for assembling x86 instructions (SgAsmx86Instruction).
+ *
+ *  End users will generally not need to use the AssemblerX86 class directly. Instead, they will call Assembler::create() to
+ *  create an assembler that's appropriate for a particular binary file header or interpretation and then use that assembler to
+ *  assemble instructions.
+ *
+ *  The assembler itself is quite small compared to the disassembler (about one third the size) and doesn't actually know about
+ *  any instructions; it only knows how to encode various prefixes and operand addressing modes.  For each instruction to be
+ *  assembled, the assembler consults a dictionary of assembly definitions. The instruction is looked up in this dictionary and
+ *  the chosen definition then drives the assembly. If the instruction being assembled matches multiple definitions then each
+ *  valid definition is tried and the "best" one (see Assembler::set_encoding_type()) is returned.
+ *
+ *  The dictionary is generated directly from the Intel "Instruction Set Reference" PDF documentation as augmented by a small
+ *  text file in this directory. The IntelAssemblyBuilder perl script generates AssemblerX86Init.h and AssemblerX86Init.C, which
+ *  contain the X86InstructionKind enumeration, a function to initialize the dictionary (AssemblerX86::initAssemblyRules()),
+ *  and a function for converting an X86InstructionKind constant to a string (AssemblerX86::to_str()). */
 class AssemblerX86: public Assembler {
 public:
     AssemblerX86()
@@ -18,7 +34,9 @@ public:
     
     /** Causes the assembler to honor (if true) or disregard (if false) the data types of operands when assembling. For
      *  instance, when honoring operand data types, if an operand is of type SgAsmWordValueExpression then the assembler will
-     *  attempt to encode it as four bytes even if its value could be encoded as a single byte. */
+     *  attempt to encode it as four bytes even if its value could be encoded as a single byte. This is turned on
+     *  automatically if the Assembler::set_encoding_type() is set to Assembler::ET_MATCHES, but can also be turned on
+     *  independently. */
     void set_honor_operand_types(bool b) {
         honor_operand_types = b;
     }
@@ -296,25 +314,39 @@ private:
     };
 
     /** These bits define the compatibility of an instruction to 32- and 64-bit modes. */
-    static const unsigned COMPAT_LEGACY = 0x01;
-    static const unsigned COMPAT_64     = 0x02;
+    static const unsigned COMPAT_LEGACY = 0x01; /**< Definition is compatible with non 64-bit architectures. */
+    static const unsigned COMPAT_64     = 0x02; /**< Definition is compatible with 64-bit architectures. */
 
+    /** Returns a ModR/M byte constructed from the three standard fields: mode, register, and register/memory. */
     static uint8_t build_modrm(unsigned mod, unsigned reg, unsigned rm) {
         return ((mod&0x3)<<6) | ((reg&0x7)<<3) | (rm&0x7);
     }
+
+    /** Returns the mode field of a ModR/M byte. */
     static unsigned modrm_mod(uint8_t modrm) { return modrm>>6; }
+
+    /** Returns the register field of a ModR/M byte. */
     static unsigned modrm_reg(uint8_t modrm) { return (modrm>>3) & 0x7; }
+
+    /** Returns the register/memory field of a ModR/M byte. */
     static unsigned modrm_rm(uint8_t modrm) { return modrm & 0x7; }
 
+    /** Returns a SIB byte constructed from the three standard fields: scale, index, and base. */
     static uint8_t build_sib(unsigned ss, unsigned index, unsigned base) {
         return ((ss&0x3)<<6) | ((index&0x7)<<3) | (base&0x7);
     }
+
+    /** Returns the scale field of a SIB byte. */
     static unsigned sib_ss(uint8_t sib) {return sib>>6; }
+
+    /** Returns the index field of a SIB byte. */
     static unsigned sib_index(uint8_t sib) { return (sib>>3) & 0x7; }
+
+    /** Returns the base field of a SIB byte. */
     static unsigned sib_base(uint8_t sib) { return sib & 0x7; }
     
     /** Defines static characteristics of an instruction used by the assembler and disassembler. The @p opcode contains up to
-     *  three bytes. Leading zeros are not emitted during assembly (except when the opcode is zero, in which case a single
+     *  eight bytes, but leading zeros are not emitted during assembly (except when the opcode is zero, in which case a single
      *  zero byte is emitted; see ADD). */
     class InsnDefn {
     public:
@@ -357,8 +389,10 @@ private:
     /** Instruction assembly definitions for all kinds of instructions. */
     typedef std::map<X86InstructionKind, DictionaryPage> InsnDictionary;
 
+    /** Build the dictionary used by the x86 assemblers. All x86 assemblers share a common dictionary. */
     static void initAssemblyRules();
 
+    /** Adds a definition to the assembly dictionary. All x86 assemblers share a common dictionary. */
     static void define(const InsnDefn *d) {
         defns[d->kind].push_back(d);
     }
@@ -375,6 +409,8 @@ private:
      *  prefix that appears in the original instruction but not the source will be dropped. */
     SgUnsignedCharList fixup_prefix_bytes(SgAsmx86Instruction *insn, SgUnsignedCharList source);
 
+    /** Low-level method to assemble a single instruction using the specified definition from the assembly dictionary. An
+     *  Assembler::Exception is thrown if the instruction is not compatible with the definition. */
     SgUnsignedCharList assemble(SgAsmx86Instruction *insn, const InsnDefn *defn);
 
     /** Attempts to match an instruction with a definition. An exception is thrown if the instruction and definition do not
@@ -404,7 +440,7 @@ private:
     /** Adjusts the "reg" field of the ModR/M byte and adjusts the REX prefix byte if necessary. */
     void build_modreg(const InsnDefn*, SgAsmx86Instruction*, size_t argno, uint8_t *modrm, uint8_t *rex) const;
 
-    static InsnDictionary defns;                /** Instruction assembly definitions organized by X86InstructionKind. */
+    static InsnDictionary defns;                /**< Instruction assembly definitions organized by X86InstructionKind. */
     bool honor_operand_types;                   /**< If true, operand types rather than values determine assembled form. */
 };
 

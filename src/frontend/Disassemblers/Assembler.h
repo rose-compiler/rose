@@ -5,6 +5,47 @@
  *
  *  The Assembler class is a virtual class providing all non-architecture-specific functionality for the assembly of
  *  instructions; architecture-specific components are in subclasses such as AssemblerArm, AssemblerPowerpc, and AssemblerX86.
+ *
+ *  This example shows how to test the disassembler against the assembler by disassembling and then reassembling all
+ *  instructions. Generate debugging output for instructions that cannot be reassembled into an encoding identical to the
+ *  original bytes:
+ *
+ *  @code
+ *  // Disassemble the interpretation (normally happens automatically)
+ *  SgAsmInterpretation *interp = ....;
+ *  Disassembler *d = Disassembler::create(interp);
+ *  d->disassemble(interp);
+ *  delete d;
+ *
+ *  // Create an assembler that can handle instructions in this interpretation.
+ *  Assembler *asm = Assembler::create(interp);
+ *
+ *  // Cause the assembler to choose encodings that are identical to the
+ *  // bytes originally disassebled.  The assembler still goes through all the
+ *  // work of assembling, but then checks the result against the original
+ *  // bytes.
+ *  asm->set_encoding_type(Assembler::ET_MATCHES);
+ *
+ *  // Attempt to reassemble each instruction. If the assembly fails to produce
+ *  // the original bytes then an exception is thrown and we try again for
+ *  // debugging side effects.
+ *  std::vector<SgNode*> insns = NodeQuery::querySubTree(interp, V_SgAsmInstruction);
+ *  for (size_t i=0; i<insns.size(); i++) {
+ *      SgAsmInstruction *insn = isSgAsmInstruction(insns[i]);
+ *      try {
+ *          asm->assembleOne(insn);
+ *      } catch(const Assembler::Exception &e) {
+ *          fprintf(stderr, "assembly failed at 0x%08llx: %s\n",
+ *                  insn->get_address(), e.mesg.c_str());
+ *          asm->set_debug(stderr);
+ *          try {
+ *              asm->assembleOne(insn);
+ *          } catch(const Assembler::Exception&) {
+ *          }
+ *          asm->set_debug(NULL);
+ *      }
+ *  }
+ *  @endcode
  */
 class Assembler {
 public:
@@ -20,11 +61,11 @@ public:
         SgAsmInstruction *insn;         /**< Instruction associated with an assembly error. */
     };
 
-    /** Assemblers can often assemble a single instruction various ways. For instance, on x86 an immediate value -64 can be
+    /** Assemblers can often assemble a single instruction various ways. For instance, on x86 the immediate value -53 can be
      *  assembled into a single byte, or sign extended into 2, 4, or 8 bytes.  These enumeration constants control how the
      *  assembleOne() method determines which encoding to return. */
     enum EncodingType {
-        ET_SHORTEST,            /**< Returns the shortest possible encoding. */
+        ET_SHORTEST,            /**< Returns the shortest possible encoding. This is the default. */
         ET_LONGEST,             /**< Returns the longest encoding. */
         ET_MATCHES,             /**< Returns an encoding that matches the SgAsmInstruction::p_raw_bytes. This is used mainly
                                  *   for testing that the assembler can produce the same encoding that was originally

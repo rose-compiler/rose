@@ -147,8 +147,11 @@ private:
 
     /** Return the virtual address that holds the branch target for an indirect branch. For example, when called with these
      *  instructions:
+     *  
+     *  @code
      *     jmp DWORD PTR ds:[0x80496b0]        -> (x86)   returns 80496b0
      *     jmp QWORD PTR ds:[rip+0x200b52]     -> (amd64) returns 200b52 + address following instruction
+     *  @endcode
      *
      * We only handle instructions that appear as the first instruction in an ELF .plt entry. */
     static rose_addr_t get_indirection_addr(SgAsmInstruction*);

@@ -45,7 +45,52 @@
  *  instructions into basic blocks (SgAsmBlock) and functions (SgAsmFunctionDeclaration). It uses an instance of the
  *  Partitioner class to do so.  The user can supply a partitioner to the disassembler or have the disassembler create a
  *  default partitioner on the fly.  The user is also free to call the partitioner directly on the InstructionMap object
- *  returned by most of the disassembler methods. */
+ *  returned by most of the disassembler methods.
+ *
+ *  For example, the following code disassembles every single possible address of all bytes that are part of an executable
+ *  ELF Segment but which are not defined as any other known part of the file (not a table, ELF Section, header, etc.). By
+ *  building a map and making a single disassembly call, we're able to handle instructions that span segments, where the bytes
+ *  of the instruction are not contiguous in the file.
+ *
+ *  @code
+ *  SgAsmGenericHeader *header = ....; // the ELF file header
+ *  SgAsmGenericSectionPtrList secs = header->get_sections()->get_sections();
+ *  SgAsmGenericSectionPtrList removals; // stuff to remove later
+ *  RvaFileMap map; // mapping from virtual address to file offset
+ *  
+ *  // Add all executable ELF Segments to the mapping
+ *  for (size_t i=0; i<secs.size(); i++) {
+ *      SgAsmElfSection *s = isSgAsmElfSection(secs[i]);
+ *      if (s && s->get_segment_header() && s->is_mapped() && s->get_mapped_xperm()) {
+ *          map.insert(es); // s is an executable ELF Segment
+ *      } else {
+ *          removals.insert(secs[i]);
+ *      }
+ *  }
+ *
+ *  // Remove all other known parts of the file from the map
+ *  map.erase(header);
+ *  for (size_t i=0; i<removals.size(); i++)
+ *      map.erase(removals[i]);
+ *
+ *  // Obtain the entire file content. This doesn't actually read the file,
+ *  // it just returns a container that points to the file.
+ *  SgAsmGenericFile *file = header->get_file();
+ *  SgFileContentList file_content = file->content(0, file->get_orig_size(), false);
+ *
+ *  // Disassemble everything
+ *  Disassembler *d = Disassembler::create(header);
+ *  d->set_search(Disassembler::SEARCH_ALLBYTES); // disassemble at every address
+ *  Disassembler::AddressSet worklist; // can be empty due to SEARCH_ALLBYTES
+ *  Disassembler::InstructionMap insns;
+ *  insns = d->disassembleBuffer(&(file_content[0]), map, worklist);
+ *
+ *  // Print all instructions
+ *  Disassembler::InstructionMap::iterator ii;
+ *  for (ii=insns.begin(); ii!=insns.end(); ++ii)
+ *      std::cout <<unparseInstructionWithAddress(ii->second) <<std::endl;
+ *  @endcode
+ */
 class Disassembler {
 public:
     /** Exception thrown by the disassemblers. */
