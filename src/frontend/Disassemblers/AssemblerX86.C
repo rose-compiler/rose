@@ -709,15 +709,19 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
         case od_xmm_m64:
             return matches(od_xmm, expr, insn, disp_p, imm_p) || matches(od_m64fp, expr, insn, disp_p, imm_p);
         case od_xmm_m128: {
-            if (rre) {
+            /* An XMM register or memory with one of the following data types:
+             *   - a vector of four single-precision floating-point values
+             *   - a vector of two double-precision floating-point values
+             *   - a double quad word */
+            if (rre)
                 return matches(od_xmm, expr, insn, disp_p, imm_p);
-            } else if (mre) {
-                /* Type must be a vector of four single-precision floats or two double-precision floats */
-                SgAsmTypeVector *tv = isSgAsmTypeVector(mre->get_type());
-                return tv && ((tv->get_elementCount()==4 && isSgAsmTypeSingleFloat(tv->get_elementType())) ||
-                              (tv->get_elementCount()==2 && isSgAsmTypeDoubleFloat(tv->get_elementType())));
-            }
-            return false;
+            if (!mre)
+                return false;
+            SgAsmTypeVector *tv = isSgAsmTypeVector(mre->get_type());
+            if (tv)
+                return ((tv->get_elementCount()==4 && isSgAsmTypeSingleFloat(tv->get_elementType())) ||
+                        (tv->get_elementCount()==2 && isSgAsmTypeDoubleFloat(tv->get_elementType())));
+            return NULL!=isSgAsmTypeDoubleQuadWord(mre->get_type());
         }
 
         case od_XMM0:   /*implicit register "<XMM0>" */
