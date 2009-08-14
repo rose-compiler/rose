@@ -281,6 +281,10 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
 #endif
   } else if (optionMatch(argv[i], "--help")) {
     cl->helpMessageRequestedOn();
+  } else if (optionMatch(argv[i], "-I") && i+1 < argc) {
+    /* also allow -I flags with a space before the file name */
+    cl->appendCommandLine(string(argv[i]) + string(argv[i+1]));
+    i++;
   } else if (!strncmp(argv[i], "-I",2)) {
     /* include path option is passed to ROSE as is */
     cl->appendCommandLine(string(argv[i]));
