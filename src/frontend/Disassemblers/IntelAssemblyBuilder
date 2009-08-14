@@ -237,6 +237,17 @@ sub fixup_row {
       0==grep {$_ eq 'od_rexw'} @{$row->{opcode}}) {
     unshift @{$row->{opcode}}, 'od_rexw';
   }
+
+  # Some instructions (PSLLD, PSLLQ, PSRAW, PSRAD, PSRLW, PSRLD, PSRLQ) use the ModR/M byte to store a MM register number in
+  # the "mod" and "rm" fields and an opcode extension in the "reg" field. Normally instructions that have an opcode extension
+  # use the "mod" and "rm" fields for a register-or-memory type of operand, but these few have a register-only operand. In
+  # order to trigger the assembler to create the ModR/M byte for the register-only operand, we set the "/r" modifier in the
+  # opcode.
+  if (2==@{$row->{operands}} && (1==grep {/^od_mm$/} @{$row->{operands}}) && (1==grep {/^od_imm/} @{$row->{operands}}) &&
+      (0==grep {/^od_modrm$/} @{$row->{opcode}})) {
+    print STDERR "//ROBB $row->{kind}\n";
+    push @{$row->{opcode}}, 'od_modrm';
+  }
 }
 
 # Emit C++ code for a table row
