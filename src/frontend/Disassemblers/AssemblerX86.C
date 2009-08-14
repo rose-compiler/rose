@@ -1277,6 +1277,8 @@ AssemblerX86::assemble(SgAsmx86Instruction *insn, const InsnDefn *defn)
         if (rre->get_register_number()>=8)
             rex_byte |= od_rex_byte(od_rexb);
         opcode += rre->get_register_number() % 8;
+        if (rre->get_position_in_register()==x86_regpos_high_byte)
+            opcode += 4;
     }
     if (defn->opcode_modifiers & od_i) {
         for (size_t i=0; i<defn->operands.size(); i++) {
