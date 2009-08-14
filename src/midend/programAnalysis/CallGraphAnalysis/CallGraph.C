@@ -1408,7 +1408,7 @@ writeSubgraphToDB( sqlite3x::sqlite3_connection& gDB, SgIncidenceDirectedGraph* 
 
       //std::cout << "Finding edges " << i->first << std::endl;
       for( rose_graph_integer_edge_hash_multimap::const_iterator ei = outEdges.find(i->first);
-          ei != outEdges.end(); ++ei )
+          ei != outEdges.end() && ei->first == i->first; ++ei )
       {
         SgDirectedGraphEdge *edge = isSgDirectedGraphEdge(ei->second);
         ROSE_ASSERT( edge != NULL );

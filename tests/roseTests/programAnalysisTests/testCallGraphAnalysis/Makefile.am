@@ -86,7 +86,7 @@ $(EXTRA_TEST_Objects): testCG
 	rm -f  $(@:.o=.db)
 
 
-TESTCODES = test1.C test2.C  test3.C  test4.C  test5.C  test6.C test7.C
+TESTCODES = test1.C test2.C  test3.C  test4.C  test5.C test7.C test6.C 
 
 # Build the list of object files
 TEST_Objects = ${TESTCODES:.C=.o}
