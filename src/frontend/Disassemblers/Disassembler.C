@@ -212,12 +212,20 @@ Disassembler::disassembleBuffer(const unsigned char *buf, const RvaFileMap &map,
                                 AddressSet *successors, BadMap *bad)
 {
     rose_addr_t next_search = 0;
+    InstructionMap insns;
 
     /* Per-buffer search methods */
     if (p_search & SEARCH_WORDS)
         search_words(&worklist, buf, map, bad);
 
-    InstructionMap insns;
+    /* Look for more addresses */
+    if (worklist.size()==0 && (p_search & (SEARCH_ALLBYTES|SEARCH_UNUSED))) {
+        bool avoid_overlap = (p_search & SEARCH_UNUSED) ? true : false;
+        search_next_address(&worklist, next_search, map, insns, bad, avoid_overlap);
+        if (worklist.size()>0)
+            next_search = *(--worklist.end())+1;
+    }
+
     while (worklist.size()>0) {
         /* Get next address to disassemble */
         AddressSet::iterator i = worklist.begin();
