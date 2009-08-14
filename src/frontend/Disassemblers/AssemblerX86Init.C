@@ -6291,7 +6291,7 @@ AssemblerX86::initAssemblyRules()
     define(defn);
     //  0F 72 /6 ib       PSLLD mm, imm8          Valid    Valid       Shift doublewords in mm left by
     //                                                                 imm8 while shifting in 0s.
-    defn = new InsnDefn("pslld",  x86_pslld,   0x03, 0x0f72, od_e6|od_ib, od_mm, od_imm8);
+    defn = new InsnDefn("pslld",  x86_pslld,   0x03, 0x0f72, od_e6|od_ib|od_modrm, od_mm, od_imm8);
     defn->set_location("x86-InstructionSetReference-NZ.pdf, page 4-249");
     define(defn);
     //  66 0F 72 /6 ib    PSLLD xmm1, imm8        Valid    Valid       Shift doublewords in xmm1 left
@@ -6311,7 +6311,7 @@ AssemblerX86::initAssemblyRules()
     define(defn);
     //  0F 73 /6 ib       PSLLQ mm, imm8          Valid    Valid       Shift quadword in mm left by
     //                                                                 imm8 while shifting in 0s.
-    defn = new InsnDefn("psllq",  x86_psllq,   0x03, 0x0f73, od_e6|od_ib, od_mm, od_imm8);
+    defn = new InsnDefn("psllq",  x86_psllq,   0x03, 0x0f73, od_e6|od_ib|od_modrm, od_mm, od_imm8);
     defn->set_location("x86-InstructionSetReference-NZ.pdf, page 4-249");
     define(defn);
     //  66 0F 73 /6 ib    PSLLQ xmm1, imm8        Valid    Valid       Shift quadwords in xmm1 left by
@@ -6335,7 +6335,7 @@ AssemblerX86::initAssemblyRules()
     define(defn);
     // 0F 71 /4 ib      PSRAW mm, imm8 Valid      Valid         Shift words in mm right by imm8
     //                                                          while shifting in sign bits
-    defn = new InsnDefn("psraw",  x86_psraw,   0x03, 0x0f71, od_e4|od_ib, od_mm, od_imm8);
+    defn = new InsnDefn("psraw",  x86_psraw,   0x03, 0x0f71, od_e4|od_ib|od_modrm, od_mm, od_imm8);
     defn->set_location("x86-InstructionSetReference-NZ.pdf, page 4-254");
     define(defn);
     // 66 0F 71 /4 ib   PSRAW xmm1,      Valid    Valid         Shift words in xmm1 right by
@@ -6357,7 +6357,7 @@ AssemblerX86::initAssemblyRules()
     define(defn);
     // 0F 72 /4 ib      PSRAD mm, imm8 Valid      Valid         Shift doublewords in mm right by
     //                                                          imm8 while shifting in sign bits.
-    defn = new InsnDefn("psrad",  x86_psrad,   0x03, 0x0f72, od_e4|od_ib, od_mm, od_imm8);
+    defn = new InsnDefn("psrad",  x86_psrad,   0x03, 0x0f72, od_e4|od_ib|od_modrm, od_mm, od_imm8);
     defn->set_location("x86-InstructionSetReference-NZ.pdf, page 4-254");
     define(defn);
     // 66 0F 72 /4 ib   PSRAD xmm1,      Valid    Valid         Shift doublewords in xmm1 right
@@ -6388,7 +6388,7 @@ AssemblerX86::initAssemblyRules()
     define(defn);
     //  0F 71 /2 ib     PSRLW mm,          Valid       Valid      Shift words in mm right by imm8 while
     //                  imm8                                      shifting in 0s.
-    defn = new InsnDefn("psrlw",  x86_psrlw,   0x03, 0x0f71, od_e2|od_ib, od_mm, od_imm8);
+    defn = new InsnDefn("psrlw",  x86_psrlw,   0x03, 0x0f71, od_e2|od_ib|od_modrm, od_mm, od_imm8);
     defn->set_location("x86-InstructionSetReference-NZ.pdf, page 4-261");
     define(defn);
     //  66 0F 71 /2 ib PSRLW xmm1,         Valid       Valid      Shift words in xmm1 right by imm8
@@ -6410,7 +6410,7 @@ AssemblerX86::initAssemblyRules()
     define(defn);
     //  0F 72 /2 ib     PSRLD mm,          Valid       Valid      Shift doublewords in mm right by
     //                  imm8                                      imm8 while shifting in 0s.
-    defn = new InsnDefn("psrld",  x86_psrld,   0x03, 0x0f72, od_e2|od_ib, od_mm, od_imm8);
+    defn = new InsnDefn("psrld",  x86_psrld,   0x03, 0x0f72, od_e2|od_ib|od_modrm, od_mm, od_imm8);
     defn->set_location("x86-InstructionSetReference-NZ.pdf, page 4-261");
     define(defn);
     //  66 0F 72 /2 ib PSRLD xmm1,         Valid       Valid      Shift doublewords in xmm1 right by
@@ -6431,7 +6431,7 @@ AssemblerX86::initAssemblyRules()
     define(defn);
     //  0F 73 /2 ib     PSRLQ mm,          Valid       Valid      Shift mm right by imm8 while shifting
     //                  imm8                                      in 0s.
-    defn = new InsnDefn("psrlq",  x86_psrlq,   0x03, 0x0f73, od_e2|od_ib, od_mm, od_imm8);
+    defn = new InsnDefn("psrlq",  x86_psrlq,   0x03, 0x0f73, od_e2|od_ib|od_modrm, od_mm, od_imm8);
     defn->set_location("x86-InstructionSetReference-NZ.pdf, page 4-261");
     define(defn);
     //  66 0F 73 /2 ib PSRLQ xmm1,         Valid       Valid      Shift quadwords in xmm1 right by
