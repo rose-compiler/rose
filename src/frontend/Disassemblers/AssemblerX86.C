@@ -976,6 +976,7 @@ AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmx86Instruction *insn, size_
         SgAsmValueExpression *disp_ve=NULL, *scale_ve=NULL;
         MemoryReferencePattern mrp = parse_memref(insn, mre, &base_reg, &index_reg, &scale_ve, &disp_ve);
 
+        /* Scale for SIB byte */
         if (scale_ve) {
             switch (SageInterface::getAsmSignedConstant(scale_ve)) {
                 case 1: ss = 0; break;
@@ -985,6 +986,8 @@ AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmx86Instruction *insn, size_
                 default: throw Exception("cannot encode scale factor for index", insn);
             }
         }
+
+        /* Displacement from base address */
         if (disp_ve) {
             ROSE_ASSERT(displacement);
             *displacement = SageInterface::getAsmSignedConstant(disp_ve);
@@ -1114,6 +1117,29 @@ AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmx86Instruction *insn, size_
     return build_modrm(mod, reg, rm);
 }
 
+uint8_t
+AssemblerX86::segment_override(SgAsmx86Instruction *insn)
+{
+    const SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
+    for (size_t i=0; i<operands.size(); i++) {
+        SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(operands[i]);
+        if (mre) {
+            SgAsmx86RegisterReferenceExpression *seg_reg = isSgAsmx86RegisterReferenceExpression(mre->get_segment());
+            ROSE_ASSERT(seg_reg!=NULL);
+            ROSE_ASSERT(seg_reg->get_register_class()==x86_regclass_segment);
+            switch (seg_reg->get_register_number()) {
+                case x86_segreg_es: return 0x26;
+                case x86_segreg_cs: return 0x2e;
+                case x86_segreg_ss: return 0x36;
+                case x86_segreg_ds: return 0;     //return 0x3e;
+                case x86_segreg_fs: return 0x64;
+                case x86_segreg_gs: return 0x65;
+            }
+        }
+    }
+    return 0;
+}
+
 SgUnsignedCharList
 AssemblerX86::fixup_prefix_bytes(SgAsmx86Instruction *insn, SgUnsignedCharList source)
 {
@@ -1209,10 +1235,12 @@ AssemblerX86::assemble(SgAsmx86Instruction *insn, const InsnDefn *defn)
     int64_t immediate=0;                        /* Immediate-valued operand */
 
     matches(defn, insn, &iprel, &immediate);    /* throws exception when match fails */
-    
-    /* Legacy prefixes */
+
+    /* Lock prefix */
     if (insn->get_lockPrefix())
         retval.push_back(0xf0);
+
+    /* Legacy prefixes that are included in the opcode definition. */
     bool emitted_repeat_prefix=false;
     bool emitted_osize_prefix=false;
     for (int i=7; i>=0; --i) {
@@ -1235,6 +1263,8 @@ AssemblerX86::assemble(SgAsmx86Instruction *insn, const InsnDefn *defn)
         if (opcode_byte)
             break;
     }
+
+    /* Legacy Repeat prefixes if necessary according to instruction. */
     if (!emitted_repeat_prefix) {
         switch (insn->get_repeatPrefix()) {
             case x86_repeat_none:                          break;
@@ -1242,6 +1272,21 @@ AssemblerX86::assemble(SgAsmx86Instruction *insn, const InsnDefn *defn)
             case x86_repeat_repe:  retval.push_back(0xf3); break;
         }
     }
+
+    /* Segment Override legacy prefix. */
+    if (x86InstructionIsConditionalBranch(insn)) {
+        switch (insn->get_branchPrediction()) {
+            case x86_branch_prediction_none: break;
+            case x86_branch_prediction_taken: retval.push_back(0x3e); break;
+            case x86_branch_prediction_not_taken: retval.push_back(0x2e); break;
+        }
+    } else {
+        uint8_t so_byte = segment_override(insn);
+        if (so_byte!=0)
+            retval.push_back(so_byte);
+    }
+
+    /* Operand size override legacy prefix. */
     if (!emitted_osize_prefix) {
         switch (insn->get_baseSize()) {
             case x86_insnsize_none:
@@ -1260,6 +1305,8 @@ AssemblerX86::assemble(SgAsmx86Instruction *insn, const InsnDefn *defn)
                 break;
         }
     }
+
+    /* Reorder the legacy prefixes */
     if (get_encoding_type()==ET_MATCHES)
         retval = fixup_prefix_bytes(insn, retval);
 
