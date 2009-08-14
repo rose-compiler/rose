@@ -3618,15 +3618,26 @@ DisassemblerX86::decodeOpcode0F()
         case 0x6E: {
             switch (mmPrefix()) {
                 case mmNone:
-                    getModRegRM(rmMM, effectiveOperandMode(), effectiveOperandType(),
-                                (effectiveOperandSize() == x86_insnsize_64 ? (SgAsmType*)QWORDT : V2DWORDT));
-                    return makeInstruction(x86_movd, "movd", reg, modrm);
+                    if (effectiveOperandSize()==x86_insnsize_64) {
+                        getModRegRM(rmMM, effectiveOperandMode(), effectiveOperandType(), QWORDT);
+                        return makeInstruction(x86_movq, "movq", reg, modrm);
+                    } else {
+                        getModRegRM(rmMM, effectiveOperandMode(), effectiveOperandType(), V2DWORDT);
+                        return makeInstruction(x86_movd, "movd", reg, modrm);
+                    }
                 case mmF3:
                     throw ExceptionX86("bad mm prefix F3 for opcode 0x0f6e", this);
                 case mm66:
-                    getModRegRM(rmXMM, effectiveOperandMode(), effectiveOperandType(),
-                                (effectiveOperandSize() == x86_insnsize_64 ? V2QWORDT : V4DWORDT));
-                    return makeInstruction(x86_movd, "movd", reg, modrm);
+                    /* 0x66 is part of the opcode rather than an operand size override and used to distinguish between mm and
+                     * xmm registers. The operands are 32 bits unless the REX.W bit is set, in which case they're 64 bits. */
+                    operandSizeOverride = false;
+                    if (effectiveOperandSize()==x86_insnsize_64) {
+                        getModRegRM(rmXMM, effectiveOperandMode(), effectiveOperandType(), V2QWORDT);
+                        return makeInstruction(x86_movq, "movq", reg, modrm);
+                    } else {
+                        getModRegRM(rmXMM, effectiveOperandMode(), effectiveOperandType(), V4DWORDT);
+                        return makeInstruction(x86_movd, "movd", reg, modrm);
+                    }
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f6e", this);
             }
@@ -3955,16 +3966,28 @@ DisassemblerX86::decodeOpcode0F()
         case 0x7E: {
             switch (mmPrefix()) {
                 case mmNone:
-                    getModRegRM(rmMM, effectiveOperandMode(), effectiveOperandType(),
-                                (effectiveOperandSize() == x86_insnsize_64 ? (SgAsmType*)QWORDT : V2DWORDT));
-                    return makeInstruction(x86_movd, "movd", modrm, reg);
+                    if (effectiveOperandSize()==x86_insnsize_64) {
+                        getModRegRM(rmMM, effectiveOperandMode(), effectiveOperandType(), QWORDT);
+                        return makeInstruction(x86_movq, "movq", modrm, reg);
+                    } else {
+                        getModRegRM(rmMM, effectiveOperandMode(), effectiveOperandType(), V2DWORDT);
+                        return makeInstruction(x86_movd, "movd", modrm, reg);
+                    }
                 case mmF3:
                     getModRegRM(rmXMM, rmXMM, V2QWORDT);
                     return makeInstruction(x86_movq, "movq", reg, modrm);
                 case mm66:
-                    getModRegRM(rmXMM, effectiveOperandMode(), effectiveOperandType(),
-                                (effectiveOperandSize() == x86_insnsize_64 ? V2QWORDT : V4DWORDT));
-                    return makeInstruction(x86_movd, "movd", modrm, reg);
+                    /* 0x66 is part of the opcode rather than an operand size override and used to distinguish between mm and
+                     * xmm registers. The operands are 32 bits unless the REX.W bit is set, in which case they're 64 bits. */
+                    operandSizeOverride = false;
+                    if (effectiveOperandSize()==x86_insnsize_64) {
+                        getModRegRM(rmXMM, effectiveOperandMode(), effectiveOperandType(), V2QWORDT);
+                        return makeInstruction(x86_movq, "movq", modrm, reg);
+                    } else {
+                        getModRegRM(rmXMM, effectiveOperandMode(), effectiveOperandType(), V4DWORDT);
+                        return makeInstruction(x86_movd, "movd", modrm, reg);
+                    }
+                    
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f7e", this);
             }
