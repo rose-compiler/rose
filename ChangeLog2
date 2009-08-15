@@ -1,3 +1,102 @@
+2009-08-14 23:19  hamilton37
+
+	* [r6858]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_registerType.cpp: RTED:
+	  Fixed a regression in C99 tests and made the instrumentation
+	  continue on
+	  some C++ tests that we don't handle.
+	  
+	  * We checked out of bounds for indices too large, but not for
+	  ones too small
+	  (e.g. [-1].
+	  
+	  - Changed a couple of `exit(1)`s to TODOs to get run_log/cpp a
+	  little farther
+	  along. Unfortunately it still dies on certain function call
+	  expressions.
+
+2009-08-14 22:30  hamilton37
+
+	* [r6857]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/PointerManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedSymbols.cpp,
+	  /trunk/ROSE/projects/RTED/RtedSymbols.h,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_locals.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_operators.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/extract-expected-error.sed: RTED: A
+	  number of improvements that result in us now passing C99 and
+	  pointer
+	  errors. Also some miscellaneous cleanup.
+	  
+	  * The implicit support for a violation handling policy has been
+	  replaced by
+	  something slightly more explicit and robust. Now RTED.cfg files
+	  can specify
+	  per-violation policies of Exit, Warn, Ignore, and for
+	  INVALID_PTR_ASSIGN,
+	  whether to invalidate the pointer or not. The defaults are still
+	  those
+	  implied by the RTED tests (notably, that invalid pointer
+	  assignments do not
+	  result in termination, but simply in pointer invalidation,
+	  causing later
+	  violations on reads or writes).
+	  
+	  * Much of the checkIfSameChunk logic was rewritten to handle
+	  memory regions with
+	  partially known subtypes better. We now don't fail on bounds
+	  checking for
+	  arrays of structs where we only know about fields of the struct.
+	  For
+	  examples, with memory that looks like the following (with ///
+	  denoting
+	  allocated, uninitialized memory of unknown intended type):
+	  
+	  0 4 8 12 16 20
+	  [int ][char ]/////[char ]
+	  [ MyStruct ]
+	  
+	  We will not report a bounds failure for type MyStruct at offset 8
+	  as what we
+	  know of the memory there is consistent with an array of
+	  MyStructs.
+	  
+	  * We now track "pointer movements", i.e. assignments for which it
+	  is an error
+	  for the pointer to escape its type bounds. The four operators for
+	  which this
+	  is true are ++, --, += and -=, and it is only checked if the left
+	  hand side's
+	  type is SgPointerType. If a pointer increments beyond an array
+	  bounds (even
+	  for an inner array in a multidimensional stack array), it is
+	  treated as an
+	  invalid assignment.
+	  
+	  - Introduced scopes in RtedSymbols.h macro so one doesn't have to
+	  invent
+	  variable names for the LOOKUP macro.
+	  
+	  - read_write_mask now uses an enum instead of magic numbers.
+
 2009-08-14 17:16  liao6
 
 	* [r6853] /trunk/ROSE/scripts/importRoseDistributionToSVN: Enabled
