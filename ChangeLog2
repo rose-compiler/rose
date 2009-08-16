@@ -1,3 +1,38 @@
+2009-08-16 18:49  dquinlan
+
+	* [r6879]
+	  /trunk/ROSE/developersScratchSpace/Dan/callGraph_tests/cgtest2009_01.C:
+	  Added call graph tests.
+
+2009-08-16 18:48  dquinlan
+
+	* [r6878] /trunk/ROSE/developersScratchSpace/Dan/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/MicrosoftWindows_tests/codeAddedToWine.txt,
+	  /trunk/ROSE/developersScratchSpace/Dan/callGraph_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/callGraph_tests/cgtest2007_02.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/constructName_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/constructName_tests/OLD_nameTests.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/constructName_tests/input_nameTests.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/constructName_tests/nameTests.C:
+	  Added name tests and call graph tests.
+
+2009-08-16 18:45  dquinlan
+
+	* [r6877] /trunk/ROSE/docs/Rose/ProgramAnalysis.tex: Added
+	  documentation for call graph support.
+
+2009-08-16 18:44  dquinlan
+
+	* [r6876]
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/CG.C,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/input_simpleMultipleFileTestInSeperateDirectories.h,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/input_simpleMultipleFileTest_01.C,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/input_simpleMultipleFileTest_02.C,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/testCallGraph.C:
+	  Added support for more tests of the call graph support and fixed
+	  CG.C to handle current test problem.
+
 2009-08-14 23:19  hamilton37
 
 	* [r6858]
