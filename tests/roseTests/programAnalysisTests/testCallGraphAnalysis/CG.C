@@ -193,7 +193,8 @@ void sortedCallGraphDump(string fileName, SgIncidenceDirectedGraph* cg)
 
 };
 
-
+#if 0
+// DQ (8/15/2009): This version does not handle files outside of the ROSE source tree.
 struct OnlyCurrentDirectory : public std::unary_function<bool,SgFunctionDeclaration*>
 {
   bool operator() (SgFunctionDeclaration* node) const
@@ -209,6 +210,50 @@ struct OnlyCurrentDirectory : public std::unary_function<bool,SgFunctionDeclarat
       return false;
   };
 }; 
+
+#else
+
+// DQ (8/15/2009): This version handles an explicitly set (hard coded for now) secondary directory location.
+// DQ (8/16/2009): This is part of an include mechanism (everything else is deleted).
+struct OnlyCurrentDirectory : public std::unary_function<bool,SgFunctionDeclaration*>
+   {
+     bool operator() (SgFunctionDeclaration* node) const
+        {
+          std::string stringToFilter = ROSE_COMPILE_TREE_PATH + std::string("/tests");
+          std::string srcDir = ROSE_AUTOMAKE_TOP_SRCDIR;
+#if 1
+       // Hard code this for initial testing on target exercise.
+          std::string secondaryTestSrcDir = "/home/dquinlan/ROSE/project/";
+#endif
+
+#if 0
+          printf ("stringToFilter = %s \n",stringToFilter.c_str());
+          printf ("srcDir         = %s \n",srcDir.c_str());
+#endif
+          string sourceFilename = node->get_file_info()->get_filename();
+          string sourceFilenameSubstring = sourceFilename.substr(0,stringToFilter.size());
+          string sourceFilenameSrcdirSubstring = sourceFilename.substr(0,srcDir.size());
+          string sourceFilenameSecondaryTestSrcdirSubstring = sourceFilename.substr(0,secondaryTestSrcDir.size());
+#if 0
+          printf ("sourceFilename                = %s \n",sourceFilename.c_str());
+          printf ("sourceFilenameSubstring       = %s \n",sourceFilenameSubstring.c_str());
+          printf ("sourceFilenameSrcdirSubstring = %s \n",sourceFilenameSrcdirSubstring.c_str());
+#endif
+       // if (string(node->get_file_info()->get_filename()).substr(0,stringToFilter.size()) == stringToFilter  )
+          if (sourceFilenameSubstring == stringToFilter)
+               return true;
+            else 
+            // if ( string(node->get_file_info()->get_filename()).substr(0,srcDir.size()) == srcDir )
+               if (sourceFilenameSrcdirSubstring == srcDir)
+                    return true;
+                 else
+                    if (sourceFilenameSecondaryTestSrcdirSubstring == secondaryTestSrcDir)
+                         return true;
+                      else
+                         return false;
+       }
+   };
+#endif
 
 
 int main (int argc, char **argv){
@@ -245,13 +290,22 @@ int main (int argc, char **argv){
   SgProject * project = frontend (argvList);
   ROSE_ASSERT (project != NULL);
 
+  printf ("graphCompareOutput = %s \n",graphCompareOutput.c_str());
+
   if(graphCompareOutput == "" )
     graphCompareOutput=((project->get_outputFileName())+".cg.dmp");
 
   // Build the callgraph according to Anreases example
   CallGraphBuilder		cgb (project, var_SOLVE_FUNCTION_CALLS_IN_DB);
+
+#if 1
+// Filtered call graph
   cgb.buildCallGraph( OnlyCurrentDirectory() );
-  //cgb.classifyCallGraph();
+#else
+// Unfiltered call graph
+  cgb.buildCallGraph();
+#endif
+  // cgb.classifyCallGraph();
   // write a dotfile vor visualisation
 
   outFileName=((project->get_outputFileName())+".dot");
@@ -274,9 +328,14 @@ int main (int argc, char **argv){
     solveVirtualFunctions( *gDB, "ClassHierarchy" );
     solveFunctionPointers( *gDB );
     std::vector<std::string> keepDirs;
-    keepDirs.push_back( ROSE_COMPILE_TREE_PATH+std::string("/tests%") );
 
+ // DQ (8/16/2009): This is part of an include mechanism (everything else is deleted).
+    keepDirs.push_back( ROSE_COMPILE_TREE_PATH+std::string("/tests%") );
     keepDirs.push_back(ROSE_AUTOMAKE_TOP_SRCDIR + std::string("%") ); 
+
+ // DQ (8/15/2009): Added explicit directory to keepDirs list.
+    keepDirs.push_back("/home/dquinlan/ROSE/project%");
+
     filterNodesKeepPaths(*gDB, keepDirs);
 
     /*

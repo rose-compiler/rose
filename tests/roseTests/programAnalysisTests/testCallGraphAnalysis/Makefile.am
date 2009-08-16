@@ -53,6 +53,25 @@ test02: testCG stressTestFactory
 testMultipleFiles: testCG stressTestFactoryMultipleFiles.pl
 	$(srcdir)/testMultipleFiles.sh $(srcdir) . 20 4
 
+# DQ (8/15/2009): Added simple case of multiple file test...
+testSimpleMultipleFiles: testCG $(srcdir)/input_simpleMultipleFileTest_01.C $(srcdir)/input_simpleMultipleFileTest_02.C 
+	echo "Testing simple case of multiple file call graph generation..."
+	./testCG $(srcdir)/input_simpleMultipleFileTest_01.C -o input_simpleMultipleFileTest_01 -db:name input_simpleMultipleFileTest.db
+	./testCG $(srcdir)/input_simpleMultipleFileTest_02.C -o input_simpleMultipleFileTest_02 -db:name input_simpleMultipleFileTest.db
+	echo "The final call graph is in input_simpleMultipleFileTest_02.dot (latest file called)"
+
+# DQ (8/15/2009): Added simple case of multiple file test for files in separate directories...
+testSimpleMultipleFilesInSeperateDirectories: testCG $(srcdir)/input_simpleMultipleFileTest_01.C $(srcdir)/input_simpleMultipleFileTest_02.C
+	echo "Testing simple case of multiple file call graph generation..."
+	rm -f simpleMultipleFileTestInSeperateDirectories.db
+	rm -rf seperateDirectory_1 seperateDirectory_2
+	mkdir seperateDirectory_1; cp $(srcdir)/input_simpleMultipleFileTest_01.C seperateDirectory_1/input_simpleMultipleFileTestInSeperateDirectories_01.C
+	cd seperateDirectory_1; ../testCG -I$(srcdir) -c input_simpleMultipleFileTestInSeperateDirectories_01.C -o input_simpleMultipleFileTestInSeperateDirectories_01 -db:name ../simpleMultipleFileTestInSeperateDirectories.db
+	mkdir seperateDirectory_2; cp $(srcdir)/input_simpleMultipleFileTest_02.C seperateDirectory_2/input_simpleMultipleFileTestInSeperateDirectories_02.C
+	cd seperateDirectory_2; ../testCG -I$(srcdir) -c input_simpleMultipleFileTestInSeperateDirectories_02.C -o input_simpleMultipleFileTestInSeperateDirectories_02 -db:name ../simpleMultipleFileTestInSeperateDirectories.db
+	echo "The final call graph is in input_simpleMultipleFileTestInSeperateDirectories_02.dot (latest file called)"
+
+
 # Import list of C++ test cases that should pass:
 #   EXAMPLE_TESTCODES_REQUIRED_TO_PASS
 #   EXAMPLE_TESTCODES_REQUIRED_TO_PASS_SHORT
@@ -106,7 +125,7 @@ $(TEST_Objects): testCG $(TESTCODES)
 	rm -f  $(@:.o=.db)
 
 
-EXTRA_DIST = $(TESTCODES) functions.h main.C f1.C f2.C stressTestFactory $(srcdir)/tests
+EXTRA_DIST = $(TESTCODES) functions.h main.C f1.C f2.C stressTestFactory $(srcdir)/tests input_simpleMultipleFileTest_01.C input_simpleMultipleFileTest_02.C
 
 # DQ (7/25/2005): The current changes to the AST break these test programs:
 check-local:
@@ -119,4 +138,5 @@ check-local:
 
 clean-local:
 	rm -rf $(CXX_TEMPLATE_OBJECTS) test0? testCG testCallGraph *.o rose_*.C *.dot Templates.DB ii_files ti_files DATABASE DATABASE.dot *.dmp sT*.C
+	rm -rf seperateDirectory_1 seperateDirectory_2
 
