@@ -13,6 +13,12 @@ is provided via a database mechanism provided within ROSE and as part of work
 in merging multiple ASTs from different files to hold the AST from a whole project
 (many files) in memory at one time.
 
+Note that ROSE supports binary analysis, chapter \ref{binaryAnalysis::overview}
+contains details that are specific to program analysis on binaries (executables,
+libraries, object files, etc.).
+A goal of ROSE is to unify much of the program analysis for source code and binaries, 
+but there are details that are presented separately.
+
 \section{General Program Analysis}
 
    General program analysis is a critical piece of the work to
@@ -22,8 +28,36 @@ and robustness required to handle large scale DOE applications.
 
 \subsection{Call Graph Analysis}
 
-   Global call graphs are available, examples are in the
-ROSE Tutorial.
+   Global {\it call graphs} are available, examples are in the ROSE Tutorial.
+ROSE supports two modes of building the call graph, with and without SGLite 
+database support (controled from the ROSE configure commandline). The use of SQLite
+database support permits information to be accumulated into a named database file
+over the compilation of many files as required to support large multi-file projects
+(even separated over many directories).
+
+   The call graph uses the new graph IR nodes to support handling large scale 
+graphs in ROSE. {\em Need to comment more on this.}
+
+   The mechanisms for filtering functions from the call graph is a subject
+of ongoing work to reduce the size of the call graph for more useful analysis
+and presentation.
+
+Note:  The Call Graph currently has a mechanism for inclusion/exclusion of
+paths/files locations of functions so that functions can be filtered from the
+Call Graph.  This mechanism is currently hard coded in the test code and need
+to be controled from the command line in the future.  ROSe included commandline
+support for specification of (see {\tt --help} option for details):
+\begin{itemize}
+   \item include paths
+   \item exclude paths
+   \item include files
+   \item exclude files
+\end{itemize}
+
+At present we can include paths for 
+the locations of functions to be included in the Call Graph. The specification of
+paths and files to include/exclude should be controled from the commandline.
+
 
 \subsection{C++ Class Hierarchy Graph Analysis}
 
@@ -40,6 +74,11 @@ Tutorial for examples of how to use these.
 
    Complete use-def chains are available, the ROSE Tutorial shows examples of
 how to access this information.
+
+\subsection{Alias Analysis}
+
+   A linear alias analysis is provided, we need to write more about this.
+
 
 \subsection{Open Analysis}
 
