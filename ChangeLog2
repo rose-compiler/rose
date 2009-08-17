@@ -1,3 +1,9 @@
+2009-08-16 19:18  dquinlan
+
+	* [r6881] /trunk/ROSE/src/frontend/SageIII/sageSupport.C: Added
+	  documentation for --help option to document
+	  -rose:read_executable_file_format_only option.
+
 2009-08-16 18:49  dquinlan
 
 	* [r6879]
