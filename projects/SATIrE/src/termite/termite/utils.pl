@@ -2,9 +2,7 @@
 % -*- prolog -*-
 
 :- module(utils,
-	  [dup/3,
-	   foldl/4,
-	   foldl1/3,
+	  [drop/3, foldl/4, foldl1/3, last/2, replicate/3, split_at/4, take/3,
            string_to_term/2,
            term_to_string/2,
 	   atom_to_string/2,
@@ -22,7 +20,12 @@
 	   term_mod/3]).
 
 %-----------------------------------------------------------------------
-/** <module> A collection of useful general-purpose predicates
+/** <module> A collection of useful general-purpose predicates.
+
+  The predicates drop/3, foldl/4, foldl1/3, last/2, replicate/3,
+  split_at/4 and take/3 are inspired by the Haskell Prelude, but are
+  implemented declaratively: They can be used to generate as well as
+  test.
 
 @author
 
@@ -41,29 +44,76 @@ GNU General Public License for more details.
 */
 %-----------------------------------------------------------------------
 
-%% dup(+A, +Num, -As) is det.
-%% dup(?A, ?Num, ?As) is nondet.
-% something like repeat in Haskell:
+% List operations from the Haskell Prelude
+
+%% drop(?N, ?List, ?Tail)
+% Drop N elements from List, yielding Tail.
 % ==
-%    dup(A, Num, As) :-
-%      length(As, Num),
-%      maplist(=(A),As).
+% drop(N, List, Tail) :-
+%   length(Head, N),
+%   append(Head, Tail, List).
 % ==
-dup(A, Num, As) :-
-  length(As, Num),
-  maplist(=(A),As).
-% dup(_, 0, []).
-% dup(A, N, B) :-
+drop(N, List, Tail) :-
+  length(Head, N),
+  append(Head, Tail, List).
+
+
+%% last(?List, ?Elem)
+% Elem is the last element of List.
+% ==
+% last(List, Elem) :-
+%   reverse(List, [Elem|_]).
+% ==
+last(List, Elem) :-
+  reverse(List, [Elem|_]).
+
+%% replicate(?A, ?Num, ?As)
+% Replicate A Num times yielding As.
+% ==
+% replicate(A, Num, As) :-
+%   length(As, Num),
+%   maplist(=(A),As).
+% ==
+
+% replicate(_, 0, []).
+% replicate(A, N, B) :-
 %   append(A, Bs, B),
 %   N1 is N-1,
-%   dup(A, N1, Bs).
+%   replicate(A, N1, Bs).
+replicate(A, Num, As) :-
+    length(As, Num),
+  maplist(=(A),As).
 
+%% split_at(?N, ?List, ?Head, ?Tail)
+% Split List at element N yielding Head, Tail
+% ==
+% split_at(N, List, Head, Tail) :-
+%   length(Head, N),
+%   append(Head, Tail, List).
+% ==
+split_at(N, List, Head, Tail) :-
+  length(Head, N),
+  append(Head, Tail, List).
+
+%% take(?N, ?List, ?Head)
+% Head is unified with the first N elements of List
+% ==
+% take(N, List, Head) :-
+%   length(Head, N),
+%   append(Head, _Tail, List).
+% ==
+take(N, List, Head) :-
+  length(Head, N),
+  append(Head, _Tail, List).
+
+%% foldl(+List, +Pred, -V).
+% Fold, starting with the first element of List
 foldl1([F|Fs], Pred, V) :-
   foldl(Fs, Pred, F, V).
 
-%% foldl(+Fs, +Pred, +Start, -V) is det.
+%% foldl(+List, +Pred, +Start, -V).
 % foldl/4 - from the SWI-Mailing List
-% Fold a list using [pred], just as you would do in Haskell ;-)
+% Fold a list using [pred], just as you would do in Haskell
 foldl([], _, V, V). 
 foldl(Fs, Pred, F, V) :- 
   fold_lag(Fs, F, Pred, V). 
@@ -119,7 +169,7 @@ replace_in_atom(Atom, What, With, NewAtom) :-
   sub_atom(Atom, 0, Be, _, A1),
   Re is Be+Len,
   sub_atom(Atom, Re, _, 0, A2),
-  concat_atom([A1, With, A2], NewAtom).
+  atomic_list_concat([A1, With, A2], NewAtom).
 
 %% replace_nth(+Xs, +N, +E, +R, -Ys) is det.
 % replace the nth element of a list with R and return it in E
