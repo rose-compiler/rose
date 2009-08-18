@@ -218,9 +218,11 @@ pointsto_live_variables: init.token
 if WITH_CBMC
 	@echo "Performing model checking on" $<
 	@cd $(testdir)/interval; \
-	$(CBMC) --show-claims intvlassert.c; \
-	ulimit -t 30; $(CBMC) --no-bounds-check --unwind 1024 intvlassert.c \
-	|| (echo "** FAILED: $<" && echo && true)
+	$(CBMC) --show-claims intvlassert.c &>cbmc-output-claims.log; \
+	ulimit -t 30; ($(CBMC) --no-bounds-check --unwind 1024 intvlassert.c \
+	2>cbmc-output.log \
+	| grep -q "^VERIFICATION SUCCESSFUL$$") \
+	|| (echo "** VERIFICATION FAILED: $<" && echo && true)
 endif
 #($(CC) -std=c99 -E -I$(BLASTHOME)/test/headers intvlassert.c > intvlassert.i;
 #$(BLAST) -clp intvlassert.i -main main)

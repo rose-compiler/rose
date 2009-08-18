@@ -109,7 +109,7 @@ term2c.txt: $(bindir)/term2c
 	echo '\end{verbatim}' >>$@
 
 termite-pdf.tex: termite.tex $(SRCFILES) termspec.tex c2term.txt term2c.txt
-	sed -e s/%%INPUTS%%/$(patsubst %.tex,\\\\input{%}\,$(TEXFILES))/ \
+	sed -e s/%%INPUTS%%/$(patsubst %.tex,\\\\input{%}\\\\clearpage\,$(TEXFILES))/ \
 	    -e '/GRAMMAR/ r termspec.tex' \
 	    -e '/C2TERM/ r c2term.txt' \
 	    -e '/TERM2C/ r term2c.txt' \

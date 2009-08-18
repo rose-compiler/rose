@@ -15,7 +15,7 @@ if !WITH_SWI_PROLOG
 DISTCHECK_CONFIGURE_FLAGS += --without-swi-prolog
 endif
 
-.PHONY: docs
+.PHONY: docs clang
 
 docs:
 	$(MAKE) -C docs docs
@@ -31,6 +31,7 @@ EXTRA_DIST= README LICENSE ChangeLog KNOWN_BUGS BugLog \
         docs/satire_cfgconstruction.pdf \
 	docs/satire_overview.pdf \
 	docs/satire_attributes_auxiliary_functions \
+	docs/termite.pdf \
 	\
 	testsuite/testsuite.sh \
 	testsuite/base/success/ab.c \

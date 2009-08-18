@@ -180,10 +180,8 @@ transformed_with(Node, Transformation, Info, Info1, NodeT) :-
 % Todo: replace this with an attribute grammer system
 %
 
-%transformed_with(null, _, _, Info, Info, null) :- !. % [green cut] just a speedup for debugging
-
-%transformed_with(Atom, _, _, Info, Info, Atom) :-
-%  atom(Atom).
+transformed_with(Atom, _, _, Info, Info, Atom) :-
+  atom(Atom), !.
 
 % preorder ---------------------------------------
 transformed_with(ListNode, Transformation, preorder, Info, InfoPost, 
