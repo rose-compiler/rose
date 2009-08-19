@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
 
+require 'fileutils'
+
 
 def args!
     if ARGV.size != 1
@@ -13,17 +15,28 @@ def args!
     return ARGV.first
 end
 
-def check_ssh_agent!
-    system( "ssh-add -l > /dev/null 2> /dev/null" )
-    unless $?.success?
-        puts "
-            You do not have ssh-agent running, or you haven't added your key.
-            This program calls ssh several times, so you are well advised to
-            invoke ssh-add before nmi-postmortem.
-        ".gsub( /^\s+/, '' )
+def setup_ssh!( host )
+    FileUtils.touch '.nmi-hosts'
+    hosts = File.readlines( '.nmi-hosts' ).map{|l| l.chomp }
+    return if hosts.include? host
 
-        exit $?.exitstatus
-    end
+    puts "
+
+        Host #{host} is not known to have been set up.  I will now do this for
+        you.  You will be asked to enter the password for the #{ENV['USER']}
+        account twice.  This step will not be necessary for future postmortems
+        of runs on this host.
+
+    ".gsub( /^[ \t]\s*/, '' )
+    system [
+        [
+            "ssh #{host} '/bin/sh /etc/profile",
+            "mkdir -p $HOME/.ssh",
+            "chmod 700 $HOME/.ssh'",
+        ].join( ';' ),
+        "scp .ssh/id_rsa.pub #{host}:~/.ssh/authorized_keys"
+    ].join( '&&' )
+    File.open( '.nmi-hosts', 'w' ) {|f| f.puts host }
 end
 
 def get_runhost( run_id )
@@ -36,10 +49,10 @@ end
 
 def main
     run_id = args!
-    check_ssh_agent!
 
     puts "Downloading run host information from nmi website"
-    run_host = get_runhost( run_id ) 
+    run_host = get_runhost( run_id )
+    setup_ssh! run_host
 
     run_dir = (
         `nmi_rundir #{run_id}` =~ /\d+: (.*)/;
@@ -57,7 +70,12 @@ def main
         %Q{ssh #{run_host} 'echo "cd run && source env.sh" > .nmi-postmortem'},
     ].join( " && " )
 
-    puts "Connecting to #{run_host}"
+    puts "
+
+        Connecting to the run host #{run_host}.  You will be placed into the run
+        directory and the environment sourced.
+
+    ".gsub( /^[ \t]\s*/, '' )
     exec "ssh #{run_host}"
 end
 
