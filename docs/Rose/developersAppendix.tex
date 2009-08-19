@@ -1370,22 +1370,22 @@ Cygwin (tux245: 32 bit Windows XP running Cygwin):
 
 The NMI Build and Test Farm allows us to compile tests on ROSE
 on a variety of different Operating Systems. For more information
-on the compile farm see \url{http://nmi.cs.wisc.edu/}.\\
-These tests are run against the HEAD revision of the public svn repository. \\
+on the compile farm see \url{http://nmi.cs.wisc.edu/}.
+These tests are run against the HEAD revision of the public svn repository.
 The purpose of this section is to show how different build and test
-configurations can be implemented with respect to the ROSE public svn. \\
+configurations can be implemented with respect to the ROSE public svn.
 For a detailed introduction on how to submit jobs to the build system
 visit \url{http://nmi.cs.wisc.edu/node/31}. A refernce manual can be found
 at \url{http://nmi.cs.wisc.edu/node/65}. However, in order to add new tests to 
-ROSE, the information given in this chapter will suffice. \\
+ROSE, the information given in this chapter will suffice.
 
 %\subsection{Test procedure}
 In order to run a test, it has to be submitted on one of the submission hosts
-provided by the University of Wisconsin. \\
+provided by the University of Wisconsin.
 The submission scripts provided with ROSE are developed for Metronome 2.5.2b
 (This is the framework responsible for parsing and submitting the scripts to the
 build machines). At the moment the only machine which supports it is 
-nmi-s005.cs.wisc.edu. \\
+nmi-s005.cs.wisc.edu.
 For every test a build and test run is started.
 
 \subsection{Adding a test}
@@ -1431,6 +1431,7 @@ nmi-s005.cs.wisc.edu}):\\
 {\tt svn checkout
 https://outreach.scidac.gov/svn/rose/trunk/scripts/nmiBuildAndTestFarm
 <your-name>-rose-nmi}\\
+
 If you are working on the NMI scripts it will be more convenient to {\tt scp}
 your local copy of the {\tt nmiBuildAndTestFarm} directory (hereafter {\tt nmi})
 to the NMI submit host, rather than checkout from the public repository.  The
@@ -1462,11 +1463,11 @@ Jobs can be added to the cronjobs file in the directory {\tt
 crontab file on the submission host (this is done by the first entry, which
 executes update.sh). In order to add your own build tests, simply add a line
 there (see {\tt man 5 crontab} for more information). Be sure to test your
-submission before adding it to the cronjobs.
+submission before adding it to the cronjobs.\\
 
 {\bf NOTE:} If you want your cronjobs to be permanent, add this to your local svn
 copy, and not the checkout on the submit machines. Also be sure to add the 
-options file that specify the test to the svn repository.
+options file that specify the test to the svn repository.\\
 
 Example entry:
 \begin{verbatim}
@@ -1480,15 +1481,36 @@ Example entry:
 If a run fails, it can be helpful to examine the environment that it ran on.
 There is a small program, {\tt nmi-postmortem}, that aims to automate some of
 the tedium of doing this.  On the results page for a run, you can find the {\tt
-runid}.
+runid} (see Figure \ref{fig:nmi:screenshot}).\\
+
+\begin{figure}
+	\includegraphics[width=200mm]{nmi-screenshot.png}
+
+	\caption{Example screenshot of a results page, {\tt runid} highlighted.}
+	\label{fig:nmi:screenshot}
+\end{figure}
+
+
+{\tt nmi-postmortem} is intended to be run on the submit host.  If it is not in
+the {\tt PATH} of the account you are using there, then {\tt scp} the file to
+the submit host and place it somewhere in your {\tt PATH}.\\
+
+
 With this, you can invoke the following on the submit host:\\
 \ {\tt nmi-postmortem <runid>}\\
+
+
 This will do the following:
 \begin{itemize}
-	\item Determine the machine the test ran on.
+
+	\item Determine the machine the test ran on (the {\tt run host}).
+
+	\item Ensure that it is possible to {\tt ssh} to the run host.  This may
+	require you entering the account's password a couple of times, but is
+	otherwise automated.
 
 	\item Copy {\tt results.tar.gz} to the run machine and extract it there in a
-	directory called {\tt run}.  {\tt WARNING}: Any previous run directory on
+	directory called {\tt run}.  {\bf {\tt WARNING}}: Any previous run directory on
 	that machine will be removed first.
 
 	\item {\tt ssh} you onto the run machine, {\tt cd} to the run directory and
@@ -1497,18 +1519,18 @@ This will do the following:
 	on.
 \end{itemize}
 
-{\tt NOTE}: {\tt nmi-postmortem} invokes {\tt ssh} a lot.  There are two things
-to keep in mind because of this:
+{\tt NOTE}: {\tt nmi-postmortem} invokes {\tt ssh} a lot and assumes that there
+exists a file {\tt \$HOME/.ssh/id\_rsa.pub} on the submit host and that this key
+has no passphrase.  If this is not the case for the account you are using,
+simply invoke {\tt ssh-keygen} and be sure not to specify a passphrase.
+
+
+\subsection{Where to get help}
+
 \begin{enumerate}
-	\item You will have to have connected to the run machine at least once to
-	ensure that a home directory is created for you.
+	\item {\bf Mailing Lists} - It is recommended to subscribe to the mailing
+		lists listed at \url{http://nmi.cs.wisc.edu/node/521}.  As of this writing,
+		these include \tt{uw-nmi-announce} and \tt{nmi-users}.
 
-	\item It will be extremely convenient to have an ssh public key in the {\tt
-	authorized\_keys} list on the target machine, and to invoke {\tt ssh-add}
-	before running {\tt nmi-postmortem}.  At the time of this writing, the
-	shared account automatically starts up with {\tt ssh-agent}, so all that is
-	required to invoke {\tt ssh-add} once per login session before invoking {\tt
-	nmi-postmortem}.
+	\item {\bf Support} - Support's email is {\tt nmi-support@cs.wisc.edu}.
 \end{enumerate}
-
-
