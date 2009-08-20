@@ -1,12 +1,13 @@
 PDFS=cfgconstruction.pdf pig-doc.pdf pag-interface.pdf manual.pdf
 nobase_dist_data=$(PDFS)  termite.pdf
-nodist_EXTRA_data=manual/manual_vars.tex.in termite.tex
+nodist_EXTRA_data=manual/manual_vars.tex.in
 
 EXTRA_DIST= \
         satire_cfgconstruction.pdf \
 	satire_overview.pdf \
 	satire_attributes_auxiliary_functions \
-	termite.pdf
+	termite.pdf \
+	 termite.tex
 
 dist-local: docs
 
@@ -100,14 +101,14 @@ termspec.tex: $(top_srcdir)/src/termite/termite_spec.pl
 	    | grep . >$@ 
 	echo '\end{verbatim}' >>$@
 
-c2term.txt: $(bindir)/c2term
+c2term.txt: $(top_builddir)/src/termite/c2term
 	echo '\begin{verbatim}' >$@
 	$< &>__tmp || true
 	cat __tmp | sed -e 's!$(bindir)/!!' >>$@
 	rm -f __tmp
 	echo '\end{verbatim}' >>$@
 
-term2c.txt: $(bindir)/term2c
+term2c.txt: $(top_builddir)/src/termite/term2c
 	echo '\begin{verbatim}' >$@
 	$< &>__tmp || true
 	cat __tmp | sed -e 's!$(bindir)/!!' >>$@
