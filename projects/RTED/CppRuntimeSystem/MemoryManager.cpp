@@ -89,15 +89,21 @@ void MemoryType::initialize(int offsetFrom, int offsetTo)
 
 void MemoryType::registerMemType(addr_type offset, RsType * type)
 {
+    checkMemType( offset, type );
+
     if(typeInfo.size() ==0) // no types registered yet
     {
         typeInfo.insert(make_pair<int,RsType*>(offset,type));
         // if we have knowledge about the type in memory, we also need to update the
         // information about "dereferentiable" memory regions i.e. pointer
         RuntimeSystem::instance()->getPointerManager()->createPointer(startAddress+offset,type);
-
-        return;
     }
+}
+
+void MemoryType::checkMemType(addr_type offset, RsType * type)
+{
+    if(typeInfo.size() ==0) // no types registered yet
+        return;
 
     int newTiStart = offset;
     int newTiEnd = offset + type->getByteSize();
@@ -562,11 +568,6 @@ bool MemoryManager::checkIfSameChunk(addr_type addr1, addr_type addr2, RsType * 
 	return checkIfSameChunk( addr1, addr2, type->getByteSize() );
 }
 
-bool MemoryManager::checkIfSameChunk(addr_type addr1, addr_type addr2, size_t typeSize)
-{
-	return checkIfSameChunk( addr1, addr2, typeSize, RuntimeViolation::POINTER_CHANGED_MEMAREA );
-}
-
 bool MemoryManager::checkIfSameChunk(
 		addr_type addr1,
 		addr_type addr2,
@@ -578,8 +579,18 @@ bool MemoryManager::checkIfSameChunk(
     MemoryType * mem1 = NULL;
     MemoryType * mem2 = NULL;
 
-    checkAccess(addr1,typeSize,NULL,mem1,RuntimeViolation::INVALID_READ);
-    checkAccess(addr2,typeSize,NULL,mem2,RuntimeViolation::INVALID_READ);
+    RuntimeViolation::Type access_violation
+        = ( violation == RuntimeViolation::NONE )
+            ? RuntimeViolation::NONE
+            : RuntimeViolation::INVALID_READ;
+    checkAccess(addr1,typeSize,NULL,mem1, access_violation );
+    checkAccess(addr2,typeSize,NULL,mem2, access_violation );
+
+    if(     violation == RuntimeViolation::NONE
+            && !( mem1 && mem2 )) {
+        return false;
+    }
+
     assert(mem1 && mem2);
 
     if(mem1 != mem2)

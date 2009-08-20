@@ -80,6 +80,8 @@ class RuntimeViolation
 				INVALID_MEM_OVERLAP,     // some memory chunk overlaps with some
 									     // other memory chunk illegaly, e.g. in arguments to memcpy
 				INVALID_TYPE_ACCESS,     // invalid access to "typed" memory
+
+                NONE,                    // no violation
 				UNKNOWN_VIOLATION
         };
 
@@ -118,6 +120,18 @@ class RuntimeViolation
 
 std::ostream& operator<< (std::ostream &os, const RuntimeViolation & m);
 
+
+class ViolationPolicy {
+    public:
+        enum Type {
+            Exit,
+            Warn,
+            Ignore,
+            InvalidatePointer,
+
+            Invalid
+        };
+};
 
 
 

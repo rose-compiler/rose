@@ -85,9 +85,9 @@ RsArrayType* RuntimeSystem_getRsArrayType(
 
   // collect dimension information
   size_t elements = 1;
-  std::vector< size_t > dimensions;
+  std::vector< unsigned int > dimensions;
   for( unsigned int i = 0; i < dimensionality; ++i ) {
-    dimensions.push_back( va_arg( vl, size_t ));
+    dimensions.push_back( va_arg( vl, unsigned int ));
     elements *= dimensions.back();
   }
   size_t base_size = size / elements;
@@ -97,7 +97,7 @@ RsArrayType* RuntimeSystem_getRsArrayType(
   assert( type != NULL );
 
   size_t current_size = base_size;
-  std::vector< size_t >::reverse_iterator itr = dimensions.rbegin();
+  std::vector< unsigned int >::reverse_iterator itr = dimensions.rbegin();
   while( itr != dimensions.rend() ) {
     // however large the base type is, the type of the array is N times as
     // large
@@ -223,11 +223,11 @@ RuntimeSystem_roseArrayAccess(const char* filename,
 	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
 	CHECKPOINT
 
-    RuntimeSystem_checkMemoryAccess( address, size, read_write_mask );
+  RuntimeSystem_checkMemoryAccess( address, size, read_write_mask );
 
-    if( read_write_mask & BoundsCheck ) {
-        rs -> getMemManager() -> checkIfSameChunk( base_address, address, size );
-    }
+  if( read_write_mask & BoundsCheck ) {
+      rs -> getMemManager() -> checkIfSameChunk( base_address, address, size );
+  }
 }
 
 // ***************************************** ARRAY FUNCTIONS *************************************

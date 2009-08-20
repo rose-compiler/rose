@@ -10,6 +10,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <vector>
+#include <set>
 #include <iostream>
 
 #include <sys/stat.h>
@@ -122,7 +123,7 @@ int getdir(string dir, vector<string> &files, vector<string> &filesExtra) {
 }
 
 void
-runtimeCheck(int argc, char** argv,vector <string>& rtedfiles) {
+runtimeCheck(int argc, char** argv, set<string>& rtedfiles) {
   // PARSE AND TRANSFORM - 1rst round--------------------------------
   // Init Transformation object
   RtedTransformation rted;
@@ -165,7 +166,7 @@ runtimeCheck(int argc, char** argv,vector <string>& rtedfiles) {
   ROSE_ASSERT(project);
   // perform all necessary transformations (calls)
   cerr << "Transforming ... " << endl;
-  rted.transform(project);
+  rted.transform(project, rtedfiles);
   cerr << "Calling backend... (2nd time)" << endl;
   // call backend and create a new rose_rose_filename.c source file
   backend(project);
@@ -186,17 +187,16 @@ int main(int argc, char** argv) {
   }
   int nrfiles = static_cast<int>(strtol(argv[1], NULL, 10));
 
-  vector <string> rtedfiles;
+  set <string> rtedfiles;
   string abs_path="";
   for (int i=0; i< argc; ++i) {
     if (i>1 && i<=(nrfiles+1)) {
       string filename = argv[i];
       int pos=filename.rfind("/");
       if (pos>0 && pos!=(int)string::npos) {
-	abs_path = filename.substr(0,pos+1);
-	filename = filename.substr(pos+1,filename.length());
+		abs_path = filename.substr(0,pos+1);
       }
-      rtedfiles.push_back(filename);
+      rtedfiles.insert( system_complete( filename ).file_string() );
       cerr << i << ": >>>>> Found filename : " << filename << endl;
     }
   }

@@ -59,6 +59,9 @@ class RuntimeSystem
         /// Switches the Qt-Debugger on/off (works only if compiled with ROSE_WITH_ROSEQT)
         void setQtDebuggerEnabled(bool b) { qtDebugger = b; }
 
+        /// Changes the violation policy for the given violation type.
+        void setViolationPolicy( RuntimeViolation::Type, ViolationPolicy::Type );
+
 
         CStdLibManager * getCStdLibManager() { return &cstdlibManager; }
 
@@ -284,16 +287,6 @@ class RuntimeSystem
         std::ostream * defaultOutStr;
         std::ofstream outFile;
 
-
-        enum ViolationPolicy {
-            Exit,
-            Warn,
-            Ignore,
-            InvalidatePointer,
-
-            Invalid
-        };
-
         /// A @c map of violation types to policies.  Policies include:
         ///
         ///     Exit (default)  -   Report the violation and terminate the
@@ -312,9 +305,9 @@ class RuntimeSystem
         /// TODO there are certain violations where the RuntimeSystem is in
         ///      inconsistent state after they have occured
         ///      determine which Violations have this problem and prevent switching them off
-        std::map<RuntimeViolation::Type, ViolationPolicy> violationTypePolicy;
+        std::map<RuntimeViolation::Type, ViolationPolicy::Type> violationTypePolicy;
 
-        ViolationPolicy getPolicyFromString( std::string & name ) const;
+        ViolationPolicy::Type getPolicyFromString( std::string & name ) const;
 
     friend class PointerManager;
 };

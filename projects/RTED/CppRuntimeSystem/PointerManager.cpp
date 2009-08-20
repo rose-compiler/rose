@@ -73,10 +73,11 @@ void PointerInfo::setTargetAddress(addr_type newAddr, bool doChecks)
         return;
     }
 
-    // If a pointer points to that memory region, assume that his mem-region if of right type
-    // even if actual error would only happen on deref
+    // Don't update the target with type information just because a pointer
+    // points there -- but do check to make sure that the pointer isn't
+    // definitely illegal (e.g. an int pointer pointing to a known double).
     if(newMem)
-        newMem->registerMemType(newAddr-newMem->getAddress(),baseType);
+        newMem->checkMemType(newAddr-newMem->getAddress(),baseType);
 
 
     // if old target was valid
@@ -235,52 +236,65 @@ void PointerManager::registerPointerChange( addr_type src, addr_type target, boo
 
     addr_type oldTarget = pi->getTargetAddress();
 
+
+    bool legal_move = true;
+    if( checkPointerMove )
+    {
+        MemoryManager * mm = RuntimeSystem::instance()->getMemManager();
+        legal_move = mm -> checkIfSameChunk(
+                oldTarget,
+                target,
+                pi -> getBaseType() -> getByteSize(),
+                RuntimeViolation::NONE );
+
+        // This isn't a legal
+        RuntimeSystem* rs = RuntimeSystem::instance();
+        if( !legal_move ) {
+            if( rs -> violationTypePolicy[ RuntimeViolation::INVALID_PTR_ASSIGN ]
+                    == ViolationPolicy::InvalidatePointer) {
+                // Don't complain now, but invalidate the pointer so that subsequent
+                // reads or writes without first registering a pointer change will
+                // be treated as invalid
+                pi -> setTargetAddressForce( 0 );
+                targetToPointerMap.insert(TargetToPointerMap::value_type(0,pi));
+                if( !( rs -> testingMode ))
+                    *((int*) (pi -> getSourceAddress())) = NULL;
+            } else {
+                // repeat check but throw invalid ptr assign
+                mm -> checkIfSameChunk(
+                    oldTarget,
+                    target,
+                    pi -> getBaseType() -> getByteSize(),
+                    RuntimeViolation::INVALID_PTR_ASSIGN );
+                // shouldn't get here
+                assert( false );
+            }
+        }
+    }
+
+
     // Remove the pointer info from TargetToPointerMap
     bool res = removeFromRevMap(pi);
     assert(res); // assert that an entry has been deleted
 
-    try
-    {
-        // set correct target
-        pi->setTargetAddress(target);
-    }
-    catch(RuntimeViolation & vio)
-    {
-        // if target could not been set, then set pointer to null
-        pi->setTargetAddressForce(0);
-        targetToPointerMap.insert(TargetToPointerMap::value_type(0,pi));
-        throw vio;
-    }
-
-    // ...and insert it again with changed target
-    targetToPointerMap.insert(TargetToPointerMap::value_type(target,pi));
-
-
-
-    if( checkPointerMove )
-    {
-        MemoryManager * mm = RuntimeSystem::instance()->getMemManager();
-        bool legal = mm -> checkIfSameChunk(
-                oldTarget,
-                target,
-                pi -> getBaseType() -> getByteSize(),
-                RuntimeViolation::INVALID_PTR_ASSIGN );
-
-        if(     !legal 
-                && RuntimeSystem::instance() 
-                        -> violationTypePolicy[ RuntimeViolation::INVALID_PTR_ASSIGN ]
-                    == RuntimeSystem::InvalidatePointer) {
-            // Don't complain now, but invalidate the pointer so that subsequent
-            // reads or writes without first registering a pointer change will
-            // be treated as invalid
-            pi -> setTargetAddressForce( 0 );
-            *((int*) (pi -> getSourceAddress())) = NULL;
+    if( legal_move ) {
+        try {
+            // set correct target
+            pi->setTargetAddress(target);
+        } catch(RuntimeViolation & vio) {
+            // if target could not been set, then set pointer to null
+            pi->setTargetAddressForce(0);
+            targetToPointerMap.insert(TargetToPointerMap::value_type(0,pi));
+            throw vio;
         }
+        // ...and insert it again with changed target
+        targetToPointerMap.insert(TargetToPointerMap::value_type(target,pi));
     }
 
 
     if( checkMemLeaks )
         checkForMemoryLeaks( oldTarget, pi -> getBaseType() -> getByteSize() );
+
 }
 
 

@@ -2,6 +2,7 @@
 #include "RsType.h"
 
 #include <boost/foreach.hpp>
+#include <typeinfo>
 #include <cassert>
 #include <sstream>
 

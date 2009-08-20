@@ -1,3 +1,4 @@
+// vim:et sta sw=4 ts=4:
 #include <rose.h>
 #include <string>
 #include "RtedSymbols.h"
@@ -229,49 +230,55 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
     ROSE_ASSERT( arrRefExp );
 
     int read_write_mask = 0;
-    // arr[ ix ].member = foo; is not an array read or write -- this will be
-    // handled by initvar.  However, we still have to do a bounds check.
-    if( !isSgDotExp( arrRefExp -> get_parent() )) {
-        // determine whether this array access is a read or write
-        SgNode* iter = arrayExp;
-        do {
-            SgNode* child = iter;
-            iter = iter->get_parent();
-            SgBinaryOp* binop = isSgBinaryOp( iter );
+	// determine whether this array access is a read or write
+	SgNode* iter = arrayExp;
+	do {
+		SgNode* child = iter;
+		iter = iter->get_parent();
+		SgBinaryOp* binop = isSgBinaryOp( iter );
 
-            if( isSgAssignOp( iter )) {
-                ROSE_ASSERT( binop );
+		if( isSgAssignOp( iter )) {
+			ROSE_ASSERT( binop );
 
-                // lhs write only, rhs read only
-                if( binop->get_lhs_operand() == child )
-                    read_write_mask |= Write;
-                // regardless of which side arrayExp was on, we can stop now
-                break;
-            } else if(  isSgAndAssignOp( iter ) 
-                        || isSgDivAssignOp( iter ) 
-                        || isSgIorAssignOp( iter )
-                        || isSgLshiftAssignOp( iter )
-                        || isSgMinusAssignOp( iter )
-                        || isSgModAssignOp( iter )
-                        || isSgMultAssignOp( iter )
-                        || isSgPlusAssignOp( iter )
-                        || isSgPointerAssignOp( iter )
-                        || isSgRshiftAssignOp( iter )
-                        || isSgXorAssignOp( iter)) {
-            
-                ROSE_ASSERT( binop );
-                // lhs read & write, rhs read only
-                if( binop->get_lhs_operand() == child )
-                    read_write_mask |= (Read | Write);
-                // regardless of which side arrayExp was on, we can stop now
-                break;
-            } else if( isSgPntrArrRefExp( iter )) {
-                // outer[ inner[ ix ]] = val;
-                //  inner[ ix ]  is only a read
-                break;
-            }
-        } while( iter );
-    }
+			// lhs write only, rhs read only
+			if( binop->get_lhs_operand() == child )
+				read_write_mask |= Write;
+			else
+				read_write_mask |= Read;
+			// regardless of which side arrayExp was on, we can stop now
+			break;
+		} else if(  isSgAndAssignOp( iter ) 
+					|| isSgDivAssignOp( iter ) 
+					|| isSgIorAssignOp( iter )
+					|| isSgLshiftAssignOp( iter )
+					|| isSgMinusAssignOp( iter )
+					|| isSgModAssignOp( iter )
+					|| isSgMultAssignOp( iter )
+					|| isSgPlusAssignOp( iter )
+					|| isSgPointerAssignOp( iter )
+					|| isSgRshiftAssignOp( iter )
+					|| isSgXorAssignOp( iter)) {
+		
+			ROSE_ASSERT( binop );
+			// lhs read & write, rhs read only
+			read_write_mask |= Read;
+			if( binop->get_lhs_operand() == child )
+				read_write_mask |= Write;
+			// regardless of which side arrayExp was on, we can stop now
+			break;
+		} else if( isSgPntrArrRefExp( iter )) {
+			// outer[ inner[ ix ]] = val;
+			//  inner[ ix ]  is only a read
+			break;
+		} else if( isSgDotExp( iter )) {
+			ROSE_ASSERT( binop );
+			if( child == binop -> get_lhs_operand() ) {
+				// arr[ ix ].member is neither a read nor write of the array
+				// itself.
+				break;
+			} // else foo.arr[ ix ] depends on parent context, so keep going
+		}
+	} while( iter );
     // always do a bounds check
     read_write_mask |= BoundsCheck;
 
@@ -320,11 +327,14 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
 void RtedTransformation::populateDimensions( RTedArray* array, SgInitializedName* init, SgArrayType* type_ ) {
     std::vector< SgExpression* >& indices = array -> getIndices();
 
+    bool implicit_index = false;
     SgType* type = type_;
     while( isSgArrayType( type )) {
         SgExpression* index = isSgArrayType( type ) -> get_index();
         if( index )
             indices.push_back( index );
+        else
+            implicit_index = true;
         type = isSgArrayType( type ) -> get_base_type();
     }
 
@@ -333,7 +343,7 @@ void RtedTransformation::populateDimensions( RTedArray* array, SgInitializedName
     //      int p[][2][3] = {{{ 1, 2, 3 }, { 4, 5, 6 }}}
     //  we can calculate the first dimension as
     //      sizeof( p ) / ( sizeof( int ) * 2 * 3 )
-    if( isSgAssignInitializer( init -> get_initptr() )) {
+    if( implicit_index ) {
         SgType* uint = buildUnsignedIntType();
         Sg_File_Info* file_info = init -> get_file_info();
 
@@ -394,13 +404,19 @@ void RtedTransformation::visit_isArraySgInitializedName(SgNode* n) {
 }
 
 
+// FIXME 2: This introduces superfluous calls to access var for dot expressions
+// 	e.g., in the following
+// 		a = *(my_struct.field);
+// 	it is necessary to read &*(my_struct.field), but we will do so twice because
+// 	of the two var refs ('my_struct', and 'field')
 void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
-  // make sure that this variable is not on 
-  // the left hand side of an assignment.
-  // And it should not be an argument to a function
-  // if true, we add it to the list of variables being accessed
-	//cerr << " Visiting VarRefExp : " << n->unparseToString() <<
-	//	"  Symbol : " << n->get_symbol() << endl;
+
+    SgInitializedName *name = n -> get_symbol() -> get_declaration();
+    if( name  && !isInInstrumentedFile( name -> get_declaration() )) {
+        // we're not instrumenting the file that contains the declaration, so
+        // we'll always complain about accesses
+        return;
+    }
 
 
  SgNode* parent = isSgVarRefExp(n);
@@ -411,17 +427,26 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
     last=parent;
     parent=parent->get_parent();
    // cerr << "*********************************** DEBUGGING  parent (loop) = " << parent->class_name() << endl;
-  if( isSgProject(parent) ||
-      //isSgFunctionCallExp(parent) ||
-      isSgDotExp(parent))
+  if( isSgProject(parent))
     { // do nothing 
       hitRoof=true;
       //cerr << "*********************************** DEBUGGING   parent = (project) " << parent->class_name() << endl;
 	  break;
     }
-  else if (isSgAssignOp(parent)) {
+  else if (		isSgAssignOp( parent )
+		  		|| isSgAndAssignOp( parent )
+				|| isSgDivAssignOp( parent )
+				|| isSgIorAssignOp( parent )
+				|| isSgLshiftAssignOp( parent )
+				|| isSgMinusAssignOp( parent )
+				|| isSgModAssignOp( parent )
+				|| isSgMultAssignOp( parent )
+				|| isSgPlusAssignOp( parent )
+				|| isSgPointerAssignOp( parent )
+				|| isSgRshiftAssignOp( parent )
+				|| isSgXorAssignOp( parent )) {
     // make sure that we came from the right hand side of the assignment
-    SgExpression* right = isSgAssignOp(parent)->get_rhs_operand();
+    SgExpression* right = isSgBinaryOp(parent)->get_rhs_operand();
 	// consider
 	//		int arr[2];
 	//		int *x = arr;
@@ -445,6 +470,10 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
 	  cerr << "------------ Found Pointer deref : " << parent->unparseToString() << endl;
 	 // cerr << "*********************************** DEBUGGING   parent (deref) = " << parent->class_name() << endl;
 	  variable_access_pointerderef[isSgPointerDerefExp(parent)]=n;
+  } else if ( isSgArrowExp( parent )) {
+      SgArrowExp* arrow_op = isSgArrowExp( parent );
+      if( last == arrow_op -> get_lhs_operand() )
+          variable_access_pointerderef[ isSgExpression( parent )] = n;
   } else if (isSgExprListExp(parent) && isSgFunctionCallExp(parent->get_parent())) {
 	  cerr << " Found Function call - lets handle its parameters." << endl;
 	  SgType* type = isSgExpression(last)->get_type();
@@ -457,6 +486,47 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
 	  // 	int* y = &x;
 	  // it is not necessary for x to be initialized
 	  hitRoof = true;
+      break;
+	} else if( isSgWhileStmt( parent )
+                || isSgDoWhileStmt( parent )
+				|| isSgIfStmt( parent )) {
+      // FIXME 1: while, getSurroundingStatement( n ) will get the
+      // scopestatement, but we also need to append to the body.  consider, e.g.
+	  // 	int *x = ...
+	  // 	while( *x > 2 ) { x = NULL; }'
+      //
+      // perhaps only true for pointers
+      //
+      // FIXME 1: dowhile has an additional problem with false positives because
+      // of checks before the dowhile rather than in the body. consider:
+      //    int *x = NULL;
+      //    do {
+      //        *x = 200;
+      //    } while( *x > 0 );
+	  break;
+  } else if( isSgForStatement( parent )) {
+      SgForStatement* for_stmt = isSgForStatement( parent );
+     
+      vector< SgNode* > initialized_names 
+          = NodeQuery::querySubTree( for_stmt -> get_for_init_stmt(), V_SgVarRefExp );
+      for(      vector< SgNode* >::iterator i = initialized_names.begin();
+                i != initialized_names.end();
+                ++i) {
+          // map the var refs to their initialized names
+          *i = isSgVarRefExp( *i ) -> get_symbol() -> get_declaration();
+      }
+
+      // FIXME 1: This isn't true for pointers -- in general checks need to be
+      // added to for's body.  consider, e.g.:
+	  // 	int *x = ...
+	  // 	for( ; *x > 2; ) { x = NULL; }'
+      if(   find( initialized_names.begin(), initialized_names.end(), name ) 
+            != initialized_names.end() ) {
+        // no need to check the ref
+        hitRoof = true;
+      }
+      // either way, no need to keep going up the AST
+      break;
   }  else {
     //cerr << "*********************************** DEBUGGING   parent (else) = " << parent->class_name() << endl;
 	  }

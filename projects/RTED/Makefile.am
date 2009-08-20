@@ -236,7 +236,8 @@ TRANSFORMING_FILES += ./runtimeCheck 2 $(filter rted_source/%$(strip $(1)), $^) 
 				       $(INCLUDES) \
 				       -I$(top_builddir) \
 				       -I$(srcdir) \
-				       -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@));
+				       -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@))\
+					   > $@.runtimeCheck.out 2> $@.runtimeCheck.err;
 TRANSFORMING_FILES += if [ $$? -ne 0 ]; then exit 1; fi;
 
 TRANSFORMING_FILES += echo " done.";
@@ -337,7 +338,7 @@ rted_source/tests/C++/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SC
 # rules to run arbitrary tests from the rted distribution
 #------------------------------------------------------------------------------
 
-run/%: rted_source/%.bin rted_source/%.expected-output 
+run/%: rted_source/%.bin rted_source/%.expected-output
 	@echo -n "   running runtime error detection ... "
 	@OUTPUT_SRC='$(strip $(filter %.expected-output, $?))';\
 		if [ -f "$$OUTPUT_SRC" ]; then\
@@ -450,12 +451,12 @@ c-compile-runtimesystem:
 	@echo "Make sure that RuntimeSystem compiles with C"
 
 # run/C/subprogram_call_errors
-# run/C/uninitialized_variables
 # run/C/floating_point_errors
 check-local: runtimeCheck $(TESTCODES) c-compile-runtimesystem \
 				run/C/array_index_out_of_bound run/C/string_errors \
 				run/C/allocation_deallocation_errors run/C/input_output_errors \
-				run/C/memory_leaks run/C/C99_specific_errors run/C/pointer_errors
+				run/C/memory_leaks run/C/uninitialized_variables \
+				run/C/C99_specific_errors run/C/pointer_errors
 	@echo "***************************************************************************************"
 	@echo "*** ROSE/projects/runtimeErrorCheck: make check rule complete (terminated normally) ***"
 	@echo "***************************************************************************************"

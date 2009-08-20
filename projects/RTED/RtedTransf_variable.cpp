@@ -342,7 +342,7 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
 
 
 void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE,
-			SgPointerDerefExp* derefExp
+			SgExpression* derefExp
 						  ) {
 	SgStatement* stmt = getSurroundingStatement(varRefE);
   // make sure there is no extern in front of stmt
@@ -386,6 +386,8 @@ void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE,
     }
     if (isSgBasicBlock(scope) ||
 	isSgIfStmt(scope) ||
+	isSgWhileStmt(scope) ||
+	isSgDoWhileStmt(scope) ||
 	isSgForStatement(scope)) {
       // build the function call : runtimeSystem-->createArray(params); ---------------------------
       SgExprListExp* arg_list = buildExprListExp();
@@ -399,17 +401,26 @@ void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE,
       SgExpression* accessed_exp = varRefE;
       SgExpression* write_location_exp = varRefE;
       if( derefExp ) {
-          // consider
-          //    int *p;
-          //    *p = 24601;
-          //  It is necessary that &p, sizeof(p) is readable, but not 
-          //  &(*p), sizeof(*p).
-          if( isUsedAsLvalue( derefExp )) {
-              accessed_exp = derefExp -> get_operand();
-              write_location_exp = derefExp;
-              read_write_mask |= Write;
-          } else
-              accessed_exp = derefExp;
+		  SgPointerDerefExp* deref_op = isSgPointerDerefExp( derefExp );
+		  SgArrowExp* arrow_op = isSgArrowExp( derefExp );
+		  ROSE_ASSERT( deref_op || arrow_op );
+
+		  if( arrow_op ) {
+			  accessed_exp
+				  = buildPointerDerefExp( arrow_op -> get_lhs_operand() );
+		  } else {
+			  // consider
+			  //    int *p;
+			  //    *p = 24601;
+			  //  It is necessary that &p, sizeof(p) is readable, but not 
+			  //  &(*p), sizeof(*p).
+			  if( isUsedAsLvalue( derefExp )) {
+				  accessed_exp = deref_op -> get_operand();
+				  write_location_exp = deref_op;
+				  read_write_mask |= Write;
+			  } else
+				  accessed_exp = deref_op;
+		  }
       }
       appendAddressAndSize(initName, accessed_exp, arg_list,2);
       appendAddressAndSize(initName, write_location_exp, arg_list,2);

@@ -34,9 +34,10 @@ RuntimeSystem::RuntimeSystem()
     for(int i=0; i< RuntimeViolation::UNKNOWN_VIOLATION; i++)
     {
         RuntimeViolation::Type t = static_cast<RuntimeViolation::Type>(i);
-        violationTypePolicy[t] = Exit;
+        violationTypePolicy[t] = ViolationPolicy::Exit;
     }
-    violationTypePolicy[RuntimeViolation::INVALID_PTR_ASSIGN] = InvalidatePointer;
+    violationTypePolicy[ RuntimeViolation::INVALID_PTR_ASSIGN ]
+        = ViolationPolicy::InvalidatePointer;
 
     readConfigFile();
 }
@@ -68,7 +69,7 @@ void RuntimeSystem::readConfigFile()
         string value_name;
         lineStream >> key;
         lineStream >> value_name;
-        ViolationPolicy value = getPolicyFromString( value_name );
+        ViolationPolicy::Type value = getPolicyFromString( value_name );
 
         if(key == "qtDebugger")
             qtDebugger = (
@@ -82,7 +83,7 @@ void RuntimeSystem::readConfigFile()
             RuntimeViolation::Type t = RuntimeViolation::getViolationByString(key);
             if (t == RuntimeViolation::UNKNOWN_VIOLATION)\
                 cerr << "Unknown key " << key << endl;
-            else if( value == Invalid )
+            else if( value == ViolationPolicy::Invalid )
                 cerr << "Unknown Policy" << value_name << endl;
             else
                 violationTypePolicy[t]=value;
@@ -107,12 +108,16 @@ void RuntimeSystem::checkpoint(const SourcePosition & pos)
 
 // --------------------- Violations ---------------------------------
 
-RuntimeSystem::ViolationPolicy RuntimeSystem::getPolicyFromString( std::string &name ) const {
-    if      ( "Exit"                == name ) return Exit;
-    else if ( "Warn"                == name ) return Warn;
-    else if ( "Ignore"              == name ) return Ignore;
-    else if ( "InvalidatePointer"   == name ) return InvalidatePointer;
-    else                                      return Invalid;
+ViolationPolicy::Type RuntimeSystem::getPolicyFromString( std::string &name ) const {
+    if      ( "Exit"                == name ) return ViolationPolicy::Exit;
+    else if ( "Warn"                == name ) return ViolationPolicy::Warn;
+    else if ( "Ignore"              == name ) return ViolationPolicy::Ignore;
+    else if ( "InvalidatePointer"   == name ) return ViolationPolicy::InvalidatePointer;
+    else                                      return ViolationPolicy::Invalid;
+}
+
+void RuntimeSystem::setViolationPolicy( RuntimeViolation::Type violation, ViolationPolicy::Type policy ) {
+    violationTypePolicy[ violation ] = policy;
 }
 
 void RuntimeSystem::violationHandler(RuntimeViolation::Type v, const std::string & description)  throw (RuntimeViolation)
@@ -123,12 +128,15 @@ void RuntimeSystem::violationHandler(RuntimeViolation::Type v, const std::string
 
 void RuntimeSystem::violationHandler(RuntimeViolation & vio)  throw (RuntimeViolation)
 {
+    if( vio.getType() == RuntimeViolation::NONE )
+        return;
+
     vio.setPosition(curPos);
-    ViolationPolicy policy = violationTypePolicy[ vio.getType() ];
+    ViolationPolicy::Type policy = violationTypePolicy[ vio.getType() ];
 
     switch( policy ) {
-        case Exit:
-        case Warn:
+        case ViolationPolicy::Exit:
+        case ViolationPolicy::Warn:
             (*defaultOutStr) << vio  << endl;
         default:
             ;// do nothing
@@ -142,7 +150,7 @@ void RuntimeSystem::violationHandler(RuntimeViolation & vio)  throw (RuntimeViol
         stringstream s;
         s << vio;
 
-        if( Exit == policy )
+        if( ViolationPolicy::Exit == policy )
             RtedDebug::instance()->addMessage(s.str().c_str(),RtedDebug::ERROR);
         else
             RtedDebug::instance()->addMessage(s.str().c_str(),RtedDebug::WARNING);
@@ -151,11 +159,12 @@ void RuntimeSystem::violationHandler(RuntimeViolation & vio)  throw (RuntimeViol
     }
 #endif
 
-    if( testingMode )
-        throw vio;
-
-    if( Exit == policy )
-        exit( 0 );
+    if( ViolationPolicy::Exit == policy ) {
+        if( testingMode )
+            throw vio;
+        else
+            exit( 0 );
+    }
 
     return;
 }

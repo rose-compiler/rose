@@ -87,6 +87,9 @@ class MemoryType
         /// however it is possible to access the mem-region later with "containing" types
         /// f.e. first access with int-pointer, then with struct pointer, which as as first member an int
         void registerMemType(addr_type offset, RsType * type);
+        /// As @see registerMemType excpet that memory is only checked, not
+        /// registered.
+        void checkMemType(addr_type offset, RsType * type);
 
 
         /// Returns the RsType, or the CONTAINING ARRAY type which is associated with that offset
@@ -177,8 +180,12 @@ class MemoryManager
         /// There a two kinds of violation: change of allocation chunk
         ///                                 change of "typed-chunk" (see example)
         bool checkIfSameChunk(addr_type a1, addr_type a2, RsType * t);
-        bool checkIfSameChunk(addr_type a1, addr_type a2, size_t size);
-        bool checkIfSameChunk(addr_type a1, addr_type a2, size_t size, RuntimeViolation::Type violation);
+        bool checkIfSameChunk(
+                addr_type a1,
+                addr_type a2,
+                size_t size,
+                RuntimeViolation::Type violation = RuntimeViolation::POINTER_CHANGED_MEMAREA
+        );
 
         /// Reports a violation for all non freed memory locations
         /// call this function at end of program

@@ -1,3 +1,4 @@
+// vim:et sta sw=4 ts=4:
 #include <rose.h>
 #include <string>
 #include "RtedSymbols.h"
@@ -60,6 +61,15 @@ RtedTransformation::isUsedAsLvalue( SgExpression* exp ) {
     return(
         assign && assign -> get_lhs_operand() == ancestor
     );
+}
+
+bool
+RtedTransformation::isInInstrumentedFile( SgNode* n ) {
+	ROSE_ASSERT( n );
+	std::string file_name = n -> get_file_info() -> get_filename();
+	return !(
+		rtedfiles -> find( file_name ) == rtedfiles -> end() 
+	);
 }
 
 
@@ -454,34 +464,28 @@ void RtedTransformation::appendTypeInformation( SgInitializedName* initName, SgT
     appendExpression(arg_list, buildIntVal( indirection_level ));
 }
 
-void RtedTransformation::appendAddressAndSize(SgInitializedName* initName,
-					      SgExpression* varRefE,
-					      SgExprListExp* arg_list,
-					      int appendType
-					      ) {
+void RtedTransformation::appendAddressAndSize(
+                            SgInitializedName* initName,
+                            SgExpression* varRefE,
+                            SgExprListExp* arg_list,
+                            int appendType ) {
 
     SgScopeStatement* scope = NULL;
-    SgType* basetype = NULL;
 
+    // FIXME 2: It would be better to explicitly handle dot and arrow
+    // expressions here, rather than indirectly through the var's declared scope
     if( initName) {
-        SgType* type = initName->get_type();
-        ROSE_ASSERT(type);
-
-        if( isSgPointerType( type ) )
-            basetype = isSgPointerType(type)->get_base_type();
         scope = initName->get_scope();
     }
 
     SgExpression* exp = varRefE;
-    if (    isSgClassType(basetype) ||
-            isSgTypedefType(basetype) ||
-            isSgClassDefinition(scope)) {
+    if ( isSgClassDefinition(scope) ) {
 
         // member -> &( var.member )
         exp = getUppermostLvalue( varRefE );
     }
 
-	appendAddress( arg_list, exp );
+    appendAddress( arg_list, exp );
 
     // for pointer arithmetic variable access in expressions, we want the
     // equivalent expression that computes the new value.

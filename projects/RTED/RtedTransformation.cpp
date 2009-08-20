@@ -1,5 +1,6 @@
 #include <rose.h>
 #include <string>
+#include <set>
 #include <boost/foreach.hpp>
 #include "RtedSymbols.h"
 #include "DataStructures.h"
@@ -26,11 +27,13 @@ RtedTransformation::parse(int argc, char** argv) {
 /* -----------------------------------------------------------
  * Perform all transformations needed (Step 2)
  * -----------------------------------------------------------*/
-void RtedTransformation::transform(SgProject* project) {
+void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
   cout << "Running Transformation..." << endl;
   globalScope = getFirstGlobalScope(isSgProject(project));
 
   ROSE_ASSERT( project);
+
+  this -> rtedfiles = &rtedfiles;
 
   // traverse the AST and find locations that need to be transformed
   symbols->traverse(project, preorder);
@@ -178,11 +181,11 @@ void RtedTransformation::transform(SgProject* project) {
 
   cerr << "\n Number of Elements in variable_access_pointer  : "
        << variable_access_pointerderef.size() << endl;
-  std::map<SgPointerDerefExp*, SgVarRefExp*>::const_iterator itAccess2 =
+  std::map<SgExpression*, SgVarRefExp*>::const_iterator itAccess2 =
 		  variable_access_pointerderef.begin();
   for (; itAccess2 != variable_access_pointerderef.end(); itAccess2++) {
 	  // can be SgVarRefExp or SgPointerDerefExp
-	  SgPointerDerefExp* pd = isSgPointerDerefExp(itAccess2->first);
+	  SgExpression* pd = isSgExpression(itAccess2->first);
 	  SgVarRefExp* in = isSgVarRefExp(itAccess2->second);
 	  if (pd)
 		  insertAccessVariable(in, pd);
@@ -285,6 +288,7 @@ void RtedTransformation::transform(SgProject* project) {
  * -----------------------------------------------------------*/
 
 void RtedTransformation::visit(SgNode* n) {
+
 
   // find MAIN ******************************************
   if (isSgFunctionDefinition(n)) {

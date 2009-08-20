@@ -560,6 +560,7 @@ void testPointerChanged()
 
     TypeSystem * ts = rs->getTypeSystem();
 
+    rs -> setViolationPolicy( RuntimeViolation::INVALID_PTR_ASSIGN, ViolationPolicy::Exit );
     // Case1: change of allocation chunk
     addr_type addr=100;
     int ptrSize = sizeof(void*);
@@ -602,9 +603,26 @@ void testPointerChanged()
 
         try{ rs->registerPointerChange("mangled_intPtr",0x42 + 10*sizeof(int),true); }
         TEST_CATCH(RuntimeViolation::INVALID_PTR_ASSIGN )
-
     rs->endScope();
 
+    // use default policy for case 3
+    rs -> setViolationPolicy( RuntimeViolation::INVALID_PTR_ASSIGN, ViolationPolicy::InvalidatePointer );
+    // Case3: into non-allocated memory
+    rs -> beginScope( "Scope3" );
+
+        CHECKPOINT
+        int *ptr = (int*) &ptr;
+        rs->createVariable( (addr_type) &ptr,"s3_ptr","mangled_s3_ptr",ts->getPointerType("SgTypeInt"));
+
+        CHECKPOINT
+        // default policy is to invalidate pointers
+        rs->registerPointerChange( (addr_type) &ptr, (addr_type) ptr, ts->getPointerType("SgTypeInt"), true, false);
+
+        CHECKPOINT
+        try{ rs->checkMemRead( (addr_type) &(*ptr), sizeof(&(*ptr))); }
+        TEST_CATCH(RuntimeViolation::INVALID_READ )
+
+    rs->endScope();
 
 
     CLEANUP
@@ -709,6 +727,7 @@ void testArrayAccess()
     rs->createMemory(heapAddr,10*sizeof(int));
     rs->createMemory(heapAddr+10*sizeof(int),10); //allocate second chunk directly afterwards
 
+    rs -> setViolationPolicy( RuntimeViolation::INVALID_PTR_ASSIGN, ViolationPolicy::Exit );
     rs->beginScope("Scope");
 
     addr_type pointerAddr = 0x100;
@@ -728,12 +747,13 @@ void testArrayAccess()
 
     // write in illegal mem region before
     try { rs->registerPointerChange(pointerAddr,heapAddr - sizeof(int),true); }
-    TEST_CATCH ( RuntimeViolation::INVALID_PTR_ASSIGN )
+    TEST_CATCH ( RuntimeViolation::INVALID_READ )
 
     rs->freeMemory(heapAddr);
     rs->freeMemory(heapAddr+10*sizeof(int));
 
     rs->endScope();
+    rs -> setViolationPolicy( RuntimeViolation::INVALID_PTR_ASSIGN, ViolationPolicy::InvalidatePointer );
 
     CLEANUP
 }
@@ -1207,7 +1227,7 @@ void testPartialTypeSystemArrayAccess() {
     //  0       8   12  16
     //          [  Typ?  ]
     CHECKPOINT 
-    mm -> checkIfSameChunk( Addr, Addr + el2_offset, sizeof( Typ )); 
+    mm -> checkIfSameChunk( Addr, Addr + el2_offset, (size_t)sizeof( Typ )); 
 
     rs -> freeMemory( Addr );
     CLEANUP

@@ -35,6 +35,23 @@
 
 # Print out the line number
 /at line [0-9]\+/I {
+
+	########################################################################
+    # Special cases where we disagree with RTED about exactly where the error
+	# line is
+    s/^.*at line \([0-9]\+\).*c_K_1_d.*$/49/I
+	# Actually here I think the ok_msg is just completely wrong.  It conflicts
+	# with the comments in the .c file, which are actually correct.
+    s/^.*at line \([0-9]\+\).*c_J_6_a.*$/34/I
+	########################################################################
+
+	########################################################################
+	# Special cases where we report the error at the end of a range (e.g. "at
+	# line x|y")
+    s/^.*at line \([0-9]\+|\)\?\([0-9]\+\).*c_A_9_e.*$/\2/I
+	########################################################################
+
+
     # In the normal case we just output the line number.
     s/^.*at line \([0-9]\+\).*$/\1/I
     P

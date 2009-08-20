@@ -4,6 +4,7 @@
 #ifndef RTEDTRANS_H
 #define RTEDTRANS_H
 
+#include <set>
 #include "RtedSymbols.h"
 #include "DataStructures.h"
 
@@ -14,6 +15,11 @@
 class RtedTransformation : public AstSimpleProcessing {
  private:
   enum ReadWriteMask { Read = 1, Write = 2, BoundsCheck = 4 };
+
+
+  // track the files that we're transforming, so we can ignore nodes and
+  // references to nodes in other files
+  std::set< std::string > *rtedfiles;
 
   // VARIABLES ------------------------------------------------------------
   SgGlobal* globalScope;
@@ -36,7 +42,9 @@ class RtedTransformation : public AstSimpleProcessing {
   std::vector<SgInitializedName*> variable_declarations;
   // We need to store the variables that are being accessed
   std::vector<SgVarRefExp*> variable_access_varref;
-  std::map<SgPointerDerefExp*,SgVarRefExp*> variable_access_pointerderef;
+  // map of expr ∈ { SgPointerDerefExp, SgArrowExp }, SgVarRefExp pairs
+  // the deref expression must be an ancestor of the varref
+  std::map<SgExpression*,SgVarRefExp*> variable_access_pointerderef;
 
   // Track pointer arithmetic, e.g. ++, --
   std::vector< SgExpression* > pointer_movements;
@@ -111,6 +119,7 @@ class RtedTransformation : public AstSimpleProcessing {
    * (such as @ref SgAssignmentOp or @ref SgPlusAssignOp)
    */
   bool isUsedAsLvalue( SgExpression* exp );
+  bool isInInstrumentedFile( SgNode* n );
   SgExpression* getExprBelowAssignment(SgExpression* exp);
   void appendFileInfo( SgNode* n, SgExprListExp* arg_list);
   void appendFileInfo( Sg_File_Info* n, SgExprListExp* arg_list);
@@ -193,7 +202,7 @@ class RtedTransformation : public AstSimpleProcessing {
 				);
   SgExprStatement* buildVariableCreateCallStmt(SgInitializedName* name, SgStatement* stmt, bool forceinit=false);
   void insertVariableCreateInitForParams( SgFunctionDefinition* n);
-  void insertAccessVariable(SgVarRefExp* varRefE,SgPointerDerefExp* derefExp);
+  void insertAccessVariable(SgVarRefExp* varRefE,SgExpression* derefExp);
   void visit_isSgVarRefExp(SgVarRefExp* n);
 
   std::string removeSpecialChar(std::string str);
@@ -235,7 +244,7 @@ class RtedTransformation : public AstSimpleProcessing {
   void insertProlog(SgProject* proj);
 
   // analyse file and apply necessary (call) transformations
-  void transform(SgProject* project);
+  void transform(SgProject* project, std::set<std::string> &rtedfiles);
 
   // Run frontend and return project
   SgProject* parse(int argc, char** argv);
