@@ -106,22 +106,39 @@ take(N, List, Head) :-
   length(Head, N),
   append(Head, _Tail, List).
 
-%% foldl(+List, +Pred, -V).
-% Fold, starting with the first element of List
-foldl1([F|Fs], Pred, V) :-
-  foldl(Fs, Pred, F, V).
+%% foldl1(?List, ?Pred, ?Result)
+%  Fold List left-to-right using Pred, starting with the first
+%  element of List.
+foldl1([X|Xs], Pred, Result) :-
+  foldl(Xs, Pred, X, Result).
 
-%% foldl(+List, +Pred, +Start, -V).
-% foldl/4 - from the SWI-Mailing List
-% Fold a list using [pred], just as you would do in Haskell
-foldl([], _, V, V). 
-foldl(Fs, Pred, F, V) :- 
-  fold_lag(Fs, F, Pred, V). 
+%% foldl(?List, ?Pred, ?Start, ?Result)
+% Fold a list left-to-right using Pred, just as you would do in Haskell.
+% ==
+% pred(LHS, RHS, Result)
+% ==
+% Thanks to Markus Triska for the definition.
+foldl([], _, Result, Result). 
+foldl(List, Pred, Start, Result) :- 
+  fold_lag(List, Start, Pred, Result). 
 
-fold_lag([], V, _, V). 
-fold_lag([F|Fs], E, Pred, V) :- 
-  call(Pred, E, F, G), 
-  fold_lag(Fs, G, Pred, V). 
+fold_lag([], Result, _, Result). 
+fold_lag([RHS|Xs], LHS, Pred, Result) :- 
+  call(Pred, LHS, RHS, Accum), 
+  fold_lag(Xs, Accum, Pred, Result).
+
+%% foldr1(?List, ?Pred, ?Result)
+%  Fold List right-to-left using Pred starting with the last element
+%  of List.
+foldlr1(List, Pred, Result) :-
+  reverse(List, ListR),
+  foldl1(ListR, Pred, Result).
+
+%% foldr(?List, ?Pred, ?Start, ?Result)
+%  Fold List right-to-left using Pred starting with Start.
+foldlr(List, Pred, Start, Result) :-
+  reverse(List, ListR),
+  foldl1(ListR, Start, Pred, Result).
 
 %% string_to_term(+Text, -Term) is det.
 % Convert a String to a Term, stripping whitespaces
