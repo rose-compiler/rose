@@ -28,10 +28,6 @@ $(top_builddir)/clang/build/Makefile:
 	cd $(top_builddir)/src/termite/clang && sh BUILD-clang.sh
 
 EXTRA_DIST= README LICENSE ChangeLog KNOWN_BUGS BugLog \
-        docs/satire_cfgconstruction.pdf \
-	docs/satire_overview.pdf \
-	docs/satire_attributes_auxiliary_functions \
-	docs/termite.pdf \
 	\
 	testsuite/testsuite.sh \
 	testsuite/base/success/ab.c \

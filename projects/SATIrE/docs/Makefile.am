@@ -1,6 +1,12 @@
 PDFS=cfgconstruction.pdf pig-doc.pdf pag-interface.pdf manual.pdf
 nobase_dist_data=$(PDFS)  termite.pdf
-nodist_EXTRA_data=manual/manual_vars.tex.in
+nodist_EXTRA_data=manual/manual_vars.tex.in termite.tex
+
+EXTRA_DIST= \
+        satire_cfgconstruction.pdf \
+	satire_overview.pdf \
+	satire_attributes_auxiliary_functions \
+	termite.pdf
 
 dist-local: docs
 
