@@ -1,3 +1,29 @@
+2009-08-19 23:09  hamilton37
+
+	* [r6911] /trunk/ROSE/docs/Rose/developersAppendix.tex,
+	  /trunk/ROSE/docs/Rose/nmi-screenshot.png,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/nmi-postmortem: NMI:
+	  nmi-postmortem now automatically sets up home dir on run host.
+	  Documentation improved.
+	  
+	  When nmi-postmortem is invoked, it will check a file, .nmi-hosts,
+	  to see if the
+	  run host is known to have been set up. If this is not the case,
+	  nmi-postmortem
+	  will now setup the home directory on the run host (no effect if
+	  this has already
+	  been done) and copy the (now-passphraseless) public key to the
+	  run hosts's
+	  authorized_keys file.
+	  
+	  Because the public key now has an empty passphrase, having
+	  ssh-agent running
+	  (and its associated check in nmi-postmortem) is no longer
+	  necessary.
+	  
+	  The documentation has been updated to make some things more
+	  explicit.
+
 2009-08-16 19:18  dquinlan
 
 	* [r6881] /trunk/ROSE/src/frontend/SageIII/sageSupport.C: Added
