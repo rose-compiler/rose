@@ -1246,6 +1246,10 @@ Grammar::setUpStatements ()
      ClassDefinition.setDataPrototype("bool", "isPrivate", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // PC (7/27/2009): Support for identifying abstract classes.
+     ClassDefinition.setDataPrototype("bool", "isAbstract", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      TemplateDeclaration.setFunctionPrototype  ( "HEADER_TEMPLATE_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
      //
      // [DT] 5/10/2000 -- Added "type".
