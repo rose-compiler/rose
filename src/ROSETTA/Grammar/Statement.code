@@ -22,7 +22,7 @@ HEADER_START
           virtual void setStatic() ROSE_DEPRECATED_FUNCTION;
 
       protected:
-          virtual bool replace_child(SgStatement *,SgStatement *, 
+          virtual bool replace_child(SgStatement *target,SgStatement * newStmt, 
                                          bool extractListFromBasicBlock = false);
           virtual bool insert_child(SgStatement*, SgStatement*, bool inFront = true, 
                                          bool extractListFromBasicBlock = false);
@@ -2863,13 +2863,14 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
 
      return false;
    }
-
+// Replace target with newstmt if target matches 'cur'
 template <class Elemtype> 
 inline bool
 StatementReplace (SgStatement *parent, Elemtype *& cur, SgStatement *target, SgStatement *newstmt)
    {
      if (cur == target)
         {
+          // newstmt can be NULL or it must be compatible with cur's type
        // assert( newstmt == 0 || newstmt->variantT() == cur->variantT());
           ROSE_ASSERT (newstmt == 0 || dynamic_cast<Elemtype*>(newstmt));
 #ifndef REMOVE_SET_PARENT_FUNCTION
@@ -13644,6 +13645,8 @@ SgOmpTaskStatement::post_construction_initialization()
 SOURCE_OMP_TASK_STATEMENT_END
 
 HEADER_OMP_BODY_STATEMENT_START
+      virtual bool replace_child(SgStatement *,SgStatement *,
+                                   bool extractListFromBasicBlock = false);
       public:
 
       virtual unsigned int cfgIndexForEnd() const;
@@ -13656,6 +13659,12 @@ SOURCE_OMP_BODY_STATEMENT_START
 void
 SgOmpBodyStatement::post_construction_initialization()
    {}
+
+bool
+SgOmpBodyStatement::replace_child(SgStatement *target,SgStatement *newstmt, bool extractBasicBlock)
+   {
+     return ( StatementReplace(this, p_body, target, newstmt) == true );
+   }
 SOURCE_OMP_BODY_STATEMENT_END
 
 

@@ -5017,6 +5017,7 @@ void SageInterface::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt)
   if (oldStmt == newStmt) return;
   SgStatement * p = isSgStatement(oldStmt->get_parent());
   ROSE_ASSERT(p);
+  // TODO  handle replace the body of a C/Fortran function definition with a single statement?
   oldStmt->set_parent(p); // needed ?
   p->replace_statement(oldStmt,newStmt);
 }

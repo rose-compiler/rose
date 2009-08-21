@@ -10241,6 +10241,7 @@ SgFile::initialization()
      p_openmp                  = false;
      p_openmp_parse_only       = true;
      p_openmp_ast_only         = false;
+     p_openmp_lowering         = false;
 
   // DQ (12/8/2007): Added commandline support for cray pointers.
      p_cray_pointer_support = false;

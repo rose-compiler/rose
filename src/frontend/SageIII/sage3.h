@@ -344,6 +344,8 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
 //#include "ArrayAnnot.h"
 //#include "ArrayInterface.h"
 //include "ArrayRewrite.h"
+// Liao, 8/11/2009, support for OpenMP lowering
+#include "omp_lowering.h" 
 
 // DQ (5/27/2007): Removed all entries in this file (only had AST Merge API and 
 // these were moved to merge.h).  One less header file make everything a little simpler!
