@@ -193,6 +193,7 @@ docs: FORCE_DOCS_TO_BE_MADE
 	   echo "    Generate all possible documentation cd docs; make documentation;"; \
 	   cd tutorial; $(MAKE) docs; \
 	   cd ../docs; $(MAKE) docs; \
+	   cd ../projects/haskellport; $(MAKE) docs; \
 	   cd $(compass_build_tooldir)/compass; $(MAKE) docs; \
    else \
       echo "Please look at the ROSE web site for documentation (www.roseCompiler.org)"; \
