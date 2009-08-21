@@ -27,7 +27,7 @@ RuntimeSystem* RuntimeSystem::instance()
 }
 
 RuntimeSystem::RuntimeSystem()
-    : defaultOutStr(&cout),testingMode(false),qtDebugger(false)
+    : testingMode( false ), qtDebugger(false), defaultOutStr(&cout)
 {
 
     // by default abort on all violations except INVALID_PTR_ASSIGN
