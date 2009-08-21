@@ -949,10 +949,13 @@ AC_SUBST(INCLUDE_COMPASS_MAKEFILE_INC)
 # happened
 ACROSE_ENABLE_ROSEHPCT
 
+# PC (08/20/2009): Symbolic links need to be resolved for the callgraph analysis tests
+res_top_pwd=$(cd "$top_pwd" && pwd -P)
+
 # DQ (11/10/2007): Add paths defined by automake to the generated rose.h.in and rose.h
 # header files so that this information will be available at compile time. Unclear
 # which syntax is best for the specification of these paths.
-AC_DEFINE_UNQUOTED([ROSE_COMPILE_TREE_PATH],"$top_pwd",[Location of ROSE Compile Tree.])
+AC_DEFINE_UNQUOTED([ROSE_COMPILE_TREE_PATH],"$res_top_pwd",[Location of ROSE Compile Tree.])
 
 # This block turns off features of libharu that don't work with Java
 with_png=no
