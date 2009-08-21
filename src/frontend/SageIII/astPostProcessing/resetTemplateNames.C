@@ -719,7 +719,9 @@ void resetTemplateNames( SgNode* node )
   // I gather that once the parent pointer is set then that indicates that the class declaration is 
   // part of a valid AST?
   // setTemplateNamesTraversal.traverse(node,preorder);
-     if (node->get_parent() != NULL)
+  // GB (8/19/2009): Allowing SgProject nodes here, under the assumption
+  // that a project node also represents a valid AST.
+     if (node->get_parent() != NULL || isSgProject(node))
         {
        // DQ (2/10/2007): Use the memory pool traversal so that we can get all relavant IR nodes (missed to many previously, which made the AST merge a problem)
        // ResetTemplateNames setTemplateNamesTraversal;
