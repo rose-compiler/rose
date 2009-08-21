@@ -55,8 +55,9 @@ AM_YFLAGS = -d
 lib_LTLIBRARIES = libtermsupport.la
 libtermsupport_la_SOURCES = \
 	RoseToTerm.C \
-	dfiparser.tab.c++ dfiparser.tab.h++ dfiscanner.c++ \
 	TermToRose.C PrologTerm.C RoseEnums.C
+nodist_libtermsupport_la_SOURCES = \
+	dfiparser.tab.c++ dfiparser.tab.h++ dfiscanner.c++
 
 CLEANFILES = termpretty.c++ \
 	     dfiparser.c++ dfiparser.h dfiscanner.c++ \
@@ -70,10 +71,11 @@ nobase_dist_data_DATA =  termite/ast_properties.pl  termite/loops.pl \
                          termite/ast_transform.pl   termite/utils.pl \
                          termite/ast_walk.pl        termite/callgraph.pl 
 else	
+nodist_BUILT_SOURCES = termparser.tab.c++ termparser.tab.h++ \
+	                dfiparser.tab.c++ dfiparser.tab.h++ \
+			termparser.c++ termparser.h termlexer.c++
 CLEANFILES += termparser.c++ termparser.h termlexer.c++ termparser.tab.c++ \
               termparser.tab.h++
-BUILT_SOURCES = termparser.tab.c++ termparser.tab.h++ \
-                dfiparser.tab.c++ dfiparser.tab.h++
 libtermsupport_la_SOURCES += termparser.y++ termlexer.l++
 nobase_include_HEADERS += satire/termparser.h
 
@@ -122,5 +124,5 @@ EXTRA_DIST = \
   term2c \
   dfiparser.y++ dfiscanner.l++ \
   term_lint.pl termite_spec.pl \
-  clang/README clang/INSTALL clang/BUILD-clang.sh clang/clang-termite.patch
+  clang/README clang/INSTALL clang/clang-termite.patch
 

@@ -21,10 +21,11 @@ V0.?.? ? AP,...
   - Correct generation of container nodes even when the list of successors
     is empty (arity used to be broken).
   - Added preprocessing info nodes.
-  - Integration of clang frontend from LLVM project.
+  - Integration of clang frontend from the LLVM project. [DE,FB]
   - Analyzers can now take TERMITE files as input. (New option
 	--input-termite-ast=<FILE>)
   - New termite_lint utility checks for sanity of Termite terms.
+  - Termite now comes with a manual. Check out docs/termite.pdf!
 
 * Building SATIrE without PAG [GB]
   - SATIrE can now be built without requiring PAG; use --without-pag
