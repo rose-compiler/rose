@@ -39,6 +39,50 @@ using namespace SageInterface;
 using namespace SageBuilder;
 using namespace OmpSupport;
 
+
+
+std::string
+SgValueExp::get_constant_folded_value_as_string()
+   {
+  // DQ (8/18/2009): Added support for generating a string from a SgValueExp.
+  // Note that the point is not not call unparse since that would providethe 
+  // expression tree and we want the constant folded value.
+
+     string s;
+     const int max_buffer_size = 500;
+     char buffer[max_buffer_size];
+     switch (variantT())
+        {
+          case V_SgIntVal: 
+             {
+               SgIntVal* integerValueExpression = isSgIntVal(this);
+               int numericValue = integerValueExpression->get_value();
+            // printf ("numericValue of constant folded expression = %d \n",numericValue);
+               snprintf (buffer,max_buffer_size,"%d",numericValue);
+               s = buffer;
+               break;
+             }
+
+          case V_SgUnsignedLongLongIntVal:
+             {
+               SgUnsignedLongLongIntVal* integerValueExpression = isSgUnsignedLongLongIntVal(this);
+               unsigned long long int numericValue = integerValueExpression->get_value();
+            // printf ("numericValue of constant folded expression = %llu \n",numericValue);
+               snprintf (buffer,max_buffer_size,"%llu",numericValue);
+               s = buffer;
+               break;
+             }
+
+          default:
+             {
+               printf ("Error case of value = %s not handled \n",this->class_name().c_str());
+               ROSE_ASSERT(false);
+             }
+        }
+
+     return s;
+   }
+
 void
 whatTypeOfFileIsThis( const string & name )
    {
@@ -7267,30 +7311,34 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
              }
 
           case V_SgDotExp:
-          {
-            SgDotExp * dotExp = isSgDotExp(functionExp);
-            ROSE_ASSERT(dotExp != NULL);
-            SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(dotExp->get_rhs_operand());
-            ROSE_ASSERT(memberFunctionRefExp != NULL);
-            returnSymbol = memberFunctionRefExp->get_symbol();
+             {
+               SgDotExp * dotExp = isSgDotExp(functionExp);
+               ROSE_ASSERT(dotExp != NULL);
+               SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(dotExp->get_rhs_operand());
+               ROSE_ASSERT(memberFunctionRefExp != NULL);
+               returnSymbol = memberFunctionRefExp->get_symbol();
 
             // DQ (2/8/2009): Can we assert this! What about pointers to functions?
-            ROSE_ASSERT(returnSymbol != NULL);
+               ROSE_ASSERT(returnSymbol != NULL);
 
-            break;
-          }
-          //Liao, 5/19/2009
-          //A pointer to function can be associated to any functions with a matching function type
-          //There is no single function declaration which is associated with it.
-          //In this case return NULL should be allowed and the caller has to handle it accordingly
+               break;
+             }
+
+       // Liao, 5/19/2009
+       // A pointer to function can be associated to any functions with a matching function type
+       // There is no single function declaration which is associated with it.
+       // In this case return NULL should be allowed and the caller has to handle it accordingly
           case V_SgPointerDerefExp:
-          {
-            break;
-          }
+             {
+               break;
+             }
+
           case V_SgArrowStarOp:
              {
-               printf ("ERROR: Sorry, cases of SgDotStarOp and SgArrowStarOp not implemented yet in SgFunctionCallExp::getAssociatedSymbol() functionExp = %p = %s \n",functionExp,functionExp->class_name().c_str());
-              ROSE_ASSERT(returnSymbol != NULL);
+            // DQ (8/18/2009): Matt reports that he was able to trigger this case, I likely need to test this on his code.
+            // I also fixed the error message to make it more clear.
+               printf ("ERROR: Sorry, case SgArrowStarOp not implemented yet (might be similar to SgDotExp case) in SgFunctionCallExp::getAssociatedSymbol() functionExp = %p = %s \n",functionExp,functionExp->class_name().c_str());
+               ROSE_ASSERT(returnSymbol != NULL);
                break;
              }
 
@@ -7300,8 +7348,10 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
                ROSE_ASSERT(false);
              }
         }
-// We allow it to be NULL for a pointer to function
-//     ROSE_ASSERT(returnSymbol != NULL);
+
+  // DQ (8/18/2009): I think this was commented out by Liao (5/19/2009).
+  // We allow it to be NULL for a pointer to function
+  // ROSE_ASSERT(returnSymbol != NULL);
 
      return returnSymbol;
    }

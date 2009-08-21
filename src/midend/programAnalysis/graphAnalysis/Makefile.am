@@ -18,15 +18,15 @@ sourse_files = \
 
 # DQ (5/2/2009): I wonder why we can't form predicates this way (does not work in Automake).
 #if ROSE_USE_NEW_GRAPH_NODES && ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
-if ROSE_USE_NEW_GRAPH_NODES
+# if ROSE_USE_NEW_GRAPH_NODES
 #if ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
-libSB_GraphAnalysis_la_SOURCES = $(sourse_files)
+#libSB_GraphAnalysis_la_SOURCES = $(sourse_files)
 #else
 #libSB_GraphAnalysis_la_SOURCES = 
 #endif
-else
+#else
 libSB_GraphAnalysis_la_SOURCES = $(sourse_files)
-endif
+#endif
 
 
 clean-local:

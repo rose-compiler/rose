@@ -215,6 +215,9 @@ HEADER_GRAPH_START
  //! Builds a set of node index values associated with a label.
      std::set<SgGraphNode*> computeNodeSet( const std::string & label );
 
+ //! Builds a set of all nodes in the graph.
+     std::set<SgGraphNode*> computeNodeSet();
+
   //! Integer index version of "std::set<SgGraphNode*> computeNodeSet( const std::string & label );"
      std::set<int> computeNodeIndexSet( const std::string & label );
 
@@ -341,10 +344,10 @@ HEADER_INCIDENCE_UNDIRECTED_GRAPH_END
 
 
 HEADER_INCIDENCE_DIRECTED_GRAPH_START
- 	// tps (4/30/2009): The following are functions on the graph that were used before 
- 	// in the old graph implementation
-  	std::set<SgGraphEdge*> getEdge(SgGraphNode* src);
-  	bool checkIfGraphEdgeExists(SgGraphNode* src);
+  // tps (4/30/2009): The following are functions on the graph that were used before 
+  // in the old graph implementation
+  	  std::set<SgGraphEdge*> getEdge(SgGraphNode* src);
+  	  bool checkIfGraphEdgeExists(SgGraphNode* src);
 
      void post_construction_initialization();
 
@@ -352,15 +355,20 @@ HEADER_INCIDENCE_DIRECTED_GRAPH_START
      SgDirectedGraphEdge* addDirectedEdge( SgGraphNode* a, SgGraphNode* b, const std::string & name = "");
 
  //! Add support for externally build SgGraphNode objects
-SgDirectedGraphEdge* addDirectedEdge( SgDirectedGraphEdge* edge  );
-
-
+     SgDirectedGraphEdge* addDirectedEdge( SgDirectedGraphEdge* edge  );
 
 	// tps (4/30/2009): Added to support functionality for DirectedGraphs		   
-    void getSuccessors(SgGraphNode* node, std::vector <SgGraphNode*>& vec );
-    void getPredecessors(SgGraphNode* node, std::vector <SgGraphNode*>& vec );
-    std::set<SgDirectedGraphEdge*> getDirectedEdge(SgGraphNode* src, SgGraphNode* trg);
-    bool checkIfDirectedGraphEdgeExists(SgGraphNode* src, SgGraphNode* trg);
+     void getSuccessors(SgGraphNode* node, std::vector <SgGraphNode*>& vec );
+     void getPredecessors(SgGraphNode* node, std::vector <SgGraphNode*>& vec );
+     std::set<SgDirectedGraphEdge*> getDirectedEdge(SgGraphNode* src, SgGraphNode* trg);
+     bool checkIfDirectedGraphEdgeExists(SgGraphNode* src, SgGraphNode* trg);
+
+  // DQ (8/18/2009): Added support for construction of sets of edges.
+     std::set<SgDirectedGraphEdge*> computeEdgeSetIn( SgGraphNode* node );
+     std::set<int> computeEdgeSetIn( int node_index );
+     std::set<SgDirectedGraphEdge*> computeEdgeSetOut( SgGraphNode* node );
+     std::set<int> computeEdgeSetOut( int node_index );
+
 HEADER_INCIDENCE_DIRECTED_GRAPH_END
 
 

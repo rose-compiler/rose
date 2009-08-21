@@ -26,19 +26,20 @@ else
 database_sourse_files =
 endif
 
+# DQ (8/18/2009): Removed the support for this old configure option.
 # DQ (5/2/2009): Added support for configure options
-if ROSE_USE_NEW_GRAPH_NODES
+#if ROSE_USE_NEW_GRAPH_NODES
 #if ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
 # Using the new Graph IR nodes and the optional backward compatability API.
-libbinaryMidend_la_SOURCES = $(sourse_files) $(database_sourse_files)
+#libbinaryMidend_la_SOURCES = $(sourse_files) $(database_sourse_files)
 #else
 # The current code will not compile with the new Graph IR node interface.
 #libbinaryMidend_la_SOURCES =
 #endif
-else
+#else
 # This is the original case (not using the new Graph IR nodes)
 libbinaryMidend_la_SOURCES = $(sourse_files) $(database_sourse_files)
-endif
+#endif
 
 BUILT_SOURCES = 
 

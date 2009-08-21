@@ -294,6 +294,9 @@ HEADER_VALUE_EXPRESSION_START
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
 
+       // DQ (8/18/2009): Added support to get the constant folded value as a string instead of the expression tree.
+          std::string get_constant_folded_value_as_string();
+
 HEADER_VALUE_EXPRESSION_END
 
 
