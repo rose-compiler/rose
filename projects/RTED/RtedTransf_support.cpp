@@ -432,36 +432,60 @@ void RtedTransformation::appendTypeInformation( SgInitializedName* initName, SgE
     appendTypeInformation( initName, initName -> get_type(), arg_list );
 }
 void RtedTransformation::appendTypeInformation( SgInitializedName* initName, SgType* type, SgExprListExp* arg_list ) {
-    SgType* basetype = NULL;
-    ROSE_ASSERT(type);
-
-    SgExpression* basetypeStr = buildString("");
-    size_t indirection_level = 0;
-
-    basetype = type;
-    while( true )
-        if (isSgPointerType( basetype )) {
-            basetype = isSgPointerType( basetype )->get_base_type();
-            ++indirection_level;
-        } else if( isSgArrayType( basetype )) {
-            basetype = isSgArrayType( basetype )->get_base_type();
-            ++indirection_level;
-        } else break;
-
-    if ( indirection_level > 0 )
-        basetypeStr = buildString( basetype->class_name() );
-
-    SgExpression* ctypeStr = buildString(type->class_name());
     // arrays in parameters are actually passed as pointers, so we shouldn't
     // treat them as stack arrays
-    if(     initName
+	bool array_to_pointer 
+		=	initName
             && isSgFunctionParameterList( getSurroundingStatement( initName ))
-            &&  type->class_name() == "SgArrayType" )
-        ctypeStr = buildString( "SgPointerType" );
+            &&  type->class_name() == "SgArrayType";
 
-    appendExpression(arg_list, ctypeStr);
-    appendExpression(arg_list, basetypeStr);
-    appendExpression(arg_list, buildIntVal( indirection_level ));
+	appendTypeInformation( type, arg_list, false, array_to_pointer );
+}
+
+void RtedTransformation::appendTypeInformation( SgType* type, SgExprListExp* arg_list, bool resolve_class_names, bool array_to_pointer ) {
+    SgType* base_type = NULL;
+    ROSE_ASSERT(type);
+
+    size_t indirection_level = 0;
+
+    base_type = type;
+    while( true ) {
+        if (isSgPointerType( base_type )) {
+            base_type = isSgPointerType( base_type )->get_base_type();
+            ++indirection_level;
+        } else if( isSgArrayType( base_type )) {
+            base_type = isSgArrayType( base_type )->get_base_type();
+            ++indirection_level;
+        } else break;
+	}
+
+
+	std::string type_string = type -> class_name();
+	std::string base_type_string = "";
+	if( indirection_level > 0 )
+		base_type_string = base_type -> class_name();
+
+	// convert SgClassType to the mangled_name, if asked
+	if( resolve_class_names ) {
+		if( isSgClassType( type ))
+			type_string 
+				=	isSgClassDeclaration(
+						isSgClassType( type ) -> get_declaration()
+					) -> get_mangled_name();
+		if( indirection_level > 0 && isSgClassType( base_type ))
+			base_type_string 
+				=	isSgClassDeclaration(
+						isSgClassType( base_type ) -> get_declaration()
+					) -> get_mangled_name();
+	}
+
+	// convert array types to pointer types, if asked
+    if(	array_to_pointer &&  type_string == "SgArrayType" )
+        type_string =  "SgPointerType";
+
+    appendExpression( arg_list, buildString( type_string ));
+    appendExpression( arg_list, buildString( base_type_string ));
+    appendExpression( arg_list, buildIntVal( indirection_level ));
 }
 
 void RtedTransformation::appendAddressAndSize(

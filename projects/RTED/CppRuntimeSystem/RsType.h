@@ -341,6 +341,7 @@ class RsBasicType : public RsType
             SgTypeUnsignedLongLong,
             SgTypeUnsignedShort,
             SgTypeString,
+            SgTypeVoid,
             SgPointerType,
             Unknown //Unknown always has to be last entry
         };

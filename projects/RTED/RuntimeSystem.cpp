@@ -109,7 +109,6 @@ RsArrayType* RuntimeSystem_getRsArrayType(
   return static_cast<RsArrayType*>( type );
 }
 
-
 RsType* RuntimeSystem_getRsType(
         std::string type,
         std::string base_type,
@@ -133,6 +132,16 @@ RsType* RuntimeSystem_getRsType(
         return RuntimeSystem::instance() -> getTypeSystem()
             -> getTypeInfo( type );
     }
+}
+
+RsType* RuntimeSystem_getRsType(
+        std::string type,
+        std::string base_type,
+        size_t indirection_level) {
+
+  // in this case we don't do any class name resolution, presumably because it
+  // was done in the transformation
+  return RuntimeSystem_getRsType( type, base_type, "", indirection_level );
 }
 
 
@@ -250,7 +259,56 @@ void RuntimeSystem_checkMemoryAccess( unsigned long int address, long int size, 
 
 // ***************************************** FUNCTION CALL *************************************
 
+std::vector< RsType* > 
+RuntimeSystem_roseGatherTypes( int type_count, va_list vl ) {
 
+  std::vector< RsType* > types;
+
+  for( int i = 0; i < type_count; ++i ) {
+    const char* type_name = va_arg( vl, const char* );
+    const char* base_type_name = va_arg( vl, const char* );
+    int indirection_level = va_arg( vl, int );
+
+    types.push_back( RuntimeSystem_getRsType(
+          type_name, base_type_name, indirection_level ));
+  }
+
+  return types;
+}
+
+void RuntimeSystem_roseAssertFunctionSignature(
+      const char* filename, const char* line, const char* lineTransformed,
+		  const char* name, int type_count, ... ) {
+
+    RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
+    CHECKPOINT
+
+    va_list vl;
+    va_start( vl, type_count );
+
+    std::vector< RsType* > types 
+      = RuntimeSystem_roseGatherTypes( type_count, vl );
+
+    rs -> expectFunctionSignature( name, types );
+    
+    va_end( vl );
+}
+
+void RuntimeSystem_roseConfirmFunctionSignature(
+		  const char* name, int type_count, ... ) {
+
+    RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
+
+    va_list vl;
+    va_start( vl, type_count );
+
+    std::vector< RsType* > types 
+      = RuntimeSystem_roseGatherTypes( type_count, vl );
+
+    rs -> confirmFunctionSignature( name, types );
+    
+    va_end( vl );
+}
 
 
 

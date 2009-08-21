@@ -160,6 +160,20 @@ class RuntimeSystem
         void registerFileClose(FILE * file);
 
 
+        /// This function be called if a function call is about to be made whose
+        /// signature could not be verified at compile time (e.g. a c program
+        /// without the function definition, which may have an incorrect or
+        /// missing function prototype).
+        ///
+        /// @param name     The name of the function that is to be called.
+        /// @param types    The type signature of the function, including return
+        ///                 type.  The first item should be the return type
+        ///                 (SgVoidType if void), and the remaining, the types
+        ///                 of the parameters.
+        void expectFunctionSignature( const std::string & name, const std::vector< RsType* > types );
+        /// This function should be called at all function definitions, to
+        /// verify the signature of separately compiled callsites, if necessary.
+        void confirmFunctionSignature( const std::string & name, const std::vector< RsType* > types );
 
         // --------------------------------  Check Functions ------------------------------------------------------------
 
@@ -308,6 +322,10 @@ class RuntimeSystem
         std::map<RuntimeViolation::Type, ViolationPolicy::Type> violationTypePolicy;
 
         ViolationPolicy::Type getPolicyFromString( std::string & name ) const;
+
+        // members related to function signature verification
+        std::string nextCallFunctionName;
+        std::vector< RsType* > nextCallFunctionTypes;
 
     friend class PointerManager;
 };

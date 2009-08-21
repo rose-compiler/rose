@@ -115,6 +115,7 @@ std::string RuntimeViolation::getShortDescFromType(Type type)
         case POINTER_CHANGED_MEMAREA: return "Pointer changed Target-MemoryRegion";
 		case INVALID_MEM_OVERLAP:	  return "Illegal Memory Overlap";
 	    case INVALID_TYPE_ACCESS:     return "Invalid access to \"typed\" memory";
+		case UNEXPECTED_FUNCTION_SIGNATURE:	return "Incorrect types at function call";
         case NONE:                    return "Not a violation";
         default:
             // handle all possible violations!
@@ -141,6 +142,7 @@ RuntimeViolation::Type RuntimeViolation::getViolationByString(const string & s)
     else if  (s == "POINTER_CHANGED_MEMAREA")  return POINTER_CHANGED_MEMAREA;
     else if  (s == "INVALID_MEM_OVERLAP")      return INVALID_MEM_OVERLAP;
     else if  (s == "INVALID_TYPE_ACCESS")      return INVALID_TYPE_ACCESS;
+    else if  (s == "UNEXPECTED_FUNCTION_SIGNATURE") return UNEXPECTED_FUNCTION_SIGNATURE;
     else                                       return UNKNOWN_VIOLATION;
 }
 

@@ -40,6 +40,8 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
   roseCreateArray = symbols->roseCreateArray;
   roseArrayAccess = symbols->roseArrayAccess;
   roseFunctionCall = symbols->roseFunctionCall;
+  roseAssertFunctionSignature = symbols->roseAssertFunctionSignature;
+  roseConfirmFunctionSignature = symbols->roseConfirmFunctionSignature;
   roseFreeMemory = symbols->roseFreeMemory;
   roseReallocateMemory = symbols->roseReallocateMemory;
   roseRtedClose = symbols->roseRtedClose;
@@ -57,6 +59,8 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
   ROSE_ASSERT(roseCreateArray);
   ROSE_ASSERT(roseArrayAccess);
   ROSE_ASSERT(roseFunctionCall);
+  ROSE_ASSERT(roseAssertFunctionSignature);
+  ROSE_ASSERT(roseConfirmFunctionSignature);
   ROSE_ASSERT(roseFreeMemory);
   ROSE_ASSERT(roseReallocateMemory);
   ROSE_ASSERT(roseConvertIntToString);
@@ -222,7 +226,6 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
   std::map<SgClassDefinition*,RtedClassDefinition*> ::const_iterator refIt =
     class_definitions.begin();
   for (; refIt != class_definitions.end(); refIt++) {
-    SgClassDefinition* classDef = refIt->first;
     RtedClassDefinition* rtedClass = refIt->second;
     ROSE_ASSERT(rtedClass);
     insertRegisterTypeCall(rtedClass);
@@ -238,11 +241,21 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
     insertArrayAccessCall(array_node, array_size);
   }
 
+
+  cerr
+    << "\n Number of Elements in function_call_missing_def  : "
+    << function_call_missing_def.size() << endl;
+  BOOST_FOREACH( SgFunctionCallExp* fncall, function_call_missing_def ) {
+    insertAssertFunctionSignature( fncall );
+  }
+
+
   cerr
     << "\n Number of Elements in function_definitions  : "
     << function_definitions.size() << endl;
   BOOST_FOREACH( SgFunctionDefinition* fndef, function_definitions) {
-    insertVariableCreateInitForParams( fndef);
+    insertVariableCreateInitForParams( fndef );
+    insertConfirmFunctionSignature( fndef );
   }
 
   cerr << "\n Number of Elements in funccall_call  : "

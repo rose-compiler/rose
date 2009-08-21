@@ -13,6 +13,8 @@ public:
 	SgFunctionSymbol* roseArrayAccess;
 	SgFunctionSymbol* roseRtedClose;
 	SgFunctionSymbol* roseFunctionCall;
+	SgFunctionSymbol* roseAssertFunctionSignature;
+	SgFunctionSymbol* roseConfirmFunctionSignature;
 	SgFunctionSymbol* roseFreeMemory;
 	SgFunctionSymbol* roseReallocateMemory;
 	SgFunctionSymbol* roseConvertIntToString;
@@ -31,6 +33,8 @@ public:
 		roseArrayAccess = NULL;
 		roseRtedClose = NULL;
         roseFunctionCall = NULL;
+		roseAssertFunctionSignature = NULL;
+		roseConfirmFunctionSignature = NULL;
         roseFreeMemory = NULL;
         roseReallocateMemory = NULL;
 		roseConvertIntToString=NULL;

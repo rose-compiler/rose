@@ -8,6 +8,8 @@
 
 #include <cstdlib> //needed for getenv("HOME") to read config file
 
+#include <boost/foreach.hpp>
+
 #ifdef ROSE_WITH_ROSEQT
 #include "DebuggerQt/RtedDebug.h"
 #endif
@@ -370,6 +372,44 @@ void RuntimeSystem::checkFileAccess(FILE * file, bool read)
 }
 
 
+// --------------------- Function Signature Verification -----------------
+
+void RuntimeSystem::expectFunctionSignature(
+            const std::string & name,
+            const std::vector< RsType* > types ) {
+
+    nextCallFunctionName = name;
+    nextCallFunctionTypes = types;
+}
+
+void RuntimeSystem::confirmFunctionSignature(
+            const std::string & name,
+            const std::vector< RsType* > types ) {
+
+    if( !( name == nextCallFunctionName ))
+        // nothing to confirm
+        return;
+
+    if( nextCallFunctionTypes != types ) {
+        stringstream ss;
+        ss  << "A call to function " << name 
+            << " had unexpected return or parameter type(s)." << endl << endl
+
+            << "The callsite expected the following:" << endl;
+        BOOST_FOREACH( RsType* type, nextCallFunctionTypes ) {
+            ss << "\t" << type -> getDisplayName() << endl;
+        }
+
+        ss  << "But the definition is:" << endl;
+        BOOST_FOREACH( RsType* type, types ) {
+            ss << "\t" << type -> getDisplayName() << endl;
+        }
+
+        violationHandler(
+            RuntimeViolation::UNEXPECTED_FUNCTION_SIGNATURE,
+            ss.str() );
+    }
+}
 
 
 // --------------------- Output Handling ---------------------------------

@@ -52,6 +52,9 @@ class RtedTransformation : public AstSimpleProcessing {
   // ------------------------ string -----------------------------------
   // handle call to functioncall
   std::vector<RtedArguments*> function_call;
+  // calls to functions whose definitions we don't know, and thus, whose
+  // signatures we must check at runtime
+  std::vector<SgFunctionCallExp*> function_call_missing_def;
   // function calls to free
   std::vector<SgFunctionCallExp*> frees;
   // function calls to realloc
@@ -72,6 +75,8 @@ class RtedTransformation : public AstSimpleProcessing {
   SgFunctionSymbol* roseCreateArray;
   SgFunctionSymbol* roseArrayAccess;
   SgFunctionSymbol* roseFunctionCall;
+  SgFunctionSymbol* roseAssertFunctionSignature;
+  SgFunctionSymbol* roseConfirmFunctionSignature;
   SgFunctionSymbol* roseFreeMemory;
   SgFunctionSymbol* roseReallocateMemory;
   SgFunctionSymbol* roseIOFunctionCall;
@@ -110,6 +115,8 @@ class RtedTransformation : public AstSimpleProcessing {
   SgExpression* getUppermostLvalue( SgExpression* n );
   // insert: RuntimeSystem* runtimeSystem = new RuntimeSystem();
   void insertRuntimeSystemClass();
+  void insertAssertFunctionSignature( SgFunctionCallExp* exp );
+  void insertConfirmFunctionSignature( SgFunctionDefinition* fndef );
   void insertFreeCall( SgFunctionCallExp* exp );
   void insertReallocateCall( SgFunctionCallExp* exp );
   SgExpression* buildString(std::string name);
@@ -220,6 +227,8 @@ class RtedTransformation : public AstSimpleProcessing {
     roseArrayAccess=NULL;
     roseRtedClose=NULL;
     roseFunctionCall=NULL;
+    roseAssertFunctionSignature=NULL;
+    roseConfirmFunctionSignature=NULL;
     roseConvertIntToString=NULL;
     roseCallStack=NULL;
     symbols = new RtedSymbols();
@@ -251,6 +260,7 @@ class RtedTransformation : public AstSimpleProcessing {
 
   void appendTypeInformation(SgInitializedName* initName, SgExprListExp* arg_list);
   void appendTypeInformation(SgInitializedName* initName, SgType* type, SgExprListExp* arg_list);
+  void appendTypeInformation(SgType* type, SgExprListExp* arg_list, bool resolve_class_names = true, bool array_to_pointer=false);
   void appendAddressAndSize(SgInitializedName* initName, SgExpression* varRef, SgExprListExp* arg_list, int appendType);
   void appendAddress( SgExprListExp* arg_list, SgExpression* exp );
   void appendBaseType( SgExprListExp* arg_list, SgType* type );

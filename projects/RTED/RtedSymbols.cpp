@@ -28,6 +28,8 @@ void RtedSymbols::visit(SgNode* n) {
     LOOKUP( roseArrayAccess );
     LOOKUP( roseRtedClose );
     LOOKUP( roseFunctionCall );
+    LOOKUP( roseAssertFunctionSignature );
+    LOOKUP( roseConfirmFunctionSignature );
     LOOKUP( roseConvertIntToString );
     LOOKUP( roseCreateVariable );
     LOOKUP( roseInitVariable );

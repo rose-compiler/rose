@@ -33,6 +33,14 @@ void RuntimeSystem_roseArrayAccess(const char* filename,
 
 
 /***************************** FUNCTION CALLS *************************************/
+
+void RuntimeSystem_roseAssertFunctionSignature(
+		const char* filename, const char* line, const char* lineTransformed,
+		const char* name, int type_count, ... );
+
+void RuntimeSystem_roseConfirmFunctionSignature(
+		const char* name, int type_count, ... );
+
 void RuntimeSystem_handleSpecialFunctionCalls(const char* funcname,
 		const char** args, int argsSize, const char* filename,
 		const char* line, const char* lineTransformed, const char* stmtStr,

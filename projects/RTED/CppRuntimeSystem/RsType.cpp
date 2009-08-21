@@ -485,6 +485,7 @@ string RsBasicType::getDisplayName() const
         case SgTypeUnsignedLongLong: return "unsigned long long";
         case SgTypeUnsignedShort:    return "unsigned short";
         case SgTypeString:           return "string";
+        case SgTypeVoid:             return "void";
         case SgPointerType:          return "pointer";
         default:                     return "Unknown";
     }
@@ -518,6 +519,7 @@ void RsBasicType::resolveTypeInfo(const std::string & typeStr)
     else if (typeStr=="SgTypeUnsignedLongLong") setTypeInfo(SgTypeUnsignedLongLong, sizeof(unsigned long long));
     else if (typeStr=="SgTypeUnsignedShort")    setTypeInfo(SgTypeUnsignedShort,    sizeof(unsigned short));
     else if (typeStr=="SgTypeString")           setTypeInfo(SgTypeString,           sizeof(char*));
+    else if (typeStr=="SgTypeVoid")             setTypeInfo(SgTypeVoid,             0);
     else if (typeStr=="SgPointerType")          setTypeInfo(SgPointerType,          sizeof(void*));
     else                                        setTypeInfo(Unknown, 0);
 }
@@ -550,6 +552,7 @@ void RsBasicType::resolveTypeInfo(RsBasicType::SgType type_)
         case SgTypeUnsignedLongLong: setTypeInfo("SgTypeUnsignedLongLong", sizeof(unsigned long long)); break;
         case SgTypeUnsignedShort:    setTypeInfo("SgTypeUnsignedShort",    sizeof(unsigned short));  break;
         case SgTypeString:           setTypeInfo("SgTypeString",           sizeof(char*));           break;
+        case SgTypeVoid:             setTypeInfo("SgTypeVoid",             0);                       break;
         case SgPointerType:          setTypeInfo("SgPointerType",          sizeof(void*));           break;
         default:                     setTypeInfo("Unknown", 0);
     }

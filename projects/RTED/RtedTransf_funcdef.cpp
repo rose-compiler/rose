@@ -36,3 +36,42 @@ RtedTransformation::insertVariableCreateInitForParams( SgFunctionDefinition* fnd
           param, getSurroundingStatement( param), true));
     }
 }
+
+void
+RtedTransformation::insertConfirmFunctionSignature( SgFunctionDefinition* fndef ) {
+
+    SgExprListExp* arg_list = buildExprListExp();
+
+	// first arg is the name
+	// FIXME 2: This probably needs to be something closer to the mangled_name,
+	// or perhaps we can simply skip the check entirely for C++
+	appendExpression( arg_list, buildString(
+		fndef -> get_declaration() -> get_name()
+	));
+
+	// append param count (+1 for return type) and types
+	Rose_STL_Container< SgType* > param_types
+		= fndef -> get_declaration() -> get_type() -> get_arguments();
+	appendExpression( arg_list, buildIntVal( param_types.size() + 1));
+
+	// return type
+	appendTypeInformation(
+		fndef -> get_declaration() -> get_type() -> get_return_type(),
+		arg_list,
+		true,
+		true ); 
+
+	// parameter types
+	BOOST_FOREACH( SgType* param_type, param_types ) {
+		appendTypeInformation( param_type, arg_list, true, true ); 
+	}
+
+
+	fndef -> get_body() -> prepend_statement(
+		buildExprStatement(
+			buildFunctionCallExp(
+				buildFunctionRefExp( roseConfirmFunctionSignature ),
+				arg_list ))
+	);
+}
+

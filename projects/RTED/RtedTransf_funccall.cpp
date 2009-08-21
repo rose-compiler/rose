@@ -1,5 +1,6 @@
 #include <rose.h>
 #include <string>
+#include <boost/foreach.hpp>
 #include "RtedSymbols.h"
 #include "DataStructures.h"
 #include "RtedTransformation.h"
@@ -337,6 +338,55 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
 
 
 void
+RtedTransformation::insertAssertFunctionSignature( SgFunctionCallExp* fncall ) {
+	SgStatement* stmt = getSurroundingStatement( fncall );
+
+	SgFunctionRefExp* fn_ref = isSgFunctionRefExp( fncall -> get_function() );
+
+	// FIXME 2: This probably fails on function ptr invocations
+	ROSE_ASSERT( fn_ref );
+
+
+    SgExprListExp* arg_list = buildExprListExp();
+
+	// checkpoint information
+	appendFileInfo( fncall, arg_list );
+
+	// first arg is the name
+	appendExpression( arg_list, buildString(
+		fn_ref -> get_symbol() -> get_name()
+	));
+
+	// append arg count (+1 for return type) and types
+	Rose_STL_Container< SgExpression* > args
+		= fncall -> get_args() -> get_expressions();
+	appendExpression( arg_list, buildIntVal( args.size() + 1 ));
+
+	// return type
+	appendTypeInformation(
+		isSgFunctionType( fn_ref -> get_type() ) -> get_return_type(),
+		arg_list,
+		true,
+		true ); 
+
+	// parameter types
+	BOOST_FOREACH( SgExpression* arg, args ) {
+		appendTypeInformation( arg -> get_type(), arg_list, true, true ); 
+	}
+
+	// we aren't able to check the function signature at compile time, so we
+	// insert a check to do so at runtime
+	insertStatementBefore(
+		stmt,
+		buildExprStatement(
+			buildFunctionCallExp(
+				buildFunctionRefExp( roseAssertFunctionSignature ),
+				arg_list
+	)));
+}
+
+
+void
 RtedTransformation::insertFreeCall( SgFunctionCallExp* free_call ) {
 
 	// stmt wraps a call to free -- most likely an expression statement
@@ -488,12 +538,18 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
 	  // if we're able to, use the function definition's body as the end of
 	  // scope (for line number complaints).  If not, the callsite is good too.
 	  SgNode* end_of_scope = getDefiningDeclaration( fcexp );
-	  if( end_of_scope )
+	  if( end_of_scope ) {
 		  end_of_scope = 
 			  isSgFunctionDeclaration( end_of_scope ) 
 			  	-> get_definition() -> get_body();
-	  else
+	  } else {
 		  end_of_scope = fcexp;
+		  // FIXME 2: We may be adding a lot of unnecessary signature checks
+		  // If we don't have the definition, we must be doing separate
+		  // compilation.  We will then have to check the signature at runtime
+		  // since there's no guarantee our prototype, if any, is accurate.
+		  function_call_missing_def.push_back( fcexp );
+	  }
       scopes[ fncallStmt ] = end_of_scope;
     } else if( "free" == name ) {
 		frees.push_back( fcexp );

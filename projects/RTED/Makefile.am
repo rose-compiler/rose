@@ -444,16 +444,29 @@ ${foreach rted_dir, ${filter $(rted_path)%, $(RTED_CPP_TEST_DIRS)}, ${eval ${cal
 
 #------------------------------------------------------------------------------
 
+
+
+
+#------------------------------------------------------------------------------
+# Intentionally ignored tests
+#------------------------------------------------------------------------------
+
+# TODO 2: Possibly handle this test
+run/C/subprogram_call_errors/c_C_1_3_f:
+	@echo Not running this test $@
+
+#------------------------------------------------------------------------------
+
 deleteAllbinfiles:
 	rm -rf rted_source
 
 c-compile-runtimesystem:
 	@echo "Make sure that RuntimeSystem compiles with C"
 
-# run/C/subprogram_call_errors
 # run/C/floating_point_errors
 check-local: runtimeCheck $(TESTCODES) c-compile-runtimesystem \
 				run/C/array_index_out_of_bound run/C/string_errors \
+				run/C/subprogram_call_errors \
 				run/C/allocation_deallocation_errors run/C/input_output_errors \
 				run/C/memory_leaks run/C/uninitialized_variables \
 				run/C/C99_specific_errors run/C/pointer_errors

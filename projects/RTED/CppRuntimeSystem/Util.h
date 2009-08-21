@@ -81,6 +81,9 @@ class RuntimeViolation
 									     // other memory chunk illegaly, e.g. in arguments to memcpy
 				INVALID_TYPE_ACCESS,     // invalid access to "typed" memory
 
+				UNEXPECTED_FUNCTION_SIGNATURE,	// a c program compiled with a missing or wrong 
+												// prototype gave the wrong types at the callsite
+
                 NONE,                    // no violation
 				UNKNOWN_VIOLATION
         };
