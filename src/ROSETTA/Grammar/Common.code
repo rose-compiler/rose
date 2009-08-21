@@ -16,6 +16,9 @@ HEADER_START
       /*! \brief returns new style SageIII enum values */
           virtual VariantT variantT() const; // MS: new variant used in tree traversal
 
+      /*! \brief static variant value */
+          static const VariantT static_variant = V_$CLASSNAME;
+
        /* the generated cast function */
       /*! \brief Casts pointer from base class to derived class */
           friend       $CLASSNAME* is$CLASSNAME(       SgNode * s );
