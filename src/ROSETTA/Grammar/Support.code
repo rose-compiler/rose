@@ -191,7 +191,7 @@ HEADER_GRAPH_START
  	// tps (4/30/2009): The following are functions on the graph that were used before 
  	// in the old graph implementation
   	//std::set<SgGraphEdge*> getEdge(SgGraphNode* src, SgGraphNode* trg);
-        void checkIfGraphNodeExists(std::string& trg_mnemonic, std::vector<SgGraphNode*>& nodes);
+        void checkIfGraphNodeExists(const std::string& trg_mnemonic, std::vector<SgGraphNode*>& nodes);
 //SgGraphNode* checkIfGraphNodeExists(std::string& trg_mnemonic);
         
 
@@ -13374,7 +13374,7 @@ SgGraph::setProperty(SgGraph::GraphProperties property, SgGraphEdge* edge,
 
 
 void
-SgGraph::checkIfGraphNodeExists(string& trg_mnemonic, std::vector<SgGraphNode*>& nodes) {
+SgGraph::checkIfGraphNodeExists(const string& trg_mnemonic, std::vector<SgGraphNode*>& nodes) {
   rose_graph_string_integer_hash_multimap::const_iterator it1, it2;
   pair <rose_graph_string_integer_hash_multimap::const_iterator, rose_graph_string_integer_hash_multimap::const_iterator> 
     iter = p_string_to_node_index_multimap.equal_range(trg_mnemonic);
