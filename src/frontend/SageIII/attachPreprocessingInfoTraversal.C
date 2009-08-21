@@ -457,8 +457,12 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 
           //AS(4/3/09): FIXME: We are doing this quick fix because the fileNameForDirectivesAndComments is
           //incorrect for Fortran
-          fileNameForDirectivesAndComments = sourceFile->get_sourceFileNameWithPath();
-          fileNameForTokenStream           = fileNameForDirectivesAndComments;
+          //PC(08/17/2009): Now conditional on the output language, otherwise breaks -rose:collectAllCommentsAndDirectives
+          if (sourceFile->get_outputLanguage() == SgFile::e_Fortran_output_language)
+             {
+               fileNameForDirectivesAndComments = sourceFile->get_sourceFileNameWithPath();
+               fileNameForTokenStream           = fileNameForDirectivesAndComments;
+             }
 
           if (sourceFile->get_Fortran_only() == true)
              {
