@@ -1,3 +1,294 @@
+2009-08-21 18:12  collingbourne2
+
+	* [r6945] /trunk/ROSE/Makefile.am,
+	  /trunk/ROSE/config/support-haskell.m4, /trunk/ROSE/configure.in,
+	  /trunk/ROSE/projects/Makefile.am,
+	  /trunk/ROSE/projects/haskellport,
+	  /trunk/ROSE/projects/haskellport/Data,
+	  /trunk/ROSE/projects/haskellport/Data/DataMc.hs,
+	  /trunk/ROSE/projects/haskellport/LICENSE,
+	  /trunk/ROSE/projects/haskellport/Makefile.am,
+	  /trunk/ROSE/projects/haskellport/ROSE,
+	  /trunk/ROSE/projects/haskellport/ROSE.hs,
+	  /trunk/ROSE/projects/haskellport/ROSE/CxxContainers.hs,
+	  /trunk/ROSE/projects/haskellport/ROSE/Sage3,
+	  /trunk/ROSE/projects/haskellport/ROSE/Sage3.hs,
+	  /trunk/ROSE/projects/haskellport/ROSE/Sage3/Misc.hs,
+	  /trunk/ROSE/projects/haskellport/ROSE/Sage3/Misc.hs-boot,
+	  /trunk/ROSE/projects/haskellport/ROSE/Sage3/SYB.hs,
+	  /trunk/ROSE/projects/haskellport/Setup.hs,
+	  /trunk/ROSE/projects/haskellport/WrapCxxContainers.C,
+	  /trunk/ROSE/projects/haskellport/WrapCxxContainers.h,
+	  /trunk/ROSE/projects/haskellport/WrapROSE.C,
+	  /trunk/ROSE/projects/haskellport/WrapSage3.C,
+	  /trunk/ROSE/projects/haskellport/genStubsAndWrappers.C,
+	  /trunk/ROSE/projects/haskellport/rose.cabal.in.in,
+	  /trunk/ROSE/projects/haskellport/sage3.h.C,
+	  /trunk/ROSE/projects/haskellport/tests,
+	  /trunk/ROSE/projects/haskellport/tests/identityTranslator,
+	  /trunk/ROSE/projects/haskellport/tests/identityTranslator/Main.hs,
+	  /trunk/ROSE/projects/haskellport/tests/simplify,
+	  /trunk/ROSE/projects/haskellport/tests/simplify/Main.hs,
+	  /trunk/ROSE/projects/haskellport/tests/simplify/simplifyTest.C:
+	  Initial commit of ROSE's Haskell interface
+
+2009-08-21 18:12  collingbourne2
+
+	* [r6944] /trunk/ROSE/configure.in: ROSE_COMPILE_TREE_PATH -
+	  symbolic links need to be resolved for the callgraph analysis
+	  tests
+
+2009-08-21 18:12  collingbourne2
+
+	* [r6943]
+	  /trunk/ROSE/src/frontend/SageIII/attachPreprocessingInfoTraversal.C:
+	  Partially reverted change causing
+	  -rose:collectAllCommentsAndDirectives to not work
+
+2009-08-21 18:12  collingbourne2
+
+	* [r6942] /trunk/ROSE/projects/DocumentationGenerator/Makefile.am:
+	  Have DocumentationGenerator build a static library
+
+2009-08-21 18:12  collingbourne2
+
+	* [r6941] /trunk/ROSE/docs/Rose/acknowledgments.tex,
+	  /trunk/ROSE/rose.docs.in: Corrected the spelling of my name :-)
+
+2009-08-21 18:12  collingbourne2
+
+	* [r6940] /trunk/ROSE/src/ROSETTA/Grammar/Expression.code: Added
+	  dummy implementation for undefined function
+	  SgDesignatedInitializer::get_next
+
+2009-08-21 18:12  collingbourne2
+
+	* [r6939] /trunk/ROSE/src/ROSETTA/src/statement.C,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/sage_gen_be.C:
+	  Support for identifying abstract classes.
+
+2009-08-21 18:12  collingbourne2
+
+	* [r6938] /trunk/ROSE/src/ROSETTA/Grammar/Support.code:
+	  trg_mnemonic may be a const string&
+
+2009-08-21 18:12  collingbourne2
+
+	* [r6937]
+	  /trunk/ROSE/src/ROSETTA/Grammar/Cxx_GlobalDeclarations.macro,
+	  /trunk/ROSE/src/ROSETTA/src/grammar.C,
+	  /trunk/ROSE/src/ROSETTA/src/grammar.h,
+	  /trunk/ROSE/src/ROSETTA/src/terminal.C,
+	  /trunk/ROSE/src/ROSETTA/src/terminal.h,
+	  /trunk/ROSE/src/frontend/SageIII/astMerge/fixupTraversal.C,
+	  /trunk/ROSE/src/frontend/SageIII/astMerge/nullifyAST.C: Extended
+	  ReferenceToPointerHandler to:
+	  
+	  - supply a "traverse" parameter stating whether the present
+	  subnode should be traversed
+	  - allow implementations to specify a node type-specific "apply"
+	  function
+
+2009-08-21 18:12  collingbourne2
+
+	* [r6936] /trunk/ROSE/src/ROSETTA/Grammar/Common.code: Provide a
+	  static variant value
+
+2009-08-21 16:48  hamilton37
+
+	* [r6935]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/Util.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/Util.h,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedSymbols.cpp,
+	  /trunk/ROSE/projects/RTED/RtedSymbols.h,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funcdef.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: RTED: We now pass all
+	  but one of the C/subprogram_call_errors tests.
+	  
+	  * For function calls whose definitions are unknown, we instrument
+	  a call that
+	  tracks the expected function signature (return type and parameter
+	  types).
+	  
+	  For all function definitions, we have a corresponding call to
+	  verify the
+	  expected function signature, if any was requested for this
+	  function.
+	  
+	  Presently we add the check call per-callsite which is a little
+	  wasteful, since
+	  we only really need to check each function once per invocation of
+	  the binary
+	  (e.g. at the start of main).
+	  
+	  * C/subprogram_call_errors was added to make check, sans the test
+	  C/subprogram_call_errors/c_C_1_3_f. This test has an incorrect
+	  prototype for
+	  a c library function (`sin`), which we cannot instrument with the
+	  verification call since we don't process the definition.
+
+2009-08-21 16:48  hamilton37
+
+	* [r6934]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.cpp:
+	  RTED: Cleaning up warnings
+
+2009-08-21 16:18  dquinlan
+
+	* [r6933] /trunk/ROSE/ROSE_ResearchPapers/BinaryCloneDetection.pdf,
+	  /trunk/ROSE/ROSE_ResearchPapers/BinaryCloneDetectionForISTA.pdf,
+	  /trunk/ROSE/ROSE_ResearchPapers/DAGSTUHL2008-TowardsDistributedMemoryParallelProgramAnalysis.pdf,
+	  /trunk/ROSE/ROSE_ResearchPapers/ISTA_workshop2009-TechniquesForSoftwareQualityAnalysisOfBinariesAppliedToWindowsAndLinux.pdf,
+	  /trunk/ROSE/ROSE_ResearchPapers/IWOMP2009-Autoparallelization.pdf,
+	  /trunk/ROSE/ROSE_ResearchPapers/LCPC2009-SourceToSourceOutliningToSupportWholeProgramEmpiricalOptimization.pdf,
+	  /trunk/ROSE/ROSE_ResearchPapers/SoftVizz2008-SignatureVisualizationOfSoftwareBinaries.pdf,
+	  /trunk/ROSE/config/rose_edg_required_macros_and_functions.h.in,
+	  /trunk/ROSE/configure.in,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/dataFlow_tests,
+	  /trunk/ROSE/developersScratchSpace/Dan/dataFlow_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/dataFlow_tests/functionBasedTaintedFlow.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/dataFlow_tests/functionBasedTaintedFlow.h,
+	  /trunk/ROSE/developersScratchSpace/Dan/dataFlow_tests/functionDetection_sprintf.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/dataFlow_tests/functionDetection_sprintf.h,
+	  /trunk/ROSE/developersScratchSpace/Dan/dataFlow_tests/functionDetection_sql.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/dataFlow_tests/functionDetection_sql.h,
+	  /trunk/ROSE/developersScratchSpace/Dan/dataFlow_tests/functionInfoPropogation.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/dataFlow_tests/functionInfoPropogation.C.b00,
+	  /trunk/ROSE/developersScratchSpace/Dan/dataFlow_tests/functionInfoPropogation.C.b01,
+	  /trunk/ROSE/developersScratchSpace/Dan/dataFlow_tests/functionInfoPropogation.C.b02,
+	  /trunk/ROSE/developersScratchSpace/Dan/dataFlow_tests/functionInfoPropogation.C.b03,
+	  /trunk/ROSE/developersScratchSpace/Dan/dataFlow_tests/functionSummary.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/dataFlow_tests/functionSummary.h,
+	  /trunk/ROSE/developersScratchSpace/Dan/dataFlow_tests/input_test_01.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/dataFlow_tests/input_test_02.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/dataFlow_tests/input_test_03.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/dataFlow_tests/input_test_04.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/dataFlow_tests/sizeOfAnalysis.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/dataFlow_tests/sizeOfAnalysis.h,
+	  /trunk/ROSE/developersScratchSpace/Dan/dataFlow_tests/taintAttributes.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/dataFlow_tests/taintAttributes.h,
+	  /trunk/ROSE/developersScratchSpace/Dan/dataFlow_tests/validFunctionUse.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/Makefile.am,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Expression.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Statement.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Support.code,
+	  /trunk/ROSE/src/frontend/SageIII/rose_graph_support.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C,
+	  /trunk/ROSE/src/midend/binaryAnalyses/Makefile.am,
+	  /trunk/ROSE/src/midend/programAnalysis/graphAnalysis/Makefile.am,
+	  /trunk/ROSE/src/roseSupport/transformationSupport.h: Added some
+	  tests and fixed more bugs:
+	  
+	  Detailed changes in this commit:
+	  1) Added CERT checkers (just atdded in previous commit).
+	  2) Added dataFlow_tests directory to the
+	  developersScratchSpace/Dan direcotry.
+	  This is a use of call graph analysis to detect paths bewteen
+	  sources and sinks.
+	  3) Fixed a number of minor bugs.
+	  4) Added more graph support for the SgIncidenceDirectedGraph.
+
+2009-08-21 16:10  dquinlan
+
+	* [r6932] /trunk/ROSE/projects/CertSecureCodeProject,
+	  /trunk/ROSE/projects/CertSecureCodeProject/ARR.C,
+	  /trunk/ROSE/projects/CertSecureCodeProject/DCL.C,
+	  /trunk/ROSE/projects/CertSecureCodeProject/Doxyfile,
+	  /trunk/ROSE/projects/CertSecureCodeProject/ENV.C,
+	  /trunk/ROSE/projects/CertSecureCodeProject/ERR.C,
+	  /trunk/ROSE/projects/CertSecureCodeProject/EXP.C,
+	  /trunk/ROSE/projects/CertSecureCodeProject/FIO.C,
+	  /trunk/ROSE/projects/CertSecureCodeProject/FLP.C,
+	  /trunk/ROSE/projects/CertSecureCodeProject/INT.C,
+	  /trunk/ROSE/projects/CertSecureCodeProject/MEM.C,
+	  /trunk/ROSE/projects/CertSecureCodeProject/MSC.C,
+	  /trunk/ROSE/projects/CertSecureCodeProject/Makefile.am,
+	  /trunk/ROSE/projects/CertSecureCodeProject/Makefile.original,
+	  /trunk/ROSE/projects/CertSecureCodeProject/POS.C,
+	  /trunk/ROSE/projects/CertSecureCodeProject/PRE.C,
+	  /trunk/ROSE/projects/CertSecureCodeProject/README,
+	  /trunk/ROSE/projects/CertSecureCodeProject/SIG.C,
+	  /trunk/ROSE/projects/CertSecureCodeProject/STR.C,
+	  /trunk/ROSE/projects/CertSecureCodeProject/categories.C,
+	  /trunk/ROSE/projects/CertSecureCodeProject/categories.h,
+	  /trunk/ROSE/projects/CertSecureCodeProject/cce,
+	  /trunk/ROSE/projects/CertSecureCodeProject/cce.ans,
+	  /trunk/ROSE/projects/CertSecureCodeProject/cce/ARR_CS.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/cce/DCL_CS.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/cce/ENV_CS.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/cce/ERR_CS.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/cce/EXP_CS.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/cce/FIO_CS.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/cce/FLP_CS.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/cce/INT_CS.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/cce/MEM_CS.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/cce/MSC_CS.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/cce/POS_CS.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/cce/PRE06_CS.h,
+	  /trunk/ROSE/projects/CertSecureCodeProject/cce/PRE08_lib1.h,
+	  /trunk/ROSE/projects/CertSecureCodeProject/cce/PRE08_lib2.h,
+	  /trunk/ROSE/projects/CertSecureCodeProject/cce/PRE09.h,
+	  /trunk/ROSE/projects/CertSecureCodeProject/cce/PRE_CS.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/cce/SIG_CS.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/cce/STR_CS.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/cce/my_stdio.h,
+	  /trunk/ROSE/projects/CertSecureCodeProject/cce/util.h,
+	  /trunk/ROSE/projects/CertSecureCodeProject/collectDefineDirectives.C,
+	  /trunk/ROSE/projects/CertSecureCodeProject/diagnose.C,
+	  /trunk/ROSE/projects/CertSecureCodeProject/diagnose.sh,
+	  /trunk/ROSE/projects/CertSecureCodeProject/example.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/gcc_diagnose,
+	  /trunk/ROSE/projects/CertSecureCodeProject/graphs,
+	  /trunk/ROSE/projects/CertSecureCodeProject/graphs/AST.xml.gz,
+	  /trunk/ROSE/projects/CertSecureCodeProject/graphs/STR31_C_getenv.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/graphs/foo.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/graphs/foo.png,
+	  /trunk/ROSE/projects/CertSecureCodeProject/graphs/foo_WholeAST.png,
+	  /trunk/ROSE/projects/CertSecureCodeProject/graphs/foo_WholeAST.xml,
+	  /trunk/ROSE/projects/CertSecureCodeProject/input_test_01.C,
+	  /trunk/ROSE/projects/CertSecureCodeProject/ncce,
+	  /trunk/ROSE/projects/CertSecureCodeProject/ncce.ans,
+	  /trunk/ROSE/projects/CertSecureCodeProject/ncce/ARR_NCCE.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/ncce/DCL_NCCE.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/ncce/ENV_NCCE.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/ncce/ERR_NCCE.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/ncce/EXP_NCCE.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/ncce/FIO_NCCE.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/ncce/FLP_NCCE.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/ncce/INT_NCCE.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/ncce/MEM_NCCE.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/ncce/MSC_NCCE.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/ncce/NCCE.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/ncce/POS_NCCE.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/ncce/PRE06_NCCE.h,
+	  /trunk/ROSE/projects/CertSecureCodeProject/ncce/PRE08_library1.h,
+	  /trunk/ROSE/projects/CertSecureCodeProject/ncce/PRE08_library2.h,
+	  /trunk/ROSE/projects/CertSecureCodeProject/ncce/PRE_NCCE.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/ncce/SIG_NCCE.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/ncce/STR_NCCE.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/ncce/stdio.h,
+	  /trunk/ROSE/projects/CertSecureCodeProject/ncce/util.h,
+	  /trunk/ROSE/projects/CertSecureCodeProject/test_next_visitor.c,
+	  /trunk/ROSE/projects/CertSecureCodeProject/utilities-inline.h,
+	  /trunk/ROSE/projects/CertSecureCodeProject/utilities.C,
+	  /trunk/ROSE/projects/CertSecureCodeProject/utilities.h,
+	  /trunk/ROSE/projects/CertSecureCodeProject/value.C,
+	  /trunk/ROSE/projects/CertSecureCodeProject/value.h,
+	  /trunk/ROSE/projects/Makefile.am: Added CERT Secure Code Project
+	  to ROSE projects directory.
+
 2009-08-21 01:42  liao6
 
 	* [r6923] /trunk/ROSE/config/Makefile.for.ROSE.includes.and.libs,
