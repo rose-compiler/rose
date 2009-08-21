@@ -9,6 +9,8 @@
 
 using namespace std;
 
+#define BOOL2STR(b) ((b) ? "true" : "false")
+
 // ################################################################
 // #                 NonTerminal Member Functions                 #
 // ################################################################
@@ -1705,8 +1707,10 @@ Terminal::buildReturnDataMemberPointers ()
 *       Terminal::buildListIteratorStringForReferenceToPointers()
 *  supports buildProcessDataMemberReferenceToPointers() by building the string representing the code 
 *  necessary to process references (pointers) all data member pointers to IR nodes contained in STL lists.
+*  The traverse parameter indicates whether the property is normally traversed.  This parameter is
+*  propagated through to the ReferenceToPointerHandler.
 *************************************************************************************************/
-string Terminal::buildListIteratorStringForReferenceToPointers(string typeName, string variableName, string classNameString)
+string Terminal::buildListIteratorStringForReferenceToPointers(string typeName, string variableName, string classNameString, bool traverse)
    {
   // AS(2/14/2006) Builds the strings for the list of data member pointers.
      string returnString;
@@ -1816,7 +1820,7 @@ string Terminal::buildListIteratorStringForReferenceToPointers(string typeName, 
                        + iteratorName + ") \n        { \n";
 
        // Declare the a loop variable (reference to current element of list)
-          returnString += "          handler->apply(*" + iteratorName + ",SgName(\""+variableName+"\"));\n";
+          returnString += "          handler->apply(*" + iteratorName + ",SgName(\""+variableName+"\"), " + BOOL2STR(traverse) + ");\n";
                 
        // close off the loop
           returnString += "        } \n";
@@ -1873,17 +1877,21 @@ Terminal::buildProcessDataMemberReferenceToPointers ()
                   {
                  // AS Analyse the types to see if it contains a '*' because then it is a pointer
                     bool typeIsStarPointer = ( varTypeString.find("*") != std::string::npos) ;
+
+                 // PC Check whether this member should be traversed.
+                    bool traverse = data->getToBeTraversed() == DEF_TRAVERSAL;
+
                  // AS Check to see if it this is an pointer to any IR-node. The varTypeString == "$CLASSNAME *" checks to see if it
                  // is a ir-node pointer which is *not* yet replaced. $CLASSNAME is inside the string and will later be replaced with 
                  // e.g SgTypeInt etc. 'varTypeString.substr(0,15) == "$GRAMMAR_PREFIX"' checks to see if it is part of the grammar.
                  // 'varTypeString.substr(0,2) == "Sg" ' and to see if it is a Sg node of some type.
-                    s += buildListIteratorStringForReferenceToPointers(varTypeString, varNameString,classNameString);
+                    s += buildListIteratorStringForReferenceToPointers(varTypeString, varNameString,classNameString, traverse);
 
                     if ( (varTypeString == "$CLASSNAME *" ) || ( ( ( varTypeString.substr(0,15) == "$GRAMMAR_PREFIX" ) || ( varTypeString.substr(0,2) == "Sg" ) ) && typeIsStarPointer ) )
                        {
                       // AS Checks to see if the pointer is a data member. Because the mechanism for generating access to variables
                       // is the same as the one accessing access member functions. We do not want the last case to show up here.
-                         s += "          handler->apply(p_" + varNameString + ",SgName(\""+varNameString+"\"));\n";
+                         s += "          handler->apply(p_" + varNameString + ",SgName(\""+varNameString+"\"), " + BOOL2STR(traverse) + ");\n";
                        }
                       else
                        {
@@ -1900,7 +1908,7 @@ Terminal::buildProcessDataMemberReferenceToPointers ()
                               s += "          for ( rose_hash_multimap::iterator it_"+varNameString+ "= p_" + varNameString + accessOperator + "begin(); it_" + varNameString + "!= p_" + varNameString + accessOperator + "end(); ++" + "it_" + varNameString + ")\n";
                               s += "             {\n";
                            // Declare the a loop variable (reference to current element of list)
-                              s += "               handler->apply(it_" + varNameString + "->second, it_" + varNameString + "->first);\n";
+                              s += "               handler->apply(it_" + varNameString + "->second, it_" + varNameString + "->first, " + BOOL2STR(traverse) + ");\n";
                            // close off the loop
                               s += "             }\n";
                               s += "        }\n";

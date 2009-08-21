@@ -305,7 +305,7 @@ class Terminal
 // DQ (4/30/2006): Added similar function to buildReturnDataMemberPointers() so that we could 
 // return references to the pointers to IR nodes (required low level support for AST Merge).
   std::string buildProcessDataMemberReferenceToPointers ();
-  std::string buildListIteratorStringForReferenceToPointers(std::string typeName, std::string variableName, std::string classNameString);
+  std::string buildListIteratorStringForReferenceToPointers(std::string typeName, std::string variableName, std::string classNameString, bool traverse);
 
 // DQ (3/7/2007): Building support for "long getChildIndex();" to be use for "bool isChild();" and other purposes.
   std::string buildChildIndex ();

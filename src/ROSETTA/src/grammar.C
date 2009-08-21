@@ -2333,6 +2333,65 @@ Grammar::buildVariantEnumNames() {
   return s;
 }
 
+// PC: new implementation of ReferenceToPointerHandler.  This implementation
+// allows you to use a subclass to override the template function
+// ReferenceToPointerHandler::apply, which is not usually possible.
+// This is done by defining an overloaded set of virtual functions each
+// corresponding to a particular node.  The SimpleReferenceToPointerHandler
+// class provides ReferenceToPointerHandler's old behaviour.
+// SimpleReferenceToPointerHandler also acts as an example of how to use
+// ReferenceToPointerHandlerImpl to write a "virtual template function".
+string
+Grammar::buildReferenceToPointerHandlerCode()
+   {
+     string s = "#ifndef REFERENCETOPOINTERHANDLER_DEFINED\n"
+                "#define REFERENCETOPOINTERHANDLER_DEFINED\n\n"
+
+                "struct ReferenceToPointerHandler\n"
+                "   {\n";
+
+     for (int i=0; i < terminalList.size(); i++)
+        {
+          s +=  "     virtual void apply(" + terminalList[i]->name + " *&r, const SgName &n, bool traverse) = 0;\n";
+        }
+
+     s +=     "\n     virtual ~ReferenceToPointerHandler() {}\n"
+                "   };\n\n";
+     
+     s += "template <class ImplClass>\n"
+          "struct ReferenceToPointerHandlerImpl : ReferenceToPointerHandler\n"
+          "   {\n";
+
+     for (int i=0; i < terminalList.size(); i++)
+        {
+          s +=  "     void apply(" + terminalList[i]->name + " *&r, const SgName &n, bool traverse)\n"
+                "        {\n"
+                "          static_cast<ImplClass *>(this)->genericApply(r, n, traverse);\n"
+                "        }\n\n";
+        }
+
+     s += "};\n\n"
+
+          "struct SimpleReferenceToPointerHandler : ReferenceToPointerHandlerImpl<SimpleReferenceToPointerHandler>\n"
+          "   {\n"
+          "     template <typename NodeSubclass>\n"
+          "     void genericApply(NodeSubclass*& r, const SgName& n, bool traverse)\n"
+          "        {\n"
+          "          SgNode* sgn = r;\n"
+          "          (*this)(sgn, n, traverse);\n"
+          "          ROSE_ASSERT (sgn == NULL || dynamic_cast<NodeSubclass*>(sgn));\n"
+          "          r = dynamic_cast<NodeSubclass*>(sgn);\n"
+          "        }\n\n"
+
+          "     virtual void operator()(SgNode*&, const SgName&, bool) = 0;\n"
+          "   };\n\n"
+
+          "#endif // REFERENCETOPOINTERHANDLER_DEFINED\n\n";
+
+     return s;
+   }
+
+
 void
 Grammar::buildCode ()
    {
@@ -2445,6 +2504,8 @@ Grammar::buildCode ()
      ROSE_ArrayGrammarHeaderFile.push_back(StringUtility::StringWithLineNumber(visitorSupport, "", 1));
 
      ROSE_ArrayGrammarHeaderFile.push_back(StringUtility::StringWithLineNumber(footerString, "", 1));
+
+     ROSE_ArrayGrammarHeaderFile << buildReferenceToPointerHandlerCode();
 
      // Now place all global declarations at the base of the 
      // header file after all classes have been defined

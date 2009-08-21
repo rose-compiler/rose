@@ -65,28 +65,3 @@ void         print_pragma          ( SgAttributePtrList&       , std::ostream& )
    ATTENTION: For huge applications, this might be set to 0, otherwise, we can run out of space easily ....
 */
 #define DISABLE_REALLOCATION_OF_DELETED_POINTERS 1
-
-#ifndef REFERENCETOPOINTERHANDLER_DEFINED
-#define REFERENCETOPOINTERHANDLER_DEFINED
-
-// JJW (11/1/2008): This is the base class for handler objects given to
-// processReferenceToDataMembers(); just override operator()() to do your
-// replacement; apply() calls it and appropriately checks and writes back the
-// result.
-
-struct ReferenceToPointerHandler
-   {
-     template <typename NodeSubclass>
-     void apply(NodeSubclass*& r, const SgName& n)
-        {
-          SgNode* sgn = r;
-          (*this)(sgn, n);
-          ROSE_ASSERT (sgn == NULL || dynamic_cast<NodeSubclass*>(sgn));
-          r = dynamic_cast<NodeSubclass*>(sgn);
-        }
-
-     virtual void operator()(SgNode*&, const SgName&) = 0;
-     virtual ~ReferenceToPointerHandler() {}
-   };
-
-#endif // REFERENCETOPOINTERHANDLER_DEFINED

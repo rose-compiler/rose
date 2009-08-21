@@ -38,8 +38,8 @@ NullTreeMemoryPoolTraversal::visit ( SgNode* node)
 
      if (nullifyIRchildren == true)
         {
-          struct Nullifier: public ReferenceToPointerHandler {
-            virtual void operator()(SgNode*& n, const SgName&) {n = NULL;}
+          struct Nullifier: public SimpleReferenceToPointerHandler {
+            virtual void operator()(SgNode*& n, const SgName&, bool /* traverse */) {n = NULL;}
           };
           Nullifier nf;
           node->processDataMemberReferenceToPointers(&nf);

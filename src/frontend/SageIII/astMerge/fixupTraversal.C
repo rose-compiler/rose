@@ -74,12 +74,12 @@ FixupTraversal::visit ( SgNode* node)
           printf ("FixupTraversal::visit: node = %p = %s \n",node,node->class_name().c_str());
         }
 
-     struct Replacer: public ReferenceToPointerHandler {
+     struct Replacer: public SimpleReferenceToPointerHandler {
        FixupTraversal& ft;
        bool traceReplacement;
        SgNode* node;
        Replacer(FixupTraversal& ft, bool traceReplacement, SgNode* node): ft(ft), traceReplacement(traceReplacement), node(node) {}
-       virtual void operator()(SgNode*& key, const SgName& debugStringName) {
+       virtual void operator()(SgNode*& key, const SgName& debugStringName, bool /* traverse */) {
          // Keep a count of the number of IR nodes evaluated.
             ft.numberOfDataMemberPointersEvaluated++;
          // Keep a count of the number of IR data members that are non-null
@@ -264,7 +264,7 @@ FixupSubtreeTraversal::visit ( SgNode* node)
           ReplacementMapTraversal::displayReplacementMap (replacementMap);
         }
 
-     struct Replacer: public ReferenceToPointerHandler
+     struct Replacer: public SimpleReferenceToPointerHandler
         {
           FixupSubtreeTraversal & ft;
           bool traceReplacement;
@@ -272,7 +272,7 @@ FixupSubtreeTraversal::visit ( SgNode* node)
           Replacer(FixupSubtreeTraversal& ft, bool traceReplacement, SgNode* node): ft(ft), traceReplacement(traceReplacement), node(node) {}
 
        // Put the work to be done into the "()" operator.
-          virtual void operator()(SgNode*& key, const SgName & debugStringName)
+          virtual void operator()(SgNode*& key, const SgName & debugStringName, bool /* traverse */)
              {
                const string & debugString = debugStringName.getString();
 
