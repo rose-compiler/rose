@@ -10,16 +10,17 @@ bin_PROGRAMS = correctAllComments correctExternalComments \
 	       correctExternalCommentsAndCompile classifyDeprecated createDocumentationForROSE docLint
 bin_SCRIPTS  = readDoxyfile correctExternalCommentsAndCompileQuietly
 
-COMMON_SOURCE_FILES = commentObj.C doxygenComment.C doxygenGrammar.C sageDoxygen.C
+noinst_LIBRARIES = libROSEDoxygen.a
+libROSEDoxygen_a_SOURCES = commentObj.C doxygenComment.C doxygenGrammar.C sageDoxygen.C
 
-correctAllComments_SOURCES                = correctAllComments.C $(COMMON_SOURCE_FILES)
-correctExternalComments_SOURCES           = correctExternalComments.C $(COMMON_SOURCE_FILES)
-correctExternalCommentsAndCompile_SOURCES = correctExternalCommentsAndCompile.C $(COMMON_SOURCE_FILES)
-classifyDeprecated_SOURCES                = classifyDeprecated.C $(COMMON_SOURCE_FILES)
-createDocumentationForROSE_SOURCES        = createDocumentationForROSE.C $(COMMON_SOURCE_FILES)
-docLint_SOURCES                           = docLint.C $(COMMON_SOURCE_FILES)
+correctAllComments_SOURCES                = correctAllComments.C
+correctExternalComments_SOURCES           = correctExternalComments.C
+correctExternalCommentsAndCompile_SOURCES = correctExternalCommentsAndCompile.C
+classifyDeprecated_SOURCES                = classifyDeprecated.C
+createDocumentationForROSE_SOURCES        = createDocumentationForROSE.C
+docLint_SOURCES                           = docLint.C
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) libROSEDoxygen.a
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
