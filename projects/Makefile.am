@@ -6,6 +6,7 @@ SUBDIRS = \
      autoParallelization \
      autoTuning\
      BinQ \
+     CertSecureCodeProject \
      compass \
      BinaryCloneDetection \
      binCompass \

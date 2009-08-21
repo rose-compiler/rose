@@ -1,0 +1,12 @@
+#/bin/sh
+
+DIAGNOSE="/home/svoboda/Desktop/Documents/Work/c_rules/diagnose --edg:brief_diagnostics "
+LD_LIBRARY_PATH=/home/svoboda/Desktop/Documents/Work/rose/compileTree/lib
+
+gcc -Wall -o nul -S $* > ./.syntax_diagnostics 2>&1
+if [ -s ./.syntax_diagnostics ]; then
+  cat ./.syntax_diagnostics
+else
+ $DIAGNOSE $*
+fi
+rm ./.syntax_diagnostics || true

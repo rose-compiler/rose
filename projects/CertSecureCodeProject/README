@@ -1,0 +1,83 @@
+Prerequesites
+-------------
+
+This code has been developed and tested on an i386 workstation running Linux (2.6.16.60) and g++ (3.4.4)
+
+This code depends on ROSE 0.9.3a, which is available for free download from:
+
+	http://rosecompiler.org/
+
+ROSE 0.9.3a also depends on the BOOST C++ library, version 1.3.5, which is available for free download from:
+
+	http://www.boost.org/
+
+First make sure that the ROSE environment variable points to the build directory of ROSE:
+
+	export ROSE=/usr/local/rose/compileTree
+
+
+Building Diagnose
+-----------------
+
+To build the ROSE 'diagnose' program, which runs secure coding rules:
+
+	make pgms
+
+To test diagnose on the code samples from the CERT C Secure Coding Rules:
+
+	make tests
+
+To build API documentation pages, you must have doxygen installed:
+
+	make doc
+
+To clean documentation pages and build files:
+
+	make clean
+
+
+Running Diagnose
+----------------
+
+To run the diagnose program on a C file, simply pass the C file as an argument:
+
+	diagnose hello.c
+
+If the C file violates some secure coding rules, the diagnose program will print them out. If the diagnose program can not find any violations, it prints nothing.
+
+
+Secure Coding Rules Enforced by Diagnose
+----------------------------------------
+
+The C Secure Coding Rules are available at:
+
+	https://www.securecoding.cert.org/confluence/display/seccode/CERT+C+Secure+Coding+Standard
+
+Here is a breakdown of how thoroughly diagnose enforces the C Secure Coding Rules:
+
+	Complete				 57
+
+ROSE catches all violations of these rules
+
+	Partial					 45
+
+ROSE catches some, but not all violations of these rules
+
+	false-positive	  9
+
+These rules could be checked by diagnose, but they will also catch some false positives.
+
+	Potential				 29
+
+These rules are not checked by diagnose, but could be
+
+	Undoable				 32
+
+These rules could not be checked by ROSE due to various limitations in ROSE.
+
+	Unenforceable		 48
+
+These rules could not be checked by any tool that relies purely on unaided static analysis.
+
+
+	TOTAL						220

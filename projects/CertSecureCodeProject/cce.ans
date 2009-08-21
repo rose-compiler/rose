@@ -1,0 +1,11 @@
+
+ENV_CS.c:164: warning: ENV04-C: Do not use system() or popen() unless you need a command interpreter
+EXP_CS.c:269: warning: EXP12-C: Do not ignore values returned by functions: rename
+FIO_CS.c:712: warning: INT07-C: Use only explicitly signed or unsigned char type for numeric values
+FIO_CS.c:865: warning: ENV04-C: Do not use system() or popen() unless you need a command interpreter
+INT_CS.c:372: error: INT34-C: Do not shift a negative number of bits or more bits than exist in the operand
+MEM_CS.c:77: error: MEM30-C: Do not access freed memory
+MSC_CS.c:165: warning: INT07-C: Use only explicitly signed or unsigned char type for numeric values
+POS_CS.c:85: error: MEM30-C: Do not access freed memory
+STR_CS.c:62: error: STR31-C: String copy destination must contain sufficient storage
+STR_CS.c:222: warning: INT01-C: Use rsize_t or size_t for all integer values representing the size of an object
