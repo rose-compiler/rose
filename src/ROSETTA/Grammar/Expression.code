@@ -5177,6 +5177,12 @@ $CLASSNAME::replace_expression(SgExpression *o, SgExpression *n)
         return 0;
    }
 
+SgExpression*
+$CLASSNAME::get_next(int& n) const
+   {
+     ROSE_ASSERT(false);
+   }
+
 SOURCE_DESIGNATED_INITIALIZER_END
 
 
