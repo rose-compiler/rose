@@ -56,6 +56,7 @@ SgValueExp::get_constant_folded_value_as_string()
           case V_SgIntVal: 
              {
                SgIntVal* integerValueExpression = isSgIntVal(this);
+               ROSE_ASSERT(integerValueExpression != NULL);
                int numericValue = integerValueExpression->get_value();
             // printf ("numericValue of constant folded expression = %d \n",numericValue);
                snprintf (buffer,max_buffer_size,"%d",numericValue);
@@ -66,10 +67,64 @@ SgValueExp::get_constant_folded_value_as_string()
           case V_SgUnsignedLongLongIntVal:
              {
                SgUnsignedLongLongIntVal* integerValueExpression = isSgUnsignedLongLongIntVal(this);
+               ROSE_ASSERT(integerValueExpression != NULL);
                unsigned long long int numericValue = integerValueExpression->get_value();
             // printf ("numericValue of constant folded expression = %llu \n",numericValue);
                snprintf (buffer,max_buffer_size,"%llu",numericValue);
                s = buffer;
+               break;
+             }
+
+       // DQ (8/19/2009): Added case
+          case V_SgUnsignedLongVal:
+             {
+               SgUnsignedLongVal* integerValueExpression = isSgUnsignedLongVal(this);
+               ROSE_ASSERT(integerValueExpression != NULL);
+               unsigned long int numericValue = integerValueExpression->get_value();
+            // printf ("numericValue of constant folded expression = %llu \n",numericValue);
+               snprintf (buffer,max_buffer_size,"%lu",numericValue);
+               s = buffer;
+               break;
+             }
+
+       // DQ (8/19/2009): Added case
+          case V_SgUnsignedIntVal:
+             {
+               SgUnsignedIntVal* integerValueExpression = isSgUnsignedIntVal(this);
+               ROSE_ASSERT(integerValueExpression != NULL);
+               unsigned int numericValue = integerValueExpression->get_value();
+            // printf ("numericValue of constant folded expression = %llu \n",numericValue);
+               snprintf (buffer,max_buffer_size,"%u",numericValue);
+               s = buffer;
+               break;
+             }
+
+       // DQ (8/19/2009): Added case
+          case V_SgBoolValExp:
+             {
+               SgBoolValExp* booleanValueExpression = isSgBoolValExp(this);
+               ROSE_ASSERT(booleanValueExpression != NULL);
+               bool booleanValue = booleanValueExpression->get_value();
+               snprintf (buffer,max_buffer_size,"%s",booleanValue == true ? "true" : "false");
+               s = buffer;
+               break;
+             }
+
+       // DQ (8/19/2009): Added case
+          case V_SgStringVal:
+             {
+               SgStringVal* stringValueExpression = isSgStringVal(this);
+               ROSE_ASSERT(stringValueExpression != NULL);
+               s = stringValueExpression->get_value();
+               break;
+             }
+
+       // DQ (8/19/2009): Added case
+          case V_SgCharVal:
+             {
+               SgCharVal* charValueExpression = isSgCharVal(this);
+               ROSE_ASSERT(charValueExpression != NULL);
+               s = charValueExpression->get_value();
                break;
              }
 
@@ -3683,6 +3738,19 @@ SgProject::parse()
           i++;
         }
 
+  // GB (8/19/2009): Moved the AstPostProcessing call from
+  // SgFile::callFrontEnd to this point. Thus, it is only called once for
+  // the whole project rather than once per file. Repeated calls to
+  // AstPostProcessing are slow due to repeated memory pool traversals. The
+  // AstPostProcessing is only to be called if there are input files to run
+  // it on, and they are meant to be used in some way other than just
+  // calling the backend on them. (If only the backend is used, this was
+  // never called by SgFile::callFrontEnd either.)
+     if ( !get_fileList().empty() && !get_useBackendOnly() )
+        {
+          AstPostProcessing(this);
+        }
+
      if ( get_verbose() > 0 )
         {
        // Report the error code if it is non-zero (but only in verbose mode)
@@ -4507,7 +4575,15 @@ SgFile::callFrontEnd()
      printf("FMZ :: before AstPostProcessing astScopeStack = %p \n",stmp);
 #endif
  
-     AstPostProcessing(this);
+  // GB (8/19/2009): Commented this out and moved it to SgProject::parse().
+  // Repeated calls to AstPostProcessing (one per file) can be slow on
+  // projects consisting of multiple files due to repeated memory pool
+  // traversals.
+  // AstPostProcessing(this);
+  // GB (8/19/2009): However, parent pointers in the file's AST must be
+  // reset right away because attachPreprocessingInfo depends on them.
+  // This is an AST traversal, so it will be fast.
+     topLevelResetParentPointer(this);
 
   // FMZ: 05/30/2008.  Do not generate .rmod file for the PU imported by "use" stmt
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
@@ -7329,6 +7405,13 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
        // There is no single function declaration which is associated with it.
        // In this case return NULL should be allowed and the caller has to handle it accordingly
           case V_SgPointerDerefExp:
+             {
+               break;
+             }
+
+       // DQ (8/19/2009): Matt reports that he was able to trigger this case, I likely need to test this on his code.
+       // I think that for this operator we can't expect to resolve the function declaration. (returning NULL)
+          case V_SgDotStarOp:
              {
                break;
              }

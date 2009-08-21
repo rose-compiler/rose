@@ -31,12 +31,20 @@ void AstPostProcessing (SgNode* node)
                SgProject* project = isSgProject(node);
                ROSE_ASSERT(project != NULL);
 
+            // GB (8/19/2009): Added this call to perform post-processing on
+            // the entire project at once. Conversely, commented out the
+            // loop iterating over all files because repeated calls to
+            // AstPostProcessing are slow due to repeated memory pool
+            // traversals of the same nodes over and over again.
+               postProcessingSupport(node);
+#if 0
                SgFilePtrList::iterator fileListIterator;
                for (fileListIterator = project->get_fileList().begin(); fileListIterator != project->get_fileList().end(); fileListIterator++)
                   {
                  // iterate through the list of current files
                     AstPostProcessing(*fileListIterator);
                   }
+#endif
 
             // printf ("SgProject support not implemented in AstPostProcessing \n");
             // ROSE_ASSERT(false);
@@ -76,7 +84,12 @@ void postProcessingSupport (SgNode* node)
   // DQ (7/25/2005): It is presently an error to call this function with a SgProject 
   // or SgDirectory, since there is no way to compute the SgFile from such IR nodes 
   // (could be multiply defined).
-     ROSE_ASSERT(isSgProject(node) == NULL && isSgDirectory(node) == NULL);
+  // ROSE_ASSERT(isSgProject(node) == NULL && isSgDirectory(node) == NULL);
+  // GB (8/19/2009): Removed the assertion against calling this function on
+  // SgProject and SgDirectory nodes. Nothing below needs to compute a
+  // SgFile, as far as I can tell; also, calling the AstPostProcessing just
+  // once on an entire project is more efficient than calling it once per
+  // file.
 
   // JJW (12/5/2008): Turn off C and C++ postprocessing steps when the new EDG
   // interface is being used (it should produce correct, complete ASTs on its
