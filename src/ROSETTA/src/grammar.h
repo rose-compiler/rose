@@ -514,6 +514,9 @@ class Grammar
      // MS: build Variants for use in tree traversal (access with getVariantT())
      std::string buildVariantEnums();
 
+     // PC: build ReferenceToPointerHandler and related classes
+     std::string buildReferenceToPointerHandlerCode();
+
 	 //AS: build the function to get the class hierarchy subtree 
      std::string buildClassHierarchySubTreeFunction();
 
