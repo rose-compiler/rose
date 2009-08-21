@@ -3018,6 +3018,8 @@ SgStatement::insert_child(SgStatement* target, SgStatement* newstmt, bool inFron
      ROSE_ASSERT(newstmt->get_file_info() != NULL);
      newstmt->get_file_info()->display("called from $CLASSNAME::insert_child()");
      ROSE_ABORT();
+
+     return false;
    }
 
 

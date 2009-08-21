@@ -549,11 +549,13 @@ was just float or double for complex<float> or complex<double>.
 /* 
    DQ (7/15/2009): Added support for MS Windows Code 
    It might be that this file in included too late when using WINE.
+   DQ (8/15/2009): The problem is that the rose_config.h file is 
+   not included so USE_ROSE_WINDOWS_ANALYSIS_SUPPORT is not defined.
  */
-#ifdef USE_ROSE_WINDOWS_ANALYSIS_SUPPORT
+/* #ifdef USE_ROSE_WINDOWS_ANALYSIS_SUPPORT */
  #define __builtin_ms_va_list __builtin_va_list
  #define __ms_va_list va_list
-#endif
+/* #endif */
 
 
 #endif // !ROSE_USE_NEW_EDG_INTERFACE

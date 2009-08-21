@@ -215,6 +215,8 @@ class TransformationSupport
 
        // DQ (6/9/2007): This function traverses through the parents to the first scope (used for name qualification support of template arguments)
           static SgScopeStatement* getScope(const SgNode* astNode);
+
+       // static SgValueExp* getValueExpr(const SgNode* astNode);
    };
 
 // endif for ROSE_TRANSFORMATION_SUPPORT
