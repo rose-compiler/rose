@@ -13,7 +13,10 @@ int main(void)
   //#pragma omp parallel for schedule (auto)
 #pragma omp parallel
   {
-#pragma omp for schedule(dynamic,2)
+#pragma omp single
+    printf ("Using %d threads.\n",omp_get_num_threads());
+
+#pragma omp for
     for (i=0;i<20;i++)
     {
       a[i]=i*2;

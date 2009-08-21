@@ -457,6 +457,9 @@ SgFunctionRefExp * buildFunctionRefExp(const SgName& name,SgScopeStatement* scop
 
 SgFunctionRefExp * buildFunctionRefExp(const char* name,SgScopeStatement* scope=NULL);
 
+//! Build SgFunctionRefExp based on a function's declaration.
+SgFunctionRefExp * buildFunctionRefExp(const SgFunctionDeclaration* func_decl);
+
 //! Build SgFunctionRefExp based on a function's symbol.
 SgFunctionRefExp * buildFunctionRefExp(SgFunctionSymbol* sym);
 SgFunctionRefExp * buildFunctionRefExp_nfi(SgFunctionSymbol* sym);
@@ -466,14 +469,14 @@ SgClassNameRefExp * buildClassNameRefExp_nfi(SgClassSymbol* sym);
 SgClassNameRefExp * buildClassNameRefExp(SgClassSymbol* sym);
 
 //! Build a function call expression
-SgFunctionCallExp* buildFunctionCallExp(SgFunctionSymbol* sym, SgExprListExp* parameters);
-SgFunctionCallExp* buildFunctionCallExp_nfi(SgExpression* f, SgExprListExp* parameters);
-SgFunctionCallExp* buildFunctionCallExp(SgExpression* f, SgExprListExp* parameters);
+SgFunctionCallExp* buildFunctionCallExp(SgFunctionSymbol* sym, SgExprListExp* parameters=NULL);
+SgFunctionCallExp* buildFunctionCallExp_nfi(SgExpression* f, SgExprListExp* parameters=NULL);
+SgFunctionCallExp* buildFunctionCallExp(SgExpression* f, SgExprListExp* parameters=NULL);
 
 //! Build a function call expression,it will automatically search for function symbols internally to build a right function reference etc. It tolerates the lack of the function symbol to support generating calls to library functions whose headers have not yet been inserted.
 SgFunctionCallExp* 
 buildFunctionCallExp(const SgName& name, SgType* return_type, \
-                SgExprListExp* parameters, SgScopeStatement* scope=NULL);
+                SgExprListExp* parameters=NULL, SgScopeStatement* scope=NULL);
 
 //! Build the rhs of a variable declaration which includes an assignment
 SgAssignInitializer * buildAssignInitializer(SgExpression * operand_i = NULL);
@@ -616,11 +619,11 @@ buildProcedureHeaderStatement(const char* name, SgType* return_type, SgFunctionP
 
 //! Build a regular function call statement
 SgExprStatement*
-buildFunctionCallStmt(const SgName& name, SgType* return_type, SgExprListExp* parameters, SgScopeStatement* scope=NULL);
+buildFunctionCallStmt(const SgName& name, SgType* return_type, SgExprListExp* parameters=NULL, SgScopeStatement* scope=NULL);
 
 //! Build a function call statement using function expression and argument list only, like (*funcPtr)(args);
 SgExprStatement*
-buildFunctionCallStmt(SgExpression* function, SgExprListExp* parameters);
+buildFunctionCallStmt(SgExpression* function, SgExprListExp* parameters=NULL);
 
 
 //! Build a label statement, handling label symbol and scope internally.

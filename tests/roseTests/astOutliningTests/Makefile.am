@@ -75,6 +75,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
 	array2.cpp \
+	reference.cpp \
 	moreTest2.cpp \
 	moreTest3.cpp \
 	moreTest4.cpp \

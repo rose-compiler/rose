@@ -192,6 +192,7 @@ getVarSyms (SgNode* n, ASTtools::VarSymSet_t* p_syms)
 
 // ========================================================================
 
+#if 0 // moved to SageInterface 
 static
 const SgVariableSymbol *
 getFirstVarSym_const (const SgVariableDeclaration* decl)
@@ -214,7 +215,7 @@ ASTtools::getFirstVarSym (SgVariableDeclaration* decl)
   const SgVariableSymbol* sym = getFirstVarSym_const (decl);
   return const_cast<SgVariableSymbol *> (sym);
 }
-
+#endif
 void
 ASTtools::collectRefdVarSyms (const SgStatement* s, VarSymSet_t& syms)
 {
@@ -293,7 +294,8 @@ ASTtools::collectLocalVisibleVarSyms (const SgStatement* root,
     }
 }
 
-//! Collect variable reference a using addresses within s, including &a expression and foo(a) when type2 foo(Type& parameter) in C++
+//! Collect variable reference a using addresses within s, 
+//including &a expression and foo(a) when type2 foo(Type& parameter) in C++
 void ASTtools::collectVarRefsUsingAddress(const SgStatement* s, std::set<SgVarRefExp* >& varSetB)
 {
   Rose_STL_Container <SgNode*> var_refs = NodeQuery::querySubTree (const_cast<SgStatement *> (s), V_SgVarRefExp);
@@ -368,6 +370,11 @@ void ASTtools::collectVarRefsOfTypeWithoutAssignmentSupport(const SgStatement* s
  
 
 //! Collect variables to be replaced by pointer dereferencing (pd)
+// We collect those used by address OR those do not support assignment
+// We exclude C++ reference types since they do not support dereferencing 
+// PointerDereferenceingVars =
+//   PassByRefParameters \intersection (UsingByAddress \union NotAssignableVars) - PointerDereferencedVars
+//   Liao, 8/14/2009
 void ASTtools::collectPointerDereferencingVarSyms(const SgStatement*s, VarSymSet_t& pdSyms)
 {
   std::set<SgVarRefExp* > varSetB;
@@ -380,6 +387,7 @@ void ASTtools::collectPointerDereferencingVarSyms(const SgStatement*s, VarSymSet
   {
     SgVarRefExp* ref = *iter;
     ROSE_ASSERT(ref->get_symbol()!=NULL);
+    if (!isSgReferenceType(ref->get_type())) // exclude C++ reference type
     pdSyms.insert(ref->get_symbol());
   }
   if (Outliner::enable_debug)

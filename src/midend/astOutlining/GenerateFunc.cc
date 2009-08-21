@@ -15,7 +15,7 @@
 #include <set>
 
 
-#include "Transform.hh"
+#include "Outliner.hh"
 #include "ASTtools.hh"
 #include "VarSym.hh"
 #include "Copy.hh"
@@ -133,13 +133,32 @@ isBaseTypePrimitive (const SgType* type)
 
 /*!
  *  \brief Creates a new outlined-function parameter for a given
- *  variable.
+ *  variable. The requirement is to preserve data read/write semantics.
+ *
+ *  For C/C++: we use pointer dereferencing to implement pass-by-reference
+ *    In a recent implementation, side effect analysis is used to find out
+ *    variables which are not modified so pointer types are not used.
+ *
+ *  For Fortran, all parameters are passed by reference by default.
  *
  *  Given a variable (i.e., its type and name) whose references are to
- *  be outlined, create a suitable outlined-function parameter. The
- *  parameter is created as a pointer, to support parameter passing of
- *  aggregate types in C programs. Moreover, the type is made 'void'
- *  if the base type is not a primitive type.
+ *  be outlined, create a suitable outlined-function parameter. 
+ *  For C/C++, the  parameter is created as a pointer, to support parameter passing of
+ *  aggregate types in C programs. 
+ *  Moreover, the type is made 'void' if the base type is not a primitive type.
+ *   
+ *  An original type may need adjustments before we can make a pointer type from it.
+ *  For example: 
+ *    a)Array types from a function parameter: its first dimension is auto converted to a pointer type 
+ *
+ *    b) Pointer to a C++ reference type is illegal, we create a pointer to its
+ *    base type in this case. It also match the semantics for addressof(refType) 
+ *
+ * 
+ *  The implementation follows two steps:
+ *     step 1: adjust a variable's base type
+ *     step 2: decide on its function parameter type
+ *  Liao, 8/14/2009
  */
 static
 OutlinedFuncParam_t
@@ -149,6 +168,12 @@ createParam (const SgInitializedName* i_name, bool readOnly=false)
   ROSE_ASSERT (i_name);
   SgType* init_type = i_name->get_type();
   ROSE_ASSERT (init_type);
+
+  // Store the adjusted original types into param_base_type
+  // primitive types: --> original type
+  // complex types: void
+  // array types from function parameters:  pointer type for 1st dimension
+  // C++ reference type: use base type since we want to have uniform way to generate a pointer to the original type
   SgType* param_base_type = 0;
   if (isBaseTypePrimitive (init_type)||Outliner::enable_classic)
     // for classic translation, there is no additional unpacking statement to 
@@ -158,15 +183,25 @@ createParam (const SgInitializedName* i_name, bool readOnly=false)
     // Duplicate the initial type.
     param_base_type = init_type; //!< \todo Is shallow copy here OK?
     //param_base_type = const_cast<SgType *> (init_type); //!< \todo Is shallow copy here OK?
-    // convert the first dimension of an array type function parameter to a pointer type, Liao
-    // 4/24/2009
+   
+    // Adjust the original types for array or function types (TODO function types) which are passed as function parameters 
+    // convert the first dimension of an array type function parameter to a pointer type, 
+    // This is called the auto type conversion for function or array typed variables 
+    // that are passed as function parameters
+    // Liao 4/24/2009
     if (isSgArrayType(param_base_type)) 
       if (isSgFunctionDefinition(i_name->get_scope()))
         param_base_type= SageBuilder::buildPointerType(isSgArrayType(param_base_type)->get_base_type());
      
+    //For C++ reference type, we use its base type since pointer to a reference type is not allowed
+    //Liao, 8/14/2009
+    SgReferenceType* ref = isSgReferenceType (param_base_type);
+    if (ref != NULL)
+      param_base_type = ref->get_base_type();
+
     ROSE_ASSERT (param_base_type);
   }
-  else
+  else // for non-primitive types, we use void as its base type
   {
     param_base_type = SgTypeVoid::createType ();
     ROSE_ASSERT (param_base_type);
@@ -180,10 +215,13 @@ createParam (const SgInitializedName* i_name, bool readOnly=false)
     }
   }
 
-  // Stores the new parameter.
+  // Stores the real parameter type to be used in new_param_type
    string init_name = i_name->get_name ().str (); 
+   // The parameter name reflects the type: the same name means the same type, 
+   // p__ means a pointer type
   string new_param_name = init_name;
   SgType* new_param_type = NULL;
+
   // For classic behavior, read only variables are passed by values for C/C++
   // They share the same name and type
   if (Outliner::enable_classic) 
@@ -200,7 +238,7 @@ createParam (const SgInitializedName* i_name, bool readOnly=false)
 
     }
   }
-  else
+  else // very conservative one, assume the worst side effects (all are written) 
   {
     new_param_name+= "p__";
     if (!SageInterface::is_Fortran_language())
@@ -210,6 +248,9 @@ createParam (const SgInitializedName* i_name, bool readOnly=false)
     }
   }
 
+  // Fortran parameters are passed by reference by default,
+  // So use base type directly
+  // C/C++ parameters will use their new param type to implement pass-by-reference
   if (SageInterface::is_Fortran_language())
     return OutlinedFuncParam_t (new_param_name,param_base_type);
   else 
@@ -224,13 +265,13 @@ createParam (const SgInitializedName* i_name, bool readOnly=false)
  *
  *  OUT_XXX(int *ip__)
  *  {
- *    // This is call unpacking declaration, Liao, 9/11/2008
+ *    // This is called unpacking declaration for a read-only variable, Liao, 9/11/2008
  *   int i = * (int *) ip__;
  *  }
  *
  *  Or
  *
- *  OUT_XXX (void * __out_argv[n])
+ *  OUT_XXX (void * __out_argv[n]) // for written variables, we have to use pointers
  *  {
  *    int * _p_i =  (int*)__out_argv[0];
  *    int * _p_j =  (int*)__out_argv[1];
@@ -270,6 +311,8 @@ createUnpackDecl (SgInitializedName* param, int index,
   ROSE_ASSERT (param_deref_type);
 
   // Cast from 'void *' to 'LOCAL_VAR_TYPE *'
+  // Special handling for C++ reference type: addressOf (refType) == addressOf(baseType) 
+  // So unpacking it to baseType* 
   SgReferenceType* ref = isSgReferenceType (param_deref_type);
   SgType* local_var_type_ptr =
     SgPointerType::createType (ref ? ref->get_base_type (): param_deref_type);
@@ -345,9 +388,16 @@ createUnpackDecl (SgInitializedName* param, int index,
   else if (Outliner::temp_variable) 
   // unique processing for C/C++ if temp variables are used
   {
-    if (isPointerDeref)
+    if (isPointerDeref) // use pointer dereferencing for some
+    {
       local_type = buildPointerType(param_deref_type);
-    else
+      // two cases: reference type vs. regular type
+      // reference type should not be categorized as a type to use pointer dereferencing.
+      //local_type = isSgReferenceType(param_deref_type) ?param_deref_type :buildPointerType(param_deref_type);
+      //cout<<"debug: found a pointer deref type: "<< param_deref_type->unparseToString()<<endl;
+      //cout<<"debug: local_type is: "<< local_type->unparseToString()<<endl;
+    }
+    else // use variable clone instead for others
       local_type = param_deref_type;
   }  
   else  
@@ -414,7 +464,7 @@ isReadOnlyType (const SgType* type)
  *    *outlined_func_arg = local_unpack_var
  *    *(int *)(__out_argv[1]) =i; // parameter wrapping case
  *
- *
+ *  C++ variables of reference types do not need this step.
  */
 static
 SgAssignOp *
@@ -424,9 +474,11 @@ createPackExpr (SgInitializedName* local_unpack_def)
   {
     if (is_C_language()) //skip for pointer dereferencing used in C language
       return NULL;
-    if (isSgReferenceType (local_unpack_def->get_type ()))  
-      return NULL;
   }
+  // reference types do not need copy the value back in any cases
+  if (isSgReferenceType (local_unpack_def->get_type ()))  
+    return NULL;
+
   if (local_unpack_def
       && !isReadOnlyType (local_unpack_def->get_type ()))
 //      && !isSgReferenceType (local_unpack_def->get_type ()))
@@ -799,9 +851,10 @@ remapVarSyms (const VarSymRemap_t& vsym_remap, const ASTtools::VarSymSet_t& pdSy
 
 // DQ (2/25/2009): Modified function interface to pass "SgBasicBlock*" as not const parameter.
 //! Create a function named 'func_name_str', with a parameter list from 'syms'
-// pdSyms specifies symbols which must use pointer dereferencing if replaced during outlining, only used when -rose:outline:temp_variable is used
+// pdSyms specifies symbols which must use pointer dereferencing if replaced during outlining, 
+// only used when -rose:outline:temp_variable is used
 SgFunctionDeclaration *
-Outliner::Transform::generateFunction ( SgBasicBlock* s,
+Outliner::generateFunction ( SgBasicBlock* s,
                                           const string& func_name_str,
                                           const ASTtools::VarSymSet_t& syms,
                                           const ASTtools::VarSymSet_t& pdSyms,
@@ -809,8 +862,9 @@ Outliner::Transform::generateFunction ( SgBasicBlock* s,
 {
   ROSE_ASSERT (s&&scope);
   ROSE_ASSERT(isSgGlobal(scope));
+  // step 1: perform necessary liveness and side effect analysis, if requested.
   std::set< SgInitializedName *> liveIns, liveOuts;
-   // Collect read only variables of the outlining target
+   // Collect read-only variables of the outlining target
     std::set<SgInitializedName*> readOnlyVars;
     if (Outliner::temp_variable||Outliner::enable_classic)
     {
@@ -836,14 +890,15 @@ Outliner::Transform::generateFunction ( SgBasicBlock* s,
       }
     }
 
-  // Create function skeleton, 'func'.
+  //step 2. Create function skeleton, 'func'.
      SgName func_name (func_name_str);
      SgFunctionParameterList *parameterList = buildFunctionParameterList();
 
      SgFunctionDeclaration* func = createFuncSkeleton (func_name,SgTypeVoid::createType (),parameterList, scope);
      ROSE_ASSERT (func);
 
-#if 1 // Liao, 4/15/2009 , enable C code to call this outlined function
+ // Liao, 4/15/2009 , enforce C-bindings  for C++ outlined code
+ // enable C code to call this outlined function
   // Only apply to C++ , pure C has trouble in recognizing extern "C"
   // Another way is to attach the function with preprocessing info:
   // #if __cplusplus 
@@ -857,7 +912,7 @@ Outliner::Transform::generateFunction ( SgBasicBlock* s,
           func->get_declarationModifier().get_storageModifier().setExtern();
           func->set_linkage ("C");
         }
-#endif
+
   // Generate the function body by deep-copying 's'.
      SgBasicBlock* func_body = func->get_definition()->get_body();
      ROSE_ASSERT (func_body != NULL);
@@ -914,11 +969,12 @@ Outliner::Transform::generateFunction ( SgBasicBlock* s,
   }
 #endif
 
+  //step 3: create parameters and replace variable references, 
+  //including adding unpacking and save-back statements
+  //
+  // Create parameters for outlined vars, and fix-up symbol refs in the body.
   // Store parameter list information.
      VarSymRemap_t vsym_remap;
-
-  // Create parameters for outlined vars, and fix-up symbol refs in
-  // the body.
   appendParams (syms, pdSyms,readOnlyVars, liveOuts,func, vsym_remap);
   remapVarSyms (vsym_remap, pdSyms, func_body);
 

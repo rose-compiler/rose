@@ -285,10 +285,14 @@ Outliner::isOutlineable (const SgStatement* s, bool verbose)
     return false;
   }
 
-  if (isSgBasicBlock (s) && !isSgBasicBlock (s->get_parent ()))
+  // Liao, 8/20/2009 TODO why do we need this at all?
+  // A minor excuse is that if the BB is the body of a function definition, 
+  // replacing it with a call statement will cause some problem.
+  // But we can easily extend SageInterface::replaceStatement() to handle it 
+  if (isSgBasicBlock (s) && (!isSgBasicBlock (s->get_parent ())&& !isSgOmpBodyStatement(s->get_parent ())))
   {
     if (verbose)
-      cerr << "*** Basic blocks must be secondary (nested). ***" << endl;
+      cerr << "*** Basic blocks must be secondary (nested) or body of SgOmpBodyStatement. ***" << endl;
     return false;
   }
 

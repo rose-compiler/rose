@@ -18,11 +18,8 @@ class SgStatement;
 
 namespace ASTtools
 {
-  //! Stores a collection of SgVariableSymbols (var syms).
-  typedef std::set<const SgVariableSymbol *> VarSymSet_t;
-
   //! Get the variable symbol for the first initialized name.
-  SgVariableSymbol* getFirstVarSym (SgVariableDeclaration* decl);
+  //  SgVariableSymbol* getFirstVarSym (SgVariableDeclaration* decl);
 
   //! Collect var syms for all local variable declarations at 's'.
   void collectDefdVarSyms (const SgStatement* s, VarSymSet_t& syms);

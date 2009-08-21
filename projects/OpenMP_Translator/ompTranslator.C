@@ -3821,7 +3821,6 @@ void OmpMidend::generateOutlinedFunctionDefinition(SgPragmaDeclaration* decl,\
    //copy the enclosed parallel region code
    SgBasicBlock *bBlock2 = buildBasicBlock();
 
-
    appendStatement(bBlock2,bBlock1);
 //   bBlock2->set_parent(bBlock1);// bug 192 
    SgStatement* nextStatement = getNextStatement(decl);

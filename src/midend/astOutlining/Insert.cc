@@ -11,7 +11,7 @@
 #include <sstream>
 
 
-#include "Transform.hh"
+#include "Outliner.hh"
 #include "ASTtools.hh"
 #include "PreprocessingInfo.hh"
 #include "StmtRewrite.hh"
@@ -541,15 +541,17 @@ insertFriendDecls (SgFunctionDeclaration* func,
 //  and insert necessary declarations into the global scope of
 //  target's original enclosing function). 
 void
-Outliner::Transform::insert (SgFunctionDeclaration* func,
+Outliner::insert (SgFunctionDeclaration* func,
                              SgGlobal* scope,
-                             SgFunctionDeclaration* target_func,
                              SgBasicBlock* target_outlined_code )
    {
   // Scope is the global scope of the outlined location (could be in a separate file).
 
-     ROSE_ASSERT (func != NULL && scope != NULL && target_func != NULL);
+     ROSE_ASSERT (func != NULL && scope != NULL );
      ROSE_ASSERT(target_outlined_code != NULL);
+     SgFunctionDeclaration* target_func = const_cast<SgFunctionDeclaration *> 
+       (SageInterface::getEnclosingFunctionDeclaration (target_outlined_code));
+     ROSE_ASSERT(target_func!= NULL);
 
   // This is the global scope of the original file
      SgGlobal* src_global = SageInterface::getGlobalScope(target_func);
@@ -565,7 +567,7 @@ Outliner::Transform::insert (SgFunctionDeclaration* func,
 
 #if 0
      printf ("******************************************************************************************** \n");
-     printf ("Outliner::Transform::insert(): input function func = %p func->get_definingDeclaration() = %p \n",func,func->get_definingDeclaration());
+     printf ("Outliner::insert(): input function func = %p func->get_definingDeclaration() = %p \n",func,func->get_definingDeclaration());
      printf ("******************************************************************************************** \n");
 #endif
 
@@ -680,7 +682,7 @@ Outliner::Transform::insert (SgFunctionDeclaration* func,
 
 #if 0
           printf ("After: Number of symbols in scope = %p symbol table = %d \n",scope,scope->get_symbol_table()->size());
-          printf ("In Outliner::Transform::insert(): outlinedFileFunctionPrototype = %p \n",outlinedFileFunctionPrototype);
+          printf ("In Outliner::insert(): outlinedFileFunctionPrototype = %p \n",outlinedFileFunctionPrototype);
 #endif
 
        // The build function should have build symbol for the symbol table.
@@ -744,7 +746,7 @@ Outliner::Transform::insert (SgFunctionDeclaration* func,
 //  and insert necessary declarations into the global scope of
 //  target's original enclosing function). 
 void
-Outliner::Transform::insert (SgFunctionDeclaration* func,
+Outliner::insert (SgFunctionDeclaration* func,
                              SgGlobal* scope,
                              SgFunctionDeclaration* target_func,
                              SgBasicBlock* target_outlined_code )
@@ -772,7 +774,7 @@ Outliner::Transform::insert (SgFunctionDeclaration* func,
      ROSE_ASSERT(func->get_definingDeclaration() == func);
 
      printf ("******************************************************************************************** \n");
-     printf ("Outliner::Transform::insert(): input function func = %p func->get_definingDeclaration() = %p \n",func,func->get_definingDeclaration());
+     printf ("Outliner::insert(): input function func = %p func->get_definingDeclaration() = %p \n",func,func->get_definingDeclaration());
      printf ("******************************************************************************************** \n");
 
      ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
@@ -812,7 +814,7 @@ Outliner::Transform::insert (SgFunctionDeclaration* func,
           SgFunctionDeclaration* func_prototype = SageBuilder::buildNondefiningFunctionDeclaration (func,scope);
           scope->append_declaration (func_prototype);
 
-          printf ("In Outliner::Transform::insert(): func_prototype = %p \n",func_prototype);
+          printf ("In Outliner::insert(): func_prototype = %p \n",func_prototype);
 
        // DQ (2/202/2009): ASK LIAO: If func is a defining declaration then shouldn't the 
        // SageBuilder::buildNondefiningFunctionDeclaration() set the definingDeclaration?
@@ -965,7 +967,7 @@ Outliner::Transform::insert (SgFunctionDeclaration* func,
             // func->set_firstNondefiningDeclaration(NULL);
              }
 
-       // printf ("In Outliner::Transform::insert(): func = %p = %s \n",func,func->class_name().c_str());
+       // printf ("In Outliner::insert(): func = %p = %s \n",func,func->class_name().c_str());
         }
        else
         {

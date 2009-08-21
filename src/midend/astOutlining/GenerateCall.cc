@@ -10,7 +10,7 @@
 #include <sstream>
 
 
-#include "Transform.hh"
+#include "Outliner.hh"
 #include "ASTtools.hh"
 #include "VarSym.hh"
 #include "StmtRewrite.hh"
@@ -78,10 +78,11 @@ appendArgs (const ASTtools::VarSymSet_t& syms,  std::set<SgInitializedName*> rea
 // =====================================================================
 
 SgStatement *
-Outliner::Transform::generateCall (SgFunctionDeclaration* out_func,
+Outliner::generateCall (SgFunctionDeclaration* out_func,
                                       const ASTtools::VarSymSet_t& syms, 
                                        std::set<SgInitializedName*>  readOnlyVars, 
-                                      std::string wrapper_name, SgScopeStatement* scope)
+                                      std::string wrapper_name, 
+                                      SgScopeStatement* scope)
 {
   // Create a reference to the function.
   SgGlobal* glob_scope = TransformationSupport::getGlobalScope(scope);

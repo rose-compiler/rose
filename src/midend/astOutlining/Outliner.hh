@@ -3,8 +3,7 @@
  *
  *  \brief An outlining implementation.
  *
- *  \author Chunhua Liao <liaoch@llnl.gov>, Richard Vuduc
- *  <richie@llnl.gov>
+ *  \author Chunhua Liao <liaoch@llnl.gov>, Richard Vuduc <richie@llnl.gov>
  *
  *  This implementation is based largely on the code by Liao for the
  *  ROSE OpenMP_Translator project. Vuduc extended the code to handle
@@ -20,8 +19,10 @@
 
 #include <cstdlib>
 #include <vector>
+#include <set>
 #include <string>
-
+#include <ASTtools.hh>
+#include <VarSym.hh>
 //! \name Forward declarations to relevant Sage classes.
 //@{
 class SgProject;
@@ -57,13 +58,6 @@ namespace Outliner
   const std::string FIND_FUNCP_DLOPEN="findFunctionUsingDlopen";
   const std::string DEFAULT_OUTPUT_PATH="/tmp";
 
-  //! Accept a set of command line options to adjust internal behaviors
-  // Please use this function before calling the frontend() to set the internal flags
-  void commandLineProcessing(std::vector<std::string> &argvList);
-  //
-  //! Returns true iff the statement is "outlineable."
-  bool isOutlineable (const SgStatement* s, bool verbose = false);
-
   //! Stores the main results of an outlining transformation.
   struct Result
   {
@@ -83,6 +77,14 @@ namespace Outliner
     ~Result (void) {}; //! Shallow; does not delete fields.
     bool isValid (void) const; //! Returns true iff result is usable
   };
+
+  //! Accept a set of command line options to adjust internal behaviors
+  // Please use this function before calling the frontend() to set the internal flags
+  void commandLineProcessing(std::vector<std::string> &argvList);
+  //
+  //! Returns true iff the statement is "outlineable."
+  bool isOutlineable (const SgStatement* s, bool verbose = false);
+
 
   /*!
    *  \brief Create a unique outlined-function name for the specified
@@ -149,6 +151,89 @@ namespace Outliner
   SgBasicBlock* preprocess (SgPragmaDeclaration* s);
   size_t preprocessAll (SgProject *);
   //@}
+  
+   /*!
+     *  \brief Outlines the given basic block into a function named
+     *  'name'.
+     *
+     *  This routine performs the outlining transformation, including
+     *  insertion of the new outlined-function declaration and call.
+     */
+    Result outlineBlock (SgBasicBlock* b, const std::string& name);
+
+    /*!
+     *  \brief Computes the set of variables in 's' that need to be
+     *  passed to the outlined routine.
+     */
+    void collectVars (const SgStatement* s, ASTtools::VarSymSet_t& syms);
+
+    /*!\brief Generate a new source file under the same SgProject as
+     * target, the file's base name is file_name_str. Suffix is automatically
+     * generated according to the file suffix of s
+     */
+    SgSourceFile* generateNewSourceFile(SgBasicBlock* target, const std::string& file_name);
+
+    /*!
+     *  \brief Returns a new outlined function containing a deep-copy
+     *  of s.
+     *
+     *  This function only creates and returns an outlined function
+     *  definition, f. Although it sets the scope of 'f' to be the
+     *  first scope surrounding 's' that may contain a function (or
+     *  member function) definition, it does not insert 'f' into that
+     *  scope.
+     *
+     *  This function is an "inner" outlining routine which does not
+     *  properly handle non-local control flow. To outline statements
+     *  containing non-local flow, a caller should instead call \ref
+     *  Outliner::outline(), which preprocesses non-local control
+     *  flow appropriately. See \ref
+     *  Outliner::transformNonLocalControlFlow() for more details.
+     *
+     *  pdSyms is used to store symbols which must be replaced with 
+     *  their corresponding pointer dereferencing if replaced during 
+     *  outlining. Used to support -rose:outline:temp_variable
+     *
+     *  \pre The statement does not contain non-local control flow.
+     */
+ // DQ (2/25/2009): Modified function interface to pass "SgBasicBlock*" as not const parameter.
+ // SgFunctionDeclaration* generateFunction (const SgBasicBlock* s,const std::string& func_name_str,const ASTtools::VarSymSet_t& syms,SgScopeStatement* scope);
+    SgFunctionDeclaration*
+    generateFunction (SgBasicBlock* s,
+                      const std::string& func_name_str,
+                      const ASTtools::VarSymSet_t& syms,
+                      const ASTtools::VarSymSet_t& pdSyms,
+                      SgScopeStatement* scope);
+
+     //! Generate packing (wrapping) statements for the variables to be passed 
+     //return the unique wrapper parameter for the outlined function
+     //target is the outlining target
+    std::string generatePackingStatements(SgStatement* target, ASTtools::VarSymSet_t & syms);
+
+    /*!
+     *  \brief Inserts an outlined-function declaration into global scope.
+     *
+     *  The caller specifies the global scope into which this routine will
+     *  insert the declaration. This is needed since we support inserting into
+     *  the original global scope and a global scope in a new file.
+     *
+     *  The caller also provides the original target to be outlined
+     *  This information is used to insert the prototypes into the correct places in
+     *  the AST.
+     */
+    void insert (SgFunctionDeclaration* func,
+                 SgGlobal* scope,
+                 SgBasicBlock* outlining_target );
+
+    /*!
+     *  \brief Generates a call to an outlined function.
+     */
+    SgStatement* generateCall (SgFunctionDeclaration* out_func,
+                              const ASTtools::VarSymSet_t& syms,
+                              std::set<SgInitializedName*> readOnlyVars,
+                              std::string wrapper_arg_name,
+                              SgScopeStatement* scope);
+  
 };
 
 #endif // !defined(INC_LIAOUTLINER_HH)

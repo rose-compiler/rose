@@ -233,38 +233,39 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/util/stringSupport \
      -I$(top_srcdir)/src/util/commandlineProcessing \
      -I$(top_srcdir)/src/midend/abstractHandle \
-     -I$(top_srcdir)/src/midend/binaryAnalyses \
-     -I$(top_srcdir)/src/midend/binaryAnalyses/graph \
-     -I$(top_srcdir)/src/midend/binaryAnalyses/dataflowanalyses \
-     -I$(top_srcdir)/src/midend/binaryAnalyses/instructionSemantics \
-     -I$(top_srcdir)/src/midend/astUtil/astSupport \
-     -I$(top_srcdir)/src/midend/astUtil/astInterface \
-     -I$(top_srcdir)/src/midend/astUtil/symbolicVal \
-     -I$(top_srcdir)/src/midend/astUtil/annotation \
-     -I$(top_srcdir)/src/midend/programAnalysis \
-     -I$(top_srcdir)/src/midend/programAnalysis/CallGraphAnalysis \
-     -I$(top_srcdir)/src/midend/programAnalysis/OAWrap \
-     -I$(top_srcdir)/src/midend/programAnalysis/CFG \
-     -I$(top_srcdir)/src/midend/programAnalysis/defUseAnalysis \
-     -I$(top_srcdir)/src/midend/programAnalysis/dominanceAnalysis \
-     -I$(top_srcdir)/src/midend/programAnalysis/staticInterproceduralSlicing \
-     -I$(top_srcdir)/src/midend/programAnalysis/distributedMemoryAnalysis \
-     -I$(top_srcdir)/src/midend/programAnalysis/graphAnalysis \
+     -I$(top_srcdir)/src/midend/astDiagnostics \
      -I$(top_srcdir)/src/midend/astInlining \
      -I$(top_srcdir)/src/midend/astOutlining  \
+     -I$(top_srcdir)/src/midend/astProcessing \
      -I$(top_srcdir)/src/midend/astQuery \
      -I$(top_srcdir)/src/midend/astRewriteMechanism \
-     -I$(top_srcdir)/src/midend/astProcessing \
-     -I$(top_srcdir)/src/midend/astDiagnostics \
-     -I$(top_srcdir)/src/midend/programAnalysis/dataflowAnalysis \
-     -I$(top_srcdir)/src/midend/programAnalysis/pointerAnal \
-     -I$(top_srcdir)/src/midend/programAnalysis/valuePropagation \
-     -I$(top_srcdir)/src/midend/loopProcessing/driver \
+     -I$(top_srcdir)/src/midend/astUtil/annotation \
+     -I$(top_srcdir)/src/midend/astUtil/astInterface \
+     -I$(top_srcdir)/src/midend/astUtil/astSupport \
+     -I$(top_srcdir)/src/midend/astUtil/symbolicVal \
+     -I$(top_srcdir)/src/midend/binaryAnalyses \
+     -I$(top_srcdir)/src/midend/binaryAnalyses/dataflowanalyses \
+     -I$(top_srcdir)/src/midend/binaryAnalyses/graph \
+     -I$(top_srcdir)/src/midend/binaryAnalyses/instructionSemantics \
      -I$(top_srcdir)/src/midend/loopProcessing/computation \
-     -I$(top_srcdir)/src/midend/loopProcessing/outsideInterface \
-     -I$(top_srcdir)/src/midend/loopProcessing/prepostTransformation \
      -I$(top_srcdir)/src/midend/loopProcessing/depGraph \
      -I$(top_srcdir)/src/midend/loopProcessing/depInfo \
+     -I$(top_srcdir)/src/midend/loopProcessing/driver \
+     -I$(top_srcdir)/src/midend/loopProcessing/outsideInterface \
+     -I$(top_srcdir)/src/midend/loopProcessing/prepostTransformation \
+     -I$(top_srcdir)/src/midend/ompLowering \
+     -I$(top_srcdir)/src/midend/programAnalysis \
+     -I$(top_srcdir)/src/midend/programAnalysis/CFG \
+     -I$(top_srcdir)/src/midend/programAnalysis/CallGraphAnalysis \
+     -I$(top_srcdir)/src/midend/programAnalysis/OAWrap \
+     -I$(top_srcdir)/src/midend/programAnalysis/dataflowAnalysis \
+     -I$(top_srcdir)/src/midend/programAnalysis/defUseAnalysis \
+     -I$(top_srcdir)/src/midend/programAnalysis/distributedMemoryAnalysis \
+     -I$(top_srcdir)/src/midend/programAnalysis/dominanceAnalysis \
+     -I$(top_srcdir)/src/midend/programAnalysis/graphAnalysis \
+     -I$(top_srcdir)/src/midend/programAnalysis/pointerAnal \
+     -I$(top_srcdir)/src/midend/programAnalysis/staticInterproceduralSlicing \
+     -I$(top_srcdir)/src/midend/programAnalysis/valuePropagation \
       $(ROSE_SIDEEFFECTS_INCLUDE) \
       $(ROSE_DATABASE_INCLUDE) \
       $(ROSE_GUI_INCLUDE) \

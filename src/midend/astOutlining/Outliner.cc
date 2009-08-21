@@ -12,7 +12,7 @@
 #include "NameGenerator.hh"
 #include "Outliner.hh"
 #include "Preprocess.hh"
-#include "Transform.hh"
+//#include "Transform.hh"
 #include "commandline_processing.h"
 #include "boost/filesystem.hpp"
 namespace bfs=boost::filesystem;
@@ -145,7 +145,7 @@ Outliner::outline (SgStatement* s, const std::string& func_name)
   {
  // return Transform::outlineBlock (s_post, func_name);
 
-    Outliner::Result returnResult = Transform::outlineBlock (s_post, func_name);
+    Outliner::Result returnResult = outlineBlock (s_post, func_name);
 
 #if 0
 // This is now done in ASTtools::replaceStatement().
@@ -316,6 +316,7 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
 SgBasicBlock *
 Outliner::preprocess (SgStatement* s)
 {
+  // bool b = isOutlineable (s, enable_debug);
   bool b = isOutlineable (s, SgProject::get_verbose () >= 1);
   if (b!= true)
   {

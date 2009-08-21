@@ -10,7 +10,8 @@
 #include <string>
 
 
-#include "Transform.hh"
+#include "Outliner.hh"
+//#include "Transform.hh"
 #include "ASTtools.hh"
 #include "VarSym.hh"
 
@@ -38,7 +39,7 @@ dump (const ASTtools::VarSymSet_t& V, const std::string& tag)
 //  The goal is to minimize the number of variables to be passed.
 //  since global variables are always visible even to the outlined function.
 void
-Outliner::Transform::collectVars (const SgStatement* s, ASTtools::VarSymSet_t& syms)
+Outliner::collectVars (const SgStatement* s, ASTtools::VarSymSet_t& syms)
 {
   // Determine the function definition surrounding 's'. The enclosing function of 's'
   const SgFunctionDefinition* outer_func_s = ASTtools::findFirstFuncDef (s);

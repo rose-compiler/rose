@@ -2082,6 +2082,19 @@ SageBuilder::buildFunctionRefExp(const char* name,const SgType* funcType, SgScop
 
 // lookup function symbol to create a reference to it
 SgFunctionRefExp *
+SageBuilder::buildFunctionRefExp(const SgFunctionDeclaration* func_decl)
+{
+  ROSE_ASSERT(func_decl != NULL);
+  SgDeclarationStatement* nondef_func = func_decl->get_firstNondefiningDeclaration ();
+  ROSE_ASSERT(nondef_func!= NULL);
+  SgSymbol* symbol = nondef_func->get_symbol_from_symbol_table();
+  ROSE_ASSERT( symbol != NULL);
+  return buildFunctionRefExp( isSgFunctionSymbol (symbol));
+}
+
+
+// lookup function symbol to create a reference to it
+SgFunctionRefExp *
 SageBuilder::buildFunctionRefExp(SgFunctionSymbol* sym)
 {
   SgFunctionRefExp* func_ref = new SgFunctionRefExp(sym, NULL);
@@ -2203,13 +2216,14 @@ SageBuilder::buildExprStatement_nfi(SgExpression*  exp)
 SgFunctionCallExp* 
 SageBuilder::buildFunctionCallExp(const SgName& name, 
                                                 SgType* return_type, 
-                                                SgExprListExp* parameters, 
-                                             SgScopeStatement* scope)
-//                                             SgScopeStatement* scope=NULL)
+                                                SgExprListExp* parameters/*=NULL*/, 
+                                             SgScopeStatement* scope/*=NULL*/)
 {
   if (scope == NULL)    
     scope = SageBuilder::topScopeStack();
   ROSE_ASSERT(scope != NULL); 
+ if (parameters == NULL)
+     parameters = buildExprListExp();
   SgFunctionParameterTypeList * typeList= buildFunctionParameterTypeList(parameters); 
   SgFunctionType * func_type = buildFunctionType(return_type,typeList); 
   SgFunctionRefExp* func_ref = buildFunctionRefExp(name,func_type,scope);
@@ -2222,9 +2236,11 @@ SageBuilder::buildFunctionCallExp(const SgName& name,
 
 SgFunctionCallExp* 
 SageBuilder::buildFunctionCallExp(SgFunctionSymbol* sym, 
-                                  SgExprListExp* parameters)
+                                  SgExprListExp* parameters/*=NULL*/)
 {
   ROSE_ASSERT (sym);
+  if (parameters == NULL)
+    parameters = buildExprListExp();
   ROSE_ASSERT (parameters);
   SgFunctionRefExp* func_ref = buildFunctionRefExp(sym);
   SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(func_ref,parameters,func_ref->get_type());
@@ -2236,7 +2252,7 @@ SageBuilder::buildFunctionCallExp(SgFunctionSymbol* sym,
 }
 
 SgFunctionCallExp* 
-SageBuilder::buildFunctionCallExp_nfi(SgExpression* f, SgExprListExp* parameters)
+SageBuilder::buildFunctionCallExp_nfi(SgExpression* f, SgExprListExp* parameters /*=NULL*/)
 {
   SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(f,parameters,f->get_type());
   if (f) f->set_parent(func_call_expr);
@@ -2247,7 +2263,7 @@ SageBuilder::buildFunctionCallExp_nfi(SgExpression* f, SgExprListExp* parameters
 }
 
 SgFunctionCallExp* 
-SageBuilder::buildFunctionCallExp(SgExpression* f, SgExprListExp* parameters)
+SageBuilder::buildFunctionCallExp(SgExpression* f, SgExprListExp* parameters/*=NULL*/)
 {
   SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(f,parameters,f->get_type());
   if (f) f->set_parent(func_call_expr);
@@ -2260,9 +2276,8 @@ SageBuilder::buildFunctionCallExp(SgExpression* f, SgExprListExp* parameters)
 SgExprStatement*
 SageBuilder::buildFunctionCallStmt(const SgName& name, 
                       SgType* return_type, 
-                      SgExprListExp* parameters, 
-                      SgScopeStatement* scope)
-//                      SgScopeStatement* scope=NULL)
+                      SgExprListExp* parameters /*= NULL*/, 
+                      SgScopeStatement* scope /*=NULL*/)
 {
   if (scope == NULL)
     scope = SageBuilder::topScopeStack();
@@ -2274,7 +2289,7 @@ SageBuilder::buildFunctionCallStmt(const SgName& name,
 
 //! Build a function call statement using function expression and argument list only, like (*funcPtr)(args);
 SgExprStatement*
-SageBuilder::buildFunctionCallStmt(SgExpression* function_exp, SgExprListExp* parameters)
+SageBuilder::buildFunctionCallStmt(SgExpression* function_exp, SgExprListExp* parameters/*=NULL*/)
 {
   SgFunctionCallExp* func_call_expr = buildFunctionCallExp(function_exp, parameters);
   SgExprStatement * expStmt = buildExprStatement(func_call_expr);

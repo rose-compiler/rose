@@ -8,7 +8,8 @@
 #include <list>
 #include <string>
 
-#include "Transform.hh"
+// #include "Transform.hh"
+#include "Outliner.hh"
 #include "ASTtools.hh"
 #include "PreprocessingInfo.hh"
 #include "StmtRewrite.hh"
@@ -27,7 +28,7 @@ using namespace SageInterface;
  *  Append dependent declarations,headers to new file if needed
  */
 Outliner::Result
-Outliner::Transform::outlineBlock (SgBasicBlock* s, const string& func_name_str)
+Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
    {
      //---------preparations-----------------------------------
      //new file, cut preprocessing information, collect variables
@@ -93,7 +94,6 @@ Outliner::Transform::outlineBlock (SgBasicBlock* s, const string& func_name_str)
      SageInterface::deleteAST(s);
 #endif
 
-     SgFunctionDeclaration* func_orig = const_cast<SgFunctionDeclaration *> (SageInterface::getEnclosingFunctionDeclaration (s));
     
   // Retest this...
      ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
@@ -101,7 +101,7 @@ Outliner::Transform::outlineBlock (SgBasicBlock* s, const string& func_name_str)
   // DQ (2/16/2009): Added (with Liao) the target block which the outlined function will replace.
   // Insert the function and its prototype as necessary  
      ROSE_ASSERT(glob_scope->lookup_function_symbol(func->get_name()));
-     insert (func, glob_scope, func_orig, s); //Outliner::Transform::insert() 
+     insert (func, glob_scope, s); //Outliner::insert() 
      ROSE_ASSERT(glob_scope->lookup_function_symbol(func->get_name()));
   //
   // Retest this...
@@ -222,6 +222,7 @@ Outliner::Transform::outlineBlock (SgBasicBlock* s, const string& func_name_str)
           printf ("******************************************************************** \n");
 #endif
        // If the outline function will be placed into it's own file then we need to reconstruct any dependent statements (and #include CPP directives).
+          SgFunctionDeclaration* func_orig = const_cast<SgFunctionDeclaration *> (SageInterface::getEnclosingFunctionDeclaration (s));
           SageInterface::appendStatementWithDependentDeclaration(func,glob_scope,func_orig,exclude_headers);
        // printf ("DONE: Now calling SageInterface::appendStatementWithDependentDeclaration() \n");
 #else
@@ -267,8 +268,9 @@ Outliner::Transform::outlineBlock (SgBasicBlock* s, const string& func_name_str)
    	 void * __out_argv[2];
  	*(__out_argv +0)=(void*)(&var1);// better form: __out_argv[0]=(void*)(&var1);
   	*(__out_argv +1)=(void*)(&var2); //__out_argv[1]=(void*)(&var2);
+ * return the name for the array parameter used to wrap all pointer parameters
  */
-std::string Outliner::Transform::generatePackingStatements(SgStatement* target, ASTtools::VarSymSet_t & syms)
+std::string Outliner::generatePackingStatements(SgStatement* target, ASTtools::VarSymSet_t & syms)
 {
   int var_count = syms.size();
   int counter=0;
@@ -310,7 +312,7 @@ std::string Outliner::Transform::generatePackingStatements(SgStatement* target, 
 }
 
 SgSourceFile* 
-Outliner::Transform::generateNewSourceFile(SgBasicBlock* s, const string& file_name)
+Outliner::generateNewSourceFile(SgBasicBlock* s, const string& file_name)
 {
   SgSourceFile* new_file = NULL;
   SgProject * project = getEnclosingNode<SgProject> (s);

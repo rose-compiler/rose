@@ -28,6 +28,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	flush.c \
 	get_max_threads.c \
 	hello.c \
+	hello-2.c \
 	hello-ordered.c \
 	lastprivate0.c \
 	lastprivate.c \
@@ -77,7 +78,7 @@ CXX_TESTCODES_REQUIRED_TO_PASS = \
 TESTCODE_CURRENTLY_FAILING =  
 	macroCalls.c 
 
-ROSE_FLAGS = -rose:openmp --edg:no_warnings -w -rose:verbose 0 --edg:restrict -rose:openmp:ast_only #-rose:wave
+ROSE_FLAGS = -rose:openmp:ast_only --edg:no_warnings -w -rose:verbose 0 --edg:restrict #-rose:wave
 # used to find omp.h, added it as one of  rose headers
 TESTCODE_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII
 

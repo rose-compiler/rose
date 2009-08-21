@@ -25,6 +25,9 @@ namespace ASTtools
   const SgStatement* findNextStatement (const SgStatement* s);
 
 #endif
+  //! Stores a collection of SgVariableSymbols (var syms).
+  typedef std::set<const SgVariableSymbol *> VarSymSet_t;
+
   //! Search for the first surrounding scope that may contain a function def.
   const SgScopeStatement* findFirstFuncDefScope (const SgStatement* s);
 

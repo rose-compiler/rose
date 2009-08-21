@@ -1,0 +1,12 @@
+An OpenMP 3.0 implementation to leverage the runtime support provided by libgomp of GCC 4.4.1
+Liao, 8/10/2009
+
+The frontend support are located in:
+* C/C++ parsing: src/frontend/SageIII/omplexer.ll ompparser.yy  
+* Fortran parsing: src/frontend/SageIII/ompFortranParser.C 
+* persistent attribute:  a temporary data structure for storing parsing results
+  src/frontend/SageIII/OmpAttribute.h OmpAttribute.C
+
+Headers: src/frontend/SageIII/omp.h  
+
+

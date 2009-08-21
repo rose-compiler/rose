@@ -132,7 +132,7 @@ void
 replaceThisExprs (ASTtools::ThisExprSet_t& this_exprs,
                   SgVariableDeclaration* decl)
 {
-  SgVariableSymbol* sym = ASTtools::getFirstVarSym (decl);
+  SgVariableSymbol* sym = SageInterface::getFirstVarSym (decl);
   ROSE_ASSERT (sym);
 
   for (ASTtools::ThisExprSet_t::iterator i = this_exprs.begin ();
