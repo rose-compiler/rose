@@ -538,6 +538,9 @@ if test "x$with_javaport" = "xyes"; then
   CXXFLAGS="$CXXFLAGS -fno-strict-aliasing"
 fi
 
+# Call supporting macro for Haskell
+ROSE_SUPPORT_HASKELL
+
 # Call supporting macro for bddbddb
 ROSE_SUPPORT_BDDBDDB
 
@@ -994,6 +997,10 @@ AM_CONDITIONAL(ROSE_WITH_ROSEQT,test x"$with_roseQt" != x"no")
 AC_ARG_ENABLE(assembly-semantics, AS_HELP_STRING([--enable-assembly-semantics], [Enable semantics-based analysis of assembly code]))
 AM_CONDITIONAL(ROSE_USE_ASSEMBLY_SEMANTICS, [test "x$enable_assembly_semantics" = xyes])
 
+# PC (7/10/2009): The Haskell build system expects a fully numeric version number.
+PACKAGE_VERSION_NUMERIC=`echo $PACKAGE_VERSION | sed -e 's/\([[a-z]]\+\)/\.\1/; y/a-i/1-9/'`
+AC_SUBST(PACKAGE_VERSION_NUMERIC)
+
 echo "subdirs $subdirs"
 AC_CONFIG_SUBDIRS([libltdl src/3rdPartyLibraries/libharu-2.1.0])
 
@@ -1249,6 +1256,8 @@ projects/OpenMP_Translator/tests/npb2.3-omp-c/MG/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/SP/Makefile
 projects/MPICodeMotion/Makefile
 projects/javaport/Makefile
+projects/haskellport/Makefile
+projects/haskellport/rose.cabal.in
 projects/palette/Makefile
 projects/reverseComputation/Makefile
 projects/assemblyToSourceAst/Makefile

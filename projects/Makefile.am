@@ -25,6 +25,7 @@ SUBDIRS = \
      C_to_Promela \
      MPICodeMotion \
      javaport \
+     haskellport \
      palette \
      reverseComputation \
      DistributedMemoryAnalysisCompass \
