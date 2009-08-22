@@ -1,3 +1,38 @@
+2009-08-22 00:14  dquinlan
+
+	* [r6950] /trunk/ROSE/LicenseInformation/ROSE_BSD_License.txt:
+	  Added more explicit form of BSD license (nothing changed, ROSE
+	  has always been released BSD).
+
+2009-08-22 00:05  dquinlan
+
+	* [r6949] /trunk/ROSE/LicenseInformation/BSD.pdf,
+	  /trunk/ROSE/LicenseInformation/BSD.rtf: Filled in some detail in
+	  the lab's BSD licence.
+
+2009-08-21 22:39  dquinlan
+
+	* [r6948]
+	  /trunk/ROSE/developersScratchSpace/Dan/dataFlow_tests/functionBasedTaintedFlow.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/dataFlow_tests/functionDetection_sprintf.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/dataFlow_tests/functionDetection_sql.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/dataFlow_tests/functionInfoPropogation.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/dataFlow_tests/functionSummary.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/dataFlow_tests/input_test_04.C,
+	  /trunk/ROSE/src/frontend/SageIII/astPostProcessing/astPostProcessing.C,
+	  /trunk/ROSE/src/frontend/SageIII/astPostProcessing/resetTemplateNames.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C: Added some tests
+	  and fixed more bugs:
+	  
+	  Detailed changes in this commit:
+	  1) Added more to the taint analysis on call graph (initial work
+	  still).
+	  2) Added Gergo's patch to avoid O(n^2) complexity when there are
+	  lots of
+	  source files specified on the command line (he is testing up to
+	  several
+	  hundred and so notice the problem AND sent us a patch).
+
 2009-08-21 18:12  collingbourne2
 
 	* [r6945] /trunk/ROSE/Makefile.am,
