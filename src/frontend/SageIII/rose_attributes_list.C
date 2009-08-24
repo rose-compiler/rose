@@ -1973,8 +1973,8 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
         }
        else
         {
-          cerr << "Unable to open target source file: " << filename << "\n";
-          ROSE_ASSERT(false);
+          cerr << "Warning: unable to open target source file: " << filename << "\n";
+       // ROSE_ASSERT(false);
         }
 
   // printf ("Leaving collectPreprocessorDirectivesAndCommentsForAST() \n");
