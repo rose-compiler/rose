@@ -102,9 +102,15 @@ private:
      *  instruction with a constant target which corresponds to the known address of an instruction causes that target to become
      *  the entry point of a function.
      *  
-     *  Note: any CALL whose target is the next instruction is ignored since this usually just happens for ip-relative calls that
-     *        need a reloc applied, and thus have a zero offset. Such calls are common in ELF object files contained in library
-     *        archives (lib*.a). */
+     *  Note that any CALL whose target is the next instruction is ignored since this usually just happens for ip-relative
+     *  calls that need a reloc applied, and thus have a zero offset. Such calls are common in ELF object files contained in
+     *  library archives (lib*.a). This also takes care of code for loading the instruction pointer into a register:
+     *
+     * @code
+     *        80484c3: e8 00 00 00 00 | call 80484c8
+     *        80484c8: 5b             | pop ebx
+     * @endcode
+     */
     void mark_call_targets(SgAsmGenericHeader*, const Disassembler::InstructionMap &insns,
                            FunctionStarts &func_starts/*out*/) const;
 

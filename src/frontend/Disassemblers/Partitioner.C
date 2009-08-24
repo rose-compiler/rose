@@ -26,11 +26,25 @@ Partitioner::detectBasicBlocks(const Disassembler::InstructionMap &insns) const
         rose_addr_t next_va = insn->get_address() + insn->get_raw_bytes().size();
 
         /* If this instruction is one which terminates a basic block then make the next instruction (if any) the beginning of
-         * a basic block. */
+         * a basic block. However, a sequence like the following should not be a basic block boundary because the CALL is
+         * acting more like a "PUSH EIP" (we should probably just look at the CALL instruction itself rather than also looking
+         * for the following POP, but since ROSE doesn't currently apply the relocation tables before disassembling, the CALL
+         * with a zero offset is quite common. [RPM 2009-08-24] */
         if (insn->terminatesBasicBlock()) {
             Disassembler::InstructionMap::const_iterator found = insns.find(next_va);
-            if (found!=insns.end() && bb_starts.find(next_va)==bb_starts.end())
-                bb_starts[next_va] = BasicBlockStarts::mapped_type();
+            if (found!=insns.end()) {
+                SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
+                SgAsmx86Instruction *insn2_x86 = isSgAsmx86Instruction(found->second);
+                rose_addr_t branch_target_va;
+                if (insn_x86 &&
+                    (insn_x86->get_kind()==x86_call || insn_x86->get_kind()==x86_farcall) &&
+                    x86GetKnownBranchTarget(insn_x86, branch_target_va) &&
+                    branch_target_va==next_va && insn2_x86->get_kind()==x86_pop) {
+                    /* The CALL is acting more like a "PUSH EIP" and should not end the basic block. */
+                } else if (bb_starts.find(next_va)==bb_starts.end()) {
+                    bb_starts[next_va] = BasicBlockStarts::mapped_type();
+                }
+            }
         }
 
         /* If this instruction has multiple known successors then make each of those successors the beginning of a basic
@@ -181,7 +195,7 @@ Partitioner::buildBasicBlocks(const Disassembler::InstructionMap &c_insns, const
             insns.erase(ii);
 
             insn_va += insn->get_raw_bytes().size();
-            if (insn->terminatesBasicBlock() || bb_starts.find(insn_va)!=bb_starts.end())
+            if (bb_starts.find(insn_va)!=bb_starts.end())
                 break;
             ii = insns.find(insn_va);
         }

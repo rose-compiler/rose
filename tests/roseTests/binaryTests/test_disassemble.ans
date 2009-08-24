@@ -4533,7 +4533,6 @@ Output the disassembled instructions:
 0x08048367 53                |S     | :: 0x8048367:push   ebx
 0x08048368 51                |Q     | :: 0x8048368:push   ecx
 0x08048369 e8 00 00 00 00    |..... | :: 0x8048369:call   0x804836e
-/* Block 0x804836e */
 0x0804836e 5b                |[     | :: 0x804836e:pop    ebx
 0x0804836f 81 c3 3a 13 00 00 |..:...| :: 0x804836f:add    ebx, 0x133a
 0x08048375 8b 93 fc ff ff ff |......| :: 0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc]
@@ -4686,7 +4685,6 @@ Output the disassembled instructions:
 0x08048495 53                |S     | :: 0x8048495:push   ebx
 0x08048496 83 ec 0c          |...   | :: 0x8048496:sub    esp, 0xc
 0x08048499 e8 00 00 00 00    |..... | :: 0x8048499:call   0x804849e
-/* Block 0x804849e */
 0x0804849e 5b                |[     | :: 0x804849e:pop    ebx
 0x0804849f 81 c3 0a 12 00 00 |......| :: 0x804849f:add    ebx, 0x120a
 0x080484a5 e8 1e fe ff ff    |..... | :: 0x80484a5:call   0x80482c8
@@ -4740,7 +4738,6 @@ Output the disassembled instructions:
 0x08048505 53                |S     | :: 0x8048505:push   ebx
 0x08048506 83 ec 0c          |...   | :: 0x8048506:sub    esp, 0xc
 0x08048509 e8 00 00 00 00    |..... | :: 0x8048509:call   0x804850e
-/* Block 0x804850e */
 0x0804850e 5b                |[     | :: 0x804850e:pop    ebx
 0x0804850f 81 c3 9a 11 00 00 |......| :: 0x804850f:add    ebx, 0x119a
 0x08048515 8d 83 20 ff ff ff |.. ...| :: 0x8048515:lea    eax, [ebx + 0xffffff20]
@@ -4814,7 +4811,6 @@ Output the disassembled instructions:
 0x08048593 53                |S     | :: 0x8048593:push   ebx
 0x08048594 50                |P     | :: 0x8048594:push   eax
 0x08048595 e8 00 00 00 00    |..... | :: 0x8048595:call   0x804859a
-/* Block 0x804859a */
 0x0804859a 5b                |[     | :: 0x804859a:pop    ebx
 0x0804859b 81 c3 0e 11 00 00 |......| :: 0x804859b:add    ebx, 0x110e
 0x080485a1 e8 ea fd ff ff    |..... | :: 0x80485a1:call   0x8048390
