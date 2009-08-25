@@ -1,3 +1,35 @@
+2009-08-24 23:40  collingbourne2
+
+	* [r6962] /trunk/ROSE/src/frontend/SageIII/rose_attributes_list.C:
+	  collectPreprocessorDirectivesAndCommentsForAST - Downgraded
+	  "Unable to open target source file" to a warning, as this causes
+	  a number of test cases to fail
+	  
+	  This is only a temporary solution. In the long term we should
+	  look at handling #line directives correctly.
+
+2009-08-24 22:55  dquinlan
+
+	* [r6961]
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_20.C:
+	  Added missing file.
+
+2009-08-24 20:01  matzke
+
+	* [r6960] /trunk/ROSE/src/frontend/Disassemblers/Partitioner.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/Partitioner.h,
+	  /trunk/ROSE/tests/roseTests/binaryTests/test_disassemble.ans:
+	  Disassembler: Fine tuning basic block partitioner
+	  
+	  The partitioner does not insert a basic block boundary after a
+	  CALL
+	  instruction that is acting more like a PUSH instruction. For
+	  instance,
+	  the following two instructions will be in the same basic block:
+	  
+	  80484c3: e8 00 00 00 00 | call 80484c8
+	  80484c8: 5b | pop %ebx
+
 2009-08-22 00:14  dquinlan
 
 	* [r6950] /trunk/ROSE/LicenseInformation/ROSE_BSD_License.txt:
