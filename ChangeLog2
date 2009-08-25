@@ -1,3 +1,17 @@
+2009-08-25 19:42  dquinlan
+
+	* [r6966] /trunk/ROSE/projects/CertSecureCodeProject/FLP.C,
+	  /trunk/ROSE/projects/CertSecureCodeProject/INT.C,
+	  /trunk/ROSE/projects/CertSecureCodeProject/MSC.C,
+	  /trunk/ROSE/projects/CertSecureCodeProject/POS.C,
+	  /trunk/ROSE/projects/CertSecureCodeProject/SIG.C,
+	  /trunk/ROSE/projects/CertSecureCodeProject/categories.h,
+	  /trunk/ROSE/projects/CertSecureCodeProject/diagnose.C,
+	  /trunk/ROSE/projects/CertSecureCodeProject/utilities.C,
+	  /trunk/ROSE/projects/CertSecureCodeProject/utilities.h,
+	  /trunk/ROSE/projects/CertSecureCodeProject/value.h: Fixed
+	  Precompiled Header issues in CERT Secure Code Project.
+
 2009-08-24 23:40  collingbourne2
 
 	* [r6962] /trunk/ROSE/src/frontend/SageIII/rose_attributes_list.C:
