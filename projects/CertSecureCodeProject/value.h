@@ -23,7 +23,7 @@
 #ifndef VALUE_H
 #define VALUE_H
 
-#include "rose.h"
+// #include "rose.h"
 
 bool getSizetVal(const SgExpression *node, size_t *value);
 bool getIntegerVal(const SgExpression *node, intmax_t *n);

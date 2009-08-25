@@ -23,9 +23,10 @@
 #ifndef UTILITIES_H
 #define UTILITIES_H
 
-#include <list>
-#include <string>
-#include "rose.h"
+// DQ (8/25/2009): these are included by "rose.h"
+// #include <list>
+// #include <string>
+// #include "rose.h"
 #include "utilities-inline.h"
 #include "categories.h"
 #include "value.h"

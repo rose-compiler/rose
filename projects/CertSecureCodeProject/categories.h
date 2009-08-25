@@ -23,7 +23,7 @@
 #ifndef CATEGORIES_H
 #define CATEGORIES_H
 
-#include "rose.h"
+// #include "rose.h"
 #include "utilities.h"
 
 const SgBinaryOp *isAnyBinArithOp(const SgNode *node);

@@ -20,12 +20,16 @@
  */
 
 
-#include <list>
-#include <string>
-#include <map>
-#include <algorithm>
-#include <functional>
+// DQ (8/25/2009): To use pre-compiled headers "rose.h" must appears first.
 #include "rose.h"
+
+// DQ (8/25/2009): these are included by "rose.h"
+// #include <list>
+// #include <string>
+// #include <map>
+// #include <algorithm>
+// #include <functional>
+
 #include "utilities.h"
 
 /**
