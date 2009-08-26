@@ -32,12 +32,13 @@ genStubsAndWrappers_SOURCES = genStubsAndWrappers.C
 ROSE/Sage3/Classes.hs WrapSage3Classes.C rose.cabal: run-genStubsAndWrappers-stamp
 	touch -c $@
 
-headersWithoutLineDirective:
-	mkdir $@
+headersWithoutLineDirective: $(wildcard $(top_builddir)/src/frontend/SageIII/*.h)
+	mkdir -p $@
 	for file in $(top_builddir)/src/frontend/SageIII/*.h ; do \
 		base=`basename $$file` ; \
 		grep -v '^#line' $$file > $@/$$base ; \
 	done
+	touch $@
 
 run-genStubsAndWrappers-stamp: genStubsAndWrappers sage3.h.C rose.cabal.in headersWithoutLineDirective
 	mkdir -p ROSE/Sage3/Methods
