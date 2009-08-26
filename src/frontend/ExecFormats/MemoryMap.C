@@ -6,17 +6,17 @@
 /* See header file for full documentation */
 
 rose_addr_t
-MemoryMap::MapElement::get_rva_offset(rose_addr_t rva) const
+MemoryMap::MapElement::get_va_offset(rose_addr_t va) const
 {
-    if (rva<get_rva() || rva>=get_rva()+get_size())
-        throw NotMapped(NULL, rva);
-    return get_offset() + (rva - get_rva());
+    if (va<get_va() || va>=get_va()+get_size())
+        throw NotMapped(NULL, va);
+    return get_offset() + (va - get_va());
 }
 
 bool
 MemoryMap::consistent(const MapElement &a, const MapElement &b) 
 {
-    return a.rva-b.rva == a.offset-b.offset;
+    return a.va-b.va == a.offset-b.offset;
 }
 
 void
@@ -33,24 +33,19 @@ void
 MemoryMap::insert(SgAsmGenericSection *section)
 {
     SgAsmGenericHeader *header = section->get_header();
-    if (header) {
-        ROSE_ASSERT(0==base_va || base_va==header->get_base_va());
-        base_va = header->get_base_va();
-    }
-
+    rose_addr_t base_va = header->get_base_va();
     if (!section->is_mapped() || 0==section->get_size())
         return;
+    rose_addr_t va = base_va + section->get_mapped_rva();
 
 #if 0 /*DEBUGGING*/
     fprintf(stderr, "MemoryMap::insert(section [%d] \"%s\" at rva 0x%08"PRIx64"-0x%08"PRIx64")\n", 
-            section->get_id(), section->get_name()->c_str(), section->get_mapped_rva(),
-            section->get_mapped_rva()+section->get_mapped_size());
+            section->get_id(), section->get_name()->c_str(), va, va+section->get_mapped_size());
 #endif
 
-    rose_addr_t rva = section->get_mapped_rva();
-    if (!rva && section->get_rose_mapped_rva())
-        rva = section->get_rose_mapped_rva();
-    MapElement add(rva, section->get_size(), section->get_offset());
+    if (section->get_mapped_rva()==0 && section->get_rose_mapped_rva()>0)
+        va = base_va + section->get_rose_mapped_rva();
+    MapElement add(va, section->get_size(), section->get_offset());
 
     insert(add);
 }
@@ -64,20 +59,20 @@ MemoryMap::insert(MapElement add)
     std::vector<MapElement>::iterator i=elements.begin();
     while (i!=elements.end()) {
         MapElement &old = *i;
-        if (old.rva+old.size < add.rva || old.rva > add.rva+add.size) {
+        if (old.va+old.size < add.va || old.va > add.va+add.size) {
             /* Existing element is left or right of new one and not contiguous with it. */
             ++i;
-        } else if (add.rva >= old.rva && add.rva+add.size <= old.rva+old.size) {
+        } else if (add.va >= old.va && add.va+add.size <= old.va+old.size) {
             /* New element is contained within (or congruent to) an existing element. */
             if (!consistent(add, old))
                 throw Inconsistent(this, add, old); /*note, "this" might have already been modified*/
             return;
-        } else if (old.rva >= add.rva && old.rva+old.size <= add.rva+add.size) {
+        } else if (old.va >= add.va && old.va+old.size <= add.va+add.size) {
             /* Existing element is contained within the new element. */
             if (!consistent(old, add))
                 throw Inconsistent(this, add, old); /*note, "this" might have already been modified*/
             elements.erase(i);
-        } else if (add.rva+add.size == old.rva) {
+        } else if (add.va+add.size == old.va) {
             /* New element is left contiguous with existing element. */
             if (consistent(old, add)) {
                 add.size += old.size;
@@ -85,30 +80,30 @@ MemoryMap::insert(MapElement add)
             } else {
                 ++i;
             }
-        } else if (old.rva+old.size == add.rva) {
+        } else if (old.va+old.size == add.va) {
             /* New element is right contiguous with existing element. */
             if (consistent(add, old)) {
                 add.size += old.size;
-                add.rva = old.rva;
+                add.va = old.va;
                 add.offset = old.offset;
                 elements.erase(i);
             } else {
                 ++i;
             }
-        } else if (add.rva < old.rva) {
+        } else if (add.va < old.va) {
             /* New element overlaps left part of existing element. */
             if (!consistent(old, add))
                 throw Inconsistent(this, add, old); /*note, "this" might have already been modified*/
-            add.size += old.rva - add.rva;
-            add.rva = old.rva;
+            add.size += old.va - add.va;
+            add.va = old.va;
             add.offset = old.offset;
             elements.erase(i);
         } else {
             /* New element overlaps right part of existing element. */
             if (!consistent(add, old))
                 throw Inconsistent(this, add, old); /*note, "this" might have already been modified*/
-            add.size = add.rva+add.size - old.rva;
-            add.rva = old.rva;
+            add.size = add.va+add.size - old.va;
+            add.va = old.va;
             add.offset = old.offset;
             elements.erase(i);
         }
@@ -123,24 +118,20 @@ void
 MemoryMap::erase(SgAsmGenericSection *section)
 {
     SgAsmGenericHeader *header = section->get_header();
-    if (header) {
-        ROSE_ASSERT(0==base_va || base_va==header->get_base_va());
-        base_va = header->get_base_va();
-    }
+    rose_addr_t base_va = header->get_base_va();
 
     if (!section->is_mapped() || 0==section->get_size())
         return;
+    rose_addr_t va = base_va + section->get_mapped_rva();
 
 #if 0 /*DEBUGGING*/
-    fprintf(stderr, "MemoryMap::erase(section [%d] \"%s\" at rva 0x%08"PRIx64"-0x%08"PRIx64")\n", 
-            section->get_id(), section->get_name()->c_str(), section->get_mapped_rva(),
-            section->get_mapped_rva()+section->get_mapped_size());
+    fprintf(stderr, "MemoryMap::erase(section [%d] \"%s\" at va 0x%08"PRIx64"-0x%08"PRIx64")\n", 
+            section->get_id(), section->get_name()->c_str(), va, va+section->get_mapped_size());
 #endif
 
-    rose_addr_t rva = section->get_mapped_rva();
-    if (!rva && section->get_rose_mapped_rva())
-        rva = section->get_rose_mapped_rva();
-    MapElement me(rva, section->get_size(), section->get_offset());
+    if (section->get_mapped_rva()==0 && section->get_rose_mapped_rva()>0)
+        va = base_va + section->get_rose_mapped_rva();
+    MapElement me(va, section->get_size(), section->get_offset());
 
     erase(me);
 }
@@ -154,19 +145,19 @@ MemoryMap::erase(MapElement me)
     std::vector<MapElement> saved;
     while (i!=elements.end()) {
         MapElement &old = *i;
-        if (me.rva+me.size <= old.rva || old.rva+old.size <= me.rva) {
+        if (me.va+me.size <= old.va || old.va+old.size <= me.va) {
             /* Non overlapping */
             ++i;
             continue;
         }
         
-        if (me.rva > old.rva) {
+        if (me.va > old.va) {
             /* Erasure begins right of existing element. */
-            saved.push_back(MapElement(old.rva, me.rva-old.rva, old.offset));
+            saved.push_back(MapElement(old.va, me.va-old.va, old.offset));
         }
-        if (me.rva+me.size < old.rva+old.size) {
+        if (me.va+me.size < old.va+old.size) {
             /* Erasure ends left of existing element. */
-            saved.push_back(MapElement(me.rva+me.size, old.rva+old.size-(me.rva+me.size), old.offset+me.rva+me.size-old.rva));
+            saved.push_back(MapElement(me.va+me.size, old.va+old.size-(me.va+me.size), old.offset+me.va+me.size-old.va));
         }
         elements.erase(i);
     }
@@ -177,7 +168,7 @@ MemoryMap::erase(MapElement me)
 }
                 
 const MemoryMap::MapElement *
-MemoryMap::findRVA(rose_addr_t rva) const
+MemoryMap::find(rose_addr_t va) const
 {
     if (!sorted) {
         sort(elements.begin(), elements.end());
@@ -188,9 +179,9 @@ MemoryMap::findRVA(rose_addr_t rva) const
     while (lo<hi) {
         size_t mid=(lo+hi)/2;
         const MapElement &elmt = elements[mid];
-        if (rva < elmt.rva) {
+        if (va < elmt.va) {
             hi = mid;
-        } else if (rva >= elmt.rva+elmt.size) {
+        } else if (va >= elmt.va+elmt.size) {
             lo = mid+1;
         } else {
             return &elmt;
@@ -209,15 +200,15 @@ MemoryMap::get_elements() const {
 }
 
 size_t
-MemoryMap::readRVA(unsigned char *dst_buf, const unsigned char *src_buf, rose_addr_t start_rva, size_t desired) const
+MemoryMap::read(unsigned char *dst_buf, const unsigned char *src_buf, rose_addr_t start_va, size_t desired) const
 {
     size_t ncopied = 0;
     while (ncopied < desired) {
-        const MemoryMap::MapElement *m = findRVA(start_rva);
+        const MemoryMap::MapElement *m = find(start_va);
         if (!m)
             break;
-        ROSE_ASSERT(start_rva >= m->get_rva());
-        size_t m_offset = start_rva - m->get_rva();
+        ROSE_ASSERT(start_va >= m->get_va());
+        size_t m_offset = start_va - m->get_va();
         ROSE_ASSERT(m_offset < m->get_size());
         size_t n = std::min(desired-ncopied, m->get_size()-m_offset);
         memcpy(dst_buf+ncopied, src_buf+m->get_offset()+m_offset, n);
@@ -229,15 +220,6 @@ MemoryMap::readRVA(unsigned char *dst_buf, const unsigned char *src_buf, rose_ad
 }
     
 
-size_t
-MemoryMap::readVA(unsigned char *dst_buf, const unsigned char *src_buf, rose_addr_t start_va, size_t desired) const
-{
-    ROSE_ASSERT(dst_buf!=NULL);
-    ROSE_ASSERT(start_va >= get_base_va());
-    rose_addr_t start_rva = start_va - get_base_va();
-    return readRVA(dst_buf, src_buf, start_rva, desired);
-}
-
 void
 MemoryMap::dump(FILE *f, const char *prefix) const
 {
@@ -246,8 +228,8 @@ MemoryMap::dump(FILE *f, const char *prefix) const
         sorted = true;
     }
     for (size_t i=0; i<elements.size(); i++) {
-        fprintf(f, "%srva 0x%08"PRIx64" + 0x%08zu = 0x%08"PRIx64" at offset 0x%08"PRIx64"\n",
-                prefix, elements[i].get_rva(), elements[i].get_size(), elements[i].get_rva()+elements[i].get_size(),
+        fprintf(f, "%sva 0x%08"PRIx64" + 0x%08zu = 0x%08"PRIx64" at offset 0x%08"PRIx64"\n",
+                prefix, elements[i].get_va(), elements[i].get_size(), elements[i].get_va()+elements[i].get_size(),
                 elements[i].get_offset());
     }
 }

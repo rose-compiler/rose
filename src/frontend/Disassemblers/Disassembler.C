@@ -235,7 +235,7 @@ Disassembler::disassembleBuffer(const unsigned char *buf, const MemoryMap &map, 
 
         if (insns.find(va)!=insns.end() || (bad && bad->find(va)!=bad->end())) {
             /* Skip this if we've already tried to disassemble it. */
-        } else if (NULL==map.findVA(va)) {
+        } else if (NULL==map.find(va)) {
             /* Any address that's outside the range we're allowed to work on will be added to the successors. */
             if (successors)
                 successors->insert(va);
@@ -281,7 +281,7 @@ Disassembler::search_following(AddressSet *worklist, const InstructionMap &bb, c
     --bbi;
     SgAsmInstruction *last_insn = bbi->second;
     rose_addr_t following_va = last_insn->get_address() + last_insn->get_raw_bytes().size();
-    if (map.findVA(following_va) && (!bad || bad->find(following_va)==bad->end())) {
+    if (map.find(following_va) && (!bad || bad->find(following_va)==bad->end())) {
         if (p_debug && worklist->find(following_va)==worklist->end()) {
             rose_addr_t va = bb.begin()->first;
             fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: SEARCH_FOLLOWING added 0x%08"PRIx64"\n", va, following_va);
@@ -311,7 +311,7 @@ Disassembler::search_immediate(AddressSet *worklist, const InstructionMap &bb,  
                 default:
                     continue; /* Not an appropriately-sized constant */
             }
-            if (map.findVA(constant) && (!bad || bad->find(constant)==bad->end())) {
+            if (map.find(constant) && (!bad || bad->find(constant)==bad->end())) {
                 if (p_debug && worklist->find(constant)==worklist->end())
                     fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: SEARCH_IMMEDIATE added 0x%08"PRIx64"\n",
                             bbi->first, constant);
@@ -328,9 +328,9 @@ Disassembler::search_words(AddressSet *worklist, const unsigned char *buf, const
     const std::vector<MemoryMap::MapElement> &mes = map.get_elements();
     for (size_t i=0; i<mes.size(); i++) {
         const MemoryMap::MapElement &me = mes[i];
-        rose_addr_t rva = me.get_rva();
-        rva = (rva+p_alignment-1) & ~(p_alignment-1); /*align*/
-        while (rva+p_wordsize <= me.get_rva()+me.get_size()) {
+        rose_addr_t va = me.get_va();
+        va = (va+p_alignment-1) & ~(p_alignment-1); /*align*/
+        while (va+p_wordsize <= me.get_va()+me.get_size()) {
             rose_addr_t constant = 0; /*virtual address*/
             ROSE_ASSERT(p_wordsize<=sizeof constant);
             for (size_t i=0; i<p_wordsize; i++) {
@@ -345,13 +345,12 @@ Disassembler::search_words(AddressSet *worklist, const unsigned char *buf, const
                         ROSE_ASSERT(!"not implemented");
                 }
             }
-            if (map.findVA(constant) && (!bad || bad->find(constant)==bad->end())) {
+            if (map.find(constant) && (!bad || bad->find(constant)==bad->end())) {
                 if (p_debug && worklist->find(constant)==worklist->end())
-                    fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: SEARCH_WORD added 0x%08"PRIx64"\n",
-                            map.get_base_va()+rva, constant);
+                    fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: SEARCH_WORD added 0x%08"PRIx64"\n", va, constant);
                 worklist->insert(constant);
             }
-            rva += p_alignment;
+            va += p_alignment;
         }
     }
 }
@@ -370,17 +369,17 @@ Disassembler::search_next_address(AddressSet *worklist, rose_addr_t start_va, co
 
         /* Advance to the next valid mapped address if necessary by scanning for the first map element that has a higher
          * virtual address. */
-        if (!map.findVA(next_va)) {
+        if (!map.find(next_va)) {
             const std::vector<MemoryMap::MapElement> &mes = map.get_elements();
             const MemoryMap::MapElement *me = NULL;
             for (size_t i=0; i<mes.size(); i++) {
-                if (map.get_base_va()+mes[i].get_rva() > next_va) {
+                if (mes[i].get_va() > next_va) {
                     me = &(mes[i]);
                     break;
                 }
             }
             if (!me) return; /*no subsequent valid mapped address*/
-            next_va = me->get_rva() - map.get_base_va();
+            next_va = me->get_va();
         }
 
         /* If we tried to disassemble at this address and failed, then try the next address. */
@@ -491,9 +490,9 @@ Disassembler::disassembleInterp(SgAsmGenericHeader *header, AddressSet *successo
                 std::ostringstream s;
                 s <<"Disassembler: inconsistent mapping of file sections to virtual memory\n"
                   <<"section [" <<section->get_id() <<"] \"" <<section->get_name()->get_string() <<"\""
-                  <<" at virtual address 0x" <<std::hex <<section->get_mapped_rva()
+                  <<" at virtual address 0x" <<std::hex <<header->get_base_va() <<"+0x" <<std::hex <<section->get_mapped_rva()
                   <<" and file offset 0x" <<std::hex <<section->get_offset()
-                  <<" conflicts with address 0x" <<std::hex <<e.b.get_rva()
+                  <<" conflicts with virtual address 0x" <<std::hex <<e.b.get_va()
                   <<" at offset 0x" <<std::hex <<e.b.get_offset()
                   <<"\n";
                 fputs(s.str().c_str(), stderr);

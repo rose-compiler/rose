@@ -965,14 +965,8 @@ HEADER_GENERIC_FILE_START
 		rose_addr_t get_current_size() const;			/* Current size based on defined sections */
 		rose_addr_t get_orig_size() const;              	/* Original size based on actual file size */
 		size_t read_content(addr_t offset, void *dst_buf, addr_t size, bool strict=true);
-		size_t read_content(const MemoryMap *map, addr_t rva, void *dst_buf, addr_t size, bool strict=true);
-		size_t read_content(const MemoryMap *map, rva_t rva, void *dst_buf, addr_t size, bool strict=true) {
-			return read_content(map, rva.get_rva(), dst_buf, size, strict);
-		}
-		std::string read_content_str(const MemoryMap *map, addr_t rva, bool strict=true);
-		std::string read_content_str(const MemoryMap *map, rva_t rva, bool strict=true) {
-			return read_content_str(map, rva.get_rva(), strict);
-		}
+		size_t read_content(const MemoryMap *map, addr_t va, void *dst_buf, addr_t size, bool strict=true);
+		std::string read_content_str(const MemoryMap *map, addr_t va, bool strict=true);
 		std::string read_content_str(addr_t abs_offset, bool strict=true);
 
 		const SgFileContentList& content() {			/* Entire file contents */

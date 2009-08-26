@@ -168,8 +168,15 @@ public:
         SEARCH_DEFAULT   = 0x0001       /**< Default set of heuristics to use. The default is to be moderately timid. */
     };
 
+    /** An AddressSet contains virtual addresses (alternatively, relative virtual addresses) for such things as specifying
+     *  which virtual addresses should be disassembled. */
     typedef std::set<rose_addr_t> AddressSet;
+
+    /** The InstructionMap is a mapping from (absolute) virtual address to disassembled instruction. */
     typedef std::map<rose_addr_t, SgAsmInstruction*> InstructionMap;
+
+    /** The BadMap is a mapping from (absolute) virtual address to information about a failed disassembly attempt at that
+     *  address. */
     typedef std::map<rose_addr_t, Exception> BadMap;
 
     Disassembler()
