@@ -1,3 +1,11 @@
+2009-08-26 00:01  collingbourne2
+
+	* [r6968] /trunk/ROSE/Makefile.am: "make docs" now works regardless
+	  of whether "make check" has been run
+	  
+	  Done by adding prerequisites to the docs rule in Makefile.am.
+	  Also improved robustness using the && operator and make -C
+
 2009-08-25 19:42  dquinlan
 
 	* [r6966] /trunk/ROSE/projects/CertSecureCodeProject/FLP.C,
