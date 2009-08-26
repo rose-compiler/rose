@@ -2145,9 +2145,11 @@ SgAsmCoffStrtab::create_storage(addr_t offset, bool shared)
                 return *i;
         }
     }
-  
+
     /* Read string length byte */
-    unsigned len = container->content(offset, 1)[0];
+    unsigned char byte;
+    container->read_content_local(offset, &byte, 1);
+    unsigned len = byte;
 
     /* Make sure new storage isn't inside some other string. (We don't support nested strings in COFF where the length byte of
      * the nested string is one of the characters of the outer string.) */
@@ -2158,8 +2160,10 @@ SgAsmCoffStrtab::create_storage(addr_t offset, bool shared)
     }
 
     /* Create storage object */
-    const char *s = (const char*)container->content(offset+1, len);
-    SgAsmStringStorage *storage = new SgAsmStringStorage(this, std::string(s, len), offset);
+    char *buf = new char[len];
+    container->read_content_local(offset+1, (unsigned char*)buf, len);
+    SgAsmStringStorage *storage = new SgAsmStringStorage(this, std::string(buf, len), offset);
+    delete[] buf;
 
     /* It's a bad idea to free (e.g., modify) strings before we've identified all the strings in the table. Consider
      * the case where two strings have the same value and point to the same offset (i.e., they share storage). If we modify one
