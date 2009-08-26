@@ -2694,18 +2694,18 @@ SgAsmElfDynamicSection::parse()
         if (4==fhdr->get_word_size()) {
             entry = new SgAsmElfDynamicEntry(this);
             SgAsmElfDynamicEntry::Elf32DynamicEntry_disk disk;
-            content(i*entry_size, struct_size, &disk);
+            read_content_local(i*entry_size, &disk, struct_size);
             entry->parse(fhdr->get_sex(), &disk);
         } else if (8==fhdr->get_word_size()) {
             entry = new SgAsmElfDynamicEntry(this);
             SgAsmElfDynamicEntry::Elf64DynamicEntry_disk disk;
-            content(i*entry_size, struct_size, &disk);
+            read_content_local(i*entry_size, &disk, struct_size);
             entry->parse(fhdr->get_sex(), &disk);
         } else {
             throw FormatError("unsupported ELF word size");
         }
         if (extra_size>0)
-            entry->get_extra() = content_ucl(i*entry_size+struct_size, extra_size);
+            entry->get_extra() = read_content_local_ucl(i*entry_size+struct_size, extra_size);
 
         /* Set name */
         if (entry->get_d_tag()==SgAsmElfDynamicEntry::DT_NEEDED) {
