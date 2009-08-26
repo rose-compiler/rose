@@ -4,7 +4,9 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-#define ALIGN(ADDR,ALMNT)       ((((ADDR)+(ALMNT)-1)/(ALMNT))*(ALMNT))
+/* Increase ADDR if necessary to make it a multiple of ALMNT */
+#define ALIGN_UP(ADDR,ALMNT)       ((((ADDR)+(ALMNT)-1)/(ALMNT))*(ALMNT))
+#define ALIGN_DN(ADDR,ALMNT)       (((ADDR)/(ALMNT))*(ALMNT))
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // PE File Header
@@ -571,8 +573,8 @@ SgAsmPEFileHeader::reallocate()
                 p_e_nsections++;
         }
 
-        addr_t header_size = ALIGN(p_section_table->get_offset() + p_section_table->get_size(),
-                                   p_e_file_align>0 ? p_e_file_align : 1);
+        addr_t header_size = ALIGN_UP(p_section_table->get_offset() + p_section_table->get_size(),
+                                      p_e_file_align>0 ? p_e_file_align : 1);
 #if 1
         /* The PE Specification regarding e_header_size (known as "SizeOfHeader" on page 14 of "Microsoft Portable Executable
          * and Common Object File Format Specification: Revision 8.1 February 15, 2008" is not always followed. We recompute
