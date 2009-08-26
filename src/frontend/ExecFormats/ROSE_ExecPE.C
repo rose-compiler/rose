@@ -1377,7 +1377,7 @@ SgAsmPEImportLookupTable::ctor(SgAsmPEImportSection *isec, rva_t rva, size_t idi
     p_is_iat = is_iat;
     const char *tname = is_iat ? "Import Address Table" : "Import Lookup Table";
 
-    SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(isec->get_header());
+    SgAsmPEFileHeader *fhdr = isSgAsmPEFileHeader(isec->get_header());
     ROSE_ASSERT(fhdr!=NULL);
 
     /* Read the Import Lookup (or Address) Table, an array of 32 or 64 bit values, the last of which is zero */
@@ -1400,7 +1400,7 @@ SgAsmPEImportLookupTable::ctor(SgAsmPEImportSection *isec, rva_t rva, size_t idi
                     "%s entry %zu starting at RVA 0x%08"PRIx64" contains unmapped address 0x%08"PRIx64"\n",
                     idir_idx, tname, i, rva.get_rva(), e.rva);
             if (e.map) {
-                fprintf(stderr, "Map in effect at time of error:\n");
+                fprintf(stderr, "Memory map in effect at time of error:\n");
                 e.map->dump(stderr, "    ");
             }
         }
@@ -1421,7 +1421,7 @@ SgAsmPEImportLookupTable::ctor(SgAsmPEImportSection *isec, rva_t rva, size_t idi
         add_ilt_entry(ilt_entry);
 
         if (SgAsmPEImportILTEntry::ILT_HNT_ENTRY_RVA==ilt_entry->get_entry_type()) {
-            SgAsmPEImportHNTEntry *hnt_entry = new SgAsmPEImportHNTEntry(ilt_entry->get_hnt_entry_rva());
+            SgAsmPEImportHNTEntry *hnt_entry = new SgAsmPEImportHNTEntry(isec, ilt_entry->get_hnt_entry_rva());
             ilt_entry->set_hnt_entry(hnt_entry);
             hnt_entry->set_parent(ilt_entry);
         }
@@ -1481,21 +1481,53 @@ SgAsmPEImportLookupTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 
 /* Constructor */
 void
-SgAsmPEImportHNTEntry::ctor(rva_t rva)
+SgAsmPEImportHNTEntry::ctor(SgAsmPEImportSection *isec, rva_t rva)
 {
     ROSE_ASSERT(rva.get_rva() % 2 == 0);
     ROSE_ASSERT(rva.get_section());
 
-    const uint16_t *hint_disk = (const uint16_t*)rva.get_section()->content(rva.get_rel(), 2);
-    p_hint = le_to_host(*hint_disk);
+    /* Hint */
+    uint16_t hint_disk = 0;
+    try {
+        isec->read_content(NULL, rva.get_rva(), (unsigned char*)&hint_disk, sizeof hint_disk);
+    } catch (const RvaFileMap::NotMapped &e) {
+        fprintf(stderr, "SgAsmPEImportHNTEntry::ctor: warning: hint at RVA 0x%08"PRIx64
+                " contains unmapped address 0x%08"PRIx64"\n", rva.get_rva(), e.rva);
+        if (e.map) {
+            fprintf(stderr, "Memory map in effect at time of error:\n");
+            e.map->dump(stderr, "    ");
+        }
+    }
+    p_hint = le_to_host(hint_disk);
     
-    std::string s = rva.get_section()->content_str(rva.get_rel()+2);
+    /* Name */
+    std::string s;
+    try {
+        s = isec->read_content_str(NULL, rva.get_rva()+2);
+    } catch (const RvaFileMap::NotMapped &e) {
+        fprintf(stderr, "SgAsmPEImportHNTEntry::ctor: warning: string at RVA 0x%08"PRIx64
+                " contains unmapped address 0x%08"PRIx64"\n", rva.get_rva()+2, e.rva);
+        if (e.map) {
+            fprintf(stderr, "Memory map in effect at time of error:\n");
+            e.map->dump(stderr, "    ");
+        }
+    }
     p_name = new SgAsmBasicString(s);
-    
+
+    /* Padding */
+    p_padding = 0;
     if (s.size()+1 % 2) {
-        p_padding = *(rva.get_section()->content(rva.get_rel()+2+s.size()+1, 1));
-    } else {
-        p_padding = 0;
+        try {
+            unsigned char byte;
+            isec->read_content(NULL, rva.get_rva()+2+s.size()+1, &byte, 1);
+            p_padding = byte;
+        } catch (const RvaFileMap::NotMapped &e) {
+            fprintf(stderr, "SgAsmPEImportHNTEntry::ctor: warning: padding at RVA 0x%08"PRIx64" is not mapped\n", e.rva);
+            if (e.map) {
+                fprintf(stderr, "Memory map in effect at time of error:\n");
+                e.map->dump(stderr, "    ");
+            }
+        }
     }
 }
 

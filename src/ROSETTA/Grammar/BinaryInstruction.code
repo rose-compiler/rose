@@ -2169,12 +2169,12 @@ HEADER_PE_IMPORT_LOOKUP_TABLE_END
 HEADER_PE_IMPORT_HNT_ENTRY_START
 	// PE -> Import Table -> Hint/Name Table -> Entry
 	public:
-		explicit SgAsmPEImportHNTEntry(rose_rva_t offset)
-			{ctor(offset);}
+		explicit SgAsmPEImportHNTEntry(SgAsmPEImportSection *isec, rose_rva_t offset)
+			{ctor(isec, offset);}
 		void unparse(std::ostream&, rva_t rva) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:
-		void ctor(rose_rva_t offset);
+		void ctor(SgAsmPEImportSection*, rose_rva_t offset);
 HEADER_PE_IMPORT_HNT_ENTRY_END
 
 
