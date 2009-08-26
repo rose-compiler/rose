@@ -840,9 +840,7 @@ HEADER_GENERIC_SECTION_START
 		SgUnsignedCharList read_content_local_ucl(addr_t rel_offset, addr_t size); //always non-strict
 		int64_t read_content_local_sleb128(rose_addr_t *rel_offset, bool strict=true);
 		uint64_t read_content_local_uleb128(rose_addr_t *rel_offset, bool strict=true);
-
-		/* Deprecated functions for accessing content */
-		unsigned char *local_content(size_t nbytes);	/* obtain a local, writable pool to hold content */
+		unsigned char *writable_content(size_t nbytes); /* obtain a local, writable pool to hold content */
 
 		/* Functions for tracking referenced/unreferenced content. The tracking actually happens at the entire file level
 		 * (see functions with the same name in SgAsmGenericFile) and these functions return that same information but

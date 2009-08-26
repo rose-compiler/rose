@@ -139,7 +139,7 @@ main()
     text->set_mapped_wperm(false);                              /* Not writable */
     text->set_mapped_xperm(true);                               /* Executable */
     text->get_name()->set_string(".text");                      /* Give section the standard name */
-    unsigned char *content = text->local_content(sizeof instructions);
+    unsigned char *content = text->writable_content(sizeof instructions);
     memcpy(content, instructions, sizeof instructions);
 #endif
 
