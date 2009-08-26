@@ -35,12 +35,27 @@ public:
         rose_addr_t offset;             /* File offset */
     };
 
-    /** This object is thrown if an attempt is made to define a mapping from one relative virtual address to more than one
-     *  file offset.  The "a" and "b" data members are the two mappings in conflict. */
+    /** Exceptions for RvaFileMap operations. */
     struct Exception {
-        Exception(const MapElement &a, const MapElement &b)
-            : a(a), b(b) {}
+        Exception(const RvaFileMap *map)
+            : map(map) {}
+        const RvaFileMap *map;          /**< Map that caused the exception if the map is available (null otherwise). */
+    };
+
+    /** Exception for an inconsistent mapping. The @p a and @p b are the map elements that are in conflict. For an insert()
+     *  operation, the @p a is the element being inserted and @p b is the existing element that's in conflict. Note that the
+     *  map may have already been partly modified before the exception is thrown [FIXME: RPM 2009-08-20]. */
+    struct Inconsistent : public Exception {
+        Inconsistent(const RvaFileMap *map, const MapElement &a, const MapElement &b)
+            : Exception(map), a(a), b(b) {}
         MapElement a, b;
+    };
+
+    /** Exception for when we try to access a virtual address that isn't mapped. */
+    struct NotMapped : public Exception {
+        NotMapped(const RvaFileMap *map, rose_addr_t rva)
+            : Exception(map), rva(rva) {}
+        rose_addr_t rva;
     };
 
     RvaFileMap()

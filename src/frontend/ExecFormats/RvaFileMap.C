@@ -9,7 +9,7 @@ rose_addr_t
 RvaFileMap::MapElement::get_rva_offset(rose_addr_t rva) const
 {
     if (rva<get_rva() || rva>=get_rva()+get_size())
-        throw Exception(*this, MapElement(rva, 0, 0));
+        throw NotMapped(NULL, rva);
     return get_offset() + (rva - get_rva());
 }
 
@@ -70,12 +70,12 @@ RvaFileMap::insert(MapElement add)
         } else if (add.rva >= old.rva && add.rva+add.size <= old.rva+old.size) {
             /* New element is contained within (or congruent to) an existing element. */
             if (!consistent(add, old))
-                throw Exception(add, old); /*note, "this" might have already been modified*/
+                throw Inconsistent(this, add, old); /*note, "this" might have already been modified*/
             return;
         } else if (old.rva >= add.rva && old.rva+old.size <= add.rva+add.size) {
             /* Existing element is contained within the new element. */
             if (!consistent(old, add))
-                throw Exception(add, old); /*note, "this" might have already been modified*/
+                throw Inconsistent(this, add, old); /*note, "this" might have already been modified*/
             elements.erase(i);
         } else if (add.rva+add.size == old.rva) {
             /* New element is left contiguous with existing element. */
@@ -98,7 +98,7 @@ RvaFileMap::insert(MapElement add)
         } else if (add.rva < old.rva) {
             /* New element overlaps left part of existing element. */
             if (!consistent(old, add))
-                throw Exception(add, old); /*note, "this" might have already been modified*/
+                throw Inconsistent(this, add, old); /*note, "this" might have already been modified*/
             add.size += old.rva - add.rva;
             add.rva = old.rva;
             add.offset = old.offset;
@@ -106,7 +106,7 @@ RvaFileMap::insert(MapElement add)
         } else {
             /* New element overlaps right part of existing element. */
             if (!consistent(add, old))
-                throw Exception(add, old); /*note, "this" might have already been modified*/
+                throw Inconsistent(this, add, old); /*note, "this" might have already been modified*/
             add.size = add.rva+add.size - old.rva;
             add.rva = old.rva;
             add.offset = old.offset;

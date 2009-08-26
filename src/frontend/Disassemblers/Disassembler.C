@@ -481,7 +481,7 @@ Disassembler::disassembleInterp(SgAsmGenericHeader *header, AddressSet *successo
             }
             try {
                 map.insert(section);
-            } catch(const RvaFileMap::Exception &e) {
+            } catch(const RvaFileMap::Inconsistent &e) {
                 std::ostringstream s;
                 s <<"Disassembler: inconsistent mapping of file sections to virtual memory\n"
                   <<"section [" <<section->get_id() <<"] \"" <<section->get_name()->get_string() <<"\""

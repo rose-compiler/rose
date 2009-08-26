@@ -881,7 +881,7 @@ SgAsmGenericFile::content(addr_t offset, addr_t size, bool relax)
     if (offset+size <= p_data.size()) {
         return SgFileContentList(p_data, offset, size);
     } else if (!relax) {
-        throw SgAsmGenericFile::ShortRead(NULL, offset, size);
+        throw ShortRead(NULL, offset, size);
     } else if (offset > p_data.size()) {
         return SgFileContentList(p_data, 0, 0);
     } else {
@@ -2209,7 +2209,7 @@ const unsigned char *
 SgAsmGenericSection::content(addr_t offset, addr_t size)
 {
     if (offset > p_data.size() || offset+size > p_data.size())
-        throw SgAsmGenericFile::ShortRead(this, offset, size);
+        throw ShortRead(this, offset, size);
     get_file()->mark_referenced_extent(get_offset()+offset, size);
     return &(p_data[offset]);
 }
@@ -2249,7 +2249,7 @@ SgAsmGenericSection::content_str(addr_t offset, bool relax)
     nchars++; /*NUL*/
 
     if (!relax && offset+nchars>p_data.size())
-        throw SgAsmGenericFile::ShortRead(this, offset, nchars);
+        throw ShortRead(this, offset, nchars);
     get_file()->mark_referenced_extent(get_offset()+offset, nchars);
 
     return std::string(ret, nchars-1);
