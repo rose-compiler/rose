@@ -1381,13 +1381,6 @@ SgAsmPEImportLookupTable::ctor(SgAsmPEImportSection *isec, rva_t rva, size_t idi
     ROSE_ASSERT(fhdr!=NULL);
 
     /* Read the Import Lookup (or Address) Table, an array of 32 or 64 bit values, the last of which is zero */
-    if (!rva.get_section()) {
-        fprintf(stderr, "SgAsmPEImportSection::ctor: error: in PE Import Directory entry %zu "
-                "%s RVA (0x%08"PRIx64") is not in the mapped address space.\n",
-                idir_idx, tname, rva.get_rva());
-        return;
-    }
-    
     if (rva.get_section()!=isec) {
         fprintf(stderr, "SgAsmPEImportSection::ctor: warning: %s RVA is outside PE Import Table\n", tname);
         fprintf(stderr, "        Import Directory Entry #%zu\n", idir_idx);
@@ -1398,17 +1391,28 @@ SgAsmPEImportLookupTable::ctor(SgAsmPEImportSection *isec, rva_t rva, size_t idi
 
     for (size_t i=0; 1; i++) {
         uint64_t ilt_entry_word=0;
+        unsigned char buf[8];
+        ROSE_ASSERT(fhdr->get_word_size() <= sizeof buf);
+        try {
+            isec->read_content(NULL, rva.get_rva(), buf, fhdr->get_word_size());
+        } catch (const RvaFileMap::NotMapped &e) {
+            fprintf(stderr, "SgAsmPEImportSection::ctor: error: in PE Import Directory entry %zu: "
+                    "%s entry %zu starting at RVA 0x%08"PRIx64" contains unmapped address 0x%08"PRIx64"\n",
+                    idir_idx, tname, i, rva.get_rva(), e.rva);
+            if (e.map) {
+                fprintf(stderr, "Map in effect at time of error:\n");
+                e.map->dump(stderr, "    ");
+            }
+        }
+
         if (4==fhdr->get_word_size()) {
-            const uint32_t *ilt_entry_disk;
-            ilt_entry_disk = (const uint32_t*)rva.get_section()->content(rva.get_rel(), sizeof ilt_entry_disk);
-            ilt_entry_word = le_to_host(*ilt_entry_disk);
+            ilt_entry_word = le_to_host(*(uint32_t*)buf);
         } else if (8==fhdr->get_word_size()) {
-            const uint64_t *ilt_entry_disk;
-            ilt_entry_disk = (const uint64_t*)rva.get_section()->content(rva.get_rel(), sizeof ilt_entry_disk);
-            ilt_entry_word = le_to_host(*ilt_entry_disk);
+            ilt_entry_word = le_to_host(*(uint64_t*)buf);
         } else {
             throw FormatError("unsupported PE word size");
         }
+
         rva.set_rva(rva.get_rva()+fhdr->get_word_size()); /*advance to next entry of table*/
         if (0==ilt_entry_word)
             break;
