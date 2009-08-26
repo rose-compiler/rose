@@ -825,14 +825,14 @@ HEADER_GENERIC_SECTION_START
 		addr_t        write_sleb128(unsigned char*, addr_t offset, int64_t) const;
 
 		/* Functions for accessing content */
-		size_t read_content(addr_t abs_offset, unsigned char *dst_buf, addr_t size) const;
-		size_t read_content(const RvaFileMap*, addr_t rva, unsigned char *dst_buf, addr_t size) const;
-		size_t read_content(const RvaFileMap *map, rva_t rva, unsigned char *dst_buf, addr_t size) const {
+		size_t read_content(addr_t abs_offset, unsigned char *dst_buf, addr_t size);
+		size_t read_content(const RvaFileMap*, addr_t rva, unsigned char *dst_buf, addr_t size);
+		size_t read_content(const RvaFileMap *map, rva_t rva, unsigned char *dst_buf, addr_t size) {
 			return read_content(map, rva.get_rva(), dst_buf, size);
 		}
-		size_t read_content_local(addr_t rel_offset, unsigned char *dst_buf, addr_t size, bool strict=false) const;
-		std::string read_content_str(const RvaFileMap*, addr_t rva) const;
-		std::string read_content_str(const RvaFileMap *map, rva_t rva) const {
+		size_t read_content_local(addr_t rel_offset, unsigned char *dst_buf, addr_t size, bool strict=false);
+		std::string read_content_str(const RvaFileMap*, addr_t rva);
+		std::string read_content_str(const RvaFileMap *map, rva_t rva) {
 			return read_content_str(map, rva.get_rva());
 		}
 
@@ -967,13 +967,13 @@ HEADER_GENERIC_FILE_START
 		/* File contents */
 		rose_addr_t get_current_size() const;			/* Current size based on defined sections */
 		rose_addr_t get_orig_size() const;              	/* Original size based on actual file size */
-		size_t read_content(addr_t offset, unsigned char *dst_buf, addr_t size) const;
-		size_t read_content(const RvaFileMap *map, addr_t rva, unsigned char *dst_buf, addr_t size) const;
-		size_t read_content(const RvaFileMap *map, rva_t rva, unsigned char *dst_buf, addr_t size) const {
+		size_t read_content(addr_t offset, unsigned char *dst_buf, addr_t size);
+		size_t read_content(const RvaFileMap *map, addr_t rva, unsigned char *dst_buf, addr_t size);
+		size_t read_content(const RvaFileMap *map, rva_t rva, unsigned char *dst_buf, addr_t size) {
 			return read_content(map, rva.get_rva(), dst_buf, size);
 		}
-		std::string read_content_str(const RvaFileMap *map, addr_t rva) const;
-		std::string read_content_str(const RvaFileMap *map, rva_t rva) const {
+		std::string read_content_str(const RvaFileMap *map, addr_t rva);
+		std::string read_content_str(const RvaFileMap *map, rva_t rva) {
 			return read_content_str(map, rva.get_rva());
 		}
 

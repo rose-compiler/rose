@@ -1129,8 +1129,9 @@ SgAsmPESectionTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 
 /* Constructor */
 void
-SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section, size_t idx)
+SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section, size_t idx, addr_t *idir_rva_p)
 {
+    ROSE_ASSERT(idir_rva_p!=NULL);
     SgAsmPEFileHeader *fhdr = isSgAsmPEFileHeader(section->get_header());
     ROSE_ASSERT(fhdr!=NULL);
 
@@ -1139,7 +1140,8 @@ SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section, size_t idx)
     size_t entry_size = sizeof(PEImportDirectory_disk);
     PEImportDirectory_disk disk, zero;
     memset(&zero, 0, sizeof zero);
-    section->content(idx*entry_size, entry_size, &disk);
+    section->read_content(NULL, *idir_rva_p, (unsigned char*)&disk, entry_size);
+    *idir_rva_p += entry_size;
 
     if (0==memcmp(&disk, &zero, sizeof zero)) {
         p_idx = -1;

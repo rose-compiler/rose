@@ -797,7 +797,7 @@ SgAsmGenericFile::get_unreferenced_extents() const
  *  from the beginning of the file), placing the result in dst_buf, and returning the number of bytes read. If the number of
  *  bytes read is less than @p size then @p dst_buf is zero padded so that exactly @p size bytes are always initialized. */
 size_t
-SgAsmGenericFile::read_content(addr_t offset, unsigned char *dst_buf, addr_t size) const
+SgAsmGenericFile::read_content(addr_t offset, unsigned char *dst_buf, addr_t size)
 {
     size_t retval;
     if (offset+size <= p_data.size()) {
@@ -809,6 +809,8 @@ SgAsmGenericFile::read_content(addr_t offset, unsigned char *dst_buf, addr_t siz
     }
     if (retval>0)
         memcpy(dst_buf, &(p_data[offset]), retval);
+    if (get_tracking_references())
+        mark_referenced_extent(offset, retval);
     memset(dst_buf+retval, 0, size-retval);
     return retval;
 }
@@ -819,22 +821,39 @@ SgAsmGenericFile::read_content(addr_t offset, unsigned char *dst_buf, addr_t siz
  *  virtual address that is not mapped we stop reading and fill the rest of the @p dst_buf with zeros and return the number of
  *  bytes we read. */
 size_t
-SgAsmGenericFile::read_content(const RvaFileMap *map, addr_t rva, unsigned char *dst_buf, addr_t size) const
+SgAsmGenericFile::read_content(const RvaFileMap *map, addr_t rva, unsigned char *dst_buf, addr_t size)
 {
     if (!map)
         map = get_loader_map();
     ROSE_ASSERT(map!=NULL);
 
-    size_t retval = map->readRVA(dst_buf, &(get_data()[0]), rva, size);
-    memset(dst_buf+retval, 0, size-retval);
-    return retval;
+    /* Note: This is the same algorithm as used by RvaFileMap::readRVA() except we do it here so that we have an opportunity
+     *       to track the file byte references. */
+    size_t ncopied = 0;
+    while (ncopied < size) {
+        const RvaFileMap::MapElement *m = map->findRVA(rva);
+        if (!m) break;                                                  /*we reached a non-mapped virtual address*/
+        ROSE_ASSERT(rva >= m->get_rva());                               /*or else map->findRVA() malfunctioned*/
+        size_t m_offset = rva - m->get_rva();                           /*offset relative to start of map element*/
+        ROSE_ASSERT(m_offset < m->get_size());                          /*or else map->findRVA() malfunctioned*/
+        size_t nread = std::min(size-ncopied, m->get_size()-m_offset);  /*bytes to read in this pass*/
+        size_t file_offset = m->get_offset() + m_offset;
+        ROSE_ASSERT(file_offset<get_data().size());
+        ROSE_ASSERT(file_offset+nread<=get_data().size());
+        memcpy(dst_buf+ncopied, &(get_data()[file_offset]), nread);
+        ncopied += nread;
+        if (get_tracking_references())
+            mark_referenced_extent(file_offset, nread);
+    }
+    memset(dst_buf+ncopied, 0, size-ncopied);                           /*zero pad result if necessary*/
+    return ncopied;
 }
 
 /** Reads a string from a file. Returns the NUL-terminated string stored at the specified relative virtual address. The
  *  returned string contains the bytes beginning at the starting RVA and continuing until we reach a NUL byte or an address
  *  which is not mapped. The returned string does not include the NUL byte. */
 std::string
-SgAsmGenericFile::read_content_str(const RvaFileMap *map, addr_t rva) const
+SgAsmGenericFile::read_content_str(const RvaFileMap *map, addr_t rva)
 {
     static char *buf = NULL;
     static size_t nalloc = 0;
@@ -2135,7 +2154,7 @@ SgAsmGenericSection::get_mapped_extent() const
  *  if the end-of-file is reached. If the return value is smaller than @p size then the @p dst_buf will be padded with zero
  *  bytes so that exactly @p size bytes of @p dst_buf are always initialized. */
 size_t
-SgAsmGenericSection::read_content(addr_t start_offset, unsigned char *dst_buf, addr_t size) const
+SgAsmGenericSection::read_content(addr_t start_offset, unsigned char *dst_buf, addr_t size)
 {
     SgAsmGenericFile *file = get_file();
     ROSE_ASSERT(file!=NULL);
@@ -2149,7 +2168,7 @@ SgAsmGenericSection::read_content(addr_t start_offset, unsigned char *dst_buf, a
  *  size bytes are initialized. The @p map is used to map virtual addresses to file offsets; if @p map is NULL then the map
  *  defined in the underlying file is used. */
 size_t
-SgAsmGenericSection::read_content(const RvaFileMap *map, addr_t start_rva, unsigned char *dst_buf, addr_t size) const
+SgAsmGenericSection::read_content(const RvaFileMap *map, addr_t start_rva, unsigned char *dst_buf, addr_t size)
 {
     SgAsmGenericFile *file = get_file();
     ROSE_ASSERT(file!=NULL);
@@ -2160,7 +2179,7 @@ SgAsmGenericSection::read_content(const RvaFileMap *map, addr_t start_rva, unsig
  *  this section. If @p strict is false (the default) then allow reading past the end of the section, otherwise throw a
  *  ShortRead exception. */
 size_t
-SgAsmGenericSection::read_content_local(addr_t start_offset, unsigned char *dst_buf, addr_t size, bool strict) const
+SgAsmGenericSection::read_content_local(addr_t start_offset, unsigned char *dst_buf, addr_t size, bool strict)
 {
     SgAsmGenericFile *file = get_file();
     ROSE_ASSERT(file!=NULL);
@@ -2173,7 +2192,7 @@ SgAsmGenericSection::read_content_local(addr_t start_offset, unsigned char *dst_
  *  until we reach an address that is not mapped. The @p map defines the mapping from virtual addresses to file offsets; if @p
  *  map is NULL then the map defined in the underlying file is used. */
 std::string
-SgAsmGenericSection::read_content_str(const RvaFileMap *map, addr_t start_rva) const
+SgAsmGenericSection::read_content_str(const RvaFileMap *map, addr_t start_rva)
 {
     SgAsmGenericFile *file = get_file();
     ROSE_ASSERT(file!=NULL);
