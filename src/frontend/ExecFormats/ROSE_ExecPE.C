@@ -454,6 +454,54 @@ SgAsmPEFileHeader::add_rvasize_pairs()
     }
 }
 
+/* Build memory mapping. This algorithm was implemented based on an e-mail from Cory Cohen at CERT. [RPM 2009-08-17] */
+void
+SgAsmPEFileHeader::map_sections()
+{
+    const SgAsmGenericSectionPtrList &sections = get_sections()->get_sections();
+
+    RvaFileMap *map = get_map();
+    if (!map) {
+        map = new RvaFileMap();
+        if (sections.size()>0)
+            map->set_base_va(sections[0]->get_header()->get_base_va());
+        set_map(map);
+    }
+
+    for (size_t i=0; i<sections.size(); i++) {
+        SgAsmGenericSection *section = sections[i];
+        if (section->is_mapped()) {
+            rose_addr_t file_alignment = section->get_file_alignment();
+            if (file_alignment>0x200 || 0==file_alignment)
+                file_alignment = 0x200;
+
+            rose_addr_t mapped_alignment = section->get_mapped_alignment();
+            if (0==mapped_alignment)
+                mapped_alignment = 0x200;
+
+            rose_addr_t file_size = ALIGN_UP(section->get_size(), file_alignment);
+
+            rose_addr_t mapped_size = section->get_mapped_size();
+            if (file_size > mapped_size)
+                mapped_size = file_size;
+
+            rose_addr_t file_offset = ALIGN_DN(section->get_offset(), file_alignment);
+
+            rose_addr_t mapped_rva = ALIGN_DN(section->get_mapped_rva(), mapped_alignment);
+
+            RvaFileMap::MapElement elmt(mapped_rva, mapped_size, file_offset);
+            map->erase(elmt); /*might have been mapped as part of an earlier section*/
+            map->insert(elmt);
+        }
+    }
+
+#if 1 /*DEBUGGING [RPM 2009-08-17] */
+    fprintf(stderr, "%s: loader-simulated memory map:\n", __func__);
+    map->dump(stderr, "    ");
+#endif
+}
+
+
 /* Looks at the RVA/Size pairs in the PE header and creates an SgAsmGenericSection object for each one. We have to do this
  * near the end of parsing because RVA/Size pairs have only memory info and no file offsets -- we need to have parsed the
  * other sections so we can determine the file offset of each table. */
@@ -941,14 +989,14 @@ SgAsmPESectionTable::parse()
     SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
 
+    /* Parse section table and construct section objects, but do not parse the sections yet. */
+    SgAsmGenericSectionPtrList pending;
     const size_t entsize = sizeof(SgAsmPESectionTableEntry::PESectionTableEntry_disk);
     for (size_t i=0; i<fhdr->get_e_nsections(); i++) {
-        /* Parse the section table entry */
         SgAsmPESectionTableEntry::PESectionTableEntry_disk disk;
         content(i * entsize, entsize, &disk);
         SgAsmPESectionTableEntry *entry = new SgAsmPESectionTableEntry(&disk);
 
-        /* The section */
         SgAsmPESection *section = NULL;
         if (entry->get_name() == ".idata") {
             section = new SgAsmPEImportSection(fhdr);
@@ -956,8 +1004,14 @@ SgAsmPESectionTable::parse()
             section = new SgAsmPESection(fhdr);
         }
         section->init_from_section_table(entry, i+1);
-        section->parse();
+        pending.push_back(section);
     }
+
+    /* Build the memory mapping like the real loader would do, then parse each section. */
+    fhdr->map_sections();
+    for (size_t i=0; i<pending.size(); i++)
+        pending[i]->parse();
+
     return this;
 }
 

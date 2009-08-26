@@ -892,7 +892,7 @@ Grammar::setUpBinaryInstructions ()
 
 
 
-     AsmPEFileHeader.setFunctionPrototype ( "HEADER_PE_FILE_HEADER", "../Grammar/BinaryInstruction.code");
+     AsmPEFileHeader.setFunctionPrototype("HEADER_PE_FILE_HEADER", "../Grammar/BinaryInstruction.code");
      AsmPEFileHeader.setAutomaticGenerationOfDestructor(false);
      AsmPEFileHeader.setDataPrototype("unsigned","e_cpu_type","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1660,7 +1660,7 @@ Grammar::setUpBinaryInstructions ()
   // bool                wperm;                          /* Mapped by loader into memory having write permission */
   // bool                eperm;                          /* Mapped by loader into memory having execute permission */
   // bool                congealed;                      /* Is "holes" up to date w.r.t. referenced? */
-     AsmGenericSection.setFunctionPrototype ( "HEADER_GENERIC_SECTION", "../Grammar/BinaryInstruction.code");
+     AsmGenericSection.setFunctionPrototype("HEADER_GENERIC_SECTION", "../Grammar/BinaryInstruction.code");
 
   // Later we will want to turn this back on so that this IR node is consistant with the others (if appropriate).
   // AsmGenericSection.setAutomaticGenerationOfConstructor(false);
@@ -1770,7 +1770,8 @@ Grammar::setUpBinaryInstructions ()
   // addr_t              base_va;                        /* Base virtual address used by all "relative virtual addresses" (RVA) */
   // std::vector<ExecDLL*> dlls;                         /* List of dynamic libraries needed by this executable */
   // std::vector<ExecSymbol*> symbols;                   /* All symbols defined for this header */
-     AsmGenericHeader.setFunctionPrototype ( "HEADER_GENERIC_HEADER", "../Grammar/BinaryInstruction.code");
+     AsmGenericHeader.setFunctionPrototype("HEADER_GENERIC_HEADER", "../Grammar/BinaryInstruction.code");
+     AsmGenericHeader.setPredeclarationString("HEADER_GENERIC_HEADER_PREDECLARATION", "../Grammar/BinaryInstruction.code");
 
      AsmGenericHeader.setAutomaticGenerationOfDestructor(false);
 
@@ -1796,6 +1797,7 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmGenericHeader.setDataPrototype("SgAsmGenericSectionList*","sections","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
 
 
 

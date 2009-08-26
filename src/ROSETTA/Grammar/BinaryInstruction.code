@@ -18,6 +18,10 @@ HEADER_BINARY_POWERPC_INSTRUCTION_PREDECLARATION_START
 #include "powerpcInstructionEnum.h"
 HEADER_BINARY_POWERPC_INSTRUCTION_PREDECLARATION_END
 
+HEADER_GENERIC_HEADER_PREDECLARATION_START
+#include "RvaFileMap.h"
+HEADER_GENERIC_HEADER_PREDECLARATION_END
+
 HEADER_BINARY_START
 
  /*  This class forms a base class for all of the types represented in the Asm Instruction grammar.
@@ -866,74 +870,64 @@ HEADER_GENERIC_HEADER_START
 	public:
           	explicit SgAsmGenericHeader(SgAsmGenericFile *ef)
 			: SgAsmGenericSection(ef, NULL),
+			p_map(NULL),
 			p_exec_format(NULL), p_isa(ISA_OTHER), p_base_va(0), p_dlls(NULL), p_symbols(NULL), p_sections(NULL)
 			{ctor();}
 
-          virtual ~SgAsmGenericHeader();
-	  virtual bool reallocate();
-	  virtual void unparse(std::ostream&) const;
-          virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+		virtual ~SgAsmGenericHeader();
+		virtual bool reallocate();
+		virtual void unparse(std::ostream&) const;
+		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 
-       // DQ (8/8/2008): We can't make this pure virtual since then we can't allocate this class.
-       // virtual const char *format_name() = 0;
-          virtual const char *format_name() const;
-    
-       /* Functions for dynamically linked libraries (DLLs) */
-          void add_dll(SgAsmGenericDLL *dll);                         /* Add new DLL to list of DLLs for this file */
-       // std::vector<SgAsmGenericDLL*>& get_dlls() {return p_dlls;}    /* all necessary dynamically loaded libraries */
-          std::vector<SgAsmGenericDLL*>& get_dlls() { ROSE_ASSERT(p_dlls != NULL); return p_dlls->get_dlls(); }    /* all necessary dynamically loaded libraries */
+		// DQ (8/8/2008): We can't make this pure virtual since then we can't allocate this class.
+		// virtual const char *format_name() = 0;
+		virtual const char *format_name() const;
 
-       /* Functions for symbols */
-          void add_symbol(SgAsmGenericSymbol*);                       /* add a new symbol to the symbol table. Duplicates are allowed. */
-       // std::vector<SgAsmGenericSymbol*>& get_symbol() { ROSE_ASSERT(p_symbols != NULL); return p_symbols->get_symbols(); }
-          SgAsmGenericSymbolPtrList & get_symbol_list();
+		/* Functions for dynamically linked libraries (DLLs) */
+		void add_dll(SgAsmGenericDLL *dll);                     /* Add new DLL to list of DLLs for this file */
+		std::vector<SgAsmGenericDLL*>& get_dlls() {		/* all necessary dynamically loaded libraries */
+		        ROSE_ASSERT(p_dlls != NULL);
+			return p_dlls->get_dlls();
+		}
 
-       /* Accessors for protected/private members */
-       // SgAsmGenericFormat & get_exec_format() {return p_exec_format;}
-          std::vector<unsigned char>& get_magic() {return p_magic;}
-       // addr_t get_base_va() const {return p_base_va;}
-          addr_t get_entry_rva() const;
-          void add_entry_rva(const rose_rva_t &rva) { p_entry_rvas.push_back(rva);}
+		/* Functions for symbols */
+		void add_symbol(SgAsmGenericSymbol*); /* add a new symbol to the symbol table. Duplicates are allowed. */
+		SgAsmGenericSymbolPtrList& get_symbol_list();
 
-       /* Convenience functions */
-       // SgAsmGenericFormat::ByteOrder get_sex() const { return p_exec_format.p_sex; }
-          SgAsmExecutableFileFormat::ByteOrder get_sex() const;
-       // size_t get_word_size() const {return p_exec_format.p_word_size;}
-          size_t get_word_size() const;
+		/* Accessors for protected/private members */
+		std::vector<unsigned char>& get_magic() {return p_magic;}
+		addr_t get_entry_rva() const;
+		void add_entry_rva(const rose_rva_t &rva) { p_entry_rvas.push_back(rva);}
+		RvaFileMap *get_map() const {return p_map;}
+		void set_map(RvaFileMap *map) {p_map=map;}
 
-       /* Functions for sections */
-          void add_section(SgAsmGenericSection*);             /* Add new section to the file; called implicitly by section ctor */
-          void remove_section(SgAsmGenericSection*); 	      /* Remove section from the file */
+		/* Convenience functions */
+		SgAsmExecutableFileFormat::ByteOrder get_sex() const;
+		size_t get_word_size() const;
 
-       /* Section lookup functions (plural) */
-	  SgAsmGenericSectionPtrList get_mapped_sections() const;
-	  SgAsmGenericSectionPtrList get_sections_by_id(int id) const;
-	  SgAsmGenericSectionPtrList get_sections_by_name(std::string, char sep=0) const;
-	  SgAsmGenericSectionPtrList get_sections_by_offset(addr_t offset, addr_t size) const;
-	  SgAsmGenericSectionPtrList get_sections_by_rva(addr_t rva) const;
-	  SgAsmGenericSectionPtrList get_sections_by_va(addr_t va) const;
+		/* Functions for sections */
+		void add_section(SgAsmGenericSection*); /* Add new section to the file; called implicitly by section ctor */
+		void remove_section(SgAsmGenericSection*); 	      /* Remove section from the file */
 
-       /* Section lookup functions (singular) */
-	  SgAsmGenericSection *get_section_by_id(int id, size_t *nfound=0) const;
-	  SgAsmGenericSection *get_section_by_name(const std::string&, char sep=0, size_t *nfound=0) const;
-	  SgAsmGenericSection *get_section_by_offset(addr_t offset, addr_t size, size_t *nfound=0) const;
-          SgAsmGenericSection *get_section_by_rva(addr_t rva, size_t *nfound=0) const;
-	  SgAsmGenericSection *get_section_by_va(addr_t va, size_t *nfound=0) const;
-	  SgAsmGenericSection *get_best_section_by_va(addr_t va, size_t *nfound=0) const;
+		/* Section lookup functions (plural) */
+		SgAsmGenericSectionPtrList get_mapped_sections() const;
+		SgAsmGenericSectionPtrList get_sections_by_id(int id) const;
+		SgAsmGenericSectionPtrList get_sections_by_name(std::string, char sep=0) const;
+		SgAsmGenericSectionPtrList get_sections_by_offset(addr_t offset, addr_t size) const;
+		SgAsmGenericSectionPtrList get_sections_by_rva(addr_t rva) const;
+		SgAsmGenericSectionPtrList get_sections_by_va(addr_t va) const;
 
-
-  // protected:
-       // ExecFormat          exec_format;                    /* General info about the executable format */
-       // std::vector<unsigned char> magic;                   /* Optional magic number in file byte order */
-       // InsSetArchitecture  target;                         /* Machine for which this header and its sections, etc. was compiled */
-       // addr_t              base_va;                        /* Base virtual address used by all "relative virtual addresses" (RVA) */
-       // std::vector<addr_t> entry_rvas;                     /* Code entry points wrt base_va */
-       // std::vector<ExecDLL*> dlls;                         /* List of dynamic libraries needed by this executable */
-       // std::vector<ExecSymbol*> symbols;                   /* All symbols defined for this header */
+		/* Section lookup functions (singular) */
+		SgAsmGenericSection *get_section_by_id(int id, size_t *nfound=0) const;
+		SgAsmGenericSection *get_section_by_name(const std::string&, char sep=0, size_t *nfound=0) const;
+		SgAsmGenericSection *get_section_by_offset(addr_t offset, addr_t size, size_t *nfound=0) const;
+		SgAsmGenericSection *get_section_by_rva(addr_t rva, size_t *nfound=0) const;
+		SgAsmGenericSection *get_section_by_va(addr_t va, size_t *nfound=0) const;
+		SgAsmGenericSection *get_best_section_by_va(addr_t va, size_t *nfound=0) const;
 
 	private:
 		void ctor();
-
+		RvaFileMap *p_map;
 HEADER_GENERIC_HEADER_END
 
 
@@ -2058,7 +2052,7 @@ HEADER_PE_FILE_HEADER_START
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 		void create_table_sections();
-
+		void map_sections();
 	private:
 		void ctor();
 		void *encode(SgAsmPEFileHeader::PEFileHeader_disk*) const;
