@@ -13,7 +13,8 @@ using namespace std;
  * filter out global variables from external libraries
  *****************************************/
 bool GlobalVarAnalysis::isFromLibrary(SgInitializedName* initName) {
-  string name = initName->get_qualified_name().str();
+  // Liao, 8/26/2009, Not used and caused problem for builtin function's parameters
+//  string name = initName->get_qualified_name().str();
   Sg_File_Info* fi = initName->get_file_info();
   if (fi->isCompilerGenerated())
     return true;
