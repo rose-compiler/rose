@@ -2226,11 +2226,12 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
 {
     static const bool debug = false;
     COFFSymbol_disk disk;
-    symtab->content(idx * COFFSymbol_disk_size, COFFSymbol_disk_size, &disk);
+    symtab->read_content_local(idx * COFFSymbol_disk_size, (unsigned char*)&disk, COFFSymbol_disk_size);
     if (disk.st_zero == 0) {
         p_st_name_offset = le_to_host(disk.st_offset);
         if (p_st_name_offset < 4) throw FormatError("name collides with size field");
-        set_name(new SgAsmBasicString(strtab->content_str(p_st_name_offset)));
+        std::string s = strtab->read_content_local_str(p_st_name_offset);
+        set_name(new SgAsmBasicString(s));
     } else {
         char temp[9];
         memcpy(temp, disk.st_name, 8);
@@ -2293,7 +2294,7 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
     
     /* Read additional aux entries. We keep this as 'char' to avoid alignment problems. */
     if (p_st_num_aux_entries > 0) {
-        p_aux_data = symtab->content_ucl((idx+1)*COFFSymbol_disk_size, p_st_num_aux_entries * COFFSymbol_disk_size);
+        p_aux_data = symtab->read_content_ucl((idx+1)*COFFSymbol_disk_size, p_st_num_aux_entries * COFFSymbol_disk_size);
 
         if (get_type() == SYM_FUNC && p_st_section_num > 0) {
             /* Function */
@@ -2340,7 +2341,7 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
             if (0 == d->st_zero) {
                 addr_t fname_offset = le_to_host(d->st_offset);
                 if (fname_offset < 4) throw FormatError("name collides with size field");
-                set_name(new SgAsmBasicString(strtab->content_str(fname_offset)));
+                set_name(new SgAsmBasicString(strtab->read_content_local_str(fname_offset)));
                 if (debug)
                     fprintf(stderr, "COFF aux file: offset=%"PRIu64", name=\"%s\"\n", fname_offset, get_name()->c_str());
             } else {
@@ -2550,7 +2551,7 @@ SgAsmCoffSymbolTable::parse()
     p_strtab->parse();
 
     uint32_t word;
-    p_strtab->content(0, sizeof word, &word);
+    p_strtab->read_content(0, (unsigned char*)&word, sizeof word);
     addr_t strtab_size = le_to_host(word);
     if (strtab_size < sizeof(uint32_t))
         throw FormatError("COFF symbol table string table size is less than four bytes");
