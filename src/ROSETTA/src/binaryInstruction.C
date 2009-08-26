@@ -1642,34 +1642,13 @@ Grammar::setUpBinaryInstructions ()
   // Need a separate IR node to hold the list of SgAsmGenericSection pointers.
      AsmGenericSectionList.setDataPrototype("SgAsmGenericSectionPtrList","sections","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
-  // This data structure represents the ExecSection from file: ExecGeneric.h
-  // ExecFile            *file;                          /* The file to which this section belongs */
-  // ExecHeader          *header;                        /* Optional header associated with section */
-  // addr_t              size;                           /* Size of section in bytes */
-  // addr_t              offset;                         /* Starting offset of the section */
-  // const unsigned char *data;                          /* Content of just this section; points into file's content */
-  // SectionPurpose      purpose;                        /* General contents of the section */
-  // bool                synthesized;                    /* Section was created by the format reader; not specified in file */
-  // int                 id;                             /* Non-unique section ID (unique for ELF) or negative */
-  // std::string         name;                           /* Optional, non-unique name of section */
-  // bool                mapped;                         /* True if section should be mapped to program's address space */
-  // addr_t              mapped_rva;                     /* Intended relative virtual address if `mapped' is true */
-  // addr_t              mapped_size;                    /* Intended virtual size if 'mapped' is true */
-  // bool                rperm;                          /* Mapped by loader into memory having read permission */
-  // bool                wperm;                          /* Mapped by loader into memory having write permission */
-  // bool                eperm;                          /* Mapped by loader into memory having execute permission */
-  // bool                congealed;                      /* Is "holes" up to date w.r.t. referenced? */
      AsmGenericSection.setFunctionPrototype("HEADER_GENERIC_SECTION", "../Grammar/BinaryInstruction.code");
-
   // Later we will want to turn this back on so that this IR node is consistant with the others (if appropriate).
   // AsmGenericSection.setAutomaticGenerationOfConstructor(false);
      AsmGenericSection.setAutomaticGenerationOfDestructor(false);
-
   /* The file to which this section belongs */
      AsmGenericSection.setDataPrototype("SgAsmGenericFile*","file","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
   // DQ (8/15/2008): Put this back since the sections are in a list and the list is not in the header
   // (as I thought).  The list is in the SgAsmGenericFile which has a SgAsmFile as a parent.
   // DQ (8/14/2008): The get_header() function is now implemented in terms of the "get_parent()" function
@@ -1680,7 +1659,6 @@ Grammar::setUpBinaryInstructions ()
   //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericSection.setDataPrototype("SgAsmGenericHeader*","header","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
   /* Current size of section in bytes (may be different than original size, which is kept in p_data.size()) */
      AsmGenericSection.setDataPrototype("rose_addr_t","size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1717,30 +1695,22 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericSection.setDataPrototype("bool","mapped_xperm","= false",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  /* Tracks either referenced or unreferenced parts of the section, depending on value of p_congealed */
-     AsmGenericSection.setDataPrototype("ExtentMap","extents","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  /* Determines what p_extents tracks: referenced extents if false; unreferenced extents (holes) if true */
-     AsmGenericSection.setDataPrototype("bool","congealed","= false",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
   // DQ (2/4/2009): Added support for specification of code to be disassembled.  this is important for
   // object files where all the sections are marked as non-executable, yet they have functions which
   // we clearly want to disassemble.
      AsmGenericSection.setDataPrototype("bool","contains_code","= false",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
   // DQ (2/4/2009): The new code must have an address where it can be mapped, but clearly since it is
   // from a section marked non-mapped (and not even executable), these are addresses that we are assigning
   // arbitrarily.
      AsmGenericSection.setDataPrototype("rose_addr_t","rose_mapped_rva","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-
   // DQ (8/2/2008): This was removed from the design by Robb.
   /* All segments belonging within this section */
   // AsmGenericSection.setDataPrototype("SgAsmGenericSegmentPtrListPtr","segmentsList","= NULL",
   //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
 
   // DQ (8/17/2008): SgAsmGenericHeader are derived from the SgAsmGenericSection and so already appear
   // in the AsmGenericFile::sections list, so set to: NO_TRAVERSAL.
@@ -1828,6 +1798,12 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmGenericFile.setDataPrototype("bool", "truncate_zeros", "= false",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmGenericFile.setDataPrototype("bool", "tracking_references", "= true", 
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmGenericFile.setDataPrototype("ExtentMap", "referenced_extents", "",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
 
 
   // This data structure represents the ExecFile from file: ExecGeneric.h

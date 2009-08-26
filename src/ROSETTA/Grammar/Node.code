@@ -85,7 +85,7 @@ class ExtentMap : public std::map<rose_addr_t,rose_addr_t> {
 	        void allocate_at(rose_addr_t offset, rose_addr_t size)
 			{allocate_at(ExtentPair(offset, size));}
 		void allocate_at(const ExtentPair&);
-		void dump_extents(FILE*, const char *prefix, const char *label) const;
+		void dump_extents(FILE*, const char *prefix, const char *label, bool pad=true) const;
 
 		/* Class methods */
 		static char category(const ExtentPair &a, const ExtentPair &b);
