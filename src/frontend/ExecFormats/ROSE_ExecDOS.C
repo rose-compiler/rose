@@ -41,26 +41,25 @@ SgAsmDOSFileHeader::ctor()
 
 /** Returns true if a cursory look at the file indicates that it could be a DOS executable file. */
 bool
-SgAsmDOSFileHeader::is_DOS(SgAsmGenericFile *ef)
+SgAsmDOSFileHeader::is_DOS(SgAsmGenericFile *file)
 {
-    SgAsmDOSFileHeader *fhdr = NULL;
-    bool retval  = false;
+    /* Turn off byte reference tracking for the duration of this function. We don't want our testing the file contents to
+     * affect the list of bytes that we've already referenced or which we might reference later. */
+    bool was_tracking = file->get_tracking_references();
+    file->set_tracking_references(false);
 
     try {
-        fhdr = new SgAsmDOSFileHeader(ef);
-        fhdr->grab_content();
-        fhdr->extend(2);
         unsigned char magic[2];
-        fhdr->content(0, 2, magic);
-        retval = 'M'==magic[0] && 'Z'==magic[1];
+        file->read_content(0, magic, sizeof magic);
+        if ('M'!=magic[0] || 'Z'!=magic[1])
+            throw 1;
     } catch (...) {
-        /* cleanup is below */
+        file->set_tracking_references(was_tracking);
+        return false;
     }
-
-    delete fhdr;
-    return retval;
+    file->set_tracking_references(was_tracking);
+    return true;
 }
-
 
 /** Initialize this header with information parsed from the file and construct and parse everything that's reachable from the
  *  header. The DOS File Header should have been constructed such that SgAsmDOSFileHeader::ctor() was called. */
@@ -73,7 +72,7 @@ SgAsmDOSFileHeader::parse(bool define_rm_section)
     DOSFileHeader_disk disk;
     if (sizeof(disk)>get_size())
         extend(sizeof(disk)-get_size());
-    content(0, sizeof(disk), &disk);
+    read_content_local(0, &disk, sizeof disk);
 
     /* Check magic number early. 
      * Some old compilers were little-endian ignorant and stored "ZM", but we will ignore this [DQ]. */
@@ -301,7 +300,7 @@ SgAsmDOSExtendedHeader::parse()
     
     /* Read header from file */
     DOSExtendedHeader_disk disk;
-    content(0, sizeof disk, &disk);
+    read_content_local(0, &disk, sizeof disk);
 
     /* Decode file format */
     ROSE_ASSERT(get_header()!=NULL); /*should be the DOS File Header*/
