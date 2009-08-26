@@ -3833,22 +3833,22 @@ SgAsmElfNoteEntry::parse(rose_addr_t at)
     
     /* Length of note entry name, including NUL termination */
     uint32_t u32;
-    notes->content(at, 4, &u32);
+    notes->read_content_local(at, &u32, 4);
     size_t name_size = disk_to_host(fhdr->get_sex(), u32);
     at += 4;
 
     /* Length of note entry description (i.e., the payload) */
-    notes->content(at, 4, &u32);
+    notes->read_content_local(at, &u32, 4);
     size_t payload_size = disk_to_host(fhdr->get_sex(), u32);
     at += 4;
 
     /* Type of note */
-    notes->content(at, 4, &u32);
+    notes->read_content_local(at, &u32, 4);
     unsigned type = disk_to_host(fhdr->get_sex(), u32);
     at += 4;
 
     /* NUL-terminated name */
-    std::string note_name = notes->content_str(at, true);
+    std::string note_name = notes->read_content_local_str(at);
     ROSE_ASSERT(note_name.size()+1 == name_size);
     at += name_size;
     at = (at+3) & ~0x3; /* payload is aligned on a four-byte offset */
@@ -3856,7 +3856,7 @@ SgAsmElfNoteEntry::parse(rose_addr_t at)
     /* Set properties */
     set_name(new SgAsmBasicString(note_name));
     set_type(type);
-    p_payload = notes->content_ucl(at, payload_size);
+    p_payload = notes->read_content_local_ucl(at, payload_size);
 
     return at + payload_size;
 }
