@@ -417,7 +417,7 @@ SgAsmGenericStrtab::free_all_strings(bool blow_away_holes)
     /* Mark holes as referenced */
     if (blow_away_holes) {
         file->set_tracking_references(true);
-        container->content(0, container->get_size());
+        file->mark_referenced_extent(container->get_offset(), container->get_size());
         file->set_tracking_references(is_tracking);
     }
 
@@ -917,23 +917,17 @@ SgAsmGenericFile::read_content_str(addr_t offset, bool strict)
     }
 }
 
-/* DEPRECATED: use read_content() instead */
-/** Returns a vector that points to part of the file content without actually ever referencing the file content until the
- *  vector elements are referenced. If @p relax is true and the desired extent falls entirely or partially outside the range
- *  of data known to the file then return an SgFileContentList with as much data as possible rather than throwing an
- *  exception. */
+/** Returns a vector that points to part of the file content without actually ever reading or otherwise referencing the file
+ *  content until the vector elements are referenced. If the desired extent falls entirely or partially outside the range
+ *  of data known to the file then throw an SgAsmExecutableFileFormat::ShortRead exception. This function never updates
+ *  reference tracking lists for the file. */
 SgFileContentList
-SgAsmGenericFile::content(addr_t offset, addr_t size, bool relax)
+SgAsmGenericFile::content(addr_t offset, addr_t size)
 {
     if (offset+size <= p_data.size()) {
         return SgFileContentList(p_data, offset, size);
-    } else if (!relax) {
-        throw ShortRead(NULL, offset, size);
-    } else if (offset > p_data.size()) {
-        return SgFileContentList(p_data, 0, 0);
     } else {
-        size = p_data.size() - offset;
-        return SgFileContentList(p_data, offset, size);
+        throw ShortRead(NULL, offset, size);
     }
 }
 

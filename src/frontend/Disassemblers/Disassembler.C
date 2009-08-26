@@ -532,7 +532,7 @@ Disassembler::disassembleInterp(SgAsmGenericHeader *header, AddressSet *successo
      * to the same file content as we originally read.  In fact, it doesn't even necessarily read any of the file except for
      * what we're actually disassembling. */
     SgAsmGenericFile *file = header->get_file();
-    SgFileContentList file_content = file->content(0, file->get_orig_size(), false);
+    SgFileContentList file_content = file->content(0, file->get_orig_size());
 
     /* Disassemble all that we've mapped, according to aggressiveness settings. */
     return disassembleBuffer(&(file_content[0]), map, worklist, successors, bad);
