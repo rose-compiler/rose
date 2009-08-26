@@ -589,7 +589,7 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
                 if (honor_operand_types) {
                     return NULL!=isSgAsmDoubleWordValueExpression(ve);
                 } else {
-                    return *imm_p>=-2147483648L && *imm_p<=2147483647L;
+                    return *imm_p>=-2147483648LL && *imm_p<=2147483647LL;
                 }
             }
             return false;
