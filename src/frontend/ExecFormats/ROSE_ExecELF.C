@@ -1028,7 +1028,9 @@ SgAsmElfStrtab::parse()
     SgAsmGenericStrtab::parse();
     ROSE_ASSERT(get_container());
     if (get_container()->get_size()>0) {
-        if (get_container()->content(0, 1)[0]=='\0') {
+        unsigned char first_byte;
+        get_container()->read_content_local(0, &first_byte, 1);
+        if (first_byte=='\0') {
             if (p_dont_free) {
                 ROSE_ASSERT(0==p_dont_free->get_offset());
             } else {
@@ -1080,7 +1082,7 @@ SgAsmElfStrtab::create_storage(addr_t offset, bool shared)
         ROSE_ASSERT(get_container()->get_size()>=1);
         storage = new SgAsmStringStorage(this, "", 0);
     } else {
-        std::string s = get_container()->content_str(offset);
+        std::string s = get_container()->read_content_local_str(offset);
         storage = new SgAsmStringStorage(this, s, offset);
     }
 
@@ -1111,7 +1113,7 @@ void
 SgAsmElfStrtab::rebind(SgAsmStringStorage *storage, addr_t offset)
 {
     ROSE_ASSERT(p_dont_free && storage!=p_dont_free && storage->get_offset()==p_dont_free->get_offset());
-    std::string s = get_container()->content_str(offset);
+    std::string s = get_container()->read_content_local_str(offset);
     storage->set_offset(offset);
     storage->set_string(s);
 }
