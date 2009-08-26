@@ -2261,7 +2261,7 @@ SgAsmGenericSection::read_content_local(addr_t start_offset, void *dst_buf, addr
 /** Reads content of a section and returns it as a container.  The returned container will always have exactly @p size byte.
  *  If @p size bytes are not available in this section at the specified offset then the container will be zero padded. */
 SgUnsignedCharList
-SgAsmGenericSection::read_content_ucl(addr_t rel_offset, addr_t size)
+SgAsmGenericSection::read_content_local_ucl(addr_t rel_offset, addr_t size)
 {
     SgUnsignedCharList retval;
     unsigned char *buf = new unsigned char[size];

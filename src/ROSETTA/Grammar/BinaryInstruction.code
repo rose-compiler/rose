@@ -837,7 +837,7 @@ HEADER_GENERIC_SECTION_START
 		}
 		std::string read_content_str(addr_t abs_offset, bool strict=true);
 		std::string read_content_local_str(addr_t rel_offset, bool strict=true);
-		SgUnsignedCharList read_content_ucl(addr_t rel_offset, addr_t size);
+		SgUnsignedCharList read_content_local_ucl(addr_t rel_offset, addr_t size);
 
 		/* Deprecated functions for accessing content */
 		const unsigned char *content(addr_t offset, addr_t size);/*returns ptr to SIZE bytes starting at OFFSET */

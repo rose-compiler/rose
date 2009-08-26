@@ -2294,7 +2294,7 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
     
     /* Read additional aux entries. We keep this as 'char' to avoid alignment problems. */
     if (p_st_num_aux_entries > 0) {
-        p_aux_data = symtab->read_content_ucl((idx+1)*COFFSymbol_disk_size, p_st_num_aux_entries * COFFSymbol_disk_size);
+        p_aux_data = symtab->read_content_local_ucl((idx+1)*COFFSymbol_disk_size, p_st_num_aux_entries * COFFSymbol_disk_size);
 
         if (get_type() == SYM_FUNC && p_st_section_num > 0) {
             /* Function */

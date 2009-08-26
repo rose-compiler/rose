@@ -1305,7 +1305,7 @@ SgAsmElfSectionTable::parse()
             shdr = new SgAsmElfSectionTableEntry(sex, &disk);
         }
         if (opt_size>0)
-            shdr->get_extra() = read_content_ucl(offset+struct_size, opt_size);
+            shdr->get_extra() = read_content_local_ucl(offset+struct_size, opt_size);
         entries.push_back(shdr);
     }
 
@@ -1977,7 +1977,7 @@ SgAsmElfSegmentTable::parse()
         }
         shdr->set_index(i);
         if (opt_size>0)
-            shdr->get_extra() = read_content_ucl(offset+struct_size, opt_size);
+            shdr->get_extra() = read_content_local_ucl(offset+struct_size, opt_size);
 
         /* Null segments are just unused slots in the table; no real section to create */
         if (SgAsmElfSegmentTableEntry::PT_NULL == shdr->get_type())
