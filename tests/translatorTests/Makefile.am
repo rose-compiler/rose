@@ -5,9 +5,11 @@ INCLUDES = $(ROSE_INCLUDES)
 
 # The bug numbers come from ROSE's SciDAC bug trackers
 noinst_PROGRAMS = \
-       bug125 
+       bug125 \
+       qualifiedName
 
 bug125_SOURCES = bug125.C
+qualifiedName_SOURCES = qualifiedName.C
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
@@ -18,10 +20,13 @@ VALGRIND =
 testbug125:bug125 
 	./bug125 -c $(srcdir)/inputbug125.C
 
+testqualifiedName: qualifiedName
+	./qualifiedName -c $(top_srcdir)/projects/autoTuning/tests/jacobi.c
+
 EXTRA_DIST =  inputbug125.C
 
 check-local:
-	@$(MAKE) testbug125 
+	@$(MAKE) testbug125 testqualifiedName
 
 distclean-local:
 	rm -rf Makefile
