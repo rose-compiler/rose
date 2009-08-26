@@ -20,12 +20,12 @@ noinst_LTLIBRARIES = libroseExecFormats.la
 libroseExecFormats_la_DEPENDENCIES =
 libroseExecFormats_la_SOURCES = \
    $(INTEL_PIN_SUPPORT) \
-   ROSE_ExecGeneric.C \
-   ROSE_ExecDOS.C \
-   ROSE_ExecELF.C \
-   ROSE_ExecPE.C \
-   ROSE_ExecNE.C \
-   ROSE_ExecLE.C \
+   ExecGeneric.C \
+   ExecDOS.C \
+   ExecELF.C \
+   ExecPE.C \
+   ExecNE.C \
+   ExecLE.C \
    MemoryMap.C
 
 include_HEADERS = IntelPinSupport.h MemoryMap.h
