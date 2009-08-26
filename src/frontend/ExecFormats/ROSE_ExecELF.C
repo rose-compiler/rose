@@ -1297,15 +1297,15 @@ SgAsmElfSectionTable::parse()
         SgAsmElfSectionTableEntry *shdr = NULL;
         if (4 == fhdr->get_word_size()) {
             SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk disk;
-            content(offset, struct_size, &disk);
+            read_content_local(offset, &disk, struct_size);
             shdr = new SgAsmElfSectionTableEntry(sex, &disk);
         } else {
             SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk disk;
-            content(offset, struct_size, &disk);
+            read_content_local(offset, &disk, struct_size);
             shdr = new SgAsmElfSectionTableEntry(sex, &disk);
         }
         if (opt_size>0)
-            shdr->get_extra() = content_ucl(offset+struct_size, opt_size);
+            shdr->get_extra() = read_content_ucl(offset+struct_size, opt_size);
         entries.push_back(shdr);
     }
 
@@ -1390,7 +1390,7 @@ SgAsmElfSectionTable::parse()
                       break;
                   }
                   case SgAsmElfSectionTableEntry::SHT_PROGBITS: {
-                      std::string section_name = section_name_strings->content_str(entry->get_sh_name(), true);
+                      std::string section_name = section_name_strings->read_content_local_str(entry->get_sh_name());
                       if (section_name == ".eh_frame") {
                           is_parsed[i] = new SgAsmElfEHFrameSection(fhdr);
                       } else {
@@ -1968,16 +1968,16 @@ SgAsmElfSegmentTable::parse()
         SgAsmElfSegmentTableEntry *shdr = NULL;
         if (4==fhdr->get_word_size()) {
             SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk disk;
-            content(offset, struct_size, &disk);
+            read_content_local(offset, &disk, struct_size);
             shdr = new SgAsmElfSegmentTableEntry(sex, &disk);
         } else {
             SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk disk;
-            content(offset, struct_size, &disk);
+            read_content_local(offset, &disk, struct_size);
             shdr = new SgAsmElfSegmentTableEntry(sex, &disk);
         }
         shdr->set_index(i);
         if (opt_size>0)
-            shdr->get_extra() = content_ucl(offset+struct_size, opt_size);
+            shdr->get_extra() = read_content_ucl(offset+struct_size, opt_size);
 
         /* Null segments are just unused slots in the table; no real section to create */
         if (SgAsmElfSegmentTableEntry::PT_NULL == shdr->get_type())
