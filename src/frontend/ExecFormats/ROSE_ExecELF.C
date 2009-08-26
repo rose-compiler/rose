@@ -2354,24 +2354,24 @@ SgAsmElfRelocSection::parse()
         if (4==fhdr->get_word_size()) {
             if (p_uses_addend) {
                 SgAsmElfRelocEntry::Elf32RelaEntry_disk disk;
-                content(i*entry_size, struct_size, &disk);
+                read_content_local(i*entry_size, &disk, struct_size);
                 entry = new SgAsmElfRelocEntry(this);
                 entry->parse(fhdr->get_sex(), &disk);
             } else {
                 SgAsmElfRelocEntry::Elf32RelEntry_disk disk;
-                content(i*entry_size, struct_size, &disk);
+                read_content_local(i*entry_size, &disk, struct_size);
                 entry = new SgAsmElfRelocEntry(this);
                 entry->parse(fhdr->get_sex(), &disk);
             }
         } else if (8==fhdr->get_word_size()) {
             if (p_uses_addend) {
                 SgAsmElfRelocEntry::Elf64RelaEntry_disk disk;
-                content(i*entry_size, struct_size, &disk);
+                read_content_local(i*entry_size, &disk, struct_size);
                 entry = new SgAsmElfRelocEntry(this);
                 entry->parse(fhdr->get_sex(), &disk);
             } else {
                 SgAsmElfRelocEntry::Elf64RelEntry_disk disk;
-                content(i*entry_size, struct_size, &disk);
+                read_content_local(i*entry_size, &disk, struct_size);
                 entry = new SgAsmElfRelocEntry(this);
                 entry->parse(fhdr->get_sex(), &disk);
             }
@@ -2379,7 +2379,7 @@ SgAsmElfRelocSection::parse()
             throw FormatError("unsupported ELF word size");
         }
         if (extra_size>0)
-            entry->get_extra() = content_ucl(i*entry_size+struct_size, extra_size);
+            entry->get_extra() = read_content_local_ucl(i*entry_size+struct_size, extra_size);
     }
     return this;
 }
