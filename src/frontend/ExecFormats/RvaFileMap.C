@@ -5,6 +5,13 @@
 
 /* See header file for full documentation */
 
+rose_addr_t
+RvaFileMap::MapElement::get_rva_offset(rose_addr_t rva) const
+{
+    if (rva<get_rva() || rva>=get_rva()+get_size())
+        throw Exception(*this, MapElement(rva, 0, 0));
+    return get_offset() + (rva - get_rva());
+}
 
 bool
 RvaFileMap::consistent(const MapElement &a, const MapElement &b) 
@@ -204,6 +211,7 @@ RvaFileMap::get_elements() const {
 size_t
 RvaFileMap::read(unsigned char *dst_buf, const unsigned char *src_buf, rose_addr_t start_va, size_t desired) const
 {
+    ROSE_ASSERT(dst_buf!=NULL);
     ROSE_ASSERT(start_va >= get_base_va());
     rose_addr_t start_rva = start_va - get_base_va();
 
@@ -219,7 +227,21 @@ RvaFileMap::read(unsigned char *dst_buf, const unsigned char *src_buf, rose_addr
         memcpy(dst_buf+ncopied, src_buf+m->get_offset()+m_offset, n);
         ncopied += n;
     }
-    
+
+    memset(dst_buf+ncopied, 0, desired-ncopied);
     return ncopied;
 }
 
+void
+RvaFileMap::dump(FILE *f, const char *prefix) const
+{
+    if (!sorted) {
+        sort(elements.begin(), elements.end());
+        sorted = true;
+    }
+    for (size_t i=0; i<elements.size(); i++) {
+        fprintf(f, "%srva 0x%08"PRIx64" + 0x%08zu = 0x%08"PRIx64" at offset 0x%08"PRIx64"\n",
+                prefix, elements[i].get_rva(), elements[i].get_size(), elements[i].get_rva()+elements[i].get_size(),
+                elements[i].get_offset());
+    }
+}

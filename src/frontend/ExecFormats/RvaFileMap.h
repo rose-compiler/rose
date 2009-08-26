@@ -13,9 +13,21 @@ public:
     public:
         MapElement(rose_addr_t rva, size_t size, rose_addr_t offset)
             : rva(rva), size(size), offset(offset) {}
+
+        /** Returns the starting relative virtual address for this map element. */
         rose_addr_t get_rva() const {return rva;}
+
+        /** Returns the size in bytes represented by the entire map element. */
         size_t get_size() const {return size;}
+
+        /** Returns the starting offset for this map element. */
         rose_addr_t get_offset() const {return offset;}
+
+        /** Returns the starting offset of the specified relative virtual address or throws an exception if the specified
+         *  relative virtual address is not represented by this map element. */
+        rose_addr_t get_rva_offset(rose_addr_t rva) const;
+        rose_addr_t get_rva_offset(rose_rva_t rva) const {return get_rva_offset(rva.get_rva());}
+
     private:
         friend class RvaFileMap;
         rose_addr_t rva;                /* Virtual address for start of region */
@@ -67,6 +79,7 @@ public:
     /** Search for the specified relative virtual address and return the map element that contains it. Returns null if the
      *  address is not mapped. */
     const MapElement* findRVA(rose_addr_t rva) const;
+    const MapElement* findRVA(rose_rva_t rva) const {return findRVA(rva.get_rva());}
 
     /** Search for the specified virtual address and return the map element that contains it. Note that the map element has a
      *  _relative_ virtual address rather than a virtual address, and in order to get the virtual address the caller must add
@@ -79,14 +92,21 @@ public:
     /** Returns the currently defined map elements. */
     const std::vector<MapElement> &get_elements() const;
 
+    /** Set the base virtual address used to calculate the relative virtual addresses in the mappings. */
+    void set_base_va(rose_addr_t va) {base_va = va;}
+
     /** Returns the base virtual address used to calculate the relative virtual addresses in the mappings. */
     rose_addr_t get_base_va() const {return base_va;}
 
     /** Copies data from a contiguous region of the virtual address space into a user supplied buffer. The portion of the
      *  virtual address space to copy begins at @p start_va and continues for @p desired bytes. The data is copied from the
-     *  @p src_buf to the @p dst_buf buffers. The return value is the number of bytes that were copied, which might be fewer
-     *  than the number of bytes desired if the mapping does not include part of the address space requested. */
+     *  @p src_buf to the @p dst_buf buffer. The return value is the number of bytes that were copied, which might be fewer
+     *  than the number of bytes desired if the mapping does not include part of the address space requested. The part of @p
+     *  dst_buf that is not read is zero filled. */
     size_t read(unsigned char *dst_buf, const unsigned char *src_buf, rose_addr_t start_va, size_t desired) const;
+
+    /** Prints the contents of the map for debugging. */
+    void dump(FILE*, const char *prefix="") const;
 
 private:
     /* Mutable because the find() method, while conceptually const, might sort the elements. */

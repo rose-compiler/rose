@@ -517,13 +517,8 @@ Disassembler::disassembleInterp(SgAsmGenericHeader *header, AddressSet *successo
 
     /* Show final virtual address map */
     if (p_debug) {
-        const std::vector<RvaFileMap::MapElement> &elements = map.get_elements();
         fprintf(stderr, "Disassembler: final virtual address to file offset mapping for disassembly:\n");
-        for (size_t i=0; i<elements.size(); i++) {
-            fprintf(p_debug, "    rva 0x%08"PRIx64" + 0x%08zu = 0x%08"PRIx64" at file offset 0x%08"PRIx64"\n",
-                    elements[i].get_rva(), elements[i].get_size(), elements[i].get_rva()+elements[i].get_size(),
-                    elements[i].get_offset());
-        }
+        map.dump(p_debug, "    ");
     }
 
     /* Seed the disassembly with the entry point(s) stored in the file header. */
