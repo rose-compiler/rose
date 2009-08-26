@@ -2357,12 +2357,12 @@ SgAsmGenericSection::read_content_local_sleb128(addr_t *rel_offset, bool strict)
     return retval;
 }
 
+#if 0 /* DEPRECATED: use read_content() instead */
 /* Returns ptr to content at specified offset after ensuring that the required amount of data is available. One can think of
  * this function as being similar to fseek()+fread() in that it returns contents of part of a file as bytes. The main
  * difference is that instead of the caller supplying the buffer, the callee uses its own buffer (part of the buffer that was
  * returned by the OS from the mmap of the binary file).  The content() functions also keep track of what parts of the section
  * have been returned so that it's easy to find the parts that are apparently unused. */
-/* DEPRECATED: use read_content() instead */
 const unsigned char *
 SgAsmGenericSection::content(addr_t offset, addr_t size)
 {
@@ -2371,6 +2371,7 @@ SgAsmGenericSection::content(addr_t offset, addr_t size)
     get_file()->mark_referenced_extent(get_offset()+offset, size);
     return &(p_data[offset]);
 }
+#endif
 
 /* Copies the specified part of the section into a buffer. This is more like fread() than the two-argument version in that the
  * caller must supply the buffer (the two-arg version returns a ptr to the mmap'd memory). Any part of the selected area that
@@ -2416,28 +2417,11 @@ SgAsmGenericSection::content_str(addr_t offset, bool relax)
 /* Like the low-level content(addr_t,addr_t) but returns an object rather than a ptr directly into the file content. This is
  * the recommended way to obtain file content for IR nodes that need to point to that content. The other function is more of a
  * low-level, efficient file read operation. This function is capable of reading past the end of the original data. */
-/* DEPRECATED: use read_content_ucl() instead */
+/* DEPRECATED: use read_content_local_ucl() instead */
 const SgUnsignedCharList
 SgAsmGenericSection::content_ucl(addr_t offset, addr_t size)
 {
-    SgUnsignedCharList returnValue;
-
-    addr_t have = size;
-    if (offset>=p_data.size()) {
-        have = 0;
-    } else if (offset+size<=p_data.size()) {
-        have = size;
-    } else {
-        have = p_data.size()-offset;
-    }
-    
-    if (have>0) {
-        const unsigned char *data = content(offset, have);
-        for (addr_t i=0; i<have; i++)
-            returnValue.push_back(data[i]);
-    }
-    returnValue.resize(size, '\0');
-    return returnValue;
+    return read_content_local_ucl(offset, size);
 }
 
 /** Write data to a file section.

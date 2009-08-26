@@ -75,46 +75,47 @@ SgAsmNEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
  // DQ (8/16/2008): Added code to set SgAsmPEFileHeader as parent of input SgAsmGenericFile
     f->set_parent(this);
 
-    const NEFileHeader_disk *fh = (const NEFileHeader_disk*)content(0, sizeof(NEFileHeader_disk));
+    NEFileHeader_disk fh;
+    read_content_local(0, &fh, sizeof fh);
 
     /* Check magic number early */
-    if (fh->e_magic[0] != 'N' || fh->e_magic[1] != 'E')
+    if (fh.e_magic[0] != 'N' || fh.e_magic[1] != 'E')
         throw FormatError("Bad NE magic number");
 
     /* Decode file header */
-    p_e_linker_major         = le_to_host(fh->e_linker_major);
-    p_e_linker_minor         = le_to_host(fh->e_linker_minor);
-    p_e_entrytab_rfo         = le_to_host(fh->e_entrytab_rfo);
-    p_e_entrytab_size        = le_to_host(fh->e_entrytab_size);
-    p_e_checksum             = le_to_host(fh->e_checksum);
-    p_e_flags1               = le_to_host(fh->e_flags1);
-    p_e_autodata_sn          = le_to_host(fh->e_autodata_sn);
-    p_e_bss_size             = le_to_host(fh->e_bss_size);
-    p_e_stack_size           = le_to_host(fh->e_stack_size);
-    p_e_csip                 = le_to_host(fh->e_csip);
-    p_e_sssp                 = le_to_host(fh->e_sssp);
-    p_e_nsections            = le_to_host(fh->e_nsections);
-    p_e_nmodrefs             = le_to_host(fh->e_nmodrefs);
-    p_e_nnonresnames         = le_to_host(fh->e_nnonresnames);
-    p_e_sectab_rfo           = le_to_host(fh->e_sectab_rfo);
-    p_e_rsrctab_rfo          = le_to_host(fh->e_rsrctab_rfo);
-    p_e_resnametab_rfo       = le_to_host(fh->e_resnametab_rfo);
-    p_e_modreftab_rfo        = le_to_host(fh->e_modreftab_rfo);
-    p_e_importnametab_rfo    = le_to_host(fh->e_importnametab_rfo);
-    p_e_nonresnametab_offset = le_to_host(fh->e_nonresnametab_offset);
-    p_e_nmovable_entries     = le_to_host(fh->e_nmovable_entries);
-    p_e_sector_align         = le_to_host(fh->e_sector_align);
-    p_e_nresources           = le_to_host(fh->e_nresources);
-    p_e_exetype              = le_to_host(fh->e_exetype);
-    p_e_flags2               = le_to_host(fh->e_flags2); 
-    p_e_fastload_sector      = le_to_host(fh->e_fastload_sector);
-    p_e_fastload_nsectors    = le_to_host(fh->e_fastload_nsectors);
-    p_e_res1                 = le_to_host(fh->e_res1);
-    p_e_winvers              = le_to_host(fh->e_winvers);
+    p_e_linker_major         = le_to_host(fh.e_linker_major);
+    p_e_linker_minor         = le_to_host(fh.e_linker_minor);
+    p_e_entrytab_rfo         = le_to_host(fh.e_entrytab_rfo);
+    p_e_entrytab_size        = le_to_host(fh.e_entrytab_size);
+    p_e_checksum             = le_to_host(fh.e_checksum);
+    p_e_flags1               = le_to_host(fh.e_flags1);
+    p_e_autodata_sn          = le_to_host(fh.e_autodata_sn);
+    p_e_bss_size             = le_to_host(fh.e_bss_size);
+    p_e_stack_size           = le_to_host(fh.e_stack_size);
+    p_e_csip                 = le_to_host(fh.e_csip);
+    p_e_sssp                 = le_to_host(fh.e_sssp);
+    p_e_nsections            = le_to_host(fh.e_nsections);
+    p_e_nmodrefs             = le_to_host(fh.e_nmodrefs);
+    p_e_nnonresnames         = le_to_host(fh.e_nnonresnames);
+    p_e_sectab_rfo           = le_to_host(fh.e_sectab_rfo);
+    p_e_rsrctab_rfo          = le_to_host(fh.e_rsrctab_rfo);
+    p_e_resnametab_rfo       = le_to_host(fh.e_resnametab_rfo);
+    p_e_modreftab_rfo        = le_to_host(fh.e_modreftab_rfo);
+    p_e_importnametab_rfo    = le_to_host(fh.e_importnametab_rfo);
+    p_e_nonresnametab_offset = le_to_host(fh.e_nonresnametab_offset);
+    p_e_nmovable_entries     = le_to_host(fh.e_nmovable_entries);
+    p_e_sector_align         = le_to_host(fh.e_sector_align);
+    p_e_nresources           = le_to_host(fh.e_nresources);
+    p_e_exetype              = le_to_host(fh.e_exetype);
+    p_e_flags2               = le_to_host(fh.e_flags2); 
+    p_e_fastload_sector      = le_to_host(fh.e_fastload_sector);
+    p_e_fastload_nsectors    = le_to_host(fh.e_fastload_nsectors);
+    p_e_res1                 = le_to_host(fh.e_res1);
+    p_e_winvers              = le_to_host(fh.e_winvers);
 
     /* Magic number */
-    for (size_t i = 0; i < sizeof(fh->e_magic); ++i)
-        p_magic.push_back(fh->e_magic[i]);
+    for (size_t i = 0; i < sizeof(fh.e_magic); ++i)
+        p_magic.push_back(fh.e_magic[i]);
 
     /* File format */
     p_exec_format->set_family( FAMILY_NE );
@@ -153,38 +154,37 @@ SgAsmNEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
  *  appears to be a DOS File Header at address zero, and what appears to be an NE File Header at a file offset specified in
  *  part of the DOS File Header (actually, in the bytes that follow the DOS File Header). */
 bool
-SgAsmNEFileHeader::is_NE(SgAsmGenericFile *ef)
+SgAsmNEFileHeader::is_NE(SgAsmGenericFile *file)
 {
-    /* Check DOS File Header magic number */
-    SgAsmGenericSection *section = new SgAsmGenericSection(ef, NULL);
-    section->set_offset(0);
-    section->set_size(0x40);
-    section->grab_content();
-    unsigned char dos_magic[2];
-    section->content(0, 2, dos_magic);
-    if ('M'!=dos_magic[0] || 'Z'!=dos_magic[1]) {
-        delete section;
+    /* Turn off byte reference tracking for the duration of this function. We don't want our testing the file contents to
+     * affect the list of bytes that we've already referenced or which we might reference later. */
+    bool was_tracking = file->get_tracking_references();
+    file->set_tracking_references(false);
+
+    try {
+        /* Check DOS File Header magic number at beginning of the file */
+        unsigned char dos_magic[2];
+        file->read_content(0, dos_magic, sizeof dos_magic);
+        if ('M'!=dos_magic[0] || 'Z'!=dos_magic[1])
+            throw 1;
+
+        /* Read four-byte offset of potential PE File Header at offset 0x3c */
+        uint32_t lfanew_disk;
+        file->read_content(0x3c, &lfanew_disk, sizeof lfanew_disk);
+        addr_t ne_offset = le_to_host(lfanew_disk);
+        
+        /* Look for the NE File Header magic number */
+        unsigned char ne_magic[2];
+        file->read_content(ne_offset, ne_magic, sizeof ne_magic);
+        if ('N'!=ne_magic[0] || 'E'!=ne_magic[1])
+            throw 1;
+    } catch (...) {
+        file->set_tracking_references(was_tracking);
         return false;
     }
     
-    /* Read offset of potential NE File Header */
-    uint32_t lfanew_disk;
-    section->content(0x3c, sizeof lfanew_disk, &lfanew_disk);
-    addr_t ne_offset = le_to_host(lfanew_disk);
-    delete section;
-    
-    /* Read the NE File Header magic number */
-    section = new SgAsmGenericSection(ef, NULL);
-    section->set_offset(ne_offset);
-    section->set_size(2);
-    section->grab_content();
-    unsigned char magic[2];
-    section->content(0, 2, magic);
-    delete section;
-    section = NULL;
-
-    /* Check the NE magic number */
-    return 'N'==magic[0] && 'E'==magic[1];
+    file->set_tracking_references(was_tracking);
+    return true;
 }
 
 /* Encode the NE header into disk format */
@@ -456,9 +456,9 @@ SgAsmNESectionTable::ctor()
 
     for (size_t i = 0; i < fhdr->get_e_nsections(); i++) {
         /* Parse the section table entry */
-        const SgAsmNESectionTableEntry::NESectionTableEntry_disk *disk =
-            (const SgAsmNESectionTableEntry::NESectionTableEntry_disk*)content(i * entsize, entsize);
-        SgAsmNESectionTableEntry *entry = new SgAsmNESectionTableEntry(disk);
+        SgAsmNESectionTableEntry::NESectionTableEntry_disk disk;
+        read_content_local(i*entsize, &disk, entsize);
+        SgAsmNESectionTableEntry *entry = new SgAsmNESectionTableEntry(&disk);
 
         /* The section */
         addr_t section_offset = entry->get_sector() << fhdr->get_e_sector_align();
@@ -567,15 +567,22 @@ SgAsmNENameTable::ctor(addr_t offset)
     addr_t at = 0;
     while (1) {
         extend(1);
-        size_t length = content(at++, 1)[0];
+        unsigned char byte;
+        read_content_local(at++, &byte, 1);
+        size_t length = byte;
         if (0==length) break;
 
         extend(length);
-        p_names.push_back(std::string((const char*)content(at, length), length));
+        char *buf = new char[length];
+        read_content_local(at, buf, length);
+        p_names.push_back(std::string(buf, length));
+        delete[] buf;
         at += length;
 
         extend(2);
-        p_ordinals.push_back(le_to_host(*(const uint16_t*)content(at, 2)));
+        uint16_t u16_disk;
+        read_content_local(at, &u16_disk, 2);
+        p_ordinals.push_back(le_to_host(u16_disk));
         at += 2;
     }
 }
@@ -662,7 +669,9 @@ SgAsmNEModuleTable::ctor(addr_t offset, addr_t size)
     ROSE_ASSERT(NULL != p_strtab);
 
     for (addr_t at = 0; at < get_size(); at += 2) {
-        addr_t name_offset = le_to_host(*(const uint16_t*)content(at, 2));
+        uint16_t u16_disk;
+        read_content_local(at, &u16_disk, 2);
+        addr_t name_offset = le_to_host(u16_disk);
         p_name_offsets.push_back(name_offset);
         p_names.push_back(p_strtab->get_string(name_offset));
     }
@@ -737,8 +746,15 @@ SgAsmNEStringTable::ctor(addr_t offset, addr_t size)
 std::string
 SgAsmNEStringTable::get_string(addr_t offset)
 {
-    size_t length = content(offset, 1)[0];
-    return std::string((const char*)content(offset+1, length), length);
+    unsigned char byte;
+    read_content_local(offset, &byte, 1);
+    size_t length = byte;
+
+    char *buf = new char[length];
+    read_content_local(offset+1, buf, length);
+    std::string retval(buf, length);
+    delete[] buf;
+    return retval;
 }
 
 /* Prints some debugging info */
@@ -818,11 +834,16 @@ SgAsmNEEntryTable::ctor(addr_t offset, addr_t size)
     set_name(new SgAsmBasicString("NE Entry Table"));
     set_purpose(SP_HEADER);
 
+    unsigned char byte;
+    uint16_t u16_disk;
+
     addr_t at = 0;
-    size_t bundle_nentries = content(at++, 1)[0];
+    read_content_local(at++, &byte, 1);
+    size_t bundle_nentries = byte;
     while (bundle_nentries > 0) {
         p_bundle_sizes.push_back(bundle_nentries);
-        unsigned segment_indicator = content(at++, 1)[0];
+        read_content_local(at++, &byte, 1);
+        unsigned segment_indicator = byte;
         if (0 == segment_indicator) {
             /* Unused entries */
             for (size_t i = 0; i < bundle_nentries; i++) {
@@ -831,23 +852,30 @@ SgAsmNEEntryTable::ctor(addr_t offset, addr_t size)
         } else if (0xff == segment_indicator) {
             /* Movable segment entries. */
             for (size_t i = 0; i < bundle_nentries; i++, at+=6) {
-                SgAsmNEEntryPoint::NEEntryFlags flags = (SgAsmNEEntryPoint::NEEntryFlags) (content(at+0, 1)[0]);
-                unsigned int3f = le_to_host(*(const uint16_t*)content(at+1, 2));
+                read_content_local(at, &byte, 1);
+                SgAsmNEEntryPoint::NEEntryFlags flags = (SgAsmNEEntryPoint::NEEntryFlags)byte;
+                read_content_local(at+1, &u16_disk, 2);
+                unsigned int3f = le_to_host(u16_disk);
                 ROSE_ASSERT(int3f!=0); /*because we use zero to indicate a fixed entry in unparse()*/
-                unsigned segno = content(at+3, 1)[0];
-                unsigned segoffset = le_to_host(*(const uint16_t*)content(at+4, 2));
+                read_content_local(at+3, &byte, 1);
+                unsigned segno = byte;
+                read_content_local(at+4, &u16_disk, 2);
+                unsigned segoffset = le_to_host(u16_disk);
                 p_entries.push_back(new SgAsmNEEntryPoint(flags, int3f, segno, segoffset));
             }
         } else {
             /* Fixed segment entries */
             for (size_t i = 0; i < bundle_nentries; i++, at+=3) {
-                SgAsmNEEntryPoint::NEEntryFlags flags = (SgAsmNEEntryPoint::NEEntryFlags) (content(at+0, 1)[0]);
-                unsigned segoffset = le_to_host(*(const uint16_t*)content(at+1, 2));
+                read_content_local(at, &byte, 1);
+                SgAsmNEEntryPoint::NEEntryFlags flags = (SgAsmNEEntryPoint::NEEntryFlags)byte;
+                read_content_local(at+1, &u16_disk, 2);
+                unsigned segoffset = le_to_host(u16_disk);
                 p_entries.push_back(new SgAsmNEEntryPoint(flags, 0, segment_indicator, segoffset));
             }
         }
         
-        bundle_nentries = content(at++, 1)[0];
+        read_content_local(at++, &byte, 1);
+        bundle_nentries = byte;
     }
 }
 
@@ -966,18 +994,24 @@ SgAsmNEEntryTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 void
 SgAsmNERelocEntry::ctor(SgAsmGenericSection *relocs, addr_t at, addr_t *rec_size/*out*/)
 {
+    unsigned char byte;
+    uint16_t u16_disk;
+    uint32_t u32_disk;
+
     addr_t orig_at = at;
     ROSE_ASSERT(at == relocs->get_size()); /*the section is extended as we parse*/
 
     /* Only the low nibble is used for source type; the high nibble is modifier bits */
     relocs->extend(1);
-    unsigned n = relocs->content(at++, 1)[0];                              
+    relocs->read_content_local(at++, &byte, 1);
+    unsigned n = byte;
     p_src_type = (SgAsmNERelocEntry::NERelocSrcType)(n & 0x0f);
     p_modifier = (SgAsmNERelocEntry::NERelocModifiers)(n>>8);
 
     /* The target type (3 bits), additive flag (1 bit), and target flags */
     relocs->extend(1);
-    n = relocs->content(at++, 1)[0];
+    relocs->read_content_local(at++, &byte, 1);
+    n = byte;
     p_tgt_type = (SgAsmNERelocEntry::NERelocTgtType)(n & 0x03);
     p_flags = (SgAsmNERelocEntry::NERelocFlags)(n>>2);
     
@@ -985,32 +1019,40 @@ SgAsmNERelocEntry::ctor(SgAsmGenericSection *relocs, addr_t at, addr_t *rec_size
      * the source will be patched by adding the target value to the value stored at the source. Otherwise the target value is
      * written to the source and the old contents of the source contains the next source offset, until we get 0xffff. */
     relocs->extend(2);
-    p_src_offset = le_to_host(*(const uint16_t*)relocs->content(at, 2));
+    relocs->read_content_local(at, &u16_disk, 2);
+    p_src_offset = le_to_host(u16_disk);
     at += 2;
 
     switch (p_tgt_type) {
       case RF_TGTTYPE_IREF:
         /* Internal reference */
         relocs->extend(4);
-        p_iref.sect_idx = relocs->content(at++, 1)[0];
-        p_iref.res1  = relocs->content(at++, 1)[0];
-        p_iref.tgt_offset = le_to_host(*(const uint16_t*)relocs->content(at, 2));
+        relocs->read_content_local(at++, &byte, 1);
+        p_iref.sect_idx = byte;
+        relocs->read_content_local(at++, &byte, 1);
+        p_iref.res1  = byte;
+        relocs->read_content_local(at, &u16_disk, 2);
+        p_iref.tgt_offset = le_to_host(u16_disk);
         at += 2;
         break;
       case RF_TGTTYPE_IORD:
         /* Imported ordinal */
         relocs->extend(4);
-        p_iord.modref  = le_to_host(*(const uint16_t*)relocs->content(at+0, 2));
-        p_iord.ordinal = le_to_host(*(const uint16_t*)relocs->content(at+2, 2));
+        relocs->read_content_local(at, &u16_disk, 2);
+        p_iord.modref  = le_to_host(u16_disk);
+        relocs->read_content_local(at+2, &u16_disk, 2);
+        p_iord.ordinal = le_to_host(u16_disk);
         at += 4;
         if (p_flags & RF_2EXTRA) {
             if (p_flags & RF_32ADD) {
                 relocs->extend(4);
-                p_iord.addend = le_to_host(*(const uint32_t*)relocs->content(at+8, 4));
+                relocs->read_content_local(at+8, &u32_disk, 4);
+                p_iord.addend = le_to_host(u32_disk);
                 at += 4;
             } else {
                 relocs->extend(2);
-                p_iord.addend = le_to_host(*(const uint16_t*)relocs->content(at+8, 2));
+                relocs->read_content_local(at+8, &u16_disk, 2);
+                p_iord.addend = le_to_host(u16_disk);
                 at += 2;
             }
         } else {
@@ -1020,17 +1062,21 @@ SgAsmNERelocEntry::ctor(SgAsmGenericSection *relocs, addr_t at, addr_t *rec_size
       case RF_TGTTYPE_INAME:
         /* Imported name */
         relocs->extend(4);
-        p_iname.modref = le_to_host(*(const uint16_t*)relocs->content(at+0, 2));
-        p_iname.nm_off = le_to_host(*(const uint16_t*)relocs->content(at+2, 2));
+        relocs->read_content_local(at, &u16_disk, 2);
+        p_iname.modref = le_to_host(u16_disk);
+        relocs->read_content_local(at+2, &u16_disk, 2);
+        p_iname.nm_off = le_to_host(u16_disk);
         at += 4;
         if (p_flags & RF_2EXTRA) {
             if (p_flags & RF_32ADD) {
                 relocs->extend(4);
-                p_iname.addend = le_to_host(*(const uint16_t*)relocs->content(at+8, 4));
+                relocs->read_content_local(at+8, &u32_disk, 4);
+                p_iname.addend = le_to_host(u32_disk);
                 at += 4;
             } else {
                 relocs->extend(2);
-                p_iname.addend = le_to_host(*(const uint16_t*)relocs->content(at+8, 2));
+                relocs->read_content_local(at+8, &u16_disk, 2);
+                p_iname.addend = le_to_host(u16_disk);
                 at += 2;
             }
         } else {
@@ -1040,8 +1086,10 @@ SgAsmNERelocEntry::ctor(SgAsmGenericSection *relocs, addr_t at, addr_t *rec_size
       case RF_TGTTYPE_OSFIXUP:
         /* Operating system fixup */
         relocs->extend(4);
-        p_osfixup.type = le_to_host(*(const uint16_t*)relocs->content(at+0, 2));
-        p_osfixup.res3 = le_to_host(*(const uint16_t*)relocs->content(at+2, 2));
+        relocs->read_content_local(at, &u16_disk, 2);
+        p_osfixup.type = le_to_host(u16_disk);
+        relocs->read_content_local(at+2, &u16_disk, 2);
+        p_osfixup.res3 = le_to_host(u16_disk);
         at += 4;
         break;
     }
@@ -1220,7 +1268,9 @@ SgAsmNERelocTable::ctor(SgAsmNESection *section)
     addr_t at = 0, reloc_size = 0;
 
     extend(2);
-    size_t nrelocs = le_to_host(*(const uint16_t*)content(at, 2));
+    uint16_t u16_disk;
+    read_content_local(at, &u16_disk, 2);
+    size_t nrelocs = le_to_host(u16_disk);
     at += 2;
     
     for (size_t i = 0; i < nrelocs; i++, at += reloc_size) {

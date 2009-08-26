@@ -24,78 +24,79 @@ SgAsmLEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
  // DQ (8/16/2008): Added code to set SgAsmPEFileHeader as parent of input SgAsmGenericFile
     f->set_parent(this);
 
-    const LEFileHeader_disk *fh = (const LEFileHeader_disk*)content(0, sizeof(LEFileHeader_disk));
+    LEFileHeader_disk fh;
+    read_content_local(0, &fh, sizeof fh);
 
     /* Check magic number early */
-    if (fh->e_magic[0]!='L' ||
-        (fh->e_magic[1]!='E' && fh->e_magic[1]!='X'))
+    if (fh.e_magic[0]!='L' ||
+        (fh.e_magic[1]!='E' && fh.e_magic[1]!='X'))
         throw FormatError("Bad LE/LX magic number");
 
     /* Decode file header */
-    p_exec_format->set_family( fh->e_magic[1]=='E' ? FAMILY_LE : FAMILY_LX );
+    p_exec_format->set_family( fh.e_magic[1]=='E' ? FAMILY_LE : FAMILY_LX );
     const char *section_name = FAMILY_LE == p_exec_format->get_family() ? "LE File Header" : "LX File Header";
     set_name(new SgAsmBasicString(section_name));
     set_synthesized(true);
     set_purpose(SP_HEADER);
-    p_e_byte_order = le_to_host(fh->e_byte_order);
-    p_e_word_order = le_to_host(fh->e_word_order);
+    p_e_byte_order = le_to_host(fh.e_byte_order);
+    p_e_word_order = le_to_host(fh.e_word_order);
     ROSE_ASSERT(p_e_byte_order == p_e_word_order);
     ByteOrder sex = 0 == p_e_byte_order ? ORDER_LSB : ORDER_MSB;
 
-    p_e_format_level           = disk_to_host(sex, fh->e_format_level);
-    p_e_cpu_type               = disk_to_host(sex, fh->e_cpu_type);
-    p_e_os_type                = disk_to_host(sex, fh->e_os_type);
-    p_e_module_version         = disk_to_host(sex, fh->e_module_version);
-    p_e_flags                  = disk_to_host(sex, fh->e_flags);
-    p_e_npages                 = disk_to_host(sex, fh->e_npages);
-    p_e_eip_section            = disk_to_host(sex, fh->e_eip_section);
-    p_e_eip                    = disk_to_host(sex, fh->e_eip);
-    p_e_esp_section            = disk_to_host(sex, fh->e_esp_section);
-    p_e_esp                    = disk_to_host(sex, fh->e_esp);
-    p_e_page_size              = disk_to_host(sex, fh->e_page_size);
+    p_e_format_level           = disk_to_host(sex, fh.e_format_level);
+    p_e_cpu_type               = disk_to_host(sex, fh.e_cpu_type);
+    p_e_os_type                = disk_to_host(sex, fh.e_os_type);
+    p_e_module_version         = disk_to_host(sex, fh.e_module_version);
+    p_e_flags                  = disk_to_host(sex, fh.e_flags);
+    p_e_npages                 = disk_to_host(sex, fh.e_npages);
+    p_e_eip_section            = disk_to_host(sex, fh.e_eip_section);
+    p_e_eip                    = disk_to_host(sex, fh.e_eip);
+    p_e_esp_section            = disk_to_host(sex, fh.e_esp_section);
+    p_e_esp                    = disk_to_host(sex, fh.e_esp);
+    p_e_page_size              = disk_to_host(sex, fh.e_page_size);
     if (FAMILY_LE == p_exec_format->get_family()) {
-        p_e_last_page_size     = disk_to_host(sex, fh->e_lps_or_shift);
+        p_e_last_page_size     = disk_to_host(sex, fh.e_lps_or_shift);
         p_e_page_offset_shift  = 0;
     } else {
         ROSE_ASSERT(FAMILY_LX == p_exec_format->get_family());
         p_e_last_page_size     = 0;
-        p_e_page_offset_shift  = disk_to_host(sex, fh->e_lps_or_shift);
+        p_e_page_offset_shift  = disk_to_host(sex, fh.e_lps_or_shift);
     }
-    p_e_fixup_sect_size        = disk_to_host(sex, fh->e_fixup_sect_size);
-    p_e_fixup_sect_cksum       = disk_to_host(sex, fh->e_fixup_sect_cksum);
-    p_e_loader_sect_size       = disk_to_host(sex, fh->e_loader_sect_size);
-    p_e_loader_sect_cksum      = disk_to_host(sex, fh->e_loader_sect_cksum);
-    p_e_secttab_rfo            = disk_to_host(sex, fh->e_secttab_rfo);
-    p_e_secttab_nentries       = disk_to_host(sex, fh->e_secttab_nentries);
-    p_e_pagetab_rfo            = disk_to_host(sex, fh->e_pagetab_rfo);
-    p_e_iterpages_offset       = disk_to_host(sex, fh->e_iterpages_offset);
-    p_e_rsrctab_rfo            = disk_to_host(sex, fh->e_rsrctab_rfo);
-    p_e_rsrctab_nentries       = disk_to_host(sex, fh->e_rsrctab_nentries);
-    p_e_resnametab_rfo         = disk_to_host(sex, fh->e_resnametab_rfo);
-    p_e_entrytab_rfo           = disk_to_host(sex, fh->e_entrytab_rfo);
-    p_e_fmtdirtab_rfo          = disk_to_host(sex, fh->e_fmtdirtab_rfo);
-    p_e_fmtdirtab_nentries     = disk_to_host(sex, fh->e_fmtdirtab_nentries);
-    p_e_fixup_pagetab_rfo      = disk_to_host(sex, fh->e_fixup_pagetab_rfo);
-    p_e_fixup_rectab_rfo       = disk_to_host(sex, fh->e_fixup_rectab_rfo);
-    p_e_import_modtab_rfo      = disk_to_host(sex, fh->e_import_modtab_rfo);
-    p_e_import_modtab_nentries = disk_to_host(sex, fh->e_import_modtab_nentries);
-    p_e_import_proctab_rfo     = disk_to_host(sex, fh->e_import_proctab_rfo);
-    p_e_ppcksumtab_rfo         = disk_to_host(sex, fh->e_ppcksumtab_rfo);
-    p_e_data_pages_offset      = disk_to_host(sex, fh->e_data_pages_offset);
-    p_e_preload_npages         = disk_to_host(sex, fh->e_preload_npages);
-    p_e_nonresnametab_offset   = disk_to_host(sex, fh->e_nonresnametab_offset);
-    p_e_nonresnametab_size     = disk_to_host(sex, fh->e_nonresnametab_size);
-    p_e_nonresnametab_cksum    = disk_to_host(sex, fh->e_nonresnametab_cksum);
-    p_e_auto_ds_section        = disk_to_host(sex, fh->e_auto_ds_section);
-    p_e_debug_info_rfo         = disk_to_host(sex, fh->e_debug_info_rfo);
-    p_e_debug_info_size        = disk_to_host(sex, fh->e_debug_info_size);
-    p_e_num_instance_preload   = disk_to_host(sex, fh->e_num_instance_preload);
-    p_e_num_instance_demand    = disk_to_host(sex, fh->e_num_instance_demand);
-    p_e_heap_size              = disk_to_host(sex, fh->e_heap_size);
+    p_e_fixup_sect_size        = disk_to_host(sex, fh.e_fixup_sect_size);
+    p_e_fixup_sect_cksum       = disk_to_host(sex, fh.e_fixup_sect_cksum);
+    p_e_loader_sect_size       = disk_to_host(sex, fh.e_loader_sect_size);
+    p_e_loader_sect_cksum      = disk_to_host(sex, fh.e_loader_sect_cksum);
+    p_e_secttab_rfo            = disk_to_host(sex, fh.e_secttab_rfo);
+    p_e_secttab_nentries       = disk_to_host(sex, fh.e_secttab_nentries);
+    p_e_pagetab_rfo            = disk_to_host(sex, fh.e_pagetab_rfo);
+    p_e_iterpages_offset       = disk_to_host(sex, fh.e_iterpages_offset);
+    p_e_rsrctab_rfo            = disk_to_host(sex, fh.e_rsrctab_rfo);
+    p_e_rsrctab_nentries       = disk_to_host(sex, fh.e_rsrctab_nentries);
+    p_e_resnametab_rfo         = disk_to_host(sex, fh.e_resnametab_rfo);
+    p_e_entrytab_rfo           = disk_to_host(sex, fh.e_entrytab_rfo);
+    p_e_fmtdirtab_rfo          = disk_to_host(sex, fh.e_fmtdirtab_rfo);
+    p_e_fmtdirtab_nentries     = disk_to_host(sex, fh.e_fmtdirtab_nentries);
+    p_e_fixup_pagetab_rfo      = disk_to_host(sex, fh.e_fixup_pagetab_rfo);
+    p_e_fixup_rectab_rfo       = disk_to_host(sex, fh.e_fixup_rectab_rfo);
+    p_e_import_modtab_rfo      = disk_to_host(sex, fh.e_import_modtab_rfo);
+    p_e_import_modtab_nentries = disk_to_host(sex, fh.e_import_modtab_nentries);
+    p_e_import_proctab_rfo     = disk_to_host(sex, fh.e_import_proctab_rfo);
+    p_e_ppcksumtab_rfo         = disk_to_host(sex, fh.e_ppcksumtab_rfo);
+    p_e_data_pages_offset      = disk_to_host(sex, fh.e_data_pages_offset);
+    p_e_preload_npages         = disk_to_host(sex, fh.e_preload_npages);
+    p_e_nonresnametab_offset   = disk_to_host(sex, fh.e_nonresnametab_offset);
+    p_e_nonresnametab_size     = disk_to_host(sex, fh.e_nonresnametab_size);
+    p_e_nonresnametab_cksum    = disk_to_host(sex, fh.e_nonresnametab_cksum);
+    p_e_auto_ds_section        = disk_to_host(sex, fh.e_auto_ds_section);
+    p_e_debug_info_rfo         = disk_to_host(sex, fh.e_debug_info_rfo);
+    p_e_debug_info_size        = disk_to_host(sex, fh.e_debug_info_size);
+    p_e_num_instance_preload   = disk_to_host(sex, fh.e_num_instance_preload);
+    p_e_num_instance_demand    = disk_to_host(sex, fh.e_num_instance_demand);
+    p_e_heap_size              = disk_to_host(sex, fh.e_heap_size);
 
     /* Magic number */
-    for (size_t i = 0; i < sizeof(fh->e_magic); ++i)
-        p_magic.push_back(fh->e_magic[i]);
+    for (size_t i = 0; i < sizeof(fh.e_magic); ++i)
+        p_magic.push_back(fh.e_magic[i]);
 
     /* File format */
     //exec_format.family    = ???; /*set above*/
@@ -136,38 +137,37 @@ SgAsmLEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
  *  appears to be a DOS File Header at address zero, and what appears to be an LE or LX File Header at a file offset specified in
  *  part of the DOS File Header (actually, in the bytes that follow the DOS File Header). */
 bool
-SgAsmLEFileHeader::is_LE(SgAsmGenericFile *ef)
+SgAsmLEFileHeader::is_LE(SgAsmGenericFile *file)
 {
-    /* Check DOS File Header magic number */
-    SgAsmGenericSection *section = new SgAsmGenericSection(ef, NULL);
-    section->set_offset(0);
-    section->set_size(0x40);
-    section->grab_content();
-    unsigned char dos_magic[2];
-    section->content(0, 2, dos_magic);
-    if ('M'!=dos_magic[0] || 'Z'!=dos_magic[1]) {
-        delete section;
+    /* Turn off byte reference tracking for the duration of this function. We don't want our testing the file contents to
+     * affect the list of bytes that we've already referenced or which we might reference later. */
+    bool was_tracking = file->get_tracking_references();
+    file->set_tracking_references(false);
+
+    try {
+        /* Check DOS File Header magic number at beginning of the file */
+        unsigned char dos_magic[2];
+        file->read_content(0, dos_magic, sizeof dos_magic);
+        if ('M'!=dos_magic[0] || 'Z'!=dos_magic[1])
+            throw 1;
+
+        /* Read four-byte offset of potential LE/LX File Header at offset 0x3c */
+        uint32_t lfanew_disk;
+        file->read_content(0x3c, &lfanew_disk, sizeof lfanew_disk);
+        addr_t le_offset = le_to_host(lfanew_disk);
+        
+        /* Look for the LE/LX File Header magic number */
+        unsigned char le_magic[4];
+        file->read_content(le_offset, le_magic, sizeof le_magic);
+        if ('L'!=le_magic[0] || ('E'!=le_magic[1] && 'X'!=le_magic[1]))
+            throw 1;
+    } catch (...) {
+        file->set_tracking_references(was_tracking);
         return false;
     }
-
-    /* Read offset of potential LE/LX File Header */
-    uint32_t lfanew_disk;
-    section->content(0x3c, sizeof lfanew_disk, &lfanew_disk);
-    addr_t le_offset = le_to_host(lfanew_disk);
-    delete section;
-
-    /* Read the LE/LX File Header magic number */
-    section = new SgAsmGenericSection(ef, NULL);
-    section->set_offset(le_offset);
-    section->set_size(2);
-    section->grab_content();
-    unsigned char magic[2];
-    section->content(0, 2, magic);
-    delete section;
-    section = NULL;
-
-    /* Check the LE/LX magic number */
-    return 'L'==magic[0] && ('E'==magic[1] || 'X'==magic[1]);
+    
+    file->set_tracking_references(was_tracking);
+    return true;
 }
 
 /* Encode the LE header into disk format */
@@ -449,9 +449,9 @@ SgAsmLEPageTable::ctor(addr_t offset, addr_t size)
 
     const addr_t entry_size = sizeof(SgAsmLEPageTableEntry::LEPageTableEntry_disk);
     for (addr_t entry_offset=0; entry_offset+entry_size <= get_size(); entry_offset+=entry_size) {
-        const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk =
-            (const SgAsmLEPageTableEntry::LEPageTableEntry_disk*)content(entry_offset, entry_size);
-        p_entries.push_back(new SgAsmLEPageTableEntry(fhdr->get_sex(), disk));
+        SgAsmLEPageTableEntry::LEPageTableEntry_disk disk;
+        read_content_local(entry_offset, &disk, entry_size);
+        p_entries.push_back(new SgAsmLEPageTableEntry(fhdr->get_sex(), &disk));
     }
 }
 
@@ -605,9 +605,9 @@ SgAsmLESectionTable::ctor(addr_t offset, addr_t size)
     const size_t entsize = sizeof(SgAsmLESectionTableEntry::LESectionTableEntry_disk);
     for (size_t i = 0; i < fhdr->get_e_secttab_nentries(); i++) {
         /* Parse the section table entry */
-        const SgAsmLESectionTableEntry::LESectionTableEntry_disk *disk =
-            (const SgAsmLESectionTableEntry::LESectionTableEntry_disk*)content(i*entsize, entsize);
-        SgAsmLESectionTableEntry *entry = new SgAsmLESectionTableEntry(fhdr->get_sex(), disk);
+        SgAsmLESectionTableEntry::LESectionTableEntry_disk disk;
+        read_content_local(i*entsize, &disk, entsize);
+        SgAsmLESectionTableEntry *entry = new SgAsmLESectionTableEntry(fhdr->get_sex(), &disk);
 
         /* The section pages in the executable file. For now we require that the entries in the page table for the section
          * being defined are contiguous in the executable file, otherwise we'd have to define more than one actual section to
@@ -725,15 +725,22 @@ SgAsmLENameTable::ctor(addr_t offset)
     addr_t at = 0;
     while (1) {
         extend(1);
-        size_t length = content(at++, 1)[0];
+        unsigned char byte;
+        read_content_local(at++, &byte, 1);
+        size_t length = byte;
         if (0==length) break;
 
         extend(length);
-        p_names.push_back(std::string((const char*)content(at, length), length));
+        char *buf = new char[length];
+        read_content_local(at, buf, length);
+        p_names.push_back(std::string(buf, length));
+        delete[] buf;
         at += length;
 
         extend(2);
-        p_ordinals.push_back(le_to_host(*(const uint16_t*)content(at, 2)));
+        uint16_t u16_disk;
+        read_content_local(at, &u16_disk, 2);
+        p_ordinals.push_back(le_to_host(u16_disk));
         at += 2;
     }
 }
@@ -880,15 +887,18 @@ SgAsmLEEntryTable::ctor(addr_t offset)
 
     addr_t at = 0;
     extend(1);
-    size_t nentries = content(at++, 1)[0];
+    unsigned char byte;
+    read_content_local(at++, &byte, 1);
+    size_t nentries = byte;
     for (size_t i = 0; i < nentries; i++) {
         extend(1);
-        uint8_t flags = content(at, 1)[0];
+        uint8_t flags;
+        read_content_local(at, &flags, 1);
         if (flags & 0x01) {
             extend(sizeof(SgAsmLEEntryPoint::LEEntryPoint_disk)-1);
-            const SgAsmLEEntryPoint::LEEntryPoint_disk *disk =
-                (const SgAsmLEEntryPoint::LEEntryPoint_disk*)content(at, sizeof(SgAsmLEEntryPoint::LEEntryPoint_disk));
-            p_entries.push_back(new SgAsmLEEntryPoint(fhdr->get_sex(), disk));
+            SgAsmLEEntryPoint::LEEntryPoint_disk disk;
+            read_content_local(at, &disk, sizeof disk);
+            p_entries.push_back(new SgAsmLEEntryPoint(fhdr->get_sex(), &disk));
         } else {
             p_entries.push_back(new SgAsmLEEntryPoint(fhdr->get_sex(), flags));
         }

@@ -71,7 +71,6 @@ SgAsmPEFileHeader::ctor()
 bool
 SgAsmPEFileHeader::is_PE(SgAsmGenericFile *file)
 {
-
     /* Turn off byte reference tracking for the duration of this function. We don't want our testing the file contents to
      * affect the list of bytes that we've already referenced or which we might reference later. */
     bool was_tracking = file->get_tracking_references();

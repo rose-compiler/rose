@@ -445,9 +445,15 @@ Disassembler::InstructionMap
 Disassembler::disassembleSection(SgAsmGenericSection *section, rose_addr_t start_va,
                                  AddressSet *successors, BadMap *bad)
 {
+    SgAsmGenericFile *file = section->get_file();
+    ROSE_ASSERT(file!=NULL);
+
     RvaFileMap map;
     map.insert(section);
-    return disassembleBuffer(section->content(0, section->get_size()), map, start_va, successors, bad);
+
+    SgFileContentList content = file->content(section->get_offset(), section->get_size());
+    const unsigned char *buf = &(content[0]);
+    return disassembleBuffer(buf, map, start_va, successors, bad);
 }
 
 /* Disassemble instructions reachable from a file header. */
