@@ -793,6 +793,64 @@ SgAsmGenericFile::get_unreferenced_extents() const
     return *p_unreferenced_cache;
 }
 
+/** Reads data from a file. Reads up to @p size bytes of data from the file beginning at the specified byte offset (measured
+ *  from the beginning of the file), placing the result in dst_buf, and returning the number of bytes read. If the number of
+ *  bytes read is less than @p size then @p dst_buf is zero padded so that exactly @p size bytes are always initialized. */
+size_t
+SgAsmGenericFile::read_content(addr_t offset, unsigned char *dst_buf, addr_t size) const
+{
+    size_t retval;
+    if (offset+size <= p_data.size()) {
+        retval = size;
+    } else if (offset > p_data.size()) {
+        retval = 0;
+    } else {
+        retval = p_data.size() - offset;
+    }
+    if (retval>0)
+        memcpy(dst_buf, &(p_data[offset]), retval);
+    memset(dst_buf+retval, 0, size-retval);
+    return retval;
+}
+
+/** Reads data from a file. Reads up to @p size bytes of data starting at the specified relative virtual address. The @p map
+ *  specifies how virtual addresses are mapped to file offsets. If @p map is the null pointer then the map already associated
+ *  with this file is used (the map provided by the loader memory mapping emulation). As bytes are read, if we encounter a
+ *  virtual address that is not mapped we stop reading and fill the rest of the @p dst_buf with zeros and return the number of
+ *  bytes we read. */
+size_t
+SgAsmGenericFile::read_content(const RvaFileMap *map, addr_t rva, unsigned char *dst_buf, addr_t size) const
+{
+    if (!map)
+        map = get_loader_map();
+    ROSE_ASSERT(map!=NULL);
+
+    size_t retval = map->read(dst_buf, &(get_data()[0]), rva, size);
+    memset(dst_buf+retval, 0, size-retval);
+}
+
+/** Reads a string from a file. Returns the NUL-terminated string stored at the specified relative virtual address. The
+ *  returned string contains the bytes beginning at the starting RVA and continuing until we reach a NUL byte or an address
+ *  which is not mapped. The returned string does not include the NUL byte. */
+std::string
+SgAsmGenericFile::read_content_str(const RvaFileMap *map, addr_t rva) const
+{
+    static char *buf = NULL;
+    static size_t nalloc = 0;
+    size_t nused=0, blocksz=64;
+
+    while (1) {
+        if (nused+blocksz>nalloc) {
+            nalloc = nused + blocksz;
+            buf = (char*)realloc(buf, nalloc);
+        }
+        size_t nread = read_content(map, rva+nused, (unsigned char*)buf+nused, blocksz);
+        if (nread<blocksz || memchr(buf+nused, '\0', blocksz))
+            return buf;
+    }
+}
+
+/* DEPRECATED: use read_content() instead */
 /** Returns a vector that points to part of the file content without actually ever referencing the file content until the
  *  vector elements are referenced. If @p relax is true and the desired extent falls entirely or partially outside the range
  *  of data known to the file then return an SgFileContentList with as much data as possible rather than throwing an
@@ -2071,11 +2129,62 @@ SgAsmGenericSection::get_mapped_extent() const
     return ExtentPair(get_mapped_rva(), get_mapped_size());
 }
 
+/** Reads data from a file. Reads up to @p bytes of data beginning at byte @p start_offset from the beginning of the file,
+ *  placing the results in @p dst_buf and returning the number of bytes read. The return value could be smaller than @p size
+ *  if the end-of-file is reached. If the return value is smaller than @p size then the @p dst_buf will be padded with zero
+ *  bytes so that exactly @p size bytes of @p dst_buf are always initialized. */
+size_t
+SgAsmGenericSection::read_content(addr_t start_offset, unsigned char *dst_buf, addr_t size) const
+{
+    SgAsmGenericFile *file = get_file();
+    ROSE_ASSERT(file!=NULL);
+    return file->read_content(start_offset, dst_buf, size);
+}
+
+/** Reads data from a file. Reads up to @p bytes of data beginning at byte @p start_rva in the mapped address space and
+ *  placing the results in @p dst_buf and returning the number of bytes read. The return value could be smaller than @p size
+ *  if the reading encounters virtual addresses that are not mapped.  When an unmapped virtual address is encountered the
+ *  reading stops (even if subsequent virtual addresses are defined) and the @p dst_buf is padded with zeros so that all @p
+ *  size bytes are initialized. The @p map is used to map virtual addresses to file offsets; if @p map is NULL then the map
+ *  defined in the underlying file is used. */
+size_t
+SgAsmGenericSection::read_content(const RvaFileMap *map, addr_t start_rva, unsigned char *dst_buf, addr_t size) const
+{
+    SgAsmGenericFile *file = get_file();
+    ROSE_ASSERT(file!=NULL);
+    return file->read_content(map, start_rva, dst_buf, size);
+}
+
+/** Reads data from a file. This behaves the same as read_content() except the @p start_offset is relative to the beginning of
+ *  this section. If @p strict is false (the default) then allow reading past the end of the section, otherwise throw a
+ *  ShortRead exception. */
+size_t
+SgAsmGenericSection::read_content_local(addr_t start_offset, unsigned char *dst_buf, addr_t size, bool strict) const
+{
+    SgAsmGenericFile *file = get_file();
+    ROSE_ASSERT(file!=NULL);
+    if (strict && (start_offset > get_size() || start_offset + size > get_size()))
+        throw SgAsmGenericFile::ShortRead(this, start_offset, size);
+    return file->read_content(get_offset()+start_offset, dst_buf, size);
+}
+
+/** Reads a string from the file. The string begins at the specified virtual address and continues until the first NUL byte or
+ *  until we reach an address that is not mapped. The @p map defines the mapping from virtual addresses to file offsets; if @p
+ *  map is NULL then the map defined in the underlying file is used. */
+std::string
+SgAsmGenericSection::read_content_str(const RvaFileMap *map, addr_t start_rva) const
+{
+    SgAsmGenericFile *file = get_file();
+    ROSE_ASSERT(file!=NULL);
+    return file->read_content_str(map, start_rva);
+}
+
 /* Returns ptr to content at specified offset after ensuring that the required amount of data is available. One can think of
  * this function as being similar to fseek()+fread() in that it returns contents of part of a file as bytes. The main
  * difference is that instead of the caller supplying the buffer, the callee uses its own buffer (part of the buffer that was
  * returned by the OS from the mmap of the binary file).  The content() functions also keep track of what parts of the section
  * have been returned so that it's easy to find the parts that are apparently unused. */
+/* DEPRECATED: use read_content() instead */
 const unsigned char *
 SgAsmGenericSection::content(addr_t offset, addr_t size)
 {
@@ -2089,6 +2198,7 @@ SgAsmGenericSection::content(addr_t offset, addr_t size)
  * caller must supply the buffer (the two-arg version returns a ptr to the mmap'd memory). Any part of the selected area that
  * is outside the domain of the section will be filled with zero (in contrast to the two-argument version that throws an
  * exception). */
+/* DEPRECATED: use read_content() instead */
 void
 SgAsmGenericSection::content(addr_t offset, addr_t size, void *buf)
 {
@@ -2105,6 +2215,7 @@ SgAsmGenericSection::content(addr_t offset, addr_t size, void *buf)
 }
 
 /** Returns ptr to a NUL-terminated string. The string is allowed to extend past the end of the section if @p relax is true. */
+/* DEPRECATED: use read_content_str() instead */
 std::string
 SgAsmGenericSection::content_str(addr_t offset, bool relax)
 {
@@ -2127,6 +2238,7 @@ SgAsmGenericSection::content_str(addr_t offset, bool relax)
 /* Like the low-level content(addr_t,addr_t) but returns an object rather than a ptr directly into the file content. This is
  * the recommended way to obtain file content for IR nodes that need to point to that content. The other function is more of a
  * low-level, efficient file read operation. This function is capable of reading past the end of the original data. */
+/* DEPRECATED: use read_content_ucl() instead */
 const SgUnsignedCharList
 SgAsmGenericSection::content_ucl(addr_t offset, addr_t size)
 {
@@ -2151,6 +2263,7 @@ SgAsmGenericSection::content_ucl(addr_t offset, addr_t size)
 }
 
 /** Extract an unsigned LEB128 value and adjust the offset according to how many bytes it occupied. */
+/* DEPRECATED: use read_content_uleb128() instead */
 uint64_t
 SgAsmGenericSection::content_uleb128(rose_addr_t *atp)
 {
@@ -2170,6 +2283,7 @@ SgAsmGenericSection::content_uleb128(rose_addr_t *atp)
 }
 
 /** Extract a signed LEB128 value and adjust the offset according to how many bytes it occupied. */
+/* DEPRECATED: use read_content_sleb128() instead */
 int64_t
 SgAsmGenericSection::content_sleb128(rose_addr_t *atp)
 {
