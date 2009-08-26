@@ -52,23 +52,24 @@ SgAsmElfFileHeader::ctor()
 
 /** Return true if the file looks like it might be an ELF file according to the magic number. */
 bool
-SgAsmElfFileHeader::is_ELF(SgAsmGenericFile *ef)
+SgAsmElfFileHeader::is_ELF(SgAsmGenericFile *file)
 {
-    SgAsmElfFileHeader *fhdr = NULL;
-    bool retval = false;
-    try {
-        fhdr = new SgAsmElfFileHeader(ef);
-        fhdr->grab_content();
-        fhdr->extend(4);
-        unsigned char magic[4];
-        fhdr->content(0, 4, magic);
-        retval = 0x7f==magic[0] && 'E'==magic[1] && 'L'==magic[2] && 'F'==magic[3];
-    } catch (...) {
-        /* cleanup is below */
-    }
+    /* Turn off byte reference tracking for the duration of this function. We don't want our testing the file contents to
+     * affect the list of bytes that we've already referenced or which we might reference later. */
+    bool was_tracking = file->get_tracking_references();
+    file->set_tracking_references(false);
 
-    delete fhdr;
-    return retval;
+    try {
+        unsigned char magic[4];
+        file->read_content(0, magic, sizeof magic);
+        if (0x7f!=magic[0] || 'E'!=magic[1] || 'L'!=magic[2] || 'F'!=magic[3])
+            throw 1;
+    } catch (...) {
+        file->set_tracking_references(was_tracking);
+        return false;
+    }
+    file->set_tracking_references(was_tracking);
+    return true;
 }
 
 /** Convert ELF "machine" identifier to generic instruction set architecture value. */
