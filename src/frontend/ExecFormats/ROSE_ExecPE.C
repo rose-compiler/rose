@@ -326,7 +326,7 @@ SgAsmPEFileHeader::parse()
         set_coff_symtab(symtab);
     }
 
-    /* Associate RVAs with particular sections. */
+    /* Associate RVAs with particular sections so that if a section's mapping is changed the RVA gets adjusted automatically. */
     ROSE_ASSERT(get_entry_rvas().size()==1);
     get_entry_rvas()[0].bind(this);
     set_e_code_rva(get_e_code_rva().bind(this));
@@ -502,14 +502,11 @@ SgAsmPEFileHeader::map_sections()
 }
 
 
-/* Looks at the RVA/Size pairs in the PE header and creates an SgAsmGenericSection object for each one. We have to do this
- * near the end of parsing because RVA/Size pairs have only memory info and no file offsets -- we need to have parsed the
- * other sections so we can determine the file offset of each table. */
+/* Looks at the RVA/Size pairs in the PE header and creates an SgAsmGenericSection object for each one.  This must be done
+ * after we build the mapping from virtual addresses to file offsets. */
 void
 SgAsmPEFileHeader::create_table_sections()
 {
-    getpid();
-
     for (size_t i=0; i<p_rvasize_pairs->get_pairs().size(); i++) {
         SgAsmPERVASizePair *pair = p_rvasize_pairs->get_pairs()[i];
         if (0==pair->get_e_size())
@@ -537,29 +534,34 @@ SgAsmPEFileHeader::create_table_sections()
           default: ROSE_ASSERT(!"too many RVA/Size pairs");  break;
         }
 
-        /* Find a section that contains the starting RVA of the table. We use that to find the file offset. */
-        SgAsmGenericFile *ef = get_file();
-        SgAsmGenericSection *contained_in = ef->get_section_by_va(get_base_va()+pair->get_e_rva());
-        if (!contained_in) {
+        /* Find the starting offset in the file.
+         * FIXME: We have a potential problem here in that ROSE sections are always contiguous in the file but a section created
+         *        from an RVA/Size pair is not necessarily contiguous in the file.  Normally such sections are in fact
+         *        contiguous and we'll just ignore this for now.  In any case, as long as these sections only ever read their
+         *        data via the same RvaFileMap that we use here, everything should be fine. [RPM 2009-08-17] */
+        RvaFileMap *map = get_map();
+        ROSE_ASSERT(map!=NULL);
+        const RvaFileMap::MapElement *elmt = map->findRVA(pair->get_e_rva());
+        if (!elmt) {
             fprintf(stderr, "SgAsmPEFileHeader::create_table_sections(): pair-%zu, rva=0x%08"PRIx64", size=%"PRIu64" bytes \"%s\""
-                    ": unable to find a section containing the virtual address (skipping)\n",
+                    ": unable to find a mapping for the virtual address (skipping)\n",
                     i, pair->get_e_rva().get_rva(), pair->get_e_size(), tabname?tabname:"");
             continue;
         }
-        addr_t file_offset = contained_in->get_rva_offset(pair->get_e_rva().get_rva());
+        addr_t file_offset = elmt->get_rva_offset(pair->get_e_rva());
 
         /* Create the new section */
         SgAsmGenericSection *tabsec = NULL;
         switch (i) {
-          case 0:
-            tabsec = new SgAsmPEExportSection(this);
-            break;
-          case 1:
-            tabsec = new SgAsmPEImportSection(this);
-            break;
-          default:
-            tabsec = new SgAsmGenericSection(ef, this);
-            break;
+            case 0:
+                tabsec = new SgAsmPEExportSection(this);
+                break;
+            case 1:
+                tabsec = new SgAsmPEImportSection(this);
+                break;
+            default:
+                tabsec = new SgAsmGenericSection(get_file(), this);
+                break;
         }
         if (tabname) tabsec->set_name(new SgAsmBasicString(tabname));
         tabsec->set_synthesized(true);
