@@ -69,38 +69,38 @@ SgAsmPEFileHeader::ctor()
  *  appears to be a DOS File Header at address zero, and what appears to be a PE File Header at a file offset specified in
  *  part of the DOS File Header (actually, in the bytes that follow the DOS File Header). */
 bool
-SgAsmPEFileHeader::is_PE(SgAsmGenericFile *ef)
+SgAsmPEFileHeader::is_PE(SgAsmGenericFile *file)
 {
-    /* Check DOS File Header magic number */
-    SgAsmGenericSection *section = new SgAsmGenericSection(ef, NULL);
-    section->set_offset(0);
-    section->set_size(0x40);
-    section->grab_content();
-    unsigned char dos_magic[2];
-    section->content(0, 2, dos_magic);
-    if ('M'!=dos_magic[0] || 'Z'!=dos_magic[1]) {
-        delete section;
+
+    /* Turn off byte reference tracking for the duration of this function. We don't want our testing the file contents to
+     * affect the list of bytes that we've already referenced or which we might reference later. */
+    bool was_tracking = file->get_tracking_references();
+    file->set_tracking_references(false);
+
+    try {
+        /* Check DOS File Header magic number at beginning of the file */
+        unsigned char dos_magic[2];
+        file->read_content(0, dos_magic, sizeof dos_magic);
+        if ('M'!=dos_magic[0] || 'Z'!=dos_magic[1])
+            throw 1;
+
+        /* Read four-byte offset of potential PE File Header at offset 0x3c */
+        uint32_t lfanew_disk;
+        file->read_content(0x3c, (unsigned char*)&lfanew_disk, sizeof lfanew_disk);
+        addr_t pe_offset = le_to_host(lfanew_disk);
+        
+        /* Look for the PE File Header magic number */
+        unsigned char pe_magic[4];
+        file->read_content(pe_offset, pe_magic, sizeof pe_magic);
+        if ('P'!=pe_magic[0] || 'E'!=pe_magic[1] || '\0'!=pe_magic[2] || '\0'!=pe_magic[3])
+            throw 1;
+    } catch (...) {
+        file->set_tracking_references(was_tracking);
         return false;
     }
     
-    /* Read offset of potential PE File Header */
-    uint32_t lfanew_disk;
-    section->content(0x3c, sizeof lfanew_disk, &lfanew_disk);
-    addr_t pe_offset = le_to_host(lfanew_disk);
-    delete section;
-    
-    /* Read the PE File Header magic number */
-    section = new SgAsmGenericSection(ef, NULL);
-    section->set_offset(pe_offset);
-    section->set_size(4);
-    section->grab_content();
-    unsigned char pe_magic[4];
-    section->content(0, 4, pe_magic);
-    delete section;
-    section = NULL;
-
-    /* Check the PE magic number */
-    return 'P'==pe_magic[0] && 'E'==pe_magic[1] && '\0'==pe_magic[2] && '\0'==pe_magic[3];
+    file->set_tracking_references(was_tracking);
+    return true;
 }
 
 /** Initialize the header with information parsed from the file and construct and parse everything that's reachable from the
@@ -110,11 +110,12 @@ SgAsmPEFileHeader::parse()
 {
     SgAsmGenericHeader::parse();
     
-    /* Read header */
+    /* Read header, zero padding if the file isn't large enough */
     PEFileHeader_disk fh;
     if (sizeof(fh)>get_size())
         extend(sizeof(fh)-get_size());
-    content(0, sizeof fh, &fh);
+    if (sizeof(fh)!=read_content_local(0, (unsigned char*)&fh, sizeof fh, false))
+        fprintf(stderr, "SgAsmPEFileHeader::parse: warning: short read of PE header at byte 0x%08"PRIx64"\n", get_offset());
 
     /* Check magic number before getting too far */
     if (fh.e_magic[0]!='P' || fh.e_magic[1]!='E' || fh.e_magic[2]!='\0' || fh.e_magic[3]!='\0')
@@ -135,11 +136,12 @@ SgAsmPEFileHeader::parse()
      * smallest possible documented size of the optional header. Also it's possible for the optional header to extend beyond
      * the end of the file, in which case that part should be read as zero. */
     PE32OptHeader_disk oh32;
-    memset(&oh32, 0, sizeof oh32);
     addr_t need32 = sizeof(PEFileHeader_disk) + std::min(p_e_nt_hdr_size, (addr_t)(sizeof oh32));
     if (need32>get_size())
         extend(need32-get_size());
-    content(sizeof fh, sizeof oh32, &oh32);
+    if (sizeof(oh32)!=read_content_local(sizeof fh, (unsigned char*)&oh32, sizeof oh32, false))
+        fprintf(stderr, "SgAsmPEFileHeader::parse: warning: short read of PE Optional Header at byte 0x%08"PRIx64"\n", 
+                get_offset() + sizeof(fh));
     p_e_opt_magic = le_to_host(oh32.e_opt_magic);
     
     /* File format changes from ctor() */
@@ -181,11 +183,12 @@ SgAsmPEFileHeader::parse()
     } else if (8==p_exec_format->get_word_size()) {
         /* We guessed wrong. This is a 64-bit header, not 32-bit. */
         PE64OptHeader_disk oh64;
-        memset(&oh64, 0, sizeof oh64);
         addr_t need64 = sizeof(PEFileHeader_disk) + std::min(p_e_nt_hdr_size, (addr_t)(sizeof oh64));
         if (need64>get_size())
             extend(need64-get_size());
-        content(sizeof fh, sizeof oh64, &oh64);
+        if (sizeof(oh64)!=read_content_local(sizeof fh, (unsigned char*)&oh64, sizeof oh64))
+            fprintf(stderr, "SgAsmPEFileHeader::parse: warning: short read of PE Optional Header at byte 0x%08"PRIx64"\n", 
+                    get_offset() + sizeof(fh));
         p_e_lmajor             = le_to_host(oh64.e_lmajor);
         p_e_lminor             = le_to_host(oh64.e_lminor);
         p_e_code_size          = le_to_host(oh64.e_code_size);
@@ -290,7 +293,7 @@ SgAsmPEFileHeader::parse()
         set_isa(ISA_Mitsubishi_M32R);
         break;
       default:
-        fprintf(stderr, "Warning: SgAsmPEFileHeader::ctor::p_e_cputype = 0x%x (%u)\n", p_e_cpu_type, p_e_cpu_type);
+        fprintf(stderr, "SgAsmPEFileHeader::parse: warning: unrecognized e_cputype = 0x%x (%u)\n", p_e_cpu_type, p_e_cpu_type);
         set_isa(ISA_OTHER);
         break;
     }
