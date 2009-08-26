@@ -494,11 +494,6 @@ SgAsmPEFileHeader::map_sections()
             map->insert(elmt);
         }
     }
-
-#if 1 /*DEBUGGING [RPM 2009-08-17] */
-    fprintf(stderr, "%s: loader-simulated memory map:\n", __func__);
-    map->dump(stderr, "    ");
-#endif
 }
 
 

@@ -1797,6 +1797,13 @@ SgAsmGenericFile::dump(FILE *f) const
     fputc('\n', f);
     fprintf(f, "  --- ---------- ---------- ----------  ---------- ---------- ---------- ---------- ---- --- -----------------\n");
 
+    /* Show the simulated loader memory map */
+    const RvaFileMap *map = get_loader_map();
+    if (map) {
+        fprintf(f, "Simulated loader memory map:\n");
+        map->dump(f, "    ");
+    }
+
     /* Show what part of the file has not been referenced */
     ExtentMap holes = get_unreferenced_extents();
     if (holes.size()>0) {
