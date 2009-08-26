@@ -1,4 +1,4 @@
-@@ -26,21 +26,21 @@
+@@ -26,29 +26,28 @@
    <   0x00008820 0x0000000c 0x0000882c  0x00000000 0x00010820 0x0000000c 0x0001082c rw-   16 .data
    <   0x0000882c 0x000000c8 0x000088f4  0x00000000 0x0001082c 0x000000c8 0x000108f4 rw-   17 .dynamic
    <   0x000088f4 0x00000008 0x000088fc  0x00000000 0x000108f4 0x00000008 0x000108fc rw-   18 .ctors
@@ -12,6 +12,17 @@
 -      0x00008e0c                                                                             EOF (original EOF was 0x00000e0c)
 +      0x00008e0c                                                                             EOF
    --- ---------- ---------- ----------  ---------- ---------- ---------- ---------- ---- --- -----------------
+ These parts of the file have not been referenced during parsing:
+     [0]  = offset 0x000000f4 (244), for 0x00000088 (136) bytes, ending at 0x0000017c (380)
+-    [1]  = offset 0x00000311 (785), for 0x0000004b (75) bytes, ending at 0x0000035c (860)
+-    [2]  = offset 0x000003cc (972), for 0x00000450 (1104) bytes, ending at 0x0000081c (2076)
+-    [3]  = offset 0x00000820 (2080), for 0x0000000c (12) bytes, ending at 0x0000082c (2092)
+-    [4]  = offset 0x000008f4 (2292), for 0x0000006c (108) bytes, ending at 0x00000960 (2400)
+-    [5]  = offset 0x00000e0c (3596), for 0x00008000 (32768) bytes, ending at 0x00008e0c (36364)
++    [1]  = offset 0x00000311 (785), for 0x0000804b (32843) bytes, ending at 0x0000835c (33628)
++    [2]  = offset 0x000083cc (33740), for 0x00000450 (1104) bytes, ending at 0x0000881c (34844)
++    [3]  = offset 0x00008820 (34848), for 0x0000000c (12) bytes, ending at 0x0000882c (34860)
++    [4]  = offset 0x000088f4 (35060), for 0x0000006c (108) bytes, ending at 0x00008960 (35168)
  Section [0]:
    ElfFileHeader.Header.Section.name                              = "ELF File Header"
    ElfFileHeader.Header.Section.id                                = -1
@@ -21,30 +32,8 @@
    ElfFileHeader.Header.Section.synthesized                       = yes
    ElfFileHeader.Header.Section.header                            = not associated
    ElfFileHeader.Header.Section.purpose                           = executable format header
-@@ -472,21 +472,21 @@
-   ElfStringSection.ElfSection.Section.synthesized                = no
-   ElfStringSection.ElfSection.Section.header                     = "ELF File Header"
-   ElfStringSection.ElfSection.Section.purpose                    = executable format header
-   ElfStringSection.ElfSection.Section.mapped                     = rva=0x0000827c, size=160 bytes
-   ElfStringSection.ElfSection.Section.mapped_alignment           = 0x00000001 (1) satisfied
-   ElfStringSection.ElfSection.Section.permissions                = r--
-   ElfStringSection.ElfSection.Section.contains_code              = false
-   ElfStringSection.ElfSection.Section.rose_mapped_rva            = 0 (0) 
-   ElfStringSection.ElfSection.Section.congealed                  = true
-   ElfStringSection.ElfSection.Section.num_holes                  = 1 hole
--  ElfStringSection.ElfSection.Section.hole[0]                    = offset 0x00000095 (149), for 0x0000000a (10) bytes, ending at 0x0000009f (159)
-+  ElfStringSection.ElfSection.Section.hole[0]                    = offset 0x00000095 (149), for 0x0000000b (11) bytes, ending at 0x000000a0 (160)
-   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_name       = 47 bytes into strtab
-   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_type       = 0x3 (3) SHT_STRTAB
-   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_link       = 0
-   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_info       = 0
-   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_flags      = 0x00000002
-   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_addr       = 0x0000827c (33404)
-   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_offset     = 0x0000027c (636) bytes into file
-   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_size       = 0x000000a0 (160) bytes
-   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_addralign  = 0x00000001 (1) bytes
-   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_entsize    = 0x00000000 (0) bytes
-@@ -506,22 +506,21 @@
+   ElfFileHeader.Header.Section.mapped                            = <not mapped>
+@@ -496,22 +495,21 @@
    ElfStringSection.Strtab.StringStorage[9].sec,offset,val        = section [5] ".dynstr", offset 0x00000059 (89), "stderr"
    ElfStringSection.Strtab.StringStorage[10].sec,offset,val       = section [5] ".dynstr", offset 0x00000029 (41), "abort"
    ElfStringSection.Strtab.StringStorage[11].sec,offset,val       = section [5] ".dynstr", offset 0x00000065 (101), "bindtextdomain"
@@ -68,26 +57,3 @@
    ElfSection.Section.header                                      = "ELF File Header"
    ElfSection.Section.purpose                                     = other
    ElfSection.Section.mapped                                      = rva=0x00008340, size=32 bytes
-@@ -1367,21 +1366,21 @@
-   ElfSection.Section.synthesized                                 = no
-   ElfSection.Section.header                                      = "ELF File Header"
-   ElfSection.Section.purpose                                     = executable format header
-   ElfSection.Section.mapped                                      = rva=0x00008000, size=2084 bytes
-   ElfSection.Section.mapped_alignment                            = 0x00008000 (32768) satisfied
-   ElfSection.Section.permissions                                 = r-x
-   ElfSection.Section.contains_code                               = false
-   ElfSection.Section.rose_mapped_rva                             = 0 (0) 
-   ElfSection.Section.congealed                                   = true
-   ElfSection.Section.num_holes                                   = 1 hole
--  ElfSection.Section.hole[0]                                     = offset 0x00000000 (0), for 0x00000820 (2080) bytes, ending at 0x00000820 (2080)
-+  ElfSection.Section.hole[0]                                     = entire section
-   ElfSection.ElfSegmentTableEntry.index                          = 2
-   ElfSection.ElfSegmentTableEntry.type                           = 0x00000001 = PT_LOAD
-   ElfSection.ElfSegmentTableEntry.flags                          = 0x00000005 r-x
-   ElfSection.ElfSegmentTableEntry.offset                         = 0x00000000 (0) bytes into file
-   ElfSection.ElfSegmentTableEntry.vaddr                          = 0x00008000 (32768)
-   ElfSection.ElfSegmentTableEntry.paddr                          = 0x00008000 (32768)
-   ElfSection.ElfSegmentTableEntry.filesz                         = 0x00008820 (34848) bytes
-   ElfSection.ElfSegmentTableEntry.memsz                          = 0x00000824 (2084) bytes
-   ElfSection.ElfSegmentTableEntry.align                          = 0x00008000 (32768) bytes
-   ElfSection.linked_to                                           = NULL

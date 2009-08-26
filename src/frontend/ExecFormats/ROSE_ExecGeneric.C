@@ -402,7 +402,8 @@ void
 SgAsmGenericStrtab::free_all_strings(bool blow_away_holes)
 {
     SgAsmGenericSection *container = get_container();
-    bool was_congealed = container->get_congealed();
+    SgAsmGenericFile *file = container->get_file();
+    bool is_tracking = file->get_tracking_references();
     set_isModified(true);
 
     /* Mark all storage objects as being unallocated. Never free the dont_free storage (if any). */
@@ -415,20 +416,17 @@ SgAsmGenericStrtab::free_all_strings(bool blow_away_holes)
 
     /* Mark holes as referenced */
     if (blow_away_holes) {
-        container->uncongeal();
+        file->set_tracking_references(true);
         container->content(0, container->get_size());
+        file->set_tracking_references(is_tracking);
     }
 
-    /* The free list is everything that's been referenced. */
-    get_freelist() = container->uncongeal();
+    /* The free list is everything that's been referenced in the container section. */
+    get_freelist() = container->get_referenced_extents();
 
     /* Remove the empty string from the free list */
     if (p_dont_free)
 	get_freelist().erase(p_dont_free->get_offset(), p_dont_free->get_string().size()+1);
-    
-    /* Restore state */
-    if (was_congealed)
-        container->congeal();
 }
 
 /* Allocates storage for strings that have been modified but not allocated. We first try to fit unallocated strings into free
@@ -767,6 +765,28 @@ SgAsmGenericFile::get_current_size() const
         retval = std::max(retval, (*i)->get_end_offset());
     }
     return retval;
+}
+
+/** Marks part of a file as having been referenced if we are tracking references. */
+void
+SgAsmGenericFile::mark_referenced_extent(addr_t offset, addr_t size)
+{
+    if (get_tracking_references()) {
+        p_referenced_extents.insert(offset, size);
+        delete p_unreferenced_cache;
+        p_unreferenced_cache = NULL;
+    }
+}
+
+/** Returns the parts of the file that have never been referenced. */
+const ExtentMap &
+SgAsmGenericFile::get_unreferenced_extents() const
+{
+    if (!p_unreferenced_cache) {
+        p_unreferenced_cache = new ExtentMap();
+        *p_unreferenced_cache = p_referenced_extents.subtract_from(0, get_current_size());
+    }
+    return *p_unreferenced_cache;
 }
 
 /** Returns a vector that points to part of the file content without actually ever referencing the file content until the
@@ -1676,6 +1696,13 @@ SgAsmGenericFile::dump(FILE *f) const
         fputs(" [ztrunc]", f);
     fputc('\n', f);
     fprintf(f, "  --- ---------- ---------- ----------  ---------- ---------- ---------- ---------- ---- --- -----------------\n");
+
+    /* Show what part of the file has not been referenced */
+    ExtentMap holes = get_unreferenced_extents();
+    if (holes.size()>0) {
+        fprintf(f, "These parts of the file have not been referenced during parsing:\n");
+        holes.dump_extents(f, "    ", "", false);
+    }
 }
 
 /** Synthesizes "hole" sections to describe the parts of the file that are not yet referenced by other sections. Note that holes
@@ -1810,16 +1837,6 @@ SgAsmGenericFile::get_header(SgAsmGenericFormat::ExecFamily efam)
     return retval;
 }
 
-/* "Congeals" a file after parsing by identifying all unreferenced parts of the file. */
-void
-SgAsmGenericFile::congeal()
-{
-    fill_holes();
-    SgAsmGenericSectionPtrList sections = get_sections();
-    for (size_t i=0; i<sections.size(); i++)
-        sections[i]->congeal();
-}
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // GenericSection
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1927,9 +1944,7 @@ SgAsmGenericSection::get_size() const
 }
 
 /* Adjust the current size of a section. This is virtual because some sections may need to do something special. This function
- * should not adjust the size of other sections, or the mapping of any section (see SgAsmGenericFile::resize() for that).
- * Changing the size does not affect p_extents: if the section is congealed then the new data is considered to be referenced,
- * otherwise the new data is considered to be not referenced. */
+ * should not adjust the size of other sections, or the mapping of any section (see SgAsmGenericFile::resize() for that). */
 void
 SgAsmGenericSection::set_size(addr_t size)
 {
@@ -2062,8 +2077,7 @@ SgAsmGenericSection::content(addr_t offset, addr_t size)
 {
     if (offset > p_data.size() || offset+size > p_data.size())
         throw SgAsmGenericFile::ShortRead(this, offset, size);
-    if (!get_congealed() && size > 0)
-        p_extents.insert(offset, size);
+    get_file()->mark_referenced_extent(get_offset()+offset, size);
     return &(p_data[offset]);
 }
 
@@ -2083,8 +2097,7 @@ SgAsmGenericSection::content(addr_t offset, addr_t size, void *buf)
     } else {
         memcpy(buf, &(p_data[offset]), size);
     }
-    if (!get_congealed())
-        p_extents.insert(offset, size);
+    get_file()->mark_referenced_extent(get_offset()+offset, size);
 }
 
 /** Returns ptr to a NUL-terminated string. The string is allowed to extend past the end of the section if @p relax is true. */
@@ -2102,8 +2115,7 @@ SgAsmGenericSection::content_str(addr_t offset, bool relax)
 
     if (!relax && offset+nchars>p_data.size())
         throw SgAsmGenericFile::ShortRead(this, offset, nchars);
-    if (!get_congealed())
-        p_extents.insert(offset, nchars);
+    get_file()->mark_referenced_extent(get_offset()+offset, nchars);
 
     return std::string(ret, nchars-1);
 }
@@ -2326,41 +2338,43 @@ SgAsmGenericSection::write_sleb128(unsigned char *buf, addr_t offset, int64_t va
     return offset;
 }
 
-/** Get a list of internal holes, which are parts of a section that have not been referenced during parsing. */
+/** Returns a list of parts of a single section that have been referenced.  The offsets are relative to the start of the
+ *  section. */
 ExtentMap
-SgAsmGenericSection::get_internal_holes() const
+SgAsmGenericSection::get_referenced_extents() const
 {
-    if (get_congealed()) {
-        return p_extents;
-    } else {
-      	return p_extents.subtract_from(0, get_size()); /*complement*/
+    ExtentMap retval;
+    ExtentPair s(get_offset(), get_size());
+    const ExtentMap &file_extents = get_file()->get_referenced_extents();
+    for (ExtentMap::const_iterator i=file_extents.begin(); i!=file_extents.end(); i++) {
+        switch (ExtentMap::category(*i, s)) {
+            case 'C': /*congruent*/
+            case 'I': /*extent is inside section*/
+                retval.insert(i->first-get_offset(), i->second);
+                break;
+            case 'L': /*extent is left of section*/
+            case 'R': /*extent is right of section*/
+                break;
+            case 'O': /*extent contains all of section*/
+                retval.insert(0, get_size());
+                break;
+            case 'B': /*extent overlaps with beginning of section*/
+                retval.insert(0, i->first+i->second - get_offset());
+                break;
+            case 'E': /*extent overlaps with end of section*/
+                retval.insert(i->first-get_offset(), get_offset()+get_size() - i->first);
+                break;
+            default:
+                ROSE_ASSERT(!"invalid extent overlap category");
+        }
     }
+    return retval;
 }
 
-/* Congeal the references to find the unreferenced areas. Once the references are congealed calling content(), content_ucl(),
- * content_str(), etc. will not affect references. This allows us to read the unreferenced areas without turning them into
- * referenced areas. */
-const ExtentMap &
-SgAsmGenericSection::congeal()
+ExtentMap
+SgAsmGenericSection::get_unreferenced_extents() const
 {
-    if (!get_congealed()) {
-      	ExtentMap holes = p_extents.subtract_from(0, get_size()); /*complement*/
-      	p_extents = holes;
-      	set_congealed(true);
-    }
-    return p_extents;
-}
-
-/* Uncongeal the holes, turning them into referenced extents instead. */
-const ExtentMap &
-SgAsmGenericSection::uncongeal()
-{
-    if (get_congealed()) {
-      	ExtentMap refs = p_extents.subtract_from(0, get_size()); /*complement*/
-      	p_extents = refs;
-      	set_congealed(false);
-    }
-    return p_extents;
+    return get_referenced_extents().subtract_from(0, get_size()); /*complement*/
 }
 
 /** Extend a section by some number of bytes during the construction and/or parsing phase. This is function is considered to
@@ -2372,7 +2386,7 @@ void
 SgAsmGenericSection::extend(addr_t size)
 {
     ROSE_ASSERT(get_file() != NULL);
-    ROSE_ASSERT(!get_congealed());              /*can only be called during the parsing phase*/
+    ROSE_ASSERT(get_file()->get_tracking_references()); /*can only be called during the parsing phase*/
     addr_t new_size = get_size() + size;
 
     /* Ending file address for section using new size, limited by total file size */
@@ -2420,8 +2434,20 @@ SgAsmGenericSection::unparse(std::ostream &f, const ExtentMap &map) const
 {
     for (ExtentMap::const_iterator i=map.begin(); i!=map.end(); ++i) {
         ROSE_ASSERT((*i).first+(*i).second <= get_size());
-        const unsigned char *extent_data = &p_data[(*i).first];
-        write(f, (*i).first, (*i).second, extent_data);
+        const unsigned char *extent_data;
+        size_t nwrite;
+        if ((*i).first >= p_data.size()) {
+            extent_data = NULL;
+            nwrite = 0;
+        } else if ((*i).first + (*i).second > p_data.size()) {
+            extent_data = &p_data[(*i).first];
+            nwrite = p_data.size() - (*i).first;
+        } else {
+            extent_data = &p_data[(*i).first];
+            nwrite = (*i).second;
+        }
+        if (extent_data)
+            write(f, (*i).first, (*i).second, extent_data);
     }
 }
 
@@ -2429,7 +2455,12 @@ SgAsmGenericSection::unparse(std::ostream &f, const ExtentMap &map) const
 void
 SgAsmGenericSection::unparse_holes(std::ostream &f) const
 {
-    unparse(f, p_extents);
+#if 0 /*DEBUGGING*/
+    ExtentMap holes = get_unreferenced_extents();
+    fprintf(stderr, "Section \"%s\", 0x%"PRIx64" bytes\n", get_name()->c_str(), get_size());
+    holes.dump_extents(stderr, "  ", "");
+#endif
+//    unparse(f, get_unreferenced_extents());
 }
 
 /* Returns the file offset associated with the relative virtual address of a mapped section. */
@@ -2525,24 +2556,12 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const
         fprintf(f, "%s%-*s = <not mapped>\n",    p, w, "mapped");
     }
 
-   // DQ (2/4/2009): Added variable to support specification of where code is since in object files
-   // sections are marked as non-executable even when they contain code and the disassembler
-   // looks only at if sections (maybe segments) are marked executable (this will change to 
-   // include sections explicit marked as code using this variable).
-      fprintf(f, "%s%-*s = %s\n", p, w, "contains_code", get_contains_code()?"true":"false");
-      fprintf(f, "%s%-*s = %"PRIx64" (%"PRIu64") \n", p, w, "rose_mapped_rva", p_rose_mapped_rva,p_rose_mapped_rva);
-
-    /* Show holes based on what's been referenced so far */
-    {
-      fprintf(f, "%s%-*s = %s\n", p, w, "congealed", get_congealed()?"true":"false");
-      ExtentMap holes = get_internal_holes();
-      fprintf(f, "%s%-*s = %zu hole%s\n", p, w, "num_holes", holes.size(), 1==holes.size()?"":"s");
-      if (1==holes.size() && holes.begin()->first==0 && holes.begin()->second==get_size()) {
-	fprintf(f, "%s%-*s = entire section\n", p, w, "hole[0]");
-      } else {
-	holes.dump_extents(f, p, "hole");
-      }
-    }
+    // DQ (2/4/2009): Added variable to support specification of where code is since in object files
+    // sections are marked as non-executable even when they contain code and the disassembler
+    // looks only at if sections (maybe segments) are marked executable (this will change to 
+    // include sections explicit marked as code using this variable).
+    fprintf(f, "%s%-*s = %s\n", p, w, "contains_code", get_contains_code()?"true":"false");
+    fprintf(f, "%s%-*s = %"PRIx64" (%"PRIu64") \n", p, w, "rose_mapped_rva", p_rose_mapped_rva,p_rose_mapped_rva);
 
     // DQ (8/31/2008): Output the contents if this not derived from (there is likely a 
     // better implementation if the hexdump function was a virtual member function).
@@ -2761,14 +2780,14 @@ ExtentMap::allocate_at(const ExtentPair &request)
 
 /* Print info about an extent map */
 void
-ExtentMap::dump_extents(FILE *f, const char *prefix, const char *label) const
+ExtentMap::dump_extents(FILE *f, const char *prefix, const char *label, bool pad) const
 {
     char p[4096];
     size_t idx=0;
     for (const_iterator i=begin(); i!=end(); ++i, ++idx) {
         if (!label) label = "Extent";
         sprintf(p, "%s%s[%zd]", prefix, label, idx);
-        int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+        int w = pad ? std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p)) : 1;
         fprintf(f, "%s%-*s = offset 0x%08"PRIx64" (%"PRIu64"),"
                 " for 0x%08"PRIx64" (%"PRIu64") byte%s,"
                 " ending at 0x%08"PRIx64" (%"PRIu64")\n",
@@ -3984,7 +4003,7 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
         }
     }
 
-    ef->congeal();
+    ef->set_tracking_references(false); /*all done parsing*/
 
     /* Is the file large enough to hold all sections?  If any section extends past the EOF then set truncate_zeros, which will
      * cause the unparser to not write zero bytes to the end of the file. */

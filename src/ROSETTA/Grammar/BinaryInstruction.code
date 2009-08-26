@@ -788,7 +788,7 @@ HEADER_GENERIC_SECTION_START
 			: local_data_pool(0), p_file(f), p_header(NULL), p_size(1), p_offset(f->get_current_size()),
 			p_file_alignment(0), p_purpose(SP_UNSPECIFIED), p_synthesized(false), p_id(-1), p_name(0),
 			p_mapped_rva(0), p_mapped_size(0), p_mapped_alignment(0), p_mapped_rperm(false), p_mapped_wperm(false),
-         p_mapped_xperm(false), p_congealed(false), p_contains_code(false), p_rose_mapped_rva(0)
+         		p_mapped_xperm(false), p_contains_code(false), p_rose_mapped_rva(0)
 			{ctor(f, fhdr);}
 
 		// This destructor modifies the SgAsmGenericFile data to remove its section from the section list!
@@ -827,10 +827,13 @@ HEADER_GENERIC_SECTION_START
 		std::string content_str(addr_t offset, bool relax=true);/* ptr to NUL-terminated string starting at OFFSET */
 		int64_t content_sleb128(rose_addr_t *atp);
 		uint64_t content_uleb128(rose_addr_t *atp);
-		ExtentMap get_internal_holes() const;		/* weak form of congeal() */
-		const ExtentMap& congeal();                     /* congeal referenced areas into holes */
-		const ExtentMap& uncongeal();                   /* uncongeal holes back into references */
 		unsigned char *local_content(size_t nbytes);	/* obtain a local, writable pool to hold content */
+
+		/* Functions for tracking referenced/unreferenced content. The tracking actually happens at the entire file level
+		 * (see functions with the same name in SgAsmGenericFile) and these functions return that same information but
+		 * limit the results to this section and return section rather than file offsets. */
+		ExtentMap get_referenced_extents() const;	/* Returns parts of the file that have been referenced */
+		ExtentMap get_unreferenced_extents() const;	/* Returns parts of file that have not been referenced */
 
 		/* Functions related to mapping of sections into executable memory */
 		bool   	      is_mapped() const;                /* True iff non-zero mapped address and size */
@@ -944,6 +947,10 @@ HEADER_GENERIC_FILE_START
 		void extend_to_eof(std::ostream&);			/* Write zeros to logical EOF */
 		void dump(FILE*) const;                                 /* Print some debugging info */
 
+		/* Tracking references */
+		const ExtentMap& get_unreferenced_extents() const;	/* Returns parts of file that have not been referenced */
+		void mark_referenced_extent(addr_t start_rva, addr_t size);
+
 		/* File contents */
 		rose_addr_t get_current_size() const;			/* Current size based on defined sections */
 		rose_addr_t get_orig_size() const;              	/* Original size based on actual file size */
@@ -986,7 +993,6 @@ HEADER_GENERIC_FILE_START
 		void shift_extend(SgAsmGenericSection*, addr_t sa, addr_t sn, AddressSpace, Elasticity);
 
 		/* Holes (unreferenced regions in the file) */	
-		void congeal();                                     	/* Identify and freeze all unreferenced regions */
 		addr_t get_next_section_offset(addr_t offset);      	/* Find file offset for next section */
 		void add_hole(SgAsmGenericSection*);		      	/* Add section to list of holes */
 		void remove_hole(SgAsmGenericSection*);             	/* Remove section from list of holes */
@@ -1011,6 +1017,7 @@ HEADER_GENERIC_FILE_START
 		SgAsmGenericSection* get_best_possible_section_by_va(addr_t va);
 
 	private:
+		mutable ExtentMap *p_unreferenced_cache;
 		void ctor();
 HEADER_GENERIC_FILE_END
 

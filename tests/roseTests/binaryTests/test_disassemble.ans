@@ -33,8 +33,7 @@ File sections:
   <   0x000006c8 0x0000000c 0x000006d4  0x00000000 0x080496c8 0x0000000c 0x080496d4 rw-   22 .data
       0x000006d4 0x00000000 0x000006d4  0x00000000 0x080496d4 0x00000008 0x080496dc rw-   23 .bss
       0x000006d4 0x00000153 0x00000827                                                    24 .comment
-      0x00000827 0x00000001 0x00000828                                                       hole
-      0x00000828 0x00000078 0x000008a0                                                    25 .debug_aranges
+    H 0x00000828 0x00000078 0x000008a0                                                    25 .debug_aranges
       0x000008a0 0x00000025 0x000008c5                                                    26 .debug_pubnames
       0x000008c5 0x000002e1 0x00000ba6                                                    27 .debug_info
       0x00000ba6 0x00000076 0x00000c1c                                                    28 .debug_abbrev
@@ -46,6 +45,12 @@ File sections:
       0x00001ad0 0x0000033d 0x00001e0d                                                    33 .strtab
       0x00001e0d                                                                             EOF
   --- ---------- ---------- ----------  ---------- ---------- ---------- ---------- ---- --- -----------------
+These parts of the file have not been referenced during parsing:
+    [0]  = offset 0x00000114 (276), for 0x00000068 (104) bytes, ending at 0x0000017c (380)
+    [1]  = offset 0x0000025d (605), for 0x0000003b (59) bytes, ending at 0x00000298 (664)
+    [2]  = offset 0x000002c8 (712), for 0x000002fc (764) bytes, ending at 0x000005c4 (1476)
+    [3]  = offset 0x000005c8 (1480), for 0x00000014 (20) bytes, ending at 0x000005dc (1500)
+    [4]  = offset 0x000006a4 (1700), for 0x00000845 (2117) bytes, ending at 0x00000ee9 (3817)
 Section [0]:
   ElfFileHeader.Header.Section.name                              = "ELF File Header"
   ElfFileHeader.Header.Section.id                                = -1
@@ -58,8 +63,6 @@ Section [0]:
   ElfFileHeader.Header.Section.mapped                            = <not mapped>
   ElfFileHeader.Header.Section.contains_code                     = false
   ElfFileHeader.Header.Section.rose_mapped_rva                   = 0 (0) 
-  ElfFileHeader.Header.Section.congealed                         = true
-  ElfFileHeader.Header.Section.num_holes                         = 0 holes
   ElfFileHeader.Header.Format.family                             = Executable and Linking Format (ELF)
   ElfFileHeader.Header.Format.purpose                            = executable program
   ElfFileHeader.Header.Format.sex                                = little-endian
@@ -1102,22 +1105,6 @@ Section [0]:
   ElfFileHeader.data at 0x00000020: 10 10 00 00 00 00 00 00  34 00 20 00 07 00 28 00  |........4. ...(.|
   ElfFileHeader.data at 0x00000030: 22 00 1f 00                                       |"...|
 Section [1]:
-  Section.name                                                   = "hole"
-  Section.id                                                     = -1
-  Section.offset                                                 = 0x00000827 (2087) bytes into file
-  Section.size                                                   = 0x00000001 (1) bytes
-  Section.file_alignment                                         = not specified
-  Section.synthesized                                            = yes
-  Section.header                                                 = not associated
-  Section.purpose                                                = not specified
-  Section.mapped                                                 = <not mapped>
-  Section.contains_code                                          = false
-  Section.rose_mapped_rva                                        = 0 (0) 
-  Section.congealed                                              = true
-  Section.num_holes                                              = 1 hole
-  Section.hole[0]                                                = entire section
-  Section.data at 0x00000000: 00                                                |.|
-Section [2]:
   SectionTable.Section.name                                      = "ELF Section Table"
   SectionTable.Section.id                                        = -1
   SectionTable.Section.offset                                    = 0x00001010 (4112) bytes into file
@@ -1129,8 +1116,6 @@ Section [2]:
   SectionTable.Section.mapped                                    = <not mapped>
   SectionTable.Section.contains_code                             = false
   SectionTable.Section.rose_mapped_rva                           = 0 (0) 
-  SectionTable.Section.congealed                                 = true
-  SectionTable.Section.num_holes                                 = 0 holes
   SectionTable.data at 0x00000000: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
   SectionTable.data at 0x00000010: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
   SectionTable.data at 0x00000020: 00 00 00 00 00 00 00 00  1b 00 00 00 01 00 00 00  |................|
@@ -1216,7 +1201,7 @@ Section [2]:
   SectionTable.data at 0x00000520: 04 00 00 00 10 00 00 00  09 00 00 00 03 00 00 00  |................|
   SectionTable.data at 0x00000530: 00 00 00 00 00 00 00 00  d0 1a 00 00 3d 03 00 00  |............=...|
   SectionTable.data at 0x00000540: 00 00 00 00 00 00 00 00  01 00 00 00 00 00 00 00  |................|
-Section [3]:
+Section [2]:
   ElfStringSection.ElfSection.Section.name                       = ".shstrtab"
   ElfStringSection.ElfSection.Section.id                         = 31
   ElfStringSection.ElfSection.Section.offset                     = 0x00000ee9 (3817) bytes into file
@@ -1228,8 +1213,6 @@ Section [3]:
   ElfStringSection.ElfSection.Section.mapped                     = <not mapped>
   ElfStringSection.ElfSection.Section.contains_code              = false
   ElfStringSection.ElfSection.Section.rose_mapped_rva            = 0 (0) 
-  ElfStringSection.ElfSection.Section.congealed                  = true
-  ElfStringSection.ElfSection.Section.num_holes                  = 0 holes
   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_name       = 17 bytes into strtab
   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_type       = 0x3 (3) SHT_STRTAB
   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_link       = 0
@@ -1299,7 +1282,7 @@ Section [3]:
   ElfStringSection.data at 0x00000100: 6f 00 2e 64 65 62 75 67  5f 61 62 62 72 65 76 00  |o..debug_abbrev.|
   ElfStringSection.data at 0x00000110: 2e 64 65 62 75 67 5f 6c  69 6e 65 00 2e 64 65 62  |.debug_line..deb|
   ElfStringSection.data at 0x00000120: 75 67 5f 73 74 72 00                              |ug_str.|
-Section [4]:
+Section [3]:
   ElfSection.Section.name                                        = ""
   ElfSection.Section.id                                          = 0
   ElfSection.Section.offset                                      = 0x00000000 (0) bytes into file
@@ -1311,8 +1294,6 @@ Section [4]:
   ElfSection.Section.mapped                                      = <not mapped>
   ElfSection.Section.contains_code                               = false
   ElfSection.Section.rose_mapped_rva                             = 0 (0) 
-  ElfSection.Section.congealed                                   = true
-  ElfSection.Section.num_holes                                   = 0 holes
   ElfSection.ElfSectionTableEntry.sh_name                        = 0 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x0 (0) SHT_NULL
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1324,7 +1305,7 @@ Section [4]:
   ElfSection.ElfSectionTableEntry.sh_addralign                   = 0x00000000 (0) bytes
   ElfSection.ElfSectionTableEntry.sh_entsize                     = 0x00000000 (0) bytes
   ElfSection.linked_to                                           = NULL
-Section [5]:
+Section [4]:
   ElfSection.Section.name                                        = ".interp"
   ElfSection.Section.id                                          = 1
   ElfSection.Section.offset                                      = 0x00000114 (276) bytes into file
@@ -1338,9 +1319,6 @@ Section [5]:
   ElfSection.Section.permissions                                 = r--
   ElfSection.Section.contains_code                               = false
   ElfSection.Section.rose_mapped_rva                             = 0 (0) 
-  ElfSection.Section.congealed                                   = true
-  ElfSection.Section.num_holes                                   = 1 hole
-  ElfSection.Section.hole[0]                                     = entire section
   ElfSection.ElfSectionTableEntry.sh_name                        = 27 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1363,7 +1341,7 @@ Section [5]:
   ElfSection.linked_to                                           = NULL
   ElfSection.data at 0x00000000: 2f 6c 69 62 2f 6c 64 2d  6c 69 6e 75 78 2e 73 6f  |/lib/ld-linux.so|
   ElfSection.data at 0x00000010: 2e 32 00                                          |.2.|
-Section [6]:
+Section [5]:
   ElfSection.Section.name                                        = ".note.ABI-tag"
   ElfSection.Section.id                                          = 2
   ElfSection.Section.offset                                      = 0x00000128 (296) bytes into file
@@ -1377,9 +1355,6 @@ Section [6]:
   ElfSection.Section.permissions                                 = r--
   ElfSection.Section.contains_code                               = false
   ElfSection.Section.rose_mapped_rva                             = 0 (0) 
-  ElfSection.Section.congealed                                   = true
-  ElfSection.Section.num_holes                                   = 1 hole
-  ElfSection.Section.hole[0]                                     = entire section
   ElfSection.ElfSectionTableEntry.sh_name                        = 35 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x7 (7) SHT_NOTE
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1402,7 +1377,7 @@ Section [6]:
   ElfSection.linked_to                                           = NULL
   ElfSection.data at 0x00000000: 04 00 00 00 10 00 00 00  01 00 00 00 47 4e 55 00  |............GNU.|
   ElfSection.data at 0x00000010: 00 00 00 00 02 00 00 00  02 00 00 00 00 00 00 00  |................|
-Section [7]:
+Section [6]:
   ElfStringSection.ElfSection.Section.name                       = ".dynstr"
   ElfStringSection.ElfSection.Section.id                         = 5
   ElfStringSection.ElfSection.Section.offset                     = 0x000001fc (508) bytes into file
@@ -1416,9 +1391,6 @@ Section [7]:
   ElfStringSection.ElfSection.Section.permissions                = r--
   ElfStringSection.ElfSection.Section.contains_code              = false
   ElfStringSection.ElfSection.Section.rose_mapped_rva            = 0 (0) 
-  ElfStringSection.ElfSection.Section.congealed                  = true
-  ElfStringSection.ElfSection.Section.num_holes                  = 1 hole
-  ElfStringSection.ElfSection.Section.hole[0]                    = offset 0x00000061 (97), for 0x0000000a (10) bytes, ending at 0x0000006b (107)
   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_name       = 63 bytes into strtab
   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_type       = 0x3 (3) SHT_STRTAB
   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_link       = 0
@@ -1452,7 +1424,7 @@ Section [7]:
   ElfStringSection.data at 0x00000040: 64 69 6e 5f 75 73 65 64  00 5f 65 78 69 74 00 5f  |din_used._exit._|
   ElfStringSection.data at 0x00000050: 5f 6c 69 62 63 5f 73 74  61 72 74 5f 6d 61 69 6e  |_libc_start_main|
   ElfStringSection.data at 0x00000060: 00 47 4c 49 42 43 5f 32  2e 30 00                 |.GLIBC_2.0.|
-Section [8]:
+Section [7]:
   ElfSection.Section.name                                        = ".gnu.version_r"
   ElfSection.Section.id                                          = 7
   ElfSection.Section.offset                                      = 0x00000278 (632) bytes into file
@@ -1466,9 +1438,6 @@ Section [8]:
   ElfSection.Section.permissions                                 = r--
   ElfSection.Section.contains_code                               = false
   ElfSection.Section.rose_mapped_rva                             = 0 (0) 
-  ElfSection.Section.congealed                                   = true
-  ElfSection.Section.num_holes                                   = 1 hole
-  ElfSection.Section.hole[0]                                     = entire section
   ElfSection.ElfSectionTableEntry.sh_name                        = 84 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x6ffffffe (1879048190) unknown
   ElfSection.ElfSectionTableEntry.sh_link                        = 5
@@ -1482,7 +1451,7 @@ Section [8]:
   ElfSection.linked_to                                           = [5] ".dynstr"
   ElfSection.data at 0x00000000: 01 00 01 00 24 00 00 00  10 00 00 00 00 00 00 00  |....$...........|
   ElfSection.data at 0x00000010: 10 69 69 0d 00 00 02 00  61 00 00 00 00 00 00 00  |.ii.....a.......|
-Section [9]:
+Section [8]:
   ElfSection.Section.name                                        = ".init"
   ElfSection.Section.id                                          = 10
   ElfSection.Section.offset                                      = 0x000002c8 (712) bytes into file
@@ -1496,9 +1465,6 @@ Section [9]:
   ElfSection.Section.permissions                                 = r-x
   ElfSection.Section.contains_code                               = false
   ElfSection.Section.rose_mapped_rva                             = 0 (0) 
-  ElfSection.Section.congealed                                   = true
-  ElfSection.Section.num_holes                                   = 1 hole
-  ElfSection.Section.hole[0]                                     = entire section
   ElfSection.ElfSectionTableEntry.sh_name                        = 117 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1512,7 +1478,7 @@ Section [9]:
   ElfSection.linked_to                                           = NULL
   ElfSection.data at 0x00000000: 55 89 e5 83 ec 08 e8 91  00 00 00 e8 f8 00 00 00  |U...............|
   ElfSection.data at 0x00000010: e8 83 02 00 00 c9 c3                              |.......|
-Section [10]:
+Section [9]:
   ElfSection.Section.name                                        = ".plt"
   ElfSection.Section.id                                          = 11
   ElfSection.Section.offset                                      = 0x000002e0 (736) bytes into file
@@ -1526,9 +1492,6 @@ Section [10]:
   ElfSection.Section.permissions                                 = r-x
   ElfSection.Section.contains_code                               = false
   ElfSection.Section.rose_mapped_rva                             = 0 (0) 
-  ElfSection.Section.congealed                                   = true
-  ElfSection.Section.num_holes                                   = 1 hole
-  ElfSection.Section.hole[0]                                     = entire section
   ElfSection.ElfSectionTableEntry.sh_name                        = 112 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1546,7 +1509,7 @@ Section [10]:
   ElfSection.data at 0x00000030: ff 25 bc 96 04 08 68 10  00 00 00 e9 c0 ff ff ff  |.%....h.........|
   ElfSection.data at 0x00000040: ff 25 c0 96 04 08 68 18  00 00 00 e9 b0 ff ff ff  |.%....h.........|
   ElfSection.data at 0x00000050: ff 25 c4 96 04 08 68 20  00 00 00 e9 a0 ff ff ff  |.%....h ........|
-Section [11]:
+Section [10]:
   ElfSection.Section.name                                        = ".text"
   ElfSection.Section.id                                          = 12
   ElfSection.Section.offset                                      = 0x00000340 (832) bytes into file
@@ -1560,9 +1523,6 @@ Section [11]:
   ElfSection.Section.permissions                                 = r-x
   ElfSection.Section.contains_code                               = false
   ElfSection.Section.rose_mapped_rva                             = 0 (0) 
-  ElfSection.Section.congealed                                   = true
-  ElfSection.Section.num_holes                                   = 1 hole
-  ElfSection.Section.hole[0]                                     = entire section
   ElfSection.ElfSectionTableEntry.sh_name                        = 123 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1611,7 +1571,7 @@ Section [11]:
   ElfSection.data at 0x00000220: 55 89 e5 53 83 ec 04 bb  c8 95 04 08 a1 c8 95 04  |U..S............|
   ElfSection.data at 0x00000230: 08 83 f8 ff 74 16 8d 76  00 8d bc 27 00 00 00 00  |....t..v...'....|
   ElfSection.data at 0x00000240: 83 eb 04 ff d0 8b 03 83  f8 ff 75 f4 58 5b 5d c3  |..........u.X[].|
-Section [12]:
+Section [11]:
   ElfSection.Section.name                                        = ".fini"
   ElfSection.Section.id                                          = 13
   ElfSection.Section.offset                                      = 0x00000590 (1424) bytes into file
@@ -1625,9 +1585,6 @@ Section [12]:
   ElfSection.Section.permissions                                 = r-x
   ElfSection.Section.contains_code                               = false
   ElfSection.Section.rose_mapped_rva                             = 0 (0) 
-  ElfSection.Section.congealed                                   = true
-  ElfSection.Section.num_holes                                   = 1 hole
-  ElfSection.Section.hole[0]                                     = entire section
   ElfSection.ElfSectionTableEntry.sh_name                        = 129 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1641,7 +1598,7 @@ Section [12]:
   ElfSection.linked_to                                           = NULL
   ElfSection.data at 0x00000000: 55 89 e5 53 50 e8 00 00  00 00 5b 81 c3 0e 11 00  |U..SP.....[.....|
   ElfSection.data at 0x00000010: 00 e8 ea fd ff ff 58 5b  c9 c3                    |......X[..|
-Section [13]:
+Section [12]:
   ElfSection.Section.name                                        = ".rodata"
   ElfSection.Section.id                                          = 14
   ElfSection.Section.offset                                      = 0x000005ac (1452) bytes into file
@@ -1655,9 +1612,6 @@ Section [13]:
   ElfSection.Section.permissions                                 = r--
   ElfSection.Section.contains_code                               = false
   ElfSection.Section.rose_mapped_rva                             = 0 (0) 
-  ElfSection.Section.congealed                                   = true
-  ElfSection.Section.num_holes                                   = 1 hole
-  ElfSection.Section.hole[0]                                     = entire section
   ElfSection.ElfSectionTableEntry.sh_name                        = 135 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1671,7 +1625,7 @@ Section [13]:
   ElfSection.linked_to                                           = NULL
   ElfSection.data at 0x00000000: 03 00 00 00 01 00 02 00  48 65 6c 6c 6f 2c 20 77  |........Hello, w|
   ElfSection.data at 0x00000010: 6f 72 6c 64 2e 0a 00                              |orld...|
-Section [14]:
+Section [13]:
   ElfEHFrameSection.ElfSection.Section.name                      = ".eh_frame"
   ElfEHFrameSection.ElfSection.Section.id                        = 15
   ElfEHFrameSection.ElfSection.Section.offset                    = 0x000005c4 (1476) bytes into file
@@ -1685,8 +1639,6 @@ Section [14]:
   ElfEHFrameSection.ElfSection.Section.permissions               = r--
   ElfEHFrameSection.ElfSection.Section.contains_code             = false
   ElfEHFrameSection.ElfSection.Section.rose_mapped_rva           = 0 (0) 
-  ElfEHFrameSection.ElfSection.Section.congealed                 = true
-  ElfEHFrameSection.ElfSection.Section.num_holes                 = 0 holes
   ElfEHFrameSection.ElfSection.ElfSectionTableEntry.sh_name      = 143 bytes into strtab
   ElfEHFrameSection.ElfSection.ElfSectionTableEntry.sh_type      = 0x1 (1) SHT_PROGBITS
   ElfEHFrameSection.ElfSection.ElfSectionTableEntry.sh_link      = 0
@@ -1698,7 +1650,7 @@ Section [14]:
   ElfEHFrameSection.ElfSection.ElfSectionTableEntry.sh_addralign = 0x00000004 (4) bytes
   ElfEHFrameSection.ElfSection.ElfSectionTableEntry.sh_entsize   = 0x00000000 (0) bytes
   ElfEHFrameSection.ElfSection.linked_to                         = NULL
-Section [15]:
+Section [14]:
   ElfSection.Section.name                                        = ".ctors"
   ElfSection.Section.id                                          = 16
   ElfSection.Section.offset                                      = 0x000005c8 (1480) bytes into file
@@ -1712,9 +1664,6 @@ Section [15]:
   ElfSection.Section.permissions                                 = rw-
   ElfSection.Section.contains_code                               = false
   ElfSection.Section.rose_mapped_rva                             = 0 (0) 
-  ElfSection.Section.congealed                                   = true
-  ElfSection.Section.num_holes                                   = 1 hole
-  ElfSection.Section.hole[0]                                     = entire section
   ElfSection.ElfSectionTableEntry.sh_name                        = 153 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1727,7 +1676,7 @@ Section [15]:
   ElfSection.ElfSectionTableEntry.sh_entsize                     = 0x00000000 (0) bytes
   ElfSection.linked_to                                           = NULL
   ElfSection.data at 0x00000000: ff ff ff ff 00 00 00 00                           |........|
-Section [16]:
+Section [15]:
   ElfSection.Section.name                                        = ".dtors"
   ElfSection.Section.id                                          = 17
   ElfSection.Section.offset                                      = 0x000005d0 (1488) bytes into file
@@ -1741,9 +1690,6 @@ Section [16]:
   ElfSection.Section.permissions                                 = rw-
   ElfSection.Section.contains_code                               = false
   ElfSection.Section.rose_mapped_rva                             = 0 (0) 
-  ElfSection.Section.congealed                                   = true
-  ElfSection.Section.num_holes                                   = 1 hole
-  ElfSection.Section.hole[0]                                     = entire section
   ElfSection.ElfSectionTableEntry.sh_name                        = 160 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1756,7 +1702,7 @@ Section [16]:
   ElfSection.ElfSectionTableEntry.sh_entsize                     = 0x00000000 (0) bytes
   ElfSection.linked_to                                           = NULL
   ElfSection.data at 0x00000000: ff ff ff ff 00 00 00 00                           |........|
-Section [17]:
+Section [16]:
   ElfSection.Section.name                                        = ".jcr"
   ElfSection.Section.id                                          = 18
   ElfSection.Section.offset                                      = 0x000005d8 (1496) bytes into file
@@ -1770,9 +1716,6 @@ Section [17]:
   ElfSection.Section.permissions                                 = rw-
   ElfSection.Section.contains_code                               = false
   ElfSection.Section.rose_mapped_rva                             = 0 (0) 
-  ElfSection.Section.congealed                                   = true
-  ElfSection.Section.num_holes                                   = 1 hole
-  ElfSection.Section.hole[0]                                     = entire section
   ElfSection.ElfSectionTableEntry.sh_name                        = 167 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1785,7 +1728,7 @@ Section [17]:
   ElfSection.ElfSectionTableEntry.sh_entsize                     = 0x00000000 (0) bytes
   ElfSection.linked_to                                           = NULL
   ElfSection.data at 0x00000000: 00 00 00 00                                       |....|
-Section [18]:
+Section [17]:
   DynamicSection.ElfSection.Section.name                         = ".dynamic"
   DynamicSection.ElfSection.Section.id                           = 19
   DynamicSection.ElfSection.Section.offset                       = 0x000005dc (1500) bytes into file
@@ -1799,8 +1742,6 @@ Section [18]:
   DynamicSection.ElfSection.Section.permissions                  = rw-
   DynamicSection.ElfSection.Section.contains_code                = false
   DynamicSection.ElfSection.Section.rose_mapped_rva              = 0 (0) 
-  DynamicSection.ElfSection.Section.congealed                    = true
-  DynamicSection.ElfSection.Section.num_holes                    = 0 holes
   DynamicSection.ElfSection.ElfSectionTableEntry.sh_name         = 172 bytes into strtab
   DynamicSection.ElfSection.ElfSectionTableEntry.sh_type         = 0x6 (6) SHT_DYNAMIC
   DynamicSection.ElfSection.ElfSectionTableEntry.sh_link         = 5
@@ -1879,7 +1820,7 @@ Section [18]:
   DynamicSection.data at 0x000000a0: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
   DynamicSection.data at 0x000000b0: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
   DynamicSection.data at 0x000000c0: 00 00 00 00 00 00 00 00                           |........|
-Section [19]:
+Section [18]:
   ElfSection.Section.name                                        = ".got"
   ElfSection.Section.id                                          = 20
   ElfSection.Section.offset                                      = 0x000006a4 (1700) bytes into file
@@ -1893,9 +1834,6 @@ Section [19]:
   ElfSection.Section.permissions                                 = rw-
   ElfSection.Section.contains_code                               = false
   ElfSection.Section.rose_mapped_rva                             = 0 (0) 
-  ElfSection.Section.congealed                                   = true
-  ElfSection.Section.num_holes                                   = 1 hole
-  ElfSection.Section.hole[0]                                     = entire section
   ElfSection.ElfSectionTableEntry.sh_name                        = 181 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1908,7 +1846,7 @@ Section [19]:
   ElfSection.ElfSectionTableEntry.sh_entsize                     = 0x00000004 (4) bytes
   ElfSection.linked_to                                           = NULL
   ElfSection.data at 0x00000000: 00 00 00 00                                       |....|
-Section [20]:
+Section [19]:
   ElfSection.Section.name                                        = ".got.plt"
   ElfSection.Section.id                                          = 21
   ElfSection.Section.offset                                      = 0x000006a8 (1704) bytes into file
@@ -1922,9 +1860,6 @@ Section [20]:
   ElfSection.Section.permissions                                 = rw-
   ElfSection.Section.contains_code                               = false
   ElfSection.Section.rose_mapped_rva                             = 0 (0) 
-  ElfSection.Section.congealed                                   = true
-  ElfSection.Section.num_holes                                   = 1 hole
-  ElfSection.Section.hole[0]                                     = entire section
   ElfSection.ElfSectionTableEntry.sh_name                        = 186 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1938,7 +1873,7 @@ Section [20]:
   ElfSection.linked_to                                           = NULL
   ElfSection.data at 0x00000000: dc 95 04 08 00 00 00 00  00 00 00 00 f6 82 04 08  |................|
   ElfSection.data at 0x00000010: 06 83 04 08 16 83 04 08  26 83 04 08 36 83 04 08  |........&...6...|
-Section [21]:
+Section [20]:
   ElfSection.Section.name                                        = ".data"
   ElfSection.Section.id                                          = 22
   ElfSection.Section.offset                                      = 0x000006c8 (1736) bytes into file
@@ -1952,9 +1887,6 @@ Section [21]:
   ElfSection.Section.permissions                                 = rw-
   ElfSection.Section.contains_code                               = false
   ElfSection.Section.rose_mapped_rva                             = 0 (0) 
-  ElfSection.Section.congealed                                   = true
-  ElfSection.Section.num_holes                                   = 1 hole
-  ElfSection.Section.hole[0]                                     = entire section
   ElfSection.ElfSectionTableEntry.sh_name                        = 195 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1967,7 +1899,7 @@ Section [21]:
   ElfSection.ElfSectionTableEntry.sh_entsize                     = 0x00000000 (0) bytes
   ElfSection.linked_to                                           = NULL
   ElfSection.data at 0x00000000: 00 00 00 00 00 00 00 00  d4 95 04 08              |............|
-Section [22]:
+Section [21]:
   ElfSection.Section.name                                        = ".bss"
   ElfSection.Section.id                                          = 23
   ElfSection.Section.offset                                      = 0x000006d4 (1748) bytes into file
@@ -1981,8 +1913,6 @@ Section [22]:
   ElfSection.Section.permissions                                 = rw-
   ElfSection.Section.contains_code                               = false
   ElfSection.Section.rose_mapped_rva                             = 0 (0) 
-  ElfSection.Section.congealed                                   = true
-  ElfSection.Section.num_holes                                   = 0 holes
   ElfSection.ElfSectionTableEntry.sh_name                        = 201 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x8 (8) SHT_NOBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1994,7 +1924,7 @@ Section [22]:
   ElfSection.ElfSectionTableEntry.sh_addralign                   = 0x00000004 (4) bytes
   ElfSection.ElfSectionTableEntry.sh_entsize                     = 0x00000000 (0) bytes
   ElfSection.linked_to                                           = NULL
-Section [23]:
+Section [22]:
   ElfSection.Section.name                                        = ".comment"
   ElfSection.Section.id                                          = 24
   ElfSection.Section.offset                                      = 0x000006d4 (1748) bytes into file
@@ -2006,9 +1936,6 @@ Section [23]:
   ElfSection.Section.mapped                                      = <not mapped>
   ElfSection.Section.contains_code                               = false
   ElfSection.Section.rose_mapped_rva                             = 0 (0) 
-  ElfSection.Section.congealed                                   = true
-  ElfSection.Section.num_holes                                   = 1 hole
-  ElfSection.Section.hole[0]                                     = entire section
   ElfSection.ElfSectionTableEntry.sh_name                        = 206 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -2042,7 +1969,7 @@ Section [23]:
   ElfSection.data at 0x00000130: 30 37 32 35 20 28 70 72  65 72 65 6c 65 61 73 65  |0725 (prerelease|
   ElfSection.data at 0x00000140: 29 20 28 44 65 62 69 61  6e 20 34 2e 30 2e 31 2d  |) (Debian 4.0.1-|
   ElfSection.data at 0x00000150: 33 29 00                                          |3).|
-Section [24]:
+Section [23]:
   ElfSection.Section.name                                        = ".debug_aranges"
   ElfSection.Section.id                                          = 25
   ElfSection.Section.offset                                      = 0x00000828 (2088) bytes into file
@@ -2054,9 +1981,6 @@ Section [24]:
   ElfSection.Section.mapped                                      = <not mapped>
   ElfSection.Section.contains_code                               = false
   ElfSection.Section.rose_mapped_rva                             = 0 (0) 
-  ElfSection.Section.congealed                                   = true
-  ElfSection.Section.num_holes                                   = 1 hole
-  ElfSection.Section.hole[0]                                     = entire section
   ElfSection.ElfSectionTableEntry.sh_name                        = 215 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -2076,7 +2000,7 @@ Section [24]:
   ElfSection.data at 0x00000050: 24 00 00 00 02 00 08 02  00 00 04 00 00 00 00 00  |$...............|
   ElfSection.data at 0x00000060: a6 85 04 08 04 00 00 00  dd 82 04 08 02 00 00 00  |................|
   ElfSection.data at 0x00000070: 00 00 00 00 00 00 00 00                           |........|
-Section [25]:
+Section [24]:
   ElfSection.Section.name                                        = ".debug_pubnames"
   ElfSection.Section.id                                          = 26
   ElfSection.Section.offset                                      = 0x000008a0 (2208) bytes into file
@@ -2088,9 +2012,6 @@ Section [25]:
   ElfSection.Section.mapped                                      = <not mapped>
   ElfSection.Section.contains_code                               = false
   ElfSection.Section.rose_mapped_rva                             = 0 (0) 
-  ElfSection.Section.congealed                                   = true
-  ElfSection.Section.num_holes                                   = 1 hole
-  ElfSection.Section.hole[0]                                     = entire section
   ElfSection.ElfSectionTableEntry.sh_name                        = 230 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -2105,7 +2026,7 @@ Section [25]:
   ElfSection.data at 0x00000000: 21 00 00 00 02 00 9e 00  00 00 91 00 00 00 79 00  |!.............y.|
   ElfSection.data at 0x00000010: 00 00 5f 49 4f 5f 73 74  64 69 6e 5f 75 73 65 64  |.._IO_stdin_used|
   ElfSection.data at 0x00000020: 00 00 00 00 00                                    |.....|
-Section [26]:
+Section [25]:
   ElfSection.Section.name                                        = ".debug_info"
   ElfSection.Section.id                                          = 27
   ElfSection.Section.offset                                      = 0x000008c5 (2245) bytes into file
@@ -2117,9 +2038,6 @@ Section [26]:
   ElfSection.Section.mapped                                      = <not mapped>
   ElfSection.Section.contains_code                               = false
   ElfSection.Section.rose_mapped_rva                             = 0 (0) 
-  ElfSection.Section.congealed                                   = true
-  ElfSection.Section.num_holes                                   = 1 hole
-  ElfSection.Section.hole[0]                                     = entire section
   ElfSection.ElfSectionTableEntry.sh_name                        = 246 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -2178,7 +2096,7 @@ Section [26]:
   ElfSection.data at 0x000002c0: 2f 67 6c 69 62 63 2d 32  2e 33 2e 35 2f 63 73 75  |/glibc-2.3.5/csu|
   ElfSection.data at 0x000002d0: 00 47 4e 55 20 41 53 20  32 2e 31 36 2e 31 00 01  |.GNU AS 2.16.1..|
   ElfSection.data at 0x000002e0: 80                                                |.|
-Section [27]:
+Section [26]:
   ElfSection.Section.name                                        = ".debug_abbrev"
   ElfSection.Section.id                                          = 28
   ElfSection.Section.offset                                      = 0x00000ba6 (2982) bytes into file
@@ -2190,9 +2108,6 @@ Section [27]:
   ElfSection.Section.mapped                                      = <not mapped>
   ElfSection.Section.contains_code                               = false
   ElfSection.Section.rose_mapped_rva                             = 0 (0) 
-  ElfSection.Section.congealed                                   = true
-  ElfSection.Section.num_holes                                   = 1 hole
-  ElfSection.Section.hole[0]                                     = entire section
   ElfSection.ElfSectionTableEntry.sh_name                        = 258 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -2212,7 +2127,7 @@ Section [27]:
   ElfSection.data at 0x00000050: 00 49 13 00 00 00 01 11  00 10 06 03 08 1b 08 25  |.I.............%|
   ElfSection.data at 0x00000060: 08 13 05 00 00 00 01 11  00 10 06 03 08 1b 08 25  |...............%|
   ElfSection.data at 0x00000070: 08 13 05 00 00 00                                 |......|
-Section [28]:
+Section [27]:
   ElfSection.Section.name                                        = ".debug_line"
   ElfSection.Section.id                                          = 29
   ElfSection.Section.offset                                      = 0x00000c1c (3100) bytes into file
@@ -2224,9 +2139,6 @@ Section [28]:
   ElfSection.Section.mapped                                      = <not mapped>
   ElfSection.Section.contains_code                               = false
   ElfSection.Section.rose_mapped_rva                             = 0 (0) 
-  ElfSection.Section.congealed                                   = true
-  ElfSection.Section.num_holes                                   = 1 hole
-  ElfSection.Section.hole[0]                                     = entire section
   ElfSection.ElfSectionTableEntry.sh_name                        = 272 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -2268,7 +2180,7 @@ Section [28]:
   ElfSection.data at 0x000001b0: 6e 2e 53 00 01 00 00 00  00 05 02 a6 85 04 08 03  |n.S.............|
   ElfSection.data at 0x000001c0: 12 01 1e 1e 1e 02 01 00  01 01 00 05 02 dd 82 04  |................|
   ElfSection.data at 0x000001d0: 08 03 09 01 1e 02 01 00  01 01                    |..........|
-Section [29]:
+Section [28]:
   ElfSection.Section.name                                        = ".debug_str"
   ElfSection.Section.id                                          = 30
   ElfSection.Section.offset                                      = 0x00000df6 (3574) bytes into file
@@ -2280,9 +2192,6 @@ Section [29]:
   ElfSection.Section.mapped                                      = <not mapped>
   ElfSection.Section.contains_code                               = false
   ElfSection.Section.rose_mapped_rva                             = 0 (0) 
-  ElfSection.Section.congealed                                   = true
-  ElfSection.Section.num_holes                                   = 1 hole
-  ElfSection.Section.hole[0]                                     = entire section
   ElfSection.ElfSectionTableEntry.sh_name                        = 284 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -2310,7 +2219,7 @@ Section [29]:
   ElfSection.data at 0x000000d0: 00 73 68 6f 72 74 20 75  6e 73 69 67 6e 65 64 20  |.short unsigned |
   ElfSection.data at 0x000000e0: 69 6e 74 00 5f 49 4f 5f  73 74 64 69 6e 5f 75 73  |int._IO_stdin_us|
   ElfSection.data at 0x000000f0: 65 64 00                                          |ed.|
-Section [30]:
+Section [29]:
   ElfStringSection.ElfSection.Section.name                       = ".strtab"
   ElfStringSection.ElfSection.Section.id                         = 33
   ElfStringSection.ElfSection.Section.offset                     = 0x00001ad0 (6864) bytes into file
@@ -2322,8 +2231,6 @@ Section [30]:
   ElfStringSection.ElfSection.Section.mapped                     = <not mapped>
   ElfStringSection.ElfSection.Section.contains_code              = false
   ElfStringSection.ElfSection.Section.rose_mapped_rva            = 0 (0) 
-  ElfStringSection.ElfSection.Section.congealed                  = true
-  ElfStringSection.ElfSection.Section.num_holes                  = 0 holes
   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_name       = 9 bytes into strtab
   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_type       = 0x3 (3) SHT_STRTAB
   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_link       = 0
@@ -2479,7 +2386,7 @@ Section [30]:
   ElfStringSection.data at 0x00000310: 61 74 61 5f 73 74 61 72  74 00 5f 4a 76 5f 52 65  |ata_start._Jv_Re|
   ElfStringSection.data at 0x00000320: 67 69 73 74 65 72 43 6c  61 73 73 65 73 00 5f 5f  |gisterClasses.__|
   ElfStringSection.data at 0x00000330: 67 6d 6f 6e 5f 73 74 61  72 74 5f 5f 00           |gmon_start__.|
-Section [31]:
+Section [30]:
   ElfSymbolSection.ElfSection.Section.name                       = ".dynsym"
   ElfSymbolSection.ElfSection.Section.id                         = 4
   ElfSymbolSection.ElfSection.Section.offset                     = 0x0000017c (380) bytes into file
@@ -2493,8 +2400,6 @@ Section [31]:
   ElfSymbolSection.ElfSection.Section.permissions                = r--
   ElfSymbolSection.ElfSection.Section.contains_code              = false
   ElfSymbolSection.ElfSection.Section.rose_mapped_rva            = 0 (0) 
-  ElfSymbolSection.ElfSection.Section.congealed                  = true
-  ElfSymbolSection.ElfSection.Section.num_holes                  = 0 holes
   ElfSymbolSection.ElfSection.ElfSectionTableEntry.sh_name       = 55 bytes into strtab
   ElfSymbolSection.ElfSection.ElfSectionTableEntry.sh_type       = 0xb (11) SHT_DYNSYM
   ElfSymbolSection.ElfSection.ElfSectionTableEntry.sh_link       = 5
@@ -2604,7 +2509,7 @@ Section [31]:
   ElfSymbolSection.data at 0x00000050: 3a 00 00 00 b0 85 04 08  04 00 00 00 11 00 0e 00  |:...............|
   ElfSymbolSection.data at 0x00000060: 01 00 00 00 00 00 00 00  00 00 00 00 20 00 00 00  |............ ...|
   ElfSymbolSection.data at 0x00000070: 15 00 00 00 00 00 00 00  00 00 00 00 20 00 00 00  |............ ...|
-Section [32]:
+Section [31]:
   ElfSection.Section.name                                        = ".gnu.version"
   ElfSection.Section.id                                          = 6
   ElfSection.Section.offset                                      = 0x00000268 (616) bytes into file
@@ -2618,9 +2523,6 @@ Section [32]:
   ElfSection.Section.permissions                                 = r--
   ElfSection.Section.contains_code                               = false
   ElfSection.Section.rose_mapped_rva                             = 0 (0) 
-  ElfSection.Section.congealed                                   = true
-  ElfSection.Section.num_holes                                   = 1 hole
-  ElfSection.Section.hole[0]                                     = entire section
   ElfSection.ElfSectionTableEntry.sh_name                        = 71 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x6fffffff (1879048191) unknown
   ElfSection.ElfSectionTableEntry.sh_link                        = 4
@@ -2633,7 +2535,7 @@ Section [32]:
   ElfSection.ElfSectionTableEntry.sh_entsize                     = 0x00000002 (2) bytes
   ElfSection.linked_to                                           = [4] ".dynsym"
   ElfSection.data at 0x00000000: 00 00 02 00 02 00 02 00  02 00 01 00 00 00 00 00  |................|
-Section [33]:
+Section [32]:
   RelocSection.ElfSection.Section.name                           = ".rel.dyn"
   RelocSection.ElfSection.Section.id                             = 8
   RelocSection.ElfSection.Section.offset                         = 0x00000298 (664) bytes into file
@@ -2647,8 +2549,6 @@ Section [33]:
   RelocSection.ElfSection.Section.permissions                    = r--
   RelocSection.ElfSection.Section.contains_code                  = false
   RelocSection.ElfSection.Section.rose_mapped_rva                = 0 (0) 
-  RelocSection.ElfSection.Section.congealed                      = true
-  RelocSection.ElfSection.Section.num_holes                      = 0 holes
   RelocSection.ElfSection.ElfSectionTableEntry.sh_name           = 99 bytes into strtab
   RelocSection.ElfSection.ElfSectionTableEntry.sh_type           = 0x9 (9) SHT_REL
   RelocSection.ElfSection.ElfSectionTableEntry.sh_link           = 4
@@ -2664,7 +2564,7 @@ Section [33]:
   RelocSection.ElfRelocEntry[0]                                    Offset     Type Addend      Sym Value      Name + Addend
   RelocSection.ElfRelocEntry[0]                                  = 0x080496a4 0x06 0x00000000    7 0x00000000 __gmon_start__ + 0
   RelocSection.data at 0x00000000: a4 96 04 08 06 07 00 00                           |........|
-Section [34]:
+Section [33]:
   RelocSection.ElfSection.Section.name                           = ".rel.plt"
   RelocSection.ElfSection.Section.id                             = 9
   RelocSection.ElfSection.Section.offset                         = 0x000002a0 (672) bytes into file
@@ -2678,8 +2578,6 @@ Section [34]:
   RelocSection.ElfSection.Section.permissions                    = r--
   RelocSection.ElfSection.Section.contains_code                  = false
   RelocSection.ElfSection.Section.rose_mapped_rva                = 0 (0) 
-  RelocSection.ElfSection.Section.congealed                      = true
-  RelocSection.ElfSection.Section.num_holes                      = 0 holes
   RelocSection.ElfSection.ElfSectionTableEntry.sh_name           = 108 bytes into strtab
   RelocSection.ElfSection.ElfSectionTableEntry.sh_type           = 0x9 (9) SHT_REL
   RelocSection.ElfSection.ElfSectionTableEntry.sh_link           = 4
@@ -2701,7 +2599,7 @@ Section [34]:
   RelocSection.data at 0x00000000: b4 96 04 08 07 01 00 00  b8 96 04 08 07 02 00 00  |................|
   RelocSection.data at 0x00000010: bc 96 04 08 07 03 00 00  c0 96 04 08 07 04 00 00  |................|
   RelocSection.data at 0x00000020: c4 96 04 08 07 07 00 00                           |........|
-Section [35]:
+Section [34]:
   ElfSymbolSection.ElfSection.Section.name                       = ".symtab"
   ElfSymbolSection.ElfSection.Section.id                         = 32
   ElfSymbolSection.ElfSection.Section.offset                     = 0x00001560 (5472) bytes into file
@@ -2713,8 +2611,6 @@ Section [35]:
   ElfSymbolSection.ElfSection.Section.mapped                     = <not mapped>
   ElfSymbolSection.ElfSection.Section.contains_code              = false
   ElfSymbolSection.ElfSection.Section.rose_mapped_rva            = 0 (0) 
-  ElfSymbolSection.ElfSection.Section.congealed                  = true
-  ElfSymbolSection.ElfSection.Section.num_holes                  = 0 holes
   ElfSymbolSection.ElfSection.ElfSectionTableEntry.sh_name       = 1 bytes into strtab
   ElfSymbolSection.ElfSection.ElfSectionTableEntry.sh_type       = 0x2 (2) SHT_SYMTAB
   ElfSymbolSection.ElfSection.ElfSectionTableEntry.sh_link       = 33
@@ -3772,7 +3668,7 @@ Section [35]:
   ElfSymbolSection.data at 0x00000540: 0d 03 00 00 c8 96 04 08  00 00 00 00 10 00 16 00  |................|
   ElfSymbolSection.data at 0x00000550: 1a 03 00 00 00 00 00 00  00 00 00 00 20 00 00 00  |............ ...|
   ElfSymbolSection.data at 0x00000560: 2e 03 00 00 00 00 00 00  00 00 00 00 20 00 00 00  |............ ...|
-Section [36]:
+Section [35]:
   ElfSection.Section.name                                        = ".hash"
   ElfSection.Section.id                                          = 3
   ElfSection.Section.offset                                      = 0x00000148 (328) bytes into file
@@ -3786,9 +3682,6 @@ Section [36]:
   ElfSection.Section.permissions                                 = r--
   ElfSection.Section.contains_code                               = false
   ElfSection.Section.rose_mapped_rva                             = 0 (0) 
-  ElfSection.Section.congealed                                   = true
-  ElfSection.Section.num_holes                                   = 1 hole
-  ElfSection.Section.hole[0]                                     = entire section
   ElfSection.ElfSectionTableEntry.sh_name                        = 49 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x5 (5) SHT_HASH
   ElfSection.ElfSectionTableEntry.sh_link                        = 4
@@ -3804,7 +3697,7 @@ Section [36]:
   ElfSection.data at 0x00000010: 05 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
   ElfSection.data at 0x00000020: 02 00 00 00 00 00 00 00  01 00 00 00 04 00 00 00  |................|
   ElfSection.data at 0x00000030: 06 00 00 00                                       |....|
-Section [37]:
+Section [36]:
   SegmentTable.Section.name                                      = "ELF Segment Table"
   SegmentTable.Section.id                                        = -1
   SegmentTable.Section.offset                                    = 0x00000034 (52) bytes into file
@@ -3816,8 +3709,6 @@ Section [37]:
   SegmentTable.Section.mapped                                    = <not mapped>
   SegmentTable.Section.contains_code                             = false
   SegmentTable.Section.rose_mapped_rva                           = 0 (0) 
-  SegmentTable.Section.congealed                                 = true
-  SegmentTable.Section.num_holes                                 = 0 holes
   SegmentTable.data at 0x00000000: 06 00 00 00 34 00 00 00  34 80 04 08 34 80 04 08  |....4...4...4...|
   SegmentTable.data at 0x00000010: e0 00 00 00 e0 00 00 00  05 00 00 00 04 00 00 00  |................|
   SegmentTable.data at 0x00000020: 03 00 00 00 14 01 00 00  14 81 04 08 14 81 04 08  |................|
@@ -3832,7 +3723,7 @@ Section [37]:
   SegmentTable.data at 0x000000b0: 20 00 00 00 20 00 00 00  04 00 00 00 04 00 00 00  | ... ...........|
   SegmentTable.data at 0x000000c0: 51 e5 74 64 00 00 00 00  00 00 00 00 00 00 00 00  |Q.td............|
   SegmentTable.data at 0x000000d0: 00 00 00 00 00 00 00 00  06 00 00 00 04 00 00 00  |................|
-Section [38]:
+Section [37]:
   ElfSection.Section.name                                        = "ELF Segment Table (segment 0)"
   ElfSection.Section.id                                          = -1
   ElfSection.Section.offset                                      = 0x00000034 (52) bytes into file
@@ -3846,9 +3737,6 @@ Section [38]:
   ElfSection.Section.permissions                                 = r-x
   ElfSection.Section.contains_code                               = false
   ElfSection.Section.rose_mapped_rva                             = 0 (0) 
-  ElfSection.Section.congealed                                   = true
-  ElfSection.Section.num_holes                                   = 1 hole
-  ElfSection.Section.hole[0]                                     = entire section
   ElfSection.ElfSegmentTableEntry.index                          = 0
   ElfSection.ElfSegmentTableEntry.type                           = 0x00000006 = PT_PHDR
   ElfSection.ElfSegmentTableEntry.flags                          = 0x00000005 r-x
@@ -3873,7 +3761,7 @@ Section [38]:
   ElfSection.data at 0x000000b0: 20 00 00 00 20 00 00 00  04 00 00 00 04 00 00 00  | ... ...........|
   ElfSection.data at 0x000000c0: 51 e5 74 64 00 00 00 00  00 00 00 00 00 00 00 00  |Q.td............|
   ElfSection.data at 0x000000d0: 00 00 00 00 00 00 00 00  06 00 00 00 04 00 00 00  |................|
-Section [39]:
+Section [38]:
   ElfSection.Section.name                                        = "ELF Load (segment 2)"
   ElfSection.Section.id                                          = -1
   ElfSection.Section.offset                                      = 0x00000000 (0) bytes into file
@@ -3887,9 +3775,6 @@ Section [39]:
   ElfSection.Section.permissions                                 = r-x
   ElfSection.Section.contains_code                               = false
   ElfSection.Section.rose_mapped_rva                             = 0 (0) 
-  ElfSection.Section.congealed                                   = true
-  ElfSection.Section.num_holes                                   = 1 hole
-  ElfSection.Section.hole[0]                                     = entire section
   ElfSection.ElfSegmentTableEntry.index                          = 2
   ElfSection.ElfSegmentTableEntry.type                           = 0x00000001 = PT_LOAD
   ElfSection.ElfSegmentTableEntry.flags                          = 0x00000005 r-x
@@ -3993,7 +3878,7 @@ Section [39]:
   ElfSection.data at 0x000005a0: 00 e8 ea fd ff ff 58 5b  c9 c3 00 00 03 00 00 00  |......X[........|
   ElfSection.data at 0x000005b0: 01 00 02 00 48 65 6c 6c  6f 2c 20 77 6f 72 6c 64  |....Hello, world|
   ElfSection.data at 0x000005c0: 2e 0a 00 00 00 00 00 00                           |........|
-Section [40]:
+Section [39]:
   ElfSection.Section.name                                        = "ELF Load (segment 3)"
   ElfSection.Section.id                                          = -1
   ElfSection.Section.offset                                      = 0x000005c8 (1480) bytes into file
@@ -4007,9 +3892,6 @@ Section [40]:
   ElfSection.Section.permissions                                 = rw-
   ElfSection.Section.contains_code                               = false
   ElfSection.Section.rose_mapped_rva                             = 0 (0) 
-  ElfSection.Section.congealed                                   = true
-  ElfSection.Section.num_holes                                   = 1 hole
-  ElfSection.Section.hole[0]                                     = entire section
   ElfSection.ElfSegmentTableEntry.index                          = 3
   ElfSection.ElfSegmentTableEntry.type                           = 0x00000001 = PT_LOAD
   ElfSection.ElfSegmentTableEntry.flags                          = 0x00000006 rw-
@@ -4037,7 +3919,7 @@ Section [40]:
   ElfSection.data at 0x000000e0: dc 95 04 08 00 00 00 00  00 00 00 00 f6 82 04 08  |................|
   ElfSection.data at 0x000000f0: 06 83 04 08 16 83 04 08  26 83 04 08 36 83 04 08  |........&...6...|
   ElfSection.data at 0x00000100: 00 00 00 00 00 00 00 00  d4 95 04 08              |............|
-Section [41]:
+Section [40]:
   ElfSection.Section.name                                        = "GNU Stack (segment 6)"
   ElfSection.Section.id                                          = -1
   ElfSection.Section.offset                                      = 0x00000000 (0) bytes into file
@@ -4051,8 +3933,6 @@ Section [41]:
   ElfSection.Section.permissions                                 = rw-
   ElfSection.Section.contains_code                               = false
   ElfSection.Section.rose_mapped_rva                             = 0 (0) 
-  ElfSection.Section.congealed                                   = true
-  ElfSection.Section.num_holes                                   = 0 holes
   ElfSection.ElfSegmentTableEntry.index                          = 6
   ElfSection.ElfSegmentTableEntry.type                           = 0x6474e551 = PT_GNU_STACK
   ElfSection.ElfSegmentTableEntry.flags                          = 0x00000006 rw-
