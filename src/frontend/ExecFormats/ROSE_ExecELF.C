@@ -137,7 +137,7 @@ SgAsmElfFileHeader::parse()
     Elf32FileHeader_disk disk32;
     if (sizeof(disk32)>get_size())
         extend(sizeof(disk32)-get_size());
-    content(0, sizeof(disk32), &disk32);
+    read_content_local(0, &disk32, sizeof disk32, false); /*zero pad if we read EOF*/
 
     /* Check magic number early */
     if (disk32.e_ident_magic[0]!=0x7f || disk32.e_ident_magic[1]!='E' ||
@@ -221,7 +221,7 @@ SgAsmElfFileHeader::parse()
         Elf64FileHeader_disk disk64;
         if (sizeof(disk64)>get_size())
             extend(sizeof(disk64)-get_size());
-        content(0, sizeof disk64, &disk64);
+        read_content_local(0, &disk64, sizeof disk64, false); /*zero pad at EOF*/
 
 	p_e_ident_padding.clear();
         for (size_t i=0; i<sizeof(disk64.e_ident_padding); i++)
@@ -665,7 +665,7 @@ SgAsmElfSection::init_from_section_table(SgAsmElfSectionTableEntry *shdr, SgAsmE
         set_size(shdr->get_sh_size());
     }
     set_file_alignment(shdr->get_sh_addralign());
-    p_data = get_file()->content(get_offset(), get_size());
+    grab_content();
 
     /* Memory mapping */
     if (shdr->get_sh_addr() > 0) {
@@ -708,7 +708,7 @@ SgAsmElfSection::init_from_segment_table(SgAsmElfSegmentTableEntry *shdr, bool m
         set_offset(shdr->get_offset());
         set_size(shdr->get_filesz());
         set_file_alignment(shdr->get_align());
-        p_data = get_file()->content(get_offset(), get_size());
+        grab_content();
     
         /* Name */
         char name[128];
