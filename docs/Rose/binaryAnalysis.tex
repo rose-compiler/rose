@@ -134,13 +134,13 @@ instructions that were successfully disassembled.
 
 The main interface to the disassembler is the {\tt disassembleBuffer} method. It searches for
 instructions based on the heuristics specified in the {\tt set\_search} method, reading
-instruction bytes from a supplied buffer.  An {\tt RvaFileMap} object is supplied in
+instruction bytes from a supplied buffer.  A {\tt MemoryMap} object is supplied in
 order to specify a mapping from virtual address space to offsets in the supplied buffer.
 The {\tt disassembleBuffer} method is used by methods that disassemble whole sections,
 whole interpretations, or whole files; in turn, it calls {\tt disassembleBlock} which
 disassembles sequential instructions until a control flow branch is encountered.
 
-An {\tt RvaFileMap} object can be built that describes the entire virtual address space
+A {\tt MemoryMap} object can be built that describes the entire virtual address space
 and how it relates to offsets in the executable file. This object, together with the
 entire contents of the file, can be passed to the {\tt disassembleBuffer} method in order
 to disassemble the entire executable in one call.  However, if the executable contains
