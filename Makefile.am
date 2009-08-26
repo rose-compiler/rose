@@ -191,10 +191,13 @@ FORCE_DOCS_TO_BE_MADE:
 docs: FORCE_DOCS_TO_BE_MADE
 	@if [ -f $(top_srcdir)/src/midend/midend.docs ]; then \
 	   echo "    Generate all possible documentation cd docs; make documentation;"; \
-	   cd tutorial; $(MAKE) docs; \
-	   cd ../docs; $(MAKE) docs; \
-	   cd ../projects/haskellport; $(MAKE) docs; \
-	   cd $(compass_build_tooldir)/compass; $(MAKE) docs; \
+	   $(MAKE) -Ctutorial docs && \
+	   $(MAKE) -Cprojects/haskellport docs && \
+	   $(MAKE) -Ctests/roseTests/astInterfaceTests check && \
+	   $(MAKE) -Ctests/CompileTests/UPC_tests check && \
+	   $(MAKE) -Cprojects/UpcTranslation/tests check && \
+	   $(MAKE) -Cdocs docs && \
+	   $(MAKE) -C$(compass_build_tooldir)/compass docs; \
    else \
       echo "Please look at the ROSE web site for documentation (www.roseCompiler.org)"; \
    fi
