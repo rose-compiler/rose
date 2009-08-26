@@ -18,9 +18,13 @@ HEADER_BINARY_POWERPC_INSTRUCTION_PREDECLARATION_START
 #include "powerpcInstructionEnum.h"
 HEADER_BINARY_POWERPC_INSTRUCTION_PREDECLARATION_END
 
-HEADER_GENERIC_HEADER_PREDECLARATION_START
+HEADER_GENERIC_SECTION_PREDECLARATION_START
 #include "RvaFileMap.h"
-HEADER_GENERIC_HEADER_PREDECLARATION_END
+HEADER_GENERIC_SECTION_PREDECLARATION_END
+
+HEADER_GENERIC_FILE_PREDECLARATION_START
+#include "RvaFileMap.h"
+HEADER_GENERIC_FILE_PREDECLARATION_END
 
 HEADER_BINARY_START
 
@@ -821,6 +825,18 @@ HEADER_GENERIC_SECTION_START
 		addr_t        write_sleb128(unsigned char*, addr_t offset, int64_t) const;
 
 		/* Functions for accessing content */
+		size_t read_content(addr_t abs_offset, unsigned char *dst_buf, addr_t size) const;
+		size_t read_content(const RvaFileMap*, addr_t rva, unsigned char *dst_buf, addr_t size) const;
+		size_t read_content(const RvaFileMap *map, rva_t rva, unsigned char *dst_buf, addr_t size) const {
+			return read_content(map, rva.get_rva(), dst_buf, size);
+		}
+		size_t read_content_local(addr_t rel_offset, unsigned char *dst_buf, addr_t size, bool strict=false) const;
+		std::string read_content_str(const RvaFileMap*, addr_t rva) const;
+		std::string read_content_str(const RvaFileMap *map, rva_t rva) const {
+			return read_content_str(map, rva.get_rva());
+		}
+
+		/* Deprecated functions for accessing content */
 		const unsigned char *content(addr_t offset, addr_t size);/*returns ptr to SIZE bytes starting at OFFSET */
 		const SgUnsignedCharList content_ucl(addr_t offset, addr_t size);/*returns ptr to SIZE bytes starting at OFFSET */
 		void content(addr_t offset, addr_t size, void *buf); /* copies content into BUF */
@@ -873,7 +889,6 @@ HEADER_GENERIC_HEADER_START
 	public:
           	explicit SgAsmGenericHeader(SgAsmGenericFile *ef)
 			: SgAsmGenericSection(ef, NULL),
-			p_map(NULL),
 			p_exec_format(NULL), p_isa(ISA_OTHER), p_base_va(0), p_dlls(NULL), p_symbols(NULL), p_sections(NULL)
 			{ctor();}
 
@@ -901,8 +916,6 @@ HEADER_GENERIC_HEADER_START
 		std::vector<unsigned char>& get_magic() {return p_magic;}
 		addr_t get_entry_rva() const;
 		void add_entry_rva(const rose_rva_t &rva) { p_entry_rvas.push_back(rva);}
-		RvaFileMap *get_map() const {return p_map;}
-		void set_map(RvaFileMap *map) {p_map=map;}
 
 		/* Convenience functions */
 		SgAsmExecutableFileFormat::ByteOrder get_sex() const;
@@ -930,7 +943,6 @@ HEADER_GENERIC_HEADER_START
 
 	private:
 		void ctor();
-		RvaFileMap *p_map;
 HEADER_GENERIC_HEADER_END
 
 
@@ -938,8 +950,8 @@ HEADER_GENERIC_HEADER_END
 HEADER_GENERIC_FILE_START
 	public:
 		SgAsmGenericFile()
-			: p_unreferenced_cache(NULL), p_fd(-1), p_headers(NULL), p_holes(NULL), p_truncate_zeros(false),
-			  p_tracking_references(true)
+			: p_unreferenced_cache(NULL), p_loader_map(NULL), p_fd(-1), p_headers(NULL), p_holes(NULL),
+			  p_truncate_zeros(false), p_tracking_references(true)
 			{ctor();}
 		virtual ~SgAsmGenericFile();				/* Destructor deletes children and unmaps/closes file */
 		SgAsmGenericFile* parse(std::string file_name);		/* Attach an existing file for parsing */
@@ -955,6 +967,16 @@ HEADER_GENERIC_FILE_START
 		/* File contents */
 		rose_addr_t get_current_size() const;			/* Current size based on defined sections */
 		rose_addr_t get_orig_size() const;              	/* Original size based on actual file size */
+		size_t read_content(addr_t offset, unsigned char *dst_buf, addr_t size) const;
+		size_t read_content(const RvaFileMap *map, addr_t rva, unsigned char *dst_buf, addr_t size) const;
+		size_t read_content(const RvaFileMap *map, rva_t rva, unsigned char *dst_buf, addr_t size) const {
+			return read_content(map, rva.get_rva(), dst_buf, size);
+		}
+		std::string read_content_str(const RvaFileMap *map, addr_t rva) const;
+		std::string read_content_str(const RvaFileMap *map, rva_t rva) const {
+			return read_content_str(map, rva.get_rva());
+		}
+
 		const SgFileContentList& content() {			/* Entire file contents */
 			return p_data;
 		}
@@ -1017,9 +1039,14 @@ HEADER_GENERIC_FILE_START
 		// DQ (8/26/2008): Added support for alternative section selection for use in disassembler.
 		SgAsmGenericSection* get_best_possible_section_by_va(addr_t va);
 
+		/* Loader memory maps */
+		RvaFileMap *get_loader_map() const {return p_loader_map;}
+		void set_loader_map(RvaFileMap *map) {p_loader_map=map;}
+
 	private:
-		mutable ExtentMap *p_unreferenced_cache;
 		void ctor();
+		mutable ExtentMap *p_unreferenced_cache;
+		RvaFileMap *p_loader_map;
 HEADER_GENERIC_FILE_END
 
 
@@ -2092,13 +2119,13 @@ HEADER_PE_IMPORT_DIRECTORY_START
 			uint32_t iat_rva;		/* 0x10 Import Address Table (Thunk Table) RVA */
 		} __attribute__((packed));		/* 0x14 */
 
-		SgAsmPEImportDirectory(SgAsmPEImportSection *isec, size_t idx)
-			{ctor(isec,idx);}
+		SgAsmPEImportDirectory(SgAsmPEImportSection *isec, size_t idx, rose_addr_t *rva_p)
+			{ctor(isec,idx,rva_p);}
 		void *encode(SgAsmPEImportDirectory::PEImportDirectory_disk*) const;
 		virtual void unparse(std::ostream&, const SgAsmPEImportSection*) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:
-		void ctor(SgAsmPEImportSection*, size_t idx);
+		void ctor(SgAsmPEImportSection*, size_t idx, rose_addr_t *rva_p);
 HEADER_PE_IMPORT_DIRECTORY_END
 
 

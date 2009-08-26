@@ -1643,8 +1643,8 @@ Grammar::setUpBinaryInstructions ()
      AsmGenericSectionList.setDataPrototype("SgAsmGenericSectionPtrList","sections","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmGenericSection.setFunctionPrototype("HEADER_GENERIC_SECTION", "../Grammar/BinaryInstruction.code");
+     AsmGenericSection.setPredeclarationString("HEADER_GENERIC_SECTION_PREDECLARATION", "../Grammar/BinaryInstruction.code");
   // Later we will want to turn this back on so that this IR node is consistant with the others (if appropriate).
-  // AsmGenericSection.setAutomaticGenerationOfConstructor(false);
      AsmGenericSection.setAutomaticGenerationOfDestructor(false);
   /* The file to which this section belongs */
      AsmGenericSection.setDataPrototype("SgAsmGenericFile*","file","= NULL",
@@ -1733,32 +1733,23 @@ Grammar::setUpBinaryInstructions ()
      AsmGenericSymbolList.setDataPrototype("SgAsmGenericSymbolPtrList","symbols","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // This data structure represents the ExecHeader from file: ExecGeneric.h
-  // ExecFormat          exec_format;                    /* General info about the executable format */
-  // std::vector<unsigned char> magic;                   /* Optional magic number in file byte order */
-  // Architecture        target                          /* Machine for which this header and its sections, etc. was compiled */
-  // addr_t              base_va;                        /* Base virtual address used by all "relative virtual addresses" (RVA) */
-  // std::vector<ExecDLL*> dlls;                         /* List of dynamic libraries needed by this executable */
-  // std::vector<ExecSymbol*> symbols;                   /* All symbols defined for this header */
+
+
      AsmGenericHeader.setFunctionPrototype("HEADER_GENERIC_HEADER", "../Grammar/BinaryInstruction.code");
-     AsmGenericHeader.setPredeclarationString("HEADER_GENERIC_HEADER_PREDECLARATION", "../Grammar/BinaryInstruction.code");
-
      AsmGenericHeader.setAutomaticGenerationOfDestructor(false);
-
-  /* General info about the executable format */
+     /* General info about the executable format */
      AsmGenericHeader.setDataPrototype("SgAsmGenericFormat*","exec_format","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-  /* Optional magic number in file byte order */
+     /* Optional magic number in file byte order */
      AsmGenericHeader.setDataPrototype("SgCharList","magic","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  /* Machine for which this header and its sections, etc. was compiled */
+     /* Machine for which this header and its sections, etc. was compiled */
      AsmGenericHeader.setDataPrototype("SgAsmGenericFormat::InsSetArchitecture","isa","= SgAsmGenericFormat::ISA_UNSPECIFIED",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  /* Base virtual address used by all "relative virtual addresses" (RVA) */
+     /* Base virtual address used by all "relative virtual addresses" (RVA) */
      AsmGenericHeader.setDataPrototype("rose_addr_t","base_va","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  /* Code entry point wrt base_va */
+     /* Code entry point wrt base_va */
      AsmGenericHeader.setDataPrototype("SgRVAList","entry_rvas","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericHeader.setDataPrototype("SgAsmGenericDLLList*","dlls","= NULL",
@@ -1773,11 +1764,10 @@ Grammar::setUpBinaryInstructions ()
 
   // This data structure represents the ExecFile from file: ExecGeneric.h
      AsmGenericFile.setFunctionPrototype ( "HEADER_GENERIC_FILE", "../Grammar/BinaryInstruction.code");
-
+     AsmGenericFile.setPredeclarationString("HEADER_GENERIC_FILE_PREDECLARATION", "../Grammar/BinaryInstruction.code");
   // Later we will want to turn this back on so that this IR node is consistant with the others (if appropriate).
      AsmGenericFile.setAutomaticGenerationOfConstructor(false);
      AsmGenericFile.setAutomaticGenerationOfDestructor(false);
-
   /* File descriptor opened for read-only (or negative) */
      AsmGenericFile.setDataPrototype("int","fd","= -1",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
