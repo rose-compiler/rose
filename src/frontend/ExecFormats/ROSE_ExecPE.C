@@ -86,7 +86,7 @@ SgAsmPEFileHeader::is_PE(SgAsmGenericFile *file)
 
         /* Read four-byte offset of potential PE File Header at offset 0x3c */
         uint32_t lfanew_disk;
-        file->read_content(0x3c, (unsigned char*)&lfanew_disk, sizeof lfanew_disk);
+        file->read_content(0x3c, &lfanew_disk, sizeof lfanew_disk);
         addr_t pe_offset = le_to_host(lfanew_disk);
         
         /* Look for the PE File Header magic number */
@@ -114,7 +114,7 @@ SgAsmPEFileHeader::parse()
     PEFileHeader_disk fh;
     if (sizeof(fh)>get_size())
         extend(sizeof(fh)-get_size());
-    if (sizeof(fh)!=read_content_local(0, (unsigned char*)&fh, sizeof fh, false))
+    if (sizeof(fh)!=read_content_local(0, &fh, sizeof fh, false))
         fprintf(stderr, "SgAsmPEFileHeader::parse: warning: short read of PE header at byte 0x%08"PRIx64"\n", get_offset());
 
     /* Check magic number before getting too far */
@@ -139,7 +139,7 @@ SgAsmPEFileHeader::parse()
     addr_t need32 = sizeof(PEFileHeader_disk) + std::min(p_e_nt_hdr_size, (addr_t)(sizeof oh32));
     if (need32>get_size())
         extend(need32-get_size());
-    if (sizeof(oh32)!=read_content_local(sizeof fh, (unsigned char*)&oh32, sizeof oh32, false))
+    if (sizeof(oh32)!=read_content_local(sizeof fh, &oh32, sizeof oh32, false))
         fprintf(stderr, "SgAsmPEFileHeader::parse: warning: short read of PE Optional Header at byte 0x%08"PRIx64"\n", 
                 get_offset() + sizeof(fh));
     p_e_opt_magic = le_to_host(oh32.e_opt_magic);
@@ -186,7 +186,7 @@ SgAsmPEFileHeader::parse()
         addr_t need64 = sizeof(PEFileHeader_disk) + std::min(p_e_nt_hdr_size, (addr_t)(sizeof oh64));
         if (need64>get_size())
             extend(need64-get_size());
-        if (sizeof(oh64)!=read_content_local(sizeof fh, (unsigned char*)&oh64, sizeof oh64))
+        if (sizeof(oh64)!=read_content_local(sizeof fh, &oh64, sizeof oh64))
             fprintf(stderr, "SgAsmPEFileHeader::parse: warning: short read of PE Optional Header at byte 0x%08"PRIx64"\n", 
                     get_offset() + sizeof(fh));
         p_e_lmajor             = le_to_host(oh64.e_lmajor);
@@ -451,7 +451,7 @@ SgAsmPEFileHeader::add_rvasize_pairs()
 
     extend(pairs_size);
     for (size_t i = 0; i < p_e_num_rvasize_pairs; i++, pairs_offset += sizeof pairs_disk) {
-        if (sizeof(pairs_disk)!=read_content_local(pairs_offset, (unsigned char*)&pairs_disk, sizeof pairs_disk, false))
+        if (sizeof(pairs_disk)!=read_content_local(pairs_offset, &pairs_disk, sizeof pairs_disk, false))
             fprintf(stderr, "SgAsmPEFileHeader::add_rvasize_pairs: warning: RVA/Size pair %zu at file offset 0x%08"PRIx64
                     " extends beyond the end of file (assuming 0/0)\n", i, get_offset()+pairs_offset);
         p_rvasize_pairs->get_pairs().push_back(new SgAsmPERVASizePair(&pairs_disk));
@@ -996,7 +996,7 @@ SgAsmPESectionTable::parse()
     const size_t entsize = sizeof(SgAsmPESectionTableEntry::PESectionTableEntry_disk);
     for (size_t i=0; i<fhdr->get_e_nsections(); i++) {
         SgAsmPESectionTableEntry::PESectionTableEntry_disk disk;
-        if (entsize!=read_content_local(i * entsize, (unsigned char*)&disk, entsize, false))
+        if (entsize!=read_content_local(i * entsize, &disk, entsize, false))
             fprintf(stderr, "SgAsmPESectionTable::parse: warning: section table entry %zu at file offset 0x%08"PRIx64
                     " extends beyond end of defined section table.\n",
                     i, get_offset()+i*entsize);
@@ -1143,7 +1143,7 @@ SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section, size_t idx, addr_t *
     size_t entry_size = sizeof(PEImportDirectory_disk);
     PEImportDirectory_disk disk, zero;
     memset(&zero, 0, sizeof zero);
-    section->read_content(NULL, *idir_rva_p, (unsigned char*)&disk, entry_size); /*may throw RvaFileMap::NotMapped*/
+    section->read_content(NULL, *idir_rva_p, &disk, entry_size); /*may throw RvaFileMap::NotMapped*/
 
     *idir_rva_p += entry_size;
 
@@ -1492,7 +1492,7 @@ SgAsmPEImportHNTEntry::ctor(SgAsmPEImportSection *isec, rva_t rva)
     /* Hint */
     uint16_t hint_disk = 0;
     try {
-        isec->read_content(NULL, rva.get_rva(), (unsigned char*)&hint_disk, sizeof hint_disk);
+        isec->read_content(NULL, rva.get_rva(), &hint_disk, sizeof hint_disk);
     } catch (const RvaFileMap::NotMapped &e) {
         fprintf(stderr, "SgAsmPEImportHNTEntry::ctor: warning: hint at RVA 0x%08"PRIx64
                 " contains unmapped address 0x%08"PRIx64"\n", rva.get_rva(), e.rva);
@@ -1715,7 +1715,7 @@ SgAsmPEExportDirectory::ctor(SgAsmPEExportSection *section)
     /* Read disk-formatted export directory */
     PEExportDirectory_disk disk;
     try {
-        section->read_content(NULL, section->get_mapped_rva(), (unsigned char*)&disk, sizeof disk);
+        section->read_content(NULL, section->get_mapped_rva(), &disk, sizeof disk);
     } catch (const RvaFileMap::NotMapped &e) {
         fprintf(stderr, "SgAsmPEExportDirectory::ctor: error: export directory at RVA 0x%08"PRIx64
                 " contains unmapped address 0x%08"PRIx64"\n", section->get_mapped_rva(), e.rva);
@@ -1855,7 +1855,7 @@ SgAsmPEExportSection::parse()
         ExportNamePtr_disk nameptr_disk = 0;
         addr_t nameptr_rva = p_export_dir->get_nameptr_rva().get_rva() + i*sizeof(nameptr_disk);
         try {
-            read_content(NULL, nameptr_rva, (unsigned char*)&nameptr_disk, sizeof nameptr_disk);
+            read_content(NULL, nameptr_rva, &nameptr_disk, sizeof nameptr_disk);
         } catch (const RvaFileMap::NotMapped &e) {
             fprintf(stderr, "SgAsmPEExportSection::parse: error: export name rva %zu at RVA 0x%08"PRIx64
                     " contains unmapped address 0x%08"PRIx64"\n", i, nameptr_rva, e.rva);
@@ -1885,7 +1885,7 @@ SgAsmPEExportSection::parse()
         ExportOrdinal_disk ordinal_disk = 0;
         addr_t ordinal_rva = p_export_dir->get_ordinals_rva().get_rva() + i*sizeof(ordinal_disk);
         try {
-            read_content(NULL, ordinal_rva, (unsigned char*)&ordinal_disk, sizeof ordinal_disk);
+            read_content(NULL, ordinal_rva, &ordinal_disk, sizeof ordinal_disk);
         } catch (const RvaFileMap::NotMapped &e) {
             fprintf(stderr, "SgAsmPEExportSection::parse: error: ordinal %zu at RVA 0x%08"PRIx64
                     " contains unmapped address 0x%08"PRIx64"\n", i, ordinal_rva, e.rva);
@@ -1908,7 +1908,7 @@ SgAsmPEExportSection::parse()
             ExportAddress_disk expaddr_disk = 0;
             addr_t expaddr_rva = p_export_dir->get_expaddr_rva().get_rva() + expaddr_idx*sizeof(expaddr_disk);
             try {
-                read_content(NULL, expaddr_rva, (unsigned char*)&expaddr_disk, sizeof expaddr_disk);
+                read_content(NULL, expaddr_rva, &expaddr_disk, sizeof expaddr_disk);
             } catch (const RvaFileMap::NotMapped &e) {
                 fprintf(stderr, "SgAsmPEExportSection::parse: error: export address %zu at RVA 0x%08"PRIx64
                         " contains unmapped address 0x%08"PRIx64"\n", i, expaddr_rva, e.rva);
@@ -2161,7 +2161,7 @@ SgAsmCoffStrtab::create_storage(addr_t offset, bool shared)
 
     /* Create storage object */
     char *buf = new char[len];
-    container->read_content_local(offset+1, (unsigned char*)buf, len);
+    container->read_content_local(offset+1, buf, len);
     SgAsmStringStorage *storage = new SgAsmStringStorage(this, std::string(buf, len), offset);
     delete[] buf;
 
@@ -2226,7 +2226,7 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
 {
     static const bool debug = false;
     COFFSymbol_disk disk;
-    symtab->read_content_local(idx * COFFSymbol_disk_size, (unsigned char*)&disk, COFFSymbol_disk_size);
+    symtab->read_content_local(idx * COFFSymbol_disk_size, &disk, COFFSymbol_disk_size);
     if (disk.st_zero == 0) {
         p_st_name_offset = le_to_host(disk.st_offset);
         if (p_st_name_offset < 4) throw FormatError("name collides with size field");
@@ -2551,7 +2551,7 @@ SgAsmCoffSymbolTable::parse()
     p_strtab->parse();
 
     uint32_t word;
-    p_strtab->read_content(0, (unsigned char*)&word, sizeof word);
+    p_strtab->read_content(0, &word, sizeof word);
     addr_t strtab_size = le_to_host(word);
     if (strtab_size < sizeof(uint32_t))
         throw FormatError("COFF symbol table string table size is less than four bytes");
