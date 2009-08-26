@@ -464,9 +464,9 @@ SgAsmPEFileHeader::map_sections()
 {
     const SgAsmGenericSectionPtrList &sections = get_sections()->get_sections();
 
-    RvaFileMap *map = get_file()->get_loader_map();
+    MemoryMap *map = get_file()->get_loader_map();
     if (!map) {
-        map = new RvaFileMap();
+        map = new MemoryMap();
         if (sections.size()>0)
             map->set_base_va(sections[0]->get_header()->get_base_va());
         get_file()->set_loader_map(map);
@@ -493,7 +493,7 @@ SgAsmPEFileHeader::map_sections()
 
             rose_addr_t mapped_rva = ALIGN_DN(section->get_mapped_rva(), mapped_alignment);
 
-            RvaFileMap::MapElement elmt(mapped_rva, mapped_size, file_offset);
+            MemoryMap::MapElement elmt(mapped_rva, mapped_size, file_offset);
             map->erase(elmt); /*might have been mapped as part of an earlier section*/
             map->insert(elmt);
         }
@@ -537,10 +537,10 @@ SgAsmPEFileHeader::create_table_sections()
          * FIXME: We have a potential problem here in that ROSE sections are always contiguous in the file but a section created
          *        from an RVA/Size pair is not necessarily contiguous in the file.  Normally such sections are in fact
          *        contiguous and we'll just ignore this for now.  In any case, as long as these sections only ever read their
-         *        data via the same RvaFileMap that we use here, everything should be fine. [RPM 2009-08-17] */
-        RvaFileMap *map = get_file()->get_loader_map();
+         *        data via the same MemoryMap that we use here, everything should be fine. [RPM 2009-08-17] */
+        MemoryMap *map = get_file()->get_loader_map();
         ROSE_ASSERT(map!=NULL);
-        const RvaFileMap::MapElement *elmt = map->findRVA(pair->get_e_rva());
+        const MemoryMap::MapElement *elmt = map->findRVA(pair->get_e_rva());
         if (!elmt) {
             fprintf(stderr, "SgAsmPEFileHeader::create_table_sections: warning: pair-%zu, rva=0x%08"PRIx64", size=%"PRIu64
                     " bytes \"%s\": unable to find a mapping for the virtual address (skipping)\n",
@@ -1142,7 +1142,7 @@ SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section, size_t idx, addr_t *
     size_t entry_size = sizeof(PEImportDirectory_disk);
     PEImportDirectory_disk disk, zero;
     memset(&zero, 0, sizeof zero);
-    section->read_content(NULL, *idir_rva_p, &disk, entry_size); /*may throw RvaFileMap::NotMapped*/
+    section->read_content(NULL, *idir_rva_p, &disk, entry_size); /*may throw MemoryMap::NotMapped*/
 
     *idir_rva_p += entry_size;
 
@@ -1167,7 +1167,7 @@ SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section, size_t idx, addr_t *
     try {
         if (p_idx>=0)
             p_dll_name = new SgAsmBasicString(section->read_content_str(NULL, p_dll_name_rva));
-    } catch (const RvaFileMap::NotMapped &e) {
+    } catch (const MemoryMap::NotMapped &e) {
         fprintf(stderr, "SgAsmPEImportDirectory::ctor: error: in PE Import Directory entry %zu: "
                 "Name RVA starting at 0x%08"PRIx64" contains unmapped address 0x%08"PRIx64"\n", 
                 idx, p_dll_name_rva.get_rva(), e.rva);
@@ -1397,7 +1397,7 @@ SgAsmPEImportLookupTable::ctor(SgAsmPEImportSection *isec, rva_t rva, size_t idi
         ROSE_ASSERT(fhdr->get_word_size() <= sizeof buf);
         try {
             isec->read_content(NULL, rva.get_rva(), buf, fhdr->get_word_size());
-        } catch (const RvaFileMap::NotMapped &e) {
+        } catch (const MemoryMap::NotMapped &e) {
             fprintf(stderr, "SgAsmPEImportSection::ctor: error: in PE Import Directory entry %zu: "
                     "%s entry %zu starting at RVA 0x%08"PRIx64" contains unmapped address 0x%08"PRIx64"\n",
                     idir_idx, tname, i, rva.get_rva(), e.rva);
@@ -1492,7 +1492,7 @@ SgAsmPEImportHNTEntry::ctor(SgAsmPEImportSection *isec, rva_t rva)
     uint16_t hint_disk = 0;
     try {
         isec->read_content(NULL, rva.get_rva(), &hint_disk, sizeof hint_disk);
-    } catch (const RvaFileMap::NotMapped &e) {
+    } catch (const MemoryMap::NotMapped &e) {
         fprintf(stderr, "SgAsmPEImportHNTEntry::ctor: warning: hint at RVA 0x%08"PRIx64
                 " contains unmapped address 0x%08"PRIx64"\n", rva.get_rva(), e.rva);
         if (e.map) {
@@ -1506,7 +1506,7 @@ SgAsmPEImportHNTEntry::ctor(SgAsmPEImportSection *isec, rva_t rva)
     std::string s;
     try {
         s = isec->read_content_str(NULL, rva.get_rva()+2);
-    } catch (const RvaFileMap::NotMapped &e) {
+    } catch (const MemoryMap::NotMapped &e) {
         fprintf(stderr, "SgAsmPEImportHNTEntry::ctor: warning: string at RVA 0x%08"PRIx64
                 " contains unmapped address 0x%08"PRIx64"\n", rva.get_rva()+2, e.rva);
         if (e.map) {
@@ -1523,7 +1523,7 @@ SgAsmPEImportHNTEntry::ctor(SgAsmPEImportSection *isec, rva_t rva)
             unsigned char byte;
             isec->read_content(NULL, rva.get_rva()+2+s.size()+1, &byte, 1);
             p_padding = byte;
-        } catch (const RvaFileMap::NotMapped &e) {
+        } catch (const MemoryMap::NotMapped &e) {
             fprintf(stderr, "SgAsmPEImportHNTEntry::ctor: warning: padding at RVA 0x%08"PRIx64" is not mapped\n", e.rva);
             if (e.map) {
                 fprintf(stderr, "Memory map in effect at time of error:\n");
@@ -1715,7 +1715,7 @@ SgAsmPEExportDirectory::ctor(SgAsmPEExportSection *section)
     PEExportDirectory_disk disk;
     try {
         section->read_content(NULL, section->get_mapped_rva(), &disk, sizeof disk);
-    } catch (const RvaFileMap::NotMapped &e) {
+    } catch (const MemoryMap::NotMapped &e) {
         fprintf(stderr, "SgAsmPEExportDirectory::ctor: error: export directory at RVA 0x%08"PRIx64
                 " contains unmapped address 0x%08"PRIx64"\n", section->get_mapped_rva(), e.rva);
         if (e.map) {
@@ -1742,7 +1742,7 @@ SgAsmPEExportDirectory::ctor(SgAsmPEExportSection *section)
     std::string name;
     try {
         name = section->read_content_str(NULL, p_name_rva.get_rva());
-    } catch (const RvaFileMap::NotMapped &e) {
+    } catch (const MemoryMap::NotMapped &e) {
         fprintf(stderr, "SgAsmPEExportDirectory::ctor: warning: directory name at RVA 0x%08"PRIx64
                 " contains unmapped address 0x%08"PRIx64"\n", p_name_rva.get_rva(), e.rva);
         if (e.map) {
@@ -1855,7 +1855,7 @@ SgAsmPEExportSection::parse()
         addr_t nameptr_rva = p_export_dir->get_nameptr_rva().get_rva() + i*sizeof(nameptr_disk);
         try {
             read_content(NULL, nameptr_rva, &nameptr_disk, sizeof nameptr_disk);
-        } catch (const RvaFileMap::NotMapped &e) {
+        } catch (const MemoryMap::NotMapped &e) {
             fprintf(stderr, "SgAsmPEExportSection::parse: error: export name rva %zu at RVA 0x%08"PRIx64
                     " contains unmapped address 0x%08"PRIx64"\n", i, nameptr_rva, e.rva);
             if (e.map) {
@@ -1870,7 +1870,7 @@ SgAsmPEExportSection::parse()
         std::string s;
         try {
             s = read_content_str(NULL, nameptr);
-        } catch (const RvaFileMap::NotMapped &e) {
+        } catch (const MemoryMap::NotMapped &e) {
             fprintf(stderr, "SgAsmPEExportSection::parse: error: export name %zu at RVA 0x%08"PRIx64
                     " contains unmapped address 0x%08"PRIx64"\n", i, nameptr, e.rva);
             if (e.map) {
@@ -1885,7 +1885,7 @@ SgAsmPEExportSection::parse()
         addr_t ordinal_rva = p_export_dir->get_ordinals_rva().get_rva() + i*sizeof(ordinal_disk);
         try {
             read_content(NULL, ordinal_rva, &ordinal_disk, sizeof ordinal_disk);
-        } catch (const RvaFileMap::NotMapped &e) {
+        } catch (const MemoryMap::NotMapped &e) {
             fprintf(stderr, "SgAsmPEExportSection::parse: error: ordinal %zu at RVA 0x%08"PRIx64
                     " contains unmapped address 0x%08"PRIx64"\n", i, ordinal_rva, e.rva);
             if (e.map) {
@@ -1908,7 +1908,7 @@ SgAsmPEExportSection::parse()
             addr_t expaddr_rva = p_export_dir->get_expaddr_rva().get_rva() + expaddr_idx*sizeof(expaddr_disk);
             try {
                 read_content(NULL, expaddr_rva, &expaddr_disk, sizeof expaddr_disk);
-            } catch (const RvaFileMap::NotMapped &e) {
+            } catch (const MemoryMap::NotMapped &e) {
                 fprintf(stderr, "SgAsmPEExportSection::parse: error: export address %zu at RVA 0x%08"PRIx64
                         " contains unmapped address 0x%08"PRIx64"\n", i, expaddr_rva, e.rva);
                 if (e.map) {
@@ -1929,7 +1929,7 @@ SgAsmPEExportSection::parse()
             std::string s;
             try {
                 s = read_content_str(NULL, expaddr.get_rva());
-            } catch (const RvaFileMap::NotMapped &e) {
+            } catch (const MemoryMap::NotMapped &e) {
                 fprintf(stderr, "SgAsmPEExportSection::parse: error: forwarder %zu at RVA 0x%08"PRIx64
                         " contains unmapped address 0x%08"PRIx64"\n", i, expaddr.get_rva(), e.rva);
                 if (e.map) {

@@ -824,19 +824,21 @@ SgAsmGenericFile::read_content(addr_t offset, void *dst_buf, addr_t size, bool s
 /** Reads data from a file. Reads up to @p size bytes of data starting at the specified relative virtual address. The @p map
  *  specifies how virtual addresses are mapped to file offsets. If @p map is the null pointer then the map already associated
  *  with this file is used (the map provided by the loader memory mapping emulation). As bytes are read, if we encounter a
- *  virtual address that is not mapped we stop reading and do one of two things: if @p strict is set then an RvaFileMap::NotMapped exception is thrown; otherwise the rest of the @p dst_buf is zero filled and the number of bytes read (not filled) is returned. */
+ *  virtual address that is not mapped we stop reading and do one of two things: if @p strict is set then a
+ *  MemoryMap::NotMapped exception is thrown; otherwise the rest of the @p dst_buf is zero filled and the number of bytes
+ *  read (not filled) is returned. */
 size_t
-SgAsmGenericFile::read_content(const RvaFileMap *map, addr_t rva, void *dst_buf, addr_t size, bool strict)
+SgAsmGenericFile::read_content(const MemoryMap *map, addr_t rva, void *dst_buf, addr_t size, bool strict)
 {
     if (!map)
         map = get_loader_map();
     ROSE_ASSERT(map!=NULL);
 
-    /* Note: This is the same algorithm as used by RvaFileMap::readRVA() except we do it here so that we have an opportunity
+    /* Note: This is the same algorithm as used by MemoryMap::readRVA() except we do it here so that we have an opportunity
      *       to track the file byte references. */
     size_t ncopied = 0;
     while (ncopied < size) {
-        const RvaFileMap::MapElement *m = map->findRVA(rva);
+        const MemoryMap::MapElement *m = map->findRVA(rva);
         if (!m) break;                                                  /*we reached a non-mapped virtual address*/
         ROSE_ASSERT(rva >= m->get_rva());                               /*or else map->findRVA() malfunctioned*/
         size_t m_offset = rva - m->get_rva();                           /*offset relative to start of map element*/
@@ -853,7 +855,7 @@ SgAsmGenericFile::read_content(const RvaFileMap *map, addr_t rva, void *dst_buf,
 
     if (ncopied<size) {
         if (strict)
-            throw RvaFileMap::NotMapped(map, rva);
+            throw MemoryMap::NotMapped(map, rva);
         memset((char*)dst_buf+ncopied, 0, size-ncopied);                /*zero pad result if necessary*/
     }
     return ncopied;
@@ -861,11 +863,11 @@ SgAsmGenericFile::read_content(const RvaFileMap *map, addr_t rva, void *dst_buf,
 
 /** Reads a string from a file. Returns the string stored at the specified relative virtual address. The
  *  returned string contains the bytes beginning at the starting RVA and continuing until we reach a NUL byte or an address
- *  which is not mapped. If we reach an address which is not mapped then one of two things happen: if @p strict is set then an
- *  RvaFileMap::NotMapped exception is thrown; otherwise the string is simply terminated. The returned string does not include
+ *  which is not mapped. If we reach an address which is not mapped then one of two things happen: if @p strict is set then a
+ *  MemoryMap::NotMapped exception is thrown; otherwise the string is simply terminated. The returned string does not include
  *  the NUL byte. */
 std::string
-SgAsmGenericFile::read_content_str(const RvaFileMap *map, addr_t rva, bool strict)
+SgAsmGenericFile::read_content_str(const MemoryMap *map, addr_t rva, bool strict)
 {
     static char *buf=NULL;
     static size_t nalloc=0;
@@ -1821,7 +1823,7 @@ SgAsmGenericFile::dump(FILE *f) const
     fprintf(f, "  --- ---------- ---------- ----------  ---------- ---------- ---------- ---------- ---- --- -----------------\n");
 
     /* Show the simulated loader memory map */
-    const RvaFileMap *map = get_loader_map();
+    const MemoryMap *map = get_loader_map();
     if (map) {
         fprintf(f, "Simulated loader memory map:\n");
         map->dump(f, "    ");
@@ -2214,11 +2216,11 @@ SgAsmGenericSection::read_content(addr_t start_offset, void *dst_buf, addr_t siz
  *  placing the results in @p dst_buf and returning the number of bytes read. The return value could be smaller than @p size
  *  if the reading encounters virtual addresses that are not mapped.  When an unmapped virtual address is encountered the
  *  reading stops (even if subsequent virtual addresses are defined) and one of two things happen: if @p strict is set (the
- *  default) then an RvaFileMap::NotMapped exception is thrown, otherwise the @p dst_buf is padded with zeros so that all @p
+ *  default) then an MemoryMap::NotMapped exception is thrown, otherwise the @p dst_buf is padded with zeros so that all @p
  *  size bytes are initialized. The @p map is used to map virtual addresses to file offsets; if @p map is NULL then the map
  *  defined in the underlying file is used. */
 size_t
-SgAsmGenericSection::read_content(const RvaFileMap *map, addr_t start_rva, void *dst_buf, addr_t size, bool strict)
+SgAsmGenericSection::read_content(const MemoryMap *map, addr_t start_rva, void *dst_buf, addr_t size, bool strict)
 {
     SgAsmGenericFile *file = get_file();
     ROSE_ASSERT(file!=NULL);
@@ -2268,10 +2270,10 @@ SgAsmGenericSection::read_content_local_ucl(addr_t rel_offset, addr_t size)
 
 /** Reads a string from the file. The string begins at the specified virtual address and continues until the first NUL byte or
  *  until we reach an address that is not mapped. However, if @p strict is set (the default) and we reach an unmapped address
- *  then an RvaFileMap::NotMapped exception is thrown. The @p map defines the mapping from virtual addresses to file offsets;
+ *  then an MemoryMap::NotMapped exception is thrown. The @p map defines the mapping from virtual addresses to file offsets;
  *  if @p map is NULL then the map defined in the underlying file is used. */
 std::string
-SgAsmGenericSection::read_content_str(const RvaFileMap *map, addr_t start_rva, bool strict)
+SgAsmGenericSection::read_content_str(const MemoryMap *map, addr_t start_rva, bool strict)
 {
     SgAsmGenericFile *file = get_file();
     ROSE_ASSERT(file!=NULL);

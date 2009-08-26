@@ -119,14 +119,14 @@ SgAsmInstruction *
 Disassembler::disassembleOne(const unsigned char *buf, rose_addr_t buf_va, size_t buf_size, rose_addr_t start_va,
                              AddressSet *successors)
 {
-    RvaFileMap map;
-    map.insert(RvaFileMap::MapElement(buf_va, buf_size, 0));
+    MemoryMap map;
+    map.insert(MemoryMap::MapElement(buf_va, buf_size, 0));
     return disassembleOne(buf, map, start_va, successors);
 }
 
 /* Disassemble one basic block. */
 Disassembler::InstructionMap
-Disassembler::disassembleBlock(const unsigned char *buf, const RvaFileMap &map, rose_addr_t start_va,
+Disassembler::disassembleBlock(const unsigned char *buf, const MemoryMap &map, rose_addr_t start_va,
                                AddressSet *successors)
 {
     InstructionMap insns;
@@ -191,14 +191,14 @@ Disassembler::InstructionMap
 Disassembler::disassembleBlock(const unsigned char *buf, rose_addr_t buf_va, size_t buf_size, rose_addr_t start_va,
                                AddressSet *successors)
 {
-    RvaFileMap map;
-    map.insert(RvaFileMap::MapElement(buf_va, buf_size, 0));
+    MemoryMap map;
+    map.insert(MemoryMap::MapElement(buf_va, buf_size, 0));
     return disassembleBlock(buf, map, start_va, successors);
 }
 
 /* Disassemble reachable instructions from a buffer */
 Disassembler::InstructionMap
-Disassembler::disassembleBuffer(const unsigned char *buf, const RvaFileMap &map, size_t start_va,
+Disassembler::disassembleBuffer(const unsigned char *buf, const MemoryMap &map, size_t start_va,
                                 AddressSet *successors, BadMap *bad)
 {
     AddressSet worklist;
@@ -208,7 +208,7 @@ Disassembler::disassembleBuffer(const unsigned char *buf, const RvaFileMap &map,
 
 /* Disassemble reachable instructions from a buffer */
 Disassembler::InstructionMap
-Disassembler::disassembleBuffer(const unsigned char *buf, const RvaFileMap &map, AddressSet worklist,
+Disassembler::disassembleBuffer(const unsigned char *buf, const MemoryMap &map, AddressSet worklist,
                                 AddressSet *successors, BadMap *bad)
 {
     rose_addr_t next_search = 0;
@@ -273,7 +273,7 @@ Disassembler::disassembleBuffer(const unsigned char *buf, const RvaFileMap &map,
 
 /* Add basic block following address to work list. */
 void
-Disassembler::search_following(AddressSet *worklist, const InstructionMap &bb, const RvaFileMap &map, const BadMap *bad)
+Disassembler::search_following(AddressSet *worklist, const InstructionMap &bb, const MemoryMap &map, const BadMap *bad)
 {
     if (bb.size()==0)
         return;
@@ -292,7 +292,7 @@ Disassembler::search_following(AddressSet *worklist, const InstructionMap &bb, c
 
 /* Add values of immediate operands to work list */
 void
-Disassembler::search_immediate(AddressSet *worklist, const InstructionMap &bb,  const RvaFileMap &map, const BadMap *bad)
+Disassembler::search_immediate(AddressSet *worklist, const InstructionMap &bb,  const MemoryMap &map, const BadMap *bad)
 {
     for (InstructionMap::const_iterator bbi=bb.begin(); bbi!=bb.end(); bbi++) {
         const std::vector<SgAsmExpression*> &operands = bbi->second->get_operandList()->get_operands();
@@ -323,11 +323,11 @@ Disassembler::search_immediate(AddressSet *worklist, const InstructionMap &bb,  
 
 /* Add word-aligned values to work list */
 void
-Disassembler::search_words(AddressSet *worklist, const unsigned char *buf, const RvaFileMap &map, const BadMap *bad)
+Disassembler::search_words(AddressSet *worklist, const unsigned char *buf, const MemoryMap &map, const BadMap *bad)
 {
-    const std::vector<RvaFileMap::MapElement> &mes = map.get_elements();
+    const std::vector<MemoryMap::MapElement> &mes = map.get_elements();
     for (size_t i=0; i<mes.size(); i++) {
-        const RvaFileMap::MapElement &me = mes[i];
+        const MemoryMap::MapElement &me = mes[i];
         rose_addr_t rva = me.get_rva();
         rva = (rva+p_alignment-1) & ~(p_alignment-1); /*align*/
         while (rva+p_wordsize <= me.get_rva()+me.get_size()) {
@@ -358,7 +358,7 @@ Disassembler::search_words(AddressSet *worklist, const unsigned char *buf, const
 
 /* Find next unused address. */
 void
-Disassembler::search_next_address(AddressSet *worklist, rose_addr_t start_va, const RvaFileMap &map,
+Disassembler::search_next_address(AddressSet *worklist, rose_addr_t start_va, const MemoryMap &map,
                                   const InstructionMap &insns, const BadMap *bad, bool avoid_overlap)
 {
     /* Assume a maximum instruction size so that while we're search backward (by virtual address) through previously
@@ -371,8 +371,8 @@ Disassembler::search_next_address(AddressSet *worklist, rose_addr_t start_va, co
         /* Advance to the next valid mapped address if necessary by scanning for the first map element that has a higher
          * virtual address. */
         if (!map.findVA(next_va)) {
-            const std::vector<RvaFileMap::MapElement> &mes = map.get_elements();
-            const RvaFileMap::MapElement *me = NULL;
+            const std::vector<MemoryMap::MapElement> &mes = map.get_elements();
+            const MemoryMap::MapElement *me = NULL;
             for (size_t i=0; i<mes.size(); i++) {
                 if (map.get_base_va()+mes[i].get_rva() > next_va) {
                     me = &(mes[i]);
@@ -435,8 +435,8 @@ Disassembler::InstructionMap
 Disassembler::disassembleBuffer(const unsigned char *buf, rose_addr_t buf_va, size_t buf_size, rose_addr_t start_va,
                                 AddressSet *successors, BadMap *bad)
 {
-    RvaFileMap map;
-    map.insert(RvaFileMap::MapElement(buf_va, buf_size, 0));
+    MemoryMap map;
+    map.insert(MemoryMap::MapElement(buf_va, buf_size, 0));
     return disassembleBuffer(buf, map, start_va, successors, bad);
 }
 
@@ -448,7 +448,7 @@ Disassembler::disassembleSection(SgAsmGenericSection *section, rose_addr_t start
     SgAsmGenericFile *file = section->get_file();
     ROSE_ASSERT(file!=NULL);
 
-    RvaFileMap map;
+    MemoryMap map;
     map.insert(section);
 
     SgFileContentList content = file->content(section->get_offset(), section->get_size());
@@ -463,7 +463,7 @@ Disassembler::disassembleInterp(SgAsmGenericHeader *header, AddressSet *successo
     AddressSet worklist;
 
     /* Decide which sections should be disassembled. */
-    RvaFileMap map;
+    MemoryMap map;
     SgAsmGenericSectionList *seclist = header->get_sections();
     for (size_t i=0; i<seclist->get_sections().size(); i++) {
         SgAsmGenericSection *section = seclist->get_sections()[i];
@@ -487,7 +487,7 @@ Disassembler::disassembleInterp(SgAsmGenericHeader *header, AddressSet *successo
             }
             try {
                 map.insert(section);
-            } catch(const RvaFileMap::Inconsistent &e) {
+            } catch(const MemoryMap::Inconsistent &e) {
                 std::ostringstream s;
                 s <<"Disassembler: inconsistent mapping of file sections to virtual memory\n"
                   <<"section [" <<section->get_id() <<"] \"" <<section->get_name()->get_string() <<"\""

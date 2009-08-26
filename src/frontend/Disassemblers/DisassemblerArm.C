@@ -152,7 +152,7 @@ DisassemblerArm::init(SgAsmGenericHeader *header)
 
 /* This is a bit of a kludge for now because we're trying to use an unmodified version of the ArmDisassembler name space. */
 SgAsmInstruction *
-DisassemblerArm::disassembleOne(const unsigned char *buf, const RvaFileMap &map, rose_addr_t start_va, 
+DisassemblerArm::disassembleOne(const unsigned char *buf, const MemoryMap &map, rose_addr_t start_va, 
                                 AddressSet *successors)
 {
     if (start_va & 0x3)
@@ -160,7 +160,7 @@ DisassemblerArm::disassembleOne(const unsigned char *buf, const RvaFileMap &map,
     if (start_va >= 0xffffffff)
         throw Exception("instruction pointer out of range", start_va);
 
-    /* The old ArmDisassembler::disassemble() function doesn't understand RvaFileMap mappings. Therefore, remap the next
+    /* The old ArmDisassembler::disassemble() function doesn't understand MemoryMap mappings. Therefore, remap the next
      * few bytes (enough for at least one instruction) into a temporary buffer. */
     unsigned char temp[4]; /* all ARM instructions are 32 bits */
     size_t tempsz = map.readVA(temp, buf, start_va, sizeof temp);

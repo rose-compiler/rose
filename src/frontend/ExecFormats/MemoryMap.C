@@ -6,7 +6,7 @@
 /* See header file for full documentation */
 
 rose_addr_t
-RvaFileMap::MapElement::get_rva_offset(rose_addr_t rva) const
+MemoryMap::MapElement::get_rva_offset(rose_addr_t rva) const
 {
     if (rva<get_rva() || rva>=get_rva()+get_size())
         throw NotMapped(NULL, rva);
@@ -14,13 +14,13 @@ RvaFileMap::MapElement::get_rva_offset(rose_addr_t rva) const
 }
 
 bool
-RvaFileMap::consistent(const MapElement &a, const MapElement &b) 
+MemoryMap::consistent(const MapElement &a, const MapElement &b) 
 {
     return a.rva-b.rva == a.offset-b.offset;
 }
 
 void
-RvaFileMap::insertMappedSections(SgAsmGenericHeader *header) 
+MemoryMap::insertMappedSections(SgAsmGenericHeader *header) 
 {
     SgAsmGenericSectionPtrList sections = header->get_mapped_sections();
     for (SgAsmGenericSectionPtrList::iterator i=sections.begin(); i!=sections.end(); ++i)
@@ -30,7 +30,7 @@ RvaFileMap::insertMappedSections(SgAsmGenericHeader *header)
 }
 
 void
-RvaFileMap::insert(SgAsmGenericSection *section)
+MemoryMap::insert(SgAsmGenericSection *section)
 {
     SgAsmGenericHeader *header = section->get_header();
     if (header) {
@@ -42,7 +42,7 @@ RvaFileMap::insert(SgAsmGenericSection *section)
         return;
 
 #if 0 /*DEBUGGING*/
-    fprintf(stderr, "RvaFileMap::insert(section [%d] \"%s\" at rva 0x%08"PRIx64"-0x%08"PRIx64")\n", 
+    fprintf(stderr, "MemoryMap::insert(section [%d] \"%s\" at rva 0x%08"PRIx64"-0x%08"PRIx64")\n", 
             section->get_id(), section->get_name()->c_str(), section->get_mapped_rva(),
             section->get_mapped_rva()+section->get_mapped_size());
 #endif
@@ -56,7 +56,7 @@ RvaFileMap::insert(SgAsmGenericSection *section)
 }
 
 void
-RvaFileMap::insert(MapElement add)
+MemoryMap::insert(MapElement add)
 {
     /* Remove existing elements that are contiguous with or overlap with the new element, extending the new element to cover
      * the removed element. We also check the consistency of the mapping: one virtual address cannot be mapped to two or more
@@ -120,7 +120,7 @@ RvaFileMap::insert(MapElement add)
 }
 
 void
-RvaFileMap::erase(SgAsmGenericSection *section)
+MemoryMap::erase(SgAsmGenericSection *section)
 {
     SgAsmGenericHeader *header = section->get_header();
     if (header) {
@@ -132,7 +132,7 @@ RvaFileMap::erase(SgAsmGenericSection *section)
         return;
 
 #if 0 /*DEBUGGING*/
-    fprintf(stderr, "RvaFileMap::erase(section [%d] \"%s\" at rva 0x%08"PRIx64"-0x%08"PRIx64")\n", 
+    fprintf(stderr, "MemoryMap::erase(section [%d] \"%s\" at rva 0x%08"PRIx64"-0x%08"PRIx64")\n", 
             section->get_id(), section->get_name()->c_str(), section->get_mapped_rva(),
             section->get_mapped_rva()+section->get_mapped_size());
 #endif
@@ -146,7 +146,7 @@ RvaFileMap::erase(SgAsmGenericSection *section)
 }
 
 void
-RvaFileMap::erase(MapElement me)
+MemoryMap::erase(MapElement me)
 {
     /* Remove existing elements that overlap with the erasure area, reducing their size to the part that doesn't overlap, and
      * then add the non-overlapping parts back at the end. */
@@ -176,8 +176,8 @@ RvaFileMap::erase(MapElement me)
         insert(*i);
 }
                 
-const RvaFileMap::MapElement *
-RvaFileMap::findRVA(rose_addr_t rva) const
+const MemoryMap::MapElement *
+MemoryMap::findRVA(rose_addr_t rva) const
 {
     if (!sorted) {
         sort(elements.begin(), elements.end());
@@ -199,8 +199,8 @@ RvaFileMap::findRVA(rose_addr_t rva) const
     return NULL;
 }
 
-const std::vector<RvaFileMap::MapElement> &
-RvaFileMap::get_elements() const {
+const std::vector<MemoryMap::MapElement> &
+MemoryMap::get_elements() const {
     if (!sorted) {
         sort(elements.begin(), elements.end());
         sorted = true;
@@ -209,11 +209,11 @@ RvaFileMap::get_elements() const {
 }
 
 size_t
-RvaFileMap::readRVA(unsigned char *dst_buf, const unsigned char *src_buf, rose_addr_t start_rva, size_t desired) const
+MemoryMap::readRVA(unsigned char *dst_buf, const unsigned char *src_buf, rose_addr_t start_rva, size_t desired) const
 {
     size_t ncopied = 0;
     while (ncopied < desired) {
-        const RvaFileMap::MapElement *m = findRVA(start_rva);
+        const MemoryMap::MapElement *m = findRVA(start_rva);
         if (!m)
             break;
         ROSE_ASSERT(start_rva >= m->get_rva());
@@ -230,7 +230,7 @@ RvaFileMap::readRVA(unsigned char *dst_buf, const unsigned char *src_buf, rose_a
     
 
 size_t
-RvaFileMap::readVA(unsigned char *dst_buf, const unsigned char *src_buf, rose_addr_t start_va, size_t desired) const
+MemoryMap::readVA(unsigned char *dst_buf, const unsigned char *src_buf, rose_addr_t start_va, size_t desired) const
 {
     ROSE_ASSERT(dst_buf!=NULL);
     ROSE_ASSERT(start_va >= get_base_va());
@@ -239,7 +239,7 @@ RvaFileMap::readVA(unsigned char *dst_buf, const unsigned char *src_buf, rose_ad
 }
 
 void
-RvaFileMap::dump(FILE *f, const char *prefix) const
+MemoryMap::dump(FILE *f, const char *prefix) const
 {
     if (!sorted) {
         sort(elements.begin(), elements.end());

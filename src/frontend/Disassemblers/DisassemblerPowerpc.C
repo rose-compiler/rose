@@ -130,10 +130,10 @@ DisassemblerPowerpc::init(SgAsmGenericHeader *header)
 
 /* This is a bit of a kludge for now because we're trying to use an unmodified version of the PowerpcDisassembler name space. */
 SgAsmInstruction *
-DisassemblerPowerpc::disassembleOne(const unsigned char *buf, const RvaFileMap &map, rose_addr_t start_va, 
+DisassemblerPowerpc::disassembleOne(const unsigned char *buf, const MemoryMap &map, rose_addr_t start_va, 
                                     AddressSet *successors)
 {
-    /* The old PowerpcDisassembler::disassemble() function doesn't understand RvaFileMap mappings. Therefore, remap the next
+    /* The old PowerpcDisassembler::disassemble() function doesn't understand MemoryMap mappings. Therefore, remap the next
      * few bytes (enough for at least one instruction) into a temporary buffer. */
     unsigned char temp[4];
     size_t tempsz = map.readVA(temp, buf, start_va, sizeof temp);

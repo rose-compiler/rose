@@ -1,13 +1,12 @@
-#ifndef ROSE_RVA_FILE_MAP_H
-#define ROSE_RVA_FILE_MAP_H
+#ifndef ROSE_MEMORY_MAP_H
+#define ROSE_MEMORY_MAP_H
 
-/** An RvaFileMap is an efficient mapping from relative virtual addresses to file offsets. The mapping can be built piecemeal
- *  and the data structure will coalesce adjacent memory areas (provided they are also adjacent in the file). If an attempt is
- *  made to define a mapping from one virtual address to multiple file offsets then an exception is raised. We also store a
- *  base virtual address to make computations that use non-relative virtual addresses easier. */
-class RvaFileMap {
+/** A MemoryMap is an efficient mapping from relative virtual addresses to file (or other) offsets. The mapping can be built
+ *  piecemeal and the data structure will coalesce adjacent memory areas (provided they are also adjacent in the file). If an
+ *  attempt is made to define a mapping from one virtual address to multiple file offsets then an exception is raised. */
+class MemoryMap {
 public:
-    /** An RvaFileMap is composed of zero or more MapElements. Each MapElement describes the mapping from some contiguous
+    /** A MemoryMap is composed of zero or more MapElements. Each MapElement describes the mapping from some contiguous
      *  relative virtual address space to some contiguous region of the file. */
     class MapElement {
     public:
@@ -29,38 +28,38 @@ public:
         rose_addr_t get_rva_offset(rose_rva_t rva) const {return get_rva_offset(rva.get_rva());}
 
     private:
-        friend class RvaFileMap;
+        friend class MemoryMap;
         rose_addr_t rva;                /* Virtual address for start of region */
         size_t size;                    /* Number of bytes in region */
         rose_addr_t offset;             /* File offset */
     };
 
-    /** Exceptions for RvaFileMap operations. */
+    /** Exceptions for MemoryMap operations. */
     struct Exception {
-        Exception(const RvaFileMap *map)
+        Exception(const MemoryMap *map)
             : map(map) {}
-        const RvaFileMap *map;          /**< Map that caused the exception if the map is available (null otherwise). */
+        const MemoryMap *map;           /**< Map that caused the exception if the map is available (null otherwise). */
     };
 
     /** Exception for an inconsistent mapping. The @p a and @p b are the map elements that are in conflict. For an insert()
      *  operation, the @p a is the element being inserted and @p b is the existing element that's in conflict. Note that the
      *  map may have already been partly modified before the exception is thrown [FIXME: RPM 2009-08-20]. */
     struct Inconsistent : public Exception {
-        Inconsistent(const RvaFileMap *map, const MapElement &a, const MapElement &b)
+        Inconsistent(const MemoryMap *map, const MapElement &a, const MapElement &b)
             : Exception(map), a(a), b(b) {}
         MapElement a, b;
     };
 
     /** Exception for when we try to access a virtual address that isn't mapped. */
     struct NotMapped : public Exception {
-        NotMapped(const RvaFileMap *map, rose_addr_t rva)
+        NotMapped(const MemoryMap *map, rose_addr_t rva)
             : Exception(map), rva(rva) {}
         rose_addr_t rva;
     };
 
-    RvaFileMap()
+    MemoryMap()
         : sorted(false), base_va(0) {}
-    RvaFileMap(SgAsmGenericHeader *header)
+    MemoryMap(SgAsmGenericHeader *header)
         : sorted(false), base_va(0) {
         insertMappedSections(header);
     }
@@ -75,7 +74,7 @@ public:
 
     /** Insert the specified section. If the section is not mapped then nothing is inserted. An exception is thrown if the
      *  operation would cause a relative virtual address to be mapped to multiple file offsets. Note that if an exception is
-     *  thrown this RvaFileMap might be modified anyway. */
+     *  thrown this MemoryMap might be modified anyway. */
     void insert(SgAsmGenericSection*);
 
     /** Insert the specified map element. */
@@ -98,7 +97,7 @@ public:
 
     /** Search for the specified virtual address and return the map element that contains it. Note that the map element has a
      *  _relative_ virtual address rather than a virtual address, and in order to get the virtual address the caller must add
-     *  the value returned by the RvaFileMap::get_base_va() method. */
+     *  the value returned by the MemoryMap::get_base_va() method. */
     const MapElement* findVA(rose_addr_t va) const {
         ROSE_ASSERT(va>=base_va);
         return findRVA(va-base_va);
@@ -137,7 +136,7 @@ private:
     rose_addr_t base_va;
 };
 
-inline bool operator<(const RvaFileMap::MapElement &a, const RvaFileMap::MapElement &b) {
+inline bool operator<(const MemoryMap::MapElement &a, const MemoryMap::MapElement &b) {
     return a.get_rva() < b.get_rva();
 }
 

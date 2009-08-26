@@ -19,11 +19,11 @@ HEADER_BINARY_POWERPC_INSTRUCTION_PREDECLARATION_START
 HEADER_BINARY_POWERPC_INSTRUCTION_PREDECLARATION_END
 
 HEADER_GENERIC_SECTION_PREDECLARATION_START
-#include "RvaFileMap.h"
+#include "MemoryMap.h"
 HEADER_GENERIC_SECTION_PREDECLARATION_END
 
 HEADER_GENERIC_FILE_PREDECLARATION_START
-#include "RvaFileMap.h"
+#include "MemoryMap.h"
 HEADER_GENERIC_FILE_PREDECLARATION_END
 
 HEADER_BINARY_START
@@ -826,13 +826,13 @@ HEADER_GENERIC_SECTION_START
 
 		/* Functions for accessing content */
 		size_t read_content(addr_t abs_offset, void *dst_buf, addr_t size, bool strict=true);
-		size_t read_content(const RvaFileMap*, addr_t rva, void *dst_buf, addr_t size, bool strict=true);
-		size_t read_content(const RvaFileMap *map, rva_t rva, void *dst_buf, addr_t size, bool strict=true) {
+		size_t read_content(const MemoryMap*, addr_t rva, void *dst_buf, addr_t size, bool strict=true);
+		size_t read_content(const MemoryMap *map, rva_t rva, void *dst_buf, addr_t size, bool strict=true) {
 			return read_content(map, rva.get_rva(), dst_buf, size, strict);
 		}
 		size_t read_content_local(addr_t rel_offset, void *dst_buf, addr_t size, bool strict=true);
-		std::string read_content_str(const RvaFileMap*, addr_t rva, bool strict=true);
-		std::string read_content_str(const RvaFileMap *map, rva_t rva, bool strict=true) {
+		std::string read_content_str(const MemoryMap*, addr_t rva, bool strict=true);
+		std::string read_content_str(const MemoryMap *map, rva_t rva, bool strict=true) {
 			return read_content_str(map, rva.get_rva(), strict);
 		}
 		std::string read_content_str(addr_t abs_offset, bool strict=true);
@@ -965,12 +965,12 @@ HEADER_GENERIC_FILE_START
 		rose_addr_t get_current_size() const;			/* Current size based on defined sections */
 		rose_addr_t get_orig_size() const;              	/* Original size based on actual file size */
 		size_t read_content(addr_t offset, void *dst_buf, addr_t size, bool strict=true);
-		size_t read_content(const RvaFileMap *map, addr_t rva, void *dst_buf, addr_t size, bool strict=true);
-		size_t read_content(const RvaFileMap *map, rva_t rva, void *dst_buf, addr_t size, bool strict=true) {
+		size_t read_content(const MemoryMap *map, addr_t rva, void *dst_buf, addr_t size, bool strict=true);
+		size_t read_content(const MemoryMap *map, rva_t rva, void *dst_buf, addr_t size, bool strict=true) {
 			return read_content(map, rva.get_rva(), dst_buf, size, strict);
 		}
-		std::string read_content_str(const RvaFileMap *map, addr_t rva, bool strict=true);
-		std::string read_content_str(const RvaFileMap *map, rva_t rva, bool strict=true) {
+		std::string read_content_str(const MemoryMap *map, addr_t rva, bool strict=true);
+		std::string read_content_str(const MemoryMap *map, rva_t rva, bool strict=true) {
 			return read_content_str(map, rva.get_rva(), strict);
 		}
 		std::string read_content_str(addr_t abs_offset, bool strict=true);
@@ -1038,13 +1038,13 @@ HEADER_GENERIC_FILE_START
 		SgAsmGenericSection* get_best_possible_section_by_va(addr_t va);
 
 		/* Loader memory maps */
-		RvaFileMap *get_loader_map() const {return p_loader_map;}
-		void set_loader_map(RvaFileMap *map) {p_loader_map=map;}
+		MemoryMap *get_loader_map() const {return p_loader_map;}
+		void set_loader_map(MemoryMap *map) {p_loader_map=map;}
 
 	private:
 		void ctor();
 		mutable ExtentMap *p_unreferenced_cache;
-		RvaFileMap *p_loader_map;
+		MemoryMap *p_loader_map;
 HEADER_GENERIC_FILE_END
 
 
