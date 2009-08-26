@@ -867,20 +867,24 @@ SgAsmGenericFile::read_content(const RvaFileMap *map, addr_t rva, unsigned char 
 std::string
 SgAsmGenericFile::read_content_str(const RvaFileMap *map, addr_t rva, bool strict)
 {
-    static char *buf = NULL;
-    static size_t nalloc = 0;
-    size_t nused=0, blocksz=64;
+    static char *buf=NULL;
+    static size_t nalloc=0;
+    size_t nused=0;
 
+    /* Note: reading one byte at a time might not be the most efficient way to do this, but it does cause the referenced bytes
+     *       to be tracked very precisely. */ 
     while (1) {
-        if (nused+blocksz>nalloc) {
-            nalloc = nused + blocksz;
+        if (nused >= nalloc) {
+            nalloc = std::max((size_t)32, 2*nalloc);
             buf = (char*)realloc(buf, nalloc);
+            ROSE_ASSERT(buf!=NULL);
         }
-        size_t nread = read_content(map, rva+nused, (unsigned char*)buf+nused, blocksz); /*result is zero padded to blocksz*/
-        if (strict && nread<blocksz && strlen(buf+nused)>=nread)
-            throw RvaFileMap::NotMapped(map, rva+nread);
-        if (nread<blocksz || memchr(buf+nused, '\0', blocksz))
-            return buf;
+
+        unsigned char byte;
+        read_content(map, rva+nused, &byte, 1, strict); /*might throw RvaSizeMap::NotMapped or return a NUL*/
+        if (!byte)
+            return std::string(buf, nused);
+        buf[nused++] = byte;
     }
 }
 
