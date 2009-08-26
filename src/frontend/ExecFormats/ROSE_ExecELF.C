@@ -3538,10 +3538,10 @@ SgAsmElfEHFrameSection::parse()
 
         /* Length or extended length */
         addr_t length_field_size = 4; /*number of bytes not counted in length*/
-        content(at, 4, &u32_disk); at += 4;
+        read_content_local(at, &u32_disk, 4); at += 4;
         addr_t record_size = disk_to_host(fhdr->get_sex(), u32_disk);
         if (record_size==0xffffffff) {
-            content(at, 8, &u64_disk); at += 8;
+            read_content_local(at, &u64_disk, 8); at += 8;
             record_size = disk_to_host(fhdr->get_sex(), u64_disk);
             length_field_size += 8; /*FIXME: it's not entirely clear whether ExtendedLength includes this field*/
         }
@@ -3549,7 +3549,7 @@ SgAsmElfEHFrameSection::parse()
             break;
 
         /* Backward offset to CIE record, or zero if this is a CIE record. */
-        content(at, 4, &u32_disk); at += 4;
+        read_content_local(at, &u32_disk, 4); at += 4;
         addr_t cie_back_offset = disk_to_host(fhdr->get_sex(), u32_disk);
         if (0==cie_back_offset) {
             /* This is a CIE record */
@@ -3558,50 +3558,50 @@ SgAsmElfEHFrameSection::parse()
 
             /* Version */
             uint8_t cie_version;
-            content(at++, 1, &cie_version);
+            read_content_local(at++, &cie_version, 1);
             cie->set_version(cie_version);
 
             /* Augmentation String */
-            std::string astr = content_str(at, true);
+            std::string astr = read_content_local_str(at);
             at += astr.size() + 1;
             cie->set_augmentation_string(astr);
 
             /* Alignment factors */
-            cie->set_code_alignment_factor(content_uleb128(&at));
-            cie->set_data_alignment_factor(content_sleb128(&at));
+            cie->set_code_alignment_factor(read_content_local_uleb128(&at));
+            cie->set_data_alignment_factor(read_content_local_sleb128(&at));
 
             /* Augmentation data length. This is apparently the length of the data described by the Augmentation String plus
              * the Initial Instructions plus any padding. [RPM 2009-01-15] */
-            cie->set_augmentation_data_length(content_uleb128(&at));
+            cie->set_augmentation_data_length(read_content_local_uleb128(&at));
 
             /* Augmentation data. The format of the augmentation data in the CIE record is determined by reading the
              * characters of the augmentation string. */ 
             if (astr[0]=='z') {
                 for (size_t i=1; i<astr.size(); i++) {
                     if ('L'==astr[i]) {
-                        content(at++, 1, &u8_disk);
+                        read_content_local(at++, &u8_disk, 1);
                         cie->set_lsda_encoding(u8_disk);
                     } else if ('P'==astr[i]) {
                         /* The first byte is an encoding method which describes the following bytes, which are the address of
                          * a Personality Routine Handler. There appears to be very little documentation about these fields. */
-                        content(at++, 1, &u8_disk);
+                        read_content_local(at++, &u8_disk, 1);
                         cie->set_prh_encoding(u8_disk);
                         switch (cie->get_prh_encoding()) {
-                          case 0x05:            /* See Ubuntu 32bit /usr/bin/aptitude */
-                          case 0x06:            /* See second CIE record for Gentoo-Amd64 /usr/bin/addftinfo */
-                          case 0x07:            /* See first CIE record for Gentoo-Amd64 /usr/bin/addftinfo */
-                            content(at++, 1, &u8_disk);       /* not sure what this is; argument for __gxx_personality_v0? */
-                            cie->set_prh_arg(u8_disk);
-                            content(at, 4, &u32_disk); at+=4; /* address of <__gxx_personality_v0@plt> */
-                            cie->set_prh_addr(le_to_host(u32_disk));
-                            break;
-                          default:
-                            fprintf(stderr, "%s:%u: ELF CIE 0x%08"PRIx64": unknown PRH encoding: 0x%02x\n", 
-                                    __FILE__, __LINE__, get_offset()+record_offset, cie->get_prh_encoding());
-                            abort();
+                            case 0x05:          /* See Ubuntu 32bit /usr/bin/aptitude */
+                            case 0x06:          /* See second CIE record for Gentoo-Amd64 /usr/bin/addftinfo */
+                            case 0x07:          /* See first CIE record for Gentoo-Amd64 /usr/bin/addftinfo */
+                                read_content_local(at++, &u8_disk, 1); /* not sure what this is; arg for __gxx_personality_v0? */
+                                cie->set_prh_arg(u8_disk);
+                                read_content_local(at, &u32_disk, 4); at+=4; /* address of <__gxx_personality_v0@plt> */
+                                cie->set_prh_addr(le_to_host(u32_disk));
+                                break;
+                            default:
+                                fprintf(stderr, "%s:%u: ELF CIE 0x%08"PRIx64": unknown PRH encoding: 0x%02x\n", 
+                                        __FILE__, __LINE__, get_offset()+record_offset, cie->get_prh_encoding());
+                                abort();
                         }
                     } else if ('R'==astr[i]) {
-                        content(at++, 1, &u8_disk);
+                        read_content_local(at++, &u8_disk, 1);
                         cie->set_addr_encoding(u8_disk);
                     } else if ('S'==astr[i]) {
                         /* See http://lkml.indiana.edu/hypermail/linux/kernel/0602.3/1144.html and GCC PR #26208*/
@@ -3617,7 +3617,7 @@ SgAsmElfEHFrameSection::parse()
             /* Initial instructions. These are apparently included in the augmentation_data_length. The final instructions can
              * be zero padding (no-op instructions) to bring the record up to a multiple of the word size. */
             addr_t init_insn_size = (length_field_size + record_size) - (at - record_offset);
-            cie->get_instructions() = content_ucl(at, init_insn_size);
+            cie->get_instructions() = read_content_local_ucl(at, init_insn_size);
             ROSE_ASSERT(cie->get_instructions().size()==init_insn_size);
 
         } else {
@@ -3634,9 +3634,9 @@ SgAsmElfEHFrameSection::parse()
               case 0x03:
               case 0x1b:        /* Address doesn't look valid (e.g., 0xfffd74e8) but still four bytes [RPM 2008-01-16]*/
               {
-                  content(at, 4, &u32_disk); at+=4;
+                  read_content_local(at, &u32_disk, 4); at+=4;
                   fde->set_begin_rva(le_to_host(u32_disk));
-                  content(at, 4, &u32_disk); at+=4;
+                  read_content_local(at, &u32_disk, 4); at+=4;
                   fde->set_size(le_to_host(u32_disk));
                   break;
               }
@@ -3649,15 +3649,15 @@ SgAsmElfEHFrameSection::parse()
             /* Augmentation Data */
             std::string astring = cie->get_augmentation_string();
             if (astring.size()>0 && astring[0]=='z') {
-                addr_t aug_length = content_uleb128(&at);
-                fde->get_augmentation_data() = content_ucl(at, aug_length);
+                addr_t aug_length = read_content_local_uleb128(&at);
+                fde->get_augmentation_data() = read_content_local_ucl(at, aug_length);
                 at += aug_length;
                 ROSE_ASSERT(fde->get_augmentation_data().size()==aug_length);
             }
 
             /* Call frame instructions */
             addr_t cf_insn_size = (length_field_size + record_size) - (at - record_offset);
-            fde->get_instructions() = content_ucl(at, cf_insn_size);
+            fde->get_instructions() = read_content_local_ucl(at, cf_insn_size);
             ROSE_ASSERT(fde->get_instructions().size()==cf_insn_size);
         }
 
