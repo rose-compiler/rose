@@ -543,8 +543,8 @@ SgAsmPEFileHeader::create_table_sections()
         ROSE_ASSERT(map!=NULL);
         const RvaFileMap::MapElement *elmt = map->findRVA(pair->get_e_rva());
         if (!elmt) {
-            fprintf(stderr, "SgAsmPEFileHeader::create_table_sections(): pair-%zu, rva=0x%08"PRIx64", size=%"PRIu64" bytes \"%s\""
-                    ": unable to find a mapping for the virtual address (skipping)\n",
+            fprintf(stderr, "SgAsmPEFileHeader::create_table_sections: warning: pair-%zu, rva=0x%08"PRIx64", size=%"PRIu64
+                    " bytes \"%s\": unable to find a mapping for the virtual address (skipping)\n",
                     i, pair->get_e_rva().get_rva(), pair->get_e_size(), tabname?tabname:"");
             continue;
         }
@@ -996,7 +996,10 @@ SgAsmPESectionTable::parse()
     const size_t entsize = sizeof(SgAsmPESectionTableEntry::PESectionTableEntry_disk);
     for (size_t i=0; i<fhdr->get_e_nsections(); i++) {
         SgAsmPESectionTableEntry::PESectionTableEntry_disk disk;
-        content(i * entsize, entsize, &disk);
+        if (entsize!=read_content_local(i * entsize, (unsigned char*)&disk, entsize, false))
+            fprintf(stderr, "SgAsmPESectionTable::parse: warning: section table entry %zu at file offset 0x%08"PRIx64
+                    " extends beyond end of defined section table.\n",
+                    i, get_offset()+i*entsize);
         SgAsmPESectionTableEntry *entry = new SgAsmPESectionTableEntry(&disk);
 
         SgAsmPESection *section = NULL;
