@@ -451,7 +451,9 @@ SgAsmPEFileHeader::add_rvasize_pairs()
 
     extend(pairs_size);
     for (size_t i = 0; i < p_e_num_rvasize_pairs; i++, pairs_offset += sizeof pairs_disk) {
-        content(pairs_offset, sizeof pairs_disk, &pairs_disk);
+        if (sizeof(pairs_disk)!=read_content_local(pairs_offset, (unsigned char*)&pairs_disk, sizeof pairs_disk, false))
+            fprintf(stderr, "SgAsmPEFileHeader::add_rvasize_pairs: warning: RVA/Size pair %zu at file offset 0x%08"PRIx64
+                    " extends beyond the end of file (assuming 0/0)\n", i, get_offset()+pairs_offset);
         p_rvasize_pairs->get_pairs().push_back(new SgAsmPERVASizePair(&pairs_disk));
         p_rvasize_pairs->get_pairs().back()->set_parent(p_rvasize_pairs);
     }
