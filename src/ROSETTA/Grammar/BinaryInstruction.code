@@ -835,6 +835,9 @@ HEADER_GENERIC_SECTION_START
 		std::string read_content_str(const RvaFileMap *map, rva_t rva, bool strict=true) {
 			return read_content_str(map, rva.get_rva(), strict);
 		}
+		std::string read_content_str(addr_t abs_offset, bool strict=true);
+		std::string read_content_local_str(addr_t rel_offset, bool strict=true);
+		SgUnsignedCharList read_content_ucl(addr_t rel_offset, addr_t size);
 
 		/* Deprecated functions for accessing content */
 		const unsigned char *content(addr_t offset, addr_t size);/*returns ptr to SIZE bytes starting at OFFSET */
@@ -976,6 +979,7 @@ HEADER_GENERIC_FILE_START
 		std::string read_content_str(const RvaFileMap *map, rva_t rva, bool strict=true) {
 			return read_content_str(map, rva.get_rva(), strict);
 		}
+		std::string read_content_str(addr_t abs_offset, bool strict=true);
 
 		const SgFileContentList& content() {			/* Entire file contents */
 			return p_data;

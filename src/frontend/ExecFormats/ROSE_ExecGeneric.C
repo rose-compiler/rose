@@ -859,7 +859,7 @@ SgAsmGenericFile::read_content(const RvaFileMap *map, addr_t rva, unsigned char 
     return ncopied;
 }
 
-/** Reads a string from a file. Returns the NUL-terminated string stored at the specified relative virtual address. The
+/** Reads a string from a file. Returns the string stored at the specified relative virtual address. The
  *  returned string contains the bytes beginning at the starting RVA and continuing until we reach a NUL byte or an address
  *  which is not mapped. If we reach an address which is not mapped then one of two things happen: if @p strict is set then an
  *  RvaFileMap::NotMapped exception is thrown; otherwise the string is simply terminated. The returned string does not include
@@ -882,6 +882,35 @@ SgAsmGenericFile::read_content_str(const RvaFileMap *map, addr_t rva, bool stric
 
         unsigned char byte;
         read_content(map, rva+nused, &byte, 1, strict); /*might throw RvaSizeMap::NotMapped or return a NUL*/
+        if (!byte)
+            return std::string(buf, nused);
+        buf[nused++] = byte;
+    }
+}
+
+/** Reads a string from a file. Returns the NUL-terminated string stored at the specified relative virtual address. The
+ *  returned string contains the bytes beginning at the specified starting file offset and continuing until we reach a NUL
+ *  byte or an invalid file offset. If we reach an invalid file offset one of two things happen: if @p strict is set (the
+ *  default) then an SgAsmExecutableFileFormat::ShortRead exception is thrown; otherwise the string is simply terminated. The
+ *  returned string does not include the NUL byte. */
+std::string
+SgAsmGenericFile::read_content_str(addr_t offset, bool strict)
+{
+    static char *buf=NULL;
+    static size_t nalloc=0;
+    size_t nused=0;
+
+    /* Note: reading one byte at a time might not be the most efficient way to do this, but it does cause the referenced bytes
+     *       to be tracked very precisely. */ 
+    while (1) {
+        if (nused >= nalloc) {
+            nalloc = std::max((size_t)32, 2*nalloc);
+            buf = (char*)realloc(buf, nalloc);
+            ROSE_ASSERT(buf!=NULL);
+        }
+
+        unsigned char byte;
+        read_content(offset+nused, &byte, 1, strict); /*might throw ShortRead or return a NUL*/
         if (!byte)
             return std::string(buf, nused);
         buf[nused++] = byte;
@@ -2229,6 +2258,20 @@ SgAsmGenericSection::read_content_local(addr_t start_offset, unsigned char *dst_
     return retval;
 }
 
+/** Reads content of a section and returns it as a container.  The returned container will always have exactly @p size byte.
+ *  If @p size bytes are not available in this section at the specified offset then the container will be zero padded. */
+SgUnsignedCharList
+SgAsmGenericSection::read_content_ucl(addr_t rel_offset, addr_t size)
+{
+    SgUnsignedCharList retval;
+    unsigned char *buf = new unsigned char[size];
+    read_content_local(rel_offset, buf, size, false); /*zero pads; never throws*/
+    for (size_t i=0; i<size; i++)
+        retval.push_back(buf[i]);
+    delete[] buf;
+    return retval;
+}
+
 /** Reads a string from the file. The string begins at the specified virtual address and continues until the first NUL byte or
  *  until we reach an address that is not mapped. However, if @p strict is set (the default) and we reach an unmapped address
  *  then an RvaFileMap::NotMapped exception is thrown. The @p map defines the mapping from virtual addresses to file offsets;
@@ -2240,6 +2283,50 @@ SgAsmGenericSection::read_content_str(const RvaFileMap *map, addr_t start_rva, b
     ROSE_ASSERT(file!=NULL);
     return file->read_content_str(map, start_rva, strict);
 }
+
+/** Reads a string from the file. The string begins at the specified absolute file offset and continues until the first NUL
+ *  byte or end of file is reached. However, if @p strict is set (the default) and we reach the end-of-file then an
+ *  SgAsmExecutableFileFormat::ShortRead exception is thrown. */
+std::string
+SgAsmGenericSection::read_content_str(addr_t abs_offset, bool strict)
+{
+    SgAsmGenericFile *file = get_file();
+    ROSE_ASSERT(file!=NULL);
+    return file->read_content_str(abs_offset, strict);
+}
+
+/** Reads a string from the file. The string begins at the specified file offset relative to the start of this section and
+ *  continues until the first NUL byte or the end of section is reached. However, if @p strict is set (the default) and we
+ *  reach the end-of-section then an SgAsmExecutableFileFormat::ShortRead exception is thrown. */
+std::string
+SgAsmGenericSection::read_content_local_str(addr_t rel_offset, bool strict)
+{
+    static char *buf=NULL;
+    static size_t nalloc=0;
+    size_t nused=0;
+    addr_t base = get_offset();
+
+    while (1) {
+        if (nused >= nalloc) {
+            nalloc = std::max((size_t)32, 2*nalloc);
+            buf = (char*)realloc(buf, nalloc);
+            ROSE_ASSERT(buf!=NULL);
+        }
+
+        unsigned char byte;
+        if (rel_offset+nused>get_size()) {
+            if (strict)
+                throw ShortRead(this, rel_offset+nused, 1);
+            byte = '\0';
+        } else {
+            read_content(base+rel_offset+nused, &byte, 1, strict); /*might throw ShortRead or return a NUL*/
+        }
+        if (!byte)
+            return std::string(buf, nused);
+        buf[nused++] = byte;
+    }
+}
+    
 
 /* Returns ptr to content at specified offset after ensuring that the required amount of data is available. One can think of
  * this function as being similar to fseek()+fread() in that it returns contents of part of a file as bytes. The main
