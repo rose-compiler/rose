@@ -1140,7 +1140,8 @@ SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section, size_t idx, addr_t *
     size_t entry_size = sizeof(PEImportDirectory_disk);
     PEImportDirectory_disk disk, zero;
     memset(&zero, 0, sizeof zero);
-    section->read_content(NULL, *idir_rva_p, (unsigned char*)&disk, entry_size);
+    section->read_content(NULL, *idir_rva_p, (unsigned char*)&disk, entry_size); /*may throw RvaFileMap::NotMapped*/
+
     *idir_rva_p += entry_size;
 
     if (0==memcmp(&disk, &zero, sizeof zero)) {
@@ -1160,14 +1161,18 @@ SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section, size_t idx, addr_t *
     p_dll_name_rva.bind(fhdr);
     p_iat_rva.bind(fhdr);
 
-    if (NULL==section->get_file()->get_loader_map()->findRVA(p_dll_name_rva.get_rva())) {
-        if (p_idx>=0) {
-            fprintf(stderr, "SgAsmPEImportDirectory::ctor: error: in PE Import Directory entry %zu "
-                    "Name RVA (0x%08"PRIx64") is not in the mapped address space.\n", idx, p_dll_name_rva.get_rva());
+    p_dll_name = NULL;
+    try {
+        if (p_idx>=0)
+            p_dll_name = new SgAsmBasicString(section->read_content_str(NULL, p_dll_name_rva));
+    } catch (const RvaFileMap::NotMapped &e) {
+        fprintf(stderr, "SgAsmPEImportDirectory::ctor: error: in PE Import Directory entry %zu: "
+                "Name RVA starting at 0x%08"PRIx64" contains unmapped address 0x%08"PRIx64"\n", 
+                idx, p_dll_name_rva.get_rva(), e.rva);
+        if (e.map) {
+            fprintf(stderr, "Memory map in effect at time of error is:\n");
+            e.map->dump(stderr, "    ");
         }
-        p_dll_name = NULL;
-    } else {
-        p_dll_name = new SgAsmBasicString(section->read_content_str(NULL, p_dll_name_rva));
     }
 }
 

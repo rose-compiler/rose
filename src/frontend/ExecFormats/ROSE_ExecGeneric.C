@@ -795,16 +795,22 @@ SgAsmGenericFile::get_unreferenced_extents() const
 
 /** Reads data from a file. Reads up to @p size bytes of data from the file beginning at the specified byte offset (measured
  *  from the beginning of the file), placing the result in dst_buf, and returning the number of bytes read. If the number of
- *  bytes read is less than @p size then @p dst_buf is zero padded so that exactly @p size bytes are always initialized. */
+ *  bytes read is less than @p size then one of two things happen: if @p strict is true (the default) then an
+ *  SgAsmExecutableFileFormat::ShortRead exception is thrown; otherwise @p dst_buf is zero padded so that exactly @p size
+ *  bytes are always initialized. */
 size_t
-SgAsmGenericFile::read_content(addr_t offset, unsigned char *dst_buf, addr_t size)
+SgAsmGenericFile::read_content(addr_t offset, unsigned char *dst_buf, addr_t size, bool strict)
 {
     size_t retval;
     if (offset+size <= p_data.size()) {
         retval = size;
     } else if (offset > p_data.size()) {
+        if (strict)
+            throw ShortRead(NULL, offset, size);
         retval = 0;
     } else {
+        if (strict)
+            throw ShortRead(NULL, p_data.size(), offset+size - (p_data.size()+offset));
         retval = p_data.size() - offset;
     }
     if (retval>0)
@@ -818,10 +824,9 @@ SgAsmGenericFile::read_content(addr_t offset, unsigned char *dst_buf, addr_t siz
 /** Reads data from a file. Reads up to @p size bytes of data starting at the specified relative virtual address. The @p map
  *  specifies how virtual addresses are mapped to file offsets. If @p map is the null pointer then the map already associated
  *  with this file is used (the map provided by the loader memory mapping emulation). As bytes are read, if we encounter a
- *  virtual address that is not mapped we stop reading and fill the rest of the @p dst_buf with zeros and return the number of
- *  bytes we read. */
+ *  virtual address that is not mapped we stop reading and do one of two things: if @p strict is set then an RvaFileMap::NotMapped exception is thrown; otherwise the rest of the @p dst_buf is zero filled and the number of bytes read (not filled) is returned. */
 size_t
-SgAsmGenericFile::read_content(const RvaFileMap *map, addr_t rva, unsigned char *dst_buf, addr_t size)
+SgAsmGenericFile::read_content(const RvaFileMap *map, addr_t rva, unsigned char *dst_buf, addr_t size, bool strict)
 {
     if (!map)
         map = get_loader_map();
@@ -845,15 +850,22 @@ SgAsmGenericFile::read_content(const RvaFileMap *map, addr_t rva, unsigned char 
         if (get_tracking_references())
             mark_referenced_extent(file_offset, nread);
     }
-    memset(dst_buf+ncopied, 0, size-ncopied);                           /*zero pad result if necessary*/
+
+    if (ncopied<size) {
+        if (strict)
+            throw RvaFileMap::NotMapped(map, rva);
+        memset(dst_buf+ncopied, 0, size-ncopied);                       /*zero pad result if necessary*/
+    }
     return ncopied;
 }
 
 /** Reads a string from a file. Returns the NUL-terminated string stored at the specified relative virtual address. The
  *  returned string contains the bytes beginning at the starting RVA and continuing until we reach a NUL byte or an address
- *  which is not mapped. The returned string does not include the NUL byte. */
+ *  which is not mapped. If we reach an address which is not mapped then one of two things happen: if @p strict is set then an
+ *  RvaFileMap::NotMapped exception is thrown; otherwise the string is simply terminated. The returned string does not include
+ *  the NUL byte. */
 std::string
-SgAsmGenericFile::read_content_str(const RvaFileMap *map, addr_t rva)
+SgAsmGenericFile::read_content_str(const RvaFileMap *map, addr_t rva, bool strict)
 {
     static char *buf = NULL;
     static size_t nalloc = 0;
@@ -864,7 +876,9 @@ SgAsmGenericFile::read_content_str(const RvaFileMap *map, addr_t rva)
             nalloc = nused + blocksz;
             buf = (char*)realloc(buf, nalloc);
         }
-        size_t nread = read_content(map, rva+nused, (unsigned char*)buf+nused, blocksz);
+        size_t nread = read_content(map, rva+nused, (unsigned char*)buf+nused, blocksz); /*result is zero padded to blocksz*/
+        if (strict && nread<blocksz && strlen(buf+nused)>=nread)
+            throw RvaFileMap::NotMapped(map, rva+nread);
         if (nread<blocksz || memchr(buf+nused, '\0', blocksz))
             return buf;
     }
@@ -2151,52 +2165,69 @@ SgAsmGenericSection::get_mapped_extent() const
 
 /** Reads data from a file. Reads up to @p bytes of data beginning at byte @p start_offset from the beginning of the file,
  *  placing the results in @p dst_buf and returning the number of bytes read. The return value could be smaller than @p size
- *  if the end-of-file is reached. If the return value is smaller than @p size then the @p dst_buf will be padded with zero
- *  bytes so that exactly @p size bytes of @p dst_buf are always initialized. */
+ *  if the end-of-file is reached. If the return value is smaller than @p size then one of two things happen: if @p strict is
+ *  set (the default) then an SgAsmExecutableFileFormat::ShortRead exception is thrown; otherwise the @p dst_buf will be
+ *  padded with zero bytes so that exactly @p size bytes of @p dst_buf are always initialized. */
 size_t
-SgAsmGenericSection::read_content(addr_t start_offset, unsigned char *dst_buf, addr_t size)
+SgAsmGenericSection::read_content(addr_t start_offset, unsigned char *dst_buf, addr_t size, bool strict)
 {
     SgAsmGenericFile *file = get_file();
     ROSE_ASSERT(file!=NULL);
-    return file->read_content(start_offset, dst_buf, size);
+    return file->read_content(start_offset, dst_buf, size, strict);
 }
 
 /** Reads data from a file. Reads up to @p bytes of data beginning at byte @p start_rva in the mapped address space and
  *  placing the results in @p dst_buf and returning the number of bytes read. The return value could be smaller than @p size
  *  if the reading encounters virtual addresses that are not mapped.  When an unmapped virtual address is encountered the
- *  reading stops (even if subsequent virtual addresses are defined) and the @p dst_buf is padded with zeros so that all @p
+ *  reading stops (even if subsequent virtual addresses are defined) and one of two things happen: if @p strict is set (the
+ *  default) then an RvaFileMap::NotMapped exception is thrown, otherwise the @p dst_buf is padded with zeros so that all @p
  *  size bytes are initialized. The @p map is used to map virtual addresses to file offsets; if @p map is NULL then the map
  *  defined in the underlying file is used. */
 size_t
-SgAsmGenericSection::read_content(const RvaFileMap *map, addr_t start_rva, unsigned char *dst_buf, addr_t size)
+SgAsmGenericSection::read_content(const RvaFileMap *map, addr_t start_rva, unsigned char *dst_buf, addr_t size, bool strict)
 {
     SgAsmGenericFile *file = get_file();
     ROSE_ASSERT(file!=NULL);
-    return file->read_content(map, start_rva, dst_buf, size);
+    return file->read_content(map, start_rva, dst_buf, size, strict);
 }
 
 /** Reads data from a file. This behaves the same as read_content() except the @p start_offset is relative to the beginning of
- *  this section. If @p strict is false (the default) then allow reading past the end of the section, otherwise throw a
- *  ShortRead exception. */
+ *  this section.   Reading past the end of the section is not allowed and treated as a short read, and one of two things
+ *  happen: if @p strict is set (the default) then an SgAsmExecutableFileFormat::ShortRead exception is thrown, otherwise the
+ *  result is zero padded so as to contain exactly @p size bytes. */
 size_t
 SgAsmGenericSection::read_content_local(addr_t start_offset, unsigned char *dst_buf, addr_t size, bool strict)
 {
+    size_t retval;
     SgAsmGenericFile *file = get_file();
     ROSE_ASSERT(file!=NULL);
-    if (strict && (start_offset > get_size() || start_offset + size > get_size()))
-        throw SgAsmGenericFile::ShortRead(this, start_offset, size);
-    return file->read_content(get_offset()+start_offset, dst_buf, size);
+    if (start_offset > get_size()) {
+        if (strict)
+            throw ShortRead(this, start_offset, size);
+        retval = 0;
+    } else if (start_offset+size > get_size()) {
+        if (strict)
+            throw ShortRead(this, get_size(), start_offset+size-get_size());
+        retval = get_size() - start_offset;
+    } else {
+        retval = size;
+    }
+
+    file->read_content(get_offset()+start_offset, dst_buf, retval, true);
+    memset(dst_buf+retval, 0, size-retval);
+    return retval;
 }
 
 /** Reads a string from the file. The string begins at the specified virtual address and continues until the first NUL byte or
- *  until we reach an address that is not mapped. The @p map defines the mapping from virtual addresses to file offsets; if @p
- *  map is NULL then the map defined in the underlying file is used. */
+ *  until we reach an address that is not mapped. However, if @p strict is set (the default) and we reach an unmapped address
+ *  then an RvaFileMap::NotMapped exception is thrown. The @p map defines the mapping from virtual addresses to file offsets;
+ *  if @p map is NULL then the map defined in the underlying file is used. */
 std::string
-SgAsmGenericSection::read_content_str(const RvaFileMap *map, addr_t start_rva)
+SgAsmGenericSection::read_content_str(const RvaFileMap *map, addr_t start_rva, bool strict)
 {
     SgAsmGenericFile *file = get_file();
     ROSE_ASSERT(file!=NULL);
-    return file->read_content_str(map, start_rva);
+    return file->read_content_str(map, start_rva, strict);
 }
 
 /* Returns ptr to content at specified offset after ensuring that the required amount of data is available. One can think of
