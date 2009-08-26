@@ -2252,7 +2252,6 @@ Grammar::setUpBinaryInstructions ()
      AsmGenericSymbol.setFunctionSource ( "SOURCE_GENERIC_SYMBOL", "../Grammar/BinaryInstruction.code");
   // AsmGenericSectionList.setFunctionSource ( "SOURCE_GENERIC_SECTION_LIST", "../Grammar/BinaryInstruction.code");
      AsmGenericSymbolList.setFunctionSource ( "SOURCE_GENERIC_SYMBOL_LIST", "../Grammar/BinaryInstruction.code");
-     AsmGenericFile.setFunctionSource ( "SOURCE_GENERIC_FILE", "../Grammar/BinaryInstruction.code");
      AsmGenericDLL.setFunctionSource ( "SOURCE_GENERIC_DLL", "../Grammar/BinaryInstruction.code");
      AsmGenericDLLList.setFunctionSource ( "SOURCE_GENERIC_DLL_LIST", "../Grammar/BinaryInstruction.code");
      AsmGenericString.setFunctionSource ( "SOURCE_GENERIC_STRING", "../Grammar/BinaryInstruction.code");

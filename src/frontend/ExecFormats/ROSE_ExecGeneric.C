@@ -686,6 +686,10 @@ SgAsmGenericFile::ctor()
 {
     ROSE_ASSERT(this != NULL);
 
+    ROSE_ASSERT(p_fd == -1);
+    ROSE_ASSERT(p_holes == NULL);
+    ROSE_ASSERT(p_truncate_zeros == false);
+
     ROSE_ASSERT(p_headers == NULL);
     p_headers  = new SgAsmGenericHeaderList();
     ROSE_ASSERT(p_headers != NULL);
