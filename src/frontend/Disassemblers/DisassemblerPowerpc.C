@@ -136,7 +136,7 @@ DisassemblerPowerpc::disassembleOne(const unsigned char *buf, const RvaFileMap &
     /* The old PowerpcDisassembler::disassemble() function doesn't understand RvaFileMap mappings. Therefore, remap the next
      * few bytes (enough for at least one instruction) into a temporary buffer. */
     unsigned char temp[4];
-    size_t tempsz = map.read(temp, buf, start_va, sizeof temp);
+    size_t tempsz = map.readVA(temp, buf, start_va, sizeof temp);
 
     /* Treat the bytes as a big-endian instruction.  Note that PowerPC is big-endian, but PowerPC can support both big- and
      * little-endian processor modes (with much weirdness; e.g. PDP endian like propoerties). */

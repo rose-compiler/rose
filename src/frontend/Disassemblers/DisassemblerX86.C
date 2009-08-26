@@ -140,7 +140,7 @@ DisassemblerX86::disassembleOne(const unsigned char *buf, const RvaFileMap &map,
      * In theory, by adding all appropriate prefix bytes you can obtain an instruction that is up to 16 bytes long. However,
      * the x86 CPU will generate an exception if the instruction length exceeds 15 bytes, and so will the getByte method. */
     unsigned char temp[16];
-    size_t tempsz = map.read(temp, buf, start_va, sizeof temp);
+    size_t tempsz = map.readVA(temp, buf, start_va, sizeof temp);
 
     /* Disassemble the instruction */
     startInstruction(start_va, temp, tempsz);

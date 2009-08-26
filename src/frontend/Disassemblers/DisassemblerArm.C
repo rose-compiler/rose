@@ -163,7 +163,7 @@ DisassemblerArm::disassembleOne(const unsigned char *buf, const RvaFileMap &map,
     /* The old ArmDisassembler::disassemble() function doesn't understand RvaFileMap mappings. Therefore, remap the next
      * few bytes (enough for at least one instruction) into a temporary buffer. */
     unsigned char temp[4]; /* all ARM instructions are 32 bits */
-    size_t tempsz = map.read(temp, buf, start_va, sizeof temp);
+    size_t tempsz = map.readVA(temp, buf, start_va, sizeof temp);
 
     /* Treat the bytes as a little-endian instruction. FIXME: This assumes a little-endian ARM system. */
     if (tempsz<4)

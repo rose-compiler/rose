@@ -209,12 +209,8 @@ RvaFileMap::get_elements() const {
 }
 
 size_t
-RvaFileMap::read(unsigned char *dst_buf, const unsigned char *src_buf, rose_addr_t start_va, size_t desired) const
+RvaFileMap::readRVA(unsigned char *dst_buf, const unsigned char *src_buf, rose_addr_t start_rva, size_t desired) const
 {
-    ROSE_ASSERT(dst_buf!=NULL);
-    ROSE_ASSERT(start_va >= get_base_va());
-    rose_addr_t start_rva = start_va - get_base_va();
-
     size_t ncopied = 0;
     while (ncopied < desired) {
         const RvaFileMap::MapElement *m = findRVA(start_rva);
@@ -230,6 +226,16 @@ RvaFileMap::read(unsigned char *dst_buf, const unsigned char *src_buf, rose_addr
 
     memset(dst_buf+ncopied, 0, desired-ncopied);
     return ncopied;
+}
+    
+
+size_t
+RvaFileMap::readVA(unsigned char *dst_buf, const unsigned char *src_buf, rose_addr_t start_va, size_t desired) const
+{
+    ROSE_ASSERT(dst_buf!=NULL);
+    ROSE_ASSERT(start_va >= get_base_va());
+    rose_addr_t start_rva = start_va - get_base_va();
+    return readRVA(dst_buf, src_buf, start_rva, desired);
 }
 
 void

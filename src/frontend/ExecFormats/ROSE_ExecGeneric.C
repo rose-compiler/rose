@@ -825,8 +825,9 @@ SgAsmGenericFile::read_content(const RvaFileMap *map, addr_t rva, unsigned char 
         map = get_loader_map();
     ROSE_ASSERT(map!=NULL);
 
-    size_t retval = map->read(dst_buf, &(get_data()[0]), rva, size);
+    size_t retval = map->readRVA(dst_buf, &(get_data()[0]), rva, size);
     memset(dst_buf+retval, 0, size-retval);
+    return retval;
 }
 
 /** Reads a string from a file. Returns the NUL-terminated string stored at the specified relative virtual address. The

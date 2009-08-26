@@ -103,7 +103,14 @@ public:
      *  @p src_buf to the @p dst_buf buffer. The return value is the number of bytes that were copied, which might be fewer
      *  than the number of bytes desired if the mapping does not include part of the address space requested. The part of @p
      *  dst_buf that is not read is zero filled. */
-    size_t read(unsigned char *dst_buf, const unsigned char *src_buf, rose_addr_t start_va, size_t desired) const;
+    size_t readVA(unsigned char *dst_buf, const unsigned char *src_buf, rose_addr_t start_va, size_t desired) const;
+
+    /** Copies data from a contiguous region of the virtual address space into a user supplied buffer. The portion of the
+     *  virtual address space to copy begins at @p start_va and continues for @p desired bytes. The data is copied from the
+     *  @p src_buf to the @p dst_buf buffer. The return value is the number of bytes that were copied, which might be fewer
+     *  than the number of bytes desired if the mapping does not include part of the address space requested. The part of @p
+     *  dst_buf that is not read is zero filled. */
+    size_t readRVA(unsigned char *dst_buf, const unsigned char *src_buf, rose_addr_t start_rva, size_t desired) const;
 
     /** Prints the contents of the map for debugging. */
     void dump(FILE*, const char *prefix="") const;

@@ -460,12 +460,12 @@ SgAsmPEFileHeader::map_sections()
 {
     const SgAsmGenericSectionPtrList &sections = get_sections()->get_sections();
 
-    RvaFileMap *map = get_map();
+    RvaFileMap *map = get_file()->get_loader_map();
     if (!map) {
         map = new RvaFileMap();
         if (sections.size()>0)
             map->set_base_va(sections[0]->get_header()->get_base_va());
-        set_map(map);
+        get_file()->set_loader_map(map);
     }
 
     for (size_t i=0; i<sections.size(); i++) {
@@ -539,7 +539,7 @@ SgAsmPEFileHeader::create_table_sections()
          *        from an RVA/Size pair is not necessarily contiguous in the file.  Normally such sections are in fact
          *        contiguous and we'll just ignore this for now.  In any case, as long as these sections only ever read their
          *        data via the same RvaFileMap that we use here, everything should be fine. [RPM 2009-08-17] */
-        RvaFileMap *map = get_map();
+        RvaFileMap *map = get_file()->get_loader_map();
         ROSE_ASSERT(map!=NULL);
         const RvaFileMap::MapElement *elmt = map->findRVA(pair->get_e_rva());
         if (!elmt) {
