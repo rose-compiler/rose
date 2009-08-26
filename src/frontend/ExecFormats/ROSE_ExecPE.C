@@ -1160,10 +1160,14 @@ SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section, size_t idx, addr_t *
     p_dll_name_rva.bind(fhdr);
     p_iat_rva.bind(fhdr);
 
-    if (p_dll_name_rva.get_section()) {
-        p_dll_name = new SgAsmBasicString(p_dll_name_rva.get_section()->content_str(p_dll_name_rva.get_rel()));
-    } else {
+    if (NULL==section->get_file()->get_loader_map()->findRVA(p_dll_name_rva.get_rva())) {
+        if (p_idx>=0) {
+            fprintf(stderr, "SgAsmPEImportDirectory::ctor: error: in PE Import Directory entry %zu "
+                    "Name RVA (0x%08"PRIx64") is not in the mapped address space.\n", idx, p_dll_name_rva.get_rva());
+        }
         p_dll_name = NULL;
+    } else {
+        p_dll_name = new SgAsmBasicString(section->read_content_str(NULL, p_dll_name_rva));
     }
 }
 
@@ -1562,21 +1566,19 @@ SgAsmPEImportSection::parse()
     SgAsmPEFileHeader *fhdr = isSgAsmPEFileHeader(get_header());
     ROSE_ASSERT(fhdr!=NULL);
 
+    ROSE_ASSERT(is_mapped());
+    rose_addr_t idir_rva = get_mapped_rva();
+
     for (size_t i = 0; 1; i++) {
         /* Read idata directory entries. The list is terminated with a zero-filled entry whose idx will be negative */
-        SgAsmPEImportDirectory *idir = new SgAsmPEImportDirectory(this, i);
+        SgAsmPEImportDirectory *idir = new SgAsmPEImportDirectory(this, i, &idir_rva);
         if (idir->get_idx()<0) {
             delete idir;
             break;
         }
 
-        /* Library name warnings and errors */
         rva_t rva = idir->get_dll_name_rva();
-        if (!rva.get_section()) {
-            fprintf(stderr, "SgAsmPEImportSection::ctor: error: in PE Import Directory entry %zu "
-                    "Name RVA (0x%08"PRIx64") is not in the mapped address space.\n",
-                    i, rva.get_rva());
-        } else if (rva.get_section()!=this) {
+        if (rva.get_section()!=this) {
             fprintf(stderr, "SgAsmPEImportSection::ctor: warning: Name RVA is outside PE Import Table\n");
             fprintf(stderr, "        Import Directory Entry #%zu\n", i);
             fprintf(stderr, "        Name RVA is %s\n", rva.to_string().c_str());
