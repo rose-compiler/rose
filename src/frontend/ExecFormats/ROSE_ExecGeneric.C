@@ -3923,17 +3923,12 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
     SgAsmGenericFile *ef = (new SgAsmGenericFile())->parse(name);
     ROSE_ASSERT(ef != NULL);
 
-    if (SgAsmElfFileHeader::is_ELF(ef))
-       {
-         (new SgAsmElfFileHeader(ef))->parse();
-       }
-      else
-       {
-         if (SgAsmDOSFileHeader::is_DOS(ef))
-            {
+    if (SgAsmElfFileHeader::is_ELF(ef)) {
+        (new SgAsmElfFileHeader(ef))->parse();
+    } else if (SgAsmDOSFileHeader::is_DOS(ef)) {
         SgAsmDOSFileHeader *dos_hdr = new SgAsmDOSFileHeader(ef);
         dos_hdr->parse(false); /*delay parsing the DOS Real Mode Section*/
-        
+
         /* DOS Files can be overloaded to also be PE, NE, LE, or LX. Such files have an Extended DOS Header immediately after
          * the DOS File Header (various forms of Extended DOS Header exist). The Extended DOS Header contains a file offset to
          * a PE, NE, LE, or LX File Header, the first bytes of which are a magic number. The is_* methods check for this magic
@@ -3987,7 +3982,6 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
         } else {
             throw FormatError("unrecognized file format");
         }
-    }
     }
 
     ef->congeal();
