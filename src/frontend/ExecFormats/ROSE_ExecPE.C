@@ -1704,22 +1704,46 @@ SgAsmPEExportDirectory::ctor(SgAsmPEExportSection *section)
 {
     set_parent(section);
 
-    size_t entry_size = sizeof(PEExportDirectory_disk);
-    const PEExportDirectory_disk *disk = (const PEExportDirectory_disk*)section->content(0, entry_size);
+    /* Read disk-formatted export directory */
+    PEExportDirectory_disk disk;
+    try {
+        section->read_content(NULL, section->get_mapped_rva(), (unsigned char*)&disk, sizeof disk);
+    } catch (const RvaFileMap::NotMapped &e) {
+        fprintf(stderr, "SgAsmPEExportDirectory::ctor: error: export directory at RVA 0x%08"PRIx64
+                " contains unmapped address 0x%08"PRIx64"\n", section->get_mapped_rva(), e.rva);
+        if (e.map) {
+            fprintf(stderr, "Memory map in effect at time of error:\n");
+            e.map->dump(stderr, "    ");
+        }
+        memset(&disk, 0, sizeof disk);
+    }
     
-    p_res1         = le_to_host(disk->res1);
-    p_timestamp    = le_to_host(disk->timestamp);
-    p_vmajor       = le_to_host(disk->vmajor);
-    p_vminor       = le_to_host(disk->vminor);
-    p_name_rva     = le_to_host(disk->name_rva);       p_name_rva.set_section(section);
-    p_ord_base     = le_to_host(disk->ord_base);
-    p_expaddr_n    = le_to_host(disk->expaddr_n);
-    p_nameptr_n    = le_to_host(disk->nameptr_n);
-    p_expaddr_rva  = le_to_host(disk->expaddr_rva);    p_expaddr_rva.set_section(section);
-    p_nameptr_rva  = le_to_host(disk->nameptr_rva);    p_nameptr_rva.set_section(section);
-    p_ordinals_rva = le_to_host(disk->ordinals_rva);   p_ordinals_rva.set_section(section);
+    /* Convert disk-format data members to native format */
+    p_res1         = le_to_host(disk.res1);
+    p_timestamp    = le_to_host(disk.timestamp);
+    p_vmajor       = le_to_host(disk.vmajor);
+    p_vminor       = le_to_host(disk.vminor);
+    p_name_rva     = le_to_host(disk.name_rva);       p_name_rva.set_section(section);
+    p_ord_base     = le_to_host(disk.ord_base);
+    p_expaddr_n    = le_to_host(disk.expaddr_n);
+    p_nameptr_n    = le_to_host(disk.nameptr_n);
+    p_expaddr_rva  = le_to_host(disk.expaddr_rva);    p_expaddr_rva.set_section(section);
+    p_nameptr_rva  = le_to_host(disk.nameptr_rva);    p_nameptr_rva.set_section(section);
+    p_ordinals_rva = le_to_host(disk.ordinals_rva);   p_ordinals_rva.set_section(section);
 
-    std::string name = p_name_rva.get_section()->content_str(p_name_rva.get_rel());
+    /* Read the name */
+    std::string name;
+    try {
+        name = section->read_content_str(NULL, p_name_rva.get_rva());
+    } catch (const RvaFileMap::NotMapped &e) {
+        fprintf(stderr, "SgAsmPEExportDirectory::ctor: warning: directory name at RVA 0x%08"PRIx64
+                " contains unmapped address 0x%08"PRIx64"\n", p_name_rva.get_rva(), e.rva);
+        if (e.map) {
+            fprintf(stderr, "Memory map in effect at time of error:\n");
+            e.map->dump(stderr, "    ");
+        }
+        memset(&disk, 0, sizeof disk);
+    }
     p_name = new SgAsmBasicString(name);
 }
 
