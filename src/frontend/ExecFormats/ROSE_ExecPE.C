@@ -1838,41 +1838,99 @@ SgAsmPEExportSection::parse()
 
     p_export_dir = new SgAsmPEExportDirectory(this);
 
+    /* The export directory points to three parallel arrays:
+     *   1. An array of RVAs that point to NUL-terminated names.
+     *   2. An array of "ordinals" which serve as indices into the Export Address Table.
+     *   3. An array of export addresses (see note below). */
     for (size_t i=0; i<p_export_dir->get_nameptr_n(); i++) {
-        /* Function name */
-        const ExportNamePtr_disk *nameptr_disk;
-        addr_t nameptr_offset = p_export_dir->get_nameptr_rva().get_rel(this) + i*sizeof(*nameptr_disk);
-        nameptr_disk = (const ExportNamePtr_disk*)content(nameptr_offset, sizeof(*nameptr_disk));
-        rva_t nameptr = le_to_host(*nameptr_disk);
-        SgAsmGenericString *fname = new SgAsmBasicString(content_str(nameptr.get_rel(this)));
+        /* Function name RVA (nameptr)*/
+        ExportNamePtr_disk nameptr_disk = 0;
+        addr_t nameptr_rva = p_export_dir->get_nameptr_rva().get_rva() + i*sizeof(nameptr_disk);
+        try {
+            read_content(NULL, nameptr_rva, (unsigned char*)&nameptr_disk, sizeof nameptr_disk);
+        } catch (const RvaFileMap::NotMapped &e) {
+            fprintf(stderr, "SgAsmPEExportSection::parse: error: export name rva %zu at RVA 0x%08"PRIx64
+                    " contains unmapped address 0x%08"PRIx64"\n", i, nameptr_rva, e.rva);
+            if (e.map) {
+                fprintf(stderr, "Memory map in effect at time of error:\n");
+                e.map->dump(stderr, "    ");
+            }
+            nameptr_disk = 0;
+        }
+        addr_t nameptr = le_to_host(nameptr_disk);
 
-        /* Ordinal (sort of an index into the Export Address Table contained in this same section) */
-        const ExportOrdinal_disk *ordinal_disk;
-        addr_t ordinal_offset = p_export_dir->get_ordinals_rva().get_rel(this) + i*sizeof(*ordinal_disk);
-        ordinal_disk = (const ExportOrdinal_disk*)content(ordinal_offset, sizeof(*ordinal_disk));
-        unsigned ordinal = le_to_host(*ordinal_disk);
+        /* Function name (fname) */
+        std::string s;
+        try {
+            s = read_content_str(NULL, nameptr);
+        } catch (const RvaFileMap::NotMapped &e) {
+            fprintf(stderr, "SgAsmPEExportSection::parse: error: export name %zu at RVA 0x%08"PRIx64
+                    " contains unmapped address 0x%08"PRIx64"\n", i, nameptr, e.rva);
+            if (e.map) {
+                fprintf(stderr, "Memory map in effect at time of error:\n");
+                e.map->dump(stderr, "    ");
+            }
+        }
+        SgAsmGenericString *fname = new SgAsmBasicString(s);
+
+        /* Ordinal (sort of an index into the Export Address Table) */
+        ExportOrdinal_disk ordinal_disk = 0;
+        addr_t ordinal_rva = p_export_dir->get_ordinals_rva().get_rva() + i*sizeof(ordinal_disk);
+        try {
+            read_content(NULL, ordinal_rva, (unsigned char*)&ordinal_disk, sizeof ordinal_disk);
+        } catch (const RvaFileMap::NotMapped &e) {
+            fprintf(stderr, "SgAsmPEExportSection::parse: error: ordinal %zu at RVA 0x%08"PRIx64
+                    " contains unmapped address 0x%08"PRIx64"\n", i, ordinal_rva, e.rva);
+            if (e.map) {
+                fprintf(stderr, "Memory map in effect at time of error:\n");
+                e.map->dump(stderr, "    ");
+            }
+            ordinal_disk = 0;
+        }
+        unsigned ordinal = le_to_host(ordinal_disk);
 
         /* Export address. Convert the symbol's Ordinal into an index into the Export Address Table. The spec says to subtract
          * the ord_base from the Ordinal to get the index, but testing has shown this to be off by one (e.g., Windows-XP file
          * /WINDOWS/system32/msacm32.dll's Export Table's first symbol has the name "XRegThunkEntry" with an Ordinal of zero
          * and the ord_base is one. The index according to spec would be -1 rather than the correct value of zero.) */
-        rva_t expaddr;
+        rva_t expaddr = 0;
         if (ordinal >= (p_export_dir->get_ord_base()-1)) {
             unsigned expaddr_idx = ordinal - (p_export_dir->get_ord_base()-1);
             ROSE_ASSERT(expaddr_idx < p_export_dir->get_expaddr_n());
-            const ExportAddress_disk *expaddr_disk;
-            addr_t expaddr_offset = p_export_dir->get_expaddr_rva().get_rel(this) + expaddr_idx*sizeof(*expaddr_disk);
-            expaddr_disk = (const ExportAddress_disk*)content(expaddr_offset, sizeof(*expaddr_disk));
-            expaddr = le_to_host(*expaddr_disk);
+            ExportAddress_disk expaddr_disk = 0;
+            addr_t expaddr_rva = p_export_dir->get_expaddr_rva().get_rva() + expaddr_idx*sizeof(expaddr_disk);
+            try {
+                read_content(NULL, expaddr_rva, (unsigned char*)&expaddr_disk, sizeof expaddr_disk);
+            } catch (const RvaFileMap::NotMapped &e) {
+                fprintf(stderr, "SgAsmPEExportSection::parse: error: export address %zu at RVA 0x%08"PRIx64
+                        " contains unmapped address 0x%08"PRIx64"\n", i, expaddr_rva, e.rva);
+                if (e.map) {
+                    fprintf(stderr, "Memory map in effect at time of error:\n");
+                    e.map->dump(stderr, "    ");
+                }
+            }
+            expaddr = le_to_host(expaddr_disk);
             expaddr.bind(fhdr);
         } else {
             expaddr = 0xffffffff; /*Ordinal out of range!*/
         }
 
-        /* If export address is within this section then it points to a NUL-terminated forwarder name. */
+        /* If export address is within this section then it points to a NUL-terminated forwarder name.
+         * FIXME: Is this the proper precondition? [RPM 2009-08-20] */
         SgAsmGenericString *forwarder = NULL;
         if (expaddr.get_rva()>=get_mapped_rva() && expaddr.get_rva()<get_mapped_rva()+get_mapped_size()) {
-            forwarder = new SgAsmBasicString(content_str(expaddr.get_rel(this)));
+            std::string s;
+            try {
+                s = read_content_str(NULL, expaddr.get_rva());
+            } catch (const RvaFileMap::NotMapped &e) {
+                fprintf(stderr, "SgAsmPEExportSection::parse: error: forwarder %zu at RVA 0x%08"PRIx64
+                        " contains unmapped address 0x%08"PRIx64"\n", i, expaddr.get_rva(), e.rva);
+                if (e.map) {
+                    fprintf(stderr, "Memory map in effect at time of error:\n");
+                    e.map->dump(stderr, "    ");
+                }
+            }
+            forwarder = new SgAsmBasicString(s);
         }
 
         SgAsmPEExportEntry *entry = new SgAsmPEExportEntry(fname, ordinal, expaddr, forwarder);
