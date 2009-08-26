@@ -512,7 +512,7 @@ SgAsmGenericStrtab::reallocate(bool shrink)
         /* The string table isn't large enough, so make it larger by extending the section that contains the table. The
          * containing section's "set_size" method should add the new space to the string table's free list. If our recursion
          * level is more than two calls deep then something went horribly wrong! */
-        fprintf(stderr, "SgAsmElfStrtab::reallocate(): need to extend [%d] \"%s\" by %zu byte%s\n", 
+        fprintf(stderr, "SgAsmElfStrtab::reallocate(): need to extend [%d] \"%s\" by %"PRIu64" byte%s\n", 
                 container->get_id(), container->get_name()->c_str(), extend_size, 1==extend_size?"":"s");
         static bool recursive=false;
         ROSE_ASSERT(!recursive);
@@ -842,7 +842,7 @@ SgAsmGenericFile::read_content(const MemoryMap *map, addr_t va, void *dst_buf, a
         if (!m) break;                                                  /*we reached a non-mapped virtual address*/
         size_t m_offset = va - m->get_va();                             /*offset relative to start of map element*/
         ROSE_ASSERT(m_offset < m->get_size());                          /*or else map->findRVA() malfunctioned*/
-        size_t nread = std::min(size-ncopied, m->get_size()-m_offset);  /*bytes to read in this pass*/
+        size_t nread = std::min(size-ncopied, (addr_t)m->get_size()-m_offset); /*bytes to read in this pass*/
         size_t file_offset = m->get_offset() + m_offset;
         ROSE_ASSERT(file_offset<get_data().size());
         ROSE_ASSERT(file_offset+nread<=get_data().size());
