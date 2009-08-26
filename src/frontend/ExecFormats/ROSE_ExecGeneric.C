@@ -2304,7 +2304,6 @@ SgAsmGenericSection::read_content_local_str(addr_t rel_offset, bool strict)
     static char *buf=NULL;
     static size_t nalloc=0;
     size_t nused=0;
-    addr_t base = get_offset();
 
     while (1) {
         if (nused >= nalloc) {
@@ -2314,19 +2313,55 @@ SgAsmGenericSection::read_content_local_str(addr_t rel_offset, bool strict)
         }
 
         unsigned char byte;
-        if (rel_offset+nused>get_size()) {
-            if (strict)
-                throw ShortRead(this, rel_offset+nused, 1);
-            byte = '\0';
-        } else {
-            read_content(base+rel_offset+nused, &byte, 1, strict); /*might throw ShortRead or return a NUL*/
-        }
+        read_content_local(rel_offset+nused, &byte, 1, strict);
         if (!byte)
             return std::string(buf, nused);
         buf[nused++] = byte;
     }
 }
-    
+
+/** Extract an unsigned LEB128 value and adjust @p rel_offset according to how many bytes it occupied.  If @p strict is set
+ *  (the default) and the end of the section is reached then throw an SgAsmExecutableFileFormat::ShortRead exception. Upon
+ *  return, the @p rel_offset will be adjusted to point to the first byte after the LEB128 value. */
+uint64_t
+SgAsmGenericSection::read_content_local_uleb128(addr_t *rel_offset, bool strict)
+{
+    int shift=0;
+    uint64_t retval=0;
+    while (1) {
+        unsigned char byte;
+        read_content_local(*rel_offset, &byte, 1, strict);
+        *rel_offset += 1;
+        ROSE_ASSERT(shift<64);
+        retval |= (byte & 0x7f) << shift;
+        shift += 7;
+        if (0==(byte & 0x80))
+            break;
+    }
+    return retval;
+}
+
+/** Extract a signed LEB128 value and adjust @p rel_offset according to how many bytes it occupied. If @p strict is set (the
+ *  default) and the end of the section is reached then throw an SgAsmExecutableFileFormat::ShortRead exception. Upon return,
+ *  the @p rel_offset will be adjusted to point to the first byte after the LEB128 value. */
+int64_t
+SgAsmGenericSection::read_content_local_sleb128(addr_t *rel_offset, bool strict)
+{
+    int shift=0;
+    int64_t retval=0;
+    while (1) {
+        unsigned char byte;
+        read_content_local(*rel_offset, &byte, 1, strict);
+        *rel_offset += 1;
+        ROSE_ASSERT(shift<64);
+        retval |= (byte & 0x7f) << shift;
+        shift += 7;
+        if (0==(byte & 0x80))
+            break;
+    }
+    retval = (retval << (64-shift)) >> (64-shift); /*sign extend*/
+    return retval;
+}
 
 /* Returns ptr to content at specified offset after ensuring that the required amount of data is available. One can think of
  * this function as being similar to fseek()+fread() in that it returns contents of part of a file as bytes. The main
@@ -2410,48 +2445,6 @@ SgAsmGenericSection::content_ucl(addr_t offset, addr_t size)
     returnValue.resize(size, '\0');
     return returnValue;
 }
-
-/** Extract an unsigned LEB128 value and adjust the offset according to how many bytes it occupied. */
-/* DEPRECATED: use read_content_uleb128() instead */
-uint64_t
-SgAsmGenericSection::content_uleb128(rose_addr_t *atp)
-{
-    int shift=0;
-    uint64_t retval=0;
-    while (1) {
-        unsigned char byte;
-        content(*atp, 1, &byte);
-        *atp += 1;
-        ROSE_ASSERT(shift<64);
-        retval |= (byte & 0x7f) << shift;
-        shift += 7;
-        if (0==(byte & 0x80))
-            break;
-    }
-    return retval;
-}
-
-/** Extract a signed LEB128 value and adjust the offset according to how many bytes it occupied. */
-/* DEPRECATED: use read_content_sleb128() instead */
-int64_t
-SgAsmGenericSection::content_sleb128(rose_addr_t *atp)
-{
-    int shift=0;
-    int64_t retval=0;
-    while (1) {
-        unsigned char byte;
-        content(*atp, 1, &byte);
-        *atp += 1;
-        ROSE_ASSERT(shift<64);
-        retval |= (byte & 0x7f) << shift;
-        shift += 7;
-        if (0==(byte & 0x80))
-            break;
-    }
-    retval = (retval << (64-shift)) >> (64-shift); /*sign extend*/
-    return retval;
-}
-
 
 /** Write data to a file section.
  *

@@ -837,15 +837,15 @@ HEADER_GENERIC_SECTION_START
 		}
 		std::string read_content_str(addr_t abs_offset, bool strict=true);
 		std::string read_content_local_str(addr_t rel_offset, bool strict=true);
-		SgUnsignedCharList read_content_local_ucl(addr_t rel_offset, addr_t size);
+		SgUnsignedCharList read_content_local_ucl(addr_t rel_offset, addr_t size); //always non-strict
+		int64_t read_content_local_sleb128(rose_addr_t *rel_offset, bool strict=true);
+		uint64_t read_content_local_uleb128(rose_addr_t *rel_offset, bool strict=true);
 
 		/* Deprecated functions for accessing content */
 		const unsigned char *content(addr_t offset, addr_t size);/*returns ptr to SIZE bytes starting at OFFSET */
 		const SgUnsignedCharList content_ucl(addr_t offset, addr_t size);/*returns ptr to SIZE bytes starting at OFFSET */
 		void content(addr_t offset, addr_t size, void *buf); /* copies content into BUF */
 		std::string content_str(addr_t offset, bool relax=true);/* ptr to NUL-terminated string starting at OFFSET */
-		int64_t content_sleb128(rose_addr_t *atp);
-		uint64_t content_uleb128(rose_addr_t *atp);
 		unsigned char *local_content(size_t nbytes);	/* obtain a local, writable pool to hold content */
 
 		/* Functions for tracking referenced/unreferenced content. The tracking actually happens at the entire file level
