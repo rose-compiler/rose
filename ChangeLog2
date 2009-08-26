@@ -1,3 +1,474 @@
+2009-08-26 18:26  matzke
+
+	* [r7018] /trunk/ROSE/src/frontend/Disassemblers/AssemblerX86.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ExecGeneric.C: Bugs: fixed
+	  compiler warnings/errors
+
+2009-08-26 17:09  matzke
+
+	* [r7017] /trunk/ROSE/src/frontend/ExecFormats/ExecDOS.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ExecELF.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ExecGeneric.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ExecLE.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ExecNE.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ExecPE.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/Makefile.am,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecDOS.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecELF.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecGeneric.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecLE.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecNE.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecPE.C: ExecFormats:
+	  Renamed some source files
+	  
+	  The ROSE_*.C files were renamed by dropping "ROSE_". This prefix
+	  was
+	  added about a year ago (r1525) when the binary parsers were being
+	  incorporated
+	  into ROSE.
+
+2009-08-26 17:08  liao6
+
+	* [r7016] /trunk/ROSE/tests/translatorTests/Makefile.am,
+	  /trunk/ROSE/tests/translatorTests/qualifiedName.C: A test case
+
+2009-08-26 17:08  matzke
+
+	* [r7015] /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/frontend/Disassemblers/Disassembler.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/Disassembler.h,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerArm.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerPowerpc.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerX86.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/MemoryMap.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/MemoryMap.h,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecGeneric.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecPE.C: MemoryMap:
+	  removed support for relative virtual addresses
+	  
+	  All memory mapping is in terms of absolute virtual addresses now
+	  since
+	  MemoryMap is used a levels of the AST higher than SgAsmFileHeader
+	  where
+	  relative virtual addresses don't make sense.
+
+2009-08-26 17:08  matzke
+
+	* [r7014] /trunk/ROSE/docs/Rose/binaryAnalysis.tex,
+	  /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/frontend/Disassemblers/Disassembler.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/Disassembler.h,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerArm.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerArm.h,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerPowerpc.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerPowerpc.h,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerX86.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerX86.h,
+	  /trunk/ROSE/src/frontend/ExecFormats/Makefile.am,
+	  /trunk/ROSE/src/frontend/ExecFormats/MemoryMap.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/MemoryMap.h,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecGeneric.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecPE.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/RvaFileMap.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/RvaFileMap.h,
+	  /trunk/ROSE/src/rose.h: RvaFileMap: name changed to MemoryMap
+	  
+	  I'm generalizing this a bit to be able to describe memory
+	  mappings
+	  across an entire file instead of within a single header. For
+	  instance,
+	  this will enable it to describe how the DOS part of a file is
+	  mapped in
+	  relation to how the PE part is mapped.
+
+2009-08-26 16:56  matzke
+
+	* [r7013]
+	  /trunk/ROSE/developersScratchSpace/Robb/BinaryTools/expandCoreDump.C,
+	  /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecGeneric.C,
+	  /trunk/ROSE/tests/roseTests/binaryTests/testElfConstruct.C:
+	  ExecFormats: removed deprecated functions
+	  
+	  SgAsmGenericSection::content()
+	  SgAsmGenericSection::content_str()
+	  SgAsmGenericSection::content_ucl()
+	  SgAsmGenericSection::local_content()
+
+2009-08-26 16:56  liao6
+
+	* [r7012]
+	  /trunk/ROSE/src/midend/programAnalysis/defUseAnalysis/GlobalVarAnalysis.cpp:
+	  Workaround a bug related to missing scope for the 2nd parameter
+	  of __builtin_prefetch()
+
+2009-08-26 16:56  matzke
+
+	* [r7011] /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/frontend/Disassemblers/Disassembler.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecGeneric.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecLE.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecNE.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecPE.C: ExecFormats:
+	  removed deprecated functions
+	  
+	  SgAsmGenericSection::content()
+	  SgAsmGenericSection::content_ucl()
+	  SgAsmGenericSection::content_str()
+
+2009-08-26 16:56  matzke
+
+	* [r7010] /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecDOS.C:
+	  ExecFormats: DOS parsing uses new content interface
+
+2009-08-26 16:55  matzke
+
+	* [r7009] /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/frontend/Disassemblers/Disassembler.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecGeneric.C:
+	  ExecFormats: Adjustments to SgAsmGenericFile::content()
+
+2009-08-26 16:55  matzke
+
+	* [r7008] /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecELF.C:
+	  ExecFormats: ELF Notes parsed with new content interface
+
+2009-08-26 16:55  matzke
+
+	* [r7007] /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecELF.C:
+	  ExecFormats: ELF EH frame parsing uses new content interface
+
+2009-08-26 16:55  matzke
+
+	* [r7006] /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecGeneric.C:
+	  ExecFormats: new methods for reading LEB128 values
+
+2009-08-26 16:55  matzke
+
+	* [r7005] /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecELF.C:
+	  ExecFormats: ELF symbols parsed with new content interface
+
+2009-08-26 16:54  matzke
+
+	* [r7004] /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecELF.C:
+	  ExecFormats: ELF dynamic sections parsed with new content
+	  interface
+
+2009-08-26 16:54  matzke
+
+	* [r7003] /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecELF.C:
+	  ExecFormats: ELF relocations parsed with new content methods
+
+2009-08-26 16:54  matzke
+
+	* [r7002] /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecELF.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecGeneric.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecPE.C: ExecFormats:
+	  change the name of a content reading method
+
+2009-08-26 16:54  matzke
+
+	* [r7001] /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecELF.C:
+	  ExecFormats: ELF section/segment table parsing uses new interface
+
+2009-08-26 16:54  matzke
+
+	* [r7000] /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecELF.C:
+	  ExecFormats: ELF string table parsing uses new content interface
+
+2009-08-26 16:54  matzke
+
+	* [r6999] /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecELF.C:
+	  ExecFormats: ELF header parsing uses new content interface
+
+2009-08-26 16:53  matzke
+
+	* [r6998] /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecGeneric.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecPE.C: ExecFormats:
+	  changed result buffer type
+
+2009-08-26 16:53  matzke
+
+	* [r6997] /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecELF.C:
+	  ExecFormats: is_ELF() uses new content reading interface
+
+2009-08-26 16:53  matzke
+
+	* [r6996] /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecPE.C:
+	  ExecFormats: PE symbol table parsing uses new read methods
+
+2009-08-26 16:53  matzke
+
+	* [r6995] /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecGeneric.C:
+	  ExecFormats: added more content reading methods
+
+2009-08-26 16:53  matzke
+
+	* [r6994] /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecPE.C:
+	  ExecFormats: PE string tables parsed with new read methods
+
+2009-08-26 16:53  matzke
+
+	* [r6993] /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecPE.C:
+	  ExecFormats: PE section table parsing uses new read methods
+
+2009-08-26 16:52  matzke
+
+	* [r6992] /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecPE.C:
+	  ExecFormats: PE RVA/Size pair loading uses new read methods
+
+2009-08-26 16:52  matzke
+
+	* [r6991] /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecPE.C:
+	  ExecFormats: PE header uses new read methods
+
+2009-08-26 16:52  matzke
+
+	* [r6990] /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecPE.C:
+	  ExecFormats: PE Export Section uses RVAs for parsing
+	  
+	  The parsing of PE Export Tables uses virtual addresses and the
+	  simulated
+	  loader memory map. These changes also make the parser more robust
+	  and
+	  able to handle tables that span PE sections.
+
+2009-08-26 16:52  matzke
+
+	* [r6989] /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecPE.C:
+	  ExecFormats: PE Export Directories are parsed using RVAs
+	  
+	  The parsing of SgAsmPEExportDirectory uses virtual addresses and
+	  the
+	  simulated loader memory map. These changes also make the parser
+	  more
+	  robust and able to handle entries that span PE sections.
+
+2009-08-26 16:52  matzke
+
+	* [r6988] /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecGeneric.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecPE.C: ExecFormats:
+	  removed debugging
+	  
+	  The simulated loader map is output to the *.dump files rather
+	  than to
+	  stderr.
+
+2009-08-26 16:52  matzke
+
+	* [r6987] /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecPE.C: ExecFormats:
+	  PE Import HNT Entries are parsed using RVAs
+	  
+	  The parsing of HNTs uses virtual addresses and the memory mapping
+	  provided by the simulated loader. These changes also make the
+	  parser
+	  more robust and able to handle entries that span PE sections.
+
+2009-08-26 16:52  matzke
+
+	* [r6986] /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecPE.C:
+	  ExecFormats: SgAsmPEImportLookupTable uses RVAs for parsing
+	  
+	  Using RVAs for parsing allows the Import Lookup Tables (ILTs) and
+	  Import Address Tables (IATs) to span PE Sections and makes the
+	  parser
+	  more robust.
+
+2009-08-26 16:51  matzke
+
+	* [r6985] /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecGeneric.C:
+	  ExecFormats: tightened reference tracking for strings
+	  
+	  The read_content_str() functions do a better job of tracking what
+	  bytes
+	  of the file have been referenced for the string.
+
+2009-08-26 16:51  matzke
+
+	* [r6984] /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecGeneric.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecPE.C: ExecFormats:
+	  readers throw exceptions
+	  
+	  The default action for all the read_content*() functions is to
+	  throw an
+	  exception (either SgAsmExecutableFileFormat::ShortRead for direct
+	  file
+	  reads or RvaFileMap::NotMapped for virtual memory) if an attempt
+	  is made
+	  to read data which doesn't exist.
+	  
+	  These functions all take an optional final argument that toggles
+	  between
+	  throwing the exception and zero-padding the result. In the latter
+	  case,
+	  the return value indicates how many bytes were actually read.
+
+2009-08-26 16:51  matzke
+
+	* [r6983] /trunk/ROSE/src/frontend/Disassemblers/Disassembler.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecGeneric.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/RvaFileMap.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/RvaFileMap.h: RvaFileMap:
+	  added more exception classes
+	  
+	  We're now able to distinguish between errors related to
+	  inconsistent
+	  mappings and attempting access unmapped virtual memory.
+
+2009-08-26 16:51  matzke
+
+	* [r6982] /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecPE.C:
+	  ExecFormats: PE import directory reads using RVAs
+
+2009-08-26 16:51  matzke
+
+	* [r6981] /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecGeneric.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecPE.C: ExecFormats:
+	  bug fixes for content reading
+
+2009-08-26 16:50  matzke
+
+	* [r6980] /trunk/ROSE/src/frontend/Disassemblers/DisassemblerArm.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerPowerpc.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerX86.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecGeneric.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecPE.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/RvaFileMap.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/RvaFileMap.h: RvaFileMap:
+	  split read() into readRVA() and readVA()
+
+2009-08-26 16:50  matzke
+
+	* [r6979] /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecGeneric.C:
+	  ExecFormats: added content reading methods
+
+2009-08-26 16:50  matzke
+
+	* [r6978] /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/ROSETTA/src/binaryInstruction.C: ExecFormats:
+	  Moved loader map from header to file; added readers
+
+2009-08-26 16:50  matzke
+
+	* [r6977] /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/ROSETTA/src/binaryInstruction.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecGeneric.C:
+	  ExecFormats: Rearranged constructor code
+	  
+	  The constructor initializations were move back into the class
+	  definition
+	  in order to closer to the declarations for data members. The
+	  constructor definition was moved into the 'ctor' method so it's
+	  in the
+	  same place as the rest of the construction code.
+
+2009-08-26 16:50  matzke
+
+	* [r6976] /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Node.code,
+	  /trunk/ROSE/src/ROSETTA/src/binaryInstruction.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecGeneric.C,
+	  /trunk/ROSE/tests/roseTests/binaryTests/arm-ctrlaltdel.ans,
+	  /trunk/ROSE/tests/roseTests/binaryTests/test_disassemble.ans:
+	  ExecFormats: referenced extents tracked at file level
+	  
+	  The old behavior was that each section tracked what part of the
+	  file was
+	  read. The benefit of the old approach was that if the section was
+	  relocated the referenced/unreferenced list still applied.
+	  
+	  The new method is that references are tracked at the file level,
+	  which
+	  will work better when we start using RvaFileMap to read from the
+	  file
+	  based on virtual addresses.
+
+2009-08-26 16:49  matzke
+
+	* [r6975] /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecPE.C:
+	  ExecFormats: PE section alignment adjusted
+	  
+	  The ROSE sections created from the RVA/Size pairs do not have
+	  alignment
+	  constraints since they live inside other sections.
+
+2009-08-26 16:49  matzke
+
+	* [r6974] /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecPE.C:
+	  ExecFormats: PE uses loader map for RVA/Size pairs
+
+2009-08-26 16:49  matzke
+
+	* [r6973] /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/ROSETTA/src/binaryInstruction.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecPE.C: ExecFormats:
+	  added preliminary loader map
+	  
+	  Executable files (and libraries, cores, etc) have fields that
+	  specify
+	  how parts of the file are to be mapped into memory and ROSE
+	  currently
+	  honors those settings precisely. However, real-world loaders must
+	  also
+	  take into account OS and hardware alignment constraints, wildly
+	  incorrect values in the executable, etc. Furthermore different
+	  loaders
+	  (or even different versions of the same loader) follow slightly
+	  different rules.
+	  
+	  Therefore, ROSE is moving toward a system where the loader
+	  mapping of
+	  file to memory (and probably eventually some other
+	  loader-specific
+	  details) is abstracted into a Loader class that can be easily
+	  specialized.
+	  
+	  This checkin adds an RvaFileMap object to executable format
+	  headers
+	  (SgAsmGenericHeader) and defines a sample loader-mapping that
+	  will be
+	  used temporarily for Windows PE files while we update the PE
+	  parser to
+	  use this new feature.
+
+2009-08-26 16:49  matzke
+
+	* [r6972] /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecGeneric.C:
+	  ExecFormats: minor code cleanup
+
+2009-08-26 16:49  matzke
+
+	* [r6971] /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecPE.C:
+	  ExecFormats: added downward-alignment macro to PE
+	  
+	  The ALIGN macro has been split in two:
+	  ALIGN_UP: the old behavior, rounding upward to next alignment
+	  ALIGN_DN: rounds downward to the next alignment
+
+2009-08-26 16:49  matzke
+
+	* [r6970] /trunk/ROSE/src/frontend/Disassemblers/Disassembler.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/RvaFileMap.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/RvaFileMap.h: RvaFileMap:
+	  added new methods
+	  
+	  Added set_base_va() and dump() methods.
+	  
+	  (RvaFileMap is a mapping from relative virtual addresses to file
+	  offsets
+	  and is similar to std::map but more efficient for this particular
+	  task.)
+	  
+	  get_rva_offset() returns offset of a particular rva
+	  findRVA() can take a rose_addr_t or a rose_rva_t arg
+
 2009-08-26 00:01  collingbourne2
 
 	* [r6968] /trunk/ROSE/Makefile.am: "make docs" now works regardless
