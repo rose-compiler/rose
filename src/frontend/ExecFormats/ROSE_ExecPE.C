@@ -569,9 +569,9 @@ SgAsmPEFileHeader::create_table_sections()
 
         tabsec->set_offset(file_offset);
         tabsec->set_size(pair->get_e_size());
-        tabsec->set_file_alignment(get_e_file_align());
+        tabsec->set_file_alignment(1);
 
-        tabsec->set_mapped_alignment(get_e_section_align());
+        tabsec->set_mapped_alignment(1);
         tabsec->set_mapped_rva(pair->get_e_rva().get_rva());
         tabsec->set_mapped_size(pair->get_e_size());
         tabsec->set_mapped_rperm(true);
@@ -1131,7 +1131,7 @@ SgAsmPESectionTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 void
 SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section, size_t idx)
 {
-    SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(section->get_header());
+    SgAsmPEFileHeader *fhdr = isSgAsmPEFileHeader(section->get_header());
     ROSE_ASSERT(fhdr!=NULL);
 
     set_parent(section);
@@ -1557,7 +1557,7 @@ SgAsmPEImportSection::parse()
 {
     SgAsmPESection::parse();
 
-    SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(get_header());
+    SgAsmPEFileHeader *fhdr = isSgAsmPEFileHeader(get_header());
     ROSE_ASSERT(fhdr!=NULL);
 
     for (size_t i = 0; 1; i++) {
