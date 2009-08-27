@@ -1,3 +1,9 @@
+2009-08-26 20:37  collingbourne2
+
+	* [r7020] /trunk/ROSE/projects/haskellport/Makefile.am:
+	  Haskellport: improved the Makefile to regenerate the
+	  headersWithoutLineDirective if necessary
+
 2009-08-26 18:26  matzke
 
 	* [r7018] /trunk/ROSE/src/frontend/Disassemblers/AssemblerX86.C,
