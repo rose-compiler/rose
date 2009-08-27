@@ -13,7 +13,7 @@ public:
     DisassemblerPowerpc(SgAsmGenericHeader *fhdr) {init(fhdr);}
     virtual ~DisassemblerPowerpc() {}
     virtual Disassembler *can_disassemble(SgAsmGenericHeader*) const;
-    virtual SgAsmInstruction *disassembleOne(const unsigned char *buf, const MemoryMap &map, rose_addr_t start_va,
+    virtual SgAsmInstruction *disassembleOne(const unsigned char *buf, const MemoryMap *map, rose_addr_t start_va,
                                              AddressSet *successors=NULL);
     virtual void assembleOne(SgAsmInstruction*, SgUnsignedCharList&) {abort();}
     virtual SgAsmInstruction *make_unknown_instruction(const Exception&);

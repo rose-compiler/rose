@@ -121,12 +121,12 @@ Disassembler::disassembleOne(const unsigned char *buf, rose_addr_t buf_va, size_
 {
     MemoryMap map;
     map.insert(MemoryMap::MapElement(buf_va, buf_size, 0));
-    return disassembleOne(buf, map, start_va, successors);
+    return disassembleOne(buf, &map, start_va, successors);
 }
 
 /* Disassemble one basic block. */
 Disassembler::InstructionMap
-Disassembler::disassembleBlock(const unsigned char *buf, const MemoryMap &map, rose_addr_t start_va,
+Disassembler::disassembleBlock(const unsigned char *buf, const MemoryMap *map, rose_addr_t start_va,
                                AddressSet *successors)
 {
     InstructionMap insns;
@@ -193,12 +193,12 @@ Disassembler::disassembleBlock(const unsigned char *buf, rose_addr_t buf_va, siz
 {
     MemoryMap map;
     map.insert(MemoryMap::MapElement(buf_va, buf_size, 0));
-    return disassembleBlock(buf, map, start_va, successors);
+    return disassembleBlock(buf, &map, start_va, successors);
 }
 
 /* Disassemble reachable instructions from a buffer */
 Disassembler::InstructionMap
-Disassembler::disassembleBuffer(const unsigned char *buf, const MemoryMap &map, size_t start_va,
+Disassembler::disassembleBuffer(const unsigned char *buf, const MemoryMap *map, size_t start_va,
                                 AddressSet *successors, BadMap *bad)
 {
     AddressSet worklist;
@@ -208,7 +208,7 @@ Disassembler::disassembleBuffer(const unsigned char *buf, const MemoryMap &map, 
 
 /* Disassemble reachable instructions from a buffer */
 Disassembler::InstructionMap
-Disassembler::disassembleBuffer(const unsigned char *buf, const MemoryMap &map, AddressSet worklist,
+Disassembler::disassembleBuffer(const unsigned char *buf, const MemoryMap *map, AddressSet worklist,
                                 AddressSet *successors, BadMap *bad)
 {
     rose_addr_t next_search = 0;
@@ -235,7 +235,7 @@ Disassembler::disassembleBuffer(const unsigned char *buf, const MemoryMap &map, 
 
         if (insns.find(va)!=insns.end() || (bad && bad->find(va)!=bad->end())) {
             /* Skip this if we've already tried to disassemble it. */
-        } else if (NULL==map.find(va)) {
+        } else if (NULL==map->find(va)) {
             /* Any address that's outside the range we're allowed to work on will be added to the successors. */
             if (successors)
                 successors->insert(va);
@@ -273,7 +273,7 @@ Disassembler::disassembleBuffer(const unsigned char *buf, const MemoryMap &map, 
 
 /* Add basic block following address to work list. */
 void
-Disassembler::search_following(AddressSet *worklist, const InstructionMap &bb, const MemoryMap &map, const BadMap *bad)
+Disassembler::search_following(AddressSet *worklist, const InstructionMap &bb, const MemoryMap *map, const BadMap *bad)
 {
     if (bb.size()==0)
         return;
@@ -281,7 +281,7 @@ Disassembler::search_following(AddressSet *worklist, const InstructionMap &bb, c
     --bbi;
     SgAsmInstruction *last_insn = bbi->second;
     rose_addr_t following_va = last_insn->get_address() + last_insn->get_raw_bytes().size();
-    if (map.find(following_va) && (!bad || bad->find(following_va)==bad->end())) {
+    if (map->find(following_va) && (!bad || bad->find(following_va)==bad->end())) {
         if (p_debug && worklist->find(following_va)==worklist->end()) {
             rose_addr_t va = bb.begin()->first;
             fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: SEARCH_FOLLOWING added 0x%08"PRIx64"\n", va, following_va);
@@ -292,7 +292,7 @@ Disassembler::search_following(AddressSet *worklist, const InstructionMap &bb, c
 
 /* Add values of immediate operands to work list */
 void
-Disassembler::search_immediate(AddressSet *worklist, const InstructionMap &bb,  const MemoryMap &map, const BadMap *bad)
+Disassembler::search_immediate(AddressSet *worklist, const InstructionMap &bb,  const MemoryMap *map, const BadMap *bad)
 {
     for (InstructionMap::const_iterator bbi=bb.begin(); bbi!=bb.end(); bbi++) {
         const std::vector<SgAsmExpression*> &operands = bbi->second->get_operandList()->get_operands();
@@ -311,7 +311,7 @@ Disassembler::search_immediate(AddressSet *worklist, const InstructionMap &bb,  
                 default:
                     continue; /* Not an appropriately-sized constant */
             }
-            if (map.find(constant) && (!bad || bad->find(constant)==bad->end())) {
+            if (map->find(constant) && (!bad || bad->find(constant)==bad->end())) {
                 if (p_debug && worklist->find(constant)==worklist->end())
                     fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: SEARCH_IMMEDIATE added 0x%08"PRIx64"\n",
                             bbi->first, constant);
@@ -323,9 +323,9 @@ Disassembler::search_immediate(AddressSet *worklist, const InstructionMap &bb,  
 
 /* Add word-aligned values to work list */
 void
-Disassembler::search_words(AddressSet *worklist, const unsigned char *buf, const MemoryMap &map, const BadMap *bad)
+Disassembler::search_words(AddressSet *worklist, const unsigned char *buf, const MemoryMap *map, const BadMap *bad)
 {
-    const std::vector<MemoryMap::MapElement> &mes = map.get_elements();
+    const std::vector<MemoryMap::MapElement> &mes = map->get_elements();
     for (size_t i=0; i<mes.size(); i++) {
         const MemoryMap::MapElement &me = mes[i];
         rose_addr_t va = me.get_va();
@@ -345,7 +345,7 @@ Disassembler::search_words(AddressSet *worklist, const unsigned char *buf, const
                         ROSE_ASSERT(!"not implemented");
                 }
             }
-            if (map.find(constant) && (!bad || bad->find(constant)==bad->end())) {
+            if (map->find(constant) && (!bad || bad->find(constant)==bad->end())) {
                 if (p_debug && worklist->find(constant)==worklist->end())
                     fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: SEARCH_WORD added 0x%08"PRIx64"\n", va, constant);
                 worklist->insert(constant);
@@ -357,7 +357,7 @@ Disassembler::search_words(AddressSet *worklist, const unsigned char *buf, const
 
 /* Find next unused address. */
 void
-Disassembler::search_next_address(AddressSet *worklist, rose_addr_t start_va, const MemoryMap &map,
+Disassembler::search_next_address(AddressSet *worklist, rose_addr_t start_va, const MemoryMap *map,
                                   const InstructionMap &insns, const BadMap *bad, bool avoid_overlap)
 {
     /* Assume a maximum instruction size so that while we're search backward (by virtual address) through previously
@@ -369,8 +369,8 @@ Disassembler::search_next_address(AddressSet *worklist, rose_addr_t start_va, co
 
         /* Advance to the next valid mapped address if necessary by scanning for the first map element that has a higher
          * virtual address. */
-        if (!map.find(next_va)) {
-            const std::vector<MemoryMap::MapElement> &mes = map.get_elements();
+        if (!map->find(next_va)) {
+            const std::vector<MemoryMap::MapElement> &mes = map->get_elements();
             const MemoryMap::MapElement *me = NULL;
             for (size_t i=0; i<mes.size(); i++) {
                 if (mes[i].get_va() > next_va) {
@@ -436,7 +436,7 @@ Disassembler::disassembleBuffer(const unsigned char *buf, rose_addr_t buf_va, si
 {
     MemoryMap map;
     map.insert(MemoryMap::MapElement(buf_va, buf_size, 0));
-    return disassembleBuffer(buf, map, start_va, successors, bad);
+    return disassembleBuffer(buf, &map, start_va, successors, bad);
 }
 
 /* Disassemble instructions in a single mapped section. */
@@ -452,7 +452,7 @@ Disassembler::disassembleSection(SgAsmGenericSection *section, rose_addr_t start
 
     SgFileContentList content = file->content(section->get_offset(), section->get_size());
     const unsigned char *buf = &(content[0]);
-    return disassembleBuffer(buf, map, start_va, successors, bad);
+    return disassembleBuffer(buf, &map, start_va, successors, bad);
 }
 
 /* Disassemble instructions reachable from a file header. */
@@ -523,7 +523,7 @@ Disassembler::disassembleInterp(SgAsmGenericHeader *header, AddressSet *successo
     /* Show final virtual address map */
     if (p_debug) {
         fprintf(stderr, "Disassembler: final virtual address to file offset mapping for disassembly:\n");
-        map.dump(p_debug, "    ");
+        map->dump(p_debug, "    ");
     }
 
     /* Seed the disassembly with the entry point(s) stored in the file header. */

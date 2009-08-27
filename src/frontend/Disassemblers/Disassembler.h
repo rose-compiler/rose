@@ -83,7 +83,7 @@
  *  d->set_search(Disassembler::SEARCH_ALLBYTES); // disassemble at every address
  *  Disassembler::AddressSet worklist; // can be empty due to SEARCH_ALLBYTES
  *  Disassembler::InstructionMap insns;
- *  insns = d->disassembleBuffer(&(file_content[0]), map, worklist);
+ *  insns = d->disassembleBuffer(&(file_content[0]), &map, worklist);
  *
  *  // Print all instructions
  *  Disassembler::InstructionMap::iterator ii;
@@ -330,7 +330,7 @@ public:
      *  added to the optional successor set (note that successors of an individual instruction can also be obtained via
      *  SgAsmInstruction::get_successors). If the instruction cannot be disassembled then an exception is thrown and the
      *  successors set is not modified. */
-    virtual SgAsmInstruction *disassembleOne(const unsigned char *buf, const MemoryMap &map, rose_addr_t start_va,
+    virtual SgAsmInstruction *disassembleOne(const unsigned char *buf, const MemoryMap *map, rose_addr_t start_va,
                                              AddressSet *successors=NULL) = 0;
 
     /** Similar in functionality to the disassembleOne method that takes a MemoryMap argument, except the content buffer is
@@ -354,7 +354,7 @@ public:
      *  added to the successors and the basic block ends at the previous instruction.  If the SEARCH_DEADEND bit is clear and
      *  an instruction cannot be disassembled then the entire basic block is discarded, an exception is thrown (the exception
      *  address is the instruction that could not be disassembled), and the successors list is not modified. */
-    InstructionMap disassembleBlock(const unsigned char *buf, const MemoryMap &map, rose_addr_t start_va,
+    InstructionMap disassembleBlock(const unsigned char *buf, const MemoryMap *map, rose_addr_t start_va,
                                     AddressSet *successors=NULL);
 
     /** Similar in functionality to the disassembleBlock method that takes a MemoryMap argument, except the supplied buffer
@@ -372,7 +372,7 @@ public:
      *  address and exception will be added to the optional @p bad map; any address which is already in the bad map upon
      *  function entry will not be disassembled. Note that bad instructions have no successors.  An exception is thrown if an
      *  error is detected before disassembly begins. */
-    InstructionMap disassembleBuffer(const unsigned char *buf, const MemoryMap &map, size_t start_va,
+    InstructionMap disassembleBuffer(const unsigned char *buf, const MemoryMap *map, size_t start_va,
                                      AddressSet *successors=NULL, BadMap *bad=NULL);
 
     /** Similar in functionality to the disassembleBuffer methods that take a MemoryMap argument, except the supplied buffer
@@ -382,7 +382,7 @@ public:
 
     /** Similar in functionality to the disassembleBuffer methods that take a single starting virtual address, except this one
      *  tries to disassemble from all the addresses specified in the workset. */
-    InstructionMap disassembleBuffer(const unsigned char *buf, const MemoryMap &map, AddressSet workset,
+    InstructionMap disassembleBuffer(const unsigned char *buf, const MemoryMap *map, AddressSet workset,
                                      AddressSet *successors=NULL, BadMap *bad=NULL);
 
 
@@ -413,16 +413,16 @@ public:
 private:
     /** Adds the address following a basic block to the list of addresses that should be disassembled.  This search method is
      *  invoked automatically if the SEARCH_FOLLOWING bit is set (see set_search()). */
-    void search_following(AddressSet *worklist, const InstructionMap &bb, const MemoryMap &map, const BadMap *bad);
+    void search_following(AddressSet *worklist, const InstructionMap &bb, const MemoryMap *map, const BadMap *bad);
 
     /** Adds values of immediate operands to the list of addresses that should be disassembled.  Such operands are often used
      *  in a closely following instruction as a jump target. E.g., "move 0x400600, reg1; ...; jump reg1". This search method
      *  is invoked automatically if the SEARCH_IMMEDIATE bit is set (see set_search()). */
-    void search_immediate(AddressSet *worklist, const InstructionMap &bb,  const MemoryMap &map, const BadMap *bad);
+    void search_immediate(AddressSet *worklist, const InstructionMap &bb,  const MemoryMap *map, const BadMap *bad);
 
     /** Adds all word-aligned values to work list, provided they specify a virtual address in the @p map.  The @p wordsize
      *  must be a power of two. This search method is invoked automatically if the SEARCH_WORDS bit is set (see set_search()). */
-    void search_words(AddressSet *worklist, const unsigned char *buf, const MemoryMap &map, const BadMap *bad);
+    void search_words(AddressSet *worklist, const unsigned char *buf, const MemoryMap *map, const BadMap *bad);
 
     /** Finds the lowest virtual address, greater than or equal to @p start_va, which does not correspond to a previous
      *  disassembly attempt as evidenced by its presence in the supplied instructions or bad map.  If @p avoid_overlaps is set
@@ -430,7 +430,7 @@ private:
      *  addresses contained in the MemoryMap will be considered.  The address is returned by adding it to the worklist;
      *  nothing is added if no qualifying address can be found. This method is invoked automatically if the SEARCH_ALLBYTES or
      *  SEARCH_UNUSED bits are set (see set_search()). */
-    void search_next_address(AddressSet *worklist, rose_addr_t start_va, const MemoryMap &map, const InstructionMap &insns,
+    void search_next_address(AddressSet *worklist, rose_addr_t start_va, const MemoryMap *map, const InstructionMap &insns,
                              const BadMap *bad, bool avoid_overlaps);
 
 

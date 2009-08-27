@@ -28,7 +28,7 @@ public:
     virtual Disassembler *can_disassemble(SgAsmGenericHeader*) const;
 
     /** See Disassembler::disassembleOne */
-    virtual SgAsmInstruction *disassembleOne(const unsigned char *buf, const MemoryMap &map, rose_addr_t start_va,
+    virtual SgAsmInstruction *disassembleOne(const unsigned char *buf, const MemoryMap *map, rose_addr_t start_va,
                                              AddressSet *successors=NULL);
 
     /** Make an unknown instruction from an exception. */

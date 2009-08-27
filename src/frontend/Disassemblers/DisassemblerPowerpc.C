@@ -130,13 +130,13 @@ DisassemblerPowerpc::init(SgAsmGenericHeader *header)
 
 /* This is a bit of a kludge for now because we're trying to use an unmodified version of the PowerpcDisassembler name space. */
 SgAsmInstruction *
-DisassemblerPowerpc::disassembleOne(const unsigned char *buf, const MemoryMap &map, rose_addr_t start_va, 
+DisassemblerPowerpc::disassembleOne(const unsigned char *buf, const MemoryMap *map, rose_addr_t start_va, 
                                     AddressSet *successors)
 {
     /* The old PowerpcDisassembler::disassemble() function doesn't understand MemoryMap mappings. Therefore, remap the next
      * few bytes (enough for at least one instruction) into a temporary buffer. */
     unsigned char temp[4];
-    size_t tempsz = map.read(temp, buf, start_va, sizeof temp);
+    size_t tempsz = map->read(temp, buf, start_va, sizeof temp);
 
     /* Treat the bytes as a big-endian instruction.  Note that PowerPC is big-endian, but PowerPC can support both big- and
      * little-endian processor modes (with much weirdness; e.g. PDP endian like propoerties). */
