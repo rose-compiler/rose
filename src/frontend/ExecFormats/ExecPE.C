@@ -454,47 +454,6 @@ SgAsmPEFileHeader::add_rvasize_pairs()
     }
 }
 
-/* Build memory mapping. This algorithm was implemented based on an e-mail from Cory Cohen at CERT. [RPM 2009-08-17] */
-void
-SgAsmPEFileHeader::map_sections()
-{
-    const SgAsmGenericSectionPtrList &sections = get_sections()->get_sections();
-
-    MemoryMap *map = get_file()->get_loader_map();
-    if (!map) {
-        map = new MemoryMap();
-        get_file()->set_loader_map(map);
-    }
-
-    for (size_t i=0; i<sections.size(); i++) {
-        SgAsmGenericSection *section = sections[i];
-        if (section->is_mapped()) {
-            rose_addr_t file_alignment = section->get_file_alignment();
-            if (file_alignment>0x200 || 0==file_alignment)
-                file_alignment = 0x200;
-
-            rose_addr_t mapped_alignment = section->get_mapped_alignment();
-            if (0==mapped_alignment)
-                mapped_alignment = 0x200;
-
-            rose_addr_t file_size = ALIGN_UP(section->get_size(), file_alignment);
-
-            rose_addr_t mapped_size = section->get_mapped_size();
-            if (file_size > mapped_size)
-                mapped_size = file_size;
-
-            rose_addr_t file_offset = ALIGN_DN(section->get_offset(), file_alignment);
-
-            rose_addr_t mapped_va = get_base_va() + ALIGN_DN(section->get_mapped_rva(), mapped_alignment);
-
-            MemoryMap::MapElement elmt(mapped_va, mapped_size, file_offset);
-            map->erase(elmt); /*might have been mapped as part of an earlier section*/
-            map->insert(elmt);
-        }
-    }
-}
-
-
 /* Looks at the RVA/Size pairs in the PE header and creates an SgAsmGenericSection object for each one.  This must be done
  * after we build the mapping from virtual addresses to file offsets. */
 void
@@ -1005,8 +964,14 @@ SgAsmPESectionTable::parse()
         pending.push_back(section);
     }
 
-    /* Build the memory mapping like the real loader would do, then parse each section. */
-    fhdr->map_sections();
+    /* Build the memory mapping like the real loader would do */
+    ROSE_ASSERT(NULL==get_file()->get_loader_map());
+    Loader *loader = Loader::find_loader(fhdr);
+    ROSE_ASSERT(loader!=NULL);
+    MemoryMap *loader_map = loader->map_all_sections(get_file());
+    get_file()->set_loader_map(loader_map);
+
+    /* Parse each section after the loader map is created */
     for (size_t i=0; i<pending.size(); i++)
         pending[i]->parse();
 

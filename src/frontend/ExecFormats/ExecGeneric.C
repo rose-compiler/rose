@@ -4117,6 +4117,7 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const std::string &name, SgAsmFile 
 SgAsmGenericFile *
 SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
 {
+    Loader::initclass();
     SgAsmGenericFile *ef = (new SgAsmGenericFile())->parse(name);
     ROSE_ASSERT(ef != NULL);
 

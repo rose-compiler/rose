@@ -462,62 +462,12 @@ Disassembler::disassembleInterp(SgAsmGenericHeader *header, AddressSet *successo
     AddressSet worklist;
 
     /* Decide which sections should be disassembled. */
-    MemoryMap map;
-    SgAsmGenericSectionList *seclist = header->get_sections();
-    for (size_t i=0; i<seclist->get_sections().size(); i++) {
-        SgAsmGenericSection *section = seclist->get_sections()[i];
-        ROSE_ASSERT(section->get_header() == header);
-        bool do_insert = false;
-        if (section->get_contains_code()) {
-            do_insert = true;
-        } else if (section->is_mapped() && section->get_mapped_xperm()) {
-            do_insert = true;
-        } else if (section->is_mapped() && (p_search & SEARCH_NONEXE)) {
-            do_insert = true;
-        } else if (isSgAsmDOSFileHeader(header)) {
-            do_insert = true;
-        }
-        if (do_insert) {
-            if (p_debug) {
-                fprintf(p_debug,
-                        "Diasembler: mapping section [%d] \"%s\" at rva 0x%08"PRIx64"-0x%08"PRIx64", offset 0x%08"PRIx64"\n",
-                        section->get_id(), section->get_name()->c_str(), section->get_mapped_rva(),
-                        section->get_mapped_rva()+section->get_mapped_size(), section->get_offset());
-            }
-            try {
-                map.insert(section);
-            } catch(const MemoryMap::Inconsistent &e) {
-                std::ostringstream s;
-                s <<"Disassembler: inconsistent mapping of file sections to virtual memory\n"
-                  <<"section [" <<section->get_id() <<"] \"" <<section->get_name()->get_string() <<"\""
-                  <<" at virtual address 0x" <<std::hex <<header->get_base_va() <<"+0x" <<std::hex <<section->get_mapped_rva()
-                  <<" and file offset 0x" <<std::hex <<section->get_offset()
-                  <<" conflicts with virtual address 0x" <<std::hex <<e.b.get_va()
-                  <<" at offset 0x" <<std::hex <<e.b.get_offset()
-                  <<"\n";
-                fputs(s.str().c_str(), stderr);
-                throw Exception(s.str());
-            }
-        }
-    }
-
-    /* If we're disassembling only executable sections, then remove those ELF Sections (not ELF Segments) that lack execution.
-     * Under ELF, a Segment is what the loader loads and they're usually few in number and very large.  The ELF Sections
-     * generally live inside the ELF Segments and some of them are marked non-executable. For instance, there's usually one
-     * big ELF Segment marked executable that encompasses the read-only ELF File Header, ELF Segment Table, symbol tables,
-     * .rodata, etc. */
-    if (isSgAsmElfFileHeader(header) && 0==(p_search & SEARCH_NONEXE)) {
-        for (size_t i=0; i<seclist->get_sections().size(); i++) {
-            SgAsmElfSection *section = isSgAsmElfSection(seclist->get_sections()[i]);
-            if (section && section->get_section_entry() && section->is_mapped() && !section->get_mapped_xperm()) {
-                if (p_debug) {
-                    fprintf(p_debug, "Diasembler: unmapping section [%d] \"%s\" at rva 0x%08"PRIx64"-0x%08"PRIx64"\n", 
-                            section->get_id(), section->get_name()->c_str(), section->get_mapped_rva(),
-                            section->get_mapped_rva()+section->get_mapped_size());
-                }
-                map.erase(section);
-            }
-        }
+    Loader *loader = Loader::find_loader(header);
+    MemoryMap *map = NULL;
+    if (p_search & SEARCH_NONEXE) {
+        map = loader->map_all_sections(header->get_sections()->get_sections());
+    } else {
+        map = loader->map_code_sections(header->get_sections()->get_sections());
     }
 
     /* Show final virtual address map */

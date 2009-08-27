@@ -2079,7 +2079,6 @@ HEADER_PE_FILE_HEADER_START
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 		void create_table_sections();
-		void map_sections();
 	private:
 		void ctor();
 		void *encode(SgAsmPEFileHeader::PEFileHeader_disk*) const;
