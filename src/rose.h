@@ -100,7 +100,12 @@ namespace ELF{
   #include "RoseBin.h"
 #endif
 
+// Files in src/frontend/ExecFormats
 #include "MemoryMap.h"
+#include "Loader.h"
+#include "LoaderELF.h"
+#include "LoaderPE.h"
+
 #include "RoseBin_abstract.h"
 #include "RoseFile.h"
 #include "RoseObj.h"
