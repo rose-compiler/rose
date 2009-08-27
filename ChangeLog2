@@ -1,3 +1,70 @@
+2009-08-27 18:25  matzke
+
+	* [r7025] /trunk/ROSE/src/frontend/Disassemblers/Disassembler.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/Disassembler.h:
+	  Disassembler: Marks parsed instructions as referenced
+	  
+	  The disassembleInterp() function, which disassembles one entire
+	  binary
+	  interpretation, also marks the successfully disassembled
+	  instructions as
+	  having been referenced in the file. This helps us detect parts of
+	  the
+	  file that have not been parsed (such as data intentionally hidden
+	  in the
+	  executable).
+
+2009-08-27 18:25  matzke
+
+	* [r7024] /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/frontend/Disassemblers/Disassembler.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ExecGeneric.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ExecPE.C: Loader: Executable
+	  loader simulation is activated
+	  
+	  The instruction disassemblers and PE parser use the
+	  loader-simulated
+	  memory map.
+
+2009-08-27 18:25  matzke
+
+	* [r7023] /trunk/ROSE/src/frontend/Disassemblers/Disassembler.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/Disassembler.h,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerArm.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerArm.h,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerPowerpc.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerPowerpc.h,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerX86.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerX86.h:
+	  Disassembler: changed memory map arguments
+
+2009-08-27 18:25  matzke
+
+	* [r7022] /trunk/ROSE/src/frontend/ExecFormats/ExecPE.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/Loader.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/Loader.h,
+	  /trunk/ROSE/src/frontend/ExecFormats/LoaderELF.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/LoaderELF.h,
+	  /trunk/ROSE/src/frontend/ExecFormats/LoaderPE.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/LoaderPE.h,
+	  /trunk/ROSE/src/frontend/ExecFormats/Makefile.am,
+	  /trunk/ROSE/src/rose.h,
+	  /trunk/ROSE/tests/roseTests/binaryTests/testElfConstruct.C:
+	  Loader: initial loader files (not used yet)
+	  
+	  The Loader class and subclasses abstract various executable
+	  file loaders that we encounter in the real world. For now the
+	  classes
+	  are fairly generic:
+	  
+	  LoaderPE: able to handle all Windows PE files
+	  LoaderELF: able to handle all ELF files
+	  Loader: able to handle all files
+	  
+	  As more specific loaders are implemented (e.g., a loader for
+	  Windows
+	  Vista) they will take precedence over the more general loaders.
+
 2009-08-26 20:37  collingbourne2
 
 	* [r7020] /trunk/ROSE/projects/haskellport/Makefile.am:
