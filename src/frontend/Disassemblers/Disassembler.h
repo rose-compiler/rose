@@ -443,6 +443,9 @@ public:
     /** Makes an unknown instruction from an exception. */
     virtual SgAsmInstruction *make_unknown_instruction(const Exception&) = 0;
 
+    /** Marks parts of the file that correspond to instructions as having been referenced. */
+    void mark_referenced_instructions(SgAsmGenericFile*, const MemoryMap*, const InstructionMap&);
+
 private:
     /** Initialize class (e.g., register built-in disassemblers). */
     static void initclass();

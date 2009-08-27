@@ -490,5 +490,32 @@ Disassembler::disassembleInterp(SgAsmGenericHeader *header, AddressSet *successo
     SgFileContentList file_content = file->content(0, file->get_orig_size());
 
     /* Disassemble all that we've mapped, according to aggressiveness settings. */
-    return disassembleBuffer(&(file_content[0]), map, worklist, successors, bad);
+    InstructionMap retval = disassembleBuffer(&(file_content[0]), map, worklist, successors, bad);
+
+    /* Mark the parts of the file corresponding to the instructions as having been referenced, since this is part of parsing. */
+    bool was_tracking = file->get_tracking_references();
+    file->set_tracking_references(true);
+    try {
+        mark_referenced_instructions(file, map, retval);
+    } catch(...) {
+        file->set_tracking_references(was_tracking);
+        throw;
+    }
+    file->set_tracking_references(was_tracking);
+
+    return retval;
+}
+
+/* Re-read instruction bytes from file if necessary in order to mark them as referenced. */
+void
+Disassembler::mark_referenced_instructions(SgAsmGenericFile *file, const MemoryMap *map, const InstructionMap &insns)
+{
+    if (file->get_tracking_references()) {
+        unsigned char buf[32];
+        for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+            SgAsmInstruction *insn = ii->second;
+            ROSE_ASSERT(insn->get_raw_bytes().size()<=sizeof buf);
+            file->read_content(map, insn->get_address(), buf, insn->get_raw_bytes().size(), false);
+        }
+    }
 }
