@@ -1,8 +1,6 @@
 /* Tests ability to build a new executable from scratch */
 #include "rose.h"
 
-#define ALIGN_UP(ADDR,SZ) ((((ADDR)+(SZ)-1)/(SZ))*(SZ))         /* Increase ADDR to a multiple of SZ (SZ>0) */
-
 int
 main() 
 {
