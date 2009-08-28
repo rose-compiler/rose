@@ -426,12 +426,12 @@ INPUT                  = \
                          @top_srcdir@/docs/testDoxygen \
                          @top_srcdir@/src/frontend/CxxFrontend/EDG_3.3/documentation.docs \
 			 @top_srcdir@/src/frontend/Disassemblers \
-			 @top_srcdir@/src/frontend/ExecFormats/ROSE_ExecGeneric.C \
-			 @top_srcdir@/src/frontend/ExecFormats/ROSE_ExecELF.C \
-			 @top_srcdir@/src/frontend/ExecFormats/ROSE_ExecNE.C \
-			 @top_srcdir@/src/frontend/ExecFormats/ROSE_ExecLE.C \
-			 @top_srcdir@/src/frontend/ExecFormats/ROSE_ExecDOS.C \
-			 @top_srcdir@/src/frontend/ExecFormats/ROSE_ExecPE.C \
+			 @top_srcdir@/src/frontend/ExecFormats/ExecGeneric.C \
+			 @top_srcdir@/src/frontend/ExecFormats/ExecELF.C \
+			 @top_srcdir@/src/frontend/ExecFormats/ExecNE.C \
+			 @top_srcdir@/src/frontend/ExecFormats/ExecLE.C \
+			 @top_srcdir@/src/frontend/ExecFormats/ExecDOS.C \
+			 @top_srcdir@/src/frontend/ExecFormats/ExecPE.C \
                          @top_srcdir@/src/frontend/Open64/documentation.docs \
                          @top_srcdir@/src/frontend/SageIII/docs \
 			 @top_srcdir@/src/frontend/SageIII/astPostProcessing/checkIsModifiedFlag.C \
