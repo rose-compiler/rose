@@ -15,6 +15,6 @@ Library
   Exposed-Modules: ROSE Data.DataMc ROSE.Sage3 ROSE.Sage3.Misc ROSE.Sage3.SYB @GENERATED_MODULES@
   Other-Modules: ROSE.CxxContainers
   Extra-Libraries: rose rosehswrap
-  Extra-Lib-Dirs: @prefix@/lib @top_builddir@/src/.libs .libs
+  Extra-Lib-Dirs: @top_builddir@/src/.libs .libs
   if os(linux)
-    ld-options: -Wl,-rpath,@prefix@/lib
+    ld-options: -Wl,-rpath,@top_builddir@/src/.libs -Wl,-rpath,.libs

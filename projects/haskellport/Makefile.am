@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-NONGENERATED_HSFILES = LICENSE ROSE.hs Setup.hs \
+NONGENERATED_HSFILES = LICENSE ROSE.hs \
   Data/DataMc.hs \
   ROSE/CxxContainers.hs \
   ROSE/Sage3.hs \
@@ -66,8 +66,9 @@ cabal-clean:
 	if [ -e cabal-configure-stamp ] ; then $(GHCBIN)/runghc Setup.hs clean ; fi
 	if test "x$(srcdir)" != "x." ; then rm -f $(NONGENERATED_HSFILES) ; fi
 	rm -f run-genStubsAndWrappers-stamp rose.cabal cabal-configure-stamp cabal-build-stamp cabal-install-stamp
+	rm -rf checkHome
 	
-cabal-configure-stamp: ROSE/Sage3/Classes.hs rose.cabal $(SRC_NONGENERATED_HSFILES) librosehswrap.la
+cabal-configure-stamp: ROSE/Sage3/Classes.hs rose.cabal Setup.hs $(SRC_NONGENERATED_HSFILES) librosehswrap.la
 	if test "x$(srcdir)" != "x." ; then \
 		for file in $(NONGENERATED_HSFILES) ; do \
 			if test ! $$file -nt $(srcdir)/$$file ; then \
@@ -91,20 +92,25 @@ cabal-install-stamp: cabal-build-stamp
 docs: cabal-configure-stamp
 	$(GHCBIN)/runghc Setup.hs haddock --html-location="http://haskell.org/ghc/docs/latest/html/libraries/\$$pkg/"
 
-installcheck: installcheck-identityTranslator installcheck-simplify
+check-local: check-identityTranslator check-simplify
 
-identityTranslator: tests/identityTranslator/Main.hs cabal-install-stamp
+checkHome: cabal-build-stamp
+	mkdir -p checkHome
+	env HOME=checkHome $(GHCBIN)/runghc Setup.hs install --inplace --user
+	touch checkHome
+
+identityTranslator: tests/identityTranslator/Main.hs checkHome
 	mkdir -p tests/$@
-	$(GHCBIN)/ghc -package rose -o $@ -odir tests/$@ -hidir tests/$@ -i $<
+	env HOME=checkHome $(GHCBIN)/ghc -package rose -o $@ -odir tests/$@ -hidir tests/$@ -i $<
 
-installcheck-identityTranslator: identityTranslator
+check-identityTranslator: identityTranslator
 	./$< -c $(top_srcdir)/exampleTranslators/documentedExamples/simpleTranslatorExamples/testCode.C
 
-simplify: tests/simplify/Main.hs cabal-install-stamp
+simplify: tests/simplify/Main.hs checkHome
 	mkdir -p tests/$@
-	$(GHCBIN)/ghc -package rose -o $@ -odir tests/$@ -hidir tests/$@ -i $<
+	env HOME=checkHome $(GHCBIN)/ghc -package rose -o $@ -odir tests/$@ -hidir tests/$@ -i $<
 
-installcheck-simplify: tests/simplify/simplifyTest.C simplify
+check-simplify: tests/simplify/simplifyTest.C simplify
 	./simplify -o simplifyTest $<
 	./simplifyTest
 
