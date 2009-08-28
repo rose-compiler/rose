@@ -13,7 +13,7 @@ TEST_HSFILES = tests/identityTranslator/Main.hs \
 
 TEST_CFILES = tests/simplify/simplifyTest.C
 
-EXTRA_DIST = $(NONGENERATED_HSFILES) sage3.h.C WrapCxxContainers.h $(TEST_HSFILES) $(TEST_CFILES)
+EXTRA_DIST = $(NONGENERATED_HSFILES) sage3.h.C WrapCxxContainers.h $(TEST_HSFILES) $(TEST_CFILES) disabled.html
 
 if USE_HASKELL
 
@@ -110,7 +110,9 @@ installcheck-simplify: tests/simplify/simplifyTest.C simplify
 
 else
 
-docs:
+docs: disabled.html
 	@echo "Haskell support disabled, unable to build Haddock docs!"
+	mkdir -p dist/doc/html/rose
+	cp $< dist/doc/html/rose/index.html
 
 endif
