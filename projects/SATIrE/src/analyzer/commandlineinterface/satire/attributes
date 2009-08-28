@@ -71,6 +71,7 @@ BOOL_ATTR(nodeFormatVarName,On)
 BOOL_ATTR(nodeFormatExprId,Off)
 BOOL_ATTR(nodeFormatExprSource,On)
 BOOL_ATTR(nodeFormatAstText,Off)
+BOOL_ATTR(buildIcfg, Off)
 
 #if HAVE_PAG
 BOOL_ATTR(vivu, Off) /* callstring length defines chop size */

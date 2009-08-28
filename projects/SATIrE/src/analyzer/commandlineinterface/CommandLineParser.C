@@ -177,6 +177,8 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->numberExpressionsOn();
   } else if (optionMatch(argv[i], "--no-number-expressions")) {
     cl->numberExpressionsOff();
+  } else if (optionMatch(argv[i], "--build-icfg")) {
+    cl->buildIcfgOn();
   } else if (optionMatch(argv[i], "--output-collectedfuncs")) {
     cl->printCollectedFunctionNamesOn();
   } else if (optionMatch(argv[i], "--no-output-collectedfuncs")) {

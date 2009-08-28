@@ -8,6 +8,9 @@ Program::Program(AnalyzerOptions *o)
 {
     analysisScheduler.registerProgram(this);
 
+    if (options->buildIcfg())
+        icfg = createICFG(astRoot, options);
+
  // Run any provided analyzers that were specified on the command line.
  // Logically, this is part of program construction because the user asked
  // for an annotated program.
