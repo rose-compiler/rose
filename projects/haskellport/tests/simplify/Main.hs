@@ -41,8 +41,8 @@ main = do
   prj <- frontend =<< getArgs
   time2 <- getClockTime
   putStrLn ("Frontend took " ++ show (diffClockTimes time2 time1))
-  everywhereMc (mkMn simplifyAddOp `extMn` simplifySubtractOp `extMn` simplifyMultiplyOp `extMn` simplifyDivideOp) prj
---  putStrLn =<< nodeUnparseToString prj
+  everywhereMc (mkMn simplifyAddOp `extMn` simplifySubtractOp
+        `extMn` simplifyMultiplyOp `extMn` simplifyDivideOp) prj
   time3 <- getClockTime
   putStrLn ("Traversal took " ++ show (diffClockTimes time3 time2))
   exitWith =<< backend prj
