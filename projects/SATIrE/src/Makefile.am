@@ -59,13 +59,15 @@ if WITH_PAG
 binprograms_ldflags += -L$(PAG_LIB_DIR) -Wl,-rpath $(PAG_LIB_DIR)
 endif
 
-bin_PROGRAMS = satire_driver ais_annotator
+bin_PROGRAMS = satire_driver
 satire_driver_SOURCES = $(top_srcdir)/src/analyzer/support/satire_driver.C
+satire_driver_LDADD = $(binprograms_ldadd)
+satire_driver_LDFLAGS = $(binprograms_ldflags)
+
+if WITH_PAG
+bin_PROGRAMS += ais_annotator
 ais_annotator_SOURCES = \
 			$(top_srcdir)/src/analyzer/provided/ais_annotator/ais_annotator.C
-
-satire_driver_LDADD = $(binprograms_ldadd)
 ais_annotator_LDADD = $(binprograms_ldadd)
-
-satire_driver_LDFLAGS = $(binprograms_ldflags)
 ais_annotator_LDFLAGS = $(binprograms_ldflags)
+endif
