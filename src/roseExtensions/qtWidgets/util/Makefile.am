@@ -61,6 +61,10 @@ EXTRA_DIST = MetricBgDelegateConfig.ui \
 	NodeIcons/sourcefiles.gif \
 	NodeIcons/sourcefile.gif \
 	NodeIcons/class.gif \
+	NodeIcons/enum.gif \
+	NodeIcons/pragma.gif \
+	NodeIcons/variable.gif \
+	NodeIcons/typedef.gif \
 	NodeIcons/namespace.gif \
 	NodeIcons/project.gif \
 	NodeIcons/binaryfiles.gif \

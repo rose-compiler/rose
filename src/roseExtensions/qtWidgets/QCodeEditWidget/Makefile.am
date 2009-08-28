@@ -66,5 +66,30 @@ EXTRA_DIST = example.qrc \
 	saveas.png \
 	save.png \
 	down.png \
-	underline.png
+	underline.png \
+	qxs/bibtex.qnfa \
+	qxs/cpp.qnfa \
+	qxs/csharp.qnfa \
+	qxs/css.qnfa \
+	qxs/dox.qnfa \
+	qxs/formats.qxf \
+	qxs/php.qnfa \
+	qxs/pro.qnfa \
+	qxs/python.qnfa \
+	qxs/qtscript.qnfa \
+	qxs/snippet.qnfa \
+	qxs/tex.qxf \
+	qxs/xml.qxf \
+	qxs/bibtex.qxf \
+	qxs/cpp.qxf \
+	qxs/csharp.qxf \
+	qxs/css.qxf \
+	qxs/dox.qxf \
+	qxs/marks.qxm \
+	qxs/php.qxf \
+	qxs/pro.qxf \
+	qxs/python.qxf \
+	qxs/qtscript.qxf \
+	qxs/tex.qnfa \
+	qxs/xml.qnfa
 
