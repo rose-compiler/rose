@@ -1,3 +1,51 @@
+2009-08-28 03:13  hamilton37
+
+	* [r7032]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/Makefile.am,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/Makefile.am,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QCodeEditWidget/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/SrcBinView/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/Makefile.am: RTED:
+	  added missing header files to distribution.
+
+2009-08-28 01:17  collingbourne2
+
+	* [r7031] /trunk/ROSE/docs/Rose/Tutorial/Makefile.am,
+	  /trunk/ROSE/docs/Rose/Tutorial/haskell.tex,
+	  /trunk/ROSE/docs/Rose/Tutorial/tutorial.tex.in,
+	  /trunk/ROSE/projects/haskellport/tests/identityTranslator/Main.hs,
+	  /trunk/ROSE/projects/haskellport/tests/simplify/Main.hs: Wrote
+	  the tutorial section on Haskellport
+
+2009-08-28 01:17  collingbourne2
+
+	* [r7030] /trunk/ROSE/docs/Rose/Makefile.am,
+	  /trunk/ROSE/docs/Rose/projects.html: Added Haskell API
+	  documentation to website
+
+2009-08-28 01:17  collingbourne2
+
+	* [r7029] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/projects/haskellport/Makefile.am,
+	  /trunk/ROSE/projects/haskellport/Setup.hs,
+	  /trunk/ROSE/projects/haskellport/Setup.hs.in,
+	  /trunk/ROSE/projects/haskellport/rose.cabal.in.in: Haskellport:
+	  changes necessary for in-place testing, thus "make installcheck"
+	  changed to "make check"
+
+2009-08-28 01:17  collingbourne2
+
+	* [r7028] /trunk/ROSE/projects/haskellport/Makefile.am,
+	  /trunk/ROSE/projects/haskellport/disabled.html: Put a dummy page
+	  in place of the Haskell docs if Haskell was not enabled
+
+2009-08-28 01:17  collingbourne2
+
+	* [r7027] /trunk/ROSE/docs/Rose/rose.cfg.in: Corrected paths to
+	  ExecFormats source files to fix "make docs"
+
 2009-08-27 18:25  matzke
 
 	* [r7025] /trunk/ROSE/src/frontend/Disassemblers/Disassembler.C,
