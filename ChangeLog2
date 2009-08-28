@@ -1,3 +1,8 @@
+2009-08-28 18:11  liao6
+
+	* [r7034] /trunk/ROSE/scripts/roseFreshTestStub-Leo-daily.sh:
+	  Enabled test for the haskell port
+
 2009-08-28 03:13  hamilton37
 
 	* [r7032]
