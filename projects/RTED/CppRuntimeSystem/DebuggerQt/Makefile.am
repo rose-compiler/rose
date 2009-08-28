@@ -12,12 +12,19 @@ libDebuggerQt_la_SOURCES = MainWindow.cpp\
                            MemoryTypeDisplay.cpp\
                            VariablesTypeDisplay.cpp\
                            MemoryGraphicsView.cpp\
-                           PointerDisplay.cpp
+                           PointerDisplay.cpp\
+													 MainWindow.h\
+													 MemoryGraphicsView.h\
+													 MemoryTypeDisplay.h\
+													 ModelRoles.h\
+													 PointerDisplay.h\
+													 RtedDebug.h\
+													 TypeInfoDisplay.h\
+													 VariablesTypeDisplay.h\
+													 moc_MainWindow.cxx\
+													 ui_MainWindow.h\
+													 qrc_res.cpp
 
-
-nodist_libDebuggerQt_la_SOURCES = moc_MainWindow.cxx\
-                                  ui_MainWindow.h\
-                                  qrc_res.cpp
 BUILT_SOURCES = ui_MainWindow.h
 
 

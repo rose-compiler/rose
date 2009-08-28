@@ -35,7 +35,11 @@ runtimeCheck_SOURCES = runtimeCheck.cpp \
                        RtedTransf_support.cpp RtedTransf_funccall.cpp \
                        RtedTransf_locals.cpp RtedTransf_scopestmt.cpp \
                        RtedTransf_funcdef.cpp RtedTransf_variable.cpp \
-                       RtedTransf_iofunccall.cpp RtedTransf_operators.cpp
+                       RtedTransf_iofunccall.cpp RtedTransf_operators.cpp \
+					   RtedTransformation.h \
+					   RtedSymbols.h \
+					   DataStructures.h \
+					   RuntimeSystem.h
 
 
 
@@ -66,12 +70,8 @@ $(TEST_Objects): runtimeCheck $(TESTCODES)
 	env SRCDIR="$(srcdir)" $(TEST_TRANSLATOR)
 
 EXTRA_DIST = example.C \
-             RtedTransformation.h \
-             RuntimeSystem.h \
              index_array.txt \
-	     file_read.txt \
-             DataStructures.h \
-             RtedSymbols.h
+             file_read.txt
 
 CLEANFILES = *.out *.ti *.pdf test_runtime* *.txt rose_test_c_E_1_1_a
 

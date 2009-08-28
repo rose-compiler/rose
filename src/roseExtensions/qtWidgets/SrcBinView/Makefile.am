@@ -12,6 +12,8 @@ nodist_libSrcBinView_la_SOURCES = moc_SrcBinView.cxx \
 
 BUILT_SOURCES = ui_SrcBinView.h
 
+EXTRA_DIST = SrcBinView.ui
+
 # Target for installing header 
 headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = SrcBinView.h
