@@ -23,7 +23,7 @@ TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 ROSE_TOP=/home/liao6/daily-test-rose/${TIMESTAMP}
 
 # for regular build and tests
-CONFIGURE_FLAGS=( --with-boost=${BOOST_ROOT} --with-pch --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-qt=/usr/apps/qt/4.4.2 --prefix=${ROSE_TOP}/install "$@")
+CONFIGURE_FLAGS=( --with-boost=${BOOST_ROOT} --with-pch --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-qt=/usr/apps/qt/4.4.2 --with-haskell=/home/liao6/opt/ghc-6.10.4/bin --prefix=${ROSE_TOP}/install "$@")
 
 ROSE_SVNROOT=file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
 MAILADDRS="liaoch@llnl.gov panas2@llnl.gov quinlan1@llnl.gov matzke1@llnl.gov"
