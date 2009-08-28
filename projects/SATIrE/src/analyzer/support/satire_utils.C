@@ -191,7 +191,13 @@ void outputProgramRepresentation(Program *program, AnalyzerOptions *options)
                 tp.traverseInputFiles(program->astRoot);
             std::ofstream termfile;
             std::string filename = program->options->getOutputTermFileName();
-            termfile.open(filename.c_str());
+            if (!openFileForWriting(termfile, filename))
+            {
+                std::cerr
+                    << "*** error: could not open term file " << filename
+                    << std::endl;
+                std::exit(EXIT_FAILURE);
+            }
             termfile << "% Termite term representation" << std::endl;
             termfile << tp.getTerm()->getRepresentation() << "." << std::endl;
             termfile.close();
