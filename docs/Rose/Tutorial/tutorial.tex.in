@@ -343,6 +343,8 @@ our own use on large scale applications.}
 
 \input{instructionSemantics}
 
+\input{haskell}
+
 \input{howToContribute}
 
 \backmatter
