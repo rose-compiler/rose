@@ -410,21 +410,40 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
  //----------------------------------------------------
  //! Build an opaque type with a name, useful when a type's details are unknown during transformation, especially for a runtime library's internal type.
  SgType * SageBuilder::buildOpaqueType(std::string const name, SgScopeStatement * scope)
- {
-   ROSE_ASSERT(scope);
-   SgTypedefDeclaration* type_decl = new SgTypedefDeclaration(name,buildIntType(),NULL, NULL, NULL);
-   ROSE_ASSERT(type_decl);
-   type_decl->set_firstNondefiningDeclaration (type_decl);
-   setOneSourcePositionForTransformation(type_decl);
-   prependStatement(type_decl,scope);
-   // Hide it from unparser
-   Sg_File_Info* file_info = type_decl->get_file_info();
-   file_info->unsetOutputInCodeGeneration ();
-    
-   SgTypedefType* result = new SgTypedefType(type_decl);
-   ROSE_ASSERT(result);
-   return result;
- }
+{
+  ROSE_ASSERT(scope);
+  SgTypedefDeclaration* type_decl = new SgTypedefDeclaration(name,buildIntType(),NULL, NULL, NULL);
+  ROSE_ASSERT(type_decl);
+  // Liao and Greg Bronevetsky , 8/27/2009
+  // patch up the symbol  
+   // TODO  a function like fixTypeDeclaration() (similar to SageInterface::fixVariableDeclaration()) for this
+  if (scope != NULL)
+  {
+    SgTypedefSymbol* type_symbol = scope->lookup_typedef_symbol(name);
+      if (type_symbol == NULL)
+      {
+        type_symbol = new SgTypedefSymbol(type_decl);
+        ROSE_ASSERT(type_symbol);
+        SgName n = name;
+        scope->get_symbol_table()->insert(n, type_symbol); 
+      } 
+     else
+     {
+       cout<<"Trying to build duplicated typedef declaration:"<<name<<endl;
+       ROSE_ASSERT(false);
+     }
+  }
+  type_decl->set_firstNondefiningDeclaration (type_decl);
+  setOneSourcePositionForTransformation(type_decl);
+  prependStatement(type_decl,scope);
+  // Hide it from unparser
+  Sg_File_Info* file_info = type_decl->get_file_info();
+  file_info->unsetOutputInCodeGeneration ();
+
+  SgTypedefType* result = new SgTypedefType(type_decl);
+  ROSE_ASSERT(result);
+  return result;
+}
 
 
 //----------------- function type------------

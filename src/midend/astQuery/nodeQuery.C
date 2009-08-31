@@ -1046,7 +1046,6 @@ NodeQuery::querySolverFunctionDeclarationFromDefinition (SgNode * astNode,
                                   VariantVector(targetVariant));
 
           };
-
 #if 0
 // DQ (3/14/207): Older version using a return type of std::list
 class TypeQueryDummyFunctionalTest :  public std::unary_function<SgNode*, std::list<SgNode*> > 
