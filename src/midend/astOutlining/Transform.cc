@@ -44,8 +44,8 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 
   // Determine variables to be passed to outlined routine.
   // Also collect symbols which must use pointer dereferencing if replaced during outlining
-  ASTtools::VarSymSet_t syms, pdSyms;
-  collectVars (s, syms);
+  ASTtools::VarSymSet_t syms, psyms, fpsyms, reductionsyms, pdSyms;
+  collectVars (s, syms, psyms, fpsyms, reductionsyms);
 
   std::set<SgInitializedName*> readOnlyVars;
 
@@ -74,7 +74,8 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
   //-------Generate outlined function------------------------------------
   // generate the function and its prototypes if necessary
 //  printf ("In Outliner::Transform::outlineBlock() function name to build: func_name_str = %s \n",func_name_str.c_str());
-  SgFunctionDeclaration* func = generateFunction (s, func_name_str, syms, pdSyms, glob_scope);
+  SgFunctionDeclaration* func = generateFunction (s, func_name_str, syms, pdSyms, psyms, 
+           fpsyms, reductionsyms, glob_scope);
   ROSE_ASSERT (func != NULL);
   ROSE_ASSERT(glob_scope->lookup_function_symbol(func->get_name()));
 
@@ -276,7 +277,8 @@ std::string Outliner::generatePackingStatements(SgStatement* target, ASTtools::V
   int counter=0;
   string wrapper_name= generateFuncArgName(target); //"__out_argv";
 
-  if (var_count==0) return wrapper_name;
+  if (var_count==0) 
+    return wrapper_name;
   SgScopeStatement* cur_scope = target->get_scope();
   ROSE_ASSERT( cur_scope != NULL);
 
@@ -291,7 +293,8 @@ std::string Outliner::generatePackingStatements(SgStatement* target, ASTtools::V
   SageInterface::insertStatementBefore(target, out_argv);
 
   SgVariableSymbol * wrapper_symbol = getFirstVarSym(out_argv);
-  //cout<<"Inserting wrapper declaration ...."<<endl;
+  ROSE_ASSERT(wrapper_symbol->get_parent() != NULL);
+//  cout<<"Inserting wrapper declaration ...."<<wrapper_symbol->get_name().getString()<<endl;
   // 	*(__out_argv +0)=(void*)(&var1);
   for (ASTtools::VarSymSet_t::reverse_iterator i = syms.rbegin ();
       i != syms.rend (); ++i)

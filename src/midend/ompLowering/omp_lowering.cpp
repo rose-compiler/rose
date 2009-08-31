@@ -271,21 +271,21 @@ void main_omp_fn_0(void **__out_argv)
    //We should have a semantic check phase for this
    //This is however of low priority since most vendor compilers have this already
    SgBasicBlock* body_block = Outliner::preprocess(body);
-   ASTtools::VarSymSet_t syms, pdSyms;
+   ASTtools::VarSymSet_t syms, pSyms, fpSyms,reductionSyms, pdSyms;
    std::set<SgInitializedName*> readOnlyVars;
 
    string func_name = Outliner::generateFuncName(target);
    SgGlobal* g_scope = SageInterface::getGlobalScope(body_block);
    ROSE_ASSERT(g_scope != NULL);
 
-   Outliner::collectVars(body_block, syms);
+   Outliner::collectVars(body_block, syms, pSyms, fpSyms,reductionSyms);
    //TODO Do we want to use side effect analysis to improve the quality of outlining here
    // SageInterface::collectReadOnlyVariables(s,readOnlyVars);
    // ASTtools::collectPointerDereferencingVarSyms(s,pdSyms);
 
    //Generate the outlined function
    SgFunctionDeclaration* outlined_func = Outliner::generateFunction(body_block, func_name,
-       syms, pdSyms, g_scope);
+       syms, pdSyms, pSyms, fpSyms, reductionSyms, g_scope);
    Outliner::insert(outlined_func, g_scope, body_block);
 
    // Generate a call to the outlined function
@@ -303,9 +303,14 @@ void main_omp_fn_0(void **__out_argv)
    SageInterface::replaceStatement(target,func_call);
 
    //add GOMP_parallel_start (OUT_func_xxx, &__out_argv1__5876__, 0);
+   // or GOMP_parallel_start (OUT_func_xxx, 0, 0); // if no variables need to be passed
+   SgExpression * parameter2 = NULL;
+   if (syms.size()==0)
+     parameter2 = buildIntVal(0);
+   else
+     parameter2 =  buildAddressOfOp(buildVarRefExp(wrapper_name, p_scope));
    SgExprListExp* parameters = buildExprListExp(buildFunctionRefExp(outlined_func), 
-     buildAddressOfOp(buildVarRefExp(wrapper_name, p_scope)),
-     buildIntVal(0)); 
+                     parameter2, buildIntVal(0)); 
   SgExprStatement * s1 = buildFunctionCallStmt("GOMP_parallel_start", buildVoidType(), parameters, p_scope); 
   SageInterface::insertStatementBefore(func_call, s1); 
   // add GOMP_parallel_end ();
@@ -319,6 +324,7 @@ void main_omp_fn_0(void **__out_argv)
  }
 
  // two cases: omp parallel and  omp task
+ // Reused Outliner for this. 
 // void SgFunctionDeclaration* generateOutlinedFunction(SgNode* node)
 // {
 //   

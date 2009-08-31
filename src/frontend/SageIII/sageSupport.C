@@ -7994,6 +7994,7 @@ static void appendOmpClauses(SgOmpClauseBodyStatement* target, OmpAttribute* att
     {
       SgOmpClause* sgclause = buildOmpNonReductionClause(att, c_clause);
       target->get_clauses().push_back(sgclause);
+      sgclause->set_parent(target); // is This right?
     }
   }
 }

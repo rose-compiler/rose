@@ -9,8 +9,11 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #include $(srcdir)/Makefile-pass.inc
 C_TESTCODES_REQUIRED_TO_PASS = \
+        firstprivate.c \
         hello.c \
-        parallel.c 
+        hello-1.c \
+        parallel.c \
+        private.c
 
 CXX_TESTCODES_REQUIRED_TO_PASS = 
 
@@ -56,7 +59,6 @@ TESTCODE_CURRENTLY_FAILING = \
         parallelfor.c \
         parallelfor2.c \
         parallelsections.c \
-        private.c \
         privatej.c \
         recursive.c \
         reduction2.c \

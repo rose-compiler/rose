@@ -284,8 +284,6 @@ SgVariableDeclaration *
 createUnpackDecl (SgInitializedName* param, int index,
                   bool isPointerDeref, 
                   const SgInitializedName* i_name, // original variable to be passed as parameter
-                 // const string& local_var_name,
-                 // SgType* local_var_type, 
                   SgScopeStatement* scope)
 {
   ROSE_ASSERT(param&&scope && i_name);
@@ -609,6 +607,126 @@ recordSymRemap (const SgVariableSymbol* orig_sym,
     }
 }
 
+// handle OpenMP private variables
+// pSyms: private variable set
+// scope: the scope of a private variable's local declaration
+// private_remap: a map between the original variables and their private copies
+static void handlePrivateVariables( const ASTtools::VarSymSet_t& pSyms,
+                                    SgScopeStatement* scope, 
+                                    VarSymRemap_t& private_remap)
+{
+  // --------------------------------------------------
+  for (ASTtools::VarSymSet_t::const_reverse_iterator i = pSyms.rbegin ();
+      i != pSyms.rend (); ++i)
+  {
+    const SgInitializedName* i_name = (*i)->get_declaration ();
+    ROSE_ASSERT (i_name);
+    string name_str = i_name->get_name ().str ();
+    SgType * v_type = i_name->get_type();
+    SgVariableDeclaration* local_var_decl = buildVariableDeclaration(name_str, v_type, NULL, scope);
+    prependStatement (local_var_decl,scope);
+    recordSymRemap (*i, local_var_decl, scope, private_remap);
+  }
+}
+
+// Create one parameter for an outlined function
+// return the created parameter
+SgInitializedName* createOneFunctionParameter(const SgInitializedName* i_name, 
+                              bool readOnly, 
+                             SgFunctionDeclaration* func)
+{
+  ROSE_ASSERT (i_name);
+
+  ROSE_ASSERT (func);
+  SgFunctionParameterList* params = func->get_parameterList ();
+  ROSE_ASSERT (params);
+  SgFunctionDefinition* def = func->get_definition ();
+  ROSE_ASSERT (def);
+
+  // It handles language-specific details internally, like pass-by-value, pass-by-reference
+  // name and type is not enough, need the SgInitializedName also for tell 
+  // if an array comes from a parameter list
+  OutlinedFuncParam_t param = createParam (i_name,readOnly);
+  SgName p_sg_name (param.first.c_str ());
+  // name, type, declaration, scope, 
+  // TODO function definition's declaration should not be passed to createInitName()
+  SgInitializedName* p_init_name = createInitName (param.first, param.second, def->get_declaration(), def);
+  ROSE_ASSERT (p_init_name);
+  prependArg(params,p_init_name);
+  return p_init_name;
+}
+
+// ===========================================================
+//! Fixes up references in a block to point to alternative symbols.
+// based on an existing symbol-to-symbol map
+// Also called variable substitution. 
+static void
+remapVarSyms (const VarSymRemap_t& vsym_remap,  // regular shared variables
+              const ASTtools::VarSymSet_t& pdSyms, // special shared variables
+              const VarSymRemap_t& private_remap,  // variables using private copies
+              SgBasicBlock* b)
+{
+  // Check if variable remapping is even needed.
+  if (vsym_remap.empty() && private_remap.empty())
+    return;
+
+  typedef Rose_STL_Container<SgNode *> NodeList_t;
+  NodeList_t refs = NodeQuery::querySubTree (b, V_SgVarRefExp);
+  for (NodeList_t::iterator i = refs.begin (); i != refs.end (); ++i)
+  {
+    // Reference possibly in need of fix-up.
+    SgVarRefExp* ref_orig = isSgVarRefExp (*i);
+    ROSE_ASSERT (ref_orig);
+
+    // Search for a symbol which need to be replaced.
+    VarSymRemap_t::const_iterator ref_new =  vsym_remap.find (ref_orig->get_symbol ());
+    VarSymRemap_t::const_iterator ref_private =  private_remap.find (ref_orig->get_symbol ());
+
+    // a variable could be both a variable needing passing original value and private variable 
+    // such as OpenMP firstprivate, lastprivate and reduction variable
+    // For variable substitution, private remap has higher priority 
+    // remapping private variables
+    if (ref_private != private_remap.end()) 
+    {
+      SgVariableSymbol* sym_new = ref_private->second;
+      ref_orig->set_symbol (sym_new);
+    }
+    else if (ref_new != vsym_remap.end ()) // Needs replacement, regular shared variables
+    {
+      SgVariableSymbol* sym_new = ref_new->second;
+      if (Outliner::temp_variable)
+        // uniform handling if temp variables of the same type are used
+      {// two cases: variable using temp vs. variables using pointer dereferencing!
+
+        if (pdSyms.find(ref_orig->get_symbol())==pdSyms.end()) //using temp
+          ref_orig->set_symbol (sym_new);
+        else
+        {
+          SgPointerDerefExp * deref_exp = SageBuilder::buildPointerDerefExp(buildVarRefExp(sym_new));
+          deref_exp->set_need_paren(true);
+          SageInterface::replaceExpression(isSgExpression(ref_orig),isSgExpression(deref_exp));
+
+        }
+      }
+      else // no variable cloning is used
+      {
+        if (is_C_language()) 
+          // old method of using pointer dereferencing indiscriminately for C input
+          // TODO compare the orig and new type, use pointer dereferencing only when necessary
+        {
+          SgPointerDerefExp * deref_exp = SageBuilder::buildPointerDerefExp(buildVarRefExp(sym_new));
+          deref_exp->set_need_paren(true);
+          SageInterface::replaceExpression(isSgExpression(ref_orig),isSgExpression(deref_exp));
+        }
+        else
+          ref_orig->set_symbol (sym_new);
+      }
+    } //find an entry
+  } // for every refs
+
+}
+
+
 /*!
  *  \brief Creates new function parameters for a set of variable
  *  symbols.
@@ -621,18 +739,22 @@ recordSymRemap (const SgVariableSymbol* orig_sym,
  *  To support C programs, this routine assumes parameters passed
  *  using pointers (rather than references).  
  *
- *  Moreover, it inserts "packing" and "unpacking" statements at the 
+ *  Moreover, it inserts "unpacking/unwrapping" and "repacking" statements at the 
  *  beginning and end of the function declaration, respectively, when necessary
  */
 static
 void
-appendParams (const ASTtools::VarSymSet_t& syms,
-              const ASTtools::VarSymSet_t& pdSyms,
+variableHandling(const ASTtools::VarSymSet_t& syms, // regular (shared) parameters
+              const ASTtools::VarSymSet_t& pdSyms, // those must use pointer dereference
+              const ASTtools::VarSymSet_t& pSyms,  // private variables 
+              const ASTtools::VarSymSet_t& fpSyms,  // firstprivate variables 
+              const ASTtools::VarSymSet_t& reductionSyms,  // reduction variables
               std::set<SgInitializedName*> & readOnlyVars,
               std::set<SgInitializedName*> & liveOutVars,
-              SgFunctionDeclaration* func,
-              VarSymRemap_t& sym_remap)
+              SgFunctionDeclaration* func)
 {
+  VarSymRemap_t sym_remap; // variable remapping for regular(shared) variables
+  VarSymRemap_t private_remap; // variable remapping for private/firstprivate/reduction variables
   ROSE_ASSERT (func);
   SgFunctionParameterList* params = func->get_parameterList ();
   ROSE_ASSERT (params);
@@ -649,6 +771,19 @@ appendParams (const ASTtools::VarSymSet_t& syms,
   // Also create unpacking and repacking statements.
   int counter=0;
   SgInitializedName* parameter1=NULL; // the wrapper parameter
+  SgVariableDeclaration*  local_var_decl  =  NULL;
+  // firstprivate and reduction variables need two local variable declarations
+  // one for their global shared copies and one for their private copies
+  SgVariableDeclaration*  local_var_decl2  =  NULL;
+
+  // handle OpenMP private variables/ or those which are neither live-in or live-out
+  handlePrivateVariables(pSyms, body, private_remap);
+
+  // handle all other variables: shared, firstprivate and reduction variables 
+  // --------------------------------------------------
+  // for each parameters passed to the outlined function
+  // They include parameters for regular shared variables and 
+  // also the shared copies for firstprivate and reduction variables
   for (ASTtools::VarSymSet_t::const_reverse_iterator i = syms.rbegin ();
       i != syms.rend (); ++i)
   {
@@ -662,11 +797,11 @@ appendParams (const ASTtools::VarSymSet_t& syms,
     bool readOnly = false;
     if (readOnlyVars.find(const_cast<SgInitializedName*> (i_name)) != readOnlyVars.end())
       readOnly = true;
-    // Create parameters and insert it into the parameter list.
+
+    // step 1. Create parameters and insert it into the parameter list.
     // ----------------------------------------
     SgInitializedName* p_init_name = NULL;
-    // Case 1: using a wrapper for all variables 
-    // all wrapped parameters have pointer type
+    // Case 1: using a wrapper for all variables all wrapped parameters have pointer type
     if (Outliner::useParameterWrapper)
     {
       if (i==syms.rbegin())
@@ -679,25 +814,11 @@ appendParams (const ASTtools::VarSymSet_t& syms,
       p_init_name = parameter1; // set the source parameter to the wrapper
     }
     else // case 2: use a parameter for each variable
-    {
-      // It handles language-specific details internally, like pass-by-value, pass-by-reference
-      // name and type is not enough, need the SgInitializedName also for tell 
-      // if an array comes from a parameter list
-      OutlinedFuncParam_t param = createParam (i_name,readOnly);
-      //OutlinedFuncParam_t param = createParam (name_str, i_type,readOnly);
-      SgName p_sg_name (param.first.c_str ());
-      // name, type, declaration, scope, 
-      // TODO function definition's declaration should not be passed to createInitName()
-      p_init_name = createInitName (param.first, param.second, 
-                                   def->get_declaration(), def);
-      ROSE_ASSERT (p_init_name);
-      prependArg(params,p_init_name);
-    }
+       p_init_name = createOneFunctionParameter(i_name, readOnly, func); 
 
-    // Create unpacking statements:transfer values or addresses from parameters
+    // step 2. Create unpacking/unwrapping statements, also record variables to be replaced
     // ----------------------------------------
     bool isPointerDeref = false; 
-    SgVariableDeclaration*  local_var_decl  =  NULL;
     if (Outliner::temp_variable) 
     { // Check if the current variable belongs to the symbol set 
       //suitable for using pointer dereferencing
@@ -707,16 +828,13 @@ appendParams (const ASTtools::VarSymSet_t& syms,
         isPointerDeref = true;
     }  
 
-    if (Outliner::enable_classic)
+    if (Outliner::enable_classic) 
+    // classic methods use parameters directly, no unpacking is needed
     {
-      if (readOnly) 
-      {
-        //read only variable should not have local variable declaration, using parameter directly
-        // taking advantage of the same parameter names for readOnly variables
-        // Let postprocessing to patch up symbols for them
-
-      }
-      else
+      if (!readOnly) 
+      //read only variable should not have local variable declaration, using parameter directly
+      // taking advantage of the same parameter names for readOnly variables
+      // Let postprocessing to patch up symbols for them
       {
         // non-readonly variables need to be mapped to their parameters with different names (p__)
         // remapVarSyms() will use pointer dereferencing for all of them by default in C, 
@@ -724,23 +842,49 @@ appendParams (const ASTtools::VarSymSet_t& syms,
         recordSymRemap(*i,p_init_name, args_scope, sym_remap); 
       }
     } else 
-    {
-      local_var_decl  = 
-             createUnpackDecl (p_init_name, counter, isPointerDeref, i_name ,body);
-             //createUnpackDecl (p_init_name, counter, isPointerDeref, name_str, i_type,body);
-      ROSE_ASSERT (local_var_decl);
-      prependStatement (local_var_decl,body);
+    { // create unwrapping statements from parameters/ or the array parameter for pointers
       if (SageInterface::is_Fortran_language())
         args_scope = NULL; // not sure about Fortran scope
-      recordSymRemap (*i, local_var_decl, args_scope, sym_remap);
+
+      local_var_decl  = 
+        createUnpackDecl (p_init_name, counter, isPointerDeref, i_name ,body);
+      ROSE_ASSERT (local_var_decl);
+      prependStatement (local_var_decl,body);
+      // also create a private copy for firstprivate and reduction variables
+      // and transfer the value from the shared copy
+      // // local_var_decl for regular (shared) firstprivate, reduction variables, 
+      // int *_pp_sum1; 
+      //   _pp_sum1 = ((int *)(__ompc_args[2]));
+      //  // local_var_decl2 for firstprivate and reduction variables
+      //  //  we avoid using copy constructor here
+      //  int _p_sum1;  
+      //  _p_sum1 = * _pp_sum1; // use a dedicated assignment statement instead
+      if (fpSyms.find(*i)!=fpSyms.end() || fpSyms.find(*i)!=fpSyms.end())  
+        // TODO handle reduction variables
+      //if (fpSyms.find(*i)!=fpSyms.end() || reductionSyms.find(*i)!=fpSyms.end())  
+      {
+        
+      // firstprivate and reduction variables use the 2nd local declaration 
+      // and use the private_remap instead of sym_remap
+        local_var_decl2 = buildVariableDeclaration ("_p_"+name_str, i_name->get_type(), NULL, args_scope); 
+        SageInterface::insertStatementAfter(local_var_decl, local_var_decl2);
+        recordSymRemap (*i, local_var_decl2, args_scope, private_remap);
+        SgExprStatement* assign_stmt = buildAssignStatement(buildVarRefExp(local_var_decl2), 
+                             buildPointerDerefExp(buildVarRefExp(local_var_decl)));
+        SageInterface::insertStatementAfter(local_var_decl2, assign_stmt);
+      }
+      else // regular and shared variables used the first local declaration
+        recordSymRemap (*i, local_var_decl, args_scope, sym_remap);
+      // transfer the value for firstprivate variables. 
+      // TODO
     }
 
-    // Create and insert companion re-pack statement in the end of the function body
+    // step 3. Create and insert companion re-pack statement in the end of the function body
     // If necessary
     // ----------------------------------------
     SgInitializedName* local_var_init = NULL;
     if (local_var_decl != NULL )
-     local_var_init = local_var_decl->get_decl_item (SgName (name_str.c_str ()));
+      local_var_init = local_var_decl->get_decl_item (SgName (name_str.c_str ()));
 
     if (!SageInterface::is_Fortran_language() && !Outliner::enable_classic)  
       ROSE_ASSERT(local_var_init!=NULL);  
@@ -753,15 +897,15 @@ appendParams (const ASTtools::VarSymSet_t& syms,
       {
         //conservatively consider them as all live out if no liveness analysis is enabled,
         bool isLiveOut = true;
-       if (Outliner::enable_liveness)
-         if (liveOutVars.find(const_cast<SgInitializedName*> (i_name))==liveOutVars.end())
+        if (Outliner::enable_liveness)
+          if (liveOutVars.find(const_cast<SgInitializedName*> (i_name))==liveOutVars.end())
             isLiveOut = false;
 
         // generate restoring statements for written and liveOut variables:
         //  isWritten && isLiveOut --> !isRead && isLiveOut --> (findRead==NULL && findLiveOut!=NULL)
         // must compare to the original init name (i_name), not the local copy (local_var_init)
         if (readOnlyVars.find(const_cast<SgInitializedName*> (i_name))==readOnlyVars.end() && isLiveOut)   // variables not in read-only set have to be restored
-       {
+        {
           if (Outliner::enable_debug)
             cout<<"Generating restoring statement for non-read-only variable:"<<local_var_init->unparseToString()<<endl;
 
@@ -788,64 +932,11 @@ appendParams (const ASTtools::VarSymSet_t& syms,
     }
     counter ++;
   } //end for
+
+  // variable substitution 
+  SgBasicBlock* func_body = func->get_definition()->get_body();
+  remapVarSyms (sym_remap, pdSyms, private_remap , func_body);
 }
-
-// ===========================================================
-
-//! Fixes up references in a block to point to alternative symbols.
-// based on an existing symbol-to-symbol map
-static
-void
-remapVarSyms (const VarSymRemap_t& vsym_remap, const ASTtools::VarSymSet_t& pdSyms, SgBasicBlock* b)
-{
-  if (!vsym_remap.empty ()) // Check if any remapping is even needed.
-  {
-    typedef Rose_STL_Container<SgNode *> NodeList_t;
-    NodeList_t refs = NodeQuery::querySubTree (b, V_SgVarRefExp);
-    for (NodeList_t::iterator i = refs.begin (); i != refs.end (); ++i)
-    {
-      // Reference possibly in need of fix-up.
-      SgVarRefExp* ref_orig = isSgVarRefExp (*i);
-      ROSE_ASSERT (ref_orig);
-
-      // Search for a replacement symbol.
-      VarSymRemap_t::const_iterator ref_new =
-        vsym_remap.find (ref_orig->get_symbol ());
-      if (ref_new != vsym_remap.end ()) // Needs replacement
-      {
-        SgVariableSymbol* sym_new = ref_new->second;
-        if (Outliner::temp_variable)
-        // uniform handling if temp variables of the same type are used
-        {// two cases: variable using temp vs. variables using pointer dereferencing!
-
-          if (pdSyms.find(ref_orig->get_symbol())==pdSyms.end()) //using temp
-            ref_orig->set_symbol (sym_new);
-          else
-          {
-            SgPointerDerefExp * deref_exp = SageBuilder::buildPointerDerefExp(buildVarRefExp(sym_new));
-            deref_exp->set_need_paren(true);
-            SageInterface::replaceExpression(isSgExpression(ref_orig),isSgExpression(deref_exp));
-
-          }
-        }
-        else
-        {
-          if (is_C_language()) 
-          // old method of using pointer dereferencing indiscriminately for C input
-          // TODO compare the orig and new type, use pointer dereferencing only when necessary
-          {
-            SgPointerDerefExp * deref_exp = SageBuilder::buildPointerDerefExp(buildVarRefExp(sym_new));
-            deref_exp->set_need_paren(true);
-            SageInterface::replaceExpression(isSgExpression(ref_orig),isSgExpression(deref_exp));
-          }
-          else
-            ref_orig->set_symbol (sym_new);
-        }
-      } //find an entry
-    } // for every refs
-  }
-}
-
 
 // =====================================================================
 
@@ -853,52 +944,58 @@ remapVarSyms (const VarSymRemap_t& vsym_remap, const ASTtools::VarSymSet_t& pdSy
 //! Create a function named 'func_name_str', with a parameter list from 'syms'
 // pdSyms specifies symbols which must use pointer dereferencing if replaced during outlining, 
 // only used when -rose:outline:temp_variable is used
+// psyms are the symbols for OpenMP private variables, or dead variables (not live-in, not live-out)
 SgFunctionDeclaration *
 Outliner::generateFunction ( SgBasicBlock* s,
                                           const string& func_name_str,
                                           const ASTtools::VarSymSet_t& syms,
                                           const ASTtools::VarSymSet_t& pdSyms,
+                                          const ASTtools::VarSymSet_t& psyms,
+                                          const ASTtools::VarSymSet_t& fpSyms,
+                                          const ASTtools::VarSymSet_t& reductionSyms,
                                           SgScopeStatement* scope)
 {
   ROSE_ASSERT (s&&scope);
   ROSE_ASSERT(isSgGlobal(scope));
   // step 1: perform necessary liveness and side effect analysis, if requested.
+  // ---------------------------
   std::set< SgInitializedName *> liveIns, liveOuts;
-   // Collect read-only variables of the outlining target
-    std::set<SgInitializedName*> readOnlyVars;
-    if (Outliner::temp_variable||Outliner::enable_classic)
+  // Collect read-only variables of the outlining target
+  std::set<SgInitializedName*> readOnlyVars;
+  if (Outliner::temp_variable||Outliner::enable_classic)
+  {
+    SgStatement* firstStmt = (s->get_statements())[0];
+    if (isSgForStatement(firstStmt)&& enable_liveness)
     {
-      SgStatement* firstStmt = (s->get_statements())[0];
-      if (isSgForStatement(firstStmt)&& enable_liveness)
-      {
-        LivenessAnalysis * liv = SageInterface::call_liveness_analysis (SageInterface::getProject());
-        SageInterface::getLiveVariables(liv, isSgForStatement(firstStmt), liveIns, liveOuts);
-      }
-      SageInterface::collectReadOnlyVariables(s,readOnlyVars);
-      if (Outliner::enable_debug)
-      {
-        cout<<"Outliner::Transform::generateFunction() -----Found "<<readOnlyVars.size()<<" read only variables..:";
-        for (std::set<SgInitializedName*>::const_iterator iter = readOnlyVars.begin();
-            iter!=readOnlyVars.end(); iter++)
-          cout<<" "<<(*iter)->get_name().getString()<<" ";
-        cout<<endl;
-        cout<<"Outliner::Transform::generateFunction() -----Found "<<liveOuts.size()<<" live out variables..:";
-        for (std::set<SgInitializedName*>::const_iterator iter = liveOuts.begin();
-            iter!=liveOuts.end(); iter++)
-          cout<<" "<<(*iter)->get_name().getString()<<" ";
-        cout<<endl;
-      }
+      LivenessAnalysis * liv = SageInterface::call_liveness_analysis (SageInterface::getProject());
+      SageInterface::getLiveVariables(liv, isSgForStatement(firstStmt), liveIns, liveOuts);
     }
+    SageInterface::collectReadOnlyVariables(s,readOnlyVars);
+    if (Outliner::enable_debug)
+    {
+      cout<<"Outliner::Transform::generateFunction() -----Found "<<readOnlyVars.size()<<" read only variables..:";
+      for (std::set<SgInitializedName*>::const_iterator iter = readOnlyVars.begin();
+          iter!=readOnlyVars.end(); iter++)
+        cout<<" "<<(*iter)->get_name().getString()<<" ";
+      cout<<endl;
+      cout<<"Outliner::Transform::generateFunction() -----Found "<<liveOuts.size()<<" live out variables..:";
+      for (std::set<SgInitializedName*>::const_iterator iter = liveOuts.begin();
+          iter!=liveOuts.end(); iter++)
+        cout<<" "<<(*iter)->get_name().getString()<<" ";
+      cout<<endl;
+    }
+  }
 
   //step 2. Create function skeleton, 'func'.
-     SgName func_name (func_name_str);
-     SgFunctionParameterList *parameterList = buildFunctionParameterList();
+  // ---------------------------
+  SgName func_name (func_name_str);
+  SgFunctionParameterList *parameterList = buildFunctionParameterList();
 
-     SgFunctionDeclaration* func = createFuncSkeleton (func_name,SgTypeVoid::createType (),parameterList, scope);
-     ROSE_ASSERT (func);
+  SgFunctionDeclaration* func = createFuncSkeleton (func_name,SgTypeVoid::createType (),parameterList, scope);
+  ROSE_ASSERT (func);
 
- // Liao, 4/15/2009 , enforce C-bindings  for C++ outlined code
- // enable C code to call this outlined function
+  // Liao, 4/15/2009 , enforce C-bindings  for C++ outlined code
+  // enable C code to call this outlined function
   // Only apply to C++ , pure C has trouble in recognizing extern "C"
   // Another way is to attach the function with preprocessing info:
   // #if __cplusplus 
@@ -906,36 +1003,36 @@ Outliner::generateFunction ( SgBasicBlock* s,
   // #endif
   // We don't choose it since the language linkage information is not explicit in AST
   // if (!SageInterface::is_Fortran_language())
-     if ( SageInterface::is_Cxx_language() || is_mixed_C_and_Cxx_language() || is_mixed_Fortran_and_Cxx_language() || is_mixed_Fortran_and_C_and_Cxx_language() )
-        {
-       // Make function 'extern "C"'
-          func->get_declarationModifier().get_storageModifier().setExtern();
-          func->set_linkage ("C");
-        }
+  if ( SageInterface::is_Cxx_language() || is_mixed_C_and_Cxx_language() || is_mixed_Fortran_and_Cxx_language() || is_mixed_Fortran_and_C_and_Cxx_language() )
+  {
+    // Make function 'extern "C"'
+    func->get_declarationModifier().get_storageModifier().setExtern();
+    func->set_linkage ("C");
+  }
 
   // Generate the function body by deep-copying 's'.
-     SgBasicBlock* func_body = func->get_definition()->get_body();
-     ROSE_ASSERT (func_body != NULL);
+  SgBasicBlock* func_body = func->get_definition()->get_body();
+  ROSE_ASSERT (func_body != NULL);
 
   // This does a copy of the statements in "s" to the function body of the outlined function.
-     ROSE_ASSERT(func_body->get_statements().empty() == true);
+  ROSE_ASSERT(func_body->get_statements().empty() == true);
 #if 0
   // This calls AST copy on each statement in the SgBasicBlock, but not on the block, so the 
   // symbol table is not setup by AST copy mechanism and not setup properly by the outliner.
-     ASTtools::appendStmtsCopy (s, func_body);
+  ASTtools::appendStmtsCopy (s, func_body);
 #else
-     SageInterface::moveStatementsBetweenBlocks (s, func_body);
+  SageInterface::moveStatementsBetweenBlocks (s, func_body);
 #endif
 
-     if (Outliner::useNewFile)
-          ASTtools::setSourcePositionAtRootAndAllChildrenAsTransformation(func_body);
+  if (Outliner::useNewFile)
+    ASTtools::setSourcePositionAtRootAndAllChildrenAsTransformation(func_body);
 
 #if 0
   // We can't call this here because "s" is passed in as "cont".
   // DQ (2/24/2009): I think that at this point we should delete the subtree represented by "s"
   // But it might have made more sense to not do a deep copy on "s" in the first place.
   // Why is there a deep copy on "s"?
-     SageInterface::deleteAST(s);
+  SageInterface::deleteAST(s);
 #endif
 
 #if 0
@@ -969,23 +1066,20 @@ Outliner::generateFunction ( SgBasicBlock* s,
   }
 #endif
 
-  //step 3: create parameters and replace variable references, 
-  //including adding unpacking and save-back statements
-  //
-  // Create parameters for outlined vars, and fix-up symbol refs in the body.
-  // Store parameter list information.
-     VarSymRemap_t vsym_remap;
-  appendParams (syms, pdSyms,readOnlyVars, liveOuts,func, vsym_remap);
-  remapVarSyms (vsym_remap, pdSyms, func_body);
-
-     ROSE_ASSERT (func != NULL);
+  //step 3: variable handling, including: 
+  //   create parameters of the outlined functions
+  //   add statements to unwrap the parameters
+  //   add repacking statements if necessary
+  //   replace variables to access to parameters, directly or indirectly
+  variableHandling(syms, pdSyms, psyms, fpSyms, reductionSyms, readOnlyVars, liveOuts,func);
+  ROSE_ASSERT (func != NULL);
 
   // Retest this...
-     ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
+  ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
   // printf ("After resetting the parent: func->get_definition() = %p func->get_definition()->get_body()->get_parent() = %p \n",func->get_definition(),func->get_definition()->get_body()->get_parent());
   //
-     ROSE_ASSERT(scope->lookup_function_symbol(func->get_name()));
-     return func;
-   }
+  ROSE_ASSERT(scope->lookup_function_symbol(func->get_name()));
+  return func;
+}
 
 // eof

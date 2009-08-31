@@ -1540,6 +1540,17 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                          ROSE_ABORT();
                 }
              }
+       // Liao, 8/28/2009, support for SgLocatedNodeSupport
+       if (isSgLocatedNodeSupport(astNode)!= NULL) 
+       {
+         if (isSgOmpClause(astNode))
+         {
+           SgOmpClause * omp_clause = const_cast<SgOmpClause*>(isSgOmpClause(astNode));
+           ROSE_ASSERT(omp_clause);
+
+           roseUnparser.u_exprStmt->unparseOmpClause(omp_clause, inheritedAttributeInfo);
+         }
+       }
 
        // Turn OFF the error checking which triggers an if the default SgUnparse_Info constructor is called
        // GB (09/27/2007): Removed this error check, see above.

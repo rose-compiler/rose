@@ -163,9 +163,11 @@ namespace Outliner
 
     /*!
      *  \brief Computes the set of variables in 's' that need to be
-     *  passed to the outlined routine.
+     *  passed to the outlined routine == shared variables in OpenMP: syms
+     *  and private variables (in OpenMP): psyms
      */
-    void collectVars (const SgStatement* s, ASTtools::VarSymSet_t& syms);
+    void collectVars (const SgStatement* s, ASTtools::VarSymSet_t& syms, ASTtools::VarSymSet_t& private_syms,
+                  ASTtools::VarSymSet_t& firstprivate_syms, ASTtools::VarSymSet_t& reduction_syms);
 
     /*!\brief Generate a new source file under the same SgProject as
      * target, the file's base name is file_name_str. Suffix is automatically
@@ -194,6 +196,8 @@ namespace Outliner
      *  their corresponding pointer dereferencing if replaced during 
      *  outlining. Used to support -rose:outline:temp_variable
      *
+     *  pSyms are OpenMP private variables, or dead variables (neither livein nor liveout)
+     *
      *  \pre The statement does not contain non-local control flow.
      */
  // DQ (2/25/2009): Modified function interface to pass "SgBasicBlock*" as not const parameter.
@@ -203,6 +207,9 @@ namespace Outliner
                       const std::string& func_name_str,
                       const ASTtools::VarSymSet_t& syms,
                       const ASTtools::VarSymSet_t& pdSyms,
+                      const ASTtools::VarSymSet_t& pSyms,
+                      const ASTtools::VarSymSet_t& fpSyms,
+                      const ASTtools::VarSymSet_t& reductionSyms,
                       SgScopeStatement* scope);
 
      //! Generate packing (wrapping) statements for the variables to be passed 

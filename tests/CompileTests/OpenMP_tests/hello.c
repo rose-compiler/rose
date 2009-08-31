@@ -16,7 +16,7 @@ By C. Liao
 int main(void)
 {
   int i=0;
-#pragma omp parallel default(shared)
+#pragma omp parallel default(shared) private(i)
   {
 #ifdef _OPENMP
     i=omp_get_thread_num();

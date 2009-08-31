@@ -24,10 +24,12 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	nowait.c \
 	expressions.c \
 	falsesharing.c \
+	firstprivate.c \
 	firstlastprivate.c \
 	flush.c \
 	get_max_threads.c \
 	hello.c \
+	hello-1.c \
 	hello-2.c \
 	hello-ordered.c \
 	lastprivate0.c \

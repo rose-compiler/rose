@@ -40,7 +40,7 @@ printNodeList ( const Rose_STL_Container<SgNode*> & localList )
 
 /* BEGIN INTERFACE NAMESPACE NODEQUERY2 */
 
-
+//! push astNode into nodeList if its variantT type match one of those from targetVariantVector
 void
 pushNewNode ( NodeQuerySynthesizedAttributeType & nodeList, 
               const VariantVector & targetVariantVector,
