@@ -1,3 +1,226 @@
+2009-09-01 18:13  hamilton37
+
+	* [r7053] /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/pointer/member_deref.ok_msg:
+	  RTED: Fixed variable refs and variable initializations for member
+	  dereferences.
+	  
+	  Previously we created invalid address-of expressions, with
+	  SgCastExp
+	  sub-expressions, which are now stripped out.
+
+2009-09-01 18:13  hamilton37
+
+	* [r7052] /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp: RTED: Do not
+	  erroneously tell the runtimesystem about `new allocations` when
+	  creating reference variables.
+
+2009-09-01 18:13  hamilton37
+
+	* [r7051] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_operators.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h: RTED: Handle c++
+	  delete (tell the runtimesystem about the deallocation) and
+	  added `make fastcheck` to run our own, but now the RTED, tests.
+
+2009-09-01 18:13  hamilton37
+
+	* [r7050] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++,
+	  /trunk/ROSE/projects/RTED/tests/C++/pointer,
+	  /trunk/ROSE/projects/RTED/tests/C++/pointer/member_deref.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/pointer/member_deref.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/delete.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/delete.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/object_create.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/object_create.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/references.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/references.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_fncall_null.c,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_fncall_null.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_scope_dowhile.c,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_scope_dowhile.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_scope_for.c,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_scope_for.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_scope_if.c,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_scope_if.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_scope_switch.c,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_scope_switch.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_scope_while.c,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_scope_while.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_to_fn_malloc_novar.c,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_to_fn_malloc_novar.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_to_fncall.c,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_to_fncall.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_to_fncall_multivar.c,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_to_fncall_multivar.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_to_locals_then_globals_then_locals.c,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_to_locals_then_globals_then_locals.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_to_multi_fncall.c,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_to_multi_fncall.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C/memoverlap/heap_array.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C/memoverlap/heap_array_in_struct.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C/memoverlap/heap_array_in_struct_in_array.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C/memoverlap/stack_array.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C/memoverlap/stack_array_in_struct.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C/memoverlap/stack_array_in_struct_in_array.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C/nomemoryleaks/assign_from_fn_free.c,
+	  /trunk/ROSE/projects/RTED/tests/C/nomemoryleaks/assignment_to_local_and_global.c,
+	  /trunk/ROSE/projects/RTED/tests/negative,
+	  /trunk/ROSE/projects/RTED/tests/negative/C,
+	  /trunk/ROSE/projects/RTED/tests/negative/C++,
+	  /trunk/ROSE/projects/RTED/tests/negative/C++/simple,
+	  /trunk/ROSE/projects/RTED/tests/negative/C++/simple/destructors.cpp,
+	  /trunk/ROSE/projects/RTED/tests/negative/C/nomemoryleaks,
+	  /trunk/ROSE/projects/RTED/tests/negative/C/nomemoryleaks/assign_from_fn_free.c,
+	  /trunk/ROSE/projects/RTED/tests/negative/C/nomemoryleaks/assignment_to_local_and_global.c:
+	  RTED: Added a number of our own tests to make check.
+
+2009-09-01 18:12  hamilton37
+
+	* [r7049]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.cpp: RTED: We
+	  handle subtypes in c++ better now.
+	  
+	  Previously we could not handle the case where a subtype
+	  completely filled a
+	  parent type, e.g.
+	  
+	  class A { public: int x; };
+	  
+	  where sizeof(A) == sizeof(A.x)
+
+2009-09-01 18:12  hamilton37
+
+	* [r7048] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_registerType.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp: RTED: We now resolve
+	  class names of member types for proper type registration
+	  with the runtime system.
+
+2009-09-01 18:12  hamilton37
+
+	* [r7047] /trunk/ROSE/projects/RTED/RtedTransf_support.cpp: RTED:
+	  We handle variable access to members of classes with overloaded
+	  assignment
+	  now.
+	  
+	  Previously we would erroneously traverse the member function when
+	  trying to
+	  calculate the lvalue to take the address of. We now properly stop
+	  at those
+	  cases (but still traverse dot expressions, to handle, e.g.
+	  `foo.bar.baz`)
+
+2009-09-01 18:12  hamilton37
+
+	* [r7046] /trunk/ROSE/projects/RTED/RtedTransf_array.cpp: RTED: We
+	  now handle the c++ new operator, informing the runtime system of
+	  the
+	  memory allocation.
+
+2009-09-01 18:12  hamilton37
+
+	* [r7045] /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_support.cpp: RTED: We handle
+	  a few more varref cases that we previously did not, such as the
+	  following:
+	  (*arr)[a][b]
+	  
+	  However, visit_isArraySgAssignOp should be re-written to handle
+	  the general
+	  case (i.e. it needs to be recursive).
+
+2009-09-01 18:12  hamilton37
+
+	* [r7044] /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_registerType.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h: RTED: Working on
+	  C++ support. We now handle certain variable references in C++
+	  better.
+	  
+	  * Variable references to static data members are now built
+	  correctly.
+	  Previously we made references with no symbols, causing errors
+	  during
+	  unparsing.
+	  
+	  * We also ignore static data members when registering types, so
+	  that the runtime
+	  system doesn't mistakenly treat them as non-static.
+	  
+	  At the moment, on some of the C++ tests, the runtime system
+	  overhead
+	  seems to be substantial.
+
+2009-09-01 18:12  hamilton37
+
+	* [r7043] /trunk/ROSE/projects/RTED/DataStructures.h,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_prolog.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_registerType.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: RTED: Handle for
+	  statements whose initializer statements include variable
+	  declarations.
+	  
+	  Our previous method of instrumenting function calls by appending
+	  them to the
+	  initializer statment generated incorrect code or code that would
+	  not compile.
+	  We know add the function calls to the test, guarded to ensure
+	  that they execute
+	  only once.
+	  
+	  This can be improved by instead adding them to initializer
+	  expressions lists,
+	  e.g.
+	  int x = (int)foo(), (int)bar(), 3;
+
+2009-09-01 18:12  hamilton37
+
+	* [r7042] /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp: RTED: minor
+	  cleanup (switching exit to `ROSE_ASSERT( false )` for easier
+	  debugging).
+
+2009-09-01 18:12  hamilton37
+
+	* [r7041] /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp: RTED:
+	  C++ support. Better handling of function calls of non-function
+	  refs.
+	  
+	  When visiting function call expressions, we now look for as much
+	  information as
+	  possible from the type, and look to the function ref, if we have
+	  one, only for
+	  the non-mangled name.
+
+2009-09-01 18:12  hamilton37
+
+	* [r7040] /trunk/ROSE/projects/RTED/runtimeCheck.cpp: RTED: Minor
+	  cleanup.
+
+2009-09-01 16:27  liao6
+
+	* [r7039] /trunk/ROSE/docs/testDoxygen/Publications.docs: Updated
+	  the publication list
+
 2009-08-31 23:41  liao6
 
 	* [r7036] /trunk/ROSE/src/ROSETTA/Grammar/Expression.code,
