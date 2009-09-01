@@ -821,6 +821,7 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
         SgNode* exp,
         NodeQuery::querySubTree( expr_r, V_SgNewExp )) {
 
+    // FIXME 2: this is a false positive if operator new is overloaded
     SgNewExp* new_op = isSgNewExp( exp );
 
     ROSE_ASSERT( new_op );

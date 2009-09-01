@@ -277,7 +277,7 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
     }
   }
   cerr << "\n Number of Elements in frees  : " << frees.size() << endl;
-  std::vector< SgFunctionCallExp* >::const_iterator it_frees = frees.begin();
+  std::vector< SgExpression* >::const_iterator it_frees = frees.begin();
   for (; it_frees != frees.end(); it_frees++) {
     insertFreeCall( *it_frees );
   }
@@ -303,11 +303,11 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
 void RtedTransformation::visit(SgNode* n) {
 
 
-  // find MAIN ******************************************
+  // find function definitions (incl. main) ******************************************
   if (isSgFunctionDefinition(n)) {
     visit_isFunctionDefinition(n);
   }
-  // find MAIN ******************************************
+  // find function definitions (incl. main) ******************************************
 
 
   // ******************** DETECT functions in input program  *********************************************************************
@@ -404,6 +404,12 @@ void RtedTransformation::visit(SgNode* n) {
     visit_pointer_movement( n );
   }
   // *********************** Detect pointer movements, e.g ++, -- *********
+  
+  // *********************** Detect delete (c++ free) *********
+  else if( isSgDeleteExp( n )) {
+    visit_delete( isSgDeleteExp( n ));
+  }
+  // *********************** Detect delete (c++ free) *********
 
   else {
 	 // cerr << " @@ Skipping : " << n->unparseToString() << "   " << n->class_name() << endl;

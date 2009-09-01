@@ -391,16 +391,31 @@ RtedTransformation::insertAssertFunctionSignature( SgFunctionCallExp* fncall ) {
 
 
 void
-RtedTransformation::insertFreeCall( SgFunctionCallExp* free_call ) {
+RtedTransformation::insertFreeCall( SgExpression* free ) {
+
+	SgFunctionCallExp* free_call = isSgFunctionCallExp( free );
+	SgDeleteExp* del_exp = isSgDeleteExp( free );
+
+	ROSE_ASSERT( free_call || del_exp );
+
 
 	// stmt wraps a call to free -- most likely an expression statement
 	// alert the RTS before the call to detect errors such as double-free
-	SgStatement* stmt = getSurroundingStatement( free_call );
+	SgStatement* stmt = getSurroundingStatement( free );
+	SgExpression* address_expression;
 
-	Rose_STL_Container< SgExpression* > args = free_call->get_args()->get_expressions();
-	ROSE_ASSERT( args.size() > 0 );
+	if( free_call) {
 
-	SgExpression* address_expression = args[ 0 ];
+		Rose_STL_Container< SgExpression* > args 
+			= free_call->get_args()->get_expressions();
+		ROSE_ASSERT( args.size() > 0 );
+
+		address_expression = args[ 0 ];
+	} else if( del_exp ) {
+
+		address_expression = del_exp -> get_variable(); 
+	} else { ROSE_ASSERT( false ); }
+
 	
 	ROSE_ASSERT( stmt );
 	ROSE_ASSERT( address_expression );

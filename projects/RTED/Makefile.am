@@ -52,7 +52,7 @@ runtimeCheck_LDADD =  $(ROSE_LIBS) CppRuntimeSystem/libCppRuntimeSystem.la
 
 TESTCODES =  $(srcdir)/example.C 
 
-runtimeCheck.o: runtimeCheck.cpp 
+runtimeCheck.o: runtimeCheck.cpp
 
 # Build the list of object files
 TEST_Objects = ${TESTCODES:.C=.o}
@@ -493,11 +493,13 @@ $(TESTS_KNOWN_TO_FAIL):
 deleteAllbinfiles:
 	rm -rf rted_source
 
-c-compile-runtimesystem:
-	@echo "Make sure that RuntimeSystem compiles with C"
+
+checkfast:	runtimeCheck $(TESTCODES) \
+				run/tests/C/memoryleaks run/tests/C/memoverlap \
+				run/tests/C++/simple run/tests/C++/pointer
 
 # run/C/floating_point_errors
-check-local: runtimeCheck $(TESTCODES) c-compile-runtimesystem \
+check-local: runtimeCheck $(TESTCODES) \
 				run/C/array_index_out_of_bound run/C/string_errors \
 				run/C/subprogram_call_errors \
 				run/C/allocation_deallocation_errors run/C/input_output_errors \

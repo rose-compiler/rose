@@ -56,7 +56,7 @@ class RtedTransformation : public AstSimpleProcessing {
   // signatures we must check at runtime
   std::vector<SgFunctionCallExp*> function_call_missing_def;
   // function calls to free
-  std::vector<SgFunctionCallExp*> frees;
+  std::vector< SgExpression* > frees;
   // function calls to realloc
   std::vector<SgFunctionCallExp*> reallocs;
 
@@ -117,7 +117,7 @@ class RtedTransformation : public AstSimpleProcessing {
   void insertRuntimeSystemClass();
   void insertAssertFunctionSignature( SgFunctionCallExp* exp );
   void insertConfirmFunctionSignature( SgFunctionDefinition* fndef );
-  void insertFreeCall( SgFunctionCallExp* exp );
+  void insertFreeCall( SgExpression* exp );
   void insertReallocateCall( SgFunctionCallExp* exp );
   SgExpression* buildString(std::string name);
   SgVarRefExp* buildVarRef( SgInitializedName *& initName );
@@ -187,6 +187,10 @@ class RtedTransformation : public AstSimpleProcessing {
   bool isFileIOFunctionCall(std::string name) ;
   SgExpression* getVariableLeftOfAssignmentFromChildOnRight(SgNode* n);
 
+
+
+	/// Visit delete operators, to track memory frees.
+	void visit_delete( SgDeleteExp* del );
 
 	/// Visit pointer assignments whose lhs is computed from the original value of
 	/// the pointer by virtue of the operator alone (e.g. ++, --)  As a heuristic,

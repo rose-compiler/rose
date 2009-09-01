@@ -66,3 +66,10 @@ void RtedTransformation::insert_pointer_change( SgExpression* exp ) {
         PreprocessingInfo::before
     );
 }
+
+
+
+void RtedTransformation::visit_delete( SgDeleteExp* del ) {
+  // FIXME 2: this is wrong if delete is overloaded
+  frees.push_back( del );
+}
