@@ -158,7 +158,7 @@ runtimeCheck(int argc, char** argv, set<string>& rtedfiles) {
   cerr << "argv[1] : " << argv[1] << endl;
 #endif
 
-  cerr << "Parsing rose_project... (2nd time)" << endl;
+  cerr << "Parsing project... " << endl;
   for (int i=0;i<argc;++i)
     cout << argv[i] << " " ;
   cout << endl;
@@ -167,7 +167,7 @@ runtimeCheck(int argc, char** argv, set<string>& rtedfiles) {
   // perform all necessary transformations (calls)
   cerr << "Transforming ... " << endl;
   rted.transform(project, rtedfiles);
-  cerr << "Calling backend... (2nd time)" << endl;
+  cerr << "Calling backend... " << endl;
   // call backend and create a new rose_rose_filename.c source file
   backend(project);
   // PARSE AND TRANSFORM - 2rst round--------------------------------
