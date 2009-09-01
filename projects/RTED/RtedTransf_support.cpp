@@ -261,6 +261,10 @@ RtedTransformation::getSurroundingStatement(SgNode* n) {
   return isSgStatement(stat);
 }
 
+// we have some expression, e.g. a var ref to m, but we want as much of the
+// expression as necessary to properly refer to m
+//
+//  e.g. &foo.bar.m, instead of the erroneous &m
 SgExpression* RtedTransformation::getUppermostLvalue( SgExpression* exp ) {
     SgExpression* parent = isSgExpression( exp->get_parent() );
     
@@ -269,6 +273,20 @@ SgExpression* RtedTransformation::getUppermostLvalue( SgExpression* exp ) {
                 || isSgArrowExp( parent )
                 || isSgPointerDerefExp( parent )
                 || isSgPntrArrRefExp( parent ))) {
+
+        // in c++, the rhs of the dot may be a member function, which we'd want
+        // to ignore
+        if( isSgDotExp( parent )) {
+            SgExpression* rhs = isSgDotExp( parent ) -> get_rhs_operand();
+            if( isSgMemberFunctionRefExp( rhs ))
+                // in, e.g.
+                //  foo.bar = 9001
+                //  foo.bar.=( 9001 )
+                // we want to stop at the dot exp
+                //  foo.bar
+                break;
+        }
+
         exp = parent;
         parent = isSgExpression( parent->get_parent() );
     }
