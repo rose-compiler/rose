@@ -73,7 +73,7 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName
       stmt = isSgVariableDeclaration(decl->get_parent());
       if (!stmt) {
 	cerr << " Error . stmt is unknown : " << decl->get_parent()->class_name() << endl;
-	exit(1);
+	ROSE_ASSERT( false );
       }
       scope = scope->get_scope();
       // We want to insert the stmt before this classdefinition, if its still in a valid block
@@ -241,7 +241,7 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
       stmt = isSgVariableDeclaration(decl->get_parent());
       if (!stmt) {
 	cerr << " Error . stmt is unknown : " << decl->get_parent()->class_name() << endl;
-	exit(1);
+	ROSE_ASSERT( false );
       }
       scope = scope->get_scope();
       // We want to insert the stmt before this classdefinition, if its still in a valid block
@@ -370,7 +370,7 @@ void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE,
       stmt = isSgVariableDeclaration(decl->get_parent());
       if (!stmt) {
 	cerr << " Error . stmt is unknown : " << decl->get_parent()->class_name() << endl;
-	exit(1);
+	ROSE_ASSERT( false );
       }
       scope = scope->get_scope();
       // We want to insert the stmt before this classdefinition, if its still in a valid block
@@ -500,7 +500,7 @@ void RtedTransformation::visit_isAssignInitializer(SgNode* n) {
     //cerr << "    after old statement : " << stmt->unparseToString() << endl;
   } else {
     cerr << " Cant determine scope : " << initName->get_scope()->class_name() << endl;
-    exit(1);
+    ROSE_ASSERT( false );
   }
 
   // ---------------------------------------------

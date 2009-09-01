@@ -307,11 +307,11 @@ RtedTransformation::resolveToVarRefRight(SgExpression* expr) {
     result = isSgVarRefExp(newexpr);
     if (!result) {
       cerr <<"  >> resolveToVarRefRight : right : " << newexpr->class_name() << endl;
-      exit(1);
+      ROSE_ASSERT( false );
     }
   } else {
     cerr <<" >> resolveToVarRefRight : unknown expression " << expr->class_name() <<endl;
-    exit(1);
+    ROSE_ASSERT( false );
   }
 
   return result;
@@ -327,11 +327,11 @@ RtedTransformation::resolveToVarRefLeft(SgExpression* expr) {
     result = isSgVarRefExp(newexpr);
     if (!result) {
       cerr <<"  >> resolveToVarRefRight : right : " << newexpr->class_name() << endl;
-      exit(1);
+      ROSE_ASSERT( false );
     }
   } else {
     cerr <<" >> resolveToVarRefRight : unknown expression " << expr->class_name() <<endl;
-    exit(1);
+    ROSE_ASSERT( false );
   }
   
   return result;

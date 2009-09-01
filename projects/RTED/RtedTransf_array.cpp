@@ -94,7 +94,7 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
       stmt = isSgVariableDeclaration(decl->get_parent());
       if (!stmt) {
 	cerr << " Error . stmt is unknown : " << decl->get_parent()->class_name() << endl;
-	exit(1);
+	ROSE_ASSERT( false );
       } 
       scope = scope->get_scope();
       // We want to insert the stmt before this classdefinition, if its still in a valid block
@@ -742,7 +742,7 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
 	ROSE_ASSERT(sizeofOp);
       } else if (results.size()>1) {
 	cerr << "More than 1 sizeof operand. Abort." << endl;
-	exit(1);
+	ROSE_ASSERT( false );
       }
       SgExpression* func = funcc->get_function();
       if (func && size) {
