@@ -1,7 +1,7 @@
-#!/usr/bin/pl -q  -O  -L64M -G64M -t main -f 
+#!/usr/bin/pl -q  -O  -L64M -G64M -t main -s 
 % -*- prolog -*-
 
-:- module(loopbounds,[main/0]).
+%% :- module(loopbounds,[main/0]).
 
 %-----------------------------------------------------------------------
 /** <module> Loop analysis

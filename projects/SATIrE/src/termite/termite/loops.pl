@@ -202,9 +202,9 @@ isForTestOp(N, Op) :- isForTestNE(N, Op).
 % generate two solutions for an AND condition
 isForMultiTestOp(expr_statement(TestOp, _, _, _), Op) :-
   isForMultiTestOp(TestOp, Op).
-isForMultiTestOp(N, Op) :- isForMultiTestLE(N, Op).
-isForMultiTestOp(N, Op) :- isForMultiTestGE(N, Op).
-isForMultiTestOp(N, Op) :- isForMultiTestNE(N, Op).
+isForMultiTestOp(N, Op) :- isForTestLE(N, Op).
+isForMultiTestOp(N, Op) :- isForTestGE(N, Op).
+isForMultiTestOp(N, Op) :- isForTestNE(N, Op).
 isForMultiTestOp(and_op(N1, _, _, _, _), Op) :- isForMultiTestOp(N1, Op).
 isForMultiTestOp(and_op(_, N2, _, _, _), Op) :- isForMultiTestOp(N2, Op).
 

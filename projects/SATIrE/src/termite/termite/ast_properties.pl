@@ -35,6 +35,7 @@
 	   
 	   get_preprocessing_infos/2]).
 
+:- use_module(library(utils)).
 % This one is meant to be user-supplied
 :- use_module(library(types)).
 

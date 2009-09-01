@@ -14,4 +14,4 @@ fi
 
 echo "---- computing loop bounds for $1 ----"
 ../interval/interval --run-pointsto-analysis $1 --output-term=$1.term ||exit 1
-$PL -q -O -t main -f loopbounds.pl < $1.term > $1.loops.term ||exit 1
+$PL -q -O -t main -s loopbounds.pl < $1.term > $1.loops.term ||exit 1

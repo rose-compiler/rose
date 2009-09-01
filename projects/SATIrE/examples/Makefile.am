@@ -234,7 +234,7 @@ pointsto_live_variables: init.token
 	@echo "testing termite -> icfgbuilder..."
 	@cd $(testdir)/interval; ./interval --run-pointsto-analysis --callstringlength=1 --input-termite-ast=intvltest.term
 	@echo "generating assertions..."
-	@cd $(testdir)/interval; export TERMITE_LIB=$(datadir)/termite; $(SWI_PL) -q -O -t main -f validator.pl < intvltest.term > intvltest1.term
+	@cd $(testdir)/interval; export TERMITE_LIB=$(datadir)/termite; $(SWI_PL) -q -O -t main -s validator.pl < intvltest.term > intvltest1.term
 	@cd $(testdir)/interval; $(DESTDIR)/$(bindir)/termite_lint intvltest1.term; if [ $$? -ne 0 ]; then echo "*** termite_lint was not quite satisfied with that term!"; fi
 	@cd $(testdir)/interval; $(DESTDIR)/$(bindir)/term2c intvltest1.term -o intvlassert.c
 	@echo "vvv from $< vvv"
@@ -287,7 +287,7 @@ itvl_stresstest: interval
 		echo    "(told you this was strict)"; \
 		exit 1; \
 	fi
-	@cd $(testdir)/interval; export TERMITE_LIB=$(datadir)/termite; $(SWI_PL) -q -O -t main -f validator.pl < itvl_stresstest.term > itvl_stresstest_assert.term
+	@cd $(testdir)/interval; export TERMITE_LIB=$(datadir)/termite; $(SWI_PL) -q -O -t main -s validator.pl < itvl_stresstest.term > itvl_stresstest_assert.term
 	@cd $(testdir)/interval; $(DESTDIR)/$(bindir)/term2c itvl_stresstest_assert.term -o itvl_stresstest_assert.c
 	@cd $(testdir)/interval; $(CC) -std=c99 -DINCLUDE_ASSERT_H -o itvl_stresstest_assert itvl_stresstest_assert.c
 	@cd $(testdir)/interval; ./itvl_stresstest_assert

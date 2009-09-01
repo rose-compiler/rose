@@ -1,4 +1,4 @@
-#!/usr/bin/pl -q  -O  -L64M -G64M -t main -f 
+#!/usr/bin/pl -q  -O  -L64M -G64M -t main -s 
 % -*- prolog -*-
 % vim: syntax=prolog
 
