@@ -810,6 +810,34 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
     }
   }
 
+  // FIXME 3: This won't handle weird cases with, e.g. multiple news on the rhs,
+  //    but for those cases this entire function is probably broken.  Consider,
+  //    e.g.
+  //        int *a, *b;
+  //        a = ( b = new int, new int );
+  //
+  // handle new (implicit C++ malloc)
+  BOOST_FOREACH(
+        SgNode* exp,
+        NodeQuery::querySubTree( expr_r, V_SgNewExp )) {
+
+    SgNewExp* new_op = isSgNewExp( exp );
+
+    ROSE_ASSERT( new_op );
+    ROSE_ASSERT( varRef );
+
+    RTedArray *array = new RTedArray(
+        false,                              // not on stack
+        initName,
+        getSurroundingStatement( varRef ),
+        true,                              // is indeed malloc, or close enough
+        buildSizeOfOp( new_op -> get_specified_type() )
+    );
+
+    variablesUsedForArray.push_back( varRef );
+    create_array_define_varRef_multiArray[ varRef ] = array;
+  }
+
   // ---------------------------------------------
   // handle variables ..............................
   // here we should know the initName of the variable on the left hand side
