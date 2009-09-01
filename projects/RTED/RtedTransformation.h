@@ -120,6 +120,7 @@ class RtedTransformation : public AstSimpleProcessing {
   void insertFreeCall( SgFunctionCallExp* exp );
   void insertReallocateCall( SgFunctionCallExp* exp );
   SgExpression* buildString(std::string name);
+  SgVarRefExp* buildVarRef( SgInitializedName *& initName );
   std::string getMangledNameOfExpression(SgExpression* expr);
   /**
    * @return @c true @b iff @c exp is a descendent of an assignment expression

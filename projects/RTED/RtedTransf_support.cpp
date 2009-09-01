@@ -84,6 +84,13 @@ RtedTransformation::isInInstrumentedFile( SgNode* n ) {
 	);
 }
 
+SgVarRefExp*
+RtedTransformation::buildVarRef( SgInitializedName *&initName ) {
+    return buildVarRefExp(
+        isSgVariableSymbol(
+            initName -> get_scope() 
+                -> lookup_symbol( initName -> get_name() )));
+}
 
 SgExpression*
 RtedTransformation::buildString(std::string name) {

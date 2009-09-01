@@ -60,7 +60,7 @@ void RtedTransformation::insertArrayCreateCall(SgInitializedName* initName,
   if( !stmt )
       stmt = getSurroundingStatement(initName);
 
-  SgVarRefExp* var_ref = buildVarRefExp( initName, stmt->get_scope());
+  SgVarRefExp* var_ref = buildVarRef( initName );
   insertArrayCreateCall(stmt, initName, var_ref, value);
 }
 

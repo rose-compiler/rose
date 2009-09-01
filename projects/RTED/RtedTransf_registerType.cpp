@@ -22,23 +22,29 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* cdef) {
     ROSE_ASSERT(sgElement);
     SgVariableDeclaration* varDecl = isSgVariableDeclaration(sgElement);
     if (varDecl) {
-		Rose_STL_Container<SgInitializedName*> vars = varDecl->get_variables();
-		Rose_STL_Container<SgInitializedName*>::const_iterator itvar = vars.begin();
-		for (;itvar!=vars.end();++itvar) {
-			SgInitializedName* initName = *itvar;
-			string name = initName->get_mangled_name();
-			string type = initName->get_type()->class_name();
+        bool not_static = !(
+            varDecl -> get_declarationModifier().get_storageModifier().isStatic()
+        );
 
-			RtedClassElement* el;
-			if( isSgArrayType( initName -> get_type() )) {
-				RTedArray* arrayRted = new RTedArray( true, initName, NULL, false );
-				populateDimensions( arrayRted, initName, isSgArrayType( initName -> get_type() ));
-				el = new RtedClassArrayElement( name, type, sgElement, arrayRted );
-			} else {
-				el = new RtedClassElement(name,type,sgElement);
-			}
-			elements.push_back(el);
-		}
+        if( not_static ) {
+            Rose_STL_Container<SgInitializedName*> vars = varDecl->get_variables();
+            Rose_STL_Container<SgInitializedName*>::const_iterator itvar = vars.begin();
+            for (;itvar!=vars.end();++itvar) {
+                SgInitializedName* initName = *itvar;
+                string name = initName->get_mangled_name();
+                string type = initName->get_type()->class_name();
+
+                RtedClassElement* el;
+                if( isSgArrayType( initName -> get_type() )) {
+                    RTedArray* arrayRted = new RTedArray( true, initName, NULL, false );
+                    populateDimensions( arrayRted, initName, isSgArrayType( initName -> get_type() ));
+                    el = new RtedClassArrayElement( name, type, sgElement, arrayRted );
+                } else {
+                    el = new RtedClassElement(name,type,sgElement);
+                }
+                elements.push_back(el);
+            }
+        }
     } else {
         // TODO 2: handle this case
     	cerr << " Declaration not handled : " << sgElement->class_name() << endl;

@@ -41,6 +41,7 @@ void RtedTransformation::visit_isSgVariableDeclaration(SgNode* n) {
   for (;it!=vars.end();++it) {
     SgInitializedName* initName = *it;
     ROSE_ASSERT(initName);
+
     // need to get the type and the possible value that it is initialized with
     cerr << "      Detected initName : " << initName->unparseToString() ;
     cerr <<"  type : " << initName->get_type()->unparseToString() << endl;
@@ -162,7 +163,7 @@ RtedTransformation::buildVariableCreateCallExpr( SgInitializedName* initName, Sg
     if (initb || forceinit)
       initBool = buildIntVal(1);
 
-    SgExpression* var_ref = buildVarRefExp( initName, scope);
+    SgExpression* var_ref = buildVarRef( initName );
     // TODO 2: Remove this if statement once the RTS handles user types
     // Note: This if statement is a hack put in place to pass the array out of
     // bounds tests
@@ -179,7 +180,7 @@ RtedTransformation::buildVariableCreateCallExpr( SgInitializedName* initName, Sg
           // file info
           initName->get_file_info(),
           // lhs
-          buildVarRefExp( first_var_name, scope),
+          buildVarRef( first_var_name ),
           // rhs
           var_ref,
           // type
