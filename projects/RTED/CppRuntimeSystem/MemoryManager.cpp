@@ -135,6 +135,21 @@ void MemoryType::checkMemType(addr_type offset, RsType * type)
         RsType * oldType = itLower->second;
         if( oldTiStart <= newTiStart && oldTiEnd >= newTiEnd )
         {
+
+            // FIXME 3: This probably doesn't handle cases where three types of
+            // the same size overlap, and the second one is asked for.
+            // Consider, e.g.
+            //
+            //  0       8
+            //  [ TypeA ]
+            //  [ TypeB ]
+            //  [ TypeC ]
+            //
+            //  Where TypeA has one member, a TypeB, which has one member, a
+            //  TypeC, and they are all of the same size.  It is then legal to
+            //  write a TypeB to &( var of TypeA ), but here we would only allow
+            //  a TypeC.
+            //
             //Check if new entry is consistent with old one
             RsType * sub =  oldType->getSubtypeRecursive(newTiStart - oldTiStart,type->getByteSize());
             if(sub != type)

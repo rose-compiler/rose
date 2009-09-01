@@ -21,7 +21,7 @@ RsType *  RsType::getSubtypeRecursive(addr_type offset,  size_t size, bool stopA
 
     //cout << "Refining " << getName() << " at offset " << offset <<  " search of size " << size << endl;
 
-    while(result->getByteSize() > size)
+    while(result->getByteSize() >= size)
     {
         if(stopAtArray)
         {
@@ -35,7 +35,13 @@ RsType *  RsType::getSubtypeRecursive(addr_type offset,  size_t size, bool stopA
 
         int subTypeId = result->getSubtypeIdAt(offset);
         if(subTypeId == -1)
-            return NULL;
+            return result -> getByteSize() == size
+                    // The subtype completely fills the parent type, and no
+                    // further refinement is possible.
+                    ? result
+                    // The subtype is larger than the type requested, and cannot
+                    // be refined.
+                    : NULL;
 
         if(navString)
             (*navString) += "." + result->getSubTypeString(subTypeId);
