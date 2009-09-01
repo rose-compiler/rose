@@ -877,9 +877,8 @@ RuntimeSystem_roseRegisterTypeCall(int count, ...) {
 			  i += dimensionality + 1;
 			  t = RuntimeSystem_getRsArrayType( vl, dimensionality, size, base_type );
 		  } else {
-              // FIXME 2: should have class name
-              t = RuntimeSystem_getRsType( type, base_type, "", indirection_level );
-          }
+        t = RuntimeSystem_getRsType( type, base_type, "", indirection_level );
+      }
 		  classType->addMember(name,t,(addr_type)offset);
 		  //cerr << "Registering Member " << name << " of type " << type << " at offset " << offset << endl;
 	  }

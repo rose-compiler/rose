@@ -451,7 +451,7 @@ ${foreach rted_dir, ${filter $(rted_path)%, $(RTED_CPP_TEST_DIRS)}, ${eval ${cal
 # Intentionally ignored tests
 #------------------------------------------------------------------------------
 
-# TODO 2: Possibly handle this test
+# TODO 2: Handle this test
 run/C/subprogram_call_errors/c_C_1_3_f:
 	@echo Not running this test $@
 

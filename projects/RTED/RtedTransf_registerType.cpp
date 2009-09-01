@@ -176,7 +176,7 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
 
 			  // append the base type (if any) of pointers and arrays
 			  SgType* type = varDecl->get_variables()[ 0 ]->get_type();
-			  appendTypeInformation( NULL, type, arg_list );
+			  appendTypeInformation( type, arg_list, true, false );
 
 			  SgExpression* dotExp = buildDotExp(derefPointer,varref);
 			  SgExpression* andOp = buildAddressOfOp(dotExp);
