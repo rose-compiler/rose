@@ -127,6 +127,8 @@ class RtedTransformation : public AstSimpleProcessing {
    */
   bool isUsedAsLvalue( SgExpression* exp );
   bool isInInstrumentedFile( SgNode* n );
+  /// is n a basic block, if statement, [do]while, or for statement
+  bool isNormalScope( SgNode* n );
   SgExpression* getExprBelowAssignment(SgExpression* exp);
   void appendFileInfo( SgNode* n, SgExprListExp* arg_list);
   void appendFileInfo( Sg_File_Info* n, SgExprListExp* arg_list);
@@ -205,8 +207,13 @@ class RtedTransformation : public AstSimpleProcessing {
   void insertVariableCreateCall(SgInitializedName* initName);
   bool isVarInCreatedVariables(SgInitializedName* n);
   void insertInitializeVariable(SgInitializedName* initName,
-				SgVarRefExp* varRefE, bool ismalloc 
-				);
+				SgVarRefExp* varRefE, bool ismalloc );
+  SgExpression* buildVariableInitCallExpr(
+				SgInitializedName* name,
+				SgVarRefExp* varRefE,
+				SgStatement* stmt,
+				bool ismalloc );
+  SgExpression* buildVariableCreateCallExpr(SgInitializedName* name, SgStatement* stmt, bool forceinit=false);
   SgExprStatement* buildVariableCreateCallStmt(SgInitializedName* name, SgStatement* stmt, bool forceinit=false);
   void insertVariableCreateInitForParams( SgFunctionDefinition* n);
   void insertAccessVariable(SgVarRefExp* varRefE,SgExpression* derefExp);
@@ -265,6 +272,27 @@ class RtedTransformation : public AstSimpleProcessing {
   void appendAddress( SgExprListExp* arg_list, SgExpression* exp );
   void appendBaseType( SgExprListExp* arg_list, SgType* type );
   void appendClassName( SgExprListExp* arg_list, SgType* type );
+
+	/** 
+	 * Handle instrumenting function calls in for initializer statements, which may
+	 * contain variable declarations.  The basic approach is to instead add the
+	 * function calls to the test, and ensuring that:
+	 *
+	 * 		-	The original test's truth value is used as the truth value of the
+	 * 			new expression.
+	 * 		-	The instrumented function calls are invoked only once.
+	 *
+	 * 	Note that this will only work for function calls that return a value
+	 * 	suitable for bitwise operations.
+	 *
+	 * 	@param	exp				An expression, which must be a legal operand to a 
+	 * 										bitwise operator.  It will be added to the for loop's
+	 * 										test in a way to make it as semantically equivalent as
+	 * 										possible as adding it to the initializer statement.
+	 *
+	 * 	@param	for_stmt	The for statement to add @c exp to.
+	 */
+  void prependPseudoForInitializerExpression( SgExpression* exp, SgForStatement* for_stmt );
 
   bool isGlobalExternVariable(SgStatement* stmt);
 

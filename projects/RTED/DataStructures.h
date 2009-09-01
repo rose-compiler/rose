@@ -237,4 +237,23 @@ class RtedArguments {
 };
 
 
+class RtedForStmtProcessed : public AstAttribute {
+    public:
+        static const std::string &Key;
+
+
+        RtedForStmtProcessed( SgExpression* _exp ) : exp( _exp ) {}
+
+
+        SgExpression* get_exp() { return exp; }
+        SgExpression* set_exp( SgExpression* e ) { exp = e; return exp; }
+
+
+    private:
+        /// This is the expression to replace when we add expressions.  E.g. if
+        /// we want to add expression e, we replace exp with bitwise or of exp
+        /// and e.
+        SgExpression* exp;
+};
+
 #endif

@@ -10,6 +10,10 @@ using namespace SageInterface;
 using namespace SageBuilder;
 
 
+// This really belongs in the non-existent DataStructures.cpp
+const std::string &RtedForStmtProcessed::Key = std::string( "Rted::ForStmtProcessed" );
+
+
 /* -----------------------------------------------------------
  * Helper Function
  * -----------------------------------------------------------*/
@@ -61,6 +65,14 @@ RtedTransformation::isUsedAsLvalue( SgExpression* exp ) {
     return(
         assign && assign -> get_lhs_operand() == ancestor
     );
+}
+
+bool RtedTransformation::isNormalScope( SgNode* n ) {
+	return	isSgBasicBlock( n )
+			|| isSgIfStmt( n )
+			|| isSgWhileStmt( n )
+			|| isSgDoWhileStmt( n )
+			|| isSgForStatement( n );
 }
 
 bool
@@ -302,8 +314,10 @@ RtedTransformation::resolveToVarRefRight(SgExpression* expr) {
   SgVarRefExp* result = NULL;
   SgExpression* newexpr = NULL;
   ROSE_ASSERT(expr);
-  if (isSgDotExp(expr)) {
-    newexpr= isSgDotExp(expr)->get_rhs_operand();
+  if (	isSgDotExp( expr )
+		|| isSgArrowExp( expr )) {
+
+    newexpr= isSgBinaryOp(expr)->get_rhs_operand();
     result = isSgVarRefExp(newexpr);
     if (!result) {
       cerr <<"  >> resolveToVarRefRight : right : " << newexpr->class_name() << endl;
@@ -646,5 +660,66 @@ void RtedTransformation::appendClassName( SgExprListExp* arg_list, SgType* type 
 
         appendExpression( arg_list, buildString( "" ));
     }
+}
+
+void RtedTransformation::prependPseudoForInitializerExpression(
+		SgExpression* exp, SgForStatement* for_stmt ) {
+
+	RtedForStmtProcessed *for_stmt_processed = NULL;
+
+	if( for_stmt -> attributeExists( RtedForStmtProcessed::Key ))
+		for_stmt_processed 
+			= static_cast< RtedForStmtProcessed* >(
+				for_stmt -> getAttribute( RtedForStmtProcessed::Key ));
+
+	if( !for_stmt_processed ) {
+
+		// { int RuntimeSystem_eval_once = 1; for( ... ) }
+		SgBasicBlock *new_scope = buildBasicBlock();
+		SgVariableDeclaration* eval_once_var
+			= buildVariableDeclaration(
+				"RuntimeSystem_eval_once",
+				buildIntType(),
+				buildAssignInitializer( buildIntVal( 1 )),
+				new_scope );
+		new_scope -> prepend_statement( eval_once_var );
+
+		// eval_once = 0
+		SgAssignOp* initial_expression
+			= buildBinaryExpression< SgAssignOp >(
+				buildVarRefExp( "RuntimeSystem_eval_once", new_scope ),
+				buildIntVal( 0 ));
+
+		// for( ... ; test; ... )
+		// -> for( ... ; test | (eval_once && ((eval_once = 0) | exp1 | exp2 ... )); ... )
+		for_stmt -> set_test_expr(
+			// test | ...
+			buildBinaryExpression< SgBitOrOp >(
+				for_stmt -> get_test_expr(),
+				// eval_once && ...
+				buildBinaryExpression< SgAndOp >(
+					buildVarRefExp( "RuntimeSystem_eval_once", new_scope ),
+					initial_expression )));
+
+		replaceStatement( for_stmt, new_scope );
+		new_scope -> append_statement( for_stmt );
+
+		for_stmt_processed = new RtedForStmtProcessed( initial_expression );
+		for_stmt 
+			-> addNewAttribute( RtedForStmtProcessed::Key, for_stmt_processed  );
+	}
+
+	ROSE_ASSERT( for_stmt_processed );
+
+	// old_exp -> old_exp | new_exp
+	SgBinaryOp* new_exp 
+		= buildBinaryExpression< SgBitOrOp >(
+				exp,
+				// This is just a throw-away expression to avoid NULL issues
+				buildIntVal( 0 ));
+
+	replaceExpression( for_stmt_processed -> get_exp(), new_exp, true );
+	new_exp -> set_rhs_operand( for_stmt_processed -> get_exp() );
+	for_stmt_processed -> set_exp( new_exp );
 }
 

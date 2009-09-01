@@ -63,6 +63,9 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
   ROSE_ASSERT(rtedClass);
   SgStatement* stmt;
 
+
+  bool global_stmt = false;
+
   // FIXME 2: This will cause multiple invocations to registertype
   //    e.g. int foo() { struct t { int x; } v; }
   //         int main() { foo(); foo(); }
@@ -83,8 +86,16 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
     string name = rtedClass->manglClassName;
     string typeC = rtedClass->classType;
 
+    // FIXME 2: we do this all over the place, but it may not work with
+    // namespaces
+    if( isSgGlobal( scope )) {
+        scope = mainBody;
+        global_stmt = true;
+    }
+
+
     ROSE_ASSERT(scope);
-    if (isSgBasicBlock(scope)) {
+    if ( isNormalScope( scope )) {
       // insert new stmt before first Statement in main
   
       /*
@@ -125,6 +136,25 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
 			  SgDeclarationStatement* sgElement = element->sgElement;
 			  //SgExpression* sgElementCopy = deepCopy(sgElement);
 			  SgExpression* elemName = buildString(manglElementName);
+
+      // FIXME 1: This will not work for references.  Consider:
+      //
+      //    #include <iostream>
+      //    using namespace std;
+      //
+      //    int i;
+      //    struct T {
+      //        int p;
+      //        int& r;
+      //
+      //        T() : r(i) {}
+      //    };
+      //
+      //    int main() { cout << offsetof( T, r ) << endl; }
+      //
+      // and see discussion (esp. follow ups) at:
+      //    http://gcc.gnu.org/ml/gcc/2003-11/msg00279.html
+      //
 	  // build a function call for offsetof(A,d);
 	      appendExpression(arg_list, elemName);
 
@@ -150,7 +180,6 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
 
 			  // add extra type info (e.g. array dimensions)
 			  element -> appendExtraArgs( arg_list );
-			  //}
 		  } else {
 			  cerr << " Declarationstatement not handled : " << sgElement->class_name() << endl;
 
@@ -164,7 +193,13 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
       SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
 							    arg_list);
       SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
-      insertStatementAfter( isSgStatement( stmt ), exprStmt );
+
+
+      if( global_stmt ) {
+          mainBody -> prepend_statement( exprStmt );
+      } else {
+          insertStatementAfter( isSgStatement( stmt ), exprStmt );
+      }
     }
     else {
       cerr

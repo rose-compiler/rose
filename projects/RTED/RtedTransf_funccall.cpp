@@ -342,10 +342,14 @@ RtedTransformation::insertAssertFunctionSignature( SgFunctionCallExp* fncall ) {
 	SgStatement* stmt = getSurroundingStatement( fncall );
 
 	SgFunctionRefExp* fn_ref = isSgFunctionRefExp( fncall -> get_function() );
-
-	// FIXME 2: This probably fails on function ptr invocations
-	ROSE_ASSERT( fn_ref );
-
+	if( !fn_ref ) {
+		// FIXME 3: This may be too pessimistic.  Just b/c fncall ->
+		// get_function() isn't a fn ref may not guarantee that we can't get at
+		// one.
+		// 
+		// Without a function ref we can't validate the signature
+		return;
+	}
 
     SgExprListExp* arg_list = buildExprListExp();
 

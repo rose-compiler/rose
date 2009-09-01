@@ -94,13 +94,15 @@ extern int RuntimeSystem_original_main(int argc, char**argv, char**envp);
 
 
 /***************************** VARIABLES *************************************/
-void RuntimeSystem_roseCreateVariable(const char* name,
+
+// TODO 1 djh: comment
+int RuntimeSystem_roseCreateVariable(const char* name,
 		const char* mangled_name, const char* type, const char* basetype,
 		size_t indirection_level, unsigned long int address, unsigned int size,
 		int init, const char* className, const char* filename,
 		const char* line, const char* lineTransformed);
 
-void RuntimeSystem_roseInitVariable(const char* typeOfVar2,
+int RuntimeSystem_roseInitVariable(const char* typeOfVar2,
 		const char* baseType2, size_t indirection_level,
 		const char* class_name, unsigned long long address, unsigned int size,
 		int ismalloc, int pointer_changed, const char* filename,

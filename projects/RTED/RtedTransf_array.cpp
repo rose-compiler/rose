@@ -506,14 +506,22 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
 	  break;
   } else if( isSgForStatement( parent )) {
       SgForStatement* for_stmt = isSgForStatement( parent );
-     
+    
+      // Capture for( int i = 0;
       vector< SgNode* > initialized_names 
+          = NodeQuery::querySubTree( for_stmt -> get_for_init_stmt(), V_SgInitializedName );
+
+      // Capture int i; for( i = 0;
+      vector< SgNode* > init_var_refs 
           = NodeQuery::querySubTree( for_stmt -> get_for_init_stmt(), V_SgVarRefExp );
-      for(      vector< SgNode* >::iterator i = initialized_names.begin();
-                i != initialized_names.end();
+      for(      vector< SgNode* >::iterator i = init_var_refs.begin();
+                i != init_var_refs.end();
                 ++i) {
-          // map the var refs to their initialized names
-          *i = isSgVarRefExp( *i ) -> get_symbol() -> get_declaration();
+
+          initialized_names.push_back(
+            // map the var refs to their initialized names
+            isSgVarRefExp( *i ) -> get_symbol() -> get_declaration()
+          );
       }
 
       // FIXME 1: This isn't true for pointers -- in general checks need to be

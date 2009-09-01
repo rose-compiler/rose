@@ -87,12 +87,18 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName
       stmt = mainFirst;
       scope = stmt->get_scope();
 
-      //SgExprStatement* exprStmt = buildVariableCreateCallStmt( initName, stmt);
-      // kind of hackey.  Really we should be prepending into main's body, not
-      // inserting relative its first statement.
-      //insertStatementBefore(isSgStatement(stmt), exprStmt);
     }
-    if (isSgBasicBlock(scope)) {
+    // for( int i =0;
+    // ForStmt .. ForInitStmt .. <stmt>
+    if( isSgForInitStatement( stmt -> get_parent() )) {
+        // we have to handle for statements separately, because of parsing
+        // issues introduced by variable declarations in the for loop's
+        // init statement
+        prependPseudoForInitializerExpression(
+            buildVariableCreateCallExpr( initName, stmt ),
+            isSgForStatement( stmt -> get_parent() -> get_parent() )
+        );
+    } else if ( isNormalScope( scope )) {
       // insert new stmt (exprStmt) after (old) stmt
       SgExprStatement* exprStmt = buildVariableCreateCallStmt( initName, stmt);
 #if 1
@@ -131,9 +137,10 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName
 }
 
 
-SgExprStatement*
-RtedTransformation::buildVariableCreateCallStmt( SgInitializedName* initName, SgStatement* stmt,
+SgExpression*
+RtedTransformation::buildVariableCreateCallExpr( SgInitializedName* initName, SgStatement* stmt,
 												bool forceinit) {
+
     string name = initName->get_mangled_name().str();
     SgScopeStatement* scope = stmt->get_scope();
 
@@ -204,8 +211,15 @@ RtedTransformation::buildVariableCreateCallStmt( SgInitializedName* initName, Sg
     ROSE_ASSERT(roseCreateVariable);
     string symbolName2 = roseCreateVariable->get_name().str();
     SgFunctionRefExp* memRef_r = buildFunctionRefExp(  roseCreateVariable);
-    SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
-                arg_list);
+
+    return buildFunctionCallExp(memRef_r, arg_list);
+}
+
+SgExprStatement*
+RtedTransformation::buildVariableCreateCallStmt( SgInitializedName* initName, SgStatement* stmt,
+												bool forceinit) {
+
+    SgExpression* funcCallExp = buildVariableCreateCallExpr( initName, stmt, forceinit );
     SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
     string empty_comment = "";
     attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
@@ -213,6 +227,68 @@ RtedTransformation::buildVariableCreateCallStmt( SgInitializedName* initName, Sg
     attachComment(exprStmt,comment,PreprocessingInfo::before);
 
     return exprStmt;
+}
+
+
+SgExpression*
+RtedTransformation::buildVariableInitCallExpr(
+        SgInitializedName* initName,
+        SgVarRefExp* varRefE,
+        SgStatement* stmt,
+        bool ismalloc) {
+
+  // build the function call : runtimeSystem-->createArray(params); ---------------------------
+  SgExprListExp* arg_list = buildExprListExp();
+  //SgExpression* simplename = buildString(initName->get_name().str());
+  //appendExpression(arg_list, simplename);
+  //SgExpression* callName = buildString(initName->get_mangled_name().str());
+  //appendExpression(arg_list, callName);
+
+  // with
+  //    arr[ ix ] = value;
+  // we want the type of (arr[ ix ]), not arr, as that is the type being
+  // written
+  SgExpression* exp = getExprBelowAssignment( varRefE );
+
+  appendTypeInformation(
+        NULL,
+        exp -> get_type(),
+        arg_list
+  );
+  appendClassName( arg_list, exp -> get_type() );
+  appendAddressAndSize(initName, exp, arg_list,0);
+
+
+  SgIntVal* ismallocV = buildIntVal(0);
+  if (ismalloc)
+    ismallocV = buildIntVal(1);
+  appendExpression(arg_list, ismallocV);
+
+  // with
+  //    int* p;
+  // this is a pointer change
+  //    p = (int*) malloc(sizeof(int));
+  // but this is not
+  //    *p = 10;
+  int is_pointer_change = 
+        isSgExprStatement( stmt ) 
+        && isSgPointerType( isSgExprStatement( stmt ) 
+                -> get_expression() -> get_type() );
+  appendExpression( arg_list, buildIntVal( is_pointer_change ));
+
+  SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
+  SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
+  appendExpression(arg_list, filename);
+  appendExpression(arg_list, linenr);
+  SgExpression* linenrTransformed = buildString("x%%x");
+  appendExpression(arg_list, linenrTransformed);
+
+  //appendExpression(arg_list, buildString(removeSpecialChar(stmt->unparseToString())));
+
+  ROSE_ASSERT(roseInitVariable);
+  string symbolName2 = roseInitVariable->get_name().str();
+  SgFunctionRefExp* memRef_r = buildFunctionRefExp(  roseInitVariable);
+  return buildFunctionCallExp(memRef_r, arg_list);
 }
 
 void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
@@ -255,63 +331,18 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
       stmt = mainFirst;
       scope=stmt->get_scope();
     }
-    if (isSgBasicBlock(scope) ||
-	isSgIfStmt(scope) ||
-	isSgForStatement(scope)) {
-      // build the function call : runtimeSystem-->createArray(params); ---------------------------
-      SgExprListExp* arg_list = buildExprListExp();
-      //SgExpression* simplename = buildString(initName->get_name().str());
-      //appendExpression(arg_list, simplename);
-      //SgExpression* callName = buildString(initName->get_mangled_name().str());
-      //appendExpression(arg_list, callName);
+    if( isSgForInitStatement( stmt -> get_parent() )) {
+        // we have to handle for statements separately, because of parsing
+        // issues introduced by variable declarations in the for loop's
+        // init statement
+        prependPseudoForInitializerExpression(
+            buildVariableInitCallExpr( initName, varRefE, stmt, ismalloc ),
+            isSgForStatement( stmt -> get_parent() -> get_parent() )
+        );
+    } else if ( isNormalScope( scope )) {
 
-      // with
-      //    arr[ ix ] = value;
-      // we want the type of (arr[ ix ]), not arr, as that is the type being
-      // written
-      SgExpression* exp = getExprBelowAssignment( varRefE );
-
-      appendTypeInformation(
-            NULL,
-            exp -> get_type(),
-            arg_list
-      );
-	  appendClassName( arg_list, exp -> get_type() );
-      appendAddressAndSize(initName, exp, arg_list,0);
-
-
-      SgIntVal* ismallocV = buildIntVal(0);
-      if (ismalloc)
-        ismallocV = buildIntVal(1);
-      appendExpression(arg_list, ismallocV);
-
-      // with
-      //    int* p;
-      // this is a pointer change
-      //    p = (int*) malloc(sizeof(int));
-      // but this is not
-      //    *p = 10;
-      int is_pointer_change = 
-            isSgExprStatement( stmt ) 
-            && isSgPointerType( isSgExprStatement( stmt ) 
-                    -> get_expression() -> get_type() );
-      appendExpression( arg_list, buildIntVal( is_pointer_change ));
-
-      SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
-      SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
-      appendExpression(arg_list, filename);
-      appendExpression(arg_list, linenr);
-      SgExpression* linenrTransformed = buildString("x%%x");
-      appendExpression(arg_list, linenrTransformed);
-
-      //appendExpression(arg_list, buildString(removeSpecialChar(stmt->unparseToString())));
-
-      ROSE_ASSERT(roseInitVariable);
-      string symbolName2 = roseInitVariable->get_name().str();
-      SgFunctionRefExp* memRef_r = buildFunctionRefExp(  roseInitVariable);
-      SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
-                  arg_list);
-
+      SgExpression* funcCallExp 
+          = buildVariableInitCallExpr( initName, varRefE, stmt, ismalloc );
       SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
       string empty_comment = "";
       attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
@@ -384,11 +415,7 @@ void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE,
       stmt = mainFirst;
       scope=stmt->get_scope();
     }
-    if (isSgBasicBlock(scope) ||
-	isSgIfStmt(scope) ||
-	isSgWhileStmt(scope) ||
-	isSgDoWhileStmt(scope) ||
-	isSgForStatement(scope)) {
+    if ( isNormalScope( scope )) {
       // build the function call : runtimeSystem-->createArray(params); ---------------------------
       SgExprListExp* arg_list = buildExprListExp();
       //SgExpression* simplename = buildString(initName->get_name().str());
@@ -492,15 +519,12 @@ void RtedTransformation::visit_isAssignInitializer(SgNode* n) {
 
   // dont do this if the variable is global
   if (isSgGlobal(initName->get_scope())) {
-  } else if (isSgBasicBlock(initName->get_scope())) {
+  } else {
     //insertThisStatementLater[exprStmt]=stmt;
     bool ismalloc=false;
     variableIsInitialized[varRef]=std::pair<SgInitializedName*,bool>(initName,ismalloc);
     //cerr << "Inserting new statement : " << exprStmt->unparseToString() << endl;
     //cerr << "    after old statement : " << stmt->unparseToString() << endl;
-  } else {
-    cerr << " Cant determine scope : " << initName->get_scope()->class_name() << endl;
-    ROSE_ASSERT( false );
   }
 
   // ---------------------------------------------

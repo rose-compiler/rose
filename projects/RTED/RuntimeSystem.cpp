@@ -679,7 +679,7 @@ void RuntimeSystem_roseExitScope( const char* filename, const char* line, const 
  * This function tells the runtime system that a variable is created
  * we store the type of the variable and whether it has been intialized
  ********************************************************/
-void RuntimeSystem_roseCreateVariable( const char* name,
+int RuntimeSystem_roseCreateVariable( const char* name,
                     const char* mangled_name,
                     const char* type,
                     const char* basetype,
@@ -722,6 +722,8 @@ void RuntimeSystem_roseCreateVariable( const char* name,
         else
             rs -> checkMemWrite( address, size );
     }
+
+    return -1;
 }
 
 
@@ -730,7 +732,7 @@ void RuntimeSystem_roseCreateVariable( const char* name,
  * For a given variable name, check if it is present
  * in the pool of variables created and return mangled_name
  ********************************************************/
-void
+int
 RuntimeSystem_roseInitVariable(
                     const char* type,
                     const char* base_type,
@@ -770,6 +772,8 @@ RuntimeSystem_roseInitVariable(
     addr_type heap_address = *((addr_type*) address);
     rs -> registerPointerChange( address, heap_address, rs_type, false, true );
   }
+
+  return -1;
 }
 
 // we want to catch errors like the following:
