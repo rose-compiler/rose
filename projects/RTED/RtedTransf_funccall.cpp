@@ -481,14 +481,23 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
 
   if (fcexp) {
     SgExprListExp* exprlist = isSgExprListExp(fcexp->get_args());
+
     SgFunctionRefExp* refExp = isSgFunctionRefExp(fcexp->get_function());
-    // TODO 2: This can be a DotExp (see
-    // C++/array_index_out_of_bound/C_E_1_3_a_i)
-    ROSE_ASSERT(refExp);
-    SgFunctionDeclaration* decl = isSgFunctionDeclaration(refExp->getAssociatedFunctionDeclaration ());
-    ROSE_ASSERT(decl);
-    string name = decl->get_name();
-    string mangled_name = decl->get_mangled_name().str();
+	SgFunctionType* fntype = isSgFunctionType( fcexp -> get_function() -> get_type() );
+
+	ROSE_ASSERT( fntype );
+
+	string name = "unknown function name";
+	string mangled_name = fntype -> get_mangled();
+
+    SgFunctionDeclaration* decl = NULL;
+	if( refExp ) {
+		decl = isSgFunctionDeclaration(refExp->getAssociatedFunctionDeclaration ());
+		ROSE_ASSERT(decl);
+
+		name = decl -> get_name();
+	}
+
     cerr <<"Found a function call " << name;
     cerr << "   : fcexp->get_function() : " << fcexp->get_function()->class_name() << endl;
     if (isStringModifyingFunctionCall(name) ||
@@ -515,13 +524,13 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
         SgExpression* ex = *it;
         args.push_back(ex);
       }
-      SgStatement* stmt = getSurroundingStatement(refExp);
+      SgStatement* stmt = getSurroundingStatement(fcexp);
       ROSE_ASSERT(stmt);
       RtedArguments* funcCall = new RtedArguments(name, //func_name
           mangled_name, 
           "",
           "",
-          refExp,
+          fcexp,
           stmt,
           args,
           varOnLeftStr,
