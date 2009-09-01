@@ -1,14 +1,15 @@
 #include <stdlib.h>
 
 
-int main( int argc, char* argv) {
+int main( int argc, char** argv) {
 
-  int z[2];
+  int z[ 2 ];
   int* x;
 
   int i = 1;
-  while( --i >= 0) {
-    int* y = (int*) malloc( sizeof(int));
+  while( --i >= 0 ) {
+    int* y;
+    y = (int*) malloc( sizeof( int ));
     x = y;
   }
 

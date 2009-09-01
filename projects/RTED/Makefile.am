@@ -85,7 +85,9 @@ RTED_C_TEST_DIRS = $(rted_path)/C/array_index_out_of_bound \
 		 $(rted_path)/C/C99_specific_errors \
 		 $(rted_path)/C/floating_point_errors \
 		 $(rted_path)/C/pointer_errors \
-		 $(srcdir)/tests/C/panasTests
+		 $(srcdir)/tests/C/panasTests \
+		 $(srcdir)/tests/C/memoryleaks \
+		 $(srcdir)/tests/C/memoverlap
 RTED_CPP_TEST_DIRS = $(rted_path)/C++/array_index_out_of_bound \
 		 $(rted_path)/C++/string_errors \
 		 $(rted_path)/C++/allocation_deallocation_errors \
@@ -93,7 +95,10 @@ RTED_CPP_TEST_DIRS = $(rted_path)/C++/array_index_out_of_bound \
 		 $(rted_path)/C++/memory_leaks \
 		 $(rted_path)/C++/uninitialized_variables \
 		 $(rted_path)/C++/floating_point_errors \
-		 $(rted_path)/C++/pointer_errors
+		 $(rted_path)/C++/pointer_errors \
+		 $(srcdir)/tests/C++/simple \
+		 $(srcdir)/tests/C++/pointer
+
 RTED_TEST_DIRS=$(RTED_C_TEST_DIRS) $(RTED_CPP_TEST_DIRS)
 
 GENERATE_RTED_ORIGSOURCES = ${foreach RTED_TEST_DIR, $(RTED_TEST_DIRS), ${wildcard $(RTED_TEST_DIR)/*[!_s]${strip $(1)}} }
@@ -166,6 +171,19 @@ rted_source/tests/%.c: rted_source $(top_srcdir)/projects/RTED/tests/%.c
 	@echo -e Checking $(patsubst $(top_srcdir)/projects/RTED/tests/%.c, %, $(filter $(top_srcdir)/%, $^)) ...
 	@echo -n "    copying input file ... "
 	@cp $(filter $(top_srcdir)/%.c, $^) $(dir $@)
+	@echo " done."
+	@echo -n "    inserting #include \"RuntimeSystem.h\" ... "
+	@sed -i '1i\#include \"RuntimeSystem.h\"' $@
+	@echo " done."
+	@echo -n "    inserting #define EXITCODE_OK 0 ... "
+	@sed -i '1i\#define EXITCODE_OK 0' $@
+	@echo " done."
+
+#testcases in $(top_srcdir)/projects/RTED/tests
+rted_source/tests/%.cpp: rted_source $(top_srcdir)/projects/RTED/tests/%.cpp
+	@echo -e Checking $(patsubst $(top_srcdir)/projects/RTED/tests/%.cpp, %, $(filter $(top_srcdir)/%, $^)) ...
+	@echo -n "    copying input file ... "
+	@cp $(filter $(top_srcdir)/%.cpp, $^) $(dir $@)
 	@echo " done."
 	@echo -n "    inserting #include \"RuntimeSystem.h\" ... "
 	@sed -i '1i\#include \"RuntimeSystem.h\"' $@
@@ -309,23 +327,24 @@ rted_source/%.bin: rted_source/%_rose.cpp $(srcdir)/$(RTS) $(srcdir)/RuntimeSyst
 
 # parameters:
 #  1: file extension (.c, .cpp, .f, ... )
-GENERATE_EXPECTED_OUTPUT = @OUTPUT_SRC='$(strip $(patsubst rted_source/%.expected-output, $(rted_path)/%.ok_msg, $@))';\
-			   TEST_FILE='$(strip $(patsubst rted_source/%.expected-output, $(rted_path)/%$(strip $(1)), $@))';\
+#  2: location to search ( $(srcdir), $(rted_path), ... )
+GENERATE_EXPECTED_OUTPUT = @OUTPUT_SRC='$(strip $(patsubst rted_source/%.expected-output, $(strip $(2))/%.ok_msg, $@))';\
+			   TEST_FILE='$(strip $(patsubst rted_source/%.expected-output, $(strip $(2))/%$(strip $(1)), $@))';\
 			   if [ -f "$$OUTPUT_SRC" ]; then \
 				echo ===`wc -l $$TEST_FILE`=== | $(EXTRACT_EXPECTED_ERROR) - $$OUTPUT_SRC > $@;\
 			   fi
 
 rted_source/C/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SCRIPT)
-	$(call GENERATE_EXPECTED_OUTPUT, .c )
+	$(call GENERATE_EXPECTED_OUTPUT, .c, $(rted_path))
 
 rted_source/tests/C/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SCRIPT)
-	$(call GENERATE_EXPECTED_OUTPUT, .c )
+	$(call GENERATE_EXPECTED_OUTPUT, .c, $(srcdir) )
 
 rted_source/C++/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SCRIPT)
-	$(call GENERATE_EXPECTED_OUTPUT, .cpp )
+	$(call GENERATE_EXPECTED_OUTPUT, .cpp, $(rted_path))
 
 rted_source/tests/C++/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SCRIPT)
-	$(call GENERATE_EXPECTED_OUTPUT, .cpp )
+	$(call GENERATE_EXPECTED_OUTPUT, .cpp, $(srcdir))
 
 #@OUTPUT_SRC='$(strip $(patsubst rted_source/%.expected-output, $(rted_path)/%.ok_msg, $@))';\
 #TEST_FILE='$(strip $(patsubst rted_source/%.expected-output, $(rted_path)/%, $@))';\
@@ -355,7 +374,12 @@ run/%: rted_source/%.bin rted_source/%.expected-output
 				echo ' (the error may be in the extraction scripts -- see the actual files that were diff-d';\
 				echo "  $(filter %.expected-output, $?) $$ACTUAL_OUTPUT)";\
 				echo -e '\n========== Expected Error ==========';\
-				cat $(patsubst rted_source/%.expected-output, $(rted_path)/%.ok_msg, $(filter %.expected-output, $?));\
+				echo "(remember to subtract 2 from actual line numbers (for non-instrumented source) to compensate for added lines)";\
+				RTED_OKMSG="$(strip $(patsubst rted_source/%.expected-output, $(rted_path)/%.ok_msg, $(filter %.expected-output, $?)))";\
+				LOCAL_OKMSG="$(strip $(patsubst rted_source/%.expected-output, $(srcdir)/%.ok_msg, $(filter %.expected-output, $?)))";\
+				if [ -f "$$RTED_OKMSG" ]; then cat $$RTED_OKMSG;\
+				elif [ -f "$$LOCAL_OKMSG" ]; then cat $$LOCAL_OKMSG;\
+				fi;\
 				echo -e '\n========== Actual   Error ==========';\
 				cat $$RESULT;\
 				exit 1;\
@@ -417,7 +441,7 @@ test:
 #------------------------------------------------------------------------------
 
 define RUN_TARGET_C
-$(1): $(filter $(1)%, $(RUN_TARGETS_GLOBAL_C))
+$(1): $(filter $(1)%, $(RUN_TARGETS_GLOBAL_C)) $(filter $(1)%, $(RUN_TARGETS_LOCAL_C))
 	@echo $(1) complete
 endef
 
@@ -427,7 +451,7 @@ $(1): $(filter $(1)%, $(RUN_LOG_TARGETS_GLOBAL_C))
 endef
 
 define RUN_TARGET_CPP
-$(1): $(filter $(1)%, $(RUN_TARGETS_GLOBAL_CPP))
+$(1): $(filter $(1)%, $(RUN_TARGETS_GLOBAL_CPP))$(filter $(1)%, $(RUN_TARGETS_LOCAL_CPP))
 	@echo $(1) complete
 endef
 
@@ -437,8 +461,11 @@ $(1): $(filter $(1)%, $(RUN_LOG_TARGETS_GLOBAL_CPP))
 endef
 
 ${foreach rted_dir, ${filter $(rted_path)%, $(RTED_C_TEST_DIRS)}, ${eval ${call RUN_TARGET_C, ${patsubst $(rted_path)%, run%, $(rted_dir)}}}}
-${foreach rted_dir, ${filter $(rted_path)%, $(RTED_C_TEST_DIRS)}, ${eval ${call RUN_LOG_TARGET_C, ${patsubst $(rted_path)%, run_log%, $(rted_dir)}}}}
+${foreach rted_dir, ${filter $(srcdir)%, $(RTED_C_TEST_DIRS)}, ${eval ${call RUN_TARGET_C, ${patsubst $(srcdir)%, run%, $(rted_dir)}}}}
 ${foreach rted_dir, ${filter $(rted_path)%, $(RTED_CPP_TEST_DIRS)}, ${eval ${call RUN_TARGET_CPP, ${patsubst $(rted_path)%, run%, $(rted_dir)}}}}
+${foreach rted_dir, ${filter $(srcdir)%, $(RTED_CPP_TEST_DIRS)}, ${eval ${call RUN_TARGET_CPP, ${patsubst $(srcdir)%, run%, $(rted_dir)}}}}
+
+${foreach rted_dir, ${filter $(rted_path)%, $(RTED_C_TEST_DIRS)}, ${eval ${call RUN_LOG_TARGET_C, ${patsubst $(rted_path)%, run_log%, $(rted_dir)}}}}
 ${foreach rted_dir, ${filter $(rted_path)%, $(RTED_CPP_TEST_DIRS)}, ${eval ${call RUN_LOG_TARGET_CPP, ${patsubst $(rted_path)%, run_log%, $(rted_dir)}}}}
 #${foreach rted_dir, ${filter $(srcdir)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(srcdir)%, %, $(rted_dir)}}}}
 
@@ -448,12 +475,18 @@ ${foreach rted_dir, ${filter $(rted_path)%, $(RTED_CPP_TEST_DIRS)}, ${eval ${cal
 
 
 #------------------------------------------------------------------------------
-# Intentionally ignored tests
+# Tests that are known to fail
 #------------------------------------------------------------------------------
 
-# TODO 2: Handle this test
-run/C/subprogram_call_errors/c_C_1_3_f:
-	@echo Not running this test $@
+# TODO 2: Handle these tests
+TESTS_KNOWN_TO_FAIL = run/C/subprogram_call_errors/c_C_1_3_f \
+					  run/tests/C/memoryleaks/assignment_scope_switch \
+					  run/tests/C/memoryleaks/assignment_to_locals_then_globals_then_locals \
+					  run/tests/C/memoryleaks/assignment_to_multi_fncall
+
+$(TESTS_KNOWN_TO_FAIL):
+	@echo This test is known to fail, not running it now: $@
+
 
 #------------------------------------------------------------------------------
 
@@ -469,7 +502,9 @@ check-local: runtimeCheck $(TESTCODES) c-compile-runtimesystem \
 				run/C/subprogram_call_errors \
 				run/C/allocation_deallocation_errors run/C/input_output_errors \
 				run/C/memory_leaks run/C/uninitialized_variables \
-				run/C/C99_specific_errors run/C/pointer_errors
+				run/C/C99_specific_errors run/C/pointer_errors \
+				run/tests/C/memoryleaks run/tests/C/memoverlap \
+				run/tests/C++/simple run/tests/C++/pointer
 	@echo "***************************************************************************************"
 	@echo "*** ROSE/projects/runtimeErrorCheck: make check rule complete (terminated normally) ***"
 	@echo "***************************************************************************************"

@@ -61,7 +61,7 @@ RuntimeSystem_roseRtedClose(
 
   // The runtime system would have exited if it had found an error
   rs->log( "Failed to discover error in RTED test\n" );
-  exit( 1);
+  exit( 1 );
 }
 
 

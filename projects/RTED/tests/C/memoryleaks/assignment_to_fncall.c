@@ -2,12 +2,13 @@
 
 
 int* foo() {
-	int* y = (int*)malloc(sizeof(int));
+	int* y;
+  y = (int*) malloc( sizeof( int ));
 	return y;
 }
 
-int main( int argc, char* argv) {
-	int x[2];
+int main( int argc, char** argv ) {
+	int x[ 2 ];
 	int* a;
 
 	a = foo();

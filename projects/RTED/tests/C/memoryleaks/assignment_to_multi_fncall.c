@@ -2,7 +2,8 @@
 
 
 int* baz() {
-	int* y = (int*) malloc(sizeof(int));
+	int* y;
+  y = (int*) malloc( sizeof( int ));
 	return y;
 }
 
@@ -14,8 +15,8 @@ int* foo() {
 	return bar();
 }
 
-int main( int argc, char* argv) {
-	int x[2];
+int main( int argc, char** argv ) {
+	int x[ 2 ];
 	int* a = foo();
 
 	// error, did not free memory malloc-d by foo (via bar, baz)

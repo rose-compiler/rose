@@ -1,13 +1,14 @@
 #include <stdlib.h>
 
 
-int main( int argc, char* argv) {
+int main( int argc, char** argv ) {
 
-  int z[2];
+  int z[ 2 ];
   int* x;
 
-  if( true) {
-    int* y = (int*) malloc( sizeof(int));
+  if( 1 ) {
+    int* y;
+    y = (int*) malloc( sizeof( int ));
     x = y;
   }
 
