@@ -314,10 +314,7 @@ void RtedTransformation::visit(SgNode* n) {
 
   // *********************** DETECT variable creations ***************
   if (isSgVariableDeclaration(n)) {
-
-    // don't track members of user types (structs, classes)
-    if( !isSgClassDefinition( n->get_parent()))
-      visit_isSgVariableDeclaration(n);
+    visit_isSgVariableDeclaration(n);
   }
 
   // *********************** DETECT variable creations ***************

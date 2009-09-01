@@ -35,12 +35,23 @@ bool RtedTransformation::isVarInCreatedVariables(SgInitializedName* n) {
 
 void RtedTransformation::visit_isSgVariableDeclaration(SgNode* n) {
   SgVariableDeclaration* varDecl = isSgVariableDeclaration(n);
+
+  // FIXME 2 djh: perhaps n->get_parent should be n->get_scope ?
+  // don't track members of user types (structs, classes)
+  if(   isSgClassDefinition( varDecl -> get_parent() ))
+      return;
+
   Rose_STL_Container<SgInitializedName*> vars = varDecl->get_variables();
   Rose_STL_Container<SgInitializedName*>::const_iterator it = vars.begin();
   cerr << " ...... CHECKING Variable Declaration " << endl;
   for (;it!=vars.end();++it) {
     SgInitializedName* initName = *it;
     ROSE_ASSERT(initName);
+
+    // reference types don't create more memory as far as the RTS is
+    // concerned (in that &foo == &bar for bar a ref. of foo)
+    if( isSgReferenceType( initName -> get_type() ))
+        continue;
 
     // need to get the type and the possible value that it is initialized with
     cerr << "      Detected initName : " << initName->unparseToString() ;
