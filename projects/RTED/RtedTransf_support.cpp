@@ -326,13 +326,16 @@ RtedTransformation::resolveToVarRefRight(SgExpression* expr) {
 
     newexpr= isSgBinaryOp(expr)->get_rhs_operand();
     result = isSgVarRefExp(newexpr);
-    if (!result) {
-      cerr <<"  >> resolveToVarRefRight : right : " << newexpr->class_name() << endl;
-      ROSE_ASSERT( false );
-    }
+  } else if( isSgPointerDerefExp( expr )) {
+	  newexpr = isSgUnaryOp( expr ) -> get_operand();
+	  result = isSgVarRefExp( newexpr );
   } else {
     cerr <<" >> resolveToVarRefRight : unknown expression " << expr->class_name() <<endl;
     ROSE_ASSERT( false );
+  }
+  if (!result) {
+      cerr <<"  >> resolveToVarRefRight : right : " << newexpr->class_name() << endl;
+      ROSE_ASSERT( false );
   }
 
   return result;

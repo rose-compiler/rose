@@ -566,6 +566,8 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
 
   cerr <<"   ::: Checking assignment : " << n->unparseToString()<<endl;
 
+  // FIXME 2: This probably does not handle n-dimensional arrays
+  //
   // left side contains SgInitializedName somewhere ... search
   SgVarRefExp* varRef = isSgVarRefExp(expr_l);
   SgPntrArrRefExp* pntrArr = isSgPntrArrRefExp(expr_l);
@@ -611,6 +613,10 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
 	varRef = mypair.second;
 	if (initName)
 	  ROSE_ASSERT(varRef);
+      } else if( isSgPointerDerefExp( expr_lll )) {
+        varRef = isSgVarRefExp( isSgPointerDerefExp( expr_lll ) -> get_operand() );
+        ROSE_ASSERT( varRef );
+        initName = varRef -> get_symbol() -> get_declaration();
       } else {
 	cerr
 	  << "RtedTransformation : Left of pntrArr2 - Unknown : "
@@ -708,7 +714,15 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
       initName = mypair.first;
       varRef = mypair.second;
       if (initName)
-	ROSE_ASSERT(varRef);
+        ROSE_ASSERT(varRef);
+    }// ------------------------------------------------------------
+    else if( isSgArrowExp( exp )) {
+      std::pair<SgInitializedName*,SgVarRefExp*> mypair = getRightOfArrow(isSgArrowExp(exp),
+										 "Right of PointerDeref  - line: " + exp->unparseToString() + " ", varRef);
+      initName = mypair.first;
+      varRef = mypair.second;
+      if (initName)
+        ROSE_ASSERT(varRef);
     }// ------------------------------------------------------------
     else {
       cerr << "RtedTransformation : PointerDerefExp - Unknown : "
