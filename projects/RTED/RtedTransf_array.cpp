@@ -550,6 +550,9 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
 
 
 
+// TODO 2 djh:  rewrite this function to be more robust
+//  i.e. handle general cases
+//  consider whether getting the initname is important
 void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
   SgAssignOp* assign = isSgAssignOp(n);
   
@@ -722,6 +725,16 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
       initName = mypair.first;
       varRef = mypair.second;
       if (initName)
+        ROSE_ASSERT(varRef);
+    }// ------------------------------------------------------------
+    else if( isSgCastExp( exp )) {
+        std::vector< SgNode* > vars = NodeQuery::querySubTree( exp, V_SgVarRefExp );
+        ROSE_ASSERT( vars.size() > 0 );
+
+        varRef = isSgVarRefExp( vars[ 0 ]);
+        ROSE_ASSERT( varRef );
+
+        initName = varRef -> get_symbol() -> get_declaration();
         ROSE_ASSERT(varRef);
     }// ------------------------------------------------------------
     else {

@@ -268,24 +268,19 @@ RtedTransformation::getSurroundingStatement(SgNode* n) {
 SgExpression* RtedTransformation::getUppermostLvalue( SgExpression* exp ) {
     SgExpression* parent = isSgExpression( exp->get_parent() );
     
-    while( parent
-            && (isSgDotExp( parent )
-                || isSgArrowExp( parent )
-                || isSgPointerDerefExp( parent )
-                || isSgPntrArrRefExp( parent ))) {
+    while(  parent
+            && (isSgDotExp( parent ))) {
 
         // in c++, the rhs of the dot may be a member function, which we'd want
         // to ignore
-        if( isSgDotExp( parent )) {
-            SgExpression* rhs = isSgDotExp( parent ) -> get_rhs_operand();
-            if( isSgMemberFunctionRefExp( rhs ))
-                // in, e.g.
-                //  foo.bar = 9001
-                //  foo.bar.=( 9001 )
-                // we want to stop at the dot exp
-                //  foo.bar
-                break;
-        }
+        SgExpression* rhs = isSgDotExp( parent ) -> get_rhs_operand();
+        if( isSgMemberFunctionRefExp( rhs ))
+            // in, e.g.
+            //  foo.bar = 9001
+            //  foo.bar.=( 9001 )
+            // we want to stop at the dot exp
+            //  foo.bar
+            break;
 
         exp = parent;
         parent = isSgExpression( parent->get_parent() );
@@ -626,10 +621,52 @@ void RtedTransformation::appendAddress(SgExprListExp* arg_list, SgExpression* ex
         exp = isSgBinaryOp( exp ) -> get_lhs_operand();
     }
 
+
+    // we have to make exp a valid lvalue
+    class anon : public AstSimpleProcessing {
+        public:
+            SgExpression* rv;
+            bool first_node;
+
+            SgExpression* visit_subtree( SgNode* n ) {
+                first_node = true;
+                rv = NULL;
+
+                traverse( n, preorder );
+
+                // if the first node we visit is an SgCastExp, we want to
+                // return something else.  Otherwise, if we've only modified
+                // proper subtrees of n, n will have been appropriately modified
+                // and we can simply return it.
+                return rv
+                        ? rv
+                        : isSgExpression( n );
+            }
+
+            /// strip out cast expressions from the subtree
+            void visit( SgNode* _n ) {
+                SgCastExp* n = isSgCastExp( _n );
+                if( !n )
+                    return;
+
+                if( first_node ) {
+                    first_node = false;
+
+                    rv = n -> get_operand();
+                } else {
+                    replaceExpression( n, n -> get_operand() );
+                }
+            }
+    } make_lvalue_visitor;
+
+    SgExpression* copy_exp 
+        = make_lvalue_visitor.visit_subtree(  exp -> copy( copy ));
+
+
     SgExpression *arg;
     SgCastExp *cast_op = 
         buildCastExp(
-            buildAddressOfOp( isSgExpression( exp -> copy( copy ))),
+            buildAddressOfOp( copy_exp ),
             buildUnsignedLongLongType()
         );
 
