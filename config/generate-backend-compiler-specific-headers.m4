@@ -18,6 +18,9 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
    absolutePath_srcdir="`pwd`"
    cd "$saveCurrentDirectory"
 
+ # DQ (9/1/2009): Output the absolute path
+   echo "absolutePath_srcdir = ${absolutePath_srcdir}"
+
  # Use the full path name to generate the header from the correctly specified version of the backend compiler
    mkdir -p "./include-staging/${BACKEND_CXX_COMPILER}_HEADERS"
    "${srcdir}/config/create_system_headers" "${BACKEND_CXX_COMPILER}" "./include-staging/${BACKEND_CXX_COMPILER}_HEADERS" "${absolutePath_srcdir}"
@@ -68,6 +71,9 @@ AC_DEFUN([GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS],
    cd "$srcdir"
    absolutePath_srcdir="`pwd`"
    cd "$saveCurrentDirectory"
+
+ # DQ (9/1/2009): Output the absolute path
+   echo "absolutePath_srcdir = ${absolutePath_srcdir}"
 
  # Use the full path name to generate the header from the correctly specified version of the backend compiler
    mkdir -p "./include-staging/${BACKEND_C_COMPILER}_HEADERS"

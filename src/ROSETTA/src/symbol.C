@@ -195,13 +195,19 @@ Grammar::setUpSymbols ()
      DefaultSymbol.setDataPrototype       ( "SgType*", "type", "= NULL",
 					    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF2TYPE_TRAVERSAL, NO_DELETE);
 
+  // DQ (8/30/2009): Added support for namespace alias to the NamespaceSymbol.
   // DQ (12/23/2005): This has been here for a long time, but in trying to remove unused SgName 
   // objects I have realized that we need the SgName here to support symbols for namespace 
   // aliases (SgNamespaceAliasDeclaration).
+     NamespaceSymbol.setFunctionPrototype  ( "HEADER_NAMESPACE_SYMBOL", "../Grammar/Symbol.code" );
      NamespaceSymbol.setDataPrototype   ( "SgName" , "name", "= \"\"",
                    CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      NamespaceSymbol.setDataPrototype     ( "SgNamespaceDeclarationStatement*", "declaration", "= NULL",
 				       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     NamespaceSymbol.setDataPrototype     ( "SgNamespaceAliasDeclarationStatement*", "aliasDeclaration", "= NULL",
+				       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     NamespaceSymbol.setDataPrototype     ( "bool", "isAlias", "= false",
+				       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 #if USE_FORTRAN_IR_NODES
   // DQ (3/19/2007): Support for Fortran IR nodes (contributed by Rice)
@@ -305,8 +311,10 @@ Grammar::setUpSymbols ()
   // TemplateInstantiationSymbol.setFunctionSource( "SOURCE_TEMPLATE_INSTANTIATION_DECLARATION", "../Grammar/Symbol.code" );
 
   // DQ (5/3/2004): Added support for namespaces
+     NamespaceSymbol.setFunctionSource      ( "SOURCE_NAMESPACE_SYMBOL", "../Grammar/Symbol.code" );
      NamespaceSymbol.setFunctionSource      ( "SOURCE_EMPTY_GET_TYPE", "../Grammar/Symbol.code" );
-     NamespaceSymbol.setFunctionSource      ( "SOURCE_SHORT_GET_NAME", "../Grammar/Symbol.code" );
+  // We need a special version of the get_symbol_basis() function
+  // NamespaceSymbol.setFunctionSource      ( "SOURCE_SHORT_GET_NAME", "../Grammar/Symbol.code" );
 
   // DQ (12/23/2005): Removed SgName object and so we now need to build the get_name() member function
      DefaultSymbol.setFunctionSource        ( "SOURCE_SHORT_DEFAULT_GET_NAME", "../Grammar/Symbol.code" );

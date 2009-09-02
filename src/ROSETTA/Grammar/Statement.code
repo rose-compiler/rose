@@ -2132,6 +2132,9 @@ HEADER_NAMESPACE_ALIAS_DECLARATION_STATEMENT_START
        // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
           virtual SgName get_mangled_name(void) const;
 
+       // DQ (8/30/2009): Added namespace alias support.
+          virtual SgSymbol* get_symbol_from_symbol_table() const;
+
 HEADER_NAMESPACE_ALIAS_DECLARATION_STATEMENT_END
 
 HEADER_USING_DIRECTIVE_STATEMENT_START
@@ -5406,6 +5409,8 @@ SgDeclarationStatement::testForBadGenerateTemplateName( const std::string & name
      if ( name.find("____") != string::npos )
         {
           printf ("Error: \"____\" found in ROSE generated type name = %s (likely and unconverted EDG name) \n",name.c_str());
+          printf ("Error: SgDeclarationStatement (this) = %p = %s = %s \n",this,this->class_name().c_str(),SageInterface::get_name(this).c_str());
+          get_file_info()->display("Error: likely and unconverted EDG name");
           ROSE_ASSERT (false);
         }
    }
@@ -5956,6 +5961,10 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                                                 }
                                              break;
                                            }
+
+                                     // DQ (8/29/2009): Added SgArrayType to eliminate error message about 
+                                     // default being reached (missed including this type previously).
+                                        case V_SgArrayType:
 
                                      // DQ (2/28/2005): List of types used in compiling Kull
                                         case V_SgTypeChar:
@@ -12092,6 +12101,14 @@ SgNamespaceAliasDeclarationStatement::get_mangled_name(void) const
      return returnName;
    }
 
+SgSymbol*
+SgNamespaceAliasDeclarationStatement::get_symbol_from_symbol_table() const
+   {
+     ROSE_ASSERT(get_scope() != NULL);
+     ROSE_ASSERT(get_scope()->get_symbol_table() != NULL);
+     return get_scope()->get_symbol_table()->find(this);
+   }
+
 SOURCE_NAMESPACE_ALIAS_DECLARATION_STATEMENT_END
 
 SOURCE_NAMESPACE_DEFINITION_STATEMENT_START
@@ -12761,8 +12778,9 @@ $CLASSNAME::get_qualified_name() const
 
 SOURCE_NAMESPACE_DECLARATION_STATEMENT_END
 
-SOURCE_NAMESPACE_ALIAS_DECLARATION_STATEMENT_START
-SOURCE_NAMESPACE_ALIAS_DECLARATION_STATEMENT_END
+// DQ (8/30/2009): These are redundant, it seems.
+// SOURCE_  NAMESPACE_ALIAS_DECLARATION_STATEMENT_START
+// SOURCE_  NAMESPACE_ALIAS_DECLARATION_STATEMENT_END
 
 SOURCE_NAMESPACE_DEFINITION_STATEMENT_START
 

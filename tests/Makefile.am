@@ -27,8 +27,14 @@ SUBDIRS = CompileTests roseTests RunTests PerformanceTests CompilerOptionsTests 
 # libraries that had not yet been built.  There was no order in which the
 # parent directories could be visited to build all the libraries require before 
 # the ROSE/src directory was processed.
-bin_PROGRAMS = testTranslator
+bin_PROGRAMS = testTranslator testAnalysis
+
+# This tests the ability to read and regnerate the input application and compile it using the backend compiler.
 testTranslator_SOURCES = testTranslator.C
+
+# This tests only the ability to read application, not regenerate the source code and compile it using the backend compiler.
+# This test code is used for the testing of ROSE compiling ROSE to support analysis using Compass.
+testAnalysis_SOURCES = testAnalysis.C
 
 # Use the names of the libraries as the list of dependences
 #testTranslator_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
@@ -38,6 +44,19 @@ INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST = tests.tex
+
+testObjectFile: testAnalysis
+	./testAnalysis $(INCLUDES) -c $(srcdir)/inputFile.C -o alt_inputFile.o
+
+testLinkFile: testObjectFile
+#	./testAnalysis $(INCLUDES) alt_inputFile.o -o alt_inputFile
+	./testAnalysis $(INCLUDES) alt_inputFile.o
+
+testCppFile: testAnalysis
+	./testAnalysis -E $(INCLUDES) $(srcdir)/inputFile.C
+
+testExecutableFile: testAnalysis
+	./testAnalysis $(INCLUDES) $(srcdir)/inputFile.C
 
 check-local:
 	@echo "************************************************************************"

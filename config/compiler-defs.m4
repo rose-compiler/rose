@@ -68,18 +68,36 @@ dnl predefined by a specific compiler
              ;;
 
   # Support for ROSE "roseTranslator" as a backend for compiling ROSE generated code
-    roseTranslator)
+  # Or support "roseAnalysis" as a backend which generates object files from the original source code.
+    roseTranslator|roseAnalysis)
            # macroString=" -D__GNUG__=$BACKEND_GCC_MAJOR -D__GNUC__=$BACKEND_GCC_MAJOR -D__GNUC_MINOR__=$BACKEND_GCC_MINOR -D__GNUC_PATCHLEVEL__=$BACKEND_GCC_PATCHLEVEL -D_GNU_SOURCE --preinclude rose_edg_macros_and_functions_required_for_gnu.h "
-             macroString="{\"-D__GNUG__=$BACKEND_GCC_MAJOR\", \"-D__GNUC__=$BACKEND_GCC_MAJOR\", \"-D__GNUC_MINOR__=$BACKEND_GCC_MINOR\", \"-D__GNUC_PATCHLEVEL__=$BACKEND_GCC_PATCHLEVEL\", \"-D_GNU_SOURCE\""
+           # macroString="{\"-D__GNUG__=$BACKEND_GCC_MAJOR\", \"-D__GNUC__=$BACKEND_GCC_MAJOR\", \"-D__GNUC_MINOR__=$BACKEND_GCC_MINOR\", \"-D__GNUC_PATCHLEVEL__=$BACKEND_GCC_PATCHLEVEL\", \"-D_GNU_SOURCE\""
+           # if test x$enable_new_edg_interface = xyes; then
+           #   :
+           # else
+           #   macroString="${macroString}, \"--preinclude\", \"rose_edg_required_macros_and_functions.h\""
+           # fi
+           # macroString="${macroString}}"
+           # BACKEND_GCC_MAJOR=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
+           # BACKEND_GCC_MINOR=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
+           # BACKEND_GCC_PATCHLEVEL=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f3`
+           #
+           # echo "This is the case of using roseTranslator to compile ROSE.";
+           # exit 1;
+           # ;;
+           #
+           # DQ (8/22/2009): This is the same as the g++ case above (we can us that because rose acts like g++ by default).
+             BACKEND_GCC_MAJOR=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
+             BACKEND_GCC_MINOR=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
+             BACKEND_GCC_PATCHLEVEL=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f3`
+             macroString="{\"-D__GNUG__=$BACKEND_GCC_MAJOR\", \"-D__GNUC__=$BACKEND_GCC_MAJOR\", \"-D__GNUC_MINOR__=$BACKEND_GCC_MINOR\", \"-D__GNUC_PATCHLEVEL__=$BACKEND_GCC_PATCHLEVEL\""
              if test x$enable_new_edg_interface = xyes; then
                :
              else
                macroString="${macroString}, \"--preinclude\", \"rose_edg_required_macros_and_functions.h\""
              fi
              macroString="${macroString}}"
-             BACKEND_GCC_MAJOR=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
-             BACKEND_GCC_MINOR=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
-             BACKEND_GCC_PATCHLEVEL=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f3` ;;
+             ;;
 
     *)
              echo "we reached here for some reason (cannot identify back-end C++ compiler \"$BACKEND_CXX_COMPILER\")";

@@ -251,6 +251,12 @@ fi
 # echo "Exiting in configure.in ...(after calling: generate backend C compiler specific headers)"
 # exit 1
 
+# AC_REQUIRE([AC_PROG_CXX])
+AC_PROG_CXX
+
+echo "In configure.in ... CXX = $CXX"
+# exit 1
+
 # DQ (9/17/2006): These should be the same for both C and C++ (else we will need separate macros)
 # Setup the -D<xxx> defines required to allow EDG to take the same path through the compiler 
 # specific and system specific header files as for the backend compiler.  These depend

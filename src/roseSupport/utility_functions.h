@@ -24,6 +24,11 @@ SgProject* frontendShell ( const std::vector<std::string>& argv);
 // int backend ( SgProject* project );
 int backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp = NULL, UnparseDelegate* unparseDelagate = NULL );
 
+// DQ (8/24/2009): This backend calls the backend compiler using the original input source file list.
+// This is useful as a test code for testing ROSE for use on projects that target Compass or any
+// other analysis only tool using ROSE. Called in tests/testAnalysis.C for example.
+int backendUsingOriginalInputFile ( SgProject* project );
+
 //QY: new back end that performs only source-to-source translations 
 // of the original file. Furthermore, statements are copied from 
 // the original file if they are not changed

@@ -732,10 +732,9 @@ SgProject::processCommandLine(const vector<string>& input_argv)
        // printf ("get_binary_only() = %s \n",get_binary_only() ? "true" : "false");
           if ( (get_binary_only() == false) && (CommandlineProcessing::isObjectFilename(argv[i]) == true) )
              {
-               printf ("Adding argv[%u] = %s to p_objectFileNameList \n",i,argv[i].c_str());
+            // printf ("Adding argv[%u] = %s to p_objectFileNameList \n",i,argv[i].c_str());
                p_objectFileNameList.push_back(argv[i]);
              }
-          
 
        // look only for .a files (library files)
           if ( (length > 2) &&
@@ -1771,7 +1770,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
      if ( CommandlineProcessing::isOption(argv,"-rose:","(skipfinalCompileStep)",true) == true )
         {
           if (get_verbose()>0) // Liao, 8/29/2008, Only show it in verbose mode.
-            printf ("option -rose:skipfinalCompileStep found \n");
+               printf ("option -rose:skipfinalCompileStep found \n");
           set_skipfinalCompileStep(true);
         }
 
@@ -1787,6 +1786,11 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           p_skip_transformation  = true;
           p_skip_unparse         = true;
           p_skipfinalCompileStep = false;
+
+       // DQ (8/22/2009): Verify that this was set when the command line was processed at the SgProject level.
+          SgProject* project = this->get_project();
+          ROSE_ASSERT(project != NULL);
+          ROSE_ASSERT(project->get_C_PreprocessorOnly() == true);
         }
 
   //
@@ -3569,6 +3573,26 @@ SgProject::parse(const vector<string>& argv)
              }
         }
 
+#if 1
+  // DQ (8/22/2009): We test the parent of SgFunctionTypeTable in the AST post processing,
+  // so we need to make sure that it is set.
+     SgFunctionTypeTable* functionTypeTable = SgNode::get_globalFunctionTypeTable();
+     ROSE_ASSERT(functionTypeTable != NULL);
+     if (functionTypeTable->get_parent() == NULL)
+        {
+       // ROSE_ASSERT(numberOfFiles() > 0);
+       // printf ("Inside of SgProject::parse(const vector<string>& argv): set the parent of SgFunctionTypeTable \n");
+          if (numberOfFiles() > 0)
+               functionTypeTable->set_parent(&(get_file(0)));
+            else
+               functionTypeTable->set_parent(this);
+        }
+     ROSE_ASSERT(functionTypeTable->get_parent() != NULL);
+
+     ROSE_ASSERT(SgNode::get_globalFunctionTypeTable() != NULL);
+     ROSE_ASSERT(SgNode::get_globalFunctionTypeTable()->get_parent() != NULL);
+#endif
+
      return errorCode;
    }
 
@@ -3736,19 +3760,6 @@ SgProject::parse()
 
           nameIterator++;
           i++;
-        }
-
-  // GB (8/19/2009): Moved the AstPostProcessing call from
-  // SgFile::callFrontEnd to this point. Thus, it is only called once for
-  // the whole project rather than once per file. Repeated calls to
-  // AstPostProcessing are slow due to repeated memory pool traversals. The
-  // AstPostProcessing is only to be called if there are input files to run
-  // it on, and they are meant to be used in some way other than just
-  // calling the backend on them. (If only the backend is used, this was
-  // never called by SgFile::callFrontEnd either.)
-     if ( !get_fileList().empty() && !get_useBackendOnly() )
-        {
-          AstPostProcessing(this);
         }
 
      if ( get_verbose() > 0 )
@@ -4575,15 +4586,7 @@ SgFile::callFrontEnd()
      printf("FMZ :: before AstPostProcessing astScopeStack = %p \n",stmp);
 #endif
  
-  // GB (8/19/2009): Commented this out and moved it to SgProject::parse().
-  // Repeated calls to AstPostProcessing (one per file) can be slow on
-  // projects consisting of multiple files due to repeated memory pool
-  // traversals.
-  // AstPostProcessing(this);
-  // GB (8/19/2009): However, parent pointers in the file's AST must be
-  // reset right away because attachPreprocessingInfo depends on them.
-  // This is an AST traversal, so it will be fast.
-     topLevelResetParentPointer(this);
+     AstPostProcessing(this);
 
   // FMZ: 05/30/2008.  Do not generate .rmod file for the PU imported by "use" stmt
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
@@ -4701,6 +4704,22 @@ SgFile::callFrontEnd()
      printf ("Leaving SgFile::callFrontEnd(): fileNameIndex = %d \n",fileNameIndex);
      display("At bottom of SgFile::callFrontEnd()");
 #endif
+
+#if 1
+  // DQ (8/22/2009): We test the parent of SgFunctionTypeTable in the AST post processing,
+  // so we need to make sure that it is set.
+     SgFunctionTypeTable* functionTypeTable = SgNode::get_globalFunctionTypeTable();
+  // ROSE_ASSERT(functionTypeTable != NULL);
+     if (functionTypeTable != NULL && functionTypeTable->get_parent() == NULL)
+        {
+       // printf ("In SgFile::callFrontEnd(): set the parent of SgFunctionTypeTable \n");
+          functionTypeTable->set_parent(this);
+        }
+  // ROSE_ASSERT(functionTypeTable->get_parent() != NULL);
+#endif
+
+  // ROSE_ASSERT(SgNode::get_globalFunctionTypeTable() != NULL);
+  // ROSE_ASSERT(SgNode::get_globalFunctionTypeTable()->get_parent() != NULL);
 
   // return the error code associated with the call to the C++ Front-end
      return frontendErrorLevel;
@@ -6330,7 +6349,7 @@ SgProject::compileOutput( const std::string& compilerName )
        // DQ (8/6/2006): Test for g++ and use gcc with "-E" option 
        // (makes a different for header file processing in ARES configuration)
        // string compilerNameString = compilerName;
-          string& compilerNameString = originalCommandLine[0];          
+          string& compilerNameString = originalCommandLine[0];
           if (get_C_only() == true)
              {
                compilerNameString = BACKEND_C_COMPILER_NAME_WITH_PATH;
@@ -6362,6 +6381,23 @@ SgProject::compileOutput( const std::string& compilerName )
 #endif
 
           errorCode = systemFromVector(originalCommandLine);
+
+#if 0
+       // DQ (8/22/2009): We test the parent of SgFunctionTypeTable in the AST post processing,
+       // so we need to make sure that it is set.
+          SgFunctionTypeTable* functionTypeTable = SgNode::get_globalFunctionTypeTable();
+          ROSE_ASSERT(functionTypeTable != NULL);
+          if (functionTypeTable->get_parent() == NULL)
+             {
+               ROSE_ASSERT(numberOfFiles() > 0);
+               printf ("set the parent of SgFunctionTypeTable \n");
+               functionTypeTable->set_parent(&get_file(0));
+             }
+          ROSE_ASSERT(functionTypeTable->get_parent() != NULL);
+#endif
+
+          ROSE_ASSERT(SgNode::get_globalFunctionTypeTable() != NULL);
+          ROSE_ASSERT(SgNode::get_globalFunctionTypeTable()->get_parent() != NULL);
 
        // printf ("Exiting after call to compiler using -E option! \n");
        // ROSE_ASSERT(false);

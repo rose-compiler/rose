@@ -86,7 +86,7 @@ CXX_TESTCODES_REQUIRED_TO_PASS = \
 
 # triangle.cpp: TODO AST copy does not support class member across files.
 # polygon.cpp: TODO recursively find super classes for a dependent class
-TESTCODE_CURRENTLY_FAILING =  	
+TESTCODE_CURRENTLY_FAILING = \
 	triangle.cpp \
 	polygon.cpp 
 

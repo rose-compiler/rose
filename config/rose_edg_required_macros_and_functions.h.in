@@ -311,6 +311,19 @@ long double __builtin_powil (long double __builtin__x, int __builtin__y);
 #define __builtin_nanl(string) 0
 */
 
+/* DQ (8/25/2009): Added another builtin function required to compile ROSE with ROSE. */
+#ifdef _GLIBCXX_ATOMIC_BUILTINS
+typedef int _Atomic_word;
+_Atomic_word  __sync_fetch_and_add(volatile _Atomic_word* __mem, int __val);
+#endif
+
+/* DQ (8/25/2009): Added another builtin function required to compile ROSE with ROSE. (required for boost) */
+#if ROSE_CPP_MODE
+/* These use C++ references and so can't be used in C mode */
+int __sync_lock_test_and_set( int & v, int n );
+int __sync_lock_release( int & v );
+#endif
+
 /* DQ and Liao (7/11/2009) Added macros to define away new GNU C++ extension (not required for newer EDG 4.0 use */
 // Only for GCC 4.3.0 and above
 #if __GNUC__ > 4 || \
@@ -518,6 +531,58 @@ was just float or double for complex<float> or complex<double>.
 #define _COMPLEX_H
 /* Disable inclusion of complex.h on Mac OS X */
 #define __COMPLEX__
+
+/* DQ (8/25/2009): Added complex builtin functions as required to compile parts of ROSE with ROSE */
+#if _GLIBCXX_USE_C99_COMPLEX
+float  __builtin_cabsf(__complex__ float __z);
+double __builtin_cabs (__complex__ double __z);
+long double __builtin_cabsl(const __complex__ long double& __z);
+
+float  __builtin_cargf(__complex__ float __z);
+double __builtin_carg(__complex__ double __z);
+long double __builtin_cargl(const __complex__ long double& __z);
+
+__complex__ float  __builtin_ccosf(__complex__ float __z);
+__complex__ double __builtin_ccos(__complex__ double __z);
+__complex__ long double __builtin_ccosl(const __complex__ long double& __z);
+
+__complex__ float  __builtin_ccoshf(__complex__ float __z);
+__complex__ double __builtin_ccosh(__complex__ double __z);
+__complex__ long double __builtin_ccoshl(const __complex__ long double& __z);
+
+__complex__ float  __builtin_cexpf(__complex__ float __z);
+__complex__ double __builtin_cexp(__complex__ double __z);
+__complex__ long double __builtin_cexpl(const __complex__ long double& __z);
+
+__complex__ float  __builtin_clogf(__complex__ float __z);
+__complex__ double __builtin_clog(__complex__ double __z);
+__complex__ long double __builtin_clogl(const __complex__ long double& __z);
+
+__complex__ float  __builtin_csinf(__complex__ float __z);
+__complex__ double __builtin_csin(__complex__ double __z);
+__complex__ long double __builtin_csinl(const __complex__ long double& __z);
+
+__complex__ float  __builtin_csinhf(__complex__ float __z);
+__complex__ double __builtin_csinh(__complex__ double __z);
+__complex__ long double __builtin_csinhl(const __complex__ long double& __z);
+
+__complex__ float __builtin_csqrtf(__complex__ float __z);
+__complex__ double __builtin_csqrt(__complex__ double __z);
+__complex__ long double __builtin_csqrtl(const __complex__ long double& __z);
+
+__complex__ float  __builtin_ctanf (__complex__ float __x);
+__complex__ double __builtin_ctan(__complex__ double __z);
+__complex__ long double __builtin_ctanl(const __complex__ long double& __z);
+
+__complex__ float  __builtin_ctanhf(__complex__ float __z);
+__complex__ double __builtin_ctanh(__complex__ double __z);
+__complex__ long double __builtin_ctanhl(const __complex__ long double& __z);
+
+__complex__ float  __builtin_cpowf(__complex__ float __x, __complex__ float __y);
+__complex__ double __builtin_cpow(__complex__ double __x, __complex__ double __y);
+__complex__ long double __builtin_cpowl(const __complex__ long double& __x,const __complex__ long double& __y);
+#endif
+
 
 /* Defined this to avoid warnings (e.g. test2001_11.C) from 3.4.6 systems header files. */
 #define __weakref__(NAME)

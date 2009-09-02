@@ -37,8 +37,11 @@ class rose_exception
 // define ROSE_ABORT as a function instead of a macro
 // this allows us overloading
 
+// DQ (8/22/2009): Added throw since EDG wants to see that the throw options match when ROSE_ABORT is a macro to "abort()" in "stdlib.h".
 // throws rose_exception with the reason "abort"
-void ROSE_ABORT();
+// void ROSE_ABORT();
+void ROSE_ABORT() __THROW __attribute__ ((__noreturn__));
+
 // throw rose_exception with user defined abort message
 void ROSE_ABORT( const char *message );
 

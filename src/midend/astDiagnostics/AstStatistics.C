@@ -19,11 +19,14 @@ using namespace ROSE_Statistics;
 
 //  NodeStatistics Constructors/Destructors
 AstNodeTraversalStatistics::AstNodeTraversalStatistics() 
-  : numNodeTypes(*new StatisticsContainerType(V_SgNumVariants)) {
-}
-AstNodeTraversalStatistics::~AstNodeTraversalStatistics() { 
-  delete &numNodeTypes;
-}
+   : numNodeTypes(*new StatisticsContainerType(V_SgNumVariants))
+   {
+   }
+
+AstNodeTraversalStatistics::~AstNodeTraversalStatistics()
+   {
+     delete &numNodeTypes;
+   }
 
 string
 AstNodeTraversalStatistics::toString(SgNode* node)
@@ -53,21 +56,22 @@ AstNodeTraversalStatistics::visit(SgNode* node)
    }
 
 AstNodeTraversalStatistics::StatisticsContainerType
-AstNodeTraversalStatistics::getStatisticsData() { 
-  return numNodeTypes;
-}
+AstNodeTraversalStatistics::getStatisticsData()
+   {
+     return numNodeTypes;
+   }
 
 string
 AstNodeTraversalStatistics::singleStatistics()
    {
   // we possibly will want to overload << 
      ostringstream ss;
-     for(unsigned int i=0; i!=numNodeTypes.size(); i++)
+     for (unsigned int i=0; i != numNodeTypes.size(); i++)
         {
           if (numNodeTypes[i] > 0)
              {
                if ( SgProject::get_verbose() >= 2 )
-                    ss << "AST Traversal Statistics: " << setw(6) << numNodeTypes[i] << ": " << getVariantName(VariantT(i)) << endl;
+                    ss << "AST Traversal Statistics: " << setw(8) << numNodeTypes[i] << ": " << getVariantName(VariantT(i)) << endl;
              }
         }
 
@@ -75,41 +79,52 @@ AstNodeTraversalStatistics::singleStatistics()
    }
 
 string
-AstNodeTraversalStatistics::cmpStatistics(AstNodeTraversalStatistics & q) {
-  ostringstream ss;
-  StatisticsContainerType numNodeTypes2=q.getStatisticsData();
-  ElementType sum1=0, sum2=0;
-  ss << "****************************************************************************************************************\n";
-  ss << "AST Traversal Statistics (traversed in current file : total in AST : percent of total traversed in current file)\n";
-  ss << "****************************************************************************************************************\n";
-  for(unsigned int i=0; i!=numNodeTypes.size(); i++) {
-    if(numNodeTypes[i]>0 || numNodeTypes2[i]>0) {
-      ss << generateCMPStatisticsValueString(getVariantName(VariantT(i)), numNodeTypes[i], numNodeTypes2[i]);
-    }
-    sum1+=numNodeTypes[i]; 
-      sum2+=numNodeTypes2[i];
-  }
-  ss << generateCMPStatisticsValueString("TOTAL", sum1, sum2);
-  ss << "**************************************************************************************************************** \n";
-  return ss.str();
-}
+AstNodeTraversalStatistics::cmpStatistics( AstNodeTraversalStatistics & q )
+   {
+     ostringstream ss;
+     StatisticsContainerType numNodeTypes2 = q.getStatisticsData();
+     ElementType sum1 = 0, sum2 = 0;
+     ss << "****************************************************************************************************************\n";
+     ss << "AST Traversal Statistics (traversed in current file) : (total in AST) : (percent of total traversed in current file)\n";
+     ss << "****************************************************************************************************************\n";
+     for(unsigned int i=0; i != numNodeTypes.size(); i++)
+        {
+          if (numNodeTypes[i]>0 || numNodeTypes2[i]>0)
+             {
+               ss << generateCMPStatisticsValueString(getVariantName(VariantT(i)), numNodeTypes[i], numNodeTypes2[i]);
+             }
+
+          sum1 += numNodeTypes[i]; 
+          sum2 += numNodeTypes2[i];
+        }
+
+     ss << generateCMPStatisticsValueString("TOTAL", sum1, sum2);
+     ss << "**************************************************************************************************************** \n";
+
+     return ss.str();
+   }
 
 // if the higher values are input data % is < 100.
 string 
-AstNodeTraversalStatistics::generateCMPStatisticsValueString(string name, ElementType v1, ElementType v2) {
-  ostringstream ss;
-  ss << "AST Traversal Statistics:";
-  ss << setw(6) << v1 << ":" << setw(6) << v2 << ":";
-  if(v2>0) {
-    ss.setf(ios::fixed|ios::showpoint);
-    ss << " " << setprecision(1) << setw(5) << (static_cast<float>(v1)/static_cast<float>(v2))*100.0 << "%";
-  } else {
-    ss << "-N/A-";
-  }
-  ss << " " << name;
-  ss << endl;
-  return ss.str();
-}
+AstNodeTraversalStatistics::generateCMPStatisticsValueString(string name, ElementType v1, ElementType v2)
+   {
+     ostringstream ss;
+     ss << "AST Traversal Statistics:";
+     ss << setw(6) << v1 << ":" << setw(6) << v2 << ":";
+     if (v2 > 0)
+        {
+          ss.setf(ios::fixed|ios::showpoint);
+          ss << " " << setprecision(1) << setw(5) << (static_cast<float>(v1)/static_cast<float>(v2))*100.0 << "%";
+        }
+       else
+        {
+          ss << "-N/A-";
+        }
+     ss << " " << name;
+     ss << endl;
+
+     return ss.str();
+   }
 
 // ************************************************************************
 //                    AstNodeMemoryPoolStatistics member functions
@@ -119,6 +134,10 @@ AstNodeTraversalStatistics::generateCMPStatisticsValueString(string name, Elemen
 
 AstNodeMemoryPoolStatistics::AstNodeMemoryPoolStatistics()
    {
+  // Initialize the total amount of memory used so that we can report fractional percentage of use per IR node.
+     totalMemoryUsed = memoryUsage();
+     printf ("Total memory used = %d \n",totalMemoryUsed);
+     printf ("numberOfNodes = %d \n",numberOfNodes());
    }
 
 AstNodeMemoryPoolStatistics::~AstNodeMemoryPoolStatistics()
@@ -145,8 +164,9 @@ AstNodeMemoryPoolStatistics::ElementType::operator<(const ElementType & x)
                ROSE_ASSERT(castNode != NULL); \
                int numberOfNodes   = castNode->numberOfNodes(); \
                int memoryFootprint = castNode->memoryUsage(); \
+               double percent = (((double) memoryFootprint) / ((double) totalMemoryUsed)) * 100.0; \
                if ( SgProject::get_verbose() >= 2 ) \
-                    printf ("AST Memory Pool Statistics: numberOfNodes = %6d memory consumption = %7d node = %s \n",numberOfNodes,memoryFootprint,castNode->class_name().c_str());\
+                    printf ("AST Memory Pool Statistics: numberOfNodes = %9d memory consumption = %10d bytes (%6.3f percent of total) sizeof() = %4ld node = %s \n",numberOfNodes,memoryFootprint,percent,sizeof(*castNode),castNode->class_name().c_str());\
                break; \
              }
 
@@ -182,12 +202,16 @@ void AstNodeMemoryPoolStatistics::visit ( SgNode* node)
              }
 #endif
 
+       // DQ (9/1/2009): Updated this list with a few new IR nodes, but there are many that are missing
+       // (binary analysis specific, instructions, and binary format, dwarf, UPC, OpenMP, etc.).
+
        // DQ (2/13/2006): these are generated by ROSETTA and copied here
           IR_NODE_VISIT_CASE(SgModifier)
           IR_NODE_VISIT_CASE(SgBitAttribute)
           IR_NODE_VISIT_CASE(SgAttribute)
+          IR_NODE_VISIT_CASE(SgBinaryFile)
           IR_NODE_VISIT_CASE(SgSupport)
-          IR_NODE_VISIT_CASE(SgPartialFunctionType)
+       // IR_NODE_VISIT_CASE(SgPartialFunctionType)
           IR_NODE_VISIT_CASE(SgMemberFunctionType)
           IR_NODE_VISIT_CASE(SgFunctionType)
           IR_NODE_VISIT_CASE(SgPointerType)
@@ -241,6 +265,7 @@ void AstNodeMemoryPoolStatistics::visit ( SgNode* node)
           IR_NODE_VISIT_CASE(SgTemplateArgument)
           IR_NODE_VISIT_CASE(SgBaseClass)
           IR_NODE_VISIT_CASE(SgQualifiedName)
+          IR_NODE_VISIT_CASE(SgSourceFile)
           IR_NODE_VISIT_CASE(SgTypeUnknown)
           IR_NODE_VISIT_CASE(SgTypeChar)
           IR_NODE_VISIT_CASE(SgTypeSignedChar)
@@ -277,7 +302,6 @@ void AstNodeMemoryPoolStatistics::visit ( SgNode* node)
           IR_NODE_VISIT_CASE(SgPartialFunctionModifierType)
           IR_NODE_VISIT_CASE(SgArrayType)
           IR_NODE_VISIT_CASE(SgTypeEllipse)
-          // IR_NODE_VISIT_CASE(SgUnknownMemberFunctionType)
           IR_NODE_VISIT_CASE(SgQualifiedNameType)
           IR_NODE_VISIT_CASE(SgExprListExp)
           IR_NODE_VISIT_CASE(SgVarRefExp)
@@ -423,6 +447,260 @@ void AstNodeMemoryPoolStatistics::visit ( SgNode* node)
           IR_NODE_VISIT_CASE(SgLabelSymbol)
           IR_NODE_VISIT_CASE(SgDefaultSymbol)
           IR_NODE_VISIT_CASE(SgNamespaceSymbol)
+          IR_NODE_VISIT_CASE(SgStatementExpression)
+
+       // DQ (9/1/2009): Added missing IR nodes.
+          IR_NODE_VISIT_CASE(SgIntrinsicSymbol)
+          IR_NODE_VISIT_CASE(SgModuleSymbol)
+          IR_NODE_VISIT_CASE(SgInterfaceSymbol)
+          IR_NODE_VISIT_CASE(SgCommonSymbol)
+          IR_NODE_VISIT_CASE(SgRenameSymbol)
+          IR_NODE_VISIT_CASE(SgAliasSymbol)
+          IR_NODE_VISIT_CASE(SgAsmBlock)
+          IR_NODE_VISIT_CASE(SgAsmOperandList)
+          IR_NODE_VISIT_CASE(SgAsmArmInstruction)
+          IR_NODE_VISIT_CASE(SgAsmx86Instruction)
+          IR_NODE_VISIT_CASE(SgAsmPowerpcInstruction)
+          IR_NODE_VISIT_CASE(SgAsmInstruction)
+          IR_NODE_VISIT_CASE(SgAsmDataStructureDeclaration)
+          IR_NODE_VISIT_CASE(SgAsmFunctionDeclaration)
+          IR_NODE_VISIT_CASE(SgAsmFieldDeclaration)
+          IR_NODE_VISIT_CASE(SgAsmDeclaration)
+          IR_NODE_VISIT_CASE(SgAsmStatement)
+          IR_NODE_VISIT_CASE(SgAsmBinaryAdd)
+          IR_NODE_VISIT_CASE(SgAsmBinarySubtract)
+          IR_NODE_VISIT_CASE(SgAsmBinaryMultiply)
+          IR_NODE_VISIT_CASE(SgAsmBinaryDivide)
+          IR_NODE_VISIT_CASE(SgAsmBinaryMod)
+          IR_NODE_VISIT_CASE(SgAsmBinaryAddPreupdate)
+          IR_NODE_VISIT_CASE(SgAsmBinarySubtractPreupdate)
+          IR_NODE_VISIT_CASE(SgAsmBinaryAddPostupdate)
+          IR_NODE_VISIT_CASE(SgAsmBinarySubtractPostupdate)
+          IR_NODE_VISIT_CASE(SgAsmBinaryLsl)
+          IR_NODE_VISIT_CASE(SgAsmBinaryLsr)
+          IR_NODE_VISIT_CASE(SgAsmBinaryAsr)
+          IR_NODE_VISIT_CASE(SgAsmBinaryRor)
+          IR_NODE_VISIT_CASE(SgAsmBinaryExpression)
+          IR_NODE_VISIT_CASE(SgAsmUnaryPlus)
+          IR_NODE_VISIT_CASE(SgAsmUnaryMinus)
+          IR_NODE_VISIT_CASE(SgAsmUnaryRrx)
+          IR_NODE_VISIT_CASE(SgAsmUnaryArmSpecialRegisterList)
+          IR_NODE_VISIT_CASE(SgAsmUnaryExpression)
+          IR_NODE_VISIT_CASE(SgAsmMemoryReferenceExpression)
+          IR_NODE_VISIT_CASE(SgAsmControlFlagsExpression)
+          IR_NODE_VISIT_CASE(SgAsmCommonSubExpression)
+          IR_NODE_VISIT_CASE(SgAsmx86RegisterReferenceExpression)
+          IR_NODE_VISIT_CASE(SgAsmArmRegisterReferenceExpression)
+          IR_NODE_VISIT_CASE(SgAsmPowerpcRegisterReferenceExpression)
+          IR_NODE_VISIT_CASE(SgAsmRegisterReferenceExpression)
+          IR_NODE_VISIT_CASE(SgAsmByteValueExpression)
+          IR_NODE_VISIT_CASE(SgAsmWordValueExpression)
+          IR_NODE_VISIT_CASE(SgAsmDoubleWordValueExpression)
+          IR_NODE_VISIT_CASE(SgAsmQuadWordValueExpression)
+          IR_NODE_VISIT_CASE(SgAsmSingleFloatValueExpression)
+          IR_NODE_VISIT_CASE(SgAsmDoubleFloatValueExpression)
+          IR_NODE_VISIT_CASE(SgAsmVectorValueExpression)
+          IR_NODE_VISIT_CASE(SgAsmValueExpression)
+          IR_NODE_VISIT_CASE(SgAsmExprListExp)
+          IR_NODE_VISIT_CASE(SgAsmExpression)
+          IR_NODE_VISIT_CASE(SgAsmTypeByte)
+          IR_NODE_VISIT_CASE(SgAsmTypeWord)
+          IR_NODE_VISIT_CASE(SgAsmTypeDoubleWord)
+          IR_NODE_VISIT_CASE(SgAsmTypeQuadWord)
+          IR_NODE_VISIT_CASE(SgAsmTypeDoubleQuadWord)
+          IR_NODE_VISIT_CASE(SgAsmTypeSingleFloat)
+          IR_NODE_VISIT_CASE(SgAsmTypeDoubleFloat)
+          IR_NODE_VISIT_CASE(SgAsmType80bitFloat)
+          IR_NODE_VISIT_CASE(SgAsmType128bitFloat)
+          IR_NODE_VISIT_CASE(SgAsmTypeVector)
+          IR_NODE_VISIT_CASE(SgAsmType)
+          IR_NODE_VISIT_CASE(SgAsmGenericDLL)
+          IR_NODE_VISIT_CASE(SgAsmPEImportHNTEntryList)
+          IR_NODE_VISIT_CASE(SgAsmPEImportILTEntryList)
+          IR_NODE_VISIT_CASE(SgAsmPEImportDirectoryList)
+          IR_NODE_VISIT_CASE(SgAsmGenericFormat)
+          IR_NODE_VISIT_CASE(SgAsmGenericFile)
+          IR_NODE_VISIT_CASE(SgAsmElfFileHeader)
+          IR_NODE_VISIT_CASE(SgAsmPEFileHeader)
+          IR_NODE_VISIT_CASE(SgAsmNEFileHeader)
+          IR_NODE_VISIT_CASE(SgAsmLEFileHeader)
+          IR_NODE_VISIT_CASE(SgAsmDOSFileHeader)
+          IR_NODE_VISIT_CASE(SgAsmGenericHeader)
+          IR_NODE_VISIT_CASE(SgAsmElfRelocSection)
+          IR_NODE_VISIT_CASE(SgAsmElfDynamicSection)
+          IR_NODE_VISIT_CASE(SgAsmElfSymbolSection)
+          IR_NODE_VISIT_CASE(SgAsmElfStringSection)
+          IR_NODE_VISIT_CASE(SgAsmElfEHFrameSection)
+          IR_NODE_VISIT_CASE(SgAsmElfNoteSection)
+          IR_NODE_VISIT_CASE(SgAsmElfStrtab)
+          IR_NODE_VISIT_CASE(SgAsmCoffStrtab)
+          IR_NODE_VISIT_CASE(SgAsmGenericStrtab)
+          IR_NODE_VISIT_CASE(SgAsmElfSection)
+          IR_NODE_VISIT_CASE(SgAsmElfSectionTable)
+          IR_NODE_VISIT_CASE(SgAsmElfSegmentTable)
+          IR_NODE_VISIT_CASE(SgAsmPEImportSection)
+          IR_NODE_VISIT_CASE(SgAsmPEExportSection)
+          IR_NODE_VISIT_CASE(SgAsmPEStringSection)
+          IR_NODE_VISIT_CASE(SgAsmPESection)
+          IR_NODE_VISIT_CASE(SgAsmPESectionTable)
+          IR_NODE_VISIT_CASE(SgAsmCoffSymbolTable)
+          IR_NODE_VISIT_CASE(SgAsmDOSExtendedHeader)
+          IR_NODE_VISIT_CASE(SgAsmNESection)
+          IR_NODE_VISIT_CASE(SgAsmNESectionTable)
+          IR_NODE_VISIT_CASE(SgAsmNENameTable)
+          IR_NODE_VISIT_CASE(SgAsmNEModuleTable)
+          IR_NODE_VISIT_CASE(SgAsmNEStringTable)
+          IR_NODE_VISIT_CASE(SgAsmNEEntryTable)
+          IR_NODE_VISIT_CASE(SgAsmNERelocTable)
+          IR_NODE_VISIT_CASE(SgAsmLESection)
+          IR_NODE_VISIT_CASE(SgAsmLESectionTable)
+          IR_NODE_VISIT_CASE(SgAsmLENameTable)
+          IR_NODE_VISIT_CASE(SgAsmLEPageTable)
+          IR_NODE_VISIT_CASE(SgAsmLEEntryTable)
+          IR_NODE_VISIT_CASE(SgAsmLERelocTable)
+          IR_NODE_VISIT_CASE(SgAsmGenericSection)
+          IR_NODE_VISIT_CASE(SgAsmCoffSymbol)
+          IR_NODE_VISIT_CASE(SgAsmElfSymbol)
+          IR_NODE_VISIT_CASE(SgAsmGenericSymbol)
+          IR_NODE_VISIT_CASE(SgAsmElfSectionTableEntry)
+          IR_NODE_VISIT_CASE(SgAsmElfSegmentTableEntry)
+          IR_NODE_VISIT_CASE(SgAsmElfSegmentTableEntryList)
+          IR_NODE_VISIT_CASE(SgAsmElfRelocEntry)
+          IR_NODE_VISIT_CASE(SgAsmElfRelocEntryList)
+          IR_NODE_VISIT_CASE(SgAsmElfDynamicEntry)
+          IR_NODE_VISIT_CASE(SgAsmElfDynamicEntryList)
+          IR_NODE_VISIT_CASE(SgAsmElfEHFrameEntryCI)
+          IR_NODE_VISIT_CASE(SgAsmElfEHFrameEntryCIList)
+          IR_NODE_VISIT_CASE(SgAsmElfEHFrameEntryFD)
+          IR_NODE_VISIT_CASE(SgAsmElfEHFrameEntryFDList)
+          IR_NODE_VISIT_CASE(SgAsmElfNoteEntry)
+          IR_NODE_VISIT_CASE(SgAsmElfNoteEntryList)
+          IR_NODE_VISIT_CASE(SgAsmPERVASizePair)
+          IR_NODE_VISIT_CASE(SgAsmPEExportDirectory)
+          IR_NODE_VISIT_CASE(SgAsmPEExportEntry)
+          IR_NODE_VISIT_CASE(SgAsmPEImportDirectory)
+          IR_NODE_VISIT_CASE(SgAsmPEImportILTEntry)
+          IR_NODE_VISIT_CASE(SgAsmPEImportHNTEntry)
+          IR_NODE_VISIT_CASE(SgAsmPEImportLookupTable)
+          IR_NODE_VISIT_CASE(SgAsmPESectionTableEntry)
+          IR_NODE_VISIT_CASE(SgAsmNEEntryPoint)
+          IR_NODE_VISIT_CASE(SgAsmNERelocEntry)
+          IR_NODE_VISIT_CASE(SgAsmNESectionTableEntry)
+          IR_NODE_VISIT_CASE(SgAsmLEPageTableEntry)
+          IR_NODE_VISIT_CASE(SgAsmLEEntryPoint)
+          IR_NODE_VISIT_CASE(SgAsmLESectionTableEntry)
+          IR_NODE_VISIT_CASE(SgAsmGenericSectionList)
+          IR_NODE_VISIT_CASE(SgAsmGenericHeaderList)
+          IR_NODE_VISIT_CASE(SgAsmGenericSymbolList)
+          IR_NODE_VISIT_CASE(SgAsmElfSymbolList)
+          IR_NODE_VISIT_CASE(SgAsmCoffSymbolList)
+          IR_NODE_VISIT_CASE(SgAsmGenericDLLList)
+          IR_NODE_VISIT_CASE(SgAsmPERVASizePairList)
+          IR_NODE_VISIT_CASE(SgAsmPEExportEntryList)
+          IR_NODE_VISIT_CASE(SgAsmBasicString)
+          IR_NODE_VISIT_CASE(SgAsmStoredString)
+          IR_NODE_VISIT_CASE(SgAsmGenericString)
+          IR_NODE_VISIT_CASE(SgAsmStringStorage)
+          IR_NODE_VISIT_CASE(SgAsmDwarfMacro)
+          IR_NODE_VISIT_CASE(SgAsmDwarfLine)
+          IR_NODE_VISIT_CASE(SgAsmDwarfMacroList)
+          IR_NODE_VISIT_CASE(SgAsmDwarfLineList)
+          IR_NODE_VISIT_CASE(SgAsmDwarfArrayType)
+          IR_NODE_VISIT_CASE(SgAsmDwarfClassType)
+          IR_NODE_VISIT_CASE(SgAsmDwarfEntryPoint)
+          IR_NODE_VISIT_CASE(SgAsmDwarfEnumerationType)
+          IR_NODE_VISIT_CASE(SgAsmDwarfFormalParameter)
+          IR_NODE_VISIT_CASE(SgAsmDwarfImportedDeclaration)
+          IR_NODE_VISIT_CASE(SgAsmDwarfLabel)
+          IR_NODE_VISIT_CASE(SgAsmDwarfLexicalBlock)
+          IR_NODE_VISIT_CASE(SgAsmDwarfMember)
+          IR_NODE_VISIT_CASE(SgAsmDwarfPointerType)
+          IR_NODE_VISIT_CASE(SgAsmDwarfReferenceType)
+          IR_NODE_VISIT_CASE(SgAsmDwarfCompilationUnit)
+          IR_NODE_VISIT_CASE(SgAsmDwarfStringType)
+          IR_NODE_VISIT_CASE(SgAsmDwarfStructureType)
+          IR_NODE_VISIT_CASE(SgAsmDwarfSubroutineType)
+          IR_NODE_VISIT_CASE(SgAsmDwarfTypedef)
+          IR_NODE_VISIT_CASE(SgAsmDwarfUnionType)
+          IR_NODE_VISIT_CASE(SgAsmDwarfUnspecifiedParameters)
+          IR_NODE_VISIT_CASE(SgAsmDwarfVariant)
+          IR_NODE_VISIT_CASE(SgAsmDwarfCommonBlock)
+          IR_NODE_VISIT_CASE(SgAsmDwarfCommonInclusion)
+          IR_NODE_VISIT_CASE(SgAsmDwarfInheritance)
+          IR_NODE_VISIT_CASE(SgAsmDwarfInlinedSubroutine)
+          IR_NODE_VISIT_CASE(SgAsmDwarfModule)
+          IR_NODE_VISIT_CASE(SgAsmDwarfPtrToMemberType)
+          IR_NODE_VISIT_CASE(SgAsmDwarfSetType)
+          IR_NODE_VISIT_CASE(SgAsmDwarfSubrangeType)
+          IR_NODE_VISIT_CASE(SgAsmDwarfWithStmt)
+          IR_NODE_VISIT_CASE(SgAsmDwarfAccessDeclaration)
+          IR_NODE_VISIT_CASE(SgAsmDwarfBaseType)
+          IR_NODE_VISIT_CASE(SgAsmDwarfCatchBlock)
+          IR_NODE_VISIT_CASE(SgAsmDwarfConstType)
+          IR_NODE_VISIT_CASE(SgAsmDwarfConstant)
+          IR_NODE_VISIT_CASE(SgAsmDwarfEnumerator)
+          IR_NODE_VISIT_CASE(SgAsmDwarfFileType)
+          IR_NODE_VISIT_CASE(SgAsmDwarfFriend)
+          IR_NODE_VISIT_CASE(SgAsmDwarfNamelist)
+          IR_NODE_VISIT_CASE(SgAsmDwarfNamelistItem)
+          IR_NODE_VISIT_CASE(SgAsmDwarfPackedType)
+          IR_NODE_VISIT_CASE(SgAsmDwarfSubprogram)
+          IR_NODE_VISIT_CASE(SgAsmDwarfTemplateTypeParameter)
+          IR_NODE_VISIT_CASE(SgAsmDwarfTemplateValueParameter)
+          IR_NODE_VISIT_CASE(SgAsmDwarfThrownType)
+          IR_NODE_VISIT_CASE(SgAsmDwarfTryBlock)
+          IR_NODE_VISIT_CASE(SgAsmDwarfVariantPart)
+          IR_NODE_VISIT_CASE(SgAsmDwarfVariable)
+          IR_NODE_VISIT_CASE(SgAsmDwarfVolatileType)
+          IR_NODE_VISIT_CASE(SgAsmDwarfDwarfProcedure)
+          IR_NODE_VISIT_CASE(SgAsmDwarfRestrictType)
+          IR_NODE_VISIT_CASE(SgAsmDwarfInterfaceType)
+          IR_NODE_VISIT_CASE(SgAsmDwarfNamespace)
+          IR_NODE_VISIT_CASE(SgAsmDwarfImportedModule)
+          IR_NODE_VISIT_CASE(SgAsmDwarfUnspecifiedType)
+          IR_NODE_VISIT_CASE(SgAsmDwarfPartialUnit)
+          IR_NODE_VISIT_CASE(SgAsmDwarfImportedUnit)
+          IR_NODE_VISIT_CASE(SgAsmDwarfMutableType)
+          IR_NODE_VISIT_CASE(SgAsmDwarfCondition)
+          IR_NODE_VISIT_CASE(SgAsmDwarfSharedType)
+          IR_NODE_VISIT_CASE(SgAsmDwarfFormatLabel)
+          IR_NODE_VISIT_CASE(SgAsmDwarfFunctionTemplate)
+          IR_NODE_VISIT_CASE(SgAsmDwarfClassTemplate)
+          IR_NODE_VISIT_CASE(SgAsmDwarfUpcSharedType)
+          IR_NODE_VISIT_CASE(SgAsmDwarfUpcStrictType)
+          IR_NODE_VISIT_CASE(SgAsmDwarfUpcRelaxedType)
+          IR_NODE_VISIT_CASE(SgAsmDwarfUnknownConstruct)
+          IR_NODE_VISIT_CASE(SgAsmDwarfConstruct)
+          IR_NODE_VISIT_CASE(SgAsmDwarfConstructList)
+          IR_NODE_VISIT_CASE(SgAsmDwarfCompilationUnitList)
+          IR_NODE_VISIT_CASE(SgAsmDwarfInformation)
+          IR_NODE_VISIT_CASE(SgAsmExecutableFileFormat)
+          IR_NODE_VISIT_CASE(SgAsmFile)
+          IR_NODE_VISIT_CASE(SgAsmInterpretation)
+          IR_NODE_VISIT_CASE(SgAsmNode)
+          IR_NODE_VISIT_CASE(SgOmpOrderedClause)
+          IR_NODE_VISIT_CASE(SgOmpNowaitClause)
+          IR_NODE_VISIT_CASE(SgOmpUntiedClause)
+          IR_NODE_VISIT_CASE(SgOmpDefaultClause)
+          IR_NODE_VISIT_CASE(SgOmpCollapseClause)
+          IR_NODE_VISIT_CASE(SgOmpIfClause)
+          IR_NODE_VISIT_CASE(SgOmpNumThreadsClause)
+          IR_NODE_VISIT_CASE(SgOmpExpressionClause)
+          IR_NODE_VISIT_CASE(SgOmpCopyprivateClause)
+          IR_NODE_VISIT_CASE(SgOmpPrivateClause)
+          IR_NODE_VISIT_CASE(SgOmpFirstprivateClause)
+          IR_NODE_VISIT_CASE(SgOmpSharedClause)
+          IR_NODE_VISIT_CASE(SgOmpCopyinClause)
+          IR_NODE_VISIT_CASE(SgOmpLastprivateClause)
+          IR_NODE_VISIT_CASE(SgOmpReductionClause)
+          IR_NODE_VISIT_CASE(SgOmpVariablesClause)
+          IR_NODE_VISIT_CASE(SgOmpScheduleClause)
+          IR_NODE_VISIT_CASE(SgOmpClause)
+          IR_NODE_VISIT_CASE(SgRenamePair)
+          IR_NODE_VISIT_CASE(SgInterfaceBody)
+          IR_NODE_VISIT_CASE(SgLocatedNodeSupport)
+          IR_NODE_VISIT_CASE(SgToken)
+
        // IR_NODE_VISIT_CASE()
 
           default:

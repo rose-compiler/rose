@@ -77,7 +77,7 @@ CXX_TESTCODES_REQUIRED_TO_PASS = \
 	task_link.cpp \
 	task_tree.cpp 
 # put macroCalls.c here since it requires -rose:wave, which causes seg fault on 64-bit machine
-TESTCODE_CURRENTLY_FAILING =  
+TESTCODE_CURRENTLY_FAILING = \
 	macroCalls.c 
 
 ROSE_FLAGS = -rose:openmp:ast_only --edg:no_warnings -w -rose:verbose 0 --edg:restrict #-rose:wave
@@ -113,4 +113,5 @@ EXTRA_DIST = $(ALL_TESTCODES) README
 clean-local:
 	rm -f *.o rose_*.* *.out
 	rm -rf QMTest
-	
+
+

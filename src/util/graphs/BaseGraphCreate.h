@@ -62,9 +62,10 @@ class BaseGraphCreateWrap : public BaseGraphCreate
                           static_cast<typename GraphImpl::Node*>(snk), _id); 
    }
   virtual void 
-  MoveEdgeEndPoint( BaseGraphEdge *e, BaseGraphNode *n, 
-#ifdef USE_ROSE  
-                     ::GraphAccess::EdgeDirection dir)
+  MoveEdgeEndPoint( BaseGraphEdge *e, BaseGraphNode *n,
+// DQ (8/31/2009): This is required for EDG to compile this code!
+#ifdef USE_ROSE
+                   ::GraphAccess::EdgeDirection dir)
 #else  
                      GraphAccess::EdgeDirection dir)
 #endif  
@@ -82,8 +83,9 @@ class BaseGraphCreateWrap : public BaseGraphCreate
     { return new IteratorImplTemplate<Node*,typename GraphImpl::NodeIterator>
             (impl->GetNodeIterator()); }
   EdgeIterator GetNodeEdgeIterator( const Node* n, 
+// DQ (8/31/2009): This is required for EDG to compile this code!
 #ifdef USE_ROSE
-                                 ::GraphAccess::EdgeDirection dir) const
+                               ::GraphAccess::EdgeDirection dir) const
 #else  
                                  GraphAccess::EdgeDirection dir) const
 #endif                                 
@@ -91,10 +93,11 @@ class BaseGraphCreateWrap : public BaseGraphCreate
              (impl->GetNodeEdgeIterator(static_cast<const typename GraphImpl::Node*>(n),
                                         TranslateDirection(dir))); }
   Node* GetEdgeEndPoint( const BaseGraphEdge* e, 
+// DQ (8/31/2009): This is required for EDG to compile this code!
 #ifdef USE_ROSE  
-                                ::GraphAccess::EdgeDirection dir) const
+                            ::GraphAccess::EdgeDirection dir) const
 #else
-                                GraphAccess::EdgeDirection dir) const
+                              GraphAccess::EdgeDirection dir) const
 #endif                                
     { return  impl->GetEdgeEndPoint(static_cast<const typename GraphImpl::Edge*>(e), 
                                     TranslateDirection(dir)); }
@@ -106,23 +109,26 @@ class BaseGraphCreateWrap : public BaseGraphCreate
   GraphImpl* impl;
 
   typename GraphImpl::EdgeDirection
+// DQ (8/31/2009): This is required for EDG to compile this code!
 #ifdef USE_ROSE  
   TranslateDirection( ::GraphAccess::EdgeDirection dir) const
 #else  
   TranslateDirection( GraphAccess::EdgeDirection dir) const
 #endif  
   { switch (dir) {
-#ifdef USE_ROSE  
-     case ::GraphAccess::EdgeOut: 
-#else     
+// DQ (8/31/2009): This is required for EDG to compile this code!
+#ifdef USE_ROSE
+      case ::GraphAccess::EdgeOut: 
+#else
      case GraphAccess::EdgeOut: 
-#endif     
+#endif
        return GraphImpl::EdgeOut;
-#ifdef USE_ROSE  
+// DQ (8/31/2009): This is required for EDG to compile this code!
+#ifdef USE_ROSE
      case ::GraphAccess::EdgeIn: 
-#else     
+#else
      case GraphAccess::EdgeIn: 
-#endif     
+#endif
        return GraphImpl::EdgeIn;
      default:
        assert(false);

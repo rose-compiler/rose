@@ -84,6 +84,9 @@ class AstNodeMemoryPoolStatistics : public ROSE_VisitTraversal
 
           int counter;
 
+       // DQ (9/1/2009): Added support to computer percentage of total memory for each IR node
+          int totalMemoryUsed; // = SgNode::memoryUsage();
+
           AstNodeMemoryPoolStatistics();
           virtual ~AstNodeMemoryPoolStatistics();
        // virtual std::string toString(SgNode* node); // to become obsolete

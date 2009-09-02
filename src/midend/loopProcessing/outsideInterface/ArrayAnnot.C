@@ -503,6 +503,9 @@ template class OperatorAnnotCollection<ArrayModifyDescriptor>;
 template class OperatorAnnotCollection<ArrayConstructDescriptor>;
 template class TypeAnnotCollection<ArrayDefineDescriptor>;
 template class TypeAnnotCollection<ArrayOptDescriptor>;
+
 #include <AnnotDescriptors.C>
 template class CollectPair<TypeDescriptor, ArrayDescriptor, 0>;
+
+
 

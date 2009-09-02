@@ -21,18 +21,32 @@ has_value( const std::string& name, SymbolicValDescriptor* r) const
       const_iterator p = find(name);
       if (p == end())
         return false;
+
       if (r != 0)
-        *r = (*p).second;
+         {
+// DQ (8/30/2009): Debugging ROSE compiling ROSE (this statement does not compile using ROSE).
+#ifndef USE_ROSE
+           *r = (*p).second;
+#endif
+         }
+
       return true;
     }
+
 
 bool HasValueDescriptor::merge (const HasValueDescriptor& that)
 {
   bool change = false;;
+
   for (const_iterator p = that.begin(); p != that.end(); ++p) {
+
+// DQ (8/30/2009): Debugging ROSE compiling ROSE (this statement does not compile using ROSE).
+#ifndef USE_ROSE
     if (operator[]((*p).first).merge((*p).second))
        change = true;
+#endif
   }
+
   return change;
 }
 
@@ -248,3 +262,5 @@ is_access_value( CPPAstInterface& fa, const AstNodePtr& exp, AstNodePtr* obj, st
 template class TypeAnnotCollection<HasValueDescriptor>;
 template class TypeCollection<HasValueDescriptor>;
 #endif
+
+

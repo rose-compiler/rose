@@ -225,7 +225,13 @@ bool DependenceGraph::hasOutgingEdge(DependenceNode * src,EdgeType compare)
 std::set < DependenceGraph::EdgeType >
     DependenceGraph::edgeType(DependenceNode * from, DependenceNode * to)
 {
+// DQ (8/30/2009): Debugging ROSE compiling ROSE (this statement does not compile using ROSE).
+// This is part of an error in DependenceGraph.h that is also commented out when ROSE is used to compile ROSE.
+#ifndef USE_ROSE
     return edgeMap[Edge(from, to)];
+#else
+    return std::set < DependenceGraph::EdgeType >();
+#endif
 }
 
 void DependenceGraph::writeDot(char *filename)

@@ -691,17 +691,18 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
           static uint16_t swap_bytes(uint16_t n);
           static uint32_t swap_bytes(uint32_t n);
           static uint64_t swap_bytes(uint64_t n);
+
           static int8_t swap_bytes(int8_t n);
           static int16_t swap_bytes(int16_t n);
           static int32_t swap_bytes(int32_t n);
           static int64_t swap_bytes(int64_t n);
-
 
        /* Little-endian byte order conversions */
           static uint8_t le_to_host(uint8_t n);
           static uint16_t le_to_host(uint16_t n);
           static uint32_t le_to_host(uint32_t n);
           static uint64_t le_to_host(uint64_t n);
+
           static int8_t le_to_host(int8_t n);
           static int16_t le_to_host(int16_t n);
           static int32_t le_to_host(int32_t n);
@@ -711,8 +712,8 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
           static void host_to_le(unsigned h, uint16_t *n);
           static void host_to_le(unsigned h, uint32_t *n);
           static void host_to_le(addr_t h, uint64_t *n);
-	  static void host_to_le(rva_t h, uint32_t *n);
-	  static void host_to_le(rva_t h, uint64_t *n);
+          static void host_to_le(rva_t h, uint32_t *n);
+          static void host_to_le(rva_t h, uint64_t *n);
           static void host_to_le(int h, int8_t *n);
           static void host_to_le(int h, int16_t *n);
           static void host_to_le(int h, int32_t *n);
@@ -732,8 +733,8 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
           static void host_to_be(unsigned h, uint16_t *n);
           static void host_to_be(unsigned h, uint32_t *n);
           static void host_to_be(addr_t h, uint64_t *n);
-	  static void host_to_be(rva_t h, uint32_t *n);
-	  static void host_to_be(rva_t h, uint64_t *n);
+          static void host_to_be(rva_t h, uint32_t *n);
+          static void host_to_be(rva_t h, uint64_t *n);
           static void host_to_be(int h, int8_t *n);
           static void host_to_be(int h, int16_t *n);
           static void host_to_be(int h, int32_t *n);
@@ -754,7 +755,7 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
           static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, unsigned h, uint16_t *np);
           static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, unsigned h, uint32_t *np);
           static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, addr_t h, uint64_t *np);
-	  static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, rva_t h, uint64_t *np);
+          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, rva_t h, uint64_t *np);
           static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, int h, int8_t *np);
           static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, int h, int16_t *np);
           static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, int h, int32_t *np);

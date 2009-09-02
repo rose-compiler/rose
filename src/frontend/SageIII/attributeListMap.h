@@ -140,7 +140,8 @@ class AttributeListMap {
 			 case T_PP_PRAGMA:    //#pragma
 			    // Part of the AST in ROSE. Do not handle it this way 
 			    return false;
-			    break; 
+          // DQ (8/29/2009): Unreachable statement after "return" 
+          // break; 
 
 			 default:
 			    // This case should not be reached 
@@ -243,19 +244,26 @@ class AttributeListMap {
 			       case T_PP_PRAGMA:    //#pragma
 				       // Part of the AST in ROSE. Do not handle it this way 
 				       return;
-				       break; 
+
+                // DQ (8/29/2009): Unreachable statement after "return" 
+                // break; 
 
 			       default:
-				       // This case should not be reached 
-				       if(SgProject::get_verbose() >= 1){
+                   {
+				      // This case should not be reached 
 
-					       std::cout << "Error: Unknown preprocessor declaration found : " << directive.get_value().c_str() << std::endl;
-					       std::cout << boost::wave::get_token_name(wave_typeid) << " " << directive.get_position().get_file().c_str() << " " << directive.get_position().get_line() 
-						       << " " << directive.get_position().get_column() << std::endl;
-					       ROSE_ASSERT(false==true);
+                  // DQ (8/29/2009): It is a horrible idea to only fail when verbose mode is turned on!
+				         if (SgProject::get_verbose() >= 1)
+                        {
+                          std::cout << "Error: Unknown preprocessor declaration found : " << directive.get_value().c_str() << std::endl;
+                          std::cout << boost::wave::get_token_name(wave_typeid) << " " << directive.get_position().get_file().c_str() << " " << directive.get_position().get_line() 
+                                    << " " << directive.get_position().get_column() << std::endl;
+                          ROSE_ASSERT(false);
+                        }
+
+                     rose_typeid  = PreprocessingInfo::CpreprocessorUnknownDeclaration;
+                     break;
 				       }
-				       rose_typeid  = PreprocessingInfo::CpreprocessorUnknownDeclaration;
-				       break;
 
 		       }
 
@@ -301,7 +309,7 @@ class AttributeListMap {
 		       PreprocessingInfo* preprocMacroDef = new PreprocessingInfo(macro_def,PreprocessingInfo::before);
 
 		       return preprocMacroDef;
-	       };
+	       }
 
        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
        //   The function 
@@ -366,7 +374,7 @@ class AttributeListMap {
 		       if( defMap.find(mapKey) == defMap.end() )
 			       defMap[mapKey]=preprocMacroDef;
 
-	       };
+	       }
 
        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
        //   The function 
@@ -478,7 +486,7 @@ class AttributeListMap {
 #endif
                return false;        
 
-	       };
+	       }
 
        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
        //   The function 
@@ -552,7 +560,7 @@ class AttributeListMap {
 
 		       ++rescan_macro_status;
                 return false;
-	       };
+	       }
 
        ///////////////////////////////////////////////////////////////////////////
        //  

@@ -2511,7 +2511,10 @@ TestAstSymbolTables::visit ( SgNode* node )
                        {
                          SgNamespaceSymbol* namespaceSymbol = isSgNamespaceSymbol(symbol);
                          ROSE_ASSERT(namespaceSymbol != NULL);
-                         ROSE_ASSERT(namespaceSymbol->get_declaration() != NULL);
+
+                      // DQ (8/30/2009): Added namespace alias support.
+                      // ROSE_ASSERT(namespaceSymbol->get_declaration() != NULL);
+                         ROSE_ASSERT( (namespaceSymbol->get_declaration() != NULL && namespaceSymbol->get_isAlias() == false) || (namespaceSymbol->get_aliasDeclaration() != NULL && namespaceSymbol->get_isAlias() == true) );
                          break;
                        }
 
@@ -2811,7 +2814,10 @@ TestAstAccessToDeclarations::test ( SgNode* node )
           case V_SgNamespaceSymbol:
              {
                SgNamespaceSymbol* tmp = isSgNamespaceSymbol(node);
-               ROSE_ASSERT(tmp->get_declaration() != NULL);
+
+            // DQ (8/30/2009): Added namespace alias support.
+            // ROSE_ASSERT(tmp->get_declaration() != NULL);
+               ROSE_ASSERT( (tmp->get_declaration() != NULL && tmp->get_isAlias() == false) || (tmp->get_aliasDeclaration() != NULL && tmp->get_isAlias() == true) );
                break;
              }
 

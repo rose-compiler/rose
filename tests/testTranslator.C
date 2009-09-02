@@ -21,9 +21,14 @@ int main( int argc, char * argv[] )
      SgProject* project = frontend(argc,argv);
      AstTests::runAllTests(project);
 
+// DQ (8/22/2009): I would like to have the test code used for ROSE be an example of simplicity.
+// if there is any specialized transformation required then it should be put into ROSE directly
+// not into the ROSE test code.
+#if 0
      if (getenv("ROSE_TEST_ELSE_DISAMBIGUATION") != NULL) {
        removeEmptyElses(project);
      }
+#endif
 
      return backend(project); // only backend error code is reported
    }

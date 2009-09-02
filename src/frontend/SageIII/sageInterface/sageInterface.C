@@ -1,8 +1,11 @@
 #include "rose.h"
 #include "sage3.h"
+
 #include "sageInterface.h"
+
 // DQ (10/14/2006): Added supporting help functions
 #include "rewrite.h"
+
 // Liao 1/24/2008 : need access to scope stack sometimes
 #include "sageBuilder.h"
 
@@ -10,12 +13,12 @@
 // Liao, 2/26/2009
 #include "AstInterface_ROSE.h"
 #include "LoopTransformInterface.h"
+
 #include "DepInfoAnal.h" // for AnalyzeStmtRefs()
 #include "ArrayAnnot.h"
 #include "ArrayInterface.h"
 
 #include "LoopUnroll.h"
-
 #include "abstract_handle.h"
 #include "roseAdapter.h"
 
@@ -29,8 +32,7 @@ typedef std::set<SgLabelStatement*> SgLabelStatementPtrSet;
 using namespace std;
 using namespace SageBuilder;
 
-
- int SageInterface::gensym_counter=0;
+int SageInterface::gensym_counter = 0;
  
 // DQ: 09/23/03
 // We require a global function for getting the string associated 
@@ -1943,14 +1945,7 @@ SageInterface::buildForwardFunctionDeclaration ( SgTemplateInstantiationMemberFu
                     ROSE_ASSERT(returnValue != NULL);
                     return returnValue;
                   }
-        } 
-#ifdef USE_ROSE // workaround for bug 322
-        ;
-        NondefiningFunctionDeclarationCopyType nondefiningFunctionDeclarationCopy;
-
-#else        
-        nondefiningFunctionDeclarationCopy;
-#endif        
+        } nondefiningFunctionDeclarationCopy;
 
   // DQ (10/20/2007): The more accurate copy mechanism now builds us a defining declaration to go with the non-defining declaration!
   // This is because we have to remove the pointers from non-defining declaration to the definition (which should be pointed to ONLY by the defining declaration!
@@ -6287,14 +6282,8 @@ SgAssignInitializer* SageInterface::splitExpression(SgExpression* from, string n
   SgType* vartype = from->get_type();
   SgNode* fromparent = from->get_parent();
   vector<SgExpression*> ancestors;
-#ifdef USE_ROSE //workaround for bug 326
-  SgExpression *expr = from, *anc = isSgExpression(fromparent);
-  for ( ; anc != 0;
-      expr = anc, anc = isSgExpression(anc->get_parent())) 
-#else  
   for (SgExpression *expr = from, *anc = isSgExpression(fromparent); anc != 0;
       expr = anc, anc = isSgExpression(anc->get_parent())) 
-#endif    
   {
     if ((isSgAndOp(anc) && expr != isSgAndOp(anc)->get_lhs_operand()) ||
         (isSgOrOp(anc) && expr != isSgOrOp(anc)->get_lhs_operand()) ||
