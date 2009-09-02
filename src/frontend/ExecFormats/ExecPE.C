@@ -482,7 +482,7 @@ SgAsmPEFileHeader::create_table_sections()
           case 12: tabname = "Import Address Table";         break;
           case 13: tabname = "Delay Import Descriptor";      break;
           case 14: tabname = "CLR Runtime Header";           break;
-          case 15: ROSE_ASSERT(!"reserved; should be zero"); break;
+          case 15: tabname = "Reserved";                     break; /*PE documentation says "must be zero", but often is not*/
           default: ROSE_ASSERT(!"too many RVA/Size pairs");  break;
         }
 
@@ -1135,6 +1135,8 @@ SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section, size_t idx, addr_t *
             e.map->dump(stderr, "    ");
         }
     }
+    if (!p_dll_name)
+        p_dll_name = new SgAsmBasicString("");
 }
 
 /* Encode a directory entry back into disk format */

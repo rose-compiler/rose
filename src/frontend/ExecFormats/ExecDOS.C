@@ -287,6 +287,7 @@ void
 SgAsmDOSExtendedHeader::ctor()
 {
     set_name(new SgAsmBasicString("DOS Extended Header"));
+    set_offset(get_header()->get_size());
     set_synthesized(true);
     set_purpose(SP_HEADER);
     set_size(sizeof(DOSExtendedHeader_disk));
