@@ -6838,10 +6838,27 @@ void SageInterface::setPragma(SgPragmaDeclaration* decl, SgPragma *pragma)
     ROSE_ASSERT(scope);
     SgClassDeclaration* nondefdecl = isSgClassDeclaration(structDecl->get_firstNondefiningDeclaration());
     ROSE_ASSERT(nondefdecl);
+    // Liao, 9/2/2009
+    // fixup missing scope when bottomup AST building is used
+    if (structDecl->get_scope() == NULL)
+      structDecl->set_scope(scope);
+    if (nondefdecl->get_scope() == NULL)
+      nondefdecl->set_scope(scope);
+
+    if (structDecl->get_parent() == NULL)
+      structDecl->set_parent(scope);
+    if (nondefdecl->get_parent() == NULL)
+      nondefdecl->set_parent(scope);
+
     SgName name= structDecl->get_name();
+    // This is rare case (translation error) when scope->lookup_class_symbol(name) will find something
+    // but nondefdecl->get_symbol_from_symbol_table() returns NULL
+    // But symbols are associated with nondefining declarations whenever possible
+    // and AST consistent check will check the nondefining declarations first
+    // Liao, 9/2/2009
     //SgClassSymbol* mysymbol = scope->lookup_class_symbol(name);
     SgClassSymbol* mysymbol = isSgClassSymbol(nondefdecl->get_symbol_from_symbol_table());
-    if (mysymbol==NULL) 
+    if (mysymbol == NULL) 
     {
       mysymbol = new SgClassSymbol(nondefdecl);
       ROSE_ASSERT(mysymbol);
@@ -6968,11 +6985,11 @@ void SageInterface::fixStatement(SgStatement* stmt, SgScopeStatement* scope)
   // fix symbol table
   if (isSgVariableDeclaration(stmt))
       fixVariableDeclaration(isSgVariableDeclaration(stmt), scope);
-  if (isStructDeclaration(stmt))
+  else if (isStructDeclaration(stmt))
       fixStructDeclaration(isSgClassDeclaration(stmt),scope);
-  if (isSgClassDeclaration(stmt))
+  else if (isSgClassDeclaration(stmt))
       fixClassDeclaration(isSgClassDeclaration(stmt),scope);
-  if (isSgLabelStatement(stmt)) 
+  else if (isSgLabelStatement(stmt)) 
       fixLabelStatement(isSgLabelStatement(stmt),scope);      
 
   // fix scope pointer for statements explicitly storing scope pointer 
@@ -6981,7 +6998,6 @@ void SageInterface::fixStatement(SgStatement* stmt, SgScopeStatement* scope)
      case V_SgEnumDeclaration: 
      case V_SgTemplateDeclaration:
      case V_SgTypedefDeclaration:
-     case V_SgClassDeclaration:
      case V_SgFunctionDeclaration:
   //   case V_SgLabelStatement: 
   //   Label statement' scope is special, handled in fixLabelStatement()
