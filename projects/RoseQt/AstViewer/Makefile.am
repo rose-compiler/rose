@@ -15,6 +15,8 @@ nodist_AstProperties_SOURCES =  ui_MyWidget.h
                  
 BUILT_SOURCES = ui_MyWidget.h
 
+EXTRA_DIST = MyWidget.ui
+
 
 AstProperties_LDADD = $(ROSE_LIBS)
   

@@ -47,7 +47,6 @@ compassMainGui2_LDADD = $(compass_build_tooldir)/compass/libCompassCheckers.la \
 
 compassMainGui2_DEPENDENCIES = $(compass_build_tooldir)/compass/libCompassCheckers.la
 
-endif
 
 EXTRA_DIST = \
         compassChecker.h \
@@ -55,4 +54,41 @@ EXTRA_DIST = \
         compassInterface.h \
         compassResult.h \
         compassViolation.h \
-        timer.h
+        timer.h \
+		ViolationsTableModel.h \
+		CompassMainWindow.ui \
+		MainWindow.ui \
+		CheckerTableModel.h \
+		res.qrc \
+		icons/application-exit.png \
+		icons/chronometer.png \
+		icons/compass.gif \
+		icons/dialog-cancel.png \
+		icons/dialog-close.png \
+		icons/dialog-ok-apply.png \
+		icons/document-properties.png \
+		icons/document-save-as.png \
+		icons/document-save.png \
+		icons/edit-copy.png \
+		icons/edit-cut.png \
+		icons/edit-delete.png \
+		icons/edit-find.png \
+		icons/edit-paste.png \
+		icons/edit-redo.png \
+		icons/edit-select-all.png \
+		icons/edit-undo.png \
+		icons/error.gif \
+		icons/flag-green.png \
+		icons/flag-red.png \
+		icons/flag-yellow.png \
+		icons/gears.gif \
+		icons/HelpIcon.gif \
+		icons/mail-mark-notjunk.png \
+		icons/ok.gif \
+		icons/process-stop.png \
+		icons/refresh.gif \
+		icons/view-refresh.png \
+		icons/view-statistics.png \
+		icons/window-close.png
+
+endif
