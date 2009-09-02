@@ -83,6 +83,7 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr,  std::map<std::string,ROSEAtt
    }
 #endif
 
+
 void
 attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& attributeMapForAllFiles)
    {
@@ -399,9 +400,12 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
           if (SgProject::get_verbose() >= 1)
                printf ("Adding preinclude file = %s \n",i->c_str());
 
+// DQ (8/29/2009): It appears that this test fails to compile using ROSE (some template name contains "____L" as a substring).
+#ifndef USE_ROSE
        // DQ (4/7/2006): This currently fails
           first.force_include( i->c_str(), copyOf_i == preincludeList.rend() );
        // first.force_include( i->c_str(), false);
+#endif
 
           if (SgProject::get_verbose() >= 1)
                printf ("DONE: Adding preinclude file = %s \n",i->c_str());
@@ -411,25 +415,40 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
           printf ("DONE: Adding the preinclude file \n");
 
      try{ 
+// DQ (8/29/2009): It appears that this test fails to compile using ROSE (some template name contains "____L" as a substring).
+#ifndef USE_ROSE
           while (first != last)
+#else
+          while (true)
+#endif
              {
                using namespace boost::wave;
+
                try{
+// DQ (8/29/2009): It appears that this test fails to compile using ROSE (some template name contains "____L" as a substring).
+// Each reference to "first" appears to generate an error. It appears that this test fails to compile using ROSE.
+#ifndef USE_ROSE
                     current_position = (*first).get_position();
-                    if(first->get_position().get_file()!="<built-in>"){
+
+                    if (first->get_position().get_file()!="<built-in>")
+                       {
                       // std::cout << first->get_position().get_file() << " l" << first->get_position().get_line()
                       //           << " " << (*first).get_value() << std::endl;
-                    }
+                       }
 
                     token_id id = token_id(*first);
+
                  // Attach comments found by Wave to the AST
-                    if((T_CCOMMENT == id) | (T_CPPCOMMENT == id)){
+                    if ((T_CCOMMENT == id) | (T_CPPCOMMENT == id))
+                       {
                          attributeListMap.found_directive(*first);
-                    }
+                       }
 
                     wave_tokenStream.push_back(*first);
                     first++;
+#endif
 	               }
+
 	            catch (boost::wave::cpp_exception &e)
                   {
                  // some preprocessing error
@@ -437,13 +456,13 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
                  // cerr  << "WAVE 1: " << e.file_name() << "(" << e.line_no() << "): "
                  //       << e.description() << endl;
 	               }
+
                catch (boost::wave::cpplexer::lexing_exception &e)
                   {
                  // some lexing error
                     cerr << "WAVE 2:" << e.file_name() << "(" << e.line_no() << "): "
                          << e.description() << endl;
                   }
-
              }
         }
 
@@ -453,6 +472,7 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
           cerr << "WAVE 3 (boost::wave::cpp_exception): " << e.file_name() << "(" << e.line_no() << "): "
                << e.description() << endl;
         }
+
      catch (boost::wave::cpplexer::lexing_exception &e)
         {
        // some lexing error
@@ -544,7 +564,6 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
    }
 
 
-
 // DQ (4/5/2006): Older version not using Wave preprocessor
 // This is the function to be called from the main function
 // DQ: Now called by the SgFile constructor body (I think)
@@ -608,6 +627,7 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
      }
 #endif
    }
+
 
 // EOF
 

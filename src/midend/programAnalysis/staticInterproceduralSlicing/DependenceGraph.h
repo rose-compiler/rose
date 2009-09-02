@@ -448,6 +448,9 @@ class DependenceNode:public SimpleDirectedGraphNode
  protected:
   bool highlight;
 };
+
+
+
 /* ! \class InterproceduralInfo
 
    This class holds information necessary to perform interprocedural slicing.
@@ -856,10 +859,16 @@ class DependenceGraph:public SimpleDirectedGraph
 
   // ! a map from EdgeType to all the edges of that type
   std::map < EdgeType, std::set < Edge > >edgeTypeMap;
+
+// DQ (8/30/2009): Debugging ROSE compiling ROSE (this statement does not compile using ROSE). The error is:
+// sage_gen_be.C:5286: SgEnumDeclaration* sage_gen_enum_definition(a_type*, SgDeclarationStatement*&, DataRequiredForComputationOfSourcePostionInformation*): Assertion `forwardDeclaration->get_parent() != __null' failed.
+#ifndef USE_ROSE
+
   // ! a map from an edge to all the variants of that edge in the graph
   std::map < Edge, std::set < EdgeType > >edgeMap;
-
-
+#else
+  std::map < Edge, std::set < int > >edgeMap;
+#endif
 
   bool isLibraryFunction(SgFunctionDeclaration * sgFD) const
   {
@@ -867,8 +876,8 @@ class DependenceGraph:public SimpleDirectedGraph
     else if (sgFD->get_definition() != NULL) return true;
     else return false;
   };
-
 };
+
 
 /* ! \class ControlDependenceGraph
 
@@ -1355,6 +1364,5 @@ class SystemDependenceGraph:public MergedDependenceGraph
   std::map <SgFunctionDeclaration *, InterproceduralInfo * > functionToInterfunctionalMap;
 
 };
-
 
 #endif

@@ -195,7 +195,6 @@ frontendShell (const std::vector<std::string>& argv)
               the error code.
  */
 int
-// backend(SgProject* project)
 backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelagate )
    {
   // DQ (7/12/2005): Introduce tracking of performance of ROSE.
@@ -317,8 +316,135 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
    }
 
 
-// int copy_backend( SgProject* project )
-int copy_backend( SgProject* project, UnparseFormatHelp *unparseFormatHelp )
+int
+backendUsingOriginalInputFile ( SgProject* project )
+   {
+  // DQ (8/24/2009):
+  // To work with existing makefile systems, we want to force an object file to be generated.
+  // So we want to call the backend compiler on the original input file (instead of generating
+  // an new file from the AST and running it through the backend).  The whole point is to 
+  // gnerate a object file.  The effect is that this does a less agressive test of ROSE
+  // but test only the parts required for analysis tools instead of transformation tools.
+  // This avoids some programs in the name qualification support that is called by the backend
+  // and permits testing of the parts of ROSE relevant for analysis tools (e.g. Compass).
+  // Of course we eventually want everything to work, but I want to test the compilation of 
+  // ROSE using ROSE as part of test to get Compass running regularly on ROSE.
+
+  // Note that the command generated may have to be fixup later to include more subtle details 
+  // required to link libraries, etc.  At present this function only handles the support required
+  // to build an object file.
+     string commandLineToGenerateObjectFile;
+
+
+#if 0
+     commandLineToGenerateObjectFile = "g++";
+
+     SgStringList includeList = project->get_includeDirectorySpecifierList();
+     for (SgStringList::iterator i = includeList.begin(); i != includeList.end(); i++)
+        {
+          commandLineToGenerateObjectFile += " " + *i;
+        }
+  // printf ("commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
+
+     SgStringList libraryDirectoryList = project->get_libraryDirectorySpecifierList();
+     for (SgStringList::iterator i = libraryDirectoryList.begin(); i != libraryDirectoryList.end(); i++)
+        {
+          commandLineToGenerateObjectFile += " -L" + *i;
+        }
+  // printf ("commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
+
+     SgStringList libraryList = project->get_librarySpecifierList();
+     for (SgStringList::iterator i = libraryList.begin(); i != libraryList.end(); i++)
+        {
+          commandLineToGenerateObjectFile += " " + *i;
+        }
+  // printf ("commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
+
+  // I think this is the *.a 
+     SgStringList libraryList = project->get_libraryFileList();
+     for (SgStringList::iterator i = libraryFileList.begin(); i != libraryFileList.end(); i++)
+        {
+          commandLineToGenerateObjectFile += " " + *i;
+        }
+  // printf ("commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
+
+     SgStringList objectFileList = project->get_objectFileNameList();
+     string linkOnly = (project->numberOfFiles() > 0) ? "-o " : "";
+     for (SgStringList::iterator i = objectFileList.begin(); i != objectFileList.end(); i++)
+        {
+          commandLineToGenerateObjectFile += " " + linkOnly + *i + " ";
+        }
+  // printf ("commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
+
+  // DQ (8/24/2009): Need to be able to generate an executable file if the commandline specified it so
+  // that be used in Autoconf tests by the configure script when specified as the CXX compiler.
+  // This allows CXX=<any ROSE tool> to work with Autoconf tests.
+     SgStringList sourceFileList = project->get_sourceFileNameList();
+     string compileOnly = (project->get_compileOnly() == true) ? "-c " : "";
+     for (SgStringList::iterator i = sourceFileList.begin(); i != sourceFileList.end(); i++)
+        {
+          commandLineToGenerateObjectFile += " " + compileOnly + *i;
+        }
+  // printf ("commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
+#else
+  // Specify either CC or CXX and then use the rest of the commandline...
+  // Any ROSE specific options (e.g. "-rose:xxx") should be ignored by the backend compiler.
+     if (project->get_C_only() == true)
+        {
+       // Typically "gcc"
+          commandLineToGenerateObjectFile = BACKEND_C_COMPILER_NAME_WITH_PATH;
+        }
+       else
+        {
+       // Typically "g++"
+          commandLineToGenerateObjectFile = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
+        }
+
+     SgStringList originalCommandLineArgumentList = project->get_originalCommandLineArgumentList();
+     SgStringList::iterator it = originalCommandLineArgumentList.begin();
+
+  // Iterate past the name of the compiler being called (arg[0]).
+     if (it != originalCommandLineArgumentList.end())
+          it++;
+
+  // Make a list of the remaining command line arguments
+     for (SgStringList::iterator i = it; i != originalCommandLineArgumentList.end(); i++)
+        {
+          commandLineToGenerateObjectFile += " " + *i;
+        }
+  // printf ("From originalCommandLineArgumentList(): commandLineToGenerateObjectFile = %s \n",commandLineToGenerateObjectFile.c_str());
+#endif
+
+     if ( SgProject::get_verbose() >= 1 )
+        {
+          printf ("/* numberOfFiles() = %d commandLineToGenerateObjectFile = \n%s\n*/\n",project->numberOfFiles(),commandLineToGenerateObjectFile.c_str());
+        }
+
+     int finalCombinedExitStatus = 0;
+     if (project->numberOfFiles() > 0)
+        {
+          finalCombinedExitStatus = system (commandLineToGenerateObjectFile.c_str());
+        }
+       else
+        {
+          if (project->get_C_only() == true)
+             {
+            // printf ("Link using the C language linker (when handling C programs) \n");
+               finalCombinedExitStatus = project->link("gcc");
+             }
+            else
+             {
+            // Use the default name for C++ compiler (defined at configure time)
+               finalCombinedExitStatus = project->link();
+             }
+        }
+
+     return finalCombinedExitStatus;
+   }
+
+
+int
+copy_backend( SgProject* project, UnparseFormatHelp *unparseFormatHelp )
    {
   // This is part of the copy-based unparser (from Qing).
   // This function calls the unparseFile function with a 

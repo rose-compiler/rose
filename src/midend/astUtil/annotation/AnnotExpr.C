@@ -7,7 +7,11 @@
 using namespace std;
 
 template class CloseDescriptor< SymbolicValDescriptor, '{', '}'>;
+
+// DQ (8/30/2009): Debugging ROSE compiling ROSE (this statement does not compile using ROSE).
+#ifndef USE_ROSE
 template bool CloseDescriptor< SymbolicValDescriptor, '{', '}'>::read(istream&);
+#endif
 
 void SymbolicValDescriptor :: set_val( const SymbolicVal& v) 
 {

@@ -32,12 +32,26 @@ OpenAnalysis::ROSE_CFG_Wrap :: ~ROSE_CFG_Wrap()
 }
 #endif
 
+#ifndef USE_ROSE
+// DQ (8/29/2009): EDG reports  this as an error:
+// error: declaration is incompatible with function template "void OpenAnalysis::BuildCFG(AstInterface &, const AstNodePtr &, BuildCFGConfig<Node> &)" 
+// (declared at line 54 of "/home/dquinlan/ROSE/svn-rose/src/midend/programAnalysis/CFG/CFG.h")
+// void OpenAnalysis::BuildCFG ( AstInterface& fa, const AstNodePtr& head, BuildCFGConfig<Node>& ng)
+
 template <class Node, class Edge>
 void OpenAnalysis::BuildCFG ( AstInterface& fa, const AstNodePtr& head, BuildCFGConfig<Node>& ng)
 {
   ROSE_CFG_Wrap wrap( head);
   OA2ROSE_CFG_Translate( wrap, ng);
 }
+#endif
+
+
+#ifndef USE_ROSE
+// DQ (8/29/2009): EDG reports  this as an error:
+// error: declaration is incompatible with function template "void OpenAnalysis::OA2ROSE_CFG_Translate(OpenAnalysis::ROSE_CFG_Wrap &, BuildCFGConfig<Node> &)"
+// (declared at line 51 of "/home/dquinlan/ROSE/svn-rose/src/midend/programAnalysis/CFG/CFG.h")
+// void OpenAnalysis::OA2ROSE_CFG_Translate ( ROSE_CFG_Wrap& wrap, BuildCFGConfig<Node>& ng)
 
 template <class Node, class Edge>
 void OpenAnalysis::OA2ROSE_CFG_Translate ( ROSE_CFG_Wrap& wrap, BuildCFGConfig<Node>& ng)
@@ -73,6 +87,7 @@ void OpenAnalysis::OA2ROSE_CFG_Translate ( ROSE_CFG_Wrap& wrap, BuildCFGConfig<N
         }
    }
 }
+#endif
 
 
 

@@ -1902,9 +1902,6 @@ $VARIABLE_DECLARATIONS\n\n\
 
      staticStringSourceCodeTemplate = prefixString + staticStringSourceCodeTemplate;
 
-  // Removed from staticStringSourceCodeTemplate
-  // define USE_ROSE 1
-
   // We need to have a string built from dynamically allocated memory using 
   // the C++ new operator since it will be deleted in the copyEdit() function
   // This avoids a purify error (so we have to call stringDuplicate())

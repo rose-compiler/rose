@@ -1,6 +1,7 @@
 #include "rose.h"
 
 #include "DependenceGraph.h"
+
 #include "DominatorTree.h"
 #include <set>
 #include <iostream>
@@ -332,6 +333,8 @@ void ControlDependenceGraph::computeInterproceduralInformation(InterproceduralIn
     }
 }
 
+
+// DQ (8/30/2009): This appears to be a large block of code commented out!
 #if 0
 void ControlDependenceGraph::_buildCDG()
 {

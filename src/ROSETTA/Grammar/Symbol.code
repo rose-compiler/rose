@@ -82,6 +82,9 @@ HEADER_RENAME_SYMBOL_START
 
 HEADER_RENAME_SYMBOL_END
 
+HEADER_NAMESPACE_SYMBOL_START
+          void post_construction_initialization();
+HEADER_NAMESPACE_SYMBOL_END
 
 // #########################################################
 // #########################################################
@@ -685,6 +688,59 @@ XXXXX
 SOURCE_RENAME_SYMBOL_END
 
 
+SOURCE_NAMESPACE_SYMBOL_START
+
+SgName
+SgNamespaceSymbol::get_name() const 
+   {
+  // DQ (8/30/2009): Added support for SgNamespaceAliasDeclarationStatement
+     SgName n;
+     if (p_isAlias == true)
+        {
+          n = (get_aliasDeclaration() != NULL) ? get_aliasDeclaration()->get_name() : SgName("undefined");
+        }
+       else
+        {
+          n = (get_declaration() != NULL) ? get_declaration()->get_name() : SgName("undefined");
+        }
+
+  // return (get_declaration() != NULL) ? get_declaration()->get_name() : SgName("undefined");
+     return n;
+   }
+
+// DQ (2/6/2007): This returns the basis for the SHORT_GET_NAME
+SgNode*
+SgNamespaceSymbol::get_symbol_basis() const
+   {
+  // DQ (8/30/2009): Added support for SgNamespaceAliasDeclarationStatement
+     SgNode* declaration = NULL;
+     if (p_isAlias == true)
+        {
+          declaration = get_aliasDeclaration();
+        }
+       else
+        {
+          declaration = get_declaration();
+        }
+
+  // return get_declaration();
+     return declaration;
+   }
+
+void
+SgNamespaceSymbol::post_construction_initialization()
+   {
+  // DQ (8/30/2009): Added support for namespace alias in the SgNamespaceSymbol
+
+     ROSE_ASSERT(p_declaration != NULL || p_aliasDeclaration != NULL);
+     ROSE_ASSERT(p_declaration == NULL || p_aliasDeclaration == NULL);
+
+  // Mark this symbol as representing a namespace alias
+     if (p_aliasDeclaration != NULL)
+          set_isAlias(true);
+   }
+
+SOURCE_NAMESPACE_SYMBOL_END
 
 
 

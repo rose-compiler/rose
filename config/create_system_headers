@@ -118,11 +118,28 @@ compilerName="`basename $1`"
 compilerBinDir="`dirname $1`"
 roseHome="$3"
 
-# echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-# echo "compilerName   = $compilerName"
-# echo "compilerBinDir = $compilerBinDir"
-# echo "roseHome       = $roseHome"
-# echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+echo "compilerName   = $compilerName"
+echo "compilerBinDir = $compilerBinDir"
+echo "roseHome       = $roseHome"
+echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+
+# DQ (8/24/2009): Allow either "roseTranslator" or "roseAnalysis"
+# if [ "$compilerName" == "roseTranslator" ]
+# if [ "$compilerName" == "roseTranslator" || "$compilerName" == "roseAnalysis" ]
+if [ "$compilerName" == "roseTranslator" ]
+then
+compilerName="g++"
+echo "Changed compilerName from roseTranslator to $compilerName"
+
+echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+echo "After change: compilerName   = $compilerName"
+echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+elif [ "$compilerName" == "roseAnalysis" ]
+then
+compilerName="g++"
+echo "Changed compilerName from roseAnalysis to $compilerName"
+fi
 
 # we try to ensure that paths can be given, to enable using different versions of the same compiler
 if [ "$compilerBinDir" != "." ]
@@ -175,6 +192,7 @@ fi
 # no src dir specified, try to determine automatically based on compiler name
  case "$compilerName" in
   # Support for compiling ROSE with GNU g++ compiler
+  # g++|gcc|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|roseTranslator)
     g++|gcc|icpc|icc|mpicc|mpic++|mpiCC|mpicxx)
          if [ "$compilerName" = "gcc" -o "$compilerName" = "icc" -o "$compilerName" = "mpicc" ]
          then
@@ -195,8 +213,11 @@ fi
          ;;
 
   # Support for compiling ROSE with ROSE (must use translator named: "roseTranslator"
-    roseTranslator) 
-         ;;
+  # DQ (8/22/2009): Commented this out so that support would be the same as for g++ (ROSE acts like g++ by default)
+  #  roseTranslator)
+  #       compilerName="g++"
+  #       echo "Note: changing compilerName configure variable from \"roseTranslator\" to $compilerName"
+  #       ;;
     *) echo "ERROR: Not able to recognize compiler $1"
        echo "ERROR: Usage is create_system_headers compiler target_dir src_dir"
        exit 1

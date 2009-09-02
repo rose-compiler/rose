@@ -33,3 +33,6 @@ include_HEADERS = \
 #	$(CXX_SHARED_LIB_UPDATE) $@ $(libastFixup_la_OBJECTS) $(libastFixup_la_LIBADD)
 #	test -f $@ || exit 1
 
+
+noinst_PROGRAMS = testForBug
+testForBug_SOURCES = testForBug.C

@@ -34,14 +34,23 @@ write( const Container& c, ostream& out)
 {
   out << left;
   bool first = true;
+
   for (typename Container::const_iterator p = c.begin(); p != c.end(); ++p) {
     if (!first)
        out << sep;
+
+// DQ (8/30/2009): Debugging ROSE compiling ROSE (this statement does not compile using ROSE. The error is: 
+// sage_gen_be.C:10043: SgExpression* sage_gen_expr(an_expr_node*, a_boolean, DataRequiredForComputationOfSourcePostionInformation*): Assertion `optionalSourcePositionData->ok() == true' failed.
+#ifndef USE_ROSE
     (*p).write(out);
+#endif
+
     first = false;
   }
+
   out << right;
 }
+
 
 template <class First, class Second, char sep>
 bool CollectPair<First,Second, sep>:: read( istream& in)

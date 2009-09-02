@@ -5341,6 +5341,14 @@ SgSymbolTable::get_name( const SgNode* node) const
                break;
              }
 
+       // DQ (8/30/2009): Added namespace alias support.
+          case V_SgNamespaceAliasDeclarationStatement:
+             {
+               const SgNamespaceAliasDeclarationStatement* namespaceAliasDeclarationStatement = isSgNamespaceAliasDeclarationStatement(node); 
+               name = namespaceAliasDeclarationStatement->get_name();
+               break;
+             }
+
           case V_SgTemplateDeclaration:
              {
                const SgTemplateDeclaration* templateDeclaration = isSgTemplateDeclaration(node); 
@@ -7415,9 +7423,24 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                        {
                          SgNamespaceSymbol* symbol = isSgNamespaceSymbol(symbolFromTable);
                          ROSE_ASSERT(symbol != NULL);
+#if 0
                          SgNamespaceDeclarationStatement* namespaceDeclaration = symbol->get_declaration();
                          mangledName = namespaceDeclaration->get_mangled_name();
                          printf ("A SgNamespaceSymbol also has a name = %s \n",symbol->get_name().str());
+#else
+                         if (symbol->get_isAlias() == true)
+                            {
+                              SgNamespaceAliasDeclarationStatement* namespaceAliasDeclarationStatement = symbol->get_aliasDeclaration();
+                              mangledName = namespaceAliasDeclarationStatement->get_mangled_name();
+                              printf ("A SgNamespaceSymbol has an ALIAS with name = %s \n",symbol->get_name().str());
+                            }
+                           else
+                            {
+                              SgNamespaceDeclarationStatement* namespaceDeclaration = symbol->get_declaration();
+                              mangledName = namespaceDeclaration->get_mangled_name();
+                              printf ("A SgNamespaceSymbol also has a name = %s \n",symbol->get_name().str());
+                            }
+#endif
                          break;
                        }
                     case V_SgTemplateSymbol:

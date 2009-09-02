@@ -107,7 +107,11 @@ const char *rose_exception::what() const throw()
     return what_;
 }
 
-void ROSE_ABORT()
+// DQ (8/22/2009): Added throw since EDG wants to see that the throw options match when ROSE_ABORT 
+// is a macro to "abort()" in "stdlib.h". Als, attributes are not permitted in a function definition
+// So this definition just uses "__THROW"
+// void ROSE_ABORT()
+void ROSE_ABORT() __THROW
 {
     throw rose_exception( "abort" );
 }

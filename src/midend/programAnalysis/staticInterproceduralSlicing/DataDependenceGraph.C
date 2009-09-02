@@ -1,6 +1,7 @@
 #include "rose.h"
 
 #include <AstInterface_ROSE.h>
+
 #include "DependenceGraph.h"
 
 #include "DefUseAnalysis.h"
@@ -415,3 +416,5 @@ DataDependenceGraph::DataDependenceGraph(SgNode * head,EDefUse * du, Interproced
           return funcCall;
 
         }
+
+

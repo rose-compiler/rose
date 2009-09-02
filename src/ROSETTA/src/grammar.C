@@ -3290,7 +3290,9 @@ Grammar::buildTreeTraversalFunctions(Terminal& node, StringUtility::FileWithLine
                  // Reaching the default case is an error.
                     outputFile << "default: cout << \"invalid index \" << idx << "
                         << "\" in get_traversalSuccessorByIndex()\" << endl;\n"
-                        << "ROSE_ASSERT(false);\n";
+                        << "ROSE_ASSERT(false);\n"
+                 // DQ (8/31/2009): Added return statement to avoid EDG warning when compiling ROSE with ROSE.
+                        << "return NULL;\n";
                  // Close the switch.
                     outputFile << "}\n";
                   }
@@ -3300,7 +3302,9 @@ Grammar::buildTreeTraversalFunctions(Terminal& node, StringUtility::FileWithLine
             // There are no successors, so calling this function was an error. Complain.
                outputFile << "cout << \"error: get_traversalSuccessorByIndex called on node of type \" << \""
                           << node.getName() << "\" << \" that has no successors!\" << endl;\n"
-                          << "ROSE_ASSERT(false);\n";
+                          << "ROSE_ASSERT(false);\n"
+            // DQ (8/31/2009): Added return statement to avoid EDG warning when compiling ROSE with ROSE.
+                          << "return NULL;\n";
              }
           outputFile << "}\n";
        // end: generate get_traversalSuccessorByIndex() method
@@ -3408,7 +3412,9 @@ Grammar::buildTreeTraversalFunctions(Terminal& node, StringUtility::FileWithLine
             // There are no successors, so calling this function was an error. Complain.
                outputFile << "cout << \"error: get_childIndex called on node of type \" << \""
                           << node.getName() << "\" << \" that has no successors!\" << endl;\n"
-                          << "ROSE_ASSERT(false);\n";
+                          << "ROSE_ASSERT(false);\n"
+            // DQ (8/30/2009): Added return statement to avoid EDG warning when compiling ROSE with ROSE.
+                          << "return 0; \n";
              }
           outputFile << "}\n";
        // end: generate get_childIndex() method
