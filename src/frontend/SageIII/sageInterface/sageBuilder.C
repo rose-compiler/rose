@@ -3317,14 +3317,14 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
           scope = SageBuilder::topScopeStack();
 
   // TODO How about class type??
-  // build defining declaration
+  // step 1. Build defining declaration
      SgClassDefinition* classDef = buildClassDefinition();
 
 #if 1
      SgClassDeclaration* defdecl = new SgClassDeclaration (name,kind,NULL,classDef);
      ROSE_ASSERT(defdecl != NULL);
 
-     printf ("SageBuilder::buildClassDeclaration_nfi(): defdecl = %p \n",defdecl);
+//     printf ("SageBuilder::buildClassDeclaration_nfi(): defdecl = %p \n",defdecl);
 
      setOneSourcePositionForTransformation(defdecl);
   // constructor is side-effect free
@@ -3332,8 +3332,9 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
      defdecl->set_definingDeclaration(defdecl);
 #endif
 
+  // Step 2. build the nondefining declaration, 
+  // but only if the input nonDefiningDecl pointer was NULL and it does not exist
 #if 0
-  // build the nondefining declaration, but only if the input nonDefiningDecl pointer was NULL
   // SgClassDeclaration* nondefdecl = new SgClassDeclaration (name,kind,NULL,NULL);
      SgClassDeclaration* nondefdecl = (nonDefiningDecl != NULL) ? nonDefiningDecl : new SgClassDeclaration (name,kind,NULL,NULL);
      ROSE_ASSERT(nondefdecl != NULL);
@@ -3351,13 +3352,14 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
         }
        else
         {
+       // Liao 9/2/2009: This is not an error. We support bottomup AST construction and scope can be unkown.   
        // DQ (1/26/2009): I think this should be an error, but that appears it would
        // break the existing interface. Need to discuss this with Liao.
-          printf ("Warning: In SageBuilder::buildClassDeclaration_nfi(): scope == NULL \n");
+//          printf ("Warning: In SageBuilder::buildClassDeclaration_nfi(): scope == NULL \n");
         }
 
-     printf ("In SageBuilder::buildClassDeclaration_nfi(): mysymbol = %p \n",mysymbol);
-     if (mysymbol != NULL)
+  //   printf ("In SageBuilder::buildClassDeclaration_nfi(): mysymbol = %p \n",mysymbol);
+     if (mysymbol != NULL) // set links if nondefining declaration already exists.
         {
           nondefdecl = isSgClassDeclaration(mysymbol->get_declaration());
 
@@ -3369,13 +3371,13 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
           ROSE_ASSERT(nondefdecl->get_definingDeclaration() == defdecl);
           ROSE_ASSERT(nondefdecl->get_firstNondefiningDeclaration() != defdecl);
         }
-       else
+       else // build a nondefnining declaration if it does not exist
         {
        // DQ (1/25/2009): We only want to build a new declaration if we can't reuse the existing declaration.
           nondefdecl = new SgClassDeclaration(name,kind,NULL,NULL);
           ROSE_ASSERT(nondefdecl != NULL);
 
-          printf ("SageBuilder::buildClassDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
+ //         printf ("SageBuilder::buildClassDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
 
        // The nondefining declaration will not appear in the source code, but is compiler
        // generated (so we have something about the class that we can reference; e.g in
@@ -3387,8 +3389,9 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
           nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
           nondefdecl->set_definingDeclaration(defdecl);
           nondefdecl->setForward();
-
-          nondefdecl->set_parent(topScopeStack());
+       // Liao, 9/2/2009. scope stack is optional, it can be empty
+      //    nondefdecl->set_parent(topScopeStack());
+          nondefdecl->set_parent(scope);
 
           if (scope != NULL)
              {
@@ -3397,14 +3400,15 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
              }
             else
              {
+       // Liao 9/2/2009: This is not an error. We support bottomup AST construction and scope can be unkown.   
             // DQ (1/26/2009): I think this should be an error, but that appears it would
             // break the existing interface. Need to discuss this with Liao.
-               printf ("Warning: no scope provided to support symbol table entry! \n");
+            //   printf ("Warning: no scope provided to support symbol table entry! \n");
              }
         }
 #endif
 
-     printf ("SageBuilder::buildClassDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
+//     printf ("SageBuilder::buildClassDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
 
   // setOneSourcePositionForTransformation(nondefdecl);
      setOneSourcePositionNull(nondefdecl);
@@ -3420,25 +3424,27 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
 
      if (scope != NULL)  // put into fixStructDeclaration() or alike later on
         {
-          fixStructDeclaration(nondefdecl,scope);
           fixStructDeclaration(defdecl,scope);
+          fixStructDeclaration(nondefdecl,scope);
 #if 0
           SgClassSymbol* mysymbol = new SgClassSymbol(nondefdecl);
           ROSE_ASSERT(mysymbol);
           scope->insert_symbol(name, mysymbol);
-#endif
           printf ("@@@@@@@@@@@@@@ In buildClassDeclaration_nfi(): setting scope of defining and non-defining declaration to scope = %s \n",scope->class_name().c_str());
           defdecl->set_scope(scope);
           nondefdecl->set_scope(scope);
 
        // defdecl->set_parent(scope);
 
+       // Liao, 9/2/2009. merged into fixStructDeclaration
        // DQ (1/25/2009): The scope is not the same as the parent, since the scope is logical, and the parent is structural (note that topScopeStack() is structural).
-       // nondefdecl->set_parent(scope);
-          nondefdecl->set_parent(topScopeStack());
+        nondefdecl->set_parent(scope);
+       //   nondefdecl->set_parent(topScopeStack());
+       // Liao, 9/2/2009. scope stack is optional, it can be empty
+     defdecl->set_parent(scope);
+     //defdecl->set_parent(topScopeStack());
+#endif
         }
-
-     defdecl->set_parent(topScopeStack());
 
   // DQ (1/26/2009): I think we should assert this, but it breaks the interface as defined
   // by the test code in tests/roseTests/astInterfaceTests.
