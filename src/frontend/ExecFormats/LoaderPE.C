@@ -1,5 +1,9 @@
 #include "rose.h"
 
+LoaderPE::LoaderPE() {
+    set_debug(stderr);
+}
+
 /* Returns sections in order of their definition in the PE Section Table */
 SgAsmGenericSectionPtrList
 LoaderPE::order_sections(const SgAsmGenericSectionPtrList &sections) 
@@ -20,31 +24,35 @@ LoaderPE::order_sections(const SgAsmGenericSectionPtrList &sections)
 
 /* This algorithm was implemented based on an e-mail from Cory Cohen at CERT. [RPM 2009-08-17] */
 void
-LoaderPE::align_values(SgAsmGenericSection *section, rose_addr_t *va, rose_addr_t *size, rose_addr_t *offset)
+LoaderPE::align_values(SgAsmGenericSection *section, rose_addr_t *va_p, rose_addr_t *mem_size_p,
+                       rose_addr_t *offset_p, rose_addr_t *file_size_p)
 {
     SgAsmGenericHeader *header = section->get_header();
     ROSE_ASSERT(header!=NULL);
     ROSE_ASSERT(section->is_mapped());
 
+    /* File and memory alignment must be between 1 and 0x200 (512), inclusive */
     rose_addr_t file_alignment = section->get_file_alignment();
     if (file_alignment>0x200 || 0==file_alignment)
         file_alignment = 0x200;
-
     rose_addr_t mapped_alignment = section->get_mapped_alignment();
     if (0==mapped_alignment)
         mapped_alignment = 0x200;
 
+    /* Align file size upward even before we align the file offset downward. */
     rose_addr_t file_size = ALIGN_UP(section->get_size(), file_alignment);
 
-    rose_addr_t mapped_size = section->get_mapped_size();
-    if (file_size > mapped_size)
-        mapped_size = file_size;
+    /* Map the entire section's file content (aligned) or the requested map size, whichever is larger. */
+    rose_addr_t mapped_size = std::max(section->get_mapped_size(), file_size);
 
+    /* Align file offset downward but do not adjust file size. */
     rose_addr_t file_offset = ALIGN_DN(section->get_offset(), file_alignment);
 
+    /* Align the relative virtual address downward without regard for the base virtual address, and do not adjust mapped size. */
     rose_addr_t mapped_va = header->get_base_va() + ALIGN_DN(section->get_mapped_rva(), mapped_alignment);
 
-    *va = mapped_va;
-    *size = mapped_size;
-    *offset = file_offset;
+    *va_p = mapped_va;
+    *mem_size_p = mapped_size;
+    *offset_p = file_offset;
+    *file_size_p = mapped_size;
 }

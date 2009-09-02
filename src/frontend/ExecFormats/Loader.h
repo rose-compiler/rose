@@ -106,9 +106,10 @@ public:
 
     /** Given a section, return the aligned mapping address, offset, and size. The version defined in the loader class uses
      *  the section memory and file alignment values, aligning the virtual address and file offset downward and adjusting the
-     *  size upward (however, we make no attempt to align the size since it's not clear whether it should be aligned according
-     *  to file constraints, memory constraints, or both. */
-    virtual void align_values(SgAsmGenericSection*, rose_addr_t *va, rose_addr_t *size, rose_addr_t *offset);
+     *  memory and file sizes upward */
+    virtual void align_values(SgAsmGenericSection*,
+                              rose_addr_t *va,     rose_addr_t *mem_size,
+                              rose_addr_t *offset, rose_addr_t *file_size);
 
     /** Returns the list of sections in the file in the order they would be mapped.  This function makes no distinction between
      *  sections that would ultimately be selected and those that wouldn't. In other words, the order that sections are mapped

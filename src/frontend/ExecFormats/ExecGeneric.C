@@ -834,7 +834,7 @@ SgAsmGenericFile::read_content(const MemoryMap *map, addr_t va, void *dst_buf, a
         map = get_loader_map();
     ROSE_ASSERT(map!=NULL);
 
-    /* Note: This is the same algorithm as used by MemoryMap::readRVA() except we do it here so that we have an opportunity
+    /* Note: This is the same algorithm as used by MemoryMap::read() except we do it here so that we have an opportunity
      *       to track the file byte references. */
     size_t ncopied = 0;
     while (ncopied < size) {
@@ -843,13 +843,17 @@ SgAsmGenericFile::read_content(const MemoryMap *map, addr_t va, void *dst_buf, a
         size_t m_offset = va - m->get_va();                             /*offset relative to start of map element*/
         ROSE_ASSERT(m_offset < m->get_size());                          /*or else map->findRVA() malfunctioned*/
         size_t nread = std::min(size-ncopied, (addr_t)m->get_size()-m_offset); /*bytes to read in this pass*/
-        size_t file_offset = m->get_offset() + m_offset;
-        ROSE_ASSERT(file_offset<get_data().size());
-        ROSE_ASSERT(file_offset+nread<=get_data().size());
-        memcpy((char*)dst_buf+ncopied, &(get_data()[file_offset]), nread);
+        if (m->is_anonymous()) {
+            memset((char*)dst_buf+ncopied, 0, nread);
+        } else {
+            size_t file_offset = m->get_offset() + m_offset;
+            ROSE_ASSERT(file_offset<get_data().size());
+            ROSE_ASSERT(file_offset+nread<=get_data().size());
+            memcpy((char*)dst_buf+ncopied, &(get_data()[file_offset]), nread);
+            if (get_tracking_references())
+                mark_referenced_extent(file_offset, nread);
+        }
         ncopied += nread;
-        if (get_tracking_references())
-            mark_referenced_extent(file_offset, nread);
     }
 
     if (ncopied<size) {
