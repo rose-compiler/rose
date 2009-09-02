@@ -20,6 +20,12 @@ Partitioner::detectBasicBlocks(const Disassembler::InstructionMap &insns) const
 {
     BasicBlockStarts bb_starts;
 
+    /* The first instruction always starts a basic block. */
+    if (insns.size()>0) {
+        rose_addr_t insn_va = insns.begin()->first;
+        bb_starts[insn_va] = BasicBlockStarts::mapped_type();
+    }
+
     for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
         SgAsmInstruction *insn = ii->second;
         rose_addr_t insn_va = insn->get_address();
@@ -109,7 +115,7 @@ Partitioner::buildTree(const Disassembler::InstructionMap &insns, const BasicBlo
     std::map<rose_addr_t, SgAsmFunctionDeclaration*> funcs;
 
     /* Every function start must also be a basic block start. This buildTree method will work fine even if we encounter a
-     * violation of this rule, but a violation probably indicates that there's bad logic elswhere. */
+     * violation of this rule, but a violation probably indicates that there's bad logic elsewhere. */
     for (FunctionStarts::const_iterator fsi=func_starts.begin(); fsi!=func_starts.end(); ++fsi) {
         BasicBlockStarts::const_iterator bbsi = bb_starts.find(fsi->first);
         ROSE_ASSERT(bbsi!=bb_starts.end());
@@ -117,10 +123,10 @@ Partitioner::buildTree(const Disassembler::InstructionMap &insns, const BasicBlo
 
     /* If there are any basic blocks whose addresses are less than the first known function, then create a new function to
      * hold all such basic blocks. */
-    if (bbs.size()>0 && func_starts.size()>0) {
+    if (bbs.size()>0) {
+        rose_addr_t lowest_func_addr = func_starts.size()>0 ? func_starts.begin()->first : bbs.begin()->first;
         rose_addr_t lowest_bb_addr = bbs.begin()->first;
-        rose_addr_t lowest_func_addr = func_starts.begin()->first;
-        if (lowest_bb_addr < lowest_func_addr) {
+        if (lowest_bb_addr < lowest_func_addr || func_starts.size()==0) {
             SgAsmFunctionDeclaration *f = new SgAsmFunctionDeclaration;
             f->set_address(lowest_bb_addr);
             funcs.insert(std::make_pair(lowest_bb_addr, f));
@@ -148,7 +154,7 @@ Partitioner::buildTree(const Disassembler::InstructionMap &insns, const BasicBlo
     for (std::map<rose_addr_t, SgAsmBlock*>::iterator bbi=bbs.begin(); bbi!=bbs.end(); ++bbi) {
         SgAsmBlock *bb = bbi->second;
         uint64_t bb_va = bb->get_address();
-        ROSE_ASSERT(bb_va==bb->get_address());
+        ROSE_ASSERT(bbi->first==bb->get_address());
 
         /* This is based on the algorithm in putInstructionsIntoBasicBlocks, with the same restrictions.  This is not quite as
          * good as what IDA does -- I've read that it takes control flow into account so functions can be non-contiguous in
