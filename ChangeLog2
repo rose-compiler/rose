@@ -1,3 +1,40 @@
+2009-09-02 01:40  hamilton37
+
+	* [r7057]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/Makefile.am,
+	  /trunk/ROSE/projects/RoseQt/AstViewer/Makefile.am,
+	  /trunk/ROSE/projects/RoseQt/Makefile.am,
+	  /trunk/ROSE/projects/RoseQt/TextEditPainter/Makefile.am,
+	  /trunk/ROSE/projects/compass/tools/compass/gui2/Makefile.am:
+	  Added more EXTRA_DIST files, extending r7032 so that more Qt
+	  tools build.
+	  
+	  The following projects had Qt dependencies and incorrect or
+	  missing EXTRA_DIST
+	  lists:
+	  compass/gui2
+	  RoseQt
+	  RTED/CppRuntimeSystem/DebuggerQt
+
+2009-09-02 01:40  hamilton37
+
+	* [r7056]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/Makefile.am:
+	  Fixed broken `make dist` from r7032.
+	  
+	  Revision 7032 erroneously included some generated QT files in
+	  _SOURCES. As it
+	  happens, these files could still be generated if configure had
+	  been run without
+	  the --with-roseQT flag if moc, rcc, etc. were on the PATH.
+
+2009-09-02 01:14  panas2
+
+	* [r7055]
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.h:
+	  Fix in SageInterface to support cloning of class declarations
+
 2009-09-01 18:13  hamilton37
 
 	* [r7053] /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
