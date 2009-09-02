@@ -34,5 +34,5 @@ include_HEADERS = \
 #	test -f $@ || exit 1
 
 
-noinst_PROGRAMS = testForBug
-testForBug_SOURCES = testForBug.C
+# noinst_PROGRAMS = testForBug
+# testForBug_SOURCES = testForBug.C
