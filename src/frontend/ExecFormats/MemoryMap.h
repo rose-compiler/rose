@@ -10,17 +10,34 @@ public:
      *  virtual address space to some contiguous region of the file. */
     class MapElement {
     public:
+        /** Creates a mapping relative to a file address. */
         MapElement(rose_addr_t va, size_t size, rose_addr_t offset)
-            : va(va), size(size), offset(offset) {}
+            : va(va), size(size), anonymous(false), offset(offset) {}
+
+        /** Creates an anonymous mapping where all addresses of the mapping are assumed to contain zero bytes. */
+        MapElement(rose_addr_t va, size_t size)
+            : va(va), size(size), anonymous(true), offset(0) {}
 
         /** Returns the starting virtual address for this map element. */
-        rose_addr_t get_va() const {return va;}
+        rose_addr_t get_va() const {
+            return va;
+        }
 
         /** Returns the size in bytes represented by the entire map element. */
-        size_t get_size() const {return size;}
+        size_t get_size() const {
+            return size;
+        }
+
+        /** Returns true if the map element is anonymous. */
+        bool is_anonymous() const {
+            return anonymous;
+        }
 
         /** Returns the starting offset for this map element. */
-        rose_addr_t get_offset() const {return offset;}
+        rose_addr_t get_offset() const {
+            if (anonymous) throw NotMapped(NULL, va);
+            return offset;
+        }
 
         /** Returns the starting offset of the specified virtual address or throws an exception if the
          *  virtual address is not represented by this map element. */
@@ -30,6 +47,7 @@ public:
         friend class MemoryMap;
         rose_addr_t va;                 /* Virtual address for start of region */
         size_t size;                    /* Number of bytes in region */
+        bool anonymous;                 /* Mapped ananymously (i.e., no backing store and initialized to all zero) */
         rose_addr_t offset;             /* File offset */
     };
 
@@ -61,8 +79,15 @@ public:
         insertMappedSections(header);
     }
 
-    /** Returns true only if @p a and @p b are separated by the same distance in memory as they are in the file.  If @p a and
-     *  @p b overlap and this function returns false, then at least one virtual address is being mapped to two file offsets. */
+    /** Returns true if @p a and @p b are consistent with each other. Consistent map elements can be combined when they are
+     *  adjacent or overlapping with one another.   In other words, returns true if either of the following conditions are met:
+     *
+     *  1. @p a and @p b are both anonymous.
+     *
+     *  2. @p a and @p b are both not anonymous and the difference in their file offsets matches their difference in virtual
+     *  memory.
+     *
+     *  Returns false in all other cases. */
     static bool consistent(const MapElement &a, const MapElement &b);
 
     /** Inserts mappings for all mapped sections reachable by the specified file header, including the file header itself if
