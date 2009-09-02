@@ -6839,7 +6839,8 @@ void SageInterface::setPragma(SgPragmaDeclaration* decl, SgPragma *pragma)
     SgClassDeclaration* nondefdecl = isSgClassDeclaration(structDecl->get_firstNondefiningDeclaration());
     ROSE_ASSERT(nondefdecl);
     SgName name= structDecl->get_name();
-    SgClassSymbol* mysymbol = scope->lookup_class_symbol(name);
+    //SgClassSymbol* mysymbol = scope->lookup_class_symbol(name);
+    SgClassSymbol* mysymbol = isSgClassSymbol(nondefdecl->get_symbol_from_symbol_table());
     if (mysymbol==NULL) 
     {
       mysymbol = new SgClassSymbol(nondefdecl);
@@ -6853,6 +6854,10 @@ void SageInterface::setPragma(SgPragmaDeclaration* decl, SgPragma *pragma)
       defdecl->set_parent(scope);
       nondefdecl->set_parent(scope);
     }
+  }
+  void SageInterface::fixClassDeclaration(SgClassDeclaration* classDecl, SgScopeStatement* scope)
+  {
+    fixStructDeclaration(classDecl,scope);
   }
   void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgScopeStatement* scope)
   {
@@ -6965,6 +6970,8 @@ void SageInterface::fixStatement(SgStatement* stmt, SgScopeStatement* scope)
       fixVariableDeclaration(isSgVariableDeclaration(stmt), scope);
   if (isStructDeclaration(stmt))
       fixStructDeclaration(isSgClassDeclaration(stmt),scope);
+  if (isSgClassDeclaration(stmt))
+      fixClassDeclaration(isSgClassDeclaration(stmt),scope);
   if (isSgLabelStatement(stmt)) 
       fixLabelStatement(isSgLabelStatement(stmt),scope);      
 
