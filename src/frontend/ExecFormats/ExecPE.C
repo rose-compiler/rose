@@ -1444,9 +1444,6 @@ SgAsmPEImportLookupTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 void
 SgAsmPEImportHNTEntry::ctor(SgAsmPEImportSection *isec, rva_t rva)
 {
-    ROSE_ASSERT(rva.get_rva() % 2 == 0);
-    ROSE_ASSERT(rva.get_section());
-
     /* Hint */
     uint16_t hint_disk = 0;
     try {
