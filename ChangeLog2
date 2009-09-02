@@ -1,3 +1,99 @@
+2009-09-02 20:30  dquinlan
+
+	* [r7071]
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/Makefile.am: Fixed
+	  bug in Makefile.am.
+
+2009-09-02 20:22  dquinlan
+
+	* [r7070] /trunk/ROSE/config/compiler-defs.m4,
+	  /trunk/ROSE/config/create_system_headers,
+	  /trunk/ROSE/config/generate-backend-compiler-specific-headers.m4,
+	  /trunk/ROSE/config/rose_edg_required_macros_and_functions.h.in,
+	  /trunk/ROSE/configure.in,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2004_135.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_21.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_22.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_23.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_24.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_25.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_26.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_27.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_28.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/preprocessor.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/translator_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/translator_tests/inputKeasler3.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/translator_tests/keasler3.C,
+	  /trunk/ROSE/docs/Rose/gettingStarted.tex.in,
+	  /trunk/ROSE/proposals/ProposedMergeWithTexasAandM.txt,
+	  /trunk/ROSE/proposals/TODO.txt,
+	  /trunk/ROSE/scripts/configure_with_roseTranslator,
+	  /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Statement.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Support.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Symbol.code,
+	  /trunk/ROSE/src/ROSETTA/src/grammar.C,
+	  /trunk/ROSE/src/ROSETTA/src/symbol.C,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/cp_gen_be.c,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/decl_inits.c,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/Makefile.am,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/sageSupport.C,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/sage_gen_be.C,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/sage_il_to_str.C,
+	  /trunk/ROSE/src/frontend/SageIII/Makefile.am,
+	  /trunk/ROSE/src/frontend/SageIII/astPostProcessing/astPostProcessing.C,
+	  /trunk/ROSE/src/frontend/SageIII/astPostProcessing/resetTemplateNames.C,
+	  /trunk/ROSE/src/frontend/SageIII/attachPreprocessingInfo.C,
+	  /trunk/ROSE/src/frontend/SageIII/attributeListMap.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/Makefile.am,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C,
+	  /trunk/ROSE/src/frontend/SageIII/virtualCFG/virtualBinCFG.C,
+	  /trunk/ROSE/src/midend/astDiagnostics/AstConsistencyTests.C,
+	  /trunk/ROSE/src/midend/astDiagnostics/AstStatistics.C,
+	  /trunk/ROSE/src/midend/astDiagnostics/AstStatistics.h,
+	  /trunk/ROSE/src/midend/astUtil/annotation/AnnotDescriptors.C,
+	  /trunk/ROSE/src/midend/astUtil/annotation/AnnotExpr.C,
+	  /trunk/ROSE/src/midend/loopProcessing/outsideInterface/ArrayAnnot.C,
+	  /trunk/ROSE/src/midend/programAnalysis/CFG/CFG_OA.C,
+	  /trunk/ROSE/src/midend/programAnalysis/staticInterproceduralSlicing/ControlDependenceGraph.C,
+	  /trunk/ROSE/src/midend/programAnalysis/staticInterproceduralSlicing/DataDependenceGraph.C,
+	  /trunk/ROSE/src/midend/programAnalysis/staticInterproceduralSlicing/DependenceGraph.C,
+	  /trunk/ROSE/src/midend/programAnalysis/staticInterproceduralSlicing/DependenceGraph.h,
+	  /trunk/ROSE/src/midend/programAnalysis/valuePropagation/ValueAnnot.C,
+	  /trunk/ROSE/src/roseSupport/transformationSupport.C,
+	  /trunk/ROSE/src/roseSupport/utility_functions.C,
+	  /trunk/ROSE/src/roseSupport/utility_functions.h,
+	  /trunk/ROSE/src/util/graphs/BaseGraphCreate.h,
+	  /trunk/ROSE/src/util/processSupport.C,
+	  /trunk/ROSE/src/util/processSupport.h,
+	  /trunk/ROSE/src/util/stringSupport/string_functions.cpp,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/Makefile.am,
+	  /trunk/ROSE/tests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/astQueryTests/testQuery.C,
+	  /trunk/ROSE/tests/testTranslator.C: Fixed ROSE to be able to
+	  compile ROSE (and fixed otehr bugs and added more tests)
+	  
+	  Detailed changes in this commit:
+	  1) Fixed lots of subtle bugs within ROSE (over a period of two
+	  weeks)
+	  as required to compile ROSE using a translator built from ROSE,
+	  but for analysis only.
+	  2) Uninstalled Gergo's patch to avoid O(n^2) complexity when
+	  there are lots of
+	  source files specified on the command line (he is testing up to
+	  several
+	  hundred and so notice the problem AND sent us a patch).
+
+2009-09-02 19:06  liao6
+
+	* [r7068]
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C:
+	  Cleaned up the builder for struct/class and fixed missing scopes
+
 2009-09-02 18:20  matzke
 
 	* [r7067] /trunk/ROSE/src/frontend/Disassemblers/Disassembler.C,
