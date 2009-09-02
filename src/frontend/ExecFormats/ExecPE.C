@@ -500,7 +500,7 @@ SgAsmPEFileHeader::create_table_sections()
                     i, pair->get_e_rva().get_rva(), pair->get_e_size(), tabname?tabname:"");
             continue;
         }
-        addr_t file_offset = elmt->get_va_offset(get_base_va() + pair->get_e_rva());
+        addr_t file_offset = elmt->is_anonymous() ? 0 : elmt->get_va_offset(get_base_va() + pair->get_e_rva());
 
         /* Create the new section */
         SgAsmGenericSection *tabsec = NULL;
