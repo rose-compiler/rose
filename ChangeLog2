@@ -1,3 +1,87 @@
+2009-09-02 18:20  matzke
+
+	* [r7067] /trunk/ROSE/src/frontend/Disassemblers/Disassembler.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/Loader.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/Loader.h,
+	  /trunk/ROSE/src/frontend/ExecFormats/LoaderPE.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/LoaderPE.h,
+	  /trunk/ROSE/tests/roseTests/binaryTests/test_disassemble.ans:
+	  ExecFormats: turned off debugging; updated tests
+
+2009-09-02 18:20  matzke
+
+	* [r7066] /trunk/ROSE/src/frontend/ExecFormats/ExecGeneric.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ExecPE.C: ExecFormats: PE
+	  Import Directory unparser fixes
+	  
+	  Certain PE unparsing errors have been relaxed so as not to
+	  terminate the
+	  process. This was necessary in order to get certain PE
+	  executables from
+	  CERT to unparse successfully.
+
+2009-09-02 18:19  matzke
+
+	* [r7065] /trunk/ROSE/src/frontend/ExecFormats/ExecPE.C:
+	  ExecFormats: PE RVA/Size pairs can point to anonymous map
+	  
+	  Some of the RVA/Size pairs in the PE header point to areas of
+	  memory
+	  that are mapped anonymously due to the containing section
+	  extending
+	  beyond the end of the file.
+
+2009-09-02 18:19  matzke
+
+	* [r7064] /trunk/ROSE/src/frontend/ExecFormats/ExecGeneric.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/Loader.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/Loader.h,
+	  /trunk/ROSE/src/frontend/ExecFormats/LoaderPE.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/LoaderPE.h: ExecFormats:
+	  Loaders use anonymous memory mapping
+	  
+	  This adds support for BSS segments.
+
+2009-09-02 18:19  matzke
+
+	* [r7063] /trunk/ROSE/src/frontend/ExecFormats/MemoryMap.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/MemoryMap.h: ExecFormats:
+	  MemoryMap supports anonymous mappings
+	  
+	  See mmap. Anonymous mappings are when there's no backing store
+	  and the
+	  memory is initialized to all zero.
+
+2009-09-02 18:19  matzke
+
+	* [r7062] /trunk/ROSE/src/frontend/ExecFormats/ExecDOS.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ExecPE.C: ExecFormats: a
+	  couple of bug fixes in the PE parser
+
+2009-09-02 18:19  matzke
+
+	* [r7061] /trunk/ROSE/src/frontend/Disassemblers/Partitioner.C:
+	  Disassembler: bugs fixed in instruction partitioner
+	  
+	  Fixed a corner case for partitioning instructions into basic
+	  blocks and
+	  basic blocks into functions. An assertion was failing (correctly)
+	  when
+	  we disassemble an interpretation that has no functions.
+
+2009-09-02 18:19  matzke
+
+	* [r7060] /trunk/ROSE/src/frontend/ExecFormats/ExecPE.C:
+	  ExecFormats: removed unecessary assertions from PE parser
+	  
+	  These assertions are no longer necessary.
+
+2009-09-02 16:24  liao6
+
+	* [r7059]
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.C:
+	  Fixed a bug related to duplicated building of a opaque type
+
 2009-09-02 01:40  hamilton37
 
 	* [r7057]
