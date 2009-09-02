@@ -24,7 +24,7 @@
  */
 class Loader {
 public:
-    Loader(): p_debug(NULL) {}
+    Loader(): p_debug(NULL) { ctor(); }
     virtual ~Loader() {}
 
     /*------------------------------------------------------------------------------------------------------------------------
@@ -135,6 +135,7 @@ public:
     FILE *get_debug() const { return p_debug; }
 
 private:
+    void ctor();
     static std::vector<Loader*> p_registered;
     FILE *p_debug;
 };

@@ -1,9 +1,5 @@
 #include "rose.h"
 
-LoaderPE::LoaderPE() {
-    set_debug(stderr);
-}
-
 /* Returns sections in order of their definition in the PE Section Table */
 SgAsmGenericSectionPtrList
 LoaderPE::order_sections(const SgAsmGenericSectionPtrList &sections) 

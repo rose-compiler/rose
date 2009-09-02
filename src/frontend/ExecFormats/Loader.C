@@ -7,6 +7,14 @@
 
 std::vector<Loader*> Loader::p_registered;
 
+/* Body of constructor, so we can make changes without having to recompile all of rose, while still keeping ':'
+ * initializations near the declarations for the variables they initialize. */
+void
+Loader::ctor()
+{
+    //p_debug = stderr;
+}
+
 /* Class method */
 void
 Loader::initclass() 

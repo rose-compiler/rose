@@ -328,6 +328,8 @@ Disassembler::search_words(AddressSet *worklist, const unsigned char *buf, const
     const std::vector<MemoryMap::MapElement> &mes = map->get_elements();
     for (size_t i=0; i<mes.size(); i++) {
         const MemoryMap::MapElement &me = mes[i];
+        if (me.is_anonymous())
+            continue;
         rose_addr_t va = me.get_va();
         va = (va+p_alignment-1) & ~(p_alignment-1); /*align*/
         while (va+p_wordsize <= me.get_va()+me.get_size()) {

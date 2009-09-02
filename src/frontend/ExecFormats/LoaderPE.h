@@ -3,7 +3,7 @@
 
 class LoaderPE: public Loader {
 public:
-    LoaderPE();
+    LoaderPE() {};
     virtual ~LoaderPE() {}
     virtual bool can_handle(SgAsmGenericHeader *header) {
         return NULL!=isSgAsmPEFileHeader(header);
