@@ -1160,8 +1160,14 @@ SgAsmPEImportDirectory::unparse(std::ostream &f, const SgAsmPEImportSection *sec
     ROSE_ASSERT(fhdr!=NULL);
 
     if (p_dll_name_rva>0) {
-        addr_t spos = p_dll_name_rva.get_section()->write(f, p_dll_name_rva.get_rel(), p_dll_name->get_string());
-        p_dll_name_rva.get_section()->write(f, spos, '\0');
+        SgAsmGenericSection *name_section = p_dll_name_rva.get_section();
+        if (name_section!=NULL) {
+            addr_t spos = name_section->write(f, p_dll_name_rva.get_rel(), p_dll_name->get_string());
+            name_section->write(f, spos, '\0');
+        } else {
+            fprintf(stderr, "%s: error: unable to locate section to contain Import Directory Name RVA 0x%08"PRIx64"\n", 
+                    __func__, p_dll_name_rva.get_rva());
+        }
     }
     if (p_ilt)
         p_ilt->unparse(f, fhdr, p_ilt_rva);
@@ -1410,7 +1416,11 @@ SgAsmPEImportLookupTable::unparse(std::ostream &f, const SgAsmPEFileHeader *fhdr
         //const char *tname = p_is_iat ? "Import Address Table" : "Import Lookup Table";
         for (size_t i=0; i<p_entries->get_vector().size(); i++) {
             SgAsmPEImportILTEntry *ilt_entry = p_entries->get_vector()[i];
-            ilt_entry->unparse(f, fhdr, rva, i);
+            try {
+                ilt_entry->unparse(f, fhdr, rva, i);
+            } catch (const ShortWrite&) {
+                fprintf(stderr, "SgAsmPEImportLookupTable::unparse: error: ILT entry #%zu skipped (short write)\n", i);
+            }
         }
 
         /* Zero terminated */
@@ -1630,9 +1640,14 @@ SgAsmPEImportSection::unparse(std::ostream &f) const
 
     /* Import Directory Entries and all they point to (even in other sections) */
     for (size_t i=0; i<get_import_directories()->get_vector().size(); i++) {
-        get_import_directories()->get_vector()[i]->unparse(f, this);
+        SgAsmPEImportDirectory *idir = get_import_directories()->get_vector()[i];
+        try {
+            idir->unparse(f, this);
+        } catch(const ShortWrite&) {
+            fprintf(stderr, "SgAsmImportSection::unparse: error: Import Directory #%zu skipped (short write)\n", i);
+        }
     }
-    
+
     /* Zero terminated */
     SgAsmPEImportDirectory::PEImportDirectory_disk zero;
     memset(&zero, 0, sizeof zero);

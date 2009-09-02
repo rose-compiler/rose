@@ -2431,18 +2431,15 @@ SgAsmGenericSection::write(std::ostream &f, addr_t offset, size_t bufsize, const
         if (((const char*)buf)[i]) {
             char mesg[1024];
             sprintf(mesg, "non-zero value truncated: buf[0x%zx]=0x%02x", i, ((const unsigned char*)buf)[i]);
-#if 1
-            fprintf(stderr, "ROBB: SgAsmGenericSection::write(): %s\n", mesg);
-            fprintf(stderr, "in [%d] \"%s\"\n", get_id(), get_name()->c_str());
-            fprintf(stderr, "section is at file offset 0x%08"PRIx64" (%"PRIu64"), size 0x%"PRIx64" (%"PRIu64") bytes\n", 
+            fprintf(stderr, "SgAsmGenericSection::write: error: %s", mesg);
+            fprintf(stderr, " in [%d] \"%s\"\n", get_id(), get_name()->c_str());
+            fprintf(stderr, "    section is at file offset 0x%08"PRIx64" (%"PRIu64"), size 0x%"PRIx64" (%"PRIu64") bytes\n", 
                     get_offset(), get_offset(), get_size(), get_size());
             fprintf(stderr, "      ");
             HexdumpFormat hf;
             hf.prefix = "      ";
             hexdump(stderr, get_offset()+offset, (const unsigned char*)buf, bufsize, hf);
             fprintf(stderr, "\n");
-            abort(); /*DEBUGGING*/
-#endif
             throw SgAsmGenericFile::ShortWrite(this, offset, bufsize, mesg);
         }
     }
