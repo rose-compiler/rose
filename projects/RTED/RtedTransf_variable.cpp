@@ -500,8 +500,7 @@ void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE,
 		  ROSE_ASSERT( deref_op || arrow_op );
 
 		  if( arrow_op ) {
-			  accessed_exp
-				  = buildPointerDerefExp( arrow_op -> get_lhs_operand() );
+			  accessed_exp =  arrow_op -> get_lhs_operand();
 		  } else {
 			  // consider
 			  //    int *p;
@@ -568,7 +567,12 @@ void RtedTransformation::visit_isAssignInitializer(SgNode* n) {
   SgAssignInitializer* assign = isSgAssignInitializer(n);
   ROSE_ASSERT(assign);
   cerr << "\n\n???????????? Found assign init op : " << n->unparseToString() << endl;
-  SgInitializedName* initName = isSgInitializedName(assign->get_parent());
+  SgInitializedName* initName = NULL;
+  SgNode* ancestor = n;
+  while( initName == NULL && ancestor != NULL ) {
+      initName = isSgInitializedName( ancestor );
+      ancestor = ancestor -> get_parent();
+  }
   ROSE_ASSERT(initName);
 
   // ---------------------------------------------
