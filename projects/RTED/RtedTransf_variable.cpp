@@ -500,7 +500,11 @@ void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE,
 		  ROSE_ASSERT( deref_op || arrow_op );
 
 		  if( arrow_op ) {
-			  accessed_exp =  arrow_op -> get_lhs_operand();
+              // with
+              //    p -> b = 2
+              // we need to be able to read
+              //    *p
+			  accessed_exp =  buildPointerDerefExp( arrow_op -> get_lhs_operand() );
 		  } else {
 			  // consider
 			  //    int *p;

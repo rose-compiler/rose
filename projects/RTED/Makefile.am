@@ -87,7 +87,8 @@ RTED_C_TEST_DIRS = $(rted_path)/C/array_index_out_of_bound \
 		 $(rted_path)/C/pointer_errors \
 		 $(srcdir)/tests/C/panasTests \
 		 $(srcdir)/tests/C/memoryleaks \
-		 $(srcdir)/tests/C/memoverlap
+		 $(srcdir)/tests/C/memoverlap \
+		 $(srcdir)/tests/C/pointer
 RTED_CPP_TEST_DIRS = $(rted_path)/C++/array_index_out_of_bound \
 		 $(rted_path)/C++/string_errors \
 		 $(rted_path)/C++/allocation_deallocation_errors \
@@ -138,7 +139,7 @@ RTED_OUTPUTFILES += ${call GENERATE_RTED_OUTPUTFILES, .cpp, expected, $(RTED_ORI
 .PRECIOUS: $(RTED_BINFILES) $(RTED_COPYSOURCES) $(RTED_ROSESOURCES) $(RTED_OUTPUTFILES)
 
 print:
-	@echo $(RTED_ROSESOURCES)
+	@echo $(RTED_TEST_DIRS)
 
 check-C-array: run/C/array_index_out_of_bound
 
