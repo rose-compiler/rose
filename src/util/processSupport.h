@@ -46,7 +46,7 @@ class rose_exception
 void ROSE_ABORT() __THROW __attribute__ ((__noreturn__));
 #else
 // DQ (9/3/2009): This is required for Mac OSX to correctly compile
-void ROSE_ABORT() __THROW;
+void ROSE_ABORT();
 #endif
 
 // throw rose_exception with user defined abort message
