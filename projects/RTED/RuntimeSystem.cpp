@@ -723,7 +723,7 @@ int RuntimeSystem_roseCreateVariable( const char* name,
             rs -> checkMemWrite( address, size );
     }
 
-    return -1;
+    return 0;
 }
 
 
@@ -773,7 +773,7 @@ RuntimeSystem_roseInitVariable(
     rs -> registerPointerChange( address, heap_address, rs_type, false, true );
   }
 
-  return -1;
+  return 0;
 }
 
 // we want to catch errors like the following:

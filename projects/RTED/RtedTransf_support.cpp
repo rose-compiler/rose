@@ -821,14 +821,22 @@ void RtedTransformation::prependPseudoForInitializerExpression(
 
 		// for( ... ; test; ... )
 		// -> for( ... ; test | (eval_once && ((eval_once = 0) | exp1 | exp2 ... )); ... )
-		for_stmt -> set_test_expr(
-			// test | ...
-			buildBinaryExpression< SgBitOrOp >(
-				for_stmt -> get_test_expr(),
-				// eval_once && ...
-				buildBinaryExpression< SgAndOp >(
-					buildVarRefExp( "RuntimeSystem_eval_once", new_scope ),
-					initial_expression )));
+        SgExprStatement* test = isSgExprStatement( for_stmt -> get_test() );
+        ROSE_ASSERT( test );
+
+        SgExpression* old_test = test -> get_expression();
+        replaceExpression(
+            test -> get_expression(),
+            // test | ...
+            buildBinaryExpression< SgBitOrOp >(
+                // throw-away expression to avoid null values
+                buildIntVal( 0 ),
+                // eval_once && ...
+                buildBinaryExpression< SgAndOp >(
+                    buildVarRefExp( "RuntimeSystem_eval_once", new_scope ),
+                    initial_expression )),
+            true);
+        isSgBinaryOp( test -> get_expression() ) -> set_lhs_operand( old_test );
 
 		replaceStatement( for_stmt, new_scope );
 		new_scope -> append_statement( for_stmt );
