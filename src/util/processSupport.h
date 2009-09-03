@@ -40,7 +40,13 @@ class rose_exception
 // DQ (8/22/2009): Added throw since EDG wants to see that the throw options match when ROSE_ABORT is a macro to "abort()" in "stdlib.h".
 // throws rose_exception with the reason "abort"
 // void ROSE_ABORT();
+#ifdef USE_ROSE
+// DQ (9/3/2009): This is required for EDG to correctly compile
 void ROSE_ABORT() __THROW __attribute__ ((__noreturn__));
+#else
+// DQ (9/3/2009): This is required for Mac OSX to correctly compile
+void ROSE_ABORT();
+#endif
 
 // throw rose_exception with user defined abort message
 void ROSE_ABORT( const char *message );
