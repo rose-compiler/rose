@@ -53,6 +53,10 @@ all-local: cabal-build-stamp
 
 install-exec-local: cabal-install-stamp
 
+uninstall-local: cabal-configure-stamp
+	-$(GHCBIN)/runghc Setup.hs unregister
+	rm -rf $(prefix)/lib/rose-$(PACKAGE_VERSION_NUMERIC) $(prefix)/share/doc/rose-$(PACKAGE_VERSION_NUMERIC)
+
 clean-local: cabal-clean
 	rm -rf headersWithoutLineDirective
 	rm -f identityTranslator simplify simplifyTest
