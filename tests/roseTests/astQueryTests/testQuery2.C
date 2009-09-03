@@ -52,15 +52,15 @@ class FunctionalTest1 :  public std::unary_function<SgNode*, NodeQuerySynthesize
 
 	       NodeQuerySynthesizedAttributeType listToNodeQuery;
 	    //visit only the nodes which is pointed to by this class
-	       typedef std::vector< std::pair<SgNode *, std::string > > DataMemberPointerType;
+	       typedef std::vector< SgNode * > DataMemberPointerType;
 
-	       DataMemberPointerType returnData = node->returnDataMemberPointers ();
+	       DataMemberPointerType returnData = node->get_traversalSuccessorContainer ();
 	    // A child of a node is the nodes it points to.
 	       for(DataMemberPointerType::iterator i = returnData.begin(); i != returnData.end(); ++i)
 		  {
 		 // visit the node which is pointed to by this SgNode
-		    if(i->first!=NULL){
-			 listToNodeQuery.push_back(i->first);
+		    if(*i!=NULL){
+			 listToNodeQuery.push_back(*i);
 		    }
 		  };
 
