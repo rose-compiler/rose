@@ -111,7 +111,12 @@ const char *rose_exception::what() const throw()
 // is a macro to "abort()" in "stdlib.h". Als, attributes are not permitted in a function definition
 // So this definition just uses "__THROW"
 // void ROSE_ABORT()
+// #ifdef __APPLE__
+#ifdef USE_ROSE
 void ROSE_ABORT() __THROW
+#else
+void ROSE_ABORT()
+#endif
 {
     throw rose_exception( "abort" );
 }
