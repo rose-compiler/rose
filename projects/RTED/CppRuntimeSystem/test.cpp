@@ -1111,7 +1111,9 @@ void testTypeSystemDetectNested()
     rs->createMemory(ADDR,sizeof(A)+sizeof(B));
     MemoryType * mt = rs->getMemManager()->getMemoryType(ADDR);
     mt->registerMemType(0,ts->getTypeInfo("A"));
+    CHECKPOINT
     mt->registerMemType(sizeof(A),ts->getTypeInfo("B"));
+    CHECKPOINT
     mt->registerMemType(sizeof(A)+offsetof(A,a3),
                           ts->getTypeInfo("SgTypeDouble"));
 
@@ -1209,6 +1211,7 @@ void testPartialTypeSystemArrayAccess() {
     addr_type Addr = 0x42;
     size_t el2_offset = sizeof( Typ );
     size_t el2_a_offset = el2_offset + offsetof( Typ, a );
+    size_t el2_b_offset = el2_offset + offsetof( Typ, b );
 
     rs -> createMemory( Addr, 2 * sizeof( Typ ) ); 
     // register known memory
@@ -1218,7 +1221,7 @@ void testPartialTypeSystemArrayAccess() {
     //  [  Typ  ]/////////
     MemoryType *mt = mm -> getMemoryType( Addr );
     mt -> registerMemType( 0, typ );
-    mt -> registerMemType( el2_a_offset, ts -> getTypeInfo( "SgTypeInt" ));
+    mt -> registerMemType( el2_b_offset, ts -> getTypeInfo( "SgTypeInt" ));
 
     // Check array access of larger type.  So far we have no reason to complain:
     // we don't know the full type at 8..16, but the part we do know is

@@ -67,7 +67,8 @@ class MemoryType
 
         /// Prints info about this allocation
         void print(std::ostream & os) const;
-
+        /// Prints information to stderr
+        void print() const;
 
         template<typename T>
         T * readMemory(int offset)
@@ -89,7 +90,15 @@ class MemoryType
         void registerMemType(addr_type offset, RsType * type);
         /// As @see registerMemType excpet that memory is only checked, not
         /// registered.
-        void checkMemType(addr_type offset, RsType * type);
+        
+       
+        /**
+         * As @see registerMemType, except that memory is only checked and
+         * merged, i.e. besides merging, no new types will be registered.
+         *
+         * @return  @c true @b iff a merge occurred.
+         */
+        bool checkAndMergeMemType(addr_type offset, RsType * type);
 
 
         /// Returns the RsType, or the CONTAINING ARRAY type which is associated with that offset

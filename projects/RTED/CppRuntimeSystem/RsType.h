@@ -56,6 +56,16 @@ class RsType
                                                  bool stopAtArray=false,
                                                  std::string * nav = NULL ) ;
 
+        /**
+         * Recursively checks to see if @c type has been written at @c offset,
+         * Handles cases with subtypes of arbitrary depth.  For example, if @c
+         * TypeA contains @c TypeB contains @c TypeC , and they are all of the
+         * same size, than any one of those types would be considered “ok”.
+         *
+         * @return  @c true @b iff @c type has been written at @c offset .
+         */
+        bool checkSubtypeRecursive( addr_type offset, RsType* type);
+
         /// Checks if a given offset is valid (not too big, and not in a padding region)
         virtual bool  isValidOffset(addr_type offset) const =0;
 

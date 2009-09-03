@@ -77,7 +77,8 @@ void PointerInfo::setTargetAddress(addr_type newAddr, bool doChecks)
     // points there -- but do check to make sure that the pointer isn't
     // definitely illegal (e.g. an int pointer pointing to a known double).
     if(newMem)
-        newMem->checkMemType(newAddr-newMem->getAddress(),baseType);
+        // FIXME 2: This should really only check, and not merge
+        newMem->checkAndMergeMemType(newAddr-newMem->getAddress(),baseType);
 
 
     // if old target was valid

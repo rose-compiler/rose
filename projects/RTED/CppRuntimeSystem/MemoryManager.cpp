@@ -89,10 +89,12 @@ void MemoryType::initialize(int offsetFrom, int offsetTo)
 
 void MemoryType::registerMemType(addr_type offset, RsType * type)
 {
-    checkMemType( offset, type );
+    bool types_merged = checkAndMergeMemType( offset, type );
 
-    if(typeInfo.size() ==0) // no types registered yet
-    {
+    if( !types_merged ) {
+        // type wasn't merged, some previously unknown portion of this
+        // MemoryType has been registered with type
+
         typeInfo.insert(make_pair<int,RsType*>(offset,type));
         // if we have knowledge about the type in memory, we also need to update the
         // information about "dereferentiable" memory regions i.e. pointer
@@ -100,10 +102,10 @@ void MemoryType::registerMemType(addr_type offset, RsType * type)
     }
 }
 
-void MemoryType::checkMemType(addr_type offset, RsType * type)
+bool MemoryType::checkAndMergeMemType(addr_type offset, RsType * type)
 {
     if(typeInfo.size() ==0) // no types registered yet
-        return;
+        return false;
 
     int newTiStart = offset;
     int newTiEnd = offset + type->getByteSize();
@@ -113,7 +115,7 @@ void MemoryType::checkMemType(addr_type offset, RsType * type)
     stringstream ss;
     ss << "Tried to access the same memory region with different types" << endl;
     ss << "When trying to access (" << newTiStart << "," << newTiEnd << ") "
-       << "as type " << type->getName()
+       << "as type " << type->getName() << endl
        << "Memory Region Info: " << endl << *this << endl;
 
     RuntimeViolation vio(RuntimeViolation::INVALID_TYPE_ACCESS,ss.str());
@@ -122,6 +124,10 @@ void MemoryType::checkMemType(addr_type offset, RsType * type)
     TiIterPair res = getOverlappingTypeInfos(newTiStart,newTiEnd);
     TiIter itLower = res.first;
     TiIter itUpper = res.second;
+
+    // Case 0: There are types registered, but not ϵ [newTiStart, newTiEnd)
+    if( itLower == typeInfo.end() )
+        return false;
 
     //  Case 1: New entry is overlapped by one old entry,
     //  i.e. [itLower,itUpper) contains only one entry
@@ -136,35 +142,22 @@ void MemoryType::checkMemType(addr_type offset, RsType * type)
         if( oldTiStart <= newTiStart && oldTiEnd >= newTiEnd )
         {
 
-            // FIXME 3: This probably doesn't handle cases where three types of
-            // the same size overlap, and the second one is asked for.
-            // Consider, e.g.
-            //
-            //  0       8
-            //  [ TypeA ]
-            //  [ TypeB ]
-            //  [ TypeC ]
-            //
-            //  Where TypeA has one member, a TypeB, which has one member, a
-            //  TypeC, and they are all of the same size.  It is then legal to
-            //  write a TypeB to &( var of TypeA ), but here we would only allow
-            //  a TypeC.
-            //
             //Check if new entry is consistent with old one
-            RsType * sub =  oldType->getSubtypeRecursive(newTiStart - oldTiStart,type->getByteSize());
-            if(sub != type)
+            bool new_type_ok = oldType -> checkSubtypeRecursive( newTiStart - oldTiStart, type );
+            if( !new_type_ok )
             {
                 vio.descStream() << "Previously registered Type completely overlaps new Type in an inconsistent way:" << endl
                                  << "Containing Type " << oldType->getName()
                                  << " (" << oldTiStart << "," << oldTiEnd << ")" << endl;
 
                 rs->violationHandler(vio);
-                return;
+                return false;
             }
             else
             {
-                //successful, no need to add because the type is already contained in bigger one
-                return;
+                // successful, no need to add because the type is already contained in bigger one
+                // effectively type has already been “merged”.
+                return true;
             }
         }
     }
@@ -182,7 +175,7 @@ void MemoryType::checkMemType(addr_type offset, RsType * type)
                              << "Overlapping Type " << curType->getName()
                              << " (" << curStart << "," << curEnd << ")" << endl;
             rs->violationHandler(vio);
-            return;
+            return false;
         }
 
         RsType * sub =  type->getSubtypeRecursive(curStart - newTiStart,curType->getByteSize());
@@ -193,7 +186,7 @@ void MemoryType::checkMemType(addr_type offset, RsType * type)
                              << " (" << curStart << "," << curEnd << ")" << endl;
 
             rs->violationHandler(vio);
-            return;
+            return false;
         }
     }
     //All consistent - old typeInfos are replaced by big new typeInfo (merging)
@@ -205,7 +198,7 @@ void MemoryType::checkMemType(addr_type offset, RsType * type)
     // if we have knowledge about the type in memory, we also need to update the
     // information about "dereferentiable" memory regions i.e. pointer
     RuntimeSystem::instance()->getPointerManager()->createPointer(startAddress+offset,type);
-    return;
+    return true;
 }
 
 
@@ -281,7 +274,7 @@ MemoryType::TiIterPair MemoryType::getOverlappingTypeInfos(addr_type from, addr_
         --it;
 
     // range not overlapping
-    if(it != end && it->first + it->second->getByteSize() <= from)
+    if(it != end && it->first + it->second->getByteSize() < from + 1)
         ++it;
 
     //for(TiIter i = it; i != end; ++i)
@@ -313,6 +306,11 @@ string MemoryType::getInitString() const
         init = "Not initialized  ";
 
     return init;
+}
+
+void MemoryType::print() const
+{
+    print( cerr );
 }
 
 // extra print function because operator<< cannot be member-> no access to privates
@@ -731,5 +729,6 @@ void MemoryManager::print(ostream & os) const
 ostream& operator<< (ostream &os, const MemoryManager & m)
 {
     m.print(os);
+    return os;
 }
 

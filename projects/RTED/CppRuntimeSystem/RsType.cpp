@@ -47,9 +47,12 @@ RsType *  RsType::getSubtypeRecursive(addr_type offset,  size_t size, bool stopA
             (*navString) += "." + result->getSubTypeString(subTypeId);
 
         offset -= result->getSubtypeOffset(subTypeId);
-        result  = result->getSubtype(subTypeId);
+        RsType* subtype = result->getSubtype(subTypeId);
 
-        //cout << "Refined to type " << result->getName() << " Offset:" << offset << endl;
+        if( subtype -> getByteSize() < size )
+            break;
+
+        result = subtype;
     }
 
     if (result->getByteSize() != size || offset != 0)
@@ -61,6 +64,29 @@ RsType *  RsType::getSubtypeRecursive(addr_type offset,  size_t size, bool stopA
     //cout << "Refinement successful " << result->getName() << " Offset" << offset<< endl;
 
     return result;
+}
+
+bool  RsType::checkSubtypeRecursive(addr_type offset,  RsType* type)
+{
+    RsType * result = this;
+    size_t size = type -> getByteSize();
+
+    while(result->getByteSize() >= size)
+    {
+        if( result == type )
+            return true;
+
+        int subTypeId = result->getSubtypeIdAt(offset);
+        if( subTypeId == -1 )
+            // no refinement is possible
+            return false;
+
+        offset -= result->getSubtypeOffset(subTypeId);
+        result  = result->getSubtype(subTypeId);
+    }
+
+    assert( result == NULL || result -> getByteSize() != size );
+    return false;
 }
 
 bool RsType::isConsistentWith( const RsType &other ) const {
