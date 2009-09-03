@@ -1,25 +1,22 @@
 #include <stdlib.h>
 
-typedef struct {
-	char before;
-	int arr[ 3 ];
-	int after;
-} TypeA;
-
-typedef struct {
-	char before;
-	int arr[ 3 ];
-	int after;
-} TypeB;
-
 int main( int argc, char **argv ) {
 
-	TypeA *x;
-	TypeB *p;
-	int *y;
+    struct TypeA {
+        char before;
+        int arr[ 3 ];
+        int after;
+    }* x; 
+    struct TypeB {
+        char before;
+        int arr[ 3 ];
+        int after;
+    }* p;
+    int* y;
 
-	x = (TypeA*) malloc( 2 * sizeof( TypeA ) + sizeof( TypeB ));
-	p = (TypeB*) (x + 2);
+    size_t size = 2 * sizeof( struct TypeA ) + sizeof( struct TypeB );
+	x = (struct TypeA*) malloc( size );
+	p = (struct TypeB*) (x + 2);
 
 	x -> arr[ 0 ] = 0;
 	x -> arr[ 1 ] = 1;
@@ -53,6 +50,8 @@ int main( int argc, char **argv ) {
 	// we should detect that y has gone out-of-bounds of x[ 0 ], even though it
 	// still points to an int and still to the same memory region
 	y++;
+
+    free( x );
 
 	return 0;
 }

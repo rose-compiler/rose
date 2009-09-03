@@ -122,6 +122,27 @@ class RtedTransformation : public AstSimpleProcessing {
   SgExpression* buildString(std::string name);
   SgVarRefExp* buildVarRef( SgInitializedName *& initName );
   std::string getMangledNameOfExpression(SgExpression* expr);
+
+  /**
+   * Appends all of the constructors of @c type to @c constructors.  The
+   * constructors are those member functions whose name matches that of the
+   * type.
+   *
+   * @return @c constructors.
+   */
+  SgDeclarationStatementPtrList& appendConstructors(
+        SgClassType* type, SgDeclarationStatementPtrList& constructors );
+  SgDeclarationStatementPtrList& appendConstructors(
+        SgClassDefinition* cdef, SgDeclarationStatementPtrList& constructors );
+  /**
+   * @return @c true @b iff @c type has any explicit constructors.  In such
+   * cases, it is necessary to be more careful about informing the runtime
+   * system of memory allocation.
+   */
+  bool hasNonEmptyConstructor( SgClassType* type );
+
+  bool isConstructor( SgFunctionDeclaration* fndecl );
+
   /**
    * @return @c true @b iff @c exp is a descendent of an assignment expression
    * (such as @ref SgAssignmentOp or @ref SgPlusAssignOp)
@@ -203,12 +224,15 @@ class RtedTransformation : public AstSimpleProcessing {
   void insert_pointer_change( SgExpression* op );
 
   // simple scope handling
-  std::string scope_name( SgStatement* n);
-  void bracketWithScopeEnterExit( SgStatement* stmt, SgNode* end_of_scope);
+  std::string scope_name( SgNode* n);
+  void bracketWithScopeEnterExit( SgStatement* stmt, SgNode* end_of_scope );
+  void bracketWithScopeEnterExit( SgFunctionDefinition* fndef );
+  void bracketWithScopeEnterExit( SgNode* stmt_or_block, Sg_File_Info* exit_file_info );
 
 
   // is it a variable?
   void visit_isSgVariableDeclaration(SgNode* n);
+  void insertVariableCreateCall( RtedClassDefinition* cdef );
   void insertVariableCreateCall(SgInitializedName* initName);
   bool isVarInCreatedVariables(SgInitializedName* n);
   void insertInitializeVariable(SgInitializedName* initName,
@@ -218,8 +242,21 @@ class RtedTransformation : public AstSimpleProcessing {
 				SgVarRefExp* varRefE,
 				SgStatement* stmt,
 				bool ismalloc );
-  SgExpression* buildVariableCreateCallExpr(SgInitializedName* name, SgStatement* stmt, bool forceinit=false);
-  SgExprStatement* buildVariableCreateCallStmt(SgInitializedName* name, SgStatement* stmt, bool forceinit=false);
+  SgFunctionCallExp* buildVariableCreateCallExpr(SgThisExp* this_exp, bool forceinit=false);
+  SgFunctionCallExp* buildVariableCreateCallExpr(SgInitializedName* name, SgStatement* stmt, bool forceinit=false);
+  // TODO 1 djh: test docs
+  /**
+   * @b{ For Internal Use Only }.  See the overloaded convenience functions.
+   */
+  SgFunctionCallExp* buildVariableCreateCallExpr( SgExpression* var_ref, std::string& debug_name, bool init );
+
+  SgExprStatement* buildVariableCreateCallStmt( SgThisExp* this_exp, bool forceinit=false );
+  SgExprStatement* buildVariableCreateCallStmt( SgInitializedName* name, SgStatement* stmt, bool forceinit=false );
+  /**
+   * @b{ For Internal Use Only }.  See the overloaded convenience functions.
+   */
+  SgExprStatement* buildVariableCreateCallStmt( SgFunctionCallExp* create_var_fn_call );
+
   void insertVariableCreateInitForParams( SgFunctionDefinition* n);
   void insertAccessVariable(SgVarRefExp* varRefE,SgExpression* derefExp);
   void visit_isSgVarRefExp(SgVarRefExp* n);
@@ -274,6 +311,7 @@ class RtedTransformation : public AstSimpleProcessing {
   void appendTypeInformation(SgInitializedName* initName, SgType* type, SgExprListExp* arg_list);
   void appendTypeInformation(SgType* type, SgExprListExp* arg_list, bool resolve_class_names = true, bool array_to_pointer=false);
   void appendAddressAndSize(SgInitializedName* initName, SgExpression* varRef, SgExprListExp* arg_list, int appendType);
+  void appendAddressAndSize(SgExpression* exp, SgType* type, SgExprListExp* arg_list, int appendType);
   void appendAddress( SgExprListExp* arg_list, SgExpression* exp );
   void appendBaseType( SgExprListExp* arg_list, SgType* type );
   void appendClassName( SgExprListExp* arg_list, SgType* type );

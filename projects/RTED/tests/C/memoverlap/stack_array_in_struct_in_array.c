@@ -1,14 +1,18 @@
-typedef struct {
-	char before;
-	int arr[ 3 ];
-	char after;
-} type;
 
 
 int main( int argc, char **argv ) {
 
-	type var[ 2 ];
-	type extra_var;
+    struct {
+        char before;
+        int arr[ 3 ];
+        char after;
+    } var[ 2 ];
+    struct {
+        char before;
+        int arr[ 3 ];
+        char after;
+    } extra_var;
+
 	int y;
 	
 	var[ 0 ].arr[ 0 ] = 0;

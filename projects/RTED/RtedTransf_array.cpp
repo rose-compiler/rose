@@ -474,6 +474,13 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
       SgArrowExp* arrow_op = isSgArrowExp( parent );
       if( last == arrow_op -> get_lhs_operand() )
           variable_access_pointerderef[ isSgExpression( parent )] = n;
+      else {
+          // We don't access the rhs of an arrow op directly, e.g.
+          //    int x = foo -> bar;
+          // we shouldn't be trying to access variable &bar
+          hitRoof = true;
+          break;
+      }
   } else if (isSgExprListExp(parent) && isSgFunctionCallExp(parent->get_parent())) {
 	  cerr << " Found Function call - lets handle its parameters." << endl;
 	  SgType* type = isSgExpression(last)->get_type();

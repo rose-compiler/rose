@@ -102,23 +102,23 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
     ROSE_ASSERT( stmt_to_bracket );
     ROSE_ASSERT( end_of_scope );
 
-    if( isSgFunctionCallExp( end_of_scope )) {
-        SgFunctionDeclaration* fn_decl = 
-          getDefiningDeclaration( isSgFunctionCallExp( end_of_scope ));
-
-        SgFunctionDefinition* fn_def = NULL; 
-        // at this point we've parsed the entire project.  If there's no
-        // function definition here, then the project probably doesn't compile,
-        // or runtimeCheck wasn't invoked correctly.
-        if( fn_decl )
-          fn_def = isSgFunctionCallExp( end_of_scope ) 
-                      -> getAssociatedFunctionDeclaration() -> get_definition();
-        
-        if( fn_def )
-          end_of_scope = fn_def -> get_body();
-    }
-
+    // bracket all scopes except constructors with enter/exit
     bracketWithScopeEnterExit( stmt_to_bracket, end_of_scope );
+  }
+  BOOST_FOREACH( SgFunctionDefinition* fndef, function_definitions ) {
+    // bracket the bodies of constructors with enter/exit.  This is easier than
+    // bracketing the variable declarations, and isn't harmful because the
+    // return type is fixed.  However, it would not be wrong to simply bracket
+    // the variable declaration, e.g.
+    //    MyClassWithConstructor a;
+    //
+    //  transformed to:
+    //    enterScope("constructor");
+    //    MyClassWithConstructor a;
+    //    exitScope("constructor");
+    //
+    if( isConstructor( fndef -> get_declaration() )) 
+      bracketWithScopeEnterExit( fndef );
   }
 
   // add calls to register pointer change after pointer arithmetic
@@ -229,6 +229,8 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
     RtedClassDefinition* rtedClass = refIt->second;
     ROSE_ASSERT(rtedClass);
     insertRegisterTypeCall(rtedClass);
+
+    insertVariableCreateCall( rtedClass );
   }
 
   cerr << "\n Number of Elements in create_array_access_call  : "

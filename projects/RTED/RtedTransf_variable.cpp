@@ -8,6 +8,7 @@
 
 #include <rose.h>
 #include <string>
+#include <boost/foreach.hpp>
 #include "RtedSymbols.h"
 #include "DataStructures.h"
 #include "RtedTransformation.h"
@@ -48,9 +49,20 @@ void RtedTransformation::visit_isSgVariableDeclaration(SgNode* n) {
     SgInitializedName* initName = *it;
     ROSE_ASSERT(initName);
 
+    SgType* var_type = initName -> get_type();
     // reference types don't create more memory as far as the RTS is
     // concerned (in that &foo == &bar for bar a ref. of foo)
-    if( isSgReferenceType( initName -> get_type() ))
+    if( isSgReferenceType( var_type ))
+        continue;
+
+    // Consider, e.g.
+    //  MyClass a;
+    //  RuntimeSystem_createVariable( a )
+    // Here we informed the RTS of memory allocation after the constructor was
+    // already run, so we might easily run into false positives from the
+    // instrumented constructors.
+    if(     isSgClassType( var_type )
+            && hasNonEmptyConstructor( isSgClassType( var_type )))
         continue;
 
     // need to get the type and the possible value that it is initialized with
@@ -60,6 +72,43 @@ void RtedTransformation::visit_isSgVariableDeclaration(SgNode* n) {
   }
 }
 
+
+// FIXME 2 djh: This presently inserts erroneous calls to createvariable when
+// multiple constructors are called for the same variable (e.g. superclass
+// constructors).
+void RtedTransformation::insertVariableCreateCall( RtedClassDefinition* rcdef ) {
+    SgClassDefinition* cdef = rcdef -> classDef;
+
+    SgDeclarationStatementPtrList constructors;
+    appendConstructors( cdef, constructors );
+
+    BOOST_FOREACH( SgDeclarationStatement* decl, constructors ) {
+        SgMemberFunctionDeclaration* constructor 
+            = isSgMemberFunctionDeclaration( decl );
+        // validate the postcondition of appendConstructors
+        ROSE_ASSERT( constructor );
+
+        // FIXME 2: Probably the thing to do in this case is simply to bail and
+        // trust that the constructor will get transformed when its definition
+        // is processed
+        SgFunctionDefinition* def = constructor -> get_definition();
+        ROSE_ASSERT( def );
+
+        SgBasicBlock* body = def -> get_body();
+
+        SgSymbolTable* sym_tab 
+            = cdef -> get_declaration() -> get_scope() -> get_symbol_table();
+
+        SgClassSymbol* csym
+            = isSgClassSymbol(
+                    sym_tab -> find_class(
+                        cdef -> get_declaration() -> get_name() ));
+        ROSE_ASSERT( csym );
+
+        body -> prepend_statement(
+                buildVariableCreateCallStmt( buildThisExp( csym )));
+    }
+}
 
 void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName
 						  ) {
@@ -149,71 +198,63 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName
 }
 
 
-SgExpression*
-RtedTransformation::buildVariableCreateCallExpr( SgInitializedName* initName, SgStatement* stmt,
-												bool forceinit) {
+// convenience function
+SgFunctionCallExp*
+RtedTransformation::buildVariableCreateCallExpr( SgThisExp* exp, bool forceinit) {
 
-    string name = initName->get_mangled_name().str();
-    SgScopeStatement* scope = stmt->get_scope();
+    string debug_name( "this" );
+    return buildVariableCreateCallExpr(
+            // we want &(*this), sizeof(*this)
+            buildPointerDerefExp( exp ), debug_name, forceinit);
+}
 
+// convenience function
+SgFunctionCallExp*
+RtedTransformation::buildVariableCreateCallExpr(
+        SgInitializedName* initName, SgStatement* stmt, bool forceinit) {
 
-    ROSE_ASSERT( initName);
-    ROSE_ASSERT( stmt);
-    ROSE_ASSERT( scope);
+    SgInitializer* initializer = initName->get_initializer();
+    bool initb = initializer || forceinit;
+
+    string debug_name = initName -> get_name();
+
+    return buildVariableCreateCallExpr(
+                buildVarRef( initName ), debug_name, initb );
+}
+
+SgFunctionCallExp*
+RtedTransformation::buildVariableCreateCallExpr(
+        SgExpression* var_ref, string& debug_name, bool initb) {
 
     // build the function call : runtimeSystem-->createArray(params); ---------------------------
     SgExprListExp* arg_list = buildExprListExp();
-    SgExpression* callName = buildString(initName->get_name().str());
-    //SgExpression* callName = buildStringVal(initName->get_name().str());
-    SgExpression* callNameExp = buildString(name);
-    SgInitializer* initializer = initName->get_initializer();
-    //SgExpression* fileOpen = buildString("no");
-    bool initb = false;
-    if (initializer) initb=true;
+    SgExpression* callName = buildString( debug_name );
+    SgExpression* callNameExp = buildString( debug_name );
+
     SgExpression* initBool = buildIntVal(0);
-    if (initb || forceinit)
+    if (initb)
       initBool = buildIntVal(1);
-
-    SgExpression* var_ref = buildVarRef( initName );
-    // TODO 2: Remove this if statement once the RTS handles user types
-    // Note: This if statement is a hack put in place to pass the array out of
-    // bounds tests
-    if( isSgVariableDeclaration( stmt)) {
-      SgInitializedName* first_var_name
-        = isSgVariableDeclaration( stmt)->get_variables()[0];
-
-      if(
-          isSgClassDeclaration(
-              isSgVariableDeclaration(stmt)->get_baseTypeDefiningDeclaration())
-            && first_var_name != initName
-      ) {
-        var_ref = new SgDotExp(
-          // file info
-          initName->get_file_info(),
-          // lhs
-          buildVarRef( first_var_name ),
-          // rhs
-          var_ref,
-          // type
-          initName->get_type()
-        );
-      }
-    }
-
 
     appendExpression(arg_list, callName);
     appendExpression(arg_list, callNameExp);
-    appendTypeInformation( initName, arg_list );
-    appendAddressAndSize(initName, isSgVarRefExp(var_ref), arg_list,0);
+    appendTypeInformation( var_ref -> get_type(), arg_list );
+
+    if( isSgVarRefExp( var_ref )) {
+        appendAddressAndSize(
+            isSgVarRefExp( var_ref ) -> get_symbol() -> get_declaration(),
+            isSgVarRefExp(var_ref),
+            arg_list,
+            0 );
+    } else {
+        appendAddressAndSize( var_ref, var_ref -> get_type(), arg_list, 0 );
+    }
 
 
     appendExpression(arg_list, initBool);
-    //appendExpression(arg_list, fileOpen);
+	appendClassName( arg_list, var_ref -> get_type() );
 
-	appendClassName( arg_list, initName -> get_type() );
-
-    SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
-    SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
+    SgExpression* filename = buildString(var_ref->get_file_info()->get_filename());
+    SgExpression* linenr = buildString(RoseBin_support::ToString(var_ref->get_file_info()->get_line()));
     appendExpression(arg_list, filename);
     appendExpression(arg_list, linenr);
 
@@ -227,11 +268,25 @@ RtedTransformation::buildVariableCreateCallExpr( SgInitializedName* initName, Sg
     return buildFunctionCallExp(memRef_r, arg_list);
 }
 
+// convenience function
 SgExprStatement*
-RtedTransformation::buildVariableCreateCallStmt( SgInitializedName* initName, SgStatement* stmt,
-												bool forceinit) {
+RtedTransformation::buildVariableCreateCallStmt( SgThisExp* exp, bool forceinit) {
+    SgFunctionCallExp* fn_call = buildVariableCreateCallExpr( exp, forceinit );
+    return buildVariableCreateCallStmt( fn_call );
+}
 
-    SgExpression* funcCallExp = buildVariableCreateCallExpr( initName, stmt, forceinit );
+// convenience function
+SgExprStatement*
+RtedTransformation::buildVariableCreateCallStmt(
+        SgInitializedName* initName, SgStatement* stmt, bool forceinit) {
+
+    SgFunctionCallExp* fn_call 
+        = buildVariableCreateCallExpr( initName, stmt, forceinit );
+    return buildVariableCreateCallStmt( fn_call );
+}
+
+SgExprStatement*
+RtedTransformation::buildVariableCreateCallStmt( SgFunctionCallExp* funcCallExp ) {
     SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
     string empty_comment = "";
     attachComment(exprStmt,empty_comment,PreprocessingInfo::before);

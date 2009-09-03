@@ -240,7 +240,7 @@ TRANSFORMING_FILES += $(2) \
 		      $(filter rted_source/%$(strip $(1)), $^) \
 		      $(INCLUDES) \
 		      -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) \
-		      -I$(top_builddir) -I$(srcdir) $(RTED_LIB);
+		      -I$(top_builddir) -I$(srcdir) $(RTED_LIB) > $@.compile.out 2> $@.compile.err;
 
 TRANSFORMING_FILES += if [ $$? -ne 0 ]; then exit 1; fi;
 
@@ -307,7 +307,7 @@ COMPILING_RUNTIME_SYSTEM = @echo -n "   compiling instrumented debugger code (wi
 				      -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) \
 				      -I$(top_builddir) \
 				      -I$(srcdir) \
-				      $(3) $(RTED_LIB); \
+				      $(3) $(RTED_LIB) > $@.compile.out 2> $@.compile.err; \
 			   if [ $$? -ne 0 ]; then exit 1; fi; \
 			   echo " done."
 
@@ -482,7 +482,11 @@ ${foreach rted_dir, ${filter $(rted_path)%, $(RTED_CPP_TEST_DIRS)}, ${eval ${cal
 TESTS_KNOWN_TO_FAIL = run/C/subprogram_call_errors/c_C_1_3_f \
 					  run/tests/C/memoryleaks/assignment_scope_switch \
 					  run/tests/C/memoryleaks/assignment_to_locals_then_globals_then_locals \
-					  run/tests/C/memoryleaks/assignment_to_multi_fncall
+					  run/tests/C/memoryleaks/assignment_to_multi_fncall \
+					  run/tests/C/memoryleaks/assignment_to_fn_malloc_novar \
+					  run/tests/C/memoverlap/heap_array_in_struct \
+					  run/tests/C/memoverlap/heap_array_in_struct_in_array \
+					  run/tests/C++/pointer/member_deref
 
 $(TESTS_KNOWN_TO_FAIL):
 	@echo This test is known to fail, not running it now: $@
@@ -497,16 +501,17 @@ deleteAllbinfiles:
 checkfast:	runtimeCheck $(TESTCODES) \
 				run/tests/C/memoryleaks run/tests/C/memoverlap \
 				run/tests/C++/simple run/tests/C++/pointer
+	@echo "---------------------------------------------------------------------------------------"
+	@echo "--- ROSE/projects/RTED: checkfast passed                                            ---"
+	@echo "---------------------------------------------------------------------------------------"
 
 # run/C/floating_point_errors
-check-local: runtimeCheck $(TESTCODES) \
+check-local: runtimeCheck $(TESTCODES) checkfast \
 				run/C/array_index_out_of_bound run/C/string_errors \
 				run/C/subprogram_call_errors \
 				run/C/allocation_deallocation_errors run/C/input_output_errors \
 				run/C/memory_leaks run/C/uninitialized_variables \
-				run/C/C99_specific_errors run/C/pointer_errors \
-				run/tests/C/memoryleaks run/tests/C/memoverlap \
-				run/tests/C++/simple run/tests/C++/pointer
+				run/C/C99_specific_errors run/C/pointer_errors
 	@echo "***************************************************************************************"
 	@echo "*** ROSE/projects/runtimeErrorCheck: make check rule complete (terminated normally) ***"
 	@echo "***************************************************************************************"

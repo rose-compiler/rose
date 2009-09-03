@@ -9,7 +9,6 @@ class Test {
       // before it went out of scope
     }
 
-  private:
     int i;
 };
 

@@ -9,35 +9,58 @@ using namespace SageInterface;
 using namespace SageBuilder;
 
 
+void 
+RtedTransformation::bracketWithScopeEnterExit( SgFunctionDefinition* fndef ) {
+    SgBasicBlock* body = fndef -> get_body();
+    ROSE_ASSERT( body );
+
+    bracketWithScopeEnterExit( isSgNode( body ), body -> get_endOfConstruct() );
+}
+
 /// add @c beginScope before @c stmt and @c endScope after @c stmt.
 /// use @c end_of_scope to determine the @c Sg_File_Info to use for reporting
 /// error location.
 void 
 RtedTransformation::bracketWithScopeEnterExit( SgStatement* stmt, SgNode* end_of_scope) {
-    ROSE_ASSERT( stmt);
-    ROSE_ASSERT( roseEnterScope);
+    bracketWithScopeEnterExit( isSgNode( stmt ), end_of_scope -> get_endOfConstruct() );
+}
+
+void 
+RtedTransformation::bracketWithScopeEnterExit( SgNode* stmt_or_block, Sg_File_Info* exit_file_info ) {
+
+    SgStatement* stmt = isSgStatement( stmt_or_block );
+    SgBasicBlock* block = isSgBasicBlock( stmt_or_block );
+
+    ROSE_ASSERT( stmt );
+    ROSE_ASSERT( exit_file_info );
+    ROSE_ASSERT( roseEnterScope );
 
     SgExprListExp* enter_scope_args = buildExprListExp();
     appendExpression(
       enter_scope_args,
       buildString(
-        scope_name( stmt) + 
+        scope_name( stmt_or_block ) + 
         ":" 
-        + RoseBin_support::ToString( stmt->get_file_info()->get_line())
+        + RoseBin_support::ToString( stmt_or_block -> get_file_info() -> get_line() )
       )
     );
-    // enterScope( "foo:23");
-    insertStatementBefore( 
-      stmt,
-      buildExprStatement(
-        buildFunctionCallExp(
-          buildFunctionRefExp( roseEnterScope),
-          enter_scope_args
-        )
-      )
-    );
+   
 
-    Sg_File_Info* exit_file_info = end_of_scope -> get_endOfConstruct();
+    // enterScope( "foo:23");
+    SgExprStatement* fncall_enter 
+        = buildExprStatement(
+            buildFunctionCallExp(
+              buildFunctionRefExp( roseEnterScope),
+              enter_scope_args
+            )
+          );
+    // order is important here... a block is a statement, but a statement is not
+    // necessarily a block
+    if( block )
+        block -> prepend_statement( fncall_enter );
+    else
+        insertStatementBefore( stmt, fncall_enter );
+
 
     // exitScope( (char*) filename, (char*) line, (char*) lineTransformed, (char*) stmtStr);
     SgExprListExp* exit_scope_args = buildExprListExp();
@@ -65,8 +88,14 @@ RtedTransformation::bracketWithScopeEnterExit( SgStatement* stmt, SgNode* end_of
             exit_scope_args
           )
         );
+    // order is important here... a block is a statement, but a statement is not
+    // necessarily a block
+    if( block )
+        block -> append_statement( exit_scope_call );
+    else
+        insertStatementAfter( stmt, exit_scope_call );
 
-    insertStatementAfter( stmt, exit_scope_call);
+
     attachComment(
         exit_scope_call,
         "",
@@ -83,7 +112,7 @@ RtedTransformation::bracketWithScopeEnterExit( SgStatement* stmt, SgNode* end_of
 /// Determines a nice scope name for @c stmt.  This is only used for convenience
 /// in the debugger, and does not affect any checks.
 std::string
-RtedTransformation::scope_name( SgStatement* stmt) {
+RtedTransformation::scope_name( SgNode* stmt) {
 
     if( isSgWhileStmt( stmt)) {
       return "while";

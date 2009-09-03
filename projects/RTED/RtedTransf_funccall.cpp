@@ -565,13 +565,13 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
 
 	  // if we're able to, use the function definition's body as the end of
 	  // scope (for line number complaints).  If not, the callsite is good too.
-	  SgNode* end_of_scope = getDefiningDeclaration( fcexp );
-	  if( end_of_scope ) {
-		  end_of_scope = 
-			  isSgFunctionDeclaration( end_of_scope ) 
-			  	-> get_definition() -> get_body();
-	  } else {
-		  end_of_scope = fcexp;
+      SgNode* end_of_scope = getDefiningDeclaration( fcexp );
+      if( end_of_scope ) {
+          end_of_scope = 
+              isSgFunctionDeclaration( end_of_scope ) 
+              -> get_definition() -> get_body();
+      } else {
+          end_of_scope = fcexp;
 		  // FIXME 2: We may be adding a lot of unnecessary signature checks
 		  // If we don't have the definition, we must be doing separate
 		  // compilation.  We will then have to check the signature at runtime

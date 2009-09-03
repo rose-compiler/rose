@@ -67,6 +67,61 @@ RtedTransformation::isUsedAsLvalue( SgExpression* exp ) {
     );
 }
 
+
+SgDeclarationStatementPtrList& RtedTransformation::appendConstructors(
+        SgClassType* type,  SgDeclarationStatementPtrList& constructors) {
+
+    SgClassDeclaration* decl
+        = isSgClassDeclaration(
+                type -> get_declaration() -> get_definingDeclaration() );
+    ROSE_ASSERT( decl );
+
+    SgClassDefinition* cdef = decl -> get_definition();
+    ROSE_ASSERT( cdef );
+
+    return appendConstructors( cdef, constructors );
+}
+
+SgDeclarationStatementPtrList& RtedTransformation::appendConstructors(
+        SgClassDefinition* cdef,  SgDeclarationStatementPtrList& constructors) {
+
+
+    SgDeclarationStatementPtrList& members = cdef -> get_members();
+    BOOST_FOREACH( SgDeclarationStatement* member, members ) {
+        SgMemberFunctionDeclaration* mfun 
+            = isSgMemberFunctionDeclaration( member );
+
+        if( isConstructor( mfun ))
+            constructors.push_back( mfun );
+    }
+
+    return constructors;
+}
+
+bool RtedTransformation::isConstructor( SgFunctionDeclaration* fndecl ) {
+    SgMemberFunctionDeclaration* mfun = isSgMemberFunctionDeclaration( fndecl );
+    if( !mfun )
+        // non member functions certainly aren't constructors
+        return false;
+
+    SgClassDeclaration* cdef = mfun -> get_associatedClassDeclaration();
+
+    // a constructor is a member function whose name matches that 
+    return (
+        mfun -> get_mangled_name() == cdef -> get_mangled_name()
+        // SgClassDefinition.get_mangled_name can return the
+        // non-mangled name!
+        || mfun -> get_name() == cdef -> get_mangled_name()
+    );
+}
+
+bool RtedTransformation::hasNonEmptyConstructor( SgClassType* type ) {
+    SgDeclarationStatementPtrList constructors;
+    appendConstructors( type, constructors );
+
+    return constructors.size() > 0;
+}
+
 bool RtedTransformation::isNormalScope( SgNode* n ) {
 	return	isSgBasicBlock( n )
 			|| isSgIfStmt( n )
@@ -546,6 +601,15 @@ void RtedTransformation::appendAddressAndSize(
         exp = getUppermostLvalue( varRefE );
     }
 
+    appendAddressAndSize( exp, varRefE -> get_type(), arg_list, appendType );
+}
+
+void RtedTransformation::appendAddressAndSize(
+                            SgExpression* exp,
+                            SgType* type,
+                            SgExprListExp* arg_list,
+                            int appendType ) {
+
     appendAddress( arg_list, exp );
 
     // for pointer arithmetic variable access in expressions, we want the
@@ -579,12 +643,12 @@ void RtedTransformation::appendAddressAndSize(
     //  we only want to access s2..s2+sizeof(char), not s2..s2+sizeof(s2)
     //
     //  but we do want to create the array as s2..s2+sizeof(s2)     
-    if( appendType & 2 && isSgArrayType( varRefE->get_type() )) {
+    if( appendType & 2 && isSgArrayType( type )) {
         appendExpression(
             arg_list,
             buildSizeOfOp(
                 isSgType(
-                    isSgArrayType( varRefE -> get_type() ) 
+                    isSgArrayType( type ) 
                         -> get_base_type() -> copy( copy )))
         );
     } else {
