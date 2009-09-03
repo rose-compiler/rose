@@ -2918,6 +2918,11 @@ SgAsmElfSymbol::ctor(SgAsmElfSymbolSection *symtab)
     symtab->get_symbols()->get_symbols().push_back(this);
     ROSE_ASSERT(symtab->get_symbols()->get_symbols().size()>0);
     set_parent(symtab->get_symbols());
+
+    set_st_info(0);
+    set_st_res1(0);
+    set_st_shndx(0);
+    set_st_size(0);
 }
 
 /** Initialize symbol by parsing a symbol table entry. An ELF String Section must be supplied in order to get the symbol name. */
