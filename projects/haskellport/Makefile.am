@@ -71,7 +71,14 @@ cabal-clean:
 	if test "x$(srcdir)" != "x." ; then rm -f $(NONGENERATED_HSFILES) ; fi
 	rm -f run-genStubsAndWrappers-stamp rose.cabal cabal-configure-stamp cabal-build-stamp cabal-install-stamp
 	rm -rf checkHome
-	
+
+# The distclean-generic rule removes the autoconf generated files,
+# including Setup.hs which is used by the cabal-clean rule.  This causes
+# problems for parallel builds.  So we impose a precondition that
+# distclean-generic must run after cabal-clean
+distclean-generic: cabal-clean
+	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
+
 cabal-configure-stamp: ROSE/Sage3/Classes.hs rose.cabal Setup.hs $(SRC_NONGENERATED_HSFILES) librosehswrap.la
 	if test "x$(srcdir)" != "x." ; then \
 		for file in $(NONGENERATED_HSFILES) ; do \
