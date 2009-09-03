@@ -1,3 +1,27 @@
+2009-09-03 16:18  matzke
+
+	* [r7081] /trunk/ROSE/src/frontend/ExecFormats/ExecELF.C:
+	  ExecFormats: bug fix
+	  
+	  Some data members weren't initialized, causing a failed assertion
+	  when
+	  ROSE attempted to unparse those values.
+
+2009-09-03 15:10  dquinlan
+
+	* [r7080] /trunk/ROSE/src/util/processSupport.C,
+	  /trunk/ROSE/src/util/processSupport.h: Fixed problem on OSX.
+
+2009-09-03 14:05  dquinlan
+
+	* [r7078] /trunk/ROSE/src/util/processSupport.h: Fixed use of
+	  _THROW for Mac OSX.
+
+2009-09-03 12:53  dquinlan
+
+	* [r7077] /trunk/ROSE/src/util/processSupport.h: Fixed use of
+	  _THROW for Mac OSX.
+
 2009-09-02 22:45  dquinlan
 
 	* [r7073] /trunk/ROSE/tests/inputFile.C,
