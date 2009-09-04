@@ -1,3 +1,135 @@
+2009-09-04 04:37  panas2
+
+	* [r7101] /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.h,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_copyClass.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funcdef.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_registerType.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C/panasTests/classTest.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C/panasTests/classTest.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.h:
+	  RTED changes - make check passes when RTED is not configured.
+	  Will fix RTED with --rted-enabled tomorrow
+
+2009-09-04 03:51  dquinlan
+
+	* [r7100] /trunk/ROSE/demo/Makefile.am: Fixed references to
+	  developersScratchSpace in demo/Makefile.am.
+
+2009-09-04 01:54  hamilton37
+
+	* [r7098] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedSymbols.cpp,
+	  /trunk/ROSE/projects/RTED/RtedSymbols.h,
+	  /trunk/ROSE/projects/RTED/RtedTransf_prolog.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: RTED: end of program
+	  cleanup now happens after the program's original main
+	  exists. This ensures we catch problems in the destructors of
+	  objects local to
+	  main.
+
+2009-09-03 23:28  collingbourne2
+
+	* [r7097] /trunk/ROSE/projects/haskellport/Makefile.am:
+	  Haskellport: fixed the distclean rule
+
+2009-09-03 23:28  collingbourne2
+
+	* [r7096] /trunk/ROSE/projects/haskellport/Makefile.am:
+	  Haskellport: added an uninstall rule to the makefile
+
+2009-09-03 22:19  hamilton37
+
+	* [r7095] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C/pointer,
+	  /trunk/ROSE/projects/RTED/tests/C/pointer/plus_equal.c,
+	  /trunk/ROSE/projects/RTED/tests/C/pointer/plus_equal.ok_msg:
+	  RTED: Fixed regressions. Pointer checking was broken for
+	  SgArrowExp.
+
+2009-09-03 22:19  hamilton37
+
+	* [r7094] /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp: RTED: Fix for
+	  statement transformation errors in r7043.
+
+2009-09-03 22:19  hamilton37
+
+	* [r7093]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/PointerManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp: RTED: Fixed
+	  subtype issues.
+	  
+	  An off-by-1 error is fixed in getOverlappingTypeInfos, and the
+	  case of three
+	  nested types of the same size is now handled properly for types
+	  besides the most
+	  nested one.
+
+2009-09-03 22:19  hamilton37
+
+	* [r7092] /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C/memoverlap/heap_array_in_struct.c,
+	  /trunk/ROSE/projects/RTED/tests/C/memoverlap/heap_array_in_struct.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C/memoverlap/stack_array_in_struct.c,
+	  /trunk/ROSE/projects/RTED/tests/C/memoverlap/stack_array_in_struct.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C/memoverlap/stack_array_in_struct_in_array.ok_msg:
+	  RTED: Fixed some regressions resulting from recent work in C++.
+
+2009-09-03 22:19  hamilton37
+
+	* [r7091] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_locals.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/object_create.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_to_fncall.c,
+	  /trunk/ROSE/projects/RTED/tests/C/memoverlap/heap_array_in_struct_in_array.c,
+	  /trunk/ROSE/projects/RTED/tests/C/memoverlap/heap_array_in_struct_in_array.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C/memoverlap/stack_array_in_struct_in_array.c:
+	  RTED: Handle simple object creation.
+	  
+	  CreateVariable is now properly called in constructors, rather
+	  than after
+	  variable declaration statements. The present implementation has a
+	  known
+	  deficiency that it doesn't handle cases where multiple
+	  constructors are called
+	  for the same object (e.g. with superclass constructor calls).
+
+2009-09-03 21:51  liao6
+
+	* [r7090] /trunk/ROSE/scripts/roseFreshTestStub-Leo-head.sh:
+	  Enabled Haskell support
+
+2009-09-03 19:11  saebjornsen1
+
+	* [r7087] /trunk/ROSE/src/midend/astQuery/astQuery.h,
+	  /trunk/ROSE/tests/roseTests/astQueryTests/testQuery2.C: Fixed bug
+	  where the NodeQuery using ChildrenOnly returned the parent
+	  pointer.
+
 2009-09-03 16:18  matzke
 
 	* [r7081] /trunk/ROSE/src/frontend/ExecFormats/ExecELF.C:
