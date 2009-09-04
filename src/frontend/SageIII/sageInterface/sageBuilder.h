@@ -725,6 +725,12 @@ SgClassDeclaration * buildStructDeclaration(const SgName& name, SgScopeStatement
 SgClassDeclaration * buildStructDeclaration(const std::string& name, SgScopeStatement* scope=NULL);
 SgClassDeclaration * buildStructDeclaration(const char* name, SgScopeStatement* scope=NULL);
 
+// tps (09/02/2009) : Added support for building namespaces
+SgNamespaceDeclarationStatement *  buildNamespaceDeclaration(const SgName& name, SgScopeStatement* scope=NULL);
+SgNamespaceDeclarationStatement *  buildNamespaceDeclaration_nfi(const SgName& name, bool unnamednamespace, SgScopeStatement* scope );
+SgNamespaceDefinitionStatement * buildNamespaceDefinition(SgNamespaceDeclarationStatement* d=NULL);
+
+
 // DQ (1/24/2009): Added this "_nfi" function but refactored buildStructDeclaration to also use it (thsi needs to be done uniformally).
 SgClassDeclaration * buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgClassDeclaration* nonDefiningDecl);
 
