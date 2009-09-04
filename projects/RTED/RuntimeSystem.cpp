@@ -47,15 +47,9 @@ RuntimeSystem_getRuntimeSystem() {
  * This function is closed when RTED finishes (Destructor)
  ********************************************************/
 void
-RuntimeSystem_roseRtedClose(
-      const char* filename,
-      const char* line,
-      const char* lineTransformed
-) {
-
-
-	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
-    CHECKPOINT
+RuntimeSystem_roseRtedClose() {
+	
+  RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
 
 	rs->doProgramExitChecks();
 
@@ -846,6 +840,13 @@ RuntimeSystem_roseConvertIntToString(int t) {
   return text;
 }
 
+// A simple way for users to manually set checkpoints
+void
+RuntimeSystem_roseCheckpoint( const char* filename, const char* line, const char* lineTransformed ) {
+	RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
+  CHECKPOINT
+}
+
 
 
 
@@ -931,17 +932,10 @@ RuntimeSystem_roseReallocateMemory(
 
 extern int RuntimeSystem_original_main(int argc, char**argv, char**envp);
 
-//#ifdef ROSE_WITH_ROSEQT
-//    #include <QApplication>
-//#endif
+int main(int argc, char **argv, char ** envp) {
 
-int main(int argc, char **argv, char ** envp)
-{
+    int exit_code = RuntimeSystem_original_main(argc, argv, envp);
+    RuntimeSystem_roseRtedClose();
 
-//    #ifdef ROSE_WITH_ROSEQT
-//        QApplication app(argc,argv);
-//    #endif
-
-
-    return RuntimeSystem_original_main(argc, argv, envp);
+    return exit_code;
 }

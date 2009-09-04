@@ -13,6 +13,8 @@ const char* RuntimeSystem_roseConvertIntToString(int t);
 
 // USE GUI for debugging
 void Rted_debugDialog(const char* filename, int line, int lineTransformed);
+
+void RuntimeSystem_roseCheckpoint( const char* filename, const char* line, const char* lineTransformed );
 /***************************** HELPER FUNCTIONS *************************************/
 
 
@@ -79,10 +81,7 @@ void RuntimeSystem_roseExitScope(const char* filename, const char* line, const c
 /***************************** SCOPE *************************************/
 
 
-
-/***************************** INIT AND EXIT *************************************/
-void RuntimeSystem_roseRtedClose(const char* filename, const char* line,
-		const char* lineTransformed);
+void RuntimeSystem_roseRtedClose();
 
 // function used to indicate error
 void RuntimeSystem_callExit(const char* filename, const char* line,

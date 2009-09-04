@@ -87,7 +87,7 @@ class RtedTransformation : public AstSimpleProcessing {
   SgStatement* mainFirst;
   SgBasicBlock* mainBody;
   Sg_File_Info* mainEnd;
-  SgFunctionSymbol* roseRtedClose;
+  SgFunctionSymbol* roseCheckpoint;
   bool mainEndsWithReturn;
   SgReturnStmt* mainReturnStmt;
   SgFunctionSymbol* roseCallStack;
@@ -274,7 +274,7 @@ class RtedTransformation : public AstSimpleProcessing {
     globalScope=NULL;
     roseCreateArray=NULL;
     roseArrayAccess=NULL;
-    roseRtedClose=NULL;
+    roseCheckpoint=NULL;
     roseFunctionCall=NULL;
     roseAssertFunctionSignature=NULL;
     roseConfirmFunctionSignature=NULL;

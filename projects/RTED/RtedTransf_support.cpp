@@ -89,7 +89,8 @@ SgDeclarationStatementPtrList& RtedTransformation::appendConstructors(
     SgDeclarationStatementPtrList& members = cdef -> get_members();
     BOOST_FOREACH( SgDeclarationStatement* member, members ) {
         SgMemberFunctionDeclaration* mfun 
-            = isSgMemberFunctionDeclaration( member );
+            = isSgMemberFunctionDeclaration(
+                member -> get_definingDeclaration() );
 
         if( isConstructor( mfun ))
             constructors.push_back( mfun );

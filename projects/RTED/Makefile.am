@@ -241,7 +241,8 @@ TRANSFORMING_FILES += $(2) \
 		      $(filter rted_source/%$(strip $(1)), $^) \
 		      $(INCLUDES) \
 		      -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) \
-		      -I$(top_builddir) -I$(srcdir) $(RTED_LIB) > $@.compile.out 2> $@.compile.err;
+		      -I$(top_builddir) -I$(srcdir) $(RTED_LIB) > $@.compile.out 2> $@.compile.err\
+			  || cat $@.compile.err;
 
 TRANSFORMING_FILES += if [ $$? -ne 0 ]; then exit 1; fi;
 
@@ -256,7 +257,8 @@ TRANSFORMING_FILES += ./runtimeCheck 2 $(filter rted_source/%$(strip $(1)), $^) 
 				       -I$(top_builddir) \
 				       -I$(srcdir) \
 				       -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@))\
-					   > $@.runtimeCheck.out 2> $@.runtimeCheck.err;
+					   > $@.runtimeCheck.out 2> $@.runtimeCheck.err\
+					   || cat $@.runtimeCheck.err;
 TRANSFORMING_FILES += if [ $$? -ne 0 ]; then exit 1; fi;
 
 TRANSFORMING_FILES += echo " done.";
@@ -308,7 +310,8 @@ COMPILING_RUNTIME_SYSTEM = @echo -n "   compiling instrumented debugger code (wi
 				      -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) \
 				      -I$(top_builddir) \
 				      -I$(srcdir) \
-				      $(3) $(RTED_LIB) > $@.compile.out 2> $@.compile.err; \
+				      $(3) $(RTED_LIB) > $@.compile.out 2> $@.compile.err \
+					  || cat $@.compile.err;\
 			   if [ $$? -ne 0 ]; then exit 1; fi; \
 			   echo " done."
 

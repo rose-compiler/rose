@@ -44,7 +44,7 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
   roseConfirmFunctionSignature = symbols->roseConfirmFunctionSignature;
   roseFreeMemory = symbols->roseFreeMemory;
   roseReallocateMemory = symbols->roseReallocateMemory;
-  roseRtedClose = symbols->roseRtedClose;
+  roseCheckpoint = symbols->roseCheckpoint;
   roseConvertIntToString=symbols->roseConvertIntToString;
   roseCreateVariable = symbols->roseCreateVariable;
   roseInitVariable = symbols->roseInitVariable;
@@ -64,7 +64,7 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
   ROSE_ASSERT(roseFreeMemory);
   ROSE_ASSERT(roseReallocateMemory);
   ROSE_ASSERT(roseConvertIntToString);
-  ROSE_ASSERT(roseRtedClose);
+  ROSE_ASSERT(roseCheckpoint);
   ROSE_ASSERT(roseCreateVariable);
   ROSE_ASSERT(roseInitVariable);
   ROSE_ASSERT(roseMovePointer);

@@ -11,7 +11,7 @@ private:
 public:
 	SgFunctionSymbol* roseCreateArray;
 	SgFunctionSymbol* roseArrayAccess;
-	SgFunctionSymbol* roseRtedClose;
+	SgFunctionSymbol* roseCheckpoint;
 	SgFunctionSymbol* roseFunctionCall;
 	SgFunctionSymbol* roseAssertFunctionSignature;
 	SgFunctionSymbol* roseConfirmFunctionSignature;
@@ -31,7 +31,7 @@ public:
 	RtedSymbols() {
 		roseCreateArray = NULL;
 		roseArrayAccess = NULL;
-		roseRtedClose = NULL;
+		roseCheckpoint = NULL;
         roseFunctionCall = NULL;
 		roseAssertFunctionSignature = NULL;
 		roseConfirmFunctionSignature = NULL;
