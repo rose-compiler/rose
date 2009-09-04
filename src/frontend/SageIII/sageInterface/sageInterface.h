@@ -744,8 +744,18 @@ void setLoopCondition(SgScopeStatement* loop, SgStatement* cond);
 
 //! Check if a for-loop has a canonical form, return loop index, bounds, step, and body if requested
 //!
-//! A canonical form is defined as : one initialization statement, a test expression, and an increment expression , loop index variable should be of an integer type.
-bool isCanonicalForLoop(SgNode* loop, SgInitializedName** ivar=NULL, SgExpression** lb=NULL, SgExpression** ub=NULL, SgExpression** step=NULL, SgStatement** body=NULL);
+//! A canonical form is defined as : one initialization statement, a test expression, and an increment expression , loop index variable should be of an integer type.  
+bool isCanonicalForLoop(SgNode* loop, SgInitializedName** ivar=NULL, SgExpression** lb=NULL, SgExpression** ub=NULL, SgExpression** step=NULL, SgStatement** body=NULL, bool *hasIncrementalIterationSpace = NULL);
+
+//! Set the lower bound of a loop header for (i=lb; ...)
+void setLoopLowerBound(SgNode* loop, SgExpression* lb);
+
+//! Set the upper bound of a loop header,regardless the condition expression type.  for (i=lb; i op up, ...)
+void setLoopUpperBound(SgNode* loop, SgExpression* ub);
+
+//! Set the stride(step) of a loop 's incremental expression, regardless the expression types (i+=s; i= i+s, etc)
+void setLoopStride(SgNode* loop, SgExpression* stride);
+
 
 //! Normalize loop init stmt by promoting the single variable declaration statement outside of the for loop header's init statement, e.g. for (int i=0;) becomes int i_x; for (i_x=0;..) and rewrite the loop with the new index variable, if necessary
 bool normalizeForLoopInitDeclaration(SgForStatement* loop);

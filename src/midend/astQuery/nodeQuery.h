@@ -310,8 +310,34 @@ namespace NodeQuery
   // Liao, 8/27/2009, a more generic nodeList query, not just for nodes of type SgNode*
   template <typename T> 
   Rose_STL_Container <T* >
+  queryNodeList ( Rose_STL_Container <T* > queryList, VariantVector targetVector)
+  {
+    Rose_STL_Container <T* > result;
+    //Rose_STL_Container <T*>::iterator iter; // not recognized ??
+    size_t i=0;
+    for (i= 0; i<queryList.size(); i++)
+    {
+      SgNode* node = dynamic_cast<SgNode*> (queryList[i]);
+      ROSE_ASSERT(node != NULL);
+      for (VariantVector::const_iterator iter = targetVector.begin();
+            iter != targetVector.end(); iter++)
+      {
+        if (node->variantT() == *iter)
+        {
+          result.push_back(queryList[i]);
+          break;
+        }
+      }
+    }
+    return result;
+  }
+  // Single VariantT 
+  template <typename T> 
+  Rose_STL_Container <T* >
   queryNodeList ( Rose_STL_Container <T* > queryList, VariantT targetVariant)
   {
+    return queryNodeList<T>( queryList, VariantVector(targetVariant));
+#if 0    
     Rose_STL_Container <T* > result;
     //Rose_STL_Container <T*>::iterator iter; // not recognized ??
     size_t i=0;
@@ -323,7 +349,9 @@ namespace NodeQuery
         result.push_back(queryList[i]);
     }
     return result;
+#endif    
   }
+
 
   // DQ (4/8/2004): Added query based on vector of variants
 
