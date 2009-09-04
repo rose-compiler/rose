@@ -137,6 +137,9 @@ void RuntimeSystem_roseRegisterTypeCall(int count, ...);
 
 
 
+
+
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

@@ -8,7 +8,7 @@
 
 
 #include "MainWindow.h"
-#include "CppRuntimeSystem.h"
+#include "../CppRuntimeSystem.h"
 
 
 #include <pthread.h>
@@ -41,6 +41,7 @@ class RtedDebug
 
 
         void addMessage(const QString & msg, MessageType type);
+	void addMessage(std::string& msg);
 
         /// Starts debug dialog
         /// runtimeSystem is blocked until singleStep or resume was clicked

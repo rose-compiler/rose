@@ -92,6 +92,13 @@ void RtedDebug::updateDialogData()
     messages.clear();
 }
 
+
+void RtedDebug::addMessage(std::string &  msg)
+{
+  QString message = QString(msg.c_str());
+  addMessage(message,RtedDebug::MESSAGE);
+}
+
 void RtedDebug::addMessage(const QString & msg, MessageType type)
 {
     QString msgCopy=msg;

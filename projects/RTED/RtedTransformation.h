@@ -355,6 +355,10 @@ class RtedTransformation : public AstSimpleProcessing {
   void visit_isClassDefinition(SgClassDefinition* cdef);
 
 
+
+
+
 };
+
 
 #endif

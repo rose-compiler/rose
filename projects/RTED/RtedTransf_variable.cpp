@@ -105,8 +105,9 @@ void RtedTransformation::insertVariableCreateCall( RtedClassDefinition* rcdef ) 
                         cdef -> get_declaration() -> get_name() ));
         ROSE_ASSERT( csym );
 
-        body -> prepend_statement(
-                buildVariableCreateCallStmt( buildThisExp( csym )));
+	SgExprStatement* expr = buildVariableCreateCallStmt( buildThisExp( csym ));
+	if (expr)
+        body -> prepend_statement(expr);
     }
 }
 
@@ -155,14 +156,16 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName
         // we have to handle for statements separately, because of parsing
         // issues introduced by variable declarations in the for loop's
         // init statement
+      SgFunctionCallExp* buildVar = buildVariableCreateCallExpr( initName, stmt );
+      if (buildVar==NULL) return;
         prependPseudoForInitializerExpression(
-            buildVariableCreateCallExpr( initName, stmt ),
+					      buildVar,
             isSgForStatement( stmt -> get_parent() -> get_parent() )
         );
     } else if ( isNormalScope( scope )) {
       // insert new stmt (exprStmt) after (old) stmt
       SgExprStatement* exprStmt = buildVariableCreateCallStmt( initName, stmt);
-#if 1
+      if (exprStmt) {
       cerr << "++++++++++++ stmt :"<<stmt << " mainFirst:"<<mainFirst<<
       "   initName->get_scope():"<<initName->get_scope() <<
       "   mainFirst->get_scope():"<<mainFirst->get_scope()<<endl;
@@ -177,7 +180,7 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName
         insertStatementAfter(isSgStatement(stmt), exprStmt);
         cerr << "+++++++ insert After... "<<endl;
       }
-#endif
+      }
     }
     else if (isSgNamespaceDefinitionStatement(scope)) {
       cerr <<"RuntimeInstrumentation :: WARNING - Scope not handled!!! : " << name << " : " << scope->class_name() << endl;
@@ -226,6 +229,11 @@ SgFunctionCallExp*
 RtedTransformation::buildVariableCreateCallExpr(
         SgExpression* var_ref, string& debug_name, bool initb) {
 
+  // if the variable is called "this", e.g. this->i ...
+  // then we skip it, since we do not want to register this variable
+  if (debug_name=="this")
+    return NULL;
+
     // build the function call : runtimeSystem-->createArray(params); ---------------------------
     SgExprListExp* arg_list = buildExprListExp();
     SgExpression* callName = buildString( debug_name );
@@ -273,6 +281,7 @@ RtedTransformation::buildVariableCreateCallExpr(
 SgExprStatement*
 RtedTransformation::buildVariableCreateCallStmt( SgThisExp* exp, bool forceinit) {
     SgFunctionCallExp* fn_call = buildVariableCreateCallExpr( exp, forceinit );
+    if (fn_call==NULL) return NULL;
     return buildVariableCreateCallStmt( fn_call );
 }
 
@@ -283,6 +292,7 @@ RtedTransformation::buildVariableCreateCallStmt(
 
     SgFunctionCallExp* fn_call 
         = buildVariableCreateCallExpr( initName, stmt, forceinit );
+    if (fn_call==NULL) return NULL;
     return buildVariableCreateCallStmt( fn_call );
 }
 

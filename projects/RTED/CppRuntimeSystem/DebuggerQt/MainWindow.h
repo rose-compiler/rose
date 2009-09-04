@@ -9,7 +9,7 @@ class RtedDebug;
 class PropertyTreeWidget;
 class QModelIndex;
 
-#include "CppRuntimeSystem.h"
+#include "../CppRuntimeSystem.h"
 
 
 

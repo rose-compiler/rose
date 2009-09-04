@@ -18,7 +18,29 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
+
 #include "RuntimeSystem.h"
+#include "CppRuntimeSystem/DebuggerQt/RtedDebug.h"
+
+
+/**********************************************************
+ *  Convert to string
+ *********************************************************/
+  template<typename T>
+  std::string ToString(T t){
+  std::ostringstream myStream; //creates an ostringstream object
+  myStream << t << std::flush;
+  return myStream.str(); //returns the string form of the stringstream object
+ }
+
+template<typename T>
+std::string HexToString(T t){
+  std::ostringstream myStream; //creates an ostringstream object
+  myStream <<  std::hex <<  t ;
+  return myStream.str(); //returns the string form of the stringstream object
+}
+
 
 
 #define CHECKPOINT rs -> checkpoint( SourcePosition( filename, atoi( line ), atoi( lineTransformed ))); 
@@ -755,8 +777,14 @@ RuntimeSystem_roseInitVariable(
 			       const char* lineTransformed) {
 
 
+  std::string message = "   Init Var at address:  "+HexToString(address)+"  type:"
+    +type+ "   size: " + ToString(size);
+  //cerr << "++++++++++++++++++++++++++ " << message << endl;
+  RtedDebug::instance()->addMessage(message);
+
   RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
   CHECKPOINT
+
 
     RsType* rs_type = 
     RuntimeSystem_getRsType(
@@ -767,6 +795,7 @@ RuntimeSystem_roseInitVariable(
 			    );
   rs -> checkMemWrite( address, size, rs_type );
 
+  
 
   // This assumes roseInitVariable is called after the assignment has taken
   // place (otherwise we wouldn't get the new heap address).
@@ -900,6 +929,10 @@ RuntimeSystem_roseRegisterTypeCall(int count, ...) {
       } else {
         t = RuntimeSystem_getRsType( type, base_type, "", indirection_level );
       }
+      std::string message = "   Register class-member:  "+name+"  offset:"
+	+HexToString(offset)+ "   size: " + ToString(size);
+      //cerr << "++++++++++++++++++++++++++ " << message << endl;
+      RtedDebug::instance()->addMessage(message);
       classType->addMember(name,t,(addr_type)offset);
       //cerr << "Registering Member " << name << " of type " << type << " at offset " << offset << endl;
     }
