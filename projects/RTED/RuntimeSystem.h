@@ -81,7 +81,7 @@ void RuntimeSystem_roseExitScope(const char* filename, const char* line, const c
 /***************************** SCOPE *************************************/
 
 
-void RuntimeSystem_roseRtedClose();
+  void RuntimeSystem_roseRtedClose(char* from);
 
 // function used to indicate error
 void RuntimeSystem_callExit(const char* filename, const char* line,

@@ -11,7 +11,7 @@ ostream & out = cout;
 
 
 #define TEST_INIT( MSG)                               \
-    out << "-- " << (MSG) << endl ;                   \
+    out << "-- " << (MSG) << endl ;		      \
     bool errorFound=false;                            \
     RuntimeSystem * rs = RuntimeSystem::instance();   \
     rs->checkpoint(SourcePosition( (MSG), __LINE__, __LINE__ ));              \
@@ -44,7 +44,7 @@ ostream & out = cout;
 #define CHECKPOINT rs -> checkpoint( SourcePosition( "", __LINE__, __LINE__ ));
 
 
-#define CLEANUP  { rs->doProgramExitChecks();  rs->clearStatus(); }
+#define CLEANUP  {  rs->doProgramExitChecks();  rs->clearStatus(); }
 
 // ------------------- cstdlib string test macros ----------------------------
 
@@ -1074,7 +1074,7 @@ void test_range_overlap()
 
     rs->freeMemory( (addr_type) s2);
     rs->freeMemory( (addr_type) s3);
-
+    
     CLEANUP
 }
 
@@ -1380,6 +1380,9 @@ extern int RuntimeSystem_original_main(int argc, char ** argv, char ** envp)
         test_memcpy_strict_overlap();
         test_meminit_nullterm_included();
         test_range_overlap();
+
+	rs->doProgramExitChecks();	
+	printf("All tests passed. \n");
     }
     catch( RuntimeViolation& e)
     {

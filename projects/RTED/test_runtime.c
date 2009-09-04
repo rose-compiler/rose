@@ -9,7 +9,7 @@
  * -----------------------------------------------------------*/
 int main(int argc, char** argv) {
   printf("Testing runtime system\n");
-  RuntimeSystem_roseRtedClose();
+  RuntimeSystem_roseRtedClose("main");
   printf("Done\n");
   return 0;
 }

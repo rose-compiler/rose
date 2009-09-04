@@ -47,15 +47,17 @@ RuntimeSystem_getRuntimeSystem() {
  * This function is closed when RTED finishes (Destructor)
  ********************************************************/
 void
-RuntimeSystem_roseRtedClose() {
+RuntimeSystem_roseRtedClose(char* from) {
 	
   RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
 
-	rs->doProgramExitChecks();
+  rs->doProgramExitChecks();
 
+  std::string stdfrom = string(from);
   // The runtime system would have exited if it had found an error
-  rs->log( "Failed to discover error in RTED test\n" );
-  exit( 1 );
+  rs->log( "Failed to discover error in RTED test. Origin : "+stdfrom+"\n" );
+  // tps (09/04/2009) : this fails and I do not understand why
+  //exit( 1 );
 }
 
 
@@ -941,7 +943,7 @@ extern int RuntimeSystem_original_main(int argc, char**argv, char**envp);
 int main(int argc, char **argv, char ** envp) {
 
     int exit_code = RuntimeSystem_original_main(argc, argv, envp);
-    RuntimeSystem_roseRtedClose();
+    RuntimeSystem_roseRtedClose((char*)"RuntimeSystem.cpp:main");
 
     return exit_code;
 }

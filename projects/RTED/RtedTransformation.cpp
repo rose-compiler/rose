@@ -79,53 +79,57 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
   vector<SgClassDeclaration*> traverseClasses;
   //*******************************************
   // for all of the sourcefiles create a namespace at the top of the file
-	// add to top of each source file
-	vector<SgNode*> resSF = NodeQuery::querySubTree(project,V_SgSourceFile);
-	// insert at top of all C files in reverse order
-	// only if the class has a constructor and if it is declared in a header file
-	vector<SgNode*>::const_iterator resSFIt = resSF.begin();
-	for (;resSFIt!=resSF.end();resSFIt++) {
-		SgSourceFile* sf = isSgSourceFile(*resSFIt);
-		ROSE_ASSERT(sf);
-		bool isInSourceFileSet = isInInstrumentedFile(sf);
-		if (isInSourceFileSet) {
-			insertNamespaceIntoSourceFile(sf);
-		}
-	}
+  // add to top of each source file
+  vector<SgNode*> resSF = NodeQuery::querySubTree(project,V_SgSourceFile);
+  // insert at top of all C files in reverse order
+  // only if the class has a constructor and if it is declared in a header file
+  vector<SgNode*>::const_iterator resSFIt = resSF.begin();
+  for (;resSFIt!=resSF.end();resSFIt++) {
+    SgSourceFile* sf = isSgSourceFile(*resSFIt);
+    ROSE_ASSERT(sf);
+    bool isInSourceFileSet = isInInstrumentedFile(sf);
+    if (isInSourceFileSet) {
+      // we should only do this for C++!
+      std::string filename = sf->get_file_info()->get_filename();
+      if (! (filename.find(".C") || filename.find(".c")) )
+	// if it is not a C but C++ program, then insert namespace
+	insertNamespaceIntoSourceFile(sf);
+    }
+  }
   cerr << "Deep copy of all C++ class declarations to allow offsetof to be used." << endl;
   vector<SgNode*> results = NodeQuery::querySubTree(project,V_SgClassDeclaration);
   // insert at top of all C files in reverse order
   // only if the class has a constructor and if it is declared in a header file
   vector<SgNode*>::const_reverse_iterator classIt = results.rbegin();
   for (;classIt!=results.rend();classIt++) {
-	  SgClassDeclaration* classDecl = isSgClassDeclaration(*classIt);
-	  if (classDecl->get_definingDeclaration()==classDecl)
-	  if (classDecl->get_class_type()==SgClassDeclaration::e_class
-			  && !classDecl->get_file_info()->isCompilerGenerated()
-			  ) {
-		  string filename = classDecl->get_file_info()->get_filenameString();
-		  int idx = filename.rfind('.');
-		  std::string extension ="";
-		  if(idx != std::string::npos)
-			  extension = filename.substr(idx+1);
-		  if ((extension!="C" && extension!="cpp" && extension!="cxx") && filename.find("include-staging")==string::npos) {
-			  std::vector<std::pair<SgNode*,std::string> > vec = classDecl->returnDataMemberPointers();
-			  cerr << "Found classDecl : " << classDecl->get_name().str() << "  in File: " << filename <<
-				  "    with number of datamembers: " << vec.size() << "   defining " <<
-				  (classDecl->get_definingDeclaration()==classDecl) << endl;
-			  if (hasPrivateDataMembers(classDecl)) {
-			    instrumentClassDeclarationIntoTopOfAllSourceFiles(project, classDecl);
-			    traverseClasses.push_back(classDecl);
-			  }
-		  }
+    SgClassDeclaration* classDecl = isSgClassDeclaration(*classIt);
+    if (classDecl->get_definingDeclaration()==classDecl)
+      if (classDecl->get_class_type()==SgClassDeclaration::e_class
+	  && !classDecl->get_file_info()->isCompilerGenerated()
+	  ) {
+	string filename = classDecl->get_file_info()->get_filenameString();
+	int idx = filename.rfind('.');
+	std::string extension ="";
+	if(idx != std::string::npos)
+	  extension = filename.substr(idx+1);
+	if ((extension!="C" && extension!="cpp" && extension!="cxx") && filename.find("include-staging")==string::npos) {
+	  std::vector<std::pair<SgNode*,std::string> > vec = classDecl->returnDataMemberPointers();
+	  cerr << "Found classDecl : " << classDecl->get_name().str() << "  in File: " << filename <<
+	    "    with number of datamembers: " << vec.size() << "   defining " <<
+	    (classDecl->get_definingDeclaration()==classDecl) << endl;
+	  if (hasPrivateDataMembers(classDecl)) {
+	    instrumentClassDeclarationIntoTopOfAllSourceFiles(project, classDecl);
+	    traverseClasses.push_back(classDecl);
 	  }
+	}
+      }
   }
   moveupPreprocessingInfo(project);
 
   // traverse all header files and collect information
   vector<SgClassDeclaration*>::const_iterator travClassIt = traverseClasses.begin();
   for (;travClassIt!=traverseClasses.end();++travClassIt) {
-	traverse(*travClassIt,preorder);
+    traverse(*travClassIt,preorder);
   }
 
   // ---------------------------------------
@@ -224,25 +228,25 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
   cerr << "\n Number of Elements in variable_access_varref  : "
        << variable_access_varref.size() << endl;
   std::vector<SgVarRefExp*>::const_iterator itAccess =
-		  variable_access_varref.begin();
+    variable_access_varref.begin();
   for (; itAccess != variable_access_varref.end(); itAccess++) {
-	  // can be SgVarRefExp or SgPointerDerefExp
-	  SgNode* node = *itAccess;
-	  SgVarRefExp* vr = isSgVarRefExp(node);
-	  ROSE_ASSERT(vr);
-	  insertAccessVariable(vr,NULL);
+    // can be SgVarRefExp or SgPointerDerefExp
+    SgNode* node = *itAccess;
+    SgVarRefExp* vr = isSgVarRefExp(node);
+    ROSE_ASSERT(vr);
+    insertAccessVariable(vr,NULL);
   }
 
   cerr << "\n Number of Elements in variable_access_pointer  : "
        << variable_access_pointerderef.size() << endl;
   std::map<SgExpression*, SgVarRefExp*>::const_iterator itAccess2 =
-		  variable_access_pointerderef.begin();
+    variable_access_pointerderef.begin();
   for (; itAccess2 != variable_access_pointerderef.end(); itAccess2++) {
-	  // can be SgVarRefExp or SgPointerDerefExp
-	  SgExpression* pd = isSgExpression(itAccess2->first);
-	  SgVarRefExp* in = isSgVarRefExp(itAccess2->second);
-	  if (pd)
-		  insertAccessVariable(in, pd);
+    // can be SgVarRefExp or SgPointerDerefExp
+    SgExpression* pd = isSgExpression(itAccess2->first);
+    SgVarRefExp* in = isSgVarRefExp(itAccess2->second);
+    if (pd)
+      insertAccessVariable(in, pd);
   }
 
   cerr
@@ -403,19 +407,19 @@ void RtedTransformation::visit(SgNode* n) {
     visit_isArrayPntrArrRefExp(n);
   } // pntrarrrefexp
   /*
-  else if (isSgVarRefExp(n) && 
-	   (isSgExprListExp(isSgVarRefExp(n)->get_parent()) ||
-	    isSgExprListExp(isSgVarRefExp(n)->get_parent()->get_parent()))  ) {
+    else if (isSgVarRefExp(n) && 
+    (isSgExprListExp(isSgVarRefExp(n)->get_parent()) ||
+    isSgExprListExp(isSgVarRefExp(n)->get_parent()->get_parent()))  ) {
     // handles calls to functions that contain array varRefExp
     // and puts the varRefExp on stack to be used by RuntimeSystem
-	  // should now be handled by all expressions at function level
+    // should now be handled by all expressions at function level
     //visit_isArrayExprListExp(n);
-  }
+    }
   */
   else if (isSgVarRefExp(n)) {
     // if this is a varrefexp and it is not initialized, we flag it.
     // do only if it is by itself or on right hand side of assignment
-	  cerr << " @@@@@@@@@ DETECTED Variable access : " << n->unparseToString() << endl;
+    cerr << " @@@@@@@@@ DETECTED Variable access : " << n->unparseToString() << endl;
     visit_isSgVarRefExp(isSgVarRefExp(n));
   }
   // *********************** DETECT ALL array accesses ***************
@@ -464,7 +468,7 @@ void RtedTransformation::visit(SgNode* n) {
   // *********************** Detect delete (c++ free) *********
 
   else {
-	 // cerr << " @@ Skipping : " << n->unparseToString() << "   " << n->class_name() << endl;
+    // cerr << " @@ Skipping : " << n->unparseToString() << "   " << n->class_name() << endl;
 
   }
 
