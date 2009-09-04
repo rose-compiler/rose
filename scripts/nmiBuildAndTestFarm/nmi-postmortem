@@ -80,6 +80,6 @@ def main
 end
 
 
-main #if $__FILE__ == $0
+main if __FILE__ == $0
 
 # vim:et sta ai sw=4 ts=4:
