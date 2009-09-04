@@ -1,3 +1,91 @@
+2009-09-04 21:44  panas2
+
+	* [r7117]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/MainWindow.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/RtedDebug.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/VariablesType.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_registerType.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp: RTED : improved
+	  debugging info
+
+2009-09-04 21:27  liao6
+
+	* [r7116] /trunk/ROSE/config/support-omp.m4,
+	  /trunk/ROSE/configure.in,
+	  /trunk/ROSE/projects/OpenMP_Translator/Makefile.am,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/Makefile.am,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/cvalidationsuite/Makefile.am,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/developmentTests/Makefile.am,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/epcc-c/Makefile.am,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c/BT/Makefile.am,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c/CG/Makefile.am,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c/CG/cg.O0.w2c.c,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c/CG/cg.O0.w2c.h,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c/CG/cg.O2.w2c.c,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c/CG/cg.O2.w2c.h,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c/CG/cg.O3.w2c.c,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c/CG/cg.O3.w2c.h,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c/CG/cg.w2c.c,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c/CG/cg.w2c.h,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c/EP/Makefile.am,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c/FT/Makefile.am,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c/IS/Makefile.am,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c/LU/Makefile.am,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c/MG/Makefile.am,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c/Makefile.am,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c/SP/Makefile.am,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.h,
+	  /trunk/ROSE/src/midend/astOutlining/GenerateFunc.cc,
+	  /trunk/ROSE/src/midend/astQuery/nodeQuery.h,
+	  /trunk/ROSE/src/midend/ompLowering/omp_lowering.cpp,
+	  /trunk/ROSE/src/midend/ompLowering/omp_lowering.h,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2005_152.C,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/barrier.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/omp1.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/ompfor.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/ompfor2.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/ompfor3.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/ompfor4.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/reduction.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/reduction2.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/single.c,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/canonicalLoop.C,
+	  /trunk/ROSE/tests/roseTests/ompLoweringTests/Makefile.am:
+	  Translation of OpenMP 3.0, targeting GCC 4.4's GOMP library,
+	  handling the following:
+	  * directives: omp for, omp barrier , omp single
+	  * clauses: schedule, private, firstprivate, lastprivate and
+	  reduction
+	  
+	  Cleaned up the old OpenMP translation project
+	  * use a better autoconf/automake name for the omni runtime
+	  library path
+
+2009-09-04 21:00  hamilton37
+
+	* [r7115] /trunk/ROSE/scripts/nmiBuildAndTestFarm/nmi-summary: NMI:
+	  Added nmi-summary, a little ruby script that gives a more concise
+	  summary
+	  of a day's run than the nmi results page.
+	  
+	  usage: nmi-summary [day]
+	  
+	  with day defaulting to the most recent one for which there are
+	  results.
+	  
+	  nmi-summary should be run on one's local machine (not a submit
+	  host), and
+	  depends on ruby, rubygems and the hpricot gem.
+
+2009-09-04 21:00  hamilton37
+
+	* [r7114] /trunk/ROSE/scripts/nmiBuildAndTestFarm/nmi-postmortem:
+	  NMI: enabled __FILE__ == /bin/bash check in nmi-postmortem
+
 2009-09-04 18:27  panas2
 
 	* [r7109]
