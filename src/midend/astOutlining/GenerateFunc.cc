@@ -669,9 +669,10 @@ remapVarSyms (const VarSymRemap_t& vsym_remap,  // regular shared variables
   // Check if variable remapping is even needed.
   if (vsym_remap.empty() && private_remap.empty())
     return;
-
+  // Find all variable references
   typedef Rose_STL_Container<SgNode *> NodeList_t;
   NodeList_t refs = NodeQuery::querySubTree (b, V_SgVarRefExp);
+  // For each of the references , 
   for (NodeList_t::iterator i = refs.begin (); i != refs.end (); ++i)
   {
     // Reference possibly in need of fix-up.
@@ -688,7 +689,9 @@ remapVarSyms (const VarSymRemap_t& vsym_remap,  // regular shared variables
     // remapping private variables
     if (ref_private != private_remap.end()) 
     {
+      // get the replacement variable
       SgVariableSymbol* sym_new = ref_private->second;
+      // Do the replacement
       ref_orig->set_symbol (sym_new);
     }
     else if (ref_new != vsym_remap.end ()) // Needs replacement, regular shared variables

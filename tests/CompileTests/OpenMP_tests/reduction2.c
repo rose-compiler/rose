@@ -12,12 +12,12 @@ void main ()
 
  omp_set_num_threads(NUM_THREADS);
 
- #pragma omp parallel for reduction(+:res) reduction(-:yy,zz)
+ #pragma omp parallel for reduction(+:res) reduction(*:yy,zz)
  for (i=0; i<= total; i++){
   res = res + i;
   res = res - 2*i;
-  yy --;
-  zz--;
+  yy *=1;
+  zz*=1;
   }
  
  printf("the sum of 1000000 is :%.0f\n", res);

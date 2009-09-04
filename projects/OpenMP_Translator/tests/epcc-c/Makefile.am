@@ -1,15 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# Automake conditional to control use of ROSE with OpenMP
-# if ROSE_USE_OPENMP
 
-# INCLUDES = $(ROSE_INCLUDES)
-# bin_PROGRAMS = copyExample
-# copyExample_SOURCES = copyExample.C
-# copyExample_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
-# LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-
-OPENMP_RUNTIME_LIBRARY = @omp_runtime_support_path@
+OMNI_OPENMP_RUNTIME_LIBRARY = @omni_omp_runtime_support_path@
 
 TESTCODES_REQUIRED_TO_PASS = \
 arraydelay.c \
@@ -66,8 +58,8 @@ run_qm_tests:
 run_qm_gui:
 	cd QMTest; qmtest gui
 
-if ROSE_USE_OPENMP
-LDADD = -L$(OPENMP_RUNTIME_LIBRARY) -lompc -lpthread -lm
+if ROSE_USE_OMNI_OPENMP
+LDADD = -L$(OMNI_OPENMP_RUNTIME_LIBRARY) -lompc -lpthread -lm
 
 TESTS = $(check_PROGRAMS)
 check_PROGRAMS = syncbench schedbench
@@ -83,16 +75,9 @@ check-local:
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/projects/OpenMP_Translator/tests/epcc-c: make check rule complete (terminated normally) ******"
+	@echo "****** make check not run here: configure --with-omni_omp_runtime_support=<path> ******"
 	@echo "***********************************************************************************************************"
 endif
-
-# else
-# check-local:
-#	@echo "\nOpenMP tests NOT run.  To run these reconfigure with:"
-#	@echo "****************************************************************************"
-#	@echo "****** make check not run here: configure --with-omp_runtime_support=<path> ******"
-#	@echo "****************************************************************************"
-# endif
 
 EXTRA_DIST =  $(ALL_TESTCODES)
 

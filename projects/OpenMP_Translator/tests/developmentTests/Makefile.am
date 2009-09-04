@@ -1,14 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# Automake conditional to control use of ROSE with OpenMP
-# if ROSE_USE_OPENMP
-
-# INCLUDES = $(ROSE_INCLUDES)
-# bin_PROGRAMS = copyExample
-# copyExample_SOURCES = copyExample.C
-# copyExample_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
-# LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-
 #inputBug320.c , this is not directly related to OpenMP, removed, Liao 11/14/2007
 #inputNomain.c: assume all tests are selfcontained. so skip this one
 
@@ -71,7 +62,7 @@ VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-l
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
 VALGRIND =
 
-OPENMP_RUNTIME_LIBRARY = @omp_runtime_support_path@
+OMNI_RUNTIME_LIBRARY_PATH = @omni_omp_runtime_support_path@
 
 PASSING_TEST_Objects = ${TESTCODES:.c=.o}
 TEST_Objects = ${ALL_TESTCODES:.c=.o}
@@ -80,14 +71,14 @@ $(TEST_Objects): ../../ompTranslator $(@:.o=.c)
 	$(VALGRIND) ../../ompTranslator -D_OPENMP $(ROSE_FLAGS) -I$(srcdir)/../.. -I$(srcdir)/../../includes -c $(srcdir)/$(@:.o=.c)
 QMTEST_Objects = ${ALL_TESTCODES:.c=.qmt}
 
-if ROSE_USE_OPENMP
+if ROSE_USE_OMNI_OPENMP
 #Liao, 11/14/2007, enable linking and running compiled code 
 # leverage the simple tests support from automake
 # Note: assume each test code is self-contained and has main() inside.
 PASSING_TEST_Executables = ${TEST_Objects:.o=.out}
 
 check_PROGRAMS = $(PASSING_TEST_Executables)
-LDADD = -L$(OPENMP_RUNTIME_LIBRARY) -lompc -lpthread -lm
+LDADD = -L$(OMNI_RUNTIME_LIBRARY_PATH) -lompc -lpthread -lm
 TESTS = $(check_PROGRAMS)
 else  # otherwise just generate object files
 check-local:
@@ -97,8 +88,8 @@ check-local:
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/projects/OpenMP_Translator/tests/developmentTests: make check rule complete (terminated normally) ******"
-	@echo "****** configure option --with-omp_runtime_support can be used to specify Omni runtime library path           ******"
-	@echo "****** for example: --with-omp_runtime_support=/home/liao6/opt/omni-1.6/lib/openmp/lib                        ******"
+	@echo "****** configure option --with-omni_omp_runtime_support can be used to specify Omni runtime library path           ******"
+	@echo "****** for example: --with-omni_omp_runtime_support=/home/liao6/opt/omni-1.6/lib/openmp/lib                        ******"
 	@echo "****** then make check will not only compile the tests, but also run them in multithreads                     ******"
 	@echo "***********************************************************************************************************"
 

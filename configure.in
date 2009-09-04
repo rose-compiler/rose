@@ -417,11 +417,13 @@ AM_CONDITIONAL(ROSE_USE_WINDOWS_ANALYSIS_SUPPORT,test ! "$with_wine" = no)
 # Control use of debugging support to convert most unions in EDG to structs.
 ROSE_SUPPORT_EDG_DEBUGGING
 
-# Call supporting macro for OpenMP
-ROSE_SUPPORT_OPENMP
+# Call supporting macro for Omni OpenMP
+# 
+ROSE_SUPPORT_OMNI_OPENMP
 
 # Configuration commandline support for OMP project using ROSE
-AM_CONDITIONAL(ROSE_USE_OPENMP,test ! "$with_omp_runtime_support" = no)
+#AM_CONDITIONAL(ROSE_USE_OPENMP,test ! "$with_omp_runtime_support" = no)
+AM_CONDITIONAL(ROSE_USE_OMNI_OPENMP,test ! "$with_omni_omp_runtime_support" = no)
 
 # Call supporting macro for GCC OpenMP
 ROSE_SUPPORT_GCC_OMP

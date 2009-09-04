@@ -5,7 +5,7 @@ SUBDIRS = BT CG EP FT IS LU MG SP
 EXTRA_DIST = README.omc  README.org LOG.omc common bin Doc config sys
 
 # Automake conditional to control use of ROSE with OpenMP
-# if ROSE_USE_OPENMP
+# if ROSE_USE_OMNI_OPENMP
 check-local:
 	@echo "Test for ROSE OpenMP Translator."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
@@ -18,7 +18,7 @@ check-local:
 # check-local:
 #	@echo "\nOpenMP tests NOT run.  To run these reconfigure with:"
 #	@echo "****************************************************************************"
-#	@echo "****** make check not run here: configure --with-omp_runtime_support=<path> ******"
+#	@echo "****** make check not run here: configure --with-omni_omp_runtime_support=<path> ******"
 #	@echo "****************************************************************************"
 # endif
 

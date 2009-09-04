@@ -1,16 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# DQ (1/6/2007): Try to turn this on so that we at least 
-# compile the OpenMP translator even if we don't run it!
-# Automake conditional to control use of ROSE with OpenMP
-# if ROSE_USE_OPENMP
-
-# INCLUDES = $(ROSE_INCLUDES)
-# bin_PROGRAMS = copyExample
-# copyExample_SOURCES = copyExample.C
-# copyExample_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
-# LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-
 TESTCODES_REQUIRED_TO_PASS = \
 for_firstprivate.c \
 for_lastprivate.c \
@@ -107,12 +96,12 @@ run_qm_tests:
 run_qm_gui:
 	cd QMTest; qmtest gui
 
-OPENMP_RUNTIME_LIBRARY = @omp_runtime_support_path@
+OMNI_OPENMP_RUNTIME_LIBRARY = @omni_omp_runtime_support_path@
 
-if ROSE_USE_OPENMP
+if ROSE_USE_OMNI_OPENMP
 # enable make check to build and run the final executable, Liao 1/31/2008
 INCLUDES= -I$(srcdir)/../../includes 
-LDADD = -L$(OPENMP_RUNTIME_LIBRARY) -lompc -lpthread -lm
+LDADD = -L$(OMNI_OPENMP_RUNTIME_LIBRARY) -lompc -lpthread -lm
 main_SOURCES=$(TESTCODES)
 check_PROGRAMS = main
 TESTS = $(check_PROGRAMS)
@@ -126,6 +115,7 @@ check-local:
 	$(MAKE) $(PASSING_TEST_Objects)
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/projects/OpenMP_Translator/tests/cvalidationsuite: make check rule complete (terminated normally) ******"
+	@echo "****** make check not run here: configure --with-omni_omp_runtime_support=<path> ******"
 	@echo "***********************************************************************************************************"
 endif
 

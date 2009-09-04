@@ -1,14 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# Automake conditional to control use of ROSE with OpenMP
-# if ROSE_USE_OPENMP
-
-# INCLUDES = $(ROSE_INCLUDES)
-# bin_PROGRAMS = copyExample
-# copyExample_SOURCES = copyExample.C
-# copyExample_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
-# LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-
 TESTCODES_REQUIRED_TO_PASS = is.c
 
 TESTCODE_CURRENTLY_FAILING = 
@@ -66,13 +57,6 @@ check-local:
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c/IS: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
-# else
-# check-local:
-#	@echo "OpenMP tests NOT run.  To run these reconfigure with:"
-#	@echo "****************************************************************************"
-#	@echo "****** make check not run here: configure --with-omp_runtime_support=<path> ******"
-#	@echo "****************************************************************************"
-# endif
 
 EXTRA_DIST = README.carefully npbparams.h $(ALL_TESTCODES)
 

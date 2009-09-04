@@ -8,11 +8,10 @@ SUBDIRS = . tests includes
 # DQ (1/6/2007): Try to turn this on so that we at least 
 # compile the OpenMP translator even if we don't run it!
 # Automake conditional to control use of ROSE with OpenMP
-# if ROSE_USE_OPENMP
 
 # Later this should reference the external Omni OMP runtile library include directory
 # This is a parameter provided through the ROSE configure script (configure commandline)
-OPENMP_RUNTIME_LIBRARY = @omp_runtime_support_path@
+OMNI_OPENMP_RUNTIME_LIBRARY = @omni_omp_runtime_support_path@
 
 INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/includes
 
@@ -22,7 +21,7 @@ ompTranslator_SOURCES = ompTranslator.C
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
 
-if ROSE_USE_OPENMP
+if ROSE_USE_OMNI_OPENMP
 check-local:
 	@echo "Test for ROSE OpenMP Translator."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest

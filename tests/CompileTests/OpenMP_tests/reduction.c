@@ -15,7 +15,7 @@ int main()
   long sum=0;
   int total=100;
 
-#pragma omp parallel for reduction(+:sum)
+#pragma omp parallel for reduction(+:sum) nowait
  for (i=0; i<= total; i++){
   sum = sum + i;
  }

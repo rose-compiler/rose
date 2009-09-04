@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # Automake conditional to control use of ROSE with OpenMP
-# if ROSE_USE_OPENMP
+# if ROSE_USE_OMNI_OPENMP
 
 # INCLUDES = $(ROSE_INCLUDES)
 # bin_PROGRAMS = copyExample
@@ -58,7 +58,7 @@ run_qm_tests:
 run_qm_gui:
 	cd QMTest; qmtest gui
 
-# if ROSE_USE_OPENMP
+# if ROSE_USE_OMNI_OPENMP
 check-local:
 	@echo "Test for ROSE OpenMP Translator."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest

@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # Automake conditional to control use of ROSE with OpenMP
-# if ROSE_USE_OPENMP
+# if ROSE_USE_OMNI_OPENMP
 
 # INCLUDES = $(ROSE_INCLUDES)
 # bin_PROGRAMS = copyExample
@@ -70,7 +70,7 @@ check-local:
 # check-local:
 #	@echo "OpenMP tests NOT run.  To run these reconfigure with:"
 #	@echo "****************************************************************************"
-#	@echo "****** make check not run here: configure --with-omp_runtime_support=<path> ******"
+#	@echo "****** make check not run here: configure --with-omni_omp_runtime_support=<path> ******"
 #	@echo "****************************************************************************"
 # endif
 

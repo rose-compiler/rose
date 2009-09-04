@@ -1,23 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# Automake conditional to control use of ROSE with OpenMP
-# DQ (1/11/2007): This test fails (at least on 64 bit systems, more testing required)
-# if ROSE_USE_OPENMP
-
-# INCLUDES = $(ROSE_INCLUDES)
-# bin_PROGRAMS = copyExample
-# copyExample_SOURCES = copyExample.C
-# copyExample_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
-# LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 TESTCODES_REQUIRED_TO_PASS = cg.c 
-
-# DQ: I think these are specific to the whirl2c.h header file
-# cg.O0.w2c.c 
-# cg.O2.w2c.c 
-# cg.O3.w2c.c 
-# cg.w2c.c
-
 
 TESTCODE_CURRENTLY_FAILING = 
 
@@ -66,7 +50,7 @@ run_qm_tests:
 run_qm_gui:
 	cd QMTest; qmtest gui
 
-if ROSE_USE_OPENMP
+if ROSE_USE_OMNI_OPENMP
 check-local:
 	@echo "Test for ROSE OpenMP Translator."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
@@ -79,11 +63,11 @@ else
 check-local:
 	@echo "OpenMP tests NOT run.  To run these reconfigure with:"
 	@echo "****************************************************************************"
-	@echo "****** make check not run here: configure --with-omp_runtime_support=<path> ******"
+	@echo "****** make check not run here: configure --with-omni_omp_runtime_support=<path> ******"
 	@echo "****************************************************************************"
 endif
 
-EXTRA_DIST = README.carefully cg.O0.w2c.h  cg.O2.w2c.h  cg.O3.w2c.h  cg.w2c.h  npbparams.h $(ALL_TESTCODES)
+EXTRA_DIST = README.carefully npbparams.h $(ALL_TESTCODES)
 
 clean-local:
 	rm -f *.o rose_*.[cC] runme test.log

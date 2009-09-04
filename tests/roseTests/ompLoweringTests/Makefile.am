@@ -9,11 +9,20 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #include $(srcdir)/Makefile-pass.inc
 C_TESTCODES_REQUIRED_TO_PASS = \
+        barrier.c \
         firstprivate.c \
         hello.c \
         hello-1.c \
+        ompfor.c \
+        omp1.c \
+        ompfor2.c \
+        ompfor3.c \
+        ompfor4.c \
         parallel.c \
-        private.c
+        private.c \
+        reduction2.c \
+        reduction.c \
+	single.c
 
 CXX_TESTCODES_REQUIRED_TO_PASS = 
 
@@ -50,8 +59,6 @@ TESTCODE_CURRENTLY_FAILING = \
         matrix_vector.c \
         nestedpar1.c \
         nestedpar.c \
-        omp1.c \
-        ompfor.c \
         ordered2.c \
         ordered.c \
         orphaned-directives.c \
@@ -61,8 +68,6 @@ TESTCODE_CURRENTLY_FAILING = \
         parallelsections.c \
         privatej.c \
         recursive.c \
-        reduction2.c \
-        reduction.c \
         section.c \
         set_num_threads.c \
         single_copyprivate.c \
@@ -103,7 +108,7 @@ $(PASSING_C_TEST_Objects): %.o: $(TEST_DIR)/%.c roseomp
 $(PASSING_CXX_TEST_Objects): %.o: $(TEST_DIR)/%.cpp roseomp
 	./roseomp$(EXEEXT) ${TEST_FLAGS} -c $<
 
-EXTRA_DIST = #Makefile-pass.inc
+EXTRA_DIST = 
 CLEANFILES = 
 
 check-local: roseomp

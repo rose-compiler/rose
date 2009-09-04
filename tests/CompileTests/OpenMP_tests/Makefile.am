@@ -11,6 +11,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	3loops.c \
 	jacobi.c \
 	atomic.c \
+	barrier.c \
 	collapse.c \
 	copyin.c \
 	copyprivate2.c \
@@ -43,6 +44,9 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	nestedpar.c \
 	omp1.c \
 	ompfor.c \
+	ompfor2.c \
+	ompfor3.c \
+	ompfor4.c \
 	ordered2.c \
 	ordered.c \
 	orphaned-directives.c \
@@ -57,6 +61,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	reduction.c \
 	section.c \
 	set_num_threads.c \
+	single.c \
 	single_copyprivate.c \
 	spmd1.c \
 	staticChunk.c \
