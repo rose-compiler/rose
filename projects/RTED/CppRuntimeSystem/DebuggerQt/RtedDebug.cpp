@@ -62,7 +62,7 @@ void RtedDebug::startRtsi()
 {
     leaveGui();
     enterGui();
-    cout << "StartRtsi" << endl;
+    cout << "StartRtsi." << endl;
     updateDialogData();
 }
 

@@ -254,9 +254,10 @@ RtedTransformation::buildVariableCreateCallExpr(
 	appendClassName( arg_list, var_ref -> get_type() );
 
     SgExpression* filename = buildString(var_ref->get_file_info()->get_filename());
-    SgExpression* linenr = buildString(RoseBin_support::ToString(var_ref->get_file_info()->get_line()));
-    appendExpression(arg_list, filename);
+    int currentlinenr = var_ref->get_file_info()->get_line();
+    SgExpression* linenr = buildString(RoseBin_support::ToString(currentlinenr));
     appendExpression(arg_list, linenr);
+    appendExpression(arg_list, filename);
 
     SgExpression* linenrTransformed = buildString("x%%x");
     appendExpression(arg_list, linenrTransformed);

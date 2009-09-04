@@ -105,8 +105,10 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
 
     stmt = isSgStatement( stmt -> get_parent());
   }
-  if( !stmt || isSgGlobal(stmt) )
+  if( !stmt || isSgGlobal(stmt) ) {
     stmt = mainFirst;
+    global_stmt = true;
+  }
 
   if (isSgStatement(stmt)) {
     SgScopeStatement* scope = stmt->get_scope();
@@ -145,11 +147,21 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
 	elements += element -> extraArgSize();
       }
 
-      SgExpression* nrElements = buildIntVal(elements);
+      // tps (09/04/2009) added 3 parameters, filename, line, linetransformed
+      SgExpression* nrElements = buildIntVal(elements+3);
 
 
       SgExprListExp* arg_list = buildExprListExp();
       appendExpression(arg_list, nrElements);
+
+      SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
+      SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
+      appendExpression(arg_list, filename);
+      appendExpression(arg_list, linenr);
+      SgExpression* linenrTransformed = buildString("x%%x");
+      appendExpression(arg_list, linenrTransformed);
+
+      
       appendExpression(arg_list, buildString(name));
       appendExpression(arg_list, buildString(typeC));
       appendExpression(arg_list, rtedClass->sizeClass);
@@ -259,7 +271,11 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
       if( global_stmt ) {
 	mainBody -> prepend_statement( exprStmt );
       } else {
+	// insert it after if it is a classdefinition, otherwise 
+	// if it is a class reference, we do it before
+	// check for assign initializer
 	insertStatementAfter( isSgStatement( stmt ), exprStmt );
+	//insertStatementBefore( isSgStatement( stmt ), exprStmt );
       }
     }
     else {

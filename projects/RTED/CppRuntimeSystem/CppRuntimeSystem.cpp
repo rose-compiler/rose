@@ -262,6 +262,7 @@ void RuntimeSystem::createVariable(addr_type address,
                                    const string & mangledName,
                                    RsType *  type)
 {
+  assert(type);
     stackManager.addVariable(new VariablesType(name,mangledName,type,address));
 }
 
@@ -297,6 +298,7 @@ void RuntimeSystem::createArray(    addr_type address,
                                     const std::string & mangledName,
                                     RsArrayType * type)
 {
+  assert(type);
     stackManager.addVariable( new VariablesType( name, mangledName, type, address ));
     pointerManager.createPointer( address, type -> getBaseType() );
 

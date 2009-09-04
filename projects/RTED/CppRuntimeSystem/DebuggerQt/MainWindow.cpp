@@ -192,8 +192,22 @@ void DbgMainWindow::updateAllRsData(bool showAlways)
     int row1 = rs->getCodePosition().getLineInOrigFile();
     int row2 = rs->getCodePosition().getLineInTransformedFile();
 
-
-
+    // skip stepping over transformed code
+    std::string filename1 = file1.toStdString();
+    //cout << "++++++++++++ file1 :" << filename1 << endl;
+    QString text = QString("Looking at: ");
+    if (file1=="0") {
+      singleStep=false;
+      text.append(" program transformation. Skipping line ... ");
+      text.append(QString("%1").arg(row2));
+    } else {
+      singleStep=true;
+      text.append(file1+" : ");
+      text.append(QString("%1,").arg(row1));
+      text.append(QString("%1").arg(row2));
+    }
+    addMessage(text);
+    
     if(!singleStep && !showAlways &&
        !breakPoints1[file1].contains(row1) &&
        !breakPoints2[file2].contains(row2))
