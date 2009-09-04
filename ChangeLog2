@@ -1,3 +1,17 @@
+2009-09-04 18:02  liao6
+
+	* [r7107] /trunk/ROSE/scripts/roseFreshTestStub-Leo-common.sh:
+	  Added Haskell compiler (gch) path to regression test environment
+
+2009-09-04 16:51  panas2
+
+	* [r7106] /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/test_runtime.c: Fixed bug that
+	  namespace is introduced into C files
+
 2009-09-04 04:37  panas2
 
 	* [r7101] /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.cpp,
