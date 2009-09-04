@@ -155,9 +155,14 @@ class RtedTransformation : public AstSimpleProcessing {
   void appendFileInfo( SgNode* n, SgExprListExp* arg_list);
   void appendFileInfo( Sg_File_Info* n, SgExprListExp* arg_list);
 
-
-
-
+  void instrumentClassDeclarationIntoTopOfAllSourceFiles(SgProject* project, SgClassDeclaration* classDecl);
+  bool hasPrivateDataMembers(SgClassDeclaration* cd_copy);
+  void moveupPreprocessingInfo(SgProject* project);
+  void insertNamespaceIntoSourceFile(SgSourceFile* sf);
+  std::map<SgSourceFile*, std::pair < SgNamespaceDeclarationStatement*,
+                                      SgNamespaceDeclarationStatement* > > sourceFileRoseNamespaceMap;
+  //std::vector<std::string> classesInRTEDNamespace;
+  std::map<SgClassDefinition*, SgClassDefinition*> classesInRTEDNamespace;
 
   // Traverse all nodes and check properties
   virtual void visit(SgNode* n);

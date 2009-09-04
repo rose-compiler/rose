@@ -84,7 +84,7 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
 
     stmt = isSgStatement( stmt -> get_parent());
   }
-  if( !stmt )
+  if( !stmt || isSgGlobal(stmt) )
       stmt = mainFirst;
 
   if (isSgStatement(stmt)) {
@@ -94,10 +94,10 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
 
     // FIXME 2: we do this all over the place, but it may not work with
     // namespaces
-    if( isSgGlobal( scope )) {
-        scope = mainBody;
-        global_stmt = true;
-    }
+   // if( isSgGlobal( scope )) {
+    //    scope = mainBody;
+    //    global_stmt = true;
+    //}
 
 
     ROSE_ASSERT(scope);
@@ -167,8 +167,25 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
 	  // build  (size_t )(&( *((struct A *)0)).x);
 			  ROSE_ASSERT(rtedClass->classDef);
 	     // cerr << " Type: " <<  rtedClass->classDef->get_declaration()->get_type()->class_name() << endl;
-	      SgExpression* nullPointer = buildCastExp(buildIntVal(0),
+
+			  // search for classDef in classesNamespace that contains all introduced RTED:Classes
+		 std::map<SgClassDefinition*, SgClassDefinition*>::const_iterator
+		          cit = classesInRTEDNamespace.find(rtedClass->classDef);
+		 SgClassDefinition* rtedModifiedClass = NULL;
+		 if (cit!=classesInRTEDNamespace.end())
+			 rtedModifiedClass = cit->second;
+		 //		 cerr << " +++++++++++++ Looking for class : " << rtedClass->classDef->get_declaration()->get_qualified_name().str()
+		 //	 << "    found : " << rtedModifiedClass << "   " << rtedModifiedClass->get_declaration()->get_qualified_name().str() << endl;
+
+	      SgExpression* nullPointer = NULL;
+	      if (rtedModifiedClass==NULL)
+	    	  nullPointer = buildCastExp(buildIntVal(0),
 	    		  buildPointerType(rtedClass->classDef->get_declaration()->get_type()));
+	      else
+	    	  nullPointer = buildCastExp(buildIntVal(1),
+	    		  buildPointerType(rtedModifiedClass->get_declaration()->get_type()));
+
+
 	      SgExpression* derefPointer = buildPointerDerefExp(nullPointer);
 	      SgVariableDeclaration* varDecl =	isSgVariableDeclaration(sgElement);
 		  if (varDecl) {
@@ -180,7 +197,14 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
 
 			  SgExpression* dotExp = buildDotExp(derefPointer,varref);
 			  SgExpression* andOp = buildAddressOfOp(dotExp);
-			  SgExpression* castOp = buildCastExp(andOp, size_t_member);
+			  SgExpression* castOp = NULL;
+			  if (rtedModifiedClass==NULL)
+				  castOp = buildCastExp(andOp, size_t_member);
+			  else {
+				  SgExpression* minus = buildSubtractOp(andOp, buildIntVal(1));
+				  castOp = buildCastExp(minus, size_t_member);
+			  }
+
 			  appendExpression(arg_list, castOp);
 			  appendExpression(arg_list, buildSizeOfOp( dotExp ));
 

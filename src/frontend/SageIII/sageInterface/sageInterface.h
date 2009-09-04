@@ -1141,6 +1141,10 @@ void fixStructDeclaration(SgClassDeclaration* structDecl, SgScopeStatement* scop
 //! Fix symbols, parent and scope pointers. Used internally within appendStatment(), insertStatement() etc when a class declaration was built without knowing its target scope.
 void fixClassDeclaration(SgClassDeclaration* classDecl, SgScopeStatement* scope);
 
+//! Fix symbols, parent and scope pointers. Used internally within appendStatment(), insertStatement() etc when a namespace declaration was built without knowing its target scope.
+void fixNamespaceDeclaration(SgNamespaceDeclarationStatement* structDecl, SgScopeStatement* scope);
+
+
 //! Fix symbol table for SgLabelStatement. Used Internally when the label is built without knowing its target scope. Both parameters cannot be NULL. 
 void fixLabelStatement(SgLabelStatement* label_stmt, SgScopeStatement* scope);
 

@@ -45,6 +45,8 @@ RtedTransformation::insertConfirmFunctionSignature( SgFunctionDefinition* fndef 
 	// first arg is the name
 	// FIXME 2: This probably needs to be something closer to the mangled_name,
 	// or perhaps we can simply skip the check entirely for C++
+    if (isSgMemberFunctionDeclaration(fndef->get_declaration()))
+		return;
 	appendExpression( arg_list, buildString(
 		fndef -> get_declaration() -> get_name()
 	));

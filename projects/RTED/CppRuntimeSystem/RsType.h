@@ -353,6 +353,7 @@ class RsBasicType : public RsType
             SgTypeString,
             SgTypeVoid,
             SgPointerType,
+            //SgReferenceType,
             Unknown //Unknown always has to be last entry
         };
 

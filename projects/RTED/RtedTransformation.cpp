@@ -23,7 +23,6 @@ RtedTransformation::parse(int argc, char** argv) {
 }
 
 
-
 /* -----------------------------------------------------------
  * Perform all transformations needed (Step 2)
  * -----------------------------------------------------------*/
@@ -77,6 +76,57 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
 
   traverseInputFiles(project,preorder);
 
+  vector<SgClassDeclaration*> traverseClasses;
+  //*******************************************
+  // for all of the sourcefiles create a namespace at the top of the file
+	// add to top of each source file
+	vector<SgNode*> resSF = NodeQuery::querySubTree(project,V_SgSourceFile);
+	// insert at top of all C files in reverse order
+	// only if the class has a constructor and if it is declared in a header file
+	vector<SgNode*>::const_iterator resSFIt = resSF.begin();
+	for (;resSFIt!=resSF.end();resSFIt++) {
+		SgSourceFile* sf = isSgSourceFile(*resSFIt);
+		ROSE_ASSERT(sf);
+		bool isInSourceFileSet = isInInstrumentedFile(sf);
+		if (isInSourceFileSet) {
+			insertNamespaceIntoSourceFile(sf);
+		}
+	}
+  cerr << "Deep copy of all C++ class declarations to allow offsetof to be used." << endl;
+  vector<SgNode*> results = NodeQuery::querySubTree(project,V_SgClassDeclaration);
+  // insert at top of all C files in reverse order
+  // only if the class has a constructor and if it is declared in a header file
+  vector<SgNode*>::const_reverse_iterator classIt = results.rbegin();
+  for (;classIt!=results.rend();classIt++) {
+	  SgClassDeclaration* classDecl = isSgClassDeclaration(*classIt);
+	  if (classDecl->get_definingDeclaration()==classDecl)
+	  if (classDecl->get_class_type()==SgClassDeclaration::e_class
+			  && !classDecl->get_file_info()->isCompilerGenerated()
+			  ) {
+		  string filename = classDecl->get_file_info()->get_filenameString();
+		  int idx = filename.rfind('.');
+		  std::string extension ="";
+		  if(idx != std::string::npos)
+			  extension = filename.substr(idx+1);
+		  if ((extension!="C" && extension!="cpp" && extension!="cxx") && filename.find("include-staging")==string::npos) {
+			  std::vector<std::pair<SgNode*,std::string> > vec = classDecl->returnDataMemberPointers();
+			  cerr << "Found classDecl : " << classDecl->get_name().str() << "  in File: " << filename <<
+				  "    with number of datamembers: " << vec.size() << "   defining " <<
+				  (classDecl->get_definingDeclaration()==classDecl) << endl;
+			  if (hasPrivateDataMembers(classDecl)) {
+			    instrumentClassDeclarationIntoTopOfAllSourceFiles(project, classDecl);
+			    traverseClasses.push_back(classDecl);
+			  }
+		  }
+	  }
+  }
+  moveupPreprocessingInfo(project);
+
+  // traverse all header files and collect information
+  vector<SgClassDeclaration*>::const_iterator travClassIt = traverseClasses.begin();
+  for (;travClassIt!=traverseClasses.end();++travClassIt) {
+	traverse(*travClassIt,preorder);
+  }
 
   // ---------------------------------------
   // Perform all transformations...
@@ -290,6 +340,10 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
     insertReallocateCall( *it_reallocs );
   }
 
+
+
+
+
   cerr << "Inserting main close call" << endl;
   // insert main call to ->close();
   ROSE_ASSERT(mainLast);
@@ -379,10 +433,9 @@ void RtedTransformation::visit(SgNode* n) {
       cerr << " +++++++++++++++++++++ FOUND Class Def!! ++++++++++++++++ " << endl;
       visit_isClassDefinition(isSgClassDefinition(n));
     }
-    // *********************** DETECT structs and class definitions ***************
 
   }
-  // *********************** DETECT ALL scope statements ***************
+
 
 
 

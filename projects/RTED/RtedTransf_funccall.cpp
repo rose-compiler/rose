@@ -342,14 +342,15 @@ RtedTransformation::insertAssertFunctionSignature( SgFunctionCallExp* fncall ) {
 	SgStatement* stmt = getSurroundingStatement( fncall );
 
 	SgFunctionRefExp* fn_ref = isSgFunctionRefExp( fncall -> get_function() );
-	if( !fn_ref ) {
-		// FIXME 3: This may be too pessimistic.  Just b/c fncall ->
-		// get_function() isn't a fn ref may not guarantee that we can't get at
-		// one.
-		// 
-		// Without a function ref we can't validate the signature
-		return;
+	SgDotExp* dotExp = isSgDotExp(fncall -> get_function() );
+	SgMemberFunctionRefExp* mfn_ref = NULL;
+	if (dotExp) {
+       mfn_ref=isSgMemberFunctionRefExp(dotExp->get_rhs_operand());
+       // tps: actually, we might not need this for C++
+       return;
 	}
+	ROSE_ASSERT( fn_ref || mfn_ref);
+
 
     SgExprListExp* arg_list = buildExprListExp();
 
@@ -357,9 +358,14 @@ RtedTransformation::insertAssertFunctionSignature( SgFunctionCallExp* fncall ) {
 	appendFileInfo( fncall, arg_list );
 
 	// first arg is the name
+	if (fn_ref)
 	appendExpression( arg_list, buildString(
 		fn_ref -> get_symbol() -> get_name()
 	));
+	else if (mfn_ref)
+		appendExpression( arg_list, buildString(
+			mfn_ref -> get_symbol() -> get_name()
+		));
 
 	// append arg count (+1 for return type) and types
 	Rose_STL_Container< SgExpression* > args
@@ -367,11 +373,14 @@ RtedTransformation::insertAssertFunctionSignature( SgFunctionCallExp* fncall ) {
 	appendExpression( arg_list, buildIntVal( args.size() + 1 ));
 
 	// return type
+	if (fn_ref)
 	appendTypeInformation(
 		isSgFunctionType( fn_ref -> get_type() ) -> get_return_type(),
-		arg_list,
-		true,
-		true ); 
+		arg_list,true,true );
+	else if (mfn_ref)
+		appendTypeInformation(
+			isSgFunctionType( mfn_ref -> get_type() ) -> get_return_type(),
+			arg_list,true,true );
 
 	// parameter types
 	BOOST_FOREACH( SgExpression* arg, args ) {
@@ -494,96 +503,107 @@ RtedTransformation::getVariableLeftOfAssignmentFromChildOnRight(SgNode* n){
  * Check if the current node is a "interesting" function call
  **************************************************************/
 void RtedTransformation::visit_isFunctionCall(SgNode* n) {
-  SgFunctionCallExp* fcexp = isSgFunctionCallExp(n);
-  // handle arguments for any function call
-  //handle_function_call_arguments.push_back(fcexp->get_args());
+	 SgFunctionCallExp* fcexp = isSgFunctionCallExp(n);
+	  // handle arguments for any function call
+	  //handle_function_call_arguments.push_back(fcexp->get_args());
 
-  if (fcexp) {
-    SgExprListExp* exprlist = isSgExprListExp(fcexp->get_args());
+	  if (fcexp) {
+	    SgExprListExp* exprlist = isSgExprListExp(fcexp->get_args());
+	    SgFunctionRefExp* refExp = isSgFunctionRefExp(fcexp->get_function());
+	    SgMemberFunctionRefExp* mrefExp = isSgMemberFunctionRefExp(fcexp->get_function());
+	    SgDotExp* dotExp = isSgDotExp(fcexp->get_function());
+	    // TODO 2: This can be a DotExp (see
+	    // C++/array_index_out_of_bound/C_E_1_3_a_i)
+	    string name = "";
+	    string mangled_name = "";
+	    if (refExp) {
+	        SgFunctionDeclaration* decl = NULL;
+	    	decl= isSgFunctionDeclaration(refExp->getAssociatedFunctionDeclaration ());
+	        name = decl->get_name();
+	        mangled_name = decl->get_mangled_name().str();
+	    } else if (dotExp) {
+	        SgMemberFunctionDeclaration* mdecl = NULL;
+	    	mrefExp=isSgMemberFunctionRefExp(dotExp->get_rhs_operand());
+			ROSE_ASSERT(mrefExp);
+	    	mdecl= isSgMemberFunctionDeclaration(mrefExp->getAssociatedMemberFunctionDeclaration ());
+	        name = mdecl->get_name();
+	        mangled_name = mdecl->get_mangled_name().str();
+	    } else {
+	    	cerr << "This case is not yet handled : " << fcexp->get_function()->class_name() << endl;
+			exit(1);
+	    }
+	    ROSE_ASSERT(refExp || mrefExp);
+	    cerr <<"Found a function call " << name;
+	    cerr << "   : fcexp->get_function() : " << fcexp->get_function()->class_name() << endl;
+	    if (isStringModifyingFunctionCall(name) ||
+	        isFileIOFunctionCall(name)
+	       ) {
+	      vector<SgExpression*> args;
+	      // if this is a function call that has a variable on the left hand size,
+	      // then we want to push that variable first,
+	      // this is used, e.g. with  File* fp = fopen("file","r");
+	      // Therefore we need to go up and see if there is an AssignmentOperator
+	      // and get the var on the left side
+	      SgExpression* varOnLeft = getVariableLeftOfAssignmentFromChildOnRight(n);
+	      SgExpression* varOnLeftStr=NULL;
+	      if (varOnLeft) {
+	        // need to get the mangled_name of the varRefExp on left hand side
+	        varOnLeftStr = buildString(getMangledNameOfExpression(varOnLeft));
+	      } else {
+	        varOnLeftStr = buildString("NoAssignmentVar");
+	      }
 
-    SgFunctionRefExp* refExp = isSgFunctionRefExp(fcexp->get_function());
-	SgFunctionType* fntype = isSgFunctionType( fcexp -> get_function() -> get_type() );
+	      Rose_STL_Container<SgExpression*> expr = exprlist->get_expressions();
+	      Rose_STL_Container<SgExpression*>::const_iterator it = expr.begin();
+	      for (;it!=expr.end();++it) {
+	        SgExpression* ex = *it;
+	        args.push_back(ex);
+	      }
+	      SgStatement* stmt = NULL;
+		  if (refExp	) stmt = getSurroundingStatement(refExp);
+			else if (mrefExp) stmt = getSurroundingStatement(mrefExp);
+		  SgExpression* pexpr = refExp;
+		  if (mrefExp) pexpr = mrefExp;
+	      ROSE_ASSERT(stmt);
+	      RtedArguments* funcCall =  new RtedArguments(name, //func_name
+	          mangled_name,
+	          "",
+	          "",
+	          pexpr, //refExp,
+	          stmt,
+	          args,
+	          varOnLeftStr,
+	          varOnLeft,
+	          exprlist
+	          );
+	      ROSE_ASSERT(funcCall);
+	      cerr << " Is a interesting function : " << name << endl;
+	      function_call.push_back(funcCall);
+	    } else if(!isFunctionCallOnIgnoreList( name)){
+	      SgStatement* fncallStmt = getSurroundingStatement( fcexp );
+	      ROSE_ASSERT( fncallStmt );
 
-	ROSE_ASSERT( fntype );
 
-	string name = "unknown function name";
-	string mangled_name = fntype -> get_mangled();
-
-    SgFunctionDeclaration* decl = NULL;
-	if( refExp ) {
-		decl = isSgFunctionDeclaration(refExp->getAssociatedFunctionDeclaration ());
-		ROSE_ASSERT(decl);
-
-		name = decl -> get_name();
-	}
-
-    cerr <<"Found a function call " << name;
-    cerr << "   : fcexp->get_function() : " << fcexp->get_function()->class_name() << endl;
-    if (isStringModifyingFunctionCall(name) ||
-        isFileIOFunctionCall(name)
-       ) {
-      vector<SgExpression*> args;
-      // if this is a function call that has a variable on the left hand size,
-      // then we want to push that variable first,
-      // this is used, e.g. with  File* fp = fopen("file","r");
-      // Therefore we need to go up and see if there is an AssignmentOperator
-      // and get the var on the left side
-      SgExpression* varOnLeft = getVariableLeftOfAssignmentFromChildOnRight(n);
-      SgExpression* varOnLeftStr=NULL;
-      if (varOnLeft) {
-        // need to get the mangled_name of the varRefExp on left hand side
-        varOnLeftStr = buildString(getMangledNameOfExpression(varOnLeft));
-      } else {
-        varOnLeftStr = buildString("NoAssignmentVar");
-      }
-
-      Rose_STL_Container<SgExpression*> expr = exprlist->get_expressions();
-      Rose_STL_Container<SgExpression*>::const_iterator it = expr.begin();
-      for (;it!=expr.end();++it) {
-        SgExpression* ex = *it;
-        args.push_back(ex);
-      }
-      SgStatement* stmt = getSurroundingStatement(fcexp);
-      ROSE_ASSERT(stmt);
-      RtedArguments* funcCall = new RtedArguments(name, //func_name
-          mangled_name, 
-          "",
-          "",
-          fcexp,
-          stmt,
-          args,
-          varOnLeftStr,
-          varOnLeft,
-          exprlist
-          );
-      ROSE_ASSERT(funcCall);
-      cerr << " Is a interesting function : " << name << endl;
-      function_call.push_back(funcCall);
-    } else if(!isFunctionCallOnIgnoreList( name)){
-      SgStatement* fncallStmt = getSurroundingStatement( fcexp );
-      ROSE_ASSERT( fncallStmt );
-
-	  // if we're able to, use the function definition's body as the end of
-	  // scope (for line number complaints).  If not, the callsite is good too.
-      SgNode* end_of_scope = getDefiningDeclaration( fcexp );
-      if( end_of_scope ) {
-          end_of_scope = 
-              isSgFunctionDeclaration( end_of_scope ) 
-              -> get_definition() -> get_body();
-      } else {
-          end_of_scope = fcexp;
-		  // FIXME 2: We may be adding a lot of unnecessary signature checks
-		  // If we don't have the definition, we must be doing separate
-		  // compilation.  We will then have to check the signature at runtime
-		  // since there's no guarantee our prototype, if any, is accurate.
-		  function_call_missing_def.push_back( fcexp );
+		  // if we're able to, use the function definition's body as the end of
+		  // scope (for line number complaints).  If not, the callsite is good too.
+		  SgNode* end_of_scope = getDefiningDeclaration( fcexp );
+		  if( end_of_scope ) {
+			  end_of_scope =
+				  isSgFunctionDeclaration( end_of_scope )
+				  	-> get_definition() -> get_body();
+		  } else {
+			  end_of_scope = fcexp;
+			  // FIXME 2: We may be adding a lot of unnecessary signature checks
+			  // If we don't have the definition, we must be doing separate
+			  // compilation.  We will then have to check the signature at runtime
+			  // since there's no guarantee our prototype, if any, is accurate.
+			  function_call_missing_def.push_back( fcexp );
+		  }
+	      scopes[ fncallStmt ] = end_of_scope;
+	    } else if( "free" == name ) {
+			frees.push_back( fcexp );
+	    } else if( "realloc" == name ) {
+			reallocs.push_back( fcexp );
+		}
 	  }
-      scopes[ fncallStmt ] = end_of_scope;
-    } else if( "free" == name ) {
-		frees.push_back( fcexp );
-    } else if( "realloc" == name ) {
-		reallocs.push_back( fcexp );
-	}
-  }
-
 }

@@ -36,6 +36,7 @@ runtimeCheck_SOURCES = runtimeCheck.cpp \
                        RtedTransf_locals.cpp RtedTransf_scopestmt.cpp \
                        RtedTransf_funcdef.cpp RtedTransf_variable.cpp \
                        RtedTransf_iofunccall.cpp RtedTransf_operators.cpp \
+                       RtedTransf_copyClass.cpp \
 					   RtedTransformation.h \
 					   RtedSymbols.h \
 					   DataStructures.h \

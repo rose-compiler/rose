@@ -6865,6 +6865,47 @@ void SageInterface::setPragma(SgPragmaDeclaration* decl, SgPragma *pragma)
   {
     fixStructDeclaration(classDecl,scope);
   }
+
+  void SageInterface::fixNamespaceDeclaration(SgNamespaceDeclarationStatement* structDecl, SgScopeStatement* scope)
+  {
+    ROSE_ASSERT(structDecl);
+    ROSE_ASSERT(scope);
+    SgNamespaceDeclarationStatement* nondefdecl = isSgNamespaceDeclarationStatement(structDecl->get_firstNondefiningDeclaration());
+    ROSE_ASSERT(nondefdecl);
+    // Liao, 9/2/2009
+    // fixup missing scope when bottomup AST building is used
+    if (structDecl->get_parent() == NULL)
+      structDecl->set_parent(scope);
+    if (nondefdecl->get_parent() == NULL)
+      nondefdecl->set_parent(scope);
+
+	// tps : (09/03/2009) Namespace should not have a scope
+    /*
+    if (structDecl->get_scope() == NULL)
+      structDecl->set_scope(scope);
+    if (nondefdecl->get_scope() == NULL)
+      nondefdecl->set_scope(scope);
+    */
+
+
+    SgName name= structDecl->get_name();
+    //SgNamespaceSymbol* mysymbol = scope->lookup_namespace_symbol(name);
+    SgNamespaceSymbol* mysymbol = isSgNamespaceSymbol(nondefdecl->get_symbol_from_symbol_table());
+    if (mysymbol==NULL) 
+    {
+      mysymbol = new SgNamespaceSymbol(name,nondefdecl);
+      ROSE_ASSERT(mysymbol);
+      scope->insert_symbol(name, mysymbol);
+      SgNamespaceDeclarationStatement* defdecl = isSgNamespaceDeclarationStatement(structDecl->get_definingDeclaration());
+      ROSE_ASSERT(defdecl);
+      defdecl->set_scope(scope);
+      nondefdecl->set_scope(scope);
+
+      defdecl->set_parent(scope);
+      nondefdecl->set_parent(scope);
+    }
+  }
+
   void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgScopeStatement* scope)
   {
     ROSE_ASSERT(varDecl);

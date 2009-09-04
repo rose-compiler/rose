@@ -519,6 +519,7 @@ string RsBasicType::getDisplayName() const
         case SgTypeString:           return "string";
         case SgTypeVoid:             return "void";
         case SgPointerType:          return "pointer";
+       // case SgReferenceType:        return "reference";
         default:                     return "Unknown";
     }
 }
@@ -553,6 +554,7 @@ void RsBasicType::resolveTypeInfo(const std::string & typeStr)
     else if (typeStr=="SgTypeString")           setTypeInfo(SgTypeString,           sizeof(char*));
     else if (typeStr=="SgTypeVoid")             setTypeInfo(SgTypeVoid,             0);
     else if (typeStr=="SgPointerType")          setTypeInfo(SgPointerType,          sizeof(void*));
+   // else if (typeStr=="SgReferenceType")        setTypeInfo(SgReferenceType,        sizeof(void*));
     else                                        setTypeInfo(Unknown, 0);
 }
 
@@ -586,6 +588,7 @@ void RsBasicType::resolveTypeInfo(RsBasicType::SgType type_)
         case SgTypeString:           setTypeInfo("SgTypeString",           sizeof(char*));           break;
         case SgTypeVoid:             setTypeInfo("SgTypeVoid",             0);                       break;
         case SgPointerType:          setTypeInfo("SgPointerType",          sizeof(void*));           break;
+     //   case SgReferenceType:        setTypeInfo("SgReferenceType",        sizeof(void*));           break;
         default:                     setTypeInfo("Unknown", 0);
     }
 }

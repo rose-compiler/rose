@@ -117,15 +117,21 @@ RsType* RuntimeSystem_getRsType(
     }
     assert( type != "" );
 
-
+    RsType* tt = NULL;
     if( type == "SgPointerType" ) {
         assert( indirection_level > 0 );
-        return RuntimeSystem::instance() -> getTypeSystem() 
+        tt= RuntimeSystem::instance() -> getTypeSystem()
             -> getPointerType( base_type, indirection_level );
+        assert(tt);
     } else {
-        return RuntimeSystem::instance() -> getTypeSystem()
+        tt= RuntimeSystem::instance() -> getTypeSystem()
             -> getTypeInfo( type );
+        if (tt==NULL) {
+        	cerr << "could not find type in typesystem : " << type << endl;
+        }
+        assert(tt);
     }
+    return tt;
 }
 
 RsType* RuntimeSystem_getRsType(
@@ -703,6 +709,7 @@ int RuntimeSystem_roseCreateVariable( const char* name,
             class_name,
             indirection_level
         );
+        assert(rsType);
         rs->createVariable(address,name,mangled_name,rsType);
     }
 
@@ -884,7 +891,6 @@ RuntimeSystem_roseRegisterTypeCall(int count, ...) {
 		  //cerr << "Registering Member " << name << " of type " << type << " at offset " << offset << endl;
 	  }
 	  va_end(vl);
-
 
 	  RuntimeSystem::instance()->getTypeSystem()->registerType(classType);
 }

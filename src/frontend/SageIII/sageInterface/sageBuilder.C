@@ -3071,6 +3071,24 @@ SgTypeImaginary* SageBuilder::buildImaginaryType(SgType* base_type /*=NULL*/)
    return result;
  }
 
+SgNamespaceDefinitionStatement* SageBuilder::buildNamespaceDefinition(SgNamespaceDeclarationStatement* d)
+  {
+    SgNamespaceDefinitionStatement* result = NULL;
+    if (d!=NULL) // the constructor does not check for NULL d, causing segmentation fault
+    {
+      result = new SgNamespaceDefinitionStatement(d);
+      result->set_parent(d); // set_declaration() == set_parent() in this case
+    }
+    else
+      result = new SgNamespaceDefinitionStatement(d);
+    
+    ROSE_ASSERT(result);
+    setOneSourcePositionForTransformation(result);
+    return result;
+  }
+
+
+
 SgClassDefinition* SageBuilder::buildClassDefinition(SgClassDeclaration *d/*= NULL*/)
   {
     SgClassDefinition* result = NULL;
@@ -3309,6 +3327,164 @@ SgClassDeclaration * SageBuilder::buildStructDeclaration(const SgName& name, SgS
 
      return defdecl;
    }
+
+
+SgNamespaceDeclarationStatement * SageBuilder::buildNamespaceDeclaration(const SgName& name, SgScopeStatement* scope /*=NULL*/)
+   {
+     SgNamespaceDeclarationStatement* defdecl = buildNamespaceDeclaration_nfi(name,false,scope);
+
+     setOneSourcePositionForTransformation(defdecl);
+     ROSE_ASSERT(defdecl->get_firstNondefiningDeclaration() != NULL);
+     setOneSourcePositionForTransformation(defdecl->get_firstNondefiningDeclaration());
+
+     return defdecl;
+   }
+
+SgNamespaceDeclarationStatement * SageBuilder::buildNamespaceDeclaration_nfi(const SgName& name, bool unnamednamespace, SgScopeStatement* scope)
+   {
+     if (scope == NULL)
+          scope = SageBuilder::topScopeStack();
+
+  // TODO How about class type??
+  // build defining declaration
+     SgNamespaceDefinitionStatement* classDef = buildNamespaceDefinition(); //buildClassDefinition
+     
+
+#if 1
+     SgNamespaceDeclarationStatement* defdecl = new SgNamespaceDeclarationStatement(name,classDef, unnamednamespace);
+     ROSE_ASSERT(defdecl != NULL);
+     classDef->set_parent(defdecl);
+     printf ("SageBuilder::buildNamespaceDeclaration_nfi(): defdecl = %p \n",defdecl);
+
+     setOneSourcePositionForTransformation(defdecl);
+  // constructor is side-effect free
+     classDef->set_namespaceDeclaration(defdecl);
+     defdecl->set_definingDeclaration(defdecl);
+#endif
+
+
+  // Get the nondefining declaration from the symbol if it has been built (if this works, 
+  // then we likely don't need the "SgClassDeclaration* nonDefiningDecl" parameter).
+     SgNamespaceDeclarationStatement* nondefdecl = NULL;
+
+  // DQ (1/26/2009): It seems that (scope == NULL) can happen in the tests/roseTests/astInterfaceTests test codes.
+  // ROSE_ASSERT(scope != NULL);
+     SgNamespaceSymbol* mysymbol = NULL;
+     if (scope != NULL)
+        {
+          mysymbol = scope->lookup_namespace_symbol(name);
+        }
+       else
+        {
+       // DQ (1/26/2009): I think this should be an error, but that appears it would
+       // break the existing interface. Need to discuss this with Liao.
+          printf ("Warning: In SageBuilder::buildNamespaceDeclaration_nfi(): scope == NULL \n");
+        }
+
+     printf ("In SageBuilder::buildNamespaceDeclaration_nfi(): mysymbol = %p \n",mysymbol);
+     if (mysymbol != NULL)
+        {
+          nondefdecl = isSgNamespaceDeclarationStatement(mysymbol->get_declaration());
+
+          ROSE_ASSERT(nondefdecl != NULL);
+          ROSE_ASSERT(nondefdecl->get_parent() != NULL);
+
+          nondefdecl->set_definingDeclaration(defdecl);
+
+          ROSE_ASSERT(nondefdecl->get_definingDeclaration() == defdecl);
+          ROSE_ASSERT(nondefdecl->get_firstNondefiningDeclaration() != defdecl);
+        }
+       else
+        {
+       // DQ (1/25/2009): We only want to build a new declaration if we can't reuse the existing declaration.
+          nondefdecl = new SgNamespaceDeclarationStatement(name,NULL, unnamednamespace);
+          ROSE_ASSERT(nondefdecl != NULL);
+
+          printf ("SageBuilder::buildNamespaceDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
+
+       // The nondefining declaration will not appear in the source code, but is compiler
+       // generated (so we have something about the class that we can reference; e.g in
+       // types).  At the moment we make it a transformation, there might be another kind 
+       // of source position that would be more precise.  FIXME.
+       // setOneSourcePositionNull(nondefdecl);
+          setOneSourcePositionForTransformation(nondefdecl);
+
+          nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
+          nondefdecl->set_definingDeclaration(defdecl);
+          nondefdecl->setForward();
+
+
+          //nondefdecl->set_parent(topScopeStack());
+          nondefdecl->set_parent(scope);
+		  ROSE_ASSERT(nondefdecl->get_parent());
+
+          if (scope != NULL)
+             {
+               mysymbol = new SgNamespaceSymbol(name,nondefdecl); // tps: added name to constructor
+               scope->insert_symbol(name, mysymbol);
+             }
+            else
+             {
+            // DQ (1/26/2009): I think this should be an error, but that appears it would
+            // break the existing interface. Need to discuss this with Liao.
+               printf ("Warning: no scope provided to support symbol table entry! \n");
+             }
+        }
+
+
+     printf ("SageBuilder::buildNamespaceDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
+
+  // setOneSourcePositionForTransformation(nondefdecl);
+     setOneSourcePositionNull(nondefdecl);
+
+  // nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
+  // nondefdecl->set_definingDeclaration(defdecl);
+     defdecl->set_firstNondefiningDeclaration(nondefdecl);
+
+  // I don't think this is always a forward declaration (e.g. if it is not used in a prototype).
+  // Checking the olded EDG/ROSE interface it appears that it is always marked forward (unless 
+  // used in a defining declaration).
+     nondefdecl->setForward();
+
+     if (scope != NULL)  // put into fixStructDeclaration() or alike later on
+        {
+          fixNamespaceDeclaration(nondefdecl,scope);
+          fixNamespaceDeclaration(defdecl,scope);
+#if 0
+          SgClassSymbol* mysymbol = new SgClassSymbol(nondefdecl);
+          ROSE_ASSERT(mysymbol);
+          scope->insert_symbol(name, mysymbol);
+#endif
+          printf ("@@@@@@@@@@@@@@ In buildNamespaceDeclaration_nfi(): setting scope of defining and non-defining declaration to scope = %s \n",scope->class_name().c_str());
+
+          // tps namespace has no scope
+          //defdecl->set_scope(scope);
+          //nondefdecl->set_scope(scope);
+
+       // defdecl->set_parent(scope);
+
+       // DQ (1/25/2009): The scope is not the same as the parent, since the scope is logical, and the parent is structural (note that topScopeStack() is structural).
+       // nondefdecl->set_parent(scope);
+        //  nondefdecl->set_parent(topScopeStack());
+        }
+
+  //   defdecl->set_parent(topScopeStack());
+
+  // DQ (1/26/2009): I think we should assert this, but it breaks the interface as defined
+  // by the test code in tests/roseTests/astInterfaceTests.
+  // ROSE_ASSERT(defdecl->get_parent() != NULL);
+
+  // ROSE_ASSERT(nonDefiningDecl->get_parent() != NULL);
+
+     ROSE_ASSERT(defdecl->get_definingDeclaration() == defdecl);
+     ROSE_ASSERT(defdecl->get_firstNondefiningDeclaration() != defdecl->get_definingDeclaration());
+
+
+     return defdecl;    
+   }
+
+
+
 
 // DQ (1/24/2009): Built this "nfi" version but factored the code.
 SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgClassDeclaration* nonDefiningDecl )
