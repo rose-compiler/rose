@@ -48,8 +48,8 @@ RsType * TypeSystem::getTypeInfo(const string & name)
     //TODO remove SgPointerType and SgArrayType from BasicTypes
     if(name == "SgPointerType" || name == "SgArrayType" )
     {
-        cerr << "getTypeInfo for " << name << "was called:" << endl;
-        cerr << "SEVERE WARNING: Pointer and Arrays have now be registered differently!" << endl;
+      cerr << endl << "getTypeInfo for " << name << "was called:" << endl;
+      cerr << "SEVERE WARNING: Pointer and Arrays have now be registered differently!" << endl;
     }
 
     InvalidType comparisonObject(name);

@@ -11,6 +11,27 @@ using namespace SageInterface;
 using namespace SageBuilder;
 
 
+bool
+RtedTransformation::hasClassConstructor(SgClassDeclaration* classdec) {
+  bool constr=false;
+  std::string classname = classdec->get_name().str();
+  // find all functions in class and if there is a function that
+  // has the same name as the class --- bingo
+
+  vector<SgNode*> results = NodeQuery::querySubTree(classdec,V_SgMemberFunctionDeclaration);
+  vector<SgNode*>::const_iterator classIt = results.begin();
+  for (;classIt!=results.end();classIt++) {
+    SgMemberFunctionDeclaration* mf = isSgMemberFunctionDeclaration(*classIt);
+    std::string funcname = mf->get_name().str();
+    //cerr << " ++++++++++++++++ comparing class : " << classname << " against func: " << funcname << endl;
+    if (classname==funcname) {
+      constr=true;
+      break;
+    }
+  }
+  return constr;
+}
+
 void RtedTransformation::visit_isClassDefinition(SgClassDefinition* cdef) {
   cerr << "Found class definition : " << cdef->unparseToString() << endl;
   vector<RtedClassElement*> elements;
@@ -22,32 +43,32 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* cdef) {
     ROSE_ASSERT(sgElement);
     SgVariableDeclaration* varDecl = isSgVariableDeclaration(sgElement);
     if (varDecl) {
-        bool not_static = !(
-            varDecl -> get_declarationModifier().get_storageModifier().isStatic()
-        );
+      bool not_static = !(
+			  varDecl -> get_declarationModifier().get_storageModifier().isStatic()
+			  );
 
-        if( not_static ) {
-            Rose_STL_Container<SgInitializedName*> vars = varDecl->get_variables();
-            Rose_STL_Container<SgInitializedName*>::const_iterator itvar = vars.begin();
-            for (;itvar!=vars.end();++itvar) {
-                SgInitializedName* initName = *itvar;
-                string name = initName->get_mangled_name();
-                string type = initName->get_type()->class_name();
+      if( not_static ) {
+	Rose_STL_Container<SgInitializedName*> vars = varDecl->get_variables();
+	Rose_STL_Container<SgInitializedName*>::const_iterator itvar = vars.begin();
+	for (;itvar!=vars.end();++itvar) {
+	  SgInitializedName* initName = *itvar;
+	  string name = initName->get_mangled_name();
+	  string type = initName->get_type()->class_name();
 
-                RtedClassElement* el;
-                if( isSgArrayType( initName -> get_type() )) {
-                    RTedArray* arrayRted = new RTedArray( true, initName, NULL, false );
-                    populateDimensions( arrayRted, initName, isSgArrayType( initName -> get_type() ));
-                    el = new RtedClassArrayElement( name, type, sgElement, arrayRted );
-                } else {
-                    el = new RtedClassElement(name,type,sgElement);
-                }
-                elements.push_back(el);
-            }
-        }
+	  RtedClassElement* el;
+	  if( isSgArrayType( initName -> get_type() )) {
+	    RTedArray* arrayRted = new RTedArray( true, initName, NULL, false );
+	    populateDimensions( arrayRted, initName, isSgArrayType( initName -> get_type() ));
+	    el = new RtedClassArrayElement( name, type, sgElement, arrayRted );
+	  } else {
+	    el = new RtedClassElement(name,type,sgElement);
+	  }
+	  elements.push_back(el);
+	}
+      }
     } else {
-        // TODO 2: handle this case
-    	cerr << " Declaration not handled : " << sgElement->class_name() << endl;
+      // TODO 2: handle this case
+      cerr << " Declaration not handled : " << sgElement->class_name() << endl;
     }
   }
 
@@ -55,7 +76,7 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* cdef) {
 						    cdef->get_mangled_name().str(),
 						    cdef->get_declaration()->get_type()->class_name(),
 						    elements.size(),
-                buildSizeOfOp( cdef->get_declaration()->get_type() ),
+						    buildSizeOfOp( cdef->get_declaration()->get_type() ),
 						    elements);
   std::map<SgClassDefinition*,RtedClassDefinition*>::const_iterator it =
     class_definitions.find(cdef);
@@ -85,7 +106,7 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
     stmt = isSgStatement( stmt -> get_parent());
   }
   if( !stmt || isSgGlobal(stmt) )
-      stmt = mainFirst;
+    stmt = mainFirst;
 
   if (isSgStatement(stmt)) {
     SgScopeStatement* scope = stmt->get_scope();
@@ -94,7 +115,7 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
 
     // FIXME 2: we do this all over the place, but it may not work with
     // namespaces
-   // if( isSgGlobal( scope )) {
+    // if( isSgGlobal( scope )) {
     //    scope = mainBody;
     //    global_stmt = true;
     //}
@@ -120,9 +141,9 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
       elements*=6; // for each element pass name, type, basetype, indirection_level and offset
       elements+=3; // ClassName , ClassType and sizeOfClass
 
-	  BOOST_FOREACH( RtedClassElement* element, rtedClass -> elements ) {
-		  elements += element -> extraArgSize();
-	  }
+      BOOST_FOREACH( RtedClassElement* element, rtedClass -> elements ) {
+	elements += element -> extraArgSize();
+      }
 
       SgExpression* nrElements = buildIntVal(elements);
 
@@ -137,83 +158,93 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
       std::vector<RtedClassElement*> elementsC = rtedClass->elements;
       std::vector<RtedClassElement*>::const_iterator itClass = elementsC.begin();
       for (;itClass!=elementsC.end();++itClass) {
-			  RtedClassElement* element = *itClass;
-			  string manglElementName = element->manglElementName;
-			  SgDeclarationStatement* sgElement = element->sgElement;
-			  //SgExpression* sgElementCopy = deepCopy(sgElement);
-			  SgExpression* elemName = buildString(manglElementName);
+	RtedClassElement* element = *itClass;
+	string manglElementName = element->manglElementName;
+	SgDeclarationStatement* sgElement = element->sgElement;
+	//SgExpression* sgElementCopy = deepCopy(sgElement);
+	SgExpression* elemName = buildString(manglElementName);
 
-      // FIXME 1: This will not work for references.  Consider:
-      //
-      //    #include <iostream>
-      //    using namespace std;
-      //
-      //    int i;
-      //    struct T {
-      //        int p;
-      //        int& r;
-      //
-      //        T() : r(i) {}
-      //    };
-      //
-      //    int main() { cout << offsetof( T, r ) << endl; }
-      //
-      // and see discussion (esp. follow ups) at:
-      //    http://gcc.gnu.org/ml/gcc/2003-11/msg00279.html
-      //
-	  // build a function call for offsetof(A,d);
-	      appendExpression(arg_list, elemName);
+	// FIXME 1: This will not work for references.  Consider:
+	//
+	//    #include <iostream>
+	//    using namespace std;
+	//
+	//    int i;
+	//    struct T {
+	//        int p;
+	//        int& r;
+	//
+	//        T() : r(i) {}
+	//    };
+	//
+	//    int main() { cout << offsetof( T, r ) << endl; }
+	//
+	// and see discussion (esp. follow ups) at:
+	//    http://gcc.gnu.org/ml/gcc/2003-11/msg00279.html
+	//
+	// build a function call for offsetof(A,d);
+	appendExpression(arg_list, elemName);
 
-	  // build  (size_t )(&( *((struct A *)0)).x);
-			  ROSE_ASSERT(rtedClass->classDef);
-	     // cerr << " Type: " <<  rtedClass->classDef->get_declaration()->get_type()->class_name() << endl;
+	// build  (size_t )(&( *((struct A *)0)).x);
+	ROSE_ASSERT(rtedClass->classDef);
+	// cerr << " Type: " <<  rtedClass->classDef->get_declaration()->get_type()->class_name() << endl;
 
-			  // search for classDef in classesNamespace that contains all introduced RTED:Classes
-		 std::map<SgClassDefinition*, SgClassDefinition*>::const_iterator
-		          cit = classesInRTEDNamespace.find(rtedClass->classDef);
-		 SgClassDefinition* rtedModifiedClass = NULL;
-		 if (cit!=classesInRTEDNamespace.end())
-			 rtedModifiedClass = cit->second;
-		 //		 cerr << " +++++++++++++ Looking for class : " << rtedClass->classDef->get_declaration()->get_qualified_name().str()
-		 //	 << "    found : " << rtedModifiedClass << "   " << rtedModifiedClass->get_declaration()->get_qualified_name().str() << endl;
+	// search for classDef in classesNamespace that contains all introduced RTED:Classes
+	std::map<SgClassDefinition*, SgClassDefinition*>::const_iterator
+	  cit = classesInRTEDNamespace.find(rtedClass->classDef);
+	SgClassDefinition* rtedModifiedClass = NULL;
+	if (cit!=classesInRTEDNamespace.end())
+	  rtedModifiedClass = cit->second;
+	//		 cerr << " +++++++++++++ Looking for class : " << rtedClass->classDef->get_declaration()->get_qualified_name().str()
+	//	 << "    found : " << rtedModifiedClass << "   " << rtedModifiedClass->get_declaration()->get_qualified_name().str() << endl;
 
-	      SgExpression* nullPointer = NULL;
-	      if (rtedModifiedClass==NULL)
-	    	  nullPointer = buildCastExp(buildIntVal(0),
-	    		  buildPointerType(rtedClass->classDef->get_declaration()->get_type()));
-	      else
-	    	  nullPointer = buildCastExp(buildIntVal(1),
-	    		  buildPointerType(rtedModifiedClass->get_declaration()->get_type()));
+	// tps (09/04/2009) : Added support to call offset of on C++ classes
+	SgExpression* nullPointer = NULL;
+	ROSE_ASSERT(rtedClass->classDef->get_declaration());
+	bool classHasConstructor=hasClassConstructor(rtedClass->classDef->get_declaration());
+	if (rtedModifiedClass==NULL) {
+	  // this is a C or C++ class in a source file without constructor
+	  if ( classHasConstructor==false)
+	    nullPointer = buildCastExp(buildIntVal(0),
+				       buildPointerType(rtedClass->classDef->get_declaration()->get_type()));
+	  else // or C++ class in a source file with constructor!
+	    nullPointer = buildCastExp(buildIntVal(1),
+				       buildPointerType(rtedClass->classDef->get_declaration()->get_type()));
+	} else {
+	  // this is a C++ class in a header file 
+	  ROSE_ASSERT(rtedModifiedClass);
+	  nullPointer = buildCastExp(buildIntVal(1),
+				     buildPointerType(rtedModifiedClass->get_declaration()->get_type()));
+	}
 
+	SgExpression* derefPointer = buildPointerDerefExp(nullPointer);
+	SgVariableDeclaration* varDecl =	isSgVariableDeclaration(sgElement);
+	if (varDecl) {
+	  SgVarRefExp* varref = buildVarRefExp(varDecl);
 
-	      SgExpression* derefPointer = buildPointerDerefExp(nullPointer);
-	      SgVariableDeclaration* varDecl =	isSgVariableDeclaration(sgElement);
-		  if (varDecl) {
-			  SgVarRefExp* varref = buildVarRefExp(varDecl);
+	  // append the base type (if any) of pointers and arrays
+	  SgType* type = varDecl->get_variables()[ 0 ]->get_type();
+	  appendTypeInformation( type, arg_list, true, false );
 
-			  // append the base type (if any) of pointers and arrays
-			  SgType* type = varDecl->get_variables()[ 0 ]->get_type();
-			  appendTypeInformation( type, arg_list, true, false );
+	  SgExpression* dotExp = buildDotExp(derefPointer,varref);
+	  SgExpression* andOp = buildAddressOfOp(dotExp);
+	  SgExpression* castOp = NULL;
+	  if (rtedModifiedClass==NULL && classHasConstructor==false)
+	    castOp = buildCastExp(andOp, size_t_member);
+	  else {
+	    SgExpression* minus = buildSubtractOp(andOp, buildIntVal(1));
+	    castOp = buildCastExp(minus, size_t_member);
+	  }
 
-			  SgExpression* dotExp = buildDotExp(derefPointer,varref);
-			  SgExpression* andOp = buildAddressOfOp(dotExp);
-			  SgExpression* castOp = NULL;
-			  if (rtedModifiedClass==NULL)
-				  castOp = buildCastExp(andOp, size_t_member);
-			  else {
-				  SgExpression* minus = buildSubtractOp(andOp, buildIntVal(1));
-				  castOp = buildCastExp(minus, size_t_member);
-			  }
+	  appendExpression(arg_list, castOp);
+	  appendExpression(arg_list, buildSizeOfOp( dotExp ));
 
-			  appendExpression(arg_list, castOp);
-			  appendExpression(arg_list, buildSizeOfOp( dotExp ));
+	  // add extra type info (e.g. array dimensions)
+	  element -> appendExtraArgs( arg_list );
+	} else {
+	  cerr << " Declarationstatement not handled : " << sgElement->class_name() << endl;
 
-			  // add extra type info (e.g. array dimensions)
-			  element -> appendExtraArgs( arg_list );
-		  } else {
-			  cerr << " Declarationstatement not handled : " << sgElement->class_name() << endl;
-
-		  }
+	}
       }
 
 
@@ -226,9 +257,9 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
 
 
       if( global_stmt ) {
-          mainBody -> prepend_statement( exprStmt );
+	mainBody -> prepend_statement( exprStmt );
       } else {
-          insertStatementAfter( isSgStatement( stmt ), exprStmt );
+	insertStatementAfter( isSgStatement( stmt ), exprStmt );
       }
     }
     else {

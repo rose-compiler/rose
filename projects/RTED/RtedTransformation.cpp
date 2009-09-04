@@ -108,7 +108,7 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
 	  && !classDecl->get_file_info()->isCompilerGenerated()
 	  ) {
 	string filename = classDecl->get_file_info()->get_filenameString();
-	int idx = filename.rfind('.');
+	size_t idx = filename.rfind('.');
 	std::string extension ="";
 	if(idx != std::string::npos)
 	  extension = filename.substr(idx+1);

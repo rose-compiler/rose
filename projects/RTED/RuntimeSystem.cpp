@@ -128,10 +128,12 @@ RsType* RuntimeSystem_getRsType(
     } else {
         tt= RuntimeSystem::instance() -> getTypeSystem()
             -> getTypeInfo( type );
+	//tps (09/04/2009) : It seems to be allowd for the type to be NULL
+	//   in particular when it is just being discovered (e.g. SgArrayType)
         if (tt==NULL) {
         	cerr << "could not find type in typesystem : " << type << endl;
         }
-        assert(tt);
+        //assert(tt);
     }
     return tt;
 }

@@ -234,7 +234,7 @@ rted_source/%_s_rose.cpp: rted_source/%_s.cpp
 #  1: file extension (.c, .cpp, .f, ... )
 #  2: compile command
 #  3: rose option, for example: C_Only
-TRANSFORMING_FILES = @echo -n "    testing if files compiles with gcc (with _s) ... ";
+TRANSFORMING_FILES = @echo -n "    testing if files compiles with gcc (with _s) ... $(patsubst %_rose$(strip $(1)), %.bin, $@)";
 
 TRANSFORMING_FILES += $(2) \
 		      -g \
@@ -249,7 +249,7 @@ TRANSFORMING_FILES += if [ $$? -ne 0 ]; then exit 1; fi;
 
 TRANSFORMING_FILES += rm $(patsubst %_rose$(strip $(1)), %.bin, $@);
 TRANSFORMING_FILES += echo " done.";
-TRANSFORMING_FILES += echo -n "    running transformation ... ";
+TRANSFORMING_FILES += echo -n "    running transformation ... $(patsubst %_rose$(strip $(1)), %.bin, $@)";
 
 TRANSFORMING_FILES += ./runtimeCheck 2 $(filter rted_source/%$(strip $(1)), $^) \
 				       -rose:$(strip $(3)) \
@@ -304,7 +304,7 @@ rted_source/%_rose.cpp: runtimeCheck rted_source/%.cpp $(srcdir)/$(RTS) $(srcdir
 #  1: file extension (.c, .cpp, .f, ... )
 #  2: compile command
 #  3: additional parameters, like linking against debugger ...
-COMPILING_RUNTIME_SYSTEM = @echo -n "   compiling instrumented debugger code (with _s) ... "; \
+COMPILING_RUNTIME_SYSTEM = @echo -n "   compiling instrumented debugger code (with _s) ... $(filter rted_source/%$(strip $(1)), $^)"; \
 			   $(2) -g -o $@ $(filter rted_source/%$(strip $(1)), $^) \
 				      $(srcdir)/$(RTS) \
 				      $(INCLUDES) \
@@ -363,7 +363,7 @@ rted_source/tests/C++/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SC
 #------------------------------------------------------------------------------
 
 run/%: rted_source/%.bin rted_source/%.expected-output
-	@echo -n "   running runtime error detection ... "
+	@echo -n "   running runtime error detection ... $(filter %.bin, $?)"
 	@OUTPUT_SRC='$(strip $(filter %.expected-output, $?))';\
 		if [ -f "$$OUTPUT_SRC" ]; then\
 			RESULT='$(strip $(patsubst %.bin, %.result.txt, $(filter rted_source/%.bin, $?)))';\
