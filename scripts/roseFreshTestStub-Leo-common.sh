@@ -16,7 +16,7 @@ export LD_LIBRARY_PATH="/usr/apps/java/jdk1.6.0_11/lib:${JAVA_HOME}/jre/lib/i386
 export LD_LIBRARY_PATH="${BOOST_ROOT}/lib:${LD_LIBRARY_PATH}"
 
 #source /usr/apps/gcc/4.2.2/setup.sh
-export PATH="$JAVA_HOME/bin:/usr/apps/automake/1.9.6/bin:$PATH"
+export PATH="$JAVA_HOME/bin:/usr/apps/automake/1.9.6/bin:/home/liao6/opt/ghc-6.10.4/bin:$PATH"
 
 # the right version of subversion is essential!!
 SVN=/nfs/apps/subversion/1.5.5/bin/svn
