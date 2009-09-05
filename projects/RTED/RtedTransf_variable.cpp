@@ -228,11 +228,22 @@ RtedTransformation::buildVariableCreateCallExpr(
 SgFunctionCallExp*
 RtedTransformation::buildVariableCreateCallExpr(
         SgExpression* var_ref, string& debug_name, bool initb) {
-
-  // if the variable is called "this", e.g. this->i ...
-  // then we skip it, since we do not want to register this variable
-  if (debug_name=="this")
+  // tps: I am not sure yet if this is needed
+#if 0
+  // if the variable is called "this", then we want to take the
+  // right hand side value
+  if (debug_name=="this") {
     return NULL;
+#if 0
+    SgArrowExp* arrowOp = isSgArrowExp(var_ref->get_parent());
+    ROSE_ASSERT(arrowOp);
+    SgVarRefExp* newVarRef = isSgVarRefExp(arrowOp->get_rhs_operand());
+    cerr << " ++++++ This FOUND! ++  Changing this : " << var_ref << "  to : " << newVarRef << endl;
+    ROSE_ASSERT(newVarRef);
+    var_ref=newVarRef;
+#endif
+  }
+#endif    
 
     // build the function call : runtimeSystem-->createArray(params); ---------------------------
     SgExprListExp* arg_list = buildExprListExp();

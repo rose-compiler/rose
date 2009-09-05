@@ -214,6 +214,7 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
 	SgExpression* nullPointer = NULL;
 	ROSE_ASSERT(rtedClass->classDef->get_declaration());
 	bool classHasConstructor=hasClassConstructor(rtedClass->classDef->get_declaration());
+	classHasConstructor=false;
 	if (rtedModifiedClass==NULL) {
 	  // this is a C or C++ class in a source file without constructor
 	  if ( classHasConstructor==false)
