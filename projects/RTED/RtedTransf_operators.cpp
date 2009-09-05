@@ -43,8 +43,7 @@ void RtedTransformation::insert_pointer_change( SgExpression* exp ) {
 
     SgExprListExp* mp_args = buildExprListExp();
     // p++, pointer address is p
-	// TODO 2 djh: make this cast unsigned long long of operand
-    appendExpression( mp_args, buildAddressOfOp( operand ));
+    appendExpression( mp_args, buildCastExp(buildAddressOfOp( operand),buildUnsignedLongType()));
     // gives us type, base_type, indirection_level
     appendTypeInformation( NULL, operand -> get_type(), mp_args );
     appendClassName( mp_args, operand -> get_type() );
