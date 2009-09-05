@@ -46,11 +46,11 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* cdef) {
       bool not_static = !(
 			  varDecl -> get_declarationModifier().get_storageModifier().isStatic()
 			  );
+      // for now, change all modifiers from private to public
+      SgAccessModifier& am = varDecl->get_declarationModifier().get_accessModifier();
+      if (am.isPrivate() || am.isProtected()) am.setPublic();
 
       if( not_static ) {
-	// for now, change all modifiers from private to public
-	SgAccessModifier& am = varDecl->get_declarationModifier().get_accessModifier();
-	if (am.isPrivate()) am.setPublic();
 
 	Rose_STL_Container<SgInitializedName*> vars = varDecl->get_variables();
 	Rose_STL_Container<SgInitializedName*>::const_iterator itvar = vars.begin();
