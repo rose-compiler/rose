@@ -1,4 +1,10 @@
 TITLE="testing default on all linux platforms"
 DESCRIPTION="minimal configuration options, gcc 4.2.4, boost 1.35, without java"
+
+# DQ (9/5/2009): ERROR -- These options don't appear to work!
+# ERROR -- No 'nmi:x86_64_fc_8' machine currently in the pool has prereq 'gcc_4_2_4'.
+# ERROR -- No 'nmi:x86_64_fc_8' machine currently in the pool has prereq 'boost_1_35_0'.
+
 PREREQS="gcc-4.2.4, boost-1.35.0"
+
 CONFIGURE_OPTIONS="--with-boost=/prereq/boost-1.35.0 --with-CXX_WARNINGS=-Wall --without-java"
