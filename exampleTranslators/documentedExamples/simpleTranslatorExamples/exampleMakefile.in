@@ -12,6 +12,12 @@ ROSE_INCLUDE_DIR = @prefix@/include
 # Location of Boost include directory
 BOOST_CPPFLAGS = @BOOST_CPPFLAGS@
 
+# Location of Dwarf include and lib (if ROSE is configured to use Dwarf)
+ROSE_DWARF_INCLUDES = @DWARF_INCLUDE@
+ROSE_DWARF_LIBS_WITH_PATH = @DWARF_LINK@
+ROSE_INCLUDE_DIR += $(ROSE_DWARF_INCLUDES)
+ROSE_LIBS += $(ROSE_DWARF_LIBS_WITH_PATH)
+
 CC                    = @CC@
 CXX                   = @CXX@
 CPPFLAGS              = @CPPFLAGS@
