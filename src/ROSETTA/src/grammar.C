@@ -2350,7 +2350,7 @@ Grammar::buildReferenceToPointerHandlerCode()
                 "struct ReferenceToPointerHandler\n"
                 "   {\n";
 
-     for (int i=0; i < terminalList.size(); i++)
+     for (size_t i=0; i < terminalList.size(); i++)
         {
           s +=  "     virtual void apply(" + terminalList[i]->name + " *&r, const SgName &n, bool traverse) = 0;\n";
         }
@@ -2362,7 +2362,7 @@ Grammar::buildReferenceToPointerHandlerCode()
           "struct ReferenceToPointerHandlerImpl : ReferenceToPointerHandler\n"
           "   {\n";
 
-     for (int i=0; i < terminalList.size(); i++)
+     for (size_t i=0; i < terminalList.size(); i++)
         {
           s +=  "     void apply(" + terminalList[i]->name + " *&r, const SgName &n, bool traverse)\n"
                 "        {\n"
