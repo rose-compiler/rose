@@ -49,6 +49,9 @@ echo ""
 echo "Rose Project Management."
 echo "*******************************************************************************************"
 
+# DQ (9/5/2009): Added output to permit debugging on NMI machines
+echo "ACLOCAL_INCLUDES = $ACLOCAL_INCLUDES"
+
 # DJH (20 July 2009): Some macros may be installed in non-standard locations
 # (e.g. libxml's on NMI build machines)
 aclocal -I ./config -I ./acmacros -I /usr/share/aclocal $ACLOCAL_INCLUDES || : exit 1
