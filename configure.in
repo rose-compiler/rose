@@ -477,6 +477,13 @@ ROSE_SUPPORT_PYTHON
 
 AC_CHECK_PROGS(PERL, [perl])
 
+# DQ (9/4/2009): Added checking for indent command (common in Linux, but not on some platforms).
+# This command is used in the tests/roseTests/astInterfaceTests/Makefile.am file.
+AC_CHECK_PROGS(INDENT, [indent])
+AM_CONDITIONAL(ROSE_USE_INDENT, [test "x$INDENT" = "xindent"])
+echo "value of INDENT variable = $INDENT"
+
+
 if test "x$JAVA_HOME" = "x"; then
   JAVA="`which javac`"
   if test -f /usr/bin/javaconfig; then # Mac Java

@@ -12,6 +12,10 @@ ROSE_INCLUDE_DIR = @prefix@/include
 # Location of Boost include directory
 BOOST_CPPFLAGS = @BOOST_CPPFLAGS@
 
+# Location of Dwarf include and lib (if ROSE is configured to use Dwarf)
+ROSE_DWARF_INCLUDES = @DWARF_INCLUDE@
+ROSE_DWARF_LIBS_WITH_PATH = @DWARF_LINK@
+
 # Location of library directory after "make install"
 ROSE_LIB_DIR = @prefix@/lib
 
@@ -56,6 +60,7 @@ all: $(executableFiles)
 $(executableFiles):
 #	g++ -I$(ROSE_INCLUDE_DIR) -o $@ $(ROSE_SOURCE_DIR)/$@.C -L$(ROSE_LIB_DIR) -Wl,-rpath $(ROSE_LIB_DIR) $(ROSE_LIBS)
 #	g++ -I$(ROSE_INCLUDE_DIR) -o $@ $(ROSE_SOURCE_DIR)/$@.C $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-	/bin/sh @top_builddir@/libtool --mode=link $(CXX) $(CPPFLAGS) $(CXXFLAGS)  $(LDFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -o $@ $(ROSE_SOURCE_DIR)/$@.C $(ROSE_LIBS)
+#	/bin/sh @top_builddir@/libtool --mode=link $(CXX) $(CPPFLAGS) $(CXXFLAGS)  $(LDFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -o $@ $(ROSE_SOURCE_DIR)/$@.C $(ROSE_LIBS)
+	/bin/sh @top_builddir@/libtool --mode=link $(CXX) $(CPPFLAGS) $(CXXFLAGS)  $(LDFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) $(ROSE_DWARF_INCLUDES) -o $@ $(ROSE_SOURCE_DIR)/$@.C $(ROSE_LIBS) $(ROSE_DWARF_LIBS_WITH_PATH)
 
 
