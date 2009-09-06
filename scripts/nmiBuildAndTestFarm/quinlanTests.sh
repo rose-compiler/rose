@@ -15,12 +15,19 @@ echo "Submitting All Tests..."
 ./submit.sh build_configs/x86_rhas_4/minimal_default
 ./submit.sh build_configs/x86_64_deb_5.0/minimal_default
 
-# DQ (9/5/2009): ACLOCAL_INCLUDES does not cause AM_PATH_XML2 to be found.
-# ACLOCAL_INCLUDES is not set in the environment.
+# DQ (9/5/2009): After removing comments from the build_configs, file then ACLOCAL_INCLUDES 
+# was properly passed to the environment.  Then we get an error specific to Suse Linux.
+# configure: error: Could not find a binary version of EDG for architecture i686-suse-linux 
+# in /home/condor/execute/dir_29767/userdir/trunk/src/frontend/CxxFrontend; it should be 
+# named "roseBinaryEDG-i686-suse-linux-8f4da3555b4592d246d4ef2a3473752b.tar.gz".  
+# This distribution cannot be used on this platform.
 ./submit.sh build_configs/x86_sles_9/minimal_default
 
 ./submit.sh build_configs/x86_fc_5/minimal_default
 ./submit.sh build_configs/x86_64_fc_9/minimal_default
+
+# DQ (9/6/2009): This platform does not appear to exist. This all of the prereq 
+# are reported to be unavailable (as warnings).
 ./submit.sh build_configs/x86_deb_3.1/minimal_default
 
 # DQ (9/5/2009): This configuration on this platform can't find libCompass.so (in "make check")

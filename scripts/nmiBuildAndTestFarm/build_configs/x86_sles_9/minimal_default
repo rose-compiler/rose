@@ -1,11 +1,5 @@
 TITLE="testing default on all linux platforms"
 DESCRIPTION="minimal configuration options, gcc 4.2.4, boost 1.35, without java"
-
-# DQ (9/4/2009): Added autoconf, which we think is required.
-# PREREQS="gcc-4.2.4, boost-1.35.0, automake-1.10, autoconf-2.59"
 PREREQS="gcc-4.2.4, boost-1.35.0, automake-1.10, autoconf-2.63, libxml2-2.7.3"
-
 CONFIGURE_OPTIONS="--with-boost=/prereq/boost-1.35.0 --with-CXX_WARNINGS=-Wall --without-java"
-
-# DQ (9/4/2009): libxml's m4 macros are not in aclocal's default include paths
 ACLOCAL_INCLUDES="-I /prereq/libxml2-2.7.3/share/aclocal/"
