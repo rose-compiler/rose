@@ -5,73 +5,44 @@
 // include "globalTraverse.h"
 // include "query.h"
 
-// string class used if compiler does not contain a C++ string class
-// #include <roseString.h>
 
 #include "booleanQuery.h"
 #include "booleanQueryInheritedAttribute.h"
 
 BooleanQueryInheritedAttributeType::~BooleanQueryInheritedAttributeType()
-   {
+{
   // Nothing to do here
-     typeOfQuery = BooleanQuery::UnknownListElementType;
-   }
+  typeOfQuery = BooleanQuery::UnknownListElementType;
+}
 
 BooleanQueryInheritedAttributeType::BooleanQueryInheritedAttributeType()
-   {
-     typeOfQuery = BooleanQuery::UnknownListElementType;
-   }
+{
+  typeOfQuery = BooleanQuery::UnknownListElementType;
+}
 
-BooleanQueryInheritedAttributeType::BooleanQueryInheritedAttributeType
-   ( const BooleanQueryInheritedAttributeType & X )
-   {
-     typeOfQuery  = X.typeOfQuery;
-   }
+  BooleanQueryInheritedAttributeType::BooleanQueryInheritedAttributeType
+( const BooleanQueryInheritedAttributeType & X )
+{
+  typeOfQuery  = X.typeOfQuery;
+}
 
-BooleanQueryInheritedAttributeType &
+  BooleanQueryInheritedAttributeType &
 BooleanQueryInheritedAttributeType::operator= ( const BooleanQueryInheritedAttributeType & X )
-   {
-     typeOfQuery  = X.typeOfQuery;
+{
+  typeOfQuery  = X.typeOfQuery;
 
-     return *this;
-   }
+  return *this;
+}
 
-#if 0
-void
-BooleanQueryInheritedAttributeType::setMatchingName ( const string & name )
-   {
-     matchingName = name;
-   }
-
-string
-BooleanQueryInheritedAttributeType::getMatchingName() const
-   {
-     return matchingName;
-   }
-#endif
-
-void
+  void
 BooleanQueryInheritedAttributeType::setQuery ( const BooleanQuery::TypeOfQueryType inputQuery )
-   {
-     typeOfQuery = inputQuery;
-   }
+{
+  typeOfQuery = inputQuery;
+}
 
 BooleanQuery::TypeOfQueryType
 BooleanQueryInheritedAttributeType::getQuery() const
-   {
-     return typeOfQuery;
-   }
-
-
-
-
-
-
-
-
-
-
-
-
-
+{
+  return typeOfQuery;
+}
 

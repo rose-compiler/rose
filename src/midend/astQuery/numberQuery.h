@@ -7,39 +7,39 @@ typedef Rose_STL_Container<int> NumberQuerySynthesizedAttributeType;
 
 namespace NumberQuery{
 
-     enum TypeOfQueryTypeOneParameter
-	{
-	  UnknownListElementType = 0,
-	  NumberOfArgsInConstructor = 1,
-	  NumberOfOperands = 2,
-	  NumberOfArgsInScalarIndexingOperator = 3,
-	  END_OF_NODE_TYPE_LIST_ONE_PARAMETER
-	};
+  enum TypeOfQueryTypeOneParameter
+  {
+    UnknownListElementType = 0,
+    NumberOfArgsInConstructor = 1,
+    NumberOfOperands = 2,
+    NumberOfArgsInScalarIndexingOperator = 3,
+    END_OF_NODE_TYPE_LIST_ONE_PARAMETER
+  };
 
-     enum TypeOfQueryTypeTwoParameters
-	{
-	  UnknownListElementTypeTwoParameters = 0,
-	  NumberOfArgsInParanthesisOperator = 1,
-	  END_OF_NODE_TYPE_LIST_TWO_PARAMETERS
-	};
+  enum TypeOfQueryTypeTwoParameters
+  {
+    UnknownListElementTypeTwoParameters = 0,
+    NumberOfArgsInParanthesisOperator = 1,
+    END_OF_NODE_TYPE_LIST_TWO_PARAMETERS
+  };
 
-     typedef NumberQuerySynthesizedAttributeType (*roseFunctionPointerOneParameter)  (SgNode *);
-     typedef NumberQuerySynthesizedAttributeType (*roseFunctionPointerTwoParameters) (SgNode *, std::string);
-
-
-
-     NumberQuerySynthesizedAttributeType
-	     queryNumberOfArgsInParenthesisOperator (SgNode * astNode, std::string typeName);
+  typedef NumberQuerySynthesizedAttributeType (*roseFunctionPointerOneParameter)  (SgNode *);
+  typedef NumberQuerySynthesizedAttributeType (*roseFunctionPointerTwoParameters) (SgNode *, std::string);
 
 
-     NumberQuerySynthesizedAttributeType
-	     queryNumberOfArgsInConstructor (SgNode * astNode);
 
-     NumberQuerySynthesizedAttributeType
-	     queryNumberOfOperands (SgNode * astNode);
+  NumberQuerySynthesizedAttributeType
+    queryNumberOfArgsInParenthesisOperator (SgNode * astNode, std::string typeName);
 
-     NumberQuerySynthesizedAttributeType
-	     queryNumberOfArgsInScalarIndexingOperator (SgNode * astNode);
+
+  NumberQuerySynthesizedAttributeType
+    queryNumberOfArgsInConstructor (SgNode * astNode);
+
+  NumberQuerySynthesizedAttributeType
+    queryNumberOfOperands (SgNode * astNode);
+
+  NumberQuerySynthesizedAttributeType
+    queryNumberOfArgsInScalarIndexingOperator (SgNode * astNode);
 
 
 
@@ -50,16 +50,16 @@ namespace NumberQuery{
    * will return a functor wrapping the pre-implemented function for TypeOfQueryTypeOneParameter.
    **************************************************************************************************************/
 
-     std::pointer_to_unary_function < SgNode *,
-	     NumberQuerySynthesizedAttributeType >getFunction (TypeOfQueryTypeOneParameter oneParam);
+  std::pointer_to_unary_function < SgNode *,
+    NumberQuerySynthesizedAttributeType >getFunction (TypeOfQueryTypeOneParameter oneParam);
 
   /**************************************************************************************************************
    * The function
    * std::pointer_to_binary_function<SgNode*, SgNode*, std::list<SgNode*> > getFunction(TypeOfQueryTypeTwoParameters twoParam);
    * will return a functor wrapping the pre-implemented function for TypeOfQueryTypeTwoParameters.
    **************************************************************************************************************/
-     std::pointer_to_binary_function < SgNode *, std::string,
-	     NumberQuerySynthesizedAttributeType > getFunction (TypeOfQueryTypeTwoParameters twoParam);
+  std::pointer_to_binary_function < SgNode *, std::string,
+    NumberQuerySynthesizedAttributeType > getFunction (TypeOfQueryTypeTwoParameters twoParam);
 
   // get the SgNode's conforming to the test in querySolverFunction or
   // get the SgNode's conforming to the test in the TypeOfQueryTypeOneParamter the user specify.
@@ -72,16 +72,16 @@ namespace NumberQuery{
    * returns a list of all numbers in the sub-tree of the variable 'subTree' found by the 
    * preimplemented function 'elementReturnType'.
    *******************************************************************************************/
-     NumberQuerySynthesizedAttributeType
-	     querySubTree
-	     (SgNode * subTree,
-	      TypeOfQueryTypeOneParameter elementReturnType,
-	      AstQueryNamespace::QueryDepth defineQueryType =
-	      AstQueryNamespace::AllNodes);
+  NumberQuerySynthesizedAttributeType
+    querySubTree
+    (SgNode * subTree,
+     TypeOfQueryTypeOneParameter elementReturnType,
+     AstQueryNamespace::QueryDepth defineQueryType =
+     AstQueryNamespace::AllNodes);
 
-     NumberQuerySynthesizedAttributeType queryNodeList
-	     (Rose_STL_Container< SgNode * > nodeList,
-	      TypeOfQueryTypeOneParameter elementReturnType);
+  NumberQuerySynthesizedAttributeType queryNodeList
+    (Rose_STL_Container< SgNode * > nodeList,
+     TypeOfQueryTypeOneParameter elementReturnType);
 
   /********************************************************************************************
    *
@@ -91,16 +91,16 @@ namespace NumberQuery{
    * returns a list of all numbers in the sub-tree of the variable 'subTree' found by the 
    * function 'elementReturnType'.
    *******************************************************************************************/
-     NumberQuerySynthesizedAttributeType
-	     querySubTree
-	     (SgNode * subTree,
-	      roseFunctionPointerOneParameter elementReturnType,
-	      AstQueryNamespace::QueryDepth defineQueryType =
-	      AstQueryNamespace::AllNodes);
+  NumberQuerySynthesizedAttributeType
+    querySubTree
+    (SgNode * subTree,
+     roseFunctionPointerOneParameter elementReturnType,
+     AstQueryNamespace::QueryDepth defineQueryType =
+     AstQueryNamespace::AllNodes);
 
-     NumberQuerySynthesizedAttributeType queryNodeList
-	     (Rose_STL_Container< SgNode * >nodeList,
-	      roseFunctionPointerOneParameter querySolverFunction);
+  NumberQuerySynthesizedAttributeType queryNodeList
+    (Rose_STL_Container< SgNode * >nodeList,
+     roseFunctionPointerOneParameter querySolverFunction);
 
 
   // get the SgNode's conforming to the test in querySolverFunction or
@@ -113,18 +113,18 @@ namespace NumberQuery{
    * returns a list of all numbers in the sub-tree of the variable 'subTree' found by the 
    * function 'querySolverFunction' given a second argument 'traversal'.
    *******************************************************************************************/
-     NumberQuerySynthesizedAttributeType
-	     querySubTree
-	     (SgNode * subTree,
-	      std::string traversal,
-	      roseFunctionPointerTwoParameters querySolverFunction,
-	      AstQueryNamespace::QueryDepth defineQueryType =
-	      AstQueryNamespace::AllNodes);
+  NumberQuerySynthesizedAttributeType
+    querySubTree
+    (SgNode * subTree,
+     std::string traversal,
+     roseFunctionPointerTwoParameters querySolverFunction,
+     AstQueryNamespace::QueryDepth defineQueryType =
+     AstQueryNamespace::AllNodes);
 
-     NumberQuerySynthesizedAttributeType queryNodeList
-	     (Rose_STL_Container< SgNode * >nodeList,
-	      std::string targetNode,
-	      roseFunctionPointerTwoParameters querySolverFunction);
+  NumberQuerySynthesizedAttributeType queryNodeList
+    (Rose_STL_Container< SgNode * >nodeList,
+     std::string targetNode,
+     roseFunctionPointerTwoParameters querySolverFunction);
 
   /********************************************************************************************
    *
@@ -135,23 +135,23 @@ namespace NumberQuery{
    * preimplemented function 'elementReturnType' given a second argument 'traversal'.
    *******************************************************************************************/
 
-     NumberQuerySynthesizedAttributeType
-	     querySubTree
-	     (SgNode * subTree,
-	      std::string traversal,
-	      TypeOfQueryTypeTwoParameters elementReturnType,
-	      AstQueryNamespace::QueryDepth defineQueryType =
-	      AstQueryNamespace::AllNodes);
+  NumberQuerySynthesizedAttributeType
+    querySubTree
+    (SgNode * subTree,
+     std::string traversal,
+     TypeOfQueryTypeTwoParameters elementReturnType,
+     AstQueryNamespace::QueryDepth defineQueryType =
+     AstQueryNamespace::AllNodes);
 
-     NumberQuerySynthesizedAttributeType queryNodeList
-	     (Rose_STL_Container< SgNode * >nodeList,
-	      std::string targetNode, TypeOfQueryTypeTwoParameters elementReturnType);
+  NumberQuerySynthesizedAttributeType queryNodeList
+    (Rose_STL_Container< SgNode * >nodeList,
+     std::string targetNode, TypeOfQueryTypeTwoParameters elementReturnType);
 
 
   // perform a query on a list<SgNode>
 
 
- /********************************************************************************
+  /********************************************************************************
    * The function
    *  NumberQuerySynthesizedAttributeType
    * queryMemoryPool(NodeFunctional nodeFunc , VariantVector* targetVariantVector = NULL)
@@ -160,11 +160,11 @@ namespace NumberQuery{
    * in VariantVector.
    ********************************************************************************/
   template<typename NodeFunctional>
-  NumberQuerySynthesizedAttributeType
-  queryMemoryPool(NodeFunctional nodeFunc , VariantVector* targetVariantVector = NULL)
-		{
-			  return AstQueryNamespace::queryMemoryPool(nodeFunc,targetVariantVector);
-		};
+    NumberQuerySynthesizedAttributeType
+    queryMemoryPool(NodeFunctional nodeFunc , VariantVector* targetVariantVector = NULL)
+    {
+      return AstQueryNamespace::queryMemoryPool(nodeFunc,targetVariantVector);
+    };
 
 
   /********************************************************************************
@@ -176,60 +176,60 @@ namespace NumberQuery{
    * performa the action specified by the second argument and return a NodeQuerySynthesizedAttributeType.
    ********************************************************************************/
   NumberQuerySynthesizedAttributeType
-  queryMemoryPool
+    queryMemoryPool
     (
      std::string traversal,
      roseFunctionPointerTwoParameters querySolverFunction, VariantVector* targetVariantVector);
 
-/********************************************************************************
- * The function
- *      _Result queryMemoryPool ( 
- *                   _Result (*__x)(SgNode*),
- *                   VariantVector* ){
- * will on every node of the memory pool which has a corresponding variant in VariantVector
- * performa the action specified by the second argument and return a NodeQuerySynthesizedAttributeType.
- ********************************************************************************/
+  /********************************************************************************
+   * The function
+   *      _Result queryMemoryPool ( 
+   *                   _Result (*__x)(SgNode*),
+   *                   VariantVector* ){
+   * will on every node of the memory pool which has a corresponding variant in VariantVector
+   * performa the action specified by the second argument and return a NodeQuerySynthesizedAttributeType.
+   ********************************************************************************/
   NumberQuerySynthesizedAttributeType
-  queryMemoryPool
+    queryMemoryPool
     (
      std::string traversal,
      roseFunctionPointerOneParameter querySolverFunction, VariantVector* targetVariantVector = NULL);
 
-/********************************************************************************
- * The function
- *      _Result queryMemoryPool ( SgNode*,
- *                   TypeOfQueryTypeTwoParameters,
- *                   VariantVector* ){
- * will on every node of the memory pool which has a corresponding variant in VariantVector
- * performa the predefined action specified by the second argument and return a 
- * NodeQuerySynthesizedAttributeType.
- ********************************************************************************/
+  /********************************************************************************
+   * The function
+   *      _Result queryMemoryPool ( SgNode*,
+   *                   TypeOfQueryTypeTwoParameters,
+   *                   VariantVector* ){
+   * will on every node of the memory pool which has a corresponding variant in VariantVector
+   * performa the predefined action specified by the second argument and return a 
+   * NodeQuerySynthesizedAttributeType.
+   ********************************************************************************/
 
   NumberQuerySynthesizedAttributeType
-  queryMemoryPool
+    queryMemoryPool
     (
      std::string traversal,
      TypeOfQueryTypeTwoParameters elementReturnType,
      VariantVector* targetVariantVector = NULL);
 
-/********************************************************************************
- * The function
- *      _Result queryMemoryPool ( 
- *                   TypeOfQueryTypeOneParameter,
- *                   VariantVector* ){
- * will on every node of the memory pool which has a corresponding variant in VariantVector
- * performa the predefined action specified by the second argument and return a 
- * NodeQuerySynthesizedAttributeType.
- ********************************************************************************/
+  /********************************************************************************
+   * The function
+   *      _Result queryMemoryPool ( 
+   *                   TypeOfQueryTypeOneParameter,
+   *                   VariantVector* ){
+   * will on every node of the memory pool which has a corresponding variant in VariantVector
+   * performa the predefined action specified by the second argument and return a 
+   * NodeQuerySynthesizedAttributeType.
+   ********************************************************************************/
 
   NumberQuerySynthesizedAttributeType
-  queryMemoryPool
+    queryMemoryPool
     (
      TypeOfQueryTypeOneParameter elementReturnType,
      VariantVector* targetVariantVector = NULL);
 
 
-     
+
 
   // DQ (4/8/2004): Added query based on vector of variants
 
