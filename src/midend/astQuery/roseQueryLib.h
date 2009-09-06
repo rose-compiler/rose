@@ -4,7 +4,6 @@
 #include "astQuery.h"
 #include "booleanQuery.h"
 #include "nodeQuery.h"
-//#warning "Removed the inclusion of nodeQuery.h in roseQueryLib.h" 
 #include "nameQuery.h"
 #include "numberQuery.h"
 /* include "projectQuery.h" */

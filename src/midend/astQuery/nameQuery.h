@@ -11,7 +11,7 @@ typedef Rose_STL_Container< std::string > NameQuerySynthesizedAttributeType;
 namespace NameQuery{
 
 
-typedef AstQueryNamespace::QueryDepth QueryDepth;
+  typedef AstQueryNamespace::QueryDepth QueryDepth;
   typedef
     NameQuerySynthesizedAttributeType (*roseFunctionPointerOneParameter)
     (SgNode *);
@@ -23,52 +23,52 @@ typedef AstQueryNamespace::QueryDepth QueryDepth;
 
 
 
-NameQuerySynthesizedAttributeType
-queryNameArgumentNames (SgNode * astNode);
+  NameQuerySynthesizedAttributeType
+    queryNameArgumentNames (SgNode * astNode);
 
-NameQuerySynthesizedAttributeType
-queryNameClassDeclarationNames (SgNode * astNode);
+  NameQuerySynthesizedAttributeType
+    queryNameClassDeclarationNames (SgNode * astNode);
 
-NameQuerySynthesizedAttributeType
-queryNameStructNames (SgNode * astNode);
+  NameQuerySynthesizedAttributeType
+    queryNameStructNames (SgNode * astNode);
 
-NameQuerySynthesizedAttributeType
-queryNameUnionNames (SgNode * astNode);
+  NameQuerySynthesizedAttributeType
+    queryNameUnionNames (SgNode * astNode);
 
-NameQuerySynthesizedAttributeType
-queryNameMemberFunctionDeclarationNames (SgNode * astNode);
+  NameQuerySynthesizedAttributeType
+    queryNameMemberFunctionDeclarationNames (SgNode * astNode);
 
-NameQuerySynthesizedAttributeType
-queryNameFunctionDeclarationNames (SgNode * astNode);
+  NameQuerySynthesizedAttributeType
+    queryNameFunctionDeclarationNames (SgNode * astNode);
 
-NameQuerySynthesizedAttributeType
-queryNameVariableTypeNames (SgNode * astNode);
+  NameQuerySynthesizedAttributeType
+    queryNameVariableTypeNames (SgNode * astNode);
 
-NameQuerySynthesizedAttributeType
-queryNameVariableNames (SgNode * astNode);
+  NameQuerySynthesizedAttributeType
+    queryNameVariableNames (SgNode * astNode);
 
-NameQuerySynthesizedAttributeType
-queryNameClassFieldNames (SgNode * astNode);
+  NameQuerySynthesizedAttributeType
+    queryNameClassFieldNames (SgNode * astNode);
 
-NameQuerySynthesizedAttributeType
-queryNameUnionFieldNames (SgNode * astNode);
+  NameQuerySynthesizedAttributeType
+    queryNameUnionFieldNames (SgNode * astNode);
 
-NameQuerySynthesizedAttributeType
-queryNameStructFieldNames (SgNode * astNode);
+  NameQuerySynthesizedAttributeType
+    queryNameStructFieldNames (SgNode * astNode);
 
-NameQuerySynthesizedAttributeType
-queryNameFunctionReferenceNames (SgNode * astNode);
+  NameQuerySynthesizedAttributeType
+    queryNameFunctionReferenceNames (SgNode * astNode);
 
-NameQuerySynthesizedAttributeType
-queryVariableNamesWithTypeName (SgNode * astNode, std::string matchingName);
-
-
-NameQuerySynthesizedAttributeType
-queryNameTypedefDeclarationNames (SgNode * astNode);
+  NameQuerySynthesizedAttributeType
+    queryVariableNamesWithTypeName (SgNode * astNode, std::string matchingName);
 
 
-NameQuerySynthesizedAttributeType
-queryNameTypeName (SgNode * astNode);
+  NameQuerySynthesizedAttributeType
+    queryNameTypedefDeclarationNames (SgNode * astNode);
+
+
+  NameQuerySynthesizedAttributeType
+    queryNameTypeName (SgNode * astNode);
 
 
   enum TypeOfQueryTypeOneParameter
@@ -99,20 +99,20 @@ queryNameTypeName (SgNode * astNode);
   };
 
 
-       /**************************************************************************************************************
-        * The function
-        *    std::pointer_to_unary_function<SgNode*, std::list<SgNode*> > getFunction(TypeOfQueryTypeOneParameter oneParam);
-        * will return a functor wrapping the pre-implemented function for TypeOfQueryTypeOneParameter.
-        **************************************************************************************************************/
+  /**************************************************************************************************************
+   * The function
+   *    std::pointer_to_unary_function<SgNode*, std::list<SgNode*> > getFunction(TypeOfQueryTypeOneParameter oneParam);
+   * will return a functor wrapping the pre-implemented function for TypeOfQueryTypeOneParameter.
+   **************************************************************************************************************/
 
   std::pointer_to_unary_function < SgNode *,
     Rose_STL_Container<std::string> >getFunction (TypeOfQueryTypeOneParameter oneParam);
 
-       /**************************************************************************************************************
-        * The function
-        * std::pointer_to_binary_function<SgNode*, SgNode*, std::list<SgNode*> > getFunction(TypeOfQueryTypeTwoParameters twoParam);
-        * will return a functor wrapping the pre-implemented function for TypeOfQueryTypeTwoParameters.
-        **************************************************************************************************************/
+  /**************************************************************************************************************
+   * The function
+   * std::pointer_to_binary_function<SgNode*, SgNode*, std::list<SgNode*> > getFunction(TypeOfQueryTypeTwoParameters twoParam);
+   * will return a functor wrapping the pre-implemented function for TypeOfQueryTypeTwoParameters.
+   **************************************************************************************************************/
   std::pointer_to_binary_function < SgNode *, std::string,
     Rose_STL_Container<std::string> > getFunction (TypeOfQueryTypeTwoParameters twoParam);
 
@@ -128,17 +128,17 @@ queryNameTypeName (SgNode * astNode);
    * preimplemented function 'elementReturnType'.
    *******************************************************************************************/
   NameQuerySynthesizedAttributeType
-  querySubTree
+    querySubTree
     (SgNode * subTree,
      TypeOfQueryTypeOneParameter elementReturnType,
      AstQueryNamespace::QueryDepth defineQueryType =
      AstQueryNamespace::AllNodes);
 
-   NameQuerySynthesizedAttributeType queryNodeList
+  NameQuerySynthesizedAttributeType queryNodeList
     (Rose_STL_Container< SgNode * > nodeList,
      TypeOfQueryTypeOneParameter elementReturnType);
 
-   /********************************************************************************************
+  /********************************************************************************************
    *
    * The function
    *   querySubTree (SgNode * subTree, roseFunctionPointerOneParameter elementReturnType,
@@ -146,8 +146,8 @@ queryNameTypeName (SgNode * astNode);
    * returns a list of all stings in the sub-tree of the variable 'subTree' found by the 
    * function 'elementReturnType'.
    *******************************************************************************************/
-   NameQuerySynthesizedAttributeType
-   querySubTree
+  NameQuerySynthesizedAttributeType
+    querySubTree
     (SgNode * subTree,
      roseFunctionPointerOneParameter elementReturnType,
      AstQueryNamespace::QueryDepth defineQueryType =
@@ -159,7 +159,7 @@ queryNameTypeName (SgNode * astNode);
 
   // get the SgNode's conforming to the test in querySolverFunction or
   // get the SgNode's conforming to the test in the TypeOfQueryTypeTwoParamters the user specify.
-   /********************************************************************************************
+  /********************************************************************************************
    *
    * The function
    *   querySubTree (SgNode * subTree, SgNode* traversal, roseFunctionPointerTwoParameters elementReturnType,
@@ -168,7 +168,7 @@ queryNameTypeName (SgNode * astNode);
    * function 'querySolverFunction' given a second argument 'traversal'.
    *******************************************************************************************/
   NameQuerySynthesizedAttributeType
-  querySubTree
+    querySubTree
     (SgNode * subTree,
      std::string traversal,
      roseFunctionPointerTwoParameters querySolverFunction,
@@ -181,7 +181,7 @@ queryNameTypeName (SgNode * astNode);
      roseFunctionPointerTwoParameters querySolverFunction);
 
 
-   /********************************************************************************************
+  /********************************************************************************************
    *
    * The function
    *   querySubTree (SgNode * subTree, SgNode* traversal, TypeOfQueryTypeTwoParameters elementReturnType,
@@ -190,14 +190,14 @@ queryNameTypeName (SgNode * astNode);
    * preimplemented function 'elementReturnType' given a second argument 'traversal'.
    *******************************************************************************************/
   NameQuerySynthesizedAttributeType
-  querySubTree
+    querySubTree
     (SgNode * subTree,
      std::string traversal,
      TypeOfQueryTypeTwoParameters elementReturnType,
      AstQueryNamespace::QueryDepth defineQueryType =
      AstQueryNamespace::AllNodes);
 
-    NameQuerySynthesizedAttributeType queryNodeList
+  NameQuerySynthesizedAttributeType queryNodeList
     (Rose_STL_Container< SgNode * >nodeList,
      std::string targetNode, TypeOfQueryTypeTwoParameters elementReturnType);
 
@@ -208,7 +208,7 @@ queryNameTypeName (SgNode * astNode);
 
 
 
- /********************************************************************************
+  /********************************************************************************
    * The function
    *  NameQuerySynthesizedAttributeType
    * queryMemoryPool(NodeFunctional nodeFunc , VariantVector* targetVariantVector = NULL)
@@ -217,11 +217,11 @@ queryNameTypeName (SgNode * astNode);
    * in VariantVector.
    ********************************************************************************/
   template<typename NodeFunctional>
-  NameQuerySynthesizedAttributeType
-  queryMemoryPool(NodeFunctional nodeFunc , VariantVector* targetVariantVector = NULL)
-		{
-			  return AstQueryNamespace::queryMemoryPool(nodeFunc,targetVariantVector);
-		};
+    NameQuerySynthesizedAttributeType
+    queryMemoryPool(NodeFunctional nodeFunc , VariantVector* targetVariantVector = NULL)
+    {
+      return AstQueryNamespace::queryMemoryPool(nodeFunc,targetVariantVector);
+    };
 
 
   /********************************************************************************
@@ -233,54 +233,54 @@ queryNameTypeName (SgNode * astNode);
    * performa the action specified by the second argument and return a NodeQuerySynthesizedAttributeType.
    ********************************************************************************/
   NameQuerySynthesizedAttributeType
-  queryMemoryPool
+    queryMemoryPool
     (
      std::string traversal,
      roseFunctionPointerTwoParameters querySolverFunction, VariantVector* targetVariantVector);
 
-/********************************************************************************
- * The function
- *      _Result queryMemoryPool ( 
- *                   _Result (*__x)(SgNode*),
- *                   VariantVector* ){
- * will on every node of the memory pool which has a corresponding variant in VariantVector
- * performa the action specified by the second argument and return a NodeQuerySynthesizedAttributeType.
- ********************************************************************************/
+  /********************************************************************************
+   * The function
+   *      _Result queryMemoryPool ( 
+   *                   _Result (*__x)(SgNode*),
+   *                   VariantVector* ){
+   * will on every node of the memory pool which has a corresponding variant in VariantVector
+   * performa the action specified by the second argument and return a NodeQuerySynthesizedAttributeType.
+   ********************************************************************************/
   NameQuerySynthesizedAttributeType
-  queryMemoryPool
+    queryMemoryPool
     (
      std::string traversal,
      roseFunctionPointerOneParameter querySolverFunction, VariantVector* targetVariantVector = NULL);
 
-/********************************************************************************
- * The function
- *      _Result queryMemoryPool ( SgNode*,
- *                   TypeOfQueryTypeTwoParameters,
- *                   VariantVector* ){
- * will on every node of the memory pool which has a corresponding variant in VariantVector
- * performa the predefined action specified by the second argument and return a 
- * NodeQuerySynthesizedAttributeType.
- ********************************************************************************/
+  /********************************************************************************
+   * The function
+   *      _Result queryMemoryPool ( SgNode*,
+   *                   TypeOfQueryTypeTwoParameters,
+   *                   VariantVector* ){
+   * will on every node of the memory pool which has a corresponding variant in VariantVector
+   * performa the predefined action specified by the second argument and return a 
+   * NodeQuerySynthesizedAttributeType.
+   ********************************************************************************/
 
   NameQuerySynthesizedAttributeType
-  queryMemoryPool
+    queryMemoryPool
     (
      std::string traversal,
      TypeOfQueryTypeTwoParameters elementReturnType,
      VariantVector* targetVariantVector = NULL);
 
-/********************************************************************************
- * The function
- *      _Result queryMemoryPool ( 
- *                   TypeOfQueryTypeOneParameter,
- *                   VariantVector* ){
- * will on every node of the memory pool which has a corresponding variant in VariantVector
- * performa the predefined action specified by the second argument and return a 
- * NodeQuerySynthesizedAttributeType.
- ********************************************************************************/
+  /********************************************************************************
+   * The function
+   *      _Result queryMemoryPool ( 
+   *                   TypeOfQueryTypeOneParameter,
+   *                   VariantVector* ){
+   * will on every node of the memory pool which has a corresponding variant in VariantVector
+   * performa the predefined action specified by the second argument and return a 
+   * NodeQuerySynthesizedAttributeType.
+   ********************************************************************************/
 
   NameQuerySynthesizedAttributeType
-  queryMemoryPool
+    queryMemoryPool
     (
      TypeOfQueryTypeOneParameter elementReturnType,
      VariantVector* targetVariantVector = NULL);

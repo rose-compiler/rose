@@ -14,21 +14,21 @@
 
 
 class VariantVector : public std::vector < VariantT >
-   {
+{
   // This class is derived from the STL vector class
-     public:
-	  VariantVector () {}
-	  VariantVector (const VariantT & X);
-	  VariantVector (const VariantVector & X);
-	  VariantVector operator= (const VariantVector & X);
+  public:
+    VariantVector () {}
+    VariantVector (const VariantT & X);
+    VariantVector (const VariantVector & X);
+    VariantVector operator= (const VariantVector & X);
 
-	  friend VariantVector operator+ (VariantT lhs, VariantT rhs);
-	  friend VariantVector operator+ (VariantT lhs, const VariantVector & rhs);
-	  friend VariantVector operator+ (const VariantVector & lhs, VariantT rhs);
-	  friend VariantVector operator+ (const VariantVector & lhs, const VariantVector & rhs);
+    friend VariantVector operator+ (VariantT lhs, VariantT rhs);
+    friend VariantVector operator+ (VariantT lhs, const VariantVector & rhs);
+    friend VariantVector operator+ (const VariantVector & lhs, VariantT rhs);
+    friend VariantVector operator+ (const VariantVector & lhs, const VariantVector & rhs);
 
-	  static void printVariantVector (const VariantVector & X);
-   };
+    static void printVariantVector (const VariantVector & X);
+};
 
 // DQ (4/23/2006): g++ 4.1.0 requires friend functions to be declared outside the class as well!
 VariantVector operator+ (VariantT lhs, VariantT rhs);
@@ -41,64 +41,64 @@ VariantVector operator+ (const VariantVector & lhs, const VariantVector & rhs);
 
 
 namespace AstQueryNamespace
-   {
+{
 
-     template<typename AstQuerySynthesizedAttributeType>
-     struct helpFunctionalOneParamater
-        : public std::unary_function<SgNode* , Rose_STL_Container<AstQuerySynthesizedAttributeType> >
-        {
-	    // When elementMatchCount == 1 then a match has been made
-          typedef Rose_STL_Container<AstQuerySynthesizedAttributeType> (*roseFunctionPointerOneParameter)  (SgNode *);
-          roseFunctionPointerOneParameter queryFunctionOneParameter;
+  template<typename AstQuerySynthesizedAttributeType>
+    struct helpFunctionalOneParamater
+    : public std::unary_function<SgNode* , Rose_STL_Container<AstQuerySynthesizedAttributeType> >
+    {
+      // When elementMatchCount == 1 then a match has been made
+      typedef Rose_STL_Container<AstQuerySynthesizedAttributeType> (*roseFunctionPointerOneParameter)  (SgNode *);
+      roseFunctionPointerOneParameter queryFunctionOneParameter;
 
-       // Constructor
-          helpFunctionalOneParamater (roseFunctionPointerOneParameter function)
-             {
-               queryFunctionOneParameter = function;
-             }
+      // Constructor
+      helpFunctionalOneParamater (roseFunctionPointerOneParameter function)
+      {
+        queryFunctionOneParameter = function;
+      }
 
-          typename Rose_STL_Container<AstQuerySynthesizedAttributeType>  operator()(SgNode* node)
-             {
-               return queryFunctionOneParameter(node);
-             }
-        };
+      typename Rose_STL_Container<AstQuerySynthesizedAttributeType>  operator()(SgNode* node)
+      {
+        return queryFunctionOneParameter(node);
+      }
+    };
 
-     struct helpF : public std::binary_function<bool,bool,bool >
-        {
-          bool operator()(bool x, bool y)
-             {
-               return x;
-             }
-        };
+  struct helpF : public std::binary_function<bool,bool,bool >
+  {
+    bool operator()(bool x, bool y)
+    {
+      return x;
+    }
+  };
 
-     template<typename AstQuerySynthesizedAttributeType, typename ArgumentType>
-     struct helpFunctionalTwoParamaters
-        : public std::binary_function<SgNode*,ArgumentType, Rose_STL_Container<AstQuerySynthesizedAttributeType> >
-        {
-	    // When elementMatchCount==1 then a match has been made
-          typedef Rose_STL_Container<AstQuerySynthesizedAttributeType> (*roseFunctionPointerTwoParameters)  (SgNode *, ArgumentType);
-          roseFunctionPointerTwoParameters queryFunctionTwoParameters;
+  template<typename AstQuerySynthesizedAttributeType, typename ArgumentType>
+    struct helpFunctionalTwoParamaters
+    : public std::binary_function<SgNode*,ArgumentType, Rose_STL_Container<AstQuerySynthesizedAttributeType> >
+    {
+      // When elementMatchCount==1 then a match has been made
+      typedef Rose_STL_Container<AstQuerySynthesizedAttributeType> (*roseFunctionPointerTwoParameters)  (SgNode *, ArgumentType);
+      roseFunctionPointerTwoParameters queryFunctionTwoParameters;
 
-          helpFunctionalTwoParamaters(roseFunctionPointerTwoParameters function)
-             {
-               queryFunctionTwoParameters = function;
-             }
-          Rose_STL_Container<AstQuerySynthesizedAttributeType>  operator()(SgNode* node, ArgumentType arg)
-             {
-               return queryFunctionTwoParameters(node,arg);
-             }
-        };
+      helpFunctionalTwoParamaters(roseFunctionPointerTwoParameters function)
+      {
+        queryFunctionTwoParameters = function;
+      }
+      Rose_STL_Container<AstQuerySynthesizedAttributeType>  operator()(SgNode* node, ArgumentType arg)
+      {
+        return queryFunctionTwoParameters(node,arg);
+      }
+    };
 
-     enum QueryDepth
-        {
-          UnknownListElementTypeQueryDepth = 0,
-          ChildrenOnly                     = 1,
-          AllNodes                         = 2,
-       // DQ (4/8/2004): Added support for extracting types from tranversed 
-       //                nodes (types are not generally traversed).
-          ExtractTypes                     = 3,
-          END_OF_NODE_TYPE_LIST_QUERY_DEPTH
-        };
+  enum QueryDepth
+  {
+    UnknownListElementTypeQueryDepth = 0,
+    ChildrenOnly                     = 1,
+    AllNodes                         = 2,
+    // DQ (4/8/2004): Added support for extracting types from tranversed 
+    //                nodes (types are not generally traversed).
+    ExtractTypes                     = 3,
+    END_OF_NODE_TYPE_LIST_QUERY_DEPTH
+  };
 
   // #include "variantVector.h"
 
@@ -107,39 +107,24 @@ namespace AstQueryNamespace
   // **********************************
 
   // forward declaration
-     class AstQueryInheritedAttributeType;
+  class AstQueryInheritedAttributeType;
 
-
-  /*
-     template<typename ResultType>
-     void Merge(std::list<ResultType> & mergeWith, std::list<ResultType> & mergeTo ){
-     mergeWith.merge(mergeTo);
-     };
-   */
-  //void Merge(std::list<SgNode*>& mergeWith, std::list<SgNode*>  mergeTo );
-
-#if 0
-     inline void Merge(std::list<SgNode*, std::allocator<SgNode*> >& mergeWith, std::list<SgNode*,  std::allocator<SgNode*> >&  mergeTo ){
-	  mergeWith.merge(mergeTo);
-     };
-#endif
-     void Merge(Rose_STL_Container<SgNode*>& mergeWith, Rose_STL_Container<SgNode*>  mergeTo );
-     void Merge(Rose_STL_Container<SgFunctionDeclaration*>& mergeWith, Rose_STL_Container<SgFunctionDeclaration*>  mergeTo );
-  // void Merge(Rose_STL_Container<bool> & mergeWith, Rose_STL_Container<bool>  mergeTo );
-     void Merge(Rose_STL_Container<int> & mergeWith, Rose_STL_Container<int>  mergeTo );
-     void Merge(Rose_STL_Container<std::string> & mergeWith, Rose_STL_Container<std::string>  mergeTo );
+  void Merge(Rose_STL_Container<SgNode*>& mergeWith, Rose_STL_Container<SgNode*>  mergeTo );
+  void Merge(Rose_STL_Container<SgFunctionDeclaration*>& mergeWith, Rose_STL_Container<SgFunctionDeclaration*>  mergeTo );
+  void Merge(Rose_STL_Container<int> & mergeWith, Rose_STL_Container<int>  mergeTo );
+  void Merge(Rose_STL_Container<std::string> & mergeWith, Rose_STL_Container<std::string>  mergeTo );
 
   // DQ & AS (3/14/2007): Added to support us of astQuery with functions returing void* (not clear why void 
   // does not work, except that void is not really a return type but instead is a signal that there is no 
   // return type).  This is used in the generation of the list of return types (used for testing in AST 
   // Consistancy tests).
-     void Merge(void* mergeWith, void* mergeTo );
+  void Merge(void* mergeWith, void* mergeTo );
 
-     template<typename ResultType>
-	  void Merge(std::vector<ResultType> & mergeWith, std::vector<ResultType> & mergeTo )
-        {
-          mergeWith.push_back(mergeTo);
-        }
+  template<typename ResultType>
+    void Merge(std::vector<ResultType> & mergeWith, std::vector<ResultType> & mergeTo )
+    {
+      mergeWith.push_back(mergeTo);
+    }
 
   //typedef std::list<SgNode*> AstQuerySynthesizedAttributeType;
 
@@ -163,19 +148,19 @@ namespace AstQueryNamespace
     This class represents a library of queries.. Basically it will support a large number of
     different types of queries that can be ask of an AST and that return a list of SgNode pointers.
    */
-     class DefaultNodeFunctional :  public std::unary_function<SgNode*, Rose_STL_Container<SgNode*> > 
-     {
-       public:
-	    result_type operator()(SgNode* node ) 
-	       { 
-		 result_type returnType;
-		 returnType.push_back(node);
-		 return returnType; 
-	       }
-     };
+  class DefaultNodeFunctional :  public std::unary_function<SgNode*, Rose_STL_Container<SgNode*> > 
+  {
+    public:
+      result_type operator()(SgNode* node ) 
+      { 
+        result_type returnType;
+        returnType.push_back(node);
+        return returnType; 
+      }
+  };
 
 
-     class AstQuery_DUMMY{};
+  class AstQuery_DUMMY{};
 
   /*******************************************************
    * The class
@@ -184,94 +169,94 @@ namespace AstQueryNamespace
    * specified in a functional on every node. The return
    *  value is a list of SgNode*.
    *****************************************************/
-     template<typename AST_Query_Base = AstQuery_DUMMY, typename NodeFunctional = DefaultNodeFunctional>
-	     class AstQuery : public AST_Query_Base
-			   //public ROSE_VisitTraversal, public AstSimpleProcessing
-	     {
+  template<typename AST_Query_Base = AstQuery_DUMMY, typename NodeFunctional = DefaultNodeFunctional>
+    class AstQuery : public AST_Query_Base
+                     //public ROSE_VisitTraversal, public AstSimpleProcessing
+  {
 
-	    //Instantiate the functional which returns the list of nodes to be processed
-	       NodeFunctional* nodeFunc;
+    //Instantiate the functional which returns the list of nodes to be processed
+    NodeFunctional* nodeFunc;
 
-	    //When a node satisfies a functional it is added to
-	    //this list.
-	       typedef typename NodeFunctional::result_type AstQueryReturnType;
-	       AstQueryReturnType listOfNodes;
-	       public:
-	       AstQuery();
+    //When a node satisfies a functional it is added to
+    //this list.
+    typedef typename NodeFunctional::result_type AstQueryReturnType;
+    AstQueryReturnType listOfNodes;
+    public:
+    AstQuery();
 
-	       AstQuery(NodeFunctional* funct);
+    AstQuery(NodeFunctional* funct);
 
-	       virtual ~AstQuery();
+    virtual ~AstQuery();
 
-	    //set the node Functional
-	       void setPredicate (NodeFunctional* funct);
-
-
-	    //get the result from the query
-	       AstQueryReturnType get_listOfNodes();
+    //set the node Functional
+    void setPredicate (NodeFunctional* funct);
 
 
-
-	    //clear the result list of the query. a new
-	    //query can then be restarted using the same object.
-	       void clear_listOfNodes();
-
-	    //visitor function will apply the functional to every node
-	    //and add the result to the listOfNodes
-	       void visit(SgNode *node);
-	     };
-
-     template<typename AST_Query_Base, typename NodeFunctional>
-	     AstQuery<AST_Query_Base,NodeFunctional>::AstQuery(NodeFunctional* funct)  
-		{
-		  nodeFunc = funct;
-		}
-
-     template<typename AST_Query_Base, typename NodeFunctional>
-	     AstQuery<AST_Query_Base,NodeFunctional>::AstQuery()  
-		{
-		  nodeFunc = new DefaultNodeFunctional();
-		}
-
-     template<typename AST_Query_Base, typename NodeFunctional>
-	     void 
-	     AstQuery<AST_Query_Base,NodeFunctional>::setPredicate (NodeFunctional* funct)
-		{
-		  nodeFunc = funct;
-		}
+    //get the result from the query
+    AstQueryReturnType get_listOfNodes();
 
 
 
-     template<typename AST_Query_Base, typename NodeFunctional>
-	     AstQuery<AST_Query_Base,NodeFunctional>::~AstQuery(){};
+    //clear the result list of the query. a new
+    //query can then be restarted using the same object.
+    void clear_listOfNodes();
 
-     template<typename AST_Query_Base, typename NodeFunctional>
-	     typename AstQuery<AST_Query_Base,NodeFunctional>::AstQueryReturnType
-	     AstQuery<AST_Query_Base,NodeFunctional>::get_listOfNodes(){
-		  return listOfNodes;
-	     };
+    //visitor function will apply the functional to every node
+    //and add the result to the listOfNodes
+    void visit(SgNode *node);
+  };
 
-     template<typename AST_Query_Base, typename NodeFunctional>
-	     void
-	     AstQuery<AST_Query_Base,NodeFunctional>::clear_listOfNodes(){
-		  listOfNodes.clear();
+  template<typename AST_Query_Base, typename NodeFunctional>
+    AstQuery<AST_Query_Base,NodeFunctional>::AstQuery(NodeFunctional* funct)  
+    {
+      nodeFunc = funct;
+    }
 
-	     };
+  template<typename AST_Query_Base, typename NodeFunctional>
+    AstQuery<AST_Query_Base,NodeFunctional>::AstQuery()  
+    {
+      nodeFunc = new DefaultNodeFunctional();
+    }
 
-     template<typename AST_Query_Base, typename NodeFunctional>
-	     void 
-	     AstQuery<AST_Query_Base,NodeFunctional>::visit(SgNode *node) {
-		  ROSE_ASSERT (node != NULL);
-		  ROSE_ASSERT (nodeFunc != NULL); 
+  template<typename AST_Query_Base, typename NodeFunctional>
+    void 
+    AstQuery<AST_Query_Base,NodeFunctional>::setPredicate (NodeFunctional* funct)
+    {
+      nodeFunc = funct;
+    }
+
+
+
+  template<typename AST_Query_Base, typename NodeFunctional>
+    AstQuery<AST_Query_Base,NodeFunctional>::~AstQuery(){};
+
+  template<typename AST_Query_Base, typename NodeFunctional>
+    typename AstQuery<AST_Query_Base,NodeFunctional>::AstQueryReturnType
+    AstQuery<AST_Query_Base,NodeFunctional>::get_listOfNodes(){
+      return listOfNodes;
+    };
+
+  template<typename AST_Query_Base, typename NodeFunctional>
+    void
+    AstQuery<AST_Query_Base,NodeFunctional>::clear_listOfNodes(){
+      listOfNodes.clear();
+
+    };
+
+  template<typename AST_Query_Base, typename NodeFunctional>
+    void 
+    AstQuery<AST_Query_Base,NodeFunctional>::visit(SgNode *node) {
+      ROSE_ASSERT (node != NULL);
+      ROSE_ASSERT (nodeFunc != NULL); 
 
 #if DEBUG_NODEQUERY
-		  printf ("%%%%% TOP of evaluateSynthesizedAttribute (astNode->sage_class_name() = %s,synthesizedAttributeList.size() = %d) \n",
-				  astNode->sage_class_name(), synthesizedAttributeList.size());
+      printf ("%%%%% TOP of evaluateSynthesizedAttribute (astNode->sage_class_name() = %s,synthesizedAttributeList.size() = %d) \n",
+          astNode->sage_class_name(), synthesizedAttributeList.size());
 #endif
 
-	       // This function assemble the elements of the input list (a list of lists) to form the output (a single list)
-             AstQueryNamespace::Merge(listOfNodes, nodeFunc->operator()(node));
-	     }
+      // This function assemble the elements of the input list (a list of lists) to form the output (a single list)
+      AstQueryNamespace::Merge(listOfNodes, nodeFunc->operator()(node));
+    }
 
 
 
@@ -282,53 +267,53 @@ namespace AstQueryNamespace
    * will query the subtree of the IR node in the first argument for nodes satisfying
    * the criteria specified in and returned by the predicate in the second argument.
    ********************************************************************************/
-     template<typename NodeFunctional>
-	     typename NodeFunctional::result_type 
-	     querySubTree(SgNode* node, NodeFunctional nodeFunc, AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::AllNodes,
-			     t_traverseOrder treeTraversalOrder = preorder)
-		{
-		  ROSE_ASSERT(node!=NULL);
+  template<typename NodeFunctional>
+    typename NodeFunctional::result_type 
+    querySubTree(SgNode* node, NodeFunctional nodeFunc, AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::AllNodes,
+        t_traverseOrder treeTraversalOrder = preorder)
+    {
+      ROSE_ASSERT(node!=NULL);
 
-		  AstQuery<AstSimpleProcessing,NodeFunctional> astQuery(&nodeFunc);
+      AstQuery<AstSimpleProcessing,NodeFunctional> astQuery(&nodeFunc);
 
-		  switch (defineQueryType)
-		     {
-		       case AstQueryNamespace::AllNodes:
-			     {
-			       astQuery.traverse(node,treeTraversalOrder);
+      switch (defineQueryType)
+      {
+        case AstQueryNamespace::AllNodes:
+          {
+            astQuery.traverse(node,treeTraversalOrder);
 
-			       break;
-			     }
-		       case AstQueryNamespace::ChildrenOnly:
-			     {
-			    //visit only the nodes which is pointed to by this class
-			       typedef std::vector< SgNode *> DataMemberPointerType;
+            break;
+          }
+        case AstQueryNamespace::ChildrenOnly:
+          {
+            //visit only the nodes which is pointed to by this class
+            typedef std::vector< SgNode *> DataMemberPointerType;
 
-			       DataMemberPointerType returnData = node->get_traversalSuccessorContainer ();
+            DataMemberPointerType returnData = node->get_traversalSuccessorContainer ();
 
-			    // A child of a node is the nodes it points to.
-			       for(DataMemberPointerType::iterator i = returnData.begin(); i != returnData.end(); ++i)
-				  {
-				 // visit the node which is pointed to by this SgNode
-				    if( *i != NULL )
-					 astQuery.visit(*i);
+            // A child of a node is the nodes it points to.
+            for(DataMemberPointerType::iterator i = returnData.begin(); i != returnData.end(); ++i)
+            {
+              // visit the node which is pointed to by this SgNode
+              if( *i != NULL )
+                astQuery.visit(*i);
 
-				  };
+            };
 
 
-			       break;
-			     }
-		       case AstQueryNamespace::ExtractTypes:
-			  printf ("Sorry, ExtractTypes case not implemented for e_OneParameterFunctionClassification! \n");
-			  ROSE_ABORT();
-			  break;
-		       default:
-			  printf ("default reached in switch (queryType) \n");
-			  ROSE_ABORT();
-		     }
+            break;
+          }
+        case AstQueryNamespace::ExtractTypes:
+          printf ("Sorry, ExtractTypes case not implemented for e_OneParameterFunctionClassification! \n");
+          ROSE_ABORT();
+          break;
+        default:
+          printf ("default reached in switch (queryType) \n");
+          ROSE_ABORT();
+      }
 
-		  return astQuery.get_listOfNodes();
-		}
+      return astQuery.get_listOfNodes();
+    }
 
 
   /********************************************************************************
@@ -339,12 +324,12 @@ namespace AstQueryNamespace
    ** will query the subtree of the IR node in the first argument for nodes satisfying
    * the criteria specified in and returned by the function pointer in the second argument.
    ********************************************************************************/
-     template <class _Arg, class _Result> 
-	     _Result querySubTree ( SgNode * subTree,
-			     _Result (*__x)(SgNode*,_Arg), _Arg x_arg,
-			     AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::AllNodes ){
-		  return querySubTree(subTree,std::bind2nd(std::ptr_fun(__x),x_arg),defineQueryType);
-	     }
+  template <class _Arg, class _Result> 
+    _Result querySubTree ( SgNode * subTree,
+        _Result (*__x)(SgNode*,_Arg), _Arg x_arg,
+        AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::AllNodes ){
+      return querySubTree(subTree,std::bind2nd(std::ptr_fun(__x),x_arg),defineQueryType);
+    }
 
   /********************************************************************************
    * The function
@@ -354,12 +339,12 @@ namespace AstQueryNamespace
    ** will query the subtree of the IR node in the first argument for nodes satisfying
    * the criteria specified in and returned by the function pointer in the second argument.
    ********************************************************************************/
-     template <class _Result> 
-	     _Result querySubTree ( SgNode * subTree,
-			     _Result (*__x)(SgNode*),
-			     AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::AllNodes ){
-		  return querySubTree(subTree,std::ptr_fun(__x),defineQueryType);
-	     }
+  template <class _Result> 
+    _Result querySubTree ( SgNode * subTree,
+        _Result (*__x)(SgNode*),
+        AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::AllNodes ){
+      return querySubTree(subTree,std::ptr_fun(__x),defineQueryType);
+    }
 
   /********************************************************************************
    * The function
@@ -368,19 +353,19 @@ namespace AstQueryNamespace
    * will query the iterator _Result::const_iterator from 'begin' to 'end' for IR nodes satisfying
    * the criteria specified in and returned by the predicate in the third argument.
    ********************************************************************************/
-     template <class Iterator, class NodeFunctional>
-	     typename NodeFunctional::result_type 
-	     queryRange(Iterator begin, Iterator end, 
-			     NodeFunctional nodeFunc){
+  template <class Iterator, class NodeFunctional>
+    typename NodeFunctional::result_type 
+    queryRange(Iterator begin, Iterator end, 
+        NodeFunctional nodeFunc){
 
-		  AstQuery<AstQuery_DUMMY,NodeFunctional> astQuery(&nodeFunc);
+      AstQuery<AstQuery_DUMMY,NodeFunctional> astQuery(&nodeFunc);
 
-		  for(; begin!=end; ++begin){
-		       astQuery.visit(*begin);
-		  }
+      for(; begin!=end; ++begin){
+        astQuery.visit(*begin);
+      }
 
-		  return astQuery.get_listOfNodes();
-	     }
+      return astQuery.get_listOfNodes();
+    }
 
   /********************************************************************************
    * The function
@@ -391,11 +376,11 @@ namespace AstQueryNamespace
    * the criteria specified in and returned by the function pointer in the third argument given the
    * fourth argument 'x_arg'.
    ********************************************************************************/
-     template <class _Arg, class _Result> 
-	     _Result queryRange ( typename _Result::iterator begin, const typename _Result::iterator end,
-			     _Result (*__x)(SgNode*,_Arg), _Arg x_arg){
-		  return queryRange(begin,end,std::bind2nd(std::ptr_fun(__x),x_arg));
-	     }
+  template <class _Arg, class _Result> 
+    _Result queryRange ( typename _Result::iterator begin, const typename _Result::iterator end,
+        _Result (*__x)(SgNode*,_Arg), _Arg x_arg){
+      return queryRange(begin,end,std::bind2nd(std::ptr_fun(__x),x_arg));
+    }
 
   /********************************************************************************
    * The function
@@ -405,11 +390,11 @@ namespace AstQueryNamespace
    * will query the iterator _Result::const_iterator from 'begin' to 'end' for IR nodes satisfying
    * the criteria specified in and returned by the function pointer in the third argument.
    ********************************************************************************/
-     template <class _Result> 
-	     _Result queryRange (typename _Result::iterator begin, typename _Result::iterator end,
-			     _Result (*__x)(SgNode*)){
-		  return queryRange(begin,end,std::ptr_fun(__x));
-	     }
+  template <class _Result> 
+    _Result queryRange (typename _Result::iterator begin, typename _Result::iterator end,
+        _Result (*__x)(SgNode*)){
+      return queryRange(begin,end,std::ptr_fun(__x));
+    }
 
   /****************************************************************************
    * The function
@@ -418,8 +403,8 @@ namespace AstQueryNamespace
    * in VariantVector.
    ***************************************************************************/
 
-     template <class FunctionalType> 
-     void queryMemoryPool(AstQuery<ROSE_VisitTraversal,FunctionalType>& astQuery, VariantVector* variantsToTraverse);
+  template <class FunctionalType> 
+    void queryMemoryPool(AstQuery<ROSE_VisitTraversal,FunctionalType>& astQuery, VariantVector* variantsToTraverse);
 
   /********************************************************************************
    * The function
@@ -427,23 +412,23 @@ namespace AstQueryNamespace
    * will query the subtree of the IR node in the first argument for nodes satisfying
    * the criteria specified in and returned by the predicate in the second argument.
    ********************************************************************************/
-     template<typename NodeFunctional>
-	     typename NodeFunctional::result_type 
-	     queryMemoryPool(NodeFunctional nodeFunc , VariantVector* targetVariantVector = NULL)
-		{
+  template<typename NodeFunctional>
+    typename NodeFunctional::result_type 
+    queryMemoryPool(NodeFunctional nodeFunc , VariantVector* targetVariantVector = NULL)
+    {
 
-		  AstQuery<ROSE_VisitTraversal,NodeFunctional> astQuery(&nodeFunc);
-		  if(targetVariantVector == NULL){
-		    //Query the whole memory pool
-		       astQuery.traverseMemoryPool();
-		  }else{
-		       queryMemoryPool<NodeFunctional>(astQuery, targetVariantVector);
-		  }; // end if-else
+      AstQuery<ROSE_VisitTraversal,NodeFunctional> astQuery(&nodeFunc);
+      if(targetVariantVector == NULL){
+        //Query the whole memory pool
+        astQuery.traverseMemoryPool();
+      }else{
+        queryMemoryPool<NodeFunctional>(astQuery, targetVariantVector);
+      }; // end if-else
 
 
 
-		  return astQuery.get_listOfNodes();
-		}
+      return astQuery.get_listOfNodes();
+    }
 
 
   /********************************************************************************
@@ -456,9 +441,9 @@ namespace AstQueryNamespace
    ********************************************************************************/
 template <class _Arg, class _Result> 
 _Result queryMemoryPool ( 
-		_Result (*__x)(SgNode*,_Arg), _Arg x_arg,
-		VariantVector* targetVariantVector = NULL){
-     return queryMemoryPool(std::bind2nd(std::ptr_fun(__x),x_arg),targetVariantVector);
+    _Result (*__x)(SgNode*,_Arg), _Arg x_arg,
+    VariantVector* targetVariantVector = NULL){
+  return queryMemoryPool(std::bind2nd(std::ptr_fun(__x),x_arg),targetVariantVector);
 }
 
 /********************************************************************************
@@ -471,9 +456,9 @@ _Result queryMemoryPool (
  ********************************************************************************/
 template <class _Result> 
 _Result queryMemoryPool (
-		_Result (*__x)(SgNode*),
-		VariantVector* targetVariantVector = NULL ){
-     return queryMemoryPool(std::ptr_fun(__x),targetVariantVector);
+    _Result (*__x)(SgNode*),
+    VariantVector* targetVariantVector = NULL ){
+  return queryMemoryPool(std::ptr_fun(__x),targetVariantVector);
 }
 
 

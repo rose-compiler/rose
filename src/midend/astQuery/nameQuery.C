@@ -653,67 +653,9 @@ NameQuery::queryNameFunctionReferenceNames (SgNode * astNode)
       Rose_STL_Container< string > argumentNameList;
       string returnTypeName = "double";
 
-      /*
-         SgFunctionCallExp *functionCallExp = dynamic_cast < SgFunctionCallExp * >(astNode);
-
-         // printf ("functionCallExp->get_function()->sage_class_name() = %s \n",
-         //      functionCallExp->get_function()->sage_class_name());
-         SgDotExp* dotExp = dynamic_cast<SgDotExp*>(functionCallExp->get_function());
-         if (dotExp != NULL)
-         {
-         // This is a member function call
-         ROSE_ASSERT (dotExp->get_rhs_operand() != NULL);
-         // printf ("dotExp->get_rhs_operand()->sage_class_name() = %s \n",
-         //      dotExp->get_rhs_operand()->sage_class_name());
-
-         // Get the function name
-         SgMemberFunctionRefExp* memberFunctionRef =
-         dynamic_cast<SgMemberFunctionRefExp*>(dotExp->get_rhs_operand());
-         ROSE_ASSERT (memberFunctionRef != NULL);
-         SgMemberFunctionSymbol* memberFunctionSymbol =
-         dynamic_cast<SgMemberFunctionSymbol*>(memberFunctionRef->get_symbol());
-         ROSE_ASSERT (memberFunctionSymbol != NULL);
-         // printf ("memberFunctionSymbol->get_name() = %s \n",
-         //      memberFunctionSymbol->get_name().str());
-
-         functionName = memberFunctionSymbol->get_name().str();
-
-         SgMemberFunctionDeclaration* memberFunctionDeclaration = 
-         memberFunctionSymbol->get_declaration();
-         ROSE_ASSERT (memberFunctionDeclaration != NULL);
-
-         // Get the argument type names
-         SgInitializedNameList & astArgumentList = memberFunctionDeclaration->get_args();
-         SgInitializedNameList::iterator i;
-         for (i = astArgumentList.begin(); i != astArgumentList.end(); i++)
-         {
-         ROSE_ASSERT ((*i).get_type() != NULL);
-         // printf ("(*i).get_type()->sage_class_name() = %s \n",(*i).get_type()->sage_class_name());
-         string argumentTypeName = (*i).get_type()->unparseToString();
-         // printf ("argumentTypeName = %s \n",argumentTypeName.c_str());
-         argumentNameList.push_back(argumentTypeName);
-         }
-
-         // Get the return type
-         SgType* returnType = memberFunctionDeclaration->get_orig_return_type();
-         ROSE_ASSERT (returnType != NULL);
-         returnTypeName = returnType->unparseToString();
-         // printf ("returnTypeName = %s \n",returnTypeName.c_str());
-         }
-         else
-         {
-         // This is a non-member function call
-         printf ("This case of dotExp == NULL not implemented \n");
-         ROSE_ABORT();
-         }
-       */
       returnNameList.
 	push_back (TransformationSupport::
 		   getFunctionName (sageFunctionCallExp));
-
-      //NameQuery::FunctionNameType functionData(functionName,argumentNameList,returnTypeName);
-
-      //returnNameList.push_back (functionData);
 
     }
 
@@ -826,35 +768,6 @@ NameQuery::queryVariableNamesWithTypeName (SgNode * astNode, string matchingName
        // DQ (8/20/2005): Added default to avoid compiler warnings about unrepresented cases
         }
     }				/* End switch case astNode */
-
-  /*
-
-     if(sageVarRefExp != NULL)
-     {
-
-     SgVariableSymbol* variableSymbol = sageVarRefExp->get_symbol();
-     ROSE_ASSERT (variableSymbol != NULL);
-
-     SgType* type = variableSymbol->get_type();
-     ROSE_ASSERT (type != NULL);
-
-
-     string typeName = TransformationSupport::getTypeName(type);
-     ROSE_ASSERT (typeName.length() > 0);
-
-     if ( typeName == matchingName){
-     // Only define the variable name if we are using an object of array type
-     SgInitializedName* initializedName = variableSymbol->get_declaration();
-     ROSE_ASSERT (initializedName != NULL);
-     SgName variableName = initializedName->get_name();
-
-     // copy the string to avoid corruption of the AST's version of the string
-     string name = variableName.str();
-     returnNameList.push_back (name);
-     }
-
-     }
-   */
 
   return returnNameList;
 

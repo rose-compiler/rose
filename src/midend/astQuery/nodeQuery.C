@@ -20,148 +20,148 @@ using namespace AstQueryNamespace;
 
 #include "queryVariant.C"
 
-std::pointer_to_unary_function<SgNode*, Rose_STL_Container<SgNode*> > 
+  std::pointer_to_unary_function<SgNode*, Rose_STL_Container<SgNode*> > 
 NodeQuery::getFunction(TypeOfQueryTypeOneParameter oneParam)
-   {
-     Rose_STL_Container<SgNode*> (*__x)(SgNode*); 
-     switch (oneParam)
-        {
-          case UnknownListElementType:
-             {
-               printf ("This is element number 0 in the list. It is not used to anything predefined.\n");
-               ROSE_ASSERT (false);
-             }
-          case TypedefDeclarations:
-             {
-               __x = &querySolverTypedefDeclarations;
-               break;
-             }
-          case AnonymousTypedefs:
-             {
-               __x = &queryNodeAnonymousTypedef;
-               break;
-             }
-          case AnonymousTypedefClassDeclarations:
-             {
-               __x = &queryNodeAnonymousTypedefClassDeclaration;
-               break;
-             }
-          case VariableDeclarations:
-             {
-               __x = &querySolverVariableDeclarations;
-               break;
-             }
-          case VariableTypes:
-             {
-               __x = &querySolverVariableTypes;
-               break;
-             }
-          case FunctionDeclarations:
-             {
-               __x = & querySolverFunctionDeclarations;
-               break;
-             }
-          case MemberFunctionDeclarations:
-             {
-               __x = &querySolverMemberFunctionDeclarations;
-               break;
-             }
-          case ClassDeclarations:
-             {
-               __x = &querySolverClassDeclarations;
-               break;
-             }
-          case StructDeclarations:
-             {
-               __x = &querySolverStructDeclarations;
-               break;
-             }
-          case UnionDeclarations:
-             {
-               __x = &querySolverUnionDeclarations;
-               break;
-             }
-          case Arguments:
-             {
-               __x = &querySolverArguments;
-               break;
-             }
-          case ClassFields:
-             {
-               __x = &querySolverClassFields;
-               break;
-             }
-          case StructFields:
-             {
-               __x = &querySolverStructFields;
-               break;
-             }
-          case UnionFields:
-             {
-               __x = &querySolverUnionFields;
-               break;
-             }
-          case StructDefinitions:
-             {
-               __x = &querySolverStructDefinitions;
-               break;
-             }
+{
+  Rose_STL_Container<SgNode*> (*__x)(SgNode*); 
+  switch (oneParam)
+  {
+    case UnknownListElementType:
+      {
+        printf ("This is element number 0 in the list. It is not used to anything predefined.\n");
+        ROSE_ASSERT (false);
+      }
+    case TypedefDeclarations:
+      {
+        __x = &querySolverTypedefDeclarations;
+        break;
+      }
+    case AnonymousTypedefs:
+      {
+        __x = &queryNodeAnonymousTypedef;
+        break;
+      }
+    case AnonymousTypedefClassDeclarations:
+      {
+        __x = &queryNodeAnonymousTypedefClassDeclaration;
+        break;
+      }
+    case VariableDeclarations:
+      {
+        __x = &querySolverVariableDeclarations;
+        break;
+      }
+    case VariableTypes:
+      {
+        __x = &querySolverVariableTypes;
+        break;
+      }
+    case FunctionDeclarations:
+      {
+        __x = & querySolverFunctionDeclarations;
+        break;
+      }
+    case MemberFunctionDeclarations:
+      {
+        __x = &querySolverMemberFunctionDeclarations;
+        break;
+      }
+    case ClassDeclarations:
+      {
+        __x = &querySolverClassDeclarations;
+        break;
+      }
+    case StructDeclarations:
+      {
+        __x = &querySolverStructDeclarations;
+        break;
+      }
+    case UnionDeclarations:
+      {
+        __x = &querySolverUnionDeclarations;
+        break;
+      }
+    case Arguments:
+      {
+        __x = &querySolverArguments;
+        break;
+      }
+    case ClassFields:
+      {
+        __x = &querySolverClassFields;
+        break;
+      }
+    case StructFields:
+      {
+        __x = &querySolverStructFields;
+        break;
+      }
+    case UnionFields:
+      {
+        __x = &querySolverUnionFields;
+        break;
+      }
+    case StructDefinitions:
+      {
+        __x = &querySolverStructDefinitions;
+        break;
+      }
 
-          default:
-             {
-               printf ("This is an invalid member of the enum  TypeOfQueryTypeOneParameter.\n");
-               ROSE_ASSERT (false);
-             }
-        } /* End switch-case */
-         return std::ptr_fun(__x);
+    default:
+      {
+        printf ("This is an invalid member of the enum  TypeOfQueryTypeOneParameter.\n");
+        ROSE_ASSERT (false);
+      }
+  } /* End switch-case */
+  return std::ptr_fun(__x);
 
-       }
+}
 
-std::pointer_to_binary_function<SgNode*, SgNode*, Rose_STL_Container<SgNode*> > 
+  std::pointer_to_binary_function<SgNode*, SgNode*, Rose_STL_Container<SgNode*> > 
 NodeQuery::getFunction(TypeOfQueryTypeTwoParameters twoParam)
-   {
-     Rose_STL_Container<SgNode*> (*__x)(SgNode*,SgNode*); 
+{
+  Rose_STL_Container<SgNode*> (*__x)(SgNode*,SgNode*); 
 
-     switch (twoParam)
-        {
-          case UnknownListElementTypeTwoParameters:
-             {
-               printf ("This is element number 0 in the list. It is not used to anything predefined.\n");
-               ROSE_ASSERT (false);
-             }
-          case FunctionDeclarationFromDefinition:
-             {
-               __x = &querySolverFunctionDeclarationFromDefinition;
-               break;
-             }
-          case ClassDeclarationFromName:
-             {
-               __x = &queryNodeClassDeclarationFromName;
-               break;
-             }
-          case ClassDeclarationsFromTypeName:
-             {
-               __x = &queryNodeClassDeclarationsFromTypeName;
-               break;
-             }
-          case PragmaDeclarationFromName:
-             {
-               __x = &queryNodePragmaDeclarationFromName;
-               break;
-             }
-          case VariableDeclarationFromName:
-             {
-               __x =  queryNodeVariableDeclarationFromName;
-               break;
-             }
-          default:
-             {
-               printf ("This is an invalid member of the enum  TypeOfQueryTypeOneParameter.\n");
-               ROSE_ASSERT (false);
-             }
-        }
-         return std::ptr_fun(__x);
-       }
+  switch (twoParam)
+  {
+    case UnknownListElementTypeTwoParameters:
+      {
+        printf ("This is element number 0 in the list. It is not used to anything predefined.\n");
+        ROSE_ASSERT (false);
+      }
+    case FunctionDeclarationFromDefinition:
+      {
+        __x = &querySolverFunctionDeclarationFromDefinition;
+        break;
+      }
+    case ClassDeclarationFromName:
+      {
+        __x = &queryNodeClassDeclarationFromName;
+        break;
+      }
+    case ClassDeclarationsFromTypeName:
+      {
+        __x = &queryNodeClassDeclarationsFromTypeName;
+        break;
+      }
+    case PragmaDeclarationFromName:
+      {
+        __x = &queryNodePragmaDeclarationFromName;
+        break;
+      }
+    case VariableDeclarationFromName:
+      {
+        __x =  queryNodeVariableDeclarationFromName;
+        break;
+      }
+    default:
+      {
+        printf ("This is an invalid member of the enum  TypeOfQueryTypeOneParameter.\n");
+        ROSE_ASSERT (false);
+      }
+  }
+  return std::ptr_fun(__x);
+}
 
 
 
@@ -173,40 +173,40 @@ NodeQuery::getFunction(TypeOfQueryTypeTwoParameters twoParam)
  * is a NodeQuery which finds all Anonymous Typedefs is the scope.
  */
 NodeQuerySynthesizedAttributeType NodeQuery::queryNodeAnonymousTypedef(SgNode* node)
-   {
-     NodeQuerySynthesizedAttributeType returnList;
-     ROSE_ASSERT( node     != NULL );
+{
+  NodeQuerySynthesizedAttributeType returnList;
+  ROSE_ASSERT( node     != NULL );
 
-     SgTypedefDeclaration* sageTypedefDeclaration = isSgTypedefDeclaration(node);
-     if (sageTypedefDeclaration != NULL)
-	       if(isSgClassType(sageTypedefDeclaration->get_base_type()))
-		         returnList.push_back(node);
+  SgTypedefDeclaration* sageTypedefDeclaration = isSgTypedefDeclaration(node);
+  if (sageTypedefDeclaration != NULL)
+    if(isSgClassType(sageTypedefDeclaration->get_base_type()))
+      returnList.push_back(node);
 
-     return returnList;
-   } /* End function:queryNodeCLassDeclarationFromName() */
+  return returnList;
+} /* End function:queryNodeCLassDeclarationFromName() */
 /*
  * The function
  *    queryNodeAnonymousTypedefClassDeclaration()
  * is a NodeQuery which finds all Anonymous Typedefs is the scope.
  */
 NodeQuerySynthesizedAttributeType NodeQuery::queryNodeAnonymousTypedefClassDeclaration(SgNode* node)
-   {
-     NodeQuerySynthesizedAttributeType returnList;
-     ROSE_ASSERT( node     != NULL );
+{
+  NodeQuerySynthesizedAttributeType returnList;
+  ROSE_ASSERT( node     != NULL );
 
-     SgTypedefDeclaration* sageTypedefDeclaration = isSgTypedefDeclaration(node);
-     if (sageTypedefDeclaration != NULL)
-	       if(isSgClassType(sageTypedefDeclaration->get_base_type()))
-             {
-		         SgClassType* sageClassType = isSgClassType(sageTypedefDeclaration->get_base_type());
-               SgClassDeclaration* sageClassDeclaration = isSgClassDeclaration(sageClassType->get_declaration());
-               ROSE_ASSERT(sageClassDeclaration != NULL);
+  SgTypedefDeclaration* sageTypedefDeclaration = isSgTypedefDeclaration(node);
+  if (sageTypedefDeclaration != NULL)
+    if(isSgClassType(sageTypedefDeclaration->get_base_type()))
+    {
+      SgClassType* sageClassType = isSgClassType(sageTypedefDeclaration->get_base_type());
+      SgClassDeclaration* sageClassDeclaration = isSgClassDeclaration(sageClassType->get_declaration());
+      ROSE_ASSERT(sageClassDeclaration != NULL);
 
-               returnList.push_back(sageClassDeclaration);
-             }
+      returnList.push_back(sageClassDeclaration);
+    }
 
-     return returnList;
-   } /* End function:queryNodeCLassDeclarationFromName() */
+  return returnList;
+} /* End function:queryNodeCLassDeclarationFromName() */
 
 
 /*
@@ -220,11 +220,11 @@ NodeQuerySynthesizedAttributeType NodeQuery::queryNodeAnonymousTypedefClassDecla
  */
 
 NodeQuerySynthesizedAttributeType NodeQuery::queryNodeClassDeclarationFromName(SgNode* node, SgNode* nameNode){
-   NodeQuerySynthesizedAttributeType returnList;
-   ROSE_ASSERT( nameNode != NULL );
-   ROSE_ASSERT( node     != NULL );
-  
-  
+  NodeQuerySynthesizedAttributeType returnList;
+  ROSE_ASSERT( nameNode != NULL );
+  ROSE_ASSERT( node     != NULL );
+
+
   //finds the name which should be matched to 
   SgName* sageName = isSgName(nameNode);
   ROSE_ASSERT( sageName != NULL );
@@ -234,36 +234,36 @@ NodeQuerySynthesizedAttributeType NodeQuery::queryNodeClassDeclarationFromName(S
   SgClassDeclaration *sageClassDeclaration = isSgClassDeclaration (node);
 
   if (sageClassDeclaration != NULL)
-      {
+  {
 
-	std::string name = sageClassDeclaration->get_name ().str ();
-        
-	if( name == nameToMatch )
-		returnList.push_back(node);
-	
-      }
+    std::string name = sageClassDeclaration->get_name ().str ();
 
-return returnList;
+    if( name == nameToMatch )
+      returnList.push_back(node);
+
+  }
+
+  return returnList;
 
 } /* End function:queryNodeCLassDeclarationFromName() */
 
 
 // DQ (3/25/2004): Added to support more general lookup of data in the AST
-NodeQuerySynthesizedAttributeType
+  NodeQuerySynthesizedAttributeType
 NodeQuery::querySolverGrammarElementFromVariant (SgNode * astNode, VariantT targetVariant)
-   {
-     ROSE_ASSERT (astNode != NULL);
-     NodeQuerySynthesizedAttributeType returnNodeList;
-                                                                                                                                                              
-//     printf ("Looking for a targetVariant = %d = %s \n",targetVariant,getVariantName(targetVariant).c_str());
-     if ( astNode->variantT() == targetVariant )
-        {
-          //printf ("astNode = %s FOUND \n",astNode->sage_class_name());
-          returnNodeList.push_back (astNode);
-        }
-                                                                                                                                                              
-     return returnNodeList;
-   } /* End function querySolverUnionFields() */
+{
+  ROSE_ASSERT (astNode != NULL);
+  NodeQuerySynthesizedAttributeType returnNodeList;
+
+  //     printf ("Looking for a targetVariant = %d = %s \n",targetVariant,getVariantName(targetVariant).c_str());
+  if ( astNode->variantT() == targetVariant )
+  {
+    //printf ("astNode = %s FOUND \n",astNode->sage_class_name());
+    returnNodeList.push_back (astNode);
+  }
+
+  return returnNodeList;
+} /* End function querySolverUnionFields() */
 
 
 
@@ -278,71 +278,71 @@ NodeQuery::querySolverGrammarElementFromVariant (SgNode * astNode, VariantT targ
  */
 
 NodeQuerySynthesizedAttributeType NodeQuery::queryNodeClassDeclarationsFromTypeName(SgNode* node, SgNode* nameNode)
-   {
-     NodeQuerySynthesizedAttributeType returnList;
-     ROSE_ASSERT( nameNode != NULL );
-     ROSE_ASSERT( node     != NULL );
-  
+{
+  NodeQuerySynthesizedAttributeType returnList;
+  ROSE_ASSERT( nameNode != NULL );
+  ROSE_ASSERT( node     != NULL );
+
   // finds the name which should be matched to 
-     SgName* sageName = isSgName(nameNode);
-     ROSE_ASSERT( sageName != NULL );
-     std::string nameToMatch = sageName->str();
-     ROSE_ASSERT( nameToMatch.length() > 0 );
+  SgName* sageName = isSgName(nameNode);
+  ROSE_ASSERT( sageName != NULL );
+  std::string nameToMatch = sageName->str();
+  ROSE_ASSERT( nameToMatch.length() > 0 );
 
-     SgClassDeclaration *sageClassDeclaration = isSgClassDeclaration (node);
-  
-     if (sageClassDeclaration != NULL)
-        {
-          if(TransformationSupport::getTypeName(sageClassDeclaration->get_type()) == nameToMatch)
-               returnList.push_back(node);
-            else
-             {
-               SgClassDefinition* classDefinition = isSgClassDefinition(sageClassDeclaration->get_definition());
-               ROSE_ASSERT( classDefinition != NULL );
+  SgClassDeclaration *sageClassDeclaration = isSgClassDeclaration (node);
 
-            // SgBaseClassList baseClassList = classDefinition->get_inheritances();
-               SgBaseClassPtrList baseClassList = classDefinition->get_inheritances();
+  if (sageClassDeclaration != NULL)
+  {
+    if(TransformationSupport::getTypeName(sageClassDeclaration->get_type()) == nameToMatch)
+      returnList.push_back(node);
+    else
+    {
+      SgClassDefinition* classDefinition = isSgClassDefinition(sageClassDeclaration->get_definition());
+      ROSE_ASSERT( classDefinition != NULL );
 
-               typedef SgBaseClassPtrList::iterator SgBaseClassPtrListIterator;
-               for( SgBaseClassPtrListIterator baseClassElm = baseClassList.begin();
-                    baseClassElm != baseClassList.end(); ++baseClassElm)
-                  {
-                 // SgBaseClass baseClass = *baseClassElm;
-                    SgBaseClass* baseClass = *baseClassElm;
-                 // sageClassDeclaration = baseClass.get_base_class();
-                    sageClassDeclaration = baseClass->get_base_class();
-                    std::string typeName  = TransformationSupport::getTypeName ( sageClassDeclaration->get_type() );
-                    if( typeName == nameToMatch )
-                         returnList.push_back(node);
-                  }
-             }
+      // SgBaseClassList baseClassList = classDefinition->get_inheritances();
+      SgBaseClassPtrList baseClassList = classDefinition->get_inheritances();
 
-/*
-        SgType* typeNode = sageClassDeclaration->get_type ();
-	ROSE_ASSERT (typeNode != NULL);
+      typedef SgBaseClassPtrList::iterator SgBaseClassPtrListIterator;
+      for( SgBaseClassPtrListIterator baseClassElm = baseClassList.begin();
+          baseClassElm != baseClassList.end(); ++baseClassElm)
+      {
+        // SgBaseClass baseClass = *baseClassElm;
+        SgBaseClass* baseClass = *baseClassElm;
+        // sageClassDeclaration = baseClass.get_base_class();
+        sageClassDeclaration = baseClass->get_base_class();
+        std::string typeName  = TransformationSupport::getTypeName ( sageClassDeclaration->get_type() );
+        if( typeName == nameToMatch )
+          returnList.push_back(node);
+      }
+    }
 
-        string currentTypeName  = "";
-	string previousTypeName = ""; 
-	
-        do{
-	  previousTypeName = currentTypeName;
-          currentTypeName  = TransformationSupport::getTypeName (typeNode);
+    /*
+       SgType* typeNode = sageClassDeclaration->get_type ();
+       ROSE_ASSERT (typeNode != NULL);
 
-	  typeNode = typeNode->findBaseType();
-	  ROSE_ASSERT( typeNode != NULL );
-	  
-	  if( currentTypeName == nameToMatch ){
-		  returnList.push_back(node);
-		  break;
-	  }
-	  cout<< "\n\n The typenames is : " << currentTypeName << "\n\n" << previousTypeName << "\n\n";
-          	  
-	}while( previousTypeName != currentTypeName);
-*/	
-        }
+       string currentTypeName  = "";
+       string previousTypeName = ""; 
 
-     return returnList;
-   } /* End function:queryNodeCLassDeclarationFromName() */
+       do{
+       previousTypeName = currentTypeName;
+       currentTypeName  = TransformationSupport::getTypeName (typeNode);
+
+       typeNode = typeNode->findBaseType();
+       ROSE_ASSERT( typeNode != NULL );
+
+       if( currentTypeName == nameToMatch ){
+       returnList.push_back(node);
+       break;
+       }
+       cout<< "\n\n The typenames is : " << currentTypeName << "\n\n" << previousTypeName << "\n\n";
+
+       }while( previousTypeName != currentTypeName);
+     */	
+  }
+
+  return returnList;
+} /* End function:queryNodeCLassDeclarationFromName() */
 
 
 /*
@@ -358,11 +358,11 @@ NodeQuerySynthesizedAttributeType NodeQuery::queryNodeClassDeclarationsFromTypeN
  *         
  */
 Rose_STL_Container<SgNode*> NodeQuery::queryNodePragmaDeclarationFromName(SgNode* node, SgNode* nameNode){
-   ROSE_ASSERT( nameNode != NULL );
-   ROSE_ASSERT( node     != NULL );
-  
+  ROSE_ASSERT( nameNode != NULL );
+  ROSE_ASSERT( node     != NULL );
+
   Rose_STL_Container<SgNode*> returnList;
-  
+
   //finds the name which should be matched to 
   SgName* sageName = isSgName(nameNode);
   ROSE_ASSERT( sageName != NULL );
@@ -370,20 +370,20 @@ Rose_STL_Container<SgNode*> NodeQuery::queryNodePragmaDeclarationFromName(SgNode
   ROSE_ASSERT( nameToMatch.length() > 0 );
 
   if(node->variantT() == V_SgPragmaDeclaration){
-       	SgPragmaDeclaration* sagePragmaDeclaration = isSgPragmaDeclaration(node);
-	ROSE_ASSERT( sagePragmaDeclaration );
-	ROSE_ASSERT( sagePragmaDeclaration->get_pragma() != NULL ); 
-	// ROSE_ASSERT( sagePragmaDeclaration->get_pragma()->get_pragma() );
-        std::string pragmaDeclarationString =  sagePragmaDeclaration->get_pragma()->get_pragma();
-        //extract the part before the leftmost = is pragmaDeclarationString
-	pragmaDeclarationString = pragmaDeclarationString.substr(0,pragmaDeclarationString.find("="));
-	//if the name-criteria is met accept node
-	if(pragmaDeclarationString.find( nameToMatch ) != pragmaDeclarationString.length() ){
-		cout << pragmaDeclarationString << endl;
-		returnList.push_back(node);
-	}
-   }
-   return returnList;
+    SgPragmaDeclaration* sagePragmaDeclaration = isSgPragmaDeclaration(node);
+    ROSE_ASSERT( sagePragmaDeclaration );
+    ROSE_ASSERT( sagePragmaDeclaration->get_pragma() != NULL ); 
+    // ROSE_ASSERT( sagePragmaDeclaration->get_pragma()->get_pragma() );
+    std::string pragmaDeclarationString =  sagePragmaDeclaration->get_pragma()->get_pragma();
+    //extract the part before the leftmost = is pragmaDeclarationString
+    pragmaDeclarationString = pragmaDeclarationString.substr(0,pragmaDeclarationString.find("="));
+    //if the name-criteria is met accept node
+    if(pragmaDeclarationString.find( nameToMatch ) != pragmaDeclarationString.length() ){
+      cout << pragmaDeclarationString << endl;
+      returnList.push_back(node);
+    }
+  }
+  return returnList;
 }
 
 /*
@@ -396,47 +396,47 @@ Rose_STL_Container<SgNode*> NodeQuery::queryNodePragmaDeclarationFromName(SgNode
  */
 
 Rose_STL_Container<SgNode*> NodeQuery::queryNodeVariableDeclarationFromName(SgNode* astNode, SgNode* nameNode){
-    ROSE_ASSERT( nameNode != NULL );
-    ROSE_ASSERT( astNode  != NULL );
-  
+  ROSE_ASSERT( nameNode != NULL );
+  ROSE_ASSERT( astNode  != NULL );
 
-    Rose_STL_Container<SgNode*> returnList;
 
-    if(astNode->variantT() == V_SgVariableDeclaration){
+  Rose_STL_Container<SgNode*> returnList;
 
-            SgName* sageName = isSgName(nameNode);
-            ROSE_ASSERT( sageName != NULL );
-            std::string nameToMatch = sageName->str();
-            ROSE_ASSERT( nameToMatch.length() > 0 );
+  if(astNode->variantT() == V_SgVariableDeclaration){
 
-	    SgVariableDeclaration* sageVariableDeclaration = isSgVariableDeclaration(astNode);
-	    ROSE_ASSERT(sageVariableDeclaration != NULL);
-	    ROSE_ASSERT( sageVariableDeclaration->get_definition() != NULL );
+    SgName* sageName = isSgName(nameNode);
+    ROSE_ASSERT( sageName != NULL );
+    std::string nameToMatch = sageName->str();
+    ROSE_ASSERT( nameToMatch.length() > 0 );
 
-       SgInitializedNamePtrList sageInitializedNameList = sageVariableDeclaration->get_variables ();
+    SgVariableDeclaration* sageVariableDeclaration = isSgVariableDeclaration(astNode);
+    ROSE_ASSERT(sageVariableDeclaration != NULL);
+    ROSE_ASSERT( sageVariableDeclaration->get_definition() != NULL );
 
-	    //see if this variable declaration fits the criteria
-  	     typedef SgInitializedNamePtrList::iterator variableIterator;
-	   	     
-	     for (variableIterator k = sageInitializedNameList.begin ();
-	 	     k != sageInitializedNameList.end(); ++k)
-	     {
-	           SgInitializedName* elmVar = *k;
-		   std::string name = elmVar->get_name().str();
-		   ROSE_ASSERT (name.length () > 0);
-		   if(name == nameToMatch)
-			   returnList.push_back(astNode);
-		
-	     }
+    SgInitializedNamePtrList sageInitializedNameList = sageVariableDeclaration->get_variables ();
+
+    //see if this variable declaration fits the criteria
+    typedef SgInitializedNamePtrList::iterator variableIterator;
+
+    for (variableIterator k = sageInitializedNameList.begin ();
+        k != sageInitializedNameList.end(); ++k)
+    {
+      SgInitializedName* elmVar = *k;
+      std::string name = elmVar->get_name().str();
+      ROSE_ASSERT (name.length () > 0);
+      if(name == nameToMatch)
+        returnList.push_back(astNode);
 
     }
 
-    return returnList;
+  }
+
+  return returnList;
 
 }; /* End function: queryNodeVariableDeclarationFromName */
 
 
-NodeQuerySynthesizedAttributeType
+  NodeQuerySynthesizedAttributeType
 NodeQuery::querySolverArguments (SgNode * astNode)
 {
 
@@ -444,49 +444,49 @@ NodeQuery::querySolverArguments (SgNode * astNode)
   NodeQuerySynthesizedAttributeType returnNodeList;
 
   switch (astNode->variantT ())
-    {
+  {
 
-      case V_SgMemberFunctionDeclaration:
-      case V_SgFunctionDeclaration:
-       {
-      SgFunctionDeclaration * sageFunctionDeclaration =
-	isSgFunctionDeclaration (astNode);
-      ROSE_ASSERT (sageFunctionDeclaration != NULL);
+    case V_SgMemberFunctionDeclaration:
+    case V_SgFunctionDeclaration:
+      {
+        SgFunctionDeclaration * sageFunctionDeclaration =
+          isSgFunctionDeclaration (astNode);
+        ROSE_ASSERT (sageFunctionDeclaration != NULL);
 
-      SgInitializedNamePtrList sageInitializedNameList =
-	sageFunctionDeclaration->get_args ();
+        SgInitializedNamePtrList sageInitializedNameList =
+          sageFunctionDeclaration->get_args ();
 
 
-      typedef SgInitializedNamePtrList::iterator variableIterator;
+        typedef SgInitializedNamePtrList::iterator variableIterator;
 
-      for (variableIterator variableListElement =
-	   sageInitializedNameList.begin ();
-	   variableListElement != sageInitializedNameList.end ();
-	   ++variableListElement)
-	{
-	  SgInitializedName* elmVar = *variableListElement;
-
-	  //AS (9/26/03) I must put an object of type const SgDeclarationStatement into the list because
-	  //             I have no other way of finding the SgVariableDeclaration in the arguments. This is safe
-	  //             because arguments are Variable Declarations, but puts unwelcome limits on use of returned
-	  //             list because of it's constantness.
-	  returnNodeList.push_back (elmVar->get_declaration ());
-	  //returnNodeList.push_back (sageVariableDeclaration);
-
-	}
-
-      break;
-    }
-      default:
+        for (variableIterator variableListElement =
+            sageInitializedNameList.begin ();
+            variableListElement != sageInitializedNameList.end ();
+            ++variableListElement)
         {
-       // DQ (8/20/2005): Added default to avoid compiler warnings about unrepresented cases
+          SgInitializedName* elmVar = *variableListElement;
+
+          //AS (9/26/03) I must put an object of type const SgDeclarationStatement into the list because
+          //             I have no other way of finding the SgVariableDeclaration in the arguments. This is safe
+          //             because arguments are Variable Declarations, but puts unwelcome limits on use of returned
+          //             list because of it's constantness.
+          returnNodeList.push_back (elmVar->get_declaration ());
+          //returnNodeList.push_back (sageVariableDeclaration);
+
         }
-    }				/* End switch-case */
+
+        break;
+      }
+    default:
+      {
+        // DQ (8/20/2005): Added default to avoid compiler warnings about unrepresented cases
+      }
+  }				/* End switch-case */
 
   return returnNodeList;
 }
 
-NodeQuerySynthesizedAttributeType
+  NodeQuerySynthesizedAttributeType
 NodeQuery::querySolverFunctionDeclarations (SgNode * astNode)
 {
   ROSE_ASSERT (astNode != 0);
@@ -498,7 +498,7 @@ NodeQuery::querySolverFunctionDeclarations (SgNode * astNode)
   return returnNodeList;
 }				/* End function querySolverFunctionDeclarations() */
 
-NodeQuerySynthesizedAttributeType
+  NodeQuerySynthesizedAttributeType
 NodeQuery::querySolverMemberFunctionDeclarations (SgNode * astNode)
 {
   ROSE_ASSERT (astNode != 0);
@@ -510,7 +510,7 @@ NodeQuery::querySolverMemberFunctionDeclarations (SgNode * astNode)
   return returnNodeList;
 }				/* End function querySolverMemberFunctionDeclarations() */
 
-NodeQuerySynthesizedAttributeType
+  NodeQuerySynthesizedAttributeType
 NodeQuery::querySolverVariableTypes (SgNode * astNode)
 {
   ROSE_ASSERT (astNode != NULL);
@@ -543,148 +543,148 @@ NodeQuery::querySolverVariableTypes (SgNode * astNode)
      }
 
    */
-// SgVarRefExp *sageVarRefExp = isSgVarRefExp (astNode);
+  // SgVarRefExp *sageVarRefExp = isSgVarRefExp (astNode);
 
   switch (astNode->variantT ())
-    {
+  {
 
     case V_SgVariableDeclaration:
       {
-	SgVariableDeclaration *sageVariableDeclaration =
-	  isSgVariableDeclaration (astNode);
-	ROSE_ASSERT (sageVariableDeclaration != NULL);
+        SgVariableDeclaration *sageVariableDeclaration =
+          isSgVariableDeclaration (astNode);
+        ROSE_ASSERT (sageVariableDeclaration != NULL);
 
-	SgInitializedNamePtrList sageInitializedNameList =
-	  sageVariableDeclaration->get_variables ();
+        SgInitializedNamePtrList sageInitializedNameList =
+          sageVariableDeclaration->get_variables ();
 
 #if DEBUG_NODEQUERY
-	printf ("\nIn filename: %s ",
-		ROSE::getFileName (isSgLocatedNode (astNode)));
-	printf ("\nHere is a variable :Line = %d Columns = %d \n",
-		ROSE::getLineNumber (isSgLocatedNode (astNode)),
-		ROSE::getColumnNumber (isSgLocatedNode (astNode)));
-	//cout << "The typename of the variable is: " << typeName << endl;
+        printf ("\nIn filename: %s ",
+            ROSE::getFileName (isSgLocatedNode (astNode)));
+        printf ("\nHere is a variable :Line = %d Columns = %d \n",
+            ROSE::getLineNumber (isSgLocatedNode (astNode)),
+            ROSE::getColumnNumber (isSgLocatedNode (astNode)));
+        //cout << "The typename of the variable is: " << typeName << endl;
 #endif
 
-	typedef SgInitializedNamePtrList::iterator variableIterator;
-	SgType *typeNode;
+        typedef SgInitializedNamePtrList::iterator variableIterator;
+        SgType *typeNode;
 
-	for (variableIterator variableListElement =
-	     sageInitializedNameList.begin ();
-	     variableListElement != sageInitializedNameList.end ();
-	     ++variableListElement)
-	  {
-	    SgInitializedName* elmVar = *variableListElement;
+        for (variableIterator variableListElement =
+            sageInitializedNameList.begin ();
+            variableListElement != sageInitializedNameList.end ();
+            ++variableListElement)
+        {
+          SgInitializedName* elmVar = *variableListElement;
 
-	    ROSE_ASSERT (elmVar != NULL);
-	    typeNode = elmVar->get_type ();
-	    ROSE_ASSERT (typeNode != NULL);
-	    returnNodeList.push_back (typeNode);
-	  }
-	break;
+          ROSE_ASSERT (elmVar != NULL);
+          typeNode = elmVar->get_type ();
+          ROSE_ASSERT (typeNode != NULL);
+          returnNodeList.push_back (typeNode);
+        }
+        break;
       }				/* End case V_SgVariableDeclaration */
 
     case V_SgFunctionDeclaration:
     case V_SgMemberFunctionDeclaration:
-       {
-      SgFunctionDeclaration * sageFunctionDeclaration =
-	isSgFunctionDeclaration (astNode);
-      ROSE_ASSERT (sageFunctionDeclaration != NULL);
+      {
+        SgFunctionDeclaration * sageFunctionDeclaration =
+          isSgFunctionDeclaration (astNode);
+        ROSE_ASSERT (sageFunctionDeclaration != NULL);
 
-      SgInitializedNamePtrList sageInitializedNameList =
-	sageFunctionDeclaration->get_args ();
-      SgType *typeNode;
+        SgInitializedNamePtrList sageInitializedNameList =
+          sageFunctionDeclaration->get_args ();
+        SgType *typeNode;
 
-      typedef SgInitializedNamePtrList::iterator variableIterator;
+        typedef SgInitializedNamePtrList::iterator variableIterator;
 
-      for (variableIterator variableListElement =
-	   sageInitializedNameList.begin ();
-	   variableListElement != sageInitializedNameList.end ();
-	   ++variableListElement)
-	{
-	  SgInitializedName* elmVar = *variableListElement;
-
-	  ROSE_ASSERT (elmVar != NULL);
-	  typeNode = elmVar->get_type ();
-	  ROSE_ASSERT (typeNode != NULL);
-	  returnNodeList.push_back (typeNode);
-
-	}
-
-      break;
-       }
-       
-      default:
+        for (variableIterator variableListElement =
+            sageInitializedNameList.begin ();
+            variableListElement != sageInitializedNameList.end ();
+            ++variableListElement)
         {
-       // DQ (8/20/2005): Added default to avoid compiler warnings about unrepresented cases
+          SgInitializedName* elmVar = *variableListElement;
+
+          ROSE_ASSERT (elmVar != NULL);
+          typeNode = elmVar->get_type ();
+          ROSE_ASSERT (typeNode != NULL);
+          returnNodeList.push_back (typeNode);
+
         }
-    }				/* End switch case astNode */
+
+        break;
+      }
+
+    default:
+      {
+        // DQ (8/20/2005): Added default to avoid compiler warnings about unrepresented cases
+      }
+  }				/* End switch case astNode */
 
 
 
   return returnNodeList;
 }				/* End function querySolverType() */
 
-NodeQuerySynthesizedAttributeType
+  NodeQuerySynthesizedAttributeType
 NodeQuery::querySolverVariableDeclarations (SgNode * astNode)
 {
   ROSE_ASSERT (astNode != 0);
   NodeQuerySynthesizedAttributeType returnNodeList;
 
   switch (astNode->variantT ())
-    {
+  {
 
     case V_SgVariableDeclaration:
       returnNodeList.push_back (astNode);
       break;
     case V_SgFunctionDeclaration:
     case V_SgMemberFunctionDeclaration:
-       {
-      SgFunctionDeclaration * sageFunctionDeclaration =
-	isSgFunctionDeclaration (astNode);
-      ROSE_ASSERT (sageFunctionDeclaration != NULL);
+      {
+        SgFunctionDeclaration * sageFunctionDeclaration =
+          isSgFunctionDeclaration (astNode);
+        ROSE_ASSERT (sageFunctionDeclaration != NULL);
 
-      SgInitializedNamePtrList sageInitializedNameList =
-	sageFunctionDeclaration->get_args ();
+        SgInitializedNamePtrList sageInitializedNameList =
+          sageFunctionDeclaration->get_args ();
 
 
-      typedef SgInitializedNamePtrList::iterator variableIterator;
+        typedef SgInitializedNamePtrList::iterator variableIterator;
 
-      for (variableIterator variableListElement =
-	   sageInitializedNameList.begin ();
-	   variableListElement != sageInitializedNameList.end ();
-	   ++variableListElement)
-	{
-	  SgInitializedName* elmVar = *variableListElement;
-
-	  //SgVariableDeclaration* sageVariableDeclaration = isSgVariableDeclaration((elmVar.get_declaration())->copy());
-	  //ROSE_ASSERT(sageVariableDeclaration != NULL); 
-
-	  //if( sageVariableDeclaration != NULL)
-
-	  //AS (9/26/03) I must put an object of type const SgDeclarationStatement into the list because
-	  //             I have no other way of finding the SgVariableDeclaration in the arguments. This is safe
-	  //             because arguments are Variable Declarations, but puts unwelcome limits on use of returned
-	  //             list because of it's constantness.
-     ROSE_ASSERT (elmVar != NULL);
-	  returnNodeList.push_back (elmVar->get_declaration ());
-	  //returnNodeList.push_back (sageVariableDeclaration);
-
-	}
-
-      break;
-       }
-       
-      default:
+        for (variableIterator variableListElement =
+            sageInitializedNameList.begin ();
+            variableListElement != sageInitializedNameList.end ();
+            ++variableListElement)
         {
-       // DQ (8/20/2005): Added default to avoid compiler warnings about unrepresented cases
+          SgInitializedName* elmVar = *variableListElement;
+
+          //SgVariableDeclaration* sageVariableDeclaration = isSgVariableDeclaration((elmVar.get_declaration())->copy());
+          //ROSE_ASSERT(sageVariableDeclaration != NULL); 
+
+          //if( sageVariableDeclaration != NULL)
+
+          //AS (9/26/03) I must put an object of type const SgDeclarationStatement into the list because
+          //             I have no other way of finding the SgVariableDeclaration in the arguments. This is safe
+          //             because arguments are Variable Declarations, but puts unwelcome limits on use of returned
+          //             list because of it's constantness.
+          ROSE_ASSERT (elmVar != NULL);
+          returnNodeList.push_back (elmVar->get_declaration ());
+          //returnNodeList.push_back (sageVariableDeclaration);
+
         }
-    }				/* End switch-case */
+
+        break;
+      }
+
+    default:
+      {
+        // DQ (8/20/2005): Added default to avoid compiler warnings about unrepresented cases
+      }
+  }				/* End switch-case */
 
   return returnNodeList;
 }				/* End function querySolverVariableDeclarations() */
 
-NodeQuerySynthesizedAttributeType
+  NodeQuerySynthesizedAttributeType
 NodeQuery::querySolverClassDeclarations (SgNode * astNode)
 {
   ROSE_ASSERT (astNode != 0);
@@ -693,14 +693,14 @@ NodeQuery::querySolverClassDeclarations (SgNode * astNode)
 
   if (sageClassDeclaration != NULL)
     if (sageClassDeclaration->get_class_type () ==
-	SgClassDeclaration::e_class)
+        SgClassDeclaration::e_class)
       returnNodeList.push_back (astNode);
 
 
   return returnNodeList;
 }				/* End function querySolverClassDeclarations() */
 
-NodeQuerySynthesizedAttributeType
+  NodeQuerySynthesizedAttributeType
 NodeQuery::querySolverStructDeclarations (SgNode * astNode)
 {
   ROSE_ASSERT (astNode != 0);
@@ -709,7 +709,7 @@ NodeQuery::querySolverStructDeclarations (SgNode * astNode)
 
   if (sageClassDeclaration != NULL)
     if (sageClassDeclaration->get_class_type () ==
-	SgClassDeclaration::e_struct)
+        SgClassDeclaration::e_struct)
       returnNodeList.push_back (astNode);
 
 
@@ -717,7 +717,7 @@ NodeQuery::querySolverStructDeclarations (SgNode * astNode)
 }				/* End function querySolverStructDeclarations() */
 
 
-NodeQuerySynthesizedAttributeType
+  NodeQuerySynthesizedAttributeType
 NodeQuery::querySolverUnionDeclarations (SgNode * astNode)
 {
   ROSE_ASSERT (astNode != 0);
@@ -726,14 +726,14 @@ NodeQuery::querySolverUnionDeclarations (SgNode * astNode)
 
   if (sageClassDeclaration != NULL)
     if (sageClassDeclaration->get_class_type () ==
-	SgClassDeclaration::e_union)
+        SgClassDeclaration::e_union)
       returnNodeList.push_back (astNode);
 
 
   return returnNodeList;
 }				/* End function querySolverUnionDeclarations() */
 
-NodeQuerySynthesizedAttributeType
+  NodeQuerySynthesizedAttributeType
 NodeQuery::querySolverTypedefDeclarations (SgNode * astNode)
 {
   ROSE_ASSERT (astNode != 0);
@@ -746,53 +746,53 @@ NodeQuery::querySolverTypedefDeclarations (SgNode * astNode)
   return returnNodeList;
 }				/* End function querySolverTypedefDeclarations() */
 
-NodeQuerySynthesizedAttributeType
+  NodeQuerySynthesizedAttributeType
 NodeQuery::querySolverClassFields (SgNode * astNode)
 {
   ROSE_ASSERT (astNode != 0);
 
   NodeQuerySynthesizedAttributeType returnNodeList;
 
-/*  cout << "The name of the node is: \" " << astNode->sage_class_name() << "\"\n";
-  SgLocatedNode* sageLocatedNode = isSgLocatedNode(astNode);
-  if(sageLocatedNode != NULL){
-  cout << "The filename is: " << sageLocatedNode->getFileName() << " At line number :" << sageLocatedNode->get_file_info()->get_line() << "\n";
-  } */
-// SgNode *sageReturnNode = NULL;
+  /*  cout << "The name of the node is: \" " << astNode->sage_class_name() << "\"\n";
+      SgLocatedNode* sageLocatedNode = isSgLocatedNode(astNode);
+      if(sageLocatedNode != NULL){
+      cout << "The filename is: " << sageLocatedNode->getFileName() << " At line number :" << sageLocatedNode->get_file_info()->get_line() << "\n";
+      } */
+  // SgNode *sageReturnNode = NULL;
 
   SgClassDefinition *sageClassDefinition = isSgClassDefinition (astNode);
 
   if (sageClassDefinition != NULL)
+  {
+    ROSE_ASSERT (sageClassDefinition->get_declaration () != NULL);
+    if (sageClassDefinition->get_declaration ()->get_class_type () ==
+        SgClassDeclaration::e_class)
     {
-      ROSE_ASSERT (sageClassDefinition->get_declaration () != NULL);
-      if (sageClassDefinition->get_declaration ()->get_class_type () ==
-	  SgClassDeclaration::e_class)
-	{
-	  SgDeclarationStatementPtrList declarationStatementPtrList =
-	    sageClassDefinition->get_members ();
+      SgDeclarationStatementPtrList declarationStatementPtrList =
+        sageClassDefinition->get_members ();
 
-	  typedef SgDeclarationStatementPtrList::iterator LI;
-	  for (LI i = declarationStatementPtrList.begin ();
-	       i != declarationStatementPtrList.end (); ++i)
-	    {
-	      SgNode *listElement = *i;
+      typedef SgDeclarationStatementPtrList::iterator LI;
+      for (LI i = declarationStatementPtrList.begin ();
+          i != declarationStatementPtrList.end (); ++i)
+      {
+        SgNode *listElement = *i;
 
-	      if (isSgVariableDeclaration (listElement) != NULL){
-		  /*    if(isSgVariableDeclaration(listElement)->get_name().str() != NULL)
-			      cout << "The name of the variable declaration is: \"" << isSgVariableDeclaration(listElement)->get_name().str() << "\"\n";
-		      else
-			      cout << "The name of the variable declaration is: \"\"\n";*/
-		returnNodeList.push_back (listElement);
-	      }
+        if (isSgVariableDeclaration (listElement) != NULL){
+          /*    if(isSgVariableDeclaration(listElement)->get_name().str() != NULL)
+                cout << "The name of the variable declaration is: \"" << isSgVariableDeclaration(listElement)->get_name().str() << "\"\n";
+                else
+                cout << "The name of the variable declaration is: \"\"\n";*/
+          returnNodeList.push_back (listElement);
+        }
 
-	    }
-	}
+      }
     }
+  }
   return returnNodeList;
 }				/* End function querySolverClassFields() */
 
 
-NodeQuerySynthesizedAttributeType
+  NodeQuerySynthesizedAttributeType
 NodeQuery::querySolverStructFields (SgNode * astNode)
 {
 
@@ -800,33 +800,33 @@ NodeQuery::querySolverStructFields (SgNode * astNode)
 
   NodeQuerySynthesizedAttributeType returnNodeList;
 
-// SgNode *sageReturnNode = NULL;
+  // SgNode *sageReturnNode = NULL;
 
   SgClassDefinition *sageClassDefinition = isSgClassDefinition (astNode);
 
   if (sageClassDefinition != NULL)
+  {
+    ROSE_ASSERT (sageClassDefinition->get_declaration () != NULL);
+    if (sageClassDefinition->get_declaration ()->get_class_type () ==
+        SgClassDeclaration::e_struct)
     {
-      ROSE_ASSERT (sageClassDefinition->get_declaration () != NULL);
-      if (sageClassDefinition->get_declaration ()->get_class_type () ==
-	  SgClassDeclaration::e_struct)
-	{
-	  SgDeclarationStatementPtrList declarationStatementPtrList =
-	    sageClassDefinition->get_members ();
+      SgDeclarationStatementPtrList declarationStatementPtrList =
+        sageClassDefinition->get_members ();
 
-	  typedef SgDeclarationStatementPtrList::iterator LI;
+      typedef SgDeclarationStatementPtrList::iterator LI;
 
-	  for (LI i = declarationStatementPtrList.begin ();
-	       i != declarationStatementPtrList.end (); ++i)
-	    {
-	      SgNode *listElement = *i;
+      for (LI i = declarationStatementPtrList.begin ();
+          i != declarationStatementPtrList.end (); ++i)
+      {
+        SgNode *listElement = *i;
 
-	      if (isSgVariableDeclaration (listElement) != NULL)
-		returnNodeList.push_back (listElement);
+        if (isSgVariableDeclaration (listElement) != NULL)
+          returnNodeList.push_back (listElement);
 
-	    }
+      }
 
-	}
     }
+  }
 
 
   return returnNodeList;
@@ -834,7 +834,7 @@ NodeQuery::querySolverStructFields (SgNode * astNode)
 
 
 
-NodeQuerySynthesizedAttributeType
+  NodeQuerySynthesizedAttributeType
 NodeQuery::querySolverUnionFields (SgNode * astNode)
 {
 
@@ -843,33 +843,33 @@ NodeQuery::querySolverUnionFields (SgNode * astNode)
 
   NodeQuerySynthesizedAttributeType returnNodeList;
 
-// SgNode *sageReturnNode = NULL;
+  // SgNode *sageReturnNode = NULL;
 
   SgClassDefinition *sageClassDefinition = isSgClassDefinition (astNode);
 
   if (sageClassDefinition != NULL)
+  {
+    ROSE_ASSERT (sageClassDefinition->get_declaration () != NULL);
+    if (sageClassDefinition->get_declaration ()->get_class_type () ==
+        SgClassDeclaration::e_union)
     {
-      ROSE_ASSERT (sageClassDefinition->get_declaration () != NULL);
-      if (sageClassDefinition->get_declaration ()->get_class_type () ==
-	  SgClassDeclaration::e_union)
-	{
-	  SgDeclarationStatementPtrList declarationStatementPtrList =
-	    sageClassDefinition->get_members ();
+      SgDeclarationStatementPtrList declarationStatementPtrList =
+        sageClassDefinition->get_members ();
 
-	  typedef SgDeclarationStatementPtrList::iterator LI;
+      typedef SgDeclarationStatementPtrList::iterator LI;
 
-	  for (LI i = declarationStatementPtrList.begin ();
-	       i != declarationStatementPtrList.end (); ++i)
-	    {
-	      SgNode *listElement = *i;
+      for (LI i = declarationStatementPtrList.begin ();
+          i != declarationStatementPtrList.end (); ++i)
+      {
+        SgNode *listElement = *i;
 
-	      if (isSgVariableDeclaration (listElement) != NULL)
-		returnNodeList.push_back (listElement);
+        if (isSgVariableDeclaration (listElement) != NULL)
+          returnNodeList.push_back (listElement);
 
-	    }
+      }
 
-	}
     }
+  }
 
 
   return returnNodeList;
@@ -880,7 +880,7 @@ NodeQuery::querySolverUnionFields (SgNode * astNode)
 
 
 
-NodeQuerySynthesizedAttributeType
+  NodeQuerySynthesizedAttributeType
 NodeQuery::querySolverStructDefinitions (SgNode * astNode)
 {
   ROSE_ASSERT (astNode != 0);
@@ -888,24 +888,24 @@ NodeQuery::querySolverStructDefinitions (SgNode * astNode)
   NodeQuerySynthesizedAttributeType returnNodeList;
 
   if (sageClassDefinition != NULL)
-    {
-      SgClassDeclaration *sageClassDeclaration =
-	isSgClassDeclaration (sageClassDefinition->get_parent ());
-      ROSE_ASSERT (sageClassDeclaration != NULL);
+  {
+    SgClassDeclaration *sageClassDeclaration =
+      isSgClassDeclaration (sageClassDefinition->get_parent ());
+    ROSE_ASSERT (sageClassDeclaration != NULL);
 
-      if (sageClassDeclaration->get_class_type () ==
-	  SgClassDeclaration::e_struct)
-	returnNodeList.push_back (astNode);
-    }
+    if (sageClassDeclaration->get_class_type () ==
+        SgClassDeclaration::e_struct)
+      returnNodeList.push_back (astNode);
+  }
 
   return returnNodeList;
 }				/* End function querySolverClassFields() */
 
 
 
-NodeQuerySynthesizedAttributeType
+  NodeQuerySynthesizedAttributeType
 NodeQuery::querySolverFunctionDeclarationFromDefinition (SgNode * astNode,
-					      SgNode * functionDefinition)
+    SgNode * functionDefinition)
 {
 
 
@@ -913,15 +913,15 @@ NodeQuery::querySolverFunctionDeclarationFromDefinition (SgNode * astNode,
 
   NodeQuerySynthesizedAttributeType returnNodeList;
 
-// SgNode *sageReturnNode = NULL;
+  // SgNode *sageReturnNode = NULL;
   SgMemberFunctionDeclaration *sageMemberFunctionDeclaration =
     isSgMemberFunctionDeclaration (astNode);
 
   if (sageMemberFunctionDeclaration != NULL)
     if (isSgClassDefinition (sageMemberFunctionDeclaration->get_parent ()))
       if (isSgNode (sageMemberFunctionDeclaration->get_definition ()) ==
-	  functionDefinition)
-	returnNodeList.push_back (astNode);
+          functionDefinition)
+        returnNodeList.push_back (astNode);
 
   return returnNodeList;
 
@@ -930,275 +930,275 @@ NodeQuery::querySolverFunctionDeclarationFromDefinition (SgNode * astNode,
 
 
 
-          NodeQuerySynthesizedAttributeType NodeQuery::querySubTree 
-                  ( SgNode * subTree,
-                    TypeOfQueryTypeOneParameter elementReturnType,
-                    AstQueryNamespace::QueryDepth defineQueryType){
-                   return AstQueryNamespace::querySubTree(subTree, getFunction(elementReturnType), defineQueryType);
-          }
+NodeQuerySynthesizedAttributeType NodeQuery::querySubTree 
+( SgNode * subTree,
+  TypeOfQueryTypeOneParameter elementReturnType,
+  AstQueryNamespace::QueryDepth defineQueryType){
+  return AstQueryNamespace::querySubTree(subTree, getFunction(elementReturnType), defineQueryType);
+}
 
-       // get the SgNode's conforming to the test in querySolverFunction or
-       // get the SgNode's conforming to the test in the TypeOfQueryTypeTwoParamters the user specify.
-          NodeQuerySynthesizedAttributeType NodeQuery::querySubTree 
-                  ( SgNode * subTree,
-                    SgNode * traversal,
-                    roseFunctionPointerTwoParameters querySolverFunction,
-                    AstQueryNamespace::QueryDepth defineQueryType){
-                     return AstQueryNamespace::querySubTree(subTree, 
-                                  std::bind2nd(std::ptr_fun(querySolverFunction),traversal), defineQueryType);
-        
-
-          };
-          NodeQuerySynthesizedAttributeType NodeQuery::querySubTree
-                  ( SgNode * subTree,
-                    SgNode * traversal,
-                    TypeOfQueryTypeTwoParameters elementReturnType,
-                    AstQueryNamespace::QueryDepth defineQueryType ){
-                    return AstQueryNamespace::querySubTree(subTree, 
-                                  std::bind2nd(getFunction(elementReturnType),traversal), defineQueryType);
-          };
+// get the SgNode's conforming to the test in querySolverFunction or
+// get the SgNode's conforming to the test in the TypeOfQueryTypeTwoParamters the user specify.
+NodeQuerySynthesizedAttributeType NodeQuery::querySubTree 
+( SgNode * subTree,
+  SgNode * traversal,
+  roseFunctionPointerTwoParameters querySolverFunction,
+  AstQueryNamespace::QueryDepth defineQueryType){
+  return AstQueryNamespace::querySubTree(subTree, 
+      std::bind2nd(std::ptr_fun(querySolverFunction),traversal), defineQueryType);
 
 
-
-       // perform a query on a list<SgNode>
-          Rose_STL_Container<SgNode*> NodeQuery::queryNodeList 
-                 ( Rose_STL_Container< SgNode * >nodeList,
-                   Rose_STL_Container< SgNode * > (*querySolverFunction)(SgNode*) ){
-                 return AstQueryNamespace::queryRange< Rose_STL_Container<SgNode*> >(nodeList.begin(), nodeList.end(),
-                                 querySolverFunction);
-          };
-          Rose_STL_Container<SgNode*> NodeQuery::queryNodeList 
-                 ( Rose_STL_Container<SgNode*> nodeList,
-                   TypeOfQueryTypeOneParameter elementReturnType ){
-                 return AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(),getFunction(elementReturnType));
-
-          };
-
-          NodeQuerySynthesizedAttributeType
-           NodeQuery::querySubTree
-           (SgNode * subTree,
-            roseFunctionPointerOneParameter elementReturnType,
-            AstQueryNamespace::QueryDepth defineQueryType 
-           ){
-
-            return  AstQueryNamespace::querySubTree(subTree,
-                                  std::ptr_fun(elementReturnType),defineQueryType);
-
-          };
+};
+NodeQuerySynthesizedAttributeType NodeQuery::querySubTree
+( SgNode * subTree,
+  SgNode * traversal,
+  TypeOfQueryTypeTwoParameters elementReturnType,
+  AstQueryNamespace::QueryDepth defineQueryType ){
+  return AstQueryNamespace::querySubTree(subTree, 
+      std::bind2nd(getFunction(elementReturnType),traversal), defineQueryType);
+};
 
 
 
-          Rose_STL_Container<SgNode*> NodeQuery::queryNodeList 
-                 ( Rose_STL_Container<SgNode*> nodeList,
-                   SgNode * targetNode,
-                   roseFunctionPointerTwoParameters querySolverFunction ){
-                return AstQueryNamespace::queryRange<SgNode*, Rose_STL_Container<SgNode*> >(nodeList.begin(), nodeList.end(),
-                             querySolverFunction, targetNode);
-//                                  std::bind2nd(getFunction(elementReturnType),traversal), defineQueryType);
+// perform a query on a list<SgNode>
+Rose_STL_Container<SgNode*> NodeQuery::queryNodeList 
+( Rose_STL_Container< SgNode * >nodeList,
+  Rose_STL_Container< SgNode * > (*querySolverFunction)(SgNode*) ){
+  return AstQueryNamespace::queryRange< Rose_STL_Container<SgNode*> >(nodeList.begin(), nodeList.end(),
+      querySolverFunction);
+};
+Rose_STL_Container<SgNode*> NodeQuery::queryNodeList 
+( Rose_STL_Container<SgNode*> nodeList,
+  TypeOfQueryTypeOneParameter elementReturnType ){
+  return AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(),getFunction(elementReturnType));
 
-          };
-          Rose_STL_Container<SgNode*> NodeQuery::queryNodeList 
-                 ( Rose_STL_Container<SgNode*> nodeList,
-                   SgNode * targetNode,
-                   TypeOfQueryTypeTwoParameters elementReturnType ){
-                return AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(),
-                             std::bind2nd(getFunction(elementReturnType), targetNode));
+};
 
-          };
+NodeQuerySynthesizedAttributeType
+NodeQuery::querySubTree
+(SgNode * subTree,
+ roseFunctionPointerOneParameter elementReturnType,
+ AstQueryNamespace::QueryDepth defineQueryType 
+ ){
+
+  return  AstQueryNamespace::querySubTree(subTree,
+      std::ptr_fun(elementReturnType),defineQueryType);
+
+};
+
+
+
+Rose_STL_Container<SgNode*> NodeQuery::queryNodeList 
+( Rose_STL_Container<SgNode*> nodeList,
+  SgNode * targetNode,
+  roseFunctionPointerTwoParameters querySolverFunction ){
+  return AstQueryNamespace::queryRange<SgNode*, Rose_STL_Container<SgNode*> >(nodeList.begin(), nodeList.end(),
+      querySolverFunction, targetNode);
+  //                                  std::bind2nd(getFunction(elementReturnType),traversal), defineQueryType);
+
+};
+Rose_STL_Container<SgNode*> NodeQuery::queryNodeList 
+( Rose_STL_Container<SgNode*> nodeList,
+  SgNode * targetNode,
+  TypeOfQueryTypeTwoParameters elementReturnType ){
+  return AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(),
+      std::bind2nd(getFunction(elementReturnType), targetNode));
+
+};
 #if 0
-       // DQ (3/25/2004): Added to support more general form of query based on variant value
-          static std::list<SgNode*> queryNodeList 
-                 ( std::list<SgNode*> nodeList, 
-                   SgNode * targetNode, 
-                   VariantT targetVariant);
+// DQ (3/25/2004): Added to support more general form of query based on variant value
+static std::list<SgNode*> queryNodeList 
+( std::list<SgNode*> nodeList, 
+  SgNode * targetNode, 
+  VariantT targetVariant);
 #endif
-       // DQ (4/8/2004): Added query based on vector of variants
+// DQ (4/8/2004): Added query based on vector of variants
 
-          NodeQuerySynthesizedAttributeType NodeQuery::querySubTree
-                  ( SgNode * subTree,
-                    VariantVector targetVariantVector,
-                    AstQueryNamespace::QueryDepth defineQueryType){
-                    return AstQueryNamespace::querySubTree(subTree, 
-                                  std::bind2nd(std::ptr_fun(querySolverGrammarElementFromVariantVector),targetVariantVector), defineQueryType);
-          };
+NodeQuerySynthesizedAttributeType NodeQuery::querySubTree
+( SgNode * subTree,
+  VariantVector targetVariantVector,
+  AstQueryNamespace::QueryDepth defineQueryType){
+  return AstQueryNamespace::querySubTree(subTree, 
+      std::bind2nd(std::ptr_fun(querySolverGrammarElementFromVariantVector),targetVariantVector), defineQueryType);
+};
 
-          NodeQuerySynthesizedAttributeType NodeQuery::queryNodeList
-                  ( NodeQuerySynthesizedAttributeType nodeList,
-                    VariantVector targetVariantVector){
-                    return AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(), 
-                                  std::bind2nd(std::ptr_fun(querySolverGrammarElementFromVariantVector),targetVariantVector));
-          };
+NodeQuerySynthesizedAttributeType NodeQuery::queryNodeList
+( NodeQuerySynthesizedAttributeType nodeList,
+  VariantVector targetVariantVector){
+  return AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(), 
+      std::bind2nd(std::ptr_fun(querySolverGrammarElementFromVariantVector),targetVariantVector));
+};
 
-       // DQ (3/26/2004): Added query based on variant
-          NodeQuerySynthesizedAttributeType NodeQuery::querySubTree 
-                 ( SgNode * subTree,
-                   VariantT targetVariant,
-                   AstQueryNamespace::QueryDepth defineQueryType ){
-                   return NodeQuery::querySubTree(subTree,
-                                  VariantVector(targetVariant), defineQueryType);
+// DQ (3/26/2004): Added query based on variant
+NodeQuerySynthesizedAttributeType NodeQuery::querySubTree 
+( SgNode * subTree,
+  VariantT targetVariant,
+  AstQueryNamespace::QueryDepth defineQueryType ){
+  return NodeQuery::querySubTree(subTree,
+      VariantVector(targetVariant), defineQueryType);
 
-          };
+};
 
-          NodeQuerySynthesizedAttributeType NodeQuery::queryNodeList 
-                 ( NodeQuerySynthesizedAttributeType queryList,
-                   VariantT targetVariant){
-                   return NodeQuery::queryNodeList(queryList,
-                                  VariantVector(targetVariant));
+NodeQuerySynthesizedAttributeType NodeQuery::queryNodeList 
+( NodeQuerySynthesizedAttributeType queryList,
+  VariantT targetVariant){
+  return NodeQuery::queryNodeList(queryList,
+      VariantVector(targetVariant));
 
-          };
+};
 #if 0
 // DQ (3/14/207): Older version using a return type of std::list
 class TypeQueryDummyFunctionalTest :  public std::unary_function<SgNode*, std::list<SgNode*> > 
-   {
-     public:
-          result_type operator()(SgNode* node );
-   };
+{
+  public:
+    result_type operator()(SgNode* node );
+};
 
-TypeQueryDummyFunctionalTest::result_type
+  TypeQueryDummyFunctionalTest::result_type
 TypeQueryDummyFunctionalTest::operator()(SgNode* node )
-   {
-     result_type returnType;
-     returnType.push_back(node);
-     return returnType; 
-   }
+{
+  result_type returnType;
+  returnType.push_back(node);
+  return returnType; 
+}
 #endif
 
 class TypeQueryDummyFunctionalTest :  public std::binary_function<SgNode*, Rose_STL_Container<SgNode*>*, void* >
-   {
-     public:
-	  result_type operator()(SgNode* node, Rose_STL_Container<SgNode*>* ) const;
-   };
+{
+  public:
+    result_type operator()(SgNode* node, Rose_STL_Container<SgNode*>* ) const;
+};
 
 TypeQueryDummyFunctionalTest::result_type
 TypeQueryDummyFunctionalTest::operator()(SgNode* node, Rose_STL_Container<SgNode*>* returnList) const
-   {
-     returnList->push_back(node);
+{
+  returnList->push_back(node);
 
   // DQ (9/25/2007): Fixed up to return NULL pointer! Approved fix by Andreas.
-     return NULL;
-   }
+  return NULL;
+}
 
 typedef SgNode* node_ptr;
 
 // Making this use a std::vector instead of std::list might make it more efficient as well.
 class TwoParamaters :  public std::binary_function<node_ptr, Rose_STL_Container<SgNode*>* , void* >
-   {
-     public:
-          result_type operator()(first_argument_type node, const second_argument_type returnList ) const
-             {
-            // second_argument_type curr_list = (second_argument_type) returnList;
-               returnList->push_back(node);
-               return NULL;
-             }
-   };
+{
+  public:
+    result_type operator()(first_argument_type node, const second_argument_type returnList ) const
+    {
+      // second_argument_type curr_list = (second_argument_type) returnList;
+      returnList->push_back(node);
+      return NULL;
+    }
+};
 
 class OneParamater :  public std::unary_function<SgNode*, Rose_STL_Container<SgNode*> >
-   {
-     public:
-          result_type operator()(SgNode* node ) const
-             {
-               Rose_STL_Container<SgNode*> returnList;
-               returnList.push_back(node);
-               return returnList;
-             }
-   };
+{
+  public:
+    result_type operator()(SgNode* node ) const
+    {
+      Rose_STL_Container<SgNode*> returnList;
+      returnList.push_back(node);
+      return returnList;
+    }
+};
 
 
 
 
 Rose_STL_Container<SgNode*> NodeQuery::generateListOfTypes ( SgNode* astNode )
-   {
+{
   // Insert your own manipulation of the AST here...
 #if 0
-     printf ("\n\n");
-     printf ("************************** \n");
-     printf ("Generate list of types ... \n");
+  printf ("\n\n");
+  printf ("************************** \n");
+  printf ("Generate list of types ... \n");
 #endif
 
-     Rose_STL_Container<SgNode*> nodeList;
+  Rose_STL_Container<SgNode*> nodeList;
 
   // if (isSgProject(astNode) != NULL || (isSgFile(astNode) != NULL && SgProject::numberOfFiles() == 1) )
   // if (isSgProject(astNode) != NULL)
-     bool useMemoryPool = (isSgProject(astNode) != NULL);
-     if (useMemoryPool == false)
-        {
-       // Check if this is a SgFile or SgGlobal where there is only a single SgFile in the SgProject!
-          if (isSgFile(astNode) != NULL || isSgGlobal(astNode) != NULL)
-             {
-               printf ("This is not a SgProject, but it is a SgFile or SgGlobal so check if this is an only file before using the memory pool! \n");
-               SgProject* project = TransformationSupport::getProject(astNode);
+  bool useMemoryPool = (isSgProject(astNode) != NULL);
+  if (useMemoryPool == false)
+  {
+    // Check if this is a SgFile or SgGlobal where there is only a single SgFile in the SgProject!
+    if (isSgFile(astNode) != NULL || isSgGlobal(astNode) != NULL)
+    {
+      printf ("This is not a SgProject, but it is a SgFile or SgGlobal so check if this is an only file before using the memory pool! \n");
+      SgProject* project = TransformationSupport::getProject(astNode);
 
-            // 2nd chance to reset useMemoryPool and provide an optimized query for types!
-               useMemoryPool = (project->numberOfFiles() == 1);
-             }
-        }
+      // 2nd chance to reset useMemoryPool and provide an optimized query for types!
+      useMemoryPool = (project->numberOfFiles() == 1);
+    }
+  }
 
-     if (useMemoryPool == true)
-        {
-       // Then just query the memory pool and provide a much faster query.
-       // printf ("Using memory pool access to type information ... \n");
+  if (useMemoryPool == true)
+  {
+    // Then just query the memory pool and provide a much faster query.
+    // printf ("Using memory pool access to type information ... \n");
 
-          TypeQueryDummyFunctionalTest funcTest;
+    TypeQueryDummyFunctionalTest funcTest;
 
-       // Build the list of all IR node variants that are derived from SgType (including SgType)
-          VariantVector ir_nodes (V_SgType);
+    // Build the list of all IR node variants that are derived from SgType (including SgType)
+    VariantVector ir_nodes (V_SgType);
 
-       // Execute the query on each separate memory pool for the list of IR node variants
+    // Execute the query on each separate memory pool for the list of IR node variants
 
-       // DQ (3/14/2007): The NodeQuery::queryMemoryPool() function assumes that the function return type is a std::list
-       // so try to use the AstQueryNamespace::queryMemoryPool() function directly.
-       // nodeList = NodeQuery::queryMemoryPool(funcTest,&ir_nodes);
-       // AstQueryNamespace::queryMemoryPool(funcTest,nodeList,&ir_nodes);
+    // DQ (3/14/2007): The NodeQuery::queryMemoryPool() function assumes that the function return type is a std::list
+    // so try to use the AstQueryNamespace::queryMemoryPool() function directly.
+    // nodeList = NodeQuery::queryMemoryPool(funcTest,&ir_nodes);
+    // AstQueryNamespace::queryMemoryPool(funcTest,nodeList,&ir_nodes);
 
-       // DQ (2/16/2007): This is Andreas's fix for the performance problem represented by the previous 
-       // implementat which built and returns STL lists by value with only a single IR node in the list.
-          AstQueryNamespace::queryMemoryPool(std::bind2nd(funcTest,&nodeList),&ir_nodes); 
-        }
-       else
-        {
-       // This operation is expensive and not always accurate (though only vacuious descrutors might be missing).
-       // As a result we would like to depricate its use in ROSE (at least for V_SgType \n");
-          printf ("The use of this mechanism to get type information on arbitrary subtrees is depricated! (subtree at %p = %s) \n",astNode,astNode->class_name().c_str());
+    // DQ (2/16/2007): This is Andreas's fix for the performance problem represented by the previous 
+    // implementat which built and returns STL lists by value with only a single IR node in the list.
+    AstQueryNamespace::queryMemoryPool(std::bind2nd(funcTest,&nodeList),&ir_nodes); 
+  }
+  else
+  {
+    // This operation is expensive and not always accurate (though only vacuious descrutors might be missing).
+    // As a result we would like to depricate its use in ROSE (at least for V_SgType \n");
+    printf ("The use of this mechanism to get type information on arbitrary subtrees is depricated! (subtree at %p = %s) \n",astNode,astNode->class_name().c_str());
 
-       // Get the types from the specified subtree
-          nodeList = NodeQuery::querySubTree (astNode,V_SgType);
-
-#if 0
-          printf ("/* AST Test: nodeList.size() = %zu */ \n",nodeList.size());
-          printNodeList(nodeList);
-          printf ("*** Sorted list *** \n");
-#endif
-
-       // DQ (9/25/2007): These operations don't exist for a std::vector and were used with we used std::list.
-       // nodeList.sort();
-       // nodeList.unique();
-          printf ("Skipping use of std::list<>::sort() and std::list<>::unique() now that we are using std::vector! (Is this a problem for NodeQuery::generateListOfTypes()?) \n");
-        }
+    // Get the types from the specified subtree
+    nodeList = NodeQuery::querySubTree (astNode,V_SgType);
 
 #if 0
-     printNodeList(nodeList);
-     printf ("DONE: Generate list of types ... \n");
-     printf ("************************** \n\n\n");
+    printf ("/* AST Test: nodeList.size() = %zu */ \n",nodeList.size());
+    printNodeList(nodeList);
+    printf ("*** Sorted list *** \n");
 #endif
 
-     return nodeList;
-   }
+    // DQ (9/25/2007): These operations don't exist for a std::vector and were used with we used std::list.
+    // nodeList.sort();
+    // nodeList.unique();
+    printf ("Skipping use of std::list<>::sort() and std::list<>::unique() now that we are using std::vector! (Is this a problem for NodeQuery::generateListOfTypes()?) \n");
+  }
+
+#if 0
+  printNodeList(nodeList);
+  printf ("DONE: Generate list of types ... \n");
+  printf ("************************** \n\n\n");
+#endif
+
+  return nodeList;
+}
 
 
 
-  /********************************************************************************
-   * The function
-   *      NodeQuerySynthesizedAttributeType queryMemoryPool ( SgNode * subTree,
-   *                   Result (*x)(SgNode*,Arg), Arg x_arg,
-   *                   VariantVector* ){
-   * will on every node of the memory pool which has a corresponding variant in VariantVector
-   * perform the action specified by the second argument and return a NodeQuerySynthesizedAttributeType.
-   ********************************************************************************/
-NodeQuerySynthesizedAttributeType
+/********************************************************************************
+ * The function
+ *      NodeQuerySynthesizedAttributeType queryMemoryPool ( SgNode * subTree,
+ *                   Result (*x)(SgNode*,Arg), Arg x_arg,
+ *                   VariantVector* ){
+ * will on every node of the memory pool which has a corresponding variant in VariantVector
+ * perform the action specified by the second argument and return a NodeQuerySynthesizedAttributeType.
+ ********************************************************************************/
+  NodeQuerySynthesizedAttributeType
 NodeQuery::queryMemoryPool ( SgNode * traversal, NodeQuery::roseFunctionPointerTwoParameters querySolverFunction, VariantVector* targetVariantVector)
-   {
-     return AstQueryNamespace::queryMemoryPool(std::bind2nd(std::ptr_fun(querySolverFunction),traversal), targetVariantVector);
-   }
+{
+  return AstQueryNamespace::queryMemoryPool(std::bind2nd(std::ptr_fun(querySolverFunction),traversal), targetVariantVector);
+}
 
 
 /********************************************************************************
@@ -1209,11 +1209,11 @@ NodeQuery::queryMemoryPool ( SgNode * traversal, NodeQuery::roseFunctionPointerT
  * will on every node of the memory pool which has a corresponding variant in VariantVector
  * performa the action specified by the second argument and return a NodeQuerySynthesizedAttributeType.
  ********************************************************************************/
-NodeQuerySynthesizedAttributeType
+  NodeQuerySynthesizedAttributeType
 NodeQuery::queryMemoryPool ( SgNode * traversal, NodeQuery::roseFunctionPointerOneParameter querySolverFunction, VariantVector* targetVariantVector)
-   {
-     return  AstQueryNamespace::queryMemoryPool(std::ptr_fun(querySolverFunction),targetVariantVector);
-   }
+{
+  return  AstQueryNamespace::queryMemoryPool(std::ptr_fun(querySolverFunction),targetVariantVector);
+}
 
 /********************************************************************************
  * The function
@@ -1225,11 +1225,11 @@ NodeQuery::queryMemoryPool ( SgNode * traversal, NodeQuery::roseFunctionPointerO
  * NodeQuerySynthesizedAttributeType.
  ********************************************************************************/
 
-NodeQuerySynthesizedAttributeType
+  NodeQuerySynthesizedAttributeType
 NodeQuery::queryMemoryPool (SgNode * traversal, NodeQuery::TypeOfQueryTypeTwoParameters elementReturnType, VariantVector* targetVariantVector)
-   {
-     return AstQueryNamespace::queryMemoryPool(std::bind2nd(getFunction(elementReturnType),traversal), targetVariantVector);
-   }
+{
+  return AstQueryNamespace::queryMemoryPool(std::bind2nd(getFunction(elementReturnType),traversal), targetVariantVector);
+}
 
 /********************************************************************************
  * The function
@@ -1241,18 +1241,18 @@ NodeQuery::queryMemoryPool (SgNode * traversal, NodeQuery::TypeOfQueryTypeTwoPar
  * NodeQuerySynthesizedAttributeType.
  ********************************************************************************/
 
-NodeQuerySynthesizedAttributeType
+  NodeQuerySynthesizedAttributeType
 NodeQuery::queryMemoryPool ( NodeQuery::TypeOfQueryTypeOneParameter elementReturnType, VariantVector* targetVariantVector )
-   {
-     return AstQueryNamespace::queryMemoryPool(getFunction(elementReturnType), targetVariantVector); 
-   }
+{
+  return AstQueryNamespace::queryMemoryPool(getFunction(elementReturnType), targetVariantVector); 
+}
 
-AstQueryNamespace::DefaultNodeFunctional::result_type 
+  AstQueryNamespace::DefaultNodeFunctional::result_type 
 NodeQuery::queryMemoryPool(VariantVector& targetVariantVector)
-   {
-     DefaultNodeFunctional nodeFunc;
-     return AstQueryNamespace::queryMemoryPool(nodeFunc, &targetVariantVector);
-   }
+{
+  DefaultNodeFunctional nodeFunc;
+  return AstQueryNamespace::queryMemoryPool(nodeFunc, &targetVariantVector);
+}
 
 
 ////////END INTERFACE FOR NAMESPACE NODE QUERY
