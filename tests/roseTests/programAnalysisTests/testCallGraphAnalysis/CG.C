@@ -220,10 +220,10 @@ struct OnlyCurrentDirectory : public std::unary_function<bool,SgFunctionDeclarat
      bool operator() (SgFunctionDeclaration* node) const
         {
           std::string stringToFilter = ROSE_COMPILE_TREE_PATH + std::string("/tests");
-          std::string srcDir = ROSE_AUTOMAKE_TOP_SRCDIR;
+          std::string srcDir = ROSE_AUTOMAKE_TOP_SRCDIR  + std::string("/tests") ;
 #if 1
        // Hard code this for initial testing on target exercise.
-          std::string secondaryTestSrcDir = "/home/dquinlan/ROSE/project/";
+          std::string secondaryTestSrcDir =  ROSE_AUTOMAKE_TOP_SRCDIR+std::string("/developersScratchSpace");
 #endif
 
 #if 0

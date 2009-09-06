@@ -1005,13 +1005,7 @@ Rose_STL_Container<SgNode*> NodeQuery::queryNodeList
       std::bind2nd(getFunction(elementReturnType), targetNode));
 
 };
-#if 0
-// DQ (3/25/2004): Added to support more general form of query based on variant value
-static std::list<SgNode*> queryNodeList 
-( std::list<SgNode*> nodeList, 
-  SgNode * targetNode, 
-  VariantT targetVariant);
-#endif
+
 // DQ (4/8/2004): Added query based on vector of variants
 
 NodeQuerySynthesizedAttributeType NodeQuery::querySubTree
