@@ -1278,6 +1278,8 @@ projects/palette/Makefile
 projects/reverseComputation/Makefile
 projects/assemblyToSourceAst/Makefile
 projects/assemblyToSourceAst/tests/Makefile
+projects/BTORCloneDetection/Makefile
+projects/BTORCloneDetection/tests/Makefile
 projects/bugSeeding/Makefile
 projects/bugSeeding/bugSeeding.tex
 projects/UpcTranslation/Makefile

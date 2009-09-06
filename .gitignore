@@ -25,4 +25,5 @@ Makefile.in
 /configure
 /rose_config.h.in
 /libltdl
+/config/compile
 *.pyc
