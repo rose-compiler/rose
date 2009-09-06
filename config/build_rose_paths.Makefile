@@ -10,7 +10,7 @@ src/util/rose_paths.C: Makefile
 	@@echo "" >> src/util/rose_paths.C
 	@@echo "/* These paths will be absolute or relative depending on how the configure script is called (called with an absolute or relative path). */" >> src/util/rose_paths.C
 	@@echo "const std::string ROSE_GFORTRAN_PATH          = \"@GFORTRAN_PATH@\";" >> src/util/rose_paths.C
-	@@echo "const std::string ROSE_AUTOMAKE_TOP_SRCDIR    = \"@top_srcdir@\";" >> src/util/rose_paths.C
+	@@echo "const std::string ROSE_AUTOMAKE_TOP_SRCDIR    = \"`cd @top_srcdir@; pwd`\";" >> src/util/rose_paths.C
 	@@echo "const std::string ROSE_AUTOMAKE_TOP_BUILDDIR  = \"@top_pwd@\";" >> src/util/rose_paths.C
 	@@echo "const std::string ROSE_AUTOMAKE_PREFIX        = \"@prefix@\";" >> src/util/rose_paths.C
 	@@echo "const std::string ROSE_AUTOMAKE_DATADIR       = \"@datadir@\";" >> src/util/rose_paths.C
