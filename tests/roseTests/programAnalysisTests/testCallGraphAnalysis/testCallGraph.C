@@ -180,7 +180,7 @@ main( int argc, char * argv[] )
 
      SgProject* project = new SgProject(argvList);
 
-     CallGraphBuilder CGBuilder( project, var_SOLVE_FUNCTION_CALLS_IN_DB );
+     CallGraphBuilder CGBuilder( project);
 
 #if 0
      CGBuilder.buildCallGraph();
@@ -209,21 +209,9 @@ main( int argc, char * argv[] )
 
           hier.writeHierarchyToDB(*gDB);
 
-          filterNodesByDirectory(*gDB, "/export" );
           solveVirtualFunctions(*gDB, "ClassHierarchy" );
           solveFunctionPointers( *gDB );
           cout << "Loading from DB...\n";
-
-          std::vector<std::string> keepDirs;
-          keepDirs.push_back( ROSE_COMPILE_TREE_PATH+std::string("%") );
-          keepDirs.push_back(ROSE_AUTOMAKE_TOP_SRCDIR + std::string("%") ); 
-
-          filterNodesKeepPaths(*gDB, keepDirs);
-
-          std::vector<std::string> removeFunctions;
-          removeFunctions.push_back("::main%" );
-          filterNodesByFunctionName(*gDB,removeFunctions);
-
           newGraph = loadCallGraphFromDB(*gDB);
           cout << "Loaded\n";
 #endif

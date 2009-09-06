@@ -1,4 +1,4 @@
-bar -> bar N::A::for_true_friends_only
+bar -> N::A::for_true_friends_only
 N::bar ->
 N::A::A -> bar
 N::A::for_true_friends_only ->

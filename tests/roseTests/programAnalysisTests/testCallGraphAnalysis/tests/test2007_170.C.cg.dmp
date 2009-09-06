@@ -1,4 +1,4 @@
-foo -> A::bar A::biz A::foo
-A::bar -> A::bar A::foo
+foo -> A::biz
+A::bar -> A::foo
 A::biz -> A::bar A::foo
 A::foo ->

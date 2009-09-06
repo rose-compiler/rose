@@ -6,35 +6,35 @@ typedef std::list<SgGraphNode *> ClassHierarchyNodePtrList;
 
 class ClassHierarchyWrapper
 {
-    SgNode *root;
-    SgIncidenceDirectedGraph* classGraph;
-    
+  SgNode *root;
+  SgIncidenceDirectedGraph* classGraph;
+
   public:
 
-    enum EdgeDirection{
-        EdgeOut,
-        EdgeIn
-    } ;
-    ClassHierarchyWrapper( SgNode *node );
-    SgClassDefinitionPtrList getSubclasses( SgClassDefinition * );
-    SgClassDefinitionPtrList getDirectSubclasses( SgClassDefinition * );
-    SgClassDefinitionPtrList getAncestorClasses( SgClassDefinition * );
-   
-    void setAST( SgNode *proj );
+  enum EdgeDirection{
+    EdgeOut,
+    EdgeIn
+  } ;
+  ClassHierarchyWrapper( SgNode *node );
+  SgClassDefinitionPtrList getSubclasses( SgClassDefinition * );
+  SgClassDefinitionPtrList getDirectSubclasses( SgClassDefinition * );
+  SgClassDefinitionPtrList getAncestorClasses( SgClassDefinition * );
+
+  void setAST( SgNode *proj );
 
 #ifdef HAVE_SQLITE3
-    ClassHierarchyWrapper(  );
+  ClassHierarchyWrapper(  );
 
-    void writeHierarchyToDB ( sqlite3x::sqlite3_connection& gDB );
-    std::list<std::string> getDirectSubclasses( std::string className ,  sqlite3x::sqlite3_connection& gDB );
-    std::list<std::string> getSubclasses( std::string className ,  sqlite3x::sqlite3_connection& gDB );
+  void writeHierarchyToDB ( sqlite3x::sqlite3_connection& gDB );
+  std::list<std::string> getDirectSubclasses( std::string className ,  sqlite3x::sqlite3_connection& gDB );
+  std::list<std::string> getSubclasses( std::string className ,  sqlite3x::sqlite3_connection& gDB );
 #endif
 
-    SgIncidenceDirectedGraph* getClassHierarchyGraph();
-    SgGraphNode* findNode(SgNode*);
+  SgIncidenceDirectedGraph* getClassHierarchyGraph();
+  SgGraphNode* findNode(SgNode*);
 
-   private:
-    SgClassDefinitionPtrList getHierarchy ( SgClassDefinition *, EdgeDirection );
+  private:
+  SgClassDefinitionPtrList getHierarchy ( SgClassDefinition *, EdgeDirection );
 };
 
 

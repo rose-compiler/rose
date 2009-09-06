@@ -1,1 +1,2 @@
-main ->
+main -> A::foo
+A::foo ->

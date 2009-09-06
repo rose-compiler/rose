@@ -296,7 +296,7 @@ int main (int argc, char **argv){
     graphCompareOutput=((project->get_outputFileName())+".cg.dmp");
 
   // Build the callgraph according to Anreases example
-  CallGraphBuilder		cgb (project, var_SOLVE_FUNCTION_CALLS_IN_DB);
+  CallGraphBuilder		cgb (project);
 
 #if 1
 // Filtered call graph
@@ -321,32 +321,13 @@ int main (int argc, char **argv){
   {
 #ifdef HAVE_SQLITE3
     writeSubgraphToDB(*gDB, cgb.getGraph() );
-    /*
-       output.filterNodesByDirectory( *gDB, "/export" );
-       output.filterNodesByDB( *gDB, "__filter.db" );*/
 
     solveVirtualFunctions( *gDB, "ClassHierarchy" );
     solveFunctionPointers( *gDB );
-    std::vector<std::string> keepDirs;
 
- // DQ (8/16/2009): This is part of an include mechanism (everything else is deleted).
-    keepDirs.push_back( ROSE_COMPILE_TREE_PATH+std::string("/tests%") );
-    keepDirs.push_back(ROSE_AUTOMAKE_TOP_SRCDIR + std::string("%") ); 
-
- // DQ (8/15/2009): Added explicit directory to keepDirs list.
-    keepDirs.push_back("/home/dquinlan/ROSE/project%");
-
-    filterNodesKeepPaths(*gDB, keepDirs);
-
-    /*
-       std::vector<std::string> removeFunctions;
-       removeFunctions.push_back("::main%" );
-       filterNodesByFunctionName(*gDB,removeFunctions);
-     */
     cout << "Loading from DB...\n";
-    cout << "Loaded\n";
-
     newGraph = loadCallGraphFromDB(*gDB);
+    cout << "Loaded\n";
 
 
 #endif

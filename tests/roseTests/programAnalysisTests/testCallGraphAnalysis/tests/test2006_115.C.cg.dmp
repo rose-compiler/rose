@@ -1,5 +1,5 @@
 f ->
-g -> f X::operator= X::operator++ X::operator--
+g -> f
 foo -> X::operator= X::operator++ X::operator--
 X::X ->
 X::X ->

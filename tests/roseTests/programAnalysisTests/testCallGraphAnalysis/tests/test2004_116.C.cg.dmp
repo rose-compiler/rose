@@ -15,12 +15,12 @@ Internal_Index::getBase ->
 Internal_Index::getMode ->
 Internal_Index::getBound ->
 Internal_Index::getCount ->
-Internal_Index::getLength -> Internal_Index::length Internal_Index::shrink Internal_Index::operator==
+Internal_Index::getLength -> Internal_Index::length
 Internal_Index::getStride ->
 Internal_Index::operator- ->
 Internal_Index::operator= ->
 Internal_Index::adjustBase ->
-Internal_Index::operator!= -> Internal_Index::shrink Internal_Index::operator==
+Internal_Index::operator!= -> Internal_Index::operator==
 Internal_Index::operator() ->
 Internal_Index::operator() ->
 Internal_Index::operator*= ->

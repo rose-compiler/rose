@@ -30,10 +30,11 @@ main( int argc, char * argv[] )
    {
      SgProject* project = new SgProject(argc, argv); //test.getSgProject();
 
-     CallGraphBuilder CGBuilder( project, false /* Do not solve in the database */ );
+     CallGraphBuilder CGBuilder( project );
      CGBuilder.buildCallGraph();
 
-     OutputDot::writeToDOTFile(CGBuilder.getGraph(), "callgraph.dot","Call Graph" );
+     AstDOTGeneration dotgen;
+     dotgen.writeIncidenceGraphToDOTFile(CGBuilder.getGraph(), "callgraph.dot");
 
      cout << "Generating DOT...\n";
      generateDOT( *project );

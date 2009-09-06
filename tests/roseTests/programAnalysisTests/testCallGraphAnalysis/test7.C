@@ -29,13 +29,18 @@ public:
 bool B::f2(int i) { return f4(f3(i)); }
 bool B::f3(int i) { return 1; }
 
+
+//We expect this function to call 
+// foo1(),  B::f1, B::f2, B::f3, A::f3
 void k(A *ap)
 {
   bool (A::*(A::*ff)(char))(int);
   bool (A::*pf)(int);
   ff = &A::f1;
   pf = &A::f2;
+  // B::f2, B::f3, A::f3
   (ap->*pf)(1);
+  // B::f1
   (ap->*(ap->*ff)('a'))(2);
   foo1();
 }

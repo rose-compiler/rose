@@ -5,7 +5,7 @@ using namespace std;
 
 CallGraphQuery::CallGraphQuery(SgProject* project)
 {
-  cgBuilder = new CallGraphBuilder(project, false/* solve outside DB */);
+  cgBuilder = new CallGraphBuilder(project);
 }
 
 void CallGraphQuery::initialize()

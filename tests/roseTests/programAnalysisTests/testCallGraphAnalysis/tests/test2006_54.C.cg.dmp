@@ -1,7 +1,7 @@
-foo -> A::foo A::foo A::foo A::foo A0::foo A0::foo B::B::operator bool
+foo -> A::foo A0::foo A0::foo B::B::operator bool
 A::A ->
 A::A ->
-A::bar -> A::foo A::foo
+A::bar -> A::foo
 A::foo ->
 A::foo ->
 A::foo ->

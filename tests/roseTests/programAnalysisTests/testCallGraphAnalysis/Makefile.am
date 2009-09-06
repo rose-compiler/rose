@@ -32,7 +32,7 @@ testCG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 test01: testCG
 	rm -f ./test01.db
 	./testCG -I. -I$(srcdir) $(srcdir)/main.C $(srcdir)/f1.C $(srcdir)/f2.C -o Callgraph -db:name test01.db
-	rm -f ./test01.db
+	rm -f ./test01.db Callgraph.cg.dmp Callgraph.dot 
 
 
 # Test that the call graph generates all the edges it should
@@ -41,13 +41,13 @@ test02: testCG stressTestFactory
 	$(srcdir)/stressTestFactory 10
 	rm -f ./sT10.db
 	./testCG sT10.C -o sT10 -compare:graph sT10.cg.dmp -db:name sT10.db
-	rm -f ./sT10.db
 	diff -U5 sT10.cmp.dmp sT10.cg.dmp
+	rm -f ./sT10.db ./sT10.cg.dmp ./sT10.cmp.dmp ./sT10.dot ./sT10.C
 	$(srcdir)/stressTestFactory 100
 	rm -f ./sT100.db
 	./testCG sT100.C -o sT100 -compare:graph sT100.cg.dmp -db:name sT100.db
-	rm -f ./sT100.db
 	diff -U5 sT100.cmp.dmp sT100.cg.dmp
+	rm -f ./sT100.db ./sT100.cg.dmp ./sT100.cmp.dmp ./sT100.dot ./sT100.C
 
 
 testMultipleFiles: testCG stressTestFactoryMultipleFiles.pl
@@ -99,10 +99,11 @@ TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
 $(EXTRA_TEST_Objects): testCG
 #	@echo "Copy the file to the local build tree so that we can change the file name suffix (to be a C language file) ..." # Not true anymore
 #	$(TEST_TRANSLATOR) $(INCLUDES) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C) -o $(@:.o=) -db:name $(@:.o=.db)
-	$(VALGRIND) ./testCG $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests $(TESTCODE_INCLUDES) -db:name $(@:.dot=.database) -c $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.dot=) -o $(@:.C.dot=.o) -DTEST_STRING_MACRO="\"test\""
-#	cp  $(@:.C.dot=.o.cg.dmp)  $(srcdir)/$(@:.dot=.cg.dmp)
-#	@if diff -U5 $(srcdir)/tests/$(@:.dot=.cg.dmp) $(@:.C.dot=.o.cg.dmp); then :; else echo "Files differ; byte order test failed"; exit 1; fi
-	rm -f  $(@:.o=.db)
+	$(VALGRIND) ./testCG $(ROSE_FLAGS) -I$(top_srcdir)/tests/CompileTests/Cxx_tests $(TESTCODE_INCLUDES) -db:name $(@:.dot=.db) -c $(top_srcdir)/tests/CompileTests/Cxx_tests/$(@:.dot=) -o $(@:.C.dot=.o) -DTEST_STRING_MACRO="\"test\""
+#	cp  $(@:.C.dot=.o.cg.dmp)  $(srcdir)/tests/$(@:.dot=.cg.dmp)
+	@if diff -U5 $(srcdir)/tests/$(@:.dot=.cg.dmp) $(@:.C.dot=.o.cg.dmp); then :; else echo "Files differ; byte order test failed"; exit 1; fi
+	rm -f  $(@:.dot=.db) $(@:.C.dot=.o.dot) $(@:.C.dot=.o.cg.dmp)
+
 
 
 TESTCODES = test1.C test2.C  test3.C  test4.C  test5.C test7.C test6.C 
@@ -121,8 +122,9 @@ $(TEST_Objects): testCG $(TESTCODES)
 	@echo "Compiling test code using $(TEST_TRANSLATOR) ..."
 	rm -f  $(@:.o=.db)
 	$(TEST_TRANSLATOR) $(INCLUDES) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C) -o $(@:.o=) -db:name $(@:.o=.db)
-#	@if diff -U5 $(srcdir)/tests/$(@:.o=.C.cg.dmp) $(@:.o=.cg.dmp); then :; else echo "Files differ; byte order test failed"; exit 1; fi
-	rm -f  $(@:.o=.db)
+	@if diff -U5 $(srcdir)/tests/$(@:.o=.C.cg.dmp) $(@:.o=.cg.dmp); then :; else echo "Files differ; byte order test failed"; exit 1; fi
+	rm -f  $(@:.o=.db) $(@:.o=.cg.dmp)  $(@:.o=.cmp.dmp) $(@:.o=.dot)
+
 
 
 EXTRA_DIST = $(TESTCODES) functions.h main.C f1.C f2.C stressTestFactory $(srcdir)/tests input_simpleMultipleFileTest_01.C input_simpleMultipleFileTest_02.C
@@ -138,5 +140,5 @@ check-local:
 
 clean-local:
 	rm -rf $(CXX_TEMPLATE_OBJECTS) test0? testCG testCallGraph *.o rose_*.C *.dot Templates.DB ii_files ti_files DATABASE DATABASE.dot *.dmp sT*.C
-	rm -rf seperateDirectory_1 seperateDirectory_2
+	rm -rf seperateDirectory_1 seperateDirectory_2 Callgraph.cg.dmp Callgraph.dot
 

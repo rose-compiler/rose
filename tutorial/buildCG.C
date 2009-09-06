@@ -25,7 +25,7 @@ int
 main( int argc, char * argv[] ) {
    RoseTestTranslator test;
    SgProject* project = new SgProject(argc, argv);
-   CallGraphBuilder CGBuilder( project, false /* Do not solve in the database */ );
+   CallGraphBuilder CGBuilder( project);
    CGBuilder.buildCallGraph(filterNodes());
 
   //  GenerateDotGraph(CGBuilder.getGraph(),"callgraph.dot");
@@ -42,7 +42,9 @@ main( int argc, char * argv[] ) {
    //filterGraph(*newGraph,filterNodes());
    generateDOT( *project );
    cout << "Done with DOT\n";
-   GenerateDotGraph(newGraph, st.str());
+   AstDOTGeneration dotgen;
+   dotgen.writeIncidenceGraphToDOTFile(newGraph, "callgraph.dot");
+
    printf ("\nLeaving main program ... \n");
    return 0; // backend(project);
 }
