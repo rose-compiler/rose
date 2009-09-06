@@ -1,11 +1,4 @@
 TITLE="testing default on all linux platforms"
 DESCRIPTION="minimal configuration options, gcc 4.2.4, boost 1.35, without java"
-
-# DQ (9/4/2009): Added autoconf, which we think is required.
-# This machine does not have a automake prereq and has only automake 1.9.2, which is tool
-# old. So this machine can not be used to compile ROSE. I have send email to NMI to
-# ask for the automake-1.10 prereq to be made available.
-# PREREQS="gcc-4.2.4, boost-1.35.0"
 PREREQS="gcc-4.2.4, boost-1.35.0, automake-1.10, autoconf-2.63, libxml2-2.7.3"
-
 CONFIGURE_OPTIONS="--with-boost=/prereq/boost-1.35.0 --with-CXX_WARNINGS=-Wall --without-java"
