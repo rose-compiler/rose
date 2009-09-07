@@ -479,7 +479,7 @@ TermToRose::listToRose(PrologCompTerm* t,string tname) {
   SgDeclarationStatement *varDeclBaseTypeDecl = NULL;
   if (tname == SG_PREFIX "variable_declaration") {
     PrologCompTerm *annot = dynamic_cast<PrologCompTerm*>(t->at(1));
-    ROSE_ASSERT (annot->getArity() == 3);
+    assert_arity(annot, 3);
     PrologTerm* typeDeclTerm = annot->at(1);
     if (!(dynamic_cast<PrologAtom*>(typeDeclTerm))) {
       varDeclBaseTypeDecl = isSgDeclarationStatement(toRose(typeDeclTerm));

@@ -552,7 +552,7 @@ unparse1(UI, typedef_declaration(null, typedef_annotation(Name,Type,_,_), _Ai, _
 
 unparse1(UI, typedef_declaration(Definition, typedef_annotation(
           Name,
-          _Type, _Decl, _PPI), _Ai, _Fi)) :- !, 
+          _Type, _Decl/*, _PPI*/), _Ai, _Fi)) :- !,
   write('typedef '), 
   unparse(UI, Definition), write(' '), write(Name).
 
@@ -601,8 +601,8 @@ unparse1(UI, variable_declaration([ClassDeclaration|[InitializedName|INs]],
   unparse(UI, variable_declaration(INs, variable_declaration_specific(null), Ai, Fi)).
 
 unparse1(UI, variable_declaration([InitializedName|INs], Spec, Ai, Fi)) :- !,
-  ( Spec = variable_declaration_specific(Mod)
-  ; Spec = variable_declaration_specific(Mod, _)),
+  ( Spec = variable_declaration_specific(Mod, _)
+  ; Spec = variable_declaration_specific(Mod, _, _)),
   unparse_modifier(Mod),
   unparse(UI, InitializedName), !,
   unparse(UI, variable_declaration(INs, variable_declaration_specific(null), Ai, Fi)).
