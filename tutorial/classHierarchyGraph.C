@@ -1,28 +1,21 @@
 // Example ROSE Preprocessor
 // used for testing ROSE infrastructure
-
-// #include <assert.h>
-// #include <string>
 #include "rose.h"
-// #include <iomanip>
-// #include "AstConsistencyTests.h"
-
 #include <CallGraph.h>
 
 using namespace std;
 
-  int
+int
 main( int argc, char * argv[] )
    {
      SgProject* project = new SgProject(argc, argv); 
 
+     //Construct class hierarchy graph
      ClassHierarchyWrapper hier( project );
 
-     SgIncidenceDirectedGraph* classHier = hier.getClassHierarchyGraph();
-     
+     //Output class hierarchy graph to dot
      AstDOTGeneration dotgen;
-     dotgen.writeIncidenceGraphToDOTFile(classHier, "callHier.dot");
-
+     dotgen.writeIncidenceGraphToDOTFile( hier.getClassHierarchyGraph() , "classHier.dot");
 
      return 0;
    }

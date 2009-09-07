@@ -3,21 +3,24 @@
 #include <GraphUpdate.h>
 using namespace std;
 
-struct filterNodes : public unary_function<bool,SgFunctionDeclaration*>{
+//Function object that determines which functions are to be represented
+//in the call graph.
+struct keepFunction : public unary_function<bool,SgFunctionDeclaration*>{
     public:
-      bool operator()(SgFunctionDeclaration* CallGraphNode2){
-              bool returnValue = false;
-              ROSE_ASSERT(CallGraphNode2 != NULL);
-              string filename = CallGraphNode2->get_file_info()->get_filename();
-              if( filename.find("g++_HEADERS")!=string::npos ||
-                  filename.find("/usr/include")!=string::npos){
-                returnValue= true;
-              }
-              if(filename.find("rose_edg_macros_and_functions_required_for_gnu.h")!=string::npos)
-                 returnValue = true;
-         if(CallGraphNode2->get_file_info()->isCompilerGenerated()==true)
-            returnValue=true;
-         return returnValue;
+      bool operator()(SgFunctionDeclaration* funcDecl){
+        bool returnValue = true;
+
+        ROSE_ASSERT(funcDecl != NULL);
+        string filename = funcDecl->get_file_info()->get_filename();
+
+        //Filter out functions from the ROSE preinclude header file
+        if(filename.find("rose_edg_required_macros_and_functions")!=string::npos)
+          returnValue = false;
+        //Filter out compiler generated functions
+        if(funcDecl->get_file_info()->isCompilerGenerated()==true)
+          returnValue=false;
+
+        return returnValue;
       }
 };
 
@@ -25,25 +28,18 @@ int
 main( int argc, char * argv[] ) {
    RoseTestTranslator test;
    SgProject* project = new SgProject(argc, argv);
+
+   //Construct Call Graph
    CallGraphBuilder CGBuilder( project);
-   CGBuilder.buildCallGraph(filterNodes());
+   CGBuilder.buildCallGraph(keepFunction());
 
-  //  GenerateDotGraph(CGBuilder.getGraph(),"callgraph.dot");
-
-   ClassHierarchyWrapper hier( project );
-   // Use the information in the graph to output a dot file for the call graph
-
-   printf ("Not using the SQLite Database ... \n");
-   SgIncidenceDirectedGraph *newGraph = CGBuilder.getGraph();
-
-   ostringstream st;
-   st << "DATABASE.dot";
    cout << "Generating DOT...\n";
-   //filterGraph(*newGraph,filterNodes());
    generateDOT( *project );
    cout << "Done with DOT\n";
+
+   // Use the information in the graph to output a dot file for the call graph
    AstDOTGeneration dotgen;
-   dotgen.writeIncidenceGraphToDOTFile(newGraph, "callgraph.dot");
+   dotgen.writeIncidenceGraphToDOTFile( CGBuilder.getGraph() , "callGraph.dot");
 
    printf ("\nLeaving main program ... \n");
    return 0; // backend(project);

@@ -34,7 +34,7 @@ main( int argc, char * argv[] )
      CGBuilder.buildCallGraph();
 
      AstDOTGeneration dotgen;
-     dotgen.writeIncidenceGraphToDOTFile(CGBuilder.getGraph(), "callgraph.dot");
+     dotgen.writeIncidenceGraphToDOTFile(CGBuilder.getGraph(), "callGraph.dot");
 
      cout << "Generating DOT...\n";
      generateDOT( *project );
