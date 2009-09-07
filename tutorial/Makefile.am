@@ -432,7 +432,7 @@ testBuildCG: buildCG
 	./buildCG $(srcdir)/inputCode_BuildCG.C
 	@echo "Building postscript file from DATABASE.dot ..."
 #	$(top_srcdir)/scripts/dotgenLetterPDF controlFlowGraph.dot controlFlowGraph.ps
-	$(top_srcdir)/scripts/dotgenLetterPDF DATABASE.dot callGraph.pdf
+	$(top_srcdir)/scripts/dotgenLetterPDF callGraph.dot callGraph.pdf
 
 testClassHierarchyGraph: classHierarchyGraph
 	./classHierarchyGraph $(srcdir)/inputCode_ClassHierarchyGraph.C
@@ -457,7 +457,7 @@ testCallGraphAnalysis: callGraphAnalysis
 	@echo "Building postscript file from inputCode_CallGraphAnalysis.C.callgraph.dot ..."
 #	$(top_srcdir)/scripts/dotgenLetterPDF callgraph.dot callGraph.ps
 #	$(top_srcdir)/scripts/dotgen callgraph.dot callGraph.ps
-	$(top_srcdir)/scripts/dotgenLetterPDF callgraph.dot callGraph.pdf
+	$(top_srcdir)/scripts/dotgenLetterPDF callGraph.dot callGraph.pdf
 
 testTemplateExample1: identityTranslator
 	./identityTranslator -c $(srcdir)/inputCode_templateExample1.C
@@ -1086,7 +1086,7 @@ callGraph.pdf: callGraphAnalysis buildCG
 #	$(top_srcdir)/scripts/dotgenLetterPDF callgraph.dot callGraph.ps
 #	$(top_srcdir)/scripts/dotgen callgraph.dot callGraph.ps
 #	$(top_srcdir)/scripts/dotgen DATABASE.dot callGraph.ps
-	$(top_srcdir)/scripts/dotgenLetterPDF DATABASE.dot callGraph.pdf
+	$(top_srcdir)/scripts/dotgenLetterPDF callGraph.dot callGraph.pdf
 
 classHierarchyGraph.pdf: classHierarchyGraph
 	./classHierarchyGraph $(srcdir)/inputCode_ClassHierarchyGraph.C
