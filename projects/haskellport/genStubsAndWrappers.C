@@ -213,7 +213,7 @@ class Sage3Filter : public APIFilter
                                  }
                               else
                                  {
-                                   cout << "Couldn't resolve a " << t->sage_class_name() << " parameter!";
+                                // cout << "Couldn't resolve a " << t->sage_class_name() << " parameter!";
                                  }
                             }
                        }
@@ -1474,10 +1474,6 @@ genStubsAndWrappers(SgSourceFile *sage3, ostream &stubs, ostream &wrappers, APIF
                          if (!fn) 
                             {
                               continue;
-                            }
-                         if (fn->get_name() == "createType")
-                            {
-                              cout << "got here" << endl;
                             }
                          SgDeclarationModifier &dm = fn->get_declarationModifier();
                          SgSpecialFunctionModifier &sfm = fn->get_specialFunctionModifier();
