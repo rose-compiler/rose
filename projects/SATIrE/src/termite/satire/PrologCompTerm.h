@@ -16,7 +16,7 @@ public:
   ~PrologCompTerm() {};
   /// Creates a compound term with the given name. no subterms added yet.
   
-  PrologCompTerm(std::string name) : mName(name) {};
+  PrologCompTerm(std::string name = "#ERROR") : mName(name) {};
 
   PrologCompTerm(std::string name, size_t n, ...) : mName(name) {
     if(n > 0) {
@@ -114,7 +114,7 @@ public:
   }
 
   /// Creates a compound term with the given name. no subterms added yet.
-  PrologCompTerm(std::string functor) {
+  PrologCompTerm(std::string functor = "#ERROR") {
     term = PL_new_term_ref();
     PL_put_atom_chars(term, functor.c_str());
 #   if DEBUG_TERMITE

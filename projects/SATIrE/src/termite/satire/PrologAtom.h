@@ -15,7 +15,7 @@ public:
   ///the destructor
   ~PrologAtom() {};	
   ///constructor setting the string
-  PrologAtom(std::string name, bool escapedRepresentation = true) {
+  PrologAtom(std::string name = "#ERROR", bool escapedRepresentation = true) {
       mName = name;
       mEscapedRepresentation = escapedRepresentation;
   };
@@ -55,13 +55,20 @@ public:
     //PL_unregister(term);
   }
   ///constructor setting the string
-  PrologAtom(std::string name, bool escapedRepresentation = true) {
+  PrologAtom(std::string name = "#ERROR", bool escapedRepresentation = true) {
     term = PL_new_term_ref();
     PL_put_atom_chars(term, name.c_str());
 #   if DEBUG_TERMITE
       std::cerr<<"PL_new_atom("<<getRepresentation()<<") = "<<term<<std::endl;
 #   endif
     (void) escapedRepresentation;  // unused
+  }
+
+  ///return the string
+  std::string getName() {
+    char* name;
+    PL_get_atom_chars(term, &name);
+    return std::string(name);
   }
 };
 
