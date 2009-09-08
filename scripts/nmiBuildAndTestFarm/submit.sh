@@ -44,6 +44,18 @@ fi
 REVISION=`svn -r HEAD log https://outreach.scidac.gov/svn/rose/trunk/ | grep '^Load rose' | cut -d'-' -f 3 | cut -d' ' -f 1`
 PLATFORMS=`arr=($(echo $1 | awk -F"/" '{$1=$1; print}')); echo ${arr[${#arr[*]}-2]}`
 
+
+# create env.pl
+mkdir -p env
+ENV_PL_TEMPDIR=$PWD/`mktemp -d env/XXXXXXXX`
+ENV_PL=${ENV_PL_TEMPDIR}/env.pl
+touch $ENV_PL
+echo "#!/usr/bin/env perl" > $ENV_PL
+echo '$ENV{JAVA_HOME} = "'${JAVA_HOME}'";' >> $ENV_PL
+echo '$ENV{ACLOCAL_INCLUDES} = "'${ACLOCAL_INCLUDES}'";' >> $ENV_PL
+echo 'return 1;' >> $ENV_PL
+
+
 # exporting options, to be recognized in the submit and input scripts
 export _NMI_TITLE=${TITLE}
 export _NMI_DESCRIPTION=${DESCRIPTION}
@@ -56,14 +68,8 @@ export _NMI_REVISION=${REVISION}
 export _NMI_HOME=$HOME
 export _NMI_HOSTNAME=$HOSTNAME
 export _NMI_SUBMITDIR=$PWD
+export _NMI_ENV_PL_TEMPDIR=${ENV_PL_TEMPDIR}
 
-
-# create env.pl
-touch env.pl
-echo "#!/usr/bin/env perl" > env.pl
-echo '$ENV{JAVA_HOME} = "'${JAVA_HOME}'";' >> env.pl
-echo '$ENV{ACLOCAL_INCLUDES} = "'${ACLOCAL_INCLUDES}'";' >> env.pl
-echo 'return 1;' >> env.pl
 
 
 
