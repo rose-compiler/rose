@@ -3,6 +3,23 @@
 require 'fileutils'
 
 
+NmiHostsFile = "#{ENV['HOME']}/.nmi-hosts"
+
+
+def check_host!
+    host = `hostname -f`.chomp
+
+    unless host =~ %r{cs\.wisc\.edu}
+        puts "
+            Your host #{host} does not seem to be on the cs.wisc.edu domain.
+            Are you sure you're running nmi-postmortem from an nmi submit host?
+        ".gsub( /^[ \t]\s*/, '' )
+
+        exit 1
+    end
+end
+
+
 def args!
     if ARGV.size != 1
          puts "
@@ -16,9 +33,9 @@ def args!
 end
 
 def setup_ssh!( host )
-    FileUtils.touch '.nmi-hosts'
-    hosts = File.readlines( '.nmi-hosts' ).map{|l| l.chomp }
-    return if hosts.include? host
+    FileUtils.touch NmiHostsFile
+    hosts = File.readlines( NmiHostsFile ).map{|l| l.chomp }
+    return true if hosts.include? host
 
     puts "
 
@@ -29,14 +46,18 @@ def setup_ssh!( host )
 
     ".gsub( /^[ \t]\s*/, '' )
     system [
-        [
-            "ssh #{host} '/bin/sh /etc/profile",
-            "mkdir -p $HOME/.ssh",
-            "chmod 700 $HOME/.ssh'",
-        ].join( ';' ),
-        "scp .ssh/id_rsa.pub #{host}:~/.ssh/authorized_keys"
+        "ssh #{host} '#{[
+                "/bin/sh /etc/profile.d/makehomedir.sh",
+                "mkdir -p $HOME/.ssh",
+                "chmod 700 $HOME/.ssh",
+            ].join( " && " )}'",
+        "scp #{ENV['HOME']}/.ssh/id_rsa.pub #{host}:~/.ssh/authorized_keys"
     ].join( '&&' )
-    File.open( '.nmi-hosts', 'w' ) {|f| f.puts host }
+    return false unless $?.success?
+
+    File.open( NmiHostsFile, 'a' ) {|f| f.puts host }
+
+    true
 end
 
 def get_runhost( run_id )
@@ -48,11 +69,46 @@ def get_runhost( run_id )
 end
 
 def main
+    check_host!
     run_id = args!
 
     puts "Downloading run host information from nmi website"
     run_host = get_runhost( run_id )
-    setup_ssh! run_host
+    unless setup_ssh! run_host
+        puts "
+
+            Error setting up #{run_host}!  I was either unable to setup the home
+            directory or $HOME/.ssh.  Either way, nmi-postmortem cannot
+            continue.  Please report the error.  In the meantime, you can
+            continue manually by doing the following:
+
+            copy the file ~/.ssh/id_rsa.pub (on this machine) to
+            #{run_host}:~/.ssh/authorized_keys
+            
+            ensure that the remote .ssh directory has mode 700.
+
+            re-run nmi-postmortem.  If you have done this, but nmi-postmortem
+            still complains, add the line:
+                #{run_host}
+            to the file ~/.nmi-hosts on this machine.
+
+            You should be able to accomplish the above with the following commands:
+
+                ssh #{run_host}
+                # on #{run_host}
+                mkdir .ssh
+                chmod 700 .ssh
+                exit
+
+                # back on this machine
+                scp #{ENV['HOME']}/.ssh/id_rsa.pub #{run_host}:~/.ssh/authorized_keys
+
+                # re-run nmi-postmortem
+                nmi-postmortem #{run_id}
+
+        ".gsub( /^[ \t]\s{11}/, '' )
+        exit 1
+    end
 
     run_dir = (
         `nmi_rundir #{run_id}` =~ /\d+: (.*)/;
@@ -60,8 +116,6 @@ def main
     )
 
     puts "Copying and extracting results.tar.gz and setting up .nmi-postmortem"
-    # FIXME 3: It would probably be better to fail graciously 
-    # if #{run_host}:.ssh/rc already exists
     system [
         "ssh #{run_host} 'rm -fr run; mkdir -p run; mkdir -p .ssh'",
         "scp #{run_dir}/userdir/nmi*/results.tar.gz #{run_host}:run/ > /dev/null 2>/dev/null",
