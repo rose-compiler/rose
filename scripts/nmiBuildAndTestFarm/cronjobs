@@ -4,7 +4,7 @@ CWD=/home/heller/rose_nmi
 PATH=/bin:/usr/bin:/nmi/bin
 # update the scripts every day at midnight
 # update.sh updates the scripts via svn and loads the new, updated cronjob file
-0 0 * * * ${CWD}/update.sh >> ${CWD}/update.log 2>> update.err
+0 0 * * * ${CWD}/update.sh >> ${CWD}/update.log 2>> ${CWD}/update.err
 ###############################################################################
 # Contribute here:
 ###############################################################################
