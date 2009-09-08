@@ -1564,7 +1564,7 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
                bool isANumber = true;
                if (strcmp(str,buffer) == 0)
                   {
-                    printf ("Using strcmp(): This was not a valid string (buffer = %s returned) \n",buffer);
+                 // printf ("Using strcmp(): This was not a valid string (buffer = %s returned) \n",buffer);
                     isANumber = false;
                   }
             // printf ("cppIndentifier = %s integerValue = %ld \n",cppIndentifier.c_str(),integerValue);
