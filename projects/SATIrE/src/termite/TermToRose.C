@@ -1,6 +1,6 @@
 /* -*- C++ -*-
 Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
-          2007-2008 Adrian Prantl <adrian@complang.tuwien.ac.at>
+          2007-2009 Adrian Prantl <adrian@complang.tuwien.ac.at>
 */
 
 #include <satire_rose.h>
@@ -322,7 +322,7 @@ TermToRose::unaryToRose(PrologCompTerm* t,string tname) {
   Sg_File_Info* fi = createFileInfo(t->at(3));
   testFileInfo(fi);
 	
-  if (tname == SG_PREFIX "class_declaration") {
+  if (tname == "class_declaration") {
     /* class declarations must be handled before their bodies because they
      * can be recursive */
     s = createClassDeclaration(fi,NULL,t);
@@ -335,42 +335,42 @@ TermToRose::unaryToRose(PrologCompTerm* t,string tname) {
     s = createValueExp(fi,child1,t);
   } else if(isUnaryOp(tname)) {
     s = createUnaryOp(fi,child1,t);
-  } else if(tname == SG_PREFIX "source_file") {
+  } else if(tname == "source_file") {
     s = createFile(fi,child1,t);
-  } else if(tname == SG_PREFIX "return_stmt") {
+  } else if(tname == "return_stmt") {
     s = createReturnStmt(fi,child1,t);
-  } else if(tname == SG_PREFIX "function_definition") {
+  } else if(tname == "function_definition") {
     s = createFunctionDefinition(fi,child1,t);
-  } else if(tname == SG_PREFIX "initialized_name") {
+  } else if(tname == "initialized_name") {
     s = createInitializedName(fi,child1,t);
-  } else if(tname == SG_PREFIX "assign_initializer") {
+  } else if(tname == "assign_initializer") {
     s = createAssignInitializer(fi,child1,t);
-  } else if(tname == SG_PREFIX "expr_statement") {
+  } else if(tname == "expr_statement") {
     s = createExprStatement(fi,child1,t);
-  } else if(tname == SG_PREFIX "default_option_stmt") {
+  } else if(tname == "default_option_stmt") {
     s = createDefaultOptionStmt(fi,child1,t);
-  } else if(tname == SG_PREFIX "class_declaration") {
+  } else if(tname == "class_declaration") {
     /* class declaration: created above, needs fixup here */
     s = setClassDeclarationBody(isSgClassDeclaration(s),child1);
-  } else if(tname == SG_PREFIX "delete_exp") {
+  } else if(tname == "delete_exp") {
     s = createDeleteExp(fi,child1,t);
-  } else if(tname == SG_PREFIX "var_arg_op") {
+  } else if(tname == "var_arg_op") {
     s = createVarArgOp(fi,child1,t);
-  } else if(tname == SG_PREFIX "var_arg_end_op") {
+  } else if(tname == "var_arg_end_op") {
     s = createVarArgEndOp(fi,child1,t);
-  } else if(tname == SG_PREFIX "var_arg_start_one_operand_op") {
+  } else if(tname == "var_arg_start_one_operand_op") {
     s = createVarArgStartOneOperandOp(fi,child1,t);
-  } else if(tname == SG_PREFIX "aggregate_initializer") {
+  } else if(tname == "aggregate_initializer") {
     s = createAggregateInitializer(fi,child1,t);
-  } else if(tname == SG_PREFIX "namespace_declaration_statement") {
+  } else if(tname == "namespace_declaration_statement") {
     s = createNamespaceDeclarationStatement(fi,child1,t);
-  } else if(tname == SG_PREFIX "size_of_op") {
+  } else if(tname == "size_of_op") {
     s = createSizeOfOp(fi,child1,t);
-  } else if(tname == SG_PREFIX "constructor_initializer") {
+  } else if(tname == "constructor_initializer") {
     s = createConstructorInitializer(fi,child1,t);
-  } else if(tname == SG_PREFIX "pragma_declaration") {
+  } else if(tname == "pragma_declaration") {
     s = createPragmaDeclaration(fi,child1,t);
-  } else if (tname == SG_PREFIX "typedef_declaration") {
+  } else if (tname == "typedef_declaration") {
     s = createTypedefDeclaration(fi,t);
   } else cerr<<"**WARNING: unhandled Unary Node: "<<tname<<endl;
     
@@ -399,7 +399,7 @@ TermToRose::binaryToRose(PrologCompTerm* t,string tname) {
   SgNode* s = NULL;
   /*get child node 1 (prefix traversal step)*/
   SgNode* child1 = toRose(t->at(0));
-  if (tname == SG_PREFIX "function_declaration") {
+  if (tname == "function_declaration") {
     /* function declarations are special: we create an incomplete
      * declaration before traversing the body; this is necessary for
      * recursive functions */
@@ -409,30 +409,30 @@ TermToRose::binaryToRose(PrologCompTerm* t,string tname) {
   SgNode* child2 = toRose(t->at(1));
 	
   /* create node depending on type*/
-  if (tname == SG_PREFIX "function_declaration") {
+  if (tname == "function_declaration") {
     /* function declaration: created above, needs a fixup here */
     s = setFunctionDeclarationBody(isSgFunctionDeclaration(s),child2);
   } else if (isBinaryOp(tname)) {
     s = createBinaryOp(fi,child1,child2,t);
-  } else if (tname == SG_PREFIX "cast_exp") {
+  } else if (tname == "cast_exp") {
     s = createUnaryOp(fi,child1,t);
-  } else if (tname == SG_PREFIX "switch_statement") {
+  } else if (tname == "switch_statement") {
     s = createSwitchStatement(fi,child1,child2,t);
-  } else if (tname == SG_PREFIX "do_while_stmt") {
+  } else if (tname == "do_while_stmt") {
     s = createDoWhileStmt(fi,child1,child2,t);
-  } else if (tname == SG_PREFIX "while_stmt") {
+  } else if (tname == "while_stmt") {
     s = createWhileStmt(fi,child1,child2,t);
-  } else if(tname == SG_PREFIX "var_arg_copy_op") {
+  } else if(tname == "var_arg_copy_op") {
     s = createVarArgCopyOp(fi,child1,child2,t);
-  } else if(tname == SG_PREFIX "var_arg_start_op") {
+  } else if(tname == "var_arg_start_op") {
     s = createVarArgStartOp(fi,child1,child2,t);	
-  } else if(tname == SG_PREFIX "function_call_exp") {
+  } else if(tname == "function_call_exp") {
     s = createFunctionCallExp(fi,child1,child2,t);	
-  } else if(tname == SG_PREFIX "try_stmt") {
+  } else if(tname == "try_stmt") {
     s = createTryStmt(fi,child1,child2,t);	
-  } else if(tname == SG_PREFIX "catch_option_stmt") {
+  } else if(tname == "catch_option_stmt") {
     s = createCatchOptionStmt(fi,child1,child2,t);	
-  } else if (tname == SG_PREFIX "source_file") {
+  } else if (tname == "source_file") {
     TERM_ASSERT(t, false && "a source_file should not be a binary node!");
     s = createFile(fi,child1,t);
   } else cerr<<"**WARNING: unhandled Binary Node: "<<tname<<endl;
@@ -466,15 +466,15 @@ TermToRose::ternaryToRose(PrologCompTerm* t,string tname) {
   testFileInfo(fi);
   /* create nodes depending on type*/
   SgNode* s = NULL;
-  if (tname == SG_PREFIX "if_stmt") {
+  if (tname == "if_stmt") {
     s = createIfStmt(fi,child1,child2,child3,t);
-  } else if (tname == SG_PREFIX "case_option_stmt") {
+  } else if (tname == "case_option_stmt") {
     s = createCaseOptionStmt(fi,child1,child2,child3,t);
-  } else if (tname == SG_PREFIX "member_function_declaration") {
+  } else if (tname == "member_function_declaration") {
     s = createMemberFunctionDeclaration(fi,child1,child2,child3,t);
-  } else if (tname == SG_PREFIX "new_exp") {
+  } else if (tname == "new_exp") {
     s = createNewExp(fi,child1,child2,child3,t);
-  } else if (tname == SG_PREFIX "conditional_exp") {
+  } else if (tname == "conditional_exp") {
     s = createConditionalExp(fi,child1,child2,child3,t);
   } else cerr<<"**WARNING: unhandled Ternary Node: "<<tname<<endl;
 
@@ -511,7 +511,7 @@ TermToRose::quaternaryToRose(PrologCompTerm* t,string tname) {
   testFileInfo(fi);
   /* node to be created*/
   SgNode* s = NULL;
-  if(tname == SG_PREFIX "for_statement") {
+  if(tname == "for_statement") {
     s = createForStatement(fi,child1,child2,child3,child4,t);
   } else cerr<<"**WARNING: unhandled Quarternary Node: "<<tname<<endl;
   /*set s to be the parent of its child nodes*/
@@ -549,7 +549,7 @@ TermToRose::listToRose(PrologCompTerm* t,string tname) {
   /* lookeahead hack for variable declarations: the annotation term must be
    * traversed first because it may contain a type declaration */
   SgDeclarationStatement *varDeclBaseTypeDecl = NULL;
-  if (tname == SG_PREFIX "variable_declaration") {
+  if (tname == "variable_declaration") {
     EXPECT_TERM_NAME_ARITY(PrologCompTerm*, annot, t->at(1),
 		 "variable_declaration_specific", 3);
     PrologTerm* typeDeclTerm = annot->at(1);
@@ -560,7 +560,7 @@ TermToRose::listToRose(PrologCompTerm* t,string tname) {
   }
 
   /* lookahead hack */
-  if (tname == SG_PREFIX "global") 
+  if (tname == "global") 
     globalDecls = succterms;
 
   deque<SgNode*>* succs = new deque<SgNode*>();
@@ -577,29 +577,29 @@ TermToRose::listToRose(PrologCompTerm* t,string tname) {
   }
   /* depending on the type, create node*/
   SgNode* s = NULL;
-  if(tname == SG_PREFIX "global") {
+  if(tname == "global") {
     s = createGlobal(fi,succs);
-  } else if (tname == SG_PREFIX "project") {
+  } else if (tname == "project") {
     s = createProject(fi,succs);
-  } else if (tname == SG_PREFIX "function_parameter_list") {
+  } else if (tname == "function_parameter_list") {
     s = createFunctionParameterList(fi,succs);
-  } else if (tname == SG_PREFIX "basic_block") {
+  } else if (tname == "basic_block") {
     s = createBasicBlock(fi,succs);
-  } else if (tname == SG_PREFIX "variable_declaration") {
+  } else if (tname == "variable_declaration") {
     s = createVariableDeclaration(fi,succs,t,varDeclBaseTypeDecl);
-  } else if (tname == SG_PREFIX "for_init_statement") {
+  } else if (tname == "for_init_statement") {
     s = createForInitStatement(fi,succs);
-  } else if (tname == SG_PREFIX "class_definition") {
+  } else if (tname == "class_definition") {
     s = createClassDefinition(fi,succs,t);
-  } else if (tname == SG_PREFIX "enum_declaration") {
+  } else if (tname == "enum_declaration") {
     s = createEnumDeclaration(fi,succs,t);
-  } else if (tname == SG_PREFIX "expr_list_exp") {
+  } else if (tname == "expr_list_exp") {
     s = createExprListExp(fi,succs);
-  } else if (tname == SG_PREFIX "ctor_initializer_list") {
+  } else if (tname == "ctor_initializer_list") {
     s = createCtorInitializerList(fi,succs);
-  } else if (tname == SG_PREFIX "namespace_definition_statement") {
+  } else if (tname == "namespace_definition_statement") {
     s = createNamespaceDefinitionStatement(fi,succs);
-  } else if (tname == SG_PREFIX "catch_statement_seq") {
+  } else if (tname == "catch_statement_seq") {
     s = createCatchStatementSeq(fi,succs);
   }
   TERM_ASSERT(t, s != NULL);
@@ -625,51 +625,51 @@ TermToRose::leafToRose(PrologCompTerm* t,string tname) {
   SgNode* s = NULL;
   /* some list nodes become leaf nodes when the list is empty
    * -> create dummy list and call corresponding factory methods*/
-  if (tname == SG_PREFIX "function_parameter_list") {
+  if (tname == "function_parameter_list") {
     deque<SgNode*>* adummy = new deque<SgNode*>;
     s = createFunctionParameterList(fi,adummy);
-  } else if (tname == SG_PREFIX "basic_block") {
+  } else if (tname == "basic_block") {
     deque<SgNode*>* adummy = new deque<SgNode*>;
     s = createBasicBlock(fi,adummy);
-  } else if (tname == SG_PREFIX "class_definition") {
+  } else if (tname == "class_definition") {
     deque<SgNode*>* adummy = new deque<SgNode*>;
     s = createClassDefinition(fi,adummy,t);
-  } else if (tname == SG_PREFIX "ctor_initializer_list") {
+  } else if (tname == "ctor_initializer_list") {
     deque<SgNode*>* adummy = new deque<SgNode*>;
     s = createCtorInitializerList(fi,adummy);
-  } else if (tname == SG_PREFIX "expr_list_exp") {
+  } else if (tname == "expr_list_exp") {
     deque<SgNode*>* adummy = new deque<SgNode*>;
     s = createExprListExp(fi,adummy);
-  } else if (tname == SG_PREFIX "namespace_definition_statement") {
+  } else if (tname == "namespace_definition_statement") {
     deque<SgNode*>* adummy = new deque<SgNode*>;
     s = createNamespaceDefinitionStatement(fi,adummy);
-  } else if (tname == SG_PREFIX "for_init_statement") {
+  } else if (tname == "for_init_statement") {
     deque<SgNode*>* adummy = new deque<SgNode*>;
     s = createForInitStatement(fi,adummy);
     /* regular leaf nodes*/
-  } else if (tname == SG_PREFIX "var_ref_exp") {
+  } else if (tname == "var_ref_exp") {
     s = createVarRefExp(fi,t);
-  } else if (tname == SG_PREFIX "break_stmt") {
+  } else if (tname == "break_stmt") {
     s = createBreakStmt(fi,t);
-  } else if (tname == SG_PREFIX "continue_stmt") {
+  } else if (tname == "continue_stmt") {
     s = createContinueStmt(fi,t);
-  } else if (tname == SG_PREFIX "label_statement") {
+  } else if (tname == "label_statement") {
     s = createLabelStatement(fi,t);
-  } else if (tname == SG_PREFIX "goto_statement") {
+  } else if (tname == "goto_statement") {
     s = createGotoStatement(fi,t);
-  } else if (tname == SG_PREFIX "ref_exp") {
+  } else if (tname == "ref_exp") {
     s = createRefExp(fi,t);
-  } else if (tname == SG_PREFIX "function_ref_exp") {
+  } else if (tname == "function_ref_exp") {
     s = createFunctionRefExp(fi,t);
-  } else if (tname == SG_PREFIX "member_function_ref_exp") {
+  } else if (tname == "member_function_ref_exp") {
     s = createMemberFunctionRefExp(fi,t);
-  } else if (tname == SG_PREFIX "this_exp") {
+  } else if (tname == "this_exp") {
     s = createThisExp(fi,t);
-  } else if(tname == SG_PREFIX "pragma") {
+  } else if(tname == "pragma") {
     s = createPragma(fi,t);
-  } else if (tname == SG_PREFIX "null_statement") {
+  } else if (tname == "null_statement") {
     s = new SgNullStatement(fi);
-  } else if (tname == SG_PREFIX "null_expression") {
+  } else if (tname == "null_expression") {
     s = new SgNullExpression(fi);
   }
   TERM_ASSERT(t, s != NULL);
@@ -898,31 +898,31 @@ TermToRose::createType(PrologTerm* t) {
       warn_msg("warning: no type created");
       type = NULL;
     } else
-    if (tname==SG_PREFIX "type_bool") type = new SgTypeBool();
-    else if (tname==SG_PREFIX "type_char") type = new SgTypeChar();
-    else if (tname==SG_PREFIX "type_default") type = new SgTypeDefault();
-    else if (tname==SG_PREFIX "type_double") type = new SgTypeDouble();
-    else if (tname==SG_PREFIX "type_float") type = new SgTypeFloat();
-    else if (tname==SG_PREFIX "type_global_void") type = new SgTypeGlobalVoid(); 
-    else if (tname==SG_PREFIX "type_ellipse") {type = new SgTypeEllipse();}
-    else if (tname==SG_PREFIX "type_int") {type = new SgTypeInt();}
-    else if (tname==SG_PREFIX "type_long") type = new SgTypeLong();
-    else if (tname==SG_PREFIX "type_long_double") type = new SgTypeLongDouble();
-    else if (tname==SG_PREFIX "type_long_long") type = new SgTypeLongLong();
-    else if (tname==SG_PREFIX "type_short") type = new SgTypeShort();
-    else if (tname==SG_PREFIX "type_signed_char") type = new SgTypeSignedChar();
-    else if (tname==SG_PREFIX "type_signed_int") type = new SgTypeSignedInt();
-    else if (tname==SG_PREFIX "type_signed_long") type = new SgTypeSignedLong();
-    else if (tname==SG_PREFIX "type_signed_short") type = new SgTypeSignedShort();
-    else if (tname==SG_PREFIX "type_string") type = new SgTypeString();
-    else if (tname==SG_PREFIX "type_unknown") type = new SgTypeUnknown();
-    else if (tname==SG_PREFIX "type_unsigned_char") type = new SgTypeUnsignedChar();
-    else if (tname==SG_PREFIX "type_unsigned_int") type = new SgTypeUnsignedInt();
-    else if (tname==SG_PREFIX "type_unsigned_long") type = new SgTypeUnsignedLong();
-    else if (tname==SG_PREFIX "type_unsigned_long_long") type = new SgTypeUnsignedLongLong();
-    else if (tname==SG_PREFIX "type_unsigned_short") type = new SgTypeUnsignedShort(); 
-    else if (tname==SG_PREFIX "type_void") type = new SgTypeVoid();
-    else if (tname==SG_PREFIX "type_wchar") type = new SgTypeWchar();
+    if (tname=="type_bool") type = new SgTypeBool();
+    else if (tname=="type_char") type = new SgTypeChar();
+    else if (tname=="type_default") type = new SgTypeDefault();
+    else if (tname=="type_double") type = new SgTypeDouble();
+    else if (tname=="type_float") type = new SgTypeFloat();
+    else if (tname=="type_global_void") type = new SgTypeGlobalVoid(); 
+    else if (tname=="type_ellipse") {type = new SgTypeEllipse();}
+    else if (tname=="type_int") {type = new SgTypeInt();}
+    else if (tname=="type_long") type = new SgTypeLong();
+    else if (tname=="type_long_double") type = new SgTypeLongDouble();
+    else if (tname=="type_long_long") type = new SgTypeLongLong();
+    else if (tname=="type_short") type = new SgTypeShort();
+    else if (tname=="type_signed_char") type = new SgTypeSignedChar();
+    else if (tname=="type_signed_int") type = new SgTypeSignedInt();
+    else if (tname=="type_signed_long") type = new SgTypeSignedLong();
+    else if (tname=="type_signed_short") type = new SgTypeSignedShort();
+    else if (tname=="type_string") type = new SgTypeString();
+    else if (tname=="type_unknown") type = new SgTypeUnknown();
+    else if (tname=="type_unsigned_char") type = new SgTypeUnsignedChar();
+    else if (tname=="type_unsigned_int") type = new SgTypeUnsignedInt();
+    else if (tname=="type_unsigned_long") type = new SgTypeUnsignedLong();
+    else if (tname=="type_unsigned_long_long") type = new SgTypeUnsignedLongLong();
+    else if (tname=="type_unsigned_short") type = new SgTypeUnsignedShort(); 
+    else if (tname=="type_void") type = new SgTypeVoid();
+    else if (tname=="type_wchar") type = new SgTypeWchar();
     else TERM_ASSERT(t, false && "Unknown type enountered");
   }
   typeMap[id] = type;
@@ -934,39 +934,39 @@ TermToRose::createType(PrologTerm* t) {
  * is this string the name of a SgValueExp?*/
 bool
 TermToRose::isValueExp(string tname) {
-  if(tname == SG_PREFIX "bool_val_exp")
+  if(tname == "bool_val_exp")
     return true;
-  if(tname == SG_PREFIX "string_val")
+  if(tname == "string_val")
     return true;
-  if(tname == SG_PREFIX "short_val")
+  if(tname == "short_val")
     return true;
-  if(tname == SG_PREFIX "char_val")
+  if(tname == "char_val")
     return true;
-  if(tname == SG_PREFIX "unsigned_char_val")
+  if(tname == "unsigned_char_val")
     return true;
-  if(tname == SG_PREFIX "wchar_val")
+  if(tname == "wchar_val")
     return true;
-  if(tname == SG_PREFIX "unsigned_short_val")
+  if(tname == "unsigned_short_val")
     return true;
-  if(tname == SG_PREFIX "int_val")
+  if(tname == "int_val")
     return true;
-  if(tname == SG_PREFIX "enum_val")
+  if(tname == "enum_val")
     return true;
-  if(tname == SG_PREFIX "unsigned_int_val")
+  if(tname == "unsigned_int_val")
     return true;
-  if(tname == SG_PREFIX "long_int_val")
+  if(tname == "long_int_val")
     return true;
-  if(tname == SG_PREFIX "long_long_int_val")
+  if(tname == "long_long_int_val")
     return true;
-  if(tname == SG_PREFIX "unsigned_long_long_int_val")
+  if(tname == "unsigned_long_long_int_val")
     return true;
-  if(tname == SG_PREFIX "unsigned_long_val")
+  if(tname == "unsigned_long_val")
     return true;
-  if(tname == SG_PREFIX "float_val")
+  if(tname == "float_val")
     return true;
-  if(tname == SG_PREFIX "double_val")
+  if(tname == "double_val")
     return true;
-  if(tname == SG_PREFIX "long_double_val")
+  if(tname == "long_double_val")
     return true;
   return false;
 }
@@ -1053,25 +1053,25 @@ TermToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
   string vtype = t->getName();
   SgValueExp* ve = NULL;
   /*integer types */
-  if(vtype == SG_PREFIX "int_val") 
+  if(vtype == "int_val") 
     createValue(SgIntVal, int, fi, t);
-  else if (vtype == SG_PREFIX "unsigned_int_val")
+  else if (vtype == "unsigned_int_val")
     createValue(SgUnsignedIntVal, uint, fi, t);
-  else if (vtype == SG_PREFIX "short_val") 
+  else if (vtype == "short_val") 
     createValue(SgShortVal, short, fi,t);
-  else if (vtype == SG_PREFIX "unsigned_short_val")
+  else if (vtype == "unsigned_short_val")
     createValue(SgUnsignedShortVal, ushort, fi, t);
-  else if (vtype == SG_PREFIX "long_int_val")
+  else if (vtype == "long_int_val")
     createValue(SgLongIntVal, longint, fi, t);
-  else if (vtype == SG_PREFIX "unsigned_long_val") 
+  else if (vtype == "unsigned_long_val") 
     createValue(SgUnsignedLongVal, ulong, fi, t);
-  else if (vtype == SG_PREFIX "long_long_int_val")
+  else if (vtype == "long_long_int_val")
     createValue(SgLongLongIntVal, longlongint, fi, t);
-  else if (vtype == SG_PREFIX "unsigned_long_long_int_val")
+  else if (vtype == "unsigned_long_long_int_val")
     createValue(SgUnsignedLongLongIntVal, ulonglongint, fi, t);
 
 
-  else if (vtype == SG_PREFIX "enum_val") {
+  else if (vtype == "enum_val") {
     debug("unparsing enum value");
     PrologCompTerm* annot = retrieveAnnotation(t);
     TERM_ASSERT(t, annot != NULL);
@@ -1096,15 +1096,15 @@ TermToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
   }
   
   /* floating point types*/
-  else if (vtype == SG_PREFIX "float_val")
+  else if (vtype == "float_val")
     createValue(SgFloatVal, float, fi, t);
-  else if (vtype == SG_PREFIX "double_val")
+  else if (vtype == "double_val")
     createValue(SgDoubleVal, double, fi, t);
-  else if (vtype == SG_PREFIX "long_double_val")
+  else if (vtype == "long_double_val")
     createValue(SgLongDoubleVal, longdouble, fi, t);
     
   /* characters */
-  else if (vtype == SG_PREFIX "char_val") {
+  else if (vtype == "char_val") {
     //char
     debug("unparsing char");
     PrologCompTerm* annot = retrieveAnnotation(t);
@@ -1119,7 +1119,7 @@ TermToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
     }		
     SgCharVal* valnode = new SgCharVal(fi,number);
     ve = valnode;
-  } else if (vtype == SG_PREFIX "unsigned_char_val") {
+  } else if (vtype == "unsigned_char_val") {
     //unsigned char
     debug("unparsing unsigned char");
     PrologCompTerm* annot = retrieveAnnotation(t);
@@ -1135,12 +1135,12 @@ TermToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
     SgUnsignedCharVal* valnode = new SgUnsignedCharVal(fi,number);
     ve = valnode;
   } 
-  else if (vtype == SG_PREFIX "wchar_val")
+  else if (vtype == "wchar_val")
     createValue(SgWcharVal, ulong, fi, t);
     /* boolean*/
-  else if (vtype == SG_PREFIX "bool_val_exp")
+  else if (vtype == "bool_val_exp")
     createValue(SgBoolValExp, int, fi, t);
-  else if (vtype == SG_PREFIX "string_val") {
+  else if (vtype == "string_val") {
     PrologCompTerm* annot = retrieveAnnotation(t);
     TERM_ASSERT(t, annot != NULL);
     EXPECT_TERM(PrologAtom*, s, annot->at(0));
@@ -1171,17 +1171,17 @@ TermToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
  */
 bool
 TermToRose::isUnaryOp(string opname) {
-  if (opname == SG_PREFIX "address_of_op" ||
-      opname == SG_PREFIX "bit_complement_op" || 
-      opname == SG_PREFIX "expression_root" || 
-      opname == SG_PREFIX "minus_op" || 
-      opname == SG_PREFIX "not_op" || 
-      opname == SG_PREFIX "pointer_deref_exp" || 
-      opname == SG_PREFIX "unary_add_op" || 
-      opname == SG_PREFIX "minus_minus_op" || 
-      opname == SG_PREFIX "plus_plus_op" || 
-      opname == SG_PREFIX "cast_exp" || 
-      opname == SG_PREFIX "throw_op")
+  if (opname == "address_of_op" ||
+      opname == "bit_complement_op" || 
+      opname == "expression_root" || 
+      opname == "minus_op" || 
+      opname == "not_op" || 
+      opname == "pointer_deref_exp" || 
+      opname == "unary_add_op" || 
+      opname == "minus_minus_op" || 
+      opname == "plus_plus_op" || 
+      opname == "cast_exp" || 
+      opname == "throw_op")
     return true;	
   return false;
 }
@@ -1208,32 +1208,32 @@ TermToRose::createUnaryOp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
   SgType* sgtype = createType(annot->at(1));
   ROSE_ASSERT(sgtype != NULL);
   /*nothing special with these*/
-  if (opname == SG_PREFIX "address_of_op") return new SgAddressOfOp(fi,sgexp,sgtype);
-  else if (opname == SG_PREFIX "bit_complement_op") return new SgBitComplementOp(fi,sgexp,sgtype);
-  else if (opname == SG_PREFIX "expression_root") {
+  if (opname == "address_of_op") return new SgAddressOfOp(fi,sgexp,sgtype);
+  else if (opname == "bit_complement_op") return new SgBitComplementOp(fi,sgexp,sgtype);
+  else if (opname == "expression_root") {
     SgExpressionRoot* er = new SgExpressionRoot(fi,sgexp,sgtype);
     debug("Exp Root: " + er->unparseToString());
     return er;
   }
-  else if (opname == SG_PREFIX "minus_op") return new SgMinusOp(fi,sgexp,sgtype);
-  else if (opname == SG_PREFIX "not_op") return new SgNotOp(fi,sgexp,sgtype);
-  else if (opname == SG_PREFIX "pointer_deref_exp") return new SgPointerDerefExp(fi,sgexp,sgtype);
-  else if (opname == SG_PREFIX "unary_add_op") return new SgUnaryAddOp(fi,sgexp,sgtype);	
+  else if (opname == "minus_op") return new SgMinusOp(fi,sgexp,sgtype);
+  else if (opname == "not_op") return new SgNotOp(fi,sgexp,sgtype);
+  else if (opname == "pointer_deref_exp") return new SgPointerDerefExp(fi,sgexp,sgtype);
+  else if (opname == "unary_add_op") return new SgUnaryAddOp(fi,sgexp,sgtype);	
   /* chose wether to use ++ and -- as prefix or postfix via set_mode*/
-  else if (opname == SG_PREFIX "minus_minus_op") {
+  else if (opname == "minus_minus_op") {
     SgMinusMinusOp* m = new SgMinusMinusOp(fi,sgexp,sgtype);
     m->set_mode(mode->getName() == "prefix" ? SgUnaryOp::prefix
                                             : SgUnaryOp::postfix);
     return m;
   }
-  else if (opname == SG_PREFIX "plus_plus_op") {
+  else if (opname == "plus_plus_op") {
     SgPlusPlusOp* p = new SgPlusPlusOp(fi,sgexp,sgtype);
     p->set_mode(mode->getName() == "prefix" ? SgUnaryOp::prefix
                                             : SgUnaryOp::postfix);
     return p;
   }
   /* For a cast we need to retrieve cast type (enum)*/
-  else if (opname == SG_PREFIX "cast_exp") {
+  else if (opname == "cast_exp") {
     //cerr<<"######castexp "<< annot->getRepresentation()<< "bug in ROSE?" <<endl;
     SgCastExp* e = new SgCastExp(fi, sgexp, sgtype,
 				 (SgCastExp::cast_type_enum)
@@ -1242,7 +1242,7 @@ TermToRose::createUnaryOp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
     return e;
   } 
   /* some more initialization necessary for a throw */
-  else if (opname == SG_PREFIX "throw_op") { 
+  else if (opname == "throw_op") { 
     /*need to retrieve throw kind* (enum)*/
     int tkind = createEnum(annot->at(2), re.throw_kind);
     // FIXME: use kind!
@@ -1869,79 +1869,79 @@ TermToRose::createBinaryOp(Sg_File_Info* fi,SgNode* lnode,SgNode* rnode,PrologCo
   SgType* op_type = createType(annot->at(0));
   /* depending on the type, call constructor*/
   SgBinaryOp* cur_op = NULL;
-  if (op_name == SG_PREFIX "arrow_exp") {
+  if (op_name == "arrow_exp") {
     cur_op = new SgArrowExp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "dot_exp") {
+  } else if (op_name == "dot_exp") {
     cur_op = new SgDotExp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "dot_star_op") {
+  } else if (op_name == "dot_star_op") {
     cur_op = new SgDotStarOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "arrow_star_op") {
+  } else if (op_name == "arrow_star_op") {
     cur_op = new SgArrowStarOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "equality_op") {
+  } else if (op_name == "equality_op") {
     cur_op = new SgEqualityOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "less_than_op") {
+  } else if (op_name == "less_than_op") {
     cur_op = new SgLessThanOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "greater_than_op") {
+  } else if (op_name == "greater_than_op") {
     cur_op = new SgGreaterThanOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "not_equal_op") {
+  } else if (op_name == "not_equal_op") {
     cur_op = new SgNotEqualOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "less_or_equal_op") {
+  } else if (op_name == "less_or_equal_op") {
     cur_op = new SgLessOrEqualOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "greater_or_equal_op") {
+  } else if (op_name == "greater_or_equal_op") {
     cur_op = new SgGreaterOrEqualOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "add_op") {
+  } else if (op_name == "add_op") {
     cur_op = new SgAddOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "subtract_op") {
+  } else if (op_name == "subtract_op") {
     cur_op = new SgSubtractOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "multiply_op") {
+  } else if (op_name == "multiply_op") {
     cur_op = new SgMultiplyOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "divide_op") {
+  } else if (op_name == "divide_op") {
     cur_op = new SgDivideOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "integer_divide_op") {
+  } else if (op_name == "integer_divide_op") {
     cur_op = new SgIntegerDivideOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "mod_op") {
+  } else if (op_name == "mod_op") {
     cur_op = new SgModOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "and_op") {
+  } else if (op_name == "and_op") {
     cur_op = new SgAndOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "or_op") {
+  } else if (op_name == "or_op") {
     cur_op = new SgOrOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "bit_xor_op") {
+  } else if (op_name == "bit_xor_op") {
     cur_op = new SgBitXorOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "bit_and_op") {
+  } else if (op_name == "bit_and_op") {
     cur_op = new SgBitAndOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "bit_or_op") {
+  } else if (op_name == "bit_or_op") {
     cur_op = new SgBitOrOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "comma_op_exp") {
+  } else if (op_name == "comma_op_exp") {
     cur_op = new SgCommaOpExp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "lshift_op") {
+  } else if (op_name == "lshift_op") {
     cur_op = new SgLshiftOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "rshift_op") {
+  } else if (op_name == "rshift_op") {
     cur_op = new SgRshiftOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "pntr_arr_ref_exp") {
+  } else if (op_name == "pntr_arr_ref_exp") {
     cur_op = new SgPntrArrRefExp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "scope_op") {
+  } else if (op_name == "scope_op") {
     cur_op = new SgScopeOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "assign_op") {
+  } else if (op_name == "assign_op") {
     cur_op = new SgAssignOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "plus_assign_op") {
+  } else if (op_name == "plus_assign_op") {
     cur_op = new SgPlusAssignOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "minus_assign_op") {
+  } else if (op_name == "minus_assign_op") {
     cur_op = new SgMinusAssignOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "and_assign_op") {
+  } else if (op_name == "and_assign_op") {
     cur_op = new SgAndAssignOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "ior_assign_op") {
+  } else if (op_name == "ior_assign_op") {
     cur_op = new SgIorAssignOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "mult_assign_op") {
+  } else if (op_name == "mult_assign_op") {
     cur_op = new SgMultAssignOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "div_assign_op") {
+  } else if (op_name == "div_assign_op") {
     cur_op = new SgDivAssignOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "mod_assign_op") {
+  } else if (op_name == "mod_assign_op") {
     cur_op = new SgModAssignOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "xor_assign_op") {
+  } else if (op_name == "xor_assign_op") {
     cur_op = new SgXorAssignOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "lshift_assign_op") {
+  } else if (op_name == "lshift_assign_op") {
     cur_op = new SgLshiftAssignOp(fi,lhs,rhs,op_type);
-  } else if (op_name == SG_PREFIX "rshift_assign_op") {
+  } else if (op_name == "rshift_assign_op") {
     cur_op = new SgRshiftAssignOp(fi,lhs,rhs,op_type);
   }
   TERM_ASSERT(t, cur_op != NULL);
@@ -1954,81 +1954,81 @@ TermToRose::createBinaryOp(Sg_File_Info* fi,SgNode* lnode,SgNode* rnode,PrologCo
  */
 bool
 TermToRose::isBinaryOp(string tname) {
-  if (tname == SG_PREFIX "arrow_exp") {
+  if (tname == "arrow_exp") {
     return true;
-  } else if (tname == SG_PREFIX "dot_exp") {
+  } else if (tname == "dot_exp") {
     return true;
-  } else if (tname == SG_PREFIX "dot_star_op") {
+  } else if (tname == "dot_star_op") {
     return true;
-  } else if (tname == SG_PREFIX "arrow_star_op") {
+  } else if (tname == "arrow_star_op") {
     return true;
-  } else if (tname == SG_PREFIX "equality_op") {
+  } else if (tname == "equality_op") {
     return true;
-  } else if (tname == SG_PREFIX "less_than_op") {
+  } else if (tname == "less_than_op") {
     return true;
-  } else if (tname == SG_PREFIX "greater_than_op") {
+  } else if (tname == "greater_than_op") {
     return true;
-  } else if (tname == SG_PREFIX "not_equal_op") {
+  } else if (tname == "not_equal_op") {
     return true;
-  } else if (tname == SG_PREFIX "less_or_equal_op") {
+  } else if (tname == "less_or_equal_op") {
     return true;
-  } else if (tname == SG_PREFIX "greater_or_equal_op") {
+  } else if (tname == "greater_or_equal_op") {
     return true;
-  } else if (tname == SG_PREFIX "add_op") {
+  } else if (tname == "add_op") {
     return true;
-  } else if (tname == SG_PREFIX "subtract_op") {
+  } else if (tname == "subtract_op") {
     return true;
-  } else if (tname == SG_PREFIX "multiply_op") {
+  } else if (tname == "multiply_op") {
     return true;
-  } else if (tname == SG_PREFIX "divide_op") {
+  } else if (tname == "divide_op") {
     return true;
-  } else if (tname == SG_PREFIX "integer_divide_op") {
+  } else if (tname == "integer_divide_op") {
     return true;
-  } else if (tname == SG_PREFIX "mod_op") {
+  } else if (tname == "mod_op") {
     return true;
-  } else if (tname == SG_PREFIX "and_op") {
+  } else if (tname == "and_op") {
     return true;
-  } else if (tname == SG_PREFIX "or_op") {
+  } else if (tname == "or_op") {
     return true;
-  } else if (tname == SG_PREFIX "bit_xor_op") {
+  } else if (tname == "bit_xor_op") {
     return true;
-  } else if (tname == SG_PREFIX "bit_and_op") {
+  } else if (tname == "bit_and_op") {
     return true;
-  } else if (tname == SG_PREFIX "bit_or_op") {
+  } else if (tname == "bit_or_op") {
     return true;
-  } else if (tname == SG_PREFIX "comma_op_exp") {
+  } else if (tname == "comma_op_exp") {
     return true;
-  } else if (tname == SG_PREFIX "lshift_op") {
+  } else if (tname == "lshift_op") {
     return true;
-  } else if (tname == SG_PREFIX "rshift_op") {
+  } else if (tname == "rshift_op") {
     return true;
-  } else if (tname == SG_PREFIX "pntr_arr_ref_exp") {
+  } else if (tname == "pntr_arr_ref_exp") {
     return true;
-  } else if (tname == SG_PREFIX "scope_op") {
+  } else if (tname == "scope_op") {
     return true;
-  } else if (tname == SG_PREFIX "assign_op") {
+  } else if (tname == "assign_op") {
     return true;
-  } else if (tname == SG_PREFIX "plus_assign_op") {
+  } else if (tname == "plus_assign_op") {
     return true;
-  } else if (tname == SG_PREFIX "minus_assign_op") {
+  } else if (tname == "minus_assign_op") {
     return true;
-  } else if (tname == SG_PREFIX "and_assign_op") {
+  } else if (tname == "and_assign_op") {
     return true;
-  } else if (tname == SG_PREFIX "ior_assign_op") {
+  } else if (tname == "ior_assign_op") {
     return true;
-  } else if (tname == SG_PREFIX "mult_assign_op") {
+  } else if (tname == "mult_assign_op") {
     return true;
-  } else if (tname == SG_PREFIX "div_assign_op") {
+  } else if (tname == "div_assign_op") {
     return true;
-  } else if (tname == SG_PREFIX "mod_assign_op") {
+  } else if (tname == "mod_assign_op") {
     return true;
-  } else if (tname == SG_PREFIX "xor_assign_op") {
+  } else if (tname == "xor_assign_op") {
     return true;
-  } else if (tname == SG_PREFIX "lshift_assign_op") {
+  } else if (tname == "lshift_assign_op") {
     return true;
-  } else if (tname == SG_PREFIX "rshift_assign_op") {
+  } else if (tname == "rshift_assign_op") {
     return true;
-  } else if (tname == SG_PREFIX "arrow_exp") {
+  } else if (tname == "arrow_exp") {
     return true;
   } else return false;
 }
@@ -3328,7 +3328,7 @@ TermToRose::createFunctionRefExp(Sg_File_Info* fi, PrologCompTerm* ct) {
   TERM_ASSERT(ct, ct != NULL);
   PrologCompTerm* annot = retrieveAnnotation(ct);
   TERM_ASSERT(ct, annot != NULL);
-  TERM_ASSERT(ct, annot->getArity() == 3);
+  ARITY_ASSERT(annot, 3);
   string* s = toStringP(annot->at(0));
   TERM_ASSERT(ct, s != NULL);
 
@@ -3520,7 +3520,6 @@ TermToRose::createConstructorInitializer(Sg_File_Info* fi, SgNode* child1,Prolog
   /* cast the SgExprListExp*/
   SgExprListExp* el = isSgExprListExp(child1);
   /* create constructor initializer, need_name = true*/
-  // old ROSE 0.8.8a: SgConstructorInitializer* ci = new SgConstructorInitializer(fi,NULL,el,decl,true,false,false,false);
   SgConstructorInitializer* ci = new SgConstructorInitializer(fi,decl,el,NULL,true,false,false,false);
   TERM_ASSERT(t, ci != NULL);
   ci->set_is_explicit_cast(1);
@@ -3577,16 +3576,12 @@ TermToRose::createConditionalExp(Sg_File_Info* fi,SgNode* child1,SgNode* child2,
   /* retrieve type*/
   SgType* tpe = createType(annot->at(0));
   TERM_ASSERT(t, tpe != NULL);
-
   SgExpression* exp1 = isSgExpression(child1);
   TERM_ASSERT(t, exp1 != NULL);
-
   SgExpression* exp2 = isSgExpression(child2);
   TERM_ASSERT(t, exp2 != NULL);
-
   SgExpression* exp3 = isSgExpression(child3);
   TERM_ASSERT(t, exp3 != NULL);
-
 
   SgConditionalExp* exp = new SgConditionalExp(fi, exp1, exp2, exp3, tpe);
   TERM_ASSERT(t, exp != NULL);

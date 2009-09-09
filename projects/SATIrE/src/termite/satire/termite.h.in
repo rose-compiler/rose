@@ -20,8 +20,4 @@
 #include "PrologInt.h"
 #include "PrologVariable.h"
 
-// Defines wether Terms start with "Sg"
-#define SG_PREFIX ""
-//#define SG_PREFIX "Sg"
-
 #endif

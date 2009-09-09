@@ -154,10 +154,6 @@ RoseToTerm::prologize(string s) {
   string t;
   string::iterator it;
   it = s.begin();
-  // remove "^Sg"
-  if ((SG_PREFIX == "") && (s.length() > 2) && (s[0] == 'S') && (s[1] == 'g')) {
-    ++it, ++it;
-  }
   //lowercase first char (without prepending underscore)
   if(it != s.end()) {
     if(isUpper(*it)) {
