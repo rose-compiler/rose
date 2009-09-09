@@ -230,7 +230,7 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
 	} else {
 	  // this is a C++ class in a header file 
 	  ROSE_ASSERT(rtedModifiedClass);
-	  nullPointer = buildCastExp(buildIntVal(1),
+	  nullPointer = buildCastExp(buildIntVal(0),
 				     buildPointerType(rtedModifiedClass->get_declaration()->get_type()));
 	}
 
@@ -249,7 +249,7 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
 	  if (rtedModifiedClass==NULL && classHasConstructor==false)
 	    castOp = buildCastExp(andOp, size_t_member);
 	  else {
-	    SgExpression* minus = buildSubtractOp(andOp, buildIntVal(1));
+	    SgExpression* minus = buildSubtractOp(andOp, buildIntVal(0));
 	    castOp = buildCastExp(minus, size_t_member);
 	  }
 

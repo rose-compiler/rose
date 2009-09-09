@@ -1,13 +1,19 @@
+class Test3;
 
 class Test {
   public:
     Test() { 
     }
   int i;
+ private:
   int m;
+  Test3* t;
 };
 
-struct Test3 {
+class Test3 {
+ public:
+  Test3();
+  ~Test3(){};
   int i;
   int x;
 };

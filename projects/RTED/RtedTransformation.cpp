@@ -91,9 +91,15 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
     if (isInSourceFileSet) {
       // we should only do this for C++!
       std::string filename = sf->get_file_info()->get_filename();
-      if (! (filename.find(".C") || filename.find(".c")) )
+      if ((filename.find(".cxx")!=std::string::npos ||
+		   filename.find(".cpp")!=std::string::npos ||
+		   filename.find(".C")!=std::string::npos  ) ) {
 	// if it is not a C but C++ program, then insert namespace
-	insertNamespaceIntoSourceFile(sf);
+    	  cerr << " **** Inserting file into sourceFileRoseNamespaceMap:" << sf -> get_file_info() -> get_filename() << endl;
+    	  insertNamespaceIntoSourceFile(sf);
+      } else {
+    	//  cerr << " ** not a cpp file" <<filename << endl;
+      }
     }
   }
   cerr << "Deep copy of all C++ class declarations to allow offsetof to be used." << endl;
@@ -104,23 +110,26 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
   for (;classIt!=results.rend();classIt++) {
     SgClassDeclaration* classDecl = isSgClassDeclaration(*classIt);
     if (classDecl->get_definingDeclaration()==classDecl)
-      if (classDecl->get_class_type()==SgClassDeclaration::e_class
-	  && !classDecl->get_file_info()->isCompilerGenerated()
+      if (//classDecl->get_class_type()==SgClassDeclaration::e_class &&
+	  !classDecl->get_file_info()->isCompilerGenerated()
 	  ) {
 	string filename = classDecl->get_file_info()->get_filenameString();
 	size_t idx = filename.rfind('.');
 	std::string extension ="";
 	if(idx != std::string::npos)
 	  extension = filename.substr(idx+1);
-	if ((extension!="C" && extension!="cpp" && extension!="cxx") && filename.find("include-staging")==string::npos) {
+	if ((extension!="C" && extension!="cpp" && extension!="cxx") &&
+			filename.find("include-staging")==string::npos &&
+			filename.find("/usr/include")==string::npos
+	) {
 	  std::vector<std::pair<SgNode*,std::string> > vec = classDecl->returnDataMemberPointers();
-	  cerr << "Found classDecl : " << classDecl->get_name().str() << "  in File: " << filename <<
+	  cerr << "\n ** Deep copy: Found classDecl : " << classDecl->get_name().str() << "  in File: " << filename <<
 	    "    with number of datamembers: " << vec.size() << "   defining " <<
 	    (classDecl->get_definingDeclaration()==classDecl) << endl;
 	  if (hasPrivateDataMembers(classDecl)) {
 	    instrumentClassDeclarationIntoTopOfAllSourceFiles(project, classDecl);
-	    traverseClasses.push_back(classDecl);
 	  }
+	    traverseClasses.push_back(classDecl);
 	}
       }
   }
