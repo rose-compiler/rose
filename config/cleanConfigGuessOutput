@@ -1,3 +1,4 @@
 #!/bin/sh
 # echo "cleanConfigGuessOutput \'$1\'" >&2
-echo "$1" | sed 's/-unknown-/-pc-/' | sed 's/-redhat-/-pc-/' | sed 's/-darwin[^-]*$/-darwin/' | sed 's/^i386-apple-/i686-apple-/'
+# echo "$1" | sed 's/-unknown-/-pc-/' | sed 's/-redhat-/-pc-/' | sed 's/-darwin[^-]*$/-darwin/' | sed 's/^i386-apple-/i686-apple-/'
+echo "$1" | sed 's/-unknown-/-pc-/' | sed 's/-suse-/-pc-/' | sed 's/-linux$/-linux-gnu/' | sed 's/-redhat-/-pc-/' | sed 's/-darwin[^-]*$/-darwin/' | sed 's/^i386-apple-/i686-apple-/'
