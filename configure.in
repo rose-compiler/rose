@@ -20,9 +20,12 @@ AC_CONFIG_AUX_DIR([config])
 # AM_INIT_AUTOMAKE(ROSE, 0.8.11a)
 AM_INIT_AUTOMAKE([foreign tar-pax 1.9.5])
 
+AMTAR ?= $(TAR)
+
 # DQ (9/9/2009): Added output to test values of am__tar and am__untar (fails on nmi:x86_sles_9).
 echo "Defined: am__tar   = $am__tar"
 echo "Defined: am__untar = $am__untar"
+echo "Defined: AMTAR     = $AMTAR"
 
 # DQ (9/9/2009): Added test.
 if test "$am__tar" = "false"; then

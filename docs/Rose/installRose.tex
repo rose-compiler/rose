@@ -790,3 +790,46 @@ users of ROSE. They are:
 \item rose-public@nersc.gov, web interface:
 \htmladdnormallink{https://mailman.nersc.gov/mailman/listinfo/rose-public}{https://mailman.nersc.gov/mailman/listinfo/rose-public}.
 \end{itemize}
+
+
+
+\subsection{ROSE and the NMI Compile Farm}
+
+   The NSF Middleware Initiative (NMI) has provides us with 
+time on their system to support the robustness of ROSE across
+multiple platforms.  ROSE is not tested on a wide range of platforms
+(see table \ref{NMI:prerequisites}).  The prerequisites
+used for each platform (machine and operating system) are generated
+in the table from the input test descriptions located in the 
+directory {\tt ROSE/scripts/nmiBuildAndTestFarm/build\_configs}.
+
+For More information about NMI, see
+\htmladdnormallink{{\tt http://nmi.cs.wisc.edu/}}{http://nmi.cs.wisc.edu/}.
+To see the details of the ROSE nightly tests click on the link: {\em Run Results}
+and select the project, {\em rose compiler}, from the pull down menu.
+
+% This is too long and does not process using LaTeX properly.
+% \htmladdnormallink{http://nmi-web.cs.wisc.edu/nmi/index.php?page=results%2Foverview&rows=100&opt_keyword=&opt_project=rose+compiler&opt_user=OPTION_SHOW_ALL&opt_comp=OPTION_SHOW_ALL&opt_type=OPTION_SHOW_ALL&opt_result=OPTION_SHOW_ALL&opt_platform=OPTION_SHOW_ALL&opt_month=0&opt_day=0&opt_year=0&opt_build_id=&opt_submit=OPTION_SHOW_ALL&searchSubmit=Search}{http://nmi-web.cs.wisc.edu/nmi/index.php?page=results%2Foverview&rows=100&opt_keyword=&opt_project=rose+compiler&opt_user=OPTION_SHOW_ALL&opt_comp=OPTION_SHOW_ALL&opt_type=OPTION_SHOW_ALL&opt_result=OPTION_SHOW_ALL&opt_platform=OPTION_SHOW_ALL&opt_month=0&opt_day=0&opt_year=0&opt_build_id=&opt_submit=OPTION_SHOW_ALL&searchSubmit=Search}.
+
+   NMI OS and machine (platform) Prerequisites for ROSE:
+% Do this when processing latex to generate non-html (not using latex2html)
+{\indent
+\begin{latexonly}
+\begin{figure}[tb]
+\begin{center}
+\begin{tabular}{|c|} \hline
+     {\tt NMI Platform (OS and Machine) Prerequisites}
+\\\hline\hline
+{\footnotesize
+   \lstinputlisting{rosePlatformPrerequisites.txt}
+}
+\\\hline
+\end{tabular}
+\end{center}
+\caption{ Example NMI machine preques used for nightly tests. }
+\end{figure}
+\end{latexonly}
+\label{NMI:prerequisites}
+% End of scope in indentation
+}
+
