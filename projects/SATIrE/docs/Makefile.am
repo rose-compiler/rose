@@ -71,7 +71,12 @@ MYTEXINPUT=$(SWI_PROLOG_HOME_DIR)/library/pldoc:$(SWI_PROLOG_HOME_DIR)/library/l
 LTX2HTM=latex2html # this is part of SWI-Prolog (not to be confused!)
 
 
+if WITH_SWI_PROLOG
 docs-termite: HTML termite.pdf mostlyclean
+else
+docs-termite:
+	@echo "** WARNING: Termite docs can only be built when SWI-Prolog is used."
+endif
 
 clean-termite: 
 	rm -f termite-pdf.dvi termite-pdf.idx termite-pdf.log termite-pdf.aux \
@@ -128,10 +133,14 @@ termite-html.tex: termite-pdf.tex
 HTML: termite-html.tex $(TEXFILES)
 	TEXINPUTS=$(MYTEXINPUT):$$TEXINPUTSl; $(LTX2HTM) $<
 
+if WITH_SWI_PROLOG
 termite.pdf: termite-pdf.tex $(TEXFILES)
 	env TEXINPUTS=$(MYTEXINPUT):$$TEXINPUTS pdflatex $<
 	makeindex $(patsubst %.tex,%,$<)
 	env TEXINPUTS=$(MYTEXINPUT):$$TEXINPUTS pdflatex $<
 	env TEXINPUTS=$(MYTEXINPUT):$$TEXINPUTS pdflatex $<
 	mv termite-pdf.pdf $@
-
+else
+termite.pdf:
+	@echo "** WARNING: Termite docs can only be built when SWI-Prolog is used." | tee termite.pdf
+endif

@@ -15,6 +15,8 @@ class PrologInt : public PrologTerm {
 public:
   /// constructor sets the value
   PrologInt(int value) : mValue(value) {}
+  /// default constructor to make this constructible from templates
+  PrologInt() : mValue(0) {}
   ///the arity is 0
   int getArity() {return 0;}
   /// an integer is always ground
