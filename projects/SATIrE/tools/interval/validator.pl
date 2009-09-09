@@ -36,8 +36,8 @@
    ),
    asserta(library_directory(TermitePath)).
 
-:- use_module([library(ast_transform),
-	       library(ast_properties),
+:- use_module([library(asttransform),
+	       library(astproperties),
 	       library(callgraph),
 	       library(utils)]).
 

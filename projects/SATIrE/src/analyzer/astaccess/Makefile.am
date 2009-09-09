@@ -28,12 +28,12 @@ nobase_include_HEADERS = satire/ast_support_funcs.h \
                          satire/o_ExpressionId.h \
                          satire/o_TypeId.h \
                          satire/o_VariableId.h \
-						 satire/o_ContextInfo.h \
+			 satire/o_ContextInfo.h \
                          satire/pag_support.h \
                          satire/pignodelist.h \
                          satire/syn_typedefs.h \
-                         $(SYNDIR)/syntree.h \
-                         $(SYNDIR)/syntree.c
+                         satire/syntree.h \
+                         satire/syntree.c
 
 libAstAccess_la_SOURCES = pag_support.C
 
@@ -65,6 +65,9 @@ EXTRA_DIST = rose.pig #syn edges pagoptions
 
 $(PIG):
 	$(MAKE) -C $(PIGDIR) pig
+
+satire/syntree.c: $(SYNDIR)/syntree.c
+satire/syntree.h: $(SYNDIR)/syntree.h
 
 # An ugly hack indeed, but haven't found a better way 
 # to confine those header files into include/satire
