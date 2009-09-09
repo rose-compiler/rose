@@ -190,6 +190,11 @@ TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, Synth
 
   PrologTerm* t;
 
+#if HAVE_SATIRE_ICFG
+  if (cfg == NULL)
+      cfg = get_global_cfg();
+#endif
+
   /* See if this node is intended to be unparsed -> decls inserted by EDG will be stripped */
   Sg_File_Info* fi = astNode->get_file_info();
   if (fi == NULL) {

@@ -10,4 +10,6 @@ int main(int argc, char **argv)
     AnalyzerOptions *options = extractOptions(argc, argv);
     Program *program = new Program(options);
     outputProgramRepresentation(program, options);
+    if (options->statistics())
+        TimingPerformance::generateReport();
 }

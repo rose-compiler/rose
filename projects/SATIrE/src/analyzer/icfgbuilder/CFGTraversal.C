@@ -2232,6 +2232,11 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
         << std::endl;
 	/* fall through */
 
+   // Ignore AsmStmts, do not even warn about them. Because they are a
+   // frequent special case.
+      case V_SgAsmStmt:
+      /* fall through */
+
       case V_SgExprStatement:
 	SgExprStatement *exprs = isSgExprStatement(*i);
 	if (exprs != NULL) {

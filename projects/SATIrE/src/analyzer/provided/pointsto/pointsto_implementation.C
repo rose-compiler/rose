@@ -1570,6 +1570,9 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
      // The function definition node contains the body of a function. It is
      // always contained inside a function declaration node, which takes
      // care of unifying return locations and such stuff.
+    case V_SgAsmStmt:
+     // AsmStmts could, in theory, do anything. But let's assume they are
+     // benign.
 
      // Ignore all these node types; to handle all of ROSE, this list will
      // become really really long.
