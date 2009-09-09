@@ -25,3 +25,23 @@ libroseEDG_la_SOURCES = dummyCppFileForLibroseEDG.C
 libroseEDG_la_LIBADD = $(libroseEDGlibraries) 
 libroseEDG_la_LDFLAGS = -no-undefined
 libroseEDG_la_DEPENDENCIES = $(libroseEDGlibraries)
+
+
+BINARY_EDG_DIRNAME=xxx_trash_xxx
+testEDGBinaryMakefileLogic:
+	if test "$(am__untar)" != "false"; then \
+	  if test -f $(srcdir)/$(BINARY_EDG_DIRNAME).tar.gz; then \
+	    echo "Found $(srcdir)/$(BINARY_EDG_DIRNAME).tar.gz: proceeding to untar file $(BINARY_EDG_DIRNAME).tar.gz" >&2 && \
+	    GZIP=$(GZIP_ENV) gunzip -c $(srcdir)/$(BINARY_EDG_DIRNAME).tar.gz | $(am__untar) && \
+	    mv $(BINARY_EDG_DIRNAME)/libroseEDG.* . && \
+	    mv $(BINARY_EDG_DIRNAME)/.libs . && \
+	    rmdir $(BINARY_EDG_DIRNAME)/; \
+	  else \
+	    echo "There is no binary version of EDG (which should be named $(BINARY_EDG_DIRNAME).tar.gz) in your copy of ROSE -- this should have been caught by configure" >&2 && \
+	    exit 1; \
+	  fi \
+	else \
+	  echo "ERROR: am__untar set to false! (am__untar == $(am__untar)) Can't untar $(BINARY_EDG_DIRNAME).tar.gz) -- this should have been caught by configure" >&2 && \
+	  exit 1; \
+	fi
+

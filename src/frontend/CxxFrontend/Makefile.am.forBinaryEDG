@@ -5,14 +5,32 @@ BINARY_EDG_DIRNAME=@EXPECTED_BINARY_EDG_DIRNAME@
 noinst_LTLIBRARIES = libroseEDG.la
 libroseEDG_la_SOURCES = 
 
-libroseEDG.la:
-	@if test -f $(srcdir)/$(BINARY_EDG_DIRNAME).tar.gz; then \
+OLD_libroseEDG.la:
+	if test -f $(srcdir)/$(BINARY_EDG_DIRNAME).tar.gz; then \
 	  GZIP=$(GZIP_ENV) gunzip -c $(srcdir)/$(BINARY_EDG_DIRNAME).tar.gz | $(am__untar) && \
 	  mv $(BINARY_EDG_DIRNAME)/libroseEDG.* . && \
 	  mv $(BINARY_EDG_DIRNAME)/.libs . && \
 	  rmdir $(BINARY_EDG_DIRNAME)/; \
 	else \
 	  echo "There is no binary version of EDG (which should be named $(BINARY_EDG_DIRNAME).tar.gz) in your copy of ROSE -- this should have been caught by configure" >&2 && \
+	  exit 1; \
+	fi
+
+# DQ (9/8/2009): Debugging gunzip broken pipe issue on NMI x86_sles_9 force echo of output from gunzip command.
+libroseEDG.la:
+	if test "$(am__untar)" != "false"; then \
+	  if test -f $(srcdir)/$(BINARY_EDG_DIRNAME).tar.gz; then \
+	    echo "Found $(srcdir)/$(BINARY_EDG_DIRNAME).tar.gz: proceeding to untar file $(BINARY_EDG_DIRNAME).tar.gz" >&2 && \
+	    GZIP=$(GZIP_ENV) gunzip -c $(srcdir)/$(BINARY_EDG_DIRNAME).tar.gz | $(am__untar) && \
+	    mv $(BINARY_EDG_DIRNAME)/libroseEDG.* . && \
+	    mv $(BINARY_EDG_DIRNAME)/.libs . && \
+	    rmdir $(BINARY_EDG_DIRNAME)/; \
+	  else \
+	    echo "There is no binary version of EDG (which should be named $(BINARY_EDG_DIRNAME).tar.gz) in your copy of ROSE -- this should have been caught by configure" >&2 && \
+	    exit 1; \
+	  fi \
+	else \
+	  echo "ERROR: am__untar set to false! (am__untar == $(am__untar)) Can't untar $(BINARY_EDG_DIRNAME).tar.gz) -- this should have been caught by configure" >&2 && \
 	  exit 1; \
 	fi
 
