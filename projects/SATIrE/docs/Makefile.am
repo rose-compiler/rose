@@ -63,7 +63,7 @@ SRCFILES= \
 INPUTFILES=$(notdir $(subst _,,$(SRCFILES)))
 $(INPUTFILES): $(SRCFILES)
 	for f in $(SRCFILES); do \
-		cp $$f `basename $$f |sed s/_//g` ; \
+		cp --no-preserve=mode -f $$f `basename $$f |sed s/_//g` ; \
 	done
 TEXFILES=$(patsubst %.pl, %.tex,$(INPUTFILES))
 GARBAGE=$(patsubst %.tex, %.aux,$(TEXFILES))
@@ -81,7 +81,7 @@ endif
 clean-termite: 
 	rm -f termite-pdf.dvi termite-pdf.idx termite-pdf.log termite-pdf.aux \
 	      termite-pdf.out termite-pdf.toc $(TEXFILES) \
-              termite-pdf.ind termite-pdf.ilg \
+              termite-pdf.ind termite-pdf.ilg $(INPUTFILES) \
 	      termite-html.tex termite-pdf.tex \
 	      termspec.tex c2term.txt term2c.txt
 	rm -rf termite.pdf termite-html
