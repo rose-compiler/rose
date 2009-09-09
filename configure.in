@@ -20,6 +20,23 @@ AC_CONFIG_AUX_DIR([config])
 # AM_INIT_AUTOMAKE(ROSE, 0.8.11a)
 AM_INIT_AUTOMAKE([foreign tar-pax 1.9.5])
 
+# DQ (9/9/2009): Added output to test values of am__tar and am__untar (fails on nmi:x86_sles_9).
+echo "Defined: am__tar   = $am__tar"
+echo "Defined: am__untar = $am__untar"
+
+# DQ (9/9/2009): Added test.
+if test "$am__tar" = "false"; then
+   echo "am__tar set to false -- this will be a problem later."
+   exit 1
+fi
+
+# DQ (9/9/2009): Added test.
+if test "$am__untar" = "false"; then
+   echo "am__untar set to false -- this will be a problem later."
+   exit 1
+fi
+
+
 # JJW (10/8/2008): Make default CFLAGS, CXXFLAGS, and FFLAGS empty (from
 # <URL:http://osdir.com/ml/sysutils.autoconf.general/2003-11/msg00124.html>)
 true ${CFLAGS:=}
