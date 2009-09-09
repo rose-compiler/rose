@@ -19,6 +19,8 @@ if WITH_SWI_PROLOG
 INCLUDES += -I$(SWI_PROLOG_INCLUDE_DIR)
 endif
 
+SYNDIR=$(top_builddir)/src/analyzer/astaccess/satire
+
 noinst_LTLIBRARIES = libAstAccess.la
 nobase_include_HEADERS = satire/ast_support_funcs.h \
                          satire/iface.h \
@@ -30,21 +32,22 @@ nobase_include_HEADERS = satire/ast_support_funcs.h \
                          satire/pag_support.h \
                          satire/pignodelist.h \
                          satire/syn_typedefs.h \
-                         satire/syntree.h \
-                         satire/syntree.c
+                         $(SYNDIR)/syntree.h \
+                         $(SYNDIR)/syntree.c
 
 libAstAccess_la_SOURCES = pag_support.C
 
-BUILT_SOURCES = satire/syntree.h  satire/syntree.c satire/syntree.cxx
-CLEANFILES =    satire/syntree.h  satire/syntree.c satire/syntree.cxx \
+BUILT_SOURCES = $(SYNDIR)/syntree.h  $(SYNDIR)/syntree.c $(SYNDIR)/syntree.cxx
+CLEANFILES =    $(SYNDIR)/syntree.h  $(SYNDIR)/syntree.c $(SYNDIR)/syntree.cxx \
                       pig_temp.h        pig_temp.c \
                      pig_temp2.h       pig_temp2.c 
 
-PIG = $(top_builddir)/src/pig/pig
+PIGDIR = $(top_builddir)/src/pig
+PIG = $(PIGDIR)/pig
 
 lib_LTLIBRARIES = satire/libsyntree.la libpagdatatypes.la
 satire_libsyntree_la_SOURCES = \
-	$(top_builddir)/src/analyzer/astaccess/satire/syntree.cxx
+	$(SYNDIR)/syntree.cxx
 libpagdatatypes_la_SOURCES = \
 	o_ExpressionId.C o_TypeId.C o_VariableId.C o_ContextInfo.C
 
@@ -61,17 +64,17 @@ EXTRA_DIST = rose.pig #syn edges pagoptions
 #	$(CXXCOMPILE) -c -o syntree.o -Isatire satire/syntree.c	 
 
 $(PIG):
-	$(MAKE) -C $(PIG)
+	$(MAKE) -C $(PIGDIR) pig
 
 # An ugly hack indeed, but haven't found a better way 
 # to confine those header files into include/satire
-satire/syntree.c: $(top_srcdir)/src/analyzer/astaccess/satire/syn $(top_srcdir)/src/analyzer/astaccess/rose.pig $(PIG)
+$(SYNDIR)/syntree.c: $(top_srcdir)/src/analyzer/astaccess/satire/syn $(top_srcdir)/src/analyzer/astaccess/rose.pig $(PIG)
 	$(PIG) -ip $(top_srcdir)/src/analyzer/astaccess/satire/syn \
 	           $(top_srcdir)/src/analyzer/astaccess/rose.pig \
 	&& mkdir -p satire \
 	&& mv syntree.h syntree.c satire/ 
 
-satire/syntree.h: satire/syntree.c # dummy dependency for parallel builds
+$(SYNDIR)/syntree.h: $(SYNDIR)/syntree.c # dummy dependency for parallel builds
 
-satire/syntree.cxx: satire/syntree.c
+$(SYNDIR)/syntree.cxx: $(SYNDIR)/syntree.c
 	cp $< $@
