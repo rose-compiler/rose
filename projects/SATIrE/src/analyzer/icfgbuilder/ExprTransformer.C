@@ -5,6 +5,7 @@
 #include <satire_rose.h>
 #include <patternRewrite.h>
 #include <cstring>
+#include <cstdlib>
 
 #include "ExprTransformer.h"
 #include "IrCreation.h"

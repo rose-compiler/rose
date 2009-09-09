@@ -1,6 +1,7 @@
 // Implementation of SATIrE's ContextInfo data type for PAG.
 
 #include <cstring>
+#include <cstdlib>
 
 #include "o_ContextInfo.h"
 

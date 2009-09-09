@@ -31,6 +31,7 @@
 // one unique location.)
 
 #include <cstring>
+#include <cstdlib>
 
 #if HAVE_PAG
 #include "gc_mem.h"

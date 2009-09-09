@@ -23,7 +23,7 @@
 // - CallString -> sequence of CallSites
 // - something for CallSite <-> Context ?
 
-
+#include <cstdlib>
 #include "Context.h"
 
 #if HAVE_PAG

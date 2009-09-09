@@ -1,6 +1,7 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
 // $Id: cfg_funcs.C,v 1.16 2008-06-02 11:27:33 gergo Exp $
 
+#include <cstdlib>
 #include "CFGTraversal.h"
 #include "iface.h"
 #include "IrCreation.h"

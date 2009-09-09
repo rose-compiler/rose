@@ -2,6 +2,7 @@
 // Author: Mihai Ghete, 2008
 //         with performance tweaks by Gergo Barany
 
+#include <cstdlib>
 #include "EqualityTraversal.h"
 
 // If DEBUG_EQUALITY_TRAVERSAL is defined to a true value, the equality

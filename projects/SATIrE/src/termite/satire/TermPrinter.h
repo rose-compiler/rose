@@ -9,6 +9,7 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
 #include <time.h>
 #include <ctype.h>
 #include <cstdio>
+#include <cstdlib>
 #include <satire_rose.h>
 #include "termite.h"
 #include <climits>

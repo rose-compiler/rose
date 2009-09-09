@@ -2,6 +2,7 @@
 // TypeId as abstract type usable in PAG analyses.
 
 #include <cstring>
+#include <cstdlib>
 
 #include "cfg_support.h"
 #include "IrCreation.h"

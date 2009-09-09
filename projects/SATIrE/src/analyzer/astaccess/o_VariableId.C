@@ -10,7 +10,7 @@
 // "Type-Storage Interface".
 
 #include <cstring>
-
+#include <cstdlib>
 #include "cfg_support.h"
 
 #include "o_VariableId.h"

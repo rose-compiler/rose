@@ -5,6 +5,7 @@
 #include "cfg_support.h"
 #include "IrCreation.h"
 #include <cstring>
+#include <cstdlib>
 
 const char * const edgetypenames[] =
 {

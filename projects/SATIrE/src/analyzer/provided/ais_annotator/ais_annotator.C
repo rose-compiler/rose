@@ -18,6 +18,7 @@
 //   where a compiler mangles function name "foo" into symbol "_foo".
 
 #include <satire.h>
+#include <cstdlib>
 
 using namespace SATIrE;
 using namespace SATIrE::Analyses;

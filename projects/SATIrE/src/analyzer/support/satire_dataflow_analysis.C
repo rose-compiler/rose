@@ -1,3 +1,5 @@
+#include <cstdlib>
+
 #include "satire.h"
 
 #include "set_pag_options.h"

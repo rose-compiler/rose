@@ -1,6 +1,7 @@
 // Author: Markus Schordan, 2007,2008
 
 #include <iostream>
+#include <cstdlib>
 #include "IrCreation.h"
 
 // GB (2008-04-01): This is the definition of the global garbage bin.

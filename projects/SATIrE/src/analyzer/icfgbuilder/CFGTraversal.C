@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string.h>
 #include <memory>
+#include <cstdlib>
 
 #include <satire_rose.h>
 #include "patternRewrite.h"
