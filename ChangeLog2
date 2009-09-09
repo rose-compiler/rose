@@ -1,3 +1,34 @@
+2009-09-09 18:01  liao6
+
+	* [r7180] /trunk/ROSE/scripts/roseFreshTestStub-Leo-head.sh: added
+	  andreas to my regression test notification list
+
+2009-09-09 17:50  panas2
+
+	* [r7179] /trunk/ROSE/projects/RTED/RtedTransf_copyClass.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_registerType.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/object_create3.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/object_create3.h,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/object_create3.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/object_create4.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/object_create4.h,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/object_create4.ok_msg:
+	  Changes so that header files can be handled
+
+2009-09-09 17:29  dquinlan
+
+	* [r7178] /trunk/ROSE/config/cleanConfigGuessOutput: Added support
+	  for additional platforms to support NMI compile farm.
+
+2009-09-09 15:23  dquinlan
+
+	* [r7177] /trunk/ROSE/src/frontend/CxxFrontend/Makefile.am,
+	  /trunk/ROSE/src/frontend/CxxFrontend/Makefile.am.forBinaryEDG:
+	  Added test to debug am__untar bug on x86_sles_9, x86_suse_10.0,
+	  and x86_suse_10.2.
+
 2009-09-08 23:15  hamilton37
 
 	* [r7170] /trunk/ROSE/scripts/nmiBuildAndTestFarm/cronjobs: NMI:
