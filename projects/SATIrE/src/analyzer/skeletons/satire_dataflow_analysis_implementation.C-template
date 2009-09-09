@@ -257,7 +257,7 @@ statement_info_string(DFI_STORE store, SgStatement *stmt, std::string attrName)
         unsigned int edge;
         for(edge = 0; outedges != 0; edge++, outedges >>= 1)
         {
-            if (outedges & 1 != 0)
+            if ((outedges & 1) != 0)
             {
                 for (int ctx = 0; ctx < arity; ctx++)
                 {
