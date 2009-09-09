@@ -143,7 +143,8 @@ latexDependences = \
      roseHelpOutput.txt \
      roseCommandline.txt \
      roseExecutionOutput.txt \
-     roseConfigureOptions.txt
+     roseConfigureOptions.txt \
+     rosePlatformPrerequisites.txt
 
 html-local: AvailableDocumentation.docs $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz
 
@@ -220,6 +221,12 @@ latex-docs: pdf
 
 pdf-local: $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf ROSE_DeveloperInstructions.pdf ROSE_DemoGuide.pdf 
 
+# DQ (9/9/2009): Added generated list of NMI compile farm platform prerequisites for ROSE documentation (ROSE_InstallationInstructions.pdf)
+rosePlatformPrerequisites.txt:
+	cd $(top_srcdir)/scripts/nmiBuildAndTestFarm/build_configs; grep -r PREREQS * | grep -v svn | grep minimal_default | grep -v minimal_default~ | sed 's/\/minimal_default:PREREQS=/ : /' >& rosePlatformPrerequisites.txt
+	mv $(top_srcdir)/scripts/nmiBuildAndTestFarm/build_configs/rosePlatformPrerequisites.txt .
+
+
 ROSE_InstallationInstructions.pdf: $(latexFiles) $(latexDependences) ROSE_InstallationInstructions.tex
 	$(PDFLATEX) ROSE_InstallationInstructions.tex && \
 	$(PDFLATEX) ROSE_InstallationInstructions.tex && \
@@ -276,4 +283,4 @@ CLEANFILES = roseDoxygen.tags SageIntermediateForm *.log *.aux *.dvi \
 	     rose.cfg roseCommandline.txt roseConfigureOptions* roseExecutionOutput.txt \
 	     roseHelpOutput.txt rose_roseTestProgram.C roseTestProgram.C sage.cfg \
 	     $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz footer.html \
-	     AvailableDocumentation.docs  leftmenu.html
+	     AvailableDocumentation.docs  leftmenu.html rosePlatformPrerequisites.txt
