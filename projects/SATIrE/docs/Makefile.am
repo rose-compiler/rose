@@ -51,9 +51,9 @@ BIBTEX = :
 
 TERMITE_DIR=$(top_srcdir)/src/termite/termite
 SRCFILES= \
-  $(TERMITE_DIR)/ast_transform.pl \
-  $(TERMITE_DIR)/ast_properties.pl \
-  $(TERMITE_DIR)/ast_walk.pl \
+  $(TERMITE_DIR)/asttransform.pl \
+  $(TERMITE_DIR)/astproperties.pl \
+  $(TERMITE_DIR)/astwalk.pl \
   $(TERMITE_DIR)/callgraph.pl \
   $(TERMITE_DIR)/utils.pl \
   $(TERMITE_DIR)/loops.pl \
@@ -80,7 +80,7 @@ endif
 
 clean-termite: 
 	rm -f termite-pdf.dvi termite-pdf.idx termite-pdf.log termite-pdf.aux \
-	      termite-pdf.out termite-pdf.toc $(TEXFILES) $(INPUTFILES) \
+	      termite-pdf.out termite-pdf.toc $(TEXFILES) \
               termite-pdf.ind termite-pdf.ilg \
 	      termite-html.tex termite-pdf.tex \
 	      termspec.tex c2term.txt term2c.txt
@@ -93,7 +93,7 @@ clean-termite:
 	      open('$@', write, _, [alias(wstrm)]),\
               latex_for_file('$<', wstrm, \
 	                     [stand_alone(false),public_only(true)]), \
-	      close(wstrm)." | pl
+	      close(wstrm)." | pl -q
 
 # Sadly, ltx2html does not understand the listings package...
 termspec.tex: $(top_srcdir)/src/termite/termite_spec.pl
@@ -121,7 +121,7 @@ term2c.txt: $(top_builddir)/src/termite/term2c
 	echo '\end{verbatim}' >>$@
 
 termite-pdf.tex: termite.tex $(SRCFILES) termspec.tex c2term.txt term2c.txt
-	sed -e s/%%INPUTS%%/$(patsubst %.tex,\\\\input{%}\\\\clearpage\,$(TEXFILES))/ \
+	sed -e s!%%INPUTS%%!$(patsubst %.tex,\\\\input{%}\\\\clearpage\,$(TEXFILES))! \
 	    -e '/GRAMMAR/ r termspec.tex' \
 	    -e '/C2TERM/ r c2term.txt' \
 	    -e '/TERM2C/ r term2c.txt' \

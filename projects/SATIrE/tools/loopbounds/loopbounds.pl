@@ -56,8 +56,8 @@ GNU General Public License for more details.
    asserta(library_directory(TermitePath)).
 
 :- use_module([library(apply_macros),
-	       library(ast_transform),
-	       library(ast_properties),
+	       library(asttransform),
+	       library(astproperties),
 	       library(loops),
 	       library(utils)]).
 :- use_module([while2for,comefrom]).

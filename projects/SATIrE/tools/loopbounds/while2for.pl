@@ -31,8 +31,8 @@
 
 :- module(while2for, [while_to_for/5]).
 
-:- use_module(library(ast_transform)),
-   use_module(library(ast_properties)).
+:- use_module(library(asttransform)),
+   use_module(library(astproperties)).
 
 is_simple_update(expr_statement(Op, _, _, _), Var) :-
   ( Op = plus_plus_op(V, _, _, _)

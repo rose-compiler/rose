@@ -33,7 +33,7 @@
 :- module(comefrom, [come_from/5]).
 
 :- use_module(library(ast_transform)),
-   use_module(library(ast_properties)).
+   use_module(library(astproperties)).
 
 come_from(I, I, I, basic_block(Stmts, Annot, Ai, Fi), Bb) :-
   % decompose the old basic block

@@ -11,7 +11,7 @@
    ),
    asserta(library_directory(TermitePath)).
 
-:- use_module(library(ast_transform)).
+:- use_module(library(asttransform)).
 
 main :-
   current_prolog_flag(argv, Argv), 

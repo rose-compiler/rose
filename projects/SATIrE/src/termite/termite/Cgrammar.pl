@@ -1,7 +1,7 @@
 #!/usr/bin/pl -t testrun -f
 % -*- mode: prolog; truncate-lines: true; -*-
 
-/*:- module(ast_transform,
+/*:- module(asttransform,
 	  [simple_form_of/2,
            ast_node/6,
 	   transformed_with/5,
@@ -14,7 +14,7 @@
 	   needs_comma/1,
 	   replace_types/3
 	   ]).
-:- use_module(library(ast_properties)),
+:- use_module(library(astproperties)),
    use_module(library(utils)).
 */
 %-----------------------------------------------------------------------

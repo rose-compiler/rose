@@ -5,8 +5,8 @@
 	   collect_funcs/5]).
 
 :- use_module(library(ugraphs)),
-   use_module(library(ast_properties)),
-   use_module(library(ast_transform)).
+   use_module(library(astproperties)),
+   use_module(library(asttransform)).
 
 %-----------------------------------------------------------------------
 /** <module> Create a call graph from an AST

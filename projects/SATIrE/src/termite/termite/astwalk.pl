@@ -1,7 +1,7 @@
 #!/usr/bin/pl -t testrun -f
 % -*- prolog -*-
 
-:- module(ast_walk,
+:- module(astwalk,
 	  [walk_to/3,
 	   goto_function/3,
 	   

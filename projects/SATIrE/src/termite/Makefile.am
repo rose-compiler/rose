@@ -67,9 +67,9 @@ if WITH_SWI_PROLOG
 AM_CXXFLAGS += -DSWI_HOME_DIR='"$(SWI_PROLOG_HOME_DIR)"'
 INCLUDES += -I$(SWI_PROLOG_INCLUDE_DIR) 
 ROSELDFLAGS += $(SWI_PROLOG_LIBS) $(SWI_PROLOG_LDADD)
-nobase_dist_data_DATA =  termite/ast_properties.pl  termite/loops.pl \
-                         termite/ast_transform.pl   termite/utils.pl \
-                         termite/ast_walk.pl        termite/callgraph.pl 
+nobase_dist_data_DATA =  termite/astproperties.pl  termite/loops.pl \
+                         termite/asttransform.pl   termite/utils.pl \
+                         termite/astwalk.pl        termite/callgraph.pl 
 else	
 nodist_BUILT_SOURCES = termparser.tab.c++ termparser.tab.h++ \
 	                dfiparser.tab.c++ dfiparser.tab.h++ \
