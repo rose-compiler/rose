@@ -1,3 +1,49 @@
+2009-09-08 23:15  hamilton37
+
+	* [r7170] /trunk/ROSE/scripts/nmiBuildAndTestFarm/cronjobs: NMI:
+	  Fixed trivial error in cronjobs that was causing update.sh error
+	  to be
+	  redirected to the wrong place.
+
+2009-09-08 22:52  panas2
+
+	* [r7169] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/object_create3.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/object_create3.h,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/object_create3.ok_msg:
+	  added new tests
+
+2009-09-08 21:57  hamilton37
+
+	* [r7167] /trunk/ROSE/scripts/nmiBuildAndTestFarm/env.scp,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/submit.sh: NMI: Fixed
+	  submit.sh so to avoid unpleasant race condition with env.pl
+	  
+	  * Previously submit.sh generated env.pl and waited for it to be
+	  scp-d from the
+	  target run host. Now env.pl is generated in a new temporary
+	  directory so that
+	  it is unique per run and won't get stomped by submit.sh during a
+	  later
+	  submission.
+
+2009-09-08 21:57  hamilton37
+
+	* [r7166] /trunk/ROSE/scripts/nmiBuildAndTestFarm/nmi-postmortem:
+	  NMI: Fixed some issues in nmi-postmortem.
+	  
+	  * copying id_rsa.pub now works from directories other than $HOME
+	  
+	  * .nmi-hosts is now appended to, instead of overwritten each time
+	  a new host is
+	  checked.
+	  
+	  * .nmi-hosts is now checked for in $HOME, not the pwd.
+	  
+	  * nmi-postmortem now terminates if it was unable to setup the
+	  home directory
+	  when it felt that it needed to.
+
 2009-09-08 18:44  collingbourne2
 
 	* [r7163] /trunk/ROSE/projects/haskellport/genStubsAndWrappers.C,
