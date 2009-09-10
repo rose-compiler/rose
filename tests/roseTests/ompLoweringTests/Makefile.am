@@ -185,10 +185,10 @@ check-local: roseomp
 	@echo "***************** Testing C++ input ******************"
 	$(MAKE) $(PASSING_CXX_TEST_Objects)
 	@echo "***********************************************************************************************************"
-	@echo "****** ROSE/tests/roseTests/ompLoweringTests: 
+	@echo "****** ROSE/tests/roseTests/ompLoweringTests:                              *******************************"
 	@echo "****       compilation tests completed but executables are not generated and run***************************"
 	@echo "****** configure option --with-gomp_omp_runtime_library to enable testing execution of OpenMP   ******"
-	@echo "****** for example: --with-gomp_omp_runtime_library=/home/liao6/opt/gcc-4.4.1/lib/              ********          
+	@echo "****** for example: --with-gomp_omp_runtime_library=/home/liao6/opt/gcc-4.4.1/lib/              ********"
 	@echo "***********************************************************************************************************"
 endif
 
