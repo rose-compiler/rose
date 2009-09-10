@@ -1,5 +1,9 @@
 //#include <iostream>
 
+// DQ (9/9/2009): Fudora version 9 requires stdlib.h to define the "exit()" function.
+#include <stdlib.h>
+
+
 using namespace std;
 
 int main(int argc, char** argv) {

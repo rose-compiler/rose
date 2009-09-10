@@ -6,27 +6,24 @@ echo "***************************"
 echo "* Passing tests (11 tests) *"
 echo "***************************"
 
-# DQ (9/7/2009): Complete (passes)
-./submit.sh build_configs/x86_64_fc_5/minimal_default
-./submit.sh build_configs/x86_rhas_4/minimal_default
-./submit.sh build_configs/x86_fc_5/minimal_default
-./submit.sh build_configs/x86_rhap_5/minimal_default
-./submit.sh build_configs/x86_64_rhap_5/minimal_default
-./submit.sh build_configs/x86_64_rhas_4/minimal_default
-./submit.sh build_configs/x86_sl_4.4/minimal_default
-./submit.sh build_configs/x86_64_rhap_5.2/minimal_default
-
 # DQ (9/9/2009): Fedora 8 was released Nov 2007 (completes, but takes a long time to run).
 ./submit.sh build_configs/x86_64_fc_8/minimal_default
-
+./submit.sh build_configs/x86_64_fc_5/minimal_default
+./submit.sh build_configs/x86_64_rhap_5/minimal_default
+./submit.sh build_configs/x86_64_rhas_4/minimal_default
+./submit.sh build_configs/x86_64_rhap_5.2/minimal_default
 ./submit.sh build_configs/x86_suse_10.0/minimal_default
 ./submit.sh build_configs/x86_suse_10.2/minimal_default
+./submit.sh build_configs/x86_fc_5/minimal_default
+./submit.sh build_configs/x86_rhas_4/minimal_default
+./submit.sh build_configs/x86_rhap_5/minimal_default
+./submit.sh build_configs/x86_sl_4.4/minimal_default
 
 echo "******************************************"
 echo "* Failing tests: libCompass.so not found *"
 echo "******************************************"
 
-# DQ (9/7/2009): This configuration on this platform can't find libCompass.so (in "make check")
+# DQ (9/9/2009): This configuration on this platform can't find libCompass.so (in "make check")
 # /home/condor/execute/dir_16350/userdir/build/projects/compass/tools/compassVerifier/.libs/lt-compassVerifier: 
 # error while loading shared libraries: libCompass.so.0: cannot open shared object file: No such file or directory
 ./submit.sh build_configs/x86_deb_5.0/minimal_default
@@ -37,7 +34,7 @@ echo "******************************************"
 # DQ (9/7/2009): AM_PATH_XML2 not found (still)!
 ./submit.sh build_configs/x86_64_deb_4.0/minimal_default
 
-# DQ (9/7/2009): Compass lib not found in "make check"
+# DQ (9/9/2009): Compass lib not found in "make check"
 ./submit.sh build_configs/x86_64_deb_5.0/minimal_default
 
 echo "******************************************************************************************************************"
