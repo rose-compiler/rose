@@ -57,7 +57,8 @@ SRCFILES= \
   $(TERMITE_DIR)/callgraph.pl \
   $(TERMITE_DIR)/utils.pl \
   $(TERMITE_DIR)/loops.pl \
-  $(top_srcdir)/tools/loopbounds/loopbounds.pl
+  $(top_srcdir)/tools/loopbounds/loopbounds.pl \
+  $(TERMITE_DIR)/termlint.pl
 
 # underscores confuse the machina!
 INPUTFILES=$(notdir $(subst _,,$(SRCFILES)))
@@ -96,7 +97,7 @@ clean-termite:
 	      close(wstrm)." | pl -q
 
 # Sadly, ltx2html does not understand the listings package...
-termspec.tex: $(top_srcdir)/src/termite/termite_spec.pl
+termspec.tex: $(top_srcdir)/src/termite/termite/termite_spec.pl
 	sed -e '1,/Grammar rules./ c \\\\begin{verbatim}' \
 	    -e 's/^.*::=/\\end{verbatim}\n\\begin{verbatim}\n\0/g' \
 	    -e 's/^%\(.*\)/\\end{verbatim}\n\1\\\\\n\\begin{verbatim}\n/g' \

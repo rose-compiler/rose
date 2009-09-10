@@ -1,15 +1,29 @@
-% This is term_lint.pl, a small tool for checking terms against a tree
-% grammar (abstract syntax).
-% Author: Gergo Barany <gergo@complang.tuwien.ac.at>
+:- module(termlint,
+	  [term_match/2,
+	   start_symbol/1,
+          % operator declarations for great prettiness
+	   op(1200, xfx, ::=),      % grammar rule
+	   op(754,   fy, atoms),    % enumeration of terminal atoms
+	   op(754,   fy, functors), % enumeration of terminal functors...
+	   op(753,  yfy, with),	    % ... with identical argument structure
+	   op(752,  xfx, where),    % semantic constraints
+	   op(751,  xf,	 ?)	    % optional occurrence of nonterminal
+	  ]).
 
+%-----------------------------------------------------------------------
+/** <module> Term type checker
 
-% operator declarations for great prettiness
-:- op(1200, xfx, ::=).      % grammar rule
-:- op(654, fy, atoms).      % enumeration of terminal atoms
-:- op(654, fy, functors).   % enumeration of terminal functors...
-:- op(653, yfy, with).      % ... with identical argument structure
-:- op(652, xfx, where).     % semantic constraints
-:- op(651, xf, ?).          % optional occurrence of nonterminal
+This is term_lint.pl, a small tool for checking terms against a tree
+grammar (abstract syntax).
+
+@author
+
+Gergo Barany <gergo@complang.tuwien.ac.at>
+
+@license 
+
+*/
+%-----------------------------------------------------------------------
 
 % TODO: @ operator for as-patterns to allow more complex semantic
 % constraints; example:  foo ::= foo(X@bar) where condition(X).
@@ -271,25 +285,3 @@ die(Format, Args) :-
     !,
     fail.
 
-
-
-
-termite_term(Filename, T) :-
-    catch(open(Filename, read, Stream, []),
-          Error,
-          (print_message(error, Error), !, fail)),
-    catch(read_term(Stream, T, [double_quotes(string)]),
-          Error,
-          (print_message(error, Error), !, fail)),
-    close(Stream).
-
-main :-
-    current_prolog_flag(argv, Argv),
-    ( append(_SystemArgs, [_ProgramName, '--', Filename], Argv)
-    ; format('* usage: need exactly one term file name argument~n'),
-      !,
-      fail ),
-    !,
-    termite_term(Filename, T),
-    start_symbol(StartSymbol),
-    catch(term_match(T, StartSymbol), _, ( !, fail ) ).

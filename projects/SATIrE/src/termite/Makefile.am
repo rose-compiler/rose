@@ -45,8 +45,9 @@ bin_PROGRAMS += termite_lint
 
 termite_lint_SOURCES =
 
-termite_lint: term_lint.pl termite_spec.pl
-	$(SWI_PL) -q -t main -o termite_lint -c $(srcdir)/term_lint.pl
+termite_lint: term_lint_main.pl termite/termite_spec.pl termite/termlint.pl
+	export TERMITE_LIB=$(srcdir)/termite && \
+	$(SWI_PL) -q -t main -o termite_lint -c $(srcdir)/term_lint_main.pl
 endif
 
 AM_CXXFLAGS=
@@ -63,14 +64,19 @@ CLEANFILES = termpretty.c++ \
 	     dfiparser.c++ dfiparser.h dfiscanner.c++ \
              dfiparser.tab.c++ dfiparser.tab.h++
 
-if WITH_SWI_PROLOG
+if WITH_SWI_PROLOG # ---------------------------------------------------
+
 AM_CXXFLAGS += -DSWI_HOME_DIR='"$(SWI_PROLOG_HOME_DIR)"'
 INCLUDES += -I$(SWI_PROLOG_INCLUDE_DIR) 
 ROSELDFLAGS += $(SWI_PROLOG_LIBS) $(SWI_PROLOG_LDADD)
-nobase_dist_data_DATA =  termite/astproperties.pl  termite/loops.pl \
-                         termite/asttransform.pl   termite/utils.pl \
-                         termite/astwalk.pl        termite/callgraph.pl 
-else	
+nobase_dist_data_DATA = \
+  termite/astproperties.pl  termite/loops.pl \
+  termite/asttransform.pl   termite/utils.pl \
+  termite/astwalk.pl        termite/callgraph.pl \
+  termite/termlint.pl       termite/termite_spec.pl 
+
+else # -----------------------------------------------------------------
+
 nodist_BUILT_SOURCES = termparser.tab.c++ termparser.tab.h++ \
 	                dfiparser.tab.c++ dfiparser.tab.h++ \
 			termparser.c++ termparser.h termlexer.c++
@@ -90,7 +96,7 @@ termparser.tab.c++: $(srcdir)/termparser.y++ Makefile
 # dummy dependendcy for make -j
 termparser.tab.h++: termparser.tab.c++
 
-endif
+endif # ----------------------------------------------------------------
 
 dfiparser.tab.c++: $(srcdir)/dfiparser.y++ Makefile
 	bison -p dfi -d $(srcdir)/dfiparser.y++
@@ -126,6 +132,6 @@ EXTRA_DIST = \
   \
   term2c \
   dfiparser.y++ dfiscanner.l++ \
-  term_lint.pl termite_spec.pl \
+  term_lint_main.pl \
   clang/README clang/INSTALL clang/clang-termite.patch
 

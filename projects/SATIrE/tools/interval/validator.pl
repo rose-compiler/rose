@@ -31,7 +31,7 @@
 :- prolog_load_context(directory, CurDir),
    asserta(library_directory(CurDir)),
    (getenv('TERMITE_LIB', TermitePath)
-   ; (print_message(error, 'Please set then environment variable $TERMITE_LIB'),
+   ; (print_message(error, 'Please set the environment variable TERMITE_LIB'),
       halt(1))
    ),
    asserta(library_directory(TermitePath)).
