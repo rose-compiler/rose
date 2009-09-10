@@ -3,6 +3,10 @@ this file stores information specific to release dates for
 some versions of operating systems important for the ROSE
 project.
 
+How to identify a Linux Distribution:
+http://etbe.coker.com.au/2007/08/30/identifying-the-distribution-of-a-linux-system/
+
+
 Info from: http://linuxmafia.com/faq/RedHat/releases.html
 
 

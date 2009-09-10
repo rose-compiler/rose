@@ -69,6 +69,10 @@ DETERMINE_OS
 AM_CONDITIONAL(ROSE_BUILD_OS_IS_OSX,    [test "x$build_vendor" = xapple])
 AM_CONDITIONAL(ROSE_BUILD_OS_IS_CYGWIN, [test "x$build_os" = xcygwin])
 
+# DQ (9/10/2009): A more agressive attempt to identify the OS vendor
+# This sets up automake conditional variables for each OS vendor name.
+DETERMINE_OS_VENDOR
+
 # exit 1
 
 # This appears to be a problem for Java (and so the Fortran support).

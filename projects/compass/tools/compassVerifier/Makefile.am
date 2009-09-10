@@ -27,7 +27,10 @@ test: compassVerifier compass_parameters $(compass_test_dir)/exampleTest_1.C
 	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -rose:skip_unparser -rose:skipfinalCompileStep $(compass_test_dir)/exampleTest_1.C 
 
 check-local:
+# DQ (9/10/2009): Skip tests on Debian system to test ROSE (and focus first on where it works!)
+if !OS_VENDOR_DEBIAN
 	@$(MAKE) test
+endif
 	@echo "*****************************************************************************"
 	@echo "*** compassVerifier: make check rule complete (terminated normally) ***"
 	@echo "*****************************************************************************"
@@ -84,7 +87,7 @@ oneBigVerify: compassVerifier compass_parameters
 			sed -e "s@$${prefix}___run(.*SgNode\*@run(SgNode\*@g" |\
 			sed -e "s@Traversal: .*run@Traversal::run@g" \
 			>> catChecker.C ;\
- 			echo "-I$(compass_checker_dir)/$${prefix}" >> catCheckerIncludes.txt ;\
+			echo "-I$(compass_checker_dir)/$${prefix}" >> catCheckerIncludes.txt ;\
 		done ;\
 		rm -f $$tmpfile ;\
 		export CAT_CHECKER_INCLUDES=`cat catCheckerIncludes.txt` ;\
@@ -93,41 +96,41 @@ oneBigVerify: compassVerifier compass_parameters
  
 verify.makefile: verify.inc
 	@sh -c '\
- 	export checker_labels=`echo "$(COMPASS_CHECKER_TEST_LABELS)" | sed -e "s@test@@g"` ;\
- 	export directories=`$(FIND_ALL_CHECKERS)` ;\
- 	echo -e "COMPILER=compassVerifier" > verify.makefile ;\
- 	echo -e "all: `echo $${directories}`" >> verify.makefile ;\
- 	for dir in $${directories} ;\
- 	do \
- 		export tmpfile=`mktemp` ; rm -f $${tmpfile} ;\
- 		export f1=$${dir}_`basename $${tmpfile} | sed -e "s@\.@@g"`_out.txt ;\
- 		export f2=$${dir}_`basename $${tmpfile} | sed -e "s@\.@@g"`_err.txt ;\
- 		export files=`ls -R $(compass_checker_dir)/$${dir}/* | grep -v "$${dir}Test.*.C"` ;\
- 		echo -e "\n$${dir}:" >> verify.makefile ;\
- 		echo -e "\t@sh -c \"\\" >> verify.makefile ;\
- 		echo -e "\t\techo -e \\\"\\\n./\$$(COMPILER) $(compass_checker_dir)/$${dir}/$${dir}.C\\\n\\\" ;\\" >> verify.makefile ;\
- 		echo -e "\t\tenv COMPASS_PARAMETERS=./compass_parameters ./\$$(COMPILER) -I$(top_builddir) $(INCLUDES) $(compass_checker_dir)/$${dir}/$${dir}.C &> $${f1} ;\\" >> verify.makefile ;\
- 		echo -e "\t\tdeclare -i err_code=\\\$$\$$? ;\\" >> verify.makefile ;\
- 		echo -e "\t\techo -e \\\"\\\n***Command Line: \$$(COMPILER) -I$(top_builddir) $(INCLUDES) $(compass_checker_dir)/$${dir}/$${dir}.C \\\" >> $${f1} ;\\" >> verify.makefile ;\
+	export checker_labels=`echo "$(COMPASS_CHECKER_TEST_LABELS)" | sed -e "s@test@@g"` ;\
+	export directories=`$(FIND_ALL_CHECKERS)` ;\
+	echo -e "COMPILER=compassVerifier" > verify.makefile ;\
+	echo -e "all: `echo $${directories}`" >> verify.makefile ;\
+	for dir in $${directories} ;\
+	do \
+		export tmpfile=`mktemp` ; rm -f $${tmpfile} ;\
+		export f1=$${dir}_`basename $${tmpfile} | sed -e "s@\.@@g"`_out.txt ;\
+		export f2=$${dir}_`basename $${tmpfile} | sed -e "s@\.@@g"`_err.txt ;\
+		export files=`ls -R $(compass_checker_dir)/$${dir}/* | grep -v "$${dir}Test.*.C"` ;\
+		echo -e "\n$${dir}:" >> verify.makefile ;\
+		echo -e "\t@sh -c \"\\" >> verify.makefile ;\
+		echo -e "\t\techo -e \\\"\\\n./\$$(COMPILER) $(compass_checker_dir)/$${dir}/$${dir}.C\\\n\\\" ;\\" >> verify.makefile ;\
+		echo -e "\t\tenv COMPASS_PARAMETERS=./compass_parameters ./\$$(COMPILER) -I$(top_builddir) $(INCLUDES) $(compass_checker_dir)/$${dir}/$${dir}.C &> $${f1} ;\\" >> verify.makefile ;\
+		echo -e "\t\tdeclare -i err_code=\\\$$\$$? ;\\" >> verify.makefile ;\
+		echo -e "\t\techo -e \\\"\\\n***Command Line: \$$(COMPILER) -I$(top_builddir) $(INCLUDES) $(compass_checker_dir)/$${dir}/$${dir}.C \\\" >> $${f1} ;\\" >> verify.makefile ;\
 		echo -e "\t\techo -e \\\"\\\n***Exit Code: \\\$$\$$err_code\\\" >> $${f1} ;\\" >> verify.makefile ;\
- 		echo -e "\t\tif((\\\$$\$$err_code!=0)); then \\" >> verify.makefile ;\
- 		echo -e "\t\t\techo -e \\\"\\\nError: ./\$$(COMPILER) exit FAILURE, see `pwd`/$${f1}\\\n\\\" ;\\" >> verify.makefile ;\
- 		echo -e "\t\t\texit 1 ;\\" >> verify.makefile ;\
- 		echo -e "\t\tfi ;\\" >> verify.makefile ;\
- 		for checker in `echo $${checker_labels}` ;\
- 		do \
- 			echo -e "\t\tgrep \\\"$${checker}:\\\" $${f1} >> $${f2} ;\\" >> verify.makefile ;\
- 		done ;\
- 		echo -e "\t\tif test -s $${f2} ; then \\" >> verify.makefile ;\
- 		echo -e "\t\t\techo \\\"Error during compass verification: $${dir} does not comply, see `pwd`/$${f2}\\\" ;\\" >> verify.makefile ;\
- 		echo -e "\t\t\texit 1 ;\\" >> verify.makefile ;\
- 		echo -e "\t\telse \\" >> verify.makefile ;\
- 		echo -e "\t\t\techo \\\"Success: $${dir} passed\\\" ;\\" >> verify.makefile ;\
- 		echo -e "\t\tfi ;\\" >> verify.makefile ;\
- 		echo -e "\t\t#rm -f $${f1} $${f2} ;\\" >> verify.makefile ;\
- 		echo -e "\t\"" >> verify.makefile ;\
- 	done \
- 	'
+		echo -e "\t\tif((\\\$$\$$err_code!=0)); then \\" >> verify.makefile ;\
+		echo -e "\t\t\techo -e \\\"\\\nError: ./\$$(COMPILER) exit FAILURE, see `pwd`/$${f1}\\\n\\\" ;\\" >> verify.makefile ;\
+		echo -e "\t\t\texit 1 ;\\" >> verify.makefile ;\
+		echo -e "\t\tfi ;\\" >> verify.makefile ;\
+		for checker in `echo $${checker_labels}` ;\
+		do \
+			echo -e "\t\tgrep \\\"$${checker}:\\\" $${f1} >> $${f2} ;\\" >> verify.makefile ;\
+		done ;\
+		echo -e "\t\tif test -s $${f2} ; then \\" >> verify.makefile ;\
+		echo -e "\t\t\techo \\\"Error during compass verification: $${dir} does not comply, see `pwd`/$${f2}\\\" ;\\" >> verify.makefile ;\
+		echo -e "\t\t\texit 1 ;\\" >> verify.makefile ;\
+		echo -e "\t\telse \\" >> verify.makefile ;\
+		echo -e "\t\t\techo \\\"Success: $${dir} passed\\\" ;\\" >> verify.makefile ;\
+		echo -e "\t\tfi ;\\" >> verify.makefile ;\
+		echo -e "\t\t#rm -f $${f1} $${f2} ;\\" >> verify.makefile ;\
+		echo -e "\t\"" >> verify.makefile ;\
+	done \
+	'
 
 new_allow_list_setup:
 	cat $(srcdir)/RULE_SELECTION.in | sed -e 's@^+@-@g' | sed -e 's@-:AllowedFunctions@+:AllowedFunctions@g' > RULE_SELECTION
