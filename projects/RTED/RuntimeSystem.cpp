@@ -779,13 +779,14 @@ RuntimeSystem_roseInitVariable(
   RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
   CHECKPOINT
 
+#ifdef ROSE_WITH_ROSEQT
   if( rs -> isQtDebuggerEnabled() ) {
     std::string message = "   Init Var at address:  "+HexToString(address)+"  type:"
       +type+ "   size: " + ToString(size);
     //cerr << "++++++++++++++++++++++++++ " << message << endl;
     RtedDebug::instance()->addMessage(message);
   }
-
+#endif
 
 
     RsType* rs_type = 
@@ -935,12 +936,14 @@ RuntimeSystem_roseRegisterTypeCall(int count, ...) {
         t = RuntimeSystem_getRsType( type, base_type, "", indirection_level );
       }
 
+#ifdef ROSE_WITH_ROSEQT
       if( rs -> isQtDebuggerEnabled() ) {
         std::string message = "   Register class-member:  "+name+"  offset:"
           +HexToString(offset)+ "   size: " + ToString(size);
         //cerr << "++++++++++++++++++++++++++ " << message << endl;
         RtedDebug::instance()->addMessage(message);
       }
+#endif
 
       classType->addMember(name,t,(addr_type)offset);
       //cerr << "Registering Member " << name << " of type " << type << " at offset " << offset << endl;
