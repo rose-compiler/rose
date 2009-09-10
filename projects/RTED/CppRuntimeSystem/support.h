@@ -1,7 +1,9 @@
 #ifndef RTEDCPPSUPPORT_H
 #define RTEDCPPSUPPORT_H
 
+#ifdef ROSE_WITH_ROSEQT
 #include "DebuggerQt/RtedDebug.h"
+#endif
 
 /**********************************************************
  *  Convert to string
@@ -21,10 +23,14 @@ assertme(bool value, std::string text, std::string left, std::string right) {
     SourcePosition curpos;
     RuntimeSystem* rs = RuntimeSystem::instance(); 
     curpos= rs->getCodePosition();
-    RtedDebug* rd = RtedDebug::instance();
-    std::string textme = "Error::: "+text+"  Left:" +left + "  Right:" +right;
-    rd->addMessage(textme,RtedDebug::ERROR);
-    rd->startGui();
+#ifdef ROSE_WITH_ROSEQT
+    if( rs -> isQtDebuggerEnabled() ) {
+        RtedDebug* rd = RtedDebug::instance();
+        std::string textme = "Error::: "+text+"  Left:" +left + "  Right:" +right;
+        rd->addMessage(textme,RtedDebug::ERROR);
+        rd->startGui();
+    }
+#endif
     cerr << "Error::: " << text << endl;
     rs->setCodePosition(curpos);
   }

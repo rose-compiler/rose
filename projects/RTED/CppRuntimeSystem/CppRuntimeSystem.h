@@ -60,6 +60,8 @@ class RuntimeSystem
         /// Switches the Qt-Debugger on/off (works only if compiled with ROSE_WITH_ROSEQT)
         void setQtDebuggerEnabled(bool b) { qtDebugger = b; }
 
+        bool isQtDebuggerEnabled() { return qtDebugger; }
+
         /// Changes the violation policy for the given violation type.
         void setViolationPolicy( RuntimeViolation::Type, ViolationPolicy::Type );
 

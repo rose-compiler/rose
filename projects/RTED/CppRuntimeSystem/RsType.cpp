@@ -274,9 +274,14 @@ int RsClassType::addMember(const std::string & name, RsType * type, addr_type of
         cerr << "Tried to register MemberPointer with NULL type" << endl;
         return -1;
     }
-    string mess = "  adding member : "+name+"  type: "+type->getName()+
-      "  offset: " + ToString(offset);
-    RtedDebug::instance()->addMessage(mess);
+
+#ifdef ROSE_WITH_ROSEQT
+    if( RuntimeSystem::instance() -> isQtDebuggerEnabled() ) {
+        string mess = "  adding member : "+name+"  type: "+type->getName()+
+          "  offset: " + ToString(offset);
+        RtedDebug::instance()->addMessage(mess);
+    }
+#endif
 
     if(offset==-1)
     {
