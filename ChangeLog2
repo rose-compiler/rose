@@ -1,3 +1,14 @@
+2009-09-10 22:10  dquinlan
+
+	* [r7202]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_fedora_8,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_fedora_8/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_fedora_8/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_fedora_9,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_fedora_9/minimal_default:
+	  Added new tests because NMI changed the name of the Fedora 8 and
+	  Fedora 9 platforms.
+
 2009-09-10 21:55  dquinlan
 
 	* [r7200] /trunk/ROSE/config/determinte-os.m4,
