@@ -11,7 +11,7 @@ latexFiles = \
    traversal.tex loopRecognition.tex typeInfoFromFunctionParameters.tex resolveOverloadedFunction.tex \
    templateParameter.tex instrumentationExample.tex addVariableDeclaration.tex \
    addAssignmentStmt.tex addExpression.tex\
-   addFunctionDeclaration.tex buildCFG.tex parallelChecker.tex runtimeErrorCheck.tex defuseAnalysis.tex \
+   addFunctionDeclaration.tex buildCFG.tex parallelChecker.tex defuseAnalysis.tex \
    binaryAnalysis.tex buildCG.tex classHierarchyGraph.tex loopOptimization.tex inliner.tex outliner.tex \
    parser-docs.tex codeCoverage.tex globalVariableHandling.tex scopeInformation.tex sideeffect-docs.tex \
    tauInstrumentation.tex templateSupport.tex dataBaseSupport.tex recognitionOfAbstractions.tex \
