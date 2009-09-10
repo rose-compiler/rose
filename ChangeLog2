@@ -1,3 +1,105 @@
+2009-09-10 01:47  liao6
+
+	* [r7187] /trunk/ROSE/config/support-gomp-omp.m4,
+	  /trunk/ROSE/configure.in,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C,
+	  /trunk/ROSE/src/midend/astOutlining/CollectVars.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Outliner.hh,
+	  /trunk/ROSE/src/midend/astOutlining/Preprocess.cc,
+	  /trunk/ROSE/src/midend/ompLowering/libgomp_g.h,
+	  /trunk/ROSE/src/midend/ompLowering/omp_lowering.cpp,
+	  /trunk/ROSE/src/midend/ompLowering/omp_lowering.h,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/3loops.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/atomic.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/critical_dead.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/dynamicChunk.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/empty.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/falsesharing.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/firstlastprivate.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/firstprivate.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/flush.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/flush_exampleA_21_1c.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/get_max_threads.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/hello-ordered.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/lastprivate.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/lastprivate0.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/limits_threads.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/lockarray.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/masterSingle.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/matrix_vector.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/nestedpar1.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/omp1.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/ompfor2.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/ordered.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/ordered2.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/orphaned-directives.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/parallel-reduction.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/parallel.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/parallelfor.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/parallelfor2.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/parallelsections.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/preprocessingInfo.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/privatej.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/reduction2.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/section.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/set_num_threads.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/single.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/spmd1.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/staticChunk.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/subteam.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/subteam2.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/variables.c,
+	  /trunk/ROSE/tests/roseTests/ompLoweringTests/Makefile.am: More
+	  OpenMP 3.0 translation work
+	  * handle more directives and clauses:
+	  ** ordered, atomic, critical, barrier, master, single
+	  * better configuration and testing:
+	  ** --with_gomp_omp_runtime_library for the path of GCC' GOMP
+	  library support-gomp-omp.m4
+	  ** "make check" now run compiled tests in parallel when
+	  applicable
+	  
+	  Other details
+	  * refactored variable handling OmpSupport::transOmpVariables()
+	  * pass -D_OPENMP to the backend compiler
+	  * preserve preprocessing information during translation
+	  * make implicit private loop variables explicit:
+	  patchUpPrivateVariables()
+	  
+	  more supportive SageInterface functions:
+	  * SageInterface::getLoopIndexVariable()
+	  * SageInterface::cutPreprocessingInfo()
+	  * SageInterface::pastePreprocessingInfo()
+
+2009-09-10 01:08  dquinlan
+
+	* [r7186] /trunk/ROSE/projects/runtimeErrorCheck/example.C,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_sles_9/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/quinlanTests.sh: Fix
+	  errors in NMI tests for Fedora version 9 (64bit).
+
+2009-09-09 22:20  dquinlan
+
+	* [r7184] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/docs/Rose/Makefile.am,
+	  /trunk/ROSE/docs/Rose/installRose.tex,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/ReleaseHistory.txt,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_sles_9/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_deb_3.1/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_sles_9/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_suse_10.2/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/quinlanTests.sh,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/update-scidac.sh: Fixed
+	  more of ROSE to work on NMI compile farm.
+
+2009-09-09 19:03  dquinlan
+
+	* [r7182] /trunk/ROSE/configure.in: Added debugging to test value
+	  of am__tar and am__untar for NMI tests.
+
 2009-09-09 18:01  liao6
 
 	* [r7180] /trunk/ROSE/scripts/roseFreshTestStub-Leo-head.sh: added
