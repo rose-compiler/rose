@@ -41,11 +41,13 @@ echo "**************************************************************************
 echo "* Failing tests: (different reasons: RTED exit not define, Compass segfault, and testCallGraphAnalysis segfault) *"
 echo "******************************************************************************************************************"
 
-# DQ (9/7/2009): This fails in the RTED work...("make check")
+# DQ (9/10/2009): NMI changed the name of this test to x86_64_fedora_9 (so our test now fails).
+# DQ (9/10/2009): Fixed problem with gnu 4.3 and one of our tests that used main() with a single argument (copyAST_tests).
+# DQ (9/7/2009): This fails in the RTED work...("make check") (NOW FIXED)
 # Error: rose_example.C: In function 'void check_var(void*, char*)':
 #        rose_example.C:34: error: 'exit' was not declared in this scope
 #        Leaving directory `/home/condor/execute/dir_13881/userdir/build/projects/runtimeErrorCheck'
-./submit.sh build_configs/x86_64_fc_9/minimal_default
+# ./submit.sh build_configs/x86_64_fc_9/minimal_default
 
 # DQ (9/9/2009): This platform will be removed (old: released June 2005)
 # DQ (9/7/2009): Segfault in Compass tests ("make check")
