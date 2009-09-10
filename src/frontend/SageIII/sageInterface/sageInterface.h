@@ -524,8 +524,14 @@ sortSgNodeListBasedOnAppearanceOrderInSource(const std::vector<SgDeclarationStat
 //! Insert  #include "filename" or #include <filename> (system header) into the global scope containing the current scope, right after other #include XXX. 
 PreprocessingInfo* insertHeader(const std::string& filename, PreprocessingInfo::RelativePositionType position=PreprocessingInfo::after, bool isSystemHeader=false, SgScopeStatement* scope=NULL);
 
-//! Move preprocessing information of stmt_src to stmt_dst, Only move preprocessing informationat the specified relative position, otherwise move all preprocessing information.  
+//! Move preprocessing information of stmt_src to stmt_dst, Only move preprocessing information at the specified relative position, otherwise move all preprocessing information.  
 void moveUpPreprocessingInfo (SgStatement* stmt_dst, SgStatement* stmt_src, PreprocessingInfo::RelativePositionType position=PreprocessingInfo::undef);
+
+//!Cut preprocessing information from a source node and save it into a buffer. Used in combination of pastePreprocessingInfo(). The cut-paste operation is similar to moveUpPreprocessingInfo() but it is more flexible in that the destination node can be unknown during the cut operation.
+void cutPreprocessingInfo (SgLocatedNode* src_node, PreprocessingInfo::RelativePositionType pos, AttachedPreprocessingInfoType& save_buf);
+
+//!Paste preprocessing information from a buffer to a destination node. Used in combination of cutPreprocessingInfo()
+void pastePreprocessingInfo (SgLocatedNode* dst_node, PreprocessingInfo::RelativePositionType pos, AttachedPreprocessingInfoType& saved_buf);
 
 //! Attach an arbitrary string to a located node. A workaround to insert irregular statements or vendor-specific attributes.
 PreprocessingInfo* attachArbitraryText(SgLocatedNode* target, 
@@ -732,8 +738,12 @@ void convertAllForsToWhiles(SgNode* top);
 //! Change continue statements in a given block of code to gotos to a label
 void changeContinuesToGotos(SgStatement* stmt, SgLabelStatement* label);
  
+//!Return the loop index variable for a for loop
+SgInitializedName* getLoopIndexVariable(SgNode* loop);
+
 //! Routines to get and set the body of a loop
 SgStatement* getLoopBody(SgScopeStatement* loop);
+
 void setLoopBody(SgScopeStatement* loop, SgStatement* body);
 
 //! Routines to get the condition of a loop. It recognize While-loop, For-loop, and Do-While-loop 
@@ -1074,8 +1084,8 @@ void removeStatement(SgStatement* stmt);
 //! Deep delete a sub AST tree. It uses postorder traversal to delete each child node.
 void deepDelete(SgNode* root);
 
-//! Replace a statement with another
-void replaceStatement(SgStatement* oldStmt, SgStatement* newStmt);
+//! Replace a statement with another. Move preprocessing information from oldStmt to newStmt if requested.
+void replaceStatement(SgStatement* oldStmt, SgStatement* newStmt, bool movePreprocessinInfo = false);
 
 //! Append an argument to SgFunctionParameterList, transparently set parent,scope, and symbols for arguments when possible
 /*! We recommend to build SgFunctionParameterList before building a function declaration

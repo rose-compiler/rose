@@ -5005,7 +5005,7 @@ void SageInterface::deepDelete(SgNode* root)
 }
 
 //! Replace a statement with another
-void SageInterface::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt)
+void SageInterface::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt, bool movePreprocessinInfo/* = false*/)
 {
   ROSE_ASSERT(oldStmt);  
   ROSE_ASSERT(newStmt);  
@@ -5015,6 +5015,10 @@ void SageInterface::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt)
   // TODO  handle replace the body of a C/Fortran function definition with a single statement?
   oldStmt->set_parent(p); // needed ?
   p->replace_statement(oldStmt,newStmt);
+
+// Some translators have their own handling for this (e.g. the outliner)
+  if (movePreprocessinInfo) 
+    moveUpPreprocessingInfo(newStmt, oldStmt);
 }
 
 // This code is based on OpenMP translator's ASTtools::replaceVarRefExp() and astInling's replaceExpressionWithExpression()
@@ -6006,6 +6010,52 @@ bool SageInterface::loopInterchange(SgForStatement* loop, size_t depth, size_t l
     }
   }
   return true; 
+}
+
+//!Return the loop index variable for a for loop
+SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
+{
+  ROSE_ASSERT(loop != NULL);
+  SgForStatement* fs = isSgForStatement(loop);
+  ROSE_ASSERT (fs != NULL);
+
+  //Check initialization statement is something like i=xx;
+  SgStatementPtrList & init = fs->get_init_stmt();
+  if (init.size() !=1)
+  {
+    cerr<<"SageInterface::getLoopIndexVariable(), no or more than one initialization statements are encountered. Not supported yet "<<endl;
+    ROSE_ASSERT(false);
+  }
+  SgStatement* init1 = init.front();
+  SgExpression* ivarast=NULL;
+  SgInitializedName* ivarname=NULL;  
+
+  bool isCase1=false, isCase2=false;
+  //consider C99 style: for (int i=0;...)
+  if (isSgVariableDeclaration(init1))
+  {
+    SgVariableDeclaration* decl = isSgVariableDeclaration(init1);
+    ivarname = decl->get_variables().front();
+    ROSE_ASSERT(ivarname != NULL);
+    SgInitializer * initor = ivarname->get_initializer();
+    if (isSgAssignInitializer(initor))
+      isCase1 = true;
+  }// other regular case: for (i=0;..)
+  else if (isAssignmentStatement(init1, &ivarast))
+  {
+    SgVarRefExp* var = isSgVarRefExp(SkipCasting(ivarast));
+    if (var)
+    {
+      ivarname = var->get_symbol()->get_declaration();
+      isCase2 = true;
+    }
+  }
+  // Cannot be both true
+  ROSE_ASSERT(!(isCase1&&isCase2));
+
+  //Check loop index's type
+  //ROSE_ASSERT(isStrictIntegerType(ivarname->get_type()));
+  return ivarname;
 }
 
 //! Based on AstInterface::IsFortranLoop() and ASTtools::getLoopIndexVar()
@@ -7495,6 +7545,94 @@ void SageInterface::moveUpPreprocessingInfo(SgStatement * stmt_dst, SgStatement 
   for (j = (*infoToRemoveList).begin(); j != (*infoToRemoveList).end(); j++)
     infoList->erase( find(infoList->begin(),infoList->end(),*j) );
 } // moveUpPreprocessingInfo()
+
+
+/*!
+ *  \brief Returns 'true' iff the given info object is valid and has
+ *  the specified position.
+ */
+static bool isNotRelPos (const PreprocessingInfo* info,
+             PreprocessingInfo::RelativePositionType pos)
+{
+  return info && (info->getRelativePosition () != pos);
+}
+
+/*!
+ *  \brief Returns 'true' iff the given info object is valid and does
+ *  not have the specified position.
+ */
+static bool isRelPos (const PreprocessingInfo* info,
+             PreprocessingInfo::RelativePositionType pos)
+{
+  return info && !isNotRelPos (info, pos);
+}
+
+
+//!Cut preprocessing information from a source node and save it into a buffer. Used in combination of pastePreprocessingInfo(). The cut-paste operaation is similar to moveUpPreprocessingInfo() but it is more flexible in that the destination node only need to be known until the paste action.
+void SageInterface::cutPreprocessingInfo (SgLocatedNode* src_node, PreprocessingInfo::RelativePositionType pos, AttachedPreprocessingInfoType& save_buf)
+{
+  ROSE_ASSERT(src_node != NULL);
+
+  AttachedPreprocessingInfoType* info = src_node->get_attachedPreprocessingInfoPtr();
+  if (info)
+  {
+    remove_copy_if (info->begin (), info->end (),
+        back_inserter (save_buf),
+        bind2nd (ptr_fun (isNotRelPos), pos));
+
+    // DQ (9/26/2007): Commented out as part of move from std::list to std::vector
+    // info->remove_if (bind2nd (ptr_fun (isRelPos), pos));
+    // Liao (10/3/2007), implement list::remove_if for vector, which lacks sth. like erase_if
+    AttachedPreprocessingInfoType::iterator new_end =
+      remove_if(info->begin(),info->end(),bind2nd(ptr_fun (isRelPos), pos));
+    info->erase(new_end, info->end());
+  }
+}
+
+static AttachedPreprocessingInfoType *
+createInfoList (SgLocatedNode* s)
+{
+  ROSE_ASSERT (s);
+  AttachedPreprocessingInfoType* info_list = s->get_attachedPreprocessingInfoPtr ();
+  if (!info_list)
+  {
+    info_list = new AttachedPreprocessingInfoType;
+    ROSE_ASSERT (info_list);
+    s->set_attachedPreprocessingInfoPtr (info_list);
+  }
+
+  // Guarantee a non-NULL pointer.
+  ROSE_ASSERT (info_list);
+  return info_list;
+}
+
+//!Cut preprocessing information from a source node and save it into a buffer. Used in combination of pastePreprocessingInfo()
+void SageInterface::pastePreprocessingInfo (SgLocatedNode* dst_node, PreprocessingInfo::RelativePositionType pos, AttachedPreprocessingInfoType& save_buf)
+{
+  // if front
+  AttachedPreprocessingInfoType* info = createInfoList (dst_node);
+  ROSE_ASSERT (info);
+
+  // DQ (9/26/2007): Commented out as part of move from std::list to std::vector
+  // printf ("Commented out front_inserter() as part of move from std::list to std::vector \n");
+  // copy (save_buf.rbegin (), save_buf.rend (), front_inserter (*info));
+
+  // Liao (10/3/2007), vectors can only be appended at the rear
+  if (pos==PreprocessingInfo::before) 
+  {
+    for(AttachedPreprocessingInfoType::reverse_iterator i=save_buf.rbegin();i!=save_buf.rend();i++)
+      info->insert(info->begin(),*i);
+  }
+  // if back 
+  else if (pos==PreprocessingInfo::after)
+    copy (save_buf.begin (), save_buf.end (), back_inserter (*info));
+  else if (pos==PreprocessingInfo::inside)
+  {
+    //TODO what if pos == PreprocessingInfo::inside ?
+    cerr<<"SageInterface::pastePreprocessingInfo() pos==PreprocessingInfo::inside is not supported."<<endl;
+    ROSE_ASSERT(false);
+  }
+}
 
 SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfFor(SgForStatement* fs) 
 {
