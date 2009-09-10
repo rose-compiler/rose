@@ -54,7 +54,7 @@ echo "**************************************************************************
 ./submit.sh build_configs/x86_64_fc_4/minimal_default
 
 # DQ (9/9/2009): This platform will be removed, redundant, please consider just building on x86_rhas_4
-# DQ (9/7/2009): Errro in testCallGraphAnalysis
+# DQ (9/7/2009): Error in testCallGraphAnalysis
 # make[6]: *** [test2006_02.C.dot] Segmentation fault
 # make[6]: Leaving directory `/home/condor/execute/dir_32311/userdir/build/tests/roseTests/programAnalysisTests/testCallGraphAnalysis'
 ./submit.sh build_configs/x86_cent_4.2/minimal_default
