@@ -18,10 +18,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
-
 #include "RuntimeSystem.h"
+
+#ifdef ROSE_WITH_ROSEQT
 #include "CppRuntimeSystem/DebuggerQt/RtedDebug.h"
+#endif
 
 
 /**********************************************************
@@ -775,14 +776,16 @@ RuntimeSystem_roseInitVariable(
 			       const char* line,
 			       const char* lineTransformed) {
 
-
-  std::string message = "   Init Var at address:  "+HexToString(address)+"  type:"
-    +type+ "   size: " + ToString(size);
-  //cerr << "++++++++++++++++++++++++++ " << message << endl;
-  RtedDebug::instance()->addMessage(message);
-
   RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
   CHECKPOINT
+
+  if( rs -> isQtDebuggerEnabled() ) {
+    std::string message = "   Init Var at address:  "+HexToString(address)+"  type:"
+      +type+ "   size: " + ToString(size);
+    //cerr << "++++++++++++++++++++++++++ " << message << endl;
+    RtedDebug::instance()->addMessage(message);
+  }
+
 
 
     RsType* rs_type = 
@@ -931,10 +934,14 @@ RuntimeSystem_roseRegisterTypeCall(int count, ...) {
       } else {
         t = RuntimeSystem_getRsType( type, base_type, "", indirection_level );
       }
-      std::string message = "   Register class-member:  "+name+"  offset:"
-	+HexToString(offset)+ "   size: " + ToString(size);
-      //cerr << "++++++++++++++++++++++++++ " << message << endl;
-      RtedDebug::instance()->addMessage(message);
+
+      if( rs -> isQtDebuggerEnabled() ) {
+        std::string message = "   Register class-member:  "+name+"  offset:"
+          +HexToString(offset)+ "   size: " + ToString(size);
+        //cerr << "++++++++++++++++++++++++++ " << message << endl;
+        RtedDebug::instance()->addMessage(message);
+      }
+
       classType->addMember(name,t,(addr_type)offset);
       //cerr << "Registering Member " << name << " of type " << type << " at offset " << offset << endl;
     }
