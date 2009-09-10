@@ -1139,7 +1139,6 @@ src/midend/programTransformation/finiteDifferencing/Makefile
 src/midend/programTransformation/functionCallNormalization/Makefile
 src/midend/programTransformation/constantFolding/Makefile
 src/midend/programTransformation/implicitCodeGeneration/Makefile
-src/midend/programTransformation/runtimeTransformation/Makefile
 src/midend/loopProcessing/Makefile
 src/midend/loopProcessing/prepostTransformation/Makefile
 src/midend/loopProcessing/depInfo/Makefile
@@ -1272,7 +1271,6 @@ projects/DatalogAnalysis/relationTranslatorGenerator/Makefile
 projects/DatalogAnalysis/tests/Makefile
 projects/DistributedMemoryAnalysisCompass/Makefile
 projects/DocumentationGenerator/Makefile
-projects/runtimeErrorCheck/Makefile
 projects/RTED/Makefile
 projects/RTED/CppRuntimeSystem/Makefile
 projects/RTED/CppRuntimeSystem/DebuggerQt/Makefile

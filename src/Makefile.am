@@ -52,7 +52,6 @@ libroseLibraries = \
    $(top_builddir)/src/frontend/PHPFrontend/librosePHPFrontend.la \
    $(libroseEDGlibraries) \
    $(libroseBinaryLibraries) \
-   $(libroseRuntimeTransformation) \
    $(top_builddir)/src/midend/abstractHandle/libabstractHandle.la \
    $(top_builddir)/src/midend/astDiagnostics/libastDiagnostics.la \
    $(top_builddir)/src/midend/astInlining/libastinlining.la \
@@ -86,7 +85,6 @@ libroseLibraries = \
    $(top_builddir)/src/midend/programTransformation/functionCallNormalization/libfunctionCallNormalization.la \
    $(top_builddir)/src/midend/programTransformation/implicitCodeGeneration/libimplicitCodeGeneration.la \
    $(top_builddir)/src/midend/programTransformation/partialRedundancyElimination/libpre.la \
-   $(top_builddir)/src/midend/programTransformation/runtimeTransformation/libruntimeTransformation.la \
    $(top_builddir)/src/roseSupport/libroseSupport.la \
    $(top_builddir)/src/util/support/libsupport.la \
    $(top_builddir)/src/util/graphs/libgraphs.la \

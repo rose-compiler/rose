@@ -5,6 +5,7 @@ class Test {
     Test() { 
     }
   int i;
+  Test3* t3;
  private:
   int m;
   Test3* t;

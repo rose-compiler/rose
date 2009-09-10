@@ -64,7 +64,6 @@ TUTORIAL_EXAMPLES = \
    defuseAnalysis \
    dwarfAnalysis \
    dwarfInstructionAddressToSourceLineAnalysis \
-   runtimeCheck \
    generatingUniqueNamesFromDeclaration \
    graphGenerationOfSubtree \
    graphTraversal \
@@ -204,8 +203,6 @@ loopProcessor_SOURCES = LoopProcessor.C
 buildCFG_SOURCES = buildCFG.C
 
 defuseAnalysis_SOURCES = defuseAnalysis.C
-
-runtimeCheck_SOURCES = runtimeCheck.cpp
 
 binaryAnalysis_SOURCES = binaryAnalysis.C
 
@@ -1012,19 +1009,7 @@ defuseAnalysis_pic1.pdf: defuseAnalysis
 	@echo "DefUseAnalysis: Building postscript file from foo.dot ..."
 	$(top_srcdir)/scripts/dotgenLetterPDF dfa.dot defuseAnalysis_pic1.pdf
 
-rose_input_runtimeErrorCheck.C: runtimeCheck
-	@echo "Building an example runtimeCheck ... curdir= `pwd`  srcdir= " $(srcdir)
-	./runtimeCheck $(ROSE_FLAGS) $(srcdir)/input_runtimeErrorCheck.C -run -c -o rose_input_runtimeErrorCheck.o $(ROSE_FLAGS)
-	@echo "running example runtimeCheck ..."
-	$(LIBTOOL) --mode=link $(CXX) -o test_runtimeCheck rose_input_runtimeErrorCheck.o $(LDADD) $(ROSE_DWARF_LIBS_WITH_PATH)
-	./test_runtimeCheck > output_runtimeCheck.C
 
-rose_input_runtimeErrorCheck2.C: runtimeCheck
-	@echo "Building an example runtimeCheck2 ... curdir= `pwd`  srcdir= " $(srcdir)
-	./runtimeCheck $(ROSE_FLAGS) $(srcdir)/input_runtimeErrorCheck2.C -run -c -o rose_input_runtimeErrorCheck2.o $(ROSE_FLAGS)
-	@echo "running example runtimeCheck2 ..."
-	$(LIBTOOL) --mode=link $(CXX) -o test_runtimeCheck2 rose_input_runtimeErrorCheck2.o $(LDADD) $(ROSE_DWARF_LIBS_WITH_PATH)
-	./test_runtimeCheck2 > output_runtimeCheck2.C
 
 binaryAnalysis_pic1.pdf: binaryAnalysis
 	@echo "Building an example BinaryAnalysis ..."
@@ -1336,12 +1321,12 @@ cleanDocs:
 #	This can not be called after make distclean (by make distcheck)
 #	cd outliner; $(MAKE) cleanDocs
 	rm -f rose_*.C rose_*.cpp *.out *.a[a-l] *.dot *.ps *.pdf *.trace *.binaryAST 
-	rm -f ExampleCodeCoverage_GeneratedBinary test_runtimeCheck* output_runtimeCheck* 
+	rm -f ExampleCodeCoverage_GeneratedBinary 
 	rm -f inputCode_AST_PDF_Generator.C 
 	rm -f rose_inputCode_dwarfAnalysis.s inputCode_dwarfAnalysis rose_inputCode_dwarfAnalysis
 
 clean-local: cleanDocs
-	rm -rf Templates.DB ii_files ti_files *.ti *.svg test_runtimeCheck* *.new rose_bin_example.s rose_bin_example_2.s bin_example_2 *.dump
+	rm -rf Templates.DB ii_files ti_files *.ti *.svg  *.new rose_bin_example.s rose_bin_example_2.s bin_example_2 *.dump
 	find . -depth -name \*.dSYM -exec rm -rf {} \; # OS X object file debug info
 	rm -rf $(generatedCodeExamples)
 #	rm -f exampleTranslator exampleTranslatorMultiLib

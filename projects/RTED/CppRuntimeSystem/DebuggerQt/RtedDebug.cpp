@@ -93,6 +93,12 @@ void RtedDebug::updateDialogData()
 }
 
 
+void RtedDebug::addMessage(std::string &  msg, MessageType type)
+{
+  QString message = QString(msg.c_str());
+  addMessage(message,type);
+}
+
 void RtedDebug::addMessage(std::string &  msg)
 {
   QString message = QString(msg.c_str());

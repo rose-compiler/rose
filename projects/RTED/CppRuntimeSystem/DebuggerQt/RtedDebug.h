@@ -41,6 +41,7 @@ class RtedDebug
 
 
         void addMessage(const QString & msg, MessageType type);
+	void addMessage(std::string& msg, MessageType type);
 	void addMessage(std::string& msg);
 
         /// Starts debug dialog

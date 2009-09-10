@@ -5,6 +5,7 @@ Test3::Test3() {}
 int main() {
   Test t;  
   t.i = 24601;
+  t.t3 = NULL;
   int* j;
   j = new int;
   // error, failed to delete j or assign another pointer to its address

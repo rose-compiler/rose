@@ -406,7 +406,9 @@ SgIncidenceDirectedGraph * ProjectNode::getCallGraph()
 {
     if(callGraph==NULL)
     {
-        CallGraphBuilder cgb (sgProject, false );
+      // tps (09/10/2009) The old call did not compile for me
+      //  CallGraphBuilder cgb (sgProject, false );
+        CallGraphBuilder cgb (sgProject );
         cgb.buildCallGraph();
 
         callGraph = cgb.getGraph();

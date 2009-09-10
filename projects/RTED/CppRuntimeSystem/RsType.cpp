@@ -1,5 +1,6 @@
 // vim:sw=4 ts=4:
 #include "RsType.h"
+#include "support.h"
 
 #include <boost/foreach.hpp>
 #include <typeinfo>
@@ -85,6 +86,9 @@ bool  RsType::checkSubtypeRecursive(addr_type offset,  RsType* type)
         result  = result->getSubtype(subTypeId);
     }
 
+    assertme(  result == NULL || result -> getByteSize() != size,
+	       "RsType::checkSubtypeRecursive - result == NULL || result -> getByteSize() != size",
+	       "",ToString(size));
     assert( result == NULL || result -> getByteSize() != size );
     return false;
 }
@@ -122,9 +126,13 @@ RsArrayType::RsArrayType(RsType * baseType_, size_t size__)
     assert(baseType != NULL);
 
     size_t base_size = baseType -> getByteSize();
+    assertme( 0 == size__ % base_size," RsArrayType::RsArrayType - 0 == size__ % base_size ",
+	      "0",ToString(size__ % base_size));
     assert( 0 == size__ % base_size );
     elementCount = size__ / base_size;
 
+    assertme(elementCount>0, "RsArrayType::RsArrayType - elementCount>0",
+	     ToString(elementCount),"0");
     assert(elementCount>0);
 }
 
@@ -195,6 +203,8 @@ string RsArrayType::getArrayTypeName(RsType * basetype, size_t size)
 
 string RsArrayType::getSubTypeString(int id) const
 {
+  assertme(id >=0 && id < elementCount,"RsArrayType::getSubTypeString( - id >=0 && id < elementCount",
+	   ToString(id),ToString(elementCount));
     assert(id >=0 && id < elementCount);
     stringstream ss;
     ss << "[" << id << "]";
@@ -250,9 +260,9 @@ int RsArrayType::getKnownSubtypesOverlappingRange(
 // ---------------------------------------- RsClassType ---------------------------------------
 
 
-RsClassType::RsClassType(const string & name, size_t byteSize_)
+RsClassType::RsClassType(const string & name, size_t byteSize_, bool isUnion)
     : RsType(name),
-      byteSize(byteSize_)
+      byteSize(byteSize_), isunionType(isUnion)
 {
 }
 
@@ -264,6 +274,9 @@ int RsClassType::addMember(const std::string & name, RsType * type, addr_type of
         cerr << "Tried to register MemberPointer with NULL type" << endl;
         return -1;
     }
+    string mess = "  adding member : "+name+"  type: "+type->getName()+
+      "  offset: " + ToString(offset);
+    RtedDebug::instance()->addMessage(mess);
 
     if(offset==-1)
     {
@@ -275,11 +288,24 @@ int RsClassType::addMember(const std::string & name, RsType * type, addr_type of
     if(members.size() >0)
     {
         Member & last = members.back();
+        // do not assert if the class is a unionType
+        cerr << " is union type ? : " << isunionType << endl;
+        if (isunionType==false) {
+        assertme(last.offset + last.type->getByteSize() <= offset,
+		 "RsClassType::addMember - last.offset + last.type->getByteSize() <= offset",
+		 ToString(last.offset + last.type->getByteSize()),
+		 ToString(offset));
         assert(last.offset + last.type->getByteSize() <= offset);
+        }
     }
 
     members.push_back(Member(name,type,offset));
 
+    // tps (09/09/2009) This test does not apply when the SgClassType is a union
+    assertme(members.back().offset + members.back().type->getByteSize() <= byteSize,
+	     "RsClassType::addMember - members.back().offset + members.back().type->getByteSize() <= byteSize)",
+	     ToString(members.back().offset + members.back().type->getByteSize() ),
+	     ToString(byteSize));
     assert(members.back().offset + members.back().type->getByteSize() <= byteSize);
 
     return members.size()-1;

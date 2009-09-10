@@ -903,15 +903,18 @@ RuntimeSystem_roseRegisterTypeCall(int count, ...) {
 
   const char* nameC = va_arg(vl,const char*);
   /*const char* typeC = */ va_arg(vl,const char*);
+  const char* isUnionType = va_arg(vl,const char*);
+  bool isUnion=false;
+  if (*isUnionType=='1') isUnion=true;
   unsigned long long sizeC = va_arg(vl,unsigned long long);
-  //cerr << " Register Class : " << nameC << " Type: " << typeC << " size : " << sizeC << endl;
+  cerr << " +++++ Register Class : " << nameC << " size : " << sizeC << "  isUnion : " << isUnion << endl;
   int i=0;
   
   RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
   CHECKPOINT
 
-  RsClassType * classType = new RsClassType(nameC,sizeC);
-  for ( i=6;i<count;i+=6)
+  RsClassType * classType = new RsClassType(nameC,sizeC, isUnion);
+  for ( i=7;i<count;i+=6)
     {
       string name = va_arg(vl,const char*);
       string type = va_arg(vl,const char*);

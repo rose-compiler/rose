@@ -211,7 +211,7 @@ class RsClassType : public RsType
     public:
         /// Creates new ClassType whith specified name and size in bytes
         /// members-info is added via addMember()
-        RsClassType(const std::string & name, size_t byteSize);
+        RsClassType(const std::string & name, size_t byteSize, bool isUnionType);
 
         /// Adds a member, and checks if typeinfo is consistent (i.e. does not exceed byteSize)
         /// @param name name of the member variable
@@ -270,6 +270,7 @@ class RsClassType : public RsType
     protected:
         bool relaxed;
         size_t byteSize;
+        bool isunionType;
 
         struct Member
         {
@@ -433,7 +434,7 @@ class RsCompoundType : public RsClassType {
 
     public:
         RsCompoundType(const std::string & name, size_t byteSize)
-            : RsClassType( name, byteSize ) { this -> relaxed = true; }
+            : RsClassType( name, byteSize,false ) { this -> relaxed = true; }
         int addMember(const std::string & name, RsType * type, addr_type offset=-1);
 
         virtual RsType*  getSubtypeAt( addr_type offset ) const;

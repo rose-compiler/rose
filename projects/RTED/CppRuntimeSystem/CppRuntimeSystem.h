@@ -51,6 +51,7 @@ class RuntimeSystem
         void checkpoint(const SourcePosition & pos) ;
 
         const SourcePosition & getCodePosition() const {return curPos; }
+        void setCodePosition(SourcePosition &  sp) {curPos=sp; }
 
         /// if testing mode is true exceptions are thrown when a violations occurs
         /// otherwise abort is called, default false

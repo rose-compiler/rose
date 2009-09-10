@@ -58,6 +58,8 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* cdef) {
 	  SgInitializedName* initName = *itvar;
 	  string name = initName->get_mangled_name();
 	  string type = initName->get_type()->class_name();
+	  VariantT variant = initName->get_type()->variantT();
+	  cerr << " *********** VarientT = " << getSgVariant(variant)  << endl;
 
 	  RtedClassElement* el;
 	  if( isSgArrayType( initName -> get_type() )) {
@@ -104,14 +106,22 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
   // we want to call register type before type is used, but where it's in
   // scope
   stmt = getSurroundingStatement( rtedClass->classDef );
+  cerr << "  the surrounding statement is (1): " << stmt->class_name() << 
+    " for : " <<  rtedClass->classDef->get_declaration()->get_name().str() <<  endl;
   while(  isSgClassDefinition( stmt )
           || isSgClassDeclaration( stmt )) {
 
     stmt = isSgStatement( stmt -> get_parent());
+    cerr << "  the surrounding statement is (2): " << stmt->class_name() << endl;
   }
-  if( !stmt || isSgGlobal(stmt) ) {
+  if( !stmt || isSgGlobal(stmt)
+	  // catch the case where a class (or union) is within another class - this is consider	to be global
+	   || (isSgVariableDeclaration(stmt) && isSgClassDefinition(stmt->get_parent())
+			   )) {
     stmt = mainFirst;
     global_stmt = true;
+  } else {
+    cerr << "  the surrounding statement is (3): " << stmt->class_name() << endl;
   }
 
   if (isSgStatement(stmt)) {
@@ -119,6 +129,11 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
     string name = rtedClass->manglClassName;
     string typeC = rtedClass->classType;
 
+    int ctype = rtedClass->classDef->get_declaration()->get_class_type();
+    string isunionType="0";
+    //cerr << " Register Type: " << typeC << endl;
+    if (ctype==SgClassDeclaration::e_union)
+    	isunionType="1";
     // FIXME 2: we do this all over the place, but it may not work with
     // namespaces
     // if( isSgGlobal( scope )) {
@@ -128,7 +143,7 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
 
 
     ROSE_ASSERT(scope);
-    if ( isNormalScope( scope )) {
+    if ( isNormalScope( scope)){// || isSgClassDefinition(scope)) {
       // insert new stmt before first Statement in main
   
       /*
@@ -145,7 +160,7 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
 
       int elements = rtedClass->nrOfElements; // elements passed to function
       elements*=6; // for each element pass name, type, basetype, indirection_level and offset
-      elements+=3; // ClassName , ClassType and sizeOfClass
+      elements+=4; // ClassName , ClassType and Union? ,sizeOfClass
 
       BOOST_FOREACH( RtedClassElement* element, rtedClass -> elements ) {
 	elements += element -> extraArgSize();
@@ -168,6 +183,7 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
       
       appendExpression(arg_list, buildString(name));
       appendExpression(arg_list, buildString(typeC));
+      appendExpression(arg_list, buildString(isunionType));
       appendExpression(arg_list, rtedClass->sizeClass);
       
       // go through each element and add name, type, basetype, offset and size

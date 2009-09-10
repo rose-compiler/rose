@@ -30,7 +30,6 @@ SUBDIRS = \
      palette \
      reverseComputation \
      DistributedMemoryAnalysisCompass \
-     runtimeErrorCheck \
      assemblyToSourceAst \
      bugSeeding \
      binaryVisualization \
