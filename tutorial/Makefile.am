@@ -743,8 +743,6 @@ generatedCodeExamples = \
    defuseAnalysis_pic1.pdf \
    binaryAnalysis_pic1.pdf \
    binaryAnalysis_pic3.pdf \
-   rose_input_runtimeErrorCheck.C \
-   rose_input_runtimeErrorCheck2.C \
    rose_inputCode_seedBugsExample_arrayIndexing.C \
    rose_inputCode_VolatileTypeModifier.C \
    inputCode_dwarfAnalysis.pdf \
