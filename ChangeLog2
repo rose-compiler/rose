@@ -1,3 +1,27 @@
+2009-09-10 17:55  hamilton37
+
+	* [r7191] /trunk/ROSE/projects/RTED/CppRuntimeSystem/Makefile.am,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp: RTED: Fixed broken
+	  make check for the RTS.
+
+2009-09-10 17:16  liao6
+
+	* [r7190] /trunk/ROSE/tests/roseTests/ompLoweringTests/Makefile.am:
+	  Fixed a minor bug
+
+2009-09-10 14:02  dquinlan
+
+	* [r7189]
+	  /trunk/ROSE/developersScratchSpace/Dan/copyAST_tests/copyExample.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/copyAST_tests/copyExampleInput.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/copyAST_tests/copytest2007_03.C,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/quinlanTests.sh,
+	  /trunk/ROSE/tests/CompileTests/copyAST_tests/copyExampleInput.C,
+	  /trunk/ROSE/tests/CompileTests/copyAST_tests/copytest2007_03.C:
+	  Fixed testcode using main() taking single paramter; error using
+	  gnu 4.3.
+
 2009-09-10 01:47  liao6
 
 	* [r7187] /trunk/ROSE/config/support-gomp-omp.m4,
