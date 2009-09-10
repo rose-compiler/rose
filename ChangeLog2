@@ -1,3 +1,10 @@
+2009-09-10 23:21  panas2
+
+	* [r7204] /trunk/ROSE/docs/Rose/Tutorial/Makefile.am,
+	  /trunk/ROSE/docs/Rose/Tutorial/runtimeErrorCheck.tex,
+	  /trunk/ROSE/docs/Rose/Tutorial/tutorial.tex.in: removed
+	  runtimeErrorCheck from Tutorial
+
 2009-09-10 22:10  dquinlan
 
 	* [r7202]
