@@ -1318,9 +1318,7 @@ void testTypeConsistencyChecking() {
 }
 
 
-#include "../RuntimeSystem.h"
-
-extern int RuntimeSystem_original_main(int argc, char ** argv, char ** envp)
+int main(int argc, char ** argv, char ** envp)
 {
     try
     {

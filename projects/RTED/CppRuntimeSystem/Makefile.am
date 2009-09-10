@@ -28,7 +28,7 @@ endif
 
 bin_PROGRAMS  = RuntimeSystemCppTest
 
-RuntimeSystemCppTest_SOURCES = test.cpp ../RuntimeSystem.cpp
+RuntimeSystemCppTest_SOURCES = test.cpp
 RuntimeSystemCppTest_LDADD   = libCppRuntimeSystem.la 
 
 

@@ -78,9 +78,7 @@ RuntimeSystem_roseRtedClose(char* from) {
   std::string stdfrom = string(from);
   // The runtime system would have exited if it had found an error
   rs->log( "Failed to discover error in RTED test. Origin : "+stdfrom+"\n" );
-  // tps (09/04/2009) : this fails and I do not understand why
-  // fixme
-  //exit( 1 );
+  exit( 1 );
 }
 
 
