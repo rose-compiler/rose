@@ -157,7 +157,6 @@ assignment:
     PrologInfixOperator* ifx = new PrologInfixOperator("->");
     ifx->addSubterm($1);
     ifx->addSubterm($3);
-    delete $1;
     $$ = ifx;
   }
 ;
