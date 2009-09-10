@@ -133,9 +133,11 @@ EXTRA_DIST = $(TESTCODES) functions.h main.C f1.C f2.C stressTestFactory $(srcdi
 check-local:
 # DQ (9/10/2009): Skip tests on Debian system to test ROSE (and focus first on where it works!)
 if !OS_VENDOR_DEBIAN
+if !OS_MACOSX
 	@$(MAKE) $(TEST_Objects)
 	@$(MAKE) test01 test02
 	@$(MAKE) $(EXTRA_TEST_Objects)
+endif
 	@echo "***********************************************************************************************************************"
 	@echo "*** ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis: make check rule complete (terminated normally) ***"
 	@echo "***********************************************************************************************************************"
