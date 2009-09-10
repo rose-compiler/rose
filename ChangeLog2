@@ -1,3 +1,27 @@
+2009-09-10 21:55  dquinlan
+
+	* [r7200] /trunk/ROSE/config/determinte-os.m4,
+	  /trunk/ROSE/configure.in,
+	  /trunk/ROSE/projects/compass/tools/compassVerifier/Makefile.am,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/ReleaseHistory.txt,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_fc_9/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/quinlanTests.sh,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/roseHPCToolkitTests/Makefile.am,
+	  /trunk/ROSE/tutorial/outliner/Makefile.am: Added test of OS
+	  vendor and disabled a few tests in ROSE when using Debian.
+
+2009-09-10 21:54  panas2
+
+	* [r7199] /trunk/ROSE/tutorial/Makefile.am: removed dependencies of
+	  old project
+
+2009-09-10 20:42  hamilton37
+
+	* [r7197] /trunk/ROSE/projects/RTED/RuntimeSystem.cpp: RTED: More
+	  qtdebugger issues.
+
 2009-09-10 20:30  saebjornsen1
 
 	* [r7196]
