@@ -1,7 +1,7 @@
 #!/usr/bin/pl -t testrun -f
 /* -*- prolog -*- */
 
-:- module(ast_properties,
+:- module(astproperties,
 	  [ast_equiv/2,
 	   is_transp/3,
 	   is_complex_statement/1,
