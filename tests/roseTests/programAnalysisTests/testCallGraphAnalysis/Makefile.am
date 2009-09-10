@@ -76,7 +76,7 @@ testSimpleMultipleFilesInSeperateDirectories: testCG $(srcdir)/input_simpleMulti
 #   EXAMPLE_TESTCODES_REQUIRED_TO_PASS
 #   EXAMPLE_TESTCODES_REQUIRED_TO_PASS_SHORT
 #
-include $(top_srcdir)/tests/CompileTests/Cxx_tests/Makefile-pass.inc
+include $(srcdir)/Makefile-pass.inc
 # include $(srcdir)/Makefile-pass.inc
 
 # Import list of C++ test cases that are known to fail:

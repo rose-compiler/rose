@@ -52,7 +52,6 @@ test2003_04.C \
 test2003_05.C \
 test2003_06.C \
 test2003_08.C \
-test2003_09.C \
 test2003_10.C \
 test2003_11.C \
 test2003_12.C \
@@ -109,13 +108,16 @@ test2004_31.C \
 test2004_32.C \
 test2004_33.C \
 test2004_34.C \
+test2004_35.C \
 test2004_36.C \
 test2004_37.C \
 test2004_38.C \
 test2004_39.C \
 test2004_40.C \
 test2004_42.C \
+test2004_43.C \
 test2004_44.C \
+test2004_45.C \
 test2004_47.C \
 test2004_48.C \
 test2004_49.C \
@@ -144,6 +146,7 @@ test2004_73.C \
 test2004_74.C \
 test2004_75.C \
 test2004_76.C \
+test2004_77.C \
 test2004_78.C \
 test2004_79.C \
 test2004_80.C \
@@ -233,6 +236,7 @@ test2005_02.C \
 test2005_03.C \
 test2005_04.C \
 test2005_05.C \
+test2005_06.C \
 test2005_07.C \
 test2005_08.C \
 test2005_09.C \
@@ -280,6 +284,7 @@ test2005_51.C \
 test2005_52.C \
 test2005_53.C \
 test2005_55.C \
+test2005_56.C \
 test2005_57.C \
 test2005_58.C \
 test2005_59.C \
@@ -305,6 +310,7 @@ test2005_78.C \
 test2005_79.C \
 test2005_80.C \
 test2005_81.C \
+test2005_82.C \
 test2005_83.C \
 test2005_84.C \
 test2005_86.C \
@@ -319,6 +325,7 @@ test2005_94.C \
 test2005_95.C \
 test2005_96.C \
 test2005_97.C \
+test2005_98.C \
 test2005_99.C \
 test2005_100.C \
 test2005_101.C \
@@ -496,7 +503,6 @@ test2006_95.C \
 test2006_96.C \
 test2006_97.C \
 test2006_98.C \
-test2006_99.C \
 test2006_101.C \
 test2006_102.C \
 test2006_103.C \
@@ -531,12 +537,9 @@ test2006_144.C \
 test2006_145.C \
 test2006_146.C \
 test2006_147.C \
-test2006_148.C \
 test2006_149.C \
 test2006_150.C \
 test2006_151.C \
-test2006_152.C \
-test2006_153.C \
 test2006_154.C \
 test2006_155.C \
 test2006_156.C \
@@ -545,7 +548,6 @@ test2006_158.C \
 test2006_159.C \
 test2006_160.C \
 test2006_161.C \
-test2006_162.C \
 test2006_163.C \
 test2006_164.C \
 test2006_165.C \
@@ -604,6 +606,7 @@ test2007_82.C \
 test2007_83.C \
 test2007_84.C \
 test2007_85.C \
+test2007_90.C \
 test2007_94.C \
 test2007_98.C \
 test2007_102.C \
@@ -654,19 +657,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS_SHORT = \
 test2001_02.C \
 test2001_03.C \
 test2004_116.C
-
-
-# DQ (8/1/2009): These tests fail for the call graph analysis (either with or without ROSE configured with SQLite)
-TESTS_STILL_TOO_HARD = \
-test2004_35.C \
-test2004_43.C \
-test2004_45.C \
-test2004_77.C \
-test2005_06.C \
-test2005_56.C \
-test2005_82.C \
-test2005_98.C \
-test2007_90.C
 
 
 # DQ (10/5/2007): Previous problems fixed, this is a remaining problem.
