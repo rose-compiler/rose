@@ -13,14 +13,23 @@
 %-----------------------------------------------------------------------
 /** <module> Term type checker
 
-This is term_lint.pl, a small tool for checking terms against a tree
-grammar (abstract syntax).
+  This is term_lint.pl, a small tool for checking terms against a tree
+  grammar (abstract syntax).
 
 @author
 
 Gergo Barany <gergo@complang.tuwien.ac.at>
 
 @license 
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; version 3 of the License.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
 */
 %-----------------------------------------------------------------------
@@ -73,43 +82,50 @@ is_arg([ElemKind]) :-
     is_arg(ElemKind).
 
 
-% OK. Here is the semantics to the structures defined above:
-%
-% The grammar is a sequence of grammar rules. Each rule is of the form
+% Obscure implementation predicates follow. No need to read these, I think.
+% (There is a main predicate at the very bottom.)
+
+%% term_match(+Term, +NonterminalSymbol).
+%  
+%   OK. Here is the semantics to the structures defined above:
+%  
+%   The grammar is a sequence of grammar rules. Each rule is of the form
 %   Nonterminal ::= Body.
-% There should be no two rules for the same nonterminal (use | instead), but
-% this is not checked.
-%
+%   There should be no two rules for the same nonterminal (use =|||= instead), but
+%   this is not checked.
+%  
 % Body has the following meaning:
-%   atom      - a nonterminal, references another rule to be used
-%   A | B     - match A; if that fails, match B
-%   A where C - match A; if that succeeds, call Prolog goal C
-%   {A}       - unify with term A; {_} means "any term", {foo} is terminal foo
-%   atoms As  - match one of the atoms in As
-%   functors Fs with (A1,...,An)
-%             - match term F(A1,...,An) where F is a functor in Fs
-%   f(A1,...,An)
-%             - match a term with functor f, where arguments match A1,...,An
-%
+%  
+% |  atom      | a nonterminal, references another rule to be used              | 
+% |  A 'pipe' B| match A; if that fails, match B				      | 
+% |  A where C | match A; if that succeeds, call Prolog goal C		      | 
+% |  {A}       | unify with term A; {_} means "any term", {foo} is terminal foo | 
+% |  atoms As  | match one of the atoms in As				      | 
+% |  functors Fs with (A1,...,An) | match term F(A1,...,An) where F is a functor in Fs | 
+% |  f(A1,...,An)	| match a term with functor f, where arguments match A1,...,An   | 
+%  
 % Argument expressions (in argument tuples) can be:
-%   atom      - a nonterminal
-%   A?        - term is "missing" (see below) or matches argument expression A
-%   {A}       - unify with term A
-%   [A]       - list of terms matching argument expression A; as a special
-%               case, [_] means "list of any type"
+%  
+% |  atom      | a nonterminal                                                  |
+% |  A?        | term is "missing" (see below) or matches argument expression A |
+% |  {A}       | unify with term A                                              |
+% |  \[A\]       | list of terms matching argument expression A; as a special case, \[_\] means "list of any type" |
+%  	      
 % Options (A?) are resolved as follows: If the term under consideration
 % is a solution of predicate missing/1 (to be defined along with the grammar
 % rules), there is a match; otherwise a term of type A must be matched.
-%
+%  
 % Predicates to be defined along with the grammar rules are:
-%   missing/1         - defines what A? can match except for A
-%   start_symbol/1    - single solution is the start symbol of the grammar
-
-
+%  
+% |  missing/1         | defines what A? can match except for A                  |
+% |  start_symbol/1    | single solution is the start symbol of the grammar      |
+%  
+%  
 % Here are a few example grammars to illustrate the explanations above.
-%
-%
-% --- arithmetic expressions, simple verbose version ---
+%  
+%  
+% *Arithmetic* *expressions*, *simple* *verbose* *version*
+% ==
 % var ::= {VarName} where atom(VarName).
 % num ::= {Number} where number(Number).
 % expr ::=
@@ -119,62 +135,67 @@ is_arg([ElemKind]) :-
 % | expr - expr
 % | expr * expr
 % | expr / expr.
-%
-%
-% --- arithmetic expressions, more condensed version ---
+% ==
+%  
+% *Arithmetic* *expressions*, *more* *condensed* *version*
+% ==
 % expr ::=
 %   {Leaf} where (atom(Leaf) ; number(Leaf))
 % | functors [+, -, *, /] with (expr, expr).
-%
-%
-% --- simple type system ---
+% ==
+%  
+% *Simple type system*
+% ==
 % type ::=
 %   atoms [number, character, string]
 % | function_type([type] /* argument types */, type? /* return type if any */).
-%
+%  
 % missing(none).    /* what to match if no return type is given */
-%
-%
-% --- partial specification (some parts are not constrained) ---
+% ==
+%  
+%  
+% *Partial* *specification* (*some* *parts* *are* *not* *constrained*)
+% ==
 % allowed ::=
 %   lst([_])        /* argument is list of some unknown things */
 % | opt(allowed?)   /* argument is missing, or of type allowed */
 % | any({_}).       /* argument is any term (anything unifies with _) */
-%
+%  
 % missing(nothing).
-%
+% ==
+%  
 % In this last example, some allowed terms are:
+% ==
 %   lst([]), lst([f(f)]), lst([x,y]), ...
 %   opt(nothing), opt(lst([])), opt(opt(nothing)), ...
 %   any(foo), any(g(f(x))), ...
-
-
+% ==
+%  
+%  
 % One more thing, which might not be explicit from the stuff above: The
 % anonymous variable _ (free variables in general) may appear in the
 % grammar, but *only* inside [] or {}:
-%   [_] (list of any type)   or
-%   {_} (any term)   or
-%   {foo(_)} (any term with functor foo)
+%  
+% *  =|[_]|= (list of any type)   or
+% *  =|{_}|= (any term)   or
+% *  =|{foo(_)}|= (any term with functor foo)
+%  
 % but:
-%   foo ::= foo(_)   is not allowed; use foo ::= foo({_})
-%   foo ::= X where cond(X)   is not allowed; use foo ::= {X} where cond(X)
-%
+%  
+% *  =|foo ::= foo(_)|=   is not allowed; use =|foo ::= foo({_})|=
+% *  =|foo ::= X where cond(X)|=   is not allowed;
+%    use =|foo ::= {X} where cond(X)|=
+%  
 % The interpreter does not check these things at the moment. Which means
 % that grammars containing variables in weird places will misbehave in weird
 % ways.
-
-
-% Obscure implementation predicates follow. No need to read these, I think.
-% (There is a main predicate at the very bottom.)
-
-% term_match(+Term, +NonterminalSymbol).
 term_match(Term, NonterminalSymbol) :-
     nonterminal_body(NonterminalSymbol, Body),
     catch(term_nt_bodymatch(Term, NonterminalSymbol, Body),
           ErrorTerm,
           term_match_error(ErrorTerm)).
 
-% nonterminal_body(+NonterminalSymbol, -Body).
+%% nonterminal_body(+NonterminalSymbol, -Body).
 nonterminal_body(NonterminalSymbol, Body) :-
     ( clause(NonterminalSymbol ::= Body, true)
       -> true
@@ -281,7 +302,7 @@ term_match_error(ErrorTerm) :-
 
 die(Format, Args) :-
     format(atom(A), Format, Args),
-    format('*** error: ~w~n', A),
+    format('**ERROR termlint:~n    ~w~n', A),
     !,
     fail.
 
