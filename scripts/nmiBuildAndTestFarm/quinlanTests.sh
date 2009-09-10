@@ -7,7 +7,9 @@ echo "* Passing tests (11 tests) *"
 echo "***************************"
 
 # DQ (9/9/2009): Fedora 8 was released Nov 2007 (completes, but takes a long time to run).
-./submit.sh build_configs/x86_64_fc_8/minimal_default
+# ./submit.sh build_configs/x86_64_fc_8/minimal_default (renamed)
+./submit.sh build_configs/x86_64_fedora_8/minimal_default
+
 ./submit.sh build_configs/x86_64_fc_5/minimal_default
 ./submit.sh build_configs/x86_64_rhap_5/minimal_default
 ./submit.sh build_configs/x86_64_rhas_4/minimal_default
@@ -48,6 +50,7 @@ echo "**************************************************************************
 #        rose_example.C:34: error: 'exit' was not declared in this scope
 #        Leaving directory `/home/condor/execute/dir_13881/userdir/build/projects/runtimeErrorCheck'
 # ./submit.sh build_configs/x86_64_fc_9/minimal_default
+./submit.sh build_configs/x86_64_fedora_9/minimal_default
 
 # DQ (9/9/2009): This platform will be removed (old: released June 2005)
 # DQ (9/7/2009): Segfault in Compass tests ("make check")
