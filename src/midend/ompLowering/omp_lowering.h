@@ -42,10 +42,15 @@ namespace OmpSupport
       void visit(SgNode*);
   }; //translationDriver
 
-  void transParallelRegion (SgNode*);
-  void transOmpFor(SgNode*);
-  void transOmpBarrier(SgNode*);
-  void transOmpSingle(SgNode*);
+  void transParallelRegion (SgNode* node);
+  void transOmpFor(SgNode* node);
+  void transOmpBarrier(SgNode* node);
+  //! Translate the ordered directive, (not the ordered clause)
+  void transOmpOrdered(SgNode* node);
+  void transOmpAtomic(SgNode* node);
+  void transOmpCritical(SgNode* node);
+  void transOmpMaster(SgNode* node);
+  void transOmpSingle(SgNode* node);
   //! Translate OpenMP variables associated with an OpenMP pragma, such as private, firstprivate, lastprivate, reduction, etc.
   //bb1 is the translation generated code block
   void transOmpVariables(SgStatement * ompStmt, SgBasicBlock* bb1);
@@ -72,6 +77,12 @@ namespace OmpSupport
   int replaceVariableReferences(SgNode* root,  VariableSymbolMap_t varRemap);
   // I decided to reuse the existing Outliner work instead of coding a new one
   //SgFunctionDeclaration* generateOutlinedFunction(SgNode* node);
+  
+  //! Add a variable into a non-reduction clause of an OpenMP statement, create the clause transparently if it does not exist
+  void addClauseVariable(SgInitializedName* var, SgOmpClauseBodyStatement * clause_stmt, const VariantT& vt);
+
+  //! Build a non-reduction variable clause for a given OpenMP directive. It directly returns the clause if the clause already exists
+  SgOmpVariablesClause* buildOmpVariableClause(SgOmpClauseBodyStatement * clause_stmt, const VariantT& vt);
 
   //! Check if an OpenMP statement has a clause of type vt
   bool hasClause(SgOmpClauseBodyStatement* clause_stmt, const VariantT & vt);
@@ -94,8 +105,11 @@ namespace OmpSupport
   //! Generate GOMP loop schedule next function's name
   std::string generateGOMPLoopNextFuncName (bool isOrdered, SgOmpClause::omp_schedule_kind_enum s_kind);
 
-  // Convert a schedule kind enum value to a small case string
+  //! Convert a schedule kind enum value to a small case string
   std::string toString(SgOmpClause::omp_schedule_kind_enum s_kind);
+
+  //! Patch up private variables for omp for. The reason is that loop indices should be private by default and this function will make this explicit
+  int patchUpPrivateVariables(SgFile*);
 
 } // end namespace OmpSupport  
 

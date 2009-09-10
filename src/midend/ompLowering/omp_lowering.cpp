@@ -326,7 +326,7 @@ namespace OmpSupport
     result += "_next"; 
     return result;
   }
-  //! Translate an omp for loop with non-static scheduling clause
+  //! Translate an omp for loop with non-static scheduling clause or with ordered clause ()
   // bb1 is the basic block to insert the translated loop
   // bb1 already has compiler-generated variable declarations for new loop control variables
   /*
@@ -345,7 +345,7 @@ namespace OmpSupport
   GOMP_loop_end ();                                          
   //  GOMP_loop_end_nowait (); 
   */
-  static void transOmpFor_nonStaticSchedule(SgOmpForStatement * target,  
+  static void transOmpFor_nonStaticOrOrderedSchedule(SgOmpForStatement * target,  
       SgVariableDeclaration* index_decl, SgVariableDeclaration* lower_decl,  SgVariableDeclaration* upper_decl, 
       SgBasicBlock* bb1)
   {
@@ -370,22 +370,34 @@ namespace OmpSupport
     ROSE_ASSERT(is_canonical == true);
 
     Rose_STL_Container<SgOmpClause*> clauses = getClause(target, V_SgOmpScheduleClause);
-    ROSE_ASSERT(clauses.size() ==1);
-    SgOmpScheduleClause* s_clause = isSgOmpScheduleClause(clauses[0]);
-    ROSE_ASSERT(s_clause);
-    SgOmpClause::omp_schedule_kind_enum s_kind = s_clause->get_kind();
-    SgExpression* orig_chunk_size = s_clause->get_chunk_size();
-    // chunk size is 1 for dynamic and guided schedule, if not specified. 
-    if (s_kind == SgOmpClause::e_omp_schedule_dynamic|| s_kind == SgOmpClause::e_omp_schedule_guided)
-    {
-      orig_chunk_size = createAdjustedChunkSize(orig_chunk_size);
-    }
-    // schedule(auto) does not have chunk size 
-    if (s_kind != SgOmpClause::e_omp_schedule_auto  && s_kind != SgOmpClause::e_omp_schedule_runtime)
-      ROSE_ASSERT(orig_chunk_size != NULL);
+
+    // the case of with the ordered schedule, but without any schedule policy specified
+    // treat it as (static, 0) based on GCC's translation
+    SgOmpClause::omp_schedule_kind_enum s_kind = SgOmpClause::e_omp_schedule_static;
+    SgExpression* orig_chunk_size = buildIntVal(0);
     bool hasOrder = false;
     if (hasClause(target, V_SgOmpOrderedClause))
       hasOrder = true;
+    ROSE_ASSERT(hasOrder || clauses.size() !=0);
+    // Most cases: with schedule(kind,chunk_size)
+    if (clauses.size() !=0)
+    {  
+      ROSE_ASSERT(clauses.size() ==1);
+      SgOmpScheduleClause* s_clause = isSgOmpScheduleClause(clauses[0]);
+      ROSE_ASSERT(s_clause);
+      s_kind = s_clause->get_kind();
+      orig_chunk_size = s_clause->get_chunk_size();
+
+      // chunk size is 1 for dynamic and guided schedule, if not specified. 
+      if (s_kind == SgOmpClause::e_omp_schedule_dynamic|| s_kind == SgOmpClause::e_omp_schedule_guided)
+      {
+        orig_chunk_size = createAdjustedChunkSize(orig_chunk_size);
+      }
+    }
+
+   // schedule(auto) does not have chunk size 
+    if (s_kind != SgOmpClause::e_omp_schedule_auto  && s_kind != SgOmpClause::e_omp_schedule_runtime)
+      ROSE_ASSERT(orig_chunk_size != NULL);
     // (GOMP_loop_static_start (orig_lower, orig_upper, adj_stride, orig_chunk, &_p_lower, &_p_upper)) 
     // (GOMP_loop_ordered_static_start (orig_lower, orig_upper, adj_stride, orig_chunk, &_p_lower, &_p_upper)) 
     string func_start_name= generateGOMPLoopStartFuncName(hasOrder, s_kind);
@@ -451,7 +463,7 @@ namespace OmpSupport
   // < --> <= and > --> >=, 
   // GCC-GOMP use compiler-generated statements to schedule loop iterations using static schedule
   // All other schedule policies use runtime calls instead.
-  // We translate static schedule here and non-static ones in transOmpFor_nonStaticSchedule()
+  // We translate static schedule here and non-static ones in transOmpFor_nonStaticOrOrderedSchedule()
   // 
   // Static schedule, including:
   //1. default (static even) case
@@ -470,9 +482,9 @@ namespace OmpSupport
 
   int _p_num_threads = omp_get_num_threads ();
   _p_chunk_size = _p_iter_count / _p_num_threads;
-  int _p_temp = (_p_chunk_size * _p_num_threads) != _p_iter_count;
+  int _p_ck_temp = (_p_chunk_size * _p_num_threads) != _p_iter_count;
   // increase the chunk size by 1 if not evenly divisible
-  _p_chunk_size = _p_temp + _p_chunk_size;
+  _p_chunk_size = _p_ck_temp + _p_chunk_size;
 
   // decide on the lower and upper bound for the current thread
   int _p_thread_id = omp_get_thread_num ();
@@ -515,7 +527,7 @@ namespace OmpSupport
 
     // step 2. Insert a basic block to replace SgOmpForStatement
     SgBasicBlock * bb1 = SageBuilder::buildBasicBlock(); 
-    replaceStatement(target, bb1);
+    replaceStatement(target, bb1, true);
     //TODO handle preprocessing information
     // Save some preprocessing information for later restoration. 
     //  AttachedPreprocessingInfoType ppi_before, ppi_after;
@@ -530,11 +542,16 @@ namespace OmpSupport
     appendStatement(index_decl, bb1);
     appendStatement(lower_decl, bb1);
     appendStatement(upper_decl, bb1);
+
+    bool hasOrder = false;
+    if (hasClause(target, V_SgOmpOrderedClause))
+      hasOrder = true;
+
     //  step 3. Translation for omp for 
     //if (hasClause(target, V_SgOmpScheduleClause)) 
-    if (!useStaticSchedule(target)) 
+    if (!useStaticSchedule(target) || hasOrder) 
     {
-      transOmpFor_nonStaticSchedule( target,   index_decl, lower_decl,   upper_decl, bb1);
+      transOmpFor_nonStaticOrOrderedSchedule( target,   index_decl, lower_decl,   upper_decl, bb1);
     }
     else 
     {
@@ -581,13 +598,13 @@ namespace OmpSupport
         SgExprStatement * assign1 = buildAssignStatement(buildVarRefExp(chunk_decl), 
             buildDivideOp(buildVarRefExp(count_decl), buildVarRefExp(num_threads_decl)) );  
         appendStatement(assign1, bb1);
-        //  int _p_temp = (_p_chunk_size * _p_num_threads) != _p_iter_count;
-        SgVariableDeclaration* temp_decl = buildVariableDeclaration("_p_temp", buildIntType(), 
+        //  int _p_ck_temp = (_p_chunk_size * _p_num_threads) != _p_iter_count;
+        SgVariableDeclaration* temp_decl = buildVariableDeclaration("_p_ck_temp", buildIntType(), 
             buildAssignInitializer( buildNotEqualOp(buildMultiplyOp(buildVarRefExp(chunk_decl), buildVarRefExp(num_threads_decl)) ,
                 buildVarRefExp(count_decl)) ), 
             bb1);  
         appendStatement(temp_decl, bb1);
-        // _p_chunk_size = _p_temp + _p_chunk_size;
+        // _p_chunk_size = _p_ck_temp + _p_chunk_size;
         SgExpression* temp_chunk = buildVarRefExp(chunk_decl);
         SgExprStatement * assign2 = buildAssignStatement(buildVarRefExp(chunk_decl), 
             buildAddOp(buildVarRefExp(temp_decl), buildVarRefExp(chunk_decl))); 
@@ -733,11 +750,6 @@ namespace OmpSupport
     ROSE_ASSERT(node != NULL);
     SgOmpParallelStatement* target = isSgOmpParallelStatement(node);
     ROSE_ASSERT (target != NULL);
-    //TODO handle preprocessing information
-    // Save some preprocessing information for later restoration. 
-    //  AttachedPreprocessingInfoType ppi_before, ppi_after;
-    //     ASTtools::cutPreprocInfo (s, PreprocessingInfo::before, ppi_before);
-    //     ASTtools::cutPreprocInfo (s, PreprocessingInfo::after, ppi_after);
 
     // printf("translating a parallel region..\n");
     SgStatement * body =  target->get_body();
@@ -756,11 +768,18 @@ namespace OmpSupport
       ROSE_ASSERT(false);
     }
 #endif   
+    // Save preprocessing info as early as possible, avoiding mess up from the outliner
+    AttachedPreprocessingInfoType save_buf1, save_buf2;
+    cutPreprocessingInfo(target, PreprocessingInfo::before, save_buf1) ;
+    cutPreprocessingInfo(target, PreprocessingInfo::after, save_buf2) ;
+
     //TODO there should be some semantics check for the regions to be outlined
     //for example, multiple entries or exists are not allowed for OpenMP
     //We should have a semantic check phase for this
     //This is however of low priority since most vendor compilers have this already
     SgBasicBlock* body_block = Outliner::preprocess(body);
+    transOmpVariables (target, body_block);
+
     ASTtools::VarSymSet_t syms, pSyms, fpSyms,reductionSyms, pdSyms;
     std::set<SgInitializedName*> readOnlyVars;
 
@@ -768,7 +787,7 @@ namespace OmpSupport
     SgGlobal* g_scope = SageInterface::getGlobalScope(body_block);
     ROSE_ASSERT(g_scope != NULL);
 
-    Outliner::collectVars(body_block, syms, pSyms, fpSyms,reductionSyms);
+    Outliner::collectVars(body_block, syms, pSyms, fpSyms, reductionSyms);
     //TODO Do we want to use side effect analysis to improve the quality of outlining here
     // SageInterface::collectReadOnlyVariables(s,readOnlyVars);
     // ASTtools::collectPointerDereferencingVarSyms(s,pdSyms);
@@ -790,7 +809,8 @@ namespace OmpSupport
     ROSE_ASSERT(func_call != NULL);  
 
     // Replace the parallel region with the function call statement
-    SageInterface::replaceStatement(target,func_call);
+    // TODO should we introduce another level of scope here?
+    SageInterface::replaceStatement(target,func_call, true);
 
     //add GOMP_parallel_start (OUT_func_xxx, &__out_argv1__5876__, 0);
     // or GOMP_parallel_start (OUT_func_xxx, 0, 0); // if no variables need to be passed
@@ -803,9 +823,17 @@ namespace OmpSupport
         parameter2, buildIntVal(0)); 
     SgExprStatement * s1 = buildFunctionCallStmt("GOMP_parallel_start", buildVoidType(), parameters, p_scope); 
     SageInterface::insertStatementBefore(func_call, s1); 
+    // Keep preprocessing information
+    // I have to use cut-paste instead of direct move since 
+    // the preprocessing information may be moved to a wrong place during outlining
+    // while the destination node is unknown until the outlining is done.
+   // SageInterface::moveUpPreprocessingInfo(s1, target, PreprocessingInfo::before); 
+   pastePreprocessingInfo(s1, PreprocessingInfo::before, save_buf1); 
     // add GOMP_parallel_end ();
     SgExprStatement * s2 = buildFunctionCallStmt("GOMP_parallel_end", buildVoidType(), NULL, p_scope); 
     SageInterface::insertStatementAfter(func_call, s2); 
+   // SageInterface::moveUpPreprocessingInfo(s2, target, PreprocessingInfo::after); 
+   pastePreprocessingInfo(s1, PreprocessingInfo::after, save_buf2); 
 
     // Postprocessing  to ensure the AST is legal 
     // Should not rely on this usually.
@@ -813,46 +841,99 @@ namespace OmpSupport
     //   AstPostProcessing(originalSourceFile);
   }
 
-  // two cases: omp parallel and  omp task
-  // Reused Outliner for this. 
-  // void SgFunctionDeclaration* generateOutlinedFunction(SgNode* node)
-  // {
-  //   
-  // }
-  //
-  //! Translation driver
-  void translationDriver::visit(SgNode* node)
+  // Two ways 
+  //1. builtin function TODO
+  //    __sync_fetch_and_add_4(&shared, (unsigned int)local);
+  //2. using atomic runtime call: 
+  //    GOMP_atomic_start (); // void GOMP_atomic_start (void); 
+  //    shared = shared op local;
+  //    GOMP_atomic_end (); // void GOMP_atomic_end (void); 
+  // We use the 2nd method only for now, for simplicity and portability
+  void transOmpAtomic(SgNode* node)
   {
-    switch (node->variantT())
+    ROSE_ASSERT(node != NULL );
+    SgOmpAtomicStatement* target = isSgOmpAtomicStatement(node);
+    ROSE_ASSERT(target != NULL );
+    SgScopeStatement * scope = target->get_scope();
+    ROSE_ASSERT(scope != NULL );
+    SgStatement * body = target->get_body();
+    ROSE_ASSERT(body != NULL);
+    
+    replaceStatement(target, body, true);
+    SgExprStatement* func_call_stmt1 = buildFunctionCallStmt("GOMP_atomic_start", buildVoidType(), NULL, scope);
+    SgExprStatement* func_call_stmt2 = buildFunctionCallStmt("GOMP_atomic_end", buildVoidType(), NULL, scope);
+    insertStatementBefore(body, func_call_stmt1);
+    insertStatementAfter(body, func_call_stmt2);
+  }
+  //! Translate the ordered directive, (not the ordered clause)
+  void transOmpOrdered(SgNode* node)
+  {
+    ROSE_ASSERT(node != NULL );
+    SgOmpOrderedStatement* target = isSgOmpOrderedStatement(node);
+    ROSE_ASSERT(target != NULL );
+    SgScopeStatement * scope = target->get_scope();
+    ROSE_ASSERT(scope != NULL );
+    SgStatement * body = target->get_body();
+    ROSE_ASSERT(body != NULL);
+
+    replaceStatement(target, body,true);
+    SgExprStatement* func_call_stmt1 = buildFunctionCallStmt("GOMP_ordered_start", buildVoidType(), NULL, scope);
+    SgExprStatement* func_call_stmt2 = buildFunctionCallStmt("GOMP_ordered_end", buildVoidType(), NULL, scope);
+    insertStatementBefore(body, func_call_stmt1);
+    insertStatementAfter(body, func_call_stmt2);
+  }
+
+  // Two cases:
+  // unnamed one
+  //   GOMP_critical_start ();
+  //   work()
+  //   GOMP_critical_end ();
+  //
+  // named one: 
+  //  static gomp_mutex_t  &gomp_critical_user_aaa;
+  //  GOMP_critical_name_start (&gomp_critical_user_aaa);
+  //  work()
+  //  GOMP_critical_name_end (&gomp_critical_user_aaa);
+  //
+  void transOmpCritical(SgNode* node)
+  {
+    ROSE_ASSERT(node != NULL );
+    SgOmpCriticalStatement* target = isSgOmpCriticalStatement(node);
+    ROSE_ASSERT(target != NULL );
+    SgScopeStatement * scope = target->get_scope();
+    ROSE_ASSERT(scope != NULL );
+
+    SgStatement * body = target->get_body();
+    ROSE_ASSERT(body != NULL);
+
+    replaceStatement(target, body,true);
+
+    SgExprStatement* func_call_stmt1=NULL, * func_call_stmt2 =NULL;
+    string c_name = target->get_name().getString();
+    if (c_name.length()==0)
     {
-      case V_SgOmpParallelStatement:
-        {
-          transParallelRegion(node);
-          break;
-        }
-      case V_SgOmpForStatement:
-        {
-          transOmpFor(node);
-          break;
-        }
-      case V_SgOmpBarrierStatement:
-        {
-          transOmpBarrier(node);
-          break;
-        }
-      case V_SgOmpSingleStatement:
-        {
-          transOmpSingle(node);
-          break;
-        }
+      func_call_stmt1 = buildFunctionCallStmt("GOMP_critical_start", buildVoidType(), NULL, scope);
+      func_call_stmt2 = buildFunctionCallStmt("GOMP_critical_end", buildVoidType(), NULL, scope);
+    }
+    else
+    {
+      string g_lock_name = "gomp_critical_user_" + c_name;
+      SgGlobal* global = getGlobalScope(target);
+      ROSE_ASSERT(global!=NULL);
+      // gomp_mutex_t is not declared by the RTL header. We use int instead.
+      SgVariableDeclaration* vardecl = buildVariableDeclaration(g_lock_name, buildIntType(), NULL, global);
+      //SgVariableDeclaration* vardecl = buildVariableDeclaration(g_lock_name, buildOpaqueType("gomp_mutex_t",global), NULL, global);
+      setStatic(vardecl);
+      prependStatement(vardecl,global);
+      SgExprListExp * param1= buildExprListExp(buildAddressOfOp(buildVarRefExp(vardecl)));
+      SgExprListExp * param2= buildExprListExp(buildAddressOfOp(buildVarRefExp(vardecl)));
+      func_call_stmt1 = buildFunctionCallStmt("GOMP_critical_name_start", buildVoidType(), param1, scope);
+      func_call_stmt2 = buildFunctionCallStmt("GOMP_critical_name_end", buildVoidType(), param2, scope);
+    }
+    insertStatementBefore(body, func_call_stmt1);
+    insertStatementAfter(body, func_call_stmt2);
+  }
 
-      default:
-        {
-          // do nothing here    
-        }
-    }// switch
-
-  }//translationDriver::visit()
 
   //! Simply replace the pragma with a function call to void GOMP_barrier (void); 
   void transOmpBarrier(SgNode * node)
@@ -864,7 +945,7 @@ namespace OmpSupport
     ROSE_ASSERT(scope != NULL );
 
     SgExprStatement* func_call_stmt = buildFunctionCallStmt("GOMP_barrier", buildVoidType(), NULL, scope);
-    replaceStatement(target, func_call_stmt);
+    replaceStatement(target, func_call_stmt, true);
   }
 
   //! Collect variables from OpenMP clauses: including private, firstprivate, lastprivate, reduction, etc.
@@ -1130,6 +1211,26 @@ namespace OmpSupport
     
   } // end void transOmpVariables()
 
+  //  if (omp_get_thread_num () == 0) 
+  //     { ... }
+  void transOmpMaster(SgNode * node)
+  {
+    ROSE_ASSERT(node != NULL );
+    SgOmpMasterStatement* target = isSgOmpMasterStatement(node);
+    ROSE_ASSERT(target != NULL );
+    SgScopeStatement * scope = target->get_scope();
+    ROSE_ASSERT(scope != NULL );
+
+    SgStatement* body = target->get_body();
+    ROSE_ASSERT(body!= NULL );
+
+    SgExpression* func_exp = buildFunctionCallExp("omp_get_thread_num", buildIntType(), NULL, scope);
+
+    SgIfStmt* if_stmt = buildIfStmt(buildEqualityOp(func_exp,buildIntVal(0)), body, NULL); 
+    replaceStatement(target, if_stmt,true);
+  }
+
+
   // Two cases: without or with copyprivate clause
   // without it: 
   //  if (GOMP_single_start ()) //bool GOMP_single_start (void)
@@ -1149,11 +1250,167 @@ namespace OmpSupport
 
     SgExpression* func_exp = buildFunctionCallExp("GOMP_single_start", buildBoolType(), NULL, scope);
     SgIfStmt* if_stmt = buildIfStmt(func_exp, body, NULL); 
-    replaceStatement(target, if_stmt);
+    replaceStatement(target, if_stmt,true);
     SgBasicBlock* true_body = ensureBasicBlockAsTrueBodyOfIf (if_stmt);
     transOmpVariables(target, true_body);
   }
 
+  // two cases: omp parallel and  omp task
+  // Reused Outliner for this. 
+  // void SgFunctionDeclaration* generateOutlinedFunction(SgNode* node)
+  // {
+  //   
+  // }
+  //
+  //! Translation driver
+  void translationDriver::visit(SgNode* node)
+  {
+#if 0 // not in use
+    switch (node->variantT())
+    {
+      case V_SgOmpParallelStatement:
+        {
+          transParallelRegion(node);
+          break;
+        }
+      case V_SgOmpForStatement:
+        {
+          transOmpFor(node);
+          break;
+        }
+      case V_SgOmpBarrierStatement:
+        {
+          transOmpBarrier(node);
+          break;
+        }
+      case V_SgOmpSingleStatement:
+        {
+          transOmpSingle(node);
+          break;
+        }
+
+      default:
+        {
+          // do nothing here    
+        }
+    }// switch
+#endif
+
+  }//translationDriver::visit()
+
+ //! Build a non-reduction variable clause for a given OpenMP directive. It directly returns the clause if the clause already exists
+  SgOmpVariablesClause* buildOmpVariableClause(SgOmpClauseBodyStatement * clause_stmt, const VariantT& vt)
+  {
+    SgOmpVariablesClause* result = NULL;
+    ROSE_ASSERT(clause_stmt != NULL);
+    ROSE_ASSERT(vt != V_SgOmpReductionClause);
+    Rose_STL_Container<SgOmpClause*> clauses = getClause(clause_stmt,vt);
+
+    if (clauses.size()==0)
+    {
+      switch(vt)
+      {
+        case V_SgOmpCopyinClause:
+          result = new SgOmpCopyinClause();
+          break;
+        case V_SgOmpCopyprivateClause:
+          result = new SgOmpCopyprivateClause();
+          break;
+        case V_SgOmpFirstprivateClause:
+          result = new SgOmpFirstprivateClause();
+          break;
+        case V_SgOmpLastprivateClause:
+          result = new SgOmpLastprivateClause();
+          break;
+        case V_SgOmpPrivateClause:
+          result = new SgOmpPrivateClause();
+          break;
+        case V_SgOmpSharedClause:
+          result = new SgOmpSharedClause();
+          break;
+        case V_SgOmpReductionClause:
+        default:
+          cerr<<"Unacceptable clause type in OmpSupport::buildOmpVariableClause(): "<<vt<<endl;
+          ROSE_ASSERT(false);
+      }
+    }
+    else
+    {
+      result = isSgOmpVariablesClause(clauses[0]);
+    }
+    ROSE_ASSERT(result != NULL); 
+    setOneSourcePositionForTransformation(result);
+
+    clause_stmt->get_clauses().push_back(result);
+    result->set_parent(clause_stmt); // is This right?
+
+    return result;
+  }
+   
+  //! Add a variable into a non-reduction clause of an OpenMP statement, create the clause transparently if it does not exist
+    void addClauseVariable(SgInitializedName* var, SgOmpClauseBodyStatement * clause_stmt, const VariantT& vt)
+    {
+      ROSE_ASSERT(var != NULL);
+      ROSE_ASSERT(clause_stmt!= NULL);
+      ROSE_ASSERT(vt != V_SgOmpReductionClause);
+      Rose_STL_Container<SgOmpClause*> clauses = getClause(clause_stmt,vt );
+      SgOmpVariablesClause* target_clause = NULL;
+       // create the clause if it does not exist
+      if (clauses.size()==0)
+      {
+        target_clause = buildOmpVariableClause (clause_stmt, vt);
+      }
+      else
+      {
+        target_clause = isSgOmpVariablesClause(clauses[0]);
+      }
+      ROSE_ASSERT(target_clause != NULL);
+
+      // Insert only if the variable is not in the list
+      if (!isInClauseVariableList(var, clause_stmt, vt)) 
+      {
+        target_clause->get_variables().push_back(var);
+      }
+    }
+    
+  //! Patch up private variables for omp for. The reason is that loop indices should be private by default and this function will make this explicit. This should happen before the actual translation is done.
+  int patchUpPrivateVariables(SgFile* file)
+  {
+    int result = 0;
+    ROSE_ASSERT(file != NULL);
+    Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(file, V_SgOmpForStatement);
+    Rose_STL_Container<SgNode*>::iterator nodeListIterator = nodeList.begin();
+    // For each omp for statement
+    for ( ;nodeListIterator !=nodeList.end();  ++nodeListIterator)
+    {
+      SgOmpForStatement* node = isSgOmpForStatement(*nodeListIterator);
+      SgScopeStatement* directive_scope = node->get_scope();
+      ROSE_ASSERT(directive_scope != NULL);
+      // Collected nested loops and their indices
+      // skip the top level loop?
+      Rose_STL_Container<SgNode*> loops = NodeQuery::querySubTree(node->get_body(), V_SgForStatement);
+      Rose_STL_Container<SgNode*>::iterator loopIter = loops.begin();
+      for (; loopIter!= loops.end(); loopIter++)
+      {
+        SgInitializedName* index_var = getLoopIndexVariable(*loopIter);
+        SgScopeStatement* var_scope = index_var->get_scope();
+        // Only loop index variables declared in higher  or the same scopes matter
+        if (isAncestor(var_scope, directive_scope) || var_scope==directive_scope)
+        {
+          // add it into the private variable list
+          if (!isInClauseVariableList(index_var, node, V_SgOmpPrivateClause)) 
+          {
+            result ++;
+            addClauseVariable(index_var,node, V_SgOmpPrivateClause);
+          }
+        }
+
+      } // end for loops
+
+    }// end for omp for statments
+   return result;
+  } // end patchUpPrivateVariables()
+ 
   //! Bottom-up processing AST tree to translate all OpenMP constructs
   // the major interface of omp_lowering
   // We now operation on scoped OpenMP regions and blocks
@@ -1171,10 +1428,75 @@ namespace OmpSupport
   {
     ROSE_ASSERT(file != NULL);
 
-    insertRTLHeaders(file);
+    patchUpPrivateVariables(file);
 
-    translationDriver driver;
-    driver.traverseWithinFile(file,postorder);
+
+    insertRTLHeaders(file);
+    //    translationDriver driver;
+    // SgOmpXXXStatment is compiler-generated and has no file info
+    //driver.traverseWithinFile(file,postorder);
+    //  driver.traverse(file,postorder);
+    // AST manipulation with postorder traversal is not reliable,
+    // We record nodes first then do changes to them
+
+    Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(file, V_SgStatement);
+    Rose_STL_Container<SgNode*>::reverse_iterator nodeListIterator = nodeList.rbegin();
+    for ( ;nodeListIterator !=nodeList.rend();  ++nodeListIterator)
+    {
+      SgStatement* node = isSgStatement(*nodeListIterator);
+      ROSE_ASSERT(node != NULL);
+      switch (node->variantT())
+      {
+        case V_SgOmpParallelStatement:
+          {
+            transParallelRegion(node);
+            break;
+          }
+        case V_SgOmpForStatement:
+          {
+            transOmpFor(node);
+            break;
+          }
+        case V_SgOmpBarrierStatement:
+          {
+            transOmpBarrier(node);
+            break;
+          }
+        case V_SgOmpSingleStatement:
+          {
+            transOmpSingle(node);
+            break;
+          }
+       case V_SgOmpMasterStatement:
+          {
+            transOmpMaster(node);
+            break;
+          }
+       case V_SgOmpAtomicStatement:
+          {
+            transOmpAtomic(node);
+            break;
+          }
+         case V_SgOmpOrderedStatement:
+          {
+            transOmpOrdered(node);
+            break;
+          }
+       case V_SgOmpCriticalStatement:
+          {
+            transOmpCritical(node);
+            break;
+          }
+
+        default:
+          {
+            // do nothing here    
+          }
+      }// switch
+
+
+    } 
+
 #if 0
     //3. Special handling for files with main() 
     // rename main() to user_main()

@@ -53,7 +53,10 @@ Outliner::Preprocess::preprocessOutlineTarget (SgStatement* s)
   ROSE_ASSERT (s_post);
 
   // Extract preprocessing control structure.
-  s_post = transformPreprocIfs (s_post);
+  // We skip this during OpenMP lowering, it has some bug
+  // Liao, 9/8/2009
+  if (! SageInterface::getEnclosingFileNode(s)->get_openmp_lowering()) 
+    s_post = transformPreprocIfs (s_post);
 
   // Convert 'this' expressions into references to a local pointer.
   s_post = transformThisExprs (s_post);

@@ -1,6 +1,7 @@
 #include <omp.h>
 #include <assert.h>
-int main(){
+int main()
+{
   int sum=7;
   int known_sum;
   int i;
@@ -22,7 +23,7 @@ int main(){
 #pragma omp section
       {
         for(i=700;i<1000;i++)
-           sum += i;
+          sum += i;
       }
 
     }/* end of section reduction.*/

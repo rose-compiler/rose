@@ -9,12 +9,12 @@ static double a[1000];
 static void init(void)
 {
   int i;
-   i=i+5; 
+  i=i+5; 
 #pragma omp for
   for (i=0;i<1000;i++)
-   {
+  {
     a[i]=(double)i/2.0;
-   }
+  }
 }
 
 int main(void){
@@ -23,5 +23,6 @@ int main(void){
  {
   init();
  }
+ return 0;
 }
 

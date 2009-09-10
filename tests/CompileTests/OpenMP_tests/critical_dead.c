@@ -5,8 +5,8 @@ void foo()
   {
 if (counter <100)
    counter++;
-else 
-  return;
+//else 
+//  return;
 //    foo();
  }
   foo();

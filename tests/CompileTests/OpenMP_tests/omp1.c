@@ -4,7 +4,7 @@
 #include <omp.h>
 #endif 
 
-void do_sth(int ar1,int ar2, int ar3)
+void do_sth(int a, int b, int c)
 {
 }
 

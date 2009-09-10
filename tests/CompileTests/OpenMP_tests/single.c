@@ -1,22 +1,26 @@
 /*
- loop scheduling
 */
 #include <stdio.h>
 #ifdef _OPENMP
 #include <omp.h>
 #endif 
+#include<assert.h> 
 
 int main(void)
 {
-  int i = 100;
+  int i = 100  ;
+  int num_threads =0;
 
 #pragma omp parallel
   {
-#pragma omp single firstprivate(i)
+#pragma omp single
     {
-      i += omp_get_num_threads();
-      printf ("i= %d \n",i);
+      num_threads = omp_get_num_threads();
+#pragma omp atomic
+      i+=100;
     }
   }
+  assert(i == 200);
+  return 0;
 }
 

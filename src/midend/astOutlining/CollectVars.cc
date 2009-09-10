@@ -29,6 +29,7 @@ dump (const ASTtools::VarSymSet_t& V, const std::string& tag)
     cerr << tag << '{' << ASTtools::toString (V) << '}' << endl;
 }
 
+#if 0
 //collect clause variables from an OpenMP statement's clause with a variable list
 static void
 collectOmpClauseVars(SgOmpClauseBodyStatement * clause_stmt, ASTtools::VarSymSet_t& omp_syms, const VariantT & vt)
@@ -60,6 +61,8 @@ collectOmpClauseVars(SgOmpClauseBodyStatement * clause_stmt, ASTtools::VarSymSet
   } // for all matched clauses
 }
 
+#endif
+
 //! Collect the variables to be passed if 's' is to be outlined
 // It classifies variables used in s as the following categories
 //  * L: locally declared  
@@ -67,16 +70,6 @@ collectOmpClauseVars(SgOmpClauseBodyStatement * clause_stmt, ASTtools::VarSymSet
 //  *  : globally declared beyond the function surrounding 's'   
 //  The variables used but not locally declared, and declared within the function
 //  should be passed as parameters to the outlined function
-//
-//  The goal is to minimize the number of variables to be passed.
-//  since global variables are always visible even to the outlined function.
-//  psyms are for private variables in OpenMP. 
-//  They don't need to be passed as parameters, but 
-//  a local declaration is needed for each of them
-//
-//  fpsysms: for OpenMP parallel regions' firstprivate variables
-//  reductionSyms: for OpenMP reduction variables associated with a parallel region
-//  TODO : copyin variables
 void
 Outliner::collectVars (const SgStatement* s, 
                        ASTtools::VarSymSet_t& syms,  
@@ -135,6 +128,7 @@ Outliner::collectVars (const SgStatement* s,
     dump (syms, "(U - L) \\cap Q = ");
   }
 
+#if 0 // Handled by OmpSupport::transOmpVariables()
   // Collect OpenMP private variables 
   // Is OpenMP lowering requested?
   if  (SageInterface::getEnclosingFileNode(const_cast<SgStatement*>(s))->get_openmp_lowering())
@@ -167,7 +161,7 @@ Outliner::collectVars (const SgStatement* s,
         }
       } // end if private clause
 #else
-  collectOmpClauseVars(p_stmt, psyms, V_SgOmpPrivateClause); 
+      collectOmpClauseVars(p_stmt, psyms, V_SgOmpPrivateClause); 
 #endif
     } // end if body of omp parallel
 
@@ -185,6 +179,7 @@ Outliner::collectVars (const SgStatement* s,
   collectOmpClauseVars(p_stmt, reductionSyms, V_SgOmpReductionClause); 
      
   } // end if openmp lowering
+#endif  
 }
 
 // eof

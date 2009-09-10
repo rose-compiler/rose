@@ -10,6 +10,7 @@ int a[20];
 int foo(int lower, int upper, int stride)
 {
   int i;
+#pragma omp single
 printf("---------default schedule--------------\n");  
 #pragma omp for  nowait
   for (i=lower;i<upper;i+=stride)
@@ -20,6 +21,7 @@ printf("---------default schedule--------------\n");
   }
 
 #pragma omp barrier
+#pragma omp single
 printf("---------static schedule--------------\n");  
 #pragma omp for schedule(static)
   for (i=lower;i<upper;i+=stride)
@@ -29,6 +31,7 @@ printf("---------static schedule--------------\n");
         i, omp_get_thread_num());
   }
 
+#pragma omp single
 printf("---------(static,5) schedule--------------\n");  
 #pragma omp for schedule(static,5)
   for (i=lower;i<upper;i+=stride)
@@ -39,6 +42,7 @@ printf("---------(static,5) schedule--------------\n");
   }
 
 
+#pragma omp single
 printf("---------(dynamic,3) schedule--------------\n");  
 #pragma omp for schedule(dynamic,3) ordered
   for (i=lower;i<upper;i+=stride)
@@ -48,6 +52,7 @@ printf("---------(dynamic,3) schedule--------------\n");
         i, omp_get_thread_num());
   }
 
+#pragma omp single
 printf("---------(guided) schedule--------------\n");  
 #pragma omp for schedule(guided) nowait
   for (i=lower;i<upper;i+=stride)
@@ -57,6 +62,7 @@ printf("---------(guided) schedule--------------\n");
         i, omp_get_thread_num());
   }
 
+#pragma omp single
 printf("---------(runtime) schedule--------------\n");  
 #pragma omp for schedule(runtime)
   for (i=lower;i<upper;i+=stride)

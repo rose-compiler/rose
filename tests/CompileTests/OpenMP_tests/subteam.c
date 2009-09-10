@@ -28,11 +28,12 @@ static void init(void)
   }
 }
 
-int main(void){
-
+int main(void)
+{
 #pragma omp parallel
  {
   init();
  }
+ return 0;
 }
 

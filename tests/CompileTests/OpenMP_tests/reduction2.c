@@ -5,7 +5,7 @@
 
 #define NUM_THREADS 4
 
-void main ()
+int main ()
 {
  int i,total=1000000, yy=10000,zz=10000;
  double res=0.0;
@@ -21,4 +21,5 @@ void main ()
   }
  
  printf("the sum of 1000000 is :%.0f\n", res);
+ return 0;
 }

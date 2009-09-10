@@ -28,6 +28,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	firstprivate.c \
 	firstlastprivate.c \
 	flush.c \
+	flush_exampleA_21_1c.c \
 	get_max_threads.c \
 	hello.c \
 	hello-1.c \
@@ -51,9 +52,11 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	ordered.c \
 	orphaned-directives.c \
 	parallel.c \
+	parallel-reduction.c \
 	parallelfor.c \
 	parallelfor2.c \
 	parallelsections.c \
+	preprocessingInfo.c \
 	private.c \
 	privatej.c \
 	recursive.c \

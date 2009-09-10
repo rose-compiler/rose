@@ -165,6 +165,8 @@ namespace Outliner
      *  \brief Computes the set of variables in 's' that need to be
      *  passed to the outlined routine == shared variables in OpenMP: syms
      *  and private variables (in OpenMP): psyms
+     *  Note: private, firsprivate, reduction variables are handled by OmpSupport::transOmpVariables() now
+     *  They are not in actual use anymore.
      */
     void collectVars (const SgStatement* s, ASTtools::VarSymSet_t& syms, ASTtools::VarSymSet_t& private_syms,
                   ASTtools::VarSymSet_t& firstprivate_syms, ASTtools::VarSymSet_t& reduction_syms);
@@ -197,6 +199,8 @@ namespace Outliner
      *  outlining. Used to support -rose:outline:temp_variable
      *
      *  pSyms are OpenMP private variables, or dead variables (neither livein nor liveout)
+     *  Note: private, firsprivate, reduction variables are handled by OmpSupport::transOmpVariables() now
+     *  They are not in actual use anymore.
      *
      *  \pre The statement does not contain non-local control flow.
      */

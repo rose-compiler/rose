@@ -7,5 +7,5 @@ int main(void)
 #pragma omp for
   for (i=0;i<1000;i++)
     a[i]=i*2;
-return 1;
+  return 0;
 }

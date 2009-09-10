@@ -13,5 +13,5 @@ int main(void)
     a[i]=i*2;
     sum+=i;
   }
-return 1;
+  return 0;
 }

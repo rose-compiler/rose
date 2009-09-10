@@ -1401,7 +1401,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
          ||CommandlineProcessing::isOption(argv,"-rose:openmp:","ast_only",true) == true)
      {
        if ( SgProject::get_verbose() >= 1 )
-         printf ("OpenMP sub option for AST construction specified \n");
+         printf ("OpenMP option for AST construction specified \n");
        set_openmp_ast_only(true);
        // we don't want to stop after parsing  if we want to proceed to ast creation before stopping
        set_openmp_parse_only(false);
@@ -5899,6 +5899,11 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // https://outreach.scidac.gov/tracker/index.php?func=detail&aid=316&group_id=24&atid=185
      compilerNameString.push_back("-DUSE_ROSE");
 
+  // Liao, 9/4/2009. If OpenMP lowering is activated. -D_OPENMP should be added
+  // since we don't remove condition compilation preprocessing info. during OpenMP lowering
+     if (get_openmp_lowering())  
+       compilerNameString.push_back("-D_OPENMP");
+   
   // Since we need to do this often, support is provided in the utility_functions.C
   // and we can simplify this code.
      std::string currentDirectory = getWorkingDirectory();

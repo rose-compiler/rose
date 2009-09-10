@@ -3,11 +3,11 @@
 int main (void)
 {
 
-int a;
+  int a;
 #pragma omp parallel 
-{
+  {
 #pragma omp atomic
-  a+=1;
-}
+    a+=1;
+  }
 
 }

@@ -5,11 +5,11 @@
 
 int main(void)
 {
-int i;
+  int i;
 #pragma omp parallel for ordered
-for (i=0;i<100;i++)
-{
+  for (i=0;i<20;i++)
+  {
 #pragma omp ordered  
-  printf("%2d,Hello,world.!\n",i);
-}
+    printf("%2d,Hello,world.!\n",i);
+  }
 }

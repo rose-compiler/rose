@@ -3,13 +3,13 @@
 int main (void)
 {
 
-int a,b;
+  int a,b;
 #pragma omp parallel 
-{
+  {
 #pragma omp master
-  a=a+1;
+    a=a+1;
 #pragma omp single
-  b=b+1;
-}
-
+    b=b+1;
+  }
+  return 0;
 }

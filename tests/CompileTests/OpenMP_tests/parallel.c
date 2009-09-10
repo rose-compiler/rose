@@ -1,7 +1,16 @@
+#include<assert.h> 
+
 int main(void)
 {
-  int i, a[1000];
-#pragma omp parallel if(i<100)
-    a[i]=i*2;
-return 1;
+  int i =100;
+#pragma omp parallel firstprivate(i)
+  {
+    assert(i == 100);
+  }
+#pragma omp parallel private(i)
+  {
+    assert(i != 100);
+  }
+
+  return 0;
 }

@@ -116,7 +116,9 @@ extern bool GOMP_loop_ull_ordered_dynamic_next (unsigned long long *,
 extern void GOMP_ordered_start (void);
 extern void GOMP_ordered_end (void);
 
-extern void GOMP_parallel_start (void (*) (void *), void *, unsigned);
+//extern void GOMP_parallel_start (void (*) (void *), void *, unsigned);
+// Avoid warning like  passing argument from incompatible pointer type
+extern void GOMP_parallel_start (void (*) (void **), void *, unsigned);
 extern void GOMP_parallel_end (void);
 
 extern void GOMP_task (void (*) (void *), void *, void (*) (void *, void *),

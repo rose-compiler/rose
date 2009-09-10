@@ -8,11 +8,11 @@ int main(void)
 {
   int counter=0, nthreads;
 #ifdef _OPENMP
-  omp_set_num_threads(-8);
+  omp_set_num_threads(7);
 #endif  
-  #pragma omp parallel 
+#pragma omp parallel 
   {
-  #pragma omp critical
+#pragma omp critical
     counter ++;
     nthreads = omp_get_num_threads();
   }

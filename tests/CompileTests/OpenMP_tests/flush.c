@@ -1,5 +1,4 @@
-int
-main (void)
+int main (void)
 {
   int a = 1, b=2;
 #pragma omp parallel if (a) num_threads(4)
@@ -14,4 +13,5 @@ main (void)
 #pragma omp barrier
       }
   }
+  return 0;
 }
