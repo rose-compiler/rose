@@ -59,7 +59,8 @@ AC_DEFUN([DETERMINE_OS_VENDOR],
    OS_vendor="ROSE_unknown_OS";
    OS_release="ROSE_unknown_OS_release";
 
-   if test -z "$ROSE_LSB_RELEASE"; then
+#  if test -z "$ROSE_LSB_RELEASE"; then
+   if test "x$ROSE_LSB_RELEASE" = xno; then
       echo "********************************";
       echo "* lsb_release is NOT available *";
       echo "********************************";
