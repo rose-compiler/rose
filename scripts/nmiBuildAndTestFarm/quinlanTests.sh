@@ -133,6 +133,11 @@ echo "*************************************************************************"
 # DQ (9/9/2009): Skip this test until we have the Java support debugged...
 # ./submit.sh build_configs/x86_ubuntu_5.10/default
 
+echo "********************************************************"
+echo "* New Mac OSX tests... *"
+echo "********************************************************"
+./submit.sh build_configs/x86_64_macos_10.5/minimal_default
+./submit.sh build_configs/x86_macos_10.4/minimal_default
 
 echo "********************************************************"
 echo "* New possible tests... (not available as of 9/9/2009) *"
