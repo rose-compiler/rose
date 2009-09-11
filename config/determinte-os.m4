@@ -76,28 +76,31 @@ AC_DEFUN([DETERMINE_OS_VENDOR],
       OS_vendor=`lsb_release -is`
       OS_release=`lsb_release -rs`
 
-      echo "OS_vendor  = $OS_vendor"
-      echo "OS_release = $OS_release"
-
-      case $OS_vendor in
-         Debian*)
-            DEBIAN=yes;
-            ;;
-         RedHat*)
-            REDHAT=yes
-            ;;
-         Ubuntu*)
-            UBUNTU=yes
-            ;;
-         CentOS*)
-            CENTOS=yes
-            ;;
-         esac
-            AM_CONDITIONAL([OS_VENDOR_DEBIAN],[ test "x$DEBIAN" = xyes ] )
-            AM_CONDITIONAL([OS_VENDOR_REDHAT],[ test "x$REDHAT" = xyes ] )
-            AM_CONDITIONAL([OS_VENDOR_UBUNTU],[ test "x$UBUNTU" = xyes ] )
-            AM_CONDITIONAL([OS_VENDOR_CENTOS],[ test "x$CENTOS" = xyes ] )
+      echo "In conditional: OS_vendor  = $OS_vendor"
+      echo "In conditional: OS_release = $OS_release"
    fi
+
+   echo "In conditional: OS_vendor  = $OS_vendor"
+   echo "In conditional: OS_release = $OS_release"
+
+   case $OS_vendor in
+      Debian*)
+         DEBIAN=yes;
+         ;;
+      RedHat*)
+         REDHAT=yes
+         ;;
+      Ubuntu*)
+         UBUNTU=yes
+         ;;
+      CentOS*)
+         CENTOS=yes
+         ;;
+      esac
+         AM_CONDITIONAL([OS_VENDOR_DEBIAN],[ test "x$DEBIAN" = xyes ] )
+         AM_CONDITIONAL([OS_VENDOR_REDHAT],[ test "x$REDHAT" = xyes ] )
+         AM_CONDITIONAL([OS_VENDOR_UBUNTU],[ test "x$UBUNTU" = xyes ] )
+         AM_CONDITIONAL([OS_VENDOR_CENTOS],[ test "x$CENTOS" = xyes ] )
 
    echo "Leaving DETERMINE OS VENDOR: OS_vendor  = $OS_vendor"
    echo "Leaving DETERMINE OS VENDOR: OS_release = $OS_release"
