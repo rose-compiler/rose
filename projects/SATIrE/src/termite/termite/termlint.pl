@@ -87,29 +87,29 @@ is_arg([ElemKind]) :-
 
 %% term_match(+Term, +NonterminalSymbol).
 %  
-%   OK. Here is the semantics to the structures defined above:
+% OK. Here is the semantics to the structures defined above:
 %  
-%   The grammar is a sequence of grammar rules. Each rule is of the form
-%   Nonterminal ::= Body.
-%   There should be no two rules for the same nonterminal (use =|||= instead), but
+% The grammar is a sequence of grammar rules. Each rule is of the form
+% Nonterminal ::= Body.
+% There should be no two rules for the same nonterminal (use =|||= instead), but
 %   this is not checked.
 %  
 % Body has the following meaning:
 %  
-% |  atom      | a nonterminal, references another rule to be used              | 
-% |  A 'pipe' B| match A; if that fails, match B				      | 
-% |  A where C | match A; if that succeeds, call Prolog goal C		      | 
-% |  {A}       | unify with term A; {_} means "any term", {foo} is terminal foo | 
-% |  atoms As  | match one of the atoms in As				      | 
+% |  atom      | a nonterminal, references another rule to be used             |
+% |  A 'pipe' B| match A; if that fails, match B			       |
+% |  A where C | match A; if that succeeds, call Prolog goal C		       |
+% |  {A}       | unify with term A; {_} means "any term", {foo} is terminal foo|
+% |  atoms As  | match one of the atoms in As				       |
 % |  functors Fs with (A1,...,An) | match term F(A1,...,An) where F is a functor in Fs | 
-% |  f(A1,...,An)	| match a term with functor f, where arguments match A1,...,An   | 
+% |  f(A1,...,An) |match a term with functor f, where arguments match A1,...,An|
 %  
 % Argument expressions (in argument tuples) can be:
 %  
-% |  atom      | a nonterminal                                                  |
-% |  A?        | term is "missing" (see below) or matches argument expression A |
-% |  {A}       | unify with term A                                              |
-% |  \[A\]       | list of terms matching argument expression A; as a special case, \[_\] means "list of any type" |
+% |  atom      | a nonterminal                                                 |
+% |  A?        | term is "missing" (see below) or matches argument expression A|
+% |  {A}       | unify with term A                                             |
+% |  \[A\]     | list of terms matching argument expression A; as a special case, \[_\] means "list of any type" |
 %  	      
 % Options (A?) are resolved as follows: If the term under consideration
 % is a solution of predicate missing/1 (to be defined along with the grammar
@@ -117,14 +117,14 @@ is_arg([ElemKind]) :-
 %  
 % Predicates to be defined along with the grammar rules are:
 %  
-% |  missing/1         | defines what A? can match except for A                  |
-% |  start_symbol/1    | single solution is the start symbol of the grammar      |
+% |  missing/1         | defines what A? can match except for A                |
+% |  start_symbol/1    | single solution is the start symbol of the grammar    |
 %  
 %  
 % Here are a few example grammars to illustrate the explanations above.
 %  
 %  
-% *Arithmetic* *expressions*, *simple* *verbose* *version*
+% *Arithmetic* *expressions*, *simple* *verbose* *version*:
 % ==
 % var ::= {VarName} where atom(VarName).
 % num ::= {Number} where number(Number).
@@ -137,14 +137,14 @@ is_arg([ElemKind]) :-
 % | expr / expr.
 % ==
 %  
-% *Arithmetic* *expressions*, *more* *condensed* *version*
+% *Arithmetic* *expressions*, *more* *condensed* *version*:
 % ==
 % expr ::=
 %   {Leaf} where (atom(Leaf) ; number(Leaf))
 % | functors [+, -, *, /] with (expr, expr).
 % ==
 %  
-% *Simple type system*
+% *Simple* *type* *system*:
 % ==
 % type ::=
 %   atoms [number, character, string]
@@ -154,7 +154,7 @@ is_arg([ElemKind]) :-
 % ==
 %  
 %  
-% *Partial* *specification* (*some* *parts* *are* *not* *constrained*)
+% *Partial* *specification* (*some* *parts* *are* *not* *constrained*):
 % ==
 % allowed ::=
 %   lst([_])        /* argument is list of some unknown things */

@@ -1,27 +1,23 @@
 PDFS=cfgconstruction.pdf pig-doc.pdf pag-interface.pdf manual.pdf
-nobase_dist_data=$(PDFS)  termite.pdf
-nodist_EXTRA_data=manual/manual_vars.tex.in
+dist_doc_DATA=$(PDFS)
+nodist_EXTRA_DATA=manual/manual_vars.tex.in
 
 EXTRA_DIST= \
         satire_cfgconstruction.pdf \
 	satire_overview.pdf \
 	satire_attributes_auxiliary_functions \
-	termite.pdf \
-	 termite.tex
+        termite.tex
 
-dist-local: docs
+.PHONY: docs HTML clean-termite
+docs: $(PDFS) docs-termite
 
-.PHONY: docs
-docs: docs-termite
-	for f in $(PDFS); do \
-		dir=`basename $$f .pdf` ; \
-		cp -r $(top_srcdir)/docs/$$dir $$dir.build ; \
-		chmod -R u+w $$dir.build ; \
-		cp -f manual/manual_vars.tex $$dir.build; \
-		cd $$dir.build ; \
-		$(MAKE) -f ../Makefile $$f; mv $$f .. ; \
-		cd .. ; \
-	done
+$(PDFS): 
+	dir=`basename $@ .pdf` && \
+	  cp -r $(top_srcdir)/docs/$$dir $$dir.build && \
+	  chmod -R u+w $$dir.build && \
+	  cp -f $(builddir)/manual/manual_vars.tex $$dir.build && \
+	  cd $$dir.build && $(MAKE) -f ../Makefile $$dir.dvi && \
+	  dvipdf $$dir.dvi ../$@
 
 clean-local: clean-termite
 	for f in $(PDFS); do \
@@ -32,17 +28,12 @@ clean-local: clean-termite
 
 BIBTEX = :
 
-# very poor man's pseudo-autoconf stuff
-#.PHONY: manual_vars.tex
-#manual_vars.tex: manual_vars.tex.in
-#   sed -e 's/[@]satire_version[@]/$(SATIRE_VERSION)/g' < $< > $@
-
-%.pdf: %.tex
-	pdflatex $< < /dev/null || (rm -f $@ && false)
+%.dvi: %.tex # We can't use pdlatex to include *.ps graphics
+	latex $< < /dev/null || (rm -f $@ && false)
 	$(BIBTEX) $*
-	pdflatex $< < /dev/null || (rm -f $@ && false)
+	latex $< < /dev/null || (rm -f $@ && false)
 	while grep -q "Rerun to get cross-references right." $*.log; do \
-		pdflatex $< < /dev/null || (rm -f $@ && exit 1) ; \
+		latex $< < /dev/null || (rm -f $@ && exit 1) ; \
 	done
 
 # ---------------------------------------------------------------------
@@ -69,15 +60,34 @@ $(INPUTFILES): $(SRCFILES)
 TEXFILES=$(patsubst %.pl, %.tex,$(INPUTFILES))
 GARBAGE=$(patsubst %.tex, %.aux,$(TEXFILES))
 MYTEXINPUT=$(SWI_PROLOG_HOME_DIR)/library/pldoc:$(SWI_PROLOG_HOME_DIR)/library/ltx2htm:/opt/gupu/src/pl-57x/packages/ltx2htm:/opt/gupu/src/pl-57x/man
-LTX2HTM=latex2html # this is part of SWI-Prolog (not to be confused!)
+LTX2HTM=/usr/local/mstools/bin/latex2html # this is part of SWI-Prolog (not to be confused!)
 
+if WITH_SWI_PROLOG  # --------------------------------------------------
 
-if WITH_SWI_PROLOG
 docs-termite: HTML termite.pdf mostlyclean
-else
-docs-termite:
-	@echo "** WARNING: Termite docs can only be built when SWI-Prolog is used."
-endif
+dist_doc_DATA += \
+	termite.pdf \
+	$(TERMITE_HTML)
+
+$(TERMITE_HTML): HTML
+
+TERMITE_HTML = \
+	termite-html/Contents.html \
+	termite-html/DocIndex.html \
+	termite-html/home.gif \
+	termite-html/index.gif \
+	termite-html/index.html \
+	termite-html/info.gif \
+	termite-html/next.gif \
+	termite-html/prev.gif \
+	termite-html/sec-1.html \
+	termite-html/sec-1.1.html \
+	termite-html/sec-2.html \
+	termite-html/sec-2.1.html \
+	termite-html/sec-3.html \
+	termite-html/up.gif \
+	termite-html/yellow_pages.gif \
+	$(patsubst %.pl, termite-html/%.html,$(INPUTFILES))
 
 clean-termite: 
 	rm -f termite-pdf.dvi termite-pdf.idx termite-pdf.log termite-pdf.aux \
@@ -110,7 +120,7 @@ termspec.tex: $(top_srcdir)/src/termite/termite/termite_spec.pl
 c2term.txt:
 	make -C $(top_builddir)/src/termite c2term
 	echo '\begin{verbatim}' >$@
-	$< &>__tmp || true
+	$(top_builddir)/src/termite/c2term &>__tmp || true
 	cat __tmp | sed -e 's!$(bindir)/!!' >>$@
 	rm -f __tmp
 	echo '\end{verbatim}' >>$@
@@ -118,7 +128,7 @@ c2term.txt:
 term2c.txt: 
 	make -C $(top_builddir)/src/termite term2c
 	echo '\begin{verbatim}' >$@
-	$< &>__tmp || true
+	$(top_builddir)/src/termite/term2c &>__tmp || true
 	cat __tmp | sed -e 's!$(bindir)/!!' >>$@
 	rm -f __tmp
 	echo '\end{verbatim}' >>$@
@@ -134,16 +144,19 @@ termite-html.tex: termite-pdf.tex
 	sed s/xPDF/xHTML/ $< >$@
 
 HTML: termite-html.tex $(TEXFILES)
-	TEXINPUTS=$(MYTEXINPUT):$$TEXINPUTSl; $(LTX2HTM) $<
+	TEXINPUTS=$(MYTEXINPUT):$$TEXINPUTS
+	$(LTX2HTM) $<
 
-if WITH_SWI_PROLOG
 termite.pdf: termite-pdf.tex $(TEXFILES)
 	env TEXINPUTS=$(MYTEXINPUT):$$TEXINPUTS pdflatex $<
 	makeindex $(patsubst %.tex,%,$<)
 	env TEXINPUTS=$(MYTEXINPUT):$$TEXINPUTS pdflatex $<
 	env TEXINPUTS=$(MYTEXINPUT):$$TEXINPUTS pdflatex $<
 	mv termite-pdf.pdf $@
-else
-termite.pdf:
-	@echo "** WARNING: Termite docs can only be built when SWI-Prolog is used." | tee termite.pdf
-endif
+
+else # -----------------------------------------------------------------
+
+docs-termite:
+	@echo "** WARNING: Termite docs can only be built when SWI-Prolog is used."
+
+endif # ----------------------------------------------------------------
