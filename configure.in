@@ -1314,6 +1314,7 @@ projects/MacroRewrapper/Makefile
 projects/QtDesignerPlugins/Makefile
 projects/RoseQt/Makefile
 projects/RoseQt/AstViewer/Makefile
+projects/StaticDynamicAnalysis/DynamicCPU/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
