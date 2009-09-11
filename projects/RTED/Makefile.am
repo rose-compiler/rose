@@ -509,7 +509,6 @@ TESTS_KNOWN_TO_FAIL = run/C/subprogram_call_errors/c_C_1_3_f \
 					  run/tests/C++/memory/calloc_delete \
 					  run/tests/C++/memory/new_free \
 					  run/tests/C++/types/global_constructors \
-					  run/tests/C++/types/reference \
 					  run/tests/C++/templates/simple_template_function \
 					  run/tests/C++/overloading/array_index
 

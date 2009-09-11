@@ -445,6 +445,8 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
 				|| isSgPointerAssignOp( parent )
 				|| isSgRshiftAssignOp( parent )
 				|| isSgXorAssignOp( parent )) {
+
+    SgExpression* left = isSgBinaryOp( parent ) -> get_lhs_operand();
     // make sure that we came from the right hand side of the assignment
     SgExpression* right = isSgBinaryOp(parent)->get_rhs_operand();
 	// consider
@@ -452,16 +454,29 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
 	//		int *x = arr;
 	// the assignment is not a var ref of arr since arr's address is statically
 	// determined
-    if ( right == last && !isSgArrayType( right -> get_type() ))
+    if (    right == last 
+            && !isSgArrayType( right -> get_type() )
+            // consider:
+            //      int& s = x;
+            // which is not a read of x
+            && !isSgReferenceType( left -> get_type() ))
       variable_access_varref.push_back(n);
     hitRoof=true;
     //cerr << "*********************************** DEBUGGING   parent (assign) = " << parent->class_name() << endl;
     break;
   }
   else if (isSgAssignInitializer(parent)) {
+
+    SgInitializedName* grandparent = isSgInitializedName( parent -> get_parent() );
     // make sure that we came from the right hand side of the assignment
     SgExpression* right = isSgAssignInitializer(parent)->get_operand();
-    if (right==last)
+    if (    right==last
+            && !(
+                // consider, e.g:
+                //  int& ref = x;
+                // which is not a read of x
+                grandparent 
+                && isSgReferenceType( grandparent -> get_type())))
     	variable_access_varref.push_back(n);
     hitRoof=true;
     //cerr << "*********************************** DEBUGGING   parent (assigniniit) = " << parent->class_name() << endl;

@@ -536,9 +536,19 @@ void RtedTransformation::appendTypeInformation( SgInitializedName* initName, SgT
 }
 
 void RtedTransformation::appendTypeInformation( SgType* type, SgExprListExp* arg_list, bool resolve_class_names, bool array_to_pointer ) {
-    SgType* base_type = NULL;
     ROSE_ASSERT(type);
 
+    // we always resolve reference type information
+    if( isSgReferenceType( type )) {
+        appendTypeInformation(
+            isSgReferenceType( type ) -> get_base_type(),
+            arg_list,
+            resolve_class_names,
+            array_to_pointer );
+        return;
+    }
+
+    SgType* base_type = NULL;
     size_t indirection_level = 0;
 
     base_type = type;
