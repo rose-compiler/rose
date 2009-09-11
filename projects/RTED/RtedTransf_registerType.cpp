@@ -95,6 +95,7 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
 						) {
   ROSE_ASSERT(rtedClass);
   SgStatement* stmt;
+  SgScopeStatement* scope;
 
 
   bool global_stmt = false;
@@ -106,12 +107,17 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
   // we want to call register type before type is used, but where it's in
   // scope
   stmt = getSurroundingStatement( rtedClass->classDef );
+  scope = stmt -> get_scope();
   cerr << "  the surrounding statement is (1): " << stmt->class_name() << 
     " for : " <<  rtedClass->classDef->get_declaration()->get_name().str() <<  endl;
   while(  isSgClassDefinition( stmt )
-          || isSgClassDeclaration( stmt )) {
+          || isSgClassDeclaration( stmt )
+          // for nested classes, we care about the scope of the outermost class
+          || isSgClassDeclaration( scope )
+          || isSgClassDefinition( scope )) {
 
     stmt = isSgStatement( stmt -> get_parent());
+    scope = stmt -> get_scope();
     cerr << "  the surrounding statement is (2): " << stmt->class_name() << endl;
   }
   if( !stmt || isSgGlobal(stmt)
@@ -125,7 +131,7 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass
   }
 
   if (isSgStatement(stmt)) {
-    SgScopeStatement* scope = stmt->get_scope();
+    scope = stmt->get_scope();
     string name = rtedClass->manglClassName;
     string typeC = rtedClass->classType;
 
