@@ -501,7 +501,6 @@ TESTS_KNOWN_TO_FAIL = run/C/subprogram_call_errors/c_C_1_3_f \
 					  run/tests/C/memoverlap/heap_array_in_struct_in_array \
 					  run/tests/C/pointer/union \
 					  run/tests/C++/simple/uninitialized_member \
-					  run/tests/C++/simple/union \
 					  run/tests/C++/pointer/member_deref \
 					  run/tests/C++/pointer/dot_star \
 					  run/tests/C++/pointer/arrow_star \

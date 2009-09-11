@@ -268,6 +268,8 @@ class RuntimeSystem
         VariableIter variablesBegin(int scopeId) const;
         VariableIter variablesEnd(int scopeId)   const;
 
+        void printMessage(std::string message);
+
     private:
 
         static RuntimeSystem* single;

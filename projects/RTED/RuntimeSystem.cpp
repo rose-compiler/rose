@@ -797,14 +797,9 @@ RuntimeSystem_roseInitVariable(
   RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
   CHECKPOINT
 
-#ifdef ROSE_WITH_ROSEQT
-  if( rs -> isQtDebuggerEnabled() ) {
-    std::string message = "   Init Var at address:  "+HexToString(address)+"  type:"
-      +type+ "   size: " + ToString(size);
-    //cerr << "++++++++++++++++++++++++++ " << message << endl;
-    RtedDebug::instance()->addMessage(message);
-  }
-#endif
+  std::string message = "   Init Var at address:  "+HexToString(address)+"  type:"
+    +type+ "   size: " + ToString(size);
+	 rs->printMessage(message);
 
 
     RsType* rs_type = 
@@ -929,7 +924,7 @@ RuntimeSystem_roseRegisterTypeCall(int count, ...) {
   bool isUnion=false;
   if (*isUnionType=='1') isUnion=true;
   unsigned long long sizeC = va_arg(vl,unsigned long long);
-  cerr << " +++++ Register Class : " << nameC << " size : " << sizeC << "  isUnion : " << isUnion << endl;
+  //cerr << " +++++ Register Class : " << nameC << " size : " << sizeC << "  isUnion : " << isUnion << endl;
   int i=0;
   
   RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
@@ -967,14 +962,9 @@ RuntimeSystem_roseRegisterTypeCall(int count, ...) {
         t = RuntimeSystem_getRsType( type, base_type, "", indirection_level );
       }
 
-#ifdef ROSE_WITH_ROSEQT
-      if( rs -> isQtDebuggerEnabled() ) {
         std::string message = "   Register class-member:  "+name+"  offset:"
           +HexToString(offset)+ "   size: " + ToString(size);
-        //cerr << "++++++++++++++++++++++++++ " << message << endl;
-        RtedDebug::instance()->addMessage(message);
-      }
-#endif
+        rs->printMessage(message);
 
       classType->addMember(name,t,(addr_type)offset);
       //cerr << "Registering Member " << name << " of type " << type << " at offset " << offset << endl;

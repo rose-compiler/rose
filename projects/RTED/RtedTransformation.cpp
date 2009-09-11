@@ -96,6 +96,7 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
 		   filename.find(".C")!=std::string::npos  ) ) {
 	// if it is not a C but C++ program, then insert namespace
     	  cerr << " **** Inserting file into sourceFileRoseNamespaceMap:" << sf -> get_file_info() -> get_filename() << endl;
+	  //if (filename.find("_s.cpp")!=std::string::npos)
     	  insertNamespaceIntoSourceFile(sf);
       } else {
     	//  cerr << " ** not a cpp file" <<filename << endl;

@@ -69,22 +69,65 @@ RsType *  RsType::getSubtypeRecursive(addr_type offset,  size_t size, bool stopA
 
 bool  RsType::checkSubtypeRecursive(addr_type offset,  RsType* type)
 {
+    RuntimeSystem * rs = RuntimeSystem::instance();
+    //rs->printMessage("    >>> checkSubtypeRecursive ");
     RsType * result = this;
     size_t size = type -> getByteSize();
 
-    while(result->getByteSize() >= size)
+    bool isunion = false;
+    int resultsize = result->getByteSize();
+    while(resultsize >= size)
     {
+      //rs->printMessage("   >> while result->getByteSize() >= size "+
+      //		       ToString(resultsize)+" : " +ToString(size));
+      //rs->printMessage("        >>> checking  result == type :   "+result->getName()+
+      //		       "  "+type->getName());
         if( result == type )
             return true;
 
-        int subTypeId = result->getSubtypeIdAt(offset);
-        if( subTypeId == -1 )
-            // no refinement is possible
-            return false;
+	// tps (09/10/09) Handle union type
+	RsClassType* ct_result = dynamic_cast<RsClassType*>( result);
+	if (ct_result && ct_result->getIsUnionType()) isunion=true;
 
-        offset -= result->getSubtypeOffset(subTypeId);
+        int subTypeId = -1;
+	vector<int> subTypeIdvec;
+	if (isunion==false)
+	  subTypeId = result->getSubtypeIdAt(offset);
+	else 
+         subTypeIdvec = ct_result->getSubtypeUnionIdAt(offset);
+
+	//rs->printMessage("   >> subTypeId: "+ToString(subTypeId)+"  isunion:"+
+	//		 ToString(isunion));
+	if (isunion && subTypeIdvec.size()==0 ||
+	    !isunion && subTypeId == -1 ) {
+            // no refinement is possible
+	    //rs->printMessage("    >>> subTypeId == -1 .");
+            return false;
+        }
+	if (isunion) {
+	  vector<int>::const_iterator it = subTypeIdvec.begin();
+	  // iterate over the members and find the matching one
+	  for (;it!=subTypeIdvec.end();++it) {
+	    subTypeId = *it;
+	    addr_type temp_offset = offset- result->getSubtypeOffset(subTypeId);
+	    RsType* temp_result =  result->getSubtype(subTypeId);
+	    if (temp_result==type)
+	      break;
+	  }
+	}
+
+	// continue as before and get the subtype
+	offset -= result->getSubtypeOffset(subTypeId);
+	//rs->printMessage("       >> new offset :  offset -= result->getSubtypeOffset(subTypeId); "+
+	//	       ToString(offset));
         result  = result->getSubtype(subTypeId);
+	//rs->printMessage("       >> result  = result->getSubtype(subTypeId) : "+
+	//		 result->getName()+"\n");
+	if (isunion==false)
+	resultsize = result->getByteSize();
     }
+    //rs->printMessage("    >>> result: bytesize: " + ToString( result -> getByteSize())+
+    //                " !=  size: "+ToString(size));
 
     assertme(  result == NULL || result -> getByteSize() != size,
 	       "RsType::checkSubtypeRecursive - result == NULL || result -> getByteSize() != size",
@@ -166,7 +209,6 @@ int RsArrayType::getSubtypeIdAt(addr_type offset) const
 {
     if( ! isValidOffset(offset))
         return -1;
-
     return offset / baseType->getByteSize();
 }
 
@@ -182,11 +224,16 @@ RsType * RsArrayType::getSubtypeAt ( addr_type offset) const
 
 bool  RsArrayType::isValidOffset(addr_type offset) const
 {
+    RuntimeSystem * rs = RuntimeSystem::instance();
+    //rs->printMessage("        ... isValidOffset: offset >= getByteSize()   "+
+    //		     ToString(offset)+ " >= "+ToString(getByteSize()));
     if(offset >= getByteSize())
         return false;
 
     int inTypeOffset = offset % baseType->getByteSize();
 
+    //rs->printMessage(" baseType->isValidOffset(inTypeOffset)==false   "+
+    //		     ToString( baseType->isValidOffset(inTypeOffset)));
     if(! baseType->isValidOffset(inTypeOffset))
         return false;
     else
@@ -296,7 +343,7 @@ int RsClassType::addMember(const std::string & name, RsType * type, addr_type of
     {
         Member & last = members.back();
         // do not assert if the class is a unionType
-        cerr << " is union type ? : " << isunionType << endl;
+        //cerr << " is union type ? : " << isunionType << endl;
         if (isunionType==false) {
         assertme(last.offset + last.type->getByteSize() <= offset,
 		 "RsClassType::addMember - last.offset + last.type->getByteSize() <= offset",
@@ -371,8 +418,39 @@ int RsClassType::getSubtypeOffset(int id) const
 
 int RsClassType::getSubtypeIdAt(addr_type offset) const
 {
+    RuntimeSystem * rs = RuntimeSystem::instance(); 
+    //rs->printMessage("      ....... isValidOffset(offset >=getByteSize) : "+
+    //		     ToString(offset)+"  >= "+ToString(getByteSize()));
     if( offset >= getByteSize())
         return -1;
+
+
+    for(int i=members.size()-1 ;  i >= 0; i--)
+    {
+        if(offset >= members[i].offset)
+        {
+	  // TODO register privates - this check fails if not all members are registered
+	  // and currently privates are not registered -> so this check fails when trying to access privates
+	  if (! members[i].type->isValidOffset(offset - members[i].offset) ) {
+	    return -1;
+	  }   else 
+	    return i;
+	}
+    }
+    return -1;
+}
+
+std::vector<int> RsClassType::getSubtypeUnionIdAt(addr_type offset) const
+{
+    vector<int>retvalvec;
+    RuntimeSystem * rs = RuntimeSystem::instance(); 
+    //rs->printMessage("      ....... isValidOffset(offset >=getByteSize) : "+
+    //		     ToString(offset)+"  >= "+ToString(getByteSize()));
+    if( offset >= getByteSize())
+        return retvalvec;
+
+    //rs->printMessage("      ....... iterate through members : "+
+    //		     ToString(members.size()));
 
     for(int i=members.size()-1 ;  i >= 0; i--)
     {
@@ -380,13 +458,22 @@ int RsClassType::getSubtypeIdAt(addr_type offset) const
         {
             // TODO register privates - this check fails if not all members are registered
             // and currently privates are not registered -> so this check fails when trying to access privates
-            if (! members[i].type->isValidOffset(offset - members[i].offset) )
-                return -1;
-            else
-                return i;
+	  //rs->printMessage("      .... iterate member : "+ToString(i)+
+	  //		   "! members[i].type->isValidOffset(offset - members[i].offset)  : "+
+	  //		   " members[i].offset: "+ToString(members[i].offset) 
+	  //		   +" offset - members[i].offset : " + ToString(offset - members[i].offset));
+	  if (! members[i].type->isValidOffset(offset - members[i].offset) ) {
+	    //rs->printMessage("     .. didnt work : "+ToString(i));
+                return retvalvec;
+	  }   else {
+	    //rs->printMessage("     .. worked : "+ToString(i));
+	      // because the union (class) needs the largest member to perform
+	      // this operation successfully, we need to return the largest member
+	      retvalvec.push_back(i);
+	    }
         }
     }
-    return -1;
+    return retvalvec;
 }
 
 RsType * RsClassType::getSubtypeAt(addr_type offset) const

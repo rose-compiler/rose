@@ -161,8 +161,9 @@ class RtedTransformation : public AstSimpleProcessing {
   bool hasPrivateDataMembers(SgClassDeclaration* cd_copy);
   void moveupPreprocessingInfo(SgProject* project);
   void insertNamespaceIntoSourceFile(SgSourceFile* sf);
-  typedef std::map<SgSourceFile*, std::pair < SgNamespaceDeclarationStatement*,
-                                      SgNamespaceDeclarationStatement* > > SourceFileRoseNMType;
+  //typedef std::map<SgSourceFile*, std::pair < SgNamespaceDeclarationStatement*,
+  //                                    SgNamespaceDeclarationStatement* > > SourceFileRoseNMType;
+  typedef std::map<SgSourceFile*, SgNamespaceDeclarationStatement* > SourceFileRoseNMType;
   SourceFileRoseNMType sourceFileRoseNamespaceMap;
   //std::vector<std::string> classesInRTEDNamespace;
   std::map<SgClassDefinition*, SgClassDefinition*> classesInRTEDNamespace;

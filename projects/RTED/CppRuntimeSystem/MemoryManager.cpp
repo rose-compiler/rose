@@ -12,7 +12,18 @@ using namespace std;
 
 
 // -----------------------    MemoryType  --------------------------------------
-
+template<typename T>
+std::string HexToString(T t){
+  std::ostringstream myStream; //creates an ostringstream object
+  myStream <<  std::hex <<  t ;
+  return myStream.str(); //returns the string form of the stringstream object
+}
+template<typename T>
+std::string ToString(T t){
+std::ostringstream myStream; //creates an ostringstream object
+myStream << t << std::flush;
+return myStream.str(); //returns the string form of the stringstream object
+}
 
 MemoryType::MemoryType(addr_type _addr, size_t _size, const SourcePosition & _pos, bool _onStack)
     : startAddress(_addr), size(_size), allocPos(_pos), onStack(_onStack)
@@ -89,7 +100,10 @@ void MemoryType::initialize(int offsetFrom, int offsetTo)
 
 void MemoryType::registerMemType(addr_type offset, RsType * type)
 {
+    RuntimeSystem * rs = RuntimeSystem::instance();
+    rs->printMessage("   ++ registerMemType at offset: "+ToString(offset)+"  type: "+type->getName());
     bool types_merged = checkAndMergeMemType( offset, type );
+    rs->printMessage("   ++ types_merged: "+types_merged);
 
     if( !types_merged ) {
         // type wasn't merged, some previously unknown portion of this
@@ -100,18 +114,20 @@ void MemoryType::registerMemType(addr_type offset, RsType * type)
         // information about "dereferentiable" memory regions i.e. pointer
         RuntimeSystem::instance()->getPointerManager()->createPointer(startAddress+offset,type);
     }
+    rs->printMessage("   ++ registerMemType done.");
 }
 
 bool MemoryType::checkAndMergeMemType(addr_type offset, RsType * type)
 {
+    RuntimeSystem * rs = RuntimeSystem::instance();
     if(typeInfo.size() ==0) // no types registered yet
         return false;
 
     int newTiStart = offset;
     int newTiEnd = offset + type->getByteSize();
+    rs->printMessage("   ++ checkAndMergeMemType newTiStart: "+ToString(newTiStart)+
+				"  newTiEnd: "+ToString(newTiEnd));
 
-
-    RuntimeSystem * rs = RuntimeSystem::instance();
     stringstream ss;
     ss << "Tried to access the same memory region with different types" << endl;
     ss << "When trying to access (" << newTiStart << "," << newTiEnd << ") "
@@ -136,14 +152,17 @@ bool MemoryType::checkAndMergeMemType(addr_type offset, RsType * type)
 
     if(incrementedLower == itUpper)
     {
+        rs->printMessage("     ++ incrementedLower == itUpper ");
         int oldTiStart = itLower->first;
         int oldTiEnd = oldTiStart + itLower->second->getByteSize();
         RsType * oldType = itLower->second;
         if( oldTiStart <= newTiStart && oldTiEnd >= newTiEnd )
         {
 
+            rs->printMessage("    oldTiStart <= newTiStart && oldTiEnd >= newTiEnd ");
             //Check if new entry is consistent with old one
             bool new_type_ok = oldType -> checkSubtypeRecursive( newTiStart - oldTiStart, type );
+            rs->printMessage("      new_type_ok : "+ToString(new_type_ok));
             if( !new_type_ok )
             {
                 vio.descStream() << "Previously registered Type completely overlaps new Type in an inconsistent way:" << endl
@@ -278,7 +297,7 @@ MemoryType::TiIterPair MemoryType::getOverlappingTypeInfos(addr_type from, addr_
         ++it;
 
     //for(TiIter i = it; i != end; ++i)
-    //    cerr  << "\t "<< i->first  << "\t" << i->second->getName() << endl ;
+    //    cerr  << "Overlap: \t "<< i->first  << "\t" << i->second->getName() << endl ;
 
     return make_pair<TiIter,TiIter>(it, end);
 }
@@ -522,9 +541,10 @@ void MemoryManager::checkAccess(addr_type addr, size_t size, RsType * t, MemoryT
         rs->violationHandler(vioType,desc.str());
     }
 
-    if(t)
-        mt->registerMemType(addr - mt->getAddress(),t);
-
+    if(t) {
+        rs->printMessage("   ++ found memory addr : "+HexToString(addr)+" size:"+ToString(size));
+    	mt->registerMemType(addr - mt->getAddress(),t);
+    }
 }
 
 
@@ -556,7 +576,7 @@ void MemoryManager::checkRead(addr_type addr, size_t size, RsType * t)
 void MemoryManager::checkWrite(addr_type addr, size_t size, RsType * t)
 {
     RuntimeSystem * rs = RuntimeSystem::instance();
-
+    rs->printMessage("   ++ checkWrite : "+HexToString(addr)+" size:"+ToString(size));
     MemoryType * mt = NULL;
     checkAccess(addr,size,t,mt,RuntimeViolation::INVALID_WRITE);
     assert(mt);
@@ -564,6 +584,7 @@ void MemoryManager::checkWrite(addr_type addr, size_t size, RsType * t)
     assert(addr >= mt->getAddress());
     int from = addr - mt->getAddress();
     mt->initialize(from,from + size);
+    rs->printMessage("   ++ checkWrite done.");
 }
 
 bool MemoryManager::isInitialized(addr_type addr, size_t size)

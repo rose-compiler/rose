@@ -1,6 +1,7 @@
 class Test {
   public:
-  union UnionA {
+  class UnionA {
+  public:
     double *ptrA;
     int valueA;
   } unionA;

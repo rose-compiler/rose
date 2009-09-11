@@ -71,17 +71,27 @@ bool RtedTransformation::hasPrivateDataMembers(SgClassDeclaration* cd_copy) {
 void RtedTransformation::insertNamespaceIntoSourceFile(SgSourceFile* sf) {
   cerr << "Building Namespace RTED" << endl;
   // build new namespace
+  // the first namespace is used for all forward declarations
   SgNamespaceDeclarationStatement* rosenamesp = buildNamespaceDeclaration(
 									  "RTED", sf->get_globalScope());
+  cerr << " *** Prepending namespace to sf->globalScope() : " <<  sf->get_globalScope() << endl;
+
   SageInterface::prependStatement(rosenamesp, sf->get_globalScope());
   ROSE_ASSERT(rosenamesp->get_definition()->get_parent());
-  //sourceFileRoseNamespaceMap1[sf]=rosenamesp;
 
+#if 0  
+  cerr << "Building Namespace RTED2" << endl;
+  // the second namespace is used for all class definitions
   SgNamespaceDeclarationStatement* rosenamesp2 = buildNamespaceDeclaration(
 									   "RTED", sf->get_globalScope());
+
   SageInterface::prependStatement(rosenamesp2, sf->get_globalScope());
+  cerr << " *** Prepending namespace2 to sf->globalScope() : " <<  sf->get_globalScope() << endl;
+  cerr << "remember namespaces together with file" << endl;
   ROSE_ASSERT(rosenamesp->get_definition()->get_parent());
   sourceFileRoseNamespaceMap[sf] = make_pair(rosenamesp, rosenamesp2);
+#endif
+  sourceFileRoseNamespaceMap[sf] = rosenamesp; //make_pair(rosenamesp, rosenamesp2);
 }
 
 void RtedTransformation::instrumentClassDeclarationIntoTopOfAllSourceFiles(
@@ -158,20 +168,23 @@ void RtedTransformation::instrumentClassDeclarationIntoTopOfAllSourceFiles(
 	  
 	  // get the namespace RTED to put new class into
 	  cerr << "Finding Namespace RTED  "  <<  endl;
-	  typedef std::pair < SgNamespaceDeclarationStatement*,
-	    SgNamespaceDeclarationStatement* > Namesp;
+	  //typedef std::pair < SgNamespaceDeclarationStatement*,
+	  //  SgNamespaceDeclarationStatement* > Namesp;
 	  SourceFileRoseNMType::const_iterator pit = sourceFileRoseNamespaceMap.find(sf);
 	  if (pit!=sourceFileRoseNamespaceMap.end()) {
-	    Namesp p = pit->second;
-	    SgNamespaceDeclarationStatement* firstNamespace = p.second;
-	    SgNamespaceDeclarationStatement* secondNamespace = p.first;
+	    //Namesp p = pit->second;
+	    //SgNamespaceDeclarationStatement* firstNamespace = p.second;
+	    //SgNamespaceDeclarationStatement* secondNamespace = p.first;
+	    SgNamespaceDeclarationStatement* firstNamespace = pit->second;
 
 	    // insert at top of file - after includes
 	    cerr << " Prepending to source file: " << sf -> get_file_info() -> get_filename() << 
 	      "   class : " << cd_copy->get_name().str() << endl;
 	    // we prepend it to the top of the file and later move the include back up
-	    SageInterface::prependStatement(cd_copy, secondNamespace->get_definition() );
+	    //SageInterface::prependStatement(cd_copy, secondNamespace->get_definition() );
+	    //SageInterface::prependStatement(cdn_copy,firstNamespace->get_definition());
 	    SageInterface::prependStatement(cdn_copy,firstNamespace->get_definition());
+	    SageInterface::appendStatement(cd_copy, firstNamespace->get_definition() );
 	    ROSE_ASSERT(cdn_copy->get_symbol_from_symbol_table() != NULL);
 
 	    //classesInRTEDNamespace.push_back(cd_copy->get_name().str());

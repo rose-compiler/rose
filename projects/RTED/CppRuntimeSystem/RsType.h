@@ -251,7 +251,8 @@ class RsClassType : public RsType
 
         /// Returns the member-id which is located at a specific offset
         /// or -1 if the offset lies in a padding area, or is too big
-        virtual int          getSubtypeIdAt(addr_type offset) const;
+        virtual int  getSubtypeIdAt(addr_type offset) const;
+        std::vector<int>  getSubtypeUnionIdAt(addr_type offset) const;
 
         /// Returns the member which is located at a specific offset
         /// or -1 if the offset lies in a padding area, or is too big
@@ -274,10 +275,13 @@ class RsClassType : public RsType
         // Check whether memory that looks like this type could be @e other
         virtual bool checkConsistencyWith( const RsType &other ) const;
 
+		bool getIsUnionType(){return isunionType;}
+
     protected:
         bool relaxed;
         size_t byteSize;
         bool isunionType;
+
 
         struct Member
         {
