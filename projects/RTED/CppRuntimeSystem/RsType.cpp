@@ -535,6 +535,7 @@ string RsBasicType::getDisplayName() const
     {
         case SgTypeBool:             return "bool";
         case SgTypeChar:             return "char";
+        case SgTypeWchar:            return "wchar_t";
         // FIXME 2: typedef should be removed (see todo in RsType.h)
         case SgTypedefType:          return "typedef";
         case SgTypeDouble:           return "double";
@@ -570,6 +571,7 @@ void RsBasicType::resolveTypeInfo(const std::string & typeStr)
 
     if      (typeStr=="SgTypeBool")             setTypeInfo(SgTypeBool,             sizeof(bool));
     else if (typeStr=="SgTypeChar")             setTypeInfo(SgTypeChar,             sizeof(char));
+    else if (typeStr=="SgTypeWchar")            setTypeInfo(SgTypeWchar,            sizeof(wchar_t));
     // FIXME 2: typedef should be removed (see todo in RsType.h)
     else if (typeStr=="SgTypedefType")          setTypeInfo(SgTypedefType,          sizeof(void*));
     else if (typeStr=="SgTypeDouble")           setTypeInfo(SgTypeDouble,           sizeof(double));
@@ -604,6 +606,7 @@ void RsBasicType::resolveTypeInfo(RsBasicType::SgType type_)
     {
         case SgTypeBool:             setTypeInfo("SgTypeBool",             sizeof(bool));            break;
         case SgTypeChar:             setTypeInfo("SgTypeChar",             sizeof(char));            break;
+        case SgTypeWchar:            setTypeInfo("SgTypeWchar",            sizeof(wchar_t));         break;
         // FIXME 2: typedef should be removed (see todo in RsType.h)
         case SgTypedefType:          setTypeInfo("SgTypedefType",          sizeof(void*));           break;
         case SgTypeDouble:           setTypeInfo("SgTypeDouble",           sizeof(double));          break;
@@ -646,6 +649,7 @@ string RsBasicType::readValueAt(addr_type addr) const
     {
         case SgTypeBool:             str <<  *m->readMemory<bool>(addr);                break;
         case SgTypeChar:             str <<  *m->readMemory<char>(addr);                break;
+        case SgTypeWchar:            str <<  *m->readMemory<wchar_t>(addr);             break;
         case SgTypeDouble:           str <<  *m->readMemory<double>(addr);              break;
         case SgTypeFloat:            str <<  *m->readMemory<float>(addr);               break;
         case SgTypeInt:              str <<  *m->readMemory<int>(addr);                 break;

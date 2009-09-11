@@ -335,6 +335,7 @@ class RsBasicType : public RsType
         {
             SgTypeBool,
             SgTypeChar,
+            SgTypeWchar,
             // TODO 2: Remove typedef as a basic type, and either expand the
             // type or treat it as a user-defined type.
             //
