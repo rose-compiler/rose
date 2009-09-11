@@ -1,3 +1,9 @@
+2009-09-10 23:51  dquinlan
+
+	* [r7208]
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/Makefile.am:
+	  Skip testing of Callgraph on OSX for now.
+
 2009-09-10 23:38  dquinlan
 
 	* [r7206] /trunk/ROSE/scripts/nmiBuildAndTestFarm/cronjobs,
