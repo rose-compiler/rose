@@ -143,19 +143,37 @@ RsType* RuntimeSystem_getRsType(
 
   RsType* tt = NULL;
   if( type == "SgPointerType" ) {
+    RsType* bt = NULL;
     assert( indirection_level > 0 );
+
+    bt = RuntimeSystem::instance() -> getTypeSystem()
+        -> getTypeInfo( base_type );
+
+    if( bt == NULL ) {
+      // Create a type stub.  This will result in errors later if it is not
+      // fixed up by a subsequent registration (i.e., of that type).
+      bt = new RsClassType( base_type, 0, false );
+      RuntimeSystem::instance()->getTypeSystem()->registerType( bt );
+    }
+
+    assert( bt != NULL );
+
     tt= RuntimeSystem::instance() -> getTypeSystem()
-      -> getPointerType( base_type, indirection_level );
-    assert(tt);
+      -> getPointerType( bt, indirection_level );
+
+    assert( tt );
   } else {
     tt= RuntimeSystem::instance() -> getTypeSystem()
       -> getTypeInfo( type );
-    //tps (09/04/2009) : It seems to be allowd for the type to be NULL
-    //   in particular when it is just being discovered (e.g. SgArrayType)
-    if (tt==NULL) {
-      cerr << "could not find type in typesystem : " << type << endl;
+
+    if( tt == NULL ) {
+      // Create a type stub.  This will result in errors later if it is not
+      // fixed up by a subsequent registration (i.e., of that type).
+      tt = new RsClassType( type, 0, false );
+      RuntimeSystem::instance()->getTypeSystem()->registerType( tt );
     }
-    //assert(tt);
+
+    assert( tt );
   }
   return tt;
 }
@@ -917,7 +935,20 @@ RuntimeSystem_roseRegisterTypeCall(int count, ...) {
   RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
   CHECKPOINT
 
-  RsClassType * classType = new RsClassType(nameC,sizeC, isUnion);
+
+  RsClassType * classType = static_cast< RsClassType* >(
+      RuntimeSystem::instance() -> getTypeSystem() -> getTypeInfo( nameC ));
+
+  if( NULL == classType )  {
+    // no stub has been registered
+    classType = new RsClassType(nameC,sizeC, isUnion);
+    RuntimeSystem::instance()->getTypeSystem()->registerType(classType);
+  } else {
+    // a stub was registered, we have to fix up its properties
+    classType -> setByteSize( sizeC );
+    classType -> setUnionType( isUnion );
+  }
+
   for ( i=7;i<count;i+=6)
     {
       string name = va_arg(vl,const char*);
@@ -929,9 +960,9 @@ RuntimeSystem_roseRegisterTypeCall(int count, ...) {
 
       RsType* t;
       if( type == "SgArrayType" ) {
-	unsigned int dimensionality = va_arg( vl, unsigned int );
-	i += dimensionality + 1;
-	t = RuntimeSystem_getRsArrayType( vl, dimensionality, size, base_type );
+        unsigned int dimensionality = va_arg( vl, unsigned int );
+        i += dimensionality + 1;
+        t = RuntimeSystem_getRsArrayType( vl, dimensionality, size, base_type );
       } else {
         t = RuntimeSystem_getRsType( type, base_type, "", indirection_level );
       }
@@ -949,8 +980,6 @@ RuntimeSystem_roseRegisterTypeCall(int count, ...) {
       //cerr << "Registering Member " << name << " of type " << type << " at offset " << offset << endl;
     }
   va_end(vl);
-
-  RuntimeSystem::instance()->getTypeSystem()->registerType(classType);
 }
 
 void

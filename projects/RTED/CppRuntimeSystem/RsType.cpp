@@ -264,6 +264,7 @@ RsClassType::RsClassType(const string & name, size_t byteSize_, bool isUnion)
     : RsType(name),
       byteSize(byteSize_), isunionType(isUnion)
 {
+    assert( !name.empty() );
 }
 
 
@@ -272,6 +273,7 @@ int RsClassType::addMember(const std::string & name, RsType * type, addr_type of
     if(type==NULL)
     {
         cerr << "Tried to register MemberPointer with NULL type" << endl;
+        assert( false );
         return -1;
     }
 
@@ -315,6 +317,11 @@ int RsClassType::addMember(const std::string & name, RsType * type, addr_type of
 
     return members.size()-1;
 }
+
+void RsClassType::setUnionType( bool is_union ) {
+    isunionType = is_union;
+}
+
 
 bool RsClassType::isComplete(bool verbose) const
 {
@@ -509,7 +516,7 @@ RsBasicType::RsBasicType(const std::string & typeStr)
 }
 
 RsBasicType::RsBasicType(SgType t)
-    : RsType(""),type(t)
+    : RsType("UnresolvedBasicType"),type(t)
 {
     resolveTypeInfo(type);
 }

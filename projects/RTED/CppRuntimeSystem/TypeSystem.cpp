@@ -36,8 +36,10 @@ bool TypeSystem::registerType(RsType * t)
     pair<TypeSet::iterator, bool> res;
     res =types.insert(t);
 
-    if(!res.second)
-        cerr << "Warning: tried to register type " << t->getName() << " twice!" << endl;
+    if(!res.second) {
+        cerr << "Error: tried to register type " << t->getName() << " twice!" << endl;
+        assert( false );
+    }
 
     return res.second;
 }
@@ -96,6 +98,7 @@ RsPointerType * TypeSystem::getPointerType(const string & name, size_t indirecti
 RsPointerType * TypeSystem::getPointerType(RsType * bt, size_t indirection)
 {
     assert(indirection >= 1);
+    assert( bt != NULL );
 
     map<size_t, RsPointerType * > & m = ptrTypeMap[bt];
 

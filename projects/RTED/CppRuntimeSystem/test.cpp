@@ -1262,19 +1262,19 @@ void testTypeConsistencyChecking() {
 
     vector< RsType* > to_delete;
     // char, 4 unknown
-    RsCompoundType* compound = new RsCompoundType( "", sizeof( Typ ));
+    RsCompoundType* compound = new RsCompoundType( sizeof( Typ ));
     RsType &compound_char = *compound;
     to_delete.push_back( compound );
     compound -> addMember( "", ts -> getTypeInfo( "SgTypeChar" ), offsetof( Typ, a ));
 
     // 1 unknown, int
-    compound = new RsCompoundType( "", sizeof( Typ ));
+    compound = new RsCompoundType( sizeof( Typ ));
     RsType &compound_int = *compound;
     to_delete.push_back( compound );
     compound -> addMember( "", ts -> getTypeInfo( "SgTypeInt" ), offsetof( Typ, b ));
 
     // 5 char
-    compound = new RsCompoundType( "", sizeof( Typ ));
+    compound = new RsCompoundType( sizeof( Typ ));
     RsType &compound_array = *compound;
     to_delete.push_back( compound );
     compound 

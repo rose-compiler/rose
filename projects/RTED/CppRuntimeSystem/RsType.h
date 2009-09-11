@@ -16,7 +16,7 @@
 class RsType
 {
     public:
-        RsType(const std::string & name) : stringId(name) {}
+        RsType(const std::string & name) : stringId(name) { }
         virtual ~RsType() {}
 
 
@@ -226,6 +226,13 @@ class RsClassType : public RsType
         /// Bytesize of this class
         virtual size_t       getByteSize() const { return byteSize; }
 
+        // FIXME 3: should check that the size is legal, i.e. that its members
+        // fit
+        void                 setByteSize( size_t sz ) { byteSize = sz; }
+
+        // FIXME 3: should check that class is legal after doing this
+        void                 setUnionType( bool is_union );
+
         /// Number of member variables
         virtual int          getSubtypeCount() const;
 
@@ -427,14 +434,19 @@ class RsPointerType : public RsBasicType
 };
 
 /// An @c RsCompoundType is a loose collection of subtypes, with gaps
-/// (conceptually of type RsType::UnknownType.  It is used when the type of
+/// (conceptually of type RsType::UnknownType).  It is used when the type of
 /// memory is partially known (for instance, if the user has been writing to
 /// member variables in an array of structs on the heap).
 class RsCompoundType : public RsClassType {
 
     public:
+        RsCompoundType( size_t byteSize )
+            : RsClassType( "CompoundType", byteSize, false ) { this -> relaxed = true; }
+
         RsCompoundType(const std::string & name, size_t byteSize)
-            : RsClassType( name, byteSize,false ) { this -> relaxed = true; }
+            : RsClassType( name, byteSize, false ) { this -> relaxed = true; }
+
+
         int addMember(const std::string & name, RsType * type, addr_type offset=-1);
 
         virtual RsType*  getSubtypeAt( addr_type offset ) const;
