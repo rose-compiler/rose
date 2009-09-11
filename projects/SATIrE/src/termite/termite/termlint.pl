@@ -16,20 +16,19 @@
   This is term_lint.pl, a small tool for checking terms against a tree
   grammar (abstract syntax).
 
-@author
-
-Gergo Barany <gergo@complang.tuwien.ac.at>
-
+@version   @PACKAGE_VERSION@
+@copyright Copyright (C) 2009 Gergo Barany
+@author    Gergo Barany <gergo@complang.tuwien.ac.at>
 @license 
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; version 3 of the License.
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; version 3 of the License.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+  This program is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  General Public License for more details.
 
 */
 %-----------------------------------------------------------------------
@@ -109,7 +108,8 @@ is_arg([ElemKind]) :-
 % |  atom      | a nonterminal                                                 |
 % |  A?        | term is "missing" (see below) or matches argument expression A|
 % |  {A}       | unify with term A                                             |
-% |  \[A\]     | list of terms matching argument expression A; as a special case, \[_\] means "list of any type" |
+% |  \[A\]     | list of terms matching argument expression A                  |
+% As a special case, =|[_]|= means "list of any type".
 %  	      
 % Options (A?) are resolved as follows: If the term under consideration
 % is a solution of predicate missing/1 (to be defined along with the grammar
@@ -124,7 +124,7 @@ is_arg([ElemKind]) :-
 % Here are a few example grammars to illustrate the explanations above.
 %  
 %  
-% *Arithmetic* *expressions*, *simple* *verbose* *version*:
+% *|Arithmetic expressions, simple verbose version:|*
 % ==
 % var ::= {VarName} where atom(VarName).
 % num ::= {Number} where number(Number).
@@ -137,14 +137,14 @@ is_arg([ElemKind]) :-
 % | expr / expr.
 % ==
 %  
-% *Arithmetic* *expressions*, *more* *condensed* *version*:
+% *|Arithmetic expressions, more condensed version:|*
 % ==
 % expr ::=
 %   {Leaf} where (atom(Leaf) ; number(Leaf))
 % | functors [+, -, *, /] with (expr, expr).
 % ==
 %  
-% *Simple* *type* *system*:
+% *Simple type system*:
 % ==
 % type ::=
 %   atoms [number, character, string]
@@ -154,7 +154,7 @@ is_arg([ElemKind]) :-
 % ==
 %  
 %  
-% *Partial* *specification* (*some* *parts* *are* *not* *constrained*):
+% *|Partial specification (some parts are not constrained):|*
 % ==
 % allowed ::=
 %   lst([_])        /* argument is list of some unknown things */
@@ -176,15 +176,20 @@ is_arg([ElemKind]) :-
 % anonymous variable _ (free variables in general) may appear in the
 % grammar, but *only* inside [] or {}:
 %  
-% *  =|[_]|= (list of any type)   or
-% *  =|{_}|= (any term)   or
-% *  =|{foo(_)}|= (any term with functor foo)
+%   *  [_]
+%      (list of any type)   or
+%   *  {_}
+%      (any term)   or
+%   *  {foo(_)}
+%      (any term with functor foo)
 %  
 % but:
 %  
-% *  =|foo ::= foo(_)|=   is not allowed; use =|foo ::= foo({_})|=
-% *  =|foo ::= X where cond(X)|=   is not allowed;
-%    use =|foo ::= {X} where cond(X)|=
+%   *  foo ::= foo(_)
+%      is not allowed; use =|foo ::= foo({_})|=
+%   *  foo ::= X where cond(X)
+%      is not allowed;
+%      use =|foo ::= {X} where cond(X)|=
 %  
 % The interpreter does not check these things at the moment. Which means
 % that grammars containing variables in weird places will misbehave in weird

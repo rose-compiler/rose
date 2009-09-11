@@ -55,7 +55,8 @@ SRCFILES= \
 INPUTFILES=$(notdir $(subst _,,$(SRCFILES)))
 $(INPUTFILES): $(SRCFILES)
 	for f in $(SRCFILES); do \
-		cp --no-preserve=mode -f $$f `basename $$f |sed s/_//g` ; \
+	  cat $$f | sed -e 's|\@PACKAGE_VERSION\@|@PACKAGE_VERSION@|' \
+              >`basename $$f |sed s/_//g` ; \
 	done
 TEXFILES=$(patsubst %.pl, %.tex,$(INPUTFILES))
 GARBAGE=$(patsubst %.tex, %.aux,$(TEXFILES))
