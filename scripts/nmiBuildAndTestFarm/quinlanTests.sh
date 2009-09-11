@@ -66,8 +66,9 @@ echo "**************************************************************************
 ./submit.sh build_configs/x86_cent_4.2/minimal_default
 
 echo "***********************************************"
-echo "* Failing tests (link problem multiple definition of `__i686.get_pc_thunk.bx') *"
+echo "* Failing test on Suse Linux version 9 (link problem multiple definition of `__i686.get_pc_thunk.bx') *"
 echo "***********************************************"
+# DQ (9/11/2009): Same error!
 # DQ (9/9/2009): New error: 
 # src/frontend/CxxFrontend/EDG_3.3/src/preproc.c:99: multiple definition of `__i686.get_pc_thunk.bx'
 # frontend/CxxFrontend/.libs/libroseEDG.a(preproc.o)(.text.__i686.get_pc_thunk.cx+0x0): In function `identify_dir_keyword':
@@ -79,7 +80,7 @@ echo "***********************************************"
 ./submit.sh build_configs/x86_sles_9/minimal_default
 
 echo "**************************************************************"
-echo "* Failing tests (link problem wrong version of libstdc++.so) *"
+echo "* Failing test on Suse Linux version 9 (link problem wrong version of libstdc++.so) *"
 echo "**************************************************************"
 # DQ (9/9/2009): New error: 
 ./submit.sh build_configs/x86_64_sles_9/minimal_default
