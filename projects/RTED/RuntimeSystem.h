@@ -94,7 +94,6 @@ extern int RuntimeSystem_original_main(int argc, char**argv, char**envp);
 
 /***************************** VARIABLES *************************************/
 
-// TODO 1 djh: comment
 int RuntimeSystem_roseCreateVariable(const char* name,
 		const char* mangled_name, const char* type, const char* basetype,
 		size_t indirection_level, unsigned long int address, unsigned int size,
@@ -107,6 +106,25 @@ int RuntimeSystem_roseInitVariable(const char* typeOfVar2,
 		int ismalloc, int pointer_changed, const char* filename,
 		const char* line, const char* lineTransformed);
 
+/**
+ * This function is called when pointers are incremented.  For example, it will
+ * be called for the following:
+ *
+ *      int* p;
+ *      // ...
+ *      ++p;
+ *
+ * but not for simple assignment, as in the following:
+ *
+ *      int* p;
+ *      // ...
+ *      p = ...
+ *
+ * It verifies that the pointer stays within “memory bounds”.  In particular, if
+ * the pointer points to an array, RuntimeSystem_roseMovePointer checks that it
+ * isn't incremented beyond the bounds of the array, even if doing so results in
+ * a pointer to allocated memory.
+ */
 void RuntimeSystem_roseMovePointer(
                 unsigned long long address,
                 const char* type,
