@@ -85,8 +85,8 @@ CLEANFILES += termparser.c++ termparser.h termlexer.c++ termparser.tab.c++ \
 libtermsupport_la_SOURCES += termparser.y++ termlexer.l++
 nobase_include_HEADERS += satire/termparser.h
 
-.PHONY: $(top_srcdir)/src/termite/TermToRose.C
-$(top_srcdir)/src/termite/TermToRose.C: termparser.tab.h++
+.PHONY: $(srcdir)/TermToRose.C
+$(srcdir)/TermToRose.C: termparser.tab.h++
 
 termparser.tab.c++: $(srcdir)/termparser.y++ Makefile
 	$(YACC) -d $(srcdir)/termparser.y++ && \
