@@ -220,6 +220,7 @@ rose_binary_compatibility_signature:
 
 .PHONY : rose_binary_compatibility_signature # Always rebuild the file when needed
 
+# 1
 binary_edg_tarball: rose_binary_compatibility_signature
 	cd src/ROSETTA/src; $(MAKE)
 	cd src/frontend/CxxFrontend; $(MAKE)
@@ -235,10 +236,12 @@ copy_binary_edg_tarball_to_source_tree: binary_edg_tarball rose_binary_compatibi
 	BINARY_EDG_DIRNAME=roseBinaryEDG-$(build_triplet_without_redhat)-`cat rose_binary_compatibility_signature` && \
 	$(top_srcdir)/scripts/copy_binary_edg_tarball_to_source_tree $(top_srcdir) "@build_triplet_without_redhat@"
 
+# 2
 copy_binary_edg_tarball_to_source_tree_svn: binary_edg_tarball rose_binary_compatibility_signature
 	BINARY_EDG_DIRNAME=roseBinaryEDG-$(build_triplet_without_redhat)-`cat rose_binary_compatibility_signature` && \
 	$(top_srcdir)/scripts/copy_binary_edg_tarball_to_source_tree_svn `sed -n 5p $(top_srcdir)/.svn/entries` "@build_triplet_without_redhat@"
 
+# 3
 source_with_binary_edg_dist: rose_binary_compatibility_signature
 	@ROSE_BINARY_COMPATIBILITY_SIGNATURE=`cat rose_binary_compatibility_signature` && \
 	if test `ls -1 $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-$${ROSE_BINARY_COMPATIBILITY_SIGNATURE}.tar.gz | wc -l` -eq 0; then echo "Error: Could not find any binary versions of EDG with signature $${ROSE_BINARY_COMPATIBILITY_SIGNATURE} in $(srcdir)/src/frontend/CxxFrontend.  This distribution cannot be made because it would not be usable on any platform." >&2; exit 1; fi && \
@@ -267,5 +270,12 @@ source_with_binary_edg_dist: rose_binary_compatibility_signature
 	find $(distdir)/ -depth -name autom4te.cache -exec rm -rf {} \;
 	tardir=$(distdir) && $(am__tar) | GZIP=$(GZIP_ENV) gzip -c >$(PACKAGE)-$(VERSION)-source-with-EDG-binary$(DOT_SVNREV).tar.gz
 	$(am__remove_distdir)
+
+# DQ (9/10/2009): Build a tarball for testing at NMI (ROSE without EDG source)
+# Some of the names of these makefile rules should be changed to be more specific.
+binary_tarball:
+	$(MAKE) binary_edg_tarball
+	$(MAKE) copy_binary_edg_tarball_to_source_tree_svn
+	$(MAKE) source_with_binary_edg_dist
 
 endif

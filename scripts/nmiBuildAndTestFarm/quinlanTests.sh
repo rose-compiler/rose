@@ -52,6 +52,7 @@ echo "**************************************************************************
 # ./submit.sh build_configs/x86_64_fc_9/minimal_default
 ./submit.sh build_configs/x86_64_fedora_9/minimal_default
 
+# DQ (9/11/2009): Segfault in Compass tests ("make check")
 # DQ (9/9/2009): This platform will be removed (old: released June 2005)
 # DQ (9/7/2009): Segfault in Compass tests ("make check")
 # make[9]: *** [test] Segmentation fault
