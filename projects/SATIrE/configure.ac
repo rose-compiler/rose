@@ -238,7 +238,6 @@ examples/Makefile
 tools/Makefile
 tools/icfgbuilder/Makefile
 tools/loopbounds/Makefile
-tools/loopbounds/lb.sh
 ])
 
 AC_OUTPUT

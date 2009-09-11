@@ -46,8 +46,8 @@ bin_PROGRAMS += termite_lint
 termite_lint_SOURCES =
 
 termite_lint: term_lint_main.pl termite/termite_spec.pl termite/termlint.pl
-	export TERMITE_LIB=$(srcdir)/termite && \
-	$(SWI_PL) -q -t main -o termite_lint -c $(srcdir)/term_lint_main.pl
+	TERMITE_LIB=$(srcdir)/termite \
+	  $(SWI_PL) -q -t main -o termite_lint -c $(srcdir)/term_lint_main.pl
 endif
 
 AM_CXXFLAGS=
