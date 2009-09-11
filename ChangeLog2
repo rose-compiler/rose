@@ -1,3 +1,131 @@
+2009-09-11 15:50  dquinlan
+
+	* [r7231]
+	  /trunk/ROSE/projects/compass/tools/compass/tests/C_tests/Makefile.am,
+	  /trunk/ROSE/projects/compass/tools/compass/tests/Cxx_tests/Makefile.am,
+	  /trunk/ROSE/projects/compass/tools/compass/tests/OpenMP_tests/Makefile.am:
+	  Commented out two more tests on Debian systems.
+
+2009-09-11 15:37  hamilton37
+
+	* [r7230] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_support.cpp: RTED: We now
+	  resolve reference types and void erroneous reads.
+	  
+	  For example, for the following:
+	  
+	  int x;
+	  int& y = x;
+	  
+	  We won't check at y's initializer that it's legal to read x.
+
+2009-09-11 15:37  hamilton37
+
+	* [r7229] /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.h: RTED: Added
+	  wchar_t basic type.
+
+2009-09-11 15:37  hamilton37
+
+	* [r7228] /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/TypeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp: RTED: We are now
+	  order-neutral in type registration.
+
+2009-09-11 15:37  hamilton37
+
+	* [r7227] /trunk/ROSE/projects/RTED/RuntimeSystem.h: RTED: minor
+	  commenting.
+
+2009-09-11 15:37  hamilton37
+
+	* [r7226] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/tests/C++/memory,
+	  /trunk/ROSE/projects/RTED/tests/C++/memory/calloc_delete.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/memory/calloc_delete.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/memory/malloc_delete.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/memory/malloc_delete.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/memory/new_free.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/memory/new_free.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/overloading,
+	  /trunk/ROSE/projects/RTED/tests/C++/overloading/array_index.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/overloading/array_index.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/pointer/arrow_star.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/pointer/arrow_star.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/pointer/dot_star.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/pointer/dot_star.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/uninitialized_member.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/uninitialized_member.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/templates,
+	  /trunk/ROSE/projects/RTED/tests/C++/templates/simple_template_function.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/templates/simple_template_function.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/types,
+	  /trunk/ROSE/projects/RTED/tests/C++/types/global_constructors.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/types/global_constructors.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/types/reference.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/types/reference.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/types/registration_order.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/types/registration_order.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C/pointer/arrow_varref.c,
+	  /trunk/ROSE/projects/RTED/tests/C/pointer/arrow_varref.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C/pointer/arrow_varref2.c,
+	  /trunk/ROSE/projects/RTED/tests/C/pointer/arrow_varref2.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C/types,
+	  /trunk/ROSE/projects/RTED/tests/C/types/union.c,
+	  /trunk/ROSE/projects/RTED/tests/C/types/union.ok_msg: RTED: Added
+	  a number of tests that illustrate present shortcomings of RTED.
+	  
+	  This list is not exhaustive, but it includes many features that
+	  are necessary to
+	  pass the RTED tests. `make check` passes, but see tests listed in
+	  `TESTS_KNOWN_TO_FAIL`. Those from C/pointer/union onwards
+	  demonstrate features
+	  that are blocking one or more RTED tests.
+
+2009-09-11 15:36  hamilton37
+
+	* [r7225] /trunk/ROSE/projects/RTED/RtedTransf_operators.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_registerType.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/scope.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/scope.ok_msg: RTED:
+	  Handle nested C++ classes and cast address in call to movePointer
+	  to make
+	  g++ happy.
+
+2009-09-11 15:31  dquinlan
+
+	* [r7224] /trunk/ROSE/config/determinte-os.m4,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_macos_10.5/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_macos_10.4/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/quinlanTests.sh: Updated
+	  macro to determine OS vendor (lsb_release does not exist on OSX)
+	  and fixed NMI tests.
+
+2009-09-11 14:19  dquinlan
+
+	* [r7222] /trunk/ROSE/config/determinte-os.m4,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_macos_10.5,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_macos_10.5/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_macos_10.4,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_macos_10.4/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/quinlanTests.sh: Updated
+	  macro to determine OS vendor (lsb_release does not exist on OSX)
+	  and added OSX NMI tests.
+
+2009-09-11 12:57  dquinlan
+
+	* [r7220] /trunk/ROSE/Makefile.am,
+	  /trunk/ROSE/config/determinte-os.m4,
+	  /trunk/ROSE/projects/compass/tools/compass/Makefile.am,
+	  /trunk/ROSE/projects/compass/tools/sampleCompassSubset/Makefile.am,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/quinlanTests.sh:
+	  Commented out 2 more tests on Debian systems and added rule to
+	  build binary tarball.
+
 2009-09-10 23:51  dquinlan
 
 	* [r7208]
