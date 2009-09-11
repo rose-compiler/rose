@@ -55,6 +55,10 @@ AC_DEFUN([DETERMINE_OS_VENDOR],
 [
    echo "Try to identify the OS vendor...";
    AC_CHECK_TOOL(ROSE_LSB_RELEASE, [lsb_release], [no])
+
+   OS_vendor="ROSE_unknown_OS";
+   OS_release="ROSE_unknown_OS_release";
+
    if test -z "$ROSE_LSB_RELEASE"; then
       echo "********************************";
       echo "* lsb_release is NOT available *";
@@ -68,11 +72,13 @@ AC_DEFUN([DETERMINE_OS_VENDOR],
 #     exit 1
    else
       echo "lsb_release IS available ROSE_LSB_RELEASE = $ROSE_LSB_RELEASE";
-      vendor=`lsb_release -is`
+      OS_vendor=`lsb_release -is`
+      OS_release=`lsb_release -rs`
 
-      echo "vendor = $vendor"
+      echo "OS_vendor  = $OS_vendor"
+      echo "OS_release = $OS_release"
 
-      case $vendor in
+      case $OS_vendor in
          Debian*)
             DEBIAN=yes;
             ;;
@@ -91,6 +97,12 @@ AC_DEFUN([DETERMINE_OS_VENDOR],
             AM_CONDITIONAL([OS_VENDOR_UBUNTU],[ test "x$UBUNTU" = xyes ] )
             AM_CONDITIONAL([OS_VENDOR_CENTOS],[ test "x$CENTOS" = xyes ] )
    fi
+
+   echo "Leaving DETERMINE OS VENDOR: OS_vendor  = $OS_vendor"
+   echo "Leaving DETERMINE OS VENDOR: OS_release = $OS_release"
+
+   AC_SUBST(OS_vendor)
+   AC_SUBST(OS_release)
 
   ])
 
