@@ -91,20 +91,20 @@ RTED_C_TEST_DIRS = $(rted_path)/C/array_index_out_of_bound \
 		 $(srcdir)/tests/C/memoverlap \
 		 $(srcdir)/tests/C/pointer \
 		 $(srcdir)/tests/C/types
-RTED_CPP_TEST_DIRS = $(rted_path)/C++/array_index_out_of_bound \
-		 $(rted_path)/C++/string_errors \
-		 $(rted_path)/C++/allocation_deallocation_errors \
-		 $(rted_path)/C++/input_output_errors \
-		 $(rted_path)/C++/memory_leaks \
-		 $(rted_path)/C++/uninitialized_variables \
-		 $(rted_path)/C++/floating_point_errors \
-		 $(rted_path)/C++/pointer_errors \
-		 $(srcdir)/tests/C++/simple \
-		 $(srcdir)/tests/C++/pointer \
-		 $(srcdir)/tests/C++/types \
-		 $(srcdir)/tests/C++/memory \
-		 $(srcdir)/tests/C++/templates \
-		 $(srcdir)/tests/C++/overloading
+RTED_CPP_TEST_DIRS = $(rted_path)/Cxx/array_index_out_of_bound \
+		 $(rted_path)/Cxx/string_errors \
+		 $(rted_path)/Cxx/allocation_deallocation_errors \
+		 $(rted_path)/Cxx/input_output_errors \
+		 $(rted_path)/Cxx/memory_leaks \
+		 $(rted_path)/Cxx/uninitialized_variables \
+		 $(rted_path)/Cxx/floating_point_errors \
+		 $(rted_path)/Cxx/pointer_errors \
+		 $(srcdir)/tests/Cxx/simple \
+		 $(srcdir)/tests/Cxx/pointer \
+		 $(srcdir)/tests/Cxx/types \
+		 $(srcdir)/tests/Cxx/memory \
+		 $(srcdir)/tests/Cxx/templates \
+		 $(srcdir)/tests/Cxx/overloading
 
 RTED_TEST_DIRS=$(RTED_C_TEST_DIRS) $(RTED_CPP_TEST_DIRS)
 
@@ -353,10 +353,10 @@ rted_source/C/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SCRIPT)
 rted_source/tests/C/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SCRIPT)
 	$(call GENERATE_EXPECTED_OUTPUT, .c, $(srcdir) )
 
-rted_source/C++/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SCRIPT)
+rted_source/Cxx/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SCRIPT)
 	$(call GENERATE_EXPECTED_OUTPUT, .cpp, $(rted_path))
 
-rted_source/tests/C++/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SCRIPT)
+rted_source/tests/Cxx/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SCRIPT)
 	$(call GENERATE_EXPECTED_OUTPUT, .cpp, $(srcdir))
 
 #@OUTPUT_SRC='$(strip $(patsubst rted_source/%.expected-output, $(rted_path)/%.ok_msg, $@))';\
@@ -500,16 +500,16 @@ TESTS_KNOWN_TO_FAIL = run/C/subprogram_call_errors/c_C_1_3_f \
 					  run/tests/C/memoverlap/heap_array_in_struct \
 					  run/tests/C/memoverlap/heap_array_in_struct_in_array \
 					  run/tests/C/pointer/union \
-					  run/tests/C++/simple/uninitialized_member \
-					  run/tests/C++/pointer/member_deref \
-					  run/tests/C++/pointer/dot_star \
-					  run/tests/C++/pointer/arrow_star \
-					  run/tests/C++/memory/malloc_delete \
-					  run/tests/C++/memory/calloc_delete \
-					  run/tests/C++/memory/new_free \
-					  run/tests/C++/types/global_constructors \
-					  run/tests/C++/templates/simple_template_function \
-					  run/tests/C++/overloading/array_index
+					  run/tests/Cxx/simple/uninitialized_member \
+					  run/tests/Cxx/pointer/member_deref \
+					  run/tests/Cxx/pointer/dot_star \
+					  run/tests/Cxx/pointer/arrow_star \
+					  run/tests/Cxx/memory/malloc_delete \
+					  run/tests/Cxx/memory/calloc_delete \
+					  run/tests/Cxx/memory/new_free \
+					  run/tests/Cxx/types/global_constructors \
+					  run/tests/Cxx/templates/simple_template_function \
+					  run/tests/Cxx/overloading/array_index
 
 $(TESTS_KNOWN_TO_FAIL):
 	@echo This test is known to fail, not running it now: $@
@@ -524,7 +524,7 @@ deleteAllbinfiles:
 checkfast:	runtimeCheck $(TESTCODES) \
 				run/tests/C/memoryleaks run/tests/C/memoverlap \
 				run/tests/C/pointer \
-				run/tests/C++/simple run/tests/C++/pointer
+				run/tests/Cxx/simple run/tests/Cxx/pointer
 	@echo "---------------------------------------------------------------------------------------"
 	@echo "--- ROSE/projects/RTED: checkfast passed                                            ---"
 	@echo "---------------------------------------------------------------------------------------"
@@ -536,7 +536,7 @@ check-local: runtimeCheck $(TESTCODES) checkfast \
 				run/C/allocation_deallocation_errors run/C/input_output_errors \
 				run/C/memory_leaks run/C/uninitialized_variables \
 				run/C/C99_specific_errors run/C/pointer_errors \
-				run/C++/string_errors
+				run/Cxx/string_errors
 	@echo "***************************************************************************************"
 	@echo "*** ROSE/projects/runtimeErrorCheck: make check rule complete (terminated normally) ***"
 	@echo "***************************************************************************************"
