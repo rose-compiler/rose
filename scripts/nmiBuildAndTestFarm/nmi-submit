@@ -1,0 +1,221 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+
+NmiDefaultSubmitHost = 'heller@nmi-s005.cs.wisc.edu'
+SummaryWidth = 32
+
+
+String.class_eval do
+    def clean
+        indent = (self =~ /^([ \t]\s*)\S/; $1.size)
+        self.strip.gsub( /^[ \t]\s{#{indent - 1}}/, '' )
+    end
+
+    def clean_summary
+        cleaned = self.clean
+        lines = cleaned.split("\n")
+        first = lines.shift
+        ([first] + lines.map{|l| (' ' * (SummaryWidth + 5)) + l}).join( "\n" )
+    end
+end
+
+
+def parse_options( args )
+    options = ( Struct.new( 
+        :user_dir, :submit_host, :tarball, :configs, :skip_update
+    ).class_eval do
+        def initialize; self.configs = []; end
+        self
+    end).new
+
+    op = OptionParser.new do |opts|
+        opts.set_summary_width SummaryWidth
+        opts.set_summary_indent "    "
+
+        # set default(s)
+        options.submit_host = NmiDefaultSubmitHost
+        options.user_dir = "#{`id -un`.chomp}-rose-nmi"
+        options.skip_update = false
+
+        opts.banner = "
+            Usage: nmi-submit [options] [TARBALL] CONFIG [CONFIG...]
+            Submit TARBALL to platforms specified by each CONFIG, which must be
+            paths relative to #{File.expand_path( File.dirname( __FILE__ ))}.
+
+            nmi-submit should be run from the source tree.
+        ".clean
+
+        opts.separator ""
+        opts.on(    "--no-tarball",
+                    "
+                        Submit the current HEAD of the public subversion
+                        repository instead of a tarball.
+                    ".clean_summary ) do
+
+            options.tarball = :none
+        end
+
+        opts.separator ""
+        opts.on(    "--[no-]skip-update",
+                    "
+                        With --no-skip-update, nmi-submit will copy files (e.g.
+                        submit.sh, glue.pl, &c) to the submit host to ensure
+                        that they are up-to-date.  This step can be skipped to
+                        speed up nmi-submit.  Defaults to --no-skip-update.
+                    ".clean_summary ) do |arg|
+
+            options.skip_update = arg
+        end
+
+        opts.separator ""
+        opts.on(    "--submit-host = HOST",
+                    "
+                        Specify the submission host to use.  Defaults to
+                        #{options.submit_host}.
+                    ".clean_summary ) do |arg|
+
+            options.submit_host = arg
+        end
+
+        opts.separator ""
+        opts.on(    "--user-dir = REMOTE_DIR",
+                    "
+                        Use REMOTE_DIR on the submission host as a working area
+                        to stage files and run the submission from.  Defaults to
+                        #{options.user_dir}.
+
+                        WARNING: nmi-submit will write to REMOTE_DIR
+                        indiscriminately.  Don't keep your family photos there.
+                    ".clean_summary ) do |arg|
+
+            options.user_dir = arg
+        end
+
+        opts.separator ""
+        opts.on_tail( "-h", "--help", "Show this message" ) do
+            puts opts
+            puts "\n\n"
+            puts "
+                Please note, nmi-submit forks various ssh and scp subprocesses
+                and will therefore only work if you can ssh to the submit host
+                without stdin, i.e. if you are running in an `ssh-agent` process
+                and have already `ssh-add`-d an identity listed in the submit
+                hosts's authorized keys.
+            ".clean
+            exit
+        end
+    end
+
+
+    begin
+        op.parse! args
+        op.order! args do |arg|
+            next options.tarball = arg unless options.tarball
+            options.configs << arg
+        end
+
+
+        # do we have all the options?
+        raise OptionParser::MissingArgument, "
+            Specify a TARBALL or use the --no-tarball option.
+        ".clean unless options.tarball
+
+        raise OptionParser::MissingArgument, "
+            At least one CONFIG must be specified.
+        ".clean if options.configs.empty?
+
+
+        # are any of the options invalid?
+        raise OptionParser::InvalidArgument, "
+            Could not find tarball #{options.tarball}
+        ".clean unless options.tarball == :none or File.file? options.tarball
+
+        # Each CONFIG must be relative to the nmi scripts directory.  This is
+        # because submit.sh expects to be given
+        # "build_configs/PLATFORM/options", i.e. it extracts the platform
+        # information from the path.
+        missing_configs = options.configs.reject do |config| 
+            File.file? "#{File.dirname( __FILE__ )}/#{config}" 
+        end
+        raise OptionParser::InvalidArgument, "
+            Could not find the following CONFIG files:
+                #{"\n    " + missing_configs.join( "\n    " )}
+            Please specify config files as paths relative to 
+            #{File.dirname( __FILE__ )}.  These paths should start with
+            [./]build_configs
+        ".clean unless missing_configs.empty?
+    rescue OptionParser::ParseError => e
+        puts "#{e.message}\n\n"
+        op.parse! [ "--help" ]
+    end
+
+    options
+end
+
+
+# Submits the runs to nmi
+#
+#   1. creates the directory, if necessary.
+#   2. scps the tarball (if provided) and File.dir(__FILE__)/*
+#       this ensures that, e.g. submit.sh is up-to-date.
+#   3. submits the runs to nmi.
+def run( options )
+    unless cpid = Process.fork
+        # Child ignores INT, parent can deal with it.
+        Signal.trap( "INT" ) {}
+
+        # (remote) [h]ost
+        h = options.submit_host
+        # (remote) dir
+        d = options.user_dir
+
+        target = "#{h}:#{d}"
+
+        # make sure host:user_dir exists
+        puts "Ensuring #{target} exists."
+        system "ssh #{h} mkdir -p #{d} > /dev/null"
+
+        unless options.skip_update
+            # copy the nmi scripts to the remote host, so we're using ones that are
+            # up-to-date
+            puts "Updating #{File.basename( File.expand_path( File.dirname( __FILE__ )))} files on #{h}."
+            system "scp -r #{File.dirname( __FILE__ )} #{target}/ > /dev/null"
+        end
+
+        unless options.tarball == :none
+            # copy the tarball to host
+            puts "Copying tarball to #{target}."
+            system "scp #{options.tarball} #{target}/rose.tar.gz > /dev/null"
+        end
+
+
+        nmi_output = ''
+
+        tarball = "rose.tar.gz" unless options.tarball == :none
+        # submit the job remotely
+        options.configs.each do |c|
+            # submit the configuration on the remote host
+            puts "Submitting #{c}."
+            nmi_output << `ssh #{h} 'cd #{d} && ./submit.sh #{c} #{tarball}'`
+        end
+
+        unless options.tarball == :none
+            puts "Cleaning up."
+            system "ssh #{h} rm #{d}/rose.tar.gz > /dev/null"
+        end
+
+        puts "\nNMI Output:\n#{nmi_output}"
+    else
+        Signal.trap( "INT" ) do
+            STDERR.puts "Interrupted.  Quitting."
+            Process.kill( "ABRT", cpid )
+            exit 2
+        end
+        Process.wait
+    end
+end
+
+
+run( parse_options( ARGV )) if $0 == __FILE__
+

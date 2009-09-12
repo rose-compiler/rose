@@ -1,8 +1,8 @@
 
 # Check command line for option file
-if [[ "$1" == "" || !( -f $1 ) ]]
+if [[ "$1" == "" || !( -f $1 )]]
 then
-	echo "Usage: $0 <option_file>"
+	echo "Usage: $0 OPTION_FILE [tarball]"
 	exit 1
 fi
 
@@ -56,6 +56,23 @@ echo '$ENV{ACLOCAL_INCLUDES} = "'${ACLOCAL_INCLUDES}'";' >> $ENV_PL
 echo 'return 1;' >> $ENV_PL
 
 
+# determine inputs
+if [[ "$2" == "" ]]; then
+    ROSE_SOURCE='svn'
+else
+    ROSE_SOURCE='scp'
+
+    if [[ !( -f $2 ) ]]; then
+        echo "Couldn't find tarball $2"
+        exit 1
+    fi
+    mkdir -p rose-tarballs
+    ROSE_TARBALL_TEMPDIR=$PWD/`mktemp -d rose-tarballs/XXXXXXXX`
+    cp $2 ${ROSE_TARBALL_TEMPDIR}/rose.tar.gz
+fi
+
+
+
 # exporting options, to be recognized in the submit and input scripts
 export _NMI_TITLE=${TITLE}
 export _NMI_DESCRIPTION=${DESCRIPTION}
@@ -70,7 +87,8 @@ export _NMI_HOSTNAME=$HOSTNAME
 export _NMI_SUBMITDIR=$PWD
 export _NMI_ENV_PL_TEMPDIR=${ENV_PL_TEMPDIR}
 
-
+export _NMI_ROSE_TARBALL_TEMPDIR=${ROSE_TARBALL_TEMPDIR}
+export _NMI_ROSE_SOURCE=${ROSE_SOURCE}
 
 
 # submit the build job

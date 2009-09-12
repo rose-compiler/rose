@@ -19,6 +19,7 @@ my @args  = @ARGV;
 my %table = (
     platform_info     => \&platform_info,
     dump_environment  => \&dump_environment,
+    untar             => \&untar,
     configure         => \&configure,
     make              => \&make,
     check             => \&check,
@@ -114,16 +115,25 @@ sub platform_info {
 # This should produce env.sh, which, when sourced, will reproduce the
 # environment used by the run.
 sub dump_environment {
-	open FILE, ">env.sh";
+    open FILE, ">env.sh";
     for my $e ( sort keys %ENV )
     {
-	  # Really we should export the entire environment, but I haven't figured
-	  # out how to do this with variables whose names include '#'.
-      print FILE "export $e='" . $ENV{$e} . "'\n" unless $e =~ /[#:]/;
+        # Really we should export the entire environment, but I haven't figured
+        # out how to do this with variables whose names include '#'.
+        print FILE "export $e='" . $ENV{$e} . "'\n" unless $e =~ /[#:]/;
     }
-	close FILE;
-	
-	print "Dumped environment to env.sh\n";
+    close FILE;
+
+    print "Dumped environment to env.sh\n";
+
+    return 0;
+}
+
+# This does nothing if we're using the subversion public repo.  If we submitted
+# a tarball, we untar it.
+sub untar {
+    system( "if [ -f rose.tar.gz ]; then tar xfz rose.tar.gz && mv rose-* trunk; fi" );
+    print "Untared rose.tar.gz, if it was necessary\n";
 
     return 0;
 }

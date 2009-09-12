@@ -6,13 +6,13 @@ description = $(DESCRIPTION)
 
 run_type = build
 
-inputs = $(SUBMITDIR)/rose.svn, $(SUBMITDIR)/glue.scp, $(SUBMITDIR)/env.scp
+inputs = $(SUBMITDIR)/rose.$(ROSE_SOURCE), $(SUBMITDIR)/glue.scp, $(SUBMITDIR)/env.scp
 
 remote_declare = glue.pl
 remote_declare_args = -taskhook=remote_declare
 
 # Declare macros for glue.pl
-TASKLIST = platform_info, dump_environment, configure, make, check
+TASKLIST = platform_info, dump_environment, untar, configure, make, check
 SRCDIR = trunk
 
 #prereqs = gcc-4.2.4, boost-1.35.0
