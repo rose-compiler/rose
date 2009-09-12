@@ -273,9 +273,11 @@ source_with_binary_edg_dist: rose_binary_compatibility_signature
 
 # DQ (9/10/2009): Build a tarball for testing at NMI (ROSE without EDG source)
 # Some of the names of these makefile rules should be changed to be more specific.
-binary_tarball:
+$(PACKAGE)-$(VERSION)-source-with-EDG-binary.tar.gz:
 	$(MAKE) binary_edg_tarball
 	$(MAKE) copy_binary_edg_tarball_to_source_tree_svn
 	$(MAKE) source_with_binary_edg_dist
+
+binary_tarball: $(PACKAGE)-$(VERSION)-source-with-EDG-binary.tar.gz
 
 endif
