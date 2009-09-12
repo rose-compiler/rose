@@ -38,9 +38,11 @@ SUBDIRS = \
      RTED \
      taintcheck \
      QtDesignerPlugins \
-     RoseQt \
-     StaticDynamicAnalysis/DynamicCPU
-      
+     RoseQt
+
+# DQ (9/12/2009): This was not added to ROSE correctly, please let me help you do this.
+#     StaticDynamicAnalysis/DynamicCPU
+
 
 #AS(3/12/2008) the  NameConsistancyChecker is now part of compass
 #     NameConsistancyChecker 
