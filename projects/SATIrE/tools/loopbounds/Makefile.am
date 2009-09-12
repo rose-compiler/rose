@@ -1,4 +1,4 @@
-EXTRA_DIST = lb.sh.in loopbounds.pl \
+EXTRA_DIST = loopbounds.pl \
 	types.pl while2for.pl validator.pl comefrom.pl
 
 if WITH_SWI_PROLOG

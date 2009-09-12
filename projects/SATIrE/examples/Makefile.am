@@ -296,7 +296,7 @@ itvl_stresstest: interval
 	@echo "Analyzing loops in" $<
 	@cp $< $(testdir)/loopbounds/looptest.c
 	@chmod u+w $(testdir)/loopbounds/looptest.c
-	cd $(testdir)/loopbounds ; sh lb.sh looptest.c
+	cd $(testdir)/loopbounds ; $(bindir)/loopbounds looptest.c
 
 loopbounds: interval
 	@echo
