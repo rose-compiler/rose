@@ -380,6 +380,13 @@ void postProcessingSupport (SgNode* node)
   // DQ (3/17/2007): This should be empty
   // ROSE_ASSERT(SgNode::get_globalMangledNameMap().size() == 0);
 
+     SgSourceFile* sourceFile = isSgSourceFile(node);
+     if (sourceFile != NULL)
+        {
+       // DQ (9/11/2009): Added support for numbering of statements required to support name qualification.
+          sourceFile->buildStatementNumbering();
+        }
+
      if ( SgProject::get_verbose() >= AST_POST_PROCESSING_VERBOSE_LEVEL )
         cout << "/* AST Postprocessing finished */" << endl;
    }

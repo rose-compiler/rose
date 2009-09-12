@@ -30,7 +30,8 @@ libastPostProcessing_la_SOURCES      = \
      resolveFortranReferences.C \
      insertFortranContainsStatement.C \
      markLhsValues.C \
-     fixupUseAndUsingDeclarations.C 
+     fixupUseAndUsingDeclarations.C \
+     buildStatementNumbering.C
 
 libastPostProcessing_la_LIBADD       = 
 libastPostProcessing_la_DEPENDENCIES = 
