@@ -30,11 +30,12 @@ echo "******************************************"
 # error while loading shared libraries: libCompass.so.0: cannot open shared object file: No such file or directory
 ./submit.sh build_configs/x86_deb_5.0/minimal_default
 
+# DQ (9/12/2009): lsb_release is not available, so we run tests that are known to fail on Debian (only test NMI deb_5.0 platforms).
 # DQ (9/9/2009): This configuration on this platform can't find libCompass.so (in "make check")
 # /home/condor/execute/dir_24405/userdir/build/projects/compass/tools/compassVerifier/.libs/lt-compassVerifier: 
 # error while loading shared libraries: libCompass.so.0: cannot open shared object file: No such file or directory
 # DQ (9/7/2009): AM_PATH_XML2 not found (still)!
-./submit.sh build_configs/x86_64_deb_4.0/minimal_default
+# ./submit.sh build_configs/x86_64_deb_4.0/minimal_default
 
 # DQ (9/9/2009): Compass lib not found in "make check"
 ./submit.sh build_configs/x86_64_deb_5.0/minimal_default
@@ -66,7 +67,7 @@ echo "**************************************************************************
 ./submit.sh build_configs/x86_cent_4.2/minimal_default
 
 echo "***********************************************"
-echo "* Failing test on Suse Linux version 9 (link problem multiple definition of `__i686.get_pc_thunk.bx') *"
+echo "* Failing test on Suse Linux version 9 (link problem multiple definition of __i686.get_pc_thunk.bx) *"
 echo "***********************************************"
 # DQ (9/11/2009): Same error!
 # DQ (9/9/2009): New error: 
@@ -107,10 +108,11 @@ echo "******************************************************"
 # DQ (9/9/2009): configure.in:21: error: Autoconf version 2.60 or higher is required (rerunning test)
 # ./submit.sh build_configs/x86_deb_3.1/minimal_default
 
+# DQ (9/12/2009): lsb_release is not available, so we run tests that are known to fail on Debian (only test NMI deb_5.0 platforms).
 # DQ (9/9/2009): This is a heavily loaded machine (tests accumulate)
 # DQ (9/7/2009): ACLOCAL_INCLUDES does not cause AM_PATH_XML2 to be found.
 # ACLOCAL_INCLUDES is not set in the environment (but this works on x86_64_deb_5.0).
-./submit.sh build_configs/x86_deb_4.0/minimal_default
+# ./submit.sh build_configs/x86_deb_4.0/minimal_default
 
 
 
@@ -134,9 +136,9 @@ echo "*************************************************************************"
 # DQ (9/9/2009): Skip this test until we have the Java support debugged...
 # ./submit.sh build_configs/x86_ubuntu_5.10/default
 
-echo "********************************************************"
+echo "************************"
 echo "* New Mac OSX tests... *"
-echo "********************************************************"
+echo "************************"
 ./submit.sh build_configs/x86_64_macos_10.5/minimal_default
 ./submit.sh build_configs/x86_macos_10.4/minimal_default
 
@@ -148,6 +150,11 @@ echo "********************************************************"
 # ./submit.sh build_configs/x86_64_ubuntu_6.06/minimal_default
 # ./submit.sh build_configs/x86_sles_11/minimal_default
 # ./submit.sh build_configs/ia64_rhap_5.3/minimal_default
+
+echo "*****************************************"
+echo "* New GNU Compiler Portability tests... *"
+echo "*****************************************"
+./submit.sh build_configs/x86_64_rhap_5.2/compilerTest_gnu_4.3
 
 
 echo "Submitted All Tests..."
