@@ -5,7 +5,6 @@
 DefaultRange = 0..(2 ** 64 - 1)
 
 
-# TODO 2 djh: add examples
 def usage( code )
     puts "
         usage:      nmi-summary [DAY]
@@ -89,7 +88,7 @@ class NMIRun
 
     def task( name )
         task = tasks.find{ |t| t.name == name.to_s }
-        task ? task.result : "running"
+        task ? task.result : "N/A"
     end
 end
 
@@ -117,7 +116,6 @@ def scrape_tasks( run )
     end
 end
 
-# TODO 1 djh: filter by range
 def scrape_results( url, range = DefaultRange )
     doc = Hpricot( open( url ))
     results = (doc/"#content #1 tr[@class^='tblrow']").map do |e|
