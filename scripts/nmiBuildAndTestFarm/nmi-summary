@@ -2,22 +2,61 @@
 # encoding: UTF-8
 
 
+DefaultRange = 0..(2 ** 64 - 1)
+
+
+# TODO 2 djh: add examples
 def usage( code )
-	puts "
-        usage: nmi-summary [day]
+    puts "
+        usage:      nmi-summary [DAY]
+           or:      nmi-summary [DAY] RUNID_RANGE
 
-            [day]   The day for which results are to be summarized.  If
-                    omitted, the most recent date for which results exist 
-                    is used.
+        In the first form, gives a summary for tasks run on DAY.
 
-        nmi-summary depends on rubygems and the hpricot gem.
+        The second form is the same, except only tasks whose runids fall within
+        RUNID_RANGE are included.
 
-            yum install rubygems && gem install hpricot
+        In either form, if DAY is omitted, it defaults to the most recent day in
+        which a task was run.
 
-        nmi-summary scrapes data from the NMI website, making N+2 requests.  It
-        is not speedy, and its users must exercise patience.
+            [DAY]           Should be spcified in the format YYYY/MM/DD.
+
+            [RUNID_RANGE]   Should be specified in the format LOWER..UPPER.
+                            Both LOWER and UPPER are inclusive.  Either may be
+                            omitted.  LOWER defaults to 0 and UPPER defaults to
+                            a large number (essentially ∞).
+
+        EXAMPLES
+        --------
+
+            The following will show results for 11 September 2009 with RunIDs
+            181300 or higher:
+
+                nmi-summary 2009/09/11 181300..
+
+            The following will show results for the most recent day with
+            submissions, whose RunIDs fall within the range 181300 and 181400,
+            inclusive:
+
+                nmi-summary 181300..181400
+
+            The following will show all results for 11 September 2009:
+
+                nmi-summary 2009/09/11
+
+
+        DEPENDENCIES
+        ------------
+            nmi-summary depends on rubygems and the hpricot gem.
+
+                yum install rubygems && gem install hpricot
+
+        NOTES
+        -----
+            nmi-summary scrapes data from the NMI website, making N+2 requests.
+            It is not speedy, and its users must exercise patience.
     ".gsub( /^ {8}/, '' )
-	exit( code )
+    exit( code )
 end
 
 
@@ -25,123 +64,151 @@ require 'date'
 require 'open-uri'
 
 begin
-	require 'rubygems'
-	require 'hpricot'
+    require 'rubygems'
+    require 'hpricot'
 rescue LoadError
-	usage( 1 )
+    usage( 1 )
 end
 
 
 NMIRun = Struct.new(
-	"NMIRun", 
-	:id, :url, :result, :start, :duration, :description, :platform, :tasks
+    "NMIRun", 
+    :id, :url, :result, :start, :duration, :description, :platform, :tasks
 )
 NMITask = Struct.new(
-	"NMITask",
-	:result, :name, :host, :start, :duration
+    "NMITask",
+    :result, :name, :host, :start, :duration
 )
 
 
 class NMIRun
-	def task( name )
-		task = tasks.find{ |t| t.name == name.to_s }
-		task ? task.result : "running"
-	end
+    def task( name )
+        task = tasks.find{ |t| t.name == name.to_s }
+        task ? task.result : "running"
+    end
 end
 
 
 def scrape_tasks( run )
-	doc = Hpricot( open( run.url ))
-	rows = (doc/"#content #1 tr[@class^='tblrow']").select do |row|
-		[ "configure", "make", "check" ].include?(
-			(row/"td:nth-of-type(4)").inner_text
-		)
-	end
+    doc = Hpricot( open( run.url ))
+    rows = (doc/"#content #1 tr[@class^='tblrow']").select do |row|
+        [ "configure", "make", "check" ].include?(
+            (row/"td:nth-of-type(4)").inner_text
+        )
+    end
 
-	rows.map do |r|
-		task = NMITask.new(
-			# FIXME 2: This pre-padding of ✓ is of course horribly hacky and
-			# unnecessary in ruby 1.9
-			(r/"td:nth-of-type(1)").inner_text =~ /failed/i ? 'fail' : '         ✓',
-			(r/"td:nth-of-type(4)").inner_text,
-			(r/"td:nth-of-type(5)").inner_text.chomp(".batlab.cs.wisc.edu"),
-			(r/"td:nth-of-type(6)").inner_text,
-			(r/"td:nth-of-type(7)").inner_text
-		)
+    rows.map do |r|
+        task = NMITask.new(
+            # FIXME 2: This pre-padding of ✓ is of course horribly hacky and
+            # unnecessary in ruby 1.9
+            (r/"td:nth-of-type(1)").inner_text =~ /failed/i ? 'fail' : '         ✓',
+            (r/"td:nth-of-type(4)").inner_text,
+            (r/"td:nth-of-type(5)").inner_text.chomp(".batlab.cs.wisc.edu"),
+            (r/"td:nth-of-type(6)").inner_text,
+            (r/"td:nth-of-type(7)").inner_text
+        )
 
-		task
-	end
+        task
+    end
 end
 
-def scrape_results( url )
-	doc = Hpricot( open( url ))
-	results = (doc/"#content #1 tr[@class^='tblrow']").map do |e|
-		NMIRun.new(
-			(e/"td:nth-of-type(1) a").inner_text,
-			(e/"td:nth-of-type(1) a").first.attributes["href"],
-			(e/"td:nth-of-type(2)").first.inner_text,
-			(e/"td:nth-of-type(7)").first.inner_text,
-			(e/"td:nth-of-type(8)").first.inner_text,
-			(e/"td:nth-of-type(9)").first.inner_text,
-			(e/"td:nth-of-type(10)").first.inner_text
-		)
-	end rescue []	# take off the rescue if you're debugging
+# TODO 1 djh: filter by range
+def scrape_results( url, range = DefaultRange )
+    doc = Hpricot( open( url ))
+    results = (doc/"#content #1 tr[@class^='tblrow']").map do |e|
+        NMIRun.new(
+            ((e/"td:nth-of-type(1) a").inner_text.to_i rescue -1),
+            (e/"td:nth-of-type(1) a").first.attributes["href"],
+            (e/"td:nth-of-type(2)").first.inner_text,
+            (e/"td:nth-of-type(7)").first.inner_text,
+            (e/"td:nth-of-type(8)").first.inner_text,
+            (e/"td:nth-of-type(9)").first.inner_text,
+            (e/"td:nth-of-type(10)").first.inner_text
+        )
+    end rescue []   # take off the rescue if you're debugging
 
-	results.each do |result|
-		result.tasks = scrape_tasks( result )
-	end
 
-	results
+    results.reject!{|r| not range.include? r.id }
+    results.each do |result|
+        result.tasks = scrape_tasks( result )
+    end
+
+    results
 end
 
 
-def summarize_day( date )
-	results = scrape_results(
-		"http://nmi-s005.cs.wisc.edu/nmi/index.php?page=results%2Foverview&rows=200&opt_user=OPTION_SHOW_ALL&opt_type=OPTION_SHOW_ALL&opt_project=rose+compiler&opt_result=OPTION_SHOW_ALL&opt_component=OPTION_SHOW_ALL&opt_month=#{date.month}&opt_day=#{date.day}&opt_year=#{date.year}&opt_platform=OPTION_SHOW_ALL&opt_build_id=&opt_submit=OPTION_SHOW_ALL&opt_keyword=&searchSubmit=Search"
-	)
+def summarize_day( date, range = DefaultRange )
+    results = scrape_results(
+        "http://nmi-s005.cs.wisc.edu/nmi/index.php?page=results%2Foverview&rows=200&opt_user=OPTION_SHOW_ALL&opt_type=OPTION_SHOW_ALL&opt_project=rose+compiler&opt_result=OPTION_SHOW_ALL&opt_component=OPTION_SHOW_ALL&opt_month=#{date.month}&opt_day=#{date.day}&opt_year=#{date.year}&opt_platform=OPTION_SHOW_ALL&opt_build_id=&opt_submit=OPTION_SHOW_ALL&opt_keyword=&searchSubmit=Search", range
+    )
 
 
-	puts "Results for: #{date}\n"
+    puts "Results for: #{date}\n"
 
-	format = "%10s   %-20s %-90s %10s %10s %10s\n"
-	printf format, "RunID", "Platform", "Description", "configure", "make", "check"
-	puts( "-" * 157)
-	for r in results
-		printf(
-			format,
-			r.id, r.platform, r.description[0..89].gsub(/\n/, ' '),
-			r.task(:configure), r.task(:make), r.task(:check)
-		)
-	end
+    format = "%10s   %-20s %-90s %10s %10s %10s\n"
+    printf format, "RunID", "Platform", "Description", "configure", "make", "check"
+    puts( "-" * 157)
+    for r in results
+        printf(
+            format,
+            r.id, r.platform, r.description[0..89].gsub(/\n/, ' '),
+            r.task(:configure), r.task(:make), r.task(:check)
+        )
+    end
 
-	results
+    results
 end
-
 
 def compute_day
-	doc = Hpricot( open( "http://nmi-s005.cs.wisc.edu/nmi/index.php?page=results%2Foverview&rows=20&opt_user=OPTION_SHOW_ALL&opt_type=OPTION_SHOW_ALL&opt_project=rose+compiler&opt_result=OPTION_SHOW_ALL&opt_component=OPTION_SHOW_ALL&opt_month=0&opt_day=0&opt_year=0&opt_platform=OPTION_SHOW_ALL&opt_build_id=&opt_submit=OPTION_SHOW_ALL&opt_keyword=&searchSubmit=Search" ))
+    doc = Hpricot( open( "http://nmi-s005.cs.wisc.edu/nmi/index.php?page=results%2Foverview&rows=20&opt_user=OPTION_SHOW_ALL&opt_type=OPTION_SHOW_ALL&opt_project=rose+compiler&opt_result=OPTION_SHOW_ALL&opt_component=OPTION_SHOW_ALL&opt_month=0&opt_day=0&opt_year=0&opt_platform=OPTION_SHOW_ALL&opt_build_id=&opt_submit=OPTION_SHOW_ALL&opt_keyword=&searchSubmit=Search" ))
 
-	Date.parse(
-		(doc/"#content #1 tr[@class^='tblrow']:nth-of-type(1) td:nth-of-type(7)").
-			inner_text
-	)
+    Date.parse(
+        (doc/"#content #1 tr[@class^='tblrow']:nth-of-type(1) td:nth-of-type(7)").
+        inner_text
+    )
 end
 
+def try_day( day )
+    Date.parse( day ) rescue nil
+end
+
+def try_range( range )
+    range =~ %r{(\d+)?\.\.(\d+)?}
+    lower = ($1 || 0).to_i
+    upper = ($2 || (2 ** 64 -1)).to_i
+    Range.new( lower, upper )
+rescue
+    nil
+end
 
 def main
-	usage( 0 ) if ARGV.first == '--help'
+    usage( 0 ) if ARGV.first == '--help'
 
-	if ARGV.first
-		begin
-			day = Date.parse( ARGV.first )
-		rescue ArgumentError
-			puts "Please use date format: YYYY/MM/DD"
-			exit 1
-		end
-	end
-	day = compute_day if day.nil?
+    day = nil
+    range = DefaultRange
 
-	summarize_day day
+    case ARGV.size
+    when 0
+        day = compute_day
+    when 1
+        unless  day = try_day( ARGV.first ) or
+                range = try_range( ARGV.first )
+
+            puts "Didn't understand argument #{ARGV.first}"
+            usage( 2 )
+        end
+    when 2
+        unless  day = try_day( ARGV.shift ) and
+                range = try_range( ARGV.shift )
+
+            puts "Failed to understand arguments"
+            usage( 2 )
+        end
+    end
+
+
+    day = compute_day if day.nil?
+    summarize_day( day, range )
 end
 
 main if __FILE__ == $0
