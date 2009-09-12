@@ -154,7 +154,10 @@ echo "********************************************************"
 echo "*****************************************"
 echo "* New GNU Compiler Portability tests... *"
 echo "*****************************************"
-./submit.sh build_configs/x86_64_rhap_5.2/compilerTest_gnu_4.3
+
+# DQ (9/12/2009): g++ 4.3.2 prereq is not available on x86_64_rhap_5.2
+# ./submit.sh build_configs/x86_64_rhap_5.2/compilerTest_gnu_4.3
+./submit.sh build_configs/x86_64_rhap_5/compilerTest_gnu_4.3
 
 
 echo "Submitted All Tests..."
