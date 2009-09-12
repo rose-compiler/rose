@@ -1,3 +1,223 @@
+2009-09-12 01:45  hamilton37
+
+	* [r7242] /trunk/ROSE/scripts/nmiBuildAndTestFarm/nmi-summary: NMI:
+	  fixed a bug in the output of nmi-summary.
+
+2009-09-12 01:40  hamilton37
+
+	* [r7241] /trunk/ROSE/scripts/nmiBuildAndTestFarm/nmi-summary: NMI:
+	  nmi-summary now reports tasks as N/A when missing, rather than
+	  erroneously
+	  as ‘running’.
+
+2009-09-12 01:40  hamilton37
+
+	* [r7240] /trunk/ROSE/scripts/nmiBuildAndTestFarm/nmi-summary: NMI:
+	  Improved output of nmi-summary.
+	  
+	  * trim noisy description prefix.
+	  * added start time to output.
+
+2009-09-12 01:40  hamilton37
+
+	* [r7239] /trunk/ROSE/scripts/nmiBuildAndTestFarm/nmi-summary: NMI:
+	  nmi-summary now supports filtering results by a RunID range.
+	  
+	  see `nmi-summary --help` for details and example usage.
+
+2009-09-12 00:40  hamilton37
+
+	* [r7238] /trunk/ROSE/scripts/nmiBuildAndTestFarm/nmi-postmortem:
+	  NMI: nmi-postmortem now supports NMI's darwin boxes.
+	  
+	  nmi-0068 has makehomedir.sh in /sw/etc/profile.d instead of
+	  /etc/profile.d.
+	  nmi-postmortem now checks both directories. Additionally,
+	  nmi-postmortem now
+	  uses .bash_profile instead of .bashrc to source .nmi-postmortem.
+
+2009-09-12 00:20  hamilton37
+
+	* [r7237] /trunk/ROSE/.gitignore,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/glue.pl,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/nmi-submit,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/rose-build.submit,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/rose.scp,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/submit.sh: NMI: Added
+	  support for submitting local tarballs.
+	  
+	  * submit.sh will now accept an optional tarball. If one is
+	  specified, it is
+	  used (after untarring) as the source tree instead of a checkout
+	  from the
+	  public repository.
+	  
+	  * nmi-submit now lets one submit nmi jobs locally, from the
+	  source tree's
+	  scrpts/nmiBuildAndTestFarm directory. There are a couple of
+	  advantages to
+	  this:
+	  
+	  - one can easily specify a local tarball (e.g. built from
+	  `make binary_tarball`), which will be automatically `scp`-d to
+	  the submit
+	  host.
+	  - one can specify an arbitrary number of build configurations
+	  (i.e. options
+	  files in the build_configs subtree) and the script will submit
+	  each of
+	  them.
+	  - nmi-submit will automatically update submit.sh, glue.pl, and
+	  other such
+	  files on the submit host (although this step can be skipped for
+	  the sake
+	  of speed).
+	  
+	  for more information, run `./nmi-submit --help`
+
+2009-09-12 00:10  hamilton37
+
+	* [r7236] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/tests/C++/memory/calloc_delete.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/memory/calloc_delete.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/memory/malloc_delete.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/memory/malloc_delete.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/memory/new_free.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/memory/new_free.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/overloading/array_index.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/overloading/array_index.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/pointer/arrow_star.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/pointer/arrow_star.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/pointer/dot_star.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/pointer/dot_star.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/pointer/member_deref.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/pointer/member_deref.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/delete.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/delete.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/object_create.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/object_create.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/object_create2.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/object_create2.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/object_create3.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/object_create3.h,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/object_create3.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/object_create4.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/object_create4.h,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/object_create4.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/references.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/references.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/scope.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/scope.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/uninitialized_member.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/uninitialized_member.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/union.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/union.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/union2.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/union2.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/templates/simple_template_function.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/templates/simple_template_function.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/types/global_constructors.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/types/global_constructors.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/types/reference.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/types/reference.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/types/registration_order.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/types/registration_order.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/memory,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/memory/calloc_delete.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/memory/calloc_delete.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/memory/malloc_delete.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/memory/malloc_delete.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/memory/new_free.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/memory/new_free.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/overloading,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/overloading/array_index.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/overloading/array_index.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/pointer,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/pointer/arrow_star.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/pointer/arrow_star.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/pointer/dot_star.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/pointer/dot_star.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/pointer/member_deref.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/pointer/member_deref.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/delete.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/delete.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/object_create.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/object_create.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/object_create2.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/object_create2.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/object_create3.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/object_create3.h,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/object_create3.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/object_create4.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/object_create4.h,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/object_create4.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/references.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/references.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/scope.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/scope.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/uninitialized_member.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/uninitialized_member.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/union.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/union.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/union2.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/union2.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/templates,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/templates/simple_template_function.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/templates/simple_template_function.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/types,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/types/global_constructors.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/types/global_constructors.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/types/reference.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/types/reference.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/types/registration_order.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/types/registration_order.ok_msg:
+	  RTED: Moved C++ directory to Cxx, for safety's sake.
+
+2009-09-11 23:45  keasler
+
+	* [r7235] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/projects/Makefile.am,
+	  /trunk/ROSE/projects/StaticDynamicAnalysis,
+	  /trunk/ROSE/projects/StaticDynamicAnalysis/A_WORK_IN_PROGRESS,
+	  /trunk/ROSE/projects/StaticDynamicAnalysis/DynamicCPU,
+	  /trunk/ROSE/projects/StaticDynamicAnalysis/DynamicCPU/ETrt.c,
+	  /trunk/ROSE/projects/StaticDynamicAnalysis/DynamicCPU/ETrt.h,
+	  /trunk/ROSE/projects/StaticDynamicAnalysis/DynamicCPU/MANIFEST,
+	  /trunk/ROSE/projects/StaticDynamicAnalysis/DynamicCPU/Makefile.am,
+	  /trunk/ROSE/projects/StaticDynamicAnalysis/DynamicCPU/ProjGen.C,
+	  /trunk/ROSE/projects/StaticDynamicAnalysis/DynamicCPU/SegDB.txt,
+	  /trunk/ROSE/projects/StaticDynamicAnalysis/DynamicCPU/cycle.h,
+	  /trunk/ROSE/projects/StaticDynamicAnalysis/DynamicCPU/traceCPU.C,
+	  /trunk/ROSE/projects/StaticDynamicAnalysis/DynamicMemory,
+	  /trunk/ROSE/projects/StaticDynamicAnalysis/StaticDependence: Add
+	  calipers for dynamic trace of instruction counts for
+	  loops and sequential segments.
+	  
+	  This project is being added at this time to enable offsite
+	  collaborators to view and modify the code. This is the
+	  initial version and there is much more work to do.
+
+2009-09-11 20:44  panas2
+
+	* [r7234]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.h,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_copyClass.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/union.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/union.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/union2.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C++/simple/union2.ok_msg: Added
+	  union support to RTED and fixed the namespace problem
+
 2009-09-11 15:50  dquinlan
 
 	* [r7231]
