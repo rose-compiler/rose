@@ -1,3 +1,36 @@
+2009-09-12 18:19  dquinlan
+
+	* [r7248] /trunk/ROSE/src/ROSETTA/Grammar/Support.code,
+	  /trunk/ROSE/src/ROSETTA/src/support.C: Initial support for better
+	  name qualification.
+
+2009-09-12 18:13  dquinlan
+
+	* [r7247]
+	  /trunk/ROSE/src/frontend/SageIII/astPostProcessing/Makefile.am,
+	  /trunk/ROSE/src/frontend/SageIII/astPostProcessing/astPostProcessing.C,
+	  /trunk/ROSE/src/frontend/SageIII/astPostProcessing/buildStatementNumbering.C:
+	  Initial support for better name qualification.
+
+2009-09-12 17:48  dquinlan
+
+	* [r7246]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_deb_4.0/minimal_default:
+	  Fixed NMI build_config file.
+
+2009-09-12 16:16  dquinlan
+
+	* [r7245] /trunk/ROSE/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/Makefile.am,
+	  /trunk/ROSE/projects/compass/tools/compass/tests/Makefile.am,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_macos_10.4/minimal_default:
+	  Skipping tests in a few places for Debian systems.
+
+2009-09-12 16:14  dquinlan
+
+	* [r7244] /trunk/ROSE/projects/Makefile.am: Fixed bug problem
+	  introduced in Jeff's work.
+
 2009-09-12 01:45  hamilton37
 
 	* [r7242] /trunk/ROSE/scripts/nmiBuildAndTestFarm/nmi-summary: NMI:
