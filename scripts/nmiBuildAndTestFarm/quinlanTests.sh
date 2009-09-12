@@ -162,5 +162,11 @@ echo "*****************************************"
 # DQ (9/12/2009): Added g++ 4.1.2 test
 ./submit.sh build_configs/x86_64_rhap_5.2/compilerTest_gnu_4.1
 
+# DQ (9/12/2009): Added g++ 4.0.4 test
+./submit.sh build_configs/x86_64_rhap_5/compilerTest_gnu_4.0
+
+# DQ (9/12/2009): Added g++ 3.4.3 test
+./submit.sh build_configs/x86_rhas_4/compilerTest_gnu_3.4
+
 
 echo "Submitted All Tests..."
