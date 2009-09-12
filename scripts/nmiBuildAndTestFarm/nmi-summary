@@ -82,6 +82,11 @@ NMITask = Struct.new(
 
 
 class NMIRun
+    def initialize( *args )
+        super *args
+        self.description = $1 if self.description =~ /^minimal configuration options,\s*(.*)$/
+    end
+
     def task( name )
         task = tasks.find{ |t| t.name == name.to_s }
         task ? task.result : "running"
@@ -120,7 +125,7 @@ def scrape_results( url, range = DefaultRange )
             ((e/"td:nth-of-type(1) a").inner_text.to_i rescue -1),
             (e/"td:nth-of-type(1) a").first.attributes["href"],
             (e/"td:nth-of-type(2)").first.inner_text,
-            (e/"td:nth-of-type(7)").first.inner_text,
+            (DateTime.parse((e/"td:nth-of-type(7)").first.inner_text) rescue nil),
             (e/"td:nth-of-type(8)").first.inner_text,
             (e/"td:nth-of-type(9)").first.inner_text,
             (e/"td:nth-of-type(10)").first.inner_text
@@ -143,15 +148,18 @@ def summarize_day( date, range = DefaultRange )
     )
 
 
-    puts "Results for: #{date}\n"
+    puts "\nResults for: #{date}\n"
 
-    format = "%10s   %-20s %-90s %10s %10s %10s\n"
-    printf format, "RunID", "Platform", "Description", "configure", "make", "check"
-    puts( "-" * 157)
+    format = "%10s   %10s  %-26s %-90s %10s %10s %10s\n"
+    printf format, "RunID", "Start", "Platform", "Description", "configure", "make", "check"
+    puts( "-" * 175)
     for r in results
         printf(
             format,
-            r.id, r.platform, r.description[0..89].gsub(/\n/, ' '),
+            r.id, 
+            (r.start ? "#{r.start.hour}:#{r.start.min}" : ""), 
+            r.platform[0..25], 
+            r.description[0..89].gsub(/\n/, ' '),
             r.task(:configure), r.task(:make), r.task(:check)
         )
     end
