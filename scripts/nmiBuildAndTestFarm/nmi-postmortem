@@ -45,9 +45,14 @@ def setup_ssh!( host )
         of runs on this host.
 
     ".gsub( /^[ \t]\s*/, '' )
+
+    linux_script = "/etc/profile.d/makehomedir.sh"
+    linux_cmd = "/bin/sh #{linux_script}"
+    darwin_script = "/sw/etc/profile.d/makehomedir.sh"
+    darwin_cmd = "/bin/sh #{darwin_script}"
     system [
         "ssh #{host} '#{[
-                "/bin/sh /etc/profile.d/makehomedir.sh",
+                "if [ -f #{linux_script} ]; then #{linux_cmd}; elif [ -f #{darwin_script} ]; then #{darwin_cmd} ; fi",
                 "mkdir -p $HOME/.ssh",
                 "chmod 700 $HOME/.ssh",
             ].join( " && " )}'",
@@ -120,7 +125,7 @@ def main
         "ssh #{run_host} 'rm -fr run; mkdir -p run; mkdir -p .ssh'",
         "scp #{run_dir}/userdir/nmi*/results.tar.gz #{run_host}:run/ > /dev/null 2>/dev/null",
         "ssh #{run_host} 'cd run && tar xfz results.tar.gz'",
-        %Q{ssh #{run_host} 'touch .bashrc; grep -q .nmi-postmortem .bashrc || echo "if [ -f .nmi-postmortem ]; then source .nmi-postmortem; fi" >> .bashrc'},
+        %Q{ssh #{run_host} 'touch .bash_profile; grep -q .nmi-postmortem .bash_profile || echo "if [ -f .nmi-postmortem ]; then source .nmi-postmortem; fi" >> .bash_profile'},
         %Q{ssh #{run_host} 'echo "cd run && source env.sh" > .nmi-postmortem'},
     ].join( " && " )
 
