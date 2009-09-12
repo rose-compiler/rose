@@ -105,7 +105,12 @@ def scrape_tasks( run )
         task = NMITask.new(
             # FIXME 2: This pre-padding of ✓ is of course horribly hacky and
             # unnecessary in ruby 1.9
-            (r/"td:nth-of-type(1)").inner_text =~ /failed/i ? 'fail' : '         ✓',
+            case (r/"td:nth-of-type(1)").inner_text 
+                when /failed/i;     'fail'
+                when /running/i:    'running'
+                when /complete/i;   '         ✓'
+                else; 'unknown'
+            end,
             (r/"td:nth-of-type(4)").inner_text,
             (r/"td:nth-of-type(5)").inner_text.chomp(".batlab.cs.wisc.edu"),
             (r/"td:nth-of-type(6)").inner_text,
