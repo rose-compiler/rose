@@ -48,7 +48,17 @@ main( int argc, char * argv[] )
   // const int validValue = 55;
   // const unsigned int validValue = 89;
   // const unsigned int validValue = 91;
-     const unsigned int validValue = 95;
+  // const unsigned int validValue = 95;
+     unsigned int validValue = 0;
+#if __GNUC__ == 3
+     validValue = 91;
+#endif
+#if __GNUC__ == 4 && __GNUC_MINOR__ <= 2
+     validValue = 91;
+#endif
+#if __GNUC__ == 4 && __GNUC_MINOR__ > 2
+     validValue = 95;
+#endif
 
      NodeQuerySynthesizedAttributeType returnList = NodeQuery::querySubTree(project, V_SgFunctionDeclaration);
      if (returnList.size() != validValue)
