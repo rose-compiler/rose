@@ -114,6 +114,31 @@ dnl predefined by a specific compiler
 # This string has all compiler specific predefined macros listed
   echo "Backend compiler specific macroString = $macroString"
 
+# DQ (9/13/2009): Add information about the backend compiler (which matches the associated header files generated).
+# These values are used to control tests that are backend compiler and or compiler version dependent.
+  BACKEND_COMPILER_VERSION_NAME=$compilerName
+  BACKEND_COMPILER_VERSION_MAJOR_NUMBER=$BACKEND_GCC_MAJOR
+  BACKEND_COMPILER_VERSION_MINOR_NUMBER=$BACKEND_GCC_MINOR
+
+  if test x$BACKEND_COMPILER_VERSION_NAME = xg++; then
+    if test x$BACKEND_COMPILER_VERSION_MAJOR_NUMBER = x4; then
+      if test x$BACKEND_COMPILER_VERSION_MINOR_NUMBER = x2; then
+        ok_for_testing=true
+      fi
+    fi
+  fi
+
+  echo "BACKEND_COMPILER_VERSION_NAME         = $BACKEND_COMPILER_VERSION_NAME"
+  echo "BACKEND_COMPILER_VERSION_MAJOR_NUMBER = $BACKEND_COMPILER_VERSION_MAJOR_NUMBER"
+  echo "BACKEND_COMPILER_VERSION_MINOR_NUMBER = $BACKEND_COMPILER_VERSION_MINOR_NUMBER"
+  echo "This version of backend compiler is OK for compiler and compiler version dependent testing: ok_for_testing = $ok_for_testing"
+
+  AM_CONDITIONAL(BACKEND_COMPILER_VERSION_OK_FOR_ROSE_TESTING,test "x$ok_for_testing" = xtrue)
+
+  AC_SUBST(BACKEND_COMPILER_VERSION_NAME)
+  AC_SUBST(BACKEND_COMPILER_VERSION_MAJOR_NUMBER)
+  AC_SUBST(BACKEND_COMPILER_VERSION_MINOR_NUMBER)
+
 # AC_LANG_RESTORE
   AC_LANG_POP(C++)
 ])
