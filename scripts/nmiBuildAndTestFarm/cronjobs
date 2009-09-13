@@ -42,3 +42,11 @@ PATH=/bin:/usr/bin:/nmi/bin
   44 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_slf_3/minimal_default >> update.log 2>> update.err
 # 46 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_ubuntu_5.10/default >> update.log 2>> update.err
   46 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_ubuntu_5.10/minimal_default >> update.log 2>> update.err
+
+  48 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_rhap_5/compilerTest_gnu_4.3 >> update.log 2>> update.err
+  50 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_rhap_5.2/compilerTest_gnu_4.1 >> update.log 2>> update.err
+  52 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_rhap_5/compilerTest_gnu_4.0 >> update.log 2>> update.err
+  54 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_rhas_4/compilerTest_gnu_3.4 >> update.log 2>> update.err
+
+  56 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_macos_10.5/minimal_default >> update.log 2>> update.err
+  58 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_macos_10.4/minimal_default >> update.log 2>> update.err
