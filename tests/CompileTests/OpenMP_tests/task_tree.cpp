@@ -7,7 +7,13 @@
  * unless #pragma omp taskwait is used in the end
  * 9/12/2008
  */
+
 #include<iostream> 
+
+// DQ (9/12/2009): GNU g++ 4.4 requires stdio.h so that printf() will be defined.
+// Note that this is not required for GNU g++ version 4.3.
+#include <stdio.h>
+
 #ifdef _OPENMP
 #include<omp.h>
 #endif
@@ -109,3 +115,4 @@ int main()
 }
   return 0;
 }
+

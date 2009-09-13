@@ -37,8 +37,13 @@ template<class T> bool Stack<T>::pop(T *get)
 
 }
 */
-int main (int tttttttttt) {
 
+// DQ (9/12/2009): error with GNU g++ version 4.3 and greater
+// error: "int main(int)" takes only zero or two arguments
+// and the types are enforced by GNU g++ as well.
+// int main (int tttttttttt)
+int main ()
+{
 	Stack<int> iStack;
 	int v = 2;
 	int* t = &v;

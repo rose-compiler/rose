@@ -1,3 +1,5 @@
+#include <typeinfo>
+
 /*
 When compiling the following code:
 
@@ -31,8 +33,19 @@ class nsString2
        }
  };
 
+class nsString3
+ {
+   public:
+     explicit
+     nsString3(const std::type_info& a, const std::type_info& b)
+       {
+       }
+ };
+
 void foo()
 {
 const nsString2 myString(sizeof(L"A DOM String, Just For
 You")/sizeof(wchar_t));
+const nsString3 myStringX(typeid(L"A DOM String, Just For
+You"), typeid(wchar_t));
 }

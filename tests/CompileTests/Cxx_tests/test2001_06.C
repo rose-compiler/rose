@@ -54,8 +54,12 @@ main()
 
      int x;
 
-  // will be unparsed as:  
+  // In the older EDG translation, this will be unparsed as:
   // x = ((((class B &)(objectBref)).myBaseClass).intValue);
+
+  // DQ (1/29/2009): Using the new EDG/ROSE interface, this will be unparsed as:
+  // x = objectBref.B::myBaseClass.A::intValue;
+
      x = ((B&)objectBref).myBaseClass.intValue;
 #endif
 

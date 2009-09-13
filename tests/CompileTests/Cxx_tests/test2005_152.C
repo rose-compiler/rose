@@ -1,5 +1,5 @@
 // Test code for overloaded member functions of a templated class where at least 
-// one is a template function (as opposed to a non-template member function).
+// one is a template function (as opposed to a non-template member fucnction).
 
 // this is a class template
 template <typename T>

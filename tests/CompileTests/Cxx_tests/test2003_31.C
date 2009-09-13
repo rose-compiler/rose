@@ -29,10 +29,6 @@ DQ: Verified problem
 
 */
 
-/* JJW (12/12/2008): That translation is correct (has the same semantics);
- * converting something to a bool is just testing whether it is not equal
- * to 0, and then the ! is translated as itself. */
-
 #if 0
 /*********START CODE**********/
 int foo(int x){

@@ -1,6 +1,9 @@
 
 #include "rose.h"
 
+#if 0
+  // DQ (9/12/2009): Adding support for new name qualification (not ready yet).
+
 void
 SgSourceFile::
 // buildStatementNumbering( SgSourceFile::NumberToStatementType & numberToStatementContainer )
@@ -72,3 +75,4 @@ fixupUsingNamespaceDeclarations()
 #endif
    }
 
+#endif

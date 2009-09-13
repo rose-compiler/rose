@@ -11,8 +11,9 @@ short x;
 int *y = &(int)x;
 #endif
 
-#if 0
-// Example 3: (not allowed by EDG)
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
+// DQ (1/10/2009): this is now allowed by EDG 4.0.
+// Example 3: (not allowed by EDG 3.3)
 int foo(int a, int a);
 #endif
 
@@ -35,6 +36,7 @@ char* strange_end_of_line = "abc\r";
 
 #if 0
 // Example 8: (not allowed by EDG)
+// EDG does not support a asm kind within the pragma support (on EDG 3.x or EDG 4.0).
 #pragma asm
 mov eax, eab
 #pragma end_asm

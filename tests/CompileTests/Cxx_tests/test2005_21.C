@@ -28,8 +28,8 @@ Vera
 
 */
 #if 0
-#include "rose.h"
 
+#include "rose.h"
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif

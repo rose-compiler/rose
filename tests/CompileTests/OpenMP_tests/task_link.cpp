@@ -7,6 +7,7 @@
  * By Liao
  * 9/12/2008
  */
+
 #include <iostream>
 #include <omp.h>
 using namespace std;
@@ -84,3 +85,4 @@ int main()
   increment_list_items(root);
   return 0;
 }
+

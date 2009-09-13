@@ -1,3 +1,17 @@
+// This is just a test code for viewing the AST
+// from different language constructs.
+
+int array[10];
+
+#pragma STDC FENV_ACCESS ON
+/* xxx */
+void foobar()
+   {
+     array[0] = 0;
+   }
+
+
+#if 0
 namespace X 
 {
    int a;
@@ -14,3 +28,4 @@ void foo()
    }
 
 // namespace X { int b; }
+#endif

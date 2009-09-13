@@ -4392,9 +4392,12 @@ HEADER_APPLICATION_SOURCE_FILE_START
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
 
+#if 0
+       // DQ (9/12/2009): Adding support for new name qualification (not ready yet).
        // typedef std::vector<SgNode*> NumberToStatementType;
        // void buildStatementNumbering( NumberToStatementType & numberToStatementContainer );
           void buildStatementNumbering();
+#endif
 
 HEADER_APPLICATION_SOURCE_FILE_END
 

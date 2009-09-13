@@ -15,8 +15,6 @@ main()
      myAssert;
      myAssert;
 
-     {switch (x) default: ++x;}
-
      switch (x)
         {
           case 0: 

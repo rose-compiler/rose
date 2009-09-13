@@ -759,10 +759,13 @@ Grammar::setUpSupport ()
      SourceFile.setDataPrototype   ( "SgModuleStatementPtrList", "module_list", "",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+#if 0
+  // DQ (9/12/2009): Adding support for new name qualification (not ready yet).
   // DQ (9/11/2009): Added support for mapping id numbers to statement pointers.
   // This is part of support for a new implementation of name qualification.
      SourceFile.setDataPrototype   ( "SgNodePtrList", "statementNumberContainer", "",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
      UnknownFile.setDataPrototype   ( "SgGlobal*", "globalScope", "= NULL",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);

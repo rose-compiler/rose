@@ -16,7 +16,6 @@
 //character literals (and hence string literals) when the proposal is accepted.
 
 #include <stdio.h>
-#include <wchar.h>
 
 //
 //The chars

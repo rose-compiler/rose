@@ -17,7 +17,6 @@ class X
 void foo()
    {
      SwigValueWrapper< X > result;
-
      int i;
      i = (&result)->size();
    }

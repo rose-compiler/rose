@@ -58,13 +58,22 @@ double mm[10];
 int main(void)
 {
 //double mm[10]; // no warning and no changes at all if it is local scope, ??
+ mm[7] = 12;
  foo(mm-1); // looks a very strange argument passing, but actually used in the benchmark.
  foobar(mm+1);
  foo((mm+1)-1);
  foo((mm+1)-2);
+
+// ERROR: Using EDG 3.3, this is unparsed as "foo(mm);"
  foo((mm-1)-2);
+
+// ERROR: Using EDG 3.3, this is unparsed as "mm_lowerBound = (mm[0]);" 
  mm_lowerBound = (mm-1)[0];
- (mm-1)[0] = 0.0;
+
+// ERROR: Using EDG 3.3, this is unparsed as "mm[0] = 3.14;" 
+ (mm-1)[0] = 3.14;
+
+// This is unparsed correctly!
  ((mm+1)-2)[0] = 0.0;
  return 0;
 }

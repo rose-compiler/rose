@@ -1,22 +1,22 @@
-class BASE
-{
-  //No user-defined constructor
-  public:
-  int i;
-  BASE():i(0){};
-};
+#if 0
+Hi Dan,
 
-class CHILD :public BASE
-{
-public:
-  int j;
- // copy constructor
-  explicit CHILD(const CHILD& old);
+This function definition is legal in C++ (note middle formal argument), but crashes the ROSE unparser:
 
-};
-// refer to compiler-generated base class's constructor
-CHILD::CHILD(const CHILD& old):BASE()
+void f(int length, double *, double *x)
 {
-  j=old.j;
+   for (int i=0; i<length; ++i)
+      x[i] = -x[i] ;
 }
+
+Several function like this are in ALE3D.
+
+-Jeff
+#endif
+
+void f(int length, double *, double *x)
+   {
+     for (int i=0; i<length; ++i)
+          x[i] = -x[i] ;
+   }
 

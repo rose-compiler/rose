@@ -24,10 +24,12 @@ void foo()
 typedef long int __fd_mask;
 
 // Skip testing on 64 bit systems for now!
-#ifndef __LP64__
+// #ifndef __LP64__
+#if 1
 
 // Skip version 4.x gnu compilers
-#if ( __GNUC__ == 3 )
+// #if ( __GNUC__ == 3 )
+#if 1
 
 typedef struct {
     __fd_mask fds_bits[1024 / (8 * sizeof (__fd_mask))];
@@ -59,7 +61,8 @@ void foo1()
      register int *result asm ("cx");
 #ifndef __INTEL_COMPILER
   // Intel reports some sort of internal error here.
-     asm ("sysint" : "=r" (result) : "0" (p1), "r" (p2));
+  // DQ (1/10/2009): "sysint" is not an x86 instruction so change this to "sysexit" (which is x86).
+     asm ("sysexit" : "=r" (result) : "0" (p1), "r" (p2));
 #endif
    }
 
@@ -76,7 +79,8 @@ void foo2()
      register int *result asm ("cx");
 #ifndef __INTEL_COMPILER
   // Intel reports some sort of internal error here.
-     asm ("sysint" : "=r" (result) : "0" (p1), "r" (p2));
+  // DQ (1/10/2009): "sysint" is not an x86 instruction so change this to "sysexit" (which is x86).
+     asm ("sysexit" : "=r" (result) : "0" (p1), "r" (p2));
 #endif
    }
 
@@ -87,9 +91,16 @@ void foo3()
   // This is a problem for the Intel compiler!
 #ifndef __INTEL_COMPILER
   // Intel complains that the registers "ax" and "bx" cannot be double, GNU does not seem to notice :-).
+  // register double angle  asm ("f") = 0.0;
+  // register double result asm ("f") = 0.0;
+  // asm ("fsinx %1,%0" : "=f" (result) : "f" (angle) );
+  // asm ("fsinx %1,%0" : "=&f" (result) : "f" (angle) : "st(1)" );
+  // asm ("fsinx %1,%0" : "=&f" (result) : "f" (angle) : "r10" );
+
+  // DQ (1/10/2009): Changed this because we need it to be an x86 instruction, and I could not get a floating point example to work.
      register double angle  asm ("ax") = 0.0;
      register double result asm ("bx") = 0.0;
-     asm ("fsinx %1,%0" : "=f" (result) : "f" (angle));
+     asm volatile ("mov %1,%0" : "=r" (result) : "r" (angle) );
 #endif
    }
 
@@ -120,7 +131,9 @@ void foo5( register int a )
    // This does not work (reports and error from g++ directly, even without ROSE),
    // double y = sin(x);
    // but this does work:
-      sin(x);
+
+   // DQ (1/10/2009): This reports and error: error: output constraint 0 must specify a single register
+   // sin(x);
 #endif
    }
 
@@ -130,7 +143,8 @@ void foo_Yarden()
 
      register char __result;
 
-     __asm__ __volatile__ ("btl %1,%2 ; setcb %b0" : // assembler instruction template 
+  // DQ (1/10/2009): Changed "btl" to "bt" for 64 bit machine
+     __asm__ __volatile__ ("bt %1,%2 ; setcb %b0" : // assembler instruction template 
                            "=q" (__result) : // operand constraint
                            "r" (((int) (10)) % (8 * sizeof (__fd_mask))), "m" (((readfds_)->fds_bits)[((10) / (8 * sizeof (__fd_mask)))]) : // operand constraint
                            "cc", "memory"); // clobbered register list (non gnu-standard register names are ignored)
@@ -158,10 +172,13 @@ __exchange_and_add (volatile _Atomic_word *__mem, int __val)
 static inline void
 __attribute__ ((__unused__))
 __atomic_add (volatile _Atomic_word* __mem, int __val)
-{
-  __asm__ __volatile__ ("lock; add{l} {%1,%0|%0,%1}"
-			: "+m" (*__mem) : "ir" (__val) : "memory");
-}
+   {
+  // DQ (1/10/2009): The code "ir" is translated to 'n' within EDG, and also ROSE, 
+  // and is not understood by gnu, so use 'r'.  The fix (mapping) was made to the 
+  // unparser.
+  // __asm__ __volatile__ ("lock; add{l} {%1,%0|%0,%1}" : "+m" (*__mem) : "ir" (__val) : "memory");
+     __asm__ __volatile__ ("lock; add{l} {%1,%0|%0,%1}" : "+m" (*__mem) : "ir" (__val) : "memory");
+   }
 
 #else
   #warning "Not tested on gnu 4.0 or greater versions"
