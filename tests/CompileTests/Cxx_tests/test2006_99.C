@@ -37,9 +37,11 @@ int main()
      register double angle  asm ("cx") = 0;
      register double result asm ("bx") = 0;
 
-   // DQ (1/6/2009): Trying alternative instruction name (similar to test2006_40.C)
-   //asm ("fsinx %1,%0" : "=f" (result) : "f" (angle));
-     asm ("nop" : "=f" (result) : "f" (angle));
+  // DQ (1/6/2009): Trying alternative instruction name (similar to test2006_40.C)
+  // asm ("fsinx %1,%0" : "=f" (result) : "f" (angle));
+  // asm ("nop" : "=f" (result) : "f" (angle));
+  // JJW fixed this to use a real x86 instruction
+     asm ("leaw (%1),%0" : "=S" (result) : "D" (angle));
 #endif
    }
 
