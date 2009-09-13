@@ -622,5 +622,9 @@ __complex__ long double __builtin_cpowl(const __complex__ long double& __x,const
  #define __ms_va_list va_list
 /* #endif */
 
+/*
+   DQ (9/12/2009): Avoid this GNU extension since it is a problem for EDG.
+ */
+#define _GLIBCXX_EXTERN_TEMPLATE 0
 
 #endif // !ROSE_USE_NEW_EDG_INTERFACE

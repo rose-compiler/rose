@@ -1701,8 +1701,19 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
      outputTemplateSpecializationSpecifier(decl_stmt);
      outputExternLinkageSpecifier(decl_stmt);
    #endif
+// #if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 3) || ( (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 3) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 4) )
    #if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 3) || ( (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 3) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 4) )
+
+// DQ (9/12/2009): If this is a g++ version 4.3 or later compiler then skip the extern linkage specifier,
+// but only if this is for a template declaration (does it only apply to a function). See tests: 
+// test2004_30.C, test2004_121.C, test2004_142.C, and test2004_143.C.
+   #if ( (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER >= 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 3) )
+     if (isSgTemplateInstantiationFunctionDecl(decl_stmt) == NULL && isSgTemplateInstantiationMemberFunctionDecl(decl_stmt) == NULL)
+          outputExternLinkageSpecifier(decl_stmt);
+   #else
      outputExternLinkageSpecifier(decl_stmt);
+   #endif
+
      outputTemplateSpecializationSpecifier(decl_stmt);
    #endif
 #else
