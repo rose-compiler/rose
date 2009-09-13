@@ -1,3 +1,8 @@
+2009-09-13 18:15  dquinlan
+
+	* [r7261] /trunk/ROSE/tests/roseTests/astQueryTests/testQuery.C:
+	  astQuery tests are compiler version dependent.
+
 2009-09-13 01:54  dquinlan
 
 	* [r7258] /trunk/ROSE/configure.in,
