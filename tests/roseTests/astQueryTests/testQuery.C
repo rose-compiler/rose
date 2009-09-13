@@ -42,11 +42,13 @@ main( int argc, char * argv[] )
   // Run internal consistancy tests on AST
      AstTests::runAllTests(project);
 
+  // DQ (9/12/2009): At least with GNU 4.3 and 4.4 the validValue should be 95!
   // DQ (12/5/2007): This value changed as a result of more builtin functions being added.
   // DQ (1/19/2007): I think this value changed as a result of a bug fix in ROSE (variant handling fix in sage_gen_be.C)
   // const int validValue = 55;
   // const unsigned int validValue = 89;
-     const unsigned int validValue = 91;
+  // const unsigned int validValue = 91;
+     const unsigned int validValue = 95;
 
      NodeQuerySynthesizedAttributeType returnList = NodeQuery::querySubTree(project, V_SgFunctionDeclaration);
      if (returnList.size() != validValue)

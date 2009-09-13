@@ -1314,7 +1314,6 @@ projects/MacroRewrapper/Makefile
 projects/QtDesignerPlugins/Makefile
 projects/RoseQt/Makefile
 projects/RoseQt/AstViewer/Makefile
-projects/StaticDynamicAnalysis/DynamicCPU/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
@@ -1490,6 +1489,12 @@ developersScratchSpace/Robb/DynamicLinking/Makefile
 developersScratchSpace/Robb/SemanticVerification/Makefile
 developersScratchSpace/Robb/extras/Makefile
 ])
+
+
+# DQ (9/12/2009): Removed so that this can be added properly a little later.
+# This currently breaks "make distcheck"
+# projects/StaticDynamicAnalysis/DynamicCPU/Makefile
+
 
 # DQ (12/31/2008): Skip these, since we don't have SPEC and NAS benchmarks setup yet.
 # developersScratchSpace/Dan/Fortran_tests/NPB3.2-SER/Makefile
