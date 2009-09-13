@@ -15,9 +15,7 @@ identityTranslator: ../../../../../ROSE/src/frontend/SageIII/astPostProcessing/r
 Aborted
 */
 
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
 struct A {
   static void m() {f();}
   friend void f();
 };
-#endif

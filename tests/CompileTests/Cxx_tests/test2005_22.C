@@ -40,6 +40,7 @@ Output file:
 */
 
 #if 0
+#include "rose.h"
 int main()
 
 { /* local stack #0 */
@@ -60,7 +61,7 @@ int CurrentLocationBottomOfScopeEnd;
 /* Reference marker variables to avoid compiler warnings */
   };
 
-#include "rose.h"
+
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

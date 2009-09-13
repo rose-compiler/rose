@@ -52,6 +52,7 @@ PR_ErrorToString(int code, unsigned int language)
     struct PRErrorTableList *et;
     char *cp;
 
-    callback_lookup(code, language, et->table, callback_private, et->table_private);
+   callback_lookup(code, language, et->table,
+      callback_private, et->table_private);
 
 }

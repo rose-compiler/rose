@@ -1,6 +1,8 @@
 
 #include<assert.h>
 
+void __assert_fail(const char*, const char*, int, const char*); // Not defined on OS X
+
 void foo()
    {
   // This is not a problem!

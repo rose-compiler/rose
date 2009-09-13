@@ -166,8 +166,9 @@ class Y {};
 void foo()
    {
      int i = 0;
-#if 1
+#if 0
 // DQ (8/27/2005): temporarily commented out 
+// JJW 5-22-2008 Commented this out again because it fails on Mac
 
      std::vector< SwigValueWrapper<X> > result;
 

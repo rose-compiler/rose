@@ -25,27 +25,21 @@ TEST CASES:
 Here is the command I use to run rose over each of these files:
 mytool -rose:C --edg:c99 --edg:extended_variadic_macros -c filename.c
 
-Here are each of the files I have been using as test cases, all are
-derived from source code I have seen in either Wine (winehq.com)
-or Apaches httpd.
+Here are each of the files I've been using as test cases, all are
+derived from source code i have seen in either Wine (winehq.com)
+or Apache's httpd.
 
 Each of these files compile with gcc 3.3.3
 */
 
-// DQ (1/8/2009): This was commented out, uncommented it so it can be tested with the new EDG/SageIII front-end.
-#if 1
+#if 0
 /*********asm.c*****************/
 static int inb( int port )
-   {
-     int b;
-
-  // DQ (1/10/2009): Changed "inb" to "in" for at least the 64bit case.
-  // __asm__ __volatile__ ( "inb %w1,%0" : "=a" (b) : "d" (port) );
-     __asm__ __volatile__ ( "in %w1,%0" : "=a" (b) : "d" (port) );
-
-     return b;
-   }
-
+{
+    int b; 
+    __asm__ __volatile__ ( "inb %w1,%0" : "=a" (b) : "d" (port) );
+    return b;
+}
 /******FUNCTION.c********************/
 #define xxx(len,wanted) CLIENT_ProtocolError( __FUNCTION__ ": len %d != %d\n", (len), (wanted) );
 
@@ -80,16 +74,8 @@ main(){
 }
 /*******volatile.c********************/
 __volatile__ int i;
-
 /*******zeroarray.c*************/
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
-// DQ (1/11/2009): both the old and new interface appear to generate the correct (same) code 
-// for a zero length array, but it only compiles with the backend compiler when using the 
-// new interface (even when it is the same backend comiler).
-// Example of zero length array declaration: char XXX[0];
-
 char XXX[0];
-#endif
 /******************************/
 
 #endif

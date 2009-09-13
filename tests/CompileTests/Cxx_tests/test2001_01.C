@@ -16,9 +16,9 @@ class A
    {
      public:
 #if 1
-          A();
+	 A();
 #else	 
-          A()
+	 A()
              {
             // The test code tests the unparsing of the
             // "this" pointer when it is used explicitly
@@ -31,7 +31,6 @@ class A
    };
 
 #if 1
-//Error:  This is unparsed as "void A()" within the new interface!
 A::A()
    {
   // The test code tests the unparsing of the

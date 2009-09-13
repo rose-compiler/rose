@@ -1,22 +1,22 @@
-#if 0
-Hi Dan,
-
-This function definition is legal in C++ (note middle formal argument), but crashes the ROSE unparser:
-
-void f(int length, double *, double *x)
+class BASE
 {
-   for (int i=0; i<length; ++i)
-      x[i] = -x[i] ;
+  //No user-defined constructor
+  public:
+  int i;
+  BASE():i(0){};
+};
+
+class CHILD :public BASE
+{
+public:
+  int j;
+ // copy constructor
+  explicit CHILD(const CHILD& old);
+
+};
+// refer to compiler-generated base class's constructor
+CHILD::CHILD(const CHILD& old):BASE()
+{
+  j=old.j;
 }
-
-Several function like this are in ALE3D.
-
--Jeff
-#endif
-
-void f(int length, double *, double *x)
-   {
-     for (int i=0; i<length; ++i)
-          x[i] = -x[i] ;
-   }
 

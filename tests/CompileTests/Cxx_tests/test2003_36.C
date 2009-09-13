@@ -5,11 +5,11 @@ int main()
      int x;
      switch(x)
         {
-          case 1:
+          case 1: {}
                int y;
                a++;
 #if 1
-          case 2:
+          case 2: {}
                int z;
                b++;
 #endif

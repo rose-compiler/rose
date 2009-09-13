@@ -25,7 +25,7 @@ void bar() { /***Cov bb*/ /***Cov me*/
    b.moo();
 }
 
-#else   
+#else
   #warning "Not tested on gnu 4.0 or greater versions"
 #endif
 

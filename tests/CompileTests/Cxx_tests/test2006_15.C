@@ -39,13 +39,4 @@ void get_mangled_name()
      '"';
 #endif
 #endif
-
-// DQ (1/9/2009): Added test to make sure that this works properly 
-// when the code is evaluated (not the original problem).
-#if 1
-     '"';
-#if 1
-     '"';
-#endif
-#endif
    }

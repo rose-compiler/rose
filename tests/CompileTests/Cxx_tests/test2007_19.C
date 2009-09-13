@@ -33,7 +33,6 @@ struct task_struct
 static inline __attribute__ ((always_inline))
      void __save_init_fpu (struct task_struct *tsk)
 {
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
   asm volatile ("661:\n\t" "fnsave %[fx] ;fwait;" ".byte 0x90\n"
                 ".byte 0x8d,0xb4,0x26,0x00,0x00,0x00,0x00\n"
                 ".byte 0x8d,0x74,0x26,0x00\n" "\n662:\n"
@@ -45,7 +44,6 @@ static inline __attribute__ ((always_inline))
                 "\n664:\n" ".previous"::"i" ((0 * 32 + 24)),
                 [fx] "m" (tsk->thread.i387.fxsave),
                 [fsw] "m" (tsk->thread.i387.fxsave.swd):"memory");
-#endif
 }
 
 
