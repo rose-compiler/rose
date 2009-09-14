@@ -40,8 +40,8 @@
    ),
    asserta(library_directory(TermitePath)).
 
-:- use_module(library(ast_transform)),
-   use_module(library(ast_properties)),
+:- use_module(library(asttransform)),
+   use_module(library(astproperties)),
    use_module(library(utils)).
 
 % A modifyed pretty-printer for C'
@@ -319,8 +319,8 @@ strip_ifdef(T, T).
 %-----------------------------------------------------------------------
 
 convert :-
-  read_term(Input, []),
-  compound(Input),
+  read_term(P, []),
+  compound(P),
 
   transformed_with(P, pragma_convert, [], _, P1),
   %P1 = P2,
