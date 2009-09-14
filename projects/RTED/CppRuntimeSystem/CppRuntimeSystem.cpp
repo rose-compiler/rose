@@ -48,8 +48,9 @@ void RuntimeSystem::printMessage(std::string message) {
 #ifdef ROSE_WITH_ROSEQT
   if( isQtDebuggerEnabled() ) {
     RtedDebug::instance()->addMessage(message);
-  } else
-	  cerr << "++++++++++++++++++++++++++ " << message << endl;
+  } else {
+    //cerr << "++++++++++++++++++++++++++ " << message << endl;
+  }
 #else
   cerr << "+++ QT disabled" << endl;
 #endif

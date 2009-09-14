@@ -183,7 +183,35 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
     //
     if( isConstructor( fndef -> get_declaration() )) 
       bracketWithScopeEnterExit( fndef );
+
+#if 1
+    SgTemplateInstantiationFunctionDecl* istemplate = 
+      isSgTemplateInstantiationFunctionDecl(fndef->get_parent());
+    cerr <<" ^^^^ Found definition : " << fndef->get_declaration()->get_name().str() << 
+      "  is template: " << istemplate << endl;
+    if (istemplate) {
+      SgGlobal* gl = isSgGlobal(istemplate->get_parent());
+      ROSE_ASSERT(gl);
+      Sg_File_Info* global_fi = gl->get_file_info();
+      //SgFunctionDefinition* cfunc = 
+      //	isSgFunctionDefinition(deepCopyNode(fndef)); 
+    SgTemplateInstantiationFunctionDecl* cfunc = 
+      isSgTemplateInstantiationFunctionDecl(deepCopyNode(istemplate));
+      ROSE_ASSERT(cfunc);
+      vector<SgNode*> nodes2 = NodeQuery::querySubTree(istemplate, V_SgLocatedNode);
+      vector<SgNode*>::const_iterator nodesIT2 = nodes2.begin();
+      for (; nodesIT2 != nodes2.end(); nodesIT2++) {
+	SgLocatedNode* node = isSgLocatedNode(*nodesIT2);
+	ROSE_ASSERT(node);
+	Sg_File_Info* file_info = node->get_file_info();
+	file_info->setOutputInCodeGeneration();
+	//node->set_file_info(global_fi);
+	//cerr << "copying node : " << node->class_name() << endl;
+      }
+      SageInterface::prependStatement(cfunc,gl);
+    }
   }
+#endif
 
   // add calls to register pointer change after pointer arithmetic
   BOOST_FOREACH( SgExpression* op, pointer_movements ) {

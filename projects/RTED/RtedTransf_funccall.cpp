@@ -528,7 +528,13 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
 	    	mdecl= isSgMemberFunctionDeclaration(mrefExp->getAssociatedMemberFunctionDeclaration ());
 	        name = mdecl->get_name();
 	        mangled_name = mdecl->get_mangled_name().str();
-	    } else {
+	    } else if (mrefExp) {
+	        SgMemberFunctionDeclaration* mdecl = NULL;
+		ROSE_ASSERT(mrefExp);
+	    	mdecl= isSgMemberFunctionDeclaration(mrefExp->getAssociatedMemberFunctionDeclaration ());
+	        name = mdecl->get_name();
+	        mangled_name = mdecl->get_mangled_name().str();
+	    } else   {
 	    	cerr << "This case is not yet handled : " << fcexp->get_function()->class_name() << endl;
 			exit(1);
 	    }
