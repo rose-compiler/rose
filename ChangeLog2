@@ -1,3 +1,112 @@
+2009-09-13 22:25  dquinlan
+
+	* [r7267]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_sles_9/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/cronjobs: Fixed NMI
+	  configure script to include tar and fixed crontab.
+
+2009-09-13 21:29  dquinlan
+
+	* [r7266] /trunk/ROSE/tests/CompileTests/Cxx_tests/test2008_05.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2008_06.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2008_07.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2008_08.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2008_09.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2008_10.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2008_11.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2008_11.h,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2008_12.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2008_13.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2008_14.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2008_15.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2008_16.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_01.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_02.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_03.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_04.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_05.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_06.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_07.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_08.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_09.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_10.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_11.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_12.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_13.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_14.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_15.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_16.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_17.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_18.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_23.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_24.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_25.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_26.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_27.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_28.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_29.C: Added
+	  testcodes from development directory.
+
+2009-09-13 21:07  dquinlan
+
+	* [r7265] /trunk/ROSE/tests/CompileTests/Cxx_tests/test.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2001_01.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2001_03.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2001_06.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2001_10.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2001_14.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2003_18.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2003_25.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2003_31.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2003_36.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2004_135.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2004_143.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2004_153.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2005_152.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2005_179.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2005_21.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2005_22.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2006_116.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2006_125.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2006_148.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2006_15.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2006_187.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2006_40.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2006_42.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2006_93.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2006_98.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2006_99.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2007_115.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2007_151.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2007_19.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2007_20.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2007_22.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2007_30.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2008_03.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_19.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_20.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_21.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_22.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test_int_lexemes.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test_wchars.C: Restored
+	  previously modified version of C++ specific tests.
+
+2009-09-13 20:36  dquinlan
+
+	* [r7264]
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2006_99.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2006_99.C: Fixed
+	  test code test2006_99.C to be the same as it used to be before
+	  copying for developmentScratch.
+
+2009-09-13 19:51  dquinlan
+
+	* [r7263] /trunk/ROSE/config/compiler-defs.m4,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_rhap_5/compilerTest_gnu_4.0,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/Makefile.am:
+	  Commented out tests on Cxx_tests directory of test for the call
+	  graph (fails even just for g++ 4.2).
+
 2009-09-13 18:15  dquinlan
 
 	* [r7261] /trunk/ROSE/tests/roseTests/astQueryTests/testQuery.C:
