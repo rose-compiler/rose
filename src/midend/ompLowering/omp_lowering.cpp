@@ -692,7 +692,8 @@ namespace OmpSupport
   }
 
   /* GCC's libomp uses the following translation method: 
-   * (we use array of pointers instead of structure of variables to pass data)
+   * (we use array of pointers instead of structure of variables to pass data
+   *  since the ROSE outliner does variable handling this way.)
    * 
 #include "libgomp_g.h"
 #include <stdio.h>
@@ -734,7 +735,7 @@ namespace OmpSupport
    printf("Hello,world! I am thread %d\n", *i);
    }
    */
-  void transParallelRegion (SgNode* node)
+  void transOmpParallel (SgNode* node)
   {
     // Replace the region with a call to it
 #if 0   // 
@@ -763,7 +764,7 @@ namespace OmpSupport
 #if 0 // This is not necessary since Outliner::preprocess() will call it. 
     if (!Outliner::isOutlineable(body))
     {
-      cout<<"OmpSupport::transParallelRegion() found a region body which can not be outlilned!\n"
+      cout<<"OmpSupport::transOmpParallel() found a region body which can not be outlilned!\n"
         <<body->unparseToString()<<endl;
       ROSE_ASSERT(false);
     }
@@ -833,7 +834,7 @@ namespace OmpSupport
     SgExprStatement * s2 = buildFunctionCallStmt("GOMP_parallel_end", buildVoidType(), NULL, p_scope); 
     SageInterface::insertStatementAfter(func_call, s2); 
    // SageInterface::moveUpPreprocessingInfo(s2, target, PreprocessingInfo::after); 
-   pastePreprocessingInfo(s1, PreprocessingInfo::after, save_buf2); 
+   pastePreprocessingInfo(s2, PreprocessingInfo::after, save_buf2); 
 
     // Postprocessing  to ensure the AST is legal 
     // Should not rely on this usually.
@@ -865,6 +866,149 @@ namespace OmpSupport
     insertStatementBefore(body, func_call_stmt1);
     insertStatementAfter(body, func_call_stmt2);
   }
+
+  //! Translate omp task
+  /*
+  The translation of omp task is similar to the one for omp parallel
+  Please remember to call patchUpFirstprivateVariables() before this function to make implicit firstprivate
+  variables explicit. 
+  
+  The gomp runtime function for omp task is:
+  extern void GOMP_task (void (*fn) (void *), void *data, void (*cpyfn) (void *, void *), long arg_size, long arg_align, bool if_clause, unsigned flags) 
+      1. void (*fn) (void *): the generated outlined function for the task body
+      2. void *data: the parameters for the outlined function
+      3. void (*cpyfn) (void *, void *): copy function to replace the default memcpy() from function data to each task's data
+      4. long arg_size: specify the size of data
+      5. long arg_align: alignment of the data
+      6. bool if_clause: the value of if_clause. true --> 1, false -->0; default is set to 1 by GCC
+      7. unsigned flags: untied (1) or not (0) 
+
+   Since we use the ROSE outliner to generate the outlined function. The parameters are wrapped into an array of pointers to them
+  So the calculation of data(parameter) size/align is simplified . They are all pointer types.
+  */
+ // TODO  refactor the code so transOmpTask and transOmpParallel can share most of the code
+  void transOmpTask(SgNode* node)
+  {
+    ROSE_ASSERT(node != NULL);
+    SgOmpTaskStatement* target = isSgOmpTaskStatement(node);
+    ROSE_ASSERT (target != NULL);
+
+    SgStatement * body =  target->get_body();
+    ROSE_ASSERT(body != NULL);
+
+    //Initialize outliner 
+    //always wrap parameters for outlining used during OpenMP translation
+    Outliner::useParameterWrapper = true; 
+
+    // Save preprocessing info as early as possible, avoiding mess up from the outliner
+    AttachedPreprocessingInfoType save_buf1, save_buf2;
+    cutPreprocessingInfo(target, PreprocessingInfo::before, save_buf1) ;
+    cutPreprocessingInfo(target, PreprocessingInfo::after, save_buf2) ;
+
+    //TODO there should be some semantics check for the regions to be outlined
+    //for example, multiple entries or exists are not allowed for OpenMP
+    //We should have a semantic check phase for this
+    //This is however of low priority since most vendor compilers have this already
+    SgBasicBlock* body_block = Outliner::preprocess(body);
+
+    // Variable handling is done after Outliner::preprocess() to ensure a basic block for the body,
+    // but before calling the actual outlining 
+    // This simplifies the outlining since firstprivate, private variables are replaced 
+    //with their local copies before outliner is used 
+    transOmpVariables (target, body_block);
+
+    ASTtools::VarSymSet_t syms, pSyms, fpSyms,reductionSyms, pdSyms;
+    std::set<SgInitializedName*> readOnlyVars;
+
+    string func_name = Outliner::generateFuncName(target);
+    SgGlobal* g_scope = SageInterface::getGlobalScope(body_block);
+    ROSE_ASSERT(g_scope != NULL);
+
+    // This step is less useful for private, firstprivate, and reduction variables
+    // since they are already handled by transOmpVariables(). 
+    // TODO clean up Outliner::collectVars() etc for variable handling
+    Outliner::collectVars(body_block, syms, pSyms, fpSyms, reductionSyms);
+
+    //TODO Do we want to use side effect analysis to improve the quality of outlining here
+    // SageInterface::collectReadOnlyVariables(s,readOnlyVars);
+    // ASTtools::collectPointerDereferencingVarSyms(s,pdSyms);
+    //Generate the outlined function
+    SgFunctionDeclaration* outlined_func = Outliner::generateFunction(body_block, func_name,
+        syms, pdSyms, pSyms, fpSyms, reductionSyms, g_scope);
+    Outliner::insert(outlined_func, g_scope, body_block);
+
+    // Generate a call to the outlined function
+    // Generate packing statements
+    std::string wrapper_name;
+    // must pass target , not body_block to get the right scope in which the declarations are inserted
+    wrapper_name= Outliner::generatePackingStatements(target,syms);
+    SgScopeStatement * p_scope = target->get_scope();
+    ROSE_ASSERT(p_scope != NULL);
+    // Generate a call to it
+   
+    //SgStatement* func_call = Outliner::generateCall (outlined_func, syms, readOnlyVars, wrapper_name,p_scope);
+    //ROSE_ASSERT(func_call != NULL);
+
+    // Replace the parallel region with the function call statement
+    // TODO should we introduce another level of scope here?
+    // SageInterface::replaceStatement(target,func_call, true);
+    // hide this from the unparser TODO this call statement is not really necessary, only the call expression is needed
+    //  Sg_File_Info* file_info = type_decl->get_file_info();
+    //      file_info->unsetOutputInCodeGeneration ();
+    //
+    //func_call->get_file_info()->unsetOutputInCodeGeneration (); 
+    
+    //  void GOMP_task (void (*fn) (void *), void *data, void (*cpyfn) (void *, void *), long arg_size, long arg_align, 
+    //                  bool if_clause, unsigned flags)
+    SgExpression * parameter_data = NULL;
+    SgExpression * parameter_cpyfn = NULL;
+    SgExpression * parameter_arg_size = NULL;
+    SgExpression * parameter_arg_align = NULL;
+    SgExpression * parameter_if_clause = buildIntVal(1);
+    SgExpression * parameter_untied = NULL;
+    size_t parameter_count = syms.size();
+    if ( parameter_count == 0) // No parameters to be passed at all
+    {
+      parameter_data = buildIntVal(0);
+      parameter_cpyfn=buildIntVal(0); // no copy function is needed
+      parameter_arg_size = buildIntVal(0);
+      parameter_arg_align = buildIntVal(0);
+    }
+    else
+    {
+      parameter_data =  buildAddressOfOp(buildVarRefExp(wrapper_name, p_scope));
+      parameter_cpyfn=buildIntVal(0); // no special copy function for array of pointers
+      // arg size of array of pointers = pointer_count * pointer_size
+      // ROSE does not support cross compilation so sizeof(void*) can use as a workaround for now
+      parameter_arg_size = buildIntVal( parameter_count* sizeof(void*));
+      parameter_arg_align = buildIntVal(sizeof(void*));
+    }
+
+    // TODO better translation for if clause: should be a if statement here to evaluate the value at runtime
+    if (hasClause(target, V_SgOmpIfClause))
+    {
+      cerr<<"Warning: if clause is not yet implemented for omp task..."<<endl;
+    }
+
+    if (hasClause(target, V_SgOmpUntiedClause))
+      parameter_untied = buildIntVal(1);
+    else  
+      parameter_untied = buildIntVal(0);
+
+    SgExprListExp* parameters = buildExprListExp(buildFunctionRefExp(outlined_func),
+        parameter_data, parameter_cpyfn, parameter_arg_size, parameter_arg_align, parameter_if_clause, parameter_untied);
+
+    SgExprStatement * s1 = buildFunctionCallStmt("GOMP_task", buildVoidType(), parameters, p_scope);
+    SageInterface::replaceStatement(target,s1, true);
+
+    // Keep preprocessing information
+    // I have to use cut-paste instead of direct move since 
+    // the preprocessing information may be moved to a wrong place during outlining
+    // while the destination node is unknown until the outlining is done.
+    pastePreprocessingInfo(s1, PreprocessingInfo::before, save_buf1);
+    pastePreprocessingInfo(s1, PreprocessingInfo::after, save_buf2);
+  }
+
   //! Translate the ordered directive, (not the ordered clause)
   void transOmpOrdered(SgNode* node)
   {
@@ -934,6 +1078,18 @@ namespace OmpSupport
     insertStatementAfter(body, func_call_stmt2);
   }
 
+  //! Simply replace the pragma with a function call to void GOMP_taskwait(void); 
+  void transOmpTaskwait(SgNode * node)
+  {
+    ROSE_ASSERT(node != NULL );
+    SgOmpTaskwaitStatement* target = isSgOmpTaskwaitStatement(node);
+    ROSE_ASSERT(target != NULL );
+    SgScopeStatement * scope = target->get_scope();
+    ROSE_ASSERT(scope != NULL );
+
+    SgExprStatement* func_call_stmt = buildFunctionCallStmt("GOMP_taskwait", buildVoidType(), NULL, scope);
+    replaceStatement(target, func_call_stmt, true);
+  }
 
   //! Simply replace the pragma with a function call to void GOMP_barrier (void); 
   void transOmpBarrier(SgNode * node)
@@ -1270,7 +1426,7 @@ namespace OmpSupport
     {
       case V_SgOmpParallelStatement:
         {
-          transParallelRegion(node);
+          transOmpParallel(node);
           break;
         }
       case V_SgOmpForStatement:
@@ -1410,6 +1566,162 @@ namespace OmpSupport
     }// end for omp for statments
    return result;
   } // end patchUpPrivateVariables()
+
+   //! Collect threadprivate variables within the current project, return a set to avoid duplicated elements
+   std::set<SgInitializedName*> collectThreadprivateVariables()
+   {
+     // Do the actual collection only once
+     static bool calledOnce = false;
+     static set<SgInitializedName*> result;
+
+     if (calledOnce)
+       return result;
+     calledOnce = true;
+     std::vector<SgOmpThreadprivateStatement*> tp_stmts = getSgNodeListFromMemoryPool<SgOmpThreadprivateStatement> ();
+     std::vector<SgOmpThreadprivateStatement*>::const_iterator c_iter;
+     for (c_iter = tp_stmts.begin(); c_iter != tp_stmts.end(); c_iter ++)
+     {
+       SgInitializedNamePtrList var_list = (*c_iter)->get_variables();
+       std::copy(var_list.begin(), var_list.end(), std::inserter(result, result.end()));
+     }
+     return result;
+   }
+     
+//Check if a variable that is determined to be shared in all enclosing constructs, up to and including the innermost enclosing
+//parallel construct, is shared
+// start_stmt is the start point to find enclosing OpenMP constructs. It is excluded as an enclosing construct for itself.
+// TODO: we only check if it is shared to the innermost enclosing parallel construct for now
+  static bool isSharedInEnclosingConstructs (SgInitializedName* init_var, SgStatement* start_stmt) 
+  {
+    bool result = false;
+    ROSE_ASSERT(init_var != NULL);
+    ROSE_ASSERT(start_stmt != NULL);
+    SgScopeStatement* var_scope = init_var->get_scope();
+//    SgScopeStatement* directive_scope = start_stmt->get_scope();
+    // locally declared variables are private to the start_stmt
+    // We should not do this here. It is irrelevant to this function.
+   // if (isAncestor(start_stmt, init_var))
+   //   return false;
+
+    SgOmpParallelStatement* enclosing_par_stmt  = getEnclosingNode<SgOmpParallelStatement> (start_stmt, false);
+    // Lexically nested within a parallel region
+    if (enclosing_par_stmt)
+    {
+      // locally declared variables are private to enclosing_par_stmt
+      SgScopeStatement* enclosing_construct_scope = enclosing_par_stmt->get_scope();
+      ROSE_ASSERT(enclosing_construct_scope != NULL);
+      if (isAncestor(enclosing_construct_scope, var_scope))
+        return false;
+
+      // Explicitly declared as a shared variable
+      if (isInClauseVariableList(init_var, enclosing_par_stmt, V_SgOmpSharedClause))
+        result = true;
+      else
+      {// shared by default
+        VariantVector vv(V_SgOmpPrivateClause);
+        vv.push_back(V_SgOmpFirstprivateClause);
+        vv.push_back(V_SgOmpCopyinClause);
+        vv.push_back(V_SgOmpReductionClause);
+        if (isInClauseVariableList(init_var, enclosing_par_stmt,vv))
+          result = false;
+        else
+          result = true;
+      }
+    }
+    else 
+     //the variable is in an orphaned construct
+     // The variable could be
+     // 1. a function parameter: it is private to its enclosing parallel region
+     // 2. a global variable: either a threadprivate variable or shared by default
+     // ?? any other cases?? TODO
+    {
+      if (isSgGlobal(var_scope))
+      {
+        set<SgInitializedName*> tp_vars = collectThreadprivateVariables();
+        if (tp_vars.find(init_var)!= tp_vars.end())
+          result = false; // is threadprivate
+        else 
+          result = true; // otherwise
+      }
+      else if (isSgFunctionParameterList(init_var->get_parent()))
+      {
+        // function parameters are private to its dynamically (non-lexically) nested parallel regions.
+        result = false;
+      }
+      else
+      {
+        cerr<<"Error: OmpSupport::isSharedInEnclosingConstructs() \n Unhandled variables within an orphaned construct:"<<endl;
+        dumpInfo(init_var);
+        ROSE_ASSERT(false);
+      }
+    }
+    return result;
+  } // end isSharedInEnclosingConstructs()
+
+  //! Patch up firstprivate variables for omp task. The reason is that the specification 3.0 defines rules for implicitly determined data-sharing attributes and this function will make the implicit firstprivate variable of omp task explicit.
+/*
+variables used in task block: 
+
+2.9.1.1 Data-sharing Attribute Rules for Variables Referenced in a Construct
+Ref. OMP 3.0 page 79 
+A variable is firstprivate to the task (default) , if
+** not explicitly specified by default(), shared(),private(), firstprivate() clauses
+** not shared in enclosing constructs
+
+It should also satisfy the restriction defined in specification 3.0 page 93  TODO
+* cannot be a variable which is part of another variable (as an array or structure element)
+* cannot be private, reduction
+* must have an accessible, unambiguous copy constructor for the class type
+* must not have a const-qualified type unless it is of class type with a mutable member
+* must not have an incomplete C/C++ type or a reference type
+*/
+  int patchUpFirstprivateVariables(SgFile*  file)
+  {
+    int result = 0;
+    ROSE_ASSERT(file != NULL);
+    Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(file, V_SgOmpTaskStatement);
+    Rose_STL_Container<SgNode*>::iterator iter = nodeList.begin();
+    for (; iter != nodeList.end(); iter ++)
+    {
+      SgOmpTaskStatement * target = isSgOmpTaskStatement(*iter);
+      SgScopeStatement* directive_scope = target->get_scope();
+      SgStatement* body = target->get_body();
+      ROSE_ASSERT(body != NULL);
+
+      // Find all variable references from the task's body
+      Rose_STL_Container<SgNode*> refList = NodeQuery::querySubTree(body, V_SgVarRefExp);
+      Rose_STL_Container<SgNode*>::iterator var_iter = refList.begin();
+      for (; var_iter != refList.end(); var_iter ++)
+      {
+        SgVarRefExp * var_ref = isSgVarRefExp(*var_iter);
+        ROSE_ASSERT(var_ref->get_symbol() != NULL);
+        SgInitializedName* init_var = var_ref->get_symbol()->get_declaration();
+        ROSE_ASSERT(init_var != NULL);
+        SgScopeStatement* var_scope = init_var->get_scope();
+        ROSE_ASSERT(var_scope != NULL);
+
+        // Variables with automatic storage duration that are declared in 
+        // a scope inside the construct are private. Skip them
+        if (isAncestor(directive_scope, var_scope))
+          continue;
+
+        // Skip variables already with explicit data-sharing attributes
+        VariantVector vv (V_SgOmpDefaultClause);
+        vv.push_back(V_SgOmpPrivateClause);
+        vv.push_back(V_SgOmpSharedClause);
+        vv.push_back(V_SgOmpFirstprivateClause);
+        if (isInClauseVariableList(init_var, target ,vv)) 
+          continue;
+        // Skip variables which are shared in enclosing constructs  
+        if(isSharedInEnclosingConstructs(init_var, target))
+          continue;
+        // Now it should be a firstprivate variable   
+        addClauseVariable(init_var, target, V_SgOmpFirstprivateClause);
+        result ++;
+      } // end for each variable reference
+    } // end for each SgOmpTaskStatement
+    return result;
+  } // end patchUpFirstprivateVariables()
  
   //! Bottom-up processing AST tree to translate all OpenMP constructs
   // the major interface of omp_lowering
@@ -1429,7 +1741,7 @@ namespace OmpSupport
     ROSE_ASSERT(file != NULL);
 
     patchUpPrivateVariables(file);
-
+    patchUpFirstprivateVariables(file);
 
     insertRTLHeaders(file);
     //    translationDriver driver;
@@ -1449,7 +1761,12 @@ namespace OmpSupport
       {
         case V_SgOmpParallelStatement:
           {
-            transParallelRegion(node);
+            transOmpParallel(node);
+            break;
+          }
+        case V_SgOmpTaskStatement:
+          {
+            transOmpTask(node);
             break;
           }
         case V_SgOmpForStatement:
@@ -1460,6 +1777,11 @@ namespace OmpSupport
         case V_SgOmpBarrierStatement:
           {
             transOmpBarrier(node);
+            break;
+          }
+        case V_SgOmpTaskwaitStatement:
+          {
+            transOmpTaskwait(node);
             break;
           }
         case V_SgOmpSingleStatement:

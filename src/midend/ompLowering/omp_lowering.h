@@ -9,7 +9,7 @@
 #define OMP_LOWERING_H 
 namespace OmpSupport
 {
-  //! The type of target runtime libraries
+  //! The type of target runtime libraries (not yet in use)
   // We support both Omni and GCC OpenMP runtime libraries
   enum omp_rtl_enum {
     e_omni = 0,
@@ -22,19 +22,16 @@ namespace OmpSupport
 
   void commandLineProcessing(std::vector<std::string> &argvList);
 
-  //! The top level interface
-  //void lower_omp(SgProject*);
+  //! The top level interface to translate OpenMP directives
   void lower_omp(SgSourceFile*);
 
-  //! Insert #include "xxx.h", the interface of runtime library to the compiler
-  //void insertRTLHeaders(SgProject*);
+  //! Insert #include "xxx.h", the interface of a runtime library to the compiler
   void insertRTLHeaders(SgSourceFile*);
 
   //! Only needed for Omni
   // int insertRTLinitAndCleanCode(SgProject* project); 
 
-
-  //! A driver to traverse AST trees and invoke individual translators for OpenMP constructs
+  //! A driver to traverse AST trees and invoke individual translators for OpenMP constructs, (not in use)
   //! Postorder is preferred. 
   class translationDriver: public AstSimpleProcessing
   { 
@@ -42,17 +39,33 @@ namespace OmpSupport
       void visit(SgNode*);
   }; //translationDriver
 
-  void transParallelRegion (SgNode* node);
+  //! Translate omp parallel
+  void transOmpParallel(SgNode* node);
+
+  //! Translate omp task
+  void transOmpTask(SgNode* node);
+
+  //! Translate omp for
   void transOmpFor(SgNode* node);
+
+  //! Translate omp barrier
   void transOmpBarrier(SgNode* node);
-  //! Translate the ordered directive, (not the ordered clause)
+
+  //! Translate omp taskwait
+  void transOmpTaskwait(SgNode* node);
+
+  //! Translate the ordered directive (not the ordered clause)
   void transOmpOrdered(SgNode* node);
+  //! Translate omp atomic
   void transOmpAtomic(SgNode* node);
+  //! Translate omp critical 
   void transOmpCritical(SgNode* node);
+  //! Translate omp master 
   void transOmpMaster(SgNode* node);
+  //! Translate omp single 
   void transOmpSingle(SgNode* node);
-  //! Translate OpenMP variables associated with an OpenMP pragma, such as private, firstprivate, lastprivate, reduction, etc.
-  //bb1 is the translation generated code block
+
+  //! Translate OpenMP variables associated with an OpenMP pragma, such as private, firstprivate, lastprivate, reduction, etc. bb1 is the translation generated code block in which the variable handling statements will be inserted.
   void transOmpVariables(SgStatement * ompStmt, SgBasicBlock* bb1);
 
   //! Collect all variables from OpenMP clauses associated with an omp statement: private, reduction, etc 
@@ -89,8 +102,8 @@ namespace OmpSupport
 
   //! Get OpenMP clauses from an eligible OpenMP statement
   Rose_STL_Container<SgOmpClause*>  getClause(SgOmpClauseBodyStatement* clause_stmt, const VariantT & vt);
-  //! Check if an omp for loop use static schedule or not
-  // Static schedule include: default schedule, or schedule(static[,chunk_size]) 
+
+  //! Check if an omp for loop use static schedule or not, including: default schedule, or schedule(static[,chunk_size]) 
   bool useStaticSchedule(SgOmpForStatement* omp_for);
 
   //! Return a reduction variable's reduction operation type
@@ -110,6 +123,12 @@ namespace OmpSupport
 
   //! Patch up private variables for omp for. The reason is that loop indices should be private by default and this function will make this explicit
   int patchUpPrivateVariables(SgFile*);
+
+  //! Patch up firstprivate variables for omp task. The reason is that the specification 3.0 defines rules for implicitly determined data-sharing attributes and this function will make the firstprivate variable of omp task explicit.
+  int patchUpFirstprivateVariables(SgFile*);
+
+  //! Collect threadprivate variables within the current project, return a set to avoid duplicated elements. No input parameters are needed since it finds match from memory pools
+  std::set<SgInitializedName*> collectThreadprivateVariables();
 
 } // end namespace OmpSupport  
 

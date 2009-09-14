@@ -53,7 +53,12 @@ C_TESTCODES_REQUIRED_TO_PASS = \
         spmd1.c \
         staticChunk.c \
         subteam.c \
-        subteam2.c
+        subteam2.c \
+        task_largenumber.c \
+        task_orphaned.c \
+        task_underIf.c \
+        task_untied.c \
+        task_wait.c
 # a subset of C tests can be executed	
 # Put their object files with main entries here
 C_MAIN_Objects = \
@@ -97,7 +102,12 @@ C_MAIN_Objects = \
 	single.o \
 	subteam.o \
 	subteam2.o \
-        spmd1.o
+        spmd1.o \
+        task_largenumber.o
+# nested tasks: tricky handling for variables:  parent task's auto variable may not be accessed by child's task!!!	
+#	task_untied.o
+# TODO task-wait hangs for gcc 4.4.1 (not for Intel icc), skip the execution for now	
+#	task_wait.o
 
 CXX_TESTCODES_REQUIRED_TO_PASS = 
 
@@ -119,18 +129,13 @@ TESTCODE_CURRENTLY_FAILING = \
         recursive.c \
         section.c \
         single_copyprivate.c \
-        task_largenumber.c \
         task_link.cpp \
-        task_orphaned.c \
-        task_underIf.c \
-        task_untied.c \
-        task_wait.c \
+        task_tree.cpp \
         threadProcessor.c \
         threadprivate.c \
         threadprivate2.c \
         threadprivate3.c \
-        variables.c \
-        task_tree.cpp
+        variables.c
 
 # we reuse the OpenMP sources files from the OpenMP compile test directory
 TEST_DIR = $(top_srcdir)/tests/CompileTests/OpenMP_tests

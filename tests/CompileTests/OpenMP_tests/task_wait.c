@@ -15,7 +15,9 @@
  * 9/15/2008
  */
 #include <stdio.h>
-unsigned long int input = 50;
+#include <assert.h>
+
+unsigned long int input = 40;
 
 unsigned long int fib(unsigned long int n) {
   unsigned long int i, j;
@@ -43,5 +45,6 @@ int main()
     }
   }
   printf("Fibonacci number for %d is:%u\n",input, result);
+  assert(result == 102334155);
   return 0;
  }
