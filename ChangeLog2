@@ -1,3 +1,10 @@
+2009-09-14 22:13  dquinlan
+
+	* [r7282] /trunk/ROSE/scripts/importRoseDistributionToSVN,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/quinlanTests.sh:
+	  Commented out requirement for OSX binary in distribution (until
+	  ninjai is rebooted).
+
 2009-09-14 18:30  liao6
 
 	* [r7277] /trunk/ROSE/docs/Rose/rose.cfg.in,
