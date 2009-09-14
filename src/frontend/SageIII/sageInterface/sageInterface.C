@@ -7379,6 +7379,10 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
      }
     else // empty file, attach it after SgGlobal,TODO it is not working for unknown reason!!
      {
+       cerr<<"SageInterface::insertHeader() Empty file is found!"<<endl;
+       cerr<<"#include xxx is  preprocessing information which has to be attached  to some other  located node (a statement for example)"<<endl;
+       cerr<<"You may have to insert some statement first before inserting a header"<<endl;
+       ROSE_ASSERT(false);
        result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
                 content, "Transformation generated",0, 0, 0, PreprocessingInfo::after);
        ROSE_ASSERT(result);

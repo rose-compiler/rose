@@ -439,6 +439,7 @@ INPUT                  = \
                          @top_srcdir@/src/frontend/SageIII/virtualCFG \
 			 @top_srcdir@/src/frontend/SageIII/virtualCFG/virtualBinCFG.C \
 			 @top_srcdir@/src/frontend/ExecFormats \
+                         @top_srcdir@/src/midend/ompLowering \
                          @top_srcdir@/src/midend/midend.docs \
                          @top_srcdir@/src/midend/astDiagnostics/AstDiagnostics.docs \
                          @top_srcdir@/src/midend/astInlining/documentation.docs \
@@ -528,6 +529,7 @@ EXCLUDE                = @top_srcdir@/AST_RewriteMechanism/testRewrite.h \
                          @top_srcdir@/AST_RewriteMechanism/test1.C \
                          @top_srcdir@/AST_RewriteMechanism/inputProgram1.C \
                          @top_srcdir@/src/frontend/SageIII/sageInterface/highLevelInterface.h \
+                         @top_srcdir@/src/midend/ompLowering/libgomp_g.h \
                          @top_srcdir@/util/testStrings.C \
                          @top_srcdir@/util/roseString.h \
                          @top_srcdir@/util/roseString.C \
