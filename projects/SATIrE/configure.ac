@@ -238,6 +238,7 @@ examples/Makefile
 tools/Makefile
 tools/icfgbuilder/Makefile
 tools/loopbounds/Makefile
+tools/wcetcc/Makefile
 ])
 
 AC_OUTPUT

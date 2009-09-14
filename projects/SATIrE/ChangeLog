@@ -1,4 +1,4 @@
-V0.?.? ? AP,...
+V0.?.? ? AP,GB,DE,FB...
 
 * Provided analyzers [GB]
   - A number of SATIrE analyzers are now compiled into a shared library for
@@ -9,7 +9,20 @@ V0.?.? ? AP,...
 * Build system [AP,GB]
   - Using libtool to create dynamic libraries.
 
-* Termite [AP,GB,DE,FB]
+* CLANG support [DE,FB,AP]
+  - Integration of clang frontend from the LLVM project.
+    Check out 'make clang'.
+  - Analyzers can now take TERMITE files as input. (New option
+	--input-termite-ast=<FILE>)
+  - With above two features it is now possible to build an analyzer
+	without using the EDG frontend.
+
+* TuBound Analyzers [AP]
+  - The loop analysis core from TuBound is now available as a standalone
+	tool, check out tools/loopbounds.
+  - The wcetC backend is now available under tools/wcetcc.
+
+* Termite [AP,GB]
   - New (optional) dependency: SWI-Prolog >= 5.6
     (auto-detected by ./configure, or use --with-swi-prolog=[yes,no])
 	* When enabled, all Term I/O will be handled by libpl, bringing
@@ -21,11 +34,9 @@ V0.?.? ? AP,...
   - Correct generation of container nodes even when the list of successors
     is empty (arity used to be broken).
   - Added preprocessing info nodes.
-  - Integration of clang frontend from the LLVM project. [DE,FB]
-  - Analyzers can now take TERMITE files as input. (New option
-	--input-termite-ast=<FILE>)
   - New termite_lint utility checks for sanity of Termite terms.
-  - Termite now comes with a manual. Check out docs/termite.pdf!
+  - Termite now comes with a manual.
+	Check out docs/termite.pdf and docs/termite-html/index.html!
 
 * Building SATIrE without PAG [GB]
   - SATIrE can now be built without requiring PAG; use --without-pag
