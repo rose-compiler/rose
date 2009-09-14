@@ -324,7 +324,7 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->verbatimArgsOn();
   } else if ((!optionMatchPrefix(argv[i], "-") && !optionMatchPrefix(argv[i],"--")) ) {
     /* handle as filename, pass filenames through */
-    cout << "Found input file name '" << argv[i] << "'." << endl;
+    cout << "Adding source file '" << argv[i] << "'." << endl;
  // GB (2008-06-02): Using appendInputFile here; this method sets the input
  // file name, appends the name to the command line, and increments the file
  // name counter.
