@@ -84,6 +84,7 @@ echo "**************************************************************"
 echo "* Failing test on Suse Linux version 9 (link problem wrong version of libstdc++.so) *"
 echo "**************************************************************"
 # DQ (9/9/2009): New error: 
+#    /prereq/gcc-4.2.4/lib/../lib64/libstdc++.so: undefined reference to `_Unwind_GetIPInfo@GCC_4.2.0'
 ./submit.sh build_configs/x86_64_sles_9/minimal_default
 
 
