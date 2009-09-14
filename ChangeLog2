@@ -1,3 +1,28 @@
+2009-09-14 18:30  liao6
+
+	* [r7277] /trunk/ROSE/docs/Rose/rose.cfg.in,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/midend/ompLowering/omp_lowering.cpp,
+	  /trunk/ROSE/src/midend/ompLowering/omp_lowering.h,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/task_largenumber.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/task_untied.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/task_wait.c,
+	  /trunk/ROSE/tests/roseTests/ompLoweringTests/Makefile.am: Added
+	  translation support for OpenMP task targeting GCC/GOMP 4.4.x
+	  
+
+2009-09-14 18:26  panas2
+
+	* [r7276]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/support.h,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/templates/simple_template_function2.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/templates/simple_template_function2.ok_msg:
+	  Changes to so that make check passes with and without RoseQt
+
 2009-09-13 22:25  dquinlan
 
 	* [r7267]
