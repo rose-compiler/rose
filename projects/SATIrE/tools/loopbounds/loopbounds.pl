@@ -802,5 +802,5 @@ main :-
   halt.
 
 main :-
-  writeln('% Usage: loopbounds.pl <Input >Output'),
+  writeln('% Usage: loopbounds <Input >Output'),
   halt(1).
