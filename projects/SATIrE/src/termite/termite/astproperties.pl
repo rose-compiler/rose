@@ -32,6 +32,8 @@
 	   function_body/2,
 	   
 	   pragma_text/2,
+	   get_annot/3,
+	   get_annot_term/3,
 	   
 	   get_preprocessing_infos/2]).
 
@@ -429,6 +431,24 @@ pragma_text(Pragma, Text) :-
 pragma_text(pragma_declaration(pragma(pragma_annotation(String, _), _, _),
 			       _, _, _),
 	    String).
+
+%% get_annot(+Stmts, -Annotterm, -Pragma)
+% Find Pragma in Stmts and treat its contents as a Prolog term.
+% If successuful, unify AnnotTerm with the parsed term.
+get_annot(Stmts, AnnotTerm, Pragma) :-
+  member(Pragma, Stmts),
+  pragma_text(Pragma, Text),
+  (atom(Text)
+  -> atom_to_term(Text, AnnotTerm, _)
+  ;  AnnotTerm = Text).
+
+%% get_annot_term(?Stmts, ?Annotterm, ?Pragma)
+% Quicker version of get_annot/3 without term parsing.
+get_annot_term(Stmts, AnnotTerm, Pragma) :-
+  pragma_text(Pragma, AnnotTerm),
+  member(Pragma, Stmts).
+
+
 
 %% get_preprocessing_infos(+Node, -PPIs)
 % Todo: move to annot.pl!

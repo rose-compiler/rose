@@ -200,14 +200,6 @@ write_loopbound(_) :-
   maplist(write, ['WCET_LOOP_BOUND (', 4294967295, ')']),
   nl.
 
-%% get_annot(+Stmts, -Annotterm, -Pragma) is nondet.
-get_annot(Stmts, AnnotTerm, Pragma) :-
-  member(Pragma, Stmts),
-  pragma_text(Pragma, Text),
-  (atom(Text)
-  -> atom_to_term(Text, AnnotTerm, _)
-  ;  AnnotTerm = Text).
-
 % output scope-specific things
 unparse_scope(UI, Bb) :- 
   Bb = basic_block(List, _,_,_),

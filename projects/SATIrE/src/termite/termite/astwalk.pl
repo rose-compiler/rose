@@ -138,9 +138,7 @@ find_function(P, FunctionTemplate, P3) :-
   find_function1(P2, FunctionTemplate, P3).
 
 find_function(P, FunctionTemplate, P4) :-
-  unzip(P, source_file(global(_Funcs, _A1, _Ai, _F1),
-		       null, _A2, _Ai2, _F2),
-	_), !,
+  unzip(P, source_file(global(_Funcs, _A1, _Ai, _F1), _A2, _Ai2, _F2), _), !,
   down(P, 1, P1),
   down(P1, 1, P2),
   down(P2, 1, P3),

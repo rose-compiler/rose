@@ -461,21 +461,6 @@ insert_annot(while_stmt(Expr,basic_block(XS, A1, Fi1), A2, Fi2),
 	     while_stmt(Expr,basic_block(XS1, A1, Fi1), A2, Fi2)) :-
   append(XS, [Annot], XS1).
 
-% get_annot_term/3:
-%% get_annot_term(+Stmts, ?Annotterm, ?Pragma) is semidet.
-% quicker version of get_annot/3 without string conversion
-get_annot_term(Stmts, AnnotTerm, Pragma) :-
-  pragma_text(Pragma, AnnotTerm),
-  member(Pragma, Stmts).
-
-%% get_annot(+Stmts, -Annotterm, -Pragma) is nondet.
-get_annot(Stmts, AnnotTerm, Pragma) :-
-  member(Pragma, Stmts),
-  pragma_text(Pragma, Text),
-  (atom(Text)
-  -> atom_to_term(Text, AnnotTerm, _)
-  ;  AnnotTerm = Text).
-
 replace_loopbody(for_statement(Init, Test, Incr,
 			       _, A, Ai, Fi),
 		 Body,

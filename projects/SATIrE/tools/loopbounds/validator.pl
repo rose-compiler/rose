@@ -150,15 +150,6 @@ assertions(y, y, y, global(Decls, An, Ai, Fi),
 
 assertions(I, I, I, Term, Term).
 
-%% get_annot(+Stmts, -Annotterm, -Pragma) is nondet.
-get_annot(Stmts, AnnotTerm, Pragma) :-
-  member(Pragma, Stmts),
-  pragma_text(Pragma, Text),
-  (atom(Text)
-  -> atom_to_term(Text, AnnotTerm, _)
-  ;  AnnotTerm = Text).
-
-
 %-----------------------------------------------------------------------  
 
 main :-

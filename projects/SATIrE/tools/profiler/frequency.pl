@@ -53,7 +53,6 @@
 
 % ast_walk/6: main traversal.
 ast_walk(P, Function, Marker, CallGraph-Target, PM, P4) :-
-  gtrace,
 %  catch(term_match(Function, function_declaration), _, ( !, fail ) ),
   ( goto_function(P, Function, P1)
   ; format('**ERROR: Could not locate function ~w.', [Function]),
