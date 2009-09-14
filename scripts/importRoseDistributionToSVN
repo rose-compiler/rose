@@ -127,13 +127,14 @@ else
   exit 3
 fi
 
-EDG_BINARIES3=($(ls ${ROSE_DIST_DIR}/src/frontend/CxxFrontend/roseBinaryEDG-i686-apple-darwin*.tar.gz))
-if [ ${EDG_BINARIES3[0]} ]; then
-   echo Found the EDG binaries for i686-apple-darwin as expected. It is ${EDG_BINARIES3[@]}. 
-else 
-  echo Fatal Error: No EDG binaries for i686-apple-darwin are available. 
-  exit 3
-fi
+# DQ (9/14/2009): While ninjai is too slow to be useful, skip the OSX binary requirement.
+# EDG_BINARIES3=($(ls ${ROSE_DIST_DIR}/src/frontend/CxxFrontend/roseBinaryEDG-i686-apple-darwin*.tar.gz))
+# if [ ${EDG_BINARIES3[0]} ]; then
+#    echo Found the EDG binaries for i686-apple-darwin as expected. It is ${EDG_BINARIES3[@]}. 
+# else 
+#   echo Fatal Error: No EDG binaries for i686-apple-darwin are available. 
+#   exit 3
+# fi
 
 # Now we can upload the package
 #--------------------------------------------------------
