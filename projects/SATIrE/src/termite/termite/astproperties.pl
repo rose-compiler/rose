@@ -422,14 +422,13 @@ function_body(function_declaration(_, function_definition(Body, _, _,_),
 pragma_text(Pragma, Text) :-
   var(Pragma), !,
   Pragma = pragma_declaration(
-               pragma(pragma_annotation(Text, preprocessor_info([])),
+               pragma(pragma_annotation(Text),
 		      analysis_result(null), null),
 			      default_annotation(null, preprocessor_info([])),
 			      analysis_result(null, null), null).
 
 % +Pragma -Text
-pragma_text(pragma_declaration(pragma(pragma_annotation(String, _), _, _),
-			       _, _, _),
+pragma_text(pragma_declaration(pragma(pragma_annotation(String), _,_), _,_,_),
 	    String).
 
 %% get_annot(+Stmts, -Annotterm, -Pragma)

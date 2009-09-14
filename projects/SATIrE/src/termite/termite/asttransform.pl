@@ -620,7 +620,8 @@ unparse1(UI, aggregate_initializer(Es, _, _, _)) :- !,
 unparse1(UI, assign_initializer(E, _, _, _)) :- !,
   write(''), unparse(UI, E).
 
-unparse1(_UI, pragma_declaration(pragma(pragma_annotation(Text,_),_, _), _, _, _)) :- !,
+unparse1(_UI, pragma_declaration(Pragma, _, _, _)) :-
+  Pragma = pragma(pragma_annotation(Text), _, _), !,
   write('#pragma '), write(Text).
 unparse1(_UI, null) :- !.
 

@@ -7,6 +7,6 @@ frequency_SOURCES=
 
 frequency: frequency.pl Makefile
 	TERMITE_LIB=$(top_srcdir)/src/termite/termite \
-	  $(SWI_PL) -q -t main -o frequency -c $(srcdir)/frequency.pl
+	  $(SWI_PLC) -o frequency -c $(srcdir)/frequency.pl
 
 endif

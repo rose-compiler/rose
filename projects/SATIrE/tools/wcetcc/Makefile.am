@@ -7,6 +7,6 @@ wcetcc_SOURCES=
 
 wcetcc: wcetcc.pl Makefile
 	TERMITE_LIB=$(top_srcdir)/src/termite/termite \
-	  $(SWI_PL) -q -t main -o wcetcc -c $(srcdir)/wcetcc.pl
+	  $(SWI_PLC) -o wcetcc -c $(srcdir)/wcetcc.pl
 
 endif

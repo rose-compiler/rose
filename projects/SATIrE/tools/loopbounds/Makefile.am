@@ -8,7 +8,7 @@ loopbounds_SOURCES=
 
 loopbounds: loopbounds.pl Makefile
 	TERMITE_LIB=$(top_srcdir)/src/termite/termite \
-	  $(SWI_PL) -q -t main -o loopbounds -c $(srcdir)/loopbounds.pl
+	  $(SWI_PLC) -o loopbounds -c $(srcdir)/loopbounds.pl
 	perl -pi -e 's!exec(.*)--.*!(satire_driver --run-pointsto-analysis \$$@ --output-term=tmp_satire.term>/dev/null) || exit \$$?\nexec \1 <tmp_satire.term!' loopbounds
 
 endif

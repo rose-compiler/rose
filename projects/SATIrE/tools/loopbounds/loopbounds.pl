@@ -1,4 +1,4 @@
-#!/usr/bin/pl -q  -O  -L64M -G64M -t main -s 
+#!/usr/bin/pl -q  -O -L0 -G0 -T0 -t main -s 
 % -*- prolog -*-
 
 %% :- module(loopbounds,[main/0]).
@@ -525,11 +525,15 @@ expr_constr(subtract_op(E1, E2, _, _, _), Map, Expr) :-
 expr_constr(and_op(E1, E2, _, _, _), Map, Expr) :-
   expr_constr(E1, Map, Expr1),
   expr_constr(E2, Map, Expr2),
+  number(Expr1),
+  number(Expr2),
   Expr is Expr1 /\ Expr2.
 
 expr_constr(or_op(E1, E2, _, _, _), Map, Expr) :-
   expr_constr(E1, Map, Expr1),
   expr_constr(E2, Map, Expr2),
+  number(Expr1),
+  number(Expr2),
   Expr is Expr1 \/ Expr2.
 
 expr_constr(Min2Func, Map, Expr) :-

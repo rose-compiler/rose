@@ -138,6 +138,7 @@ AS_IF([test "x$with_swi_prolog" = xyes],
        AC_SUBST([SWI_PROLOG_LDADD], ["-Wl,-rpath $PLLIB -L$PLLIB -lpl"])
        AC_SUBST([SWI_PROLOG_HOME_DIR], ["$PLBASE"])
        AC_SUBST([SWI_PROLOG_INCLUDE_DIR], ["$PLBASE/include"])
+       AC_SUBST([SWI_PLC], ["$PL -q -t main -O -L0 -G0 -T0"])
        AC_DEFINE([HAVE_SWI_PROLOG], [1], [Define if you have SWI Prolog])
        AC_MSG_RESULT([Termite will be built with SWI-Prolog support.])
        have_swi_prolog=1],

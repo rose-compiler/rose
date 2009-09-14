@@ -87,7 +87,7 @@ my_unparse1(UI, default_option_stmt(E1, _, _, _Fi)) :- !,
   write('default '), write(': '), unparse_scope(UI, E1).
 
 
-my_unparse1(_UI, pragma_declaration(pragma(pragma_annotation(Text,_), _Ai, _Fi),
+my_unparse1(_UI, pragma_declaration(pragma(pragma_annotation(Text), _Ai, _Fi),
 			      _An, _Ai1, _Fi1)) :- 
   !, nl, write('#pragma '), write(Text).
 
