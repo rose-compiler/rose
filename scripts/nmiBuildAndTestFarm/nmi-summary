@@ -80,7 +80,7 @@ NMITask = Struct.new(
 )
 
 
-class NMIRun
+NMIRun.class_eval do
     def initialize( *args )
         super *args
         self.description = $1 if self.description =~ /^minimal configuration options,\s*(.*)$/
@@ -89,6 +89,15 @@ class NMIRun
     def task( name )
         task = tasks.find{ |t| t.name == name.to_s }
         task ? task.result : "N/A"
+    end
+
+    def summarize_tasks
+        case result
+        when /removed/i
+            [ "Run Removed --------------------", nil, nil ]
+        else
+            [ :configure, :make, :check ].map{|t| task(t) }
+        end
     end
 end
 
@@ -163,7 +172,7 @@ def summarize_day( date, range = DefaultRange )
             (r.start ? "#{r.start.hour}:#{r.start.min}" : ""), 
             r.platform[0..25], 
             r.description[0..89].gsub(/\n/, ' '),
-            r.task(:configure), r.task(:make), r.task(:check)
+            *r.summarize_tasks
         )
     end
 
