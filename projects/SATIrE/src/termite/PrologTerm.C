@@ -119,9 +119,6 @@ bool init_termite(int argc, char **argv, bool interactive)
   // this file is compiled. It will then be hardcoded in the library, which
   // is not very nice, but somewhat reasonable.
   // (see http://www.swi-prolog.org/FAQ/FindResources.html for info)
-#ifndef SWI_HOME_DIR
-#error "SWI_HOME_DIR macro is not defined!"
-#endif
   setenv("SWI_HOME_DIR", SWI_HOME_DIR, /* overwrite = */ 0);
 
   return PL_initialise(ac, av);

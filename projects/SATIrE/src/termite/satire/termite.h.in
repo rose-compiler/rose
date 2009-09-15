@@ -11,6 +11,8 @@
 #define HAVE_SWI_PROLOG @have_swi_prolog@
 #endif
 
+#define SWI_HOME_DIR "@SWI_PROLOG_HOME_DIR@"
+
 #define DEBUG_TERMITE 0
 
 #include "PrologTerm.h"

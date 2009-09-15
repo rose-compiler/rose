@@ -76,6 +76,8 @@ local_newanalysis_script: $(top_srcdir)/src/analyzer/skeletons/*
 	   local_include_dir
 	cp $(top_builddir)/src/termite/satire/termite.h \
 	   local_include_dir
+	cp $(top_builddir)/src/satire/satire_rose.h \
+	   local_include_dir
 
 # Build an analyzer directory for each analysis and initialize it using the
 # newanalysis script.
@@ -132,7 +134,7 @@ satire/satiredfa.h: $(foreach a, $(X_ANALYZERS), satire/$(a)_implementation.h)
 		cp `printf %s/%s_implementation.h $$a $$a` satire; \
 	done
 
-INCLUDES = -I$(top_srcdir)/src/satire \
+INCLUDES = -I$(top_builddir)/src/satire \
        -I$(top_srcdir)/src/termite/satire \
        -I$(top_builddir)/src/termite/satire \
        -I$(top_srcdir)/src/analyzer/annotation/satire \

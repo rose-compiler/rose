@@ -1,4 +1,7 @@
-INCLUDES = -I$(top_srcdir)/src/satire -I$(top_srcdir)/src/analyzer/icfgbuilder -I$(top_srcdir)/src/grato
+INCLUDES = \
+	-I$(top_builddir)/src/satire \
+	-I$(top_srcdir)/src/analyzer/icfgbuilder \
+	-I$(top_srcdir)/src/grato
 
 noinst_PROGRAMS = pig
 

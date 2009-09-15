@@ -14,7 +14,7 @@ libsatire_la_LIBADD = analyzer/icfgbuilder/libIcfgBuilder.la \
                       analyzer/support/libAnalysisSupport.la \
                       analyzer/provided/pointsto/libPointsTo.la
 
-INCLUDES = -I$(top_srcdir)/src/satire \
+INCLUDES = -I$(top_builddir)/src/satire \
        -I$(top_srcdir)/src/termite/satire \
        -I$(top_builddir)/src/termite/satire \
        -I$(top_srcdir)/src/analyzer/annotation/satire \

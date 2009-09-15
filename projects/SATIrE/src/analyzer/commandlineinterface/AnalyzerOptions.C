@@ -3,6 +3,7 @@
 
 // todo: inheritance mechanism for help text (w/ automagic "[default]" labelling)
 
+#include <satire_rose.h>
 #include "AnalyzerOptions.h"
 #include <iostream>
 #include <cstring>
@@ -173,7 +174,10 @@ std::string AnalyzerOptions::toString() {
 }
 
 std::string AnalyzerOptions::getOptionsInfo() {
-  return "\n Usage: "+getProgramName()+" [OPTION]... <filename1> <filename2> ... \n\n "+getHelpOptionsText();
+  return "\nUsage: "+getProgramName()
+    +" [OPTION]... <filename1> <filename2> ... \n\n "+getHelpOptionsText()
+    +"\nThis program was built against "+SATIRE_PACKAGE_STRING+",\n"
+    +"please report bugs to "+SATIRE_PACKAGE_BUGREPORT+".\n\n";
 }
 
 #define STRING_ATTR(attrname,defaultval) \

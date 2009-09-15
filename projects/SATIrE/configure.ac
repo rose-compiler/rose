@@ -29,74 +29,74 @@ AS_IF([test "x$LIBTOOL" = x],[AC_MSG_FAILURE([Please install libtool])])
 # ROSE PATH
 ROSEDIR='/opt/rose'
 AC_ARG_WITH(rosedir,
-           [  --with-rosedir=DIR           ROSE install path (default in /opt/rose)],
-           [ROSEDIR="$withval"])
+  [  --with-rosedir=DIR           ROSE install path (default in /opt/rose)],
+  [ROSEDIR="$withval"])
 AC_SUBST(ROSEDIR)
 
 ROSE_INCLUDE_DIR="$ROSEDIR/include"
 AC_ARG_WITH(rose_includedir,
-           [  --with-rose-includedir=DIR   ROSE include path (default in /opt/rose/include)],
-           [ROSE_INCLUDE_DIR="$withval"])
+  [  --with-rose-includedir=DIR   ROSE include path (default in /opt/rose/include)],
+  [ROSE_INCLUDE_DIR="$withval"])
 AC_SUBST(ROSE_INCLUDE_DIR)
 
 ROSE_LIB_DIR="$ROSEDIR/lib"
 AC_ARG_WITH(rose_libdir,
-           [  --with-rose-libdir=DIR       ROSE library path (default in /opt/rose/lib)],
-           [ROSE_LIB_DIR="$withval"])
+  [  --with-rose-libdir=DIR       ROSE library path (default in /opt/rose/lib)],
+  [ROSE_LIB_DIR="$withval"])
 AC_SUBST(ROSE_LIB_DIR)
 
 # PAG PATH
 AC_ARG_WITH([pag],
-            [AS_HELP_STRING([--without-pag],
-                            [disable support for PAG])],
-            [],
-            [with_pag=yes])
+   [AS_HELP_STRING([--without-pag],
+          [disable support for PAG])],
+   [],
+   [with_pag=yes])
 
 PAGDIR='/opt/pag'
 AC_ARG_WITH(pagdir,
-           [  --with-pagdir=DIR            PAG install path (default in /opt/pag)],
-           [with_pag=yes
-            PAGDIR="$withval"])
+  [  --with-pagdir=DIR            PAG install path (default in /opt/pag)],
+  [with_pag=yes
+   PAGDIR="$withval"])
 AC_SUBST(PAGDIR)
 
 PAG_INCLUDE_DIR="$PAGDIR/include"
 AC_ARG_WITH(pag_includedir,
-           [  --with-pag-includedir=DIR    PAG include path (default in /opt/pag/include)],
-           [with_pag=yes
-            PAG_INCLUDE_DIR="$withval"])
+  [  --with-pag-includedir=DIR    PAG include path (default in /opt/pag/include)],
+  [with_pag=yes
+   PAG_INCLUDE_DIR="$withval"])
 AC_SUBST(PAG_INCLUDE_DIR)
 
 PAG_LIB_DIR="$PAGDIR/lib/pag"
 AC_ARG_WITH(pag_libdir,
-           [  --with-pag-libdir=DIR        PAG library path (default in /opt/pag/lib)],
-           [with_pag=yes
-            PAG_LIB_DIR="$withval"])
+  [  --with-pag-libdir=DIR        PAG library path (default in /opt/pag/lib)],
+  [with_pag=yes
+   PAG_LIB_DIR="$withval"])
 AC_SUBST(PAG_LIB_DIR)
 
 # BOOST PATH
 BOOSTDIR='/usr'
 AC_ARG_WITH(boostdir,
-           [  --with-boostdir=DIR          Boost install path (default in /usr)],
-           [BOOSTDIR="$withval"])
+  [  --with-boostdir=DIR          Boost install path (default in /usr)],
+  [BOOSTDIR="$withval"])
 AC_SUBST(BOOSTDIR)
 
 BOOST_INCLUDE_DIR="$BOOSTDIR/include"
 AC_ARG_WITH(boost_includedir,
-           [  --with-boost-includedir=DIR  Boost include path (default in /usr/include)],
-           [BOOST_INCLUDE_DIR="$withval"])
+  [  --with-boost-includedir=DIR  Boost include path (default in /usr/include)],
+  [BOOST_INCLUDE_DIR="$withval"])
 AC_SUBST(BOOST_INCLUDE_DIR)
 
 BOOST_LIB_DIR="$BOOSTDIR/lib"
 AC_ARG_WITH(boost_libdir,
-           [  --with-boost-libdir=DIR      Boost library path (default in /usr/lib)],
-           [BOOST_LIB_DIR="$withval"])
+  [  --with-boost-libdir=DIR      Boost library path (default in /usr/lib)],
+  [BOOST_LIB_DIR="$withval"])
 AC_SUBST(BOOST_LIB_DIR)
 
 # additional Boost stuff: it encodes the compiler version into its lib names
 BOOST_COMPILER_STRING="gcc42"
 AC_ARG_WITH(boost_compiler_string,
-           [  --with-boost-compiler-string=STR    Boost compiler string (default: gcc42)],
-           [BOOST_COMPILER_STRING="$withval"])
+  [  --with-boost-compiler-string=STR    Boost compiler string (default: gcc42)],
+  [BOOST_COMPILER_STRING="$withval"])
 
 
 # Check for SWI-Prolog (optional)
@@ -116,20 +116,20 @@ PLLIBS=`$PL --dump-runtime-variables |grep PLLIBS |sed 's/"/ /g' |awk -F= '{prin
 PLCFLAGS=`$PL --dump-runtime-variables |grep PLCFLAGS |sed 's/"/ /g' |awk '{print $2}'`
 PLLIB="$PLBASE/lib/$PLARCH"
 AC_ARG_WITH([swi-prolog],
-            [AS_HELP_STRING([--with-swi-prolog],
-              [enable SWI-Prolog in Termite (recommended)  @<:@default=check@:>@])],
-            [],
-            [with_swi_prolog=check])
+   [AS_HELP_STRING([--with-swi-prolog],
+     [enable SWI-Prolog in Termite (recommended)  @<:@default=check@:>@])],
+   [],
+   [with_swi_prolog=check])
           
 AS_IF([test "x$with_swi_prolog" != xno],
       [AC_CHECK_LIB([pl], [PL_toplevel],
-                    [with_swi_prolog=yes],
-                    [if test "x$with_swi_prolog" != xcheck; then
-                       AC_MSG_FAILURE([--with-swi_prolog was given, but test for SWI Prolog failed])
-                     else
+           [with_swi_prolog=yes],
+           [if test "x$with_swi_prolog" != xcheck; then
+     AC_MSG_FAILURE([--with-swi_prolog was given, but test for SWI Prolog failed])
+            else
 		       with_swi_prolog=no
-                     fi],
-                    [$PLCFLAGS $PLLIBS -L$PLLIB])],
+            fi],
+           [$PLCFLAGS $PLLIBS -L$PLLIB])],
       [with_swi_prolog=no])
 
 AS_IF([test "x$with_swi_prolog" = xyes],
@@ -159,19 +159,19 @@ CBMC=`which cbmc-2-9-i686-linux`
 CBMCHOME=`dirname $CBMC`/..
 
 AC_ARG_WITH([cbmc],
-            [AS_HELP_STRING([--with-cbmc],
-              [enable CBMC model checker (optional) @<:@default=check@:>@])],
-            [],
-            [with_cbmc=check])
+   [AS_HELP_STRING([--with-cbmc],
+     [enable CBMC model checker (optional) @<:@default=check@:>@])],
+   [],
+   [with_cbmc=check])
           
 AS_IF([test "x$with_cbmc" != xno],
       AS_IF([test "x$CBMC" != x],
-            [with_cbmc=yes],
-            [if test "x$with_cbmc" != xcheck; then
-             AC_MSG_FAILURE([--with-cbmc was given, but test for CBMC failed])
+   [with_cbmc=yes],
+   [if test "x$with_cbmc" != xcheck; then
+    AC_MSG_FAILURE([--with-cbmc was given, but test for CBMC failed])
 	     else
 	       with_cbmc=no
-             fi]),
+    fi]),
       [with_cbmc=no])
 
 AS_IF([test "x$with_cbmc" = xyes],
@@ -194,25 +194,25 @@ AC_SUBST(have_cbmc)
 #-----------------------------------
 AS_IF([test "x$with_pag" != xno],
       [AC_CHECK_LIB([pag], [pag_version],
-                    [AC_MSG_RESULT([found PAG])
-                     AC_DEFINE([HAVE_PAG], [1], [Define if you have PAG])],
-                    [AC_MSG_FAILURE(
-                        [PAG test failed (--without-pag to disable, --with-pag* to fix paths)])],
-                    [-L${PAG_LIB_DIR}])],
+           [AC_MSG_RESULT([found PAG])
+            AC_DEFINE([HAVE_PAG], [1], [Define if you have PAG])],
+           [AC_MSG_FAILURE(
+      [PAG test failed (--without-pag to disable, --with-pag* to fix paths)])],
+           [-L${PAG_LIB_DIR}])],
       [AC_MSG_RESULT([skipping check for PAG])])
 AM_CONDITIONAL(WITH_PAG, [test "x$with_pag" = xyes])
 
 AC_CHECK_FILE(${BOOST_LIB_DIR}/libboost_filesystem-${BOOST_COMPILER_STRING}-mt.so,
-             AC_MSG_RESULT([found Boost (hopefully)]),
-             [echo "Could not find 'libboost_filesystem-${BOOST_COMPILER_STRING}-mt.so' in '${BOOST_LIB_DIR}'."
-              echo "Please consider using one of the --with-boost* options."
-              exit -1 ])
+    AC_MSG_RESULT([found Boost (hopefully)]),
+    [echo "Could not find 'libboost_filesystem-${BOOST_COMPILER_STRING}-mt.so' in '${BOOST_LIB_DIR}'."
+     echo "Please consider using one of the --with-boost* options."
+     exit -1 ])
 
 AC_CHECK_LIB([rose], [ROSE_NUMERIC_VERSION], AC_MSG_RESULT([found ROSE]),
-             [echo "Could not find '-lrose' in '-L${ROSE_LIB_DIR}'."
-              echo "Please consider using one of the --with-rose* options."
-              exit -1 ],
-             [-Wl,--rpath -Wl,${BOOST_LIB_DIR} -L${ROSE_LIB_DIR}])
+    [echo "Could not find '-lrose' in '-L${ROSE_LIB_DIR}'."
+     echo "Please consider using one of the --with-rose* options."
+     exit -1 ],
+    [-Wl,--rpath -Wl,${BOOST_LIB_DIR} -L${ROSE_LIB_DIR}])
 
 AC_CONFIG_FILES([
 Makefile
@@ -234,6 +234,7 @@ src/analyzer/provided/Makefile
 src/analyzer/Makefile
 src/grato/Makefile
 src/pig/Makefile
+src/satire/satire_rose.h
 src/Makefile
 examples/Makefile
 tools/Makefile

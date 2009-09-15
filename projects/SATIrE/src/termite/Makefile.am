@@ -1,6 +1,6 @@
 ## Process this file with automake to create Makefile.in.
 
-INCLUDES = -I$(top_srcdir)/src/satire \
+INCLUDES = -I$(top_builddir)/src/satire \
 	   -I$(top_srcdir)/src/termite/satire \
 	   -I$(top_builddir)/src/termite/satire \
 	   -I$(top_srcdir)/src/analyzer/annotation/satire \
@@ -50,7 +50,6 @@ termite_lint: term_lint_main.pl termite/termite_spec.pl termite/termlint.pl
 	  $(SWI_PLC) -o termite_lint -c $(srcdir)/term_lint_main.pl
 endif
 
-AM_CXXFLAGS=
 AM_YFLAGS = -d
 
 lib_LTLIBRARIES = libtermsupport.la
@@ -66,7 +65,6 @@ CLEANFILES = termpretty.c++ \
 
 if WITH_SWI_PROLOG # ---------------------------------------------------
 
-AM_CXXFLAGS += -DSWI_HOME_DIR='"$(SWI_PROLOG_HOME_DIR)"'
 INCLUDES += -I$(SWI_PROLOG_INCLUDE_DIR) 
 ROSELDFLAGS += $(SWI_PROLOG_LIBS) $(SWI_PROLOG_LDADD)
 nobase_dist_data_DATA = \

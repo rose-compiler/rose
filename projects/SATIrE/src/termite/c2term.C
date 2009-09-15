@@ -7,7 +7,9 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
 
 #include <iostream>
 #include <fstream>
+
 #include <satire_rose.h>
+
 #include <getopt.h>
 
 // GB (2009-02-25): We want to build c2term without ICFG stuff to avoid
@@ -35,7 +37,11 @@ void usage(const char* me)
        << "    Create a dotty graph of the syntax tree.\n\n"
 
        << "  --pdf\n"
-       << "    Create a PDF printout of the syntax tree."
+       << "    Create a PDF printout of the syntax tree.\n\n"
+
+       << "This program was built against "<<SATIRE_PACKAGE_STRING<<",\n"
+       << "please report bugs to "<<SATIRE_PACKAGE_BUGREPORT<<"."
+
        << endl;
 }
 
