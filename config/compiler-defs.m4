@@ -36,6 +36,8 @@ dnl predefined by a specific compiler
                macroString="${macroString}, \"--preinclude\", \"rose_edg_required_macros_and_functions.h\""
              fi
              macroString="${macroString}}"
+
+             compilerVendorName=GNU
              ;;
 
   # Support for Intel icc as a backend for compiling ROSE generated code
@@ -61,6 +63,8 @@ dnl predefined by a specific compiler
              macroString="${macroString}}"
               echo "ICC MACRO DEFS: $ICC_MACRO_DEFS"
              echo "macroString: $macroString"
+
+             compilerVendorName=Intel
 
              #BACKEND_GCC_MAJOR=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
              #BACKEND_GCC_MINOR=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
@@ -97,6 +101,8 @@ dnl predefined by a specific compiler
                macroString="${macroString}, \"--preinclude\", \"rose_edg_required_macros_and_functions.h\""
              fi
              macroString="${macroString}}"
+
+             compilerVendorName=GNU
              ;;
 
     *)
@@ -116,11 +122,15 @@ dnl predefined by a specific compiler
 
 # DQ (9/13/2009): Add information about the backend compiler (which matches the associated header files generated).
 # These values are used to control tests that are backend compiler and or compiler version dependent.
-  BACKEND_COMPILER_VERSION_NAME=$compilerName
+  BACKEND_COMPILER_VERSION_NAME=$compilerVendorName
   BACKEND_COMPILER_VERSION_MAJOR_NUMBER=$BACKEND_GCC_MAJOR
   BACKEND_COMPILER_VERSION_MINOR_NUMBER=$BACKEND_GCC_MINOR
+  BACKEND_COMPILER_VERSION_PATCHLEVEL_NUMBER=$BACKEND_GCC_PATCHLEVEL
 
-  if test x$BACKEND_COMPILER_VERSION_NAME = xg++; then
+# DQ (9/14/2009): generate a name to use with the name of the ROSE EDG binary so that we can be version number specific.
+  GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX="$BACKEND_COMPILER_VERSION_NAME-$BACKEND_COMPILER_VERSION_MAJOR_NUMBER.$BACKEND_COMPILER_VERSION_MINOR_NUMBER"
+
+  if test x$BACKEND_COMPILER_VERSION_NAME = xGNU; then
     if test x$BACKEND_COMPILER_VERSION_MAJOR_NUMBER = x4; then
       if test x$BACKEND_COMPILER_VERSION_MINOR_NUMBER = x2; then
         ok_for_testing=true
@@ -128,9 +138,13 @@ dnl predefined by a specific compiler
     fi
   fi
 
-  echo "BACKEND_COMPILER_VERSION_NAME         = $BACKEND_COMPILER_VERSION_NAME"
-  echo "BACKEND_COMPILER_VERSION_MAJOR_NUMBER = $BACKEND_COMPILER_VERSION_MAJOR_NUMBER"
-  echo "BACKEND_COMPILER_VERSION_MINOR_NUMBER = $BACKEND_COMPILER_VERSION_MINOR_NUMBER"
+  echo "BACKEND_COMPILER_VERSION_NAME              = $BACKEND_COMPILER_VERSION_NAME"
+  echo "BACKEND_COMPILER_VERSION_MAJOR_NUMBER      = $BACKEND_COMPILER_VERSION_MAJOR_NUMBER"
+  echo "BACKEND_COMPILER_VERSION_MINOR_NUMBER      = $BACKEND_COMPILER_VERSION_MINOR_NUMBER"
+  echo "BACKEND_COMPILER_VERSION_PATCHLEVEL_NUMBER = $BACKEND_COMPILER_VERSION_PATCHLEVEL_NUMBER"
+
+  echo "GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX = $GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX"
+
   echo "This version of backend compiler is OK for compiler and compiler version dependent testing: ok_for_testing = $ok_for_testing"
 
   AM_CONDITIONAL(BACKEND_COMPILER_VERSION_OK_FOR_ROSE_TESTING,test "x$ok_for_testing" = xtrue)
@@ -138,6 +152,10 @@ dnl predefined by a specific compiler
   AC_SUBST(BACKEND_COMPILER_VERSION_NAME)
   AC_SUBST(BACKEND_COMPILER_VERSION_MAJOR_NUMBER)
   AC_SUBST(BACKEND_COMPILER_VERSION_MINOR_NUMBER)
+  AC_SUBST(BACKEND_COMPILER_VERSION_PATCHLEVEL_NUMBER)
+
+  AC_SUBST(GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX)
+
 
 # AC_LANG_RESTORE
   AC_LANG_POP(C++)

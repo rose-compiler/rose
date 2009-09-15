@@ -1,7 +1,7 @@
 #!/bin/sh -xv
 # This script copy the newly-built EDG binaries to the source tree
 set -e
-if test $# -ne 2; then
+if test $# -ne 3; then
   echo "Usage: $0 top_srcdir build-triplet" >&2
   exit 1
 fi
@@ -13,8 +13,9 @@ else
 fi
 top_srcdir="$1"
 buildTriplet="$2"
+buildCompiler="$3"
 signature=`cat rose_binary_compatibility_signature`
-binaryEdgTarball="roseBinaryEDG-${buildTriplet}-${signature}.tar.gz"
+binaryEdgTarball="roseBinaryEDG-${buildTriplet}-${buildCompiler}-${signature}.tar.gz"
 if test -f ${binaryEdgTarball}; then
   :
 else

@@ -109,6 +109,8 @@ if [ ${EDG_COPYRIGHT_STRINGS[0]} ]; then
   exit 2
 fi
 
+# DQ (9/14/2009): Commented out as a test to see if I can build a binary with a single 64bit ROSE EDG Binary.
+if true; then
 # Make sure all binary EDG versions for three platforms exist:i686-apple, i686-redhat, 
 # and x86_64-redhat, using a bash array (index starting from 0) to test it.
 EDG_BINARIES1=($(ls ${ROSE_DIST_DIR}/src/frontend/CxxFrontend/roseBinaryEDG-i686-pc-linux-gnu*.tar.gz))
@@ -117,6 +119,7 @@ if [ ${EDG_BINARIES1[0]} ]; then
 else 
   echo Fatal Error: No EDG binaries for i686-pc-linux are available. 
   exit 3
+fi
 fi
 
 EDG_BINARIES2=($(ls ${ROSE_DIST_DIR}/src/frontend/CxxFrontend/roseBinaryEDG-x86_64-pc-linux-gnu*.tar.gz))
@@ -128,13 +131,15 @@ else
 fi
 
 # DQ (9/14/2009): While ninjai is too slow to be useful, skip the OSX binary requirement.
-# EDG_BINARIES3=($(ls ${ROSE_DIST_DIR}/src/frontend/CxxFrontend/roseBinaryEDG-i686-apple-darwin*.tar.gz))
-# if [ ${EDG_BINARIES3[0]} ]; then
-#    echo Found the EDG binaries for i686-apple-darwin as expected. It is ${EDG_BINARIES3[@]}. 
-# else 
-#   echo Fatal Error: No EDG binaries for i686-apple-darwin are available. 
-#   exit 3
-# fi
+if false; then
+ EDG_BINARIES3=($(ls ${ROSE_DIST_DIR}/src/frontend/CxxFrontend/roseBinaryEDG-i686-apple-darwin*.tar.gz))
+ if [ ${EDG_BINARIES3[0]} ]; then
+    echo Found the EDG binaries for i686-apple-darwin as expected. It is ${EDG_BINARIES3[@]}. 
+ else 
+   echo Fatal Error: No EDG binaries for i686-apple-darwin are available. 
+   exit 3
+ fi
+fi
 
 # Now we can upload the package
 #--------------------------------------------------------

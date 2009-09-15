@@ -17,6 +17,7 @@ OLD_libroseEDG.la:
 	fi
 
 # DQ (9/8/2009): Debugging gunzip broken pipe issue on NMI x86_sles_9 force echo of output from gunzip command.
+# DQ (9/14/2009): When doing nmi-postmortem testing, the $(srcdir)/$(BINARY_EDG_DIRNAME).tar.gz is already unzipped
 libroseEDG.la:
 	if test "$(am__untar)" != "false"; then \
 	  if test -f $(srcdir)/$(BINARY_EDG_DIRNAME).tar.gz; then \
@@ -27,7 +28,17 @@ libroseEDG.la:
 	    rmdir $(BINARY_EDG_DIRNAME)/; \
 	  else \
 	    echo "There is no binary version of EDG (which should be named $(BINARY_EDG_DIRNAME).tar.gz) in your copy of ROSE -- this should have been caught by configure" >&2 && \
-	    exit 1; \
+	    echo "  Looking for a binary version of EDG (which should be named $(BINARY_EDG_DIRNAME).tar) in your copy of ROSE -- could be part of nmi-postmortem testing" >&2 && \
+	    if test -f $(srcdir)/$(BINARY_EDG_DIRNAME).tar; then \
+	      echo "Found $(srcdir)/$(BINARY_EDG_DIRNAME).tar: proceeding to untar file $(BINARY_EDG_DIRNAME).tar" >&2 && \
+	      $(am__untar) $(srcdir)/$(BINARY_EDG_DIRNAME).tar && \
+	      mv $(BINARY_EDG_DIRNAME)/libroseEDG.* . && \
+	      mv $(BINARY_EDG_DIRNAME)/.libs . && \
+	      rmdir $(BINARY_EDG_DIRNAME)/; \
+	    else \
+	      echo "There is no binary version of EDG (which should be named $(BINARY_EDG_DIRNAME).tar) in your copy of ROSE -- (if this had been part of NMI debugging)" >&2 && \
+	      exit 1; \
+	    fi \
 	  fi \
 	else \
 	  echo "ERROR: am__untar set to false! (am__untar == $(am__untar)) Can't untar $(BINARY_EDG_DIRNAME).tar.gz) -- this should have been caught by configure" >&2 && \

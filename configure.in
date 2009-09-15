@@ -931,7 +931,12 @@ AM_CONDITIONAL(BINARY_EDG_TARBALL_ENABLED, [test "x$binary_edg_tarball_enabled" 
 
 release_binary_compatibility_signature="RELEASE_BINARY_COMPATIBILITY_SIGNATURE" # This variable will be substituted in binary-EDG release copies of configure.in
 build_triplet_without_redhat=`${srcdir}/config/cleanConfigGuessOutput "$build"`
-expected_binary_edg_dirname="roseBinaryEDG-${build_triplet_without_redhat}-${release_binary_compatibility_signature}"
+
+# DQ (9/14/2009): Added compiler name and major and minor 
+# version numbers to the generate ROSE EDG binary name.
+# expected_binary_edg_dirname="roseBinaryEDG-${build_triplet_without_redhat}-${release_binary_compatibility_signature}"
+expected_binary_edg_dirname="roseBinaryEDG-${build_triplet_without_redhat}-$GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX-${release_binary_compatibility_signature}"
+
 expected_binary_edg_tarball="${expected_binary_edg_dirname}.tar.gz"
 full_expected_binary_edg_tarball="${srcdir}/src/frontend/CxxFrontend/${expected_binary_edg_tarball}"
 
@@ -950,6 +955,9 @@ else
 fi
 
 EXPECTED_BINARY_EDG_DIRNAME="${expected_binary_edg_dirname}"
+
+echo "EXPECTED_BINARY_EDG_DIRNAME = $EXPECTED_BINARY_EDG_DIRNAME" 
+
 AC_SUBST(EXPECTED_BINARY_EDG_DIRNAME)
 
 dnl ---------------------------------------------------------------------

@@ -9,7 +9,6 @@ echo "***************************"
 # DQ (9/9/2009): Fedora 8 was released Nov 2007 (completes, but takes a long time to run).
 # ./submit.sh build_configs/x86_64_fc_8/minimal_default (renamed)
 ./submit.sh build_configs/x86_64_fedora_8/minimal_default
-
 ./submit.sh build_configs/x86_64_fc_5/minimal_default
 ./submit.sh build_configs/x86_64_rhap_5/minimal_default
 ./submit.sh build_configs/x86_64_rhas_4/minimal_default
@@ -25,20 +24,32 @@ echo "******************************************"
 echo "* Failing tests: libCompass.so not found *"
 echo "******************************************"
 
+# DQ (9/15/2009): Passing with skipping Debian tests.
 # DQ (9/9/2009): This configuration on this platform can't find libCompass.so (in "make check")
 # /home/condor/execute/dir_16350/userdir/build/projects/compass/tools/compassVerifier/.libs/lt-compassVerifier: 
 # error while loading shared libraries: libCompass.so.0: cannot open shared object file: No such file or directory
 ./submit.sh build_configs/x86_deb_5.0/minimal_default
 
+# DQ (9/15/2009): Passing with skipping Debian tests.
+# DQ (9/14/2009): NMI added lsb_release
 # DQ (9/12/2009): lsb_release is not available, so we run tests that are known to fail on Debian (only test NMI deb_5.0 platforms).
 # DQ (9/9/2009): This configuration on this platform can't find libCompass.so (in "make check")
 # /home/condor/execute/dir_24405/userdir/build/projects/compass/tools/compassVerifier/.libs/lt-compassVerifier: 
 # error while loading shared libraries: libCompass.so.0: cannot open shared object file: No such file or directory
 # DQ (9/7/2009): AM_PATH_XML2 not found (still)!
-# ./submit.sh build_configs/x86_64_deb_4.0/minimal_default
+./submit.sh build_configs/x86_64_deb_4.0/minimal_default
 
+# DQ (9/15/2009): Passing with skipping Debian tests.
 # DQ (9/9/2009): Compass lib not found in "make check"
 ./submit.sh build_configs/x86_64_deb_5.0/minimal_default
+
+# DQ (9/15/2009): Passing with skipping Debian tests.
+# DQ (9/14/2009): NMI added lsb_release
+# DQ (9/12/2009): lsb_release is not available, so we run tests that are known to fail on Debian (only test NMI deb_5.0 platforms).
+# DQ (9/9/2009): This is a heavily loaded machine (tests accumulate)
+# DQ (9/7/2009): ACLOCAL_INCLUDES does not cause AM_PATH_XML2 to be found.
+# ACLOCAL_INCLUDES is not set in the environment (but this works on x86_64_deb_5.0).
+./submit.sh build_configs/x86_deb_4.0/minimal_default
 
 echo "******************************************************************************************************************"
 echo "* Failing tests: (different reasons: RTED exit not define, Compass segfault, and testCallGraphAnalysis segfault) *"
@@ -69,6 +80,8 @@ echo "**************************************************************************
 echo "***********************************************"
 echo "* Failing test on Suse Linux version 9 (link problem multiple definition of __i686.get_pc_thunk.bx) *"
 echo "***********************************************"
+
+# DQ (9/15/2009): Progress! New error -- tclsh: command not found in: src/frontend/BinaryDisassembly
 # DQ (9/11/2009): Same error!
 # DQ (9/9/2009): New error: 
 # src/frontend/CxxFrontend/EDG_3.3/src/preproc.c:99: multiple definition of `__i686.get_pc_thunk.bx'
@@ -108,12 +121,6 @@ echo "******************************************************"
 # are reported to be unavailable (as warnings). 
 # DQ (9/9/2009): configure.in:21: error: Autoconf version 2.60 or higher is required (rerunning test)
 # ./submit.sh build_configs/x86_deb_3.1/minimal_default
-
-# DQ (9/12/2009): lsb_release is not available, so we run tests that are known to fail on Debian (only test NMI deb_5.0 platforms).
-# DQ (9/9/2009): This is a heavily loaded machine (tests accumulate)
-# DQ (9/7/2009): ACLOCAL_INCLUDES does not cause AM_PATH_XML2 to be found.
-# ACLOCAL_INCLUDES is not set in the environment (but this works on x86_64_deb_5.0).
-# ./submit.sh build_configs/x86_deb_4.0/minimal_default
 
 
 
