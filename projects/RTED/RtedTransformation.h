@@ -72,8 +72,8 @@ class RtedTransformation : public AstSimpleProcessing {
 
   // The following are vars that are needed for transformations
   // and retrieved through the visit function
-  SgFunctionSymbol* roseCreateArray;
-  SgFunctionSymbol* roseArrayAccess;
+  SgFunctionSymbol* roseCreateHeap;
+  SgFunctionSymbol* roseAccessHeap;
   SgFunctionSymbol* roseFunctionCall;
   SgFunctionSymbol* roseAssertFunctionSignature;
   SgFunctionSymbol* roseConfirmFunctionSignature;
@@ -248,12 +248,15 @@ class RtedTransformation : public AstSimpleProcessing {
   void visit_isSgVariableDeclaration(SgNode* n);
   void insertVariableCreateCall( RtedClassDefinition* cdef );
   void insertVariableCreateCall(SgInitializedName* initName);
+  void insertVariableCreateCall(SgInitializedName* initName,SgExpression* expr);
   bool isVarInCreatedVariables(SgInitializedName* n);
   void insertInitializeVariable(SgInitializedName* initName,
-				SgVarRefExp* varRefE, bool ismalloc );
-  SgExpression* buildVariableInitCallExpr(
+		  SgExpression* varRefE, bool ismalloc );
+  //std::vector<SgExpression*>
+  SgExpression*
+   buildVariableInitCallExpr(
 				SgInitializedName* name,
-				SgVarRefExp* varRefE,
+				SgExpression* varRefE,
 				SgStatement* stmt,
 				bool ismalloc );
   SgFunctionCallExp* buildVariableCreateCallExpr(SgThisExp* this_exp, bool forceinit=false);
@@ -286,8 +289,8 @@ class RtedTransformation : public AstSimpleProcessing {
   RtedTransformation() {
     //inputFiles=files;
     globalScope=NULL;
-    roseCreateArray=NULL;
-    roseArrayAccess=NULL;
+    roseCreateHeap=NULL;
+    roseAccessHeap=NULL;
     roseCheckpoint=NULL;
     roseFunctionCall=NULL;
     roseAssertFunctionSignature=NULL;

@@ -225,8 +225,11 @@ void RuntimeSystem::createMemory(addr_type addr, size_t size, bool onStack, RsTy
             mt->registerMemType(0,type);
             assert(type->getByteSize() == size);
         }
-        else //TODO make error to assert, if registration is done correct
+        else { //TODO make error to assert, if registration is done correct
             cerr << "Warning: Stack Memory registered without type!" << endl;
+            //tps (09/15/2009): added abort.
+            exit(1);
+        }
     }
 }
 

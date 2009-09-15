@@ -36,6 +36,7 @@ RtedTransformation::getExprBelowAssignment( SgExpression* exp ) {
     while(  parent
             && !(
                 isSgAssignOp( parent )
+//                || isSgAssignInitializer( parent )
                 || isSgAndAssignOp( parent ) 
                 || isSgDivAssignOp( parent ) 
                 || isSgIorAssignOp( parent )
@@ -52,7 +53,8 @@ RtedTransformation::getExprBelowAssignment( SgExpression* exp ) {
         exp = parent;
         parent = isSgExpression( parent->get_parent() );
     }
-
+   // if (isSgPointerDerefExp(parent))
+   // 	exp=parent;
     return exp;
 }
 

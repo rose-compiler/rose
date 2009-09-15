@@ -36,8 +36,8 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
 
   // traverse the AST and find locations that need to be transformed
   symbols->traverse(project, preorder);
-  roseCreateArray = symbols->roseCreateArray;
-  roseArrayAccess = symbols->roseArrayAccess;
+  roseCreateHeap = symbols->roseCreateHeap;
+  roseAccessHeap = symbols->roseAccessHeap;
   roseFunctionCall = symbols->roseFunctionCall;
   roseAssertFunctionSignature = symbols->roseAssertFunctionSignature;
   roseConfirmFunctionSignature = symbols->roseConfirmFunctionSignature;
@@ -55,8 +55,8 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
   roseRegisterTypeCall = symbols->roseRegisterTypeCall;
   size_t_member = symbols->size_t_member;
 
-  ROSE_ASSERT(roseCreateArray);
-  ROSE_ASSERT(roseArrayAccess);
+  ROSE_ASSERT(roseCreateHeap);
+  ROSE_ASSERT(roseAccessHeap);
   ROSE_ASSERT(roseFunctionCall);
   ROSE_ASSERT(roseAssertFunctionSignature);
   ROSE_ASSERT(roseConfirmFunctionSignature);
@@ -184,6 +184,7 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
     if( isConstructor( fndef -> get_declaration() )) 
       bracketWithScopeEnterExit( fndef );
 
+     // tps : 09/14/2009 : handle templates
 #if 1
     SgTemplateInstantiationFunctionDecl* istemplate = 
       isSgTemplateInstantiationFunctionDecl(fndef->get_parent());
@@ -192,27 +193,40 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
     if (istemplate) {
       SgGlobal* gl = isSgGlobal(istemplate->get_parent());
       ROSE_ASSERT(gl);
-      Sg_File_Info* global_fi = gl->get_file_info();
-      //SgFunctionDefinition* cfunc = 
-      //	isSgFunctionDefinition(deepCopyNode(fndef)); 
-    SgTemplateInstantiationFunctionDecl* cfunc = 
-      isSgTemplateInstantiationFunctionDecl(deepCopyNode(istemplate));
-      ROSE_ASSERT(cfunc);
+      //SgTemplateInstantiationFunctionDecl* cfunc =
+      //isSgTemplateInstantiationFunctionDecl(deepCopyNode(istemplate));
+      //ROSE_ASSERT(cfunc);
       vector<SgNode*> nodes2 = NodeQuery::querySubTree(istemplate, V_SgLocatedNode);
       vector<SgNode*>::const_iterator nodesIT2 = nodes2.begin();
       for (; nodesIT2 != nodes2.end(); nodesIT2++) {
-	SgLocatedNode* node = isSgLocatedNode(*nodesIT2);
-	ROSE_ASSERT(node);
-	Sg_File_Info* file_info = node->get_file_info();
-	file_info->setOutputInCodeGeneration();
-	//node->set_file_info(global_fi);
-	//cerr << "copying node : " << node->class_name() << endl;
+    	  SgLocatedNode* node = isSgLocatedNode(*nodesIT2);
+    	  ROSE_ASSERT(node);
+    	  Sg_File_Info* file_info = node->get_file_info();
+    	  file_info->setOutputInCodeGeneration();
       }
-      SageInterface::prependStatement(cfunc,gl);
+      // insert after template declaration
+      // find last template declaration, which should be part of SgGlobal
+      vector<SgNode*> nodes3 = NodeQuery::querySubTree(gl, V_SgTemplateInstantiationFunctionDecl);
+      vector<SgNode*>::const_iterator nodesIT3 = nodes3.begin();
+      SgTemplateInstantiationFunctionDecl* templ = NULL;
+      for (; nodesIT3 != nodes3.end(); nodesIT3++) {
+    	  SgTemplateInstantiationFunctionDecl* temp = isSgTemplateInstantiationFunctionDecl(*nodesIT3);
+    	  string temp_str = temp->get_qualified_name().str();
+    	  string template_str = istemplate->get_qualified_name().str();
+    	  if (temp!=istemplate)
+    		  if (temp_str.compare(template_str)==0)
+    		  templ =temp;
+//    	  cerr << " Found templ : " << temp->get_qualified_name().str() << ":"<<temp<<
+//			  "  istemplate : " << istemplate->get_qualified_name().str() << ":"<<istemplate<<
+//			  "         " << (temp_str.compare(template_str)==0) << endl;
+      }
+      ROSE_ASSERT(templ);
+      SageInterface::removeStatement(istemplate);
+      SageInterface::insertStatementAfter(templ,istemplate);
     }
-  }
-#endif
 
+#endif
+  }
   // add calls to register pointer change after pointer arithmetic
   BOOST_FOREACH( SgExpression* op, pointer_movements ) {
     ROSE_ASSERT( op );
@@ -248,6 +262,20 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
     //cerr << "      varInit : " << varref->unparseToString() <<
     //  "    malloc: " << ismalloc << endl;
     insertInitializeVariable(init, varref,ismalloc);
+
+#if 0
+    // handle special case of assigninitializer
+	SgType* thetype = init->get_type();
+	if (isSgPointerType(thetype) && ismalloc) {
+		//cerr << "$$$$$ Found the AssignInitializer : " << isSgVarRefExp(varref)->get_parent() << endl;
+		//cerr << "$$$$$ Found the InitName : " << init->unparseToString() << endl;
+		//cerr << "$$$$$ Found the InitName Type: " << thetype->class_name() << endl;
+		SgExpression* tmpExp = buildPointerDerefExp(varref);
+	    insertInitializeVariable(init, tmpExp,ismalloc);
+	    insertVariableCreateCall(init, tmpExp);
+		// insertArrayCreateCall(tmpExp, array_size);
+	}
+#endif
   }
 
   cerr << "\n Number of Elements in create_array_define_varRef_multiArray  : "

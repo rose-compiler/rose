@@ -9,8 +9,8 @@ class RtedSymbols: public AstSimpleProcessing {
 private:
 
 public:
-	SgFunctionSymbol* roseCreateArray;
-	SgFunctionSymbol* roseArrayAccess;
+	SgFunctionSymbol* roseCreateHeap;
+	SgFunctionSymbol* roseAccessHeap;
 	SgFunctionSymbol* roseCheckpoint;
 	SgFunctionSymbol* roseFunctionCall;
 	SgFunctionSymbol* roseAssertFunctionSignature;
@@ -29,8 +29,8 @@ public:
 	SgType* size_t_member;
 
 	RtedSymbols() {
-		roseCreateArray = NULL;
-		roseArrayAccess = NULL;
+		roseCreateHeap = NULL;
+		roseAccessHeap = NULL;
 		roseCheckpoint = NULL;
         roseFunctionCall = NULL;
 		roseAssertFunctionSignature = NULL;

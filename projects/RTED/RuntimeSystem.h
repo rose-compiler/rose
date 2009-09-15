@@ -20,13 +20,13 @@ void RuntimeSystem_roseCheckpoint( const char* filename, const char* line, const
 
 
 /***************************** ARRAY FUNCTIONS *************************************/
-void RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name,
+void RuntimeSystem_roseCreateHeap(const char* name, const char* mangl_name,
 		const char* type, const char* basetype, size_t indirection_level,
 		unsigned long int address, long int size, long int mallocSize,
 		const char* class_name, const char* filename, const char* line,
 		const char* lineTransformed, int dimensions, ...);
 
-void RuntimeSystem_roseArrayAccess(const char* filename,
+void RuntimeSystem_roseAccessHeap(const char* filename,
 		unsigned long int base_address, // &( array[ 0 ])
 		unsigned long int address, long int size, int read_write_mask, // 1 = read, 2 = write
 		const char* line, const char* lineTransformed);

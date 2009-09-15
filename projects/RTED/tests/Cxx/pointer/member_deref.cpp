@@ -1,8 +1,9 @@
 class Test {
 
   public:
+
     void foo() {
-      p = new int;
+       p = new int;
       *p = 42;
 
       // illegal write

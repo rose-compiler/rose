@@ -24,8 +24,8 @@ void RtedSymbols::visit(SgNode* n) {
 
   if (isSgScopeStatement(n)) {
 
-    LOOKUP( roseCreateArray );
-    LOOKUP( roseArrayAccess );
+    LOOKUP( roseCreateHeap );
+    LOOKUP( roseAccessHeap );
     LOOKUP( roseCheckpoint );
     LOOKUP( roseFunctionCall );
     LOOKUP( roseAssertFunctionSignature );

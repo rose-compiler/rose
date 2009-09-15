@@ -143,10 +143,10 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
       array -> appendDimensionInformation( arg_list );
 
       //      appendExpression(arg_list, buildString(stmt->unparseToString()));
-      ROSE_ASSERT(roseCreateArray);
-      string symbolName2 = roseCreateArray->get_name().str();
+      ROSE_ASSERT(roseCreateHeap);
+      string symbolName2 = roseCreateHeap->get_name().str();
       //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
-      SgFunctionRefExp* memRef_r = buildFunctionRefExp(  roseCreateArray);
+      SgFunctionRefExp* memRef_r = buildFunctionRefExp(  roseCreateHeap);
       //SgArrowExp* sgArrowExp = buildArrowExp(varRef_l, memRef_r);
 
       SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
@@ -168,7 +168,7 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
 #endif
       string empty_comment = "";
       attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
-      string comment = "RS : Create Array Variable, paramaters : (name, manglname, dimension, address, sizeof(type), size dim 1, size dim 2, ismalloc, filename, linenr, linenrTransformed)";
+      string comment = "RS : Create Array Variable, paramaters : (name, manglname, typr, basetype, address, sizeof(type), array size,  ismalloc, filename, linenr, linenrTransformed, dimension info ...)";
       attachComment(exprStmt,comment,PreprocessingInfo::before);
     } 
     else if (isSgNamespaceDefinitionStatement(scope)) {
@@ -297,11 +297,11 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
 
 
 
-    ROSE_ASSERT(roseArrayAccess);
-    string symbolName2 = roseArrayAccess->get_name().str();
+    ROSE_ASSERT(roseAccessHeap);
+    string symbolName2 = roseAccessHeap->get_name().str();
     //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
     SgFunctionRefExp* memRef_r = buildFunctionRefExp(
-						     roseArrayAccess);
+    		roseAccessHeap);
     //SgArrowExp* sgArrowExp = buildArrowExp(varRef_l, memRef_r);
 
     SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
@@ -410,6 +410,8 @@ void RtedTransformation::visit_isArraySgInitializedName(SgNode* n) {
 // 	it is necessary to read &*(my_struct.field), but we will do so twice because
 // 	of the two var refs ('my_struct', and 'field')
 void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
+	cerr <<"\n$$$$$ visit_isSgVarRefExp : " << n->unparseToString() <<
+	"  in line : " << n->get_file_info()->get_line() << " -------------------------------------" <<endl;
 
     SgInitializedName *name = n -> get_symbol() -> get_declaration();
     if( name  && !isInInstrumentedFile( name -> get_declaration() )) {
@@ -421,18 +423,35 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
 
  SgNode* parent = isSgVarRefExp(n);
   SgNode* last = parent;
-  bool hitRoof=false;
+  bool stopSearch=false;
   //cerr << "*********************************** DEBUGGING  " << n->unparseToString() << endl;
   while (!isSgProject(parent)) {
     last=parent;
     parent=parent->get_parent();
-   // cerr << "*********************************** DEBUGGING  parent (loop) = " << parent->class_name() << endl;
+    cerr << "*********************************** DEBUGGING  parent (loop) = " << parent->class_name() << endl;
   if( isSgProject(parent))
     { // do nothing 
-      hitRoof=true;
+      stopSearch=true;
       //cerr << "*********************************** DEBUGGING   parent = (project) " << parent->class_name() << endl;
 	  break;
     }
+  else if (isSgAssignInitializer(parent)) {
+
+     SgInitializedName* grandparent = isSgInitializedName( parent -> get_parent() );
+     // make sure that we came from the right hand side of the assignment
+     SgExpression* right = isSgAssignInitializer(parent)->get_operand();
+     if (    right==last
+             && !(
+                 // consider, e.g:
+                 //  int& ref = x;
+                 // which is not a read of x
+                 grandparent
+                 && isSgReferenceType( grandparent -> get_type())))
+     	variable_access_varref.push_back(n);
+     stopSearch=true;
+     cerr << " $$$$ *********************************** DEBUGGING   parent (assigniniit) = " << parent->class_name() << endl;
+     break;
+   }
   else if (		isSgAssignOp( parent )
 		  		|| isSgAndAssignOp( parent )
 				|| isSgDivAssignOp( parent )
@@ -454,60 +473,65 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
 	//		int *x = arr;
 	// the assignment is not a var ref of arr since arr's address is statically
 	// determined
-    if (    right == last 
-            && !isSgArrayType( right -> get_type() )
+    if (    right == last &&
+             !isSgArrayType( right -> get_type() ) &&
+             !isSgNewExp(right)
             // consider:
             //      int& s = x;
             // which is not a read of x
-            && !isSgReferenceType( left -> get_type() ))
+            && !isSgReferenceType( left -> get_type() )) {
+      cerr <<"$$$$$ Adding variable_access_varref (assignOp): " << n->unparseToString() <<
+		  "   right hand side type: " << right->get_type()->class_name() <<
+		  "   right exp: " << right->class_name() << endl;
       variable_access_varref.push_back(n);
-    hitRoof=true;
+	      stopSearch = true;
+    } else {
+    	// tps (09/15/2009): added this
+    	cerr <<"$$$$$ Unhandled case (AssignOp) : " << parent->unparseToString() << endl;
+    	cerr <<"$$$$$ right : " << right->unparseToString() <<
+    	       "    last : " << last->unparseToString() << endl;
+    	//exit(1);
+    }
+    stopSearch=true;
     //cerr << "*********************************** DEBUGGING   parent (assign) = " << parent->class_name() << endl;
     break;
   }
-  else if (isSgAssignInitializer(parent)) {
-
-    SgInitializedName* grandparent = isSgInitializedName( parent -> get_parent() );
-    // make sure that we came from the right hand side of the assignment
-    SgExpression* right = isSgAssignInitializer(parent)->get_operand();
-    if (    right==last
-            && !(
-                // consider, e.g:
-                //  int& ref = x;
-                // which is not a read of x
-                grandparent 
-                && isSgReferenceType( grandparent -> get_type())))
-    	variable_access_varref.push_back(n);
-    hitRoof=true;
-    //cerr << "*********************************** DEBUGGING   parent (assigniniit) = " << parent->class_name() << endl;
-    break;
-  } else if (isSgPointerDerefExp(parent)) {
-	  cerr << "------------ Found Pointer deref : " << parent->unparseToString() << endl;
+  else if (isSgPointerDerefExp(parent)) {
+	  cerr << "$$$$$ ---- Found Pointer deref : " << parent->unparseToString() << endl;
 	 // cerr << "*********************************** DEBUGGING   parent (deref) = " << parent->class_name() << endl;
 	  variable_access_pointerderef[isSgPointerDerefExp(parent)]=n;
+      stopSearch = true;
+
   } else if ( isSgArrowExp( parent )) {
+	  cerr << "$$$$$ ---- Found isSgArrowExp  : " << parent->unparseToString() << endl;
       SgArrowExp* arrow_op = isSgArrowExp( parent );
-      if( last == arrow_op -> get_lhs_operand() )
+      if( last == arrow_op -> get_lhs_operand() ) {
+    	  cerr << "    $$$$$ Adding left hand side to variable_access_pointerderef" <<
+			  "    : " << parent->class_name() << endl;
           variable_access_pointerderef[ isSgExpression( parent )] = n;
-      else {
+          stopSearch = true;
+      } else {
           // We don't access the rhs of an arrow op directly, e.g.
           //    int x = foo -> bar;
           // we shouldn't be trying to access variable &bar
-          hitRoof = true;
+		  cerr << "   $$$$ Case not handled because " << last->unparseToString() << " not on lhs side." << endl;
+		  cerr << "   $$$$ last : " << last->class_name() <<
+			  "        arrow_op -> get_lhs_operand() :" << arrow_op -> get_lhs_operand()->class_name() << endl;
+          stopSearch = true;
           break;
       }
   } else if (isSgExprListExp(parent) && isSgFunctionCallExp(parent->get_parent())) {
-	  cerr << " Found Function call - lets handle its parameters." << endl;
+	  cerr << "$$$$$ Found Function call - lets handle its parameters." << endl;
 	  SgType* type = isSgExpression(last)->get_type();
 	  if (type && isSgArrayType(type))
-		  hitRoof=true;
+		  stopSearch=true;
 	  break;
   } else if (isSgAddressOfOp(parent)) {
 	  // consider, e.g.
 	  // 	int x;
 	  // 	int* y = &x;
 	  // it is not necessary for x to be initialized
-	  hitRoof = true;
+	  stopSearch = true;
       break;
 	} else if( isSgWhileStmt( parent )
                 || isSgDoWhileStmt( parent )
@@ -553,7 +577,7 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
       if(   find( initialized_names.begin(), initialized_names.end(), name ) 
             != initialized_names.end() ) {
         // no need to check the ref
-        hitRoof = true;
+        stopSearch = true;
       }
       // either way, no need to keep going up the AST
       break;
@@ -562,7 +586,7 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
 	  }
   } //while
 
-  if (!hitRoof) {
+  if (!stopSearch) {
     // its a plain variable access
 	  cerr << " @@@@@@@@@ ADDING Variable access : " << n->unparseToString() << endl;
 	  variable_access_varref.push_back(n);
@@ -836,7 +860,8 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
       SgExpression* size_orig = 
           isSgExprListExp( size ) -> get_expressions()[ 0 ];
 
-	  RTedArray* array = new RTedArray(false, initName, getSurroundingStatement( varRef ), ismalloc, size_orig);
+	  RTedArray* array = new RTedArray(false, initName, getSurroundingStatement( varRef ),
+									  ismalloc, size_orig);
 	  // varRef can not be a array access, its only an array Create
 	  variablesUsedForArray.push_back(varRef);
 	  create_array_define_varRef_multiArray[varRef] = array;

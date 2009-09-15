@@ -208,7 +208,7 @@ bool initialize_next_array = false;
  * line      : linenumber
  ********************************************************/
 void
-RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name,
+RuntimeSystem_roseCreateHeap(const char* name, const char* mangl_name,
 			      const char* type, const char* basetype, size_t indirection_level,
 			      unsigned long int address, long int size,
 			      long int mallocSize, const char* class_name,
@@ -239,6 +239,9 @@ RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name,
     }
   } else if( type_name == "SgPointerType") {
     addr_type heap_address = *((addr_type*) address);
+    //cerr << " registering heap   type:" << type << "  basetype:"<<basetype<<
+    //		"  class_name:" <<class_name<<"  indirection_level:"<<ToString(indirection_level)<<
+    //		"  address:"<<HexToString(heap_address) <<"  malloc size:"<<ToString(mallocSize)<<endl;
     rs -> createMemory( heap_address, mallocSize );
     rs -> registerPointerChange(
 				address,
@@ -268,7 +271,7 @@ RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name,
  * stmtStr   : unparsed version of the line to be used for error message
  ********************************************************/
 void
-RuntimeSystem_roseArrayAccess(const char* filename,
+RuntimeSystem_roseAccessHeap(const char* filename,
 			      unsigned long int base_address, unsigned long int address, long int size, 
 			      int read_write_mask, const char* line, const char* lineTransformed){
 

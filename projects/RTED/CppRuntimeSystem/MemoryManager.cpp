@@ -29,6 +29,9 @@ MemoryType::MemoryType(addr_type _addr, size_t _size, const SourcePosition & _po
     : startAddress(_addr), size(_size), allocPos(_pos), onStack(_onStack)
 {
     // not memory has been initialized by default
+	RuntimeSystem * rs = RuntimeSystem::instance();
+	    rs->printMessage("	***** Allocate Memory ::: "+HexToString(_addr)+
+					"  size:"+ToString(_size)+"  pos1:"+ToString(_pos.getLineInOrigFile()));
     initialized.assign(size,false);
 }
 
