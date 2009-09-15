@@ -13,6 +13,14 @@ String.class_eval do
         indent = (self =~ /^([ \t]\s*)\S/; $1.size)
         self.strip.gsub( /^[ \t]\s{#{indent - 1}}/, '' )
     end
+
+    def start_with?( prefix )
+        if size >= prefix.size and self[ (0..prefix.size-1) ] == prefix
+            true
+        else
+            false
+        end
+    end
 end
 
 File.instance_eval do
