@@ -169,8 +169,12 @@ HASKELLPORT_APIDOCS = $(top_builddir)/projects/haskellport/dist/doc/html/rose
 $(HASKELLPORT_APIDOCS):
 	$(MAKE) -C$(top_builddir)/projects/haskellport docs
 
+# DQ (9/15/2009): This appears to be a problem for Mac OSX
 RoseQtDoc:
-	doxygen roseQtWidgets.doxygen
+if !OS_MACOSX
+	@echo "Skipping doxygen processing of roseQtWidgets.doxygen (failing in OSX)"
+#	doxygen roseQtWidgets.doxygen
+endif
 
 make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf ROSE_DeveloperInstructions.pdf ROSE_DemoGuide.pdf footer.html leftmenu.html $(COMPASS_MANUAL) $(AUTOTUNING_MANUAL) $(HASKELLPORT_APIDOCS) RoseQtDoc
 	cd Tutorial; $(MAKE) make-web-pages
@@ -272,7 +276,9 @@ EXTRA_DIST = \
 # requirements.tex
 
 clean-web-pages:
-	test ! -d ROSE_WebPages || (test -d ROSE_WebPages && ( chmod +w -R ROSE_WebPages ))
+#	DQ (9/15/2009): wrong syntax for chmod, at least on OSX.
+#	test ! -d ROSE_WebPages || (test -d ROSE_WebPages && ( chmod +w -R ROSE_WebPages ))
+	test ! -d ROSE_WebPages || (test -d ROSE_WebPages && ( chmod -R +w ROSE_WebPages ))
 	rm -rf ROSE_WebPages
 
 clean-local: clean-web-pages
