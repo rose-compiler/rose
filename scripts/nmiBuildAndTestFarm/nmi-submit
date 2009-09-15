@@ -23,7 +23,7 @@ end
 
 def parse_options( args )
     options = ( Struct.new( 
-        :user_dir, :submit_host, :tarball, :configs, :skip_update
+        :user_dir, :submit_host, :tarball, :configs, :skip_update, :fork
     ).class_eval do
         def initialize; self.configs = []; end
         self
@@ -37,6 +37,7 @@ def parse_options( args )
         options.submit_host = NmiDefaultSubmitHost
         options.user_dir = "#{`id -un`.chomp}-rose-nmi"
         options.skip_update = false
+        options.fork = true
 
         opts.banner = "
             Usage: nmi-submit [options] [TARBALL] CONFIG [CONFIG...]
@@ -66,6 +67,19 @@ def parse_options( args )
                     ".clean_summary ) do |arg|
 
             options.skip_update = arg
+        end
+
+        opts.separator ""
+        opts.on(    "--[no-]fork",
+                    "
+                        If --fork is specified, all subprocesses are forked.
+                        This allows nmi-submit to be more responsive to INT
+                        signals, but then requres that ssh and scp can be run
+                        passwordless (e.g. because ssh-agent has an appropriate
+                        identity loaded).  Defaults to --fork.
+                    ".clean_summary ) do |arg|
+
+            options.fork = arg
         end
 
         opts.separator ""
@@ -161,9 +175,9 @@ end
 #       this ensures that, e.g. submit.sh is up-to-date.
 #   3. submits the runs to nmi.
 def run( options )
-    unless cpid = Process.fork
+    if !options.fork or !( cpid = Process.fork )
         # Child ignores INT, parent can deal with it.
-        Signal.trap( "INT" ) {}
+        Signal.trap( "INT" ) {} if options.fork
 
         # (remote) [h]ost
         h = options.submit_host
@@ -206,7 +220,7 @@ def run( options )
         end
 
         puts "\nNMI Output:\n#{nmi_output}"
-    else
+    elsif options.fork
         Signal.trap( "INT" ) do
             STDERR.puts "Interrupted.  Quitting."
             Process.kill( "ABRT", cpid )
