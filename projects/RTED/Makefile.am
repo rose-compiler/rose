@@ -499,7 +499,6 @@ TESTS_KNOWN_TO_FAIL = run/C/subprogram_call_errors/c_C_1_3_f \
 					  run/tests/C/memoryleaks/assignment_to_fn_malloc_novar \
 					  run/tests/C/memoverlap/heap_array_in_struct \
 					  run/tests/C/memoverlap/heap_array_in_struct_in_array \
-					  run/tests/C/pointer/union \
 					  run/tests/C++/simple/uninitialized_member \
 					  run/tests/C++/pointer/dot_star \
 					  run/tests/C++/pointer/arrow_star \
@@ -510,8 +509,6 @@ TESTS_KNOWN_TO_FAIL = run/C/subprogram_call_errors/c_C_1_3_f \
 					  run/tests/C++/overloading/array_index \
 					  run/tests/Cxx/pointer/dot_star \
 					  run/tests/Cxx/pointer/arrow_star \
-					  run/tests/Cxx/simple/union2 \
-					  run/tests/Cxx/simple/union \
 					  run/tests/Cxx/simple/uninitialized_member \
 					  run/tests/Cxx/pointer/member_deref
 
