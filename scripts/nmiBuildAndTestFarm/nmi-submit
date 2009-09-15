@@ -7,16 +7,50 @@ SummaryWidth = 32
 
 
 String.class_eval do
+    # A helper function that makes it easier to present strings nicely while
+    # keeping source code clean.
     def clean
         indent = (self =~ /^([ \t]\s*)\S/; $1.size)
         self.strip.gsub( /^[ \t]\s{#{indent - 1}}/, '' )
     end
+end
 
-    def clean_summary
-        cleaned = self.clean
-        lines = cleaned.split("\n")
-        first = lines.shift
-        ([first] + lines.map{|l| (' ' * (SummaryWidth + 5)) + l}).join( "\n" )
+File.instance_eval do
+    def resolve_path( path )
+        expand_path(
+            path.split( "/" ).inject( Dir.pwd ) do |path, next_part|
+                next "" if next_part.empty?
+                
+                full_path = "#{path}/#{next_part}".chomp( "/" )
+                if File.symlink? full_path
+                    next_part = File.readlink( full_path ).chomp( "/" )
+                end
+
+
+                # symlink may be absolute or relative, so we may need to
+                # prepend +path+ again.
+                case File.expand_path( next_part ).chomp( "/" )
+                when next_part
+                    next_part
+                else
+                    "#{path}/#{next_part}"
+                end
+            end
+        )
+    end
+end
+
+
+
+# Converts +arg+ to a path relative to the nmiBuildAndTestFarm directory
+def find_rel_path( arg )
+    path = File.resolve_path( arg )
+    subtree_root = File.resolve_path( File.dirname( __FILE__ ))
+
+    if path.start_with? subtree_root
+        path[ (subtree_root.size + 1)..-1 ]
+    else
+        nil
     end
 end
 
@@ -42,66 +76,63 @@ def parse_options( args )
         opts.banner = "
             Usage: nmi-submit [options] [TARBALL] CONFIG [CONFIG...]
             Submit TARBALL to platforms specified by each CONFIG, which must be
-            paths relative to #{File.expand_path( File.dirname( __FILE__ ))}.
-
-            nmi-submit should be run from the source tree.
+            files in the subtree #{File.expand_path( File.dirname( __FILE__ ))}.
         ".clean
 
         opts.separator ""
         opts.on(    "--no-tarball",
-                    "
+                    *("
                         Submit the current HEAD of the public subversion
                         repository instead of a tarball.
-                    ".clean_summary ) do
+                    ".clean.split( "\n" ))) do
 
             options.tarball = :none
         end
 
         opts.separator ""
         opts.on(    "--[no-]skip-update",
-                    "
+                    *("
                         With --no-skip-update, nmi-submit will copy files (e.g.
                         submit.sh, glue.pl, &c) to the submit host to ensure
                         that they are up-to-date.  This step can be skipped to
                         speed up nmi-submit.  Defaults to --no-skip-update.
-                    ".clean_summary ) do |arg|
+                    ".clean.split( "\n" ))) do |arg|
 
             options.skip_update = arg
         end
 
         opts.separator ""
         opts.on(    "--[no-]fork",
-                    "
+                    *("
                         If --fork is specified, all subprocesses are forked.
                         This allows nmi-submit to be more responsive to INT
                         signals, but then requres that ssh and scp can be run
                         passwordless (e.g. because ssh-agent has an appropriate
                         identity loaded).  Defaults to --fork.
-                    ".clean_summary ) do |arg|
+                    ".clean.split( "\n" ))) do |arg|
 
             options.fork = arg
         end
 
         opts.separator ""
         opts.on(    "--submit-host = HOST",
-                    "
+                    *("
                         Specify the submission host to use.  Defaults to
                         #{options.submit_host}.
-                    ".clean_summary ) do |arg|
+                    ".clean.split( "\n" ))) do |arg|
 
             options.submit_host = arg
         end
 
         opts.separator ""
         opts.on(    "--user-dir = REMOTE_DIR",
-                    "
+                    *("
                         Use REMOTE_DIR on the submission host as a working area
                         to stage files and run the submission from.  Defaults to
                         #{options.user_dir}.
-
                         WARNING: nmi-submit will write to REMOTE_DIR
                         indiscriminately.  Don't keep your family photos there.
-                    ".clean_summary ) do |arg|
+                    ".clean.split( "\n" ))) do |arg|
 
             options.user_dir = arg
         end
@@ -127,8 +158,7 @@ def parse_options( args )
         op.order! args do |arg|
             next options.tarball = arg unless options.tarball
             options.configs << arg
-        end
-
+        end 
 
         # do we have all the options?
         raise OptionParser::MissingArgument, "
@@ -145,20 +175,22 @@ def parse_options( args )
             Could not find tarball #{options.tarball}
         ".clean unless options.tarball == :none or File.file? options.tarball
 
-        # Each CONFIG must be relative to the nmi scripts directory.  This is
-        # because submit.sh expects to be given
-        # "build_configs/PLATFORM/options", i.e. it extracts the platform
-        # information from the path.
+
         missing_configs = options.configs.reject do |config| 
-            File.file? "#{File.dirname( __FILE__ )}/#{config}" 
+            File.file? "#{File.dirname( __FILE__ )}/#{find_rel_path( config )}"
         end
         raise OptionParser::InvalidArgument, "
             Could not find the following CONFIG files:
                 #{"\n    " + missing_configs.join( "\n    " )}
-            Please specify config files as paths relative to 
-            #{File.dirname( __FILE__ )}.  These paths should start with
-            [./]build_configs
+            Please specify config files that are in the subtree 
+            #{File.dirname( __FILE__ )}.
         ".clean unless missing_configs.empty?
+
+        # Each CONFIG must be relative to the nmi scripts directory.  This is
+        # because submit.sh expects to be given
+        # "build_configs/PLATFORM/options", i.e. it extracts the platform
+        # information from the path.
+        options.configs.map!{|config| find_rel_path( config )}
     rescue OptionParser::ParseError => e
         puts "#{e.message}\n\n"
         op.parse! [ "--help" ]
@@ -194,6 +226,8 @@ def run( options )
             # copy the nmi scripts to the remote host, so we're using ones that are
             # up-to-date
             puts "Updating #{File.basename( File.expand_path( File.dirname( __FILE__ )))} files on #{h}."
+            # FIXME 2: This copies all of the .svn directories
+            #   should tar --exclude .svn and scp, extract that file
             system "scp -r #{File.dirname( __FILE__ )} #{target}/ > /dev/null"
         end
 
