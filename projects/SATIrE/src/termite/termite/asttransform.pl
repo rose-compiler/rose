@@ -270,10 +270,10 @@ unparse(fi(Line, Col, ParentPPIs), Node) :-
   % extract mine
   get_preprocessing_infos(Node, PPIs),
   % unparse the node
-  unparse_ppi(before, PPIs),
-  unparse1(fi(Line, Col, PPIs), Node),
+  unparse_ppi(before, PPIs), !, % I/O means we can't backtrack anyway
+  unparse1(fi(Line, Col, PPIs), Node), !,
   % process the parent preprocessing info
-  unparse_ppi(inside, ParentPPIs),
+  unparse_ppi(inside, ParentPPIs), !,
   unparse_ppi(after, PPIs).
 
 
@@ -324,7 +324,6 @@ unparse1(UI, size_of_op(null, size_of_op_annotation(ClassType,_Type, _), _)) :- 
 unparse1(_UI,          char_val(_,value_annotation(Value,_),_)) :- string(Value), !, string_to_list(Value, [N]), write(N).
 unparse1(_UI, unsigned_char_val(_,value_annotation(Value,_),_)) :- string(Value), !, string_to_list(Value, [N]), write(N).
 
-unparse1(_UI, enum_val(_,value_annotation(_,Value,_),_,_)) :- !, write(Value).
 unparse1(_UI, char_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
 unparse1(_UI, int_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
 unparse1(_UI, short_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
@@ -344,6 +343,7 @@ unparse1(_UI, string_val(_,value_annotation(Value,_),_,_)) :- !, write('"'), wri
 unparse1(_UI, bool_val_exp(_, value_annotation(0,_),_,_)) :- !, write('false').
 unparse1(_UI, bool_val_exp(_, value_annotation(1,_),_,_)) :- !, write('true').
 unparse1(_UI, bool_val_exp(_, value_annotation(Value,_),_, _)) :- !, write(Value).
+unparse1(_UI, enum_val(_,value_annotation(_,Value,_,_),_,_)) :- !, write(Value).
 
 % EXPRESSIONS
 unparse1(UI, function_call_exp(function_ref_exp(function_ref_exp_annotation(Name, _Type, _), _, _), ExprList, _, _, _)) :-
@@ -635,7 +635,6 @@ unparse1(_UI, function_end(_, function_declaration_annotation(_, Name, _, _), _)
 unparse1(_UI, interval(Min, Max)) :- !, write(interval(Min, Max)).
 
 % ERRORS
-
 unparse1(_UI, X) :- var(X), !, writeln('UNBOUND!'), gtrace.
 unparse1(UI, X) :- write(X), gtrace, unparse(UI, X).
 
@@ -756,9 +755,11 @@ indent(file_info(_Filename,_Line,Col)) :- tab(Col).
 % Location must be one of [before, after, inside].
 unparse_ppi(_, []).
 unparse_ppi(Location, [PPI|PPIs]) :-
-  PPI =.. [_Type, Text, Location, Fi], !,
+  PPI =.. [Type, Text, Location, Fi], !,
   (Fi = file_info(_, _, 1) -> nl; true),
-  write(Text), /*FIXME use file info instead!*/ nl,
+  write(Text),
+  % FIXME use file info instead!
+  (Type = c_StyleComment -> true; nl),
   unparse_ppi(Location, PPIs).
 
 unparse_ppi(Location, [_|PPIs]) :- !, unparse_ppi(Location, PPIs).

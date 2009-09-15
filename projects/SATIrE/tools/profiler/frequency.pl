@@ -1,4 +1,4 @@
-#!/usr/local/mstools/bin/pl -O -q -L0 -G0 -T0 -t main -f
+#!/usr/local/mstools/bin/pl -L0 -G0 -T0 -t main -f
 % -*- prolog -*-
 
 %-----------------------------------------------------------------------
