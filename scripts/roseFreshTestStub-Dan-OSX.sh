@@ -8,7 +8,9 @@ export DYLD_LIBRARY_PATH=/Users/dquinlan/local/boost_1_35_0_installTree-gxx-4.0.
 ROSE_TOP="/Users/dquinlan/ROSE/svn-test-rose/$$/"
 export BOOST_ROOTX="/Users/dquinlan/local/boost_1_35_0_installTree-gxx-4.0.1/"
 
-CONFIGURE_FLAGS=( --disable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS='-Wall' --with-C_WARNINGS='-Wall' --with-CXXFLAGS=-fPIC --with-CFLAGS=-fPIC --prefix=${ROSE_TOP}/install --with-boost=${BOOST_ROOTX} "$@")
+# DQ (9/16/2009): Run the quicker version of the tests...
+# CONFIGURE_FLAGS=( --disable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS='-Wall' --with-C_WARNINGS='-Wall' --with-CXXFLAGS=-fPIC --with-CFLAGS=-fPIC --prefix=${ROSE_TOP}/install --with-boost=${BOOST_ROOTX} "$@")
+CONFIGURE_FLAGS=( --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS='-Wall' --with-C_WARNINGS='-Wall' --with-CXXFLAGS=-fPIC --with-CFLAGS=-fPIC --prefix=${ROSE_TOP}/install --with-boost=${BOOST_ROOTX} "$@")
 
 ROSE_SVNROOT=svn+ssh://tux270.llnl.gov/usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
 MAILADDRS="dquinlan@llnl.gov liaoch@llnl.gov panas2@llnl.gov matzke1@llnl.gov saebjornsen1@llnl.gov"
