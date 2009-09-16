@@ -507,7 +507,8 @@ markers(Stem, Stem, Stem,
   %term_to_string(wcet_marker(StemInner), Text),
   Text = wcet_marker(StemInner), 
   pragma_text(Marker, Text),
-  append(List, [Marker], ListPrime).
+  %append(List, [Marker], ListPrime).
+  ListPrime = [Marker|List].
 markers(I, I, I, Term, Term).
 
 %% expr_constr(+Expr, +AM, -Expr1) is det.

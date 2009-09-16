@@ -7,8 +7,12 @@ EXTRA_DIST= \
 	satire_overview.pdf \
 	satire_attributes_auxiliary_functions \
         termite.tex \
-	fancychap.sty      html.sty  plonline.sty  url.sty \
-	fancyheadings.sty  logo.sty  plpage.sty
+	fancychap.sty \    
+	fancyheadings.sty \
+	logo.sty \
+        plonline.sty \
+        plpage.sty \
+	html.sty pl.sty url.sty
 
 .PHONY: docs HTML clean-termite
 docs: $(PDFS) docs-termite
@@ -63,7 +67,6 @@ $(INPUTFILES): $(SRCFILES)
 TEXFILES=$(patsubst %.pl, %.tex,$(INPUTFILES))
 GARBAGE=$(patsubst %.tex, %.aux,$(TEXFILES))
 MYTEXINPUT=$(SWI_PROLOG_HOME_DIR)/library/pldoc:$(SWI_PROLOG_HOME_DIR)/library/ltx2htm:$(srcdir)
-LTX2HTM=/usr/local/mstools/bin/latex2html # this is part of SWI-Prolog (not to be confused!)
 
 if WITH_SWI_PROLOG  # --------------------------------------------------
 
@@ -98,7 +101,7 @@ clean-termite:
               termite-pdf.ind termite-pdf.ilg $(INPUTFILES) \
 	      termite-html.tex termite-pdf.tex \
 	      termspec.tex c2term.txt term2c.txt
-	rm -rf termite.pdf termite-html
+	rm -rf termite.pdf termite-html 
 
 termite_spec.pl: $(top_srcdir)/src/termite/termite/termite_spec.pl
 	cp $< $@
@@ -116,7 +119,7 @@ types.pl: $(top_srcdir)/tools/loopbounds/types.pl
 	      open('$@', write, _, [alias(wstrm)]),\
               latex_for_file('$<', wstrm, \
 	                     [stand_alone(false),public_only(true)]), \
-	      close(wstrm)." | pl -q
+	      close(wstrm)." | $(SWI_PL) -q
 
 # Sadly, ltx2html does not understand the listings package...
 termspec.tex: $(top_srcdir)/src/termite/termite/termite_spec.pl
@@ -155,9 +158,11 @@ termite-pdf.tex: termite.tex $(SRCFILES) termspec.tex c2term.txt term2c.txt
 termite-html.tex: termite-pdf.tex
 	sed s/xPDF/xHTML/ $< >$@
 
-HTML: termite-html.tex $(TEXFILES)
-	TEXINPUTS=$(MYTEXINPUT):$$TEXINPUTS
-	$(LTX2HTM) $<
+HTML: termite-html.tex $(TEXFILES) $(LTX2HTM)
+	TEXINPUTS=$(MYTEXINPUT):$$TEXINPUTS \
+	printf "load_files('library(latex2html),[silent(true)]'),\n \
+	      latex2html('$<').\n" \
+	| $(SWI_PL) -q -p library=$(srcdir)/ltx2htm -t halt
 
 termite.pdf: termite-pdf.tex $(TEXFILES)
 	env TEXINPUTS=$(MYTEXINPUT):$$TEXINPUTS pdflatex $<
@@ -165,6 +170,41 @@ termite.pdf: termite-pdf.tex $(TEXFILES)
 	env TEXINPUTS=$(MYTEXINPUT):$$TEXINPUTS pdflatex $<
 	env TEXINPUTS=$(MYTEXINPUT):$$TEXINPUTS pdflatex $<
 	mv termite-pdf.pdf $@
+
+# LaTeX -> HTML from SWI-Prolog
+EXTRA_DIST += \
+  ltx2htm/COPYING \
+  ltx2htm/configure.in \
+  ltx2htm/latex.cmd \
+  ltx2htm/pl.pl \
+  ltx2htm/url.sty \
+  ltx2htm/ChangeLog \
+  ltx2htm/debug.pl \
+  ltx2htm/latex2html.css \
+  ltx2htm/pl.sty \
+  ltx2htm/xpce.cmd \
+  ltx2htm/Makefile.in \
+  ltx2htm/doc2tex \
+  ltx2htm/latex2html.in \
+  ltx2htm/ps2gif.pl \
+  ltx2htm/xpce.pl \
+  ltx2htm/html.sty \
+  ltx2htm/latex2html.pl \
+  ltx2htm/psfile.c \
+  ltx2htm/config.h.in \
+  ltx2htm/ltx2htm.doc \
+  ltx2htm/run.pl \
+  ltx2htm/configure \
+  ltx2htm/install-sh* \
+  ltx2htm/pl.cmd \
+  ltx2htm/tex.c \
+  ltx2htm/icons/home.gif \
+  ltx2htm/icons/index.gif \
+  ltx2htm/icons/info.gif \
+  ltx2htm/icons/next.gif \
+  ltx2htm/icons/prev.gif \
+  ltx2htm/icons/up.gif \
+  ltx2htm/icons/yellow_pages.gif
 
 else # -----------------------------------------------------------------
 
