@@ -12,7 +12,7 @@ EXTRA_DIST= \
 	logo.sty \
         plonline.sty \
         plpage.sty \
-	html.sty pl.sty url.sty
+	html.sty url.sty
 
 .PHONY: docs HTML clean-termite
 docs: $(PDFS) docs-termite
@@ -100,8 +100,9 @@ clean-termite:
 	      termite-pdf.out termite-pdf.toc $(TEXFILES) \
               termite-pdf.ind termite-pdf.ilg $(INPUTFILES) \
 	      termite-html.tex termite-pdf.tex \
-	      termspec.tex c2term.txt term2c.txt
-	rm -rf termite.pdf termite-html 
+	      termspec.tex c2term.txt term2c.txt \
+	      termite_spec.pl types.pl
+	rm -rf termite.pdf termite-html ltx2htm-inst ltx2htm-build
 
 termite_spec.pl: $(top_srcdir)/src/termite/termite/termite_spec.pl
 	cp $< $@
@@ -158,11 +159,9 @@ termite-pdf.tex: termite.tex $(SRCFILES) termspec.tex c2term.txt term2c.txt
 termite-html.tex: termite-pdf.tex
 	sed s/xPDF/xHTML/ $< >$@
 
+LTX2HTM=ltx2htm-inst/bin/latex2html
 HTML: termite-html.tex $(TEXFILES) $(LTX2HTM)
-	TEXINPUTS=$(MYTEXINPUT):$$TEXINPUTS \
-	printf "load_files('library(latex2html),[silent(true)]'),\n \
-	      latex2html('$<').\n" \
-	| $(SWI_PL) -q -p library=$(srcdir)/ltx2htm -t halt
+	$(LTX2HTM) $<
 
 termite.pdf: termite-pdf.tex $(TEXFILES)
 	env TEXINPUTS=$(MYTEXINPUT):$$TEXINPUTS pdflatex $<
@@ -195,7 +194,7 @@ EXTRA_DIST += \
   ltx2htm/ltx2htm.doc \
   ltx2htm/run.pl \
   ltx2htm/configure \
-  ltx2htm/install-sh* \
+  ltx2htm/install-sh \
   ltx2htm/pl.cmd \
   ltx2htm/tex.c \
   ltx2htm/icons/home.gif \
@@ -205,6 +204,13 @@ EXTRA_DIST += \
   ltx2htm/icons/prev.gif \
   ltx2htm/icons/up.gif \
   ltx2htm/icons/yellow_pages.gif
+
+$(LTX2HTM):
+	cp -r $(srcdir)/ltx2htm ltx2htm-build
+	chmod u+rw -R ltx2htm-build
+	mkdir -p ltx2htm-inst/bin ltx2htm-inst/lib
+	cd ltx2htm-build && sh configure --prefix=$(PWD)/ltx2htm-inst
+	make -C ltx2htm-build all install
 
 else # -----------------------------------------------------------------
 
