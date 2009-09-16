@@ -26,7 +26,8 @@ nobase_include_HEADERS = \
 	$(foreach a, $(X_ANALYZERS), satire/$(a)_implementation.h)
 
 # Explicit rule to override default (which assumes a certain C source file).
-libsatiredfa_la_SOURCES = satiredfa.C
+libsatiredfa_la_SOURCES = 
+libsatiredfa_la_BUILT_SOURCES = satiredfa.C
 
 # All the objects and archives we want to go into libsatiredfa, based on
 # $(ANALYZERS) specified above.
