@@ -4780,9 +4780,20 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
           fortran_C_preprocessor_commandLine.push_back("-E");
 
-       // DQ (5/20/2008): Need to select between fixed and free format
-          fortran_C_preprocessor_commandLine.push_back("-ffree-line-length-none");
+#if 0
+// DQ (9/16/2009): I don't think we need to pass this to gfortran if we are just using gfortran to call CPP
 
+// We need this #if since if gfortran is unavailable the macros for the major and minor version numbers will be empty strings (blank).
+#if USE_GFORTRAN_IN_ROSE
+       // DQ (9/16/2009): This option is not available in gfortran version 4.0.x (wonderful).
+       // DQ (5/20/2008): Need to select between fixed and free format
+       // fortran_C_preprocessor_commandLine.push_back("-ffree-line-length-none");
+          if ( (BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER >= 4) && (BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER >= 1) )
+             {
+               fortran_C_preprocessor_commandLine.push_back("-ffree-line-length-none");
+             }
+#endif
+#endif
           string sourceFilename              = get_sourceFileNameWithPath();
           fortran_C_preprocessor_commandLine.push_back(sourceFilename);
 
@@ -4896,6 +4907,10 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                   }
              }
 
+       // Refactor the code below so that we can conditionally set the -ffree-line-length-none 
+       // or -ffixed-line-length-none options (not available in all versions of gfortran).
+          string use_line_length_none_string;
+
        // DQ (11/17/2007): Set the fortran mode used with gfortran.
           if (get_F90_only() == true || get_F95_only() == true)
              {
@@ -4903,7 +4918,8 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                fortranCommandLine.push_back("-std=f95");
 
             // DQ (5/20/2008)
-               fortranCommandLine.push_back("-ffree-line-length-none");
+            // fortranCommandLine.push_back("-ffree-line-length-none");
+               use_line_length_none_string = "-ffree-line-length-none";
              }
             else
              {
@@ -4912,16 +4928,29 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                     fortranCommandLine.push_back("-std=f2003");
 
                  // DQ (5/20/2008)
-                    fortranCommandLine.push_back("-ffree-line-length-none");
+                 // fortranCommandLine.push_back("-ffree-line-length-none");
+                    use_line_length_none_string = "-ffree-line-length-none";
                   }
                  else
                   {
                  // This should be the default mode (fortranMode string is empty). So is it f77?
 
                  // DQ (5/20/2008)
-                    fortranCommandLine.push_back("-ffixed-line-length-none");
+                 // fortranCommandLine.push_back ("-ffixed-line-length-none");
+                    use_line_length_none_string = "-ffixed-line-length-none";
                   }
              }
+
+// We need this #if since if gfortran is unavailable the macros for the major and minor version numbers will be empty strings (blank).
+#if USE_GFORTRAN_IN_ROSE
+       // DQ (9/16/2009): This option is not available in gfortran version 4.0.x (wonderful).
+       // DQ (5/20/2008): Need to select between fixed and free format
+       // fortran_C_preprocessor_commandLine.push_back("-ffree-line-length-none");
+          if ( (BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER >= 4) && (BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER >= 1) )
+             {
+               fortranCommandLine.push_back(use_line_length_none_string);
+             }
+#endif
 
        // DQ (12/8/2007): Added support for cray pointers from commandline.
           if (get_cray_pointer_support() == true)
@@ -5832,7 +5861,16 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                       // If backend compilation is specificed to be free form, then allow any line length (to simplify code generation for now)
                       // compilerNameString += "-ffree-form ";
                       // compilerNameString += "-ffree-line-length-<n> "; // -ffree-line-length-<n>
-                         compilerNameString.push_back("-ffree-line-length-none");
+                      // compilerNameString.push_back("-ffree-line-length-none");
+
+#if USE_GFORTRAN_IN_ROSE
+                      // DQ (9/16/2009): This option is not available in gfortran version 4.0.x (wonderful).
+                         if ( (BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER >= 4) && (BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER >= 1) )
+                            {
+                              compilerNameString.push_back("-ffree-line-length-none");
+                            }
+#endif
+
                        }
                       else
                        {

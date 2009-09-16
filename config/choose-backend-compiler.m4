@@ -100,6 +100,14 @@ dnl build using ROSE)
   # exit 1
   fi
 
+  gfortran_version_4_0=no
+  if test x$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == x; then
+     if test x$BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER == x; then
+        gfortran_version_4_0=yes
+     fi
+  fi
+  AM_CONDITIONAL(ROSE_USING_GFORTRAN_VERSION_4_0, [test "x$gfortran_version_4_0" = "xyes"])
+
 # echo "Exiting after test of backend version number support ..."
 # exit 1
 

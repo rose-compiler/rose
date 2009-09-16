@@ -43,6 +43,10 @@ ENABLE_UPLOAD_WEB=1
 #KEEP_TEST_DIR=1
 NORMAL_INSTALL_DIR=1 # no chmod 000 for 'install'
 
-ENABLE_BUILD_BINARY_EDG=1
+# DQ (9/16/2009): turned off ability of this script to generate EDG binary to
+# avoid interferrence with other test that have this specific purpose. For
+# now we want only Dan and Liao's cron test to generate the EDG binaries.
+ENABLE_BUILD_BINARY_EDG=0
+
 set -e
 set -o pipefail
