@@ -100,9 +100,18 @@ clean-termite:
 	      termspec.tex c2term.txt term2c.txt
 	rm -rf termite.pdf termite-html
 
-%.tex: %.pl
-	export TERMITE_LIB=$(datarootdir)/termite && \
-	echo " use_module(library(doc_latex)), \
+termite_spec.pl: $(top_srcdir)/src/termite/termite/termite_spec.pl
+	cp $< $@
+types.pl: $(top_srcdir)/tools/loopbounds/types.pl
+	cp $< $@
+
+%.tex: %.pl types.pl  termite_spec.pl
+	export TERMITE_LIB=$(top_srcdir)/src/termite/termite && \
+	echo "use_module(library(doc_latex)), \
+	      getenv('PWD', CurDir), \
+	      asserta(library_directory(CurDir)), \
+	      getenv('TERMITE_LIB', TermitePath), \
+	      asserta(library_directory(TermitePath)), \
 	      consult('$*'), \
 	      open('$@', write, _, [alias(wstrm)]),\
               latex_for_file('$<', wstrm, \
