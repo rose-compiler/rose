@@ -67,15 +67,41 @@ dnl build using ROSE)
 # Or Jeremiah suggests the alternative:
 # gfortran --version | sed -n '1s/.*) //;1p'
   echo "BACKEND_FORTRAN_COMPILER = $BACKEND_FORTRAN_COMPILER"
+
+# Testing the 4.0.x compiler
+# BACKEND_FORTRAN_COMPILER="/usr/apps/gcc/4.0.2/bin/gfortran"
+# echo "BACKEND_FORTRAN_COMPILER = $BACKEND_FORTRAN_COMPILER"
+
+# DQ (9/15/2009): Normally we expect a string such as "GNU Fortran 95 (GCC) 4.1.2", but 
+# the GNU 4.0.x compiler's gfortran outputs a string such as "GNU Fortran 95 (GCC 4.0.2)"
+# So for this case we detect it explicitly and fill in the values directly!
   BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_FORTRAN_COMPILER --version | head -1 | cut -f2 -d\) | tr -d \  | cut -d\. -f1`
   BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_FORTRAN_COMPILER --version | head -1 | cut -f2 -d\) | tr -d \  | cut -d\. -f2`
+
+# Test if we computed the major and minor version numbers correctly...recompute if required
+  if test x$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == x; then
+    echo "Warning: BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER = $BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER (blank) so this is likely the GNU 4.0.x version (try again to get the version number)"
+    BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_FORTRAN_COMPILER --version | head -1 | sed s/"GNU Fortran 95 (GCC "//g | cut -f1 -d \) | cut -d\. -f1`
+    BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_FORTRAN_COMPILER --version | head -1 | sed s/"GNU Fortran 95 (GCC "//g | cut -f1 -d \) | cut -d\. -f2`
+  fi
 
 # echo "back-end compiler for generated translators to use will be: $BACKEND_CXX_COMPILER"
   echo "     Fortran back-end compiler major version number = $BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER"
   echo "     Fortran back-end compiler minor version number = $BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER"
 
-#echo "Exiting after test of backend version number support ..."
-#exit 1
+# Test that we have correctly evaluated the major and minor versions numbers...
+  if test x$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == x; then
+    echo "Error: Could not compute the MAJOR version number of $BACKEND_FORTRAN_COMPILER"
+    exit 1
+  fi
+
+  if test x$BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER == x; then
+    echo "Error: Could not compute the MINOR version number of $BACKEND_FORTRAN_COMPILER"
+    exit 1
+  fi
+
+# echo "Exiting after test of backend version number support ..."
+# exit 1
 
 # We use the name of the backend C++ compiler to generate a compiler name that will be used
 # elsewhere (CXX_ID might be a better name to use, instead we use basename to strip the path).
