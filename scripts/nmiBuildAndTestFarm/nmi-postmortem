@@ -120,13 +120,44 @@ def main
         $1
     )
 
+
+    # FIXME 2: Apparently, messing around with .bash_profile is unnecessary.  We
+    # can simply do the following:
+    #   ssh #{run_host} -t '/bin/bash --rcfile .nmi-postmortem'
+    # although whether this works on the darwin boxes (e.g. nmi-0068) is not
+    # clear.
+    #   
+    #
+    #
+    # We ssh -t -t to force a pseudo tty allocation.  The motivation for this is
+    # it prevents bash_profile from being read.  per the ssh man page, it seems
+    # that this should be unnecessary: invoking ssh with a command should be
+    # enough.  However, empirical testing suggests otherwise.  With a
+    # bash_profile that changes directory to run, we get the following:
+    #
+    #    [heller@nmi-s005 ~]$ ssh nmi-0061 pwd
+    #    /home/heller/run
+    #    [heller@nmi-s005 ~]$ ssh -t nmi-0061 pwd
+    #    /home/heller
+    #
+    # Similarly, the convoluted process of sshing to the run host in order to
+    # invoke scp to copy results.tar.gz is aimed to circumvent this problem.
+    #
+    # Using bash_profile in the first place is motivated by the need to do the
+    # following:
+    #   (1) ssh to a target host
+    #   (2) ensure that some arbitrary commands are run 
+    #       (in this case cd run && source env.sh)
+    #   (3) leave the user with a functioning shell so they can issue commands
+    #       in an environment very similar to the one for the NMI run
     puts "Copying and extracting results.tar.gz and setting up .nmi-postmortem"
     system [
-        "ssh #{run_host} 'rm -fr run; mkdir -p run; mkdir -p .ssh'",
-        "scp #{run_dir}/userdir/nmi*/results.tar.gz #{run_host}:run/ > /dev/null 2>/dev/null",
-        "ssh #{run_host} 'cd run && tar xfz results.tar.gz'",
-        %Q{ssh #{run_host} 'touch .bash_profile; grep -q .nmi-postmortem .bash_profile || echo "if [ -f .nmi-postmortem ]; then source .nmi-postmortem; fi" >> .bash_profile'},
-        %Q{ssh #{run_host} 'echo "cd run && source env.sh" > .nmi-postmortem'},
+        "ssh-add 2> /dev/null",
+        "ssh -t -t #{run_host} 'rm -fr run; mkdir -p run;' 2> /dev/null",
+        %Q{ssh -A -t #{run_host} 'scp -o "StrictHostKeyChecking no" #{run_dir}/userdir/nmi*/results.tar.gz run/ > /dev/null 2>/dev/null' 2> /dev/null},
+        "ssh -t -t #{run_host} 'cd run && tar xfz results.tar.gz' 2> /dev/null",
+        %Q{ssh -t -t #{run_host} 'touch .bash_profile; grep -q .nmi-postmortem .bash_profile || echo "if [ -f .nmi-postmortem ]; then source .nmi-postmortem; fi" >> .bash_profile' 2> /dev/null},
+        %Q{ssh -t -t #{run_host} 'echo "cd run && source env.sh" > .nmi-postmortem' 2> /dev/null},
     ].join( " && " )
 
     puts "
