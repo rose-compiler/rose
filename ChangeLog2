@@ -1,3 +1,9 @@
+2009-09-16 20:40  liao6
+
+	* [r7321] /trunk/ROSE/scripts/roseFreshTestStub-Leo-daily.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-scidac.sh: Added
+	  --with-roseQt into regression test stubs
+
 2009-09-16 17:31  liao6
 
 	* [r7319]
