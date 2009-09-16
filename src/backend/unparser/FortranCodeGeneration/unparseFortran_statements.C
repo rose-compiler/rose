@@ -321,6 +321,8 @@ FortranCodeGeneration_locatedNode::unparseFortranIncludeLine (SgStatement* stmt,
 #if USE_GFORTRAN_IN_ROSE
      if (fortranCompilerName == "gfortran")
         {
+       // DQ (9/15/2009): This failed for the gfortran version 4.0.x because the major
+       // and minor version number were not generated in configure correctly.
           if ( (BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == 3) || 
                ( (BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER >= 4) && (BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER <= 1) ) )
              {

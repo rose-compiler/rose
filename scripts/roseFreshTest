@@ -216,11 +216,13 @@ fi
     echo "SYSTEM_NAME = \"$SYSTEM_NAME\"" >&2
     if [ 0$ENABLE_BUILD_BINARY_EDG -ne 0 ]; then
       cd ${ROSE_TOP}/build
-      make binary_edg_tarball || exit 1
-      ${ROSE_TOP}/sourcetree/scripts/copy_binary_edg_tarball_to_source_tree_svn ${ROSE_SVNROOT} "${SYSTEM_NAME}" || exit 1
-      ${ROSE_TOP}/sourcetree/scripts/copy_binary_edg_tarball_to_source_tree ${ROSE_TOP}/sourcetree "${SYSTEM_NAME}" || exit 1
-    make $MAKEFLAGS source_with_binary_edg_dist DOT_SVNREV=-${svnversion} || exit 1
-    echo "############ make source_with_binary_edg_dist done"
+    # DQ (9/15/2009): These are now called via dependences in the Makefile when we call the makefile rule: source_with_binary_edg_dist
+    # make binary_edg_tarball || exit 1
+    # ${ROSE_TOP}/sourcetree/scripts/copy_binary_edg_tarball_to_source_tree_svn ${ROSE_SVNROOT} "${SYSTEM_NAME}" || exit 1
+    # ${ROSE_TOP}/sourcetree/scripts/copy_binary_edg_tarball_to_source_tree ${ROSE_TOP}/sourcetree "${SYSTEM_NAME}" || exit 1
+    # make $MAKEFLAGS source_with_binary_edg_dist DOT_SVNREV=-${svnversion} || exit 1
+      make $MAKEFLAGS source_with_binary_edg_dist DOT_SVNREV=-${svnversion} || exit 1
+      echo "############ make source_with_binary_edg_dist done"
     fi
   fi
 ) >buildlog 2>&1 || buildstatus=1

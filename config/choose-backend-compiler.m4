@@ -91,13 +91,13 @@ dnl build using ROSE)
 
 # Test that we have correctly evaluated the major and minor versions numbers...
   if test x$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == x; then
-    echo "Error: Could not compute the MAJOR version number of $BACKEND_FORTRAN_COMPILER"
-    exit 1
+    echo "Warning: Could not compute the MAJOR version number of $BACKEND_FORTRAN_COMPILER"
+  # exit 1
   fi
 
   if test x$BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER == x; then
-    echo "Error: Could not compute the MINOR version number of $BACKEND_FORTRAN_COMPILER"
-    exit 1
+    echo "Warning: Could not compute the MINOR version number of $BACKEND_FORTRAN_COMPILER"
+  # exit 1
   fi
 
 # echo "Exiting after test of backend version number support ..."
