@@ -177,7 +177,7 @@ std::string AnalyzerOptions::getOptionsInfo() {
   return "\nUsage: "+getProgramName()
     +" [OPTION]... <filename1> <filename2> ... \n\n "+getHelpOptionsText()
     +"\nThis program was built against "+SATIRE_PACKAGE_STRING+",\n"
-    +"please report bugs to "+SATIRE_PACKAGE_BUGREPORT+".\n\n";
+    +"please report bugs to "+SATIRE_PACKAGE_BUGREPORT+".\n";
 }
 
 #define STRING_ATTR(attrname,defaultval) \

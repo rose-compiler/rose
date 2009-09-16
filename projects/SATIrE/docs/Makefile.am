@@ -6,7 +6,9 @@ EXTRA_DIST= \
         satire_cfgconstruction.pdf \
 	satire_overview.pdf \
 	satire_attributes_auxiliary_functions \
-        termite.tex
+        termite.tex \
+	fancychap.sty      html.sty  plonline.sty  url.sty \
+	fancyheadings.sty  logo.sty  plpage.sty
 
 .PHONY: docs HTML clean-termite
 docs: $(PDFS) docs-termite
@@ -60,7 +62,7 @@ $(INPUTFILES): $(SRCFILES)
 	done
 TEXFILES=$(patsubst %.pl, %.tex,$(INPUTFILES))
 GARBAGE=$(patsubst %.tex, %.aux,$(TEXFILES))
-MYTEXINPUT=$(SWI_PROLOG_HOME_DIR)/library/pldoc:$(SWI_PROLOG_HOME_DIR)/library/ltx2htm:/opt/gupu/src/pl-57x/packages/ltx2htm:/opt/gupu/src/pl-57x/man
+MYTEXINPUT=$(SWI_PROLOG_HOME_DIR)/library/pldoc:$(SWI_PROLOG_HOME_DIR)/library/ltx2htm:$(srcdir)
 LTX2HTM=/usr/local/mstools/bin/latex2html # this is part of SWI-Prolog (not to be confused!)
 
 if WITH_SWI_PROLOG  # --------------------------------------------------
