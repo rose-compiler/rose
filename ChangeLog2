@@ -1,3 +1,26 @@
+2009-09-16 17:31  liao6
+
+	* [r7319]
+	  /trunk/ROSE/projects/autoParallelization/tests/Makefile.am:
+	  Turned off a debugging flag for auto parallelization to have a
+	  cleaner screen output
+
+2009-09-16 14:55  dquinlan
+
+	* [r7318] /trunk/ROSE/Makefile.am,
+	  /trunk/ROSE/config/choose-backend-compiler.m4,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/Makefile.am,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Andreas-daily.sh,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C: Can't use rule
+	  copy_binary_edg_tarball_to_source_tree_svn since it fails on a
+	  distribution (can't find .svn/entries file).
+
+2009-09-16 12:24  dquinlan
+
+	* [r7315] /trunk/ROSE/scripts/roseFreshTestStub-Dan-OSX.sh: Run the
+	  shorted version of the OSX tests for now (while testing to build
+	  binaries).
+
 2009-09-16 02:01  dquinlan
 
 	* [r7309] /trunk/ROSE/config/choose-backend-compiler.m4,
