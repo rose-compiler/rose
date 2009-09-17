@@ -10281,6 +10281,103 @@ void SageInterface::collectReadOnlySymbols(SgStatement* stmt, std::set<SgVariabl
 
 }
 
+//! Check if a variable reference is used by its address: including &a expression and foo(a) when type2 foo(Type& parameter) in C++
+bool SageInterface::isUseByAddressVariableRef(SgVarRefExp* ref)
+{
+  bool result = false; 
+  ROSE_ASSERT(ref != NULL);
+  ROSE_ASSERT(ref->get_parent() != NULL);
+  // case 1: ref is used as an operator for & (SgAddressofOp)
+  // TODO tolerate possible type casting operations in between ?
+  if (isSgAddressOfOp(ref->get_parent()))
+  {
+    result = true;
+  }
+  // case 2. ref is used as a function call's parameter, and the parameter has reference type in C++
+  else if ((SageInterface::is_Cxx_language())&&(isSgExprListExp(ref->get_parent())))
+  {
+    SgNode* grandparent = ref->get_parent()->get_parent();
+    ROSE_ASSERT(grandparent);
+    if (isSgFunctionCallExp(grandparent)) // Is used as a function call's parameter 
+    {
+      // find which parameter ref is in SgExpressionPtrList
+      int param_index =0;
+      SgExpressionPtrList expList = isSgExprListExp(ref->get_parent())->get_expressions();
+      Rose_STL_Container<SgExpression*>::const_iterator iter= expList.begin();
+      for (; iter!=expList.end(); iter++)
+      {
+        if (*iter == ref)
+          break;
+        else
+          param_index++;
+      }
+      // find the parameter type of the corresponding function declaration
+      SgFunctionRefExp * funcRef = isSgFunctionRefExp(isSgFunctionCallExp(grandparent)->get_function());
+      SgFunctionDeclaration* funcDecl = isSgFunctionSymbol(funcRef->get_symbol())->get_declaration();
+      SgInitializedNamePtrList nameList = funcDecl->get_args();
+      //TODO tolerate typedef chains
+      if (isSgReferenceType(nameList[param_index]->get_type()))
+      {
+        result = true;
+      }
+    }
+  }
+  return result;
+}
+
+
+//! Collect variable references involving use by address: including &a expression and foo(a) when foo(Type& parameter) in C++
+void SageInterface::collectUseByAddressVariableRefs (const SgStatement* s, std::set<SgVarRefExp* >& varSetB)
+{
+  Rose_STL_Container <SgNode*> var_refs = NodeQuery::querySubTree (const_cast<SgStatement *> (s), V_SgVarRefExp);
+
+  Rose_STL_Container<SgNode*>::iterator iter = var_refs.begin();
+  for (; iter!=var_refs.end(); iter++)
+  {
+    SgVarRefExp* ref = isSgVarRefExp(*iter);
+    ROSE_ASSERT(ref != NULL);
+    ROSE_ASSERT(ref->get_parent() != NULL);
+#if 0
+    // case 1: ref is used as an operator for & (SgAddressofOp)
+    // TODO tolerate possible type casting operations in between ?
+    if (isSgAddressOfOp(ref->get_parent()))
+    {
+      varSetB.insert(ref);
+    }
+    // case 2. ref is used as a function call's parameter, and the parameter has reference type in C++
+    else if ((SageInterface::is_Cxx_language())&&(isSgExprListExp(ref->get_parent())))
+    {
+      SgNode* grandparent = ref->get_parent()->get_parent();
+      ROSE_ASSERT(grandparent);
+      if (isSgFunctionCallExp(grandparent)) // Is used as a function call's parameter 
+      {
+        // find which parameter ref is in SgExpressionPtrList
+        int param_index =0;
+        SgExpressionPtrList expList = isSgExprListExp(ref->get_parent())->get_expressions();
+        Rose_STL_Container<SgExpression*>::const_iterator iter= expList.begin();
+        for (; iter!=expList.end(); iter++)
+        {
+          if (*iter == ref)
+            break;
+          else
+            param_index++;
+        }
+        // find the parameter type of the corresponding function declaration
+        SgFunctionRefExp * funcRef = isSgFunctionRefExp(isSgFunctionCallExp(grandparent)->get_function());
+        SgFunctionDeclaration* funcDecl = isSgFunctionSymbol(funcRef->get_symbol())->get_declaration();
+        SgInitializedNamePtrList nameList = funcDecl->get_args();
+        //TODO tolerate typedef chains
+        if (isSgReferenceType(nameList[param_index]->get_type()))
+        {
+          varSetB.insert(ref);
+        }
+      }
+    }
+#endif
+    if (isUseByAddressVariableRef(ref))
+      varSetB.insert(ref);
+  }
+}
 //!Call liveness analysis on an entire project
 LivenessAnalysis * SageInterface::call_liveness_analysis(SgProject* project, bool debug/*=false*/)
 {
