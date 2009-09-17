@@ -104,6 +104,7 @@ namespace ELF{
 #include "MemoryMap.h"
 #include "Loader.h"
 #include "LoaderELF.h"
+#include "LoaderELFObj.h"
 #include "LoaderPE.h"
 
 #include "RoseBin_abstract.h"
