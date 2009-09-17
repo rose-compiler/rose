@@ -27,7 +27,6 @@ nobase_include_HEADERS = \
 
 # Explicit rule to override default (which assumes a certain C source file).
 libsatiredfa_la_SOURCES = satiredfa.C
-nodist_libsatiredfa_la_BUILT_SOURCES = satiredfa.C
 
 # All the objects and archives we want to go into libsatiredfa, based on
 # $(ANALYZERS) specified above.
@@ -160,32 +159,26 @@ if WITH_SWI_PROLOG
 INCLUDES += -I$(SWI_PROLOG_INCLUDE_DIR)
 endif
 
-satiredfa.C: satire/satiredfa.h
-	rm -f satiredfa.C
-	touch satiredfa.C
-	echo "#include <satire.h>" >> satiredfa.C
-	echo "#include \"satire/satiredfa.h\"" >> satiredfa.C
-	echo "namespace SATIrE {" >> satiredfa.C
-	echo "const char *provided_analyzers[] = {" >> satiredfa.C
+satiredfa.C: satire/satiredfa.h satiredfa_analyzers satiredfa_cases
+
+satiredfa_analyzers:
+	rm -f satiredfa_analyzers
+	touch satiredfa_analyzers
 	for a in $(X_ANALYZERS); do \
-		echo "    \"$$a\"," >> satiredfa.C; \
+		echo "    \"$$a\"," >> satiredfa_analyzers; \
 	done
-	echo "    (const char *) 0" >> satiredfa.C
-	echo "};" >> satiredfa.C
-	echo "DataFlowAnalysis* makeProvidedAnalyzer(const char *name) {" \
-		>> satiredfa.C
-	echo "    std::string analyzer = name;" >> satiredfa.C
+
+satiredfa_cases:
+	rm -f satiredfa_cases
+	touch satiredfa_cases
 	for a in $(X_ANALYZERS); do \
-		echo "    if (analyzer == \"$$a\")" >> satiredfa.C; \
+		echo "    if (analyzer == \"$$a\")" >> satiredfa_cases; \
 		echo "        return new DataFlowAnalysis(new $$a::Implementation());" \
-			>> satiredfa.C; \
+			>> satiredfa_cases; \
 	done
-	echo "    return NULL;" >> satiredfa.C
-	echo "}" >> satiredfa.C
-	echo "}" >> satiredfa.C
 
 clean-local:
 	rm -rf $(X_ANALYZERS)
 	rm -rf satire/
 	rm -rf local_satire_skeletons local_include_dir local_newanalysis_script
-	rm -rf satiredfa.C
+	rm -rf satiredfa_analyzers satiredfa_cases
