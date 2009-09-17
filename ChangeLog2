@@ -1,3 +1,109 @@
+2009-09-17 18:39  liao6
+
+	* [r7342] /trunk/ROSE/docs/testDoxygen/Publications.docs,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.h,
+	  /trunk/ROSE/src/midend/astOutlining/VarSym.cc,
+	  /trunk/ROSE/src/midend/ompLowering/omp_lowering.cpp,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/task_untied2.c,
+	  /trunk/ROSE/tests/roseTests/ompLoweringTests/Makefile.am:
+	  Variable handling for nested OpenMP tasks, paying attention to
+	  variables used by address
+
+2009-09-17 18:26  hamilton37
+
+	* [r7341] /trunk/ROSE/scripts/nmiBuildAndTestFarm/nmi-summary: NMI:
+	  nmi-summary fails more gracefully when it is unable to retrieve a
+	  website.
+
+2009-09-17 18:10  hamilton37
+
+	* [r7339] /trunk/ROSE/projects/RTED/Makefile.am: RTED: Fixed
+	  makefile errors from r7236.
+	  
+	  Although the local tests are in a Cxx directory, the RTED
+	  distribution still has
+	  tests in a C++ directory.
+
+2009-09-17 18:10  hamilton37
+
+	* [r7338]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/VariablesType.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp,
+	  /trunk/ROSE/projects/RTED/DataStructures.h,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: RTED: Track source of
+	  heap memory (i.e. malloc or new) and ensure tracked frees
+	  match (so that, e.g. the 'free' function isn't used with memory
+	  created via
+	  the new operator).
+
+2009-09-17 18:09  liao6
+
+	* [r7337] /trunk/ROSE/docs/Rose/Tutorial/gettingStarted.tex.in,
+	  /trunk/ROSE/docs/Rose/Tutorial/globalVariableHandling.tex,
+	  /trunk/ROSE/docs/Rose/Tutorial/introduction.tex,
+	  /trunk/ROSE/docs/Rose/Tutorial/outliner.tex,
+	  /trunk/ROSE/docs/Rose/Tutorial/tutorial.tex.in,
+	  /trunk/ROSE/docs/Rose/Tutorial/tutorialMakefile.tex: Reorganized
+	  the rose tutorial chapters by categories.
+	  Updated relevant text also
+
+2009-09-17 17:17  dquinlan
+
+	* [r7335] /trunk/ROSE/scripts/roseFreshTest: Fixed roseFreashTest
+	  script to generate an EDG binary.
+
+2009-09-17 14:12  dquinlan
+
+	* [r7332] /trunk/ROSE/Makefile.am,
+	  /trunk/ROSE/projects/Makefile.am,
+	  /trunk/ROSE/scripts/copy_binary_edg_tarball_to_source_tree_svn,
+	  /trunk/ROSE/scripts/importRoseDistributionToSVN,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_ubuntu_5.10/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/cronjobs,
+	  /trunk/ROSE/scripts/roseFreshTest,
+	  /trunk/ROSE/src/3rdPartyLibraries/libharu-2.1.0/src/hpdf_streams.c:
+	  Fixed bug in ROSE to work with NMI Compile Farm.
+	  
+	  Detailed changes in this commit:
+	  1) Added compiler specific tests
+	  2) modified runFreashTests to permit optional skipping of doc,
+	  install, and
+	  installcheck rules to support generation of binaries for
+	  different versions of
+	  compilers.
+	  3) Fixed bug in hpdf library so that ROSE compiles when zlib.h is
+	  not availalbe
+	  (important for NMI tests on ubuntu platform.
+	  4) Added Jeff Keaslers work to the distrivution (still needs to
+	  be added so that it can
+	  be compiled and tested.
+	  5) Added more support for the NMI tests on different platforms
+	  and using different
+	  compiler versions.
+
+2009-09-17 13:59  panas2
+
+	* [r7331]
+	  /trunk/ROSE/projects/compass/extensions/prerequisites/SourceDefUsePrerequisite.h:
+	  changes to compass
+
+2009-09-17 13:29  matzke
+
+	* [r7330] /trunk/ROSE/src/frontend/ExecFormats/Loader.h: Fixed
+	  compiler error
+	  
+	  Third time I'm fixing this. It keeps getting dropped somehow.
+
 2009-09-17 04:08  panas2
 
 	* [r7327]
