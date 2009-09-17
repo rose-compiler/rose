@@ -498,8 +498,8 @@ RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
 	bool error=false;
     if (type!="function") {
       if (hex_name!=nameL) {
-	    cerr << " hexName : ." << hex_name << ". == ." << nameL << ".   out of : " << name << endl;
-      	cerr << " WARNING ................... SOMETHING IN DOT GENERATION WENT WRONG. ALLOWING THIS FOR NOW . " << endl;
+	//cerr << " hexName : ." << hex_name << ". == ." << nameL << ".   out of : " << name << endl;
+      	//cerr << " WARNING ................... SOMETHING IN DOT GENERATION WENT WRONG. ALLOWING THIS FOR NOW . " << endl;
       	error=true;
       }
       ROSE_ASSERT(hex_name==nameL);
@@ -528,8 +528,8 @@ void RoseBin_DotGraph::printEdges_single( VirtualBinCFG::AuxiliaryInformation* i
   // traverse edges and visualize results of graph
   //  SgGraphEdgeList* gedges = get_edges();
   rose_graph_integer_edge_hash_multimap edges =get_node_index_to_edge_multimap_edgesOut();
-  cerr << " Writing singleEdge graph to DOT - Nr of unique Edges : " << unique_edges.size() << " compare to edges: " <<
-    edges.size() << endl;
+  //cerr << " Writing singleEdge graph to DOT - Nr of unique Edges : " << unique_edges.size() << " compare to edges: " <<
+  // edges.size() << endl;
   int edgeNr=0;
   rose_graph_integer_edge_hash_multimap::iterator it = unique_edges.begin();
   for (; it!=unique_edges.end();++it) {
@@ -547,8 +547,8 @@ void RoseBin_DotGraph::printEdges_multiple( VirtualBinCFG::AuxiliaryInformation*
   // traverse edges and visualize results of graph
   //  SgGraphEdgeList* gedges = get_edges();
 	rose_graph_integer_edge_hash_multimap edges =get_node_index_to_edge_multimap_edgesOut();
-  cerr << " Writing multiEdge graph to DOT - Nr of unique Edges : " << unique_edges.size() << " compare to edges: " <<
-    edges.size() << endl;
+	//cerr << " Writing multiEdge graph to DOT - Nr of unique Edges : " << unique_edges.size() << " compare to edges: " <<
+	//edges.size() << endl;
   int edgeNr=0;
   rose_graph_integer_edge_hash_multimap::iterator it = edges.begin();
   for (; it!=edges.end();++it) {
@@ -590,24 +590,25 @@ void RoseBin_DotGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info,
     if (n==target) foundT=true;
   }
   if (foundS==false || foundT==false) {
-    cerr <<"WARNING :: printEdges - edge not found. " << endl;
+    //cerr <<"WARNING :: printEdges - edge not found. " << endl;
     return;
     if (source && target) {
       SgAsmFunctionDeclaration* src = isSgAsmFunctionDeclaration(source->get_SgNode());
       SgAsmFunctionDeclaration* trg = isSgAsmFunctionDeclaration(target->get_SgNode());
       if (src && trg) {
-	cerr <<"WARNING :: printEdges - edge not found: " <<
+	//cerr <<"WARNING :: printEdges - edge not found: " <<
 	  RoseBin_support::HexToString(src->get_address()) << " -> " <<
 	  RoseBin_support::HexToString(trg->get_address()) << endl;
 	//return;
       } else {
-	if (src==NULL)
-	  cerr <<"WARNING :: printEdges - src == NULL " << source->get_SgNode()->class_name() <<endl;
-	else
-	  cerr <<"WARNING :: printEdges - trg == NULL " << target->get_SgNode()->class_name() <<endl;
+	if (src==NULL) {
+	  // cerr <<"WARNING :: printEdges - src == NULL " << source->get_SgNode()->class_name() <<endl;
+	} else {
+	  // cerr <<"WARNING :: printEdges - trg == NULL " << target->get_SgNode()->class_name() <<endl;
+	}
       }
     } else {
-      cerr <<"WARNING :: printEdges - source or target == NULL " <<endl;
+      // cerr <<"WARNING :: printEdges - source or target == NULL " <<endl;
     }
   }
 #endif

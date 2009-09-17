@@ -8,7 +8,7 @@
 
 class NullAfterFree : public BinAnalyses,AstSimpleProcessing {
  public:
-  NullAfterFree(){testFlag=false; debug=true;};
+  NullAfterFree(){testFlag=false; debug=false;};
   virtual ~NullAfterFree(){};
   bool testFlag;
   void run(SgNode* f1, SgNode* f2);

@@ -609,7 +609,6 @@ void RtedTransformation::appendAddressAndSize(
 
     SgExpression* exp = varRefE;
     if ( isSgClassDefinition(scope) ) {
-
         // member -> &( var.member )
         exp = getUppermostLvalue( varRefE );
     }

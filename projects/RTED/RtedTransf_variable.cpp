@@ -551,8 +551,15 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
 
 }
 
+void RtedTransformation::insertAccessVariable(SgThisExp* varRefE,
+		SgExpression* derefExp) {
+  SgStatement* stmt = getSurroundingStatement(varRefE);
+
+}
+
 void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE,
 		SgExpression* derefExp) {
+
 	SgStatement* stmt = getSurroundingStatement(varRefE);
 	// make sure there is no extern in front of stmt
 	SgInitializedName* initName = varRefE->get_symbol()->get_declaration();
@@ -604,11 +611,6 @@ void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE,
 		if (isNormalScope(scope)) {
 			// build the function call : runtimeSystem-->createArray(params); ---------------------------
 			SgExprListExp* arg_list = buildExprListExp();
-			//SgExpression* simplename = buildString(initName->get_name().str());
-			//appendExpression(arg_list, simplename);
-			//SgExpression* callName = buildString(initName->get_mangled_name().str());
-			//appendExpression(arg_list, callName);
-
 
 			int read_write_mask = Read;
 			SgExpression* accessed_exp = varRefE;

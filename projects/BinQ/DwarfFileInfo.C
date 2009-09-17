@@ -81,7 +81,7 @@ DwarfFileInfo::run(SgNode* fileA, SgNode* fileB) {
   set<string>::const_iterator it= files.begin();
   for (;it!=files.end();++it) {
     string filename = *it;
-    cerr << "  >>> Filename " << filename << endl;
+    //cerr << "  >>> Filename " << filename << endl;
   }
   //  runTraversal(isSgProject(fileA));
 

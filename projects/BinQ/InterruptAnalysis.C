@@ -503,8 +503,8 @@ InterruptAnalysis::run(string& name, SgGraphNode* node,
 	  //	  createVariable(fpos_rax, pos_rax, "rax", data_ebx, "rax", 0, val_rax,false);
 	}
 
-		cerr << " DataFlow::VariableAnalysis . Ambigious INT call: " <<
-	 vizzGraph->getProperty(SgGraph::name, node) << " - " << value << endl;
+	//cerr << " DataFlow::VariableAnalysis . Ambigious INT call: " <<
+	//vizzGraph->getProperty(SgGraph::name, node) << " - " << value << endl;
 	value = "PROBLEM: " + value;
 	node->append_properties(SgGraph::dfa_unresolved_func,value);
 

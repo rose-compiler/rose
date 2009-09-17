@@ -72,7 +72,7 @@ void
 RoseBin_FlowAnalysis::getRootNodes(vector <SgGraphNode*>& rootNodes) {
   nrOfFunctions=0;
   ROSE_ASSERT(vizzGraph);
-  cerr << " get Root nodes " << endl;
+  //cerr << " get Root nodes " << endl;
   rose_graph_integer_node_hash_map::const_iterator itn = vizzGraph->get_node_index_to_node_map().begin();
   for (; itn!=vizzGraph->get_node_index_to_node_map().end();++itn) {
     //    string hex_address = itn->first;
@@ -124,7 +124,7 @@ void
 RoseBin_FlowAnalysis::flattenBlocks(SgAsmNode* globalNode) {
   vector<SgNode*> tree =NodeQuery::querySubTree(globalNode, V_SgAsmBlock);
   vector<SgNode*>::iterator itV = tree.begin();
-  cerr << " ObjDump-BinRose:: Removing Blocks " << endl;
+  //cerr << " ObjDump-BinRose:: Removing Blocks " << endl;
   for (;itV!=tree.end();itV++) {
     SgAsmBlock* block = isSgAsmBlock(*itV);
     if (block && block!=globalNode) {
@@ -155,7 +155,7 @@ void
 RoseBin_FlowAnalysis::convertBlocksToFunctions(SgAsmNode* globalNode) {
   vector<SgNode*> tree =NodeQuery::querySubTree(globalNode, V_SgAsmBlock);
   vector<SgNode*>::iterator itV = tree.begin();
-  cerr << " ObjDump-BinRose:: Converting Blocks To Functions" << endl;
+  //cerr << " ObjDump-BinRose:: Converting Blocks To Functions" << endl;
   for (;itV!=tree.end();itV++) {
     SgAsmBlock* block = isSgAsmBlock(*itV);
     if (block && block!=globalNode) {
@@ -188,7 +188,7 @@ RoseBin_FlowAnalysis::convertBlocksToFunctions(SgAsmNode* globalNode) {
  */
 void
 RoseBin_FlowAnalysis::resolveFunctions(SgAsmNode* globalNode) {
-  cerr << " ObjDump-BinRose:: Detecting and merging Functions" << endl;
+  //cerr << " ObjDump-BinRose:: Detecting and merging Functions" << endl;
   vector<SgAsmFunctionDeclaration*> visitedFunctions;
   vector<SgNode*> tree =NodeQuery::querySubTree(globalNode, V_SgAsmFunctionDeclaration);
   //  vector<SgNode*>::iterator itV = tree.begin();
@@ -393,6 +393,7 @@ RoseBin_FlowAnalysis::process_jumps_get_target(SgAsmx86Instruction* inst) {
       else{
 	//	std::cerr << "FlowAnalysis ::  from_string failed .. " << std::endl;
 	if (valStr!="")
+	  if (RoseBin_support::DEBUG_MODE())
 	  cerr << " WARNING: Cant convert string to long - in process_jump  :: " << regRef->class_name() <<
 	    " inst :: " << inst->get_mnemonic() << "  addr : " << addrhex3.str() << " target : " << valStr << endl;
       }
@@ -416,6 +417,7 @@ RoseBin_FlowAnalysis::initFunctionList(SgAsmNode* globalNode) {
 }
 
 void printAST(SgAsmNode* globalNode) {
+    if (RoseBin_support::DEBUG_MODE())
   std::cerr << " ++++++++++++++++++++++++++++++= printing AST +++++++++++++++++++++++\n\n " << endl;
   std::string filename="_binary_tree_func.dot";
   AST_BIN_Traversal* trav = new AST_BIN_Traversal();
@@ -424,8 +426,8 @@ void printAST(SgAsmNode* globalNode) {
 
 void
 RoseBin_FlowAnalysis::process_jumps() {
-
-  cerr << "\n >>>>>>>>> processing jumps ... " << endl;
+    if (RoseBin_support::DEBUG_MODE())
+      cerr << "\n >>>>>>>>> processing jumps ... " << endl;
   rose_hash::hash_map <uint64_t, SgAsmInstruction* >::iterator it;
   for (it=rememberInstructions.begin();it!=rememberInstructions.end();++it) {
     SgAsmx86Instruction* inst = isSgAsmx86Instruction(it->second);
@@ -481,16 +483,19 @@ RoseBin_FlowAnalysis::process_jumps() {
               }
 	    }
 	  } else {
+	    if (RoseBin_support::DEBUG_MODE())
 	    cerr << " NO FUNCTION DETECTED ABOVE BLOCK . " << endl;
 	  }
 
 	} else {
-	  cerr << "   WARNING :: process_jumps: target has no parent ... i.e. no FunctionDeclaration to it " <<
+	  if (RoseBin_support::DEBUG_MODE())
+	    cerr << "   WARNING :: process_jumps: target has no parent ... i.e. no FunctionDeclaration to it " <<
 	    target->class_name() << endl;
 	}
       } else {
 	if (inst)
-	  cerr << "    WARNING :: process_jumps: No target found for node " << RoseBin_support::HexToString(inst->get_address())
+	  if (RoseBin_support::DEBUG_MODE())
+	    cerr << "    WARNING :: process_jumps: No target found for node " << RoseBin_support::HexToString(inst->get_address())
 	       << "   " << inst->get_mnemonic() << endl;
       }
     } else {
@@ -539,13 +544,15 @@ RoseBin_FlowAnalysis::process_jumps() {
 	  }
 	} // for
       } else { // if parent
-	cerr << "   ERROR :: RET jumps :: no parent found for ret : " << target->class_name() << endl;
+	if (RoseBin_support::DEBUG_MODE())
+	  cerr << "   ERROR :: RET jumps :: no parent found for ret : " << target->class_name() << endl;
 	//exit (0);
       }
     } // if ret
 #endif
   }
-  cerr << " >>>>>>>>> resolving RET jumps ... done." << endl;
+  if (RoseBin_support::DEBUG_MODE())
+    cerr << " >>>>>>>>> resolving RET jumps ... done." << endl;
 }
 
 
@@ -569,7 +576,8 @@ RoseBin_FlowAnalysis::createInstToNodeTable() {
   // DQ (4/23/2009): We want the type defined in the base class.
   // typedef rose_hash::hash_map <std::string, SgGraphNode*> nodeType;
 
-  cerr << " RoseBin_FlowAnalysis::createInstToNodeTable" << endl;
+  if (RoseBin_support::DEBUG_MODE())
+    cerr << " RoseBin_FlowAnalysis::createInstToNodeTable" << endl;
   rose_graph_integer_node_hash_map nodes = vizzGraph->get_node_index_to_node_map();
   rose_graph_integer_node_hash_map::iterator it = nodes.begin();
   for (;it!=nodes.end();++it) {
@@ -679,6 +687,7 @@ RoseBin_FlowAnalysis::visit(SgNode* node) {
       funcDeclNode = src;
       checkControlFlow(inst, sizeList, sizeList, name, func_nr);
     } else {
+    if (RoseBin_support::DEBUG_MODE())
       cerr << "This is not an Instruction " << endl;
     }
   }
@@ -991,12 +1000,14 @@ RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
 	      worklist_forthisfunction.push(bin_target);
 	    }
 	  } else {
+	    if (RoseBin_support::DEBUG_MODE())
 	    cerr << " ERROR:: Target Instruction has no parent! " << bin_target->class_name() << endl;
 	  }
 	} // if visited
       } else {
 	nr_target_missed++;
 	if (binInst)
+	  if (RoseBin_support::DEBUG_MODE())
 	  cerr << " WARNING:: no target found for " << RoseBin_support::HexToString(binInst->get_address()) << " " << binInst->class_name() << endl;
       }
     }

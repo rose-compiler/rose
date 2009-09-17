@@ -81,8 +81,8 @@ alignFunctionsSmart() {
   // add padding 
   int position=-1, offset=0, currentPos=0;
   bool fileAPadd = findPosWhenFunctionsAreNotSyncSmart(position, offset,currentPos);
-  cerr << " 1 Found PosWhenFunctionsAre not sync : " << position << "   offset : " << offset << 
-    " A? " << fileAPadd << "  currentPos : " << currentPos << endl;
+  //cerr << " 1 Found PosWhenFunctionsAre not sync : " << position << "   offset : " << offset << 
+  // " A? " << fileAPadd << "  currentPos : " << currentPos << endl;
   //int count=0;
   while (position!=-1) {
     // lets add padding
@@ -143,8 +143,8 @@ alignFunctionsSmart() {
     offset=0;
     currentPos=0;
     fileAPadd = findPosWhenFunctionsAreNotSyncSmart(position, offset,currentPos);
-    cerr << " 2 Found PosWhenFunctionsAre not sync : " << position << "   offset : " << offset << 
-      " A? " << fileAPadd << "  currentPos : " << currentPos << endl;
+    //cerr << " 2 Found PosWhenFunctionsAre not sync : " << position << "   offset : " << offset << 
+    //  " A? " << fileAPadd << "  currentPos : " << currentPos << endl;
     //    count++;
     //if (count==5) break;
   }

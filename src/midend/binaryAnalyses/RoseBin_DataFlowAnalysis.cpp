@@ -472,12 +472,13 @@ void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multied
 
   if (RoseBin_support::DEBUG_MODE_MIN()) {
     cerr << " ... Staring Variable Analysis " << endl;
+    cerr << " defuse defsize " << defuse->getDefinitionSize() << endl;
   }
-  cerr << " defuse defsize " << defuse->getDefinitionSize() << endl;
 
   ROSE_ASSERT(g_algo->info);
   // variable analysis --------------------------------------------------
   variableAnalysis = new RoseBin_VariableAnalysis(defuse,g_algo);
+  if (RoseBin_support::DEBUG_MODE_MIN()) 
   cerr << " variableAnalysis defsize " << variableAnalysis->getDefinitionSize() << endl;
   variableAnalysis->init(vizzGraph);
   init();

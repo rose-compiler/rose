@@ -13,7 +13,7 @@ using namespace ticl;
   filename =directory+string( FILENAME );				\
   ifstream myfile;							\
   /*vector<STRUCT_NAME> vec_##STRUCT_NAME;*/ /*= new vector<STRUCT_NAME>();*/ \
-  std::cout << "Opening file:" << filename << std::endl;		\
+  //std::cout << "Opening file:" << filename << std::endl;		\
   myfile.open(filename.c_str());					\
 									\
   if (myfile.is_open())							\

@@ -115,25 +115,25 @@ SgAsmNode* RoseFile::retrieve_DB() {
   ROSE_ASSERT(globalBlock);
   start = getTime();
   memusage =  ROSE_MemoryUsage().getMemoryUsageMegabytes();
-    cerr << ">> processing comments.   " ;
+  //cerr << ">> processing comments.   " ;
   idaDB->process_comments_query( );
   ends = getTime();
-  cerr << " " << (double) (ends - start)   << " sec";
+  //cerr << " " << (double) (ends - start)   << " sec";
   memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
+  //cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
 
   //    cerr << ">> processing callgraph." << endl;
   //idaDB->process_callgraph_query( );
   start = getTime();
   memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-    cerr << ">> processing functions.  " ;
+  //cerr << ">> processing functions.  " ;
   idaDB->process_functions_query( globalBlock, functionNames);
   ends = getTime();
-  cerr << " " << (double) (ends - start)   << " sec";
+  //cerr << " " << (double) (ends - start)   << " sec";
   memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
+  //cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
   num_func = idaDB->get_numberOfFunctions();
-  cerr << " Nr of functions: " << ( num_func) << endl;
+  //cerr << " Nr of functions: " << ( num_func) << endl;
 
   // the order is important. First build blocks
   // then the branchgraph, since the branchgraph needs info
@@ -142,82 +142,82 @@ SgAsmNode* RoseFile::retrieve_DB() {
   //idaDB->process_branchgraph_query( );
   start = getTime();
   memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-    cerr << ">> processing instructions.  " ;
+  //cerr << ">> processing instructions.  " ;
   idaDB->process_instruction_query( );
   ends = getTime();
-  cerr << " " << (double) (ends - start)   << " sec";
+  //cerr << " " << (double) (ends - start)   << " sec";
   memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
+  //cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
   num_inst = idaDB->get_numberOfInstructions();
-  cerr << " Nr of instructions: " << ( num_inst) << endl;
+  //cerr << " Nr of instructions: " << ( num_inst) << endl;
 
   // preparation for expression resolution
   start = getTime();
   memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << ">> processing op_strings.  " ;
+  //cerr << ">> processing op_strings.  " ;
   idaDB->process_operand_strings_query( );
   ends = getTime();
-  cerr << " " << (double) (ends - start)   << " sec";
+  //cerr << " " << (double) (ends - start)   << " sec";
   memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
+  //cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
 
   start = getTime();
   memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-    cerr << ">> processing expr_tree.  ";
+  //cerr << ">> processing expr_tree.  ";
   idaDB->process_expression_tree_query( );
   ends = getTime();
-  cerr << " " << (double) (ends - start)   << " sec";
+  //cerr << " " << (double) (ends - start)   << " sec";
   memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
+  //cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
 
   start = getTime();
   memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << ">> processing op_expr.  " ;
+  //cerr << ">> processing op_expr.  " ;
   idaDB->process_operand_expressions_query( );
   ends = getTime();
-  cerr << " " << (double) (ends - start)   << " sec";
+  //cerr << " " << (double) (ends - start)   << " sec";
   memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
+  //cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
 
   start = getTime();
   memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << ">> processing substitution.  ";
+  //cerr << ">> processing substitution.  ";
   idaDB->process_substitutions_query( );
   ends = getTime();
-  cerr << " " << (double) (ends - start)   << " sec";
+  //cerr << " " << (double) (ends - start)   << " sec";
   memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
+  //cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
 
   // get the map (op_id, root)
   start = getTime();
   memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << ">> processing op_root.  ";
+  //cerr << ">> processing op_root.  ";
   idaDB->process_operand_root_query( );
   // resolve the expressions
   ends = getTime();
-  cerr << " " << (double) (ends - start)   << " sec";
+  //cerr << " " << (double) (ends - start)   << " sec";
   memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
+  //cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
 
 
   start = getTime();
   memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << ">> processing op_tuples.  ";
+  //cerr << ">> processing op_tuples.  ";
   idaDB->process_operand_tuples_query( );
   ends = getTime();
-  cerr << " " << (double) (ends - start)   << " sec";
+  //cerr << " " << (double) (ends - start)   << " sec";
   memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
+  //cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
 
   // this is important to resolve the jump to address of instructions
   start = getTime();
   memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << ">> processing jumps.  " ;
+  //cerr << ">> processing jumps.  " ;
   //  idaDB->process_jumps();
   ends = getTime();
-  cerr << " " << (double) (ends - start)   << " sec";
+  //cerr << " " << (double) (ends - start)   << " sec";
   memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
+  //cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
 
   idaDB->cleanUpDBMemory();
 
@@ -234,17 +234,16 @@ void RoseFile::test() {
   nodes=0;
   double start = getTime();
   double memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << ">> traversing AST...  " ;
+  //cerr << ">> traversing AST...  " ;
   traverse(globalNode,preorder);
   double ends = getTime();
-  cerr << " " << (double) (ends - start)   << " sec";
+  //cerr << " " << (double) (ends - start)   << " sec";
   double memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
+  //cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
   
-  cerr << " traversed nodes : " << nodes << endl;
-  cerr << " num_func / trav_funcs  : " << num_func << "/ " << trav_funcs << endl;
-  //cerr << " num_blocks/ trav_blocks : " << num_blocks << "/ " << trav_blocks << endl;
-  cerr << " num_inst  / trav_inst   : " << num_inst << "/ " << trav_inst << endl;
+  //cerr << " traversed nodes : " << nodes << endl;
+  //cerr << " num_func / trav_funcs  : " << num_func << "/ " << trav_funcs << endl;
+  //cerr << " num_inst  / trav_inst   : " << num_inst << "/ " << trav_inst << endl;
 
   //ROSE_ASSERT(trav_funcs==num_func);
   //ROSE_ASSERT(trav_blocks==num_blocks);
@@ -270,7 +269,7 @@ void RoseFile::visit(SgNode* node) {
       int address = funcDecl->get_address();
       ostringstream addrhex;
       addrhex << hex << setw(8) << address ;
-      cerr << " func with no global :: " << addrhex.str() << " " << address << endl; 
+      //cerr << " func with no global :: " << addrhex.str() << " " << address << endl; 
     }
     //    ROSE_ASSERT(glob);
   }

@@ -43,8 +43,8 @@ NullAfterFree::visit(SgNode* node) {
       return;
     string calleeName = inst->get_comment();
     if (calleeName=="free" || calleeName=="_free") {
-      cerr << "  >>>> NullAfterFree : found free() at : " << 
-      RoseBin_support::HexToString(inst->get_address() )<< endl;
+      //cerr << "  >>>> NullAfterFree : found free() at : " << 
+      //      RoseBin_support::HexToString(inst->get_address() )<< endl;
       // we have found a call to free!
       // look backwards and check for last mov reg,addr . the address contains the pointer that needs to be freed
       std::set<uint64_t> preds = info->getPossiblePredecessors(inst);

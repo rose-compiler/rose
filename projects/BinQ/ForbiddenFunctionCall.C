@@ -154,6 +154,7 @@ ForbiddenFunctionCall::run(SgNode* fileA, SgNode* fileB) {
     std::set<std::string>::const_iterator it = foundFunction.begin();
     for (;it!=foundFunction.end();++it) {
       string fname = *it;
+      if (debug)
       std::cout << " functions traversed: name ==== " << fname << std::endl;
     }
     //  }
@@ -163,6 +164,7 @@ ForbiddenFunctionCall::run(SgNode* fileA, SgNode* fileB) {
       .arg(RoseBin_support::ToString(foundFunction.size()).c_str());
     instance->analysisResult->append(res);  
   }
+  if (debug)
   std::cerr << "    ForbiddenFunctionCall : Fobidden Functions : " <<
     RoseBin_support::ToString(result.size()) << "   Total # functions: " << 
     RoseBin_support::ToString(foundFunction.size()) 

@@ -315,6 +315,29 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
       insertAccessVariable(in, pd);
   }
 
+  cerr << "\n Number of Elements in variable_access_arrowexp  : "
+       << variable_access_arrowexp.size() << endl;
+  std::map<SgExpression*, SgVarRefExp*>::const_iterator itAccessArr =
+    variable_access_arrowexp.begin();
+  for (; itAccessArr != variable_access_arrowexp.end(); itAccessArr++) {
+    SgExpression* pd = isSgExpression(itAccessArr->first);
+    SgVarRefExp* in = isSgVarRefExp(itAccessArr->second);
+    if (pd)
+      insertAccessVariable(in, pd);
+  }
+
+  cerr << "\n Number of Elements in variable_access_arrowthisexp  : "
+       << variable_access_arrowthisexp.size() << endl;
+  std::map<SgExpression*, SgThisExp*>::const_iterator itAccessArr2 =
+    variable_access_arrowthisexp.begin();
+  for (; itAccessArr2 != variable_access_arrowthisexp.end(); itAccessArr2++) {
+    SgExpression* pd = isSgExpression(itAccessArr2->first);
+    SgThisExp* in = isSgThisExp(itAccessArr2->second);
+    if (pd)
+      insertAccessVariable(in, pd);
+  }
+
+
   cerr
     << "\n Number of Elements in create_array_define_varRef_multiArray_stack  : "
     << create_array_define_varRef_multiArray_stack.size() << endl;
@@ -487,6 +510,18 @@ void RtedTransformation::visit(SgNode* n) {
     // do only if it is by itself or on right hand side of assignment
     cerr << " @@@@@@@@@ DETECTED Variable access : " << n->unparseToString() << endl;
     visit_isSgVarRefExp(isSgVarRefExp(n));
+  }
+  else if (isSgPointerDerefExp(n)) {
+    // if this is a varrefexp and it is not initialized, we flag it.
+    // do only if it is by itself or on right hand side of assignment
+    cerr << " @@@@@@@@@ DETECTED PointerDerefExp : " << n->unparseToString() << endl;
+    visit_isSgPointerDerefExp(isSgPointerDerefExp(n));
+  }
+  else if (isSgArrowExp(n)) {
+    // if this is a varrefexp and it is not initialized, we flag it.
+    // do only if it is by itself or on right hand side of assignment
+    cerr << " @@@@@@@@@ DETECTED isSgArrowExp : " << n->unparseToString() << endl;
+    visit_isSgArrowExp(isSgArrowExp(n));
   }
   // *********************** DETECT ALL array accesses ***************
 

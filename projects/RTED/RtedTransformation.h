@@ -45,6 +45,10 @@ class RtedTransformation : public AstSimpleProcessing {
   // map of expr ∈ { SgPointerDerefExp, SgArrowExp }, SgVarRefExp pairs
   // the deref expression must be an ancestor of the varref
   std::map<SgExpression*,SgVarRefExp*> variable_access_pointerderef;
+  // The second SgExpression can contain either SgVarRefExp,
+  // or a SgThisExp
+  std::map<SgExpression*,SgVarRefExp*> variable_access_arrowexp;
+  std::map<SgExpression*,SgThisExp*> variable_access_arrowthisexp;
 
   // Track pointer arithmetic, e.g. ++, --
   std::vector< SgExpression* > pointer_movements;
@@ -276,7 +280,10 @@ class RtedTransformation : public AstSimpleProcessing {
 
   void insertVariableCreateInitForParams( SgFunctionDefinition* n);
   void insertAccessVariable(SgVarRefExp* varRefE,SgExpression* derefExp);
+  void insertAccessVariable(SgThisExp* varRefE,SgExpression* derefExp);
   void visit_isSgVarRefExp(SgVarRefExp* n);
+  void visit_isSgPointerDerefExp(SgPointerDerefExp* n);
+  void visit_isSgArrowExp(SgArrowExp* n);
 
   std::string removeSpecialChar(std::string str);
 

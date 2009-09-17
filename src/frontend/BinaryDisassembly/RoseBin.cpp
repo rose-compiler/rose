@@ -28,8 +28,8 @@ using namespace std;
 #include "RoseBin_support.h"
 
 /*
-class RoseBin : public AstSimpleProcessing {
- private:
+  class RoseBin : public AstSimpleProcessing {
+  private:
   MYSQL_RES *res_set;
   // the DB connection
   RoseBin_DB_IDAPRO* idaDB; 
@@ -53,35 +53,35 @@ class RoseBin : public AstSimpleProcessing {
   void saveAST(std::string filename);
 
 
- public:
+  public:
 
   RoseBin(char* host, 
-	  char* user, 
-	  char* passw, 
-	  char* dbase) {
-    RoseBin_support::setDebugMode(true);    
-    //RoseBin_support::setDebugMode(false);    
-    idaDB = new RoseBin_DB_IDAPRO(host, user, passw, dbase);
-    unparser = new RoseBin_unparse();
-    RoseBin_support::setUnparseVisitor(unparser->getVisitor());
-    res_set = 0;
-    conn = 0;
-    globalNode = 0;
-    functionNames.clear();
-    num_inst=0;
-    num_func=0;
-    RoseBin_support::setAssemblyLanguage(RoseBin_Def::none);
+  char* user, 
+  char* passw, 
+  char* dbase) {
+  RoseBin_support::setDebugMode(true);    
+  //RoseBin_support::setDebugMode(false);    
+  idaDB = new RoseBin_DB_IDAPRO(host, user, passw, dbase);
+  unparser = new RoseBin_unparse();
+  RoseBin_support::setUnparseVisitor(unparser->getVisitor());
+  res_set = 0;
+  conn = 0;
+  globalNode = 0;
+  functionNames.clear();
+  num_inst=0;
+  num_func=0;
+  RoseBin_support::setAssemblyLanguage(RoseBin_Def::none);
   }
   
   ~RoseBin() {
-    delete idaDB;
-    delete unparser;
+  delete idaDB;
+  delete unparser;
 
-    idaDB = NULL;
-    unparser = NULL;
+  idaDB = NULL;
+  unparser = NULL;
 
-    if (globalNode)
-      delete globalNode;
+  if (globalNode)
+  delete globalNode;
   }
 
 
@@ -103,7 +103,7 @@ class RoseBin : public AstSimpleProcessing {
   void unparse(char* fileName);
 
   void test();
-};
+  };
 */
 //#endif
 
@@ -128,18 +128,18 @@ public:
  * ******************************************************/
 void RoseBin::loadAST(std::string filename){
   /*
-  std::cout << "ROSE: AST LOAD." << std::endl;
-  double memusage = ROSE_MemoryUsage::getMemoryUsageMegabytes();
+    std::cout << "ROSE: AST LOAD." << std::endl;
+    double memusage = ROSE_MemoryUsage::getMemoryUsageMegabytes();
 
-  REGISTER_ATTRIBUTE_FOR_FILE_IO(UserDefinedAttribute);
-  AST_FILE_IO::clearAllMemoryPools();
-  globalNode = (SgProject*)
+    REGISTER_ATTRIBUTE_FOR_FILE_IO(UserDefinedAttribute);
+    AST_FILE_IO::clearAllMemoryPools();
+    globalNode = (SgProject*)
     (AST_FILE_IO::readASTFromFile ( filename + ".binaryAST" ) );
 
-  double memusageend = ROSE_MemoryUsage::getMemoryUsageMegabytes();
-  cout << "Memory usage for ROSE PARSING: " << (memusageend-memusage) << " MB. "  << std::endl;
+    double memusageend = ROSE_MemoryUsage::getMemoryUsageMegabytes();
+    cout << "Memory usage for ROSE PARSING: " << (memusageend-memusage) << " MB. "  << std::endl;
 
-  std::cout << "ROSE: AST LOAD COMPLETE -------------------- " << endl;
+    std::cout << "ROSE: AST LOAD COMPLETE -------------------- " << endl;
   */
 }
 
@@ -149,18 +149,18 @@ void RoseBin::loadAST(std::string filename){
  * ******************************************************/
 void RoseBin::saveAST(std::string filename) {
   /*
-  std::cout << "ROSE: AST SAVE .. project file: " << filename << std::endl;
-  double memusage = ROSE_MemoryUsage::getMemoryUsageMegabytes();
+    std::cout << "ROSE: AST SAVE .. project file: " << filename << std::endl;
+    double memusage = ROSE_MemoryUsage::getMemoryUsageMegabytes();
 
-  REGISTER_ATTRIBUTE_FOR_FILE_IO(UserDefinedAttribute);
-  AST_FILE_IO::startUp( (SgProject*) globalNode ) ;
-  std::cout << "ROSE: AST SAVE ... startup done." << std::endl;
-  AST_FILE_IO::writeASTToFile ( filename + ".binaryAST" );
-  std::cout << "ROSE: AST SAVE ... writeToFile done." << std::endl;
-  double memusageend = ROSE_MemoryUsage::getMemoryUsageMegabytes();
-  cout << "Memory usage for ROSE PARSING: " << (memusageend-memusage) << " MB. "  << std::endl;
+    REGISTER_ATTRIBUTE_FOR_FILE_IO(UserDefinedAttribute);
+    AST_FILE_IO::startUp( (SgProject*) globalNode ) ;
+    std::cout << "ROSE: AST SAVE ... startup done." << std::endl;
+    AST_FILE_IO::writeASTToFile ( filename + ".binaryAST" );
+    std::cout << "ROSE: AST SAVE ... writeToFile done." << std::endl;
+    double memusageend = ROSE_MemoryUsage::getMemoryUsageMegabytes();
+    cout << "Memory usage for ROSE PARSING: " << (memusageend-memusage) << " MB. "  << std::endl;
 
-  std::cout << "ROSE: AST SAVE COMPLETE -------------------- " << endl;
+    std::cout << "ROSE: AST SAVE COMPLETE -------------------- " << endl;
   */
 }
 
@@ -204,26 +204,28 @@ SgAsmNode* RoseBin::retrieve_DB_IDAPRO() {
   SgAsmBlock* globalBlock = new SgAsmBlock();
   ROSE_ASSERT(globalBlock);
   start = getTime();
+  bool debug=false;
   memusage =  ROSE_MemoryUsage().getMemoryUsageMegabytes();
+  if (debug)
     cerr << ">> processing comments.   " ;
   idaDB->process_comments_query(conn,res_set);
   ends = getTime();
-  cerr << " " << (double) (ends - start)   << " sec";
+  if (debug)  cerr << " " << (double) (ends - start)   << " sec";
   memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
+  if (debug)  cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
 
   //    cerr << ">> processing callgraph." << endl;
   //idaDB->process_callgraph_query(conn,res_set);
   start = getTime();
   memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-    cerr << ">> processing functions.  " ;
+  if (debug)    cerr << ">> processing functions.  " ;
   idaDB->process_functions_query(conn,res_set,globalBlock, functionNames);
   ends = getTime();
-  cerr << " " << (double) (ends - start)   << " sec";
+  if (debug) cerr << " " << (double) (ends - start)   << " sec";
   memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
+  if (debug) cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
   num_func = idaDB->get_numberOfFunctions();
-  cerr << " Nr of functions: " << ( num_func) << endl;
+  if (debug) cerr << " Nr of functions: " << ( num_func) << endl;
 
   // the order is important. First build blocks
   // then the branchgraph, since the branchgraph needs info
@@ -232,82 +234,82 @@ SgAsmNode* RoseBin::retrieve_DB_IDAPRO() {
   //idaDB->process_branchgraph_query(conn,res_set);
   start = getTime();
   memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-    cerr << ">> processing instructions.  " ;
+  cerr << ">> processing instructions.  " ;
   idaDB->process_instruction_query(conn,res_set);
   ends = getTime();
-  cerr << " " << (double) (ends - start)   << " sec";
+  if (debug)  cerr << " " << (double) (ends - start)   << " sec";
   memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
+  if (debug) cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
   num_inst = idaDB->get_numberOfInstructions();
-  cerr << " Nr of instructions: " << ( num_inst) << endl;
+  if (debug) cerr << " Nr of instructions: " << ( num_inst) << endl;
 
   // preparation for expression resolution
   start = getTime();
   memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << ">> processing op_strings.  " ;
+  if (debug) cerr << ">> processing op_strings.  " ;
   idaDB->process_operand_strings_query(conn,res_set);
   ends = getTime();
-  cerr << " " << (double) (ends - start)   << " sec";
+  if (debug) cerr << " " << (double) (ends - start)   << " sec";
   memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
+  if (debug) cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
 
   start = getTime();
   memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-    cerr << ">> processing expr_tree.  ";
+  if (debug)  cerr << ">> processing expr_tree.  ";
   idaDB->process_expression_tree_query(conn,res_set);
   ends = getTime();
-  cerr << " " << (double) (ends - start)   << " sec";
+  if (debug) cerr << " " << (double) (ends - start)   << " sec";
   memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
+  if (debug) cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
 
   start = getTime();
   memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << ">> processing op_expr.  " ;
+  if (debug) cerr << ">> processing op_expr.  " ;
   idaDB->process_operand_expressions_query(conn,res_set);
   ends = getTime();
-  cerr << " " << (double) (ends - start)   << " sec";
+  if (debug) cerr << " " << (double) (ends - start)   << " sec";
   memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
+  if (debug) cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
 
   start = getTime();
   memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << ">> processing substitution.  ";
+  if (debug) cerr << ">> processing substitution.  ";
   idaDB->process_substitutions_query(conn,res_set);
   ends = getTime();
-  cerr << " " << (double) (ends - start)   << " sec";
+  if (debug) cerr << " " << (double) (ends - start)   << " sec";
   memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
+  if (debug) cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
 
   // get the map (op_id, root)
   start = getTime();
   memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << ">> processing op_root.  ";
+  if (debug) cerr << ">> processing op_root.  ";
   idaDB->process_operand_root_query(conn,res_set);
   // resolve the expressions
   ends = getTime();
-  cerr << " " << (double) (ends - start)   << " sec";
+  if (debug) cerr << " " << (double) (ends - start)   << " sec";
   memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
+  if (debug) cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
 
 
   start = getTime();
   memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << ">> processing op_tuples.  ";
+  if (debug) cerr << ">> processing op_tuples.  ";
   idaDB->process_operand_tuples_query(conn,res_set);
   ends = getTime();
-  cerr << " " << (double) (ends - start)   << " sec";
+  if (debug) cerr << " " << (double) (ends - start)   << " sec";
   memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
+  if (debug) cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
 
   // this is important to resolve the jump to address of instructions
   start = getTime();
   memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << ">> processing jumps.  " ;
+  if (debug) cerr << ">> processing jumps.  " ;
   //  idaDB->process_jumps();
   ends = getTime();
-  cerr << " " << (double) (ends - start)   << " sec";
+  if (debug) cerr << " " << (double) (ends - start)   << " sec";
   memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
+  if (debug) cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
 
   idaDB->cleanUpDBMemory();
 
@@ -317,24 +319,24 @@ SgAsmNode* RoseBin::retrieve_DB_IDAPRO() {
 }
 
 void RoseBin::test() {
- // run the consistency test -----------------------------------------------------
+  // run the consistency test -----------------------------------------------------
   trav_funcs=0;
   trav_inst=0;
   trav_blocks=0;
   nodes=0;
   double start = getTime();
   double memusage = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << ">> traversing AST...  " ;
+  //cerr << ">> traversing AST...  " ;
   traverse(globalNode,preorder);
   double ends = getTime();
-  cerr << " " << (double) (ends - start)   << " sec";
+  //cerr << " " << (double) (ends - start)   << " sec";
   double memusageend = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
+  //cerr << "    Memory usage: " << (memusageend-memusage) << endl;  
   
-  cerr << " traversed nodes : " << nodes << endl;
-  cerr << " num_func / trav_funcs  : " << num_func << "/ " << trav_funcs << endl;
-  //cerr << " num_blocks/ trav_blocks : " << num_blocks << "/ " << trav_blocks << endl;
-  cerr << " num_inst  / trav_inst   : " << num_inst << "/ " << trav_inst << endl;
+  //cerr << " traversed nodes : " << nodes << endl;
+  //cerr << " num_func / trav_funcs  : " << num_func << "/ " << trav_funcs << endl;
+  
+  //cerr << " num_inst  / trav_inst   : " << num_inst << "/ " << trav_inst << endl;
 
   //ROSE_ASSERT(trav_funcs==num_func);
   //ROSE_ASSERT(trav_blocks==num_blocks);
@@ -365,7 +367,7 @@ void RoseBin::visit(SgNode* node) {
     //    ROSE_ASSERT(glob);
   }
   /*
-  if (block) {
+    if (block) {
     trav_blocks++;
     SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(block->get_parent());
     int address = block->get_address();
@@ -376,7 +378,7 @@ void RoseBin::visit(SgNode* node) {
     //} else 
     //cerr << trav_blocks << " block with no function :: " << addrhex.str() << " " << address << endl; 
     //ROSE_ASSERT(func);
-  }
+    }
   */
   if (isSgAsmMemoryReferenceExpression(node)) {
     SgAsmMemoryReferenceExpression* n = isSgAsmMemoryReferenceExpression(node);

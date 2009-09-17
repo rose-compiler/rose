@@ -46,7 +46,7 @@ BinQbatch::BinQbatch(std::string fA, std::string fB, std::vector<std::string> dl
   currentSelectedFile=fileA;
   if (test==false)
     createGUI();
-  cerr << "Initialization done." <<endl;
+  //cerr << "Initialization done." <<endl;
   if (test) {
     // only run for single tests
     testAnalyses(preanalyses);
@@ -55,7 +55,7 @@ BinQbatch::BinQbatch(std::string fA, std::string fB, std::vector<std::string> dl
 }
 
 void BinQbatch::initAnalyses() {
-  cerr << "Checking for analyses ... " << endl;
+  //cerr << "Checking for analyses ... " << endl;
   analyses.clear();
   preanalyses.clear();
   preanalyses.push_back(new DynamicInfo());
@@ -107,7 +107,7 @@ BinQbatch::runAnalyses( std::vector<BinAnalyses*>& analysesVec, bool init) {
     if (twoFiles && fileB!=NULL || twoFiles==false) {
       currentAnalysis=analysesVec[i];
       if (currentAnalysis) {
-	cerr << "Running analysis : " << analysesVec[i]->name().c_str() << endl;
+	//cerr << "Running analysis : " << analysesVec[i]->name().c_str() << endl;
 	double start = RoseBin_support::getTime();
 	currentAnalysis->test(fileA,fileB);
 	double end = RoseBin_support::getTime();
@@ -116,8 +116,8 @@ BinQbatch::runAnalyses( std::vector<BinAnalyses*>& analysesVec, bool init) {
 	problems+=resu.size();
 	myfile << "Running analysis : " << analysesVec[i]->name().c_str() <<
 	  "   time : " << time << "   Problems : " << RoseBin_support::ToString(resu.size()) << endl;
-	cerr << "Running analysis : " << analysesVec[i]->name().c_str() <<
-	  "   time : " << time << "   Problems : " << RoseBin_support::ToString(resu.size()) << endl;
+	//cerr << "Running analysis : " << analysesVec[i]->name().c_str() <<
+	//  "   time : " << time << "   Problems : " << RoseBin_support::ToString(resu.size()) << endl;
 	QString res = QString("Running ... %1  time : %2   Problems: %3")
 	  .arg(currentAnalysis->name().c_str())
 	  .arg(time)

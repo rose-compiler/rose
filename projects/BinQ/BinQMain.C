@@ -33,7 +33,7 @@ printAssembly(string fileNameA, string fileNameB, SgNode* fileA, SgNode* fileB,
 
     unparseAsmStatementToFile(fileNameA+".dump2", interpA->get_global_block());
   } else if (is_directory( fileNameA ) == true ) {
-    cerr << " Node : " << fileA->class_name() << endl;
+    //cerr << " Node : " << fileA->class_name() << endl;
     SgAsmBlock* block = isSgAsmBlock(fileA);
     if (block) {
       //      SgProject* proj = new SgProject();
@@ -74,7 +74,7 @@ createAndDeleteBinGUI(std::string fileName, std::string empty,
 void
 runListMode(string saveFile, 
 	    string listFile) {
-  cerr << " Running in List Mode. Loading File: " << listFile << endl;
+  //cerr << " Running in List Mode. Loading File: " << listFile << endl;
   ifstream inFile;
   vector<string> files;
   vector<string> filesSkip;
@@ -94,7 +94,7 @@ runListMode(string saveFile,
       if (!removedPreheader && i>18) {i=0; removedPreheader=true;}
       if ( removedPreheader && (i%8)==0) {
 	filesSkip.push_back(fileNameSkip);
-	cerr << i << " skipping file : " << fileNameSkip << endl;
+	//cerr << i << " skipping file : " << fileNameSkip << endl;
       } //else 
 	//cerr << i << " junk "  << fileNameSkip << endl;
       i++;
@@ -109,7 +109,7 @@ runListMode(string saveFile,
     cout << "Unable to open listFile" << endl;
     exit(1); // terminate with error
   }
-  cerr << "Found the following filenames : " << endl;
+  //cerr << "Found the following filenames : " << endl;
   while (inFile >> fileName) {
     //    if (!is_directory(fileName))
     bool found=false;
@@ -120,12 +120,12 @@ runListMode(string saveFile,
     }
     if (!found) {
       files.push_back(fileName);
-      cerr << " Adding file : " << fileName << endl;
+      //cerr << " Adding file : " << fileName << endl;
     }
   }
 
   inFile.close();
-  cerr << "Reading done. Files found: " << files.size() << endl;
+  //cerr << "Reading done. Files found: " << files.size() << endl;
 
 
   // store the final results per file
@@ -144,52 +144,52 @@ runListMode(string saveFile,
   map<string,int> analysisRes;
   for (;it!=files.end();++it) {
     string fileName = *it;
-    cerr << "Analyzing : " << fileName ;
+    //cerr << "Analyzing : " << fileName ;
     //if (i<10) {
     analysisRes.clear();
     try {
-    double timeForFile = createAndDeleteBinGUI(fileName, empty, emptyVec, 
-					       saveFile, analysisRes);
+      double timeForFile = createAndDeleteBinGUI(fileName, empty, emptyVec, 
+						 saveFile, analysisRes);
 
-    if (i==0) {
-      columns=analysisRes.size();
-      totalBugs = new int[columns];
-      for (int i=0;i<columns;++i) {
-	totalBugs[i]=0;
+      if (i==0) {
+	columns=analysisRes.size();
+	totalBugs = new int[columns];
+	for (int i=0;i<columns;++i) {
+	  totalBugs[i]=0;
+	}
       }
-    }
-    // remove -tsv
-    if (fileName.find("-tsv")!=std::string::npos)
-      if (fileName.size()>4)
-	fileName = fileName.substr(0,fileName.size()-4);
-    cerr << "Writing results for : " << fileName << endl;
-    if (firstIt) {
-      firstIt=false;
-      fp_out << "FILENAME " ;
-      map<string,int>::const_iterator it4 = analysisRes.begin();
-      for (;it4!=analysisRes.end();++it4) {
-	string analysisName = it4->first;
-	fp_out << "\t" << analysisName ;
+      // remove -tsv
+      if (fileName.find("-tsv")!=std::string::npos)
+	if (fileName.size()>4)
+	  fileName = fileName.substr(0,fileName.size()-4);
+      //cerr << "Writing results for : " << fileName << endl;
+      if (firstIt) {
+	firstIt=false;
+	fp_out << "FILENAME " ;
+	map<string,int>::const_iterator it4 = analysisRes.begin();
+	for (;it4!=analysisRes.end();++it4) {
+	  string analysisName = it4->first;
+	  fp_out << "\t" << analysisName ;
+	}
+	fp_out << "\tTotal Bugs \tTime" << endl;
       }
-      fp_out << "\tTotal Bugs \tTime" << endl;
-    }
-    map<string,int>::const_iterator it3 = analysisRes.begin();
-    fp_out << fileName ;
-    int totalbugsRow=0;
-    int j=0;
-    for (;it3!=analysisRes.end();++it3) {
-      int value = it3->second;
-      fp_out << "\t" << value;
-      totalbugsRow +=value;
-      totalBugs[j]+=value;
-      j++;
-    }
-    totalTime += timeForFile;
-    fp_out << "\t" <<totalbugsRow << "\t" <<timeForFile << endl;
-    //      }
-    i++;
+      map<string,int>::const_iterator it3 = analysisRes.begin();
+      fp_out << fileName ;
+      int totalbugsRow=0;
+      int j=0;
+      for (;it3!=analysisRes.end();++it3) {
+	int value = it3->second;
+	fp_out << "\t" << value;
+	totalbugsRow +=value;
+	totalBugs[j]+=value;
+	j++;
+      }
+      totalTime += timeForFile;
+      fp_out << "\t" <<totalbugsRow << "\t" <<timeForFile << endl;
+      //      }
+      i++;
     } catch (int i) {
-      cerr << "Stop -- Aborted : " << fileName << endl;
+      //cerr << "Stop -- Aborted : " << fileName << endl;
     }
   }
   for (int i=0;i<columns;++i) {
@@ -217,6 +217,7 @@ main( int argc, char **argv ) {
   string listName="";
   vector<std::string> dllA;
   vector<std::string> dllB;
+  if (argc<=2)
   cerr << "\nUSAGE : BinQ -a binaryFileA [.so|.dll]* [-b binaryFileB|IdaFile|SourceFile [.so|.dll]*] [--test] [--batch] [--list listFile]\n\n " << endl;
   std::string fileA="";
   std::string fileB="";
@@ -288,17 +289,20 @@ main( int argc, char **argv ) {
 
   }
   
-  cerr << "FileA: " << fileA << "  FileB: " << fileB << "    test: " << test << "   batch : " 
-       << batch << " List : " << listName << endl;
+  if (debug)
+    cerr << "FileA: " << fileA << "  FileB: " << fileB << "    test: " << test << "   batch : " 
+	 << batch << " List : " << listName << endl;
   if (fileA=="" && listName=="") exit(1);
   vector<std::string>::const_iterator it= dllA.begin();
   for (;it!=dllA.end();++it) {
-    cerr << "  File A dll : " << *it<<endl; 
+    if (debug)
+      cerr << "  File A dll : " << *it<<endl; 
   }
   if (fileB!="") {
     it= dllB.begin();
     for (;it!=dllB.end();++it) {
-      cerr << "  File B dll : " << *it<<endl; 
+      if (debug)
+	cerr << "  File B dll : " << *it<<endl; 
     }
   }
 

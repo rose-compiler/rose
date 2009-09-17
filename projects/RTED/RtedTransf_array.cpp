@@ -404,6 +404,74 @@ void RtedTransformation::visit_isArraySgInitializedName(SgNode* n) {
 }
 
 
+void
+RtedTransformation::visit_isSgPointerDerefExp(SgPointerDerefExp* n) {
+  cerr <<"\n$$$$$ visit_isSgPointerDerefExp : " << n->unparseToString() <<
+    "  in line : " << n->get_file_info()->get_line() << " -------------------------------------" <<endl;
+
+#if 0  
+  SgExpression* right = isSgExpression(n->get_operand());
+  // right hand side should contain some VarRefExp
+  std::vector< SgNode* > vars = NodeQuery::querySubTree( right, V_SgVarRefExp );
+  std::vector< SgNode* >::const_iterator it = vars.begin();
+  for (;it!=vars.end();++it) {
+    SgVarRefExp* varRef = isSgVarRefExp(*it);
+    ROSE_ASSERT(varRef);
+    SgExpression* parent = isSgExpression(varRef->get_parent());
+    ROSE_ASSERT(parent);
+    SgDotExp* dotExp = isSgDotExp(parent);
+    SgArrowExp* arrowExp = isSgArrowExp(parent);
+    SgExpression* left = NULL;
+    if (dotExp) left = dotExp->get_lhs_operand();
+    if (arrowExp) left = arrowExp->get_lhs_operand();
+    if ((left && left==varRef) || left==NULL) {
+      variable_access_pointerderef[n]=varRef;
+      cerr << " &&& Adding : " << varRef->unparseToString() << endl;
+    }
+  }
+  if (vars.size()>1) {
+    cerr << "Warning : We added more than one SgVarRefExp to this map for SgPointerDerefExp. This might be a problem" << endl;
+    //exit(1);
+  }
+#endif
+}
+
+void
+RtedTransformation::visit_isSgArrowExp(SgArrowExp* n) {
+  cerr <<"\n$$$$$ visit_isSgArrowExp : " << n->unparseToString() <<
+    "  in line : " << n->get_file_info()->get_line() << " -------------------------------------" <<endl;
+
+#if 0
+  SgExpression* left = isSgExpression(n->get_lhs_operand());
+  ROSE_ASSERT(left);
+  // left hand side should be a varrefexp or a thisOp
+  std::vector< SgNode* > vars = NodeQuery::querySubTree( left, V_SgVarRefExp );
+  std::vector< SgNode* >::const_iterator it = vars.begin();
+  for (;it!=vars.end();++it) {
+    SgVarRefExp* varRef = isSgVarRefExp(*it);
+    ROSE_ASSERT(varRef);
+    variable_access_arrowexp[ n] = varRef;
+    cerr << " &&& Adding : " << varRef->unparseToString() << endl;
+  }
+  if (vars.size()>1) {
+    cerr << "Warning : We added more than one SgVarRefExp to this map for SgArrowExp. This might be a problem" << endl;
+    //exit(1);
+  }
+  std::vector< SgNode* > vars2 = NodeQuery::querySubTree( left, V_SgThisExp );
+  std::vector< SgNode* >::const_iterator it2 = vars2.begin();
+  for (;it2!=vars2.end();++it2) {
+    SgThisExp* varRef = isSgThisExp(*it2);
+    ROSE_ASSERT(varRef);
+    variable_access_arrowthisexp[ n] = varRef;
+    cerr << " &&& Adding : " << varRef->unparseToString() << endl;
+  }
+  if (vars2.size()>1) {
+    cerr << "Warning : We added more than one SgThisExp to this map for SgArrowExp. This might be a problem" << endl;
+    //exit(1);
+  }
+#endif
+}
+
 // FIXME 2: This introduces superfluous calls to access var for dot expressions
 // 	e.g., in the following
 // 		a = *(my_struct.field);
@@ -484,7 +552,7 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
 		  "   right hand side type: " << right->get_type()->class_name() <<
 		  "   right exp: " << right->class_name() << endl;
       variable_access_varref.push_back(n);
-	      stopSearch = true;
+      stopSearch=true;
     } else {
     	// tps (09/15/2009): added this
     	cerr <<"$$$$$ Unhandled case (AssignOp) : " << parent->unparseToString() << endl;
@@ -496,20 +564,24 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
     //cerr << "*********************************** DEBUGGING   parent (assign) = " << parent->class_name() << endl;
     break;
   }
+#if 1
   else if (isSgPointerDerefExp(parent)) {
 	  cerr << "$$$$$ ---- Found Pointer deref : " << parent->unparseToString() << endl;
 	 // cerr << "*********************************** DEBUGGING   parent (deref) = " << parent->class_name() << endl;
+	  // leave this in for now
 	  variable_access_pointerderef[isSgPointerDerefExp(parent)]=n;
-      stopSearch = true;
-
+	  stopSearch = true;
+	  // break;
   } else if ( isSgArrowExp( parent )) {
 	  cerr << "$$$$$ ---- Found isSgArrowExp  : " << parent->unparseToString() << endl;
       SgArrowExp* arrow_op = isSgArrowExp( parent );
       if( last == arrow_op -> get_lhs_operand() ) {
     	  cerr << "    $$$$$ Adding left hand side to variable_access_pointerderef" <<
 			  "    : " << parent->class_name() << endl;
+	  // leave this in for now
           variable_access_pointerderef[ isSgExpression( parent )] = n;
           stopSearch = true;
+	  //break;
       } else {
           // We don't access the rhs of an arrow op directly, e.g.
           //    int x = foo -> bar;
@@ -517,10 +589,12 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
 		  cerr << "   $$$$ Case not handled because " << last->unparseToString() << " not on lhs side." << endl;
 		  cerr << "   $$$$ last : " << last->class_name() <<
 			  "        arrow_op -> get_lhs_operand() :" << arrow_op -> get_lhs_operand()->class_name() << endl;
-          stopSearch = true;
+	  stopSearch = true;
           break;
       }
-  } else if (isSgExprListExp(parent) && isSgFunctionCallExp(parent->get_parent())) {
+  } 
+#endif 
+  else if (isSgExprListExp(parent) && isSgFunctionCallExp(parent->get_parent())) {
 	  cerr << "$$$$$ Found Function call - lets handle its parameters." << endl;
 	  SgType* type = isSgExpression(last)->get_type();
 	  if (type && isSgArrayType(type))
@@ -586,7 +660,7 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
 	  }
   } //while
 
-  if (!stopSearch) {
+  if (stopSearch==false) {
     // its a plain variable access
 	  cerr << " @@@@@@@@@ ADDING Variable access : " << n->unparseToString() << endl;
 	  variable_access_varref.push_back(n);

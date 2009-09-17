@@ -18,7 +18,7 @@ RoseBin_Graph::createUniqueEdges() {
   //SgGraphEdgeList* gedges = get_edges();
   rose_graph_integer_edge_hash_multimap edges =get_node_index_to_edge_multimap_edgesOut();
   if (unique_edges.size()==0) {
-    cerr << " Creating unique edge map. Edges : " << RoseBin_support::ToString(edges.size()) << endl;
+    //cerr << " Creating unique edge map. Edges : " << RoseBin_support::ToString(edges.size()) << endl;
     rose_graph_integer_edge_hash_multimap::const_iterator it2 = edges.begin();
     for (;it2!=edges.end();it2++) {
       SgDirectedGraphEdge* edgeIt = isSgDirectedGraphEdge(it2->second);

@@ -48,13 +48,13 @@ MallocAndFree::visit(SgNode* node) {
       // go forward in this function and check for the next mov mem,reg [rax]
       // malloc returns in rax
       string funcName = instFunc->get_name();
-      cerr << " Found malloc in function " << funcName << endl;
+      //cerr << " Found malloc in function " << funcName << endl;
       rose_addr_t next_addr = inst->get_address() + inst->get_raw_bytes().size();
       next_addr = BinQSupport::checkIfValidAddress(next_addr,inst);
       std::set<uint64_t> succs;
       std::list<uint64_t> succList;
       succList.push_back(next_addr);
-      cerr << " Checking addr for malloc found at: " << RoseBin_support::HexToString(inst->get_address() ) << "  nextAddr : " << RoseBin_support::HexToString(next_addr) << endl;
+      //cerr << " Checking addr for malloc found at: " << RoseBin_support::HexToString(inst->get_address() ) << "  nextAddr : " << RoseBin_support::HexToString(next_addr) << endl;
       bool movMemRegFound=false;
       std::set<uint64_t> visited;
 
@@ -85,12 +85,12 @@ MallocAndFree::visit(SgNode* node) {
 	    // just jumps, so we add it
 	    rose_addr_t next_addr2 = succInst->get_address() + succInst->get_raw_bytes().size();
 	    next_addr2 = BinQSupport::checkIfValidAddress(next_addr2, succInst);
-	    cerr << " Checking next addr : " << RoseBin_support::HexToString(next_addr2) << endl;
+	    //cerr << " Checking next addr : " << RoseBin_support::HexToString(next_addr2) << endl;
 	    if (isSgAsmx86Instruction(succInst) && isSgAsmx86Instruction(succInst)->get_kind() == x86_call) {
 	      // if another call found, stop here
 	      rose_addr_t next_addr = succInst->get_address() + succInst->get_raw_bytes().size();
 	      next_addr = BinQSupport::checkIfValidAddress(next_addr, succInst);
-	      cerr << " Windows workaround starts here: " << RoseBin_support::HexToString(next_addr) << endl;
+	      //cerr << " Windows workaround starts here: " << RoseBin_support::HexToString(next_addr) << endl;
 	      succList.push_back(next_addr);
 	      break;
 	    }
@@ -157,13 +157,14 @@ MallocAndFree::visit(SgNode* node) {
 		// this mov matches, now store the address of the mem
 		// so we can find out if this address is freed later.
 		resolveAddr=BinQSupport::evaluateMemoryExpression(succInst,mem);
-		cerr << "MallocAndFree: Found Malloc - " << RoseBin_support::HexToString(resolveAddr) << endl;
+		//cerr << "MallocAndFree: Found Malloc - " << RoseBin_support::HexToString(resolveAddr) << endl;
 		movMemRegFound=true;
 		succList.clear();
 	      } else {
-		cerr << " unknown registers : " << cl << endl;
+		//cerr << " unknown registers : " << cl << endl;
 	      }
-	    } else { cerr << "next mem : " << mem << " reg : " << reg << endl;}
+	    } else { //cerr << "next mem : " << mem << " reg : " << reg << endl;
+}
 	  } 
 	  // else we look further backward
 	  if (movMemRegFound==false) {
@@ -191,7 +192,7 @@ MallocAndFree::visit(SgNode* node) {
       if (resolveAddr!=0) {
 	SgAsmFunctionDeclaration* succFunc2=instFunc;
 	SgAsmx86Instruction* succInst2=inst;
-	cerr << " Looking for free : start : " << RoseBin_support::HexToString(succInst2->get_address() )<< endl;
+	//cerr << " Looking for free : start : " << RoseBin_support::HexToString(succInst2->get_address() )<< endl;
 	std::set<uint64_t> visited;
 	while (instFunc==succFunc2) {
 	  next_addr = succInst2->get_address() + succInst2->get_raw_bytes().size();
@@ -218,11 +219,11 @@ MallocAndFree::visit(SgNode* node) {
 	  }
 	  if (isSgAsmx86Instruction(succInst2)->get_kind() == x86_call) {
 	    string calleeName2 = succInst2->get_comment();
-	    cerr << "  checking succ call : " << calleeName2 << endl; 
+	    //cerr << "  checking succ call : " << calleeName2 << endl; 
 	    // do this if we have found a matching free call
 	    if (calleeName2=="free" || calleeName2=="_free") { 
-	      cerr << "MallocAndFree : found free() at : " << 
-		RoseBin_support::HexToString(succInst2->get_address() )<< endl;
+	      //cerr << "MallocAndFree : found free() at : " << 
+	      //	RoseBin_support::HexToString(succInst2->get_address() )<< endl;
 	      // we have found a call to free!
 	      // look backwards and check for last mov reg,addr . the address contains the pointer that needs to be freed
 	      // compare that pointer with the pointer in malloc!
@@ -239,8 +240,8 @@ MallocAndFree::visit(SgNode* node) {
 		predInst = BinQSupport::checkIfValidPredecessor(front,predInst);
 		if (predInst==NULL)
 		  break;
-		cerr <<" Possible predecessor : " << unparseInstruction(predInst)<<
-		  RoseBin_support::HexToString(predInst->get_address() ) <<endl;
+		//cerr <<" Possible predecessor : " << unparseInstruction(predInst)<<
+		// RoseBin_support::HexToString(predInst->get_address() ) <<endl;
 		SgNode* predBlock = NULL;
 		if (project) 
 		  predBlock= isSgAsmBlock(predInst->get_parent());

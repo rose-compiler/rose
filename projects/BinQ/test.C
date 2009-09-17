@@ -37,15 +37,15 @@ public:
 void 
 DeleteSgTree( SgNode* root) {
   VariantVector vv1 = V_SgNode;
-  std::cout << "Number of nodes before: " << 
-    NodeQuery::queryMemoryPool(vv1).size() << std::endl;
+  //std::cout << "Number of nodes before: " << 
+  // NodeQuery::queryMemoryPool(vv1).size() << std::endl;
 
   DeleteAST2 deleteTree;
   deleteTree.traverse(root,postorder);
 
   vector<SgNode*> vec = NodeQuery::queryMemoryPool(vv1);
-  std::cout << "Number of nodes after AST deletion: " << 
-    vec.size() << std::endl;
+  //std::cout << "Number of nodes after AST deletion: " << 
+  // vec.size() << std::endl;
 
   vector<SgNode*>::const_iterator it = vec.begin();
   for (;it!=vec.end();++it) {
@@ -53,7 +53,7 @@ DeleteSgTree( SgNode* root) {
     // tps :: the following nodes are not deleted with the 
     // AST traversal. We can only delete some of them -
     // but not all within the memory pool traversal
-    cerr << "  Not deleted : " << node->class_name() ;
+    //cerr << "  Not deleted : " << node->class_name() ;
     if (!isSgAsmTypeByte(node) &&
 	!isSgAsmTypeWord(node) &&
 	!isSgAsmTypeDoubleWord(node) &&
@@ -70,14 +70,14 @@ DeleteSgTree( SgNode* root) {
 	!isSgAsmGenericHeader(node) &&
 	!isSgAsmGenericSection(node) 
 	) {
-      cerr << "    .. deleting. " ;
+      //cerr << "    .. deleting. " ;
       delete node;
     }
-    cerr << endl;
+    //cerr << endl;
   }
 
-  std::cout << "Number of nodes after Memory pool deletion: " << 
-    NodeQuery::queryMemoryPool(vv1).size() << std::endl;
+  //std::cout << "Number of nodes after Memory pool deletion: " << 
+  // NodeQuery::queryMemoryPool(vv1).size() << std::endl;
   
 }
 

@@ -45,13 +45,13 @@ BinQinteractive::BinQinteractive(std::string fA, std::string fB, std::vector<std
     createGUI();
     updateByteItemList();
   }
-  cerr << "Initialization done." <<endl;
+  //cerr << "Initialization done." <<endl;
   if (test)
     testAnalyses(analyses);
 }
 
 void BinQinteractive::initAnalyses() {
-  cerr << "Checking for analyses ... " << endl;
+  //cerr << "Checking for analyses ... " << endl;
   analyses.clear();
   analyses.push_back(new DwarfFileInfo(algo));
   analyses.push_back(new DynamicInfo());

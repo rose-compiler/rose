@@ -893,13 +893,13 @@ RoseBin_DataFlowAbstract::getPredecessor(SgGraphNode* node){
 SgGraphNode*
 RoseBin_DataFlowAbstract::getSuccessor(SgGraphNode* node){
   vector <SgGraphNode*> vec;
-  cerr << endl << " START ++++++++++++ getSuccessor : call getDirectCFGSucc " << endl;
+  //cerr << endl << " START ++++++++++++ getSuccessor : call getDirectCFGSucc " << endl;
   g_algo->getDirectCFGSuccessors(vizzGraph,node, vec);
   SgGraphNode* after = NULL;
-  cerr << " END +++++++++++ getSuccessor : >>>>>>>>>>>>>>> Outedges for node " << 
-    node->get_index() << " " << node->get_name() << " " <<
-    node->get_SgNode()->class_name() << 
-     "   size: " <<  vec.size() << endl;
+  //cerr << " END +++++++++++ getSuccessor : >>>>>>>>>>>>>>> Outedges for node " << 
+  //    node->get_index() << " " << node->get_name() << " " <<
+  //  node->get_SgNode()->class_name() << 
+  //   "   size: " <<  vec.size() << endl;
   if (vec.size()==1) {
     // found one predecessor
     after = vec.back();

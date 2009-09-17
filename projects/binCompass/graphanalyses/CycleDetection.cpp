@@ -95,14 +95,17 @@ CycleDetection::run(string& name, SgGraphNode* node,
       // found this node in visited list
       SgAsmx86Instruction* nodeSg = isSgAsmx86Instruction(node->get_SgNode());
       SgAsmx86Instruction* nextSg = isSgAsmx86Instruction(next->get_SgNode());
+      if (debug) {
       std::cerr << "Found possible cycle between  " << 
 	toString(nodeSg->get_kind()) << " (" << 
 	RoseBin_support::HexToString(nodeSg->get_address()) << ") and " <<
 	toString(nextSg->get_kind()) << " (" << 
 	RoseBin_support::HexToString(nextSg->get_address()) << ")" << std::endl;
+      }
 
       bool validCycle = checkIfValidCycle(node,next);
       if (validCycle) {
+	if (debug)
 	std::cerr << "This is a valid cycle. " << std::endl;
 	cycleFound[node]=next;
       } else {

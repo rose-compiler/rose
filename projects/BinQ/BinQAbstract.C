@@ -21,7 +21,7 @@ using namespace __gnu_cxx;
 void BinQAbstract::init(){
 
 
-  cerr << "Disassemble File A ... " << fileNameA << endl;
+  //cerr << "Disassemble File A ... " << fileNameA << endl;
   std::string sourceFileS;
   fileA = binqsupport->disassembleFile(fileNameA, sourceFileS);
   ROSE_ASSERT(fileA);
@@ -35,14 +35,14 @@ void BinQAbstract::init(){
   }
 
   if (saveAST!="") {
-    std::cerr << "ROSE saving FILE.... " << saveAST << std::endl;
+    //std::cerr << "ROSE saving FILE.... " << saveAST << std::endl;
     LoadSaveAST::saveAST(saveAST, isSgProject(fileA)); 
     exit(0);
   }
 
   fileB=NULL;
   if (fileNameB!="") {
-    cerr << "\nDisassemble File B ... " << fileNameB << endl;
+    //cerr << "\nDisassemble File B ... " << fileNameB << endl;
     fileB = binqsupport->disassembleFile(fileNameB, sourceFileS);
     ROSE_ASSERT(fileB);
     if (sourceFileS=="true")
@@ -88,10 +88,12 @@ void BinQAbstract::init(){
   createFunction(fileA, funcsFileA, false);
   createFunction(fileB, funcsFileB, false);
 
+#if 0
   if (fileA)
     cerr << " File A has " << RoseBin_support::ToString(funcsFileA.size()) << " funcs." << endl;
   if (fileB)
     cerr << " File B has " << RoseBin_support::ToString(funcsFileB.size()) << " funcs." << endl;
+#endif 
 
   createItem(fileA,itemsFileA, funcsFileA, false);
   createItem(fileB,itemsFileB, funcsFileB, false);

@@ -76,7 +76,7 @@ FunctionDiffAlgo::run(SgNode* fileA, SgNode* fileB) {
       .arg(minus);
     instance->analysisTab->setCurrentIndex(1);
     instance->analysisResult->append(res);  
-    cerr << " Writing results ... " << endl;
+    //cerr << " Writing results ... " << endl;
   }
 };
 

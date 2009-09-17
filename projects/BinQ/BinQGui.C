@@ -32,7 +32,7 @@ void clicked1() {
   QListWidgetItem *item= instance->listWidget->currentItem(); 
   QString te = item->text();
   string t = te.toStdString();
-  cerr << " Selected : " << t << endl;
+  //cerr << " Selected : " << t << endl;
   for (unsigned int i=0;i<instance->analyses.size();++i) {
     BinAnalyses* analysis = instance->analyses[i];
     if (t==analysis->name()) {
@@ -268,7 +268,7 @@ void BinQGUI::unhighlightInstructionRow(int row,qrs::QRTable* widget) {
 // this function manages the code to keep the slide bar update with the instruction table
 void BinQGUI::updateByteItemList() {
   // update byteItemList
-  cerr << "updating itemsFileA : " << RoseBin_support::ToString(itemsFileA.size()) << endl; 
+  //cerr << "updating itemsFileA : " << RoseBin_support::ToString(itemsFileA.size()) << endl; 
   for (unsigned int i=0;i<itemsFileA.size();++i) {
     Item* a = itemsFileA[i];
     if (a) {
@@ -281,7 +281,7 @@ void BinQGUI::updateByteItemList() {
     }
   }
   if (fileB) {
-    cerr << "updating itemsFileB : " << RoseBin_support::ToString(itemsFileB.size()) << endl; 
+    //cerr << "updating itemsFileB : " << RoseBin_support::ToString(itemsFileB.size()) << endl; 
     for (unsigned int i=0;i<itemsFileB.size();++i) {
       Item* b = itemsFileB[i];
       if (b) {
@@ -294,12 +294,12 @@ void BinQGUI::updateByteItemList() {
     }
   }
   slide->colorize();
-  cerr << "displaying A  ... " << endl; 
+  //cerr << "displaying A  ... " << endl; 
   showFile(0, codeTableWidget, funcsFileA, itemsFileA);
   getFileForWidget[codeTableWidget]=fileA;
   QROSE::link(codeTableWidget, SIGNAL(activated(int, int, int, int)), &codeTableWidgetCellActivated, this);
   if (fileB) {
-    cerr << "displaying B ... " << endl; 
+    //cerr << "displaying B ... " << endl; 
     showFile(0, codeTableWidget2, funcsFileB, itemsFileB);
     getFileForWidget[codeTableWidget2]=fileB;
     QROSE::link(codeTableWidget2, SIGNAL(activated(int, int, int, int)), &codeTableWidgetCellActivated, this);
@@ -307,7 +307,7 @@ void BinQGUI::updateByteItemList() {
   showFileTab();
 
 
-  cerr << ">> Handling DLLs ... " << endl; 
+  //cerr << ">> Handling DLLs ... " << endl; 
   //handle DLLs
 #if 1
   std::vector<SgNode*>::const_iterator dllIt = dllFilesA.begin();
@@ -322,7 +322,7 @@ void BinQGUI::updateByteItemList() {
     std::vector<Item*> itemsFile;
     createFunction(file, funcsFile, true);
     createItem(file,itemsFile, funcsFile, true);
-    cerr << " Adding DLL of FileA---  funcsFileSize: " << RoseBin_support::ToString(funcsFile.size()) << "  itemsFileSize: " << RoseBin_support::ToString(itemsFile.size()) << endl;
+    //cerr << " Adding DLL of FileA---  funcsFileSize: " << RoseBin_support::ToString(funcsFile.size()) << "  itemsFileSize: " << RoseBin_support::ToString(itemsFile.size()) << endl;
     showFile(0, codeTableWidgetDLL, funcsFile, itemsFile);
     getFileForWidget[codeTableWidgetDLL]=file;
     QROSE::link(codeTableWidgetDLL, SIGNAL(activated(int, int, int, int)), &codeTableWidgetCellActivated, this);
@@ -339,7 +339,7 @@ void BinQGUI::updateByteItemList() {
     std::vector<Item*> itemsFile;
     createFunction(file, funcsFile, true);
     createItem(file,itemsFile, funcsFile, true);
-    cerr << " Adding DLL of FileB---  funcsFileSize: " << RoseBin_support::ToString(funcsFile.size()) << "  itemsFileSize: " << RoseBin_support::ToString(itemsFile.size()) << endl;
+    //cerr << " Adding DLL of FileB---  funcsFileSize: " << RoseBin_support::ToString(funcsFile.size()) << "  itemsFileSize: " << RoseBin_support::ToString(itemsFile.size()) << endl;
     showFile(0, codeTableWidgetDLL, funcsFile, itemsFile);
     getFileForWidget[codeTableWidgetDLL]=file;
     QROSE::link(codeTableWidgetDLL, SIGNAL(activated(int, int, int, int)), &codeTableWidgetCellActivated, this);
@@ -514,7 +514,7 @@ BinQGUI::DeleteSgTree( SgNode* root) {
     // tps :: the following nodes are not deleted with the 
     // AST traversal. We can only delete some of them -
     // but not all within the memory pool traversal
-    cerr << "  Not deleted : " << node->class_name() ;
+    //cerr << "  Not deleted : " << node->class_name() ;
     if (!isSgAsmTypeByte(node) &&
 	!isSgAsmTypeWord(node) &&
 	!isSgAsmTypeDoubleWord(node) &&
@@ -537,10 +537,10 @@ BinQGUI::DeleteSgTree( SgNode* root) {
 	!isSgProject(node) &&
 	!isSgNode(node)
 	) {
-      cerr << " .. deleting. " ;
+      //cerr << " .. deleting. " ;
       delete node;
     }
-    cerr << endl;
+    //cerr << endl;
   }
 
     std::cout << "Number of nodes after deeleting in Memory pool: " << 
@@ -801,7 +801,7 @@ BinQGUI::testAnalyses(std::vector<BinAnalyses*>& analysesVec) {
   int problems=0;
   double startTotal = RoseBin_support::getTime();
   for (unsigned int i=0;i<analysesVec.size();++i) {
-    cerr << " testing analysis : " << analysesVec[i]->getDescription() << endl;
+    //cerr << " testing analysis : " << analysesVec[i]->getDescription() << endl;
     bool twoFiles = analysesVec[i]->twoFiles();
     if (twoFiles && fileB!=NULL || twoFiles==false) {
       currentAnalysis=analysesVec[i];
@@ -812,8 +812,8 @@ BinQGUI::testAnalyses(std::vector<BinAnalyses*>& analysesVec) {
 	double time = (double) (end - start);
 	map<SgNode*,string> resu = currentAnalysis->getResult();
 	problems+=resu.size();
-	cerr << "Running analysis : " << currentAnalysis->name() <<
-	  "   time : " << time << "   Problems : " << RoseBin_support::ToString(resu.size()) << endl;
+	//cerr << "Running analysis : " << currentAnalysis->name() <<
+	//  "   time : " << time << "   Problems : " << RoseBin_support::ToString(resu.size()) << endl;
 	testAnalysisResults[currentAnalysis->name()]=resu.size();
       }
     }
@@ -821,7 +821,7 @@ BinQGUI::testAnalyses(std::vector<BinAnalyses*>& analysesVec) {
  
   double endTotal = RoseBin_support::getTime();
   double timeTotal = (double) (endTotal - startTotal);
-  cerr << "\nTotal time : " << timeTotal << "  problems : " << problems << endl;
+  //cerr << "Total time : " << timeTotal << "  problems : " << problems << endl;
   testAnalysisTime=timeTotal;
 }
 
@@ -849,8 +849,9 @@ BinQGUI::run( ) {
       if (isSgProject(currentSelectedFile)) {
 	SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(currentSelectedFile)->get_fileList()[0]);
 	SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
-	if (file)
-	  cerr << " Current selected file : " << file->get_name() << endl;
+	if (file) {
+	  // cerr << " Current selected file : " << file->get_name() << endl;
+	}
       }
       currentAnalysis->run(currentSelectedFile,NULL);
     }
@@ -862,7 +863,7 @@ BinQGUI::run( ) {
 // Creates the Function table (left hand side) for file A and B
 void 
 BinQGUI::showFileTab() {
-  cerr << "creating FileTab " << endl; 
+  //cerr << "creating FileTab " << endl; 
 
   QROSE::unlink(tableWidget, SIGNAL(activated(int, int, int, int)));
   while(tableWidget->rowCount()) 
@@ -1152,7 +1153,7 @@ void BinQGUI::showFile(int row, qrs::QRTable* currentWidget,
       for (int j=1;j<maxrows;++j) {
 	currentWidget->setBgColor(back,j,i);
       }
-      cerr << "Unknown Type : " << stmts->class_name() << endl;
+      //cerr << "Unknown Type : " << stmts->class_name() << endl;
       if (itemsFile[i]->row) {
 	currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->row), 0, i);	
 	if (!sourceFile) {
@@ -1165,8 +1166,8 @@ void BinQGUI::showFile(int row, qrs::QRTable* currentWidget,
     }
 
       if (addRow) {
-	if ((rowC%500)==0)
-	  cerr << "Adding Row : " << RoseBin_support::ToString(rowC) << "/"<< RoseBin_support::ToString(itemsFile.size()) << endl;
+	//if ((rowC%500)==0)
+	//cerr << "Adding Row : " << RoseBin_support::ToString(rowC) << "/"<< RoseBin_support::ToString(itemsFile.size()) << endl;
 	// tps : this is still very slow and commented out for now
 #if 0
 		currentWidget->setHAlignment(true, false, 3); // left horizontal alignment
@@ -1203,7 +1204,7 @@ void BinQGUI::showFile(int row, qrs::QRTable* currentWidget,
 	posC+=length;
       }
   }
-  cerr << "Widget done." <<endl;
+  //cerr << "Widget done." <<endl;
   currentWidget->setShowGrid(false);
   currentWidget->setCurrentCell(row,0);
 

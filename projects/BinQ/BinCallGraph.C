@@ -46,7 +46,7 @@ BinCallGraph::run(SgNode* fileA, SgNode* fileB) {
   VirtualBinCFG::AuxiliaryInformation* info = new VirtualBinCFG::AuxiliaryInformation(file);
 
   // call graph analysis  *******************************************************
-  cerr << " creating call graph ... " << endl;
+  //cerr << " creating call graph ... " << endl;
  if (!testFlag) {
   ROSE_ASSERT(instance);
   ROSE_ASSERT(instance->analysisTab);
@@ -82,8 +82,8 @@ BinCallGraph::run(SgNode* fileA, SgNode* fileB) {
     instance->analysisResult->append(res);
   }
 
-  cerr << " nr of nodes visited in callanalysis : " << callanalysis->nodesVisited() << endl;
-  cerr << " nr of edges visited in callanalysis : " << callanalysis->edgesVisited() << endl;
+  //cerr << " nr of nodes visited in callanalysis : " << callanalysis->nodesVisited() << endl;
+  //cerr << " nr of edges visited in callanalysis : " << callanalysis->edgesVisited() << endl;
 
 }
 

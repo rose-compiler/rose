@@ -63,7 +63,7 @@ BufferOverflow::run(string& name, SgGraphNode* node,
 	  string codeStr = unparseX86Register(code.first, code.second, x86_regpos_qword);
 	  if (codeStr=="rdi")
 	    value = getValueOfInstr(asmPre, true);
-	  else 
+	  else if (debug)
 	    cerr << " Error :: found a mov before a call that does not point to rdi but ::: " << codeStr << endl;
 	  if (debug && asmPre->get_kind() == x86_mov) 
 	    cerr << "   malloc: found mov size of " << codeStr << " in " << value 
@@ -86,7 +86,7 @@ BufferOverflow::run(string& name, SgGraphNode* node,
     ROSE_ASSERT(aft->get_SgNode());
     while (foundMov==true && sameParents(node, aft)) {
       ROSE_ASSERT(aft);
-      cerr << " ----------- Getting successor for " << aft->get_name() << endl;
+      //cerr << " ----------- Getting successor for " << aft->get_name() << endl;
       aft = getSuccessor(aft);
       ROSE_ASSERT(aft);
       SgAsmx86Instruction* asmAft = isSgAsmx86Instruction(aft->get_SgNode());
@@ -119,7 +119,7 @@ BufferOverflow::run(string& name, SgGraphNode* node,
 	    // done for now; 
 	    return false;
 	  }
-	} else 
+	} else if (debug) 
 	  cerr << " Error :: foud a mov after a call that is not rax." << endl;
       } // mov
     } // while
@@ -263,7 +263,7 @@ BufferOverflow::run(SgNode* fileA, SgNode* fileB) {
   bool interprocedural=false;
   string dfgFileName = "dfg.dot";
   if (graph==NULL) {
-    cerr << "No graph found yet .. creating graph " << endl;
+    //cerr << "No graph found yet .. creating graph " << endl;
     graph= new RoseBin_DotGraph();
     if (dot==false) {
       dfgFileName = "dfg.gml";
@@ -276,7 +276,7 @@ BufferOverflow::run(SgNode* fileA, SgNode* fileB) {
   GraphAlgorithms* algo = new GraphAlgorithms(info);
   SgAsmInterpretation* interp = SageInterface::getMainInterpretation(file);
   if (dfanalysis==NULL) {
-    cerr << "No dataflow analysis run yet ... running ... " << endl;
+    //cerr << "No dataflow analysis run yet ... running ... " << endl;
     dfanalysis = 
       new RoseBin_DataFlowAnalysis(interp->get_global_block(), forward, new RoseObj(), algo);
     ROSE_ASSERT(dfanalysis);
@@ -284,7 +284,7 @@ BufferOverflow::run(SgNode* fileA, SgNode* fileB) {
     dfanalysis->init(interprocedural, edges);
     dfanalysis->run(graph, dfgFileName, mergedEdges);
   } else {
-    cerr << "Dataflow analysis run before ... " << endl;
+    //cerr << "Dataflow analysis run before ... " << endl;
   }
 
   if (instance) {

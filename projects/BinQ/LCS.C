@@ -123,14 +123,14 @@ printDiff( scoped_array<scoped_array<size_t> >& C,
   {
     printDiff(C,A,B,i,j-1,addInstr, minusInstr);
     //print "+ " + B[j]
-    std::cout << "+ " << j << " " << unparseInstrFast( (SgAsmInstruction*) B[j]) <<std::endl;
+    //std::cout << "+ " << j << " " << unparseInstrFast( (SgAsmInstruction*) B[j]) <<std::endl;
     ROSE_ASSERT(j!=0);
     addInstr.push_back(j);
   }else  if(i > 0 && (j == 0 || C[i][j-1] < C[i-1][j]))
   {
     printDiff(C, A, B, i-1, j,addInstr, minusInstr);
     //   print "- " + X[i]
-    std::cout << "- " << i << " " << unparseInstrFast((SgAsmInstruction*)A[i]) << std::endl;
+    //std::cout << "- " << i << " " << unparseInstrFast((SgAsmInstruction*)A[i]) << std::endl;
     ROSE_ASSERT(i != 0);
     minusInstr.push_back(i);
   }

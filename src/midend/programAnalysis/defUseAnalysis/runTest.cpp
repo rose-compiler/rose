@@ -127,7 +127,7 @@ void runCurrentFile(int argc, char * argv[]) {
 
   // Call the Def-Use Analysis
   DFAnalysis* defuse = new DefUseAnalysis(project);
-  bool debug = true;
+  bool debug = false;
   int val = defuse->run(debug);
   std::cout << "Analysis is : " << (val ? "success" : "failure") << std::endl;
   if (debug==false)

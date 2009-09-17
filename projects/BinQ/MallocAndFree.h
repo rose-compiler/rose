@@ -8,7 +8,7 @@
 
 class MallocAndFree : public BinAnalyses, AstSimpleProcessing {
  public:
-  MallocAndFree(){testFlag=false; debug=true;};
+  MallocAndFree(){testFlag=false; debug=false;};
   virtual ~MallocAndFree(){};
   bool testFlag;
   void run(SgNode* f1, SgNode* f2);

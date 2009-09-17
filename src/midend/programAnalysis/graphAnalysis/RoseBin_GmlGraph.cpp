@@ -354,8 +354,8 @@ void RoseBin_GMLGraph::printEdges_single( VirtualBinCFG::AuxiliaryInformation* i
   // traverse edges and visualize results of graph
   //SgGraphEdgeList* gedges = get_edges();
 	rose_graph_integer_edge_hash_multimap edges =get_node_index_to_edge_multimap_edgesOut();
-  cerr << " Writing singleEdge graph to GML - Nr of unique Edges : " << unique_edges.size() << " compare to edges: " <<
-    edges.size() << endl;
+	//cerr << " Writing singleEdge graph to GML - Nr of unique Edges : " << unique_edges.size() << " compare to edges: " <<
+	//edges.size() << endl;
   int edgeNr=0;
   rose_graph_integer_edge_hash_multimap::iterator it = unique_edges.begin();
   for (; it!=unique_edges.end();++it) {
@@ -373,8 +373,8 @@ void RoseBin_GMLGraph::printEdges_multiple( VirtualBinCFG::AuxiliaryInformation*
   // traverse edges and visualize results of graph
   //  SgGraphEdgeList* gedges = get_edges();
   rose_graph_integer_edge_hash_multimap edges =get_node_index_to_edge_multimap_edgesOut();
-  cerr << " Writing multiEdge graph to GML - Nr of unique Edges : " << unique_edges.size() << " compare to edges: " <<
-    edges.size() << endl;
+  //cerr << " Writing multiEdge graph to GML - Nr of unique Edges : " << unique_edges.size() << " compare to edges: " <<
+  // edges.size() << endl;
   int edgeNr=0;
   rose_graph_integer_edge_hash_multimap::iterator it = edges.begin();
   for (; it!=edges.end();++it) {
@@ -412,7 +412,7 @@ void RoseBin_GMLGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info, bo
     SgAsmStatement* binStat_s = isSgAsmStatement(source->get_SgNode());
     SgAsmStatement* binStat_t = isSgAsmStatement(target->get_SgNode());
     if (binStat_s==NULL || binStat_t==NULL) {
-      cerr << "binStat_s==NULL || binStat_t==NULL" << endl;
+      //cerr << "binStat_s==NULL || binStat_t==NULL" << endl;
     } else {
       map <SgAsmStatement*, int>::iterator it_s = nodesMap.find(binStat_s);
       map <SgAsmStatement*, int>::iterator it_t = nodesMap.find(binStat_t);
@@ -423,8 +423,9 @@ void RoseBin_GMLGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info, bo
       if (it_t!=nodesMap.end())
 	pos_t = it_t->second;
 
-      if (pos_s==0 || pos_t==0)
-	cerr << " GMLGraph edge, node == 0 " << endl;
+      if (pos_s==0 || pos_t==0) {
+	//cerr << " GMLGraph edge, node == 0 " << endl;
+      }
 
       string output = "edge [\n  label \""+edgeLabel+"\"\n source " + RoseBin_support::ToString(pos_s) +
 	"\n   target " + RoseBin_support::ToString(pos_t) + "\n";

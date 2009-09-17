@@ -174,6 +174,7 @@ RoseBin_CallGraphAnalysis::getConnectedComponents(std::map<int,std::set<SgAsmFun
   std::map<int,std::set<SgAsmFunctionDeclaration*> >::const_iterator comps = ret.begin();
   for (;comps!=ret.end();++comps) {
       int nr = comps->first;
+      if (debug)
       cerr << " CALLGRAPH : found the following component " << nr << endl;
       std::set<SgAsmFunctionDeclaration*>  funcs = comps->second;
       std::set<SgAsmFunctionDeclaration*>::const_iterator it = funcs.begin();
@@ -181,6 +182,7 @@ RoseBin_CallGraphAnalysis::getConnectedComponents(std::map<int,std::set<SgAsmFun
 	SgAsmFunctionDeclaration* function = *it;
 	string name = function->get_name();
 	name.append("_f");
+	if (debug)
 	cerr << "   CALLGRAPH :  function : " << name << endl;
       }
   }
@@ -195,6 +197,8 @@ void RoseBin_CallGraphAnalysis::run(RoseBin_Graph* vg, string fileN, bool multie
   double start=0;
   double ends=0;
   clearMaps();
+  //RoseBin_support::setDebugMode(false);
+  //RoseBin_support::setDebugModeMin(false);
 
   func_nr=0;
   //  ROSE_ASSERT(roseBin);
@@ -207,9 +211,10 @@ void RoseBin_CallGraphAnalysis::run(RoseBin_Graph* vg, string fileN, bool multie
 
   ROSE_ASSERT(vizzGraph->graph);
   nr_target_missed=0;
-  if (RoseBin_support::DEBUG_MODE_MIN())
+  if (RoseBin_support::DEBUG_MODE_MIN()) {
     cerr << " running CallGraphAnalysis ... " << endl;
-  cout << "\n\n\n -------------------- running CallGraphAnalysis ... " << RoseBin_support::ToString(fileName) << endl;
+    cout << "\n\n\n -------------------- running CallGraphAnalysis ... " << RoseBin_support::ToString(fileName) << endl;
+  }
   start = RoseBin_support::getTime();
   this->traverse(globalBin,preorder);
   ends = RoseBin_support::getTime();
@@ -221,10 +226,10 @@ void RoseBin_CallGraphAnalysis::run(RoseBin_Graph* vg, string fileN, bool multie
   //  }
 
 
-  //  if (RoseBin_support::DEBUG_MODE_MIN()) {
+    if (RoseBin_support::DEBUG_MODE_MIN()) {
     cerr << " ********************** done running CallGraphAnalysis ... " << endl;
     cerr << " ********************** saving to file ... " << endl;
-    // }
+     }
   // create file
   std::ofstream myfile;
   myfile.open(fileName.c_str());
