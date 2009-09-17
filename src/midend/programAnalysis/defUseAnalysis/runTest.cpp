@@ -14,13 +14,15 @@ void testOneFunction( std::string funcParamName,
 		      bool debug, int nrOfNodes, 
 		      multimap <string, int> results,
 		      multimap <string, int> useresults) {
-  cout << " \n\n------------------------------------------\nrunning ... " << argv[1] << endl;
+  if (debug)
+    cout << " \n\n------------------------------------------\nrunning ... " << argv[1] << endl;
   // Build the AST used by ROSE
   SgProject* project = frontend(argc,argv);
   // Call the Def-Use Analysis
   DFAnalysis* defuse = new DefUseAnalysis(project);
   int val = defuse->run(debug);
-  std::cout << "Analysis run is : " << (val ? "success" : "failure") << std::endl;
+  if (debug)
+    std::cout << "Analysis run is : " << (val ? "success" : "failure") << std::endl;
 
   if (debug==false)
     defuse->dfaToDOT();
@@ -39,14 +41,17 @@ void testOneFunction( std::string funcParamName,
     if (funcName!=funcParamName)
       continue;
 
-    cout << "\n------------------------\nchecking for " << name << " -- " << funcName << " -- " << nodeNr << endl;
+    if (debug)
+      cout << "\n------------------------\nchecking for " << name << " -- " << funcName << " -- " << nodeNr << endl;
     if (maxNodes!=nrOfNodes) {
       cout << " Error: Test should have " << nrOfNodes << " nodes. found: " << maxNodes << endl;
       exit(0);
     }
-    cout << " Test has nodes:  " << nrOfNodes <<  endl;
+    if (debug)
+      cout << " Test has nodes:  " << nrOfNodes <<  endl;
 
-    cout <<"\nChecking all definitions ... " << endl;
+    if (debug)
+      cout <<"\nChecking all definitions ... " << endl;
     // check nodes in multimap
     std::multimap <SgInitializedName*, SgNode* > map = defuse->getDefMultiMapFor(func);
     if (map.size()>0) {
@@ -56,17 +61,20 @@ void testOneFunction( std::string funcParamName,
 	SgInitializedName* in_node = j->first;
 	SgNode* node = j->second;
 	string name= in_node->get_qualified_name().str();
-	cout << " ... checking :  " << name << endl;
+	if (debug)
+	  cout << " ... checking :  " << name << endl;
 	multimap <string, int>::const_iterator k =results.begin();
 	for (;k!=results.end();++k) {
 	  string resName = k->first;
 	  int resNr = k->second;
 	  int tableNr = defuse->getIntForSgNode(node);
-	  if (name==resName)
-	    cout << " ... defNr: " << resNr << "  inTable: " << tableNr <<  endl; 
+	  if (name==resName) 
+	    if (debug)
+	      cout << " ... defNr: " << resNr << "  inTable: " << tableNr <<  endl; 
 	  if (name==resName && tableNr==resNr) {
 	    hit++;
-	    cout << " Hit " << hit << "/" << results.size() << " - (" << name << "," << resNr << ")" << endl;
+	    if (debug)
+	      cout << " Hit " << hit << "/" << results.size() << " - (" << name << "," << resNr << ")" << endl;
 	  }
 	}
 
@@ -82,7 +90,8 @@ void testOneFunction( std::string funcParamName,
       }
     }
   
-    cout <<"\nChecking all uses ... " << endl;
+    if (debug)
+      cout <<"\nChecking all uses ... " << endl;
     // check nodes in multimap
     map = defuse->getUseMultiMapFor(func);
     if (map.size()>0) {
@@ -92,17 +101,20 @@ void testOneFunction( std::string funcParamName,
 	SgInitializedName* in_node = j->first;
 	SgNode* node = j->second;
 	string name= in_node->get_qualified_name().str();
-	cout << " ... checking :  " << name << endl;
+	if (debug)
+	  cout << " ... checking :  " << name << endl;
 	multimap <string, int>::const_iterator k =useresults.begin();
 	for (;k!=useresults.end();++k) {
 	  string resName = k->first;
 	  int resNr = k->second;
 	  int tableNr = defuse->getIntForSgNode(node);
 	  if (name==resName)
-	    cout << " ... defNr: " << resNr << "  inTable: " << tableNr <<  endl; 
+	    if (debug)
+	      cout << " ... defNr: " << resNr << "  inTable: " << tableNr <<  endl; 
 	  if (name==resName && tableNr==resNr) {
 	    hit++;
-	    cout << " Hit " << hit << "/" << useresults.size() << " - (" << name << "," << resNr << ")" << endl;
+	    if (debug)
+	      cout << " Hit " << hit << "/" << useresults.size() << " - (" << name << "," << resNr << ")" << endl;
 	  }
 	}
 
@@ -113,23 +125,28 @@ void testOneFunction( std::string funcParamName,
       }
     } // if
   }
-  std::cout << "Analysis test is success." << std::endl;
+  if (debug)
+    std::cout << "Analysis test is success." << std::endl;
 }
 
 
 void runCurrentFile(int argc, char * argv[]) {
   // Build the AST used by ROSE
-  std::cout << ">>>> Starting ROSE frontend ... " << endl;
+  if (debug)
+    std::cout << ">>>> Starting ROSE frontend ... " << endl;
   SgProject* project = frontend(argc,argv);
-  std::cout << ">>>> generate PDF " << endl;
+  if (debug)
+    std::cout << ">>>> generate PDF " << endl;
   generatePDF ( *project );
-  std::cout << ">>>> start def-use analysis ... " << endl;
+  if (debug)
+    std::cout << ">>>> start def-use analysis ... " << endl;
 
   // Call the Def-Use Analysis
   DFAnalysis* defuse = new DefUseAnalysis(project);
   bool debug = false;
   int val = defuse->run(debug);
-  std::cout << "Analysis is : " << (val ? "success" : "failure") << std::endl;
+  if (debug)
+    std::cout << "Analysis is : " << (val ? "success" : "failure") << std::endl;
   if (debug==false)
     defuse->dfaToDOT();
   
@@ -143,8 +160,9 @@ void runCurrentFile(int argc, char * argv[]) {
   
     vector<SgNode* > vec = defuse->getDefFor(initName, initName);
     if (vec.size()>0)
-      std::cout << "  DEF>> Vector entries for " << name <<  " ( " << 
-	initName << " ) : " << vec.size() << std::endl;
+      if (debug)
+	std::cout << "  DEF>> Vector entries for " << name <<  " ( " << 
+	  initName << " ) : " << vec.size() << std::endl;
 
   }
 
@@ -165,16 +183,19 @@ void runCurrentFile(int argc, char * argv[]) {
       
       vector<SgNode* > vec = defuse->getUseFor(ret, initName);
       if (vec.size()>0)
-	std::cout << "  USE>> Vector entries for " << name <<  " ( " << 
-	  ret << " ) : " << vec.size() << std::endl;
+	if (debug)
+	  std::cout << "  USE>> Vector entries for " << name <<  " ( " << 
+	    ret << " ) : " << vec.size() << std::endl;
 
     }
   }
   // print resulting table
-  cout << "\nDEFMAP" << endl;
-  defuse->printDefMap();
-  cout << "\nUSEMAP" << endl;
-  defuse->printUseMap();
+  if (debug) {
+    cout << "\nDEFMAP" << endl;
+    defuse->printDefMap();
+    cout << "\nUSEMAP" << endl;
+    defuse->printUseMap();
+  }
 }
 
 void usage() {

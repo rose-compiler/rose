@@ -653,7 +653,7 @@ FilteredCFGNode<IsDFAFilter> LivenessAnalysis::run(
 			}
 		}
 	}
-	cerr << "   . Total nodes to check : " << worklist.size() << endl;
+	//cerr << "   . Total nodes to check : " << worklist.size() << endl;
 	bool valueHasChanged = false;
 	bool unhandledNode = false;
 	while (!worklist.empty()) {
