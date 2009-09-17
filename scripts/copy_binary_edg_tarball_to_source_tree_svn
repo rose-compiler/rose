@@ -25,6 +25,7 @@ else
 fi
 checkoutDir=tempCheckout_CxxFrontend_`hostname`_$$
 ${SVN} checkout -N ${roseRepositoryUrl}/src/frontend/CxxFrontend ${checkoutDir} # FIXME Not secure
+# This reports the binaries not matching the current signature and removes them from svn.
 ${SVN} ls ${checkoutDir} | grep -x 'roseBinaryEDG-.*-.*\.tar\.gz' | grep -vx 'roseBinaryEDG-.*-'${signature}'\.tar\.gz' | while read oldBinary; do ${SVN} rm ${checkoutDir}/${oldBinary}; done
 cp ${binaryEdgTarball} ${checkoutDir}/${binaryEdgTarball}
 ${SVN} add ${checkoutDir}/${binaryEdgTarball}

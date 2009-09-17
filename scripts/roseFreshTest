@@ -178,29 +178,34 @@ fi
   echo "############ make done"
   make $MAKEFLAGS check || exit 1
   echo "############ make check done"
-  make $MAKEFLAGS docs || exit 1
-  echo "############ make docs done"
-  rmdir ../install || exit 1
-  make $MAKEFLAGS install || exit 1
-  echo "############ make install done"
-  make $MAKEFLAGS installcheck || exit 1
-  echo "############ make installcheck done"
+  # skip the rest if we are testing the head of the SciDAC repository of ROSE
+  if [ 0$SKIP_DOCS_AND_INSTALL_TEST -ne 0 ] ; then
+    echo "Skipping make docs, install, and installcheck.." 
+  else  
+    make $MAKEFLAGS docs || exit 1
+    echo "############ make docs done"
+    rmdir ../install || exit 1
+    make $MAKEFLAGS install || exit 1
+    echo "############ make install done"
+    make $MAKEFLAGS installcheck || exit 1
+    echo "############ make installcheck done"
 
   # test the installed ROSE on external benchmarks, such as SPEC CPU 2006 etc.
-  if  [ 0$ENABLE_EXTERNAL_TEST -ne 0 ] ; then
-    echo "----------- start testing using external benchmarks------------"
+    if  [ 0$ENABLE_EXTERNAL_TEST -ne 0 ] ; then
+      echo "----------- start testing using external benchmarks------------"
 
-    if [ "x$SPEC_CPU2006_INS" = "x" ]; then
-    echo "ERROR: SPEC CPU2006's install path is not given!"
-    exit 1
+      if [ "x$SPEC_CPU2006_INS" = "x" ]; then
+      echo "ERROR: SPEC CPU2006's install path is not given!"
+      exit 1
+      fi
+
+      if [ "x$SPEC_CPU2006_CONFIG" = "x" ]; then
+      echo "ERROR: SPEC CPU2006's config file name is not given!"
+      exit 1
+      fi
+
+      ${ROSE_TOP}/sourcetree/scripts/testOnExternalBenchmarks.sh ${ROSE_INS} $SPEC_CPU2006_INS $SPEC_CPU2006_CONFIG ||exit 1
     fi
-
-    if [ "x$SPEC_CPU2006_CONFIG" = "x" ]; then
-    echo "ERROR: SPEC CPU2006's config file name is not given!"
-    exit 1
-    fi
-
-    ${ROSE_TOP}/sourcetree/scripts/testOnExternalBenchmarks.sh ${ROSE_INS} $SPEC_CPU2006_INS $SPEC_CPU2006_CONFIG ||exit 1
   fi
 
   # skip the rest if we are testing the head of the SciDAC repository of ROSE

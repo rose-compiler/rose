@@ -17,12 +17,17 @@
 
 #include <errno.h>
 
+// DQ (9/16/2009): When zlib.h is not installed we notice that "hpdf_conf.h" must preceed references to HPDF_NOZLIB.
+// This fixes a where on the NMI x86_ubuntu_5.10 platform, zlib is not installed.
+#include "hpdf_conf.h"
+
 #ifndef HPDF_NOZLIB
 #include <zlib.h>
 #include <zconf.h>
 #endif /* HPDF_NOZLIB */
 
-#include "hpdf_conf.h"
+// DQ (9/16/2009): Moved this to above reference to HPDF_NOZLIB.
+// #include "hpdf_conf.h"
 #include "hpdf_consts.h"
 #include "hpdf_utils.h"
 #include "hpdf_streams.h"
