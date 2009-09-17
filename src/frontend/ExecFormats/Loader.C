@@ -22,8 +22,10 @@ Loader::initclass()
     static bool initialized=false;
     if (!initialized) {
         initialized = true;
+        /* Register from most general to most specific */
         register_subclass(new Loader);
         register_subclass(new LoaderELF);
+        register_subclass(new LoaderELFObj);
         register_subclass(new LoaderPE);
     }
 }
@@ -54,7 +56,7 @@ Loader::map_all_sections(const SgAsmGenericSectionPtrList &sections, bool allow_
 {
     struct: public Selector {
         Contribution contributes(SgAsmGenericSection *section) {
-            return section->is_mapped() ? CONTRIBUTE_ADD : CONTRIBUTE_NONE;
+            return CONTRIBUTE_ADD; /*alignment might weed out non-mapped sections*/
         }
     } s1;
     return create_map(sections, &s1, allow_overmap);
@@ -67,10 +69,12 @@ Loader::map_code_sections(const SgAsmGenericSectionPtrList &sections, bool allow
 {
     struct: public Selector {
         Contribution contributes(SgAsmGenericSection *section) {
-            if (section->is_mapped() && (section->get_contains_code() || section->get_mapped_xperm())) {
-                return CONTRIBUTE_ADD;
+            if (section->get_contains_code()) {
+                return CONTRIBUTE_ADD; /*even if it has no preferred mapping*/
             } else if (!section->is_mapped()) {
                 return CONTRIBUTE_NONE;
+            } else if (section->get_mapped_xperm()) {
+                return CONTRIBUTE_ADD;
             } else {
                 return CONTRIBUTE_SUB;
             }
@@ -79,7 +83,10 @@ Loader::map_code_sections(const SgAsmGenericSectionPtrList &sections, bool allow
     return create_map(sections, &s1, allow_overmap);
 }
 
-/* Returns a map of executable sections. Any mapped section that isn't executable is subtracted from the mapping. */
+/* Returns a map of executable sections. Any mapped section that isn't executable is subtracted from the mapping.
+ *
+ * Note that another way to do this is to use call map_all_sections() and then prune away, using MemoryMap::prune(), those
+ * parts of the map that are not executable. */
 MemoryMap *
 Loader::map_executable_sections(const SgAsmGenericSectionPtrList &sections, bool allow_overmap)
 {
@@ -97,7 +104,10 @@ Loader::map_executable_sections(const SgAsmGenericSectionPtrList &sections, bool
     return create_map(sections, &s1, allow_overmap);
 }
 
-/* Returns a map of executable sections. Any section that is not executable is removed from the mapping. */
+/* Returns a map of executable sections. Any section that is not writable is removed from the mapping.
+ *
+ * Note that another way to do this is to call map_all_sections() and then prune away, using MemoryMap::prune(), those parts
+ * of the map that are not writable. */
 MemoryMap *
 Loader::map_writable_sections(const SgAsmGenericSectionPtrList &sections, bool allow_overmap)
 {
@@ -116,18 +126,22 @@ Loader::map_writable_sections(const SgAsmGenericSectionPtrList &sections, bool a
 }
 
 /* Align section addresses and sizes */
-void
+rose_addr_t
 Loader::align_values(SgAsmGenericSection *section,
                      rose_addr_t *va_p/*out*/, rose_addr_t *mem_size_p/*out*/,
-                     rose_addr_t *offset_p/*out*/, rose_addr_t *file_size_p/*out*/)
+                     rose_addr_t *offset_p/*out*/, rose_addr_t *file_size_p/*out*/, 
+                     const MemoryMap*)
 {
-    ROSE_ASSERT(section->is_mapped());
-    rose_addr_t va = section->get_header()->get_base_va() + section->get_mapped_rva();
-    if (section->get_mapped_rva()==0 && section->get_rose_mapped_rva()>0)
-        va += section->get_rose_mapped_rva();
+    if (!section->is_mapped()) {
+        *va_p = *mem_size_p = *offset_p = *file_size_p = 0;
+        return 0;
+    }
+    
+    rose_addr_t va = section->get_header()->get_base_va() + section->get_mapped_preferred_rva();
     rose_addr_t mem_size = section->get_mapped_size();
     rose_addr_t offset = section->get_offset();
     rose_addr_t file_size = section->get_size();
+    rose_addr_t nleading = 0; /*number of bytes prepended to the mapped part of the file for alignment*/
 
     /* Align the file offset downward, adjusting file size as necessary. Then align the file size upward so the mapped file
      * extent ends on a boundary. */
@@ -135,12 +149,13 @@ Loader::align_values(SgAsmGenericSection *section,
     if (fa>0) {
         rose_addr_t n = ALIGN_DN(offset, fa);
         ROSE_ASSERT(n<=offset);
-        file_size += offset-n;
+        nleading = offset-n;
+        file_size += nleading;
         offset = n;
         file_size = ALIGN_UP(file_size, fa);
     }
 
-    /* Align memory address downward, adjusting file size as necessary. Then align memory size upward so the mapped region
+    /* Align memory address downward, adjusting memory size as necessary. Then align memory size upward so the mapped region
      * ends on a boundary. */
     rose_addr_t ma = section->get_mapped_alignment();
     if (ma>0) {
@@ -148,13 +163,15 @@ Loader::align_values(SgAsmGenericSection *section,
         ROSE_ASSERT(n<=va);
         mem_size += va-n;
         va = n;
-        mem_size = ALIGN_UP(mem_size, ma);
+        mem_size = ALIGN_UP(mem_size+nleading, ma);
     }
 
     *va_p = va;
     *mem_size_p = mem_size;
     *offset_p = offset;
     *file_size_p = file_size;
+
+    return va + nleading;
 }
 
 /* Returns sections in mapping order. */
@@ -180,11 +197,17 @@ Loader::create_map(const SgAsmGenericSectionPtrList &unordered_sections, Selecto
         fprintf(p_debug, "Loader: creating memory map...\n");
     for (size_t i=0; i<sections.size(); i++) {
         SgAsmGenericSection *section = sections[i];
+        section->set_mapped_actual_rva(0); /*assigned below if mapped*/
+
+        /* Does this section contribute anything to the mapping? */
         Contribution contrib = selector->contributes(section);
         if (CONTRIBUTE_NONE==contrib)
             continue;
         rose_addr_t va=0, mem_size=0, offset=0, file_size=0;
-        align_values(section, &va, &mem_size, &offset, &file_size);
+        rose_addr_t section_va = align_values(section, &va, &mem_size, &offset, &file_size, map);
+
+        if (0==mem_size)
+            continue;
 
         if (p_debug) {
             fprintf(p_debug, "  %smapping section [%d] \"%s\" with base va 0x%08"PRIx64"\n",
@@ -192,22 +215,27 @@ Loader::create_map(const SgAsmGenericSectionPtrList &unordered_sections, Selecto
                     section->get_id(), section->get_name()->c_str(),
                     section->get_header()->get_base_va());
             fprintf(p_debug, "    Section specified: RVA 0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64"\n",
-                    section->get_mapped_rva(), section->get_mapped_size(), section->get_mapped_rva()+section->get_mapped_size());
+                    section->get_mapped_preferred_rva(), section->get_mapped_size(),
+                    section->get_mapped_preferred_rva()+section->get_mapped_size());
             fprintf(p_debug, "    Section specified:  VA 0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64"\n",
-                    section->get_header()->get_base_va() + section->get_mapped_rva(),
+                    section->get_header()->get_base_va() + section->get_mapped_preferred_rva(),
                     section->get_mapped_size(),
-                    section->get_header()->get_base_va() + section->get_mapped_rva() + section->get_mapped_size());
+                    section->get_header()->get_base_va() + section->get_mapped_preferred_rva() + section->get_mapped_size());
             fprintf(p_debug, "    Aligned values:     VA 0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64"%s\n",
                     va, mem_size, va+mem_size,
-                    (section->get_header()->get_base_va()+section->get_mapped_rva()==va && section->get_mapped_size()==mem_size ?
+                    (section->get_header()->get_base_va()+section->get_mapped_preferred_rva()==va &&
+                     section->get_mapped_size()==mem_size ?
                      " (no change)":""));
         }
         if (p_debug && CONTRIBUTE_ADD==contrib) {
+            fprintf(p_debug, "    Section begins at va   0x%08"PRIx64"\n", section_va);
             fprintf(p_debug, "    File location:         0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64"\n",
                     section->get_offset(), section->get_size(), section->get_offset()+section->get_size());
             fprintf(p_debug, "    File aligned:          0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64"%s\n",
                     offset, file_size, offset+file_size,
                     section->get_offset()==offset && section->get_size()==file_size ? " (no change)" : "");
+            fprintf(p_debug, "    Permissions: %c%c%c\n", 
+                    section->get_mapped_rperm()?'r':'-', section->get_mapped_wperm()?'w':'-', section->get_mapped_xperm()?'x':'-');
         }
         
         if (allow_overmap || CONTRIBUTE_SUB==contrib) {
@@ -237,6 +265,15 @@ Loader::create_map(const SgAsmGenericSectionPtrList &unordered_sections, Selecto
             }
             rose_addr_t rtsz = mem_size - ltsz;
 
+            /* Permissions */
+            unsigned mapperms=PROT_NONE;
+            if (section->get_mapped_rperm())
+                mapperms |= PROT_READ;
+            if (section->get_mapped_wperm())
+                mapperms |= PROT_WRITE;
+            if (section->get_mapped_xperm())
+                mapperms |= PROT_EXEC;
+
             /* Map the left part to the file; right part is anonymous. */
             if (p_debug)
                 fprintf(p_debug, "    Mapping   va 0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64
@@ -244,9 +281,14 @@ Loader::create_map(const SgAsmGenericSectionPtrList &unordered_sections, Selecto
             if (p_debug && rtsz>0)
                 fprintf(p_debug, "    Anonymous va 0x%08"PRIx64" + 0x%08"PRIx64" bytes = 0x%08"PRIx64" zero filled\n",
                         va+ltsz, rtsz, va+ltsz+rtsz);
-            map->insert(MemoryMap::MapElement(va, ltsz, offset));
+            if (ltsz>0)
+                map->insert(MemoryMap::MapElement(va, ltsz, &(file->get_data()[0]), offset, mapperms));
             if (rtsz>0)
-                map->insert(MemoryMap::MapElement(va+ltsz, rtsz));
+                map->insert(MemoryMap::MapElement(va+ltsz, rtsz, mapperms));
+
+            /* Remember virtual address of first byte of section. */
+            ROSE_ASSERT(section_va >= section->get_header()->get_base_va());
+            section->set_mapped_actual_rva(section_va - section->get_header()->get_base_va());
         }
     }
     if (p_debug) {

@@ -4426,11 +4426,6 @@ HEADER_APPLICATION_BINARY_FILE_START
        //! This is refactored code, called once for a binary executable, and called on each object file for a library archive.
           void buildAsmAST( std::string executableFileName );
 
-      //! Support for explicit marking of sections in object files (*.o) to be disassembled.
-          std::map<rose_addr_t,std::string> markSectionsForDisassembly(SgAsmFile* asmFile);
-
-      //! Support for updating SgAsmFunctionDeclaration IR nodes with the mangled names (carries type information)
-          void updateFunctionNames(SgAsmFile* asmFile, std::map<rose_addr_t,std::string> & addressToFunctionNameMap );
 
 HEADER_APPLICATION_BINARY_FILE_END
 

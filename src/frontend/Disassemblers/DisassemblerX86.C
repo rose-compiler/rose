@@ -127,8 +127,7 @@ DisassemblerX86::init(SgAsmGenericHeader *header)
 }
 
 SgAsmInstruction *
-DisassemblerX86::disassembleOne(const unsigned char *buf, const MemoryMap *map, rose_addr_t start_va,
-                                AddressSet *successors)
+DisassemblerX86::disassembleOne(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors)
 {
     /* The low-level disassembly function don't understand MemoryMap mappings. Therefore, remap the next few bytes (enough
      * for at least one instruction) into a temporary buffer. The longest x86 instruction is 15 bytes in 16-bit mode and 13
@@ -140,7 +139,7 @@ DisassemblerX86::disassembleOne(const unsigned char *buf, const MemoryMap *map, 
      * In theory, by adding all appropriate prefix bytes you can obtain an instruction that is up to 16 bytes long. However,
      * the x86 CPU will generate an exception if the instruction length exceeds 15 bytes, and so will the getByte method. */
     unsigned char temp[16];
-    size_t tempsz = map->read(temp, buf, start_va, sizeof temp);
+    size_t tempsz = map->read(temp, start_va, sizeof temp);
 
     /* Disassemble the instruction */
     startInstruction(start_va, temp, tempsz);

@@ -56,28 +56,54 @@ public:
         return map_all_sections(file->get_sections(), allow_overmap);
     }
 
+    /** Creates a map containing all mappable sections in a file header. */
+    virtual MemoryMap *map_all_sections(SgAsmGenericHeader *fhdr, bool allow_overmap=true) {
+        return map_all_sections(fhdr->get_sections()->get_sections(), allow_overmap);
+    }
+
     /** Creates a map containing the specified sections (if they are mapped). */
     virtual MemoryMap *map_all_sections(const SgAsmGenericSectionPtrList &sections, bool allow_overmap=true);
+
+
 
     /** Creates a map for all code-containing sections in the file. */
     virtual MemoryMap *map_code_sections(SgAsmGenericFile *file, bool allow_overmap=true) {
         return map_code_sections(file->get_sections(), allow_overmap);
     }
 
+    /** Creates a map for all code-containing sections reachable from the file header. */
+    virtual MemoryMap *map_code_sections(SgAsmGenericHeader *fhdr, bool allow_overmap=true) {
+        return map_code_sections(fhdr->get_sections()->get_sections(), allow_overmap);
+    }
+
     /** Creates a map for all code-containing sections from the specified list. */
     virtual MemoryMap *map_code_sections(const SgAsmGenericSectionPtrList &sections, bool allow_overmap=true);
+
+
 
     /** Creates a map for all executable sections in the file. */
     virtual MemoryMap *map_executable_sections(SgAsmGenericFile *file, bool allow_overmap=true) {
         return map_executable_sections(file->get_sections(), allow_overmap);
     }
 
+    /** Creates a map for all executable sections reachable from the file header. */
+    virtual MemoryMap *map_executable_sections(SgAsmGenericHeader *fhdr, bool allow_overmap=true) {
+        return map_executable_sections(fhdr->get_sections()->get_sections(), allow_overmap);
+    }
+
     /** Creates a map for all executable sections from the specified list. */
     virtual MemoryMap *map_executable_sections(const SgAsmGenericSectionPtrList &sections, bool allow_overmap=true);
+
+
 
     /** Creates a map for all writable sections in the file. */
     virtual MemoryMap *map_writable_sections(SgAsmGenericFile *file, bool allow_overmap=true) {
         return map_writable_sections(file->get_sections(), allow_overmap);
+    }
+
+    /** Creates a map for all writable sections reachable from the file header. */
+    virtual MemoryMap *map_writable_sections(SgAsmGenericHeader *fhdr, bool allow_overmap=true) {
+        return map_writable_sections(fhdr->get_sections()->get_sections(), allow_overmap);
     }
 
     /** Creates a map for all writable sections from the specified list. */
@@ -104,12 +130,38 @@ public:
      * Helper methods. These are declared virtual but are often not overridden by subclasses.
      *------------------------------------------------------------------------------------------------------------------------*/
 
-    /** Given a section, return the aligned mapping address, offset, and size. The version defined in the loader class uses
-     *  the section memory and file alignment values, aligning the virtual address and file offset downward and adjusting the
-     *  memory and file sizes upward */
-    virtual void align_values(SgAsmGenericSection*,
-                              rose_addr_t *va,     rose_addr_t *mem_size,
-                              rose_addr_t *offset, rose_addr_t *file_size);
+    /** Computes memory mapping addresses for a section.
+     *
+     *  Operating systems generally have some alignment constraints for how a file is mapped to virtual memory, and these
+     *  correspond to the page size. For example, see the man page for Unix mmap().  There are three parts to the information
+     *  returned:
+     *
+     *  First, we need to know the entire range of file offsets that are mapped. On Unix systems only entire pages of a file
+     *  can be mapped. If the section begins with a partial page then we align the starting offset downward. Likewise if the
+     *  section ends with a partial page we extend the range.  Both of these adjustments can increase the number of file bytes
+     *  that are mapped.  The starting offset and file size are returned through the @p offset and @p file_size arguments.
+     *
+     *  Second, we need to know the entire range of virtual addresses that are affected.  Again, at least on Unix systems,
+     *  only entire pages of memory can be mapped. We therefore make the same adjustments to memory as we did to the file,
+     *  aligning the starting virtual address downward and the ending address upward. Both of these adjustments can affect the
+     *  size of the virtual address region affected.  The starting address and memory size are returned through the @p va and
+     *  @p mem_size arguments.  When the returned memory size is larger than the returned file size then the mapping will
+     *  include an anonymous region (memory that is initialized to zero rather than file contents).
+     *
+     *  Finally, we need to indicate where the first byte of the section is located in memory. If we needed to make
+     *  adjustments to the first affected virtual address then the start-of-section will not be the same as the first affected
+     *  virtual address.  The start-of-section virtual address is the return value of this function.
+     *
+     *  Additionally, this function can veto a section mapping by returning a zero memory size.  This can happen when the
+     *  Selector selects a section indiscriminantly (as with map_all_sections()) but there is not enough information to
+     *  determine where the section should be mapped.  On the other hand, it can also define a mapping for a section that
+     *  doesn't have any mapping attributes (for instance, the ELF object file loader, LoaderELFObj, maps function text
+     *  sections that are marked as "not mapped" in the ELF container by choosing free regions of virtual memory using the @p
+     *  current argument that contains the most up-to-date mapping). */
+    virtual rose_addr_t align_values(SgAsmGenericSection*,
+                                     rose_addr_t *va,     rose_addr_t *mem_size,
+                                     rose_addr_t *offset, rose_addr_t *file_size,
+                                     const MemoryMap *current);
 
     /** Returns the list of sections in the file in the order they would be mapped.  This function makes no distinction between
      *  sections that would ultimately be selected and those that wouldn't. In other words, the order that sections are mapped

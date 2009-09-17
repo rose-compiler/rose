@@ -59,7 +59,7 @@ Section [0]:
   ElfFileHeader.Header.Section.purpose                           = executable format header
   ElfFileHeader.Header.Section.mapped                            = <not mapped>
   ElfFileHeader.Header.Section.contains_code                     = false
-  ElfFileHeader.Header.Section.rose_mapped_rva                   = 0 (0) 
+  ElfFileHeader.Header.Section.mapped_actual_rva                 = 0x00000000 (0) 
   ElfFileHeader.Header.Format.family                             = Executable and Linking Format (ELF)
   ElfFileHeader.Header.Format.purpose                            = executable program
   ElfFileHeader.Header.Format.sex                                = little-endian
@@ -69,6 +69,18 @@ Section [0]:
   ElfFileHeader.Header.Format.wordsize                           = 4
   ElfFileHeader.Header.ins_arch                                  = 0x102
   ElfFileHeader.Header.magic                                     = "\177ELF"
+  ElfFileHeader.Header.loader_map: va 0x08048000 + 0x00000114 = 0x08048114 r-x at base aaa  + 0x00000000
+  ElfFileHeader.Header.loader_map: va 0x08048114 + 0x00000013 = 0x08048127 r-- at base aaa  + 0x00000114
+  ElfFileHeader.Header.loader_map: va 0x08048127 + 0x00000001 = 0x08048128 r-x at base aaa  + 0x00000127
+  ElfFileHeader.Header.loader_map: va 0x08048128 + 0x0000013f = 0x08048267 r-- at base aaa  + 0x00000128
+  ElfFileHeader.Header.loader_map: va 0x08048267 + 0x00000001 = 0x08048268 r-x at base aaa  + 0x00000267
+  ElfFileHeader.Header.loader_map: va 0x08048268 + 0x00000060 = 0x080482c8 r-- at base aaa  + 0x00000268
+  ElfFileHeader.Header.loader_map: va 0x080482c8 + 0x000002e4 = 0x080485ac r-x at base aaa  + 0x000002c8
+  ElfFileHeader.Header.loader_map: va 0x080485ac + 0x0000001c = 0x080485c8 r-- at base aaa  + 0x000005ac
+  ElfFileHeader.Header.loader_map: va 0x080485c8 + 0x00000a38 = 0x08049000 r-x at base aaa  + 0x000005c8
+  ElfFileHeader.Header.loader_map: va 0x08049000 + 0x000006d4 = 0x080496d4 rw- at base aaa  + 0x00000000
+  ElfFileHeader.Header.loader_map: va 0x080496d4 + 0x00000008 = 0x080496dc rw- at anonymous + 0x00000000
+  ElfFileHeader.Header.loader_map: va 0x080496dc + 0x00000924 = 0x0804a000 rw- at base aaa  + 0x000006dc
   ElfFileHeader.Header.base_va                                   = 0x00000000 (0)
   ElfFileHeader.Header.entry_rva.size                            = 1 entry points
   ElfFileHeader.Header.entry_rva[0]                              = 0x08048340 (134513472)
@@ -1112,7 +1124,7 @@ Section [1]:
   SectionTable.Section.purpose                                   = executable format header
   SectionTable.Section.mapped                                    = <not mapped>
   SectionTable.Section.contains_code                             = false
-  SectionTable.Section.rose_mapped_rva                           = 0 (0) 
+  SectionTable.Section.mapped_actual_rva                         = 0x00000000 (0) 
   SectionTable.data at 0x00000000: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
   SectionTable.data at 0x00000010: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
   SectionTable.data at 0x00000020: 00 00 00 00 00 00 00 00  1b 00 00 00 01 00 00 00  |................|
@@ -1209,7 +1221,7 @@ Section [2]:
   ElfStringSection.ElfSection.Section.purpose                    = executable format header
   ElfStringSection.ElfSection.Section.mapped                     = <not mapped>
   ElfStringSection.ElfSection.Section.contains_code              = false
-  ElfStringSection.ElfSection.Section.rose_mapped_rva            = 0 (0) 
+  ElfStringSection.ElfSection.Section.mapped_actual_rva          = 0x00000000 (0) 
   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_name       = 17 bytes into strtab
   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_type       = 0x3 (3) SHT_STRTAB
   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_link       = 0
@@ -1290,7 +1302,7 @@ Section [3]:
   ElfSection.Section.purpose                                     = other
   ElfSection.Section.mapped                                      = <not mapped>
   ElfSection.Section.contains_code                               = false
-  ElfSection.Section.rose_mapped_rva                             = 0 (0) 
+  ElfSection.Section.mapped_actual_rva                           = 0x00000000 (0) 
   ElfSection.ElfSectionTableEntry.sh_name                        = 0 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x0 (0) SHT_NULL
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1315,7 +1327,7 @@ Section [4]:
   ElfSection.Section.mapped_alignment                            = 0x00000001 (1) satisfied
   ElfSection.Section.permissions                                 = r--
   ElfSection.Section.contains_code                               = false
-  ElfSection.Section.rose_mapped_rva                             = 0 (0) 
+  ElfSection.Section.mapped_actual_rva                           = 0x08048114 (134512916) 
   ElfSection.ElfSectionTableEntry.sh_name                        = 27 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1351,7 +1363,7 @@ Section [5]:
   ElfSection.Section.mapped_alignment                            = 0x00000004 (4) satisfied
   ElfSection.Section.permissions                                 = r--
   ElfSection.Section.contains_code                               = false
-  ElfSection.Section.rose_mapped_rva                             = 0 (0) 
+  ElfSection.Section.mapped_actual_rva                           = 0x08048128 (134512936) 
   ElfSection.ElfSectionTableEntry.sh_name                        = 35 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x7 (7) SHT_NOTE
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1387,7 +1399,7 @@ Section [6]:
   ElfStringSection.ElfSection.Section.mapped_alignment           = 0x00000001 (1) satisfied
   ElfStringSection.ElfSection.Section.permissions                = r--
   ElfStringSection.ElfSection.Section.contains_code              = false
-  ElfStringSection.ElfSection.Section.rose_mapped_rva            = 0 (0) 
+  ElfStringSection.ElfSection.Section.mapped_actual_rva          = 0x080481fc (134513148) 
   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_name       = 63 bytes into strtab
   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_type       = 0x3 (3) SHT_STRTAB
   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_link       = 0
@@ -1434,7 +1446,7 @@ Section [7]:
   ElfSection.Section.mapped_alignment                            = 0x00000004 (4) satisfied
   ElfSection.Section.permissions                                 = r--
   ElfSection.Section.contains_code                               = false
-  ElfSection.Section.rose_mapped_rva                             = 0 (0) 
+  ElfSection.Section.mapped_actual_rva                           = 0x08048278 (134513272) 
   ElfSection.ElfSectionTableEntry.sh_name                        = 84 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x6ffffffe (1879048190) unknown
   ElfSection.ElfSectionTableEntry.sh_link                        = 5
@@ -1460,8 +1472,8 @@ Section [8]:
   ElfSection.Section.mapped                                      = rva=0x080482c8, size=23 bytes
   ElfSection.Section.mapped_alignment                            = 0x00000004 (4) satisfied
   ElfSection.Section.permissions                                 = r-x
-  ElfSection.Section.contains_code                               = false
-  ElfSection.Section.rose_mapped_rva                             = 0 (0) 
+  ElfSection.Section.contains_code                               = true
+  ElfSection.Section.mapped_actual_rva                           = 0x080482c8 (134513352) 
   ElfSection.ElfSectionTableEntry.sh_name                        = 117 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1488,7 +1500,7 @@ Section [9]:
   ElfSection.Section.mapped_alignment                            = 0x00000004 (4) satisfied
   ElfSection.Section.permissions                                 = r-x
   ElfSection.Section.contains_code                               = false
-  ElfSection.Section.rose_mapped_rva                             = 0 (0) 
+  ElfSection.Section.mapped_actual_rva                           = 0x080482e0 (134513376) 
   ElfSection.ElfSectionTableEntry.sh_name                        = 112 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1518,8 +1530,8 @@ Section [10]:
   ElfSection.Section.mapped                                      = rva=0x08048340, size=592 bytes
   ElfSection.Section.mapped_alignment                            = 0x00000010 (16) satisfied
   ElfSection.Section.permissions                                 = r-x
-  ElfSection.Section.contains_code                               = false
-  ElfSection.Section.rose_mapped_rva                             = 0 (0) 
+  ElfSection.Section.contains_code                               = true
+  ElfSection.Section.mapped_actual_rva                           = 0x08048340 (134513472) 
   ElfSection.ElfSectionTableEntry.sh_name                        = 123 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1580,8 +1592,8 @@ Section [11]:
   ElfSection.Section.mapped                                      = rva=0x08048590, size=26 bytes
   ElfSection.Section.mapped_alignment                            = 0x00000004 (4) satisfied
   ElfSection.Section.permissions                                 = r-x
-  ElfSection.Section.contains_code                               = false
-  ElfSection.Section.rose_mapped_rva                             = 0 (0) 
+  ElfSection.Section.contains_code                               = true
+  ElfSection.Section.mapped_actual_rva                           = 0x08048590 (134514064) 
   ElfSection.ElfSectionTableEntry.sh_name                        = 129 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1608,7 +1620,7 @@ Section [12]:
   ElfSection.Section.mapped_alignment                            = 0x00000004 (4) satisfied
   ElfSection.Section.permissions                                 = r--
   ElfSection.Section.contains_code                               = false
-  ElfSection.Section.rose_mapped_rva                             = 0 (0) 
+  ElfSection.Section.mapped_actual_rva                           = 0x080485ac (134514092) 
   ElfSection.ElfSectionTableEntry.sh_name                        = 135 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1635,7 +1647,7 @@ Section [13]:
   ElfEHFrameSection.ElfSection.Section.mapped_alignment          = 0x00000004 (4) satisfied
   ElfEHFrameSection.ElfSection.Section.permissions               = r--
   ElfEHFrameSection.ElfSection.Section.contains_code             = false
-  ElfEHFrameSection.ElfSection.Section.rose_mapped_rva           = 0 (0) 
+  ElfEHFrameSection.ElfSection.Section.mapped_actual_rva         = 0x080485c4 (134514116) 
   ElfEHFrameSection.ElfSection.ElfSectionTableEntry.sh_name      = 143 bytes into strtab
   ElfEHFrameSection.ElfSection.ElfSectionTableEntry.sh_type      = 0x1 (1) SHT_PROGBITS
   ElfEHFrameSection.ElfSection.ElfSectionTableEntry.sh_link      = 0
@@ -1660,7 +1672,7 @@ Section [14]:
   ElfSection.Section.mapped_alignment                            = 0x00000004 (4) satisfied
   ElfSection.Section.permissions                                 = rw-
   ElfSection.Section.contains_code                               = false
-  ElfSection.Section.rose_mapped_rva                             = 0 (0) 
+  ElfSection.Section.mapped_actual_rva                           = 0x080495c8 (134518216) 
   ElfSection.ElfSectionTableEntry.sh_name                        = 153 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1686,7 +1698,7 @@ Section [15]:
   ElfSection.Section.mapped_alignment                            = 0x00000004 (4) satisfied
   ElfSection.Section.permissions                                 = rw-
   ElfSection.Section.contains_code                               = false
-  ElfSection.Section.rose_mapped_rva                             = 0 (0) 
+  ElfSection.Section.mapped_actual_rva                           = 0x080495d0 (134518224) 
   ElfSection.ElfSectionTableEntry.sh_name                        = 160 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1712,7 +1724,7 @@ Section [16]:
   ElfSection.Section.mapped_alignment                            = 0x00000004 (4) satisfied
   ElfSection.Section.permissions                                 = rw-
   ElfSection.Section.contains_code                               = false
-  ElfSection.Section.rose_mapped_rva                             = 0 (0) 
+  ElfSection.Section.mapped_actual_rva                           = 0x080495d8 (134518232) 
   ElfSection.ElfSectionTableEntry.sh_name                        = 167 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1738,7 +1750,7 @@ Section [17]:
   DynamicSection.ElfSection.Section.mapped_alignment             = 0x00000004 (4) satisfied
   DynamicSection.ElfSection.Section.permissions                  = rw-
   DynamicSection.ElfSection.Section.contains_code                = false
-  DynamicSection.ElfSection.Section.rose_mapped_rva              = 0 (0) 
+  DynamicSection.ElfSection.Section.mapped_actual_rva            = 0x080495dc (134518236) 
   DynamicSection.ElfSection.ElfSectionTableEntry.sh_name         = 172 bytes into strtab
   DynamicSection.ElfSection.ElfSectionTableEntry.sh_type         = 0x6 (6) SHT_DYNAMIC
   DynamicSection.ElfSection.ElfSectionTableEntry.sh_link         = 5
@@ -1830,7 +1842,7 @@ Section [18]:
   ElfSection.Section.mapped_alignment                            = 0x00000004 (4) satisfied
   ElfSection.Section.permissions                                 = rw-
   ElfSection.Section.contains_code                               = false
-  ElfSection.Section.rose_mapped_rva                             = 0 (0) 
+  ElfSection.Section.mapped_actual_rva                           = 0x080496a4 (134518436) 
   ElfSection.ElfSectionTableEntry.sh_name                        = 181 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1856,7 +1868,7 @@ Section [19]:
   ElfSection.Section.mapped_alignment                            = 0x00000004 (4) satisfied
   ElfSection.Section.permissions                                 = rw-
   ElfSection.Section.contains_code                               = false
-  ElfSection.Section.rose_mapped_rva                             = 0 (0) 
+  ElfSection.Section.mapped_actual_rva                           = 0x080496a8 (134518440) 
   ElfSection.ElfSectionTableEntry.sh_name                        = 186 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1883,7 +1895,7 @@ Section [20]:
   ElfSection.Section.mapped_alignment                            = 0x00000004 (4) satisfied
   ElfSection.Section.permissions                                 = rw-
   ElfSection.Section.contains_code                               = false
-  ElfSection.Section.rose_mapped_rva                             = 0 (0) 
+  ElfSection.Section.mapped_actual_rva                           = 0x080496c8 (134518472) 
   ElfSection.ElfSectionTableEntry.sh_name                        = 195 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1909,7 +1921,7 @@ Section [21]:
   ElfSection.Section.mapped_alignment                            = 0x00000004 (4) satisfied
   ElfSection.Section.permissions                                 = rw-
   ElfSection.Section.contains_code                               = false
-  ElfSection.Section.rose_mapped_rva                             = 0 (0) 
+  ElfSection.Section.mapped_actual_rva                           = 0x080496d4 (134518484) 
   ElfSection.ElfSectionTableEntry.sh_name                        = 201 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x8 (8) SHT_NOBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1932,7 +1944,7 @@ Section [22]:
   ElfSection.Section.purpose                                     = program-supplied data/code/etc
   ElfSection.Section.mapped                                      = <not mapped>
   ElfSection.Section.contains_code                               = false
-  ElfSection.Section.rose_mapped_rva                             = 0 (0) 
+  ElfSection.Section.mapped_actual_rva                           = 0x00000000 (0) 
   ElfSection.ElfSectionTableEntry.sh_name                        = 206 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -1977,7 +1989,7 @@ Section [23]:
   ElfSection.Section.purpose                                     = program-supplied data/code/etc
   ElfSection.Section.mapped                                      = <not mapped>
   ElfSection.Section.contains_code                               = false
-  ElfSection.Section.rose_mapped_rva                             = 0 (0) 
+  ElfSection.Section.mapped_actual_rva                           = 0x00000000 (0) 
   ElfSection.ElfSectionTableEntry.sh_name                        = 215 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -2008,7 +2020,7 @@ Section [24]:
   ElfSection.Section.purpose                                     = program-supplied data/code/etc
   ElfSection.Section.mapped                                      = <not mapped>
   ElfSection.Section.contains_code                               = false
-  ElfSection.Section.rose_mapped_rva                             = 0 (0) 
+  ElfSection.Section.mapped_actual_rva                           = 0x00000000 (0) 
   ElfSection.ElfSectionTableEntry.sh_name                        = 230 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -2034,7 +2046,7 @@ Section [25]:
   ElfSection.Section.purpose                                     = program-supplied data/code/etc
   ElfSection.Section.mapped                                      = <not mapped>
   ElfSection.Section.contains_code                               = false
-  ElfSection.Section.rose_mapped_rva                             = 0 (0) 
+  ElfSection.Section.mapped_actual_rva                           = 0x00000000 (0) 
   ElfSection.ElfSectionTableEntry.sh_name                        = 246 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -2104,7 +2116,7 @@ Section [26]:
   ElfSection.Section.purpose                                     = program-supplied data/code/etc
   ElfSection.Section.mapped                                      = <not mapped>
   ElfSection.Section.contains_code                               = false
-  ElfSection.Section.rose_mapped_rva                             = 0 (0) 
+  ElfSection.Section.mapped_actual_rva                           = 0x00000000 (0) 
   ElfSection.ElfSectionTableEntry.sh_name                        = 258 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -2135,7 +2147,7 @@ Section [27]:
   ElfSection.Section.purpose                                     = program-supplied data/code/etc
   ElfSection.Section.mapped                                      = <not mapped>
   ElfSection.Section.contains_code                               = false
-  ElfSection.Section.rose_mapped_rva                             = 0 (0) 
+  ElfSection.Section.mapped_actual_rva                           = 0x00000000 (0) 
   ElfSection.ElfSectionTableEntry.sh_name                        = 272 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -2188,7 +2200,7 @@ Section [28]:
   ElfSection.Section.purpose                                     = program-supplied data/code/etc
   ElfSection.Section.mapped                                      = <not mapped>
   ElfSection.Section.contains_code                               = false
-  ElfSection.Section.rose_mapped_rva                             = 0 (0) 
+  ElfSection.Section.mapped_actual_rva                           = 0x00000000 (0) 
   ElfSection.ElfSectionTableEntry.sh_name                        = 284 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x1 (1) SHT_PROGBITS
   ElfSection.ElfSectionTableEntry.sh_link                        = 0
@@ -2227,7 +2239,7 @@ Section [29]:
   ElfStringSection.ElfSection.Section.purpose                    = executable format header
   ElfStringSection.ElfSection.Section.mapped                     = <not mapped>
   ElfStringSection.ElfSection.Section.contains_code              = false
-  ElfStringSection.ElfSection.Section.rose_mapped_rva            = 0 (0) 
+  ElfStringSection.ElfSection.Section.mapped_actual_rva          = 0x00000000 (0) 
   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_name       = 9 bytes into strtab
   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_type       = 0x3 (3) SHT_STRTAB
   ElfStringSection.ElfSection.ElfSectionTableEntry.sh_link       = 0
@@ -2396,7 +2408,7 @@ Section [30]:
   ElfSymbolSection.ElfSection.Section.mapped_alignment           = 0x00000004 (4) satisfied
   ElfSymbolSection.ElfSection.Section.permissions                = r--
   ElfSymbolSection.ElfSection.Section.contains_code              = false
-  ElfSymbolSection.ElfSection.Section.rose_mapped_rva            = 0 (0) 
+  ElfSymbolSection.ElfSection.Section.mapped_actual_rva          = 0x0804817c (134513020) 
   ElfSymbolSection.ElfSection.ElfSectionTableEntry.sh_name       = 55 bytes into strtab
   ElfSymbolSection.ElfSection.ElfSectionTableEntry.sh_type       = 0xb (11) SHT_DYNSYM
   ElfSymbolSection.ElfSection.ElfSectionTableEntry.sh_link       = 5
@@ -2519,7 +2531,7 @@ Section [31]:
   ElfSection.Section.mapped_alignment                            = 0x00000002 (2) satisfied
   ElfSection.Section.permissions                                 = r--
   ElfSection.Section.contains_code                               = false
-  ElfSection.Section.rose_mapped_rva                             = 0 (0) 
+  ElfSection.Section.mapped_actual_rva                           = 0x08048268 (134513256) 
   ElfSection.ElfSectionTableEntry.sh_name                        = 71 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x6fffffff (1879048191) unknown
   ElfSection.ElfSectionTableEntry.sh_link                        = 4
@@ -2545,7 +2557,7 @@ Section [32]:
   RelocSection.ElfSection.Section.mapped_alignment               = 0x00000004 (4) satisfied
   RelocSection.ElfSection.Section.permissions                    = r--
   RelocSection.ElfSection.Section.contains_code                  = false
-  RelocSection.ElfSection.Section.rose_mapped_rva                = 0 (0) 
+  RelocSection.ElfSection.Section.mapped_actual_rva              = 0x08048298 (134513304) 
   RelocSection.ElfSection.ElfSectionTableEntry.sh_name           = 99 bytes into strtab
   RelocSection.ElfSection.ElfSectionTableEntry.sh_type           = 0x9 (9) SHT_REL
   RelocSection.ElfSection.ElfSectionTableEntry.sh_link           = 4
@@ -2574,7 +2586,7 @@ Section [33]:
   RelocSection.ElfSection.Section.mapped_alignment               = 0x00000004 (4) satisfied
   RelocSection.ElfSection.Section.permissions                    = r--
   RelocSection.ElfSection.Section.contains_code                  = false
-  RelocSection.ElfSection.Section.rose_mapped_rva                = 0 (0) 
+  RelocSection.ElfSection.Section.mapped_actual_rva              = 0x080482a0 (134513312) 
   RelocSection.ElfSection.ElfSectionTableEntry.sh_name           = 108 bytes into strtab
   RelocSection.ElfSection.ElfSectionTableEntry.sh_type           = 0x9 (9) SHT_REL
   RelocSection.ElfSection.ElfSectionTableEntry.sh_link           = 4
@@ -2607,7 +2619,7 @@ Section [34]:
   ElfSymbolSection.ElfSection.Section.purpose                    = symbol table
   ElfSymbolSection.ElfSection.Section.mapped                     = <not mapped>
   ElfSymbolSection.ElfSection.Section.contains_code              = false
-  ElfSymbolSection.ElfSection.Section.rose_mapped_rva            = 0 (0) 
+  ElfSymbolSection.ElfSection.Section.mapped_actual_rva          = 0x00000000 (0) 
   ElfSymbolSection.ElfSection.ElfSectionTableEntry.sh_name       = 1 bytes into strtab
   ElfSymbolSection.ElfSection.ElfSectionTableEntry.sh_type       = 0x2 (2) SHT_SYMTAB
   ElfSymbolSection.ElfSection.ElfSectionTableEntry.sh_link       = 33
@@ -3678,7 +3690,7 @@ Section [35]:
   ElfSection.Section.mapped_alignment                            = 0x00000004 (4) satisfied
   ElfSection.Section.permissions                                 = r--
   ElfSection.Section.contains_code                               = false
-  ElfSection.Section.rose_mapped_rva                             = 0 (0) 
+  ElfSection.Section.mapped_actual_rva                           = 0x08048148 (134512968) 
   ElfSection.ElfSectionTableEntry.sh_name                        = 49 bytes into strtab
   ElfSection.ElfSectionTableEntry.sh_type                        = 0x5 (5) SHT_HASH
   ElfSection.ElfSectionTableEntry.sh_link                        = 4
@@ -3705,7 +3717,7 @@ Section [36]:
   SegmentTable.Section.purpose                                   = executable format header
   SegmentTable.Section.mapped                                    = <not mapped>
   SegmentTable.Section.contains_code                             = false
-  SegmentTable.Section.rose_mapped_rva                           = 0 (0) 
+  SegmentTable.Section.mapped_actual_rva                         = 0x00000000 (0) 
   SegmentTable.data at 0x00000000: 06 00 00 00 34 00 00 00  34 80 04 08 34 80 04 08  |....4...4...4...|
   SegmentTable.data at 0x00000010: e0 00 00 00 e0 00 00 00  05 00 00 00 04 00 00 00  |................|
   SegmentTable.data at 0x00000020: 03 00 00 00 14 01 00 00  14 81 04 08 14 81 04 08  |................|
@@ -3733,7 +3745,7 @@ Section [37]:
   ElfSection.Section.mapped_alignment                            = 0x00000004 (4) satisfied
   ElfSection.Section.permissions                                 = r-x
   ElfSection.Section.contains_code                               = false
-  ElfSection.Section.rose_mapped_rva                             = 0 (0) 
+  ElfSection.Section.mapped_actual_rva                           = 0x08048034 (134512692) 
   ElfSection.ElfSegmentTableEntry.index                          = 0
   ElfSection.ElfSegmentTableEntry.type                           = 0x00000006 = PT_PHDR
   ElfSection.ElfSegmentTableEntry.flags                          = 0x00000005 r-x
@@ -3771,7 +3783,7 @@ Section [38]:
   ElfSection.Section.mapped_alignment                            = 0x00001000 (4096) satisfied
   ElfSection.Section.permissions                                 = r-x
   ElfSection.Section.contains_code                               = false
-  ElfSection.Section.rose_mapped_rva                             = 0 (0) 
+  ElfSection.Section.mapped_actual_rva                           = 0x08048000 (134512640) 
   ElfSection.ElfSegmentTableEntry.index                          = 2
   ElfSection.ElfSegmentTableEntry.type                           = 0x00000001 = PT_LOAD
   ElfSection.ElfSegmentTableEntry.flags                          = 0x00000005 r-x
@@ -3888,7 +3900,7 @@ Section [39]:
   ElfSection.Section.mapped_alignment                            = 0x00001000 (4096) NOT SATISFIED
   ElfSection.Section.permissions                                 = rw-
   ElfSection.Section.contains_code                               = false
-  ElfSection.Section.rose_mapped_rva                             = 0 (0) 
+  ElfSection.Section.mapped_actual_rva                           = 0x080495c8 (134518216) 
   ElfSection.ElfSegmentTableEntry.index                          = 3
   ElfSection.ElfSegmentTableEntry.type                           = 0x00000001 = PT_LOAD
   ElfSection.ElfSegmentTableEntry.flags                          = 0x00000006 rw-
@@ -3929,7 +3941,7 @@ Section [40]:
   ElfSection.Section.mapped_alignment                            = 0x00000004 (4) satisfied
   ElfSection.Section.permissions                                 = rw-
   ElfSection.Section.contains_code                               = false
-  ElfSection.Section.rose_mapped_rva                             = 0 (0) 
+  ElfSection.Section.mapped_actual_rva                           = 0x00000000 (0) 
   ElfSection.ElfSegmentTableEntry.index                          = 6
   ElfSection.ElfSegmentTableEntry.type                           = 0x6474e551 = PT_GNU_STACK
   ElfSection.ElfSegmentTableEntry.flags                          = 0x00000006 rw-
@@ -3986,6 +3998,8 @@ Output the disassembled instructions:
 0x08048040 34 80             |4.    | :: 0x8048040:xor    al, 0x80
 0x08048042 04 08             |..    | :: 0x8048042:add    al, 0x8
 0x08048044 e0 00             |..    | :: 0x8048044:loopnz 0x8048046
+/* Block 0x8048034 */
+0x08048034 06                |.     | :: 0x8048034:push   es
 /* Block 0x8048046 */
 0x08048046 00 00             |..    | :: 0x8048046:add    BYTE PTR ds:[eax], al
 0x08048048 e0 00             |..    | :: 0x8048048:loopnz 0x804804a
@@ -4083,14 +4097,13 @@ Output the disassembled instructions:
 0x0804811d 69 6e 75 78 2e 73 |inux.s|
 0x08048123 6f                |o     | :: 0x804811d:imul   ebp, DWORD PTR ds:[esi + 0x75], 0x6f732e78
 0x08048124 2e 32 00          |.2.   | :: 0x8048124:xor    al, BYTE PTR cs:[eax]
-0x08048127 00 04 00          |...   | :: 0x8048127:add    BYTE PTR ds:[eax + eax], al
-0x0804812a 00 00             |..    | :: 0x804812a:add    BYTE PTR ds:[eax], al
-0x0804812c 10 00             |..    | :: 0x804812c:adc    BYTE PTR ds:[eax], al
-0x0804812e 00 00             |..    | :: 0x804812e:add    BYTE PTR ds:[eax], al
-0x08048130 01 00             |..    | :: 0x8048130:add    DWORD PTR ds:[eax], eax
-0x08048132 00 00             |..    | :: 0x8048132:add    BYTE PTR ds:[eax], al
-0x08048134 47                |G     | :: 0x8048134:inc    edi
-0x08048135 4e                |N     | :: 0x8048135:dec    esi
+0x08048127 00 00             |..    | :: 0x8048127:add    BYTE PTR ds:[eax], al
+0x08048129 00 00             |..    | :: 0x8048129:add    BYTE PTR ds:[eax], al
+0x0804812b 00 10             |..    | :: 0x804812b:add    BYTE PTR ds:[eax], dl
+0x0804812d 00 00             |..    | :: 0x804812d:add    BYTE PTR ds:[eax], al
+0x0804812f 00 01             |..    | :: 0x804812f:add    BYTE PTR ds:[ecx], al
+0x08048131 00 00             |..    | :: 0x8048131:add    BYTE PTR ds:[eax], al
+0x08048133 00 47 4e          |.GN   | :: 0x8048133:add    BYTE PTR ds:[edi + 0x4e], al
 0x08048136 55                |U     | :: 0x8048136:push   ebp
 0x08048137 00 00             |..    | :: 0x8048137:add    BYTE PTR ds:[eax], al
 0x08048139 00 00             |..    | :: 0x8048139:add    BYTE PTR ds:[eax], al
@@ -4137,6 +4150,39 @@ Output the disassembled instructions:
 0x0804818f 00 00             |..    | :: 0x804818f:add    BYTE PTR ds:[eax], al
 0x08048191 00 00             |..    | :: 0x8048191:add    BYTE PTR ds:[eax], al
 0x08048193 00 cb             |..    | :: 0x8048193:add    bl, cl
+/* Block 0x804804a */
+0x0804804a 00 00             |..    | :: 0x804804a:add    BYTE PTR ds:[eax], al
+0x0804804c 05 00 00 00 04    |..... | :: 0x804804c:add    eax, 0x4000000
+/* Block 0x8048128 */
+0x08048128 04 00             |..    | :: 0x8048128:add    al, 0x0
+0x0804812a 00 00             |..    | :: 0x804812a:add    BYTE PTR ds:[eax], al
+0x0804812c 10 00             |..    | :: 0x804812c:adc    BYTE PTR ds:[eax], al
+0x0804812e 00 00             |..    | :: 0x804812e:add    BYTE PTR ds:[eax], al
+0x08048130 01 00             |..    | :: 0x8048130:add    DWORD PTR ds:[eax], eax
+0x08048132 00 00             |..    | :: 0x8048132:add    BYTE PTR ds:[eax], al
+0x08048134 47                |G     | :: 0x8048134:inc    edi
+0x08048135 4e                |N     | :: 0x8048135:dec    esi
+/* Block 0x8048148 */
+0x08048148 03 00             |..    | :: 0x8048148:add    eax, DWORD PTR ds:[eax]
+0x0804814a 00 00             |..    | :: 0x804814a:add    BYTE PTR ds:[eax], al
+0x0804814c 08 00             |..    | :: 0x804814c:or     BYTE PTR ds:[eax], al
+0x0804814e 00 00             |..    | :: 0x804814e:add    BYTE PTR ds:[eax], al
+0x08048150 07                |.     | :: 0x8048150:pop    es
+/* Block 0x804817c */
+0x0804817c 00 00             |..    | :: 0x804817c:add    BYTE PTR ds:[eax], al
+0x0804817e 00 00             |..    | :: 0x804817e:add    BYTE PTR ds:[eax], al
+0x08048180 00 00             |..    | :: 0x8048180:add    BYTE PTR ds:[eax], al
+0x08048182 00 00             |..    | :: 0x8048182:add    BYTE PTR ds:[eax], al
+0x08048184 00 00             |..    | :: 0x8048184:add    BYTE PTR ds:[eax], al
+0x08048186 00 00             |..    | :: 0x8048186:add    BYTE PTR ds:[eax], al
+0x08048188 00 00             |..    | :: 0x8048188:add    BYTE PTR ds:[eax], al
+0x0804818a 00 00             |..    | :: 0x804818a:add    BYTE PTR ds:[eax], al
+0x0804818c 33 00             |3.    | :: 0x804818c:xor    eax, DWORD PTR ds:[eax]
+0x0804818e 00 00             |..    | :: 0x804818e:add    BYTE PTR ds:[eax], al
+0x08048190 00 00             |..    | :: 0x8048190:add    BYTE PTR ds:[eax], al
+0x08048192 00 00             |..    | :: 0x8048192:add    BYTE PTR ds:[eax], al
+0x08048194 cb                |.     | :: 0x8048194:retf   
+/* Block 0x8048195 */
 0x08048195 00 00             |..    | :: 0x8048195:add    BYTE PTR ds:[eax], al
 0x08048197 00 12             |..    | :: 0x8048197:add    BYTE PTR ds:[edx], dl
 0x08048199 00 00             |..    | :: 0x8048199:add    BYTE PTR ds:[eax], al
@@ -4190,9 +4236,8 @@ Output the disassembled instructions:
 0x080481fd 5f                |_     | :: 0x80481fd:pop    edi
 0x080481fe 4a                |J     | :: 0x80481fe:dec    edx
 0x080481ff 76 5f             |v_    | :: 0x80481ff:jbe    0x8048260
-/* Block 0x804804a */
-0x0804804a 00 00             |..    | :: 0x804804a:add    BYTE PTR ds:[eax], al
-0x0804804c 05 00 00 00 04    |..... | :: 0x804804c:add    eax, 0x4000000
+/* Block 0x80481fc */
+0x080481fc 00 5f 4a          |._J   | :: 0x80481fc:add    BYTE PTR ds:[edi + 0x4a], bl
 /* Block 0x8048201 */
 0x08048201 52                |R     | :: 0x8048201:push   edx
 0x08048202 65 67 69 73 74 65 |egiste|
@@ -4275,6 +4320,18 @@ Output the disassembled instructions:
 0x08048290 61                |a     | :: 0x8048290:popad  
 /* Block 0x8048260 */
 0x08048260 42                |B     | :: 0x8048260:inc    edx
+/* Block 0x8048268 */
+0x08048268 00 00             |..    | :: 0x8048268:add    BYTE PTR ds:[eax], al
+0x0804826a 02 00             |..    | :: 0x804826a:add    al, BYTE PTR ds:[eax]
+0x0804826c 02 00             |..    | :: 0x804826c:add    al, BYTE PTR ds:[eax]
+0x0804826e 02 00             |..    | :: 0x804826e:add    al, BYTE PTR ds:[eax]
+0x08048270 02 00             |..    | :: 0x8048270:add    al, BYTE PTR ds:[eax]
+0x08048272 01 00             |..    | :: 0x8048272:add    DWORD PTR ds:[eax], eax
+0x08048274 00 00             |..    | :: 0x8048274:add    BYTE PTR ds:[eax], al
+0x08048276 00 00             |..    | :: 0x8048276:add    BYTE PTR ds:[eax], al
+0x08048278 01 00             |..    | :: 0x8048278:add    DWORD PTR ds:[eax], eax
+0x0804827a 01 00             |..    | :: 0x804827a:add    DWORD PTR ds:[eax], eax
+0x0804827c 24 00             |$.    | :: 0x804827c:and    al, 0x0
 /* Block 0x8048281 */
 0x08048281 00 00             |..    | :: 0x8048281:add    BYTE PTR ds:[eax], al
 0x08048283 00 00             |..    | :: 0x8048283:add    BYTE PTR ds:[eax], al
@@ -4718,7 +4775,7 @@ Output the disassembled instructions:
 0x080485bf 64 2e 0a 00       |d...  | :: 0x80485bf:or     al, BYTE PTR cs:[eax]
 0x080485c3 00 00             |..    | :: 0x80485c3:add    BYTE PTR ds:[eax], al
 0x080485c5 00 00             |..    | :: 0x80485c5:add    BYTE PTR ds:[eax], al
-0x080485c7 00 ff             |..    | :: 0x80485c7:add    bh, bh
+0x080485c7 00 00             |..    | :: 0x80485c7:add    BYTE PTR ds:[eax], al
 /* Block 0x80485cb */
 0x080485cb ff 00             |..    | :: 0x80485cb:inc    DWORD PTR ds:[eax]
 0x080485cd 00 00             |..    | :: 0x80485cd:add    BYTE PTR ds:[eax], al
@@ -6828,7 +6885,9 @@ Output the disassembled instructions:
 0x08049601 81 04 08 06 00 00 |......|
 0x08049607 00                |.     | :: 0x8049601:add    DWORD PTR ds:[eax + ecx], 0x6
 0x08049608 7c 81             ||.    | :: 0x8049608:jl     0x804958b
-/* Block 0x80495d8 */
+/* Block 0x80495d4 */
+0x080495d4 00 00             |..    | :: 0x80495d4:add    BYTE PTR ds:[eax], al
+0x080495d6 00 00             |..    | :: 0x80495d6:add    BYTE PTR ds:[eax], al
 0x080495d8 00 00             |..    | :: 0x80495d8:add    BYTE PTR ds:[eax], al
 0x080495da 00 00             |..    | :: 0x80495da:add    BYTE PTR ds:[eax], al
 0x080495dc 01 00             |..    | :: 0x80495dc:add    DWORD PTR ds:[eax], eax
@@ -6947,6 +7006,21 @@ Output the disassembled instructions:
 0x080496e8 30 35 30 37 32 35 |050725| :: 0x80496e8:xor    BYTE PTR ds:[0x35323730], dh
 0x080496ee 20 28             | (    | :: 0x80496ee:and    BYTE PTR ds:[eax], ch
 0x080496f0 70 72             |pr    | :: 0x80496f0:jo     0x8049764
+/* Block 0x80496a4 */
+0x080496a4 00 00             |..    | :: 0x80496a4:add    BYTE PTR ds:[eax], al
+0x080496a6 00 00             |..    | :: 0x80496a6:add    BYTE PTR ds:[eax], al
+0x080496a8 dc 95 04 08 00 00 |......| :: 0x80496a8:fcom   DOUBLE PTR ss:[ebp + 0x804]
+/* Block 0x80496b8 */
+0x080496b8 06                |.     | :: 0x80496b8:push   es
+0x080496b9 83 04 08 16       |....  | :: 0x80496b9:add    DWORD PTR ds:[eax + ecx], 0x16
+/* Block 0x80496bc */
+0x080496bc 16                |.     | :: 0x80496bc:push   ss
+/* Block 0x80496c0 */
+0x080496c0 26 83 04 08 36    |&...6 | :: 0x80496c0:add    DWORD PTR es:[eax + ecx], 0x36
+/* Block 0x80496c4 */
+0x080496c4 36 83 04 08 00    |6.... | :: 0x80496c4:add    DWORD PTR ss:[eax + ecx], 0x0
+/* Block 0x80496d0 */
+0x080496d0 d4 95             |..    | :: 0x80496d0:aam    0x95
 /* Block 0x80496f2 */
 0x080496f2 65 72 65          |ere   | :: 0x80496f2:jb     0x804975a
 /* Block 0x80496f5 */

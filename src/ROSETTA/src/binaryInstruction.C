@@ -1,6 +1,7 @@
 /*-------------------------------------------------------------------------------------------------------------------------------
  * NOTICE: Some of these classes and their data members are documented in *.docs files in docs/testDoxygen where '*' is the
- *         name of the class.  Be sure to update that documentation if you change this file!
+ *         name of the class.  Be sure to update that documentation if you change this file!  The practice used in this file
+ *         is that doxygen-documented entities are marked here with a "doxygen" comment as a reminder.
  *-----------------------------------------------------------------------------------------------------------------------------*/
 
 #include "ROSETTA_macros.h"
@@ -1642,6 +1643,9 @@ Grammar::setUpBinaryInstructions ()
   // Need a separate IR node to hold the list of SgAsmGenericSection pointers.
      AsmGenericSectionList.setDataPrototype("SgAsmGenericSectionPtrList","sections","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+
+
      AsmGenericSection.setFunctionPrototype("HEADER_GENERIC_SECTION", "../Grammar/BinaryInstruction.code");
      AsmGenericSection.setPredeclarationString("HEADER_GENERIC_SECTION_PREDECLARATION", "../Grammar/BinaryInstruction.code");
   // Later we will want to turn this back on so that this IR node is consistant with the others (if appropriate).
@@ -1683,7 +1687,7 @@ Grammar::setUpBinaryInstructions ()
   /* Non-unique name of section (may be empty string) */
      AsmGenericSection.setDataPrototype("SgAsmGenericString*","name","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmGenericSection.setDataPrototype("rose_addr_t","mapped_rva","= 0",
+     AsmGenericSection.setDataPrototype("rose_addr_t","mapped_preferred_rva","= 0",     /*doxygen*/
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericSection.setDataPrototype("rose_addr_t","mapped_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1695,20 +1699,10 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericSection.setDataPrototype("bool","mapped_xperm","= false",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (2/4/2009): Added support for specification of code to be disassembled.  this is important for
-  // object files where all the sections are marked as non-executable, yet they have functions which
-  // we clearly want to disassemble.
-     AsmGenericSection.setDataPrototype("bool","contains_code","= false",
+     AsmGenericSection.setDataPrototype("bool","contains_code","= false",               /*doxygen*/
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (2/4/2009): The new code must have an address where it can be mapped, but clearly since it is
-  // from a section marked non-mapped (and not even executable), these are addresses that we are assigning
-  // arbitrarily.
-     AsmGenericSection.setDataPrototype("rose_addr_t","rose_mapped_rva","= 0",
+     AsmGenericSection.setDataPrototype("rose_addr_t","mapped_actual_rva","= 0",        /*doxygen*/
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (8/2/2008): This was removed from the design by Robb.
-  /* All segments belonging within this section */
-  // AsmGenericSection.setDataPrototype("SgAsmGenericSegmentPtrListPtr","segmentsList","= NULL",
-  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
 
@@ -1946,9 +1940,9 @@ Grammar::setUpBinaryInstructions ()
   // Store the expression tree from any constant folding (this can be ignored until later)
      AsmValueExpression.setDataPrototype("SgAsmValueExpression*","unfolded_expression_tree","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     AsmValueExpression.setDataPrototype("unsigned short", "bit_offset", "= 0",
+     AsmValueExpression.setDataPrototype("unsigned short", "bit_offset", "= 0",         /*doxygen*/
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmValueExpression.setDataPrototype("unsigned short", "bit_size", "= 0",
+     AsmValueExpression.setDataPrototype("unsigned short", "bit_size", "= 0",           /*doxygen*/
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 

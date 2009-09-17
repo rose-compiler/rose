@@ -669,14 +669,16 @@ SgAsmElfSection::init_from_section_table(SgAsmElfSectionTableEntry *shdr, SgAsmE
 
     /* Memory mapping */
     if (shdr->get_sh_addr() > 0) {
-        set_mapped_rva(shdr->get_sh_addr());
+        set_mapped_preferred_rva(shdr->get_sh_addr());
+        set_mapped_actual_rva(0); /*will be assigned by Loader*/
         set_mapped_size(shdr->get_sh_size());
         set_mapped_rperm(true);
         set_mapped_wperm((shdr->get_sh_flags() & 0x01) == 0x01);
         set_mapped_xperm((shdr->get_sh_flags() & 0x04) == 0x04);
         set_mapped_alignment(shdr->get_sh_addralign());
     } else {
-        set_mapped_rva(0);
+        set_mapped_preferred_rva(0);
+        set_mapped_actual_rva(0); /*will be assigned by Loader*/
         set_mapped_size(0);
         set_mapped_rperm(false);
         set_mapped_wperm(false);
@@ -732,7 +734,8 @@ SgAsmElfSection::init_from_segment_table(SgAsmElfSegmentTableEntry *shdr, bool m
     }
     
     /* Memory mapping */
-    set_mapped_rva(shdr->get_vaddr());
+    set_mapped_preferred_rva(shdr->get_vaddr());
+    set_mapped_actual_rva(0); /*will be assigned by Loader*/
     set_mapped_size(shdr->get_memsz());
     set_mapped_alignment(shdr->get_align());
     set_mapped_rperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_RPERM ? true : false);
@@ -1573,7 +1576,7 @@ SgAsmElfSectionTableEntry::update_from_section(SgAsmElfSection *section)
     }
 
     if (section->is_mapped()) {
-        set_sh_addr(section->get_mapped_rva());
+        set_sh_addr(section->get_mapped_preferred_rva());
         set_sh_addralign(section->get_mapped_alignment());
         if (section->get_mapped_wperm()) {
             p_sh_flags |= 0x01;
@@ -1823,7 +1826,7 @@ SgAsmElfSegmentTableEntry::update_from_section(SgAsmElfSection *section)
     set_offset(section->get_offset());
     set_filesz(section->get_size());
 
-    set_vaddr(section->get_mapped_va());
+    set_vaddr(section->get_mapped_preferred_va());
     set_memsz(section->get_mapped_size());
     if (section->get_mapped_rperm()) {
         set_flags((SegmentFlags)(p_flags | PF_RPERM));
@@ -1992,7 +1995,8 @@ SgAsmElfSegmentTable::parse()
             if (possible[j]->get_offset()!=shdr->get_offset() || possible[j]->get_size()!=shdr->get_filesz())
                 continue; /*different file extent*/
             if (possible[j]->is_mapped()) {
-                if (possible[j]->get_mapped_rva()!=shdr->get_vaddr() || possible[j]->get_mapped_size()!=shdr->get_memsz())
+                if (possible[j]->get_mapped_preferred_rva()!=shdr->get_vaddr() ||
+                    possible[j]->get_mapped_size()!=shdr->get_memsz())
                     continue; /*different mapped address or size*/
                 unsigned section_perms = (possible[j]->get_mapped_rperm() ? 0x01 : 0x00) |
                                          (possible[j]->get_mapped_wperm() ? 0x02 : 0x00) |
@@ -2782,7 +2786,7 @@ SgAsmElfDynamicSection::finish_parsing()
               SgAsmGenericSection *best = NULL;
               for (SgAsmGenericSectionPtrList::iterator i=containers.begin(); i!=containers.end(); ++i) {
                   if ((*i)->is_mapped()) {
-                      if ((*i)->get_mapped_rva()==entry->get_d_val().get_rva()) {
+                      if ((*i)->get_mapped_preferred_rva()==entry->get_d_val().get_rva()) {
                           best = *i;
                           break;
                       } else if (!best) {

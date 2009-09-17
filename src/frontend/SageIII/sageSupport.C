@@ -5537,27 +5537,6 @@ SgBinaryFile::buildAsmAST( string executableFileName )
      readDwarf(asmFile);
 #endif
 
-     map<rose_addr_t,string> addressToFunctionNameMap;
-
-  // DQ (2/4/2009): This is some analysis inserted between the reading of the binary file format and the disassembly.
-  // The point is to explicitly mark sections which require disassemble in object files (*.o files) as part of the 
-  // support for reading library archive files (*.a) files and building library identification support.
-  // if (get_isLibraryArchive() == true)
-     if ( (get_isLibraryArchive() == true) || (get_isObjectFile() == true) )
-        {
-       // Do the analysis to specify in the binary file format (just built) what sections contain code and should be disassembled.
-       // Note that for an object file none of the sections will be marked as executable, so we have to explictly pick out what
-       // sections we want to disassemble. And save the mapping of addresses to function names.
-          printf ("Do the analysis required to mark the sections in the object file that contain code and should be disassembled. \n");
-          addressToFunctionNameMap = markSectionsForDisassembly(asmFile);
-
-          printf ("Do the analysis required to mark the sections in the object file that contain code and should be disassembled. \n");
-#if 0
-          printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
-#endif
-        }
-
   // Fill in the instructions into the SgAsmFile IR node
      SgProject* project = isSgProject(this->get_parent());
      ROSE_ASSERT(project != NULL);
@@ -5578,9 +5557,6 @@ SgBinaryFile::buildAsmAST( string executableFileName )
 #else
      printf ("\nWARNING: Skipping instruction disassembly \n\n");
 #endif
-
-  // Update the function names with the mangled names (to preserve all type information).
-     updateFunctionNames(asmFile,addressToFunctionNameMap);
 
 #if 0
      printf ("At base of SgBinaryFile::buildAsmAST(): exiting... \n");
@@ -7152,165 +7128,6 @@ SgC_PreprocessorDirectiveStatement::createDirective ( PreprocessingInfo* current
 
      return cppDirective;
    }
-
-
-
-namespace SgNode_markSectionsForDisassembly
-   {
-  // This namespace hold the class required to support the marking of sections in object 
-  // files that contain code so that the disassembler can know to disassemble them.
-
-     class MarkSectionsTraversal : public AstSimpleProcessing
-        {
-          public:
-              SgAsmInterpretation* currentAsmInterpretation;
-              rose_addr_t rose_file_mapped_rva;
-
-           // Mapping of address (where the function's instructions will 
-           // assigned a position in memory) relative to rose_mapped_rva.
-              map<rose_addr_t,string> addressToFunctionNameMap;
-
-              MarkSectionsTraversal() : currentAsmInterpretation(NULL), rose_file_mapped_rva(0) {}
-
-              void visit ( SgNode* astNode );
-        };
-   }
-
-void
-SgNode_markSectionsForDisassembly::MarkSectionsTraversal::visit ( SgNode* astNode )
-   {
-#define ADD_PADDING_AROUND_BINARY_FUNCTIONS 1
-
-     SgAsmInterpretation* asmInterpretation = isSgAsmInterpretation(astNode);
-     if (asmInterpretation != NULL)
-        {
-       // Set the current SgAsmInterpretation so that we can reference the header and the SgRVAList
-          currentAsmInterpretation = asmInterpretation;
-          ROSE_ASSERT(currentAsmInterpretation != NULL);
-        }
-
-     SgAsmGenericSymbol* symbol = isSgAsmGenericSymbol(astNode);
-     if (symbol != NULL)
-        {
-          if (symbol->get_type() == SgAsmGenericSymbol::SYM_FUNC)
-             {
-            // Found a symbol of type function.
-               ROSE_ASSERT(symbol->get_name() != NULL);
-               SgAsmGenericSection* boundSection = symbol->get_bound();
-               ROSE_ASSERT(boundSection != NULL);
-#if 1
-               printf ("Found a symbol of type function symbol = %p = %s bound to section = %p = %s \n",
-                    symbol,symbol->get_name()->c_str(),boundSection,boundSection->get_name()->c_str());
-#endif
-            // Mark this section as containing code.
-               boundSection->set_contains_code(true);
-
-            // Define an artificial starting address for the instructions 
-            // to be located at when they are disassembled.
-               boundSection->set_rose_mapped_rva(rose_file_mapped_rva);
-
-               ROSE_ASSERT(currentAsmInterpretation != NULL);
-               SgAsmGenericHeader* header = currentAsmInterpretation->get_header();
-               ROSE_ASSERT (header != NULL);
-
-               SgRVAList & entry_rvalist = header->get_entry_rvas();
-               entry_rvalist.push_back(rose_file_mapped_rva);
-
-               printf ("function name at address = %p using symbol = %p = %s \n",(void*)rose_file_mapped_rva,symbol,symbol->get_name()->c_str());
-               addressToFunctionNameMap[rose_file_mapped_rva] = symbol->get_name()->c_str();
-
-            // printf ("entry_rvalist.size() = %zu \n",entry_rvalist.size());
-
-            // Increment the rose_file_mapped_rva so that all the function 
-            // will have unique addresses in the file.
-#if ADD_PADDING_AROUND_BINARY_FUNCTIONS
-            // rose_file_mapped_rva += (1 << 16);
-#else
-               rose_file_mapped_rva += boundSection->get_size();
-#endif
-             }
-        }
-   }
-
-map<rose_addr_t,string>
-SgBinaryFile::markSectionsForDisassembly(SgAsmFile* asmFile)
-   {
-  // This function marks sections which correspond to symbols that are of type "function"
-  // and initializes the header->get_entry_rvas() to point to the function starts (defining
-  // a unique address for each one to begin at when disassembled.  For the sections it
-  // also sets the rose_mapped_rva.  The traversal also computes the mapping of
-  // function names to their addresses (in ROSE Virtual Address Space) so that the names
-  // can be saved to the SgAsmFunctionDeclaration IR nodes after disassembly.
-
-  // FIXME: for functions bound to the same section, this will reset the rose_mapped_rva, is this a problem?
-
-     SgNode_markSectionsForDisassembly::MarkSectionsTraversal t;
-     t.traverse(asmFile,preorder);
-
-  // Return the address to function name map.
-     return t.addressToFunctionNameMap;
-   }
-
-void
-SgBinaryFile::updateFunctionNames(SgAsmFile* asmFile, map<rose_addr_t,string> & addressToFunctionNameMap )
-   {
-  // DQ (2/5/2009): This function updates the names in the SgAsmFunctionDeclaration IR nodes in the AST
-  // using the addressToFunctionNameMap generated from the markSectionsForDisassembly() function.
-     class MarkFunctionsTraversal : public AstSimpleProcessing
-        {
-          public:
-               map<rose_addr_t,string> & local_addressToFunctionNameMap;
-               int functionCounter;
-               int nonfunctionCounter;
-
-               MarkFunctionsTraversal(map<rose_addr_t,string> & x)
-                  : local_addressToFunctionNameMap(x), functionCounter(0), nonfunctionCounter(0) {}
-
-               void visit ( SgNode* astNode )
-                  {
-                    SgAsmFunctionDeclaration* asmFunctionDeclaration = isSgAsmFunctionDeclaration(astNode);
-                    if (asmFunctionDeclaration != NULL)
-                       {
-                      // asmFunctionDeclaration->set_name(local_addressToFunctionNameMap[asmFunctionDeclaration->get_address()]);
-                         rose_addr_t address = asmFunctionDeclaration->get_address();
-                         string functionName = local_addressToFunctionNameMap[address];
-
-                         functionCounter++;
-
-                         if (functionName.empty() == true)
-                            {
-                           // This is a SgFunctionDeclaration in the AST that does not correspond to a function in the object file.
-                           // These function are perhaps an example of over-eager function recognition in the disassembly.
-#if 0
-                              printf ("Function at address = %p does not map to function in the object file. \n");
-#endif
-                              nonfunctionCounter++;
-                            }
-                           else
-                            {
-                              printf ("Updating function names in SgAsmFunctionDeclaration IR nodes: function = %p = %s \n",(void*)address,functionName.c_str());
-                              asmFunctionDeclaration->set_name(local_addressToFunctionNameMap[asmFunctionDeclaration->get_address()]);
-                            }
-                       }
-                  }
-        };
-
-     MarkFunctionsTraversal t(addressToFunctionNameMap);
-     t.traverse(asmFile,preorder);
-
-#if 0
-  // It seems that we recognize too many functions and so we need to tune our function recognition a bit.
-  // This provides a count of the total number of functions recognized and the number of nonfunctions found by mistake.
-     printf ("Over-eager function recognition: functionCounter = %d nonfunctionCounter = %d \n",t.functionCounter,t.nonfunctionCounter);
-#endif
-
-#if 0
-     printf ("Exiting in SgBinaryFile::updateFunctionNames() \n");
-     ROSE_ASSERT(false);
-#endif
-   }
-
-
 
 bool
 StringUtility::popen_wrapper ( const string & command, vector<string> & result )

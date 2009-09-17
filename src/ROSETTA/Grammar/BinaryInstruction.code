@@ -792,8 +792,8 @@ HEADER_GENERIC_SECTION_START
 		SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr)
 			: local_data_pool(0), p_file(f), p_header(NULL), p_size(1), p_offset(f->get_current_size()),
 			p_file_alignment(0), p_purpose(SP_UNSPECIFIED), p_synthesized(false), p_id(-1), p_name(0),
-			p_mapped_rva(0), p_mapped_size(0), p_mapped_alignment(0), p_mapped_rperm(false), p_mapped_wperm(false),
-         		p_mapped_xperm(false), p_contains_code(false), p_rose_mapped_rva(0)
+			p_mapped_preferred_rva(0), p_mapped_size(0), p_mapped_alignment(0), p_mapped_rperm(false),
+			p_mapped_wperm(false), p_mapped_xperm(false), p_contains_code(false), p_mapped_actual_rva(0)
 			{ctor(f, fhdr);}
 
 		// This destructor modifies the SgAsmGenericFile data to remove its section from the section list!
@@ -854,10 +854,10 @@ HEADER_GENERIC_SECTION_START
 		void   	      clear_mapped();                 	/* Set mapped address and size to zero (unmapped)*/
 		addr_t        get_mapped_size() const;
 		virtual void  set_mapped_size(addr_t);	      	/* Set mapped size w/o regard to other section mappings */
-		addr_t	      get_mapped_rva() const;
-		virtual void  set_mapped_rva(addr_t);         	/* Move a section w/o regard to other section mappings */
+		addr_t	      get_mapped_preferred_rva() const;	/* The virtual address indicated in the binary file */
+		virtual void  set_mapped_preferred_rva(addr_t); /* Move a section w/o regard to other section mappings */
 		addr_t 	      get_base_va() const;            	/* Convenience to get header's base VA */
-		addr_t 	      get_mapped_va();		      	/* Like get_mapped_rva() except returns VA */
+		addr_t 	      get_mapped_preferred_va();	/* Like get_mapped_preferred_rva() except returns VA */
 		addr_t        get_va_offset(addr_t va);       	/* Return file offset for specified virtual address */
 		addr_t	      get_rva_offset(addr_t rva);     	/* Return file offset for specified relative virtual address */
 
@@ -867,7 +867,7 @@ HEADER_GENERIC_SECTION_START
 
 		/* Convenience functions */
 		ExtentPair get_file_extent() const;		/* Returns get_offset() and get_size() */
-		ExtentPair get_mapped_extent() const;	        /* Returns get_mapped_rva() and get_mapped_size() */
+		ExtentPair get_mapped_preferred_extent() const; /* Returns get_mapped_preferred_rva() and get_mapped_size() */
 
 	protected:
 		void ctor(SgAsmGenericFile*, SgAsmGenericHeader*);
@@ -886,7 +886,7 @@ HEADER_GENERIC_SECTION_END
 HEADER_GENERIC_HEADER_START
 	public:
           	explicit SgAsmGenericHeader(SgAsmGenericFile *ef)
-			: SgAsmGenericSection(ef, NULL),
+			: SgAsmGenericSection(ef, NULL), p_loader_map(NULL),
 			p_exec_format(NULL), p_isa(ISA_OTHER), p_base_va(0), p_dlls(NULL), p_symbols(NULL), p_sections(NULL)
 			{ctor();}
 
@@ -939,8 +939,13 @@ HEADER_GENERIC_HEADER_START
 		SgAsmGenericSection *get_section_by_va(addr_t va, size_t *nfound=0) const;
 		SgAsmGenericSection *get_best_section_by_va(addr_t va, size_t *nfound=0) const;
 
+		/* Loader memory maps */
+		MemoryMap *get_loader_map() const {return p_loader_map;}
+		void set_loader_map(MemoryMap *map) {p_loader_map=map;}
+
 	private:
 		void ctor();
+		MemoryMap *p_loader_map;
 HEADER_GENERIC_HEADER_END
 
 
@@ -948,7 +953,7 @@ HEADER_GENERIC_HEADER_END
 HEADER_GENERIC_FILE_START
 	public:
 		SgAsmGenericFile()
-			: p_unreferenced_cache(NULL), p_loader_map(NULL), p_fd(-1), p_headers(NULL), p_holes(NULL),
+			: p_unreferenced_cache(NULL), p_fd(-1), p_headers(NULL), p_holes(NULL),
 			  p_truncate_zeros(false), p_tracking_references(true)
 			{ctor();}
 		virtual ~SgAsmGenericFile();				/* Destructor deletes children and unmaps/closes file */
@@ -1032,14 +1037,9 @@ HEADER_GENERIC_FILE_START
 		// DQ (8/26/2008): Added support for alternative section selection for use in disassembler.
 		SgAsmGenericSection* get_best_possible_section_by_va(addr_t va);
 
-		/* Loader memory maps */
-		MemoryMap *get_loader_map() const {return p_loader_map;}
-		void set_loader_map(MemoryMap *map) {p_loader_map=map;}
-
 	private:
 		void ctor();
 		mutable ExtentMap *p_unreferenced_cache;
-		MemoryMap *p_loader_map;
 HEADER_GENERIC_FILE_END
 
 

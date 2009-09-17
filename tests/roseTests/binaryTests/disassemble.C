@@ -51,6 +51,10 @@ main(int argc, char *argv[])
             search |= Disassembler::SEARCH_UNKNOWN;
         } else if (!strcmp(argv[i], "--no-search-unknown")) {
             search &= ~Disassembler::SEARCH_UNKNOWN;
+        } else if (!strcmp(argv[i], "--search-funcsyms")) {
+            search |= Disassembler::SEARCH_FUNCSYMS;
+        } else if (!strcmp(argv[i], "--no-search-funcsyms")) {
+            search &= ~Disassembler::SEARCH_FUNCSYMS;
         } else if (!strcmp(argv[i], "--show-bad")) {
             show_bad = true;
         } else if (!strcmp(argv[i], "--reassemble")) {

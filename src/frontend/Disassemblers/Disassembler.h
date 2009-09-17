@@ -73,17 +73,12 @@
  *  for (size_t i=0; i<removals.size(); i++)
  *      map.erase(removals[i]);
  *
- *  // Obtain the entire file content. This doesn't actually read the file,
- *  // it just returns a container that points to the file.
- *  SgAsmGenericFile *file = header->get_file();
- *  SgFileContentList file_content = file->content(0, file->get_orig_size(), false);
- *
  *  // Disassemble everything
  *  Disassembler *d = Disassembler::create(header);
  *  d->set_search(Disassembler::SEARCH_ALLBYTES); // disassemble at every address
  *  Disassembler::AddressSet worklist; // can be empty due to SEARCH_ALLBYTES
  *  Disassembler::InstructionMap insns;
- *  insns = d->disassembleBuffer(&(file_content[0]), &map, worklist);
+ *  insns = d->disassembleBuffer(&map, worklist);
  *
  *  // Print all instructions
  *  Disassembler::InstructionMap::iterator ii;
@@ -165,7 +160,11 @@ public:
         SEARCH_UNKNOWN   = 0x0080,      /**< Rather than generating exceptions when an instruction cannot be disassembled,
                                          *   create a pseudo-instruction that occupies one byte. These will generally have
                                          *   opcodes like x86_unknown_instruction. */
-        SEARCH_DEFAULT   = 0x0001       /**< Default set of heuristics to use. The default is to be moderately timid. */
+        SEARCH_FUNCSYMS  = 0x0100,      /**< Disassemble beginning at every address that corresponds to the value of a
+                                         *   function symbol. This heuristic only applies to disassembly methods called at the
+                                         *   interpretation (SgAsmInterpretation) or header (SgAsmGenericHeader) level or
+                                         *   above since that's where the symbols are grafted onto the abstract symbol tree. */
+        SEARCH_DEFAULT   = 0x0101       /**< Default set of heuristics to use. The default is to be moderately timid. */
     };
 
     /** An AddressSet contains virtual addresses (alternatively, relative virtual addresses) for such things as specifying
@@ -325,13 +324,12 @@ public:
 public:
     /** This is the lowest level disassembly function and is implemented in the architecture-specific subclasses. It
      *  disassembles one instruction at the specified virtual address. The @p map is a mapping from virtual addresses to
-     *  offsets in the content buffer and enables instructions to span file segments that are mapped contiguously in virtual
-     *  memory by the loader but which might not be contiguous in the file.  The instruction's successor virtual addresses are
-     *  added to the optional successor set (note that successors of an individual instruction can also be obtained via
+     *  buffer and enables instructions to span file segments that are mapped contiguously in virtual memory by the loader but
+     *  which might not be contiguous in the file.  The instruction's successor virtual addresses are added to the optional
+     *  successor set (note that successors of an individual instruction can also be obtained via
      *  SgAsmInstruction::get_successors). If the instruction cannot be disassembled then an exception is thrown and the
      *  successors set is not modified. */
-    virtual SgAsmInstruction *disassembleOne(const unsigned char *buf, const MemoryMap *map, rose_addr_t start_va,
-                                             AddressSet *successors=NULL) = 0;
+    virtual SgAsmInstruction *disassembleOne(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors=NULL) = 0;
 
     /** Similar in functionality to the disassembleOne method that takes a MemoryMap argument, except the content buffer is
      *  mapped 1:1 to virtual memory beginning at the specified address. */
@@ -354,8 +352,7 @@ public:
      *  added to the successors and the basic block ends at the previous instruction.  If the SEARCH_DEADEND bit is clear and
      *  an instruction cannot be disassembled then the entire basic block is discarded, an exception is thrown (the exception
      *  address is the instruction that could not be disassembled), and the successors list is not modified. */
-    InstructionMap disassembleBlock(const unsigned char *buf, const MemoryMap *map, rose_addr_t start_va,
-                                    AddressSet *successors=NULL);
+    InstructionMap disassembleBlock(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors=NULL);
 
     /** Similar in functionality to the disassembleBlock method that takes a MemoryMap argument, except the supplied buffer
      *  is mapped 1:1 to virtual memory beginning at the specified address. */
@@ -372,8 +369,7 @@ public:
      *  address and exception will be added to the optional @p bad map; any address which is already in the bad map upon
      *  function entry will not be disassembled. Note that bad instructions have no successors.  An exception is thrown if an
      *  error is detected before disassembly begins. */
-    InstructionMap disassembleBuffer(const unsigned char *buf, const MemoryMap *map, size_t start_va,
-                                     AddressSet *successors=NULL, BadMap *bad=NULL);
+    InstructionMap disassembleBuffer(const MemoryMap *map, size_t start_va, AddressSet *successors=NULL, BadMap *bad=NULL);
 
     /** Similar in functionality to the disassembleBuffer methods that take a MemoryMap argument, except the supplied buffer
      *  is mapped 1:1 to virtual memory beginning at the specified address. */
@@ -382,16 +378,16 @@ public:
 
     /** Similar in functionality to the disassembleBuffer methods that take a single starting virtual address, except this one
      *  tries to disassemble from all the addresses specified in the workset. */
-    InstructionMap disassembleBuffer(const unsigned char *buf, const MemoryMap *map, AddressSet workset,
-                                     AddressSet *successors=NULL, BadMap *bad=NULL);
+    InstructionMap disassembleBuffer(const MemoryMap *map, AddressSet workset, AddressSet *successors=NULL, BadMap *bad=NULL);
 
 
 
 
-    /** Disassembles instructions in the specified mapped section beginning at the specified virtual address.  The section
-     *  need not be marked as executable or as containing code. All other aspects of this method are similar to the
-     *  disassembleBuffer method. */
-    InstructionMap disassembleSection(SgAsmGenericSection *section, rose_addr_t start_va,
+    /** Disassembles instructions in the specified section by assuming that it's mapped to a particular starting address.
+     *  Disassembly will begin at the specified byte offset in the section. The section need not be mapped with execute
+     *  permission; in fact, since a starting address is specified, it need not be mapped at all.  All other aspects of this
+     *  method are similar to the disassembleBuffer method. */
+    InstructionMap disassembleSection(SgAsmGenericSection *section, rose_addr_t section_va, rose_addr_t start_offset,
                                       AddressSet *successors=NULL, BadMap *bad=NULL);
 
     /** Disassembles instructions in all code-containing sections of a particular executable file header according to the
@@ -422,7 +418,7 @@ private:
 
     /** Adds all word-aligned values to work list, provided they specify a virtual address in the @p map.  The @p wordsize
      *  must be a power of two. This search method is invoked automatically if the SEARCH_WORDS bit is set (see set_search()). */
-    void search_words(AddressSet *worklist, const unsigned char *buf, const MemoryMap *map, const BadMap *bad);
+    void search_words(AddressSet *worklist, const MemoryMap *map, const BadMap *bad);
 
     /** Finds the lowest virtual address, greater than or equal to @p start_va, which does not correspond to a previous
      *  disassembly attempt as evidenced by its presence in the supplied instructions or bad map.  If @p avoid_overlaps is set
@@ -434,6 +430,9 @@ private:
                              const BadMap *bad, bool avoid_overlaps);
 
 
+    /** Adds addresses that correspond to function symbols.  This method is invoked automatically if the SEARCH_FUNCSYMS bits
+     *  are set (see set_search()). It applies only to disassembly at the file header (SgAsmGenericHeader) level or above. */
+    void search_function_symbols(AddressSet *worklist, const MemoryMap*, SgAsmGenericHeader*);
 
 
     /*==========================================================================================================================

@@ -115,7 +115,7 @@ main()
     text->set_offset(ALIGN_UP(text->get_offset(), 4));          /* Align on an 8-byte boundary */
     text->set_file_alignment(4);                                /* Tell reallocator about alignment constraint */
     text->set_mapped_alignment(4);                              /* Alignment constraint for memory mapping */
-    text->set_mapped_rva(base_va+text->get_offset());           /* Mapped address is based on file offset */
+    text->set_mapped_preferred_rva(base_va+text->get_offset()); /* Mapped address is based on file offset */
     text->set_mapped_size(text->get_size());                    /* Mapped size is same as file size */
     text->set_mapped_rperm(true);                               /* Readable */
     text->set_mapped_wperm(false);                              /* Not writable */
@@ -131,7 +131,7 @@ main()
     text->set_file_alignment(4);                                /* Tell reallocator about alignment constraint */
     text->set_size(sizeof instructions);                        /* Give section a specific size */
     text->set_mapped_alignment(4);                              /* Alignment constraint for memory mapping */
-    text->set_mapped_rva(base_va+text->get_offset());           /* Mapped address is based on file offset */
+    text->set_mapped_preferred_rva(base_va+text->get_offset()); /* Mapped address is based on file offset */
     text->set_mapped_size(text->get_size());                    /* Mapped size is same as file size */
     text->set_mapped_rperm(true);                               /* Readable */
     text->set_mapped_wperm(false);                              /* Not writable */
@@ -145,7 +145,7 @@ main()
     /* Set the main entry point to be the first virtual address in the text section. A rose_rva_t address is associated
      * with a section (.text in this case) so that if the starting address of the section changes (such as via reallocate())
      * then the rose_rva_t address will also change so as to continue to refer to the same byte of the section. */
-    rose_rva_t entry_rva(text->get_mapped_rva(), text);
+    rose_rva_t entry_rva(text->get_mapped_preferred_rva(), text);
     fhdr->add_entry_rva(entry_rva);
 
     /* We now add an entry to the ELF Segment Table. ELF Segments often overlap multiple sections, and in this case we're
@@ -156,7 +156,7 @@ main()
     seg1->get_name()->set_string("LOAD");                       /* Segment names aren't saved (but useful for debugging) */
     seg1->set_offset(0);                                        /* Starts at beginning of file */
     seg1->set_size(text->get_offset() + text->get_size());      /* Extends to end of .text section */
-    seg1->set_mapped_rva(base_va);                              /* Typically mapped by loader to this memory address */
+    seg1->set_mapped_preferred_rva(base_va);                    /* Typically mapped by loader to this memory address */
     seg1->set_mapped_size(seg1->get_size());                    /* Make mapped size match size in the file */
     seg1->set_mapped_rperm(true);                               /* Readable */
     seg1->set_mapped_wperm(false);                              /* Not writable */
@@ -227,7 +227,7 @@ main()
      * executables the string table is usually separate from the others, but we'll just use the one we already created. */
     SgAsmElfDynamicSection *dynamic = new SgAsmElfDynamicSection(fhdr, shstrtab);
     dynamic->get_name()->set_string(".dynamic-test");           /* Give section a name */
-    dynamic->set_mapped_rva(0x800000);                          /* RVA where loader will map section */
+    dynamic->set_mapped_preferred_rva(0x800000);                /* RVA where loader will map section */
     dynamic->set_mapped_size(dynamic->get_size());              /* Make mapped size same as file size */
     dynamic->set_mapped_rperm(true);                            /* Readable */
     dynamic->set_mapped_wperm(true);                            /* Writable */
@@ -270,7 +270,7 @@ main()
     /* We can add notes to an executable */
     SgAsmElfNoteSection *notes = new SgAsmElfNoteSection(fhdr);
     notes->set_name(new SgAsmBasicString("ELF Notes"));
-    notes->set_mapped_rva(0x900000);                          /* RVA where loader will map section */
+    notes->set_mapped_preferred_rva(0x900000);                /* RVA where loader will map section */
     notes->set_mapped_size(dynamic->get_size());              /* Make mapped size same as file size */
     notes->set_mapped_rperm(true);                            /* Readable */
     notes->set_mapped_wperm(true);                            /* Writable */
@@ -297,7 +297,7 @@ main()
      * We can work around that here by explicitly setting the memory mapping to be relative to the segment. However, we'll
      * need to call reallocate() again because besides moving things around, reallocate() also updates some ELF-specific data
      * structures from values stored in the more generic structures. */
-    text->set_mapped_rva(seg1->get_mapped_rva()+(text->get_offset()-seg1->get_offset()));
+    text->set_mapped_preferred_rva(seg1->get_mapped_preferred_rva()+(text->get_offset()-seg1->get_offset()));
     ef->reallocate(); /*won't resize or move things this time since we didn't modify much since the last call to reallocate()*/
 
     /* Show some results. This is largely the same output as would be found in the *.dump file produced by many of the other

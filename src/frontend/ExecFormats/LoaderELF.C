@@ -22,7 +22,7 @@ LoaderELF::order_sections(const SgAsmGenericSectionPtrList &sections)
 
 /* Load all sections containing code.  Any section marked as executable or explicitly containing code is added to the map. Any
  * ELF Section (but not ELF Segment) that is not added will be subtracted.  Therefore, since ELF Segments are processed before
- * ELF Segments, we first load the ELF Segments and then any ELF Section that doesn't contain code is subtracted out of the
+ * ELF Sections, we first load the ELF Segments and then any ELF Section that doesn't contain code is subtracted out of the
  * containing ELF Segments' virtual address space. */
 MemoryMap *
 LoaderELF::load_code_sections(const SgAsmGenericSectionPtrList &sections, bool allow_overmap)

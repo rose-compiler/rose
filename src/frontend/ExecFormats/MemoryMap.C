@@ -14,46 +14,100 @@ MemoryMap::MapElement::get_va_offset(rose_addr_t va) const
 }
 
 bool
-MemoryMap::consistent(const MapElement &a, const MapElement &b)
+MemoryMap::MapElement::consistent(const MapElement &other) const
 {
-    if (a.is_anonymous() && b.is_anonymous()) {
+    if (is_read_only()!=other.is_read_only()) {
+        return false;
+    } else if (get_mapperms()!=other.get_mapperms()) {
+        return false;
+    } else if (is_anonymous() && other.is_anonymous()) {
         return true;
-    } else if (a.is_anonymous() || b.is_anonymous()) {
+    } else if (is_anonymous() || other.is_anonymous()) {
         return false;
     } else {
-        return a.va-b.va == a.offset-b.offset;
+        return va - other.va == offset - other.offset;
     }
 }
 
 void
-MemoryMap::insertMappedSections(SgAsmGenericHeader *header)
+MemoryMap::MapElement::merge_anonymous(const MapElement &other, size_t oldsize)
 {
-    SgAsmGenericSectionPtrList sections = header->get_mapped_sections();
-    for (SgAsmGenericSectionPtrList::iterator i=sections.begin(); i!=sections.end(); ++i)
-        insert(*i);
-    if (header->is_mapped())
-        insert(header);
+    /* This element must have already been merged with the other, except for the base ptr */
+    ROSE_ASSERT(is_anonymous());
+    ROSE_ASSERT(other.is_anonymous());
+    ROSE_ASSERT(va<=other.va);
+    ROSE_ASSERT(offset<=other.offset);
+    ROSE_ASSERT(size>=other.size);
+
+    if (NULL==other.base)
+        return;
+    
+    uint8_t *newbase = new uint8_t[offset+size];
+    memset(newbase, 0, offset+size);
+    if (base)
+        memcpy(newbase+offset, (uint8_t*)base+offset, oldsize);
+    memcpy(newbase+offset+(other.va-va), (uint8_t*)other.base+other.offset, other.size);
+
+    if (1==*anonymous)
+        delete[] (uint8_t*)base;
+    base = newbase;
+    *anonymous = 1;
 }
 
-void
-MemoryMap::insert(SgAsmGenericSection *section)
+bool
+MemoryMap::MapElement::merge(const MapElement &other)
 {
-    SgAsmGenericHeader *header = section->get_header();
-    rose_addr_t base_va = header->get_base_va();
-    if (!section->is_mapped() || 0==section->get_size())
-        return;
-    rose_addr_t va = base_va + section->get_mapped_rva();
+    size_t oldsize = size;
+    if (va+size < other.va || va > other.va+other.size) {
+        /* Other element is left or right of this one and not contiguous with it. */
+        return false;
+    } else if (other.va >= va && other.va+other.size <= va+size) {
+        /* Other element is contained within (or congruent to) this element. */
+        if (!consistent(other))
+            throw Inconsistent(NULL, *this, other);
+    } else if (va >= other.va && va+size <= other.va+other.size) {
+        /* Other element encloses this element. */
+        if (!consistent(other))
+            throw Inconsistent(NULL, *this, other);
+        offset = other.offset;
+        va = other.va;
+        base = other.base;
+        size = other.size;
+    } else if (other.va + other.size == va) {
+        /* Other element is left contiguous with this element. */
+        if (!consistent(other))
+            return false; /*no exception since they don't overlap*/
+        size += other.size;
+        va = other.va;
+        base = other.base;
+        offset = other.offset;
+    } else if (va + size == other.va) {
+        /* Other element is right contiguous with this element. */
+        if (!consistent(other))
+            return false; /*no exception since they don't overlap*/
+        size += other.size;
+    } else if (other.va < va) {
+        /* Other element overlaps left part of this element. */
+        if (!consistent(other))
+            throw Inconsistent(NULL, *this, other);
+        size += va - other.va;
+        va = other.va;
+        base = other.base;
+        offset = other.offset;
+    } else {
+        /* Other element overlaps right part of this element. */
+        if (!consistent(other))
+            throw Inconsistent(NULL, *this, other);
+        size = (other.va + other.size) - va;
+    }
 
-#if 0 /*DEBUGGING*/
-    fprintf(stderr, "MemoryMap::insert(section [%d] \"%s\" at rva 0x%08"PRIx64"-0x%08"PRIx64")\n",
-            section->get_id(), section->get_name()->c_str(), va, va+section->get_mapped_size());
-#endif
+    /* Adjust backing store for anonymous elements. This is necessary because two anonymous elements are consistent if they
+     * are adjacent or overlap, even if their base addresses are different or their offsets are inconsistent. By merging
+     * anonymous elements we can reduce the number of memory allocations that are necessary. */
+    if (is_anonymous())
+        merge_anonymous(other, oldsize);
 
-    if (section->get_mapped_rva()==0 && section->get_rose_mapped_rva()>0)
-        va = base_va + section->get_rose_mapped_rva();
-    MapElement add(va, section->get_size(), section->get_offset());
-
-    insert(add);
+    return true;
 }
 
 void
@@ -62,88 +116,30 @@ MemoryMap::insert(MapElement add)
     if (add.size==0)
         return;
 
-    /* Remove existing elements that are contiguous with or overlap with the new element, extending the new element to cover
-     * the removed element. We also check the consistency of the mapping: one virtual address cannot be mapped to two or more
-     * file locations. */
-    std::vector<MapElement>::iterator i=elements.begin();
-    while (i!=elements.end()) {
-        MapElement &old = *i;
-        if (old.va+old.size < add.va || old.va > add.va+add.size) {
-            /* Existing element is left or right of new one and not contiguous with it. */
-            ++i;
-        } else if (add.va >= old.va && add.va+add.size <= old.va+old.size) {
-            /* New element is contained within (or congruent to) an existing element. */
-            if (!consistent(add, old))
-                throw Inconsistent(this, add, old); /*note, "this" might have already been modified*/
-            return;
-        } else if (old.va >= add.va && old.va+old.size <= add.va+add.size) {
-            /* Existing element is contained within the new element. */
-            if (!consistent(old, add))
-                throw Inconsistent(this, add, old); /*note, "this" might have already been modified*/
-            elements.erase(i);
-        } else if (add.va+add.size == old.va) {
-            /* New element is left contiguous with existing element. */
-            if (consistent(old, add)) {
-                add.size += old.size;
+    try {
+        /* Remove existing elements that are contiguous with or overlap with the new element, extending the new element to cover
+         * the removed element. We also check the consistency of the mapping and throw an exception if the new element overlaps
+         * inconsistently with an existing element. */
+        std::vector<MapElement>::iterator i=elements.begin();
+        while (i!=elements.end()) {
+            MapElement &old = *i;
+            if (add.merge(old)) {
                 elements.erase(i);
             } else {
                 ++i;
             }
-        } else if (old.va+old.size == add.va) {
-            /* New element is right contiguous with existing element. */
-            if (consistent(add, old)) {
-                add.size += old.size;
-                add.va = old.va;
-                add.offset = old.offset;
-                elements.erase(i);
-            } else {
-                ++i;
-            }
-        } else if (add.va < old.va) {
-            /* New element overlaps left part of existing element. */
-            if (!consistent(old, add))
-                throw Inconsistent(this, add, old); /*note, "this" might have already been modified*/
-            add.size += old.va - add.va;
-            add.va = old.va;
-            add.offset = old.offset;
-            elements.erase(i);
-        } else {
-            /* New element overlaps right part of existing element. */
-            if (!consistent(add, old))
-                throw Inconsistent(this, add, old); /*note, "this" might have already been modified*/
-            add.size = add.va+add.size - old.va;
-            add.va = old.va;
-            add.offset = old.offset;
-            elements.erase(i);
         }
+
+        /* Insert the new element */
+        assert(NULL==find(add.va));
+        elements.push_back(add);
+        sorted = false;
+    } catch (Exception &e) {
+        e.map = this;
+        throw e;
     }
-
-    /* Insert the new element */
-    elements.push_back(add);
-    sorted = false;
 }
-
-void
-MemoryMap::erase(SgAsmGenericSection *section)
-{
-    SgAsmGenericHeader *header = section->get_header();
-    rose_addr_t base_va = header->get_base_va();
-
-    if (!section->is_mapped() || 0==section->get_size())
-        return;
-    rose_addr_t va = base_va + section->get_mapped_rva();
-
-#if 0 /*DEBUGGING*/
-    fprintf(stderr, "MemoryMap::erase(section [%d] \"%s\" at va 0x%08"PRIx64"-0x%08"PRIx64")\n",
-            section->get_id(), section->get_name()->c_str(), va, va+section->get_mapped_size());
-#endif
-
-    if (section->get_mapped_rva()==0 && section->get_rose_mapped_rva()>0)
-        va = base_va + section->get_rose_mapped_rva();
-    MapElement me(va, section->get_size(), section->get_offset());
-
-    erase(me);
-}
+    
 
 void
 MemoryMap::erase(MapElement me)
@@ -151,39 +147,43 @@ MemoryMap::erase(MapElement me)
     if (me.size==0)
         return;
 
-    /* Remove existing elements that overlap with the erasure area, reducing their size to the part that doesn't overlap, and
-     * then add the non-overlapping parts back at the end. */
-    std::vector<MapElement>::iterator i=elements.begin();
-    std::vector<MapElement> saved;
-    while (i!=elements.end()) {
-        MapElement &old = *i;
-        if (me.va+me.size <= old.va || old.va+old.size <= me.va) {
-            /* Non overlapping */
-            ++i;
-            continue;
-        }
+    try {
+        /* Remove existing elements that overlap with the erasure area, reducing their size to the part that doesn't overlap, and
+         * then add the non-overlapping parts back at the end. */
+        std::vector<MapElement>::iterator i=elements.begin();
+        std::vector<MapElement> saved;
+        while (i!=elements.end()) {
+            MapElement &old = *i;
+            if (me.va+me.size <= old.va || old.va+old.size <= me.va) {
+                /* Non overlapping */
+                ++i;
+                continue;
+            }
 
-        if (me.va > old.va) {
-            /* Erasure begins right of existing element. */
-            MapElement tosave = old;
-            tosave.size = me.va-old.va;
-            saved.push_back(tosave);
-        }
-        if (me.va+me.size < old.va+old.size) {
-            /* Erasure ends left of existing element. */
-            MapElement tosave = old;
-            tosave.va = me.va+me.size;
-            tosave.size = (old.va+old.size) - (me.va+me.size);
-            if (!tosave.anonymous)
+            if (me.va > old.va) {
+                /* Erasure begins right of existing element. */
+                MapElement tosave = old;
+                tosave.size = me.va-old.va;
+                saved.push_back(tosave);
+            }
+            if (me.va+me.size < old.va+old.size) {
+                /* Erasure ends left of existing element. */
+                MapElement tosave = old;
+                tosave.va = me.va+me.size;
+                tosave.size = (old.va+old.size) - (me.va+me.size);
                 tosave.offset += (me.va+me.size) - old.va;
-            saved.push_back(tosave);
+                saved.push_back(tosave);
+            }
+            elements.erase(i);
         }
-        elements.erase(i);
-    }
 
-    /* Now add saved elements back in. */
-    for (i=saved.begin(); i!=saved.end(); ++i)
-        insert(*i);
+        /* Now add saved elements back in. */
+        for (i=saved.begin(); i!=saved.end(); ++i)
+            insert(*i);
+    } catch(Exception &e) {
+        e.map = this;
+        throw e;
+    }
 }
 
 const MemoryMap::MapElement *
@@ -209,6 +209,33 @@ MemoryMap::find(rose_addr_t va) const
     return NULL;
 }
 
+rose_addr_t
+MemoryMap::find_free(rose_addr_t start_va, size_t size, rose_addr_t alignment) const
+{
+    if (!sorted) {
+        sort(elements.begin(), elements.end());
+        sorted = true;
+    }
+
+    start_va = ALIGN_UP(start_va, alignment);
+    for (size_t i=0; i<elements.size(); i++) {
+        const MapElement &me = elements[i];
+        if (me.va + me.size <= start_va)
+            continue;
+        if (me.va > start_va &&  me.va - start_va >= size)
+            break;
+        rose_addr_t x = start_va;
+        start_va = ALIGN_UP(me.va + me.size, alignment);
+        if (start_va<x)
+            throw NoFreeSpace(this, size);
+    }
+
+    if (start_va+size < start_va)
+        throw NoFreeSpace(this, size);
+
+    return start_va;
+}
+
 const std::vector<MemoryMap::MapElement> &
 MemoryMap::get_elements() const {
     if (!sorted) {
@@ -218,8 +245,19 @@ MemoryMap::get_elements() const {
     return elements;
 }
 
+void
+MemoryMap::prune(bool(*predicate)(const MapElement&))
+{
+    std::vector<MapElement> keep;
+    for (size_t i=0; i<elements.size(); i++) {
+        if (!predicate(elements[i]))
+            keep.push_back(elements[i]);
+    }
+    elements = keep;
+}
+
 size_t
-MemoryMap::read(unsigned char *dst_buf, const unsigned char *src_buf, rose_addr_t start_va, size_t desired) const
+MemoryMap::read(void *dst_buf, rose_addr_t start_va, size_t desired) const
 {
     size_t ncopied = 0;
     while (ncopied < desired) {
@@ -231,14 +269,37 @@ MemoryMap::read(unsigned char *dst_buf, const unsigned char *src_buf, rose_addr_
         ROSE_ASSERT(m_offset < m->get_size());
         size_t n = std::min(desired-ncopied, m->get_size()-m_offset);
         if (m->is_anonymous()) {
-            memset(dst_buf+ncopied, 0, n);
+            memset((uint8_t*)dst_buf+ncopied, 0, n);
         } else {
-            memcpy(dst_buf+ncopied, src_buf+m->get_offset()+m_offset, n);
+            memcpy((uint8_t*)dst_buf+ncopied, (uint8_t*)m->get_base()+m->get_offset()+m_offset, n);
         }
         ncopied += n;
     }
 
-    memset(dst_buf+ncopied, 0, desired-ncopied);
+    memset((uint8_t*)dst_buf+ncopied, 0, desired-ncopied);
+    return ncopied;
+}
+
+size_t
+MemoryMap::write(const void *src_buf, rose_addr_t start_va, size_t nbytes) const
+{
+    size_t ncopied = 0;
+    while (ncopied < nbytes) {
+        const MemoryMap::MapElement *m = find(start_va);
+        if (!m || m->is_read_only())
+            break;
+        ROSE_ASSERT(start_va >= m->get_va());
+        size_t m_offset = start_va - m->get_va();
+        ROSE_ASSERT(m_offset < m->get_size());
+        size_t n = std::min(nbytes-ncopied, m->get_size()-m_offset);
+        if (m->is_anonymous() && NULL==m->get_base()) {
+            ROSE_ASSERT(*m->anonymous==0);
+            *(m->anonymous) = 1;
+            m->base = new uint8_t[m->get_size()];
+        }
+        memcpy((uint8_t*)m->get_base()+m->get_offset()+m_offset, (uint8_t*)src_buf+ncopied, n);
+        ncopied += n;
+    }
     return ncopied;
 }
 
@@ -249,13 +310,40 @@ MemoryMap::dump(FILE *f, const char *prefix) const
         sort(elements.begin(), elements.end());
         sorted = true;
     }
+
+    if (0==elements.size())
+        fprintf(f, "%sempty\n", prefix);
+
+    std::map<void*,std::string> bases;
     for (size_t i=0; i<elements.size(); i++) {
-        fprintf(f, "%sva 0x%08"PRIx64" + 0x%08zu = 0x%08"PRIx64,
-                prefix, elements[i].get_va(), elements[i].get_size(), elements[i].get_va()+elements[i].get_size());
-        if (elements[i].is_anonymous()) {
-            fprintf(f, " anonymous\n");
+        const MapElement &me = elements[i];
+        std::string basename;
+        std::map<void*,std::string>::iterator found = bases.find(me.get_base());
+
+        /* Convert the base address to a unique name like "aaa", "aab", "aac", etc. This makes it easier to compare outputs
+         * from different runs since the base addresses are likely to be different between runs but the names aren't. */   
+        if (me.is_anonymous()) {
+            basename = "anonymous";
+        } else if (NULL==me.get_base()) {
+            basename = "base null";
+        } else if (found==bases.end()) {
+            size_t j = bases.size();
+            ROSE_ASSERT(j<26*26*26);
+            basename = "base ";
+            basename += 'a'+(j/(26*26))%26;
+            basename += 'a'+(j/26)%26;
+            basename += 'a'+(j%26);
+            bases.insert(std::make_pair(me.get_base(), basename));
         } else {
-            fprintf(f, " at offset 0x%08"PRIx64"\n", elements[i].get_offset());
+            basename = found->second;
         }
+
+
+        fprintf(f, "%sva 0x%08"PRIx64" + 0x%08zx = 0x%08"PRIx64" %c%c%c at %-9s + 0x%08"PRIx64"\n",
+                prefix, me.get_va(), me.get_size(), me.get_va()+me.get_size(),
+                0==(me.get_mapperms()&PROT_READ) ?'-':'r',
+                0==(me.get_mapperms()&PROT_WRITE)?'-':'w',
+                0==(me.get_mapperms()&PROT_EXEC) ?'-':'x',
+                basename.c_str(), elements[i].get_offset());
     }
 }

@@ -345,13 +345,16 @@ Partitioner::mark_func_symbols(SgAsmGenericHeader *fhdr, const Disassembler::Ins
 
         for (size_t j=0; j<symbols.size(); j++) {
             SgAsmGenericSymbol *symbol = symbols[j];
-            if (symbol->get_def_state()==SgAsmGenericSymbol::SYM_DEFINED &&
-                symbol->get_type()==SgAsmGenericSymbol::SYM_FUNC &&
-                insns.find(symbol->get_value())!=insns.end()) {
+            if (symbol->get_def_state()==SgAsmGenericSymbol::SYM_DEFINED && symbol->get_type()==SgAsmGenericSymbol::SYM_DEFINED) {
                 rose_addr_t value = symbol->get_value();
-                func_starts[value].reason |= SgAsmFunctionDeclaration::FUNC_SYMBOL;
-                if (func_starts[value].name=="")
-                    func_starts[value].name = symbol->get_name()->get_string();
+                SgAsmGenericSection *section = symbol->get_bound();
+                if (section && symbol->get_binding()==SgAsmGenericSymbol::SYM_WEAK)
+                    value += section->get_header()->get_base_va() + section->get_mapped_actual_rva();
+                if (insns.find(symbol->get_value())!=insns.end()) {
+                    func_starts[value].reason |= SgAsmFunctionDeclaration::FUNC_SYMBOL;
+                    if (func_starts[value].name=="")
+                        func_starts[value].name = symbol->get_name()->get_string();
+                }
             }
         }
     }
@@ -451,8 +454,8 @@ Partitioner::name_plt_entries(SgAsmGenericHeader *fhdr, const Disassembler::Inst
         if (fi->second.name!="")
             continue; /* function already has a name */
 
-        if (func_addr <  elf->get_base_va() + plt->get_mapped_rva() &&
-            func_addr >= elf->get_base_va() + plt->get_mapped_rva() + plt->get_mapped_size())
+        if (func_addr <  elf->get_base_va() + plt->get_mapped_preferred_rva() &&
+            func_addr >= elf->get_base_va() + plt->get_mapped_preferred_rva() + plt->get_mapped_size())
             continue; /* function is not in the .plt section */
 
         /* Sometimes the first instruction of a basic block cannot be disassembled and the basic block will have a different
@@ -467,8 +470,8 @@ Partitioner::name_plt_entries(SgAsmGenericHeader *fhdr, const Disassembler::Inst
         SgAsmx86Instruction *insn = isSgAsmx86Instruction(ii->second);
         rose_addr_t gotplt_va = get_indirection_addr(insn);
 
-        if (gotplt_va <  elf->get_base_va() + gotplt->get_mapped_rva() ||
-            gotplt_va >= elf->get_base_va() + gotplt->get_mapped_rva() + gotplt->get_mapped_size())
+        if (gotplt_va <  elf->get_base_va() + gotplt->get_mapped_preferred_rva() ||
+            gotplt_va >= elf->get_base_va() + gotplt->get_mapped_preferred_rva() + gotplt->get_mapped_size())
             continue; /* PLT entry doesn't dereference a value in the .got.plt section */
         
         /* Find the relocation entry whose offset is the gotplt_rva and use that entries symbol for the function name. */

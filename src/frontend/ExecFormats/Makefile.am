@@ -21,10 +21,10 @@ libroseExecFormats_la_DEPENDENCIES =
 libroseExecFormats_la_SOURCES = \
    $(INTEL_PIN_SUPPORT) \
    ExecGeneric.C ExecDOS.C ExecELF.C ExecPE.C ExecNE.C ExecLE.C \
-   Loader.C LoaderELF.C LoaderPE.C \
+   Loader.C LoaderELF.C LoaderELFObj.C LoaderPE.C \
    MemoryMap.C
 
-include_HEADERS = IntelPinSupport.h Loader.h LoaderELF.h LoaderPE.h MemoryMap.h
+include_HEADERS = IntelPinSupport.h Loader.h LoaderELF.h LoaderELFObj.h LoaderPE.h MemoryMap.h
 
 # Make sure that this is distributed even if ROSE was not configured using: -with-IntelPin=<path>
 EXTRA_DIST = IntelPinSupport.C

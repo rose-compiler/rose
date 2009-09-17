@@ -447,9 +447,12 @@ LibraryIdentification::generateOpCodeVector(SgAsmInterpretation* asmInterpretati
        /* This code assumes that the entire sequence of instructions is present in a single section, or a group of sections that
         * are mapped in such a way that that file layout mirrors virtual memory layout. This isn't always the case. In fact, the
         * disassembler is now able to disassemble instructions that even span two sections such that the first bytes of the
-        * instruction are at one file offset and the last few bytes are at a wildly different offset. [RPM 2009-06-23] */
-          startOffset = startAddress - section->get_mapped_rva() + section->get_offset();
-          endOffset   = endAddress - section->get_mapped_rva() + section->get_offset();
+        * instruction are at one file offset and the last few bytes are at a wildly different offset. [RPM 2009-06-23]
+        *
+        * This code also assumes that the virtual address specified in the binary file is the same address that ROSE
+        * ultimately uses when it simulates the mapping and relocation fixups performed by the loader. [RPM 2009-09-09] */
+          startOffset = startAddress - section->get_mapped_preferred_rva() + section->get_offset();
+          endOffset   = endAddress - section->get_mapped_preferred_rva() + section->get_offset();
 
           printf ("---- function %p addresses: (start = %p, end = %p) file offsets: (start = %zu, end = %zu) \n",node,(void*)startAddress,(void*)endAddress,startOffset,endOffset);
 

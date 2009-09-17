@@ -146,7 +146,7 @@ void BinQAbstract::createItem(SgNode* file, std::vector<Item*>& itemsFile,std::v
       }  else if (isSgAsmElfSection(*it)) {
 	SgAsmElfSection* sec = isSgAsmElfSection(*it);
 	std::string nam = "size: " + RoseBin_support::ToString(sec->get_size());
-	item = new Item(sec->get_mapped_rva(),sec,2,row,length,sec->get_size(),pos,nam,0);
+	item = new Item(sec->get_mapped_preferred_rva(),sec,2,row,length,sec->get_size(),pos,nam,0);
       } else if (isSgAsmElfSectionTableEntry(*it)) {
 	SgAsmElfSectionTableEntry* sec = isSgAsmElfSectionTableEntry(*it);
 	std::string nam = "size: " + RoseBin_support::ToString(sec->get_sh_size());

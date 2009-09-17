@@ -43,7 +43,7 @@ main()
     SgAsmPESection *s1 = new SgAsmPESection(fhdr);
     s1->get_name()->set_string("test section s1"); /*name will be truncated since PE allows only eight characters*/
     s1->set_size(512);
-    s1->set_mapped_rva(0x4000);
+    s1->set_mapped_preferred_rva(0x4000);
     s1->set_mapped_size(s1->get_size());
     s1->set_mapped_rperm(true);
     s1->set_mapped_wperm(true);

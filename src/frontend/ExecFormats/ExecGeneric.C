@@ -20,9 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Relative Virtual Addresses (RVA)
 // An RVA is always relative to the base virtual address (base_va) defined in an executable file header.
-// A rose_rva_t is optionally tied to an SgAsmGenericSection so that if the mapped address of the section is modified then
-// the RVA stored in the rose_rva_t object is also adjusted.  The section-relative offset is always treated as an unsigned
-// quantity, but negative offsets can be accommodated via integer overflow.
+// A rose_rva_t is optionally tied to an SgAsmGenericSection so that if the preferred mapped address of the section is
+// modified then the RVA stored in the rose_rva_t object is also adjusted.  The section-relative offset is always treated as
+// an unsigned quantity, but negative offsets can be accommodated via integer overflow.
 //
 // Be careful about adjusting the RVA (the address or section) using ROSETTA's accessors.
 //     symbol.p_address.set_section(section);          // this works
@@ -37,7 +37,7 @@ rose_addr_t
 rose_rva_t::get_rva() const 
 {
     rose_addr_t rva = addr;
-    if (section) rva += section->get_mapped_rva();
+    if (section) rva += section->get_mapped_preferred_rva();
     return rva;
 }
 
@@ -46,7 +46,7 @@ rose_rva_t::set_rva(rose_addr_t rva)
 {
     addr = rva;
     if (section)
-        addr -= section->get_mapped_rva();
+        addr -= section->get_mapped_preferred_rva();
     return *this;
 }
 
@@ -60,11 +60,11 @@ rose_rva_t&
 rose_rva_t::set_section(SgAsmGenericSection *new_section)
 {
     if (section) {
-        addr += section->get_mapped_rva();
+        addr += section->get_mapped_preferred_rva();
         section = NULL;
     }
     if (new_section) {
-        addr -= new_section->get_mapped_rva();
+        addr -= new_section->get_mapped_preferred_rva();
     }
     section = new_section;
     return *this;
@@ -92,8 +92,8 @@ rose_rva_t::get_rel(SgAsmGenericSection *s)
 {
     ROSE_ASSERT(s!=NULL);
     ROSE_ASSERT(s->is_mapped());
-    ROSE_ASSERT(get_rva() >= s->get_mapped_rva());
-    return get_rva() - s->get_mapped_rva();
+    ROSE_ASSERT(get_rva() >= s->get_mapped_preferred_rva());
+    return get_rva() - s->get_mapped_preferred_rva();
 }
 
 /* Convert to a string representation */
@@ -714,7 +714,7 @@ SgAsmGenericFile::parse(std::string fileName)
     }
 
     /* Map the file into memory so we don't have to read it explicitly */
-    unsigned char *mapped = (unsigned char*)mmap(NULL, p_sb.st_size, PROT_READ, MAP_PRIVATE, p_fd, 0);
+    unsigned char *mapped = (unsigned char*)mmap(NULL, p_sb.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE, p_fd, 0);
     if (!mapped) {
         std::string mesg = "Could not mmap binary file";
         throw FormatError(mesg + ": " + strerror(errno));
@@ -822,16 +822,12 @@ SgAsmGenericFile::read_content(addr_t offset, void *dst_buf, addr_t size, bool s
 }
 
 /** Reads data from a file. Reads up to @p size bytes of data starting at the specified (absolute) virtual address. The @p map
- *  specifies how virtual addresses are mapped to file offsets. If @p map is the null pointer then the map already associated
- *  with this file is used (the map provided by the loader memory mapping emulation). As bytes are read, if we encounter a
- *  virtual address that is not mapped we stop reading and do one of two things: if @p strict is set then a
- *  MemoryMap::NotMapped exception is thrown; otherwise the rest of the @p dst_buf is zero filled and the number of bytes
- *  read (not filled) is returned. */
+ *  specifies how virtual addresses are mapped to file offsets.  As bytes are read, if we encounter a virtual address that is
+ *  not mapped we stop reading and do one of two things: if @p strict is set then a MemoryMap::NotMapped exception is thrown;
+ *  otherwise the rest of the @p dst_buf is zero filled and the number of bytes read (not filled) is returned. */
 size_t
 SgAsmGenericFile::read_content(const MemoryMap *map, addr_t va, void *dst_buf, addr_t size, bool strict)
 {
-    if (!map)
-        map = get_loader_map();
     ROSE_ASSERT(map!=NULL);
 
     /* Note: This is the same algorithm as used by MemoryMap::read() except we do it here so that we have an opportunity
@@ -1152,7 +1148,7 @@ SgAsmGenericFile::get_section_by_offset(addr_t offset, addr_t size, size_t *nfou
 }
 
 /* Returns all sections that are mapped to include the specified relative virtual address across all headers, including
- * headers and holes. */
+ * headers and holes. This uses the preferred mapping of the section rather than the actual mapping. */
 SgAsmGenericSectionPtrList
 SgAsmGenericFile::get_sections_by_rva(addr_t rva) const
 {
@@ -1161,14 +1157,14 @@ SgAsmGenericFile::get_sections_by_rva(addr_t rva) const
     /* Holes (probably not mapped anyway) */
     for (SgAsmGenericSectionPtrList::iterator i=p_holes->get_sections().begin(); i!=p_holes->get_sections().end(); ++i) {
         if ((*i)->is_mapped() &&
-            rva >= (*i)->get_mapped_rva() && rva < (*i)->get_mapped_rva() + (*i)->get_mapped_size())
+            rva >= (*i)->get_mapped_preferred_rva() && rva < (*i)->get_mapped_preferred_rva() + (*i)->get_mapped_size())
             retval.push_back(*i);
     }
 
     /* Headers and their sections */
     for (SgAsmGenericHeaderPtrList::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i) {
         if ((*i)->is_mapped() &&
-            rva >= (*i)->get_mapped_rva() && rva < (*i)->get_mapped_rva() + (*i)->get_mapped_size())
+            rva >= (*i)->get_mapped_preferred_rva() && rva < (*i)->get_mapped_preferred_rva() + (*i)->get_mapped_size())
             retval.push_back(*i);
         const SgAsmGenericSectionPtrList &recurse = (*i)->get_sections_by_rva(rva);
         retval.insert(retval.end(), recurse.begin(), recurse.end());
@@ -1187,7 +1183,7 @@ SgAsmGenericFile::get_section_by_rva(addr_t rva, size_t *nfound/*optional*/) con
 }
 
 /* Returns all sections that are mapped to include the specified virtual address across all headers, including headers and
- * holes. */
+ * holes. This uses the preferred mapping rather than the actual mapping. */
 SgAsmGenericSectionPtrList
 SgAsmGenericFile::get_sections_by_va(addr_t va) const
 {
@@ -1197,7 +1193,7 @@ SgAsmGenericFile::get_sections_by_va(addr_t va) const
     for (SgAsmGenericSectionPtrList::iterator i=p_holes->get_sections().begin(); i!=p_holes->get_sections().end(); ++i) {
         addr_t rva = va; /* Holes don't belong to any header and therefore have a zero base_va */
         if ((*i)->is_mapped() &&
-            rva >= (*i)->get_mapped_rva() && rva < (*i)->get_mapped_rva() + (*i)->get_mapped_size())
+            rva >= (*i)->get_mapped_preferred_rva() && rva < (*i)->get_mapped_preferred_rva() + (*i)->get_mapped_size())
             retval.push_back(*i);
     }
 
@@ -1206,7 +1202,7 @@ SgAsmGenericFile::get_sections_by_va(addr_t va) const
         /* Headers probably aren't mapped, but just in case... */
         addr_t rva = va; /* Headers don't belong to any header and therefore have a zero base_va */
         if ((*i)->is_mapped() &&
-            rva >= (*i)->get_mapped_rva() && rva < (*i)->get_mapped_rva() + (*i)->get_mapped_size())
+            rva >= (*i)->get_mapped_preferred_rva() && rva < (*i)->get_mapped_preferred_rva() + (*i)->get_mapped_size())
             retval.push_back(*i);
 
         /* Header sections */
@@ -1356,7 +1352,8 @@ SgAsmGenericFile::get_next_section_offset(addr_t offset)
     return found;
 }
 
-/* Shifts (to a higher offset) and/or enlarges the specified section, S, taking all other sections into account.
+/* Shifts (to a higher offset) and/or enlarges the specified section, S, taking all other sections into account. The positions
+ * of sections are based on their preferred virtual mappings rather than the actual mapping.
  *
  * The neighborhood(S) is S itself and the set of all sections that overlap or are adjacent to the neighborhood of S,
  * recursively.
@@ -1389,7 +1386,7 @@ SgAsmGenericFile::get_next_section_offset(addr_t offset)
  * offsets and sizes in a consistent manner.
  *
  * To change the address and/or size of S without regard to other sections in the same file, use set_offset() and set_size()
- * (for file address space) or set_mapped_rva() and set_mapped_size() (for memory address space).
+ * (for file address space) or set_mapped_preferred_rva() and set_mapped_size() (for memory address space).
  */
 void
 SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, AddressSpace space, Elasticity elasticity)
@@ -1454,7 +1451,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
                 ep = all[i]->get_file_extent();
             } else {
                 ROSE_ASSERT(all[i]->is_mapped());
-                ep = all[i]->get_mapped_extent();
+                ep = all[i]->get_mapped_preferred_extent();
             }
             fprintf(stderr, "%s        0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64" [%d] \"%s\"\n",
                     p, ep.first, ep.second, ep.first+ep.second, all[i]->get_id(), all[i]->get_name()->c_str());
@@ -1470,7 +1467,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
         } else if (!memspace || !s->is_mapped()) {
             return; /*nothing to do*/
         } else {
-            sp = s->get_mapped_extent();
+            sp = s->get_mapped_preferred_extent();
         }
     
         /* Build address map */
@@ -1479,7 +1476,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
                 amap.insert(all[i]->get_file_extent());
             } else {
                 ROSE_ASSERT(all[i]->is_mapped());
-                amap.insert(all[i]->get_mapped_extent());
+                amap.insert(all[i]->get_mapped_preferred_extent());
             }
         }
         if (debug) {
@@ -1518,7 +1515,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
             } else if (!a->is_mapped()) {
                 continue;
             } else {
-                ap = a->get_mapped_extent();
+                ap = a->get_mapped_preferred_extent();
             }
             switch (ExtentMap::category(ap, nhs)) {
               case 'L':
@@ -1552,7 +1549,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
             fprintf(stderr, "%s    Neighbors:\n", p);
             for (size_t i=0; i<neighbors.size(); i++) {
                 SgAsmGenericSection *a = neighbors[i];
-                ExtentPair ap = filespace ? a->get_file_extent() : a->get_mapped_extent();
+                ExtentPair ap = filespace ? a->get_file_extent() : a->get_mapped_preferred_extent();
                 addr_t align = filespace ? a->get_file_alignment() : a->get_mapped_alignment();
                 char cat = ExtentMap::category(ap, sp);
                 fprintf(stderr, "%s        %c %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
@@ -1567,7 +1564,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
             if (villagers.size()>0) fprintf(stderr, "%s    Villagers:\n", p);
             for (size_t i=0; i<villagers.size(); i++) {
                 SgAsmGenericSection *a = villagers[i];
-                ExtentPair ap = filespace ? a->get_file_extent() : a->get_mapped_extent();
+                ExtentPair ap = filespace ? a->get_file_extent() : a->get_mapped_preferred_extent();
                 addr_t align = filespace ? a->get_file_alignment() : a->get_mapped_alignment();
                 fprintf(stderr, "%s        %c %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
                         p, ExtentMap::category(ap, sp), /*cat should always be R*/
@@ -1581,7 +1578,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
         align = 1;
         for (size_t i=0; i<neighbors.size(); i++) {
             SgAsmGenericSection *a = neighbors[i];
-            ExtentPair ap = filespace ? a->get_file_extent() : a->get_mapped_extent();
+            ExtentPair ap = filespace ? a->get_file_extent() : a->get_mapped_preferred_extent();
             if (strchr("RICE", ExtentMap::category(ap, sp))) {
                 addr_t x = filespace ? a->get_file_alignment() : a->get_mapped_alignment();
                 align = boost::math::lcm(align, x?x:1);
@@ -1602,7 +1599,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
         ExtentPair hp(0, 0);
         for (size_t i=0; i<villagers.size(); i++) {
             SgAsmGenericSection *a = villagers[i];
-            ExtentPair ap = filespace ? a->get_file_extent() : a->get_mapped_extent();
+            ExtentPair ap = filespace ? a->get_file_extent() : a->get_mapped_preferred_extent();
             if (!after_hole || ap.first<hp.first) {
                 after_hole = a;
                 hp = ap;
@@ -1635,7 +1632,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
     bool resized_mem = false;
     for (size_t i=0; i<neighbors.size(); i++) {
         SgAsmGenericSection *a = neighbors[i];
-        ExtentPair ap = filespace ? a->get_file_extent() : a->get_mapped_extent();
+        ExtentPair ap = filespace ? a->get_file_extent() : a->get_mapped_preferred_extent();
         switch (ExtentMap::category(ap, sp)) {
           case 'L':
             break;
@@ -1643,7 +1640,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
             if (filespace) {
                 a->set_offset(a->get_offset()+aligned_sasn);
             } else {
-                a->set_mapped_rva(a->get_mapped_rva()+aligned_sasn);
+                a->set_mapped_preferred_rva(a->get_mapped_preferred_rva()+aligned_sasn);
             }
             break;
           case 'C': /*including S itself*/
@@ -1656,7 +1653,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
                     resized_mem = true;
                 }
             } else {
-                a->set_mapped_rva(a->get_mapped_rva()+aligned_sa);
+                a->set_mapped_preferred_rva(a->get_mapped_preferred_rva()+aligned_sa);
                 a->set_mapped_size(a->get_mapped_size()+sn);
             }
             break;
@@ -1666,7 +1663,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
                     a->set_offset(a->get_offset()+aligned_sa);
                     a->set_size(a->get_size()+sn);
                 } else {
-                    a->set_mapped_rva(a->get_mapped_rva()+aligned_sa);
+                    a->set_mapped_preferred_rva(a->get_mapped_preferred_rva()+aligned_sa);
                     a->set_mapped_size(a->get_mapped_size()+sn);
                 }
             } else {
@@ -1685,7 +1682,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
             if (filespace) {
                 a->set_offset(a->get_offset()+aligned_sa);
             } else {
-                a->set_mapped_rva(a->get_mapped_rva()+aligned_sa);
+                a->set_mapped_preferred_rva(a->get_mapped_preferred_rva()+aligned_sa);
             }
             break;
           case 'B':
@@ -1707,7 +1704,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
             addr_t x = filespace ? a->get_file_alignment() : a->get_mapped_alignment();
             fprintf(stderr, "%s   %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
                     p, 0==ap.first%(x?x:1)?' ':'!', ap.first, ap.second, ap.first+ap.second);
-            ExtentPair newap = filespace ? a->get_file_extent() : a->get_mapped_extent();
+            ExtentPair newap = filespace ? a->get_file_extent() : a->get_mapped_preferred_extent();
             fprintf(stderr, " -> %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
                     0==newap.first%(x?x:1)?' ':'!', newap.first, newap.second, newap.first+newap.second);
             fprintf(stderr, " [%2d] \"%s\"\n", a->get_id(), a->get_name()->c_str());
@@ -1785,9 +1782,10 @@ SgAsmGenericFile::dump(FILE *f) const
         /* Mapped addresses */
         if (section->is_mapped()) {
             fprintf(f, " %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
-                    section->get_mapped_alignment()==0 || section->get_mapped_rva()%section->get_mapped_alignment()==0?' ':'!',
-                    section->get_base_va(), section->get_mapped_rva(), section->get_mapped_size(),
-                    section->get_mapped_rva()+section->get_mapped_size());
+                    (section->get_mapped_alignment()==0 ||
+                     section->get_mapped_preferred_rva()%section->get_mapped_alignment()==0?' ':'!'),
+                    section->get_base_va(), section->get_mapped_preferred_rva(), section->get_mapped_size(),
+                    section->get_mapped_preferred_rva()+section->get_mapped_size());
         } else {
             fprintf(f, " %*s", 4*11, "");
         }
@@ -1824,13 +1822,6 @@ SgAsmGenericFile::dump(FILE *f) const
         fputs(" [ztrunc]", f);
     fputc('\n', f);
     fprintf(f, "  --- ---------- ---------- ----------  ---------- ---------- ---------- ---------- ---- --- -----------------\n");
-
-    /* Show the simulated loader memory map */
-    const MemoryMap *map = get_loader_map();
-    if (map) {
-        fprintf(f, "Simulated loader memory map:\n");
-        map->dump(f, "    ");
-    }
 
     /* Show what part of the file has not been referenced */
     ExtentMap holes = get_unreferenced_extents();
@@ -2123,7 +2114,7 @@ SgAsmGenericSection::get_file_extent() const
 bool
 SgAsmGenericSection::is_mapped() const
 {
-    return (get_mapped_rva()!=0 || get_mapped_size()!=0 ||
+    return (get_mapped_preferred_rva()!=0 || get_mapped_size()!=0 ||
             get_mapped_rperm() || get_mapped_wperm() || get_mapped_xperm());
 }
 
@@ -2132,7 +2123,8 @@ void
 SgAsmGenericSection::clear_mapped()
 {
     set_mapped_size(0);
-    set_mapped_rva(0);
+    set_mapped_preferred_rva(0);
+    set_mapped_actual_rva(0);
     set_mapped_rperm(false);
     set_mapped_wperm(false);
     set_mapped_xperm(false);
@@ -2159,29 +2151,29 @@ SgAsmGenericSection::set_mapped_size(addr_t size)
 
 /* Returns relative virtual address w.r.t., base address of header */
 rose_addr_t
-SgAsmGenericSection::get_mapped_rva() const
+SgAsmGenericSection::get_mapped_preferred_rva() const
 {
     ROSE_ASSERT(this != NULL);
-    return p_mapped_rva;
+    return p_mapped_preferred_rva;
 }
 
 /* Moves a mapped section without consideration of other sections that might be mapped. */
 void
-SgAsmGenericSection::set_mapped_rva(addr_t a)
+SgAsmGenericSection::set_mapped_preferred_rva(addr_t a)
 {
     ROSE_ASSERT(this != NULL);
-    if (p_mapped_rva!=a)
+    if (p_mapped_preferred_rva!=a)
         set_isModified(true);
-    p_mapped_rva = a;
+    p_mapped_preferred_rva = a;
 }
 
 /* Returns (non-relative) virtual address if mapped, zero otherwise. */
 rose_addr_t
-SgAsmGenericSection::get_mapped_va()
+SgAsmGenericSection::get_mapped_preferred_va()
 {
     ROSE_ASSERT(this != NULL);
     if (is_mapped())
-        return get_base_va() + get_mapped_rva();
+        return get_base_va() + get_mapped_preferred_rva();
     return 0;
 }
 
@@ -2196,10 +2188,10 @@ SgAsmGenericSection::get_base_va() const
 
 /* Returns the memory extent for a mapped section. If the section is not mapped then offset and size will be zero */
 ExtentPair
-SgAsmGenericSection::get_mapped_extent() const
+SgAsmGenericSection::get_mapped_preferred_extent() const
 {
     ROSE_ASSERT(this != NULL);
-    return ExtentPair(get_mapped_rva(), get_mapped_size());
+    return ExtentPair(get_mapped_preferred_rva(), get_mapped_size());
 }
 
 /** Reads data from a file. Reads up to @p bytes of data beginning at byte @p start_offset from the beginning of the file,
@@ -2642,22 +2634,26 @@ SgAsmGenericSection::unparse_holes(std::ostream &f) const
 //    unparse(f, get_unreferenced_extents());
 }
 
-/* Returns the file offset associated with the relative virtual address of a mapped section. */
+/* Returns the file offset associated with the relative virtual address of a mapped section.
+ *
+ * NOTE: The MemoryMap class is a better interface to this same information. [RPM 2009-09-09] */
 rose_addr_t
 SgAsmGenericSection::get_rva_offset(addr_t rva)
 {
     return get_va_offset(rva + get_base_va());
 }
 
-/* Returns the file offset associated with the virtual address of a mapped section. */
+/* Returns the file offset associated with the virtual address of a mapped section.
+ *
+ * NOTE: The MemoryMap class is a better interface to this same information. [RPM 2009-09-09] */
 rose_addr_t
 SgAsmGenericSection::get_va_offset(addr_t va)
 {
     ROSE_ASSERT(is_mapped());
     ROSE_ASSERT(va >= get_base_va());
     addr_t rva = va - get_base_va();
-    ROSE_ASSERT(rva >= get_mapped_rva());
-    return get_offset() + (rva - get_mapped_rva());
+    ROSE_ASSERT(rva >= get_mapped_preferred_rva());
+    return get_offset() + (rva - get_mapped_preferred_rva());
 }
 
 /* Class method that prints info about offsets into known sections */
@@ -2667,8 +2663,8 @@ SgAsmGenericSection::dump_containing_sections(FILE *f, const std::string &prefix
 {
     for (size_t i=0; i<slist.size(); i++) {
         SgAsmGenericSection *s = slist[i];
-        if (s->is_mapped() && rva>=s->get_mapped_rva() && rva<s->get_mapped_rva()+s->get_mapped_size()) {
-            addr_t offset = rva - s->get_mapped_rva();
+        if (s->is_mapped() && rva>=s->get_mapped_preferred_rva() && rva<s->get_mapped_preferred_rva()+s->get_mapped_size()) {
+            addr_t offset = rva - s->get_mapped_preferred_rva();
             fprintf(f, "%-*s   is 0x%08"PRIx64" (%"PRIu64") bytes into section [%d] \"%s\"\n",
                     DUMP_FIELD_WIDTH, prefix.c_str(), offset, offset, s->get_id(), s->get_name()->c_str());
         }
@@ -2721,13 +2717,13 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %s\n", p, w, "purpose", s);
 
     if (is_mapped()) {
-        fprintf(f, "%s%-*s = rva=0x%08"PRIx64", size=%"PRIu64" bytes\n", p, w, "mapped",  p_mapped_rva, p_mapped_size);
+        fprintf(f, "%s%-*s = rva=0x%08"PRIx64", size=%"PRIu64" bytes\n", p, w, "mapped",  p_mapped_preferred_rva, p_mapped_size);
         if (0==get_mapped_alignment()) {
             fprintf(f, "%s%-*s = not specified\n", p, w, "mapped_alignment");
         } else {
             fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") %s\n", p, w, "mapped_alignment", 
                     get_mapped_alignment(), get_mapped_alignment(),
-                    0==get_mapped_rva()%get_mapped_alignment()?"satisfied":"NOT SATISFIED");
+                    0==get_mapped_preferred_rva()%get_mapped_alignment()?"satisfied":"NOT SATISFIED");
         }
         fprintf(f, "%s%-*s = %c%c%c\n", p, w, "permissions",
                 get_mapped_rperm()?'r':'-', get_mapped_wperm()?'w':'-', get_mapped_xperm()?'x':'-');
@@ -2735,12 +2731,8 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const
         fprintf(f, "%s%-*s = <not mapped>\n",    p, w, "mapped");
     }
 
-    // DQ (2/4/2009): Added variable to support specification of where code is since in object files
-    // sections are marked as non-executable even when they contain code and the disassembler
-    // looks only at if sections (maybe segments) are marked executable (this will change to 
-    // include sections explicit marked as code using this variable).
     fprintf(f, "%s%-*s = %s\n", p, w, "contains_code", get_contains_code()?"true":"false");
-    fprintf(f, "%s%-*s = %"PRIx64" (%"PRIu64") \n", p, w, "rose_mapped_rva", p_rose_mapped_rva,p_rose_mapped_rva);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") \n", p, w, "mapped_actual_rva", p_mapped_actual_rva, p_mapped_actual_rva);
 
     // DQ (8/31/2008): Output the contents if this not derived from (there is likely a 
     // better implementation if the hexdump function was a virtual member function).
@@ -3251,7 +3243,7 @@ SgAsmGenericHeader::get_sections_by_rva(addr_t rva) const
     for (SgAsmGenericSectionPtrList::iterator i = p_sections->get_sections().begin(); i!=p_sections->get_sections().end(); ++i) {
         SgAsmGenericSection *section = *i;
         if (section->is_mapped() &&
-            rva >= section->get_mapped_rva() && rva < section->get_mapped_rva() + section->get_mapped_size()) {
+            rva >= section->get_mapped_preferred_rva() && rva < section->get_mapped_preferred_rva() + section->get_mapped_size()) {
             retval.push_back(section);
         }
     }
@@ -3332,7 +3324,15 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
         }
     }
     fputs("\"\n", f);
-    
+
+    /* Show the simulated loader memory map */
+    const MemoryMap *map = get_loader_map();
+    if (map) {
+        map->dump(f, (std::string(p)+"loader_map: ").c_str());
+    } else {
+        fprintf(f, "%s%-*s = not defined\n", p, w, "loader_map");
+    }
+
     /* Base virtual address and entry addresses */
     fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "base_va", get_base_va(), get_base_va());
     fprintf(f, "%s%-*s = %zu entry points\n", p, w, "entry_rva.size", p_entry_rvas.size());
@@ -4189,5 +4189,34 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
      * cause the unparser to not write zero bytes to the end of the file. */
     ef->set_truncate_zeros(ef->get_current_size()>ef->get_orig_size());
 
+    /* If any section is the target of a function symbol then mark that section as containing code even if that section is not
+     * memory mapped with execute permission. */
+    struct: public AstSimpleProcessing {
+        void visit(SgNode *node) {
+            SgAsmGenericSymbol *symbol = isSgAsmGenericSymbol(node);
+            if (symbol && symbol->get_type()==SgAsmGenericSymbol::SYM_FUNC) {
+               SgAsmGenericSection *section = symbol->get_bound();
+               if (section)
+                   section->set_contains_code(true);
+            }
+        }
+    } t1;
+    t1.traverse(ef, preorder);
+    
+    /* Simulate the memory map that would have been created by the loader. There is one per file header. If this was
+     * calculated already then don't do anything here. */
+    struct: public AstSimpleProcessing {
+        void visit(SgNode *node) {
+            SgAsmGenericHeader *fhdr = isSgAsmGenericHeader(node);
+            if (fhdr!=NULL && NULL==fhdr->get_loader_map()) {
+                Loader *loader = Loader::find_loader(fhdr);
+                ROSE_ASSERT(loader!=NULL);
+                MemoryMap *loader_map = loader->map_all_sections(fhdr);
+                fhdr->set_loader_map(loader_map);
+            }
+        }
+    } t2;
+    t2.traverse(ef, preorder);
+    
     return ef;
 }

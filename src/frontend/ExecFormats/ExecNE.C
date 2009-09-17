@@ -473,7 +473,8 @@ SgAsmNESectionTable::ctor()
 
         /* All NE sections are mapped. There desired address is apparently based on their file offset. */
         addr_t mapped_rva = section_offset - fhdr->get_offset();
-        section->set_mapped_rva(mapped_rva);
+        section->set_mapped_preferred_rva(mapped_rva);
+        section->set_mapped_actual_rva(0); /*assigned by Loader*/
         section->set_mapped_size(entry->get_virtual_size());
 
         unsigned section_type = entry->get_flags() & SgAsmNESectionTableEntry::SF_TYPE_MASK;
@@ -895,7 +896,7 @@ SgAsmNEEntryTable::populate_entries()
             entry.dump(stderr, "      ", i);
         } else {
             ROSE_ASSERT(section->is_mapped());
-            addr_t entry_rva = section->get_mapped_rva() + entry.get_section_offset();
+            addr_t entry_rva = section->get_mapped_preferred_rva() + entry.get_section_offset();
             fhdr->add_entry_rva(entry_rva);
 #if 0 /*DEBUGGING*/
             /* Entry points often have names. Here's how to get them. */

@@ -21,8 +21,7 @@ public:
     virtual Disassembler *can_disassemble(SgAsmGenericHeader*) const;
 
     /** See Disassembler::disassembleOne */
-    virtual SgAsmInstruction *disassembleOne(const unsigned char *buf, const MemoryMap *map, rose_addr_t start_va,
-                                             AddressSet *successors=NULL);
+    virtual SgAsmInstruction *disassembleOne(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors=NULL);
 
     /** See Disassembler::assembleOne */
     virtual void assembleOne(SgAsmInstruction*, SgUnsignedCharList&) {abort();}

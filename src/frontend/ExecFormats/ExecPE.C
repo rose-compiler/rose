@@ -491,7 +491,7 @@ SgAsmPEFileHeader::create_table_sections()
          *        from an RVA/Size pair is not necessarily contiguous in the file.  Normally such sections are in fact
          *        contiguous and we'll just ignore this for now.  In any case, as long as these sections only ever read their
          *        data via the same MemoryMap that we use here, everything should be fine. [RPM 2009-08-17] */
-        MemoryMap *map = get_file()->get_loader_map();
+        MemoryMap *map = get_loader_map();
         ROSE_ASSERT(map!=NULL);
         const MemoryMap::MapElement *elmt = map->find(get_base_va() + pair->get_e_rva());
         if (!elmt) {
@@ -524,7 +524,8 @@ SgAsmPEFileHeader::create_table_sections()
         tabsec->set_file_alignment(1);
 
         tabsec->set_mapped_alignment(1);
-        tabsec->set_mapped_rva(pair->get_e_rva().get_rva());
+        tabsec->set_mapped_preferred_rva(pair->get_e_rva().get_rva());
+        tabsec->set_mapped_actual_rva(pair->get_e_rva().get_rva()); /*FIXME: not sure this is correct. [RPM 2009-09-11]*/
         tabsec->set_mapped_size(pair->get_e_size());
         tabsec->set_mapped_rperm(true);
         tabsec->set_mapped_wperm(false);
@@ -832,7 +833,7 @@ void
 SgAsmPESectionTableEntry::update_from_section(SgAsmPESection *section)
 {
     p_virtual_size = section->get_mapped_size();
-    p_rva = section->get_mapped_rva();
+    p_rva = section->get_mapped_preferred_rva();
     p_physical_size = section->get_size();
     p_physical_offset = section->get_offset();
     p_name = section->get_name()->get_string();
@@ -964,12 +965,14 @@ SgAsmPESectionTable::parse()
         pending.push_back(section);
     }
 
-    /* Build the memory mapping like the real loader would do */
-    ROSE_ASSERT(NULL==get_file()->get_loader_map());
+    /* Build the memory mapping like the real loader would do. This is the same code used by
+     * SgAsmExecutableFileFormat::parseBinaryFormat() except we're doing here early because we need it in the rest of the PE
+     * parser. */
+    ROSE_ASSERT(NULL==fhdr->get_loader_map());
     Loader *loader = Loader::find_loader(fhdr);
     ROSE_ASSERT(loader!=NULL);
-    MemoryMap *loader_map = loader->map_all_sections(get_file());
-    get_file()->set_loader_map(loader_map);
+    MemoryMap *loader_map = loader->map_all_sections(fhdr);
+    fhdr->set_loader_map(loader_map);
 
     /* Parse each section after the loader map is created */
     for (size_t i=0; i<pending.size(); i++)
@@ -1101,7 +1104,7 @@ SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section, size_t idx, addr_t *
     size_t entry_size = sizeof(PEImportDirectory_disk);
     PEImportDirectory_disk disk, zero;
     memset(&zero, 0, sizeof zero);
-    section->read_content(NULL, *idir_rva_p, &disk, entry_size); /*may throw MemoryMap::NotMapped*/
+    section->read_content(fhdr->get_loader_map(), *idir_rva_p, &disk, entry_size); /*may throw MemoryMap::NotMapped*/
 
     *idir_rva_p += entry_size;
 
@@ -1125,7 +1128,7 @@ SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section, size_t idx, addr_t *
     p_dll_name = NULL;
     try {
         if (p_idx>=0)
-            p_dll_name = new SgAsmBasicString(section->read_content_str(NULL, p_dll_name_rva));
+            p_dll_name = new SgAsmBasicString(section->read_content_str(fhdr->get_loader_map(), p_dll_name_rva));
     } catch (const MemoryMap::NotMapped &e) {
         fprintf(stderr, "SgAsmPEImportDirectory::ctor: error: in PE Import Directory entry %zu: "
                 "Name RVA starting at 0x%08"PRIx64" contains unmapped virtual address 0x%08"PRIx64"\n", 
@@ -1355,7 +1358,7 @@ SgAsmPEImportLookupTable::ctor(SgAsmPEImportSection *isec, rva_t rva, size_t idi
         fprintf(stderr, "        Import Directory Entry #%zu\n", idir_idx);
         fprintf(stderr, "        %s RVA is %s\n", tname, rva.to_string().c_str());
         fprintf(stderr, "        PE Import Table mapped from 0x%08"PRIx64" to 0x%08"PRIx64"\n", 
-                isec->get_mapped_rva(), isec->get_mapped_rva()+isec->get_mapped_size());
+                isec->get_mapped_actual_rva(), isec->get_mapped_actual_rva()+isec->get_mapped_size());
     }
 
     for (size_t i=0; 1; i++) {
@@ -1363,7 +1366,7 @@ SgAsmPEImportLookupTable::ctor(SgAsmPEImportSection *isec, rva_t rva, size_t idi
         unsigned char buf[8];
         ROSE_ASSERT(fhdr->get_word_size() <= sizeof buf);
         try {
-            isec->read_content(NULL, rva.get_rva(), buf, fhdr->get_word_size());
+            isec->read_content(fhdr->get_loader_map(), rva.get_rva(), buf, fhdr->get_word_size());
         } catch (const MemoryMap::NotMapped &e) {
             fprintf(stderr, "SgAsmPEImportSection::ctor: error: in PE Import Directory entry %zu: "
                     "%s entry %zu starting at RVA 0x%08"PRIx64" contains unmapped virtual address 0x%08"PRIx64"\n",
@@ -1456,10 +1459,13 @@ SgAsmPEImportLookupTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 void
 SgAsmPEImportHNTEntry::ctor(SgAsmPEImportSection *isec, rva_t rva)
 {
+    SgAsmGenericHeader *fhdr = isec->get_header();
+    ROSE_ASSERT(fhdr!=NULL);
+
     /* Hint */
     uint16_t hint_disk = 0;
     try {
-        isec->read_content(NULL, rva.get_rva(), &hint_disk, sizeof hint_disk);
+        isec->read_content(fhdr->get_loader_map(), rva.get_rva(), &hint_disk, sizeof hint_disk);
     } catch (const MemoryMap::NotMapped &e) {
         fprintf(stderr, "SgAsmPEImportHNTEntry::ctor: warning: hint at RVA 0x%08"PRIx64
                 " contains unmapped virtual address 0x%08"PRIx64"\n", rva.get_rva(), e.va);
@@ -1473,7 +1479,7 @@ SgAsmPEImportHNTEntry::ctor(SgAsmPEImportSection *isec, rva_t rva)
     /* Name */
     std::string s;
     try {
-        s = isec->read_content_str(NULL, rva.get_rva()+2);
+        s = isec->read_content_str(fhdr->get_loader_map(), rva.get_rva()+2);
     } catch (const MemoryMap::NotMapped &e) {
         fprintf(stderr, "SgAsmPEImportHNTEntry::ctor: warning: string at RVA 0x%08"PRIx64
                 " contains unmapped virtual address 0x%08"PRIx64"\n", rva.get_rva()+2, e.va);
@@ -1489,7 +1495,7 @@ SgAsmPEImportHNTEntry::ctor(SgAsmPEImportSection *isec, rva_t rva)
     if (s.size()+1 % 2) {
         try {
             unsigned char byte;
-            isec->read_content(NULL, rva.get_rva()+2+s.size()+1, &byte, 1);
+            isec->read_content(fhdr->get_loader_map(), rva.get_rva()+2+s.size()+1, &byte, 1);
             p_padding = byte;
         } catch (const MemoryMap::NotMapped &e) {
             fprintf(stderr, "SgAsmPEImportHNTEntry::ctor: warning: padding at virtual address 0x%08"PRIx64
@@ -1579,7 +1585,7 @@ SgAsmPEImportSection::parse()
     ROSE_ASSERT(fhdr!=NULL);
 
     ROSE_ASSERT(is_mapped());
-    rose_addr_t idir_rva = get_mapped_rva();
+    rose_addr_t idir_rva = get_mapped_actual_rva();
 
     for (size_t i = 0; 1; i++) {
         /* Read idata directory entries. The list is terminated with a zero-filled entry whose idx will be negative */
@@ -1595,7 +1601,7 @@ SgAsmPEImportSection::parse()
             fprintf(stderr, "        Import Directory Entry #%zu\n", i);
             fprintf(stderr, "        Name RVA is %s\n", rva.to_string().c_str());
             fprintf(stderr, "        PE Import Table mapped from 0x%08"PRIx64" to 0x%08"PRIx64"\n", 
-                    get_mapped_rva(), get_mapped_rva()+get_mapped_size());
+                    get_mapped_actual_rva(), get_mapped_actual_rva()+get_mapped_size());
         }
 
         /* Import Lookup Table */
@@ -1683,15 +1689,17 @@ SgAsmPEImportSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 void
 SgAsmPEExportDirectory::ctor(SgAsmPEExportSection *section)
 {
+    SgAsmGenericHeader *fhdr = section->get_header();
+    ROSE_ASSERT(fhdr!=NULL);
     set_parent(section);
 
     /* Read disk-formatted export directory */
     PEExportDirectory_disk disk;
     try {
-        section->read_content(NULL, section->get_mapped_rva(), &disk, sizeof disk);
+        section->read_content(fhdr->get_loader_map(), section->get_mapped_actual_rva(), &disk, sizeof disk);
     } catch (const MemoryMap::NotMapped &e) {
         fprintf(stderr, "SgAsmPEExportDirectory::ctor: error: export directory at RVA 0x%08"PRIx64
-                " contains unmapped virtual address 0x%08"PRIx64"\n", section->get_mapped_rva(), e.va);
+                " contains unmapped virtual address 0x%08"PRIx64"\n", section->get_mapped_actual_rva(), e.va);
         if (e.map) {
             fprintf(stderr, "Memory map in effect at time of error:\n");
             e.map->dump(stderr, "    ");
@@ -1715,7 +1723,7 @@ SgAsmPEExportDirectory::ctor(SgAsmPEExportSection *section)
     /* Read the name */
     std::string name;
     try {
-        name = section->read_content_str(NULL, p_name_rva.get_rva());
+        name = section->read_content_str(fhdr->get_loader_map(), p_name_rva.get_rva());
     } catch (const MemoryMap::NotMapped &e) {
         fprintf(stderr, "SgAsmPEExportDirectory::ctor: warning: directory name at RVA 0x%08"PRIx64
                 " contains unmapped virtual address 0x%08"PRIx64"\n", p_name_rva.get_rva(), e.va);
@@ -1828,7 +1836,7 @@ SgAsmPEExportSection::parse()
         ExportNamePtr_disk nameptr_disk = 0;
         addr_t nameptr_rva = p_export_dir->get_nameptr_rva().get_rva() + i*sizeof(nameptr_disk);
         try {
-            read_content(NULL, nameptr_rva, &nameptr_disk, sizeof nameptr_disk);
+            read_content(fhdr->get_loader_map(), nameptr_rva, &nameptr_disk, sizeof nameptr_disk);
         } catch (const MemoryMap::NotMapped &e) {
             fprintf(stderr, "SgAsmPEExportSection::parse: error: export name rva %zu at RVA 0x%08"PRIx64
                     " contains unmapped virtual address 0x%08"PRIx64"\n", i, nameptr_rva, e.va);
@@ -1843,7 +1851,7 @@ SgAsmPEExportSection::parse()
         /* Function name (fname) */
         std::string s;
         try {
-            s = read_content_str(NULL, nameptr);
+            s = read_content_str(fhdr->get_loader_map(), nameptr);
         } catch (const MemoryMap::NotMapped &e) {
             fprintf(stderr, "SgAsmPEExportSection::parse: error: export name %zu at RVA 0x%08"PRIx64
                     " contains unmapped virtual address 0x%08"PRIx64"\n", i, nameptr, e.va);
@@ -1858,7 +1866,7 @@ SgAsmPEExportSection::parse()
         ExportOrdinal_disk ordinal_disk = 0;
         addr_t ordinal_rva = p_export_dir->get_ordinals_rva().get_rva() + i*sizeof(ordinal_disk);
         try {
-            read_content(NULL, ordinal_rva, &ordinal_disk, sizeof ordinal_disk);
+            read_content(fhdr->get_loader_map(), ordinal_rva, &ordinal_disk, sizeof ordinal_disk);
         } catch (const MemoryMap::NotMapped &e) {
             fprintf(stderr, "SgAsmPEExportSection::parse: error: ordinal %zu at RVA 0x%08"PRIx64
                     " contains unmapped virtual address 0x%08"PRIx64"\n", i, ordinal_rva, e.va);
@@ -1881,7 +1889,7 @@ SgAsmPEExportSection::parse()
             ExportAddress_disk expaddr_disk = 0;
             addr_t expaddr_rva = p_export_dir->get_expaddr_rva().get_rva() + expaddr_idx*sizeof(expaddr_disk);
             try {
-                read_content(NULL, expaddr_rva, &expaddr_disk, sizeof expaddr_disk);
+                read_content(fhdr->get_loader_map(), expaddr_rva, &expaddr_disk, sizeof expaddr_disk);
             } catch (const MemoryMap::NotMapped &e) {
                 fprintf(stderr, "SgAsmPEExportSection::parse: error: export address %zu at RVA 0x%08"PRIx64
                         " contains unmapped virtual address 0x%08"PRIx64"\n", i, expaddr_rva, e.va);
@@ -1899,10 +1907,10 @@ SgAsmPEExportSection::parse()
         /* If export address is within this section then it points to a NUL-terminated forwarder name.
          * FIXME: Is this the proper precondition? [RPM 2009-08-20] */
         SgAsmGenericString *forwarder = NULL;
-        if (expaddr.get_rva()>=get_mapped_rva() && expaddr.get_rva()<get_mapped_rva()+get_mapped_size()) {
+        if (expaddr.get_rva()>=get_mapped_actual_rva() && expaddr.get_rva()<get_mapped_actual_rva()+get_mapped_size()) {
             std::string s;
             try {
-                s = read_content_str(NULL, expaddr.get_rva());
+                s = read_content_str(fhdr->get_loader_map(), expaddr.get_rva());
             } catch (const MemoryMap::NotMapped &e) {
                 fprintf(stderr, "SgAsmPEExportSection::parse: error: forwarder %zu at RVA 0x%08"PRIx64
                         " contains unmapped virtual address 0x%08"PRIx64"\n", i, expaddr.get_rva(), e.va);
@@ -1998,7 +2006,8 @@ SgAsmPESection::init_from_section_table(SgAsmPESectionTableEntry *entry, int id)
 
     /* Memory mapping */
     if (entry->get_rva() > 0) {
-        set_mapped_rva(entry->get_rva());
+        set_mapped_preferred_rva(entry->get_rva());
+        set_mapped_actual_rva(0); /*will be asigned by Loader*/
         set_mapped_size(entry->get_virtual_size());
         set_mapped_alignment(fhdr->get_e_section_align());
         set_mapped_rperm((entry->get_flags() & SgAsmPESectionTableEntry::OF_READABLE)
@@ -2008,7 +2017,8 @@ SgAsmPESection::init_from_section_table(SgAsmPESectionTableEntry *entry, int id)
         set_mapped_xperm((entry->get_flags() & SgAsmPESectionTableEntry::OF_EXECUTABLE)
                          == SgAsmPESectionTableEntry::OF_EXECUTABLE);
     } else {
-        set_mapped_rva(0);
+        set_mapped_preferred_rva(0);
+        set_mapped_actual_rva(0); /*will be assigned by Loader*/
         set_mapped_size(0);
         set_mapped_rperm(false);
         set_mapped_wperm(false);
