@@ -114,14 +114,14 @@ class RuntimeSystem
         /// @param startAdress  the return value of malloc/new
         /// @param size         size of the allocated memory area
         /// @param pos          position of allocation (needed to inform the user when this allocation is never freed)
-        void createMemory(addr_type addr, size_t size,bool onStack = false, RsType * type=NULL);
+        void createMemory(addr_type addr, size_t size,bool onStack = false, bool fromMalloc = false, RsType * type=NULL);
         /// this version creates stackmemory, of given type
         void createStackMemory(addr_type addr, size_t size,const std::string & type);
 
 
         /// Call this function when a free/delete occurs in monitored code
         /// @param startAddress the address to be freed (argument of free/delete)
-        void freeMemory(addr_type startAddress, bool onStack = false);
+        void freeMemory(addr_type startAddress, bool onStack = false, bool fromMalloc = false);
 
 
         /// Call this function when the value of a pointer changed i.e. the address a pointer points to

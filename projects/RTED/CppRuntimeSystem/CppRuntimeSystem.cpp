@@ -212,10 +212,10 @@ void RuntimeSystem::clearStatus()
 // --------------------- Mem Checking ---------------------------------
 
 
-void RuntimeSystem::createMemory(addr_type addr, size_t size, bool onStack, RsType * type)
+void RuntimeSystem::createMemory(addr_type addr, size_t size, bool onStack, bool fromMalloc, RsType * type)
 {
     // the created MemoryType is freed by memory manager
-    MemoryType * mt = new MemoryType(addr,size,curPos,onStack);
+    MemoryType * mt = new MemoryType( addr, size, curPos, onStack, fromMalloc );
     memManager.allocateMemory(mt);
 
     if(onStack)
@@ -237,14 +237,14 @@ void RuntimeSystem::createMemory(addr_type addr, size_t size, bool onStack, RsTy
 void RuntimeSystem::createStackMemory(addr_type addr, size_t size,const std::string & strType)
 {
     RsType * type = typeSystem.getTypeInfo(strType);
-    createMemory(addr,size,true,type);
+    createMemory(addr,size,true,false,type);
 }
 
 
 
-void RuntimeSystem::freeMemory(addr_type startAddress, bool onStack)
+void RuntimeSystem::freeMemory(addr_type startAddress, bool onStack, bool fromMalloc)
 {
-    memManager.freeMemory(startAddress, onStack);
+    memManager.freeMemory(startAddress, onStack, fromMalloc);
 }
 
 

@@ -198,7 +198,7 @@ void testInvalidFree()
 
 void testInvalidStackFree()
 {
-    TEST_INIT("Testing invalid Free outside allocated Block");
+    TEST_INIT("Testing invalid Free of stack memory");
 
     // freeing heap memory should be fine
     rs->createMemory(42,10);
@@ -296,7 +296,29 @@ void testMemAccess()
 
 
     CLEANUP
+}
 
+void testMallocDeleteCombinations()
+{
+    TEST_INIT("Testing malloc/delete, new/free and similar combinations");
+
+    // memory created via malloc
+    rs -> createMemory( 0x42, sizeof( long ), false, true );
+    // can't be freed via non-free (e.g. delete)
+    try { rs->freeMemory( 0x42, false, false ); }
+    TEST_CATCH( RuntimeViolation::INVALID_FREE )
+    // but can be freed via free
+    rs->freeMemory( 0x42, false, true );
+
+    // memory created via new
+    rs -> createMemory( 0x42, sizeof( long ), false, false );
+    // can't be freed via free
+    try { rs->freeMemory( 0x42, false, true ); }
+    TEST_CATCH( RuntimeViolation::INVALID_FREE )
+    // but can be freed via delete
+    rs->freeMemory( 0x42, false, false );
+
+    CLEANUP
 }
 
 
@@ -1343,6 +1365,7 @@ int main(int argc, char ** argv, char ** envp)
         testMemoryLeaks();
         testEmptyAllocation();
         testMemAccess();
+        testMallocDeleteCombinations();
 
         testFileDoubleClose();
         testFileDoubleOpen();

@@ -121,12 +121,17 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
 
       //SgIntVal* ismalloc = buildIntVal( 0 );
       SgExpression* size = buildIntVal( 0 );
-      if (array->ismalloc) {
-        //ismalloc = buildIntVal(1);
-        size = buildCastExp( array -> size, buildLongLongType());
+      SgExpression* fromMalloc = buildIntVal( 0 );
+      if ( array -> onHeap ) {
+        size = buildCastExp( array -> size, buildLongLongType() );
+
+        // track whether heap memory was allocated via malloc or new, to ensure
+        // that free/delete matches
+        if( array -> fromMalloc )
+            fromMalloc = buildIntVal( 1 );
       }
-      //appendExpression( arg_list, ismalloc );
       appendExpression( arg_list, size );
+      appendExpression( arg_list, fromMalloc );
 
 
       appendClassName( arg_list, initName -> get_type() );
@@ -168,7 +173,7 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
 #endif
       string empty_comment = "";
       attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
-      string comment = "RS : Create Array Variable, paramaters : (name, manglname, typr, basetype, address, sizeof(type), array size,  ismalloc, filename, linenr, linenrTransformed, dimension info ...)";
+      string comment = "RS : Create Array Variable, paramaters : (name, manglname, typr, basetype, address, sizeof(type), array size, fromMalloc, filename, linenr, linenrTransformed, dimension info ...)";
       attachComment(exprStmt,comment,PreprocessingInfo::before);
     } 
     else if (isSgNamespaceDefinitionStatement(scope)) {
@@ -186,7 +191,7 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
     ROSE_ASSERT(false);
   }
 
-  bool ismalloc = array->ismalloc;
+  bool ismalloc = array->onHeap;
   // unfortunately the arrays are filled with '\0' which is a problem
   // for detecting other bugs such as not null terminated strings
   // therefore we call a function that appends code to the 
@@ -878,6 +883,7 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
 
   // handle MALLOC
   bool ismalloc=false;
+  bool iscalloc=false;
   vector<SgNode*> calls = NodeQuery::querySubTree(expr_r,
 						  V_SgFunctionCallExp);
   vector<SgNode*>::const_iterator it = calls.begin();
@@ -915,7 +921,12 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
 	      << funcname << "     and size : "
 	      << size->unparseToString() << "   idx1 : "
 	      << indx1 << "  idx2 : " << indx2 << endl;
-	  }
+	  } else if( funcname == "calloc" ) {
+          iscalloc = true;
+          cerr
+              << "... Detecting func call on right hand side : "
+              << funcname;
+      }
 	  ROSE_ASSERT(varRef);
 	} else {
 	  // right hand side of assign should only contain call to malloc somewhere
@@ -935,11 +946,35 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
           isSgExprListExp( size ) -> get_expressions()[ 0 ];
 
 	  RTedArray* array = new RTedArray(false, initName, getSurroundingStatement( varRef ),
-									  ismalloc, size_orig);
+									  ismalloc, true, size_orig);
 	  // varRef can not be a array access, its only an array Create
 	  variablesUsedForArray.push_back(varRef);
 	  create_array_define_varRef_multiArray[varRef] = array;
-	}
+	} else if( iscalloc ) {
+	  ROSE_ASSERT(initName);
+	  ROSE_ASSERT(varRef);
+
+      // copy the arguments to calloc so we know how much memory was allocated
+      ROSE_ASSERT( size->get_expressions().size() > 1 );
+      SgExpression* size_to_use 
+          = new SgMultiplyOp(
+            size -> get_file_info(),
+              isSgExprListExp( size ) -> get_expressions()[ 0 ],
+              isSgExprListExp( size ) -> get_expressions()[ 1 ]
+          );
+
+	  RTedArray* array 
+          = new RTedArray(
+                false, initName, getSurroundingStatement( varRef ),
+                true,   // array is on heap
+                true,   // array came form [mc]alloc
+                size_to_use
+            );
+
+	  // varRef can not be a array access, its only an array Create
+	  variablesUsedForArray.push_back(varRef);
+	  create_array_define_varRef_multiArray[varRef] = array;
+    }
       }
     }
   }
@@ -965,7 +1000,8 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
         false,                              // not on stack
         initName,
         getSurroundingStatement( varRef ),
-        true,                              // is indeed malloc, or close enough
+        true,                              // memory on heap
+        false,                             // but not from call to malloc
         buildSizeOfOp( new_op -> get_specified_type() )
     );
 

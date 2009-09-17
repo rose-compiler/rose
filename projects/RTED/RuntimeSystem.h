@@ -20,9 +20,18 @@ void RuntimeSystem_roseCheckpoint( const char* filename, const char* line, const
 
 
 /***************************** ARRAY FUNCTIONS *************************************/
-void RuntimeSystem_roseCreateHeap(const char* name, const char* mangl_name,
-		const char* type, const char* basetype, size_t indirection_level,
-		unsigned long int address, long int size, long int mallocSize,
+void RuntimeSystem_roseCreateHeap(
+        const char* name, 
+        const char* mangl_name,
+		const char* type, 
+        const char* basetype, 
+        size_t indirection_level,       // how many dereferences to get to a non-pointer type
+                                        // e.g. int*** has indirection level 3
+		unsigned long int address, 
+        long int size, 
+        long int mallocSize,
+        int fromMalloc,                 // 1 if from call to malloc
+                                        // 0 otherwise, if e.g. from new
 		const char* class_name, const char* filename, const char* line,
 		const char* lineTransformed, int dimensions, ...);
 
@@ -59,7 +68,13 @@ void RuntimeSystem_roseFunctionCall(int count, ...);
 
 
 /***************************** MEMORY FUNCTIONS *************************************/
-void RuntimeSystem_roseFreeMemory(void* ptr, const char* filename,
+void RuntimeSystem_roseFreeMemory(
+        void* ptr,              // the address that is about to be freed
+        int fromMalloc,         // whether the free expects to be paired with
+                                // memory allocated via 'malloc'.  In short,
+                                // whether this is a call to free (1) or delete
+                                // (0)
+        const char* filename,
 		const char* line, const char* lineTransformed);
 
 void RuntimeSystem_roseReallocateMemory(void* ptr, unsigned long int size,

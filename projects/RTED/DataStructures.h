@@ -19,16 +19,18 @@ class RTedArray {
   bool stack;
   SgInitializedName* initName;
   SgStatement* surroundingStatement;
-  bool ismalloc;
+  bool onHeap;
+  bool fromMalloc;
   SgExpression* size;
   std::vector<SgExpression*> indices;
 
   RTedArray(bool s, SgInitializedName* init, SgStatement* stmt,
-	    bool mal, SgExpression* _size = NULL) {
+	    bool _onHeap, bool _fromMalloc = false, SgExpression* _size = NULL) {
       stack = s;
 	  initName = init;
       surroundingStatement = stmt;
-	  ismalloc=mal;
+      onHeap = _onHeap;
+      fromMalloc = _fromMalloc;
       size = _size;
   }
   virtual ~RTedArray() {}

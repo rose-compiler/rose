@@ -211,7 +211,7 @@ void
 RuntimeSystem_roseCreateHeap(const char* name, const char* mangl_name,
 			      const char* type, const char* basetype, size_t indirection_level,
 			      unsigned long int address, long int size,
-			      long int mallocSize, const char* class_name,
+			      long int mallocSize, int fromMalloc, const char* class_name,
 			      const char* filename, const char* line, const char* lineTransformed,
 			      int dimensionality, ...){
 
@@ -242,7 +242,8 @@ RuntimeSystem_roseCreateHeap(const char* name, const char* mangl_name,
     //cerr << " registering heap   type:" << type << "  basetype:"<<basetype<<
     //		"  class_name:" <<class_name<<"  indirection_level:"<<ToString(indirection_level)<<
     //		"  address:"<<HexToString(heap_address) <<"  malloc size:"<<ToString(mallocSize)<<endl;
-    rs -> createMemory( heap_address, mallocSize );
+    bool was_from_malloc = ( fromMalloc == 1 );
+    rs -> createMemory( heap_address, mallocSize, false, was_from_malloc );
     rs -> registerPointerChange(
 				address,
 				heap_address,
@@ -820,7 +821,7 @@ RuntimeSystem_roseInitVariable(
   // place (otherwise we wouldn't get the new heap address).
   //
   // Note that we cannot call registerPointerChange until after the memory
-  // creation is registered, which is done in roseCreateArray.
+  // creation is registered, which is done in roseCreateHeap.
   if(     ismalloc != 1 
 	  && pointer_changed == 1 
 	  && 0 == strcmp( "SgPointerType", type )) {
@@ -978,6 +979,7 @@ RuntimeSystem_roseRegisterTypeCall(int count, ...) {
 void
 RuntimeSystem_roseFreeMemory(
 			     void* ptr,
+           int fromMalloc,
 			     const char* filename,
 			     const char* line,
 			     const char* lineTransformed
@@ -986,7 +988,8 @@ RuntimeSystem_roseFreeMemory(
   RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
   CHECKPOINT
 
-    rs->freeMemory( (addr_type) ptr );
+    bool expected_to_free_memory_from_malloc = ( fromMalloc == 1 );
+    rs->freeMemory( (addr_type) ptr, false, expected_to_free_memory_from_malloc );
 }
 
 
@@ -1003,7 +1006,7 @@ RuntimeSystem_roseReallocateMemory(
   CHECKPOINT
 
     rs->freeMemory( (addr_type) ptr );
-  rs->createMemory( (addr_type) ptr, size);
+    rs->createMemory( (addr_type) ptr, size, false, true );
 }
 
 

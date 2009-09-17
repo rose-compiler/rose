@@ -34,7 +34,7 @@ VariablesType::VariablesType(const std::string & name_,
             assert(false);//unknown type
     }
 
-    RuntimeSystem::instance()->createMemory(address,type->getByteSize(),true,type);
+    RuntimeSystem::instance()->createMemory(address,type->getByteSize(),true,false,type);
 
 }
 
@@ -48,7 +48,7 @@ VariablesType::VariablesType(const std::string & name_,
     address(address_)
 {
   assert(type);
-  RuntimeSystem::instance()->createMemory(address,type->getByteSize(),true,type);
+  RuntimeSystem::instance()->createMemory(address,type->getByteSize(),true,false,type);
 }
 
 

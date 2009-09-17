@@ -25,8 +25,8 @@ myStream << t << std::flush;
 return myStream.str(); //returns the string form of the stringstream object
 }
 
-MemoryType::MemoryType(addr_type _addr, size_t _size, const SourcePosition & _pos, bool _onStack)
-    : startAddress(_addr), size(_size), allocPos(_pos), onStack(_onStack)
+MemoryType::MemoryType(addr_type _addr, size_t _size, const SourcePosition & _pos, bool _onStack, bool _fromMalloc)
+    : startAddress(_addr), size(_size), allocPos(_pos), onStack(_onStack), fromMalloc( _fromMalloc )
 {
     // not memory has been initialized by default
 	RuntimeSystem * rs = RuntimeSystem::instance();
@@ -35,12 +35,13 @@ MemoryType::MemoryType(addr_type _addr, size_t _size, const SourcePosition & _po
     initialized.assign(size,false);
 }
 
-MemoryType::MemoryType(addr_type _addr, size_t _size, bool _onStack,
+MemoryType::MemoryType(addr_type _addr, size_t _size, bool _onStack, bool _fromMalloc,
                        const std::string & file, int line1, int line2)
     : startAddress(_addr),
       size(_size),
       allocPos(file,line1,line2),
-      onStack(_onStack)
+      onStack(_onStack),
+      fromMalloc( _fromMalloc )
 {
 }
 
@@ -469,7 +470,7 @@ void MemoryManager::allocateMemory(MemoryType * alloc)
 }
 
 
-void MemoryManager::freeMemory(addr_type addr, bool onStack)
+void MemoryManager::freeMemory(addr_type addr, bool onStack, bool fromMalloc)
 {
     RuntimeSystem * rs = RuntimeSystem::instance();
 
@@ -503,6 +504,24 @@ void MemoryManager::freeMemory(addr_type addr, bool onStack)
     {
         stringstream desc;
         desc << "Stack memory was explicitly freed (0x" 
+             << *m << endl;
+
+        rs->violationHandler(RuntimeViolation::INVALID_FREE, desc.str());
+        return;
+    }
+
+    // memory was malloc-d, but freed via delete
+    if( m -> wasFromMalloc() && !fromMalloc ) {
+        stringstream desc;
+        desc << "Memory allocated via malloc freed with delete or delete[] (0x"
+             << *m << endl;
+
+        rs->violationHandler(RuntimeViolation::INVALID_FREE, desc.str());
+        return;
+    // memory was created via new, but freed via 'free' function
+    } else if( !(m -> wasFromMalloc()) && fromMalloc ) {
+        stringstream desc;
+        desc << "Memory allocated via new freed with 'free' function (0x" 
              << *m << endl;
 
         rs->violationHandler(RuntimeViolation::INVALID_FREE, desc.str());

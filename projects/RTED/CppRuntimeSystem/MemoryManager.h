@@ -29,8 +29,8 @@ class MemoryType
         typedef TypeInfoMap::iterator TiIter;
 
 
-        MemoryType(addr_type addr, size_t size, const SourcePosition & pos, bool onStack);
-        MemoryType(addr_type addr, size_t size, bool onStack,
+        MemoryType(addr_type addr, size_t size, const SourcePosition & pos, bool onStack, bool fromMalloc);
+        MemoryType(addr_type addr, size_t size, bool onStack, bool fromMalloc,
                    const std::string & file, int line1, int line2);
 
         // constructor which initialized only the address, used for comparison purposes
@@ -53,6 +53,7 @@ class MemoryType
         size_t                 getSize()    const { return size; }
         const SourcePosition & getPos()     const { return allocPos; }
         bool                   isOnStack()  const { return onStack; }
+        bool                   wasFromMalloc() const { return fromMalloc; }
 
         /// Tests if a part of memory is initialized
         bool  isInitialized(int offsetFrom, int offsetTo) const;
@@ -120,7 +121,8 @@ class MemoryType
         size_t            size;         ///< Size of allocation
         SourcePosition    allocPos;     ///< Position in source file where malloc/new was called
         std::vector<bool> initialized;  ///< stores for every byte if it was initialized
-        bool			  onStack;		///< Whether the memory lives on the stack or not (i.e. on the heap)
+        bool              onStack;      ///< Whether the memory lives on the stack or not (i.e. on the heap)
+        bool              fromMalloc;   ///< Whether the memory was allocated via a call to malloc (vice new)
 
 
         /// Determines all typeinfos which intersect the defined offset-range [from,to)
@@ -159,7 +161,7 @@ class MemoryManager
         void allocateMemory(MemoryType * alloc);
 
         /// Frees allocated memory, throws error when no allocation is managed at this addr
-        void freeMemory(addr_type addr, bool onStack=false);
+        void freeMemory(addr_type addr, bool onStack=false, bool fromMalloc = false);
 
 
         /// Prints information about all currently allocated memory areas

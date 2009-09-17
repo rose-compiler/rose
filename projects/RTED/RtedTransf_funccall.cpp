@@ -98,6 +98,7 @@ RtedTransformation::isFunctionCallOnIgnoreList(std::string name) {
   bool interesting=false;
   if (name=="printf" ||
       name=="malloc" ||
+      name=="calloc" ||
       name=="free" ||
 	  name=="realloc"
       )
@@ -412,6 +413,7 @@ RtedTransformation::insertFreeCall( SgExpression* free ) {
 	// alert the RTS before the call to detect errors such as double-free
 	SgStatement* stmt = getSurroundingStatement( free );
 	SgExpression* address_expression;
+    SgExpression* from_malloc_expression;
 
 	if( free_call) {
 
@@ -420,19 +422,27 @@ RtedTransformation::insertFreeCall( SgExpression* free ) {
 		ROSE_ASSERT( args.size() > 0 );
 
 		address_expression = args[ 0 ];
+
+        // free should be paired with malloc
+        from_malloc_expression = buildIntVal( 1 );
 	} else if( del_exp ) {
 
 		address_expression = del_exp -> get_variable(); 
+
+        // delete should be paired with new
+        from_malloc_expression = buildIntVal( 0 );
 	} else { ROSE_ASSERT( false ); }
 
 	
 	ROSE_ASSERT( stmt );
 	ROSE_ASSERT( address_expression );
+	ROSE_ASSERT( from_malloc_expression );
 
 
 	// roseFree( ptr, source info );
     SgExprListExp* arg_list = buildExprListExp();
 	appendExpression( arg_list, address_expression );
+	appendExpression( arg_list, from_malloc_expression );
 	appendFileInfo( stmt, arg_list );
 
 	// have to check validity of call to free before the call itself
