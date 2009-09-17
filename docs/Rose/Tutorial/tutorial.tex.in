@@ -98,10 +98,11 @@
          Livermore, CA  94550 \\
          925-423-2668 (office) \\
          925-422-6278 (fax) \\
-         \{dquinlan,panas2,liao6,willcock2\}@llnl.gov \\
+         \{dquinlan,panas2,liao6\}@llnl.gov \\
           markus@complang.tuwien.ac.at \\
           qingyi@cs.utsa.edu \\
           richie@cc.gatech.edu \\
+          jewillco@osl.iu.edu \\
          Project Web Page: www.rosecompiler.org \\
          UCRL Number for ROSE User Manual: UCRL-SM-210137-DRAFT \\
          UCRL Number for ROSE Tutorial: UCRL-SM-210032-DRAFT \\
@@ -192,59 +193,92 @@
 %            Introduction
 %-----------------------------------------------------------
 \input{introduction}
-
-%-----------------------------------------------------------
-%           Stable Parts 
-%-----------------------------------------------------------
-
-% \part[Mature Parts of ROSE]{ Mature Parts of ROSE \\
-\part[Stable Parts of ROSE]{  Stable Parts of ROSE \\
-\vspace{1.0in}
-\normalsize{These parts of ROSE are tested regularly on large scale applications and are
-    suitable for use on ROSE projects requiring the greatest levels of robustness.}
-\fixme{Lay out rules and criteria for the classification of different parts of ROSE.}
-}
-
 \input{gettingStarted}
+% Liao, 9/17/2009, Out of date information. We have better text in the
+% developer guide now.
+%\input{howToContribute}
+\input{tutorialMakefile}
 
-\input{ASTGraphGenerator}
-
-\input{AST_PDF_Generator}
+%-----------------------------------------------------------
+%          Working with ROSE AST 
+%-----------------------------------------------------------
+\part[Working with the ROSE AST]{  Working with the ROSE AST \\
+\vspace{1.0in}
+\normalsize{Get familiar with the ROSE AST is the basis for any advanced
+usage of ROSE. This part of tutorial collects examples for AST
+visualization, traversal, query, and debugging.}
+}
+%\part[Stable Parts of ROSE]{  Stable Parts of ROSE \\
+%\vspace{1.0in}
+%\normalsize{These parts of ROSE are tested regularly on large scale applications and are
+%    suitable for use on ROSE projects requiring the greatest levels of robustness.}
+%\fixme{Lay out rules and criteria for the classification of different parts of ROSE.}
+%}
 
 \input{identityTranslator}
-
-\input{queryLibraryExample}
-
+\input{scopeInformation}
+\input{ASTGraphGenerator}
+\input{wholeGraphAST}
+\input{AST_PDF_Generator}
 \input{traversal}
-%-----------------------------------------------------------
-%           Testing Parts 
-%-----------------------------------------------------------
+\input{queryLibraryExample}
+\input{astFileIO}
+\input{debuggingSupport}
 
-%\part[Experimental Parts of ROSE]{ Experimental Parts of ROSE \\ 
-\part[Testing Parts of ROSE]{ Testing Parts of ROSE \\
+%-----------------------------------------------------------
+%           Complex Types
+%-----------------------------------------------------------
+\part[Complex Types]{ Complex Types \\
 \vspace{1.0in}
-\normalsize{These parts of ROSE are moderately well tested but not tested at a scale sufficent for
-our own use on large scale applications.}
-\fixme{Lay out rules and criteria for the classification of different parts of ROSE.}
+\normalsize{This part elaborates some details for handling complex types in
+ROSE.}
 }
-
-\input{dataBaseSupport}
-
-\input{loopRecognition}
-
-\input{reductionRecognition}
-
+\input{modifiers}
 \input{typeInfoFromFunctionParameters}
-
 \input{resolveOverloadedFunction}
-
 \input{templateParameter}
-
 \input{templateSupport}
 
-\input{virtualCFG}
+%\part[Experimental Parts of ROSE]{ Experimental Parts of ROSE \\ 
+%\part[Testing Parts of ROSE]{ Testing Parts of ROSE \\
+%\vspace{1.0in}
+%\normalsize{These parts of ROSE are moderately well tested but not tested at a scale sufficent for
+%our own use on large scale applications.}
+%\fixme{Lay out rules and criteria for the classification of different parts of ROSE.}
+%}
 
-% chapter for AST construction
+%-----------------------------------------------------------
+%           Program Analyses
+%-----------------------------------------------------------
+\part[Program Analyses]{ Program Analyses \\
+\vspace{1.0in}
+\normalsize{This part exemplifies the use of existing ROSE analyses and how
+to build customized analyses using ROSE.}
+}
+\input{loopRecognition}
+\input{virtualCFG}
+\input{buildCFG}
+\input{defuseAnalysis}
+\input{buildCG}
+\input{classHierarchyGraph}
+\input{dataBaseSupport}
+\input{customGraphs} 
+
+%-----------------------------------------------------------
+%           Program Transformations and Optimizations
+%-----------------------------------------------------------
+\part[Program Transformations and Optimizations]{ Program Transformations
+and Optimizations \\
+\vspace{1.0in}
+\normalsize{This part gives examples of building source-to-source program
+transformations and optimizations.}
+}
+% name generation is a good start point for learning transformation
+\input{uniqueNames}
+\input{commandlineProcessing}
+\input{codeGenerationFormatControl}
+
+%---- begin chapter for AST construction
 % DQ (6/24/2008): Need to combine these into a
 % single file if it is to be a single chapter.
 \input{addVariableDeclaration}
@@ -252,108 +286,100 @@ our own use on large scale applications.}
 \input {addAssignmentStmt}
 \input{addFunctionDeclaration}
 \input{instrumentationExample}
+\input{globalVariableHandling}
 %-------end of chapter for AST construction
 
-\input{loopOptimization}
-%-----------------------------------------------------------
-%           Experimental Parts 
-%-----------------------------------------------------------
-%\part[Bleeding-Edge Parts of ROSE]{ Bleeding-Edge Parts of ROSE \\
-\part[Experimental Parts of ROSE]{ Experimental Parts of ROSE \\ 
-\vspace{1.0in}
-\normalsize{These parts of ROSE are either new or not well tested on real
-    applications.}
-\fixme{Lay out rules and criteria for the classification of different parts of ROSE.}
-}
-
-\input{buildCFG}
-
-\input{defuseAnalysis}
-
-\input{binaryAnalysis}
-
-\input{dwarfDebugSupport}
-
-\input{buildCG}
-
-\input{classHierarchyGraph}
-
-\input{inliner}
-
-\input{outliner}
-
+\input{addingComments}  % handling preprocessing information
 \input{partialRedundancyElimination}
-
-% \input{recognitionOfAbstractions}
-
-\input{astFileIO}
-
-\input{uniqueNames}
-
-\input{scopeInformation}
-
-\input{modifiers}
-
-% These should not be separate chapters!
-% \input{debuggingIRnodeToString}
-% \input{debuggingSourceCodePositionInformation}
-
-\input{debuggingSupport}
-
-\input{addingComments}
-
-\input{codeGenerationFormatControl}
-
-\input{commandlineProcessing}
-
-\input{customGraphs}
-
-\input{wholeGraphAST}
-
-\input{tutorialMakefile}
-
-\input{wrapup}
-
-\input{codeCoverage}
-
-\input{globalVariableHandling}
-
-\input{tauInstrumentation}
-
-\input{roseHPCT}
-
-\input{bugSeeding}
-
-% Disabled as it breaks new assertion in Copy Mechanism, Liao, 2/7/2008
-%\input{copyHelp}
-
-\input{sharedMemoryTraversals}
-
-\input{distributedMemoryTraversals}
-
-\input{parallelChecker}
-
-\input{abstractHandle}
-
+\input{inliner}
+\input{outliner}
+\input{loopOptimization}
 \input{paramerizedTranslation}
 
-\input{binaryConstruction}
 
+%-----------------------------------------------------------
+%          Correctness Checking 
+%-----------------------------------------------------------
+\part[Correctness Checking]{ Correctness Checking \\
+\vspace{1.0in}
+\normalsize{Tutorials of using ROSE to help program correctness checking or
+debugging.}
+}
+
+\input{codeCoverage}
+\input{bugSeeding}
+
+%-----------------------------------------------------------
+%          Binary Support
+%-----------------------------------------------------------
+\part[Binary Support]{ Binary Support \\
+\vspace{1.0in}
+\normalsize{Tutorials of using ROSE to handle binary executable files.}
+}
 \input{instructionSemantics}
+\input{binaryAnalysis}
+\input{binaryConstruction}
+\input{dwarfDebugSupport}
 
+%-----------------------------------------------------------
+%          Interacting with Other Tools
+%-----------------------------------------------------------
+\part[Interacting with Other Tools]{ Interacting with Other Tools \\
+\vspace{1.0in}
+\normalsize{How to build interoperable tools using ROSE.}
+}
+\input{abstractHandle}
+\input{roseHPCT}
+\input{tauInstrumentation}
 \input{haskell}
 
-\input{howToContribute}
+%-----------------------------------------------------------
+%          Parallelism
+%-----------------------------------------------------------
 
+\part[Parallelism]{ Parallelism \\
+\vspace{1.0in}
+\normalsize{Topics relevant to shared or distributed parallel computing using ROSE.}
+}
+\input{sharedMemoryTraversals}
+\input{distributedMemoryTraversals}
+\input{parallelChecker}
+\input{reductionRecognition}
+
+%-----------------------------------------------------------
+%         Summary
+%-----------------------------------------------------------
+\part[Tutorial Summary]{ Tutorial Summary \\
+\vspace{1.0in}
+\normalsize{Summary of the ROSE tutorials.}
+}
+\input{wrapup}
 \backmatter
 
 % Appendix is for new ideas about how to organize the tutorial
 \input{appendix}
-
-% Borrow glossary from ROSE User Manual (copyied into docs/Rose/Tutorial by Makefile)
+% Borrow glossary from ROSE User Manual (copied into docs/Rose/Tutorial by Makefile)
 \input{glossary}
 
 \end{document}
+
+
+%----------------------- old text ----------------------------------
+%\part[Bleeding-Edge Parts of ROSE]{ Bleeding-Edge Parts of ROSE \\
+%\part[Experimental Parts of ROSE]{ Experimental Parts of ROSE \\ 
+%\vspace{1.0in}
+%\normalsize{These parts of ROSE are either new or not well tested on real
+%    applications.}
+%\fixme{Lay out rules and criteria for the classification of different parts of ROSE.}
+%}
+
+% \input{recognitionOfAbstractions}
+% These should not be separate chapters!
+% \input{debuggingIRnodeToString}
+% \input{debuggingSourceCodePositionInformation}
+
+% Disabled as it breaks new assertion in Copy Mechanism, Liao, 2/7/2008
+%\input{copyHelp}
 
 
 
