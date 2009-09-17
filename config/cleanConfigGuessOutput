@@ -1,4 +1,23 @@
 #!/bin/sh
+set -e
+if test $# -ne 3; then
+  echo "Usage: $0 build cpu os_vendor" >&2
+  exit 1
+fi
+
 # echo "cleanConfigGuessOutput \'$1\'" >&2
 # echo "$1" | sed 's/-unknown-/-pc-/' | sed 's/-redhat-/-pc-/' | sed 's/-darwin[^-]*$/-darwin/' | sed 's/^i386-apple-/i686-apple-/'
-echo "$1" | sed 's/-unknown-/-pc-/' | sed 's/-suse-/-pc-/' | sed 's/-linux$/-linux-gnu/' | sed 's/-redhat-/-pc-/' | sed 's/-darwin[^-]*$/-darwin/' | sed 's/^i386-apple-/i686-apple-/'
+# echo "$1" | sed 's/-unknown-/-pc-/' | sed 's/-suse-/-pc-/' | sed 's/-linux$/-linux-gnu/' | sed 's/-redhat-/-pc-/' | sed 's/-darwin[^-]*$/-darwin/' | sed 's/^i386-apple-/i686-apple-/'
+# echo "$1" | sed 's/-unknown-/-pc-/' | sed 's/-suse-/-pc-/' | sed 's/-linux$/-linux-gnu/' | sed 's/-redhat-/-pc-/' | sed 's/-darwin[^-]*$/-darwin/' | sed 's/^i386-apple-/i686-apple-/' | sed 's/-GNU-3.4/-GNU-4.2/' 
+
+if $3 == "apple"; then
+  # DQ (9/17/2009): Added support for GNU 3.4 to use the GNU 4.2 EDG binary (compiling using GNU 3.4 has -fPIC problem with Boost wave library).
+    echo "$1" | sed 's/-unknown-/-pc-/' | sed 's/-suse-/-pc-/' | sed 's/-linux$/-linux-gnu/' | sed 's/-redhat-/-pc-/' | sed 's/-darwin[^-]*$/-darwin/' | sed 's/^i386-apple-/i686-apple-/' | sed 's/-GNU-3.4/-GNU-4.2/' 
+else
+    if $2 == "x86_64"; then
+      # DQ (9/17/2009): Added support for GNU 3.4 to use the GNU 4.2 EDG binary (compiling using GNU 3.4 has -fPIC problem with Boost wave library).
+        echo "$1" | sed 's/-unknown-/-pc-/' | sed 's/-suse-/-pc-/' | sed 's/-linux$/-linux-gnu/' | sed 's/-redhat-/-pc-/' | sed 's/-darwin[^-]*$/-darwin/' | sed 's/^i386-apple-/i686-apple-/' | sed 's/-GNU-3.4/-GNU-4.2/' 
+    else
+        echo "$1" | sed 's/-unknown-/-pc-/' | sed 's/-suse-/-pc-/' | sed 's/-linux$/-linux-gnu/' | sed 's/-redhat-/-pc-/' | sed 's/-darwin[^-]*$/-darwin/' | sed 's/^i386-apple-/i686-apple-/' | sed 's/-GNU-3.4/-GNU-4.1/' | sed 's/-GNU-4.0/-GNU-4.1/' | sed 's/-GNU-4.2/-GNU-4.1/'
+    fi
+fi
