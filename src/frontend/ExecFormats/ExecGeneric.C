@@ -2194,7 +2194,7 @@ SgAsmGenericSection::get_mapped_preferred_extent() const
     return ExtentPair(get_mapped_preferred_rva(), get_mapped_size());
 }
 
-/** Reads data from a file. Reads up to @p bytes of data beginning at byte @p start_offset from the beginning of the file,
+/** Reads data from a file. Reads up to @p size bytes of data beginning at byte @p start_offset from the beginning of the file,
  *  placing the results in @p dst_buf and returning the number of bytes read. The return value could be smaller than @p size
  *  if the end-of-file is reached. If the return value is smaller than @p size then one of two things happen: if @p strict is
  *  set (the default) then an SgAsmExecutableFileFormat::ShortRead exception is thrown; otherwise the @p dst_buf will be
@@ -2207,7 +2207,7 @@ SgAsmGenericSection::read_content(addr_t start_offset, void *dst_buf, addr_t siz
     return file->read_content(start_offset, dst_buf, size, strict);
 }
 
-/** Reads data from a file. Reads up to @p bytes of data beginning at byte @p start_rva in the mapped address space and
+/** Reads data from a file. Reads up to @p size bytes of data beginning at byte @p start_rva in the mapped address space and
  *  placing the results in @p dst_buf and returning the number of bytes read. The return value could be smaller than @p size
  *  if the reading encounters virtual addresses that are not mapped.  When an unmapped virtual address is encountered the
  *  reading stops (even if subsequent virtual addresses are defined) and one of two things happen: if @p strict is set (the

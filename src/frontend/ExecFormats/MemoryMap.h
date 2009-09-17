@@ -3,9 +3,10 @@
 
 #include <sys/mman.h> /*mmap include for PROT_READ, PROT_WRITE, PROT_EXEC, and PROT_NONE*/
 
-/** A MemoryMap is an efficient mapping from virtual addresses to file (or other) offsets. The mapping can be built
- *  piecemeal and the data structure will coalesce adjacent memory areas (provided they are also adjacent in the file). If an
- *  attempt is made to define a mapping from one virtual address to multiple file offsets then an exception is raised. */
+/** A MemoryMap is an efficient mapping from virtual addresses to source bytes.  The source bytes can be bytes of a file,
+ *  bytes stored in some memory buffer, or bytes initialized to zero and are described by the MemoryMap::MapElement class.
+ *  The mapping can be built piecemeal and the data structure will coalesce adjacent memory areas when possible. If an attempt
+ *  is made to define a mapping from a virtual address to multiple source bytes then an exception is raised. */
 class MemoryMap {
 public:
     /** A MemoryMap is composed of zero or more MapElements. Each map element describes a mapping from contiguous virtual
@@ -40,7 +41,8 @@ public:
             nullify();
         }
 
-        /** Creates a mapping relative to a memory buffer. */
+        /** Creates a mapping relative to a memory buffer.  The MemoryMap will coalesce adjacent elements having the same base
+         *  when possible, but never elements having different bases. */
         MapElement(rose_addr_t va, size_t size, void *base, rose_addr_t offset, unsigned perms=PROT_NONE)
             : va(va), size(size), base(base), offset(offset), read_only(false), mapperms(perms), anonymous(NULL) {}
 
@@ -50,8 +52,9 @@ public:
             : va(va), size(size), base(const_cast<void*>(base)), offset(offset), read_only(true), mapperms(perms), anonymous(NULL)
             {}
 
-        /** Creates an anonymous mapping where all addresses of the mapping are initially contain zero bytes. Note that the
-         *  base address is not assigned until a write attempt is made. */
+        /** Creates an anonymous mapping where all addresses of the mapping are initially contain zero bytes. Note that memory
+         *  is not allocated (and the base address is not assigned) until a write attempt is made. The implementation is free
+         *  to coalesce compatible adjacent anonymous regions as it sees fit, reallocating memory as necessary. */
         MapElement(rose_addr_t va, size_t size, unsigned perms=PROT_NONE)
             : va(va), size(size), base(NULL), offset(0), read_only(false), mapperms(perms), anonymous(new size_t) {
             *anonymous = 0; /*no storage allocated yet for 'base'*/
@@ -73,27 +76,34 @@ public:
         }
 
         /** Returns true if the map points to read-only memory. This attribute is orthogonal to the mapping permissions
-         *  returned by get_mapperms(). */
+         *  returned by get_mapperms().  For instance, the underlying storage in ROSE can be a const buffer (is_read_only()
+         *  returns true) even though the map element indicates that the storage would be mapped by the loader with write
+         *  permission. */
         bool is_read_only() const {
             return read_only;
         }
 
-        /** Returns mapping permissions. The mapping permissions are orthogonal to is_read_only(). */
+        /** Returns mapping permissions. The mapping permissions are orthogonal to is_read_only(). For instance, an element
+         *  can indicate that memory would be mapped read-only by the loader even when the underlying storage in ROSE is
+         *  writable. */
         unsigned get_mapperms() const {
             return mapperms;
         }
 
-        /** Returns the buffer to which the offset applies. */
+        /** Returns the buffer to which the offset applies.  The base for anonymous elements is probably not of interest to a
+         *  caller since the implementation is free to allocate anonymous memory as it sees fit (in fact, it might not even
+         *  use a large contiguous buffer). */
         void *get_base() const {
             return base;
         }
 
-        /** Returns the starting offset for this map element. */
+        /** Returns the starting offset for this map element. The offset is measured with respect to the value returned by
+         *  get_base(). The offset is probably not of interest when the element describes an anonymous mapping. */
         rose_addr_t get_offset() const {
             return offset;
         }
 
-        /** Returns the starting offset of the specified virtual address or throws an exception if the
+        /** Returns the starting offset of the specified virtual address or throws a MemoryMap::NotMapped exception if the
          *  virtual address is not represented by this map element. */
         rose_addr_t get_va_offset(rose_addr_t va) const;
 
@@ -104,13 +114,13 @@ public:
         bool consistent(const MapElement &other) const;
 
         /** Attempts to merge the @p other element with this one.  Returns true if the elements can be merged; false if they
-         *  cannot. If the two elements overlap but are inconsistent then an Inconsistent exception is thrown. */
+         *  cannot. If the two elements overlap but are inconsistent then a MemoryMap::Inconsistent exception is thrown. */
         bool merge(const MapElement &other);
 
     private:
         friend class MemoryMap;
 
-        /* Initialize this element using data from another element. */
+        /** Initialize this element using data from another element. */
         void init(const MapElement &other) {
             va = other.va;
             size = other.size;
@@ -192,7 +202,7 @@ public:
 
     MemoryMap() : sorted(false) {}
 
-    /** Insert the specified map element. */
+    /** Insert the specified map element. Adjacent elements are coalesced when possible (see MapElement::merge()). */
     void insert(MapElement elmt);
 
     /** Erase parts of the mapping that correspond to the specified virtual address range. The addresses to be erased don't
@@ -205,20 +215,22 @@ public:
     const MapElement* find(rose_addr_t va) const;
 
     /** Search for free space in the mapping.  This is done by looking for the lowest possible address not less than @p
-     *  start_va and with the specified alignment where there are at least @p size free bytes. */
+     *  start_va and with the specified alignment where there are at least @p size free bytes. Throws a MemoryMap::NoFreeSpace
+     *  exception if the search fails to find free space. */
     rose_addr_t find_free(rose_addr_t start_va, size_t size, rose_addr_t mem_alignment=1) const;
 
-    /** Returns the currently defined map elements. */
+    /** Returns the currently defined map elements sorted by virtual address. */
     const std::vector<MapElement> &get_elements() const;
 
     /** Prunes the map elements by removing those for which @p predicate returns true. */
     void prune(bool(*predicate)(const MapElement&));
 
     /** Copies data from a contiguous region of the virtual address space into a user supplied buffer. The portion of the
-     *  virtual address space to copy begins at @p start_va and continues for @p desired bytes. The data is copied into the @p
-     *  dst_buf buffer. The return value is the number of bytes that were copied, which might be fewer than the number of
-     *  bytes desired if the mapping does not include part of the address space requested. The @p dst_buf bytes that do not
-     *  correpond to mapped virtual addresses will be zero filled. */
+     *  virtual address space to copy begins at @p start_va and continues for @p desired bytes. The data is copied into the
+     *  beginning of the @p dst_buf buffer. The return value is the number of bytes that were copied, which might be fewer
+     *  than the number of  bytes desired if the mapping does not include part of the address space requested. The @p dst_buf
+     *  bytes that do not correpond to mapped virtual addresses will be zero filled so that @p desired bytes are always
+     *  initialized. */
     size_t read(void *dst_buf, rose_addr_t start_va, size_t desired) const;
 
     /** Copies data from a supplied buffer into the specified virtual addresses.  If part of the destination address space is
@@ -226,15 +238,17 @@ public:
      *  aborted early if a map element is marked read-only.  The return value is the number of bytes copied. */
     size_t write(const void *src_buf, rose_addr_t start_va, size_t size) const;
 
-    /** Prints the contents of the map for debugging. */
+    /** Prints the contents of the map for debugging. The @p prefix string is added to the beginning of every line of output
+     *  and typically is used to indent the output. */
     void dump(FILE*, const char *prefix="") const;
 
 private:
     /* Mutable because some constant methods might sort the elements. */
-    mutable bool sorted;
-    mutable std::vector<MapElement> elements; /*only lazily sorted*/
+    mutable bool sorted;                        /**< True if the 'elements' are sorted by virtual address. */
+    mutable std::vector<MapElement> elements;   /**< Map elements are only lazily sorted; see 'sorted' data member. */
 };
 
+/** Map elements are sorted by virtual address. */
 inline bool operator<(const MemoryMap::MapElement &a, const MemoryMap::MapElement &b) {
     return a.get_va() < b.get_va();
 }

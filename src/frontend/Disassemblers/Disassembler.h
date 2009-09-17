@@ -54,31 +54,17 @@
  *
  *  @code
  *  SgAsmGenericHeader *header = ....; // the ELF file header
- *  SgAsmGenericSectionPtrList secs = header->get_sections()->get_sections();
- *  SgAsmGenericSectionPtrList removals; // stuff to remove later
- *  MemoryMap map; // mapping from virtual address to file offset
- *  
- *  // Add all executable ELF Segments to the mapping
- *  for (size_t i=0; i<secs.size(); i++) {
- *      SgAsmElfSection *s = isSgAsmElfSection(secs[i]);
- *      if (s && s->get_segment_header() && s->is_mapped() && s->get_mapped_xperm()) {
- *          map.insert(es); // s is an executable ELF Segment
- *      } else {
- *          removals.insert(secs[i]);
- *      }
- *  }
  *
- *  // Remove all other known parts of the file from the map
- *  map.erase(header);
- *  for (size_t i=0; i<removals.size(); i++)
- *      map.erase(removals[i]);
+ *  // Create a memory map
+ *  Loader *loader = Loader::find_loader(header);
+ *  MemoryMap *map = loader->map_executable_sections(header);
  *
- *  // Disassemble everything
+ *  // Disassemble everything defined by the memory map
  *  Disassembler *d = Disassembler::create(header);
  *  d->set_search(Disassembler::SEARCH_ALLBYTES); // disassemble at every address
  *  Disassembler::AddressSet worklist; // can be empty due to SEARCH_ALLBYTES
  *  Disassembler::InstructionMap insns;
- *  insns = d->disassembleBuffer(&map, worklist);
+ *  insns = d->disassembleBuffer(map, worklist);
  *
  *  // Print all instructions
  *  Disassembler::InstructionMap::iterator ii;

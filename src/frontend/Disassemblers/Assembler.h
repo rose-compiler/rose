@@ -49,7 +49,7 @@
  */
 class Assembler {
 public:
-    /** Exception thrown by the assemblers. */
+    /** %Exception thrown by the assemblers. */
     class Exception {
     public:
         /** An exception bound to a particular instruction being assembled. */

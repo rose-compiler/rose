@@ -6,10 +6,12 @@
 #define ALIGN_DN(ADDR,ALMNT)       (((ADDR)/(ALMNT))*(ALMNT))
 
 
-/** This class is the interface for executable loaders. A loader is reponsible for mapping file sections into memory and
- *  emulates the actions taken by real-world loaders. Each real-world loader will be represented as a subclass of Loader. The
- *  loaders are registered with ROSE by calling register_loader(), making them available to modules such as the instruction
- *  disassembler. For example, see the LoaderPE class.
+/** This class is the interface for binary file loaders.
+ *
+ *  A Loader is reponsible for constructing a MemoryMap describing a
+ *  mapping from virtual memory to file content and emulates the actions taken by real-world loaders. Each real-world loader
+ *  will be represented as a subclass of Loader. The loaders are registered with ROSE by calling register_loader(), making
+ *  them available to modules such as the instruction disassembler.
  *
  *  For example, given a Windows PE executable containing a DOS executable and a PE executable, this is how one would create a
  *  mapping to describe all the code-containing sections that are part of the PE executable:
@@ -17,10 +19,23 @@
  *  @code
  *  SgAsmPEFileHeader *pe_header = ...;
  *  Loader *loader = Loader::find_loader(pe_header); // Get the best loader for PE
- *  ROSE_ASSERT(loader!=NULL);
- *  const SgAsmGenericSectionPtrList pe_sections = pe_header->get_sections()->get_sections();
- *  MemoryMap *map = loader->map_code_sections(pe_sections);
+ *  MemoryMap *map = loader->map_code_sections(pe_header);
  *  @endcode
+ *
+ *  The high-level functions, map_all_sections(), map_code_sections(), map_executable_sections(), map_writable_sections(), and
+ *  possibly others in the future each have three overloaded versions: one that selects sections from the entire file, one
+ *  that selects sections belonging to a particular binary header, and one that selects sections from a specified list.  These
+ *  are all declared virtual so that a subclass can provide new definitions, although normally only the last version (the one
+ *  that takes a list of sections) is overridden since the other two are defined in terms of it.
+ *
+ *  The high-level functions then call create_map(), supplying a local class using the Selector interface to describe which
+ *  specific sections contribute to the final mapping and how they contribute.  The sections are sorted (see order_sections())
+ *  and then each contributing section is then run through the align_values() method to satisfy alignment constraints, choose
+ *  new virtual addresses, and/or eliminate the section from consideration.
+ *
+ *  Finally, once values are aligned addresses are added to or removed from the MemoryMap that is eventually returned.  For
+ *  each section that is added to the memory map, the section's starting address is assigned with
+ *  SgAsmGenericSection::set_mapped_actual_rva().
  */
 class Loader {
 public:
@@ -30,26 +45,35 @@ public:
     /*------------------------------------------------------------------------------------------------------------------------
      * Methods for registering and looking up loader implementations.
      *------------------------------------------------------------------------------------------------------------------------*/
+public:
 
     /** Class method to register a loader.  This allows users to define loaders at runtime and register them with ROSE.  When
      *  loader functionality is needed by the parser, disassembler, etc., ROSE will try each loader in the reverse order they
-     *  were registered until one indicates that it can handle the request. */
+     *  were registered until one indicates that it can handle the request. A loader indicates it can handle a request when its
+     *  can_handle() method returns true.  The loader's built into ROSE are also registered automatically by ROSE. */
     static void register_subclass(Loader*);
 
-    /** Class method to find a registered loader supporting the specified file header. */
+    /** Class method to find a registered loader supporting the specified file header.
+     *
+     *  This method will call the can_handle()
+     *  method of each registered loader, in reverse order of their registration, until one returns true. */
     static Loader *find_loader(SgAsmGenericHeader*);
 
-    /** Returns true if the loader is able to handle the specified file header.  For instance, WindowsVista loader would
-     *  return true if the header is for a PE file. The generic Loader advertises that it can handle all types of file headers,
-     *  so subclasses should definitely override this. */
+    /** Indicates whether a loader can handle a specific type of file.
+     *
+     *  Returns true if the loader is able to handle the specified file header.  For instance, the LoaderELFObj loader would
+     *  return true if the header is for an ELF object file. The generic Loader advertises that it can handle all types of
+     *  file headers, so subclasses should definitely override this. */
     virtual bool can_handle(SgAsmGenericHeader*) { return true; }
 
+private:
     /** Class method to register ROSE built-in loaders. This is called automatically by register_subclass(). */
     static void initclass();
 
     /*------------------------------------------------------------------------------------------------------------------------
      * High-level functions for mapping.
      *------------------------------------------------------------------------------------------------------------------------*/
+public:
 
     /** Creates a map containing all mappable sections in the file. */
     virtual MemoryMap *map_all_sections(SgAsmGenericFile *file, bool allow_overmap=true) {
@@ -112,14 +136,20 @@ public:
     /*------------------------------------------------------------------------------------------------------------------------
      * Selectors
      *------------------------------------------------------------------------------------------------------------------------*/
+public:
+
     enum Contribution {
         CONTRIBUTE_NONE,                /**< Section does not contribute to final mapping. */
         CONTRIBUTE_ADD,                 /**< Section is added to the mapping. */
         CONTRIBUTE_SUB                  /**< Section is subtracted from the mapping. */
     };
 
-    /** A Selector is used to decide whether a section should contribute to the mapping, and whether that contribution should
-     *  be additive or subtractive.  The Selector virtual class will be subclassed for various kinds of selections. */
+    /** The interface for deciding whether a section contributes to a mapping.
+     *
+     *  A Selector is used to decide whether a section should contribute to the mapping, and whether that contribution should
+     *  be additive or subtractive.  Any section that contributes to a mapping will be passed through the align_values()
+     *  method, which has an opportunity to veto the section's contribution. The Selector virtual class will be subclassed for
+     *  various kinds of selections. */
     class Selector {
     public:
         virtual ~Selector() {}
@@ -129,6 +159,7 @@ public:
     /*------------------------------------------------------------------------------------------------------------------------
      * Helper methods. These are declared virtual but are often not overridden by subclasses.
      *------------------------------------------------------------------------------------------------------------------------*/
+public:
 
     /** Computes memory mapping addresses for a section.
      *
@@ -163,26 +194,36 @@ public:
                                      rose_addr_t *offset, rose_addr_t *file_size,
                                      const MemoryMap *current);
 
-    /** Returns the list of sections in the file in the order they would be mapped.  This function makes no distinction between
-     *  sections that would ultimately be selected and those that wouldn't. In other words, the order that sections are mapped
-     *  is independent of the rules (Selector) determining how the section contributes to the mapping. */
+    /** Sort sections for mapping.
+     *
+     *  Given a list of sections, sort the sections according to the order they should contribute to the mapping.  For
+     *  instance, ELF Segments should contribute to the mapping before ELF Sections.
+     *
+     *  This method can also be used as a first-line for excluding sections that meet certain criteria. It is called by
+     *  create_map() before sections are passed through the Selector object.  The default implementation excludes any section
+     *  that was synthesized by the binary parser, keeping only those that were created due to the parser encountering a
+     *  description of the section in some kind of table. */
     virtual SgAsmGenericSectionPtrList order_sections(const SgAsmGenericSectionPtrList&);
 
-    /** Creates a memory map containing sections that satisfy some constraint. The sections are mapped in the order specified
-     *  by order_sections() and contribute to the final mapping according to the specified Selector.  If @p allow_overmap is
-     *  set (the default) then any section that contributes to the map in an additive manner will first have its virtual
-     *  address space removed from the map in order to prevent a MemoryMap::Inconsistent exception. */
+    /** Creates a memory map containing sections that satisfy some constraint.
+     *
+     *  The sections are mapped in the order specified by order_sections(), contribute to the final mapping according to the
+     *  specified Selector, and are aligned according to the rules in align_values().  If @p allow_overmap is set (the
+     *  default) then any section that contributes to the map in an additive manner will first have its virtual address space
+     *  removed from the map in order to prevent a MemoryMap::Inconsistent exception; otherwise a MemoryMap::Inconsistent
+     *  exception will be thrown when a single virtual address would map to two different source bytes, such as two different
+     *  offsets in a file. */
     virtual MemoryMap *create_map(const SgAsmGenericSectionPtrList&, Selector*, bool allow_overmap=true);
 
     /*------------------------------------------------------------------------------------------------------------------------
      * Configuration methods.
      *------------------------------------------------------------------------------------------------------------------------*/
 
-    /** Turns debugging output on or off.  If @p f is null then debugging is turned off, otherwise debugging output is sent to
-     *  the specified file. */
+    /** Turns debugging output on or off. If @p f is null then debugging is turned off, otherwise debugging output is sent to
+     *  the specified file.  The default can be changed at the top of the Loader.C file. */
     void set_debug(FILE *f) { p_debug=f; }
 
-    /** Returns debugging status.  If debugging is off a null pointer is returned, otherwise the file to which debugging
+    /** Returns debugging status. If debugging is off a null pointer is returned, otherwise the file to which debugging
      *  information is being emitted is returned. */
     FILE *get_debug() const { return p_debug; }
 
