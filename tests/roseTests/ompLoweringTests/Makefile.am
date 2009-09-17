@@ -58,6 +58,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
         task_orphaned.c \
         task_underIf.c \
         task_untied.c \
+        task_untied2.c \
         task_wait.c
 # a subset of C tests can be executed	
 # Put their object files with main entries here
@@ -103,9 +104,9 @@ C_MAIN_Objects = \
 	subteam.o \
 	subteam2.o \
         spmd1.o \
-        task_largenumber.o
-# nested tasks: tricky handling for variables:  parent task's auto variable may not be accessed by child's task!!!	
-#	task_untied.o
+        task_largenumber.o \
+	task_untied.o \
+        task_untied2.o
 # TODO task-wait hangs for gcc 4.4.1 (not for Intel icc), skip the execution for now	
 #	task_wait.o
 

@@ -14,6 +14,7 @@ is included <a href="../ROSE_ResearchPapers/selectedpapers.bib"> (download here)
 to reference the latest papers.
 
 Best papers:
+   -# LCPC2009-SourceToSourceOutliningToSupportWholeProgramEmpiricalOptimization.pdf
    -# IWOMP2009-ExtendingAutoParToOptimizeAbstractions.pdf
    -# ICS05BrianWhiteAndCast.pdf
    -# LCPC2004-OptimizationsOfObjectOrientedAbstractionsThroughClassificationOfSemantics.pdf
@@ -25,10 +26,10 @@ Best papers:
 \section LabelA Brief descriptions of the several papers that we have included
 - Chunhua Liao, Daniel J. Quinlan, Richard Vuduc and Thomas Panas, Effective Source-to-Source Outlining to Support Whole Program Empirical Optimization, The 22nd International Workshop on Languages and Compilers for Parallel Computing, Newark, Delaware, USA. October 8-10, 2009.  <a href="../ROSE_ResearchPapers/LCPC2009-SourceToSourceOutliningToSupportWholeProgramEmpiricalOptimization.pdf"> pdf </a>. \n
  This paper describes our work of using ROSE to build an effective source-to-source outliner in order to support whole program 
- empirical optimization (also called autotuning). The ROSE outliner addresses of the problem of extracting tunable
+ empirical optimization (also called autotuning). The ROSE outliner addresses the problem of extracting tunable
  kernels out of large scale applications, thereby helping to convert the challenging whole-program tuning problem into a set of 
  more manageable kernel tuning tasks. In particular, the outliner can generate kernels which preserve performance characteristics
- of tuning targets and can be easily handled by other tools. This work also demonstrates how one can use ROSE's compiler analyses to enhance the quality of source-to-source translation.
+ of tuning targets which can be easily handled by other tools. This work also demonstrates how one can use ROSE's compiler analyses to enhance the quality of source-to-source translation.
 
 - Chunhua Liao, Daniel J. Quinlan, Jeremiah J. Willcock and Thomas Panas,
 "Extending Automatic Parallelization to Optimize High-Level Abstractions for Multicore,"

@@ -73,6 +73,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	task_largenumber.c \
 	task_orphaned.c \
 	task_untied.c \
+	task_untied2.c \
 	task_underIf.c \
 	task_wait.c \
 	threadprivate2.c \

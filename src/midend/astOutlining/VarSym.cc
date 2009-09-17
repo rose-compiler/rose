@@ -298,6 +298,8 @@ ASTtools::collectLocalVisibleVarSyms (const SgStatement* root,
 //including &a expression and foo(a) when type2 foo(Type& parameter) in C++
 void ASTtools::collectVarRefsUsingAddress(const SgStatement* s, std::set<SgVarRefExp* >& varSetB)
 {
+  SageInterface::collectUseByAddressVariableRefs(s, varSetB);
+#if 0  
   Rose_STL_Container <SgNode*> var_refs = NodeQuery::querySubTree (const_cast<SgStatement *> (s), V_SgVarRefExp);
 
   Rose_STL_Container<SgNode*>::iterator iter = var_refs.begin();
@@ -346,6 +348,7 @@ void ASTtools::collectVarRefsUsingAddress(const SgStatement* s, std::set<SgVarRe
       } 
     } 
   }
+#endif  
 }
 
 

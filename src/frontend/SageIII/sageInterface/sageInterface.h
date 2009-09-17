@@ -1199,6 +1199,12 @@ void collectReadOnlyVariables(SgStatement* stmt, std::set<SgInitializedName*>& r
 //!Collect read only variable symbols within a statement. The statement can be either of a function, a scope, or a single line statement.
 void collectReadOnlySymbols(SgStatement* stmt, std::set<SgVariableSymbol*>& readOnlySymbols);
 
+//! Check if a variable reference is used by its address: including &a expression and foo(a) when type2 foo(Type& parameter) in C++
+bool isUseByAddressVariableRef(SgVarRefExp* ref);
+
+//! Collect variable references involving use by address: including &a expression and foo(a) when type2 foo(Type& parameter) in C++
+void collectUseByAddressVariableRefs (const SgStatement* s, std::set<SgVarRefExp* >& varSetB);
+
 //!Call liveness analysis on an entire project
 LivenessAnalysis * call_liveness_analysis(SgProject* project, bool debug=false);
 

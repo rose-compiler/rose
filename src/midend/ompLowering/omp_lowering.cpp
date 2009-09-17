@@ -197,6 +197,82 @@ namespace OmpSupport
   }
 
   //! Replace variable references within root based on a map from old symbols to new symbols
+  /* This function is mostly used by transOmpVariables() to handle private, firstprivate, reduction, etc.
+   * Within this context, the replacement of a variable used by address need special attention:
+   * The quick answer is skip the replacement to maintain the semantic correctness.
+   * The reason follows:
+   * Considering nested omp tasks: 
+
+         #pragma omp task untied
+            {
+              int j =100;
+              // i is firstprivate, item is shared
+              {
+                for (i = 0; i < LARGE_NUMBER; i++)
+                {
+      #pragma omp task if(1) 
+                  process (item[i],&j);
+                }
+              }
+            }
+   * the variable j will be firstprivate by default 
+   * however, it is used by its address within a nested task (&j)
+   * replacing it with its local copy will not get the right, original address.
+   *
+   * Even worse: the replacement will cause some later translation (outlining) to 
+   * access the address of a parent task's local variable. 
+   * It seems (not 100% certain!!!) that GOMP implements tasks as independent entities.
+   * As a result a parent task's local stack will not be always accessible to its nested tasks.
+   * A segmentation fault will occur when the lexically nested task tries to obtain the address of
+   * its parent task's local variable. 
+   * An example mistaken translation is shown below
+       int main()
+      {
+        GOMP_parallel_start(OUT__3__1527__,0,0);
+        OUT__3__1527__();
+        GOMP_parallel_end();
+        return 0;
+      }
+      
+      void OUT__3__1527__()
+      {
+        if (GOMP_single_start()) {
+          int i;
+          printf(("Using %d threads.\n"),omp_get_num_threads());
+          void *__out_argv2__1527__[1];
+          __out_argv2__1527__[0] = ((void *)(&i));
+          GOMP_task(OUT__2__1527__,&__out_argv2__1527__,0,4,4,1,1);
+          //GOMP_task(OUT__2__1527__,&__out_argv2__1527__,0,4,4,1,0); //untied or not, no difference
+        }
+      }
+      
+      void OUT__2__1527__(void **__out_argv)
+      {
+        int *i = (int *)(__out_argv[0]);
+      //  int _p_i;
+      //  _p_i =  *i;
+      //  for (_p_i = 0; _p_i < 1000; _p_i++) {
+        for (*i = 0; *i < 1000; (*i)++) {
+          void *__out_argv1__1527__[1];
+        // cannot access auto variable from the stack of another task instance!!
+          //__out_argv1__1527__[0] = ((void *)(&_p_i));
+          __out_argv1__1527__[0] = ((void *)(&(*i)));// this is the right translation
+          GOMP_task(OUT__1__1527__,&__out_argv1__1527__,0,4,4,1,0);
+        }
+      }
+      void OUT__1__1527__(void **__out_argv)
+      {
+        int *i = (int *)(__out_argv[0]);
+        int _p_i;
+        _p_i =  *i;
+        assert(_p_i>=0);
+        assert(_p_i<10000);
+      
+        process((item[_p_i]));
+      }
+   *
+   *   
+   */
   int replaceVariableReferences(SgNode* root, VariableSymbolMap_t varRemap)
   {
     int result =0;
@@ -206,6 +282,11 @@ namespace OmpSupport
     {
       SgVarRefExp* ref_orig = isSgVarRefExp (*i);
       ROSE_ASSERT (ref_orig);
+      if (SageInterface::isUseByAddressVariableRef(ref_orig))
+      {
+      //  cout<<"Skipping a variable replacement because the variable is used by its address:"<< ref_orig->unparseToString()<<endl;
+        continue; //skip the replacement for variable used by addresses
+      }
       VariableSymbolMap_t::const_iterator iter = varRemap.find(ref_orig->get_symbol()); 
       if (iter != varRemap.end())
       {
