@@ -949,7 +949,9 @@ fi
 AM_CONDITIONAL(BINARY_EDG_TARBALL_ENABLED, [test "x$binary_edg_tarball_enabled" = "xyes"])
 
 release_binary_compatibility_signature="RELEASE_BINARY_COMPATIBILITY_SIGNATURE" # This variable will be substituted in binary-EDG release copies of configure.in
-build_triplet_without_redhat=`${srcdir}/config/cleanConfigGuessOutput "$build"`
+
+# DQ (9/17/2009): Added build_cpu so that we could make the naming different for 32bit vs. 64bit.
+build_triplet_without_redhat=`${srcdir}/config/cleanConfigGuessOutput "$build" "$build_cpu" "$build_vendor"`
 
 # DQ (9/14/2009): Added compiler name and major and minor 
 # version numbers to the generate ROSE EDG binary name.

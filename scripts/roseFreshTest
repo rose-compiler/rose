@@ -174,11 +174,15 @@ fi
   cd build
   ../sourcetree/configure "${CONFIGURE_FLAGS[@]}" || exit 1
   echo "############ configure done"
-  make $MAKEFLAGS || exit 1
-  echo "############ make done"
+
+# make $MAKEFLAGS || exit 1
+# echo "############ make done"
 
   # For testing -- skip the rest if we are testing the head of the SciDAC repository of ROSE
-  if [ 0$SKIP_DOCS_AND_INSTALL_TEST -ne 0 ] ; then
+  if [ 0$BUILD_AND_UPDATE_EDG_BINARY_ONLY -ne 0 ] ; then
+  # This is as short a compile as possible (roughly) to build the EDG binary.
+    make -C src $MAKEFLAGS || exit 1
+    echo "############ make done"
     echo "Skipping make check, docs, install, and installcheck.."
     if [ 0$ENABLE_BUILD_BINARY_EDG -ne 0 ]; then
       cd ${ROSE_TOP}/build
@@ -186,7 +190,10 @@ fi
       make $MAKEFLAGS copy_binary_edg_tarball_to_source_tree_svn DOT_SVNREV=-${svnversion} || exit 1
       echo "############ make copy_binary_edg_tarball_to_source_tree_svn using svnversion = ${svnversion} done"
     fi
-  else  
+  else
+  # Normal build of ROSE
+    make $MAKEFLAGS || exit 1
+    echo "############ make done"
     make $MAKEFLAGS check || exit 1
     echo "############ make check done"
     make $MAKEFLAGS docs || exit 1
@@ -224,8 +231,8 @@ fi
     make $MAKEFLAGS distcheck || exit 1
     echo "############ make distcheck done"
     # Build a binary version of EDG and put it into the source tree
-    SYSTEM_NAME=`${ROSE_TOP}/sourcetree/config/config.guess | xargs ${ROSE_TOP}/sourcetree/config/cleanConfigGuessOutput`
-    echo "SYSTEM_NAME = \"$SYSTEM_NAME\"" >&2
+    # SYSTEM_NAME=`${ROSE_TOP}/sourcetree/config/config.guess | xargs ${ROSE_TOP}/sourcetree/config/cleanConfigGuessOutput`
+    # echo "SYSTEM_NAME = \"$SYSTEM_NAME\"" >&2
     if [ 0$ENABLE_BUILD_BINARY_EDG -ne 0 ]; then
       cd ${ROSE_TOP}/build
     # DQ (9/15/2009): These are now called via dependences in the Makefile when we call the makefile rule: source_with_binary_edg_dist

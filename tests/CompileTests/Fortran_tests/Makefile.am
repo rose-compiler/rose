@@ -132,8 +132,12 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2007_249.f90 \
      test2007_250.f90 \
      test2007_262.f90 \
-     test2007_263.f90 \
      canonicalExample.f90 
+
+if !ROSE_USING_GFORTRAN_VERSION_4_0
+   F90_TESTCODES_REQUIRED_TO_PASS += test2007_263.f90
+endif
+
 
 F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS = \
      test2007_124.f \
@@ -237,6 +241,9 @@ F03_TESTCODES_REQUIRED_TO_PASS = \
      test2007_174.f03 \
      test2007_176.f03
 
+if !ROSE_USING_GFORTRAN_VERSION_4_1
+   F03_TESTCODES_REQUIRED_TO_PASS += test2007_43.f03
+endif
 
 # #######################
 #      FAILING TESTS
