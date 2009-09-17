@@ -39,7 +39,8 @@ using namespace SageInterface;
 using namespace SageBuilder;
 using namespace OmpSupport;
 
-
+// DQ (9/17/2009): This appears to only be required for the GNU 4.1.x compiler (not for any earlier or later versions).
+extern const std::string ROSE_GFORTRAN_PATH;
 
 std::string
 SgValueExp::get_constant_folded_value_as_string()
