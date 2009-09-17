@@ -209,7 +209,7 @@ $(LTX2HTM):
 	cp -r $(srcdir)/ltx2htm ltx2htm-build
 	chmod u+rw -R ltx2htm-build
 	mkdir -p ltx2htm-inst/bin ltx2htm-inst/lib
-	cd ltx2htm-build && sh configure --prefix=$(PWD)/ltx2htm-inst
+	cd ltx2htm-build && sh configure --prefix=$(realpath $(builddir))/ltx2htm-inst
 	make -C ltx2htm-build all install
 
 else # -----------------------------------------------------------------
