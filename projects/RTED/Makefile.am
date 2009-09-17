@@ -91,14 +91,14 @@ RTED_C_TEST_DIRS = $(rted_path)/C/array_index_out_of_bound \
 		 $(srcdir)/tests/C/memoverlap \
 		 $(srcdir)/tests/C/pointer \
 		 $(srcdir)/tests/C/types
-RTED_CPP_TEST_DIRS = $(rted_path)/Cxx/array_index_out_of_bound \
-		 $(rted_path)/Cxx/string_errors \
-		 $(rted_path)/Cxx/allocation_deallocation_errors \
-		 $(rted_path)/Cxx/input_output_errors \
-		 $(rted_path)/Cxx/memory_leaks \
-		 $(rted_path)/Cxx/uninitialized_variables \
-		 $(rted_path)/Cxx/floating_point_errors \
-		 $(rted_path)/Cxx/pointer_errors \
+RTED_CPP_TEST_DIRS = $(rted_path)/C++/array_index_out_of_bound \
+		 $(rted_path)/C++/string_errors \
+		 $(rted_path)/C++/allocation_deallocation_errors \
+		 $(rted_path)/C++/input_output_errors \
+		 $(rted_path)/C++/memory_leaks \
+		 $(rted_path)/C++/uninitialized_variables \
+		 $(rted_path)/C++/floating_point_errors \
+		 $(rted_path)/C++/pointer_errors \
 		 $(srcdir)/tests/Cxx/simple \
 		 $(srcdir)/tests/Cxx/pointer \
 		 $(srcdir)/tests/Cxx/types \
@@ -350,11 +350,11 @@ GENERATE_EXPECTED_OUTPUT = @OUTPUT_SRC='$(strip $(patsubst rted_source/%.expecte
 rted_source/C/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SCRIPT)
 	$(call GENERATE_EXPECTED_OUTPUT, .c, $(rted_path))
 
+rted_source/C++/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SCRIPT)
+	$(call GENERATE_EXPECTED_OUTPUT, .cpp, $(rted_path))
+
 rted_source/tests/C/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SCRIPT)
 	$(call GENERATE_EXPECTED_OUTPUT, .c, $(srcdir) )
-
-rted_source/Cxx/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SCRIPT)
-	$(call GENERATE_EXPECTED_OUTPUT, .cpp, $(rted_path))
 
 rted_source/tests/Cxx/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SCRIPT)
 	$(call GENERATE_EXPECTED_OUTPUT, .cpp, $(srcdir))
