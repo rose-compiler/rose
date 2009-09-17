@@ -73,8 +73,9 @@ if WITH_SWI_PROLOG  # --------------------------------------------------
 
 docs-termite: HTML termite.pdf mostlyclean
 dist_doc_DATA += \
-	termite.pdf \
-	$(TERMITE_HTML)
+	termite.pdf
+
+nobase_dist_doc_DATA = $(TERMITE_HTML)
 
 $(TERMITE_HTML): HTML
 
