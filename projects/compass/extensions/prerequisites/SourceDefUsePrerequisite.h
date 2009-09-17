@@ -50,9 +50,10 @@ class SourceDefUsePrerequisite: public Prerequisite
     //defuse->disableVisualization();
     Rose_STL_Container<SgNode *> funcs =
       NodeQuery::querySubTree(root, V_SgFunctionDefinition);
-    if (my_rank==0)
+    if (my_rank==0) {
       //std::cerr << "\n>>>>> running defuse analysis (with MPI)...  functions: " << funcs.size() <<
       //  "  processes : " << processes << std::endl;
+    }
     int resultDefUseNodes=0;
 
 
