@@ -237,9 +237,9 @@ void DefUseAnalysis::printMultiMap(const multitype* multi) {
     SgNode* sgNodeMM = (*j).second;
     ROSE_ASSERT(sgInitMM);
     ROSE_ASSERT(sgNodeMM);
-    cout << "  ..  initName:" << sgInitMM->get_qualified_name().str() << " ( " <<
-      ToString(getIntForSgNode(sgInitMM)) << " ) - SgNode " << 
-      ToString(getIntForSgNode(sgNodeMM)) << endl;
+    //cout << "  ..  initName:" << sgInitMM->get_qualified_name().str() << " ( " <<
+    //  ToString(getIntForSgNode(sgInitMM)) << " ) - SgNode " << 
+    //  ToString(getIntForSgNode(sgNodeMM)) << endl;
   }      
 }
 

@@ -705,10 +705,11 @@ void RoseBin_FILE::process_operand_tuples_query( ) {
       cout << "\n\n> appending operandList to instruction.  " << endl;
     rose_hash::hash_map <uint64_t, SgAsmInstruction* >::iterator blockIt;      
     int count = 0;
-    cerr << "Instruction count: " << rememberInstructions.size() << endl;
+    //cerr << "Instruction count: " << rememberInstructions.size() << endl;
     for (blockIt=rememberInstructions.begin();blockIt!=rememberInstructions.end();++blockIt) {
       ++count;
-      if (count % 1000 == 0) cout << "Adding operands to instruction " << count << endl;
+      if (RoseBin_support::DEBUG_MODE())
+	if (count % 1000 == 0) cout << "Adding operands to instruction " << count << endl;
       int inst_address = blockIt->first;
       SgAsmInstruction* remInstr = blockIt->second;
       map<int, vector< SgAsmExpression*> >::iterator it = tmp_instruction_map.find(inst_address);

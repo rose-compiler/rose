@@ -21,9 +21,9 @@ class SourceDefUsePrerequisite: public Prerequisite
       done =true;
   if (defuse==NULL) {
     //#define DEFUSE
-    std::cerr << " DEFUSE ==NULL ... running defuse analysis " << std::endl;
+    //std::cerr << " DEFUSE ==NULL ... running defuse analysis " << std::endl;
 #if ROSE_MPI
-    std::cerr << " MPI is enabled! Running in parallel ... " << std::endl;
+    //std::cerr << " MPI is enabled! Running in parallel ... " << std::endl;
     /* ----------------------------------------------------------
      * MPI code for DEFUSE
      * ----------------------------------------------------------*/
@@ -37,7 +37,7 @@ class SourceDefUsePrerequisite: public Prerequisite
     // create map with all nodes and indices
     MemoryTraversal* memTrav = new MemoryTraversal();
     memTrav->traverseMemoryPool();
-    std::cerr << my_rank << " >> MemoryTraversal - Elements : " << memTrav->counter << std::endl;
+    //std::cerr << my_rank << " >> MemoryTraversal - Elements : " << memTrav->counter << std::endl;
     ROSE_ASSERT(memTrav->counter>0);
     ROSE_ASSERT(memTrav->counter==memTrav->nodeMap.size());
 
@@ -51,8 +51,8 @@ class SourceDefUsePrerequisite: public Prerequisite
     Rose_STL_Container<SgNode *> funcs =
       NodeQuery::querySubTree(root, V_SgFunctionDefinition);
     if (my_rank==0)
-      std::cerr << "\n>>>>> running defuse analysis (with MPI)...  functions: " << funcs.size() <<
-        "  processes : " << processes << std::endl;
+      //std::cerr << "\n>>>>> running defuse analysis (with MPI)...  functions: " << funcs.size() <<
+      //  "  processes : " << processes << std::endl;
     int resultDefUseNodes=0;
 
 
@@ -117,10 +117,10 @@ class SourceDefUsePrerequisite: public Prerequisite
           MPI_Isend(res, 2, MPI_INT, 0, 1, MPI_COMM_WORLD, &request[0]);
           MPI_Irecv(res2, 2, MPI_INT, 0, 1, MPI_COMM_WORLD, &request[1]);
 
-          if (((max-min) % 20)==0 || min <10)
-            std::cout << " process : " << my_rank << " receiving nr: [" << min << ":" << max << "[ of " <<
-              bounds.size() << "     range : " << (max-min) << std::endl;
-
+          if (((max-min) % 20)==0 || min <10) {
+	    // std::cout << " process : " << my_rank << " receiving nr: [" << min << ":" << max << "[ of " <<
+            //  bounds.size() << "     range : " << (max-min) << std::endl;
+	  }
           for (int i=min; i<max;i++) {
             SgNode* mynode = isSgNode(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]);
             ROSE_ASSERT(mynode);
@@ -169,26 +169,26 @@ class SourceDefUsePrerequisite: public Prerequisite
         }
 
       } //while
-      if (my_rank==0)
-        std::cerr << ">>> Final scale = " << scale << std::endl;
-
+      if (my_rank==0) {
+	// std::cerr << ">>> Final scale = " << scale << std::endl;
+      }
     } //else
     // ---------------- LOAD BALANCING of DEFUSE -------------------
 
 
     gettime(end_time_node);
     double my_time_node = timeDifference(end_time_node, begin_time_node);
-    std::cerr << my_rank << ": DefUse Analysis complete. Nr of nodes: " << resultDefUseNodes <<
-      "  time: " << my_time_node << std::endl;
+    //std::cerr << my_rank << ": DefUse Analysis complete. Nr of nodes: " << resultDefUseNodes <<
+    // "  time: " << my_time_node << std::endl;
     MPI_Barrier(MPI_COMM_WORLD);
-    if (my_rank==0)
-      std::cerr << "\n>> Collecting defuse results ... " << std::endl;
-
+    if (my_rank==0) {
+      // std::cerr << "\n>> Collecting defuse results ... " << std::endl;
+    }
 
     ROSE_ASSERT(defuse);
     my_map defmap = defuse->getDefMap();
     my_map usemap = defuse->getUseMap();
-    std::cerr << my_rank << ": Def entries: " << defmap.size() << "  Use entries : " << usemap.size() << std::endl;
+    //std::cerr << my_rank << ": Def entries: " << defmap.size() << "  Use entries : " << usemap.size() << std::endl;
     gettime(end_time_node);
     my_time_node = timeDifference(end_time_node, begin_time_node);
 
@@ -204,7 +204,7 @@ class SourceDefUsePrerequisite: public Prerequisite
     delete[] times_defuse;
 
     if (my_rank==0) {
-      std::cerr << ">> ---- Time (max) needed for DefUse : " << totaltime << std::endl <<std::endl;
+      //std::cerr << ">> ---- Time (max) needed for DefUse : " << totaltime << std::endl <<std::endl;
       Compass::gettime(begin_time_node);
       Compass::gettime(b_time_node);
     }
@@ -222,8 +222,8 @@ class SourceDefUsePrerequisite: public Prerequisite
     for (;dit2!=usemap.end();++dit2) {
       arrsizeUse +=(dit2->second).size()*3;
     }
-    std::cerr << my_rank << ": defmapsize : " << defmap.size() << "  usemapsize: " << usemap.size()
-              << ": defs : " << arrsize << "  uses: " << arrsizeUse << std::endl;
+    //std::cerr << my_rank << ": defmapsize : " << defmap.size() << "  usemapsize: " << usemap.size()
+    //         << ": defs : " << arrsize << "  uses: " << arrsizeUse << std::endl;
     // communicate total size to allocate global arrsize
     global_arrsize = -1;
     global_arrsizeUse = -1;
@@ -248,13 +248,13 @@ class SourceDefUsePrerequisite: public Prerequisite
     serializeDefUseResults(def_values, defmap, memTrav->nodeMapInv);
     serializeDefUseResults(use_values, usemap, memTrav->nodeMapInv);
     /* serialize all results */
-    std::cerr << my_rank << " : serialization done."  << std::endl;
+    //std::cerr << my_rank << " : serialization done."  << std::endl;
 
     MPI_Barrier(MPI_COMM_WORLD);
     if (my_rank==0) {
       Compass::gettime(e_time_node);
       double restime = Compass::timeDifference(e_time_node, b_time_node);
-      std::cerr << "\n >>> serialization done. TIME : " << restime << std::endl;
+      //std::cerr << "\n >>> serialization done. TIME : " << restime << std::endl;
       Compass::gettime(b_time_node);
     }
 
@@ -279,8 +279,8 @@ class SourceDefUsePrerequisite: public Prerequisite
       length[j]=global_length[j];
       lengthUse[j]=global_lengthUse[j];
     }
-    std::cerr << my_rank << " : serialization done."
-              <<  "  waiting to gather...   arrsize: " << arrsize << "  offset : " << offset[my_rank] << " globalarrsize: " << global_arrsize<< std::endl;
+    //std::cerr << my_rank << " : serialization done."
+    //         <<  "  waiting to gather...   arrsize: " << arrsize << "  offset : " << offset[my_rank] << " globalarrsize: " << global_arrsize<< std::endl;
 
     delete[] global_length;
     delete[] global_lengthUse;
@@ -289,7 +289,7 @@ class SourceDefUsePrerequisite: public Prerequisite
     if (my_rank==0) {
       Compass::gettime(e_time_node);
       double restime = Compass::timeDifference(e_time_node, b_time_node);
-      std::cerr << "\n >>> communication (ARRSIZE) done. TIME : " << restime << "  BROADCASTING ... " << std::endl;
+      //std::cerr << "\n >>> communication (ARRSIZE) done. TIME : " << restime << "  BROADCASTING ... " << std::endl;
       Compass::gettime(b_time_node);
     }
 
@@ -315,14 +315,14 @@ class SourceDefUsePrerequisite: public Prerequisite
 
     if (quickSave==false) {
       /* communicate all results */
-      std::cerr << my_rank << " : communication done. Deserializing ..." << std::endl;
+      //std::cerr << my_rank << " : communication done. Deserializing ..." << std::endl;
 
       MPI_Barrier(MPI_COMM_WORLD);
       if (my_rank==0) {
         Compass::gettime(e_time_node);
         double restime = Compass::timeDifference(e_time_node, b_time_node);
-        std::cerr << "\n >>> communication (ARRAY) done. TIME : " << restime <<
-          "   arrsize Def : " << global_arrsize << "  arrsize Use : " << global_arrsizeUse << std::endl;
+        //std::cerr << "\n >>> communication (ARRAY) done. TIME : " << restime <<
+        //  "   arrsize Def : " << global_arrsize << "  arrsize Use : " << global_arrsizeUse << std::endl;
       }
 
 
@@ -332,7 +332,7 @@ class SourceDefUsePrerequisite: public Prerequisite
       ((DefUseAnalysis*)defuse)->flushDefuse();
       deserializeDefUseResults(global_arrsize, (DefUseAnalysis*)defuse, def_values_global, memTrav->nodeMap, true);
       deserializeDefUseResults(global_arrsizeUse, (DefUseAnalysis*)defuse, use_values_global, memTrav->nodeMap, false);
-      std::cerr << my_rank << " : deserialization done." << std::endl;
+      //std::cerr << my_rank << " : deserialization done." << std::endl;
       /* deserialize all results */
 
 
@@ -340,28 +340,28 @@ class SourceDefUsePrerequisite: public Prerequisite
       if (my_rank==0) {
         Compass::gettime(end_time_node);
         double restime = Compass::timeDifference(end_time_node, begin_time_node);
-        std::cerr << ">> ---- DefUse Analysis - time for ALL communication :  " << restime << " sec " << std::endl;
+        //std::cerr << ">> ---- DefUse Analysis - time for ALL communication :  " << restime << " sec " << std::endl;
       }
 
       defmap = defuse->getDefMap();
       usemap = defuse->getUseMap();
 
       if (my_rank==0) {
-        std::cerr <<  my_rank << ": Total number of def nodes: " << defmap.size() << std::endl;
-        std::cerr <<  my_rank << ": Total number of use nodes: " << usemap.size() << std::endl << std::endl;
+        //std::cerr <<  my_rank << ": Total number of def nodes: " << defmap.size() << std::endl;
+        //std::cerr <<  my_rank << ": Total number of use nodes: " << usemap.size() << std::endl << std::endl;
         //((DefUseAnalysis*)defuse)->printDefMap();
       }
     }
     //#endif
 #else
-    std::cerr << ">>>>>> running defuse analysis in SEQUENCE (NO MPI). "  << std::endl;
+    //std::cerr << ">>>>>> running defuse analysis in SEQUENCE (NO MPI). "  << std::endl;
     defuse = new DefUseAnalysis(root);
 
     // tps: fixme (9 Jul 2008)
     // skipping defuse tests until they pass all compass tests
     ((DefUseAnalysis*)defuse)->run(false);
-    std::cerr <<  "Total number of def nodes: " << defuse->getDefMap().size() << std::endl;
-    std::cerr <<  "Total number of use nodes: " << defuse->getUseMap().size() << std::endl << std::endl;
+    //std::cerr <<  "Total number of def nodes: " << defuse->getDefMap().size() << std::endl;
+    //std::cerr <<  "Total number of use nodes: " << defuse->getUseMap().size() << std::endl << std::endl;
 
 #endif
 

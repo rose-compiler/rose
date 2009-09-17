@@ -7,11 +7,13 @@ using namespace std;
  * print Error
  *******************************************/
 void printSet(std::set<uint64_t> res) {
+  bool debug =false;
   std::set<uint64_t>::iterator it = res.begin();
   int i=0;
   for (;it!=res.end();++it) {
     i++;
     uint64_t nr  = *it;
+    if (debug)
     cerr << "    Set " << RoseBin_support::ToString(i) << " = " << RoseBin_support::HexToString(nr) << " (" <<RoseBin_support::ToString(nr) << ")"<<endl;
   }
 }
@@ -33,8 +35,8 @@ void checkNode(RoseBin_DataFlowAnalysis* dfanalysis,
     unparsed = unparseInstructionWithAddress(inst);
   }
   set<uint64_t> def_nodes = dfanalysis->getDefForInst(address,std::make_pair(regclass, regnum));
-  cerr << " testing address : " << RoseBin_support::HexToString(address) << " ("<<RoseBin_support::ToString(address)<<")" << 
-    "  reg: " << registerName << "   .. " << unparsed << endl;
+  //cerr << " testing address : " << RoseBin_support::HexToString(address) << " ("<<RoseBin_support::ToString(address)<<")" << 
+  //  "  reg: " << registerName << "   .. " << unparsed << endl;
 
   if (def_nodes!=result) {
     cerr << " ERROR :: Test failed on " << RoseBin_support::HexToString(address) << endl;
@@ -76,7 +78,7 @@ int main(int argc, char** argv) {
   //RoseBin_unparse* unparser = new RoseBin_unparse();
   //RoseBin_support::setUnparseVisitor(unparser->getVisitor());
 
-  cerr << " writing _binary_tree ... " << endl;
+  //cerr << " writing _binary_tree ... " << endl;
   string filename="_binary_tree.dot";
   //  set<SgNode*> skippedNodeSet;
   //SimpleColorFilesTraversal::generateGraph(globalBlock,filename,skippedNodeSet);
@@ -97,19 +99,17 @@ int main(int argc, char** argv) {
   RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(interp->get_global_block(), forward, 
 									     new RoseObj(), edges, graphalgo);
   cfganalysis->run(dotGraph, cfgFileName, mergedEdges);
-  cerr << " Number of nodes == " << cfganalysis->nodesVisited() << endl;
-  cerr << " Number of edges == " << cfganalysis->edgesVisited() << endl;
-  // ROSE_ASSERT(cfganalysis->nodesVisited()==241);
-  // ROSE_ASSERT(cfganalysis->edgesVisited()==264);
+  //cerr << " Number of nodes == " << cfganalysis->nodesVisited() << endl;
+  //cerr << " Number of edges == " << cfganalysis->edgesVisited() << endl;
 
   // call graph analysis  *******************************************************
-  cerr << " creating call graph ... " << endl;
+  //cerr << " creating call graph ... " << endl;
   const char* callFileName = "callgraph.gml";
   forward = true;
   RoseBin_CallGraphAnalysis* callanalysis = new RoseBin_CallGraphAnalysis(interp->get_global_block(), new RoseObj(), graphalgo);
   callanalysis->run(gmlGraph, callFileName, !mergedEdges);
-  cerr << " Number of nodes == " << callanalysis->nodesVisited() << endl;
-  cerr << " Number of edges == " << callanalysis->edgesVisited() << endl;
+  //cerr << " Number of nodes == " << callanalysis->nodesVisited() << endl;
+  //cerr << " Number of edges == " << callanalysis->edgesVisited() << endl;
   // tps (25 Aug 2008) : changed this because of results from IDAPro
   //ROSE_ASSERT(callanalysis->nodesVisited()==16 || callanalysis->nodesVisited()==10 || callanalysis->nodesVisited()==13);
   ROSE_ASSERT(callanalysis->nodesVisited()==20 ||
@@ -118,7 +118,7 @@ int main(int argc, char** argv) {
     //ROSE_ASSERT(callanalysis->edgesVisited()==20 || callanalysis->edgesVisited()==9  || callanalysis->edgesVisited()==13);
 
 
-  cerr << " creating dataflow graph ... " << endl;
+    //cerr << " creating dataflow graph ... " << endl;
   string dfgFileName = "dfg.dot";
   forward = true;
   bool printEdges = true;
@@ -126,12 +126,14 @@ int main(int argc, char** argv) {
   RoseBin_DataFlowAnalysis* dfanalysis = new RoseBin_DataFlowAnalysis(interp->get_global_block(), forward, new RoseObj(), graphalgo);
   dfanalysis->init(interprocedural, printEdges);
   dfanalysis->run(dotGraph, dfgFileName, mergedEdges);
+#if 0
   cerr << " Number of nodes == " << dfanalysis->nodesVisited() << endl;
   cerr << " Number of edges == " << dfanalysis->edgesVisited() << endl;
   cerr << " Number of memWrites == " << dfanalysis->nrOfMemoryWrites() << endl;
   cerr << " Number of regWrites == " << dfanalysis->nrOfRegisterWrites() << endl;
   cerr << " Number of definitions == " << dfanalysis->nrOfDefinitions() << endl;
   cerr << " Number of uses == " << dfanalysis->nrOfUses() << endl;
+#endif
   // values for old implementation -- using objdump
 
 
@@ -205,8 +207,8 @@ int main(int argc, char** argv) {
   RoseBin_DataFlowAbstract* variableA =  dfanalysis->getVariableAnalysis();
   RoseBin_Variable* var = variableA->getVariable(RoseBin_support::HexToDec("8048381"));
   ROSE_ASSERT(var);
-  cerr << "malloc variable found : '" << var->getName() << "'  length: " << 
-    RoseBin_support::ToString(var->getLength()) << " ... toString:: " << var->toString() << endl;
+  //cerr << "malloc variable found : '" << var->getName() << "'  length: " << 
+  //  RoseBin_support::ToString(var->getLength()) << " ... toString:: " << var->toString() << endl;
   ROSE_ASSERT(var->getLength()==40);
   ROSE_ASSERT(var->getName()==" 804837c:_malloc");
 #endif

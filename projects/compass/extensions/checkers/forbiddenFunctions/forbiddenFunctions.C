@@ -52,8 +52,9 @@ namespace CompassAnalyses
                  // If you use inherited attributes, use the following definition:
                  // void run(SgNode* n){ this->traverse(n, initialInheritedAttribute()); }
 	       void run(SgNode* n){ foundFunction=0;this->traverse(n, preorder); 
-		 std::cerr << "  forbiddenFunctions : functions traversed = " << 
-		   RoseBin_support::ToString(foundFunction) << std::endl;}
+		 //std::cerr << "  forbiddenFunctions : functions traversed = " << 
+		 //  RoseBin_support::ToString(foundFunction) << std::endl;
+	       }
 
                  // Change this function if you are using a different type of traversal, e.g.
                  // void *evaluateInheritedAttribute(SgNode *, void *);

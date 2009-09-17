@@ -46,9 +46,9 @@ namespace CompassAnalyses
                  // If you use inherited attributes, use the following definition:
                  // void run(SgNode* n){ this->traverse(n, initialInheritedAttribute()); }
                     void run(SgNode* n){ this->traverse(n, preorder); 
-		      std::cerr << "  running binPrintAsmInstuction checker... " << std::endl;
+		      //std::cerr << "  running binPrintAsmInstuction checker... " << std::endl;
 		      finish(n);
-		      std::cerr << stringOutput << std::endl;
+		      //std::cerr << stringOutput << std::endl;
 		    }
 
 		    void finish(SgNode* node);

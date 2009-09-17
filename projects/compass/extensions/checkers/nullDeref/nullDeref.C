@@ -59,7 +59,7 @@ namespace CompassAnalyses
 	    //ROSE_ASSERT(pr);
 	    //	    Compass::runDefUseAnalysis(pr);
 	    counter=0;
-	    debug=true;
+	    debug=false;
 	    std::vector<SgNode*> exprList = NodeQuery:: querySubTree (n, V_SgFunctionDeclaration);
 	    max = exprList.size();
 	    this->traverse(n, preorder); 

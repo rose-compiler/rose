@@ -194,10 +194,8 @@ void runCurrentFile(vector<string> &argvList, bool debug, bool debug_map) {
   }
   // print resulting table
   if (debug_map) {
-    if (debug)
       cout << "\nDEFMAP" << endl;
     defuse->printDefMap();
-    if (debug)
       cout << "\nUSEMAP" << endl;
     defuse->printUseMap();
   }

@@ -71,7 +71,7 @@ class BottomUpTraversalLivenessOUT: public AstBottomUpProcessing<std::vector<SgI
     for (s = synAttributes.begin(); s != synAttributes.end(); ++s)   {
       std::vector<SgInitializedName*>* vec = *s;
       // merge vec and out
-      std::cout << "    >>> Merging *vec and newVec    --- *vec size :" << (*vec).size() << std::endl;
+      //std::cout << "    >>> Merging *vec and newVec    --- *vec size :" << (*vec).size() << std::endl;
       if ((*vec).size()>0) {
 	*newVec = live->merge_no_dups(*vec,*newVec);
       }
@@ -82,7 +82,7 @@ class BottomUpTraversalLivenessOUT: public AstBottomUpProcessing<std::vector<SgI
     if (isSgStatement(node)) {
       // replace the current out[SgNode] map
       live->setOut(node,*newVec);
-      std::cout << "  --- replacing stmt : newVecElements : " << (*newVec).size() << std::endl;
+      //std::cout << "  --- replacing stmt : newVecElements : " << (*newVec).size() << std::endl;
     }
     return newVec;
   }

@@ -66,7 +66,9 @@ public:
      *  file headers, so subclasses should definitely override this. */
     virtual bool can_handle(SgAsmGenericHeader*) { return true; }
 
-private:
+    // tps (09/16/2009) : changed private to public to pass tests
+    public:
+    //private:
     /** Class method to register ROSE built-in loaders. This is called automatically by register_subclass(). */
     static void initclass();
 

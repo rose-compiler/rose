@@ -46,7 +46,7 @@ namespace CompassAnalyses
                  // If you use inherited attributes, use the following definition:
                  // void run(SgNode* n){ this->traverse(n, initialInheritedAttribute()); }
                     void run(SgNode* n){ this->traverse(n, preorder); 
-		      std::cerr << " running binary checker: binPrintAsmFunctions " << std::endl;
+		      //std::cerr << " running binary checker: binPrintAsmFunctions " << std::endl;
 		      finalize();
 		    }
 
@@ -105,7 +105,7 @@ Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
 void
 CompassAnalyses::BinPrintAsmFunctions::Traversal::
 finalize() {
-  std::cerr << stringOutput << std::endl;
+  //std::cerr << stringOutput << std::endl;
   if (file!=NULL)
     output->addOutput(new CheckerOutput(file, stringOutput));
 }

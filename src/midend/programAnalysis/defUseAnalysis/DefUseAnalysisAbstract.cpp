@@ -134,7 +134,8 @@ SgInitializedName* DefUseAnalysisAbstract::getInitName(SgNode* l_expr) {
       retName = isSgVarRefExp(l_expr)->get_symbol()->get_declaration();
     } 
   } else {
-    cout << " GETINITNAME:: could not resolve initName " << l_expr->class_name() << endl;
+    if (DEBUG_MODE)
+      cout << " GETINITNAME:: could not resolve initName " << l_expr->class_name() << endl;
   }
   return retName;
 }
