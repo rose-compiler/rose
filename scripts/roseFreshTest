@@ -176,12 +176,19 @@ fi
   echo "############ configure done"
   make $MAKEFLAGS || exit 1
   echo "############ make done"
-  make $MAKEFLAGS check || exit 1
-  echo "############ make check done"
-  # skip the rest if we are testing the head of the SciDAC repository of ROSE
+
+  # For testing -- skip the rest if we are testing the head of the SciDAC repository of ROSE
   if [ 0$SKIP_DOCS_AND_INSTALL_TEST -ne 0 ] ; then
-    echo "Skipping make docs, install, and installcheck.." 
+    echo "Skipping make check, docs, install, and installcheck.."
+    if [ 0$ENABLE_BUILD_BINARY_EDG -ne 0 ]; then
+      cd ${ROSE_TOP}/build
+    # DQ (9/17/2009): These are now called via dependences in the Makefile when we call the makefile rule: source_with_binary_edg_dist
+      make $MAKEFLAGS copy_binary_edg_tarball_to_source_tree_svn DOT_SVNREV=-${svnversion} || exit 1
+      echo "############ make copy_binary_edg_tarball_to_source_tree_svn using svnversion = ${svnversion} done"
+    fi
   else  
+    make $MAKEFLAGS check || exit 1
+    echo "############ make check done"
     make $MAKEFLAGS docs || exit 1
     echo "############ make docs done"
     rmdir ../install || exit 1
