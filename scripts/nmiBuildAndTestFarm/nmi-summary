@@ -4,6 +4,9 @@
 
 DefaultRange = 0..(2 ** 64 - 1)
 
+class OpenUriError < StandardError; end
+
+
 
 def usage( code )
     puts "
@@ -102,8 +105,15 @@ NMIRun.class_eval do
 end
 
 
+def scrape_url( url )
+    Hpricot( open( url ))
+rescue => e
+    raise OpenUriError.new, e.message
+end
+
+
 def scrape_tasks( run )
-    doc = Hpricot( open( run.url ))
+    doc = scrape_url( run.url )
     rows = (doc/"#content #1 tr[@class^='tblrow']").select do |row|
         [ "configure", "make", "check" ].include?(
             (row/"td:nth-of-type(4)").inner_text
@@ -131,7 +141,8 @@ def scrape_tasks( run )
 end
 
 def scrape_results( url, range = DefaultRange )
-    doc = Hpricot( open( url ))
+    doc = scrape_url( url )
+
     results = (doc/"#content #1 tr[@class^='tblrow']").map do |e|
         NMIRun.new(
             ((e/"td:nth-of-type(1) a").inner_text.to_i rescue -1),
@@ -180,7 +191,7 @@ def summarize_day( date, range = DefaultRange )
 end
 
 def compute_day
-    doc = Hpricot( open( "http://nmi-s005.cs.wisc.edu/nmi/index.php?page=results%2Foverview&rows=20&opt_user=OPTION_SHOW_ALL&opt_type=OPTION_SHOW_ALL&opt_project=rose+compiler&opt_result=OPTION_SHOW_ALL&opt_component=OPTION_SHOW_ALL&opt_month=0&opt_day=0&opt_year=0&opt_platform=OPTION_SHOW_ALL&opt_build_id=&opt_submit=OPTION_SHOW_ALL&opt_keyword=&searchSubmit=Search" ))
+    doc = scrape_url( "http://nmi-s005.cs.wisc.edu/nmi/index.php?page=results%2Foverview&rows=20&opt_user=OPTION_SHOW_ALL&opt_type=OPTION_SHOW_ALL&opt_project=rose+compiler&opt_result=OPTION_SHOW_ALL&opt_component=OPTION_SHOW_ALL&opt_month=0&opt_day=0&opt_year=0&opt_platform=OPTION_SHOW_ALL&opt_build_id=&opt_submit=OPTION_SHOW_ALL&opt_keyword=&searchSubmit=Search" )
 
     Date.parse(
         (doc/"#content #1 tr[@class^='tblrow']:nth-of-type(1) td:nth-of-type(7)").
@@ -229,6 +240,14 @@ def main
 
     day = compute_day if day.nil?
     summarize_day( day, range )
+rescue OpenUriError => e
+    puts "
+        There was an error scraping a website.  Perhaps you haven't logged into
+        the LLNL proxy yet.  To do this, simply navigate in your browser (e.g.
+        Firefox) to any URL outside of the lab (e.g. <http://news.google.com>)
+        and login when prompted by the proxy.
+    "
+    raise e
 end
 
 main if __FILE__ == $0
