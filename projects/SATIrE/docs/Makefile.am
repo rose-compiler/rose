@@ -12,6 +12,7 @@ EXTRA_DIST= \
 	logo.sty \
         plonline.sty \
         plpage.sty \
+	pldoc.sty \
 	html.sty url.sty
 
 .PHONY: docs HTML clean-termite
@@ -66,7 +67,7 @@ $(INPUTFILES): $(SRCFILES)
 	done
 TEXFILES=$(patsubst %.pl, %.tex,$(INPUTFILES))
 GARBAGE=$(patsubst %.tex, %.aux,$(TEXFILES))
-MYTEXINPUT=$(SWI_PROLOG_HOME_DIR)/library/pldoc:$(SWI_PROLOG_HOME_DIR)/library/ltx2htm:$(srcdir)
+MYTEXINPUT=$(srcdir)/ltx2htm:$(srcdir)
 
 if WITH_SWI_PROLOG  # --------------------------------------------------
 
