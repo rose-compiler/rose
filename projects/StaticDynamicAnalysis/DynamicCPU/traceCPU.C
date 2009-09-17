@@ -346,10 +346,10 @@ static void CreateLoopProbe(SgFunctionDeclaration *funcDecl, SgBasicBlock *funcB
         artificial scope.
 */
 
-void TransformFunction(SgFunctionDeclaration *funcDecl, SgBasicBlock *funcBody,
-                     SgBasicBlock *scanScope, int *loopCount, int *segmentCount)
+bool TransformFunction(SgFunctionDeclaration *funcDecl, SgBasicBlock *funcBody,
+                       SgBasicBlock *scanScope, int *loopCount, int *segmentCount)
 {
-   bool simpleWork = true ;
+   bool simpleWork = true ; /* entire block only contains sequential work */
    SgStatement *segBegin = NULL ;
    SgStatement *stmt ;
 
@@ -372,14 +372,14 @@ void TransformFunction(SgFunctionDeclaration *funcDecl, SgBasicBlock *funcBody,
       if (isSgForStatement(stmt)) /* could be embedded inside a statement */
       {
          SgForStatement *forStatement = isSgForStatement(stmt) ;
-         SgBasicBlock *loopBody = isSgBasicBlock(forStatement->get_loop_body()) ;
+         SgBasicBlock *loopBody = SageInterface::ensureBasicBlockAsBodyOfFor(forStatement) ;
          ROSE_ASSERT(loopBody) ;
          if (segBegin != NULL)
          {
            CreateSegmentProbe(funcDecl, funcBody, segBegin, stmt, segmentCount) ;
-           simpleWork = false ;
            segBegin = NULL ;
          }
+         simpleWork = false ;
          CreateLoopProbe(funcDecl, funcBody, stmt, loopCount) ;
          TransformFunction(funcDecl, funcBody, loopBody, loopCount, segmentCount) ; 
       }
@@ -388,7 +388,7 @@ void TransformFunction(SgFunctionDeclaration *funcDecl, SgBasicBlock *funcBody,
          /* Note -- we should probably put the return statement in block scope */
          /* before adding the extra code */
          int level = ForLoopDepth(funcBody, stmt) ;
-         if (segBegin != NULL)
+         if ((segBegin != NULL) && !simpleWork)
          {
            CreateSegmentProbe(funcDecl, funcBody, segBegin, stmt, segmentCount) ;
            simpleWork = false ;
@@ -445,14 +445,49 @@ void TransformFunction(SgFunctionDeclaration *funcDecl, SgBasicBlock *funcBody,
       {
       }
       */
+      else if (isSgIfStmt(stmt))
+      {
+         bool simpleWorkTrueBody  = true ;
+         bool simpleWorkFalseBody = true ;
+         SgIfStmt *ifStatement = isSgIfStmt(stmt) ;
+
+         if (ifStatement->get_true_body() != NULL) {
+           SgBasicBlock *trueBody = SageInterface::ensureBasicBlockAsTrueBodyOfIf(ifStatement) ;
+           ROSE_ASSERT(trueBody) ;
+           simpleWorkTrueBody =
+              TransformFunction(funcDecl, funcBody, trueBody, loopCount, segmentCount) ; 
+         }
+         if (ifStatement->get_false_body() != NULL) {
+           SgBasicBlock *falseBody = SageInterface::ensureBasicBlockAsFalseBodyOfIf(ifStatement) ;
+           ROSE_ASSERT(falseBody) ;
+           simpleWorkFalseBody =
+              TransformFunction(funcDecl, funcBody, falseBody, loopCount, segmentCount) ; 
+         }
+         if (!(simpleWorkTrueBody && simpleWorkFalseBody)) {
+           if (segBegin != NULL)
+           {
+             CreateSegmentProbe(funcDecl, funcBody, segBegin, stmt, segmentCount) ;
+             segBegin = NULL ;
+           }
+           simpleWork = false ;
+         }
+         else {
+           if (segBegin == NULL)
+           {
+#ifndef DISABLE_SEQUENTIAL_SEGMENTS
+              segBegin = stmt ;
+#endif
+           }
+         }
+      }
       else if (ContainsCall(stmt))
       {
          if (segBegin != NULL)
          {
            CreateSegmentProbe(funcDecl, funcBody, segBegin, stmt, segmentCount) ;
-           simpleWork = false ;
            segBegin = NULL ;
          }
+         simpleWork = false ;
       }
       else
       {
@@ -469,6 +504,8 @@ void TransformFunction(SgFunctionDeclaration *funcDecl, SgBasicBlock *funcBody,
    {
       CreateSegmentProbe(funcDecl, funcBody, segBegin, stmt, segmentCount) ;
    }
+
+   return simpleWork ;
 }
 
 
@@ -507,8 +544,6 @@ int main (int argc, char *argv[])
 
    /* make sure AST is well formed */
    AstTests::runAllTests(project);
-
-   // generateDOT (*project);
 
    /* set up some needed typedefs for runtime support */
 
@@ -621,6 +656,8 @@ int main (int argc, char *argv[])
 
    /* make sure AST is well formed */
    AstTests::runAllTests(project);
+
+   // generateDOT (*project);
 
    return backend(project);
 }
