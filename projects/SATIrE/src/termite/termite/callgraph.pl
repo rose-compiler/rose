@@ -63,7 +63,6 @@ collect_funcs(I,I,I, N, N).
 %
 % @tbd
 % NO function pointers or virtual methods yet!
-% NO leaves!!!
 callgraph(P, Graph) :-
   transformed_with(P, collect_calls, postorder, _-[], _-Edges, _), !,
   transformed_with(P, collect_funcs, postorder, [], Vertices, _), !,

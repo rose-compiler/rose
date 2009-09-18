@@ -9,6 +9,7 @@
 	   list_from_to/3,
 	   repeat_string/3,
 
+	   replace_all/4,
 	   replace_in_atom/4,
 	   replace_nth/5,
 	   
@@ -178,6 +179,15 @@ repeat_string(S, N, Res) :-
   N_1 is N-1,
   repeat_string(S, N_1, S_1),
   string_concat(S, S_1, Res).
+
+% replace_all(+List, +What, +With, -NewList) is det.
+% replace all instances of What with With in List yielding NewList
+replace_all([], _, _, []).
+replace_all([X|Xs], What, With, [Y|Ys]) :-
+  (   X = What
+  ->  Y = With
+  ;   Y = X),
+  replace_all(Xs, What, With, Ys).
 
 % replace_in_atom(+Atom, +What, +With, -NewAtom) is det.
 % replace 1 instance of What with With in Atom yielding NewAtom

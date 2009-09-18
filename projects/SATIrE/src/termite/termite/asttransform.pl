@@ -7,7 +7,7 @@
            ast_node/6,
 	   transformed_with/5,
 	   transformed_with/6,
-	   unparse_to_atom/2,
+	   unparse_to/2,
 	   unparse/1,
 	   unparse/2,
 	   unparse_storage_modifier/1,
@@ -251,10 +251,10 @@ transform_children([C|Cs], Transformation, Order, Info0, InfoT, [CT|CTs]) :-
 
 %-----------------------------------------------------------------------
 
-%% unparse_to_atom(+Term, -Atom) is det.
-% Unparse the program Term using unparse/1 and put the output in the
-% atom Atom.
-unparse_to_atom(Term, Atom) :- with_output_to(Atom, unparse(Term)).
+%% unparse_to_atom(?Output, +Term) is det.
+% Unparse the program Term using unparse/1 and sent the output to Output
+% @see with_output_to/2
+unparse_to(Output, Term) :- with_output_to(Output, unparse(Term)).
 
 %% unparse(+Term) is det.
 % This predicate prints the original textual (source code)

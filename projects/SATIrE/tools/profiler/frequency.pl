@@ -28,6 +28,18 @@
 %
 %-----------------------------------------------------------------------
 
+% Before doing anything else, set up handling to halt if warnings or errors
+% are encountered.
+:- dynamic prolog_reported_problems/0.
+% If the Prolog compiler encounters warnings or errors, record this fact in
+% a global flag. We let message_hook fail because that signals Prolog to
+% format output as usual (otherwise, we would have to worry about formatting
+% error messages).
+user:message_hook(_Term, warning, _Lines) :-
+    assert(prolog_reported_problems), !, fail.
+user:message_hook(_Term, error, _Lines) :-
+    assert(prolog_reported_problems), !, fail.
+
 :- getenv('PWD', CurDir),
    asserta(library_directory(CurDir)),
    prolog_load_context(directory, SrcDir),
@@ -38,13 +50,15 @@
    ),
    asserta(library_directory(TermitePath)).
 
-:- use_module(library(astwalk)),
-   use_module(library(astproperties)),
-   use_module(library(asttransform)),
-   use_module(library(callgraph)),
-   use_module(library(termlint)),   
-   use_module(library(utils)).
+%:- use_module(library(apply_macros)).
+:- use_module(library(astwalk)).
+:- use_module(library(astproperties)).
+:- use_module(library(asttransform)).
+:- use_module(library(callgraph)).
+:- use_module(library(termlint)).
+:- use_module(library(utils)).
 :- use_module(library(clpfd)).
+:- use_module(library(visicfg)).
 %:- use_module(library(clpq)), use_module(sum).
 
 :- guitracer.
@@ -388,7 +402,7 @@ parse_pragma(P, Marker, PragmaMap, PragmaMap1) :-
       put_assoc(M, PragmaMap, Var, PragmaMap1),
       marker_freq(Marker, Freq),
       Var #= Freq
-   ;  AnnotTerm = wcet_constraint(Term), 
+   ;  AnnotTerm = wcet_constraint(Term),
       translate(Term, PragmaMap, Constraint),
       Constraint,
       PragmaMap = PragmaMap1
@@ -417,6 +431,9 @@ translate(A, _, A) :- number(A).
 translate(A, _, _) :- write('//** WARNING: could translate '), writeln(A), fail.
 
 %-------------------------------------------------------------
+% Constraint handling
+%-------------------------------------------------------------
+
 
 % gather_constraints/5 
 
@@ -470,6 +487,68 @@ plusify([X], X).
 plusify([X|Xs], X+Sum) :-
   plusify(Xs, Sum).
 
+dump_constraints(Sums, Constraints) :-
+  % Dump the constraints for later analysis by Markus (Triska)
+  copy_term(Constraints, _, Cs1),
+  copy_term(Sums, _, Cs2),
+  open('constraint-dump.pl', write, _, [alias(wstrm)]),
+  write(wstrm, '% Constraints:\n'),
+  write(wstrm, ':- use_module(library(clpfd)).\n'),
+  append(Cs1, Cs2, Css),
+  write(wstrm, pair(Css, Constraints)),
+  write(wstrm, '.\n'),
+  close(wstrm).
+
+%-----------------------------------------------------------------------
+% GRAPH Printing
+%-----------------------------------------------------------------------
+
+% Fake ^Nodes are converted into labeled edges.
+
+display(N) :- write(N).
+
+%% dump_graph(+Method, +Filename, +Graph, +Flags) is det.
+% Method must be one of _graphviz_ or _vcg_.
+% Flags is a list of terms
+% * layout(tree)
+dump_graph(Method, Filename, Graph, Flags) :-   
+  open(Filename, write, _, [alias(dumpstream)]),
+  call(Method, dumpstream, Graph, Flags), !,
+  close(dumpstream).
+
+viz_edge(F, Edge) :-
+  Edge = N1-N2,
+  write(F, '"'), with_output_to(F, display(N1)), write(F, '"'),
+  write(F, ' -> '),
+  write(F, '"'), with_output_to(F, display(N2)), write(F, '"'), 
+  write(F, ';\n').
+
+viz_node(F, Node) :-
+  Node = Name/Type,
+  Style = 'shape=note, style=filled, fillcolor=cornsilk',
+  default_values(PPI, _DA, AI, FI),
+  Decl = function_declaration(null, null,
+             function_declaration_annotation(Type, Name, null, PPI), AI, FI),
+  with_output_to(chars(Cs), unparse(Decl)),
+  delete(Cs, '\n', Cs1), atom_chars(Label, Cs1), % remove newlines
+  format(F, '"~w" [ label="~w", ~w ] ;~n', [Node,Label,Style]).
+
+%% graphviz(F, G, _).
+%  Dump an ugraph in dotty syntax
+graphviz(F, G, Base) :-
+  edges(G, E),
+  vertices(G, V),
+  Root = Base/_Type, member(Root, V),
+  format(F, 'digraph G {~n');
+  format(F, '  root="~w"; splines=true; overlap=false; rankdir=LR;~n', [Root]),
+  maplist(viz_edge(F), E),
+  maplist(viz_node(F), V),
+  write(F, '}\n').
+
+%-------------------------------------------------------------
+% MAIN
+%-------------------------------------------------------------
+
 main1(Filename, Target, Base) :-
   %catch(
   (
@@ -479,16 +558,16 @@ main1(Filename, Target, Base) :-
 
    % Calculate the Call Graph
    callgraph(P, CallGraph),
-   %dump_graph(vcg, 'call.vcg', CallGraph),
+   dump_graph(graphviz, 'call.dot', CallGraph, Base),
 
    % start with BaseFunc(...)
    function_signature(BaseFunc, function_type(_, _, _), Base, _),
    Marker = freq(marker([], 'm'), 1),
 
-   empty_assoc(PragmaMap), 
-   ast_walk(zipper(P, []),
-	    BaseFunc, Marker, CallGraph-Target, PragmaMap,
-	    zipper(P1, [])),
+   empty_assoc(PragmaMap),
+   zip(P, Pz),
+   ast_walk(Pz, BaseFunc, Marker, CallGraph-Target, PragmaMap, Pz1),
+   unzip(Pz1, P1, _),
 
    transformed_with(P1, gather_constraints, postorder, [], Constraints, _),
 
@@ -502,21 +581,14 @@ main1(Filename, Target, Base) :-
    
    append([ff,down,step], [max(MaxTerm)], Behaviour),
    append(Sums, Constraints, Cs), !,
-   maplist(print_dom, Cs), writeln(MaxTerm), nl, 
+   maplist(print_dom, Cs), writeln(MaxTerm), nl,
+   dump_constraints(Sums, Cs),
    (Cs \= [] -> once(labeling(Behaviour, Cs)); true),
    %maximize(MaxTerm),
+   visicfg(P2, Base),
 
-%    Dump the constraints for later analysis by Markus (Triska)
-%    copy_term(Constraints, _, Cs1),
-%    copy_term(Sums, _, Cs2),
-%    open('constraint-dump.pl', write, _, [alias(wstrm)]),
-%    write(wstrm, '% Constraints:\n'),
-%    write(wstrm, ':- use_module(library(clpfd)).\n'),
-%    append(Cs1, Cs2, Css),
-%    write(wstrm, pair(Css, Constraints)),
-%    write(wstrm, '.\n'),
-%    close(wstrm)
-   unparse(P2)
+   unparse(P2),
+   (Target = 'SUM' -> statistics ; true)
   ).%, E, (print_message(error, E), fail)).
 
 main :-
@@ -527,8 +599,13 @@ main :-
   %profile(main1), trace.
 
 main :-
-  writeln('The static profiler. (C) 2008,2009 Adrian Prantl'),
-  writeln('Usage: frequency [annotated program].pl [max_Target]|[SUM] [Base]'),
-  writeln('Example: frequency input.pl my_func main'),
+  writeln('The static profiler. (C) 2008, 2009 Adrian Prantl'),
+  writeln('Report bugs to <adrian@complang.tuwien.ac.at>'),
+  writeln('Usage: frequency [max_Target]|[SUM] [Base] < project.term'),
+  writeln('Example: loopbounds prog1.c | frequency my_func main'),
   writeln('Use SUM to maximize the sum over all constraints (expensive!)'),
   halt(1).
+
+% Finish error handling (see top of source file) by halting with an error
+% condition of Prolog generated any warnings or errors.
+:- (prolog_reported_problems -> halt(1) ; true).
