@@ -421,6 +421,26 @@ ROSE_SUPPORT_DWARF
 # Setup Automake conditional in --- (not yet distributed)
 AM_CONDITIONAL(ROSE_USE_DWARF,test ! "$with_dwarf" = no)
 
+# Call supporting macro for libffi
+ROSE_SUPPORT_LIBFFI
+
+# Setup Automake conditional in projects/interpreter/Makefile.am
+AM_CONDITIONAL(ROSE_USE_LIBFFI,test ! "$with_libffi" = no)
+
+TEST_SMT_SOLVER=""
+AC_ARG_WITH(smt-solver,
+[  --with-smt-solver=PATH	Specify the path to an SMT-LIB compatible SMT solver.  Used only for testing.],
+if test "x$with_smt_solver" = "xcheck" -o "x$with_smt_solver" = "xyes"; then
+  AC_ERROR([--with-smt-solver cannot be auto-detected])
+fi
+if test "x$with_smt_solver" != "xno"; then
+  TEST_SMT_SOLVER="$with_smt_solver"
+fi,
+)
+
+AM_CONDITIONAL(ROSE_USE_TEST_SMT_SOLVER,test ! "$TEST_SMT_SOLVER" = "")
+AC_SUBST(TEST_SMT_SOLVER)
+
 # DQ (3/13/2009): Trying to get Intel Pin and ROSE to both use the same version of libdwarf.
 # DQ (3/10/2009): The Dwarf support in Intel Pin conflicts with the Dwarf support in ROSE.
 # Maybe there is a way to fix this later, for now we want to disallow it.
