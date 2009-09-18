@@ -1730,9 +1730,6 @@ Grammar::setUpExpressions ()
   // AssignInitializer.setFunctionSource   ( "SOURCE_GET_TYPE_CALLING_GET_EXPRESSION_TYPE_EXPRESSION",
   //                                              "../Grammar/Expression.code" );
 
-     AggregateInitializer.setFunctionSource   ( "SOURCE_GET_TYPE_GENERIC", "../Grammar/Expression.code" );
-     AggregateInitializer.editSubstitute      ( "GENERIC_TYPE", "SgTypeDefault" );
-
   // DQ (7/19/2006): Suggested change by Jeremiah Willcock
   // ConstructorInitializer.setFunctionSource ( "SOURCE_GET_TYPE_GENERIC", "../Grammar/Expression.code" );
   // ConstructorInitializer.editSubstitute    ( "GENERIC_TYPE", "SgTypeDefault" );

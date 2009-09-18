@@ -3983,6 +3983,21 @@ $CLASSNAME::replace_expression(SgExpression* o, SgExpression* n)
         }
    }
 
+SgType*
+$CLASSNAME::get_type() const
+   {
+     SgInitializedName* initName = isSgInitializedName(get_parent());
+     if (initName != NULL)
+        {
+          return initName->get_type();
+        }
+     else
+        {
+          printf ("$CLASSNAME::get_type(): unable to compute type because parent is not attached or is not an SgInitializedName\n");
+          return SgTypeDefault::createType();
+        }
+   }
+
 SOURCE_AGGREGATE_INITIALIZER_EXPRESSION_END
 
 
