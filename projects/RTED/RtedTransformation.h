@@ -281,6 +281,9 @@ class RtedTransformation : public AstSimpleProcessing {
   void insertVariableCreateInitForParams( SgFunctionDefinition* n);
   void insertAccessVariable(SgVarRefExp* varRefE,SgExpression* derefExp);
   void insertAccessVariable(SgThisExp* varRefE,SgExpression* derefExp);
+  void insertAccessVariable(SgScopeStatement* scope,
+  		SgExpression* derefExp, SgStatement* stmt, SgExpression* varRefE);
+
   void visit_isSgVarRefExp(SgVarRefExp* n);
   void visit_isSgPointerDerefExp(SgPointerDerefExp* n);
   void visit_isSgArrowExp(SgArrowExp* n);
@@ -334,7 +337,8 @@ class RtedTransformation : public AstSimpleProcessing {
   void appendTypeInformation(SgInitializedName* initName, SgExprListExp* arg_list);
   void appendTypeInformation(SgInitializedName* initName, SgType* type, SgExprListExp* arg_list);
   void appendTypeInformation(SgType* type, SgExprListExp* arg_list, bool resolve_class_names = true, bool array_to_pointer=false);
-  void appendAddressAndSize(SgInitializedName* initName, SgExpression* varRef, SgExprListExp* arg_list, int appendType);
+  void appendAddressAndSize(//SgInitializedName* initName,
+		  SgScopeStatement* scope, SgExpression* varRef, SgExprListExp* arg_list, int appendType);
   void appendAddressAndSize(SgExpression* exp, SgType* type, SgExprListExp* arg_list, int appendType);
   void appendAddress( SgExprListExp* arg_list, SgExpression* exp );
   void appendBaseType( SgExprListExp* arg_list, SgType* type );

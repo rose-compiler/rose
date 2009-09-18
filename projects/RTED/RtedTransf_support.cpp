@@ -594,26 +594,31 @@ void RtedTransformation::appendTypeInformation( SgType* type, SgExprListExp* arg
 }
 
 void RtedTransformation::appendAddressAndSize(
-                            SgInitializedName* initName,
+                         //   SgInitializedName* initName,
+							SgScopeStatement* scope,
                             SgExpression* varRefE,
                             SgExprListExp* arg_list,
                             int appendType ) {
 
-    SgScopeStatement* scope = NULL;
+ //   SgScopeStatement* scope = NULL;
 
     // FIXME 2: It would be better to explicitly handle dot and arrow
     // expressions here, rather than indirectly through the var's declared scope
+#if 0
     if( initName) {
         scope = initName->get_scope();
     }
+#endif
+
 
     SgExpression* exp = varRefE;
     if ( isSgClassDefinition(scope) ) {
         // member -> &( var.member )
         exp = getUppermostLvalue( varRefE );
     }
-
-    appendAddressAndSize( exp, varRefE -> get_type(), arg_list, appendType );
+    SgType* type  = NULL;
+    if (varRefE) type=varRefE -> get_type();
+    appendAddressAndSize( exp, type, arg_list, appendType );
 }
 
 void RtedTransformation::appendAddressAndSize(
@@ -664,10 +669,17 @@ void RtedTransformation::appendAddressAndSize(
                         -> get_base_type() -> copy( copy )))
         );
     } else {
-        appendExpression(
+    	if (exp)
+          appendExpression(
             arg_list,
             buildSizeOfOp( isSgExpression( exp -> copy( copy )))
         );
+    	else
+          appendExpression(
+                arg_list,
+                buildSizeOfOp( isSgExpression( buildLongLongIntVal(0)))
+            );
+
     }
 }
 
@@ -735,16 +747,23 @@ void RtedTransformation::appendAddress(SgExprListExp* arg_list, SgExpression* ex
             }
     } make_lvalue_visitor;
 
-    SgExpression* copy_exp 
-        = make_lvalue_visitor.visit_subtree(  exp -> copy( copy ));
+    SgExpression* copy_exp = NULL;
+    if (exp)
+       copy_exp = make_lvalue_visitor.visit_subtree(  exp -> copy( copy ));
 
 
     SgExpression *arg;
-    SgCastExp *cast_op = 
-        buildCastExp(
+    SgCastExp *cast_op = NULL;
+    if (exp)
+     cast_op=   buildCastExp(
             buildAddressOfOp( copy_exp ),
             buildUnsignedLongLongType()
         );
+    else
+        cast_op=   buildCastExp(
+               buildLongLongIntVal( 0),
+               buildUnsignedLongLongType()
+           );
 
     if( offset != NULL ) {
         ROSE_ASSERT( exp != NULL );

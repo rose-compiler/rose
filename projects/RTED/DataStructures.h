@@ -25,13 +25,17 @@ class RTedArray {
   std::vector<SgExpression*> indices;
 
   RTedArray(bool s, SgInitializedName* init, SgStatement* stmt,
-	    bool _onHeap, bool _fromMalloc = false, SgExpression* _size = NULL) {
+	    bool _onHeap, bool _fromMalloc = false, SgExpression* _size = NULL )
+	  :stack(s),initName(init),surroundingStatement(stmt), onHeap(_onHeap) ,
+	  fromMalloc (_fromMalloc), size(_size){
+#if 0
       stack = s;
 	  initName = init;
       surroundingStatement = stmt;
       onHeap = _onHeap;
       fromMalloc = _fromMalloc;
       size = _size;
+#endif
   }
   virtual ~RTedArray() {}
 

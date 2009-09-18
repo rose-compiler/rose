@@ -297,9 +297,12 @@ RtedTransformation::buildVariableCreateCallExpr(SgExpression* var_ref,
 	appendTypeInformation(var_ref -> get_type(), arg_list);
 
 	if (isSgVarRefExp(var_ref)) {
+		SgInitializedName* initName = isSgVarRefExp(var_ref) -> get_symbol() -> get_declaration();
+		SgScopeStatement* scope = NULL;
+		if (initName) scope = initName->get_scope();
 		appendAddressAndSize(
-				isSgVarRefExp(var_ref) -> get_symbol() -> get_declaration(),
-				isSgVarRefExp(var_ref), arg_list, 0);
+				//isSgVarRefExp(var_ref) -> get_symbol() -> get_declaration(),
+				scope, isSgVarRefExp(var_ref), arg_list, 0);
 	} else {
 		appendAddressAndSize(var_ref, var_ref -> get_type(), arg_list, 0);
 	}
@@ -407,7 +410,10 @@ RtedTransformation::buildVariableInitCallExpr(
 		SgExprListExp* arg_list = buildExprListExp();
 		appendTypeInformation(NULL, exp -> get_type(), arg_list);
 		appendClassName(arg_list, exp -> get_type());
-		appendAddressAndSize(initName, exp, arg_list, 0);
+		SgScopeStatement* scope = NULL;
+		if (initName) scope = initName->get_scope();
+		appendAddressAndSize(//initName,
+				scope, exp, arg_list, 0);
 
 		SgIntVal* ismallocV = buildIntVal(0);
 		if (ismalloc)
@@ -554,7 +560,10 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
 void RtedTransformation::insertAccessVariable(SgThisExp* varRefE,
 		SgExpression* derefExp) {
   SgStatement* stmt = getSurroundingStatement(varRefE);
-
+  SgClassDeclaration* decl = varRefE->get_class_symbol()->get_declaration();
+  ROSE_ASSERT(decl);
+  SgScopeStatement* scope = decl->get_scope();
+	insertAccessVariable(scope, derefExp, stmt, varRefE);
 }
 
 void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE,
@@ -563,6 +572,7 @@ void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE,
 	SgStatement* stmt = getSurroundingStatement(varRefE);
 	// make sure there is no extern in front of stmt
 	SgInitializedName* initName = varRefE->get_symbol()->get_declaration();
+    SgScopeStatement* initNamescope = initName->get_scope();
 
 	SgDotExp* parent_dot = isSgDotExp(varRefE -> get_parent());
 	if (parent_dot && parent_dot -> get_lhs_operand() == varRefE) {
@@ -570,11 +580,15 @@ void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE,
 		// does not need a var ref to y, only to s
 		return;
 	}
+	insertAccessVariable(initNamescope, derefExp, stmt, varRefE);
+}
 
+void RtedTransformation::insertAccessVariable(SgScopeStatement* initscope,
+		SgExpression* derefExp, SgStatement* stmt, SgExpression* varRefE) {
 	if (isSgStatement(stmt)) {
 		SgScopeStatement* scope = stmt->get_scope();
-		string name = initName->get_mangled_name().str();
-		cerr << "          ... running insertAccessVariable :  " << name
+		//string name = initName->get_mangled_name().str();
+		cerr << "          ... running insertAccessVariable :  " //<< name
 				<< "   scope: " << scope->class_name() << endl;
 
 		ROSE_ASSERT(scope);
@@ -601,7 +615,8 @@ void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE,
 		else if (isSgGlobal(scope)) {
 			cerr
 					<< " ------->....... RuntimeInstrumentation :: WARNING - Scope not handled!!! : "
-					<< name << " : " << scope->class_name() << "\n\n\n\n"
+					//<< name
+					<< " : " << scope->class_name() << "\n\n\n\n"
 					<< endl;
 			// We need to add this new statement to the beginning of main
 			// get the first statement in main as stmt
@@ -626,9 +641,14 @@ void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE,
 					// we need to be able to read
 					//    *p
 					if (isUsedAsLvalue(arrow_op)) {
-						accessed_exp = arrow_op->get_lhs_operand();
+						if (isSgThisExp(arrow_op->get_lhs_operand())) {
+							accessed_exp=0;
+							read_write_mask = Write;
+						} else {
+							accessed_exp = arrow_op->get_lhs_operand();
+							read_write_mask |= Write;
+						}
 						write_location_exp = arrow_op;
-						read_write_mask |= Write;
 					} else
 						accessed_exp = arrow_op;
 							//buildPointerDerefExp(
@@ -647,8 +667,10 @@ void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE,
 						accessed_exp = deref_op;
 				}
 			}
-			appendAddressAndSize(initName, accessed_exp, arg_list, 2);
-			appendAddressAndSize(initName, write_location_exp, arg_list, 2);
+			appendAddressAndSize(//initName,
+					initscope,accessed_exp, arg_list, 2);
+			appendAddressAndSize(//initName,
+					initscope,write_location_exp, arg_list, 2);
 			appendExpression(arg_list, buildIntVal(read_write_mask));
 
 			SgExpression* filename = buildString(
@@ -683,12 +705,14 @@ void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE,
 		else if (isSgNamespaceDefinitionStatement(scope)) {
 			cerr
 					<< " ------------> RuntimeInstrumentation :: WARNING - Scope not handled!!! : "
-					<< name << " : " << scope->class_name() << "\n\n\n\n"
+					//<< name
+					<< " : " << scope->class_name() << "\n\n\n\n"
 					<< endl;
 		} else {
 			cerr
 					<< " -----------> RuntimeInstrumentation :: Surrounding Block is not Block! : "
-					<< name << " : " << scope->class_name() << "  - "
+					//<< name
+					<< " : " << scope->class_name() << "  - "
 					<< stmt->unparseToString() << endl;
 			ROSE_ASSERT(false);
 		}
@@ -728,6 +752,7 @@ void RtedTransformation::visit_isAssignInitializer(SgNode* n) {
 	ROSE_ASSERT(scope);
 //	SgType* type = initName->get_type();
 	SgVarRefExp* varRef = buildVarRefExp(initName, scope);
+	varRef->get_file_info()->unsetOutputInCodeGeneration();
 	ROSE_ASSERT(varRef);
 
 	// dont do this if the variable is global
@@ -746,20 +771,44 @@ void RtedTransformation::visit_isAssignInitializer(SgNode* n) {
 
  		// tps (09/15/2009): The following code handles AssignInitializers for SgNewExp
 		// e.g. int *p = new int;
+#if 1
  		if (ismalloc) {
- 	    RTedArray *array = new RTedArray(
+ 		  SgNewExp* oldnewExp=	isSgNewExp(assign->get_operand()) ;
+ 		  ROSE_ASSERT(oldnewExp);
+ 		  SgType* thesizetype = oldnewExp->get_specified_type();
+ 		  ROSE_ASSERT(thesizetype);
+ 		  SgExpression* sizeExp = buildSizeOfOp(
+ 				  buildPointerType(buildVoidType())
+ 				  #if 0
+ 				  buildNewExp(thesizetype,
+ 						      NULL,
+ 						      oldnewExp->get_constructor_args(),
+ 						      oldnewExp->get_builtin_args(),
+ 						      0,
+ 						      NULL)
+#endif
+ 		  );
+ 		  ROSE_ASSERT(sizeExp);
+ 		  cerr << " $$$ sizeExp: " << sizeExp->unparseToString() << endl;
+ 		  RTedArray *array = new RTedArray(
  	        false,                              // not on stack
  	        initName,
  	        getSurroundingStatement( initName ),
- 	        true,                              // is indeed malloc, or close enough
- 	        buildSizeOfOp( isSgNewExp(assign->get_operand()) -> get_specified_type() )
+ 	        true,
+ 	        false,// is indeed malloc, or close enough
+ 	        sizeExp
  	    );
+ 		  cerr << " $$$2 sizeExp: " << array->size->unparseToString() << endl;
+ 		 // abort();
  	      variablesUsedForArray.push_back( varRef );
+ 	      ROSE_ASSERT(varRef);
+ 	      ROSE_ASSERT(array);
+ 	      ROSE_ASSERT(array->size);
  	      create_array_define_varRef_multiArray[ varRef ] = array;
  	      cerr  << ">> Setting this var to be initialized : " << initName->unparseToString() << endl;
  	      variableIsInitialized[varRef]=std::pair<SgInitializedName*,bool>(initName,ismalloc);
-
  		}
+#endif
 
 	}
 

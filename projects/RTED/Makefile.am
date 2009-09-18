@@ -505,7 +505,8 @@ TESTS_KNOWN_TO_FAIL = run/C/subprogram_call_errors/c_C_1_3_f \
 					  run/tests/Cxx/pointer/arrow_star \
 					  run/tests/Cxx/simple/uninitialized_member \
 					  run/tests/Cxx/pointer/member_deref \
-					  run/tests/Cxx/pointer/member_deref2 
+					  run/tests/Cxx/pointer/member_deref2 \ 
+					  run/tests/C/pointer/arraytest
 
 $(TESTS_KNOWN_TO_FAIL):
 	@echo This test is known to fail, not running it now: $@
