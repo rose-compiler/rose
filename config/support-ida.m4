@@ -9,7 +9,7 @@ AC_ARG_WITH(ida,
 [  --with-ida=PATH	Specify the prefix where IDA Pro is installed],
 ,
 if test ! "$with_ida" ; then
-   with_maple=no
+   with_ida=no
 fi
 )
 
