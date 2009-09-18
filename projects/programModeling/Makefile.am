@@ -3,7 +3,6 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # Automake conditional to control use of ROSE with Maple Symbolic Algebra Package
 if ROSE_USE_MAPLE
 
-MAPLE_INCLUDES = -I$(maple_path)/extern/include
 INCLUDES = $(ROSE_INCLUDES) $(MAPLE_INCLUDES)
 
 bin_PROGRAMS = mapleBugReport1 mapleAPIExample2 mapleRoseTest loopTest
@@ -17,7 +16,6 @@ mapleRoseTest_SOURCES = mapleRoseTest.C
 
 loopTest_SOURCES = loopTest.C mapleSupport.C programModel.C memoryAccessModel.C
 
-MAPLE_LIBS = -L$(maple_path)/bin.IBM_INTEL_LINUX -lmaplec -lmaple
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(MAPLE_LIBS)
 
 testMapleBug: mapleBugReport1
