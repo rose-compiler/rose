@@ -124,6 +124,10 @@ printenv >> mailtext1
 
 /usr/sbin/sendmail -i $MAILADDRS < mailtext1
 
+timer="/usr/bin/time"
+
+SourceTreeLocation=$ROSE_TOP/sourcetree
+
 #------------------------------------------------------
 #  Building and Making Section
 #------------------------------------------------------
@@ -132,12 +136,39 @@ buildstatus=0
   set -e
   # Print a trace of simple Shell commands  
   set -x
-
+ 
 #------------------------------------------------------
 # check out a fresh copy for testing
 # Two methods: checkout and export (default)
   if [ "x$SVNOP" = "x" ]; then SVNOP=export; fi
-  $SVN ${SVNOP} -r${svnversion} -q ${ROSE_SVNROOT} sourcetree
+
+# $SVN ${SVNOP} -r${svnversion} -q ${ROSE_SVNROOT} sourcetree
+# $timer $SVN ${SVNOP} -r${svnversion} -q ${ROSE_SVNROOT} sourcetree
+
+  if [ "x$SVNOP" = "xupdate" ]; then
+      $SVN info $SVN_READONLY_REPOSITORY_LOCATION
+    # Check the return status of the svn info command.
+      if [ $? == 0 ]; then
+          SourceTreeLocation=$SVN_READONLY_REPOSITORY_LOCATION
+
+        # I think we need to run update and build separately before running tests
+        # cd $SVN_READONLY_REPOSITORY_LOCATION; $timer $SVN ${SVNOP} -r${svnversion} -q
+        # cd $SourceTreeLocation
+        # $timer ./build
+        # cd ..
+      else
+        # Error
+          echo "Error update specified without a valid SVN repository: $SVN_READONLY_REPOSITORY_LOCATION"
+          exit 1
+      fi
+    else
+      if [ "x$SVNOP" = "xcheckout" ]; then
+          $timer $SVN ${SVNOP} -r${svnversion} -q ${ROSE_SVNROOT} $SourceTreeLocation
+      else
+        # default is export
+          $timer $SVN ${SVNOP} -r${svnversion} -q ${ROSE_SVNROOT} $SourceTreeLocation
+      fi
+  fi
 
 #------------------------------------------------------
 # rebuild the Makefile in the source tree
@@ -148,8 +179,8 @@ if [ 0$SKIP_BUILD_SOURCE -ne 0 ]; then
   echo "Skipping ./build in the source tree..."
 else  
   echo "Build configuration and Makefile.in in the source tree...."
-  cd sourcetree
-  ./build
+  cd $SourceTreeLocation
+  $timer ./build
   cd ..
 fi
 #------------------------------------------------------
@@ -172,7 +203,7 @@ fi
 #------------------------------------------------------
 # configure,make, and test ROSE
   cd build
-  ../sourcetree/configure "${CONFIGURE_FLAGS[@]}" || exit 1
+  $timer $SourceTreeLocation/configure "${CONFIGURE_FLAGS[@]}" || exit 1
   echo "############ configure done"
 
 # make $MAKEFLAGS || exit 1
@@ -181,27 +212,31 @@ fi
   # For testing -- skip the rest if we are testing the head of the SciDAC repository of ROSE
   if [ 0$BUILD_AND_UPDATE_EDG_BINARY_ONLY -ne 0 ] ; then
   # This is as short a compile as possible (roughly) to build the EDG binary.
-    make -C src $MAKEFLAGS || exit 1
+    $timer make -C src/util $MAKEFLAGS || exit 1
+    $timer make -C src/ROSETTA $MAKEFLAGS || exit 1
+    $timer make -C src/frontend $MAKEFLAGS || exit 1
+    echo "exit status = $?"
     echo "############ make done"
     echo "Skipping make check, docs, install, and installcheck.."
     if [ 0$ENABLE_BUILD_BINARY_EDG -ne 0 ]; then
       cd ${ROSE_TOP}/build
     # DQ (9/17/2009): These are now called via dependences in the Makefile when we call the makefile rule: source_with_binary_edg_dist
       make $MAKEFLAGS copy_binary_edg_tarball_to_source_tree_svn DOT_SVNREV=-${svnversion} || exit 1
+      echo "After copy_binary_edg_tarball_to_source_tree_svn: exit status = $?"
       echo "############ make copy_binary_edg_tarball_to_source_tree_svn using svnversion = ${svnversion} done"
     fi
   else
   # Normal build of ROSE
-    make $MAKEFLAGS || exit 1
+    $timer make $MAKEFLAGS || exit 1
     echo "############ make done"
-    make $MAKEFLAGS check || exit 1
+    $timer make $MAKEFLAGS check || exit 1
     echo "############ make check done"
-    make $MAKEFLAGS docs || exit 1
+    $timer make $MAKEFLAGS docs || exit 1
     echo "############ make docs done"
     rmdir ../install || exit 1
-    make $MAKEFLAGS install || exit 1
+    $timer make $MAKEFLAGS install || exit 1
     echo "############ make install done"
-    make $MAKEFLAGS installcheck || exit 1
+    $timer make $MAKEFLAGS installcheck || exit 1
     echo "############ make installcheck done"
 
   # test the installed ROSE on external benchmarks, such as SPEC CPU 2006 etc.
@@ -218,32 +253,36 @@ fi
       exit 1
       fi
 
-      ${ROSE_TOP}/sourcetree/scripts/testOnExternalBenchmarks.sh ${ROSE_INS} $SPEC_CPU2006_INS $SPEC_CPU2006_CONFIG ||exit 1
+      $SourceTreeLocation/scripts/testOnExternalBenchmarks.sh ${ROSE_INS} $SPEC_CPU2006_INS $SPEC_CPU2006_CONFIG ||exit 1
     fi
   fi
+
+  echo "Before testing for SKIP_DIST_TEST: exit status = $?"
 
   # skip the rest if we are testing the head of the SciDAC repository of ROSE
   if [ 0$SKIP_DIST_TEST -ne 0 ] ; then
     echo "Skipping make dist, distcheck, source_with_binary_edg_dist.." 
   else  
-    make $MAKEFLAGS dist || exit 1
+    $timer make $MAKEFLAGS dist || exit 1
     echo "############ make dist done"
-    make $MAKEFLAGS distcheck || exit 1
+    $timer make $MAKEFLAGS distcheck || exit 1
     echo "############ make distcheck done"
     # Build a binary version of EDG and put it into the source tree
-    # SYSTEM_NAME=`${ROSE_TOP}/sourcetree/config/config.guess | xargs ${ROSE_TOP}/sourcetree/config/cleanConfigGuessOutput`
+    # SYSTEM_NAME=`$SourceTreeLocation/config/config.guess | xargs $SourceTreeLocation/config/cleanConfigGuessOutput`
     # echo "SYSTEM_NAME = \"$SYSTEM_NAME\"" >&2
     if [ 0$ENABLE_BUILD_BINARY_EDG -ne 0 ]; then
       cd ${ROSE_TOP}/build
     # DQ (9/15/2009): These are now called via dependences in the Makefile when we call the makefile rule: source_with_binary_edg_dist
     # make binary_edg_tarball || exit 1
-    # ${ROSE_TOP}/sourcetree/scripts/copy_binary_edg_tarball_to_source_tree_svn ${ROSE_SVNROOT} "${SYSTEM_NAME}" || exit 1
-    # ${ROSE_TOP}/sourcetree/scripts/copy_binary_edg_tarball_to_source_tree ${ROSE_TOP}/sourcetree "${SYSTEM_NAME}" || exit 1
+    # $SourceTreeLocation/scripts/copy_binary_edg_tarball_to_source_tree_svn ${ROSE_SVNROOT} "${SYSTEM_NAME}" || exit 1
+    # $SourceTreeLocation/scripts/copy_binary_edg_tarball_to_source_tree $SourceTreeLocation "${SYSTEM_NAME}" || exit 1
     # make $MAKEFLAGS source_with_binary_edg_dist DOT_SVNREV=-${svnversion} || exit 1
+    # $timer make $MAKEFLAGS source_with_binary_edg_dist DOT_SVNREV=-${svnversion} || exit 1
       make $MAKEFLAGS source_with_binary_edg_dist DOT_SVNREV=-${svnversion} || exit 1
       echo "############ make source_with_binary_edg_dist done"
     fi
   fi
+  echo "End of tests: exit status = $?"
 ) >buildlog 2>&1 || buildstatus=1
 
 #------------------------------------------------------
@@ -252,7 +291,7 @@ fi
 #------------------------------------------------------
 # if successful
 #------------------------------------------------------
- mailtext=${ROSE_TOP}/mailtext  # using absolute path to work with changing current dir.
+mailtext=${ROSE_TOP}/mailtext  # using absolute path to work with changing current dir.
 if [ $buildstatus == 0 ]; then  
   if [ -n "$TIMESTAMP" ]; then
     echo "Subject: ROSE test $TIMESTAMP on `hostname` 2. end (pass)" > $mailtext
@@ -317,7 +356,7 @@ if [ $buildstatus == 0 ]; then
   if [ 0$ENABLE_UPLOAD_SVN -ne 0 ] ; then
  # bypass set -e by using own flag, so the child script can return to its parent    
      failed=no 
-     ${ROSE_TOP}/sourcetree/scripts/importRoseDistributionToSVN ${ROSE_TOP} >>${ROSE_TOP}/buildlog || failed=yes
+     $SourceTreeLocation/scripts/importRoseDistributionToSVN ${ROSE_TOP} >>${ROSE_TOP}/buildlog || failed=yes
     if [ $failed = yes ]; then
       echo "Error: importRoseDistributionToSVN finishes abnormally!" >>$mailtext
       tail buildlog >>$mailtext

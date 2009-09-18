@@ -34,7 +34,8 @@ export PATH="/usr/apps/gcc/3.4.6/bin:$JAVA_HOME/bin:$PATH"
 export LD_LIBRARY_PATH="/usr/apps/gcc/3.4.6/lib:$LD_LIBRARY_PATH"
 
 # Use this directory for the location of all tests of ROSE.
-ROSE_TOP="/home/dquinlan/ROSE/svn-test-rose/$$/"
+ROSE_TEST_ROOT="/home/dquinlan/ROSE/svn-test-rose"
+ROSE_TOP="$ROSE_TEST_ROOT/$$/"
 
 # CONFIGURE_FLAGS=(--with-edg_source_code=true --with-boost=${BOOST_ROOT} --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --prefix=${ROSE_TOP}/install "$@")
 # CONFIGURE_FLAGS=(--with-boost=${BOOST_ROOT} --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --prefix=${ROSE_TOP}/install "$@")
@@ -49,8 +50,15 @@ ROSE_SVNROOT=file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
 MAILADDRS="dquinlan@llnl.gov"
 
 # the right version of subversion is essential!!
-SVN=/nfs/apps/subversion/1.4.5/bin/svn
-SVNOP=checkout
+SVN=/nfs/apps/subversion/1.5.5/bin/svn
+
+# This repository is for testing only and is a performance optimization to avoid long checkout times.
+SVN_READONLY_REPOSITORY_LOCATION=$ROSE_TEST_ROOT/svn-readonly-rose
+# SVNOP=checkout
+SVNOP=update
+
+# If we are using update then assume build has been run...
+SKIP_BUILD_SOURCE=1
 
 # Run in parallel (using gmake option).
 MAKEFLAGS="-j8"

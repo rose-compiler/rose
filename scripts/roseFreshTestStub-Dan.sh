@@ -28,7 +28,9 @@ export BOOST_ROOT="/home/dquinlan/local/boost_1_37_0_installTree-gxx-4.2.2"
 export LD_LIBRARY_PATH="${BOOST_ROOT}/lib:${LD_LIBRARY_PATH}"
 
 # Use this directory for the location of all tests of ROSE.
-ROSE_TOP="/home/dquinlan/ROSE/svn-test-rose/$$/"
+ROSE_TEST_ROOT="/home/dquinlan/ROSE/svn-test-rose"
+ROSE_TOP="$ROSE_TEST_ROOT/$$/"
+# ROSE_TOP="/home/dquinlan/ROSE/svn-test-rose/$$"
 
 # CONFIGURE_FLAGS=(--with-edg_source_code=true --with-boost=${BOOST_ROOT} --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --prefix=${ROSE_TOP}/install "$@")
 CONFIGURE_FLAGS=(--with-boost=${BOOST_ROOT} --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --prefix=${ROSE_TOP}/install "$@")
@@ -40,14 +42,27 @@ ROSE_SVNROOT=file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
 MAILADDRS="dquinlan@llnl.gov liaoch@llnl.gov panas2@llnl.gov matzke1@llnl.gov saebjornsen1@llnl.gov"
 
 # the right version of subversion is essential!!
-SVN=/nfs/apps/subversion/1.4.5/bin/svn
+SVN=/nfs/apps/subversion/1.5.5/bin/svn
+
+# This repository is for testing only and is a performance optimization to avoid long checkout times.
+SVN_READONLY_REPOSITORY_LOCATION=$ROSE_TEST_ROOT/svn-readonly-rose
+
 SVNOP=checkout
+
+# If we are using update then assume build has been run...
+SKIP_BUILD_SOURCE=0
 
 # Run in parallel (using gmake option).
 MAKEFLAGS="-j16"
 
 # Controls generation and contribution of binary for EDG support to distribution.
 ENABLE_BUILD_BINARY_EDG=1
+
+# Skip running the distcheck rule (since we just want to build the compiler specific binary)
+SKIP_DIST_TEST=0
+
+# Skip running docs, install, and installcheck rules.
+BUILD_AND_UPDATE_EDG_BINARY_ONLY=0
 
 # TP (31Jul2008) make sure that the mpi deamon runs in the background
 export mpdvar=$(ps ax | grep mpd | wc -l )
