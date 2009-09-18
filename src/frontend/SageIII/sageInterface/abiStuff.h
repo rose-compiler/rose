@@ -181,6 +181,15 @@ class X86_64_VSPrimitiveTypeLayoutGenerator: public X86_64PrimitiveTypeLayoutGen
   virtual StructLayoutInfo layoutType(SgType* t) const;
 };
 
+//! Layout generator for the native system (uses sizeof)
+class SystemPrimitiveTypeLayoutGenerator: public ChainableTypeLayoutGenerator {
+  public:
+  SystemPrimitiveTypeLayoutGenerator(ChainableTypeLayoutGenerator* next)
+      : ChainableTypeLayoutGenerator(next)
+    {}
+  virtual StructLayoutInfo layoutType(SgType* t) const;
+};
+
 //! Layout generator for customized primitive types, mostly for UPC relying on Berkeley runtime library now
 class CustomizedPrimitiveTypeLayoutGenerator: public ChainableTypeLayoutGenerator {
   public:
