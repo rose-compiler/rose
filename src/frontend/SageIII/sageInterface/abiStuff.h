@@ -72,6 +72,7 @@ struct StructCustomizedSizes
 struct StructLayoutEntry {
   //! If a SgInitializedName, the field represented by this entry
   //! If a SgClassDeclaration, the anonymous union represented by this entry
+  //! If a SgBaseClass, the base class represented by this entry
   //! If NULL, this entry is padding
   SgNode* decl;
   //! The byte offset of this field (or its containing word for bit fields) in

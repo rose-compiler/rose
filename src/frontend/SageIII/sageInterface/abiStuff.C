@@ -60,10 +60,17 @@ StructLayoutInfo NonpackedTypeLayoutGenerator::layoutType(SgType* t) const {
       ROSE_ASSERT (decl);
       SgClassDefinition* def = decl->get_definition();
       ROSE_ASSERT (def);
-      const SgDeclarationStatementPtrList& body = def->get_members();
-      bool isUnion = (decl->get_class_type() == SgClassDeclaration::e_union);
       StructLayoutInfo layout;
       size_t currentOffset = 0;
+      const SgBaseClassPtrList& bases = def->get_inheritances();
+      for (SgBaseClassPtrList::const_iterator i = bases.begin();
+           i != bases.end(); ++i) {
+        SgBaseClass* base = *i;
+        SgClassDeclaration* basecls = base->get_base_class();
+        layoutOneField(basecls->get_type(), base, false, currentOffset, layout);
+      }
+      const SgDeclarationStatementPtrList& body = def->get_members();
+      bool isUnion = (decl->get_class_type() == SgClassDeclaration::e_union);
       for (SgDeclarationStatementPtrList::const_iterator i = body.begin();
            i != body.end(); ++i) {
         SgDeclarationStatement* mem = *i;
