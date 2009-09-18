@@ -53,9 +53,36 @@ RtedTransformation::getExprBelowAssignment( SgExpression* exp ) {
         exp = parent;
         parent = isSgExpression( parent->get_parent() );
     }
-   // if (isSgPointerDerefExp(parent))
-   // 	exp=parent;
     return exp;
+}
+
+bool
+RtedTransformation::isthereAnotherDerefOpBetweenCurrentAndAssign(SgExpression* exp ) {
+    SgExpression* parent = isSgExpression( exp->get_parent() );
+    
+    while(  parent
+            && !(
+                isSgAssignOp( parent )
+//                || isSgAssignInitializer( parent )
+                || isSgAndAssignOp( parent ) 
+                || isSgDivAssignOp( parent ) 
+                || isSgIorAssignOp( parent )
+                || isSgLshiftAssignOp( parent )
+                || isSgMinusAssignOp( parent )
+                || isSgModAssignOp( parent )
+                || isSgMultAssignOp( parent )
+                || isSgPlusAssignOp( parent )
+                || isSgPointerAssignOp( parent )
+                || isSgRshiftAssignOp( parent )
+                || isSgXorAssignOp( parent)
+            )) {
+      if (isSgPointerDerefExp(parent))
+    	return true;
+
+        exp = parent;
+        parent = isSgExpression( parent->get_parent() );
+    }
+    return false;
 }
 
 bool
@@ -213,6 +240,24 @@ RtedTransformation::getRightOfDot(SgDotExp* dot, std::string str,
   return make_pair(initName,varRef);
 }
 
+std::pair<SgInitializedName*,SgVarRefExp*>
+RtedTransformation::getRightOfDotStar(SgDotStarOp* dot, std::string str,
+				      SgVarRefExp* varRef) {
+  varRef=NULL;
+  SgInitializedName* initName = NULL;
+  SgExpression* rightDot = dot->get_rhs_operand();
+  ROSE_ASSERT(rightDot);
+  varRef = isSgVarRefExp(rightDot);
+  if (varRef) {
+    initName = (varRef)->get_symbol()->get_declaration();
+  } else {
+    cerr << "RtedTransformation : " << str << " - Unknown : "
+	 << rightDot->class_name() << endl;
+    ROSE_ASSERT(false);
+  }
+  return make_pair(initName,varRef);
+}
+
 /****************************************
  * This function returns InitializedName
  * for a DotExpr
@@ -245,6 +290,24 @@ RtedTransformation::getRightOfArrow(SgArrowExp* arrow, std::string str,
   varRef=NULL;
   SgInitializedName* initName = NULL;
   SgExpression* rightArrow = arrow->get_rhs_operand();
+  ROSE_ASSERT(rightArrow);
+  varRef = isSgVarRefExp(rightArrow);
+  if (varRef) {
+    initName = varRef->get_symbol()->get_declaration();
+  } else {
+    cerr << "RtedTransformation : " << str << " - Unknown : "
+	 << rightArrow->class_name() << endl;
+    ROSE_ASSERT(false);
+  }
+  return make_pair(initName,varRef);
+}
+
+std::pair<SgInitializedName*,SgVarRefExp*>
+RtedTransformation::getRightOfArrowStar(SgArrowStarOp* arrowstar, std::string str,
+					SgVarRefExp* varRef) {
+  varRef=NULL;
+  SgInitializedName* initName = NULL;
+  SgExpression* rightArrow = arrowstar->get_rhs_operand();
   ROSE_ASSERT(rightArrow);
   varRef = isSgVarRefExp(rightArrow);
   if (varRef) {
@@ -595,7 +658,7 @@ void RtedTransformation::appendTypeInformation( SgType* type, SgExprListExp* arg
 
 void RtedTransformation::appendAddressAndSize(
                          //   SgInitializedName* initName,
-							SgScopeStatement* scope,
+					      SgScopeStatement* scope,
                             SgExpression* varRefE,
                             SgExprListExp* arg_list,
                             int appendType ) {
@@ -732,8 +795,15 @@ void RtedTransformation::appendAddress(SgExprListExp* arg_list, SgExpression* ex
             }
 
             /// strip out cast expressions from the subtree
+            /// tps (09/18/2009) but only if they come first
+            /// dont strip : *((cast)*val) because that leaves only *val 
             void visit( SgNode* _n ) {
                 SgCastExp* n = isSgCastExp( _n );
+		//		cerr << " $$$$$ Traversing nodes : " << _n->class_name() << endl;
+                if( n==NULL && first_node ) {
+                    first_node = false;
+		    rv = n;
+		}
                 if( !n )
                     return;
 
@@ -741,16 +811,18 @@ void RtedTransformation::appendAddress(SgExprListExp* arg_list, SgExpression* ex
                     first_node = false;
 
                     rv = n -> get_operand();
-                } else {
-                    replaceExpression( n, n -> get_operand() );
+                } 
+		else{
+		  //replaceExpression( n, n -> get_operand() );
                 }
             }
     } make_lvalue_visitor;
 
     SgExpression* copy_exp = NULL;
+    //    if (exp)
+    //cerr << " exp to be added as address : " << exp->unparseToString() << endl;
     if (exp)
-       copy_exp = make_lvalue_visitor.visit_subtree(  exp -> copy( copy ));
-
+      copy_exp = make_lvalue_visitor.visit_subtree(  exp -> copy( copy ));
 
     SgExpression *arg;
     SgCastExp *cast_op = NULL;

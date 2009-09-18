@@ -625,65 +625,80 @@ void RtedTransformation::insertAccessVariable(SgScopeStatement* initscope,
 		}
 		if (isNormalScope(scope)) {
 			// build the function call : runtimeSystem-->createArray(params); ---------------------------
-			SgExprListExp* arg_list = buildExprListExp();
-
-			int read_write_mask = Read;
-			SgExpression* accessed_exp = varRefE;
-			SgExpression* write_location_exp = varRefE;
-			if (derefExp) {
-				SgPointerDerefExp* deref_op = isSgPointerDerefExp(derefExp);
-				SgArrowExp* arrow_op = isSgArrowExp(derefExp);
-				ROSE_ASSERT( deref_op || arrow_op );
-
-				if (arrow_op) {
-					// with
-					//    p -> b = 2
-					// we need to be able to read
-					//    *p
-					if (isUsedAsLvalue(arrow_op)) {
-						if (isSgThisExp(arrow_op->get_lhs_operand())) {
-							accessed_exp=0;
-							read_write_mask = Write;
-						} else {
-							accessed_exp = arrow_op->get_lhs_operand();
-							read_write_mask |= Write;
-						}
-						write_location_exp = arrow_op;
-					} else
-						accessed_exp = arrow_op;
-							//buildPointerDerefExp(
-							//arrow_op -> get_lhs_operand());
-				} else {
-					// consider
-					//    int *p;
-					//    *p = 24601;
-					//  It is necessary that &p, sizeof(p) is readable, but not
-					//  &(*p), sizeof(*p).
-					if (isUsedAsLvalue(derefExp)) {
-						accessed_exp = deref_op -> get_operand();
-						write_location_exp = deref_op;
-						read_write_mask |= Write;
-					} else
-						accessed_exp = deref_op;
-				}
+		  SgExprListExp* arg_list = buildExprListExp();
+		  
+		  int read_write_mask = Read;
+		  SgExpression* accessed_exp = varRefE;
+		  SgExpression* write_location_exp = varRefE;
+		  if (derefExp) {
+		    SgPointerDerefExp* deref_op = isSgPointerDerefExp(derefExp);
+		    SgArrowExp* arrow_op = isSgArrowExp(derefExp);
+		    ROSE_ASSERT( deref_op || arrow_op );
+		    
+		    if (arrow_op) {
+		      // with
+		      //    p -> b = 2
+		      // we need to be able to read
+		      //    *p
+		      if (isUsedAsLvalue(arrow_op)) {
+			bool isReadOnly = 
+			  isthereAnotherDerefOpBetweenCurrentAndAssign(derefExp);
+			if (isSgThisExp(arrow_op->get_lhs_operand())) {
+			  return;
+#if 0
+			  if (!isReadOnly) { // there is a deref above the this op
+			    accessed_exp=0;
+			    read_write_mask = Write;
+			  } else {
+			    write_location_exp = 0;
+			    //accessed_exp = arrow_op;
+			  }
+#endif
+			} else {
+			  accessed_exp = arrow_op->get_lhs_operand();
+			  if (!isReadOnly)
+			    read_write_mask |= Write;
 			}
-			appendAddressAndSize(//initName,
-					initscope,accessed_exp, arg_list, 2);
-			appendAddressAndSize(//initName,
-					initscope,write_location_exp, arg_list, 2);
-			appendExpression(arg_list, buildIntVal(read_write_mask));
+			write_location_exp = arrow_op;
+		      } else {
+			// not a l-value
+			write_location_exp=0;
+			accessed_exp = arrow_op;
+		      }
+		    } else {
+		      // consider
+		      //    int *p;
+		      //    *p = 24601;
+		      //  It is necessary that &p, sizeof(p) is readable, but not
+		      //  &(*p), sizeof(*p).
+		      if (isUsedAsLvalue(derefExp)) {
+			bool isReadOnly = 
+			  isthereAnotherDerefOpBetweenCurrentAndAssign(derefExp);
+			accessed_exp = deref_op -> get_operand();
+			write_location_exp = deref_op;
+			if (!isReadOnly)
+			  read_write_mask |= Write;
+		      } else
+			accessed_exp = deref_op;
+		    }
+		  }
+		  appendAddressAndSize(//initName,
+				       initscope,accessed_exp, arg_list, 2);
+		  appendAddressAndSize(//initName,
+				       initscope,write_location_exp, arg_list, 2);
+		  appendExpression(arg_list, buildIntVal(read_write_mask));
+		  
+		  SgExpression* filename = buildString(
+						       stmt->get_file_info()->get_filename());
+		  SgExpression* linenr = buildString(RoseBin_support::ToString(
+									       stmt->get_file_info()->get_line()));
+		  appendExpression(arg_list, filename);
+		  appendExpression(arg_list, linenr);
+		  
+		  SgExpression* linenrTransformed = buildString("x%%x");
+		  appendExpression(arg_list, linenrTransformed);
 
-			SgExpression* filename = buildString(
-					stmt->get_file_info()->get_filename());
-			SgExpression* linenr = buildString(RoseBin_support::ToString(
-					stmt->get_file_info()->get_line()));
-			appendExpression(arg_list, filename);
-			appendExpression(arg_list, linenr);
-
-			SgExpression* linenrTransformed = buildString("x%%x");
-			appendExpression(arg_list, linenrTransformed);
-
-			// appendExpression(arg_list, buildString(removeSpecialChar(stmt->unparseToString())));
+		  // appendExpression(arg_list, buildString(removeSpecialChar(stmt->unparseToString())));
 
 			ROSE_ASSERT(roseAccessVariable);
 			string symbolName2 = roseAccessVariable->get_name().str();
@@ -698,8 +713,8 @@ void RtedTransformation::insertAccessVariable(SgScopeStatement* initscope,
 			string empty_comment = "";
 			attachComment(exprStmt, empty_comment, PreprocessingInfo::before);
 			string
-					comment =
-							"RS : Access Variable, paramaters : (name, mangl_name, address, sizeof(type), filename, line, line transformed, error Str)";
+			  comment =
+			  "RS : Access Variable, paramaters : (address_r, sizeof(type)_r, address_w, sizeof(type)_w, r/w, filename, line, line transformed, error Str)";
 			attachComment(exprStmt, comment, PreprocessingInfo::before);
 		} // basic block
 		else if (isSgNamespaceDefinitionStatement(scope)) {
@@ -778,15 +793,8 @@ void RtedTransformation::visit_isAssignInitializer(SgNode* n) {
  		  SgType* thesizetype = oldnewExp->get_specified_type();
  		  ROSE_ASSERT(thesizetype);
  		  SgExpression* sizeExp = buildSizeOfOp(
- 				  buildPointerType(buildVoidType())
- 				  #if 0
- 				  buildNewExp(thesizetype,
- 						      NULL,
- 						      oldnewExp->get_constructor_args(),
- 						      oldnewExp->get_builtin_args(),
- 						      0,
- 						      NULL)
-#endif
+							oldnewExp->get_specified_type()
+ //   		    buildPointerType(buildVoidType())
  		  );
  		  ROSE_ASSERT(sizeExp);
  		  cerr << " $$$ sizeExp: " << sizeExp->unparseToString() << endl;

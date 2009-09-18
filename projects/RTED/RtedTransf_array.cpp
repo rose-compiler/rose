@@ -461,6 +461,20 @@ RtedTransformation::visit_isSgPointerDerefExp(SgPointerDerefExp* n) {
     cerr << "Warning : We added more than one SgVarRefExp to this map for SgPointerDerefExp. This might be a problem" << endl;
     //exit(1);
   }
+#if 1
+  std::vector< SgNode* > vars2 = NodeQuery::querySubTree( right, V_SgThisExp );
+  std::vector< SgNode* >::const_iterator it2 = vars2.begin();
+  for (;it2!=vars2.end();++it2) {
+    SgThisExp* varRef = isSgThisExp(*it2);
+    ROSE_ASSERT(varRef);
+    variable_access_arrowthisexp[ n] = varRef;
+    cerr << " &&& Adding : " << varRef->unparseToString() << endl;
+  }
+  if (vars2.size()>1) {
+    cerr << "Warning : We added more than one SgThisExp to this map for SgArrowExp. This might be a problem" << endl;
+    //exit(1);
+  }
+#endif
 #endif
 }
 
@@ -469,7 +483,7 @@ RtedTransformation::visit_isSgArrowExp(SgArrowExp* n) {
   cerr <<"\n$$$$$ visit_isSgArrowExp : " << n->unparseToString() <<
     "  in line : " << n->get_file_info()->get_line() << " -------------------------------------" <<endl;
 
-#if 1
+
   SgExpression* left = isSgExpression(n->get_lhs_operand());
   ROSE_ASSERT(left);
   // left hand side should be a varrefexp or a thisOp
@@ -494,6 +508,7 @@ RtedTransformation::visit_isSgArrowExp(SgArrowExp* n) {
     cerr << "Warning : We added more than one SgVarRefExp to this map for SgArrowExp. This might be a problem" << endl;
     //exit(1);
   }
+#if 1
   std::vector< SgNode* > vars2 = NodeQuery::querySubTree( left, V_SgThisExp );
   std::vector< SgNode* >::const_iterator it2 = vars2.begin();
   for (;it2!=vars2.end();++it2) {
@@ -906,7 +921,29 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
       << "RtedTransformation: UNHANDLED BUT ACCEPTED FOR NOW - Left of assign - Unknown : "
       << expr_l->class_name() << "  line:"
       << expr_l->unparseToString() << endl;
-  } else {
+  }
+  else if (isSgArrowStarOp(expr_l)) {
+    std::pair<SgInitializedName*,SgVarRefExp*> mypair  = 
+      getRightOfArrowStar(isSgArrowStarOp(expr_l),
+		      "Right of Arrow  - line: " + expr_l->unparseToString()
+		      + " ", varRef);
+    ROSE_ASSERT(mypair.first);
+    ROSE_ASSERT(mypair.second);
+    initName = mypair.first;
+    varRef = mypair.second;
+    if (initName)
+      ROSE_ASSERT(varRef);
+  }// ------------------------------------------------------------
+  else if (isSgDotStarOp(expr_l)) {
+    std::pair<SgInitializedName*,SgVarRefExp*> mypair = 
+      getRightOfDotStar(isSgDotStarOp(expr_l),
+		    "Right of Dot  - line: " + expr_l->unparseToString() + " ", varRef);
+    initName = mypair.first;
+    varRef = mypair.second;
+    if (initName)
+      ROSE_ASSERT(varRef);
+  }// ------------------------------------------------------------
+  else {
     cerr << "RtedTransformation : Left of assign - Unknown : "
 	 << expr_l->class_name() << "  line:"
 	 << expr_l->unparseToString() << endl;
