@@ -1,4 +1,5 @@
 #include "aral.h"
+#include <cstdlib>
 
 /* Implementation */
 
@@ -327,7 +328,7 @@ Aral::Data* Aral::BotElement::deepCopy() {
 	return new BotElement();
 }
 Aral::Data* Aral::TopElement::deepCopy() {
-	return new BotElement();
+	return new TopElement();
 }
 Aral::Data* Aral::Int32::deepCopy() {
 	return new Int32(_value);
@@ -464,9 +465,9 @@ void Aral::DataToStringVisitor::preVisitTopElement(TopElement* o){ s+="top"; }
 void Aral::DataToStringVisitor::postVisitTopElement(TopElement* o){}
 void Aral::DataToStringVisitor::preVisitBotElement(BotElement* o){ s+="bot"; }
 void Aral::DataToStringVisitor::postVisitBotElement(BotElement* o){}
-void Aral::DataToStringVisitor::preVisitVarId(VarId* o){ s+=o->idToString(); }
+void Aral::DataToStringVisitor::preVisitVarId(VarId* o){ s+="@"+o->idToString(); }
 void Aral::DataToStringVisitor::postVisitVarId(VarId* o){}
-void Aral::DataToStringVisitor::preVisitExpId(ExpId* o){ s+=o->idToString(); }
+void Aral::DataToStringVisitor::preVisitExpId(ExpId* o){ s+="@"+o->idToString(); }
 void Aral::DataToStringVisitor::postVisitExpId(ExpId* o){}
-void Aral::DataToStringVisitor::preVisitStmtLabel(StmtLabel* o){ s+=o->labelToString(); }
+void Aral::DataToStringVisitor::preVisitStmtLabel(StmtLabel* o){ s+="#"+o->labelToString(); }
 void Aral::DataToStringVisitor::postVisitStmtLabel(StmtLabel* o){}

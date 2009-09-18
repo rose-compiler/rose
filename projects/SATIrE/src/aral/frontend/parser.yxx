@@ -11,7 +11,8 @@
 #include "parser_decls.h"
 
 char *input_filename = NULL;
-char *output_filename = "a.c";
+char tempfilename[30];
+char *output_filename = tempfilename;
 
 //void process_unit(struct func *);
 
@@ -42,9 +43,10 @@ Tuple* araltuple;
 }
 
 %token ';' ',' 
-%token '{' '}' '[' ']' '<' '>' '(' ')' 
+%token '{' '}' '[' ']' '<' '>' '(' ')'
+%token TOP BOT
 %token <idstring> IDENT 
-%token <intval> INTEGER
+%token <intval> INTEGER IDCODE LABEL
 %token <string> STRING
 
 %type <araldata> element basic_element
@@ -73,7 +75,8 @@ element		: basic_element
 			Tuple* t=new Tuple($2->size());
 			int pos=0;
 			for(List::iterator i=$2->begin();i!=$2->end();++i,++pos) {
-				t->setAt(pos,*i);
+				Aral::Data* temp=(*i)->deepCopy();
+				t->setAt(pos,temp);
 			}
 			delete $2;
 			$$=t;
@@ -83,6 +86,10 @@ element		: basic_element
 basic_element	: IDENT { $$=new Int32(-1 /*dummy*/); }
 		| STRING { $$=new Int32(-2 /*dummy*/); }
 		| INTEGER { $$=new Int32($1); }
+		| LABEL { $$=new StmtLabel($1); }
+		| IDCODE { $$=new VarId($1); }
+		| TOP { $$=new TopElement(); }
+ 		| BOT { $$=new BotElement(); }
 		;
 
 opt_set_elements: /* empty */

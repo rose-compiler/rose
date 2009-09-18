@@ -6,7 +6,7 @@
 // These are global declarations needed for the lexer and parser files.
 
 // ARAL classes
-#include "../Aral1/aral.h"
+#include "../satire/aral.h"
 using namespace Aral;
 
 // Front End specific classes

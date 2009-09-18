@@ -39,8 +39,13 @@ single			[{}<>(),;]
 "["			{ return '['; }
 "]"			{ return ']'; }
 
+"top"			      { return TOP; }
+"bot"			      { return BOT; }
 {letter}({letter}|{digit})*  { yylval.idstring = strdup(yytext); /* = lookup(yytext); */ return IDENT; }
 {digit}{digit}*              { yylval.intval = atoi(yytext); return INTEGER; }
+"@"{digit}{digit}*              { yylval.intval = atoi(yytext+1); return LABEL; }
+"#"{digit}{digit}*              { yylval.intval = atoi(yytext+1); return IDCODE; }
+
 
 [ \t\r]                      ; /* white space */
 \n                           ; /* we are using #option yylineno */ 
