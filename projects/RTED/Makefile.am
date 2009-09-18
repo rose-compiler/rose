@@ -518,9 +518,11 @@ deleteAllbinfiles:
 
 
 checkfast:	runtimeCheck $(TESTCODES) \
-				run/tests/C/memoryleaks run/tests/C/memoverlap \
+				run/tests/C/memoryleaks \
+				run/tests/C/memoverlap \
 				run/tests/C/pointer \
-				run/tests/Cxx/simple run/tests/Cxx/pointer
+				run/tests/Cxx/simple \
+				run/tests/Cxx/pointer
 	@echo "---------------------------------------------------------------------------------------"
 	@echo "--- ROSE/projects/RTED: checkfast passed                                            ---"
 	@echo "---------------------------------------------------------------------------------------"
@@ -532,7 +534,7 @@ check-local: runtimeCheck $(TESTCODES) checkfast \
 				run/C/allocation_deallocation_errors run/C/input_output_errors \
 				run/C/memory_leaks run/C/uninitialized_variables \
 				run/C/C99_specific_errors run/C/pointer_errors \
-				run/Cxx/string_errors
+				run/C++/string_errors
 	@echo "***************************************************************************************"
 	@echo "*** ROSE/projects/runtimeErrorCheck: make check rule complete (terminated normally) ***"
 	@echo "***************************************************************************************"
