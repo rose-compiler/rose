@@ -1,3 +1,59 @@
+2009-09-19 18:32  dquinlan
+
+	* [r7406]
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/sage_gen_be.C:
+	  Force change to MD5 checksum to test binary generation.
+
+2009-09-19 18:22  dquinlan
+
+	* [r7405] /trunk/ROSE/scripts/roseFreshTestStub-Dan-OSX.sh: Set
+	  KEEP_TEST_DIR variable.
+
+2009-09-19 18:14  dquinlan
+
+	* [r7404] /trunk/ROSE/scripts/roseFreshTest,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Dan-gnu-3.4.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Dan-gnu-4.0.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Dan-gnu-4.1.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Dan-gnu-4.2.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Dan-gnu-4.3.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Dan-gnu-4.4.sh: More fixes
+	  to the binary EDG builds.
+
+2009-09-19 16:24  dquinlan
+
+	* [r7397] /trunk/ROSE/scripts/roseFreshTest: Fixed roseFreshTest to
+	  checkin EDG binary to SVN.
+
+2009-09-19 15:15  dquinlan
+
+	* [r7395] /trunk/ROSE/scripts/roseFreshTest,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Dan-OSX.sh,
+	  /trunk/ROSE/scripts/update_svn-readonly-rose_repository-OSX-Dan.sh:
+	  Added call to build script.
+
+2009-09-19 15:15  dquinlan
+
+	* [r7394]
+	  /trunk/ROSE/scripts/update_svn-readonly-rose_repository-Linux-Dan.sh:
+	  Added call to build script.
+
+2009-09-19 15:11  dquinlan
+
+	* [r7393] /trunk/ROSE/config/cleanConfigGuessOutput,
+	  /trunk/ROSE/config/support-libffi.m4: Commented our failing marco
+	  (OSX) and added fix to cleanConfigGuessOutput script.
+
+2009-09-19 14:13  dquinlan
+
+	* [r7392] /trunk/ROSE/scripts/changingCompilers.txt,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/quinlanTests.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Dan-gnu-4.2.sh,
+	  /trunk/ROSE/scripts/update_svn-readonly-rose_repository-Linux-Dan.sh,
+	  /trunk/ROSE/scripts/update_svn-readonly-rose_repository-OSX-Dan.sh:
+	  Added scripts for automated update of svn-readonly-rose cached
+	  copy.
+
 2009-09-18 23:00  collingbourne2
 
 	* [r7389] /trunk/ROSE/configure.in,
