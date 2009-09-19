@@ -19,6 +19,14 @@ CONFIGURE_FLAGS=( --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS='-Wa
 ROSE_SVNROOT=svn+ssh://tux270.llnl.gov/usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
 MAILADDRS="dquinlan@llnl.gov liaoch@llnl.gov panas2@llnl.gov matzke1@llnl.gov saebjornsen1@llnl.gov"
 
+# This repository is for testing only and is a performance optimization to avoid long checkout times.
+SVN_READONLY_REPOSITORY_LOCATION=$ROSE_TEST_ROOT/svn-readonly-rose
+# SVNOP=checkout
+SVNOP=update
+
+# If we are using update then assume build has been run...
+SKIP_BUILD_SOURCE=1
+
 # Controls generation and contribution of binary for EDG support to distribution.
 ENABLE_BUILD_BINARY_EDG=1
 
@@ -27,9 +35,6 @@ SKIP_DIST_TEST=0
 
 # Skip running docs, install, and installcheck rules.
 BUILD_AND_UPDATE_EDG_BINARY_ONLY=0
-
-# If we are using update then assume build has been run...
-SKIP_BUILD_SOURCE=0
 
 # the right version of subversion is essential!!
 SVN=/usr/bin/svn
