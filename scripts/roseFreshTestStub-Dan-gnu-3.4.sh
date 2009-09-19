@@ -72,6 +72,9 @@ SKIP_DIST_TEST=1
 # Skip running docs, install, and installcheck rules.
 BUILD_AND_UPDATE_EDG_BINARY_ONLY=1
 
+# Save the directory of tests (for debugging)
+KEEP_TEST_DIR=1
+
 # TP (31Jul2008) make sure that the mpi deamon runs in the background
 export mpdvar=$(ps ax | grep mpd | wc -l )
 #echo $mpdvar

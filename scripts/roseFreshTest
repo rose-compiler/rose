@@ -145,6 +145,8 @@ buildstatus=0
 # $SVN ${SVNOP} -r${svnversion} -q ${ROSE_SVNROOT} sourcetree
 # $timer $SVN ${SVNOP} -r${svnversion} -q ${ROSE_SVNROOT} sourcetree
 
+# DQ (9/18/2009): This is added as a performance optimization to the
+# generation of many EDG binaries for different versions of compilers.
   if [ "x$SVNOP" = "xupdate" ]; then
       $SVN info $SVN_READONLY_REPOSITORY_LOCATION
     # Check the return status of the svn info command.
@@ -217,22 +219,28 @@ fi
     echo "This is a short compile (just enough to build the EDG binary)"
     $timer make -C src/util $MAKEFLAGS || exit 1
     $timer make -C src/ROSETTA $MAKEFLAGS || exit 1
-    $timer make -C src/frontend $MAKEFLAGS || exit 1
+
+  # $timer make -C src/frontend $MAKEFLAGS || exit 1
+    $timer make -C src/frontend/CxxFrontend $MAKEFLAGS || exit 1
+  # $timer make -C src/frontend/CxxFrontend/EDG_3.3 $MAKEFLAGS || exit 1
+  # $timer make -C src/frontend/CxxFrontend/EDG_SAGE_Connection $MAKEFLAGS || exit 1
+
     echo "exit status = $?"
     echo "############ make done"
     echo "Skipping make check, docs, install, and installcheck.."
-    if [ 0$ENABLE_BUILD_BINARY_EDG -ne 0 ]; then
-      cd ${ROSE_TOP}/build
-    # DQ (9/17/2009): These are now called via dependences in the Makefile when we call the makefile rule: source_with_binary_edg_dist
-      make $MAKEFLAGS copy_binary_edg_tarball_to_source_tree_svn DOT_SVNREV=-${svnversion} || exit 1
-      echo "After copy_binary_edg_tarball_to_source_tree_svn: exit status = $?"
-      echo "############ make copy_binary_edg_tarball_to_source_tree_svn using svnversion = ${svnversion} done"
-    fi
+
+#    if [ 0$ENABLE_BUILD_BINARY_EDG -ne 0 ]; then
+#      cd ${ROSE_TOP}/build
+#    # DQ (9/17/2009): These are now called via dependences in the Makefile when we call the makefile rule: source_with_binary_edg_dist
+#      make $MAKEFLAGS copy_binary_edg_tarball_to_source_tree_svn DOT_SVNREV=-${svnversion} || exit 1
+#      echo "After copy_binary_edg_tarball_to_source_tree_svn: exit status = $?"
+#      echo "############ make copy_binary_edg_tarball_to_source_tree_svn using svnversion = ${svnversion} done"
+#    fi
   else
   # Normal build of ROSE
 
   # This conditional allows faster testing of the generation of the EDG binary
-    if true; then
+    if [ true ]; then
       $timer make $MAKEFLAGS || exit 1
       echo "############ make done"
       $timer make $MAKEFLAGS check || exit 1
@@ -281,9 +289,12 @@ fi
       echo "After copy_binary_edg_tarball_to_source_tree_svn: exit status = $?"
       echo "############ make copy_binary_edg_tarball_to_source_tree_svn using svnversion = ${svnversion} done"
 
-    # See comment below (in false case).
-      make $MAKEFLAGS source_with_binary_edg_dist DOT_SVNREV=-${svnversion} || exit 1
-      echo "############ make source_with_binary_edg_dist done"
+      if [ 0$BUILD_AND_UPDATE_EDG_BINARY_ONLY -eq 0 ] ; then
+      # This appears to be a problem (since make dist is called) but we have not build all of ROSE 
+      # See comment below (in false case).
+        make $MAKEFLAGS source_with_binary_edg_dist DOT_SVNREV=-${svnversion} || exit 1
+        echo "############ make source_with_binary_edg_dist done"
+      fi
     fi
   else
     echo "Running make dist, distcheck, source_with_binary_edg_dist... (but running source_with_binary_edg_dist rule at the end)" 
@@ -442,8 +453,9 @@ fi
 # cat buildlog >> $mailtext (too big)
 /usr/sbin/sendmail -i $MAILADDRS < $mailtext
 if [ 0$KEEP_TEST_DIR -ne 0 ] ; then
-  : # echo "Test directory is preserved."
-else  
-  # echo "Test directory has been removed."
+# : # echo "Test directory is preserved."
+  echo "Test directory is preserved."
+else
+  echo "Test directory has been removed."
   if [ $buildstatus == 0 ]; then rm -rf "${ROSE_TOP}"; fi # Only delete if the test passed
 fi 
