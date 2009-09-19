@@ -16,3 +16,6 @@ ${SVN} update ${ROSE_TOP}
 
 # Check the resulting binaries
 ls -l ${ROSE_TOP}/src/frontend/CxxFrontend
+
+# Also run the build script to generate the configure script
+cd ${ROSE_TOP}; ./build
