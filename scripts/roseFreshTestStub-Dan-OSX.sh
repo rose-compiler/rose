@@ -21,11 +21,11 @@ MAILADDRS="dquinlan@llnl.gov liaoch@llnl.gov panas2@llnl.gov matzke1@llnl.gov sa
 
 # This repository is for testing only and is a performance optimization to avoid long checkout times.
 SVN_READONLY_REPOSITORY_LOCATION=$ROSE_TEST_ROOT/svn-readonly-rose
-# SVNOP=checkout
-SVNOP=update
+SVNOP=checkout
+# SVNOP=update
 
 # If we are using update then assume build has been run...
-SKIP_BUILD_SOURCE=1
+SKIP_BUILD_SOURCE=0
 
 # Controls generation and contribution of binary for EDG support to distribution.
 ENABLE_BUILD_BINARY_EDG=1

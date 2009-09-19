@@ -18,10 +18,10 @@ fi
 # BUILD BINARIES (for all versions of compilers)
 # DQ (9/15/2009): Test different versions of compilers.
 cd /home/dquinlan/ROSE/svn-rose/scripts && ./roseFreshTest ./roseFreshTestStub-Dan-gnu-4.4.sh --without-java &
-sleep 1m
-cd /home/dquinlan/ROSE/svn-rose/scripts && ./roseFreshTest ./roseFreshTestStub-Dan-gnu-4.3.sh --without-java &
 
-if test false; then
+if false; then
+  sleep 1m
+  cd /home/dquinlan/ROSE/svn-rose/scripts && ./roseFreshTest ./roseFreshTestStub-Dan-gnu-4.3.sh --without-java &
   sleep 1m
   cd /home/dquinlan/ROSE/svn-rose/scripts && ./roseFreshTest ./roseFreshTestStub-Dan-gnu-4.2.sh --without-java &
   sleep 1m
