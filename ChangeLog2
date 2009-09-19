@@ -1,3 +1,95 @@
+2009-09-18 23:00  collingbourne2
+
+	* [r7389] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/projects/Makefile.am,
+	  /trunk/ROSE/projects/interpreter,
+	  /trunk/ROSE/projects/interpreter/Makefile.am,
+	  /trunk/ROSE/projects/interpreter/README,
+	  /trunk/ROSE/projects/interpreter/interp_core.C,
+	  /trunk/ROSE/projects/interpreter/interp_core.h,
+	  /trunk/ROSE/projects/interpreter/interp_extcall.C,
+	  /trunk/ROSE/projects/interpreter/interp_extcall.h,
+	  /trunk/ROSE/projects/interpreter/interp_maple.C,
+	  /trunk/ROSE/projects/interpreter/interp_maple.h,
+	  /trunk/ROSE/projects/interpreter/interp_mpi.C,
+	  /trunk/ROSE/projects/interpreter/interp_mpi.h,
+	  /trunk/ROSE/projects/interpreter/interp_smt.C,
+	  /trunk/ROSE/projects/interpreter/interp_smt.h,
+	  /trunk/ROSE/projects/interpreter/main_core.C,
+	  /trunk/ROSE/projects/interpreter/main_extcall.C,
+	  /trunk/ROSE/projects/interpreter/main_maple.C,
+	  /trunk/ROSE/projects/interpreter/main_mpi.C,
+	  /trunk/ROSE/projects/interpreter/main_smt.C,
+	  /trunk/ROSE/projects/interpreter/maple++.C,
+	  /trunk/ROSE/projects/interpreter/maple++.h,
+	  /trunk/ROSE/projects/interpreter/smtlib.C,
+	  /trunk/ROSE/projects/interpreter/smtlib.h,
+	  /trunk/ROSE/projects/interpreter/testInput_core_agginit.c,
+	  /trunk/ROSE/projects/interpreter/testInput_core_arrays.C,
+	  /trunk/ROSE/projects/interpreter/testInput_core_boolcast.C,
+	  /trunk/ROSE/projects/interpreter/testInput_core_casting.C,
+	  /trunk/ROSE/projects/interpreter/testInput_core_constructors.C,
+	  /trunk/ROSE/projects/interpreter/testInput_core_pointersFunctions.C,
+	  /trunk/ROSE/projects/interpreter/testInput_extcall_hello.c,
+	  /trunk/ROSE/projects/interpreter/testInput_smt_simpleIntegerOverflow.c,
+	  /trunk/ROSE/projects/interpreter/test_core.C,
+	  /trunk/ROSE/projects/interpreter/test_smt.C,
+	  /trunk/ROSE/projects/interpreter/test_smtlib.C,
+	  /trunk/ROSE/projects/interpreter/typeLayoutStore.C,
+	  /trunk/ROSE/projects/interpreter/typeLayoutStore.h: Initial
+	  commit of program interpreter
+
+2009-09-18 23:00  collingbourne2
+
+	* [r7388]
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/abiStuff.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/abiStuff.h:
+	  abiStuff: added a SystemPrimitiveTypeLayoutGenerator
+
+2009-09-18 23:00  collingbourne2
+
+	* [r7387]
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/abiStuff.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/abiStuff.h:
+	  abiStuff: support for base classes
+
+2009-09-18 23:00  collingbourne2
+
+	* [r7386] /trunk/ROSE/src/ROSETTA/Grammar/Expression.code,
+	  /trunk/ROSE/src/ROSETTA/src/expression.C: Implementation of
+	  SgAggregateInitializer::get_type()
+
+2009-09-18 23:00  collingbourne2
+
+	* [r7385] /trunk/ROSE/config/support-libffi.m4,
+	  /trunk/ROSE/configure.in: configure support for SMT solver and
+	  libffi
+
+2009-09-18 23:00  collingbourne2
+
+	* [r7384] /trunk/ROSE/config/support-maple.m4,
+	  /trunk/ROSE/projects/programModeling/Makefile.am: Detect
+	  MAPLE_INCLUDES and MAPLE_LIBS in configure
+
+2009-09-18 23:00  collingbourne2
+
+	* [r7383] /trunk/ROSE/config/support-ida.m4: Fixed typo in IDA
+	  support
+
+2009-09-18 20:22  panas2
+
+	* [r7382] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/pointer/C_F_3_3_a_i.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/pointer/C_F_3_3_a_i.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/pointer/C_F_3_3_a_i2.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/pointer/C_F_3_3_a_i2.ok_msg:
+	  Fixed tests pointer_deref pointer_deref2 and dotstar and
+	  arrowstar
+
 2009-09-18 03:19  dquinlan
 
 	* [r7373]
