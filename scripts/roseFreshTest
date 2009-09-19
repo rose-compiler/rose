@@ -167,7 +167,7 @@ buildstatus=0
       else
         # default is export
         # $timer $SVN ${SVNOP} -r${svnversion} -q ${ROSE_SVNROOT} $SourceTreeLocation
-          echo "Default is export, but make that an error for now!"
+          echo "Default is export, but make that an error for now! (SVNOP should be defined: SVNOP = $SVNOP)"
           exit 1
       fi
   fi
@@ -214,6 +214,7 @@ fi
   # For testing -- skip the rest if we are testing the head of the SciDAC repository of ROSE
   if [ 0$BUILD_AND_UPDATE_EDG_BINARY_ONLY -ne 0 ] ; then
   # This is as short a compile as possible (roughly) to build the EDG binary.
+    echo "This is a short compile (just enough to build the EDG binary)"
     $timer make -C src/util $MAKEFLAGS || exit 1
     $timer make -C src/ROSETTA $MAKEFLAGS || exit 1
     $timer make -C src/frontend $MAKEFLAGS || exit 1
@@ -229,30 +230,38 @@ fi
     fi
   else
   # Normal build of ROSE
-  # $timer make $MAKEFLAGS || exit 1
-    echo "############ make done"
-  # $timer make $MAKEFLAGS check || exit 1
-    echo "############ make check done"
-  # $timer make $MAKEFLAGS docs || exit 1
-    echo "############ make docs done"
-    rmdir ../install || exit 1
-  # $timer make $MAKEFLAGS install || exit 1
-    echo "############ make install done"
-  # $timer make $MAKEFLAGS installcheck || exit 1
-    echo "############ make installcheck done"
+
+  # This conditional allows faster testing of the generation of the EDG binary
+    if true; then
+      $timer make $MAKEFLAGS || exit 1
+      echo "############ make done"
+      $timer make $MAKEFLAGS check || exit 1
+      echo "############ make check done"
+      $timer make $MAKEFLAGS docs || exit 1
+      echo "############ make docs done"
+      rmdir ../install || exit 1
+      $timer make $MAKEFLAGS install || exit 1
+      echo "############ make install done"
+      $timer make $MAKEFLAGS installcheck || exit 1
+      echo "############ make installcheck done"
+    else
+      $timer make -C src/util $MAKEFLAGS || exit 1
+      $timer make -C src/ROSETTA $MAKEFLAGS || exit 1
+      $timer make -C src/frontend $MAKEFLAGS || exit 1
+    fi
 
   # test the installed ROSE on external benchmarks, such as SPEC CPU 2006 etc.
     if  [ 0$ENABLE_EXTERNAL_TEST -ne 0 ] ; then
       echo "----------- start testing using external benchmarks------------"
 
       if [ "x$SPEC_CPU2006_INS" = "x" ]; then
-      echo "ERROR: SPEC CPU2006's install path is not given!"
-      exit 1
+        echo "ERROR: SPEC CPU2006's install path is not given!"
+        exit 1
       fi
 
       if [ "x$SPEC_CPU2006_CONFIG" = "x" ]; then
-      echo "ERROR: SPEC CPU2006's config file name is not given!"
-      exit 1
+        echo "ERROR: SPEC CPU2006's config file name is not given!"
+        exit 1
       fi
 
       $SourceTreeLocation/scripts/testOnExternalBenchmarks.sh ${ROSE_INS} $SPEC_CPU2006_INS $SPEC_CPU2006_CONFIG ||exit 1
@@ -263,8 +272,21 @@ fi
 
   # skip the rest if we are testing the head of the SciDAC repository of ROSE
   if [ 0$SKIP_DIST_TEST -ne 0 ] ; then
-    echo "Skipping make dist, distcheck, source_with_binary_edg_dist.." 
-  else  
+    echo "Skipping make dist, distcheck, source_with_binary_edg_dist... (but running source_with_binary_edg_dist rule)" 
+
+    if [ 0$ENABLE_BUILD_BINARY_EDG -ne 0 ]; then
+      cd ${ROSE_TOP}/build
+    # See comment below (in false case).
+      make $MAKEFLAGS copy_binary_edg_tarball_to_source_tree_svn DOT_SVNREV=-${svnversion} || exit 1
+      echo "After copy_binary_edg_tarball_to_source_tree_svn: exit status = $?"
+      echo "############ make copy_binary_edg_tarball_to_source_tree_svn using svnversion = ${svnversion} done"
+
+    # See comment below (in false case).
+      make $MAKEFLAGS source_with_binary_edg_dist DOT_SVNREV=-${svnversion} || exit 1
+      echo "############ make source_with_binary_edg_dist done"
+    fi
+  else
+    echo "Running make dist, distcheck, source_with_binary_edg_dist... (but running source_with_binary_edg_dist rule at the end)" 
     $timer make $MAKEFLAGS dist || exit 1
     echo "############ make dist done"
     $timer make $MAKEFLAGS distcheck || exit 1
@@ -274,12 +296,21 @@ fi
     # echo "SYSTEM_NAME = \"$SYSTEM_NAME\"" >&2
     if [ 0$ENABLE_BUILD_BINARY_EDG -ne 0 ]; then
       cd ${ROSE_TOP}/build
+
     # DQ (9/15/2009): These are now called via dependences in the Makefile when we call the makefile rule: source_with_binary_edg_dist
     # make binary_edg_tarball || exit 1
     # $SourceTreeLocation/scripts/copy_binary_edg_tarball_to_source_tree_svn ${ROSE_SVNROOT} "${SYSTEM_NAME}" || exit 1
     # $SourceTreeLocation/scripts/copy_binary_edg_tarball_to_source_tree $SourceTreeLocation "${SYSTEM_NAME}" || exit 1
     # make $MAKEFLAGS source_with_binary_edg_dist DOT_SVNREV=-${svnversion} || exit 1
     # $timer make $MAKEFLAGS source_with_binary_edg_dist DOT_SVNREV=-${svnversion} || exit 1
+
+    # DQ (9/19/2009): The fix in <rose>/Makefile.am to have copy_binary_edg_tarball_to_source_tree be 
+    # a dependency of source_with_binary_edg_dist instead of copy_binary_edg_tarball_to_source_tree_svn 
+    # means that we have to call it explictly.
+      make $MAKEFLAGS copy_binary_edg_tarball_to_source_tree_svn DOT_SVNREV=-${svnversion} || exit 1
+      echo "After copy_binary_edg_tarball_to_source_tree_svn: exit status = $?"
+
+    # Now call the rule to build a proper distribution.
       make $MAKEFLAGS source_with_binary_edg_dist DOT_SVNREV=-${svnversion} || exit 1
       echo "############ make source_with_binary_edg_dist done"
     fi
