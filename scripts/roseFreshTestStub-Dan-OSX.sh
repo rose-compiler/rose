@@ -36,6 +36,8 @@ SKIP_DIST_TEST=0
 # Skip running docs, install, and installcheck rules.
 BUILD_AND_UPDATE_EDG_BINARY_ONLY=0
 
+KEEP_TEST_DIR=1
+
 # the right version of subversion is essential!!
 SVN=/usr/bin/svn
 
