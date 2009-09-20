@@ -143,6 +143,10 @@ get_icfgContextSensitivePointsToAnalysis(void)
             << std::endl;
         std::exit(EXIT_FAILURE);
     }
+ // GB (2009-09-20): We no longer run the points-to analysis here; the
+ // Program constructor does that for us.
+    numberOfLocations = o_Location_power;
+#if 0
     static bool once = true;
     if (once)
     {
@@ -155,6 +159,7 @@ get_icfgContextSensitivePointsToAnalysis(void)
 
         once = false;
     }
+#endif
     return cspta;
 }
 #endif

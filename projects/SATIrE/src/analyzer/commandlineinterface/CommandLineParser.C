@@ -27,6 +27,14 @@ void CommandLineParser::parse(AnalyzerOptions *cl, int argc, char**argv) {
   cl->clearCommandLine();
   cl->appendCommandLine(string(argv[0]));
 
+#if HAVE_PAG
+  // GB (2009-09-20): Run the "empty" analyzer by default; it forces
+  // computation of context information.
+  SATIrE::DataFlowAnalysis *empty =
+      SATIrE::makeProvidedAnalyzer("empty");
+  cl->appendDataFlowAnalysis(empty);
+#endif
+
   for (int i=1; i < argc; i += handleOption(cl, i, argc, argv));
 
   // handle edg warnings by modifying the command line that is passed to ROSE
