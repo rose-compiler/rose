@@ -135,6 +135,7 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      canonicalExample.f90 
 
 if !ROSE_USING_GFORTRAN_VERSION_4_0
+ # These are tests that fail using the gfrotran version 4.0 compiler (but pass with all other versions of gfortran).
    F90_TESTCODES_REQUIRED_TO_PASS += test2007_263.f90
 endif
 

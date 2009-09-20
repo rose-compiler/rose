@@ -13,10 +13,14 @@ F77_TESTCODES_TO_PASS = \
 
 F90_TESTCODES_TO_PASS = \
   paralledo.f90 \
-  exampleA134f.f90 \
   collapse.f90 \
   critical.f90 \
   continuation.f90
+
+if !ROSE_USING_GFORTRAN_VERSION_4_0
+ # These are tests that fail using the gfrotran version 4.0 compiler (but pass with all other versions of gfortran).
+   F90_TESTCODES_TO_PASS += exampleA134f.f90
+endif
 
 # see bug 350, wrong position for C$OMP END PARALLEL
 # case insensitive in symobl lookup for Fortran
