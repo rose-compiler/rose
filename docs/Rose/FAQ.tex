@@ -365,6 +365,31 @@ promise when it would happen.
 \end{enumerate}
 
 \commentout{
+
+* Question from Antoine Colin (9/19/2009):
+I recently found the ROSE compiler infrastructure and it looks very attractive for my work (building a prototype C++ instrumenter).
+The documentation mentions port on cygwin in a few places, but the download links do not seem to point at any?
+Is there a version available that can be compiled/linked on cygwin?
+
+Answer from Dan:
+   We have internally compiled ROSE on cygwin, and while it
+works, we don't try to release a cygwin binary of the EDG work that
+would be required for an external release.  So we don't really officially
+support it.  I find Cygwin to be so slow that working with ROSE on cygwin
+is (I think) a painful process.  So I'm not really supportive of a making cygwin
+an official supported platform for ROSE.  I suggest you use a linux or Mac OSX
+platform, you will be much happier with the resulting working environment.
+
+
+
+* Question about ROSE License policy (submitted to rose-public mailing list week of 9/14/09)
+
+
+
+}
+
+
+\commentout{
 Tool Demos at Dagstuhl: Scalable Program Analysis
 
     * LLNL-ROSE: Daniel J. Quinlan

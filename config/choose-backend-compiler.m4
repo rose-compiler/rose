@@ -102,8 +102,9 @@ dnl build using ROSE)
 
 # DQ (9/16/2009): GNU gfortran 4.0 has special problems so we avoid some tests where it fails.
   gfortran_version_4_0=no
-  if test x$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == x; then
-     if test x$BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER == x; then
+  if test x$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == x4; then
+     if test x$BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER == x0; then
+        echo "Note: we have identified version 4.0 of gfortran!"
         gfortran_version_4_0=yes
      fi
   fi
@@ -113,6 +114,7 @@ dnl build using ROSE)
   gfortran_version_4_1=no
   if test x$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == x4; then
      if test x$BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER == x1; then
+        echo "Note: we have identified version 4.1 of gfortran!"
         gfortran_version_4_1=yes
      fi
   fi
