@@ -206,6 +206,11 @@ CFGTraversal::atTraversalEnd() {
         cfg->calls.push_back(NULL);
         cfg->returns.push_back(NULL);
 
+     // GB (2008-04-08): Made numbering of expressions optional, but
+     // default.
+        if (flag_numberExpressions)
+            number_exprs();
+
      // If the user asked for resolution of function pointers, we must force
      // points-to analysis.
         if (cfg->analyzerOptions->resolveFuncPtrCalls())
@@ -234,11 +239,6 @@ CFGTraversal::atTraversalEnd() {
             IcfgExternalCallResolver iecr;
             iecr.run(cfg);
         }
-
-     // GB (2008-04-08): Made numbering of expressions optional, but
-     // default.
-        if (flag_numberExpressions)
-            number_exprs();
     }
 }
 
