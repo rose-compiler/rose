@@ -28,6 +28,8 @@ void dfierror(const char *);
 %token <strValue> UNDEF 
 %token <strValue> SET_BEGIN
 %token <strValue> SET_CLOSE
+%token <strValue> LIFT_SET_BEGIN
+%token <strValue> LIFT_SET_CLOSE
 %token LABELS
 %token FROM_TO
 %token <strValue> EDGE
@@ -172,6 +174,11 @@ value:
   | topbot         { $$ = $1; }
   | '(' values ')' { $$ = new PrologList(*$2); }
   | SET_BEGIN values SET_CLOSE { 
+      PrologCompTerm* t = new PrologCompTerm("set");
+      t->addSubterm(new PrologList(*$2));
+      $$ = t;
+    }
+  | LIFT_SET_BEGIN values LIFT_SET_CLOSE {
       PrologCompTerm* t = new PrologCompTerm("lifted_set");
       t->addSubterm(new PrologList(*$2));
       $$ = t;

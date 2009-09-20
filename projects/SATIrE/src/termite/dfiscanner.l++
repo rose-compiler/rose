@@ -29,8 +29,10 @@ const char* dfi_input_start = 0;
 
 top TOP
 bottom BOT
-setbegin \{\[
-setclose \]\}
+setbegin \{
+setclose \}
+liftsetbegin \{\[
+liftsetclose \]\}
 int \-?[0-9]+
 assign \-\>
 /* kudos to kregexpeditor: */
@@ -57,6 +59,8 @@ ws [ \t\r\n]
 {assign} { return ASSIGN; }
 {setbegin} { return SET_BEGIN; }
 {setclose} { return SET_CLOSE; }
+{liftsetbegin} { return LIFT_SET_BEGIN; }
+{liftsetclose} { return LIFT_SET_CLOSE; }
 
 {int}   { //cerr<<"INT "<<yytext<<endl; 
           dfilval.intValue = (int)strtol(dfitext, NULL, 10); 
@@ -65,8 +69,7 @@ ws [ \t\r\n]
           dfilval.strValue = new string(dfitext); 
 	  return(TOKEN); }
 {site}  { dfilval.strValue = new string(dfitext); return TOKEN; }
-\,\}    { //cerr<<"my }"<< endl;
-          return '}'; /* don't want to deal with this ugliness in the parser*/}
+\,      { return ','; }
 {ws}    ;
 .       { //cerr<<"ID "<<yytext<<endl;
           return(dfitext[0]); }
