@@ -11,7 +11,9 @@
 	   right/2,
 	   
 	   zip/2,
-	   unzip/3]).
+	   unzip/3,
+
+	   distance_from_root/2]).
 
 %-----------------------------------------------------------------------
 /** <module> Flexible traversals of abstract syntax trees
@@ -153,3 +155,8 @@ find_function1(P, FunctionTemplate, P2) :-
      right(P, P1),
      find_function1(P1, FunctionTemplate, P2)
   ).
+
+%% distance_from_root(+Zipper, -Distance) is det.
+% Return the current distance from the root node
+distance_from_root(zipper(_, Nav), Distance) :- length(Nav, Distance).
+

@@ -27,7 +27,7 @@ new_graph(Name, G) :- new_graph(Name, 0, G).
 
 new_graph(Name, Label, graph(G,Label1,Start)) :-
   Label1 #= Label + 1,
-  Start = node(Label, Name, style='shape=tab, color=azure3'),
+  Start = node(Label, Name, style='shape=tab, fillcolor=azure, pencolor=azure4'),
   vertices_edges_to_ugraph([Start], [], G).
 
 visicfg(P, Base) :-
@@ -260,28 +260,50 @@ make_node(P-G, G) :-
 	  
 make_node(P-graph(G,Label,Last), graph(G1,Label1,V)) :-
   bound(P), bound(G), bound(Label),
-  
+
+  % The statement
   unzip(P, S, _),
   unparse_to_safe_atom(S, Stmt),
-  Style = 'shape=note, style=filled, fillcolor=cornsilk',
+
+  % Put the surounding context in a tooltip if it's not too large
+  distance_from_root(P, D),
+  (   D #> 5
+  ->  
+      up(P, P1), unzip(P1, Ctx, _),
+      unparse_to_safe_atom(Ctx, Context)
+  ;   Context = Stmt  ),
+  format(atom(Style),
+	 'shape=note, style=filled, fillcolor=cornsilk, pencolor=cornsilk4, id=<~w>',
+	 [Context]),
   V = node(Label, Stmt, style=Style),
   
   Label1 #= Label+1,
   add_edges(G, [Last-V], G1).
 
 faux_node(graph(G,Label,Last), Name, graph(G1,Label1,V)) :-
-  V = node(Label, Name, style='shape=note, style=filled, fillcolor=gold'),
+  V = node(Label, Name, style='shape=note, style=filled, fillcolor=gold, pencolor=gold4'),
   Label1 #= Label+1,
   add_edges(G, [Last-V], G1).
-	 
+
+replace_all1(CsI,A1,A2,CsO) :-
+  atom_codes(A1, [C1]),
+  atom_codes(A2, Cs2),
+  replace_all(CsI, C1, Cs2, CsO).
 
 unparse_to_safe_atom(S, Atom) :-
-  unparse_to(chars(Cs), S),
-  delete(Cs, '\n', Cs1), % remove newlines
-  replace_all(Cs1,'"', ['\\','"'], Cs2),
-  replace_all(Cs2,'\\', '/', Cs4),
-  flatten(Cs4, Cs5),
-  atom_chars(Atom, Cs5).
+  unparse_to(codes(Cs), S),
+  replace_all1(Cs, '\n', '<br align="left"/>', Cs1), % -> html syntax
+  replace_all1(Cs1,'"', '&quot;', Cs2),
+  replace_all1(Cs2,'\\','&#92;', Cs3),
+  replace_all1(Cs3,'&', '&amp;', Cs4),
+  replace_all1(Cs4,'>', '&gt;', Cs5),
+  replace_all1(Cs5,'<', '&lt;', Cs7),
+  atom_codes('<font face="Courier">', F1),
+  atom_codes('</font>', F2),
+  flatten([F1,Cs7,F2], Cs8),
+%  atom_codes(A1, Cs),
+%  atom_codes(A2, Cs7), writeln(A1), writeln(A2),trace,
+  atom_chars(Atom, Cs8).
 
 
 display(N) :- write(N).
@@ -305,7 +327,7 @@ viz_edge(F, N1-N2) :-
 viz_edge(_, Edge) :- write(Edge), trace.
 
 viz_node(F, _, node(Label,Stmt,style=Style)) :- !,
-  format(F, '~w [ label="~w", ~w ];~n', [Label,Stmt,Style]).
+  format(F, '~w [ label=<~w>, ~w ];~n', [Label,Stmt,Style]).
 
 viz_node(F, Color, graph(G, Label, Last)) :- !,
   format(F, 'subgraph cluster~w {~n', [Label,G,Last]),
