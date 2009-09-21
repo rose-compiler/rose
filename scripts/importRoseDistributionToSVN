@@ -129,7 +129,7 @@ else
   exit 3
 fi
 
-if true; then
+if false; then
  EDG_BINARIES3=($(ls ${ROSE_DIST_DIR}/src/frontend/CxxFrontend/roseBinaryEDG-i686-apple-darwin*.tar.gz))
  if [ ${EDG_BINARIES3[0]} ]; then
     echo Found the EDG binaries for i686-apple-darwin as expected. It is ${EDG_BINARIES3[@]}. 
