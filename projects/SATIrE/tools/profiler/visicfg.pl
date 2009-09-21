@@ -22,21 +22,26 @@
 %-----------------------------------------------------------------------
 
 :- use_module(library(clpfd)).
- 
+
+new_graph(Name, G) :- new_graph(Name, 0, G).
+
+new_graph(Name, Label, graph(G,Label1,Start)) :-
+  Label1 #= Label + 1,
+  Start = node(Label, Name, style='shape=tab, color=azure3'),
+  vertices_edges_to_ugraph([Start], [], G).
 
 visicfg(P, Base) :-
   function_signature(BaseFunc, function_type(_, _, _), Base, _),
   zip(P, Pz),
-  Start = node(0,'int main(int, char**)',style=''),
-  vertices_edges_to_ugraph([Start], [], G0),
-  ast_walk(Pz-graph(G0,0,Start), BaseFunc, _-graph(G, _, _)),
+  new_graph('Start', G0),
+  ast_walk(Pz-G0, BaseFunc, _-graph(G, _, _)),
   dump_graph(graphviz, 'icfg.dot', G, BaseFunc).
 
 bound(V) :-
   (   nonvar(V) -> true ; trace ).
 
 % ast_walk/6: main traversal.
-ast_walk(P-G, Function, P4-G2) :- bound(P), bound(G),
+ast_walk(P-G, Function, P4-G3) :- bound(P), bound(G),
   (   goto_function(P, Function, P1)
   ->  true
   ;   format('**ERROR: Could not locate function ~w.', [Function]),
@@ -45,15 +50,25 @@ ast_walk(P-G, Function, P4-G2) :- bound(P), bound(G),
   Function = function_declaration(Params, _Def, DeclAnnot, AI, FI),
   FunctionHd = function_declaration(Params, null, DeclAnnot, AI, FI),
   unparse_to_safe_atom(FunctionHd, Sig),
-  faux_node(G, Sig, G1),
+
+  % start a new subgraph
+  G = graph(G0, Label0, Last0),
+  new_graph(Sig, Label0, SubG1),
+  SubG1 = graph(_,_,EntryNode),
+  
   %  function_signature(Function, Type, Name, _),
   %  writeln(Name),
   %  (Name = 'Read_AD_Channel' -> trace ; true),
   
   down(P1, 2, P2),	    
-  ast_walk(P2-G1, P3-G2),
-  
-  top(P3, P4).
+  ast_walk(P2-SubG1, P3-SubG2),
+  top(P3, P4),
+
+  faux_node(SubG2, 'return', SubG3),
+  SubG3 = graph(_,Label,ExitNode),
+  add_vertices(G0, [SubG3], G1),
+  add_edges(G1, [Last0-EntryNode], G2),
+  G3 = graph(G2, Label, ExitNode).
 
 % type checking
 ast_walk(P-G, _) :- bound(P), bound(G), fail.
@@ -280,17 +295,29 @@ dump_graph(Method, Filename, Graph, Flags) :-
   call(Method, dumpstream, Graph, Flags), !,
   close(dumpstream).
 
-viz_edge(F, node(N1,_,_)-node(N2,_,_)) :- !,
-  format(F, '~w -> ~w ;~n', [N1, N2]).
+get_label(node(L,_,_), L).
+get_label(graph(_,L,_), L).
+
+viz_edge(F, N1-N2) :-
+  get_label(N1, L1),
+  get_label(N2, L2),
+  format(F, '~w -> ~w ;~n', [L1, L2]).
 viz_edge(_, Edge) :- write(Edge), trace.
 
-viz_node(F, node(Label,Stmt,style=Style)) :- !,
+viz_node(F, _, node(Label,Stmt,style=Style)) :- !,
   format(F, '~w [ label="~w", ~w ];~n', [Label,Stmt,Style]).
 
-%viz_node(F, node(Label,Stmt,subgraph)) :- !,
-%  format(F, '[subgraph ~w] {', [Label,Stmt,Style]).
+viz_node(F, Color, graph(G, Label, Last)) :- !,
+  format(F, 'subgraph cluster~w {~n', [Label,G,Last]),
+  format(F, 'node [style=filled];~n', []),
+  format(F, 'style=filled; color=gray~w;~n', [Color]),
+  Color1 #= Color - 12,
+  edges(G, E),     maplist(viz_edge(F), E),
+  vertices(G, V),  maplist(viz_node(F,Color1), V),
+  format(F, 'label="Function" ;~n', []),
+  format(F, '} ;~n', []).
 
-viz_node(_, Node) :- write(Node), trace.
+viz_node(_, _, Node) :- write(Node), trace.
 
 
 %% graphviz(F, G, _).
@@ -303,5 +330,5 @@ graphviz(F, G, _Base) :-
   %format(F, '  root="~w";~n', [Root]),
   format(F, 'splines=true; overlap=false; rankdir=TB;~n', []),
   maplist(viz_edge(F), E),
-  maplist(viz_node(F), V),
+  maplist(viz_node(F, 100), V),
   write(F, '}\n').
