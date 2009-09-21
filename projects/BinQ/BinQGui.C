@@ -406,7 +406,7 @@ BinQGUI::insertFileInformation() {
     fileInfo->append(header->class_name().c_str());
     SgAsmElfFileHeader* elf = isSgAsmElfFileHeader(header);
     if (elf) {
-      fileInfo->append(file->get_name().c_str());
+      fileInfo->append(file->get_genericFile()->get_name().c_str());
       fileInfo->append(elf->format_name());
       string num = RoseBin_support::ToString(elf->get_e_machine());
       fileInfo->append( QString("Machine: %1")

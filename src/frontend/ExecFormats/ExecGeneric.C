@@ -707,6 +707,7 @@ SgAsmGenericFile::parse(std::string fileName)
 {
     ROSE_ASSERT(p_fd < 0); /*can call parse() only once per object*/
 
+    set_name(fileName);
     p_fd = open(fileName.c_str(), O_RDONLY);
     if (p_fd<0 || fstat(p_fd, &p_sb)<0) {
         std::string mesg = "Could not open binary file";
@@ -4108,7 +4109,6 @@ SgAsmExecutableFileFormat::unparseBinaryFormat(std::ostream &f, SgAsmFile *asmFi
 void
 SgAsmExecutableFileFormat::parseBinaryFormat(const std::string &name, SgAsmFile *asmFile)
 {
-    asmFile->set_name(name);
     SgAsmGenericFile *ef = parseBinaryFormat(name.c_str());
     ROSE_ASSERT(ef != NULL);
     ef->set_parent(asmFile);

@@ -45,7 +45,7 @@ DwarfFileInfo::run(SgNode* fileA, SgNode* fileB) {
     ROSE_ASSERT(instance);
     ROSE_ASSERT(instance->analysisTab);
     instance->analysisTab->setCurrentIndex(1);
-    QString res = QString("Start : %1").arg(file->get_name().c_str());
+    QString res = QString("Start : %1").arg(file->get_genericFile()->get_name().c_str());
     instance->analysisResult->append(res);  
   }
   genericF = file->get_genericFile() ;
