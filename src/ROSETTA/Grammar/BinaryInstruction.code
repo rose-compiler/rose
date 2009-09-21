@@ -38,6 +38,13 @@ HEADER_BINARY_END
 
 
 
+HEADER_INTERPRETATION_START
+	public:
+		SgAsmGenericFilePtrList get_files() const; /*files referenced by interpretation*/
+HEADER_INTERPRETATION_END
+
+
+
 HEADER_BINARY_INSTRUCTION_START
 	public:
 		SgAsmInstruction* cfgBinFlowOutEdge(const VirtualBinCFG::AuxiliaryInformation* info);
@@ -666,10 +673,9 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
 
 
        // DQ (12/8/2008): Hook into the construction of the binary file format support.
-          static void parseBinaryFormat(const std::string & name, SgAsmFile* asmFile);
           static SgAsmGenericFile *parseBinaryFormat(const char *name);
-          static void unparseBinaryFormat(const std::string &name, SgAsmFile *asmFile);
-	  static void unparseBinaryFormat(std::ostream&, SgAsmFile*);
+          static void unparseBinaryFormat(const std::string &name, SgAsmGenericFile*);
+	  static void unparseBinaryFormat(std::ostream&, SgAsmGenericFile*);
 
         /** Displays binary data in a fashion similar to the "hexdump -C" command in Unix: an address, numeric byte values,
          *  character byte values.  The format of the output is configurable through the HexdumpFormat argument. */
@@ -3603,16 +3609,6 @@ HEADER_DWARF_COMMON_BLOCK_END
 
 
 SOURCE_BINARY_FILE_START
-void
-SgAsmFile::post_construction_initialization()
-   {
-  // Build the list IR node
-
-  // DQ (8/16/2008): Make the SgAsmGenericFile the root of the AST for the binary executable format
-  // p_headers = new SgAsmGenericHeaderList();
-  // p_headers->set_parent(this);
-   }
-
 SOURCE_BINARY_FILE_END
 
 SOURCE_BINARY_BLOCK_START

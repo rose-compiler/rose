@@ -4070,26 +4070,23 @@ SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const std::string 
     }
 }
 
-/** Writes a new file from the IR node for a parse executable file. Warning: This function might modify the AST by calling
+/** Writes a new file from the IR node for a parsed executable file. Warning: This function might modify the AST by calling
  *  reallocate(), which makes sure all parts of the AST are consistent with respect to each other. */
 void
-SgAsmExecutableFileFormat::unparseBinaryFormat(const std::string &name, SgAsmFile *asmFile)
+SgAsmExecutableFileFormat::unparseBinaryFormat(const std::string &name, SgAsmGenericFile *ef)
 {
     std::ofstream f(name.c_str(), std::ios_base::out|std::ios_base::binary|std::ios_base::trunc);
     ROSE_ASSERT(f.is_open());
     f.exceptions(std::ios::badbit | std::ios::failbit);
-    unparseBinaryFormat(f, asmFile);
+    unparseBinaryFormat(f, ef);
     f.close();
 }
 
 /** Unparses an executable file into the supplied output stream. Warning: This function might modify the AST by calling
  *  reallocate(), which makes sure all parts of the AST are consistent with respect to each other. */
 void
-SgAsmExecutableFileFormat::unparseBinaryFormat(std::ostream &f, SgAsmFile *asmFile)
+SgAsmExecutableFileFormat::unparseBinaryFormat(std::ostream &f, SgAsmGenericFile *ef)
 {
-    ROSE_ASSERT(asmFile!=NULL);
-    ROSE_ASSERT(asmFile->get_genericFile() != NULL);
-    SgAsmGenericFile *ef = asmFile->get_genericFile();
     ROSE_ASSERT(ef);
 
     if (checkIsModifiedFlag(ef))
@@ -4102,17 +4099,6 @@ SgAsmExecutableFileFormat::unparseBinaryFormat(std::ostream &f, SgAsmFile *asmFi
      * file to its full size. */
     if (!ef->get_truncate_zeros())
         ef->extend_to_eof(f);
-}
-
-/* Top-level binary executable file parser. Given the name of a file, open the file, detect the format, parse the file,
- * and return information about the file. */
-void
-SgAsmExecutableFileFormat::parseBinaryFormat(const std::string &name, SgAsmFile *asmFile)
-{
-    SgAsmGenericFile *ef = parseBinaryFormat(name.c_str());
-    ROSE_ASSERT(ef != NULL);
-    ef->set_parent(asmFile);
-    asmFile->set_genericFile(ef);
 }
 
 SgAsmGenericFile *

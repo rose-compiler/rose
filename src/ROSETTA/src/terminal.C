@@ -1512,7 +1512,11 @@ Terminal::buildListIteratorString( string typeName, string variableName, string 
            if(typeIsList!=true)
              return "";
 
-
+           if ((typeIsList && typeIsSgNode) || (!typeIsList && !typeIsSgNode)) {
+               cerr << (typeIsList ? "cannot be both" : "must be either")
+                    <<" a list and a Sage node: "
+                    <<typeName <<" " <<classNameString <<"::" <<variableName <<endl;
+           }
            ROSE_ASSERT(typeIsList == true  || typeIsSgNode == true);
            ROSE_ASSERT(typeIsList == false || typeIsSgNode == false);
 

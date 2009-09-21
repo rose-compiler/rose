@@ -3952,12 +3952,6 @@ Section [40]:
   ElfSection.ElfSegmentTableEntry.memsz                          = 0x00000000 (0) bytes
   ElfSection.ElfSegmentTableEntry.align                          = 0x00000004 (4) bytes
   ElfSection.linked_to                                           = NULL
-
-
-*************************************
-Output the disassembled instructions:
-*************************************
-
 /* Interpretation ELF */
 /* Block 0x0 */
 /* Function  at 0x8048000 */
@@ -8171,4 +8165,3 @@ Output the disassembled instructions:
 0x08049fff 5f                |_     | :: 0x8049fff:pop    edi
 /* Block 0x8049ffc */
 0x08049ffc 62 75 67          |bug   | :: 0x8049ffc:bound  esi, DWORD PTR ss:[ebp + 0x67]
-

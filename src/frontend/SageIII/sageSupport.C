@@ -2520,7 +2520,7 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
                                      // libraries (so that we detect these in staticaly linked binaries).
                                         ROSE_ASSERT(isBinaryExecutable == false);
 
-                                     // Note that since a archive can contain many *.o files each of these will be a SgAsmFile object and 
+                                     // Note that since a archive can contain many *.o files each of these will be a SgAsmGenericFile object and 
                                      // the SgBinaryFile will contain a list of SgAsmFile objects to hold them all.
                                         string archiveName = file->get_sourceFileNameWithPath();
 
@@ -2659,17 +2659,6 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
    }
 
  
-void
-SgFile::generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFile* asmFile )
-   {
-  // Need a mechanism to select what kind of binary we will process.
-
-  // printf ("Calling SgAsmExecutableFileFormat::parseBinaryFormat() \n");
-
-     SgAsmExecutableFileFormat::parseBinaryFormat(sourceFilename,asmFile);
-   }
-
-
 static void makeSysIncludeList(const Rose_STL_Container<string>& dirs, Rose_STL_Container<string>& result)
    {
      string includeBase = findRoseSupportPathFromBuild("include-staging", "include");
@@ -3668,8 +3657,11 @@ SgUnknownFile::callFrontEnd()
    }
 
 SgBinaryFile::SgBinaryFile ( vector<string> & argv ,  SgProject* project )
-// : SgFile (argv,errorCode,fileNameIndex,project)
-   {
+    : p_genericFileList(NULL), p_interpretations(NULL)
+{
+    p_interpretations = new SgAsmInterpretationList();
+    p_genericFileList = new SgAsmGenericFileList();
+    
   // DQ (2/3/2009): This data member has disappeared (in favor of a list).
   // p_binaryFile = NULL;
 
@@ -3684,7 +3676,7 @@ SgBinaryFile::SgBinaryFile ( vector<string> & argv ,  SgProject* project )
      doSetupForConstructor(argv,  project);
 
   // printf ("Leaving SgBinaryFile constructor \n");
-   }
+}
 
 
 int 
@@ -5483,81 +5475,43 @@ SgSourceFile::build_PHP_AST()
    }
 
 
+/* Parses a single binary file and adds a SgAsmGenericFile node under this SgBinaryFile node. */
 void
-SgBinaryFile::buildAsmAST( string executableFileName )
-   {
-     if ( get_verbose() > 0 || SgProject::get_verbose() > 0)
-          printf ("Disassemble executableFileName = %s \n",executableFileName.c_str());
+SgBinaryFile::buildAsmAST(string executableFileName)
+{
+    if ( get_verbose() > 0 || SgProject::get_verbose() > 0)
+        printf ("Disassemble executableFileName = %s \n",executableFileName.c_str());
 
-  // Disassemble the binary file (using recursive disassembler based on objdump.
-  // SgAsmFile* asmFile = objdumpToRoseBinaryAst(executableFileName);
-     SgAsmFile* asmFile = new SgAsmFile();
-     ROSE_ASSERT(asmFile != NULL);
+    /* Parse the binary container, but do not disassemble instructions yet. */
+    SgAsmGenericFile *file = SgAsmExecutableFileFormat::parseBinaryFormat(executableFileName.c_str());
+    ROSE_ASSERT(file != NULL);
 
-  // printf ("ERROR: The SgAsmFile should be in the SgBinaryFile \n");
-  // ROSE_ASSERT(false);
+    /* Attach the file to this node */
+    get_genericFileList()->get_files().push_back(file);
+    file->set_parent(this);
 
-  // Attach the SgAsmFile to the SgFile
-
-  // DQ (2/3/2009): This is now a list of pointers to SgAsmFile objects.
-  // DQ (9/2/2008): commented out the setting of the binaryFile, now moved to the new SgBinaryFile IR node.
-  // this->set_binaryFile(asmFile);
-     get_binaryFileList().push_back(asmFile);
-     asmFile->set_parent(this);
-
-  // printf ("Calling generateBinaryExecutableFileInformation() \n");
-
-  // Get the structure of the binary file (only implemented for ELF formatted files currently).
-  // Later we will implement a PE reader to get the structure of MS Windows executables.
-     generateBinaryExecutableFileInformation(executableFileName,asmFile);
-
-  // printf ("DONE: Calling generateBinaryExecutableFileInformation() \n");
-
-  // Find the headers in the executable format and convert
-  // them into SgAsmInterpretation objects
-     SgAsmGenericFile* genericFile = asmFile->get_genericFile();
-     ROSE_ASSERT (genericFile != NULL);
-     SgAsmGenericHeaderList* headerList = genericFile->get_headers();
-     ROSE_ASSERT (headerList);
-     const SgAsmGenericHeaderPtrList& headers = headerList->get_headers();
-     for (size_t i = 0; i < headers.size(); ++i)
-        {
-          SgAsmInterpretation* interp = new SgAsmInterpretation();
-          interp->set_parent(asmFile);
-          interp->set_header(headers[i]);
-          asmFile->get_interpretations().push_back(interp);
-
-       // If dwarf is available then read it into the AST.
-        }
+    /* Add a disassembly interpretation for each header. Actual disassembly will occur later.
+     * NOTE: This probably isn't the right place to add interpretation nodes, but I'm leaving it here for the time being. We
+     *       probably don't want an interpretation for each header if we're doing dynamic linking. [RPM 2009-09-17] */
+    const SgAsmGenericHeaderPtrList &headers = file->get_headers()->get_headers();
+    for (size_t i = 0; i < headers.size(); ++i) {
+        SgAsmInterpretation* interp = new SgAsmInterpretation();
+        get_interpretations()->get_interpretations().push_back(interp);
+        interp->set_parent(this);
+        interp->set_header(headers[i]);
+    }
 
 #if USE_ROSE_DWARF_SUPPORT
-  // DQ (3/14/2009): Dwarf support now works within ROSE when used with Intel Pin
-  // (was a huge problem until everything (e.g. libdwarf) was dynamically linked).
-
-  // DQ (11/7/2008): New Dwarf support in ROSE (Dwarf IR nodes are generated in the AST).
-     readDwarf(asmFile);
+    // DQ (3/14/2009): Dwarf support now works within ROSE when used with Intel Pin
+    // (was a huge problem until everything (e.g. libdwarf) was dynamically linked).
+    // DQ (11/7/2008): New Dwarf support in ROSE (Dwarf IR nodes are generated in the AST).
+    readDwarf(file);
 #endif
 
-  // Fill in the instructions into the SgAsmFile IR node
-     SgProject* project = isSgProject(this->get_parent());
-     ROSE_ASSERT(project != NULL);
+    /* Make sure this node is correctly parented */
+    SgProject* project = isSgProject(this->get_parent());
+    ROSE_ASSERT(project != NULL);
 
-#if 1
-  // DQ (8/16/2008): Added support to only read the binary executable file format.
-  // this will allow us to separate out different kinds of testing.
-     if (get_read_executable_file_format_only() == false)
-        {
-       // printf ("Calling the Disassembler::disassembleFile(asmFile = %p) \n",asmFile),
-          Disassembler::disassembleFile(asmFile);
-       // printf ("DONE: Calling the Disassembler::disassembleFile(asmFile = %p) \n",asmFile);
-        }
-       else
-        {
-          printf ("\nWARNING: Skipping instruction disassembly \n\n");
-        }
-#else
-     printf ("\nWARNING: Skipping instruction disassembly \n\n");
-#endif
 
 #if 0
      printf ("At base of SgBinaryFile::buildAsmAST(): exiting... \n");
@@ -5565,123 +5519,54 @@ SgBinaryFile::buildAsmAST( string executableFileName )
 #endif
    }
 
+
+/* Builds the entire AST under the SgBinaryFile node:
+ *    - figures out what binary files are needed
+ *    - parses binary container of each file (SgAsmGenericFile nodes)
+ *    - optionally disassembles instructions (SgAsmInterpretation nodes) */
 int
-SgBinaryFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
-   {
-  // Note that both argv and inputCommandLine is unused!
+SgBinaryFile::buildAST(vector<string> /*argv*/, vector<string> /*inputCommandLine*/)
+{
+    if (get_isLibraryArchive()) {
+        ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty() == false);
+        ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty() == (get_isLibraryArchive() == false));
 
-  // printf ("Calling SgBinaryFile::buildAST() \n");
-
-  // We likely need some error reporting from objdumpToRoseBinaryAst()
-     int frontendErrorLevel = 0;
-
-     if (get_isLibraryArchive() == true)
-        {
-          ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty() == false);
-
-          ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty() == (get_isLibraryArchive() == false));
-
-          for (size_t i = 0; i < get_libraryArchiveObjectFileNameList().size(); i++)
-             {
-               printf ("Build binary AST for get_libraryArchiveObjectFileNameList()[%zu] = %s \n",i,get_libraryArchiveObjectFileNameList()[i].c_str());
-
-               string filename = "tmp_objects/" + get_libraryArchiveObjectFileNameList()[i];
-               printf ("Build SgAsmFile from: %s \n",filename.c_str());
-
-               buildAsmAST(filename);
-             }
+        for (size_t i = 0; i < get_libraryArchiveObjectFileNameList().size(); i++) {
+            printf("Build binary AST for get_libraryArchiveObjectFileNameList()[%zu] = %s \n",
+                    i, get_libraryArchiveObjectFileNameList()[i].c_str());
+            string filename = "tmp_objects/" + get_libraryArchiveObjectFileNameList()[i];
+            printf("Build SgAsmGenericFile from: %s \n", filename.c_str());
+            buildAsmAST(filename);
         }
-       else
-        {
-          ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty() == true);
+    } else {
+        ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty() == true);
+        buildAsmAST(this->get_sourceFileNameWithPath());
+    }
 
-       // string executableFileName = this->get_sourceFileNameWithPath();
-#if 1
-       // printf ("Calling buildAsmAST() \n");
-          buildAsmAST(this->get_sourceFileNameWithPath());
-       // printf ("DONE: Calling buildAsmAST() \n");
-#else
-     if ( get_verbose() > 0 )
-          printf ("Disassemble executableFileName = %s \n",executableFileName.c_str());
-
-  // Disassemble the binary file (using recursive disassembler based on objdump.
-  // SgAsmFile* asmFile = objdumpToRoseBinaryAst(executableFileName);
-     SgAsmFile* asmFile = new SgAsmFile();
-     ROSE_ASSERT(asmFile != NULL);
-
-  // printf ("ERROR: The SgAsmFile should be in the SgBinaryFile \n");
-  // ROSE_ASSERT(false);
-
-  // Attach the SgAsmFile to the SgFile
-
-  // DQ (9/2/2008): commented out the setting of the binaryFile, now moved to the new SgBinaryFile IR node.
-     this->set_binaryFile(asmFile);
-     asmFile->set_parent(this);
-
-  // printf ("Calling generateBinaryExecutableFileInformation() \n");
-
-  // Get the structure of the binary file (only implemented for ELF formatted files currently).
-  // Later we will implement a PE reader to get the structure of MS Windows executables.
-     generateBinaryExecutableFileInformation(executableFileName,asmFile);
-
-  // Find the headers in the executable format and convert
-  // them into SgAsmInterpretation objects
-     SgAsmGenericFile* genericFile = asmFile->get_genericFile();
-     ROSE_ASSERT (genericFile != NULL);
-     SgAsmGenericHeaderList* headerList = genericFile->get_headers();
-     ROSE_ASSERT (headerList);
-     const SgAsmGenericHeaderPtrList& headers = headerList->get_headers();
-     for (size_t i = 0; i < headers.size(); ++i)
-        {
-          SgAsmInterpretation* interp = new SgAsmInterpretation();
-          interp->set_parent(asmFile);
-          interp->set_header(headers[i]);
-          asmFile->get_interpretations().push_back(interp);
-
-       // If dwarf is available then read it into the AST.
+    /* Disassemble each interpretation */
+    if (get_read_executable_file_format_only()) {
+        printf ("\nWARNING: Skipping instruction disassembly \n\n");
+    } else {
+        const SgAsmInterpretationPtrList &interps = get_interpretations()->get_interpretations();
+        for (size_t i=0; i<interps.size(); i++) {
+            Disassembler::disassembleInterpretation(interps[i]);
         }
+    }
 
-#if USE_ROSE_DWARF_SUPPORT
-  // DQ (11/7/2008): New Dwarf support in ROSE (Dwarf IR nodes are generated in the AST).
-     readDwarf(asmFile);
-#endif
+    // DQ (1/22/2008): The generated unparsed assemble code can not currently be compiled because the 
+    // addresses are unparsed (see Jeremiah for details).
+    // Skip running gnu assemble on the output since we include text that would make this a problem.
+    if (get_verbose() > 1)
+        printf("set_skipfinalCompileStep(true) because we are on a binary '%s'\n", this->get_sourceFileNameWithoutPath().c_str());
+    this->set_skipfinalCompileStep(true);
 
-  // Fill in the instructions into the SgAsmFile IR node
-     SgProject* project = isSgProject(this->get_parent());
-     ROSE_ASSERT(project != NULL);
+    // This is now done below in the Secondary file processing phase.
+    // Generate the ELF executable format structure into the AST
+    // generateBinaryExecutableFileInformation(executableFileName,asmFile);
 
-#if 1
-  // DQ (8/16/2008): Added support to only read the binary executable file format.
-  // this will allow us to separate out different kinds of testing.
-     if (get_read_executable_file_format_only() == false)
-        {
-          Disassembler::disassembleFile(asmFile);
-        }
-       else
-        {
-          printf ("\nWARNING: Skipping instruction disassembly \n\n");
-        }
-#else
-     printf ("\nWARNING: Skipping instruction disassembly \n\n");
-#endif
-#endif
-        }
-
-  // DQ (1/22/2008): The generated unparsed assemble code can not currently be compiled because the 
-  // addresses are unparsed (see Jeremiah for details).
-  // Skip running gnu assemble on the output since we include text that would make this a problem.
-     if (get_verbose() > 1)
-        {
-          printf("set_skipfinalCompileStep(true) because we are on a binary '%s'\n", this->get_sourceFileNameWithoutPath().c_str());
-        }
-     this->set_skipfinalCompileStep(true);
-
-  // This is now done below in the Secondary file processing phase.
-  // Generate the ELF executable format structure into the AST
-  // generateBinaryExecutableFileInformation(executableFileName,asmFile);
-
-     return frontendErrorLevel;
-   }
+    int frontendErrorLevel = 0;
+    return frontendErrorLevel;
+}
  
 int
 SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )

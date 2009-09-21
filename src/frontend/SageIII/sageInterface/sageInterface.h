@@ -78,7 +78,7 @@ namespace SageInterface
 extern int gensym_counter;
 
 // tps : 28 Oct 2008 - support for finding the main interpretation
- SgAsmInterpretation* getMainInterpretation(SgAsmFile* file);
+ SgAsmInterpretation* getMainInterpretation(SgAsmGenericFile* file);
 
 //! Get the unsigned value of a disassembled constant.
 uint64_t getAsmConstant(SgAsmValueExpression* e);

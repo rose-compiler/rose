@@ -22,7 +22,7 @@ libroseExecFormats_la_SOURCES = \
    $(INTEL_PIN_SUPPORT) \
    ExecGeneric.C ExecDOS.C ExecELF.C ExecPE.C ExecNE.C ExecLE.C \
    Loader.C LoaderELF.C LoaderELFObj.C LoaderPE.C \
-   MemoryMap.C
+   MemoryMap.C Interpretation.C
 
 include_HEADERS = IntelPinSupport.h Loader.h LoaderELF.h LoaderELFObj.h LoaderPE.h MemoryMap.h
 

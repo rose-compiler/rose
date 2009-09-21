@@ -152,25 +152,6 @@ hexdump ( rose_addr_t base_addr, const char *prefix, const SgUnsignedCharList & 
      return returnString;
    }
 
-SgAsmFile*
-get_asmFile(SgAsmStatement* stmt)
-   {
-     SgNode* parent = stmt;
-
-  // printf ("In get_file(): starting at: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
-     while (isSgAsmFile(parent) == NULL)
-        {
-       // printf ("parent = %p = %s \n",parent,parent->class_name().c_str());
-          parent = parent->get_parent();
-        }
-
-     ROSE_ASSERT(parent != NULL);
-     ROSE_ASSERT(isSgAsmFile(parent) != NULL);
-
-     return isSgAsmFile(parent);
-   }
-
-
 // DQ (8/23/2008): I think this should take an SgAsmStatement
 // string unparseAsmStatement(SgAsmNode* stmt)
 std::string
@@ -181,41 +162,18 @@ unparseAsmStatement(SgAsmStatement* stmt)
 
      ROSE_ASSERT (stmt != NULL);
 
-  // printf ("In unparseAsmStatement(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
-
      std::string result;
      if (stmt->get_comment().empty() == false)
           result = "/* " + stmt->get_comment() + " */\n";
 
-#if 0
-     string addressString = "/* Address: " + StringUtility::intToHex(stmt->get_address()) + " */";
-     printf ("comment empty = %s addressString = %s \n",stmt->get_comment().empty() ? "true" : "false", addressString.c_str());
-#endif
-
-#if 1
-     SgAsmFile* asmFile = get_asmFile(stmt);
-     ROSE_ASSERT(asmFile != NULL);
-     SgAsmGenericFile* genericFile = asmFile->get_genericFile();
-     ROSE_ASSERT(genericFile != NULL);
-
+     /* Virtual address and raw bytes */
      SgAsmInstruction* asmInstruction = isSgAsmInstruction(stmt);
+     if (asmInstruction != NULL) {
+         size_t max_length = 6;
+         result += hexdump(stmt->get_address(),"",asmInstruction->get_raw_bytes(),max_length);
+         result += " :: ";
+     }
 
-     if (asmInstruction != NULL)
-        {
-       // result += hexdump(stmt->get_address(),"---",&(genericFile->get_data()[0]),asmInstruction->get_raw_bytes().size());
-          size_t max_length = 6;
-#if 0
-          printf ("asmInstruction = %p = %s = %s (length = %zu) \n",asmInstruction,asmInstruction->class_name().c_str(),
-               asmInstruction->get_mnemonic().c_str(),asmInstruction->get_raw_bytes().size());
-#endif
-          result += hexdump(stmt->get_address(),"",asmInstruction->get_raw_bytes(),max_length);
-          result += " :: ";
-        }
-       else
-        {
-       // result += "----------";
-        }
-#endif
 
      switch (stmt->variantT())
         {
@@ -259,7 +217,8 @@ unparseAsmStatement(SgAsmStatement* stmt)
 std::string
 unparseAsmInterpretation(SgAsmInterpretation* interp)
    {
-     return "/* Interpretation " + std::string(interp->get_header()->format_name()) + " */\n" + (interp->get_global_block() ? unparseAsmStatement(interp->get_global_block()) : "/* No global block */");
+       return ("/* Interpretation " + std::string(interp->get_header()->format_name()) + " */\n" +
+               (interp->get_global_block() ? unparseAsmStatement(interp->get_global_block()) : "/* No global block */"));
    }
 
 // void unparseAsmStatementToFile(const string& filename, SgAsmNode* stmt) {
@@ -269,17 +228,4 @@ unparseAsmStatementToFile(const std::string& filename, SgAsmStatement* stmt)
      ROSE_ASSERT (stmt != NULL);
      std::ofstream of(filename.c_str());
      of << unparseAsmStatement(stmt);
-   }
-
-void
-unparseAsmFileToFile(const std::string& filename, SgAsmFile* file)
-   {
-     ROSE_ASSERT (file != NULL);
-     std::ofstream of(filename.c_str());
-     const SgAsmInterpretationPtrList& interps = file->get_interpretations();
-
-     for (size_t i = 0; i < interps.size(); ++i)
-        {
-          of << unparseAsmInterpretation(interps[i]) << '\n';
-        }
    }

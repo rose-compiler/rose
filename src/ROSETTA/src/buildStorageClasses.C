@@ -769,12 +769,6 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgTypeModifier::gnu_extension_machine_mode_enum" ) ||
                  ( varTypeString == "SgDeclarationStatement::gnu_extension_visability_attribute_enum" ) ||
                  ( varTypeString == "SgVariableDeclaration::gnu_extension_declaration_attributes_enum" ) ||
-                 ( varTypeString == "SgAsmFile::elf_class_kind_enum" ) ||
-                 ( varTypeString == "SgAsmFile::elf_OS_ABI_identification_enum" ) ||
-                 ( varTypeString == "SgAsmFile::elf_object_file_type_enum" ) ||
-                 ( varTypeString == "SgAsmFile::elf_data_encoding_enum" ) ||
-                 ( varTypeString == "SgAsmFile::elf_version_enum" ) ||
-                 ( varTypeString == "SgAsmFile::elf_machine_architecture_enum" ) ||
                  ( varTypeString == "X86InstructionKind" ) ||
                  ( varTypeString == "X86RegisterClass" ) ||
                  ( varTypeString == "X86SegmentRegister" ) ||

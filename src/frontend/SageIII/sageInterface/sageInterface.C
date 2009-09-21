@@ -8189,23 +8189,40 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
 
 
 // tps : 28 Oct 2008 - support for finding the main interpretation
- SgAsmInterpretation* 
- SageInterface::getMainInterpretation(SgAsmFile* file) {
-   SgAsmInterpretationPtrList& interps = file->get_interpretations();
-   if (interps.size()==1)
-     return interps[0];
-   SgAsmInterpretation* mainInt=NULL;
-   SgAsmInterpretationPtrList::iterator it = interps.begin();
-   for (;it!=interps.end();++it) {
-     mainInt = *it;
-     SgAsmGenericHeader* header = mainInt->get_header();
-     if (isSgAsmPEFileHeader(header))
-       break;
-   }
-   ROSE_ASSERT(mainInt);
-   return mainInt;
- }
+// rpm : 18 Sep 2009 - rewritten to support multiple files per interpretation
+/** Returns the "main" interpretation. "Main" is defined as the first interpretation that points to a header of the supplied
+ *  file. If the supplied file has more than one header then the interpretation must point to this file's PE header. */
+SgAsmInterpretation *
+SageInterface::getMainInterpretation(SgAsmGenericFile *file)
+{
+    SgBinaryFile *binary = isSgBinaryFile(file->get_parent());
+    ROSE_ASSERT(binary!=NULL);
 
+    /* Find the only header or the PE header of this file */
+    SgAsmGenericHeader *requisite_header = NULL; /*the returned interpretation must point to this header*/
+    const SgAsmGenericHeaderPtrList &headers = file->get_headers()->get_headers();
+    if (1==headers.size()) {
+        requisite_header = headers[0];
+    } else {
+        for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
+            if (isSgAsmPEFileHeader(*hi)) {
+                requisite_header = isSgAsmPEFileHeader(*hi);
+                break;
+            }
+        }
+    }
+    ROSE_ASSERT(requisite_header!=NULL);
+
+    /* Find an interpretation that points to this header */
+    const SgAsmInterpretationPtrList &interps = binary->get_interpretations()->get_interpretations();
+    for (SgAsmInterpretationPtrList::const_iterator ii=interps.begin(); ii!=interps.end(); ++ii) {
+        if ((*ii)->get_header() == requisite_header)
+            return *ii;
+    }
+
+    ROSE_ASSERT(!"no appropriate interpretation");
+    return NULL;
+}
 
 class CollectDependentDeclarationsCopyType : public SgCopyHelp
    {

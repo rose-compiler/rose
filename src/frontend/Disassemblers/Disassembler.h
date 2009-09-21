@@ -221,9 +221,6 @@ public:
      *  namespace. It just creates a default Disassembler object and invokes its disassemble method. */
     static void disassembleInterpretation(SgAsmInterpretation*);
 
-    /** This class method is for backward compatibility with the disassembleFile() function in the old Disassembler namespace.
-     *  It calls disassembleInterpretation for each interpretation in the file. */
-    static void disassembleFile(SgAsmFile*);
 
 
 

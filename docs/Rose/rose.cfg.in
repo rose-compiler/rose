@@ -433,6 +433,7 @@ INPUT                  = \
 			 @top_srcdir@/src/frontend/ExecFormats/ExecLE.C \
 			 @top_srcdir@/src/frontend/ExecFormats/ExecDOS.C \
 			 @top_srcdir@/src/frontend/ExecFormats/ExecPE.C \
+			 @top_srcdir@/src/frontend/ExecFormats/Interpretation.C \
                          @top_srcdir@/src/frontend/Open64/documentation.docs \
                          @top_srcdir@/src/frontend/SageIII/docs \
 			 @top_srcdir@/src/frontend/SageIII/astPostProcessing/checkIsModifiedFlag.C \

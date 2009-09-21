@@ -44,6 +44,5 @@ std::string unparseAsmStatement(SgAsmStatement* stmt);
 std::string unparseAsmInterpretation(SgAsmInterpretation* interp);
 
 void unparseAsmStatementToFile(const std::string& filename, SgAsmStatement* stmt);
-void unparseAsmFileToFile(const std::string& filename, SgAsmFile* file);
 
 #endif /* ROSE_UNPARSEASM_H */

@@ -145,12 +145,12 @@ SgAsmExecutableFileFormat
 SgAsmExprListExp
 SgAsmExpression
 SgAsmFieldDeclaration
-SgAsmFile
 SgAsmFunctionDeclaration
 SgAsmGenericArchitecture
 SgAsmGenericDLL
 SgAsmGenericDLLList
 SgAsmGenericFile
+SgAsmGenericFileList
 SgAsmGenericFormat
 SgAsmGenericHeader
 SgAsmGenericHeaderList
@@ -162,6 +162,7 @@ SgAsmGenericSymbol
 SgAsmGenericSymbolList
 SgAsmInstruction
 SgAsmInterpretation
+SgAsmInterpretationList
 SgAsmLEEntryPoint
 SgAsmLEEntryTable
 SgAsmLEFileHeader

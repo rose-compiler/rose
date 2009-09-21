@@ -15,10 +15,10 @@ SB_CallGraph::createCallGraph(SgProject* project) {
 
   RoseBin_Def::RoseAssemblyLanguage = RoseBin_Def::x86;
   SgBinaryFile* binaryFile = isSgBinaryFile(project->get_fileList()[0]);
-  SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
+  SgAsmGenericFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
   if (file) {
     // binary analysis
-    const SgAsmInterpretationPtrList& interps = file->get_interpretations();
+    const SgAsmInterpretationPtrList& interps = binaryFile->get_interpretations()->get_interpretations();
     ROSE_ASSERT (interps.size() == 1);
     SgAsmInterpretation* interp = interps[0];
     SgAsmBlock* global_block = interp->get_global_block();

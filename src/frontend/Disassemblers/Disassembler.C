@@ -83,15 +83,6 @@ Disassembler::disassembleInterpretation(SgAsmInterpretation *interp)
     delete disassembler;
 }
 
-/* Class method for backward compatibility with the old Disassembler name space. */
-void
-Disassembler::disassembleFile(SgAsmFile *file)
-{
-    const SgAsmInterpretationPtrList& interps = file->get_interpretations();
-    for (size_t i=0; i<interps.size(); i++)
-        disassembleInterpretation(interps[i]);
-}
-
 /* Accessor */
 void
 Disassembler::set_wordsize(size_t n)
