@@ -1,3 +1,145 @@
+2009-09-21 18:54  collingbourne2
+
+	* [r7439] /trunk/ROSE/projects/interpreter/interp_core.h:
+	  Eliminated rose.h include from header file
+
+2009-09-21 18:20  liao6
+
+	* [r7437] /trunk/ROSE/scripts/roseFreshTestStub-Leo-common.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-head-gnu-4.2.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-head-gnu-4.3.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-head-gnu-4.4.sh: Setup
+	  scripts for building and updating EDG binaries only
+
+2009-09-21 17:07  liao6
+
+	* [r7436] /trunk/ROSE/scripts/importRoseDistributionToSVN,
+	  /trunk/ROSE/scripts/roseFreshTest,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-head-gnu-4.2.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-head-gnu-4.3.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-head-gnu-4.4.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-head.sh: Scripts to
+	  build more GCC-specific EDG binaries
+
+2009-09-21 16:24  matzke
+
+	* [r7434]
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/recognizeGlobalVariables.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/runAnalysisByThomas.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/runLiteralClassificationTest,
+	  /trunk/ROSE/developersScratchSpace/Dan/Dwarf_tests/dwarfReader.C,
+	  /trunk/ROSE/docs/Rose/Tutorial/binaryAnalysis.tex,
+	  /trunk/ROSE/docs/Rose/binaryAnalysis.tex,
+	  /trunk/ROSE/projects/BTORCloneDetection/powerpcAssemblyToC.C,
+	  /trunk/ROSE/projects/BTORCloneDetection/x86AssemblyToC.C,
+	  /trunk/ROSE/projects/BinQ/BinCallGraph.C,
+	  /trunk/ROSE/projects/BinQ/BinControlFlowAnalysis.C,
+	  /trunk/ROSE/projects/BinQ/BinDataFlowAnalysis.C,
+	  /trunk/ROSE/projects/BinQ/BinDynamicInfo.C,
+	  /trunk/ROSE/projects/BinQ/BinQAbstract.C,
+	  /trunk/ROSE/projects/BinQ/BinQGui.C,
+	  /trunk/ROSE/projects/BinQ/BinQMain.C,
+	  /trunk/ROSE/projects/BinQ/BufferOverflow.C,
+	  /trunk/ROSE/projects/BinQ/ComplexityMetric.C,
+	  /trunk/ROSE/projects/BinQ/DwarfFileInfo.C,
+	  /trunk/ROSE/projects/BinQ/ForbiddenFunctionCall.C,
+	  /trunk/ROSE/projects/BinQ/InitPointerToNull.C,
+	  /trunk/ROSE/projects/BinQ/InterruptAnalysis.C,
+	  /trunk/ROSE/projects/BinQ/MallocAndFree.C,
+	  /trunk/ROSE/projects/BinQ/NullAfterFree.C,
+	  /trunk/ROSE/projects/DistributedMemoryAnalysisCompass/parallel_compass.C,
+	  /trunk/ROSE/projects/assemblyToSourceAst/powerpcAssemblyToC.C,
+	  /trunk/ROSE/projects/assemblyToSourceAst/x86AssemblyToC.C,
+	  /trunk/ROSE/projects/binCompass/binCompassMain.cpp,
+	  /trunk/ROSE/projects/binaryVisualization/vizzBinary.C,
+	  /trunk/ROSE/projects/binaryVisualization/vizzBinaryOld.C,
+	  /trunk/ROSE/projects/compass/extensions/checkers/allowedFunctions/variantT_enums.txt,
+	  /trunk/ROSE/projects/compass/extensions/checkers/binaryBufferOverflow/binaryBufferOverflow.C,
+	  /trunk/ROSE/projects/compass/extensions/checkers/binaryInterruptAnalysis/binaryInterruptAnalysis.C,
+	  /trunk/ROSE/projects/compass/extensions/checkers/cycleDetection/cycleDetection.C,
+	  /trunk/ROSE/projects/compass/extensions/prerequisites/AuxiliaryInfoPrerequisite.h,
+	  /trunk/ROSE/projects/compass/extensions/prerequisites/BinDataFlowPrerequisite.h,
+	  /trunk/ROSE/projects/palette/rose.P,
+	  /trunk/ROSE/tests/roseTests/binaryTests/runExecFormatsTest,
+	  /trunk/ROSE/tests/roseTests/binaryTests/runTest.C,
+	  /trunk/ROSE/tutorial/binaryAnalysis.C: ExecFormats: Updated tests
+	  for removed SgAsmFile
+	  
+	  This commit completes the previous task by fixing all tests,
+	  documentation, and projects so as to handle the removal of the
+	  SgAsmFile
+	  AST node class.
+
+2009-09-21 16:24  matzke
+
+	* [r7433] /trunk/ROSE/docs/Rose/rose.cfg.in,
+	  /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Node.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Support.code,
+	  /trunk/ROSE/src/ROSETTA/astNodeList,
+	  /trunk/ROSE/src/ROSETTA/src/binaryInstruction.C,
+	  /trunk/ROSE/src/ROSETTA/src/buildStorageClasses.C,
+	  /trunk/ROSE/src/ROSETTA/src/support.C,
+	  /trunk/ROSE/src/ROSETTA/src/terminal.C,
+	  /trunk/ROSE/src/backend/asmUnparser/unparseAsm.C,
+	  /trunk/ROSE/src/backend/asmUnparser/unparseAsm.h,
+	  /trunk/ROSE/src/backend/unparser/unparser.C,
+	  /trunk/ROSE/src/backend/unparser/unparser.h,
+	  /trunk/ROSE/src/frontend/Disassemblers/Disassembler.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/Disassembler.h,
+	  /trunk/ROSE/src/frontend/ExecFormats/ExecGeneric.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/Interpretation.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/Makefile.am,
+	  /trunk/ROSE/src/frontend/SageIII/astPostProcessing/checkIsModifiedFlag.C,
+	  /trunk/ROSE/src/frontend/SageIII/dwarfSupport.C,
+	  /trunk/ROSE/src/frontend/SageIII/dwarfSupport.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C,
+	  /trunk/ROSE/src/midend/astDiagnostics/AstStatistics.C,
+	  /trunk/ROSE/src/midend/programAnalysis/graphAnalysis/CallGraphAnalysis.C,
+	  /trunk/ROSE/tests/roseTests/binaryTests/runTest.C,
+	  /trunk/ROSE/tests/roseTests/binaryTests/test_disassemble.ans:
+	  ExecFormats: Removed SgAsmFile
+	  
+	  This is Step A of Robb and Matt's proposal for cleaning up the
+	  top
+	  layers of an AST for binary entities:
+	  
+	  1. The SgAsmFile::p_name was moved into SgAsmGenericFile where
+	  all
+	  the other per-physical-file attributes are stored.
+	  
+	  2. The list of SgAsmFile pointers stored in SgBinaryFile was
+	  changed
+	  so that it's a list of SgAsmGenericFile pointers.
+	  
+	  3. The SgAsmInterpretation list stored in SgAsmFile was moved
+	  up to the SgBinaryFile instead since it will eventually
+	  contain instructions that span more than one file.
+
+2009-09-21 16:23  matzke
+
+	* [r7432] /trunk/ROSE/docs/Rose/rose.cfg.in,
+	  /trunk/ROSE/projects/BinQ/BinDynamicInfo.C,
+	  /trunk/ROSE/projects/BinQ/BinQGui.C,
+	  /trunk/ROSE/projects/BinQ/ComplexityMetric.C,
+	  /trunk/ROSE/projects/BinQ/DwarfFileInfo.C,
+	  /trunk/ROSE/projects/BinQ/ForbiddenFunctionCall.C,
+	  /trunk/ROSE/projects/BinQ/InitPointerToNull.C,
+	  /trunk/ROSE/projects/BinQ/MallocAndFree.C,
+	  /trunk/ROSE/projects/BinQ/NullAfterFree.C,
+	  /trunk/ROSE/src/ROSETTA/src/binaryInstruction.C,
+	  /trunk/ROSE/src/backend/unparser/unparser.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/Partitioner.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ExecGeneric.C: ExecFormats:
+	  Moved a data member from node to node
+	  
+	  The file name (p_name data member) was moved from SgAsmFile into
+	  SgAsmGenericFile since that's where the rest of the
+	  per-physical-file
+	  attributes are stored.
+
 2009-09-20 21:21  dquinlan
 
 	* [r7429] /trunk/ROSE/proposals/parallelAST.txt: Notes on parallel
