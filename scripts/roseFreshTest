@@ -215,6 +215,7 @@ fi
 
   # For testing -- skip the rest if we are testing the head of the SciDAC repository of ROSE
   if [ 0$BUILD_AND_UPDATE_EDG_BINARY_ONLY -ne 0 ] ; then
+    $SKIP_DIST_TEST=1 # we also want to skip distcheck in this case, Liao 9/17/2009
   # This is as short a compile as possible (roughly) to build the EDG binary.
     echo "This is a short compile (just enough to build the EDG binary)"
     $timer make -C src/util $MAKEFLAGS || exit 1
