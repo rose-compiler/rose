@@ -6,7 +6,7 @@ class A {
         A() {
             // A needs to have been registered before this point
         }
-        ~A() { delete member; };
+        ~A() { };
 };
 
 // constructor, pre-main function call

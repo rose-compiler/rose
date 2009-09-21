@@ -435,8 +435,8 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
 
 
 
-
-
+  //ROSE_ASSERT(globalScope);
+  //appendGlobalConstructor(globalScope);
   cerr << "Inserting main close call" << endl;
   // insert main call to ->close();
   ROSE_ASSERT(mainLast);

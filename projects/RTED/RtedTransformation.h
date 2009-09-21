@@ -73,6 +73,17 @@ class RtedTransformation : public AstSimpleProcessing {
   // store all classdefinitions found
   std::map<SgClassDefinition*,RtedClassDefinition*> class_definitions;
 
+  // indicates if we have a globalconstructor build or not
+  SgClassDeclaration* globConstructor;
+  SgBasicBlock* globalFunction;
+  SgVariableDeclaration* globalConstructorVariable;
+  SgBasicBlock* buildGlobalConstructor(SgScopeStatement* scope, std::string name);
+  SgBasicBlock* appendToGlobalConstructor(SgScopeStatement* scope, std::string name);
+  void appendGlobalConstructor(SgScopeStatement* scope, SgStatement* stmt);
+  void appendGlobalConstructorVariable(SgScopeStatement* scope,
+				       SgStatement* stmt);
+  SgVariableDeclaration* getGlobalVariableForClass(SgGlobal* globel, SgClassDeclaration* classStmt);
+
 
   // The following are vars that are needed for transformations
   // and retrieved through the visit function
@@ -321,7 +332,9 @@ class RtedTransformation : public AstSimpleProcessing {
     roseInitVariable=NULL;
     roseMovePointer=NULL;
     roseAccessVariable=NULL;
-
+    globConstructor=false;
+    globalConstructorVariable=NULL;
+    globalFunction=NULL;
   };
   virtual ~RtedTransformation(){
 

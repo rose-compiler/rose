@@ -387,7 +387,10 @@ RtedTransformation::getSurroundingStatement(SgNode* n) {
 //
 //  e.g. &foo.bar.m, instead of the erroneous &m
 SgExpression* RtedTransformation::getUppermostLvalue( SgExpression* exp ) {
-    SgExpression* parent = isSgExpression( exp->get_parent() );
+	if (exp)
+	cerr << "Checking if exp has parent: " << exp->unparseToString() << "  :" << endl;
+	if(exp==NULL || exp->get_parent()==NULL) return exp;
+	SgExpression* parent = isSgExpression( exp->get_parent() );
     
     while(  parent
             && (isSgDotExp( parent ))) {
@@ -963,3 +966,120 @@ void RtedTransformation::prependPseudoForInitializerExpression(
 	for_stmt_processed -> set_exp( new_exp );
 }
 
+
+SgBasicBlock*
+RtedTransformation::buildGlobalConstructor(SgScopeStatement* scope, std::string name) {
+  //SgStatement* global=NULL;
+  // build the classdeclaration and definition for RtedGlobal
+  SgClassDeclaration* nondef_decl = buildNondefiningClassDeclaration_nfi(
+									 "RtedGlobal_"+name,
+									 SgClassDeclaration::e_class,
+									 scope);
+  ROSE_ASSERT(nondef_decl);
+  SgClassDeclaration* decl = buildClassDeclaration_nfi(
+						       "RtedGlobal_"+name,
+						       SgClassDeclaration::e_class,
+						       scope, nondef_decl);
+  ROSE_ASSERT(decl);
+  globConstructor = decl;
+  SgClassDefinition* def = buildClassDefinition(decl);
+  ROSE_ASSERT(def);
+
+  SgFunctionParameterList* param =
+    buildFunctionParameterList (buildFunctionParameterTypeList());
+  ROSE_ASSERT(param);
+  ROSE_ASSERT(def->get_scope());
+  ROSE_ASSERT(def->get_parent()); // should be the declaration
+  ROSE_ASSERT(isSgClassDefinition(def));
+  SgMemberFunctionDeclaration* mf = 
+    buildDefiningMemberFunctionDeclaration("RtedGlobal_"+name,buildVoidType(),param,def);
+  ROSE_ASSERT(mf);
+  SgSpecialFunctionModifier& fmod = mf->get_specialFunctionModifier();
+  fmod.setConstructor();
+  SgFunctionDefinition* fdef = mf->get_definition();
+  ROSE_ASSERT(fdef);
+  SgBasicBlock* block = fdef->get_body();
+  ROSE_ASSERT(block);
+
+  // append memberfunc decl to classdef
+  prependStatement(mf,def);
+
+  // build the call to RtedGlobal: RtedGlobal rg;
+  globalConstructorVariable = buildVariableDeclaration("rg_"+name,decl->get_type(),NULL,scope);
+  ROSE_ASSERT(globalConstructorVariable);
+
+
+  return block;
+}
+
+SgBasicBlock* 
+RtedTransformation::appendToGlobalConstructor(SgScopeStatement* scope, std::string name) {
+  // if we do not have a globalConstructor yet, build one
+  ROSE_ASSERT(scope);
+  // if (globalFunction==NULL) {
+  globalFunction = buildGlobalConstructor(scope,name);
+    //  }
+  ROSE_ASSERT(globalFunction);
+  // return the last statement in the globalConstructor
+  // so that the new statement can be appended
+  SgBasicBlock* gl_scope = isSgBasicBlock(globalFunction);
+  //cerr << " gl_scope = " << globalFunction->get_scope()->class_name()<<endl;
+  ROSE_ASSERT(gl_scope);
+  return gl_scope;
+}
+
+void 
+RtedTransformation::appendGlobalConstructor(SgScopeStatement* scope,
+					    SgStatement* stmt) {
+  // add the global constructor to the top of the file
+  //ROSE_ASSERT(globalConstructorVariable);
+  ROSE_ASSERT(globConstructor);
+  //prependStatement(globalConstructorVariable, scope);
+  // prependStatement(globConstructor, scope);
+  ROSE_ASSERT(stmt);
+  insertStatement(stmt, globConstructor, true);
+  //insertStatement(stmt, globConstructor, false);
+
+}
+
+void 
+RtedTransformation::appendGlobalConstructorVariable(SgScopeStatement* scope,
+					    SgStatement* stmt) {
+  // add the global constructor to the top of the file
+  ROSE_ASSERT(globalConstructorVariable);
+  ROSE_ASSERT(stmt);
+  insertStatement(stmt, globalConstructorVariable);
+}
+
+
+SgVariableDeclaration*
+RtedTransformation::getGlobalVariableForClass(SgGlobal* gl, 
+					      SgClassDeclaration* classStmt) {
+  SgVariableDeclaration* var = NULL;
+  string classDeclName = classStmt->get_name().str();
+
+  // get all children of global
+  Rose_STL_Container<SgDeclarationStatement*> decls = gl->get_declarations();
+  Rose_STL_Container<SgDeclarationStatement*>::const_iterator it = decls.begin();
+  for (;it!=decls.end();++it) {
+    SgVariableDeclaration* vard = isSgVariableDeclaration(*it);
+    if (vard) {
+      // check if declared variable is a class and if it maches with classStmt
+      SgInitializedName* initName = *(vard->get_variables().begin());
+      ROSE_ASSERT(initName);
+      SgClassType* varT = isSgClassType(initName->get_type());
+      if (varT) {
+	string classname = varT->get_name().str() ;
+	cerr<< "Found global var with type : " << varT->class_name() << "  " <<
+	  initName->unparseToString() << "  class name : " <<
+	  classname<< "         comparing to == " << classDeclName << "   compGen: " <<
+		  classStmt->get_file_info()->isCompilerGenerated() << endl;
+	if (classname==classDeclName)
+	  var=vard;
+      }
+    }
+  }
+
+  return var;
+
+}
