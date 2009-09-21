@@ -17,7 +17,7 @@ ROSE_TOP=/home/liao6/daily-test-rose/${TIMESTAMP}
 # for regular build and tests
 CONFIGURE_FLAGS=(--with-boost=${BOOST_ROOT} --with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall --prefix=${ROSE_TOP}/install "$@")
 
-SVNOP=checkout
+SVNOP=update
 # check out the revision of the past 11:00pm PDT (06:00am UTC)
 # using data as revision number needs {}
 # default is head
@@ -26,6 +26,10 @@ SVNOP=checkout
 
 # How many processes for make
 MAKEFLAGS="-j8"
+# If we are using update then assume build has been run...
+SKIP_BUILD_SOURCE=1
+# Skip running the distcheck rule (since we just want to build the compiler specific binary)
+SKIP_DIST_TEST=1
 
 ENABLE_BUILD_BINARY_EDG=1
 KEEP_TEST_DIR=0

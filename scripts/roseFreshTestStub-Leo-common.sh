@@ -23,5 +23,8 @@ SVN=/nfs/apps/subversion/1.5.5/bin/svn
 # installation path of spec cpu and the config file for using rose
 SPEC_CPU2006_INS="/home/liao6/opt/spec_cpu2006"
 SPEC_CPU2006_CONFIG="tux268-rose-gcc42.cfg"
+
+SVN_READONLY_REPOSITORY_LOCATION=/home/liao6/daily-test-rose/svn-readonly-rose
+
 #-------------end of environment
 
