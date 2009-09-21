@@ -44,10 +44,6 @@ BUILT_SOURCES = ui_qtgradientdialog.h \
 		ui_qtgradientviewdialog.h \
 		ui_qtgradientview.h 
 
-EXTRA_DIST = qtgradientdialog.ui \
-	     qtgradienteditor.ui \
-	     qtgradientviewdialog.ui \
-	     qtgradientview.ui
 
 libQtGradientEditor.la: $(QTGRADIENT_MOC_FILES) $(libQtGradientEditor_la_OBJECTS)
 	$(CXXLINK) $(am_libQtGradientEditor_la_rpath) $(libQtGradientEditor_la_LDFLAGS) $(libQtGradientEditor_la_OBJECTS) $(libQtGradientEditor_la_LIBADD) $(LIBS)
@@ -68,3 +64,9 @@ headerTarget_HEADERS = qtcolorbutton.h \
 		       qtgradientwidget.h
 
 endif
+
+EXTRA_DIST = qtgradientdialog.ui \
+	     qtgradienteditor.ui \
+	     qtgradientviewdialog.ui \
+	     qtgradientview.ui
+
