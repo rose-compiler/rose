@@ -595,7 +595,7 @@ parseBinaryFile(std::string name) {
   char* argv[] = {"vizzBinary",nameChar};
   SgProject* project = frontend(2,argv);
   ROSE_ASSERT (project != NULL);
-  SgAsmFile* file = project->get_file(0).get_binaryFile();
+  SgAsmGenericFile* file = project->get_file(0).get_binaryFile();
   const SgAsmInterpretationPtrList& interps = file->get_interpretations();
   ROSE_ASSERT (interps.size() == 1);
   SgAsmInterpretation* interp = interps[0];

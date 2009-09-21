@@ -72,7 +72,7 @@ test_one () {
 
     if [ -h "$exename" ]; then
 	echo "File is a symbolic link and we are skipping it." >>$stderr
-	echo "It is skipped because the name stored in SgAsmFile is not the same as the" >>$stderr
+	echo "It is skipped because the name stored in SgAsmGenericFile is not the same as the" >>$stderr
 	echo "name that we opened. Therefore we don't know what name would be used for the" >>$stderr
 	echo "generated file (it should be $newname, but is based on the symlink" >>$stderr
 	echo "contents instead)." >>$stderr

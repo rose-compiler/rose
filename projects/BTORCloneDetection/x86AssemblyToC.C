@@ -35,9 +35,9 @@ struct WordWithExpression {
 
 // Operations build IR nodes to represent the expressions.
 struct X86CTranslationPolicy: public CTranslationPolicy {
-  X86CTranslationPolicy(SgSourceFile* sourceFile, SgAsmFile* asmFile);
+  X86CTranslationPolicy(SgSourceFile* sourceFile, SgAsmGenericFile* asmFile);
 
-  SgAsmFile* asmFile;
+  SgAsmGenericFile* asmFile;
   SgGlobal* globalScope;
   SgFunctionSymbol* paritySym;
   SgFunctionSymbol* mulhi16Sym;
@@ -406,7 +406,7 @@ SgFunctionSymbol* X86CTranslationPolicy::addHelperFunction(const std::string& na
   return sym;
 }
 
-X86CTranslationPolicy::X86CTranslationPolicy(SgSourceFile* f, SgAsmFile* asmFile): asmFile(asmFile), globalScope(NULL) {
+X86CTranslationPolicy::X86CTranslationPolicy(SgSourceFile* f, SgAsmGenericFile* asmFile): asmFile(asmFile), globalScope(NULL) {
   ROSE_ASSERT (f);
   ROSE_ASSERT (f->get_globalScope());
   globalScope = f->get_globalScope();
@@ -493,10 +493,10 @@ int main(int argc, char** argv) {
   ROSE_ASSERT (g);
   SgFunctionDeclaration* decl = buildDefiningFunctionDeclaration("run", SgTypeVoid::createType(), buildFunctionParameterList(), g);
   appendStatement(decl, g);
-  vector<SgNode*> asmFiles = NodeQuery::querySubTree(proj, V_SgAsmFile);
+  vector<SgNode*> asmFiles = NodeQuery::querySubTree(proj, V_SgAsmGenericFile);
   ROSE_ASSERT (asmFiles.size() == 1);
   SgBasicBlock* body = decl->get_definition()->get_body();
-  X86CTranslationPolicy policy(newFile, isSgAsmFile(asmFiles[0]));
+  X86CTranslationPolicy policy(newFile, isSgAsmGenericFile(asmFiles[0]));
   policy.switchBody = buildBasicBlock();
   SgSwitchStatement* sw = buildSwitchStatement(buildVarRefExp(policy.ipSym), policy.switchBody);
   SgWhileStmt* whileStmt = buildWhileStmt(buildBoolValExp(true), sw);

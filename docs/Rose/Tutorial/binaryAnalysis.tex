@@ -94,7 +94,7 @@ The binary AST can now be unparsed to represent assembly instructions, cf. Figur
 
 {\mySmallFontSize
 \begin{verbatim}
-  SgAsmFile* file = project->get_file(0).get_binaryFile();
+  SgAsmGenericFile* file = project->get_file(0).get_binaryFile();
   RoseBin_unparse* unparser = new RoseBin_unparse();
   unparser->init(file->get_global_block(), fileName);
   unparser->unparse();

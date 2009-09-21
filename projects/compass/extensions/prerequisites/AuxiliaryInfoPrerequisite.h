@@ -9,7 +9,6 @@
     void run(SgProject* project) {
       if (done) return;
 
-//      SgAsmFile* file = project->get_file(0).get_binaryFile();
       info = new VirtualBinCFG::AuxiliaryInformation(project);
       done = true;
     }

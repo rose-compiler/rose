@@ -39,7 +39,7 @@ BinDataFlowAnalysis::run(SgNode* fileA, SgNode* fileB) {
   graph=NULL;
   ROSE_ASSERT(isSgProject(fileA));
   SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
-  SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
+  SgAsmGenericFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
   ROSE_ASSERT(file);
 
   VirtualBinCFG::AuxiliaryInformation* info = new VirtualBinCFG::AuxiliaryInformation(file);
@@ -86,7 +86,7 @@ BinDataFlowAnalysis::test(SgNode* fileA, SgNode* fileB) {
   graph=NULL;
   ROSE_ASSERT(isSgProject(fileA));
   SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
-  SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
+  SgAsmGenericFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
   ROSE_ASSERT(file);
 
   VirtualBinCFG::AuxiliaryInformation* info = new VirtualBinCFG::AuxiliaryInformation(file);

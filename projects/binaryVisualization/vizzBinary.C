@@ -927,7 +927,7 @@ parseBinaryFile(std::string name) {
   if (binFile==NULL)
     return NULL;
   //  SgAsmFile* file = binFile->get_binaryFile();
-  SgAsmFile* file = binFile != NULL ? binFile->get_binaryFile() : NULL;
+  SgAsmGenericFile* file = binFile != NULL ? binFile->get_binaryFile() : NULL;
 
 
   interp = SageInterface::getMainInterpretation(file);

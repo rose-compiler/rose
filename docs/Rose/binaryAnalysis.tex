@@ -352,7 +352,7 @@ Performance Computing (HPC). A principal focus is on IBM BGL and Cray XT support
 
    File byte order can be changed by modifying the SgAsmGenericFormat object pointed to by the file header:
 
-      SgAsmFileHeader *fhdr = ....;
+      SgAsmGenericHeader *fhdr = ....;
       fhdr->get\_exec\_format()->set\_sex(ORDER\_MSB);
 
    NOTE: Modifying the byte order affects only those sections that are actually parsed. If the ELF file contains a section
@@ -367,7 +367,7 @@ Performance Computing (HPC). A principal focus is on IBM BGL and Cray XT support
    File word size can be changed between 4 bytes and 8 bytes by modifying the SgAsmGenericFormat object pointed to by the file
    header:
 
-      SgAsmFileHeader *fhdr = ....;
+      SgAsmGenericHeader *fhdr = ....;
       fhdr->get\_exec\_format()->set\_word\_size(4);
 
    When changing word sizes, any fields that have values too large to represent in the new word size will cause the unparser
@@ -382,7 +382,7 @@ Performance Computing (HPC). A principal focus is on IBM BGL and Cray XT support
 \subsubsection{4. ELF Header Magic Number}
 
    An ELF header has a four-byte magic number, usually 0x7f, 'E', 'L', 'F'.  The magic number can be modified by changing the
-   string from SgAsmFileHeader::get\_magic.  It must be exactly four characters in length.
+   string from SgAsmGenericHeader::get\_magic.  It must be exactly four characters in length.
 
 \subsubsection{5. ELF File Purpose (lib, executable, core, etc.)}
 

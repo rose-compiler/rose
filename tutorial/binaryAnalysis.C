@@ -13,10 +13,10 @@ int main(int argc, char** argv)
   // DQ (9/3/2008): Using new SgBinaryFile IR node.
   // SgAsmFile* file = project->get_file(0).get_binaryFile();
      SgBinaryFile* binaryFile = isSgBinaryFile(project->get_fileList()[0]);
-     SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
+     SgAsmGenericFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
 
      ROSE_ASSERT (file != NULL);
-     const SgAsmInterpretationPtrList& interps = file->get_interpretations();
+     const SgAsmInterpretationPtrList& interps = binaryFile->get_interpretations()->get_interpretations();
      ROSE_ASSERT (interps.size() == 1);
      SgAsmInterpretation* interp = interps[0];
      SgAsmBlock* global_block = interp->get_global_block();

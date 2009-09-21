@@ -67,9 +67,9 @@ struct WordWithExpression {
 };
 
 struct powerpcCTranslationPolicy: public CTranslationPolicy {
-  powerpcCTranslationPolicy(SgSourceFile* sourceFile, SgAsmFile* asmFile);
+  powerpcCTranslationPolicy(SgSourceFile* sourceFile, SgAsmGenericFile* asmFile);
 
-  SgAsmFile* asmFile;
+  SgAsmGenericFile* asmFile;
   SgGlobal* globalScope;
   SgFunctionSymbol* mulhi16Sym;
   SgFunctionSymbol* mulhi32Sym;
@@ -412,7 +412,7 @@ SgFunctionSymbol* powerpcCTranslationPolicy::addHelperFunction(const std::string
   return sym;
 }
 
-powerpcCTranslationPolicy::powerpcCTranslationPolicy(SgSourceFile* f, SgAsmFile* asmFile): asmFile(asmFile), globalScope(NULL) {
+powerpcCTranslationPolicy::powerpcCTranslationPolicy(SgSourceFile* f, SgAsmGenericFile* asmFile): asmFile(asmFile), globalScope(NULL) {
   ROSE_ASSERT (f);
   ROSE_ASSERT (f->get_globalScope());
   globalScope = f->get_globalScope();
@@ -488,12 +488,12 @@ int main(int argc, char** argv) {
 // to be an emulation of the binary.
   SgFunctionDeclaration* decl = buildDefiningFunctionDeclaration("run", SgTypeVoid::createType(), buildFunctionParameterList(), g);
   appendStatement(decl, g);
-  vector<SgNode*> asmFiles = NodeQuery::querySubTree(proj, V_SgAsmFile);
+  vector<SgNode*> asmFiles = NodeQuery::querySubTree(proj, V_SgAsmGenericFile);
   ROSE_ASSERT (asmFiles.size() == 1);
   SgBasicBlock* body = decl->get_definition()->get_body();
 
 // Build the policy object which contains the details of the translation of the disassembled instructions
-  powerpcCTranslationPolicy policy(newFile, isSgAsmFile(asmFiles[0]));
+  powerpcCTranslationPolicy policy(newFile, isSgAsmGenericFile(asmFiles[0]));
   policy.switchBody = buildBasicBlock();
   SgSwitchStatement* sw = buildSwitchStatement(buildVarRefExp(policy.ipSym), policy.switchBody);
   SgWhileStmt* whileStmt = buildWhileStmt(buildBoolValExp(true), sw);

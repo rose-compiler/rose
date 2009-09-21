@@ -200,7 +200,7 @@ DynamicInfo::run(SgNode* fileA, SgNode* fileB) {
   }
 
   project=false;
-  SgAsmFile* file = NULL;
+  SgAsmGenericFile* file = NULL;
   if (isSgProject(fileA)) {
     project=true;
     SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
@@ -219,7 +219,7 @@ DynamicInfo::run(SgNode* fileA, SgNode* fileB) {
     ROSE_ASSERT(instance->analysisTab);
     instance->analysisTab->setCurrentIndex(1);
     if (isSgProject(fileA)) {
-      QString res = QString("Looking at dynamic information : %1").arg(file->get_genericFile()->get_name().c_str());
+      QString res = QString("Looking at dynamic information : %1").arg(file->get_name().c_str());
       instance->analysisResult->append(res);  
     }
   }
@@ -235,7 +235,7 @@ DynamicInfo::run(SgNode* fileA, SgNode* fileB) {
     return;
   }
 
-  genericF = file->get_genericFile() ;
+  genericF = file;
   symbolMap.clear();
   firstIteration=true;
   printOutRelaEntries(isSgProject(fileA));

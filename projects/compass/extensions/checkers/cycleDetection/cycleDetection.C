@@ -95,9 +95,8 @@ static void run(Compass::Parameters params, Compass::OutputObject* output) {
   //  CompassAnalyses::CycleDetection::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
 
   // DQ (9/3/2008): Using new SgBinaryFile IR node.
-  // SgAsmFile* file = Compass::projectPrerequisite.getProject()->get_file(0).get_binaryFile();
   SgBinaryFile* binaryFile = isSgBinaryFile(Compass::projectPrerequisite.getProject()->get_fileList()[0]);
-  SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
+  SgAsmGenericFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
 
   if (file==NULL)
     return;

@@ -147,7 +147,7 @@ InitPointerToNull::run(SgNode* fileA, SgNode* fileB) {
   }
 
   project=false;
-  SgAsmFile* file = NULL;
+  SgAsmGenericFile* file = NULL;
   if (isSgProject(fileA)) {
     project=true;
     SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
@@ -163,13 +163,13 @@ InitPointerToNull::run(SgNode* fileA, SgNode* fileB) {
     ROSE_ASSERT(instance->analysisTab);
     instance->analysisTab->setCurrentIndex(1);
     if (isSgProject(fileA)) {
-      QString res = QString("Looking at dynamic information : %1").arg(file->get_genericFile()->get_name().c_str());
+      QString res = QString("Looking at dynamic information : %1").arg(file->get_name().c_str());
       instance->analysisResult->append(res);  
     }
   }
 
   if (isSgProject(fileA)) {
-    genericF = file->get_genericFile() ;
+    genericF = file;
     runTraversal(isSgProject(fileA));
   }
   else

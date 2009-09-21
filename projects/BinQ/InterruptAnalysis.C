@@ -539,7 +539,7 @@ InterruptAnalysis::run(SgNode* fileA, SgNode* fileB) {
   RoseBin_Graph* graph=NULL;
   ROSE_ASSERT(isSgProject(fileA));
   SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
-  SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
+  SgAsmGenericFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
   ROSE_ASSERT(file);
 
   //  VirtualBinCFG::AuxiliaryInformation* info = new VirtualBinCFG::AuxiliaryInformation(file);
@@ -610,7 +610,7 @@ InterruptAnalysis::test(SgNode* fileA, SgNode* fileB) {
   RoseBin_Graph* graph=NULL;
   ROSE_ASSERT(isSgProject(fileA));
   SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
-  SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
+  SgAsmGenericFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
   ROSE_ASSERT(file);
 
   //  VirtualBinCFG::AuxiliaryInformation* info = new VirtualBinCFG::AuxiliaryInformation(file);

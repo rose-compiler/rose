@@ -339,13 +339,10 @@ int main(int argc, char **argv)
   CountingOutputObject  outputs ;
 
   bool isBinaryInput=true;
-  //  SgAsmFile* file = root->get_file(0).get_binaryFile();
-  //SgBinaryFile* binFile = isSgBinaryFile(root->get_fileList[0]);
   SgBinaryFile* binFile = isSgBinaryFile(root->get_fileList()[0]);
 
   //ROSE_ASSERT(binFile);
-  //  SgAsmFile* file = binFile->get_binaryFile();
-  SgAsmFile* file = binFile != NULL ? binFile->get_binaryFile() : NULL;
+  SgAsmGenericFile* file = binFile != NULL ? binFile->get_binaryFile() : NULL;
 
   if (file==NULL)
     isBinaryInput=false;

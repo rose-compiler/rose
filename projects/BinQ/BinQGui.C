@@ -396,9 +396,9 @@ BinQGUI::insertFileInformation() {
   ROSE_ASSERT(isSgProject(fileA));
 
   SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
-  SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
+  SgAsmGenericFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
 
-  SgAsmInterpretationPtrList& interps = file->get_interpretations();
+  SgAsmInterpretationPtrList& interps = binaryFile->get_interpretations()->get_interpretations();
   SgAsmInterpretationPtrList::iterator it = interps.begin();
   for (;it!=interps.end();++it) {
     SgAsmInterpretation* mainInt = *it;
@@ -406,7 +406,7 @@ BinQGUI::insertFileInformation() {
     fileInfo->append(header->class_name().c_str());
     SgAsmElfFileHeader* elf = isSgAsmElfFileHeader(header);
     if (elf) {
-      fileInfo->append(file->get_genericFile()->get_name().c_str());
+      fileInfo->append(file->get_name().c_str());
       fileInfo->append(elf->format_name());
       string num = RoseBin_support::ToString(elf->get_e_machine());
       fileInfo->append( QString("Machine: %1")
@@ -421,7 +421,7 @@ BinQGUI::insertFileInformation() {
 			.arg(sec.c_str()) );
     }
   }
-  SgAsmGenericFile *genericF = file->get_genericFile() ;
+  SgAsmGenericFile *genericF = file;
   string size = RoseBin_support::ToString(genericF->get_orig_size());
   fileInfo->append( QString("Orig Size of AsmGenericFile: %1")
 		    .arg(size.c_str()) );
@@ -532,7 +532,6 @@ BinQGUI::DeleteSgTree( SgNode* root) {
 	!isSgAsmGenericSection(node) &&
 	!isSgAsmExecutableFileFormat(node) &&
 	!isSgSupport(node) &&
-	!isSgAsmFile(node) &&
 	!isSgAsmInterpretation(node) &&
 	!isSgProject(node) &&
 	!isSgNode(node)
@@ -848,7 +847,7 @@ BinQGUI::run( ) {
     else if (currentSelectedFile!=NULL) {
       if (isSgProject(currentSelectedFile)) {
 	SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(currentSelectedFile)->get_fileList()[0]);
-	SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
+	SgAsmGenericFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
 	if (file) {
 	  // cerr << " Current selected file : " << file->get_name() << endl;
 	}

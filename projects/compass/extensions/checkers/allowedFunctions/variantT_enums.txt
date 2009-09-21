@@ -423,7 +423,6 @@ V_SgAsmPEFile
 V_SgAsmPESection 	
 V_SgAsmPESupport 	
 V_SgAsmExecutableFileFormat 	
-V_SgAsmFile 	
 V_SgAsmProgramHeader 	
 V_SgAsmSectionHeader 	
 V_SgAsmProgramHeaderList 	
