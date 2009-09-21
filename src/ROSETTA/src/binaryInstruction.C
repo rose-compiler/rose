@@ -439,16 +439,14 @@ Grammar::setUpBinaryInstructions ()
 
   // This is the IR node for a binary executable that loosely corresponds to the SgFile IR node for
   // source code. The kinds of information that we want to save for each is really quire different.
-     NEW_TERMINAL_MACRO ( AsmFile, "AsmFile", "AsmFileTag" );
      NEW_TERMINAL_MACRO ( AsmInterpretation, "AsmInterpretation", "AsmInterpretationTag" );
+     NEW_TERMINAL_MACRO ( AsmInterpretationList, "AsmInterpretationList", "AsmInterpretationListTag" );
+     NEW_TERMINAL_MACRO ( AsmGenericFileList, "AsmGenericFileList", "AsmGenericFileListTag" );
 
-#if USE_OLD_BINARY_EXECUTABLE_IR_NODES
-
-#error "Dead Code!"
-
-#else
-     NEW_NONTERMINAL_MACRO (AsmNode, AsmStatement | AsmExpression | AsmFile | AsmInterpretation | AsmOperandList | AsmType | AsmExecutableFileFormat, "AsmNode","AsmNodeTag", false);
-#endif
+     NEW_NONTERMINAL_MACRO (AsmNode,
+                            AsmStatement | AsmExpression | AsmInterpretation | AsmOperandList | AsmType |
+                            AsmExecutableFileFormat | AsmInterpretationList | AsmGenericFileList,
+                            "AsmNode","AsmNodeTag", false);
 
   // DQ (3/15/2007): Added support forbinaries (along lines of suggestions by Thomas Dullien)
   // AsmInstructionBase.setFunctionPrototype        ( "HEADER", "../Grammar/Common.code");
@@ -520,25 +518,7 @@ Grammar::setUpBinaryInstructions ()
 
 
 
-     AsmFile.setFunctionPrototype ( "HEADER_BINARY_FILE", "../Grammar/BinaryInstruction.code");
-
-  // DQ (8/16/2008): Robb suggested that this be a list since some formats (e.g., PE) have multiple headers.
-  // DQ (8/12/2008): This is the connection to Robb's work.
-  // AsmFile.setDataPrototype("SgAsmGenericHeader*","header","= NULL",
-  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-  // AsmFile.setDataPrototype("SgAsmGenericHeaderList*","headers","= NULL",
-  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     AsmFile.setDataPrototype("SgAsmGenericFile*","genericFile","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmFile.setDataPrototype("SgAsmInterpretationPtrList","interpretations","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
-  // DQ (11/5/2008): This currently added to the SgBinaryFile instead of the SgAsmFile, we may want to
-  // move it later.  For now we can't add it to SgAsmFile becuase we could not traverse both a list and
-  // a data member in the definition of an AST traversal.
-  // AsmFile.setDataPrototype("SgAsmDwarfCompilationUnit*","dwarf_info","= NULL",
-  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
+     AsmInterpretation.setFunctionPrototype("HEADER_INTERPRETATION", "../Grammar/BinaryInstruction.code");
   // DQ (11/6/2008): Moved Dwarf support to AsmInterpretation from SgBinaryFile. Moved ahead of the
   // SgAsmGenericHeader so that maps (of instructions to source) built in the Dwarf section can be
   // used in analysis in the instruction sections. since Dwarf is meant to be read-only (at least
@@ -553,11 +533,18 @@ Grammar::setUpBinaryInstructions ()
   // AsmInterpretation.setDataPrototype("rose_addr_t", "associated_entry_point","= 0",
   //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmInterpretation.setDataPrototype("SgAsmGenericHeader*", "header", "= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // This is where the instructions are put...(put it last so the instructions are traversed last, after the binary file format)
      AsmInterpretation.setDataPrototype("SgAsmBlock*","global_block","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+
+
+     AsmInterpretationList.setDataPrototype("SgAsmInterpretationPtrList", "interpretations", "",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+
 
   // *****************************************************
   //           NEW BINARY FILE FORMAT IR NODES
@@ -1649,14 +1636,6 @@ Grammar::setUpBinaryInstructions ()
   /* The file to which this section belongs */
      AsmGenericSection.setDataPrototype("SgAsmGenericFile*","file","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (8/15/2008): Put this back since the sections are in a list and the list is not in the header
-  // (as I thought).  The list is in the SgAsmGenericFile which has a SgAsmFile as a parent.
-  // DQ (8/14/2008): The get_header() function is now implemented in terms of the "get_parent()" function
-  // so that we can remove redundant representation of pointers to IR nodes. parent pointers are
-  // a standard part of the design of the ROSE IR and this detail was not accounted for in the
-  // design of the executable format support.
-  // AsmGenericSection.setDataPrototype("SgAsmGenericHeader*","header","= NULL",
-  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericSection.setDataPrototype("SgAsmGenericHeader*","header","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   /* Current size of section in bytes (may be different than original size, which is kept in p_data.size()) */
@@ -1785,6 +1764,9 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
+
+     AsmGenericFileList.setDataPrototype("SgAsmGenericFilePtrList", "files", "",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
   // This data structure represents the ExecFile from file: ExecGeneric.h
@@ -2293,7 +2275,6 @@ Grammar::setUpBinaryInstructions ()
 
   // Non binary File IR node support
 
-     AsmFile.setFunctionSource                     ( "SOURCE_BINARY_FILE", "../Grammar/BinaryInstruction.code");
      AsmBlock.setFunctionSource                    ( "SOURCE_BINARY_BLOCK", "../Grammar/BinaryInstruction.code");
      AsmOperandList.setFunctionSource              ( "SOURCE_BINARY_OPERAND_LIST", "../Grammar/BinaryInstruction.code");
      AsmDataStructureDeclaration.setFunctionSource ( "SOURCE_BINARY_DATA_STRUCTURE", "../Grammar/BinaryInstruction.code");

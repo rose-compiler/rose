@@ -2767,7 +2767,7 @@ test_dwarf(string file_name)
 
 
 void
-readDwarf ( SgAsmFile* asmFile )
+readDwarf ( SgAsmGenericFile* asmFile )
    {
      ROSE_ASSERT(asmFile != NULL);
 

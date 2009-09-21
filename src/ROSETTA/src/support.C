@@ -1082,25 +1082,16 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "sourceFileTypeIsUnknown", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (2/3/2009): Commented out the single SgAsmFile pointer to support a vector of them (so that
-  // we can optionally support library archives which are a collection of object files).
-  // DQ (10/13/2007): Add the binary file to the SgFile IR node so that we can hold both the source
-  // code AST and the binary AST together.  This also permits the binary AST to be handled similarly
-  // the the source code AST (for traversals, file I/O, etc.).
-  // File.setDataPrototype         ( "SgAsmFile*", "binaryFile", "= NULL",
-  //             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-  // BinaryFile.setDataPrototype         ( "SgAsmFile*", "binaryFile", "= NULL",
-  //             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
-  // DQ (2/3/2009): Build a list of SgAsmFile for use by archive files to represent their object files.
   // To be consistant with the use of binaryFile we will implement get_binaryFile() and set_binaryFile()
   // functions so that we can support the more common (previous) interface where there was only a single
   // SgAsmFile pointers called "binaryFile".
-     BinaryFile.setDataPrototype         ( "SgAsmFilePtrList", "binaryFileList", "",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     BinaryFile.setDataPrototype("SgAsmGenericFileList*", "genericFileList", "= NULL",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     BinaryFile.setDataPrototype("SgAsmInterpretationList*","interpretations","= NULL",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-  // DQ (11/5/2008): This should maybe be added to the SgAsmFile instead of the SgBinaryFile, if so
-  // we will move it.  For now we can't add it to SgAsmFile becuase we could not traverse both a
+  // DQ (11/5/2008): This should maybe be added to the SgAsmGenericFile instead of the SgBinaryFile, if so
+  // we will move it.  For now we can't add it to SgAsmGenericFile becuase we could not traverse both a
   // list and a data member in the definition of an AST traversal.
   // BinaryFile.setDataPrototype("SgAsmDwarfCompilationUnit*","dwarf_info","= NULL",
   //             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);

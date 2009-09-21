@@ -30,14 +30,6 @@ CheckIsModifiedFlagSupport(SgNode *node)
             retval = true;
     }
 
-    /* It seems that the genericFile stored in an SgAsmFile is not considered to be a child. [RPM 2008-12-02] */
-    SgAsmFile *asmFile = isSgAsmFile(node);
-    if (asmFile) {
-        SgAsmGenericFile *ef = asmFile->get_genericFile();
-        if (ef && CheckIsModifiedFlagSupport(ef))
-            retval = true;
-    }
-    
     return retval;
 } 
 
