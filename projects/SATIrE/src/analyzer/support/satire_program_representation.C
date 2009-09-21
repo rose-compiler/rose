@@ -21,7 +21,7 @@ Program::Program(AnalyzerOptions *o)
     std::vector<DataFlowAnalysis *>::const_iterator a = analyzers.begin();
  // The first analyzer is special: It allows us to compute context
  // information and run the context-specific points-to analysis.
-    if (a != analyzers.end() && (*a)->identifier() == "empty")
+    if (a != analyzers.end() && (*a) != NULL /* empty analyzer */)
     {
         (*a)->run(this);
         a++;
@@ -43,8 +43,10 @@ Program::Program(AnalyzerOptions *o)
     }
     for ( ; a != analyzers.end(); ++a)
     {
+      if (*a != NULL /* empty analyzer */) {
         (*a)->run(this);
         (*a)->processResultsWithPrefix(this);
+      }
     }
 }
 
