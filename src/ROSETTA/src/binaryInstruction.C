@@ -522,10 +522,6 @@ Grammar::setUpBinaryInstructions ()
 
      AsmFile.setFunctionPrototype ( "HEADER_BINARY_FILE", "../Grammar/BinaryInstruction.code");
 
-  // This is the filename of the binary executable...
-     AsmFile.setDataPrototype("std::string","name","= \"\"",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
   // DQ (8/16/2008): Robb suggested that this be a list since some formats (e.g., PE) have multiple headers.
   // DQ (8/12/2008): This is the connection to Robb's work.
   // AsmFile.setDataPrototype("SgAsmGenericHeader*","header","= NULL",
@@ -1756,12 +1752,13 @@ Grammar::setUpBinaryInstructions ()
 
 
 
-  // This data structure represents the ExecFile from file: ExecGeneric.h
      AsmGenericFile.setFunctionPrototype ( "HEADER_GENERIC_FILE", "../Grammar/BinaryInstruction.code");
      AsmGenericFile.setPredeclarationString("HEADER_GENERIC_FILE_PREDECLARATION", "../Grammar/BinaryInstruction.code");
   // Later we will want to turn this back on so that this IR node is consistant with the others (if appropriate).
      AsmGenericFile.setAutomaticGenerationOfConstructor(false);
      AsmGenericFile.setAutomaticGenerationOfDestructor(false);
+     AsmGenericFile.setDataPrototype("std::string","name","= \"\"",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   /* File descriptor opened for read-only (or negative) */
      AsmGenericFile.setDataPrototype("int","fd","= -1",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

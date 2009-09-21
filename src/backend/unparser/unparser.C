@@ -331,7 +331,8 @@ Unparser::unparseAsmFile ( SgAsmFile* asmFile, SgUnparse_Info& info )
 
   // string outputFileName = "unparse.s";
   // string outputFileName = asmFile->get_unparse_output_filename();
-     string outputFileName = asmFile->get_name();
+  // string outputFileName = asmFile->get_name();
+     string outputFileName = asmFile->get_genericFile()->get_name();
 
   // DQ (8/14/2008): Added test to make sure that there is a valid SgAsmBlock with instructions.
   // So that we can optionally just test the binary file format details.
@@ -351,7 +352,8 @@ Unparser::unparseAsmFile ( SgAsmFile* asmFile, SgUnparse_Info& info )
      string newFilename = file->get_unparse_output_filename();
 #else
   // string sourceFilename = asmFile->get_sourceFileNameWithoutPath();
-     string sourceFilename = asmFile->get_name();
+  // string sourceFilename = asmFile->get_name();
+     string sourceFilename = asmFile->get_genericFile()->get_name();
 
      printf ("In Unparser::unparseAsmFile(): sourceFilename = %s \n",sourceFilename.c_str());
 
@@ -376,7 +378,8 @@ Unparser::unparseAsmFile ( SgAsmFile* asmFile, SgUnparse_Info& info )
 
   // Dump detailed info from the AST representation of the binary executable file format.
   // string baseName = file->get_sourceFileNameWithoutPath();
-     string baseName = asmFile->get_name();
+  // string baseName = asmFile->get_name();
+     string baseName = asmFile->get_genericFile()->get_name();
 
   // DQ (8/30/2008): This is temporary, we should review how we want to name the files 
   // generated in the unparse phase of processing a binary.
@@ -557,7 +560,7 @@ Unparser::unparseFile ( SgBinaryFile* file, SgUnparse_Info& info )
                SgAsmFile* asmFile = file->get_binaryFileList()[i];
                ROSE_ASSERT(asmFile != NULL);
 
-               printf ("Unparse: asmFile->get_name() = %s \n",asmFile->get_name().c_str());
+               printf ("Unparse: asmFile->get_genericFile()->get_name() = %s \n",asmFile->get_genericFile()->get_name().c_str());
 
                unparseAsmFile(asmFile,info);
              }
