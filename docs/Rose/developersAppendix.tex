@@ -1387,32 +1387,45 @@ Cygwin (tux245: 32 bit Windows XP running Cygwin):
 
 \section{Testing on the NMI Build and Test Farm}%{{{
 
-The NMI Build and Test Farm allows us to compile tests on ROSE
-on a variety of different Operating Systems. For more information
-on the compile farm see \url{http://nmi.cs.wisc.edu/}.
-These tests are run against the HEAD revision of the public svn repository.
-The purpose of this section is to show how different build and test
-configurations can be implemented with respect to the ROSE public svn.
-For a detailed introduction on how to submit jobs to the build system
-visit \url{http://nmi.cs.wisc.edu/node/31}. A refernce manual can be found
-at \url{http://nmi.cs.wisc.edu/node/65}. However, in order to add new tests to 
+The NMI Build and Test Farm allows us to compile tests on ROSE on a variety of
+different Operating Systems. For more information on the compile farm see
+\url{http://nmi.cs.wisc.edu/}.  These tests can be run against an arbitrary
+tarball of ROSE source (with EDG binary), or against the HEAD revision of the
+public svn repository.  The purpose of this section is to show how different
+build and test configurations can be implemented.  For a detailed introduction
+on how to submit jobs to the build system visit
+\url{http://nmi.cs.wisc.edu/node/31}. A refernce manual can be found at
+\url{http://nmi.cs.wisc.edu/node/65}. However, in order to add new tests to
 ROSE, the information given in this chapter will suffice.
 
 %\subsection{Test procedure}
 In order to run a test, it has to be submitted on one of the submission hosts
 provided by the University of Wisconsin.
-The submission scripts provided with ROSE are developed for Metronome 2.5.2b
+The submission scripts provided with ROSE are developed for Metronome 2.6.0
 (This is the framework responsible for parsing and submitting the scripts to the
-build machines). At the moment the only machine which supports it is 
-nmi-s005.cs.wisc.edu.
+build machines). At the time of this writing, there are three submission hosts.
+They are:
+\begin{itemize}
+    \item {\tt nmi-s001.cs.wisc.edu}
+    \item {\tt nmi-s003.cs.wisc.edu}
+    \item {\tt nmi-s005.cs.wisc.edu}
+\end{itemize}
+
 For every test a build and test run is started.
 
 \subsection{Adding a test}
 To add a test which can be run on the Compile Farm you need to add an options
-file to the svn repository. This options file sets some bash variables which
-control the conditions and name the test is run. The right place to put those
-files is {\tt <rose\_dir>/scripts/nmiBuildAndTestFarm/build\_configs/<platform>/
-}. \\ 
+file to {\tt
+<rose\_dir>/scripts/nmiBuildAndTestFarm/build\_configs/<platform>/}.  If using
+{\tt nmi-submit} (see section \ref{sec:nmi:submitting-tests}) with {\tt
+--no-skip-update} (the default), the options file does not need to be checked
+in.  However, once your file works, you should check it in to the SVN repository
+so that it makes it out to the public repository, and then to the NMI cron job.
+
+These option files are simple bash scripts that set variables that determine the
+configuration of the run on the platform, which is implied by the directory the
+options file is placed in.  The name of the option file itself is not
+interpreted in any special way.\\
 
 Overview of the options:
 \begin{itemize}
@@ -1422,14 +1435,21 @@ Overview of the options:
                        can be seen by navigating to: \\
                        \url{http://nmi-s005.cs.wisc.edu/nmi/index.php?page=pool/platform} \\
                        and clicking on the platforms you want to use.
- \item {\tt CONFIGURE\_OPTIONS} - Define which options you want to pass to configure
-                                  most likely you want at least point to the right
-                                  boost directory
+ \item {\tt CONFIGURE\_OPTIONS} - Define which options you want to pass to {\tt
+                         configure}.  You will very likely need, at a minimum,
+                         to refer to the correct boost directory.
 
  \item {\tt JAVA\_HOME} - If {\tt java} is included in the prereqs, {\tt
 						 JAVA\_HOME} should be specified.  This will be passed
 						 to the environment of the running test.
-\end{itemize}
+
+ \item {\tt ACLOCAL\_INCLUDES} - Some prereqs may have {\tt m4} macros in
+ nonstandard locations.  This can be passed to the build script (and
+ subsequently to {\tt aclocal}) via {\tt ACLOCAL\_INCLUDES}.  The value is
+ passed verbatim, and so should be space separated entries of the form ``{\tt -I
+ <dir>}".  A common requirement is to include the path to the libxml-2.2.7.3
+ {\tt m4} macros with a value of ``-I /prereq/libxml2-2.7.3/share/aclocal/".
+ \end{itemize}
 
 Example options file:
 \begin{verbatim}
@@ -1439,49 +1459,67 @@ PREREQS="gcc-4.2.4, boost-1.35.0"
 CONFIGURE_OPTIONS="--with-boost=/prereq/boost-1.35.0 --with-CXX_WARNINGS=-Wall --without-java"
 \end{verbatim}
 
-\subsection{Manually submitting tests}
 
-At the time of this writing, ROSE developers share an account on the NMI test
-farm.  It is therefore important to work in your own directory when submitting
-tests manually.  To setup your own directory using the public configuration, you
-can invoke the following command on the NMI submit host ({\tt
-nmi-s005.cs.wisc.edu}):\\
+\subsection{Manually submitting tests}%{{{
+\label{sec:nmi:submitting-tests}
 
-{\tt svn checkout
-https://outreach.scidac.gov/svn/rose/trunk/scripts/nmiBuildAndTestFarm
-<your-name>-rose-nmi}\\
 
-If you are working on the NMI scripts it will be more convenient to {\tt scp}
-your local copy of the {\tt nmiBuildAndTestFarm} directory (hereafter {\tt nmi})
-to the NMI submit host, rather than checkout from the public repository.  The
-directory {\tt rose\_nmi} is used for the automated nightly (cron) runs, and
-should not be used for manually submitting tests, except to debug the cron jobs.
-Once you have your own copy of the {\tt nmi} directory on the submit host,
-manually submitting tests can be done as follows:
+Tests can be manually submitted with the script {\tt nmi-submit}.  This is a
+ruby program in the {\tt scripts/nmiBuildAndTestFarm} directory.  See {\tt
+nmi-submit --help} for more information.  At the time of this writing, this
+would output the following:
 
-\begin{enumerate}
- \item Log on to nmi-s005.cs.wisc.edu
- \item See whats already there: 
- \begin{itemize}
-  \item {\tt ls build\_configs}
-  \item {\tt ls build\_configs/<platform>}
-  \item {\tt \$\{EDITOR\} build\_configs/<platform>/<options\_file>}
- \end{itemize}
- \item After you have chosen the test you want to run execute:
-       {\tt ./submit.sh build\_configs/<platform>/<options\_file>}
-       to submit test.
- \item Point your browser to: 
-	   \url{http://nmi-web.cs.wisc.edu/nmi/index.php?page=results\%2Foverview\&opt\_project=rose+compiler}
-	   To open the results overview page. Your submitted test should be shown as
-	   "running."
-\end{enumerate}
+\begin{verbatim}
+Usage: nmi-submit [options] [TARBALL] CONFIG [CONFIG...]
+Submit TARBALL to platforms specified by each CONFIG, which must be
+files in the subtree ROSE/scripts/nmiBuildAndTestFarm.
 
-\subsection{Cron automated tests}
+        --no-tarball                 Submit the current HEAD of the public subversion
+                                     repository instead of a tarball.
+
+        --[no-]skip-update           With --no-skip-update, nmi-submit will copy files (e.g.
+                                     submit.sh, glue.pl, &c) to the submit host to ensure
+                                     that they are up-to-date.  This step can be skipped to
+                                     speed up nmi-submit.  Defaults to --no-skip-update.
+
+        --[no-]fork                  If --fork is specified, all subprocesses are forked.
+                                     This allows nmi-submit to be more responsive to INT
+                                     signals, but then requres that ssh and scp can be run
+                                     passwordless (e.g. because ssh-agent has an appropriate
+                                     identity loaded).  Defaults to --fork.
+
+        --submit-host = HOST         Specify the submission host to use.  Defaults to
+                                     heller@nmi-s005.cs.wisc.edu.
+
+        --user-dir = REMOTE_DIR      Use REMOTE_DIR on the submission host as a working area
+                                     to stage files and run the submission from.  Defaults to
+                                     `id -un`-rose-nmi.
+                                     WARNING: nmi-submit will write to REMOTE_DIR
+                                     indiscriminately.  Don't keep your family photos there.
+
+    -h, --help                       Show this message
+\end{verbatim}
+
+{\tt nmi-submit} can submit a tarball (built with {\tt make
+binary\_tarball} in the compile tree) and a list of options files, or with the
+{\tt --no-tarball} option, submit a list of options files to be tested against
+the current version of the public repository.
+
+{\tt nmi-submit} should be run locally.  It is recommended to run it from your
+source tree, specifically in the {\tt scripts/nmiBuildAndTestFarm} directory,
+although this is not required.
+
+Once you have submitted a test, you should be given a {\tt RunID}, and your test
+should appear on the search results page at
+\url{http://nmi-web.cs.wisc.edu/nmi/index.php?page=results\%2Foverview&opt\_project=rose+compiler}.
+
+
+\subsection{Cron automated tests}%{{{
 Jobs can be added to the cronjobs file in the directory {\tt
-<rose\_dir>/scripts/nmi } These cronjobs will be loaded every night into the
+<rose\_dir>/scripts/nmi}. These cronjobs will be loaded every night into the
 crontab file on the submission host (this is done by the first entry, which
-executes update.sh). In order to add your own build tests, simply add a line
-there (see {\tt man 5 crontab} for more information). Be sure to test your
+executes {\tt update.sh}). In order to add your own build tests, simply add a
+line there (see {\tt man 5 crontab} for more information). Be sure to test your
 submission before adding it to the cronjobs.\\
 
 {\bf NOTE:} If you want your cronjobs to be permanent, add this to your local svn
@@ -1492,7 +1530,84 @@ Example entry:
 \begin{verbatim}
 # run the minimal_default test every day at midnight
 0 0 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_deb_4.0/minimal_default
+\end{verbatim}%}}}
+
+
+\subsection{Viewing the Results of Recent Tests}
+\label{sec:nmi-summary}
+
+One way to see the results of recent tests is to navigate to
+\url{http://nmi-web.cs.wisc.edu/nmi/index.php?page=results\%2Foverview&opt\_project=rose+compiler}.
+A command-line friendlier tool exists, namely {\tt nmi-summary}, which will
+summarize tasks and give results for the individual tasks {\tt configure}, {\tt
+make}, {\tt check}.
+
+{\tt nmi-summary} depends on {\tt ruby}, {\tt rubygems} and the {\tt hpricot}
+gem.  See {\tt nmi-summary --help} for more information, which, at the time of
+this writing, produces the following:
+
+\begin{verbatim}
+usage:      nmi-summary [DAY]
+   or:      nmi-summary [DAY] RUNID_RANGE
+
+In the first form, gives a summary for tasks run on DAY.
+
+The second form is the same, except only tasks whose runids fall within
+RUNID_RANGE are included.
+
+In either form, if DAY is omitted, it defaults to the most recent day in
+which a task was run.
+
+    [DAY]           Should be spcified in the format YYYY/MM/DD.
+
+    [RUNID_RANGE]   Should be specified in the format LOWER..UPPER.
+                    Both LOWER and UPPER are inclusive.  Either may be
+                    omitted.  LOWER defaults to 0 and UPPER defaults to
+                    a large number (essentially infinity).
+
+EXAMPLES
+--------
+
+    The following will show results for 11 September 2009 with RunIDs
+    181300 or higher:
+
+        nmi-summary 2009/09/11 181300..
+
+    The following will show results for the most recent day with
+    submissions, whose RunIDs fall within the range 181300 and 181400,
+    inclusive:
+
+        nmi-summary 181300..181400
+
+    The following will show all results for 11 September 2009:
+
+        nmi-summary 2009/09/11
+
+
+DEPENDENCIES
+------------
+    nmi-summary depends on rubygems and the hpricot gem.
+
+        yum install rubygems && gem install hpricot
+
+NOTES
+-----
+    nmi-summary scrapes data from the NMI website, making N+2 requests.
+    It is not speedy, and its users must exercise patience.
+    
 \end{verbatim}
+
+
+\subsection{{\tt cleanup.sh}}
+The process of submitting tests produces some temporary files.  One is a
+generated environment file that is quite small.  However, submitting individual
+tarballs leaves a copy of the tarball on the submit host, which is necessary so
+that the run host can access it.
+
+So as not to unduly burden the NMI submit host hard drives, we have a script,
+{\tt cleanup.sh}, which is included in the crontab and cleans up any such
+temporary files older than 72 hours.  Although not necessary (thanks to cron),
+it is safe to run the script manually.
 
 
 \subsection{Troubleshooting with {\tt nmi-postmortem}}
@@ -1500,7 +1615,9 @@ Example entry:
 If a run fails, it can be helpful to examine the environment that it ran on.
 There is a small program, {\tt nmi-postmortem}, that aims to automate some of
 the tedium of doing this.  On the results page for a run, you can find the {\tt
-runid} (see Figure \ref{fig:nmi:screenshot}).\\
+RunID} (see Figure \ref{fig:nmi:screenshot}).  Alternatively, you can find the
+{\tt RunID} from {\tt nmi-summary} (see section \ref{sec:nmi-summary}).\\
+
 
 \begin{figure}
 	\includegraphics[width=200mm]{nmi-screenshot.png}
@@ -1512,7 +1629,8 @@ runid} (see Figure \ref{fig:nmi:screenshot}).\\
 
 {\tt nmi-postmortem} is intended to be run on the submit host.  If it is not in
 the {\tt PATH} of the account you are using there, then {\tt scp} the file to
-the submit host and place it somewhere in your {\tt PATH}.\\
+the submit host and place it somewhere in your {\tt PATH}.  If you are using the
+shared account, then {\tt nmi-postmortem} should already be in your {\tt PATH}.\\
 
 
 With this, you can invoke the following on the submit host:\\
@@ -1526,7 +1644,8 @@ This will do the following:
 
 	\item Ensure that it is possible to {\tt ssh} to the run host.  This may
 	require you entering the account's password a couple of times, but is
-	otherwise automated.
+	otherwise automated.  This amounts to copying the public key from the submit
+    host to the run host's {\tt \$HOME/.ssh/authorized\_keys} file.
 
 	\item Copy {\tt results.tar.gz} to the run machine and extract it there in a
 	directory called {\tt run}.  {\bf {\tt WARNING}}: Any previous run directory on
@@ -1545,7 +1664,7 @@ simply invoke {\tt ssh-keygen} and be sure not to specify a passphrase.
 
 
 \subsection{Default Timeouts}
-   See manual.
+   See the manual.
 
 
 \subsection{Where to get help}
@@ -1556,5 +1675,8 @@ simply invoke {\tt ssh-keygen} and be sure not to specify a passphrase.
 		these include \tt{uw-nmi-announce} and \tt{nmi-users}.
 
 	\item {\bf Support} - Support's email is {\tt nmi-support@cs.wisc.edu}.
+
+    \item {\bf The Manual} - \url{http://nmi.cs.wisc.edu/node/31}.
 \end{enumerate}
 %}}}
+

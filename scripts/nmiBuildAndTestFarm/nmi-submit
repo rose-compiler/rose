@@ -148,14 +148,6 @@ def parse_options( args )
         opts.separator ""
         opts.on_tail( "-h", "--help", "Show this message" ) do
             puts opts
-            puts "\n\n"
-            puts "
-                Please note, nmi-submit forks various ssh and scp subprocesses
-                and will therefore only work if you can ssh to the submit host
-                without stdin, i.e. if you are running in an `ssh-agent` process
-                and have already `ssh-add`-d an identity listed in the submit
-                hosts's authorized keys.
-            ".clean
             exit
         end
     end
