@@ -521,11 +521,14 @@ sortSgNodeListBasedOnAppearanceOrderInSource(const std::vector<SgDeclarationStat
   \brief #if-#else-#end, comments, #include, etc
 */
 
+  //! Dumps a located node's preprocessing information.
+  void dumpPreprocInfo (SgLocatedNode* locatedNode);
+
 //! Insert  #include "filename" or #include <filename> (system header) into the global scope containing the current scope, right after other #include XXX. 
 PreprocessingInfo* insertHeader(const std::string& filename, PreprocessingInfo::RelativePositionType position=PreprocessingInfo::after, bool isSystemHeader=false, SgScopeStatement* scope=NULL);
 
-//! Move preprocessing information of stmt_src to stmt_dst, Only move preprocessing information at the specified relative position, otherwise move all preprocessing information.  
-void moveUpPreprocessingInfo (SgStatement* stmt_dst, SgStatement* stmt_src, PreprocessingInfo::RelativePositionType position=PreprocessingInfo::undef);
+//! Move preprocessing information of stmt_src to stmt_dst, Only move preprocessing information from the specified sourcerelative position to a specified target position, otherwise move all preprocessing information with position information intact 
+void moveUpPreprocessingInfo (SgStatement* stmt_dst, SgStatement* stmt_src, PreprocessingInfo::RelativePositionType src_position=PreprocessingInfo::undef,  PreprocessingInfo::RelativePositionType dst_position=PreprocessingInfo::undef);
 
 //!Cut preprocessing information from a source node and save it into a buffer. Used in combination of pastePreprocessingInfo(). The cut-paste operation is similar to moveUpPreprocessingInfo() but it is more flexible in that the destination node can be unknown during the cut operation.
 void cutPreprocessingInfo (SgLocatedNode* src_node, PreprocessingInfo::RelativePositionType pos, AttachedPreprocessingInfoType& save_buf);
@@ -1031,6 +1034,9 @@ SgScopeStatement* getScope(const SgNode* astNode);
   */
  bool isSameFunction(SgFunctionDeclaration* func1, SgFunctionDeclaration* func2);
 
+ //! Check if a statement is the last statement within its closed scope
+ bool isLastStatement(SgStatement* stmt);
+
 //@}
 
 //------------------------------------------------------------------------
@@ -1487,9 +1493,6 @@ std::vector<SgDeclarationStatement*> getDependentDeclarations (SgStatement* stmt
   void moveBeforePreprocInfo (SgStatement* src, SgStatement* dest);
   void moveInsidePreprocInfo (SgBasicBlock* src, SgBasicBlock* dest);
   void moveAfterPreprocInfo (SgStatement* src, SgStatement* dest);
-
-  //! Dumps a statement's preprocessing information.
-  void dumpPreprocInfo (const SgStatement* s, std::ostream& o);
 
 //--------------------------------operator--------------------------------
 //------------------------------------------------------------------------

@@ -5175,6 +5175,34 @@ bool SageInterface::isEqualToIntConst(SgExpression* e, int value) {
   return result;  
  } // isSameFunction()
 
+//! Check if a statement is the last statement within its closed scope
+ bool SageInterface::isLastStatement(SgStatement* stmt)
+{
+  bool result =false;
+  ROSE_ASSERT(stmt != NULL);
+  SgScopeStatement* p_scope = stmt->get_scope();
+  ROSE_ASSERT(p_scope != NULL);
+#if 0  
+  if (p_scope->containsOnlyDeclarations())
+  {
+    SgDeclarationStatementPtrList stmtlist= p_scope->getDeclarationList ()
+      if (stmtlist[stmtlist.size()-1] == stmt)
+        result = true;
+  }
+  else
+  {
+    SgStatementPtrList  stmtlist= p_scope->getStatementList ();
+    if (stmtlist[stmtlist.size()-1] == stmt)
+      result = true;
+  }
+#endif
+  SgStatementPtrList  stmtlist= p_scope->generateStatementList ();
+  if (stmtlist[stmtlist.size()-1] == stmt)
+    result = true;
+
+  return result;
+}
+
 //-----------------------------------------------
 // Remove original expression trees from expressions, so you can change
 // the value and have it unparsed correctly.
@@ -6617,6 +6645,11 @@ SgAssignInitializer* SageInterface::splitExpression(SgExpression* from, string n
 
   SgExpression* SageInterface::copyExpression(SgExpression* e) 
   {
+    ROSE_ASSERT( e != NULL);
+    // We enforce that the source expression is fully attached to the AST
+    // Too strict, the source expression can be just built and not attached.
+    // Liao, 9/21/2009
+//    ROSE_ASSERT( e->get_parent() != NULL);
     return deepCopy(e);
   }
 
@@ -7506,7 +7539,8 @@ StringUtility::numberToString(++breakLabelCounter),
 // More general usage: move preprocessingInfo of stmt_src to stmt_dst, should used before any
 //           LoweLevel::remove(stmt_src)
 void SageInterface::moveUpPreprocessingInfo(SgStatement * stmt_dst, SgStatement * stmt_src,
-      PreprocessingInfo::RelativePositionType position/*=PreprocessingInfo::undef*/)
+      PreprocessingInfo::RelativePositionType src_position/*=PreprocessingInfo::undef*/,
+      PreprocessingInfo::RelativePositionType dst_position/*=PreprocessingInfo::undef*/)
 {
   ROSE_ASSERT(stmt_src != NULL);
   ROSE_ASSERT(stmt_dst != NULL);
@@ -7532,15 +7566,17 @@ void SageInterface::moveUpPreprocessingInfo(SgStatement * stmt_dst, SgStatement 
         (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorEndifDeclaration )
        )
     { 
-      if (position == PreprocessingInfo::undef) 
+      if (src_position == PreprocessingInfo::undef) 
       {
         stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::after);
         (*infoToRemoveList).push_back(*i);
-      } else if (info->getRelativePosition()==position)
+      } else if (info->getRelativePosition()==src_position)
       {
+        if (dst_position != PreprocessingInfo::undef) 
+          info->setRelativePosition(dst_position);
         stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::after);
         (*infoToRemoveList).push_back(*i);
-      } // if position
+      } // if src_position
     } // end if 
   }// end for
 
@@ -7549,6 +7585,7 @@ void SageInterface::moveUpPreprocessingInfo(SgStatement * stmt_dst, SgStatement 
   for (j = (*infoToRemoveList).begin(); j != (*infoToRemoveList).end(); j++)
     infoList->erase( find(infoList->begin(),infoList->end(),*j) );
 } // moveUpPreprocessingInfo()
+
 
 
 /*!
@@ -7635,6 +7672,41 @@ void SageInterface::pastePreprocessingInfo (SgLocatedNode* dst_node, Preprocessi
     //TODO what if pos == PreprocessingInfo::inside ?
     cerr<<"SageInterface::pastePreprocessingInfo() pos==PreprocessingInfo::inside is not supported."<<endl;
     ROSE_ASSERT(false);
+  }
+}
+
+void SageInterface::dumpPreprocInfo (SgLocatedNode* locatedNode)
+{
+  ROSE_ASSERT(locatedNode != NULL);
+  AttachedPreprocessingInfoType *comments =
+    locatedNode->getAttachedPreprocessingInfo ();
+
+  if (comments != NULL)
+  {
+    printf ("-----------------------------------------------\n");
+    printf ("Found an IR node (at %p of type: %s) in file %s \n",
+        locatedNode, locatedNode->class_name ().c_str (),
+        (locatedNode->get_file_info ()->get_filenameString ()).c_str ());
+    int counter = 0;
+    AttachedPreprocessingInfoType::iterator i;
+    for (i = comments->begin (); i != comments->end (); i++)
+    {
+      printf
+        ("with attached preprocessingInfo numbering #%d :------------- \nclassification= %s:\nString format:%s\n",
+         counter++,
+         PreprocessingInfo::directiveTypeName ((*i)->getTypeOfDirective ()).
+         c_str (), (*i)->getString ().c_str ());
+      if ((*i)->getRelativePosition () == PreprocessingInfo::inside)
+        printf ("relative position is: inside\n");
+      else 
+        printf ("relative position is: %s\n", \
+            ((*i)->getRelativePosition () == PreprocessingInfo::before) ? "before" : "after");
+    }
+  }
+  else
+  {
+    printf ("No attached preprocessing info. (at %p of type: %s): \n", locatedNode,
+        locatedNode->sage_class_name ());
   }
 }
 
@@ -10132,6 +10204,9 @@ void SageInterface::dumpInfo(SgNode* node, std::string desc/*=""*/)
     SgFunctionDeclaration * decl = isSgFunctionDeclaration(snode);
     if (decl)
       cout<<"\tqualified name="<<decl->get_qualified_name().getString()<<endl;
+    SgVarRefExp * varRef =  isSgVarRefExp(snode);
+    if (varRef) 
+      cout<<"\treferenced variable name= "<<varRef->get_symbol()->get_name().getString()<<endl;
   }
   cout<<endl;
   cout<<"///////////// end of SageInterface::dumpInfo() ///////////////"<<endl;

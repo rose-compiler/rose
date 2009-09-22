@@ -302,7 +302,7 @@ SgLocatedNode::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
         }
        else
         {
-          printf ("In SgStatement::fixupCopy_scopes(): parent not set for original AST at %p = %s, thus copy left similarly incomplete \n",this,this->class_name().c_str());
+          printf ("In SgLocatedNode::fixupCopy_scopes(): parent not set for original AST at %p = %s, thus copy left similarly incomplete \n",this,this->class_name().c_str());
         }
 
   // DQ (2/20/2009): Added assertion, I think it is up to the parent node copy function to set the parent in the copying of any children.
