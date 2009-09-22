@@ -403,15 +403,25 @@ run/%: rted_source/%.bin rted_source/%.expected-output
 	@echo " done."
        
 run_log/%: rted_source/%.bin rted_source/%.expected-output 
-	@echo -n "   running runtime error detection ... "
-	@$(filter rted_source/%.bin, $^); \
-	if [ $$? -ne 0 ]; \
-	then \
-		echo " $@ failed" >> test_log.txt;\
-	else \
-	echo " $@ passed" >> test_log.txt;\
-	fi 
-	@echo " done."  
+	@echo "   logging results for runtime error detection ... $(filter %.bin, $?)"
+	@OUTPUT_SRC='$(strip $(filter %.expected-output, $?))';\
+		if [ -f "$$OUTPUT_SRC" ]; then\
+			RESULT='$(strip $(patsubst %.bin, %.result.txt, $(filter rted_source/%.bin, $?)))';\
+			./$(filter rted_source/%.bin, $?) 2> $$RESULT;\
+			if [ $$? -ne 0 ];then cat $$RESULT && echo "Test exited unexpectedly with non-zero status" && exit 1; fi;\
+			ACTUAL_OUTPUT='./$(strip $(patsubst %.bin, %.actual-output, $(filter rted_source/%.bin, $?)))';\
+			if [ ! -f $$RESULT ]; then echo "no result produced!" && exit 1; fi; \
+			$(EXTRACT_ACTUAL_ERROR) $$RESULT > $$ACTUAL_OUTPUT;\
+			diff --ignore-all-space --ignore-case -q $$ACTUAL_OUTPUT $(filter %.expected-output, $?) > /dev/null;\
+			if [ $$? -ne 0 ]; then\
+				echo " $@ failed" >> test_log.txt;\
+			else \
+				echo " $@ passed" >> test_log.txt;\
+			fi;\
+		else\
+			./$(filter rted_source/%.bin, $?);\
+		fi;
+	@echo " done."
 
 #------------------------------------------------------------------------------
 
