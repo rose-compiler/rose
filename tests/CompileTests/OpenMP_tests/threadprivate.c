@@ -12,4 +12,5 @@ int main(void)
     counter++;
 #pragma omp parallel
   printf("counter=%d\n",counter);
+  return 0;
 }

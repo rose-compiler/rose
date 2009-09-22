@@ -35,6 +35,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2009_07.c \
      test2009_08.c \
      test2009_16.c \
+     test2009_19.c \
      math.c \
      complex_01.c \
      constants.c

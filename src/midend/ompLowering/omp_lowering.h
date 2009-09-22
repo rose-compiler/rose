@@ -51,8 +51,14 @@ namespace OmpSupport
   //! Translate omp barrier
   void transOmpBarrier(SgNode* node);
 
+  //! Translate omp flush 
+  void transOmpFlush(SgNode* node);
+
   //! Translate omp taskwait
   void transOmpTaskwait(SgNode* node);
+
+  //! Translate omp threadprivate
+  void transOmpThreadprivate(SgNode* node);
 
   //! Translate the ordered directive (not the ordered clause)
   void transOmpOrdered(SgNode* node);

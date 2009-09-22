@@ -8,17 +8,31 @@ GOMP_PATH = @gomp_omp_runtime_library_path@
 
 # all input files are put into tests/CompileTests/OpenMP_tests
 # They are shared by both OpenMP parsing tests and OpenMP lowering tests
-C_TESTCODES_REQUIRED_TO_PASS = \
+
+# Put test codes without main() entry here
+# They will be compiled only, not executed.
+C_TESTCODES_REQUIRED_TO_COMPILE = \
+        barrier.c \
+        dynamicChunk.c \
+	master.c \
+        nowait.c \
+        staticChunk.c \
+        task_orphaned.c \
+        task_underIf.c \
+        task_wait.c
+
+# Put test codes which can run (with main() ) here
+# They will be compiled and executed when the gomp library path is set
+C_TESTCODES_REQUIRED_TO_RUN = \
         3loops.c \
         atomic.c \
-        barrier.c \
         critical.c \
         critical_orphaned.c \
-        dynamicChunk.c \
         empty.c \
         falsesharing.c \
         firstlastprivate.c \
         firstprivate.c \
+        flush.c \
         get_max_threads.c \
         hello-1.c \
 	hello-2.c \
@@ -31,7 +45,6 @@ C_TESTCODES_REQUIRED_TO_PASS = \
         nestedpar.c \
         nestedpar1.c \
         masterSingle.c \
-        nowait.c \
         ordered.c \
         ordered2.c \
         omp1.c \
@@ -44,76 +57,29 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	parallel-reduction.c \
         parallelfor.c \
         parallelfor2.c \
-        private.c \
+	private.c \
         privatej.c \
         reduction.c \
         reduction2.c \
         set_num_threads.c \
 	single.c \
+	subteam.c \
+	subteam2.c \
         spmd1.c \
-        staticChunk.c \
-        subteam.c \
-        subteam2.c \
         task_largenumber.c \
-        task_orphaned.c \
-        task_underIf.c \
-        task_untied.c \
-        task_untied2.c \
-        task_wait.c
-# a subset of C tests can be executed	
-# Put their object files with main entries here
-C_MAIN_Objects = \
-        3loops.o \
-        atomic.o \
-        critical.o \
-        critical_orphaned.o \
-        empty.o \
-        falsesharing.o \
-        firstlastprivate.o \
-        firstprivate.o \
-        get_max_threads.o \
-        hello-1.o \
-	hello-2.o \
-        hello-ordered.o \
-        hello.o \
-        jacobi.o \
-        lastprivate.o \
-        lastprivate0.o \
-        lockarray.o \
-        nestedpar.o \
-        nestedpar1.o \
-        masterSingle.o \
-        ordered.o \
-        ordered2.o \
-        omp1.o \
-        ompfor.o \
-        ompfor2.o \
-        ompfor3.o \
-        ompfor4.o \
-        orphaned-directives.o \
-        parallel.o \
-	parallel-reduction.o \
-        parallelfor.o \
-        parallelfor2.o \
-	private.o \
-        privatej.o \
-        reduction.o \
-        reduction2.o \
-        set_num_threads.o \
-	single.o \
-	subteam.o \
-	subteam2.o \
-        spmd1.o \
-        task_largenumber.o \
-	task_untied.o \
-        task_untied2.o
+	task_untied.c \
+        task_untied2.c
+	threadprivate.c \
+        threadprivate2.c \
+        threadprivate3.c
+
+# The runnable tests' object files
+PASSING_Objects_With_main = ${C_TESTCODES_REQUIRED_TO_RUN:.c=.o}
+
 # TODO task-wait hangs for gcc 4.4.1 (not for Intel icc), skip the execution for now	
 #	task_wait.o
 
-CXX_TESTCODES_REQUIRED_TO_PASS = 
-
-# a subset of Cxx tests can be executed	
-CXX_MAIN_Objects = 
+CXX_TESTCODES_REQUIRED_TO_COMPILE = 
 
 # TODO: npb, validation suite, developer tests, epcc
 TESTCODE_CURRENTLY_FAILING = \
@@ -124,7 +90,6 @@ TESTCODE_CURRENTLY_FAILING = \
         copyprivate3.c \
         critical_dead.c \
         expressions.c \
-        flush.c \
         macroCalls.c \
         parallelsections.c \
         recursive.c \
@@ -133,9 +98,6 @@ TESTCODE_CURRENTLY_FAILING = \
         task_link.cpp \
         task_tree.cpp \
         threadProcessor.c \
-        threadprivate.c \
-        threadprivate2.c \
-        threadprivate3.c \
         variables.c
 
 # we reuse the OpenMP sources files from the OpenMP compile test directory
@@ -149,10 +111,18 @@ roseomp_SOURCES = roseomp.C
 # this flag is used for the long list of CXX test files
 TEST_FLAGS = $(TEST_INCLUDES) -rose:openmp:lowering --edg:no_warnings #-rose:verbose 2 #--edg:restrict #-rose:wave 
 
-PASSING_C_TEST_Objects = $(C_TESTCODES_REQUIRED_TO_PASS:.c=.o)
-PASSING_CXX_TEST_Objects = $(CXX_TESTCODES_REQUIRED_TO_PASS:.cpp=.o)
+# We only include test codes required to compile here.
+# Runnable codes are handled separatedly, 
+#    using check_PROGRAM  if gomp path is available
+#   or make their object files only
+PASSING_C_TEST_Objects = $(C_TESTCODES_REQUIRED_TO_COMPILE:.c=.o)
+PASSING_CXX_TEST_Objects = $(CXX_TESTCODES_REQUIRED_TO_COMPILE:.cpp=.o)
 
+# rules to build .o from .c for OpenMP test codes
 $(PASSING_C_TEST_Objects): %.o: $(TEST_DIR)/%.c roseomp
+	./roseomp$(EXEEXT) ${TEST_FLAGS} -c $<
+
+$(PASSING_Objects_With_main): %.o: $(TEST_DIR)/%.c roseomp
 	./roseomp$(EXEEXT) ${TEST_FLAGS} -c $<
 
 $(PASSING_CXX_TEST_Objects): %.o: $(TEST_DIR)/%.cpp roseomp
@@ -163,8 +133,7 @@ if WITH_GOMP_OPENMP_LIB
 #-------------compile and run--------------------------------	
 # Only for C or CXX tests will main()
 # a subset of PASSING_C_TEST_Objects and PASSING_CXX_TEST_Objects
-TEST_MAIN_Objects = $(C_MAIN_Objects) $(CXX_MAIN_Objects)	
-PASSING_TEST_Executables = ${TEST_MAIN_Objects:.o=.out}
+PASSING_TEST_Executables = ${PASSING_Objects_With_main:.o=.out}
 # TODO this might have problem with CXX objects!!
 MY_FINAL_LINK = -L$(GOMP_PATH) -lgomp -lpthread -lm
 %.out: %.o
@@ -184,10 +153,12 @@ check-local: roseomp
 	@echo "***********************************************************************************************************"
 
 else
+#-------------compile only --------------------------------	
 check-local: roseomp
 	@echo "Test for ROSE OpenMP lowering."
 	@echo "***************** Testing C input *******************"
 	$(MAKE) $(PASSING_C_TEST_Objects)
+	$(MAKE) $(PASSING_Objects_With_main) # make objects with main entries here 
 	@echo "***************** Testing C++ input ******************"
 	$(MAKE) $(PASSING_CXX_TEST_Objects)
 	@echo "***********************************************************************************************************"

@@ -39,6 +39,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	limits_threads.c \
 	lockarray.c \
 	lu_factorization.c \
+	master.c \
 	masterSingle.c \
 	matrix_vector.c \
 	nestedpar1.c \

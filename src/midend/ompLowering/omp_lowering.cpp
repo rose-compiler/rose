@@ -455,7 +455,7 @@ namespace OmpSupport
     // the case of with the ordered schedule, but without any schedule policy specified
     // treat it as (static, 0) based on GCC's translation
     SgOmpClause::omp_schedule_kind_enum s_kind = SgOmpClause::e_omp_schedule_static;
-    SgExpression* orig_chunk_size = buildIntVal(0);
+    SgExpression* orig_chunk_size = NULL;
     bool hasOrder = false;
     if (hasClause(target, V_SgOmpOrderedClause))
       hasOrder = true;
@@ -475,6 +475,8 @@ namespace OmpSupport
         orig_chunk_size = createAdjustedChunkSize(orig_chunk_size);
       }
     }
+    else
+      orig_chunk_size = buildIntVal(0);
 
    // schedule(auto) does not have chunk size 
     if (s_kind != SgOmpClause::e_omp_schedule_auto  && s_kind != SgOmpClause::e_omp_schedule_runtime)
@@ -493,7 +495,8 @@ namespace OmpSupport
         createAdjustedStride(orig_stride, isIncremental)); 
     if (s_kind != SgOmpClause::e_omp_schedule_auto && s_kind != SgOmpClause::e_omp_schedule_runtime)
     {
-      appendExpression(para_list, copyExpression(orig_chunk_size));
+      appendExpression(para_list, orig_chunk_size);
+      //appendExpression(para_list, copyExpression(orig_chunk_size));
     }
     appendExpression(para_list, buildAddressOfOp(buildVarRefExp(lower_decl)));
     appendExpression(para_list, buildAddressOfOp(buildVarRefExp(upper_decl)));
@@ -647,6 +650,7 @@ namespace OmpSupport
         SgOmpClause::omp_schedule_kind_enum s_kind = s_clause->get_kind();
         ROSE_ASSERT(s_kind == SgOmpClause::e_omp_schedule_static);
         SgExpression* orig_chunk_size = s_clause->get_chunk_size();  
+      //  ROSE_ASSERT(orig_chunk_size->get_parent() != NULL);
         if (orig_chunk_size)
         {
           hasSpecifiedSize = true;
@@ -688,12 +692,13 @@ namespace OmpSupport
         // _p_chunk_size = _p_ck_temp + _p_chunk_size;
         SgExpression* temp_chunk = buildVarRefExp(chunk_decl);
         SgExprStatement * assign2 = buildAssignStatement(buildVarRefExp(chunk_decl), 
-            buildAddOp(buildVarRefExp(temp_decl), buildVarRefExp(chunk_decl))); 
+            buildAddOp(buildVarRefExp(temp_decl), temp_chunk)); 
         // buildAddOp(buildVarRefExp(temp_decl), buildVarRefExp(chunk_decl)));  // use temp_chunk once to avoid dangling expression
         appendStatement(assign2, bb1);
         my_chunk_size = temp_chunk; // now my_chunk_size has to be copied before reusing it!!
       }
       ROSE_ASSERT(my_chunk_size != NULL);
+      ROSE_ASSERT(my_chunk_size->get_parent() != NULL);
 
       // adjust start and end iterations for the current thread for static scheduling
       // ---------------------------------------------------------------
@@ -1185,6 +1190,42 @@ namespace OmpSupport
     replaceStatement(target, func_call_stmt, true);
   }
 
+  //! Simply replace the pragma with a function call to __sync_synchronize ();
+  void transOmpFlush(SgNode * node)
+  {
+    ROSE_ASSERT(node != NULL );
+    SgOmpFlushStatement* target = isSgOmpFlushStatement(node);
+    ROSE_ASSERT(target != NULL );
+    SgScopeStatement * scope = target->get_scope();
+    ROSE_ASSERT(scope != NULL );
+
+    SgExprStatement* func_call_stmt = buildFunctionCallStmt("__sync_synchronize", buildVoidType(), NULL, scope);
+    replaceStatement(target, func_call_stmt, true);
+  }
+
+  //! Add __thread for each threadprivate variable's declaration statement and remove the #pragma omp threadprivate(...) 
+  void transOmpThreadprivate(SgNode * node)
+  {
+    ROSE_ASSERT(node != NULL );
+    SgOmpThreadprivateStatement* target = isSgOmpThreadprivateStatement(node);
+    ROSE_ASSERT(target != NULL );
+
+    SgInitializedNamePtrList nameList = target->get_variables ();
+    for (size_t i = 0; i<nameList.size(); i++)
+    {
+      SgInitializedName* init_name = nameList[i];
+      ROSE_ASSERT(init_name != NULL);
+      SgVariableDeclaration*  decl = isSgVariableDeclaration(init_name-> get_declaration());
+      ROSE_ASSERT (decl != NULL);
+     // cout<<"setting TLS for decl:"<<decl->unparseToString()<< endl;
+      decl->get_declarationModifier().get_storageModifier().set_thread_local_storage(true);
+      // choice between set TLS to declaration or init_name (not working) ?
+     // init_name-> get_storageModifier ().set_thread_local_storage (true); 
+    }
+    removeStatement(target);
+  }
+
+
   //! Collect variables from OpenMP clauses: including private, firstprivate, lastprivate, reduction, etc.
   SgInitializedNamePtrList collectClauseVariables (SgOmpClauseBodyStatement * clause_stmt, const VariantT & vt)
   {
@@ -1457,6 +1498,7 @@ namespace OmpSupport
     ROSE_ASSERT(target != NULL );
     SgScopeStatement * scope = target->get_scope();
     ROSE_ASSERT(scope != NULL );
+    bool isLast = isLastStatement(target); // check this now before any transformation
 
     SgStatement* body = target->get_body();
     ROSE_ASSERT(body!= NULL );
@@ -1465,6 +1507,14 @@ namespace OmpSupport
 
     SgIfStmt* if_stmt = buildIfStmt(buildEqualityOp(func_exp,buildIntVal(0)), body, NULL); 
     replaceStatement(target, if_stmt,true);
+    moveUpPreprocessingInfo (if_stmt, target, PreprocessingInfo::before);
+    if (isLast) // the preprocessing info after the last statement may be attached to the inside of its parent scope
+    {
+  //    cout<<"Found a last stmt. scope is: "<<scope->class_name()<<endl;
+  //    dumpPreprocInfo(scope);
+  // move preprecessing info. from inside position to an after position    
+      moveUpPreprocessingInfo (if_stmt, scope, PreprocessingInfo::inside, PreprocessingInfo::after);
+    }
   }
 
 
@@ -1860,7 +1910,18 @@ It should also satisfy the restriction defined in specification 3.0 page 93  TOD
             transOmpBarrier(node);
             break;
           }
-        case V_SgOmpTaskwaitStatement:
+        case V_SgOmpFlushStatement:
+          {
+            transOmpFlush(node);
+            break;
+          }
+
+        case V_SgOmpThreadprivateStatement:
+          {
+            transOmpThreadprivate(node);
+            break;
+          }
+       case V_SgOmpTaskwaitStatement:
           {
             transOmpTaskwait(node);
             break;

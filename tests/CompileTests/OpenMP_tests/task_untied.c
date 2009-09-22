@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <omp.h>
 
-#define LARGE_NUMBER 1000
+#define LARGE_NUMBER 100
 //#define LARGE_NUMBER 10000000
 double item[LARGE_NUMBER];
 void process (double input)
