@@ -280,7 +280,7 @@ class RtedTransformation : public AstSimpleProcessing {
 				bool ismalloc );
   SgFunctionCallExp* buildVariableCreateCallExpr(SgThisExp* this_exp, bool forceinit=false);
   SgFunctionCallExp* buildVariableCreateCallExpr(SgInitializedName* name, SgStatement* stmt, bool forceinit=false);
-  // TODO 1 djh: test docs
+  // TODO 2 djh: test docs
   /**
    * @b{ For Internal Use Only }.  See the overloaded convenience functions.
    */

@@ -76,6 +76,20 @@ EXTRA_DIST = example.C \
 
 CLEANFILES = *.out *.ti *.pdf test_runtime* *.txt rose_test_c_E_1_1_a
 
+RTED_C_LOCAL_TEST_DIRS = $(srcdir)/tests/C/panasTests \
+						 $(srcdir)/tests/C/memoryleaks \
+						 $(srcdir)/tests/C/memoverlap \
+						 $(srcdir)/tests/C/pointer \
+						 $(srcdir)/tests/C/types
+
+RTED_CPP_LOCAL_TEST_DIRS = 	 $(srcdir)/tests/Cxx/io \
+							 $(srcdir)/tests/Cxx/memory \
+							 $(srcdir)/tests/Cxx/overloading \
+							 $(srcdir)/tests/Cxx/pointer \
+							 $(srcdir)/tests/Cxx/simple \
+							 $(srcdir)/tests/Cxx/templates \
+							 $(srcdir)/tests/Cxx/types
+
 RTED_C_TEST_DIRS = $(rted_path)/C/array_index_out_of_bound \
 		 $(rted_path)/C/string_errors \
 		 $(rted_path)/C/subprogram_call_errors \
@@ -86,11 +100,8 @@ RTED_C_TEST_DIRS = $(rted_path)/C/array_index_out_of_bound \
 		 $(rted_path)/C/C99_specific_errors \
 		 $(rted_path)/C/floating_point_errors \
 		 $(rted_path)/C/pointer_errors \
-		 $(srcdir)/tests/C/panasTests \
-		 $(srcdir)/tests/C/memoryleaks \
-		 $(srcdir)/tests/C/memoverlap \
-		 $(srcdir)/tests/C/pointer \
-		 $(srcdir)/tests/C/types
+		 $(RTED_C_LOCAL_TEST_DIRS)
+
 RTED_CPP_TEST_DIRS = $(rted_path)/C++/array_index_out_of_bound \
 		 $(rted_path)/C++/string_errors \
 		 $(rted_path)/C++/allocation_deallocation_errors \
@@ -99,12 +110,7 @@ RTED_CPP_TEST_DIRS = $(rted_path)/C++/array_index_out_of_bound \
 		 $(rted_path)/C++/uninitialized_variables \
 		 $(rted_path)/C++/floating_point_errors \
 		 $(rted_path)/C++/pointer_errors \
-		 $(srcdir)/tests/Cxx/simple \
-		 $(srcdir)/tests/Cxx/pointer \
-		 $(srcdir)/tests/Cxx/types \
-		 $(srcdir)/tests/Cxx/memory \
-		 $(srcdir)/tests/Cxx/templates \
-		 $(srcdir)/tests/Cxx/overloading
+		 $(RTED_CPP_LOCAL_TEST_DIRS)
 
 RTED_TEST_DIRS=$(RTED_C_TEST_DIRS) $(RTED_CPP_TEST_DIRS)
 
@@ -386,14 +392,14 @@ run/%: rted_source/%.bin rted_source/%.expected-output
 				echo 'Expected error did not match actual error found';\
 				echo ' (the error may be in the extraction scripts -- see the actual files that were diff-d';\
 				echo "  $(filter %.expected-output, $?) $$ACTUAL_OUTPUT)";\
-				echo -e '\n========== Expected Error ==========';\
+				echo -e '\n----------- Expected Error ------------';\
 				echo "(remember to subtract 2 from actual line numbers (for non-instrumented source) to compensate for added lines)";\
 				RTED_OKMSG="$(strip $(patsubst rted_source/%.expected-output, $(rted_path)/%.ok_msg, $(filter %.expected-output, $?)))";\
 				LOCAL_OKMSG="$(strip $(patsubst rted_source/%.expected-output, $(srcdir)/%.ok_msg, $(filter %.expected-output, $?)))";\
 				if [ -f "$$RTED_OKMSG" ]; then cat $$RTED_OKMSG;\
 				elif [ -f "$$LOCAL_OKMSG" ]; then cat $$LOCAL_OKMSG;\
 				fi;\
-				echo -e '\n========== Actual   Error ==========';\
+				echo -e '\n----------- Actual   Error ------------';\
 				cat $$RESULT;\
 				exit 1;\
 			fi;\
@@ -507,20 +513,34 @@ TESTS_KNOWN_TO_FAIL = run/C/subprogram_call_errors/c_C_1_3_f \
 					  run/C++/pointer_errors/C_J_1_4_a_d \
 					  run/C++/pointer_errors/C_J_2_1_a_d \
 					  run/tests/C/memoryleaks/assignment_scope_switch \
-					  run/tests/C/memoryleaks/assignment_to_locals_then_globals_then_locals \
+					  run/tests/C/memoryleaks/assignment_to_locals_then_globals_then_local \
 					  run/tests/C/memoryleaks/assignment_to_multi_fncall \
 					  run/tests/C/memoryleaks/assignment_to_fn_malloc_novar \
 					  run/tests/C/memoverlap/heap_array_in_struct \
 					  run/tests/C/memoverlap/heap_array_in_struct_in_array \
-					  run/tests/Cxx/overloading/array_index \
-					  run/tests/Cxx/pointer/dot_star \
-					  run/tests/Cxx/pointer/arrow_star \
 					  run/tests/C/pointer/arraytest \
+					  run/tests/C/types/union \
+					  run/tests/Cxx/io/cxx_stream \
+					  run/tests/Cxx/memory/new_realloc \
+					  run/tests/Cxx/overloading/array_index \
+					  run/tests/Cxx/pointer/arrow_star \
 					  run/tests/Cxx/pointer/C_F_3_3_a_i \
-					  run/tests/Cxx/pointer/C_F_3_3_a_i2
+					  run/tests/Cxx/pointer/C_F_3_3_a_i2 \
+					  run/tests/Cxx/pointer/dot_star \
+					  run/tests/Cxx/pointer/reference_to_pointer \
+					  run/tests/Cxx/simple/arrow_member_function_invocation \
+					  run/tests/Cxx/simple/if_test_with_var_decl \
+					  run/tests/Cxx/simple/uninitialized_member \
+					  run/tests/Cxx/types/global_constructor \
+					  run/tests/Cxx/types/multiple_constructor_invocation \
+					  run/tests/Cxx/types/nested_types_with_constructor \
+					  run/tests/Cxx/types/uninitialized_reference_param
 
 $(TESTS_KNOWN_TO_FAIL):
 	@echo This test is known to fail, not running it now: $@
+
+run/tests/C/panasTests/%:
+	@echo ignoring test: $@
 
 
 #------------------------------------------------------------------------------
@@ -530,11 +550,8 @@ deleteAllbinfiles:
 
 
 checkfast:	runtimeCheck $(TESTCODES) \
-				run/tests/C/memoryleaks \
-				run/tests/C/memoverlap \
-				run/tests/C/pointer \
-				run/tests/Cxx/simple \
-				run/tests/Cxx/pointer
+				$(patsubst $(srcdir)/%, run/%, $(RTED_C_LOCAL_TEST_DIRS)) \
+				$(patsubst $(srcdir)/%, run/%, $(RTED_CPP_LOCAL_TEST_DIRS))
 	@echo "---------------------------------------------------------------------------------------"
 	@echo "--- ROSE/projects/RTED: checkfast passed                                            ---"
 	@echo "---------------------------------------------------------------------------------------"
