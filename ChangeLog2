@@ -1,3 +1,132 @@
+2009-09-22 00:24  hamilton37
+
+	* [r7457] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_to_locals_then_globals_then_local.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_to_locals_then_globals_then_locals.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/io,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/io/cxx_stream.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/io/cxx_stream.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/memory/new_realloc.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/memory/new_realloc.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/pointer/reference_to_pointer.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/pointer/reference_to_pointer.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/arrow_member_function_invocation.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/arrow_member_function_invocation.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/if_test_with_var_decl.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/if_test_with_var_decl.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/reference.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/reference.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/references.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/references.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/types/global_constructor.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/types/global_constructor.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/types/global_constructors.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/types/global_constructors.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/types/multiple_constructor_invocation.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/types/multiple_constructor_invocation.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/types/nested_types_with_constructor.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/types/nested_types_with_constructor.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/types/uninitialized_member.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/types/uninitialized_member.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/types/uninitialized_members_direct_access_test.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/types/uninitialized_members_direct_access_test.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/types/uninitialized_reference_param.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/types/uninitialized_reference_param.ok_msg:
+	  RTED: Added a number of tests to checkfast that illustrate
+	  present shortcomings
+	  of our RTED detection.
+
+2009-09-22 00:24  hamilton37
+
+	* [r7456] /trunk/ROSE/projects/RTED/Makefile.am: RTED: Minor
+	  tweaking to line number checking.
+	  
+	  * Some tests in allocation_deallocation_errors report multiple
+	  line numbers.
+	  The one we want to check against is the first that appears.
+
+2009-09-22 00:24  hamilton37
+
+	* [r7455] /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funcdef.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp: RTED: Minor bug
+	  fixes.
+	  
+	  * we now support function calls whose parent nodes are arrow ops
+	  (similar to dot
+	  exps)
+	  * we now properly ignore reference function parameters
+	  * assign initializers were not properly setting stack, heap and
+	  malloc flags
+
+2009-09-22 00:24  hamilton37
+
+	* [r7454] /trunk/ROSE/projects/RTED/Makefile.am: RTED: Fixed
+	  run_log rules, which didn't compare actual with expected output.
+
+2009-09-22 00:24  hamilton37
+
+	* [r7453] /trunk/ROSE/projects/RTED/Makefile.am: RTED: Added
+	  C++/pointer_errors to check, sans the three that still fail
+
+2009-09-22 00:24  hamilton37
+
+	* [r7452] /trunk/ROSE/projects/RTED/RtedTransf_registerType.cpp:
+	  RTED: Don't register compiler generated classes.
+
+2009-09-22 00:23  hamilton37
+
+	* [r7451] /trunk/ROSE/docs/Rose/developersAppendix.tex,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/nmi-submit: NMI: Updated
+	  documentation.
+
+2009-09-22 00:22  hamilton37
+
+	* [r7450] /trunk/ROSE/docs/Rose/developersAppendix.tex: Docs: Added
+	  vim fold markers for developers appendix
+
+2009-09-21 23:01  panas2
+
+	* [r7449] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_registerType.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/types/global_constructors.cpp:
+	  Worked on more testcases to get global constructors to work
+
+2009-09-21 22:42  collingbourne2
+
+	* [r7448] /trunk/ROSE/projects/haskellport/Makefile.am:
+	  Haskellport: define CAN_NOT_COMPILE_WITH_ROSE when generating
+	  stubs and wrappers to avoid Boost-related build errors on certain
+	  platforms
+
+2009-09-21 22:24  liao6
+
+	* [r7447] /trunk/ROSE/config/cleanConfigGuessOutput: fixed a script
+
+2009-09-21 20:29  liao6
+
+	* [r7445] /trunk/ROSE/scripts/roseFreshTestStub-Leo-head.sh: turn
+	  on --with-roseQt
+
+2009-09-21 20:27  liao6
+
+	* [r7444]
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QtGradientEditor/Makefile.am:
+	  Always distribute .ui files
+
+2009-09-21 20:11  dquinlan
+
+	* [r7443] /trunk/ROSE/acmacros/pkg.m4,
+	  /trunk/ROSE/config/support-libffi.m4, /trunk/ROSE/configure.in:
+	  Added pkg.m4 macro file to aclocal directory (for libffi).
+
 2009-09-21 18:54  collingbourne2
 
 	* [r7439] /trunk/ROSE/projects/interpreter/interp_core.h:
