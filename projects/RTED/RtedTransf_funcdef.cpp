@@ -31,9 +31,15 @@ RtedTransformation::insertVariableCreateInitForParams( SgFunctionDefinition* fnd
       = fndef->get_declaration()->get_parameterList()->get_args();
 
     BOOST_FOREACH( SgInitializedName* param, names) {
-      body->prepend_statement(
-        buildVariableCreateCallStmt(
-          param, getSurroundingStatement( param), true));
+        if( isSgReferenceType( param -> get_type() ))
+            // reference variables don't allocate new memory
+            // if we call createVariable the RTS will think it's a double
+            // allocation fault
+            continue;
+
+        body->prepend_statement(
+            buildVariableCreateCallStmt(
+                param, getSurroundingStatement( param), true ));
     }
 }
 

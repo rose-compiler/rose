@@ -522,8 +522,9 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
 	    SgFunctionRefExp* refExp = isSgFunctionRefExp(fcexp->get_function());
 	    SgMemberFunctionRefExp* mrefExp = isSgMemberFunctionRefExp(fcexp->get_function());
 	    SgDotExp* dotExp = isSgDotExp(fcexp->get_function());
-	    // TODO 2: This can be a DotExp (see
-	    // C++/array_index_out_of_bound/C_E_1_3_a_i)
+        SgArrowExp* arrowExp = isSgArrowExp( fcexp -> get_function() );
+        SgBinaryOp* binop = isSgBinaryOp( fcexp -> get_function() );
+
 	    string name = "";
 	    string mangled_name = "";
 	    if (refExp) {
@@ -531,9 +532,9 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
 	    	decl= isSgFunctionDeclaration(refExp->getAssociatedFunctionDeclaration ());
 	        name = decl->get_name();
 	        mangled_name = decl->get_mangled_name().str();
-	    } else if (dotExp) {
+	    } else if (dotExp || arrowExp) {
 	        SgMemberFunctionDeclaration* mdecl = NULL;
-	    	mrefExp=isSgMemberFunctionRefExp(dotExp->get_rhs_operand());
+	    	mrefExp=isSgMemberFunctionRefExp(binop->get_rhs_operand());
 			ROSE_ASSERT(mrefExp);
 	    	mdecl= isSgMemberFunctionDeclaration(mrefExp->getAssociatedMemberFunctionDeclaration ());
 	        name = mdecl->get_name();

@@ -789,6 +789,10 @@ void RtedTransformation::visit_isAssignInitializer(SgNode* n) {
 		// e.g. int *p = new int;
 #if 1
 		if (ismalloc) {
+        // TODO 2: This handles new assign initializers, but not malloc assign
+        //          initializers.  Consider, e.g:
+        //
+        //          int* x = (int*) malloc( sizeof( int ));
 			SgNewExp* oldnewExp = isSgNewExp(assign->get_operand());
 			ROSE_ASSERT(oldnewExp);
 			SgType* thesizetype = oldnewExp->get_specified_type();
@@ -799,9 +803,14 @@ void RtedTransformation::visit_isAssignInitializer(SgNode* n) {
 					);
 			ROSE_ASSERT(sizeExp);
 			cerr << " $$$ sizeExp: " << sizeExp->unparseToString() << endl;
-			RTedArray *array = new RTedArray(false, // not on stack
-					initName, getSurroundingStatement(initName), true, false,// is indeed malloc, or close enough
-					sizeExp);
+ 		  RTedArray *array = new RTedArray(
+ 	        false,                              // not on stack
+ 	        initName,
+ 	        getSurroundingStatement( initName ),
+ 	        true,                               // on heap
+            false,                              // new op (not from malloc)
+ 	        sizeExp
+ 	    );
 			cerr << " $$$2 sizeExp: " << array->size->unparseToString() << endl;
 			// abort();
 			variablesUsedForArray.push_back(varRef);

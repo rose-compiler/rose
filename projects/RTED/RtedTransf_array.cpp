@@ -137,7 +137,7 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
       SgExpression* size = buildIntVal( 0 );
       SgExpression* fromMalloc = buildIntVal( 0 );
       if ( array -> onHeap ) {
-    	  ROSE_ASSERT( array -> size);
+        ROSE_ASSERT( array -> size );
         size = buildCastExp( array -> size, buildLongLongType() );
 
         // track whether heap memory was allocated via malloc or new, to ensure

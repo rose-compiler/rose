@@ -253,8 +253,8 @@ RuntimeSystem_roseCreateHeap(const char* name, const char* mangl_name,
 							class_name,
 							indirection_level
 							),
-				false,
-				true
+				false,  // checkPtrMove? no, pointer may change regions
+				true    // checkMemLeak? yes
 				);
   } else {
     cerr << "Unexpected Array Type: " << type << endl;
