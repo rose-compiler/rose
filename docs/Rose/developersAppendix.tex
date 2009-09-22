@@ -1,7 +1,9 @@
+% vim:fdm=marker:
+
 \chapter{ Developer's Appendix }
 \label{developersAppendix:developersAppendix}
 
-\section{Adding Contributions to ROSE}
+\section{Adding Contributions to ROSE}%{{{
 
    We will be happy to work with you if you want to add new features to ROSE.
 We can setup a special SVN branch for you so that you can checkin your work and
@@ -29,10 +31,10 @@ In the future we will likely not accept contributions that are not accompanied
 by sufficient test codes that demonstrate that they work and will be part of the
 automated tests ({\em make check} makefile rule).  If you want to add a new 
 feature to ROSE, show us your tests.
-
+%}}}
 
 %Added by Liao 10/17/2008
-\section{Working with the ROSE SVN repositories}
+\section{Working with the ROSE SVN repositories}%{{{
 \label{gettingStarted::svn}
 We have two subversion repositories for ROSE: an internal one at LLNL and
 an external one at SciDAC Outreach Center (using a vendor drop scheme). 
@@ -316,9 +318,10 @@ svn/text/hooks or svn/ROSE/hooks) keeps our email recipient list.\\
 \item Building distributions of ROSE MUST be done with \textit{svn export}. Otherwise, .svn directories are copied into the distribution trees. 
 
 \end{itemize}
+%}}}
 
 % DQ (2/4/2009): Added documentation for how to sync external version of ROSE
-\section{Resync-ing with a full version of ROSE}
+\section{Resync-ing with a full version of ROSE}%{{{
    As part of work with external collaborators, where they have 
 access to the EDG source code, we sometime have to update their
 version of the parts of ROSE that are not released publicly
@@ -406,10 +409,11 @@ which we then send to you.  This is a full source code release of ROSE which inc
    patch to the internal ROSE and
     the next external release of ROSE (usually nightly) will reflect your changes.
 \end{enumerate}
+%}}}
 
 % DQ (6/5/2008): This is the resulting lesson from the erasure
 % of my ROSE directory as the result of a bad cron script.
-\section{How to recover from a file-system disaster at LLNL}
+\section{How to recover from a file-system disaster at LLNL}%{{{
    Disasters can happen (cron scripts can go very very badly).  If you 
 loose files on the CASC cluster at LLNL you can get the backup from the 
 night before.  It just takes a while.
@@ -423,9 +427,9 @@ night before.  It just takes a while.
        This will start the process to restore the files from tape.
 \end{enumerate}
    This process can take a long time if you have a lot of files to recover.
+%}}}
 
-
-\section{Generating Documentation}
+\section{Generating Documentation}%{{{
    There is a standard GNU {\tt make docs} rule for building all documentation.
 
 {\it Note to developers: To build the documentation ({\tt make docs}) you will need 
@@ -436,9 +440,9 @@ permit larger internal buffer sizes.  All the other LaTeX documentation, such as
 User Manual but not the Reference Manual may be built without problems using the 
 default configuration for LaTeX.
 }
+%}}}
 
-
-\section {Adding New SAGE III IR Nodes (Developers Only)}
+\section {Adding New SAGE III IR Nodes (Developers Only)}%{{{
     We don't expect users to add nodes to the SAGE III Intermediate Representation (IR),
 however, we need to document the process to support developers who might be extending
 ROSE.  It is hoped that if you proceed to add IR nodes that you understand just
@@ -698,9 +702,9 @@ Unparse_ExprStmt::unparseVarArgOp(SgExpression* expr, SgUnparse_Info& info)
 
 \end{enumerate}
 
+%}}}
 
-
-\section{Separation of EDG Source Code from ROSE Distribution}
+\section{Separation of EDG Source Code from ROSE Distribution}%{{{
 
     The EDG research license restricts the distribution of their source code.
 Working with EDG is still possible within an open source project such as ROSE because 
@@ -756,9 +760,9 @@ To build a distribution without EDG source code:
    \item Then rerun configure to not use the EDG source code, and
    \item Run {\tt make dist}.
 \end{enumerate}
+%}}}
 
-
-\section{How to Deprecate ROSE Features}
+\section{How to Deprecate ROSE Features}%{{{
 
     There comes a time when even the best ideas don't last
 into a new version of the source code.  This section covers how to
@@ -799,9 +803,9 @@ for each case:
 }}
 \end{itemize}
 
+%}}}
 
-
-\section{Code Style Rules for ROSE}
+\section{Code Style Rules for ROSE}%{{{
 
    I don't want to constrain anyone from being expressive, but
 we have to maintain your code after you leave, so there are a few rules:
@@ -837,9 +841,9 @@ My rules for style are as follows. Adhere to them if you like, or don't, if you'
    \item Put spaces between operators for clarity.
 \end{enumerate}
 
+%}}}
 
-
-\section{Things That May Happen to Your Code}
+\section{Things That May Happen to Your Code}%{{{
 
     No one likes to have their code touched, and we would like to
 avoid having to do so. We would like to have your contribution to ROSE
@@ -858,9 +862,9 @@ that we may do a number of things to it that might offend you:
          anything later, your free to reformat your code as you like.  We try to change
          as little as possible of the code that is contributed.
 \end{enumerate}
+%}}}
 
-
-\section{ROSE Email Lists}
+\section{ROSE Email Lists}%{{{
 \label{rose_email_list_info}
 % DQ (10/28/2008): These email addresses have been copied to the installRose.tex as well.
    We have three mailing lists for core developers (those who have write access to
@@ -954,7 +958,9 @@ Details: \\
 % commented out
 }
 
-\section{How To Build a ROSE Distribution with EDG Binaries}
+%}}}
+
+\section{How To Build a ROSE Distribution with EDG Binaries}%{{{
 
 %Updated by Liao on 4/27/2009
 
@@ -1000,7 +1006,9 @@ Please see the makefile target {\tt rose\_binary\_compatibility\_signature} in {
 Our regression test script will check for the availability and consistency of the binaries for all supported platforms 
 before making an external ROSE release with EDG binaries.
 %-----------------------------------------------------------------------
-\section{Avoiding Nightly Backups of Unrequired ROSE Files at LLNL}
+%}}}
+
+\section{Avoiding Nightly Backups of Unrequired ROSE Files at LLNL}%{{{
 
    If your at LLNL and participating in the nightly builds and
 regression testing of ROSE, then it is kind to the admin staff
@@ -1033,7 +1041,9 @@ Thanks for saving a number of people a lot of work.
 
 
 %-----------------------------------------------------------------------
-\section{Setting Up Nightly Regression Tests}
+%}}}
+
+\section{Setting Up Nightly Regression Tests}%{{{
 
 Directions for using a bash script (rose/scripts/roseFreshTest) to set up periodic regression tests:
 
@@ -1150,7 +1160,9 @@ We will continue to enhance the quality of ROSE and add more external
 benchmarks as time passes by. 
 
 %-----------------------------------------------------------------------
-\section{Updating The External Website and Repository}
+%}}}
+
+\section{Updating The External Website and Repository}%{{{
 (For the LLNL internal developers only) We have several special top level
 makefile targets to update the rosecompiler.org and SciDAC Outreach
 subversion repository. They are controlled by the regression test scripts
@@ -1193,7 +1205,9 @@ have an active account with https://outreach.scidac.gov to do this!\\
 
 It conducts a set of sanity checks and postprocessing before the actual importing. e.g. No EDG copyrighted files in the package, remove .svn and other undesired directories or files, make sure all EDG binaries for supported platforms are available.
 %------------------------------------------------------------
-\section{Generating ChangeLog2}
+%}}}
+
+\section{Generating ChangeLog2}%{{{
 You can generate a GNU-style ChangeLog from ROSE's subversion commit logs using a program named \textit{svn2cl}. 
 Download it from \url{http://ch.tudelft.nl/~arthur/svn2cl/}
 and install it as directed in its documentation. 
@@ -1209,7 +1223,9 @@ The command above will include revision numbers into the change log and
 filter out the automatically generated commits updating EDG binary files.
 
 %------------------------------------------------------------
-\section{Compiling ROSE using ROSE Translators}
+%}}}
+
+\section{Compiling ROSE using ROSE Translators}%{{{
 It is possible to use a ROSE-based translator to compile the ROSE source
 tree.
 The motivation could be using Compass checkers to check for bugs or
@@ -1239,7 +1255,9 @@ Then a configuration line likes like the following:
 CXX=roseTranslator CXXLD=g++
 \end{verbatim}
 %------------------------------------------------------------
-\section{Enabling PHP Support}
+%}}}
+
+\section{Enabling PHP Support}%{{{
 
 \begin{enumerate}
 \item
@@ -1298,9 +1316,9 @@ Once both packages have been installed ROSE must be configured with
 the additional \texttt{--with-php=/usr/local/php} option.
 \end{enumerate}
 
+%}}}
 
-
-\section{Binary Analysis}
+\section{Binary Analysis}%{{{
 
 \fixme{Move this binary analysis documentation into the ROSE Manual Binary Analysis chapter.}
 
@@ -1365,8 +1383,9 @@ Cygwin (tux245: 32 bit Windows XP running Cygwin):
    build_vendor = pc
    build_os     = cygwin
 \end{verbatim}
+%}}}
 
-\section{Testing on the NMI Build and Test Farm}
+\section{Testing on the NMI Build and Test Farm}%{{{
 
 The NMI Build and Test Farm allows us to compile tests on ROSE
 on a variety of different Operating Systems. For more information
@@ -1538,3 +1557,4 @@ simply invoke {\tt ssh-keygen} and be sure not to specify a passphrase.
 
 	\item {\bf Support} - Support's email is {\tt nmi-support@cs.wisc.edu}.
 \end{enumerate}
+%}}}
