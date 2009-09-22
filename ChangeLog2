@@ -1,3 +1,40 @@
+2009-09-22 16:51  liao6
+
+	* [r7470]
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/c_gen_be.c,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/cmd_line.c,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/cmd_line.h,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/cp_gen_be.c,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/decl_spec.c,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/decls.c,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/err_codes.h,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/err_data.h,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/error_msg.txt,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/exprutil.c,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/fe_init.c,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/il_def.h,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/lang_feat.h,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/lexical.h,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/lower_init.c,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/sage_gen_be.C,
+	  /trunk/ROSE/src/frontend/SageIII/fixupCopy_scopes.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.h,
+	  /trunk/ROSE/src/midend/ompLowering/omp_lowering.cpp,
+	  /trunk/ROSE/src/midend/ompLowering/omp_lowering.h,
+	  /trunk/ROSE/tests/CompileTests/C_tests/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/C_tests/test2009_19.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/master.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/reduction.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/task_untied.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/threadprivate.c,
+	  /trunk/ROSE/tests/roseTests/ompLoweringTests/Makefile.am: More
+	  work on OpenMP 3.0 implementation targeting GCC's gomp
+	  * support omp threadprivate, omp flush
+	  * handle tricky preprocessing information inside a basic block
+	  * merged thread local storage (__thread) support from EDG 4.0
+
 2009-09-22 00:24  hamilton37
 
 	* [r7457] /trunk/ROSE/projects/RTED/Makefile.am,
