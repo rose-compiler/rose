@@ -34,6 +34,22 @@ bool RtedTransformation::hasClassConstructor(SgClassDeclaration* classdec) {
 void RtedTransformation::visit_isClassDefinition(SgClassDefinition* cdef) {
 	cerr << "Found class definition : " << cdef->unparseToString() << endl;
 	vector<RtedClassElement*> elements;
+
+  // We want to skip compiler generated template instantiation classes.
+  // Depending on compiler version, etc., we may visit classes such as:
+  //
+  //    class std::basic_ostream< char, std::char_traits< char >>::sentry
+  //    struct std::basic_string< char, std::char_traits< char >, allocator< char >>::_Rep 
+  //
+  // Since we're not intstrumenting these classes, we shouldn't register their
+  // types.
+  if(   cdef -> get_file_info() -> isCompilerGenerated()
+        && cdef -> get_declaration() -> get_file_info() -> isCompilerGenerated() ) {
+
+      cerr << "Skipping compiler generated class" << endl;
+      return;
+  }
+
 	Rose_STL_Container<SgDeclarationStatement*> members = cdef->get_members();
 	Rose_STL_Container<SgDeclarationStatement*>::const_iterator itMem = members.begin();
 	for (;itMem!=members.end();++itMem) {
