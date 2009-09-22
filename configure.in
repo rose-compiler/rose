@@ -403,11 +403,14 @@ echo "Testing the value of CPPFLAGS: (CPPFLAGS = $CPPFLAGS)"
 # Call supporting macro for MAPLE
 ROSE_SUPPORT_MAPLE
 
+# Setup Automake conditional in Projects/programModeling/Makefile.am
+AM_CONDITIONAL(ROSE_USE_MAPLE,test ! "$with_maple" = no)
+
 #Call supporting macro for IDA PRO
 ROSE_SUPPORT_IDA
 
-# Setup Automake conditional in Projects/programModeling/Makefile.am
-AM_CONDITIONAL(ROSE_USE_MAPLE,test ! "$with_maple" = no)
+# Setup Automake conditional in projects/AstEquivalence/Makefile.am
+AM_CONDITIONAL(ROSE_USE_IDA,test ! "$with_ida" = no)
 
 # Call supporting macro to Yices Satisfiability Modulo Theories (SMT) Solver
 ROSE_SUPPORT_YICES

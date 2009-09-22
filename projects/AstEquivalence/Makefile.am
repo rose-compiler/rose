@@ -6,7 +6,10 @@ SUBDIRS =  gui
 if ROSE_USE_QT
 if ROSE_USE_SQLITE_DATABASE
 
-bin_PROGRAMS = astEquivalence createTextFiles evaluateAllBinaries runIDA
+bin_PROGRAMS = astEquivalence createTextFiles evaluateAllBinaries
+if ROSE_USE_IDA
+bin_PROGRAMS += runIDA
+endif
 
 astEquivalence_SOURCES = astEquivalenceGui.C astEquivalenceMainGui.C
 createTextFiles_SOURCES = createTextFiles.C 
