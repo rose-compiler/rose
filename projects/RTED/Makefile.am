@@ -493,6 +493,9 @@ ${foreach rted_dir, ${filter $(rted_path)%, $(RTED_CPP_TEST_DIRS)}, ${eval ${cal
 
 # TODO 2: Handle these tests
 TESTS_KNOWN_TO_FAIL = run/C/subprogram_call_errors/c_C_1_3_f \
+					  run/C++/pointer_errors/C_J_1_3_a_d \
+					  run/C++/pointer_errors/C_J_1_4_a_d \
+					  run/C++/pointer_errors/C_J_2_1_a_d \
 					  run/tests/C/memoryleaks/assignment_scope_switch \
 					  run/tests/C/memoryleaks/assignment_to_locals_then_globals_then_locals \
 					  run/tests/C/memoryleaks/assignment_to_multi_fncall \
@@ -528,12 +531,17 @@ checkfast:	runtimeCheck $(TESTCODES) \
 
 # run/C/floating_point_errors
 check-local: runtimeCheck $(TESTCODES) checkfast \
-				run/C/array_index_out_of_bound run/C/string_errors \
+				run/C/array_index_out_of_bound \
+				run/C/string_errors \
 				run/C/subprogram_call_errors \
-				run/C/allocation_deallocation_errors run/C/input_output_errors \
-				run/C/memory_leaks run/C/uninitialized_variables \
-				run/C/C99_specific_errors run/C/pointer_errors \
-				run/C++/string_errors
+				run/C/allocation_deallocation_errors \
+				run/C/input_output_errors \
+				run/C/memory_leaks \
+				run/C/uninitialized_variables \
+				run/C/C99_specific_errors \
+				run/C/pointer_errors \
+				run/C++/string_errors \
+				run/C++/pointer_errors
 	@echo "***************************************************************************************"
 	@echo "*** ROSE/projects/runtimeErrorCheck: make check rule complete (terminated normally) ***"
 	@echo "***************************************************************************************"
