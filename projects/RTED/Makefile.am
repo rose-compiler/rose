@@ -344,7 +344,7 @@ rted_source/%.bin: rted_source/%_rose.cpp $(srcdir)/$(RTS) $(srcdir)/RuntimeSyst
 GENERATE_EXPECTED_OUTPUT = @OUTPUT_SRC='$(strip $(patsubst rted_source/%.expected-output, $(strip $(2))/%.ok_msg, $@))';\
 			   TEST_FILE='$(strip $(patsubst rted_source/%.expected-output, $(strip $(2))/%$(strip $(1)), $@))';\
 			   if [ -f "$$OUTPUT_SRC" ]; then \
-				echo ===`wc -l $$TEST_FILE`=== | $(EXTRACT_EXPECTED_ERROR) - $$OUTPUT_SRC > $@;\
+				echo ===`wc -l $$TEST_FILE`=== | $(EXTRACT_EXPECTED_ERROR) - $$OUTPUT_SRC | head -n 1 > $@;\
 			   fi
 
 rted_source/C/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SCRIPT)
