@@ -381,7 +381,8 @@ Unparser::unparseAsmFile(SgAsmGenericFile *file, SgUnparse_Info &info)
         for (size_t i=0; i<interps.size(); i++) {
             SgAsmGenericFilePtrList interp_files = interps[i]->get_files();
             if (interp_files.size()==1 && interp_files[0]==file) {
-                fputs(unparseAsmInterpretation(interps[i]).c_str(), dumpFile);
+                std::string assembly = unparseAsmInterpretation(interps[i]);
+                fputs(assembly.c_str(), dumpFile);
             }
         }
         
@@ -423,6 +424,17 @@ Unparser::unparseFile(SgBinaryFile *binary, SgUnparse_Info &info)
             }
             fputs(unparseAsmInterpretation(interps[i]).c_str(), interp_file);
             fclose(interp_file);
+        }
+    }
+
+    /* Generate the rose_*.s (get_unparse_output_filename()) assembly file. It will contain all the interpretations. */
+    if (binary->get_unparse_output_filename()!="") {
+        FILE *asm_file = fopen(binary->get_unparse_output_filename().c_str(), "wb");
+        if (asm_file!=NULL) {
+            for (size_t i=0; i<interps.size(); i++) {
+                fputs(unparseAsmInterpretation(interps[i]).c_str(), asm_file);
+            }
+            fclose(asm_file);
         }
     }
 }
