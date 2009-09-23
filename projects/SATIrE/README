@@ -8,14 +8,14 @@ Program Analysis Generator (PAG), the C/C++ infrastructure LLNL-ROSE,
 and support for an external format (reading and writing) in Prolog
 term syntax.
 
-* Tested with:
+* Tested with (under Debian lenny):
   - ROSE 0.9.3a-1593
   - PAG 9.0.0.92248
   - flex 2.5.33
   - bison 2.3
   - g++ 4.2.0 (>= 4.2.0 required by ROSE with EDG binaries)
   - Boost 1_36 (>= 1_35 required by ROSE)
-  - SWI-Prolog version 5.6.59 for x86_64-linux (optional)
+  - SWI-Prolog version 5.7.14 for x86_64-linux (optional)
 
 ------------------------------------------------------------
 (0) UPGRADING AN EXISTING SATIrE INSTALLATION
@@ -24,12 +24,12 @@ term syntax.
   If you are upgrading from an earlier version of SATIrE
 
   a) Go to the OLD SATIrE drectory
-     cd SATIrE-0.8.3
+     cd SATIrE-0.8.5
 
   b) Uninstall the old version
      make uninstall
 
-  you can now continue with 1b)
+  you can now continue with 1.b)
 
 ------------------------------------------------------------
 (1) INSTALLATION
@@ -40,24 +40,44 @@ term syntax.
     ii) you must install PAG - http://www.absint.com/pag/
 
  b) Unpack the satire tar-ball with:
-    tar xvzf SATIrE-0.8.5.tgz
+    tar xvzf SATIrE-0.8.6.tgz
 
  c) Go to the satire directory:
-    cd SATIrE-0.8.5
+    cd SATIrE-0.8.6
 
  d) Configure the sources for your platform and set the path for ROSE and PAG:
 
     e.g.    
-    ./configure --prefix=/usr/local --with-rosedir=/usr/local/rose/ --with-pagdir=/usr/local/pag
+    ./configure --prefix=/usr/local --with-rosedir=/usr/local/rose/  \
+                --with-pagdir=/usr/local/pag
 
     ./configure --help
 
     run 'make' for compiling all SATIrE modules and analyzers
-    run 'make install' to install SATIrE to the location specified by --prefix=<INSTALL_PREFIX>
+    run 'make install' to install SATIrE to the location specified 
+      by --prefix=<INSTALL_PREFIX>
     run 'make installcheck' to run SATIrE tests on the installation
 
 ------------------------------------------------------------
 (2) GETTING STARTED WITH AN ANALYSIS THAT COMES WITH SATIrE
+------------------------------------------------------------
+
+ Several of the SATIrE-based analyses are accessable via the
+ satire_driver program.
+
+ Examples:
+
+ a) <INSTALL_PREFIX>/bin/satire_driver \
+      --run-pointsto-analysis <FILE1.c> <FILE2.c> ...  --output-text
+ 
+ For the TERMITE-based loop bounds analysis a convenient executable is
+ available under <INSTALL_PREFIX>/bin/loopbounds
+
+ b) <INSTALL_PREFIX>/bin/loopbounds  <FILE1.c> | term2c
+
+
+------------------------------------------------------------
+(3) COMPILING THE EXAMPLE ANALYSES THAT COME WITH SATIrE
 ------------------------------------------------------------
 
  a) Ensure that SATIrE's <INSTALL_PREFIX>/bin is in your environment variable path.
@@ -97,7 +117,7 @@ term syntax.
     and non-default visualizations.
 
 ------------------------------------------------------------
-(3) CRAFTING A NEW ANALYSIS
+(4) CRAFTING A NEW ANALYSIS
 ------------------------------------------------------------
 
  a) Ensure that <INSTALL_PREFIX>/bin is in your environment variable path.
@@ -131,7 +151,7 @@ term syntax.
     where it is run. 
 
 ------------------------------------------------------------
-(4) FURTHER INFORMATION & CONTACT
+(5) FURTHER INFORMATION & CONTACT
 ------------------------------------------------------------
   
  a) Documentation that comes with the distribution can be found

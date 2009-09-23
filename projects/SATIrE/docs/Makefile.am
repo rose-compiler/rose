@@ -13,7 +13,13 @@ EXTRA_DIST= \
         plonline.sty \
         plpage.sty \
 	pldoc.sty \
-	html.sty url.sty
+	html.sty url.sty \
+	icons/folder-saved-search.png \
+	icons/go-next.png \
+	icons/go-up.png \
+	icons/go-home.png \
+	icons/go-previous.png \
+	icons/internet-news-reader.png
 
 .PHONY: docs HTML clean-termite
 docs: $(PDFS) docs-termite
@@ -82,19 +88,19 @@ $(TERMITE_HTML): HTML
 TERMITE_HTML = \
 	termite-html/Contents.html \
 	termite-html/DocIndex.html \
-	termite-html/home.gif \
-	termite-html/index.gif \
 	termite-html/index.html \
 	termite-html/info.gif \
-	termite-html/next.gif \
-	termite-html/prev.gif \
 	termite-html/sec-1.html \
 	termite-html/sec-1.1.html \
 	termite-html/sec-2.html \
 	termite-html/sec-2.1.html \
 	termite-html/sec-3.html \
-	termite-html/up.gif \
-	termite-html/yellow_pages.gif \
+	termite-html/folder-saved-search.png \
+	termite-html/go-next.png \
+	termite-html/go-up.png \
+	termite-html/go-home.png \
+	termite-html/go-previous.png \
+	termite-html/internet-news-reader.png \
 	$(patsubst %.pl, termite-html/%.html,$(INPUTFILES))
 
 clean-termite: 
@@ -135,20 +141,20 @@ termspec.tex: $(top_srcdir)/src/termite/termite/termite_spec.pl
 	    | grep . >$@ 
 	echo '\end{verbatim}' >>$@
 
-c2term.txt:
+c2term.txt: Makefile
 	make -C $(top_builddir)/src/termite c2term
 	echo '\begin{verbatim}' >$@
-	$(top_builddir)/src/termite/c2term &>__tmp || true
-	cat __tmp | sed -e 's!$(bindir)/!!' >>$@
-	rm -f __tmp
+	$(top_builddir)/src/termite/c2term &>__tmp1 || true
+	cat __tmp1 | sed -e 's!^U.*c2term!Usage: c2term!' >>$@
+	rm -f __tmp1
 	echo '\end{verbatim}' >>$@
 
-term2c.txt: 
+term2c.txt: Makefile
 	make -C $(top_builddir)/src/termite term2c
 	echo '\begin{verbatim}' >$@
-	$(top_builddir)/src/termite/term2c &>__tmp || true
-	cat __tmp | sed -e 's!$(bindir)/!!' >>$@
-	rm -f __tmp
+	$(top_builddir)/src/termite/term2c &>__tmp2 || true
+	cat __tmp2 | sed -e 's!^U.*term2c!Usage: term2c!' >>$@
+	rm -f __tmp2
 	echo '\end{verbatim}' >>$@
 
 termite-pdf.tex: termite.tex $(SRCFILES) termspec.tex c2term.txt term2c.txt
@@ -164,6 +170,14 @@ termite-html.tex: termite-pdf.tex
 LTX2HTM=ltx2htm-inst/bin/latex2html
 HTML: termite-html.tex $(TEXFILES) $(LTX2HTM)
 	$(LTX2HTM) $<
+	sed -i -e 's/yellow_pages\.gif/folder-saved-search.png/' \
+	       -e 's/home\.gif/go-home.png/' \
+	       -e 's/up\.gif/go-up.png/' \
+	       -e 's/next\.gif/go-next.png/' \
+	       -e 's/prev\.gif/go-previous.png/' \
+	       -e 's/index\.gif/internet-news-reader.png/' \
+	  termite-html/*.html
+	cp $(srcdir)/icons/* termite-html/
 
 termite.pdf: termite-pdf.tex $(TEXFILES)
 	env TEXINPUTS=$(MYTEXINPUT):$$TEXINPUTS pdflatex $<

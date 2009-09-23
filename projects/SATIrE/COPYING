@@ -1,5 +1,14 @@
+With the exception of
+  docs/ltx2htm/*
+  src/termite/termite/*
+  tools/*
 
-Copyright (c) 2005,2006,2007 Markus Schordan, Gergo Barany
+SATIrE is licensed under the following BSD-style license:
+
+------------------------------------------------------------------------
+
+Copyright (C) 2005-2009 Markus Schordan, Gergo Barany, 
+                        Adrian Prantl and Viktor Pavlu
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -29,3 +38,11 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+------------------------------------------------------------------------
+
+EXCEPTIONS:
+
+*) Some of the icons are from the Tango Project and are under public domain.
+*) latex2html is part of SWI-Prolog and is under GPL2 (docs/ltx2htm/COPYING).
+*) All Prolog code is licensed under GPL3 (see the respective files).

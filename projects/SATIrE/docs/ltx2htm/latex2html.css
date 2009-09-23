@@ -1,13 +1,18 @@
-
 /* Style sheet for SWI-Prolog latex2html
 */
+
+body {
+    font-family: 'Trebuchet MS', 'Lucida Grande', Helvetica, sans-serif;
+    font-size: 10pt;
+    width:50em;
+}
 
 dd.defbody
 { margin-bottom: 1em;
 }
 
 dt.pubdef
-{ background-color: #c5e1ff;
+{ background-color: #bfd8e8; //#c5e1ff;
 }
 
 .bib dd
@@ -19,6 +24,9 @@ dt.pubdef
   margin-right: 1.3ex;
 }
 
+a:link     { color: #4c85a9; text-decoration: underline; }
+a:visited  { color: #5e7a8b; text-decoration: underline; }
+
 pre.code
 { margin-left: 1.5em;
   margin-right: 1.5em;
@@ -27,6 +35,8 @@ pre.code
   padding-left: 5px;
   padding-bottom: 5px;
   background-color: #f8f8f8;
+  font-family: 'Monaco', 'Courier', fixed;
+  font-size: 9pt;
 }
 
 div.navigate
