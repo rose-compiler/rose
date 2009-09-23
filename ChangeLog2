@@ -1,3 +1,32 @@
+2009-09-23 20:16  liao6
+
+	* [r7497] /trunk/ROSE/config/support-gomp-omp.m4,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C,
+	  /trunk/ROSE/src/midend/ompLowering/omp_lowering.cpp,
+	  /trunk/ROSE/src/midend/programTransformation/constantFolding/constantFolding.C,
+	  /trunk/ROSE/tests/CompileTests/C_tests/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/C_tests/test2009_20.c,
+	  /trunk/ROSE/tests/CompileTests/C_tests/test2009_21.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/ompfor5.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/single.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/task_untied.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/task_untied2.c,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/inputloopNormalization.C,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/loopNormalization.C,
+	  /trunk/ROSE/tests/roseTests/ompLoweringTests/Makefile.am: More
+	  OpenMP work
+	  * Almost all (except ep, bug368, a sequential compilation bug)
+	  NPB 2.3 C OpenMP benchmarks pass
+	  * Limited constant folding to optimize loop headers only: keep
+	  the orginal floating point calculation accuracy
+	  * Handle decremental OpenMP loops
+	  * Handle nowait for omp single
+	  * Automatically add header and library path when
+	  -rose:openmp:lowering is specified
+
 2009-09-23 00:54  panas2
 
 	* [r7476] /trunk/ROSE/projects/RTED/Makefile.am,
