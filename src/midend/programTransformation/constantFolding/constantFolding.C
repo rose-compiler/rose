@@ -596,6 +596,8 @@ static SgValueExp* evaluateBinaryOp(SgBinaryOp* binaryOperator)
         }
       case V_SgFloatVal: 
         {
+          // Liao, 9/22/2009, folding float to float may decrease the accuracy. promoting it to double
+          // TODO, need an option to skip folding float point operations
           result = buildResultValueExp_float_t<SgFloatVal,float>(binaryOperator,lhsValue,rhsValue);
           break;
         }

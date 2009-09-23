@@ -5792,18 +5792,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // is in use to be properly passed on the compilation of the generated code.
      compilerNameString.push_back("-DROSE_USE_NEW_EDG_INTERFACE");
 #endif
-
-  // Liao, 2/13/2009. I think we should pass this macro to the backend compiler also
-  // User programs may have rose-specific tweaks to enable ROSE translators to compile them
-  // Part of solution to bug 316 :
-  // https://outreach.scidac.gov/tracker/index.php?func=detail&aid=316&group_id=24&atid=185
-     compilerNameString.push_back("-DUSE_ROSE");
-
-  // Liao, 9/4/2009. If OpenMP lowering is activated. -D_OPENMP should be added
-  // since we don't remove condition compilation preprocessing info. during OpenMP lowering
-     if (get_openmp_lowering())  
-       compilerNameString.push_back("-D_OPENMP");
-   
+  
   // Since we need to do this often, support is provided in the utility_functions.C
   // and we can simplify this code.
      std::string currentDirectory = getWorkingDirectory();
@@ -5822,6 +5811,47 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        // compilerNameString += " -c ";
         }
 
+  // Liao, 2/13/2009. I think we should pass this macro to the backend compiler also
+  // User programs may have rose-specific tweaks to enable ROSE translators to compile them
+  // Part of solution to bug 316 :
+  // https://outreach.scidac.gov/tracker/index.php?func=detail&aid=316&group_id=24&atid=185
+     compilerNameString.push_back("-DUSE_ROSE");
+
+  // Liao, 9/4/2009. If OpenMP lowering is activated. -D_OPENMP should be added
+  // since we don't remove condition compilation preprocessing info. during OpenMP lowering
+     if (get_openmp_lowering())  
+     {
+       compilerNameString.push_back("-D_OPENMP");
+       // Liao, 9/22/2009, we also specify the search path for libgomp_g.h, which is installed under $ROSE_INS/include
+       // and the path to libgomp.a/libgomp.so, which are located in $GCC_GOMP_OPENMP_LIB_PATH
+
+       // Header should always be available 
+       // the conditional compilation is necessary to pass make distcheck,
+       // where only a minimum configuration options are used and not all macros are defined. 
+#ifdef ROSE_INSTALLATION_PATH 
+       string include_path(ROSE_INSTALLATION_PATH);
+       include_path += "/include"; 
+       compilerNameString.push_back("-I"+include_path); 
+#endif
+#if 0  // moved to the very end       
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY       
+       // lib path is available if --with-gomp_omp_runtime_library=XXX is used
+       if (USE_ROSE_GOMP_OPENMP_LIBRARY)
+       {
+         // only linking phase needs this
+         if (!get_compileOnly()) 
+         {
+           string gomp_lib_path(GCC_GOMP_OPENMP_LIB_PATH);
+           ROSE_ASSERT (gomp_lib_path.size() != 0);
+ //          compilerNameString.push_back("-L"+gomp_lib_path); 
+           compilerNameString.push_back(gomp_lib_path+"/libgomp.a"); // static linking for simplicity
+           compilerNameString.push_back("-lpthread"); 
+         }
+       }
+#endif       
+#endif       
+     }
+ 
   // DQ (3/31/2004): New cleaned up source file handling
      Rose_STL_Container<string> argcArgvList = argv;
 
@@ -6028,6 +6058,25 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      printf ("Exiting at base of buildCompilerCommandLineOptions() ... \n");
      ROSE_ASSERT (false);
 #endif
+     // Liao, 9/23/2009, optional linker flags to support OpenMP lowering targeting GOMP
+     if (get_openmp_lowering())
+     {
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY       
+       // lib path is available if --with-gomp_omp_runtime_library=XXX is used
+       if (USE_ROSE_GOMP_OPENMP_LIBRARY)
+       {
+         // only linking phase needs this
+         if (!get_compileOnly()) 
+         {
+           string gomp_lib_path(GCC_GOMP_OPENMP_LIB_PATH);
+           ROSE_ASSERT (gomp_lib_path.size() != 0);
+           //          compilerNameString.push_back("-L"+gomp_lib_path); 
+           compilerNameString.push_back(gomp_lib_path+"/libgomp.a"); // static linking for simplicity
+           compilerNameString.push_back("-lpthread"); 
+         }
+       }
+#endif          
+     }
 
      return compilerNameString;
    }

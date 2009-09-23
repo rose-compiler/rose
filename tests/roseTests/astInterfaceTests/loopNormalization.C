@@ -14,18 +14,16 @@ int main(int argc, char * argv[])
   ROSE_ASSERT(func != NULL);
   SgBasicBlock* body = func->get_definition()->get_body();
   ROSE_ASSERT(body!= NULL);
-  SgStatement* stmt = SageInterface::getFirstStatement(body);
-  ROSE_ASSERT(stmt != NULL);
+  Rose_STL_Container<SgNode*> loops = NodeQuery::querySubTree(body,V_SgForStatement);
 
-  if (isSgForStatement(stmt))
+  for (size_t i=0; i< loops.size(); i++)
   {
+    SgForStatement * cloop = isSgForStatement(loops[i]);
+    ROSE_ASSERT(cloop != NULL);
     bool result=false;
-    result = SageInterface::forLoopNormalization(isSgForStatement(stmt));
+    result = SageInterface::forLoopNormalization(cloop);
     ROSE_ASSERT(result != false);
   }
-
-  // generateWholeGraphOfAST("WholeAST");
-
   // run all tests
   AstTests::runAllTests(project);
 

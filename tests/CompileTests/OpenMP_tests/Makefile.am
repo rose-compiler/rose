@@ -49,6 +49,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	ompfor2.c \
 	ompfor3.c \
 	ompfor4.c \
+	ompfor5.c \
 	ordered2.c \
 	ordered.c \
 	orphaned-directives.c \

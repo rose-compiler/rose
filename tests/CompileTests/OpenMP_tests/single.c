@@ -13,12 +13,19 @@ int main(void)
 
 #pragma omp parallel
   {
+
 #pragma omp single
     {
       num_threads = omp_get_num_threads();
 #pragma omp atomic
       i+=100;
     }
+
+#pragma omp single nowait
+    {
+      num_threads = omp_get_num_threads();
+    }
+
   }
   assert(i == 200);
   return 0;

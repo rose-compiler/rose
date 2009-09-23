@@ -16,6 +16,7 @@ C_TESTCODES_REQUIRED_TO_COMPILE = \
         dynamicChunk.c \
 	master.c \
         nowait.c \
+        ompfor5.c \
         staticChunk.c \
         task_orphaned.c \
         task_underIf.c \
@@ -135,7 +136,8 @@ if WITH_GOMP_OPENMP_LIB
 # a subset of PASSING_C_TEST_Objects and PASSING_CXX_TEST_Objects
 PASSING_TEST_Executables = ${PASSING_Objects_With_main:.o=.out}
 # TODO this might have problem with CXX objects!!
-MY_FINAL_LINK = -L$(GOMP_PATH) -lgomp -lpthread -lm
+MY_FINAL_LINK = $(GOMP_PATH)/libgomp.a -lpthread -lm
+#MY_FINAL_LINK = -L$(GOMP_PATH) -lgomp -lpthread -lm # using static link for simplicity (avoid LD_LIBRARY_PATH )
 %.out: %.o
 	$(CC) $< -o $@ $(MY_FINAL_LINK)
 check_PROGRAM = $(PASSING_TEST_Executables)

@@ -5477,12 +5477,14 @@ bool SageInterface::forLoopNormalization(SgForStatement* loop)
 {
   ROSE_ASSERT(loop != NULL);
   // Normalize initialization statement of the for loop
+  // -------------------------------------
   // for (int i=0;... ) becomes int i; for (i=0;..)
   // Only roughly check here, isCanonicalForLoop() should be called to have a stricter check
   if (!normalizeForLoopInitDeclaration(loop))
     return false;
 
   // Normalized the test expressions
+  // -------------------------------------
   SgExpression* test = loop->get_test_expr();
   SgExpression* testlhs=NULL, * testrhs=NULL;
   if (isSgBinaryOp(test))
@@ -5519,6 +5521,7 @@ bool SageInterface::forLoopNormalization(SgForStatement* loop)
       return false;
   }
   // Normalize the increment expression
+  // -------------------------------------
   SgExpression* incr = loop->get_increment();
   ROSE_ASSERT(incr != NULL);
   switch (incr->variantT()) {
@@ -5544,9 +5547,20 @@ bool SageInterface::forLoopNormalization(SgForStatement* loop)
             buildPlusAssignOp(isSgExpression(deepCopy(incr_var)), buildIntVal(-1)));
         break;
       } 
+    case V_SgMinusAssignOp: // i-= s is normalized to i+= -s
+      {
+        SgVarRefExp* incr_var = isSgVarRefExp(SkipCasting(isSgMinusAssignOp(incr)->get_lhs_operand()));
+        SgExpression* rhs = isSgMinusAssignOp(incr)->get_rhs_operand();
+        ROSE_ASSERT (rhs != NULL);
+        if (incr_var == NULL) return false;
+        if ( incr_var->get_symbol() != var_symbol)
+          return false;
+        replaceExpression(incr,
+            buildPlusAssignOp(isSgExpression(deepCopy(incr_var)), buildMultiplyOp(buildIntVal(-1), copyExpression(rhs))));
+        break;
+      }
     case V_SgAssignOp:
     case V_SgPlusAssignOp:
-    case V_SgMinusAssignOp:
       break;
     default:
       return false;
@@ -5555,8 +5569,13 @@ bool SageInterface::forLoopNormalization(SgForStatement* loop)
   // Normalize the loop body: ensure there is a basic block
   SgBasicBlock* body = ensureBasicBlockAsBodyOfFor(loop); 
   ROSE_ASSERT(body!=NULL); 
-
-  constantFolding(loop->get_parent());
+   // Liao, 9/22/2009
+   // folding entire loop may cause decreased accuracy for floating point operations
+   // we only want to fold the loop controlling expressions
+  //constantFolding(loop->get_parent());
+  constantFolding(loop->get_test());
+  constantFolding(loop->get_increment());
+  
 
   return true;
 }
@@ -5969,7 +5988,11 @@ bool SageInterface::loopTiling(SgForStatement* loopNest, size_t targetLevel, siz
   SgConditionalExp * triple_exp = buildConditionalExp(test_exp,copyExpression(ub), copyExpression(ub2));
   bin_op->set_rhs_operand(triple_exp);
   // constant folding 
-  constantFolding(control_loop->get_scope());
+  // folding entire loop may decrease the accuracy of floating point calculation
+  // we fold loop control expressions only 
+  //constantFolding(control_loop->get_scope());
+  constantFolding(control_loop->get_test());
+  constantFolding(control_loop->get_increment());
   return true;
 }
 

@@ -306,7 +306,16 @@ namespace OmpSupport
     if (isIncremental)
       return copyExpression(orig_stride); // never share expressions
     else
-      return buildMultiplyOp(buildIntVal(-1),copyExpression(orig_stride));
+    {
+      /*  I changed the normalization phase to generate consistent incremental expressions
+       *  it should be i+= -1  for decremental loops 
+       *   no need to adjust it anymore.
+       *  */
+//      printf("Found a decremental case: orig_stride is\n");
+//      cout<<"\t"<<orig_stride->unparseToString()<<endl;
+      return copyExpression(orig_stride);
+      //return buildMultiplyOp(buildIntVal(-1),copyExpression(orig_stride));
+    }
   }
 
   //! check if an omp for loop use static schedule or not
@@ -1540,6 +1549,12 @@ namespace OmpSupport
     replaceStatement(target, if_stmt,true);
     SgBasicBlock* true_body = ensureBasicBlockAsTrueBodyOfIf (if_stmt);
     transOmpVariables(target, true_body);
+    // handle nowait 
+    if (!hasClause(target, V_SgOmpNowaitClause))
+    {
+      SgExprStatement* barrier_call= buildFunctionCallStmt("GOMP_barrier", buildVoidType(), NULL, scope);
+      insertStatementAfter(if_stmt, barrier_call);
+    }
   }
 
   // two cases: omp parallel and  omp task
