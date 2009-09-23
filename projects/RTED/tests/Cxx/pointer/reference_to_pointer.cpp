@@ -6,9 +6,12 @@ int main() {
     int*& r = p;
 
     p = &x;
-    // error, we incremented from x to y, implicitly depending on a particular
-    // memory layout
+    // unsafe increment from &x to &y
     ++r;
+
+    // error, p is invalidated because we incremented it badly, implicitly
+    // depending on a particular memory layout
+    int z = *p;
 
     return 0;
 }

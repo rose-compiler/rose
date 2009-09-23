@@ -42,7 +42,7 @@ class RtedTransformation : public AstSimpleProcessing {
   std::vector<SgInitializedName*> variable_declarations;
   // We need to store the variables that are being accessed
   std::vector<SgVarRefExp*> variable_access_varref;
-  // map of expr ∈ { SgPointerDerefExp, SgArrowExp }, SgVarRefExp pairs
+  // map of expr ϵ { SgPointerDerefExp, SgArrowExp }, SgVarRefExp pairs
   // the deref expression must be an ancestor of the varref
   std::map<SgExpression*,SgVarRefExp*> variable_access_pointerderef;
   // The second SgExpression can contain either SgVarRefExp,
@@ -163,6 +163,11 @@ class RtedTransformation : public AstSimpleProcessing {
    * (such as @ref SgAssignmentOp or @ref SgPlusAssignOp)
    */
   bool isthereAnotherDerefOpBetweenCurrentAndAssign(SgExpression* exp );
+  /**
+   * @return @c SgPointerType if @c type is a pointer type, reference to pointer
+   * type or typedef whose base type is a pointer type, and @c null otherwise.
+   */
+  SgPointerType* isUsableAsSgPointerType( SgType* type );
   bool isUsedAsLvalue( SgExpression* exp );
   bool isInInstrumentedFile( SgNode* n );
   /// is n a basic block, if statement, [do]while, or for statement

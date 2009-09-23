@@ -85,6 +85,23 @@ RtedTransformation::isthereAnotherDerefOpBetweenCurrentAndAssign(SgExpression* e
     return false;
 }
 
+SgPointerType* RtedTransformation::isUsableAsSgPointerType( SgType* type ) {
+    if( isSgPointerType( type )) {
+        return isSgPointerType( type );
+    } else if( isSgTypedefType( type )) {
+        // resolve typedef to typedef ... to pointer
+        return isUsableAsSgPointerType(
+            isSgTypedefType( type ) -> get_base_type() );
+    } else if( isSgReferenceType( type )) {
+        // resolve reference to reference ... to pointer
+        return isUsableAsSgPointerType( 
+            isSgReferenceType( type ) -> get_base_type() );
+    }
+
+    return NULL;
+}
+
+
 bool
 RtedTransformation::isUsedAsLvalue( SgExpression* exp ) {
     if( NULL == exp ) return false;

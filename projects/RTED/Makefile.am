@@ -527,9 +527,7 @@ TESTS_KNOWN_TO_FAIL = run/C/subprogram_call_errors/c_C_1_3_f \
 					  run/tests/Cxx/pointer/C_F_3_3_a_i \
 					  run/tests/Cxx/pointer/C_F_3_3_a_i2 \
 					  run/tests/Cxx/pointer/dot_star \
-					  run/tests/Cxx/pointer/reference_to_pointer \
 					  run/tests/Cxx/simple/arrow_member_function_invocation \
-					  run/tests/Cxx/simple/uninitialized_member \
 					  run/tests/Cxx/types/multiple_constructor_invocation \
 					  run/tests/Cxx/types/nested_types_with_constructor \
 					  run/tests/Cxx/types/uninitialized_reference_param

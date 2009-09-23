@@ -20,8 +20,8 @@ void RtedTransformation::visit_pointer_movement( SgNode* node ) {
     else if( b_op )
         operand = b_op -> get_lhs_operand();
 
-    if( !isSgPointerType( operand -> get_type() ))
-        // we don't care about int++, only pointers.
+    if( !isUsableAsSgPointerType( operand -> get_type() ))
+        // we don't care about int++, only pointers, or reference to pointers.
         return;
 
     pointer_movements.push_back( isSgExpression( node ));
