@@ -30,6 +30,8 @@ RtedTransformation::bracketWithScopeEnterExit( SgNode* stmt_or_block, Sg_File_In
 
     SgStatement* stmt = isSgStatement( stmt_or_block );
     SgBasicBlock* block = isSgBasicBlock( stmt_or_block );
+    if (!stmt || stmt->get_file_info()->isCompilerGenerated())
+      return;
 
     ROSE_ASSERT( stmt );
     ROSE_ASSERT( exit_file_info );
@@ -58,9 +60,12 @@ RtedTransformation::bracketWithScopeEnterExit( SgNode* stmt_or_block, Sg_File_In
     // necessarily a block
     if( block )
         block -> prepend_statement( fncall_enter );
-    else
+    else {
+      
+      cerr << "@@@ inserting scope : " << stmt->unparseToString() << 
+      	"   " << stmt->class_name() << "  " << stmt->get_file_info()->isCompilerGenerated() << endl;
         insertStatementBefore( stmt, fncall_enter );
-
+    }
 
     // exitScope( (char*) filename, (char*) line, (char*) lineTransformed, (char*) stmtStr);
     SgExprListExp* exit_scope_args = buildExprListExp();

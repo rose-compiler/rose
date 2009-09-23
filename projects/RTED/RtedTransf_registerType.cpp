@@ -34,7 +34,7 @@ bool RtedTransformation::hasClassConstructor(SgClassDeclaration* classdec) {
 void RtedTransformation::visit_isClassDefinition(SgClassDefinition* cdef) {
 	cerr << "Found class definition : " << cdef->unparseToString() << endl;
 	vector<RtedClassElement*> elements;
-
+	
   // We want to skip compiler generated template instantiation classes.
   // Depending on compiler version, etc., we may visit classes such as:
   //
@@ -46,8 +46,8 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* cdef) {
   if(   cdef -> get_file_info() -> isCompilerGenerated()
         && cdef -> get_declaration() -> get_file_info() -> isCompilerGenerated() ) {
 
-      cerr << "Skipping compiler generated class" << endl;
-      return;
+    cerr << "Skipping compiler generated class" << cdef->unparseToString() <<endl;
+    //      return;
   }
 
 	Rose_STL_Container<SgDeclarationStatement*> members = cdef->get_members();
@@ -119,6 +119,8 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass) 
 	// scope
 	stmt = getSurroundingStatement(rtedClass->classDef);
 	SgStatement* origStmt = stmt;
+	cerr <<"@@@@ registerType : " << stmt->unparseToString() << endl;
+	//	abort();
 
 	SgScopeStatement* globalScope = NULL;
 	scope = stmt -> get_scope();
@@ -330,7 +332,8 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass) 
 		SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
 				arg_list);
 		SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
-
+		cerr <<"@@@@@ Creating regType for : " << stmt->unparseToString() << endl;
+		//abort();
 		if (origStmt->get_file_info()->isCompilerGenerated())
 		return;
 		if( global_stmt ) {

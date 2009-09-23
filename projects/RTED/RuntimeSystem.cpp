@@ -822,6 +822,10 @@ RuntimeSystem_roseInitVariable(
   //
   // Note that we cannot call registerPointerChange until after the memory
   // creation is registered, which is done in roseCreateHeap.
+  cerr << "============ Possible pointer change : ismalloc: "<<ismalloc<<
+    "   pointer_changed:" << pointer_changed << " pointer_type:" <<
+    type<<endl;
+
   if(     ismalloc != 1 
 	  && pointer_changed == 1 
 	  && 0 == strcmp( "SgPointerType", type )) {

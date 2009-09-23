@@ -64,6 +64,86 @@ void RtedTransformation::insertArrayCreateCall(SgInitializedName* initName,
   insertArrayCreateCall(stmt, initName, var_ref, value);
 }
 
+SgStatement* 
+RtedTransformation::buildArrayCreateCall(SgInitializedName* initName, 
+					 SgVarRefExp* varRef,
+					 RTedArray* array,
+					 SgStatement* stmt) {
+      // build the function call : runtimeSystem-->createArray(params); ---------------------------
+  string name = initName->get_mangled_name().str();
+      SgExpression* plainname = buildString(initName->get_name());
+      SgExpression* callNameExp = buildString(name);
+
+      SgExprListExp* arg_list = buildExprListExp();
+      appendExpression(arg_list, plainname);
+      appendExpression(arg_list, callNameExp);
+
+      if (varRef->get_parent()!=NULL)
+    	  appendTypeInformation( NULL, getExprBelowAssignment( varRef ) -> get_type(), arg_list );
+      else
+    	  appendTypeInformation( NULL, varRef -> get_type(), arg_list );
+
+		SgScopeStatement* scope = NULL;
+		if (initName) scope = initName->get_scope();
+#if 0
+	bool isUnionClass=false;
+	SgClassDefinition* unionclass = isSgClassDefinition(initName->get_scope());
+	if (unionclass && 
+	    unionclass->get_declaration()->get_class_type()==SgClassDeclaration::e_union)
+	  isUnionClass=true;
+	//if (!isUnionClass) 
+#endif
+	SgClassDefinition* unionclass=NULL;
+
+	    if (varRef->get_parent()!=NULL)
+            appendAddressAndSize(//initName,
+				 scope, getExprBelowAssignment( varRef ), arg_list,0,unionclass);
+	    else
+	      appendAddressAndSize(//initName,
+				   scope, varRef , arg_list,0,unionclass);
+
+
+      //SgIntVal* ismalloc = buildIntVal( 0 );
+      SgExpression* size = buildIntVal( 0 );
+      SgExpression* fromMalloc = buildIntVal( 0 );
+      if ( array -> onHeap ) {
+        ROSE_ASSERT( array -> size );
+        size = buildCastExp( array -> size, buildLongLongType() );
+
+        // track whether heap memory was allocated via malloc or new, to ensure
+        // that free/delete matches
+        if( array -> fromMalloc )
+            fromMalloc = buildIntVal( 1 );
+      }
+      appendExpression( arg_list, size );
+      appendExpression( arg_list, fromMalloc );
+
+
+      appendClassName( arg_list, initName -> get_type() );
+
+
+      SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
+      SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
+      appendExpression(arg_list, filename);
+      appendExpression(arg_list, linenr);
+
+      SgExpression* linenrTransformed = buildString("x%%x");
+      appendExpression(arg_list, linenrTransformed);
+
+      array -> appendDimensionInformation( arg_list );
+
+      //      appendExpression(arg_list, buildString(stmt->unparseToString()));
+      ROSE_ASSERT(roseCreateHeap);
+      string symbolName2 = roseCreateHeap->get_name().str();
+      //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
+      SgFunctionRefExp* memRef_r = buildFunctionRefExp(  roseCreateHeap);
+      //SgArrowExp* sgArrowExp = buildArrowExp(varRef_l, memRef_r);
+
+      SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
+							    arg_list);
+      SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
+      return exprStmt;
+}
 
 void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
 					       SgInitializedName* initName, 
@@ -108,71 +188,49 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
       scope = mainBody;
 	  global_stmt = true;
     }
-    if (isSgBasicBlock(scope)) {
-      // build the function call : runtimeSystem-->createArray(params); ---------------------------
-      SgExpression* plainname = buildString(initName->get_name());
-      SgExpression* callNameExp = buildString(name);
-      //SgBoolValExp* stackExpr = buildBoolValExp(stack);
-
-      SgExprListExp* arg_list = buildExprListExp();
-      appendExpression(arg_list, plainname);
-      appendExpression(arg_list, callNameExp);
-
-      if (varRef->get_parent()!=NULL)
-    	  appendTypeInformation( NULL, getExprBelowAssignment( varRef ) -> get_type(), arg_list );
-      else
-    	  appendTypeInformation( NULL, varRef -> get_type(), arg_list );
-
-		SgScopeStatement* scope = NULL;
-		if (initName) scope = initName->get_scope();
-	    if (varRef->get_parent()!=NULL)
-            appendAddressAndSize(//initName,
-    		  scope, getExprBelowAssignment( varRef ), arg_list,0);
-	    else
-	      appendAddressAndSize(//initName,
-	    		  scope, varRef , arg_list,0);
-
-
-      //SgIntVal* ismalloc = buildIntVal( 0 );
-      SgExpression* size = buildIntVal( 0 );
-      SgExpression* fromMalloc = buildIntVal( 0 );
-      if ( array -> onHeap ) {
-        ROSE_ASSERT( array -> size );
-        size = buildCastExp( array -> size, buildLongLongType() );
-
-        // track whether heap memory was allocated via malloc or new, to ensure
-        // that free/delete matches
-        if( array -> fromMalloc )
-            fromMalloc = buildIntVal( 1 );
+    if (isSgIfStmt(scope)) {
+      SgStatement* exprStmt = buildArrayCreateCall(initName,varRef,array,stmt);      
+      ROSE_ASSERT(exprStmt);
+      // get the two bodies of the ifstmt and prepend to them
+      cerr <<"If Statment : inserting createHeap" << endl;
+      SgStatement* trueb = isSgIfStmt(scope)->get_true_body();
+      SgStatement* falseb = isSgIfStmt(scope)->get_false_body();
+      bool partOfTrue = traverseAllChildrenAndFind(varRef,trueb);
+      bool partOfFalse = traverseAllChildrenAndFind(varRef,falseb);
+      bool partOfCondition = false;
+      if (partOfTrue==false && partOfFalse==false)
+	partOfCondition=true;
+      if (trueb && ( partOfTrue || partOfCondition)) {
+	if (!isSgBasicBlock(trueb)) {
+	  removeStatement(trueb);
+	  SgBasicBlock* bb = buildBasicBlock();
+	  bb->set_parent(isSgIfStmt(scope));
+	  isSgIfStmt(scope)->set_true_body(bb);
+	  bb->prepend_statement(trueb);
+	  trueb=bb;
+	}
+	prependStatement( exprStmt,isSgScopeStatement(trueb));
       }
-      appendExpression( arg_list, size );
-      appendExpression( arg_list, fromMalloc );
-
-
-      appendClassName( arg_list, initName -> get_type() );
-
-
-      SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
-      SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
-      appendExpression(arg_list, filename);
-      appendExpression(arg_list, linenr);
-
-      SgExpression* linenrTransformed = buildString("x%%x");
-      appendExpression(arg_list, linenrTransformed);
-
-      array -> appendDimensionInformation( arg_list );
-
-      //      appendExpression(arg_list, buildString(stmt->unparseToString()));
-      ROSE_ASSERT(roseCreateHeap);
-      string symbolName2 = roseCreateHeap->get_name().str();
-      //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
-      SgFunctionRefExp* memRef_r = buildFunctionRefExp(  roseCreateHeap);
-      //SgArrowExp* sgArrowExp = buildArrowExp(varRef_l, memRef_r);
-
-      SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
-							    arg_list);
-      SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
-
+      if (falseb && ( partOfFalse || partOfCondition)) {
+	if (!isSgBasicBlock(falseb)) {
+	  removeStatement(falseb);
+	  SgBasicBlock* bb = buildBasicBlock();
+	  bb->set_parent(isSgIfStmt(scope));
+	  isSgIfStmt(scope)->set_false_body(bb);
+	  bb->prepend_statement(falseb);
+	  falseb=bb;
+	}
+	prependStatement(exprStmt,isSgScopeStatement(falseb));
+      }else if (partOfCondition){
+	// create false statement, this is sometimes needed
+	SgBasicBlock* bb = buildBasicBlock();
+	bb->set_parent(isSgIfStmt(scope));
+	isSgIfStmt(scope)->set_false_body(bb);
+	falseb=bb;
+	prependStatement(exprStmt,isSgScopeStatement(falseb));
+      }
+    } else if (isSgBasicBlock(scope)) {
+      SgStatement* exprStmt = buildArrayCreateCall(initName,varRef,array,stmt);      
 #if 1
       cerr << "++++++++++++ stmt :"<<stmt << " mainFirst:"<<mainFirst<<
       "   initName->get_scope():"<<initName->get_scope() <<

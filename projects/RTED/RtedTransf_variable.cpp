@@ -164,7 +164,48 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName) {
 				return;
 			prependPseudoForInitializerExpression(buildVar, isSgForStatement(
 					stmt -> get_parent() -> get_parent()));
-		} else if (isNormalScope(scope)) {
+		} else if (isSgIfStmt(scope)) {
+		  SgExprStatement* exprStmt = buildVariableCreateCallStmt(initName,stmt);
+		  if (exprStmt) {
+		      SgStatement* trueb = isSgIfStmt(scope)->get_true_body();
+		      SgStatement* falseb = isSgIfStmt(scope)->get_false_body();
+		      bool partOfTrue = traverseAllChildrenAndFind(initName,trueb);
+		      bool partOfFalse = traverseAllChildrenAndFind(initName,falseb);
+		      bool partOfCondition = false;
+		      if (partOfTrue==false && partOfFalse==false)
+			partOfCondition=true;
+		      if (trueb && ( partOfTrue || partOfCondition)) {
+			if (!isSgBasicBlock(trueb)) {
+			  removeStatement(trueb);
+			  SgBasicBlock* bb = buildBasicBlock();
+			  bb->set_parent(isSgIfStmt(scope));
+			  isSgIfStmt(scope)->set_true_body(bb);
+			  bb->prepend_statement(trueb);
+			  trueb=bb;
+			}
+			prependStatement( exprStmt,isSgScopeStatement(trueb));
+		      }
+		      if (falseb && ( partOfFalse || partOfCondition)) {
+			if (!isSgBasicBlock(falseb)) {
+			  removeStatement(falseb);
+			  SgBasicBlock* bb = buildBasicBlock();
+			  bb->set_parent(isSgIfStmt(scope));
+			  isSgIfStmt(scope)->set_false_body(bb);
+			  bb->prepend_statement(falseb);
+			  falseb=bb;
+			}
+			prependStatement(exprStmt,isSgScopeStatement(falseb));
+		      } else if (partOfCondition) {
+			// create false statement, this is sometimes needed
+			  SgBasicBlock* bb = buildBasicBlock();
+			  bb->set_parent(isSgIfStmt(scope));
+			  isSgIfStmt(scope)->set_false_body(bb);
+			  falseb=bb;
+			  prependStatement(exprStmt,isSgScopeStatement(falseb));
+		      }
+		    }
+										
+		} else if (isNormalScope(scope) || !isSgIfStmt(scope)) {
 			// insert new stmt (exprStmt) after (old) stmt
 			SgExprStatement* exprStmt = buildVariableCreateCallStmt(initName,
 					stmt);
@@ -304,9 +345,9 @@ RtedTransformation::buildVariableCreateCallExpr(SgExpression* var_ref,
 			scope = initName->get_scope();
 		appendAddressAndSize(
 		//isSgVarRefExp(var_ref) -> get_symbol() -> get_declaration(),
-				scope, isSgVarRefExp(var_ref), arg_list, 0);
+				     scope, isSgVarRefExp(var_ref), arg_list, 0);
 	} else {
-		appendAddressAndSize(var_ref, var_ref -> get_type(), arg_list, 0);
+	  appendAddressAndSize(var_ref, var_ref -> get_type(), arg_list, 0);
 	}
 
 	appendExpression(arg_list, initBool);
@@ -390,27 +431,6 @@ RtedTransformation::buildVariableInitCallExpr(SgInitializedName* initName,
 		//	exp_list.push_back(buildPointerDerefExp(exp));
 	}
 
-#if 0
-	exp_list.push_back(exp);
-	SgExpression* last_exp = exp;
-	while (isSgPointerDerefExp(exp)) {
-		exp = getExprBelowAssignment(isSgExpression(exp));
-		if (exp!=last_exp) {
-			exp_list.push_back(exp);
-			cerr << " getExprBelowAssignment : " << exp->class_name() << endl;
-		} else {
-			break;
-		}
-		last_exp=exp;
-	}
-	std::vector<SgExpression*> resultSet;
-	std::vector<SgExpression*>::const_iterator vit = exp_list.begin();
-	for (; vit != exp_list.end(); ++vit) {
-		// go through the list of all dereferenced memory locations
-		SgExpression* theexp = *vit;
-		cerr << "$$$$$- Found mem loc that is being initialized: "
-		<< theexp->class_name() << endl;
-#endif
 	// build the function call : runtimeSystem-->createArray(params); ---------------------------
 	SgExprListExp* arg_list = buildExprListExp();
 	appendTypeInformation(NULL, exp -> get_type(), arg_list);
@@ -418,8 +438,15 @@ RtedTransformation::buildVariableInitCallExpr(SgInitializedName* initName,
 	SgScopeStatement* scope = NULL;
 	if (initName)
 		scope = initName->get_scope();
+	bool isUnionClass=false;
+	SgClassDefinition* unionclass = isSgClassDefinition(initName->get_scope());
+	if (unionclass && 
+	    unionclass->get_declaration()->get_class_type()==SgClassDeclaration::e_union)
+	  isUnionClass=true;
+	//if (!isUnionClass) 
+	unionclass=NULL;
 	appendAddressAndSize(//initName,
-			scope, exp, arg_list, 0);
+			     scope, exp, arg_list, 0, unionclass);
 
 	SgIntVal* ismallocV = buildIntVal(0);
 	if (ismalloc)
@@ -434,6 +461,15 @@ RtedTransformation::buildVariableInitCallExpr(SgInitializedName* initName,
 	//    *p = 10;
 	int is_pointer_change = isSgExprStatement(stmt) && isSgPointerType(
 			isSgExprStatement(stmt) -> get_expression() -> get_type());
+	// However, the following can be a pointer change if u
+	// is a union
+	//   u.p = malloc(..)
+	//   u.x = 50
+	// i.e. if any of the vars in union is a pointer, then there is a 
+	// pointer change
+	//if (isUnionClass)
+	// is_pointer_change=true;
+	cerr <<"@@@@ varrefe = " << initName->get_scope()->class_name() << endl;
 	appendExpression(arg_list, buildIntVal(is_pointer_change));
 
 	SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
@@ -484,8 +520,11 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
 			ROSE_ASSERT(decl);
 			stmt = isSgVariableDeclaration(decl->get_parent());
 			if (!stmt) {
-				cerr << " Error . stmt is unknown : "
+				cerr << " stmt==NULL : Error . stmt is unknown : "
 						<< decl->get_parent()->class_name() << endl;
+				cerr << "is CompilerGen: " << decl->get_file_info()->isCompilerGenerated() << endl;
+				if (decl->get_file_info()->isCompilerGenerated())
+				  return;
 				ROSE_ASSERT( false );
 			}
 			scope = scope->get_scope();
@@ -514,17 +553,60 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
 					varRefE, stmt, ismalloc);
 			prependPseudoForInitializerExpression(funcCallExp_vec,
 					isSgForStatement(stmt -> get_parent() -> get_parent()));
-		} else if (isNormalScope(scope)) {
+		} else if (isSgIfStmt(scope)) {
+			SgExpression* funcCallExp = buildVariableInitCallExpr(initName,
+					varRefE, stmt, ismalloc);
+
+			SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
+			cerr <<"If Statment : inserting initvar" << endl;
+			if (exprStmt) {
+			  SgStatement* trueb = isSgIfStmt(scope)->get_true_body();
+			  SgStatement* falseb = isSgIfStmt(scope)->get_false_body();
+			  // find out if the varRefE is part of the true, false or
+			  // the condition
+			  bool partOfTrue = traverseAllChildrenAndFind(varRefE,trueb);
+			  bool partOfFalse = traverseAllChildrenAndFind(varRefE,falseb);
+			  bool partOfCondition = false;
+			  if (partOfTrue==false && partOfFalse==false)
+			    partOfCondition=true;
+			  cerr <<"@@@@ If cond : partOfTrue: "<<partOfTrue<<
+			    "   partOfFalse:"<<partOfFalse<<"  partOfCondition:"<<
+			    partOfCondition<<endl;
+			  if (trueb && ( partOfTrue || partOfCondition)) {
+			    if (!isSgBasicBlock(trueb)) {
+			      removeStatement(trueb);
+			      SgBasicBlock* bb = buildBasicBlock();
+			      bb->set_parent(isSgIfStmt(scope));
+			      isSgIfStmt(scope)->set_true_body(bb);
+			      bb->prepend_statement(trueb);
+			      trueb=bb;
+			    }
+			    prependStatement( exprStmt,isSgScopeStatement(trueb));
+			  }
+			  if (falseb && ( partOfFalse || partOfCondition)) {
+			    if (!isSgBasicBlock(falseb)) {
+			      removeStatement(falseb);
+			      SgBasicBlock* bb = buildBasicBlock();
+			      bb->set_parent(isSgIfStmt(scope));
+			      isSgIfStmt(scope)->set_false_body(bb);
+			      bb->prepend_statement(falseb);
+			      falseb=bb;
+			    }
+			    prependStatement(exprStmt,isSgScopeStatement(falseb));
+			  }  else if (partOfCondition) {
+			    // create false statement, this is sometimes needed
+			    SgBasicBlock* bb = buildBasicBlock();
+			    bb->set_parent(isSgIfStmt(scope));
+			    isSgIfStmt(scope)->set_false_body(bb);
+			    falseb=bb;
+			    prependStatement(exprStmt,isSgScopeStatement(falseb));
+			  }
+			}
+		} else if (isNormalScope(scope) && !isSgIfStmt(scope)) {
 
 			SgExpression* funcCallExp = buildVariableInitCallExpr(initName,
 					varRefE, stmt, ismalloc);
 
-#if 0
-			std::vector<SgExpression*>::const_iterator it =
-			funcCallExp_vec.begin();
-			for (; it != funcCallExp_vec.end(); ++it) {
-				SgExpression* funcCallExp = *it;
-#endif
 			SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
 			string empty_comment = "";
 			attachComment(exprStmt, empty_comment, PreprocessingInfo::before);
@@ -685,9 +767,9 @@ void RtedTransformation::insertAccessVariable(SgScopeStatement* initscope,
 				}
 			}
 			appendAddressAndSize(//initName,
-					initscope, accessed_exp, arg_list, 2);
+					     initscope, accessed_exp, arg_list, 2);
 			appendAddressAndSize(//initName,
-					initscope, write_location_exp, arg_list, 2);
+					     initscope, write_location_exp, arg_list, 2);
 			appendExpression(arg_list, buildIntVal(read_write_mask));
 
 			SgExpression* filename = buildString(

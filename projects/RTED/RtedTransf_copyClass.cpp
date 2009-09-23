@@ -97,6 +97,7 @@ void RtedTransformation::insertNamespaceIntoSourceFile(SgSourceFile* sf) {
 void RtedTransformation::instrumentClassDeclarationIntoTopOfAllSourceFiles(
 									   SgProject* project, SgClassDeclaration* classDecl) {
   // **********************
+  cerr <<"@@@ instrumenting into top "<< endl;
   // deep copy the classdecl and make it unparseable
   SgClassDeclaration* cd_copy = isSgClassDeclaration(deepCopyNode(classDecl));
   SgClassType* type_copy = new SgClassType(cd_copy);

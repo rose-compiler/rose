@@ -664,7 +664,8 @@ void RtedTransformation::appendAddressAndSize(
 					      SgScopeStatement* scope,
                             SgExpression* varRefE,
                             SgExprListExp* arg_list,
-                            int appendType ) {
+					      int appendType,
+					      SgClassDefinition* UnionClass) {
 
  //   SgScopeStatement* scope = NULL;
 
@@ -684,14 +685,15 @@ void RtedTransformation::appendAddressAndSize(
     }
     SgType* type  = NULL;
     if (varRefE) type=varRefE -> get_type();
-    appendAddressAndSize( exp, type, arg_list, appendType );
+    appendAddressAndSize( exp, type, arg_list, appendType,UnionClass );
 }
 
 void RtedTransformation::appendAddressAndSize(
                             SgExpression* exp,
                             SgType* type,
                             SgExprListExp* arg_list,
-                            int appendType ) {
+                            int appendType,
+					      SgClassDefinition* unionclass) {
 
     appendAddress( arg_list, exp );
 
@@ -735,6 +737,20 @@ void RtedTransformation::appendAddressAndSize(
                         -> get_base_type() -> copy( copy )))
         );
     } else {
+#if 0
+      if (unionclass) {
+	cerr <<"isUnionClass" << endl;
+	SgType* classtype = unionclass ->get_declaration()->get_type();
+	cerr <<" unionclass : " << unionclass->unparseToString()<<"  type: " << classtype->class_name() << endl;
+
+          appendExpression(
+			   arg_list,
+			   buildSizeOfOp( isSgType(classtype-> copy( copy )))
+			   //			   buildSizeOfOp( buildIntVal(8))
+			   );
+      } else
+#endif
+
     	if (exp)
           appendExpression(
             arg_list,
@@ -1010,6 +1026,46 @@ RtedTransformation::buildGlobalConstructor(SgScopeStatement* scope, std::string 
 
 
   return block;
+}
+
+bool
+RtedTransformation::traverseAllChildrenAndFind(SgExpression* varRef, 
+					       SgStatement* stmt) {
+  bool found =false;
+  if (stmt==NULL) 
+    return found;
+  Rose_STL_Container< SgNode * > nodes = 
+    NodeQuery::querySubTree(stmt,V_SgExpression);
+  Rose_STL_Container< SgNode * >::const_iterator it = nodes.begin();
+  for (;it!=nodes.end();++it) {
+    SgExpression* var = isSgExpression(*it);
+    ROSE_ASSERT(var);
+    if (var==varRef) {
+      found=true;
+      break;
+    }
+  }
+  return found;
+}
+
+bool
+RtedTransformation::traverseAllChildrenAndFind(SgInitializedName* varRef, 
+					       SgStatement* stmt) {
+  bool found =false;
+  if (stmt==NULL) 
+    return found;
+  Rose_STL_Container< SgNode * > nodes = 
+    NodeQuery::querySubTree(stmt,V_SgInitializedName);
+  Rose_STL_Container< SgNode * >::const_iterator it = nodes.begin();
+  for (;it!=nodes.end();++it) {
+    SgInitializedName* var = isSgInitializedName(*it);
+    ROSE_ASSERT(var);
+    if (var==varRef) {
+      found=true;
+      break;
+    }
+  }
+  return found;
 }
 
 SgBasicBlock* 

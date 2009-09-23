@@ -2,8 +2,8 @@
 int main() {
 
     union {
-        int*    p;
-        int     x;
+       int*    p;
+       int     x;
     } u;
 
     u.p = malloc( sizeof( int ));

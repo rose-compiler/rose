@@ -210,6 +210,8 @@ class RtedTransformation : public AstSimpleProcessing {
   void insertArrayCreateCall(SgVarRefExp* n, RTedArray* value);
   void insertArrayCreateCall(SgInitializedName* initName,  RTedArray* value);
   void insertArrayCreateCall(SgStatement* stmt,SgInitializedName* initName,  SgVarRefExp* varRef, RTedArray* value);
+  SgStatement* buildArrayCreateCall(SgInitializedName* initName, SgVarRefExp* varRef,
+				    RTedArray* array,SgStatement* stmt);
 
   void insertArrayAccessCall(SgExpression* arrayExp, RTedArray* value);
   void insertArrayAccessCall(SgStatement* stmt,
@@ -266,6 +268,7 @@ class RtedTransformation : public AstSimpleProcessing {
   // is it a variable?
   void visit_isSgVariableDeclaration(SgNode* n);
   void insertVariableCreateCall( RtedClassDefinition* cdef );
+
   void insertVariableCreateCall(SgInitializedName* initName);
   void insertVariableCreateCall(SgInitializedName* initName,SgExpression* expr);
   bool isVarInCreatedVariables(SgInitializedName* n);
@@ -304,6 +307,8 @@ class RtedTransformation : public AstSimpleProcessing {
   void visit_isSgArrowExp(SgArrowExp* n);
 
   std::string removeSpecialChar(std::string str);
+  bool traverseAllChildrenAndFind(SgExpression* varRef, SgStatement* stmt);
+  bool traverseAllChildrenAndFind(SgInitializedName* varRef, SgStatement* stmt);
 
 
   /// Renames the original main function
@@ -355,8 +360,8 @@ class RtedTransformation : public AstSimpleProcessing {
   void appendTypeInformation(SgInitializedName* initName, SgType* type, SgExprListExp* arg_list);
   void appendTypeInformation(SgType* type, SgExprListExp* arg_list, bool resolve_class_names = true, bool array_to_pointer=false);
   void appendAddressAndSize(//SgInitializedName* initName,
-		  SgScopeStatement* scope, SgExpression* varRef, SgExprListExp* arg_list, int appendType);
-  void appendAddressAndSize(SgExpression* exp, SgType* type, SgExprListExp* arg_list, int appendType);
+			    SgScopeStatement* scope, SgExpression* varRef, SgExprListExp* arg_list, int appendType, SgClassDefinition* cd=NULL);
+  void appendAddressAndSize(SgExpression* exp, SgType* type, SgExprListExp* arg_list, int appendType, SgClassDefinition* isUnionClass=NULL);
   void appendAddress( SgExprListExp* arg_list, SgExpression* exp );
   void appendBaseType( SgExprListExp* arg_list, SgType* type );
   void appendClassName( SgExprListExp* arg_list, SgType* type );

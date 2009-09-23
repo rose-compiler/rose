@@ -120,7 +120,7 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
 	if(idx != std::string::npos)
 	  extension = filename.substr(idx+1);
 	if ((extension!="C" && extension!="cpp" && extension!="cxx") &&
-			filename.find("include-staging")==string::npos &&
+		      	filename.find("include-staging")==string::npos &&
 			filename.find("/usr/include")==string::npos
 	) {
 	  std::vector<std::pair<SgNode*,std::string> > vec = classDecl->returnDataMemberPointers();
@@ -131,7 +131,22 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
 	    instrumentClassDeclarationIntoTopOfAllSourceFiles(project, classDecl);
 	  }
 	    traverseClasses.push_back(classDecl);
-	}
+	} else if (    	filename.find("include-staging")==string::npos ||
+			filename.find("/usr/include")==string::npos) {
+	  std::string classname = classDecl->get_name().str();
+	  cerr <<"Found a class that is instantiated through the header file" << 
+	    "  " << filename << "  class:" << classname << 
+	    "  classtype: " << classDecl->class_name() << endl;
+	  bool isBasicFile = false;
+	  if (classname.compare("__file < char >"))
+	    isBasicFile=true;
+	  cerr <<"isBasicFile: " << isBasicFile<< "  isCompilerGen:" <<
+	    classDecl->get_file_info()->isCompilerGenerated() << endl;
+	  //tps : fixme in order to make cxx_stream test work.
+	  //if (isBasicFile) 
+	  //  instrumentClassDeclarationIntoTopOfAllSourceFiles(project, classDecl);
+	  
+	} 
       }
   }
   moveupPreprocessingInfo(project);
