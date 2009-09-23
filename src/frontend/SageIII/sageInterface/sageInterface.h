@@ -781,7 +781,8 @@ bool normalizeForLoopInitDeclaration(SgForStatement* loop);
 //!           i>x is normalized to i>= (x+1)
 //!    For increment expression:
 //!           i++ is normalized to i+=1 and 
-//!           i-- is normalized to i+=-1
+//!           i-- is normalized to i+=-1 
+//!           i-=s is normalized to i+= -s
 bool forLoopNormalization(SgForStatement* loop);
 
 //!  Unroll a target loop with a specified unrolling factor. It handles steps larger than 1 and adds a fringe loop if the iteration count is not evenly divisible by the unrolling factor.
@@ -1220,9 +1221,8 @@ void getLiveVariables(LivenessAnalysis * liv, SgForStatement* loop, std::set<SgI
 //!Recognize and collect reduction variables and operations within a C/C++ loop, following OpenMP 3.0 specification for allowed reduction variable types and operation types.
 void ReductionRecognition(SgForStatement* loop, std::set< std::pair <SgInitializedName*, VariantT> > & results);
 
-//! Constant folding an AST subtree rooted at 'r' (replacing its children with their constant values, if applicable)
-/*! It is a wrapper function for ConstantFolding::constantFoldingOptimization(). Note that only r's children are replaced with their corresponding constant values, not the input SgNode r itself. You have to call this upon an expression's parent node if you want to fold the expression.
- * */
+//! Constant folding an AST subtree rooted at 'r' (replacing its children with their constant values, if applicable). Please be advised that constant folding on floating point computation may decrease the accuracy of floating point computations! 
+/*! It is a wrapper function for ConstantFolding::constantFoldingOptimization(). Note that only r's children are replaced with their corresponding constant values, not the input SgNode r itself. You have to call this upon an expression's parent node if you want to fold the expression. */
 void constantFolding(SgNode* r);
 
 //!Instrument(Add a statement, often a function call) into a function right before the return points, handle multiple return statements and return expressions with side effects. Return the number of statements inserted. 
