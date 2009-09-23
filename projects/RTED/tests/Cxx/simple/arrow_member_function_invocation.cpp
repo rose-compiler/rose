@@ -10,7 +10,7 @@ int main() {
         A* a = new A;
         int* x = a -> foo();
 
-        delete a;
+
     // memory leak on scope exit
     }
 

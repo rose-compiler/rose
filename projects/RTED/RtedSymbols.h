@@ -19,6 +19,7 @@ public:
 	SgFunctionSymbol* roseReallocateMemory;
 	SgFunctionSymbol* roseConvertIntToString;
 	SgFunctionSymbol* roseCreateVariable;
+	SgFunctionSymbol* roseCreateObject;
 	SgFunctionSymbol* roseInitVariable;
 	SgFunctionSymbol* roseMovePointer;
 	SgFunctionSymbol* roseAccessVariable;
@@ -39,6 +40,7 @@ public:
         roseReallocateMemory = NULL;
 		roseConvertIntToString=NULL;
 		roseCreateVariable = NULL;
+		roseCreateObject = NULL;
 		roseInitVariable = NULL;
 		roseAccessVariable = NULL;
 		roseEnterScope = NULL;

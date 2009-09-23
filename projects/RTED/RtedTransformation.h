@@ -107,6 +107,7 @@ class RtedTransformation : public AstSimpleProcessing {
   SgReturnStmt* mainReturnStmt;
   SgFunctionSymbol* roseCallStack;
   SgFunctionSymbol* roseCreateVariable;
+  SgFunctionSymbol* roseCreateObject;
   SgFunctionSymbol* roseInitVariable;
   SgFunctionSymbol* roseMovePointer;
   SgFunctionSymbol* roseAccessVariable;
@@ -272,8 +273,7 @@ class RtedTransformation : public AstSimpleProcessing {
 
   // is it a variable?
   void visit_isSgVariableDeclaration(SgNode* n);
-  void insertVariableCreateCall( RtedClassDefinition* cdef );
-
+  void insertCreateObjectCall( RtedClassDefinition* cdef );
   void insertVariableCreateCall(SgInitializedName* initName);
   void insertVariableCreateCall(SgInitializedName* initName,SgExpression* expr);
   bool isVarInCreatedVariables(SgInitializedName* n);
@@ -286,7 +286,6 @@ class RtedTransformation : public AstSimpleProcessing {
 				SgExpression* varRefE,
 				SgStatement* stmt,
 				bool ismalloc );
-  SgFunctionCallExp* buildVariableCreateCallExpr(SgThisExp* this_exp, bool forceinit=false);
   SgFunctionCallExp* buildVariableCreateCallExpr(SgInitializedName* name, SgStatement* stmt, bool forceinit=false);
   // TODO 2 djh: test docs
   /**
@@ -294,7 +293,6 @@ class RtedTransformation : public AstSimpleProcessing {
    */
   SgFunctionCallExp* buildVariableCreateCallExpr( SgExpression* var_ref, std::string& debug_name, bool init );
 
-  SgExprStatement* buildVariableCreateCallStmt( SgThisExp* this_exp, bool forceinit=false );
   SgExprStatement* buildVariableCreateCallStmt( SgInitializedName* name, SgStatement* stmt, bool forceinit=false );
   /**
    * @b{ For Internal Use Only }.  See the overloaded convenience functions.
@@ -339,6 +337,7 @@ class RtedTransformation : public AstSimpleProcessing {
     mainBody = NULL;
     mainEndsWithReturn=false;
     roseCreateVariable=NULL;
+    roseCreateObject=NULL;
     roseInitVariable=NULL;
     roseMovePointer=NULL;
     roseAccessVariable=NULL;

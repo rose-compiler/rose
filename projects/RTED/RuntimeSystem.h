@@ -115,6 +115,22 @@ int RuntimeSystem_roseCreateVariable(const char* name,
 		int init, const char* className, const char* filename,
 		const char* line, const char* lineTransformed);
 
+/**
+ * Register the creation of a C++ object.  This function should only be called
+ * at the start of an object's constructor.  It is safe to call this function
+ * multiple times for the same address: e.g. if called in a base class
+ * constructor and a sub class constructor.
+ */
+int RuntimeSystem_roseCreateObject(
+        const char* type,
+        const char* basetype,
+        size_t indirection_level,
+        unsigned long int address,
+        unsigned int size,
+        const char* filename,
+        const char* line,
+        const char* lineTransformed );
+
 int RuntimeSystem_roseInitVariable(const char* typeOfVar2,
 		const char* baseType2, size_t indirection_level,
 		const char* class_name, unsigned long long address, unsigned int size,

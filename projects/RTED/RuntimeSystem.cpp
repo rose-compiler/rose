@@ -242,17 +242,32 @@ RuntimeSystem_roseCreateHeap(const char* name, const char* mangl_name,
     //cerr << " registering heap   type:" << type << "  basetype:"<<basetype<<
     //		"  class_name:" <<class_name<<"  indirection_level:"<<ToString(indirection_level)<<
     //		"  address:"<<HexToString(heap_address) <<"  malloc size:"<<ToString(mallocSize)<<endl;
-    bool was_from_malloc = ( fromMalloc == 1 );
-    rs -> createMemory( heap_address, mallocSize, false, was_from_malloc );
-    rs -> registerPointerChange(
-				address,
-				heap_address,
-				RuntimeSystem_getRsType(
+
+    RsPointerType* rs_type 
+      = static_cast< RsPointerType* >(
+          RuntimeSystem_getRsType(
 							type,
 							basetype,
 							class_name,
-							indirection_level
-							),
+							indirection_level ));
+    RsClassType* class_type 
+      = dynamic_cast< RsClassType* >( rs_type -> getBaseType() );
+    // A class might have had its memory allocation registered in the
+    // constructor.  If there was no explicit constructor, however, we still
+    // have to allocate the memory here.
+    if(   !class_type
+          || rs -> getMemManager() -> findContainingMem( heap_address) == NULL ) {
+      // FIXME 2: This won't handle the unlikely case of a C++ object being
+      // allocated via malloc and then freed with delete.
+      //
+      // object memory allocation is handled in the constructor
+      bool was_from_malloc = ( fromMalloc == 1 );
+      rs -> createMemory( heap_address, mallocSize, false, was_from_malloc );
+    }
+    rs -> registerPointerChange(
+				address,
+				heap_address,
+        rs_type,
 				false,  // checkPtrMove? no, pointer may change regions
 				true    // checkMemLeak? yes
 				);
@@ -778,6 +793,29 @@ int RuntimeSystem_roseCreateVariable( const char* name,
   return 0;
 }
 
+int RuntimeSystem_roseCreateObject(
+        const char* type_name,
+        const char* base_type,
+        size_t indirection_level,
+        unsigned long int address,
+        unsigned int size,
+        const char* filename,
+        const char* line,
+        const char* lineTransformed ) {
+
+  RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
+  CHECKPOINT
+
+  RsClassType * rs_type 
+    = static_cast< RsClassType* >(
+        RuntimeSystem_getRsType(
+              type_name,
+              base_type,
+              indirection_level ));
+  assert( rs_type );
+
+  rs -> createObject( address, rs_type );
+}
 
 
 /*********************************************************

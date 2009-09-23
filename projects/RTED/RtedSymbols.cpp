@@ -32,6 +32,7 @@ void RtedSymbols::visit(SgNode* n) {
     LOOKUP( roseConfirmFunctionSignature );
     LOOKUP( roseConvertIntToString );
     LOOKUP( roseCreateVariable );
+    LOOKUP( roseCreateObject );
     LOOKUP( roseInitVariable );
     LOOKUP( roseMovePointer );
     LOOKUP( roseEnterScope );

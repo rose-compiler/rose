@@ -21,6 +21,7 @@
 #include "StackManager.h"
 #include "PointerManager.h"
 
+
 /**
  * RuntimeSystem is responsible for keeping track of all variable allocations and memory operations
  *
@@ -107,6 +108,21 @@ class RuntimeSystem
                             const std::string & name,
                             const std::string & mangledName,
                             RsArrayType * type);
+
+        /** Notifies the RTS that a C++ object has been created.  This will
+         * typically be called in the constructor, so that the RTS is aware of
+         * the memory during the constructor.  If the object is on the stack,
+         * the variable will have to be created (and associated with this
+         * memory) later, at the right scope.
+         *
+         * The behaviour of createObject is intended to handle subtypes and
+         * nested types.  If createObject is called for an existing address,
+         * usually nothing will happen.  However, if the address is exactly the
+         * same (and not an offset in an existing @c MemoryType) and the type is
+         * a subtype, then the type of the memory layout is updated.
+         */
+        void createObject(  addr_type address,
+                            RsClassType* type );
 
 
 

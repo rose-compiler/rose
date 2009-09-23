@@ -47,19 +47,11 @@ void RtedTransformation::visit_isSgVariableDeclaration(SgNode* n) {
 		ROSE_ASSERT(initName);
 
 		SgType* var_type = initName -> get_type();
+        // FIXME 2: probably need to handle typedef to reference, recursive
+        // typedef/reference, &c.
 		// reference types don't create more memory as far as the RTS is
 		// concerned (in that &foo == &bar for bar a ref. of foo)
 		if( isSgReferenceType( var_type ))
-		continue;
-
-		// Consider, e.g.
-		//  MyClass a;
-		//  RuntimeSystem_createVariable( a )
-		// Here we informed the RTS of memory allocation after the constructor was
-		// already run, so we might easily run into false positives from the
-		// instrumented constructors.
-		if( isSgClassType( var_type )
-				&& hasNonEmptyConstructor( isSgClassType( var_type )))
 		continue;
 
 		// need to get the type and the possible value that it is initialized with
@@ -69,42 +61,64 @@ void RtedTransformation::visit_isSgVariableDeclaration(SgNode* n) {
 	}
 }
 
-// FIXME 2 djh: This presently inserts erroneous calls to createvariable when
-// multiple constructors are called for the same variable (e.g. superclass
-// constructors).
-void RtedTransformation::insertVariableCreateCall(RtedClassDefinition* rcdef) {
-	SgClassDefinition* cdef = rcdef -> classDef;
+void RtedTransformation::insertCreateObjectCall(RtedClassDefinition* rcdef) {
+    SgClassDefinition* cdef = rcdef -> classDef;
 
-	SgDeclarationStatementPtrList constructors;
-	appendConstructors(cdef, constructors);
+    SgDeclarationStatementPtrList constructors;
+    appendConstructors( cdef, constructors );
 
-	BOOST_FOREACH( SgDeclarationStatement* decl, constructors )
-{	SgMemberFunctionDeclaration* constructor
-	= isSgMemberFunctionDeclaration( decl );
-	// validate the postcondition of appendConstructors
-	ROSE_ASSERT( constructor );
+    BOOST_FOREACH( SgDeclarationStatement* decl, constructors ) {
+        SgMemberFunctionDeclaration* constructor
+            = isSgMemberFunctionDeclaration( decl );
+        // validate the postcondition of appendConstructors
+        ROSE_ASSERT( constructor );
 
-	// FIXME 2: Probably the thing to do in this case is simply to bail and
-	// trust that the constructor will get transformed when its definition
-	// is processed
-	SgFunctionDefinition* def = constructor -> get_definition();
-	ROSE_ASSERT( def );
+        // FIXME 2: Probably the thing to do in this case is simply to bail and
+        // trust that the constructor will get transformed when its definition
+        // is processed
+        SgFunctionDefinition* def = constructor -> get_definition();
+        ROSE_ASSERT( def );
 
-	SgBasicBlock* body = def -> get_body();
+        SgBasicBlock* body = def -> get_body();
 
-	SgSymbolTable* sym_tab
-	= cdef -> get_declaration() -> get_scope() -> get_symbol_table();
+        // We need the symbol to build a this expression
+        SgSymbolTable* sym_tab
+            = cdef -> get_declaration() -> get_scope() -> get_symbol_table();
 
-	SgClassSymbol* csym
-	= isSgClassSymbol(
-			sym_tab -> find_class(
-					cdef -> get_declaration() -> get_name() ));
-	ROSE_ASSERT( csym );
+        SgClassSymbol* csym
+            = isSgClassSymbol(
+                    sym_tab -> find_class(
+                        cdef -> get_declaration() -> get_name() ));
+        ROSE_ASSERT( csym );
 
-	SgExprStatement* expr = buildVariableCreateCallStmt( buildThisExp( csym ));
-	if (expr)
-	body -> prepend_statement(expr);
-}
+        SgType* type = cdef -> get_declaration() -> get_type();
+
+        // build arguments to roseCreateObject
+        SgExprListExp* arg_list = buildExprListExp();
+        appendTypeInformation( type, arg_list );
+        appendAddressAndSize(
+            // we want &(*this), sizeof(*this)
+            buildPointerDerefExp( buildThisExp( csym )), type, arg_list, 0 );
+        appendFileInfo( body, arg_list );
+
+        // create the function call and prepend it to the constructor's body
+        ROSE_ASSERT( roseCreateObject );
+        SgExprStatement* fncall =
+            buildExprStatement(
+                buildFunctionCallExp(
+                    buildFunctionRefExp( roseCreateObject ),
+                    arg_list ));
+        attachComment( fncall, "", PreprocessingInfo::before );
+        attachComment(
+            fncall,
+            "RS: Create Variable, parameters: "
+                "type, basetype, indirection_level, "
+                "address, size, filename, line, linetransformed",
+            PreprocessingInfo::before );
+
+        ROSE_ASSERT( fncall );
+        body -> prepend_statement( fncall );
+    }
 }
 
 void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName) {
@@ -283,21 +297,29 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName,
 
 // convenience function
 SgFunctionCallExp*
-RtedTransformation::buildVariableCreateCallExpr(SgThisExp* exp, bool forceinit) {
-
-	string debug_name("this");
-	return buildVariableCreateCallExpr(
-	// we want &(*this), sizeof(*this)
-			buildPointerDerefExp(exp), debug_name, forceinit);
-}
-
-// convenience function
-SgFunctionCallExp*
 RtedTransformation::buildVariableCreateCallExpr(SgInitializedName* initName,
 		SgStatement* stmt, bool forceinit) {
 
 	SgInitializer* initializer = initName->get_initializer();
-	bool initb = initializer || forceinit;
+
+    // FIXME 2: We don't handle initialzer clauses in constructors.
+    // E.g.
+    // class A {
+    //  int x, y;
+    //  A : x( 1 ), y( 200 ) { }
+    // };
+    //
+    /* For non objects, any initialzer is enough for the variable to be
+     * fully initialized, e.g.
+     *      int y = 200;    // safe to read y
+     * However, all objects will have some initialzer, even if it's nothing more
+     * than a constructor initializer.  Which members are initialized is up to
+     * the constructor.
+     */
+	bool initb = 
+        (initializer 
+            && !(isSgConstructorInitializer( initializer )))
+        || forceinit;
 
 	string debug_name = initName -> get_name();
 
@@ -369,15 +391,6 @@ RtedTransformation::buildVariableCreateCallExpr(SgExpression* var_ref,
 	SgFunctionRefExp* memRef_r = buildFunctionRefExp(roseCreateVariable);
 
 	return buildFunctionCallExp(memRef_r, arg_list);
-}
-
-// convenience function
-SgExprStatement*
-RtedTransformation::buildVariableCreateCallStmt(SgThisExp* exp, bool forceinit) {
-	SgFunctionCallExp* fn_call = buildVariableCreateCallExpr(exp, forceinit);
-	if (fn_call == NULL)
-		return NULL;
-	return buildVariableCreateCallStmt(fn_call);
 }
 
 // convenience function

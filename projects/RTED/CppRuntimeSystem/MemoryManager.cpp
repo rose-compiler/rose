@@ -55,6 +55,11 @@ MemoryType::~MemoryType()
 
 }
 
+void MemoryType::resize( size_t new_size ) {
+    assert( new_size >= size );
+    size = new_size;
+}
+
 bool MemoryType::containsAddress(addr_type queryAddress)
 {
     return ( queryAddress >= startAddress &&
@@ -119,6 +124,17 @@ void MemoryType::registerMemType(addr_type offset, RsType * type)
         RuntimeSystem::instance()->getPointerManager()->createPointer(startAddress+offset,type);
     }
     rs->printMessage("   ++ registerMemType done.");
+}
+
+void MemoryType::forceRegisterMemType( addr_type offset, RsType* type ) {
+    TiIterPair type_range = getOverlappingTypeInfos(
+        offset, offset + type -> getByteSize() );
+
+    TiIter incrementedLower = type_range.first;
+    ++incrementedLower;
+
+    typeInfo.erase( type_range.first, type_range.second );
+    typeInfo.insert( make_pair< int, RsType* >( offset, type ));
 }
 
 bool MemoryType::checkAndMergeMemType(addr_type offset, RsType * type)
@@ -748,7 +764,12 @@ MemoryType * MemoryManager::getMemoryType(addr_type addr)
 {
     MemoryType * possibleMatch = findPossibleMemMatch(addr);
 
-    return possibleMatch->getAddress() == addr ? possibleMatch : NULL;
+    return(
+        possibleMatch != NULL
+        && possibleMatch->getAddress() == addr
+            ? possibleMatch 
+            : NULL
+    );
 }
 
 

@@ -34,6 +34,16 @@ VariablesType::VariablesType(const std::string & name_,
             assert(false);//unknown type
     }
 
+    RsClassType* class_type = dynamic_cast< RsClassType* >( type );
+    if(     class_type != NULL
+            && RuntimeSystem::instance() -> getMemManager() 
+                -> getMemoryType( address )) {
+        // When we create classes, the memory might be allocated in the
+        // constructor.  In these cases, it's fine to call createvar with
+        // existing memory
+        return;
+    }
+
     RuntimeSystem::instance()->createMemory(address,type->getByteSize(),true,false,type);
 
 }
@@ -48,6 +58,17 @@ VariablesType::VariablesType(const std::string & name_,
     address(address_)
 {
   assert(type);
+
+  RsClassType* class_type = dynamic_cast< RsClassType* >( type );
+  if(     class_type != NULL
+          && RuntimeSystem::instance() -> getMemManager() 
+              -> getMemoryType( address )) {
+      // When we create classes, the memory might be allocated in the
+      // constructor.  In these cases, it's fine to call createvar with
+      // existing memory
+      return;
+  }
+
   RuntimeSystem::instance()->createMemory(address,type->getByteSize(),true,false,type);
 }
 

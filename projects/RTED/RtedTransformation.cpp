@@ -46,6 +46,7 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
   roseCheckpoint = symbols->roseCheckpoint;
   roseConvertIntToString=symbols->roseConvertIntToString;
   roseCreateVariable = symbols->roseCreateVariable;
+  roseCreateObject = symbols->roseCreateObject;
   roseInitVariable = symbols->roseInitVariable;
   roseMovePointer = symbols->roseMovePointer;
   roseAccessVariable = symbols->roseAccessVariable;
@@ -65,6 +66,7 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
   ROSE_ASSERT(roseConvertIntToString);
   ROSE_ASSERT(roseCheckpoint);
   ROSE_ASSERT(roseCreateVariable);
+  ROSE_ASSERT(roseCreateObject);
   ROSE_ASSERT(roseInitVariable);
   ROSE_ASSERT(roseMovePointer);
   ROSE_ASSERT(roseAccessVariable);
@@ -388,7 +390,7 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
     ROSE_ASSERT(rtedClass);
     insertRegisterTypeCall(rtedClass);
 
-    insertVariableCreateCall( rtedClass );
+    insertCreateObjectCall( rtedClass );
   }
 
   cerr << "\n Number of Elements in create_array_access_call  : "

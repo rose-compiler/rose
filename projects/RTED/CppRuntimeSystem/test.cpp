@@ -1258,6 +1258,86 @@ void testPartialTypeSystemArrayAccess() {
     CLEANUP
 }
 
+void testTypeSystemSubtypes() {
+    TEST_INIT("Testing types: createObject should handle subtypes")
+
+    MemoryManager* mm = rs -> getMemManager();
+    TypeSystem* ts = rs -> getTypeSystem();
+
+    // register types
+    class Base { public: int x; };
+    class Sub : public Base { public: int y[ 200 ]; };
+    RsClassType* rs_base = new RsClassType( "Base", sizeof( Base ), false );
+    rs_base -> addMember( "x", ts -> getTypeInfo( "SgTypeInt" ), offsetof( Base, x ));
+    assert( rs_base -> isComplete() );
+
+    RsClassType* rs_sub = new RsClassType( "Sub", sizeof( Sub ), false );
+    rs_sub -> addMember(
+        "y",
+        ts -> getArrayType( "SgTypeInt", sizeof( int[ 200 ])),
+        offsetof( Sub, y ));
+    assert( rs_sub -> isComplete() );
+
+    // we should be able to call createObject for the same address in either
+    // order and end up with the more specific (larger) type.
+    rs -> createObject( 0x42, rs_base );
+    rs -> createObject( 0x42, rs_sub );
+    MemoryType* mt = mm -> findContainingMem( 0x42 );
+    assert( mt );
+    assert( rs_sub == mt -> getTypeAt( 0, mt -> getSize() ));
+
+    rs -> freeMemory( 0x42 );
+
+    // same test, but we call createObject in the reverse order
+    rs -> createObject( 0x42, rs_sub );
+    rs -> createObject( 0x42, rs_base );
+    mt = mm -> findContainingMem( 0x42 );
+    assert( mt );
+    assert( rs_sub == mt -> getTypeAt( 0, mt -> getSize() ));
+
+    rs -> freeMemory( 0x42 );
+
+    CLEANUP
+}
+
+void testTypeSystemNested() {
+    TEST_INIT("Testing types: createObject should ignore nested types")
+
+    MemoryManager* mm = rs -> getMemManager();
+    TypeSystem* ts = rs -> getTypeSystem();
+
+    // register types
+    class Base { public: int x; };
+    class Composite { public: int p; Base y[ 200 ]; };
+    RsClassType* rs_base = new RsClassType( "Base", sizeof( Base ), false );
+    rs_base -> addMember( "x", ts -> getTypeInfo( "SgTypeInt" ), offsetof( Base, x ));
+    assert( rs_base -> isComplete() );
+
+    RsClassType* rs_composite = new RsClassType( "Composite", sizeof( Composite ), false );
+    rs_composite -> addMember( "p", ts -> getTypeInfo( "SgTypeInt" ), offsetof( Composite, p ));
+    rs_composite -> addMember(
+        "y",
+        ts -> getArrayType( rs_base, sizeof( Base[ 200 ])),
+        offsetof( Composite, y ));
+    assert( rs_composite -> isComplete() );
+
+
+    // Once we create the larger class, we should ignore calls to the composite
+    // types.  If we did this in the reverse order the types would be merged.
+    rs -> createObject( 0x42, rs_composite );
+    MemoryType* mt = mm -> findContainingMem( 0x42 );
+    assert( mt );
+    assert( rs_composite == mt -> getTypeAt( 0, mt -> getSize() ));
+
+    rs -> createObject( 0x42 + offsetof( Composite, y ), rs_base );
+    assert( mt );
+    assert( rs_composite == mt -> getTypeAt( 0, mt -> getSize() ));
+
+    rs -> freeMemory( 0x42 );
+
+    CLEANUP
+}
+
 void testTypeConsistencyChecking() {
     TEST_INIT("Testing type consistency checking")
 
@@ -1348,12 +1428,13 @@ int main(int argc, char ** argv, char ** envp)
         rs->setTestingMode(true);
         rs->setOutputFile("test_output.txt");
 
-
         testTypeConsistencyChecking();
 
         testTypeSystemDetectNested();
         testTypeSystemMerge();
         testPartialTypeSystemArrayAccess();
+        testTypeSystemSubtypes();
+        testTypeSystemNested();
 
         testSuccessfulMallocFree();
 

@@ -321,6 +321,29 @@ void RuntimeSystem::createArray(    addr_type address,
 }
 
 
+void RuntimeSystem::createObject(   addr_type address,
+                                    RsClassType* type ) {
+    MemoryType* mt = memManager.findContainingMem( address );
+    if( mt ) {
+        if(     mt -> getAddress() == address
+                && type -> getByteSize() > mt -> getSize() ) {
+            // Same address, larger size.  We assume that a base type was
+            // registered, and now its subtype's constructor has been called
+
+            mt -> resize( type -> getByteSize() );
+            mt -> forceRegisterMemType( 0, type );
+        }
+        return;
+    }
+
+    mt = new MemoryType(
+        address, type -> getByteSize(), curPos, false, false );
+    memManager.allocateMemory(mt );
+
+    mt -> registerMemType( 0, type );
+}
+
+
 
 
 

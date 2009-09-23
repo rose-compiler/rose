@@ -55,6 +55,8 @@ class MemoryType
         bool                   isOnStack()  const { return onStack; }
         bool                   wasFromMalloc() const { return fromMalloc; }
 
+        void                   resize( size_t size );
+
         /// Tests if a part of memory is initialized
         bool  isInitialized(int offsetFrom, int offsetTo) const;
 
@@ -89,9 +91,12 @@ class MemoryType
         /// however it is possible to access the mem-region later with "containing" types
         /// f.e. first access with int-pointer, then with struct pointer, which as as first member an int
         void registerMemType(addr_type offset, RsType * type);
-        /// As @see registerMemType excpet that memory is only checked, not
-        /// registered.
-        
+      
+        /**
+         * As @see registerMemType, except that memory is not checked.  The type
+         * at @c offset is forced to be @c type.
+         */
+        void forceRegisterMemType( addr_type offset, RsType* type );
        
         /**
          * As @see registerMemType, except that memory is only checked and
