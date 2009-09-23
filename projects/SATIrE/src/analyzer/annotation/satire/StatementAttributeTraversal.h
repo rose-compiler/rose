@@ -37,6 +37,14 @@ private:
   SgFunctionDeclaration* enclosing_function(SgNode *node);
 };
 
+class AstDfiAttribute : public AstAttribute { 
+public:
+  std::string info;
+  AstDfiAttribute(std::string comment) {
+    info=comment;
+  }
+};
+
 template<typename DFI_STORE_TYPE>
 class DfiCommentAnnotator : public StatementAttributeTraversal<DFI_STORE_TYPE>
 {
@@ -50,6 +58,23 @@ protected:
   void addComment(std::string comment, PreprocessingInfo::RelativePositionType posSpecifier, SgStatement* node);
   void addCommentBeforeNode(std::string comment, SgStatement* node);
   void addCommentAfterNode(std::string comment, SgStatement* node);
+
+private:
+};
+
+template<typename DFI_STORE_TYPE>
+class DfiAttributeAnnotator : public StatementAttributeTraversal<DFI_STORE_TYPE>
+{
+public:
+  DfiAttributeAnnotator(DFI_STORE_TYPE store_):StatementAttributeTraversal<DFI_STORE_TYPE>(store_) {}
+  virtual ~DfiAttributeAnnotator();
+
+protected:
+  virtual void handleStmtDfi(SgStatement* stmt,std::string preInfo, std::string postInfo);
+
+  //  void addAttribute(std::string comment, PreprocessingInfo::RelativePositionType posSpecifier, SgStatement* node);
+  void addPreAttributeAtNode(std::string comment, SgStatement* node);
+  void addPostAttributeAtNode(std::string comment, SgStatement* node);
 
 private:
 };
@@ -137,6 +162,25 @@ void DfiCommentAnnotator<DFI_STORE_TYPE>::addCommentAfterNode(std::string commen
   addComment(comment,PreprocessingInfo::after,node);
 }
 
+template<typename DFI_STORE_TYPE>
+DfiAttributeAnnotator<DFI_STORE_TYPE>::~DfiAttributeAnnotator() {
+}
+
+template<typename DFI_STORE_TYPE>
+void DfiAttributeAnnotator<DFI_STORE_TYPE>::handleStmtDfi(SgStatement* stmt,std::string preInfo, std::string postInfo) {
+  addPreAttributeAtNode(preInfo,stmt);
+  addPostAttributeAtNode(postInfo,stmt);
+}
+
+template<typename DFI_STORE_TYPE>
+void DfiAttributeAnnotator<DFI_STORE_TYPE>::addPreAttributeAtNode(std::string comment, SgStatement* node) {
+  node->setAttribute("AnalysisResultPreInfo",new AstDfiAttribute(comment));
+}
+
+template<typename DFI_STORE_TYPE>
+void DfiAttributeAnnotator<DFI_STORE_TYPE>::addPostAttributeAtNode(std::string comment, SgStatement* node) {
+  node->setAttribute("AnalysisResultPostInfo",new AstDfiAttribute(comment));
+}
 
 template<typename DFI_STORE_TYPE>
 std::string StatementAttributeTraversal<DFI_STORE_TYPE>::getPreInfo(SgStatement* stmt) {
@@ -213,6 +257,11 @@ void StatementAttributeTraversal<DFI_STORE_TYPE>::visit(SgNode *node)
                 std::string funcname = func->get_name().str();
                 _currentFunction=funcname;
                 handleStmtDfi(stmt,getPreInfo(stmt),getPostInfo(stmt));
+		// MS+AP: would be using the PAG analysis results available as AST attributes 
+		//AstDfiAttribute* preinfo=dynamic_cast<AstDfiAttribute*>(node->getAttribute("AnalysisResultPreInfo"));
+		//AstDfiAttribute* postinfo=dynamic_cast<AstDfiAttribute*>(node->getAttribute("AnalysisResultPostInfo"));
+		//assert(preinfo && postinfo);
+		//handleStmtDfi(stmt,preinfo->info,postinfo->info);
             }
             if(SgBasicBlock* bb=isSgBasicBlock(stmt)) {
                 visitBasicBlock(bb); // Basic Block has no annotation but we need it sometimes
