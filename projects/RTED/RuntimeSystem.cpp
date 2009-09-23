@@ -1009,8 +1009,15 @@ RuntimeSystem_roseReallocateMemory(
   RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
   CHECKPOINT
 
-    rs->freeMemory( (addr_type) ptr );
-    rs->createMemory( (addr_type) ptr, size, false, true );
+    rs->freeMemory( (addr_type) ptr,
+      false,  // not freeing stack memory
+      true    // we do expect to free memory that came from malloc (i.e. not new)
+    );
+    rs->createMemory(
+      (addr_type) ptr, size,
+      false,    // not on stack
+      true      // was from malloc (i.e. don't use delete on this memory)
+    );
 }
 
 

@@ -521,7 +521,6 @@ TESTS_KNOWN_TO_FAIL = run/C/subprogram_call_errors/c_C_1_3_f \
 					  run/tests/C/pointer/arraytest \
 					  run/tests/C/types/union \
 					  run/tests/Cxx/io/cxx_stream \
-					  run/tests/Cxx/memory/new_realloc \
 					  run/tests/Cxx/overloading/array_index \
 					  run/tests/Cxx/pointer/arrow_star \
 					  run/tests/Cxx/pointer/C_F_3_3_a_i \
