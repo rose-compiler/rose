@@ -164,11 +164,18 @@ class RtedTransformation : public AstSimpleProcessing {
    * (such as @ref SgAssignmentOp or @ref SgPlusAssignOp)
    */
   bool isthereAnotherDerefOpBetweenCurrentAndAssign(SgExpression* exp );
+
   /**
    * @return @c SgPointerType if @c type is a pointer type, reference to pointer
    * type or typedef whose base type is a pointer type, and @c null otherwise.
    */
   SgPointerType* isUsableAsSgPointerType( SgType* type );
+  SgArrayType* isUsableAsSgArrayType( SgType* type );
+  SgReferenceType* isUsableAsSgReferenceType( SgType* type );
+
+  SgType* resolveTypedefs( SgType* type );
+  SgType* resolveReferencesAndTypedefs( SgType* type );
+
   bool isUsedAsLvalue( SgExpression* exp );
   bool isInInstrumentedFile( SgNode* n );
   /// is n a basic block, if statement, [do]while, or for statement

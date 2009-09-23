@@ -86,19 +86,42 @@ RtedTransformation::isthereAnotherDerefOpBetweenCurrentAndAssign(SgExpression* e
 }
 
 SgPointerType* RtedTransformation::isUsableAsSgPointerType( SgType* type ) {
-    if( isSgPointerType( type )) {
-        return isSgPointerType( type );
-    } else if( isSgTypedefType( type )) {
-        // resolve typedef to typedef ... to pointer
-        return isUsableAsSgPointerType(
+    return isSgPointerType( resolveReferencesAndTypedefs( type ));
+}
+
+SgArrayType* RtedTransformation::isUsableAsSgArrayType( SgType* type ) {
+    return isSgArrayType( resolveReferencesAndTypedefs( type ));
+}
+
+SgReferenceType* RtedTransformation::isUsableAsSgReferenceType( SgType* type ) {
+    return isSgReferenceType( resolveTypedefs( type ));
+}
+
+/**
+ * Follow the base type of @c type until we reach a non-typedef.
+ */
+SgType* RtedTransformation::resolveTypedefs( SgType* type ) {
+     if( isSgTypedefType( type ))
+        return resolveTypedefs(
+            isSgTypedefType( type ) -> get_base_type() );
+
+     return type;
+}
+
+/**
+ * Follow the base type of @c type until we reach a non-typedef, non-reference.
+ */
+SgType* RtedTransformation::resolveReferencesAndTypedefs( SgType* type ) {
+     if( isSgTypedefType( type )) {
+        return resolveReferencesAndTypedefs(
             isSgTypedefType( type ) -> get_base_type() );
     } else if( isSgReferenceType( type )) {
         // resolve reference to reference ... to pointer
-        return isUsableAsSgPointerType( 
+        return resolveReferencesAndTypedefs( 
             isSgReferenceType( type ) -> get_base_type() );
     }
 
-    return NULL;
+    return type;
 }
 
 

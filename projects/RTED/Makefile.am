@@ -526,7 +526,6 @@ TESTS_KNOWN_TO_FAIL = run/C/subprogram_call_errors/c_C_1_3_f \
 					  run/tests/Cxx/pointer/C_F_3_3_a_i \
 					  run/tests/Cxx/pointer/C_F_3_3_a_i2 \
 					  run/tests/Cxx/pointer/dot_star \
-					  run/tests/Cxx/types/uninitialized_reference_param
 
 $(TESTS_KNOWN_TO_FAIL):
 	@echo This test is known to fail, not running it now: $@

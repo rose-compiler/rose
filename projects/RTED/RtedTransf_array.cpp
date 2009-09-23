@@ -680,8 +680,43 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
   } 
   else if (isSgExprListExp(parent) && isSgFunctionCallExp(parent->get_parent())) {
 	  cerr << "$$$$$ Found Function call - lets handle its parameters." << endl;
-	  SgType* type = isSgExpression(last)->get_type();
-	  if (type && isSgArrayType(type))
+	  SgType* arg_type = isSgExpression(last)->get_type();
+      SgType* param_type = NULL;
+
+      // try to determine the parameter type
+      SgFunctionDeclaration* fndecl 
+          = isSgFunctionCallExp( parent -> get_parent() ) 
+                -> getAssociatedFunctionDeclaration();
+      if( fndecl ) {
+          int param_index = -1;
+          SgExpressionPtrList& args = isSgExprListExp( parent ) -> get_expressions();
+          for( int i = 0; i < args.size(); ++i ) {
+              if( args[ i ] == last ) {
+                  param_index = i;
+                  break;
+              }
+          }
+          ROSE_ASSERT( param_index > -1 );
+
+          // If we're in C, the function declaration could be just about
+          // anything.  In particular, it's not guaranteed that it has as many
+          // parameters as our callsite has arguments.
+          if( fndecl -> get_parameterList() -> get_args().size() > param_index ) {
+              SgInitializedName* param
+                    = fndecl -> get_parameterList() 
+                        -> get_args()[ param_index ];
+              if( param )
+                  param_type = param -> get_type();
+          }
+      }
+
+	  if (      (   arg_type 
+                    // Pointers are passed as pointers
+                    && isUsableAsSgArrayType( arg_type ) != NULL )
+                || (param_type
+                    // References do not have to be initialized.  They can be
+                    // initialized in the function body
+                    && isUsableAsSgReferenceType( param_type ) != NULL ))
 		  stopSearch=true;
 	  break;
   } else if (isSgAddressOfOp(parent)) {
