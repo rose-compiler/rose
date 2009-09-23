@@ -8,6 +8,7 @@ class A {
 int main() {
     if( true ) {
         A* a = new A;
+        a -> foo();
         int* x = a -> foo();
 
 

@@ -757,7 +757,13 @@ void RtedTransformation::insertAccessVariable(SgScopeStatement* initscope,
 					} else {
 						// not a l-value
 						write_location_exp = 0;
-						accessed_exp = arrow_op;
+                        if( isSgMemberFunctionType( arrow_op -> get_rhs_operand() -> get_type() ))
+                        // for member function invocations, we just want to
+                        // check that the pointer is good
+                            accessed_exp = arrow_op -> get_lhs_operand();
+                        else
+                        // normally we'll be reading the member itself 
+                            accessed_exp = arrow_op;
 					}
 				} else {
 					// consider

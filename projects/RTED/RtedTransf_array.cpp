@@ -541,7 +541,6 @@ RtedTransformation::visit_isSgArrowExp(SgArrowExp* n) {
   cerr <<"\n$$$$$ visit_isSgArrowExp : " << n->unparseToString() <<
     "  in line : " << n->get_file_info()->get_line() << " -------------------------------------" <<endl;
 
-
   SgExpression* left = isSgExpression(n->get_lhs_operand());
   ROSE_ASSERT(left);
   // left hand side should be a varrefexp or a thisOp
