@@ -1,3 +1,38 @@
+2009-09-23 00:54  panas2
+
+	* [r7476] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_copyClass.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_locals.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_registerType.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/tests/C/types/union.c: Work on RTED
+
+2009-09-22 23:27  collingbourne2
+
+	* [r7475] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/projects/AstEquivalence/Makefile.am: runIDA build
+	  made conditional on IDA being enabled
+
+2009-09-22 20:11  matzke
+
+	* [r7473] /trunk/ROSE/src/backend/unparser/unparser.C: ExecFormats:
+	  rose_*.s files were empty
+	  
+	  Fixes a bug where the assembly dump was not being written to the
+	  name specified in the SgBinaryFile node, but only to the *.dump
+	  file produced by the SgAsmGenericFile node.
+	  
+	  Note that the assembly in the rose_*.s file contains output from
+	  all
+	  SgAsmInterpretation nodes.
+	  
+	  This hopefully fixes the recent problem with the tutorial.
+
 2009-09-22 16:51  liao6
 
 	* [r7470]
