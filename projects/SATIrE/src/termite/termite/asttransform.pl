@@ -755,11 +755,12 @@ indent(file_info(_Filename,_Line,Col)) :- tab(Col).
 % Location must be one of [before, after, inside].
 unparse_ppi(_, []).
 unparse_ppi(Location, [PPI|PPIs]) :-
-  PPI =.. [Type, Text, Location, Fi], !,
+  PPI =.. [_Type, Text, Location, Fi], !,
   (Fi = file_info(_, _, 1) -> nl; true),
   write(Text),
   % FIXME use file info instead!
-  (Type = c_StyleComment -> true; nl),
+  %(Type = c_StyleComment -> true; nl),
+  nl,
   unparse_ppi(Location, PPIs).
 
 unparse_ppi(Location, [_|PPIs]) :- !, unparse_ppi(Location, PPIs).
