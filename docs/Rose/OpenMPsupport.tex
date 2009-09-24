@@ -91,7 +91,9 @@ A rich set of C/C++/Fortran OpenMP tests is located in \textit{src/tests/Compile
 %-------------------------------------------------------------
 %-------------------------------------------------------------
 \section{Generating AST with OpenMP Nodes}
-This phase converts the ROSE AST attached with OmpAttribute instances into AST with OpenMP-specific nodes.
+This phase converts the ROSE AST attached with OmpAttribute instances into
+AST with OpenMP-specific nodes\footnote{The conversion supports C and C++.
+We are working on the Fortran support.}.
 The introduction of OpenMP-specific ROSE AST nodes can help reuse all existing ROSE AST traversal, query, and other manipulation interfaces, thus facilitating analysis and translation of OpenMP program.
 
 All OpenMP AST nodes have names starting with \textit{SgOmp}. 
@@ -129,7 +131,9 @@ Please refer to the ROSE Web Reference\footnote{\url{http://www.rosecompiler.org
 %-------------------------------------------------------------
 \section{Translating OpenMP Directives}
 Using a command line like \textit{identityTranslator -rose:openmp:lower inputcode.c},
-ROSE can translate OpenMP 3.0 programs into multithreaded code targeting the GCC GOMP OpenMP runtime library.
+ROSE can translate OpenMP 3.0 programs into multithreaded code targeting
+the GCC GOMP OpenMP runtime library\footnote{The translation supports C
+now. We are working on the C++ and Fortran support.}.
 If the path to GOMP (preferably the one shipped with GCC 4.3 for OpenMP task support) is specified (using a configure option \textit{--with-gomp\_omp\_runtime\_library=/home/liao6/opt/gcc-svn/lib/}),
 the generated multithreaded code can be automatically linked to the GOMP library to generate final executables after compilation. 
 
