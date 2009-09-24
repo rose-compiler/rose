@@ -1,3 +1,108 @@
+2009-09-24 02:22  panas2
+
+	* [r7507]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/FileManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/FileManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.cpp,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_iofunccall.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_registerType.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/io/cxx_stream.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/io/cxx_stream2.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/io/cxx_stream2.ok_msg: pass
+	  all C++ input output errors
+
+2009-09-23 21:35  hamilton37
+
+	* [r7504] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h: RTED: Don't
+	  checkread args passed-by-reference.
+
+2009-09-23 21:35  hamilton37
+
+	* [r7503] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/arrow_member_function_invocation.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/arrow_member_function_invocation.ok_msg:
+	  RTED: Handle arrow expressions whose rhs is a member function
+	  reference.
+	  
+	  Previously we would incorrectly try to check the read of the
+	  function pointer,
+	  rather than the LHS of the arrow op.
+
+2009-09-23 21:34  hamilton37
+
+	* [r7502]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/VariablesType.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedSymbols.cpp,
+	  /trunk/ROSE/projects/RTED/RtedSymbols.h,
+	  /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/arrow_member_function_invocation.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/object_create3.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/simple/object_create4.ok_msg:
+	  RTED: Better handling of C++ object memory allocation.
+	  
+	  * We now handle multiple constructor invocations (e.g. from
+	  superclass
+	  constructor calls)
+	  * We handle nested types better, no longer producing erroneous
+	  double allocation
+	  faults when a user type has a member that is also a user type.
+
+2009-09-23 21:34  hamilton37
+
+	* [r7501] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp: RTED: Now we catch
+	  new/realloc pairs, as well as new/free, malloc/delete, etc.
+
+2009-09-23 21:34  hamilton37
+
+	* [r7500] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_operators.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/extract-expected-error.sed,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/pointer/reference_to_pointer.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/pointer/reference_to_pointer.ok_msg:
+	  RTED: We now handle illegal pointer movements through references.
+	  
+	  We previously caught cases such as the following:
+	  int x;
+	  int y;
+	  int* p = &x;
+	  // bad increment, unsafely relies on memory layout
+	  ++p;
+	  Now we catch the same errors when pointer is moved indirectly,
+	  via references.
+
+2009-09-23 20:25  liao6
+
+	* [r7499] /trunk/ROSE/scripts/roseFreshTestStub-Leo-head.sh:
+	  Specify GOMP path and enable execution test of the OpenMP support
+
 2009-09-23 20:16  liao6
 
 	* [r7497] /trunk/ROSE/config/support-gomp-omp.m4,
