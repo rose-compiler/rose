@@ -59,12 +59,14 @@ VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-l
 VALGRIND =
 
 C_TEST_Objects = ${C_TESTCODES_REQUIRED_TO_PASS:.c=.o}
+#C_TEST_Output = ${C_TESTCODES_REQUIRED_TO_PASS:.c=.out}
+
 CXX_TEST_Objects = ${CXX_TESTCODES_REQUIRED_TO_PASS:.C=.o}
 
 $(C_TEST_Objects): ../autoPar $(@:.o=.c)
-	$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.c)
+	$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.c) | fold >$(@:.o=.out)
 $(CXX_TEST_Objects): ../autoPar $(@:.o=.C)
-	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C)
+	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C) | fold >$(@:.o=.out)
 rose_interp1_elem.C: ../autoPar interp1_elem.C
 	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c -annot $(srcdir)/floatArray.annot -annot $(srcdir)/funcs.annot -annot $(srcdir)/Index.annot $(srcdir)/interp1_elem.C	
 rose_doall_vector.C: ../autoPar doall_vector.C
@@ -78,9 +80,9 @@ check-local:
 	@echo "Test for ROSE automatic parallelization."
 	@$(MAKE) $(C_TEST_Objects)
 	@$(MAKE) $(CXX_TEST_Objects)
-	@$(MAKE) rose_interp1_elem.C
-	@$(MAKE) rose_doall_vector.C
-	@$(MAKE) rose_doall_vector2.C
+	@$(MAKE) rose_interp1_elem.C > interp1_elem.out
+	@$(MAKE) rose_doall_vector.C > doall_vector.out
+	@$(MAKE) rose_doall_vector2.C > doall_vector2.out
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/projects/autoParallelization/tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
@@ -88,7 +90,7 @@ check-local:
 EXTRA_DIST = $(ALL_TESTCODES) funcs.annot floatArray.annot Index.annot simpleA++.h interp1_elem.C doall_vector.C doall_vector2.C
 
 clean-local:
-	rm -f *.o rose_*.[cC] *.dot 
+	rm -f *.o rose_*.[cC] *.dot *.out
 
 	
 

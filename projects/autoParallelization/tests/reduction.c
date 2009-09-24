@@ -6,7 +6,6 @@ void foo()
 {
   int i,sum2,xx,yy,zz;
   sum = 0;
-//#pragma omp parallel for private (i),reduction (+:sum,xx),reduction (-:yy),reduction (*:zz)  
   for (i=0;i<100;i++)
   {
     a[i]=i;
