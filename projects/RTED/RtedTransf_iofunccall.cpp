@@ -17,7 +17,7 @@ using namespace SageBuilder;
 
 void
 RtedTransformation::insertIOFuncCall(RtedArguments* args  ) {
-  //  SgStatement* stmt = getSurroundingStatement(args->varRefExp);
+
   SgStatement* stmt = args->stmt;
   ROSE_ASSERT(stmt);
   if (isSgStatement(stmt)) {
@@ -58,7 +58,10 @@ RtedTransformation::insertIOFuncCall(RtedArguments* args  ) {
     appendExpression(arg_list, buildString(removeSpecialChar(stmt->unparseToString())));
     // this one is new, it indicates the variable on the left hand side of the statment,
     // if available
-    appendExpression(arg_list, args->leftHandSideAssignmentExprStr);
+    if (args->leftHandSideAssignmentExprStr)
+      appendExpression(arg_list, args->leftHandSideAssignmentExprStr);
+    else 
+      appendExpression(arg_list, buildStringVal("NoAssignmentVar"));
     cerr << " ... Left hand side variable : " <<  args->leftHandSideAssignmentExpr << endl;
 
     // this is the file handle for fopen
@@ -109,6 +112,21 @@ RtedTransformation::insertIOFuncCall(RtedArguments* args  ) {
     			appendExpression(arg_list, exp);
     	}
     	appendExpression(arg_list, buildString("NULL"));
+    } else if (args->f_name=="std::fstream") {
+      cerr << " Detected fstream" << endl;
+      appendExpression(arg_list, args->varRefExp); // file handle
+    	std::vector<SgExpression*>::const_iterator it = args->arguments.begin();
+    	for (;it!=args->arguments.end();++it) {
+    		SgExpression* exp = deepCopy(*it);
+    		appendExpression(arg_list, exp);
+    	}
+    	// 0 arguments
+    	appendExpression(arg_list, buildString("NULL"));
+	//    	appendExpression(arg_list, buildString("NULL"));
+
+    } else {
+      cerr <<"Unknown io function call " << args->f_name << endl;
+      abort();
     }
 
     string symbolName2 = roseIOFunctionCall->get_name().str();

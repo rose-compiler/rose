@@ -136,6 +136,7 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
 	} else if (    	filename.find("include-staging")==string::npos ||
 			filename.find("/usr/include")==string::npos) {
 	  std::string classname = classDecl->get_name().str();
+#if 0
 	  cerr <<"Found a class that is instantiated through the header file" << 
 	    "  " << filename << "  class:" << classname << 
 	    "  classtype: " << classDecl->class_name() << endl;
@@ -147,7 +148,7 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
 	  //tps : fixme in order to make cxx_stream test work.
 	  //if (isBasicFile) 
 	  //  instrumentClassDeclarationIntoTopOfAllSourceFiles(project, classDecl);
-	  
+#endif 	  
 	} 
       }
   }
@@ -552,7 +553,7 @@ void RtedTransformation::visit(SgNode* n) {
     // *********************** DETECT structs and class definitions ***************
     if (isSgClassDefinition(n)) {
       // call to a specific function that needs to be checked
-      cerr << " +++++++++++++++++++++ FOUND Class Def!! ++++++++++++++++ " << endl;
+      //cerr << " +++++++++++++++++++++ FOUND Class Def!! ++++++++++++++++ " << endl;
       visit_isClassDefinition(isSgClassDefinition(n));
     }
 

@@ -32,6 +32,20 @@ bool RtedTransformation::isVarInCreatedVariables(SgInitializedName* n) {
 	return ret;
 }
 
+bool 
+RtedTransformation::isFileIOVariable(SgType* type) {
+  bool isIO=false;
+  std::string name = type->unparseToString();
+  //cerr << "#### Detected Type : " << type->class_name() << 
+  // "  name : " << name << 
+  // "  name : " << type->class_name() << endl;
+  
+  if (name.compare("std::fstream")==0) {
+    isIO=true;
+  }
+  return isIO;
+}
+
 void RtedTransformation::visit_isSgVariableDeclaration(SgNode* n) {
 	SgVariableDeclaration* varDecl = isSgVariableDeclaration(n);
 
@@ -58,6 +72,7 @@ void RtedTransformation::visit_isSgVariableDeclaration(SgNode* n) {
 		cerr << "      Detected initName : " << initName->unparseToString();
 		cerr <<"  type : " << initName->get_type()->unparseToString() << endl;
 		variable_declarations.push_back(initName);
+
 	}
 }
 
@@ -352,8 +367,9 @@ RtedTransformation::buildVariableCreateCallExpr(SgExpression* var_ref,
 	SgExpression* callNameExp = buildString(debug_name);
 
 	SgExpression* initBool = buildIntVal(0);
-	if (initb)
-		initBool = buildIntVal(1);
+	bool isFileIO = isFileIOVariable(var_ref->get_type());
+	if (initb && !isFileIO)
+	  initBool = buildIntVal(1);
 
 	appendExpression(arg_list, callName);
 	appendExpression(arg_list, callNameExp);
@@ -533,9 +549,9 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
 			ROSE_ASSERT(decl);
 			stmt = isSgVariableDeclaration(decl->get_parent());
 			if (!stmt) {
-				cerr << " stmt==NULL : Error . stmt is unknown : "
-						<< decl->get_parent()->class_name() << endl;
-				cerr << "is CompilerGen: " << decl->get_file_info()->isCompilerGenerated() << endl;
+			  //cerr << " stmt==NULL : Error . stmt is unknown : "
+			  //			<< decl->get_parent()->class_name() << endl;
+			  //cerr << "is CompilerGen: " << decl->get_file_info()->isCompilerGenerated() << endl;
 				if (decl->get_file_info()->isCompilerGenerated())
 				  return;
 				ROSE_ASSERT( false );
@@ -654,6 +670,7 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
 
 }
 
+
 void RtedTransformation::insertAccessVariable(SgThisExp* varRefE,
 		SgExpression* derefExp) {
 	SgStatement* stmt = getSurroundingStatement(varRefE);
@@ -692,7 +709,7 @@ void RtedTransformation::insertAccessVariable(SgScopeStatement* initscope,
 		//string name = initName->get_mangled_name().str();
 		cerr << "          ... running insertAccessVariable :  " //<< name
 				<< "   scope: " << scope->class_name() << endl;
-
+		
 		ROSE_ASSERT(scope);
 		// what if there is an array creation within a ClassDefinition
 		if (isSgClassDefinition(scope)) {
@@ -725,9 +742,13 @@ void RtedTransformation::insertAccessVariable(SgScopeStatement* initscope,
 			scope = stmt->get_scope();
 		}
 		if (isNormalScope(scope)) {
+		  bool isFileIO = isFileIOVariable(varRefE->get_type());
+		  // if this is a file IO operation, do not count it is a var access
+		  if (isFileIO)
+		    return;
 			// build the function call : runtimeSystem-->createArray(params); ---------------------------
 			SgExprListExp* arg_list = buildExprListExp();
-
+			
 			int read_write_mask = Read;
 			SgExpression* accessed_exp = varRefE;
 			SgExpression* write_location_exp = varRefE;

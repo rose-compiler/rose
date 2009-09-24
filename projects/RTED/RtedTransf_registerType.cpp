@@ -32,7 +32,7 @@ bool RtedTransformation::hasClassConstructor(SgClassDeclaration* classdec) {
 }
 
 void RtedTransformation::visit_isClassDefinition(SgClassDefinition* cdef) {
-	cerr << "Found class definition : " << cdef->unparseToString() << endl;
+  //cerr << "Found class definition : " << cdef->unparseToString() << endl;
 	vector<RtedClassElement*> elements;
 	
   // We want to skip compiler generated template instantiation classes.
@@ -46,8 +46,8 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* cdef) {
   if(   cdef -> get_file_info() -> isCompilerGenerated()
         && cdef -> get_declaration() -> get_file_info() -> isCompilerGenerated() ) {
 
-    cerr << "Skipping compiler generated class" << cdef->unparseToString() <<endl;
-    //      return;
+    //cerr << "Skipping compiler generated class" << cdef->unparseToString() <<endl;
+    return;
   }
 
 	Rose_STL_Container<SgDeclarationStatement*> members = cdef->get_members();
@@ -73,7 +73,7 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* cdef) {
 					string name = initName->get_mangled_name();
 					string type = initName->get_type()->class_name();
 					VariantT variant = initName->get_type()->variantT();
-					cerr << " *********** VarientT = " << getSgVariant(variant) << endl;
+					//cerr << " *********** VarientT = " << getSgVariant(variant) << endl;
 
 					RtedClassElement* el;
 					if( isSgArrayType( initName -> get_type() )) {
@@ -88,7 +88,7 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* cdef) {
 			}
 		} else {
 			// TODO 2: handle this case
-			cerr << " Declaration not handled : " << sgElement->class_name() << endl;
+			//cerr << " Declaration not handled : " << sgElement->class_name() << endl;
 		}
 	}
 
@@ -119,22 +119,22 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass) 
 	// scope
 	stmt = getSurroundingStatement(rtedClass->classDef);
 	SgStatement* origStmt = stmt;
-	cerr <<"@@@@ registerType : " << stmt->unparseToString() << endl;
+	//cerr <<"@@@@ registerType : " << stmt->unparseToString() << endl;
 	//	abort();
 
 	SgScopeStatement* globalScope = NULL;
 	scope = stmt -> get_scope();
-	cerr << "  the surrounding statement is (1): " << stmt->class_name()
-			<< " for : "
-			<< rtedClass->classDef->get_declaration()->get_name().str() << endl;
+	//cerr << "  the surrounding statement is (1): " << stmt->class_name()
+	//		<< " for : "
+	//		<< rtedClass->classDef->get_declaration()->get_name().str() << endl;
 	while (isSgClassDefinition(stmt) || isSgClassDeclaration(stmt)
 	// for nested classes, we care about the scope of the outermost class
 			|| isSgClassDeclaration(scope) || isSgClassDefinition(scope)) {
 		origStmt = stmt;
 		stmt = isSgStatement(stmt -> get_parent());
 		scope = stmt -> get_scope();
-		cerr << "  the surrounding statement is (2): " << stmt->class_name()
-				<< endl;
+		//cerr << "  the surrounding statement is (2): " << stmt->class_name()
+		//		<< endl;
 	}
 	if (!stmt || isSgGlobal(stmt)
 	// catch the case where a class (or union) is within another class - this is consider	to be global
@@ -332,7 +332,7 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass) 
 		SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
 				arg_list);
 		SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
-		cerr <<"@@@@@ Creating regType for : " << stmt->unparseToString() << endl;
+		//cerr <<"@@@@@ Creating regType for : " << stmt->unparseToString() << endl;
 		//abort();
 		if (origStmt->get_file_info()->isCompilerGenerated())
 		return;

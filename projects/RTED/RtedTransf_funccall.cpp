@@ -78,7 +78,8 @@ RtedTransformation::isFileIOFunctionCall(std::string name) {
   if (name=="fopen" ||
       name=="fgetc" ||
       name=="fputc" ||
-      name=="fclose"
+      name=="fclose" ||
+      name=="std::fstream"
 
       )
     interesting=true;
@@ -508,6 +509,34 @@ RtedTransformation::getVariableLeftOfAssignmentFromChildOnRight(SgNode* n){
   return expr;
 }
 
+void
+RtedTransformation::addFileIOFunctionCall(SgVarRefExp* n, bool read) {
+      // treat the IO variable as a function call
+  SgInitializedName *name = n -> get_symbol() -> get_declaration();
+      string fname = name->get_type()->unparseToString();
+      string readstr = "r";
+      if (!read) 
+	readstr = "w";
+      SgExpression* ex = buildStringVal(readstr);
+      SgStatement* stmt = getSurroundingStatement(n);
+      std::vector<SgExpression*> args;
+      args.push_back(ex);
+      SgExpression* pexpr=n;
+      RtedArguments* funcCall =  new RtedArguments(fname, 
+						   readstr,
+						   "",
+						   "",
+						   pexpr,
+						   stmt,
+						   args,
+						   NULL,
+						   NULL,
+						   NULL
+						   );
+      ROSE_ASSERT(funcCall);
+      cerr << " Is a interesting function : " << fname << endl;
+      function_call.push_back(funcCall);
+}
 
 /***************************************************************
  * Check if the current node is a "interesting" function call
@@ -522,8 +551,10 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
 	    SgFunctionRefExp* refExp = isSgFunctionRefExp(fcexp->get_function());
 	    SgMemberFunctionRefExp* mrefExp = isSgMemberFunctionRefExp(fcexp->get_function());
 	    SgDotExp* dotExp = isSgDotExp(fcexp->get_function());
-        SgArrowExp* arrowExp = isSgArrowExp( fcexp -> get_function() );
-        SgBinaryOp* binop = isSgBinaryOp( fcexp -> get_function() );
+	    SgArrowExp* arrowExp = isSgArrowExp( fcexp -> get_function() );
+	    SgBinaryOp* binop = isSgBinaryOp( fcexp -> get_function() );
+	    //	    cerr << "       refExp : " << refExp << "  mrefExp : " << mrefExp
+	    //	 << "  dotExp : " << dotExp << "   arrowExp: " << arrowExp << endl;
 
 	    string name = "";
 	    string mangled_name = "";
@@ -532,6 +563,7 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
 	    	decl= isSgFunctionDeclaration(refExp->getAssociatedFunctionDeclaration ());
 	        name = decl->get_name();
 	        mangled_name = decl->get_mangled_name().str();
+		//		cerr << " ### Found FuncRefExp: " <<refExp->get_symbol()->get_declaration()->get_name().str() << endl; 
 	    } else if (dotExp || arrowExp) {
 	        SgMemberFunctionDeclaration* mdecl = NULL;
 	    	mrefExp=isSgMemberFunctionRefExp(binop->get_rhs_operand());
@@ -539,6 +571,12 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
 	    	mdecl= isSgMemberFunctionDeclaration(mrefExp->getAssociatedMemberFunctionDeclaration ());
 	        name = mdecl->get_name();
 	        mangled_name = mdecl->get_mangled_name().str();
+#if 0
+		cerr << "### DotExp :   left : " <<binop->get_lhs_operand()->class_name() <<
+		  ":   right : " <<binop->get_rhs_operand()->class_name() << endl;
+		cerr << "### DotExp :   left : " <<binop->get_lhs_operand()->unparseToString() <<
+		  ":   right : " <<binop->get_rhs_operand()->unparseToString() << endl;
+#endif
 	    } else if (mrefExp) {
 	        SgMemberFunctionDeclaration* mdecl = NULL;
 		ROSE_ASSERT(mrefExp);
@@ -549,9 +587,37 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
 	    	cerr << "This case is not yet handled : " << fcexp->get_function()->class_name() << endl;
 			exit(1);
 	    }
+
+	    // find out if this is a IO-CALL like : myfile << "something" ;
+	    // with fstream myfile;
+	    if (exprlist) {
+	      Rose_STL_Container<SgExpression*> expr = exprlist->get_expressions();
+	      Rose_STL_Container<SgExpression*>::const_iterator it = expr.begin();
+	      for (;it!=expr.end();++it) {
+		SgExpression* fre = isSgExpression(*it);
+		  bool isFileIO = isFileIOVariable(fre->get_type());
+		  SgVarRefExp* varRef = isSgVarRefExp(fre);
+		  cerr << "$$ THe first FuncCallExp has expressions: " <<
+		    fre->unparseToString() << "  type: " << fre->get_type()->class_name() << 
+		    "   isFileIO : " << isFileIO << "   class : " << fre->class_name()<<endl;
+		  if (isFileIO && varRef) {
+		    if (name.compare("operator>>")==0)
+		      addFileIOFunctionCall(varRef,true); //read
+		    else
+		      addFileIOFunctionCall(varRef,false); //write
+		  }
+	      }
+	    }
+
+
+
 	    ROSE_ASSERT(refExp || mrefExp);
-	    cerr <<"Found a function call " << name;
-	    cerr << "   : fcexp->get_function() : " << fcexp->get_function()->class_name() << endl;
+	    cerr <<"\n@@@@ Found a function call: " << name;
+	    cerr << "   : fcexp->get_function() : " << fcexp->get_function()->class_name() << 
+	      "   parent : " << fcexp->get_parent()->class_name() << "  : " << fcexp->get_parent()->unparseToString() <<
+	      "\n   : type: : " << fcexp->get_function()->get_type()->class_name() << 
+	      "   : parent type: : " << isSgExpression(fcexp->get_function()->get_parent())->get_type()->class_name() << 
+	      "   unparse: " << fcexp->unparseToString() << endl;
 	    if (isStringModifyingFunctionCall(name) ||
 	        isFileIOFunctionCall(name)
 	       ) {

@@ -1166,10 +1166,10 @@ RtedTransformation::getGlobalVariableForClass(SgGlobal* gl,
       SgClassType* varT = isSgClassType(initName->get_type());
       if (varT) {
 	string classname = varT->get_name().str() ;
-	cerr<< "Found global var with type : " << varT->class_name() << "  " <<
-	  initName->unparseToString() << "  class name : " <<
-	  classname<< "         comparing to == " << classDeclName << "   compGen: " <<
-		  classStmt->get_file_info()->isCompilerGenerated() << endl;
+	//cerr<< "Found global var with type : " << varT->class_name() << "  " <<
+	//  initName->unparseToString() << "  class name : " <<
+	//  classname<< "         comparing to == " << classDeclName << "   compGen: " <<
+	//	  classStmt->get_file_info()->isCompilerGenerated() << endl;
 	if (classname==classDeclName)
 	  var=vard;
       }

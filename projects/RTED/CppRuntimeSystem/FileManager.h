@@ -11,8 +11,9 @@
 class FileManager;
 
 typedef FILE *  FileHandle;
+typedef std::fstream& FileHandle2;
 
-
+// -----------------------    FileInfo  --------------------------------------
 class FileInfo
 {
     public:
@@ -50,6 +51,46 @@ class FileInfo
 };
 
 std::ostream& operator<< (std::ostream &os, const FileInfo & m);
+
+
+// -----------------------    FileInfo2  --------------------------------------
+class FileInfo2
+{
+    public:
+        /// Constructor
+        /// @param openMode  OR combination out of RuntimeSystem::FileOpenMode constants
+        FileInfo2(FileHandle2 fp,
+                 const std::string & name,
+                 int openMode,
+                 const SourcePosition & pos);
+
+
+
+        /// overloaded operator because FileInfo's are managed in a std::set
+	bool operator< (const FileInfo2 & other) const { return &handle < &other.handle; }
+
+        void print(std::ostream & os) const;
+
+	FileHandle2            getHandle()   const      { return handle;   }
+        const std::string &    getFileName() const      { return name;     }
+        int                    getOpenMode() const      { return openMode; }
+        const SourcePosition & getPos()      const      { return openPos;  }
+
+    protected:
+
+        friend class FileManager;
+
+        /// Creates an invalid FileInfo, only used to get comparison objects in FileManager
+        FileInfo2(FileHandle2 f);
+
+
+	FileHandle2     handle;   ///< the pointer returned by fopen
+        std::string    name;      ///< filename or filepath
+        int            openMode;  ///< combination of OpenMode flags
+        SourcePosition openPos;   ///< position in sourcecode where file was opened
+};
+
+std::ostream& operator<< (std::ostream &os, const FileInfo2 & m);
 
 
 
@@ -95,8 +136,33 @@ class FileManager
         /// Prints the status to a stream
         void print(std::ostream & os) const;
 
+
+
+
+
+        /// Registers that a file was opened
+        void openFile(FileHandle2 handle,
+                      const std::string & fileName,
+                      OpenMode mode,
+                      const SourcePosition & pos);
+
+        void openFile(FileHandle2 handle,
+                      const std::string & fileName,
+                      const std::string & mode,
+                      const SourcePosition & pos);
+
+        /// Registers that a file was closed
+        void closeFile(FileHandle2  handle);
+
+        /// Checks if a certain file-access is valid
+        /// @param handle  the handle on which the file operation is performed
+        /// @param read    true if read-access, false if write-access
+        void checkFileAccess(FileHandle2 handle, bool read);
+
+
     private:
         std::set<FileInfo> openFiles;
+        std::set<FileInfo2> openFiles2;
 
 };
 std::ostream& operator<< (std::ostream &os, const FileManager & m);

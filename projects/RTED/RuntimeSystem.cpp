@@ -570,7 +570,7 @@ RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, in
 void
 RuntimeSystem_roseIOFunctionCall(const char* fname,
 				 const char* filename, const char* line, const char* lineTransformed,
-				 const char* stmtStr, const char* leftHandSideVar, FILE* file,
+				 const char* stmtStr, const char* leftHandSideVar, void* file,
 				 const char* arg1, const char* arg2) {
 
   //fixme - we need to create a new function call that
@@ -604,14 +604,15 @@ RuntimeSystem_roseIOFunctionCall(const char* fname,
     //  vfprintf
     //  vprintf
     //  vsprintf
+    
     if ( 0 == strcmp("fclose", fname)) {
-      rs -> registerFileClose( file );
+      rs -> registerFileClose( (FILE*)file );
     } else if ( 0 == strcmp("fflush", fname)) {
-      rs -> checkFileAccess( file, false /* is_read? */);
+      rs -> checkFileAccess( (FILE*)file, false /* is_read? */);
     } else if ( 0 == strcmp("fgetc", fname)) {
-      rs -> checkFileAccess( file, true /* is_read? */);
+      rs -> checkFileAccess( (FILE*)file, true /* is_read? */);
     } else if ( 0 == strcmp("fgets", fname)) {
-      rs -> checkFileAccess( file, true /* is_read? */);
+      rs -> checkFileAccess( (FILE*)file, true /* is_read? */);
     } else if ( 0 == strcmp("fopen", fname)) {
       const char *filen = arg1;
       const char *mode = arg2;
@@ -620,23 +621,34 @@ RuntimeSystem_roseIOFunctionCall(const char* fname,
         openMode=READ;
       if (strcmp(mode,"w")==0)
         openMode=WRITE;
-      rs->registerFileOpen(file, filen, openMode);
+      rs->registerFileOpen((FILE*)file, filen, openMode);
     } else if ( 0 == strcmp("fprintf", fname)) {
-      rs -> checkFileAccess( file, false /* is_read? */);
+      rs -> checkFileAccess( (FILE*)file, false /* is_read? */);
     } else if ( 0 == strcmp("fputc", fname)) {
-      rs -> checkFileAccess( file, false /* is_read? */);
+      rs -> checkFileAccess( (FILE*)file, false /* is_read? */);
     } else if ( 0 == strcmp("fputs", fname)) {
-      rs -> checkFileAccess( file, false /* is_read? */);
+      rs -> checkFileAccess( (FILE*)file, false /* is_read? */);
     } else if ( 0 == strcmp("fread", fname)) {
-      rs -> checkFileAccess( file, true /* is_read? */);
+      rs -> checkFileAccess( (FILE*)file, true /* is_read? */);
     } else if ( 0 == strcmp("fscanf", fname)) {
-      rs -> checkFileAccess( file, true /* is_read? */);
+      rs -> checkFileAccess( (FILE*)file, true /* is_read? */);
     } else if ( 0 == strcmp("fwrite", fname)) {
-      rs -> checkFileAccess( file, false /* is_read? */);
+      rs -> checkFileAccess( (FILE*)file, false /* is_read? */);
     } else if ( 0 == strcmp("getc", fname)) {
-      rs -> checkFileAccess( file, true /* is_read? */);
+      rs -> checkFileAccess( (FILE*)file, true /* is_read? */);
     } else if ( 0 == strcmp("putc", fname)) {
-      rs -> checkFileAccess( file, false /* is_read? */);
+      rs -> checkFileAccess( (FILE*)file, false /* is_read? */);
+    }
+     else if ( 0 == strcmp("std::fstream", fname)) {
+#if 1
+       if (0 == strcmp(arg1,"r"))
+	 rs -> checkFileAccess((std::fstream&) file,true /* is_read? */);
+       else
+	 rs -> checkFileAccess((std::fstream&) file,false /* is_read? */);
+#else
+	        cerr <<" fstream unhandled . " << arg1 << endl;
+	 abort();
+#endif
     }
 
 }

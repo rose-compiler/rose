@@ -404,12 +404,33 @@ void RuntimeSystem::registerFileClose(FILE* file)
     fileManager.closeFile(file);
 }
 
-
 void RuntimeSystem::checkFileAccess(FILE * file, bool read)
 {
     fileManager.checkFileAccess(file,read);
 }
 
+
+
+
+void RuntimeSystem::registerFileOpen(std::fstream& file,const string & openendFile, int mode)
+{
+      fileManager.openFile(file, openendFile,(FileOpenMode)mode, curPos);
+}
+
+void RuntimeSystem::registerFileOpen(std::fstream& file,const string & openendFile, const string & mode_str)
+{
+    fileManager.openFile(file, openendFile,mode_str, curPos);
+}
+
+void RuntimeSystem::registerFileClose(std::fstream& file)
+{
+    fileManager.closeFile(file);
+}
+
+void RuntimeSystem::checkFileAccess(std::fstream& file, bool read)
+{
+   fileManager.checkFileAccess(file,read);
+}
 
 // --------------------- Function Signature Verification -----------------
 

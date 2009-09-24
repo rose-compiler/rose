@@ -177,6 +177,9 @@ class RuntimeSystem
         void registerFileOpen (FILE * file, const std::string & openedFile, int openMode);
         void registerFileOpen (FILE * file, const std::string & openedFile, const std::string & openMode);
         void registerFileClose(FILE * file);
+        void registerFileOpen (std::fstream& file, const std::string & openedFile, int openMode);
+        void registerFileOpen (std::fstream& file, const std::string & openedFile, const std::string & openMode);
+        void registerFileClose(std::fstream& file);
 
 
         /// This function be called if a function call is about to be made whose
@@ -212,6 +215,7 @@ class RuntimeSystem
         /// Returns true if file is currently open
         /// @param read true if read access, false for write access
         void checkFileAccess(FILE * f, bool read);
+        void checkFileAccess(std::fstream& f, bool read);
 
 
         // ------------------- CStdLib delegates ------------------------------

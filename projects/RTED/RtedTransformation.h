@@ -311,6 +311,9 @@ class RtedTransformation : public AstSimpleProcessing {
   void insertAccessVariable(SgThisExp* varRefE,SgExpression* derefExp);
   void insertAccessVariable(SgScopeStatement* scope,
   		SgExpression* derefExp, SgStatement* stmt, SgExpression* varRefE);
+  bool isFileIOVariable(SgType* type);
+  void addFileIOFunctionCall(SgVarRefExp* n, bool read);
+
 
   void visit_isSgVarRefExp(SgVarRefExp* n);
   void visit_isSgPointerDerefExp(SgPointerDerefExp* n);
