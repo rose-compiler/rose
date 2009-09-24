@@ -6,9 +6,12 @@
 \section{Introduction}
 ROSE supports the OpenMP 3.0 specifications~\cite{OpenMP3.0}. 
 OpenMP is a popular shared-memory parallel programming model which extends serial programming languages like C/C++ and Fortran 77/90 to include additional parallel semantics. 
-The extensions OpenMP provides contains compiler directives, user level runtime routines and environment variables. 
-Depending on the languages (C/C++ or Fortran), the OpenMP support in ROSE includes parsing OpenMP directive, generating dedicated AST nodes for them, and finally translating OpenMP program into multithreaded programs targeting the GCC GOMP OpenMP runtime library. 
-We also have an implementation of automatic parallelization using OpenMP, which automatically introduces OpenMP directive into sequential C/C++ applications.
+The extensions OpenMP provides contain compiler directives, user level runtime routines and environment variables. 
+Depending on the languages (C/C++ or Fortran), the OpenMP support in ROSE
+includes parsing OpenMP directive, generating dedicated AST nodes for them,
+and finally translating OpenMP programs into multithreaded programs targeting the GCC GOMP OpenMP runtime library. 
+We also have an implementation of automatic parallelization using OpenMP,
+which automatically introduces OpenMP directives into sequential C/C++ applications.
 
 %-------------------------------------------------------------
 %-------------------------------------------------------------
@@ -32,12 +35,14 @@ the OpenMP-related command line options can be displayed as follows:
 %-------------------------------------------------------------
 %-------------------------------------------------------------
 \section{Entry Point and Top Level Function}
-ROSE processes OpenMP right after preprocessing information is processed within \lstinline{SgFile::callFrontEnd()}.
-This order is necessary since preprocessing information may existing within OpenMP directives, such as macro calls or named constants defined using \lstinline{#define}.
+ROSE processes OpenMP directives right after preprocessing information is processed within \lstinline{SgFile::callFrontEnd()}.
+This order is necessary since preprocessing information may existing within
+OpenMP directives, such as macro calls.
+%or named constants defined using \lstinline{#define}.
 ROSE needs to be aware of such preprocessing information when processing OpenMP.
 
 The top level function for processing OpenMP is named \lstinline{processOpenMP()}, as shown below:
-\lstset{language=C,basicstyle=\scriptsize}
+\lstset{language=C,basicstyle=\scriptsize,numbers=left}
 \begin{lstlisting}
 void processOpenMP(SgSourceFile *sageFilePtr)
 {
@@ -72,13 +77,15 @@ void processOpenMP(SgSourceFile *sageFilePtr)
 Since the EDG C/C++ frontend (as of version 4.0 and earlier versions) does not support OpenMP, 
 ROSE has its own OpenMP directive parsers. 
 The parsers recognize all OpenMP directives as defined in OpenMP 3.0.
-Persistent AST attributes (\emph{OmpAttribute} as defined in \textit{src/frontend/SageIII/OmpAttribute.h}) are generated as the results of parsing and attached to relevant AST nodes. 
-The attributes serve as a light-weight representation for OpenMP directives since they only incur minimum change to existing ROSE AST.
+Persistent AST attributes (\emph{OmpAttribute} as defined in
+\textit{src/frontend/SageIII/OmpAttribute.h}) are generated as the results
+of parsing.
+The attributes are attached to relevant AST nodes and serve as a light-weight representation for OpenMP directives since they only incur minimum change to existing ROSE AST.
 % and can be handy in some special occasions. 
 
 The source files of the OpenMP directive parser for C/C++ are located in \textit{rose/src/frontend/SageIII/ }.
 They include \textit{omplexer.ll} (for Lex) and \textit{ompparser.yy} (for Yacc).
-The Fortran OpenMP parser is hand crafted and has only one source file \textit{src/frontend/SageIII/ompFortranParser.C}. 
+The Fortran OpenMP parser is hand crafted and has only one source file, \textit{src/frontend/SageIII/ompFortranParser.C}. 
 
 A rich set of C/C++/Fortran OpenMP tests is located in \textit{src/tests/CompileTests/OpenMP\_tests} to test the ROSE OpenMP parsers.
 %-------------------------------------------------------------
@@ -121,7 +128,7 @@ Please refer to the ROSE Web Reference\footnote{\url{http://www.rosecompiler.org
 %-------------------------------------------------------------
 %-------------------------------------------------------------
 \section{Translating OpenMP Directives}
-Using a command line like \textit{identityTranslator -rose:openmp:lower inputcode.c}),
+Using a command line like \textit{identityTranslator -rose:openmp:lower inputcode.c},
 ROSE can translate OpenMP 3.0 programs into multithreaded code targeting the GCC GOMP OpenMP runtime library.
 If the path to GOMP (preferably the one shipped with GCC 4.3 for OpenMP task support) is specified (using a configure option \textit{--with-gomp\_omp\_runtime\_library=/home/liao6/opt/gcc-svn/lib/}),
 the generated multithreaded code can be automatically linked to the GOMP library to generate final executables after compilation. 
@@ -134,17 +141,22 @@ Basically, it applies the following algorithm to each input source file using Op
 \begin{enumerate}
 \item Handle OpenMP-specific variables, such as private, firstprivate, lastprivate and reduction variables used by the target construct, if any.
 \item For parallel (\lstinline{omp parallel}) and task (\lstinline{omp task}) constructs, call the general-purpose source-to-source AST outliner~\cite{LiaoEffective2009} to generate tasks and replace the original code block with GOMP runtime calls.
-\item For loop constructs, normalize target loops and generate code to calculate iteration chunks for each thread
-\item Translation for other constructs are omitted since they are relatively simpler cases. 
+\item For loop constructs, normalize target loops and generate code to
+calculate iteration chunks for each thread.
+\item Translation for other constructs are relatively simpler cases and
+details are omitted here.
 \end{enumerate}
 \end{enumerate}
 
+%-------------------------------------------------------------
 \subsection{Variable Handling}
-The separation of OpenMP variable handling from the rest of translation is key to the successful reuse of a general-purpose outliner within an OpenMP 3.0 implementation. 
+The separation of OpenMP variable handling from the rest of translation is
+the key to the successful reuse of a general-purpose outliner within an OpenMP 3.0 implementation. 
 After OpenMP variable handling, a structured code block of a parallel or task construct becomes much easier to be handled by the outliner.
 
 Variable handling is implemented in \lstinline{OmpSupport::transOmpVariables()}. 
-It translates all OpenMP clauses with variable lists, such as private, firstprivate, lastprivate, reduction, etc.
+It translates most OpenMP clauses with variable lists, such as private, firstprivate, lastprivate, reduction, etc.
+(The threadprivate clause is not handled here and will be explained later.)
 Assume \lstinline{bb} is a structured block affected by the variable clauses, the algorithm for handling OpenMP variables is given below:
 \begin{enumerate}
 \item Collect all variables used in clauses with variable lists
@@ -162,11 +174,13 @@ Please note that a variable can be associated with more than one clauses, such a
 %-------------------------------------------------------------
 \subsection{Parallel Regions}
 
-Translation of a simple OpenMP parallel region \lstinline{#pragma omp parallel} without variable uses is demonstrated in
+Translation of a simple OpenMP parallel region 
+(\lstinline{#pragma omp parallel}) without any variable uses is demonstrated in
 Figure~\ref{Manual:omp:hello1-trans} for an input code shown in
 Figure~\ref{Manual:omp:hello1}.
 
 \lstset{language=C,basicstyle=\scriptsize}
+\lstset{language=C,basicstyle=\scriptsize,numbers=left}
 \begin{figure}[htbp]
 {\indent
   {\mySmallFontSize
@@ -197,9 +211,10 @@ Figure~\ref{Manual:omp:hello1}.
 \label{Manual:omp:hello1-trans}
 \end{figure}
 
-Translation of a complex OpenMP parallel region with variable references is demonstrated in
+Translation of a relatively complex OpenMP parallel region with variable references is demonstrated in
 Figure~\ref{Manual:omp:preduction-trans} for an input code shown in
-Figure~\ref{Manual:omp:preduction}. Note the handling of shared, and reduction variables during the translation.
+Figure~\ref{Manual:omp:preduction}. 
+Note the handling of shared, and reduction variables during the translation.
 
 \lstset{language=C,basicstyle=\scriptsize}
 \begin{figure}[htbp]
@@ -239,8 +254,8 @@ Translation of a loop construct is given in
 Figure~\ref{Manual:omp:ompfor-trans} for an input code shown in
 Figure~\ref{Manual:omp:ompfor}. 
 Note that GOMP does not provide a runtime function to calculate iteration chunks for the default schedule policy. 
-Compilers have to generate code to calculate it instead. 
-Constant folding is used to simplify some expressions with constant values. 
+Compilers have to generate code to calculate the chunks for each thread instead. 
+We use constant folding to simplify some expressions with constant values. 
 
 \lstset{language=C,basicstyle=\scriptsize}
 \begin{figure}[htbp]
@@ -308,8 +323,9 @@ Figure~\ref{Manual:omp:ompfor5}.
 \label{Manual:omp:ompfor5-trans}
 \end{figure}
 
-GOMP provides loop scheduling runtime functions for loop constructs with known chunk sizes or with an ordered clause. 
-Figure~\ref{Manual:omp:ompfor4-trans} show the translation of a dynamic scheduled loop,  for an input code given in
+GOMP provides loop scheduling functions for loop constructs with readily
+known chunk sizes (no calculation is needed) or with an ordered clause. 
+Figure~\ref{Manual:omp:ompfor4-trans} shows the translation of a dynamic scheduled loop,  for an input code given in
 Figure~\ref{Manual:omp:ompfor4}. 
 
 \lstset{language=C,basicstyle=\scriptsize}
@@ -347,7 +363,7 @@ Figure~\ref{Manual:omp:ompfor4}.
 \clearpage
 \subsection{Threadprivate}
 GCC uses thread local storage (TLS) to implement OpenMP threadprivate variables. 
-No special support is needed from the runtime library's point of view. 
+No additional support is needed from the runtime library's point of view. 
 The translation is very simple: add the keyword \lstinline{__thread} in front of the original declaration for a variable declared as threadprivate and then remove the OpenMP pragma. 
 
 Figure~\ref{Manual:omp:threadprivate-trans} shows the translation result for a test input code (Figure~\ref{Manual:omp:threadprivate}). It also demonstrates the handling of loop constructs using the ordered clause.
@@ -387,7 +403,9 @@ Figure~\ref{Manual:omp:threadprivate-trans} shows the translation result for a t
 %-------------------------------------------------------------
 \clearpage
 \subsection{Task Constructs}
-The translation of task constructs are similar to the translation of parallel constructs. They share the same AST outliner to generate outlined functions for tasks.
+The translation of task constructs are similar to the translation of parallel constructs. 
+They share the same ROSE AST outliner to generate outlined functions for
+explicit or implicit tasks.
 
 Figure~\ref{Manual:omp:task_untied3-trans} shows the translation of untied task constructs(input code given in
 Figure~\ref{Manual:omp:task_untied3}). 
@@ -439,7 +457,7 @@ Figure~\ref{Manual:omp:task_wait}).
   }
 }
 \caption{Example of tasks with taskwait}
-\label{Manual:omp:taskwait}
+\label{Manual:omp:task_wait}
 \end{figure}
 
 \begin{figure}[htbp]
@@ -462,9 +480,319 @@ Figure~\ref{Manual:omp:task_wait}).
 \clearpage
 \section{Automatic Parallelization}
 ROSE has an implementation of automatic parallelization using OpenMP.
-The implementation is also used to explore semantics-aware automatic parallelization, as
+The implementation is also being used to explore semantics-aware automatic parallelization, as
 described in one of our paper~\cite{LiaoExtending2009}.
-\fixme{write more here}
+Out goal is to handle both traditional C/Fortran and modern C++
+applications.
+
+As part of an ongoing and evolving work, the automatic parallelization
+implementation (referred to as the ROSE parallelizer) is not yet integrated into the main
+source tree of ROSE. 
+The source files are currently located in
+\textit{rose/projects/autoParallelization}.
+A standalone executable program (named \textit{autoPar}) is generated and
+installed to the installation tree of ROSE (under \textit{ROSE\_INS/bin}). 
+The program will take in sequential C (or some C++) code and automatically
+insert OpenMP pragmas into it, if possible. 
+%-------------------------------------------------------------
+\subsection{Algorithm}
+The ROSE parallelizer is designed to handle both conventional loops operating on primitive
+arrays and modern applications using high-level abstractions.
+The parallelizer uses the following algorithm:
+The loops may contain variables of either primitive data types
+or STL container types, or both. 
+\begin{enumerate}
+  \item Preparation and Preprocessing
+  \begin{enumerate}
+  \item  Read a specification file for known abstractions and semantics. %to represent known abstractions and  semantics.
+%  \item  Traverse AST and build a loop hierarchy.
+  \item  Apply optional custom transformations based on input code semantics,
+  such as converting tree traversals to loop iterations on memory
+  pools.
+  \item  Normalize loops, including those using iterators.
+  \item  Find candidate array computation loops
+  with canonical forms (for \lstinline{omp for}) or loops and functions
+  operating on individual elements (for \lstinline{omp task}).
+%  \item  Select eligible loops based on used operation types and  computation requirements.
+  \end{enumerate}
+  \item  For each candidate:
+  \begin{enumerate}
+    \item Skip the target if there are function calls without known semantics or side effects. %if there is not enough work, 
+    \item Call dependence analysis and liveness analysis.
+  % including scalars and arrays of both primitive types and STL types.
+    \item Classify OpenMP variables (autoscoping), recognize references
+    to the current element, and find order-independent write accesses.
+    \item Eliminate dependencies associated with autoscoped variables,
+    those involving only the current elements, and output dependencies
+    caused by order-independent write accesses.
+    \item Insert the corresponding OpenMP constructs if no dependencies
+    remain.
+  \end{enumerate}
+\end{enumerate}
+The key idea of the algorithm is to capture dependencies within a target and eliminate them later on as much as possible based on
+various rules.
+Parallelization is safe if there are no remaining dependencies.
+Please refer to one of our papers~\cite{LiaoExtending2009} for the details. 
+%-------------------------------------------------------------
+\subsection{Dependence Analysis}
+Dependence analysis is the basis for the parallelizer to decide whether a loop is
+parallelizable.
+The ROSE parallelizer invokes the dependence analysis from the loop optimizer, which implements algorithms proposed in~%
+\cite{YAK:PLDI00,YK:LACSI02} to effectively transform
+both perfectly nested loops and non-perfectly nested loops.
+An extended direction matrix
+(EDM) dependence representation is used to cover non-common loop nests that surround
+only one of the two statements in order to handle non-perfectly
+nested loops. For array accesses within loops, a Gaussian elimination
+algorithm is used to solve a set of linear integer equations of loop induction
+variables. 
+
+Figure~\ref{code.depGraph} gives an example dependence graph dump for an input
+code, in which a statement is surrounded by two loops
+($\mathit{commonlevel} = 2$). 
+Two true dependence relations exist, caused by two pairs of array
+references and carried in both loop levels ($\mathit{CarryLevel} = 0$ and
+$\mathit{CarryLevel} = 1$).  
+%So the code cannot be parallelized. 
+The extended direction matrices give the
+dependence directions(one of $=$, $\leq$,$\geq$, and $*$) and alignment factors.
+The details of the dependence analysis and corresponding graph
+can be found in \cite{YAK:PLDI00,YK:LACSI02}.
+%can be found in \cite{YiTransforming2004,YiTransforming2002}.
+It is clear from the dependence analysis that the example code in Fig.~%
+\ref{code.depGraph} cannot be parallelized because of 
+loop-carried dependences in both loop levels.
+
+% providing an example
+\begin{figure}[!ht]
+ \centering
+%  \figure{%
+        \lstinputlisting{bothlevel.c}
+%  }
+  \caption{\label{code.depGraph} An example output of ROSE's dependence graph}
+\end{figure}
+
+
+%-------------------------------------------------------------
+\subsection{Variable Classification}
+Table~\ref{tab:varClassification} shows the categories of
+data-sharing attributes for variables based on their live-in (before the
+execution of a loop) and live-out (after the execution of a loop)
+analysis results. For instance, a private variable inside a
+loop is neither live-in nor live-out of the loop, which means the 
+variable is immediately killed (redefined) inside the loop and then used inside
+the loop somehow, but is never going to be used anywhere after the loop.
+All loop index variables are also classified as OpenMP private variables to a avoid
+possible race condition.
+On the other hand, shared variables are live at both the beginning and the end of the loop.
+\lstinline{Firstprivate} and \lstinline{lastprivate} variables are live at either only the beginning or
+only the end of the loop, respectively.
+
+\begin{table}[htbp]
+%\fixme{Do captions need to end with periods?} No 
+\caption{OpenMP variable classification based on liveness analysis}
+        \centering
+\begin{tabular}{||l||c|c||} \hline
+\textbf{Data-sharing attribute} & \textbf{Live-in} & \textbf{Live-out} \\ \hline
+{\bfseries\scriptsize{shared}} & Yes & Yes \\ \hline
+{\bfseries\scriptsize{private}} & No & No       \\ \hline
+{\bfseries\scriptsize{firstprivate}} & Yes & No \\ \hline
+{\bfseries\scriptsize{lastprivate}} & No & Yes  \\ \hline
+\end{tabular} 
+% LNCS requires table captions to put at the top!!!
+%\caption{Variable classification based on liveness analysis}
+\label{tab:varClassification}
+\end{table}
+
+Reduction variables are handled specially to maximize the opportunities for
+parallelization.
+%Liveness analysis does not apply
+%to them because all possible combinations for live-in and live-out on the loop can happen. 
+A typical reduction operation inside a loop, such as
+\lstinline{sum = sum + a[i]},
+causes a loop-carried output
+dependence, a loop-carried anti-dependence, and a loop independent anti-dependence.
+We use an idiom recognition analysis to capture such typical operations and exclude
+the associated loop-carried dependences when deciding if a loop is
+parallelizable.
+%-------------------------------------------------------------
+\subsection{Examples}
+Test input codes of the ROSE parallelizer are located in \textit{src/rojects/autoParallelization/tests}.
+We show a few representative examples here. 
+
+Figure~\ref{Manual:autopar:doall_2-trans} shows the auto parallelization result generated from  an input code given in
+Figure~\ref{Manual:autopar:doall_2}).
+As we can see, the ROSE parallelizer detects all parallelizable loop levels and make private loop index variables explicit.
+It also reports the parallelized loops and their line numbers during the execution (shown in Figure~\ref{Manual:autopar:doall_2-output}).
+
+\lstset{language=C,basicstyle=\scriptsize,numbers=left}
+\begin{figure}[htbp]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopSourceDirectory/projects/autoParallelization/tests/doall_2.c}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopSourceDirectory/projects/autoParallelization/tests/doall_2.c}
+    \end{htmlonly}
+  }
+}
+\caption{Example of a simple loop}
+\label{Manual:autopar:doall_2}
+\end{figure}
+
+\begin{figure}[htbp]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopBuildDirectory/projects/autoParallelization/tests/rose_doall_2.c}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopBuildDirectory/projects/autoParallelization/tests/rose_doall_2.c}
+    \end{htmlonly}
+  }
+}
+\caption{Parallelized code}
+\label{Manual:autopar:doall_2-trans}
+\end{figure}
+
+\begin{figure}[htbp]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopBuildDirectory/projects/autoParallelization/tests/doall_2.out}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopBuildDirectory/projects/autoParallelization/tests/doall_2.out}
+    \end{htmlonly}
+  }
+}
+\caption{Screen output during the execution of the ROSE parallelizer}
+\label{Manual:autopar:doall_2-output}
+\end{figure}
+
+
+Figure~\ref{Manual:autopar:inner_only-trans} shows the auto parallelization result generated from  an input code given in
+Figure~\ref{Manual:autopar:inner_only}).
+Again, the relevant information is reported during the execution (shown in Figure~\ref{Manual:autopar:inner_only-output}).
+Reasons are given for loops which cannot be automatically parallelized. 
+
+\lstset{language=C,basicstyle=\scriptsize,numbers=left}
+\begin{figure}[htbp]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopSourceDirectory/projects/autoParallelization/tests/inner_only.c}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopSourceDirectory/projects/autoParallelization/tests/inner_only.c}
+    \end{htmlonly}
+  }
+}
+\caption{Example of a simple loop}
+\label{Manual:autopar:inner_only}
+\end{figure}
+
+\begin{figure}[htbp]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopBuildDirectory/projects/autoParallelization/tests/rose_inner_only.c}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopBuildDirectory/projects/autoParallelization/tests/rose_inner_only.c}
+    \end{htmlonly}
+  }
+}
+\caption{Parallelized code}
+\label{Manual:autopar:inner_only-trans}
+\end{figure}
+
+\begin{figure}[htbp]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopBuildDirectory/projects/autoParallelization/tests/inner_only.out}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopBuildDirectory/projects/autoParallelization/tests/inner_only.out}
+    \end{htmlonly}
+  }
+}
+\caption{Screen output during the execution of the ROSE parallelizer}
+\label{Manual:autopar:inner_only-output}
+\end{figure}
+
+Reduction recognition is demonstrated in Figure~\ref{Manual:autopar:reduction-trans} generated from  an input code given in
+Figure~\ref{Manual:autopar:reduction}).
+The ROSE parallelizer is able to recognize reduction variables based on the
+idiom recognition analysis.
+
+\lstset{language=C,basicstyle=\scriptsize,numbers=left}
+\begin{figure}[htbp]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopSourceDirectory/projects/autoParallelization/tests/reduction.c}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopSourceDirectory/projects/autoParallelization/tests/reduction.c}
+    \end{htmlonly}
+  }
+}
+\caption{Example of a simple loop}
+\label{Manual:autopar:reduction}
+\end{figure}
+
+\begin{figure}[htbp]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopBuildDirectory/projects/autoParallelization/tests/rose_reduction.c}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopBuildDirectory/projects/autoParallelization/tests/rose_reduction.c}
+    \end{htmlonly}
+  }
+}
+\caption{Parallelized code}
+\label{Manual:autopar:reduction-trans}
+\end{figure}
+
+With known semantics of STL vectors, loops operating on vectors can also be parallelized( shown in Figure~\ref{Manual:autopar:doall_vector2-trans} generated from  an input code given in Figure~\ref{Manual:autopar:doall_vector2}).
+
+\lstset{language=C,basicstyle=\scriptsize,numbers=left}
+\begin{figure}[htbp]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopSourceDirectory/projects/autoParallelization/tests/doall_vector2.C}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopSourceDirectory/projects/autoParallelization/tests/doall_vector2.C}
+    \end{htmlonly}
+  }
+}
+\caption{Example of a simple loop operating on a vector}
+\label{Manual:autopar:doall_vector2}
+\end{figure}
+
+\begin{figure}[htbp]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopBuildDirectory/projects/autoParallelization/tests/rose_doall_vector2.C}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopBuildDirectory/projects/autoParallelization/tests/rose_doall_vector2.C}
+    \end{htmlonly}
+  }
+}
+\caption{Parallelized code}
+\label{Manual:autopar:doall_vector2-trans}
+\end{figure}
+
+
 %-------------------------------------------------------------
 %-------------------------------------------------------------
 %\clearpage

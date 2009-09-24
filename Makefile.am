@@ -194,8 +194,10 @@ docs: FORCE_DOCS_TO_BE_MADE
 	   $(MAKE) -Ctutorial docs && \
 	   $(MAKE) -Cprojects/haskellport docs && \
 	   $(MAKE) -Ctests/roseTests/astInterfaceTests check && \
+	   $(MAKE) -Ctests/roseTests/ompLoweringTests check && \
 	   $(MAKE) -Ctests/CompileTests/UPC_tests check && \
 	   $(MAKE) -Cprojects/UpcTranslation/tests check && \
+	   $(MAKE) -Cprojects/autoParallelization/tests check && \
 	   $(MAKE) -Cdocs docs && \
 	   $(MAKE) -C$(compass_build_tooldir)/compass docs; \
    else \
