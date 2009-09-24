@@ -113,9 +113,9 @@ clean-termite:
 	rm -rf termite.pdf termite-html ltx2htm-inst ltx2htm-build
 
 termite_spec.pl: $(top_srcdir)/src/termite/termite/termite_spec.pl
-	cp $< $@
+	cp --preserve=timestamps $< $@
 types.pl: $(top_srcdir)/tools/loopbounds/types.pl
-	cp $< $@
+	cp --preserve=timestamps $< $@
 
 %.tex: %.pl types.pl  termite_spec.pl
 	export TERMITE_LIB=$(top_srcdir)/src/termite/termite && \
@@ -178,6 +178,7 @@ HTML: termite-html.tex $(TEXFILES) $(LTX2HTM)
 	       -e 's/index\.gif/internet-news-reader.png/' \
 	  termite-html/*.html
 	cp $(srcdir)/icons/* termite-html/
+	chmod u+rw termite-html/*
 
 termite.pdf: termite-pdf.tex $(TEXFILES)
 	env TEXINPUTS=$(MYTEXINPUT):$$TEXINPUTS pdflatex $<

@@ -34,7 +34,7 @@ clang: $(top_srcdir)/src/termite/clang/clang-termite.patch $(top_builddir)/clang
 $(top_builddir)/clang/build/Makefile:
 	cd $(top_builddir)/src/termite/clang && sh BUILD-clang.sh
 
-EXTRA_DIST= README LICENSE ChangeLog KNOWN_BUGS BugLog \
+EXTRA_DIST= README COPYING ChangeLog KNOWN_BUGS BugLog \
 	\
 	testsuite/testsuite.sh \
 	testsuite/base/success/ab.c \
