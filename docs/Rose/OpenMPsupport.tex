@@ -1,0 +1,474 @@
+\chapter{OpenMP Support}
+\label{chap::ompsupport}
+
+%-------------------------------------------------------------
+%-------------------------------------------------------------
+\section{Introduction}
+ROSE supports the OpenMP 3.0 specifications~\cite{OpenMP3.0}. 
+OpenMP is a popular shared-memory parallel programming model which extends serial programming languages like C/C++ and Fortran 77/90 to include additional parallel semantics. 
+The extensions OpenMP provides contains compiler directives, user level runtime routines and environment variables. 
+Depending on the languages (C/C++ or Fortran), the OpenMP support in ROSE includes parsing OpenMP directive, generating dedicated AST nodes for them, and finally translating OpenMP program into multithreaded programs targeting the GCC GOMP OpenMP runtime library. 
+We also have an implementation of automatic parallelization using OpenMP, which automatically introduces OpenMP directive into sequential C/C++ applications.
+
+%-------------------------------------------------------------
+%-------------------------------------------------------------
+\section{Command Line Options}
+Like most other OpenMP implementations, ROSE's OpenMP support has to be explicitly turned on via command line options.
+By running any ROSE-based translator (e.g. identityTranslator) with \textit{-help}, 
+the OpenMP-related command line options can be displayed as follows: 
+{\scriptsize
+\begin{verbatim}
+  -rose:OpenMP, -rose:openmp
+                          follow OpenMP 3.0 specification for C/C++ and Fortran, perform one of the following actions:
+  -rose:OpenMP:parse_only, -rose:openmp:parse_only
+                          parse OpenMP directives to OmpAttributes, no further actions (default behavior now)
+  -rose:OpenMP:ast_only, -rose:openmp:ast_only
+                          on top of -rose:openmp:parse_only, build OpenMP AST nodes from OmpAttributes, no further actions
+  -rose:OpenMP:lowering, -rose:openmp:lowering
+                          on top of -rose:openmp:ast_only, transform AST with OpenMP nodes into multithreaded code 
+                          targeting GCC GOMP runtime library
+\end{verbatim}
+}
+%-------------------------------------------------------------
+%-------------------------------------------------------------
+\section{Entry Point and Top Level Function}
+ROSE processes OpenMP right after preprocessing information is processed within \lstinline{SgFile::callFrontEnd()}.
+This order is necessary since preprocessing information may existing within OpenMP directives, such as macro calls or named constants defined using \lstinline{#define}.
+ROSE needs to be aware of such preprocessing information when processing OpenMP.
+
+The top level function for processing OpenMP is named \lstinline{processOpenMP()}, as shown below:
+\lstset{language=C,basicstyle=\scriptsize}
+\begin{lstlisting}
+void processOpenMP(SgSourceFile *sageFilePtr)
+{
+  ROSE_ASSERT(sageFilePtr != NULL);
+  // skip if no OpenMP directives
+  if (sageFilePtr->get_openmp() == false)
+    return;
+
+  // parse OpenMP directives and attach OmpAttributeList to relevant SgNode
+  attachOmpAttributeInfo(sageFilePtr);
+
+  // stop here if only OpenMP parsing is requested
+  if (sageFilePtr->get_openmp_parse_only())
+    return;
+
+  //Build OpenMP AST nodes based on parsing results
+  build_OpenMP_AST(sageFilePtr);
+
+  // Stop here if only OpenMP AST construction is requested
+  if (sageFilePtr->get_openmp_ast_only())
+    return;
+
+  // Translate to multithreaded code targeting GOMP
+  lower_omp(sageFilePtr);
+}
+\end{lstlisting}
+\lstset{language=C,basicstyle=\small}
+
+%-------------------------------------------------------------
+%-------------------------------------------------------------
+\section{Parsing OpenMP Directives}
+Since the EDG C/C++ frontend (as of version 4.0 and earlier versions) does not support OpenMP, 
+ROSE has its own OpenMP directive parsers. 
+The parsers recognize all OpenMP directives as defined in OpenMP 3.0.
+Persistent AST attributes (\emph{OmpAttribute} as defined in \textit{src/frontend/SageIII/OmpAttribute.h}) are generated as the results of parsing and attached to relevant AST nodes. 
+The attributes serve as a light-weight representation for OpenMP directives since they only incur minimum change to existing ROSE AST.
+% and can be handy in some special occasions. 
+
+The source files of the OpenMP directive parser for C/C++ are located in \textit{rose/src/frontend/SageIII/ }.
+They include \textit{omplexer.ll} (for Lex) and \textit{ompparser.yy} (for Yacc).
+The Fortran OpenMP parser is hand crafted and has only one source file \textit{src/frontend/SageIII/ompFortranParser.C}. 
+
+A rich set of C/C++/Fortran OpenMP tests is located in \textit{src/tests/CompileTests/OpenMP\_tests} to test the ROSE OpenMP parsers.
+%-------------------------------------------------------------
+%-------------------------------------------------------------
+\section{Generating AST with OpenMP Nodes}
+This phase converts the ROSE AST attached with OmpAttribute instances into AST with OpenMP-specific nodes.
+The introduction of OpenMP-specific ROSE AST nodes can help reuse all existing ROSE AST traversal, query, and other manipulation interfaces, thus facilitating analysis and translation of OpenMP program.
+
+All OpenMP AST nodes have names starting with \textit{SgOmp}. 
+Directives are treated as statement-like nodes, which in turn can have a list of clause nodes.
+A list of some example OpenMP constructs and their corresponding ROSE AST nodes are given below:
+
+{\scriptsize
+\begin{verbatim}
+omp atomic              SgOmpAtomicStatement
+omp barrier             SgOmpBarrierStatement
+omp critical            SgOmpCriticalStatement
+omp parallel            SgOmpParallelStatement
+omp for                 SgOmpForStatement
+omp task                SgOmpTaskStatement
+omp sections            SgOmpSectionsStatement
+omp flush               SgOmpFlushStatement
+omp taskwait            SgOmpTaskwaitStatement
+omp threadprivate       SgOmpThreadprivateStatement
+
+reduction               SgOmpReductionClause
+schedule                SgOmpScheduleClause
+private                 SgOmpPrivateClause
+firstprivate            SgOmpFirstprivateClause
+lastprivate             SgOmpLastprivateClause
+nowait                  SgOmpNowaitClause
+copyin                  SgOmpCopyinClause
+collapse                SgOmpCollapseClause
+untied                  SgOmpUntiedClause
+ordered                 SgOmpOrderedClause
+\end{verbatim}
+}
+ 
+Please refer to the ROSE Web Reference\footnote{\url{http://www.rosecompiler.org/ROSE_HTML_Reference/index.html}} for details about these nodes and their class hierarchy. 
+%-------------------------------------------------------------
+%-------------------------------------------------------------
+\section{Translating OpenMP Directives}
+Using a command line like \textit{identityTranslator -rose:openmp:lower inputcode.c}),
+ROSE can translate OpenMP 3.0 programs into multithreaded code targeting the GCC GOMP OpenMP runtime library.
+If the path to GOMP (preferably the one shipped with GCC 4.3 for OpenMP task support) is specified (using a configure option \textit{--with-gomp\_omp\_runtime\_library=/home/liao6/opt/gcc-svn/lib/}),
+the generated multithreaded code can be automatically linked to the GOMP library to generate final executables after compilation. 
+
+The major source file of the OpenMP translation is \textit{src/midend/ompLowering/omp\_lowering.cpp}. 
+Basically, it applies the following algorithm to each input source file using OpenMP:
+\begin{enumerate}
+\item  Use a top-down AST traversal to make implicit data-sharing attribute explicit, including implicit private variables for loop constructs and implicit firstprivate variables for task constructs. 
+\item  Uses a bottom-up AST traversal to locate OpenMP nodes and performance necessary translation for each type of them.
+\begin{enumerate}
+\item Handle OpenMP-specific variables, such as private, firstprivate, lastprivate and reduction variables used by the target construct, if any.
+\item For parallel (\lstinline{omp parallel}) and task (\lstinline{omp task}) constructs, call the general-purpose source-to-source AST outliner~\cite{LiaoEffective2009} to generate tasks and replace the original code block with GOMP runtime calls.
+\item For loop constructs, normalize target loops and generate code to calculate iteration chunks for each thread
+\item Translation for other constructs are omitted since they are relatively simpler cases. 
+\end{enumerate}
+\end{enumerate}
+
+\subsection{Variable Handling}
+The separation of OpenMP variable handling from the rest of translation is key to the successful reuse of a general-purpose outliner within an OpenMP 3.0 implementation. 
+After OpenMP variable handling, a structured code block of a parallel or task construct becomes much easier to be handled by the outliner.
+
+Variable handling is implemented in \lstinline{OmpSupport::transOmpVariables()}. 
+It translates all OpenMP clauses with variable lists, such as private, firstprivate, lastprivate, reduction, etc.
+Assume \lstinline{bb} is a structured block affected by the variable clauses, the algorithm for handling OpenMP variables is given below:
+\begin{enumerate}
+\item Collect all variables used in clauses with variable lists
+\item For each variable, do the following:
+\begin{enumerate}
+\item Prepend a local declaration statement for the variable to the beginning of \lstinline{bb}.
+\item Insert an assignment statement after the declaration statement to initialize the local copy (e.g. for firstprivate and reduction variables).
+\item Replace all references to the variable within \lstinline{bb} with references to its local copy.
+\item Append an assignment statement to save the value of the local copy to its global counter part (e.g. for reduction and lastprivate variables)
+\end{enumerate}
+\end{enumerate}
+Please note that a variable can be associated with more than one clauses, such as firstprivate and lastprivate. 
+
+
+%-------------------------------------------------------------
+\subsection{Parallel Regions}
+
+Translation of a simple OpenMP parallel region \lstinline{#pragma omp parallel} without variable uses is demonstrated in
+Figure~\ref{Manual:omp:hello1-trans} for an input code shown in
+Figure~\ref{Manual:omp:hello1}.
+
+\lstset{language=C,basicstyle=\scriptsize}
+\begin{figure}[htbp]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/hello-1.c}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/hello-1.c}
+    \end{htmlonly}
+  }
+}
+\caption{Example of a simple parallel region}
+\label{Manual:omp:hello1}
+\end{figure}
+
+\begin{figure}[htbp]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_hello-1.c}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_hello-1.c}
+    \end{htmlonly}
+  }
+}
+\caption{Translation of a simple parallel region}
+\label{Manual:omp:hello1-trans}
+\end{figure}
+
+Translation of a complex OpenMP parallel region with variable references is demonstrated in
+Figure~\ref{Manual:omp:preduction-trans} for an input code shown in
+Figure~\ref{Manual:omp:preduction}. Note the handling of shared, and reduction variables during the translation.
+
+\lstset{language=C,basicstyle=\scriptsize}
+\begin{figure}[htbp]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/parallel-reduction.c}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/parallel-reduction.c}
+    \end{htmlonly}
+  }
+}
+\caption{Example of a complex parallel region}
+\label{Manual:omp:preduction}
+\end{figure}
+
+\begin{figure}[htbp]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_parallel-reduction.c}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_parallel-reduction.c}
+    \end{htmlonly}
+  }
+}
+\caption{Translation of a complex parallel region}
+\label{Manual:omp:preduction-trans}
+\end{figure}
+
+%-------------------------------------------------------------
+\clearpage
+\subsection{Loop Constructs}
+Translation of a loop construct is given in
+Figure~\ref{Manual:omp:ompfor-trans} for an input code shown in
+Figure~\ref{Manual:omp:ompfor}. 
+Note that GOMP does not provide a runtime function to calculate iteration chunks for the default schedule policy. 
+Compilers have to generate code to calculate it instead. 
+Constant folding is used to simplify some expressions with constant values. 
+
+\lstset{language=C,basicstyle=\scriptsize}
+\begin{figure}[htbp]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/ompfor.c}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/ompfor.c}
+    \end{htmlonly}
+  }
+}
+\caption{Example of a loop construct}
+\label{Manual:omp:ompfor}
+\end{figure}
+
+\begin{figure}[htbp]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_ompfor.c}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_ompfor.c}
+    \end{htmlonly}
+  }
+}
+\caption{Translation of a loop construct}
+\label{Manual:omp:ompfor-trans}
+\end{figure}
+
+Calculating iteration chunks for a loop with a decremental iteration space is shown in 
+Figure~\ref{Manual:omp:ompfor5-trans} for an input code given in
+Figure~\ref{Manual:omp:ompfor5}. 
+
+\lstset{language=C,basicstyle=\scriptsize}
+\begin{figure}[htbp]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/ompfor5.c}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/ompfor5.c}
+    \end{htmlonly}
+  }
+}
+\caption{Example of an OpenMP loop with a decremental iteration space}
+\label{Manual:omp:ompfor5}
+\end{figure}
+
+\begin{figure}[htbp]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_ompfor5.c}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_ompfor5.c}
+    \end{htmlonly}
+  }
+}
+\caption{Translation of the loop with a decremental iteration space}
+\label{Manual:omp:ompfor5-trans}
+\end{figure}
+
+GOMP provides loop scheduling runtime functions for loop constructs with known chunk sizes or with an ordered clause. 
+Figure~\ref{Manual:omp:ompfor4-trans} show the translation of a dynamic scheduled loop,  for an input code given in
+Figure~\ref{Manual:omp:ompfor4}. 
+
+\lstset{language=C,basicstyle=\scriptsize}
+\begin{figure}[htbp]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/ompfor4.c}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/ompfor4.c}
+    \end{htmlonly}
+  }
+}
+\caption{Example of an OpenMP loop with a dynamic schedule}
+\label{Manual:omp:ompfor4}
+\end{figure}
+
+\begin{figure}[htbp]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_ompfor4.c}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_ompfor4.c}
+    \end{htmlonly}
+  }
+}
+\caption{Translation of the loop with a dynamic schedule}
+\label{Manual:omp:ompfor4-trans}
+\end{figure}
+
+%-------------------------------------------------------------
+\clearpage
+\subsection{Threadprivate}
+GCC uses thread local storage (TLS) to implement OpenMP threadprivate variables. 
+No special support is needed from the runtime library's point of view. 
+The translation is very simple: add the keyword \lstinline{__thread} in front of the original declaration for a variable declared as threadprivate and then remove the OpenMP pragma. 
+
+Figure~\ref{Manual:omp:threadprivate-trans} shows the translation result for a test input code (Figure~\ref{Manual:omp:threadprivate}). It also demonstrates the handling of loop constructs using the ordered clause.
+
+\lstset{language=C,basicstyle=\scriptsize}
+\begin{figure}[htbp]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/threadprivate.c}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/threadprivate.c}
+    \end{htmlonly}
+  }
+}
+\caption{Example using threadprivate}
+\label{Manual:omp:threadprivate}
+\end{figure}
+
+\begin{figure}[htbp]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_threadprivate.c}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_threadprivate.c}
+    \end{htmlonly}
+  }
+}
+\caption{Translation of threadprivate}
+\label{Manual:omp:threadprivate-trans}
+\end{figure}
+
+
+%-------------------------------------------------------------
+\clearpage
+\subsection{Task Constructs}
+The translation of task constructs are similar to the translation of parallel constructs. They share the same AST outliner to generate outlined functions for tasks.
+
+Figure~\ref{Manual:omp:task_untied3-trans} shows the translation of untied task constructs(input code given in
+Figure~\ref{Manual:omp:task_untied3}). 
+
+\lstset{language=C,basicstyle=\scriptsize}
+\begin{figure}[htbp]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/task_untied3.c}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/task_untied3.c}
+    \end{htmlonly}
+  }
+}
+\caption{Example of untied tasks}
+\label{Manual:omp:task_untied3}
+\end{figure}
+
+\begin{figure}[htbp]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_task_untied3.c}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_task_untied3.c}
+    \end{htmlonly}
+  }
+}
+\caption{Translation of the untied tasks}
+\label{Manual:omp:task_untied3-trans}
+\end{figure}
+
+Figure~\ref{Manual:omp:task_wait-trans} shows the translation of task constructs used with taskwait( an input code given in
+Figure~\ref{Manual:omp:task_wait}). 
+
+\lstset{language=C,basicstyle=\scriptsize}
+\begin{figure}[htbp]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/task_wait.c}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/task_wait.c}
+    \end{htmlonly}
+  }
+}
+\caption{Example of tasks with taskwait}
+\label{Manual:omp:taskwait}
+\end{figure}
+
+\begin{figure}[htbp]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_task_wait.c}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_task_wait.c}
+    \end{htmlonly}
+  }
+}
+\caption{Translation of the taskwait example}
+\label{Manual:omp:task_wait-trans}
+\end{figure}
+
+%-------------------------------------------------------------
+%-------------------------------------------------------------
+\clearpage
+\section{Automatic Parallelization}
+ROSE has an implementation of automatic parallelization using OpenMP.
+The implementation is also used to explore semantics-aware automatic parallelization, as
+described in one of our paper~\cite{LiaoExtending2009}.
+\fixme{write more here}
+%-------------------------------------------------------------
+%-------------------------------------------------------------
+%\clearpage
+%\section{Appendix}
+%\subsection{Old OpenMP 2.0 Implementation}
+%
+%\subsection{Investigating GCC's OpenMP translation}
