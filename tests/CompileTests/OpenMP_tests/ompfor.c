@@ -1,6 +1,5 @@
 /*
-1. with and without omp for
-2. default loop scheduling: implementation dependent
+* default loop scheduling
 */
 #include <stdio.h>
 #ifdef _OPENMP
@@ -10,12 +9,10 @@ int a[20];
 int main(void)
 {
   int i;
-  //#pragma omp parallel for schedule (auto)
 #pragma omp parallel
   {
 #pragma omp single
     printf ("Using %d threads.\n",omp_get_num_threads());
-
 #pragma omp for nowait
     for (i=0;i<20;i+=3)
     {

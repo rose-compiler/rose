@@ -20,7 +20,8 @@ C_TESTCODES_REQUIRED_TO_COMPILE = \
         staticChunk.c \
         task_orphaned.c \
         task_underIf.c \
-        task_wait.c
+        task_wait.c \
+        task_wait2.c
 
 # Put test codes which can run (with main() ) here
 # They will be compiled and executed when the gomp library path is set
@@ -56,6 +57,7 @@ C_TESTCODES_REQUIRED_TO_RUN = \
         orphaned-directives.c \
         parallel.c \
 	parallel-reduction.c \
+	parallel-reduction2.c \
         parallelfor.c \
         parallelfor2.c \
 	private.c \
@@ -69,7 +71,8 @@ C_TESTCODES_REQUIRED_TO_RUN = \
         spmd1.c \
         task_largenumber.c \
 	task_untied.c \
-        task_untied2.c
+        task_untied2.c \
+	task_untied3.c \
 	threadprivate.c \
         threadprivate2.c \
         threadprivate3.c

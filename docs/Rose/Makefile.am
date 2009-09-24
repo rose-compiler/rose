@@ -89,7 +89,7 @@ latexFiles = preface.tex acknowledgments.tex introduction.tex \
              rose-processing-phases.pdf testing.tex \
              writingYourFirstTranslator.tex overviewOfRose.tex \
              developersAppendix.tex astMerge.tex installRose.tex \
-             binaryAnalysis.tex demo.tex UPCsupport.tex
+             binaryAnalysis.tex demo.tex OpenMPsupport.tex UPCsupport.tex
 
 # DQ (3/4/2009): Removed requirements.tex since it is not longer used.
 # requirements.tex
@@ -222,6 +222,9 @@ $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz: make-web-pages
 
 # Simpler rule
 latex-docs: pdf
+
+# simpler target for building manual only
+manual: $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf
 
 pdf-local: $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf ROSE_DeveloperInstructions.pdf ROSE_DemoGuide.pdf 
 

@@ -280,6 +280,9 @@
 % DQ (2/10/2007): Documentation for the AST Merge mechanism to support whole program analysis
 \input{astMerge}
 
+% Liao, 9/23/2009: describing the support of OpenMP
+\input{OpenMPsupport}
+
 % Liao, 7/15/2009: describing the support of UPC
 \input{UPCsupport}
 

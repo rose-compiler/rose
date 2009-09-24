@@ -1,10 +1,4 @@
 /*
-1. how to include header
-2. parallel region
-3. runtime routine
-4. undeterminated execution order
-5. control number of threads
-
 By C. Liao
 */
 #include <stdio.h>

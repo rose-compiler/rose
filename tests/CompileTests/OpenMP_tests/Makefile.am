@@ -55,6 +55,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	orphaned-directives.c \
 	parallel.c \
 	parallel-reduction.c \
+	parallel-reduction2.c \
 	parallelfor.c \
 	parallelfor2.c \
 	parallelsections.c \
@@ -76,8 +77,10 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	task_orphaned.c \
 	task_untied.c \
 	task_untied2.c \
+	task_untied3.c \
 	task_underIf.c \
 	task_wait.c \
+	task_wait2.c \
 	threadprivate2.c \
 	threadprivate3.c \
 	threadprivate.c \

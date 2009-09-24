@@ -7,8 +7,8 @@ int counter=0;
 int main(void)
 {
  int i;
-#pragma omp parallel for
- for(i=0;i<10000;i++)
+#pragma omp parallel for ordered
+ for(i=0;i<100;i++)
     counter++;
 #pragma omp parallel
   printf("counter=%d\n",counter);

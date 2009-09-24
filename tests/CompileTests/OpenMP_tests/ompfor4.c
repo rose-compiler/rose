@@ -1,6 +1,5 @@
 /*
-1. with and without omp for
-2. default loop scheduling: implementation dependent
+ * Dynamic schedule
 */
 #include <stdio.h>
 #ifdef _OPENMP
@@ -22,7 +21,6 @@ int foo(int lower, int upper, int stride)
 
 int main(void)
 {
-  //#pragma omp parallel for schedule (auto)
 #pragma omp parallel
   {
 #pragma omp single

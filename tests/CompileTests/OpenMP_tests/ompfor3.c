@@ -1,6 +1,6 @@
 /*
-1. with and without omp for
-2. default loop scheduling: implementation dependent
+* Decremental loop iteration, 
+* Default loop scheduling
 */
 #include <stdio.h>
 #ifdef _OPENMP
@@ -11,7 +11,6 @@ int main(void)
 {
   int i;
   int j = 100;
-  //#pragma omp parallel for schedule (auto)
 #pragma omp parallel
   {
 #pragma omp single
