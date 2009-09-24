@@ -1,3 +1,26 @@
+2009-09-24 16:35  liao6
+
+	* [r7523] /trunk/ROSE/docs/Rose/Makefile.am,
+	  /trunk/ROSE/docs/Rose/OpenMPsupport.tex,
+	  /trunk/ROSE/docs/Rose/bibliography.tex,
+	  /trunk/ROSE/docs/Rose/manual.tex.in,
+	  /trunk/ROSE/src/frontend/SageIII/ompparser.yy,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/hello-2.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/ompfor.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/ompfor3.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/ompfor4.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/parallel-reduction.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/parallel-reduction2.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/task_untied3.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/task_wait.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/task_wait2.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/threadprivate.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/threadprivate3.c,
+	  /trunk/ROSE/tests/roseTests/ompLoweringTests/Makefile.am: Wrote a
+	  new manual chapter explaining the OpenMP support in ROSE
+
 2009-09-24 02:22  panas2
 
 	* [r7507]
