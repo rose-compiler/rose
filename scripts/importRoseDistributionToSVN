@@ -44,6 +44,13 @@ if [ $? -ne 0 ]; then
    echo "Fatal error: cannot find the distribution package!"
    exit 1
 fi
+
+# double check here!! Liao, 9/25/2009
+if [ "x$ROSE_DISTRIBUTION" = "x" ]; then
+   echo "Fatal error: cannot find the distribution package!"
+   exit 1
+fi
+
 echo Found the ROSE distribution package: $ROSE_DISTRIBUTION
 
 ROSE_SRC=${ROSE_TOP_TEST_DIR}/sourcetree
