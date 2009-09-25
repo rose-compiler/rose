@@ -1,3 +1,66 @@
+2009-09-25 01:26  panas2
+
+	* [r7538] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/pointer/C_F_3_3_a_i.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/pointer/C_F_3_3_a_i2.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/pointer/C_F_3_3_a_i2.ok_msg:
+	  removed a test
+
+2009-09-25 01:12  liao6
+
+	* [r7537] /trunk/ROSE/docs/Rose/news.html,
+	  /trunk/ROSE/docs/Rose/rose.html: Added news for OpenMP support
+	  into the website pages
+
+2009-09-25 00:33  liao6
+
+	* [r7536] /trunk/ROSE/docs/Rose/OpenMPsupport.tex: Fixed some typos
+
+2009-09-25 00:24  panas2
+
+	* [r7535]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/PointerManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/PointerManager.h,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedSymbols.cpp,
+	  /trunk/ROSE/projects/RTED/RtedSymbols.h,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/pointer/nulltest.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/pointer/nulltest.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/pointer/ptest.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/pointer/ptest.ok_msg: Pass
+	  some more tests
+
+2009-09-24 23:44  liao6
+
+	* [r7534] /trunk/ROSE/docs/Rose/OpenMPsupport.tex: Be more specific
+	  about the supported languages for each phase of the OpenMP
+	  support
+
+2009-09-24 23:35  liao6
+
+	* [r7533] /trunk/ROSE/Makefile.am,
+	  /trunk/ROSE/docs/Rose/Makefile.am,
+	  /trunk/ROSE/docs/Rose/OpenMPsupport.tex,
+	  /trunk/ROSE/docs/Rose/bothlevel.c,
+	  /trunk/ROSE/projects/autoParallelization/tests/Makefile.am,
+	  /trunk/ROSE/projects/autoParallelization/tests/doall_2.c,
+	  /trunk/ROSE/projects/autoParallelization/tests/doall_vector.C,
+	  /trunk/ROSE/projects/autoParallelization/tests/doall_vector2.C,
+	  /trunk/ROSE/projects/autoParallelization/tests/firstprivate.c,
+	  /trunk/ROSE/projects/autoParallelization/tests/inner_only.c,
+	  /trunk/ROSE/projects/autoParallelization/tests/reduction.c: Added
+	  text about auto parallelization into the OpenMP support chapter
+	  of the ROSE manual
+
 2009-09-24 16:35  liao6
 
 	* [r7523] /trunk/ROSE/docs/Rose/Makefile.am,
