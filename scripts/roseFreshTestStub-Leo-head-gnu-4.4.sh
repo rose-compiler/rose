@@ -6,7 +6,7 @@ source /home/liao6/rose/scripts/roseFreshTestStub-Leo-common.sh
 source /home/liao6/set.gcc4.4.1
 
 ROSE_SVNROOT=file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
-MAILADDRS="liaoch@llnl.gov quinlan1@llnl.gov"
+MAILADDRS="liaoch@llnl.gov"
 #MAILADDRS="liaoch@llnl.gov panas2@llnl.gov quinlan1@llnl.gov matzke1@llnl.gov andreas.saebjoernsen@gmail.com"
 
 # using a time stamp to avoid overwriting previous tests
@@ -31,6 +31,7 @@ SKIP_DIST_TEST=1
 
 # How many processes for make
 MAKEFLAGS="-j8"
+ENABLE_SVN_UPDATE=1
 
 ENABLE_BUILD_BINARY_EDG=1
 KEEP_TEST_DIR=0

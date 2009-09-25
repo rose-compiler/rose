@@ -81,7 +81,9 @@ set -e
 if [ "x$SVNVERSIONOPTION" = "x" ]; then SVNVERSIONOPTION="HEAD"; fi
 svnversion=`${SVN} info -r${SVNVERSIONOPTION} ${ROSE_SVNROOT} | grep '^Revision: ' | cut -f 2 -d \ `
 svnmodificationdate=`${SVN} info -r${SVNVERSIONOPTION} ${ROSE_SVNROOT} | grep '^Last Changed Date: ' | cut -f 4- -d \ `
-
+#------------------------------------------------------
+# Sending an email notifying the start of the test ....
+#------------------------------------------------------
 (
 if [ -n "$TIMESTAMP" ]; then
   echo "Subject: ROSE test $TIMESTAMP on `hostname` 1. start" > mailtext1
@@ -126,11 +128,11 @@ printenv >> mailtext1
 
 timer="/usr/bin/time"
 
-SourceTreeLocation=$ROSE_TOP/sourcetree
-
 #------------------------------------------------------
 #  Building and Making Section
 #------------------------------------------------------
+
+SourceTreeLocation=$ROSE_TOP/sourcetree
 buildstatus=0
 (
   set -e
@@ -147,23 +149,37 @@ buildstatus=0
 
 # DQ (9/18/2009): This is added as a performance optimization to the
 # generation of many EDG binaries for different versions of compilers.
+# adjust the local copy of ROSE to share a common directory: 
+# We assume the common dir (SVN_READONLY_REPOSITORY_LOCATION) already exists and 
+# ./build has been run before.
+# This saves time compared to a fresh checkout
+
+ # additional svn options, quiet mode by default
+ SVN_OPTIONS="-q"
   if [ "x$SVNOP" = "xupdate" ]; then
       $SVN info $SVN_READONLY_REPOSITORY_LOCATION
     # Check the return status of the svn info command.
       if [ $? == 0 ]; then
           SourceTreeLocation=$SVN_READONLY_REPOSITORY_LOCATION
-
+        # Liao, 9/25/2009
+        # for the update operation, we use force to overwrite previous local copies of binaries
+        SVN_OPTIONS=$SVN_OPTIONS" --force"  
         # I think we need to run update and build separately before running tests
         # cd $SVN_READONLY_REPOSITORY_LOCATION; $timer $SVN ${SVNOP} -r${svnversion} -q
         # cd $SourceTreeLocation
         # $timer ./build
         # cd ..
+
+        # Liao, 9/25/2009. I want to do the update here also,there is no conflict for me
+        if [ 0$ENABLE_SVN_UPDATE -ne 0 ]; then
+          $timer $SVN ${SVNOP} -r${svnversion} ${SVN_OPTIONS} ${ROSE_SVNROOT} $SourceTreeLocation
+        fi  
       else
         # Error
           echo "Error update specified without a valid SVN repository: $SVN_READONLY_REPOSITORY_LOCATION"
           exit 1
       fi
-    else
+  else # check out or export operations
       if [ "x$SVNOP" = "xcheckout" ]; then
           $timer $SVN ${SVNOP} -r${svnversion} -q ${ROSE_SVNROOT} $SourceTreeLocation
       else
@@ -172,7 +188,9 @@ buildstatus=0
           echo "Default is export, but make that an error for now! (SVNOP should be defined: SVNOP = $SVNOP)"
           exit 1
       fi
-  fi
+  fi    
+
+ 
 
 #------------------------------------------------------
 # rebuild the Makefile in the source tree
@@ -209,9 +227,6 @@ fi
   cd build
   $timer $SourceTreeLocation/configure "${CONFIGURE_FLAGS[@]}" || exit 1
   echo "############ configure done"
-
-# make $MAKEFLAGS || exit 1
-# echo "############ make done"
 
   # For testing -- skip the rest if we are testing the head of the SciDAC repository of ROSE
   if [ 0$BUILD_AND_UPDATE_EDG_BINARY_ONLY -ne 0 ] ; then
