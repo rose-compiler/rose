@@ -1027,15 +1027,10 @@ SgBasicBlock*
 RtedTransformation::buildGlobalConstructor(SgScopeStatement* scope, std::string name) {
   //SgStatement* global=NULL;
   // build the classdeclaration and definition for RtedGlobal
-  SgClassDeclaration* nondef_decl = buildNondefiningClassDeclaration_nfi(
-									 "RtedGlobal_"+name,
-									 SgClassDeclaration::e_class,
-									 scope);
-  ROSE_ASSERT(nondef_decl);
   SgClassDeclaration* decl = buildClassDeclaration_nfi(
 						       "RtedGlobal_"+name,
 						       SgClassDeclaration::e_class,
-						       scope, nondef_decl);
+						       scope, NULL);
   ROSE_ASSERT(decl);
   globConstructor = decl;
   SgClassDefinition* def = buildClassDefinition(decl);
