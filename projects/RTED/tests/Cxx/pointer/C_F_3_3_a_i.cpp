@@ -31,11 +31,7 @@ void TestClass :: runA() {
 }
 
 int main() {
-    arrayA=new int [SIZE];
-    int *ptrA=&arrayA[SIZE-1];
-
-
-    //    TestClass testclassA;
-    //testclassA.runA();
+    TestClass testclassA;
+    testclassA.runA();
     return EXITCODE_OK;
 }
