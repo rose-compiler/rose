@@ -2,10 +2,11 @@
 # This script add the newly built EDG binaries into the internal ROSE svn repository. 
 set -e
 if test "x$SVN" = "x"; then SVN=svn; fi
-if test $# -ne 3; then
-  echo "Usage: $0 rose-repository-url-or-top_srcdir build-triplet" >&2
+if test $# -ne 4; then
+  echo "Usage: $0 rose-repository-url-or-top_srcdir build-triplet revision-number" >&2
   exit 1
 fi
+
 if test -f rose_binary_compatibility_signature; then
   :
 else
@@ -15,6 +16,7 @@ fi
 roseRepositoryUrl="$1"
 buildTriplet="$2"
 buildCompiler="$3"
+revisionNumber="$4" # add revision number to be aware possible stale binary
 signature=`cat rose_binary_compatibility_signature`
 binaryEdgTarball="roseBinaryEDG-${buildTriplet}-${buildCompiler}-${signature}.tar.gz"
 if test -f ${binaryEdgTarball}; then
@@ -33,7 +35,33 @@ if test -e ${checkoutDir}/${binaryEdgTarball}; then
 else
   cp ${binaryEdgTarball} ${checkoutDir}/${binaryEdgTarball}
 fi
+
+# Liao, 9/25/2009
+# make sure the binary is not stale, based on its revision number and the latest binary file's revision number in the repository
+mytempfile=ttt$$
+svn log -l 100 file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE > $mytempfile
+LASTEST_BIN_REV_NO=`cat $mytempfile | grep -m 1 "Automatic updates of binary EDG" | cut -f 10 -d' '`
+rm -rf $mytempfile
+
+# be prepared that the log message has no 10th field at all
+if [ "x$LASTEST_BIN_REV_NO" != "x" ]; then
+  if [ 0$LASTEST_BIN_REV_NO -ne 0 ]; then
+     if test $revisionNumber -lt $LASTEST_BIN_REV_NO ; then
+       echo "Trying to commit a state binary  which is  generated from rev $revisionNumber"
+       echo "while the repository already has a binary from rev $LASTEST_BIN_REV_NO."
+       rm -rf ${checkoutDir}
+       exit 1 
+     fi
+  else
+    echo "cannot find the revision number of the most recent binary file in the repository. Proceed to commit anyway."
+  fi
+else
+  echo "cannot find the revision number of the most recent binary file in the repository. Proceed to commit anyway."
+fi
+
+
 ${SVN} add ${checkoutDir}/${binaryEdgTarball}
 ${SVN} status ${checkoutDir}
-${SVN} commit -m"Automatic updates of binary EDG tarballs." ${checkoutDir}
+# Liao, 9/25/2009 the last field of the commit message must be a revision number only, without period or so.
+${SVN} commit -m"Automatic updates of binary EDG tarballs based on rev ${revisionNumber}" ${checkoutDir}
 rm -rf ${checkoutDir}
