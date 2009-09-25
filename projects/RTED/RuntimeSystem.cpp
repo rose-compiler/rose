@@ -1079,10 +1079,16 @@ void RuntimeSystem_roseCheckIfThisNULL(
 		const char* filename, const char* line,
 		const char* lineTransformed) {
 
+  // djh (25 Sep 2009) Commented this out as it causes a number of regressions.
+  // Cursory examination suggests that it's fine, but empirically it's not.  For
+  // example, uncommenting this causes us to fail to discover the error in
+  //    C++/array_index_out_of_bound/C_E_2_7_j_d
+  /*
 	cerr <<" Asserting that thisExp is != NULL " << endl;
 	  RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
 	  CHECKPOINT
 	  rs->checkIfThisisNULL(thisExp);
+    */
 }
 
 
