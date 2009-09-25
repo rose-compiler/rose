@@ -36,7 +36,7 @@ the OpenMP-related command line options can be displayed as follows:
 %-------------------------------------------------------------
 \section{Entry Point and Top Level Function}
 ROSE processes OpenMP directives right after preprocessing information is processed within \lstinline{SgFile::callFrontEnd()}.
-This order is necessary since preprocessing information may existing within
+This order is necessary since preprocessing information may exist within
 OpenMP directives, such as macro calls.
 %or named constants defined using \lstinline{#define}.
 ROSE needs to be aware of such preprocessing information when processing OpenMP.
@@ -94,7 +94,9 @@ A rich set of C/C++/Fortran OpenMP tests is located in \textit{src/tests/Compile
 This phase converts the ROSE AST attached with OmpAttribute instances into
 AST with OpenMP-specific nodes\footnote{The conversion supports C and C++.
 We are working on the Fortran support.}.
-The introduction of OpenMP-specific ROSE AST nodes can help reuse all existing ROSE AST traversal, query, and other manipulation interfaces, thus facilitating analysis and translation of OpenMP program.
+The introduction of OpenMP-specific ROSE AST nodes can help reuse all
+existing ROSE AST traversal, query, and other manipulation interfaces, thus
+facilitating analysis and translation of OpenMP programs.
 
 All OpenMP AST nodes have names starting with \textit{SgOmp}. 
 Directives are treated as statement-like nodes, which in turn can have a list of clause nodes.
@@ -407,7 +409,7 @@ Figure~\ref{Manual:omp:threadprivate-trans} shows the translation result for a t
 %-------------------------------------------------------------
 \clearpage
 \subsection{Task Constructs}
-The translation of task constructs are similar to the translation of parallel constructs. 
+The translation of task constructs is similar to the translation of parallel constructs. 
 They share the same ROSE AST outliner to generate outlined functions for
 explicit or implicit tasks.
 
