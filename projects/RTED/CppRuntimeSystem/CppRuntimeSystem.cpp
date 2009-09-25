@@ -386,6 +386,11 @@ void RuntimeSystem::checkPointerDereference( addr_type source, addr_type derefed
     pointerManager.checkPointerDereference(source,derefed_address);
 }
 
+void RuntimeSystem::checkIfThisisNULL(void* thisExp) {
+
+	pointerManager.checkIfPointerNULL(thisExp);
+}
+
 
 // --------------------- File Management ---------------------------------
 

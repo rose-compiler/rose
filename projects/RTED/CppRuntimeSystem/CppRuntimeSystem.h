@@ -159,7 +159,7 @@ class RuntimeSystem
         /// Checks if two addresses lie in the same "typed chunk"
         /// equivalent to the check which is done on registerPointerChange
         void checkPointerDereference( addr_type sourceAddress, addr_type derefed_address );
-
+        void checkIfThisisNULL(void* thisExp);
 
 
         /// Each variable is associated with a scope, use this function to create a new scope

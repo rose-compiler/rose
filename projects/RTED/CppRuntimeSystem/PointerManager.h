@@ -92,7 +92,7 @@ class PointerManager
         /// Example: *(p++)  call registerPointerChange()
         ///          *(p+1)  call checkPointerDereference()
         void checkPointerDereference( addr_type sourceAddress, addr_type derefed_address );
-
+        void checkIfPointerNULL( void* pointer);
 
         /// Invalidates all "Pointer" i.e. dereferentiable memory regions
         /// point in given memory chunk

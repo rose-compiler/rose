@@ -27,6 +27,7 @@ public:
 	SgFunctionSymbol* roseExitScope;
 	SgFunctionSymbol* roseIOFunctionCall;
 	SgFunctionSymbol* roseRegisterTypeCall;
+	SgFunctionSymbol* roseCheckIfThisNULL;
 	SgType* size_t_member;
 
 	RtedSymbols() {
@@ -48,6 +49,7 @@ public:
 		roseIOFunctionCall=NULL;
 		roseRegisterTypeCall=NULL;
 		size_t_member=NULL;
+		roseCheckIfThisNULL=NULL;
 	};
 	
 	virtual ~RtedSymbols() {

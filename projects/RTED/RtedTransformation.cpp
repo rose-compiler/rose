@@ -55,6 +55,7 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
   roseIOFunctionCall = symbols->roseIOFunctionCall;
   roseRegisterTypeCall = symbols->roseRegisterTypeCall;
   size_t_member = symbols->size_t_member;
+  roseCheckIfThisNULL = symbols->roseCheckIfThisNULL;
 
   ROSE_ASSERT(roseCreateHeap);
   ROSE_ASSERT(roseAccessHeap);
@@ -75,6 +76,7 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
   ROSE_ASSERT(roseIOFunctionCall);
   ROSE_ASSERT(roseRegisterTypeCall);
   ROSE_ASSERT(size_t_member);
+  ROSE_ASSERT(roseCheckIfThisNULL);
 
   traverseInputFiles(project,preorder);
 
@@ -351,8 +353,10 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
   for (; itAccessArr2 != variable_access_arrowthisexp.end(); itAccessArr2++) {
     SgExpression* pd = isSgExpression(itAccessArr2->first);
     SgThisExp* in = isSgThisExp(itAccessArr2->second);
-    if (pd)
+    if (pd) {
+    	insertCheckIfThisNull(in);
       insertAccessVariable(in, pd);
+    }
   }
 
 

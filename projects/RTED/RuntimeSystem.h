@@ -174,6 +174,11 @@ void RuntimeSystem_roseAccessVariable(
         int read_write_mask, //1 = read, 2 = write
         const char* filename, const char* line,
 		const char* lineTransformed);
+
+void RuntimeSystem_roseCheckIfThisNULL(
+		void* thisExp,
+		const char* filename, const char* line,
+		const char* lineTransformed);
 /***************************** VARIABLES *************************************/
 
 

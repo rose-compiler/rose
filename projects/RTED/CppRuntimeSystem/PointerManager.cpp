@@ -339,6 +339,16 @@ bool PointerManager::checkForMemoryLeaks( addr_type address, size_t type_size, P
 }
 
 
+void PointerManager::checkIfPointerNULL( void* pointer)
+{
+	RuntimeSystem * rs = RuntimeSystem::instance();
+	if (pointer==NULL) {
+		stringstream ss;
+		ss << "Accessing (This) NULL Pointer: " << endl;
+		rs->violationHandler(RuntimeViolation::INVALID_WRITE, ss.str());
+	}
+}
+
 void PointerManager::checkPointerDereference( addr_type src, addr_type deref_addr)
 {
     MemoryManager * mm = RuntimeSystem::instance()->getMemManager();

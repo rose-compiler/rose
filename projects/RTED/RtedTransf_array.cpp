@@ -581,6 +581,8 @@ RtedTransformation::visit_isSgArrowExp(SgArrowExp* n) {
 #endif
 }
 
+
+
 // FIXME 2: This introduces superfluous calls to access var for dot expressions
 // 	e.g., in the following
 // 		a = *(my_struct.field);

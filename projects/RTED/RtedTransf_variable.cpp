@@ -32,18 +32,17 @@ bool RtedTransformation::isVarInCreatedVariables(SgInitializedName* n) {
 	return ret;
 }
 
-bool 
-RtedTransformation::isFileIOVariable(SgType* type) {
-  bool isIO=false;
-  std::string name = type->unparseToString();
-  //cerr << "#### Detected Type : " << type->class_name() << 
-  // "  name : " << name << 
-  // "  name : " << type->class_name() << endl;
-  
-  if (name.compare("std::fstream")==0) {
-    isIO=true;
-  }
-  return isIO;
+bool RtedTransformation::isFileIOVariable(SgType* type) {
+	bool isIO = false;
+	std::string name = type->unparseToString();
+	//cerr << "#### Detected Type : " << type->class_name() <<
+	// "  name : " << name <<
+	// "  name : " << type->class_name() << endl;
+
+	if (name.compare("std::fstream") == 0) {
+		isIO = true;
+	}
+	return isIO;
 }
 
 void RtedTransformation::visit_isSgVariableDeclaration(SgNode* n) {
@@ -61,8 +60,8 @@ void RtedTransformation::visit_isSgVariableDeclaration(SgNode* n) {
 		ROSE_ASSERT(initName);
 
 		SgType* var_type = initName -> get_type();
-        // FIXME 2: probably need to handle typedef to reference, recursive
-        // typedef/reference, &c.
+		// FIXME 2: probably need to handle typedef to reference, recursive
+		// typedef/reference, &c.
 		// reference types don't create more memory as far as the RTS is
 		// concerned (in that &foo == &bar for bar a ref. of foo)
 		if( isSgReferenceType( var_type ))
@@ -77,63 +76,63 @@ void RtedTransformation::visit_isSgVariableDeclaration(SgNode* n) {
 }
 
 void RtedTransformation::insertCreateObjectCall(RtedClassDefinition* rcdef) {
-    SgClassDefinition* cdef = rcdef -> classDef;
+	SgClassDefinition* cdef = rcdef -> classDef;
 
-    SgDeclarationStatementPtrList constructors;
-    appendConstructors( cdef, constructors );
+	SgDeclarationStatementPtrList constructors;
+	appendConstructors(cdef, constructors);
 
-    BOOST_FOREACH( SgDeclarationStatement* decl, constructors ) {
-        SgMemberFunctionDeclaration* constructor
-            = isSgMemberFunctionDeclaration( decl );
-        // validate the postcondition of appendConstructors
-        ROSE_ASSERT( constructor );
+	BOOST_FOREACH( SgDeclarationStatement* decl, constructors )
+{	SgMemberFunctionDeclaration* constructor
+	= isSgMemberFunctionDeclaration( decl );
+	// validate the postcondition of appendConstructors
+	ROSE_ASSERT( constructor );
 
-        // FIXME 2: Probably the thing to do in this case is simply to bail and
-        // trust that the constructor will get transformed when its definition
-        // is processed
-        SgFunctionDefinition* def = constructor -> get_definition();
-        ROSE_ASSERT( def );
+	// FIXME 2: Probably the thing to do in this case is simply to bail and
+	// trust that the constructor will get transformed when its definition
+	// is processed
+	SgFunctionDefinition* def = constructor -> get_definition();
+	ROSE_ASSERT( def );
 
-        SgBasicBlock* body = def -> get_body();
+	SgBasicBlock* body = def -> get_body();
 
-        // We need the symbol to build a this expression
-        SgSymbolTable* sym_tab
-            = cdef -> get_declaration() -> get_scope() -> get_symbol_table();
+	// We need the symbol to build a this expression
+	SgSymbolTable* sym_tab
+	= cdef -> get_declaration() -> get_scope() -> get_symbol_table();
 
-        SgClassSymbol* csym
-            = isSgClassSymbol(
-                    sym_tab -> find_class(
-                        cdef -> get_declaration() -> get_name() ));
-        ROSE_ASSERT( csym );
+	SgClassSymbol* csym
+	= isSgClassSymbol(
+			sym_tab -> find_class(
+					cdef -> get_declaration() -> get_name() ));
+	ROSE_ASSERT( csym );
 
-        SgType* type = cdef -> get_declaration() -> get_type();
+	SgType* type = cdef -> get_declaration() -> get_type();
 
-        // build arguments to roseCreateObject
-        SgExprListExp* arg_list = buildExprListExp();
-        appendTypeInformation( type, arg_list );
-        appendAddressAndSize(
-            // we want &(*this), sizeof(*this)
-            buildPointerDerefExp( buildThisExp( csym )), type, arg_list, 0 );
-        appendFileInfo( body, arg_list );
+	// build arguments to roseCreateObject
+	SgExprListExp* arg_list = buildExprListExp();
+	appendTypeInformation( type, arg_list );
+	appendAddressAndSize(
+			// we want &(*this), sizeof(*this)
+			buildPointerDerefExp( buildThisExp( csym )), type, arg_list, 0 );
+	appendFileInfo( body, arg_list );
 
-        // create the function call and prepend it to the constructor's body
-        ROSE_ASSERT( roseCreateObject );
-        SgExprStatement* fncall =
-            buildExprStatement(
-                buildFunctionCallExp(
-                    buildFunctionRefExp( roseCreateObject ),
-                    arg_list ));
-        attachComment( fncall, "", PreprocessingInfo::before );
-        attachComment(
-            fncall,
-            "RS: Create Variable, parameters: "
-                "type, basetype, indirection_level, "
-                "address, size, filename, line, linetransformed",
-            PreprocessingInfo::before );
+	// create the function call and prepend it to the constructor's body
+	ROSE_ASSERT( roseCreateObject );
+	SgExprStatement* fncall =
+	buildExprStatement(
+			buildFunctionCallExp(
+					buildFunctionRefExp( roseCreateObject ),
+					arg_list ));
+	attachComment( fncall, "", PreprocessingInfo::before );
+	attachComment(
+			fncall,
+			"RS: Create Variable, parameters: "
+			"type, basetype, indirection_level, "
+			"address, size, filename, line, linetransformed",
+			PreprocessingInfo::before );
 
-        ROSE_ASSERT( fncall );
-        body -> prepend_statement( fncall );
-    }
+	ROSE_ASSERT( fncall );
+	body -> prepend_statement( fncall );
+}
 }
 
 void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName) {
@@ -194,46 +193,47 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName) {
 			prependPseudoForInitializerExpression(buildVar, isSgForStatement(
 					stmt -> get_parent() -> get_parent()));
 		} else if (isSgIfStmt(scope)) {
-		  SgExprStatement* exprStmt = buildVariableCreateCallStmt(initName,stmt);
-		  if (exprStmt) {
-		      SgStatement* trueb = isSgIfStmt(scope)->get_true_body();
-		      SgStatement* falseb = isSgIfStmt(scope)->get_false_body();
-		      bool partOfTrue = traverseAllChildrenAndFind(initName,trueb);
-		      bool partOfFalse = traverseAllChildrenAndFind(initName,falseb);
-		      bool partOfCondition = false;
-		      if (partOfTrue==false && partOfFalse==false)
-			partOfCondition=true;
-		      if (trueb && ( partOfTrue || partOfCondition)) {
-			if (!isSgBasicBlock(trueb)) {
-			  removeStatement(trueb);
-			  SgBasicBlock* bb = buildBasicBlock();
-			  bb->set_parent(isSgIfStmt(scope));
-			  isSgIfStmt(scope)->set_true_body(bb);
-			  bb->prepend_statement(trueb);
-			  trueb=bb;
+			SgExprStatement* exprStmt = buildVariableCreateCallStmt(initName,
+					stmt);
+			if (exprStmt) {
+				SgStatement* trueb = isSgIfStmt(scope)->get_true_body();
+				SgStatement* falseb = isSgIfStmt(scope)->get_false_body();
+				bool partOfTrue = traverseAllChildrenAndFind(initName, trueb);
+				bool partOfFalse = traverseAllChildrenAndFind(initName, falseb);
+				bool partOfCondition = false;
+				if (partOfTrue == false && partOfFalse == false)
+					partOfCondition = true;
+				if (trueb && (partOfTrue || partOfCondition)) {
+					if (!isSgBasicBlock(trueb)) {
+						removeStatement(trueb);
+						SgBasicBlock* bb = buildBasicBlock();
+						bb->set_parent(isSgIfStmt(scope));
+						isSgIfStmt(scope)->set_true_body(bb);
+						bb->prepend_statement(trueb);
+						trueb = bb;
+					}
+					prependStatement(exprStmt, isSgScopeStatement(trueb));
+				}
+				if (falseb && (partOfFalse || partOfCondition)) {
+					if (!isSgBasicBlock(falseb)) {
+						removeStatement(falseb);
+						SgBasicBlock* bb = buildBasicBlock();
+						bb->set_parent(isSgIfStmt(scope));
+						isSgIfStmt(scope)->set_false_body(bb);
+						bb->prepend_statement(falseb);
+						falseb = bb;
+					}
+					prependStatement(exprStmt, isSgScopeStatement(falseb));
+				} else if (partOfCondition) {
+					// create false statement, this is sometimes needed
+					SgBasicBlock* bb = buildBasicBlock();
+					bb->set_parent(isSgIfStmt(scope));
+					isSgIfStmt(scope)->set_false_body(bb);
+					falseb = bb;
+					prependStatement(exprStmt, isSgScopeStatement(falseb));
+				}
 			}
-			prependStatement( exprStmt,isSgScopeStatement(trueb));
-		      }
-		      if (falseb && ( partOfFalse || partOfCondition)) {
-			if (!isSgBasicBlock(falseb)) {
-			  removeStatement(falseb);
-			  SgBasicBlock* bb = buildBasicBlock();
-			  bb->set_parent(isSgIfStmt(scope));
-			  isSgIfStmt(scope)->set_false_body(bb);
-			  bb->prepend_statement(falseb);
-			  falseb=bb;
-			}
-			prependStatement(exprStmt,isSgScopeStatement(falseb));
-		      } else if (partOfCondition) {
-			// create false statement, this is sometimes needed
-			  SgBasicBlock* bb = buildBasicBlock();
-			  bb->set_parent(isSgIfStmt(scope));
-			  isSgIfStmt(scope)->set_false_body(bb);
-			  falseb=bb;
-			  prependStatement(exprStmt,isSgScopeStatement(falseb));
-		      }
-		    }
-										
+
 		} else if (isNormalScope(scope) || !isSgIfStmt(scope)) {
 			// insert new stmt (exprStmt) after (old) stmt
 			SgExprStatement* exprStmt = buildVariableCreateCallStmt(initName,
@@ -317,24 +317,22 @@ RtedTransformation::buildVariableCreateCallExpr(SgInitializedName* initName,
 
 	SgInitializer* initializer = initName->get_initializer();
 
-    // FIXME 2: We don't handle initialzer clauses in constructors.
-    // E.g.
-    // class A {
-    //  int x, y;
-    //  A : x( 1 ), y( 200 ) { }
-    // };
-    //
-    /* For non objects, any initialzer is enough for the variable to be
-     * fully initialized, e.g.
-     *      int y = 200;    // safe to read y
-     * However, all objects will have some initialzer, even if it's nothing more
-     * than a constructor initializer.  Which members are initialized is up to
-     * the constructor.
-     */
-	bool initb = 
-        (initializer 
-            && !(isSgConstructorInitializer( initializer )))
-        || forceinit;
+	// FIXME 2: We don't handle initialzer clauses in constructors.
+	// E.g.
+	// class A {
+	//  int x, y;
+	//  A : x( 1 ), y( 200 ) { }
+	// };
+	//
+	/* For non objects, any initialzer is enough for the variable to be
+	 * fully initialized, e.g.
+	 *      int y = 200;    // safe to read y
+	 * However, all objects will have some initialzer, even if it's nothing more
+	 * than a constructor initializer.  Which members are initialized is up to
+	 * the constructor.
+	 */
+	bool initb = (initializer && !(isSgConstructorInitializer(initializer)))
+			|| forceinit;
 
 	string debug_name = initName -> get_name();
 
@@ -369,7 +367,7 @@ RtedTransformation::buildVariableCreateCallExpr(SgExpression* var_ref,
 	SgExpression* initBool = buildIntVal(0);
 	bool isFileIO = isFileIOVariable(var_ref->get_type());
 	if (initb && !isFileIO)
-	  initBool = buildIntVal(1);
+		initBool = buildIntVal(1);
 
 	appendExpression(arg_list, callName);
 	appendExpression(arg_list, callNameExp);
@@ -383,9 +381,9 @@ RtedTransformation::buildVariableCreateCallExpr(SgExpression* var_ref,
 			scope = initName->get_scope();
 		appendAddressAndSize(
 		//isSgVarRefExp(var_ref) -> get_symbol() -> get_declaration(),
-				     scope, isSgVarRefExp(var_ref), arg_list, 0);
+				scope, isSgVarRefExp(var_ref), arg_list, 0);
 	} else {
-	  appendAddressAndSize(var_ref, var_ref -> get_type(), arg_list, 0);
+		appendAddressAndSize(var_ref, var_ref -> get_type(), arg_list, 0);
 	}
 
 	appendExpression(arg_list, initBool);
@@ -467,15 +465,15 @@ RtedTransformation::buildVariableInitCallExpr(SgInitializedName* initName,
 	SgScopeStatement* scope = NULL;
 	if (initName)
 		scope = initName->get_scope();
-	bool isUnionClass=false;
+	bool isUnionClass = false;
 	SgClassDefinition* unionclass = isSgClassDefinition(initName->get_scope());
-	if (unionclass && 
-	    unionclass->get_declaration()->get_class_type()==SgClassDeclaration::e_union)
-	  isUnionClass=true;
+	if (unionclass && unionclass->get_declaration()->get_class_type()
+			== SgClassDeclaration::e_union)
+		isUnionClass = true;
 	//if (!isUnionClass) 
-	unionclass=NULL;
+	unionclass = NULL;
 	appendAddressAndSize(//initName,
-			     scope, exp, arg_list, 0, unionclass);
+			scope, exp, arg_list, 0, unionclass);
 
 	SgIntVal* ismallocV = buildIntVal(0);
 	if (ismalloc)
@@ -498,7 +496,7 @@ RtedTransformation::buildVariableInitCallExpr(SgInitializedName* initName,
 	// pointer change
 	//if (isUnionClass)
 	// is_pointer_change=true;
-	cerr <<"@@@@ varrefe = " << initName->get_scope()->class_name() << endl;
+	cerr << "@@@@ varrefe = " << initName->get_scope()->class_name() << endl;
 	appendExpression(arg_list, buildIntVal(is_pointer_change));
 
 	SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
@@ -549,11 +547,11 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
 			ROSE_ASSERT(decl);
 			stmt = isSgVariableDeclaration(decl->get_parent());
 			if (!stmt) {
-			  //cerr << " stmt==NULL : Error . stmt is unknown : "
-			  //			<< decl->get_parent()->class_name() << endl;
-			  //cerr << "is CompilerGen: " << decl->get_file_info()->isCompilerGenerated() << endl;
+				//cerr << " stmt==NULL : Error . stmt is unknown : "
+				//			<< decl->get_parent()->class_name() << endl;
+				//cerr << "is CompilerGen: " << decl->get_file_info()->isCompilerGenerated() << endl;
 				if (decl->get_file_info()->isCompilerGenerated())
-				  return;
+					return;
 				ROSE_ASSERT( false );
 			}
 			scope = scope->get_scope();
@@ -587,49 +585,49 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
 					varRefE, stmt, ismalloc);
 
 			SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
-			cerr <<"If Statment : inserting initvar" << endl;
+			cerr << "If Statment : inserting initvar" << endl;
 			if (exprStmt) {
-			  SgStatement* trueb = isSgIfStmt(scope)->get_true_body();
-			  SgStatement* falseb = isSgIfStmt(scope)->get_false_body();
-			  // find out if the varRefE is part of the true, false or
-			  // the condition
-			  bool partOfTrue = traverseAllChildrenAndFind(varRefE,trueb);
-			  bool partOfFalse = traverseAllChildrenAndFind(varRefE,falseb);
-			  bool partOfCondition = false;
-			  if (partOfTrue==false && partOfFalse==false)
-			    partOfCondition=true;
-			  cerr <<"@@@@ If cond : partOfTrue: "<<partOfTrue<<
-			    "   partOfFalse:"<<partOfFalse<<"  partOfCondition:"<<
-			    partOfCondition<<endl;
-			  if (trueb && ( partOfTrue || partOfCondition)) {
-			    if (!isSgBasicBlock(trueb)) {
-			      removeStatement(trueb);
-			      SgBasicBlock* bb = buildBasicBlock();
-			      bb->set_parent(isSgIfStmt(scope));
-			      isSgIfStmt(scope)->set_true_body(bb);
-			      bb->prepend_statement(trueb);
-			      trueb=bb;
-			    }
-			    prependStatement( exprStmt,isSgScopeStatement(trueb));
-			  }
-			  if (falseb && ( partOfFalse || partOfCondition)) {
-			    if (!isSgBasicBlock(falseb)) {
-			      removeStatement(falseb);
-			      SgBasicBlock* bb = buildBasicBlock();
-			      bb->set_parent(isSgIfStmt(scope));
-			      isSgIfStmt(scope)->set_false_body(bb);
-			      bb->prepend_statement(falseb);
-			      falseb=bb;
-			    }
-			    prependStatement(exprStmt,isSgScopeStatement(falseb));
-			  }  else if (partOfCondition) {
-			    // create false statement, this is sometimes needed
-			    SgBasicBlock* bb = buildBasicBlock();
-			    bb->set_parent(isSgIfStmt(scope));
-			    isSgIfStmt(scope)->set_false_body(bb);
-			    falseb=bb;
-			    prependStatement(exprStmt,isSgScopeStatement(falseb));
-			  }
+				SgStatement* trueb = isSgIfStmt(scope)->get_true_body();
+				SgStatement* falseb = isSgIfStmt(scope)->get_false_body();
+				// find out if the varRefE is part of the true, false or
+				// the condition
+				bool partOfTrue = traverseAllChildrenAndFind(varRefE, trueb);
+				bool partOfFalse = traverseAllChildrenAndFind(varRefE, falseb);
+				bool partOfCondition = false;
+				if (partOfTrue == false && partOfFalse == false)
+					partOfCondition = true;
+				cerr << "@@@@ If cond : partOfTrue: " << partOfTrue
+						<< "   partOfFalse:" << partOfFalse
+						<< "  partOfCondition:" << partOfCondition << endl;
+				if (trueb && (partOfTrue || partOfCondition)) {
+					if (!isSgBasicBlock(trueb)) {
+						removeStatement(trueb);
+						SgBasicBlock* bb = buildBasicBlock();
+						bb->set_parent(isSgIfStmt(scope));
+						isSgIfStmt(scope)->set_true_body(bb);
+						bb->prepend_statement(trueb);
+						trueb = bb;
+					}
+					prependStatement(exprStmt, isSgScopeStatement(trueb));
+				}
+				if (falseb && (partOfFalse || partOfCondition)) {
+					if (!isSgBasicBlock(falseb)) {
+						removeStatement(falseb);
+						SgBasicBlock* bb = buildBasicBlock();
+						bb->set_parent(isSgIfStmt(scope));
+						isSgIfStmt(scope)->set_false_body(bb);
+						bb->prepend_statement(falseb);
+						falseb = bb;
+					}
+					prependStatement(exprStmt, isSgScopeStatement(falseb));
+				} else if (partOfCondition) {
+					// create false statement, this is sometimes needed
+					SgBasicBlock* bb = buildBasicBlock();
+					bb->set_parent(isSgIfStmt(scope));
+					isSgIfStmt(scope)->set_false_body(bb);
+					falseb = bb;
+					prependStatement(exprStmt, isSgScopeStatement(falseb));
+				}
 			}
 		} else if (isNormalScope(scope) && !isSgIfStmt(scope)) {
 
@@ -670,6 +668,86 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
 
 }
 
+void RtedTransformation::insertCheckIfThisNull(SgThisExp* texp) {
+	cerr << "access to this : " << texp->unparseToString() << endl;
+	SgStatement* stmt = getSurroundingStatement(texp);
+	if (isSgStatement(stmt)) {
+		SgScopeStatement* scope = stmt->get_scope();
+
+		if (isSgClassDefinition(scope)) {
+			SgClassDeclaration* decl =
+					isSgClassDeclaration(scope->get_parent());
+			ROSE_ASSERT(decl);
+			stmt = isSgVariableDeclaration(decl->get_parent());
+			if (!stmt) {
+				cerr << " Error . stmt is unknown : "
+						<< decl->get_parent()->class_name() << endl;
+				ROSE_ASSERT( false );
+			}
+			scope = scope->get_scope();
+
+		}
+		// what is there is an array creation in a global scope
+		else if (isSgGlobal(scope)) {
+			stmt = mainFirst;
+			scope = stmt->get_scope();
+		}
+		if (isNormalScope(scope)) {
+			// build the function call : runtimeSystem-->createArray(params); ---------------------------
+			SgExprListExp* arg_list = buildExprListExp();
+			appendExpression(arg_list, buildThisExp(texp->get_class_symbol()));
+
+			SgExpression* filename = buildString(
+					stmt->get_file_info()->get_filename());
+			SgExpression* linenr = buildString(RoseBin_support::ToString(
+					stmt->get_file_info()->get_line()));
+			appendExpression(arg_list, filename);
+			appendExpression(arg_list, linenr);
+
+			SgExpression* linenrTransformed = buildString("x%%x");
+			appendExpression(arg_list, linenrTransformed);
+
+			// appendExpression(arg_list, buildString(removeSpecialChar(stmt->unparseToString())));
+
+			ROSE_ASSERT(roseCheckIfThisNULL);
+			string symbolName2 = roseCheckIfThisNULL->get_name().str();
+			//cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
+			SgFunctionRefExp* memRef_r =
+					buildFunctionRefExp(roseCheckIfThisNULL);
+			SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
+					arg_list);
+			SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
+			// insert new stmt (exprStmt) before (old) stmt
+			insertStatementBefore(isSgStatement(stmt), exprStmt);
+			string empty_comment = "";
+			attachComment(exprStmt, empty_comment, PreprocessingInfo::before);
+			string
+					comment =
+							"RS : roseCheckIfThisNULL, paramaters : (ThisExp, filename, line, line transformed, error Str)";
+			attachComment(exprStmt, comment, PreprocessingInfo::before);
+		} // basic block
+		else if (isSgNamespaceDefinitionStatement(scope)) {
+			cerr
+					<< " ------------> RuntimeInstrumentation :: WARNING - Scope not handled!!! : "
+			//<< name
+					<< " : " << scope->class_name() << "\n\n\n\n" << endl;
+		} else {
+			cerr
+					<< " -----------> RuntimeInstrumentation :: Surrounding Block is not Block! : "
+			//<< name
+					<< " : " << scope->class_name() << "  - "
+					<< stmt->unparseToString() << endl;
+			ROSE_ASSERT(false);
+		}
+	} else {
+		cerr
+				<< "RuntimeInstrumentation :: Surrounding Statement could not be found! "
+				<< stmt->class_name() << "  " << stmt->unparseToString()
+				<< endl;
+		ROSE_ASSERT(false);
+	}
+
+}
 
 void RtedTransformation::insertAccessVariable(SgThisExp* varRefE,
 		SgExpression* derefExp) {
@@ -700,16 +778,16 @@ void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE,
 void RtedTransformation::insertAccessVariable(SgScopeStatement* initscope,
 		SgExpression* derefExp, SgStatement* stmt, SgExpression* varRefE) {
 	if (stmt->get_file_info()->isCompilerGenerated())
-			return;
-	if (isSgVarRefExp(varRefE) &&
-			!isInInstrumentedFile(isSgVarRefExp(varRefE)->get_symbol()->get_declaration()))
+		return;
+	if (isSgVarRefExp(varRefE) && !isInInstrumentedFile(
+			isSgVarRefExp(varRefE)->get_symbol()->get_declaration()))
 		return;
 	if (isSgStatement(stmt)) {
 		SgScopeStatement* scope = stmt->get_scope();
 		//string name = initName->get_mangled_name().str();
 		cerr << "          ... running insertAccessVariable :  " //<< name
 				<< "   scope: " << scope->class_name() << endl;
-		
+
 		ROSE_ASSERT(scope);
 		// what if there is an array creation within a ClassDefinition
 		if (isSgClassDefinition(scope)) {
@@ -742,13 +820,13 @@ void RtedTransformation::insertAccessVariable(SgScopeStatement* initscope,
 			scope = stmt->get_scope();
 		}
 		if (isNormalScope(scope)) {
-		  bool isFileIO = isFileIOVariable(varRefE->get_type());
-		  // if this is a file IO operation, do not count it is a var access
-		  if (isFileIO)
-		    return;
+			bool isFileIO = isFileIOVariable(varRefE->get_type());
+			// if this is a file IO operation, do not count it is a var access
+			if (isFileIO)
+				return;
 			// build the function call : runtimeSystem-->createArray(params); ---------------------------
 			SgExprListExp* arg_list = buildExprListExp();
-			
+
 			int read_write_mask = Read;
 			SgExpression* accessed_exp = varRefE;
 			SgExpression* write_location_exp = varRefE;
@@ -778,13 +856,14 @@ void RtedTransformation::insertAccessVariable(SgScopeStatement* initscope,
 					} else {
 						// not a l-value
 						write_location_exp = 0;
-                        if( isSgMemberFunctionType( arrow_op -> get_rhs_operand() -> get_type() ))
-                        // for member function invocations, we just want to
-                        // check that the pointer is good
-                            accessed_exp = arrow_op -> get_lhs_operand();
-                        else
-                        // normally we'll be reading the member itself 
-                            accessed_exp = arrow_op;
+						if (isSgMemberFunctionType(
+								arrow_op -> get_rhs_operand() -> get_type()))
+							// for member function invocations, we just want to
+							// check that the pointer is good
+							accessed_exp = arrow_op -> get_lhs_operand();
+						else
+							// normally we'll be reading the member itself
+							accessed_exp = arrow_op;
 					}
 				} else {
 					// consider
@@ -807,9 +886,9 @@ void RtedTransformation::insertAccessVariable(SgScopeStatement* initscope,
 				}
 			}
 			appendAddressAndSize(//initName,
-					     initscope, accessed_exp, arg_list, 2);
+					initscope, accessed_exp, arg_list, 2);
 			appendAddressAndSize(//initName,
-					     initscope, write_location_exp, arg_list, 2);
+					initscope, write_location_exp, arg_list, 2);
 			appendExpression(arg_list, buildIntVal(read_write_mask));
 
 			SgExpression* filename = buildString(
@@ -911,10 +990,10 @@ void RtedTransformation::visit_isAssignInitializer(SgNode* n) {
 		// e.g. int *p = new int;
 #if 1
 		if (ismalloc) {
-        // TODO 2: This handles new assign initializers, but not malloc assign
-        //          initializers.  Consider, e.g:
-        //
-        //          int* x = (int*) malloc( sizeof( int ));
+			// TODO 2: This handles new assign initializers, but not malloc assign
+			//          initializers.  Consider, e.g:
+			//
+			//          int* x = (int*) malloc( sizeof( int ));
 			SgNewExp* oldnewExp = isSgNewExp(assign->get_operand());
 			ROSE_ASSERT(oldnewExp);
 			SgType* thesizetype = oldnewExp->get_specified_type();
@@ -925,14 +1004,10 @@ void RtedTransformation::visit_isAssignInitializer(SgNode* n) {
 					);
 			ROSE_ASSERT(sizeExp);
 			cerr << " $$$ sizeExp: " << sizeExp->unparseToString() << endl;
- 		  RTedArray *array = new RTedArray(
- 	        false,                              // not on stack
- 	        initName,
- 	        getSurroundingStatement( initName ),
- 	        true,                               // on heap
-            false,                              // new op (not from malloc)
- 	        sizeExp
- 	    );
+			RTedArray *array = new RTedArray(false, // not on stack
+					initName, getSurroundingStatement(initName), true, // on heap
+					false, // new op (not from malloc)
+					sizeExp);
 			cerr << " $$$2 sizeExp: " << array->size->unparseToString() << endl;
 			// abort();
 			variablesUsedForArray.push_back(varRef);

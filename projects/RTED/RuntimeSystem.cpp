@@ -827,6 +827,7 @@ int RuntimeSystem_roseCreateObject(
   assert( rs_type );
 
   rs -> createObject( address, rs_type );
+  return 0;
 }
 
 
@@ -1071,6 +1072,17 @@ RuntimeSystem_roseReallocateMemory(
 }
 
 
+
+void RuntimeSystem_roseCheckIfThisNULL(
+		void* thisExp,
+		const char* filename, const char* line,
+		const char* lineTransformed) {
+
+	cerr <<" Asserting that thisExp is != NULL " << endl;
+	  RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
+	  CHECKPOINT
+	  rs->checkIfThisisNULL(thisExp);
+}
 
 
 /*********************************************************

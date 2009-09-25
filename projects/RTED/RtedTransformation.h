@@ -114,6 +114,7 @@ class RtedTransformation : public AstSimpleProcessing {
   SgFunctionSymbol* roseEnterScope;
   SgFunctionSymbol* roseExitScope;
   SgFunctionSymbol* roseRegisterTypeCall;
+  SgFunctionSymbol* roseCheckIfThisNULL;
   SgType* size_t_member;
 
   // FUNCTIONS ------------------------------------------------------------
@@ -313,11 +314,12 @@ class RtedTransformation : public AstSimpleProcessing {
   		SgExpression* derefExp, SgStatement* stmt, SgExpression* varRefE);
   bool isFileIOVariable(SgType* type);
   void addFileIOFunctionCall(SgVarRefExp* n, bool read);
-
+  void insertCheckIfThisNull(SgThisExp* texp);
 
   void visit_isSgVarRefExp(SgVarRefExp* n);
   void visit_isSgPointerDerefExp(SgPointerDerefExp* n);
   void visit_isSgArrowExp(SgArrowExp* n);
+
 
   std::string removeSpecialChar(std::string str);
   bool traverseAllChildrenAndFind(SgExpression* varRef, SgStatement* stmt);
@@ -354,6 +356,7 @@ class RtedTransformation : public AstSimpleProcessing {
     globConstructor=false;
     globalConstructorVariable=NULL;
     globalFunction=NULL;
+    roseCheckIfThisNULL=NULL;
   };
   virtual ~RtedTransformation(){
 

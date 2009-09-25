@@ -556,6 +556,8 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
 	    //	    cerr << "       refExp : " << refExp << "  mrefExp : " << mrefExp
 	    //	 << "  dotExp : " << dotExp << "   arrowExp: " << arrowExp << endl;
 
+		SgDotStarOp* dotStar = isSgDotStarOp(fcexp->get_function());
+
 	    string name = "";
 	    string mangled_name = "";
 	    if (refExp) {
@@ -583,7 +585,18 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
 	    	mdecl= isSgMemberFunctionDeclaration(mrefExp->getAssociatedMemberFunctionDeclaration ());
 	        name = mdecl->get_name();
 	        mangled_name = mdecl->get_mangled_name().str();
-	    } else   {
+	    } else if (dotStar) {
+	    	// e.g. : (testclassA.*testclassAPtr)()
+	    	SgExpression* right = dotStar->get_rhs_operand();
+			// we want to make sure that the right hand side is not NULL
+			//	abort();
+			// tps (09/24/2009) : this part is new and needs to be tested
+			// testcode breaks at different location right now.
+			SgVarRefExp * varrefRight = isSgVarRefExp(right);
+			if (varrefRight)
+				variable_access_varref.push_back(varrefRight);
+			return;
+	    }  else   {
 	    	cerr << "This case is not yet handled : " << fcexp->get_function()->class_name() << endl;
 			exit(1);
 	    }
