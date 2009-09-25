@@ -267,7 +267,7 @@ html-docs: html
 EXTRA_DIST = \
    WEB_DOCS_README AvailableDocumentation.docs.in \
    sage.cfg.in rose.cfg.in roseQtWidgets.doxygen.in \
-   fixme.sty  acknowledgments.tex bothlevels.c \
+   fixme.sty  acknowledgments.tex bothlevel.c \
    bibliography.tex  examples.tex fd-docs.tex overviewOfRose.tex pre-docs.tex loopTransformDoc.tex  \
    mm.tex preprocessorDesign.tex tridvpk.tex writingYourFirstTranslator.tex appendix.tex \
    developersAppendix.tex designOfRose.tex  FAQ.tex glossary.tex introduction.tex lu.tex \
