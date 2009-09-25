@@ -1,3 +1,8 @@
+2009-09-25 16:00  liao6
+
+	* [r7550] /trunk/ROSE/docs/Rose/Makefile.am: fixed a misspelled
+	  file name
+
 2009-09-25 01:26  panas2
 
 	* [r7538] /trunk/ROSE/projects/RTED/Makefile.am,
