@@ -1,5 +1,5 @@
 :- module(visicfg,
-	  [visicfg/2]).
+	  [visicfg/4]).
 
 %-----------------------------------------------------------------------
 /** <module> 
@@ -23,20 +23,35 @@
 
 :- use_module(library(clpfd)).
 
-new_graph(Name, G) :- new_graph(Name, 0, G).
+% Data structure:
+% * G        ugraph
+% * Mode     one of [compact,explode]
+% * Count    current node ID
+% * Last     last node
+% * Fundecls [EntryNode]
 
-new_graph(Name, Label, graph(G,Label1,Start)) :-
-  Label1 #= Label + 1,
-  Start = node(Label, Name, style='shape=tab, fillcolor=azure, pencolor=azure4'),
+% Accessors:
+graph_count(graph(_G,_Mode,Count,_Last,_FunDecls), Count).
+graph_last( graph(_G,_Mode,_Count,Last,_FunDecls), Last).
+graph_mode( graph(_G,Mode,_Count,_Last,_FunDecls), Mode).
+
+new_graph(Name, Mode, G) :- new_graph(Name, Mode, 0, [], G).
+
+new_graph(Name, Mode, Count, FunDecls,
+	  graph(G,Mode,Count1,Start,[Start|FunDecls])) :-
+  Count1 #= Count + 1,
+  Start = node(Count, Name, style='shape=tab, fillcolor=azure,pencolor=azure4'),
   vertices_edges_to_ugraph([Start], [], G).
 
-visicfg(P, Base) :-
+visicfg(P, Mode, Base, Filename) :-
   function_signature(BaseFunc, function_type(_, _, _), Base, _),
   zip(P, Pz),
-  new_graph('Start', G0),
-  ast_walk(Pz-G0, BaseFunc, _-graph(G, _, _)),
-  dump_graph(graphviz, 'icfg.dot', G, BaseFunc).
+  new_graph('Start', Mode, G0),
+  ast_walk(Pz-G0, BaseFunc, _-graph(G, _, _, _, _)),
 
+  dump_graph(graphviz, Filename, G, Mode).
+
+% basic type checking
 bound(V) :-
   (   nonvar(V) -> true ; trace ).
 
@@ -51,24 +66,21 @@ ast_walk(P-G, Function, P4-G3) :- bound(P), bound(G),
   FunctionHd = function_declaration(Params, null, DeclAnnot, AI, FI),
   unparse_to_safe_atom(FunctionHd, Sig),
 
+  G = graph(G0, Mode, Count0, Last0, FunDecls0),
   % start a new subgraph
-  G = graph(G0, Label0, Last0),
-  new_graph(Sig, Label0, SubG1),
-  SubG1 = graph(_,_,EntryNode),
-  
-  %  function_signature(Function, Type, Name, _),
-  %  writeln(Name),
-  %  (Name = 'Read_AD_Channel' -> trace ; true),
+  new_graph(Sig, Mode, Count0, FunDecls0, SubG1),
+  SubG1 = graph(_,Mode,_,EntryNode,_),
   
   down(P1, 2, P2),	    
   ast_walk(P2-SubG1, P3-SubG2),
   top(P3, P4),
 
+				% FIXME return edges
   faux_node(SubG2, 'return', SubG3),
-  SubG3 = graph(_,Label,ExitNode),
+  SubG3 = graph(_,Mode,Count,ExitNode,FunDecls1),
   add_vertices(G0, [SubG3], G1),
   add_edges(G1, [Last0-EntryNode], G2),
-  G3 = graph(G2, Label, ExitNode).
+  G3 = graph(G2, Mode, Count, ExitNode, FunDecls1).
 
 % type checking
 ast_walk(P-G, _) :- bound(P), bound(G), fail.
@@ -138,19 +150,19 @@ ast_walk(P-G, P7-G7) :-
   % Cond
   down(P, 1, P1),
 
-  ast_walk(P1-G1, P2-graph(G2,N2,If)),
+  ast_walk(P1-G1, P2-graph(G2,M,N2,If,FDs2)),
   
   % Then
   right(P2, P3),
-  ast_walk(P3-graph(G2,N2,If), P4-graph(G3,N3,Then)),
+  ast_walk(P3-graph(G2,M,N2,If,FDs2), P4-graph(G3,M,N3,Then,FDs3)),
 
   % Else
   right(P4, P5),
 
-  faux_node(graph(G3,N3,If), 'else', G4),
-  ast_walk(P5-G4, P6-graph(G5,N5,End)),
+  faux_node(graph(G3,M,N3,If,FDs3), 'else', G4),
+  ast_walk(P5-G4, P6-graph(G5,M,N5,End,FDs5)),
   add_edges(G5, [Then-End], G6),
-  G7 = graph(G6,N5,End),
+  G7 = graph(G6,M,N5,End,FDs5),
   
   up(P6, P7).
 
@@ -179,10 +191,25 @@ ast_walk(P-G, P2-G1) :-
   unzip(P, FCall, Ctx),
   is_function_call_exp(FCall, Name, Type), !,
   function_signature(FunctionDecl, Type, Name, _Mod),
-  top(P, Top),
 
-  ast_walk(Top-G, FunctionDecl, P1-G1),
-  walk_to(P1, Ctx, P2).
+  top(P, Top),
+  goto_function(Top, FunctionDecl,_), % fixme... slow! used just for lookup
+  FunctionDecl = function_declaration(Params, _Def, DeclAnnot, AI, FI),
+  FunctionHd = function_declaration(Params, null, DeclAnnot, AI, FI),
+  unparse_to_safe_atom(FunctionHd, Sig),
+  % Fixme add function exit too
+
+  G = graph(UG0, Mode, Count, Last, FunDecls),
+  % Only add edge if we already visited that function
+  (   Mode=compact, member(node(Label, Sig, _), FunDecls)
+  ->  % connect to an existing function
+      add_edges(UG0, [Last-Label], UG1),
+      G1 = graph(UG1, Mode, Count, Last, FunDecls),
+      P2 = P
+  ;   % dive into the function
+      ast_walk(Top-G, FunctionDecl, P1-G1),
+      walk_to(P1, Ctx, P2)
+  ).
 
 % Lists
 ast_walk(zipper([], Ctx)-G, zipper([], Ctx)-G) :- bound(G),
@@ -249,17 +276,28 @@ ast_walk1(P-G, N, P3-G2) :-
 
 % make_back_edge(+Entry, +Exit, -Next)
 % introduce a back edge and rewire Last to point to loop entry
-make_back_edge(graph(_,_,Entry),
-	       graph(G,Last,Exit),
-	       graph(G1,Last,Entry)) :-
+make_back_edge(graph(_,_,_,Entry,_),
+	       graph(G,Mode,Last,Exit,FDs),
+	       graph(G1,Mode,Last,Entry,FDs)) :-
   add_edges(G, [Exit-Entry], G1).
+
+% Edge labels are modelled via the following trick
+% N1 ->(Label) N2 is represented as N1 -> (Label, N2), N1 -> N2
 
 make_node(P-G, G) :-
   unzip(P, Pragma, _),
   pragma_text(Pragma, _).
+
+make_node(P-graph(G,Mode,Count,Last,FDs), graph(G1,Mode,Count1,Node,FDs)) :-
+  unzip(P, Pragma, _),
+  pragma_text(Pragma, _),
+  unparse_to_safe_atom(Pragma, Text),
+  Node = node(Count, Text, style=''),
+  Count1 #= Count+1,
+  add_edges(G, [Last-edge(Text,Node)], G1).
 	  
-make_node(P-graph(G,Label,Last), graph(G1,Label1,V)) :-
-  bound(P), bound(G), bound(Label),
+make_node(P-graph(G,Mode,Count,Last,FDs), graph(G1,Mode,Count1,Node,FDs)) :-
+  bound(P), bound(G), bound(Count),
 
   % The statement
   unzip(P, S, _),
@@ -273,17 +311,18 @@ make_node(P-graph(G,Label,Last), graph(G1,Label1,V)) :-
       unparse_to_safe_atom(Ctx, Context)
   ;   Context = Stmt  ),
   format(atom(Style),
-	 'shape=note, style=filled, fillcolor=cornsilk, pencolor=cornsilk4, id=<~w>',
+    'shape=note,style=filled,fillcolor=cornsilk,pencolor=cornsilk4,id=<~w>',
 	 [Context]),
-  V = node(Label, Stmt, style=Style),
+  Node = node(Count, Stmt, style=Style),
   
-  Label1 #= Label+1,
-  add_edges(G, [Last-V], G1).
+  Count1 #= Count+1,
+  add_edges(G, [Last-Node], G1).
 
-faux_node(graph(G,Label,Last), Name, graph(G1,Label1,V)) :-
-  V = node(Label, Name, style='shape=note, style=filled, fillcolor=gold, pencolor=gold4'),
-  Label1 #= Label+1,
-  add_edges(G, [Last-V], G1).
+faux_node(graph(G,Mode,Count,Last,FDs), Name, graph(G1,Mode,Count1,Node,FDs)) :-
+  Node = node(Count, Name,
+	      style='shape=note, style=filled, fillcolor=gold, pencolor=gold4'),
+  Count1 #= Count+1,
+  add_edges(G, [Last-Node], G1).
 
 replace_all1(CsI,A1,A2,CsO) :-
   atom_codes(A1, [C1]),
@@ -318,19 +357,52 @@ dump_graph(Method, Filename, Graph, Flags) :-
   close(dumpstream).
 
 get_label(node(L,_,_), L).
-get_label(graph(_,L,_), L).
+get_label(G, L) :- graph_count(G, L).
+get_label(L, A) :- number(L), format(atom(A), '~w [constraint=false]', L).
 
 viz_edge(F, N1-N2) :-
   get_label(N1, L1),
   get_label(N2, L2),
   format(F, '~w -> ~w ;~n', [L1, L2]).
-viz_edge(_, Edge) :- write(Edge), trace.
+viz_edge(F, N1-edge(Attribute, N2)) :-
+  get_label(N1, L1),
+  get_label(N2, L2),
+  format(F, '~w -> ~w [label=<~w>];~n', [L1, L2, Attribute]).
+
+viz_edge(_, Edge) :- writeln(Edge), trace.
 
 viz_node(F, _, node(Label,Stmt,style=Style)) :- !,
   format(F, '~w [ label=<~w>, ~w ];~n', [Label,Stmt,Style]).
 
-viz_node(F, Color, graph(G, Label, Last)) :- !,
-  format(F, 'subgraph cluster~w {~n', [Label,G,Last]),
+viz_node(F, _-Color, graph(G, explode, Count, Last, _FDs)) :- !, trace,
+  viz_exploded_subgraph(F, Color, graph(G, Count, Last)).
+
+viz_node(F, Free-_, graph(G, compact, Count, Last, _FDs)) :- !,
+  % hack ahead: delay execution until Free is bound
+  trace,
+  writeln(Free), frozen(Free, Goal), writeln(Goal),
+  freeze(Free, viz_compact_subgraph(F, Free, graph(G, Count, Last))).
+
+% already handled above
+viz_node(_, _, N) :- number(N).
+viz_node(_, _, edge(_, _)).
+
+% Error
+viz_node(_, _, Node) :- writeln(Node), trace.
+
+% subgraphs
+viz_compact_subgraph(F, Free, graph(G, Count, Last)) :-
+  trace,
+  format(F, 'subgraph cluster~w {~n', [Count,G,Last]),
+  format(F, 'node [style=filled];~n', []),
+  format(F, 'style=filled; color=azure;~n', []),
+  edges(G, E),     maplist(viz_edge(F), E),
+  vertices(G, V),  maplist(viz_node(F, Free), V),
+  format(F, 'label="Function" ;~n', []),
+  format(F, '} ;~n', []).
+
+viz_exploded_subgraph(F, Color, graph(G, Count, Last)) :-
+  format(F, 'subgraph cluster~w {~n', [Count,G,Last]),
   format(F, 'node [style=filled];~n', []),
   format(F, 'style=filled; color=gray~w;~n', [Color]),
   Color1 #= Color - 12,
@@ -339,18 +411,18 @@ viz_node(F, Color, graph(G, Label, Last)) :- !,
   format(F, 'label="Function" ;~n', []),
   format(F, '} ;~n', []).
 
-viz_node(_, _, Node) :- write(Node), trace.
-
 
 %% graphviz(F, G, _).
 %  Dump an ugraph in dotty syntax
-graphviz(F, G, _Base) :-
+graphviz(F, G, _Mode) :- trace,
   edges(G, E),
   vertices(G, V), 
-  %Root = Base/_Type, member(Root, V),
   format(F, 'digraph G {~n', []),
+  %Root = Base/_Type, member(Root, V),
   %format(F, '  root="~w";~n', [Root]),
   format(F, 'splines=true; overlap=false; rankdir=TB;~n', []),
   maplist(viz_edge(F), E),
-  maplist(viz_node(F, 100), V),
+  Free = _Unbound, Color #= 100,
+  maplist(viz_node(F, Free-Color), V),
+  Free = springtime,
   write(F, '}\n').

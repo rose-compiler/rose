@@ -505,8 +505,6 @@ dump_constraints(Sums, Constraints) :-
 
 % Fake ^Nodes are converted into labeled edges.
 
-display(N) :- write(N).
-
 %% dump_graph(+Method, +Filename, +Graph, +Flags) is det.
 % Method must be one of _graphviz_ or _vcg_.
 % Flags is a list of terms
@@ -518,10 +516,7 @@ dump_graph(Method, Filename, Graph, Flags) :-
 
 viz_edge(F, Edge) :-
   Edge = N1-N2,
-  write(F, '"'), with_output_to(F, display(N1)), write(F, '"'),
-  write(F, ' -> '),
-  write(F, '"'), with_output_to(F, display(N2)), write(F, '"'), 
-  write(F, ';\n').
+  format(F, '"~w" -> "~w";~n', [N1, N2]).
 
 viz_node(F, Node) :-
   Node = Name/Type,
@@ -539,11 +534,22 @@ graphviz(F, G, Base) :-
   edges(G, E),
   vertices(G, V),
   Root = Base/_Type, member(Root, V),
-  format(F, 'digraph G {~n');
+  format(F, 'digraph G {~n', []),
   format(F, '  root="~w"; splines=true; overlap=false; rankdir=LR;~n', [Root]),
   maplist(viz_edge(F), E),
   maplist(viz_node(F), V),
   write(F, '}\n').
+
+make_filename(Proj, Prefix, Suffix, Filename) :-
+  % Strip directory from first source file name
+  Proj = project([source_file(_,_,_, file_info(Name,_,_))|_], _, _, _), 
+  sub_atom(Name, _, _, 0, SrcFilename),
+  atom_chars(SrcFilename, Cs),
+  \+ member(/, Cs),
+  \+ member('\\', Cs),
+  %atom_concat(Dir, Filename, Name),
+  %concat_atom([Dir, 'prefix_', Filename], File),
+  concat_atom([Prefix, SrcFilename, Suffix], Filename).
 
 %-------------------------------------------------------------
 % MAIN
@@ -558,7 +564,6 @@ main1(Filename, Target, Base) :-
 
    % Calculate the Call Graph
    callgraph(P, CallGraph),
-   dump_graph(graphviz, 'call.dot', CallGraph, Base),
 
    % start with BaseFunc(...)
    function_signature(BaseFunc, function_type(_, _, _), Base, _),
@@ -585,7 +590,16 @@ main1(Filename, Target, Base) :-
    dump_constraints(Sums, Cs),
    (Cs \= [] -> once(labeling(Behaviour, Cs)); true),
    %maximize(MaxTerm),
-   visicfg(P2, Base),
+
+   % Visualize this!
+   make_filename(P2, 'call-', '.dot', Fn0),
+   dump_graph(graphviz, Fn0, CallGraph, Base),
+
+   make_filename(P2, 'icfg-', '-compact.dot', Fn1),
+   visicfg(P2, compact, Base, Fn1),
+
+   make_filename(P2, 'icfg-', '-explode.dot', Fn2),
+   visicfg(P2, explode, Base, Fn2),
 
    unparse(P2),
    (Target = 'SUM' -> statistics ; true)
