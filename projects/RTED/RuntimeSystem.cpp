@@ -827,6 +827,7 @@ int RuntimeSystem_roseCreateObject(
   assert( rs_type );
 
   rs -> createObject( address, rs_type );
+
   return 0;
 }
 

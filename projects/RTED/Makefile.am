@@ -222,11 +222,33 @@ COPYING_FILE = @SOURCE_FILE='$(strip $(patsubst rted_source/%, $(rted_path)/%, $
 			echo -n "    not copying fake dependency $(1) ... ";\
 		fi
 
-rted_source/%.c: rted_source $(rted_path)/%.c
+# TODO 2: Remove this once the assert( sym != null ) issue is fixed.
+COPYING_FILE_WITH_WORKAROUND = @SOURCE_FILE='$(strip $(patsubst rted_source/%, $(rted_path)/%, $(1)))';\
+		if [ -f $$SOURCE_FILE ]; then\
+			echo -n "    copying input file $(1)... ";\
+			cp $$SOURCE_FILE $(dir $(1));\
+			echo " done.";\
+			echo -n "    inserting include \"RuntimeSystem_ParsingWorkaround.h\" ... ";\
+			sed -i '1i\#include \"RuntimeSystem_ParsingWorkaround.h\"' $(1);\
+			echo " done.";\
+			echo -n "    inserting define EXITCODE_OK 0 ... ";\
+			sed -i '1i\#define EXITCODE_OK 0' $(1);\
+			echo " done.";\
+		else\
+			echo -n "    not copying fake dependency $(1) ... ";\
+		fi
+
+rted_source/%_s.c: rted_source $(rted_path)/%_s.c
 	$(call COPYING_FILE, $@)
 
-rted_source/%.cpp: rted_source $(rted_path)/%.cpp
+rted_source/%_s.cpp: rted_source $(rted_path)/%_s.cpp
 	$(call COPYING_FILE, $@)
+
+rted_source/%.c: rted_source $(rted_path)/%.c
+	$(call COPYING_FILE_WITH_WORKAROUND, $@)
+
+rted_source/%.cpp: rted_source $(rted_path)/%.cpp
+	$(call COPYING_FILE_WITH_WORKAROUND, $@)
 
 #------------------------------------------------------------------------------
 
@@ -317,7 +339,7 @@ rted_source/%_rose.cpp: runtimeCheck rted_source/%.cpp $(srcdir)/$(RTS) $(srcdir
 #  1: file extension (.c, .cpp, .f, ... )
 #  2: compile command
 #  3: additional parameters, like linking against debugger ...
-COMPILING_RUNTIME_SYSTEM = @echo -n "   compiling instrumented debugger code (with _s) ... $(filter rted_source/%$(strip $(1)), $^)"; \
+COMPILING_RUNTIME_SYSTEM = @echo "   compiling instrumented debugger code (with _s) ... $(filter rted_source/%$(strip $(1)), $^)"; \
 			   $(2) -g -o $@ $(filter rted_source/%$(strip $(1)), $^) \
 				      $(srcdir)/$(RTS) \
 				      $(INCLUDES) \
@@ -509,9 +531,30 @@ ${foreach rted_dir, ${filter $(rted_path)%, $(RTED_CPP_TEST_DIRS)}, ${eval ${cal
 
 # TODO 2: Handle these tests
 TESTS_KNOWN_TO_FAIL = run/C/subprogram_call_errors/c_C_1_3_f \
+					  run/C++/allocation_deallocation_errors/C_G_2_1_g_d \
+					  run/C++/allocation_deallocation_errors/C_G_2_1_h_ld \
+					  run/C++/allocation_deallocation_errors/C_G_2_3_a_d \
+					  run/C++/allocation_deallocation_errors/C_G_2_4_a_d \
+					  run/C++/allocation_deallocation_errors/C_G_4_1_o_f \
+					  run/C++/array_index_out_of_bound/C_E_1_7_a_o \
+					  run/C++/array_index_out_of_bound/C_E_1_7_i_f \
+					  run/C++/array_index_out_of_bound/C_E_1_7_i_sh \
+					  run/C++/memory_leaks/C_I_1_1_m_d \
+					  run/C++/memory_leaks/C_I_2_2_a_d \
+					  run/C++/memory_leaks/C_I_2_5_a_d \
+					  run/C++/memory_leaks/C_I_2_6_a_d \
+					  run/C++/memory_leaks/C_I_2_6_b_o \
 					  run/C++/pointer_errors/C_J_1_3_a_d \
 					  run/C++/pointer_errors/C_J_1_4_a_d \
 					  run/C++/pointer_errors/C_J_2_1_a_d \
+					  run/C++/uninitialized_variables/C_A_1_1_c_uc \
+					  run/C++/uninitialized_variables/C_A_1_2_a_d \
+					  run/C++/uninitialized_variables/C_A_1_2_a_i \
+					  run/C++/uninitialized_variables/C_A_1_3_a_d \
+					  run/C++/uninitialized_variables/C_A_1_3_a_i \
+					  run/C++/uninitialized_variables/C_A_2_1_b_uc \
+					  run/C++/uninitialized_variables/C_A_3_1_c_uc \
+					  run/C++/uninitialized_variables/C_A_3_2_c_uc \
 					  run/tests/C/memoryleaks/assignment_scope_switch \
 					  run/tests/C/memoryleaks/assignment_to_locals_then_globals_then_local \
 					  run/tests/C/memoryleaks/assignment_to_multi_fncall \
@@ -549,17 +592,22 @@ checkfast:	runtimeCheck $(TESTCODES) \
 
 # run/C/floating_point_errors
 check-local: runtimeCheck $(TESTCODES) checkfast \
-				run/C/array_index_out_of_bound \
-				run/C/string_errors \
-				run/C/subprogram_call_errors \
 				run/C/allocation_deallocation_errors \
+				run/C/array_index_out_of_bound \
+				run/C/C99_specific_errors \
 				run/C/input_output_errors \
 				run/C/memory_leaks \
-				run/C/uninitialized_variables \
-				run/C/C99_specific_errors \
 				run/C/pointer_errors \
+				run/C/string_errors \
+				run/C/subprogram_call_errors \
+				run/C/uninitialized_variables \
+				run/C++/allocation_deallocation_errors \
+				run/C++/array_index_out_of_bound \
+				run/C++/input_output_errors \
+				run/C++/memory_leaks \
+				run/C++/pointer_errors \
 				run/C++/string_errors \
-				run/C++/pointer_errors
+				run/C++/uninitialized_variables
 	@echo "***************************************************************************************"
 	@echo "*** ROSE/projects/runtimeErrorCheck: make check rule complete (terminated normally) ***"
 	@echo "***************************************************************************************"
