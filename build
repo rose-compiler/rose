@@ -52,6 +52,13 @@ echo "**************************************************************************
 # DQ (9/5/2009): Added output to permit debugging on NMI machines
 echo "ACLOCAL_INCLUDES = $ACLOCAL_INCLUDES"
 
+# DQ (9/26/2009): Testing svn (required for construction of EDG binaries)
+# echo "Testing SVN version"
+# svn --version
+# svn --help
+# svn log --help
+# svn log --limit 100
+
 # DQ (9/26/2009): Having the wrong version of automake is a common problem.
 # We can't test for it in the configure.in and we want to catch the problem 
 # as early as possible.  So we test for it here. This appears to be the only 
