@@ -374,13 +374,11 @@ viz_edge(_, Edge) :- writeln(Edge), trace.
 viz_node(F, _, node(Label,Stmt,style=Style)) :- !,
   format(F, '~w [ label=<~w>, ~w ];~n', [Label,Stmt,Style]).
 
-viz_node(F, _-Color, graph(G, explode, Count, Last, _FDs)) :- !, trace,
+viz_node(F, _-Color, graph(G, explode, Count, Last, _FDs)) :- !,
   viz_exploded_subgraph(F, Color, graph(G, Count, Last)).
 
 viz_node(F, Free-_, graph(G, compact, Count, Last, _FDs)) :- !,
   % hack ahead: delay execution until Free is bound
-  trace,
-  writeln(Free), frozen(Free, Goal), writeln(Goal),
   freeze(Free, viz_compact_subgraph(F, Free, graph(G, Count, Last))).
 
 % already handled above
@@ -391,15 +389,15 @@ viz_node(_, _, edge(_, _)).
 viz_node(_, _, Node) :- writeln(Node), trace.
 
 % subgraphs
-viz_compact_subgraph(F, Free, graph(G, Count, Last)) :-
-  trace,
+viz_compact_subgraph(F, _Free, graph(G, Count, Last)) :-
   format(F, 'subgraph cluster~w {~n', [Count,G,Last]),
   format(F, 'node [style=filled];~n', []),
   format(F, 'style=filled; color=azure;~n', []),
   edges(G, E),     maplist(viz_edge(F), E),
-  vertices(G, V),  maplist(viz_node(F, Free), V),
+  vertices(G, V),  maplist(viz_node(F, Free1-_), V),
   format(F, 'label="Function" ;~n', []),
-  format(F, '} ;~n', []).
+  format(F, '} ;~n', []),
+  Free1 = springtime.
 
 viz_exploded_subgraph(F, Color, graph(G, Count, Last)) :-
   format(F, 'subgraph cluster~w {~n', [Count,G,Last]),
@@ -407,14 +405,14 @@ viz_exploded_subgraph(F, Color, graph(G, Count, Last)) :-
   format(F, 'style=filled; color=gray~w;~n', [Color]),
   Color1 #= Color - 12,
   edges(G, E),     maplist(viz_edge(F), E),
-  vertices(G, V),  maplist(viz_node(F,Color1), V),
+  vertices(G, V),  maplist(viz_node(F,_-Color1), V),
   format(F, 'label="Function" ;~n', []),
   format(F, '} ;~n', []).
 
 
 %% graphviz(F, G, _).
 %  Dump an ugraph in dotty syntax
-graphviz(F, G, _Mode) :- trace,
+graphviz(F, G, _Mode) :-
   edges(G, E),
   vertices(G, V), 
   format(F, 'digraph G {~n', []),
