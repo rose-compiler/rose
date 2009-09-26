@@ -97,7 +97,7 @@ if test $AUTOMAKE_VERSION_MAJOR -eq $AUTOMAKE_VERSION_MAJOR_PREREQ; then
       fi
    fi
 else
- # Allow major version numbers greatern than 1 (when they are available) to pass
+ # Allow major version numbers greater than 1 (when they are available) to pass
    if test $AUTOMAKE_VERSION_MAJOR -lt $AUTOMAKE_VERSION_MAJOR_PREREQ; then
       echo "ERROR: Automake major version number too old:    AUTOMAKE_VERSION_MAJOR = $AUTOMAKE_VERSION_MAJOR (requires $AUTOMAKE_VERSION_MAJOR_PREREQ)"
       exit 1;
