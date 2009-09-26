@@ -54,19 +54,25 @@ echo "ACLOCAL_INCLUDES = $ACLOCAL_INCLUDES"
 
 # DJH (20 July 2009): Some macros may be installed in non-standard locations
 # (e.g. libxml's on NMI build machines)
+echo "Running aclocal ..."
 aclocal -I ./config -I ./acmacros -I /usr/share/aclocal $ACLOCAL_INCLUDES || : exit 1
 
+echo "Running autoheader ..."
 # autoheader --warnings=obsolete,all || : exit 1
 autoheader || : exit 1
 
+echo "Running autoconf ..."
 # autoconf --warnings=syntax,obsolete,all || : exit 1
 autoconf || : exit 1
 
+echo "Running automake ..."
 # automake -a -c --include-deps --foreign --verbose || : exit 1
 # automake -a -c -i --foreign $AUTOMAKE_FLAGS || : exit 1
 # automake -a -c -i --foreign |& grep -v "is not a standard library name" || : exit 1
 # automake -a -c -i --foreign || : exit 1
 automake -a -c -i 2>&1 | grep -v "is not a standard library name" 1>&2 || : exit 1
+
+echo "Finishing up details ..."
 
 # Automake manual says that if we use AM_CONFIG_HEADER we have to build the stamp-h.in files
 touch stamp-h.in  || : exit 1
