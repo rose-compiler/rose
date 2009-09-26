@@ -47,7 +47,7 @@ rm -rf $mytempfile
 if [ "x$LASTEST_BIN_REV_NO" != "x" ]; then
   if [ 0$LASTEST_BIN_REV_NO -ne 0 ]; then
      if test $revisionNumber -lt $LASTEST_BIN_REV_NO ; then
-       echo "Trying to commit a state binary  which is  generated from rev $revisionNumber"
+       echo "Trying to commit a stale binary  which is  generated from rev $revisionNumber"
        echo "while the repository already has a binary from rev $LASTEST_BIN_REV_NO."
        rm -rf ${checkoutDir}
        exit 1 

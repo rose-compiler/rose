@@ -333,7 +333,7 @@ fi
 
     # DQ (9/19/2009): The fix in <rose>/Makefile.am to have copy_binary_edg_tarball_to_source_tree be 
     # a dependency of source_with_binary_edg_dist instead of copy_binary_edg_tarball_to_source_tree_svn 
-    # means that we have to call it explictly.
+    # means that we have to call it explicitly.
       make $MAKEFLAGS copy_binary_edg_tarball_to_source_tree_svn DOT_SVNREV=-${svnversion} || exit 1
       echo "After copy_binary_edg_tarball_to_source_tree_svn: exit status = $?"
 
