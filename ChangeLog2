@@ -1,3 +1,53 @@
+2009-09-26 00:03  liao6
+
+	* [r7573]
+	  /trunk/ROSE/scripts/copy_binary_edg_tarball_to_source_tree_svn,
+	  /trunk/ROSE/scripts/roseFreshTest: fixed some typos
+
+2009-09-25 23:14  liao6
+
+	* [r7569] /trunk/ROSE/Makefile.am,
+	  /trunk/ROSE/scripts/copy_binary_edg_tarball_to_source_tree_svn:
+	  Added a test for stale EDG binary file based on revision numbers
+
+2009-09-25 23:12  hamilton37
+
+	* [r7568] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp: RTED: Work around
+	  recent regression in some tests.
+
+2009-09-25 23:12  hamilton37
+
+	* [r7567] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem_ParsingWorkaround.h:
+	  RTED: Hacked a workaround RuntimeSystem.h to force the
+	  introduction of
+	  std::endl.
+
+2009-09-25 23:12  hamilton37
+
+	* [r7566] /trunk/ROSE/projects/RTED/RtedTransf_support.cpp: RTED:
+	  Fixed a minor bug.
+	  
+	  We were building problematic non defining class declarations that
+	  we didn't
+	  actually need.
+
+2009-09-25 21:28  liao6
+
+	* [r7561] /trunk/ROSE/scripts/importRoseDistributionToSVN: minor
+	  change
+
+2009-09-25 19:00  liao6
+
+	* [r7557] /trunk/ROSE/scripts/roseFreshTest,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-head-gnu-3.3.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-head-gnu-4.2.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-head-gnu-4.3.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-head-gnu-4.4.sh: fixed
+	  the missed svn update problem
+
 2009-09-25 16:00  liao6
 
 	* [r7550] /trunk/ROSE/docs/Rose/Makefile.am: fixed a misspelled
