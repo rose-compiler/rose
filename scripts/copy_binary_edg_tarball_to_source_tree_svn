@@ -39,7 +39,9 @@ fi
 # Liao, 9/25/2009
 # make sure the binary is not stale, based on its revision number and the latest binary file's revision number in the repository
 mytempfile=ttt$$
-svn log -l 100 file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE > $mytempfile
+# DQ (9/26/2009): Suggested fix by Liao (-l option only works with SVN 1.5)
+# svn log -l 100 file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE > $mytempfile
+${SVN} log --limit 100 file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE > $mytempfile
 LASTEST_BIN_REV_NO=`cat $mytempfile | grep -m 1 "Automatic updates of binary EDG" | cut -f 10 -d' '`
 rm -rf $mytempfile
 
