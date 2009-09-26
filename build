@@ -76,11 +76,12 @@ AUTOMAKE_VERSION_PATCH=`echo|automake --version | head -1 | sed s/"automake (GNU
 # DQ (9/26/2009): Now test for the correct version number of automake.
 echo "Automake version is $AUTOMAKE_VERSION_MAJOR.$AUTOMAKE_VERSION_MINOR.$AUTOMAKE_VERSION_PATCH (ROSE requires at least $AUTOMAKE_VERSION_MAJOR_PREREQ.$AUTOMAKE_VERSION_MINOR_PREREQ.$AUTOMAKE_VERSION_PATCH_PREREQ)"
 if test $AUTOMAKE_VERSION_MAJOR -eq $AUTOMAKE_VERSION_MAJOR_PREREQ; then
-   echo "Automake major version number is correct: AUTOMAKE_VERSION_MAJOR = $AUTOMAKE_VERSION_MAJOR (requires $AUTOMAKE_VERSION_MAJOR_PREREQ)"
+ # echo "Automake major version number is correct: AUTOMAKE_VERSION_MAJOR = $AUTOMAKE_VERSION_MAJOR (requires $AUTOMAKE_VERSION_MAJOR_PREREQ)"
    if test $AUTOMAKE_VERSION_MINOR -eq $AUTOMAKE_VERSION_MINOR_PREREQ; then
-      echo "Automake minor version number is correct: AUTOMAKE_VERSION_MINOR = $AUTOMAKE_VERSION_MINOR (requires $AUTOMAKE_VERSION_MINOR_PREREQ)"
+    # echo "Automake minor version number is correct: AUTOMAKE_VERSION_MINOR = $AUTOMAKE_VERSION_MINOR (requires $AUTOMAKE_VERSION_MINOR_PREREQ)"
       if test $AUTOMAKE_VERSION_PATCH -eq $AUTOMAKE_VERSION_PATCH_PREREQ; then
-         echo "Automake patch version number is correct: AUTOMAKE_VERSION_PATCH = $AUTOMAKE_VERSION_PATCH (requires $AUTOMAKE_VERSION_PATCH_PREREQ)"
+       # echo "Automake patch version number is correct: AUTOMAKE_VERSION_PATCH = $AUTOMAKE_VERSION_PATCH (requires $AUTOMAKE_VERSION_PATCH_PREREQ)"
+         :
       else
        # Allow patch version 7 and greater to pass (I don't think there is anything between 1.9.6 and 1.10, but just in case)
          if test $AUTOMAKE_VERSION_PATCH -lt $AUTOMAKE_VERSION_PATCH_PREREQ; then
