@@ -52,6 +52,57 @@ echo "**************************************************************************
 # DQ (9/5/2009): Added output to permit debugging on NMI machines
 echo "ACLOCAL_INCLUDES = $ACLOCAL_INCLUDES"
 
+# DQ (9/26/2009): Having the wrong version of automake is a common problem.
+# We can't test for it in the configure.in and we want to catch the problem 
+# as early as possible.  So we test for it here. This appears to be the only 
+# place to test for the correct version of automake. Autoconf can use the 
+# AC_PREREQ macro, but there is no AM_PREREQ macro for automake.
+
+# Specify what version we require (at least)
+AUTOMAKE_VERSION_MAJOR_PREREQ=1
+AUTOMAKE_VERSION_MINOR_PREREQ=9
+AUTOMAKE_VERSION_PATCH_PREREQ=6
+
+echo "testing version of automake.."
+AUTOMAKE_VERSION_MAJOR=`echo|automake --version | head -1 | sed s/"automake (GNU automake) "//g | cut -f1 -d \) | cut -d\. -f1`
+AUTOMAKE_VERSION_MINOR=`echo|automake --version | head -1 | sed s/"automake (GNU automake) "//g | cut -f1 -d \) | cut -d\. -f2`
+AUTOMAKE_VERSION_PATCH=`echo|automake --version | head -1 | sed s/"automake (GNU automake) "//g | cut -f1 -d \) | cut -d\. -f3`
+
+# Output what version we have
+# echo "AUTOMAKE_VERSION_MAJOR = $AUTOMAKE_VERSION_MAJOR"
+# echo "AUTOMAKE_VERSION_MINOR = $AUTOMAKE_VERSION_MINOR"
+# echo "AUTOMAKE_VERSION_PATCH = $AUTOMAKE_VERSION_PATCH"
+
+# DQ (9/26/2009): Now test for the correct version number of automake.
+echo "Automake version is $AUTOMAKE_VERSION_MAJOR.$AUTOMAKE_VERSION_MINOR.$AUTOMAKE_VERSION_PATCH (ROSE requires at least $AUTOMAKE_VERSION_MAJOR_PREREQ.$AUTOMAKE_VERSION_MINOR_PREREQ.$AUTOMAKE_VERSION_PATCH_PREREQ)"
+if test $AUTOMAKE_VERSION_MAJOR -eq $AUTOMAKE_VERSION_MAJOR_PREREQ; then
+   echo "Automake major version number is correct: AUTOMAKE_VERSION_MAJOR = $AUTOMAKE_VERSION_MAJOR (requires $AUTOMAKE_VERSION_MAJOR_PREREQ)"
+   if test $AUTOMAKE_VERSION_MINOR -eq $AUTOMAKE_VERSION_MINOR_PREREQ; then
+      echo "Automake minor version number is correct: AUTOMAKE_VERSION_MINOR = $AUTOMAKE_VERSION_MINOR (requires $AUTOMAKE_VERSION_MINOR_PREREQ)"
+      if test $AUTOMAKE_VERSION_PATCH -eq $AUTOMAKE_VERSION_PATCH_PREREQ; then
+         echo "Automake patch version number is correct: AUTOMAKE_VERSION_PATCH = $AUTOMAKE_VERSION_PATCH (requires $AUTOMAKE_VERSION_PATCH_PREREQ)"
+      else
+       # Allow patch version 7 and greater to pass (I don't think there is anything between 1.9.6 and 1.10, but just in case)
+         if test $AUTOMAKE_VERSION_PATCH -lt $AUTOMAKE_VERSION_PATCH_PREREQ; then
+            echo "ERROR: Automake patch version number too old:    AUTOMAKE_VERSION_PATCH = $AUTOMAKE_VERSION_PATCH (requires $AUTOMAKE_VERSION_PATCH_PREREQ)"
+            exit 1;
+         fi
+      fi
+   else
+    # Allow minor version 10 and greater to pass (minor version values of 10 are avalable)
+      if test $AUTOMAKE_VERSION_MINOR -lt $AUTOMAKE_VERSION_MINOR_PREREQ; then
+         echo "ERROR: Automake minor version number too old:    AUTOMAKE_VERSION_MINOR = $AUTOMAKE_VERSION_MINOR (requires $AUTOMAKE_VERSION_MINOR_PREREQ)"
+         exit 1;
+      fi
+   fi
+else
+ # Allow major version numbers greatern than 1 (when they are available) to pass
+   if test $AUTOMAKE_VERSION_MAJOR -lt $AUTOMAKE_VERSION_MAJOR_PREREQ; then
+      echo "ERROR: Automake major version number too old:    AUTOMAKE_VERSION_MAJOR = $AUTOMAKE_VERSION_MAJOR (requires $AUTOMAKE_VERSION_MAJOR_PREREQ)"
+      exit 1;
+   fi
+fi
+
 # DJH (20 July 2009): Some macros may be installed in non-standard locations
 # (e.g. libxml's on NMI build machines)
 echo "Running aclocal ..."
@@ -70,9 +121,13 @@ echo "Running automake ..."
 # automake -a -c -i --foreign $AUTOMAKE_FLAGS || : exit 1
 # automake -a -c -i --foreign |& grep -v "is not a standard library name" || : exit 1
 # automake -a -c -i --foreign || : exit 1
-automake -a -c -i 2>&1 | grep -v "is not a standard library name" 1>&2 || : exit 1
+# DQ (9/26/2009): Testing for "is not a standard library name" is not required any more!
+# automake -a -c -i 2>&1 | grep -v "is not a standard library name" 1>&2 || : exit 1
+automake -a -c -i 2>&1 || : exit 1
 
-echo "Finishing up details ..."
+# DQ (9/26/2009): tracking down error when not using the correct automake version.
+# We would like to fail as early as possible.
+echo "Finishing up details ... exit status = $?"
 
 # Automake manual says that if we use AM_CONFIG_HEADER we have to build the stamp-h.in files
 touch stamp-h.in  || : exit 1
