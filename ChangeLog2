@@ -1,3 +1,58 @@
+2009-09-27 00:39  dquinlan
+
+	* [r7598] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/translator_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/translator_tests/inputKeasler4.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/translator_tests/keasler4.C,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/cronjobs,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/quinlanTests.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Dan-32bit.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Dan-Linux-all-compilers.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Dan-OSX-all-compilers.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Dan-gnu-4.0.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Dan-scidac.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-RegressionTests-Dan.sh,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Statement.code,
+	  /trunk/ROSE/src/backend/unparser/languageIndependenceSupport/name_qualification_support.C,
+	  /trunk/ROSE/tests/CompileTests/C_tests/Makefile.am: Fixed OSX
+	  problem and updated many scripts.
+
+2009-09-26 23:53  dquinlan
+
+	* [r7597] /trunk/ROSE/config/support-libffi.m4: Fixed libffi
+	  problem for Debian.
+
+2009-09-26 23:22  dquinlan
+
+	* [r7596] /trunk/ROSE/build: Fixed build script to check for
+	  correct versions of automake (to catch erros ASAP).
+
+2009-09-26 21:56  dquinlan
+
+	* [r7589] /trunk/ROSE/build: Fixed build script to check for
+	  correct versions of automake (to catch erros ASAP).
+
+2009-09-26 21:54  dquinlan
+
+	* [r7588] /trunk/ROSE/build: Fixed build script to check for
+	  correct versions of automake (to catch erros ASAP).
+
+2009-09-26 21:49  dquinlan
+
+	* [r7587] /trunk/ROSE/build: Fixed build script to check for
+	  correct versions of automake (to catch erros ASAP).
+
+2009-09-26 20:18  dquinlan
+
+	* [r7586] /trunk/ROSE/build: Added some debugging information.
+
+2009-09-26 19:55  dquinlan
+
+	* [r7585]
+	  /trunk/ROSE/scripts/copy_binary_edg_tarball_to_source_tree_svn:
+	  Need to checkin some scripts since the makefiles run them...
+
 2009-09-26 00:03  liao6
 
 	* [r7573]
