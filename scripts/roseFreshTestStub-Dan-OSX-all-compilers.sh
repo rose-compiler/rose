@@ -9,6 +9,8 @@ fi
 
 run_build=$1
 
+echo "run_build = $run_build"
+
 # BUILD BINARIES (first step is to update the readonly repository)
 if test $run_build = "build"; then
   echo "Running SVN UPDATE and BUILD script before building libraries..."
