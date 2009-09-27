@@ -21,6 +21,9 @@
 // This fixes a where on the NMI x86_ubuntu_5.10 platform, zlib is not installed.
 #include "hpdf_conf.h"
 
+// DQ (9/27/2009): This is the file that has the setting to disable the use of zlib (HPDF_NOZLIB)
+#include "hpdf_config.h"
+
 #ifndef HPDF_NOZLIB
 #include <zlib.h>
 #include <zconf.h>
