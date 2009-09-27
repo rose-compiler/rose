@@ -9,8 +9,8 @@ PATH=/bin:/usr/bin:/nmi/bin
 # Contribute here:
 ###############################################################################
 
-# DQ (9/10/2009): Changed the times and reordered the tests (passing first then failing).
-#    Also skipping the tests using Java since tha is not setup yet (fortran support).
+# DQ (9/10/2009): Changed the times and reordered the tests (passing first then failing tests).
+#    Also skipping the tests using Java since that is not setup yet (fortran support).
 # run each config test every day at 2 am
 
 # Passing tests
@@ -36,7 +36,7 @@ PATH=/bin:/usr/bin:/nmi/bin
 
   36 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_sles_9/minimal_default >> update.log 2>> update.err
 # 38 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_cent_4.2/minimal_default >> update.log 2>> update.err
-  40 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_rhas_3/minimal_default >> update.log 2>> update.err
+# 40 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_rhas_3/minimal_default >> update.log 2>> update.err (too old)
   42 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_sles_9/minimal_default >> update.log 2>> update.err
   44 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_slf_3/minimal_default >> update.log 2>> update.err
 # 46 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_ubuntu_5.10/default >> update.log 2>> update.err

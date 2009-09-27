@@ -35,11 +35,18 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2009_07.c \
      test2009_08.c \
      test2009_16.c \
-     test2009_19.c \
      test2009_21.c \
      math.c \
      complex_01.c \
      constants.c
+
+# DQ (9/26/2009): Conditionally compile this file (fails in OSX due to lack of OSX
+# support for thread local storage). Liao know more about the details of this test.
+# test2009_19.c
+
+if !OS_MACOSX
+   TESTCODES_REQUIRED_TO_PASS += test2009_19.c
+endif
 
 #Liao, 5/16/2009 add a set of self-verifiable test code with main() 
 # and let them run during make check

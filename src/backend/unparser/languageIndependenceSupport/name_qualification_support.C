@@ -196,6 +196,7 @@ Unparser_Nameq::generateNameQualifier( SgDeclarationStatement* declarationStatem
   // the function). However, a declaration in namespace can be refed to using name qualification
   // through the namespace and a declaration in global scope is always visible through global 
   // qualification.
+     ROSE_ASSERT(declarationStatement->get_scope() != NULL);
      outputQualifiedName = (declarationStatement->get_scope()->supportsDefiningFunctionDeclaration() == true);
 
 #if TRACE_NAME_QUALIFICATION

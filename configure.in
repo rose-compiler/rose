@@ -20,6 +20,9 @@ AC_CONFIG_AUX_DIR([config])
 # AM_INIT_AUTOMAKE(ROSE, 0.8.11a)
 AM_INIT_AUTOMAKE([foreign tar-pax 1.9.5])
 
+# DQ (9/26/2009): this is not a defined macro.  This is handled in the build script.
+# AM_PREREQ(1.9.6)
+
 AMTAR ?= $(TAR)
 
 # DQ (9/9/2009): Added output to test values of am__tar and am__untar (fails on nmi:x86_sles_9).

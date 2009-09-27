@@ -49,7 +49,6 @@ ROSE_SVNROOT=file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
 MAILADDRS="dquinlan@llnl.gov"
 
 # the right version of subversion is essential!!
-# SVN=/nfs/apps/subversion/1.4.5/bin/svn
 SVN=/nfs/apps/subversion/1.5.5/bin/svn
 
 # This repository is for testing only and is a performance optimization to avoid long checkout times.

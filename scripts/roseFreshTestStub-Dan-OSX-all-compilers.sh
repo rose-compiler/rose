@@ -10,7 +10,7 @@ fi
 run_build=$1
 
 # BUILD BINARIES (first step is to update the readonly repository)
-if test $run_build == "build"; then
+if test $run_build = "build"; then
   cd /Users/dquinlan/ROSE/svn-rose/scripts && ./update_svn-readonly-rose_repository-OSX-Dan.sh
 # sleep 15m
 fi
