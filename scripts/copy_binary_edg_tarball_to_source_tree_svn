@@ -41,7 +41,21 @@ fi
 mytempfile=ttt$$
 # DQ (9/26/2009): Suggested fix by Liao (-l option only works with SVN 1.5)
 # svn log -l 100 file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE > $mytempfile
-${SVN} log --limit 100 file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE > $mytempfile
+# ${SVN} log --limit 100 file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE > $mytempfile
+
+# DQ (9/27/2009): for the Mac OSX we are not directly connected to the LC so the reference 
+# to file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE fails and we have to use:
+# svn+ssh://tux270.llnl.gov/usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
+# This test will at least work on ninjai which is running "Darwin" OSX.
+if test `uname` = "Darwin"; then
+# Must use: svn+ssh://tux270.llnl.gov/usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
+  echo "Running on OSX (special handling for svn repository access is required)"
+  ${SVN} log --limit 100 svn+ssh://tux270.llnl.gov/usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE > $mytempfile
+else
+# This is the non-OSX case that is what everyone but Dan sees.
+  ${SVN} log --limit 100 file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE > $mytempfile
+fi
+
 LASTEST_BIN_REV_NO=`cat $mytempfile | grep -m 1 "Automatic updates of binary EDG" | cut -f 10 -d' '`
 rm -rf $mytempfile
 
