@@ -1,3 +1,41 @@
+2009-09-27 18:55  dquinlan
+
+	* [r7616] /trunk/ROSE/tests/roseTests/ompLoweringTests/Makefile.am:
+	  Fixed makefile to generate rose_threadprivate.c on OSX (with and
+	  without GOMP).
+
+2009-09-27 18:43  dquinlan
+
+	* [r7615] /trunk/ROSE/tests/roseTests/ompLoweringTests/Makefile.am:
+	  Added generation or rose_threadprivate.c when on OSX because
+	  documentation depends on it (temporary fix).
+
+2009-09-27 17:57  dquinlan
+
+	* [r7606]
+	  /trunk/ROSE/scripts/copy_binary_edg_tarball_to_source_tree_svn:
+	  Fixed svn repository access to use svn+ssh://xxx on ninjai.
+
+2009-09-27 16:58  dquinlan
+
+	* [r7605]
+	  /trunk/ROSE/scripts/roseFreshTestStub-Dan-OSX-all-compilers.sh:
+	  Added debugging to script.
+
+2009-09-27 16:45  dquinlan
+
+	* [r7604]
+	  /trunk/ROSE/scripts/roseFreshTestStub-Dan-OSX-defaultCompiler.sh:
+	  Added script to build EDG binaries for OSX.
+
+2009-09-27 16:36  dquinlan
+
+	* [r7603]
+	  /trunk/ROSE/scripts/roseFreshTestStub-Dan-OSX-all-compilers.sh,
+	  /trunk/ROSE/tests/roseTests/ompLoweringTests/Makefile.am:
+	  Commented out more OMP tests that required thread local storage
+	  (not availalbe on OSX).
+
 2009-09-27 00:39  dquinlan
 
 	* [r7598] /trunk/ROSE/configure.in,
