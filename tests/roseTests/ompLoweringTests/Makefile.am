@@ -178,6 +178,14 @@ check-local: roseomp
 	@echo "Test for ROSE OpenMP lowering."
 	@echo "***************** Testing C input *******************"
 	$(MAKE) $(PASSING_C_TEST_Objects)
+if OS_MACOSX
+#	DQ (9/27/2009): We need to generate this file temporaily because the documentation depends on it.
+#	However, documentation should only depend upon generated files in the tutorial directory.
+#	Please more the test to the tutorial directory if it is only for documentation purposes
+#	or recreate it there for purposes of documentation and leave it here for purposes of testing
+#	(I would like to not mix the two purposes together).
+	@echo "/* threadprivate.c not run on MAC OSX (no thread local storage on OSX). */" > rose_threadprivate.c
+endif
 	$(MAKE) $(PASSING_Objects_With_main) # make objects with main entries here 
 	@echo "***************** Testing C++ input ******************"
 	$(MAKE) $(PASSING_CXX_TEST_Objects)
