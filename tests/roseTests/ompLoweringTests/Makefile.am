@@ -14,7 +14,7 @@ GOMP_PATH = @gomp_omp_runtime_library_path@
 C_TESTCODES_REQUIRED_TO_COMPILE = \
         barrier.c \
         dynamicChunk.c \
-	master.c \
+        master.c \
         nowait.c \
         ompfor5.c \
         staticChunk.c \
@@ -37,7 +37,7 @@ C_TESTCODES_REQUIRED_TO_RUN = \
         flush.c \
         get_max_threads.c \
         hello-1.c \
-	hello-2.c \
+        hello-2.c \
         hello-ordered.c \
         hello.c \
         jacobi.c \
@@ -56,26 +56,33 @@ C_TESTCODES_REQUIRED_TO_RUN = \
         ompfor4.c \
         orphaned-directives.c \
         parallel.c \
-	parallel-reduction.c \
-	parallel-reduction2.c \
+        parallel-reduction.c \
+        parallel-reduction2.c \
         parallelfor.c \
         parallelfor2.c \
-	private.c \
+        private.c \
         privatej.c \
         reduction.c \
         reduction2.c \
         set_num_threads.c \
-	single.c \
-	subteam.c \
-	subteam2.c \
+        single.c \
+        subteam.c \
+        subteam2.c \
         spmd1.c \
         task_largenumber.c \
-	task_untied.c \
+        task_untied.c \
         task_untied2.c \
-	task_untied3.c \
-	threadprivate.c \
-        threadprivate2.c \
-        threadprivate3.c
+        task_untied3.c
+
+# DQ (9/27/2009): Conditionally compile these files (fail in OSX due to lack of OSX
+# support for thread local storage). Liao knows more about the details of these tests.
+# threadprivate.c
+# threadprivate2.c
+# threadprivate3.c
+
+if !OS_MACOSX
+   C_TESTCODES_REQUIRED_TO_RUN += threadprivate.c threadprivate2.c threadprivate3.c
+endif
 
 # The runnable tests' object files
 PASSING_Objects_With_main = ${C_TESTCODES_REQUIRED_TO_RUN:.c=.o}

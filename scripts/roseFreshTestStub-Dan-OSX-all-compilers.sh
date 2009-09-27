@@ -11,8 +11,11 @@ run_build=$1
 
 # BUILD BINARIES (first step is to update the readonly repository)
 if test $run_build = "build"; then
+  echo "Running SVN UPDATE and BUILD script before building libraries..."
   cd /Users/dquinlan/ROSE/svn-rose/scripts && ./update_svn-readonly-rose_repository-OSX-Dan.sh
 # sleep 15m
+else
+  echo "Skipping SVN UPDATE and BUILD script before building libraries..."
 fi
 
 # BUILD BINARIES (for all versions of compilers)
