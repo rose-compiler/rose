@@ -184,9 +184,10 @@ buildstatus=0
           $timer $SVN ${SVNOP} -r${svnversion} -q ${ROSE_SVNROOT} $SourceTreeLocation
       else
         # default is export
-        # $timer $SVN ${SVNOP} -r${svnversion} -q ${ROSE_SVNROOT} $SourceTreeLocation
-          echo "Default is export, but make that an error for now! (SVNOP should be defined: SVNOP = $SVNOP)"
-          exit 1
+         $timer $SVN ${SVNOP} -r${svnversion} -q ${ROSE_SVNROOT} $SourceTreeLocation
+# Liao, 9/28/2009. Weekly file release uses export, we have to allow this.
+#          echo "Default is export, but make that an error for now! (SVNOP should be defined: SVNOP = $SVNOP)"
+#          exit 1
       fi
   fi    
 
