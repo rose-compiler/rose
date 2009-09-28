@@ -161,7 +161,7 @@ main(int argc, char *argv[])
 
         
         Partitioner::BasicBlockStarts bb_starts = part.detectBasicBlocks(instMap); //The CFG 
-        Partitioner::FunctionStarts func_starts = part.detectFunctions(interp->get_header(), instMap, bb_starts);
+        Partitioner::FunctionStarts func_starts = part.detectFunctions(interp, instMap, bb_starts);
         
 
        // SgAsmBlock* blocks = part.partition(interp->get_header(), instMap);

@@ -166,7 +166,7 @@ int main(int argc, char** argv) {
   SgProject* project = frontend(argc,argv);
   ROSE_ASSERT (project != NULL);
 
-  SgBinaryComposite* binaryFile = isSgBinaryComposite(project->get_fileList()[0]);
+  SgBinaryComposite* binary = isSgBinaryComposite(project->get_fileList()[0]);
   SgAsmGenericFile* file = binary != NULL ? binary->get_binaryFile() : NULL;
 
   //  const SgAsmInterpretationPtrList& interps = file->get_interpretations();
