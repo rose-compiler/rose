@@ -92,7 +92,7 @@ typedef boost::shared_ptr<const Value> const_ValueP;
 class FieldVisitor
    {
      public:
-     virtual void operator()(size_t offset, ValueP prim) = 0;
+     virtual void operator()(long offset, ValueP prim) = 0;
      virtual ~FieldVisitor();
    };
 
@@ -187,7 +187,8 @@ class Value : public boost::enable_shared_from_this<Value>
      ValueP prim() { return primAtOffset(0); }
      const_ValueP prim() const { return primAtOffset(0); }
 
-     virtual void forEachField(FieldVisitor &visit);
+     virtual void forEachSubfield(FieldVisitor &visit, long offset = 0);
+     virtual void forEachPrim(FieldVisitor &visit, long offset = 0);
 
      std::vector<SgClassType *> dynamicTypesAtOffset(size_t offset) const;
      virtual void buildDynamicTypesAtOffset(size_t offset, std::vector<SgClassType *> &types) const;
@@ -238,6 +239,11 @@ class Value : public boost::enable_shared_from_this<Value>
          that extracting the needed information from the source value is type-specific
          functionality. */
      virtual ValueP evalCastExp(ValueP fromVal, SgType *fromType, SgType *toType);
+
+     /*! Returns a type which closely resembles the given Value's type.  To be used only
+         when the correct type is not known, and it is not possible to know the type
+         (i.e. from information in the AST). */
+     virtual SgType *defaultType() const;
 
      Value(Position pos, StackFrameP owner, bool valid);
      virtual ~Value();
@@ -290,15 +296,15 @@ class PointerValue : public Value
             ValueP evalSubtractOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const;
 
             ValueP evalPrefixPlusPlusOp(SgType *apt);
-            ValueP evalPostfixPlusPlusOp(SgType *apt);
             ValueP evalPrefixMinusMinusOp(SgType *apt);
-            ValueP evalPostfixMinusMinusOp(SgType *apt);
 
             ValueP evalCastExp(ValueP fromVal, SgType *fromType, SgType *toType);
 
             FOREACH_BOOL_BINARY_PRIMOP(DECLARE_BINOP_FN)
 
             ValueP dereference() const;
+
+            SgType *defaultType() const;
      };
 
 /*! This is the base class for values which are based on SgSymbols - i.e. functions, or 
@@ -392,6 +398,40 @@ class NonstaticFieldValue : public SymbolValue
 
      };
 
+/*! Represents a function with an internal implementation inside the interpreter.  The
+    core interpreter uses this to implement (part of) the C standard library; extensions
+    can use it to implement whatever functions they need. */
+class BuiltinFunctionValue : public Value
+   {
+     public:
+     BuiltinFunctionValue(Position pos, StackFrameP owner) : Value(pos, owner, true) {}
+
+     virtual std::string functionName() const = 0;
+
+     std::string show() const;
+
+     ValueP call(SgFunctionType *fnType, const std::vector<ValueP> &args) const = 0;
+     ValueP primAssign(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt);
+     size_t forwardValidity() const;
+
+   };
+
+class memcpyFnValue : public BuiltinFunctionValue
+     {
+       public:
+            memcpyFnValue(Position pos, StackFrameP owner) : BuiltinFunctionValue(pos, owner) {}
+            std::string functionName() const;
+            ValueP call(SgFunctionType *fnType, const std::vector<ValueP> &args) const;
+     };
+
+class memsetFnValue : public BuiltinFunctionValue
+     {
+       public:
+            memsetFnValue(Position pos, StackFrameP owner) : BuiltinFunctionValue(pos, owner) {}
+            std::string functionName() const;
+            ValueP call(SgFunctionType *fnType, const std::vector<ValueP> &args) const;
+     };
+
 /*! This class implements the arithmetic operations and primAssign using the primitive
     value that is accessible using prim.  Compound values and offset values inherit from this. */
 class BaseCompoundValue : public Value
@@ -408,6 +448,9 @@ class BaseCompoundValue : public Value
             ValueP evalPostfixPlusPlusOp(SgType *apt);
             ValueP evalPrefixMinusMinusOp(SgType *apt);
             ValueP evalPostfixMinusMinusOp(SgType *apt);
+
+            void forEachSubfield(FieldVisitor &visit, long offset = 0) = 0;
+            void forEachPrim(FieldVisitor &visit, long offset = 0);
 
             ValueP dereference() const;
 
@@ -464,7 +507,7 @@ class CompoundValue : public BaseCompoundValue
 
        std::string show() const;
 
-       void forEachField(FieldVisitor &visit);
+       void forEachSubfield(FieldVisitor &visit, long offset = 0);
 
        /*
        ValueP assign(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt);
@@ -502,6 +545,8 @@ class OffsetValue : public BaseCompoundValue
 
        ValueP fieldAtOffset(size_t offset);
        const_ValueP fieldAtOffset(size_t offset) const;
+
+       void forEachSubfield(FieldVisitor &visit, long offset = 0);
      };
 
 /*! An ArrayValue is a special type of PointerValue which represents an array definition that
@@ -527,6 +572,9 @@ class ArrayValue : public PointerValue
             std::string show() const;
 
             void destroy();
+
+            void forEachSubfield(FieldVisitor &visit, long offset = 0);
+            void forEachPrim(FieldVisitor &visit, long offset = 0);
 
      };
 
@@ -581,7 +629,7 @@ class GenericPrimTypeValue : public BasePrimTypeValue
 
      bool isCorrectApparentType(SgType *apt) const
         {
-          return (dynamic_cast<typename SgPrimTypeT<PrimType>::t *>(apt) != NULL);
+          return (dynamic_cast<typename SgPrimTypeT<PrimType>::t *>(apt->stripTypedefsAndModifiers()) != NULL);
         }
 
      public:
@@ -701,7 +749,8 @@ class GenericPrimTypeValue : public BasePrimTypeValue
         {
           if (!valid) return "<<undefined>>";
           std::stringstream ss;
-          ss << v;
+          ss << v+0;
+          // ss << std::hex << "0x" << v+0;
           return ss.str();
         }
 
@@ -713,24 +762,15 @@ class GenericPrimTypeValue : public BasePrimTypeValue
           return shared_from_this();
         }
 
-     ValueP evalPostfixPlusPlusOp(SgType *apt)
-        {
-          ValueP result = copy(apt, PTemp, owner);
-          v++;
-          return result;
-        }
-
      ValueP evalPrefixMinusMinusOp(SgType *apt)
         {
           v -= 1; /* v-- is not defined for bool, so we use this workaround. */
           return shared_from_this();
         }
 
-     ValueP evalPostfixMinusMinusOp(SgType *apt)
+     SgType *defaultType() const
         {
-          ValueP result = copy(apt, PTemp, owner);
-          v -= 1;
-          return result;
+          return SgPrimTypeT<PrimType>::t::createType();
         }
 
    };
@@ -871,8 +911,21 @@ typedef std::map<SgVariableSymbol *, ValueP> varBindings_t;
 class Interpretation
    {
      public:
+     typedef std::map<std::string, ValueP> builtins_t;
+
+     private:
+     builtins_t _builtinFns;
+
+     protected:
+     virtual void registerBuiltinFns(builtins_t &builtins);
+
+     public:
      bool trace;
      varBindings_t globalVarBindings;
+
+     Interpretation();
+
+     const builtins_t &builtinFns() { return _builtinFns; }
 
      virtual void parseCommandLine(std::vector<std::string> &args);
 
@@ -880,7 +933,7 @@ class Interpretation
          to hook any variable assignments that may occur in the program.
          For example, if the interpretation uses checkpointing, this
          allows the interpretation to save the state for a rollback. */
-     virtual void prePrimAssign(ValueP lhs, const_ValueP rhs);
+     virtual void prePrimAssign(ValueP lhs, const_ValueP rhs, SgType *lhsApt, SgType *rhsApt);
 
      virtual ~Interpretation();
    };
@@ -920,6 +973,7 @@ class StackFrame : public boost::enable_shared_from_this<StackFrame>
      bool isGlobalVar(SgInitializedName *var);
      ValueP stringToValue(const std::string &str);
      ValueP evalStringVal(SgStringVal *strVal);
+     virtual ValueP evalConditionalExp(SgConditionalExp *condExp);
      ValueP evalPointerDerefExp(SgExpression *opd);
      ValueP evalAddressOfOp(SgExpression *opd);
      ValueP evalCastExp(SgExpression *opd, SgType *toType);
@@ -931,6 +985,7 @@ class StackFrame : public boost::enable_shared_from_this<StackFrame>
      ValueP evalDotExp(SgExpression *lhs, SgExpression *rhs);
      ValueP evalArrowExp(SgExpression *lhs, SgExpression *rhs);
      ValueP evalPntrArrRefExp(SgExpression *lhs, SgExpression *rhs);
+     ValueP evalCommaOpExp(SgExpression *lhs, SgExpression *rhs);
      ValueP evalFunctionCallExp(SgFunctionCallExp *fnCall);
      std::vector<ValueP> evalExprListExp(SgExprListExp *exprList);
      ValueP evalThisExp();
@@ -949,7 +1004,7 @@ class StackFrame : public boost::enable_shared_from_this<StackFrame>
         DECLARE_STACKFRAME_EVALBINOP(op,opassignname)
 
 #define DECLARE_STACKFRAME_SC_EVALBINOP(op,opname,sctype) \
-        DECLARE_STACKFRAME_EVALBINOP(op,opname)
+        virtual DECLARE_STACKFRAME_EVALBINOP(op,opname)
 
      FOREACH_UNARY_PRIMOP(          DECLARE_STACKFRAME_EVALUNOP)
      FOREACH_NOFP_UNARY_PRIMOP(     DECLARE_STACKFRAME_EVALUNOP)
@@ -972,19 +1027,34 @@ class StackFrame : public boost::enable_shared_from_this<StackFrame>
      typedef std::vector<SgVariableSymbol *> blockScopeVars_t;
 
      struct BlockStackFrame;
+
+     typedef boost::shared_ptr<BlockStackFrame> BlockStackFrameP;
+
+     struct BlockStackFrame : boost::enable_shared_from_this<BlockStackFrame>
+     {
+       BlockStackFrame(BlockStackFrameP up, StackFrameP sf, SgScopeStatement *scope) : up(up), sf(sf), scope(scope) {}
+       BlockStackFrameP up;
+       StackFrameP sf;
+       SgScopeStatement *scope;
+       blockScopeVars_t scopeVars;
+       virtual SgStatement *next();
+       virtual void destroyScope();
+       virtual BlockStackFrameP doContinue();
+       virtual BlockStackFrameP doBreak();
+       virtual ~BlockStackFrame();
+     };
+
      struct BasicBlockStackFrame;
      struct LoopBlockStackFrame;
 
-     typedef boost::shared_ptr<BlockStackFrame> BlockStackFrameP;
      typedef std::vector<BlockStackFrameP> blockStack_t;
 
-     // It would be cute if this function were called from a hypothetical BlockScope destructor
      void destroyScope(blockScopeVars_t &scope);
 
      void evalBasicBlock(SgBasicBlock *bb, BlockStackFrameP &curFrame);
      ValueP evalInitializedName(SgInitializedName *var, blockScopeVars_t &blockScope);
      ValueP evalVariableDecl(SgVariableDeclaration *vdec, blockScopeVars_t &blockScope);
-     void evalIfStmt(SgIfStmt *ifStmt, BlockStackFrameP &curFrame);
+     virtual void evalIfStmt(SgIfStmt *ifStmt, BlockStackFrameP &curFrame);
      void evalWhileStmt(SgWhileStmt *whileStmt, BlockStackFrameP &curFrame);
      void evalDoWhileStmt(SgDoWhileStmt *doWhileStmt, BlockStackFrameP &curFrame);
      void evalForInitStatement(SgForInitStatement *forInitStmt, blockScopeVars_t &blockScope);

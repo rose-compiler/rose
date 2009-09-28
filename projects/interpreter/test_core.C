@@ -11,8 +11,9 @@ using namespace Interp;
 int main(int argc, char **argv)
    {
      vector<string> argvList(argv, argv+argc);
-     string expectedReturnValue;
+     string expectedReturnValue, expectedReturnStr;
      CommandlineProcessing::isOptionWithParameter(argvList, "-interp:", "expectedReturnValue", expectedReturnValue, true);
+     CommandlineProcessing::isOptionWithParameter(argvList, "-interp:", "expectedReturnStr", expectedReturnStr, true);
      try
         {
           Interpretation interp;
@@ -25,7 +26,16 @@ int main(int argc, char **argv)
           SgFunctionSymbol *testSym = global->lookup_function_symbol("test");
 
           StackFrameP head(new StackFrame(&interp, testSym));
-          ValueP rv = head->interpFunction(vector<ValueP>(1, ValueP(new IntValue(1, PTemp, head))));
+          vector<ValueP> args;
+          args.push_back(ValueP(new IntValue(1, PTemp, head)));
+          ValueP returnStr;
+          if (expectedReturnStr != "")
+             {
+               returnStr = ValueP(new CompoundValue(SgTypeChar::createType(), expectedReturnStr.size()+1, PTemp, head));
+               args.push_back(ValueP(new PointerValue(returnStr, PTemp, head)));
+             }
+
+          ValueP rv = head->interpFunction(args);
           if (expectedReturnValue != "")
              {
                int rvInt = rv->prim()->getConcreteValueInt();
@@ -35,6 +45,19 @@ int main(int argc, char **argv)
                   {
                     cerr << "Return value expected to be " << expectedReturnValue << ", got " << rv->show() << endl;
                     return 1;
+                  }
+             }
+          if (expectedReturnStr != "")
+             {
+               for (size_t i = 0; i <= expectedReturnStr.size(); ++i)
+                  {
+                    char expectedChar = i < expectedReturnStr.size() ? expectedReturnStr[i] : 0,
+                         computedChar = returnStr->primAtOffset(i)->getConcreteValueChar();
+                    if (expectedChar != computedChar)
+                       {
+                         cerr << "Return string at " << i << " expected to be " << expectedChar+0 << ", got " << computedChar+0 << endl;
+                         return 1;
+                       }
                   }
              }
           cout << "Returned " << (rv.get() ? rv->show() : "<<nothing>>") << endl;

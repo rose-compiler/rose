@@ -22,8 +22,9 @@ int main(int argc, char **argv)
           SgFunctionSymbol *testSym = global->lookup_function_symbol("test");
 
           StackFrameP head(new SMTStackFrame(&interp, testSym));
-          ValueP x (new BVValue(bvbaseP(new bvname(Bits32, "x")), PTemp, head));
-          ValueP rv = head->interpFunction(vector<ValueP>(1, x));
+          bvvarP x (new bvvar(Bits32, "x"));
+          ValueP xVal (new BVValue(bvbaseP(new bvname(x)), PTemp, head));
+          ValueP rv = head->interpFunction(vector<ValueP>(1, xVal));
           cout << "Returned " << (rv.get() ? rv->show() : "<<nothing>>") << endl;
         }
      catch (InterpError &ie)

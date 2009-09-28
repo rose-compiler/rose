@@ -55,20 +55,25 @@ smtlib::QF_BV::Bits bvSgTypeBits(SgType *t);
 
 class BVValue : public Value
    {
-     friend class AssertFunctionValue;
-
      smtlib::QF_BV::bvbaseP v;
+     /*! bvBits is only correct when !valid (otherwise, v->bits() is the correct Bits
+         value).  The getBits() function handles this automatically. */
+     smtlib::QF_BV::Bits bvBits;
 
      static smtlib::QF_BV::bvbaseP getBV(const_ValueP val, SgType *apt);
 
-     ValueP evalBinOp(smtlib::QF_BV::bvbinop_kind kind, const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const;
-     ValueP evalBinPred(smtlib::QF_BV::bvbinpred_kind kind, const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const;
+     ValueP evalUnOp(smtlib::QF_BV::bvunop_kind kind, SgType *apt) const;
+     ValueP evalBinOp(smtlib::QF_BV::bvbinop_kind kind, const_ValueP rhs, SgType *lhsApt, SgType *rhsApt, bool isShift = false) const;
+     ValueP evalBinPred(smtlib::QF_BV::bvbinpred_kind kind, const_ValueP rhs, SgType *lhsApt, SgType *rhsApt, bool negate = false) const;
 
      public:
-     BVValue(Position pos, StackFrameP owner) : Value(pos, owner, false) {}
+     BVValue(smtlib::QF_BV::Bits bvBits, Position pos, StackFrameP owner) : Value(pos, owner, false), bvBits(bvBits) {}
      BVValue(smtlib::QF_BV::bvbaseP v, Position pos, StackFrameP owner);
 
      std::string show() const;
+
+     smtlib::QF_BV::bvbaseP getBV() const;
+     smtlib::QF_BV::Bits getBits() const;
 
      ValueP primAssign(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt);
      size_t forwardValidity() const;
@@ -77,10 +82,22 @@ class BVValue : public Value
      ValueP evalSubtractOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const;
      ValueP evalMultiplyOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const;
      ValueP evalDivideOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const;
+     ValueP evalModOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const;
+     ValueP evalBitAndOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const;
+     ValueP evalBitOrOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const;
+     ValueP evalBitXorOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const;
+     ValueP evalLshiftOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const;
+     ValueP evalRshiftOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const;
      ValueP evalLessThanOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const;
      ValueP evalGreaterThanOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const;
      ValueP evalLessOrEqualOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const;
      ValueP evalGreaterOrEqualOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const;
+     ValueP evalEqualityOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const;
+     ValueP evalNotEqualOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const;
+     ValueP evalMinusOp(SgType *apt) const;
+     ValueP evalBitComplementOp(SgType *apt) const;
+     ValueP evalPrefixPlusPlusOp(SgType *apt);
+     ValueP evalPrefixMinusMinusOp(SgType *apt);
 
      template <typename intT>
      intT getConcreteValue() const
@@ -120,18 +137,16 @@ class BVValue : public Value
 
      ValueP evalCastExp(ValueP fromVal, SgType *fromType, SgType *toType);
 
+     SgType *defaultType() const;
    };
 
-class AssertFunctionValue : public Value
+class AssertFunctionValue : public BuiltinFunctionValue
    {
      public:
-     AssertFunctionValue(Position pos, StackFrameP owner) : Value(pos, owner, true) {}
+     AssertFunctionValue(Position pos, StackFrameP owner) : BuiltinFunctionValue(pos, owner) {}
 
-     std::string show() const;
-
+     std::string functionName() const;
      ValueP call(SgFunctionType *fnType, const std::vector<ValueP> &args) const;
-     ValueP primAssign(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt);
-     size_t forwardValidity() const;
 
    };
 
@@ -141,17 +156,26 @@ class SMTInterpretation : public Interpretation
        public:
        std::string smtSolver;
        bool keepSolverInput;
+
+       typedef std::map<ValueP, std::pair<SgType *, ValueP> > cpFrame_t;
+       typedef std::vector<cpFrame_t> cpStack_t;
+       cpStack_t cpStack;
+
        void parseCommandLine(std::vector<std::string> &args);
+       void prePrimAssign(ValueP lhs, const_ValueP rhs, SgType *lhsApt, SgType *rhsApt);
 
      };
 
 class SMTStackFrame : public StackFrame
    {
+     protected:
+          struct SymIfBlockStackFrame;
+
      public:
 
           SMTStackFrame(SMTInterpretation *currentInterp, SgFunctionSymbol *funSym, ValueP thisBinding = ValueP()) : StackFrame(currentInterp, funSym, thisBinding) {}
 
-          ValueP newValue(SgType *t, Position pos, bool isParam);
+          ValueP newValue(SgType *t, Position pos, bool isParam = false);
 
           template <class SgValExprT>
           ValueP evalIntSymPrimExpr(SgExpression *expr)
@@ -168,6 +192,13 @@ class SMTStackFrame : public StackFrame
 
           ValueP evalFunctionRefExp(SgFunctionSymbol *sym);
 
+          void evalIfStmt(SgIfStmt *ifStmt, BlockStackFrameP &curFrame);
+
+          ValueP evalShortCircuitExp(SgExpression *condExp, SgExpression *trueExp, SgExpression *falseExp);
+
+          ValueP evalConditionalExp(SgConditionalExp *condExp);
+          ValueP evalAndOp(SgExpression *lhs, SgExpression *rhs);
+          ValueP evalOrOp(SgExpression *lhs, SgExpression *rhs);
    };
 
 }

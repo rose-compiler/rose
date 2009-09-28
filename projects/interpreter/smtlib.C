@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <map>
 #include <string.h>
 #include <errno.h>
 
@@ -12,7 +13,7 @@ namespace smtlib {
 
 bool varbase::lt(const_varbaseP var) const
    {
-     return typeid(this).before(typeid(var.get()));
+     return typeid(*this).before(typeid(*var));
    }
 
 varbase::~varbase() {}
@@ -26,6 +27,8 @@ bool predbase::getconst() const
    {
      throw noconst();
    }
+
+predbase::~predbase() {}
 
 string predconst::show() const
    {
@@ -44,13 +47,229 @@ bool predconst::getconst() const
 
 void predconst::freevars(varset &vs) const {}
 
-predbase::~predbase() {}
+predbaseP mkprednot(predbaseP pred)
+   {
+     if (pred->isconst())
+          return predbaseP(new predconst(!pred->getconst()));
+
+     return predbaseP(new prednot(pred));
+   }
+
+string prednot::show() const
+   {
+     return "(not " + pred->show() + ")";
+   }
+
+void prednot::freevars(varset &vs) const
+   {
+     pred->freevars(vs);
+   }
+
+string predbinop::show() const
+   {
+     return "(iff " + op1->show() + " " + op2->show() + ")";
+   }
+
+void predbinop::freevars(varset &vs) const
+   {
+     op1->freevars(vs);
+     op2->freevars(vs);
+   }
+
+string predvar::show() const
+   {
+     return ":extrapreds (("+_name+"))";
+   }
+
+string predvar::name() const
+   {
+     return _name;
+   }
+
+bool predvar::lt(const_varbaseP other) const
+   {
+     if (const predvar *pv = dynamic_cast<const predvar *>(other.get()))
+        {
+          return _name < pv->_name;
+        }
+     else
+        {
+          return varbase::lt(other);
+        }
+   }
+
+string predname::show() const
+   {
+     return var->name();
+   }
+
+void predname::freevars(varset &vs) const
+   {
+     vs.insert(var);
+   }
+
+solveresult solverbase::solve(predbaseP formula, bool keep)
+   {
+     using namespace smtlib::QF_BV;
+
+     /*
+      * The purpose of this visitor is to create an identical version of the input bv
+      * in which (common) subexpressions have been replaced with variables of the appropriate
+      * type.  It produces a list of assumptions which are necessary to enforce the
+      * equality constraints on the subexpression variables.
+      */
+     struct csevisitor : predvisitor, bvvisitor
+     {
+       map<const predbase *, predbaseP> _prednames;
+       map<const bvbase *, bvbaseP> _bvnames;
+
+       predbaseP _pred; bvbaseP _bv;
+
+       varset fv;
+       vector<predbaseP> assumptions;
+
+       /* To consider: a version of seen that checks for common subexpressions in
+        * the case where these are stored in different objects. */
+       bool seen(bvbaseP bv)
+          {
+            map<const bvbase *, bvbaseP>::const_iterator i = _bvnames.find(bv.get());
+            if (i != _bvnames.end())
+               {
+                 _bv = i->second;
+                 return true;
+               }
+            return false;
+          }
+
+       bool seen(predbaseP pred)
+          {
+            map<const predbase *, predbaseP>::const_iterator i = _prednames.find(pred.get());
+            if (i != _prednames.end())
+               {
+                 _pred = i->second;
+                 return true;
+               }
+            return false;
+          }
+
+       bvbaseP getbv(bvbaseP bv)
+          {
+            bv->visit(*this);
+            return _bv;
+          }
+
+       predbaseP getpred(predbaseP pred)
+          {
+            pred->visit(*this);
+            return _pred;
+          }
+
+       void bvassumption(bvbaseP key, bvbaseP val)
+          {
+            stringstream ss;
+            ss << "tmpbv_" << key;
+            bvvarP namevar (new bvvar(key->bits(), ss.str()));
+            bvbaseP name (new bvname(namevar));
+            predbaseP nameEqVal (new bvbinpred(bveq, name, val));
+            fv.insert(namevar);
+            assumptions.push_back(nameEqVal);
+            _bv = _bvnames[key.get()] = name;
+          }
+
+       void predassumption(predbaseP key, predbaseP val)
+          {
+            stringstream ss;
+            ss << "tmppred_" << key;
+            predvarP namevar (new predvar(ss.str()));
+            predbaseP name (new predname(namevar));
+            predbaseP nameEqVal (new predbinop(prediff, name, val));
+            fv.insert(namevar);
+            assumptions.push_back(nameEqVal);
+            _pred = _prednames[key.get()] = name;
+          }
+
+       void visit_bvconst(bvbaseP self)
+          {
+            _bv = self;
+          }
+
+       void visit_bvname(bvbaseP self, bvvarP var)
+          {
+            fv.insert(var);
+            _bv = self;
+          }
+
+       void visit_bvunop(bvbaseP self, bvunop_kind kind, bvbaseP op)
+          {
+            if (seen(self)) return;
+            bvassumption(self, mkbvunop(kind, getbv(op)));
+          }
+
+       void visit_bvbinop(bvbaseP self, bvbinop_kind kind, bvbaseP op1, bvbaseP op2)
+          {
+            if (seen(self)) return;
+            bvassumption(self, mkbvbinop(kind, getbv(op1), getbv(op2)));
+          }
+
+       void visit_bvextend(bvbaseP self, bvextend_kind kind, Bits targetbits, bvbaseP op)
+          {
+            if (seen(self)) return;
+            bvassumption(self, mkbvextend(kind, targetbits, getbv(op)));
+          }
+
+       void visit_bvextract(bvbaseP self, Bits targetbits, bvbaseP op)
+          {
+            if (seen(self)) return;
+            bvassumption(self, mkbvextract(targetbits, getbv(op)));
+          }
+
+       void visit_bvite(bvbaseP self, predbaseP p, bvbaseP trueBV, bvbaseP falseBV)
+          {
+            if (seen(self)) return;
+            bvassumption(self, mkbvite(getpred(p), getbv(trueBV), getbv(falseBV)));
+          }
+
+       void visit_predconst(predbaseP self)
+          {
+            _pred = self;
+          }
+
+       void visit_prednot(predbaseP self, predbaseP op)
+          {
+            if (seen(self)) return;
+            predassumption(self, mkprednot(getpred(op)));
+          }
+
+       void visit_bvbinpred(predbaseP self, bvbinpred_kind kind, bvbaseP op1, bvbaseP op2)
+          {
+            if (seen(self)) return;
+            predassumption(self, mkbvbinpred(kind, getbv(op1), getbv(op2)));
+          }
+
+       void visit_predbinop(predbaseP self, predbinop_kind kind, predbaseP op1, predbaseP op2)
+          {
+            if (seen(self)) return;
+            predassumption(self, predbaseP(new predbinop(kind, getpred(op1), getpred(op2))));
+          }
+
+       void visit_predname(predbaseP self, predvarP var)
+          {
+            fv.insert(var);
+            _pred = self;
+          }
+
+     };
+
+     csevisitor cv;
+     formula->visit(cv);
+     return xsolve(cv.fv, cv.assumptions, cv._pred, keep);
+   }
 
 solverbase::~solverbase() {}
 
 solver_smtlib::solver_smtlib(string cmd) : cmd(cmd) {}
 
-solveresult solver_smtlib::solve(predbaseP p, bool keep)
+solveresult solver_smtlib::xsolve(const varset &fv, const vector<predbaseP> &assumptions, predbaseP formula, bool keep)
    {
         {
           ofstream smtFile("test.smt");
@@ -58,17 +277,19 @@ solveresult solver_smtlib::solve(predbaseP p, bool keep)
              {
                throw solveerror(string("Unable to create temporary file: ") + strerror(errno));
              }
-          varset fv;
-          p->freevars(fv);
 
           smtFile << "(benchmark test" << endl
                   << " :logic QF_BV" << endl // TODO: change QF_BV to something more general
                   << " :status unknown" << endl;
-          for (varset::iterator i = fv.begin(); i != fv.end(); ++i)
+          for (varset::const_iterator i = fv.begin(); i != fv.end(); ++i)
              {
-               smtFile << " :extrafuns " << (*i)->show() << endl;
+               smtFile << " " << (*i)->show() << endl;
              }
-          smtFile << " :formula " << p->show() << endl
+          for (vector<predbaseP>::const_iterator i = assumptions.begin(); i != assumptions.end(); ++i)
+             {
+               smtFile << " :assumption " << (*i)->show() << endl;
+             }
+          smtFile << " :formula " << formula->show() << endl
                   << " )" << endl;
         }
 
@@ -78,34 +299,44 @@ solveresult solver_smtlib::solve(predbaseP p, bool keep)
         {
           throw solveerror(string("Unable to spawn solver process: ") + strerror(errno));
         }
-     char satResult[8], satModel[4097];
-     if (fscanf(procFile, "%7s", satResult) == EOF)
-        {
-          throw solveerror(string("Unable to read solver result: ") + strerror(errno));
-        }
-
+     char satLine[4097];
      solveresult rv;
-     if (strcmp(satResult, "sat") == 0)
+     bool gotResult = false;
+     errno = 0;
+     while (fscanf(procFile, "%4096[^\n]\n", satLine) != EOF)
         {
-          rv.kind = sat;
+          if (strcmp(satLine, "sat") == 0)
+             {
+               rv.kind = sat;
+               gotResult = true;
+             }
+          else if (strcmp(satLine, "unsat") == 0)
+             {
+               rv.kind = unsat;
+               gotResult = true;
+             }
+          else
+             {
+               rv.model.append(satLine);
+               rv.model.append("\n");
+             }
         }
-     else if (strcmp(satResult, "unsat") == 0)
+     if (errno != 0)
         {
-          rv.kind = unsat;
-        }
-     else
-        {
-          throw solveerror(string("Unexpected output from solver: ") + satResult);
-        }
-
-     size_t readSize;
-     while ((readSize = fread(satModel, 1, sizeof(satModel)-1, procFile)) != 0)
-        {
-          satModel[readSize] = '\0';
-          rv.model.append(satModel);
+          throw solveerror(string("Unable to read solver output: ") + strerror(errno));
         }
 
      fclose(procFile);
+
+     if (rv.model.size() > 0)
+        {
+          rv.model.erase(rv.model.size()-1);
+        }
+
+     if (!gotResult)
+        {
+          throw solveerror("Received bad input from solver: " + rv.model);
+        }
 
      if (!keep)
         {
@@ -117,6 +348,28 @@ solveresult solver_smtlib::solve(predbaseP p, bool keep)
 
      return rv;
    }
+
+void predconst::visit(predvisitor &visitor)
+   {
+     visitor.visit_predconst(shared_from_this());
+   }
+
+void prednot::visit(predvisitor &visitor)
+   {
+     visitor.visit_prednot(shared_from_this(), pred);
+   }
+
+void predbinop::visit(predvisitor &visitor)
+   {
+     visitor.visit_predbinop(shared_from_this(), kind, op1, op2);
+   }
+
+void predname::visit(predvisitor &visitor)
+   {
+     visitor.visit_predname(shared_from_this(), var);
+   }
+
+predvisitor::~predvisitor() {}
 
 namespace QF_BV {
 
@@ -210,7 +463,7 @@ string bvconst::show() const
      switch (m_bits)
         {
           case Bits1: ss << (u1 ? "bit1" : "bit0"); break;
-          case Bits8: ss << "bv" << u8 << "[8]"; break;
+          case Bits8: ss << "bv" << u8+0 << "[8]"; break;
           case Bits16: ss << "bv" << u16 << "[16]"; break;
           case Bits32: ss << "bv" << u32 << "[32]"; break;
           case Bits64: ss << "bv" << u64 << "[64]"; break;
@@ -224,7 +477,7 @@ bool bvvar::lt(const_varbaseP other) const
    {
      if (const bvvar *v = dynamic_cast<const bvvar *>(other.get()))
         {
-          return nbits < v->nbits || (nbits == v->nbits && name < v->name);
+          return nbits < v->nbits || (nbits == v->nbits && _name < v->_name);
         }
      else
         {
@@ -235,23 +488,23 @@ bool bvvar::lt(const_varbaseP other) const
 string bvvar::show() const
    {
      stringstream ss;
-     ss << "((" << name << " BitVec[" << nbits << "]))";
+     ss << ":extrafuns ((" << _name << " BitVec[" << nbits << "]))";
      return ss.str();
    }
 
 Bits bvname::bits() const
    {
-     return nbits;
+     return var->bits();
    }
 
 string bvname::show() const
    {
-     return name;
+     return var->name();
    }
 
 void bvname::freevars(varset &vs) const
    {
-     vs.insert(varbaseP(new bvvar(nbits, name)));
+     vs.insert(var);
    }
 
 bvbaseP mkbvunop(bvunop_kind kind, bvbaseP op)
@@ -333,6 +586,8 @@ bvbaseP mkbvbinop(bvbinop_kind kind, bvbaseP op1, bvbaseP op2)
                        case Bits32: return bvbaseP(new bvconst(uint32_t(int32_t(op1->const32()) intop int32_t(op2->const32())))); \
                        case Bits64: return bvbaseP(new bvconst(uint64_t(int64_t(op1->const64()) intop int64_t(op2->const64())))); \
                      } 
+               BVBINOP_CASE(bvand, op1->const1() && op2->const1(), &)
+               BVBINOP_CASE(bvor, op1->const1() || op2->const1(), |)
                BVBINOP_CASE(bvadd, op1->const1() != op2->const1(), +)
                BVBINOP_CASE(bvmul, op1->const1() && op2->const1(), *)
                BVBINOP_CASE(bvudiv, op1->const1(), /)
@@ -365,6 +620,8 @@ string bvbinop::show() const
      ss << "(";
      switch (kind)
         {
+          case bvand: ss << "bvand"; break;
+          case bvor: ss << "bvor"; break;
           case bvadd: ss << "bvadd"; break;
           case bvmul: ss << "bvmul"; break;
           case bvudiv: ss << "bvudiv"; break;
@@ -419,7 +676,6 @@ predbaseP mkbvbinpred(bvbinpred_kind kind, bvbaseP op1, bvbaseP op2)
                        case Bits64: return predbaseP(new predconst(int64_t(op1->const64()) intpred int64_t(op2->const64()))); \
                      }
                BVBINPRED_CASE(bveq, ==)
-               BVBINPRED_CASE(bvne, !=)
                BVBINPRED_CASE(bvult, <)
                BVBINPRED_CASE(bvule, <=)
                BVBINPRED_CASE(bvugt, >)
@@ -445,7 +701,6 @@ string bvbinpred::show() const
      switch (kind)
         {
           case bveq: ss << "="; break;
-          case bvne: ss << "!="; break;
           case bvult: ss << "bvult"; break;
           case bvule: ss << "bvule"; break;
           case bvugt: ss << "bvugt"; break;
@@ -479,6 +734,7 @@ static bvbaseP bvconstcast(bvextend_kind kind, Bits targetbits, bvbaseP op)
                   case Bits32: result = op->const32(); break;
                   case Bits64: result = op->const64(); break;
                 }
+             break;
           case sign_extend:
              switch (op->bits())
                 {
@@ -592,65 +848,78 @@ void bvextract::freevars(varset &vs) const
      op->freevars(vs);
    }
 
-Bits pred2bv::bits() const
+bvite::bvite(predbaseP p, bvbaseP trueBV, bvbaseP falseBV) : p(p), trueBV(trueBV), falseBV(falseBV)
+     {
+       if (trueBV->bits() != falseBV->bits())
+            throw bad_bitwidth();
+     }
+
+Bits bvite::bits() const
    {
-     return Bits1;
+     return trueBV->bits();
    }
 
-string pred2bv::show() const
+string bvite::show() const
    {
-     stringstream ss;
-     ss << "(ite " << op->show() << " bit1 bit0)";
-     return ss.str();
+     return "(ite " + p->show() + " " + trueBV->show() + " " + falseBV->show() + ")";
    }
 
-void pred2bv::freevars(varset &vs) const
+void bvite::freevars(varset &vs) const
    {
-     op->freevars(vs);
+     p->freevars(vs);
+     trueBV->freevars(vs);
+     falseBV->freevars(vs);
    }
 
-string bv2pred::show() const
+bvbaseP mkbvite(predbaseP p, bvbaseP trueBV, bvbaseP falseBV)
    {
-     stringstream ss;
-     ss << "(!= " << op->show() << " bv0[" << op->bits() << "])";
-     return ss.str();
+     if (p->isconst())
+          return p->getconst() ? trueBV : falseBV;
+
+     return bvbaseP(new bvite(p, trueBV, falseBV));
    }
 
-void bv2pred::freevars(varset &vs) const
+void bvbinpred::visit(predvisitor &visitor)
    {
-     op->freevars(vs);
+     visitor.visit_bvbinpred(shared_from_this(), kind, op1, op2);
    }
 
-predbaseP mkbv2pred(bvbaseP op)
+void bvconst::visit(bvvisitor &visitor)
    {
-     if (op->isconst())
-        {
-          bool p;
-          switch (op->bits())
-             {
-               case Bits1: p = op->const1(); break;
-               case Bits8: p = op->const8() != 0; break;
-               case Bits16: p = op->const16() != 0; break;
-               case Bits32: p = op->const32() != 0; break;
-               case Bits64: p = op->const64() != 0; break;
-             }
-          return predbaseP(new predconst(p));
-        }
-     if (pred2bv *p2b = dynamic_cast<pred2bv *>(op.get()))
-        {
-          return p2b->op;
-        }
-     return predbaseP(new bv2pred(op));
+     visitor.visit_bvconst(shared_from_this());
    }
 
-bvbaseP mkpred2bv(predbaseP op)
+void bvname::visit(bvvisitor &visitor)
    {
-     if (op->isconst())
-        {
-          return bvbaseP(new bvconst(op->getconst()));
-        }
-     return bvbaseP(new pred2bv(op));
+     visitor.visit_bvname(shared_from_this(), var);
    }
+
+void bvunop::visit(bvvisitor &visitor)
+   {
+     visitor.visit_bvunop(shared_from_this(), kind, op);
+   }
+
+void bvbinop::visit(bvvisitor &visitor)
+   {
+     visitor.visit_bvbinop(shared_from_this(), kind, op1, op2);
+   }
+
+void bvextend::visit(bvvisitor &visitor)
+   {
+     visitor.visit_bvextend(shared_from_this(), kind, targetbits, op);
+   }
+
+void bvextract::visit(bvvisitor &visitor)
+   {
+     visitor.visit_bvextract(shared_from_this(), targetbits, op);
+   }
+
+void bvite::visit(bvvisitor &visitor)
+   {
+     visitor.visit_bvite(shared_from_this(), p, trueBV, falseBV);
+   }
+
+bvvisitor::~bvvisitor() {}
 
 }
 }

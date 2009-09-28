@@ -147,13 +147,13 @@ FieldVisitor::~FieldVisitor() {}
 
 Value::Value(Position pos, StackFrameP owner, bool valid) : pos(pos), owner(owner), valid(valid)
    {
-     if (owner->interp()->trace)
+     if (owner && owner->interp()->trace)
           cout << "Value::Value @" << this << endl;
    }
 
 Value::~Value()
    {
-     if (owner->interp()->trace)
+     if (owner && owner->interp()->trace)
           cout << "Value::~Value @" << this << endl;
    }
 
@@ -211,9 +211,11 @@ const_ValueP Value::primAtOffset(size_t offset) const
      return field;
    };
 
-void Value::forEachField(FieldVisitor &visit)
+void Value::forEachSubfield(FieldVisitor &visit, long offset) {}
+
+void Value::forEachPrim(FieldVisitor &visit, long offset)
    {
-     visit(0, shared_from_this());
+     visit(offset, shared_from_this());
    }
 
 bool Value::hasDynamicTypeAtOffset(SgClassType *t, size_t offset) const
@@ -298,6 +300,11 @@ unsigned short Value::getConcreteValueUnsignedShort() const
      throw InterpError("This value has no concrete representation of type unsigned short");
    }
 
+SgType *Value::defaultType() const
+   {
+     throw InterpError("The defaultType method is not implemented for this Value");
+   }
+
 #define GDEFINE_UNDEF_UNOP_FN(op,opname,cv) \
 ValueP Value::eval##opname(SgType *apt) cv \
    { \
@@ -332,15 +339,27 @@ FOREACH_BOOL_UNARY_PRIMOP(     DEFINE_UNDEF_UNOP_FN)
 FOREACH_BOOL_BINARY_PRIMOP(    DEFINE_UNDEF_BINOP_FN)
 
 GDEFINE_UNDEF_UNOP_FN(++,PrefixPlusPlusOp,)
-GDEFINE_UNDEF_UNOP_FN(++,PostfixPlusPlusOp,)
 GDEFINE_UNDEF_UNOP_FN(--,PrefixMinusMinusOp,)
-GDEFINE_UNDEF_UNOP_FN(--,PostfixMinusMinusOp,)
 
 #undef GDEFINE_UNDEF_UNOP_FN
 #undef DEFINE_UNDEF_UNOP_FN
 #undef GDEFINE_UNDEF_BINOP_FN
 #undef DEFINE_UNDEF_BINOP_FN
 #undef DEFINE_UNDEF_BINOP_FNS
+
+ValueP Value::evalPostfixPlusPlusOp(SgType *apt)
+   {
+     ValueP result = copy(apt, PTemp, owner);
+     evalPrefixPlusPlusOp(apt);
+     return result;
+   }
+
+ValueP Value::evalPostfixMinusMinusOp(SgType *apt)
+   {
+     ValueP result = copy(apt, PTemp, owner);
+     evalPrefixMinusMinusOp(apt);
+     return result;
+   }
 
 #define GDEFINE_BCV_UNOP_FN(op,opname,cv) \
 ValueP BaseCompoundValue::eval##opname(SgType *apt) cv \
@@ -462,17 +481,13 @@ ValueP PointerValue::adjustedOffset(SgType *apt, size_t offset) const
 
 ValueP PointerValue::evalAddOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const
    {
-     const BasePrimTypeValue *rhsPrim = dynamic_cast<const BasePrimTypeValue *>(rhs.get());
-     ROSE_ASSERT(rhsPrim != NULL);
-     ValueP ofs = adjustedOffset(lhsApt, rhsPrim->getConcreteValueInt());
+     ValueP ofs = adjustedOffset(lhsApt, rhs->getConcreteValueInt());
      return ValueP(new PointerValue(ofs, PTemp, owner));
    }
 
 ValueP PointerValue::evalSubtractOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const
    {
-     const BasePrimTypeValue *rhsPrim = dynamic_cast<const BasePrimTypeValue *>(rhs.get());
-     ROSE_ASSERT(rhsPrim != NULL);
-     ValueP ofs = adjustedOffset(lhsApt, -rhsPrim->getConcreteValueInt());
+     ValueP ofs = adjustedOffset(lhsApt, -rhs->getConcreteValueInt());
      return ValueP(new PointerValue(ofs, PTemp, owner));
    }
 
@@ -482,24 +497,15 @@ ValueP PointerValue::evalPrefixPlusPlusOp(SgType *apt)
      return shared_from_this();
    }
 
-ValueP PointerValue::evalPostfixPlusPlusOp(SgType *apt)
-   {
-     ValueP result (new PointerValue(target, PTemp, owner));
-     target = adjustedOffset(apt, 1);
-     return result;
-   }
-
 ValueP PointerValue::evalPrefixMinusMinusOp(SgType *apt)
    {
      target = adjustedOffset(apt, -1);
      return shared_from_this();
    }
 
-ValueP PointerValue::evalPostfixMinusMinusOp(SgType *apt)
+SgType *PointerValue::defaultType() const
    {
-     ValueP result (new PointerValue(target, PTemp, owner));
-     target = adjustedOffset(apt, -1);
-     return result;
+     return SgPointerType::createType(SgTypeVoid::createType());
    }
 
 string SymbolValue::show() const
@@ -644,17 +650,22 @@ ValueP Value::assign(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt)
         }
      else
         {
-          owner->interp()->prePrimAssign(shared_from_this(), rhs);
+          owner->interp()->prePrimAssign(shared_from_this(), rhs, lhsApt, rhsApt);
           return primAssign(rhs, lhsApt, rhsApt);
         }
    }
 
-void CompoundValue::forEachField(FieldVisitor &visit)
+void CompoundValue::forEachSubfield(FieldVisitor &visit, long offset)
    {
      for (fieldMap_t::const_iterator fieldI = fields.begin(); fieldI != fields.end(); ++fieldI)
         {
-          visit(fieldI->first, fieldI->second);
+          visit(offset+fieldI->first, fieldI->second);
         }
+   }
+
+void OffsetValue::forEachSubfield(FieldVisitor &visit, long offset)
+   {
+     base->forEachSubfield(visit, offset - this->offset);
    }
 
 ValueP Value::copy(SgType *apt, Position pos, StackFrameP owner, bool isParam) const
@@ -814,6 +825,25 @@ ValueP BaseCompoundValue::primAssign(const_ValueP rhs, SgType *lhsApt, SgType *r
      prim()->primAssign(rhs, lhsApt, rhsApt);
      return shared_from_this();
    }
+
+struct VisitPrimSubfieldsVisitor : FieldVisitor
+     {
+       FieldVisitor &visit;
+
+       VisitPrimSubfieldsVisitor(FieldVisitor &visit) : visit(visit) {}
+
+       void operator()(long offset, ValueP val)
+          {
+            val->forEachPrim(visit, offset);
+          }
+     };
+
+void BaseCompoundValue::forEachPrim(FieldVisitor &visit, long offset)
+   {
+     VisitPrimSubfieldsVisitor vpsv(visit);
+     forEachSubfield(vpsv, offset);
+   }
+
 vector<SgClassType *> Value::dynamicTypesAtOffset(size_t offset) const
    {
      vector<SgClassType *> dynTypes;
@@ -851,36 +881,28 @@ void dumpBindings(std::ostream &out, const varBindings_t &bindings)
      out << "}";
    }
 
-struct StackFrame::BlockStackFrame : boost::enable_shared_from_this<BlockStackFrame>
+SgStatement *StackFrame::BlockStackFrame::next() { return NULL; }
+
+void StackFrame::BlockStackFrame::destroyScope()
    {
-     BlockStackFrame(BlockStackFrameP up, StackFrameP sf, SgScopeStatement *scope) : up(up), sf(sf), scope(scope) {}
-     BlockStackFrameP up;
-     StackFrameP sf;
-     SgScopeStatement *scope;
-     blockScopeVars_t scopeVars;
-     virtual SgStatement *next() { return NULL; }
+     sf->destroyScope(scopeVars);
+   }
 
-     virtual void destroyScope()
-        {
-          sf->destroyScope(scopeVars);
-        }
+StackFrame::BlockStackFrameP StackFrame::BlockStackFrame::doContinue()
+   {
+     destroyScope();
+     ROSE_ASSERT(up.get() != NULL);
+     return up->doContinue();
+   }
 
-     virtual BlockStackFrameP doContinue()
-        {
-          destroyScope();
-          ROSE_ASSERT(up.get() != NULL);
-          return up->doContinue();
-        }
+StackFrame::BlockStackFrameP StackFrame::BlockStackFrame::doBreak()
+   {
+     destroyScope();
+     ROSE_ASSERT(up.get() != NULL);
+     return up->doBreak();
+   }
 
-     virtual BlockStackFrameP doBreak()
-        {
-          destroyScope();
-          ROSE_ASSERT(up.get() != NULL);
-          return up->doBreak();
-        }
-
-     virtual ~BlockStackFrame() {}
-   };
+StackFrame::BlockStackFrame::~BlockStackFrame() {}
 
 ArrayValue::ArrayValue(SgType *baseType, size_t index, Position pos, StackFrameP owner)
         : PointerValue(ValueP(new CompoundValue(baseType, index, pos, owner)), pos, owner),
@@ -950,6 +972,18 @@ void ArrayValue::destroy()
    {
      PointerValue::destroy();
      target->destroy();
+   }
+
+// ArrayValue::primAtOffset?
+
+void ArrayValue::forEachSubfield(FieldVisitor &visit, long offset)
+   {
+     target->forEachSubfield(visit, offset);
+   }
+
+void ArrayValue::forEachPrim(FieldVisitor &visit, long offset)
+   {
+     target->forEachPrim(visit, offset);
    }
 
 CompoundValue::CompoundValue(SgType *baseType, size_t index, Position pos, StackFrameP owner) : BaseCompoundValue(pos, owner, true)
@@ -1037,8 +1071,29 @@ ValueP StackFrame::evalVarRefExp(SgVarRefExp *vr)
 
 ValueP StackFrame::evalFunctionRefExp(SgFunctionSymbol *sym)
    {
-  // Note: this should really be a shared PGlobal, so that pointer comparisons etc will work
+     const Interpretation::builtins_t &builtins = interp()->builtinFns();
+     Interpretation::builtins_t::const_iterator bi = builtins.find(sym->get_declaration()->get_qualified_name().getString());
+
+     if (bi != builtins.end())
+        {
+          // XXX: hack to give the FunctionValue a valid owner
+          bi->second->owner = shared_from_this();
+          return bi->second;
+        }
+
+  // Note: this should really be a shared PGlob so that pointer comparisons etc will work
      return ValueP(new StaticFunctionValue(sym, PTemp, shared_from_this()));
+   }
+
+Interpretation::Interpretation()
+   {
+     registerBuiltinFns(_builtinFns);
+   }
+
+void Interpretation::registerBuiltinFns(builtins_t &builtins)
+   {
+     builtins["::memcpy"] = ValueP(new memcpyFnValue(PGlob, StackFrameP()));
+     builtins["::memset"] = ValueP(new memsetFnValue(PGlob, StackFrameP()));
    }
 
 ValueP StackFrame::evalMemberFunctionRefExp(SgMemberFunctionSymbol *sym)
@@ -1149,6 +1204,91 @@ ValueP NonstaticFieldValue::evalDotExp(ValueP lhs, SgType *lhsApt) const
      ROSE_ASSERT(lhsAptCls != NULL);
      size_t offset = sageOffsetOf(lhs, lhsAptCls, symbol);
      return ValueP(new OffsetValue(lhs, offset));
+   }
+
+
+string BuiltinFunctionValue::show() const { return "<<built-in function " + functionName() + ">>"; }
+
+ValueP BuiltinFunctionValue::primAssign(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt)
+   {
+     throw InterpError("Cannot assign to a function!");
+   }
+
+size_t BuiltinFunctionValue::forwardValidity() const { return 1; }
+
+string memcpyFnValue::functionName() const { return "memcpy"; }
+
+ValueP memcpyFnValue::call(SgFunctionType *fnType, const std::vector<ValueP> &args) const
+   {
+     if (args.size() != 3)
+        {
+          throw InterpError("Function memcpy called with incorrect arity");
+        }
+     ValueP destPtr = args[0], srcPtr = args[1], nVal = args[2];
+     ValueP destArea = destPtr->dereference(), srcArea = srcPtr->dereference();
+     
+     size_t n = getConcreteValueF<size_t>::f(nVal->prim());
+
+     struct PrimCopy : FieldVisitor
+        {
+          ValueP srcArea;
+          size_t n;
+          PrimCopy(ValueP srcArea, size_t n) : srcArea(srcArea), n(n) {}
+          void operator()(long offset, ValueP destPrim)
+             {
+               if (offset < 0 || offset >= long(n)) return;
+               ValueP srcOffset (new OffsetValue(srcArea, offset));
+               SgType *destType = destPrim->defaultType();
+               destPrim->assign(srcOffset, destType, destType);
+             }
+        };
+
+     PrimCopy pc(srcArea, n);
+     destArea->forEachPrim(pc);
+
+     return ValueP();
+   }
+
+string memsetFnValue::functionName() const { return "memset"; }
+
+ValueP memsetFnValue::call(SgFunctionType *fnType, const std::vector<ValueP> &args) const
+   {
+     if (args.size() != 3)
+        {
+          throw InterpError("Function memset called with incorrect arity");
+        }
+     ValueP sPtr = args[0], cVal = args[1], nVal = args[2];
+     ValueP sArea = sPtr->dereference();
+
+     size_t n = getConcreteValueF<size_t>::f(nVal->prim());
+
+     struct PrimSet : FieldVisitor
+        {
+          size_t n;
+          ValueP cVal;
+          SgType *cValType;
+          StackFrameP owner;
+
+          PrimSet(size_t n, ValueP cVal, SgType *cValType, StackFrameP owner) :
+                  n(n),
+                  cVal(cVal),
+                  cValType(cValType),
+                  owner(owner) {}
+
+          void operator()(long offset, ValueP destPrim)
+             {
+               if (offset < 0 || offset >= long(n)) return;
+               SgType *destType = destPrim->defaultType();
+               ValueP newVal = owner->newValue(destType, PTemp);
+               newVal->evalCastExp(cVal, cValType, destType);
+               destPrim->assign(newVal, destType, destType);
+             }
+        };
+
+     PrimSet ps(n, cVal, fnType->get_arguments()[1], owner);
+     sArea->forEachPrim(ps);
+
+     return ValueP();
    }
 
 ValueP StackFrame::evalDotExp(SgExpression *lhs, SgExpression *rhs)
@@ -1294,6 +1434,12 @@ ValueP StackFrame::evalUnaryOp(SgUnaryOp *unOp)
         }
    }
 
+ValueP StackFrame::evalCommaOpExp(SgExpression *lhs, SgExpression *rhs)
+   {
+     evalExpr(lhs);
+     return evalExpr(rhs);
+   }
+
 ValueP StackFrame::evalBinaryOp(SgBinaryOp *binOp)
    {
      SgExpression *lhs = binOp->get_lhs_operand(), *rhs = binOp->get_rhs_operand();
@@ -1315,6 +1461,7 @@ ValueP StackFrame::evalBinaryOp(SgBinaryOp *binOp)
 #undef STACKFRAME_EVALBINARYOP_CASE
 #undef STACKFRAME_SC_EVALBINARYOP_CASE
 #undef STACKFRAME_EVALBINARYOP_CASES
+          case V_SgCommaOpExp: return evalCommaOpExp(lhs, rhs);
           case V_SgDotExp: return evalDotExp(lhs, rhs);
           case V_SgArrowExp: return evalArrowExp(lhs, rhs);
           case V_SgPntrArrRefExp: return evalPntrArrRefExp(lhs, rhs);
@@ -1344,6 +1491,19 @@ ValueP StackFrame::evalStringVal(SgStringVal *strVal)
      return stringToValue(strVal->get_value());
    }
 
+ValueP StackFrame::evalConditionalExp(SgConditionalExp *condExp)
+   {
+     ValueP cond = evalExpr(condExp->get_conditional_exp());
+     if (cond->prim()->getConcreteValueInt() != 0)
+        {
+          return evalExpr(condExp->get_true_exp());
+        }
+     else
+        {
+          return evalExpr(condExp->get_false_exp());
+        }
+   }
+
 ValueP StackFrame::evalExpr(SgExpression *expr)
    {
      if (SgUnaryOp *unOp = isSgUnaryOp(expr)) return evalUnaryOp(unOp);
@@ -1370,6 +1530,7 @@ ValueP StackFrame::evalExpr(SgExpression *expr)
           case V_SgMemberFunctionRefExp: return evalMemberFunctionRefExp(isSgMemberFunctionRefExp(expr)->get_symbol());
           case V_SgFunctionCallExp: return evalFunctionCallExp(isSgFunctionCallExp(expr));
           case V_SgThisExp: return evalThisExp();
+          case V_SgConditionalExp: return evalConditionalExp(isSgConditionalExp(expr));
           default: throw InterpError("unhandled expression " + expr->class_name() + " encountered");
         }
    }
@@ -1543,8 +1704,7 @@ struct StackFrame::LoopBlockStackFrame : BlockStackFrame
                  sf->destroyScope(loopScopeVars);
                }
             ValueP cond = sf->evalStmtAsBool(condition, loopScopeVars);
-            BasePrimTypeValue *condPrim = dynamic_cast<BasePrimTypeValue *>(cond.get());
-            return condPrim->getConcreteValueInt() ? body : NULL;
+            return cond->getConcreteValueInt() ? body : NULL;
           }
 
        BlockStackFrameP doContinue()
@@ -1634,12 +1794,14 @@ void StackFrame::evalStmt(SgStatement *stmt, BlockStackFrameP &curFrame)
      if (interp()->trace)
         {
           cout << "after evalStmt(" << stmt->unparseToString() << "): ";
+#if 1
           if (thisBinding.get())
              {
                cout << "thisBinding = " << thisBinding->show() << ", ";
              }
           cout << "localVarBindings = ";
           dumpBindings(std::cout, localVarBindings);
+#endif
           cout << endl;
         }
    }
@@ -1744,7 +1906,7 @@ ValueP StackFrame::interpFunction(const vector<ValueP> &actualParams)
 
 StackFrame::~StackFrame() {}
 
-void Interpretation::prePrimAssign(ValueP lhs, const_ValueP rhs) {}
+void Interpretation::prePrimAssign(ValueP lhs, const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) {}
 
 void Interpretation::parseCommandLine(vector<string> &args)
    {

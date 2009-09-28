@@ -148,7 +148,7 @@ class RoseFFI
                *pdata = intVal->getConcreteValueInt();
              }
           // TODO: other primtypes
-          else if (CompoundValue *compVal = dynamic_cast<CompoundValue *>(valP))
+          else if (BaseCompoundValue *compVal = dynamic_cast<BaseCompoundValue *>(valP))
              {
                struct SerializeField : FieldVisitor
                   {
@@ -158,15 +158,18 @@ class RoseFFI
 
                     SerializeField(RoseFFI *ffi, void *data) : ffi(ffi), data(data) {}
 
-                    void operator()(size_t offset, ValueP prim)
+                    void operator()(long offset, ValueP prim)
                        {
-                         void *dataOfs = static_cast<void *>(static_cast<char *>(data) + offset);
-                         ffi->serialize(dataOfs, prim);
+                         if (offset >= 0)
+                            {
+                              void *dataOfs = static_cast<void *>(static_cast<char *>(data) + offset);
+                              ffi->serialize(dataOfs, prim);
+                            }
                        }
 
                   };
                SerializeField sf(this, data);
-               compVal->forEachField(sf);
+               compVal->forEachPrim(sf);
              }
           else
              {

@@ -34,12 +34,16 @@ The interpreters also take the following command-line argument:
 
 The SMT interpreter additionally takes the following arguments:
 
--interp:smtSolver - specifies the path to the SMT solver executable.
-                    Required.  To print a model, the correct
-                    command-line arguments must be supplied for
-                    your solver.  For example, the Beaver solver:
+-interp:smtSolver "PATH" - specifies the path to the SMT solver executable.
+                           Required.  To print a model, the correct
+                           command-line arguments must be supplied for
+                           your solver.  Appropriate command line arguments
+                           are shown below for a number of solvers:
 
-    -interp:smtSolver "/path/to/beaver -m --model-file=/dev/stdout"
+      Beaver:    /path/to/beaver -m --model-file=/dev/stdout
+      STP:       /path/to/stp -m -p
+      Yices:     /path/to/yices -smt -e
+      Boolector: /path/to/boolector -m
 
 -interp:keepSolverInput - retain the SMT solver benchmark file.  This
                           will be made available as "test.smt".

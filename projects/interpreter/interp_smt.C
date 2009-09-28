@@ -52,6 +52,11 @@ Bits bvSgTypeBits(SgType *t)
         }
    }
 
+bvbaseP BVValue::getBV() const
+   {
+     return v;
+   }
+
 bvbaseP BVValue::getBV(const_ValueP val, SgType *apt)
    {
      const BVValue *rhsBV = dynamic_cast<const BVValue *>(val->prim().get());
@@ -64,6 +69,8 @@ bvbaseP BVValue::getBV(const_ValueP val, SgType *apt)
           SgType *st = apt->stripTypedefsAndModifiers();
           switch (st->variantT())
              {
+               case V_SgTypeChar:
+                  return bvbaseP(new bvconst(uint8_t(val->prim()->getConcreteValueChar())));
                /*
                case V_SgTypeDouble:
                case V_SgTypeFloat:
@@ -88,19 +95,29 @@ bvbaseP BVValue::getBV(const_ValueP val, SgType *apt)
         }
    }
 
-ValueP BVValue::evalBinOp(bvbinop_kind kind, const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const
+ValueP BVValue::evalBinOp(bvbinop_kind kind, const_ValueP rhs, SgType *lhsApt, SgType *rhsApt, bool isShift) const
    {
-     if (!valid || !rhs->valid) return ValueP(new BVValue(PTemp, owner));
+     if (!valid || !rhs->valid) return ValueP(new BVValue(getBits(), PTemp, owner));
      bvbaseP rhsBV = getBV(rhs, rhsApt);
+     if (isShift) rhsBV = mkbvcast(zero_extend, v->bits(), rhsBV);
      return ValueP(new BVValue(mkbvbinop(kind, v, rhsBV), PTemp, owner));
    }
 
-ValueP BVValue::evalBinPred(bvbinpred_kind kind, const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const
+ValueP BVValue::evalUnOp(bvunop_kind kind, SgType *apt) const
    {
-     if (!valid || !rhs->valid) return ValueP(new BVValue(PTemp, owner));
+     if (!valid) return ValueP(new BVValue(bvBits, PTemp, owner));
+     return ValueP(new BVValue(mkbvunop(kind, v), PTemp, owner));
+   }
+
+ValueP BVValue::evalBinPred(bvbinpred_kind kind, const_ValueP rhs, SgType *lhsApt, SgType *rhsApt, bool negate) const
+   {
+     if (!valid || !rhs->valid) return ValueP(new BVValue(getBits(), PTemp, owner));
      bvbaseP rhsBV = getBV(rhs, rhsApt);
      predbaseP resultPred = mkbvbinpred(kind, v, rhsBV);
-     bvbaseP resultBV = mkpred2bv(resultPred);
+     if (negate) resultPred = mkprednot(resultPred);
+     bvbaseP resultBV = mkbvite(resultPred,
+                                bvbaseP(new bvconst(true)),
+                                bvbaseP(new bvconst(false)));
      SgFile::outputLanguageOption_enum lang = owner->get_language();
      if (lang == SgFile::e_C_output_language)
           resultBV = mkbvextend(zero_extend, bvTypeTraits<int>::bits, resultBV);
@@ -132,6 +149,8 @@ ValueP BVValue::primAssign(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt)
         }
      else
         {
+          if (valid)
+               bvBits = v->bits();
           valid = false;
         }
      return shared_from_this();
@@ -159,6 +178,36 @@ ValueP BVValue::evalDivideOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) c
      return evalBinOp(isUnsignedType(lhsApt) ? bvudiv : bvsdiv, rhs, lhsApt, rhsApt);
    }
 
+ValueP BVValue::evalModOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const
+   {
+     return evalBinOp(isUnsignedType(lhsApt) ? bvurem : bvsrem, rhs, lhsApt, rhsApt);
+   }
+
+ValueP BVValue::evalBitAndOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const
+   {
+     return evalBinOp(bvand, rhs, lhsApt, rhsApt);
+   }
+
+ValueP BVValue::evalBitOrOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const
+   {
+     return evalBinOp(bvor, rhs, lhsApt, rhsApt);
+   }
+
+ValueP BVValue::evalBitXorOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const
+   {
+     return evalBinOp(bvxor, rhs, lhsApt, rhsApt);
+   }
+
+ValueP BVValue::evalLshiftOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const
+   {
+     return evalBinOp(bvshl, rhs, lhsApt, rhsApt, true);
+   }
+
+ValueP BVValue::evalRshiftOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const
+   {
+     return evalBinOp(isUnsignedType(lhsApt) ? bvlshr : bvashr, rhs, lhsApt, rhsApt, true);
+   }
+
 ValueP BVValue::evalLessThanOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const
    {
      return evalBinPred(isUnsignedType(lhsApt) ? bvult : bvslt, rhs, lhsApt, rhsApt);
@@ -177,6 +226,26 @@ ValueP BVValue::evalLessOrEqualOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsA
 ValueP BVValue::evalGreaterOrEqualOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const
    {
      return evalBinPred(isUnsignedType(lhsApt) ? bvuge : bvsge, rhs, lhsApt, rhsApt);
+   }
+
+ValueP BVValue::evalEqualityOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const
+   {
+     return evalBinPred(bveq, rhs, lhsApt, rhsApt);
+   }
+
+ValueP BVValue::evalNotEqualOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const
+   {
+     return evalBinPred(bveq, rhs, lhsApt, rhsApt, true);
+   }
+
+ValueP BVValue::evalMinusOp(SgType *apt) const
+   {
+     return evalUnOp(bvneg, apt);
+   }
+
+ValueP BVValue::evalBitComplementOp(SgType *apt) const
+   {
+     return evalUnOp(bvnot, apt);
    }
 
 bool BVValue::getConcreteValueBool() const
@@ -261,7 +330,54 @@ ValueP BVValue::evalCastExp(ValueP fromVal, SgType *fromType, SgType *toType)
      return shared_from_this();
    }
 
-string AssertFunctionValue::show() const { return "<<built-in function assert>>"; }
+ValueP BVValue::evalPrefixPlusPlusOp(SgType *apt)
+   {
+     bvbaseP one (new bvconst(v->bits(), 1)), newBV;
+     if (v->bits() == Bits1)
+          newBV = one;
+     else
+          newBV = mkbvbinop(bvadd, v, one);
+     ValueP newVal (new BVValue(newBV, PTemp, owner));
+     assign(newVal, apt, apt);
+     return shared_from_this();
+   }
+
+ValueP BVValue::evalPrefixMinusMinusOp(SgType *apt)
+   {
+     bvbaseP one (new bvconst(v->bits(), 1));
+     bvbaseP newBV = mkbvbinop(bvsub, v, one);
+     ValueP newVal (new BVValue(newBV, PTemp, owner));
+     assign(newVal, apt, apt);
+     return shared_from_this();
+   }
+
+Bits BVValue::getBits() const
+   {
+     if (valid)
+        {
+          return v->bits();
+        }
+     else
+        {
+          return bvBits;
+        }
+   }
+
+SgType *BVValue::defaultType() const
+   {
+     switch (getBits())
+        {
+          // TODO: make these types platform-independent
+          case Bits1: return SgTypeBool::createType();
+          case Bits8: return SgTypeUnsignedChar::createType();
+          case Bits16: return SgTypeUnsignedShort::createType();
+          case Bits32: return SgTypeUnsignedInt::createType();
+          case Bits64: return SgTypeUnsignedLongLong::createType();
+          default: throw InterpError("BVValue::defaultType: unexpected case");
+        }
+   }
+
+string AssertFunctionValue::functionName() const { return "assert"; }
 
 ValueP AssertFunctionValue::call(SgFunctionType *fnType, const vector<ValueP> &args) const
    {
@@ -273,7 +389,7 @@ ValueP AssertFunctionValue::call(SgFunctionType *fnType, const vector<ValueP> &a
         {
           throw InterpError("Unable to assert a non-BVValue");
         }
-     bvbaseP bv = bvArg->v;
+     bvbaseP bv = bvArg->getBV();
      bvbaseP bvZero (new bvconst(bv->bits(), 0));
      predbaseP bvEqZero = mkbvbinpred(bveq, bv, bvZero);
      if (bvEqZero->isconst())
@@ -290,8 +406,10 @@ ValueP AssertFunctionValue::call(SgFunctionType *fnType, const vector<ValueP> &a
           return ValueP();
         }
 
+#if 0
      if (trace)
           cout << "About to call solver on " << bvEqZero->show() << endl;
+#endif
      // solver_smtlib solver("/export/tmp.collingbourne2/binsrc/beaver-1.1-rc1-x86_64/bin/beaver -m --model-file=/dev/stdout");
      solver_smtlib solver(interp->smtSolver);
      solveresult sr = solver.solve(bvEqZero, interp->keepSolverInput);
@@ -302,17 +420,10 @@ ValueP AssertFunctionValue::call(SgFunctionType *fnType, const vector<ValueP> &a
         }
      else if (sr.kind == sat)
         {
-          throw InterpError("Assertion failed! (proposition satisfiable).  Model follows:" + sr.model);
+          throw InterpError("Assertion failed! (proposition satisfiable).  Model follows:\n" + sr.model);
         }
      return ValueP();
    }
-
-ValueP AssertFunctionValue::primAssign(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt)
-   {
-     throw InterpError("Cannot assign to a function!");
-   }
-
-size_t AssertFunctionValue::forwardValidity() const { return 1; }
 
 ValueP SMTStackFrame::newValue(SgType *t, Position pos, bool isParam)
    {
@@ -329,7 +440,7 @@ ValueP SMTStackFrame::newValue(SgType *t, Position pos, bool isParam)
           case V_SgTypeUnsignedInt:
           case V_SgTypeUnsignedLongLong:
           case V_SgTypeUnsignedLong:
-          case V_SgTypeUnsignedShort: return ValueP(new BVValue(pos, shared_from_this()));
+          case V_SgTypeUnsignedShort: return ValueP(new BVValue(bvSgTypeBits(t), pos, shared_from_this()));
           default: return StackFrame::newValue(t, pos, isParam);
         }
    }
@@ -372,6 +483,345 @@ void SMTInterpretation::parseCommandLine(vector<string> &args)
      CommandlineProcessing::isOptionWithParameter(args, "-interp:", "smtSolver", smtSolver, true);
      keepSolverInput = CommandlineProcessing::isOption(args, "-interp:", "keepSolverInput", true);
    }
+
+void SMTInterpretation::prePrimAssign(ValueP lhs, const_ValueP rhs, SgType *lhsApt, SgType *rhsApt)
+   {
+     ValueP lhsPrim = lhs->prim();
+     if (cpStack.size() > 0)
+        {
+          cpFrame_t &oldValues = cpStack.back();
+          cpFrame_t::iterator oldValueI = oldValues.find(lhsPrim);
+          if (oldValueI == oldValues.end())
+             {
+               ValueP oldValue = lhsPrim->owner->newValue(lhsApt, PTemp);
+               oldValue->primAssign(lhs, lhsApt, lhsApt);
+               oldValues[lhsPrim] = pair<SgType *, ValueP>(lhsApt, oldValue);
+             }
+        }
+   }
+
+/* The purpose of the ConditionalTransaction is to encapsulate all aspects of a conditional
+   evaluation.  Namely, it is responsible for saving the state of the "true" and "false"
+   branches and computing the meet of the two branches using the SMT conditional
+   expression ite.
+ 
+   To use: evaluate the two branches in between beginTrueBranch()/endTrueBranch() and
+   beginFalseBranch()/endFalseBranch() (both branches are optional).  Then call commit()
+   to substitute the meet of the two branches.
+ */
+class ConditionalTransaction
+   {
+
+     StackFrameP sf;
+     SMTInterpretation::cpFrame_t trueValues, falseValues;
+
+     predbaseP pred;
+
+     enum status_t {
+          ST_NoBranchActive,
+          ST_FalseBranchActive,
+          ST_TrueBranchActive,
+          ST_Committed,
+     } status;
+
+     SMTInterpretation *interp()
+        {
+          return static_cast<SMTInterpretation *>(sf->interp());
+        }
+
+     void beginBranch(status_t newStatus)
+        {
+          if (status != ST_NoBranchActive)
+             {
+               throw InterpError("Branch was begun while a branch was already active!");
+             }
+          interp()->cpStack.push_back(SMTInterpretation::cpFrame_t());
+          status = newStatus;
+        }
+
+     void rollback(status_t expectStatus, SMTInterpretation::cpFrame_t &toFrame)
+        {
+          if (status != expectStatus)
+             {
+               throw InterpError("Branch was ended while no branch was active, or the wrong branch was active");
+             }
+          SMTInterpretation::cpFrame_t &curFrame = interp()->cpStack.back();
+          for (SMTInterpretation::cpFrame_t::iterator i = curFrame.begin(); i != curFrame.end(); ++i)
+             {
+               ValueP newVal = sf->newValue(i->second.first, PTemp);
+               newVal->primAssign(i->first, i->second.first, i->second.first);
+               toFrame[i->first] = pair<SgType *, ValueP>(i->second.first, newVal);
+               i->first->primAssign(i->second.second, i->second.first, i->second.first);
+             }
+          interp()->cpStack.pop_back();
+          status = ST_NoBranchActive;
+        }
+
+     public:
+     ConditionalTransaction(StackFrameP sf, predbaseP pred) : sf(sf), pred(pred), status(ST_NoBranchActive) {}
+
+     void commit()
+        {
+       // foreach val in trueValues U falseValues: set val to (ite pred trueValue falseValue)
+          if (status != ST_NoBranchActive)
+             {
+               throw InterpError("Commit was called twice or while a branch was already active!");
+             }
+          for (SMTInterpretation::cpFrame_t::iterator ti = trueValues.begin(), fi = falseValues.begin(); ti != trueValues.end() || fi != falseValues.end();)
+             {
+               ValueP val, tv, fv;
+               SgType *t;
+               if (ti != trueValues.end() && (fi == falseValues.end() || ti->first < fi->first))
+                  {
+                    val = ti->first;
+                    t = ti->second.first;
+                    tv = ti->second.second;
+                    fv = val;
+                    ++ti;
+                  }
+               else if (ti != trueValues.end() && fi != falseValues.end() && ti->first == fi->first)
+                  {
+                    val = ti->first;
+                    t = ti->second.first;
+                    tv = ti->second.second;
+                    fv = fi->second.second;
+                    ++ti; ++fi;
+                  }
+               else if (fi != falseValues.end() && (ti == trueValues.end() || fi->first < ti->first))
+                  {
+                    val = fi->first;
+                    t = fi->second.first;
+                    tv = val;
+                    fv = fi->second.second;
+                    ++fi;
+                  }
+               else
+                  {
+                    throw InterpError("Something weird happened in SymIfBlockStackFrame::commit");
+                  }
+               BVValue *tvBVV = dynamic_cast<BVValue *>(tv.get());
+               BVValue *fvBVV = dynamic_cast<BVValue *>(fv.get());
+               if (tvBVV == NULL || fvBVV == NULL)
+                  {
+                    throw InterpError("Unable to meet non-integral values (such as pointers)");
+                  }
+               bvbaseP tvBV = tvBVV->getBV(), fvBV = fvBVV->getBV();
+#if 0
+               cout << "pred = " << pred->show() << endl;
+               cout << "tvBV = " << tvBV->show() << endl;
+               cout << "fvBV = " << fvBV->show() << endl;
+#endif
+               ValueP newVal (new BVValue(mkbvite(pred, tvBV, fvBV), PTemp, val->owner));
+               val->primAssign(newVal, t, t);
+             }
+          status = ST_Committed;
+        }
+
+     void beginTrueBranch()
+        {
+          beginBranch(ST_TrueBranchActive);
+        }
+
+     void beginFalseBranch()
+        {
+          beginBranch(ST_FalseBranchActive);
+        }
+
+     void endTrueBranch()
+        {
+          rollback(ST_TrueBranchActive, trueValues);
+        }
+
+     void endFalseBranch()
+        {
+          rollback(ST_FalseBranchActive, falseValues);
+        }
+
+     ~ConditionalTransaction()
+        {
+          if (status != ST_Committed)
+             {
+               cerr << "An active ConditionalTransaction was destroyed!" << endl;
+             }
+        }
+
+   };
+
+struct SMTStackFrame::SymIfBlockStackFrame : BlockStackFrame
+   {
+     SymIfBlockStackFrame(BlockStackFrameP up, StackFrameP sf, SgIfStmt *scope) : BlockStackFrame(up, sf, scope), doneFalseBody(false) {}
+
+     SMTInterpretation::cpFrame_t trueValues, falseValues;
+     bool doneFalseBody;
+     boost::shared_ptr<ConditionalTransaction> condTrans;
+
+     void setPred(predbaseP pred)
+        {
+          condTrans = boost::shared_ptr<ConditionalTransaction>(new ConditionalTransaction(sf, pred));
+        }
+
+     SgStatement *next()
+        {
+          if (condTrans)
+             {
+               if (!doneFalseBody)
+                  {
+                    condTrans->endTrueBranch();
+                    SgIfStmt *ifStmt = static_cast<SgIfStmt *>(scope);
+                    if (ifStmt->get_false_body())
+                       {
+                         condTrans->beginFalseBranch();
+                         doneFalseBody = true;
+                         return ifStmt->get_false_body();
+                       }
+                    else
+                       {
+                         condTrans->commit();
+                         return NULL;
+                       }
+                  }
+               else
+                  {
+                    condTrans->endFalseBranch();
+                    condTrans->commit();
+                    return NULL;
+                  }
+             }
+          else
+             {
+               return NULL;
+             }
+        }
+
+   };
+
+void SMTStackFrame::evalIfStmt(SgIfStmt *ifStmt, BlockStackFrameP &curFrame)
+   {
+     SymIfBlockStackFrame *ifFrame = new SymIfBlockStackFrame(curFrame, shared_from_this(), ifStmt);
+     curFrame = BlockStackFrameP(ifFrame);
+     ValueP cond = evalStmtAsBool(ifStmt->get_conditional(), curFrame->scopeVars);
+     ValueP condPrim = cond->prim();
+     if (BVValue *bvVal = dynamic_cast<BVValue *>(condPrim.get()))
+        {
+          bvbaseP bv = bvVal->getBV();
+          bvbaseP bvZero (new bvconst(bv->bits(), 0));
+          predbaseP bvEqZero = mkbvbinpred(bveq, bv, bvZero);
+          predbaseP bvNeZero = mkprednot(bvEqZero);
+          if (bvNeZero->isconst())
+             {
+               if (bvNeZero->getconst())
+                  {
+                    evalStmt(ifStmt->get_true_body(), curFrame);
+                  }
+               else if (ifStmt->get_false_body())
+                  {
+                    evalStmt(ifStmt->get_false_body(), curFrame);
+                  }
+             }
+          else
+             {
+               ifFrame->setPred(bvNeZero);
+               ifFrame->condTrans->beginTrueBranch();
+               evalStmt(ifStmt->get_true_body(), curFrame);
+             }
+        }
+     else
+        {
+          if (cond->getConcreteValueInt())
+             {
+               evalStmt(ifStmt->get_true_body(), curFrame);
+             }
+          else if (ifStmt->get_false_body())
+             {
+               evalStmt(ifStmt->get_false_body(), curFrame);
+             }
+        }
+   }
+
+ValueP SMTStackFrame::evalShortCircuitExp(SgExpression *condExp, SgExpression *trueExp, SgExpression *falseExp)
+   {
+     ValueP cond = evalExpr(condExp);
+     ValueP condPrim = cond->prim();
+     if (BVValue *bvVal = dynamic_cast<BVValue *>(condPrim.get()))
+        {
+          bvbaseP bv = bvVal->getBV();
+          bvbaseP bvZero (new bvconst(bv->bits(), 0));
+          predbaseP bvEqZero = mkbvbinpred(bveq, bv, bvZero);
+          predbaseP bvNeZero = mkprednot(bvEqZero);
+          if (bvNeZero->isconst())
+             {
+               if (bvNeZero->getconst())
+                  {
+                    return trueExp ? evalExpr(trueExp) : cond;
+                  }
+               else
+                  {
+                    return falseExp ? evalExpr(falseExp) : cond;
+                  }
+             }
+          else
+             {
+               ConditionalTransaction ct(shared_from_this(), bvNeZero);
+               SgType *resType = trueExp ? trueExp->get_type() : falseExp->get_type();
+               ValueP result = newValue(resType, PTemp);
+               ct.beginTrueBranch();
+               ValueP trueExpVal;
+               if (trueExp)
+                  {
+                    trueExpVal = evalExpr(trueExp);
+                  }
+               else
+                  {
+                    bvbaseP bvResOne (new bvconst(bvSgTypeBits(resType), 1));
+                    trueExpVal = ValueP(new BVValue(bvResOne, PTemp, shared_from_this()));
+                  }
+               result->assign(trueExpVal, resType, resType);
+               ct.endTrueBranch();
+               ct.beginFalseBranch();
+               ValueP falseExpVal;
+               if (falseExp)
+                  {
+                    falseExpVal = evalExpr(falseExp);
+                  }
+               else
+                  {
+                    bvbaseP bvResZero (new bvconst(bvSgTypeBits(resType), 0));
+                    falseExpVal = ValueP(new BVValue(bvResZero, PTemp, shared_from_this()));
+                  }
+               result->assign(falseExpVal, resType, resType);
+               ct.endFalseBranch();
+               ct.commit();
+               return result;
+             }
+        }
+     else
+        {
+          if (condPrim->getConcreteValueInt() != 0)
+             {
+               return trueExp ? evalExpr(trueExp) : cond;
+             }
+          else
+             {
+               return falseExp ? evalExpr(falseExp) : cond;
+             }
+        }
+   }
+
+ValueP SMTStackFrame::evalConditionalExp(SgConditionalExp *condExp)
+   {
+     return evalShortCircuitExp(condExp->get_conditional_exp(), condExp->get_true_exp(), condExp->get_false_exp());
+   }
+
+ValueP SMTStackFrame::evalAndOp(SgExpression *lhs, SgExpression *rhs)
+   {
+     return evalShortCircuitExp(lhs, rhs, NULL);
+   }
+
+ValueP SMTStackFrame::evalOrOp(SgExpression *lhs, SgExpression *rhs)
+   {
+     return evalShortCircuitExp(lhs, NULL, rhs);
+   }
+
 
 /*
 int main(int argc, char **argv)
