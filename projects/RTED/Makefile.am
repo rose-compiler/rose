@@ -114,7 +114,7 @@ RTED_CPP_TEST_DIRS = $(rted_path)/C++/array_index_out_of_bound \
 
 RTED_TEST_DIRS=$(RTED_C_TEST_DIRS) $(RTED_CPP_TEST_DIRS)
 
-GENERATE_RTED_ORIGSOURCES = ${foreach RTED_TEST_DIR, $(RTED_TEST_DIRS), ${wildcard $(RTED_TEST_DIR)/*[!_s]${strip $(1)}} }
+GENERATE_RTED_ORIGSOURCES = ${foreach RTED_TEST_DIR, $(RTED_TEST_DIRS), $(patsubst $(RTED_TEST_DIR)/%_s$(strip $(1)), , ${wildcard $(RTED_TEST_DIR)/*${strip $(1)}}) }
 GENERATE_RTED_COPYSOURCES = ${foreach RTED_TEST_DIR, ${filter ${strip $(2)}%, $(RTED_TEST_DIRS)}, ${patsubst ${strip $(2)}/%${strip $(1)}, rted_source/%${strip $(1)}, ${wildcard $(RTED_TEST_DIR)/*${strip $(1)}} } }
 GENERATE_RTED_ROSESOURCES = ${patsubst %${strip $(1)}, %_rose${strip $(1)}, $(2) }
 GENERATE_RTED_BINFILES = ${patsubst ${strip $(2)}/%${strip $(1)}, rted_source/%.bin, ${filter ${strip $(2)}%, ${strip $(3)}}}
@@ -482,7 +482,7 @@ run_log/c:		$(RUN_LOG_TARGETS_GLOBAL_C)
 run_log/cpp:	$(RUN_LOG_TARGETS_GLOBAL_CPP)
 
 test:
-	@echo $(RUN_LOG_TARGETS_GLOBAL_CPP)
+	@echo $(RTED_ORIGSOURCES_GLOBAL_CPP)
 
 #------------------------------------------------------------------------------
 
@@ -502,7 +502,7 @@ $(1): $(filter $(1)%, $(RUN_LOG_TARGETS_GLOBAL_C))
 endef
 
 define RUN_TARGET_CPP
-$(1): $(filter $(1)%, $(RUN_TARGETS_GLOBAL_CPP))$(filter $(1)%, $(RUN_TARGETS_LOCAL_CPP))
+$(1): $(filter $(1)%, $(RUN_TARGETS_GLOBAL_CPP)) $(filter $(1)%, $(RUN_TARGETS_LOCAL_CPP))
 	@echo $(1) complete
 endef
 
@@ -601,7 +601,6 @@ check-local: runtimeCheck $(TESTCODES) checkfast \
 				run/C/uninitialized_variables \
 				run/C++/allocation_deallocation_errors \
 				run/C++/array_index_out_of_bound \
-				run/C++/input_output_errors \
 				run/C++/memory_leaks \
 				run/C++/pointer_errors \
 				run/C++/string_errors \
