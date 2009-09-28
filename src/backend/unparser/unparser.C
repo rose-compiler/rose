@@ -375,7 +375,7 @@ Unparser::unparseAsmFile(SgAsmGenericFile *file, SgUnparse_Info &info)
         }
 
         /* Dump interpretations that point only to this file. */
-        SgBinaryFile *binary = isSgBinaryFile(file->get_parent());
+        SgBinaryComposite *binary = isSgBinaryComposite(file->get_parent());
         ROSE_ASSERT(binary!=NULL);
         const SgAsmInterpretationPtrList &interps = binary->get_interpretations()->get_interpretations();
         for (size_t i=0; i<interps.size(); i++) {
@@ -395,7 +395,7 @@ Unparser::unparseAsmFile(SgAsmGenericFile *file, SgUnparse_Info &info)
 }
 
 void
-Unparser::unparseFile(SgBinaryFile *binary, SgUnparse_Info &info)
+Unparser::unparseFile(SgBinaryComposite *binary, SgUnparse_Info &info)
 {
     ROSE_ASSERT(binary != NULL);
     ROSE_ASSERT(binary->get_binary_only()) ;
@@ -1374,9 +1374,9 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                     break;
                   }
 
-               case V_SgBinaryFile:
+               case V_SgBinaryComposite:
                   {
-                    SgBinaryFile* binaryFile = isSgBinaryFile(file);
+                    SgBinaryComposite* binaryFile = isSgBinaryComposite(file);
                     roseUnparser.unparseFile(binaryFile,inheritedAttributeInfo);
                     break;
                   }

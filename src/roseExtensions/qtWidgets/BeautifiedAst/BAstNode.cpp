@@ -95,7 +95,7 @@ ItemTreeNode * BAstNode::generate(SgNode * node,AstFilterInterface * filter, Ite
 
         std::map< int, std::string > map = fi->get_fileidtoname_map();
 
-        if( isSgBinaryFile(file) )//binary ast
+        if( isSgBinaryComposite(file) )//binary ast
         {
             generationVisit(file,root,-1,filter);
         }

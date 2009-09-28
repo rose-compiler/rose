@@ -255,7 +255,7 @@ SgBaseClass
 SgBaseClassModifier
 SgBasicBlock
 SgBidirectionalGraph
-SgBinaryFile
+SgBinaryComposite
 SgBinaryOp
 SgBitAndOp
 SgBitAttribute

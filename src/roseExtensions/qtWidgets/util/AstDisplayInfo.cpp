@@ -117,7 +117,7 @@ namespace AstDisplayInfo
 
 
         SgSourceFile * sgSrcFile                    = isSgSourceFile(node);
-        SgBinaryFile * sgBinFile                    = isSgBinaryFile(node);
+        SgBinaryComposite * sgBinFile               = isSgBinaryComposite(node);
         SgProject * sgProject                       = isSgProject(node);
 
 

@@ -7,7 +7,7 @@
 class SgNode;
 class SgProject;
 class SgSourceFile;
-class SgBinaryFile;
+class SgBinaryComposite;
 
 
 class ProjectNode;
@@ -264,7 +264,7 @@ class BinaryFileNode : public QObject, public ItemTreeNode
 
         virtual QVariant data(int role, int column=0) const;
 
-        SgBinaryFile *getSgBinaryFile() const { return sgBinaryFile; }
+        SgBinaryComposite *getSgBinaryComposite() const { return sgBinaryComposite; }
 
         virtual void rebuild();
 
@@ -291,7 +291,7 @@ class BinaryFileNode : public QObject, public ItemTreeNode
         RoseFrontendTask * frontendTask;
 
         /// Node in the Sage-AST
-        SgBinaryFile * sgBinaryFile;
+        SgBinaryComposite * sgBinaryFile;
 };
 
 

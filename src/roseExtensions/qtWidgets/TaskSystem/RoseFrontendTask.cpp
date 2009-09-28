@@ -43,7 +43,7 @@ void annotateFiles( SgProject *project, SgFile *file )
 
         for( int i( 0 ); i < project->numberOfFiles(); ++i )
         {
-            SgBinaryFile *otherBinFile( isSgBinaryFile( (*project)[i] ) );
+            SgBinaryComposite *otherBinFile( isSgBinaryComposite( (*project)[i] ) );
 
             if( otherBinFile == NULL ) continue;
 
@@ -55,10 +55,10 @@ void annotateFiles( SgProject *project, SgFile *file )
 
 
     ///////////////////////////////////////////////////////////////////////////
-    // annotators which only work for SgBinaryFile
+    // annotators which only work for SgBinaryComposite
     ///////////////////////////////////////////////////////////////////////////
 
-    SgBinaryFile *binFile( isSgBinaryFile( file ) );
+    SgBinaryComposite *binFile( isSgBinaryComposite( file ) );
     if( binFile )
     {
         std::string pinFileName( binFile->getFileName() );

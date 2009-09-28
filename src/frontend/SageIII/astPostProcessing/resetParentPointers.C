@@ -1589,7 +1589,7 @@ ResetFileInfoParentPointersInMemoryPool::visit(SgNode* node)
 
             // case V_SgFile:
                case V_SgSourceFile:
-               case V_SgBinaryFile:
+               case V_SgBinaryComposite:
                case V_SgUnknownFile:
                   {
                     ROSE_ASSERT(support->get_file_info() != NULL);
@@ -2031,7 +2031,7 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
                case V_SgSymbolTable:
             // case V_SgFile:
                case V_SgSourceFile:
-               case V_SgBinaryFile:
+               case V_SgBinaryComposite:
                case V_SgTypedefSeq:
                case V_SgFunctionParameterTypeList:
                case V_SgPragma:

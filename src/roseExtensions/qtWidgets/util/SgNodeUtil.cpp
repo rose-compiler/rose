@@ -30,7 +30,7 @@ SgFile *getSgFile( SgNode *node )
 
 bool isBinaryNode( SgNode *node )
 {
-    return isSgBinaryFile( getSgFile( node ) ) ? true : false;
+    return isSgBinaryComposite( getSgFile( node ) ) ? true : false;
 }
 
 bool isSourceNode( SgNode *node )

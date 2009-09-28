@@ -581,7 +581,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
 
        // case V_SgFile: 
           case V_SgSourceFile: 
-          case V_SgBinaryFile: 
+          case V_SgBinaryComposite: 
              {
                SgFile* file = dynamic_cast<SgFile*>(node);
                ROSE_ASSERT(file != NULL);
@@ -592,10 +592,10 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
             // string filename = string("./") + ROSE::stripPathFromFileName(original_filename) + "."+filenamePostfix+"dot";
                string filename = string("./") + ROSE::stripPathFromFileName(original_filename) + filenamePostfix + ".dot";
 
-            // printf ("generated filename for dot file (from SgSourceFile or SgBinaryFile) = %s file->get_parent() = %p \n",filename.c_str(),file->get_parent());
+            // printf ("generated filename for dot file (from SgSourceFile or SgBinaryComposite) = %s file->get_parent() = %p \n",filename.c_str(),file->get_parent());
 
             // printf ("file->get_parent() = %p \n",file->get_parent());
-            // cout << "generating DOT file (from SgSourceFile or SgBinaryFile): " << filename2 << " ... ";
+            // cout << "generating DOT file (from SgSourceFile or SgBinaryComposite): " << filename2 << " ... ";
 
             // DQ (9/1/2008): this effects the output of DOT files when multiple files are specified 
             // on the command line.  A SgProject is still built even when a single file is specificed 
@@ -614,7 +614,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                   {
                  // There is a SgProject IR node, but if we will be traversing it we want to output the 
                  // graph then (so that the graph will include the SgProject IR nodes and connect multiple 
-                 // files (SgSourceFile or SgBinaryFile IR nodes).
+                 // files (SgSourceFile or SgBinaryComposite IR nodes).
                     if ( visitedNodes.find(file->get_parent()) == visitedNodes.end() )
                        {
                       // This SgProject node was not input as part of the traversal, 

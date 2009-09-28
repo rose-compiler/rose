@@ -6,7 +6,7 @@
 
 class SgNode;
 class SgSourceFile;
-class SgBinaryFile;
+class SgBinaryComposite;
 
 class ItemTreeModel;
 class ItemTreeNode;

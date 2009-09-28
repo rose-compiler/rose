@@ -597,7 +597,7 @@ void BinaryFileNode::frontendTaskFinished()
     Q_ASSERT(!sgBinaryFile);
     if( frontendTask->getState() == Task::FINISHED_SUCCESS )
     {
-        sgBinaryFile = dynamic_cast<SgBinaryFile*>(frontendTask->getResult());
+        sgBinaryFile = dynamic_cast<SgBinaryComposite*>(frontendTask->getResult());
         Q_ASSERT(sgBinaryFile);
     }
 

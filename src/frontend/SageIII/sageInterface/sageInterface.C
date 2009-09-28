@@ -1025,7 +1025,7 @@ SageInterface::get_name ( const SgSupport* node )
        // DQ (5/31/2007): Implemented case for SgFile
        // case V_SgFile:
           case V_SgSourceFile:
-          case V_SgBinaryFile:
+          case V_SgBinaryComposite:
              {
                name = "_file_";
 
@@ -3012,10 +3012,10 @@ SageInterface::generateFileList()
 
      FileTraversal fileTraversal;
 
-  // traverse just the SgFile nodes (both the SgSourceFile and SgBinaryFile IR nodes)!
+  // traverse just the SgFile nodes (both the SgSourceFile and SgBinaryComposite IR nodes)!
   // SgFile::visitRepresentativeNode(fileTraversal);
      SgSourceFile::visitRepresentativeNode(fileTraversal);
-     SgBinaryFile::visitRepresentativeNode(fileTraversal);
+     SgBinaryComposite::visitRepresentativeNode(fileTraversal);
 
   // This would alternatively traverse all IR nodes in thememory pool!
   // fileTraversal.traverseMemoryPool();
@@ -8290,7 +8290,7 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
 SgAsmInterpretation *
 SageInterface::getMainInterpretation(SgAsmGenericFile *file)
 {
-    SgBinaryFile *binary = isSgBinaryFile(file->get_parent());
+    SgBinaryComposite *binary = isSgBinaryComposite(file->get_parent());
     ROSE_ASSERT(binary!=NULL);
 
     /* Find the only header or the PE header of this file */
