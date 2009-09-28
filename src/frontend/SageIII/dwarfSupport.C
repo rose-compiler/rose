@@ -3042,7 +3042,7 @@ SgAsmDwarfLineList::sourceCodeToAddress ( FileIdLineColumnFilePosition sourcePos
   // int line    = sourcePosition.second.first;
   // int column  = sourcePosition.second.second;
 
-     uint64_t returnAddress = NULL;
+     uint64_t returnAddress = 0;
 
      DwarfInstructionSourceMapReturnType maps = buildInstructionAddressSourcePositionMaps();
      SgSourcePositionInstructionAddressMapPtrList & source_code_instruction_map = *(maps.second);
@@ -3058,7 +3058,7 @@ SgAsmDwarfLineList::sourceCodeToAddress ( FileIdLineColumnFilePosition sourcePos
           if (lowerBound->first.first != file_id)
              {
             // printf ("This source position is not from a valide file in the map: file_id = %d lowerBound->first = %d \n",file_id,lowerBound->first.first);
-               returnAddress = NULL;
+               returnAddress = 0;
              }
         }
 
@@ -3076,7 +3076,7 @@ SgAsmDwarfLineList::sourceCodeToAddress ( FileIdLineColumnFilePosition sourcePos
                returnAddress = NULL;
              }
 #else
-          returnAddress = NULL;
+          returnAddress = 0;
 #endif
         }
 #if 0
