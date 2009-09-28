@@ -560,8 +560,8 @@ string QRSourceBox::unparseFileToString (SgFile *file, bool use_coords) {
 
           case V_SgBinaryComposite:
              {
-               SgBinaryComposite* binaryFile = isSgBinaryComposite(file);
-               roseUnparser->unparseFile(binaryFile, *inputUnparseInfoPointer);
+               SgBinaryComposite* binary = isSgBinaryComposite(file);
+               roseUnparser->unparseFile(binary, *inputUnparseInfoPointer);
                break;
              }
 

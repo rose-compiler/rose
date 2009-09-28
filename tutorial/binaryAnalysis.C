@@ -10,11 +10,11 @@ int main(int argc, char** argv)
      RoseBin_Def::RoseAssemblyLanguage = RoseBin_Def::x86;
 
 #if 1
-     SgBinaryComposite* binaryFile = isSgBinaryComposite(project->get_fileList()[0]);
-     SgAsmGenericFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
+     SgBinaryComposite* binary = isSgBinaryComposite(project->get_fileList()[0]);
+     SgAsmGenericFile* file = binary != NULL ? binary->get_binaryFile() : NULL;
 
      ROSE_ASSERT (file != NULL);
-     const SgAsmInterpretationPtrList& interps = binaryFile->get_interpretations()->get_interpretations();
+     const SgAsmInterpretationPtrList& interps = binary->get_interpretations()->get_interpretations();
      ROSE_ASSERT (interps.size() == 1);
      SgAsmInterpretation* interp = interps[0];
      SgAsmBlock* global_block = interp->get_global_block();

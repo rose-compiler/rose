@@ -395,10 +395,10 @@ BinQGUI::insertFileInformation() {
 
   ROSE_ASSERT(isSgProject(fileA));
 
-  SgBinaryComposite* binaryFile = isSgBinaryComposite(isSgProject(fileA)->get_fileList()[0]);
-  SgAsmGenericFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
+  SgBinaryComposite* binary = isSgBinaryComposite(isSgProject(fileA)->get_fileList()[0]);
+  SgAsmGenericFile* file = binary != NULL ? binary->get_binaryFile() : NULL;
 
-  SgAsmInterpretationPtrList& interps = binaryFile->get_interpretations()->get_interpretations();
+  SgAsmInterpretationPtrList& interps = binary->get_interpretations()->get_interpretations();
   SgAsmInterpretationPtrList::iterator it = interps.begin();
   for (;it!=interps.end();++it) {
     SgAsmInterpretation* mainInt = *it;
@@ -846,8 +846,8 @@ BinQGUI::run( ) {
       currentAnalysis->run(fileA,fileB);
     else if (currentSelectedFile!=NULL) {
       if (isSgProject(currentSelectedFile)) {
-	SgBinaryComposite* binaryFile = isSgBinaryComposite(isSgProject(currentSelectedFile)->get_fileList()[0]);
-	SgAsmGenericFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
+	SgBinaryComposite* binary = isSgBinaryComposite(isSgProject(currentSelectedFile)->get_fileList()[0]);
+	SgAsmGenericFile* file = binary != NULL ? binary->get_binaryFile() : NULL;
 	if (file) {
 	  // cerr << " Current selected file : " << file->get_name() << endl;
 	}

@@ -1666,10 +1666,10 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
        // DQ (10/12/2008): This was previously commented out, I think it need 
        // to be available even if exactly what it means may still be in flux.
        // set_aggressive(true);
-          SgBinaryComposite* binaryFile = isSgBinaryComposite(this);
-          if (binaryFile != NULL)
+          SgBinaryComposite* binary = isSgBinaryComposite(this);
+          if (binary != NULL)
              {
-               binaryFile->set_aggressive(true);
+               binary->set_aggressive(true);
              }
 
        // DQ (10/12/2008): I am less clear if we want to have more than one mechanism in place!
@@ -2485,8 +2485,8 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
                               if (isBinaryExecutable == true || isLibraryArchive == true)
                                  {
                                 // Build a SgBinaryComposite to represent either the binary executable or the library archive.
-                                   SgBinaryComposite* binaryFile = new SgBinaryComposite ( argv,  project );
-                                   file = binaryFile;
+                                   SgBinaryComposite* binary = new SgBinaryComposite ( argv,  project );
+                                   file = binary;
 
                                 // This should have already been setup!
                                 // file->initializeSourcePosition();
@@ -2557,8 +2557,8 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
                                           // Get each object file name (*.o)
                                              string objectFileName = *i;
                                              printf ("objectFileName = %s \n",objectFileName.c_str());
-                                             binaryFile->get_libraryArchiveObjectFileNameList().push_back(objectFileName);
-                                             printf ("binaryFile->get_libraryArchiveObjectFileNameList().size() = %zu \n",binaryFile->get_libraryArchiveObjectFileNameList().size());
+                                             binary->get_libraryArchiveObjectFileNameList().push_back(objectFileName);
+                                             printf ("binary->get_libraryArchiveObjectFileNameList().size() = %zu \n",binary->get_libraryArchiveObjectFileNameList().size());
                                            }
 #if 0
                                         printf ("Exiting in processing a library archive file. \n");
@@ -4509,8 +4509,8 @@ SgFile::callFrontEnd()
 
                     case V_SgBinaryComposite:
                        {
-                         SgBinaryComposite* binaryFile = const_cast<SgBinaryComposite*>(isSgBinaryComposite(this));
-                         frontendErrorLevel = binaryFile->buildAST(argv,inputCommandLine);
+                         SgBinaryComposite* binary = const_cast<SgBinaryComposite*>(isSgBinaryComposite(this));
+                         frontendErrorLevel = binary->buildAST(argv,inputCommandLine);
                          break;
                        }
                     case V_SgUnknownFile:
@@ -4528,22 +4528,22 @@ SgFile::callFrontEnd()
             // printf ("After calling buildAST(): this->class_name() = %s \n",this->class_name().c_str());
 #if 0
                SgSourceFile* sourceFile = const_cast<SgSourceFile*>(isSgSourceFile(this));
-               SgBinaryComposite* binaryFile = const_cast<SgBinaryComposite*>(isSgBinaryComposite(this));
-               if (binaryFile != NULL)
+               SgBinaryComposite* binary = const_cast<SgBinaryComposite*>(isSgBinaryComposite(this));
+               if (binary != NULL)
                   {
                     ROSE_ASSERT(sourceFile == NULL);
-                    frontendErrorLevel = binaryFile->buildAST(argv,inputCommandLine);
+                    frontendErrorLevel = binary->buildAST(argv,inputCommandLine);
                   }
                  else
                   {
                     if (sourceFile != NULL)
                        {
-                         ROSE_ASSERT(binaryFile == NULL);
+                         ROSE_ASSERT(binary == NULL);
                          frontendErrorLevel = sourceFile->buildAST(argv,inputCommandLine);
                        }
                       else
                        {
-                         printf ("Error: neither sourceFile nor binaryFile are valid pointers this = %s \n",class_name().c_str());
+                         printf ("Error: neither sourceFile nor binary are valid pointers this = %s \n",class_name().c_str());
                          ROSE_ASSERT(false);
                        }
                   }

@@ -167,7 +167,7 @@ int main(int argc, char** argv) {
   ROSE_ASSERT (project != NULL);
 
   SgBinaryComposite* binaryFile = isSgBinaryComposite(project->get_fileList()[0]);
-  SgAsmGenericFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
+  SgAsmGenericFile* file = binary != NULL ? binary->get_binaryFile() : NULL;
 
   //  const SgAsmInterpretationPtrList& interps = file->get_interpretations();
   //ROSE_ASSERT (interps.size() == 1);

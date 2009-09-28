@@ -203,8 +203,8 @@ DynamicInfo::run(SgNode* fileA, SgNode* fileB) {
   SgAsmGenericFile* file = NULL;
   if (isSgProject(fileA)) {
     project=true;
-    SgBinaryComposite* binaryFile = isSgBinaryComposite(isSgProject(fileA)->get_fileList()[0]);
-    file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
+    SgBinaryComposite* binary = isSgBinaryComposite(isSgProject(fileA)->get_fileList()[0]);
+    file = binary != NULL ? binary->get_binaryFile() : NULL;
     ROSE_ASSERT(file);
     info = new VirtualBinCFG::AuxiliaryInformation(file);
   }

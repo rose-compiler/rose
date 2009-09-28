@@ -538,8 +538,8 @@ InterruptAnalysis::run(SgNode* fileA, SgNode* fileB) {
 
   RoseBin_Graph* graph=NULL;
   ROSE_ASSERT(isSgProject(fileA));
-  SgBinaryComposite* binaryFile = isSgBinaryComposite(isSgProject(fileA)->get_fileList()[0]);
-  SgAsmGenericFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
+  SgBinaryComposite* binary = isSgBinaryComposite(isSgProject(fileA)->get_fileList()[0]);
+  SgAsmGenericFile* file = binary != NULL ? binary->get_binaryFile() : NULL;
   ROSE_ASSERT(file);
 
   //  VirtualBinCFG::AuxiliaryInformation* info = new VirtualBinCFG::AuxiliaryInformation(file);
@@ -609,8 +609,8 @@ InterruptAnalysis::test(SgNode* fileA, SgNode* fileB) {
 
   RoseBin_Graph* graph=NULL;
   ROSE_ASSERT(isSgProject(fileA));
-  SgBinaryComposite* binaryFile = isSgBinaryComposite(isSgProject(fileA)->get_fileList()[0]);
-  SgAsmGenericFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
+  SgBinaryComposite* binary = isSgBinaryComposite(isSgProject(fileA)->get_fileList()[0]);
+  SgAsmGenericFile* file = binary != NULL ? binary->get_binaryFile() : NULL;
   ROSE_ASSERT(file);
 
   //  VirtualBinCFG::AuxiliaryInformation* info = new VirtualBinCFG::AuxiliaryInformation(file);

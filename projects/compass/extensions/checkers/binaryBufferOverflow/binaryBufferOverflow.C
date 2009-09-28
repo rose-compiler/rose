@@ -98,8 +98,8 @@ Traversal::run ( SgNode* node )
 static void run(Compass::Parameters params, Compass::OutputObject* output) {
   //  CompassAnalyses::BinaryBufferOverflow::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
 
-  SgBinaryComposite* binaryFile = isSgBinaryComposite(Compass::projectPrerequisite.getProject()->get_fileList()[0]);
-  SgAsmGenericFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
+  SgBinaryComposite* binary = isSgBinaryComposite(Compass::projectPrerequisite.getProject()->get_fileList()[0]);
+  SgAsmGenericFile* file = binary != NULL ? binary->get_binaryFile() : NULL;
 
   if (file==NULL)
     return;
