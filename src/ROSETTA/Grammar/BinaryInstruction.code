@@ -876,7 +876,8 @@ HEADER_GENERIC_SECTION_START
 		addr_t	      get_mapped_preferred_rva() const;	/* The virtual address indicated in the binary file */
 		virtual void  set_mapped_preferred_rva(addr_t); /* Move a section w/o regard to other section mappings */
 		addr_t 	      get_base_va() const;            	/* Convenience to get header's base VA */
-		addr_t 	      get_mapped_preferred_va();	/* Like get_mapped_preferred_rva() except returns VA */
+		addr_t 	      get_mapped_preferred_va();	/* Like get_mapped_preferred_rva() except returns absolute VA */
+		addr_t	      get_mapped_actual_va();		/* Like get_mapped_actual_rva() except returns absolute VA */
 		addr_t        get_va_offset(addr_t va);       	/* Return file offset for specified virtual address */
 		addr_t	      get_rva_offset(addr_t rva);     	/* Return file offset for specified relative virtual address */
 

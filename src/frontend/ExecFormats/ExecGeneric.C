@@ -2178,6 +2178,20 @@ SgAsmGenericSection::get_mapped_preferred_va()
     return 0;
 }
 
+/** Returns (non-relative) virtual address where section was mapped. The address corresponds to the latest call into the
+ *  Loader classes.  Depending on the loader employed, it's possible for a section to be mapped, the p_mapped_actual_rva value
+ *  to be set, and then some other section to be mapped over the top of all or part of the first section. In that case, the
+ *  p_mapped_actual_rva of the first section is not reset to zero.  The return value is not conditional upon is_mapped() since
+ *  that predicate applies only to preferred mapping attributes. Also, the base virtual address is always added to the
+ *  p_mapped_actual_rva regardless of whether p_mapped_actual_rva is non-zero (this doesn't matter in ELF, where the base
+ *  virtual address is always zero anyway). */
+rose_addr_t
+SgAsmGenericSection::get_mapped_actual_va()
+{
+    ROSE_ASSERT(this != NULL);
+    return get_base_va() + get_mapped_actual_rva();
+}
+
 /* Returns base virtual address for a section, or zero if the section is not associated with a header. */
 rose_addr_t
 SgAsmGenericSection::get_base_va() const
