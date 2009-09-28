@@ -539,12 +539,10 @@ TESTS_KNOWN_TO_FAIL = run/C/subprogram_call_errors/c_C_1_3_f \
 					  run/C++/array_index_out_of_bound/C_E_1_7_a_o \
 					  run/C++/array_index_out_of_bound/C_E_1_7_i_f \
 					  run/C++/array_index_out_of_bound/C_E_1_7_i_sh \
-					  run/C++/memory_leaks/C_I_1_1_m_d \
 					  run/C++/memory_leaks/C_I_2_2_a_d \
 					  run/C++/memory_leaks/C_I_2_5_a_d \
 					  run/C++/memory_leaks/C_I_2_6_a_d \
 					  run/C++/memory_leaks/C_I_2_6_b_o \
-					  run/C++/pointer_errors/C_J_1_3_a_d \
 					  run/C++/pointer_errors/C_J_1_4_a_d \
 					  run/C++/pointer_errors/C_J_2_1_a_d \
 					  run/C++/uninitialized_variables/C_A_1_1_c_uc \

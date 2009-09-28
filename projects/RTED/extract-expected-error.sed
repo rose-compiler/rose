@@ -40,13 +40,21 @@
     # Special cases where we disagree with RTED about exactly where the error
 	# line is
     s/^.*at line \([0-9]\+\).*c_K_1_d.*$/49/I
+
     # RTED is inconsistent.  In this test they complain at the bad assignment to
     # the pointer, rather than the bad usage (read/free), which they do in most
     # of their other pointer tests.
     s/^.*at line \([0-9]\+\).*C_I_3_3_a_d\.cpp.*$/58/I
+
 	# Actually here I think the ok_msg is just completely wrong.  It conflicts
 	# with the comments in the .c file, which are actually correct.
     s/^.*at line \([0-9]\+\).*c_J_6_a.*$/34/I
+
+    # Per James J. Coyle's email, the explanation in RTED for this test is
+    # simply wrong.  The error occurs when runA ends, and its pass-by-value
+    # parameter goes out of scope, causing a memory leak.
+    s/^.*at line \([0-9]\+\).*C_I_1_1_m_d.*$/48/I
+
 	########################################################################
 
 	########################################################################
