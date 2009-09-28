@@ -2771,7 +2771,7 @@ readDwarf ( SgAsmGenericFile* asmFile )
    {
      ROSE_ASSERT(asmFile != NULL);
 
-     SgAsmGenericFile* genericFile = asmFile->get_genericFile();
+     SgAsmGenericFile* genericFile = asmFile;
      ROSE_ASSERT(genericFile != NULL);
 
 #if TEST_DEBUG_DWARF_LINKING
