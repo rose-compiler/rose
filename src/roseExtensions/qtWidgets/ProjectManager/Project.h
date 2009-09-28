@@ -291,7 +291,7 @@ class BinaryFileNode : public QObject, public ItemTreeNode
         RoseFrontendTask * frontendTask;
 
         /// Node in the Sage-AST
-        SgBinaryComposite * sgBinaryFile;
+        SgBinaryComposite * sgBinaryComposite;
 };
 
 
