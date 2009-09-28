@@ -402,7 +402,8 @@ BinQGUI::insertFileInformation() {
   SgAsmInterpretationPtrList::iterator it = interps.begin();
   for (;it!=interps.end();++it) {
     SgAsmInterpretation* mainInt = *it;
-    SgAsmGenericHeader* header = mainInt->get_header();
+    ROSE_ASSERT(mainInt->get_headers()->get_headers().size()==1);
+    SgAsmGenericHeader* header = mainInt->get_headers()->get_headers()[0];
     fileInfo->append(header->class_name().c_str());
     SgAsmElfFileHeader* elf = isSgAsmElfFileHeader(header);
     if (elf) {
