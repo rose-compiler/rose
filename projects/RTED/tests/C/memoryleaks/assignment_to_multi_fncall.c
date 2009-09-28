@@ -2,9 +2,9 @@
 
 
 int* baz() {
-	int* y;
-  y = (int*) malloc( sizeof( int ));
-	return y;
+  //	int* y;
+  //y = (int*) malloc( sizeof( int ));
+  return (int*) malloc( sizeof( int ));
 }
 
 int* bar() {
