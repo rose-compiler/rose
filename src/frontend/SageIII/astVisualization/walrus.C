@@ -132,7 +132,7 @@ WalrusGraph::generateWalrusGraph( SgNode* node, string outputFilename )
           printf ("Found the SgProject \n");
 
           SgFile* fileNode = project->get_fileList()[0];
-          if (isSgBinaryFile(fileNode) != NULL)
+          if (isSgBinaryComposite(fileNode) != NULL)
              {
                if (project->get_binary_only() == false)
                     printf ("This should have been set already, what is wrong here! \n");

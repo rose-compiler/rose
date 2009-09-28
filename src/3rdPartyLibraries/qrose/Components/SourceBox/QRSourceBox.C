@@ -558,9 +558,9 @@ string QRSourceBox::unparseFileToString (SgFile *file, bool use_coords) {
                break;
              }
 
-          case V_SgBinaryFile:
+          case V_SgBinaryComposite:
              {
-               SgBinaryFile* binaryFile = isSgBinaryFile(file);
+               SgBinaryComposite* binaryFile = isSgBinaryComposite(file);
                roseUnparser->unparseFile(binaryFile, *inputUnparseInfoPointer);
                break;
              }

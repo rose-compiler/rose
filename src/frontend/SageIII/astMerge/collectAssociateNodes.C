@@ -1816,7 +1816,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgProject:
        // case V_SgFile:
           case V_SgSourceFile:
-          case V_SgBinaryFile:
+          case V_SgBinaryComposite:
           case V_SgUnknownFile:
           case V_SgSymbolTable:
           case V_SgFunctionTypeTable:

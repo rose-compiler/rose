@@ -35,7 +35,7 @@ namespace CompassAnalyses
                Compass::OutputObject* output;
 	       std::string stringOutput;
 	       //SgAsmFunctionDeclaration* project;
-	       SgBinaryFile* file;
+	       SgBinaryComposite* file;
                public:
                     Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
 
@@ -117,8 +117,8 @@ visit(SgNode* n)
      // mark the first Function as the output object
      //     if (isSgAsmFunctionDeclaration(n) && file==NULL)
      //file = isSgAsmFunctionDeclaration(n);
-     if (isSgBinaryFile(n) && file==NULL)
-       file = isSgBinaryFile(n);
+     if (isSgBinaryComposite(n) && file==NULL)
+       file = isSgBinaryComposite(n);
   SgAsmInstruction* binInst = isSgAsmInstruction(n);
   SgAsmFunctionDeclaration* funcDecl = isSgAsmFunctionDeclaration(n);
   SgAsmBlock* block = isSgAsmBlock(n);

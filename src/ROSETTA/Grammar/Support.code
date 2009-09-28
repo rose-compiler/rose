@@ -4400,14 +4400,14 @@ HEADER_APPLICATION_SOURCE_FILE_END
 
 HEADER_APPLICATION_BINARY_FILE_START
      public:
-       // SgBinaryFile ( int & argc, char** & argv, int & errorCode, int fileNameIndex = 0, SgProject* project = NULL );
-          SgBinaryFile(std::vector<std::string>& argv,  SgProject* project = NULL);
-       // SgBinaryFile ( const SgBinaryFile & X );
+       // SgBinaryComposite ( int & argc, char** & argv, int & errorCode, int fileNameIndex = 0, SgProject* project = NULL );
+          SgBinaryComposite(std::vector<std::string>& argv,  SgProject* project = NULL);
+       // SgBinaryComposite ( const SgBinaryFile & X );
 
           virtual int callFrontEnd();
       //  Default constructor (not meant to be used)
       //  JJW (9/5/2008): the normal constructor has defaults for all of its arguments, so this is ambiguous
-      //  SgBinaryFile() ROSE_DEPRECATED_FUNCTION;
+      //  SgBinaryComposite() ROSE_DEPRECATED_FUNCTION;
 
           virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project);
 
@@ -10094,45 +10094,6 @@ SgFile::SgFile ( vector<string> & argv ,  SgProject* project )
      doSetupForConstructor(argv,  project);
    }
 
-#if 0
-// Commented out 9/2/2008): We now have new SgSourceFile and SgBinaryFile IR nodes.
-SgFile::SgFile ()
-   {
-  // Default constructor
-  // This builds a valid SgFile which has no global scope
-  // we might make it have a global scope just to support 
-  // the p_root pointer always being a valid pointer (and 
-  // the list of declarations being empty).
-
-  // DQ (1/18/2006): uncommented to test loop processing
-  // DQ (9/26/2005): We can try to get this constructor working now
-  // printf ("This is the default constructor, use SgFile (argc,argv) instead \n");
-  // ROSE_ABORT();
-
-     p_root                         = NULL;
-
-  // DQ (9/2/2008): This is moved to the new SgBinaryFile (derived from SgFile)
-  // p_binaryFile                   = NULL;
-
-  // DQ (10/16/2005): Removed as part of cleanup to SgFile
-  // p_numberOfCommandLineArguments = 0;
-  // p_commandLineArgumentList      = NULL;
-
-     initialization ();
-
-  // DQ (5/15/2006): Note that initialization() builds a SgGlobal but for this 
-  // default constructor (used in the copy function) we don't want to build one of these.
-  // So delete the SgGlobal just built.
-     ROSE_ASSERT(p_root != NULL);
-     delete p_root;
-     p_root = NULL;
-
-  // DQ (10/16/2005): Removed as part of cleanup to SgFile
-  // DQ (7/13/2004): Reset the values based on constructor arguments
-  // p_numberOfCommandLineArguments = p_defaultNumberOfCommandLineArguments;
-  // p_commandLineArgumentList      = p_defaultCommandLineArgumentList;
-   }
-#endif
 
 // DQ (1/17/2006): Added this (copy constructor) to be explicit 
 // and avoid difficult bugs where it is compiler generated.
@@ -10179,8 +10140,6 @@ SgFile::initialization()
   // DQ (9/4/2008): This is now part of the SgSourceFile
   // ROSE_ASSERT (p_root == NULL);
 
-  // DQ (9/2/2008): This is moved to the new SgBinaryFile (derived from SgFile)
-  // ROSE_ASSERT (p_binaryFile == NULL);
 
 #if 0
   // DQ (12/23/2008): Build this later when we have a valid filename.
@@ -10484,10 +10443,6 @@ X aggressive
 
      p_sourceFileUsesBinaryFileExtension = false;
 
-  // DQ (9/2/2008): This is moved to the new SgBinaryFile (derived from SgFile)
-  // DQ (10/19/2007): Added initialization new data member added to support handing of binary AST and source code AST.
-  // p_binaryFile = NULL;
-
   // This will cause only the binary file format to be read and skipps instruction disassembly
      p_read_executable_file_format_only = false;
 
@@ -10501,8 +10456,6 @@ X aggressive
      p_skip_unparse_asm_commands = false;
      p_read_instructions_only    = false;
 
-  // DQ (9/2/2008): This is moved to the new SgBinaryFile (derived from SgFile)
-  // p_aggressive = false;
    }
 
 #if 0
@@ -10984,13 +10937,9 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_sourceFileUsesFortran95FileExtension = %s \n",(p_sourceFileUsesFortran95FileExtension == true) ? "true" : "false");
      printf ("     p_sourceFileUsesPHPFileExtension       = %s \n",(p_sourceFileUsesPHPFileExtension == true) ? "true" : "false");
      printf ("     p_sourceFileUsesBinaryFileExtension    = %s \n",(p_sourceFileUsesBinaryFileExtension == true) ? "true" : "false");
-  // DQ (9/2/2008): This is moved to the new SgBinaryFile (derived from SgFile)
-  // printf ("     p_binaryFile                           = %p \n",p_binaryFile);
      printf ("     p_read_executable_file_format_only     = %s \n",(p_read_executable_file_format_only == true) ? "true" : "false");
      printf ("     p_read_instructions_only               = %s \n",(p_read_instructions_only == true) ? "true" : "false");
 
-  // DQ (9/2/2008): This is moved to the new SgBinaryFile (derived from SgFile)
-  // printf ("     p_aggressive                           = %s \n",(p_aggressive == true) ? "true" : "false");
 
 #if 0
 // Order of data member entries in support.C, matched against the 
@@ -11112,21 +11061,21 @@ SOURCE_APPLICATION_SOURCE_FILE_END
 SOURCE_APPLICATION_BINARY_FILE_START
 
 const SgAsmGenericFile* 
-SgBinaryFile::get_binaryFile() const
+SgBinaryComposite::get_binaryFile() const
    {
      ROSE_ASSERT(p_genericFileList->get_files().size() == 1);
      return p_genericFileList->get_files()[0];
    }
 
 SgAsmGenericFile*
-SgBinaryFile::get_binaryFile()
+SgBinaryComposite::get_binaryFile()
    {
      ROSE_ASSERT(p_genericFileList->get_files().size() == 1);
      return p_genericFileList->get_files()[0];
    }
 
 void
-SgBinaryFile::set_binaryFile( SgAsmGenericFile* file )
+SgBinaryComposite::set_binaryFile( SgAsmGenericFile* file )
    {
      ROSE_ASSERT(p_genericFileList->get_files().empty() == true);
      p_genericFileList->get_files().push_back(file);

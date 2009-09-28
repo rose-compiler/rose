@@ -34,7 +34,7 @@ namespace CompassAnalyses
             // Checker specific parameters should be allocated here.
                Compass::OutputObject* output;
 	       std::string stringOutput;
-	       SgBinaryFile* file;
+	       SgBinaryComposite* file;
                public:
                     Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
                     rose_hash::hash_map<std::string, int,rose_hash::hash_string,rose_hash::eqstr_string> instMap;
@@ -132,8 +132,8 @@ CompassAnalyses::BinPrintAsmInstruction::Traversal::
 visit(SgNode* n)
    { 
 
-     if (isSgBinaryFile(n) && file==NULL)
-       file = isSgBinaryFile(n);
+     if (isSgBinaryComposite(n) && file==NULL)
+       file = isSgBinaryComposite(n);
 
   SgAsmx86Instruction* binInst = isSgAsmx86Instruction(n);
   if (binInst==NULL) return;

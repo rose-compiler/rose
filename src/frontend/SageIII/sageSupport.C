@@ -1656,7 +1656,6 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_skip_unparse_asm_commands(true);
         }
 
-  // DQ (9/2/2008): This is now set in the new SgBinaryFile IR node.
   // DQ (8/26/2008): support for optional more agressive mode of disassembly of binary from all 
   // executable segments instead of just section based.
   //
@@ -1667,7 +1666,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
        // DQ (10/12/2008): This was previously commented out, I think it need 
        // to be available even if exactly what it means may still be in flux.
        // set_aggressive(true);
-          SgBinaryFile* binaryFile = isSgBinaryFile(this);
+          SgBinaryComposite* binaryFile = isSgBinaryComposite(this);
           if (binaryFile != NULL)
              {
                binaryFile->set_aggressive(true);
@@ -2485,10 +2484,8 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
                            // printf ("isBinaryExecutable = %s isLibraryArchive = %s \n",isBinaryExecutable ? "true" : "false",isLibraryArchive ? "true" : "false");
                               if (isBinaryExecutable == true || isLibraryArchive == true)
                                  {
-                                // Build a SgBinaryFile to represent either the binary executable or the library archive.
-                                // file = new SgBinaryFile ( argv,  project );
-                                   SgBinaryFile* binaryFile = new SgBinaryFile ( argv,  project );
-                                // printf ("Done with call to new SgBinaryFile() \n");
+                                // Build a SgBinaryComposite to represent either the binary executable or the library archive.
+                                   SgBinaryComposite* binaryFile = new SgBinaryComposite ( argv,  project );
                                    file = binaryFile;
 
                                 // This should have already been setup!
@@ -2521,7 +2518,7 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
                                         ROSE_ASSERT(isBinaryExecutable == false);
 
                                      // Note that since a archive can contain many *.o files each of these will be a SgAsmGenericFile object and 
-                                     // the SgBinaryFile will contain a list of SgAsmFile objects to hold them all.
+                                     // the SgBinaryComposite will contain a list of SgAsmGenericFile objects to hold them all.
                                         string archiveName = file->get_sourceFileNameWithPath();
 
                                         printf ("archiveName = %s \n",archiveName.c_str());
@@ -3639,7 +3636,7 @@ SgSourceFile::callFrontEnd()
    }
 
 int
-SgBinaryFile::callFrontEnd()
+SgBinaryComposite::callFrontEnd()
    {
      int frontendErrorLevel = SgFile::callFrontEnd();
   // DQ (1/21/2008): This must be set for all languages
@@ -3656,7 +3653,7 @@ SgUnknownFile::callFrontEnd()
      return 0;
    }
 
-SgBinaryFile::SgBinaryFile ( vector<string> & argv ,  SgProject* project )
+SgBinaryComposite::SgBinaryComposite ( vector<string> & argv ,  SgProject* project )
     : p_genericFileList(NULL), p_interpretations(NULL)
 {
     p_interpretations = new SgAsmInterpretationList();
@@ -3669,13 +3666,13 @@ SgBinaryFile::SgBinaryFile ( vector<string> & argv ,  SgProject* project )
   // is easier, the more aggressive modes are still in development.
      p_aggressive = false;
 
-  // printf ("In the SgBinaryFile constructor \n");
+  // printf ("In the SgBinaryComposite constructor \n");
 
   // This constructor actually makes the call to EDG to build the AST (via callFrontEnd()).
-  // printf ("In SgBinaryFile::SgBinaryFile(): Calling doSetupForConstructor() \n");
+  // printf ("In SgBinaryComposite::SgBinaryComposite(): Calling doSetupForConstructor() \n");
      doSetupForConstructor(argv,  project);
 
-  // printf ("Leaving SgBinaryFile constructor \n");
+  // printf ("Leaving SgBinaryComposite constructor \n");
 }
 
 
@@ -3797,7 +3794,7 @@ SgSourceFile::doSetupForConstructor(const vector<string>& argv, SgProject* proje
    }
 
 void
-SgBinaryFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
+SgBinaryComposite::doSetupForConstructor(const vector<string>& argv, SgProject* project)
    {
      SgFile::doSetupForConstructor(argv, project);
    }
@@ -4494,7 +4491,7 @@ SgFile::callFrontEnd()
                ROSE_ASSERT(false);
 #endif
 
-            // DQ (9/2/2008): Factored out the details of building the AST for Source code (SgSourceFile IR node) and Binaries (SgBinaryFile IR node)
+            // DQ (9/2/2008): Factored out the details of building the AST for Source code (SgSourceFile IR node) and Binaries (SgBinaryComposite IR node)
             // Note that making buildAST() a virtual function does not appear to solve the problems since it is called form the base class.  This is 
             // awkward code which is temporary.
 
@@ -4510,9 +4507,9 @@ SgFile::callFrontEnd()
                          break;
                        }
 
-                    case V_SgBinaryFile:
+                    case V_SgBinaryComposite:
                        {
-                         SgBinaryFile* binaryFile = const_cast<SgBinaryFile*>(isSgBinaryFile(this));
+                         SgBinaryComposite* binaryFile = const_cast<SgBinaryComposite*>(isSgBinaryComposite(this));
                          frontendErrorLevel = binaryFile->buildAST(argv,inputCommandLine);
                          break;
                        }
@@ -4531,7 +4528,7 @@ SgFile::callFrontEnd()
             // printf ("After calling buildAST(): this->class_name() = %s \n",this->class_name().c_str());
 #if 0
                SgSourceFile* sourceFile = const_cast<SgSourceFile*>(isSgSourceFile(this));
-               SgBinaryFile* binaryFile = const_cast<SgBinaryFile*>(isSgBinaryFile(this));
+               SgBinaryComposite* binaryFile = const_cast<SgBinaryComposite*>(isSgBinaryComposite(this));
                if (binaryFile != NULL)
                   {
                     ROSE_ASSERT(sourceFile == NULL);
@@ -5475,9 +5472,9 @@ SgSourceFile::build_PHP_AST()
    }
 
 
-/* Parses a single binary file and adds a SgAsmGenericFile node under this SgBinaryFile node. */
+/* Parses a single binary file and adds a SgAsmGenericFile node under this SgBinaryComposite node. */
 void
-SgBinaryFile::buildAsmAST(string executableFileName)
+SgBinaryComposite::buildAsmAST(string executableFileName)
 {
     if ( get_verbose() > 0 || SgProject::get_verbose() > 0)
         printf ("Disassemble executableFileName = %s \n",executableFileName.c_str());
@@ -5514,18 +5511,18 @@ SgBinaryFile::buildAsmAST(string executableFileName)
 
 
 #if 0
-     printf ("At base of SgBinaryFile::buildAsmAST(): exiting... \n");
+     printf ("At base of SgBinaryComposite::buildAsmAST(): exiting... \n");
      ROSE_ASSERT(false);
 #endif
    }
 
 
-/* Builds the entire AST under the SgBinaryFile node:
+/* Builds the entire AST under the SgBinaryComposite node:
  *    - figures out what binary files are needed
  *    - parses binary container of each file (SgAsmGenericFile nodes)
  *    - optionally disassembles instructions (SgAsmInterpretation nodes) */
 int
-SgBinaryFile::buildAST(vector<string> /*argv*/, vector<string> /*inputCommandLine*/)
+SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputCommandLine*/)
 {
     if (get_isLibraryArchive()) {
         ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty() == false);
@@ -6957,7 +6954,7 @@ SgSourceFile::numberOfNodesInSubtree()
    }
 
 size_t
-SgBinaryFile::numberOfNodesInSubtree()
+SgBinaryComposite::numberOfNodesInSubtree()
    {
      return get_binaryFile()->numberOfNodesInSubtree() + 1;
    }

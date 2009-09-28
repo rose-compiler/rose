@@ -355,7 +355,7 @@ MallocAndFree::run(SgNode* fileA, SgNode* fileB) {
   SgAsmGenericFile* file = NULL;
   if (isSgProject(fileA)) {
     project=true;
-    SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
+    SgBinaryComposite* binaryFile = isSgBinaryComposite(isSgProject(fileA)->get_fileList()[0]);
     file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
     ROSE_ASSERT(file);
     info = new VirtualBinCFG::AuxiliaryInformation(file);

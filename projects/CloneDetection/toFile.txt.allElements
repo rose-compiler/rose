@@ -66,7 +66,7 @@ SgBinaryTypeQuadWord
 SgBinaryTypeSingleFloat
 SgBinaryTypeDoubleFloat
 SgBinaryTypeVector
-SgBinaryFile
+SgBinaryComposite
 SgSymbolTable
 SgInitializedName
 SgName

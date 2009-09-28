@@ -341,7 +341,7 @@ MySynthesizedAttribute
     {
  // case V_SgFile:
     case V_SgSourceFile:
-    case V_SgBinaryFile:
+    case V_SgBinaryComposite:
       {
 	//set filename information
 	SgFile *sageFile = isSgFile (astNode);

@@ -14,7 +14,7 @@ namespace Ui { class SrcBinView; }
 class SgNode;
 class SgProject;
 class SgNode;
-class SgBinaryFile;
+class SgBinaryComposite;
 class SgSourceFile;
 
 class QDropEvent;
@@ -70,7 +70,7 @@ class SrcBinView : public QWidget
     private:
         Ui::SrcBinView *srcBinView;
 
-        SgBinaryFile *binFile;
+        SgBinaryComposite *binFile;
         SgSourceFile *srcFile;
 
         void fillMap( SgNode *node );

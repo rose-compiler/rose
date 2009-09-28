@@ -92,11 +92,11 @@ Grammar::setUpSupport ()
   // can be related to a source file (and many source files).  The mapping is left
   // to an analysis phase to define and not defined in the structure of the AST.
      NEW_TERMINAL_MACRO (SourceFile, "SourceFile", "SourceFileTag" );
-     NEW_TERMINAL_MACRO (BinaryFile, "BinaryFile", "BinaryFileTag" );
+     NEW_TERMINAL_MACRO (BinaryComposite, "BinaryComposite", "BinaryCompositeTag" );
      NEW_TERMINAL_MACRO (UnknownFile, "UnknownFile", "UnknownFileTag" );
 
   // Mark this as being able to be an IR node for now and later make it false.
-     NEW_NONTERMINAL_MACRO (File, SourceFile | BinaryFile | UnknownFile , "File", "FileTag", false);
+     NEW_NONTERMINAL_MACRO (File, SourceFile | BinaryComposite | UnknownFile , "File", "FileTag", false);
 #endif
      NEW_TERMINAL_MACRO (FileList, "FileList", "FileListTag" );
      NEW_TERMINAL_MACRO (Directory, "Directory", "DirectoryTag" );
@@ -518,7 +518,7 @@ Grammar::setUpSupport ()
      SourceFile.setFunctionPrototype          ( "HEADER_APPLICATION_SOURCE_FILE", "../Grammar/Support.code");
   // SourceFile.setAutomaticGenerationOfConstructor(false);
 
-     BinaryFile.setFunctionPrototype          ( "HEADER_APPLICATION_BINARY_FILE", "../Grammar/Support.code");
+     BinaryComposite.setFunctionPrototype          ( "HEADER_APPLICATION_BINARY_FILE", "../Grammar/Support.code");
 
      UnknownFile.setFunctionPrototype          ( "HEADER_APPLICATION_UNKNOWN_FILE", "../Grammar/Support.code");
 
@@ -1085,9 +1085,9 @@ Grammar::setUpSupport ()
   // To be consistant with the use of binaryFile we will implement get_binaryFile() and set_binaryFile()
   // functions so that we can support the more common (previous) interface where there was only a single
   // SgAsmFile pointers called "binaryFile".
-     BinaryFile.setDataPrototype("SgAsmGenericFileList*", "genericFileList", "= NULL",
+     BinaryComposite.setDataPrototype("SgAsmGenericFileList*", "genericFileList", "= NULL",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     BinaryFile.setDataPrototype("SgAsmInterpretationList*","interpretations","= NULL",
+     BinaryComposite.setDataPrototype("SgAsmInterpretationList*","interpretations","= NULL",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (11/5/2008): This should maybe be added to the SgAsmGenericFile instead of the SgBinaryFile, if so
@@ -1146,7 +1146,7 @@ Grammar::setUpSupport ()
   // built using compilers and intended for debugging follow more rules than arbitrary binaries.
   // File.setDataPrototype         ( "bool", "aggressive", "= false",
   //             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     BinaryFile.setDataPrototype         ( "bool", "aggressive", "= false",
+     BinaryComposite.setDataPrototype         ( "bool", "aggressive", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
@@ -1970,7 +1970,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
      DirectoryList.setFunctionSource   ( "SOURCE_APPLICATION_DIRECTORY_LIST", "../Grammar/Support.code");
      File.setFunctionSource            ( "SOURCE_APPLICATION_FILE", "../Grammar/Support.code");
      SourceFile.setFunctionSource      ( "SOURCE_APPLICATION_SOURCE_FILE", "../Grammar/Support.code");
-     BinaryFile.setFunctionSource      ( "SOURCE_APPLICATION_BINARY_FILE", "../Grammar/Support.code");
+     BinaryComposite.setFunctionSource ( "SOURCE_APPLICATION_BINARY_FILE", "../Grammar/Support.code");
      FileList.setFunctionSource        ( "SOURCE_APPLICATION_FILE_LIST", "../Grammar/Support.code");
      UnknownFile.setFunctionSource     ( "SOURCE_APPLICATION_UNKNOWN_FILE", "../Grammar/Support.code");
 

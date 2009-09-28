@@ -27,7 +27,7 @@ void BinQAbstract::init(){
   ROSE_ASSERT(fileA);
 
   if (isSgProject(fileA)) {
-    SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
+    SgBinaryComposite* binaryFile = isSgBinaryComposite(isSgProject(fileA)->get_fileList()[0]);
     SgAsmGenericFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
     ROSE_ASSERT(file);
     info = new VirtualBinCFG::AuxiliaryInformation(file);

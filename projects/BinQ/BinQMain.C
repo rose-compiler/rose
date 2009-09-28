@@ -26,7 +26,7 @@ printAssembly(string fileNameA, string fileNameB, SgNode* fileA, SgNode* fileB,
   // this part writes the file out to an assembly file -----------------------------------
 
   if(is_directory( fileNameA ) == false ) {
-    SgBinaryFile* binaryFileA = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
+    SgBinaryComposite* binaryFileA = isSgBinaryComposite(isSgProject(fileA)->get_fileList()[0]);
     SgAsmGenericFile* file1 = binaryFileA != NULL ? binaryFileA->get_binaryFile() : NULL;
     SgAsmInterpretation* interpA = SageInterface::getMainInterpretation(file1);
 
@@ -49,7 +49,7 @@ printAssembly(string fileNameA, string fileNameB, SgNode* fileA, SgNode* fileB,
 
   if (fileNameB!="") 
     if(is_directory( fileNameB  ) == false && sourceFile==false) {
-      SgBinaryFile* binaryFileB = isSgBinaryFile(isSgProject(fileB)->get_fileList()[0]);
+      SgBinaryComposite* binaryFileB = isSgBinaryComposite(isSgProject(fileB)->get_fileList()[0]);
       SgAsmGenericFile* file2 = binaryFileB != NULL ? binaryFileB->get_binaryFile() : NULL;
       SgAsmInterpretation* interpB = SageInterface::getMainInterpretation(file2);
       unparseAsmStatementToFile(fileNameB+".dump2", interpB->get_global_block());

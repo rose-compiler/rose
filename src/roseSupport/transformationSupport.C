@@ -2118,14 +2118,14 @@ TransformationSupport::getSourceFile( const SgNode* astNode )
      return const_cast<SgSourceFile*>(file);
    }
 
-// DQ (9/3/2008): This used to use SgFile and was switched to use SgBinaryFile.
-SgBinaryFile*
+// DQ (9/3/2008): This used to use SgFile and was switched to use SgBinaryComposite.
+SgBinaryComposite*
 TransformationSupport::getBinaryFile( const SgNode* astNode )
    {
      ROSE_ASSERT(astNode != NULL);
 
      const SgNode* parentNode = astNode;
-     while ( (isSgBinaryFile(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
+     while ( (isSgBinaryComposite(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
         {
           parentNode = parentNode->get_parent();
         }
@@ -2134,31 +2134,31 @@ TransformationSupport::getBinaryFile( const SgNode* astNode )
   // not associated with a primary AST can be used with this function!
   // Check to see if we made it back to the root (current root is SgProject).
   // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
-     if ( isSgBinaryFile(parentNode) == NULL &&
+     if ( isSgBinaryComposite(parentNode) == NULL &&
           dynamic_cast<const SgType*>(parentNode) == NULL &&
           dynamic_cast<const SgSymbol*>(parentNode) == NULL )
         {
-       // printf ("Error: could not trace back to SgBinaryFile node \n");
+       // printf ("Error: could not trace back to SgBinaryComposite node \n");
        // ROSE_ASSERT(false);
         }
        else
         {
           if ( dynamic_cast<const SgType*>(parentNode) != NULL || dynamic_cast<const SgSymbol*>(parentNode) != NULL )
              {
-               printf ("Error: can't locate an associated SgBinaryFile from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
+               printf ("Error: can't locate an associated SgBinaryComposite from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
                return NULL;
              }
         }
 
 
-  // Make sure we have a SgBinaryFile node
-     const SgBinaryFile* file = isSgBinaryFile(parentNode);
+  // Make sure we have a SgBinaryComposite node
+     const SgBinaryComposite* file = isSgBinaryComposite(parentNode);
 
   // DQ (8/2/2005): Allow to return NULL
   // ROSE_ASSERT (file != NULL);
 
   // return file;
-     return const_cast<SgBinaryFile*>(file);
+     return const_cast<SgBinaryComposite*>(file);
    }
 
 SgGlobal*

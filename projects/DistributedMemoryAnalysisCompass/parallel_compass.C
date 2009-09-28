@@ -339,7 +339,7 @@ int main(int argc, char **argv)
   CountingOutputObject  outputs ;
 
   bool isBinaryInput=true;
-  SgBinaryFile* binFile = isSgBinaryFile(root->get_fileList()[0]);
+  SgBinaryComposite* binFile = isSgBinaryComposite(root->get_fileList()[0]);
 
   //ROSE_ASSERT(binFile);
   SgAsmGenericFile* file = binFile != NULL ? binFile->get_binaryFile() : NULL;

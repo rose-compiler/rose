@@ -39,7 +39,7 @@ BinCallGraph::run(SgNode* fileA, SgNode* fileB) {
 
   RoseBin_Graph* graph=NULL;
   ROSE_ASSERT(isSgProject(fileA));
-  SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
+  SgBinaryComposite* binaryFile = isSgBinaryComposite(isSgProject(fileA)->get_fileList()[0]);
   SgAsmGenericFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
   ROSE_ASSERT(file);
 

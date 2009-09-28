@@ -923,7 +923,7 @@ parseBinaryFile(std::string name) {
   }
   
 #if 0
-  SgBinaryFile* binFile = isSgBinaryFile(project->get_fileList()[0]);
+  SgBinaryComposite* binFile = isSgBinaryComposite(project->get_fileList()[0]);
   if (binFile==NULL)
     return NULL;
   //  SgAsmFile* file = binFile->get_binaryFile();

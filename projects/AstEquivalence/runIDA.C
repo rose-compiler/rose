@@ -242,7 +242,7 @@ main(int argc, char** argv)
         SgFile* file = (*project)[i];
         std::cout << "B" << std::endl;
 
-        if( isSgBinaryFile(file) ){
+        if( isSgBinaryComposite(file) ){
           std::string filename = file->getFileName(); 
 
           std::cout << "B " << filename << std::endl;

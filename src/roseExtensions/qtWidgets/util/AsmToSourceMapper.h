@@ -178,7 +178,7 @@ class AsmToSourceMapper
 
         /// Constructor, extracts the dwarf information from the binary
         /// and stores them in
-        AsmToSourceMapper( SgBinaryFile *file );
+        AsmToSourceMapper( SgBinaryComposite *file );
         
         
         /// This function annotates the Source and the binary AST with the
@@ -193,7 +193,7 @@ class AsmToSourceMapper
         /// to more than one dwarf line information
         std::multiset<AsmMappingInfo> asmMappingInfos;
 
-        SgBinaryFile *file;
+        SgBinaryComposite *file;
 
         void addFile();
 

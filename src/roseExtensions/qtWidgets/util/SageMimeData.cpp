@@ -70,7 +70,7 @@ QMimeData *createSageMimeData( SgNode *node )
         if( !d_.isEmpty() ) data->setData( SG_NODE_BINARY_MIMETYPE, d_ );
     }
 
-    if( isSgBinaryFile( parent ) )
+    if( isSgBinaryComposite( parent ) )
     {
         data->setData( SG_NODE_BINARY_MIMETYPE, d );
         

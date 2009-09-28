@@ -38,7 +38,7 @@ BinDataFlowAnalysis::run(SgNode* fileA, SgNode* fileB) {
 
   graph=NULL;
   ROSE_ASSERT(isSgProject(fileA));
-  SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
+  SgBinaryComposite* binaryFile = isSgBinaryComposite(isSgProject(fileA)->get_fileList()[0]);
   SgAsmGenericFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
   ROSE_ASSERT(file);
 
@@ -85,7 +85,7 @@ BinDataFlowAnalysis::test(SgNode* fileA, SgNode* fileB) {
 
   graph=NULL;
   ROSE_ASSERT(isSgProject(fileA));
-  SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
+  SgBinaryComposite* binaryFile = isSgBinaryComposite(isSgProject(fileA)->get_fileList()[0]);
   SgAsmGenericFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
   ROSE_ASSERT(file);
 

@@ -128,8 +128,7 @@ Traversal::run ( SgNode* node )
 static void run(Compass::Parameters params, Compass::OutputObject* output) {
   //  CompassAnalyses::BinaryInterruptAnalysis::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
 
-  // DQ (9/3/2008): Using new SgBinaryFile IR node.
-  SgBinaryFile* binaryFile = isSgBinaryFile(Compass::projectPrerequisite.getProject()->get_fileList()[0]);
+  SgBinaryComposite* binaryFile = isSgBinaryComposite(Compass::projectPrerequisite.getProject()->get_fileList()[0]);
   SgAsmGenericFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
 
   if (file==NULL)

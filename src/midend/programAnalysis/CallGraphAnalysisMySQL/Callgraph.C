@@ -196,10 +196,10 @@ CallgraphTraversal::evaluateInheritedAttribute (
 	switch(astNode->variantT())
 	{
    // case V_SgFile:
-   // case V_SgBinaryFile:
+   // case V_SgBinaryComposite:
       case V_SgSourceFile:
         {
-			cerr << " found V_SgSourceFile or SgBinaryFile" << endl; // debug
+			cerr << " found V_SgSourceFile or SgBinaryComposite" << endl; // debug
 			// found a file node
 
       // DQ (9/2/2008): Modified to support SgSourceFile IR node

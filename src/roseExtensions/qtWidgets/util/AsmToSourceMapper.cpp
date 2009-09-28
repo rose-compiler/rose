@@ -39,7 +39,7 @@ struct compare_address
 #endif
 
 
-AsmToSourceMapper::AsmToSourceMapper( SgBinaryFile *file_ )
+AsmToSourceMapper::AsmToSourceMapper( SgBinaryComposite *file_ )
     : file( file_ )
 {
     addFile();

@@ -259,7 +259,7 @@ void SrcBinView::dropEvent( QDropEvent *ev )
     delete ctxMenu;*/
 
     srcFile = dynamic_cast<SgSourceFile *>( getSgFile( srcNodes.at( 0 ) ) );
-    binFile = dynamic_cast<SgBinaryFile *>( getSgFile( binNodes.at( 0 ) ) );
+    binFile = dynamic_cast<SgBinaryComposite *>( getSgFile( binNodes.at( 0 ) ) );
     
     AsmToSourceMapper map( binFile );
     map.annotate( srcFile );
