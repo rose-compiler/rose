@@ -43,6 +43,12 @@ mytempfile=ttt$$
 # svn log -l 100 file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE > $mytempfile
 # ${SVN} log --limit 100 file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE > $mytempfile
 
+# DQ (9/28/2009): Note that "-l" is not in svn 1.4 (where it is "--limit") and even 
+# "--limit" is not in older versions of SVN.  So since this is such a problem, output
+# the version of SVN so that if it fails we can better debug this.  Many machines have
+# quite old versions of SVN installed by default.
+${SVN} --version
+
 # DQ (9/27/2009): for the Mac OSX we are not directly connected to the LC so the reference 
 # to file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE fails and we have to use:
 # svn+ssh://tux270.llnl.gov/usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
