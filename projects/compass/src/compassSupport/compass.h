@@ -227,10 +227,13 @@ namespace Compass {
   public:
     std::string name;
     mutable bool done;
-  Prerequisite(const std::string& name): name(name), done(false) {}
+    Prerequisite(const std::string& input_name): name(input_name), done(false) {}
     virtual PrerequisiteList getPrerequisites() const = 0;
     virtual void run(SgProject* proj) = 0;
-    virtual ~Prerequisite() {}
+
+ // DQ (9/28/2009): Having memory problems that are GNU 4.3 specific (reported by Valgrind).
+ // This appears to fix a memory problem, though it is not clear why.
+    virtual ~Prerequisite() { name = ""; }
   };
 
   /// The basic class with metadata about a checker.  Most checkers will be

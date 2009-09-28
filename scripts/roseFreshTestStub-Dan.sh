@@ -27,6 +27,10 @@ export PATH="/usr/apps/automake/1.9.6/bin:$PATH"
 # the "svn log -l 100" or "svn log --limit 100" optional parameters.
 export PATH="/nfs/apps/subversion/1.5.1/bin:$PATH"
 
+# Added as a test
+# svn --version
+# exit 1
+
 #export PATH="/home/dquinlan/swig-install/bin:$PATH"
 #export BOOST_ROOT="/home/dquinlan/local/boost_1_35_0_install"
 export BOOST_ROOT="/home/dquinlan/local/boost_1_37_0_installTree-gxx-4.2.2"
