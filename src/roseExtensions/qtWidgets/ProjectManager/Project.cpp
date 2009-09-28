@@ -522,7 +522,7 @@ QVariant BinaryFileHeaderNode::data(int role, int column) const
 BinaryFileNode::~BinaryFileNode()
 {
     SgProject * proj = dynamic_cast<ProjectNode*>(getParent()->getParent() )->getSgProject();
-    deleteFileFromProject(sgBinaryFile,proj);
+    deleteFileFromProject(sgBinaryComposite,proj);
 }
 
 // -------------------------- BinaryFileNode--- -----------------------------------
@@ -530,7 +530,7 @@ BinaryFileNode::~BinaryFileNode()
 
 
 BinaryFileNode::BinaryFileNode(const QString & _path)
-    : path(_path),compileTask(NULL),frontendTask(NULL),sgBinaryFile(NULL)
+    : path(_path),compileTask(NULL),frontendTask(NULL),sgBinaryComposite(NULL)
 {
     QFileInfo fileInfo(path);
     path=fileInfo.absoluteFilePath();
@@ -572,8 +572,8 @@ void BinaryFileNode::submitCompileTask()
 void BinaryFileNode::rebuild()
 {
     ProjectNode * pn = dynamic_cast<ProjectNode*>(getParent()->getParent() );
-    deleteFileFromProject(sgBinaryFile,pn->getSgProject());
-    sgBinaryFile=NULL;
+    deleteFileFromProject(sgBinaryComposite,pn->getSgProject());
+    sgBinaryComposite=NULL;
 
     if(sourceFiles.isEmpty())
         submitFrontendTask();
@@ -594,11 +594,11 @@ void BinaryFileNode::submitFrontendTask()
 
 void BinaryFileNode::frontendTaskFinished()
 {
-    Q_ASSERT(!sgBinaryFile);
+    Q_ASSERT(!sgBinaryComposite);
     if( frontendTask->getState() == Task::FINISHED_SUCCESS )
     {
-        sgBinaryFile = dynamic_cast<SgBinaryComposite*>(frontendTask->getResult());
-        Q_ASSERT(sgBinaryFile);
+        sgBinaryComposite = dynamic_cast<SgBinaryComposite*>(frontendTask->getResult());
+        Q_ASSERT(sgBinaryComposite);
     }
 
 
@@ -607,7 +607,7 @@ void BinaryFileNode::frontendTaskFinished()
     // task is deleted by TaskList
     frontendTask=NULL;
 
-    BAstNode::generate(sgBinaryFile,NULL,this);
+    BAstNode::generate(sgBinaryComposite,NULL,this);
 }
 
 void BinaryFileNode::buildTaskFinished()
@@ -631,7 +631,7 @@ QVariant BinaryFileNode::data(int role, int column) const
 
     if      (role == Qt::DisplayRole)      return filename;
     else if (role == Qt::DecorationRole )  return QIcon(":/util/NodeIcons/binaryfile.gif");
-    else if (role == SgNodeRole)           return QVariant::fromValue((SgNode*)sgBinaryFile);
+    else if (role == SgNodeRole)           return QVariant::fromValue((SgNode*)sgBinaryComposite);
 
 
     return QVariant();
