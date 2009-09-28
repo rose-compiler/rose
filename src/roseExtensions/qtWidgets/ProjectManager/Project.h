@@ -264,7 +264,7 @@ class BinaryFileNode : public QObject, public ItemTreeNode
 
         virtual QVariant data(int role, int column=0) const;
 
-        SgBinaryComposite *getSgBinaryComposite() const { return sgBinaryComposite; }
+        SgBinaryComposite *getSgBinaryComposite() const { return sgBinaryFile; }
 
         virtual void rebuild();
 
