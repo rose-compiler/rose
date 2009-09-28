@@ -85,5 +85,5 @@ fi
 ${SVN} add ${checkoutDir}/${binaryEdgTarball}
 ${SVN} status ${checkoutDir}
 # Liao, 9/25/2009 the last field of the commit message must be a revision number only, without period or so.
-${SVN} commit -m"Automatic updates of binary EDG tarballs based on rev ${revisionNumber}" ${checkoutDir}
+${SVN} commit -m"Automatic updates of binary EDG tarballs based on rev ${revisionNumber} for ${buildTriplet}-${buildCompiler}" ${checkoutDir}
 rm -rf ${checkoutDir}
