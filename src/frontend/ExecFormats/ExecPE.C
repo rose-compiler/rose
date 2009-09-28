@@ -803,6 +803,14 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     if (variantT() == V_SgAsmPEFileHeader) //unless a base class
         hexdump(f, 0, std::string(p)+"data at ", p_data);
+
+    /* Show the simulated loader memory map */
+    const MemoryMap *map = get_loader_map();
+    if (map) {
+        map->dump(f, (std::string(p)+"loader_map: ").c_str());
+    } else {
+        fprintf(f, "%s%-*s = not defined\n", p, w, "loader_map");
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -971,7 +979,7 @@ SgAsmPESectionTable::parse()
     ROSE_ASSERT(NULL==fhdr->get_loader_map());
     Loader *loader = Loader::find_loader(fhdr);
     ROSE_ASSERT(loader!=NULL);
-    MemoryMap *loader_map = loader->map_all_sections(fhdr);
+    MemoryMap *loader_map = loader->map_all_sections(NULL, fhdr);
     fhdr->set_loader_map(loader_map);
 
     /* Parse each section after the loader map is created */
@@ -1459,7 +1467,7 @@ SgAsmPEImportLookupTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 void
 SgAsmPEImportHNTEntry::ctor(SgAsmPEImportSection *isec, rva_t rva)
 {
-    SgAsmGenericHeader *fhdr = isec->get_header();
+    SgAsmPEFileHeader *fhdr = isSgAsmPEFileHeader(isec->get_header());
     ROSE_ASSERT(fhdr!=NULL);
 
     /* Hint */
@@ -1689,7 +1697,7 @@ SgAsmPEImportSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 void
 SgAsmPEExportDirectory::ctor(SgAsmPEExportSection *section)
 {
-    SgAsmGenericHeader *fhdr = section->get_header();
+    SgAsmPEFileHeader *fhdr = isSgAsmPEFileHeader(section->get_header());
     ROSE_ASSERT(fhdr!=NULL);
     set_parent(section);
 

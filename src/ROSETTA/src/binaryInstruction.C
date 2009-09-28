@@ -519,22 +519,16 @@ Grammar::setUpBinaryInstructions ()
 
 
      AsmInterpretation.setFunctionPrototype("HEADER_INTERPRETATION", "../Grammar/BinaryInstruction.code");
+     AsmInterpretation.setPredeclarationString("HEADER_INTERPRETATION_PREDECLARATION", "../Grammar/BinaryInstruction.code");
+     AsmInterpretation.setAutomaticGenerationOfConstructor(false);
   // DQ (11/6/2008): Moved Dwarf support to AsmInterpretation from SgBinaryFile. Moved ahead of the
   // SgAsmGenericHeader so that maps (of instructions to source) built in the Dwarf section can be
   // used in analysis in the instruction sections. since Dwarf is meant to be read-only (at least
   // for now) this is a simpler design and avoids redundant traversals.
      AsmInterpretation.setDataPrototype("SgAsmDwarfCompilationUnitList*","dwarf_info","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
-  // DQ (8/13/2008): Required data member for Jeremiah's ROSE/projects/assemblyToSourceAst/x86AssemblyToC.C
-  // DQ (8/13/2008): This needs to be removed once the x86AssemblyToC.C file is fixed up to not require it.
-  // This is redundant with the more complete information in the SgAsmGenericSections of the binary file format.
-  // JJW (8/28/2008): Removing this
-  // AsmInterpretation.setDataPrototype("rose_addr_t", "associated_entry_point","= 0",
-  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmInterpretation.setDataPrototype("SgAsmGenericHeader*", "header", "= NULL",
+     AsmInterpretation.setDataPrototype("SgAsmGenericHeaderList*", "headers", "= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
   // This is where the instructions are put...(put it last so the instructions are traversed last, after the binary file format)
      AsmInterpretation.setDataPrototype("SgAsmBlock*","global_block","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);

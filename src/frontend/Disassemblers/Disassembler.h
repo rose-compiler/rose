@@ -373,15 +373,10 @@ public:
     InstructionMap disassembleSection(SgAsmGenericSection *section, rose_addr_t section_va, rose_addr_t start_offset,
                                       AddressSet *successors=NULL, BadMap *bad=NULL);
 
-    /** Disassembles instructions in all code-containing sections of a particular executable file header according to the
+    /** Disassembles instructions in all code-containing sections of a particular binary interpretation according to the
      *  aggressiveness set for this Disassembler object.  All other aspects of this method are similar to the
      *  disassembleBuffer method. */
-    InstructionMap disassembleInterp(SgAsmGenericHeader *header,
-                                     AddressSet *successors=NULL, BadMap *bad=NULL);
-    InstructionMap disassembleInterp(SgAsmInterpretation *interp,
-                                     AddressSet *successors=NULL, BadMap *bad=NULL) {
-        return disassembleInterp(interp->get_header(), successors, bad);
-    }
+    InstructionMap disassembleInterp(SgAsmInterpretation *interp, AddressSet *successors=NULL, BadMap *bad=NULL);
 
 
 
@@ -426,7 +421,7 @@ public:
     virtual SgAsmInstruction *make_unknown_instruction(const Exception&) = 0;
 
     /** Marks parts of the file that correspond to instructions as having been referenced. */
-    void mark_referenced_instructions(SgAsmGenericFile*, const MemoryMap*, const InstructionMap&);
+    void mark_referenced_instructions(SgAsmInterpretation*, const MemoryMap*, const InstructionMap&);
 
 private:
     /** Initialize class (e.g., register built-in disassemblers). */

@@ -3326,14 +3326,6 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
     fputs("\"\n", f);
 
-    /* Show the simulated loader memory map */
-    const MemoryMap *map = get_loader_map();
-    if (map) {
-        map->dump(f, (std::string(p)+"loader_map: ").c_str());
-    } else {
-        fprintf(f, "%s%-*s = not defined\n", p, w, "loader_map");
-    }
-
     /* Base virtual address and entry addresses */
     fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "base_va", get_base_va(), get_base_va());
     fprintf(f, "%s%-*s = %zu entry points\n", p, w, "entry_rva.size", p_entry_rvas.size());
@@ -4188,21 +4180,6 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
         }
     } t1;
     t1.traverse(ef, preorder);
-    
-    /* Simulate the memory map that would have been created by the loader. There is one per file header. If this was
-     * calculated already then don't do anything here. */
-    struct: public AstSimpleProcessing {
-        void visit(SgNode *node) {
-            SgAsmGenericHeader *fhdr = isSgAsmGenericHeader(node);
-            if (fhdr!=NULL && NULL==fhdr->get_loader_map()) {
-                Loader *loader = Loader::find_loader(fhdr);
-                ROSE_ASSERT(loader!=NULL);
-                MemoryMap *loader_map = loader->map_all_sections(fhdr);
-                fhdr->set_loader_map(loader_map);
-            }
-        }
-    } t2;
-    t2.traverse(ef, preorder);
     
     return ef;
 }

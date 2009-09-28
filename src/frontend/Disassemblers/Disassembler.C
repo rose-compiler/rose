@@ -41,7 +41,15 @@ Disassembler::register_subclass(Disassembler *factory)
 Disassembler *
 Disassembler::create(SgAsmInterpretation *interp)
 {
-    return create(interp->get_header());
+    Disassembler *retval=NULL;
+    const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+    for (size_t i=0; i<headers.size(); i++) {
+        Disassembler *candidate = create(headers[i]);
+        if (retval && retval!=candidate)
+            throw Exception("interpretation has multiple disassemblers");
+        retval = candidate;
+    }
+    return retval;
 }
 
 /* Class factory method */
@@ -63,11 +71,9 @@ Disassembler::create(SgAsmGenericHeader *header)
 void
 Disassembler::disassemble(SgAsmInterpretation *interp, AddressSet *successors, BadMap *bad)
 {
-    SgAsmGenericHeader *header = interp->get_header();
-    ROSE_ASSERT(header);
-    InstructionMap insns = disassembleInterp(header, successors, bad);
+    InstructionMap insns = disassembleInterp(interp, successors, bad);
     Partitioner *p = p_partitioner ? p_partitioner : new Partitioner;
-    SgAsmBlock *top = p->partition(header, insns);
+    SgAsmBlock *top = p->partition(interp, insns);
     interp->set_global_block(top);
     top->set_parent(interp);
     if (!p_partitioner)
@@ -476,66 +482,102 @@ Disassembler::disassembleSection(SgAsmGenericSection *section, rose_addr_t secti
     return disassembleBuffer(&map, section_va+start_offset, successors, bad);
 }
 
-/* Disassemble instructions reachable from a file header. */
+/* Disassemble instructions for an interpretation (set of headers) */
 Disassembler::InstructionMap
-Disassembler::disassembleInterp(SgAsmGenericHeader *header, AddressSet *successors, BadMap *bad)
+Disassembler::disassembleInterp(SgAsmInterpretation *interp, AddressSet *successors, BadMap *bad)
 {
+    const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
     AddressSet worklist;
+    MemoryMap *map = new MemoryMap();
+    
+    for (size_t i=0; i<headers.size(); i++) {
+        /* Seed disassembly with entry points. */
+        SgRVAList entry_rvalist = headers[i]->get_entry_rvas();
+        for (size_t j=0; j<entry_rvalist.size(); j++) {
+            rose_addr_t entry_va = entry_rvalist[j].get_rva() + headers[i]->get_base_va();
+            worklist.insert(entry_va);
+        }
 
-    /* Decide which sections should be disassembled. */
-    Loader *loader = Loader::find_loader(header);
-    MemoryMap *map = NULL;
-    if (p_search & SEARCH_NONEXE) {
-        map = loader->map_all_sections(header->get_sections()->get_sections());
-    } else {
-        map = loader->map_code_sections(header->get_sections()->get_sections());
+        /* Seed disassembly with function entry points. */
+        if (p_search & SEARCH_FUNCSYMS)
+            search_function_symbols(&worklist, map, headers[i]);
+
+        /* Incrementally build the map describing the relationship between virtual memory and binary file(s). */
+        Loader *loader = Loader::find_loader(headers[i]);
+        if (p_search & SEARCH_NONEXE) {
+            loader->map_all_sections(map, headers[i]->get_sections()->get_sections());
+        } else {
+            loader->map_code_sections(map, headers[i]->get_sections()->get_sections());
+        }
     }
+    interp->set_map(map);
 
-    /* Show final virtual address map */
     if (p_debug) {
-        fprintf(stderr, "Disassembler: final virtual address to file offset mapping for disassembly:\n");
+        fprintf(p_debug, "Disassembler: MemoryMap for disassembly:\n");
         map->dump(p_debug, "    ");
     }
-
-    /* Seed the disassembly with the entry point(s) stored in the file header. */
-    SgRVAList entry_rvalist = header->get_entry_rvas();
-    for (size_t i=0; i<entry_rvalist.size(); i++) {
-        rose_addr_t entry_va = entry_rvalist[i].get_rva() + header->get_base_va();
-        worklist.insert(entry_va);
-    }
-
-    /* Optionally seed the disassembly with starting address of all known functions. */
-    if (p_search & SEARCH_FUNCSYMS)
-        search_function_symbols(&worklist, map, header);
 
     /* Disassemble all that we've mapped, according to aggressiveness settings. */
     InstructionMap retval = disassembleBuffer(map, worklist, successors, bad);
 
     /* Mark the parts of the file corresponding to the instructions as having been referenced, since this is part of parsing. */
-    SgAsmGenericFile *file = header->get_file();
-    bool was_tracking = file->get_tracking_references();
-    file->set_tracking_references(true);
-    try {
-        mark_referenced_instructions(file, map, retval);
-    } catch(...) {
-        file->set_tracking_references(was_tracking);
-        throw;
-    }
-    file->set_tracking_references(was_tracking);
-
+    mark_referenced_instructions(interp, map, retval);
     return retval;
 }
-
+        
 /* Re-read instruction bytes from file if necessary in order to mark them as referenced. */
 void
-Disassembler::mark_referenced_instructions(SgAsmGenericFile *file, const MemoryMap *map, const InstructionMap &insns)
+Disassembler::mark_referenced_instructions(SgAsmInterpretation *interp, const MemoryMap *map, const InstructionMap &insns)
 {
-    if (file->get_tracking_references()) {
-        unsigned char buf[32];
+    unsigned char buf[32];
+    const MemoryMap::MapElement *me = NULL;
+    SgAsmGenericFile *file = NULL;
+    const SgAsmGenericFilePtrList &files = interp->get_files();
+    bool was_tracking;
+
+    try {
         for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
             SgAsmInstruction *insn = ii->second;
             ROSE_ASSERT(insn->get_raw_bytes().size()<=sizeof buf);
-            file->read_content(map, insn->get_address(), buf, insn->get_raw_bytes().size(), false);
+            rose_addr_t va = insn->get_address();
+            size_t nbytes = insn->get_raw_bytes().size();
+
+            while (nbytes>0) {
+                /* Find the map element and the file that goes with that element (if any) */
+                if (!me || va<me->get_va() || va>=me->get_va()+me->get_size()) {
+                    if (file)
+                        file->set_tracking_references(was_tracking);
+                    file = NULL;
+                    me = map->find(insn->get_address());
+                    ROSE_ASSERT(me!=NULL);
+                    if (me->is_anonymous())
+                        break;
+                    for (size_t i=0; i<files.size(); i++) {
+                        if (&(files[i]->get_data()[0]) == me->get_base()) {
+                            file = files[i];
+                            was_tracking = file->get_tracking_references();
+                            file->set_tracking_references(true);
+                            break;
+                        }
+                    }
+                    ROSE_ASSERT(file);
+                }
+
+                /* Read the file */
+                size_t me_offset = va - me->get_va();
+                size_t n = std::min(nbytes, me->get_size()-me_offset);
+                if (file) {
+                    size_t file_offset = me->get_offset() + me_offset;
+                    file->read_content(file_offset, buf, n);
+                }
+                nbytes -= n;
+            }
         }
+        if (file)
+            file->set_tracking_references(was_tracking);
+    } catch(...) {
+        if (file)
+            file->set_tracking_references(was_tracking);
+        throw;
     }
 }

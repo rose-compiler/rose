@@ -74,63 +74,75 @@ public:
      *------------------------------------------------------------------------------------------------------------------------*/
 public:
 
-    /** Creates a map containing all mappable sections in the file. */
-    virtual MemoryMap *map_all_sections(SgAsmGenericFile *file, bool allow_overmap=true) {
-        return map_all_sections(file->get_sections(), allow_overmap);
+    /** Creates a map containing all mappable sections in the file. If @p map is non-null then it will be modified in place
+     *  and returned, otherwise a new map is created. */
+    virtual MemoryMap *map_all_sections(MemoryMap *map, SgAsmGenericFile *file, bool allow_overmap=true) {
+        return map_all_sections(map, file->get_sections(), allow_overmap);
     }
 
-    /** Creates a map containing all mappable sections in a file header. */
-    virtual MemoryMap *map_all_sections(SgAsmGenericHeader *fhdr, bool allow_overmap=true) {
-        return map_all_sections(fhdr->get_sections()->get_sections(), allow_overmap);
+    /** Creates a map containing all mappable sections in a file header. If @p map is non-null then it will be modified in place
+     *  and returned, otherwise a new map is created. */
+    virtual MemoryMap *map_all_sections(MemoryMap *map, SgAsmGenericHeader *fhdr, bool allow_overmap=true) {
+        return map_all_sections(map, fhdr->get_sections()->get_sections(), allow_overmap);
     }
 
-    /** Creates a map containing the specified sections (if they are mapped). */
-    virtual MemoryMap *map_all_sections(const SgAsmGenericSectionPtrList &sections, bool allow_overmap=true);
+    /** Creates a map containing the specified sections (if they are mapped). If @p map is non-null then it will be modified
+     *  in place and returned, otherwise a new map is created. */
+    virtual MemoryMap *map_all_sections(MemoryMap*, const SgAsmGenericSectionPtrList &sections, bool allow_overmap=true);
 
 
 
-    /** Creates a map for all code-containing sections in the file. */
-    virtual MemoryMap *map_code_sections(SgAsmGenericFile *file, bool allow_overmap=true) {
-        return map_code_sections(file->get_sections(), allow_overmap);
+    /** Creates a map for all code-containing sections in the file. If @p map is non-null then it will be modified in place
+     *  and returned, otherwise a new map is created. */
+    virtual MemoryMap *map_code_sections(MemoryMap *map, SgAsmGenericFile *file, bool allow_overmap=true) {
+        return map_code_sections(map, file->get_sections(), allow_overmap);
     }
 
-    /** Creates a map for all code-containing sections reachable from the file header. */
-    virtual MemoryMap *map_code_sections(SgAsmGenericHeader *fhdr, bool allow_overmap=true) {
-        return map_code_sections(fhdr->get_sections()->get_sections(), allow_overmap);
+    /** Creates a map for all code-containing sections reachable from the file header. If @p map is non-null then it will be
+     *  modified in place and returned, otherwise a new map is created. */
+    virtual MemoryMap *map_code_sections(MemoryMap *map, SgAsmGenericHeader *fhdr, bool allow_overmap=true) {
+        return map_code_sections(map, fhdr->get_sections()->get_sections(), allow_overmap);
     }
 
-    /** Creates a map for all code-containing sections from the specified list. */
-    virtual MemoryMap *map_code_sections(const SgAsmGenericSectionPtrList &sections, bool allow_overmap=true);
+    /** Creates a map for all code-containing sections from the specified list. If @p map is non-null then it will be
+     *  modified in place and returned, otherwise a new map is created. */
+    virtual MemoryMap *map_code_sections(MemoryMap*, const SgAsmGenericSectionPtrList &sections, bool allow_overmap=true);
 
 
 
-    /** Creates a map for all executable sections in the file. */
-    virtual MemoryMap *map_executable_sections(SgAsmGenericFile *file, bool allow_overmap=true) {
-        return map_executable_sections(file->get_sections(), allow_overmap);
+    /** Creates a map for all executable sections in the file. If @p map is non-null then it will be
+     *  modified in place and returned, otherwise a new map is created. */
+    virtual MemoryMap *map_executable_sections(MemoryMap *map, SgAsmGenericFile *file, bool allow_overmap=true) {
+        return map_executable_sections(map, file->get_sections(), allow_overmap);
     }
 
-    /** Creates a map for all executable sections reachable from the file header. */
-    virtual MemoryMap *map_executable_sections(SgAsmGenericHeader *fhdr, bool allow_overmap=true) {
-        return map_executable_sections(fhdr->get_sections()->get_sections(), allow_overmap);
+    /** Creates a map for all executable sections reachable from the file header. If @p map is non-null then it will be
+     *  modified in place and returned, otherwise a new map is created. */
+    virtual MemoryMap *map_executable_sections(MemoryMap *map, SgAsmGenericHeader *fhdr, bool allow_overmap=true) {
+        return map_executable_sections(map, fhdr->get_sections()->get_sections(), allow_overmap);
     }
 
-    /** Creates a map for all executable sections from the specified list. */
-    virtual MemoryMap *map_executable_sections(const SgAsmGenericSectionPtrList &sections, bool allow_overmap=true);
+    /** Creates a map for all executable sections from the specified list. If @p map is non-null then it will be
+     *  modified in place and returned, otherwise a new map is created. */
+    virtual MemoryMap *map_executable_sections(MemoryMap*, const SgAsmGenericSectionPtrList &sections, bool allow_overmap=true);
 
 
 
-    /** Creates a map for all writable sections in the file. */
-    virtual MemoryMap *map_writable_sections(SgAsmGenericFile *file, bool allow_overmap=true) {
-        return map_writable_sections(file->get_sections(), allow_overmap);
+    /** Creates a map for all writable sections in the file. If @p map is non-null then it will be
+     *  modified in place and returned, otherwise a new map is created. */
+    virtual MemoryMap *map_writable_sections(MemoryMap *map, SgAsmGenericFile *file, bool allow_overmap=true) {
+        return map_writable_sections(map, file->get_sections(), allow_overmap);
     }
 
-    /** Creates a map for all writable sections reachable from the file header. */
-    virtual MemoryMap *map_writable_sections(SgAsmGenericHeader *fhdr, bool allow_overmap=true) {
-        return map_writable_sections(fhdr->get_sections()->get_sections(), allow_overmap);
+    /** Creates a map for all writable sections reachable from the file header. If @p map is non-null then it will be
+     *  modified in place and returned, otherwise a new map is created. */
+    virtual MemoryMap *map_writable_sections(MemoryMap *map, SgAsmGenericHeader *fhdr, bool allow_overmap=true) {
+        return map_writable_sections(map, fhdr->get_sections()->get_sections(), allow_overmap);
     }
 
-    /** Creates a map for all writable sections from the specified list. */
-    virtual MemoryMap *map_writable_sections(const SgAsmGenericSectionPtrList &sections, bool allow_overmap=true);
+    /** Creates a map for all writable sections from the specified list. If @p map is non-null then it will be
+     *  modified in place and returned, otherwise a new map is created. */
+    virtual MemoryMap *map_writable_sections(MemoryMap*, const SgAsmGenericSectionPtrList &sections, bool allow_overmap=true);
 
     /*------------------------------------------------------------------------------------------------------------------------
      * Selectors
@@ -211,8 +223,10 @@ public:
      *  default) then any section that contributes to the map in an additive manner will first have its virtual address space
      *  removed from the map in order to prevent a MemoryMap::Inconsistent exception; otherwise a MemoryMap::Inconsistent
      *  exception will be thrown when a single virtual address would map to two different source bytes, such as two different
-     *  offsets in a file. */
-    virtual MemoryMap *create_map(const SgAsmGenericSectionPtrList&, Selector*, bool allow_overmap=true);
+     *  offsets in a file.
+     *
+     *  If a memory map is supplied, then it will be modified in place and returned; otherwise a new map is allocated. */
+    virtual MemoryMap *create_map(MemoryMap *map, const SgAsmGenericSectionPtrList&, Selector*, bool allow_overmap=true);
 
     /*------------------------------------------------------------------------------------------------------------------------
      * Configuration methods.

@@ -12,7 +12,7 @@ std::vector<Loader*> Loader::p_registered;
 void
 Loader::ctor()
 {
-    //p_debug = stderr;
+    p_debug = stderr;
 }
 
 /* Class method */
@@ -52,20 +52,20 @@ Loader::find_loader(SgAsmGenericHeader *header)
 
 /* Returns a map containing the specified sections (if they are mapped). */
 MemoryMap *
-Loader::map_all_sections(const SgAsmGenericSectionPtrList &sections, bool allow_overmap)
+Loader::map_all_sections(MemoryMap *map, const SgAsmGenericSectionPtrList &sections, bool allow_overmap)
 {
     struct: public Selector {
         Contribution contributes(SgAsmGenericSection *section) {
             return CONTRIBUTE_ADD; /*alignment might weed out non-mapped sections*/
         }
     } s1;
-    return create_map(sections, &s1, allow_overmap);
+    return create_map(map, sections, &s1, allow_overmap);
 }
 
 /* Returns a map of code-containing sections. A code-containing section is any section that is mapped with execute permission or
  * any section explicitly marked as containing code. Any section that is not code-containing is subtracted from the mapping. */
 MemoryMap *
-Loader::map_code_sections(const SgAsmGenericSectionPtrList &sections, bool allow_overmap)
+Loader::map_code_sections(MemoryMap *map, const SgAsmGenericSectionPtrList &sections, bool allow_overmap)
 {
     struct: public Selector {
         Contribution contributes(SgAsmGenericSection *section) {
@@ -80,7 +80,7 @@ Loader::map_code_sections(const SgAsmGenericSectionPtrList &sections, bool allow
             }
         }
     } s1;
-    return create_map(sections, &s1, allow_overmap);
+    return create_map(map, sections, &s1, allow_overmap);
 }
 
 /* Returns a map of executable sections. Any mapped section that isn't executable is subtracted from the mapping.
@@ -88,7 +88,7 @@ Loader::map_code_sections(const SgAsmGenericSectionPtrList &sections, bool allow
  * Note that another way to do this is to use call map_all_sections() and then prune away, using MemoryMap::prune(), those
  * parts of the map that are not executable. */
 MemoryMap *
-Loader::map_executable_sections(const SgAsmGenericSectionPtrList &sections, bool allow_overmap)
+Loader::map_executable_sections(MemoryMap *map, const SgAsmGenericSectionPtrList &sections, bool allow_overmap)
 {
     struct: public Selector {
         Contribution contributes(SgAsmGenericSection *section) {
@@ -101,7 +101,7 @@ Loader::map_executable_sections(const SgAsmGenericSectionPtrList &sections, bool
             }
         }
     } s1;
-    return create_map(sections, &s1, allow_overmap);
+    return create_map(map, sections, &s1, allow_overmap);
 }
 
 /* Returns a map of executable sections. Any section that is not writable is removed from the mapping.
@@ -109,7 +109,7 @@ Loader::map_executable_sections(const SgAsmGenericSectionPtrList &sections, bool
  * Note that another way to do this is to call map_all_sections() and then prune away, using MemoryMap::prune(), those parts
  * of the map that are not writable. */
 MemoryMap *
-Loader::map_writable_sections(const SgAsmGenericSectionPtrList &sections, bool allow_overmap)
+Loader::map_writable_sections(MemoryMap *map, const SgAsmGenericSectionPtrList &sections, bool allow_overmap)
 {
     struct: public Selector {
         Contribution contributes(SgAsmGenericSection *section) {
@@ -122,7 +122,7 @@ Loader::map_writable_sections(const SgAsmGenericSectionPtrList &sections, bool a
             }
         }
     } s1;
-    return create_map(sections, &s1, allow_overmap);
+    return create_map(map, sections, &s1, allow_overmap);
 }
 
 /* Align section addresses and sizes */
@@ -189,9 +189,10 @@ Loader::order_sections(const SgAsmGenericSectionPtrList &sections)
 
 /* Uses a selector to determine what sections should be mapped. */
 MemoryMap *
-Loader::create_map(const SgAsmGenericSectionPtrList &unordered_sections, Selector *selector, bool allow_overmap)
+Loader::create_map(MemoryMap *map, const SgAsmGenericSectionPtrList &unordered_sections, Selector *selector, bool allow_overmap)
 {
-    MemoryMap *map = new MemoryMap();
+    if (!map)
+        map = new MemoryMap();
     SgAsmGenericSectionPtrList sections = order_sections(unordered_sections);
     if (p_debug)
         fprintf(p_debug, "Loader: creating memory map...\n");

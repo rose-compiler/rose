@@ -216,10 +216,20 @@ unparseAsmStatement(SgAsmStatement* stmt)
 
 std::string
 unparseAsmInterpretation(SgAsmInterpretation* interp)
-   {
-       return ("/* Interpretation " + std::string(interp->get_header()->format_name()) + " */\n" +
-               (interp->get_global_block() ? unparseAsmStatement(interp->get_global_block()) : "/* No global block */"));
-   }
+{
+    std::string heading;
+    const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+    if (1==headers.size()) {
+        heading = "/* Interpretation " + std::string(headers[0]->format_name()) + " */\n";
+    } else {
+        heading = "/* Interpretation including:\n";
+        for (size_t i=0; i<headers.size(); i++) {
+            heading += std::string(" *    ") + headers[i]->format_name() + " from " + headers[i]->get_file()->get_name() + "\n";
+        }
+        heading += " */\n";
+    }
+    return heading + (interp->get_global_block() ? unparseAsmStatement(interp->get_global_block()) : "/* No global block */");
+}
 
 // void unparseAsmStatementToFile(const string& filename, SgAsmNode* stmt) {
 void

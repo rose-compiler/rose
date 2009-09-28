@@ -7,10 +7,10 @@
 
 /* Partitions instructions into functions of basic blocks. */
 SgAsmBlock *
-Partitioner::partition(SgAsmGenericHeader *fhdr, const Disassembler::InstructionMap &insns) const
+Partitioner::partition(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insns) const
 {
     BasicBlockStarts bb_starts = detectBasicBlocks(insns);
-    FunctionStarts func_starts = detectFunctions(fhdr, insns, bb_starts);
+    FunctionStarts func_starts = detectFunctions(interp, insns, bb_starts);
     return buildTree(insns, bb_starts, func_starts);
 }
 
@@ -67,22 +67,25 @@ Partitioner::detectBasicBlocks(const Disassembler::InstructionMap &insns) const
 
 /* Find beginnings of functions. */
 Partitioner::FunctionStarts
-Partitioner::detectFunctions(SgAsmGenericHeader *fhdr, const Disassembler::InstructionMap &insns,
+Partitioner::detectFunctions(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insns,
                              BasicBlockStarts &bb_starts/*out*/) const
 {
     FunctionStarts func_starts;
 
-    if (p_func_heuristics & SgAsmFunctionDeclaration::FUNC_ENTRY_POINT)
-        mark_entry_targets(fhdr, insns, func_starts);
+    const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+    for (size_t i=0; i<headers.size(); i++) {
+        if (p_func_heuristics & SgAsmFunctionDeclaration::FUNC_ENTRY_POINT)
+            mark_entry_targets(headers[i], insns, func_starts);
+        if (p_func_heuristics & SgAsmFunctionDeclaration::FUNC_EH_FRAME)
+            mark_eh_frames(headers[i], insns, func_starts);
+        if (p_func_heuristics & SgAsmFunctionDeclaration::FUNC_SYMBOL)
+            mark_func_symbols(headers[i], insns, func_starts);
+        if (p_func_heuristics & SgAsmFunctionDeclaration::FUNC_PATTERN)
+            mark_func_patterns(headers[i], insns, func_starts);
+    }
     if (p_func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_TARGET)
-        mark_call_targets(fhdr, insns, func_starts);
-    if (p_func_heuristics & SgAsmFunctionDeclaration::FUNC_EH_FRAME)
-        mark_eh_frames(fhdr, insns, func_starts);
-    if (p_func_heuristics & SgAsmFunctionDeclaration::FUNC_SYMBOL)
-        mark_func_symbols(fhdr, insns, func_starts);
-    if (p_func_heuristics & SgAsmFunctionDeclaration::FUNC_PATTERN)
-        mark_func_patterns(fhdr, insns, func_starts);
-
+        mark_call_targets(insns, func_starts);
+    
     /* All function entry points are also the starts of basic blocks. */
     for (FunctionStarts::iterator i=func_starts.begin(); i!=func_starts.end(); i++) {
         if (bb_starts.find(i->first)==bb_starts.end())
@@ -91,7 +94,7 @@ Partitioner::detectFunctions(SgAsmGenericHeader *fhdr, const Disassembler::Instr
 
     /* This one depends on basic block starts being consistent with function starts. */
     if (p_func_heuristics & SgAsmFunctionDeclaration::FUNC_GRAPH) {
-        mark_graph_edges(fhdr, insns, bb_starts, func_starts);
+        mark_graph_edges(insns, bb_starts, func_starts);
         /* All function entry points are also the starts of basic blocks. */
         for (FunctionStarts::iterator i=func_starts.begin(); i!=func_starts.end(); i++) {
             if (bb_starts.find(i->first)==bb_starts.end())
@@ -100,7 +103,9 @@ Partitioner::detectFunctions(SgAsmGenericHeader *fhdr, const Disassembler::Instr
     }
 
     /* This doesn't detect new functions, it just gives names to ELF .plt trampolines */
-    name_plt_entries(fhdr, insns, func_starts);
+    for (size_t i=0; i<headers.size(); i++) {
+        name_plt_entries(headers[i], insns, func_starts);
+    }
 
     return func_starts;
 }
@@ -272,8 +277,7 @@ Partitioner::mark_entry_targets(SgAsmGenericHeader *fhdr, const Disassembler::In
 
 /* Marks CALL targets as functions. */
 void
-Partitioner::mark_call_targets(SgAsmGenericHeader *fhdr, const Disassembler::InstructionMap &insns,
-                               FunctionStarts &func_starts/*out*/) const
+Partitioner::mark_call_targets(const Disassembler::InstructionMap &insns, FunctionStarts &func_starts/*out*/) const
 {
     for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ii++) {
         SgAsmx86Instruction *insn = isSgAsmx86Instruction(ii->second);
@@ -362,7 +366,7 @@ Partitioner::mark_func_symbols(SgAsmGenericHeader *fhdr, const Disassembler::Ins
 
 /* Use control flow graph to find function starts. */
 void
-Partitioner::mark_graph_edges(SgAsmGenericHeader *fhdr, const Disassembler::InstructionMap &insns,
+Partitioner::mark_graph_edges(const Disassembler::InstructionMap &insns,
                               const BasicBlockStarts &basicBlockStarts, FunctionStarts &functionStarts/*out*/) const
 {
     std::set<rose_addr_t, std::greater<rose_addr_t> > pending_functions; /*sorted from highest to lowest*/

@@ -9,7 +9,7 @@ public:
         return NULL!=isSgAsmElfFileHeader(header);
     }
     virtual SgAsmGenericSectionPtrList order_sections(const SgAsmGenericSectionPtrList&);
-    virtual MemoryMap *load_code_sections(const SgAsmGenericSectionPtrList&, bool allow_overmap=true);
+    virtual MemoryMap *load_code_sections(MemoryMap*, const SgAsmGenericSectionPtrList&, bool allow_overmap=true);
 };
 
 #endif

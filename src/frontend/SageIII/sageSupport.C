@@ -5495,7 +5495,7 @@ SgBinaryComposite::buildAsmAST(string executableFileName)
         SgAsmInterpretation* interp = new SgAsmInterpretation();
         get_interpretations()->get_interpretations().push_back(interp);
         interp->set_parent(this);
-        interp->set_header(headers[i]);
+        interp->get_headers()->get_headers().push_back(headers[i]);
     }
 
 #if USE_ROSE_DWARF_SUPPORT

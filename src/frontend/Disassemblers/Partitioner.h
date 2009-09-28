@@ -60,14 +60,14 @@ public:
      *======================================================================================================================*/
 public:
     /** Convenience function that detects all the basic block and function starts and then calls buildTree(). */
-    SgAsmBlock *partition(SgAsmGenericHeader*, const Disassembler::InstructionMap &insns) const;
+    SgAsmBlock *partition(SgAsmInterpretation*, const Disassembler::InstructionMap &insns) const;
 
     /** Find the beginnings of basic blocks based on instruction type and call targets. */
     BasicBlockStarts detectBasicBlocks(const Disassembler::InstructionMap &insns) const;
 
     /** Find the beginnings of functions based on a variety of methods.  Since the first instruction of each function is also
      *  a basic block, the basic block starts will also be amended. */
-    FunctionStarts detectFunctions(SgAsmGenericHeader*, const Disassembler::InstructionMap &insns,
+    FunctionStarts detectFunctions(SgAsmInterpretation*, const Disassembler::InstructionMap &insns,
                                    BasicBlockStarts &bb_starts/*out*/) const;
 
     /** Organize instructions into a single SgAsmBlock containing a list of functions (SgAsmFunctionDeclaration), which in turn
@@ -111,8 +111,7 @@ private:
      *        80484c8: 5b             | pop ebx
      * @endcode
      */
-    void mark_call_targets(SgAsmGenericHeader*, const Disassembler::InstructionMap &insns,
-                           FunctionStarts &func_starts/*out*/) const;
+    void mark_call_targets(const Disassembler::InstructionMap &insns, FunctionStarts &func_starts/*out*/) const;
 
     /** Use the Frame Descriptor Entry Records of the ELF .eh_frame section to mark functions. */
     void mark_eh_frames(SgAsmGenericHeader*, const Disassembler::InstructionMap &insns,
@@ -128,7 +127,7 @@ private:
      *     2. The first (lowest address) basic block serves as the single entry point for a function.
      *     3. The body of the function is contiguous basic blocks.
      *     4. Each basic block that follows a function is the entry point of a subsequent function. */
-    void mark_graph_edges(SgAsmGenericHeader*, const Disassembler::InstructionMap &insns,
+    void mark_graph_edges(const Disassembler::InstructionMap &insns,
                           const BasicBlockStarts &basicBlockStarts, FunctionStarts &functionStarts/*out*/) const;
 
     /** Match instruction patterns to locate starts of functions. Compilers sometimes use templates to generate function

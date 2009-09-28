@@ -25,7 +25,7 @@ LoaderELF::order_sections(const SgAsmGenericSectionPtrList &sections)
  * ELF Sections, we first load the ELF Segments and then any ELF Section that doesn't contain code is subtracted out of the
  * containing ELF Segments' virtual address space. */
 MemoryMap *
-LoaderELF::load_code_sections(const SgAsmGenericSectionPtrList &sections, bool allow_overmap)
+LoaderELF::load_code_sections(MemoryMap *map, const SgAsmGenericSectionPtrList &sections, bool allow_overmap)
 {
     struct: public Selector {
         Contribution contributes(SgAsmGenericSection *section) {
@@ -41,5 +41,5 @@ LoaderELF::load_code_sections(const SgAsmGenericSectionPtrList &sections, bool a
             }
         }
     } s1;
-    return create_map(sections, &s1, allow_overmap);
+    return create_map(map, sections, &s1, allow_overmap);
 }

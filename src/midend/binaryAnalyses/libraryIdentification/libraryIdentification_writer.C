@@ -437,6 +437,14 @@ LibraryIdentification::generateOpCodeVector(SgAsmInterpretation* asmInterpretati
           DisassemblerCommon::AsmFileWithData asmFileInformation (asmInterpretation);
 #endif
 
+
+#if 0
+       /* The code assumes that a SgAsmInterpretation points to a single binary file. This isn't the case with library
+        * archives or dynamic linking. Therefore returning startOffset and endOffset doesn't make much sense--they might be
+        * offsets in two different files (or an offset in anonymous memory).  The replacement code returns the offsets for the
+        * instructions with the lowest and highest virtual addresses anway.   See Disassembler::mark_referenced_instructions()
+        * for some ideas since that function also maps virtual addresses to file offsets. [RPM 2009-09-23] */
+
        // We need a DisassemblerCommon::AsmFileWithData object to call getSectionOfAddress()
        // SgAsmGenericSection* section = DisassemblerCommon::AsmFileWithData::getSectionOfAddress(t.startAddress);
           SgAsmGenericHeader* fhdr = asmInterpretation->get_header();
@@ -453,6 +461,16 @@ LibraryIdentification::generateOpCodeVector(SgAsmInterpretation* asmInterpretati
         * ultimately uses when it simulates the mapping and relocation fixups performed by the loader. [RPM 2009-09-09] */
           startOffset = startAddress - section->get_mapped_preferred_rva() + section->get_offset();
           endOffset   = endAddress - section->get_mapped_preferred_rva() + section->get_offset();
+#else
+          MemoryMap *map = asmInterpretation->get_map(); /*map that was used durring disassembly*/
+          ROSE_ASSERT(map!=NULL);
+          const MemoryMap::MapElement *me = map->find(startAddress);
+          ROSE_ASSERT(me!=NULL);
+          startOffset = me->get_offset();
+          me = map->find(endAddress);
+          ROSE_ASSERT(me!=NULL);
+          endOffset = me->get_offset();
+#endif
 
           printf ("---- function %p addresses: (start = %p, end = %p) file offsets: (start = %zu, end = %zu) \n",node,(void*)startAddress,(void*)endAddress,startOffset,endOffset);
 
