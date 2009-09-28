@@ -1416,7 +1416,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
      if ( isTransformed (templateInstantiationFunctionDeclaration) == true )
         {
        // DQ (5/16/2005): This is an attempt to remove explicit declarations of specializations which 
-       // are preventing template instations of function definitions within the prelinking process.
+       // are preventing template instantiations of function definitions within the prelinking process.
           bool skipforwardDeclarationOfTemplateSpecialization = 
                (templateInstantiationFunctionDeclaration->get_file_info()->isCompilerGenerated() == true) && 
                (templateInstantiationFunctionDeclaration->get_definition() == NULL) &&
@@ -2352,6 +2352,22 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgFunctionDeclaration* funcdecl_stmt = isSgFunctionDeclaration(stmt);
      ROSE_ASSERT(funcdecl_stmt != NULL);
 
+  // Liao, 9/25/2009, skip the compiler generated forward declaration for a SgTemplateInstantiationFunctionDecl
+  // see bug 369: https://outreach.scidac.gov/tracker/index.php?func=detail&aid=369&group_id=24&atid=185
+    if (funcdecl_stmt->isForward()) 
+    {
+      SgFunctionDeclaration* def_decl = isSgFunctionDeclaration(funcdecl_stmt->get_definingDeclaration());
+      if (def_decl)
+      {
+        if (isSgTemplateInstantiationFunctionDecl(def_decl))
+        {
+         // cout<<"Skipping a forward declaration of a template instantiation function declaration..."<<endl;
+          return;
+        }
+      }
+    }
+     
+ 
 #if 0
      printf ("funcdecl_stmt = %p = %s \n",funcdecl_stmt,funcdecl_stmt->get_name().str());
      funcdecl_stmt->get_startOfConstruct()->display("Inside of unparseFuncDeclStmt()");
@@ -2413,6 +2429,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgUnparse_Info ninfo(info);
 
      fixupScopeInUnparseInfo (ninfo,funcdecl_stmt);
+    
 
   // DQ (10/10/2006): Do output any qualified names (particularly for non-defining declarations).
   // ninfo.set_forceQualifiedNames();
