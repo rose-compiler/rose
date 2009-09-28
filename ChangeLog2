@@ -1,3 +1,12 @@
+2009-09-27 20:58  dquinlan
+
+	* [r7618]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_rhap_5/compilerTest_gnu_4.3,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_ubuntu_5.10/minimal_default,
+	  /trunk/ROSE/src/3rdPartyLibraries/libharu-2.1.0/src/hpdf_streams.c:
+	  Modified NMI build setting and tried for fix zlib support in
+	  libhpdf.
+
 2009-09-27 18:55  dquinlan
 
 	* [r7616] /trunk/ROSE/tests/roseTests/ompLoweringTests/Makefile.am:
