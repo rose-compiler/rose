@@ -874,9 +874,9 @@ RuntimeSystem_roseInitVariable(
   //
   // Note that we cannot call registerPointerChange until after the memory
   // creation is registered, which is done in roseCreateHeap.
-  cerr << "============ Possible pointer change : ismalloc: "<<ismalloc<<
-    "   pointer_changed:" << pointer_changed << " pointer_type:" <<
-    type<<endl;
+  //cerr << "============ Possible pointer change : ismalloc: "<<ismalloc<<
+  // "   pointer_changed:" << pointer_changed << " pointer_type:" <<
+  //  type<<endl;
 
   if(     ismalloc != 1 
 	  && pointer_changed == 1 
@@ -1079,16 +1079,10 @@ void RuntimeSystem_roseCheckIfThisNULL(
 		const char* filename, const char* line,
 		const char* lineTransformed) {
 
-  // djh (25 Sep 2009) Commented this out as it causes a number of regressions.
-  // Cursory examination suggests that it's fine, but empirically it's not.  For
-  // example, uncommenting this causes us to fail to discover the error in
-  //    C++/array_index_out_of_bound/C_E_2_7_j_d
-  /*
-	cerr <<" Asserting that thisExp is != NULL " << endl;
+	//cerr <<" Asserting that thisExp is != NULL " << endl;
 	  RuntimeSystem * rs = RuntimeSystem_getRuntimeSystem();
 	  CHECKPOINT
 	  rs->checkIfThisisNULL(thisExp);
-    */
 }
 
 

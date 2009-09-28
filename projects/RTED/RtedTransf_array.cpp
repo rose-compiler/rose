@@ -287,6 +287,7 @@ void RtedTransformation::insertArrayAccessCall(SgExpression* arrayExp,
   insertArrayAccessCall(stmt, arrayExp, value);
 }
 
+
 void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
 					       SgExpression* arrayExp, RTedArray* array) {
 
@@ -306,6 +307,18 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
 
     SgPntrArrRefExp* arrRefExp = isSgPntrArrRefExp( arrayExp );
     ROSE_ASSERT( arrRefExp );
+
+    // Recursively check each dimension of a multidimensional array access.
+    // This doesn't matter for stack arrays, since they're contiguous and can
+    // therefore be conceptually flattened, but it does matter for double
+    // pointer array access.
+    if( isSgPntrArrRefExp( arrRefExp -> get_lhs_operand() )) {
+        //      a[ i ][ j ] = x;
+        //      x = a[ i ][ j ];
+        // in either case, a[ i ] is read, and read before a[ i ][ j ].
+        insertArrayAccessCall( stmt, arrRefExp -> get_lhs_operand(), array );
+    }
+
 
     int read_write_mask = 0;
 	// determine whether this array access is a read or write
@@ -390,8 +403,6 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
     attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
     string comment = "RS : Access Array Variable, paramaters : (name, dim 1 location, dim 2 location, read_write_mask, filename, linenr, linenrTransformed, part of error message)";
     attachComment(exprStmt,comment,PreprocessingInfo::before);
-
-    //    }
 
   } else {
     cerr

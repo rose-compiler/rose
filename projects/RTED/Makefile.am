@@ -567,8 +567,7 @@ TESTS_KNOWN_TO_FAIL = run/C/subprogram_call_errors/c_C_1_3_f \
 					  run/tests/Cxx/pointer/arrow_star \
 					  run/tests/Cxx/pointer/C_F_3_3_a_i \
 					  run/tests/Cxx/pointer/dot_star \
-					  run/tests/Cxx/pointer/nulltest \
-					  run/tests/Cxx/pointer/ptest
+					  run/tests/Cxx/pointer/nulltest
 
 
 $(TESTS_KNOWN_TO_FAIL):
