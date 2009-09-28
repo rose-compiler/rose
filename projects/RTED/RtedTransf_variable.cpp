@@ -486,16 +486,17 @@ RtedTransformation::buildVariableInitCallExpr(SgInitializedName* initName,
 	//    p = (int*) malloc(sizeof(int));
 	// but this is not
 	//    *p = 10;
-	int is_pointer_change = isSgExprStatement(stmt) && isSgPointerType(
+	int is_pointer_change =0;
+#if 1
+	SgExpression* lval = getExprBelowAssignment(varRefE);
+	if (lval)
+	  is_pointer_change = isSgExprStatement(stmt) && isSgPointerType(
+									 lval-> get_type());
+#else
+	 is_pointer_change = isSgExprStatement(stmt) && isSgPointerType(
 			isSgExprStatement(stmt) -> get_expression() -> get_type());
-	// However, the following can be a pointer change if u
-	// is a union
-	//   u.p = malloc(..)
-	//   u.x = 50
-	// i.e. if any of the vars in union is a pointer, then there is a 
-	// pointer change
-	//if (isUnionClass)
-	// is_pointer_change=true;
+#endif
+
 	cerr << "@@@@ varrefe = " << initName->get_scope()->class_name() << endl;
 	appendExpression(arg_list, buildIntVal(is_pointer_change));
 

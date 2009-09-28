@@ -170,6 +170,14 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
   // ---------------------------------------
 
 
+  cerr << "\n Number of Elements in returnstmt  : "
+       << returnstmt.size() << endl;
+  std::vector<SgReturnStmt*>::const_iterator rita = returnstmt.begin();
+  for (; rita != returnstmt.end(); rita++) {
+    SgReturnStmt* ret = *rita;
+     changeReturnStmt(ret);
+  }
+
 
   // bracket function calls and scope statements with calls to enterScope and
   // exitScope.  
@@ -409,6 +417,7 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
   }
 
 
+
   cerr
     << "\n Number of Elements in function_call_missing_def  : "
     << function_call_missing_def.size() << endl;
@@ -589,6 +598,15 @@ void RtedTransformation::visit(SgNode* n) {
     visit_delete( isSgDeleteExp( n ));
   }
   // *********************** Detect delete (c++ free) *********
+
+  else if (isSgReturnStmt(n)) {
+#if 1
+    SgReturnStmt* rstmt = isSgReturnStmt(n);
+    SgExpression* right = rstmt->get_expression();
+    if (right)  // && !isSgValueExp(right))
+      returnstmt.push_back(rstmt);
+#endif
+  }
 
   else {
     // cerr << " @@ Skipping : " << n->unparseToString() << "   " << n->class_name() << endl;

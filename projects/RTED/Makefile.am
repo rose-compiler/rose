@@ -35,6 +35,7 @@ runtimeCheck_SOURCES = runtimeCheck.cpp \
                        RtedTransf_support.cpp RtedTransf_funccall.cpp \
                        RtedTransf_locals.cpp RtedTransf_scopestmt.cpp \
                        RtedTransf_funcdef.cpp RtedTransf_variable.cpp \
+		       RtedTransf_returnStmt.cpp \
                        RtedTransf_iofunccall.cpp RtedTransf_operators.cpp \
                        RtedTransf_copyClass.cpp \
 					   RtedTransformation.h \
@@ -555,17 +556,17 @@ TESTS_KNOWN_TO_FAIL = run/C/subprogram_call_errors/c_C_1_3_f \
 					  run/C++/uninitialized_variables/C_A_3_2_c_uc \
 					  run/tests/C/memoryleaks/assignment_scope_switch \
 					  run/tests/C/memoryleaks/assignment_to_locals_then_globals_then_local \
-					  run/tests/C/memoryleaks/assignment_to_multi_fncall \
 					  run/tests/C/memoryleaks/assignment_to_fn_malloc_novar \
 					  run/tests/C/memoverlap/heap_array_in_struct \
 					  run/tests/C/memoverlap/heap_array_in_struct_in_array \
 					  run/tests/C/pointer/arraytest \
-					  run/tests/C/types/union \
 					  run/tests/Cxx/overloading/array_index \
+					  run/tests/C/types/union \
 					  run/tests/Cxx/pointer/arrow_star \
 					  run/tests/Cxx/pointer/C_F_3_3_a_i \
 					  run/tests/Cxx/pointer/dot_star \
 					  run/tests/Cxx/pointer/nulltest
+
 
 
 $(TESTS_KNOWN_TO_FAIL):

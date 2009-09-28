@@ -52,6 +52,8 @@ class RtedTransformation : public AstSimpleProcessing {
 
   // Track pointer arithmetic, e.g. ++, --
   std::vector< SgExpression* > pointer_movements;
+  // return statements that need to be changed
+  std::vector< SgReturnStmt*> returnstmt;
 
   // ------------------------ string -----------------------------------
   // handle call to functioncall
@@ -104,6 +106,7 @@ class RtedTransformation : public AstSimpleProcessing {
   Sg_File_Info* mainEnd;
   SgFunctionSymbol* roseCheckpoint;
   bool mainEndsWithReturn;
+  bool mainHasBeenChanged;
   SgReturnStmt* mainReturnStmt;
   SgFunctionSymbol* roseCallStack;
   SgFunctionSymbol* roseCreateVariable;
@@ -329,6 +332,7 @@ class RtedTransformation : public AstSimpleProcessing {
   /// Renames the original main function
   /// copied from projects/UpcTranslation/upc_translation.C
   void renameMain(SgFunctionDeclaration * sg_func);
+  void changeReturnStmt(SgReturnStmt * rstmt);
 
  public:
   RtedTransformation() {
@@ -348,6 +352,7 @@ class RtedTransformation : public AstSimpleProcessing {
     mainLast=NULL;
     mainBody = NULL;
     mainEndsWithReturn=false;
+    mainHasBeenChanged=false;
     roseCreateVariable=NULL;
     roseCreateObject=NULL;
     roseInitVariable=NULL;

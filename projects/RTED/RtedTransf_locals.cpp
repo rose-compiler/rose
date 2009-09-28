@@ -128,6 +128,7 @@ RtedTransformation::scope_name( SgNode* stmt) {
     } else if( isSgDoWhileStmt( stmt)) {
       return "do";
     } else {
+      //cerr << " Trying to query stmt : " << stmt->class_name() << endl;
       vector<SgNode*> calls 
         = NodeQuery::querySubTree( stmt, V_SgFunctionCallExp);
     

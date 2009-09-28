@@ -36,6 +36,8 @@ RtedTransformation::insertMainCloseCall(SgStatement* stmt) {
       SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
       //cerr << " Last statement in main : " << stmt->class_name() << "  insertBefore : " << mainEndsWithReturn << endl;
       if (mainEndsWithReturn) {
+#if 0
+    	  if (mainHasBeenChanged==false) {
           // consider e.g.
           //    int main() {
           //        return foo();
@@ -72,6 +74,9 @@ RtedTransformation::insertMainCloseCall(SgStatement* stmt) {
         insertStatementBefore( stmt, newFnCallStmt );
         insertStatementBefore(isSgStatement(stmt), exprStmt);
         replaceStatement( stmt, newRtnStmt );
+    	  }
+#endif
+    	   insertStatementBefore(isSgStatement(stmt), exprStmt);
       } else
 	insertStatementAfter(isSgStatement(stmt), exprStmt);
       string comment = "RS : Insert Finalizing Call to Runtime System to check if error was detected (needed for automation)";
@@ -183,6 +188,7 @@ void RtedTransformation::visit_checkIsMain(SgNode* n)
         //	RoseBin_support::resBool(mainEndsWithReturn) << endl;
         ROSE_ASSERT(last);
         // insert call to close before last statement (could be return)
+	cerr << "\n\n@@@@@@@@@@@@@@@@@@@@@@ Changing mainLast in prolog" << endl;
         mainLast = last;
         mainFirst = first;
         mainBody = block;

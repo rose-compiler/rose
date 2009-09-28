@@ -703,7 +703,7 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
       if( fndecl ) {
           int param_index = -1;
           SgExpressionPtrList& args = isSgExprListExp( parent ) -> get_expressions();
-          for( int i = 0; i < args.size(); ++i ) {
+          for( unsigned int i = 0; i < args.size(); ++i ) {
               if( args[ i ] == last ) {
                   param_index = i;
                   break;
@@ -1018,7 +1018,8 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
       cerr << "RtedTransformation : PointerDerefExp - Unknown : "
 	   << exp->class_name() << "  line:"
 	   << pointerDeref->unparseToString() << endl;
-      ROSE_ASSERT(false);
+
+      //      ROSE_ASSERT(false);
     }
   } // ------------------------------------------------------------
   else if (isSgFunctionCallExp(expr_l)) {
@@ -1026,6 +1027,26 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
       << "RtedTransformation: UNHANDLED BUT ACCEPTED FOR NOW - Left of assign - Unknown : "
       << expr_l->class_name() << "  line:"
       << expr_l->unparseToString() << endl;
+#if 1
+    SgFunctionCallExp* expcall = isSgFunctionCallExp(expr_l);
+      SgExpression* exp = expcall->get_function();
+      if (exp && isSgDotExp(exp)) {
+	SgExpression* rightDot = isSgDotExp(exp)->get_rhs_operand();
+	SgExpression* leftDot =  isSgDotExp(exp)->get_lhs_operand();
+	ROSE_ASSERT(rightDot);
+	ROSE_ASSERT(leftDot);
+	SgVarRefExp* varRefL = isSgVarRefExp(leftDot);
+	SgMemberFunctionRefExp* varRefR = isSgMemberFunctionRefExp(rightDot);
+	if (varRefL && varRefR) {
+	  // variable is on the left hand side
+	  varRef=varRefL;
+	  initName = (varRef)->get_symbol()->get_declaration();
+	  if (initName)
+	    ROSE_ASSERT(varRef);
+	  ROSE_ASSERT(initName);
+	}
+    }// ------------------------------------------------------------
+#endif
   }
   else if (isSgArrowStarOp(expr_l)) {
     std::pair<SgInitializedName*,SgVarRefExp*> mypair  = 
@@ -1054,6 +1075,8 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
 	 << expr_l->unparseToString() << endl;
     ROSE_ASSERT(false);
   }
+  cerr << " expr_l : " << expr_l->class_name() << endl;
+  ROSE_ASSERT(initName);
 
   // handle MALLOC
   bool ismalloc=false;
