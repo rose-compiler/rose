@@ -1376,8 +1376,8 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
                case V_SgBinaryComposite:
                   {
-                    SgBinaryComposite* binaryFile = isSgBinaryComposite(file);
-                    roseUnparser.unparseFile(binaryFile,inheritedAttributeInfo);
+                    SgBinaryComposite* binary = isSgBinaryComposite(file);
+                    roseUnparser.unparseFile(binary,inheritedAttributeInfo);
                     break;
                   }
 
