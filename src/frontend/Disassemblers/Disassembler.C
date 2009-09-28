@@ -488,7 +488,10 @@ Disassembler::disassembleInterp(SgAsmInterpretation *interp, AddressSet *success
 {
     const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
     AddressSet worklist;
-    MemoryMap *map = new MemoryMap();
+
+    MemoryMap *map = NULL;
+    if (interp->get_map() == NULL)
+        map = new MemoryMap();
     
     for (size_t i=0; i<headers.size(); i++) {
         /* Seed disassembly with entry points. */
@@ -503,15 +506,22 @@ Disassembler::disassembleInterp(SgAsmInterpretation *interp, AddressSet *success
             search_function_symbols(&worklist, map, headers[i]);
 
         /* Incrementally build the map describing the relationship between virtual memory and binary file(s). */
-        Loader *loader = Loader::find_loader(headers[i]);
-        if (p_search & SEARCH_NONEXE) {
-            loader->map_all_sections(map, headers[i]->get_sections()->get_sections());
-        } else {
-            loader->map_code_sections(map, headers[i]->get_sections()->get_sections());
+        if (map) {
+            Loader *loader = Loader::find_loader(headers[i]);
+            if (p_search & SEARCH_NONEXE) {
+                loader->map_all_sections(map, headers[i]->get_sections()->get_sections());
+            } else {
+                loader->map_code_sections(map, headers[i]->get_sections()->get_sections());
+            }
         }
     }
-    interp->set_map(map);
 
+    /* Use map stored in interpretation, or save the one we just created. */
+    if (map==NULL) {
+        map = interp->get_map();
+    } else {
+        interp->set_map(map);
+    }
     if (p_debug) {
         fprintf(p_debug, "Disassembler: MemoryMap for disassembly:\n");
         map->dump(p_debug, "    ");

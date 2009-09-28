@@ -203,11 +203,14 @@ public:
      *========================================================================================================================== */
 public:
     /** This high-level method disassembles instructions belonging to part of a file described by an executable file header as
-     *  indicated by the specified interpretation.  The instructions are partitioned into a block (SgAsmBlock) of functions
-     *  (SgAsmFunctionDeclaration) containing basic blocks (SgAsmBlock) of instructions (SgAsmInstruction). The top-level
-     *  block is then added to the interpretation.  The heuristics used to partition instructions into functions, and the
-     *  aggressiveness of the disassembler in finding instructions can be controlled by setting properties of this Disassembler
-     *  object.
+     *  indicated by the specified interpretation.  The disassembleInterp() method is called for the main disassembly work,
+     *  then a partitioner is invoked to create functions and basic blocks, then the nodes are linked into the AST.
+     *
+     *  The heuristics used to partition instructions into functions, and the aggressiveness of the disassembler in finding
+     *  instructions can be controlled by setting properties of this Disassembler object.  The MemoryMap describing how
+     *  virtual memory to be disassembled is mapped into the binary files that ROSE is parsing is either taken from the map
+     *  defined by the SgAsmInterpretation::p_map, or a new map is created by calling various Loaders and then saved into
+     *  SgAsmInterpretation::p_map.
      *
      *  Addresses containing instructions that could not be disassembled are added to the optional @p bad map.  Successor
      *  addresses where no disassembly was attempted are added to the optional successors set.
