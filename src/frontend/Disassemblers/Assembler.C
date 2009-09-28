@@ -8,6 +8,13 @@ Assembler::create(SgAsmGenericHeader *hdr)
     return new AssemblerX86();
 }
 
+Assembler *
+Assembler::create(SgAsmInterpretation*)
+{
+    /* FIXME: This should eventually use a process similar to Disassembler::create() [RPM 2009-07-23] */
+    return new AssemblerX86();
+}
+
 SgUnsignedCharList
 Assembler::assembleBlock(SgAsmBlock *bb)
 {

@@ -8311,8 +8311,11 @@ SageInterface::getMainInterpretation(SgAsmGenericFile *file)
     /* Find an interpretation that points to this header */
     const SgAsmInterpretationPtrList &interps = binary->get_interpretations()->get_interpretations();
     for (SgAsmInterpretationPtrList::const_iterator ii=interps.begin(); ii!=interps.end(); ++ii) {
-        if ((*ii)->get_header() == requisite_header)
-            return *ii;
+        const SgAsmGenericHeaderPtrList &headers = (*ii)->get_headers()->get_headers();
+        for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
+            if ((*hi)==requisite_header)
+                return *ii;
+        }
     }
 
     ROSE_ASSERT(!"no appropriate interpretation");
