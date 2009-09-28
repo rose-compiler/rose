@@ -86,7 +86,11 @@ svnmodificationdate=`${SVN} info -r${SVNVERSIONOPTION} ${ROSE_SVNROOT} | grep '^
 #------------------------------------------------------
 (
 if [ -n "$TIMESTAMP" ]; then
-  echo "Subject: ROSE test $TIMESTAMP on `hostname` 1. start" > mailtext1
+  if [ 0$SHOW_STUB_ON_EMAIL_SUBJECT -ne 0 ] ; then
+    echo "Subject: $user_config_file $TIMESTAMP on `hostname` 1. start" > mailtext1
+  else
+    echo "Subject: ROSE test $TIMESTAMP on `hostname` 1. start" > mailtext1
+  fi  
 else
   echo "Subject: Starting ROSE test $$ on `hostname`" > mailtext1
 fi  
@@ -355,7 +359,11 @@ fi
 mailtext=${ROSE_TOP}/mailtext  # using absolute path to work with changing current dir.
 if [ $buildstatus == 0 ]; then  
   if [ -n "$TIMESTAMP" ]; then
-    echo "Subject: ROSE test $TIMESTAMP on `hostname` 2. end (pass)" > $mailtext
+    if [ 0$SHOW_STUB_ON_EMAIL_SUBJECT -ne 0 ] ; then
+      echo "Subject: $user_config_file $TIMESTAMP on `hostname` 2. end (pass)" > $mailtext
+    else  
+      echo "Subject: ROSE test $TIMESTAMP on `hostname` 2. end (pass)" > $mailtext
+    fi  
   else
     echo "Subject: ROSE test $$ on `hostname` results (pass)" > $mailtext
   fi
@@ -445,7 +453,11 @@ else
 # if failed
 #------------------------------------------------------
   if [ -n "$TIMESTAMP" ]; then
+   if [ 0$SHOW_STUB_ON_EMAIL_SUBJECT -ne 0 ] ; then
+    echo "Subject: $user_config_file $TIMESTAMP on `hostname` 2. end (fail)" > $mailtext
+   else 
     echo "Subject: ROSE test $TIMESTAMP on `hostname` 2. end (fail)" > $mailtext
+   fi
   else
     echo "Subject: ROSE test $$ on `hostname` results (fail)" > $mailtext
   fi  

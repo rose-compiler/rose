@@ -26,5 +26,10 @@ SPEC_CPU2006_CONFIG="tux268-rose-gcc42.cfg"
 
 SVN_READONLY_REPOSITORY_LOCATION=/home/liao6/daily-test-rose/svn-readonly-rose
 
+# Liao, 9/28/2009
+# so many script stubs are running
+# I want to see which stub is running by putting the stub name into email subjects
+SHOW_STUB_ON_EMAIL_SUBJECT=1
+
 #-------------end of environment
 

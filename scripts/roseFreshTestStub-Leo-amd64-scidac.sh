@@ -46,5 +46,8 @@ NORMAL_INSTALL_DIR=1 # no chmod 000 for 'install'
 #SKIP_BUILD_SOURCE=1
 #make source_with_binary_edg_dist etc
 #ENABLE_BUILD_BINARY_EDG=1
+
+SHOW_STUB_ON_EMAIL_SUBJECT=1
+
 set -e
 set -o pipefail

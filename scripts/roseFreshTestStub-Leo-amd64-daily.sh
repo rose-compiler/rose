@@ -23,6 +23,7 @@ MAILADDRS="liaoch@llnl.gov"
 # the right version of subversion is essential!!
 SVN=/home/liao6/64home/opt/subversion-1.5.3/bin/svn
 SVNOP=checkout
+
 # check out the revision of the past 11:00pm PDT (06:00am UTC)
 # using data as revision number needs {}
 # default is head
@@ -32,7 +33,8 @@ SVNOP=checkout
 # How many processes for make
 MAKEFLAGS="-j4"
 
-ENABLE_BUILD_BINARY_EDG=1
+# 9/28/2009, tux242 is too slow and it often tries to commit stale binaries. 
+#ENABLE_BUILD_BINARY_EDG=1
 
 # my additional stuff
 #ENABLE_UPLOAD_SVN=1
@@ -40,6 +42,7 @@ ENABLE_BUILD_BINARY_EDG=1
 
 #KEEP_TEST_DIR=1
 NORMAL_INSTALL_DIR=1 # no chmod 000 for 'install'
+SHOW_STUB_ON_EMAIL_SUBJECT=1
 
 set -e
 set -o pipefail
