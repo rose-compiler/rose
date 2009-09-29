@@ -1,3 +1,69 @@
+2009-09-29 18:45  dquinlan
+
+	* [r7674] /trunk/ROSE/src/frontend/SageIII/Makefile.am: Added
+	  comment to Makefile.am about name change of preproc.ll.
+
+2009-09-29 18:26  dquinlan
+
+	* [r7671] /trunk/ROSE/src/frontend/SageIII/Makefile.am,
+	  /trunk/ROSE/src/frontend/SageIII/preproc-c.ll,
+	  /trunk/ROSE/src/frontend/SageIII/preproc.ll: Renamed preproc.ll
+	  to preproc-c.ll matching preproc-fortran.ll and avoiding multiple
+	  preproc.o files that is a problem for nmi:x86_sles_9.
+
+2009-09-29 18:26  matzke
+
+	* [r7670] /trunk/ROSE/scripts/rosegit/bin/rosegit-functions.sh,
+	  /trunk/ROSE/scripts/rosegit/config/defaults.conf: RoseGit: added
+	  --with-binarysql
+
+2009-09-29 17:54  liao6
+
+	* [r7668] /trunk/ROSE/scripts/findDuplicatedFileNames.sh: Archived
+	  a script to find files with identical names within ROSE
+
+2009-09-29 16:55  dquinlan
+
+	* [r7666] /trunk/ROSE/build,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_sles_9/minimal_default:
+	  Added version checking for libtool to build script (and modified
+	  NMI options).
+
+2009-09-29 16:53  matzke
+
+	* [r7665] /trunk/ROSE/src/frontend/ExecFormats/Loader.C:
+	  ExecFormats: turned off debuging in Loader class
+
+2009-09-29 16:53  matzke
+
+	* [r7664] /trunk/ROSE/src/frontend/ExecFormats/ExecELF.C:
+	  ExecFormats: Fixed bug parsing gcc-4.0.x eh_frame
+	  
+	  Could not find documentation for this encoding, so we just keep
+	  it
+	  unparsed for now.
+
+2009-09-29 13:18  dquinlan
+
+	* [r7663] /trunk/ROSE/build,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2008_04.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_29.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_30.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_31.C,
+	  /trunk/ROSE/projects/palette/rose.P,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_ubuntu_5.10/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/cronjobs,
+	  /trunk/ROSE/scripts/roseFreshTest,
+	  /trunk/ROSE/src/3rdPartyLibraries/libharu-2.1.0/src/hpdf_streams.c,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Statement.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Support.code,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/buildVariableDeclaration.C:
+	  Fixed GNU 4.0 specific problem in sageInterface and added more
+	  tests and some assertion tests.
+
 2009-09-28 23:48  panas2
 
 	* [r7661] /trunk/ROSE/projects/RTED/Makefile.am,
