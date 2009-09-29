@@ -12,7 +12,7 @@ std::vector<Loader*> Loader::p_registered;
 void
 Loader::ctor()
 {
-    p_debug = stderr;
+    //p_debug = stderr;
 }
 
 /* Class method */
