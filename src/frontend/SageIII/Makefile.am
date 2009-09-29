@@ -41,11 +41,14 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 # for developers to worry about in the generation of sufficently portable distributions.
 # EXTRA_DIST = preproc.lex preproc.C sageClasses.docs sage.docs.in docs
 # EXTRA_DIST = preproc.lex preproc.C astGraphTemplate.C docs
-EXTRA_DIST = preproc.ll docs rtiHelpers.h attributeListMap.h \
-            advanced_preprocessing_hooks.h rose_attributes_list.h dwarfSupport.h \
-           omplexer.cc ompparser.cc ompparser.h
+# EXTRA_DIST = preproc.ll docs rtiHelpers.h attributeListMap.h
+EXTRA_DIST = preproc-c.ll docs rtiHelpers.h attributeListMap.h \
+             advanced_preprocessing_hooks.h rose_attributes_list.h dwarfSupport.h \
+             omplexer.cc ompparser.cc ompparser.h
 CLEANFILES = haveRosettaGeneratedSource
-DISTCLEANFILES = preproc.cc ompparser.cc ompparser.h omplexer.cc
+
+# DISTCLEANFILES = preproc.cc ompparser.cc ompparser.h omplexer.cc
+DISTCLEANFILES = preproc-c.cc ompparser.cc ompparser.h omplexer.cc
 
 
 # DQ (10/18/2007): Added AST_FILE_IO.C StorageClasses.C
@@ -120,7 +123,8 @@ libsage3Sources = \
 noinst_LTLIBRARIES = libsage3.la
 
 # libsage3_la_SOURCES = $(libsage3Sources) preproc.ll rose_paths.h omplexer.ll ompparser.yy
-libsage3_la_SOURCES = $(libsage3Sources) preproc.ll omplexer.ll ompparser.yy
+# libsage3_la_SOURCES = $(libsage3Sources) preproc.ll omplexer.ll ompparser.yy
+libsage3_la_SOURCES = $(libsage3Sources) preproc-c.ll omplexer.ll ompparser.yy
 
 # DQ (3/8/2009): I think that the dependence upon $(top_builddir)/rose_config.h 
 # is what was forcing a lot of files to be compiled after reruning configure.
