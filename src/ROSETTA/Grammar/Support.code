@@ -6354,6 +6354,7 @@ SgSymbolTable::findvar(const SgName &nm)
 SgVariableSymbol*
 SgSymbolTable::find_variable(const SgName &nm)
    {
+     ROSE_ASSERT(this != NULL);
      ROSE_ASSERT(p_table != NULL);
 
      p_iterator = p_table->find(nm);

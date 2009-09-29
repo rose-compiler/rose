@@ -6,7 +6,7 @@ do_timing=no
 while [ "$#" -gt 0 ]; do
     arg="$1"; shift
     case "$arg" in
-	--verbose)
+        --verbose)
 	    do_quiet=no
 	    ;;
         --timing)
@@ -166,6 +166,7 @@ fi
 #                  $(CXX) $(DEFS) ....... `test -f 'RDis/main.C' || echo '$(srcdir)/'`RDis/main.C
 #     It seems that this might be an error on the part of automake since it bypasses libtool. [RPM 2009-04-04]
 #
+echo "Report status of verbose mode: do_quiet = $do_quiet"
 if [ "$do_quiet" = "yes" ]; then
     find . -name Makefile.in | grep -v libharu | grep -v libltdl | xargs sed -i~ \
 	-e '/echo.*COMPILE/!s/^\(LT\)\{0,1\}\(CXX\)\{0,1\}COMPILE =/& @echo "  COMPILE $@";/' \

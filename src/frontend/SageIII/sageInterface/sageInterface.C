@@ -7185,6 +7185,7 @@ void SageInterface::setPragma(SgPragmaDeclaration* decl, SgPragma *pragma)
      // optional?
       varDecl->set_parent(scope);
       // symbol table
+      ROSE_ASSERT(scope != NULL);
       SgVariableSymbol* varSymbol = scope->lookup_variable_symbol(name);
       if (varSymbol==NULL)
       {
