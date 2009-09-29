@@ -42,6 +42,10 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 # EXTRA_DIST = preproc.lex preproc.C sageClasses.docs sage.docs.in docs
 # EXTRA_DIST = preproc.lex preproc.C astGraphTemplate.C docs
 # EXTRA_DIST = preproc.ll docs rtiHelpers.h attributeListMap.h
+
+# DQ (9/29/2009): Renamed preproc.ll to preproc-c.ll in SVN.
+# This will hopefull avoid a linking problem where multiple files
+# are called preproc.o (from here and from EDG).
 EXTRA_DIST = preproc-c.ll docs rtiHelpers.h attributeListMap.h \
              advanced_preprocessing_hooks.h rose_attributes_list.h dwarfSupport.h \
              omplexer.cc ompparser.cc ompparser.h
