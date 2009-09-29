@@ -112,6 +112,7 @@ rosegit_environment () {
     type path-adjust >/dev/null 2>&1 && eval $(path-adjust --var=LD_LIBRARY_PATH remove --regexp /ROSE/ /boost_)
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$BOOST_ROOT/lib"
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROSE_BLD/src/.libs"
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROSE_BLD/libltdl/.libs"
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROSE_BLD/src/3rdPartyLibraries/libharu-2.1.0/src/.libs"
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROSE_BLD/src/3rdPartyLibraries/qrose/QRoseLib/.libs"
     export LD_LIBRARY_PATH
