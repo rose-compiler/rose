@@ -1,3 +1,119 @@
+2009-09-28 23:48  panas2
+
+	* [r7661] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_locals.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_prolog.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_returnStmt.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h: Work on RTED.
+
+2009-09-28 23:05  hamilton37
+
+	* [r7660] /trunk/ROSE/projects/RTED/Makefile.am: RTED: Fixed broken
+	  pattern matching in makefile that was causing make check not
+	  to check enough tests.
+
+2009-09-28 23:05  hamilton37
+
+	* [r7659] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/extract-expected-error.sed: RTED:
+	  Tweaked expected error line for C++/memory_leaks/C_I_1_1_m_d, as
+	  the RTED
+	  error explanation is wrong.
+
+2009-09-28 23:05  hamilton37
+
+	* [r7658] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp: RTED: Check each
+	  dimension of multidimensional array access.
+
+2009-09-28 22:13  liao6
+
+	* [r7657]
+	  /trunk/ROSE/scripts/copy_binary_edg_tarball_to_source_tree_svn:
+	  Added more information into the binary update commit messages
+
+2009-09-28 21:51  matzke
+
+	* [r7656]
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/ProjectManager/Project.h:
+	  Revert "member variable name is misspelled - this fails when QT
+	  is enabled"
+	  
+	  This reverts commit 0674d9c025e9fa2cf314e597d5365935b600d3a7.
+	  a.k.a., subversion r7639
+	  
+	  Fixed by changing the name of the data member in commit
+	  "qtWidgets:
+	  fixed some compile errors"
+	  (2accbd1bc279061fb0776a336c7696464e840198),
+	  making r7639 redundant.
+
+2009-09-28 21:51  matzke
+
+	* [r7655]
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/ProjectManager/Project.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/ProjectManager/Project.h:
+	  qtWidgets: fixed some compile errors
+
+2009-09-28 21:50  matzke
+
+	* [r7654]
+	  /trunk/ROSE/developersScratchSpace/Dan/Dwarf_tests/dwarfReader.C:
+	  Dwarf: fixed another compile error
+
+2009-09-28 21:50  matzke
+
+	* [r7653] /trunk/ROSE/scripts/rosegit/config/defaults.conf:
+	  RoseGit: added --with-roseQt
+
+2009-09-28 21:46  panas2
+
+	* [r7652]
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_to_multi_fncall.c,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/pointer/doublepointer.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/pointer/doublepointer.ok_msg:
+	  Added test
+
+2009-09-28 21:18  panas2
+
+	* [r7650]
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.C:
+	  Fixes in sageBuilder
+
+2009-09-28 20:29  collingbourne2
+
+	* [r7643] /trunk/ROSE/projects/interpreter/Makefile.am,
+	  /trunk/ROSE/projects/interpreter/README,
+	  /trunk/ROSE/projects/interpreter/interp_core.C,
+	  /trunk/ROSE/projects/interpreter/interp_core.h,
+	  /trunk/ROSE/projects/interpreter/interp_extcall.C,
+	  /trunk/ROSE/projects/interpreter/interp_smt.C,
+	  /trunk/ROSE/projects/interpreter/interp_smt.h,
+	  /trunk/ROSE/projects/interpreter/main_smt.C,
+	  /trunk/ROSE/projects/interpreter/smtlib.C,
+	  /trunk/ROSE/projects/interpreter/smtlib.h,
+	  /trunk/ROSE/projects/interpreter/testInput_core_condExp.C,
+	  /trunk/ROSE/projects/interpreter/testInput_md5.c,
+	  /trunk/ROSE/projects/interpreter/testInput_smt_abs.c,
+	  /trunk/ROSE/projects/interpreter/testInput_smt_absBug.c,
+	  /trunk/ROSE/projects/interpreter/testInput_smt_excludedMiddle.c,
+	  /trunk/ROSE/projects/interpreter/testInput_smt_reverse.c,
+	  /trunk/ROSE/projects/interpreter/test_core.C,
+	  /trunk/ROSE/projects/interpreter/test_smt.C: Interpreter: several
+	  new features and bug fixes, including:
+	  
+	  * SMT conditionals
+	  * Modified smtlib to handle result and model appearing in any
+	  order (this varies between solvers)
+	  * Documented the usage of STP, Yices, Boolector solvers
+	  * Builtin implementation of memcpy and memset
+	  * Basic common subexpression elimination (CSE) for smtlib
+	  * Several test cases for new features including md5 test case
+
 2009-09-28 18:58  liao6
 
 	* [r7641] /trunk/ROSE/tests/roseTests/ompLoweringTests/Makefile.am:
