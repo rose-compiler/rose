@@ -13,12 +13,22 @@ using namespace SageInterface;
 //---------------------------------------------
 
 // DQ (1/18/2008): Added declaration in source file with Liao.
-std::list<SgScopeStatement*> SageBuilder::ScopeStack;
+// std::list<SgScopeStatement*> SageBuilder::ScopeStack;
+std::list<SgScopeStatement*> SageBuilder::ScopeStack(0);
 
 
 void SageBuilder::pushScopeStack (SgScopeStatement* stmt)
 {
   ROSE_ASSERT(stmt);
+
+// DQ (9/28/2009): This is part of testing for GNU 4.0.x (other versions of g++ work fine).
+  ROSE_ASSERT(stmt != NULL);
+  if (stmt != NULL)
+     {
+    // Calling any member function is a way to test the pointer.
+       stmt->class_name();
+     }
+
   ScopeStack.push_back(stmt); 
 }
 
@@ -38,7 +48,19 @@ void SageBuilder::popScopeStack()
 
 SgScopeStatement* SageBuilder::topScopeStack()
 {
-  return ScopeStack.back();
+// DQ (9/28/2009): Test if this is an empty stack, and if so return NULL (ScopeStack.back() should be undefined for this case).
+   if (ScopeStack.empty() == true)
+      return NULL;
+
+// DQ (9/28/2009): This is part of testing for GNU 4.0.x (other versions of g++ work fine).
+  SgScopeStatement* tempScope = ScopeStack.back();
+  if (tempScope != NULL)
+     {
+       tempScope->class_name();
+     }
+
+//return ScopeStack.back();
+  return tempScope;
 }
 
 bool SageBuilder::emptyScopeStack()
@@ -3538,7 +3560,7 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
        // Liao 9/2/2009: This is not an error. We support bottomup AST construction and scope can be unkown.   
        // DQ (1/26/2009): I think this should be an error, but that appears it would
        // break the existing interface. Need to discuss this with Liao.
-//          printf ("Warning: In SageBuilder::buildClassDeclaration_nfi(): scope == NULL \n");
+       // printf ("Warning: In SageBuilder::buildClassDeclaration_nfi(): scope == NULL \n");
         }
 
   //   printf ("In SageBuilder::buildClassDeclaration_nfi(): mysymbol = %p \n",mysymbol);

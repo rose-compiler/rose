@@ -38,7 +38,7 @@ PATH=/bin:/usr/bin:/nmi/bin
 # 38 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_cent_4.2/minimal_default >> update.log 2>> update.err
 # 40 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_rhas_3/minimal_default >> update.log 2>> update.err (too old)
   42 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_sles_9/minimal_default >> update.log 2>> update.err
-  44 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_slf_3/minimal_default >> update.log 2>> update.err
+# 44 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_slf_3/minimal_default >> update.log 2>> update.err (platform does not exist any more)
 # 46 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_ubuntu_5.10/default >> update.log 2>> update.err
   46 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_ubuntu_5.10/minimal_default >> update.log 2>> update.err
 

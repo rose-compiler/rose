@@ -24,8 +24,8 @@
 // DQ (9/27/2009): This is the file that has the setting to disable the use of zlib (HPDF_NOZLIB)
 #include "hpdf_config.h"
 
-// DQ (9/28/2009): The inclusion of "hpdf_config.h" still is not turning ZLIB off, 
-// so try this more drastic action to turn it off for DEBIAN systems.
+// DQ (9/28/2009): The inclusion of "hpdf_config.h" still is not turning ZLIB off,
+// so try this more drastic action to turn it off (this is a problem for UBUNTU systems).
 #define HPDF_NOZLIB
 
 #ifndef HPDF_NOZLIB

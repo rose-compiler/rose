@@ -19,6 +19,12 @@ int main (int argc, char *argv[])
   SgProject *project = frontend (argc, argv);
   SgGlobal *globalScope = getFirstGlobalScope (project);
 
+  ROSE_ASSERT(globalScope != NULL);
+
+// DQ (9/28/2009): Tracking down GNU 4.0.x compiler problem!
+// SageBuilder::clearScopeStack();
+// SageBuilder::pushScopeStack (globalScope);
+
   // bottom up for volatile int j; no previous knowledge of target scope
   SgVariableDeclaration *varDecl0 = buildVariableDeclaration("j", 
     buildVolatileType(buildIntType()));

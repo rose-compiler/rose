@@ -3733,6 +3733,8 @@ SgScopeStatement::lookup_var_symbol(const SgName& n) const
 SgVariableSymbol*
 SgScopeStatement::lookup_variable_symbol(const SgName& n) const
    {
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT (p_symbol_table != NULL);
      assert (p_symbol_table != NULL);
      return p_symbol_table->find_variable(n);
    }

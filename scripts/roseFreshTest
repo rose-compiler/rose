@@ -281,7 +281,7 @@ fi
 
   # test the installed ROSE on external benchmarks, such as SPEC CPU 2006 etc.
     if  [ 0$ENABLE_EXTERNAL_TEST -ne 0 ] ; then
-      echo "----------- start testing using external benchmarks------------"
+      echo "----------- start testing using external benchmarks ------------"
 
       if [ "x$SPEC_CPU2006_INS" = "x" ]; then
         echo "ERROR: SPEC CPU2006's install path is not given!"
@@ -294,6 +294,29 @@ fi
       fi
 
       $SourceTreeLocation/scripts/testOnExternalBenchmarks.sh ${ROSE_INS} $SPEC_CPU2006_INS $SPEC_CPU2006_CONFIG ||exit 1
+    fi
+
+  # DQ (9/28/2009): Added support for ROSE to be tested by compiling the ROSE source code.
+  # Test the installed version of ROSE on the compilation of the ROSE source code.
+  # This works, but it greatly effected by new code added to ROSE (since most 
+  # developers don't run this test).  This is mostly interesting and not a critical 
+  # test currently.
+    if  [ 0$ENABLE_ROSE_COMPILE_ROSE_TEST -ne 0 ] ; then
+      echo "----------- start testing of ROSE compiling ROSE ------------"
+
+    # Finish customization of this test later (I might not need either of these variables)
+      if [ "x$ROSE_INS" = "x" ]; then
+        echo "ERROR: ROSE's install path is not given!"
+        exit 1
+      fi
+
+      if [ "x$ROSE_CONFIG" = "x" ]; then
+        echo "ERROR: ROSE's xxx file name is not given!"
+        exit 1
+      fi
+
+    # Finish customization of this test later (I might not need either of these variables)
+      $SourceTreeLocation/scripts/testOfRoseCompilingRose.sh ${ROSE_INS} $ROSE_INS $ROSE_CONFIG ||exit 1
     fi
   fi
 
