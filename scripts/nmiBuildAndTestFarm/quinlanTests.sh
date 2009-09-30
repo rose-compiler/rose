@@ -11,16 +11,16 @@ echo "***************************"
 # ./submit.sh build_configs/x86_64_fc_8/minimal_default (renamed)
 # ./submit.sh build_configs/x86_64_fedora_8/minimal_default (renamed again)
 # ./submit.sh build_configs/x86_64_fc_8/minimal_default
-./submit.sh build_configs/x86_64_fedora_8/minimal_default
-./submit.sh build_configs/x86_64_fc_5/minimal_default
-./submit.sh build_configs/x86_64_rhap_5/minimal_default
-./submit.sh build_configs/x86_64_rhas_4/minimal_default
-./submit.sh build_configs/x86_64_rhap_5.2/minimal_default
+./submit.sh build_configs/x86_64_fedora_8/minimal_default &
+./submit.sh build_configs/x86_64_fc_5/minimal_default &
+./submit.sh build_configs/x86_64_rhap_5/minimal_default &
+./submit.sh build_configs/x86_64_rhas_4/minimal_default &
+./submit.sh build_configs/x86_64_rhap_5.2/minimal_default &
 ./submit.sh build_configs/x86_suse_10.0/minimal_default
-./submit.sh build_configs/x86_suse_10.2/minimal_default
-./submit.sh build_configs/x86_fc_5/minimal_default
-./submit.sh build_configs/x86_rhas_4/minimal_default
-./submit.sh build_configs/x86_rhap_5/minimal_default
+./submit.sh build_configs/x86_suse_10.2/minimal_default &
+./submit.sh build_configs/x86_fc_5/minimal_default &
+./submit.sh build_configs/x86_rhas_4/minimal_default &
+./submit.sh build_configs/x86_rhap_5/minimal_default &
 ./submit.sh build_configs/x86_sl_4.4/minimal_default
 
 echo "******************************************"
@@ -31,7 +31,7 @@ echo "******************************************"
 # DQ (9/9/2009): This configuration on this platform can't find libCompass.so (in "make check")
 # /home/condor/execute/dir_16350/userdir/build/projects/compass/tools/compassVerifier/.libs/lt-compassVerifier: 
 # error while loading shared libraries: libCompass.so.0: cannot open shared object file: No such file or directory
-./submit.sh build_configs/x86_deb_5.0/minimal_default
+./submit.sh build_configs/x86_deb_5.0/minimal_default &
 
 # DQ (9/15/2009): Passing with skipping Debian tests.
 # DQ (9/14/2009): NMI added lsb_release
@@ -40,11 +40,11 @@ echo "******************************************"
 # /home/condor/execute/dir_24405/userdir/build/projects/compass/tools/compassVerifier/.libs/lt-compassVerifier: 
 # error while loading shared libraries: libCompass.so.0: cannot open shared object file: No such file or directory
 # DQ (9/7/2009): AM_PATH_XML2 not found (still)!
-./submit.sh build_configs/x86_64_deb_4.0/minimal_default
+./submit.sh build_configs/x86_64_deb_4.0/minimal_default &
 
 # DQ (9/15/2009): Passing with skipping Debian tests.
 # DQ (9/9/2009): Compass lib not found in "make check"
-./submit.sh build_configs/x86_64_deb_5.0/minimal_default
+./submit.sh build_configs/x86_64_deb_5.0/minimal_default &
 
 # DQ (9/15/2009): Passing with skipping Debian tests.
 # DQ (9/14/2009): NMI added lsb_release
@@ -52,7 +52,7 @@ echo "******************************************"
 # DQ (9/9/2009): This is a heavily loaded machine (tests accumulate)
 # DQ (9/7/2009): ACLOCAL_INCLUDES does not cause AM_PATH_XML2 to be found.
 # ACLOCAL_INCLUDES is not set in the environment (but this works on x86_64_deb_5.0).
-./submit.sh build_configs/x86_deb_4.0/minimal_default
+./submit.sh build_configs/x86_deb_4.0/minimal_default &
 
 echo "******************************************************************************************************************"
 echo "* Failing tests: (different reasons: RTED exit not define, Compass segfault, and testCallGraphAnalysis segfault) *"
@@ -68,19 +68,20 @@ echo "**************************************************************************
 # ./submit.sh build_configs/x86_64_fedora_9/minimal_default
 # ./submit.sh build_configs/x86_64_fc_9/minimal_default
 ./submit.sh build_configs/x86_64_fedora_9/minimal_default
+./submit.sh build_configs/x86_64_fedora_11/minimal_default
 
 # DQ (9/11/2009): Segfault in Compass tests ("make check")
 # DQ (9/9/2009): This platform will be removed (old: released June 2005)
 # DQ (9/7/2009): Segfault in Compass tests ("make check")
 # make[9]: *** [test] Segmentation fault
 # make[9]: Leaving directory `/home/condor/execute/dir_22074/userdir/build/projects/compass/tools/compass'
-./submit.sh build_configs/x86_64_fc_4/minimal_default
+./submit.sh build_configs/x86_64_fc_4/minimal_default &
 
 # DQ (9/9/2009): This platform will be removed, redundant, please consider just building on x86_rhas_4
 # DQ (9/7/2009): Error in testCallGraphAnalysis
 # make[6]: *** [test2006_02.C.dot] Segmentation fault
 # make[6]: Leaving directory `/home/condor/execute/dir_32311/userdir/build/tests/roseTests/programAnalysisTests/testCallGraphAnalysis'
-./submit.sh build_configs/x86_cent_4.2/minimal_default
+./submit.sh build_configs/x86_cent_4.2/minimal_default &
 
 echo "***********************************************"
 echo "* Failing test on Suse Linux version 9 (link problem multiple definition of __i686.get_pc_thunk.bx) *"
@@ -96,14 +97,14 @@ echo "***********************************************"
 # collect2: ld returned 1 exit status
 # make[3]: *** [librose.la] Error 1
 # make[3]: Leaving directory `/home/condor/execute/dir_16335/userdir/build/src'
-./submit.sh build_configs/x86_sles_9/minimal_default
+./submit.sh build_configs/x86_sles_9/minimal_default &
 
 echo "**************************************************************"
 echo "* Failing test on Suse Linux version 9 (link problem wrong version of libstdc++.so) *"
 echo "**************************************************************"
 # DQ (9/9/2009): New error: 
 #    /prereq/gcc-4.2.4/lib/../lib64/libstdc++.so: undefined reference to `_Unwind_GetIPInfo@GCC_4.2.0'
-./submit.sh build_configs/x86_64_sles_9/minimal_default
+./submit.sh build_configs/x86_64_sles_9/minimal_default 
 
 
 echo "******************************************************"
@@ -152,8 +153,8 @@ echo "*************************************************************************"
 echo "************************"
 echo "* New Mac OSX tests... *"
 echo "************************"
-./submit.sh build_configs/x86_64_macos_10.5/minimal_default
-./submit.sh build_configs/x86_macos_10.4/minimal_default
+./submit.sh build_configs/x86_64_macos_10.5/minimal_default &
+./submit.sh build_configs/x86_macos_10.4/minimal_default &
 
 echo "********************************************************"
 echo "* New possible tests... (not available as of 9/9/2009) *"
@@ -173,13 +174,13 @@ echo "*****************************************"
 ./submit.sh build_configs/x86_64_rhap_5/compilerTest_gnu_4.3
 
 # DQ (9/12/2009): Added g++ 4.1.2 test
-./submit.sh build_configs/x86_64_rhap_5.2/compilerTest_gnu_4.1
+./submit.sh build_configs/x86_64_rhap_5.2/compilerTest_gnu_4.1 &
 
 # DQ (9/12/2009): Added g++ 4.0.4 test
-./submit.sh build_configs/x86_64_rhap_5/compilerTest_gnu_4.0
+./submit.sh build_configs/x86_64_rhap_5/compilerTest_gnu_4.0 &
 
 # DQ (9/12/2009): Added g++ 3.4.3 test
-./submit.sh build_configs/x86_rhas_4/compilerTest_gnu_3.4
+./submit.sh build_configs/x86_rhas_4/compilerTest_gnu_3.4 &
 
 # DQ (9/29/2009): Suggested new machine (by SNL)
 ./submit.sh build_configs/x86_64_ubuntu_8.04.3/minimal_default
@@ -188,10 +189,10 @@ echo "*****************************************"
 ./submit.sh build_configs/x86_rhas_4/compilerTest_gnu_4.3
 
 # DQ (9/29/2009): Added g++ 4.1.2 test
-./submit.sh build_configs/x86_rhap_5/compilerTest_gnu_4.1
+./submit.sh build_configs/x86_rhap_5/compilerTest_gnu_4.1 &
 
 # DQ (9/29/2009): Added g++ 3.4.3 test
-./submit.sh build_configs/x86_rhap_5/compilerTest_gnu_3.4
+./submit.sh build_configs/x86_rhap_5/compilerTest_gnu_3.4 &
 
 # DQ (9/29/2009): Added Red Hat 5.3 test
 ./submit.sh build_configs/x86_64_rhap_5.3/minimal_default
