@@ -7,6 +7,7 @@ while [ "$#" -gt 0 ]; do
     arg="$1"; shift
     case "$arg" in
         --verbose)
+            echo "Setting verbose mode in build script ..."
             do_quiet=no
             ;;
         --timing)
