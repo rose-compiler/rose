@@ -1,3 +1,42 @@
+2009-09-30 03:06  dquinlan
+
+	* [r7687] /trunk/ROSE/Makefile.am, /trunk/ROSE/build,
+	  /trunk/ROSE/proposals/TODO.txt,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_macos_10.4/minimal_default,
+	  /trunk/ROSE/src/frontend/CxxFrontend/roseBinaryEDG-x86_64-pc-linux-gnu-GNU-4.2-986bf502283a3dc60c82c5a008eefb61.tar.gz:
+	  Minor tweaks to NMI support.
+
+2009-09-30 02:53  dquinlan
+
+	* [r7686]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_macos_10.5/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_macos_10.4/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/quinlanTests.sh: Added
+	  libtool prereq to Mac OSX tests.
+
+2009-09-30 02:08  dquinlan
+
+	* [r7685]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_rhap_5.3,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_rhap_5.3/minimal_default:
+	  Added 64-bit Red Hat 5.3 test.
+
+2009-09-30 02:05  dquinlan
+
+	* [r7684]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_rhap_5/compilerTest_gnu_3.4,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_rhap_5/compilerTest_gnu_4.1,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_rhas_4/compilerTest_gnu_4.3:
+	  Added 32-bit compiler tests.
+
+2009-09-30 00:56  dquinlan
+
+	* [r7683]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_ubuntu_8.04.3,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_ubuntu_8.04.3/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/quinlanTests.sh: Added
+	  latest version of ubuntu platform.
+
 2009-09-29 18:45  dquinlan
 
 	* [r7674] /trunk/ROSE/src/frontend/SageIII/Makefile.am: Added
