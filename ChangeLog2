@@ -1,3 +1,36 @@
+2009-09-30 17:31  dquinlan
+
+	* [r7692] /trunk/ROSE/scripts/nmiBuildAndTestFarm/cronjobs: Updated
+	  crontab file for NMI tests.
+
+2009-09-30 17:25  dquinlan
+
+	* [r7691]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_rhap_5.2/compilerTest_gnu_4.1,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_rhap_5.2/compilerTest_gnu_4.3,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_rhap_5/compilerTest_gnu_4.0,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_rhap_5/compilerTest_gnu_4.3,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_rhap_5/compilerTest_gnu_3.4,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_rhap_5/compilerTest_gnu_4.1,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_rhas_4/compilerTest_gnu_3.4,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_rhas_4/compilerTest_gnu_4.3,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/quinlanTests.sh: Updated
+	  titles on some NMI tests.
+
+2009-09-30 17:22  dquinlan
+
+	* [r7690] /trunk/ROSE/build: Fixed build script tests of libtoolize
+	  to be more portable.
+
+2009-09-30 15:18  dquinlan
+
+	* [r7689]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_fedora_11,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_fedora_11/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_macos_10.4/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/quinlanTests.sh: Added
+	  new platform and fixed Mac OSX platform options.
+
 2009-09-30 03:06  dquinlan
 
 	* [r7687] /trunk/ROSE/Makefile.am, /trunk/ROSE/build,
