@@ -9,6 +9,8 @@
 	   up/2,
 	   down/3,
 	   right/2,
+
+	   next_preorder/2,
 	   
 	   zip/2,
 	   unzip/3,
@@ -100,7 +102,7 @@ up(zipper(X,[down_list(PredsR, Succs, _)|Ctx]), zipper(Parent,Ctx)) :-
   !.
 
 %% right(+Zipper, -Zipper1) is semidet.
-% Navigate to the next sibling in a tree
+% Navigate to the next sibling in a tree or a list.
 right(zipper(X, [down_list(PredsR, [Y|Succs], N)|Ctx]),
       zipper(Y, [down_list([X|PredsR], Succs, N1)|Ctx])) :- !,
   N1 is N+1.
@@ -159,4 +161,22 @@ find_function1(P, FunctionTemplate, P2) :-
 %% distance_from_root(+Zipper, -Distance) is det.
 % Return the current distance from the root node
 distance_from_root(zipper(_, Nav), Distance) :- length(Nav, Distance).
+
+%% next_preorder(+Zipper, -Zipper)
+% Return the ``next'' node in a preorder traversal fashion.
+% Algorithm:
+%   try down(1)
+%   else while not try right() do up()
+
+next_preorder(P1, P2) :-
+  (   down(P1, 1, P2)
+  ;   right_or_up(P1, P2)
+  ).
+
+right_or_up(P1, Pn) :-
+  (   right(P1, Pn)
+  ;   up(P1, P2),
+      right_or_up(P2, Pn)
+  ).
+
 

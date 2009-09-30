@@ -75,7 +75,7 @@ ast_walk(P-G, Function, P4-G3) :- bound(P), bound(G),
   ast_walk(P2-SubG1, P3-SubG2),
   top(P3, P4),
 
-				% FIXME return edges
+% FIXME return edges
   faux_node(SubG2, 'return', SubG3),
   SubG3 = graph(_,Mode,Count,ExitNode,FunDecls1),
   add_vertices(G0, [SubG3], G1),
