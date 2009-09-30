@@ -67,8 +67,10 @@ echo "**************************************************************************
 # ./submit.sh build_configs/x86_64_fc_9/minimal_default
 # ./submit.sh build_configs/x86_64_fedora_9/minimal_default
 # ./submit.sh build_configs/x86_64_fc_9/minimal_default
-./submit.sh build_configs/x86_64_fedora_9/minimal_default
-./submit.sh build_configs/x86_64_fedora_11/minimal_default
+./submit.sh build_configs/x86_64_fedora_9/minimal_default &
+
+# DQ (9/30/2009): Added new test
+./submit.sh build_configs/x86_64_fedora_11/minimal_default &
 
 # DQ (9/11/2009): Segfault in Compass tests ("make check")
 # DQ (9/9/2009): This platform will be removed (old: released June 2005)
@@ -120,7 +122,7 @@ echo "******************************************************"
 
 # DQ (9/9/2009): This platform will be removed, consider supporting one of the two current LTS releases (see email)
 # DQ (9/7/2009): AM_PATH_XML2 not found (fixed and waiting for new test results)
-./submit.sh build_configs/x86_ubuntu_5.10/minimal_default
+./submit.sh build_configs/x86_ubuntu_5.10/minimal_default &
 
 # DQ (9/9/2009): This platform will be removed (skip this test)
 # DQ (9/6/2009): This platform does not appear to exist. This all of the prereq 
@@ -171,7 +173,7 @@ echo "*****************************************"
 
 # DQ (9/12/2009): g++ 4.3.2 prereq is not available on x86_64_rhap_5.2
 # ./submit.sh build_configs/x86_64_rhap_5.2/compilerTest_gnu_4.3
-./submit.sh build_configs/x86_64_rhap_5/compilerTest_gnu_4.3
+./submit.sh build_configs/x86_64_rhap_5/compilerTest_gnu_4.3 &
 
 # DQ (9/12/2009): Added g++ 4.1.2 test
 ./submit.sh build_configs/x86_64_rhap_5.2/compilerTest_gnu_4.1 &
@@ -186,7 +188,7 @@ echo "*****************************************"
 ./submit.sh build_configs/x86_64_ubuntu_8.04.3/minimal_default
 
 # DQ (9/29/2009): Added g++ 4.3.2 test
-./submit.sh build_configs/x86_rhas_4/compilerTest_gnu_4.3
+./submit.sh build_configs/x86_rhas_4/compilerTest_gnu_4.3 &
 
 # DQ (9/29/2009): Added g++ 4.1.2 test
 ./submit.sh build_configs/x86_rhap_5/compilerTest_gnu_4.1 &
