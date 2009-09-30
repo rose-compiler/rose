@@ -54,5 +54,11 @@ PATH=/bin:/usr/bin:/nmi/bin
   56 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_macos_10.5/minimal_default >> update.log 2>> update.err
   58 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_macos_10.4/minimal_default >> update.log 2>> update.err
 
+  00 3 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_rhap_5.3/minimal_default >> update.log 2>> update.err
+  00 3 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_ubuntu_8.04.3/minimal_default >> update.log 2>> update.err
+  00 3 * * * cd ${CWD}; ./submit.sh build_configs/x86_rhas_4/compilerTest_gnu_4.3 >> update.log 2>> update.err
+  00 3 * * * cd ${CWD}; ./submit.sh build_configs/x86_rhap_5/compilerTest_gnu_4.1 >> update.log 2>> update.err
+  00 3 * * * cd ${CWD}; ./submit.sh build_configs/x86_rhap_5/compilerTest_gnu_3.4 >> update.log 2>> update.err
+
 # Cleanup temporary files from older submissions
 00 3 * * * ${CWD}/cleanup.sh >> ${CWD}/update.log 2>> ${CWD}/update.err
