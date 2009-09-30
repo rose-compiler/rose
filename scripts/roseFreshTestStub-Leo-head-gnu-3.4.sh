@@ -3,7 +3,10 @@
 # Stub file to include settings for roseFreshTest-common
 # this file stores all sharable environment variables for all test stubs on tux268
 source /home/liao6/rose/scripts/roseFreshTestStub-Leo-common.sh
-source /home/liao6/set.gcc4.4.1
+export BOOST_ROOT="/home/liao6/opt/boost_1_40_0_gcc34"
+export LD_LIBRARY_PATH="${BOOST_ROOT}/lib:${LD_LIBRARY_PATH}"
+
+source /home/liao6/set.gcc3.4
 
 ROSE_SVNROOT=file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
 MAILADDRS="liaoch@llnl.gov"

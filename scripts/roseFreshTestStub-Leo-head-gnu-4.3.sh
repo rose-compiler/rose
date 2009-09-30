@@ -30,7 +30,7 @@ MAKEFLAGS="-j8"
 SKIP_BUILD_SOURCE=1
 # Skip running the distcheck rule (since we just want to build the compiler specific binary)
 SKIP_DIST_TEST=1
-ENABLE_SVN_UPDATE=1
+#ENABLE_SVN_UPDATE=1
 
 ENABLE_BUILD_BINARY_EDG=1
 KEEP_TEST_DIR=0
