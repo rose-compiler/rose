@@ -55,25 +55,35 @@ libtoolize_name=""
 test_libtoolize_version=""
 run_libtoolize=""
 
+echo ""
 echo "******************************************"
 echo "Testing version of libtool (libtoolize)..."
 echo "******************************************"
 
+# Look for this name first...
+libtoolize_name=libtoolize
+
 # DQ (9/29/2009): Check if libtoolize is available in the user's path, else check for glibtoolize (less common, I think).
-if test ! `which libtoolize > /dev/null`; then
+if which $libtoolize_name > /dev/null; then
    echo "Found libtoolize program, running it to generate libtool locally in ROSE."
-   libtoolize_name=libtoolize
    test_libtoolize_version=yes
 else
-   if test ! `which glibtoolize > /dev/null`; then
+   libtoolize_name=glibtoolize
+   if which $libtoolize_name > /dev/null; then
       echo "Found glibtoolize program, running it to generate libtool locally in ROSE."
-      libtoolize_name=glibtoolize
       test_libtoolize_version=yes
    else
     # If the user is running build then libtool should be available.
       echo "Can't find libtool support (libtoolize)...(using the version that comes with ROSE)"
       test_libtoolize_version=no
-    # exit 1;
+
+      libtoolize_name=libtoolize_not_available
+
+     # Make it an error to run this build script if libtool is unavailable, however
+     # it the future it might be fine to not require libtool since we included a 
+     # version in ROSE. So this is a temporary measure.
+       echo "Error: Neither libtoolize nor glibtoolize were found in the user's path."
+       exit 1;
    fi
 fi
 
