@@ -181,5 +181,7 @@ echo "*****************************************"
 # DQ (9/12/2009): Added g++ 3.4.3 test
 ./submit.sh build_configs/x86_rhas_4/compilerTest_gnu_3.4
 
+# DQ (9/29/2009): Suggested new machine (by SNL)
+./submit.sh build_configs/x86_64_ubuntu_8.04.3/minimal_default
 
 echo "Submitted All Tests..."
