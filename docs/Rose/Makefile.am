@@ -144,7 +144,8 @@ latexDependences = \
      roseCommandline.txt \
      roseExecutionOutput.txt \
      roseConfigureOptions.txt \
-     rosePlatformPrerequisites.txt
+     rosePlatformPrerequisites.txt \
+     rosePlatformConfigureOptions.txt
 
 html-local: AvailableDocumentation.docs $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz
 
@@ -230,9 +231,13 @@ pdf-local: $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationIn
 
 # DQ (9/9/2009): Added generated list of NMI compile farm platform prerequisites for ROSE documentation (ROSE_InstallationInstructions.pdf)
 rosePlatformPrerequisites.txt:
-	cd $(top_srcdir)/scripts/nmiBuildAndTestFarm/build_configs; grep -r PREREQS * | grep -v svn | grep minimal_default | grep -v minimal_default~ | sed 's/\/minimal_default:PREREQS=/ : /' >& rosePlatformPrerequisites.txt
+	cd $(top_srcdir)/scripts/nmiBuildAndTestFarm/build_configs; grep -r PREREQS * | grep -v svn | grep minimal_default | grep -v minimal_default~ | grep -v "#" | sed 's/\/minimal_default:PREREQS=/ : /' >& rosePlatformPrerequisites.txt
 	mv $(top_srcdir)/scripts/nmiBuildAndTestFarm/build_configs/rosePlatformPrerequisites.txt .
 
+# DQ (9/29/2009): Added generated list of NMI compile farm platform configure options for ROSE documentation (ROSE_InstallationInstructions.pdf)
+rosePlatformConfigureOptions.txt:
+	cd $(top_srcdir)/scripts/nmiBuildAndTestFarm/build_configs; grep -r CONFIGURE_OPTIONS * | grep -v svn | grep minimal_default | grep -v minimal_default~ | grep -v "#" | sed 's/\/minimal_default:CONFIGURE_OPTIONS=/ : /' >& rosePlatformConfigureOptions.txt
+	mv $(top_srcdir)/scripts/nmiBuildAndTestFarm/build_configs/rosePlatformConfigureOptions.txt .
 
 ROSE_InstallationInstructions.pdf: $(latexFiles) $(latexDependences) ROSE_InstallationInstructions.tex
 	$(PDFLATEX) ROSE_InstallationInstructions.tex && \
@@ -292,4 +297,5 @@ CLEANFILES = roseDoxygen.tags SageIntermediateForm *.log *.aux *.dvi \
 	     rose.cfg roseCommandline.txt roseConfigureOptions* roseExecutionOutput.txt \
 	     roseHelpOutput.txt rose_roseTestProgram.C roseTestProgram.C sage.cfg \
 	     $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz footer.html \
-	     AvailableDocumentation.docs  leftmenu.html rosePlatformPrerequisites.txt
+	     AvailableDocumentation.docs  leftmenu.html rosePlatformPrerequisites.txt \
+        rosePlatformConfigureOptions.txt

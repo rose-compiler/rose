@@ -120,6 +120,7 @@ echo "******************************************************"
 # DQ (9/9/2009): This platform will be removed (old machine)
 # ./submit.sh build_configs/x86_slf_3/minimal_default
 
+# DQ (9/30/2009): The platform demonstrates asegfault error when the "src/testSharedRoseLib" executable is run.
 # DQ (9/9/2009): This platform will be removed, consider supporting one of the two current LTS releases (see email)
 # DQ (9/7/2009): AM_PATH_XML2 not found (fixed and waiting for new test results)
 ./submit.sh build_configs/x86_ubuntu_5.10/minimal_default &
@@ -182,6 +183,7 @@ echo "*****************************************"
 ./submit.sh build_configs/x86_64_rhap_5/compilerTest_gnu_4.0 &
 
 # DQ (9/12/2009): Added g++ 3.4.3 test
+# Error: can't find the correct binary (32-bit GNU 3.4; but we should have the renaming such that the 4.1 version binary is used.
 ./submit.sh build_configs/x86_rhas_4/compilerTest_gnu_3.4 &
 
 # DQ (9/29/2009): Suggested new machine (by SNL)

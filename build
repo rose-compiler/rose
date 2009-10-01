@@ -155,25 +155,17 @@ fi
 # echo "Exiting ./build script as a test!"
 # exit 1
 
-# DQ (11/23/2008): Added message to make users less afraid of warnings...
-echo ""
-echo "*******************************************************************************************"
-echo "Note that due to ROSE compatibility with libtool 1.5 and 2.0, some warnings will be output."
-echo "These warnings come from configure.in and aclocal.m4, and can be safely ignored."
-echo "These messages from from the use of aclocal, acheader, autoconf, and automake."
-echo ""
-echo "Rose Project Management."
-echo "*******************************************************************************************"
-
-# DQ (9/5/2009): Added output to permit debugging on NMI machines
-echo "ACLOCAL_INCLUDES = $ACLOCAL_INCLUDES"
-
 # DQ (9/26/2009): Testing svn (required for construction of EDG binaries)
 # echo "Testing SVN version"
 # svn --version
 # svn --help
 # svn log --help
 # svn log --limit 100
+
+echo ""
+echo "******************************************"
+echo "Testing version of automake (autotools)..."
+echo "******************************************"
 
 # DQ (9/26/2009): Having the wrong version of automake is a common problem.
 # We can't test for it in the configure.in and we want to catch the problem 
@@ -226,6 +218,19 @@ else
       exit 1;
    fi
 fi
+
+# DQ (11/23/2008): Added message to make users less afraid of warnings...
+echo ""
+echo "*******************************************************************************************"
+echo "Note that due to ROSE compatibility with libtool 1.5 and 2.0, some warnings will be output."
+echo "These warnings come from configure.in and aclocal.m4, and can be safely ignored."
+echo "These messages from from the use of aclocal, acheader, autoconf, and automake."
+echo ""
+echo "Rose Project Management."
+echo "*******************************************************************************************"
+
+# DQ (9/5/2009): Added output to permit debugging on NMI machines
+echo "ACLOCAL_INCLUDES = $ACLOCAL_INCLUDES"
 
 # DJH (20 July 2009): Some macros may be installed in non-standard locations
 # (e.g. libxml's on NMI build machines)

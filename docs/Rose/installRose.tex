@@ -820,7 +820,9 @@ and select the project, {\em rose compiler}, from the pull down menu.
 \begin{tabular}{|c|} \hline
      {\tt NMI Platform (OS and Machine) Prerequisites}
 \\\hline\hline
-{\footnotesize
+{
+%\footnotesize
+\scriptsize
    \lstinputlisting{rosePlatformPrerequisites.txt}
 }
 \\\hline
@@ -830,6 +832,30 @@ and select the project, {\em rose compiler}, from the pull down menu.
 \end{figure}
 \end{latexonly}
 \label{NMI:prerequisites}
+% End of scope in indentation
+}
+
+   NMI OS and machine (platform) Configure Options for ROSE:
+% Do this when processing latex to generate non-html (not using latex2html)
+{\indent
+\begin{latexonly}
+\begin{figure}[tb]
+\begin{center}
+\begin{tabular}{|c|} \hline
+     {\tt NMI Platform (OS and Machine) Configure Options}
+\\\hline\hline
+{
+%\footnotesize
+\scriptsize
+   \lstinputlisting{rosePlatformConfigureOptions.txt}
+}
+\\\hline
+\end{tabular}
+\end{center}
+\caption{ Example NMI machine configure options used for nightly tests. }
+\end{figure}
+\end{latexonly}
+\label{NMI:configureOptions}
 % End of scope in indentation
 }
 

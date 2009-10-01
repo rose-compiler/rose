@@ -149,6 +149,25 @@ dnl predefined by a specific compiler
 
   AM_CONDITIONAL(BACKEND_COMPILER_VERSION_OK_FOR_ROSE_TESTING,test "x$ok_for_testing" = xtrue)
 
+# DQ (9/30/2009): Exempt a set of old compiler versions from some testing
+# This is an attept to define a class of compiler versions that 
+# we should not test because it can generate internal compiler errors.
+# Specifically I am turning off the projects/interpretation directory
+# when using GNU version 3.4 (this is an example of this class).
+  if test x$BACKEND_COMPILER_VERSION_NAME = xGNU; then
+    if test x$BACKEND_COMPILER_VERSION_MAJOR_NUMBER = x3; then
+      if test x$BACKEND_COMPILER_VERSION_MINOR_NUMBER = x4; then
+        echo "Warning: This is classified as an OLD compiler to ROSE (some parts of ROSE will not be compiled)."
+        old_compiler=true
+      fi
+    fi
+  fi
+
+  echo "This version of backend compiler is condidered too old for parts of ROSE: old_compiler = $old_compiler"
+
+  AM_CONDITIONAL(OLD_COMPILER_VERSION,test "x$old_compiler" = xtrue)
+
+
   AC_SUBST(BACKEND_COMPILER_VERSION_NAME)
   AC_SUBST(BACKEND_COMPILER_VERSION_MAJOR_NUMBER)
   AC_SUBST(BACKEND_COMPILER_VERSION_MINOR_NUMBER)
