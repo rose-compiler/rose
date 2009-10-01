@@ -1,3 +1,126 @@
+2009-10-01 17:48  liao6
+
+	* [r7713] /trunk/ROSE/docs/Rose/rose.cfg.in: Enabled the search
+	  capability of Doxygen-generated web references
+
+2009-10-01 16:29  liao6
+
+	* [r7712] /trunk/ROSE/src/midend/astOutlining/ASTtools.hh,
+	  /trunk/ROSE/src/midend/astOutlining/CollectVars.cc,
+	  /trunk/ROSE/src/midend/astOutlining/GenerateCall.cc,
+	  /trunk/ROSE/src/midend/astOutlining/GenerateFunc.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Outliner.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Outliner.hh,
+	  /trunk/ROSE/src/midend/astOutlining/Transform.cc,
+	  /trunk/ROSE/src/midend/astOutlining/VarSym.cc,
+	  /trunk/ROSE/src/midend/ompLowering/libgomp_g.h,
+	  /trunk/ROSE/src/midend/ompLowering/omp_lowering.cpp,
+	  /trunk/ROSE/src/midend/ompLowering/omp_lowering.h,
+	  /trunk/ROSE/tests/roseTests/ompLoweringTests/Makefile.am: Added
+	  support for untied OpenMP tasks using the outliner's new feature:
+	  * added a new feature of the outliner: wrap parameters into a
+	  data structure
+	  * pass parameters by values in the data structure if they are
+	  firstprivate and private variables
+	  This is important since a parent , untied task may be
+	  inactive/suspended and its nested child tasks cannot access
+	  a parent task's stack variable.
+
+2009-10-01 13:57  matzke
+
+	* [r7711] /trunk/ROSE/scripts/rosegit/config/defaults.conf:
+	  RoseGit: added --with-mysql
+
+2009-10-01 13:56  matzke
+
+	* [r7710] /trunk/ROSE/binaries/Makefile.am,
+	  /trunk/ROSE/binaries/samples/ARPPRODUCTICON.exe,
+	  /trunk/ROSE/binaries/samples/Makefile.am,
+	  /trunk/ROSE/binaries/samples/PFE32.EXE,
+	  /trunk/ROSE/binaries/samples/arm-ctrlaltdel,
+	  /trunk/ROSE/binaries/samples/arm-nologin,
+	  /trunk/ROSE/binaries/samples/arm-pivot_root,
+	  /trunk/ROSE/binaries/samples/arm-poweroff,
+	  /trunk/ROSE/binaries/samples/asm_code_samples_gcc.exe,
+	  /trunk/ROSE/binaries/samples/bgl-helloworld-mpicc,
+	  /trunk/ROSE/binaries/samples/bgl-helloworld-mpixlc,
+	  /trunk/ROSE/binaries/samples/buffer2.bin,
+	  /trunk/ROSE/binaries/samples/exefmt.exe,
+	  /trunk/ROSE/binaries/samples/fnord.i386,
+	  /trunk/ROSE/binaries/samples/fnord.ppc,
+	  /trunk/ROSE/binaries/samples/i386-ctrlaltdel,
+	  /trunk/ROSE/binaries/samples/i386-fsck.cramfs,
+	  /trunk/ROSE/binaries/samples/i386-nologin,
+	  /trunk/ROSE/binaries/samples/i386-pivot_root,
+	  /trunk/ROSE/binaries/samples/i386-poweroff,
+	  /trunk/ROSE/binaries/samples/i686-test1.O0.bin,
+	  /trunk/ROSE/binaries/samples/i686-test1.O3.bin,
+	  /trunk/ROSE/binaries/samples/libm-2.3.6.so,
+	  /trunk/ROSE/binaries/samples/pocketputty.exe,
+	  /trunk/ROSE/binaries/samples/pocketputty2.exe,
+	  /trunk/ROSE/binaries/samples/proxycfg.exe,
+	  /trunk/ROSE/binaries/samples/puttytel.exe,
+	  /trunk/ROSE/binaries/samples/schulz-sample1-p.so,
+	  /trunk/ROSE/binaries/samples/schulz-sample1.so,
+	  /trunk/ROSE/binaries/samples/schulz-sample2-p.so,
+	  /trunk/ROSE/binaries/samples/schulz-sample2.so,
+	  /trunk/ROSE/binaries/samples/x86-64-ctrlaltdel,
+	  /trunk/ROSE/binaries/samples/x86-64-nologin,
+	  /trunk/ROSE/binaries/samples/x86-64-pivot_root,
+	  /trunk/ROSE/binaries/samples/x86-64-poweroff,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/ARPPRODUCTICON.exe,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/PFE32.EXE,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/arm-ctrlaltdel,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/arm-nologin,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/arm-pivot_root,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/arm-poweroff,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/asm_code_samples_gcc.exe,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/bgl-helloworld-mpicc,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/bgl-helloworld-mpixlc,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/exefmt.exe,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/fnord.i386,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/fnord.ppc,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/i386-ctrlaltdel,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/i386-fsck.cramfs,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/i386-nologin,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/i386-pivot_root,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/i386-poweroff,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/pocketputty.exe,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/pocketputty2.exe,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/proxycfg.exe,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/puttytel.exe,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/x86-64-ctrlaltdel,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/x86-64-nologin,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/x86-64-pivot_root,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/x86-64-poweroff,
+	  /trunk/ROSE/tests/roseTests/binaryTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/binaryTests/arm-ctrlaltdel,
+	  /trunk/ROSE/tests/roseTests/binaryTests/arm-poweroff,
+	  /trunk/ROSE/tests/roseTests/binaryTests/buffer2.bin,
+	  /trunk/ROSE/tests/roseTests/binaryTests/i686-test1.O0.bin,
+	  /trunk/ROSE/tests/roseTests/binaryTests/i686-test1.O3.bin,
+	  /trunk/ROSE/tests/roseTests/binaryTests/libm-2.3.6.so,
+	  /trunk/ROSE/tests/roseTests/binaryTests/schulz-sample1-p.so,
+	  /trunk/ROSE/tests/roseTests/binaryTests/schulz-sample1.so,
+	  /trunk/ROSE/tests/roseTests/binaryTests/schulz-sample2-p.so,
+	  /trunk/ROSE/tests/roseTests/binaryTests/schulz-sample2.so,
+	  /trunk/ROSE/tests/roseTests/binaryTests/testSampleBinaries.conf,
+	  /trunk/ROSE/tests/roseTests/binaryTests/testSampleBinaries.sh:
+	  Moved binary samples into a single directory
+
+2009-10-01 13:53  matzke
+
+	* [r7709] /trunk/ROSE/Makefile.am, /trunk/ROSE/binaries,
+	  /trunk/ROSE/binaries/samples,
+	  /trunk/ROSE/binaries/samples/Makefile.am,
+	  /trunk/ROSE/binaries/samples/gcc-4.0.x-test1.o,
+	  /trunk/ROSE/configure.in, /trunk/ROSE/demo/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/binaryTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/binaryTests/testSampleBinaries.conf,
+	  /trunk/ROSE/tests/roseTests/binaryTests/testSampleBinaries.sh:
+	  ExecFormats: more testing
+
 2009-10-01 02:48  dquinlan
 
 	* [r7696] /trunk/ROSE/build, /trunk/ROSE/config/compiler-defs.m4,
