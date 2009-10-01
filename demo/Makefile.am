@@ -75,18 +75,18 @@ demo_binary_analysis_C:
 
 
 if DQ_DEVELOPER_TESTS 
-# This demo show the handling of different formats (ELF and PE) and different instruction sets (ARM, PowerPC, x86).
+# This demo shows the handling of different formats (ELF and PE) and different instruction sets (ARM, PowerPC, x86).
 demo_2: demo_2_test
-	emacs $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests/asm_code_samples_gcc.exe.dump
+	$${EDITOR:-emacs} $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests/asm_code_samples_gcc.exe.dump
 	@echo "End of demo_2"
 
 demo_2_test:
-	cd $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests; $(MAKE) demo_binary_file_format_Linux
-	cd $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests; $(MAKE) demo_with_instructions_Linux
-	cd $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests; $(MAKE) demo_binary_file_format_PE
-	cd $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests; $(MAKE) demo_with_instructions_PE
-	cd $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests; $(MAKE) demo_binary_file_format_ARM
-	cd $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests; $(MAKE) demo_with_instructions_ARM
+	cd $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests && $(MAKE) demo_binary_file_format_Linux
+	cd $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests && $(MAKE) demo_with_instructions_Linux
+	cd $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests && $(MAKE) demo_binary_file_format_PE
+	cd $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests && $(MAKE) demo_with_instructions_PE
+	cd $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests && $(MAKE) demo_binary_file_format_ARM
+	cd $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests && $(MAKE) demo_with_instructions_ARM
 endif
 
 # This demo shows the generation of a few different forms of analysis on binaries

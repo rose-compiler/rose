@@ -1561,6 +1561,8 @@ developersScratchSpace/Robb/BinaryTools/Makefile
 developersScratchSpace/Robb/DynamicLinking/Makefile
 developersScratchSpace/Robb/SemanticVerification/Makefile
 developersScratchSpace/Robb/extras/Makefile
+binaries/Makefile
+binaries/samples/Makefile
 ])
 
 

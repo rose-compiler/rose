@@ -4,7 +4,8 @@ EXTRA_DIST = buffer2.bin runTest.C \
              arm-poweroff arm-ctrlaltdel arm-ctrlaltdel.ans \
 	     schulz-sample1.so schulz-sample1-p.so schulz-sample2.so schulz-sample2-p.so \
 	     runExecFormatsTest testShiftResizeSection.sh libm-2.3.6.so i686-test1.O3.bin \
-	     test_findConstants.ans test_disassemble.ans i686-test1.O0.bin
+	     test_findConstants.ans test_disassemble.ans i686-test1.O0.bin \
+             testSampleBinaries.sh testSampleBinaries.conf
 
 if USE_BINARY_ANALYSIS_TESTS
 
@@ -222,6 +223,12 @@ test_assembler.passed: disassemble
 	$(VALGRIND) ./disassemble --reassemble --show-bad $(top_srcdir)/projects/BinQ/buffer2.bin
 	@touch $@
 
+# This tests lots of sample binaries. We cannot run it concurrently with the other tests because some of the output
+# names could conflict with the other tests (we don't know what files are in the sample binaries directory).
+test_samples.passed: disassemble execFormatsTest $(srcdir)/testSampleBinaries.sh test $(srcdir)/testSampleBinaries.conf
+	$(srcdir)/testSampleBinaries.sh $(top_srcdir)/binaries/samples $(srcdir)/testSampleBinaries.conf
+	@touch $@
+
 ###############################################################################################################################
 # Miscellaneous....
 ###############################################################################################################################
@@ -299,6 +306,7 @@ else
 # Caution: runTest generates the same output files as some $(TEST_PASSED_TARGETS) [RPM 2009-07-21]
 check-local: runTest test1 $(TEST_PASSED_TARGETS)
 	./runTest $(srcdir)/buffer2.bin > output
+	$(MAKE) test_samples.passed
 	@echo "*********************************************************************"
 	@echo "*** ROSE/tests/roseTests/programAnalysisTests/binaryTests: passed ***"
 	@echo "*********************************************************************"
