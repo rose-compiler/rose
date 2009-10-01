@@ -34,13 +34,13 @@ test_parser() {
 # A test that runs the disassembler with default settings
 test_disassembler() {
     local sample="$1"
-    ./disassemble $sample
+    ./disassemble -rose:binary $sample
 }
 
 # A test that runs the disassembler and tries to reassemble to the same machine code bytes
 test_assembler() {
     local sample="$1"
-    ./disassemble --reassemble $sample
+    ./disassemble -rose:binary --reassemble $sample
 }
 
 
@@ -58,8 +58,14 @@ test_assembler() {
 failures= nfailures=0
 echo "Running binary tests on samples in $SAMPLE_DIR"
 for sample in $(find $SAMPLE_DIR -type f |sort); do
-    sampleshort="${sample#$SAMPLE_DIR}"
+    sampleshort="${sample#$SAMPLE_DIR/}"
     samplebase="${sample##*/}"
+
+    # Skip certain file names
+    case "$samplebase" in
+	Makefile.*) continue ;;
+	*~)         continue ;;
+    esac
 
     # Look for the config entry using the full name returned by the "find" command above, then the name with the SAMPLE_DIR
     # part stripped off the front, then just the file name with no directory component, and finally a "*" entry.  If all that
@@ -70,31 +76,34 @@ for sample in $(find $SAMPLE_DIR -type f |sort); do
     [ -n "$tests" ] || tests="$(egrep '^\*:' $CONFIG)"
     [ -n "$tests" ] || tests="*: $DEFAULT_TESTS"
     tests="${tests##*:}" # strip off the sample name
-    echo -n "$sampleshort:" >&99
+    (echo -n "$sampleshort:" >&99) >/dev/null 2>&1
 
     for testname in $tests; do
-	echo -n " $testname" >&99
-	echo
+	(echo -n " $testname" >&99) >/dev/null 2>&1
 	echo
 	echo
 	echo
 	echo "==============================================================================================="
 	echo "===   $testname $sample"
 	echo "==============================================================================================="
-	echo
 
 	if eval "test_$testname '$sample'"; then
 	    : ok
 	else
 	    echo "FAILED: $testname $sample" >&2
-	    echo -n "[FAILED]" >&99
+	    (echo -n "[FAILED]" >&99) >/dev/null 2>&1
 	    failures="$failures $sampleshort[$testname]"
 	    nfailures=$[nfailures+1]
 	fi
     done
-    echo >&99
+    (echo >&99) >/dev/null 2>&1
 done
 
+
+echo "==============================================================================================="
+echo "===   Summary"
+echo "==============================================================================================="
+(echo "Number of failed tests: $nfailures" >&99) >/dev/null 2>&1
 if [ $nfailures -eq 0 ]; then
     echo "All tests passed!"
     exit 0

@@ -1,11 +1,11 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-EXTRA_DIST = buffer2.bin runTest.C \
-             arm-poweroff arm-ctrlaltdel arm-ctrlaltdel.ans \
-	     schulz-sample1.so schulz-sample1-p.so schulz-sample2.so schulz-sample2-p.so \
-	     runExecFormatsTest testShiftResizeSection.sh libm-2.3.6.so i686-test1.O3.bin \
-	     test_findConstants.ans test_disassemble.ans i686-test1.O0.bin \
+EXTRA_DIST = runTest.C arm-ctrlaltdel.ans \
+	     runExecFormatsTest testShiftResizeSection.sh \
+	     test_findConstants.ans test_disassemble.ans \
              testSampleBinaries.sh testSampleBinaries.conf
+
+BINARY_SAMPLES = $(top_srcdir)/binaries/samples
 
 if USE_BINARY_ANALYSIS_TESTS
 
@@ -82,26 +82,26 @@ demos-local: $(DEMO_PHONY_TARGETS)
 
 demo_execFormatsTest: execFormatsTest
 	@echo; echo; echo "Demo for $<"; echo
-	./execFormatsTest $(srcdir)/buffer2.bin
+	./execFormatsTest $(BINARY_SAMPLES)/buffer2.bin
 	@echo "See file buffer2.bin.dump for information regarding the executable format"
 	@echo "See file rose-buffer2.bin.s for disassembly of instructions"
 
 demo_testElfStrtab: testElfStrtab demo_execFormatsTest
 	@echo; echo; echo "Demo for $<"; echo
-	./testElfStrtab $(srcdir)/arm-poweroff
+	./testElfStrtab $(BINARY_SAMPLES)/arm-poweroff
 
 demo_testElfByteOrder: testElfByteOrder demo_testElfStrtab
 	@echo; echo; echo "Demo for $<"; echo
-	./testElfByteOrder $(srcdir)/arm-poweroff
+	./testElfByteOrder $(BINARY_SAMPLES)/arm-poweroff
 
 demo_testElfWordSize: testElfWordSize demo_testElfByteOrder
 	@echo; echo; echo "Demo for $<"; echo
-	./testElfWordSize $(srcdir)/arm-poweroff
+	./testElfWordSize $(BINARY_SAMPLES)/arm-poweroff
 
 demo_testElfSchulz: testElfSchulz demo_testElfWordSize
 	@echo; echo; echo "Demo for $<"; echo
-	./testElfSchulz $(srcdir)/schulz-sample1.so
-	./testElfSchulz $(srcdir)/schulz-sample2.so
+	./testElfSchulz $(BINARY_SAMPLES)/schulz-sample1.so
+	./testElfSchulz $(BINARY_SAMPLES)/schulz-sample2.so
 
 demo_testElfConstruct: testElfConstruct demo_testElfSchulz
 	@echo; echo; echo "Demo for $<"; echo
@@ -113,15 +113,15 @@ demo_testPeConstruct: testPeConstruct demo_testElfConstruct
 
 demo_shiftResizeSection: shiftResizeSection demo_testPeConstruct
 	@echo; echo; echo "Demo for $<"; echo
-	$(srcdir)/testShiftResizeSection.sh $(srcdir)/arm-ctrlaltdel >arm-ctrlaltdel.ans
+	$(srcdir)/testShiftResizeSection.sh $(BINARY_SAMPLES)/arm-ctrlaltdel >arm-ctrlaltdel.ans
 
 demo_findConstants: findConstants demo_shiftResizeSection
 	@echo; echo; echo "Demo for $<"; echo
-	./findConstants $(srcdir)/i686-test1.O3.bin
+	./findConstants $(BINARY_SAMPLES)/i686-test1.O3.bin
 
 demo_disassemble: disassemble demo_findConstants
 	@echo; echo; echo "Demo for $<"; echo
-	./disassemble --search-following --search-immediate --search-words --search-allbytes --search-unused --search-nonexe --search-deadend --search-unknown $(srcdir)/i686-test1.O0.bin
+	./disassemble --search-following --search-immediate --search-words --search-allbytes --search-unused --search-nonexe --search-deadend --search-unknown $(BINARY_SAMPLES)/i686-test1.O0.bin
 	@echo "output has been dumped to i686-test1.O0.bin.dump"
 
 ###############################################################################################################################
@@ -139,19 +139,19 @@ test_execFormatsTest.passed: execFormatsTest
 	@touch $@
 
 test_testElfStrtab.passed: testElfStrtab
-	$(VALGRIND) ./testElfStrtab $(srcdir)/arm-poweroff
+	$(VALGRIND) ./testElfStrtab $(BINARY_SAMPLES)/arm-poweroff
 	@touch $@
 
 # cannot run in parallel with testElfStrtab
 test_testElfByteOrder.passed: testElfByteOrder test_testElfStrtab.passed
-	$(VALGRIND) ./testElfByteOrder $(srcdir)/arm-poweroff
+	$(VALGRIND) ./testElfByteOrder $(BINARY_SAMPLES)/arm-poweroff
 	$(VALGRIND) ./execFormatsTest ./arm-poweroff.new
 	@if diff -u ./arm-poweroff.new{,.new}; then :; else echo "Files differ; byte order test failed"; exit 1; fi
 	@touch $@
 
 # cannot run in parallel with testElfStrtab or testElfByteOrder
 test_testElfWordSize.passed: testElfWordSize test_testElfStrtab.passed test_testElfByteOrder.passed
-	$(VALGRIND) ./testElfWordSize -rose:read_executable_file_format_only $(srcdir)/arm-poweroff
+	$(VALGRIND) ./testElfWordSize -rose:read_executable_file_format_only $(BINARY_SAMPLES)/arm-poweroff
 	$(VALGRIND) ./execFormatsTest -rose:read_executable_file_format_only ./arm-poweroff.new
 	@if diff -u ./arm-poweroff.new{,.new}; then								\
 		: ok;												\
@@ -170,27 +170,27 @@ test_testElfSchulz.passed: test_testElfSchulz-1.passed test_testElfSchulz-2.pass
 	@touch $@
 
 test_testElfSchulz-1.passed: testElfSchulz
-	$(VALGRIND) ./testElfSchulz $(srcdir)/schulz-sample1.so
+	$(VALGRIND) ./testElfSchulz $(BINARY_SAMPLES)/schulz-sample1.so
 	$(VALGRIND) ./execFormatsTest ./schulz-sample1.so.new
-	$(VALGRIND) ./execFormatsTest $(srcdir)/schulz-sample1-p.so
+	$(VALGRIND) ./execFormatsTest $(BINARY_SAMPLES)/schulz-sample1-p.so
 	@if diff -u schulz-sample1{-p.so,.so.new}.dump; then :; \
 	    else echo "Dumps differ; Schulz test-1 failed"; exit 1; fi
-	@if diff $(srcdir)/schulz-sample1-p.so schulz-sample1.so.new; then :; \
+	@if diff $(BINARY_SAMPLES)/schulz-sample1-p.so schulz-sample1.so.new; then :; \
 	    else echo "Libs differ; Schulz test-1 failed"; exit 1; fi
 	@touch $@
 
 test_testElfSchulz-2.passed: testElfSchulz
-	$(VALGRIND) ./testElfSchulz $(srcdir)/schulz-sample2.so
+	$(VALGRIND) ./testElfSchulz $(BINARY_SAMPLES)/schulz-sample2.so
 	$(VALGRIND) ./execFormatsTest ./schulz-sample2.so.new
-	$(VALGRIND) ./execFormatsTest $(srcdir)/schulz-sample2-p.so
+	$(VALGRIND) ./execFormatsTest $(BINARY_SAMPLES)/schulz-sample2-p.so
 	@if diff -u schulz-sample2{-p.so,.so.new}.dump; then :; \
 	    else echo "Dumps differ; Schulz test-2 failed"; exit 1; fi
-	@if diff $(srcdir)/schulz-sample2-p.so schulz-sample2.so.new; then :; \
+	@if diff $(BINARY_SAMPLES)/schulz-sample2-p.so schulz-sample2.so.new; then :; \
 	    else echo "Libs differ; Schulz test-2 failed"; exit 1; fi
 	@touch $@
 
 test_so_file:
-	$(VALGRIND) ./execFormatsTest $(srcdir)/libm-2.3.6.so
+	$(VALGRIND) ./execFormatsTest $(BINARY_SAMPLES)/libm-2.3.6.so
 
 test_testElfConstruct.passed: testElfConstruct
 	$(VALGRIND) ./testElfConstruct
@@ -201,17 +201,17 @@ test_testPeConstruct.passed: testPeConstruct
 	@touch $@
 
 test_shiftResizeSection.passed: shiftResizeSection
-	$(srcdir)/testShiftResizeSection.sh $(srcdir)/arm-ctrlaltdel >arm-ctrlaltdel.ans
+	$(srcdir)/testShiftResizeSection.sh $(BINARY_SAMPLES)/arm-ctrlaltdel >arm-ctrlaltdel.ans
 	@if diff -u {$(srcdir),.}/arm-ctrlaltdel.ans; then :; else echo "Answer differs from expected"; exit 1; fi
 	@touch $@
 
 test_findConstants.passed: findConstants
-	$(VALGRIND) ./findConstants $(srcdir)/i686-test1.O3.bin >test_findConstants.ans
+	$(VALGRIND) ./findConstants $(BINARY_SAMPLES)/i686-test1.O3.bin >test_findConstants.ans
 	@if diff -u {$(srcdir),.}/test_findConstants.ans; then :; else echo "Answer differs from expected"; exit 1; fi
 	@touch $@
 
 test_disassemble.passed: disassemble
-	$(VALGRIND) ./disassemble --search-following --search-immediate --search-words --no-search-allbytes --search-unused --search-nonexe --search-deadend --no-search-unknown $(srcdir)/i686-test1.O0.bin
+	$(VALGRIND) ./disassemble --search-following --search-immediate --search-words --no-search-allbytes --search-unused --search-nonexe --search-deadend --no-search-unknown $(BINARY_SAMPLES)/i686-test1.O0.bin
 	@mv i686-test1.O0.bin.dump test_disassemble.ans
 	@if diff -u {$(srcdir),.}/test_disassemble.ans; then :; else echo "Answer differs from expected"; exit 1; fi
 	@touch $@
@@ -225,9 +225,13 @@ test_assembler.passed: disassemble
 
 # This tests lots of sample binaries. We cannot run it concurrently with the other tests because some of the output
 # names could conflict with the other tests (we don't know what files are in the sample binaries directory).
-test_samples.passed: disassemble execFormatsTest $(srcdir)/testSampleBinaries.sh test $(srcdir)/testSampleBinaries.conf
-	$(srcdir)/testSampleBinaries.sh $(top_srcdir)/binaries/samples $(srcdir)/testSampleBinaries.conf
-	@touch $@
+test_samples.passed: disassemble execFormatsTest $(srcdir)/testSampleBinaries.sh $(srcdir)/testSampleBinaries.conf
+	@if $(srcdir)/testSampleBinaries.sh $(BINARY_SAMPLES) $(srcdir)/testSampleBinaries.conf 99>&1 >test_samples.out 2>&1; \
+	then \
+	   touch $@; \
+	else \
+	   echo "Full output is in `pwd`/test_samples.out"; \
+	fi
 
 ###############################################################################################################################
 # Miscellaneous....
@@ -305,7 +309,7 @@ else
 # check-local: runTest test1 $(TEST_PASSED_TARGETS) test_so_file
 # Caution: runTest generates the same output files as some $(TEST_PASSED_TARGETS) [RPM 2009-07-21]
 check-local: runTest test1 $(TEST_PASSED_TARGETS)
-	./runTest $(srcdir)/buffer2.bin > output
+	./runTest $(BINARY_SAMPLES)/buffer2.bin > output
 	$(MAKE) test_samples.passed
 	@echo "*********************************************************************"
 	@echo "*** ROSE/tests/roseTests/programAnalysisTests/binaryTests: passed ***"
