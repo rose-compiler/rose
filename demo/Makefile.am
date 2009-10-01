@@ -138,7 +138,7 @@ demo_8b:
 	cd $(top_builddir)/projects/compass/tools/compass; $(MAKE) demo_compassGUI_binary
 	@echo "End of demo_8b"
 
-# This test the construction of a new checker for Compass (to be submitted to Compass).
+# This tests the construction of a new checker for Compass (to be submitted to Compass).
 # Note that this demo removes a checker directory (relative to the source tree) and then rebuilds it.
 # To make this safer we do it in two steps to avoid using "-r" with rm.
 demo_9:

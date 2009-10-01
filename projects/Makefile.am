@@ -38,8 +38,17 @@ SUBDIRS = \
      RTED \
      taintcheck \
      QtDesignerPlugins \
-     RoseQt \
-     interpreter
+     RoseQt
+
+# Disable the use of the interpreter except on GNU 4.2
+# interpreter
+
+# DQ (9/30/2009): This is classified as an old version of compiler and some parts of
+# ROSE are restricted from use (this is currently the only example due to internal 
+# compiler errors).
+if ! OLD_COMPILER_VERSION
+   SUBDIRS += interpreter
+endif
 
 # DQ (9/12/2009): This was not added to ROSE correctly, please let me help you do this.
 #     StaticDynamicAnalysis/DynamicCPU
