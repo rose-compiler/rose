@@ -1102,6 +1102,29 @@ Directions for using a bash script (rose/scripts/roseFreshTest) to set up period
    the date specification includes today's date.  Be sure to quit your
    editor -- just suspending it prevents your changes from taking effect.
 \end{enumerate}
+
+\subsection{When We Test and Release ROSE}
+We have the following timeline (Pacific Time Zone) for testing and 
+releasing ROSE.
+
+Daily tests and updates to the rose website and the SciDAC subversion
+repository.
+\begin{enumerate}
+\item 1:00 am: Start the regression test on a 32-bit workstation. The test
+will update the website and the SciDAC repository also if the test
+passes.
+\item 3:40 am: Finish the 32-bit regression test and the updates to the external website
+and subversion repository.
+\item 12:00 pm: Start another the regression test on a 32-bit workstation.
+\item 14:40 pm: Finish the 32-bit regression test and updates to the external website
+and subversion repository.
+\item 
+\end{enumerate}
+
+We also have a weekly release of a ROSE file package on the SciDAC project page.
+The script starts every Monday morning 5:00 am and should finish around 7:00am. 
+
+
 \subsection{Enabling Testing Using External Benchmarks}
 In addition to testing ROSE using the embedded test cases via \textit{make
 check}, roseFreshTest also supports automatically testing ROSE on
