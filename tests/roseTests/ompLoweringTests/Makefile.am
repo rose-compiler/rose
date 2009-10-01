@@ -19,14 +19,9 @@ C_TESTCODES_REQUIRED_TO_COMPILE = \
         ompfor5.c \
         staticChunk.c \
         task_orphaned.c \
-        task_untied.c \
-        task_untied2.c \
-        task_untied3.c \
         task_underIf.c \
         task_wait.c \
         task_wait2.c
-# untied tasks have undeterministic stack layout, passing parent's local variable's address is not safe
-# TODO copy value of the outlined function parameters for task_untied 
 
 # Put test codes which can run (with main() ) here
 # They will be compiled and executed when the gomp library path is set
@@ -74,7 +69,10 @@ C_TESTCODES_REQUIRED_TO_RUN = \
         subteam.c \
         subteam2.c \
         spmd1.c \
-        task_largenumber.c
+        task_largenumber.c \
+        task_untied.c \
+        task_untied2.c \
+        task_untied3.c
 
 # DQ (9/27/2009): Conditionally compile these files (fail in OSX due to lack of OSX
 # support for thread local storage). Liao knows more about the details of these tests.

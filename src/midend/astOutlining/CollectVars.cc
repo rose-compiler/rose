@@ -73,9 +73,9 @@ collectOmpClauseVars(SgOmpClauseBodyStatement * clause_stmt, ASTtools::VarSymSet
 void
 Outliner::collectVars (const SgStatement* s, 
                        ASTtools::VarSymSet_t& syms,  
-                       ASTtools::VarSymSet_t& psyms,
-                       ASTtools::VarSymSet_t& fpsyms,
-                       ASTtools::VarSymSet_t& reductionSyms)
+                       ASTtools::VarSymSet_t& psyms)
+          //             ASTtools::VarSymSet_t& fpsyms) // firstprivate and reduction are handled by OmpSupport::transOmpVaraibles() now
+                       //ASTtools::VarSymSet_t& reductionSyms)
 {
   // Determine the function definition surrounding 's'. The enclosing function of 's'
   const SgFunctionDefinition* outer_func_s = ASTtools::findFirstFuncDef (s);

@@ -7,6 +7,18 @@ using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
 
+  //! Generate a symbol set from an initialized name list
+static void convert (const SgInitializedNamePtrList input, ASTtools::VarSymSet_t& output)
+  {
+    for (SgInitializedNamePtrList::const_iterator iter =  input.begin(); iter != input.end(); iter++)
+    {
+      const SgInitializedName * iname = *iter;
+      SgVariableSymbol* symbol = isSgVariableSymbol(iname->get_symbol_from_symbol_table ()); 
+      ROSE_ASSERT (symbol != NULL);
+      output.insert(symbol);
+    }
+  }
+
 namespace OmpSupport
 { 
   omp_rtl_enum rtl_type = e_gcc; /* default to  generate code targetting gcc's gomp */
@@ -786,8 +798,93 @@ namespace OmpSupport
     return  (p_clause.size()!= 0) ;
   }
 
+//! A helper function to generate implicit or explicit task for either omp parallel or omp task
+// It calls the ROSE AST outliner internally. 
+SgFunctionDeclaration* generatedOutlinedTask(SgNode* node, std::string& wrapper_name, ASTtools::VarSymSet_t& syms, std::set<SgInitializedName*>& readOnlyVars)
+{
+  ROSE_ASSERT(node != NULL);
+  SgOmpClauseBodyStatement* target = isSgOmpClauseBodyStatement(node);  
+  ROSE_ASSERT (target != NULL);
+
+  // must be either omp task or omp parallel
+  SgOmpTaskStatement* target1 = isSgOmpTaskStatement(node);
+  SgOmpParallelStatement* target2 = isSgOmpParallelStatement(node);
+  ROSE_ASSERT (target1 != NULL || target2 != NULL);
+
+  SgStatement * body =  target->get_body();
+  ROSE_ASSERT(body != NULL);
+  SgFunctionDeclaration* result= NULL;
+  //Initialize outliner 
+  //always wrap parameters for outlining used during OpenMP translation
+  Outliner::useParameterWrapper = true; 
+  Outliner::useStructureWrapper = true;
+
+  //TODO there should be some semantics check for the regions to be outlined
+  //for example, multiple entries or exists are not allowed for OpenMP
+  //This is however of low priority since most vendor compilers have this already
+  SgBasicBlock* body_block = Outliner::preprocess(body);
+
+  // Variable handling is done after Outliner::preprocess() to ensure a basic block for the body,
+  // but before calling the actual outlining 
+  // This simplifies the outlining since firstprivate, private variables are replaced 
+  //with their local copies before outliner is used 
+  transOmpVariables (target, body_block);
+
+  ASTtools::VarSymSet_t pSyms, fpSyms,reductionSyms, pdSyms;
+
+  string func_name = Outliner::generateFuncName(target);
+  SgGlobal* g_scope = SageInterface::getGlobalScope(body_block);
+  ROSE_ASSERT(g_scope != NULL);
+
+  // This step is less useful for private, firstprivate, and reduction variables
+  // since they are already handled by transOmpVariables(). 
+  Outliner::collectVars(body_block, syms, pSyms);
+
+  //     SageInterface::collectReadOnlyVariables(body_block,readOnlyVars);
+  // We choose to be conservative about the variables needing pointer dereferencing first
+  // AllParameters - readOnlyVars  - private -firstprivate 
+  // Union ASTtools::collectPointerDereferencingVarSyms(body_block, pdSyms) 
+
+  // Assume all parameters need to be passed by pointers first
+  std::copy(syms.begin(), syms.end(), std::inserter(pdSyms,pdSyms.begin()));
+
+  //exclude firstprivate variables: they are read only in fact
+  SgInitializedNamePtrList fp_vars = collectClauseVariables (target, V_SgOmpFirstprivateClause);
+  ASTtools::VarSymSet_t fp_syms, pdSyms2;
+  convert (fp_vars, fp_syms);
+  set_difference (pdSyms.begin(), pdSyms.end(),
+      fp_syms.begin(), fp_syms.end(),
+      std::inserter(pdSyms2, pdSyms2.begin()));
+
+  // Similarly , exclude private variable, also read only
+ SgInitializedNamePtrList p_vars = collectClauseVariables (target, V_SgOmpPrivateClause);
+ ASTtools::VarSymSet_t p_syms, pdSyms3;
+ convert (p_vars, p_syms);
+  set_difference (pdSyms2.begin(), pdSyms2.end(),
+      p_syms.begin(), p_syms.end(),
+      std::inserter(pdSyms3, pdSyms3.begin()));
+ 
+  // lastprivate and reduction variables cannot be excluded  since write access to their shared copies
+
+  // a data structure used to wrap parameters
+  SgClassDeclaration* struct_decl = Outliner::generateParameterStructureDeclaration (body_block, func_name, syms, pdSyms3, g_scope);
+  // ROSE_ASSERT (struct_decl != NULL); // can be NULL if no parameters to be passed
+
+  //Generate the outlined function
+  result = Outliner::generateFunction(body_block, func_name, syms, pdSyms3, pSyms, struct_decl, g_scope);
+  Outliner::insert(result, g_scope, body_block);
+
+  // Generate a call to the outlined function
+  // Generate packing statements
+  // must pass target , not body_block to get the right scope in which the declarations are inserted
+  wrapper_name= Outliner::generatePackingStatements(target,syms,pdSyms3, struct_decl);
+  ROSE_ASSERT (result != NULL);
+  return result;
+}
   /* GCC's libomp uses the following translation method: 
-   * (we use array of pointers instead of structure of variables to pass data
+   * 
+
+(we use array of pointers instead of structure of variables to pass data
    *  since the ROSE outliner does variable handling this way.)
    * 
 #include "libgomp_g.h"
@@ -832,75 +929,26 @@ namespace OmpSupport
    */
   void transOmpParallel (SgNode* node)
   {
-    // Replace the region with a call to it
-#if 0   // 
-    SgFunctionDeclaration *outFuncDecl= generateOutlinedFunction(decl);
-    ROSE_ASSERT(outFuncDecl !=NULL);
-    insertOutlinedFunction(decl, outFuncDecl);
-
-    SgBasicBlock *rtlCall= generateParallelRTLcall(decl, outFuncDecl,ompattribute);
-    ROSE_ASSERT(rtlCall !=NULL );
-    replacePragmaBlock(decl, rtlCall);
-#endif 
-
     ROSE_ASSERT(node != NULL);
     SgOmpParallelStatement* target = isSgOmpParallelStatement(node);
     ROSE_ASSERT (target != NULL);
 
-    // printf("translating a parallel region..\n");
     SgStatement * body =  target->get_body();
     ROSE_ASSERT(body != NULL);
-
-    //Initialize outliner 
-
-    // always wrap parameters for outlining used during OpenMP translation
-    Outliner::useParameterWrapper = true; 
-
-#if 0 // This is not necessary since Outliner::preprocess() will call it. 
-    if (!Outliner::isOutlineable(body))
-    {
-      cout<<"OmpSupport::transOmpParallel() found a region body which can not be outlilned!\n"
-        <<body->unparseToString()<<endl;
-      ROSE_ASSERT(false);
-    }
-#endif   
     // Save preprocessing info as early as possible, avoiding mess up from the outliner
     AttachedPreprocessingInfoType save_buf1, save_buf2;
     cutPreprocessingInfo(target, PreprocessingInfo::before, save_buf1) ;
     cutPreprocessingInfo(target, PreprocessingInfo::after, save_buf2) ;
-
-    //TODO there should be some semantics check for the regions to be outlined
-    //for example, multiple entries or exists are not allowed for OpenMP
-    //We should have a semantic check phase for this
-    //This is however of low priority since most vendor compilers have this already
-    SgBasicBlock* body_block = Outliner::preprocess(body);
-    transOmpVariables (target, body_block);
-
-    ASTtools::VarSymSet_t syms, pSyms, fpSyms,reductionSyms, pdSyms;
-    std::set<SgInitializedName*> readOnlyVars;
-
-    string func_name = Outliner::generateFuncName(target);
-    SgGlobal* g_scope = SageInterface::getGlobalScope(body_block);
-    ROSE_ASSERT(g_scope != NULL);
-
-    Outliner::collectVars(body_block, syms, pSyms, fpSyms, reductionSyms);
-    //TODO Do we want to use side effect analysis to improve the quality of outlining here
-    // SageInterface::collectReadOnlyVariables(s,readOnlyVars);
-    // ASTtools::collectPointerDereferencingVarSyms(s,pdSyms);
-
-    //Generate the outlined function
-    SgFunctionDeclaration* outlined_func = Outliner::generateFunction(body_block, func_name,
-        syms, pdSyms, pSyms, fpSyms, reductionSyms, g_scope);
-    Outliner::insert(outlined_func, g_scope, body_block);
-
-    // Generate a call to the outlined function
-    // Generate packing statements
+     // generated an outlined function as the task
     std::string wrapper_name;
-    // must pass target , not body_block to get the right scope in which the declarations are inserted
-    wrapper_name= Outliner::generatePackingStatements(target,syms);
+    ASTtools::VarSymSet_t syms;
+    std::set<SgInitializedName*> readOnlyVars;
+    SgFunctionDeclaration* outlined_func = generatedOutlinedTask (node, wrapper_name, syms, readOnlyVars);
+
     SgScopeStatement * p_scope = target->get_scope();
     ROSE_ASSERT(p_scope != NULL);
 
+    // generate a function call to it
     SgStatement* func_call = Outliner::generateCall (outlined_func, syms, readOnlyVars, wrapper_name,p_scope);
     ROSE_ASSERT(func_call != NULL);  
 
@@ -962,6 +1010,7 @@ namespace OmpSupport
     insertStatementAfter(body, func_call_stmt2);
   }
 
+
   //! Translate omp task
   /*
   The translation of omp task is similar to the one for omp parallel
@@ -990,53 +1039,16 @@ namespace OmpSupport
 
     SgStatement * body =  target->get_body();
     ROSE_ASSERT(body != NULL);
-
-    //Initialize outliner 
-    //always wrap parameters for outlining used during OpenMP translation
-    Outliner::useParameterWrapper = true; 
-
     // Save preprocessing info as early as possible, avoiding mess up from the outliner
     AttachedPreprocessingInfoType save_buf1, save_buf2;
     cutPreprocessingInfo(target, PreprocessingInfo::before, save_buf1) ;
     cutPreprocessingInfo(target, PreprocessingInfo::after, save_buf2) ;
-
-    //TODO there should be some semantics check for the regions to be outlined
-    //for example, multiple entries or exists are not allowed for OpenMP
-    //We should have a semantic check phase for this
-    //This is however of low priority since most vendor compilers have this already
-    SgBasicBlock* body_block = Outliner::preprocess(body);
-
-    // Variable handling is done after Outliner::preprocess() to ensure a basic block for the body,
-    // but before calling the actual outlining 
-    // This simplifies the outlining since firstprivate, private variables are replaced 
-    //with their local copies before outliner is used 
-    transOmpVariables (target, body_block);
-
-    ASTtools::VarSymSet_t syms, pSyms, fpSyms,reductionSyms, pdSyms;
-    std::set<SgInitializedName*> readOnlyVars;
-
-    string func_name = Outliner::generateFuncName(target);
-    SgGlobal* g_scope = SageInterface::getGlobalScope(body_block);
-    ROSE_ASSERT(g_scope != NULL);
-
-    // This step is less useful for private, firstprivate, and reduction variables
-    // since they are already handled by transOmpVariables(). 
-    // TODO clean up Outliner::collectVars() etc for variable handling
-    Outliner::collectVars(body_block, syms, pSyms, fpSyms, reductionSyms);
-
-    //TODO Do we want to use side effect analysis to improve the quality of outlining here
-    // SageInterface::collectReadOnlyVariables(s,readOnlyVars);
-    // ASTtools::collectPointerDereferencingVarSyms(s,pdSyms);
-    //Generate the outlined function
-    SgFunctionDeclaration* outlined_func = Outliner::generateFunction(body_block, func_name,
-        syms, pdSyms, pSyms, fpSyms, reductionSyms, g_scope);
-    Outliner::insert(outlined_func, g_scope, body_block);
-
-    // Generate a call to the outlined function
-    // Generate packing statements
+    // generated an outlined function as a task
     std::string wrapper_name;
-    // must pass target , not body_block to get the right scope in which the declarations are inserted
-    wrapper_name= Outliner::generatePackingStatements(target,syms);
+    ASTtools::VarSymSet_t syms;
+    std::set<SgInitializedName*> readOnlyVars;
+    SgFunctionDeclaration* outlined_func = generatedOutlinedTask (node, wrapper_name, syms, readOnlyVars);
+
     SgScopeStatement * p_scope = target->get_scope();
     ROSE_ASSERT(p_scope != NULL);
     // Generate a call to it
@@ -1052,7 +1064,6 @@ namespace OmpSupport
     //      file_info->unsetOutputInCodeGeneration ();
     //
     //func_call->get_file_info()->unsetOutputInCodeGeneration (); 
-    
     //  void GOMP_task (void (*fn) (void *), void *data, void (*cpyfn) (void *, void *), long arg_size, long arg_align, 
     //                  bool if_clause, unsigned flags)
     SgExpression * parameter_data = NULL;

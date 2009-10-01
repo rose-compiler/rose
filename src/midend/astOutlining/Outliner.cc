@@ -24,7 +24,8 @@ namespace Outliner {
   //! A set of flags to control the internal behavior of the outliner
   bool enable_classic=false;
   // use a wrapper for all variables or one parameter for a variable or a wrapper for all variables
-  bool useParameterWrapper=false;  // use a wrapper for parameters of the outlined function
+  bool useParameterWrapper=false;  // use an array of pointers wrapper for parameters of the outlined function
+  bool useStructureWrapper=false;  // use a structure wrapper for parameters of the outlined function
   bool preproc_only_=false;  // preprocessing only
   bool useNewFile=false; // generate the outlined function into a new source file
   bool temp_variable=false; // use temporary variables to reduce pointer dereferencing
@@ -190,6 +191,13 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
   }
   //  else
   //    useParameterWrapper= false;
+  //
+  if (CommandlineProcessing::isOption (argvList,"-rose:outline:","structure_wrapper",true))
+  {
+    if (enable_debug)
+      cout<<"Enabling parameter wrapping using a structure..."<<endl;
+    useStructureWrapper= true;
+  }
 
   if (CommandlineProcessing::isOption (argvList,"-rose:outline:","new_file",true))
   {
@@ -267,6 +275,10 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
 
 
   //------------ handle side effects of options-----------
+  if (useStructureWrapper) 
+   {
+     useParameterWrapper = true;
+   } 
   //    use_dlopen = false;
   if (use_dlopen)
   {
@@ -299,7 +311,8 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
     cout<<"Main operation mode:"<<endl;
     cout<<"\t-rose:outline:preproc-only                     preprocessing only, no actual outlining"<<endl;
     cout<<"\t-rose:outline:abstract_handle handle_string    using an abstract handle to specify an outlining target"<<endl;
-    cout<<"\t-rose:outline:parameter_wrapper                use an array of pointers for the variables to be passed"<<endl;
+    cout<<"\t-rose:outline:parameter_wrapper                use an array of pointers to pack the variables to be passed"<<endl;
+    cout<<"\t-rose:outline:structure_wrapper                use a data structure to pack the variables to be passed"<<endl;
     cout<<"\t-rose:outline:enable_classic                   use parameters directly in the outlined function body without transferring statement, C only"<<endl;
     cout<<"\t-rose:outline:temp_variable                    use temp variables to reduce pointer dereferencing for the variables to be passed"<<endl;
     cout<<"\t-rose:outline:enable_liveness                  use liveness analysis to reduce restoring statements if temp_variable is turned on"<<endl;

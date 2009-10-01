@@ -71,6 +71,10 @@ namespace OmpSupport
   //! Translate omp single 
   void transOmpSingle(SgNode* node);
 
+ //! A helper function to generate implicit or explicit task for either omp parallel or omp task
+ // It calls the ROSE AST outliner internally. 
+ SgFunctionDeclaration* generatedOutlinedTask(SgNode* node, std::string& wrapper_name, std::set<SgVariableSymbol*>& syms, std::set<SgInitializedName*>& readOnlyVars);
+ 
   //! Translate OpenMP variables associated with an OpenMP pragma, such as private, firstprivate, lastprivate, reduction, etc. bb1 is the translation generated code block in which the variable handling statements will be inserted.
   void transOmpVariables(SgStatement * ompStmt, SgBasicBlock* bb1);
 

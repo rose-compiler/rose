@@ -43,6 +43,9 @@ namespace ASTtools
   //! Returns 'true' if the specified type is a 'const' object.
   bool isConstObj (const SgType* type);
 
+  //! Collect variables suitable for using pointer dereferencing
+  void collectPointerDereferencingVarSyms(const SgStatement*s, VarSymSet_t& pdSyms);
+
   /*!
    *  \brief Returns 'true' <==> 's' is the conditional selector of some
    *  'switch' statement.

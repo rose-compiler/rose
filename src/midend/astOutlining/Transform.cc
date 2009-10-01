@@ -8,7 +8,6 @@
 #include <list>
 #include <string>
 
-// #include "Transform.hh"
 #include "Outliner.hh"
 #include "ASTtools.hh"
 #include "PreprocessingInfo.hh"
@@ -20,6 +19,71 @@ using namespace std;
 using namespace SageBuilder;
 using namespace SageInterface;
 // =====================================================================
+SgClassDeclaration* Outliner::generateParameterStructureDeclaration(
+                               SgBasicBlock* s, // the outlining target
+                               const std::string& func_name_str, // the name for the outlined function, we generate the name of struct based on this.
+                               const ASTtools::VarSymSet_t& syms, // variables to be passed as parameters
+                               ASTtools::VarSymSet_t& pdSyms, // variables must use pointer types
+                               SgScopeStatement* func_scope ) // the scope of the outlined function, could be different from s's global scope
+{
+  SgClassDeclaration* result = NULL;
+  // no need to generate the declaration if no variables are to be passed
+  if (syms.empty()) 
+    return result;
+
+  ROSE_ASSERT (s != NULL);
+  ROSE_ASSERT (func_scope != NULL);
+  // this declaration will later on be inserted right before the outlining target calling the outlined function
+  ROSE_ASSERT (isSgGlobal(func_scope) != NULL);
+  string decl_name = func_name_str+"_data";
+  
+  result = buildStructDeclaration(decl_name);
+  // insert member variable declarations to it
+  SgClassDefinition *def = result->get_definition();
+  ROSE_ASSERT (def != NULL); 
+  SgScopeStatement* def_scope = isSgScopeStatement (def);
+  ROSE_ASSERT (def_scope != NULL); 
+  for (ASTtools::VarSymSet_t::const_iterator i = syms.begin ();
+      i != syms.end (); ++i)
+  { 
+    const SgInitializedName* i_name = (*i)->get_declaration ();
+    ROSE_ASSERT (i_name);
+    const SgVariableSymbol* i_symbol  = isSgVariableSymbol(i_name->get_symbol_from_symbol_table ());
+    ROSE_ASSERT (i_symbol != NULL);
+    string member_name= i_name->get_name ().str ();
+    SgType* member_type = i_name->get_type() ;
+    // use pointer type or its original type?
+    if (pdSyms.find(i_symbol) != pdSyms.end())
+    {
+       member_name = member_name+"_p";
+       member_type = buildPointerType(member_type);
+    }
+
+    SgVariableDeclaration *member_decl = buildVariableDeclaration(member_name, member_type, NULL, def_scope);
+    appendStatement (member_decl, def_scope);
+  }
+
+  // insert it before the s, but must be in a global scope
+  // s might be within a class, namespace, etc. we need to find its ancestor scope
+  SgNode* global_scoped_ancestor = getEnclosingFunctionDefinition(s,false); 
+  while (!isSgGlobal(global_scoped_ancestor->get_parent())) 
+ // use get_parent() instead of get_scope() since a function definition node's scope is global while its parent is its function declaration
+  {
+    global_scoped_ancestor = global_scoped_ancestor->get_parent();
+   }
+  cout<<"global_scoped_ancestor class_name: "<<global_scoped_ancestor->class_name()<<endl; 
+  ROSE_ASSERT (isSgStatement(global_scoped_ancestor));
+  insertStatementBefore(isSgStatement(global_scoped_ancestor), result); 
+
+  if (global_scoped_ancestor->get_parent() != func_scope )
+  {
+  //TODO 
+   cout<<"Outliner::generateParameterStructureDeclaration() separated file case is not yet handled."<<endl;
+   ROSE_ASSERT (false);
+  }
+  return result;
+}
+
 /**
  * Major work of outlining is done here
  *  Preparations: variable collection
@@ -30,7 +94,7 @@ using namespace SageInterface;
 Outliner::Result
 Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
    {
-     //---------preparations-----------------------------------
+  //---------step 1. Preparations-----------------------------------
      //new file, cut preprocessing information, collect variables
   // Generate a new source file for the outlined function, if requested
      SgSourceFile* new_file = NULL;
@@ -44,13 +108,13 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 
   // Determine variables to be passed to outlined routine.
   // Also collect symbols which must use pointer dereferencing if replaced during outlining
-  ASTtools::VarSymSet_t syms, psyms, fpsyms, reductionsyms, pdSyms;
-  collectVars (s, syms, psyms, fpsyms, reductionsyms);
+  ASTtools::VarSymSet_t syms, psyms, pdSyms;
+  collectVars (s, syms, psyms);
 
   std::set<SgInitializedName*> readOnlyVars;
 
   //Determine variables to be replaced by temp copy or pointer dereferencing.
-  if (Outliner::temp_variable|| Outliner::enable_classic)
+  if (Outliner::temp_variable|| Outliner::enable_classic || Outliner::useStructureWrapper)
   {
     SageInterface::collectReadOnlyVariables(s,readOnlyVars);
 #if 0    
@@ -58,6 +122,8 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
     ASTtools::collectVarRefsUsingAddress(s,varRefSetB);
     ASTtools::collectVarRefsOfTypeWithoutAssignmentSupport(s,varRefSetB);
 #endif
+    // Collect use by address plus non-assignable variables
+    // They must be passed by reference if they need to be passed as parameters
     ASTtools::collectPointerDereferencingVarSyms(s,pdSyms);
   }
     
@@ -71,11 +137,19 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
           glob_scope = new_file->get_globalScope();
         }
 
-  //-------Generate outlined function------------------------------------
+  //-------Step 2. Generate outlined function------------------------------------
+  // Generate a structure declaration if useStructureWrapper is set
+  // A variable of the struct type will later used to wrap function parameters
+  SgClassDeclaration* struct_decl = NULL;
+  if (Outliner::useStructureWrapper) 
+  {
+    struct_decl = generateParameterStructureDeclaration (s, func_name_str, syms, pdSyms, glob_scope);
+    ROSE_ASSERT (struct_decl != NULL);
+  }
+  
   // generate the function and its prototypes if necessary
-//  printf ("In Outliner::Transform::outlineBlock() function name to build: func_name_str = %s \n",func_name_str.c_str());
-  SgFunctionDeclaration* func = generateFunction (s, func_name_str, syms, pdSyms, psyms, 
-           fpsyms, reductionsyms, glob_scope);
+  //  printf ("In Outliner::Transform::outlineBlock() function name to build: func_name_str = %s \n",func_name_str.c_str());
+  SgFunctionDeclaration* func = generateFunction (s, func_name_str, syms, pdSyms, psyms, struct_decl, glob_scope);
   ROSE_ASSERT (func != NULL);
   ROSE_ASSERT(glob_scope->lookup_function_symbol(func->get_name()));
 
@@ -94,11 +168,11 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
   // Why is there a deep copy on "s"?
      SageInterface::deleteAST(s);
 #endif
-
     
   // Retest this...
      ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
 
+  //-----------Step 3. insert the outlined function -------------
   // DQ (2/16/2009): Added (with Liao) the target block which the outlined function will replace.
   // Insert the function and its prototype as necessary  
      ROSE_ASSERT(glob_scope->lookup_function_symbol(func->get_name()));
@@ -107,6 +181,7 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
   //
   // Retest this...
      ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
+
     // reproduce the lost OpenMP pragma attached to a outlining target loop 
     // The assumption is that OmpAttribute is attached to both the pragma and the affected loop
     // in the frontend already.
@@ -118,11 +193,15 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
       SgForStatement* firstloop = isSgForStatement(*liter); 
       OmpSupport::generatePragmaFromOmpAttribute(firstloop);
     }
-  //-----------replace the outlining target with a function call-------------
-  // Generate packing statements
-     std::string wrapper_name;
-     if (useParameterWrapper)
-          wrapper_name= generatePackingStatements(s,syms);
+
+  //-----------Step 4. Replace the outlining target with a function call-------------
+ 
+ // Prepare the parameter of the function call,
+ // Generate packing statements, insert them into the beginning of the target s
+    std::string wrapper_name;
+  // two ways to pack parameters: an array of pointers v.s. A structure
+    if (useParameterWrapper || useStructureWrapper)
+      wrapper_name= generatePackingStatements(s,syms,pdSyms, struct_decl );
 
   // Generate a call to the outlined function.
      SgScopeStatement * p_scope = s->get_scope();
@@ -270,9 +349,18 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
  	*(__out_argv +0)=(void*)(&var1);// better form: __out_argv[0]=(void*)(&var1);
   	*(__out_argv +1)=(void*)(&var2); //__out_argv[1]=(void*)(&var2);
  * return the name for the array parameter used to wrap all pointer parameters
+ *
+ * if Outliner::useStructureWrapper is true, we wrap parameters into a structure instead of an array.
+ * In this case, we need to know the structure type's name and parameters passed by pointers
+ *  struct OUT__1__8228___data __out_argv1__1527__; 
+ *  __out_argv1__1527__.i = i;
+ *  __out_argv1__1527__.j = j;
+ *  __out_argv1__1527__.sum_p = &sum; 
+ *
  */
-std::string Outliner::generatePackingStatements(SgStatement* target, ASTtools::VarSymSet_t & syms)
+std::string Outliner::generatePackingStatements(SgStatement* target, ASTtools::VarSymSet_t & syms, ASTtools::VarSymSet_t & pdsyms, SgClassDeclaration* struct_decl /* = NULL */)
 {
+
   int var_count = syms.size();
   int counter=0;
   string wrapper_name= generateFuncArgName(target); //"__out_argv";
@@ -283,30 +371,64 @@ std::string Outliner::generatePackingStatements(SgStatement* target, ASTtools::V
   ROSE_ASSERT( cur_scope != NULL);
 
   // void * __out_argv[count];
-  SgType* pointer_type = buildPointerType(buildVoidType()); 
-  SgType* my_type = buildArrayType(pointer_type, buildIntVal(var_count));
+  SgType* my_type = NULL; 
+
+  if (useStructureWrapper)
+  {
+    ROSE_ASSERT (struct_decl != NULL);
+    my_type = struct_decl->get_type();
+  }
+  else // default case for parameter wrapping is to use an array of pointers
+  { 
+    SgType* pointer_type = buildPointerType(buildVoidType()); 
+    my_type = buildArrayType(pointer_type, buildIntVal(var_count));
+  }
+
   SgVariableDeclaration* out_argv = buildVariableDeclaration(wrapper_name, my_type, NULL,cur_scope);
 
-// Since we have moved the outlined block to be the outlined function's body, and removed it 
-// from its location in the original location where it was outlined, we can't insert new 
-// statements relative to "target".
+  // Since we have moved the outlined block to be the outlined function's body, and removed it 
+  // from its location in the original location where it was outlined, we can't insert new 
+  // statements relative to "target".
   SageInterface::insertStatementBefore(target, out_argv);
 
   SgVariableSymbol * wrapper_symbol = getFirstVarSym(out_argv);
   ROSE_ASSERT(wrapper_symbol->get_parent() != NULL);
-//  cout<<"Inserting wrapper declaration ...."<<wrapper_symbol->get_name().getString()<<endl;
-  // 	*(__out_argv +0)=(void*)(&var1);
+  //  cout<<"Inserting wrapper declaration ...."<<wrapper_symbol->get_name().getString()<<endl;
   for (ASTtools::VarSymSet_t::reverse_iterator i = syms.rbegin ();
       i != syms.rend (); ++i)
   {
-//    SgAddOp * addop = buildAddOp(buildVarRefExp(wrapper_symbol),buildIntVal(counter));
-//    SgPointerDerefExp *lhs = buildPointerDerefExp(addop);
-    SgPntrArrRefExp *lhs = buildPntrArrRefExp(buildVarRefExp(wrapper_symbol),buildIntVal(counter));
+    SgExpression * lhs = NULL;
+    SgExpression * rhs = NULL;
+    if (useStructureWrapper)
+    {
+      // if use a struct to wrap parameters
+      // two kinds of field: original type v.s. pointer type to the original type
+      //  __out_argv1__1527__.i = i;
+      //  __out_argv1__1527__.sum_p = &sum;
+      SgInitializedName* i_name = (*i)->get_declaration();
+      SgVariableSymbol * i_symbol = const_cast<SgVariableSymbol *>(*i);
+      //SgType* i_type = i_symbol->get_type();
+       string member_name= i_name->get_name ().str ();
+      rhs = buildVarRefExp(i_symbol); 
+      if (pdsyms.find(i_symbol) != pdsyms.end()) // pointer type
+      {
+        member_name = member_name+"_p";
+        // member_type = buildPointerType(member_type);
+        rhs = buildAddressOfOp(rhs); 
+      }
+      SgClassDefinition* class_def = isSgClassDefinition (isSgClassDeclaration(struct_decl->get_definingDeclaration())->get_definition()) ; 
+      ROSE_ASSERT (class_def != NULL);
+      lhs = buildDotExp ( buildVarRefExp(out_argv), buildVarRefExp (member_name, class_def));  
+    }
+    else
+    // Default case: array of pointers, e.g.,  *(__out_argv +0)=(void*)(&var1);
+    {
+      lhs = buildPntrArrRefExp(buildVarRefExp(wrapper_symbol),buildIntVal(counter));
+      SgVarRefExp* rhsvar = buildVarRefExp((*i)->get_declaration(),cur_scope);
+      rhs = buildCastExp( buildAddressOfOp(rhsvar), buildPointerType(buildVoidType()), SgCastExp::e_C_style_cast);
+    }
 
-    SgVarRefExp* rhsvar = buildVarRefExp((*i)->get_declaration(),cur_scope);
-    SgCastExp * rhs = buildCastExp( \
-        buildAddressOfOp(rhsvar), \
-        pointer_type,SgCastExp::e_C_style_cast);
+    // build wrapping statement for either cases
     SgExprStatement * expstmti= buildAssignStatement(lhs,rhs);
     SageInterface::insertStatementBefore(target, expstmti);
     counter ++;

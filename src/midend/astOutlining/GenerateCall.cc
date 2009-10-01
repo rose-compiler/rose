@@ -29,13 +29,23 @@ appendArgs (const ASTtools::VarSymSet_t& syms,  std::set<SgInitializedName*> rea
 {
   if (!e_list)
     return;
-  if (Outliner::useParameterWrapper && (syms.size()>0))  // using void * __out_argv[n] as a wrapper
+  if ((Outliner::useParameterWrapper|| Outliner::useStructureWrapper) && (syms.size()>0))  
   { 
     ROSE_ASSERT(scope!=NULL);
-    SageInterface::appendExpression(e_list,SageBuilder::buildVarRefExp(arg_name ,scope));
+    if (Outliner::useStructureWrapper)
+    {
+      //using &_out_argv as a wrapper  
+      SageInterface::appendExpression(e_list,SageBuilder::buildAddressOfOp(SageBuilder::buildVarRefExp(arg_name ,scope)));
+    }
+    else  
+    {
+     // using void * __out_argv[n] as a wrapper
+      SageInterface::appendExpression(e_list,SageBuilder::buildVarRefExp(arg_name ,scope));
+    }
+
     return; 
   }
-  else 
+  else // no parameter wrapping, a parameter for each variable
   {
     for (ASTtools::VarSymSet_t::const_iterator i = syms.begin ();
         i != syms.end (); ++i)

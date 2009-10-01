@@ -375,6 +375,7 @@ void ASTtools::collectVarRefsOfTypeWithoutAssignmentSupport(const SgStatement* s
 //! Collect variables to be replaced by pointer dereferencing (pd)
 // We collect those used by address OR those do not support assignment
 // We exclude C++ reference types since they do not support dereferencing 
+// 
 // PointerDereferenceingVars =
 //   PassByRefParameters \intersection (UsingByAddress \union NotAssignableVars) - PointerDereferencedVars
 //   Liao, 8/14/2009
@@ -383,16 +384,20 @@ void ASTtools::collectPointerDereferencingVarSyms(const SgStatement*s, VarSymSet
   std::set<SgVarRefExp* > varSetB;
   std::set<SgVarRefExp* >::const_iterator iter;
 
+  // use by address
   collectVarRefsUsingAddress(s, varSetB);
+  // not assignable
   collectVarRefsOfTypeWithoutAssignmentSupport(s,varSetB);
-  // collect symbols from variable references
+
+  // convert variable references to symbols
   for (iter=varSetB.begin(); iter!=varSetB.end(); iter++)
   {
     SgVarRefExp* ref = *iter;
     ROSE_ASSERT(ref->get_symbol()!=NULL);
     if (!isSgReferenceType(ref->get_type())) // exclude C++ reference type
-    pdSyms.insert(ref->get_symbol());
+      pdSyms.insert(ref->get_symbol());
   }
+
   if (Outliner::enable_debug)
   {
     cout<<"Executing ASTtools::collectPointerDereferencingVarSyms()....."<<endl;
@@ -400,8 +405,8 @@ void ASTtools::collectPointerDereferencingVarSyms(const SgStatement*s, VarSymSet
     VarSymSet_t::const_iterator iter=pdSyms.begin();
     for (;iter!=pdSyms.end();iter++)
       cout<<(*iter)->get_name().getString()<<" ";
-  }
     cout<<endl;
+  }
 }
 
 // eof

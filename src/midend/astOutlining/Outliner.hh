@@ -38,7 +38,8 @@ namespace Outliner
   //side effect analysis for pass-by-value and pass-by-ref, reuse parameters
   extern bool enable_classic; 
   // use a wrapper for all variables or one parameter for a variable or a wrapper for all variables
-  extern bool useParameterWrapper;  // use a wrapper for parameters of the outlined function
+  extern bool useParameterWrapper;  // use an array of pointers wrapper for parameters of the outlined function
+  extern bool useStructureWrapper;  // use a structure-type wrapper for parameters of the outlined function, this is a sub option for useParameterWrapper. false means using array, true means using structure
                    // turned on by command line option:   -rose:outline:parameter_wrapper
   extern bool preproc_only_;  // preprocessing only, -rose:outline:preproc-only
   extern bool useNewFile; // Generate the outlined function into a separated new source file
@@ -168,14 +169,26 @@ namespace Outliner
      *  Note: private, firsprivate, reduction variables are handled by OmpSupport::transOmpVariables() now
      *  They are not in actual use anymore.
      */
-    void collectVars (const SgStatement* s, ASTtools::VarSymSet_t& syms, ASTtools::VarSymSet_t& private_syms,
-                  ASTtools::VarSymSet_t& firstprivate_syms, ASTtools::VarSymSet_t& reduction_syms);
+    void collectVars (const SgStatement* s, ASTtools::VarSymSet_t& syms, ASTtools::VarSymSet_t& private_syms);
 
     /*!\brief Generate a new source file under the same SgProject as
      * target, the file's base name is file_name_str. Suffix is automatically
      * generated according to the file suffix of s
      */
     SgSourceFile* generateNewSourceFile(SgBasicBlock* target, const std::string& file_name);
+
+    /*!\brief Generate a struct declaration to wrap all variables to be passed to the outlined function
+     *
+     * This function will also insert the declaration inside the global scope point right before the outlining target
+     * If the scope of the outlined function is different, a declaration will also be inserted there. 
+     */
+    SgClassDeclaration* generateParameterStructureDeclaration(
+        SgBasicBlock* s, // the outlining target
+        const std::string& func_name_str, // the name for the outlined function, we generate the name of struct based on this.
+        const ASTtools::VarSymSet_t& syms, // variables to be passed as parameters
+        ASTtools::VarSymSet_t& pdSyms, // variables must use pointer types
+        SgScopeStatement* func_scope ); // the scope of the outlined function, could be in another file
+
 
     /*!
      *  \brief Returns a new outlined function containing a deep-copy
@@ -199,7 +212,8 @@ namespace Outliner
      *  outlining. Used to support -rose:outline:temp_variable
      *
      *  pSyms are OpenMP private variables, or dead variables (neither livein nor liveout)
-     *  Note: private, firsprivate, reduction variables are handled by OmpSupport::transOmpVariables() now
+     *
+     *  Note: private, firsprivate, reduction variables are handled by OmpSupport::transOmpVariables()
      *  They are not in actual use anymore.
      *
      *  \pre The statement does not contain non-local control flow.
@@ -212,14 +226,13 @@ namespace Outliner
                       const ASTtools::VarSymSet_t& syms,
                       const ASTtools::VarSymSet_t& pdSyms,
                       const ASTtools::VarSymSet_t& pSyms,
-                      const ASTtools::VarSymSet_t& fpSyms,
-                      const ASTtools::VarSymSet_t& reductionSyms,
+                      SgClassDeclaration* struct_decl, /*optional struct type to wrap parameters*/
                       SgScopeStatement* scope);
 
      //! Generate packing (wrapping) statements for the variables to be passed 
      //return the unique wrapper parameter for the outlined function
      //target is the outlining target
-    std::string generatePackingStatements(SgStatement* target, ASTtools::VarSymSet_t & syms);
+    std::string generatePackingStatements(SgStatement* target, ASTtools::VarSymSet_t & syms,  ASTtools::VarSymSet_t & pdsyms, SgClassDeclaration* struct_decl = NULL);
 
     /*!
      *  \brief Inserts an outlined-function declaration into global scope.
