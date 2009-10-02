@@ -1,3 +1,62 @@
+2009-10-02 03:21  dquinlan
+
+	* [r7721] /trunk/ROSE/scripts/nmiBuildAndTestFarm/cronjobs: Added
+	  tests to crontab.
+
+2009-10-02 03:16  dquinlan
+
+	* [r7720]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_deb_5.0/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_macos_10.5/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_deb_5.0/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_rhap_5/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/quinlanTests.sh: Added
+	  default setting for NMI tests (includes Fortran tests).
+
+2009-10-02 02:36  dquinlan
+
+	* [r7718]
+	  /trunk/ROSE/src/frontend/OpenFortranParser_SAGE_Connection/c_action_functionsToImplement.sh:
+	  Added shell script to identify missing c_action functions.
+
+2009-10-02 02:34  dquinlan
+
+	* [r7717] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_32.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_33.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_34.C,
+	  /trunk/ROSE/docs/testDoxygen/SgDeclarationStatement.docs,
+	  /trunk/ROSE/docs/testDoxygen/SgInitializedName.docs,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_rhap_5.2/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/cronjobs,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/quinlanTests.sh,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Statement.code,
+	  /trunk/ROSE/src/ROSETTA/src/statement.C,
+	  /trunk/ROSE/src/ROSETTA/src/support.C,
+	  /trunk/ROSE/src/frontend/OpenFortranParser_SAGE_Connection/FortranParserActionROSE.C,
+	  /trunk/ROSE/src/frontend/OpenFortranParser_SAGE_Connection/Makefile.am,
+	  /trunk/ROSE/src/frontend/SageIII/astPostProcessing/astPostProcessing.C,
+	  /trunk/ROSE/src/frontend/SageIII/astPostProcessing/buildStatementNumbering.C,
+	  /trunk/ROSE/src/frontend/SageIII/astVisualization/wholeAST.C,
+	  /trunk/ROSE/tests/CompileTests/copyAST_tests/copytest2009_01.C:
+	  Fixed more NMI specific work in ROSE.
+	  
+	  Detailed changes in this commit:
+	  1) Added remaining c_action functions required for dynamic
+	  loading on NMI machines.
+	  2) Added statement numbering as part of support for name
+	  qualification.
+	  3) Added more test codes.
+	  4) Added debugging code to the selection of binary libraries.
+	  5) Added more documentation to the symbol table support.
+	  6) Added more NMI support.
+
+2009-10-01 20:49  liao6
+
+	* [r7716] /trunk/ROSE/docs/Rose/developersAppendix.tex: Documented
+	  when we test and release ROSE
+
 2009-10-01 17:48  liao6
 
 	* [r7713] /trunk/ROSE/docs/Rose/rose.cfg.in: Enabled the search
