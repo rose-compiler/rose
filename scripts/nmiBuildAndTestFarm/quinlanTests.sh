@@ -31,6 +31,9 @@ echo "***************************"
 ./submit.sh build_configs/x86_rhap_5/default &
 ./submit.sh build_configs/x86_64_macos_10.5/default &
 
+# DQ (10/2/2009): Testing the default compiler (4.0.4)
+./submit.sh build_configs/x86_64_rhap_5/default &
+
 echo "******************************************"
 echo "* Failing tests: libCompass.so not found *"
 echo "******************************************"
@@ -111,6 +114,7 @@ echo "***********************************************"
 # collect2: ld returned 1 exit status
 # make[3]: *** [librose.la] Error 1
 # make[3]: Leaving directory `/home/condor/execute/dir_16335/userdir/build/src'
+# SUSE LINUX Enterprise Server 9 (x86_64)
 ./submit.sh build_configs/x86_sles_9/minimal_default &
 
 echo "**************************************************************"

@@ -85,3 +85,26 @@ Debian 2.2 Potato (15 August 2000)
 Debian 3.0 Woody (19 July 2002) 
 Debian 3.1 Sarge (6 June 2005) 
 Debian 4.0 Etch (8 April 2007)
+
+************************
+History of SUSE Releases
+************************
+
+SUSE  9.0 October  2003
+SUSE 10.0 October  2005
+SUSE 10.1 May      2006
+SUSE 10.2 December 2006
+SUSE 10.3 October  2007
+SUSE 11.0 June     2008
+SUSE 11.1 December 2008
+SUSE 11.2 November 2009
+
+
+**************************
+History of Ubuntu Releases
+**************************
+
+Ubuntu  8.04  April   2008
+Ubuntu  9.04  April   2009
+Ubuntu  9.10  October 2009
+Ubuntu 10.04  April   2010
