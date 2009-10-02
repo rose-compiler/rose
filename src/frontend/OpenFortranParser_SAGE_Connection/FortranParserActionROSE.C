@@ -2740,8 +2740,7 @@ void c_action_ac_implied_do_control( ofp_bool hasStride )
  * scalar_int_variable
  *
  */
-void
-c_action_scalar_int_variable()
+void c_action_scalar_int_variable()
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_scalar_int_variable() \n");
@@ -2758,8 +2757,7 @@ c_action_scalar_int_variable()
  * @param eos Token for the end of the statement.
  */
 // void c_action_type_declaration_stmt(Token_t * label, int numAttributes)
-void
-c_action_type_declaration_stmt(Token_t * label, int numAttributes, Token_t * eos)
+void c_action_type_declaration_stmt(Token_t * label, int numAttributes, Token_t * eos)
    {
   // This is a variable declaration (build the SgVariableDeclaration and populate it using data saved on the stack).
 
@@ -16904,11 +16902,41 @@ void c_action_cleanUp()
 #if 0
 // DQ (10/2/2007): New rule?
 // This may be R214 ???
-void c_action_action_stmt()
+// void c_action_action_stmt()
    {
      printf ("In c_action_action_stmt(): What rule is this? \n");
    }
 #endif
+
+
+// DQ (10/1/2009): Added these functions because the NMI platforms complain about it being undefined.
+// It appears that it is strict.
+void c_action_component_initialization(){}
+void c_action_allocate_co_array_spec(){}
+void c_action_allocate_co_shape_spec(ofp_bool carg_0){}
+void c_action_bounds_remapping(){}
+void c_action_bounds_spec(){}
+void c_action_co_array_spec(){}
+void c_action_component_data_source(){}
+void c_action_component_spec(Token_t *carg_0){}
+void c_action_data_pointer_object(){}
+void c_action_deferred_co_shape_spec(){}
+void c_action_enumerator(Token_t *carg_0, ofp_bool carg_1){}
+void c_action_final_binding(Token_t *carg_0){}
+void c_action_forall_body_construct(){}
+void c_action_forall_construct(){}
+void c_action_image_selector(int carg_0){}
+void c_action_inquire_spec(Token_t *carg_0){}
+void c_action_pointer_object(){}
+void c_action_proc_interface(Token_t *carg_0){}
+void c_action_proc_pointer_object(){}
+void c_action_scalar_constant(){}
+void c_action_select_type_construct(){}
+void c_action_specific_binding(Token_t *carg_0, Token_t *carg_1, Token_t *carg_2, Token_t *carg_3, ofp_bool carg_4){}
+void c_action_structure_constructor(Token_t *carg_0){}
+void c_action_type_param_attr_spec(Token_t *carg_0){}
+void c_action_type_spec(){}
+void c_action_vector_subscript(){}
 
 #ifdef __cplusplus
 } /* End extern C. */

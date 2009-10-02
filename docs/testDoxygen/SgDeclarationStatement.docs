@@ -396,3 +396,25 @@ pointer to an object derived from a SgDeclarationStatement.
     that variable's documentation for details).
 */
 
+
+/*! \fn SgDeclarationStatement::get_symbol_from_symbol_table() const
+\brief \b FOR \b INTERNAL \b USE Get the associated symbol from the symbol table in the stored scope.
+       Users should use the SgDeclarationStatement::search_for_symbol_from_symbol_table() instead.
+*/
+
+/*! \fn SgDeclarationStatement::search_for_symbol_from_symbol_table() const
+\brief User interface for retrieving the associated symbol from the declaration.
+
+\return Returns SgSymbol pointer.
+*/
+
+/*! \fn SgDeclarationStatement::hasAssociatedSymbol() const
+\brief Returns boolean value true of this type of declaration has an associated sysmbol.
+
+\return Returns bool.
+
+\internal Only a few types of declarations do not have associated symbols
+    (SgFunctionParameterList, SgCtorInitializerList, SgPragmaDeclaration, 
+     SgVariableDeclaration, SgVariableDefinition).
+*/
+

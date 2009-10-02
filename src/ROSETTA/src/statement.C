@@ -426,30 +426,13 @@ Grammar::setUpStatements ()
   // Statement.excludeFunctionPrototype    ( "HEADER", "../Grammar/sageCommon.code" );
 
      Statement.setFunctionPrototype ( "HEADER", "../Grammar/Statement.code" );
-#if 0
-  // DQ (8/21/2004): Removed old design SgAttribute based mechanism
-  // MK: I moved the following data member declaration from ../Grammar/Statement.code to this position:
-#if 0
-     Statement.setDataPrototype("SgAttributePtrList", "uattributes", "= NULL",
-				NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#else
-     Statement.setDataPrototype("SgAttributePtrList", "uattributes", "",
-				NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
-#endif
+
   // MK: the following two function calls could be wrapped into a single one:
      Statement.setFunctionPrototype("HEADER_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Statement.code");
      Statement.setSubTreeFunctionPrototype("HEADER_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Statement.code" );
 
   // DQ (12/4/2004): Now we automate the generation of the destructors
   // Statement.setAutomaticGenerationOfDestructor(false);
-
-#ifdef HL_GRAMMARS
-     X_Statement.setFunctionPrototype     ( "HEADER_X_STATEMENT",     "../Grammar/Statement.code" );
-     X_Statement.setAutomaticGenerationOfCopyFunction(false);
-
-     non_X_Statement.setFunctionPrototype ( "HEADER_NON_X_STATEMENT", "../Grammar/Statement.code" );
-#endif
 
   // Statement.excludeFunctionPrototype    ( "HEADER_POST_CONSTRUCTION_INITIALIZATION",
   //                                         "../Grammar/Statement.code" );
@@ -464,6 +447,13 @@ Grammar::setUpStatements ()
   // Statement.setDataPrototype("int", "numeric_label", "= -1",
   //           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Statement.setDataPrototype("SgLabelRefExp*", "numeric_label", "= NULL",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (10/1/2009): Adding support for source sequence numbers as part of name qualification support
+  // which would include a test for if statements containing references to declarations appear before 
+  // or after the defining declaration they are associated with. More subtle rules also apply and are
+  // critical for correct name qualification in the generated code (unparser).
+     Statement.setDataPrototype("int", "source_sequence_value", "= -1",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      ScopeStatement.setFunctionPrototype( "HEADER_SCOPE_STATEMENT", "../Grammar/Statement.code" );

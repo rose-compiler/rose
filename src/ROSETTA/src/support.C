@@ -763,7 +763,7 @@ Grammar::setUpSupport ()
   // DQ (9/12/2009): Adding support for new name qualification (not ready yet).
   // DQ (9/11/2009): Added support for mapping id numbers to statement pointers.
   // This is part of support for a new implementation of name qualification.
-     SourceFile.setDataPrototype   ( "SgNodePtrList", "statementNumberContainer", "",
+     SourceFile.setDataPrototype   ( "SgStatementPtrList", "statementNumberContainer", "",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
@@ -853,19 +853,19 @@ Grammar::setUpSupport ()
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "fortran_implicit_none", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  //Liao, 10/28/2008: Support for OpenMP 3.0 model for C/C++ pragma, will use it for Fortran later on, changed fortran_openmp to openmp
+  // Liao, 10/28/2008: Support for OpenMP 3.0 model for C/C++ pragma, will use it for Fortran later on, changed fortran_openmp to openmp
      File.setDataPrototype         ( "bool", "openmp", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     // Liao, 5/31/2009: Only invoke the OpenMP C/C++ and Fortran directive parsers and generate OmpAttributes
+  // Liao, 5/31/2009: Only invoke the OpenMP C/C++ and Fortran directive parsers and generate OmpAttributes
      File.setDataPrototype         ( "bool", "openmp_parse_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     // Only generate SgOmp* nodes from OmpAttributes in AST, no further actions
+  // Only generate SgOmp* nodes from OmpAttributes in AST, no further actions
      File.setDataPrototype         ( "bool", "openmp_ast_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     // Lowering OpenMP directives to code with explicit runtime calls
+  // Lowering OpenMP directives to code with explicit runtime calls
      File.setDataPrototype         ( "bool", "openmp_lowering", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    File.setDataPrototype         ( "bool", "cray_pointer_support", "= false",
+     File.setDataPrototype         ( "bool", "cray_pointer_support", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (12/11/2007): Adds support for parser to output the parser rules to be called. For Fortran

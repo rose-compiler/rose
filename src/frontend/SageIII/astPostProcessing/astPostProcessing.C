@@ -375,17 +375,20 @@ void postProcessingSupport (SgNode* node)
   // CheckIsModifiedFlagSupport(node); 
      checkIsModifiedFlag(node);
 
-  // ROSE_ASSERT(saved_declaration->get_definingDeclaration() != saved_declaration->get_firstNondefiningDeclaration());     
+  // ROSE_ASSERT(saved_declaration->get_definingDeclaration() != saved_declaration->get_firstNondefiningDeclaration());
 
   // DQ (3/17/2007): This should be empty
   // ROSE_ASSERT(SgNode::get_globalMangledNameMap().size() == 0);
 
-#if 0
+#if 1
      SgSourceFile* sourceFile = isSgSourceFile(node);
      if (sourceFile != NULL)
         {
        // DQ (9/11/2009): Added support for numbering of statements required to support name qualification.
-          sourceFile->buildStatementNumbering();
+       // sourceFile->buildStatementNumbering();
+          SgGlobal* globalScope = sourceFile->get_globalScope();
+          ROSE_ASSERT(globalScope != NULL);
+          globalScope->buildStatementNumbering();
         }
 #endif
 

@@ -11,54 +11,60 @@ PATH=/bin:/usr/bin:/nmi/bin
 
 # DQ (9/10/2009): Changed the times and reordered the tests (passing first then failing tests).
 #    Also skipping the tests using Java since that is not setup yet (fortran support).
-# run each config test every day at 2 am
+# run each config test every day at 4 am (after the 3:30 am nightly release, when internal tests pass).
 
 # Passing tests
-# 00 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_fedora_8/default >> update.log 2>> update.err
-  02 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_fedora_8/minimal_default >> update.log 2>> update.err
-  04 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_fc_5/minimal_default >> update.log 2>> update.err
-  10 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_rhap_5.2/minimal_default >> update.log 2>> update.err
-  12 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_suse_10.0/minimal_default >> update.log 2>> update.err
-  14 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_suse_10.2/minimal_default >> update.log 2>> update.err
-  16 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_deb_5.0/minimal_default >> update.log 2>> update.err
-  18 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_rhas_4/minimal_default >> update.log 2>> update.err
-  22 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_sl_4.4/minimal_default >> update.log 2>> update.err
-  25 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_fc_5/minimal_default >> update.log 2>> update.err
+# 00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_fedora_8/default >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_fedora_8/minimal_default >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_fc_5/minimal_default >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_rhap_5.2/minimal_default >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_suse_10.0/minimal_default >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_suse_10.2/minimal_default >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_deb_5.0/minimal_default >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_rhas_4/minimal_default >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_sl_4.4/minimal_default >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_fc_5/minimal_default >> update.log 2>> update.err
 
-  24 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_deb_4.0/minimal_default >> update.log 2>> update.err
-  26 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_deb_5.0/minimal_default >> update.log 2>> update.err
-# 28 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_deb_3.1/minimal_default >> update.log 2>> update.err
-  28 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_deb_4.0/minimal_default >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_deb_4.0/minimal_default >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_deb_5.0/minimal_default >> update.log 2>> update.err
+# 00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_deb_3.1/minimal_default >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_deb_4.0/minimal_default >> update.log 2>> update.err
 
-  30 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_fedora_9/minimal_default >> update.log 2>> update.err
-  32 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_rhap_5/minimal_default >> update.log 2>> update.err
-  34 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_rhas_4/minimal_default >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_fedora_9/minimal_default >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_fedora_11/minimal_default >> update.log 2>> update.err
 
-  36 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_sles_9/minimal_default >> update.log 2>> update.err
-# 38 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_cent_4.2/minimal_default >> update.log 2>> update.err
-# 40 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_rhas_3/minimal_default >> update.log 2>> update.err (too old)
-  42 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_sles_9/minimal_default >> update.log 2>> update.err
-# 44 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_slf_3/minimal_default >> update.log 2>> update.err (platform does not exist any more)
-# 46 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_ubuntu_5.10/default >> update.log 2>> update.err
-  46 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_ubuntu_5.10/minimal_default >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_rhap_5/minimal_default >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_rhas_4/minimal_default >> update.log 2>> update.err
 
-  48 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_rhap_5/compilerTest_gnu_4.3 >> update.log 2>> update.err
-  50 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_rhap_5.2/compilerTest_gnu_4.1 >> update.log 2>> update.err
-  52 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_rhap_5/compilerTest_gnu_4.0 >> update.log 2>> update.err
-  54 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_rhas_4/compilerTest_gnu_3.4 >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_sles_9/minimal_default >> update.log 2>> update.err
+# 00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_cent_4.2/minimal_default >> update.log 2>> update.err
+# 00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_rhas_3/minimal_default >> update.log 2>> update.err (too old)
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_sles_9/minimal_default >> update.log 2>> update.err
+# 00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_slf_3/minimal_default >> update.log 2>> update.err (platform does not exist any more)
+# 00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_ubuntu_5.10/default >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_ubuntu_5.10/minimal_default >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_ubuntu_8.04.3/minimal_default >> update.log 2>> update.err
 
-# 54 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_rhap_5/default >> update.log 2>> update.err
-  54 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_rhap_5/minimal_default >> update.log 2>> update.err
-  56 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_fc_4/minimal_default >> update.log 2>> update.err
+# 00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_rhap_5/default >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_rhap_5/minimal_default >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_rhap_5.2/minimal_default >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_rhap_5.3/minimal_default >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_fc_4/minimal_default >> update.log 2>> update.err
 
-  56 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_macos_10.5/minimal_default >> update.log 2>> update.err
-  58 2 * * * cd ${CWD}; ./submit.sh build_configs/x86_macos_10.4/minimal_default >> update.log 2>> update.err
+# Mac OSX tests
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_macos_10.5/minimal_default >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_macos_10.4/minimal_default >> update.log 2>> update.err
 
-  00 3 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_rhap_5.3/minimal_default >> update.log 2>> update.err
-  00 3 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_ubuntu_8.04.3/minimal_default >> update.log 2>> update.err
-  00 3 * * * cd ${CWD}; ./submit.sh build_configs/x86_rhas_4/compilerTest_gnu_4.3 >> update.log 2>> update.err
-  00 3 * * * cd ${CWD}; ./submit.sh build_configs/x86_rhap_5/compilerTest_gnu_4.1 >> update.log 2>> update.err
-  00 3 * * * cd ${CWD}; ./submit.sh build_configs/x86_rhap_5/compilerTest_gnu_3.4 >> update.log 2>> update.err
+# 32-bit compiler tests
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_rhas_4/compilerTest_gnu_4.3 >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_rhap_5/compilerTest_gnu_4.1 >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_rhap_5/compilerTest_gnu_3.4 >> update.log 2>> update.err
+
+# 64-bit compiler tests
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_rhap_5/compilerTest_gnu_4.3 >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_rhap_5.2/compilerTest_gnu_4.1 >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_rhap_5/compilerTest_gnu_4.0 >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_rhas_4/compilerTest_gnu_3.4 >> update.log 2>> update.err
 
 # Cleanup temporary files from older submissions
-00 3 * * * ${CWD}/cleanup.sh >> ${CWD}/update.log 2>> ${CWD}/update.err
+00 04 * * * ${CWD}/cleanup.sh >> ${CWD}/update.log 2>> ${CWD}/update.err
