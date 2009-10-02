@@ -238,13 +238,16 @@ test_samples.passed: disassemble execFormatsTest $(srcdir)/testSampleBinaries.sh
 ###############################################################################################################################
 
 # Don't delete things indiscriminately--sometimes developers have other related files that should not be touched!
-MOSTLYCLEANFILES = $(TEST_PASSED_TARGETS) test_testElfSchulz-{1,2}.passed \
-	a.out arm-ctrlaltdel.ans arm-ctrlaltdel.dump-{1,2,3} arm-ctrlaltdel.{new,new.new} \
-	arm-poweroff.{dump,new,new.dump,new.new} rose_arm-ctrlaltdel.{s,new.s} rose_arm-poweroff.{s,new.s} \
-	rose_schulz-sample{1,2}-p.so.s rose_schulz-sample{1,2}.so.new.s rose_schulz-sample{1,2}.so.s \
-	schulz-sample{1,2}-p.so.{dump,new} schulz-sample{1,2}.so.{dump,new,new.dump,new.new} test_findConstants.ans \
-	test_disassemble.ans i686-test1.O0.bin.{dump,new} rose_i686-test1.O0.bin.s \
-	buffer2.bin.{dump,new} rose_buffer2.bin.s
+MOSTLYCLEANFILES = \
+	$(addsuffix .new,  $(notdir $(wildcard $(BINARY_SAMPLES)/*))) \
+	$(addsuffix .dump, $(notdir $(wildcard $(BINARY_SAMPLES)/*))) \
+	$(addprefix rose_, $(addsuffix .s, $(notdir $wildcard $(BINARY_SAMPLES)/*))) \
+        $(TEST_PASSED_TARGETS) test_testElfSchulz-{1,2}.passed \
+	a.out arm-ctrlaltdel.ans arm-ctrlaltdel.dump-{1,2,3} arm-ctrlaltdel.new.new \
+	arm-poweroff.{new.dump,new.new} rose_arm-ctrlaltdel.new.s rose_arm-poweroff.new.s \
+	rose_schulz-sample{1,2}.so.new.s schulz-sample{1,2}.so.{new.dump,new.new} test_findConstants.ans \
+	test_disassemble.ans
+
 
 ###############################################################################################################################
 # The older part of this makefile...
