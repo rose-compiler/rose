@@ -3651,6 +3651,9 @@ HEADER_INITIALIZED_NAME_START
       //! Get the associated SgSymbol from the symbol table located in the scope
           SgSymbol* get_symbol_from_symbol_table() const;
 
+       // PC (10/1/2009): Added support to get the symbol from the correct associated declaration
+          SgSymbol* search_for_symbol_from_symbol_table() const;
+
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
@@ -7674,6 +7677,19 @@ SgInitializedName::get_symbol_from_symbol_table() const
      ROSE_ASSERT(get_scope() != NULL);
      ROSE_ASSERT(get_scope()->get_symbol_table() != NULL);
      return get_scope()->get_symbol_table()->find(this);
+   }
+
+// PC (10/1/2009): Added support to get the symbol from the correct associated declaration
+SgSymbol*
+SgInitializedName::search_for_symbol_from_symbol_table() const
+   {
+     SgSymbol *symbol;
+     if (p_prev_decl_item)
+          symbol = p_prev_decl_item->get_symbol_from_symbol_table();
+     else
+          symbol = get_symbol_from_symbol_table();
+     ROSE_ASSERT(symbol != NULL);
+     return symbol;
    }
 
 #if 0
