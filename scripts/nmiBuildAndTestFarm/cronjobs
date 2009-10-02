@@ -66,5 +66,12 @@ PATH=/bin:/usr/bin:/nmi/bin
   00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_rhap_5/compilerTest_gnu_4.0 >> update.log 2>> update.err
   00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_rhas_4/compilerTest_gnu_3.4 >> update.log 2>> update.err
 
+# Test Fortran support
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_rhap_5/default        >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_macos_10.5/default >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_deb_5.0/default       >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_deb_5.0/default    >> update.log 2>> update.err
+  00 06 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_rhap_5.2/default   >> update.log 2>> update.err
+
 # Cleanup temporary files from older submissions
 00 04 * * * ${CWD}/cleanup.sh >> ${CWD}/update.log 2>> ${CWD}/update.err
