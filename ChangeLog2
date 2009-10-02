@@ -1,3 +1,32 @@
+2009-10-02 18:40  dquinlan
+
+	* [r7735]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/ReleaseHistory.txt,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_deb_5.0/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_macos_10.5/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_rhap_5.2/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_rhap_5/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_rhap_5/default_compiler,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_deb_5.0/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_rhap_5/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/quinlanTests.sh: Update
+	  NMI tests.
+
+2009-10-02 17:17  matzke
+
+	* [r7733] /trunk/ROSE/scripts/rosegit/bin/rat-test: RoseGit: added
+	  "make distclean" to the test
+
+2009-10-02 15:59  matzke
+
+	* [r7732] /trunk/ROSE/tests/roseTests/binaryTests/Makefile.am:
+	  generated files removed by "make mostlyclean"
+	  
+	  The list of files to remove must be generated dynamically because
+	  we
+	  don't know what sample binaries might have been copied into the
+	  $(top_srcdir)/binaries/samples directory.
+
 2009-10-02 03:21  dquinlan
 
 	* [r7721] /trunk/ROSE/scripts/nmiBuildAndTestFarm/cronjobs: Added
