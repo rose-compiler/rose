@@ -353,3 +353,12 @@ detailed variable x
 
 */
 
+/*! \fn SgInitializedName::get_symbol_from_symbol_table() const
+\brief \b FOR \b INTERNAL \b USE Get the associated symbol from the symbol table in the stored scope.
+       Users should use the SgInitializedName::search_for_symbol_from_symbol_table() instead.
+*/
+
+/*! \fn SgInitializedName::search_for_symbol_from_symbol_table() const
+\brief User interface for retrieving the associated symbol.
+*/
+

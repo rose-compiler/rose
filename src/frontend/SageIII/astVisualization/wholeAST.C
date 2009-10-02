@@ -1731,7 +1731,7 @@ SimpleColorMemoryPoolTraversal::visit(SgNode* node)
 #if 0
      emptySymbolTableFilter(node);
 #endif
-#if 1
+#if 0
      variableDefinitionFilter(node);
      variableDeclarationFilter(node);
      ctorInitializerListFilter(node);

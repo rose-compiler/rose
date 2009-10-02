@@ -1005,6 +1005,10 @@ AC_SUBST(build_triplet_without_redhat) dnl This is done even with EDG source, si
 if test -e ${srcdir}/src/frontend/CxxFrontend/EDG_SAGE_Connection; then
   : # We have EDG source code
 else
+  echo ""
+  echo "These are the available binaries:"
+  ls -l ${srcdir}/src/frontend/CxxFrontend
+  echo ""
   AC_MSG_CHECKING([for an appropriate binary version of EDG])
   if test -f ${full_expected_binary_edg_tarball}; then
     AC_MSG_RESULT([$expected_binary_edg_tarball])
