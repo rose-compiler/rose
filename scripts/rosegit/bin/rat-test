@@ -39,7 +39,9 @@ rosegit_tester_preamble
 rosegit_run "build"          "(cd $ROSE_SRC && ./build)"            	|| exit 1
 rosegit_run "configure"      "(cd $ROSE_BLD && $ROSEGIT_CONFIGURE)" 	|| exit 1
 rosegit_run "make"           "(cd $ROSE_BLD && rosegit_make)"       	|| exit 1
+rosegit_run "distclean"      "(cd $ROSE_BLD && rosegit_make distclean)" || exit 1
 rosegit_run "make distcheck" "(cd $ROSE_BLD && rosegit_make distcheck)" || exit 1
+
 
 # Or you can just run your own commands and generate your own progress messages...
 
