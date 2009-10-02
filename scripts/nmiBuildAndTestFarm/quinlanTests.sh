@@ -28,6 +28,8 @@ echo "***************************"
 ./submit.sh build_configs/x86_64_rhap_5.2/compilerTest_gnu_4.1 &
 ./submit.sh build_configs/x86_rhap_5/compilerTest_gnu_4.1 &
 
+./submit.sh build_configs/x86_rhap_5/default &
+./submit.sh build_configs/x86_64_macos_10.5/default &
 
 echo "******************************************"
 echo "* Failing tests: libCompass.so not found *"
@@ -38,6 +40,7 @@ echo "******************************************"
 # /home/condor/execute/dir_16350/userdir/build/projects/compass/tools/compassVerifier/.libs/lt-compassVerifier: 
 # error while loading shared libraries: libCompass.so.0: cannot open shared object file: No such file or directory
 ./submit.sh build_configs/x86_deb_5.0/minimal_default &
+./submit.sh build_configs/x86_deb_5.0/default &
 
 # DQ (9/15/2009): Passing with skipping Debian tests.
 # DQ (9/14/2009): NMI added lsb_release
@@ -51,6 +54,7 @@ echo "******************************************"
 # DQ (9/15/2009): Passing with skipping Debian tests.
 # DQ (9/9/2009): Compass lib not found in "make check"
 ./submit.sh build_configs/x86_64_deb_5.0/minimal_default &
+./submit.sh build_configs/x86_64_deb_5.0/default &
 
 # DQ (9/15/2009): Passing with skipping Debian tests.
 # DQ (9/14/2009): NMI added lsb_release
