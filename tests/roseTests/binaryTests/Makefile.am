@@ -246,7 +246,7 @@ MOSTLYCLEANFILES = \
 	a.out arm-ctrlaltdel.ans arm-ctrlaltdel.dump-{1,2,3} arm-ctrlaltdel.new.new \
 	arm-poweroff.{new.dump,new.new} rose_arm-ctrlaltdel.new.s rose_arm-poweroff.new.s \
 	rose_schulz-sample{1,2}.so.new.s schulz-sample{1,2}.so.{new.dump,new.new} test_findConstants.ans \
-	test_disassemble.ans
+	test_disassemble.ans test_samples.{passed,out}
 
 
 ###############################################################################################################################
