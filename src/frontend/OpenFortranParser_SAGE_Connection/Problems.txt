@@ -67,3 +67,25 @@ New Problems (11/16/2007):
          R753 forall_construct_stmt
 
    2) Support for "associate" is not implemented in the IR yet.
+
+
+DQ (10/2/2009): Linking issues with different dynamic loaders and Java (email from Peter
+about a linking problem that we had on the NMI machines which forces the definition of
+all symbols and defined a stricter linker requirement thant what we use for development).
+
+Re the linking problem we discussed today, I found the following
+passage within the dlopen man page:
+
+RTLD_NOW
+       If this value is specified, or the environment variable
+       LD_BIND_NOW is set to a non-empty string, all undefined  symbols
+       in  the  library  are  resolved  before dlopen() returns.
+       If this cannot be done, an error is returned.
+
+So we should be able to set the LD_BIND_NOW environment variable to
+test strict resolution.
+
+Thanks,
+-- Peter 
+
+
