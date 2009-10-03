@@ -266,7 +266,7 @@ echo "************************************************************************"
 # Error: can't find the correct binary (32-bit GNU 3.4; but we should have the renaming such that the 4.1 version binary is used.
 ./submit.sh build_configs/x86_rhas_4/compilerTest_gnu_3.4 &
 
-# DQ (10/1/2009): It appears libtoolfinds the wrong libstdc++ library.
+# DQ (10/1/2009): It appears libtool finds the wrong libstdc++ library.
 # The solution may be related to: http://www.mail-archive.com/libtool@gnu.org/msg07653.html
 # The solution might be to configure withouth libxml.
 # DQ (9/29/2009): Added g++ 3.4.3 test
