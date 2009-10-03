@@ -34,6 +34,9 @@ echo "***************************"
 # DQ (10/2/2009): Testing the default compiler (4.0.4)
 ./submit.sh build_configs/x86_64_rhap_5/default &
 
+./submit.sh build_configs/x86_64_fedora_9/default &
+./submit.sh build_configs/x86_64_fedora_9/default_compiler &
+
 echo "******************************************"
 echo "* Failing tests: libCompass.so not found *"
 echo "******************************************"
