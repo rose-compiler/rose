@@ -1,7 +1,7 @@
-TITLE="testing default on all linux platforms"
+TITLE="testing default compiler"
 
-# DESCRIPTION="minimal configuration options, boost 1.35, without java"
-DESCRIPTION="minimal configuration options, boost 1.36, without java"
+DESCRIPTION="minimal configuration options, boost 1.35, without java"
+# DESCRIPTION="minimal configuration options, boost 1.36, without java"
 
 # DQ (9/29/2009): Added prereq for libtool (not available by default).
 # DQ (9/11/2009): boost-1.35.0 does not link using the default compiler!

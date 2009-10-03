@@ -94,15 +94,18 @@ echo "**************************************************************************
 # ./submit.sh build_configs/x86_64_fc_9/minimal_default
 ./submit.sh build_configs/x86_64_fedora_9/minimal_default &
 
-# DQ (9/30/2009): Added new test
-./submit.sh build_configs/x86_64_fedora_11/minimal_default &
+# (DQ (10/3/2009): Machine not available yet!
+# DQ (9/30/2009): Added new test (default compiler is 4.3.?, no other compiler is available)
+# ./submit.sh build_configs/x86_64_fedora_11/minimal_default &
+./submit.sh build_configs/x86_64_fedora_11/default_compiler &
 
+# DQ (10/3/2009): This platform has been removed...
 # DQ (9/11/2009): Segfault in Compass tests ("make check")
 # DQ (9/9/2009): This platform will be removed (old: released June 2005)
 # DQ (9/7/2009): Segfault in Compass tests ("make check")
 # make[9]: *** [test] Segmentation fault
 # make[9]: Leaving directory `/home/condor/execute/dir_22074/userdir/build/projects/compass/tools/compass'
-./submit.sh build_configs/x86_64_fc_4/minimal_default &
+# ./submit.sh build_configs/x86_64_fc_4/minimal_default &
 
 # DQ (10/1/2009): This platform is not available any more.
 # DQ (9/9/2009): This platform will be removed, redundant, please consider just building on x86_rhas_4
@@ -128,7 +131,9 @@ echo "***********************************************"
 # make[3]: Leaving directory `/home/condor/execute/dir_16335/userdir/build/src'
 # SUSE LINUX Enterprise Server 9 (x86_64)
 ./submit.sh build_configs/x86_sles_9/minimal_default &
-./submit.sh build_configs/x86_sles_9/default_compiler &
+
+# The default compiler is GNU 3.3, and we don't build a binary that old!
+# ./submit.sh build_configs/x86_sles_9/default_compiler &
 
 echo "**************************************************************"
 echo "* Failing test on Suse Linux version 9 (link problem wrong version of libstdc++.so) *"
@@ -136,12 +141,19 @@ echo "**************************************************************"
 # DQ (9/9/2009): Error: 
 #    /prereq/gcc-4.2.4/lib/../lib64/libstdc++.so: undefined reference to `_Unwind_GetIPInfo@GCC_4.2.0'
 ./submit.sh build_configs/x86_64_sles_9/minimal_default &
-./submit.sh build_configs/x86_64_sles_9/default_compiler &
+
+# The default compiler is GNU 3.3, and we don't build a binary that old!
+# ./submit.sh build_configs/x86_64_sles_9/default_compiler &
 
 
 echo "******************************************************"
 echo "* Still running... (these appear to never terminate: heavily loaded machines) *"
 echo "******************************************************"
+
+# DQ (10/3/2009): There platforms a current problem: 
+#    x86_64_fc_4, x86_rhap_5.3, x86_ubuntu_8.04.3, x86_cent_4.2, x86_slf_3, x86_64_fedora_11
+#    These should be available soon: x86_rhap_5.3, x86_ubuntu_8.04.3, x86_64_fedora_11
+#    These have been removed: x86_64_fc_4, x86_cent_4.2, x86_slf_3
 
 # DQ (9/9/2009): error message from 8/7/2009) -- config.status: error: cannot find input file: Makefile.in
 # I think that this platform is too old to be used for ROSE (Rhat version 3 released Oct 2003).
@@ -155,8 +167,10 @@ echo "******************************************************"
 # DQ (9/7/2009): AM_PATH_XML2 not found (fixed and waiting for new test results)
 ./submit.sh build_configs/x86_ubuntu_5.10/minimal_default &
 
+# (DQ (10/3/2009): Machine not available yet!
 # DQ (9/29/2009): Suggested new machine (by SNL)
-./submit.sh build_configs/x86_64_ubuntu_8.04.3/minimal_default &
+# ./submit.sh build_configs/x86_64_ubuntu_8.04.3/minimal_default &
+./submit.sh build_configs/x86_64_ubuntu_8.04.3/default_compiler &
 
 # DQ (9/9/2009): This platform will be removed (skip this test)
 # DQ (9/6/2009): This platform does not appear to exist. This all of the prereq 
@@ -206,8 +220,10 @@ echo "********************************************************"
 # ./submit.sh build_configs/x86_64_ubuntu_6.06/minimal_default
 # ./submit.sh build_configs/x86_sles_11/minimal_default
 
+# (DQ (10/3/2009): Machine not available yet!
 # DQ (9/29/2009): Added Red Hat 5.3 test (no results yet)
-./submit.sh build_configs/x86_64_rhap_5.3/minimal_default
+# ./submit.sh build_configs/x86_64_rhap_5.3/minimal_default
+./submit.sh build_configs/x86_64_rhap_5.3/default_compiler
 
 
 echo "************************************************************************"
