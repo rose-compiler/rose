@@ -43,6 +43,9 @@ echo "***************************"
 ./submit.sh build_configs/x86_ubuntu_5.10/default &
 ./submit.sh build_configs/x86_ubuntu_5.10/default_compiler &
 
+./submit.sh build_configs/x86_sl_4.4/default &
+./submit.sh build_configs/x86_sl_4.4/default_compiler &
+
 echo "******************************************"
 echo "* Failing tests: libCompass.so not found *"
 echo "******************************************"
