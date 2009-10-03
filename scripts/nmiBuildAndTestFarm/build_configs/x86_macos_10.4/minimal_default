@@ -1,4 +1,4 @@
-TITLE="testing default compiler"
+TITLE="testing default compiler (this platform is old)"
 
 DESCRIPTION="minimal configuration options, boost 1.35, without java"
 # DESCRIPTION="minimal configuration options, boost 1.36, without java"

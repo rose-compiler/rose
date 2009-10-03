@@ -10,14 +10,23 @@ how ROSE is developed and where it is regularly tested.
 % within ROSE have some additional software requirements.
 
 \subsubsection{Required Hardware/Operating System}
-   ROSE has been developed on Linux/Intel platforms. We have not yet 
-addressed significant portability issues for ROSE. But EDG has addressed
-portability issues for their C++ frontend and it is available on nearly all
-platforms (see {\tt www.EDG.com} for details).  ROSE is currently developed on
+   ROSE has been developed on Linux/Intel platforms. We have  
+addressed significant portability issues for ROSE; and routinely work on
+both 64 and 32 bit Linux and Mac OSX platforms. ROSE is nightly tested on 
+about 20 different platforms (difference versions of Linux and Max OSX)
+see section ref{NMI_testing} for details.
+We will in time expand the protability of ROSE to other platforms as 
+required.  ROSE is released as source code and a binary for the EDG
+part that permits ROSE to work with C and C++; all other support for
+Fortran and binary analysis is fully released as source code.  EDG has 
+addressed portability issues for their C++ frontend and it is available on 
+nearly all platforms (see {\tt www.EDG.com} for details); so a EDG is not 
+a barrier to portability for us.  ROSE is currently developed on
 Linux/Intel platforms and works with all modern versions of the GNU compilers 
-(3.4.x, and later). ROSE also works on both 32-bit and 64-bit architectures, 
+(3.4.x, and later). ROSE also works on both 32-bit and 64-bit architectures,
 as well as with the Intel C and C++ compilers.  Recent work has ported ROSE
-to both Mac OSX and Cygwin (under Microsoft Windows).
+to Cygwin (under Microsoft Windows) and a port of Visual Studio is ongoing 
+work.  The Cygwin support is not released generally at the moment.
 
 Future work will focus on portability to other platforms important to users.
 If you have a specific requirement for ROSE to be ported to a target platform
@@ -30,7 +39,8 @@ please let us know.
 % We use the GNU g++ compiler most often, but the Intel compiler (version 9.1) will also work.
 Present development work is done on Intel/Linux platforms
 %using the GNU g++ 3.3.x, 3.4.x, and 4.x; and the Intel compilers.  GNU compilers older
-using the GNU g++ 3.4.x, and 4.x; and the Intel compilers.  
+using the GNU g++ 3.4.x, and 4.x; and the Intel compilers.  Other people using ROSE
+regularly use Max OSX (but version 10.5 or later).
 %GNU compilers older
 %than 3.3.x are not supported within the ROSE project, but in some cases they might work 
 %(g++ 3.2.x is likely to work, but g++ 2.96 will not work).
@@ -794,6 +804,7 @@ users of ROSE. They are:
 
 
 \subsection{ROSE and the NMI Compile Farm}
+\label{NMI_testing}
 
    The NSF Middleware Initiative (NMI) has provides us with 
 time on their system to support the robustness of ROSE across
