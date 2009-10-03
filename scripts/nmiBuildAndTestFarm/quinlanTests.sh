@@ -37,6 +37,12 @@ echo "***************************"
 ./submit.sh build_configs/x86_64_fedora_9/default &
 ./submit.sh build_configs/x86_64_fedora_9/default_compiler &
 
+./submit.sh build_configs/x86_suse_10.2/default &
+./submit.sh build_configs/x86_suse_10.2/default_compiler &
+
+./submit.sh build_configs/x86_ubuntu_5.10/default &
+./submit.sh build_configs/x86_ubuntu_5.10/default_compiler &
+
 echo "******************************************"
 echo "* Failing tests: libCompass.so not found *"
 echo "******************************************"
