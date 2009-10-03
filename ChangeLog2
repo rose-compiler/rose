@@ -1,3 +1,78 @@
+2009-10-03 18:16  dquinlan
+
+	* [r7764] /trunk/ROSE/scripts/nmiBuildAndTestFarm/quinlanTests.sh:
+	  Added NMI tests.
+
+2009-10-03 18:09  dquinlan
+
+	* [r7763]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_sles_9/default_compiler,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_sles_9/default_compiler:
+	  Added NMI tests.
+
+2009-10-03 17:57  dquinlan
+
+	* [r7762]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_sl_4.4/default:
+	  Added NMI tests.
+
+2009-10-03 17:52  dquinlan
+
+	* [r7761]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_sl_4.4/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_sl_4.4/default_compiler,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/quinlanTests.sh: Added
+	  NMI tests.
+
+2009-10-03 17:09  dquinlan
+
+	* [r7760]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_ubuntu_5.10/default_compiler:
+	  Added NMI tests.
+
+2009-10-03 17:02  dquinlan
+
+	* [r7759]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_suse_10.2/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_suse_10.2/default_compiler:
+	  Added NMI tests.
+
+2009-10-03 16:52  dquinlan
+
+	* [r7758]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_ubuntu_5.10/default_compiler:
+	  Added NMI tests.
+
+2009-10-03 16:46  dquinlan
+
+	* [r7757]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_ubuntu_5.10/default_compiler,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/quinlanTests.sh: Added
+	  NMI tests.
+
+2009-10-03 16:34  dquinlan
+
+	* [r7756]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_suse_10.2/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_suse_10.2/default_compiler:
+	  Added NMI tests.
+
+2009-10-03 16:12  dquinlan
+
+	* [r7755]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_fedora_9/default_compiler,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_rhap_5/default_compiler,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/cronjobs,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/quinlanTests.sh: Added
+	  NMI tests.
+
+2009-10-03 15:30  dquinlan
+
+	* [r7754]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_fedora_9/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_fedora_9/default_compiler:
+	  Added more NMI tests.
+
 2009-10-02 21:47  liao6
 
 	* [r7740] /trunk/ROSE/docs/Rose/documents.html: Fixed typos
