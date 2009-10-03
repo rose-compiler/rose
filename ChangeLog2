@@ -1,3 +1,24 @@
+2009-10-02 21:47  liao6
+
+	* [r7740] /trunk/ROSE/docs/Rose/documents.html: Fixed typos
+
+2009-10-02 20:41  collingbourne2
+
+	* [r7739] /trunk/ROSE/src/ROSETTA/Grammar/Support.code: Implemented
+	  SgInitializedName::search_for_symbol_from_symbol_table()
+
+2009-10-02 20:41  collingbourne2
+
+	* [r7738]
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/sage_gen_be.C:
+	  Set SgInitializedName::p_prev_decl_item field for constructor
+	  preinitializers
+
+2009-10-02 19:02  matzke
+
+	* [r7737] /trunk/ROSE/tests/roseTests/binaryTests/Makefile.am: More
+	  files removed by "make mostlyclean"
+
 2009-10-02 18:40  dquinlan
 
 	* [r7735]
