@@ -2,9 +2,9 @@
 
 echo "Submitting All Tests..."
 
-echo "***************************"
-echo "* Passing tests (11 tests) *"
-echo "***************************"
+echo "****************************"
+echo "* Passing tests (18 tests) *"
+echo "****************************"
 
 # DQ (9/26/2009): NMI reports that fedora_8 and fedora_9 are the new names.
 # DQ (9/9/2009): Fedora 8 was released Nov 2007 (completes, but takes a long time to run).
@@ -191,7 +191,9 @@ echo "*************************************************************************"
 # DQ (9/9/2009): Skip this test until we have the Java support debugged...
 # DQ (9/5/2009): when we specify java prereq I think a problem is that we are not getting the jdk (fails in "make check")
 # The test without Java completes.
-./submit.sh build_configs/x86_64_rhap_5.2/default
+./submit.sh build_configs/x86_64_rhap_5.2/default &
+# ./submit.sh build_configs/x86_64_rhap_5.2/default_compiler &
+./submit.sh build_configs/x86_64_rhap_5.2/default_compiler_boost_1.36 &
 
 # DQ (9/9/2009): Skip this test until we have the Java support debugged...
 # The test without Java completes, but it takes several days.
@@ -222,8 +224,8 @@ echo "********************************************************"
 
 # (DQ (10/3/2009): Machine not available yet!
 # DQ (9/29/2009): Added Red Hat 5.3 test (no results yet)
-# ./submit.sh build_configs/x86_64_rhap_5.3/minimal_default
-./submit.sh build_configs/x86_64_rhap_5.3/default_compiler
+# ./submit.sh build_configs/x86_64_rhap_5.3/minimal_default &
+./submit.sh build_configs/x86_64_rhap_5.3/default_compiler &
 
 
 echo "************************************************************************"
