@@ -1,3 +1,40 @@
+2009-10-03 20:55  dquinlan
+
+	* [r7770] /trunk/ROSE/docs/Rose/installRose.tex,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_macos_10.4/minimal_default,
+	  /trunk/ROSE/src/frontend/OpenFortranParser_SAGE_Connection/Problems.txt:
+	  Updated some of the documentation.
+
+2009-10-03 20:52  dquinlan
+
+	* [r7769]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_sles_9/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_sles_9/minimal_default:
+	  Added NMI tests.
+
+2009-10-03 20:23  dquinlan
+
+	* [r7768] /trunk/ROSE/scripts/nmiBuildAndTestFarm/cronjobs,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/quinlanTests.sh: Added
+	  NMI tests.
+
+2009-10-03 19:36  dquinlan
+
+	* [r7767] /trunk/ROSE/scripts/nmiBuildAndTestFarm/quinlanTests.sh:
+	  Added NMI tests.
+
+2009-10-03 19:31  dquinlan
+
+	* [r7766]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_fedora_11/default_compiler,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_rhap_5.2/default_compiler,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_rhap_5.2/default_compiler_boost_1.36,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_rhap_5.3/default_compiler,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_ubuntu_8.04.3/default_compiler,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_macos_10.4/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/quinlanTests.sh: Added
+	  NMI tests.
+
 2009-10-03 18:16  dquinlan
 
 	* [r7764] /trunk/ROSE/scripts/nmiBuildAndTestFarm/quinlanTests.sh:
