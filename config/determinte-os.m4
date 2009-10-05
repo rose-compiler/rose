@@ -81,7 +81,7 @@ AC_DEFUN([DETERMINE_OS_VENDOR],
     # Fix the case of Apple OSX support.
       if test "x$build_vendor" = xapple; then
          OS_vendor=$build_vendor
-         case $version in
+         case $build_os in
             darwin8*)
                OS_release=10.4
                ;;
