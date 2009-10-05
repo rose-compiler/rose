@@ -1,3 +1,38 @@
+2009-10-05 18:51  dquinlan
+
+	* [r7777] /trunk/ROSE/config/determinte-os.m4: Fixed typo in macro.
+
+2009-10-05 18:23  liao6
+
+	* [r7776] /trunk/ROSE/docs/Rose/installRose.tex: Fixed a mistake (_
+	  without \ in LaTex) and a few typos
+
+2009-10-05 17:19  dquinlan
+
+	* [r7775] /trunk/ROSE/config/determinte-os.m4,
+	  /trunk/ROSE/src/frontend/OpenFortranParser_SAGE_Connection/Makefile.am:
+	  Fixed OSX support in macro and Makefile.am for Fortran support.
+
+2009-10-05 15:51  dquinlan
+
+	* [r7774] /trunk/ROSE/docs/Rose/installRose.tex: Fixed LaTeX error
+	  in documentation.
+
+2009-10-05 15:42  dquinlan
+
+	* [r7773]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_rhap_5/compilerTest_gnu_3.4:
+	  Modified NMI tests.
+
+2009-10-05 15:18  dquinlan
+
+	* [r7772]
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/ReleaseHistory.txt,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_sles_9/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_macos_10.4/minimal_default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_sles_9/minimal_default:
+	  Modified NMI tests.
+
 2009-10-03 20:55  dquinlan
 
 	* [r7770] /trunk/ROSE/docs/Rose/installRose.tex,
