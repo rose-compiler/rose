@@ -1,4 +1,4 @@
-TITLE="testing default on all linux platforms (this platform is old)"
+TITLE="test using 4.2.4 compiler (expected failure; old platform)"
 DESCRIPTION="minimal ROSE configuration options, gcc 4.2.4, boost 1.35, without java"
 
 # DQ (9/13/2009): Need tar-1.14 as well.

@@ -108,3 +108,16 @@ Ubuntu  8.04  April   2008
 Ubuntu  9.04  April   2009
 Ubuntu  9.10  October 2009
 Ubuntu 10.04  April   2010
+
+
+***************************
+History of Mac OSX Releases
+***************************
+
+Mac OS X version 10.0. Version 10.1 shipped on September 25, 2001
+Mac OS X 10.2 "Jaguar"       released August  24, 2002
+Mac OS X 10.3 "Panther"      released October 24, 2003
+Mac OS X 10.4 "Tiger"        released April   29, 2005
+Mac OS X 10.5 "Leopard"      released October 26, 2007
+Mac OS X 10.6 "Snow Leopard" released August  28, 2009
+
