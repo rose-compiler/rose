@@ -55,7 +55,7 @@ include_HEADERS = ActionEnums.h  FortranParserAction.h  token.h rose_fortran_tok
 #    2) FortranParserAction.h  (header file of C_action functions)
 #    3) ActionEnums.h (enum values used in OFP and queried in ROSE)
 # All other files copied to ROSE are used as reference within the development.
-OPEN_FORTRAN_PARSER_PATH=/home/dquinlan/ROSE/OpenFortranParser/fortran-parser
+# OPEN_FORTRAN_PARSER_PATH=/home/dquinlan/ROSE/OpenFortranParser/fortran-parser
 update:
 #	cp $(OPEN_FORTRAN_PARSER_PATH)/src/parser/c/token.* $(srcdir)
 #	cp $(OPEN_FORTRAN_PARSER_PATH)/src/parser/c/jni/jni_token_funcs.* $(srcdir)
