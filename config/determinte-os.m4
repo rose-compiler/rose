@@ -124,7 +124,7 @@ AC_DEFUN([DETERMINE_OS_VENDOR],
       CentOS*)
          CENTOS=yes
          ;;
-      apple)
+      apple*)
          APPLE=yes;
          ;;
       esac

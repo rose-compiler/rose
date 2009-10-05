@@ -1,5 +1,5 @@
 TITLE="testing default on all linux platforms"
-DESCRIPTION="minimal configuration options, gcc 4.2.4, boost 1.35, without java"
+DESCRIPTION="minimal configuration options, gcc 4.2.4, boost 1.35, without java (fails to execute)"
 
 # DQ (9/16/2009): Note that flex was missing in the default configuration for ubuntu.
 # DQ (9/16/2009): Also zlib is not required, though were zlib.h is unavailable this is not a fixed bug in ROSE.
