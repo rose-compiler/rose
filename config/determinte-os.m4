@@ -113,7 +113,7 @@ AC_DEFUN([DETERMINE_OS_VENDOR],
 
    case $OS_vendor in
       Debian*)
-         DEBIAN=yes;
+         DEBIAN=yes
          ;;
       RedHat*)
          REDHAT=yes
@@ -125,14 +125,14 @@ AC_DEFUN([DETERMINE_OS_VENDOR],
          CENTOS=yes
          ;;
       apple*)
-         APPLE=yes;
+         APPLE=yes
          ;;
       esac
          AM_CONDITIONAL([OS_VENDOR_DEBIAN],[ test "x$DEBIAN" = xyes ] )
          AM_CONDITIONAL([OS_VENDOR_REDHAT],[ test "x$REDHAT" = xyes ] )
          AM_CONDITIONAL([OS_VENDOR_UBUNTU],[ test "x$UBUNTU" = xyes ] )
          AM_CONDITIONAL([OS_VENDOR_CENTOS],[ test "x$CENTOS" = xyes ] )
-         AM_CONDITIONAL([OS_VENDOR_APPLE] ,[ test "x$APPLE"  = xyes ] )
+         AM_CONDITIONAL([OS_VENDOR_APPLE],[ test "x$APPLE"  = xyes ] )
 
    echo "Leaving DETERMINE OS VENDOR: OS_vendor  = $OS_vendor"
    echo "Leaving DETERMINE OS VENDOR: OS_release = $OS_release"
