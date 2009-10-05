@@ -64,13 +64,38 @@ AC_DEFUN([DETERMINE_OS_VENDOR],
       echo "********************************";
       echo "* lsb_release is NOT available *";
       echo "********************************";
-    # Most OS's output there name buried in /etc/issue
+    # Most OS's output their name buried in /etc/issue
       ls -dl /etc/*-release /etc/*-version;
       echo "***************************";
       echo "* Output /etc/issue file: *";
       cat /etc/issue
       echo "***************************";
-#     exit 1
+
+    # For at least Apple Mac OSX, there is no lsb_release program or /etc/*-release /etc/*-version
+    # files but autoconf will guess the vendor and the OS release correctly (so use those vaules).
+      echo "Autoconf computed value for cpu       = $build_cpu"
+      echo "Autoconf computed value for OS vendor = $build_vendor"
+      echo "Autoconf computed value for OS        = $build_os"
+      echo "***************************";
+
+    # Fix the case of Apple OSX support.
+      if test "x$build_vendor" = xapple; then
+         OS_vendor=$build_vendor
+         case $version in
+            darwin8*)
+               OS_release=10.4
+               ;;
+            darwin9*)
+               OS_release=10.5
+               ;;
+            *)
+             echo "Error: Apple Mac OSX version not recognized as either darwin8 or darwin9 ... (build_os = $build_os)";
+             exit 1;
+             OS_release="";;
+         esac
+         echo "Identified Apple OSX platform OS_vendor = $OS_vendor OS_release = $OS_release"
+      fi
+    # exit 1
    else
       echo "lsb_release IS available ROSE_LSB_RELEASE = $ROSE_LSB_RELEASE";
       OS_vendor=`lsb_release -is`
@@ -96,11 +121,15 @@ AC_DEFUN([DETERMINE_OS_VENDOR],
       CentOS*)
          CENTOS=yes
          ;;
+      apple)
+         APPLE=yes;
+         ;;
       esac
          AM_CONDITIONAL([OS_VENDOR_DEBIAN],[ test "x$DEBIAN" = xyes ] )
          AM_CONDITIONAL([OS_VENDOR_REDHAT],[ test "x$REDHAT" = xyes ] )
          AM_CONDITIONAL([OS_VENDOR_UBUNTU],[ test "x$UBUNTU" = xyes ] )
          AM_CONDITIONAL([OS_VENDOR_CENTOS],[ test "x$CENTOS" = xyes ] )
+         AM_CONDITIONAL([OS_VENDOR_APPLE] ,[ test "x$APPLE"  = xyes ] )
 
    echo "Leaving DETERMINE OS VENDOR: OS_vendor  = $OS_vendor"
    echo "Leaving DETERMINE OS VENDOR: OS_release = $OS_release"
