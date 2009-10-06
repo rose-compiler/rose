@@ -1,3 +1,18 @@
+2009-10-06 18:52  panas2
+
+	* [r7786] /trunk/ROSE/projects/RTED/CppRuntimeSystem/Makefile.am:
+	  added header file
+
+2009-10-06 18:29  dquinlan
+
+	* [r7785] /trunk/ROSE/scripts/nmiBuildAndTestFarm/cronjobs:
+	  Modified crontab file.
+
+2009-10-06 17:42  panas2
+
+	* [r7784] /trunk/ROSE/scripts/roseFreshTestStub-Thomas-scidac.sh:
+	  Added test
+
 2009-10-05 23:59  dquinlan
 
 	* [r7782] /trunk/ROSE/config/determinte-os.m4: Fixed macro for
