@@ -1,3 +1,25 @@
+2009-10-05 23:59  dquinlan
+
+	* [r7782] /trunk/ROSE/config/determinte-os.m4: Fixed macro for
+	  Apple case.
+
+2009-10-05 23:40  collingbourne2
+
+	* [r7781]
+	  /trunk/ROSE/tests/CompileTests/mergeAST_tests/Makefile.am: Enable
+	  the -rose:astMerge flag when testing AST merge
+
+2009-10-05 23:00  dquinlan
+
+	* [r7780] /trunk/ROSE/config/determinte-os.m4,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_ubuntu_5.10/minimal_default:
+	  Fixed macro case of APPLE.
+
+2009-10-05 19:34  dquinlan
+
+	* [r7779] /trunk/ROSE/config/determinte-os.m4: Added detection of
+	  OSX 10.6 (newest version of OSX).
+
 2009-10-05 18:51  dquinlan
 
 	* [r7777] /trunk/ROSE/config/determinte-os.m4: Fixed typo in macro.
