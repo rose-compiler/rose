@@ -41,7 +41,8 @@ pkginclude_HEADERS = CppRuntimeSystem.h \
 					 RsType.h\
 					 TypeSystem.h\
 					 PointerManager.h\
-					 StackManager.h
+					 StackManager.h \
+					 support.h
 
 
 #DebuggerQt/libDebuggerQt.la
