@@ -3986,14 +3986,11 @@ $CLASSNAME::replace_expression(SgExpression* o, SgExpression* n)
 SgType*
 $CLASSNAME::get_type() const
    {
-     SgInitializedName* initName = isSgInitializedName(get_parent());
-     if (initName != NULL)
-        {
-          return initName->get_type();
-        }
+     if (p_expression_type != NULL)
+          return p_expression_type;
      else
         {
-          printf ("$CLASSNAME::get_type(): unable to compute type because parent is not attached or is not an SgInitializedName\n");
+          printf ("$CLASSNAME::get_type(): default case\n");
           return SgTypeDefault::createType();
         }
    }

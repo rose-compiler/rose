@@ -2375,7 +2375,7 @@ void c_action_array_constructor()
   // Use a SgAggregateInitializer
      if (expressionList->get_expressions().empty() == false)
         {
-          SgAggregateInitializer* initializer = new SgAggregateInitializer(expressionList);
+          SgAggregateInitializer* initializer = new SgAggregateInitializer(expressionList, NULL);
           setSourcePosition(initializer);
 
        // astInitializerStack.push_front(expressionList);
@@ -3324,7 +3324,7 @@ void c_action_entity_decl(Token_t * id)
                     astExpressionStack.clear();
 
                  // Use a SgAggregateInitializer
-                    initializer = new SgAggregateInitializer(exprList);
+                    initializer = new SgAggregateInitializer(exprList, NULL);
                     setSourcePosition(initializer);
                   }
                  else

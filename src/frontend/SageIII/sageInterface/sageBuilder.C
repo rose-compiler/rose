@@ -1719,9 +1719,9 @@ SgAssignInitializer * SageBuilder::buildAssignInitializer_nfi(SgExpression * ope
 }
 
 //! Build an aggregate initializer
-SgAggregateInitializer * SageBuilder::buildAggregateInitializer(SgExprListExp * initializers/* = NULL*/)
+SgAggregateInitializer * SageBuilder::buildAggregateInitializer(SgExprListExp * initializers/* = NULL*/, SgType *type/* = NULL */)
 {
-  SgAggregateInitializer* result = new SgAggregateInitializer(initializers);
+  SgAggregateInitializer* result = new SgAggregateInitializer(initializers, type);
   ROSE_ASSERT(result);
   if (initializers!=NULL)
   {
@@ -1733,9 +1733,9 @@ SgAggregateInitializer * SageBuilder::buildAggregateInitializer(SgExprListExp * 
 }
 
 //! Build an aggregate initializer
-SgAggregateInitializer * SageBuilder::buildAggregateInitializer_nfi(SgExprListExp * initializers/* = NULL*/)
+SgAggregateInitializer * SageBuilder::buildAggregateInitializer_nfi(SgExprListExp * initializers/* = NULL*/, SgType *type/* = NULL */)
 {
-  SgAggregateInitializer* result = new SgAggregateInitializer(initializers);
+  SgAggregateInitializer* result = new SgAggregateInitializer(initializers, type);
   ROSE_ASSERT(result);
   if (initializers!=NULL)
   {
