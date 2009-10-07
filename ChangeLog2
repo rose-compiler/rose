@@ -1,3 +1,15 @@
+2009-10-07 15:45  dquinlan
+
+	* [r7789]
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/fortran/Makefile.am:
+	  Skipping specific fortran test for Debian 5.0 systems (NMI
+	  tests).
+
+2009-10-07 15:00  dquinlan
+
+	* [r7788] /trunk/ROSE/scripts/nmiBuildAndTestFarm/cronjobs: Changed
+	  crontab times.
+
 2009-10-06 18:52  panas2
 
 	* [r7786] /trunk/ROSE/projects/RTED/CppRuntimeSystem/Makefile.am:
