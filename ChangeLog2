@@ -1,3 +1,14 @@
+2009-10-07 22:39  collingbourne2
+
+	* [r7791] /trunk/ROSE/src/ROSETTA/Grammar/Expression.code,
+	  /trunk/ROSE/src/ROSETTA/src/expression.C,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/sage_gen_be.C,
+	  /trunk/ROSE/src/frontend/OpenFortranParser_SAGE_Connection/FortranParserActionROSE.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.h:
+	  Added field SgAggregateInitializer::p_expression_type to
+	  correctly implement SgAggregateInitializer::get_type()
+
 2009-10-07 15:45  dquinlan
 
 	* [r7789]
