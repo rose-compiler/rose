@@ -3,11 +3,10 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 if ROSE_USE_RTED
 
 # To keep compile commands tidy, please ONLY put required include flags here.
-#INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I. -Winvalid-pch -rose:UPC  
 INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I. -Winvalid-pch  
 INCLUDES2 = $(ROSE_INCLUDES) -I../../
-#UPC_INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I. -Winvalid-pch -rose:UPC -I$(srcdir)/required/ 
-UPC_INCLUDES = -I.
+UPC_INCLUDES = -I$(srcdir)/required/ 
+#UPC_INCLUDES = -I.
 
 EXTRACT_EXPECTED_ERROR_SCRIPT=$(srcdir)/extract-expected-error.sed
 EXTRACT_EXPECTED_ERROR=sed -n -f $(EXTRACT_EXPECTED_ERROR_SCRIPT)
@@ -283,13 +282,13 @@ rted_source/%_s.upc: rted_source $(rted_path)/%_s.upc
 
 
 rted_source/%.c: rted_source $(rted_path)/%.c
-	$(call COPYING_FILE_WITH_WORKAROUND, $@)
+	$(call COPYING_FILE, $@)
 
 rted_source/%.cpp: rted_source $(rted_path)/%.cpp
 	$(call COPYING_FILE_WITH_WORKAROUND, $@)
 
 rted_source/%.upc: rted_source $(rted_path)/%.upc
-	$(call COPYING_FILE_WITH_WORKAROUND, $@)
+	$(call COPYING_FILE, $@)
 
 #------------------------------------------------------------------------------
 
@@ -339,7 +338,7 @@ TRANSFORMING_FILES += echo -n "    running transformation ... $(patsubst %_rose$
 TRANSFORMING_FILES += ./runtimeCheck 2 $(filter rted_source/%$(strip $(1)), $^) \
 				       -rose:$(strip $(3)) \
 				       -c \
-				       $(INCLUDES) $(UPC_INCLUDES)\
+				       $(INCLUDES) \
 				       -I$(top_builddir) \
 				       -I$(srcdir) \
 				       -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@))\
@@ -373,8 +372,8 @@ rted_source/%_rose.c: runtimeCheck rted_source/%.c rted_source/%_s.c $(srcdir)/$
 rted_source/%_rose.cpp: runtimeCheck rted_source/%.cpp rted_source/%_s.cpp $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	$(call TRANSFORMING_FILES, .cpp, $(RTED_CXX), Cxx)
 
-rted_source/%_rose.upc: runtimeCheck rted_source/%.upc rted_source/%_s.upc $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
-	$(call TRANSFORMING_FILES, .upc, $(RTED_UPC), Cxx)
+rted_source/%_rose.upc: runtimeCheck rted_source/%.upc rted_source/%_s.upc $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h $(UPC_INCLUDES)
+	$(call TRANSFORMING_FILES, .upc, $(RTED_UPC), UPC)
 
 
 rted_source/%_rose.c: runtimeCheck rted_source/%.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
@@ -383,8 +382,8 @@ rted_source/%_rose.c: runtimeCheck rted_source/%.c $(srcdir)/$(RTS) $(srcdir)/Ru
 rted_source/%_rose.cpp: runtimeCheck rted_source/%.cpp $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	$(call TRANSFORMING_FILES, .cpp, $(RTED_CXX), Cxx)
 
-rted_source/%_rose.upc: runtimeCheck rted_source/%.upc $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
-	$(call TRANSFORMING_FILES, .upc, $(RTED_UPC), Cxx)
+rted_source/%_rose.upc: runtimeCheck rted_source/%.upc $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h $(UPC_INCLUDES)
+	$(call TRANSFORMING_FILES, .upc, $(RTED_UPC), UPC)
 
 #------------------------------------------------------------------------------
 
