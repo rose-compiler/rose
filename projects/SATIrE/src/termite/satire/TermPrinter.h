@@ -167,6 +167,7 @@ TermPrinter<DFI_STORE_TYPE>::isContainer(SgNode* astNode)
     isSgExprListExp(astNode) ||
     isSgBasicBlock(astNode) ||
     isSgForInitStatement(astNode) ||
+    isSgClassDefinition(astNode) ||
     isSgVariableDeclaration(astNode);
 }
 
