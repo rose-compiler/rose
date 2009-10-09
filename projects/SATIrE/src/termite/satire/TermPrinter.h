@@ -134,9 +134,10 @@ private:
   void *cfg;
 #endif
 
-  PrologCompTerm* getAnalysisResult(SgStatement* stmt);  
+  PrologList* getAnalysisResultList(SgStatement* stmt);
   PrologCompTerm* pagToProlog(std::string name, std::string analysis,
                               std::string dfi);
+  PrologCompTerm* functionIdAnnotation(std::string funcname);
 };
 
 typedef TermPrinter<void*> BasicTermPrinter;
@@ -240,7 +241,21 @@ TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, Synth
     /* add analysis information to the term*/
     if (SgStatement* n = isSgStatement(astNode)) {
       /* analysis result */
-      ((PrologCompTerm*)t)->addSubterm(getAnalysisResult(n));
+      PrologCompTerm* ar = new PrologCompTerm("analysis_info");
+      PrologList *results = getAnalysisResultList(n);
+
+      /* function IDs, if appropriate */
+#if HAVE_SATIRE_ICFG
+      std::string funcname = "";
+      if (SgFunctionDeclaration *d = isSgFunctionDeclaration(astNode))
+        funcname = d->get_name().str();
+      if (funcname != "" && cfg != NULL) {
+        results->addFirstElement(functionIdAnnotation(funcname));
+      }
+#endif
+
+      ar->addSubterm(results);
+      ((PrologCompTerm*)t)->addSubterm(ar);
     } else {
       /* default: empty analysis result */
       PrologCompTerm* ar = new PrologCompTerm("analysis_info");
@@ -268,6 +283,21 @@ TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, Synth
           varid_annot->addSubterm(varidTerm(sym));
           results->addFirstElement(varid_annot);
         }
+      }
+#endif
+
+      /* function IDs, if appropriate */
+#if HAVE_SATIRE_ICFG
+      std::string funcname = "";
+      if (SgFunctionRefExp *f = isSgFunctionRefExp(astNode))
+        funcname = f->get_symbol()->get_name().str();
+      if (funcname != "" && cfg != NULL) {
+        std::multimap<std::string, Procedure *>::iterator mmi;
+        mmi = cfg->proc_map.lower_bound(funcname);
+        ROSE_ASSERT(mmi != cfg->proc_map.end());
+        PrologCompTerm *funcid_annot = new PrologCompTerm("function_id");
+        funcid_annot->addSubterm(new PrologInt(mmi->second->procnum));
+        results->addFirstElement(funcid_annot);
       }
 #endif
 
@@ -406,11 +436,9 @@ TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, Synth
 
 /* Add analysis result */
 template<typename DFI_STORE_TYPE>
-PrologCompTerm*
-TermPrinter<DFI_STORE_TYPE>::getAnalysisResult(SgStatement* stmt)
+PrologList*
+TermPrinter<DFI_STORE_TYPE>::getAnalysisResultList(SgStatement* stmt)
 {
-  PrologCompTerm *ar;
-  ar   = new PrologCompTerm("analysis_info");
   PrologList *infos;
   infos = new PrologList();
 
@@ -437,9 +465,8 @@ TermPrinter<DFI_STORE_TYPE>::getAnalysisResult(SgStatement* stmt)
     infos->addFirstElement(ee);
   }
 #endif
-  ar->addSubterm(infos);
 
-  return ar;
+  return infos;
 }
 
 /* Convert the PAG analysis result into a Prolog Term */
@@ -572,6 +599,19 @@ TermPrinter<DFI_STORE_TYPE>::varidTerm(SgVariableSymbol *sym)
     result = new PrologAtom("null");
   }
   return result;
+}
+
+template<typename DFI_STORE_TYPE>
+PrologCompTerm*
+TermPrinter<DFI_STORE_TYPE>::functionIdAnnotation(std::string funcname) {
+  std::multimap<std::string, Procedure *>::iterator mmi;
+  PrologCompTerm *funcid_annot = new PrologCompTerm("function_id");
+  mmi = cfg->proc_map.lower_bound(funcname);
+  if (mmi != cfg->proc_map.end())
+    funcid_annot->addSubterm(new PrologInt(mmi->second->procnum));
+  else
+    funcid_annot->addSubterm(new PrologInt(INT_MAX));
+  return funcid_annot;
 }
 #endif
 
