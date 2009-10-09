@@ -956,6 +956,11 @@ void RtedTransformation::appendClassName( SgExprListExp* arg_list, SgType* type 
 void RtedTransformation::prependPseudoForInitializerExpression(
 		SgExpression* exp, SgForStatement* for_stmt ) {
 
+  if (for_stmt==NULL) {
+    // something went wrong!
+     return;
+  }
+
 	RtedForStmtProcessed *for_stmt_processed = NULL;
 
 	if( for_stmt -> attributeExists( RtedForStmtProcessed::Key ))

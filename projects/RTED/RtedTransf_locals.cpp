@@ -64,7 +64,23 @@ RtedTransformation::bracketWithScopeEnterExit( SgNode* stmt_or_block, Sg_File_In
       
       cerr << "@@@ inserting scope : " << stmt->unparseToString() << 
       	"   " << stmt->class_name() << "  " << stmt->get_file_info()->isCompilerGenerated() << endl;
-        insertStatementBefore( stmt, fncall_enter );
+      // tps : 10/07/2009: what if the statement before is a for loop, then we have to insert a block as well
+      SgStatement* parentStmt = isSgStatement(stmt->get_parent());
+      cerr << "    @@@ parent == " << parentStmt->class_name() << endl;
+      if (parentStmt && (
+			 isSgUpcForAllStatement(parentStmt) ||
+			 isSgForStatement(parentStmt) ||
+			 isSgWhileStmt(parentStmt))) {
+	SgBasicBlock* bb = buildBasicBlock();
+	bb->set_parent(parentStmt);
+	bb->append_statement(fncall_enter);
+	bb->append_statement(stmt);
+	if (isSgForStatement(parentStmt))
+	  isSgForStatement(parentStmt)->set_loop_body(bb);
+	if (isSgUpcForAllStatement(parentStmt))
+	  isSgUpcForAllStatement(parentStmt)->set_loop_body(bb);
+      } else
+      insertStatementBefore( stmt, fncall_enter );
     }
 
     // exitScope( (char*) filename, (char*) line, (char*) lineTransformed, (char*) stmtStr);

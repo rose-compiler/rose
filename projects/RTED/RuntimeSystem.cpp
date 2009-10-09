@@ -1092,9 +1092,9 @@ void RuntimeSystem_roseCheckIfThisNULL(
 
 
 
-
 extern int RuntimeSystem_original_main(int argc, char**argv, char**envp);
 
+#if 0
 int main(int argc, char **argv, char ** envp) {
 
   int exit_code = RuntimeSystem_original_main(argc, argv, envp);
@@ -1102,3 +1102,5 @@ int main(int argc, char **argv, char ** envp) {
 
   return exit_code;
 }
+
+#endif

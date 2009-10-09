@@ -22,6 +22,7 @@
 #include "RuntimeSystem.h"
 #ifdef __cplusplus
 
+// tps : (10/09/2009) This will not work with a C compiler (using UPC)
 #include <iostream>
 void RuntimeSystem_work_around_parsing_errors() {
     std::cout << "" << std::endl;

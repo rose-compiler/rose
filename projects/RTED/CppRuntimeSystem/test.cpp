@@ -1422,6 +1422,7 @@ void testTypeConsistencyChecking() {
 
 int main(int argc, char ** argv, char ** envp)
 {
+
     try
     {
         RuntimeSystem * rs = RuntimeSystem::instance();

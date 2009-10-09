@@ -204,11 +204,58 @@ void RtedTransformation::renameMain(SgFunctionDeclaration* sg_func)
     // grab symbol before any modifications.
     SgGlobal* global_scope = isSgGlobal(sg_func->get_scope());
     ROSE_ASSERT(global_scope);
-    SgFunctionSymbol * symbol = global_scope->lookup_function_symbol(SgName("main"), sg_func->get_type());
 
-    //ROSE_ASSERT(symbol == sg_func->get_symbol_from_symbol_table());
-    global_scope->remove_symbol(symbol);
-    delete (symbol); // avoid dangling symbol!
+	SgFunctionSymbol * symbol = global_scope->lookup_function_symbol(SgName("main"), sg_func->get_type());
+	global_scope->remove_symbol(symbol);
+	delete (symbol); // avoid dangling symbol!
+
+    // add another main!!
+    if (global_scope) {
+        // int main( int arc, char** argc)
+        SgInitializedName* arg1 = buildInitializedName("argc", buildIntType());
+        SgType* type2= buildPointerType(buildPointerType(buildCharType()));
+        SgInitializedName* arg2 = buildInitializedName("argv", type2);
+        SgInitializedName* arg3 = buildInitializedName("envp", type2);
+        SgFunctionParameterList * paraList = buildFunctionParameterList();
+        appendArg(paraList, arg1);
+        appendArg(paraList, arg2);
+        appendArg(paraList, arg3);
+
+        SgFunctionDeclaration * func = buildDefiningFunctionDeclaration
+                ("main",buildIntType(),paraList,global_scope);
+        appendStatement(func,global_scope);
+
+        // fill main body:
+        SgBasicBlock* body = func->get_definition()->get_body();
+
+         //bupc_init_reentrant(&argc, &argv, &user_main);
+         SgExpression * bupc_arg1 = (buildVarRefExp("argc",body));
+         SgExpression * bupc_arg2 = (buildVarRefExp("argv",body));
+         SgExpression * bupc_arg3 = (buildVarRefExp("envp",body));
+         SgExprListExp* arg_list = buildExprListExp();
+         appendExpression(arg_list,bupc_arg1);
+         appendExpression(arg_list,bupc_arg2);
+         appendExpression(arg_list,bupc_arg3);
+
+         SgExpression* stmt1 = buildFunctionCallExp
+             ("RuntimeSystem_original_main",buildVoidType(),arg_list,body);
+
+		 SgStatement* st = buildVariableDeclaration("exit_code",buildIntType(),
+					 buildAssignInitializer(stmt1),body);
+         appendStatement(st, body);
+
+         SgExprListExp* arg_list2 = buildExprListExp();
+         appendExpression(arg_list2,buildStringVal("RuntimeSystem.cpp:main"));
+         SgExprStatement* stmt5 = buildFunctionCallStmt
+             ("RuntimeSystem_roseRtedClose",buildVoidType(),arg_list2,body);
+         appendStatement(stmt5, body);
+
+
+         //return 0;
+        SgReturnStmt * stmt2 = buildReturnStmt(buildVarRefExp("exit_code",body));
+        appendStatement(stmt2, body);
+
+    }
 
     // rename it
     SgName new_name = SgName("RuntimeSystem_original_main");
