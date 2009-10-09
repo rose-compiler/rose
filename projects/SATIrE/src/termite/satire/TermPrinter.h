@@ -270,10 +270,36 @@ TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, Synth
         sym = isSgVariableSymbol(in->get_symbol_from_symbol_table());
         if (sym == NULL) {
           /* ROSE has NULL symbols for some unused things; for example,
-           * argument names in forward function declarations. We invent a
+           * argument names in forward function declarations. But also for
+           * global variables that are declared more than once (which is
+           * totally allowed). Look up this variable in the special little
+           * table for global variable IDs; if it's not there, we invent a
            * number for these and hope that nothing breaks. */
-          PrologCompTerm *varid_annot = new PrologCompTerm("variable_id");
-          varid_annot->addSubterm(new PrologInt(INT_MAX));
+          PrologCompTerm *varid_annot = NULL;
+          SgVariableDeclaration *d = isSgVariableDeclaration(in->get_parent());
+          if (d != NULL && isSgGlobal(d->get_parent())
+           && !d->get_declarationModifier().get_storageModifier().isStatic()) {
+            /* If there is no symbol, ROSE does not give a variable name
+             * either. But we can hack one out of the mangled name, where
+             * the variable name comes right after the substring
+             * "variable_name_". */
+            std::string mname = d->get_mangled_name().str();
+            const char *key = "variable_name_";
+            std::string::size_type pos = mname.find(key);
+            if (pos != std::string::npos) {
+              std::string varname = mname.substr(pos + strlen(key));
+              std::map<std::string, unsigned long>::iterator idi;
+              idi = cfg->globalvarnames_ids.find(varname);
+              if (idi != cfg->globalvarnames_ids.end()) {
+                varid_annot = new PrologCompTerm("variable_id");
+                varid_annot->addSubterm(new PrologInt(idi->second));
+              }
+            }
+          }
+          if (varid_annot == NULL) {
+            varid_annot = new PrologCompTerm("variable_id");
+            varid_annot->addSubterm(new PrologInt(INT_MAX));
+          }
           results->addFirstElement(varid_annot);
         }
       }

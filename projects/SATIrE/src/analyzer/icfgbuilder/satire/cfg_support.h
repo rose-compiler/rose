@@ -110,6 +110,7 @@ public:
  // cannot be a vector because the ids are not consecutive
     std::map<SgVariableSymbol *, unsigned long> varsyms_ids;
     std::map<unsigned long, SgVariableSymbol *> ids_varsyms;
+    std::map<std::string, unsigned long> globalvarnames_ids;
  // mapping from each call target expression to the corresponding call block
     std::map<SgExpression *, CallBlock *> call_target_call_block;
 

@@ -886,6 +886,21 @@ CFGTraversal::number_exprs()
                     << "; added it with ID " << i
                     << std::endl;
 #endif
+             // ROSE sometimes messes up symbols for variables that are
+             // redeclared; for instance, a global variable that is declared
+             // in a header and then declared again at file scope gets a
+             // NULL symbol. In such cases, we cannot assign the correct ID.
+             // To ameliorate this, create a table of non-static global
+             // variables and their IDs.
+                if (isSgGlobal(sym->get_declaration()->get_scope()))
+                {
+                    if (!sym->get_declaration()->get_storageModifier()
+                                               .isStatic())
+                    {
+                        std::string name = sym->get_name().str();
+                        cfg->globalvarnames_ids[name] = i;
+                    }
+                }
             }
         }
         if (exprs.empty())
