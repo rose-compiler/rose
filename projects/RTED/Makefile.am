@@ -5,7 +5,7 @@ if ROSE_USE_RTED
 # To keep compile commands tidy, please ONLY put required include flags here.
 INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I. -Winvalid-pch  
 INCLUDES2 = $(ROSE_INCLUDES) -I../../
-UPC_INCLUDES = -I$(srcdir)/required/ 
+UPC_INCLUDES =  -I$(srcdir)/required/ 
 #UPC_INCLUDES = -I.
 
 EXTRACT_EXPECTED_ERROR_SCRIPT=$(srcdir)/extract-expected-error.sed
@@ -372,8 +372,8 @@ rted_source/%_rose.c: runtimeCheck rted_source/%.c rted_source/%_s.c $(srcdir)/$
 rted_source/%_rose.cpp: runtimeCheck rted_source/%.cpp rted_source/%_s.cpp $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	$(call TRANSFORMING_FILES, .cpp, $(RTED_CXX), Cxx)
 
-rted_source/%_rose.upc: runtimeCheck rted_source/%.upc rted_source/%_s.upc $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h $(UPC_INCLUDES)
-	$(call TRANSFORMING_FILES, .upc, $(RTED_UPC), UPC)
+rted_source/%_rose.upc: runtimeCheck rted_source/%.upc rted_source/%_s.upc $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h 
+	$(call TRANSFORMING_FILES, .upc, $(RTED_UPC), UPC $(UPC_INCLUDES))
 
 
 rted_source/%_rose.c: runtimeCheck rted_source/%.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
@@ -382,8 +382,8 @@ rted_source/%_rose.c: runtimeCheck rted_source/%.c $(srcdir)/$(RTS) $(srcdir)/Ru
 rted_source/%_rose.cpp: runtimeCheck rted_source/%.cpp $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	$(call TRANSFORMING_FILES, .cpp, $(RTED_CXX), Cxx)
 
-rted_source/%_rose.upc: runtimeCheck rted_source/%.upc $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h $(UPC_INCLUDES)
-	$(call TRANSFORMING_FILES, .upc, $(RTED_UPC), UPC)
+rted_source/%_rose.upc: runtimeCheck rted_source/%.upc $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h 
+	$(call TRANSFORMING_FILES, .upc, $(RTED_UPC), UPC $(UPC_INCLUDES))
 
 #------------------------------------------------------------------------------
 
@@ -667,6 +667,7 @@ TESTS_KNOWN_TO_FAIL = run/C/subprogram_call_errors/c_C_1_3_f \
 					  run/tests/Cxx/pointer/nulltest \
 					  run/tests/Cxx/pointer/arrow_varref2 \
 					  run/tests/UPC/simple/simple
+
 
 
 $(TESTS_KNOWN_TO_FAIL):
