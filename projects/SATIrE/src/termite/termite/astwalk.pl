@@ -169,13 +169,13 @@ distance_from_root(zipper(_, Nav), Distance) :- length(Nav, Distance).
 %   else while not try right() do up()
 
 next_preorder(P1, P2) :-
-  (   down(P1, 1, P2)
+  (   down(P1, 1, P2) % ,writeln(down)
   ;   right_or_up(P1, P2)
-  ).
+  ) ; fail.
 
 right_or_up(P1, Pn) :-
-  (   right(P1, Pn)
-  ;   up(P1, P2),
+  (   right(P1, Pn)  
+  ;   up(P1, P2),% write('up to'), unzip(P2,S,_C),S=..[A|_],writeln(A),
       right_or_up(P2, Pn)
   ).
 

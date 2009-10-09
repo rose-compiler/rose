@@ -500,7 +500,60 @@ dump_constraints(Sums, Constraints) :-
   close(wstrm).
 
 %-----------------------------------------------------------------------
-% GRAPH Printing
+
+find_statement(P1, Stmt, Pn) :-
+  % erase Context to limit the search space
+  unzip(P1, N, _Ctx),
+  zip(N, P2),
+  find_statement1(P2, Stmt, Pn), !.
+
+find_statement1(P1, Stmt, Pn) :-
+  (   unzip(P1, Stmt, _),
+      Pn = P1
+  ;   next_preorder(P1, P2),
+      find_statement1(P2, Stmt, Pn)
+  ).
+  
+% find_statement1(P1, Stmt, Pn) :-
+%   unzip(P1, basic_block(Stmts, _An, _Ai, _Fi), _),
+%   down(P1, P2),
+%   find_statement1(P2, Stmt, Pn).
+
+% find_statement1(P1, Stmt, Pn) :-
+%   (   unzip(P1, [Stmt|_], _)
+%   ->  down(P1, Pn)
+%   ;   down(P1, P2),
+%       right(P2, P3),
+%       find_statement1(P1, Stmt, Pn)
+%   ).
+
+% find_statement1(P1, Stmt, Pn) :-
+%   unzip(P1, [], _),
+%   up(P1, P2),
+%   right(P2, P3),
+%       find_statement(P1, Stmt, Pn)
+%   ).
+
+%   find_statement(P2, Stmt, Pn).
+
+% Get the sum_freq nodes for a specific function call
+% FIXME this can be implemented much more efficiently!
+% FIXME what if a function is called twice from the same caller?
+function_call_weight(Proj, Name1/Type1, Name2/Type2, Weight) :-
+  (   function_signature(Sig, Type1, Name1, _),
+      goto_function(Proj, Sig, P1),
+      is_function_call_exp(FCall, Name2, Type2),
+      find_statement(P1, FCall, P2),
+      up(P2, P3), up(P3, P4),
+      unzip(P4, Stmts, _),
+      pragma_text(Pragma, sum_freq(Weight)),
+      member(Pragma, Stmts)
+  )   ;
+  %trace,
+  Weight = -1.
+
+%-----------------------------------------------------------------------
+% CALLGRAPH Printing
 %-----------------------------------------------------------------------
 
 % Fake ^Nodes are converted into labeled edges.
@@ -509,14 +562,18 @@ dump_constraints(Sums, Constraints) :-
 % Method must be one of _graphviz_ or _vcg_.
 % Flags is a list of terms
 % * layout(tree)
-dump_graph(Method, Filename, Graph, Flags) :-   
+dump_graph(Method, Filename, Graph, Proj, Flags) :-   
   open(Filename, write, _, [alias(dumpstream)]),
-  call(Method, dumpstream, Graph, Flags), !,
+  zip(Proj, Pz),
+  call(Method, dumpstream, Graph, Pz, Flags), !,
   close(dumpstream).
 
-viz_edge(F, Edge) :-
+viz_edge(F, Proj, Edge) :-
   Edge = N1-N2,
-  format(F, '"~w" -> "~w";~n', [N1, N2]).
+  function_call_weight(Proj, N1, N2, Weight),
+  Size is log(Weight+2),
+  format(F, '"~w" -> "~w" [arrowsize=~w,weight=~w];~n',
+	 [N1, N2, Size,Weight]).
 
 viz_node(F, Node) :-
   Node = Name/Type,
@@ -530,13 +587,13 @@ viz_node(F, Node) :-
 
 %% graphviz(F, G, _).
 %  Dump an ugraph in dotty syntax
-graphviz(F, G, Base) :-
+graphviz(F, G, Proj, Base) :-
   edges(G, E),
   vertices(G, V),
   Root = Base/_Type, member(Root, V),
   format(F, 'digraph G {~n', []),
   format(F, '  root="~w"; splines=true; overlap=false; rankdir=LR;~n', [Root]),
-  maplist(viz_edge(F), E),
+  maplist(viz_edge(F, Proj), E),
   maplist(viz_node(F), V),
   write(F, '}\n').
 
@@ -593,7 +650,7 @@ main1(Filename, Target, Base) :-
 
    % Visualize this!
    make_filename(P2, 'call-', '.dot', Fn0),
-   dump_graph(graphviz, Fn0, CallGraph, Base),
+   dump_graph(graphviz, Fn0, CallGraph, P2, Base),
 
    make_filename(P2, 'icfg-', '-compact.dot', Fn1),
    visicfg(P2, compact, Base, Fn1),
