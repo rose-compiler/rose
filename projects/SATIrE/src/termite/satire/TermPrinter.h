@@ -137,7 +137,9 @@ private:
   PrologList* getAnalysisResultList(SgStatement* stmt);
   PrologCompTerm* pagToProlog(std::string name, std::string analysis,
                               std::string dfi);
-  PrologCompTerm* functionIdAnnotation(std::string funcname);
+  /** create a term containing the procnum for the given procedure, when
+   * looked up in a certain file (the file matters for static functions) */
+  PrologCompTerm* functionIdAnnotation(std::string funcname, SgFile *file);
 };
 
 typedef TermPrinter<void*> BasicTermPrinter;
@@ -247,10 +249,14 @@ TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, Synth
       /* function IDs, if appropriate */
 #if HAVE_SATIRE_ICFG
       std::string funcname = "";
-      if (SgFunctionDeclaration *d = isSgFunctionDeclaration(astNode))
+      SgFunctionDeclaration *d = isSgFunctionDeclaration(astNode);
+      if (d != NULL)
         funcname = d->get_name().str();
       if (funcname != "" && cfg != NULL) {
-        results->addFirstElement(functionIdAnnotation(funcname));
+        SgNode *p = d->get_parent();
+        while (p != NULL && !isSgFile(p))
+          p = p->get_parent();
+        results->addFirstElement(functionIdAnnotation(funcname, isSgFile(p)));
       }
 #endif
 
@@ -315,15 +321,14 @@ TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, Synth
       /* function IDs, if appropriate */
 #if HAVE_SATIRE_ICFG
       std::string funcname = "";
-      if (SgFunctionRefExp *f = isSgFunctionRefExp(astNode))
+      SgFunctionRefExp *f = isSgFunctionRefExp(astNode);
+      if (f != NULL)
         funcname = f->get_symbol()->get_name().str();
       if (funcname != "" && cfg != NULL) {
-        std::multimap<std::string, Procedure *>::iterator mmi;
-        mmi = cfg->proc_map.lower_bound(funcname);
-        ROSE_ASSERT(mmi != cfg->proc_map.end());
-        PrologCompTerm *funcid_annot = new PrologCompTerm("function_id");
-        funcid_annot->addSubterm(new PrologInt(mmi->second->procnum));
-        results->addFirstElement(funcid_annot);
+        SgNode *p = f->get_parent();
+        while (p != NULL && !isSgFile(p))
+          p = p->get_parent();
+        results->addFirstElement(functionIdAnnotation(funcname, isSgFile(p)));
       }
 #endif
 
@@ -629,13 +634,34 @@ TermPrinter<DFI_STORE_TYPE>::varidTerm(SgVariableSymbol *sym)
 
 template<typename DFI_STORE_TYPE>
 PrologCompTerm*
-TermPrinter<DFI_STORE_TYPE>::functionIdAnnotation(std::string funcname) {
-  std::multimap<std::string, Procedure *>::iterator mmi;
+TermPrinter<DFI_STORE_TYPE>::functionIdAnnotation(std::string funcname,
+                                                  SgFile *file) {
+  std::multimap<std::string, Procedure *>::iterator mmi, limit;
   PrologCompTerm *funcid_annot = new PrologCompTerm("function_id");
   mmi = cfg->proc_map.lower_bound(funcname);
-  if (mmi != cfg->proc_map.end())
-    funcid_annot->addSubterm(new PrologInt(mmi->second->procnum));
-  else
+  if (mmi != cfg->proc_map.end()) {
+    /* If we got here, we found *some* functions with the correct name in
+     * the procedure map. To see which one we really want, we prefer a
+     * static function in the same file, if there is one; otherwise, a
+     * non-static implementation. */
+    Procedure *staticCandidate = NULL;
+    Procedure *nonStaticCandidate = NULL;
+    limit = cfg->proc_map.upper_bound(funcname);
+    while (mmi != limit) {
+      Procedure *p = mmi++->second;
+      if (p->isStatic && p->containingFile == file) {
+        staticCandidate = p;
+        break;
+      } else if (!p->isStatic)
+        nonStaticCandidate = p;
+    }
+    if (staticCandidate != NULL)
+      funcid_annot->addSubterm(new PrologInt(staticCandidate->procnum));
+    else if (nonStaticCandidate != NULL)
+      funcid_annot->addSubterm(new PrologInt(nonStaticCandidate->procnum));
+    else
+      funcid_annot->addSubterm(new PrologInt(INT_MAX));
+  } else
     funcid_annot->addSubterm(new PrologInt(INT_MAX));
   return funcid_annot;
 }

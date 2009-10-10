@@ -797,7 +797,7 @@ Procedure::Procedure()
   : class_type(NULL), entry(NULL), exit(NULL),
     arg_block(NULL), first_arg_block(NULL), last_arg_block(NULL),
     this_assignment(NULL), returnvar(NULL),
-    params(NULL), decl(NULL), static_file(NULL)
+    params(NULL), decl(NULL), isStatic(false), containingFile(NULL)
 {
 }
 

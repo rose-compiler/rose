@@ -1801,7 +1801,7 @@ ExprTransformer::find_entries(SgFunctionCallExp *call)
          // function is not declared static, call it; if it is declared
          // static, only call it if the call and the definition are in the
          // same file.
-            if (p->static_file == NULL)
+            if (!p->isStatic)
             {
                 blocks->push_back(p->entry);
 #if 0
@@ -1826,7 +1826,7 @@ ExprTransformer::find_entries(SgFunctionCallExp *call)
 #endif
                 SgFile *call_file = isSgFile(n);
 
-                if (p->static_file == call_file)
+                if (p->containingFile == call_file)
                 {
                     blocks->push_back(p->entry);
 #if 0

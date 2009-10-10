@@ -853,7 +853,11 @@ public:
  // GB (2008-07-01): Used for resolution of calls to static functions. For
  // static functions, this points to the file containing the function's
  // definition. It is NULL otherwise.
-    SgFile *static_file;
+ // GB (2009-10-10): For better resolution of static calls, we now record
+ // the containing file for every Procedure, and a separate flag to store
+ // whether it is static.
+    bool isStatic;
+    SgFile *containingFile;
 
     ~Procedure();
 };

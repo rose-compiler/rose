@@ -149,26 +149,20 @@ ProcTraversal::visit(SgNode *node) {
      // This only makes sense for non-member functions.
         SgStorageModifier &sm =
             (fnd != NULL ? fnd : decl)->get_declarationModifier().get_storageModifier();
-        if (sm.isStatic())
-        {
-#if 0
-            std::cout << "static declaration for function "
-                << proc->name << "/" << proc->procnum << std::endl;
-#endif
-         // Note that we query the first nondefining declaration for the
-         // static modifier, but we save the file of the *defining*
-         // declaration. This is because the first declaration might be in
-         // some header file, but for call resolution, the actual source
-         // file with the definition is relevant.
-         // Trace back to the enclosing file node. The definition might be
-         // included in foo.c from bar.c, in which case the Sg_File_Info
-         // would refer to bar.c; but for function call resolution, foo.c is
-         // the relevant file.
-            SgNode *p = decl->get_parent();
-            while (p != NULL && !isSgFile(p))
-                p = p->get_parent();
-            proc->static_file = isSgFile(p);
-        }
+        proc->isStatic = sm.isStatic();
+     // Note that we query the first nondefining declaration for the
+     // static modifier, but we save the file of the *defining*
+     // declaration. This is because the first declaration might be in
+     // some header file, but for call resolution, the actual source
+     // file with the definition is relevant.
+     // Trace back to the enclosing file node. The definition might be
+     // included in foo.c from bar.c, in which case the Sg_File_Info
+     // would refer to bar.c; but for function call resolution, foo.c is
+     // the relevant file.
+        SgNode *p = decl->get_parent();
+        while (p != NULL && !isSgFile(p))
+            p = p->get_parent();
+        proc->containingFile = isSgFile(p);
       }
       proc_map.insert(std::make_pair(proc->name, proc));
       mangled_proc_map.insert(std::make_pair(proc->mangled_name, proc));
