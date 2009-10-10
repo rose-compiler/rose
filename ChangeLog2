@@ -1,3 +1,46 @@
+2009-10-09 22:31  panas2
+
+	* [r7809] /trunk/ROSE/projects/RTED/Makefile.am: changes
+
+2009-10-09 20:48  panas2
+
+	* [r7808] /trunk/ROSE/projects/RTED/Makefile.am: More changes
+
+2009-10-09 20:48  panas2
+
+	* [r7807] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/required,
+	  /trunk/ROSE/projects/RTED/required/upc.h: More changes
+
+2009-10-09 20:46  panas2
+
+	* [r7806] /trunk/ROSE/projects/RTED/Makefile.am: More changes
+
+2009-10-09 19:34  panas2
+
+	* [r7805] /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_locals.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_prolog.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem_ParsingWorkaround.h,
+	  /trunk/ROSE/projects/RTED/tests/C/pointer/arrow_varref.c,
+	  /trunk/ROSE/projects/RTED/tests/C/pointer/arrow_varref.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/C/pointer/arrow_varref2.c,
+	  /trunk/ROSE/projects/RTED/tests/C/pointer/arrow_varref2.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/pointer/arrow_varref.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/pointer/arrow_varref.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/pointer/arrow_varref2.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Cxx/pointer/arrow_varref2.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/UPC,
+	  /trunk/ROSE/projects/RTED/tests/UPC/simple,
+	  /trunk/ROSE/projects/RTED/tests/UPC/simple/simple.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/UPC/simple/simple.upc,
+	  /trunk/ROSE/projects/RTED/upcparam.h,
+	  /trunk/ROSE/projects/RTED/upcparam_s.h: Changes to RTED to enable
+	  UPC
+
 2009-10-07 22:39  collingbourne2
 
 	* [r7791] /trunk/ROSE/src/ROSETTA/Grammar/Expression.code,
