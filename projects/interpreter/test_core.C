@@ -10,13 +10,14 @@ using namespace Interp;
 
 int main(int argc, char **argv)
    {
+     Interpretation interp;
      vector<string> argvList(argv, argv+argc);
      string expectedReturnValue, expectedReturnStr;
      CommandlineProcessing::isOptionWithParameter(argvList, "-interp:", "expectedReturnValue", expectedReturnValue, true);
      CommandlineProcessing::isOptionWithParameter(argvList, "-interp:", "expectedReturnStr", expectedReturnStr, true);
+     bool expectUndefinedReturnValue = CommandlineProcessing::isOption(argvList, "-interp:", "expectUndefinedReturnValue", true);
      try
         {
-          Interpretation interp;
           interp.parseCommandLine(argvList);
 
           SgProject *prj = frontend(argvList);
@@ -26,6 +27,7 @@ int main(int argc, char **argv)
           SgFunctionSymbol *testSym = global->lookup_function_symbol("test");
 
           StackFrameP head(new StackFrame(&interp, testSym));
+          head->initializeGlobals(prj);
           vector<ValueP> args;
           args.push_back(ValueP(new IntValue(1, PTemp, head)));
           ValueP returnStr;
@@ -36,6 +38,14 @@ int main(int argc, char **argv)
              }
 
           ValueP rv = head->interpFunction(args);
+          if (expectUndefinedReturnValue)
+             {
+               if (rv->prim()->valid())
+                  {
+                    cerr << "Return value expected to be undefined, got " << rv->show() << endl;
+                    return 1;
+                  }
+             }
           if (expectedReturnValue != "")
              {
                int rvInt = rv->prim()->getConcreteValueInt();

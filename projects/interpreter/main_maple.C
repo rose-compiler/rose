@@ -8,13 +8,13 @@ using namespace Interp::maple;
 
 int main(int argc, char **argv)
    {
+     Interpretation interp;
      try
         {
           Maple maple = vector<string>();
           mpl = &maple;
 
           vector<string> argvList(argv, argv+argc);
-          Interpretation interp;
           interp.parseCommandLine(argvList);
 
           SgProject *prj = frontend(argvList);
@@ -24,6 +24,7 @@ int main(int argc, char **argv)
           SgFunctionSymbol *testSym = global->lookup_function_symbol("test");
 
           StackFrameP head(new SymStackFrame(&interp, testSym));
+          head->initializeGlobals(prj);
           ValueP x (new AlgebValue(mpl->mkName("x", false), PTemp, head));
        // ValueP x (new AlgebValue(mpl->fromInteger64(1), PTemp, head));
           ValueP rv = head->interpFunction(vector<ValueP>(1, x));

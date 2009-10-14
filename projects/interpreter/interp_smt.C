@@ -38,6 +38,7 @@ Bits bvSgTypeBits(SgType *t)
         {
           case V_SgTypeBool: return bvSgTypeTraits<SgTypeBool>::bits;
           case V_SgTypeChar: return bvSgTypeTraits<SgTypeChar>::bits;
+          case V_SgEnumType: return bvSgTypeTraits<SgEnumType>::bits;
           case V_SgTypeInt: return bvSgTypeTraits<SgTypeInt>::bits;
           case V_SgTypeLong: return bvSgTypeTraits<SgTypeLong>::bits;
           case V_SgTypeLongLong: return bvSgTypeTraits<SgTypeLongLong>::bits;
@@ -97,7 +98,7 @@ bvbaseP BVValue::getBV(const_ValueP val, SgType *apt)
 
 ValueP BVValue::evalBinOp(bvbinop_kind kind, const_ValueP rhs, SgType *lhsApt, SgType *rhsApt, bool isShift) const
    {
-     if (!valid || !rhs->valid) return ValueP(new BVValue(getBits(), PTemp, owner));
+     if (!isValid || !rhs->valid()) return ValueP(new BVValue(getBits(), PTemp, owner));
      bvbaseP rhsBV = getBV(rhs, rhsApt);
      if (isShift) rhsBV = mkbvcast(zero_extend, v->bits(), rhsBV);
      return ValueP(new BVValue(mkbvbinop(kind, v, rhsBV), PTemp, owner));
@@ -105,13 +106,13 @@ ValueP BVValue::evalBinOp(bvbinop_kind kind, const_ValueP rhs, SgType *lhsApt, S
 
 ValueP BVValue::evalUnOp(bvunop_kind kind, SgType *apt) const
    {
-     if (!valid) return ValueP(new BVValue(bvBits, PTemp, owner));
+     if (!isValid) return ValueP(new BVValue(bvBits, PTemp, owner));
      return ValueP(new BVValue(mkbvunop(kind, v), PTemp, owner));
    }
 
 ValueP BVValue::evalBinPred(bvbinpred_kind kind, const_ValueP rhs, SgType *lhsApt, SgType *rhsApt, bool negate) const
    {
-     if (!valid || !rhs->valid) return ValueP(new BVValue(getBits(), PTemp, owner));
+     if (!isValid || !rhs->valid()) return ValueP(new BVValue(getBits(), PTemp, owner));
      bvbaseP rhsBV = getBV(rhs, rhsApt);
      predbaseP resultPred = mkbvbinpred(kind, v, rhsBV);
      if (negate) resultPred = mkprednot(resultPred);
@@ -124,7 +125,7 @@ ValueP BVValue::evalBinPred(bvbinpred_kind kind, const_ValueP rhs, SgType *lhsAp
      return ValueP(new BVValue(resultBV, PTemp, owner));
    }
 
-BVValue::BVValue(bvbaseP v, Position pos, StackFrameP owner) : Value(pos, owner, true), v(v)
+BVValue::BVValue(bvbaseP v, Position pos, StackFrameP owner) : BasePrimValue(pos, owner, true), v(v)
 {
   if (!v)
      {
@@ -134,7 +135,7 @@ BVValue::BVValue(bvbaseP v, Position pos, StackFrameP owner) : Value(pos, owner,
 
 string BVValue::show() const
    {
-     if (valid)
+     if (isValid)
           return v->show();
      else
           return "<<undefined>>";
@@ -142,16 +143,16 @@ string BVValue::show() const
 
 ValueP BVValue::primAssign(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt)
    {
-     if (rhs->valid)
+     if (rhs->valid())
         {
-          valid = true;
+          isValid = true;
           v = getBV(rhs, rhsApt);
         }
      else
         {
-          if (valid)
+          if (isValid)
                bvBits = v->bits();
-          valid = false;
+          isValid = false;
         }
      return shared_from_this();
    }
@@ -320,12 +321,12 @@ unsigned short BVValue::getConcreteValueUnsignedShort() const
 
 ValueP BVValue::evalCastExp(ValueP fromVal, SgType *fromType, SgType *toType)
    {
-     if (fromVal->valid)
+     if (fromVal->valid())
         {
           toType = toType->stripTypedefsAndModifiers();
           bvbaseP fromBV = getBV(fromVal, fromType);
           v = mkbvcast(isUnsignedType(toType) ? zero_extend : sign_extend, bvSgTypeBits(toType), fromBV);
-          valid = true;
+          isValid = true;
         }
      return shared_from_this();
    }
@@ -353,7 +354,7 @@ ValueP BVValue::evalPrefixMinusMinusOp(SgType *apt)
 
 Bits BVValue::getBits() const
    {
-     if (valid)
+     if (isValid)
         {
           return v->bits();
         }
@@ -425,13 +426,14 @@ ValueP AssertFunctionValue::call(SgFunctionType *fnType, const vector<ValueP> &a
      return ValueP();
    }
 
-ValueP SMTStackFrame::newValue(SgType *t, Position pos, bool isParam)
+ValueP SMTStackFrame::newValue(SgType *t, Position pos, Context ctx)
    {
      t = t->stripTypedefsAndModifiers();
      switch (t->variantT())
         {
           case V_SgTypeBool:
           case V_SgTypeChar:
+          case V_SgEnumType:
           case V_SgTypeInt:
           case V_SgTypeLong:
           case V_SgTypeLongLong:
@@ -441,7 +443,7 @@ ValueP SMTStackFrame::newValue(SgType *t, Position pos, bool isParam)
           case V_SgTypeUnsignedLongLong:
           case V_SgTypeUnsignedLong:
           case V_SgTypeUnsignedShort: return ValueP(new BVValue(bvSgTypeBits(t), pos, shared_from_this()));
-          default: return StackFrame::newValue(t, pos, isParam);
+          default: return StackFrame::newValue(t, pos, ctx);
         }
    }
 
@@ -450,12 +452,13 @@ StackFrameP SMTStackFrame::newStackFrame(SgFunctionSymbol *funSym, ValueP thisBi
      return StackFrameP(new SMTStackFrame(static_cast<SMTInterpretation *>(interp()), funSym, thisBinding));
    }
 
-ValueP SMTStackFrame::evalExpr(SgExpression *expr)
+ValueP SMTStackFrame::evalExpr(SgExpression *expr, bool arrPtrConv)
    {
      switch (expr->variantT())
         {
           case V_SgBoolValExp: return evalIntSymPrimExpr<SgBoolValExp>(expr);
           case V_SgCharVal: return evalIntSymPrimExpr<SgCharVal>(expr);
+          case V_SgEnumVal: return evalIntSymPrimExpr<SgEnumVal>(expr);
           case V_SgIntVal: return evalIntSymPrimExpr<SgIntVal>(expr);
           case V_SgLongIntVal: return evalIntSymPrimExpr<SgLongIntVal>(expr);
           case V_SgLongLongIntVal: return evalIntSymPrimExpr<SgLongLongIntVal>(expr);
@@ -465,7 +468,7 @@ ValueP SMTStackFrame::evalExpr(SgExpression *expr)
           case V_SgUnsignedLongLongIntVal: return evalIntSymPrimExpr<SgUnsignedLongLongIntVal>(expr);
           case V_SgUnsignedLongVal: return evalIntSymPrimExpr<SgUnsignedLongVal>(expr);
           case V_SgUnsignedShortVal: return evalIntSymPrimExpr<SgUnsignedShortVal>(expr);
-          default: return StackFrame::evalExpr(expr);
+          default: return StackFrame::evalExpr(expr, arrPtrConv);
         }
    }
 

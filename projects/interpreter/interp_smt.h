@@ -19,6 +19,9 @@ template <>
 struct bvSgTypeTraits<SgTypeChar> : smtlib::QF_BV::bvTypeTraits<char> {};
 
 template <>
+struct bvSgTypeTraits<SgEnumType> : smtlib::QF_BV::bvTypeTraits<int> {};
+
+template <>
 struct bvSgTypeTraits<SgTypeInt> : smtlib::QF_BV::bvTypeTraits<int> {};
 
 template <>
@@ -53,7 +56,7 @@ struct bvSgValueTraits<SgBoolValExp> : smtlib::QF_BV::bvTypeTraits<bool> {};
 
 smtlib::QF_BV::Bits bvSgTypeBits(SgType *t);
 
-class BVValue : public Value
+class BVValue : public BasePrimValue
    {
      smtlib::QF_BV::bvbaseP v;
      /*! bvBits is only correct when !valid (otherwise, v->bits() is the correct Bits
@@ -67,7 +70,7 @@ class BVValue : public Value
      ValueP evalBinPred(smtlib::QF_BV::bvbinpred_kind kind, const_ValueP rhs, SgType *lhsApt, SgType *rhsApt, bool negate = false) const;
 
      public:
-     BVValue(smtlib::QF_BV::Bits bvBits, Position pos, StackFrameP owner) : Value(pos, owner, false), bvBits(bvBits) {}
+     BVValue(smtlib::QF_BV::Bits bvBits, Position pos, StackFrameP owner) : BasePrimValue(pos, owner, false), bvBits(bvBits) {}
      BVValue(smtlib::QF_BV::bvbaseP v, Position pos, StackFrameP owner);
 
      std::string show() const;
@@ -102,7 +105,7 @@ class BVValue : public Value
      template <typename intT>
      intT getConcreteValue() const
         {
-          if (!valid)
+          if (!isValid)
              {
                throw InterpError("Attempt to access an undefined value");
              }
@@ -175,7 +178,7 @@ class SMTStackFrame : public StackFrame
 
           SMTStackFrame(SMTInterpretation *currentInterp, SgFunctionSymbol *funSym, ValueP thisBinding = ValueP()) : StackFrame(currentInterp, funSym, thisBinding) {}
 
-          ValueP newValue(SgType *t, Position pos, bool isParam = false);
+          ValueP newValue(SgType *t, Position pos, Context ctx = COther);
 
           template <class SgValExprT>
           ValueP evalIntSymPrimExpr(SgExpression *expr)
@@ -188,7 +191,7 @@ class SMTStackFrame : public StackFrame
 
           StackFrameP newStackFrame(SgFunctionSymbol *funSym, ValueP thisBinding);
 
-          ValueP evalExpr(SgExpression *expr);
+          ValueP evalExpr(SgExpression *expr, bool arrPtrConv = true);
 
           ValueP evalFunctionRefExp(SgFunctionSymbol *sym);
 

@@ -9,15 +9,13 @@
 namespace Interp {
 namespace mpi {
 
-class MPI_InitValue : public Value
+class MPI_InitValue : public BuiltinFunctionValue
    {
      public:
-     MPI_InitValue(Position pos, StackFrameP owner) : Value(pos, owner, true) {}
+     MPI_InitValue(Position pos, StackFrameP owner) : BuiltinFunctionValue(pos, owner) {}
 
-     std::string show() const;
+     std::string functionName() const;
      ValueP call(SgFunctionType *fnType, const std::vector<ValueP> &args) const;
-     ValueP primAssign(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt);
-     size_t forwardValidity() const;
 
    };
 

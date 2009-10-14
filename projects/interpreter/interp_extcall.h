@@ -9,18 +9,16 @@
 namespace Interp {
 namespace extcall {
 
-class ExternalCallingFunctionValue : public Value
+class ExternalCallingFunctionValue : public BuiltinFunctionValue
    {
      std::string fnName;
      void (*fnPtr)();
 
      public:
-     ExternalCallingFunctionValue(const std::string &fnName, void (*fnPtr)(), Position pos, StackFrameP owner) : Value(pos, owner, true), fnName(fnName), fnPtr(fnPtr) {}
+     ExternalCallingFunctionValue(const std::string &fnName, void (*fnPtr)(), Position pos, StackFrameP owner) : BuiltinFunctionValue(pos, owner), fnName(fnName), fnPtr(fnPtr) {}
 
-     std::string show() const;
+     std::string functionName() const;
      ValueP call(SgFunctionType *fnType, const std::vector<ValueP> &args) const;
-     ValueP primAssign(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt);
-     size_t forwardValidity() const;
 
    };
 

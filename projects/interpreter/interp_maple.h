@@ -6,14 +6,14 @@ namespace maple {
 
 extern MaplePP::Maple *mpl;
 
-class AlgebValue : public Value
+class AlgebValue : public BasePrimValue
    {
      MaplePP::Algeb v;
 
      static MaplePP::Algeb getAlgeb(const_ValueP val, SgType *apt);
 
      public:
-     AlgebValue(Position pos, StackFrameP owner) : Value(pos, owner, false) {}
+     AlgebValue(Position pos, StackFrameP owner) : BasePrimValue(pos, owner, false) {}
      AlgebValue(MaplePP::Algeb v, Position pos, StackFrameP owner);
 
      std::string show() const;
@@ -39,7 +39,7 @@ class SymStackFrame : public StackFrame
 
           SymStackFrame(Interpretation *currentInterp, SgFunctionSymbol *funSym, ValueP thisBinding = ValueP()) : StackFrame(currentInterp, funSym, thisBinding) {}
 
-          ValueP newValue(SgType *t, Position pos, bool isParam);
+          ValueP newValue(SgType *t, Position pos, Context ctx);
 
           template <class SgValExprT>
           ValueP evalIntSymPrimExpr(SgExpression *expr)
@@ -56,7 +56,7 @@ class SymStackFrame : public StackFrame
              }
 
           StackFrameP newStackFrame(SgFunctionSymbol *funSym, ValueP thisBinding);
-          ValueP evalExpr(SgExpression *expr);
+          ValueP evalExpr(SgExpression *expr, bool arrPtrConv = true);
 
    };
 

@@ -20,6 +20,7 @@ int test(int)
      f(foo);
      f2(foo);
      A afoo, abar;
+     void *p = abar.foo;
      abar.foo[0] = 4;
      abar.foo[1] = 5;
      abar.foo[2] = 6;

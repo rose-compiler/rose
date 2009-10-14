@@ -7,10 +7,10 @@ using namespace Interp::extcall;
 
 int main(int argc, char **argv)
    {
+     Interpretation interp;
      try
         {
           vector<string> argvList(argv, argv+argc);
-          Interpretation interp;
           interp.parseCommandLine(argvList);
 
           SgProject *prj = frontend(argvList);
@@ -21,6 +21,7 @@ int main(int argc, char **argv)
 
           vector<void *> libList = buildLibraryList(prj);
           StackFrameP head(new ExternalCallingStackFrame(libList, &interp, testSym));
+          head->initializeGlobals(prj);
           ValueP argcVal (new IntValue(0, PTemp, head));
           ValueP argvVal (new PointerValue(ValueP(), PTemp, head));
           vector<ValueP> params;

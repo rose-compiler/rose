@@ -10,10 +10,10 @@ using namespace Interp;
 
 int main(int argc, char **argv)
    {
+     Interpretation interp;
      try
         {
           vector<string> argvList(argv, argv+argc);
-          Interpretation interp;
           interp.parseCommandLine(argvList);
 
           SgProject *prj = frontend(argvList);
@@ -23,6 +23,7 @@ int main(int argc, char **argv)
           SgFunctionSymbol *testSym = global->lookup_function_symbol("test");
 
           StackFrameP head(new StackFrame(&interp, testSym));
+          head->initializeGlobals(prj);
           ValueP rv = head->interpFunction(vector<ValueP>(1, ValueP(new IntValue(1, PTemp, head))));
           cout << "Returned " << (rv.get() ? rv->show() : "<<nothing>>") << endl;
         }

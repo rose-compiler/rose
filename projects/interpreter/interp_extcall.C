@@ -200,10 +200,10 @@ class RoseFFI
 
    };
 
-string ExternalCallingFunctionValue::show() const
+string ExternalCallingFunctionValue::functionName() const
    {
      stringstream ss;
-     ss << "<<external-function " << fnName << "@" << fnPtr << ">>";
+     ss << fnName << "@" << fnPtr;
      return ss.str();
    }
 
@@ -221,13 +221,6 @@ ValueP ExternalCallingFunctionValue::call(SgFunctionType *fnType, const vector<V
      ffi.call(fnPtr, args);
      return ValueP(); // TODO: get return value
    }
-
-ValueP ExternalCallingFunctionValue::primAssign(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt)
-   {
-     throw InterpError("Cannot assign to a function!");
-   }
-
-size_t ExternalCallingFunctionValue::forwardValidity() const { return 1; }
 
 StackFrameP ExternalCallingStackFrame::newStackFrame(SgFunctionSymbol *funSym, ValueP thisBinding)
    {

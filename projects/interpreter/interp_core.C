@@ -22,6 +22,9 @@ static bool isBaseClassOf(SgClassDeclaration* base, SgClassDeclaration* clDecl)
      if( clDecl->get_definingDeclaration() == NULL )
           return false;
 
+     if( base->get_definingDeclaration() == clDecl->get_definingDeclaration() )
+          return true;
+
      SgClassDefinition* clDef = isSgClassDeclaration(clDecl->get_definingDeclaration())->get_definition();
 
      if(clDef == NULL)
@@ -35,16 +38,23 @@ static bool isBaseClassOf(SgClassDeclaration* base, SgClassDeclaration* clDecl)
 
           SgClassDeclaration* baseCl = (*i)->get_base_class();
 
-          if( base ==  baseCl )
-               return true;
-
-          if( isBaseClassOf( baseCl, clDecl ) == true  )
+          if( isBaseClassOf( base, baseCl ) == true  )
                return true;
         } 
 
      return false;
    }
  
+static SgScopeStatement *symbolScope(SgSymbol *symbol)
+   {
+     switch (symbol->variantT())
+        {
+          case V_SgClassSymbol: return static_cast<SgClassSymbol *>(symbol)->get_declaration()->get_scope(); break;
+          case V_SgVariableSymbol: return static_cast<SgVariableSymbol *>(symbol)->get_declaration()->get_scope(); break;
+          default: throw Interp::InterpError("symbolScope: unexpected symbol type " + symbol->class_name());
+        }
+   }
+
 //! Returns the type of the given field from a StructLayoutEntry
 static SgType *fieldType(SgNode *field)
    {
@@ -65,6 +75,24 @@ static SgType *fieldType(SgNode *field)
           cerr << "fieldType: unrecognised field declaration " << field->sage_class_name() << endl;
           return 0;
         }
+   }
+
+SgVariableSymbol *firstNamedMember(SgClassType *ct)
+   {
+     SgClassDefinition *cdef = isSgClassDeclaration(ct->get_declaration()->get_definingDeclaration())->get_definition();
+     SgDeclarationStatementPtrList &members = cdef->get_members();
+     for (SgDeclarationStatementPtrList::iterator i = members.begin(); i != members.end(); ++i)
+        {
+          if (SgVariableDeclaration *vd = isSgVariableDeclaration(*i))
+             {
+               SgInitializedName *in = vd->get_variables().front();
+               if (in->get_name() == "") continue;
+               SgVariableSymbol *vs = isSgVariableSymbol(in->search_for_symbol_from_symbol_table());
+               ROSE_ASSERT(vs != NULL);
+               return vs;
+             }
+        }
+     return NULL;
    }
 
 }; // anonymous namespace
@@ -111,16 +139,21 @@ Value *mkBoolean(Position pos, StackFrameP owner)
 
 InterpError::InterpError(string err) : err(err)
      {
-       callStack.push_back(NULL);
+       callStack.push_back(Frame(StackFrameP(), NULL));
      }
 
 void InterpError::dumpCallStack(ostream &out)
    {
+     Interpretation *interp = NULL;
+     bool trace = !callStack.empty()
+                && callStack.back().first
+      && (interp = callStack.back().first->interp())->errorTrace;
      for (size_t i = 0; i < callStack.size(); i++)
         {
-          SgStatement *frame = callStack[i];
+          Frame &frame = callStack[i];
+          SgStatement *stmt = frame.second;
           out << " at ";
-          SgNode *parent = frame;
+          SgNode *parent = stmt;
           SgFunctionDeclaration *decl = NULL;
           while (decl == NULL)
              {
@@ -134,32 +167,42 @@ void InterpError::dumpCallStack(ostream &out)
                continue;
              }
           out << decl->get_qualified_name().getString();
-          Sg_File_Info *soc = frame->get_startOfConstruct();
+          Sg_File_Info *soc = stmt->get_startOfConstruct();
           if (soc)
              {
                out << " (" << soc->get_filenameString() << ":" << soc->get_line() << ")";
              }
+          if (trace && frame.first)
+             {
+               out << ", localVarBindings = ";
+               dumpBindings(out, frame.first->localVarBindings);
+             }
+          out << endl;
+        }
+     if (trace)
+        {
+          out << "globalVarBindings = ";
+          dumpBindings(out, interp->globalVarBindings);
           out << endl;
         }
    }
 
 FieldVisitor::~FieldVisitor() {}
 
-Value::Value(Position pos, StackFrameP owner, bool valid) : pos(pos), owner(owner), valid(valid)
+Value::Value(Position pos, StackFrameP owner) : pos(pos), owner(owner)
    {
+#if 0
      if (owner && owner->interp()->trace)
           cout << "Value::Value @" << this << endl;
+#endif
    }
 
 Value::~Value()
    {
+#if 0
      if (owner && owner->interp()->trace)
           cout << "Value::~Value @" << this << endl;
-   }
-
-void Value::destroy()
-   {
-     valid = false;
+#endif
    }
 
 ValueP Value::fieldAtOffset(size_t offset)
@@ -193,6 +236,10 @@ ValueP Value::primAtOffset(size_t offset)
         {
           fieldp = field;
           field = field->fieldAtOffset(0);
+          if (!field)
+             {
+               throw InterpError("fieldAtOffset returned NULL!");
+             }
         }
      while (fieldp != field);
      return field;
@@ -200,15 +247,7 @@ ValueP Value::primAtOffset(size_t offset)
 
 const_ValueP Value::primAtOffset(size_t offset) const
    {
-     const_ValueP field = fieldAtOffset(offset), fieldp;
-     // As soon as we reach a fixed point, we know the value cannot be broken down any further
-     do
-        {
-          fieldp = field;
-          field = field->fieldAtOffset(0);
-        }
-     while (fieldp != field);
-     return field;
+     return const_cast<Value *>(this)->primAtOffset(offset);
    };
 
 void Value::forEachSubfield(FieldVisitor &visit, long offset) {}
@@ -300,6 +339,76 @@ unsigned short Value::getConcreteValueUnsignedShort() const
      throw InterpError("This value has no concrete representation of type unsigned short");
    }
 
+bool BaseCompoundValue::getConcreteValueBool() const
+   {
+     return prim()->getConcreteValueBool();
+   }
+
+char BaseCompoundValue::getConcreteValueChar() const
+   {
+     return prim()->getConcreteValueChar();
+   }
+
+double BaseCompoundValue::getConcreteValueDouble() const
+   {
+     return prim()->getConcreteValueDouble();
+   }
+
+float BaseCompoundValue::getConcreteValueFloat() const
+   {
+     return prim()->getConcreteValueFloat();
+   }
+
+int BaseCompoundValue::getConcreteValueInt() const
+   {
+     return prim()->getConcreteValueInt();
+   }
+
+long double BaseCompoundValue::getConcreteValueLongDouble() const
+   {
+     return prim()->getConcreteValueLongDouble();
+   }
+
+long int BaseCompoundValue::getConcreteValueLong() const
+   {
+     return prim()->getConcreteValueLong();
+   }
+
+long long int BaseCompoundValue::getConcreteValueLongLong() const
+   {
+     return prim()->getConcreteValueLongLong();
+   }
+
+short BaseCompoundValue::getConcreteValueShort() const
+   {
+     return prim()->getConcreteValueShort();
+   }
+
+unsigned char BaseCompoundValue::getConcreteValueUnsignedChar() const
+   {
+     return prim()->getConcreteValueUnsignedChar();
+   }
+
+unsigned int BaseCompoundValue::getConcreteValueUnsignedInt() const
+   {
+     return prim()->getConcreteValueUnsignedInt();
+   }
+
+unsigned long long int BaseCompoundValue::getConcreteValueUnsignedLongLong() const
+   {
+     return prim()->getConcreteValueUnsignedLongLong();
+   }
+
+unsigned long BaseCompoundValue::getConcreteValueUnsignedLong() const
+   {
+     return prim()->getConcreteValueUnsignedLong();
+   }
+
+unsigned short BaseCompoundValue::getConcreteValueUnsignedShort() const
+   {
+     return prim()->getConcreteValueUnsignedShort();
+   }
+
 SgType *Value::defaultType() const
    {
      throw InterpError("The defaultType method is not implemented for this Value");
@@ -321,7 +430,7 @@ ValueP Value::eval##opname(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) cv 
 #define DEFINE_ASSIGN_BINOP_FN(opname,opassignname) \
 ValueP Value::eval##opassignname(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) \
   { \
-    return assign(eval##opname(rhs, lhsApt, rhsApt), lhsApt, rhsApt); \
+    return assign(eval##opname(rhs, lhsApt, rhsApt), lhsApt, lhsApt); \
   }
 
 #define DEFINE_UNDEF_BINOP_FN(op,opname) GDEFINE_UNDEF_BINOP_FN(op,opname,const)
@@ -361,6 +470,11 @@ ValueP Value::evalPostfixMinusMinusOp(SgType *apt)
      return result;
    }
 
+void Value::setDiscriminantAtOffset(size_t offset, SgSymbol *discriminant)
+   {
+     throw InterpError("Cannot set discriminant of this value");
+   }
+
 #define GDEFINE_BCV_UNOP_FN(op,opname,cv) \
 ValueP BaseCompoundValue::eval##opname(SgType *apt) cv \
    { \
@@ -395,6 +509,10 @@ FOREACH_BOOL_BINARY_PRIMOP(    DEFINE_BCV_BINOP_FN)
 #undef DEFINE_BCV_BINOP_FNS
 #undef DEFINE_BCV_SC_BINOP_FN
 
+void BaseCompoundValue::setDiscriminantAtOffset(size_t offset, SgSymbol *discriminant)
+   {
+     fieldAtOffset(0)->setDiscriminantAtOffset(offset, discriminant);
+   }
 
 #define DEFINE_PV_BOOL_BINOP_FN(op,opname) \
 ValueP PointerValue::eval##opname(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const \
@@ -409,7 +527,7 @@ ValueP PointerValue::eval##opname(const_ValueP rhs, SgType *lhsApt, SgType *rhsA
         { \
           throw InterpError("Operator " #op " between incompatible types"); \
         } \
-     if (this->valid && rhsPtr->valid) \
+     if (this->valid() && rhsPtr->valid()) \
           return ValueP(mkBoolean(this->target.get() op rhsPtr->target.get(), PTemp, this->owner)); \
      else \
           return ValueP(mkBoolean(PTemp, this->owner)); \
@@ -421,6 +539,13 @@ FOREACH_BOOL_BINARY_PRIMOP(DEFINE_PV_BOOL_BINOP_FN)
 
 ValueP PointerValue::primAssign(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt)
    {
+     if (isSgFunctionType(rhsApt))
+        {
+       // implicit function-to-pointer conversion
+          isValid = true;
+          target = boost::const_pointer_cast<Value, const Value>(rhs);
+          return shared_from_this();
+        }
      const PointerValue *rhsPtr = dynamic_cast<const PointerValue *>(rhs->prim().get());
      if ((!isSgPointerType(lhsApt) && !isSgArrayType(lhsApt) && !isSgTypeString(lhsApt))
       || (!isSgPointerType(rhsApt) && !isSgArrayType(rhsApt) && !isSgTypeString(rhsApt)))
@@ -431,18 +556,20 @@ ValueP PointerValue::primAssign(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt
         {
           throw InterpError("Operator = between incompatible types");
         }
-     if (rhsPtr->valid)
+     if (rhsPtr->isValid)
         {
-          valid = true;
+          isValid = true;
           target = rhsPtr->target;
         }
      else
-          valid = false;
+          isValid = false;
      return shared_from_this();
    }
 
 string PointerValue::show() const
    {
+     if (!isValid)
+          return "<<undefined>>";
      if (target.get() == NULL)
           return "<<null-ptr>>";
      stringstream ss;
@@ -518,11 +645,30 @@ ValueP SymbolValue::primAssign(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt)
      throw InterpError("Attempt to assign to a SymbolValue");
    }
 
+bool SymbolValue::valid() const
+   {
+     return true;
+   }
+
+void SymbolValue::destroy()
+   {
+     throw InterpError("Attempt to destroy a SymbolValue");
+   }
+
 ValueP Value::evalDotExp(ValueP lhs, SgType *lhsApt) const
    {
      throw InterpError("Operator . not defined for this type of value");
    }
 
+ValueP Value::evalVarArgOp(SgType *apt)
+   {
+     throw InterpError("Vararg operator not defined for this type of value");
+   }
+
+void Value::evalVarArgEndOp()
+   {
+     throw InterpError("Vararg end operator not defined for this type of value");
+   }
 
 /* The size of a SymbolValue is generally undefined and usually does not make sense but
    some compilers treat a pointer to one as a void* */
@@ -567,7 +713,22 @@ ValueP BaseCompoundValue::evalPostfixMinusMinusOp(SgType *apt)
      return prim()->evalPostfixMinusMinusOp(apt);
    }
 
-OffsetValue::OffsetValue(ValueP base, size_t offset) : BaseCompoundValue(base->pos, base->owner, base->valid)
+bool BaseCompoundValue::valid() const
+   {
+     return prim()->valid();
+   }
+
+ValueP BaseCompoundValue::evalVarArgOp(SgType *apt)
+   {
+     return prim()->evalVarArgOp(apt);
+   }
+
+void BaseCompoundValue::evalVarArgEndOp()
+   {
+     prim()->evalVarArgEndOp();
+   }
+
+OffsetValue::OffsetValue(ValueP base, size_t offset) : BaseCompoundValue(base->pos, base->owner)
    {
      if (const OffsetValue *baseOfs = dynamic_cast<const OffsetValue *>(base.get()))
         {
@@ -608,10 +769,23 @@ const_ValueP OffsetValue::fieldAtOffset(size_t offset) const
      return base->fieldAtOffset(this->offset + offset);
    }
 
+void OffsetValue::destroy()
+   {
+     throw InterpError("OffsetValues cannot be destroyed");
+   }
+
+void UnionDiscriminantValue::destroy()
+   {
+     throw InterpError("UnionDiscriminantValues cannot be destroyed");
+   }
+
 std::string CompoundValue::show() const
    {
-     // TODO: use the dynamicTypes information to show field names if possible
      stringstream ss;
+     if (dynamicType != NULL)
+        {
+          ss << dynamicType->get_name().getString() << " ";
+        }
      ss << "{";
      for (map<size_t, ValueP>::const_iterator fieldI = fields.begin(); fieldI != fields.end(); ++fieldI)
         {
@@ -648,6 +822,19 @@ ValueP Value::assign(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt)
              }
           return shared_from_this();
         }
+     else if (SgArrayType *at = isSgArrayType(lhsApt))
+        {
+          SgType *baseType = at->get_base_type();
+          const StructLayoutInfo &info = typeLayout(baseType);
+          size_t arrSize = forwardValidity();
+          for (size_t ofs = 0; ofs < arrSize; ofs += info.size)
+             {
+               ValueP lhsOfs(new OffsetValue(shared_from_this(), ofs));
+               ValueP rhsOfs(new OffsetValue(const_pointer_cast<Value, const Value>(rhs), ofs));
+               lhsOfs->assign(rhsOfs, baseType, baseType);
+             }
+          return shared_from_this();
+        }
      else
         {
           owner->interp()->prePrimAssign(shared_from_this(), rhs, lhsApt, rhsApt);
@@ -668,9 +855,9 @@ void OffsetValue::forEachSubfield(FieldVisitor &visit, long offset)
      base->forEachSubfield(visit, offset - this->offset);
    }
 
-ValueP Value::copy(SgType *apt, Position pos, StackFrameP owner, bool isParam) const
+ValueP Value::copy(SgType *apt, Position pos, StackFrameP owner, Context ctx) const
    {
-     ValueP newVal = owner->newValue(apt, pos, isParam);
+     ValueP newVal = owner->newValue(apt, pos, ctx);
      return newVal->assign(this->shared_from_this(), apt, apt);
      if (SgClassType *ct = isSgClassType(apt))
         {
@@ -687,11 +874,11 @@ ValueP Value::copy(SgType *apt, Position pos, StackFrameP owner, bool isParam) c
         }
      else
         {
-          return primCopy(apt, pos, owner, isParam);
+          return primCopy(apt, pos, owner, ctx);
         }
    }
 
-ValueP Value::primCopy(SgType *apt, Position pos, StackFrameP owner, bool isParam) const
+ValueP Value::primCopy(SgType *apt, Position pos, StackFrameP owner, Context ctx) const
    {
      ValueP newVal = owner->newValue(apt, pos);
      return newVal->primAssign(this->shared_from_this(), apt, apt);
@@ -752,19 +939,22 @@ StackFrameP ThisNonstaticFunctionValue::createStackFrame() const
      return owner->newStackFrame(symbol, pThis);
    }
 
-CompoundValue::CompoundValue(SgClassType *dynamicType, Position pos, StackFrameP owner) : BaseCompoundValue(pos, owner, true), dynamicType(dynamicType)
+CompoundValue::CompoundValue(SgClassType *dynamicType, Position pos, StackFrameP owner) : BaseCompoundValue(pos, owner), dynamicType(dynamicType)
      {
        const StructLayoutInfo &info = typeLayout(dynamicType);
        size = info.size;
        for (std::vector<StructLayoutEntry>::const_iterator fieldI = info.fields.begin(); fieldI != info.fields.end(); ++fieldI)
           {
-            SgType *fldType = fieldType(fieldI->decl);
-            fields[fieldI->byteOffset] = owner->newValue(fldType, pos);
+            if (fieldI->decl)
+               {
+                 SgType *fldType = fieldType(fieldI->decl);
+                 fields[fieldI->byteOffset] = owner->newValue(fldType, pos, CField);
+               }
           }
      }
 
 CompoundValue::CompoundValue(SgClassType *dynamicType, fieldMap_t fields, Position pos, StackFrameP owner, size_t size) : 
-        BaseCompoundValue(pos, owner, true), 
+        BaseCompoundValue(pos, owner), 
         fields(fields), 
         size(size == SIZE_MAX ? typeLayout(dynamicType).size : size), 
         dynamicType(dynamicType) {}
@@ -790,7 +980,6 @@ ValueP CompoundValue::copy(const_ValueP rhs);
 void CompoundValue::destroy()
    {
      // TODO: call the destructor
-     valid = false;
      for (fieldMap_t::iterator fieldI = fields.begin(); fieldI != fields.end(); ++fieldI)
         {
           fieldI->second->destroy();
@@ -870,15 +1059,152 @@ bool CompoundValue::hasDynamicTypeAtOffset(SgClassType *t, size_t offset) const
 
 size_t CompoundValue::forwardValidity() const { return size; }
 
+void CompoundValue::setDiscriminantAtOffset(size_t offset, SgSymbol *discriminant)
+   {
+     fieldAtOffset(offset)->setDiscriminant(discriminant);
+   }
+
+string UnionValue::show() const
+   {
+     if (!currDiscriminant || !storage)
+        {
+          return "<<undefined union, type=" + unionType->unparseToString() + ">>";
+        }
+     return "{" + currDiscriminant->get_name().getString() + " <- " + storage->show() + "}";
+   }
+
+size_t UnionValue::forwardValidity() const
+   {
+     return storage ? storage->forwardValidity() : 0;
+   }
+
+void UnionValue::forEachSubfield(FieldVisitor &visit, long offset)
+   {
+     if (storage)
+          storage->forEachSubfield(visit, offset);
+   }
+
+ValueP UnionValue::fieldAtOffset(size_t offset)
+   {
+     if (!storage)
+          throw InterpError("Attempt to access uninitialised storage");
+     if (offset == 0)
+          return storage;
+     return storage->fieldAtOffset(offset);
+   }
+
+const_ValueP UnionValue::fieldAtOffset(size_t offset) const
+   {
+     return const_cast<UnionValue *>(this)->fieldAtOffset(offset);
+   }
+
+void UnionValue::setDiscriminantAtOffset(size_t offset, SgSymbol *discriminant)
+   {
+     if (offset == 0)
+        {
+          if (discriminant == currDiscriminant) return;
+          SgClassDefinition *clsDef = isSgClassDefinition(symbolScope(discriminant));
+          SgClassDeclaration *clsDecl = clsDef->get_declaration();
+       // if (clsType == unionType)
+          if (clsDecl == unionType->get_declaration()->get_definingDeclaration())
+             {
+               storage = owner->newValue(discriminant->get_type(), pos, CField);
+               currDiscriminant = discriminant;
+               return;
+             }
+        }
+     storage->setDiscriminantAtOffset(offset, discriminant);
+   }
+
+void UnionValue::destroy()
+   {
+     if (storage)
+          storage->destroy();
+   }
+
+bool BasePrimValue::valid() const
+   {
+     return isValid;
+   }
+
+void BasePrimValue::destroy()
+   {
+     isValid = false;
+   }
+
+string VAListValue::show() const
+   {
+     if (isValid)
+        {
+          stringstream ss;
+          ss << "<<va_list ";
+          for (VAList::const_iterator i = vaList->begin(); i != vaList->end(); ++i)
+             {
+               if (i == vaListPos)
+                    ss << "-> ";
+               ss << (*i)->show() << " ";
+               if (i == vaListPos)
+                    ss << "<- ";
+             }
+          ss << ">>";
+          return ss.str();
+        }
+     else
+          return "<<undefined va_list>>";
+   }
+
+ValueP VAListValue::primAssign(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt)
+   {
+     const VAListValue *rhsVAList = dynamic_cast<const VAListValue *>(rhs.get());
+     if (rhsVAList == NULL)
+        {
+          throw InterpError("VAListValue::primAssign: rhs not a VAListValue");
+        }
+     isValid = rhs->valid();
+     if (isValid)
+        {
+          vaList = rhsVAList->vaList;
+          vaListPos = rhsVAList->vaListPos;
+        }
+     return shared_from_this();
+   }
+
+size_t VAListValue::forwardValidity() const { return 1; }
+
+ValueP VAListValue::evalVarArgOp(SgType *apt)
+   {
+     if (!isValid)
+        {
+          throw InterpError("Called va_arg on undefined va_list");
+        }
+     if (vaListPos == vaList->end())
+        {
+          throw InterpError("Called va_arg past the end of the argument list");
+        }
+     return *vaListPos++;
+   }
+
+void VAListValue::evalVarArgEndOp()
+   {
+     isValid = false;
+     vaList = VAListP();
+   }
+
 void dumpBindings(std::ostream &out, const varBindings_t &bindings)
    {
      out << "{";
      for (varBindings_t::const_iterator bindI = bindings.begin(); bindI != bindings.end(); ++bindI)
         {
           if (bindI != bindings.begin()) out << ", ";
-          out << bindI->first->get_name().getString() << " => " << bindI->second->show();
+          out << bindI->first << " " << bindI->first->get_name().getString() << " => " << bindI->second->show();
         }
      out << "}";
+   }
+
+void StackFrame::dump()
+   {
+     dumpBindings(cout, localVarBindings);
+     cout << endl;
    }
 
 SgStatement *StackFrame::BlockStackFrame::next() { return NULL; }
@@ -904,89 +1230,7 @@ StackFrame::BlockStackFrameP StackFrame::BlockStackFrame::doBreak()
 
 StackFrame::BlockStackFrame::~BlockStackFrame() {}
 
-ArrayValue::ArrayValue(SgType *baseType, size_t index, Position pos, StackFrameP owner)
-        : PointerValue(ValueP(new CompoundValue(baseType, index, pos, owner)), pos, owner),
-          extent(index) {}
-
-ArrayValue::ArrayValue(SgType *baseType, size_t index, CompoundValue::fieldMap_t fields, Position pos, StackFrameP owner)
-        : PointerValue(ValueP(new CompoundValue(0, fields, pos, owner, index * typeLayout(baseType).size)), pos, owner),
-          extent(index) {}
-
-
-ValueP ArrayValue::primAssign(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt)
-   {
-     // As far as I am aware this will only happen if a struct containing an array
-     // performs a default assignment.  This is because arrays are nonmodifiable
-     // (see C++ standard section 8.3.4 para 5). In this case, we should perform a
-     // deep assignment.
-     SgArrayType *lhsArr = isSgArrayType(lhsApt->stripTypedefsAndModifiers());
-     ROSE_ASSERT(lhsArr != NULL);
-     SgType *baseType = lhsArr->get_base_type();
-     const StructLayoutInfo &info = typeLayout(baseType);
-     for (size_t i = 0; i < extent; ++i)
-        {
-          size_t ofs = i * info.size;
-          ValueP lhsElem (new OffsetValue(target, ofs));
-          ValueP rhsElem (new OffsetValue(rhs->dereference(), ofs));
-          lhsElem->assign(rhsElem, baseType, baseType);
-        }
-     return shared_from_this();
-   }
-
-ValueP ArrayValue::primCopy(SgType *apt, Position pos, StackFrameP owner, bool isParam) const
-   {
-     // The rules here are:
-     // 1. If we are doing parameter passing, we need to pass by reference,
-     //    i.e. create a PointerValue
-     // 2. If apt is an SgPointerType, this is an implicit array-to-pointer conversion
-     //    (C++ standard, section 4.2), and we also need to create a PointerValue
-     // 3. Otherwise, we are not doing parameter passing, and this must be a copy performed
-     //    by the implicit copy constructor.  Copy by value.
-     SgType *st = apt->stripTypedefsAndModifiers();
-     if (isParam || isSgPointerType(st))
-        {
-          return ValueP(new PointerValue(target, pos, owner));
-        }
-     SgArrayType *at = isSgArrayType(st);
-     ROSE_ASSERT(at != NULL);
-     SgType *baseType = at->get_base_type();
-     const StructLayoutInfo &info = typeLayout(baseType);
-     CompoundValue::fieldMap_t fields;
-     for (size_t i = 0; i < extent; ++i)
-        {
-          size_t ofs = i * info.size;
-          ValueP rhsElem (new OffsetValue(target, ofs));
-          fields[ofs] = rhsElem->copy(baseType, pos, owner);
-        }
-     return ValueP(new ArrayValue(at, extent, fields, pos, owner));
-   }
-
-string ArrayValue::show() const
-   {
-     stringstream ss;
-     ss << "array " << target->show();
-     return ss.str();
-   }
-
-void ArrayValue::destroy()
-   {
-     PointerValue::destroy();
-     target->destroy();
-   }
-
-// ArrayValue::primAtOffset?
-
-void ArrayValue::forEachSubfield(FieldVisitor &visit, long offset)
-   {
-     target->forEachSubfield(visit, offset);
-   }
-
-void ArrayValue::forEachPrim(FieldVisitor &visit, long offset)
-   {
-     target->forEachPrim(visit, offset);
-   }
-
-CompoundValue::CompoundValue(SgType *baseType, size_t index, Position pos, StackFrameP owner) : BaseCompoundValue(pos, owner, true)
+CompoundValue::CompoundValue(SgType *baseType, size_t index, Position pos, StackFrameP owner) : BaseCompoundValue(pos, owner), dynamicType(NULL)
    {
      const StructLayoutInfo &info = typeLayout(baseType);
      size = index * info.size;
@@ -996,24 +1240,50 @@ CompoundValue::CompoundValue(SgType *baseType, size_t index, Position pos, Stack
         }
    }
 
-ValueP StackFrame::newArray(SgArrayType *at, Position pos)
+ValueP StackFrame::newArray(SgArrayType *at, Position pos, Context ctx)
    {
      SgExpression *index = at->get_index();
-     if (index == NULL) /* this is an incomplete type, so it should be represented as a pointer */
+     if (pos == PTemp   /* temporaries are only pointers */
+      || index == NULL) /* this is an incomplete type, so it should be represented as a pointer */
           return ValueP(new PointerValue(pos, shared_from_this()));
      ValueP indexVal = evalExpr(index);
-     return ValueP(new ArrayValue(at->get_base_type(), indexVal->getConcreteValueInt(), pos, shared_from_this()));
+     return ValueP(new CompoundValue(at->get_base_type(), indexVal->getConcreteValueInt(), pos, shared_from_this()));
    }
 
-ValueP StackFrame::newValue(SgType *t, Position pos, bool isParam)
+ValueP StackFrame::newClassValue(SgClassType *ct, Position pos)
    {
-     t = t->stripTypedefsAndModifiers();
+     SgClassDeclaration *cd = isSgClassDeclaration(ct->get_declaration());
+     if (cd->get_class_type() == SgClassDeclaration::e_union)
+        {
+          return ValueP(new UnionValue(ct, pos, shared_from_this()));
+        }
+     else
+        {
+          return ValueP(new CompoundValue(ct, pos, shared_from_this()));
+        }
+   }
+
+ValueP StackFrame::newTypedefValue(SgTypedefType *tt, Position pos, Context ctx)
+   {
+     SgTypedefDeclaration *td = isSgTypedefDeclaration(tt->get_declaration());
+     if (td->get_name() == "va_list" && td->get_scope()->variantT() == V_SgGlobal)
+        {
+          return ValueP(new VAListValue(pos, shared_from_this()));
+        }
+     return newValue(td->get_base_type(), pos, ctx);
+   }
+
+ValueP StackFrame::newValue(SgType *t, Position pos, Context ctx)
+   {
      switch (t->variantT())
         {
+          case V_SgTypedefType: return newTypedefValue(static_cast<SgTypedefType *>(t), pos, ctx);
+          case V_SgModifierType: return newValue(static_cast<SgModifierType *>(t)->get_base_type(), pos, ctx);
           case V_SgTypeBool: return ValueP(new BoolValue(pos, shared_from_this()));
           case V_SgTypeChar: return ValueP(new CharValue(pos, shared_from_this()));
           case V_SgTypeDouble: return ValueP(new DoubleValue(pos, shared_from_this()));
           case V_SgTypeFloat: return ValueP(new FloatValue(pos, shared_from_this()));
+          case V_SgEnumType:
           case V_SgTypeInt: return ValueP(new IntValue(pos, shared_from_this()));
           case V_SgTypeLongDouble: return ValueP(new LongDoubleValue(pos, shared_from_this()));
           case V_SgTypeLong: return ValueP(new LongIntValue(pos, shared_from_this()));
@@ -1025,9 +1295,9 @@ ValueP StackFrame::newValue(SgType *t, Position pos, bool isParam)
           case V_SgTypeUnsignedLongLong: return ValueP(new UnsignedLongLongIntValue(pos, shared_from_this()));
           case V_SgTypeUnsignedLong: return ValueP(new UnsignedLongValue(pos, shared_from_this()));
           case V_SgTypeUnsignedShort: return ValueP(new UnsignedShortValue(pos, shared_from_this()));
-          case V_SgClassType: return ValueP(new CompoundValue(isSgClassType(t), pos, shared_from_this()));
-          case V_SgArrayType: if (!isParam) return newArray(isSgArrayType(t), pos);
-                                   /* else fallthrough */
+          case V_SgClassType: return newClassValue(isSgClassType(t), pos);
+          case V_SgArrayType: return newArray(isSgArrayType(t), pos, ctx);
+          case V_SgTypeString:
           case V_SgPointerType: return ValueP(new PointerValue(pos, shared_from_this()));
           default: throw InterpError("Unable to create a new value of type " + t->class_name());
         }
@@ -1044,11 +1314,17 @@ bool StackFrame::isGlobalVar(SgInitializedName *var)
      return isSgGlobal(varScope) || isSgNamespaceDefinitionStatement(varScope);
    }
 
+ValueP StackFrame::evalVarRefExp(ValueP symTabEntry, SgType *apt)
+   {
+     return symTabEntry;
+   }
+
 ValueP StackFrame::evalVarRefExp(SgVarRefExp *vr)
    {
      SgVariableSymbol *sym = vr->get_symbol();
      SgInitializedName *in = sym->get_declaration();
-     if (isSgClassDefinition(in->get_scope()) && !in->get_storageModifier().isStatic())
+     SgClassDefinition *clsDef = isSgClassDefinition(in->get_scope());
+     if (clsDef && !in->get_storageModifier().isStatic())
         {
        // a non-static member variable
           return ValueP(new NonstaticFieldValue(sym, PTemp, shared_from_this()));
@@ -1057,15 +1333,16 @@ ValueP StackFrame::evalVarRefExp(SgVarRefExp *vr)
         {
        // static, local or global variable
           varBindings_t::const_iterator vari = localVarBindings.find(sym);
-          if (vari != localVarBindings.end()) return vari->second;
+          if (vari != localVarBindings.end()) return evalVarRefExp(vari->second, vr->get_type());
           varBindings_t &globalVarBindings = currentInterp->globalVarBindings;
           vari = globalVarBindings.find(sym);
-          if (vari != globalVarBindings.end()) return vari->second;
+          if (vari != globalVarBindings.end()) return evalVarRefExp(vari->second, vr->get_type());
           bool isGlobal = isGlobalVar(sym->get_declaration());
+          cout << "Oh no, magic happened (sym = " << sym << ", name = " << sym->get_name().getString() << ", isGlobal = " << isGlobal << ")" << endl;
           varBindings_t &thisVarBindings = isGlobal ? globalVarBindings : localVarBindings;
           ValueP newVal = newValue(sym->get_type(), isGlobal ? PGlob : PStack);
           thisVarBindings[sym] = newVal;
-          return newVal;
+          return evalVarRefExp(newVal, vr->get_type());
         }
    }
 
@@ -1093,6 +1370,7 @@ Interpretation::Interpretation()
 void Interpretation::registerBuiltinFns(builtins_t &builtins)
    {
      builtins["::memcpy"] = ValueP(new memcpyFnValue(PGlob, StackFrameP()));
+     builtins["::memcmp"] = ValueP(new memcmpFnValue(PGlob, StackFrameP()));
      builtins["::memset"] = ValueP(new memsetFnValue(PGlob, StackFrameP()));
    }
 
@@ -1111,7 +1389,7 @@ ValueP StackFrame::evalPointerDerefExp(SgExpression *opd)
 
 ValueP StackFrame::evalAddressOfOp(SgExpression *opd)
    {
-     return ValueP(new PointerValue(evalExpr(opd), PTemp, shared_from_this()));
+     return ValueP(new PointerValue(evalExpr(opd, false), PTemp, shared_from_this()));
    }
 
 ValueP StackFrame::evalCastExp(SgExpression *opd, SgType *toType)
@@ -1139,9 +1417,14 @@ ValueP PointerValue::evalCastExp(ValueP fromVal, SgType *fromType, SgType *toTyp
           setTarget(ValueP());
           return shared_from_this();
         }
-     else
+     else if ((!isSgPointerType(fromType) && !isSgArrayType(fromType) && !isSgTypeString(fromType))
+           || (!isSgPointerType(toType)   && !isSgArrayType(toType)   && !isSgTypeString(toType)))
         {
           return Value::evalCastExp(fromVal, fromType, toType);
+        }
+     else
+        {
+          return fromVal;
         }
    }
 
@@ -1150,7 +1433,7 @@ ValueP StackFrame::evalAssignOp(SgExpression *lhs, SgExpression *rhs)
      return evalExpr(lhs)->assign(evalExpr(rhs), lhs->get_type(), rhs->get_type());
    }
 
-static size_t sageOffsetOf(ValueP val, SgClassType *apt, SgVariableSymbol *field)
+static size_t sageOffsetOf(ValueP val, SgClassType *apt, SgSymbol *field)
    {
      if (val)
         {
@@ -1165,7 +1448,11 @@ static size_t sageOffsetOf(ValueP val, SgClassType *apt, SgVariableSymbol *field
              }
         }
      const StructLayoutInfo &info = typeLayout(apt);
-     SgInitializedName *fieldDecl = field->get_declaration();
+     SgNode *fieldDecl;
+     if (SgVariableSymbol *vs = isSgVariableSymbol(field))
+          fieldDecl = vs->get_declaration();
+     else if (SgClassSymbol *cs = isSgClassSymbol(field))
+          fieldDecl = cs->get_declaration()->get_definingDeclaration();
      for (std::vector<StructLayoutEntry>::const_iterator fieldI = info.fields.begin(); fieldI != info.fields.end(); ++fieldI)
         {
           if (fieldI->decl == fieldDecl)
@@ -1198,14 +1485,96 @@ ValueP NonstaticFunctionValue::evalDotExp(ValueP lhs, SgType *lhsApt) const
      return ValueP(new ThisNonstaticFunctionValue(lhs, lhsApt, symbol, PTemp, owner));
    }
 
+ValueP offsetValueOf(ValueP lhs, SgClassType *lhsApt, SgSymbol *symbol)
+   {
+     SgClassDefinition *symcdef = isSgClassDefinition(symbolScope(symbol));
+     ROSE_ASSERT(symcdef != NULL);
+     SgClassDeclaration *symcdecl = symcdef->get_declaration();
+     ValueP base;
+     bool isDirect = false;
+     if (isBaseClassOf(symcdecl, static_cast<SgClassDeclaration *>(lhsApt->get_declaration())))
+        {
+          base = lhs;
+          isDirect = true;
+        }
+     else
+        {
+          SgSymbol *symcsym = symcdecl->search_for_symbol_from_symbol_table();
+          base = offsetValueOf(lhs, lhsApt, symcsym);
+        }
+     ValueP val;
+     switch (symcdecl->get_class_type())
+        {
+          case SgClassDeclaration::e_union:
+             val = ValueP(new UnionDiscriminantValue(base, symbol));
+             break;
+          default:
+             size_t offset = sageOffsetOf(isDirect ? lhs : ValueP(), symcdecl->get_type(), symbol);
+             val = ValueP(new OffsetValue(base, offset));
+             break;
+        }
+#if 0
+     if (symbol->get_type()->stripTypedefsAndModifiers()->variantT() == V_SgArrayType)
+        {
+          val = ValueP(new PointerValue(val, PTemp, val->owner));
+        }
+#endif
+     return val;
+   }
+
 ValueP NonstaticFieldValue::evalDotExp(ValueP lhs, SgType *lhsApt) const
    {
+#if 0
      SgClassType *lhsAptCls = isSgClassType(lhsApt->stripTypedefsAndModifiers());
      ROSE_ASSERT(lhsAptCls != NULL);
      size_t offset = sageOffsetOf(lhs, lhsAptCls, symbol);
      return ValueP(new OffsetValue(lhs, offset));
+#endif
+     SgClassType *lhsAptCls = isSgClassType(lhsApt->stripTypedefsAndModifiers());
+     ROSE_ASSERT(lhsAptCls != NULL);
+     return offsetValueOf(lhs, lhsAptCls, symbol);
    }
 
+string UnionDiscriminantValue::show() const
+   {
+     return "{" + discriminant->get_name().getString() + " -> " + base->show() + "}";
+   }
+
+size_t UnionDiscriminantValue::forwardValidity() const
+   {
+     return base->forwardValidity();
+   }
+
+size_t UnionDiscriminantValue::backwardValidity() const
+   {
+     return base->backwardValidity();
+   }
+
+/* This will lead to O(2^n) calls to setDiscriminantAtOffset, more than we need but this
+   ensures that the calls arrive in the correct order. */
+void UnionDiscriminantValue::setDiscriminantAtOffset(size_t offset, SgSymbol *discriminant)
+   {
+     base->setDiscriminantAtOffset(0, this->discriminant);
+     base->setDiscriminantAtOffset(offset, discriminant);
+   }
+
+const_ValueP UnionDiscriminantValue::fieldAtOffset(size_t offset) const
+   {
+     base->setDiscriminant(discriminant);
+     return base->fieldAtOffset(offset);
+   }
+
+ValueP UnionDiscriminantValue::fieldAtOffset(size_t offset)
+   {
+     base->setDiscriminant(discriminant);
+     return base->fieldAtOffset(offset);
+   }
+
+void UnionDiscriminantValue::forEachSubfield(FieldVisitor &visit, long offset)
+   {
+     base->setDiscriminant(discriminant);
+     base->forEachSubfield(visit, offset);
+   }
 
 string BuiltinFunctionValue::show() const { return "<<built-in function " + functionName() + ">>"; }
 
@@ -1215,6 +1584,13 @@ ValueP BuiltinFunctionValue::primAssign(const_ValueP rhs, SgType *lhsApt, SgType
    }
 
 size_t BuiltinFunctionValue::forwardValidity() const { return 1; }
+
+bool BuiltinFunctionValue::valid() const { return true; }
+
+void BuiltinFunctionValue::destroy()
+   {
+     throw InterpError("Cannot destroy a function");
+   }
 
 string memcpyFnValue::functionName() const { return "memcpy"; }
 
@@ -1247,6 +1623,48 @@ ValueP memcpyFnValue::call(SgFunctionType *fnType, const std::vector<ValueP> &ar
      destArea->forEachPrim(pc);
 
      return ValueP();
+   }
+
+string memcmpFnValue::functionName() const { return "memcmp"; }
+
+ValueP memcmpFnValue::call(SgFunctionType *fnType, const std::vector<ValueP> &args) const
+   {
+     if (args.size() != 3)
+        {
+          throw InterpError("Function memcmp called with incorrect arity");
+        }
+     ValueP s1Ptr = args[0], s2Ptr = args[1], nVal = args[2];
+     ValueP s1Area = s1Ptr->dereference(), s2Area = s2Ptr->dereference();
+     
+     size_t n = getConcreteValueF<size_t>::f(nVal);
+
+     struct PrimComp : FieldVisitor
+        {
+          ValueP s2Area;
+          size_t n;
+          int result;
+          PrimComp(ValueP s2Area, size_t n) : s2Area(s2Area), n(n), result(0) {}
+          void operator()(long offset, ValueP s1Prim)
+             {
+               if (result != 0) return;
+               if (offset < 0 || offset >= long(n)) return;
+               ValueP s2Offset (new OffsetValue(s2Area, offset));
+               SgType *s1Type = s1Prim->defaultType();
+               if (s1Prim->evalLessThanOp(s2Offset, s1Type, s1Type)->getConcreteValueInt())
+                  {
+                    result = -1;
+                  }
+               else if (s1Prim->evalGreaterThanOp(s2Offset, s1Type, s1Type)->getConcreteValueInt())
+                  {
+                    result = 1;
+                  }
+             }
+        };
+
+     PrimComp pc(s2Area, n);
+     s1Area->forEachPrim(pc);
+
+     return ValueP(new IntValue(pc.result, PTemp, owner));
    }
 
 string memsetFnValue::functionName() const { return "memset"; }
@@ -1293,14 +1711,14 @@ ValueP memsetFnValue::call(SgFunctionType *fnType, const std::vector<ValueP> &ar
 
 ValueP StackFrame::evalDotExp(SgExpression *lhs, SgExpression *rhs)
    {
-     return evalExpr(rhs)->evalDotExp(evalExpr(lhs), lhs->get_type());
+     return evalExpr(rhs, false)->evalDotExp(evalExpr(lhs), lhs->get_type());
    }
 
 ValueP StackFrame::evalArrowExp(SgExpression *lhs, SgExpression *rhs)
    {
      SgPointerType *lhsPtrType = isSgPointerType(lhs->get_type()->stripTypedefsAndModifiers());
      ROSE_ASSERT(lhsPtrType != NULL);
-     return evalExpr(rhs)->evalDotExp(evalExpr(lhs)->dereference(), lhsPtrType->get_base_type());
+     return evalExpr(rhs, false)->evalDotExp(evalExpr(lhs)->dereference(), lhsPtrType->get_base_type());
    }
 
 ValueP StackFrame::evalPntrArrRefExp(SgExpression *lhs, SgExpression *rhs)
@@ -1313,14 +1731,15 @@ ValueP StackFrame::evalFunctionCallExp(SgFunctionCallExp *fnCall)
      SgExpression *fn = fnCall->get_function();
      ValueP fnVal = evalExpr(fn);
      SgExprListExp *args = fnCall->get_args();
-     vector<ValueP> argVals = evalExprListExp(args);
+     SgFunctionType *fnType = isSgFunctionType(fn->get_type()->stripTypedefsAndModifiers());
+     vector<ValueP> argVals = evalExprListExp(args, &fnType->get_arguments());
      try
         {
-          return fnVal->call(isSgFunctionType(fn->get_type()->stripTypedefsAndModifiers()), argVals);
+          return fnVal->call(fnType, argVals);
         }
      catch (InterpError &ie)
         {
-          ie.callStack.push_back(NULL);
+          ie.callStack.push_back(InterpError::Frame(shared_from_this(), NULL));
           throw;
         }
    }
@@ -1331,13 +1750,43 @@ ValueP Value::call(SgFunctionType *fnType, const vector<ValueP> &argVals) const
      return down->interpFunction(argVals);
    }
 
-vector<ValueP> StackFrame::evalExprListExp(SgExprListExp *exprList)
+vector<ValueP> StackFrame::evalExprListExp(SgExprListExp *exprList, SgTypePtrList *types)
    {
      const SgExpressionPtrList &exprs = exprList->get_expressions();
+     SgTypePtrList::const_iterator typeI;
+     if (types)
+        {
+          if (types->size() == 0)
+             {
+            // K&R prototype, no casting possible
+               types = 0;
+             }
+          else
+             {
+            // Won't work for varargs
+            // ROSE_ASSERT(exprs.size() == types->size());
+               typeI = types->begin();
+             }
+        }
      vector<ValueP> exprVals;
      for (SgExpressionPtrList::const_iterator exprI = exprs.begin(); exprI != exprs.end(); ++exprI)
         {
-          exprVals.push_back(evalExpr(*exprI));
+          ValueP exprVal = evalExpr(*exprI);
+          if (types)
+             {
+               ROSE_ASSERT(typeI != types->end());
+               if ((*typeI)->variantT() == V_SgTypeEllipse)
+                  {
+                    types = 0;
+                  }
+               else if ((*exprI)->get_type() != *typeI)
+                  {
+                    ValueP castExprVal = newValue(*typeI, PTemp);
+                    exprVal = castExprVal->evalCastExp(exprVal, (*exprI)->get_type(), *typeI);
+                  }
+               ++typeI;
+             }
+          exprVals.push_back(exprVal);
         }
      return exprVals;
    }
@@ -1376,13 +1825,15 @@ ValueP StackFrame::evalMinusMinusOp(SgExpression *opd, SgUnaryOp::Sgop_mode mode
 #define DEFINE_STACKFRAME_EVALUNOP(op,opname) \
 ValueP StackFrame::eval##opname(SgExpression *opd) \
    { \
-     return evalExpr(opd)->eval##opname(opd->get_type()); \
+     ValueP opdVal = evalExpr(opd); \
+     return opdVal->eval##opname(opd->get_type()); \
    }
 
 #define DEFINE_STACKFRAME_EVALBINOP(op,opname) \
 ValueP StackFrame::eval##opname(SgExpression *lhs, SgExpression *rhs) \
    { \
-     return evalExpr(lhs)->eval##opname(evalExpr(rhs), lhs->get_type(), rhs->get_type()); \
+     ValueP lhsVal = evalExpr(lhs), rhsVal = evalExpr(rhs); \
+     return lhsVal->eval##opname(rhsVal, lhs->get_type(), rhs->get_type()); \
    }
 
 #define DEFINE_STACKFRAME_SC_EVALBINOP(op,opname,sctype) \
@@ -1394,7 +1845,7 @@ ValueP StackFrame::eval##opname(SgExpression *lhs, SgExpression *rhs) \
         { \
           throw InterpError("LHS of operator " #op " returned value of incorrect type (must be bool or int)"); \
         } \
-     if (!lhsPrim->valid || lhsPrim->getConcreteValueInt() == sctype) return lhsEval; \
+     if (!lhsPrim->valid() || lhsPrim->getConcreteValueInt() == sctype) return lhsEval; \
      return evalExpr(rhs); \
    }
 
@@ -1504,35 +1955,77 @@ ValueP StackFrame::evalConditionalExp(SgConditionalExp *condExp)
         }
    }
 
-ValueP StackFrame::evalExpr(SgExpression *expr)
+ValueP StackFrame::evalVarArgStartOp(SgVarArgStartOp *vaStart)
    {
-     if (SgUnaryOp *unOp = isSgUnaryOp(expr)) return evalUnaryOp(unOp);
-     if (SgBinaryOp *binOp = isSgBinaryOp(expr)) return evalBinaryOp(binOp);
-     switch (expr->variantT())
+     SgExpression *vaListExp = vaStart->get_lhs_operand();
+     ValueP vaListVal = evalExpr(vaListExp);
+     ValueP myVaList (new VAListValue(vaList, PTemp, shared_from_this()));
+     vaListVal->assign(myVaList, vaListExp->get_type(), vaListExp->get_type());
+     return ValueP();
+   }
+
+ValueP StackFrame::evalVarArgOp(SgVarArgOp *vaArg)
+   {
+     SgExpression *vaListExp = vaArg->get_operand_expr();
+     ValueP vaListVal = evalExpr(vaListExp);
+     return vaListVal->evalVarArgOp(vaArg->get_expression_type());
+   }
+
+ValueP StackFrame::evalVarArgEndOp(SgVarArgEndOp *vaEnd)
+   {
+     SgExpression *vaListExp = vaEnd->get_operand_expr();
+     ValueP vaListVal = evalExpr(vaListExp);
+     vaListVal->evalVarArgEndOp();
+     return ValueP();
+   }
+
+ValueP StackFrame::evalExpr(SgExpression *expr, bool arrPtrConv)
+   {
+     ValueP val;
+     if (SgUnaryOp *unOp = isSgUnaryOp(expr)) val = evalUnaryOp(unOp);
+     else if (SgBinaryOp *binOp = isSgBinaryOp(expr)) val = evalBinaryOp(binOp);
+     else switch (expr->variantT())
         {
-          case V_SgBoolValExp: return evalPrimExpr<BoolValue, SgBoolValExp>(expr);
-          case V_SgCharVal: return evalPrimExpr<CharValue, SgCharVal>(expr);
-          case V_SgDoubleVal: return evalPrimExpr<DoubleValue, SgDoubleVal>(expr);
-          case V_SgFloatVal: return evalPrimExpr<FloatValue, SgFloatVal>(expr);
-          case V_SgIntVal: return evalPrimExpr<IntValue, SgIntVal>(expr);
-          case V_SgLongDoubleVal: return evalPrimExpr<LongDoubleValue, SgLongDoubleVal>(expr);
-          case V_SgLongIntVal: return evalPrimExpr<LongIntValue, SgLongIntVal>(expr);
-          case V_SgLongLongIntVal: return evalPrimExpr<LongLongIntValue, SgLongLongIntVal>(expr);
-          case V_SgShortVal: return evalPrimExpr<ShortValue, SgShortVal>(expr);
-          case V_SgStringVal: return evalStringVal(isSgStringVal(expr));
-          case V_SgUnsignedCharVal: return evalPrimExpr<UnsignedCharValue, SgUnsignedCharVal>(expr);
-          case V_SgUnsignedIntVal: return evalPrimExpr<UnsignedIntValue, SgUnsignedIntVal>(expr);
-          case V_SgUnsignedLongLongIntVal: return evalPrimExpr<UnsignedLongLongIntValue, SgUnsignedLongLongIntVal>(expr);
-          case V_SgUnsignedLongVal: return evalPrimExpr<UnsignedLongValue, SgUnsignedLongVal>(expr);
-          case V_SgUnsignedShortVal: return evalPrimExpr<UnsignedShortValue, SgUnsignedShortVal>(expr);
-          case V_SgVarRefExp: return evalVarRefExp(isSgVarRefExp(expr));
-          case V_SgFunctionRefExp: return evalFunctionRefExp(isSgFunctionRefExp(expr)->get_symbol());
-          case V_SgMemberFunctionRefExp: return evalMemberFunctionRefExp(isSgMemberFunctionRefExp(expr)->get_symbol());
-          case V_SgFunctionCallExp: return evalFunctionCallExp(isSgFunctionCallExp(expr));
-          case V_SgThisExp: return evalThisExp();
-          case V_SgConditionalExp: return evalConditionalExp(isSgConditionalExp(expr));
+          case V_SgBoolValExp: val = evalPrimExpr<BoolValue, SgBoolValExp>(expr); break;
+          case V_SgCharVal: val = evalPrimExpr<CharValue, SgCharVal>(expr); break;
+          case V_SgDoubleVal: val = evalPrimExpr<DoubleValue, SgDoubleVal>(expr); break;
+          case V_SgEnumVal: val = evalPrimExpr<IntValue, SgEnumVal>(expr); break;
+          case V_SgFloatVal: val = evalPrimExpr<FloatValue, SgFloatVal>(expr); break;
+          case V_SgIntVal: val = evalPrimExpr<IntValue, SgIntVal>(expr); break;
+          case V_SgLongDoubleVal: val = evalPrimExpr<LongDoubleValue, SgLongDoubleVal>(expr); break;
+          case V_SgLongIntVal: val = evalPrimExpr<LongIntValue, SgLongIntVal>(expr); break;
+          case V_SgLongLongIntVal: val = evalPrimExpr<LongLongIntValue, SgLongLongIntVal>(expr); break;
+          case V_SgShortVal: val = evalPrimExpr<ShortValue, SgShortVal>(expr); break;
+          case V_SgStringVal: val = evalStringVal(isSgStringVal(expr)); break;
+          case V_SgUnsignedCharVal: val = evalPrimExpr<UnsignedCharValue, SgUnsignedCharVal>(expr); break;
+          case V_SgUnsignedIntVal: val = evalPrimExpr<UnsignedIntValue, SgUnsignedIntVal>(expr); break;
+          case V_SgUnsignedLongLongIntVal: val = evalPrimExpr<UnsignedLongLongIntValue, SgUnsignedLongLongIntVal>(expr); break;
+          case V_SgUnsignedLongVal: val = evalPrimExpr<UnsignedLongValue, SgUnsignedLongVal>(expr); break;
+          case V_SgUnsignedShortVal: val = evalPrimExpr<UnsignedShortValue, SgUnsignedShortVal>(expr); break;
+          case V_SgVarRefExp: val = evalVarRefExp(isSgVarRefExp(expr)); break;
+          case V_SgFunctionRefExp: val = evalFunctionRefExp(isSgFunctionRefExp(expr)->get_symbol()); break;
+          case V_SgMemberFunctionRefExp: val = evalMemberFunctionRefExp(isSgMemberFunctionRefExp(expr)->get_symbol()); break;
+          case V_SgFunctionCallExp: val = evalFunctionCallExp(isSgFunctionCallExp(expr)); break;
+          case V_SgThisExp: val = evalThisExp(); break;
+          case V_SgConditionalExp: val = evalConditionalExp(isSgConditionalExp(expr)); break;
+          case V_SgNullExpression: val = ValueP(); break;
+          case V_SgVarArgStartOp: val = evalVarArgStartOp(isSgVarArgStartOp(expr)); break;
+          case V_SgVarArgOp: val = evalVarArgOp(isSgVarArgOp(expr)); break;
+          case V_SgVarArgEndOp: val = evalVarArgEndOp(isSgVarArgEndOp(expr)); break;
           default: throw InterpError("unhandled expression " + expr->class_name() + " encountered");
         }
+     // The SAGE IR does not explicitly represent array-to-pointer conversion.
+     // C99 6.3.2.1 para 3 gives the rules for this type of conversion, and
+     // arrPtrConv is set in those circumstances requiring a conversion.
+     if (arrPtrConv)
+        {
+          SgType *exprType = expr->get_type()->stripTypedefsAndModifiers();
+          if (exprType->variantT() == V_SgArrayType)
+             {
+               return ValueP(new PointerValue(val, PTemp, shared_from_this()));
+             }
+        }
+     return val;
    }
 
 void StackFrame::destroyScope(blockScopeVars_t &scope)
@@ -1557,7 +2050,7 @@ void StackFrame::destroyScope(blockScopeVars_t &scope)
 
 struct StackFrame::BasicBlockStackFrame : BlockStackFrame
      {
-       BasicBlockStackFrame(BlockStackFrameP up, StackFrameP sf, SgBasicBlock *bb) : BlockStackFrame(up, sf, bb), stmts(bb->get_statements()), stmtI(stmts.begin()) {}
+       BasicBlockStackFrame(BlockStackFrameP up, StackFrameP sf, SgBasicBlock *bb, SgStatementPtrList::iterator *stmtI = NULL) : BlockStackFrame(up, sf, bb), stmts(bb->get_statements()), stmtI(stmtI ? *stmtI : stmts.begin()) {}
 
        SgStatementPtrList &stmts;
        SgStatementPtrList::iterator stmtI;
@@ -1577,19 +2070,20 @@ void StackFrame::evalBasicBlock(SgBasicBlock *bb, BlockStackFrameP &curFrame)
      curFrame = BlockStackFrameP(new BasicBlockStackFrame(curFrame, shared_from_this(), bb));
    }
 
-void StackFrame::assignInitialize(ValueP var, SgExpression *rhs)
+void StackFrame::assignInitialize(ValueP var, SgExpression *rhs, SgType *varApt, bool isStatic)
    {
-     var->assign(evalExpr(rhs), rhs->get_type(), rhs->get_type());
+     // TODO: special handling for SgStringVals.  See C99 6.3.2.1p3
+     var->assign(evalExpr(rhs), varApt, rhs->get_type());
    }
 
-void StackFrame::ctorInitialize(ValueP var, SgConstructorInitializer *ctorInit)
+void StackFrame::ctorInitialize(ValueP var, SgConstructorInitializer *ctorInit, SgType *varApt, bool isStatic)
    {
-     vector<ValueP> argVals = evalExprListExp(ctorInit->get_args());
-     StackFrameP down = newStackFrame(isSgFunctionSymbol(ctorInit->get_declaration()->get_symbol_from_symbol_table()), var);
+     vector<ValueP> argVals = evalExprListExp(ctorInit->get_args(), &ctorInit->get_declaration()->get_type()->get_arguments());
+     StackFrameP down = newStackFrame(isSgFunctionSymbol(ctorInit->get_declaration()->search_for_symbol_from_symbol_table()), var);
      down->interpFunction(argVals);
    }
 
-void StackFrame::aggregateInitialize(ValueP var, SgAggregateInitializer *aggInit)
+void StackFrame::aggregateInitialize(ValueP var, SgAggregateInitializer *aggInit, SgType *varApt, bool isStatic)
    {
      SgType *initType = aggInit->get_type()->stripTypedefsAndModifiers();
      SgExpressionPtrList &inits = aggInit->get_initializers()->get_expressions();
@@ -1597,68 +2091,139 @@ void StackFrame::aggregateInitialize(ValueP var, SgAggregateInitializer *aggInit
         {
           SgType *elemType = at->get_base_type();
           const StructLayoutInfo &info = typeLayout(elemType);
-          size_t ofs = 0;
-          for (SgExpressionPtrList::const_iterator i = inits.begin(); i != inits.end(); ++i, ofs += info.size)
+          size_t ofs = 0, defaultElemCount;
+          if (SgUnsignedLongVal *idxUL = isSgUnsignedLongVal(at->get_index()))
+               defaultElemCount = idxUL->get_value();
+          else if (SgIntVal *idxI = isSgIntVal(at->get_index()))
+               defaultElemCount = idxI->get_value();
+          else
+               throw InterpError("Array size not constant");
+          for (SgExpressionPtrList::const_iterator i = inits.begin(); i != inits.end(); ++i, ofs += info.size, --defaultElemCount)
              {
                SgInitializer *init = isSgInitializer(*i);
                ROSE_ASSERT(init != NULL);
                // TODO: handle SgDesignatedInitializers
-               ValueP ofsVal (new OffsetValue(var->dereference(), ofs));
-               initialize(ofsVal, init);
+               ValueP ofsVal (new OffsetValue(var, ofs));
+               initialize(var->fieldAtOffset(ofs), init, elemType, isStatic);
+             }
+          for (; defaultElemCount != 0; ofs += info.size, --defaultElemCount)
+             {
+               defaultInitialize(var->fieldAtOffset(ofs), isStatic);
              }
         }
      else if (SgClassType *ct = isSgClassType(initType))
         {
-          const StructLayoutInfo &info = typeLayout(ct);
-               vector<StructLayoutEntry>::const_iterator si = info.fields.begin();
-          for (SgExpressionPtrList::const_iterator ei = inits.begin(); si != info.fields.end() && ei != inits.end(); ++si, ++ei)
+          if (isSgClassDeclaration(ct->get_declaration())->get_class_type() == SgClassDeclaration::e_union)
              {
-               SgInitializer *init = isSgInitializer(*ei);
-               ROSE_ASSERT(init != NULL);
-               // TODO: handle SgDesignatedInitializers
-               ValueP ofsVal (new OffsetValue(var, si->byteOffset));
-               initialize(ofsVal, init);
+            // initialize "the first named member of a union" (C99 6.7.8p17)
+               SgVariableSymbol *vs = firstNamedMember(ct);
+               ROSE_ASSERT(vs != NULL);
+               var->setDiscriminant(vs);
+               SgInitializer *init = isSgInitializer(inits.front());
+               initialize(var->fieldAtOffset(0), init, vs->get_type(), isStatic);
+             }
+          else
+             {
+               const StructLayoutInfo &info = typeLayout(ct);
+               vector<StructLayoutEntry>::const_iterator si = info.fields.begin();
+               for (SgExpressionPtrList::const_iterator ei = inits.begin(); si != info.fields.end() && ei != inits.end(); ++si, ++ei)
+                  {
+                    while (si != info.fields.end() && si->decl == NULL) ++si;
+                    if (si == info.fields.end()) break;
+                    SgInitializer *init = isSgInitializer(*ei);
+                    ROSE_ASSERT(init != NULL);
+                 // TODO: handle SgDesignatedInitializers
+                    initialize(var->fieldAtOffset(si->byteOffset), init, fieldType(si->decl), isStatic);
+                  }
+               for(; si != info.fields.end(); ++si)
+                  {
+                    while (si != info.fields.end() && si->decl == NULL) ++si;
+                    if (si == info.fields.end()) break;
+                    defaultInitialize(var->fieldAtOffset(si->byteOffset), isStatic);
+                  }
              }
         }
    }
 
-void StackFrame::initialize(ValueP var, SgInitializer *init)
+void Value::assignDefault()
+   {
+     throw InterpError("This type of value does not support being assigned to the default value.");
+   }
+
+void PointerValue::assignDefault()
+   {
+     target = ValueP();
+     isValid = true;
+   }
+
+void CompoundValue::assignDefault()
+   {
+     for (fieldMap_t::const_iterator fieldI = fields.begin(); fieldI != fields.end(); ++fieldI)
+        {
+          fieldI->second->assignDefault();
+        }
+   }
+
+void UnionValue::assignDefault()
+   {
+     setDiscriminant(firstNamedMember(unionType));
+     storage->assignDefault();
+   }
+
+void StackFrame::defaultInitialize(ValueP var, bool isStatic)
+   {
+  // TODO: look up a 0-arg ctor for this object
+
+     if (isStatic)
+        {
+          var->assignDefault();
+        }
+   }
+
+void StackFrame::initialize(ValueP var, SgInitializer *init, SgType *varApt, bool isStatic)
    {
      if (init)
         {
           switch (init->variantT())
              {
-               case V_SgAssignInitializer: assignInitialize(var, isSgAssignInitializer(init)->get_operand()); break;
-               case V_SgConstructorInitializer: ctorInitialize(var, isSgConstructorInitializer(init)); break;
-               case V_SgAggregateInitializer: aggregateInitialize(var, isSgAggregateInitializer(init)); break;
+               case V_SgAssignInitializer: assignInitialize(var, isSgAssignInitializer(init)->get_operand(), varApt, isStatic); break;
+               case V_SgConstructorInitializer: ctorInitialize(var, isSgConstructorInitializer(init), varApt, isStatic); break;
+               case V_SgAggregateInitializer: aggregateInitialize(var, isSgAggregateInitializer(init), varApt, isStatic); break;
                default: cerr << "StackFrame::initialize: unrecognized initializer " << init->class_name() << endl; break;
              }
         }
      else
         {
-          // TODO: call the default initializer
+          defaultInitialize(var, isStatic);
         }
    }
 
-ValueP StackFrame::evalInitializedName(SgInitializedName *var, blockScopeVars_t &blockScope)
+ValueP StackFrame::evalInitializedName(SgInitializedName *var, blockScopeVars_t &blockScope, varBindings_t &varBindings, bool isStatic)
    {
-     SgVariableSymbol *sym = isSgVariableSymbol(var->get_symbol_from_symbol_table());
+     SgVariableSymbol *sym = isSgVariableSymbol(var->search_for_symbol_from_symbol_table());
      ROSE_ASSERT(sym != NULL);
      SgInitializer *init = var->get_initializer();
-     ValueP binding = newValue(var->get_type(), PStack);
-     initialize(binding, init);
-     localVarBindings[sym] = binding;
+     SgType *varType = var->get_type();
+     if (isSgArrayType(varType) && init) // in this case, var may have an incomplete array type
+                                         // which we need to replace with the complete type
+                                         // from the initializer
+        {
+          varType = init->get_type();
+        }
+     ValueP binding = newValue(varType, PStack);
+     initialize(binding, init, var->get_type(), isStatic);
+     varBindings[sym] = binding;
      blockScope.push_back(sym);
      return binding;
    }
 
-ValueP StackFrame::evalVariableDecl(SgVariableDeclaration *vdec, blockScopeVars_t &blockScope)
+ValueP StackFrame::evalVariableDecl(SgVariableDeclaration *vdec, blockScopeVars_t &blockScope, varBindings_t &varBindings, bool isStatic)
    {
      SgInitializedNamePtrList &vars = vdec->get_variables();
      ValueP rv;
      for (SgInitializedNamePtrList::iterator varI = vars.begin(); varI != vars.end(); ++varI)
         {
-          rv = evalInitializedName(*varI, blockScope);
+          rv = evalInitializedName(*varI, blockScope, varBindings, isStatic);
         }
      return rv;
    }
@@ -1762,6 +2327,74 @@ void StackFrame::evalReturnStmt(SgReturnStmt *retStmt, BlockStackFrameP &curFram
      } while (curFrame.get());
    }
 
+struct StackFrame::SwitchBlockStackFrame : public BlockStackFrame
+     {
+       SwitchBlockStackFrame(BlockStackFrameP up, StackFrameP sf, SgScopeStatement *scope) :
+               BlockStackFrame(up, sf, scope) {}
+
+       BlockStackFrameP doBreak()
+          {
+            destroyScope();
+            return up;
+          }
+
+     };
+
+/*
+ * Note: case statements may appear in places other than the top-level basic block of the
+ * switch statement (e.g. see Duff's device).  This code does not handle such cases.
+ */
+void StackFrame::evalSwitchStatement(SgSwitchStatement *switchStmt, BlockStackFrameP &curFrame)
+   {
+     curFrame = BlockStackFrameP(new SwitchBlockStackFrame(curFrame, shared_from_this(), switchStmt));
+     ValueP selectorVal = evalStmtAsExpr(switchStmt->get_item_selector(), curFrame->scopeVars);
+     unsigned long long selectorULL = selectorVal->getConcreteValueUnsignedLongLong();
+
+     SgBasicBlock *bodyBB = isSgBasicBlock(switchStmt->get_body());
+     if (bodyBB == NULL)
+        throw InterpError("StackFrame::evalSwitchStatement: expected a SgBasicBlock body, found a " + bodyBB->class_name());
+
+     SgStatementPtrList &stmts = bodyBB->get_statements();
+     SgStatementPtrList::iterator nextStmtI = stmts.end(), defaultStmtI = stmts.end();
+     for (SgStatementPtrList::iterator curStmtI = stmts.begin();
+          nextStmtI == stmts.end() && curStmtI != stmts.end(); ++curStmtI)
+        {
+          SgStatement *curStmt = *curStmtI;
+          switch (curStmt->variantT())
+             {
+               case V_SgDefaultOptionStmt: defaultStmtI = curStmtI; break;
+               case V_SgCaseOptionStmt:
+                 {
+                   SgCaseOptionStmt *optStmt = isSgCaseOptionStmt(curStmt);
+                   ValueP keyVal = evalExpr(optStmt->get_key());
+                   if (keyVal->getConcreteValueUnsignedLongLong() == selectorULL)
+                      {
+                        nextStmtI = curStmtI;
+                      }
+                   break;
+                 }
+               default: break;
+             }
+        }
+     if (nextStmtI == stmts.end())
+          nextStmtI = defaultStmtI;
+
+     if (nextStmtI != stmts.end())
+        {
+          curFrame = BlockStackFrameP(new BasicBlockStackFrame(curFrame, shared_from_this(), bodyBB, &nextStmtI));
+        }
+   }
+
+void StackFrame::evalCaseOptionStmt(SgCaseOptionStmt *caseOptStmt, BlockStackFrameP &curFrame)
+   {
+     evalStmt(caseOptStmt->get_body(), curFrame);
+   }
+
+void StackFrame::evalDefaultOptionStmt(SgDefaultOptionStmt *defaultOptStmt, BlockStackFrameP &curFrame)
+   {
+     evalStmt(defaultOptStmt->get_body(), curFrame);
+   }
+
 void StackFrame::evalStmt(SgStatement *stmt, BlockStackFrameP &curFrame)
    {
      blockScopeVars_t &blockScope = curFrame->scopeVars;
@@ -1770,12 +2403,15 @@ void StackFrame::evalStmt(SgStatement *stmt, BlockStackFrameP &curFrame)
           switch (stmt->variantT())
              {
                case V_SgBasicBlock: evalBasicBlock(isSgBasicBlock(stmt), curFrame); break;
-               case V_SgVariableDeclaration: evalVariableDecl(isSgVariableDeclaration(stmt), blockScope); break;
+               case V_SgVariableDeclaration: evalVariableDecl(isSgVariableDeclaration(stmt), blockScope, localVarBindings, isSgVariableDeclaration(stmt)->get_declarationModifier().get_storageModifier().isStatic()); break;
                case V_SgExprStatement: evalExpr(isSgExprStatement(stmt)->get_expression()); break;
                case V_SgIfStmt: evalIfStmt(isSgIfStmt(stmt), curFrame); break;
                case V_SgWhileStmt: evalWhileStmt(isSgWhileStmt(stmt), curFrame); break;
                case V_SgDoWhileStmt: evalDoWhileStmt(isSgDoWhileStmt(stmt), curFrame); break;
                case V_SgForStatement: evalForStatement(isSgForStatement(stmt), curFrame); break;
+               case V_SgSwitchStatement: evalSwitchStatement(isSgSwitchStatement(stmt), curFrame); break;
+               case V_SgCaseOptionStmt: evalCaseOptionStmt(isSgCaseOptionStmt(stmt), curFrame); break;
+               case V_SgDefaultOptionStmt: evalDefaultOptionStmt(isSgDefaultOptionStmt(stmt), curFrame); break;
                case V_SgBreakStmt: curFrame = curFrame->doBreak(); break;
                case V_SgContinueStmt: curFrame = curFrame->doContinue(); break;
                case V_SgReturnStmt: evalReturnStmt(isSgReturnStmt(stmt), curFrame); break;
@@ -1784,10 +2420,14 @@ void StackFrame::evalStmt(SgStatement *stmt, BlockStackFrameP &curFrame)
         }
      catch (InterpError &ie)
         {
-          SgStatement *&frame = ie.callStack[ie.callStack.size()-1];
-          if (frame == NULL)
+          InterpError::Frame &frame = ie.callStack[ie.callStack.size()-1];
+          if (!frame.first)
              {
-               frame = stmt;
+               frame.first = shared_from_this();
+             }
+          if (frame.second == NULL)
+             {
+               frame.second = stmt;
              }
           throw;
         }
@@ -1800,7 +2440,11 @@ void StackFrame::evalStmt(SgStatement *stmt, BlockStackFrameP &curFrame)
                cout << "thisBinding = " << thisBinding->show() << ", ";
              }
           cout << "localVarBindings = ";
-          dumpBindings(std::cout, localVarBindings);
+          dumpBindings(cout, localVarBindings);
+#if 1
+          cout << ", globalVarBindings = ";
+          dumpBindings(cout, interp()->globalVarBindings);
+#endif
 #endif
           cout << endl;
         }
@@ -1810,7 +2454,7 @@ ValueP StackFrame::evalStmtAsExpr(SgStatement *stmt, blockScopeVars_t &blockScop
    {
      switch (stmt->variantT())
         {
-          case V_SgVariableDeclaration: return evalVariableDecl(isSgVariableDeclaration(stmt), blockScope);
+          case V_SgVariableDeclaration: return evalVariableDecl(isSgVariableDeclaration(stmt), blockScope, localVarBindings);
           case V_SgExprStatement: return evalExpr(isSgExprStatement(stmt)->get_expression());
           default:
              throw InterpError("StackFrame::evalStmtAsExpr: unexpected statement " + stmt->class_name() + " encountered");
@@ -1843,23 +2487,44 @@ ValueP StackFrame::interpFunction(const vector<ValueP> &actualParams)
    {
      SgFunctionDeclaration *decl = funSym->get_declaration();
      SgFunctionDeclaration *defDecl = isSgFunctionDeclaration(decl->get_definingDeclaration());
-     ROSE_ASSERT(defDecl != NULL);
+     if (defDecl == NULL)
+        {
+          throw InterpError("Undefined function: " + funSym->get_name().getString());
+        }
      language = SageInterface::getEnclosingFileNode(defDecl)->get_outputLanguage();
      SgFunctionDefinition *def = defDecl->get_definition();
      ROSE_ASSERT(def != NULL);
      BlockStackFrameP fnBlock (new BlockStackFrame(BlockStackFrameP(), shared_from_this(), def));
      SgInitializedNamePtrList &formalParams = defDecl->get_args();
-     ROSE_ASSERT(formalParams.size() == actualParams.size());
+  // The below assert won't work for varargs
+  // ROSE_ASSERT(formalParams.size() == actualParams.size());
           SgInitializedNamePtrList::iterator fpI = formalParams.begin();
      for (vector<ValueP>::const_iterator apI = actualParams.begin();
                      apI != actualParams.end();
                      ++fpI, ++apI)
         {
+          ROSE_ASSERT(fpI != formalParams.end());
           SgVariableSymbol *fpSym = isSgVariableSymbol((*fpI)->get_symbol_from_symbol_table());
+          SgType *fpType = (*fpI)->get_type();
           if (fpSym != NULL) // fpSym is NULL if the parameter variable is anonymous
              {
-               localVarBindings[fpSym] = (*apI)->copy((*fpI)->get_type(), PStack, shared_from_this(), true);
-               fnBlock->scopeVars.push_back(fpSym);
+               if (isSgArrayType(fpType->stripTypedefsAndModifiers()))
+                  {
+                    localVarBindings[fpSym] = (*apI)->dereference();
+                  }
+               else
+                  {
+                    localVarBindings[fpSym] = (*apI)->copy(fpType, PStack, shared_from_this(), CParam);
+                    fnBlock->scopeVars.push_back(fpSym);
+                  }
+             }
+          else if (fpType->variantT() == V_SgTypeEllipse)
+             {
+               vaList = VAListP(new VAList);
+               do {
+                    vaList->push_back(*apI);
+               } while (++apI != actualParams.end());
+               break;
              }
         }
   // if this is a constructor, initialize fields according to the ctors
@@ -1876,21 +2541,16 @@ ValueP StackFrame::interpFunction(const vector<ValueP> &actualParams)
                   {
                     case SgInitializedName::e_virtual_base_class:
                     case SgInitializedName::e_nonvirtual_base_class:
-                       initialize(thisBinding, ctor->get_initializer());
+                       initialize(thisBinding, ctor->get_initializer(), ctor->get_type());
                        break;
                     case SgInitializedName::e_data_member:
                           {
-#if 0
-                            SgSymbol *memSym = ctor->get_symbol_from_symbol_table();
+                            SgSymbol *memSym = ctor->search_for_symbol_from_symbol_table();
                             ROSE_ASSERT(memSym != NULL);
                             SgVariableSymbol *memVarSym = isSgVariableSymbol(memSym);
                             ROSE_ASSERT(memVarSym != NULL);
-#endif
-                         // get_symbol_from_symbol_table does not work for SgInitializedNames which are preinitializers
-                            SgVariableSymbol *memVarSym = ctor->get_scope()->lookup_variable_symbol(ctor->get_name());
-                            ROSE_ASSERT(memVarSym != NULL);
-                            size_t offset = sageOffsetOf(thisBinding, memDefDecl->get_associatedClassDeclaration()->get_type(), memVarSym);
-                            initialize(ValueP(new OffsetValue(thisBinding, offset)), ctor->get_initializer());
+                            ValueP offsetVal = offsetValueOf(thisBinding, memDefDecl->get_associatedClassDeclaration()->get_type(), memVarSym);
+                            initialize(offsetVal, ctor->get_initializer(), ctor->get_type());
                             break;
                           }
                     default:
@@ -1904,6 +2564,44 @@ ValueP StackFrame::interpFunction(const vector<ValueP> &actualParams)
      return returnValue;
    }
 
+void StackFrame::initializeGlobals(SgScopeStatement *scope)
+   {
+     blockScopeVars_t dummyScope;
+     SgDeclarationStatementPtrList &decls = scope->getDeclarationList();
+     for (SgDeclarationStatementPtrList::iterator i = decls.begin(); i != decls.end(); ++i)
+        {
+          SgDeclarationStatement *decl = *i;
+          if (SgVariableDeclaration *varDecl = isSgVariableDeclaration(decl))
+             {
+               if (!varDecl->get_declarationModifier().get_storageModifier().isExtern())
+                    evalVariableDecl(varDecl, dummyScope, interp()->globalVarBindings, true);
+               if (interp()->trace)
+                  {
+                    cout << "after initializeGlobals(" << varDecl->unparseToString() << "): ";
+                    cout << "globalVarBindings = ";
+                    dumpBindings(cout, interp()->globalVarBindings);
+                    cout << endl;
+                  }
+             }
+          else if (SgNamespaceDeclarationStatement *nsDecl = isSgNamespaceDeclarationStatement(decl))
+             {
+               initializeGlobals(nsDecl->get_definition());
+             }
+          // TODO: find static variable declarations within function bodies
+        }
+   }
+
+void StackFrame::initializeGlobals(SgProject *prj)
+   {
+     SgFilePtrList &fileList = prj->get_fileList();
+     for (SgFilePtrList::iterator file = fileList.begin(); file != fileList.end(); ++file)
+        {
+          SgSourceFile *srcFile = isSgSourceFile(*file);
+          ROSE_ASSERT(srcFile != NULL);
+          initializeGlobals(srcFile->get_globalScope());
+        }
+   }
+
 StackFrame::~StackFrame() {}
 
 void Interpretation::prePrimAssign(ValueP lhs, const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) {}
@@ -1911,6 +2609,7 @@ void Interpretation::prePrimAssign(ValueP lhs, const_ValueP rhs, SgType *lhsApt,
 void Interpretation::parseCommandLine(vector<string> &args)
    {
      trace = CommandlineProcessing::isOption(args, "-interp:", "trace", true);
+     errorTrace = CommandlineProcessing::isOption(args, "-interp:", "errorTrace", true);
    }
 
 Interpretation::~Interpretation() {}

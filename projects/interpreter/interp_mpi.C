@@ -12,20 +12,13 @@ using namespace Interp;
 namespace Interp {
 namespace mpi {
 
-string MPI_InitValue::show() const { return "<<built-in function MPI_Init>>"; }
+string MPI_InitValue::functionName() const { return "MPI_Init"; }
 
 ValueP MPI_InitValue::call(SgFunctionType *fnType, const vector<ValueP> &args) const
    {
      cerr << "MPI_Init called" << endl;
      return ValueP();
    }
-
-ValueP MPI_InitValue::primAssign(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt)
-   {
-     throw InterpError("Cannot assign to a function!");
-   }
-
-size_t MPI_InitValue::forwardValidity() const { return 1; }
 
 StackFrameP MPIStackFrame::newStackFrame(SgFunctionSymbol *funSym, ValueP thisBinding)
    {

@@ -1,6 +1,7 @@
 #ifndef INTERPRETER_H
 #define INTERPRETER_H
 
+#include <vector>
 #include <map>
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
@@ -19,15 +20,12 @@ enum Position
      PTemp
    };
 
-class InterpError
+// Context in which a new value is being created
+enum Context
    {
-     public:
-
-     std::vector<SgStatement *> callStack;
-     std::string err;
-
-     InterpError(std::string err);
-     void dumpCallStack(std::ostream &out);
+     COther,
+     CParam, // parameter passing
+     CField  // field of a struct of union
    };
 
 class StackFrame;
@@ -36,6 +34,21 @@ class Value;
 typedef boost::shared_ptr<StackFrame> StackFrameP;
 typedef boost::shared_ptr<Value> ValueP;
 typedef boost::shared_ptr<const Value> const_ValueP;
+
+typedef std::vector<ValueP> VAList;
+typedef boost::shared_ptr<VAList> VAListP;
+
+class InterpError
+   {
+     public:
+     typedef std::pair<StackFrameP, SgStatement *> Frame;
+
+     std::vector<Frame> callStack;
+     std::string err;
+
+     InterpError(std::string err);
+     void dumpCallStack(std::ostream &out);
+   };
 
 #define FOREACH_UNARY_PRIMOP(unop) \
         unop(-,MinusOp) \
@@ -112,7 +125,6 @@ class Value : public boost::enable_shared_from_this<Value>
 
      Position pos;
      StackFrameP owner;
-     bool valid;
 
 #define GDECLARE_VIRTUAL_UNOP_FN(op,opname,cv) \
      virtual ValueP eval##opname(SgType *apt) cv;
@@ -147,6 +159,9 @@ class Value : public boost::enable_shared_from_this<Value>
      virtual ValueP evalPrefixMinusMinusOp(SgType *apt);
      virtual ValueP evalPostfixMinusMinusOp(SgType *apt);
 
+     /*! Returns true if Value is valid (i.e. defined; can be read from). */
+     virtual bool valid() const = 0;
+
      /*! assign is equivalent to the = operator. */
      ValueP assign(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt);
 
@@ -154,11 +169,11 @@ class Value : public boost::enable_shared_from_this<Value>
      virtual ValueP primAssign(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) = 0;
 
      /*! copy is equivalent to the copy constructor.  */
-     ValueP copy(SgType *apt, Position pos, StackFrameP owner, bool isParam = false) const;
+     ValueP copy(SgType *apt, Position pos, StackFrameP owner, Context ctx = COther) const;
 
      /*!  primCopy is called by copy for primitive (non-compound) copies.
           The default implementation is based on primAsssign. */
-     virtual ValueP primCopy(SgType *apt, Position pos, StackFrameP owner, bool isParam = false) const;
+     virtual ValueP primCopy(SgType *apt, Position pos, StackFrameP owner, Context ctx = COther) const;
 
      /*! Returns the number of valid bytes in this Value looking forward (typically
          the sizeof the Value */
@@ -176,7 +191,7 @@ class Value : public boost::enable_shared_from_this<Value>
      /*! Destroys an object as though it were to go out of scope, or "delete' were invoked.
          Because the destructor will be called, this does not do the same thing as the free
          function call. */
-     virtual void destroy();
+     virtual void destroy() = 0;
 
      virtual ValueP fieldAtOffset(size_t offset);
      virtual const_ValueP fieldAtOffset(size_t offset) const;
@@ -217,6 +232,12 @@ class Value : public boost::enable_shared_from_this<Value>
          distinctly from methods through the virtual function. */
      virtual ValueP evalDotExp(ValueP lhs, SgType *lhsApt) const;
 
+     /*! This function implements the va_arg operation for va_list values. */
+     virtual ValueP evalVarArgOp(SgType *apt);
+
+     /*! This function implements the va_end operation for va_list values. */
+     virtual void evalVarArgEndOp();
+
      /*! These functions return concrete representations where possible.  They could also
          be used to implement casting. */
      virtual bool getConcreteValueBool() const;
@@ -245,7 +266,19 @@ class Value : public boost::enable_shared_from_this<Value>
          (i.e. from information in the AST). */
      virtual SgType *defaultType() const;
 
-     Value(Position pos, StackFrameP owner, bool valid);
+     /*! Sets the discriminant of the union with the given field at the given offset to the
+         given field of the union, if different from the current discriminant.  If the
+         discriminant is changed, this will normally cause a reset of most fields in
+         the UnionValue (but there are some special cases). */
+     virtual void setDiscriminantAtOffset(size_t offset, SgSymbol *discriminant);
+     void setDiscriminant(SgSymbol *discriminant) { setDiscriminantAtOffset(0, discriminant); }
+
+     /*! Sets this object to the default value.  The default value for an object is defined
+         by C99 6.7.8p10.  This method is special in that it only needs to be implemented
+         by "real" values, rather than passthrough values such as OffsetValue. */
+     virtual void assignDefault();
+
+     Value(Position pos, StackFrameP owner);
      virtual ~Value();
 
    };
@@ -271,21 +304,35 @@ class Value : public boost::enable_shared_from_this<Value>
      FOREACH_BOOL_UNARY_PRIMOP(     DECLARE_UNOP_FN) \
      FOREACH_BOOL_BINARY_PRIMOP(    DECLARE_BINOP_FN)
 
+/* TODO: introduce an abstraction for show() and validity here */
+class BasePrimValue : public Value
+   {
+     protected:
+     bool isValid;
+
+     public:
+     BasePrimValue(Position pos, StackFrameP owner, bool valid) : Value(pos, owner), isValid(valid) {}
+
+     bool valid() const;
+     void destroy();
+   };
+
+
 /*! Represents a pointer or reference.  If this pointer references an offset into another
     structure, it will point to an OffsetValue.  If this is a null pointer, target will be
     null (i.e. ValueP()). */
-class PointerValue : public Value
+class PointerValue : public BasePrimValue
      {
        protected:
             ValueP target;
             ValueP adjustedOffset(SgType *apt, size_t offset) const;
 
        public:
-            PointerValue(Position pos, StackFrameP owner) : Value(pos, owner, false) {}
-            PointerValue(ValueP target, Position pos, StackFrameP owner) : Value(pos, owner, true), target(target) {}
+            PointerValue(Position pos, StackFrameP owner) : BasePrimValue(pos, owner, false) {}
+            PointerValue(ValueP target, Position pos, StackFrameP owner) : BasePrimValue(pos, owner, true), target(target) {}
 
             ValueP getTarget() const { return target; }
-            void setTarget(ValueP target) { this->target = target; this->valid = true; }
+            void setTarget(ValueP target) { this->target = target; this->isValid = true; }
 
             size_t forwardValidity() const;
 
@@ -305,6 +352,24 @@ class PointerValue : public Value
             ValueP dereference() const;
 
             SgType *defaultType() const;
+
+            void assignDefault();
+     };
+
+class VAListValue : public BasePrimValue
+     {
+       VAListP vaList;
+       VAList::const_iterator vaListPos;
+
+       public:
+       VAListValue(Position pos, StackFrameP owner) : BasePrimValue(pos, owner, false) {}
+       VAListValue(VAListP vaList, Position pos, StackFrameP owner) : BasePrimValue(pos, owner, true), vaList(vaList), vaListPos(vaList->begin()) {}
+       std::string show() const;
+       ValueP primAssign(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt);
+       size_t forwardValidity() const;
+       ValueP evalVarArgOp(SgType *apt);
+       void evalVarArgEndOp();
+
      };
 
 /*! This is the base class for values which are based on SgSymbols - i.e. functions, or 
@@ -316,11 +381,13 @@ class SymbolValue : public Value
             virtual SgSymbol *getSymbol() const = 0;
 
        public:
-            SymbolValue(Position pos, StackFrameP owner, bool valid) : Value(pos, owner, valid) {}
+            SymbolValue(Position pos, StackFrameP owner) : Value(pos, owner) {}
 
+            bool valid() const;
             std::string show() const;
             ValueP primAssign(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt);
             size_t forwardValidity() const;
+            void destroy();
 
      };
 
@@ -333,8 +400,7 @@ class StaticFunctionValue : public SymbolValue
             SgSymbol *getSymbol() const;
 
        public:
-            StaticFunctionValue(Position pos, StackFrameP owner) : SymbolValue(pos, owner, false) {}
-            StaticFunctionValue(SgFunctionSymbol *symbol, Position pos, StackFrameP owner) : SymbolValue(pos, owner, true), symbol(symbol) {}
+            StaticFunctionValue(SgFunctionSymbol *symbol, Position pos, StackFrameP owner) : SymbolValue(pos, owner), symbol(symbol) {}
 
             SgFunctionSymbol *getStaticFunctionSymbol() const;
             void setStaticFunctionSymbol(SgFunctionSymbol *sym);
@@ -354,8 +420,7 @@ class NonstaticFunctionValue : public SymbolValue
             SgSymbol *getSymbol() const;
 
        public:
-            NonstaticFunctionValue(Position pos, StackFrameP owner) : SymbolValue(pos, owner, false) {}
-            NonstaticFunctionValue(SgMemberFunctionSymbol *symbol, Position pos, StackFrameP owner) : SymbolValue(pos, owner, true), symbol(symbol) {}
+            NonstaticFunctionValue(SgMemberFunctionSymbol *symbol, Position pos, StackFrameP owner) : SymbolValue(pos, owner), symbol(symbol) {}
 
             SgMemberFunctionSymbol *getNonstaticFunctionSymbol() const;
             void setNonstaticFunctionSymbol(SgMemberFunctionSymbol *sym);
@@ -377,7 +442,7 @@ class ThisNonstaticFunctionValue : public SymbolValue
             SgSymbol *getSymbol() const;
 
        public:
-            ThisNonstaticFunctionValue(ValueP pThis, SgType *thisApt, SgMemberFunctionSymbol *symbol, Position pos, StackFrameP owner) : SymbolValue(pos, owner, true), pThis(pThis), thisApt(thisApt), symbol(symbol) {}
+            ThisNonstaticFunctionValue(ValueP pThis, SgType *thisApt, SgMemberFunctionSymbol *symbol, Position pos, StackFrameP owner) : SymbolValue(pos, owner), pThis(pThis), thisApt(thisApt), symbol(symbol) {}
 
             StackFrameP createStackFrame() const;
             std::string show() const;
@@ -392,7 +457,7 @@ class NonstaticFieldValue : public SymbolValue
             SgSymbol *getSymbol() const;
 
        public:
-            NonstaticFieldValue(SgVariableSymbol *symbol, Position pos, StackFrameP owner) : SymbolValue(pos, owner, true), symbol(symbol) {}
+            NonstaticFieldValue(SgVariableSymbol *symbol, Position pos, StackFrameP owner) : SymbolValue(pos, owner), symbol(symbol) {}
 
             ValueP evalDotExp(ValueP lhs, SgType *lhsApt) const;
 
@@ -404,7 +469,7 @@ class NonstaticFieldValue : public SymbolValue
 class BuiltinFunctionValue : public Value
    {
      public:
-     BuiltinFunctionValue(Position pos, StackFrameP owner) : Value(pos, owner, true) {}
+     BuiltinFunctionValue(Position pos, StackFrameP owner) : Value(pos, owner) {}
 
      virtual std::string functionName() const = 0;
 
@@ -414,12 +479,23 @@ class BuiltinFunctionValue : public Value
      ValueP primAssign(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt);
      size_t forwardValidity() const;
 
+     bool valid() const;
+     void destroy();
+
    };
 
 class memcpyFnValue : public BuiltinFunctionValue
      {
        public:
             memcpyFnValue(Position pos, StackFrameP owner) : BuiltinFunctionValue(pos, owner) {}
+            std::string functionName() const;
+            ValueP call(SgFunctionType *fnType, const std::vector<ValueP> &args) const;
+     };
+
+class memcmpFnValue : public BuiltinFunctionValue
+     {
+       public:
+            memcmpFnValue(Position pos, StackFrameP owner) : BuiltinFunctionValue(pos, owner) {}
             std::string functionName() const;
             ValueP call(SgFunctionType *fnType, const std::vector<ValueP> &args) const;
      };
@@ -438,7 +514,7 @@ class BaseCompoundValue : public Value
      {
        public:
 
-            BaseCompoundValue(Position pos, StackFrameP owner, bool valid) : Value(pos, owner, valid) {}
+            BaseCompoundValue(Position pos, StackFrameP owner) : Value(pos, owner) {}
 
             ValueP primAssign(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt);
 
@@ -449,12 +525,32 @@ class BaseCompoundValue : public Value
             ValueP evalPrefixMinusMinusOp(SgType *apt);
             ValueP evalPostfixMinusMinusOp(SgType *apt);
 
+            ValueP evalVarArgOp(SgType *apt);
+            void evalVarArgEndOp();
+
             void forEachSubfield(FieldVisitor &visit, long offset = 0) = 0;
             void forEachPrim(FieldVisitor &visit, long offset = 0);
 
             ValueP dereference() const;
 
-            /* TODO: add the getConcreteValue family of functions here. */
+            bool getConcreteValueBool() const;
+            char getConcreteValueChar() const;
+            double getConcreteValueDouble() const;
+            float getConcreteValueFloat() const;
+            int getConcreteValueInt() const;
+            long double getConcreteValueLongDouble() const;
+            long int getConcreteValueLong() const;
+            long long int getConcreteValueLongLong() const;
+            short getConcreteValueShort() const;
+            unsigned char getConcreteValueUnsignedChar() const;
+            unsigned int getConcreteValueUnsignedInt() const;
+            unsigned long long int getConcreteValueUnsignedLongLong() const;
+            unsigned long getConcreteValueUnsignedLong() const;
+            unsigned short getConcreteValueUnsignedShort() const;
+
+            void setDiscriminantAtOffset(size_t offset, SgSymbol *discriminant);
+
+            bool valid() const;
      };
 
 #undef GDECLARE_UNOP_FN
@@ -523,6 +619,9 @@ class CompoundValue : public BaseCompoundValue
        bool hasDynamicTypeAtOffset(SgClassType *t, size_t offset) const;
 
        size_t forwardValidity() const;
+
+       void setDiscriminantAtOffset(size_t offset, SgSymbol *discriminant);
+       void assignDefault();
      };
 
 /*! Represents an offset into another value (usually a CompoundValue), obtained using
@@ -547,41 +646,66 @@ class OffsetValue : public BaseCompoundValue
        const_ValueP fieldAtOffset(size_t offset) const;
 
        void forEachSubfield(FieldVisitor &visit, long offset = 0);
+       void destroy();
      };
 
-/*! An ArrayValue is a special type of PointerValue which represents an array definition that
-    allocates storage (other references to the array are normal PointerValues).  Consistent
-    with array semantics, it destroys its target when it itself goes out of scope
-    (is destroyed). */
-class ArrayValue : public PointerValue
+/*! UnionDiscriminantValue is to UnionValue as OffsetValue is to CompoundValue.  Calls to
+    fieldAtOffset will set the UnionValue's discriminant. */
+class UnionDiscriminantValue : public BaseCompoundValue
      {
-       protected:
-            /*! The extent of the array.  Is is debatable whether this should be here or
-                not.  The rationale for including this field is that the SgExpression
-                representing the extent should only be calculated at one point. */
-            size_t extent;
-
-            ArrayValue(SgType *baseType, size_t index, CompoundValue::fieldMap_t fields, Position pos, StackFrameP owner);
+       ValueP base;
+       SgSymbol *discriminant;
 
        public:
-            ArrayValue(SgType *baseType, size_t index, Position pos, StackFrameP owner);
+       UnionDiscriminantValue(ValueP base, SgSymbol *discriminant) : BaseCompoundValue(base->pos, base->owner), base(base), discriminant(discriminant) {}
 
-            ValueP primAssign(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt);
-            ValueP primCopy(SgType *apt, Position pos, StackFrameP owner, bool isParam = false) const;
+       std::string show() const;
 
-            std::string show() const;
+       size_t forwardValidity() const;
+       size_t backwardValidity() const;
 
-            void destroy();
+       ValueP fieldAtOffset(size_t offset);
+       const_ValueP fieldAtOffset(size_t offset) const;
 
-            void forEachSubfield(FieldVisitor &visit, long offset = 0);
-            void forEachPrim(FieldVisitor &visit, long offset = 0);
-
+       void forEachSubfield(FieldVisitor &visit, long offset = 0);
+       void setDiscriminantAtOffset(size_t offset, SgSymbol *discriminant);
+       void destroy();
      };
 
-class BasePrimTypeValue : public Value
+/*! UnionValues change their underlying storage in response to calls to setDiscriminant. */
+class UnionValue : public BaseCompoundValue
+     {
+       /*! Type of this union (used to identify calls to setDiscriminant as belonging to
+           this UnionValue (as opposed to a subfield of this UnionValue)). */
+       SgClassType *unionType;
+
+       /*! The current discriminant. */
+       SgSymbol *currDiscriminant;
+
+       /*! The underlying storage for this UnionValue. */ 
+       ValueP storage;
+
+       public:
+       UnionValue(SgClassType *unionType, Position pos, StackFrameP owner) :
+               BaseCompoundValue(pos, owner),
+               unionType(unionType),
+               currDiscriminant(NULL),
+               storage() {}
+
+       std::string show() const;
+       size_t forwardValidity() const;
+       void forEachSubfield(FieldVisitor &visit, long offset);
+       ValueP fieldAtOffset(size_t offset);
+       const_ValueP fieldAtOffset(size_t offset) const;
+       void setDiscriminantAtOffset(size_t offset, SgSymbol *discriminant);
+       void destroy();
+       void assignDefault();
+     };
+
+class BasePrimTypeValue : public BasePrimValue
    {
      public:
-     BasePrimTypeValue(Position pos, StackFrameP owner, bool valid) : Value(pos, owner, valid) {}
+     BasePrimTypeValue(Position pos, StackFrameP owner, bool valid) : BasePrimValue(pos, owner, valid) {}
 
      virtual bool isCorrectApparentType(SgType *apt) const = 0;
    };
@@ -650,16 +774,17 @@ class GenericPrimTypeValue : public BasePrimTypeValue
              }
              */
           const_ValueP rhsPrim = rhs->prim();
-          if (rhsPrim->valid)
+          if (rhsPrim->valid())
                setConcreteValue(getConcreteValueF<PrimType>::f(rhsPrim));
           else
-               valid = false;
+               isValid = false;
           return shared_from_this();
         }
 
      PrimType getConcreteValue() const
         {
-          if (!valid) std::cerr << "Attempt to retrieve undefined value!" << std::endl;
+          if (!isValid)
+               throw InterpError("Attempt to retrieve undefined value!");
           return v;
         }
 
@@ -736,18 +861,22 @@ class GenericPrimTypeValue : public BasePrimTypeValue
      void setConcreteValue(PrimType v)
         {
           this->v = v;
-          valid = true;
+          isValid = true;
         }
 
      ValueP evalCastExp(ValueP fromVal, SgType *fromType, SgType *toType)
         {
-          setConcreteValue(getConcreteValueF<PrimType>::f(fromVal->prim()));
+          ValueP fromValPrim = fromVal->prim();
+          if (fromValPrim->valid())
+              setConcreteValue(getConcreteValueF<PrimType>::f(fromVal->prim()));
+          else
+              isValid = false;
           return shared_from_this();
         }
 
      std::string show() const
         {
-          if (!valid) return "<<undefined>>";
+          if (!isValid) return "<<undefined>>";
           std::stringstream ss;
           ss << v+0;
           // ss << std::hex << "0x" << v+0;
@@ -773,6 +902,11 @@ class GenericPrimTypeValue : public BasePrimTypeValue
           return SgPrimTypeT<PrimType>::t::createType();
         }
 
+     void assignDefault()
+        {
+          setConcreteValue(0);
+        }
+
    };
 
 #define DEFINE_VIRTUAL_GENERIC_UNOP_IMPL(op,opname,resultfn) \
@@ -782,7 +916,7 @@ class GenericPrimTypeValue : public BasePrimTypeValue
              { \
                throw InterpError("Operator " #op " applied to incorrect apparent type"); \
              } \
-          if (this->valid) \
+          if (this->valid()) \
                return ValueP(resultfn(op this->getConcreteValue(), PTemp, this->owner)); \
           else \
                return ValueP(resultfn(PTemp, this->owner)); \
@@ -806,7 +940,7 @@ class GenericPrimTypeValue : public BasePrimTypeValue
              { \
                throw InterpError("Operator " #op " applied to incorrect apparent type"); \
              } \
-          if (this->valid && rhs->valid) \
+          if (this->valid() && rhs->valid()) \
                return ValueP(resultfn(this->getConcreteValue() op getConcreteValueF<rhsprimtype>::f(rhsP), PTemp, this->owner)); \
           else \
                return ValueP(resultfn(PTemp, this->owner)); \
@@ -920,7 +1054,7 @@ class Interpretation
      virtual void registerBuiltinFns(builtins_t &builtins);
 
      public:
-     bool trace;
+     bool trace, errorTrace;
      varBindings_t globalVarBindings;
 
      Interpretation();
@@ -943,6 +1077,7 @@ void dumpBindings(std::ostream &out, const varBindings_t &bindings);
 class StackFrame : public boost::enable_shared_from_this<StackFrame>
    {
      friend class Interpretation;
+     friend class InterpError;
 
      Interpretation *currentInterp;
 
@@ -955,6 +1090,8 @@ class StackFrame : public boost::enable_shared_from_this<StackFrame>
      varBindings_t localVarBindings;
      SgFile::outputLanguageOption_enum language;
 
+     VAListP vaList;
+
      bool active;
      ValueP returnValue;
 
@@ -965,10 +1102,12 @@ class StackFrame : public boost::enable_shared_from_this<StackFrame>
           return ValueP(new PrimTypeValueT(pe->get_value(), PTemp, shared_from_this()));
         }
 
-     void assignInitialize(ValueP var, SgExpression *rhs);
-     void ctorInitialize(ValueP var, SgConstructorInitializer *ctorInit);
-     void aggregateInitialize(ValueP var, SgAggregateInitializer *aggInit);
-     void initialize(ValueP var, SgInitializer *init);
+     void defaultInitialize(ValueP var, bool isStatic);
+
+     void assignInitialize(ValueP var, SgExpression *rhs, SgType *varApt, bool isStatic = false);
+     void ctorInitialize(ValueP var, SgConstructorInitializer *ctorInit, SgType *varApt, bool isStatic = false);
+     void aggregateInitialize(ValueP var, SgAggregateInitializer *aggInit, SgType *varApt, bool isStatic = false);
+     void initialize(ValueP var, SgInitializer *init, SgType *varApt, bool isStatic = false);
 
      bool isGlobalVar(SgInitializedName *var);
      ValueP stringToValue(const std::string &str);
@@ -977,6 +1116,7 @@ class StackFrame : public boost::enable_shared_from_this<StackFrame>
      ValueP evalPointerDerefExp(SgExpression *opd);
      ValueP evalAddressOfOp(SgExpression *opd);
      ValueP evalCastExp(SgExpression *opd, SgType *toType);
+     ValueP evalVarRefExp(ValueP symTabEntry, SgType *apt);
      ValueP evalVarRefExp(SgVarRefExp *vr);
      virtual ValueP evalFunctionRefExp(SgFunctionSymbol *sym);
      ValueP evalMemberFunctionRefExp(SgMemberFunctionSymbol *sym);
@@ -987,8 +1127,11 @@ class StackFrame : public boost::enable_shared_from_this<StackFrame>
      ValueP evalPntrArrRefExp(SgExpression *lhs, SgExpression *rhs);
      ValueP evalCommaOpExp(SgExpression *lhs, SgExpression *rhs);
      ValueP evalFunctionCallExp(SgFunctionCallExp *fnCall);
-     std::vector<ValueP> evalExprListExp(SgExprListExp *exprList);
+     std::vector<ValueP> evalExprListExp(SgExprListExp *exprList, SgTypePtrList *types = NULL);
      ValueP evalThisExp();
+     ValueP evalVarArgStartOp(SgVarArgStartOp *vaStart);
+     ValueP evalVarArgOp(SgVarArgOp *vaArg);
+     ValueP evalVarArgEndOp(SgVarArgEndOp *vaEnd);
 
      ValueP evalPlusPlusOp(SgExpression *opd, SgUnaryOp::Sgop_mode mode);
      ValueP evalMinusMinusOp(SgExpression *opd, SgUnaryOp::Sgop_mode mode);
@@ -1022,7 +1165,7 @@ class StackFrame : public boost::enable_shared_from_this<StackFrame>
 
      ValueP evalUnaryOp(SgUnaryOp *unOp);
      ValueP evalBinaryOp(SgBinaryOp *binOp);
-     virtual ValueP evalExpr(SgExpression *expr);
+     virtual ValueP evalExpr(SgExpression *expr, bool arrPtrConv = true);
 
      typedef std::vector<SgVariableSymbol *> blockScopeVars_t;
 
@@ -1046,36 +1189,45 @@ class StackFrame : public boost::enable_shared_from_this<StackFrame>
 
      struct BasicBlockStackFrame;
      struct LoopBlockStackFrame;
+     struct SwitchBlockStackFrame;
 
      typedef std::vector<BlockStackFrameP> blockStack_t;
 
      void destroyScope(blockScopeVars_t &scope);
 
      void evalBasicBlock(SgBasicBlock *bb, BlockStackFrameP &curFrame);
-     ValueP evalInitializedName(SgInitializedName *var, blockScopeVars_t &blockScope);
-     ValueP evalVariableDecl(SgVariableDeclaration *vdec, blockScopeVars_t &blockScope);
+     ValueP evalInitializedName(SgInitializedName *var, blockScopeVars_t &blockScope, varBindings_t &varBindings, bool isStatic = false);
+     ValueP evalVariableDecl(SgVariableDeclaration *vdec, blockScopeVars_t &blockScope, varBindings_t &varBindings, bool isStatic = false);
      virtual void evalIfStmt(SgIfStmt *ifStmt, BlockStackFrameP &curFrame);
      void evalWhileStmt(SgWhileStmt *whileStmt, BlockStackFrameP &curFrame);
      void evalDoWhileStmt(SgDoWhileStmt *doWhileStmt, BlockStackFrameP &curFrame);
      void evalForInitStatement(SgForInitStatement *forInitStmt, blockScopeVars_t &blockScope);
      void evalForStatement(SgForStatement *forStmt, BlockStackFrameP &curFrame);
      void evalReturnStmt(SgReturnStmt *retStmt, BlockStackFrameP &curFrame);
+     void evalSwitchStatement(SgSwitchStatement *switchStmt, BlockStackFrameP &curFrame);
+     void evalCaseOptionStmt(SgCaseOptionStmt *caseOptStmt, BlockStackFrameP &curFrame);
+     void evalDefaultOptionStmt(SgDefaultOptionStmt *defaultOptStmt, BlockStackFrameP &curFrame);
      void evalStmt(SgStatement *stmt, BlockStackFrameP &curFrame);
      ValueP evalStmtAsBool(SgStatement *stmt, blockScopeVars_t &blockScope);
      ValueP evalStmtAsExpr(SgStatement *stmt, blockScopeVars_t &blockScope);
      void mainEvalLoop(BlockStackFrameP &curFrame);
 
-     virtual ValueP newArray(SgArrayType *at, Position pos);
+     virtual ValueP newArray(SgArrayType *at, Position pos, Context ctx);
+     ValueP newClassValue(SgClassType *ct, Position pos);
+     ValueP newTypedefValue(SgTypedefType *tt, Position pos, Context ctx);
 
      public:
      StackFrame(Interpretation *currentInterp, SgFunctionSymbol *funSym, ValueP thisBinding = ValueP()) : currentInterp(currentInterp), funSym(funSym), thisBinding(thisBinding), active(true) {}
 
      Interpretation *interp() const { return currentInterp; }
 
+     void initializeGlobals(SgScopeStatement *scope);
+     void initializeGlobals(SgProject *project);
+
      /*! Returns a new (undefined) value of the given type.  If isParam is true,
          the value is the callee's copy of a value passed as a parameter.  This
          is special cased in order to correctly handle passing of arrays. */
-     virtual ValueP newValue(SgType *t, Position pos, bool isParam = false);
+     virtual ValueP newValue(SgType *t, Position pos, Context ctx = COther);
 
      /*! Returns a new stack frame that is initialised with the given function
          and "this" binding.  This function must be overridden by any subclasses
@@ -1085,6 +1237,7 @@ class StackFrame : public boost::enable_shared_from_this<StackFrame>
      SgFile::outputLanguageOption_enum get_language() { return language; }
 
      ValueP interpFunction(const std::vector<ValueP> &args);
+     void dump();
 
      virtual ~StackFrame();
 

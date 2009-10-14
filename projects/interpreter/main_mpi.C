@@ -7,10 +7,10 @@ using namespace Interp::mpi;
 
 int main(int argc, char **argv)
    {
+     Interpretation interp;
      try
         {
           vector<string> argvList(argv, argv+argc);
-          Interpretation interp;
           interp.parseCommandLine(argvList);
 
           SgProject *prj = frontend(argvList);
@@ -20,6 +20,7 @@ int main(int argc, char **argv)
           SgFunctionSymbol *testSym = global->lookup_function_symbol("test");
 
           StackFrameP head(new MPIStackFrame(&interp, testSym));
+          head->initializeGlobals(prj);
           ValueP x (new IntValue(1, PTemp, head));
           ValueP rv = head->interpFunction(vector<ValueP>(1, x));
           cout << "Returned " << (rv.get() ? rv->show() : "<<nothing>>") << endl;

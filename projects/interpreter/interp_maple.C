@@ -51,7 +51,7 @@ Algeb AlgebValue::getAlgeb(const_ValueP val, SgType *apt)
         }
    }
 
-AlgebValue::AlgebValue(Algeb v, Position pos, StackFrameP owner) : Value(pos, owner, true), v(v)
+AlgebValue::AlgebValue(Algeb v, Position pos, StackFrameP owner) : BasePrimValue(pos, owner, true), v(v)
 {
   if (!v)
      {
@@ -61,7 +61,7 @@ AlgebValue::AlgebValue(Algeb v, Position pos, StackFrameP owner) : Value(pos, ow
 
 string AlgebValue::show() const
    {
-     if (valid)
+     if (isValid)
           return v.show();
      else
           return "<<undefined>>";
@@ -69,14 +69,14 @@ string AlgebValue::show() const
 
 ValueP AlgebValue::primAssign(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt)
    {
-     if (rhs->valid)
+     if (rhs->valid())
         {
-          valid = true;
+          isValid = true;
           v = getAlgeb(rhs, rhsApt);
         }
      else
         {
-          valid = false;
+          isValid = false;
         }
      return shared_from_this();
    }
@@ -101,7 +101,7 @@ ValueP AlgebValue::evalBitAndOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt
      return ValueP(new AlgebValue(result, PTemp, owner));
    }
 
-ValueP SymStackFrame::newValue(SgType *t, Position pos, bool isParam)
+ValueP SymStackFrame::newValue(SgType *t, Position pos, Context ctx)
    {
      t = t->stripTypedefsAndModifiers();
      switch (t->variantT())
@@ -120,7 +120,7 @@ ValueP SymStackFrame::newValue(SgType *t, Position pos, bool isParam)
           case V_SgTypeUnsignedLongLong:
           case V_SgTypeUnsignedLong:
           case V_SgTypeUnsignedShort: return ValueP(new AlgebValue(pos, shared_from_this()));
-          default: return StackFrame::newValue(t, pos, isParam);
+          default: return StackFrame::newValue(t, pos, ctx);
         }
    }
 
@@ -129,7 +129,7 @@ StackFrameP SymStackFrame::newStackFrame(SgFunctionSymbol *funSym, ValueP thisBi
      return StackFrameP(new SymStackFrame(interp(), funSym, thisBinding));
    }
 
-ValueP SymStackFrame::evalExpr(SgExpression *expr)
+ValueP SymStackFrame::evalExpr(SgExpression *expr, bool arrPtrConv)
    {
      switch (expr->variantT())
         {
@@ -147,7 +147,7 @@ ValueP SymStackFrame::evalExpr(SgExpression *expr)
           case V_SgUnsignedLongLongIntVal: return evalIntSymPrimExpr<SgUnsignedLongLongIntVal>(expr);
           case V_SgUnsignedLongVal: return evalIntSymPrimExpr<SgUnsignedLongVal>(expr);
           case V_SgUnsignedShortVal: return evalIntSymPrimExpr<SgUnsignedShortVal>(expr);
-          default: return StackFrame::evalExpr(expr);
+          default: return StackFrame::evalExpr(expr, arrPtrConv);
         }
    }
 

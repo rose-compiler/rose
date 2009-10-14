@@ -9,11 +9,11 @@ using namespace smtlib::QF_BV;
 
 int main(int argc, char **argv)
    {
+     SMTInterpretation interp;
      vector<string> argvList(argv, argv+argc);
      bool expectAssertionFailure = CommandlineProcessing::isOption(argvList, "-interp:", "expectAssertionFailure", true);
      try
         {
-          SMTInterpretation interp;
           interp.parseCommandLine(argvList);
 
           SgProject *prj = frontend(argvList);
@@ -23,6 +23,7 @@ int main(int argc, char **argv)
           SgFunctionSymbol *testSym = global->lookup_function_symbol("test");
 
           StackFrameP head(new SMTStackFrame(&interp, testSym));
+          head->initializeGlobals(prj);
           bvvarP x (new bvvar(Bits32, "x"));
           ValueP xVal (new BVValue(bvbaseP(new bvname(x)), PTemp, head));
           ValueP rv = head->interpFunction(vector<ValueP>(1, xVal));

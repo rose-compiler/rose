@@ -46,20 +46,27 @@ smtInterpreter_SOURCES = main_smt.C
 smtInterpreter_LDADD = $(LDADD) libsmtlib.a
 
 TEST_INPUTS = \
-    testInput_core_agginit.c \
-    testInput_core_arrays.C \
-    testInput_core_boolcast.C \
-    testInput_core_casting.C \
-    testInput_core_condExp.C \
-    testInput_core_constructors.C \
-    testInput_core_pointersFunctions.C \
-    testInput_extcall_hello.c \
-    testInput_smt_simpleIntegerOverflow.c \
-    testInput_smt_abs.c \
-    testInput_smt_absBug.c \
-    testInput_smt_excludedMiddle.c \
-    testInput_smt_reverse.c \
-    testInput_md5.c
+    testInput/core/agginit.c \
+    testInput/core/anonUnionCtor.C \
+    testInput/core/anonUnionStruct.c \
+    testInput/core/arrays.C \
+    testInput/core/boolcast.C \
+    testInput/core/casting.C \
+    testInput/core/condExp.C \
+    testInput/core/constructors.C \
+    testInput/core/globals.c \
+    testInput/core/initunion.c \
+    testInput/core/mdarr.c \
+    testInput/core/nestedUnion.c \
+    testInput/core/pointersFunctions.C \
+    testInput/core/varargs.c \
+    testInput/extcall/hello.c \
+    testInput/smt/simpleIntegerOverflow.c \
+    testInput/smt/abs.c \
+    testInput/smt/absBug.c \
+    testInput/smt/excludedMiddle.c \
+    testInput/smt/reverse.c \
+    testInput/md5.c
 
 EXTRA_DIST = interp_core.h interp_extcall.h interp_maple.h interp_mpi.h interp_smt.h maple++.h typeLayoutStore.h smtlib.h $(TEST_INPUTS)
 
@@ -93,22 +100,29 @@ smtTest_LDADD = $(LDADD) libsmtlib.a
 
 check-local: $(TEST_INPUTS)
 	./test_smtlib
-	./coreTest -interp:expectedReturnValue 12 $(srcdir)/testInput_core_agginit.c
-	./coreTest -interp:expectedReturnValue 0 $(srcdir)/testInput_core_boolcast.C
-	./coreTest -interp:expectedReturnValue 3 $(srcdir)/testInput_core_casting.C
-	./coreTest -interp:expectedReturnValue 2 $(srcdir)/testInput_core_condExp.C
-	./coreTest -interp:expectedReturnValue 91 $(srcdir)/testInput_core_pointersFunctions.C
-	./coreTest -interp:expectedReturnValue 20 $(srcdir)/testInput_core_constructors.C
-	./coreTest -interp:expectedReturnValue 59 $(srcdir)/testInput_core_arrays.C
-	./coreTest -interp:expectedReturnStr $$'\xb4\xc3\x03\x45\x04\x5f\x6c\x35\x36\xef\x43\x59\xef\xfc\x34\xd8' $(srcdir)/testInput_md5.c
+	./coreTest -interp:expectedReturnValue 12 $(srcdir)/testInput/core/agginit.c
+	./coreTest -interp:expectedReturnValue 0 $(srcdir)/testInput/core/boolcast.C
+	./coreTest -interp:expectedReturnValue 3 $(srcdir)/testInput/core/casting.C
+	./coreTest -interp:expectedReturnValue 2 $(srcdir)/testInput/core/condExp.C
+	./coreTest -interp:expectedReturnValue 91 $(srcdir)/testInput/core/pointersFunctions.C
+	./coreTest -interp:expectedReturnValue 20 $(srcdir)/testInput/core/constructors.C
+	./coreTest -interp:expectedReturnValue 59 $(srcdir)/testInput/core/arrays.C
+	./coreTest -interp:expectedReturnValue 42 $(srcdir)/testInput/core/globals.c
+	./coreTest -interp:expectedReturnStr $$'\xb4\xc3\x03\x45\x04\x5f\x6c\x35\x36\xef\x43\x59\xef\xfc\x34\xd8' $(srcdir)/testInput/md5.c
+	./coreTest -interp:expectedReturnValue 4 $(srcdir)/testInput/core/nestedUnion.c
+	./coreTest -interp:expectUndefinedReturnValue $(srcdir)/testInput/core/anonUnionStruct.c
+	./coreTest -interp:expectedReturnValue 42 $(srcdir)/testInput/core/anonUnionCtor.C
+	./coreTest -interp:expectedReturnValue 0 $(srcdir)/testInput/core/initunion.c
+	./coreTest -interp:expectedReturnValue 10 $(srcdir)/testInput/core/varargs.c
+	./coreTest -interp:expectedReturnValue 78 $(srcdir)/testInput/core/mdarr.c
 if ROSE_USE_LIBFFI
-	./extcallInterpreter $(srcdir)/testInput_extcall_hello.c ; test $$? = 123
+	./extcallInterpreter $(srcdir)/testInput/extcall/hello.c ; test $$? = 123
 endif
 if ROSE_USE_TEST_SMT_SOLVER
-	./smtTest -interp:smtSolver "$(TEST_SMT_SOLVER)" -interp:expectAssertionFailure $(srcdir)/testInput_smt_simpleIntegerOverflow.c
-	./smtTest -interp:smtSolver "$(TEST_SMT_SOLVER)" -interp:expectAssertionFailure $(srcdir)/testInput_smt_absBug.c
-	./smtTest -interp:smtSolver "$(TEST_SMT_SOLVER)" $(srcdir)/testInput_smt_abs.c
-	./smtTest -interp:smtSolver "$(TEST_SMT_SOLVER)" $(srcdir)/testInput_smt_excludedMiddle.c
-	./smtTest -interp:smtSolver "$(TEST_SMT_SOLVER)" $(srcdir)/testInput_smt_reverse.c
-	./smtTest -interp:smtSolver "$(TEST_SMT_SOLVER)" -interp:expectAssertionFailure -DSMT $(srcdir)/testInput_md5.c
+	./smtTest -interp:smtSolver "$(TEST_SMT_SOLVER)" -interp:expectAssertionFailure $(srcdir)/testInput/smt/simpleIntegerOverflow.c
+	./smtTest -interp:smtSolver "$(TEST_SMT_SOLVER)" -interp:expectAssertionFailure $(srcdir)/testInput/smt/absBug.c
+	./smtTest -interp:smtSolver "$(TEST_SMT_SOLVER)" $(srcdir)/testInput/smt/abs.c
+	./smtTest -interp:smtSolver "$(TEST_SMT_SOLVER)" $(srcdir)/testInput/smt/excludedMiddle.c
+	./smtTest -interp:smtSolver "$(TEST_SMT_SOLVER)" $(srcdir)/testInput/smt/reverse.c
+	./smtTest -interp:smtSolver "$(TEST_SMT_SOLVER)" -interp:expectAssertionFailure -DSMT $(srcdir)/testInput/md5.c
 endif
