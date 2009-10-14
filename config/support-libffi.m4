@@ -8,7 +8,10 @@ PKG_CHECK_MODULES([LIBFFI],[libffi],[with_libffi=yes],[with_libffi=no])
 # DQ (9/19/2009): This fails on Mac OSX (this variable is needed
 # for an automake conditional that will be built in configure.in)
 # with_libffi=no
+save_CPPFLAGS="$CPPFLAGS"
+CPPFLAGS="$CPPFLAGS $LIBFFI_CFLAGS"
 AC_CHECK_HEADERS(ffi.h,[with_ffi_header=yes],[with_ffi_header=no])
+CPPFLAGS="$save_CPPFLAGS"
 
 echo "Intermediate test debugging info for libffi support: "
 echo "   with_libffi     = $with_libffi"
