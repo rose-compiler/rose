@@ -2870,6 +2870,42 @@ TestExpressionTypes::visit ( SgNode* node )
           ROSE_ASSERT(type != NULL);
        // printf ("TestExpressionTypes::visit(): calling expression->get_type() on expression = %p = %s type = %s \n",
        //      expression,expression->class_name().c_str(),type->class_name().c_str());
+
+       // PC (10/12/2009): The following test verifies that array types properly decay to pointer types
+       //  From C99 6.3.2.1p3:
+       /* Except when it is the operand of the sizeof operator or the unary & operator, or is a
+          string literal used to initialize an array, an expression that has type ‘‘array of type’’ is
+          converted to an expression with type ‘‘pointer to type’’ that points to the initial element of
+          the array object and is not an lvalue. */
+          type = type->stripTypedefsAndModifiers();
+          if (type->variantT() == V_SgArrayType || type->variantT() == V_SgTypeString)
+             {
+               SgExpression *parentExpr = isSgExpression(expression->get_parent());
+               if (parentExpr != NULL && !(
+                                       parentExpr->variantT() == V_SgAssignInitializer && expression->variantT() == V_SgStringVal
+                                    || parentExpr->variantT() == V_SgDotExp
+                                    || parentExpr->variantT() == V_SgArrowExp
+                                    || isSgInitializer(parentExpr) && isSgInitializer(expression)))
+                  {
+                    SgType* parentType = parentExpr->get_type();
+                    parentType = parentType->stripTypedefsAndModifiers();
+                    if (SageInterface::getDimensionCount(type) == SageInterface::getDimensionCount(parentType)
+                     && SageInterface::getArrayElementType(type) == SageInterface::getArrayElementType(parentType))
+                       {
+                         SgValueExp *parentValueExpr = isSgValueExp(parentExpr);
+                         if (parentValueExpr == NULL || expression != parentValueExpr->get_originalExpressionTree())
+                            {
+                              printf ("Warning: encountered a case where an array type did not decay to a pointer type\n"
+                                      "  parentExpr = %p = %s, expression = %p = %s, parentType = %p = %s, type = %p = %s\n",
+                                              parentExpr, parentExpr->sage_class_name(),
+                                              expression, expression->sage_class_name(),
+                                              parentType, parentType->sage_class_name(),
+                                              type, type->sage_class_name());
+                           // ROSE_ASSERT(false);
+                            }
+                       }
+                  }
+             }
         }
 
      SgType* type = NULL;

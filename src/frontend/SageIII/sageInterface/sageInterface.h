@@ -662,10 +662,13 @@ std::string mangleType(SgType* type);
 size_t getArrayElementCount(SgArrayType* t);
 
 //! Get the number of dimensions of an array type
-int getDimensionCount(SgArrayType* t);
+int getDimensionCount(SgType* t);
 
 //! Get the element type of an array
-SgType* getArrayElementType(SgArrayType* t);
+SgType* getArrayElementType(SgType* t);
+
+//! Get the element type of an array, pointer or string, or NULL if not applicable
+SgType* getElementType(SgType* t);
 
 //! Check if an expression is an array access. If so, return its name expression and subscripts if requested. Based on AstInterface::IsArrayAccess()
 bool isArrayReference(SgExpression* ref, SgExpression** arrayNameExp=NULL, std::vector<SgExpression*>** subscripts=NULL);
