@@ -1,3 +1,4 @@
+#include "rose.h"
 #include <binary_analysis.h>
 
 #include <boost/lexical_cast.hpp>

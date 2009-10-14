@@ -4,12 +4,11 @@
  * Date : 3Apr07
  * Decription : Example code on how to use RoseBin
  ****************************************************/
-
+#include "rose.h"
 #include <stdio.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <iostream>
-#include "rose.h"
 
 #include "sqlite3x.h"
 

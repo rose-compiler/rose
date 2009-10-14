@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "createSignatureVectors.h"
 #include "vectorCompression.h"
 #include <boost/lexical_cast.hpp>

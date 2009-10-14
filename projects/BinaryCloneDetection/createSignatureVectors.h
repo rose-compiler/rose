@@ -1,4 +1,3 @@
-#include "rose.h"
 #include <string>
 #include <fstream>
 #include <iostream>
@@ -11,7 +10,6 @@
 
 #include <stdio.h>
 #include <iostream>
-#include "rose.h"
 
 #include "sqlite3x.h"
 
