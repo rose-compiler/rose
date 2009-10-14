@@ -9,6 +9,7 @@ SUBDIRS = \
      CertSecureCodeProject \
      compass \
      BinaryCloneDetection \
+     SemanticSignatureVectors \
      binCompass \
      CloneDetection \
      DatalogAnalysis \

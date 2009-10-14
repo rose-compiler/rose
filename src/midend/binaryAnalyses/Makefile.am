@@ -8,6 +8,7 @@ noinst_LTLIBRARIES = libbinaryMidend.la
 libbinaryMidend_la_DEPENDENCIES =
 
 sourse_files = \
+     binary_analysis.C \
      RoseBin_CompareAnalysis.cpp RoseBin_ControlFlowAnalysis.cpp \
      RoseBin_printInstructions.cpp RoseBin_DataFlowAnalysis.cpp \
      RoseBin_CallGraphAnalysis.cpp RoseBin_FlowAnalysis.cpp \
@@ -46,6 +47,7 @@ BUILT_SOURCES =
 CLEANFILES = $(BUILT_SOURCES)
 
 BINARY_DISASSEMBLY_HEADER_FILES = \
+   binary_analysis.h \
    GraphAlgorithms.h \
    RoseBin_CallGraphAnalysis.h \
    RoseBin_CompareAnalysis.h \
