@@ -341,6 +341,9 @@ AM_PATH_XML2(2.0.0, [with_xml="yes"])
 # Make the use of libxml2 explicitly controlled.
 AM_CONDITIONAL(ROSE_USE_XML,test "$with_xml" != no)
 
+# AS Check for ssl for the binary clone detection work
+CHECK_SSL
+
 # Check for objdump for BinaryContextLookup since it doesn't normally exist on
 # Mac
 AC_CHECK_TOOL(ROSE_OBJDUMP_PATH, [objdump], [no])
@@ -1380,8 +1383,6 @@ projects/palette/Makefile
 projects/reverseComputation/Makefile
 projects/assemblyToSourceAst/Makefile
 projects/assemblyToSourceAst/tests/Makefile
-projects/BTORCloneDetection/Makefile
-projects/BTORCloneDetection/tests/Makefile
 projects/bugSeeding/Makefile
 projects/bugSeeding/bugSeeding.tex
 projects/UpcTranslation/Makefile

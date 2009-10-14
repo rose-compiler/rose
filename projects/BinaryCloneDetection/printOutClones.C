@@ -8,20 +8,24 @@
 #include <list>
 #include <math.h>
 #include <boost/program_options.hpp>
+#include <boost/smart_ptr.hpp>
+
 #include <algorithm>
 #include <string>
 #include <cstdio> // for std::remove
-#include <boost/random.hpp>
-#include <boost/smart_ptr.hpp>
-#include <boost/lexical_cast.hpp>
-
-
-//##include "lsh.h"
 using namespace std;
 using namespace sqlite3x;
 using namespace boost::program_options;
-using namespace boost;
 
+struct Element {
+      int cluster;
+      int64_t vectors_row;
+      int64_t function_id;
+      std::string file;
+      std::string function_name;
+      int64_t line;
+      int64_t offset;
+};
 
 template <typename T>
 class scoped_array_with_size {
@@ -45,19 +49,6 @@ class scoped_array_with_size {
   private:
   scoped_array_with_size(const scoped_array_with_size<T>&); // Not copyable
 };
-
-
-
-struct Element {
-      int64_t cluster;
-      int64_t vectors_row;
-      int64_t function_id;
-      std::string file;
-      std::string function_name;
-      int64_t line;
-      int64_t offset;
-};
-
 
 
 int main(int argc, char* argv[])
@@ -132,17 +123,18 @@ int main(int argc, char* argv[])
   
   try {
     if( similarity == 1.0)
-    eltCount = lexical_cast<size_t>(con.executestring("select count(distinct cluster) from postprocessed_clusters"));
+    eltCount = boost::lexical_cast<size_t>(con.executestring("select count(distinct cluster) from postprocessed_clusters"));
 
     else
-    eltCount = lexical_cast<size_t>(con.executestring("select count(distinct cluster) from clusters"));
-  } catch (std::exception& e) {cerr << "Exception: " << e.what() << endl;}
+    eltCount = boost::lexical_cast<size_t>(con.executestring("select count(distinct cluster) from clusters"));
+  } catch (exception& e) {cerr << "Exception: " << e.what() << endl;}
 
   if (eltCount == 0) {
     cerr << "No largest_clones table found -- invalid database?" << endl;
     exit (1);
   }
 
+  std::cout << "Allocating " << eltCount << " elements " << std::endl;
   vectorOfClusters.allocate(eltCount);
   //Create set of clone pairs
   try{
@@ -152,6 +144,7 @@ int main(int argc, char* argv[])
     sqlite3_command cmd(con, selectSeparateDatasets.c_str());
     sqlite3_reader datasets=cmd.executereader();
 
+    
    
     std::vector<Element> thisCluster;
     
@@ -159,21 +152,21 @@ int main(int argc, char* argv[])
 //    int set_number = ds.find_set(0);
 
     
-    int last_clone=0;
-    int clone_cluster=0;
+    int64_t last_clone=0;
+    int64_t clone_cluster=0;
       
     while(datasets.read())
     {
     
       Element cur_elem;
-      cur_elem.cluster       = lexical_cast<int64_t>(datasets.getstring(0));
+      cur_elem.cluster       = boost::lexical_cast<int64_t>(datasets.getstring(0));
 
-      cur_elem.vectors_row   = lexical_cast<int64_t>(datasets.getstring(1));
-      cur_elem.function_id   = lexical_cast<int64_t>(datasets.getstring(2));
+      cur_elem.vectors_row   = boost::lexical_cast<int64_t>(datasets.getstring(1));
+      cur_elem.function_id   = boost::lexical_cast<int64_t>(datasets.getstring(2));
       cur_elem.file          = datasets.getstring(3);
       cur_elem.function_name = datasets.getstring(4);
-      cur_elem.line          = lexical_cast<int64_t>(datasets.getstring(5));
-      cur_elem.offset        = lexical_cast<int64_t>(datasets.getstring(6));
+      cur_elem.line          = boost::lexical_cast<int64_t>(datasets.getstring(5));
+      cur_elem.offset        = boost::lexical_cast<int64_t>(datasets.getstring(6));
 
       if( cur_elem.cluster != last_clone )
       {
@@ -182,10 +175,12 @@ int main(int argc, char* argv[])
       }
       
       
+      if(clone_cluster == eltCount)
+        std::cout << "Bad idea: eltCount exceeded " << std::endl;
       vectorOfClusters[clone_cluster].push_back(cur_elem);
       
     }
-  }catch(std::exception &ex) {
+  }catch(exception &ex) {
 	cerr << "Exception Occured: " << ex.what() << endl;
   }
 
@@ -195,14 +190,14 @@ int main(int argc, char* argv[])
     std::cout << "Cluster " << vectorOfClusters[i][0].cluster <<
       " has " << vectorOfClusters[i].size() << " elements. " << std::endl;
 
-    for(unsigned int j=0; j < vectorOfClusters[i].size(); j++)
+    for(int j=0; j < vectorOfClusters[i].size(); j++)
     {
       std::cout << "  elem " << j << ": row in vectors " << vectorOfClusters[i][j].vectors_row
                 << " function id " << vectorOfClusters[i][j].function_id 
                 << " file " << vectorOfClusters[i][j].file
-                << " filename " << vectorOfClusters[i][j].function_name
-                << " line " << hex << vectorOfClusters[i][j].line 
-                << " offset " << hex << vectorOfClusters[i][j].offset 
+                << " function name " << vectorOfClusters[i][j].function_name
+                << " begin address " << hex << vectorOfClusters[i][j].line 
+                << " end address " << hex << vectorOfClusters[i][j].offset 
                 << dec << std::endl;
            
 
