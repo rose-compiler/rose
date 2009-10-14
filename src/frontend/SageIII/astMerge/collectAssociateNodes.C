@@ -607,6 +607,12 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                            // sharedFunctionDeclaration->get_startOfConstruct()->display("Error sharedFunctionDeclaration located at:");
                             }
                       // ROSE_ASSERT(sharedFunctionSymbol != NULL);
+
+                      // PC (10/7/2009): merge definingDeclaration pointers
+                           if (matchingNodeInMergedAST_functionDeclaration->get_definingDeclaration() == NULL)
+                              {
+                                matchingNodeInMergedAST_functionDeclaration->set_definingDeclaration(functionDeclaration->get_definingDeclaration());
+                              }
                        }
 
                     nodeList.insert(functionSymbol);
