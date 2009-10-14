@@ -1,3 +1,86 @@
+2009-10-14 18:45  saebjornsen1
+
+	* [r7815] /trunk/ROSE/.gitignore: updated gitignore
+
+2009-10-14 18:45  saebjornsen1
+
+	* [r7814]
+	  /trunk/ROSE/projects/BinaryCloneDetection/createSignatureVectors.C,
+	  /trunk/ROSE/projects/BinaryCloneDetection/createSignatureVectors.h,
+	  /trunk/ROSE/projects/BinaryCloneDetection/createVectorsBinary.C,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/btorCloneDetection.C,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/powerpcAssemblyToC.C,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/x86AssemblyToC.C,
+	  /trunk/ROSE/src/midend/binaryAnalyses/binary_analysis.C: Fixed
+	  header files so that rose.h is not in them.
+	  Updated the interfaces for the semantic signature generation.
+
+2009-10-14 18:45  saebjornsen1
+
+	* [r7813] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/projects/Makefile.am,
+	  /trunk/ROSE/projects/SemanticSignatureVectors,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/BtorFunctionPolicy.C,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/BtorFunctionPolicy.h,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/Makefile.am,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/README,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/binaryClauseSimplify.C,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/bitblast.ss,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/bmc.ss,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/btorCleanup.C,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/btorCloneDetection.C,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/btorProblem.C,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/btorProblem.h,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/btorUnroll.C,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/constructCFG.h,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/count-variable-uses.tcl,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/dimacs.ss,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/dimacs_to_dot.tcl,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/dimacs_to_implication_graph.tcl,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/doubleStep.C,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/eliminateRedundantVariables.C,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/factorLiteralCoincidences.C,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/generatedCOpts.C,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/generatedCOpts.h,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/lookForErrors.C,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/make-cfg.ss,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/outputFileTemplate.C,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/powerpcAssemblyToC.C,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/powerpcInstructionSemantics.h,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/powerpcOutputFileTemplate.C,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/readAndWriteSets.C,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/removeUnusedVariables.C,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/satProblem.C,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/satProblem.h,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/simplify-dimacs.tcl,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/simplifyCnf.C,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/tests,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/tests/Makefile.am,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/tests/lib.h,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/tests/test0.c,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/tests/test1.c,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/tests/test2.c,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/unitResolve.C,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/variable_incidence_graph.tcl,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/x86AssemblyToBtor.C,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/x86AssemblyToBtor.h,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/x86AssemblyToBtorMain.C,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/x86AssemblyToC.C,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/x86AssemblyToC.h,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/x86AssemblyToNetlist.C,
+	  /trunk/ROSE/projects/SemanticSignatureVectors/x86AssemblyToNetlist.h,
+	  /trunk/ROSE/src/midend/binaryAnalyses/Makefile.am,
+	  /trunk/ROSE/src/midend/binaryAnalyses/binary_analysis.C,
+	  /trunk/ROSE/src/midend/binaryAnalyses/binary_analysis.h: Added
+	  Mechanism to semantically generate signature vectors to the
+	  repository
+	  - Fixed bug in creation of binary callgraph and cfg
+	  - Removed code that added bogus IP error
+	  - Added code to generate static traces
+	  Added header files for the system wide availability of the binary
+	  analysis
+	  - Support for generating a DDG
+
 2009-10-14 01:17  saebjornsen1
 
 	* [r7811] /trunk/ROSE/config/check_ssl.m4,
