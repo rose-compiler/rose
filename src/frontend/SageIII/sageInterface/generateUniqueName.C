@@ -822,6 +822,7 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
                case V_SgIfStmt:
                case V_SgWhileStmt:
                case V_SgLabelStatement: // RV 05/11/2007
+               case V_SgGotoStatement:
                   {
                  // We don't want to generate a unique string for these statements
                     break;
