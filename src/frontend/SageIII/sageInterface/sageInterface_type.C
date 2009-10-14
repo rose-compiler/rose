@@ -290,26 +290,45 @@ namespace SageInterface
     return result;
   } // getArrayElementCount()
 
-  SgType* getArrayElementType(SgArrayType* t)
+  SgType* getArrayElementType(SgType* t)
   {
     ROSE_ASSERT(t);
-    SgType* current_type = t;
+    SgType* current_type = t->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_REFERENCE_TYPE);
     while (isSgArrayType(current_type))
-      current_type = isSgArrayType(current_type)->get_base_type();
+      current_type = isSgArrayType(current_type)->get_base_type()->stripTypedefsAndModifiers();
+    if (current_type->variantT() == V_SgTypeString)
+      return SgTypeChar::createType();
     return current_type;  
   }
 
+  SgType* getElementType(SgType* t)
+  {
+    ROSE_ASSERT(t);
+    t = t->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_REFERENCE_TYPE);
+    VariantT vt = t->variantT();
+    if (vt == V_SgPointerType)
+      return static_cast<SgPointerType *>(t)->get_base_type();
+    else if (vt == V_SgArrayType)
+      return static_cast<SgArrayType *>(t)->get_base_type();
+    else if (vt == V_SgTypeString)
+      return SgTypeChar::createType();
+    else
+      return NULL;
+  }
+
   //! Get the number of dimensions of an array type
-  int getDimensionCount(SgArrayType* mytype)
+  int getDimensionCount(SgType* mytype)
   {
     ROSE_ASSERT(mytype != NULL);
-    int dimension = 1;
-    SgType* basetype= mytype->get_base_type();
-    while (isSgArrayType(basetype))
+    int dimension = 0;
+    SgType* current_type = mytype->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_REFERENCE_TYPE);
+    while (isSgArrayType(current_type))
     {
       dimension++;
-      basetype= isSgArrayType(basetype)->get_base_type();
+      current_type= isSgArrayType(current_type)->get_base_type()->stripTypedefsAndModifiers();
     }
+    if (current_type->variantT() == V_SgTypeString)
+      dimension++;
     return dimension;
   }                              
   // Returns true if args is a valid argument type list for decl

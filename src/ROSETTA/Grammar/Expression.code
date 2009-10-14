@@ -1568,7 +1568,8 @@ SgBinaryOp::get_type() const
      SgType* lhsType = get_lhs_operand()->get_type();
      ROSE_ASSERT(lhsType != NULL);
 
-     ROSE_ASSERT(get_rhs_operand()->get_type() != NULL);
+     SgType* rhsType = get_rhs_operand()->get_type();
+     ROSE_ASSERT(rhsType != NULL);
 
   // DQ (9/27/2006): Ideally, this should not be set, though sometimes it is.
   // ROSE_ASSERT(p_expression_type != NULL);
@@ -1578,6 +1579,30 @@ SgBinaryOp::get_type() const
           expression_type_name = p_expression_type->class_name();
           printf ("Found an case where $CLASSNAME::p_expression_type != NULL on %s expression_type_name = %s \n",
                this->class_name().c_str(),expression_type_name.c_str());
+        }
+
+     if (variantT() == V_SgAddOp || variantT() == V_SgSubtractOp)
+        {
+       // PC (10/9/2009): Pointer arithmetic is a special case
+          SgType *lhsBase = SageInterface::getElementType(lhsType),
+                 *rhsBase = SageInterface::getElementType(rhsType);
+
+       /* Note that we return an SgPointerType regardless of whether the original
+        * type was an SgPointerType or SgArrayType.  This is because the latter
+        * undergoes implicit array-to-pointer conversion. */
+          if (lhsBase != NULL && rhsBase == NULL)
+             {
+               return SgPointerType::createType(lhsBase);
+             }
+          else if (lhsBase == NULL && rhsBase != NULL)
+             {
+               return SgPointerType::createType(rhsBase);
+             }
+          else if (lhsBase != NULL && rhsBase != NULL && variantT() == V_SgSubtractOp)
+             {
+            // TODO: return ptrdiff_t
+               return lhsType;
+             }
         }
 
      return lhsType;
@@ -3395,6 +3420,13 @@ $CLASSNAME::get_type() const
   // so to be consistant we will select the same branch.
      SgType* returnType = trueType;
 
+  // PC (10/12/2009): If returnType is in fact an SgArrayType it will undergo array-to-pointer conversion
+     SgType *retElemType = SageInterface::getElementType(returnType);
+     if (retElemType != NULL)
+        {
+          returnType = SgPointerType::createType(retElemType);
+        }
+
      ROSE_ASSERT(returnType != NULL);
      return returnType;
    }
@@ -4171,6 +4203,17 @@ $CLASSNAME::get_type() const
 
      ROSE_ASSERT(get_operand() != NULL);
      SgType* returnType = get_operand()->get_type();
+
+     ROSE_ASSERT(returnType != NULL);
+
+     if (get_operand()->variantT() != V_SgStringVal)
+        {
+          SgType* retElemType = SageInterface::getElementType(returnType);
+          if (retElemType != NULL)
+             {
+               returnType = SgPointerType::createType(retElemType);
+             }
+        }
 
      ROSE_ASSERT(returnType != NULL);
      return returnType;
