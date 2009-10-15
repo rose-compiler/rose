@@ -38,8 +38,6 @@
 	   get_preprocessing_infos/2]).
 
 :- use_module(library(utils)).
-% This one is meant to be user-supplied
-:- use_module(library(types)).
 
 %-----------------------------------------------------------------------
 /** <module> Properties of abstract syntax trees
@@ -47,6 +45,11 @@
   This module defines commonly-used queries about C/C++/Objective C
   ASTs given in the TERMITE term representation as exported by SATIrE.
 
+  Depenedencies:
+  
+  The user has to define the type predicates [type_info/3, type_interval/2]
+
+  
 @version   @PACKAGE_VERSION@
 @copyright Copyright (C) 2008-2009 Adrian Prantl
 @author    Adrian Prantl <adrian@complang.tuwien.ac.at>

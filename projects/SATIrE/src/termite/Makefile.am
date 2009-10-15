@@ -75,9 +75,11 @@ nobase_dist_data_DATA = \
 
 else # -----------------------------------------------------------------
 
-nodist_BUILT_SOURCES = termparser.tab.c++ termparser.tab.h++ \
-	                dfiparser.tab.c++ dfiparser.tab.h++ \
-			termparser.c++ termparser.h termlexer.c++
+BUILT_SOURCES = \
+	termparser.tab.c++ termparser.tab.h++ \
+	dfiparser.tab.c++ dfiparser.tab.h++ \
+	termparser.c++ termparser.h termlexer.c++
+nodist_libtermsupport_la_SOURCES += $(BUILT_SOURCES)
 CLEANFILES += termparser.c++ termparser.h termlexer.c++ termparser.tab.c++ \
               termparser.tab.h++
 libtermsupport_la_SOURCES += termparser.y++ termlexer.l++

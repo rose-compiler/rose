@@ -7,7 +7,7 @@ EXTRA_DIST= \
 	satire_overview.pdf \
 	satire_attributes_auxiliary_functions \
         termite.tex \
-	fancychap.sty \    
+	fancychap.sty \
 	fancyheadings.sty \
 	logo.sty \
         plonline.sty \
