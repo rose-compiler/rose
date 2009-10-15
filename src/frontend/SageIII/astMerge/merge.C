@@ -637,6 +637,8 @@ int AstMergeSupport ( SgProject* project )
                   }
              }
 
+          AstPostProcessing(project);
+
 #if 0
        // Build the AST Merge object (this is not the final interface)
           AstMerge mergeSupport;

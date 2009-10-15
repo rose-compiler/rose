@@ -3773,6 +3773,33 @@ SgProject::parse()
           i++;
         }
 
+  // GB (8/19/2009): Moved the AstPostProcessing call from
+  // SgFile::callFrontEnd to this point. Thus, it is only called once for
+  // the whole project rather than once per file. Repeated calls to
+  // AstPostProcessing are slow due to repeated memory pool traversals. The
+  // AstPostProcessing is only to be called if there are input files to run
+  // it on, and they are meant to be used in some way other than just
+  // calling the backend on them. (If only the backend is used, this was
+  // never called by SgFile::callFrontEnd either.)
+     if ( !get_fileList().empty() && !get_useBackendOnly() )
+        {
+          AstPostProcessing(this);
+        }
+
+  // GB (9/4/2009): Moved the secondary pass over source files (which
+  // attaches the preprocessing information) to this point. This way, the
+  // secondary pass over each file runs after all fixes have been done. This
+  // is relevant where the AstPostProcessing mechanism must first mark nodes
+  // to be output before preprocessing information is attached.
+     SgFilePtrList &files = get_fileList();
+     SgFilePtrList::iterator fIterator;
+     for (fIterator = files.begin(); fIterator != files.end(); ++fIterator)
+        {
+          SgFile *file = *fIterator;
+          ROSE_ASSERT(file != NULL);
+          file->secondaryPassOverSourceFile();
+        }
+
      if ( get_verbose() > 0 )
         {
        // Report the error code if it is non-zero (but only in verbose mode)
@@ -4597,7 +4624,11 @@ SgFile::callFrontEnd()
      printf("FMZ :: before AstPostProcessing astScopeStack = %p \n",stmp);
 #endif
  
-     AstPostProcessing(this);
+  // GB (8/19/2009): Commented this out and moved it to SgProject::parse().
+  // Repeated calls to AstPostProcessing (one per file) can be slow on
+  // projects consisting of multiple files due to repeated memory pool
+  // traversals.
+  // AstPostProcessing(this);
 
   // FMZ: 05/30/2008.  Do not generate .rmod file for the PU imported by "use" stmt
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
@@ -4613,8 +4644,20 @@ SgFile::callFrontEnd()
         }
 #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 
+#if 0
+     printf ("Leaving SgFile::callFrontEnd(): fileNameIndex = %d \n",fileNameIndex);
+     display("At bottom of SgFile::callFrontEnd()");
+#endif
+
+  // return the error code associated with the call to the C++ Front-end
+     return frontendErrorLevel;
+   }
 
 
+
+void
+SgFile::secondaryPassOverSourceFile()
+   {
   // **************************************************************************
   //                      Secondary Pass Over Source File
   // **************************************************************************
@@ -4631,6 +4674,9 @@ SgFile::callFrontEnd()
   //    4) All tokens (each is classified as to what specific type of token it is)
   //
   // There is no secondary processing for binaries.
+
+  // GB (9/4/2009): Factored out the secondary pass. It is now done after
+  // the whole project has been constructed and fixed up.
 
      if (get_binary_only() == true)
         {
@@ -4662,7 +4708,7 @@ SgFile::callFrontEnd()
              {
                if (get_verbose() > 1)
                   {
-                    printf ("In SgFile::callFrontEnd(): calling attachAllPreprocessingInfo() \n");
+                    printf ("In SgFile::secondaryPassOverSourceFile(): calling attachAllPreprocessingInfo() \n");
                   }
 
             // printf ("Secondary pass over source file = %s to comment comments and CPP directives \n",this->get_file_info()->get_filenameString().c_str());
@@ -4731,9 +4777,6 @@ SgFile::callFrontEnd()
 
   // ROSE_ASSERT(SgNode::get_globalFunctionTypeTable() != NULL);
   // ROSE_ASSERT(SgNode::get_globalFunctionTypeTable()->get_parent() != NULL);
-
-  // return the error code associated with the call to the C++ Front-end
-     return frontendErrorLevel;
    }
 
 

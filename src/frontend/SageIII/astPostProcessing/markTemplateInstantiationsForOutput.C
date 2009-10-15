@@ -795,10 +795,12 @@ markTemplateInstantiationsForOutput( SgNode* node )
   // DQ (8/2/2005): Added better handling of AST fragments where template handling is not required!
   // DQ (7/29/2005): Added support with Qing for AST framents that occure in the ASTInterface classes.
      SgSourceFile* file                = NULL;
+     SgProject* project                = NULL;
   // bool buildImplicitTemplates = false;
 
      ROSE_ASSERT(node != NULL);
      file = TransformationSupport::getSourceFile(node);
+     project = isSgProject(node);
   // buildImplicitTemplates = (file != NULL) && (file->get_no_implicit_templates() == false);
 
   // printf ("buildImplicitTemplates = %s \n",buildImplicitTemplates ? "true" : "false");
@@ -843,6 +845,21 @@ markTemplateInstantiationsForOutput( SgNode* node )
           MarkTemplateInstantiationsForOutput::ProcessClassTemplateDeclarations(setOfRequiredDeclarations,file);
 
         } // end of if (file != NULL)
+     else if (project != NULL)
+        {
+       // GB (9/4/2009): Added this case for handling SgProject nodes. We do
+       // this simply by iterating over the list of files in the project and
+       // calling this function recursively. This is only one level of
+       // recursion since files are not nested.
+          SgFilePtrList &files = project->get_fileList();
+          SgFilePtrList::iterator fIterator;
+          for (fIterator = files.begin(); fIterator != files.end(); ++fIterator)
+             {
+               SgFile *file = *fIterator;
+               ROSE_ASSERT(file != NULL);
+               markTemplateInstantiationsForOutput(file);
+             }
+        }
 
 #if 0
           printf ("Exiting after output of required declarations \n");
