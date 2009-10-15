@@ -164,19 +164,16 @@ distance_from_root(zipper(_, Nav), Distance) :- length(Nav, Distance).
 
 %% next_preorder(+Zipper, -Zipper)
 % Return the ``next'' node in a preorder traversal fashion.
-% Algorithm:
+% Algorithm: (rechtssucher)
 %   try down(1)
 %   else while not try right() do up()
 
-next_preorder(P1, P2) :-
-  (   down(P1, 1, P2) % ,writeln(down)
-  ;   right_or_up(P1, P2)
-  ) ; fail.
+next_preorder(P1, P2) :- down(P1, 1, P2), !.
+next_preorder(P1, P2) :- right_or_up(P1, P2).
 
-right_or_up(P1, Pn) :-
-  (   right(P1, Pn)  
-  ;   up(P1, P2),% write('up to'), unzip(P2,S,_C),S=..[A|_],writeln(A),
-      right_or_up(P2, Pn)
-  ).
+right_or_up(P1, Pn) :- right(P1, Pn), !.
+right_or_up(P1, Pn) :- 
+  up(P1, P2),
+  right_or_up(P2, Pn).
 
 

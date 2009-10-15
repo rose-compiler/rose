@@ -1,4 +1,5 @@
 #!/usr/local/mstools/bin/pl -L0 -G0 -T0 -t main -f
+%#!/sw/bin/swipl -L0 -G0 -T0 -t main -f
 % -*- prolog -*-
 
 %-----------------------------------------------------------------------
@@ -69,7 +70,7 @@ user:message_hook(_Term, error, _Lines) :-
 ast_walk(P, Function, Marker, CallGraph-Target, PM, P4) :-
 %  catch(term_match(Function, function_declaration), _, ( !, fail ) ),
   ( goto_function(P, Function, P1)
-  ; format('**ERROR: Could not locate function ~w.', [Function]),
+  ; format(user_error, '**ERROR: Could not locate function ~w.', [Function]),
     halt(1)
   ),
   function_signature(Function, Type, Name, _), 
@@ -505,7 +506,7 @@ find_statement(P1, Stmt, Pn) :-
   % erase Context to limit the search space
   unzip(P1, N, _Ctx),
   zip(N, P2),
-  find_statement1(P2, Stmt, Pn), !.
+  find_statement1(P2, Stmt, Pn).
 
 find_statement1(P1, Stmt, Pn) :-
   (   unzip(P1, Stmt, _),
@@ -543,15 +544,18 @@ function_call_weight(Proj, Name1/Type1, Name2/Type2, Weight) :-
   (   function_signature(Sig, Type1, Name1, _),
       goto_function(Proj, Sig, P1),
       is_function_call_exp(FCall, Name2, Type2),
-      find_statement(P1, FCall, P2),
-      up(P2, P3), up(P3, P4),
-      unzip(P4, Stmts, _),
-      pragma_text(Pragma, sum_freq(Weight)),
-      member(Pragma, Stmts)
+      findall(W, function_call_weight1(P1,FCall,W), Weights),
+      sum(Weights, #=, Weight), !
   )   ;
   %trace,
   Weight = -1.
 
+function_call_weight1(P1,FCall,Weight) :-
+      find_statement(P1, FCall, P2),
+      up(P2, P3), up(P3, P4),
+      unzip(P4, Stmts, _),
+      pragma_text(Pragma, sum_freq(Weight)),
+      member(Pragma, Stmts).
 %-----------------------------------------------------------------------
 % CALLGRAPH Printing
 %-----------------------------------------------------------------------
@@ -568,12 +572,19 @@ dump_graph(Method, Filename, Graph, Proj, Flags) :-
   call(Method, dumpstream, Graph, Pz, Flags), !,
   close(dumpstream).
 
+weight_color(0, black).
+weight_color(Weight, Color) :-
+  C is min(4,round(log(Weight+1)+1)),
+  format(atom(Color), 'orangered~w', [C]).
+
 viz_edge(F, Proj, Edge) :-
   Edge = N1-N2,
   function_call_weight(Proj, N1, N2, Weight),
-  Size is log(Weight+2),
-  format(F, '"~w" -> "~w" [arrowsize=~w,weight=~w];~n',
-	 [N1, N2, Size,Weight]).
+  Size is min(4,log(Weight+1)+1),
+  weight_color(Weight, Color),
+  format(F,
+'"~w" -> "~w" [arrowsize=~w,penwidth=~w,color=~w,label="~w"];~n', %weight=~w,
+	 [N1, N2, Size, Size,  Color, Weight]).
 
 viz_node(F, Node) :-
   Node = Name/Type,
@@ -592,7 +603,7 @@ graphviz(F, G, Proj, Base) :-
   vertices(G, V),
   Root = Base/_Type, member(Root, V),
   format(F, 'digraph G {~n', []),
-  format(F, '  root="~w"; splines=true; overlap=false; rankdir=LR;~n', [Root]),
+  format(F, '  root="~w"; splines=true; overlap=true; rankdir=LR;~n', [Root]),
   maplist(viz_edge(F, Proj), E),
   maplist(viz_node(F), V),
   write(F, '}\n').
@@ -649,14 +660,14 @@ main1(Filename, Target, Base) :-
    %maximize(MaxTerm),
 
    % Visualize this!
-   make_filename(P2, 'call-', '.dot', Fn0),
-   dump_graph(graphviz, Fn0, CallGraph, P2, Base),
+   make_filename(P2, 'call-', '.dot', Fn0), !,
+   dump_graph(graphviz, Fn0, CallGraph, P2, Base), !,
 
-   make_filename(P2, 'icfg-', '-compact.dot', Fn1),
-   visicfg(P2, compact, Base, Fn1),
+   make_filename(P2, 'icfg-', '-compact.dot', Fn1), !,
+   visicfg(P2, compact, Base, Fn1), !,
 
-   make_filename(P2, 'icfg-', '-explode.dot', Fn2),
-   visicfg(P2, explode, Base, Fn2),
+   make_filename(P2, 'icfg-', '-explode.dot', Fn2), !,
+   visicfg(P2, explode, Base, Fn2), !,
 
    unparse(P2),
    (Target = 'SUM' -> statistics ; true)

@@ -349,6 +349,10 @@ unparse1(_UI, enum_val(_,value_annotation(_,Value,_,_),_,_)) :- !, write(Value).
 unparse1(UI, function_call_exp(function_ref_exp(function_ref_exp_annotation(Name, _Type, _), _, _), ExprList, _, _, _)) :-
   !, write(Name), write('('), unparse(UI, ExprList), write(')').
 
+unparse1(UI, function_call_exp(FunctionPointer,
+			       ExprList, _, _, _)) :-
+  !, write('('), unparse(FunctionPointer), write(')'), write('('), unparse(UI, ExprList), write(')').
+
 unparse1(_UI, function_ref_exp(function_ref_exp_annotation(Name, _Type, _), _, _)) :- !, write(Name).
 
 unparse1(_UI, expr_list_exp(_, _, _)) :- !.

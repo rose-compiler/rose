@@ -51,6 +51,8 @@ collect_calls(I,I,I, N, N).
 collect_funcs(Sigs, [], [Sig|Sigs], FunctionDecl, FunctionDecl) :-
   function_body(FunctionDecl, _), % not interested in declarations
   function_signature(FunctionDecl, Type, Name, _),
+%  file_info(FunctionDecl,Fi),
+% Fixme an  den edges auch unifizieren!
   !, 
   Sig = Name/Type.
 

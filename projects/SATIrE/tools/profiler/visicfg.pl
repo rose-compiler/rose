@@ -23,24 +23,37 @@
 
 :- use_module(library(clpfd)).
 
-% Data structure:
+% Graph Data structure:
 % * G        ugraph
 % * Mode     one of [compact,explode]
 % * Count    current node ID
 % * Last     last node
 % * Fundecls [EntryNode]
 
+% Node Data structure:
+% * Label    Integer
+% * Name     
+% * Style    
+% * SameRank [Labels]
+
 % Accessors:
 graph_count(graph(_G,_Mode,Count,_Last,_FunDecls), Count).
 graph_last( graph(_G,_Mode,_Count,Last,_FunDecls), Last).
 graph_mode( graph(_G,Mode,_Count,_Last,_FunDecls), Mode).
+
+% graph_connect(+G1, +G2, -G3).
+% make the last node in G1 the last node in G2 yielding G3
+graph_connect(graph(_, _, _, Last, _),
+	      graph(UG, Mode, Count, _, FunDecls),
+	      graph(UG, Mode, Count, Last, FunDecls)).
 
 new_graph(Name, Mode, G) :- new_graph(Name, Mode, 0, [], G).
 
 new_graph(Name, Mode, Count, FunDecls,
 	  graph(G,Mode,Count1,Start,[Start|FunDecls])) :-
   Count1 #= Count + 1,
-  Start = node(Count, Name, style='shape=tab, fillcolor=azure,pencolor=azure4'),
+  Start = node(Count, Name,
+	       style='shape=tab, fillcolor=azure,pencolor=azure4', []),
   vertices_edges_to_ugraph([Start], [], G).
 
 visicfg(P, Mode, Base, Filename) :-
@@ -142,11 +155,14 @@ ast_walk(P-G, P3-G3) :-
 
 % BRANCHES
 
-ast_walk(P-G, P7-G7) :-
+ast_walk(P-G, P7-Gn) :-
   unzip(P, if_stmt(_E1, _Bb1, _Bb2, _An, _Ai, _Fi), _), !,
   %make_node(zipper(if_stmt(E1, null, null, An, Ai, Fi), [])-G, G1),
-  faux_node(G, 'if', G1),
-  
+
+  % make if appear next to then
+  samerank_node(G, 'if', IfLabel, ThenLabel, G1),
+  ThenLabel #= IfLabel + 1,
+    
   % Cond
   down(P, 1, P1),
 
@@ -159,10 +175,12 @@ ast_walk(P-G, P7-G7) :-
   % Else
   right(P4, P5),
 
-  faux_node(graph(G3,M,N3,If,FDs3), 'else', G4),
-  ast_walk(P5-G4, P6-graph(G5,M,N5,End,FDs5)),
-  add_edges(G5, [Then-End], G6),
-  G7 = graph(G6,M,N5,End,FDs5),
+  % make else appear next to if
+  samerank_node(graph(G3,M,N3,If,FDs3), 'else', _, IfLabel, G4),
+  ast_walk(P5-G4, P6-graph(G5,M,N5,Else,FDs5)),
+  faux_node(graph(G5,M,N5,Then,FDs5), 'endif', graph(G6,M,N6,End,FDs6)),
+  add_edges(G6, [Else-End], G7),
+  Gn = graph(G7,M,N6,End,FDs6),
   
   up(P6, P7).
 
@@ -187,7 +205,7 @@ ast_walk(P-G, P3-G1) :-
   up(P2, P3).
 
 % FUNCTION CALL
-ast_walk(P-G, P2-G1) :-
+ast_walk(P-G, P2-Gn) :-
   unzip(P, FCall, Ctx),
   is_function_call_exp(FCall, Name, Type), !,
   function_signature(FunctionDecl, Type, Name, _Mod),
@@ -198,18 +216,28 @@ ast_walk(P-G, P2-G1) :-
   FunctionHd = function_declaration(Params, null, DeclAnnot, AI, FI),
   unparse_to_safe_atom(FunctionHd, Sig),
   % Fixme add function exit too
-
-  G = graph(UG0, Mode, Count, Last, FunDecls),
+  faux_node(G, 'return from call', G1),
+  
+  graph_connect(G, G1, G2),
+  graph_last(G1, RetTo),
+  G2 = graph(UG2, Mode, Count, Call, FunDecls),
   % Only add edge if we already visited that function
-  (   Mode=compact, member(node(Label, Sig, _), FunDecls)
+  (   Mode=compact, member(node(Label, Sig, _, _), FunDecls)
   ->  % connect to an existing function
-      add_edges(UG0, [Last-Label], UG1),
-      G1 = graph(UG1, Mode, Count, Last, FunDecls),
+      add_edges(UG2, [Call-Label], UG3),
+      Exit = Label, % FIXME: should be function exit, not entry!
+      G3 = graph(UG3, Mode, Count, Exit, FunDecls),
       P2 = P
   ;   % dive into the function
-      ast_walk(Top-G, FunctionDecl, P1-G1),
+      ast_walk(Top-G2, FunctionDecl, P1-G3),
       walk_to(P1, Ctx, P2)
-  ).
+  ),
+
+  % connect to the 'return from' node
+  G3 = graph(UG3, Mode3, Count3, Last3, FunDecls3),
+  add_edges(UG3, [Last3-RetTo], UG4),
+  Gn = graph(UG4, Mode3, Count3, Last3, FunDecls3).
+
 
 % Lists
 ast_walk(zipper([], Ctx)-G, zipper([], Ctx)-G) :- bound(G),
@@ -277,8 +305,11 @@ ast_walk1(P-G, N, P3-G2) :-
 % make_back_edge(+Entry, +Exit, -Next)
 % introduce a back edge and rewire Last to point to loop entry
 make_back_edge(graph(_,_,_,Entry,_),
-	       graph(G,Mode,Last,Exit,FDs),
+	       %graph(G,Mode,Last,Exit,FDs),
+	       G_Final,
 	       graph(G1,Mode,Last,Entry,FDs)) :-
+  faux_node(G_Final, 'Loop end', graph(G,_,_,_,_)),
+  G_Final=graph(_,Mode,Last,Exit,FDs),
   add_edges(G, [Exit-Entry], G1).
 
 % Edge labels are modelled via the following trick
@@ -292,7 +323,7 @@ make_node(P-graph(G,Mode,Count,Last,FDs), graph(G1,Mode,Count1,Node,FDs)) :-
   unzip(P, Pragma, _),
   pragma_text(Pragma, _),
   unparse_to_safe_atom(Pragma, Text),
-  Node = node(Count, Text, style=''),
+  Node = node(Count, Text, style='', []),
   Count1 #= Count+1,
   add_edges(G, [Last-edge(Text,Node)], G1).
 	  
@@ -313,16 +344,27 @@ make_node(P-graph(G,Mode,Count,Last,FDs), graph(G1,Mode,Count1,Node,FDs)) :-
   format(atom(Style),
     'shape=note,style=filled,fillcolor=cornsilk,pencolor=cornsilk4,id=<~w>',
 	 [Context]),
-  Node = node(Count, Stmt, style=Style),
+  Node = node(Count, Stmt, style=Style, []),
   
   Count1 #= Count+1,
   add_edges(G, [Last-Node], G1).
 
 faux_node(graph(G,Mode,Count,Last,FDs), Name, graph(G1,Mode,Count1,Node,FDs)) :-
   Node = node(Count, Name,
-	      style='shape=note, style=filled, fillcolor=gold, pencolor=gold4'),
+	      style='shape=note, style=filled, fillcolor=gold, pencolor=gold4',
+	      []),
   Count1 #= Count+1,
   add_edges(G, [Last-Node], G1).
+
+% same as faux but with SameRank of OtherLabel
+samerank_node(graph(G,Mode,Count,Last,FDs), Name, Count, OtherLabel,
+              graph(G1,Mode,Count1,Node,FDs)) :-
+  Node = node(Count, Name,
+	      style='shape=note, style=filled, fillcolor=gold, pencolor=gold4',
+	      [OtherLabel]),
+  Count1 #= Count+1,
+  add_edges(G, [Last-Node], G1).
+
 
 replace_all1(CsI,A1,A2,CsO) :-
   atom_codes(A1, [C1]),
@@ -356,14 +398,15 @@ dump_graph(Method, Filename, Graph, Flags) :-
   call(Method, dumpstream, Graph, Flags), !,
   close(dumpstream).
 
-get_label(node(L,_,_), L).
-get_label(G, L) :- graph_count(G, L).
-get_label(L, A) :- number(L), format(atom(A), '~w [constraint=false]', L).
+get_label(node(L,_,_,_), L, '').
+get_label(G, L, '') :- graph_count(G, L).
+get_label(L, L, '[constraint=false]') :- number(L). % back edge
+%  format(atom(A), '~w ', L).
 
 viz_edge(F, N1-N2) :-
-  get_label(N1, L1),
-  get_label(N2, L2),
-  format(F, '~w -> ~w ;~n', [L1, L2]).
+  get_label(N1, L1, Constraint),
+  get_label(N2, L2, _),
+  format(F, '~w -> ~w ~w;~n', [L1, L2, Constraint]).
 viz_edge(F, N1-edge(Attribute, N2)) :-
   get_label(N1, L1),
   get_label(N2, L2),
@@ -371,8 +414,9 @@ viz_edge(F, N1-edge(Attribute, N2)) :-
 
 viz_edge(_, Edge) :- writeln(Edge), trace.
 
-viz_node(F, _, node(Label,Stmt,style=Style)) :- !,
-  format(F, '~w [ label=<~w>, ~w ];~n', [Label,Stmt,Style]).
+viz_node(F, _, node(Label,Stmt,style=Style,SameRank)) :- !,
+  format(F, '~w [ label=<~w>, ~w ];~n', [Label,Stmt,Style]),
+  viz_rank(F, Label, SameRank).
 
 viz_node(F, _-Color, graph(G, explode, Count, Last, _FDs)) :- !,
   viz_exploded_subgraph(F, Color, graph(G, Count, Last)).
@@ -409,6 +453,12 @@ viz_exploded_subgraph(F, Color, graph(G, Count, Last)) :-
   format(F, 'label="Function" ;~n', []),
   format(F, '} ;~n', []).
 
+viz_rank(_, _, []).
+viz_rank(F, Label, SameRank) :-
+  format(F, '{ rank = same; ', []),
+  maplist(print_w_semi(F),[Label|SameRank]),
+  format(F, '}~n', []).
+print_w_semi(F, N) :- format(F, '~w; ', [N]).
 
 %% graphviz(F, G, _).
 %  Dump an ugraph in dotty syntax
@@ -418,7 +468,7 @@ graphviz(F, G, _Mode) :-
   format(F, 'digraph G {~n', []),
   %Root = Base/_Type, member(Root, V),
   %format(F, '  root="~w";~n', [Root]),
-  format(F, 'splines=true; overlap=false; rankdir=TB;~n', []),
+  format(F, 'splines=true; overlap=true; rankdir=TB;~n', []),
   maplist(viz_edge(F), E),
   Free = _Unbound, Color #= 100,
   maplist(viz_node(F, Free-Color), V),

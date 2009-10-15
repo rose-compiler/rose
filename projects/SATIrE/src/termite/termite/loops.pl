@@ -18,7 +18,7 @@
 	   is_const_val/2
 ]).
 
-:- use_module([library(types),library(astproperties)]).
+:- use_module(library(astproperties)).
 
 %-----------------------------------------------------------------------
 /** <module> Properties of loops
