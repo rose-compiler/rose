@@ -2,12 +2,12 @@
 	  [visicfg/4]).
 
 %-----------------------------------------------------------------------
-/** <module> 
+/** <module>
 
 @version   @PACKAGE_VERSION@
 @copyright Copyright (C) 2009 Adrian Prantl
 @author    Adrian Prantl <adrian@complang.tuwien.ac.at>
-@license 
+@license
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -83,8 +83,8 @@ ast_walk(P-G, Function, P4-G3) :- bound(P), bound(G),
   % start a new subgraph
   new_graph(Sig, Mode, Count0, FunDecls0, SubG1),
   SubG1 = graph(_,Mode,_,EntryNode,_),
-  
-  down(P1, 2, P2),	    
+
+  down(P1, 2, P2),
   ast_walk(P2-SubG1, P3-SubG2),
   top(P3, P4),
 
@@ -99,8 +99,8 @@ ast_walk(P-G, Function, P4-G3) :- bound(P), bound(G),
 ast_walk(P-G, _) :- bound(P), bound(G), fail.
 
 % FUNCTION DEF
-ast_walk(P-G, P3-G1) :- 
-  unzip(P, function_definition(_Bb, _An, _Ai, _Fi), _), !, 
+ast_walk(P-G, P3-G1) :-
+  unzip(P, function_definition(_Bb, _An, _Ai, _Fi), _), !,
   down(P, 1, P1),
 
   ast_walk(P1-G, P2-G1),
@@ -123,10 +123,10 @@ ast_walk(P-G, P-G) :-
 ast_walk(P-G, P3-G3) :-
   unzip(P, for_statement(E1, E2, E3, Bb, An, Ai, Fi), _), !,
   make_node(zipper(for_statement(E1, E2, E3, null, An, Ai, Fi), [])-G, G1),
-  
+
   down(P, 4, P1),
   extract_loopbound(Bb, _LoopBound),
-    
+
   ast_walk(P1-G1, P2-G2),
   make_back_edge(G1, G2, G3),
   up(P2, P3).
@@ -137,7 +137,7 @@ ast_walk(P-G, P3-G3) :-
   down(P, 2, P1),
 
   extract_loopbound(Bb, _LoopBound),
- 
+
   ast_walk(P1-G1, P2-G2),
   make_back_edge(G1, G2, G3),
   up(P2, P3).
@@ -148,7 +148,7 @@ ast_walk(P-G, P3-G3) :-
   down(P, 1, P1),
 
   extract_loopbound(Bb, _LoopBound),
-  
+
   ast_walk(P1-G1, P2-G2),
   make_back_edge(G1, G2, G3),
   up(P2, P3).
@@ -163,11 +163,13 @@ ast_walk(P-G, P7-Gn) :-
   samerank_node(G, 'if', IfLabel, ThenLabel, G1),
   ThenLabel #= IfLabel + 1,
     
+  %faux_node(G, 'if', G1),
+  
   % Cond
   down(P, 1, P1),
 
   ast_walk(P1-G1, P2-graph(G2,M,N2,If,FDs2)),
-  
+
   % Then
   right(P2, P3),
   ast_walk(P3-graph(G2,M,N2,If,FDs2), P4-graph(G3,M,N3,Then,FDs3)),
@@ -181,7 +183,7 @@ ast_walk(P-G, P7-Gn) :-
   faux_node(graph(G5,M,N5,Then,FDs5), 'endif', graph(G6,M,N6,End,FDs6)),
   add_edges(G6, [Else-End], G7),
   Gn = graph(G7,M,N6,End,FDs6),
-  
+
   up(P6, P7).
 
 ast_walk(P-G, P3-G1) :-
@@ -238,6 +240,8 @@ ast_walk(P-G, P2-Gn) :-
   add_edges(UG3, [Last3-RetTo], UG4),
   Gn = graph(UG4, Mode3, Count3, Last3, FunDecls3).
 
+  %),
+  %faux_node(G1, 'Function return', Gn).
 
 % Lists
 ast_walk(zipper([], Ctx)-G, zipper([], Ctx)-G) :- bound(G),
@@ -253,7 +257,7 @@ ast_walk(P-G, P3-G1) :-
 
 % % UnOp
 ast_walk(P-G, P3-G2) :-
-   unzip(P, UnOp, _), 
+   unzip(P, UnOp, _),
    functor(UnOp, F, 4), !, %UnOp =.. [_Op, _E1, _, _, _],
    down(P, 1, P1),
 
@@ -265,20 +269,20 @@ ast_walk(P-G, P3-G2) :-
    ;   make_node(P-G, G1)  ),
 
    % skip vardecls
-   (   atom_concat(_, 'declaration',F) 
+   (   atom_concat(_, 'declaration',F)
    ->  P1-G1 = P2-G2
    ;   ast_walk(P1-G1, P2-G2)  ),
    up(P2, P3).
 
 % BinOp
 ast_walk(P-G, P5-G3) :-
-  unzip(P, BinOp, _), 
+  unzip(P, BinOp, _),
   functor(BinOp, _, 5), !, %BinOp =.. [_Op, _E1, _E2, _, _, _],
-  
+
   G =G1,%make_node(P-G, G1),
   down(P, 1, P1),
   ast_walk(P1-G1, P2-G2),
-      
+
   right(P2, P3),
   ast_walk(P3-G2, P4-G3),
   up(P4, P5).
@@ -326,7 +330,7 @@ make_node(P-graph(G,Mode,Count,Last,FDs), graph(G1,Mode,Count1,Node,FDs)) :-
   Node = node(Count, Text, style='', []),
   Count1 #= Count+1,
   add_edges(G, [Last-edge(Text,Node)], G1).
-	  
+
 make_node(P-graph(G,Mode,Count,Last,FDs), graph(G1,Mode,Count1,Node,FDs)) :-
   bound(P), bound(G), bound(Count),
 
@@ -337,7 +341,7 @@ make_node(P-graph(G,Mode,Count,Last,FDs), graph(G1,Mode,Count1,Node,FDs)) :-
   % Put the surounding context in a tooltip if it's not too large
   distance_from_root(P, D),
   (   D #> 5
-  ->  
+  ->
       up(P, P1), unzip(P1, Ctx, _),
       unparse_to_safe_atom(Ctx, Context)
   ;   Context = Stmt  ),
@@ -345,7 +349,7 @@ make_node(P-graph(G,Mode,Count,Last,FDs), graph(G1,Mode,Count1,Node,FDs)) :-
     'shape=note,style=filled,fillcolor=cornsilk,pencolor=cornsilk4,id=<~w>',
 	 [Context]),
   Node = node(Count, Stmt, style=Style, []),
-  
+
   Count1 #= Count+1,
   add_edges(G, [Last-Node], G1).
 
@@ -393,7 +397,7 @@ display(N) :- write(N).
 % Method must be one of _graphviz_ or _vcg_.
 % Flags is a list of terms
 % * layout(tree)
-dump_graph(Method, Filename, Graph, Flags) :-   
+dump_graph(Method, Filename, Graph, Flags) :-
   open(Filename, write, _, [alias(dumpstream)]),
   call(Method, dumpstream, Graph, Flags), !,
   close(dumpstream).
@@ -464,7 +468,7 @@ print_w_semi(F, N) :- format(F, '~w; ', [N]).
 %  Dump an ugraph in dotty syntax
 graphviz(F, G, _Mode) :-
   edges(G, E),
-  vertices(G, V), 
+  vertices(G, V),
   format(F, 'digraph G {~n', []),
   %Root = Base/_Type, member(Root, V),
   %format(F, '  root="~w";~n', [Root]),

@@ -14,7 +14,7 @@
 % Authors
 % -------
 %
-% Copyright 2007-2009 Adrian Prantl
+% Copyright (C) 2007-2009 Adrian Prantl
 %
 % License
 % -------
