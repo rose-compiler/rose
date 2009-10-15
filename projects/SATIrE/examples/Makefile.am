@@ -72,37 +72,7 @@ EXTRA_DIST= \
 	pointsto_live_variables/tests/lv_nosingletonalias.c \
     \
     empty/empty.optla \
-    empty/tests/empty.c \
-	\
-	unparser/unparse.pl \
-	unparser/tests/array.c \
-	unparser/tests/define.c \
-	unparser/tests/for.c \
-	unparser/tests/return.c \
-	unparser/tests/termtests_gb.c \
-	unparser/tests/typedef.h
-	unparser/tests/char.c \
-	unparser/tests/empty.h \
-	unparser/tests/include.c \
-	unparser/tests/simple.c \
-	unparser/tests/test-literals.c \
-	unparser/tests/union.c \
-	unparser/tests/cnt.c \
-	unparser/tests/enum.c \
-	unparser/tests/long.c \
-	unparser/tests/string.c \
-	unparser/tests/test-stmt.c \
-	unparser/tests/while.c \
-	unparser/tests/comma.c \
-	unparser/tests/float.c \
-	unparser/tests/matmult.c \
-	unparser/tests/struct.c \
-	unparser/tests/test-stmt2.c \
-	unparser/tests/comma.h \
-	unparser/tests/foo.h \
-	unparser/tests/pp.c \
-	unparser/tests/struct1.c \
-	unparser/tests/test-typdef.c 
+    empty/tests/empty.c 
 
 
 testdir=installcheck-executable-examples
