@@ -14,17 +14,14 @@
 :- use_module(library(asttransform)).
 
 main :-
-  current_prolog_flag(argv, Argv), 
-  append(_, [--|Args], Argv),
-  Args = [File],
+  format(user_error, '/* Unparsing from stdin */~n', []),
+  read_term(P, []),
+  compound(P),
 
-  open(File, read, _, [alias(rstrm)]),
-  read_term(rstrm,P,[double_quotes(string)]),
-  close(rstrm),
-
-  catch(profile(unparse(P)), E, (print_message(error, E), fail)),
+  catch(%profile(
+	unparse(P), E, (print_message(error, E), fail)),
   halt.
 
 main :-
-  writeln('Usage: unparse.pl [termrep].term'),
+  writeln('Usage: unparse.pl < [termrep].term'),
   halt(1).
