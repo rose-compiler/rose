@@ -4251,6 +4251,10 @@ HEADER_APPLICATION_FILE_START
        // Get the commandline from where it is stored internally
           virtual int callFrontEnd();
 
+      //! Fixups to be run when the whole project has been created (this attaches preprocessing information).
+       // GB (9/4/2009)
+          void secondaryPassOverSourceFile();
+
        // DQ (9/2/2008): Added to factor out detail fo building the AST in callFrontEnd().
           virtual int buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
 
