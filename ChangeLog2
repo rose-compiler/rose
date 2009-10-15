@@ -1,3 +1,114 @@
+2009-10-14 19:10  collingbourne2
+
+	* [r7822] /trunk/ROSE/projects/interpreter/Makefile.am,
+	  /trunk/ROSE/projects/interpreter/interp_core.C,
+	  /trunk/ROSE/projects/interpreter/interp_core.h,
+	  /trunk/ROSE/projects/interpreter/interp_extcall.C,
+	  /trunk/ROSE/projects/interpreter/interp_extcall.h,
+	  /trunk/ROSE/projects/interpreter/interp_maple.C,
+	  /trunk/ROSE/projects/interpreter/interp_maple.h,
+	  /trunk/ROSE/projects/interpreter/interp_mpi.C,
+	  /trunk/ROSE/projects/interpreter/interp_mpi.h,
+	  /trunk/ROSE/projects/interpreter/interp_smt.C,
+	  /trunk/ROSE/projects/interpreter/interp_smt.h,
+	  /trunk/ROSE/projects/interpreter/libc,
+	  /trunk/ROSE/projects/interpreter/libc/string.c,
+	  /trunk/ROSE/projects/interpreter/main_core.C,
+	  /trunk/ROSE/projects/interpreter/main_extcall.C,
+	  /trunk/ROSE/projects/interpreter/main_maple.C,
+	  /trunk/ROSE/projects/interpreter/main_mpi.C,
+	  /trunk/ROSE/projects/interpreter/main_smt.C,
+	  /trunk/ROSE/projects/interpreter/testInput,
+	  /trunk/ROSE/projects/interpreter/testInput/core,
+	  /trunk/ROSE/projects/interpreter/testInput/core/agginit.c,
+	  /trunk/ROSE/projects/interpreter/testInput/core/anonUnionCtor.C,
+	  /trunk/ROSE/projects/interpreter/testInput/core/anonUnionStruct.c,
+	  /trunk/ROSE/projects/interpreter/testInput/core/arrays.C,
+	  /trunk/ROSE/projects/interpreter/testInput/core/boolcast.C,
+	  /trunk/ROSE/projects/interpreter/testInput/core/casting.C,
+	  /trunk/ROSE/projects/interpreter/testInput/core/condExp.C,
+	  /trunk/ROSE/projects/interpreter/testInput/core/constructors.C,
+	  /trunk/ROSE/projects/interpreter/testInput/core/globals.c,
+	  /trunk/ROSE/projects/interpreter/testInput/core/initunion.c,
+	  /trunk/ROSE/projects/interpreter/testInput/core/mdarr.c,
+	  /trunk/ROSE/projects/interpreter/testInput/core/nestedUnion.c,
+	  /trunk/ROSE/projects/interpreter/testInput/core/pointersFunctions.C,
+	  /trunk/ROSE/projects/interpreter/testInput/core/varargs.c,
+	  /trunk/ROSE/projects/interpreter/testInput/extcall,
+	  /trunk/ROSE/projects/interpreter/testInput/extcall/hello.c,
+	  /trunk/ROSE/projects/interpreter/testInput/md5.c,
+	  /trunk/ROSE/projects/interpreter/testInput/smt,
+	  /trunk/ROSE/projects/interpreter/testInput/smt/abs.c,
+	  /trunk/ROSE/projects/interpreter/testInput/smt/absBug.c,
+	  /trunk/ROSE/projects/interpreter/testInput/smt/excludedMiddle.c,
+	  /trunk/ROSE/projects/interpreter/testInput/smt/reverse.c,
+	  /trunk/ROSE/projects/interpreter/testInput/smt/simpleIntegerOverflow.c,
+	  /trunk/ROSE/projects/interpreter/testInput_core_agginit.c,
+	  /trunk/ROSE/projects/interpreter/testInput_core_arrays.C,
+	  /trunk/ROSE/projects/interpreter/testInput_core_boolcast.C,
+	  /trunk/ROSE/projects/interpreter/testInput_core_casting.C,
+	  /trunk/ROSE/projects/interpreter/testInput_core_condExp.C,
+	  /trunk/ROSE/projects/interpreter/testInput_core_constructors.C,
+	  /trunk/ROSE/projects/interpreter/testInput_core_pointersFunctions.C,
+	  /trunk/ROSE/projects/interpreter/testInput_extcall_hello.c,
+	  /trunk/ROSE/projects/interpreter/testInput_md5.c,
+	  /trunk/ROSE/projects/interpreter/testInput_smt_abs.c,
+	  /trunk/ROSE/projects/interpreter/testInput_smt_absBug.c,
+	  /trunk/ROSE/projects/interpreter/testInput_smt_excludedMiddle.c,
+	  /trunk/ROSE/projects/interpreter/testInput_smt_reverse.c,
+	  /trunk/ROSE/projects/interpreter/testInput_smt_simpleIntegerOverflow.c,
+	  /trunk/ROSE/projects/interpreter/test_core.C,
+	  /trunk/ROSE/projects/interpreter/test_smt.C: Interpreter: several
+	  new features and bug fixes, including:
+	  
+	  * Added support for switch statement, enum types, unions, global
+	  variables (including static initialization), anonymous structs
+	  and
+	  unions, null expressions, varargs
+	  * AggregateInitializers skip padding fields
+	  * Create new values using the initializer's type if available
+	  * New builtin: memcmp
+	  * Reworked array support to handle multidimensional arrays and
+	  edge
+	  cases using array-to-pointer conversion
+	  * CompoundValue::show uses dynamicType to show record name if
+	  possible
+
+2009-10-14 19:10  collingbourne2
+
+	* [r7821] /trunk/ROSE/src/ROSETTA/Grammar/Expression.code,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface_type.C,
+	  /trunk/ROSE/src/midend/astDiagnostics/AstConsistencyTests.C:
+	  Added an AST consistency test that verifies that array types
+	  properly decay to pointer types. Changed get_type for SgBinaryOp,
+	  SgAssignInitializer and SgConditionalExp to apply decay if
+	  necessary
+
+2009-10-14 19:10  collingbourne2
+
+	* [r7820]
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/sage_il_to_str.C:
+	  Initialize source position information for certain expressions
+	  involving multiple dereferences/field accesses.
+
+2009-10-14 19:10  collingbourne2
+
+	* [r7819]
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/generateUniqueName.C:
+	  Added SgGotoStatement case to SageInterface::generateUniqueName
+
+2009-10-14 19:10  collingbourne2
+
+	* [r7818] /trunk/ROSE/config/support-libffi.m4: Set $CPPFLAGS
+	  correctly for ffi.h test
+
+2009-10-14 19:09  collingbourne2
+
+	* [r7817]
+	  /trunk/ROSE/src/frontend/SageIII/astMerge/collectAssociateNodes.C:
+	  AST Merge: also merge definingDeclaration pointers
+
 2009-10-14 18:45  saebjornsen1
 
 	* [r7815] /trunk/ROSE/.gitignore: updated gitignore
