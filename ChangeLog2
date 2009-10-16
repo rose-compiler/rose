@@ -1,3 +1,24 @@
+2009-10-16 18:37  liao6
+
+	* [r7838] /trunk/ROSE/docs/Rose/OpenMPsupport.tex,
+	  /trunk/ROSE/projects/autoTuning/doc/codeTriageTransformation.tex,
+	  /trunk/ROSE/projects/autoTuning/doc/minidb.bib,
+	  /trunk/ROSE/src/midend/ompLowering/omp_lowering.cpp: Accepted the
+	  OpenMP lowering bugfix patch from travitch@cs.wisc.edu
+	  Updated some documents
+
+2009-10-16 17:41  dquinlan
+
+	* [r7837]
+	  /trunk/ROSE/developersScratchSpace/Dan/fileLocation_tests/Makefile.in:
+	  Add this so that I can remove it due to SVN problem.
+
+2009-10-16 17:40  dquinlan
+
+	* [r7836]
+	  /trunk/ROSE/developersScratchSpace/Dan/fileLocation_tests/Makefile.in:
+	  Add this so that I can remove it due to SVN problem.
+
 2009-10-14 19:10  collingbourne2
 
 	* [r7822] /trunk/ROSE/projects/interpreter/Makefile.am,
