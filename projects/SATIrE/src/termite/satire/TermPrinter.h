@@ -292,7 +292,7 @@ TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, Synth
             std::string mname = d->get_mangled_name().str();
             const char *key = "variable_name_";
             std::string::size_type pos = mname.find(key);
-            if (pos != std::string::npos) {
+            if (pos != std::string::npos && cfg != NULL) {
               std::string varname = mname.substr(pos + strlen(key));
               std::map<std::string, unsigned long>::iterator idi;
               idi = cfg->globalvarnames_ids.find(varname);
