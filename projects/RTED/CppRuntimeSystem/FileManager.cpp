@@ -54,14 +54,14 @@ ostream& operator<< ( ostream &os, const FileInfo & m)
 // -----------------------    FileInfo2  --------------------------------------
 
 
-FileInfo2::FileInfo2(FileHandle2 fh) :
+FileInfo_FSTREAM::FileInfo_FSTREAM(FileHandle_FSTREAM fh) :
       handle(fh),
     name("Invalid"),
     openMode(INVALID_OPEN_MODE)
 {
 }
 
-FileInfo2::FileInfo2(FileHandle2 fp,
+FileInfo_FSTREAM::FileInfo_FSTREAM(FileHandle_FSTREAM fp,
                    const std::string & _name,
                    int _openMode,
                    const SourcePosition & pos):
@@ -74,7 +74,7 @@ FileInfo2::FileInfo2(FileHandle2 fp,
 }
 
 
-void FileInfo2::print(ostream & os ) const
+void FileInfo_FSTREAM::print(ostream & os ) const
 {
   os << hex <<   "\t" << name ;
     os << " Mode:";
@@ -85,7 +85,7 @@ void FileInfo2::print(ostream & os ) const
 }
 
 
-ostream& operator<< ( ostream &os, const FileInfo2 & m)
+ostream& operator<< ( ostream &os, const FileInfo_FSTREAM & m)
 {
     m.print(os);
     return os;
@@ -252,7 +252,7 @@ std::ostream& operator<< (std::ostream &os, const FileManager & m)
 
 
 
-void FileManager::openFile(FileHandle2 handle,
+void FileManager::openFile(FileHandle_FSTREAM handle,
                            const std::string & fileName,
                            OpenMode mode,
                            const SourcePosition & pos)
@@ -269,7 +269,7 @@ void FileManager::openFile(FileHandle2 handle,
 
 
 
-    FileInfo2 compareObj (handle);
+    FileInfo_FSTREAM compareObj (handle);
     if( openFiles2.find(compareObj) != openFiles2.end() )
     {
         rs->violationHandler(RuntimeViolation::DOUBLE_FILE_OPEN,
@@ -278,10 +278,10 @@ void FileManager::openFile(FileHandle2 handle,
     }
 
 
-    openFiles2.insert( FileInfo2(handle,fileName,mode,pos));
+    openFiles2.insert( FileInfo_FSTREAM(handle,fileName,mode,pos));
 }
 
-void FileManager::openFile(FileHandle2 handle,
+void FileManager::openFile(FileHandle_FSTREAM handle,
                            const std::string & fileName,
                            const std::string & mode_str,
                            const SourcePosition & pos)
@@ -302,13 +302,13 @@ void FileManager::openFile(FileHandle2 handle,
 
 
 
-void FileManager::closeFile(FileHandle2 handle)
+void FileManager::closeFile(FileHandle_FSTREAM handle)
 {
     RuntimeSystem * rs = RuntimeSystem::instance();
 
-    FileInfo2 compareObj(handle);
+    FileInfo_FSTREAM compareObj(handle);
 
-    set<FileInfo2>::iterator iter = openFiles2.find(compareObj);
+    set<FileInfo_FSTREAM>::iterator iter = openFiles2.find(compareObj);
     if( iter == openFiles2.end() )
     {
         rs->violationHandler(RuntimeViolation::INVALID_FILE_CLOSE,
@@ -318,12 +318,12 @@ void FileManager::closeFile(FileHandle2 handle)
     openFiles2.erase(iter);
 }
 
-void FileManager::checkFileAccess(FileHandle2 handle, bool read)
+void FileManager::checkFileAccess(FileHandle_FSTREAM handle, bool read)
 {
     RuntimeSystem * rs = RuntimeSystem::instance();
 
-    FileInfo2 compareObj(handle);
-    set<FileInfo2>::iterator it = openFiles2.find(compareObj);
+    FileInfo_FSTREAM compareObj(handle);
+    set<FileInfo_FSTREAM>::iterator it = openFiles2.find(compareObj);
     //Check if file-handle exists
     if( it == openFiles2.end() )
     {

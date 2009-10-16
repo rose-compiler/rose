@@ -1111,7 +1111,7 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
 	    funcr->getAssociatedFunctionDeclaration();
 	  ROSE_ASSERT(funcd);
 	  string funcname = funcd->get_name().str();
-	  if (funcname == "malloc") {
+	  if (funcname == "malloc" )  {
 	    ismalloc = true;
 	    cerr
 	      << "... Detecting func call on right hand side : "

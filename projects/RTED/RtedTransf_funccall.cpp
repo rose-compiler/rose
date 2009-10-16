@@ -101,6 +101,8 @@ RtedTransformation::isFunctionCallOnIgnoreList(std::string name) {
       name=="malloc" ||
       name=="calloc" ||
       name=="free" ||
+  	      name=="upc_alloc" ||
+  	      name=="upc_free" ||
 	  name=="realloc"
       )
     interesting=true;

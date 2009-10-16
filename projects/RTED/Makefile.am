@@ -3,7 +3,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 if ROSE_USE_RTED
 
 # To keep compile commands tidy, please ONLY put required include flags here.
-INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I. -Winvalid-pch  
+INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I. -Winvalid-pch -pthreads
 INCLUDES2 = $(ROSE_INCLUDES) -I../../
 UPC_INCLUDES =  -I$(srcdir)/required/ 
 #UPC_INCLUDES = -I.
@@ -81,7 +81,7 @@ RTED_CPP_LOCAL_TEST_DIRS = 	 $(srcdir)/tests/Cxx/io \
 							 $(srcdir)/tests/Cxx/templates \
 							 $(srcdir)/tests/Cxx/types
 
-RTED_UPC_LOCAL_TEST_DIRS = 	 $(srcdir)/tests/UPC/simple
+RTED_UPC_LOCAL_TEST_DIRS = 	 
 
 
 RTED_C_TEST_DIRS = $(rted_path)/C/array_index_out_of_bound \
@@ -508,12 +508,65 @@ run/%: rted_source/%.bin rted_source/%.expected-output
 		fi;
 	@echo " done."
 
+runupc/%: rted_source/%.bin rted_source/%.expected-output
+	@echo -n "   running (UPC) runtime error detection ... upcrun -n 4 $(filter %.bin, $?)"
+	@OUTPUT_SRC='$(strip $(filter %.expected-output, $?))';\
+		if [ -f "$$OUTPUT_SRC" ]; then\
+			RESULT='$(strip $(patsubst %.bin, %.result.txt, $(filter rted_source/%.bin, $?)))';\
+			upcrun -quiet -n 4 ./$(filter rted_source/%.bin, $?)  2> $$RESULT;\
+			if [ $$? -ne 0 ];then cat $$RESULT && echo "Test exited unexpectedly with non-zero status" && exit 1; fi;\
+			ACTUAL_OUTPUT='./$(strip $(patsubst %.bin, %.actual-output, $(filter rted_source/%.bin, $?)))';\
+			if [ ! -f $$RESULT ]; then echo "no result produced!" && exit 1; fi; \
+			$(EXTRACT_ACTUAL_ERROR) $$RESULT > $$ACTUAL_OUTPUT;\
+			diff --ignore-all-space --ignore-case -q $$ACTUAL_OUTPUT $(filter %.expected-output, $?) > /dev/null;\
+			if [ $$? -ne 0 ]; then\
+				echo -e '\n\n';\
+				echo 'Expected error did not match actual error found';\
+				echo ' (the error may be in the extraction scripts -- see the actual files that were diff-d';\
+				echo "  $(filter %.expected-output, $?) $$ACTUAL_OUTPUT)";\
+				echo -e '\n----------- Expected Error ------------';\
+				echo "(remember to subtract 2 from actual line numbers (for non-instrumented source) to compensate for added lines)";\
+				RTED_OKMSG="$(strip $(patsubst rted_source/%.expected-output, $(rted_path)/%.ok_msg, $(filter %.expected-output, $?)))";\
+				LOCAL_OKMSG="$(strip $(patsubst rted_source/%.expected-output, $(srcdir)/%.ok_msg, $(filter %.expected-output, $?)))";\
+				if [ -f "$$RTED_OKMSG" ]; then cat $$RTED_OKMSG;\
+				elif [ -f "$$LOCAL_OKMSG" ]; then cat $$LOCAL_OKMSG;\
+				fi;\
+				echo -e '\n----------- Actual   Error ------------';\
+				cat $$RESULT;\
+				exit 1;\
+			fi;\
+		else\
+			./$(filter rted_source/%.bin, $?);\
+		fi;
+	@echo " done."
+
 run_log/%: rted_source/%.bin rted_source/%.expected-output 
 	@echo "   logging results for runtime error detection ... $(filter %.bin, $?)"
 	@OUTPUT_SRC='$(strip $(filter %.expected-output, $?))';\
 		if [ -f "$$OUTPUT_SRC" ]; then\
 			RESULT='$(strip $(patsubst %.bin, %.result.txt, $(filter rted_source/%.bin, $?)))';\
 			./$(filter rted_source/%.bin, $?) 2> $$RESULT;\
+			if [ $$? -ne 0 ];then cat $$RESULT && echo "Test exited unexpectedly with non-zero status" && exit 1; fi;\
+			ACTUAL_OUTPUT='./$(strip $(patsubst %.bin, %.actual-output, $(filter rted_source/%.bin, $?)))';\
+			if [ ! -f $$RESULT ]; then echo "no result produced!" && exit 1; fi; \
+			$(EXTRACT_ACTUAL_ERROR) $$RESULT > $$ACTUAL_OUTPUT;\
+			diff --ignore-all-space --ignore-case -q $$ACTUAL_OUTPUT $(filter %.expected-output, $?) > /dev/null;\
+			if [ $$? -ne 0 ]; then\
+				echo " $@ failed" >> test_log.txt;\
+			else \
+				echo " $@ passed" >> test_log.txt;\
+			fi;\
+		else\
+			./$(filter rted_source/%.bin, $?);\
+		fi;
+	@echo " done."
+
+runupc_log/%: rted_source/%.bin rted_source/%.expected-output 
+	@echo "   logging results for runtime error detection ... $(filter %.bin, $?)"
+	@OUTPUT_SRC='$(strip $(filter %.expected-output, $?))';\
+		if [ -f "$$OUTPUT_SRC" ]; then\
+			RESULT='$(strip $(patsubst %.bin, %.result.txt, $(filter rted_source/%.bin, $?)))';\
+			upcrun -n 4 ./$(filter rted_source/%.bin, $?) 2> $$RESULT;\
 			if [ $$? -ne 0 ];then cat $$RESULT && echo "Test exited unexpectedly with non-zero status" && exit 1; fi;\
 			ACTUAL_OUTPUT='./$(strip $(patsubst %.bin, %.actual-output, $(filter rted_source/%.bin, $?)))';\
 			if [ ! -f $$RESULT ]; then echo "no result produced!" && exit 1; fi; \
@@ -548,25 +601,31 @@ RUN_TARGETS_GLOBAL_C  = ${call GENERATE_RTED_RUN_TARGET, .c, run, $(RTED_ORIGSOU
 RUN_TARGETS_LOCAL_C = ${call GENERATE_RTED_RUN_TARGET, .c, run, $(RTED_ORIGSOURCES_LOCAL_C), $(srcdir)}
 RUN_TARGETS_GLOBAL_CPP = ${call GENERATE_RTED_RUN_TARGET, .cpp, run, $(RTED_ORIGSOURCES_GLOBAL_CPP), $(rted_path)}
 RUN_TARGETS_LOCAL_CPP = ${call GENERATE_RTED_RUN_TARGET, .cpp, run, $(RTED_ORIGSOURCES_LOCAL_CPP), $(srcdir)}
-RUN_TARGETS_GLOBAL_UPC = ${call GENERATE_RTED_RUN_TARGET, .upc, run, $(RTED_ORIGSOURCES_GLOBAL_UPC), $(rted_path)}
-RUN_TARGETS_LOCAL_UPC = ${call GENERATE_RTED_RUN_TARGET, .upc, run, $(RTED_ORIGSOURCES_LOCAL_UPC), $(srcdir)}
+
+RUN_TARGETS_GLOBAL_UPC = ${call GENERATE_RTED_RUN_TARGET, .upc, runupc, $(RTED_ORIGSOURCES_GLOBAL_UPC), $(rted_path)}
+RUN_TARGETS_LOCAL_UPC = ${call GENERATE_RTED_RUN_TARGET, .upc, runupc, $(RTED_ORIGSOURCES_LOCAL_UPC), $(srcdir)}
 
 RUN_LOG_TARGETS_GLOBAL_C = ${call GENERATE_RTED_RUN_TARGET, .c, run_log, $(RTED_ORIGSOURCES_GLOBAL_C), $(rted_path)}
 RUN_LOG_TARGETS_LOCAL_C = ${call GENERATE_RTED_RUN_TARGET, .c, run_log, $(RTED_ORIGSOURCES_LOCAL_C), $(srcdir)}
 RUN_LOG_TARGETS_GLOBAL_CPP = ${call GENERATE_RTED_RUN_TARGET, .cpp, run_log, $(RTED_ORIGSOURCES_GLOBAL_CPP), $(rted_path)}
 RUN_LOG_TARGETS_LOCAL_CPP = ${call GENERATE_RTED_RUN_TARGET, .cpp, run_log, $(RTED_ORIGSOURCES_LOCAL_CPP), $(srcdir)}
-RUN_LOG_TARGETS_GLOBAL_UPC = ${call GENERATE_RTED_RUN_TARGET, .upc, run_log, $(RTED_ORIGSOURCES_GLOBAL_UPC), $(rted_path)}
-RUN_LOG_TARGETS_LOCAL_UPC = ${call GENERATE_RTED_RUN_TARGET, .upc, run_log, $(RTED_ORIGSOURCES_LOCAL_UPC), $(srcdir)}
 
-run: $(RUN_TARGETS_GLOBAL_C) $(RUN_TARGETS_LOCAL_C) $(RUN_TARGETS_GLOBAL_CPP) $(RUN_TARGETS_LOCAL_CPP) $(RUN_TARGETS_GLOBAL_UPC) $(RUN_TARGETS_LOCAL_UPC)
+RUN_LOG_TARGETS_GLOBAL_UPC = ${call GENERATE_RTED_RUN_TARGET, .upc, runupc_log, $(RTED_ORIGSOURCES_GLOBAL_UPC), $(rted_path)}
+RUN_LOG_TARGETS_LOCAL_UPC = ${call GENERATE_RTED_RUN_TARGET, .upc, runupc_log, $(RTED_ORIGSOURCES_LOCAL_UPC), $(srcdir)}
 
-run_log: $(RUN_LOG_TARGETS_GLOBAL_C) $(RUN_LOG_TARGETS_LOCAL_C) $(RUN_LOG_TARGETS_GLOBAL_CPP) $(RUN_LOG_TARGETS_LOCAL_CPP) $(RUN_LOG_TARGETS_GLOBAL_UPC) $(RUN_LOG_TARGETS_LOCAL_UPC)
+run: $(RUN_TARGETS_GLOBAL_C) $(RUN_TARGETS_LOCAL_C) $(RUN_TARGETS_GLOBAL_CPP) $(RUN_TARGETS_LOCAL_CPP) 
+
+runupc:  $(RUN_TARGETS_GLOBAL_UPC) $(RUN_TARGETS_LOCAL_UPC)
+
+run_log: $(RUN_LOG_TARGETS_GLOBAL_C) $(RUN_LOG_TARGETS_LOCAL_C) $(RUN_LOG_TARGETS_GLOBAL_CPP) $(RUN_LOG_TARGETS_LOCAL_CPP) 
+
+runupc_log: $(RUN_LOG_TARGETS_GLOBAL_UPC) $(RUN_LOG_TARGETS_LOCAL_UPC)
 
 run_log/c:		$(RUN_LOG_TARGETS_GLOBAL_C)
 
 run_log/cpp:	$(RUN_LOG_TARGETS_GLOBAL_CPP)
 
-run_log/upc:	$(RUN_LOG_TARGETS_GLOBAL_UPC)
+#run_log/upc:	$(RUN_LOG_TARGETS_GLOBAL_UPC)
 
 test:
 	@echo $(RTED_ORIGSOURCES_GLOBAL_CPP)
@@ -612,12 +671,13 @@ ${foreach rted_dir, ${filter $(rted_path)%, $(RTED_C_TEST_DIRS)}, ${eval ${call 
 ${foreach rted_dir, ${filter $(srcdir)%, $(RTED_C_TEST_DIRS)}, ${eval ${call RUN_TARGET_C, ${patsubst $(srcdir)%, run%, $(rted_dir)}}}}
 ${foreach rted_dir, ${filter $(rted_path)%, $(RTED_CPP_TEST_DIRS)}, ${eval ${call RUN_TARGET_CPP, ${patsubst $(rted_path)%, run%, $(rted_dir)}}}}
 ${foreach rted_dir, ${filter $(srcdir)%, $(RTED_CPP_TEST_DIRS)}, ${eval ${call RUN_TARGET_CPP, ${patsubst $(srcdir)%, run%, $(rted_dir)}}}}
-${foreach rted_dir, ${filter $(rted_path)%, $(RTED_UPC_TEST_DIRS)}, ${eval ${call RUN_TARGET_UPC, ${patsubst $(rted_path)%, run%, $(rted_dir)}}}}
-${foreach rted_dir, ${filter $(srcdir)%, $(RTED_UPC_TEST_DIRS)}, ${eval ${call RUN_TARGET_UPC, ${patsubst $(srcdir)%, run%, $(rted_dir)}}}}
+
+${foreach rted_dir, ${filter $(rted_path)%, $(RTED_UPC_TEST_DIRS)}, ${eval ${call RUN_TARGET_UPC, ${patsubst $(rted_path)%, runupc%, $(rted_dir)}}}}
+${foreach rted_dir, ${filter $(srcdir)%, $(RTED_UPC_TEST_DIRS)}, ${eval ${call RUN_TARGET_UPC, ${patsubst $(srcdir)%, runupc%, $(rted_dir)}}}}
 
 ${foreach rted_dir, ${filter $(rted_path)%, $(RTED_C_TEST_DIRS)}, ${eval ${call RUN_LOG_TARGET_C, ${patsubst $(rted_path)%, run_log%, $(rted_dir)}}}}
 ${foreach rted_dir, ${filter $(rted_path)%, $(RTED_CPP_TEST_DIRS)}, ${eval ${call RUN_LOG_TARGET_CPP, ${patsubst $(rted_path)%, run_log%, $(rted_dir)}}}}
-${foreach rted_dir, ${filter $(rted_path)%, $(RTED_UPC_TEST_DIRS)}, ${eval ${call RUN_LOG_TARGET_UPC, ${patsubst $(rted_path)%, run_log%, $(rted_dir)}}}}
+${foreach rted_dir, ${filter $(rted_path)%, $(RTED_UPC_TEST_DIRS)}, ${eval ${call RUN_LOG_TARGET_UPC, ${patsubst $(rted_path)%, runupc_log%, $(rted_dir)}}}}
 
 
 #------------------------------------------------------------------------------

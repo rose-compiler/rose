@@ -11,7 +11,7 @@
 class FileManager;
 
 typedef FILE *  FileHandle;
-typedef std::fstream& FileHandle2;
+typedef std::fstream& FileHandle_FSTREAM;
 
 // -----------------------    FileInfo  --------------------------------------
 class FileInfo
@@ -54,12 +54,12 @@ std::ostream& operator<< (std::ostream &os, const FileInfo & m);
 
 
 // -----------------------    FileInfo2  --------------------------------------
-class FileInfo2
+class FileInfo_FSTREAM
 {
     public:
         /// Constructor
         /// @param openMode  OR combination out of RuntimeSystem::FileOpenMode constants
-        FileInfo2(FileHandle2 fp,
+        FileInfo_FSTREAM(FileHandle_FSTREAM fp,
                  const std::string & name,
                  int openMode,
                  const SourcePosition & pos);
@@ -67,11 +67,11 @@ class FileInfo2
 
 
         /// overloaded operator because FileInfo's are managed in a std::set
-	bool operator< (const FileInfo2 & other) const { return &handle < &other.handle; }
+	bool operator< (const FileInfo_FSTREAM & other) const { return &handle < &other.handle; }
 
         void print(std::ostream & os) const;
 
-	FileHandle2            getHandle()   const      { return handle;   }
+	FileHandle_FSTREAM            getHandle()   const      { return handle;   }
         const std::string &    getFileName() const      { return name;     }
         int                    getOpenMode() const      { return openMode; }
         const SourcePosition & getPos()      const      { return openPos;  }
@@ -81,16 +81,16 @@ class FileInfo2
         friend class FileManager;
 
         /// Creates an invalid FileInfo, only used to get comparison objects in FileManager
-        FileInfo2(FileHandle2 f);
+        FileInfo_FSTREAM(FileHandle_FSTREAM f);
 
 
-	FileHandle2     handle;   ///< the pointer returned by fopen
+	FileHandle_FSTREAM     handle;   ///< the pointer returned by fopen
         std::string    name;      ///< filename or filepath
         int            openMode;  ///< combination of OpenMode flags
         SourcePosition openPos;   ///< position in sourcecode where file was opened
 };
 
-std::ostream& operator<< (std::ostream &os, const FileInfo2 & m);
+std::ostream& operator<< (std::ostream &os, const FileInfo_FSTREAM & m);
 
 
 
@@ -141,28 +141,28 @@ class FileManager
 
 
         /// Registers that a file was opened
-        void openFile(FileHandle2 handle,
+        void openFile(FileHandle_FSTREAM handle,
                       const std::string & fileName,
                       OpenMode mode,
                       const SourcePosition & pos);
 
-        void openFile(FileHandle2 handle,
+        void openFile(FileHandle_FSTREAM handle,
                       const std::string & fileName,
                       const std::string & mode,
                       const SourcePosition & pos);
 
         /// Registers that a file was closed
-        void closeFile(FileHandle2  handle);
+        void closeFile(FileHandle_FSTREAM  handle);
 
         /// Checks if a certain file-access is valid
         /// @param handle  the handle on which the file operation is performed
         /// @param read    true if read-access, false if write-access
-        void checkFileAccess(FileHandle2 handle, bool read);
+        void checkFileAccess(FileHandle_FSTREAM handle, bool read);
 
 
     private:
         std::set<FileInfo> openFiles;
-        std::set<FileInfo2> openFiles2;
+        std::set<FileInfo_FSTREAM> openFiles2;
 
 };
 std::ostream& operator<< (std::ostream &os, const FileManager & m);
