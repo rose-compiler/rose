@@ -39,15 +39,12 @@ EXTRA_DIST= \
 	nnh99_shape/GraphStats.h \
 	nnh99_shape/satire_legacy.h      nnh99_shape/satire_legacy.C \
 	nnh99_shape/tests/nnh_xsely.C \
-	nnh99_shape/tests/srw98_listreverse.C \
 	nnh99_shape/tests/nnh_xysel3.C \
 	nnh99_shape/tests/nnh_xselnil.C \
 	nnh99_shape/tests/nnh_xy.C \
 	nnh99_shape/tests/nnh_xysel2.C \
 	nnh99_shape/tests/srw98_data.h \
 	nnh99_shape/tests/nnh_xnil.C \
-	nnh99_shape/tests/nnh_xysel3shared.C \
-	nnh99_shape/tests/srw98_listinsert.C \
 	\
 	srw98_shape/srw98_shape.set               srw98_shape/srw98_shape.optla \
 	srw98_shape/main.C                        srw98_shape/main.h \
@@ -55,7 +52,6 @@ EXTRA_DIST= \
 	srw98_shape/GraphStats.h \
 	srw98_shape/satire_legacy.h      srw98_shape/satire_legacy.C \
 	srw98_shape/tests/nnh_xsely.C \
-	srw98_shape/tests/srw98_listreverse.C \
 	srw98_shape/tests/nnh_xysel3.C \
 	srw98_shape/tests/nnh_xselnil.C \
 	srw98_shape/tests/nnh_xy.C \
