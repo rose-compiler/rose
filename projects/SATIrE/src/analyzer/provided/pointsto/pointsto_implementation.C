@@ -2705,7 +2705,7 @@ PointsToAnalysis::Implementation::debugDump(SgNode *node)
     public:
         void dump(SgNode *node)
         {
-            stream << "|   " << node->unparseToString() << std::endl;
+         // stream << "|   " << node->unparseToString() << std::endl;
             stream << "|   ";
             traverse(node);
             stream << std::endl;
@@ -2760,7 +2760,7 @@ PointsToAnalysis::Implementation::pickThePointer(
     t = t->stripType(SgType::STRIP_MODIFIER_TYPE
                    | SgType::STRIP_REFERENCE_TYPE
                    | SgType::STRIP_TYPEDEF_TYPE);
-    if (isSgPointerType(t) || isSgArrayType(t))
+    if (isSgPointerType(t) || isSgArrayType(t) || isSgStringVal(operand))
     {
         result = a;
      // We might have gotten a NULL argument, but we need the result to be
@@ -2778,7 +2778,7 @@ PointsToAnalysis::Implementation::pickThePointer(
         t = t->stripType(SgType::STRIP_MODIFIER_TYPE
                        | SgType::STRIP_REFERENCE_TYPE
                        | SgType::STRIP_TYPEDEF_TYPE);
-        if (isSgPointerType(t) || isSgArrayType(t))
+        if (isSgPointerType(t) || isSgArrayType(t) || isSgStringVal(operand))
         {
             result = b;
          // We might have gotten a NULL argument, but we need the result to
@@ -5029,7 +5029,8 @@ PointsToAnalysis::Implementation::stripOnePointerLayer(
     type = type->stripType(SgType::STRIP_MODIFIER_TYPE
                          | SgType::STRIP_REFERENCE_TYPE
                          | SgType::STRIP_TYPEDEF_TYPE);
-    if (!isSgPointerType(type) && !isSgArrayType(type))
+    if (!isSgPointerType(type) && !isSgArrayType(type)
+                               && !isSgTypeString(type))
     {
         std::cerr
             << "*** error: type " << (void *) type
