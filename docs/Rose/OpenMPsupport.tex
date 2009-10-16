@@ -136,7 +136,7 @@ Using a command line like \textit{identityTranslator -rose:openmp:lower inputcod
 ROSE can translate OpenMP 3.0 programs into multithreaded code targeting
 the GCC GOMP OpenMP runtime library\footnote{The translation supports C
 now. We are working on the C++ and Fortran support.}.
-If the path to GOMP (preferably the one shipped with GCC 4.3 for OpenMP task support) is specified (using a configure option \textit{--with-gomp\_omp\_runtime\_library=/home/liao6/opt/gcc-svn/lib/}),
+If the path to GOMP (preferably the one shipped with GCC 4.3 or above for OpenMP task support) is specified (using a configure option \textit{--with-gomp\_omp\_runtime\_library=/home/liao6/opt/gcc-svn/lib/}),
 the generated multithreaded code can be automatically linked to the GOMP library to generate final executables after compilation. 
 
 The major source file of the OpenMP translation is \textit{src/midend/ompLowering/omp\_lowering.cpp}. 
@@ -153,6 +153,13 @@ calculate iteration chunks for each thread.
 details are omitted here.
 \end{enumerate}
 \end{enumerate}
+
+Many translation tests (from
+\textit{ROSE\_SOURCE\_TREE/src/tests/CompileTests/OpenMP tests}) are
+provided within the ROSE release, you can type
+\textit{make check} under
+\textit{ROSE\_BUILD\_TREE/tests/roseTests/ompLoweringTests} to see the
+OpenMP translation in action.
 
 %-------------------------------------------------------------
 \subsection{Variable Handling}

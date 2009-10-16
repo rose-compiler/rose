@@ -874,6 +874,10 @@ SgFunctionDeclaration* generatedOutlinedTask(SgNode* node, std::string& wrapper_
   result = Outliner::generateFunction(body_block, func_name, syms, pdSyms3, pSyms, struct_decl, g_scope);
   Outliner::insert(result, g_scope, body_block);
 
+  // A fix from Tristan Ravitch travitch@cs.wisc.edu to make outlined functions static to avoid name conflicts
+  SageInterface::setStatic(result->get_definingDeclaration());
+  SageInterface::setStatic(result->get_firstNondefiningDeclaration());
+
   // Generate a call to the outlined function
   // Generate packing statements
   // must pass target , not body_block to get the right scope in which the declarations are inserted
@@ -883,9 +887,6 @@ SgFunctionDeclaration* generatedOutlinedTask(SgNode* node, std::string& wrapper_
 }
   /* GCC's libomp uses the following translation method: 
    * 
-
-(we use array of pointers instead of structure of variables to pass data
-   *  since the ROSE outliner does variable handling this way.)
    * 
 #include "libgomp_g.h"
 #include <stdio.h>
@@ -1029,8 +1030,8 @@ SgFunctionDeclaration* generatedOutlinedTask(SgNode* node, std::string& wrapper_
 
    Since we use the ROSE outliner to generate the outlined function. The parameters are wrapped into an array of pointers to them
   So the calculation of data(parameter) size/align is simplified . They are all pointer types.
+  TODO we now use a structure to wrap parameters, we have to go through each field of the structure to compute the size!
   */
- // TODO  refactor the code so transOmpTask and transOmpParallel can share most of the code
   void transOmpTask(SgNode* node)
   {
     ROSE_ASSERT(node != NULL);
