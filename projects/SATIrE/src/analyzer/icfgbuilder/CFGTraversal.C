@@ -16,6 +16,8 @@
 #include "IrCreation.h"
 #include "EqualityTraversal.h"
 
+#include "o_Location.h"
+
 #define REPLACE_FOR_BY_WHILE
 
 // CFGTraversal::CFGTraversal(std::deque<Procedure *> *procs)
@@ -221,13 +223,6 @@ CFGTraversal::atTraversalEnd() {
         {
             cfg->pointsToAnalysis = new SATIrE::Analyses::PointsToAnalysis();
             cfg->pointsToAnalysis->run(cfg);
-#if HAVE_PAG
-         // GB (2009-03-13): Added context-sensitive points-to analysis. The
-         // analyzer object is initialized here, but it is not run until
-         // later (because PAG must have computed its mappings before).
-            cfg->contextSensitivePointsToAnalysis
-                = new SATIrE::Analyses::PointsToAnalysis(/* ctxsens = */ true);
-#endif
         }
         else
             cfg->pointsToAnalysis = NULL;
@@ -239,6 +234,39 @@ CFGTraversal::atTraversalEnd() {
             IcfgExternalCallResolver iecr;
             iecr.run(cfg);
         }
+
+#if HAVE_PAG
+        if (cfg->analyzerOptions->runPointsToAnalysis())
+        {
+         // GB (2009-03-13): Added context-sensitive points-to analysis. The
+         // analyzer object is initialized here, but it is not run until
+         // later (because PAG must have computed its mappings before).
+            cfg->contextSensitivePointsToAnalysis
+                = new SATIrE::Analyses::PointsToAnalysis(/* ctxsens = */ true);
+
+         // GB (2009-10-16): PAG magic. This is somewhat easier than running
+         // a fake data flow analyzer for the same effect...
+            extern int startbanks;
+            GC_init(startbanks);
+            mapping_cfg_init(cfg);
+            mapping_init(cfg);
+
+            cfg->contextInformation = new ContextInformation(cfg);
+
+         // Clean up PAG stuff when we're done using it.
+            mapping_forced_cleanup(cfg);
+
+            cfg->contextSensitivePointsToAnalysis->run(cfg);
+            if (cfg->analyzerOptions->outputPointsToGraph())
+            {
+                cfg->contextSensitivePointsToAnalysis->doDot(
+                        cfg->analyzerOptions->getPointsToGraphName());
+            }
+            o_Location_power = cfg->contextSensitivePointsToAnalysis
+                                  ->get_locations().size();
+        }
+#endif
+
     }
 }
 

@@ -69,37 +69,7 @@ EXTRA_DIST= \
 	pointsto_live_variables/runtests.custom \
 	pointsto_live_variables/tests/lv_noalias.c \
 	pointsto_live_variables/tests/lv_singletonalias.c \
-	pointsto_live_variables/tests/lv_nosingletonalias.c \
-	\
-	unparser/unparse.pl \
-	unparser/tests/array.c \
-	unparser/tests/define.c \
-	unparser/tests/for.c \
-	unparser/tests/return.c \
-	unparser/tests/termtests_gb.c \
-	unparser/tests/typedef.h
-	unparser/tests/char.c \
-	unparser/tests/empty.h \
-	unparser/tests/include.c \
-	unparser/tests/simple.c \
-	unparser/tests/test-literals.c \
-	unparser/tests/union.c \
-	unparser/tests/cnt.c \
-	unparser/tests/enum.c \
-	unparser/tests/long.c \
-	unparser/tests/string.c \
-	unparser/tests/test-stmt.c \
-	unparser/tests/while.c \
-	unparser/tests/comma.c \
-	unparser/tests/float.c \
-	unparser/tests/matmult.c \
-	unparser/tests/struct.c \
-	unparser/tests/test-stmt2.c \
-	unparser/tests/comma.h \
-	unparser/tests/foo.h \
-	unparser/tests/pp.c \
-	unparser/tests/struct1.c \
-	unparser/tests/test-typdef.c 
+	pointsto_live_variables/tests/lv_nosingletonalias.c
 
 
 testdir=installcheck-executable-examples
@@ -230,9 +200,9 @@ pointsto_live_variables: init.token
 	@cp $< $(testdir)/interval/intvltest.c
 	find `dirname $<` -name '*.h' -exec cp '{}' $(testdir)/interval ';'
 	@chmod u+w $(testdir)/interval/intvltest.c
-	@cd $(testdir)/interval; ./interval --run-pointsto-analysis --callstringlength=1 --output-term=intvltest.term intvltest.c
+	@cd $(testdir)/interval; ./interval --run-pointsto-analysis --callstringlength=2 --output-term=intvltest.term intvltest.c
 	@echo "testing termite -> icfgbuilder..."
-	@cd $(testdir)/interval; ./interval --run-pointsto-analysis --callstringlength=1 --input-termite-ast=intvltest.term
+	@cd $(testdir)/interval; ./interval --run-pointsto-analysis --callstringlength=2 --input-termite-ast=intvltest.term
 	@echo "generating assertions..."
 	@cd $(testdir)/interval; export TERMITE_LIB=$(datadir)/termite; $(SWI_PL) -q -O -t main -s validator.pl < intvltest.term > intvltest1.term
 	@cd $(testdir)/interval; $(DESTDIR)/$(bindir)/termite_lint intvltest1.term; if [ $$? -ne 0 ]; then echo "*** termite_lint was not quite satisfied with that term!"; fi
@@ -316,7 +286,7 @@ satire_driver: init.token
 	cd $(testdir)
 	for f in $(testdir)/driver_tests/*; do \
 		rm -rf driver_out; \
-		$(bindir)/satire_driver --analysis=interval --run-pointsto-analysis --callstringlength=1 --output-term=driver_out/interval/`basename $$f .c`.term $$f; \
+		$(bindir)/satire_driver --analysis=interval --run-pointsto-analysis --callstringlength=2 --output-term=driver_out/interval/`basename $$f .c`.term $$f; \
 		echo "testing existence of term file driver_out/interval/interval_`basename $$f .c`.term ..."; \
 		test -s driver_out/interval/interval_`basename $$f .c`.term || exit 1; \
 		wc driver_out/interval/interval_`basename $$f .c`.term; \
