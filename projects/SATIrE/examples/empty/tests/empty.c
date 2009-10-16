@@ -1,1 +1,0 @@
-int empty = 42;

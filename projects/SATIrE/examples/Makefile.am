@@ -70,9 +70,36 @@ EXTRA_DIST= \
 	pointsto_live_variables/tests/lv_noalias.c \
 	pointsto_live_variables/tests/lv_singletonalias.c \
 	pointsto_live_variables/tests/lv_nosingletonalias.c \
-    \
-    empty/empty.optla \
-    empty/tests/empty.c 
+	\
+	unparser/unparse.pl \
+	unparser/tests/array.c \
+	unparser/tests/define.c \
+	unparser/tests/for.c \
+	unparser/tests/return.c \
+	unparser/tests/termtests_gb.c \
+	unparser/tests/typedef.h
+	unparser/tests/char.c \
+	unparser/tests/empty.h \
+	unparser/tests/include.c \
+	unparser/tests/simple.c \
+	unparser/tests/test-literals.c \
+	unparser/tests/union.c \
+	unparser/tests/cnt.c \
+	unparser/tests/enum.c \
+	unparser/tests/long.c \
+	unparser/tests/string.c \
+	unparser/tests/test-stmt.c \
+	unparser/tests/while.c \
+	unparser/tests/comma.c \
+	unparser/tests/float.c \
+	unparser/tests/matmult.c \
+	unparser/tests/struct.c \
+	unparser/tests/test-stmt2.c \
+	unparser/tests/comma.h \
+	unparser/tests/foo.h \
+	unparser/tests/pp.c \
+	unparser/tests/struct1.c \
+	unparser/tests/test-typdef.c 
 
 
 testdir=installcheck-executable-examples
@@ -80,8 +107,7 @@ testdir=installcheck-executable-examples
 # The tests are now split into separate targets to facilitate a
 # paralellized run of the testsuite (make -j #N installcheck)
 
-TESTS_WITH_PAG = sl1rd sl2rd nnh99_shape srw98_shape pointsto_live_variables \
-                 testsuite interval empty satire_driver
+TESTS_WITH_PAG = sl1rd sl2rd nnh99_shape srw98_shape pointsto_live_variables testsuite interval satire_driver
 TESTS_WITHOUT_PAG = termite
 
 if WITH_SWI_PROLOG
@@ -198,15 +224,6 @@ pointsto_live_variables: init.token
 	chmod u+rwx -R $(testdir)/pointsto_live_variables
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -p ptlv_ -u pointsto_live_variables
 	$(MAKE) check -C $(testdir)/pointsto_live_variables
-
-empty: init.token
-	@echo
-	@echo "Testing empty"
-	@echo "====================="
-	cp -ur $(top_srcdir)/examples/empty $(testdir)
-	chmod u+rwx -R $(testdir)/empty
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -p empty_ -u empty
-	$(MAKE) check -C $(testdir)/empty
 
 %.interval.run: %.c
 	@echo "Testing the correctness of the interval analysis on" $<
