@@ -1,3 +1,28 @@
+2009-10-17 18:51  dquinlan
+
+	* [r7847] /trunk/ROSE/scripts/nmiBuildAndTestFarm/cronjobs: Added
+	  NMI tests to focus on Fortran support.
+
+2009-10-17 18:44  dquinlan
+
+	* [r7846] /trunk/ROSE/scripts/nmiBuildAndTestFarm/README,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_deb_5.0/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_fc_8/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_fedora_8/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_fedora_9/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_rhap_5.2/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_rhas_4/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_deb_5.0/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_rhap_5/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_rhas_4/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_sl_4.4/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_suse_10.2/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_ubuntu_5.10/default,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/cronjobs,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/glue.pl,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/submit.sh: Added NMI
+	  tests to focus on Fortran support.
+
 2009-10-16 23:43  liao6
 
 	* [r7844] /trunk/ROSE/docs/Rose/documents.html: Updated the
