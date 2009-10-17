@@ -51,7 +51,10 @@ ENV_PL_TEMPDIR=$PWD/`mktemp -d env/XXXXXXXX`
 ENV_PL=${ENV_PL_TEMPDIR}/env.pl
 touch $ENV_PL
 echo "#!/usr/bin/env perl" > $ENV_PL
-echo '$ENV{JAVA_HOME} = "'${JAVA_HOME}'";' >> $ENV_PL
+
+# Test if this is required since the NMI environment should set it
+# and it appears that we over write it in the perl environment.
+# echo '$ENV{JAVA_HOME} = "'${JAVA_HOME}'";' >> $ENV_PL
 echo '$ENV{ACLOCAL_INCLUDES} = "'${ACLOCAL_INCLUDES}'";' >> $ENV_PL
 echo 'return 1;' >> $ENV_PL
 

@@ -5,3 +5,20 @@ To see an overview of the rose tests see:
 http://nmi-web.cs.wisc.edu/nmi/index.php?page=results%2Foverview&rows=20&opt_keyword=&opt_project=rosecompiler&opt_user=OPTION_SHOW_ALL&opt_comp=OPTION_SHOW_ALL&opt_type=OPTION_SHOW_ALL&opt_result=OPTION_SHOW_ALL&opt_platform=OPTION_SHOW_ALL&opt_month=0&opt_day=0&opt_year=0&opt_build_id=&opt_submit=OPTION_SHOW_ALL&searchSubmit=Search
 
 for further documentation see the ROSE User Manual developers appendix section "Testing on the NMI Build and Test Farm"
+
+
+SSH to NMI machines:
+ssh -o "ConnectTimeout 0" -X -lheller nmi-s005.cs.wisc.edu
+
+   Note that it appears that the `-o "ConnectTimeout 0"`
+option will keep the connection up. FAILED
+
+Trying:
+ssh -o "ServerAliveInterval 60" -X -lheller nmi-s005.cs.wisc.edu
+
+
+Command to copy lastest versions of ROSE NMI work to NMI:
+scp -r . heller@nmi-s005.cs.wisc.edu:~/dquinlan-rose-nmi/
+
+
+
