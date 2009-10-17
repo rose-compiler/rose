@@ -39,8 +39,10 @@ my $startdir = cwd();
 my $builddir = "build";
 $platform = $ENV{'NMI_PLATFORM'};
 
-if ( $platform =~ /x86(?!_[0-9]{2})/ )
+# if ( $platform =~ /x86(?!_[0-9]{2})/ )
+if ( $platform =~ /x86_(?!64)/)
 {
+ # 32-bit case
    $ENV{'LD_LIBRARY_PATH'} = $ENV{'JAVA_HOME'}."/jre/lib/i386/server:".$ENV{'LD_LIBRARY_PATH'};
    $ENV{'DYLD_LIBRARY_PATH'} = $ENV{'JAVA_HOME'}."/jre/lib/i386/server:".$ENV{'DYLD_LIBRARY_PATH'};
    $ENV{'LD_LIBRARY64_PATH'} = $ENV{'JAVA_HOME'}."/jre/lib/i386/server:".$ENV{'LD_LIBRARY64_PATH'};
@@ -48,14 +50,22 @@ if ( $platform =~ /x86(?!_[0-9]{2})/ )
    $ENV{'LIBPATH'} = $ENV{'JAVA_HOME'}."/jre/lib/i386/server:".$ENV{'LIBPATH'};
    $ENV{'SHLIB_PATH'} = $ENV{'JAVA_HOME'}."/jre/lib/i386/server:".$ENV{'SHLIB_PATH'};
 }
-elsif ( $platform =~ /x86_[0-9]{2}/ )
+# elsif ( $platform =~ /x86_[0-9]{2}/ )
+elsif ( $platform =~ /x86_64/)
 {
+ # 64-bit case
    $ENV{'LD_LIBRARY_PATH'} = $ENV{'JAVA_HOME'}."/jre/lib/amd64/server:".$ENV{'LD_LIBRARY_PATH'};
    $ENV{'DYLD_LIBRARY_PATH'} = $ENV{'JAVA_HOME'}."/jre/lib/amd64/server:".$ENV{'DYLD_LIBRARY_PATH'};
    $ENV{'LD_LIBRARY64_PATH'} = $ENV{'JAVA_HOME'}."/jre/lib/amd64/server:".$ENV{'LD_LIBRARY64_PATH'};
    $ENV{'LD_LIBRARYN32_PATH'} = $ENV{'JAVA_HOME'}."/jre/lib/amd64/server:".$ENV{'LD_LIBRARYN32_PATH'};
    $ENV{'LIBPATH'} = $ENV{'JAVA_HOME'}."/jre/lib/amd64/server:".$ENV{'LIBPATH'};
    $ENV{'SHLIB_PATH'} = $ENV{'JAVA_HOME'}."/jre/lib/amd64/server:".$ENV{'SHLIB_PATH'};
+}
+else
+{
+ # Added case to support detection of errors.
+   printf "Can't identify prefix extension for platform = $platform \n";
+   exit 1;
 }
 
 # Figure out the name of the task
