@@ -6,7 +6,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 SUBDIRS =  gui
 
 if ROSE_USE_SQLITE_DATABASE
-if HAVE_SSL
+# if HAVE_SSL
+if ROSE_USE_SSL_SUPPORT
 
 INCLUDES = $(ROSE_INCLUDES)  $(SQLITE_DATABASE_INCLUDE)
 

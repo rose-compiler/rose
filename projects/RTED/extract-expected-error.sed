@@ -50,7 +50,7 @@
 	# with the comments in the .c file, which are actually correct.
     s/^.*at line \([0-9]\+\).*c_J_6_a.*$/34/I
 
-    # Per James J. Coyle's email, the explanation in RTED for this test is
+    # Per James J. Coyle's email (9/25/2009), the explanation in RTED for this test is
     # simply wrong.  The error occurs when runA ends, and its pass-by-value
     # parameter goes out of scope, causing a memory leak.
     s/^.*at line \([0-9]\+\).*C_I_1_1_m_d.*$/48/I

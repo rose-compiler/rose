@@ -341,8 +341,11 @@ AM_PATH_XML2(2.0.0, [with_xml="yes"])
 # Make the use of libxml2 explicitly controlled.
 AM_CONDITIONAL(ROSE_USE_XML,test "$with_xml" != no)
 
+# DQ (10/17/2009): This is a bug introduced (again) into ROSE which disables the Java support.
+# See elsewhere in this file where this macro is commented out and the reason explained in 
+# more details.
 # AS Check for ssl for the binary clone detection work
-CHECK_SSL
+# CHECK_SSL
 
 # Check for objdump for BinaryContextLookup since it doesn't normally exist on
 # Mac
@@ -1563,6 +1566,8 @@ developersScratchSpace/Dan/fileLocation_tests/Makefile
 developersScratchSpace/Dan/callGraph_tests/Makefile
 developersScratchSpace/Dan/constructName_tests/Makefile
 developersScratchSpace/Dan/dataFlow_tests/Makefile
+developersScratchSpace/Dan/binaryDataStructureRecognition_tests/Makefile
+developersScratchSpace/Dan/algorithmRecognition_tests/Makefile
 developersScratchSpace/Robb/Makefile
 developersScratchSpace/Robb/BinaryTools/Makefile
 developersScratchSpace/Robb/DynamicLinking/Makefile

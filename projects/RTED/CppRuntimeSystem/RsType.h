@@ -334,6 +334,10 @@ class RsTypeDef : public RsType
 class RsBasicType : public RsType
 {
     public:
+
+     // DQ (10/7/2009): The use of this specific name for enum values could be a problem for ROSE
+     // since they are typename isn ROSE and enum names in this section of code.
+
         /// Enumeration of all basic types
         enum SgType
         {

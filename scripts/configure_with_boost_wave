@@ -8,3 +8,7 @@
 
 (4/17/2008): After adding default support for boost:
 /home/dquinlan/ROSE/svn-rose/configure --with-edg_source_code=true --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-binary_analysis=no --with-Java=/usr/java/jdk1.5.0_11 --with-JavaJVM=/usr/java/jdk1.5.0_11/jre/lib/i386/client --with-openFortranParser=/home/dquinlan/ROSE/OpenFortranParser/fortran-parser --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall -with-CXXFLAGS=-fPIC -with-CFLAGS=-fPIC --prefix=/home/dquinlan/ROSE/svn-roseCompileTree-g++3.4.3_install CFLAGS=-fPIC CXXFLAGS=-fPIC --with-boost=/home/dquinlan/tmp_boost/install --with-boost-wave
+
+/home/dquinlan/ROSE/svn-rose/configure --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-boost=/home/dquinlan/local/boost_1_37_0_gnu_4.1.2_install/ --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-java=/usr/apps/java/jdk1.6.0_11/
+
+
