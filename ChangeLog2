@@ -1,3 +1,29 @@
+2009-10-16 23:43  liao6
+
+	* [r7844] /trunk/ROSE/docs/Rose/documents.html: Updated the
+	  document web page
+
+2009-10-16 23:26  liao6
+
+	* [r7843] /trunk/ROSE/docs/Rose/news.html,
+	  /trunk/ROSE/docs/Rose/rose.html: added news for Haskell support
+
+2009-10-16 22:35  panas2
+
+	* [r7842]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/FileManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/FileManager.h,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp: Modifications
+	  to RTED to support UPC
+
+2009-10-16 21:28  liao6
+
+	* [r7841]
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-head-gnu-4.0.sh: a
+	  script stub for generating EDG binary for gcc 4.0
+
 2009-10-16 18:37  liao6
 
 	* [r7838] /trunk/ROSE/docs/Rose/OpenMPsupport.tex,
