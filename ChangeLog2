@@ -1,3 +1,20 @@
+2009-10-18 18:45  dquinlan
+
+	* [r7851]
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/astStructRecognition.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/testProgram_1.C,
+	  /trunk/ROSE/src/frontend/SageIII/astVisualization/wholeAST.C,
+	  /trunk/ROSE/src/frontend/SageIII/astVisualization/wholeAST.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C: Added work to
+	  support binary Analysis.
+	  
+	  Detailed changes in this commit:
+	  1) Added representation of asm instruction details for the Whole
+	  AST graph.
+	  2) Added more recent (ongoing) work to support the C++ structure
+	  representation for binaries.
+
 2009-10-17 22:39  dquinlan
 
 	* [r7849] /trunk/ROSE/configure.in,
