@@ -1,3 +1,38 @@
+2009-10-17 22:39  dquinlan
+
+	* [r7849] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_35.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_36.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_29.f,
+	  /trunk/ROSE/developersScratchSpace/Dan/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/algorithmRecognition_tests,
+	  /trunk/ROSE/developersScratchSpace/Dan/algorithmRecognition_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/algorithmRecognition_tests/algorithmRecognition.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/algorithmRecognition_tests/graphIsomorphism.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/algorithmRecognition_tests/orderedGraphIsomorphism.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/astStructRecognition.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/testProgram_1.C,
+	  /trunk/ROSE/docs/Rose/developersAppendix.tex,
+	  /trunk/ROSE/docs/Rose/leftmenu.html.in,
+	  /trunk/ROSE/docs/Rose/news.html,
+	  /trunk/ROSE/projects/BinaryCloneDetection/Makefile.am,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/RsType.h,
+	  /trunk/ROSE/projects/RTED/README,
+	  /trunk/ROSE/projects/RTED/extract-expected-error.sed,
+	  /trunk/ROSE/projects/compass/compassCountScript.sh,
+	  /trunk/ROSE/scripts/configure_with_boost_wave,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/README: Fixed problems
+	  specific to new SSL tests that broke Fortran support on RedHat.
+	  
+	  Detailed changes in this commit:
+	  1) Fixed problems specific to new SSL tests that broke Fortran
+	  support on RedHat.
+	  2) Added directory of initial work on algorithm detection.
+	  3) Added directory for initial work on C++ structure recognition
+	  for binaries.
+
 2009-10-17 18:51  dquinlan
 
 	* [r7847] /trunk/ROSE/scripts/nmiBuildAndTestFarm/cronjobs: Added
