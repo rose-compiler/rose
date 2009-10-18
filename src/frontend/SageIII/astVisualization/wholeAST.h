@@ -230,6 +230,11 @@ class CustomMemoryPoolDOTGeneration
           void ctorInitializerListFilter(SgNode* n);
           void symbolFilter(SgNode* n);
 
+       // DQ (10/18/2009): Added support to skip output of binary file format in generation of AST visualization.
+          void asmFileFormatFilter(SgNode* n);
+
+       // DQ (10/18/2009): Added support to skip output of binary expression type information in generation of AST visualization.
+          void asmTypeFilter(SgNode* n);
    };
 
 
