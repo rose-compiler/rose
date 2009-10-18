@@ -775,6 +775,26 @@ CustomMemoryPoolDOTGeneration::symbolFilter(SgNode* node)
    }
 
 void
+CustomMemoryPoolDOTGeneration::asmFileFormatFilter(SgNode* node)
+   {
+  // DQ (10/18/2009): Added support to skip output of binary file format in generation of AST visualization.
+     if (isSgAsmExecutableFileFormat(node) != NULL)
+        {
+          skipNode(node);
+        }
+   }
+
+void
+CustomMemoryPoolDOTGeneration::asmTypeFilter(SgNode* node)
+   {
+  // DQ (10/18/2009): Added support to skip output of binary expression type information in generation of AST visualization.
+     if (isSgAsmType(node) != NULL)
+        {
+          skipNode(node);
+        }
+   }
+
+void
 CustomMemoryPoolDOTGeneration::emptySymbolTableFilter(SgNode* node)
    {
   // This function skips the representation of types and IR nodes associated with types
@@ -1557,6 +1577,37 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                   }
              }
 
+       // DQ (10/18/2009): Added support to provide more information in the generated graphs of the AST.
+          SgAsmInstruction* asmInstruction = isSgAsmInstruction(node);
+          if (asmInstruction != NULL)
+             {
+            // string mnemonicString      = asmInstruction->get_mnemonic();
+
+            // Note that unparsing of instructions is inconsistant with the rest of ROSE.
+            // string unparsedInstruction = asmInstruction->unparseToString();
+
+               string unparsedInstruction = unparseInstruction(asmInstruction);
+
+               string addressString       = StringUtility::numberToString( (void*) asmInstruction->get_address() );
+
+               additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"blue\",fillcolor=skyblue,fontname=\"7x13bold\",fontcolor=black,style=filled";
+               labelWithSourceCode = "\\n  " + unparsedInstruction + 
+                                     "\\n  address: " + addressString +
+                                     "\\n  (generated label: " +  StringUtility::numberToString(asmInstruction) + ")  ";
+             }
+
+       // DQ (10/18/2009): Added support to provide more information in the generated graphs of the AST.
+          SgAsmExpression* asmExpression = isSgAsmExpression(node);
+          if (asmExpression != NULL)
+             {
+               string unparsedExpression = unparseExpression(asmExpression);
+
+               additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"blue\",fillcolor=skyblue,fontname=\"7x13bold\",fontcolor=black,style=filled";
+               labelWithSourceCode = "\\n  " + unparsedExpression + 
+                                     "\\n  (generated label: " +  StringUtility::numberToString(asmExpression) + ")  ";
+             }
+
+
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
         }
@@ -1738,6 +1789,12 @@ SimpleColorMemoryPoolTraversal::visit(SgNode* node)
 #endif
 #if 0
      symbolFilter(node);
+#endif
+
+#if 0
+  // DQ (10/18/2009): Added support to skip output of binary file format in generation of AST visualization.
+     asmFileFormatFilter(node);
+     asmTypeFilter(node);
 #endif
 
 #if 1
