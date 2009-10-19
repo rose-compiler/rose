@@ -1,3 +1,38 @@
+2009-10-19 18:37  panas2
+
+	* [r7858] /trunk/ROSE/demo/qrose/Makefile.am: Change to Makefile so
+	  that extra dist works
+
+2009-10-19 18:22  panas2
+
+	* [r7857] /trunk/ROSE/projects/RoseQt/AstViewer/Makefile.am,
+	  /trunk/ROSE/projects/RoseQt/Makefile.am: Change to Makefile so
+	  that extra dist works
+
+2009-10-19 18:11  panas2
+
+	* [r7856]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/DebuggerQt/Makefile.am:
+	  Change to Makefile so that extra dist works
+
+2009-10-19 17:37  liao6
+
+	* [r7855]
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-amd64-scidac.sh: minor
+	  change to test stub
+
+2009-10-19 17:36  panas2
+
+	* [r7854]
+	  /trunk/ROSE/projects/compass/tools/compass/gui2/Makefile.am:
+	  Change to Makefile so that extra dist works
+
+2009-10-19 17:20  panas2
+
+	* [r7853]
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/SrcBinView/Makefile.am:
+	  Fix in Makefile
+
 2009-10-18 18:45  dquinlan
 
 	* [r7851]
