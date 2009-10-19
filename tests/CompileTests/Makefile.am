@@ -13,7 +13,8 @@ SUBDIRS = \
      sourcePosition_tests OpenMP_tests \
      boost_tests virtualCFG_tests uninitializedField_tests \
      A++Tests OvertureCode P++Tests A++Code ElsaTestCases \
-     ExpressionTemplateExample_tests hiddenTypeAndDeclarationListTests
+     ExpressionTemplateExample_tests hiddenTypeAndDeclarationListTests \
+	 sizeofOperation_tests
 
 # DQ (12/5/2007): Removed because this takes a long time (about 1 minute)
 # A++Code 

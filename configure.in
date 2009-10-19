@@ -1446,6 +1446,7 @@ tests/CompileTests/virtualCFG_tests/Makefile
 tests/CompileTests/uninitializedField_tests/Makefile
 tests/CompileTests/sourcePosition_tests/Makefile
 tests/CompileTests/hiddenTypeAndDeclarationListTests/Makefile
+tests/CompileTests/sizeofOperation_tests/Makefile
 tests/roseTests/Makefile
 tests/roseTests/PHPTests/Makefile
 tests/roseTests/astFileIOTests/Makefile
