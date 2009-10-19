@@ -283,9 +283,9 @@ satire_driver: init.token
 	for f in $(testdir)/driver_tests/*; do \
 		rm -rf driver_out; \
 		$(bindir)/satire_driver --analysis=interval --run-pointsto-analysis --callstringlength=2 --output-term=driver_out/interval/`basename $$f .c`.term $$f; \
-		echo "testing existence of term file driver_out/interval/interval_`basename $$f .c`.term ..."; \
-		test -s driver_out/interval/interval_`basename $$f .c`.term || exit 1; \
-		wc driver_out/interval/interval_`basename $$f .c`.term; \
+		echo "testing existence of term file driver_out/interval/`basename $$f .c`.term ..."; \
+		test -s driver_out/interval/`basename $$f .c`.term || exit 1; \
+		wc driver_out/interval/`basename $$f .c`.term; \
 		echo; \
 	done
 	rm -rf driver_out
