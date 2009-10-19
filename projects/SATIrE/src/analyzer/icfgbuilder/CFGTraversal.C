@@ -246,6 +246,7 @@ CFGTraversal::atTraversalEnd() {
 
          // GB (2009-10-16): PAG magic. This is somewhat easier than running
          // a fake data flow analyzer for the same effect...
+            setPagOptions(*cfg->analyzerOptions);
             extern int startbanks;
             GC_init(startbanks);
             mapping_cfg_init(cfg);
