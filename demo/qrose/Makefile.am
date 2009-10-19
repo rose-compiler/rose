@@ -1,5 +1,8 @@
 include $(top_srcdir)/src/roseExtensions/qtWidgets/Make.inc
 
+EXTRA_DIST = test.C icons.h
+
+
 if ROSE_USE_QT
 
 #INCLUDES = $(ROSE_INCLUDES) $(QT_INCLUDES)
@@ -32,7 +35,6 @@ if ROSE_WITH_ROSEQT
 t7_qtcompat_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) $(top_builddir)/src/roseExtensions/qtWidgets/libRoseQtWidgets.la
 endif
 
-EXTRA_DIST = test.C icons.h
 
 all-local: test.C
 	cp -f $(srcdir)/test.C .
