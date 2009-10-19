@@ -271,7 +271,7 @@ main()
     SgAsmElfNoteSection *notes = new SgAsmElfNoteSection(fhdr);
     notes->set_name(new SgAsmBasicString("ELF Notes"));
     notes->set_mapped_preferred_rva(0x900000);                /* RVA where loader will map section */
-    notes->set_mapped_size(dynamic->get_size());              /* Make mapped size same as file size */
+    notes->set_mapped_size(notes->get_size());              /* Make mapped size same as file size */
     notes->set_mapped_rperm(true);                            /* Readable */
     notes->set_mapped_wperm(true);                            /* Writable */
     notes->set_mapped_xperm(false);                           /* Not executable */
@@ -282,6 +282,62 @@ main()
         note->get_payload().push_back(payload[i]);
     }
     segtab->add_section(notes);
+
+
+    /* Add a Symbol Version section.  This is a gnu extension to elf to support versioning of individual symbols 
+       the size of the symver section should match the size of the dynamic symbol section (nominally .dynsym).
+       there should also be an entry in the .dynamic section [DT_VERDEFNUM] that matches this same number.
+     */
+    SgAsmElfSymverSection* symver = new SgAsmElfSymverSection(fhdr);
+    symver->get_name()->set_string(".gnu-version-test");       /* Give section a name */
+    symver->set_mapped_preferred_rva(0xA00000);                /* RVA where loader will map section */
+    symver->set_mapped_size(symver->get_size());               /* Make mapped size same as file size */
+    symver->set_mapped_rperm(true);                            /* Readable */
+    symver->set_mapped_wperm(false);                           /* Writable */
+    symver->set_mapped_xperm(false);                           /* Not executable */
+    sectab->add_section(symver);                               /* Make an ELF Section Table entry */
+
+    for(size_t i=0; i < symtab->get_symbols()->get_symbols().size(); ++i){
+      SgAsmElfSymverEntry* symver_entry = new SgAsmElfSymverEntry(symver);
+      symver_entry->set_value(i);
+    }
+    
+    SgAsmElfSymverDefinedSection* symver_def = new SgAsmElfSymverDefinedSection(fhdr,shstrtab);
+    symver_def->get_name()->set_string(".gnu.version_d-test");
+    symver_def->set_mapped_preferred_rva(0xB00000);                /* RVA where loader will map section */
+    symver_def->set_mapped_size(symver_def->get_size());               /* Make mapped size same as file size */
+    symver_def->set_mapped_rperm(true);                            /* Readable */
+    symver_def->set_mapped_wperm(false);                           /* Writable */
+    symver_def->set_mapped_xperm(false);                           /* Not executable */
+
+    sectab->add_section(symver_def);                               /* Make an ELF Section Table entry */
+
+    /** normal case - one Aux structure*/
+    SgAsmElfSymverDefinedEntry* symdefEntry1 = new SgAsmElfSymverDefinedEntry(symver_def);
+    symdefEntry1->set_version(1);
+    symdefEntry1->set_hash(0xdeadbeef);// need to implement real hash support?
+    symdefEntry1->set_flags(0x0);
+    
+    SgAsmElfSymverDefinedAux* symdefAux1a = new SgAsmElfSymverDefinedAux(symdefEntry1, symver_def);
+    symdefAux1a->get_name()->set_string("version-1");
+
+    SgAsmElfSymverDefinedEntry* symdefEntry2 = new SgAsmElfSymverDefinedEntry(symver_def);
+    SgAsmElfSymverDefinedAux* symdefAux2a = new SgAsmElfSymverDefinedAux(symdefEntry2, symver_def);
+    SgAsmElfSymverDefinedAux* symdefAux2b = new SgAsmElfSymverDefinedAux(symdefEntry2, symver_def);
+
+    /* Very strange case, but technically legal - zero Aux */
+    SgAsmElfSymverDefinedEntry* symdefEntry3 = new SgAsmElfSymverDefinedEntry(symver_def);
+
+    SgAsmElfSymverNeededSection* symver_need = new SgAsmElfSymverNeededSection(fhdr,shstrtab);
+    symver_need->get_name()->set_string(".gnu.version_d-test");
+    symver_need->set_mapped_preferred_rva(0xC00000);                /* RVA where loader will map section */
+    symver_need->set_mapped_size(symver_need->get_size());               /* Make mapped size same as file size */
+    symver_need->set_mapped_rperm(true);                            /* Readable */
+    symver_need->set_mapped_wperm(false);                           /* Writable */
+    symver_need->set_mapped_xperm(false);                           /* Not executable */
+    sectab->add_section(symver_need);                               /* Make an ELF Section Table entry */
+
+
 #endif
 
     /* Some of the sections we created above have default sizes of one byte because there's no way to determine their true

@@ -1342,18 +1342,25 @@ HEADER_ELF_SECTION_TABLE_ENTRY_START
 	public:
 		/* Section types (host order). All other values are reserved. */
 		enum SectionType {
-			SHT_NULL        = 0,            /* Section header is inactive */
-			SHT_PROGBITS	= 1,            /* Info defined by the program; format and meaning determined by prog */
-			SHT_SYMTAB      = 2,            /* Complete symbol table */
-			SHT_STRTAB      = 3,            /* String table */
-			SHT_RELA        = 4,            /* Relocation entries with explicit addends (e.g., Elf32_Rela types) */
-			SHT_HASH        = 5,            /* Symbol hash table (used by dynamic linking) */
-			SHT_DYNAMIC     = 6,            /* Information for dynamic linking */
-			SHT_NOTE        = 7,            /* Information that marks the file in some way */
-			SHT_NOBITS      = 8,            /* Like SHT_PROGBITS but occupies no file space */
-			SHT_REL         = 9,            /* Relocation entries without explicit addends (e.g., Elf32_Rel types) */
-			SHT_SHLIB       = 10,           /* Reserved, unspecified semantics; Present only in non-conforming files */
-			SHT_DYNSYM      = 11,           /* Minimal set of dynamic linking symbols */
+			SHT_NULL        = 0,            /**< Section header is inactive */
+			SHT_PROGBITS	= 1,            /**< Info defined by the program; format and meaning determined by prog */
+			SHT_SYMTAB      = 2,            /**< Complete symbol table */
+			SHT_STRTAB      = 3,            /**< String table */
+			SHT_RELA        = 4,            /**< Relocation entries with explicit addends (e.g., Elf32_Rela types) */
+			SHT_HASH        = 5,            /**< Symbol hash table (used by dynamic linking) */
+			SHT_DYNAMIC     = 6,            /**< Information for dynamic linking */
+			SHT_NOTE        = 7,            /**< Information that marks the file in some way */
+			SHT_NOBITS      = 8,            /**< Like SHT_PROGBITS but occupies no file space */
+			SHT_REL         = 9,            /**< Relocation entries without explicit addends (e.g., Elf32_Rel types) */
+			SHT_SHLIB       = 10,           /**< Reserved, unspecified semantics; Present only in non-conforming files */
+			SHT_DYNSYM      = 11,           /**< Minimal set of dynamic linking symbols */
+
+			SHT_LOOS        = 0x60000000,   /**< OS specific semantics */
+			SHT_GNU_verdef  = 0x6ffffffd,   /**< Symbol Version Definitions [gnu extension] .gnu.version_d */
+			SHT_GNU_verneed = 0x6ffffffe,   /**< Symbol Version Requirements [gnu extension] .gnu.version_r */
+			SHT_GNU_versym  = 0x6fffffff,   /**< Symbol Version Table [gnu extension] .gnu.version */
+			SHT_HIOS        = 0x6fffffff,   /**< End OS specific semantics */
+
 			SHT_LOPROC      = 0x70000000,	/* Processor specific semantics */
 			SHT_HIPROC      = 0x7fffffff,
 			SHT_LOUSER      = 0x80000000,   /* Application specific semantics */
@@ -1755,6 +1762,157 @@ HEADER_ELF_EH_FRAME_ENTRY_FD_START
 		void ctor(SgAsmElfEHFrameEntryCI*);
 HEADER_ELF_EH_FRAME_ENTRY_FD_END
 
+
+
+HEADER_ELF_SYMVER_SECTION_START
+	public:
+		explicit SgAsmElfSymverSection(SgAsmElfFileHeader *fhdr)
+		        : SgAsmElfSection(fhdr)
+			{ctor();}
+		virtual SgAsmElfSymverSection* parse();
+		using SgAsmElfSection::calculate_sizes;
+		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const;
+		virtual void unparse(std::ostream&) const;
+		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+	private:
+		void ctor();
+HEADER_ELF_SYMVER_SECTION_END
+
+
+HEADER_ELF_SYMVER_ENTRY_START
+	public:
+		explicit SgAsmElfSymverEntry(SgAsmElfSymverSection *symver)
+		        : p_value(0)
+			{ctor(symver);}
+		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
+	private:
+		void ctor(SgAsmElfSymverSection*);
+HEADER_ELF_SYMVER_ENTRY_END
+
+
+HEADER_ELF_SYMVER_DEFINED_SECTION_START
+	public:
+		SgAsmElfSymverDefinedSection(SgAsmElfFileHeader *fhdr, SgAsmElfStringSection *strsec)
+			: SgAsmElfSection(fhdr)
+			{ctor(strsec);}
+		virtual SgAsmElfSymverDefinedSection* parse();
+		using SgAsmElfSection::calculate_sizes;
+		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const;
+		virtual void unparse(std::ostream&) const;
+		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+	private:
+		void ctor(SgAsmElfStringSection*);
+HEADER_ELF_SYMVER_DEFINED_SECTION_END
+
+
+HEADER_ELF_SYMVER_DEFINED_ENTRY_START
+	public:
+		/** Elfxx_Verdef, Note, same for 32bit and 64bit */
+		struct ElfSymverDefinedEntry_disk { 
+			uint16_t      vd_version;   /**< version of this struct: This field shall be set to 1 */
+			uint16_t      vd_flags;     /**< Version information flag bitmask */
+			uint16_t      vd_ndx;       /**< Version index of this entry */
+			uint16_t      vd_cnt;       /**< Number of verdaux entries @see SgAsmElfSymverDefinedAux */
+			uint32_t      vd_hash;      /**< Hash of version name */
+			uint32_t      vd_aux;       /**< Offset (in bytes) to start of array of verdaux entries */
+			uint32_t      vd_next;      /**< Offset (in bytes) to next verdef entry */
+		} __attribute__((packed));
+
+
+		explicit SgAsmElfSymverDefinedEntry(SgAsmElfSymverDefinedSection *symver_defined)
+		  	{ctor(symver_defined);}
+		void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymverDefinedEntry::ElfSymverDefinedEntry_disk*);
+		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymverDefinedEntry::ElfSymverDefinedEntry_disk*) const;
+		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
+	private:
+		void ctor(SgAsmElfSymverDefinedSection*);
+HEADER_ELF_SYMVER_DEFINED_ENTRY_END
+
+
+HEADER_ELF_SYMVER_DEFINED_AUX_START
+	public:
+		/** Elfxx_Verdaux, Note: same for 32bit and 64bit */
+		struct ElfSymverDefinedAux_disk { 
+			uint32_t      vda_name;   /**< Offset (in bytes) to strings table to name string */
+		        uint32_t      vda_next;   /**< Offset (in bytes) to next verdaux entry */
+		} __attribute__((packed));
+
+
+                explicit SgAsmElfSymverDefinedAux(SgAsmElfSymverDefinedEntry *symver_def_entry,
+						  SgAsmElfSymverDefinedSection *symver_def_sec)
+		        : p_name(NULL)
+                        {ctor(symver_def_entry,symver_def_sec);}
+		void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymverDefinedAux::ElfSymverDefinedAux_disk*);
+		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymverDefinedAux::ElfSymverDefinedAux_disk*) const;
+		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
+
+	private:
+	        void ctor(SgAsmElfSymverDefinedEntry*,SgAsmElfSymverDefinedSection *symver_def_sec);
+HEADER_ELF_SYMVER_DEFINED_AUX_END
+
+
+HEADER_ELF_SYMVER_NEEDED_SECTION_START
+	public:
+		 SgAsmElfSymverNeededSection(SgAsmElfFileHeader *fhdr, SgAsmElfStringSection *strsec)
+			: SgAsmElfSection(fhdr)
+			{ctor(strsec);}
+		virtual SgAsmElfSymverNeededSection* parse();
+		using SgAsmElfSection::calculate_sizes;
+		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const;
+		virtual void unparse(std::ostream&) const;
+		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+	private:
+		void ctor(SgAsmElfStringSection*);
+HEADER_ELF_SYMVER_NEEDED_SECTION_END
+
+
+HEADER_ELF_SYMVER_NEEDED_ENTRY_START
+	public:
+		/** Elfxx_Verneed, Note, same for 32bit and 64bit */
+		struct ElfSymverNeededEntry_disk { 
+			uint16_t      vn_version;  /**< version of this struct: This field shall be set to 1 */
+			uint16_t      vn_cnt;      /**< Number of vernaux entries @see SgAsmElfSymverNeededAux */
+			uint32_t      vn_file;     /**< Offset (in bytes) to strings table to file string */
+			uint32_t      vn_aux;      /**< Offset (in bytes) to start of array of vernaux entries */
+			uint32_t      vn_next;     /**< Offset (in bytes) to next verneed entry */
+		} __attribute__((packed));
+
+
+		explicit SgAsmElfSymverNeededEntry(SgAsmElfSymverNeededSection *symver_needed)
+		        : p_file_name(NULL)
+			{ctor(symver_needed);}
+		void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymverNeededEntry::ElfSymverNeededEntry_disk*);
+		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymverNeededEntry::ElfSymverNeededEntry_disk*) const;
+		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
+
+	private:
+		void ctor(SgAsmElfSymverNeededSection*);
+HEADER_ELF_SYMVER_NEEDED_ENTRY_END
+
+
+HEADER_ELF_SYMVER_NEEDED_AUX_START
+	public:
+		/** Elfxx_Verdaux, Note: same for 32bit and 64bit */
+		struct ElfSymverNeededAux_disk { 
+			uint32_t      vna_hash;  /**< Hash of version name */
+			uint16_t      vna_flags; /**< Version information flag bitmask */
+			uint16_t      vna_other; /**< Version index of this entry (bit 15 is special) */
+			uint32_t      vna_name;  /**< Offset (in bytes) to strings table to name string */
+		        uint32_t      vna_next;  /**< Offset (in bytes) to next vernaux entry */
+		} __attribute__((packed));
+
+
+                SgAsmElfSymverNeededAux(SgAsmElfSymverNeededEntry *symver_needed_entry,
+					SgAsmElfSymverNeededSection *symver_needed_sec)
+		        : p_name(NULL)
+                        {ctor(symver_needed_entry,symver_needed_sec);}
+		void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymverNeededAux::ElfSymverNeededAux_disk*);
+		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymverNeededAux::ElfSymverNeededAux_disk*) const;
+		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
+
+	private:
+	        void ctor(SgAsmElfSymverNeededEntry*,SgAsmElfSymverNeededSection*);
+HEADER_ELF_SYMVER_NEEDED_AUX_END
 
 
 HEADER_ELF_SEGMENT_TABLE_START
