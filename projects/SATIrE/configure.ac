@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT(SATIrE, 0.8.6-rc2, markus@complang.tuwien.ac.at)
+AC_INIT(SATIrE, 0.8.6-rc2, adrian@complang.tuwien.ac.at)
 AC_CONFIG_SRCDIR([README])
 
 AC_CONFIG_MACRO_DIR([m4])

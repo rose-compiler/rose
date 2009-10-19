@@ -6,7 +6,7 @@ if WITH_SWI_PROLOG
 bin_PROGRAMS=loopbounds
 loopbounds_SOURCES=
 
-DRIVER=$(bindir)/satire_driver --run-pointsto-analysis \$$@ --output-term=tmp_satire.term
+DRIVER=$(bindir)/satire_driver --run-pointsto-analysis --analysis=interval \$$@ --output-term=tmp_satire.term
 
 loopbounds: loopbounds.pl Makefile
 	TERMITE_LIB=$(top_srcdir)/src/termite/termite \

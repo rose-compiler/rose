@@ -14,6 +14,7 @@
 :- use_module(library(asttransform)).
 
 main :-
+  prompt(_,''),
   format(user_error, '/* Unparsing from stdin */~n', []),
   read_term(P, []),
   compound(P),

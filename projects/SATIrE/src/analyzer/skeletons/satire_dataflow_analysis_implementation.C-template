@@ -399,7 +399,9 @@ Implementation::outputAnnotatedProgram(Program *program, bool prefixFiles)
                 tp.traverseInputFiles(program->astRoot);
 
             ofstream termfile;
-            string prefix = (prefixFiles ? identifier() : "");
+	    // Do we actually need this prefix stuff? 
+	    // Originally there for CLANG-mibench testsuite.
+            string prefix = ""; // (prefixFiles ? identifier() : "");
             string filename
                 = prefixedFileName(program->options->getOutputTermFileName(),
                                    prefix);
