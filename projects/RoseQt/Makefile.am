@@ -23,9 +23,6 @@ nodist_roseQt_SOURCES = moc_MainWindow.cxx ui_MainWindow.h
 
 BUILT_SOURCES = ui_MainWindow.h
 
-EXTRA_DIST = MainWindow.ui \
-			 MainWindow.h
-			 res.qrc
 
 
 roseQt_LDADD = $(ROSEHPCT_BUILD_ROOT)/src/librosehpct.la \
@@ -34,3 +31,7 @@ roseQt_LDADD = $(ROSEHPCT_BUILD_ROOT)/src/librosehpct.la \
                $(ROSE_SEPARATE_LIBS)\
                $(LIBS_WITH_RPATH)
 endif
+
+EXTRA_DIST = MainWindow.ui \
+			 MainWindow.h
+			 res.qrc
