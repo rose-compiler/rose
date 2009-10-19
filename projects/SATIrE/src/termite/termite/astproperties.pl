@@ -38,6 +38,7 @@
 	   get_preprocessing_infos/2]).
 
 :- use_module(library(utils)).
+:- use_module(library(clpfd)).
 
 %-----------------------------------------------------------------------
 /** <module> Properties of abstract syntax trees
@@ -255,16 +256,16 @@ var_stripped(Term, Term).
 var_interval(analysis_info(AnalysisInfo),
 	     var_ref_exp(var_ref_exp_annotation(Type, Name, _Val, _, _),
 			 _Ai, _Fi),
-	     interval(Min,Max)) :-
+	     (Min..Max)) :-
   member(pre_info(interval, Contexts), AnalysisInfo),
   member(merged:map(_,Intvls),Contexts),
   member(Name->[Min1,Max1],Intvls),
   (  number(Min1)
   -> Min = Min1
-  ;  type_interval(Type, interval(Min, _))),
+  ;  type_interval(Type, (Min.._))),
   (  number(Max1)
   -> Max = Max1
-  ;  type_interval(Type, interval(_, Max))).
+  ;  type_interval(Type, (_..Max))).
 
 var_interval(_,
 	     var_ref_exp(var_ref_exp_annotation(Type, _, _, _, _), _, _),

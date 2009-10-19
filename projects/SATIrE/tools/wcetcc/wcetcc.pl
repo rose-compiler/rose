@@ -193,7 +193,7 @@ ignore_pragma(wcet_marker(_)).
 ignore_pragma(wcet_constraint(_)).
 
 write_loopbound(basic_block(List, _,_,_)) :-
-  get_annot(List, wcet_loopbound(Bound), _), !,
+  get_annot(List, wcet_loopbound(_..Bound), _), !,
   maplist(write, ['WCET_LOOP_BOUND (', Bound, ')']), nl.
 write_loopbound(_) :-
   writeln('/* **WARNING: no loop bound */'),

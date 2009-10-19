@@ -104,7 +104,7 @@ is_fortran_multicond_for_loop(for_statement(ForInit,
 
   guarantee(Body, is_transp(I, local)).
 
-%% is_fortran_for_loop(+ForStatement, +I, ForInit, ForTest, ForStep, Body)
+%% is_fortran_for_loop(+ForStatement, -I, -ForInit, -ForTest, -ForStep, -Body)
 is_fortran_for_loop(for_statement(ForInit,
 			     ForTest,
 			     ForStep,

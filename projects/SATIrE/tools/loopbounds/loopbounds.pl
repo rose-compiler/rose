@@ -92,12 +92,12 @@ interval_of(_-Info, Var, Interval) :-
 
 %-----------------------------------------------------------------------
 %% reduce(+Info, +Expr, -ExprRed) is det.
-% try to reduce an AST expression into an interval(Min, Max)
+% try to reduce an AST expression into an interval Min..Max
 % analysis information Info
 
-reduce(_, interval(Min, Max), interval(Min, Max)).
+reduce(_, Min..Max, Min..Max).
 
-reduce(_, Int, interval(I, I)) :-
+reduce(_, Int, I..I) :-
   isIntVal(Int, I).
 
 % If evaluation doesn't yield a result, try to rewrite the expression
@@ -109,41 +109,41 @@ reduce(Info, Expr, X) :-
   reduce(Info, ExprT, X).
 
 reduce(Info, add_op(Expr1, Expr2, _, _, _), I) :-
-  reduce(Info, Expr1, interval(I1lo, I1hi)),
-  reduce(Info, Expr2, interval(I2lo, I2hi)),
+  reduce(Info, Expr1, (I1lo..I1hi)),
+  reduce(Info, Expr2, (I2lo..I2hi)),
   Ilo is I1lo + I2lo,
   Ihi is I1hi + I2hi,
-  I = interval(Ilo, Ihi).
+  I = (Ilo..Ihi).
 
 % The subtraction of two intervals is (xmin-ymax, xmax-ymin)
 reduce(Info, subtract_op(Expr1, Expr2, _, _, _), I) :-
-  reduce(Info, Expr1, interval(I1lo, I1hi)),
-  reduce(Info, Expr2, interval(I2lo, I2hi)),
+  reduce(Info, Expr1, (I1lo..I1hi)),
+  reduce(Info, Expr2, (I2lo..I2hi)),
   Ilo is I1lo - I2hi,
   Ihi is I1hi - I2lo,
-  I = interval(Ilo, Ihi).
+  I = (Ilo..Ihi).
 
 % Interval Arithmetic
-reduce(_, add_op(interval(Min1, Max1), interval(Min2, Max2), _, _, _),
-	       interval(Min3, Max3)) :-
+reduce(_, add_op((Min1..Max1), (Min2..Max2), _, _, _),
+          (   Min3..Max3)) :-
   Min3 is Min1 + Min2,
   Max3 is Max1 + Max2.
 
-reduce(_, subtract_op(interval(Min1, Max1), interval(Min2, Max2), _, _, _),
-	       interval(Min3, Max3)) :-
+reduce(_, subtract_op((Min1..Max1), (Min2..Max2), _, _, _),
+	       (Min3..Max3)) :-
   Min3 is Min1 - Max2,
   Max3 is Max1 - Min2.
 
-reduce(_, minus_op(interval(Min1, Max1), _, _, _), interval(Min2, Max2)) :-
+reduce(_, minus_op((Min1..Max1), _, _, _), (Min2..Max2)) :-
   Min2 is -Max1,
   Max2 is -Min1.
 
-reduce(_, and_op(interval(Min1, Max1), E1, _, _, _), interval(Min2, Max2)) :-
+reduce(_, and_op((Min1..Max1), E1, _, _, _), (Min2..Max2)) :-
   isIntVal(E1, Mask),
   Min2 is Min1 /\ Mask,
   Max2 is Max1 /\ Mask.
 
-reduce(_, or_op(interval(Min1, Max1), E1, _, _, _), interval(Min2, Max2)) :-
+reduce(_, or_op((Min1..Max1), E1, _, _, _), (Min2..Max2)) :-
   isIntVal(E1, Mask),
   Min2 is Min1 \/ Mask,
   Max2 is Max1 \/ Mask.
@@ -216,7 +216,7 @@ simplification(or_op(E1, E2, _, _, _), E3) :-
 simplification(xor_op(E1, E2, _, _, _), E3) :-
   isIntVal(E1, X), isIntVal(E2, Y), Z is X xor Y, isIntVal(E3, Z).
 
-simplification(arrow_exp(_,interval(_,_),binary_op_annotation(Type,_), _, _), I):-
+simplification(arrow_exp(_,(_.._),binary_op_annotation(Type,_), _, _), I):-
   type_interval(Type, I). % Fallback, we don't know anything
 
 % Type Casting
@@ -298,39 +298,39 @@ simplification(assign_op(V1, add_op(V1, E1, _, _, _), _, _, _),
 % Worstcase minimal stepsize for unsigned variable increments
 isUnsignedVarStep(Info, plus_assign_op(InductionVar, Var, _, _, _),
 		  InductionVar, 1) :-
-  var_interval(Info, Var, interval(Min, _)),
+  var_interval(Info, Var, (Min.._)),
   Min >= 0.
 
 %-----------------------------------------------------------------------
-%% is_real_for_loop(+ForStmt,+Info,-Ai,-Body,-IterationVar,-Interval,-Step).
+%% is_real_for_loop(+ForStmt,+Info,-AnalysisInfo,-Body,-IterationVar,-Interval,-Step).
 % Determine wether a given for loop is a "simple", counter-based loop and
 % extract its parameters
 is_real_for_loop(for_statement(ForInit,
 			       ForTest,
 			       ForStep,
 			       Body,
-			       _An, Ai, _Fi),
-		 Info, Ai, Body, IterationVar,
-		 interval(Min, Max),
+			       _An, AnalysisInfo, _Fi),
+		 Info, AnalysisInfo, Body, IterationVar,
+		 (Min..Max),
 		 Step) :-
   write('% '), unparse(for_statement(ForInit,ForTest,ForStep,[], _, _, _)), nl,
   %gtrace,
   (isSimpleForInit(ForInit, IterationVar, B1v)
   -> (
-      term_interval(Ai, B1v, B1),
+      term_interval(AnalysisInfo, B1v, B1),
 
       isForTestOp(ForTest, TestOp), 
       isBinOpRhs(TestOp, B2v),
-      term_interval(Ai, B2v, B2))
+      term_interval(AnalysisInfo, B2v, B2))
   ; ( % ForInit is empty
      isEmptyForInit(ForInit), 
      isForTestOp(ForTest, TestOp),
      isBinOpLhs(TestOp, I1),
      var_stripped(I1, IterationVar),
      ( interval_of(Info, IterationVar, B1)
-     ; term_interval(Ai, IterationVar, B1)),
+     ; term_interval(AnalysisInfo, IterationVar, B1)),
      isBinOpRhs(TestOp, B2v),
-     term_interval(Ai, B2v, B2)
+     term_interval(AnalysisInfo, B2v, B2)
   )), 
     %unparse(B1v), write('->'), unparse(B1), nl,
     %writeln(B2v),
@@ -356,8 +356,8 @@ is_real_for_loop(for_statement(ForInit,
       Min = MinV, 
       Max = MaxV)
   ; ( % Evaluated
-      reduce(Info, B1, interval(B1l, B1h)),
-      reduce(Info, B2, interval(B2l, B2h)),
+      reduce(Info, B1, (B1l..B1h)),
+      reduce(Info, B2, (B2l..B2h)),
       isIntVal(Min, MinX), 
       isIntVal(Max, MaxX))
   ), 
@@ -374,14 +374,14 @@ find_iv_interval(Info, InfoInner, PostCondition, I, Base, End) :-
   reduce(Info, End, StopR),
   
   %unparse(for_statement(ForInit,ForTest,ForStep, [], _, _, _)), nl,
-  StartR = interval(StartMin,_),          % write('StartR='), writeln(StartR),
-  StopR = interval(StopMin,StopMax),      %  write('StopR='), writeln(StopR),
-  IVinterval2 = interval(StartMin, StopMax), write('% IVinterval='), writeln(IVinterval2),
+  StartR = (StartMin.._),          % write('StartR='), writeln(StartR),
+  StopR = (StopMin..StopMax),      %  write('StopR='), writeln(StopR),
+  IVinterval2 = (StartMin..StopMax), write('% IVinterval='), writeln(IVinterval2),
   merge_info(Info, I-IVinterval2, InfoInner), %write('inner '), writeln(InfoInner),
 
   PCmin is StopMin /*+Increment*/,
   PCmax is StopMax /*+Increment*/,
-  merge_info(Info, I-interval(PCmin, PCmax), PostCondition).
+  merge_info(Info, I-(PCmin..PCmax), PostCondition).
   %write('post '), writeln(PostCondition)
   %merge_info(PostCond1, equiv(I, End),
     %add_op(End, int_val(_, value_annotation(Increment, _), _, _), _)),
@@ -394,25 +394,30 @@ find_iv_interval(Info, InfoInner, PostCondition, I, Base, End) :-
 %   1. transform(loop_end - loop_start)
 %   2. divided by step
 %   resulting in: either an Integer
-%                 or at least a Interval(min, max)
+%                 or at least an interval (min..max)
 %
 
 get_loopbound(Fs, Bound, I, Info, InfoInner, PostCondition) :-
   is_real_for_loop(Fs, Info, AnInfo, _, I,
-		   interval(Base, End),
+		   (Base..End),
 		   Increment),
 
   % Find out the iteration space
   %unparse(subtract_op(EndExpr, BaseExpr, _, _, _)), nl,
   term_stripped(subtract_op(End, Base, null, null, null), Term),
   reduce(AnInfo-Info, Term, LoopBoundR), %write('LoopBoundR= '),writeln(LoopBoundR),
-  LoopBoundR = interval(_, IVinterval1),
+  LoopBoundR = (IV_low..IV_high),
 
-				% Find the loop bound
-  Bound is ceil((IVinterval1 + 1 /*LE*/) / abs(Increment)),
+  % Find the loop bounds
+  (   is_fortran_for_loop(Fs, _, _, _, _, _)
+  ->  Low is floor((IV_low + 1 /*LE*/) / abs(Increment))
+  ;   Low = 0  ), % Early exits or multiple exit conditions not handled yet
+  High is ceil((IV_high + 1 /*LE*/) / abs(Increment)),
+  Bound=Low..High, 
   write(' --> '), write('Bound= '), writeln(Bound),
 
-  % Try to find the Induction Variable interval
+  % Try to find the Induction Variable interval;
+  % this information is used by the inner loop
   (find_iv_interval(Info, InfoInner, PostCondition, I, Base, End) -> true
   ; (Info = InfoInner,
      Info = PostCondition)
@@ -552,7 +557,7 @@ expr_constr(Var, Map, Expr) :-
   Expr #= Expr1.
 
 expr_constr(Term, AR-_Map, Expr) :-
-  term_interval(AR, Term, interval(Min, Max)),
+  term_interval(AR, Term, (Min..Max)),
   Expr #>= Min,
   Max < 2**24,
   Expr #=< Max.
@@ -589,7 +594,7 @@ init_constr(ForInit, Map, Dir) :-
 
 init_constr2(Map, AR, Var) :-
   get_assoc(Var, Map, CLP_Var),
-  ( term_interval(AR, Var, interval(Min, Max)),
+  ( term_interval(AR, Var, (Min..Max)),
     CLP_Var #>= Min,
     CLP_Var #=< Max
   ; true).
@@ -658,7 +663,7 @@ loop_constraints(Fs, Fs_Annot, RootMarker, Map) :-
   %unparse(FsPrint), writeln('...'), 
 
   !,
-  
+  %gtrace,
   gen_varmap(InductionVars, Map, Map1),
   %trace,
   step_constr(ForStep, Aibody/*FIXME!!! body*/-Map1, Dir),
@@ -670,8 +675,8 @@ loop_constraints(Fs, Fs_Annot, RootMarker, Map) :-
 
   assoc_to_values(Map1, Vars),
   %Vars=[I,J,K], findall((I,J,K), (indomain(I),indomain(J)), Is),writeln(Is),
-  findall(C, labeling([upto_in(C)], Vars), Cs),
   %length(Ns, IterationCount),
+  findall(C, labeling([upto_in(C)], Vars), Cs),
   sum(Cs, #=, IterationCount),
   %writeln(Ns),
   
