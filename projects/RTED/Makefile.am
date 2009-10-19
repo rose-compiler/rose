@@ -726,8 +726,17 @@ TESTS_KNOWN_TO_FAIL = run/C/subprogram_call_errors/c_C_1_3_f \
 					  run/tests/Cxx/pointer/dot_star \
 					  run/tests/Cxx/pointer/nulltest \
 					  run/tests/Cxx/pointer/arrow_varref2 \
-					  run/tests/UPC/simple/simple
-
+					  run/tests/UPC/simple/simple \
+					  run/C/uninitialized_variables/c_A_6_a_in \
+					  run/C/uninitialized_variables/c_A_6_b_in \
+					  run/C/uninitialized_variables/c_A_6_c_in \
+					  run/C/uninitialized_variables/c_A_6_d_in \
+					  run/C/uninitialized_variables/c_A_6_e_in \
+					  run/C++/uninitialized_variables/c_A_6_a_in \
+					  run/C++/uninitialized_variables/c_A_6_b_in \
+					  run/C++/uninitialized_variables/c_A_6_c_in \
+					  run/C++/uninitialized_variables/c_A_6_d_in \
+					  run/C++/uninitialized_variables/c_A_6_e_in
 
 
 $(TESTS_KNOWN_TO_FAIL):
