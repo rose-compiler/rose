@@ -739,7 +739,24 @@ typedef Rose_STL_Container<SgAsmElfEHFrameEntryFD*> SgAsmElfEHFrameEntryFDPtrLis
 typedef SgAsmElfEHFrameEntryFDPtrList*              SgAsmElfEHFrameEntryFDPtrListPtr;
 
 typedef Rose_STL_Container<SgAsmElfSegmentTableEntry*> SgAsmElfSegmentTableEntryPtrList;
-typedef SgAsmElfSegmentTableEntryPtrList SgAsmElfSegmentTableEntryPtrListPtr;
+typedef SgAsmElfSegmentTableEntryPtrList* SgAsmElfSegmentTableEntryPtrListPtr;
+
+typedef Rose_STL_Container<SgAsmElfSymverEntry*> SgAsmElfSymverEntryPtrList;
+typedef SgAsmElfSymverEntryPtrList*              SgAsmElfSymverEntryPtrListPtr;
+
+typedef Rose_STL_Container<SgAsmElfSymverDefinedEntry*> SgAsmElfSymverDefinedEntryPtrList;
+typedef SgAsmElfSymverDefinedEntryPtrList*              SgAsmElfSymverDefinedEntryPtrListPtr;
+
+typedef Rose_STL_Container<SgAsmElfSymverDefinedAux*> SgAsmElfSymverDefinedAuxPtrList;
+typedef SgAsmElfSymverDefinedAuxPtrList*              SgAsmElfSymverDefinedAuxPtrListPtr;
+
+typedef Rose_STL_Container<SgAsmElfSymverNeededEntry*> SgAsmElfSymverNeededEntryPtrList;
+typedef SgAsmElfSymverNeededEntryPtrList*              SgAsmElfSymverNeededEntryPtrListPtr;
+
+typedef Rose_STL_Container<SgAsmElfSymverNeededAux*> SgAsmElfSymverNeededAuxPtrList;
+typedef SgAsmElfSymverNeededAuxPtrList*              SgAsmElfSymverNeededAuxPtrListPtr;
+
+
 
 typedef Rose_STL_Container<SgAsmPERVASizePair*> SgAsmPERVASizePairPtrList;
 typedef SgAsmPERVASizePairPtrList* SgAsmPERVASizePairPtrListPtr;
