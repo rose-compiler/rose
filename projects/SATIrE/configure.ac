@@ -240,6 +240,7 @@ examples/Makefile
 tools/Makefile
 tools/icfgbuilder/Makefile
 tools/loopbounds/Makefile
+tools/optimizer/Makefile
 tools/wcetcc/Makefile
 ])
 
