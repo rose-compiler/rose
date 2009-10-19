@@ -47,6 +47,7 @@ compassMainGui2_LDADD = $(compass_build_tooldir)/compass/libCompassCheckers.la \
 
 compassMainGui2_DEPENDENCIES = $(compass_build_tooldir)/compass/libCompassCheckers.la
 
+endif
 
 EXTRA_DIST = \
         compassChecker.h \
@@ -91,4 +92,4 @@ EXTRA_DIST = \
 		icons/view-statistics.png \
 		icons/window-close.png
 
-endif
+
