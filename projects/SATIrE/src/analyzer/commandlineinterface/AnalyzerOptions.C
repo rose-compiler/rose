@@ -103,8 +103,6 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo(""),_n
     "                            the icfg generation\n"
     "   --output-source=<FILENAME> generate source file with annotated \n"
     "                            analysis results for each statement\n"
-    "   --no-annotate-source     do not insert analysis result comments into\n"
-    "                            the source code (useful for termite output)\n"
     "   --output-term=<FILENAME> generate Termite term representation of input\n"
     "                            program AST\n"
     "   --output-icfg=<FILENAME> output icfg of input program\n"

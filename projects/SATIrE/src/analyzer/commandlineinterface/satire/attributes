@@ -58,7 +58,6 @@ BOOL_ATTR(analysisWholeProgram, On)
 BOOL_ATTR(gdlProcedureSubgraphs, On)
 #endif
 BOOL_ATTR(outputText, Off)
-BOOL_ATTR(annotateSource, On)
 BOOL_ATTR(outputSource, Off)
 BOOL_ATTR(outputTerm, Off)
 BOOL_ATTR(outputIcfg, Off)

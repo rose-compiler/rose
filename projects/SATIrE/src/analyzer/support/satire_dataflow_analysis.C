@@ -81,11 +81,9 @@ DataFlowAnalysis::processResultsWithPrefix(Program *program, bool prefixFiles)
     /* Output visual representations of the analysis results. */
     p_impl->outputAnalysisVisualization(program, prefixFiles);
 
-    if (program->options->annotateSource()) {
-      /* Annotate the progam with analysis information according to the
-       * command line options. */
-      p_impl->annotateProgram(program);
-    }
+    /* Annotate the progam with analysis information according to the
+     * command line options. */
+    p_impl->annotateProgram(program);
 
     /* Print the program as annotated text or term if requested. */
     p_impl->outputAnnotatedProgram(program, prefixFiles);
