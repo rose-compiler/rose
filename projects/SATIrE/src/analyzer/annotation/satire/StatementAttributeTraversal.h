@@ -116,7 +116,7 @@ private:
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
 // $Id: StatementAttributeTraversal.h,v 1.6 2008-09-09 14:21:17 gergo Exp $
 
-/* this file is inlcuded by StatementAttributeTraversal.h for template instantiation */
+/* this file is included by StatementAttributeTraversal.h for template instantiation */
 
 #include "cfg_support.h"
 #include "analysis_info.h"

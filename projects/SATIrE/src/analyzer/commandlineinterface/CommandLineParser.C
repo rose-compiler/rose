@@ -203,6 +203,8 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->checkIcfgOn();
   } else if (optionMatch(argv[i], "--no-check-icfg")) {
     cl->checkIcfgOff();
+  } else if (optionMatch(argv[i], "--no-annotate-source")) {
+    cl->annotateSourceOff();
   } else if (optionMatchPrefix(argv[i], "--output-source=")) {
     if (strlen(argv[i]+prefixLength) == 0) {
       cl->setOptionsErrorMessage("empty output file name");

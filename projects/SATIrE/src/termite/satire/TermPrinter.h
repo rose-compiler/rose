@@ -1,6 +1,6 @@
 /* -*- C++ -*-
 Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
-          2007-2008 Adrian Prantl <adrian@complang.tuwien.ac.at>
+          2007-2009 Adrian Prantl <adrian@complang.tuwien.ac.at>
 */
 #ifndef PROLOGTRAVERSAL_H_
 #define  PROLOGTRAVERSAL_H_
