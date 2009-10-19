@@ -1,6 +1,8 @@
 #------------ AsmView Makefile.am -----------
 include ../Make.inc 
 
+EXTRA_DIST = SrcBinView.ui
+
 if ROSE_WITH_ROSEQT
 
 noinst_LTLIBRARIES = libSrcBinView.la 
@@ -12,7 +14,6 @@ nodist_libSrcBinView_la_SOURCES = moc_SrcBinView.cxx \
 
 BUILT_SOURCES = ui_SrcBinView.h
 
-EXTRA_DIST = SrcBinView.ui
 
 # Target for installing header 
 headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
