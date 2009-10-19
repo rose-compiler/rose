@@ -314,7 +314,7 @@ is_real_for_loop(for_statement(ForInit,
 		 (Min..Max),
 		 Step) :-
   write('% '), unparse(for_statement(ForInit,ForTest,ForStep,[], _, _, _)), nl,
-  %gtrace,
+%  gtrace,
   (isSimpleForInit(ForInit, IterationVar, B1v)
   -> (
       term_interval(AnalysisInfo, B1v, B1),
@@ -495,26 +495,16 @@ loop_bounds(Info, InfoInner, InfoPost, Fs, Fs_Annot) :-
 loop_bounds(I, I, I, Term, Term).
 
 
-
+get_bb_marker(Stmts, Marker) :-
+  member(Stmt, Stmts),
+  \+ pragma_text(Stmt, wcet_loopbound(_)),
+  analysis_info(Stmt, analysis_info(Ai)),
+  member(entry_exit_labels(Id-_), Ai),
+  atom_concat(label, Id, Marker).
 
 %-----------------------------------------------------------------------
 % Constraints ...
 %-----------------------------------------------------------------------
-
-%% markers(+Stem, -Stem, -Stem, +Bb, -Bb1).
-%-----------------------------------------------------------------------
-% FIXME use Inner and next instead of counter()
-markers(Stem, Stem, Stem,
-	basic_block(List, Annot, Ai, Fi),
-	basic_block(ListPrime, Annot, Ai, Fi)) :-
-  retract(counter(X)), Y is X+1, assert(counter(Y)),
-  concat_atom([Stem, '_', Y], StemInner), 
-  %term_to_string(wcet_marker(StemInner), Text),
-  Text = wcet_marker(StemInner), 
-  pragma_text(Marker, Text),
-  %append(List, [Marker], ListPrime).
-  ListPrime = [Marker|List].
-markers(I, I, I, Term, Term).
 
 %% expr_constr(+Expr, +AM, -Expr1) is det.
 % AM is (Analysisresult-Map)
@@ -680,7 +670,7 @@ loop_constraints(Fs, Fs_Annot, RootMarker, Map) :-
   sum(Cs, #=, IterationCount),
   %writeln(Ns),
   
-  get_annot_term(Stmts, wcet_marker(ThisMarker), _),
+  get_bb_marker(Stmts, ThisMarker),
   
   % Add constraint
   pragma_text(Annot, wcet_constraint(ThisMarker=<RootMarker*IterationCount)),
@@ -725,8 +715,8 @@ constraints(I, I, I, Fs, [/*Scope,*/ Fs_Annot]) :-
 
 % save the parent marker
 constraints(I, parentMarker:Marker, I, Term, Term) :-
-  Term = basic_block(Stmts, _, _, _), 
-  get_annot_term(Stmts, wcet_marker(Marker), _).
+  Term = basic_block(Stmts, _, _, _),
+  get_bb_marker(Stmts, Marker).
 
 constraints(I, I, I, Fs, Fs).
 
@@ -763,19 +753,14 @@ annot(Input, Output) :-
   empty_assoc(Info),
   transformed_with(X2, loop_bounds, Info, _, X3), !,
 
-  % Markers
-  writeln('% Markers...'),
-  assert(counter(0)),
-  transformed_with(X3, markers, 'm', _, X4), !,
-
   % Constraints
   writeln('% Constraints...'), 
-  transformed_with(X4, constraints, [], _, X5), !,
+  transformed_with(X3, constraints, [], _, X4), !,
 
   % Pragma Terms->Atoms
-  transformed_with(X5, pragma_fixup, _, _, X6), !,
+  transformed_with(X4, pragma_fixup, _, _, X5), !,
   
-  X6 = Output.
+  X5 = Output.
 
 main :-
   catch((

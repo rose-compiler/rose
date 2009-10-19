@@ -8,6 +8,7 @@
 	   guarantee/2,
 
 	   strip_file_info/5, % deprecated
+	   get_variable_id/2,
 	   var_stripped/2,
 	   term_stripped/2,
 	   var_interval/3,
@@ -234,32 +235,42 @@ do_check(Node, F) :-
 %
 % Use this with transformed_with/4
 strip_file_info(_,_,_,
-  var_ref_exp(var_ref_exp_annotation(Type, Name, Val, An, PPI), _Ai, _Fi),
-  var_ref_exp(var_ref_exp_annotation(Type, Name, Val, An, PPI),null, null)).
+  var_ref_exp(var_ref_exp_annotation(Type, Name, Val, An, PPI), Ai, _Fi),
+  var_ref_exp(var_ref_exp_annotation(Type, Name, Val, An, PPI),Ai1, null)) :-
+  get_variable_id(Ai, Id),
+  Ai1 = analysis_info([variable_id(Id)]).
 strip_file_info(_,_,_, Term, Term).
 
 %% var_stripped(+VarRefExp, -VarRefExpStripped)
 %
 % Non-traversal version of strip_file_info/5.
 var_stripped(
-  var_ref_exp(var_ref_exp_annotation(Type, Name, Val, A1, PPI), _Ai, _Fi),
-  var_ref_exp(var_ref_exp_annotation(Type, Name, Val, A1, PPI),null,null)) :- !.
+  var_ref_exp(var_ref_exp_annotation(Type, Name, Val, A1, PPI), Ai, _Fi),
+  var_ref_exp(var_ref_exp_annotation(Type, Name, Val, A1, PPI), Ai1,null)) :- !,
+    get_variable_id(Ai, Id),
+    Ai1 = analysis_info([variable_id(Id)]).
 
 var_stripped(cast_exp(V, _, _A, _Ai, _Fi), V1) :- !,
   var_stripped(V, V1).
 
 var_stripped(Term, Term).
 
+%% get_variable_id(+AnalysisInfo, -Id)
+% Extract the numerical variable Id from the Analysis Information
+get_variable_id(analysis_info(L), Id) :-
+  member(variable_id(Id), L).
+
 %% var_interval(+AnalysisInfo, +VarRefExp, -Interval)
 % Employ the analysis result/type info to yield an interval for the
 % VarRefExp.
 var_interval(analysis_info(AnalysisInfo),
 	     var_ref_exp(var_ref_exp_annotation(Type, Name, _Val, _, _),
-			 _Ai, _Fi),
+			 Ai, _Fi),
 	     (Min..Max)) :-
+  get_variable_id(Ai, Id),
   member(pre_info(interval, Contexts), AnalysisInfo),
   member(merged:map(_,Intvls),Contexts),
-  member(Name->[Min1,Max1],Intvls),
+  member([Id,Name]->[Min1,Max1],Intvls),
   (  number(Min1)
   -> Min = Min1
   ;  type_interval(Type, (Min.._))),

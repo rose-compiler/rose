@@ -42,6 +42,7 @@
 
 :- use_module(library(asttransform)),
    use_module(library(astproperties)),
+   use_module(library(clpfd)), % for the .. infix operator
    use_module(library(utils)).
 
 % A modifyed pretty-printer for C'
@@ -187,7 +188,7 @@ my_unparse(fi(Line, Col, ParentPPIs), Node) :-
   my_unparse1(fi(Line, Col, []), Node),
   unparse_ppi(after, PPIs).
 
-ignore_pragma(wcet_loopbound(_)).
+ignore_pragma(wcet_loopbound(_.._)).
 ignore_pragma(wcet_scope(_)).
 ignore_pragma(wcet_marker(_)).
 ignore_pragma(wcet_constraint(_)).
@@ -200,18 +201,27 @@ write_loopbound(_) :-
   maplist(write, ['WCET_LOOP_BOUND (', 4294967295, ')']),
   nl.
 
+get_bb_marker(Stmts, Marker) :-
+  member(Stmt, Stmts),
+  \+ pragma_text(Stmt, wcet_loopbound(_)),
+  analysis_info(Stmt, analysis_info(Ai)),
+  member(entry_exit_labels(Id-_), Ai),
+  atom_concat(label, Id, Marker).
+
 % output scope-specific things
 unparse_scope(UI, Bb) :- 
   Bb = basic_block(List, _,_,_),
 
   % FIXME: this translation (scopes/restrictions) is actually not 1-1 accurate..
   get_annot(List, wcet_scope(Marker), _), !, 
-  maplist(write, ['WCET_SCOPE (scope_', Marker, ') {']), nl, 
+  maplist(write, ['WCET_SCOPE (scope_', Marker, ') {']), nl,
 
   % Markers must come after vardecls
   maplist(output_vardecl, List),
-  maplist(output_marker, List), 
-  
+  maplist(output_marker, List),
+  get_bb_marker(List, Label),
+  maplist(write, ['WCET_MARKER(', Label, ');\n']),
+    
   my_unparse(UI, Bb),
   write_restrictions(Bb),
   writeln('}').
@@ -219,6 +229,9 @@ unparse_scope(UI, Bb) :-
   Bb = basic_block(List, _,_,_), !,
   maplist(output_vardecl, List),
   maplist(output_marker, List),
+  get_bb_marker(List, Label),
+  maplist(write, ['WCET_MARKER(', Label, ');\n']),
+  
   my_unparse(UI, Bb).
 
 unparse_scope(UI, Other) :-
