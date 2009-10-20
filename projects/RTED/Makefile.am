@@ -1,5 +1,9 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+EXTRA_DIST = index_array.txt \
+             file_read.txt \
+	     tests upccrose
+
 if ROSE_USE_RTED
 
 # To keep compile commands tidy, please ONLY put required include flags here.
@@ -61,9 +65,6 @@ ROSE_FLAGS = -rose:verbose 0
 TEST_TRANSLATOR = ./runtimeCheck all $(ROSE_FLAGS)
 TESTCODE_INCLUDES =
 
-EXTRA_DIST = index_array.txt \
-             file_read.txt \
-	     tests
 
 CLEANFILES = *.out *.ti *.pdf test_runtime* *.txt rose_test_c_E_1_1_a
 
