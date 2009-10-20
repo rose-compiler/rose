@@ -1,4 +1,4 @@
-EXTRA_DIST = unroll.pl types.pl
+EXTRA_DIST = unroll.pl
 
 if WITH_SWI_PROLOG
 
