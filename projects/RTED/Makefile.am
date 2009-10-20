@@ -34,7 +34,7 @@ RTED_CC = $(LIBTOOL) --tag=CC --mode=link gcc $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS)
 
 #$(LIBTOOL) --tag=CXX  --mode=link $(AM_PROG_UPC)
-RTED_UPC =  upcctom $(AM_CXXFLAGS) \
+RTED_UPC =  upccrose $(AM_CXXFLAGS) \
 	 $(AM_LDFLAGS) 
 RTED_LIB=CppRuntimeSystem/libCppRuntimeSystem.la
 runtimeCheck_SOURCES = runtimeCheck.cpp \
