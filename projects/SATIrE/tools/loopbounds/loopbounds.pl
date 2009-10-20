@@ -404,6 +404,7 @@ get_loopbound(Fs, Bound, I, Info, InfoInner, PostCondition) :-
 
   % Find out the iteration space
   %unparse(subtract_op(EndExpr, BaseExpr, _, _, _)), nl,
+
   term_stripped(subtract_op(End, Base, null, null, null), Term),
   reduce(AnInfo-Info, Term, LoopBoundR), %write('LoopBoundR= '),writeln(LoopBoundR),
   LoopBoundR = (IV_low..IV_high),

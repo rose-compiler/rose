@@ -401,7 +401,7 @@ Implementation::outputAnnotatedProgram(Program *program, bool prefixFiles)
             ofstream termfile;
 	    // Do we actually need this prefix stuff? 
 	    // Originally there for CLANG-mibench testsuite.
-            string prefix = ""; // (prefixFiles ? identifier() : "");
+            string prefix = (prefixFiles ? identifier() : "");
             string filename
                 = prefixedFileName(program->options->getOutputTermFileName(),
                                    prefix);

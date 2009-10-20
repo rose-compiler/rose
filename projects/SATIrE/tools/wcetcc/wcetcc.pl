@@ -228,8 +228,12 @@ unparse_scope(UI, Bb) :-
   ;
       maplist(output_vardecl, List),
       maplist(output_marker, List),
-      get_bb_marker(List, Label),
-      maplist(write, ['WCET_MARKER(', Label, ');\n']),
+      (	   % FIXME
+	   List = [basic_block(_, _,_,_)|_]
+      ->  true
+      ;	  get_bb_marker(List, Label),
+	   maplist(write, ['WCET_MARKER(', Label, ');\n'])
+      ),
       
       my_unparse(UI, Bb)
   ).
