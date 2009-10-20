@@ -23,7 +23,7 @@ Program::Program(AnalyzerOptions *o)
     {
       if (*a != NULL /* empty analyzer */) {
         (*a)->run(this);
-        (*a)->processResultsWithPrefix(this);
+        (*a)->processResultsWithPrefix(this, false);
       }
     }
 }
