@@ -25,9 +25,8 @@ TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
 # Add the dependence upon the source file to trigger recompilation each time the makefile is run!
 # $(TEST_Objects): SizeofTest_GNU $(srcdir)/$(@:.o=.C)
-$(TEST_Objects): SizeofTest_GNU
+$(TEST_Objects): SizeofTest_GNU SizeofTest_Intel
 	./SizeofTest_GNU -c $(srcdir)/$(@:.o=.C)
-$(TEST_Objects): SizeofTest_Intel
 	./SizeofTest_Intel -c $(srcdir)/$(@:.o=.C)
 
 #QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}

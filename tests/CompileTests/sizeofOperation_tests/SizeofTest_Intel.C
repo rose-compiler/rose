@@ -1,6 +1,7 @@
 /*Test for sizeof operations using Intel C++ compiler.*/
 #include <iostream>
 #include <cstdio>
+#include <string>
 #include "rose.h"
 
 using namespace std;
@@ -56,11 +57,27 @@ int main(int argc, char* argv[])
 	cout << "Running sizeof operation tests...\n";
 	system("rm -f test");
 	//Run the input file first to get all the sizeof results and write them into a file.
-	system("icc -o inputCode_SizeofTest inputCode_SizeofTest.C");
-	system("./inputCode_SizeofTest");
+	string command("icc -o inputCode_SizeofTest ");
+	command += argv[2];
+	int result = system(command.c_str());
+	if(result != 0)
+	{
+		cout << "Intel compiler not found or not executed. Test aborted.\n";
+		exit(1);
+	}
+	result = system("./inputCode_SizeofTest");
+	if(result != 0)
+	{
+		cout << "Input file corruption. Test aborted.\n";
+		exit(1);
+	}
 	//Read the file serially and compare each sizeof result with the value in the extra IR node.
 	fp = fopen("test", "r");
-	ROSE_ASSERT(fp != NULL);
+	if(fp == NULL)
+	{
+		cout << "Test result file not generated or not found. Test aborted.\n";
+		exit(1);
+	}
 	visitorTraversal findSizeOf;
 	findSizeOf.traverseInputFiles(project, preorder);
 	fclose(fp);
