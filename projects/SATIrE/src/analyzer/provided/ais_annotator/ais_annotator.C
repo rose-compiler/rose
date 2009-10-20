@@ -2,11 +2,11 @@
 // them with comments in the form expected by AbsInt's aiT tool.
 // The analyses are:
 // - points-to analysis including resolution of function pointers
-// - interval analysis
+// - interval analysis (optional)
 // The annotations are:
 // - possible targets for function pointer calls
 // - possible targets for pointer expressions
-// - unreachable code
+// - unreachable code (optional, if interval analysis is performed)
 // The analyses are context-sensitive if the user asked for
 // context-sensitivity; the program prints a friendly reminder if the user
 // did not ask for context-sensitivity.
@@ -34,7 +34,7 @@ int main(int argc, char **argv)
 
  // We augment (or override!) the command line options specified by the user
  // with a number of our own options. In particular, we force the points-to
- // and interval analyses to run, and we force output of source code. If no
+ // analysis to run, and we force output of source code. If no
  // context-sensitivity was requested, we inform the user.
     addAisAnnotatorOptions(options);
 
@@ -68,11 +68,13 @@ void addAisAnnotatorOptions(AnalyzerOptions *options)
             << std::endl;
     }
 
+    options->buildIcfgOn();
     options->runPointsToAnalysisOn();
     options->resolveFuncPtrCallsOn();
 
- // Make sure there is an instance of the interval analysis in the analyzer
- // list of the AnalyzerOptions object.
+ // If there is an instance of the interval analysis in the analyzer list of
+ // the AnalyzerOptions object, set our global pointer; otherwise, we know
+ // that no interval analysis was requested.
     const std::vector<DataFlowAnalysis *> &analyzers
         = options->getDataFlowAnalyzers();
     std::vector<DataFlowAnalysis *>::const_iterator a;
@@ -83,12 +85,6 @@ void addAisAnnotatorOptions(AnalyzerOptions *options)
             globalIntervalAnalysis = *a;
             break;
         }
-    }
-    if (globalIntervalAnalysis == NULL)
-    {
-        DataFlowAnalysis *intervalAnalysis = makeProvidedAnalyzer("interval");
-        options->appendDataFlowAnalysis(intervalAnalysis);
-        globalIntervalAnalysis = intervalAnalysis;
     }
 
  // Don't add the usual data flow annotation comments. We only want the
@@ -318,8 +314,13 @@ void addUnreachabilityAnnotations(Program *program)
         }
     };
 
-    UnreachabilityAnnotator ua(program, globalIntervalAnalysis);
-    ua.run();
+ // Unreachability tests rely on the interval analysis, which we do not run
+ // by default.
+    if (globalIntervalAnalysis != NULL)
+    {
+        UnreachabilityAnnotator ua(program, globalIntervalAnalysis);
+        ua.run();
+    }
 }
 
 void addDataPointstoAnnotations(Program *program)
