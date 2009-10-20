@@ -687,25 +687,6 @@ SgProject::processCommandLine(const vector<string>& input_argv)
      vector<string> argv = get_originalCommandLineArgumentList();
      ROSE_ASSERT(argv.size() > 0);
 
-     //AS (2/22/08): GCC looks for system headers in '-I' first. We need to support this. 
-//     for (unsigned int i = argv.size()-1; i >= 0; i--)
-     for (unsigned int i = 0; i < argv.size(); i++)
-
-        {
-       // find the source code filenames and modify them to be the output filenames
-          unsigned int length = argv[i].size();
-       // look only for -I include directories (directories where #include<filename> will be found)
-          if ( (length > 2) && (argv[i][0] == '-') && (argv[i][1] == 'I') )
-             {
-            // AS Changed source code to support absolute paths 
-            // replaceRelativePath 
-            
-               std::string includeDirectorySpecifier =  argv[i].substr(2);
-               includeDirectorySpecifier = StringUtility::getAbsolutePathFromRelativePath(includeDirectorySpecifier );
-               p_preincludeDirectoryList.insert(p_preincludeDirectoryList.begin(),includeDirectorySpecifier);
-             }
-
-        } 
   // DQ (12/22/2008): This should only be called once (outside of the loop over all command line arguments!
   // DQ (12/8/2007): This leverages existing support in commandline processing
   // printf ("In SgProject::processCommandLine(): Calling CommandlineProcessing::generateSourceFilenames(argv) \n");
@@ -2838,6 +2819,28 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
         }
 #endif
 
+     //AS(063006) Changed implementation so that real paths can be found later
+     vector<string> includePaths;
+
+  // skip the 0th entry since this is just the name of the program (e.g. rose)
+     for (unsigned int i=1; i < argv.size(); i++)
+        {
+       // most options appear as -<option>
+       // have to process +w2 (warnings option) on some compilers so include +<option>
+          if ( argv[i].size() >= 2 && (argv[i][0] == '-') && (argv[i][1] == 'I') )
+             {
+            // int length = strlen(argv[i]);
+            // printf ("Look for include path:  argv[%d] = %s length = %d \n",i,argv[i],length);
+ 
+            // AS: Did changes to get absolute path
+               std::string includeDirectorySpecifier =  argv[i].substr(2);
+#if 1
+               includeDirectorySpecifier = StringUtility::getAbsolutePathFromRelativePath(includeDirectorySpecifier );
+#endif               
+               includePaths.push_back(includeDirectorySpecifier);
+             }
+        }
+
 #if 0
   // This functionality has been moved to before source name extraction since the 
   // -isystem dir will be extracted as a file name and treated as a source file name 
@@ -2864,6 +2867,15 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      }
 #else
   // DQ (1/13/2009): The preincludeDirectoryList was built if the -isystem <dir> option was used
+
+//AS (2/22/08): GCC looks for system headers in '-I' first. We need to support this. 
+//PC (10/20/2009): This code was moved from SgProject as it is file-specific (required by AST merge)
+     for (vector<string>::iterator i = includePaths.begin(); i != includePaths.end(); ++i)
+        {
+          commandLine.push_back("--sys_include");
+          commandLine.push_back(*i);
+        }
+
      for (SgStringList::iterator i = project->get_preincludeDirectoryList().begin(); i != project->get_preincludeDirectoryList().end(); i++)
         {
        // Build the preinclude directory list
@@ -3170,31 +3182,6 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // Now add the include paths to the end so that EDG knows where to find head files to process
   // Add all input include paths so that the EDG front end will know where to find headers
 
-     //AS(063006) Changed implementation so that real paths can be found later
-     vector<string> includePaths;
-
-  // skip the 0th entry since this is just the name of the program (e.g. rose)
-     for (unsigned int i=1; i < argv.size(); i++)
-        {
-       // most options appear as -<option>
-       // have to process +w2 (warnings option) on some compilers so include +<option>
-          if ( argv[i].size() >= 2 && (argv[i][0] == '-') && (argv[i][1] == 'I') )
-             {
-            // int length = strlen(argv[i]);
-            // printf ("Look for include path:  argv[%d] = %s length = %d \n",i,argv[i],length);
- 
-            // AS: Did changes to get absolute path
-               std::string includeDirectorySpecifier =  argv[i].substr(2);
-#if 1
-               includeDirectorySpecifier = "-I"+StringUtility::getAbsolutePathFromRelativePath(includeDirectorySpecifier );
-#else               
-
-               includeDirectorySpecifier = "-I"+includeDirectorySpecifier;
-#endif               
-               includePaths.push_back(includeDirectorySpecifier);
-             }
-        }
-
 #if 0
      for (int i=0; i < includePathCounter; i++)
         {
@@ -3203,7 +3190,10 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #endif
 
   // Add the -I definitions to the command line
-     inputCommandLine.insert(inputCommandLine.end(), includePaths.begin(), includePaths.end());
+     for (vector<string>::const_iterator i = includePaths.begin(); i != includePaths.end(); ++i)
+        {
+          inputCommandLine.push_back("-I" + *i);
+        }
 
   // *******************************************************************
   // Handle general edg options (-xxx)
