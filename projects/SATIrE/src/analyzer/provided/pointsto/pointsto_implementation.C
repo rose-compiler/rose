@@ -593,10 +593,18 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
         a = synlist[SgPointerDerefExp_operand_i];
         if (a == NULL)
         {
+#if 0
             std::cerr
                 << "error: pointer dereference with NULL base location!"
                 << std::endl;
             debugDump(isSgPointerDerefExp(node));
+#else
+         // This can happen for expressions like * (char *) 0xdeadbeef where
+         // the magic constant is presumably the well-known address of some
+         // memory-mapped hardware component. Let's assume that users know
+         // what they are doing...
+            a = createLocation(createLocation());
+#endif
         }
 #if VERBOSE_DEBUG
         std::cout
