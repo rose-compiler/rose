@@ -1,3 +1,50 @@
+2009-10-19 23:04  wei4
+
+	* [r7862] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/tests/CompileTests/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/sizeofOperation_tests,
+	  /trunk/ROSE/tests/CompileTests/sizeofOperation_tests/.libs,
+	  /trunk/ROSE/tests/CompileTests/sizeofOperation_tests/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/sizeofOperation_tests/README,
+	  /trunk/ROSE/tests/CompileTests/sizeofOperation_tests/SizeofTest_GNU.C,
+	  /trunk/ROSE/tests/CompileTests/sizeofOperation_tests/SizeofTest_Intel.C,
+	  /trunk/ROSE/tests/CompileTests/sizeofOperation_tests/inputCode_SizeofTest.C:
+	  Added a new test for testing the correctness of the sizeof
+	  operation on different compilers against the EDG front-end.
+	  
+	  This test case tested the sizeof operation on different C/C++
+	  data types, including build-in and user defined types. The tests
+	  have been conducted on GNU and Intel compile. The results show
+	  that GNU compiler behaved differently with EDG front-end on
+	  processing nested #pragma pack directives. But Intel compiler is
+	  always consistent with EDG front-end. The reason is included in
+	  the README file.
+
+2009-10-19 22:07  brown223
+
+	* [r7861] /trunk/ROSE/projects/palette/rose.P,
+	  /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Node.code,
+	  /trunk/ROSE/src/ROSETTA/astNodeList,
+	  /trunk/ROSE/src/ROSETTA/src/binaryInstruction.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ExecELF.C,
+	  /trunk/ROSE/src/midend/astDiagnostics/AstStatistics.C,
+	  /trunk/ROSE/tests/roseTests/binaryTests/arm-ctrlaltdel.ans,
+	  /trunk/ROSE/tests/roseTests/binaryTests/testElfConstruct.C,
+	  /trunk/ROSE/tests/roseTests/binaryTests/test_disassemble.ans:
+	  Added support for Elf Symbol Versioning
+	  
+	  There is an "optional" gnu extension to allow per symbol
+	  versioning.
+	  This commit includes support for the data structures (3 sections,
+	  and
+	  associated entries).
+
+2009-10-19 19:57  panas2
+
+	* [r7860] /trunk/ROSE/projects/RTED/Makefile.am: Changes to
+	  Makefile to add tests that fail
+
 2009-10-19 18:37  panas2
 
 	* [r7858] /trunk/ROSE/demo/qrose/Makefile.am: Change to Makefile so
