@@ -213,26 +213,26 @@ unparse_scope(UI, Bb) :-
   Bb = basic_block(List, _,_,_),
 
   % FIXME: this translation (scopes/restrictions) is actually not 1-1 accurate..
-  get_annot(List, wcet_scope(Marker), _), !, 
-  maplist(write, ['WCET_SCOPE (scope_', Marker, ') {']), nl,
+  (   get_annot(List, wcet_scope(Marker), _)
+  ->  maplist(write, ['WCET_SCOPE (scope_', Marker, ') {']), nl,
 
-  % Markers must come after vardecls
-  maplist(output_vardecl, List),
-  maplist(output_marker, List),
-  get_bb_marker(List, Label),
-  maplist(write, ['WCET_MARKER(', Label, ');\n']),
+      % Markers must come after vardecls
+      maplist(output_vardecl, List),
+      maplist(output_marker, List),
+      get_bb_marker(List, Label),
+      maplist(write, ['WCET_MARKER(', Label, ');\n']),
     
-  my_unparse(UI, Bb),
-  write_restrictions(Bb),
-  writeln('}').
-unparse_scope(UI, Bb) :- 
-  Bb = basic_block(List, _,_,_), !,
-  maplist(output_vardecl, List),
-  maplist(output_marker, List),
-  get_bb_marker(List, Label),
-  maplist(write, ['WCET_MARKER(', Label, ');\n']),
-  
-  my_unparse(UI, Bb).
+      my_unparse(UI, Bb),
+      write_restrictions(Bb),
+      writeln('}')
+  ;
+      maplist(output_vardecl, List),
+      maplist(output_marker, List),
+      get_bb_marker(List, Label),
+      maplist(write, ['WCET_MARKER(', Label, ');\n']),
+      
+      my_unparse(UI, Bb)
+  ).
 
 unparse_scope(UI, Other) :-
   file_info(Other, Fi),
