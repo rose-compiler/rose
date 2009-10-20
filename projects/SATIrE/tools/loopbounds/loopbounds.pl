@@ -447,24 +447,25 @@ get_loopbound(ShiftLoop, Bound, _, Info, Info, Info) :-
 
 
 %-----------------------------------------------------------------------
-% Insert an annotation as the first Statement of a for loop's inner basic block
-insert_annot(for_statement(Init,Test,Incr,basic_block(XS, A1, Fi1), A2, Fi2),
+% Insert an annotation as the last Statement of a for loop's inner basic block
+insert_annot(for_statement(Init,Test,Incr, X, An, Ai, Fi),
 	     Annot,
-	     for_statement(Init,Test,Incr,basic_block(XS1, A1, Fi1),
-			   A2, Fi2)) :-
-  !, append(XS, [Annot], XS1).
-insert_annot(for_statement(Init,Test,Incr,Stmt, A, Ai, Fi),
-	     Annot,
-	     for_statement(Init,Test,Incr,basic_block([Stmt|[Annot]], A, Ai, Fi),
-			   A, Ai, Fi)).
-insert_annot(while_stmt(Expr,basic_block(A1, Fi1), A2, Fi2),
-	     Annot,
-	     while_stmt(Expr,basic_block([Annot], A1, Fi1), A2, Fi2)).
+	     for_statement(Init,Test,Incr, Y, An, Ai, Fi)) :-
+  (   X = basic_block(Stmts, An1, Ai1, Fi1)
+  ->  append(Stmts, [Annot], Stmts1),
+      Y = basic_block(Stmts1, An1, Ai1, Fi1)
+  ;   default_values(_PPI, An1, Ai1, Fi1),
+      Y = basic_block([X,Annot], An1, Ai1, Fi1)
+  ).
 
-insert_annot(while_stmt(Expr,basic_block(XS, A1, Fi1), A2, Fi2),
-	     Annot,
-	     while_stmt(Expr,basic_block(XS1, A1, Fi1), A2, Fi2)) :-
-  append(XS, [Annot], XS1).
+% insert_annot(while_stmt(Expr,basic_block(A1, Fi1), A2, Fi2),
+% 	     Annot,
+% 	     while_stmt(Expr,basic_block([Annot], A1, Fi1), A2, Fi2)).
+
+% insert_annot(while_stmt(Expr,basic_block(XS, A1, Fi1), A2, Fi2),
+% 	     Annot,
+% 	     while_stmt(Expr,basic_block(XS1, A1, Fi1), A2, Fi2)) :-
+%   append(XS, [Annot], XS1).
 
 replace_loopbody(for_statement(Init, Test, Incr,
 			       _, A, Ai, Fi),
@@ -480,11 +481,12 @@ loop_bounds(Info, InfoInner, InfoPost, Fs, Fs_Annot) :-
   get_loopbound(Fs, Bound, /*InductionVar*/_, Info, InfoIn, _InfoPo), !,
   A = wcet_loopbound(Bound), write('% '), pragma_text(Annot, A), writeln(A),
 
-  ((Fs = for_statement(_,_,_,basic_block(Stmts, _, _, _), _, _, _),
-   get_annot(Stmts, wcet_loopbound(_), _),
-   Fs = Fs_Annot)
-  ; % only insert new loop bounds - don't overwrite manual annotations
-  insert_annot(Fs, Annot, Fs_Annot)),
+  (   Fs = for_statement(_,_,_,basic_block(Stmts, _, _, _), _, _, _),
+      get_annot(Stmts, wcet_loopbound(_), _),
+      Fs = Fs_Annot
+  ;   % only insert new loop bounds - don't overwrite manual annotations
+      insert_annot(Fs, Annot, Fs_Annot)
+  ),
 
   empty_assoc(InfoPost),
   merge_info(Info, InfoIn, InfoInner).
@@ -699,9 +701,9 @@ constraints(I, I, I, Fs, [/*Scope,*/ Fs_Annot]) :-
 
   % We employ our own "interpretation traversal", so don't traverse this
   % subtree if we already visited it from a parent scope
-  \+ get_annot_term(Stmts, wcet_constraint(_), _), 
+  \+ get_annot_term(Stmts, wcet_constraint(_), _),
 
-  %write('constraints('), unparse(Fs), writeln(')'),
+  %write('constraints('), unparse(Fs), writeln(')'), gtrace,
   empty_assoc(Map),
   I = parentMarker:RootMarker,
   loop_constraints(Fs, Fs_Annot, RootMarker, Map),
