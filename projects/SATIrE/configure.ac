@@ -241,6 +241,8 @@ tools/Makefile
 tools/icfgbuilder/Makefile
 tools/loopbounds/Makefile
 tools/optimizer/Makefile
+tools/profiler/Makefile
+tools/unparser/Makefile
 tools/wcetcc/Makefile
 ])
 

@@ -1,4 +1,4 @@
-SUBDIRS = icfgbuilder loopbounds optimizer wcetcc
+SUBDIRS = icfgbuilder loopbounds optimizer profiler unparser wcetcc
 EXTRA_DIST=interval/interval.optla \
 	interval/validator.pl \
 	interval/runtests.custom \
