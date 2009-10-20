@@ -52,6 +52,8 @@ int main(int argc, char **argv)
 }
 
 static DataFlowAnalysis *globalIntervalAnalysis = NULL;
+static bool outputExternalAnnotationFile = true;
+static std::ofstream annotationFile;
 
 void addAisAnnotatorOptions(AnalyzerOptions *options)
 {
@@ -91,11 +93,19 @@ void addAisAnnotatorOptions(AnalyzerOptions *options)
  // aiT-specific annotation comments.
     options->analysisAnnotationOff();
 
-    options->outputSourceOn();
-    if (options->getOutputSourceFileName() == ""
-     && options->getOutputFilePrefix() == "")
+ // By default, output an external AIS annotation file. However, if source
+ // output was requested, then do that and add AIS annotation comments.
+    if (!options->outputSource())
     {
-        options->setOutputFilePrefix("ais_");
+        std::string firstInputFile =
+            pathNameComponents(options->getInputFileName()).back();
+        std::string annotationFileName =
+            firstInputFile.substr(0, firstInputFile.rfind('.')) + ".ais";
+        annotationFile.open(annotationFileName.c_str());
+    }
+    else
+    {
+        outputExternalAnnotationFile = false;
     }
 }
 
@@ -117,7 +127,27 @@ void externalCallTargets(
         std::map<int, const std::list<SgFunctionSymbol *> *> &positionFuncMap);
 std::string callSiteRegisterName(Procedure *);
 std::string contextCondition(ContextInformation::Context context, CFG *icfg);
-void addAisComment(std::string what, enum where where, SgStatement *stmt);
+
+struct Annotation
+{
+ // A position-specific AIS annotation structure is a pair of two strings;
+ // the code position that the annotation refers to is automatically added
+ // inbetween. That is, an Annotation with preamble.str() == "foo" and
+ // postamble.str() == "bar" will be turned into either the external
+ // annotation
+ //     foo file 'bla.c' line 42 bar;
+ // or the annotation comment
+ //     /* ai: foo here bar; */
+    std::stringstream preamble;
+    std::stringstream postamble;
+ // Otherwise, an Annotation is position-independent and can be used
+ // verbatim. In this case, the contents of literal.str() are simply used as
+ // the annotation.
+    std::stringstream literal;
+};
+
+void addAisAnnotation(const Annotation &what, enum where where,
+                      SgStatement *stmt);
 
 void addContextAnnotations(Program *program)
 {
@@ -204,12 +234,14 @@ void addContextAnnotations(Program *program)
                 std::map<Procedure *, std::set<int> >::iterator tgt;
                 for (tgt = targets.begin(); tgt != targets.end(); ++tgt)
                 {
-                    std::stringstream annotation;
+                    Annotation annotation;
                     if (tgt->second.size() == 1)
                     {
                         int node = *tgt->second.begin();
-                        annotation
-                            << "instruction here is entered with "
+                        annotation.preamble
+                            << "instruction";
+                        annotation.postamble
+                            << "is entered with "
                             << callSiteRegisterName(tgt->first)
                             << " = " << node << ";";
                     }
@@ -217,12 +249,14 @@ void addContextAnnotations(Program *program)
                     {
                         int min = *tgt->second.begin();
                         int max = *tgt->second.rbegin();
-                        annotation
-                            << "instruction here is entered with "
+                        annotation.preamble
+                            << "instruction";
+                        annotation.postamble
+                            << "is entered with "
                             << callSiteRegisterName(tgt->first)
                             << " = " << min << ".." << max << ";";
                     }
-                    addAisComment(annotation.str(), before, stmt);
+                    addAisAnnotation(annotation, before, stmt);
                 }
             }
         }
@@ -298,17 +332,19 @@ void addUnreachabilityAnnotations(Program *program)
                                       bb->id, position, &reachable);
                 if (!reachable)
                 {
-                    std::stringstream annotation;
-                    annotation
-                        << "snippet here is never executed";
+                    Annotation annotation;
+                    annotation.preamble
+                        << "snippet";
+                    annotation.postamble
+                        << "is never executed";
                     std::string condition
                         = contextCondition(ContextInformation::Context(
                                     bb->procnum, position, icfg), icfg);
                     if (condition != "")
-                        annotation << " if " << condition;
-                    annotation
+                        annotation.postamble << " if " << condition;
+                    annotation.postamble
                         << ";";
-                    addAisComment(annotation.str(), before, stmt);
+                    addAisAnnotation(annotation, before, stmt);
                 }
             }
         }
@@ -432,8 +468,8 @@ void addDataPointstoAnnotations(Program *program)
                 if (contextsWithNonglobalDerefs.find(context) ==
                     contextsWithNonglobalDerefs.end())
                 {
-                    std::stringstream annotation;
-                    annotation
+                    Annotation annotation;
+                    annotation.literal
                         << "accesses default \"" << context.procName
                         << "\" to ";
                     std::set<SgVariableSymbol *>::const_iterator v;
@@ -441,21 +477,22 @@ void addDataPointstoAnnotations(Program *program)
                     while (v != variables.end())
                     {
                         SgVariableSymbol *sym = *v;
-                        annotation << '"' << sym->get_name().str() << '"';
+                        annotation.literal
+                            << '"' << sym->get_name().str() << '"';
                         if (++v != variables.end())
-                            annotation << ", ";
+                            annotation.literal << ", ";
                     }
                     std::string condition = contextCondition(context, icfg);
                     if (condition != "")
-                        annotation << " if " << condition;
-                    annotation << ";";
+                        annotation.literal << " if " << condition;
+                    annotation.literal << ";";
                     Procedure *p = (*icfg->procedures)[context.procnum];
                     SgFunctionDeclaration *decl
                         = isSgFunctionDeclaration(
                                 p->decl->get_definingDeclaration());
                     SgStatement *functionBody
                         = decl->get_definition()->get_body();
-                    addAisComment(annotation.str(), before, functionBody);
+                    addAisAnnotation(annotation, before, functionBody);
                 }
             }
         }
@@ -499,28 +536,30 @@ void addFunctionPointstoAnnotations(Program *program)
                     pos;
                 for (pos = map.begin(); pos != map.end(); ++pos)
                 {
-                    std::stringstream annotation;
-                    annotation << "instruction here + 1 call calls ";
+                    Annotation annotation;
+                    annotation.preamble << "instruction";
+                    annotation.postamble << "+ 1 call calls ";
 
                     std::list<SgFunctionSymbol *>::const_iterator f;
                     f = pos->second->begin();
                     while (f != pos->second->end())
                     {
                         SgFunctionSymbol *sym = *f;
-                        annotation << '"' << sym->get_name().str() << '"';
+                        annotation.postamble
+                            << '"' << sym->get_name().str() << '"';
                         if (++f != pos->second->end())
-                            annotation << ", ";
+                            annotation.postamble << ", ";
                     }
 
                     std::string condition =
                         contextCondition(ContextInformation::Context(
                                     bb->procnum, pos->first, icfg), icfg);
                     if (condition != "")
-                        annotation << " if " << condition;
-                    annotation << ";";
+                        annotation.postamble << " if " << condition;
+                    annotation.postamble << ";";
 
                     SgStatement *stmt = icfg->labeledStatement(get_node_id());
-                    addAisComment(annotation.str(), before, stmt);
+                    addAisAnnotation(annotation, before, stmt);
                 }
             }
         }
@@ -594,11 +633,9 @@ std::string contextCondition(ContextInformation::Context context, CFG *icfg)
     return result.str();
 }
 
-void addAisComment(std::string what, enum where where, SgStatement *stmt)
+void addAisAnnotation(const Annotation &what, enum where where,
+                      SgStatement *stmt)
 {
-    PreprocessingInfo::RelativePositionType position
-        = (where == before ? PreprocessingInfo::before
-                           : PreprocessingInfo::after);
     Sg_File_Info *fi = stmt->get_startOfConstruct();
     std::string fileName = "compilerGenerated";
     int lineNo = 0;
@@ -609,12 +646,44 @@ void addAisComment(std::string what, enum where where, SgStatement *stmt)
         lineNo = fi->get_line();
         colNo = fi->get_col();
     }
-    PreprocessingInfo *commentInfo
-        = new PreprocessingInfo(PreprocessingInfo::C_StyleComment,
-                                "/* ai: " + what + " */",
-                                fileName, lineNo, colNo,
-                                /* number of lines = */ 1, position);
-    stmt->addToAttachedPreprocessingInfo(commentInfo);
+
+    if (outputExternalAnnotationFile)
+    {
+        if (what.literal.str() == "")
+        {
+            annotationFile
+                << what.preamble.str()
+                << " '" << fileName << "' line " << lineNo << " "
+                << what.postamble.str()
+                << std::endl;
+        }
+        else
+        {
+            annotationFile
+                << what.literal.str()
+                << std::endl;
+        }
+    }
+    else
+    {
+        std::string annotationText;
+        if (what.literal.str() == "")
+        {
+            annotationText = what.preamble.str() + " here " +
+                what.postamble.str();
+        }
+        else
+            annotationText = what.literal.str();
+        PreprocessingInfo::RelativePositionType position
+            = (where == before ? PreprocessingInfo::before
+                               : PreprocessingInfo::after);
+        PreprocessingInfo *commentInfo
+            = new PreprocessingInfo(PreprocessingInfo::C_StyleComment,
+                                    "/* ai: " + annotationText + " */",
+                                    fileName, lineNo, colNo,
+                                    /* number of lines = */ 1, position);
+        stmt->addToAttachedPreprocessingInfo(commentInfo);
+    }
 
 #if LOG
     std::cout
