@@ -1,4 +1,4 @@
-EXTRA_DIST = frequency.pl types.pl
+EXTRA_DIST = frequency.pl types.pl visicfg.pl
 
 if WITH_SWI_PROLOG
 

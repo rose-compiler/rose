@@ -40,26 +40,31 @@
 :- use_module(library(asttransform)),
    use_module(library(astproperties)),
    use_module(library(callgraph)),
+   use_module(library(clpfd)),
    use_module(library(utils)).
 
 %-----------------------------------------------------------------------
 
 % generate an expression assert(v > Lower && v < Upper)
-counter_assert(C, N, FI, Assertion) :-
+counter_assert(C, Lower..Upper, FI, Assertion) :-
   default_values(PPI, DA, AI, _FI), 
   VarType = type_unsigned_int,
   Assertion =  expr_statement(AssertionExpr, DA, AI, FI),
   AssertionExpr =
-    function_call_exp(FRefExp, expr_list_exp([LEop], DA, AI, FI),
+    function_call_exp(FRefExp, expr_list_exp([AndOp], DA, AI, FI),
 		      function_call_exp_annotation(type_void,PPI), AI, FI),
   FRefExp = function_ref_exp(function_ref_exp_annotation(assert, Ftp, PPI),
 			     AI, FI),
   Ftp = function_type(type_void,ellipses,[type_int]),
 
-  MaxVal = unsigned_int_val(null, value_annotation(N, PPI), AI, FI),
+  MinVal = unsigned_int_val(null, value_annotation(Lower, PPI), AI, FI),
+  MaxVal = unsigned_int_val(null, value_annotation(Upper, PPI), AI, FI),
+  GEop = greater_or_equal_op(VarRef, MinVal, TypeAn, AI, FI),
   LEop = less_or_equal_op(VarRef, MaxVal, TypeAn, AI, FI),
+  AndOp = and_op(GEop, LEop, binary_op_annotation(type_int, PPI), AI, FI),
 
-  VarRef = var_ref_exp(var_ref_exp_annotation(VarType, C, default, PPI),AI, FI),
+  VarRef =
+    var_ref_exp(var_ref_exp_annotation(VarType, C, default, null, PPI),AI, FI),
   TypeAn = binary_op_annotation(VarType, PPI).
 
 
@@ -89,7 +94,7 @@ assertions(y, y, y, Statement, AssertedStatement) :-
 			    basic_block(Stmts, DA1, AI1, FI1), DA, AI, FI),
   get_annot(Stmts, wcet_trusted_loopbound(N), _),
 
-  C = xxyyzzyy,
+  C = xyzzy,
   counter_decl(C, FI1, CounterDecl),
   counter_inc(C, FI1, Count),
   counter_assert(C, N, FI1, CounterAssert),
