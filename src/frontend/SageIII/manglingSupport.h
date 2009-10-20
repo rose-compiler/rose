@@ -160,6 +160,10 @@ std::string mangleValueExp (const SgValueExp* expr);
  */
 std::string mangleExpression (const SgExpression* expr);
 
+/*! If the declaration has translation unit scope
+    (as opposed to program scope), mangle the
+    translation unit name. */
+std::string mangleTranslationUnitQualifiers (const SgDeclarationStatement* decl);
 
 #if 0
 // DQ (3/29/2006): I think this is only required interanlly in the mangledSupport.C file (where it is defined)
