@@ -25,7 +25,7 @@
 %
 %-----------------------------------------------------------------------
 
-:- module(types, [type_info/3, type_interval/2]).
+:- module(types, [type_info/3]).
 
 
 % FIXME: parameterize this for the different CPU types
@@ -44,14 +44,3 @@ type_info(type_char,          signed, 8).
 
 type_info(typedef_type(_Name, Type), Signed, Size) :-
   type_info(Type, Signed, Size).
-
-type_interval(Type, interval(Min, Max)) :-
-  type_info(Type, Signed, Size),
-  (Signed = signed
-  -> (Min is -(2**Size),
-      Max is (2**Size)-1)
-  ;  (Min is 0,
-      Max is (2**Size)-1)).
-
-type_interval(typedef_type(_Name, Type),  Interval) :-
-  type_interval(Type, Interval).

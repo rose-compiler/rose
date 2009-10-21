@@ -36,7 +36,9 @@
 	   get_annot/3,
 	   get_annot_term/3,
 	   
-	   get_preprocessing_infos/2]).
+	   get_preprocessing_infos/2,
+
+	   type_interval/2]).
 
 :- use_module(library(utils)).
 :- use_module(library(clpfd)).
@@ -476,3 +478,16 @@ get_preprocessing_infos(Node, PPIs) :-
   ), !.
 get_preprocessing_infos(_, []).
 
+%% type_interval(+Type, -Interval)
+% Use the user-defined type_info/2 to return an Interval (Min..Max)
+% denoting the maximum value range of Type
+type_interval(Type, (Min..Max)) :-
+  type_info(Type, Signed, Size),
+  (Signed = signed
+  -> (Min is -(2**Size),
+      Max is (2**Size)-1)
+  ;  (Min is 0,
+      Max is (2**Size)-1)).
+
+type_interval(typedef_type(_Name, Type),  Interval) :-
+  type_interval(Type, Interval).
