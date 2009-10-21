@@ -1552,7 +1552,7 @@ options file that specify the test to the svn repository.\\
 Example entry:
 \begin{verbatim}
 # run the minimal_default test every day at midnight
-0 0 * * * cd ${CWD}; ./submit.sh build_configs/x86_64_deb_4.0/minimal_default
+0 0 * * * cd \${CWD}; ./submit.sh build_configs/x86_64_deb_4.0/minimal_default
 \end{verbatim}%}}}
 
 
@@ -1702,4 +1702,51 @@ simply invoke {\tt ssh-keygen} and be sure not to specify a passphrase.
     \item {\bf The Manual} - \url{http://nmi.cs.wisc.edu/node/31}.
 \end{enumerate}
 %}}}
+
+
+
+\subsection{ROSE API Refactoring}
+
+This is the design for the ROSE API which is
+where high level function interfaces will be located that
+call meshangism for analysis, transformation, and 
+expected user level support for ROSE tools.
+There are 4 levels:
+
+\begin{enumerate}
+   \item ROSE Frontend \\
+      Generation of AST from source code.
+
+   \item ROSE Midend
+      Analysis and transformation support for ROSE-based tools.
+
+   \begin{enumerate}
+      \item ROSE Analysis API \\
+         This would include intra-procedural analysis, inter-procedural analysis, 
+         and whole program analysis (which over comes the issues of separate compilation).
+
+      \item ROSE Transformation API \\
+         Modifications of the AST can be organized as:
+      \begin{enumerate}
+         \item Instrumentation
+
+         \item Optimizations
+
+         \item General Transforamtions
+
+      \end{enumerate}
+   \end{enumerate}
+
+   \item ROSE AST Backend \\
+      Code generation from the AST (unparsing).
+
+   \item ROSE Util \\
+      Utility functions useful in ROSE-based tools.
+\end{enumerate}
+
+
+This work should coinside with tutorial examples
+that should the use of the API and present the
+simple executables that generated specific 
+forms of analysis (e.g. call graph, outliner, etc.).
 
