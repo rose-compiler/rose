@@ -290,6 +290,10 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
   } else if (!strncmp(argv[i], "-I",2)) {
     /* include path option is passed to ROSE as is */
     cl->appendCommandLine(string(argv[i]));
+  } else if (optionMatch(argv[i], "-D") && i+1 < argc) {
+    cl->appendCommandLine(string(argv[i]) + string(argv[i+1]));
+  } else if (optionMatchPrefix(argv[i], "-D")) {
+    cl->appendCommandLine(string(argv[i]));
   } else if (optionMatch(argv[i], "--language=c++")) {
     cl->setLanguage(AnalyzerOptions::Language_CPP);
   } else if (optionMatch(argv[i], "--language=c89")) {
