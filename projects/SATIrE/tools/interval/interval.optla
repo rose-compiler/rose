@@ -796,26 +796,38 @@ cond_update(state, exp, value, context) =
 // -- update the min portion of an interval
 adjust_min :: itvl_Interval, itvl_Interval, bool -> itvl_Interval;
 adjust_min((a1, a2), (m, _), isLoopBody) =
-  if isLoopBody then (m, max(m, a2)) else (intersect_max(a1, m), max(m, a2));
+  if (a1 = a2) then
+    (a1, a2) // -- skip this if (a) is a constant value
+  else
+    if isLoopBody then (m, max(m, a2)) else (intersect_max(a1, m), max(m, a2));
 
 // -- update the max portion of an interval
 adjust_max :: itvl_Interval, itvl_Interval, bool -> itvl_Interval;
 adjust_max((a1, a2), (_, m), isLoopBody) =
-  if isLoopBody then (min(a1, m), m) else (min(a1, m), intersect_min(a2, m));
+  if (a1 = a2) then
+    (a1, a2) // -- skip this if (a) is a constant value
+  else
+    if isLoopBody then (min(a1, m), m) else (min(a1, m), intersect_min(a2, m));
 
 // -- update the min portion of an interval and add c
 adjust_min_plus :: itvl_Interval, itvl_Interval, snum, bool -> itvl_Interval;
 adjust_min_plus((a1, a2), (m, _), c, isLoopBody) =
-  let m1 <= m; in
-  let n = lift(m1+c); in
-    if isLoopBody then (n, max(n, a2)) else (intersect_max(a1, n), max(n, a2));
+  if (a1 = a2) then
+    (a1, a2) // -- skip this if (a) is a constant value
+  else
+    let m1 <= m; in
+    let n = lift(m1+c); in
+      if isLoopBody then (n, max(n,a2)) else (intersect_max(a1, n), max(n, a2));
 
 // -- update the max portion of an interval and add c
 adjust_max_plus :: itvl_Interval, itvl_Interval, snum, bool -> itvl_Interval;
 adjust_max_plus((a1, a2), (_, m), c, isLoopBody) =
-  let m1 <= m; in
-  let n = lift(m1+c); in
-    if isLoopBody then (min(a1, n), n) else (min(a1, n), intersect_min(a2, n));
+  if (a1 = a2) then
+    (a1, a2) // -- skip this if (a) is a constant value
+  else
+    let m1 <= m; in
+    let n = lift(m1+c); in
+      if isLoopBody then (min(a1,n), n) else (min(a1, n), intersect_min(a2, n));
 
 
 kill_vars :: itvl_State, *VariableSymbolNT -> itvl_State;
@@ -991,7 +1003,6 @@ wide(a, bot) = a;
 wide(_, top) = top;
 wide(top, _) = top;
 wide(a, b) = lift(crunch(drop(a), drop(b), widen));
-
 widen((top, top), b) = b;
 widen((a1, a2), (b1, b2)) =
   ( if a1=b1 then a1 else top /*min(a1, b1)*/ ,
