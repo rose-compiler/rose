@@ -36,7 +36,7 @@ void usage(const char* me)
        << "    Create a PDF printout of the syntax tree.\n\n"
 
        << "This program was built against "<<PACKAGE_STRING<<",\n"
-       << "please report bugs to "<<PACKAGE_BUGREPORT<<"."
+       << "please report bugs to <"<<PACKAGE_BUGREPORT<<">."
 
        << endl;
 

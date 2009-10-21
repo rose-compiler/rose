@@ -40,7 +40,7 @@ void usage(const char* me)
        << "    Create a PDF printout of the syntax tree.\n\n"
 
        << "This program was built against "<<SATIRE_PACKAGE_STRING<<",\n"
-       << "please report bugs to "<<SATIRE_PACKAGE_BUGREPORT<<"."
+       << "please report bugs to <"<<SATIRE_PACKAGE_BUGREPORT<<">."
 
        << endl;
 }

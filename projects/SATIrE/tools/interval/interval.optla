@@ -105,7 +105,8 @@ ScopeStatement(IfStmt(ExprStatement(cond))), false_edge:
   branch(cond, @, false, false, context);
 
 ScopeStatement(WhileStmt(ExprStatement(cond))), true_edge:
-  branch(cond, @, true, true, context);
+  let result = branch(cond, @, true, true, context);
+  in /*println(label,": ",@," -> ",result)*/ result;
 
 ScopeStatement(WhileStmt(ExprStatement(cond))), false_edge:
   branch(cond, @, false, true, context);
