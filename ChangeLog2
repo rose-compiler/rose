@@ -1,3 +1,27 @@
+2009-10-20 21:51  panas2
+
+	* [r7878] /trunk/ROSE/projects/RTED/Makefile.am: Added upccrose
+	  script
+
+2009-10-20 21:50  panas2
+
+	* [r7877] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/upccrose: Added upccrose script
+
+2009-10-20 21:42  wei4
+
+	* [r7876]
+	  /trunk/ROSE/tests/CompileTests/sizeofOperation_tests/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/sizeofOperation_tests/SizeofTest_GNU.C,
+	  /trunk/ROSE/tests/CompileTests/sizeofOperation_tests/SizeofTest_Intel.C:
+	  Fixed the bug in the test files.
+	  
+	  Modified the program to test whether the GNU and the Intel
+	  compiler has been installed to conditionally run them. So now the
+	  program will not return an assertion failure. If some required
+	  compiler is not installed, the corresponding test will abort and
+	  exit.
+
 2009-10-19 23:04  wei4
 
 	* [r7862] /trunk/ROSE/configure.in,
