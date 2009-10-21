@@ -41,11 +41,6 @@ generatedCodeExamples = \
 $(generatedCodeExamples):
 	cd $(top_builddir)/tutorial; $(MAKE) docs
 
-#Liao, 10/21/2009, define the dependences between docs and external tests
-# I do this to avoid duplicated tests files in both tests and doc directories
-# #for ROSE turtorial: it needs sageInterface tests in addition to the examples from tutorial/
-generated_file_for_tutorial: $(generatedCodeExamples)
-	$(MAKE) -C$(top_builddir)/tests/roseTests/astInterfaceTests check
 
 latex-docs: pdf
 
@@ -59,7 +54,12 @@ make-web-pages: $(TUTORIAL_NAME)
 # a copy without version number as a permanent URL used for external references, Liao	
 	cp -fp $(TUTORIAL_NAME) ../ROSE_WebPages/ROSE_Tutorial/ROSE-Tutorial.pdf
 
-$(TUTORIAL_NAME): generated_file_for_tutorial tutorial.tex gettingStarted.tex $(latexFiles)
+#Liao, 10/21/2009, run external tests before making tutorial
+# I do this to avoid duplicated test/translator files in both tests and doc directories
+#for ROSE turtorial: it needs sageInterface tests in addition to the examples from tutorial/
+$(TUTORIAL_NAME): tutorial.tex gettingStarted.tex $(latexFiles)
+	$(MAKE) -C$(top_builddir)/tutorial docs && \
+	$(MAKE) -C$(top_builddir)/tests/roseTests/astInterfaceTests check && \
 	$(PDFLATEX) tutorial.tex && \
 	$(PDFLATEX) tutorial.tex && \
 	$(PDFLATEX) tutorial.tex && \

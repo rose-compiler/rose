@@ -147,18 +147,7 @@ latexDependences = \
      rosePlatformPrerequisites.txt \
      rosePlatformConfigureOptions.txt
 
-#Liao, 10/21/2009, define the dependences between docs and external tests
-# I do this to avoid duplicated tests files in both tests and doc directories
-
-# for ROSE manual: it needs generated files from OpenMP and UPC test directories
-generated_file_for_manual:
-	$(MAKE) -C$(top_builddir)/tests/roseTests/ompLoweringTests check && \
-	$(MAKE) -C$(top_builddir)/projects/autoParallelization && \
-	$(MAKE) -C$(top_builddir)/projects/autoParallelization/tests check && \
-	$(MAKE) -C$(top_builddir)/tests/CompileTests/UPC_tests check && \
-	$(MAKE) -C$(top_builddir)/projects/UpcTranslation && \
-	$(MAKE) -C$(top_builddir)/projects/UpcTranslation/tests check
-
+# website contents
 html-local: AvailableDocumentation.docs $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz
 
 footer.html: footer.html.in
@@ -270,7 +259,16 @@ ROSE_DemoGuide.pdf: $(latexFiles) $(latexDependences) ROSE_DemoGuide.tex
 
 # DQ (7/25/2004): Need to include manual.tex and reference.tex since they are build from 
 # manual.tex.in and reference.tex.in
-$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf: generated_file_for_manual manual.tex gettingStarted.tex $(latexFiles) $(latexDependences)
+# Liao, 10/21/2009, run external tests before making manual
+# I do this to avoid duplicated test/translator file in both tests and doc directories
+# for ROSE manual: it needs generated files from OpenMP and UPC test directories
+$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf: manual.tex gettingStarted.tex $(latexFiles) $(latexDependences)
+	$(MAKE) -C$(top_builddir)/tests/roseTests/ompLoweringTests check && \
+	$(MAKE) -C$(top_builddir)/projects/autoParallelization && \
+	$(MAKE) -C$(top_builddir)/projects/autoParallelization/tests check && \
+	$(MAKE) -C$(top_builddir)/tests/CompileTests/UPC_tests check && \
+	$(MAKE) -C$(top_builddir)/projects/UpcTranslation && \
+	$(MAKE) -C$(top_builddir)/projects/UpcTranslation/tests check
 	$(PDFLATEX) manual.tex && \
 	$(PDFLATEX) manual.tex && \
 	$(PDFLATEX) manual.tex && \
