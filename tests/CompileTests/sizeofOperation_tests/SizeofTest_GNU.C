@@ -1,7 +1,7 @@
 /*Test for sizeof operations using GNU compiler.*/
+#include "rose.h"
 #include <iostream>
 #include <cstdio>
-#include "rose.h"
 
 using namespace std;
 

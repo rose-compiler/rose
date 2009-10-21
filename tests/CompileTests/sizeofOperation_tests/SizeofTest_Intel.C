@@ -1,8 +1,8 @@
 /*Test for sizeof operations using Intel C++ compiler.*/
+#include "rose.h"
 #include <iostream>
 #include <cstdio>
 #include <string>
-#include "rose.h"
 
 using namespace std;
 
