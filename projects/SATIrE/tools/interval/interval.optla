@@ -110,7 +110,7 @@ ScopeStatement(WhileStmt(ExprStatement(cond))), true_edge:
 
 ScopeStatement(WhileStmt(ExprStatement(cond))), false_edge:
   branch(cond, @, false, true, context);
-
+  
 LogicalIf(cond), true_edge:
   branch(cond, @, true, false, context);
 
@@ -1004,6 +1004,9 @@ wide(a, bot) = a;
 wide(_, top) = top;
 wide(top, _) = top;
 wide(a, b) = lift(crunch(drop(a), drop(b), widen));
+             //let result=lift(crunch(drop(a), drop(b), widen)); in
+             //println(a) println(b) println(result) println("")
+             //       result;
 widen((top, top), b) = b;
 widen((a1, a2), (b1, b2)) =
   ( if a1=b1 then a1 else top /*min(a1, b1)*/ ,

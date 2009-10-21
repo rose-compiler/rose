@@ -551,14 +551,13 @@ unparse1(UI, function_type(T)) :- !, unparse(UI, T), write('()').
 %		 (write('{'), unparse(UI, Definitions), write('} *'), write(Name))),
 %  unparse_type(UI, X, Type).
 
-unparse1(UI, typedef_declaration(null, typedef_annotation(Name,Type,_,_), _Ai, _Fi)) :- !,
-  write('typedef '), unparse_type(UI, Name, Type).
-
 unparse1(UI, typedef_declaration(Definition, typedef_annotation(
-          Name,
-          _Type, _Decl/*, _PPI*/), _Ai, _Fi)) :- !,
+          Name, Type, _Decl/*, _PPI*/), _Ai, _Fi)) :- !,
   write('typedef '), 
-  unparse(UI, Definition), write(' '), write(Name).
+  (   Definition = null
+  ->  unparse_type(UI, Name, Type)
+  ;   unparse(UI, Definition), write(' '), write(Name)
+  ).
 
 %unparse1(UI, typedef_declaration(_, typedef_annotation(
 %          Name,
@@ -695,18 +694,23 @@ unparse_enum(UI, [N|Ns]) :- !,
   ; writeln(',')),
   unparse_enum(UI, Ns).
 
+%% unparse_par(UI, E)
 % Put parentheses around E if necessary
+%
+% Fixme: This completely ignores operator precedence an puts
+% parenthesis around just abount anything
 unparse_par(UI, E) :- unparse_par1(UI, E), !.
 unparse_par1(UI, E) :-
-  functor(E, function_call_exp, _),
+  functor(E, F, _),
+  member(F, [function_call_exp, pntr_arr_ref_exp]),
   unparse(UI, E).
 unparse_par1(UI, E) :-
   functor(E, pointer_deref_exp, _),
   write('('), unparse(UI, E), write(')').
 unparse_par1(UI, E) :-
-  functor(E, _, N), N < 4, !,
+  functor(E, _, N), N < 5, !,
   unparse(UI, E).
-unparse_par1(UI, E) :-
+unparse_par1(UI, E) :- 
   write('('), unparse(UI, E), write(')').
 
 unparse_modifier(Mod) :-
