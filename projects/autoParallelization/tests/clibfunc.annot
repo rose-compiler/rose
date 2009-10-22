@@ -1,0 +1,11 @@
+class double {}
+operator sqrt( double rhs)
+    {
+      modify none; read{rhs}; alias none;
+    }
+
+operator sqrt( float rhs)
+    {
+      modify none; read{rhs}; alias none;
+    }
+

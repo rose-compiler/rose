@@ -44,6 +44,8 @@ main (int argc, char *argv[])
      SgDeclarationStatementPtrList& declList = root->get_declarations ();
      bool hasOpenMP= false; // flag to indicate if omp.h is needed in this file
 
+      
+
     //For each function body in the scope
      for (SgDeclarationStatementPtrList::iterator p = declList.begin(); p != declList.end(); ++p) 
      {
@@ -58,6 +60,16 @@ main (int argc, char *argv[])
         // For each loop 
         Rose_STL_Container<SgNode*> loops = NodeQuery::querySubTree(defn,V_SgForStatement); 
         if (loops.size()==0) continue;
+
+       // normalize C99 style for (int i= x, ...) to C89 style: int i;  (i=x, ...)
+       // Liao, 10/22/2009. Thank Jeff Keasler for spotting this bug
+         for (Rose_STL_Container<SgNode*>::iterator iter = loops.begin();
+                     iter!= loops.end(); iter++ )
+         {
+           SgForStatement* cur_loop = isSgForStatement(*iter);
+           ROSE_ASSERT(cur_loop);
+           SageInterface::normalizeForLoopInitDeclaration(cur_loop);
+         }
 
         // X. Replace operators with their equivalent counterparts defined 
         // in "inline" annotations

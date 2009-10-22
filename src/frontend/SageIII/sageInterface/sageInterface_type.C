@@ -53,6 +53,8 @@ namespace SageInterface
   {
     ROSE_ASSERT(t);
     switch(t->variantT()) {
+      case V_SgTypedefType:
+         return isScalarType(isSgTypedefType(t)->get_base_type());
       case V_SgTypeChar :
       case V_SgTypeSignedChar :
       case V_SgTypeUnsignedChar :

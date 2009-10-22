@@ -4,6 +4,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 C_TESTCODES_REQUIRED_TO_PASS = \
 anti_dep.c \
 array_scalar.c \
+c99loop.c \
 doall.c \
 doall_2.c \
 firstprivate.c \
@@ -75,6 +76,9 @@ rose_doall_vector.C: ../autoPar doall_vector.C
 rose_doall_vector2.C: ../autoPar doall_vector2.C
 	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c -annot $(srcdir)/std_vector.annot $(srcdir)/doall_vector2.C
 
+rose_Stress2.cc: ../autoPar Stress2.cc
+	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c -annot $(srcdir)/clibfunc.annot $(srcdir)/Stress2.cc
+
 
 check-local:
 	@echo "Test for ROSE automatic parallelization."
@@ -83,14 +87,16 @@ check-local:
 	@$(MAKE) rose_interp1_elem.C > interp1_elem.out
 	@$(MAKE) rose_doall_vector.C > doall_vector.out
 	@$(MAKE) rose_doall_vector2.C > doall_vector2.out
+	@$(MAKE) rose_Stress2.cc > Stress2.out
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/projects/autoParallelization/tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
 
-EXTRA_DIST = $(ALL_TESTCODES) funcs.annot floatArray.annot Index.annot simpleA++.h interp1_elem.C doall_vector.C doall_vector2.C
+EXTRA_DIST = $(ALL_TESTCODES) funcs.annot floatArray.annot Index.annot simpleA++.h interp1_elem.C doall_vector.C doall_vector2.C \
+	Stress2.cc clibfunc.annot
 
 clean-local:
-	rm -f *.o rose_*.[cC] *.dot *.out
+	rm -f *.o rose_*.[cC] *.dot *.out rose_*.cc
 
 	
 
