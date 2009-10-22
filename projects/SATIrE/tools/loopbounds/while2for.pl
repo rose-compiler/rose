@@ -21,7 +21,7 @@
 % This program is free software; you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation; version 3 of the License.
-% 
+%
 % This program is distributed in the hope that it will be useful,
 % but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -48,7 +48,7 @@ contains_safe_increment(basic_block(Statements, Annot, Ai, Fi),
 			Var, Increment) :-
   select(Increment, Statements, ForBody),
   is_simple_update(Increment, Var),
-  guarantee(Statements, is_transp(Var, local)).
+  guarantee_list(Statements, is_transp(Var, local)).
 
 while_to_for(_Info, _InfoInner, _InfoPost, WhileStmt, ForStmt) :-
   % Transform the WHILE-Statement
@@ -58,7 +58,7 @@ while_to_for(_Info, _InfoInner, _InfoPost, WhileStmt, ForStmt) :-
   %nl, nl,
   %write('Condition: '), unparse(Condition), nl,
   %write('Var: '), unparse(Var), nl,
-  
+
   % Find and remove Increment from Body
   contains_safe_increment(Body, NewBody, Var, Increment),
   %isSimpleForInit(ForInit, AssignOp),
@@ -74,6 +74,7 @@ while_to_for(_Info, _InfoInner, _InfoPost, WhileStmt, ForStmt) :-
 while_to_for(_Info, _InfoInner, _InfoPost, DoWhileStmt, UnrolledFor) :-
   % Transform the WHILE-Statement
   isDoWhileStatement(DoWhileStmt, Condition, V, Body, Annot, Ai, Fi),
+
   var_stripped(V, Var),
   % Find and remove Increment from Body
   contains_safe_increment(Body, NewBody, Var, Increment),
@@ -85,10 +86,10 @@ while_to_for(_Info, _InfoInner, _InfoPost, DoWhileStmt, UnrolledFor) :-
   ForTest = Condition,
   expr_statement(ForStep, _, _, _) = Increment,
   ForStmt = for_statement(ForInit, ForTest, ForStep, NewBody, Annot, Ai, Fi),
-
+  Body = basic_block(Statements, An1, Ai1, Fi1),
   % Unroll the first iteration
-  append(Body, [ForStmt], UnrolledFor).
-
+  append(Statements, [ForStmt], Statements1),
+  UnrolledFor = basic_block(Statements1, An1, Ai1, Fi1).
 
 while_to_for(I, I, I, S, S).
 

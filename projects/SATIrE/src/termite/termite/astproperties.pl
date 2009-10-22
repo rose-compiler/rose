@@ -6,7 +6,8 @@
 	   is_transp/3,
 	   is_complex_statement/1,
 	   guarantee/2,
-
+	   guarantee_list/2,
+	   
 	   strip_file_info/5, % deprecated
 	   get_variable_id/2,
 	   var_stripped/2,
@@ -206,17 +207,18 @@ is_scope_statement(do_while_stmt(_, _, _, _)).
 %-----------------------------------------------------------------------
 
 %% guarantee(+Node, +Pred).
-% Recursively test a predicate Pred on an AST Node.
-%
+%% guarantee(+List, +Pred).
+% Recursively test a predicate Pred on an AST Node or List of AST
+% Nodes, respectively.
 guarantee(Node, Pred) :-
   ast_node(Node, _, Children, _, _, _),
   do_check(Node, Pred),
-  guarantee_children(Children, Pred).
+  guarantee_list(Children, Pred).
 
-guarantee_children([], _).
-guarantee_children([C|Cs], Pred) :-
+guarantee_list([], _).
+guarantee_list([C|Cs], Pred) :-
   do_check(C, Pred),
-  guarantee_children(Cs, Pred).
+  guarantee_list(Cs, Pred).
 
 do_check(Node, F) :-
   %simple_form_of(Node, NodeSimple),
