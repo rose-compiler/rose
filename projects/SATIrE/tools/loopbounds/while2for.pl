@@ -32,6 +32,7 @@
 :- module(while2for, [while_to_for/5]).
 
 :- use_module(library(asttransform)),
+   use_module(library(loops)),
    use_module(library(astproperties)).
 
 is_simple_update(expr_statement(Op, _, _, _), Var) :-
@@ -98,12 +99,10 @@ while_to_for(I, I, I, S, S).
 %-----------------------------------------------------------------------
 
 main :-
-  open('input.pl',read,_,[alias(rstrm)]),
-  read_term(rstrm,X,[double_quotes(string)]),
-  close(rstrm),
-  
-  transformed_with(X, while_to_for, [], _, Y),
-  
-  open('output.pl',write,_,[alias(wstrm)]),
-  write_term(wstrm,Y,[quoted(true),double_quotes(string)]),
-  close(wstrm).
+  prompt(_,''), % Read input
+  read_term(Input, []),
+  compound(Input),
+
+  transformed_with(Input, while_to_for, [], _, Output),
+
+  write_term(Output, [quoted(true),double_quotes(string)]).

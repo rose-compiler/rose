@@ -241,8 +241,9 @@ do_check(Node, F) :-
 strip_file_info(_,_,_,
   var_ref_exp(var_ref_exp_annotation(Type, Name, Val, An, PPI), Ai, _Fi),
   var_ref_exp(var_ref_exp_annotation(Type, Name, Val, An, PPI),Ai1, null)) :-
-  get_variable_id(Ai, Id),
-  Ai1 = analysis_info([variable_id(Id)]).
+  (   get_variable_id(Ai, Id) % Keep the variable_id, if any
+  ->  Ai1 = analysis_info([variable_id(Id)])
+  ;   Ai1 = null).
 strip_file_info(_,_,_, Term, Term).
 
 %% var_stripped(+VarRefExp, -VarRefExpStripped)
@@ -251,8 +252,9 @@ strip_file_info(_,_,_, Term, Term).
 var_stripped(
   var_ref_exp(var_ref_exp_annotation(Type, Name, Val, A1, PPI), Ai, _Fi),
   var_ref_exp(var_ref_exp_annotation(Type, Name, Val, A1, PPI), Ai1,null)) :- !,
-    get_variable_id(Ai, Id),
-    Ai1 = analysis_info([variable_id(Id)]).
+    (	get_variable_id(Ai, Id) % Keep the variable_id, if any
+    ->	Ai1 = analysis_info([variable_id(Id)])
+    ;	Ai1 = null).
 
 var_stripped(cast_exp(V, _, _A, _Ai, _Fi), V1) :- !,
   var_stripped(V, V1).
