@@ -27,7 +27,8 @@ TEST_Objects = ${ALL_TESTCODES:.C=.o}
 # $(TEST_Objects): SizeofTest_GNU $(srcdir)/$(@:.o=.C)
 $(TEST_Objects): SizeofTest_GNU SizeofTest_Intel
 	./SizeofTest_GNU -c $(srcdir)/$(@:.o=.C)
-	./SizeofTest_Intel -c $(srcdir)/$(@:.o=.C)
+# DQ (10/21/2009): comment out for now while Yi fixes this.
+#	./SizeofTest_Intel -c $(srcdir)/$(@:.o=.C)
 
 #QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
 
