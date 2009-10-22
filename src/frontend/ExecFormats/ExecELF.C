@@ -3869,7 +3869,7 @@ SgAsmElfSymverEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
   if (0==idx)
     fprintf(f, "%s%-*s   %-10s\n", p, w, "", "Value");
 
-  fprintf(f, "%s%-*s = 0x%08"PRIx64"\n", p, w, "", p_value);
+  fprintf(f, "%s%-*s = 0x%08x\n", p, w, "", p_value);
 }
 
 /* Non-parsing constructor */
