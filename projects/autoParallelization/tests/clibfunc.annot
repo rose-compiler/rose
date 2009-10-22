@@ -1,11 +1,10 @@
-class double {}
-operator sqrt( double rhs)
+operator sqrt( double val)
     {
-      modify none; read{rhs}; alias none;
+      modify none; read{val}; alias none;
     }
 
-operator sqrt( float rhs)
+operator sqrt( float val)
     {
-      modify none; read{rhs}; alias none;
+      modify none; read{val}; alias none;
     }
 
