@@ -1707,9 +1707,10 @@ simply invoke {\tt ssh-keygen} and be sure not to specify a passphrase.
 
 \section{ROSE API Refactoring}
 
-This is the design for the ROSE API which is where high level function interfaces will be
-located that call meshangism for analysis, transformation, and expected user level support
-for ROSE tools. There are four levels:
+This a draft design for a new High Level ROSE API where high level function interfaces will be
+located that call mechanisms for analysis, transformation, and expected user level support
+for ROSE tools. This support is presently spread around in ROSE and this API would
+centralize it and make ROSE more clear to users. There are four levels:
 \begin{enumerate}
    \item ROSE Frontend \\
       Generation of Abstract Syntax Tree (AST) from source code or binary executable.
