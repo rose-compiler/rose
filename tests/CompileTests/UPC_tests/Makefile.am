@@ -56,11 +56,11 @@ ROSE_FLAGS = --edg:no_warnings -rose:skipfinalCompileStep -rose:UPC
 endif
 #ROSE_FLAGS = --edg:no_warnings -w --edg:restrict --edg:upc -rose:verbose 3
 
-PASSING_TEST_Objects = ${TESTCODES:.upc=.o}
-TEST_Objects = ${ALL_TESTCODES:.upc=.o}
+PASSING_TEST_Output = $(addprefix rose_,${TESTCODES})
+TEST_Output = $(addprefix rose_,${ALL_TESTCODES})
 
-$(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.upc)
-	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.upc)
+$(TEST_Output): ../../testTranslator $(srcdir)/$(@:rose_%=%)
+	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/$(@:rose_%=%)
 
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
@@ -86,7 +86,7 @@ EXTRA_DIST = $(ALL_TESTCODES) upc.h upc_relaxed.h upc_strict.h upc_collective.h
 
 check-local:
 	@echo "Tests for UPC examples."
-	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(PASSING_TEST_Output)
 	@$(MAKE) rose_shared.upc.aa
 	@echo "***********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/UPC_tests: make check rule complete (terminated normally) ******"

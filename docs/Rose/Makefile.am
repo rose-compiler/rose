@@ -257,18 +257,66 @@ ROSE_DemoGuide.pdf: $(latexFiles) $(latexDependences) ROSE_DemoGuide.tex
 	$(PDFLATEX) ROSE_DemoGuide.tex && \
 	$(PDFLATEX) ROSE_DemoGuide.tex
 
-# DQ (7/25/2004): Need to include manual.tex and reference.tex since they are build from 
-# manual.tex.in and reference.tex.in
+
 # Liao, 10/21/2009, run external tests before making manual
 # I do this to avoid duplicated test/translator file in both tests and doc directories
 # for ROSE manual: it needs generated files from OpenMP and UPC test directories
-$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf: manual.tex gettingStarted.tex $(latexFiles) $(latexDependences)
-	$(MAKE) -C$(top_builddir)/tests/roseTests/ompLoweringTests check && \
-	$(MAKE) -C$(top_builddir)/projects/autoParallelization && \
-	$(MAKE) -C$(top_builddir)/projects/autoParallelization/tests check && \
-	$(MAKE) -C$(top_builddir)/tests/CompileTests/UPC_tests check && \
-	$(MAKE) -C$(top_builddir)/projects/UpcTranslation && \
-	$(MAKE) -C$(top_builddir)/projects/UpcTranslation/tests check
+generated_ompLowering_files_for_manual = \
+       $(top_builddir)/tests/roseTests/ompLoweringTests/rose_hello-1.c \
+       $(top_builddir)/tests/roseTests/ompLoweringTests/rose_parallel-reduction.c \
+       $(top_builddir)/tests/roseTests/ompLoweringTests/rose_ompfor.c \
+       $(top_builddir)/tests/roseTests/ompLoweringTests/rose_ompfor5.c \
+       $(top_builddir)/tests/roseTests/ompLoweringTests/rose_ompfor4.c \
+       $(top_builddir)/tests/roseTests/ompLoweringTests/rose_threadprivate.c \
+       $(top_builddir)/tests/roseTests/ompLoweringTests/rose_task_untied3.c \
+       $(top_builddir)/tests/roseTests/ompLoweringTests/rose_task_wait.c
+
+generated_autoPar_files_for_manual = \
+       $(top_builddir)/projects/autoParallelization/tests/rose_doall_2.c \
+       $(top_builddir)/projects/autoParallelization/tests/rose_doall_2.out \
+       $(top_builddir)/projects/autoParallelization/tests/rose_inner_only.c \
+       $(top_builddir)/projects/autoParallelization/tests/rose_inner_only.out \
+       $(top_builddir)/projects/autoParallelization/tests/rose_reduction.c \
+       $(top_builddir)/projects/autoParallelization/tests/rose_vector2.C
+
+generated_upcCompile_files_for_manual = \
+       $(top_builddir)/tests/CompileTests/UPC_tests/rose_hello.upc \
+       $(top_builddir)/tests/CompileTests/UPC_tests/rose_consistency.upc \
+       $(top_builddir)/tests/CompileTests/UPC_tests/rose_continue.upc \
+       $(top_builddir)/tests/CompileTests/UPC_tests/rose_affinity.upc \
+       $(top_builddir)/tests/CompileTests/UPC_tests/rose_shared.upc.aa \
+       $(top_builddir)/tests/CompileTests/UPC_tests/rose_shared.upc.ab \
+       $(top_builddir)/tests/CompileTests/UPC_tests/rose_lock.upc
+
+generated_upcTrans_files_for_manual = \
+       $(top_builddir)/projects/UpcTranslation/tests/rose_hello.c \
+       $(top_builddir)/projects/UpcTranslation/tests/rose_shared_1.c.aaf \
+       $(top_builddir)/projects/UpcTranslation/tests/rose_shared_1.c.abf \
+       $(top_builddir)/projects/UpcTranslation/tests/rose_unshared_1.c.aaf \
+       $(top_builddir)/projects/UpcTranslation/tests/rose_unshared_1.c.abf
+
+$(generated_ompLowering_files_for_manual):
+	$(MAKE) -C$(top_builddir)/tests/roseTests/ompLoweringTests check
+
+$(generated_autoPar_files_for_manual):
+	$(MAKE) -C$(top_builddir)/projects/autoParallelization check
+
+$(generated_upcCompile_files_for_manual):
+	$(MAKE) -C$(top_builddir)/tests/CompileTests/UPC_tests check
+
+$(generated_upcTrans_files_for_manual):
+	$(MAKE) -C$(top_builddir)/projects/UpcTranslation check
+	
+generated_files_for_manual = \
+	$(generated_ompLowering_files_for_manual) \
+	$(generated_autoPar_files_for_manual) \
+	$(generated_upcCompile_files_for_manual) \
+	$(generated_upcTrans_files_for_manual)
+
+# DQ (7/25/2004): Need to include manual.tex and reference.tex since they are build from 
+# manual.tex.in and reference.tex.in
+#
+$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf: $(generated_files_for_manual) manual.tex gettingStarted.tex $(latexFiles) $(latexDependences)
 	$(PDFLATEX) manual.tex && \
 	$(PDFLATEX) manual.tex && \
 	$(PDFLATEX) manual.tex && \
@@ -309,3 +357,4 @@ CLEANFILES = roseDoxygen.tags SageIntermediateForm *.log *.aux *.dvi \
 	     $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz footer.html \
 	     AvailableDocumentation.docs  leftmenu.html rosePlatformPrerequisites.txt \
         rosePlatformConfigureOptions.txt
+.PHONY :generated_files_for_manual generated_ompLowering_files_for_manual generated_autoPar_files_for_manual generated_upcCompile_files_for_manual generated_upcTrans_files_for_manual
