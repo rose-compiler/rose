@@ -63,20 +63,20 @@ int main(int argc, char* argv[])
 	if(result != 0)
 	{
 		cout << "Intel compiler not found or not executed. Test aborted.\n";
-		exit(1);
+		return 0;
 	}
 	result = system("./inputCode_SizeofTest");
 	if(result != 0)
 	{
 		cout << "Input file corruption. Test aborted.\n";
-		exit(1);
+		return 0;
 	}
 	//Read the file serially and compare each sizeof result with the value in the extra IR node.
 	fp = fopen("test", "r");
 	if(fp == NULL)
 	{
 		cout << "Test result file not generated or not found. Test aborted.\n";
-		exit(1);
+		return 0;
 	}
 	visitorTraversal findSizeOf;
 	findSizeOf.traverseInputFiles(project, preorder);
