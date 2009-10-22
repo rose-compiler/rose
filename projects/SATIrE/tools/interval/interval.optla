@@ -105,11 +105,12 @@ ScopeStatement(IfStmt(ExprStatement(cond))), false_edge:
   branch(cond, @, false, false, context);
 
 ScopeStatement(WhileStmt(ExprStatement(cond))), true_edge:
-  let result = branch(cond, @, true, true, context);
-  in /*println(label,": ",@," -> ",result)*/ result;
+  branch(cond, @, true, true, context);
 
 ScopeStatement(WhileStmt(ExprStatement(cond))), false_edge:
   branch(cond, @, false, true, context);
+  // -- let result = branch(cond, @, false, true, context);
+  // -- in println(label,": ",@," -> ",result) result;
   
 LogicalIf(cond), true_edge:
   branch(cond, @, true, false, context);
@@ -623,7 +624,8 @@ branch(exp, state, edge, isLoopBody, context) =
   let pair = eval(exp, state, context); in
   let c = interval_to_bool(pair!1!2); 
           newstate = pair!2!2; in
-  if (c = top || isLoopBody) then
+  // -- println("pair = ", pair, ", c = ", c, ", newstate = ", newstate)
+  if (c = top || (isLoopBody && value_interval(exp) = top)) then
     // -- We don't know for sure which edge will be taken, or this is a loop
     // -- condition. Given our widening operator, we must always look at the
     // -- effects of loop conditions and "pre-widen" information on loop
@@ -633,7 +635,7 @@ branch(exp, state, edge, isLoopBody, context) =
     // --print("Maybe\n") 
     branch_condition_effects(exp, state, newstate, edge, isLoopBody, context)
   else if c = bot then 
-    print("FIXME c=bot\n") 
+    print("FIXME c=bot\n")
     state
   else if drop(c) = edge then  
     // -- This edge will ALWAYS be taken
@@ -839,9 +841,22 @@ kill_vars(s, v::vars) =
   kill_vars(lift(ss\[varsym_varid(v) -> top]), vars);
 
 interval_to_bool :: itvl_Interval -> BoolL;
-interval_to_bool((lift(0), lift(0))) = lift(false);
-interval_to_bool((lift(1), lift(1))) = lift(true);
-interval_to_bool(_) = top;
+// -- interval_to_bool((lift(0), lift(0))) = lift(false);
+// -- interval_to_bool((lift(1), lift(1))) = lift(true);
+// -- interval_to_bool(_) = top;
+interval_to_bool((l, r)) =
+  println("interval_to_bool(", (l,r), ")")
+  let lo <= l;
+      hi <= r;
+  in
+    println("lo = ", lo, ", hi = ", hi)
+      if (lo < 0 && hi < 0) || (lo > 0 && hi > 0) then
+        println("=> true!")
+        lift(true)
+      else if lo = 0 && hi = 0 then
+        lift(false)
+      else
+        top;
 
 // --shiftleft :: snum, snum -> snum;
 // --shiftleft(a, 0) = a;
@@ -1004,9 +1019,9 @@ wide(a, bot) = a;
 wide(_, top) = top;
 wide(top, _) = top;
 wide(a, b) = lift(crunch(drop(a), drop(b), widen));
-             //let result=lift(crunch(drop(a), drop(b), widen)); in
-             //println(a) println(b) println(result) println("")
-             //       result;
+             // --let result=lift(crunch(drop(a), drop(b), widen)); in
+             // --println(a) println(b) println(result) println("")  result;
+
 widen((top, top), b) = b;
 widen((a1, a2), (b1, b2)) =
   ( if a1=b1 then a1 else top /*min(a1, b1)*/ ,
