@@ -1,3 +1,72 @@
+2009-10-22 01:36  dquinlan
+
+	* [r7893]
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/astStructRecognition.C:
+	  Iteration of C++ data structure recognition.
+
+2009-10-22 01:23  dquinlan
+
+	* [r7892]
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/astStructRecognition.C:
+	  Iteration of C++ data structure recognition.
+
+2009-10-22 01:17  dquinlan
+
+	* [r7891]
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/astStructRecognition.C:
+	  Iteration of C++ data structure recognition.
+
+2009-10-22 00:57  liao6
+
+	* [r7890] /trunk/ROSE/docs/Rose/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/UPC_tests/Makefile.am: Fixed the
+	  repeatedly building of upc output files
+
+2009-10-22 00:56  dquinlan
+
+	* [r7889]
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/astStructRecognition.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/testProgram_1.C:
+	  Iteration of C++ data structure recognition.
+
+2009-10-22 00:48  dquinlan
+
+	* [r7888] /trunk/ROSE/docs/Rose/developersAppendix.tex:
+	  Construction of ROSE API (documentation).
+
+2009-10-22 00:44  dquinlan
+
+	* [r7887]
+	  /trunk/ROSE/tests/CompileTests/sizeofOperation_tests/Makefile.am:
+	  Removed test of SizeofTest_Intel since it requires icc.
+
+2009-10-22 00:20  dquinlan
+
+	* [r7886] /trunk/ROSE/docs/Rose/developersAppendix.tex,
+	  /trunk/ROSE/docs/Rose/testing.tex: Construction of ROSE API
+	  (documentation).
+
+2009-10-21 21:02  wei4
+
+	* [r7885]
+	  /trunk/ROSE/tests/CompileTests/sizeofOperation_tests/SizeofTest_GNU.C,
+	  /trunk/ROSE/tests/CompileTests/sizeofOperation_tests/SizeofTest_Intel.C:
+	  Fixed the test code to include rose.h as the first header file.
+	  
+	  So that they won't cause failure in other's test.
+
+2009-10-21 20:01  liao6
+
+	* [r7884] /trunk/ROSE/docs/Rose/Makefile.am,
+	  /trunk/ROSE/docs/Rose/Tutorial/Makefile.am: Defined better
+	  dependencies on external tests
+
+2009-10-21 19:30  liao6
+
+	* [r7883] /trunk/ROSE/docs/Rose/Makefile.am,
+	  /trunk/ROSE/docs/Rose/Tutorial/Makefile.am: Added the missing
+	  dependences for building tutorial and manual
+
 2009-10-21 17:52  dquinlan
 
 	* [r7881] /trunk/ROSE/src/roseAPI, /trunk/ROSE/src/roseAPI/README:
