@@ -1,3 +1,16 @@
+2009-10-22 18:14  wei4
+
+	* [r7895]
+	  /trunk/ROSE/tests/CompileTests/sizeofOperation_tests/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/sizeofOperation_tests/SizeofTest_GNU.C,
+	  /trunk/ROSE/tests/CompileTests/sizeofOperation_tests/SizeofTest_Intel.C:
+	  Fixed the test codes to prevent the make system from crashing.
+	  
+	  Instead of exit with return code 1, the programs will return 0
+	  even if no corresponding compiler found, no file found or input
+	  file corrupted. It will print out some error message and skip the
+	  test.
+
 2009-10-22 01:36  dquinlan
 
 	* [r7893]
