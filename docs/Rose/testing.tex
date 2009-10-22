@@ -8,12 +8,107 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Testing Within ROSE}
-
 \label{testing::overviewOfTesting}
+
+\section{Introduction}
+   Testing is a particularly important part of the ROSE project.
+We credit our particularly high level of automated testing for
+why we are able to maintain a compiler project such as ROSE
+with so few people.  All testing is automated and the results
+of the testing drives higher levesl of testing (from
+developer testing, to automated internal daily testing, to
+external nightly testing).  Different levels of testing
+with different types of feedback provide a basis for the health
+of the project to be visible to either the individual developer,
+the rest of the team, or to an external audience.
+
+   We test so that we can detect errors as quickly as possible and
+provide as much transparency as possible to our external users.
+Our goal is to communicate honestly so that we can avoid any 
+misunderstandings, it is in our best interest to have this
+policy.
+
+   ROSE uses {\tt autoconf}, {\tt automake}, and {\tt libtool}.
+As a result our generated {\em Makefiles} follow the GNU
+standards for makefiles and contain the associated makefile rules:
+\begin{itemize}
+   \item {\tt make }: used to compile all of ROSE.
+   \item {\tt make check}: used to run tests in each directory.
+   \item {\tt make distcheck}: used to build a GNU standard distribution and run {\tt check} on
+    on that distribution.
+\end{itemize}
+Additional stepts such a {\tt build} and {\tt configure} are covered in the
+ROSE Installation guide.
+
+This chapter is organized by laying out the different
+ways in which ROSE is tests.  All testing scripts and the information
+required for our approach to be used with other projects is made available
+in the ROSE distribution. 
+Section \ref{testing::twoRepositories} explains why we maintain two
+different SVN repositories internally and externally.
+Section \ref{testing::developerTests} explains what tests are done by developers, before checkin to SVN.
+Section \ref{testing::dailyInternalTests} explains what daily internal tests are done.
+Section \ref{testing::dailyExternalTests} explains what daily external tests are done.
+
+\section{Tail of Two SVN Repositories}
+\label{testing::twoRepositories}
+   We maintain two SVN repositories, one internal and the other external.
+The internal SVN repository is only available to the ROSE core
+development team.  After passing specific tests, parts of the internal
+SVN repository as submitted to the external SVN repository (hosted by SciDAC at 
+Lawrence Berkley Laboratory).  The external SVN repository has public
+visability.  It is always a snapshot of the internal SVN repository 
+(for the revision that passed the required tests to be made externally available).
+Importantly, the SVN repository is always trying to be a working copy of
+ROSE. Non-compilable code should neve be checked in, all of ROSE as it
+is represented in the SVN repository should pass {\tt make distcheck}.
+Atuomated tests verify this or identify developers who are at fault.
+Peer pressure is generally enough so that everyone fixes their code 
+in the morning as a result of results of nightly tests.
+
+   The external SVN repository also has a number of braches, these support
+external collaborations and represent a community of people who contribute
+work to the ROSE project (which is a community open source project).
+
+
+\section{Developer Tests}
+\label{testing::developerTests}
+   Developer tests are required to run and pass {\tt make distcheck}
+before checking in work to the internal SVN repository.  It is at
+their discression if they want to only run {\tt make check}, which is
+faster and less through. In general all developers know who is careful and
+who is not and interally we can deal with people who break the ROSE 
+builds too often.  If the developers test pass then the work
+can be checked into the internal SVN repository.
+
+\section{Daily Internal Tests}
+\label{testing::dailyInternalTests}
+   There are daily internal tests at LLNL (twice per day)
+that use the internal SVN repository and checkout versions
+of automated tests on three different platforms:
+\begin{itemize}
+   \item 32-bit Linux (Red Hat system 5)
+   \item 64-bit Linux (Red Hat system 4)
+   \item Max OSX version 10.5 (x86)
+\end{itemize}
+There three system are used to evaluate and report the status of ROSE.  Crontabs are used
+to initiate the tests.  The crontabs call scripts in the ROSE/scripts
+\fixme{We should provide an example of the crontabs used (output of 'crontab -l', for example)}.
+
+
+\section{Daily External Tests}
+\label{testing::dailyExternalTests}
+   There are nightly external tests on the NSF Middleware Initiative compile farm
+at the University of Wisconson. The results of these tests are made public
+via link on the main ROSE web page.  This provides transparency to our external
+collaborators and that is is public help keep us at our best.
+
+
+
 
 {\scriptsize \include{qmTestScript} }
 
-\section{Introduction}
+\section{QMTest: Introduction}
 {\tt qm.sh} is a wrapper for the compile-line in an arbitrary project build 
 system that creates qmtest test files that test ROSE. The basic assumption
 is that it is possible to isolate and modify the compile-line command in most
@@ -30,7 +125,7 @@ a ROSE translator in the place of {\tt gcc} but with the exact same arguments
 {\tt qm.sh} also mimics the compile-line process of the project's build system
 so that all dependencies are built as normal by the backend compiler.
 
-\section{Usage}
+\subsection{Usage}
 
 {\tt qm.sh <f|o> <QMTest test class> <ROSE translator> <Backend compiler> 
 \{compiler arguments\ldots\} \{ROSE arguments\ldots\}}
@@ -55,7 +150,7 @@ so that all dependencies are built as normal by the backend compiler.
 	after the $<$Backend Compiler$>$ argument.
 \end{description}
 
-\section{Variables}
+\subsection{Variables}
 
 \begin{description}
   \item[COUNT] : The for loop counter, keeps track of number of {\tt qm.sh}
@@ -77,7 +172,7 @@ so that all dependencies are built as normal by the backend compiler.
 
 \end{description}
 
-\section{Execution Walkthrough}
+\subsection{Execution Walkthrough}
 {\tt qm.sh} is broken into code blocks which each perform some procedure. These
 blocks are delimited with a solid line of 80 {\tt \#} characters.
 
@@ -193,7 +288,7 @@ Lines 2-3 execute the reconstructed original backend compile-line of project's
 build system. The script {\tt qm.sh} exits with the same code as the exit
 status of the backend process.
 
-\section{Example}
+\subsection{Example}
 
 The following example edits a trivial makefile and builds QMTest files with
 {\tt qm.sh} by editing the makefile.
@@ -294,7 +389,7 @@ _home_yuan5_roseqmtest_project_p2_registers_c.qmt
 \caption{{\tt find . -name "*.qmt"} output}
 \end{figure}
 
-\section{Running the Tests}
+\subsection{Running the Tests}
 
 This section describes how to collect and run the test created by {\tt qm.sh}
 after building the project with an edited build system. When the project has

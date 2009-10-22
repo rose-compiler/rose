@@ -1705,48 +1705,237 @@ simply invoke {\tt ssh-keygen} and be sure not to specify a passphrase.
 
 
 
-\subsection{ROSE API Refactoring}
+\section{ROSE API Refactoring}
 
-This is the design for the ROSE API which is
-where high level function interfaces will be located that
-call meshangism for analysis, transformation, and 
-expected user level support for ROSE tools.
-There are 4 levels:
-
+This is the design for the ROSE API which is where high level function interfaces will be
+located that call meshangism for analysis, transformation, and expected user level support
+for ROSE tools. There are four levels:
 \begin{enumerate}
    \item ROSE Frontend \\
-      Generation of AST from source code.
+      Generation of Abstract Syntax Tree (AST) from source code or binary executable.
+      The AST holds structural representations of the input software.
 
-   \item ROSE Midend
+   \item ROSE Midend \\
       Analysis and transformation support for ROSE-based tools.
-
    \begin{enumerate}
       \item ROSE Analysis API \\
          This would include intra-procedural analysis, inter-procedural analysis, 
          and whole program analysis (which over comes the issues of separate compilation).
+         This analysis can handle either source code analysis, binary analysis, or both.
+         Program analysis on source code includes:
+         \begin{enumerate}
+            \item Call Graph Analysis
+            \item Class Hierarchy Analysis
+            \item Control Flow Analysis
+            \item Def-Use Analysis
+            \item Dominance Analysis
+            \item Dominator Trees And Dominance Frontiers Analysis (old)
+            \item Connection of Open Analysis (old)
+            \item Pointer Analysis
+            \item Procedural Slicing (old; not used) 
+            \item Side-Effect Analysis
+            \item Value Propagation Analysis
+            \item Static Interprocedural Slicing (replaces Procedural Slicing)
+            \item Liveness Analysis
+            \item AST Interpreter (Interpretation of Concrete Semantics using AST)
+         \end{enumerate}
+      \item Program analysis on binaries includes:
+         \begin{enumerate}
+            \item Call graph Analysis
+            \item Control Flow Analysis
+            \item Constant Propogation
+            \item Data Flow Analysis
+            \item InstructionSemantics
+            \item Library Identification (FLIRT)
+            \item Dwarf Debug Format
+            \item Analysis of the Binary File Format
+         \end{enumerate}
 
       \item ROSE Transformation API \\
          Modifications of the AST can be organized as:
-      \begin{enumerate}
-         \item Instrumentation
+         \begin{enumerate}
+            \item Instrumentation
+            \item Optimization
+               These include a range of optimizations relevant for general performance
+               optimization of scientific applications.
+            \begin{enumerate}
+               \item Inlining
+               \item Loop optimizations:fusion, fisson, unrolling, blocking, loop
+                  interchange, array copy, etc.
+               \item Constant Folding
+               \item Finite Differencing
+               \item Partial Redundancy Elimination
+            \end{enumerate}
 
-         \item Optimizations
+            \item General Transformations
+               These include outlining,
+            \begin{enumerate}
+               \item Outlining
+               \item ImplicitCodeGeneration \\
+                  This work makes C++ implicit semantics explicit for C style analysis.
+               \item FunctionCallNormalization \\
+                  This is a library of function call normizations to support binary
+                  analysis.
+               \item AST Copy support \\
+                  This support permits arbitrary subtrees (or the whole AST) to be copied
+                  with control over deep or shallow copying via a single function.
+               \item AST Merge support \\
+                  This work permits the merging of separate AST's and the sharing of their
+                  identically names language declarations to support whole program
+                  analysis. Duplicate parts of the merged AST are deleted.
+               \item Static Binary Rewriting \\
+                  A restricted set of transformations are possible on a binary executable,
+                  this section details this work.
+            \end{enumerate}
+         \end{enumerate}
 
-         \item General Transforamtions
-
-      \end{enumerate}
+      \item AST Traversals \\
+         ROSE provides a number of different techniques to define traversals of the AST
+         and associated graphs formed from the AST. 
    \end{enumerate}
 
-   \item ROSE AST Backend \\
-      Code generation from the AST (unparsing).
+   \item ROSE Backend \\
+      Code generation from the AST (unparsing) and optionally calling the backend
+      compiler.  ROSE includes a number of features specific to the code generation phase: 
+   \begin{enumerate}
+      \item Code generation from arbitrary subtrees of the AST \\
+         Users can generate code from subsets of the AST as part of support for custom
+         code generation.
+      \item Generation of abritrary test with generated code \\
+         This section contains the support for the output of arbitrary text as part of the
+         generation of code (useful for generating code for specialized GPU tools, etc.).
+      \item Code generation Format control \\
+         Some control is possible over the formatting of generated code within ROSE.
+   \end{enumerate}
+
 
    \item ROSE Util \\
       Utility functions useful in ROSE-based tools.
+   \begin{enumerate}
+      \item AST Visualization \\
+         AST support for visualization includes representations as PDF, DOT, and
+         a more colorful representation of the whole graph that includes AST plus 
+         type attributes (not typically as part of an AST). This work includes
+         support for dot2gml translation (in roseIndependentSupport/dot2gml).
+         this is where interfaces to possible OGDF (Open Graph Drawing Framework)
+         could be put.
+
+      \item AST Query \\
+         The AST Query mechanism is a simple approach to getting list of IR nodes.
+         It is typically used within analysis or transformations.
+
+      \item AST Consistancy Tests \\
+         The consistancy tests validate that the AST is correctly formed. Note that this
+         is not a test that the code that will be gnerated is leagal code.
+
+      \item Performance monitoring \\
+         This section provides support using in ROSE to measuring both space and 
+         time complexity for ROSE based tools.
+
+      \item AST Postprocessing \\
+         The AST postprocessing is a step used to fix the AST after some types of 
+         modification by the user and to make it a correctly formed AST. Not all
+         modifications to the AST can be corrected using this step.
+
+      \item AST File I/O Support \\
+         This section contains the support for writing and reading the AST to and from
+         files (binary file I/O is used and the design is for performance (both space and
+         time)).
+
+      \item Language specific name support \\
+         This section contains the support for generating unique names for language
+         constructs and handling mangled and unmangled names for use in ROSE based tools.
+
+      \item Support for comments and CPP directives \\
+         This section contains the support for reading and writing comments and CPP
+         directives within the AST.
+
+      \item GUI Support \\
+         This section contains the support for building GUI based tools using ROSE.
+
+      \item Binary Analysis connection to IDA PRO \\
+         This section contains the support for using IDA Pro with ROSE for Binary Analysis.
+
+      \item Database Support \\
+         This section contains the support for building tools that use SQLite Database.
+
+      \item Graphs and Graph Analysis \\
+         This section contains the support for building custom graphs to represent static
+         and dynamic ananlysis and graph analysis algorithms to suport of analysis of
+         these graphs.
+
+      \item Performance Metric Annotation \\
+         This section contains the support for dynamically derived information to be
+         written into the AST (performance inforamtion to support analysis and
+         optimization tools).
+
+      \item Abstract Handles \\
+         This section contains the support for building abstract handles into source code.
+         This work is used in the autotuning and also other tools that pass references to
+         source code as part of an interface.
+
+      \item Macro Rewrapper \\
+         This is currently in the ROSE/projects directory and should perhaps be a part of
+         the ROSE API.
+
+      \item Command-line processing support \\
+         This is the command line handling used internally by ROSE and made available 
+         so that users can process the command line for their specific ROSE based tools.
+
+      \item Common string support \\
+         These function support common operations on strings used within ROSE and 
+         useful within ROSE-based tools.
+
+      \item Common file and path support \\
+         This is a collection of function useful for handling directory structures within
+         ROSE-based tools.
+
+      \item Miscellaneous Support \\
+         Output of useage information, ROSE version number support, etc.
+
+   \end{enumerate}
+
 \end{enumerate}
 
+\section{ROSE Example Projects}
+   These project demonstrate types of tools that have been built using ROSE and are 
+small enough to include within the ROSE distribution (taken from the ROSE/projects
+directory):
+\begin{enumerate}
+   \item Compass
+   \item Auto Parallelization
+   \item Assembly To Source AST
+   \item Auto Tuning
+   \item Haskell port
+   \item Java port
+   \item MPI Code Motion
+   \item Reverse Computation
+   \item Qt Designer Plugins
+   \item Distributed Memory Analysis Compass
+   \item Name Consistancy Checker
+   \item Name Similarities
+   \item Run-time Error Detection (RTED)
+   \item Mixed Static Dynamic Analysis
+   \item Taint Check
+   \item UpcTranslation
+   \item CERT Secure Code Project
+   \item Data-Structure Graphing
+   \item Documentation Generator
+   \item Bug Seeding
+   \item (Review the projects directory)
+\end{enumerate}
 
 This work should coinside with tutorial examples
 that should the use of the API and present the
 simple executables that generated specific 
 forms of analysis (e.g. call graph, outliner, etc.).
 
+Topics that it is less clear where to put (or even if
+to put) in the ROSE API include:
+\begin{itemize}
+   \item Annotation Language Parser (annotationLanguageParser directory; not working)
+   \item Distributed Memory Analysis (distributedMemoryAnalysis directory)
+   \item AST Rewrite Mechanism (supress this from the API for now).
+   \item ompLowering (not for the user interface)
+   \item OpenMP Reduction Variable Recognition
+\end{itemize}
