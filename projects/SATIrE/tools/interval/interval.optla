@@ -841,17 +841,12 @@ kill_vars(s, v::vars) =
   kill_vars(lift(ss\[varsym_varid(v) -> top]), vars);
 
 interval_to_bool :: itvl_Interval -> BoolL;
-// -- interval_to_bool((lift(0), lift(0))) = lift(false);
-// -- interval_to_bool((lift(1), lift(1))) = lift(true);
-// -- interval_to_bool(_) = top;
 interval_to_bool((l, r)) =
-  println("interval_to_bool(", (l,r), ")")
+  // --println("interval_to_bool(", (l,r), ")")
   let lo <= l;
       hi <= r;
   in
-    println("lo = ", lo, ", hi = ", hi)
       if (lo < 0 && hi < 0) || (lo > 0 && hi > 0) then
-        println("=> true!")
         lift(true)
       else if lo = 0 && hi = 0 then
         lift(false)
@@ -1136,7 +1131,6 @@ value_interval(exp) =
     FloatVal(_) => top;
     DoubleVal(_) => top;
     StringVal(_) => top;
-    _         => print("unsupported value exp: ")
-                 print(exp) print("\n")
-                            top;
+    _         => // --println("unsupported value exp: ", exp)
+                 top;
   endcase;
