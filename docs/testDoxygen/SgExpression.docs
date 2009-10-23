@@ -14,12 +14,19 @@ binary operators, conditional expressions, delete expression, variable
 reference expressions, etc.
 
 \note The SgExpression class has a virtual get_type() member function which returns
-the type associated with any expression.  This work was recently reimplemented and 
-now has the following properties:
-   - The type is no longer explicitly stored in the IR, except for:
+the type associated with any expression.  The get_type() support has the following 
+properties:
+   - The type is not explicitly stored in the IR, except for:
       -# SgCastExp
       -# SgNewExp
+      -# SgAssignInitializer
+      -# SgAggregateInitializer
+      -# SgConstructorInitializer
       -# SgVarArgOp
+      -# SgVarArgStartOp
+      -# SgVarArgEndOp
+      -# SgVarArgCopyOp
+      -# SgVarArgStartOneOperandOp
    - Binary operators return the type associated with the lhs operand, except for (which
     return the type associated with the rhs operand):
       -# SgDotExp
@@ -72,14 +79,19 @@ now has the following properties:
          operand). not clear if this is the correct behavior.
    - The following expressions return a SgTypeDefault:
       -# SgThrowOp
-      -# SgVarArgStartOp
-      -# SgVarArgEndOp
-      -# SgVarArgCopyOp
-      -# SgVarArgStartOneOperandOp
       -# SgNullExpression
       -# SgVariantExpression
-      -# SgAggregateInitializer
-      -# SgConstructorInitializer
+
+
+\note get_type() vs. get_expression_type(). Note that there is of some IR nodes a
+get_expression_type() which is always a data access function to a stored type.
+The get_expression_type() function is for \b internal \b use \b only.
+Where used, this function can return NULL if the explicitly stored
+p_expression_type variable is not needed (this is to support it later
+being removed). Although the type should be computed most of the time, there are 
+some IR nodes where it must be stored explicitly (detailed above; for example where the 
+SgTypeDefault is used and for SgCastExp, etc.). The function get_expression_type()
+is not a part of the user interface and users should call get_type() instead.
 
 \internal This is a base class for all expressions.
 As a design point IPR has an empty expression, not an empty statement. And empty statement can 
@@ -254,9 +266,12 @@ within SAGE III (will be tested in the future).
 
 /*!
 \fn SgExpression::get_type() const
-\brief Get the type associated with this expression
+\brief Get the type associated with this expression.
 
-\return Returns SgType (base class for all possible types)
+This function is the correct user function to call to get the 
+type (note that get_expression_type() is for internal use only).
+
+\return Returns pointer to SgType (base class for all possible types)
 */
 
 /*!
@@ -264,6 +279,32 @@ within SAGE III (will be tested in the future).
 \brief Set the type associated with this expression
 
    This is an internally call function, it sets up the type of the expression 
+based upon the types of the subexpressions (if any). Thus it takes no 
+arguments.
+
+\return Returns void
+*/
+
+/*!
+\fn SgExpression::get_expression_type() const
+\brief \b FOR \b INTERNAL \b USE Data access function for explicitly stored type.
+
+   This access function is used internally to access explicitly stored types (where it
+is required to be stored).  Currently a larger number of IR nodes have this
+data member than where it is explicitly required, this will be fixed in the
+future. Where used, this function can return NULL if the explicitly stored
+p_expression_type variable is not needed (this is to support it later
+being removed).
+
+\return Returns pointer to SgType (base class for all possible types)
+*/
+
+/*!
+\fn SgExpression::set_expression_type()
+\brief \b FOR \b INTERNAL \b USE Data access function for explicitly stored type.
+
+   This function is only meaningful where the type is explicitly stored.
+It is an internally called function, it sets up the type of the expression 
 based upon the types of the subexpressions (if any). Thus it takes no 
 arguments.
 
