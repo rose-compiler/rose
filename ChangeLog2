@@ -1,3 +1,43 @@
+2009-10-23 00:57  dquinlan
+
+	* [r7901]
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/astStructRecognition.C:
+	  Switched to synthisized attributed based implementation.
+
+2009-10-23 00:15  dquinlan
+
+	* [r7900] /trunk/ROSE/docs/testDoxygen/SgExpression.docs: Explained
+	  difference between get_type() and get_expression_type() in the
+	  documentation.
+
+2009-10-22 22:34  liao6
+
+	* [r7899]
+	  /trunk/ROSE/projects/autoParallelization/tests/clibfunc.annot: A
+	  better form of side effect annotations for C math lib function
+
+2009-10-22 22:22  liao6
+
+	* [r7898] /trunk/ROSE/projects/autoParallelization/autoPar.C,
+	  /trunk/ROSE/projects/autoParallelization/tests/Makefile.am,
+	  /trunk/ROSE/projects/autoParallelization/tests/Stress2.cc,
+	  /trunk/ROSE/projects/autoParallelization/tests/c99loop.c,
+	  /trunk/ROSE/projects/autoParallelization/tests/clibfunc.annot,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface_type.C:
+	  Handle more corner cases for auto parallelization:
+	  * Normalizing C99 style loop to c89 style: for (int i=0;..) -->
+	  int i; for (i=0, ...)
+	  * Treat a typedef type with a scalar base type as a scalar type
+	  * Annotation file for standard c lib functions: enabling
+	  parallelizing certain code using math functions.
+
+2009-10-22 20:55  brown223
+
+	* [r7897] /trunk/ROSE/src/frontend/ExecFormats/ExecELF.C: Fix
+	  32-bit bug in SgAsmSymverEntry::dump
+	  
+	  Fixes a bug causing 32-bit builds to print uninitialized memory
+
 2009-10-22 18:14  wei4
 
 	* [r7895]
