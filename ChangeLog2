@@ -1,3 +1,9 @@
+2009-10-24 02:09  dquinlan
+
+	* [r7908]
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/README:
+	  Added documentation for command to output section boundaries.
+
 2009-10-24 00:18  dquinlan
 
 	* [r7906] /trunk/ROSE/tests/roseTests/binaryTests/Makefile.am: Used
