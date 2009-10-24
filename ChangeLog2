@@ -1,3 +1,37 @@
+2009-10-24 00:18  dquinlan
+
+	* [r7906] /trunk/ROSE/tests/roseTests/binaryTests/Makefile.am: Used
+	  test for detection of RedHat_32bit platform so that a test could
+	  be commented out.
+
+2009-10-24 00:17  dquinlan
+
+	* [r7905] /trunk/ROSE/config/determinte-os.m4: Added test for
+	  detection of RedHat_32bit platform so that a test could be
+	  commented out.
+
+2009-10-24 00:13  dquinlan
+
+	* [r7904]
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/README,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/astStructRecognition.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/testProgram_1.C:
+	  Added a file to accumulate information about C struct and C++
+	  class recognition.
+
+2009-10-24 00:06  hamilton37
+
+	* [r7903]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CStdLibManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/FileManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/PointerManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/doc/doc.doxyfile,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: Added some comments to
+	  the RTED RTS.
+
 2009-10-23 00:57  dquinlan
 
 	* [r7901]
