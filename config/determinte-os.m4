@@ -134,6 +134,8 @@ AC_DEFUN([DETERMINE_OS_VENDOR],
          AM_CONDITIONAL([OS_VENDOR_CENTOS],[ test "x$CENTOS" = xyes ] )
          AM_CONDITIONAL([OS_VENDOR_APPLE],[ test "x$APPLE"  = xyes ] )
 
+         AM_CONDITIONAL([OS_VENDOR_REDHAT_32BIT],[ test "x$REDHAT" = xyes -a "x$build_cpu" = xi686 ] )
+
    echo "Leaving DETERMINE OS VENDOR: OS_vendor  = $OS_vendor"
    echo "Leaving DETERMINE OS VENDOR: OS_release = $OS_release"
 
