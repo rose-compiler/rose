@@ -12,7 +12,7 @@ class PointerManager;
 
 /**
  * Stores infos for a dereferentiable memory region (mostly but not always a pointer)
- * Example char ** b; for this case we have two PointerInfos, one for c, and one for *c
+ * Example char ** b; for this case we have two PointerInfos, one for c, and one for *c.
  */
 class PointerInfo
 {
@@ -25,7 +25,7 @@ class PointerInfo
 
 
         /// Checks if there is a variable registered for sourceAddress
-        /// if not NULL is returned
+        /// if not @c NULL is returned
         VariablesType * getVariable() const;
 
         /// Less operator uses sourceAddress (should be unique)
@@ -55,7 +55,8 @@ std::ostream& operator<< (std::ostream &os, const PointerInfo & m);
 
 
 /**
- * Keeps track of all dereferentiable memory regions
+ * Keeps track of all dereferentiable memory regions.  It is expected that
+ * PointerManager is used indirectly via the API for RuntimeSystem.
  */
 class PointerManager
 {

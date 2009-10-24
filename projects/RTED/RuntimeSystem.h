@@ -140,17 +140,17 @@ int RuntimeSystem_roseInitVariable(const char* typeOfVar2,
 /**
  * This function is called when pointers are incremented.  For example, it will
  * be called for the following:
- *
- *      int* p;
- *      // ...
- *      ++p;
- *
+ @code
+       int* p;
+       // ...
+       ++p;
+ @endcode
  * but not for simple assignment, as in the following:
- *
- *      int* p;
- *      // ...
- *      p = ...
- *
+ @code
+       int* p;
+       // ...
+       p = ...
+ @endcode
  * It verifies that the pointer stays within “memory bounds”.  In particular, if
  * the pointer points to an array, RuntimeSystem_roseMovePointer checks that it
  * isn't incremented beyond the bounds of the array, even if doing so results in

@@ -97,7 +97,10 @@ std::ostream& operator<< (std::ostream &os, const FileInfo_FSTREAM & m);
 
 enum FileOpenMode   {  INVALID_OPEN_MODE=0, READ=1,WRITE=2,APPEND=4  };
 
-
+/**
+ * Checks file access for such errors as invalid writes, reads, etc.
+ * FileManager is intended to be used indirectly via RuntimeSystem.
+ */
 class FileManager
 {
     public:

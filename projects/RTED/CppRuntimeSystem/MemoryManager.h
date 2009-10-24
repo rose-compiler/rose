@@ -18,8 +18,13 @@
 class RuntimeSystem;
 class VariablesType;
 class RsType;
+
 /**
- * This class represents a memory allocation, made by malloc/new or just on the stack
+ * Keeps track of information about memory, such as address, size, and known
+ * type information.  It is generally unnecessary for users to handle MemoryType
+ * objects directly.
+ *
+ * Most uses of the MemoryManager can be handled indirectly via RuntimeSystem.
  */
 class MemoryType
 {
@@ -153,7 +158,11 @@ std::ostream& operator<< (std::ostream &os, const MemoryType & m);
 
 
 
-
+/**
+ * MemoryManager tracks allocated memory and known type information.  With the
+ * exception of bounds checking via @ref checkIfSameChunk, MemoryManager is
+ * expected to be used indirectly, via calls to functions of RuntimeSystem.
+ */
 class MemoryManager
 {
     public:
@@ -182,6 +191,9 @@ class MemoryManager
         void checkWrite (addr_type addr, size_t size, RsType * t=NULL);
 
 
+        /** 
+         * @return @b true if the memory region containing 
+         * @c addr @c.. @c addr+size is initialized. */
         bool  isInitialized(addr_type addr, size_t size);
 
 

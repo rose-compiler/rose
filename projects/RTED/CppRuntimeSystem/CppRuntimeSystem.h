@@ -23,12 +23,58 @@
 
 
 /**
- * RuntimeSystem is responsible for keeping track of all variable allocations and memory operations
+ * @brief Main API of the runtimesystem.  Provides direct and indirect access to
+ * PointerManager, MemoryManager, StackManager, CStdLibManager, and FileManager.
+ * Also provides access to TypeSystem.
  *
- * there a two types of functions:
- *      - Register Functions: have to be called when specific memory operations are called in instrumented code
- *                            especially (de-)allocations, and writes to memory
- *      - Check Functions:    check if certain memory allocations are safe/valid
+ * RuntimeSystem is responsible for keeping track of all variable allocations,
+ * memory and file operations.  Although most of the implementation exists in
+ * the various managers, the primary user-visible API is provided by this class.
+ *
+ * There a two classes of functions:
+ *      - Register Functions:   have to be called when specific memory operations
+ *                              are called in instrumented code especially
+ *                              (de-)allocations, and writes to memory
+ *      - Check Functions:      check if certain memory allocations are safe/valid
+ *
+ * Features of RuntimeSystem include:
+ *      - @b Checking @b memory @b reads.  
+ *              Reads can be checked to ensure memory is readable (i.e. an
+ *              address refers to allocated memory), initialized, and
+ *              type-consistent.
+ *      - @b Checking @b memory @b writes.
+ *              Writes can be checked to ensure memory is allocated, and that
+ *              the write is type-consistent (e.g. ensuring that one doesn't
+ *              write a float to a memory location to which one had previously
+ *              written an int).
+ *      - @b Checking @b pointer @b manipulations.
+ *              Pointer increments can be checked to ensure that they stay
+ *              within the same sort of memory.  The canonical example is array
+ *              bounds checking.
+ *              @n@n
+ *              Memory leaks can be checked at pointer assignment as well.  If
+ *              some pointer φ refers to some allocated memory μ and is assigned
+ *              to some other address, and no other pointer points to μ, an
+ *              error can be raised.  This has false positives in the sense that
+ *              one might be able to reliably compute the address of a memory
+ *              location without having a pointer to that location.
+ *              @n
+ *      - @b Stack @b Management.
+ *              The runtime system can track stack variables and automatically
+ *              deallocate them (and check for corresponding memory leaks) when
+ *              stack frames are removed.
+ *      - @b Miscellaneous
+ *              The runtime system can also verify function signatures (only
+ *              applicable to C) and check for consistent memory
+ *              allocation/deallocation (e.g. raising an exception if memory
+ *              allocated with @c malloc is freed with @c delete).
+ *
+ * @remarks RuntimeSystem provides an API for managing pointers, checking for
+ * memory leaks and so on.  There are some important implementation details,
+ * namely:
+ *      -#  An assumption is made that all pointers are of the same size
+ *          (specifically, @c sizeof(void*)).
+ *      -#  That size is determined when the @em RuntimeSystem is compiled.
  *
  * Singleton
  */
@@ -67,6 +113,8 @@ class RuntimeSystem
         void setViolationPolicy( RuntimeViolation::Type, ViolationPolicy::Type );
 
 
+        // access a specific manager
+
         CStdLibManager * getCStdLibManager() { return &cstdlibManager; }
 
         MemoryManager * getMemManager()     { return & memManager;     }
@@ -77,10 +125,40 @@ class RuntimeSystem
 
         // ---------------------------------  Register Functions ------------------------------------------------------------
 
-        /// Notifies the runtime-system that a variable was created
-        /// creates this variable on the stack and handles allocation right
-        /// the VariablesType is deleted when the var goes out of scope
+        /** Notifies the runtime-system that a variable was created.
+         * Creates this variable on the stack and handles allocation right.
+         * The VariablesType is deleted when the var goes out of scope.
+         *
+         * @c createVariable should not be used for stack arrays.  Instead, use
+         * @ref createArray.  @c createVariable @e can be used for pointer
+         * types, and will automatically be registered with the pointer manager
+         * when a pointer change is registered.  See @ref registerPointerChange.
+         *
+         * The following example shows how to properly register a local
+         * variable:
+         @code
+            int foo() {
+                int x;
 
+                RuntimeSystem* rs = RuntimeSystem::instance();
+                rs -> createVariable(
+                    &x,
+                    "x",
+                    "mangled_x",
+                    "SgTypeInt"
+                );
+            }
+         @endcode
+         *
+         * Using a std::string for the type is a convenience.  Calling
+         * createVariable( addr_type, const std::string&, const std::string&, RsType*)
+         * is preferred.
+         *
+         * @param address       The (stack) address of the variable.
+         * @param name          The simple name of the variable.  Only used for the
+         *                      debugger and/or output, not to detect violations.
+         * @param typeString    A valid RsType string.
+         */
         void createVariable(addr_type address,
                             const std::string & name,
                             const std::string & mangledName,
@@ -126,29 +204,67 @@ class RuntimeSystem
 
 
 
-        /// Call this function after when a malloc or new occurs in monitored code
-        /// @param startAdress  the return value of malloc/new
-        /// @param size         size of the allocated memory area
-        /// @param pos          position of allocation (needed to inform the user when this allocation is never freed)
+        /** Notify the runtime system that memory has been allocated, usually
+         * via @c malloc or @c new.
+         *
+         * @param addr          The base address of the newly allocated memory.
+         * @param size          The size of the newly allocated memory.
+         * @param onStack       Whether the memory is on the stack or not.  @ref
+         *                      createMemory should be called for stack
+         *                      variables, in which case @c onStack should be @c
+         *                      true.  The runtime system will detect invalid
+         *                      frees to stack memory.
+         * @param fromMalloc    Whether the memory was created via a C-style
+         *                      allocation such as @c malloc, as opposed to a
+         *                      C++ style allocation such as @c new.  Ignored if
+         *                      onstack is true.
+         * @param type          What type information is known about the memory,
+         *                      if any.  If and when memory becomes typed, calls
+         *                      to @ref checkMemRead and @ref checkMemWrite can
+         *                      verify that memory is used in a type-consistent
+         *                      way.
+         */
         void createMemory(addr_type addr, size_t size,bool onStack = false, bool fromMalloc = false, RsType * type=NULL);
         /// this version creates stackmemory, of given type
         void createStackMemory(addr_type addr, size_t size,const std::string & type);
 
 
-        /// Call this function when a free/delete occurs in monitored code
-        /// @param startAddress the address to be freed (argument of free/delete)
+        /** Symmetric to @ref createMemory.
+         */
         void freeMemory(addr_type startAddress, bool onStack = false, bool fromMalloc = false);
 
 
-        /// Call this function when the value of a pointer changed i.e. the address a pointer points to
-        /// this concept applies not only to pointer, but to all memory regions which can be dereferenced
-        /// pointer information is deleted when the memory where srcAddress lies in is deleted
-        /// @param checkPointerMove if true, it is checked if the pointer changed the memory area it points to
-        ///               which is fine, if pointer was changed by assignment, and which might be an "error"
-        ///               if it was changed via pointer arithmetic
-        /// @param checkMemLeaks if true, and the pointer at sourceAddress
-        ///               pointed at some memory, checks are made that pointers
-        ///               still exist that reference the old memory
+        /** Registers that a pointer, at address @c sourceAddress has just been
+         * updated to point to @c targetAddress.  If this is the first time
+         * registerPointerChange() has been called for @c sourceAddress it will
+         * be automatically registered with the PointerManager.
+         *
+         * @param checkPointerMove
+         *      If @b true, treat this pointer change as a "move" and report as
+         *      violations escaping array bounds, even if @c targetAddress is
+         *      valid memory.  The canonical example of such a violation is the
+         *      following:
+         @code
+            struct Type {
+                int x[ 2 ];
+                int y;
+            } var;
+           int* p = &var.x;
+           ++p;     // okay
+           ++p;     // now we point to &v.y, an illegal "pointer move"
+         @endcode
+         *      @c checkPointerMove is expected to be @b true for pointer
+         *      arithmetic, and @b false for other assignment.
+         *
+         * @param checkMemLeaks
+         *      If @b true, and the pointer at @c sourceAddress previously
+         *      pointed to some memory @c x, ensure that there is still a
+         *      known pointer that refers to @c x.  This check @em can result in
+         *      false positives, as there is no runtime dataflow analysis and so
+         *      will report as a leak cases when an address is reliably
+         *      computable (e.g. if one stores an int with a fixed offset from
+         *      the address).
+         */
         void registerPointerChange( addr_type sourceAddress, addr_type targetAddress, bool checkPointerMove=false, bool checkMemLeaks=true);
         /// for documentation see PointerManager::registerPointerChange()
         void registerPointerChange( addr_type sourceAddress, addr_type targetAddress, RsType * type, bool checkPointerMove=false, bool checkMemLeaks=true);
@@ -167,7 +283,7 @@ class RuntimeSystem
         void beginScope(const std::string & name);
 
         /// Closes a scope and deletes all variables which where created via registerVariable()
-        /// from the stack, tests for
+        /// from the stack, testing for memory leaks (@ref registerPointerChange).
         void endScope ();
 
 
@@ -182,19 +298,22 @@ class RuntimeSystem
         void registerFileClose(std::fstream& file);
 
 
-        /// This function be called if a function call is about to be made whose
-        /// signature could not be verified at compile time (e.g. a c program
-        /// without the function definition, which may have an incorrect or
-        /// missing function prototype).
-        ///
-        /// @param name     The name of the function that is to be called.
-        /// @param types    The type signature of the function, including return
-        ///                 type.  The first item should be the return type
-        ///                 (SgVoidType if void), and the remaining, the types
-        ///                 of the parameters.
+        /** This function be called if a function call is about to be made whose
+         * signature could not be verified at compile time (e.g. a c program
+         * without the function definition, which may have an incorrect or
+         * missing function prototype).
+         *
+         * @param name     The name of the function that is to be called.
+         * @param types    The type signature of the function, including return
+         *                 type.  The first item should be the return type
+         *                 (SgVoidType if void), and the remaining, the types
+         *                 of the parameters.
+         */
         void expectFunctionSignature( const std::string & name, const std::vector< RsType* > types );
-        /// This function should be called at all function definitions, to
-        /// verify the signature of separately compiled callsites, if necessary.
+        /** This function should be called at all function definitions, to
+         * verify the signature of separately compiled callsites, if necessary.
+         * Only applicable to C programs.
+         */
         void confirmFunctionSignature( const std::string & name, const std::vector< RsType* > types );
 
         // --------------------------------  Check Functions ------------------------------------------------------------
@@ -326,24 +445,26 @@ class RuntimeSystem
         std::ostream * defaultOutStr;
         std::ofstream outFile;
 
-        /// A @c map of violation types to policies.  Policies include:
-        ///
-        ///     Exit (default)  -   Report the violation and terminate the
-        ///                         process.
-        ///     Warn            -   Report the violation and continue.
-        ///     Ignore          -   Do nothing about the violation.
-        ///
-        ///     InvalidatePointer-  Only valid for INVALID_PTR_ASSIGN.  Do
-        ///                         not report the violation, but invalidate the
-        ///                         pointer, both the real one and our tracked 
-        ///                         pointer info, by setting the target to NULL.
-        ///                         If an attempt is made to read or write to the
-        ///                         pointer without registering a pointer change,
-        //                          a different violation will occur.
-        ///     
-        /// TODO there are certain violations where the RuntimeSystem is in
-        ///      inconsistent state after they have occured
-        ///      determine which Violations have this problem and prevent switching them off
+        /** A @c map of violation types to policies.  Policies include:
+         *
+         *      - @b Exit (default).    Report the violation and terminate the
+         *                              running process.
+         *      - @b Warn.              Report the violation and continue.
+         *      - @b Ignore.            Do nothing.
+         *      - @b InvalidatePointer. Only valid for
+         *                              RuntimeViolation::INVALID_PTR_ASSIGN.
+         *                              Do not report the violation, but
+         *                              invalidate the pointer, both the real
+         *                              one and our tracked pointer info, by
+         *                              setting the target to @c NULL.  If an
+         *                              attempt is made to read or write to the
+         *                              pointer without registering a pointer
+         *                              change, a different violation will
+         *                              occur.
+         *
+         * @todo there are certain violations where the RuntimeSystem is in
+         * inconsistent state after they have occured.
+         */
         std::map<RuntimeViolation::Type, ViolationPolicy::Type> violationTypePolicy;
 
         ViolationPolicy::Type getPolicyFromString( std::string & name ) const;

@@ -8,9 +8,28 @@
 using namespace std;
 
 
+/** Provides checks for functions in the C Standard Library.  Each function @c f
+ * for which a check is provided will be named @c check_@em f and take exactly the
+ * same arguments as @c f.  If a check function for @c f does not report a
+ * violation, then an immediate subsequent call to @c f with the same arguments
+ * will not result in undefined behaviour.
+ */
 class CStdLibManager {
 
     public:
+        /* Listed below (in comments) are the functions in the C standard
+         * library that have not yet been considered.  Most of them probably do
+         * not have any checks that need to be performed and can simply be
+         * ignored.
+         *
+         * Those that have functions which must be checked to avoid unspecified
+         * behaviour have corresponding check_ functions.
+         *
+         * For example, check_memcpy ensures that an immediately subsequent call
+         * to memcpy with the same arguments will not result in unspecified
+         * behaviour.
+         */
+
         // cstdlib functions {{{
         //
         //  assert.h
@@ -177,8 +196,9 @@ class CStdLibManager {
     
     private:
        
-        // Check that the memory region `ptr1 .. ptr1 + num` does not overlap
-        // with memory region `ptr2 .. ptr2 + num`
+        /** Check that the memory region (@c ptr1 : @c ptr1 + @c num) does not overlap
+         * with memory region (@c ptr2 : @c ptr2 + num)
+         */
         void check_overlap(
             const void* ptr1, 
             const void* ptr2, 
@@ -198,12 +218,13 @@ class CStdLibManager {
             const string& description = ""
         );
 
-        // Checks that str is initialized, and that it contains a null
-        // terminator.
-        //
-        // Returns the length of the string if the null terminator was found.
-        // If the null terminator was not found, -1 is returned unless reporting
-        // violations results in aborted execution.
+        /** Checks that str is initialized, and that it contains a null
+         * terminator.
+         *
+         * Returns the length of the string if the null terminator was found.
+         * If the null terminator was not found, -1 is returned unless reporting
+         * violations results in aborted execution.
+         */
         size_t check_string( const char* str);
 };
 
