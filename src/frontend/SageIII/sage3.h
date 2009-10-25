@@ -24,7 +24,7 @@
 // by internal ROSE files that only include sage3.h.
 #include <rose_config.h>
 
-// DQ (4/21/2009): Error checking to avoid difficult to debug ORD violations on 32-bit systems.
+// DQ (4/21/2009): Error checking to avoid difficult to debug ODR violations on 32-bit systems.
 #if defined(_SYS_STAT_H)
 #warning "sys/stat.h should not have been included before the _FILE_OFFSET_BITS macro is set! (use rose.h first...)"
 #endif

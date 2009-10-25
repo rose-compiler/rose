@@ -159,8 +159,10 @@ std::ostream& operator<< (std::ostream &os, const MemoryType & m);
 
 
 /**
- * MemoryManager tracks allocated memory and known type information.  With the
- * exception of bounds checking via @ref checkIfSameChunk, MemoryManager is
+ * \class MemoryManager
+ * \brief MemoryManager tracks allocated memory and known type information.  
+ *
+ * With the exception of bounds checking via @ref checkIfSameChunk, MemoryManager is
  * expected to be used indirectly, via calls to functions of RuntimeSystem.
  */
 class MemoryManager
