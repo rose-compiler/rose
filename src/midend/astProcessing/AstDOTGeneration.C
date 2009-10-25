@@ -13,6 +13,8 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+#include "unparseAsm.h"
+
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
@@ -287,9 +289,24 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
         {
        // At the moment the mnemonic name is stored, but it could be computed in the 
        // future from the kind and the tostring() function.
-          string name = genericInstruction->get_mnemonic();
+#if 1
+          string unparsedInstruction = unparseInstruction(genericInstruction);
+          string addressString       = StringUtility::numberToString( (void*) genericInstruction->get_address() );
+       // string name = genericInstruction->get_mnemonic();
+          string name = unparsedInstruction + "\\n address: " + addressString;
+#else
+          string name = unparsedInstruction + "\\n" + addressString;
+#endif
           ROSE_ASSERT(name.empty() == false);
 
+          nodelabel += string("\\n") + name;
+        }
+
+     SgAsmExpression* genericExpression = isSgAsmExpression(node);
+     if (genericExpression != NULL)
+        {
+          string name = unparseExpression(genericExpression);
+          ROSE_ASSERT(name.empty() == false);
           nodelabel += string("\\n") + name;
         }
 
