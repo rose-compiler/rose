@@ -1,3 +1,83 @@
+2009-10-25 15:45  dquinlan
+
+	* [r7913] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_30.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_37.C,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/doc/doc.doxyfile,
+	  /trunk/ROSE/projects/RTED/upcparam.h,
+	  /trunk/ROSE/projects/RTED/upcparam_s.h,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/build_configs/x86_64_rhas_4/minimal_default,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/attribute.h,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/cmd_line.h,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/cp_gen_be.c,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/error.c,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/error.h,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/fe_init.c,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/il.h,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/il_def.h,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/il_to_str.h,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/lexical.h,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/pch.h,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/preproc.h,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/symbol_tbl.h,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/version.h,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/Makefile.am,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/attributeSupport.C,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/debugging.C,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/edgMacros.h,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/sageCommonSourceHeader.h,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/sageSupport.C,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/sage_gen_be.C,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/sage_gen_be.h,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/sage_il_to_str.C,
+	  /trunk/ROSE/src/frontend/CxxFrontend/Makefile.am,
+	  /trunk/ROSE/src/frontend/SageIII/AstAttributeDOT.C,
+	  /trunk/ROSE/src/frontend/SageIII/AstAttributeDOT.h,
+	  /trunk/ROSE/src/frontend/SageIII/sage3.h,
+	  /trunk/ROSE/src/midend/astProcessing/AstDOTGeneration.C,
+	  /trunk/ROSE/tutorial/Makefile.am: Added work to support more
+	  binary analysis and fix C++ bug.
+	  
+	  Detailed changes in this commit:
+	  1) Added more work on the recognition of C structs and C++
+	  classes.
+	  2) Fixed bug (test2009_37.C) where use of std::endl (in a
+	  specific
+	  trivial case) was a problem.
+	  3) Fixed warnings in use of EDG with later versions of GNU (4.2
+	  and greater)
+	  where new warnings were making it difficult to identify and debug
+	  ROSE
+	  (The EDG and EDG translation now compiles cleanly without
+	  warnings for
+	  the version of EDG used by defult in ROSE.
+	  4) Removed duplicated files:
+	  src/frontend/SageIII/AstAttributeDOT.[hC]
+	  pointed out by Andreas.
+	  5) Modified NMI support for x86_64_rhas_4/minimal_default to
+	  disable
+	  compilation of hpct (this platform used to pass, and now fails as
+	  of Oct 18th).
+	  6) Fixed the ordering of header files in the EDG translation to
+	  avoid
+	  32-bit specific warning that from sage3.h:
+	  #warning "sys/stat.h should not have been included before the
+	  _FILE_OFFSET_BITS macro is set! (use rose.h first...)"
+	  7) Added test for existence of generated pdf files in the
+	  tutorial (this can be a
+	  problem when "dot" is not available.
+	  8) Tried to remove use of EDG_3.10, but was not able to do so
+	  (saved for later).
+	  9) Minor fixes to RTED done with David Hamilton's help.
+	  10) Added test2009_37.C test code (it is a dramatically simpler
+	  version (from Liao) of
+	  test2009_30.C (from Thomas)).
+	  11) Added new testcodes to be run by default in "make check" rule
+	  for
+	  developersScratchSpace/Dan/Cxx_tests directory.
+
 2009-10-24 20:15  dquinlan
 
 	* [r7911] /trunk/ROSE/tests/roseTests/binaryTests/Makefile.am: The
