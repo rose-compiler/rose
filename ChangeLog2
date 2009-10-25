@@ -1,3 +1,9 @@
+2009-10-24 20:15  dquinlan
+
+	* [r7911] /trunk/ROSE/tests/roseTests/binaryTests/Makefile.am: The
+	  test_disassemble.passed rule fails on a lot of platforms (Mac OSX
+	  as well; commented out this test).
+
 2009-10-24 02:09  dquinlan
 
 	* [r7908]
