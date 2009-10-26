@@ -1,5 +1,8 @@
+# Editor backups
+*~
 
 # /
+Makefile.in
 /aclocal.m4
 /rose_config.h.in
 /configure
