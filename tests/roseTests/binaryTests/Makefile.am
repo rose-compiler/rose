@@ -234,6 +234,7 @@ test_samples.passed: disassemble execFormatsTest $(srcdir)/testSampleBinaries.sh
 	   touch $@; \
 	else \
 	   echo "Full output is in `pwd`/test_samples.out"; \
+	   false; \
 	fi
 
 ###############################################################################################################################

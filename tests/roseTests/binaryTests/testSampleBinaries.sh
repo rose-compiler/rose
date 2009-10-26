@@ -57,7 +57,7 @@ test_assembler() {
 [ -n "$CONFIG" ] || CONFIG=/dev/null
 failures= nfailures=0
 echo "Running binary tests on samples in $SAMPLE_DIR"
-for sample in $(find $SAMPLE_DIR -type f |sort); do
+for sample in $(find $SAMPLE_DIR \( -type d -name .svn -prune \) -o -type f |sort); do
     sampleshort="${sample#$SAMPLE_DIR/}"
     samplebase="${sample##*/}"
 
