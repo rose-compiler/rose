@@ -999,9 +999,12 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "new_frontend", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+#if 0
+  // DQ (10/26/2009): After discussion with Peter, this data member should be removed.
   // MS: DOT option flag (depricate this if it is not needed any more)
      File.setDataPrototype         ( "bool", "travTraceToDOT", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
   // Older options (will be depricated)
      File.setDataPrototype         ( "bool", "disable_edg_backend", "= false",
@@ -1014,6 +1017,8 @@ Grammar::setUpSupport ()
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "enable_cp_backend", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if 0
+  // DQ (10/26/2009): After discussion with Peter, this data member should be removed.
      File.setDataPrototype         ( "bool", "outputGrammarTreeFiles", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "outputGrammarTreeFilesForHeaderFiles", "= false",
@@ -1022,6 +1027,8 @@ Grammar::setUpSupport ()
   // (since they are very large and most often only the SAGE III version is wanted)
      File.setDataPrototype         ( "bool", "outputGrammarTreeFilesForEDG", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
   // DQ (8/8/2006): Permit marking of the generated source code with "#define ROSE_GENERATED_CODE"
   // option requested by Yarden at IBM.
      File.setDataPrototype         ( "bool", "markGeneratedFiles", "= false",
@@ -1461,9 +1468,12 @@ Grammar::setUpSupport ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Project.setDataPrototype("SgStringList","libraryDirectorySpecifierList", "",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (10/26/2009): After discussion with Peter, this data member should be moved to the SgFile (or SgSourceFile) object.
      Project.setDataPrototype("SgStringList","includeDirectorySpecifierList", "",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (10/26/2009): After discussion with Peter, this data member should be moved to the SgFile (or SgSourceFile) object.
   // DQ (1/13/2009): Added support for GNU -include (for pre inclusion of files) and -isystem
   // (for preinclusion of directories to be searched) options.
      Project.setDataPrototype("SgStringList","preincludeFileList", "",
