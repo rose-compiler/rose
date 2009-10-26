@@ -1,3 +1,18 @@
+2009-10-25 20:19  dquinlan
+
+	* [r7927]
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/astStructRecognition.C:
+	  Update of work in progress.
+
+2009-10-25 19:45  dquinlan
+
+	* [r7926]
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/astStructRecognition.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/sectionBoundaryTraversal.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/sectionBoundaryTraversal.h:
+	  Added support for section boundaries.
+
 2009-10-25 15:45  dquinlan
 
 	* [r7913] /trunk/ROSE/configure.in,
