@@ -31,6 +31,13 @@ test_parser() {
     ./execFormatsTest -rose:read_binary_file_format_only -rose:binary $sample
 }
 
+# A test of the unparser that tries to parse what was unparsed in the 'test_parser' test.
+test_unparser() {
+    local sample="$1"
+    sample="$(basename $sample).new"
+    ./execFormatsTest -rose:read_binary_file_format_only -rose:binary $sample
+}
+
 # A test that runs the disassembler with default settings
 test_disassembler() {
     local sample="$1"
