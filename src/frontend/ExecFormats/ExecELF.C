@@ -328,9 +328,9 @@ SgAsmElfFileHeader::parse()
     return this;
 }
 
-/* Maximum page size according to the ABI. This is used by the loader when calculating the program base address. Since parts
- * of the file are mapped into the process address space those parts must be aligned (both in the file and in memory) on the
- * largest possible page boundary so that any smaller page boundary will also work correctly. */
+/** Maximum page size according to the ABI. This is used by the loader when calculating the program base address. Since parts
+ *  of the file are mapped into the process address space those parts must be aligned (both in the file and in memory) on the
+ *  largest possible page boundary so that any smaller page boundary will also work correctly. */
 uint64_t
 SgAsmElfFileHeader::max_page_size()
 {
@@ -342,7 +342,7 @@ SgAsmElfFileHeader::max_page_size()
     return 4*1024;
 }
 
-/* Get the list of sections defined in the ELF Section Table */
+/** Get the list of sections defined in the ELF Section Table */
 SgAsmGenericSectionPtrList
 SgAsmElfFileHeader::get_sectab_sections()
 {
@@ -356,7 +356,7 @@ SgAsmElfFileHeader::get_sectab_sections()
     return retval;
 }
 
-/* Get the list of sections defined in the ELF Segment Table */
+/** Get the list of sections defined in the ELF Segment Table */
 SgAsmGenericSectionPtrList
 SgAsmElfFileHeader::get_segtab_sections()
 {
@@ -370,7 +370,7 @@ SgAsmElfFileHeader::get_segtab_sections()
     return retval;
 }
 
-/* Encode Elf header disk structure */
+/** Encode Elf header disk structure */
 void *
 SgAsmElfFileHeader::encode(ByteOrder sex, Elf32FileHeader_disk *disk) const
 {
@@ -453,7 +453,7 @@ SgAsmElfFileHeader::encode(ByteOrder sex, Elf64FileHeader_disk *disk) const
     return disk;
 }
 
-/* Update prior to unparsing */
+/** Update prior to unparsing */
 bool
 SgAsmElfFileHeader::reallocate()
 {
@@ -534,7 +534,7 @@ SgAsmElfFileHeader::reallocate()
     return reallocated;
 }
 
-/* Write ELF contents back to a file. */
+/** Write ELF contents back to a file. */
 void
 SgAsmElfFileHeader::unparse(std::ostream &f) const
 {
@@ -571,7 +571,7 @@ SgAsmElfFileHeader::unparse(std::ostream &f) const
     write(f, p_offset, struct_size, disk);
 }
 
-/* Print some debugging info */
+/** Print some debugging info */
 void
 SgAsmElfFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -620,7 +620,7 @@ SgAsmElfFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 // Sections
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* Constructor for sections that are in neither the ELF Section Table nor the ELF Segment Table yet (but eventually will be) */
+/** Constructor for sections that are in neither the ELF Section Table nor the ELF Segment Table yet (but eventually will be) */
 void
 SgAsmElfSection::ctor()
 {
@@ -749,15 +749,15 @@ SgAsmElfSection::init_from_segment_table(SgAsmElfSegmentTableEntry *shdr, bool m
     return this;
 }
 
-/* Just a convenience function so we don't need to constantly cast the return value from get_header() */
+/** Just a convenience function so we don't need to constantly cast the return value from get_header() */
 SgAsmElfFileHeader*
 SgAsmElfSection::get_elf_header() const
 {
     return dynamic_cast<SgAsmElfFileHeader*>(get_header());
 }
 
-/* Returns info about the size of the entries based on information already available. Any or all arguments may be null
- * pointers if the caller is not interested in the value. Return values are:
+/** Returns info about the size of the entries based on information already available. Any or all arguments may be null
+ *  pointers if the caller is not interested in the value. Return values are:
  *
  *   entsize  - size of each entry, sum of required and optional parts. This comes from the sh_entsize member of this
  *              section's ELF Section Table Entry, adjusted upward to be large enough to hold the required part of each
@@ -772,7 +772,7 @@ SgAsmElfSection::get_elf_header() const
  *   entcount - total number of entries in this section. If the section has been parsed then this is the actual number of
  *              parsed entries, otherwise its the section size divided by the "entsize".
  *
- * Return value is the total size needed for the section. In all cases, it is entsize*entcount.
+ *  Return value is the total size needed for the section. In all cases, it is entsize*entcount.
  */
 rose_addr_t
 SgAsmElfSection::calculate_sizes(size_t r32size, size_t r64size,       /*size of required parts*/
@@ -833,21 +833,21 @@ SgAsmElfSection::calculate_sizes(size_t r32size, size_t r64size,       /*size of
     return entry_size * nentries;
 }
 
-/* Most subclasses will override this virtual function in order to return more useful values. This implementation returns the
- * following values:
+/** Most subclasses will override this virtual function in order to return more useful values. This implementation returns the
+ *  following values:
  *   entsize  -- size stored in the ELF Section Table's sh_entsize member, or size of entire section if not a table.
  *   required -- same as entsize
  *   optional -- zero
  *   entcount -- number of entries, each of size entsize, that can fit in the section.
- * The return size is entsize*entcount, which, if this section is a table (nonzero sh_entsize), could be smaller than the
- * total size of the section. */
+ *  The return size is entsize*entcount, which, if this section is a table (nonzero sh_entsize), could be smaller than the
+ *  total size of the section. */
 rose_addr_t
 SgAsmElfSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     return calculate_sizes(0, 0, std::vector<size_t>(), entsize, required, optional, entcount);
 }
 
-/* Called prior to unparse to make things consistent. */
+/** Called prior to unparse to make things consistent. */
 bool
 SgAsmElfSection::reallocate()
 {
@@ -880,7 +880,7 @@ SgAsmElfSection::reallocate()
     return reallocated;
 }
 
-/* Print some debugging info */
+/** Print some debugging info */
 void
 SgAsmElfSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -916,7 +916,7 @@ SgAsmElfSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 //    Table Section points to the ELF String Table (SgAsmElfStrtab) that is contained in the section.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* Non-parsing constructor. The ELF String Table is constructed to contain one NUL byte. */
+/** Non-parsing constructor. The ELF String Table is constructed to contain one NUL byte. */
 void
 SgAsmElfStringSection::ctor()
 {
@@ -926,7 +926,7 @@ SgAsmElfStringSection::ctor()
     p_strtab = new SgAsmElfStrtab(this);
 }
 
-/* Parse the file content to initialize the string table */
+/** Parse the file content to initialize the string table */
 SgAsmElfStringSection *
 SgAsmElfStringSection::parse()
 {
@@ -937,10 +937,10 @@ SgAsmElfStringSection::parse()
     return this;
 }
 
-/* Reallocate space for the string section if necessary. Note that reallocation is lazy here -- we don't shrink the section,
- * we only enlarge it (if you want the section to shrink then call SgAsmGenericStrtab::reallocate(bool) with a true value
- * rather than calling this function. SgAsmElfStringSection::reallocate is called in response to unparsing a file and gives
- * the string table a chance to extend its container section if it needs to allocate more space for strings. */
+/** Reallocate space for the string section if necessary. Note that reallocation is lazy here -- we don't shrink the section,
+ *  we only enlarge it (if you want the section to shrink then call SgAsmGenericStrtab::reallocate(bool) with a true value
+ *  rather than calling this function. SgAsmElfStringSection::reallocate is called in response to unparsing a file and gives
+ *  the string table a chance to extend its container section if it needs to allocate more space for strings. */
 bool
 SgAsmElfStringSection::reallocate()
 {
@@ -956,7 +956,7 @@ SgAsmElfStringSection::reallocate()
     return reallocated;
 }
 
-/* Unparse an ElfStringSection by unparsing the ElfStrtab */
+/** Unparse an ElfStringSection by unparsing the ElfStrtab */
 void
 SgAsmElfStringSection::unparse(std::ostream &f) const
 {
@@ -986,7 +986,7 @@ SgAsmElfStringSection::set_size(addr_t newsize)
     }
 }
 
-/* Print some debugging info */
+/** Print some debugging info */
 void
 SgAsmElfStringSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -1023,8 +1023,8 @@ SgAsmElfStrtab::ctor()
     p_dont_free = create_storage(0, false);
 }
 
-/* Parses the string table. All that actually happens at this point is we look to see if the table begins with an empty
- * string. */
+/** Parses the string table. All that actually happens at this point is we look to see if the table begins with an empty
+ *  string. */
 SgAsmElfStrtab *
 SgAsmElfStrtab::parse()
 {
@@ -1046,10 +1046,10 @@ SgAsmElfStrtab::parse()
     return this;
 }
 
-/* Free StringStorage objects associated with this string table. It may not be safe to blow them away yet since other objects
- * may still have SgAsmStoredStrings pointing to these storage objects. So instead, we will mark all this strtab's storage
- * objects as no longer being associated with a string table. This allows the SgAsmStoredString objects to still function
- * properly and their destructors (~SgAsmStoredString) will free their storage. */
+/** Free StringStorage objects associated with this string table. It may not be safe to blow them away yet since other objects
+ *  may still have SgAsmStoredStrings pointing to these storage objects. So instead, we will mark all this strtab's storage
+ *  objects as no longer being associated with a string table. This allows the SgAsmStoredString objects to still function
+ *  properly and their destructors (~SgAsmStoredString) will free their storage. */
 SgAsmElfStrtab::~SgAsmElfStrtab()
 {
     for (referenced_t::iterator i = p_storage_list.begin(); i != p_storage_list.end(); ++i) {
@@ -1061,9 +1061,9 @@ SgAsmElfStrtab::~SgAsmElfStrtab()
     p_dont_free = NULL; /*FIXME: can't delete for same reason as in SgAsmStoredString destructor. (RPM 2008-09-05) */
 }
 
-/* Creates the storage item for the string at the specified offset. If 'shared' is true then attempt to re-use a previous
- * storage object, otherwise always create a new one. Each storage object is considered a separate string, therefore when two
- * strings share the same storage object, changing one string changes the other. */
+/** Creates the storage item for the string at the specified offset. If 'shared' is true then attempt to re-use a previous
+ *  storage object, otherwise always create a new one. Each storage object is considered a separate string, therefore when two
+ *  strings share the same storage object, changing one string changes the other. */
 SgAsmStringStorage *
 SgAsmElfStrtab::create_storage(addr_t offset, bool shared)
 {
@@ -1111,7 +1111,7 @@ SgAsmElfStrtab::create_storage(addr_t offset, bool shared)
     return storage;
 }
 
-/* Similar to create_storage() but uses a storage object that's already been allocated. */
+/** Similar to create_storage() but uses a storage object that's already been allocated. */
 void
 SgAsmElfStrtab::rebind(SgAsmStringStorage *storage, addr_t offset)
 {
@@ -1121,19 +1121,19 @@ SgAsmElfStrtab::rebind(SgAsmStringStorage *storage, addr_t offset)
     storage->set_string(s);
 }
 
-/* Returns the number of bytes required to store the string in the string table. This is the length of the string plus
- * one for the NUL terminator. */
+/** Returns the number of bytes required to store the string in the string table. This is the length of the string plus
+ *  one for the NUL terminator. */
 rose_addr_t
 SgAsmElfStrtab::get_storage_size(const SgAsmStringStorage *storage) {
     return storage->get_string().size() + 1;
 }
 
-/* Tries to find a suitable offset for a string such that it overlaps with some other string already allocated. If the new
- * string is the same as the end of some other string (new="main", existing="domain") then we just use an offset into that
- * string since the space is already allocated for the existing string. If the new string ends with an existing string
- * (new="domain", existing="main") and there's enough free space before the existing string (two bytes in this case) then
- * we allocate some of that free space and use a suitable offset. In any case, upon return storage->get_offset() will return
- * the allocated offset if successful, or SgAsmGenericString::unallocated if we couldn't find an overlap. */
+/** Tries to find a suitable offset for a string such that it overlaps with some other string already allocated. If the new
+ *  string is the same as the end of some other string (new="main", existing="domain") then we just use an offset into that
+ *  string since the space is already allocated for the existing string. If the new string ends with an existing string
+ *  (new="domain", existing="main") and there's enough free space before the existing string (two bytes in this case) then
+ *  we allocate some of that free space and use a suitable offset. In any case, upon return storage->get_offset() will return
+ *  the allocated offset if successful, or SgAsmGenericString::unallocated if we couldn't find an overlap. */
 void
 SgAsmElfStrtab::allocate_overlap(SgAsmStringStorage *storage)
 {
@@ -1161,7 +1161,7 @@ SgAsmElfStrtab::allocate_overlap(SgAsmStringStorage *storage)
     }
 }
 
-/* Write string table back to disk. Free space is zeroed out; holes are left as they are. */
+/** Write string table back to disk. Free space is zeroed out; holes are left as they are. */
 void
 SgAsmElfStrtab::unparse(std::ostream &f) const
 {
@@ -1185,7 +1185,7 @@ SgAsmElfStrtab::unparse(std::ostream &f) const
 // Section tables
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* Converts 32-bit disk representation to host representation */
+/** Converts 32-bit disk representation to host representation */
 void
 SgAsmElfSectionTableEntry::ctor(ByteOrder sex, const Elf32SectionTableEntry_disk *disk) 
 {
@@ -1201,7 +1201,7 @@ SgAsmElfSectionTableEntry::ctor(ByteOrder sex, const Elf32SectionTableEntry_disk
     p_sh_entsize   = disk_to_host(sex, disk->sh_entsize);
 }
     
-/* Converts 64-bit disk representation to host representation */
+/** Converts 64-bit disk representation to host representation */
 void
 SgAsmElfSectionTableEntry::ctor(ByteOrder sex, const Elf64SectionTableEntry_disk *disk) 
 {
@@ -1217,7 +1217,7 @@ SgAsmElfSectionTableEntry::ctor(ByteOrder sex, const Elf64SectionTableEntry_disk
     p_sh_entsize   = disk_to_host(sex, disk->sh_entsize);
 }
 
-/* Encode a section table entry into the disk structure */
+/** Encode a section table entry into the disk structure */
 void *
 SgAsmElfSectionTableEntry::encode(ByteOrder sex, Elf32SectionTableEntry_disk *disk) const
 {
@@ -1519,8 +1519,8 @@ SgAsmElfSection::allocate_name_to_storage(SgAsmElfStringSection *strsec)
     }
 }
 
-/* Returns info about the size of the entries based on information already available. Any or all arguments may be null
- * pointers if the caller is not interested in the value. */
+/** Returns info about the size of the entries based on information already available. Any or all arguments may be null
+ *  pointers if the caller is not interested in the value. */
 rose_addr_t
 SgAsmElfSectionTable::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
@@ -1618,7 +1618,7 @@ SgAsmElfSectionTableEntry::update_from_section(SgAsmElfSection *section)
     }
 }
 
-/* Change symbol to string */
+/** Change symbol to string */
 const char *
 SgAsmElfSectionTableEntry::to_string(SectionType t)
 {
@@ -1653,7 +1653,7 @@ SgAsmElfSectionTableEntry::to_string(SectionType t)
     }
 }
 
-/* Print some debugging info */
+/** Print some debugging info */
 void
 SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -1682,7 +1682,7 @@ SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
 }
 
-/* Pre-unparsing updates */
+/** Pre-unparsing updates */
 bool
 SgAsmElfSectionTable::reallocate()
 {
@@ -1712,7 +1712,7 @@ SgAsmElfSectionTable::reallocate()
     return reallocated;
 }
 
-/* Write the section table section back to disk */
+/** Write the section table section back to disk */
 void
 SgAsmElfSectionTable::unparse(std::ostream &f) const
 {
@@ -1764,7 +1764,7 @@ SgAsmElfSectionTable::unparse(std::ostream &f) const
     }
 }
 
-/* Print some debugging info */
+/** Print some debugging info */
 void
 SgAsmElfSectionTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -1786,7 +1786,7 @@ SgAsmElfSectionTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 // Segment tables
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* Converts 32-bit disk representation to host representation */
+/** Converts 32-bit disk representation to host representation */
 void
 SgAsmElfSegmentTableEntry::ctor(ByteOrder sex, const struct Elf32SegmentTableEntry_disk *disk) 
 {
@@ -1800,7 +1800,7 @@ SgAsmElfSegmentTableEntry::ctor(ByteOrder sex, const struct Elf32SegmentTableEnt
     p_align     = disk_to_host(sex, disk->p_align);
 }
 
-/* Converts 64-bit disk representation to host representation */
+/** Converts 64-bit disk representation to host representation */
 void
 SgAsmElfSegmentTableEntry::ctor(ByteOrder sex, const Elf64SegmentTableEntry_disk *disk) 
 {
@@ -1814,7 +1814,7 @@ SgAsmElfSegmentTableEntry::ctor(ByteOrder sex, const Elf64SegmentTableEntry_disk
     p_align     = disk_to_host(sex, disk->p_align);
 }
 
-/* Converts segment table entry back into disk structure */
+/** Converts segment table entry back into disk structure */
 void *
 SgAsmElfSegmentTableEntry::encode(ByteOrder sex, Elf32SegmentTableEntry_disk *disk) const
 {
@@ -1872,7 +1872,7 @@ SgAsmElfSegmentTableEntry::update_from_section(SgAsmElfSection *section)
     }
 }
 
-/* Print some debugging info */
+/** Print some debugging info */
 void
 SgAsmElfSegmentTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -2081,8 +2081,8 @@ SgAsmElfSegmentTable::add_section(SgAsmElfSection *section)
     section->set_segment_entry(shdr);
 }
 
-/* Returns info about the size of the entries based on information already available. Any or all arguments may be null
- * pointers if the caller is not interested in the value. */
+/** Returns info about the size of the entries based on information already available. Any or all arguments may be null
+ *  pointers if the caller is not interested in the value. */
 rose_addr_t
 SgAsmElfSegmentTable::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
@@ -2135,7 +2135,7 @@ SgAsmElfSegmentTable::calculate_sizes(size_t *entsize, size_t *required, size_t 
     return entry_size * nentries;
 }
 
-/* Pre-unparsing updates */
+/** Pre-unparsing updates */
 bool
 SgAsmElfSegmentTable::reallocate()
 {
@@ -2164,7 +2164,7 @@ SgAsmElfSegmentTable::reallocate()
     return reallocated;
 }
 
-/* Write the segment table to disk. */
+/** Write the segment table to disk. */
 void
 SgAsmElfSegmentTable::unparse(std::ostream &f) const
 {
@@ -2214,7 +2214,7 @@ SgAsmElfSegmentTable::unparse(std::ostream &f) const
     }
 }
 
-/* Print some debugging info */
+/** Print some debugging info */
 void
 SgAsmElfSegmentTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -2321,7 +2321,7 @@ SgAsmElfRelocEntry::encode(ByteOrder sex, Elf64RelEntry_disk *disk) const
     return disk;
 }
 
-/* Print some debugging info */
+/** Print some debugging info */
 void
 SgAsmElfRelocEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbolSection *symtab) const
 {
@@ -2352,7 +2352,7 @@ SgAsmElfRelocEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbo
     }
 }
 
-/* Non-parsing constructor */
+/** Non-parsing constructor */
 void
 SgAsmElfRelocSection::ctor(SgAsmElfSymbolSection *symbols)
 {
@@ -2362,7 +2362,7 @@ SgAsmElfRelocSection::ctor(SgAsmElfSymbolSection *symbols)
     p_linked_section = symbols;
 }
 
-/* Parse an existing ELF Rela Section */
+/** Parse an existing ELF Rela Section */
 SgAsmElfRelocSection *
 SgAsmElfRelocSection::parse()
 {
@@ -2411,7 +2411,7 @@ SgAsmElfRelocSection::parse()
     return this;
 }
 
-/* Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
+/** Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
 rose_addr_t
 SgAsmElfRelocSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
@@ -2429,7 +2429,7 @@ SgAsmElfRelocSection::calculate_sizes(size_t *entsize, size_t *required, size_t 
     return retval;
 }
 
-/* Pre-unparsing adjustments */
+/** Pre-unparsing adjustments */
 bool
 SgAsmElfRelocSection::reallocate()
 {
@@ -2445,7 +2445,7 @@ SgAsmElfRelocSection::reallocate()
     return reallocated;
 }
 
-/* Write section back to disk */
+/** Write section back to disk */
 void
 SgAsmElfRelocSection::unparse(std::ostream &f) const
 {
@@ -2498,7 +2498,7 @@ SgAsmElfRelocSection::unparse(std::ostream &f) const
     unparse_holes(f);
 }
 
-/* Print some debugging info */
+/** Print some debugging info */
 void
 SgAsmElfRelocSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -2555,7 +2555,7 @@ SgAsmElfDynamicEntry::parse(ByteOrder sex, const Elf64DynamicEntry_disk *disk)
     p_d_val = disk_to_host(sex, disk->d_val);
 }
 
-/* Encode a native entry back into disk format */
+/** Encode a native entry back into disk format */
 void *
 SgAsmElfDynamicEntry::encode(ByteOrder sex, Elf32DynamicEntry_disk *disk) const
 {
@@ -2571,7 +2571,7 @@ SgAsmElfDynamicEntry::encode(ByteOrder sex, Elf64DynamicEntry_disk *disk) const
     return disk;
 }
 
-/* Convert Dynamic Entry Tag to a string */
+/** Convert Dynamic Entry Tag to a string */
 const char *
 SgAsmElfDynamicEntry::stringify_tag(EntryType t) const
 {
@@ -2650,7 +2650,7 @@ SgAsmElfDynamicEntry::stringify_tag(EntryType t) const
     }
 }
 
-/* Set name and adjust parent */
+/** Set name and adjust parent */
 void
 SgAsmElfDynamicEntry::set_name(SgAsmGenericString *name)
 {
@@ -2661,7 +2661,7 @@ SgAsmElfDynamicEntry::set_name(SgAsmGenericString *name)
         p_name->set_parent(this);
 }
 
-/* Print some debugging info */
+/** Print some debugging info */
 void
 SgAsmElfDynamicEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -2688,7 +2688,7 @@ SgAsmElfDynamicEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
 }
 
-/* Non-parsing constructor */
+/** Non-parsing constructor */
 void
 SgAsmElfDynamicSection::ctor(SgAsmElfStringSection *strings)
 {
@@ -2748,7 +2748,7 @@ SgAsmElfDynamicSection::parse()
     return this;
 }
 
-/* Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
+/** Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
 rose_addr_t
 SgAsmElfDynamicSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
@@ -2761,7 +2761,7 @@ SgAsmElfDynamicSection::calculate_sizes(size_t *entsize, size_t *required, size_
                            entsize, required, optional, entcount);
 }
     
-/* Finish initializing the section entries. */
+/** Finish initializing the section entries. */
 void
 SgAsmElfDynamicSection::finish_parsing() 
 {
@@ -2829,7 +2829,7 @@ SgAsmElfDynamicSection::finish_parsing()
     }
 }
 
-/* Called prior to unparse to make things consistent. */
+/** Called prior to unparse to make things consistent. */
 bool
 SgAsmElfDynamicSection::reallocate()
 {
@@ -2863,7 +2863,7 @@ SgAsmElfDynamicSection::reallocate()
     return reallocated;
 }
 
-/* Write the dynamic section back to disk */
+/** Write the dynamic section back to disk */
 void
 SgAsmElfDynamicSection::unparse(std::ostream &f) const
 {
@@ -2904,7 +2904,7 @@ SgAsmElfDynamicSection::unparse(std::ostream &f) const
     unparse_holes(f);
 }
 
-/* Print some debugging info */
+/** Print some debugging info */
 void
 SgAsmElfDynamicSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -3045,7 +3045,7 @@ SgAsmElfSymbol::get_elf_type() const
     return (ElfSymType)(p_st_info & 0xf);
 }
 
-/* Encode a symbol into disk format */
+/** Encode a symbol into disk format */
 void *
 SgAsmElfSymbol::encode(ByteOrder sex, Elf32SymbolEntry_disk *disk) const
 {
@@ -3073,7 +3073,7 @@ SgAsmElfSymbol::encode(ByteOrder sex, Elf64SymbolEntry_disk *disk) const
     return disk;
 }
 
-/* Print some debugging info. The 'section' is an optional section pointer for the st_shndx member. */
+/** Print some debugging info. The 'section' is an optional section pointer for the st_shndx member. */
 void
 SgAsmElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmGenericSection *section) const
 {
@@ -3129,7 +3129,7 @@ SgAsmElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmGenericSecti
     }
 }
 
-/* Non-parsing constructor */
+/** Non-parsing constructor */
 void
 SgAsmElfSymbolSection::ctor(SgAsmElfStringSection *strings)
 {
@@ -3178,7 +3178,7 @@ SgAsmElfSymbolSection::parse()
     return this;
 }
 
-/* Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
+/** Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
 rose_addr_t
 SgAsmElfSymbolSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
@@ -3191,10 +3191,10 @@ SgAsmElfSymbolSection::calculate_sizes(size_t *entsize, size_t *required, size_t
                            entsize, required, optional, entcount);
 }
 
-/* Update section pointers for locally-bound symbols since we know that the section table has been read and all
- * non-synthesized sections have been created.
+/** Update section pointers for locally-bound symbols since we know that the section table has been read and all
+ *  non-synthesized sections have been created.
  * 
- * The st_shndx is the index (ID) of the section to which the symbol is bound. Special values are:
+ *  The st_shndx is the index (ID) of the section to which the symbol is bound. Special values are:
  *   0x0000        no section (section table entry zero should be all zeros anyway)
  *   0xff00-0xffff reserved values, not an index
  *   0xff00-0xff1f processor specific values
@@ -3215,7 +3215,7 @@ SgAsmElfSymbolSection::finish_parsing()
     }
 }
 
-/* Given a symbol, return its index in this symbol table. */
+/** Given a symbol, return its index in this symbol table. */
 size_t
 SgAsmElfSymbolSection::index_of(SgAsmElfSymbol *symbol)
 {
@@ -3226,7 +3226,7 @@ SgAsmElfSymbolSection::index_of(SgAsmElfSymbol *symbol)
     throw FormatError("symbol is not in symbol table");
 }
 
-/* Called prior to unparsing. Updates symbol entries with name offsets */
+/** Called prior to unparsing. Updates symbol entries with name offsets */
 bool
 SgAsmElfSymbolSection::reallocate()
 {
@@ -3241,7 +3241,7 @@ SgAsmElfSymbolSection::reallocate()
     return reallocated;
 }
 
-/* Write symbol table sections back to disk */
+/** Write symbol table sections back to disk */
 void
 SgAsmElfSymbolSection::unparse(std::ostream &f) const
 {
@@ -3282,7 +3282,7 @@ SgAsmElfSymbolSection::unparse(std::ostream &f) const
     unparse_holes(f);
 }
 
-/* Print some debugging info */
+/** Print some debugging info */
 void
 SgAsmElfSymbolSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -3312,7 +3312,7 @@ SgAsmElfSymbolSection::dump(FILE *f, const char *prefix, ssize_t idx) const
  * Additional information can be found in the DWARF 3 documentation under "Other Debugging Information: Call Frame Information".
  ********************************************************************************************************************************/
 
-/* Non-parsing constructor */
+/** Non-parsing constructor */
 void
 SgAsmElfEHFrameEntryCI::ctor(SgAsmElfEHFrameSection *ehframe)
 {
@@ -3325,8 +3325,8 @@ SgAsmElfEHFrameEntryCI::ctor(SgAsmElfEHFrameSection *ehframe)
     p_fd_entries->set_parent(this);
 }
 
-/* Unparse one Common Information Entry (CIE) without unparsing the Frame Description Entries (FDE) to which it points. The
- * initial length fields are not included in the result string. */
+/** Unparse one Common Information Entry (CIE) without unparsing the Frame Description Entries (FDE) to which it points. The
+ *  initial length fields are not included in the result string. */
 std::string
 SgAsmElfEHFrameEntryCI::unparse(const SgAsmElfEHFrameSection *ehframe) const 
 {
@@ -3415,7 +3415,7 @@ SgAsmElfEHFrameEntryCI::unparse(const SgAsmElfEHFrameSection *ehframe) const
     return retval;
 }
 
-/* Print some debugging info */
+/** Print some debugging info */
 void
 SgAsmElfEHFrameEntryCI::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -3454,7 +3454,7 @@ SgAsmElfEHFrameEntryCI::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
 }
 
-/* Non-parsing constructor */
+/** Non-parsing constructor */
 void
 SgAsmElfEHFrameEntryFD::ctor(SgAsmElfEHFrameEntryCI *cie)
 {
@@ -3464,8 +3464,8 @@ SgAsmElfEHFrameEntryFD::ctor(SgAsmElfEHFrameEntryCI *cie)
     set_parent(cie->get_fd_entries());
 }
 
-/* Unparse the Frame Description Entry (FDE) into a string but do not include the leading length field(s) or the CIE back pointer.
- */
+/** Unparse the Frame Description Entry (FDE) into a string but do not include the leading length field(s) or the CIE back
+ *  pointer. */
 std::string
 SgAsmElfEHFrameEntryFD::unparse(const SgAsmElfEHFrameSection *ehframe, SgAsmElfEHFrameEntryCI *cie) const
 {
@@ -3523,7 +3523,7 @@ SgAsmElfEHFrameEntryFD::unparse(const SgAsmElfEHFrameSection *ehframe, SgAsmElfE
 }
 
 
-/* Print some debugging info */
+/** Print some debugging info */
 void
 SgAsmElfEHFrameEntryFD::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -3545,7 +3545,7 @@ SgAsmElfEHFrameEntryFD::dump(FILE *f, const char *prefix, ssize_t idx) const
     hexdump(f, 0, std::string(p)+"insns at ", get_instructions());
 }
 
-/* Non-parsing constructor */
+/** Non-parsing constructor */
 void
 SgAsmElfEHFrameSection::ctor()
 {
@@ -3553,7 +3553,7 @@ SgAsmElfEHFrameSection::ctor()
     p_ci_entries->set_parent(this);
 }
 
-/* Initialize by parsing a file. */
+/** Initialize by parsing a file. */
 SgAsmElfEHFrameSection *
 SgAsmElfEHFrameSection::parse()
 {
@@ -3721,16 +3721,16 @@ SgAsmElfEHFrameSection::calculate_sizes(size_t *entsize, size_t *required, size_
     return whole;
 }
 
-/* Write data to .eh_frame section */
+/** Write data to .eh_frame section */
 void
 SgAsmElfEHFrameSection::unparse(std::ostream &f) const
 {
     unparse(&f);
 }
 
-/* Unparses the section into the optional output stream and returns the number of bytes written. If there is no output stream
- * we still go through the actions but don't write anything. This is the only way to determine the amount of memory required
- * to store the section since the section is run-length encoded. */
+/** Unparses the section into the optional output stream and returns the number of bytes written. If there is no output stream
+ *  we still go through the actions but don't write anything. This is the only way to determine the amount of memory required
+ *  to store the section since the section is run-length encoded. */
 rose_addr_t
 SgAsmElfEHFrameSection::unparse(std::ostream *fp) const
 {
@@ -3853,7 +3853,7 @@ SgAsmElfSymverEntry::ctor(SgAsmElfSymverSection *symver)
   set_value(0);
 }
 
-/* Print some debugging info. */
+/** Print some debugging info. */
 void
 SgAsmElfSymverEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -3872,7 +3872,7 @@ SgAsmElfSymverEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
   fprintf(f, "%s%-*s = 0x%08x\n", p, w, "", p_value);
 }
 
-/* Non-parsing constructor */
+/** Non-parsing constructor */
 void
 SgAsmElfSymverSection::ctor()
 {
@@ -3906,7 +3906,7 @@ SgAsmElfSymverSection::parse()
   return this;
 }
 
-/* Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
+/** Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
 rose_addr_t
 SgAsmElfSymverSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
@@ -3918,7 +3918,7 @@ SgAsmElfSymverSection::calculate_sizes(size_t *entsize, size_t *required, size_t
 }
 
 
-/* Write symver table sections back to disk */
+/** Write symver table sections back to disk */
 void
 SgAsmElfSymverSection::unparse(std::ostream &f) const
 {
@@ -3946,7 +3946,7 @@ SgAsmElfSymverSection::unparse(std::ostream &f) const
     unparse_holes(f);
 }
 
-/* Print some debugging info */
+/** Print some debugging info */
 void
 SgAsmElfSymverSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -3998,7 +3998,6 @@ void SgAsmElfSymverDefinedAux::dump(FILE *f, const char *prefix, ssize_t idx) co
   fprintf(f, "%s%-*s = %s \n", p, w, "name", get_name()->c_str());
 }
 
-/**  */
 void SgAsmElfSymverDefinedAux::parse(ByteOrder sex, const ElfSymverDefinedAux_disk* disk)
 {
 
@@ -4044,7 +4043,7 @@ SgAsmElfSymverDefinedEntry::parse(ByteOrder sex, const ElfSymverDefinedEntry_dis
   p_hash  = disk_to_host(sex, disk->vd_hash);  
 }
 
-/* Encode an Entry into disk format */
+/** Encode an Entry into disk format */
 void *
 SgAsmElfSymverDefinedEntry::encode(ByteOrder sex, ElfSymverDefinedEntry_disk *disk) const
 {
@@ -4055,7 +4054,7 @@ SgAsmElfSymverDefinedEntry::encode(ByteOrder sex, ElfSymverDefinedEntry_disk *di
   return disk;
 }
 
-/* Print some debugging info. */
+/** Print some debugging info. */
 void
 SgAsmElfSymverDefinedEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -4082,7 +4081,7 @@ SgAsmElfSymverDefinedEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
   fprintf(f, "\n");
 }
 
-/* Non-parsing constructor */
+/** Non-parsing constructor */
 void
 SgAsmElfSymverDefinedSection::ctor(SgAsmElfStringSection *strings)
 {
@@ -4207,7 +4206,7 @@ SgAsmElfSymverDefinedSection::parse()
   return this;
 }
 
-/* Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
+/** Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
 rose_addr_t
 SgAsmElfSymverDefinedSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
@@ -4245,8 +4244,8 @@ SgAsmElfSymverDefinedSection::calculate_sizes(size_t *entsize, size_t *required,
 }
 
 
-/* Write SymverDefined section back to disk 
-   for more information about encoding, see SgAsmElfSymverDefinedSection::parse
+/** Write SymverDefined section back to disk 
+    for more information about encoding, see SgAsmElfSymverDefinedSection::parse
 */
 void
 SgAsmElfSymverDefinedSection::unparse(std::ostream &f) const
@@ -4307,7 +4306,7 @@ SgAsmElfSymverDefinedSection::unparse(std::ostream &f) const
   unparse_holes(f);
 }
 
-/* Print some debugging info */
+/** Print some debugging info */
 void
 SgAsmElfSymverDefinedSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -4360,7 +4359,6 @@ void SgAsmElfSymverNeededAux::dump(FILE *f, const char *prefix, ssize_t idx) con
   fprintf(f, "%s%-*s = %s \n", p, w, "name", get_name()->c_str());
 }
 
-/**  */
 void SgAsmElfSymverNeededAux::parse(ByteOrder sex, const ElfSymverNeededAux_disk* disk)
 {
   p_hash = disk_to_host(sex,disk->vna_hash);
@@ -4404,7 +4402,6 @@ SgAsmElfSymverNeededEntry::ctor(SgAsmElfSymverNeededSection *section)
   p_version  = 0;
 }
 
-/** */
 void
 SgAsmElfSymverNeededEntry::parse(ByteOrder sex, const ElfSymverNeededEntry_disk *disk)
 {
@@ -4415,7 +4412,7 @@ SgAsmElfSymverNeededEntry::parse(ByteOrder sex, const ElfSymverNeededEntry_disk 
 
 }
 
-/* Encode an Entry into disk format */
+/** Encode an Entry into disk format */
 void *
 SgAsmElfSymverNeededEntry::encode(ByteOrder sex, ElfSymverNeededEntry_disk *disk) const
 {
@@ -4428,7 +4425,7 @@ SgAsmElfSymverNeededEntry::encode(ByteOrder sex, ElfSymverNeededEntry_disk *disk
   return disk;
 }
 
-/* Print some debugging info. */
+/** Print some debugging info. */
 void
 SgAsmElfSymverNeededEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -4462,7 +4459,7 @@ SgAsmElfSymverNeededEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
   fprintf(f, "\n");
 }
 
-/* Non-parsing constructor */
+/** Non-parsing constructor */
 void
 SgAsmElfSymverNeededSection::ctor(SgAsmElfStringSection *strings)
 {
@@ -4527,7 +4524,7 @@ SgAsmElfSymverNeededSection::parse()
   return this;
 }
 
-/* Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
+/** Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
 rose_addr_t
 SgAsmElfSymverNeededSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
@@ -4565,8 +4562,8 @@ SgAsmElfSymverNeededSection::calculate_sizes(size_t *entsize, size_t *required, 
 }
 
 
-/* Write SymverNeeded section back to disk 
-   for more information about encoding, see SgAsmElfSymverNeededSection::parse
+/** Write SymverNeeded section back to disk 
+    for more information about encoding, see SgAsmElfSymverNeededSection::parse
 */
 void
 SgAsmElfSymverNeededSection::unparse(std::ostream &f) const
@@ -4628,7 +4625,7 @@ SgAsmElfSymverNeededSection::unparse(std::ostream &f) const
   unparse_holes(f);
 }
 
-/* Print some debugging info */
+/** Print some debugging info */
 void
 SgAsmElfSymverNeededSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -4666,7 +4663,7 @@ SgAsmElfNoteEntry::ctor(SgAsmElfNoteSection *section)
     set_parent(section->get_entries());
 }
 
-/* Set name and adjust parent */
+/** Set name and adjust parent */
 void
 SgAsmElfNoteEntry::set_name(SgAsmGenericString *name)
 {
@@ -4677,8 +4674,8 @@ SgAsmElfNoteEntry::set_name(SgAsmGenericString *name)
         p_name->set_parent(this);
 }
 
-/* Initialize a note by parsing it from the specified location in the note section. Return value is the offset to the
- * beginning of the next note. */
+/** Initialize a note by parsing it from the specified location in the note section. Return value is the offset to the
+ *  beginning of the next note. */
 rose_addr_t
 SgAsmElfNoteEntry::parse(rose_addr_t at)
 {
@@ -4722,8 +4719,8 @@ SgAsmElfNoteEntry::parse(rose_addr_t at)
     return at + payload_size;
 }
 
-/* Write a note at the specified offset to the section containing the note. Returns the offset for the first byte past the end
- * of the note. */
+/** Write a note at the specified offset to the section containing the note. Returns the offset for the first byte past the end
+ *  of the note. */
 rose_addr_t
 SgAsmElfNoteEntry::unparse(std::ostream &f, rose_addr_t at)
 {
@@ -4767,7 +4764,7 @@ SgAsmElfNoteEntry::unparse(std::ostream &f, rose_addr_t at)
     return at;
 }
 
-/* Returns the number of bytes needed to store this note. */
+/** Returns the number of bytes needed to store this note. */
 rose_addr_t
 SgAsmElfNoteEntry::calculate_size() const {
     addr_t need = 12;                           /*namesize, payloadsize, type*/
@@ -4777,7 +4774,7 @@ SgAsmElfNoteEntry::calculate_size() const {
     return need;
 }
 
-/* Print some debugging information */
+/** Print some debugging information */
 void
 SgAsmElfNoteEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -4797,7 +4794,7 @@ SgAsmElfNoteEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
 }
 
-/* Non-parsing constructor */
+/** Non-parsing constructor */
 void
 SgAsmElfNoteSection::ctor()
 {
@@ -4819,7 +4816,7 @@ SgAsmElfNoteSection::parse()
     return this;
 }
 
-/* Pre-unparsing adjustments */
+/** Pre-unparsing adjustments */
 bool
 SgAsmElfNoteSection::reallocate()
 {
@@ -4848,7 +4845,7 @@ SgAsmElfNoteSection::reallocate()
     return reallocated;
 }
 
-/* Write data to note section */
+/** Write data to note section */
 void
 SgAsmElfNoteSection::unparse(std::ostream &f) const
 {
@@ -4863,7 +4860,7 @@ SgAsmElfNoteSection::unparse(std::ostream &f) const
 }
 
 
-/* Print some debugging information */
+/** Print some debugging information */
 void
 SgAsmElfNoteSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
