@@ -8,7 +8,8 @@ AC_CONFIG_SRCDIR([README])
 AC_CONFIG_MACRO_DIR([m4])
 
 AM_INIT_AUTOMAKE
-
+# Automake > 1.11 allows a less verbose make output!
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
 
 # Checks for programs.
 AC_PROG_YACC
