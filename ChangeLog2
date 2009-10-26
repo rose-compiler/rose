@@ -1,3 +1,68 @@
+2009-10-26 14:22  matzke
+
+	* [r7937] /trunk/ROSE/scripts/rosegit/bin/rat-test: Rosegit:
+	  Swapped distcheck and distclean
+
+2009-10-26 14:22  matzke
+
+	* [r7936] /trunk/ROSE/src/frontend/ExecFormats/ExecELF.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ExecGeneric.C:
+	  Documentation: Changed comments into doxygen coments
+
+2009-10-26 14:22  matzke
+
+	* [r7935] /trunk/ROSE/tests/roseTests/binaryTests/disassemble.C,
+	  /trunk/ROSE/tests/roseTests/binaryTests/execFormatsTest.C:
+	  binaryTests: Added dot-file generation to some tests
+
+2009-10-26 14:21  matzke
+
+	* [r7934] /trunk/ROSE/src/frontend/Disassemblers/Disassembler.C:
+	  Disassembler: Improved exception handling; removed dups
+	  
+	  Improved exception handling to make sure that dangling
+	  instructions are
+	  deleted.
+	  
+	  Disassembler::disassembleBuffer() is more careful about creating
+	  instructions so that we don't create two instructions for the
+	  same
+	  address, with only one attached to the AST.
+
+2009-10-26 14:21  matzke
+
+	* [r7933] /trunk/ROSE/src/backend/asmUnparser/unparseAsm.C,
+	  /trunk/ROSE/src/backend/asmUnparser/unparseAsm.h,
+	  /trunk/ROSE/src/backend/asmUnparser/unparseX86Asm.C: Asm:
+	  unparsing unattached expressions is now possible
+	  
+	  Attempting to unparse (stringify) a SgAsmExpression that wasn't
+	  attached
+	  to the AST caused a segmentation fault. Now the unparser just
+	  assumes
+	  that the expression should be unparsed using x86 syntax.
+
+2009-10-26 14:21  matzke
+
+	* [r7932] /trunk/ROSE/src/frontend/Disassemblers/Partitioner.C:
+	  ExecFormats: Partitioner class does AST sanity checks
+	  
+	  The code is in place, but disabled because it's slow.
+
+2009-10-26 13:16  matzke
+
+	* [r7931] /trunk/ROSE/tests/roseTests/binaryTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/binaryTests/testSampleBinaries.sh:
+	  ExecFormats: more testing
+	  
+	  The test was descending into the ".svn" directories and "make
+	  check" was
+	  not failing if a test failed.
+
+2009-10-26 13:16  matzke
+
+	* [r7930] /trunk/ROSE/.gitignore: Updated .gitignore
+
 2009-10-25 20:19  dquinlan
 
 	* [r7927]
