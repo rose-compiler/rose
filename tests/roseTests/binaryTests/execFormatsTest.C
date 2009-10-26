@@ -12,6 +12,11 @@ main(int argc, char *argv[])
 
     SgProject *project= frontend(argc,argv);
 
+#if 0 /*debugging; don't leave this enabled unless you fix "make distcheck" to clean up these files!*/
+    generateDOT(*project);
+    generateAstGraph(project, 4000);
+#endif
+
  // Previous details to regenerate the binary from the AST for testing (*.new files) 
  // and to output a dump of the binary executable file format (*.dump files) has
  // been combined with the output of the disassembled instructions in the "backend()".

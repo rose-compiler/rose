@@ -12,6 +12,7 @@ main(int argc, char *argv[])
     bool show_bad = false;
     bool do_debug = false;
     bool do_reassemble = false;
+    bool do_dot = false;
     int exit_status = 0;
 
     char **new_argv = (char**)calloc(argc+2, sizeof(char*));
@@ -55,6 +56,8 @@ main(int argc, char *argv[])
             search |= Disassembler::SEARCH_FUNCSYMS;
         } else if (!strcmp(argv[i], "--no-search-funcsyms")) {
             search &= ~Disassembler::SEARCH_FUNCSYMS;
+        } else if (!strcmp(argv[i], "--dot")) {
+            do_dot = true;
         } else if (!strcmp(argv[i], "--show-bad")) {
             show_bad = true;
         } else if (!strcmp(argv[i], "--reassemble")) {
@@ -107,7 +110,12 @@ main(int argc, char *argv[])
             printf("\n");
         }
 
-
+        /* Generate graph of the AST */
+        if (do_dot) {
+            generateDOT(*project);
+            generateAstGraph(project, INT_MAX);
+        }
+        
         /* Test assembler */
         if (do_reassemble) {
             size_t assembly_failures = 0;
