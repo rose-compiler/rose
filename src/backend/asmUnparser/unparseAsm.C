@@ -54,6 +54,10 @@ std::string unparseExpression(SgAsmExpression *expr) {
         insn = isSgAsmInstruction(node);
     }
 
+    /* The expression is possibly not linked into the tree yet. Assume x86 if that happens. */
+    if (!insn)
+        return unparseX86Expression(expr, false);
+        
     switch (insn->variantT()) {
         case V_SgAsmx86Instruction:
             return unparseX86Expression(expr);

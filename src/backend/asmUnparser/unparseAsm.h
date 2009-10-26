@@ -7,6 +7,7 @@
 
 std::string unparseX86Mnemonic(SgAsmx86Instruction*);
 std::string unparseX86Expression(SgAsmExpression*);
+std::string unparseX86Expression(SgAsmExpression*, bool leaMode);
 
 /*-------------------------------------------------------------------------------------------------------------------------------
  * ARM

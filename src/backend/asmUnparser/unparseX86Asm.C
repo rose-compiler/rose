@@ -103,7 +103,7 @@ static std::string x86TypeToPtrName(SgAsmType* ty) {
 }
 
 
-static std::string unparseX86Expression(SgAsmExpression *expr, bool leaMode) {
+std::string unparseX86Expression(SgAsmExpression *expr, bool leaMode) {
     std::string result = "";
     if (expr == NULL) return "BOGUS:NULL";
     switch (expr->variantT()) {
