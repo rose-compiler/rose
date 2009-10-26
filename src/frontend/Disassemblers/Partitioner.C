@@ -115,7 +115,7 @@ SgAsmBlock *
 Partitioner::buildTree(const Disassembler::InstructionMap &insns, const BasicBlockStarts &bb_starts,
                        const FunctionStarts &func_starts) const
 {
-    SgAsmBlock* retval = new SgAsmBlock();
+    SgAsmBlock *retval = new SgAsmBlock();
     std::map<rose_addr_t, SgAsmBlock*> bbs = buildBasicBlocks(insns, bb_starts);
     std::map<rose_addr_t, SgAsmFunctionDeclaration*> funcs;
 
@@ -177,6 +177,54 @@ Partitioner::buildTree(const Disassembler::InstructionMap &insns, const BasicBlo
         SgAsmFunctionDeclaration *func = fi->second;
         ROSE_ASSERT(func->get_statementList().size()>0);
     }
+
+#if 0 /* Turned off because this is very slow */
+    /* Sanity checks */
+    for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+        SgAsmInstruction *insn = ii->second;
+
+        /* Every instruction belongs to a basic block which points to that instruction. */
+        SgAsmBlock *block = isSgAsmBlock(insn->get_parent());
+        {
+            ROSE_ASSERT(block!=NULL);
+            bool found = false;
+            const SgAsmStatementPtrList &iv = block->get_statementList();
+            for (size_t i=0; !found && i<iv.size(); i++) {
+                ROSE_ASSERT(isSgAsmInstruction(iv[i]));
+                found = insn == iv[i];
+            }
+            ROSE_ASSERT(found);
+        }
+
+        /* Every basic block belongs to a function which points to that basic block. */
+        SgAsmFunctionDeclaration *function = isSgAsmFunctionDeclaration(block->get_parent());
+        {
+            ROSE_ASSERT(function!=NULL);
+            bool found = false;
+            const SgAsmStatementPtrList &bv = function->get_statementList();
+            for (size_t i=0; !found && i<bv.size(); i++) {
+                ROSE_ASSERT(isSgAsmBlock(bv[i]));
+                found = block == bv[i];
+            }
+            ROSE_ASSERT(found);
+        }
+
+        /* Every function belongs to the top block which points to that function. */
+        SgAsmBlock *top = isSgAsmBlock(function->get_parent());
+        ROSE_ASSERT(top==retval);
+        {
+            ROSE_ASSERT(top!=NULL);
+            bool found = false;
+            const SgAsmStatementPtrList &fv = top->get_statementList();
+            for (size_t i=0; !found && i<fv.size(); i++) {
+                ROSE_ASSERT(fv[i]!=NULL);
+                ROSE_ASSERT(isSgAsmFunctionDeclaration(fv[i]));
+                found = function == fv[i];
+            }
+            ROSE_ASSERT(found);
+        }
+    }
+#endif
 
     return retval;
 }
