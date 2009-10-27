@@ -266,7 +266,6 @@ void RtedTransformation::renameMain(SgFunctionDeclaration* sg_func)
     SgInitializedNamePtrList args = sg_func->get_args();
     SgFunctionParameterList * parameterList = sg_func->get_parameterList();
 
-
     SgPointerType *pType1= new SgPointerType(SgTypeChar::createType());
     SgPointerType *pType2= new SgPointerType(pType1);
 

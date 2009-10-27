@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 EXTRA_DIST = index_array.txt \
              file_read.txt \
-	     tests upccrose required/upc.h upccrose \
+	     tests upccrose required/upc.h \
 	     upcparam.h upcparam_s.h \
 	     extract-actual-error.sed extract-expected-error.sed
 
@@ -27,7 +27,9 @@ LINK_QT_DEBUGGER=
 # This test program does not require the rest of ROSE so it can be handled locally
 bin_PROGRAMS  = runtimeCheck
 
+
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -ldl 
+#$(top_builddir)/projects/RTED/CppRuntimeSystem/libCppRuntimeSystem.a
 
 RTS=RuntimeSystem.cpp
 RTED_CXX = $(LIBTOOL) --tag=CXX --mode=link g++ $(AM_CXXFLAGS) \
@@ -36,7 +38,7 @@ RTED_CC = $(LIBTOOL) --tag=CC --mode=link gcc $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS)
 
 #$(LIBTOOL) --tag=CXX  --mode=link $(AM_PROG_UPC)
-RTED_UPC =  upccrose $(AM_CXXFLAGS) \
+RTED_UPC =  ./upccrose $(AM_CXXFLAGS) \
 	 $(AM_LDFLAGS) 
 RTED_LIB=CppRuntimeSystem/libCppRuntimeSystem.la
 runtimeCheck_SOURCES = runtimeCheck.cpp \
@@ -84,7 +86,7 @@ RTED_CPP_LOCAL_TEST_DIRS = 	 $(srcdir)/tests/Cxx/io \
 							 $(srcdir)/tests/Cxx/templates \
 							 $(srcdir)/tests/Cxx/types
 
-RTED_UPC_LOCAL_TEST_DIRS = 	 
+RTED_UPC_LOCAL_TEST_DIRS = $(srcdir)/tests/UPC/simple/simple
 
 
 RTED_C_TEST_DIRS = $(rted_path)/C/array_index_out_of_bound \
@@ -109,7 +111,8 @@ RTED_CPP_TEST_DIRS = $(rted_path)/C++/array_index_out_of_bound \
 		 $(rted_path)/C++/pointer_errors \
 		 $(RTED_CPP_LOCAL_TEST_DIRS)
 
-RTED_UPC_TEST_DIRS = $(rted_path)/UPC/C_Outofbnds \
+RTED_UPC_TEST_DIRS = $(RTED_UPC_LOCAL_TEST_DIRS) \
+	         $(rted_path)/UPC/C_Outofbnds \
 		 $(rted_path)/UPC/D_Outofbnds \
 		 $(rted_path)/UPC/E_Outofbnds \
 		$(rted_path)/UPC/A_Deadlcks \
@@ -119,8 +122,7 @@ RTED_UPC_TEST_DIRS = $(rted_path)/UPC/C_Outofbnds \
 		$(rted_path)/UPC/H_Memoryerr \
 		$(rted_path)/UPC/I_Wronorder \
 		$(rted_path)/UPC/J_Nonportbl \
-		$(rted_path)/UPC/K_Warnings \
-		 $(RTED_UPC_LOCAL_TEST_DIRS)
+		$(rted_path)/UPC/K_Warnings
 
 RTED_TEST_DIRS=$(RTED_C_TEST_DIRS) $(RTED_CPP_TEST_DIRS) $(RTED_UPC_TEST_DIRS)
 
@@ -190,12 +192,14 @@ check-C-uninitvar: run/C/uninitialized_variables
 
 check-C-C99specific: run/C/C99_specific_errors
 
+
 rted_source:
-	@echo "Copying files .... "
+	@echo "Copying all files .... "
 	@cp -f $(srcdir)/index_array.txt .
 	@cp -f $(srcdir)/file_read.txt .
 	@cp -f $(srcdir)/upcparam.h .
 	@cp -f $(srcdir)/upcparam_s.h .
+	@cp -f $(srcdir)/upccrose .
 	@mkdir -p $(foreach rted_dir,$(filter $(rted_path)%, $(RTED_TEST_DIRS) ), $(patsubst $(rted_path)/%, rted_source/%, $(rted_dir) ) )
 	@mkdir -p $(foreach local_test_dir,$(filter $(srcdir)%, $(RTED_TEST_DIRS) ), $(patsubst $(srcdir)/%, rted_source/%, $(local_test_dir) ) )
 
@@ -206,7 +210,7 @@ rted_source:
 #testcases in $(top_srcdir)/projects/RTED/tests
 rted_source/tests/%.c: rted_source $(top_srcdir)/projects/RTED/tests/%.c
 	@echo -e Checking $(patsubst $(top_srcdir)/projects/RTED/tests/%.c, %, $(filter $(top_srcdir)/%, $^)) ...
-	@echo -n "    copying input file ... "
+	@echo -n "    copying input file (.c) ... "
 	@cp $(filter $(top_srcdir)/%.c, $^) $(dir $@)
 	@echo " done."
 	@echo -n "    inserting #include \"RuntimeSystem.h\" ... "
@@ -219,7 +223,7 @@ rted_source/tests/%.c: rted_source $(top_srcdir)/projects/RTED/tests/%.c
 #testcases in $(top_srcdir)/projects/RTED/tests
 rted_source/tests/%.cpp: rted_source $(top_srcdir)/projects/RTED/tests/%.cpp
 	@echo -e Checking $(patsubst $(top_srcdir)/projects/RTED/tests/%.cpp, %, $(filter $(top_srcdir)/%, $^)) ...
-	@echo -n "    copying input file ... "
+	@echo -n "    copying input file (.cpp) ... "
 	@cp $(filter $(top_srcdir)/%.cpp, $^) $(dir $@)
 	@echo " done."
 	@echo -n "    inserting #include \"RuntimeSystem.h\" ... "
@@ -232,7 +236,7 @@ rted_source/tests/%.cpp: rted_source $(top_srcdir)/projects/RTED/tests/%.cpp
 #testcases in $(top_srcdir)/projects/RTED/tests
 rted_source/tests/%.upc: rted_source $(top_srcdir)/projects/RTED/tests/%.upc
 	@echo -e Checking $(patsubst $(top_srcdir)/projects/RTED/tests/%.upc, %, $(filter $(top_srcdir)/%, $^)) ...
-	@echo -n "    copying input file ... "
+	@echo -n "    copying input file (.upc) ... $(filter $(top_srcdir)/%.upc, $^) $(dir $@) "
 	@cp $(filter $(top_srcdir)/%.upc, $^) $(dir $@)
 	@echo " done."
 	@echo -n "    inserting #include \"RuntimeSystem.h\" ... "
@@ -485,6 +489,7 @@ run/%: rted_source/%.bin rted_source/%.expected-output
 	@OUTPUT_SRC='$(strip $(filter %.expected-output, $?))';\
 		if [ -f "$$OUTPUT_SRC" ]; then\
 			RESULT='$(strip $(patsubst %.bin, %.result.txt, $(filter rted_source/%.bin, $?)))';\
+			export LD_LIBRARY_PATH=$(top_builddir)/projects/RTED/CppRuntimeSystem/.libs/:${LD_LIBRARY_PATH};\
 			./$(filter rted_source/%.bin, $?) 2> $$RESULT;\
 			if [ $$? -ne 0 ];then cat $$RESULT && echo "Test exited unexpectedly with non-zero status" && exit 1; fi;\
 			ACTUAL_OUTPUT='./$(strip $(patsubst %.bin, %.actual-output, $(filter rted_source/%.bin, $?)))';\
@@ -729,8 +734,9 @@ TESTS_KNOWN_TO_FAIL = run/C/subprogram_call_errors/c_C_1_3_f \
 					  run/tests/Cxx/pointer/C_F_3_3_a_i \
 					  run/tests/Cxx/pointer/dot_star \
 					  run/tests/Cxx/pointer/nulltest \
-					  run/tests/Cxx/pointer/arrow_varref2 \
 					  run/tests/UPC/simple/simple \
+					  run/tests/UPC/simple/test \
+					  run/tests/Cxx/pointer/arrow_varref2 \
 					  run/C/uninitialized_variables/c_A_6_a_in \
 					  run/C/uninitialized_variables/c_A_6_b_in \
 					  run/C/uninitialized_variables/c_A_6_c_in \
