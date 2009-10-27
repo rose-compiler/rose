@@ -44,13 +44,13 @@ replace_ivar(I+0,I+0,I+0, X, X) :- !.
 replace_ivar(I+Inc, I+Inc, I+Inc, VarRefExp, add_op(I, IncVal, An0, Ai0, Fi0)):-
   var_stripped(VarRefExp, I), 
   Inc #> 0, !,
-  isIntVal(IncVal, Inc),
+  new_intval(Inc, IncVal),
   default_values(_PPI, An0, Ai0, Fi0).
 replace_ivar(I+Inc, I+Inc, I+Inc, VarRefExp,subtract_op(I,IncVal,An0,Ai0,Fi0)):-
   var_stripped(VarRefExp, I), 
   Inc #< 0, !,
-  IncNeg #= - Inc,
-  isIntVal(IncVal, IncNeg),
+  Dec #= - Inc,
+  new_intval(Dec, IncVal),
   default_values(_PPI, An0, Ai0, Fi0).
 replace_ivar(I,I,I, X, X).
 
@@ -65,10 +65,16 @@ dup_bodies(Stmts, I, Stride, N, Nn, [Body|Bodies]) :-
   N1 #= N + Stride,
   dup_bodies(Stmts, I, Stride, N1, Nn, Bodies).
 
+strip_labels(DAi,DAi,DAi, Node, N1) :-
+  ast_node(Node, Type, Children, Annot, _, Fi),
+  ast_node(N1, Type, Children, Annot, DAi, Fi).
+
 unrolled(_, _, _, Fs, Fs1) :- 
   once(is_fortran_for_loop(Fs, I, Init, Test, Step, Body)),
   %unparse(Fs),nl, gtrace,
-  
+  max_nesting_level(Fs, NestingLevel),
+  (   NestingLevel #> 1 -> fail; true ),
+  (   ground(Body) -> true; gtrace),
   % Wrap a single statement inside of { }
   (   Body = basic_block(Stmts, An, Ai, Fi)
   ->  Bb = Body
@@ -78,11 +84,13 @@ unrolled(_, _, _, Fs, Fs1) :-
   ),
   get_annot(Stmts, wcet_loopbound(N..N), _), % only unroll constant for loops
   isStepsize(Step, _, Stride),
-
+  
   % Duplicate the loop body
-  dup_bodies(Bb, I, Stride, N, Bodies),
+  default_values(_PPI, An0, Ai0, Fi0),
+  transformed_with(Bb, strip_labels, preorder, Ai0, _, BbStripped),
+  dup_bodies(BbStripped, I, Stride, N, Bodies),
   N1 #= N*abs(Stride),
-  isIntVal(Nval, N1),
+  new_intval(N1, Nval),
   (   Stride #> 0
   ->  StepN = expr_statement(plus_assign_op(I, Nval,An0,Ai0,Fi0),An0,Ai0,Fi0)
   ;   StepN = expr_statement(minus_assign_op(I, Nval,An0,Ai0,Fi0),An0,Ai0,Fi0)
@@ -104,7 +112,10 @@ main :-
   compound(P),
 
   writeln('% unrolling...'),
-  transformed_with(P, unrolled, postorder, [], _, P2), !,
+%  guitracer, profile(
+  transformed_with(P, unrolled, postorder, [], _, P2)
+%  ), !, gtrace
+  ,
 
   write_term(P2, [quoted(true)]),
   writeln('.').

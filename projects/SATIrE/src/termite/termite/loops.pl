@@ -15,10 +15,15 @@
 
 	   is_fortran_for_loop/6,
 	   is_fortran_multicond_for_loop/6,
-	   is_const_val/2
+	   is_const_val/2,
+
+	   max_nesting_level/2,
+	   nested/3, nestmax/3
 ]).
 
 :- use_module(library(astproperties)).
+:- use_module(library(asttransform)).
+:- use_module(library(clpfd)).
 
 %-----------------------------------------------------------------------
 /** <module> Properties of loops
@@ -240,3 +245,20 @@ isMin2Func(
 			 expr_list_exp([Expr1, Expr2], _, _Ai2, _Fi2),
 			 _, _Ai3, _Fi3), Expr1, Expr2) :-
   string_to_atom(MIN2, min2).
+
+%% max_nesting_level(+Loop, -N)
+% return the maximum number of loops nested inside Loop
+max_nesting_level(Loop, N) :-
+  collate_ast(loops:nested, loops:nestmax, 0, Loop, N).
+
+nestmax(N1, N2, N) :- N is max(N1, N2).
+nested(Node, N0, N) :-
+  functor(Node, F, _),
+  (   (	  F = for_statement
+      ;	  F = while_stmt
+      ;	  F = do_while_stmt
+      )
+  ->  N is N0+1
+  ;   N = N0).
+
+
