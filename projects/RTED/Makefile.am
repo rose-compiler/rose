@@ -2,14 +2,16 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 EXTRA_DIST = index_array.txt \
              file_read.txt \
-	     tests upccrose
+	     tests upccrose required/upc.h upccrose \
+	     upcparam.h upcparam_s.h \
+	     extract-actual-error.sed extract-expected-error.sed
 
 if ROSE_USE_RTED
 
 # To keep compile commands tidy, please ONLY put required include flags here.
 INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I. -Winvalid-pch -pthreads
 INCLUDES2 = $(ROSE_INCLUDES) -I../../
-UPC_INCLUDES =  -I$(srcdir)/required/ 
+UPC_INCLUDES =  -I$(srcdir)/required/
 #UPC_INCLUDES = -I.
 
 EXTRACT_EXPECTED_ERROR_SCRIPT=$(srcdir)/extract-expected-error.sed
@@ -50,7 +52,7 @@ runtimeCheck_SOURCES = runtimeCheck.cpp \
 		       RtedTransformation.h \
 		       RtedSymbols.h \
 		       DataStructures.h \
-		       RuntimeSystem.h
+		       RuntimeSystem.h RuntimeSystem.cpp RuntimeSystem_ParsingWorkaround.h
 
 
 
@@ -189,6 +191,7 @@ check-C-uninitvar: run/C/uninitialized_variables
 check-C-C99specific: run/C/C99_specific_errors
 
 rted_source:
+	@echo "Copying files .... "
 	@cp -f $(srcdir)/index_array.txt .
 	@cp -f $(srcdir)/file_read.txt .
 	@cp -f $(srcdir)/upcparam.h .
