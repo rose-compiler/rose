@@ -479,8 +479,8 @@ buildFunctionCallExp(const SgName& name, SgType* return_type, \
                 SgExprListExp* parameters=NULL, SgScopeStatement* scope=NULL);
 
 //! Build the rhs of a variable declaration which includes an assignment
-SgAssignInitializer * buildAssignInitializer(SgExpression * operand_i = NULL);
-SgAssignInitializer * buildAssignInitializer_nfi(SgExpression * operand_i);
+SgAssignInitializer * buildAssignInitializer(SgExpression * operand_i = NULL, SgType * expression_type = NULL);
+SgAssignInitializer * buildAssignInitializer_nfi(SgExpression * operand_i = NULL, SgType * expression_type = NULL);
 
 //! Build an aggregate initializer
 SgAggregateInitializer * buildAggregateInitializer(SgExprListExp * initializers = NULL, SgType * type = NULL);
