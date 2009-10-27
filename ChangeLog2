@@ -1,3 +1,31 @@
+2009-10-26 19:31  dquinlan
+
+	* [r7939]
+	  /trunk/ROSE/developersScratchSpace/Dan/C_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/C_tests/test2009_01.c,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_38.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/mergeAST_tests/Makefile.am,
+	  /trunk/ROSE/proposals/TODO.txt,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Support.code,
+	  /trunk/ROSE/src/ROSETTA/src/support.C,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/sage_gen_be.C:
+	  Fixed a few problems as part of meeting with Peter.
+	  
+	  Detailed changes in this commit:
+	  1) Added support to detect use of C specific GNU extension "x ?:
+	  y"
+	  so that we fail properly with a message that this is not yet
+	  supported.
+	  2) Added entries to TODO list of more complex tasks than I can
+	  handle
+	  before leaving on travel.
+	  3) Commented out some specific files in SgFile that we old and
+	  not
+	  yet removed.
+	  4) Added C and C++ test code to demonstrate C specific GNU
+	  extension "x ?: y".
+
 2009-10-26 14:22  matzke
 
 	* [r7937] /trunk/ROSE/scripts/rosegit/bin/rat-test: Rosegit:
