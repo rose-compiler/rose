@@ -1,6 +1,13 @@
 #------------ QtDesignerPlugins Makefile.am -----------
 include $(top_srcdir)/src/roseExtensions/qtWidgets/Make.inc 
 
+EXTRA_DIST = QtDesignerPlugins.qrc \
+	icons/Kiviat.gif \
+	icons/PropTreeWidget.gif \
+	icons/Rose.gif \
+	icons/Graph.gif
+
+
 if ROSE_WITH_ROSEQT
 
 lib_LTLIBRARIES = libQtDesignerPlugins.la 
@@ -41,11 +48,6 @@ nodist_libQtDesignerPlugins_la_SOURCES = moc_AsmViewPlugin.cxx\
 libQtDesignerPlugins_la_LIBADD = $(top_builddir)/src/librose.la $(QT_LDFLAGS)
 libQtDesignerPlugins_la_DEPENDENCIES = $(top_builddir)/src/roseExtensions/qtWidgets/libRoseQtWidgets.la
 
-EXTRA_DIST = QtDesignerPlugins.qrc \
-	icons/Kiviat.gif \
-	icons/PropTreeWidget.gif \
-	icons/Rose.gif \
-	icons/Graph.gif
 
 # Target for installing header 
 headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
