@@ -1,6 +1,7 @@
 /* -*- C++ -*-
 Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
           2007-2009 Adrian Prantl <adrian@complang.tuwien.ac.at>
+	  2009 Gergö Barany <gergo@complang.tuwien.ac.at>
 */
 #ifndef PROLOGTRAVERSAL_H_
 #define  PROLOGTRAVERSAL_H_
@@ -182,15 +183,18 @@ TermPrinter<DFI_STORE_TYPE>::getArity(SgNode* astNode)
 }
 
 template<typename DFI_STORE_TYPE>
-PrologTerm* 
-TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, SynthesizedAttributesList synList) {
+PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
+  SgNode* astNode, SynthesizedAttributesList synList) {
   /*
    * Compute the PROLOG representation of a node using
    * the successors' synthesized attributes.
-   * o nodes with a fixed number of atmost 4 successors will be represented by a term in which
-   *   the successor nodes have fixed positions
-   * o nodes with more successors or a variable # of succ. will be represented by a term that contains
-   *   a list of successor nodes.
+   *
+   * o nodes with a fixed number of atmost 4 successors will be
+   *   represented by a term in which the successor nodes have fixed
+   *   positions
+   *
+   * o nodes with more successors or a variable # of succ. will be
+   *   represented by a term that contains a list of successor nodes.
    */
 
   PrologTerm* t;
@@ -206,8 +210,18 @@ TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, Synth
     fi = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
     if (isSgLocatedNode(astNode)) {
       std::cerr << "** WARNING: FileInfo for Node " << astNode->class_name()  
-		<< " \"" << astNode->unparseToString() << "\" was not set." << std::endl;
+		<< " \"" << astNode->unparseToString() 
+		<< "\" was not set." << std::endl;
     }
+  }
+
+  if (fi->isCompilerGenerated() && isSgBasicBlock(astNode)) {
+    /* Adrian 2009/10/27:
+       ROSE insists on wrapping loop bodies into a second SgBasicBlock now.
+       We don't need that */
+    assert(synList.size() == 1);
+    t = synList.at(0);
+    return t;
   }
 
   if (!fi->isFrontendSpecific()) {
@@ -533,19 +547,21 @@ TermPrinter<DFI_STORE_TYPE>::pagToProlog(
 
 /* Create a prolog term representing a leaf node.*/
 template<typename DFI_STORE_TYPE>
-PrologCompTerm*
-TermPrinter<DFI_STORE_TYPE>::leafTerm(SgNode* astNode, SynthesizedAttributesList synList) 
+PrologCompTerm* TermPrinter<DFI_STORE_TYPE>::leafTerm(
+  SgNode* astNode, SynthesizedAttributesList synList) 
 {
-	PrologCompTerm* t = new PrologCompTerm(termConv.prologize(astNode->class_name()));
+	PrologCompTerm* t = 
+	  new PrologCompTerm(termConv.prologize(astNode->class_name()));
 	return t;
 }
 
 /* Create a prolog term representing a unary operator.*/
 template<typename DFI_STORE_TYPE>
-PrologCompTerm*
-TermPrinter<DFI_STORE_TYPE>::unaryTerm(SgNode* astNode, SynthesizedAttributesList synList) 
+PrologCompTerm* TermPrinter<DFI_STORE_TYPE>::unaryTerm(
+  SgNode* astNode, SynthesizedAttributesList synList) 
 {
-	PrologCompTerm* t = new PrologCompTerm(termConv.prologize(astNode->class_name()));
+	PrologCompTerm* t = 
+	  new PrologCompTerm(termConv.prologize(astNode->class_name()));
 	/* add children's subterms*/
 	t->addSubterm(synList.at(0));
 	return t;
@@ -553,10 +569,11 @@ TermPrinter<DFI_STORE_TYPE>::unaryTerm(SgNode* astNode, SynthesizedAttributesLis
 
 /* Create a prolog term representing a binary operator.*/
 template<typename DFI_STORE_TYPE>
-PrologCompTerm*
-TermPrinter<DFI_STORE_TYPE>::binaryTerm(SgNode* astNode, SynthesizedAttributesList synList) 
+PrologCompTerm* TermPrinter<DFI_STORE_TYPE>::binaryTerm(
+  SgNode* astNode, SynthesizedAttributesList synList) 
 {
-	PrologCompTerm* t = new PrologCompTerm(termConv.prologize(astNode->class_name()));
+	PrologCompTerm* t = 
+	  new PrologCompTerm(termConv.prologize(astNode->class_name()));
 	/* add children's subterms*/
 	t->addSubterm(synList.at(0));
 	t->addSubterm(synList.at(1));
@@ -565,10 +582,11 @@ TermPrinter<DFI_STORE_TYPE>::binaryTerm(SgNode* astNode, SynthesizedAttributesLi
 
 /* Create a prolog term representing a ternary operator.*/
 template<typename DFI_STORE_TYPE>
-PrologCompTerm*
-TermPrinter<DFI_STORE_TYPE>::ternaryTerm(SgNode* astNode, SynthesizedAttributesList synList) 
+PrologCompTerm* TermPrinter<DFI_STORE_TYPE>::ternaryTerm(
+  SgNode* astNode, SynthesizedAttributesList synList) 
 {
-	PrologCompTerm* t = new PrologCompTerm(termConv.prologize(astNode->class_name()));
+	PrologCompTerm* t = 
+	  new PrologCompTerm(termConv.prologize(astNode->class_name()));
 	t->addSubterm(synList.at(0)); 
 	t->addSubterm(synList.at(1));
 	t->addSubterm(synList.at(2));
@@ -577,10 +595,11 @@ TermPrinter<DFI_STORE_TYPE>::ternaryTerm(SgNode* astNode, SynthesizedAttributesL
 
 /* Create a prolog term representing a quaternary operator.*/
 template<typename DFI_STORE_TYPE>
-PrologCompTerm*
-TermPrinter<DFI_STORE_TYPE>::quaternaryTerm(SgNode* astNode, SynthesizedAttributesList synList) 
+PrologCompTerm* TermPrinter<DFI_STORE_TYPE>::quaternaryTerm(
+  SgNode* astNode, SynthesizedAttributesList synList) 
 {
-	PrologCompTerm* t = new PrologCompTerm(termConv.prologize(astNode->class_name()));
+	PrologCompTerm* t = 
+          new PrologCompTerm(termConv.prologize(astNode->class_name()));
 	t->addSubterm(synList.at(0));
 	t->addSubterm(synList.at(1));
 	t->addSubterm(synList.at(2));
@@ -590,11 +609,12 @@ TermPrinter<DFI_STORE_TYPE>::quaternaryTerm(SgNode* astNode, SynthesizedAttribut
 
 /* Create a prolog term representing a node with more than four successors.*/
 template<typename DFI_STORE_TYPE>
-PrologCompTerm*
-TermPrinter<DFI_STORE_TYPE>::listTerm(SgNode* astNode, SynthesizedAttributesList synList) 
+PrologCompTerm* TermPrinter<DFI_STORE_TYPE>::listTerm(
+  SgNode* astNode, SynthesizedAttributesList synList) 
 {
-  PrologCompTerm* t = new PrologCompTerm(termConv.prologize(astNode->class_name()));
- /* add children's subterms to list*/
+  PrologCompTerm* t = 
+   new PrologCompTerm(termConv.prologize(astNode->class_name()));
+  /* add children's subterms to list */
   PrologList* l = new PrologList();
   SynthesizedAttributesList::reverse_iterator it;
   it = synList.rbegin();
@@ -613,7 +633,7 @@ TermPrinter<DFI_STORE_TYPE>::listTerm(SgNode* astNode, SynthesizedAttributesList
   }
 
   while(it != end) {
-    /* strip "null" Atoms */
+    /* strip frontend-specific "null" Atoms (see above) */
     PrologAtom* atom = dynamic_cast<PrologAtom*>(*it);
     if (!(atom && (atom->getName() == "null")))
       l->addFirstElement(*it);
