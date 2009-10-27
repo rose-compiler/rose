@@ -2654,11 +2654,16 @@ SgAsmElfDynamicEntry::stringify_tag(EntryType t) const
 void
 SgAsmElfDynamicEntry::set_name(SgAsmGenericString *name)
 {
-    if (p_name)
-        p_name->set_parent(NULL);
-    p_name = name;
-    if (p_name)
-        p_name->set_parent(this);
+    if (name!=p_name) {
+        if (p_name) {
+            p_name->set_parent(NULL);
+            delete p_name;
+        }
+        p_name = name;
+        if (p_name)
+            p_name->set_parent(this);
+        set_isModified(true);
+    }
 }
 
 /** Print some debugging info */
@@ -4667,11 +4672,16 @@ SgAsmElfNoteEntry::ctor(SgAsmElfNoteSection *section)
 void
 SgAsmElfNoteEntry::set_name(SgAsmGenericString *name)
 {
-    if (p_name)
-        p_name->set_parent(NULL);
-    p_name = name;
-    if (p_name)
-        p_name->set_parent(this);
+    if (name!=p_name) {
+        if (p_name) {
+            p_name->set_parent(NULL);
+            delete p_name;
+        }
+        p_name = name;
+        if (p_name)
+            p_name->set_parent(this);
+        set_isModified(true);
+    }
 }
 
 /** Initialize a note by parsing it from the specified location in the note section. Return value is the offset to the

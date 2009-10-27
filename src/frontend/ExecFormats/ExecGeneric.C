@@ -2055,11 +2055,16 @@ SgAsmGenericSection::get_name() const
 void
 SgAsmGenericSection::set_name(SgAsmGenericString *s)
 {
-    if (s)
-        s->set_parent(this);
-    if (p_name!=s)
+    if (s!=p_name) {
+        if (p_name) {
+            p_name->set_parent(NULL);
+            delete p_name;
+        }
+        p_name = s;
+        if (p_name)
+            p_name->set_parent(this);
         set_isModified(true);
-    p_name = s;
+    }
 }
 
 /** Returns the current file size of the section in bytes. The original size of the section (available when parse() is called
@@ -3382,11 +3387,16 @@ SgAsmGenericDLL::get_name() const
 void
 SgAsmGenericDLL::set_name(SgAsmGenericString *s)
 {
-    if (s)
-        s->set_parent(this);
-    if (p_name!=s)
+    if (s!=p_name) {
+        if (p_name) {
+            p_name->set_parent(NULL);
+            delete p_name;
+        }
+        p_name = s;
+        if (p_name)
+            p_name->set_parent(this);
         set_isModified(true);
-    p_name = s;
+    }
 }
 
 /** Print some debugging info */
@@ -3425,11 +3435,16 @@ SgAsmGenericSymbol::get_name() const
 void
 SgAsmGenericSymbol::set_name(SgAsmGenericString *s)
 {
-    if (s)
-        s->set_parent(this);
-    if (p_name!=s)
+    if (s!=p_name) {
+        if (p_name) {
+            p_name->set_parent(NULL);
+            delete p_name;
+        }
+        p_name = s;
+        if (p_name)
+            p_name->set_parent(this);
         set_isModified(true);
-    p_name = s;
+    }
 }
 
 std::string
