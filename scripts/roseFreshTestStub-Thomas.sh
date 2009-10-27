@@ -37,8 +37,14 @@ export JAVA_HOME=/home/panas2/java/jdk1.6.0-64bit
 export PATH=/home/panas2/development/subversion/1.4.3/bin:/home/panas2/java/jdk1.6.0-64bit/bin:/usr/apps/bin:${ANT_HOME}/bin:${PATH}
 export LD_LIBRARY_PATH=/home/panas2/development/subversion/1.4.3/lib:/home/panas2/development/ROSE-64bit/install-gcc4/lib:/home/panas2/development/jogl/jogl-1.1.1/gluegen/build/obj/:/home/panas2/development/jogl/jogl-1.1.1/jogl/build/obj/:/usr/lib/:${BOOST_LD}:/home/panas2/programs/dwarf/dwarf-20081013/libdwarf/:${LD_LIBRARY_PATH}
 
-export PATH=${HOME}/bin:/usr/apps/gcc/4.2.2-64bit/bin/:${PATH}
-export LD_LIBRARY_PATH=/home/panas2/development/surface-gl/glut-3.6/lib/glut/:/usr/apps/gcc/4.2.2-64bit/lib64/:/usr/apps/gcc/4.2.2-64bit/lib/:${LD_LIBRARY_PATH}
+export UPC="/home/panas2/development/bupc/build_rs"
+export UPC_BIN=${UPC}/bin
+export UPC_LIB=${UPC}/lib
+export UPC_LIB_ROSE="/home/panas2/c++workspace/build/projects/RTED/CppRuntimeSystem/.libs"
+
+export PATH=${HOME}/bin:${UPC_BIN}:/usr/apps/gcc/4.2.2-64bit/bin/:${PATH}
+export LD_LIBRARY_PATH=${UPC_LIB}:${UPC_LIB_ROSE}:/home/panas2/development/surface-gl/glut-3.6/lib/glut/:/usr/apps/gcc/4.2.2-64bit/lib64/:/usr/apps/gcc/4.2.2-64bit/lib/:${LD_LIBRARY_PATH}
+
 
 
 # using a time stamp to avoid overwriting previous tests
@@ -47,8 +53,8 @@ ROSE_TOP=/home/panas2/ROSE/svn-test-rose/${TIMESTAMP}
 
 
 
-#mpi
-CONFIGURE_FLAGS=(--with-boost=${BOOST_ROOT}  --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-CXXFLAGS=-fPIC -with-CFLAGS=-fPIC --with-CXX_DEBUG=-g --with-boost=/home/panas2/development/boost-install-gcc4-64bit/  --without-Mesa --with-qt=/usr/apps/qt/4.4.2/ --with-sqlite3=/home/panas2/programs/sqlite/sqlite3 --with-java LDFLAGS=-L/home/panas2/programs/freeglut/lib --with-pch CPPFLAGS=-I/home/panas2/programs/freeglut/freeglut-2.4.0/include --with-rted=/home/panas2/development/rted/RTED --prefix=${ROSE_TOP}/install "$@")
+#rted
+CONFIGURE_FLAGS=(--with-boost=${BOOST_ROOT}  --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-CXXFLAGS=-fPIC -with-CFLAGS=-fPIC --with-CXX_DEBUG=-g --with-boost=/home/panas2/development/boost-install-gcc4-64bit/  --without-Mesa --with-qt=/usr/apps/qt/4.4.2/ --with-sqlite3=/home/panas2/programs/sqlite/sqlite3 --without-java LDFLAGS=-L/home/panas2/programs/freeglut/lib --with-pch CPPFLAGS=-I/home/panas2/programs/freeglut/freeglut-2.4.0/include --with-rted=/home/panas2/development/rted/RTED --prefix=${ROSE_TOP}/install "$@")
 
 
 
