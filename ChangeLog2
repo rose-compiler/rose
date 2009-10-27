@@ -1,3 +1,36 @@
+2009-10-27 18:08  panas2
+
+	* [r7956] /trunk/ROSE/scripts/roseFreshTestStub-Thomas-RoseQt.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Thomas.sh: Changes to cron
+	  scripts
+
+2009-10-27 17:34  panas2
+
+	* [r7955] /trunk/ROSE/projects/QtDesignerPlugins/Makefile.am: Moved
+	  ExtraDist outside of condition
+
+2009-10-27 15:56  matzke
+
+	* [r7954]
+	  /trunk/ROSE/tests/roseTests/binaryTests/testSampleBinaries.sh:
+	  binaryTests: ignore .svn directory
+	  
+	  This fixes r7931
+
+2009-10-27 15:56  matzke
+
+	* [r7953] /trunk/ROSE/src/frontend/ExecFormats/ExecELF.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ExecGeneric.C: ExecFormats:
+	  various set_name() accessors free old value
+	  
+	  SgAsmElfDynamicEntry::set_name()
+	  SgAsmElfNoteEntry::set_name()
+	  SgAsmGenericSection::set_name()
+	  SgAsmGenericDLL::set_name()
+	  SgAsmGenericSymbol::set_name()
+	  
+	  This cleans up unattached SgAsmBasicString nodes.
+
 2009-10-26 19:31  dquinlan
 
 	* [r7939]
