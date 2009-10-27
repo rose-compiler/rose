@@ -5,8 +5,10 @@
 	  [default_values/4,
 	   simple_form_of/2,
            ast_node/6,
+	   is_ast_node/6,
 	   transformed_with/5,
 	   transformed_with/6,
+	   collate_ast/5,
 	   unparse_to/2,
 	   unparse/1,
 	   unparse/2,
@@ -153,6 +155,15 @@ ast_node(Node, Type, Children, Annot, Ai, Fi) :-
   Node =.. [Type|Xs],
   append(Children, [Annot, Ai, Fi], Xs).
 
+%% is_ast_node(+Node, -Type, -Children, -Annot, -Ai, -Fi) is det.
+% Faster, uni-directional version of ast_node/6.
+is_ast_node(Node, Type, Children, Annot, Ai, Fi) :-
+  functor(Node, Type, Args),
+  N is Args - 3,
+  length(Children, N),
+  Node =.. [Type|Xs],
+  append(Children, [Annot, Ai, Fi], Xs).
+
 %-----------------------------------------------------------------------
 
 %% transformed_with(+Node, +Transformation, +Info, -Info1, -NodeT).
@@ -175,6 +186,11 @@ transformed_with(Node, Transformation, Info, Info1, NodeT) :-
 %                    Info, InfoInner, InfoPost, TransformedNode).
 % ==
 %
+% * Preorder traversals
+%     In a list-node, InfoInner is passed to the children
+% * Postorder traversals
+%     In a list-node, InfoInner is passed to the children
+%
 % Warning: InfoPost works only in a sequential fashion - no merging et al.
 %
 % Todo: replace this with an attribute grammer system
@@ -195,26 +211,20 @@ transformed_with(ListNode, Transformation, preorder, Info, InfoPost,
   transformed_with(List, Transformation, preorder, InfoInner, _, ListT),
   ast_node(ListNode2, Type, [ListT], Annot, Ai, Fi).
 
+% postorder --------------------------------------
+% nothing special
+
+% lists
 transformed_with([], _, _, Info, Info, []).
-transformed_with([A|As], Transformation, preorder, Info, InfoPost, X) :- !,
+transformed_with([A|As], Transformation, Order, Info, InfoPost, X) :- !,
   % First
-  transformed_with(A, Transformation, preorder, Info, InfoPost1, B), 
+  transformed_with(A, Transformation, Order, Info, InfoPost1, B), 
   % Rest of list
-  transformed_with(As, Transformation, preorder, InfoPost1, InfoPost, Bs),
+  transformed_with(As, Transformation, Order, InfoPost1, InfoPost, Bs),
   % Both can be lists
   (is_list(B)
   -> append(B, Bs, X)
   ;  X = [B|Bs]).
-
-% postorder --------------------------------------
-
-transformed_with([A|As], Transformation, postorder, Info, InfoPost, X) :- !,
-  transformed_with(A, Transformation, postorder, Info, InfoInner, B),
-  transformed_with(As, Transformation, postorder, InfoInner, InfoPost, Bs),
-  (is_list(B)
-  -> append(B, Bs, X)
-  ;  X = [B|Bs]).
-
 % ---------------------------------------------------------------------
 
 % Generic version for 0-4ary nodes
@@ -234,22 +244,44 @@ apply_transformation(Node, Transformation, Info, InfoInner, InfoPost,
   call(Transformation, Info, InfoInner, InfoPost, Node, NodeTrans).
 
 % Transform subterms, left-to-right
-transformed_children([], _, _, I, I, []).
+transformed_children([], _, _, I, I, []) :- !.
 transformed_children([N|Ns], Transformation, Order, Info0, InfoT, [NT|NsT]) :-
+  !,
   transformed_children(N, Transformation, Order, Info0, InfoT1, NT),
   transformed_children(Ns, Transformation, Order, InfoT1, InfoT, NsT).
 
 transformed_children(Node, Transformation, Order, Info0, InfoT, NodeT) :-
-  ast_node(Node, Type, Children, Annot, Ai, Fi),
-  transform_children(Children, Transformation, Order, Info0, InfoT, ChildrenT),
+  is_ast_node(Node, Type, Children, Annot, Ai, Fi),
+  transformed_withL(Children, Transformation, Order, Info0, InfoT, ChildrenT),
   ast_node(NodeT, Type, ChildrenT, Annot, Ai, Fi).
 
-transform_children([], _, _, Info, Info, []).
-transform_children([C|Cs], Transformation, Order, Info0, InfoT, [CT|CTs]) :-
+% This time a node cannot be transformed into a list
+transformed_withL([], _, _, Info, Info, []).
+transformed_withL([C|Cs], Transformation, Order, Info0, InfoT, [CT|CTs]) :-
   transformed_with(C, Transformation, Order, Info0, Info1, CT),
-  transform_children(Cs, Transformation, Order, Info1, InfoT, CTs).
+  transformed_withL(Cs, Transformation, Order, Info1, InfoT, CTs).
 
 %-----------------------------------------------------------------------
+
+%% collate_ast(Map, Reduce, A0, Node, A)
+% Perform a postorder traversal on the AST Node. For every Node
+% visited call Map = f(Node, A_Children, A). For child nodes in the
+% same hierarchy call foldl1(As, Reduce, A).
+collate_ast(Map, Reduce, A0, Node, A) :-
+  collate_children(Map, Reduce, A0, Node, As),
+  (   As = []
+  ->  A0 = A1
+  ;   once(foldl1(As, Reduce, A1))
+  ),
+  call(Map, Node, A1, A).
+
+collate_children(Map, Reduce, A0, Node, As) :-
+  (   is_list(Node)
+  ->  Children = Node
+  ;   is_ast_node(Node, _Type, Children, _, _, _)
+  ), !,
+  maplist(collate_ast(Map, Reduce, A0), Children, As).
+collate_children(_, _, _, _, []).
 
 %% unparse_to_atom(?Output, +Term) is det.
 % Unparse the program Term using unparse/1 and sent the output to Output
@@ -262,7 +294,7 @@ unparse_to(Output, Term) :- with_output_to(Output, unparse(Term)).
 % stdout.
 %
 % This predicate is especially useful for debugging purposes.
-unparse(Node) :- unparse(fi(0, 0, []), Node).
+unparse(Node) :- unparse(fi(0, 0, []), Node), !.
 
 % FIXME implement replacement write/1 that uses col/line
 
@@ -702,7 +734,7 @@ unparse_enum(UI, [N|Ns]) :- !,
 unparse_par(UI, E) :- unparse_par1(UI, E), !.
 unparse_par1(UI, E) :-
   functor(E, F, _),
-  member(F, [function_call_exp, pntr_arr_ref_exp]),
+  memberchk(F, [function_call_exp, pntr_arr_ref_exp]),
   unparse(UI, E).
 unparse_par1(UI, E) :-
   functor(E, pointer_deref_exp, _),

@@ -17,7 +17,8 @@
 
 	   var_type/2,
 	   var_typemod/2,
-	   
+
+	   new_intval/2,
 	   isIntVal/2,
 	   isVar/2,
 	   isBinNode/7,
@@ -328,6 +329,11 @@ isIntVal(unsigned_char_val(_,value_annotation(String, _), _, _), Value) :-
   string_to_atom(String, Atom),
   atom_codes(Atom, [Value]).
 
+%% new_intval(+Value, -IntVal)
+% Create a new int_val(Value, ...) data structure with default annotations.
+new_intval(Value, int_val(null,value_annotation(Value,PPI), AI, FI)) :-
+  default_values(PPI, _, AI, FI).
+
 %% isVar(?VarRefExp, ?Name) is nondet.
 % True if VarRefExp is a var_ref_exp or a cast_exp. Name is the name
 % of the variable.
@@ -379,7 +385,7 @@ isBinOpRhs(BinOp, Rhs) :- arg(2, BinOp, Rhs).
 %    namespace_definition_statment, switch_statement, while_stmt
 scope_statement(Node) :-
   functor(Node, F, _),
-  member(F, [basic_block, catch_option_stmt, class_definition,
+  memberchk(F, [basic_block, catch_option_stmt, class_definition,
 	     do_while_stmt, for_statement,function_definition, global, if_stmt,
 	     namespace_definition_statment, switch_statement, while_stmt]).
 % scope_statement(basic_block(_, _, _, _)).
