@@ -1,3 +1,86 @@
+2009-10-28 17:40  liao6
+
+	* [r7966] /trunk/ROSE/scripts/roseFreshTestStub-Leo-daily.sh:
+	  Enable OpenMP execution tests
+
+2009-10-28 17:26  liao6
+
+	* [r7965]
+	  /trunk/ROSE/projects/autoParallelization/tests/Makefile.am,
+	  /trunk/ROSE/projects/autoParallelization/tests/plusPlusOp.c,
+	  /trunk/ROSE/src/midend/astUtil/symbolicVal/SymbolicVal.C: Handle
+	  ++ and -- operator in dependence analysis, used for auto
+	  parallelization
+
+2009-10-28 17:18  liao6
+
+	* [r7964]
+	  /trunk/ROSE/exampleTranslators/DOTGenerator/dotGeneratorWholeASTGraph.C,
+	  /trunk/ROSE/projects/OpenMP_Translator/README,
+	  /trunk/ROSE/src/frontend/SageIII/astVisualization/wholeAST.C,
+	  /trunk/ROSE/src/frontend/SageIII/astVisualization/wholeAST.h,
+	  /trunk/ROSE/src/frontend/SageIII/astVisualization/wholeAST_API.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/midend/astOutlining/GenerateCall.cc,
+	  /trunk/ROSE/src/midend/astOutlining/GenerateFunc.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Insert.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Outliner.cc,
+	  /trunk/ROSE/src/midend/astOutlining/PragmaInterface.cc,
+	  /trunk/ROSE/src/midend/astOutlining/StmtRewrite.cc,
+	  /trunk/ROSE/src/midend/astOutlining/ThisExprs.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Transform.cc,
+	  /trunk/ROSE/src/midend/ompLowering/omp_lowering.cpp,
+	  /trunk/ROSE/src/util/commandlineProcessing/commandline_processing.C,
+	  /trunk/ROSE/src/util/commandlineProcessing/commandline_processing.h,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/hello.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/hello1.cpp,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/task_tree.cpp,
+	  /trunk/ROSE/tests/roseTests/ompLoweringTests/Makefile.am: Added
+	  an internal configuration data structure to control the use of
+	  various filters for the whole AST graph generator
+	  * also added a commandline interface
+	  * type dotGeneratorWholeASTGraph -rose:help for details
+	  
+	  OpenMP implementation for C++
+	  * use void* types and type casting to avoid introducing forward
+	  declarations of class types
+	  * enforce type matching for generated function calls and gomp
+	  function prototypes
+	  * better handling of the temporary this pointer variable within
+	  C++ member functions
+	  * skip variables which are part of other variables for
+	  firstprivate variable classification
+	  * pass three C++ tests: a parallel region and two parallel tasks
+
+2009-10-28 17:16  brown223
+
+	* [r7963]
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/README:
+	  more ideas for recognizing c++ class structures
+	  
+	  specifally targetted at classes with virtual tables
+
+2009-10-28 14:38  dquinlan
+
+	* [r7962]
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/astStructRecognition.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/structureRecognitionSupport.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/structureRecognitionSupport.h,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/testProgram_1.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/variableInitialization.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/variableInitialization.h,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/virtualTableLoad.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/virtualTableLoad.h:
+	  More work while on travel.
+
+2009-10-28 14:27  dquinlan
+
+	* [r7961]
+	  /trunk/ROSE/developersScratchSpace/Dan/algorithmRecognition_tests/algorithms.C:
+	  Added example file.
+
 2009-10-27 23:45  panas2
 
 	* [r7959] /trunk/ROSE/projects/RTED/Makefile.am,
