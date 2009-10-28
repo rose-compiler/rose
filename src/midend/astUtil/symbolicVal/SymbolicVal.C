@@ -318,6 +318,13 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
        // Many operations on symbolic expressions do not consider type casting operations
        // Liao, 11/20/2008
          return v; //GetSymbolicVal(fa,s1);
+    case AstInterface::UOP_INCR1:
+    case AstInterface::UOP_DECR1:
+        // Liao, 10/27/2009
+        // The value of val++ val-- seems to be ambiguous, 
+        // we return their original values here since the used value in array[val++] is the original.
+        // TODO double check this
+         return v; 
     default:
        std::cerr << "SymbolicValGenerator::GetSymbolicVal() Cannot handle " << AstToString(exp) << ":" << opr << "\n";
        assert(false);
