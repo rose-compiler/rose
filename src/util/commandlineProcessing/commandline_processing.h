@@ -10,6 +10,9 @@ namespace CommandlineProcessing
           //! Separate a string into individual parameters and store them into a string vector
           Rose_STL_Container<std::string> generateArgListFromString ( std::string commandline );
 
+          //! Convert a vector of string to a single string
+          std::string generateStringFromArgList( Rose_STL_Container<std::string> & argList);
+
 	  //! Convert an argc-argv pair into a string vector
           Rose_STL_Container<std::string> generateArgListFromArgcArgv ( int argc, const char* argv[] );
 	  

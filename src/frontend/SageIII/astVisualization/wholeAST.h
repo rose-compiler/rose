@@ -1,3 +1,9 @@
+#ifndef WHOLE_AST_H
+#define WHOLE_AST_H
+
+#include <string>
+#include <vector>
+
 class CustomAstDOTGenerationEdgeType
    {
   // EdgeType holdes information required to specify an edge to DOT
@@ -198,8 +204,9 @@ class CustomMemoryPoolDOTGeneration
        // Wrapup details and output the file (generates the rest of the nodes in the AST)
           void internalGenerateGraph( std::string filename );
 
-       // DQ (5/11/2006): This filters out the gnu compatability IR nodes (which tend to confuse everyone!)
-          void frontendCompatabilityFilter(SgNode* n);
+
+       // DQ (5/11/2006): This filters out the gnu compatibility IR nodes (which tend to confuse everyone!)
+          void frontendCompatibilityFilter(SgNode* n);
           void typeFilter(SgNode* n);
           void commentAndDirectiveFilter(SgNode* n);
 
@@ -209,7 +216,7 @@ class CustomMemoryPoolDOTGeneration
        // DQ (5/11/2006): This adds colors to the whole AST graph
           void defaultColorFilter(SgNode* n);
 
-       // Default fileter to simplify the whole AST graph
+       // Default filter to simplify the whole AST graph
           void defaultFilter(SgNode* n);
 
        // DQ (8/14/2008): Added to reduce the size and complexity of graphs of the executable format.
@@ -220,6 +227,33 @@ class CustomMemoryPoolDOTGeneration
 
        // DQ (3/2/2009): Ignore empty symbol tables
           void emptySymbolTableFilter(SgNode* n);
+
+        // Liao, 10/23/2009, use flags to turn on/off filters, 0 : off, 1: on
+         struct s_Filter_Flags
+         {
+           int m_asmFileFormat;          /*asmFileFormatFilter()*/
+           int m_asmType;            /* asmTypeFilter()*/
+           int m_binaryExecutableFormat; /*binaryExecutableFormatFilter()*/
+           int m_commentAndDirective;    /* commentAndDirectiveFilter()*/  
+           int m_ctorInitializer;    /*ctorInitializerListFilter()*/
+
+           int m_default; /* defaultFilter ()*/
+           int m_defaultColor;           /*defaultColorFilter()*/
+           int m_edge;   /* edgeFilter ()*/
+           int m_emptySymbolTable;  /*emptySymbolTableFilter()*/ 
+           int m_expression; /* expressionFilter ()*/
+
+           int m_fileInfo;               /* fileInfoFilter ()*/
+           int m_frontendCompatibility;  /* frontendCompatibilityFilter()*/
+           int m_symbol;  /*symbolFilter ()*/
+           int m_type;   /* typeFilter ()*/
+           int m_variableDeclaration; /*variableDeclarationFilter()*/
+
+           int m_variableDefinition; /*variableDefinitionFilter()*/
+         };
+
+         //static int useExpressionFilter ;
+         static struct s_Filter_Flags filterFlags;
 
        // DQ (3/2/2009): Ignore expression IR nodes
           void expressionFilter(SgNode* n);
@@ -235,6 +269,16 @@ class CustomMemoryPoolDOTGeneration
 
        // DQ (10/18/2009): Added support to skip output of binary expression type information in generation of AST visualization.
           void asmTypeFilter(SgNode* n);
+        //! Initialize filter flags from command line options
+          static void init_filters(std::vector <std::string>& argvList);
+        //! Initialize filter flags for the default cases
+          static void init_filters();
+        // print out command line option help  
+          static void print_help();
+         //! print out the current values of the filter flags
+          static void print_filter_flags ();
+
    };
 
+#endif //WHOLE_AST_H
 

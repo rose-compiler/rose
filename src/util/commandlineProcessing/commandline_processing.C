@@ -101,6 +101,20 @@ CommandlineProcessing::generateArgListFromString ( string commandline )
      return argList;
    }
 
+//! Convert a vector of string to a single string
+std::string CommandlineProcessing::generateStringFromArgList( Rose_STL_Container<std::string> & argList)
+{
+  string result; 
+  Rose_STL_Container<std::string>::iterator iter;
+  for (iter = argList.begin(); iter != argList.end(); iter ++)
+  {
+    if (iter !=argList.begin())
+      result += " ";
+    result += *iter;
+  }
+  return result;  
+}
+
 Rose_STL_Container<string>
 CommandlineProcessing::generateArgListFromArgcArgv ( int argc, const char* argv[] )
    {
