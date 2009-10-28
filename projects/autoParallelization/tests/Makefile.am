@@ -22,6 +22,7 @@ reduction_2.c \
 reduction_fake.c \
 scalar_privatization.c \
 shared.c \
+plusPlusOp.c \
 true_dep.c \
 true_dep_2.c \
 true_l2.c 
