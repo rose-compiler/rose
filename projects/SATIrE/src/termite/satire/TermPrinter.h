@@ -494,6 +494,15 @@ TermPrinter<DFI_STORE_TYPE>::getAnalysisResultList(SgStatement* stmt)
     ee = new PrologCompTerm("entry_exit_labels");
     ee->addSubterm(pair);
     infos->addFirstElement(ee);
+    /* ICFG node labels identifying branch headers */
+    if (stmt->attributeExists("PAG statement head")) {
+      StatementAttribute *a =
+        (StatementAttribute *) stmt->getAttribute("PAG statement head");
+      PrologInt *l = new PrologInt(a->get_bb()->id);
+      PrologCompTerm *head = new PrologCompTerm("branch_head_label");
+      head->addSubterm(l);
+      infos->addFirstElement(head);
+    }
   }
 #endif
 
