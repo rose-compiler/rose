@@ -145,7 +145,7 @@ Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, Addre
                         fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: disassembly failed in basic block 0x%08"PRIx64": %s\n",
                                 e.ip, start_va, e.mesg.c_str());
                     for (InstructionMap::iterator ii=insns.begin(); ii!=insns.end(); ++ii)
-                        delete ii->second;
+                        SageInterface::deleteAST(ii->second);
                     throw;
                 }
                 break;
@@ -249,7 +249,7 @@ Disassembler::disassembleBuffer(const MemoryMap *map, AddressSet worklist, Addre
                     for (InstructionMap::iterator bbi=bb.begin(); bbi!=bb.end(); ++bbi) {
                         InstructionMap::iterator exists = insns.find(bbi->first);
                         if (exists!=insns.end()) {
-                            delete exists->second; /*don't delete bbi->second because we use it below*/
+                            SageInterface::deleteAST(exists->second); /*don't delete bbi->second because we use it below*/
                             exists->second = bbi->second;
                         } else {
                             insns.insert(*bbi);
@@ -278,7 +278,7 @@ Disassembler::disassembleBuffer(const MemoryMap *map, AddressSet worklist, Addre
         }
     } catch(...) {
         for (InstructionMap::iterator ii=insns.begin(); ii!=insns.end(); ++ii)
-            delete ii->second;
+            SageInterface::deleteAST(ii->second);
         throw;
     }
 
