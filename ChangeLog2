@@ -1,3 +1,16 @@
+2009-10-27 23:45  panas2
+
+	* [r7959] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_prolog.cpp,
+	  /trunk/ROSE/projects/RTED/tests/UPC/simple/test.ok_msg,
+	  /trunk/ROSE/projects/RTED/tests/UPC/simple/test.upc: Fixes to UPC
+	  distribution
+
+2009-10-27 21:30  panas2
+
+	* [r7958] /trunk/ROSE/projects/RTED/Makefile.am: Added missing
+	  files to Distribution
+
 2009-10-27 18:08  panas2
 
 	* [r7956] /trunk/ROSE/scripts/roseFreshTestStub-Thomas-RoseQt.sh,
