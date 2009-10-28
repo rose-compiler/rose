@@ -56,7 +56,13 @@ SgClassDeclaration* Outliner::generateParameterStructureDeclaration(
     if (pdSyms.find(i_symbol) != pdSyms.end())
     {
        member_name = member_name+"_p";
-       member_type = buildPointerType(member_type);
+       // member_type = buildPointerType(member_type);
+       // Liao, 10/26/2009
+       // We use void* instead of type* to ease the handling of C++ class pointers wrapped into the data structure
+       // Using void* can avoid adding a forward class declaration  which is needed for classA *
+       // It also simplifies unparsing: unparsing the use of classA* has some complications. 
+       // The downside is that type casting is needed for setting and using the pointer typed values
+       member_type = buildPointerType(buildVoidType());
     }
 
     SgVariableDeclaration *member_decl = buildVariableDeclaration(member_name, member_type, NULL, def_scope);
@@ -74,6 +80,7 @@ SgClassDeclaration* Outliner::generateParameterStructureDeclaration(
   cout<<"global_scoped_ancestor class_name: "<<global_scoped_ancestor->class_name()<<endl; 
   ROSE_ASSERT (isSgStatement(global_scoped_ancestor));
   insertStatementBefore(isSgStatement(global_scoped_ancestor), result); 
+  moveUpPreprocessingInfo(result,isSgStatement(global_scoped_ancestor));
 
   if (global_scoped_ancestor->get_parent() != func_scope )
   {
@@ -241,7 +248,10 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
      ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
 
   // What is this doing (what happens to "s")
+//  cout<<"Debug before replacement(s, func_call), s is\n "<< s<<endl; 
+//     SageInterface::insertStatementAfter(s,func_call);
      SageInterface::replaceStatement(s,func_call);
+
      ROSE_ASSERT(s != NULL);
      ROSE_ASSERT(s->get_statements().empty() == true);
 
@@ -409,12 +419,14 @@ std::string Outliner::generatePackingStatements(SgStatement* target, ASTtools::V
       SgVariableSymbol * i_symbol = const_cast<SgVariableSymbol *>(*i);
       //SgType* i_type = i_symbol->get_type();
        string member_name= i_name->get_name ().str ();
+//     cout<<"Debug: Outliner::generatePackingStatements() symbol to be packed:"<<member_name<<endl;  
       rhs = buildVarRefExp(i_symbol); 
       if (pdsyms.find(i_symbol) != pdsyms.end()) // pointer type
       {
         member_name = member_name+"_p";
         // member_type = buildPointerType(member_type);
-        rhs = buildAddressOfOp(rhs); 
+        //rhs = buildAddressOfOp(rhs); 
+        rhs = buildCastExp( buildAddressOfOp(rhs), buildPointerType(buildVoidType())); 
       }
       SgClassDefinition* class_def = isSgClassDefinition (isSgClassDeclaration(struct_decl->get_definingDeclaration())->get_definition()) ; 
       ROSE_ASSERT (class_def != NULL);

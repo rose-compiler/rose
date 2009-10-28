@@ -27,7 +27,7 @@ class node {
     node* parent;
     class node* left; // class node or node here? Both
     node* right;
-    node(int id):id(id){}
+    node(int id):id(id){ left =0; right = 0;} // must initialize left and right children, otherwise may cause seg fault!!
     void setLeft(node* child) { left = child; child->parent = this;}
     void setRight(node* child){ right = child; child->parent = this;}
 };

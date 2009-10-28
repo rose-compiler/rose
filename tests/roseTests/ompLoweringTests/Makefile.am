@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # Default header file search path
 INCLUDES = $(ROSE_INCLUDES)
-roseomp_LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+roseomp_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 GOMP_PATH = @gomp_omp_runtime_library_path@
 
@@ -84,14 +84,31 @@ if !OS_MACOSX
    C_TESTCODES_REQUIRED_TO_RUN += threadprivate.c threadprivate2.c threadprivate3.c
 endif
 
+CXX_TESTCODES_REQUIRED_TO_COMPILE = 
+
+#CXX_TESTCODES_REQUIRED_TO_RUN =
+CXX_TESTCODES_REQUIRED_TO_RUN =  \
+	hello1.cpp \
+	task_link.cpp \
+	task_tree.cpp
+
+ALL_TESTCODES = \
+	$(C_TESTCODES_REQUIRED_TO_COMPILE) \
+	$(C_TESTCODES_REQUIRED_TO_RUN) \
+	$(CXX_TESTCODES_REQUIRED_TO_COMPILE) \
+	$(CXX_TESTCODES_REQUIRED_TO_RUN) \
+	$(TESTCODE_CURRENTLY_FAILING)
+
 # The runnable tests' object files
-PASSING_Objects_With_main = ${C_TESTCODES_REQUIRED_TO_RUN:.c=.o}
+C_TEST_OBJECT_REQUIRED_TO_RUN = ${C_TESTCODES_REQUIRED_TO_RUN:.c=.o}
+CXX_TEST_OBJECT_REQUIRED_TO_RUN = ${CXX_TESTCODES_REQUIRED_TO_RUN:.cpp=.o}
+#PASSING_Objects_With_main = \
+#    $(C_TEST_OBJECT_REQUIRED_TO_RUN) \
+#    $(CXX_TEST_OBJECT_REQUIRED_TO_RUN)
+
 
 # TODO task-wait hangs for gcc 4.4.1 (not for Intel icc), skip the execution for now	
 #	task_wait.o
-
-CXX_TESTCODES_REQUIRED_TO_COMPILE = 
-
 # TODO: npb, validation suite, developer tests, epcc
 TESTCODE_CURRENTLY_FAILING = \
         collapse.c \
@@ -106,8 +123,6 @@ TESTCODE_CURRENTLY_FAILING = \
         recursive.c \
         section.c \
         single_copyprivate.c \
-        task_link.cpp \
-        task_tree.cpp \
         threadProcessor.c \
         variables.c
 
@@ -133,24 +148,35 @@ PASSING_CXX_TEST_Objects = $(CXX_TESTCODES_REQUIRED_TO_COMPILE:.cpp=.o)
 $(PASSING_C_TEST_Objects): %.o: $(TEST_DIR)/%.c roseomp
 	./roseomp$(EXEEXT) ${TEST_FLAGS} -c $<
 
-$(PASSING_Objects_With_main): %.o: $(TEST_DIR)/%.c roseomp
+#$(C_TESTCODES_REQUIRED_TO_RUN): %.o: $(TEST_DIR)/%.c roseomp
+$(C_TEST_OBJECT_REQUIRED_TO_RUN): %.o: $(TEST_DIR)/%.c roseomp
 	./roseomp$(EXEEXT) ${TEST_FLAGS} -c $<
 
 $(PASSING_CXX_TEST_Objects): %.o: $(TEST_DIR)/%.cpp roseomp
+	./roseomp$(EXEEXT) ${TEST_FLAGS} -c $<
+
+#$(CXX_TESTCODES_REQUIRED_TO_RUN): %.o: $(TEST_DIR)/%.cpp roseomp
+$(CXX_TEST_OBJECT_REQUIRED_TO_RUN): %.o: $(TEST_DIR)/%.cpp roseomp
 	./roseomp$(EXEEXT) ${TEST_FLAGS} -c $<
 
 
 if WITH_GOMP_OPENMP_LIB
 #-------------compile and run--------------------------------	
 # Only for C or CXX tests will main()
-# a subset of PASSING_C_TEST_Objects and PASSING_CXX_TEST_Objects
-PASSING_TEST_Executables = ${PASSING_Objects_With_main:.o=.out}
+#PASSING_TEST_Executables = ${PASSING_Objects_With_main:.o=.out}
+PASSING_C_TEST_Executables = ${C_TEST_OBJECT_REQUIRED_TO_RUN:.o=.out}
+PASSING_CXX_TEST_Executables = ${CXX_TEST_OBJECT_REQUIRED_TO_RUN:.o=.out}
 # TODO this might have problem with CXX objects!!
 MY_FINAL_LINK = $(GOMP_PATH)/libgomp.a -lpthread -lm
 #MY_FINAL_LINK = -L$(GOMP_PATH) -lgomp -lpthread -lm # using static link for simplicity (avoid LD_LIBRARY_PATH )
-%.out: %.o
+#%.out: %.o
+#	$(CC) $< -o $@ $(MY_FINAL_LINK)
+
+$(PASSING_C_TEST_Executables): %.out: %.o
 	$(CC) $< -o $@ $(MY_FINAL_LINK)
-check_PROGRAM = $(PASSING_TEST_Executables)
+$(PASSING_CXX_TEST_Executables): %.out: %.o 
+	$(CXX) $< -o $@ $(MY_FINAL_LINK)
+check_PROGRAM = $(PASSING_C_TEST_Executables) $(PASSING_CXX_TEST_Executables)
 # Executables depend on objects
 # check-TESTS happens before check-local
 TESTS =  $(check_PROGRAM)
@@ -186,9 +212,11 @@ if OS_MACOSX
 #	(I would like to not mix the two purposes together).
 	@echo "/* threadprivate.c not run on MAC OSX (no thread local storage on OSX). */" > rose_threadprivate.c
 endif
-	$(MAKE) $(PASSING_Objects_With_main) # make objects with main entries here 
+#	$(MAKE) $(PASSING_Objects_With_main) # make objects with main entries here 
+	$(MAKE)	$(C_TEST_OBJECT_REQUIRED_TO_RUN)
 	@echo "***************** Testing C++ input ******************"
 	$(MAKE) $(PASSING_CXX_TEST_Objects)
+	$(MAKE)	$(CXX_TEST_OBJECT_REQUIRED_TO_RUN)
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/tests/roseTests/ompLoweringTests:                              *******************************"
 	@echo "****       compilation tests completed but executables are not generated and run***************************"

@@ -134,7 +134,7 @@ Outliner::outline (SgPragmaDeclaration* decl)
      SgStatement* s = processPragma (decl);
      if (!s)
           return Result ();
-
+//cout<<"Debug: Outliner::outline(), outlining target is:"<<s<<endl;
   // Generate outlined function, removing 's' from the tree.
      string name = generateFuncName (s);
      Result result = outline (s, name);

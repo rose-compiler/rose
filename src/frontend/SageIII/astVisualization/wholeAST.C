@@ -9,6 +9,10 @@
 
 using namespace std;
 
+// Liao 10/26/2009, static class member variable to turn on/off filters
+//  static struct s_Filter_Flags filterFlags;
+struct CustomMemoryPoolDOTGeneration::s_Filter_Flags CustomMemoryPoolDOTGeneration::filterFlags ;
+
 #if 1
 CustomAstDOTGeneration::~CustomAstDOTGeneration()
    {
@@ -976,7 +980,7 @@ CustomMemoryPoolDOTGeneration::fileInfoFilter(SgNode* node)
    }
 
 void
-CustomMemoryPoolDOTGeneration::frontendCompatabilityFilter(SgNode* node)
+CustomMemoryPoolDOTGeneration::frontendCompatibilityFilter(SgNode* node)
    {
   // DQ (5/11/2006): This filters out the gnu compatability IR nodes (which tend to confuse everyone!)
 
@@ -1151,26 +1155,31 @@ CustomMemoryPoolDOTGeneration::defaultFilter(SgNode* node)
   // printf ("Exiting in CustomMemoryPoolDOTGeneration::defaultFilter() \n");
   // ROSE_ASSERT(false);
 #if 0
-     frontendCompatabilityFilter(node);
+     frontendCompatibilityFilter(node);
 #endif
+   if (filterFlags.m_commentAndDirective == 1)
      commentAndDirectiveFilter(node);
 
+   if (filterFlags.m_binaryExecutableFormat == 1)
      binaryExecutableFormatFilter(node);
 
-     std::vector<std::pair<SgNode*,std::string> > listOfIRnodes = node->returnDataMemberPointers();
-     std::vector<std::pair<SgNode*,std::string> >::iterator i = listOfIRnodes.begin();
-     while (i != listOfIRnodes.end())
-        {
-       // Might we want to test if this is node previously ignored (a gnu compatability IR node)
-       // and do something like include that IR node in the AST?
-          SgNode* n             = (*i).first;
-          std::string edgelabel = (*i).second;
-
-       // Run all the edges through the filter (the filter will single out the ones to be skipped)
-          edgeFilter(node,n,edgelabel);
-
-          i++;
-        }
+   if (filterFlags.m_edge== 1)
+    {
+       std::vector<std::pair<SgNode*,std::string> > listOfIRnodes = node->returnDataMemberPointers();
+       std::vector<std::pair<SgNode*,std::string> >::iterator i = listOfIRnodes.begin();
+       while (i != listOfIRnodes.end())
+          {
+         // Might we want to test if this is node previously ignored (a gnu compatibility IR node)
+         // and do something like include that IR node in the AST?
+            SgNode* n             = (*i).first;
+            std::string edgelabel = (*i).second;
+  
+         // Run all the edges through the filter (the filter will single out the ones to be skipped)
+            edgeFilter(node,n,edgelabel);
+  
+            i++;
+          }
+      }
    }
 
 void
@@ -1660,10 +1669,124 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
         }
 #endif
    }
+/* Initialize the filters for the default case */
+void
+CustomMemoryPoolDOTGeneration::init_filters()
+{
+  // Initial values for the filters
+  filterFlags.m_asmFileFormat = 0;         /*asmFileFormatFilter()*/
+  filterFlags.m_asmType = 0;               /* asmTypeFilter()*/
+  filterFlags.m_binaryExecutableFormat = 0;/*binaryExecutableFormatFilter()*/
+  filterFlags.m_commentAndDirective = 1;   /* commentAndDirectiveFilter()*/
+  filterFlags.m_ctorInitializer = 0;       /*ctorInitializerListFilter()*/
 
+  filterFlags.m_default = 1;              /* defaultFilter ()*/
+  filterFlags.m_defaultColor = 1;         /*defaultColorFilter()*/
+  filterFlags.m_edge    = 1;              /* edgeFilter ()*/
+  filterFlags.m_emptySymbolTable = 0;    /*emptySymbolTableFilter()*/
+  filterFlags.m_expression = 0 ;          /* expressionFilter ()*/
 
+  filterFlags.m_fileInfo =  1;             /* fileInfoFilter ()*/
+  filterFlags.m_frontendCompatibility = 1;/* frontendCompatibilityFilter()*/
+  filterFlags.m_symbol     = 0;           /*symbolFilter ()*/
+  filterFlags.m_type    = 0;              /* typeFilter ()*/
+  filterFlags.m_variableDeclaration = 0;  /*variableDeclarationFilter()*/
 
+  filterFlags.m_variableDefinition = 0 ;  /*variableDefinitionFilter()*/
+}
 
+void CustomMemoryPoolDOTGeneration::print_filter_flags ()
+{
+  printf ("Current filter flags' values are: \n");
+
+  printf ("\t m_asmFileFormat = %d \n", filterFlags.m_asmFileFormat);
+  printf ("\t m_asmType = %d \n", filterFlags.m_asmType);
+  printf ("\t m_binaryExecutableFormat = %d \n", filterFlags.m_binaryExecutableFormat);
+  printf ("\t m_commentAndDirective = %d \n", filterFlags.m_commentAndDirective);
+  printf ("\t m_ctorInitializer = %d \n", filterFlags.m_ctorInitializer);
+
+  printf ("\t m_default = %d \n", filterFlags.m_default);
+  printf ("\t m_defaultColor = %d \n", filterFlags.m_defaultColor);
+  printf ("\t m_edge = %d \n", filterFlags.m_edge);
+  printf ("\t m_emptySymbolTable = %d \n", filterFlags.m_emptySymbolTable);
+  printf ("\t m_expression = %d \n", filterFlags.m_expression);
+
+  printf ("\t m_fileInfo = %d \n", filterFlags.m_fileInfo);
+  printf ("\t m_frontendCompatibility = %d \n", filterFlags.m_frontendCompatibility);
+  printf ("\t m_symbol = %d \n", filterFlags.m_symbol);
+  printf ("\t m_type = %d \n", filterFlags.m_type);
+  printf ("\t m_variableDeclaration = %d \n", filterFlags.m_variableDeclaration);
+
+  printf ("\t m_variableDefinition = %d \n", filterFlags.m_variableDefinition);
+
+}
+/* Initialize the filters and change them according to command line options*/
+void
+CustomMemoryPoolDOTGeneration::init_filters(std::vector <std::string>& argvList)
+{
+   init_filters (); // set default first
+  // stop here if no arguments are specified at all
+  if ( argvList.size() == 0)
+    return;
+
+//  printf("Inside CustomMemoryPoolDOTGeneration::init_filters() ...\n");
+//  cout<< CommandlineProcessing::generateStringFromArgList(argvList)<<endl;
+  if (CommandlineProcessing::isOption(argvList, "-rose:","help", false)
+     || CommandlineProcessing::isOption(argvList, "-help","", false)
+     || CommandlineProcessing::isOption(argvList, "--help:","", false))
+  {
+    print_help();
+    print_filter_flags();
+  }
+
+//  filterFlags= 0;
+  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","asmFileFormatFilter", filterFlags.m_asmFileFormat, true);
+  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","asmTypeFilter", filterFlags.m_asmType, true);
+  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","binaryExecutableFormatFilter", filterFlags.m_binaryExecutableFormat, true);
+  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","commentAndDirectiveFilter", filterFlags.m_commentAndDirective, true);
+  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","ctorInitializerListFilter", filterFlags.m_ctorInitializer, true);
+
+  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","defaultColorFilter", filterFlags.m_defaultColor, true);
+  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","defaultFilter", filterFlags.m_default, true);
+  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","edgeFilter", filterFlags.m_edge, true);
+  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","emptySymbolTableFilter", filterFlags.m_emptySymbolTable, true);
+  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","expressionFilter", filterFlags.m_expression, true);
+
+  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","fileInfoFilter", filterFlags.m_fileInfo, true);
+  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","frontendCompatibilityFilter", filterFlags.m_frontendCompatibility, true);
+  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","symbolFilter", filterFlags.m_symbol, true);
+  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","typeFilter", filterFlags.m_type, true);
+  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","variableDeclarationFilter", filterFlags.m_variableDeclaration, true);
+
+  CommandlineProcessing::isOptionWithParameter(argvList, "-rose:dotgraph:","variableDefinitionFilter", filterFlags.m_variableDefinition, true);
+//  cout<<"Expression Filter = " << filterFlags.m_expression <<endl;
+}
+
+void
+CustomMemoryPoolDOTGeneration::print_help()
+{
+  cout<<"   -rose:help                     show this help message"<<endl;
+
+  cout<<"   -rose:dotgraph:asmFileFormatFilter           [0|1]  Disable or enable asmFileFormat filter"<<endl;
+  cout<<"   -rose:dotgraph:asmTypeFilter                 [0|1]  Disable or enable asmType filter"<<endl;
+  cout<<"   -rose:dotgraph:binaryExecutableFormatFilter  [0|1]  Disable or enable binaryExecutableFormat filter"<<endl;
+  cout<<"   -rose:dotgraph:commentAndDirectiveFilter     [0|1]  Disable or enable commentAndDirective filter"<<endl;
+  cout<<"   -rose:dotgraph:ctorInitializerListFilter     [0|1]  Disable or enable ctorInitializerList filter"<<endl;
+
+  cout<<"   -rose:dotgraph:defaultFilter                 [0|1]  Disable or enable default filter"<<endl;
+  cout<<"   -rose:dotgraph:defaultColorFilter            [0|1]  Disable or enable defaultColor filter"<<endl;
+  cout<<"   -rose:dotgraph:edgeFilter                    [0|1]  Disable or enable edge filter"<<endl;
+  cout<<"   -rose:dotgraph:expressionFilter              [0|1]  Disable or enable expression filter"<<endl;
+  cout<<"   -rose:dotgraph:fileInfoFilter                [0|1]  Disable or enable fileInfo filter"<<endl;
+
+  cout<<"   -rose:dotgraph:frontendCompatibilityFilter   [0|1]  Disable or enable frontendCompatibility filter"<<endl;
+  cout<<"   -rose:dotgraph:symbolFilter                  [0|1]  Disable or enable symbol filter"<<endl;
+  cout<<"   -rose:dotgraph:emptySymbolTableFilter        [0|1]  Disable or enable emptySymbolTable filter"<<endl;
+  cout<<"   -rose:dotgraph:typeFilter                    [0|1]  Disable or enable type filter"<<endl;
+  cout<<"   -rose:dotgraph:variableDeclarationFilter     [0|1]  Disable or enable variableDeclaration filter"<<endl;
+
+  cout<<"   -rose:dotgraph:variableDefinitionFilter      [0|1]  Disable or enable variableDefinitionFilter filter"<<endl;
+}
 
 
 class SimpleColorMemoryPoolTraversal
@@ -1766,48 +1889,61 @@ void
 SimpleColorMemoryPoolTraversal::visit(SgNode* node)
    {
 #if 1
+  if ( filterFlags.m_default== 1) 
      defaultFilter(node);
 #endif
 
-#if 0
+#if 1
   // DQ (3/1/2009): Uncommented to allow filtering of types.
+  if ( filterFlags.m_type== 1) 
      typeFilter(node);
 #endif
 
-#if 0
+#if 1
   // DQ (3/2/2009): Remove some more nodes to make the graphs more clear.
+  if ( filterFlags.m_expression == 1) 
      expressionFilter(node);
 #endif
 
-#if 0
+#if 1
+  if ( filterFlags.m_emptySymbolTable== 1) 
      emptySymbolTableFilter(node);
 #endif
-#if 0
+#if 1
+  if ( filterFlags.m_variableDefinition== 1) 
      variableDefinitionFilter(node);
+  if ( filterFlags.m_variableDeclaration== 1) 
      variableDeclarationFilter(node);
+  if ( filterFlags.m_ctorInitializer== 1) 
      ctorInitializerListFilter(node);
 #endif
-#if 0
+#if 1
+  if ( filterFlags.m_symbol== 1) 
      symbolFilter(node);
 #endif
 
-#if 0
+#if 1
   // DQ (10/18/2009): Added support to skip output of binary file format in generation of AST visualization.
+  if ( filterFlags.m_asmFileFormat== 1) 
      asmFileFormatFilter(node);
+  if ( filterFlags.m_asmType== 1) 
      asmTypeFilter(node);
 #endif
 
 #if 1
+  if ( filterFlags.m_defaultColor== 1) 
      defaultColorFilter(node);
 #endif
 
-#if 1
+#if 0 // this is included inside default filter laready
   // Ignore Sg_File_Info objects associated with comments and CPP directives
+  if ( filterFlags.m_commentAndDirective== 1) 
      commentAndDirectiveFilter(node);
 #endif
 
 #if 1
   // Control output of Sg_File_Info object in graph of whole AST.
+  if ( filterFlags.m_fileInfo== 1) 
      fileInfoFilter(node);
 #endif
 
@@ -2056,7 +2192,7 @@ generateWholeGraphOfAST( string filename, set<SgNode*> & skippedNodeSet )
    }
 
 void
-generateWholeGraphOfAST( string filename )
+generateWholeGraphOfAST( string filename)
    {
   // set<SgNode*> skippedNodeSet = getSetOfFrontendSpecificNodes();
   // SimpleColorMemoryPoolTraversal::generateGraph(filename+"_beforeMergeWholeAST",skippedNodeSet);
@@ -2066,7 +2202,7 @@ generateWholeGraphOfAST( string filename )
    }
 
 void
-generateWholeGraphOfAST_filteredFrontendSpecificNodes( string filename )
+generateWholeGraphOfAST_filteredFrontendSpecificNodes( string filename)
    {
      set<SgNode*> skippedNodeSet = getSetOfFrontendSpecificNodes();
      SimpleColorMemoryPoolTraversal::generateGraph(filename,skippedNodeSet);
@@ -2087,3 +2223,7 @@ generateGraphOfAST( SgProject* project, string filename )
      SimpleColorFilesTraversal::generateGraph(project,filename,emptyNodeSet);
    }
 
+void generateGraphOfAST_initFilters (std::vector <std::string>& argvList)
+{
+     CustomMemoryPoolDOTGeneration::init_filters(argvList);
+}

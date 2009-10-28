@@ -49,54 +49,73 @@ getClassSymAndVerify (const ASTtools::ThisExprSet_t& E)
     }
   return sym;
 }
-
+//!  class Hello *this__ptr__ = this; 
+// creation and insertion if it does not yet exist
+// multiple outlining targets within the same member function can share the same declaration
 static
 SgVariableDeclaration *
 createThisShadowDecl (const string& name,
-                      SgClassSymbol* sym,
-                      const SgFunctionDefinition* func_def,
-                      SgScopeStatement* scope)
+                      SgClassSymbol* sym, /* the class symbol for this pointer*/
+                      SgFunctionDefinition* func_def /*The enclosing class member function*/)
+//                      SgScopeStatement* scope)
 {
+  SgVariableDeclaration* decl = NULL;
   ROSE_ASSERT (sym && func_def);
 
   // Analyze function definition.
   const SgMemberFunctionDeclaration* func_decl =
     isSgMemberFunctionDeclaration (func_def->get_declaration ());
   ROSE_ASSERT (func_decl);
+  SgBasicBlock* func_body = func_def ->get_body();
+  ROSE_ASSERT (func_body);
 
   // Build name for shadow variable.
   SgName var_name (name);
 
-  // Build variable's type.
-  SgType* class_type = sym->get_type  ();
-  ROSE_ASSERT (class_type);
-  SgType* var_type = 0;
-  if (ASTtools::isConstMemFunc (func_decl))
+  SgVariableSymbol * exist_symbol = func_body->lookup_variable_symbol(var_name);
+  if (exist_symbol)
+  {
+    decl = isSgVariableDeclaration(exist_symbol->get_declaration()->get_definition());
+    ROSE_ASSERT (decl);
+    ROSE_ASSERT (decl->get_scope() == isSgScopeStatement(func_body));
+  }
+  else 
+  {
+    // Build variable's type. class A*  or const class A *
+    SgType* class_type = sym->get_type  ();
+    ROSE_ASSERT (class_type);
+    SgType* var_type = 0;
+    if (ASTtools::isConstMemFunc (func_decl))
     {
       SgModifierType* mod_type = SageBuilder::buildModifierType (class_type);
       ROSE_ASSERT (mod_type);
       mod_type->get_typeModifier ().get_constVolatileModifier ().setConst ();
       var_type = SgPointerType::createType (mod_type);
     }
-  else
-    var_type = SgPointerType::createType (class_type);
-  ROSE_ASSERT (var_type);
+    else
+      var_type = SgPointerType::createType (class_type);
+    ROSE_ASSERT (var_type);
 
-  // Build initial value
-  SgThisExp* this_expr = SageBuilder::buildThisExp (sym);
-  ROSE_ASSERT (this_expr);
-  SgAssignInitializer* init =
-    SageBuilder::buildAssignInitializer (this_expr);
+    // Build initial value: this pointer
+    SgThisExp* this_expr = SageBuilder::buildThisExp (sym);
+    ROSE_ASSERT (this_expr);
+    SgAssignInitializer* init =
+      SageBuilder::buildAssignInitializer (this_expr);
 
-  // Build final declaration.
-  SgVariableDeclaration* decl =
-    SageBuilder::buildVariableDeclaration (var_name, var_type, init, scope);
-  ROSE_ASSERT(decl->get_variableDeclarationContainsBaseTypeDefiningDeclaration ()==false);
+    // Build final declaration.
+    decl =  SageBuilder::buildVariableDeclaration (var_name, var_type, init, func_body);
+    //SageBuilder::buildVariableDeclaration (var_name, var_type, init, scope);
+    ROSE_ASSERT(decl->get_variableDeclarationContainsBaseTypeDefiningDeclaration ()==false);
+  }
   ROSE_ASSERT (decl);
-  //! \todo Should constructor do this?
-  //decl->set_firstNondefiningDeclaration (decl);
+  // Add some comments to mark it
+  SageBuilder::buildComment(decl, "//A declaration for this pointer"); 
+
+  // We insert it to the enclosing member function definition
+  SageInterface::prependStatement(decl, func_body);
   return decl;
 }
+
 #if 0
 // TODO: Move to ASTtools?
 //! Inserts a variable declaration into a scope, with symbol insertion.
@@ -127,6 +146,7 @@ prependVarDecl (SgVariableDeclaration* decl,
 }
 #endif
 
+//! Replace this->member  with this__ptr__->member
 static
 void
 replaceThisExprs (ASTtools::ThisExprSet_t& this_exprs,
@@ -193,12 +213,14 @@ replaceThisExprs (ASTtools::ThisExprSet_t& this_exprs,
           ROSE_ASSERT (e_sizeof->get_operand_expr () == e_this);
           e_sizeof->set_operand_expr (e_repl);
         }
+#if 1        
       else if (isSgAssignInitializer (e_par))
         {
           SgAssignInitializer* e_assign = isSgAssignInitializer (e_par);
           ROSE_ASSERT (e_assign->get_operand_i () == e_this);
           e_assign->set_operand_i (e_repl);
         }
+#endif        
       else // Don't know how to handle this...
         {
           cerr << "*** '" << e_par->class_name () << "' ***" << endl;
@@ -220,30 +242,46 @@ Outliner::Preprocess::transformThisExprs (SgBasicBlock* b)
   ASTtools::collectThisExpressions (b, this_exprs);
   if (this_exprs.empty ()) // No transformation required.
     return b;
-
-  // Create a shell to hold local declarations.
+//cout<<"Debug Outliner::Preprocess::transformThisExprs() input BB is"<<b<<endl;
+  // Get the class symbol for the set of 'this' expressions.
+  SgClassSymbol* sym = getClassSymAndVerify (this_exprs);
+  ROSE_ASSERT (sym);
+#if 0
+  // Create a shell to hold local declarations:
+  // Add an additional inner level of BB  and move b's content to it,
+  // return the inner level BB as the new outlining target
+  // In the meantime, prepend a this-pointer declaration to the original BB and keep it
   SgBasicBlock* b_this = ASTtools::transformToBlockShell (b);
   ROSE_ASSERT (b_this);
   ASTtools::moveUpPreprocInfo (b_this, b);
 
-  // Get the class symbol for the set of 'this' expressions.
-  SgClassSymbol* sym = getClassSymAndVerify (this_exprs);
-  ROSE_ASSERT (sym);
-
   // Create a shadow-declaration for 'this'.
-//Liao, type mismatch!  
-  //SgName shadow_name ("this__ptr__");
   SgVariableDeclaration* decl =
     createThisShadowDecl (string("this__ptr__"), sym,
                           ASTtools::findFirstFuncDef (b),b);
   ROSE_ASSERT (decl);
 //  prependVarDecl (decl, b);
    SageInterface::prependStatement(decl,b);  
+#else
+   // Liao 10/27/2009
+   // we have to consider the AST changes for both #pragma rose_outline and #pragma omp parallel/task
+   // They have different layout:
+   // the first one has an outlining target following the pragma
+   //    generating an inner level BB and return it as the new outlining target can keep the this_ptr declaration
+   // but the 2nd case has a child block as the outlining target
+   //    the whole child block will be replaced and the this_ptr declaration will get lost
+   // So the solution is to create the this__ptr__ declaration within the enclosing member function definition
+   // No new inner level BB is created at all.
+  SgVariableDeclaration* decl =  createThisShadowDecl (string("this__ptr__"), sym, const_cast<SgFunctionDefinition *>(ASTtools::findFirstFuncDef (b)));
+  ROSE_ASSERT (decl);
+#endif
 
   // Replace instances of SgThisExp with the shadow variable.
   replaceThisExprs (this_exprs, decl);
 
-  return b_this;
+//cout<<"Debug Outliner::Preprocess::transformThisExprs() output BB is"<<b_this<<endl;
+  //return b_this;
+  return b;
 }
 
 // eof

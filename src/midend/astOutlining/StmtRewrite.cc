@@ -184,14 +184,15 @@ ASTtools::moveStatements (SgBasicBlock* src, SgBasicBlock* dest)
 }
 
 // =====================================================================
-// add an additional level of block 
+// add an additional inner level of block: 
+// by moving the b_orig's statements to the inner level
 SgBasicBlock *
 ASTtools::transformToBlockShell (SgBasicBlock* b_orig)
 {
   // Create new block to store 'T', and move statements to it.
   SgBasicBlock* b_shell = SageBuilder::buildBasicBlock ();
   ROSE_ASSERT (b_shell);
-  ASTtools::moveStatements (b_orig, b_shell);
+  ASTtools::moveStatements (b_orig, b_shell);// move statements to the inner block
   b_orig->append_statement (b_shell);
   b_shell->set_parent (b_orig);
   return b_shell;

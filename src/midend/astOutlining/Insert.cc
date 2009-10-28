@@ -101,10 +101,14 @@ generatePrototype (const SgFunctionDeclaration* full_decl, SgScopeStatement* sco
    }
 
 //! Generates a 'friend' declaration from a given function declaration.
+//For a friend declaration, two scopes are involved.
+//'scope' is the class definition within which the friend declaration is inserted. 
+//'class_scope' is the class definition's SgClassDeclaration's scope in which the function symbol should be created, if not exist.
 static
 SgFunctionDeclaration *
-generateFriendPrototype (const SgFunctionDeclaration* full_decl, SgScopeStatement* scope)
+generateFriendPrototype (const SgFunctionDeclaration* full_decl, SgScopeStatement* scope, SgScopeStatement* class_scope)
    {
+     ROSE_ASSERT (class_scope != NULL);
      SgFunctionDeclaration* proto = generatePrototype (full_decl,scope);
      ROSE_ASSERT (proto != NULL);
 
@@ -127,8 +131,18 @@ generateFriendPrototype (const SgFunctionDeclaration* full_decl, SgScopeStatemen
      ROSE_ASSERT(friendFunctionSymbol != NULL);
   // printf ("@@@@@@@@@@@@ In generateFriendPrototype(): removing SgFunctionSymbol = %p with friendFunctionSymbol->get_declaration() = %p \n",friendFunctionSymbol,friendFunctionSymbol->get_declaration());
      scope->remove_symbol(friendFunctionSymbol);
-     delete friendFunctionSymbol;
-     friendFunctionSymbol = NULL;
+
+#if 0
+    // Liao, 10/26/2009, patch up the symbol in the class's scope, if does not exist
+    SgFunctionSymbol* symbol2 = isSgFunctionSymbol(class_scope->lookup_symbol(full_decl->get_name())); 
+    if (symbol2 == NULL)
+      class_scope->insert_symbol(full_decl->get_name(), isSgSymbol(friendFunctionSymbol));
+    else
+#endif      
+    {
+      delete friendFunctionSymbol;
+      friendFunctionSymbol = NULL;
+    }
 
   // printf ("In generatePrototype(): Returning SgFunctionDeclaration prototype = %p \n",proto);
 
@@ -271,7 +285,7 @@ insertGlobalPrototype (SgFunctionDeclaration* def,
       //The prototype has to be inserted to the very first class having a friend declaration to the outlined function
       //to avoid conflicting type info. for extern "C" functions.
       //The reason is that there is no way to use friend and extern "C" together within a class.
-      if (friendFunctionPrototypeList.size()!=0)
+            if (friendFunctionPrototypeList.size()!=0)
       {
         vector<SgDeclarationStatement*> origFriends;
         for (FuncDeclList_t::iterator i=friendFunctionPrototypeList.begin(); i!=friendFunctionPrototypeList.end(); i++) 
@@ -281,7 +295,7 @@ insertGlobalPrototype (SgFunctionDeclaration* def,
           origFriends.push_back(decl);
         }
         vector<SgDeclarationStatement*> sortedFriends = SageInterface::sortSgNodeListBasedOnAppearanceOrderInSource(origFriends); 
-         prototype = GlobalProtoInserter::insertManually (def,scope,sortedFriends[0]);
+        prototype = GlobalProtoInserter::insertManually (def,scope,sortedFriends[0]);
       }
       else
          prototype = GlobalProtoInserter::insertManually (def,scope,default_target);
@@ -293,6 +307,7 @@ insertGlobalPrototype (SgFunctionDeclaration* def,
        }
   }
 
+      // The friend function declarations are linked to the global declarations via first non-defining declaration links.
   // Fix-up remaining prototypes.
      if (prototype != NULL)
         {
@@ -302,6 +317,7 @@ insertGlobalPrototype (SgFunctionDeclaration* def,
                SgFunctionDeclaration* proto_i = *i;
                ROSE_ASSERT (proto_i);
                proto_i->set_firstNondefiningDeclaration (prototype);
+               ROSE_ASSERT (proto_i->get_declaration_associated_with_symbol() != NULL);     
 
             // Only set the friend function prototype to reference the defining declaration
             // of we will NOT be moving the defining declaration to a separate file.
@@ -340,29 +356,32 @@ static
 SgFunctionDeclaration *
 insertFriendDecl (const SgFunctionDeclaration* func,
                   SgGlobal* scope,
-                  SgClassDefinition* cls_scope)
+                  SgClassDefinition* cls_def)
 {
   SgFunctionDeclaration* friend_proto = 0;
-  if (func && scope && cls_scope)
+  if (func && scope && cls_def)
     {
       // Determine insertion point, i.
-      SgDeclarationStatementPtrList& mems = cls_scope->get_members ();
+      SgDeclarationStatementPtrList& mems = cls_def->get_members ();
       SgDeclarationStatementPtrList::iterator i = mems.begin ();
 
       // Create the friend declaration.
-      friend_proto = generateFriendPrototype (func,cls_scope);
+      friend_proto = generateFriendPrototype (func,cls_def, scope);
       ROSE_ASSERT (friend_proto != NULL);
       ROSE_ASSERT(friend_proto->get_definingDeclaration() == NULL);
 
       // Insert it into the class.
       if (i != mems.end ())
         ASTtools::moveBeforePreprocInfo ((*i), friend_proto);
-      cls_scope->get_members().insert(i, friend_proto);
-      friend_proto->set_parent (cls_scope);
+      cls_def->get_members().insert(i, friend_proto);
+      friend_proto->set_parent (cls_def);
       friend_proto->set_scope (scope);
     }
 
-  // printf ("In insertFriendDecl(): Returning SgFunctionDeclaration prototype = %p \n",friend_proto);
+//  printf ("In insertFriendDecl(): Returning SgFunctionDeclaration prototype = %p \n",friend_proto);
+//  We should not try to unparse the friend declaration here. Since its first-non definining declaration 
+//  has not yet been inserted. So it has no declaration associated with a symbol
+//  cout<<friend_proto->unparseToString()<<endl; 
 
   return friend_proto;
 }

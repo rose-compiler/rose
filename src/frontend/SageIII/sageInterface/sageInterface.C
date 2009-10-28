@@ -8995,8 +8995,12 @@ SageInterface::sortSgNodeListBasedOnAppearanceOrderInSource(const vector<SgDecla
 {
   vector<SgDeclarationStatement*> sortedNode;
 
-  if (nodevec.size()==0)
+  if (nodevec.size()==0 )
     return sortedNode;
+  // no need to sort if there is only 1 element  
+  if (nodevec.size() ==1) 
+    return nodevec;
+
   SgProject* project = SageInterface::getProject();
   Rose_STL_Container<SgNode*> queryResult = NodeQuery::querySubTree(project,V_SgDeclarationStatement);
   for (Rose_STL_Container<SgNode*>::const_iterator iter = queryResult.begin();
@@ -9014,12 +9018,12 @@ SageInterface::sortSgNodeListBasedOnAppearanceOrderInSource(const vector<SgDecla
   if (nodevec.size() != sortedNode.size())
   {
     cerr<<"Fatal error in sortSgNodeListBasedOnAppearanceOrderInSource(): nodevec.size() != sortedNode.size()"<<endl;
-    cerr<<"nodevec() elements are:"<<endl;
+    cerr<<"nodevec() have "<< nodevec.size()<<" elements. They are:"<<endl;
     for (vector<SgDeclarationStatement*>::const_iterator iter = nodevec.begin(); iter != nodevec.end(); iter++) 
     {
       cerr<<(*iter)<<(*iter)->class_name() <<" "<<(*iter)->unparseToString()<<endl;
     }
-    cerr<<"sortedNode() elements are:"<<endl;
+    cerr<<"sortedNode() have " << sortedNode.size() <<" elements. They are:"<<endl;
     for (vector<SgDeclarationStatement*>::const_iterator iter = sortedNode.begin(); iter != sortedNode.end(); iter++) 
     {
       cerr<<(*iter)<<(*iter)->class_name() <<" "<<(*iter)->unparseToString()<<endl;
@@ -10222,8 +10226,8 @@ void SageInterface::dumpInfo(SgNode* node, std::string desc/*=""*/)
       cout<<"Total attached preprocessingInfo count="<<comments->size()<<endl;
       for (i = comments->begin (); i != comments->end (); i++)
       {
-	PreprocessingInfo * pinfo = *i;
-	pinfo->display("");
+        PreprocessingInfo * pinfo = *i;
+        pinfo->display("");
       }
     }
     cout<<"--------------name info. for SgNode---------------"<<endl;
@@ -10235,6 +10239,10 @@ void SageInterface::dumpInfo(SgNode* node, std::string desc/*=""*/)
     if (varRef) 
       cout<<"\treferenced variable name= "<<varRef->get_symbol()->get_name().getString()<<endl;
   }
+  SgInitializedName * iname = isSgInitializedName(snode);  
+  if (iname)
+    cout<<"\tvariable name= "<<iname->get_qualified_name().getString()<<endl;
+
   cout<<endl;
   cout<<"///////////// end of SageInterface::dumpInfo() ///////////////"<<endl;
 }

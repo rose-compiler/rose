@@ -88,8 +88,10 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	variables.c
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
+	hello1.cpp \
 	task_link.cpp \
 	task_tree.cpp 
+
 # put macroCalls.c here since it requires -rose:wave, which causes seg fault on 64-bit machine
 TESTCODE_CURRENTLY_FAILING = \
 	macroCalls.c 

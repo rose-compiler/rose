@@ -117,7 +117,9 @@ Outliner::outline (SgStatement* s)
 Outliner::Result
 Outliner::outline (SgStatement* s, const std::string& func_name)
 {
+//cout<<"Debug Outliner::outline() input statement is:"<<s<<endl;  
   SgBasicBlock* s_post = preprocess (s);
+//cout<<"Debug Outliner::outline() preprocessed statement is:"<<s_post<<endl;  
   ROSE_ASSERT (s_post);
 #if 0
   //Liao, enable -rose:outline:preproc-only, 

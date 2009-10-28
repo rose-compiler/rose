@@ -1761,6 +1761,7 @@ SgFunctionDeclaration* generatedOutlinedTask(SgNode* node, std::string& wrapper_
    // if (isAncestor(start_stmt, init_var))
    //   return false;
 
+//   cout<<"Debug omp_lowering.cpp isSharedInEnclosingConstructs() SgInitializedName name = "<<init_var->get_name().getString()<<endl;
     SgOmpParallelStatement* enclosing_par_stmt  = getEnclosingNode<SgOmpParallelStatement> (start_stmt, false);
     // Lexically nested within a parallel region
     if (enclosing_par_stmt)
@@ -1809,6 +1810,7 @@ SgFunctionDeclaration* generatedOutlinedTask(SgNode* node, std::string& wrapper_
       else
       {
         cerr<<"Error: OmpSupport::isSharedInEnclosingConstructs() \n Unhandled variables within an orphaned construct:"<<endl;
+        cerr<<"SgInitializedName name = "<<init_var->get_name().getString()<<endl;
         dumpInfo(init_var);
         ROSE_ASSERT(false);
       }
@@ -1869,6 +1871,9 @@ It should also satisfy the restriction defined in specification 3.0 page 93  TOD
         vv.push_back(V_SgOmpSharedClause);
         vv.push_back(V_SgOmpFirstprivateClause);
         if (isInClauseVariableList(init_var, target ,vv)) 
+          continue;
+        // Skip variables which are class/structure members: part of another variable
+        if (isSgClassDefinition(init_var->get_scope()))
           continue;
         // Skip variables which are shared in enclosing constructs  
         if(isSharedInEnclosingConstructs(init_var, target))

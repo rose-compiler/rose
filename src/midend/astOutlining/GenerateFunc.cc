@@ -381,6 +381,9 @@ createUnpackDecl (SgInitializedName* param, // the function parameter
   //   case 1: default is to use the parameter directly
   //   case 2:  for array of pointer type parameter,  build an array element reference
   //   case 3: for structure type parameter, build a field reference
+  //     we use type casting to have generic void * parameter and void* data structure fields
+  //     so less types are to exposed during translation
+  //   class Hello **this__ptr__ = (class Hello **)(((struct OUT__1__1527___data *)__out_argv) -> this__ptr___p);
   SgExpression* param_ref = NULL;
   if (Outliner::useParameterWrapper) // using index for a wrapper parameter
   {
@@ -394,7 +397,13 @@ createUnpackDecl (SgInitializedName* param, // the function parameter
         if (isPointerDeref)
           field_name = field_name+"_p";
         // __out_argv->i  or __out_argv->sum_p , depending on if pointer deference is needed
-        param_ref = buildArrowExp(buildVarRefExp(param, scope), buildVarRefExp(field_name, struct_def));
+        //param_ref = buildArrowExp(buildVarRefExp(param, scope), buildVarRefExp(field_name, struct_def));
+        //We use void* for all pointer types elements within the data structure. So type casting is needed here
+  //e.g.   class Hello **this__ptr__ = (class Hello **)(((struct OUT__1__1527___data *)__out_argv) -> this__ptr___p);
+        param_ref = buildCastExp(buildArrowExp(buildCastExp(buildVarRefExp(param, scope), buildPointerType(struct_decl->get_type())), 
+                                               buildVarRefExp(field_name, struct_def)),
+                                 local_type);
+        //local_type
       }
       else
       {
@@ -541,7 +550,17 @@ createPackExpr (SgInitializedName* local_unpack_def)
   // reference types do not need copy the value back in any cases
   if (isSgReferenceType (local_unpack_def->get_type ()))  
     return NULL;
+  
+  // Liao 10/26/2009, Most of time, using data structure of parameters don't need copy 
+  // a local variable's value back to its original parameter
+  if (Outliner::useStructureWrapper)
+  {
+    if (is_Cxx_language())
+      return NULL;
+  }
 
+  // We expect that the value transferring back to the original parameter is only 
+  // needed for variable clone options and when the variable is being written. 
   if (local_unpack_def
       && !isReadOnlyType (local_unpack_def->get_type ()))
 //      && !isSgReferenceType (local_unpack_def->get_type ()))
@@ -882,9 +901,14 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // regular (shared) paramete
         SgType* ptype= NULL; 
         if (Outliner::useStructureWrapper)
         {
+          // To have strict type matching in C++ model
+          // between the outlined function and the function pointer passed to the gomp runtime lib
+          // we use void* for the parameter type
+          #if 0 
           if (struct_decl != NULL)
             ptype = buildPointerType (struct_decl->get_type());
           else
+          #endif  
             ptype = buildPointerType (buildVoidType());
         }
         else
@@ -1014,6 +1038,22 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // regular (shared) paramete
     }
     counter ++;
   } //end for
+  //For OpenMP lowering, we have to have a void * parameter even if there is no need to pass any parameters 
+  //in order to match the gomp runtime lib 's function prototype for function pointers
+  SgFile* cur_file = getEnclosingFileNode(func);
+  ROSE_ASSERT (cur_file != NULL);
+  if (cur_file->get_openmp_lowering ())
+  {
+    if (syms.size() ==0)
+    {
+      SgName var1_name = "__out_argv";
+      ROSE_ASSERT (Outliner::useStructureWrapper);
+      SgType* ptype= NULL; 
+      ptype = buildPointerType (buildVoidType());
+      parameter1 = buildInitializedName(var1_name,ptype);
+      appendArg(params,parameter1);
+    }
+  }
 
   // variable substitution 
   SgBasicBlock* func_body = func->get_definition()->get_body();

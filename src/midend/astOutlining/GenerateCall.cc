@@ -45,6 +45,17 @@ appendArgs (const ASTtools::VarSymSet_t& syms,  std::set<SgInitializedName*> rea
 
     return; 
   }
+  else if (Outliner::useStructureWrapper && (syms.size() ==0))
+  {
+    //For OpenMP lowering, we have to have a void * parameter even if there is no need to pass any parameters 
+    //in order to match the gomp runtime lib 's function prototype for function pointers
+    SgFile* cur_file = SageInterface::getEnclosingFileNode(scope);
+    ROSE_ASSERT (cur_file != NULL);
+    if (cur_file->get_openmp_lowering ())
+    {
+      SageInterface::appendExpression(e_list, SageBuilder::buildIntVal(0));
+    }
+  }
   else // no parameter wrapping, a parameter for each variable
   {
     for (ASTtools::VarSymSet_t::const_iterator i = syms.begin ();

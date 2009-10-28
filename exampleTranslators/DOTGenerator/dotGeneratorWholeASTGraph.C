@@ -1,5 +1,6 @@
 #include "rose.h"
-
+#include "wholeAST.h"
+#include <vector>
 using namespace std;
 
 // Large arbitrary graphs are a problem to layout using GraphViz (and generally)
@@ -13,7 +14,13 @@ using namespace std;
 
 int main( int argc, char* argv[] )
    {
-     SgProject* project = frontend(argc,argv);
+     // Liao, 10/23/2009, enable command options to change internal behaviors of the dot graph generator
+     vector<string>  argvList (argv, argv+ argc);
+     //CustomMemoryPoolDOTGeneration::init_filters(argvList);
+     generateGraphOfAST_initFilters(argvList);
+
+     //SgProject* project = frontend(argc,argv);
+     SgProject* project = frontend(argvList);
      ROSE_ASSERT (project != NULL);
 
   // Generate the filename to be used as a base for generated dot files (graphs)

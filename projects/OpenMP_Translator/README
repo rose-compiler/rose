@@ -1,7 +1,16 @@
+This project is being phased out since we have a new OpenMP
+implementation in src/midend/ompLowering.
+Please refer to the ROSE Manual's "OpenMP Support" Chapter for 
+details. 
+http://www.rosecompiler.org/ROSE_UserManual/ROSE-UserManual.pdf
+
+By Liao, 10/23/2009
+
 The ROSE OpenMP Translator V 0.9
 
 By Chunhua(Leo) Liao, University of Houston, @ LLNL
 August, 2006
+
 ======================================================
 
 This is an OpenMP translator using the ROSE compiler framework.
