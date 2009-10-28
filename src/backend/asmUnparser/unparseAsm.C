@@ -3,6 +3,14 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+
+// DQ (10/28/2009): Removing magic numbers to specify register names (using enum values instead).
+// const char* regnames8l[16] = {"al", "cl", "dl", "bl", "spl", "bpl", "sil", "dil", "r8b", "r9b", "r10b", "r11b", "r12b", "r13b", "r14b", "r15b"};
+// const char* regnames8h[16] = {"ah", "ch", "dh", "bh", "", "", "", "", "", "", "", "", "", "", "", ""};
+// const char* regnames16[16] = {"ax", "cx", "dx", "bx", "sp", "bp", "si", "di", "r8w", "r9w", "r10w", "r11w", "r12w", "r13w", "r14w", "r15w"};
+// const char* regnames32[16] = {"eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi", "r8d", "r9d", "r10d", "r11d", "r12d", "r13d", "r14d", "r15d"};
+// const char* regnames64[16] = {"rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"};
+
 /** Returns the string representation of an assembly instruction, sans address. */
 std::string unparseInstruction(SgAsmInstruction* insn) {
     /* Mnemonic */
@@ -166,18 +174,28 @@ unparseAsmStatement(SgAsmStatement* stmt)
 
      ROSE_ASSERT (stmt != NULL);
 
+#define PUT_COMMENTS_IN_COLUMN_ON_RIGHT  1
+#define RIGHT_COMMENT_COLUMN_BOUNDARY   55
+
      std::string result;
+     std::string commentString;
      if (stmt->get_comment().empty() == false)
-          result = "/* " + stmt->get_comment() + " */\n";
+        {
+          commentString = stmt->get_comment();
+
+#if !PUT_COMMENTS_IN_COLUMN_ON_RIGHT
+          result = "/* " + commentString + " */\n";
+#endif
+        }
 
      /* Virtual address and raw bytes */
      SgAsmInstruction* asmInstruction = isSgAsmInstruction(stmt);
-     if (asmInstruction != NULL) {
-         size_t max_length = 6;
-         result += hexdump(stmt->get_address(),"",asmInstruction->get_raw_bytes(),max_length);
-         result += " :: ";
-     }
-
+     if (asmInstruction != NULL)
+        {
+          size_t max_length = 6;
+          result += hexdump(stmt->get_address(),"",asmInstruction->get_raw_bytes(),max_length);
+          result += " :: ";
+        }
 
      switch (stmt->variantT())
         {
@@ -185,7 +203,32 @@ unparseAsmStatement(SgAsmStatement* stmt)
           case V_SgAsmArmInstruction:
           case V_SgAsmPowerpcInstruction:
              {
+            // return result + unparseInstructionWithAddress(isSgAsmInstruction(stmt)) + '\n';
+#if PUT_COMMENTS_IN_COLUMN_ON_RIGHT
+                std::string instructionString = unparseInstructionWithAddress(isSgAsmInstruction(stmt));
+               result += instructionString;
+               if (commentString.empty() == true)
+                  {
+                    size_t instructionStringSize = instructionString.size();
+                    for (size_t i = instructionStringSize; i <= RIGHT_COMMENT_COLUMN_BOUNDARY; i++)
+                       {
+                      // Format the comments nicely
+                         if (i == instructionStringSize || i == RIGHT_COMMENT_COLUMN_BOUNDARY)
+                              result += " ";
+                           else
+                              result += "-";
+                       }
+                    result = result + "/* " + commentString + " */\n";
+
+                    return result;
+                  }
+                 else
+                  {
+                    return result + '\n';
+                  }
+#else
                return result + unparseInstructionWithAddress(isSgAsmInstruction(stmt)) + '\n';
+#endif
              }
 
           case V_SgAsmBlock:
