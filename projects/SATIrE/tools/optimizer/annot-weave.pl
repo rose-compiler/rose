@@ -40,66 +40,53 @@
 :- use_module([library(clpfd),
 	       library(astproperties),
 	       library(asttransform),
-	       library(utils)]).
+	       library(utils),
+	       markers]).
 
 % weaved/5:
 % Info = info(marker_stem(M3_1_12), marker_count(1), ...)
 
-% TODO: Throw this and the code from unweave into a library
-
-weaved(Info, InfoInner, Info, FunDecl, FunDecl) :- 
-  FunDecl = function_declaration(_Prm, _Def, function_declaration_annotation(_Typ, Name, _, _), _),
-  Info = info(marker_stem(Stem), marker_count(Count), A, R),
-  foldl1([Stem, '_', Name], string_concat, NewStem), 
-  InfoInner = info(marker_stem(NewStem), marker_count(Count), A, R).
-
-weaved(Info, InfoInner, InfoPost, Node, NodeTrans) :-
+weaved(t(Info,     Annots, RefMarks),
+       t(InfoInner,Annots1,RefMarks),
+       t(InfoPost, Annots1,RefMarks),
+       Node, NodeTrans) :-
   % We only have annotations per basic block
-  Node = basic_block(_,_,_), 
+  Node = basic_block(_,_,_,_), 
   !,
-  % Count the Markers
-  Info = info(marker_stem(Stem), marker_count(Count), Annots, RefMarks),
-  foldl1([Stem, '_', Count], string_concat, Marker),
+  
+  % Update the Markers
+  update_marker_info(Info, InfoInner, InfoPost, Node, Marker),
 
   % Weave!
-  weave(Node, Marker, RefMarks, Annots, Annots1, NodeTrans),
+  weave(Node, Marker, RefMarks, Annots, Annots1, NodeTrans).
 
-  % Prepare the Marker for INNER
-  StemInner = Marker,
-  InfoInner = info(marker_stem(StemInner), marker_count(1), Annots1, RefMarks),
-
-  % Prepare the Marker for POST
-  Count1 is Count + 1,
-  InfoPost = info(marker_stem(Stem), marker_count(Count1), Annots1, RefMarks).
-
-weaved(Info, Info, Info, Node, Node) :- !.
+weaved(t(Info,A,R), t(InfoInner,A,R), t(InfoPost,A,R), Node, Node) :- 
+  update_marker_info(Info, InfoInner, InfoPost, Node, _Marker).
 
 
 % Annotations
-weave(basic_block(Stmts, An, Fi), Marker, RefMarks, [A|As], As1, BBweaved) :-
-  string_to_term(Marker, MarkerTerm),
-  A = annotation(MarkerTerm, Annot),
-  term_to_string(Annot, AnnotString),
-  !, 
-  pragma_text(Pragma, AnnotString),
-  weave(basic_block([Pragma|Stmts], An, Fi), 
+weave(basic_block(Stmts, An, Ai, Fi), Marker, RefMarks, As, AsN, BBweaved):-
+  select(annotation(Marker, Annot), As, As1),
+  format(atom(Text), '~w', Annot),
+  !,
+  pragma_text(Pragma, Text),
+  weave(basic_block([Pragma|Stmts], An, Ai, Fi), 
         Marker, RefMarks, 
-        As, As1, 
+        As1, AsN, 
         BBweaved).
 
-
 % Markers
-weave(basic_block(Stmts, An, Fi), 
+weave(basic_block(Stmts, An, Ai, Fi), 
       Marker, RefMarks,
       As, As,
-      basic_block([Pragma|Stmts], An, Fi)) :-
+      basic_block([Pragma|Stmts], An, Ai, Fi)) :-
   % We only include Markers that are actually referenced by the annotations
-  string_to_term(Marker, MarkerTerm),
-  memberchk(MarkerTerm, RefMarks), !,
-  term_to_string(wcet_marker(MarkerTerm), AnnotString),
-  pragma_text(Pragma, AnnotString).
+  memberchk(Marker, RefMarks), !, 
+  format(atom(Text), '~w', wcet_marker(Marker)),
+  pragma_text(Pragma, Text).
 
-weave(basic_block(Stmts, An, Fi), _, _, As, As, basic_block(Stmts, An, Fi)).
+weave(basic_block(Stmts, An, Ai, Fi), _, _, As, As,
+      basic_block(Stmts, An, Ai, Fi)).
   
 % atomlist - construct a list of all atoms in term
 
@@ -117,41 +104,42 @@ atomlist(Term, [Term]) :-
 
 atomlist(_, []).
 
-restriction_rhs(annotation(_, wcet_restriction(R)), wcet_restriction(R)) :- !.
-restriction_rhs(_, []).
+constraint_rhs(annotation(_, wcet_constraint(R)), wcet_constraint(R)) :- !.
+constraint_rhs(_, []).
 
 %-----------------------------------------------------------------------
 % MAIN
 %-----------------------------------------------------------------------
 
-weaveit(Input, InputAnnotations, Output) :-
-  open(InputAnnotations, read, _, [alias(rstrm1)]),
-  read_term(rstrm1, Annots, [double_quotes(string)]),
-  close(rstrm1),
-  maplist(restriction_rhs, Annots, Restr),
+weaveit(InputAnnotations) :- 
+  prompt(_,''),
+  open(InputAnnotations, read, _, [alias(rstrm)]),
+  read_term(rstrm, Annots, [double_quotes(string)]),
+  close(rstrm),
+  maplist(constraint_rhs, Annots, Restr),
   maplist(atomlist, Restr, Atoms),
   flatten(Atoms, ReferencedMarkers),
 
-  open(Input, read, _, [alias(rstrm2)]),
-  read_term(rstrm2, P, [double_quotes(string)]),
-  close(rstrm2),
-  
-  writeln(Annots),
-  transformed_with(P, weaved, info(marker_stem('m'), marker_count(1), Annots, ReferencedMarkers), _,P_Annot),
 
-  open(Output, write, _, [alias(wstrm)]),
-  write_term(wstrm, P_Annot, [quoted(true),double_quotes(string)] ),
-  write(wstrm, '.\n'),
-  close(wstrm).
+  read_term(P, []),
+  
+  %writeln(Annots),
+  transformed_with(P, weaved,
+		   t(info(marker_stem('m'), marker_count(1)),
+		     Annots, ReferencedMarkers),
+		   _, P_Annot),
+
+  write_term(P_Annot, [quoted(true)]),
+  write('.\n').
 
 
 main :-
   current_prolog_flag(argv, Argv), 
   append(_, [--|Args], Argv),
-  Args = [A1, A2, A3],
-  catch(weaveit(A1, A2, A3), E, (print_message(error, E), fail)),
+  Args = [A1],
+  catch(weaveit(A1), E, (print_message(error, E), fail)),
   halt.
 
 main :-
-  writeln('Usage: weave.pl Input InputAnnotations Output'),
+  format(user_error, 'Usage: weave.pl InputAnnotations <Input >Output', []),
   halt(1).

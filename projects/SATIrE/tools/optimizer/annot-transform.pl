@@ -73,12 +73,12 @@ replace(Term, _, _, Term) :-
   number(Term), !.
 replace(Term, _, _, Term) :-
   string(Term), !.
-replace(_,_,_,_) :- writeln('FIXME').
+replace(_,_,_,_) :- writeln('FIXME'), gtrace.
 
 % Marker renaming
 rename_markers(Annots, Annots_renamed) :-
   select(annotation(M_int, wcet_marker(M_usr)), Annots, Annots1), !,
-  write('Replacing '), write(M_usr), write(' with '), write(M_int), writeln('.'), 
+  format('Replacing ~w with ~w.~n', [M_usr, M_int]), 
   rename_marker(M_usr, M_int, Annots1, Annots2),
   rename_markers(Annots2, Annots_renamed).
 rename_markers(A, A).
@@ -167,39 +167,39 @@ simplify_term(Term, Term).
 % rule base
 %-----------------------------------------------------------------------
 
-nested_in(M1, M2) :- string_concat(M2, _, M1).
+nested_in(M1, M2) :- atom_concat(M2, _, M1).
 
 % loop unrolling
 % --------------
-unrolled(M, K, annotation(M, wcet_loopbound(Bound)), 
-              [annotation(M, wcet_loopbound(New))]) :-
-  New is ceiling(Bound/K).
+unrolled(M, K, annotation(M, wcet_loopbound(Lo..Up)), 
+              [annotation(M, wcet_loopbound(Lo1..Up1))]) :-
+  Lo1 is floor(Lo/K),
+  Up1 is ceiling(Up/K).
 
-unrolled(M_Loop, K, annotation(M_Annot, wcet_restriction(Term)), NewAnnots) :- 
+unrolled(M_Loop, K, annotation(M_Annot, wcet_constraint(Term)), NewAnnots) :-
   replace(Term, M_Loop, M_Loop*K, Term1), 
-  (nested_in(M_Annot, M_Loop) -> 
-    list_from_to(1, K, Ns),
-    sub_string(M_Annot, 0, _, 2, S1), % Workaround until ROSE will embrace {} unrolled blocks
-    string_to_atom(S1, M_AnnotBase),
+  (   nested_in(M_Annot, M_Loop)
+  ->  list_from_to(1, K, Ns),
+      % Workaround until ROSE will embrace {} unrolled blocks
+      % sub_string(M_Annot, 0, _, 2, S1), 
+      %string_to_atom(S1, M_AnnotBase),
+      M_AnnotBase = M_Annot,
+      maplist(unroll_clone(M_AnnotBase, M_Annot, Term1, Ns), Ns, NewAnnots) ;
+    NewAnnots = [annotation(M_Annot, wcet_constraint(Term1))]).
 
-    maplist(unroll_clone(M_AnnotBase, M_Annot, Term1, Ns), Ns, NewAnnots) ;
-    NewAnnots = []).
-
-unroll_clone(M_AnnotBase, M_Annot, RestrTerm, Ns, N, NewAnnot) :-
-  foldl1([M_AnnotBase, '_', N], string_concat, S1), string_to_atom(S1, M_clone), % Pos. of Restr
-  sumterm(M_AnnotBase, Ns, M_sum), % New RestrTerm
-  replace(RestrTerm, M_Annot, M_sum, RestrTerm1),    
-  NewAnnot = annotation(M_clone, wcet_restriction(RestrTerm1)).
+unroll_clone(M_AnnotBase, M_Annot, ConstrTerm, Ns, N, NewAnnot) :-
+  atomic_list_concat([M_AnnotBase, '_', N], M_clone), % Pos. of Constr
+  sumterm(M_AnnotBase, Ns, M_sum), % New ConstrTerm
+  replace(ConstrTerm, M_Annot, M_sum, ConstrTerm1),    
+  NewAnnot = annotation(M_clone, wcet_constraint(ConstrTerm1)).
 
 % Construct a term <Sum> that is 'Base_N1+Base_N2+...+Base_Nn'
 sumterm(_, [], []) :- trace.
 sumterm(Base, [N], Sum) :-
-  foldl1([Base, '_', N], string_concat, S),
-  string_to_atom(S, Sum).
+  atomic_list_concat([Base, '_', N], Sum).
 sumterm(Base, [N|Ns], Sum) :-
   sumterm(Base, Ns, Sums),
-  foldl1([Base, '_', N], string_concat, S),
-  string_to_atom(S, A),
+  atomic_list_concat([Base, '_', N], A),
   Sum = A+Sums.
 
 
@@ -213,8 +213,8 @@ blocked(M, K, N, annotation(M, wcet_loopbound(Bound)),
   string_concat(M, S1, S2), string_to_atom(S2, Mblk).
 
 % this rule moves annotations to their new locations deeper in the tree
-blocked(M_blk, _, _, annotation(Mann, wcet_restriction(Term)), 
-                    [annotation(Mnew, wcet_restriction(Term1))]) :-
+blocked(M_blk, _, _, annotation(Mann, wcet_constraint(Term)), 
+                    [annotation(Mnew, wcet_constraint(Term1))]) :-
   string_concat(M_blk, '_1', M_newroot),
   replace(Mann, M_blk, M_newroot, Mnew),
   replace(Term, M_blk, M_newroot, Term1).
@@ -230,7 +230,7 @@ fused(M_orig, M_fused, annotation(M_orig,  Annot),
 %
 %-----------------------------------------------------------------------
 
-apply_transformations([], Annotations, Annotations).
+apply_transformations([end], Annotations, Annotations) :- !.
 apply_transformations([T|Ts], Annotations, Result) :-
   write('Processing '), write(T), writeln(':'),
   apply_transformation(T, Annotations, AnnotationsT),
@@ -241,9 +241,10 @@ apply_transformation(T, [A|As], ATs) :-
   write('    '), writeln(A),
   write('  ->'),
   apply(T, A, ATs_trans),
-  write(ATs_trans), nl,
-  maplist(simplify_term, ATs_trans, ATs_sim), !, 
-  ((ATs_trans \= ATs_sim) -> write('  ->'), write(ATs_sim), nl ; true), 
+  write(ATs_trans), nl, 
+  ATs_trans = ATs_sim, !,
+  %maplist(simplify_term, ATs_trans, ATs_sim), !, 
+  %((ATs_trans \= ATs_sim) -> write('  ->'), write(ATs_sim), nl ; true), 
   nl,
   apply_transformation(T, As, ATs_rem),
   append(ATs_sim, ATs_rem, ATs).
@@ -286,5 +287,7 @@ main :-
   halt.
 
 main :-
-  writeln('Usage: transform.pl InputAnnotation, InputTrace, OutputAnnotations'),
+  format(user_error,
+	 'Usage: annot-transform.pl InputAnnotation, InputTrace, OutputAnnotations',
+	 []),
   halt(1).

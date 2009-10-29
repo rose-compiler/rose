@@ -124,16 +124,18 @@ UndeclareStmt(vars), _:
 FunctionExit(_, vars), _:
   kill_vars(@, vars);
 
-FunctionCall(_,_), local_edge:
+FunctionCall(name,_), local_edge:
   if @ != bot then
     let f <= @; in
+      let result =
       lift([(v,i)->top !! (v,i) <- f\top,
                           if islocal(v) && !isaliasedlocal(v, context)])
+      ; in /*println(val-aststring(name), " local: ", result)*/ result
   else
     bot
   ;
 
-FunctionCall(_,_), call_edge:
+FunctionCall(name,_), call_edge:
   if @ != bot then
     let f <= @; in
     // -- GB: values of (possibly) aliased locals must also be passed to the
@@ -895,7 +897,7 @@ intersect_min(top, b) = b;
 intersect_min(bot, b) = b;
 intersect_min(a, b) = if drop(a) < drop(b) then a else b;
 
-ret(a, bot) = a;
+ret(a, bot) = bot; // -- a;
 ret(bot, b) = b;
 ret(_, top) = top;
 ret(top, _) = top;

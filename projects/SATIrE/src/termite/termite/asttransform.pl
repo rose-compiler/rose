@@ -189,7 +189,7 @@ transformed_with(Node, Transformation, Info, Info1, NodeT) :-
 % * Preorder traversals
 %     In a list-node, InfoInner is passed to the children
 % * Postorder traversals
-%     In a list-node, InfoInner is passed to the children
+%     @tbd
 %
 % Warning: InfoPost works only in a sequential fashion - no merging et al.
 %
@@ -229,9 +229,9 @@ transformed_with([A|As], Transformation, Order, Info, InfoPost, X) :- !,
 
 % Generic version for 0-4ary nodes
 transformed_with(Node, Transformation, preorder, Info, InfoT, NodeT) :-
-  % The Inner Info only makes sense for ListNodes.
-  apply_transformation(Node, Transformation, Info, _, Info0, Node0),
-  transformed_children(Node0, Transformation, preorder, Info0, InfoT, NodeT).
+ % The Inner Info only makes sense for ListNodes. See annot-unweave.pl
+   apply_transformation(Node, Transformation, Info, _InfoIn, Info0, Node0),
+   transformed_children(Node0, Transformation, preorder, Info0, InfoT, NodeT).
 
 transformed_with(Node, Transformation, postorder, Info, InfoT, NodeT) :-
   transformed_children(Node, Transformation, postorder, Info, Info0, Node0),
@@ -271,7 +271,7 @@ collate_ast(Map, Reduce, A0, Node, A) :-
   collate_children(Map, Reduce, A0, Node, As),
   (   As = []
   ->  A0 = A1
-  ;   once(foldl1(As, Reduce, A1))
+  ;   foldl1(As, Reduce, A1)
   ),
   call(Map, Node, A1, A).
 
