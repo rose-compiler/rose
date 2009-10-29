@@ -376,9 +376,11 @@ public:
     InstructionMap disassembleSection(SgAsmGenericSection *section, rose_addr_t section_va, rose_addr_t start_offset,
                                       AddressSet *successors=NULL, BadMap *bad=NULL);
 
-    /** Disassembles instructions in all code-containing sections of a particular binary interpretation according to the
-     *  aggressiveness set for this Disassembler object.  All other aspects of this method are similar to the
-     *  disassembleBuffer method. */
+    /** Disassembles instructions in a particular binary interpretation. If the interpretation has a memory map
+     *  (SgAsmInterpretation::get_map()) then that map will be used for disassembly. Otherwise a new map is created to
+     *  describe all code-containing sections of the header, and that map is stored in the interpretation.  The aggressiveness
+     *  when searching for addresses to disassemble is controlled by the disassembler's set_search() method. All other aspects
+     *  of this method are similar to the disassembleBuffer() method. */
     InstructionMap disassembleInterp(SgAsmInterpretation *interp, AddressSet *successors=NULL, BadMap *bad=NULL);
 
 
