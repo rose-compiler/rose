@@ -1,3 +1,24 @@
+2009-10-29 18:44  liao6
+
+	* [r7974] /trunk/ROSE/src/ROSETTA/Grammar/Statement.code,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/sage_gen_be.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/Makefile-pass.inc,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_31.C: Fixed the
+	  final part of But 375:
+	  It turns out that the variable declaration for an ellipse type
+	  variable was not built properly within try-catch(...) used in a
+	  template function.
+	  
+	  There may be a postprocessing phase to patch up it but it somehow
+	  skips instantiated template declaration.
+	  See test cases: test2009_31.C for details
+
+2009-10-29 16:56  matzke
+
+	* [r7973] /trunk/ROSE/src/frontend/Disassemblers/Disassembler.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/Disassembler.h:
+	  Disassembler: fixed core dump in disassembleInterp; documentation
+
 2009-10-29 04:49  hamilton37
 
 	* [r7971] /trunk/ROSE/docs/Rose/RTED.tex,
