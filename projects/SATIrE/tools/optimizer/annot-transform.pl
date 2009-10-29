@@ -167,7 +167,11 @@ simplify_term(Term, Term).
 % rule base
 %-----------------------------------------------------------------------
 
-nested_in(M1, M2) :- atom_concat(M2, _, M1).
+nested_in(M1, M2) :-
+  atomic_list_concat(Annot, '_', M1),
+  atomic_list_concat(Prefix, '_', M2),
+  append(Prefix, _, Annot).
+% atom_concat(M2, _, M1).
 
 % loop unrolling
 % --------------
@@ -239,8 +243,8 @@ apply_transformation(T, [A|As], ATs) :-
   write('  ->'),
   apply(T, A, ATs_trans),
   write(ATs_trans), nl, 
-  ATs_trans = ATs_sim, !,
-  %maplist(simplify_term, ATs_trans, ATs_sim), !, 
+  %ATs_trans = ATs_sim, !,
+  maplist(simplify_term, ATs_trans, ATs_sim), !, 
   %((ATs_trans \= ATs_sim) -> write('  ->'), write(ATs_sim), nl ; true), 
   nl,
   apply_transformation(T, As, ATs_rem),

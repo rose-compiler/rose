@@ -125,8 +125,7 @@ unrolled(Info, InfoInner, InfoPost, Fs, Fs1) :-
 		      An0, Ai0, Fi0),
 
   % Ouptut trace
-  update_marker_info(Info, InfoInner, InfoPost, Fs, M),
-  atom_concat(M, '_1', Mbody),
+  update_marker_info(Info, InfoInner, InfoPost, Fs, Mbody),
   format(optrace, ' ~W,~n', [unrolled(Mbody, K), [quoted(true)]]),
 
 %  unparse(Fs1),nl, 

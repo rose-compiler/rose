@@ -341,7 +341,11 @@ is_real_for_loop(for_statement(ForInit,
      isBinOpLhs(TestOp, I1),
      var_stripped(I1, IterationVar),
      ( interval_of(Info, IterationVar, B1)
-     ; term_interval(AnalysisInfo, IterationVar, B1)),
+     ; term_interval(AnalysisInfo, IterationVar, B1)
+       % This will often (=janne_complex.c) fail, because due to the
+       % way the ICFG is constructed we have no preinfo available if
+       % the for_initializer is missing
+     ),
      isBinOpRhs(TestOp, B2v),
      term_interval(AnalysisInfo, B2v, B2)
   )), 

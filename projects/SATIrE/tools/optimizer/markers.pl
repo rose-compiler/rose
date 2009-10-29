@@ -57,5 +57,8 @@ update_marker_info(Info, InfoInner, InfoPost, basic_block(_,_,_,_), Marker) :-
   Count1 is Count + 1,
   InfoPost = info(marker_stem(Stem), marker_count(Count1)).
 
-update_marker_info(I, I, I, _, M) :-
-    I = info(marker_stem(M), _).
+update_marker_info(I, I, I, _, Marker) :-
+    I = info(marker_stem(Stem), marker_count(Count)),
+    % Fixme: performance.. not needed every time
+    atomic_list_concat([Stem, '_', Count], Marker).
+
