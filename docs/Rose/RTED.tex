@@ -1,0 +1,270 @@
+% vim: set fdm=marker
+
+\chapter{RTED: Runtime Error Detection} %{{{
+
+\label{RTED}
+
+
+\section{Overview}%{{{
+
+RTED\footnote{\url{http://rted.public.iastate.edu/}} is a test suite
+developed by Iowa State University's High Performance Computing
+Group\footnote{\url{http://www.it.iastate.edu/research/hpcg/}}.  It illustrates
+a number of runtime errors, many of which result from undefined behavior in the
+C and C++ specifications.
+
+The RTED project in ROSE is a program that instruments its input to use
+a supplied runtime system with the aim that when the instrumented program runs,
+any undefined behavior is immediately caught, as well as certain other runtime
+errors such as certain memory leaks.  For example, in the following code:
+
+\begin{verbatim}
+    int foo() {
+        int a[3];
+        int n;
+
+        int* p = &a[ 2 ];
+        ++p;
+    }
+\end{verbatim}
+
+After \texttt{p} is incremented, its address is undefined.  Many compilers might
+well organize the call frame such that after the increment, \texttt{p == \&n},
+but relying on this is unsafe.
+
+When the runtime system detects unspecified behavior, a violation is raised and
+handled.  The default policy for most violations is to output a message and
+immediately terminate the program.
+
+
+\subsection{Current State}
+
+At the time of this writing, the project is incomplete.  Presently, only the
+RTED test suite is targeted, although a large subset of its C and C++
+tests' errors are caught.
+
+
+\subsection{Organization}
+
+The project is organized into two sections:
+
+\begin{enumerate}
+
+    \item The runtime system is a library that provides an API that, in
+    principle, can be used for other projects that require tracking variables,
+    the stack, “typed” memory, and so on.
+
+    \item The transformation code is compiled into a binary that transforms
+    input by injecting calls to the runtime system.  For convenience, the actual
+    injected calls are to very small wrapper functions that provide a simpler
+    abstraction over the runtime system's API.  However, if users wish to adapt
+    the runtime system, it is recommended that they view the wrapper functions
+    as an example usage of the runtime system's API, and not the API itself.  
+    
+\end{enumerate}
+
+The transformation only injects function calls that are valid C and C++ code.
+The runtime system is written in C++ but its API is compiled with
+\texttt{extern “C”}
+
+%}}}
+
+
+\section{How to use RTED in ROSE}%{{{
+
+To instrument a program, one does the following:
+
+\begin{enumerate}
+
+    \item Compile \texttt{runtimeCheck} in \texttt{projects/RTED} of the ROSE
+    compile tree.
+
+    \item \texttt{\#include RuntimeSystem.h} in your source files\footnote{You
+    may notice that in the ROSE makefile, \texttt{\#include
+    RuntimeSystem\_ParsingWorkaround.h} is sometimes included instead.  You will
+    probably not need to do this, but if you have errors resulting from
+    \texttt{std::endl} being undefined, you can try using
+    \texttt{RuntimeSystem\_ParsingWorkaround.h} instead.}.
+
+    \item Run \texttt{runtimeCheck -n <number-of-source-files> <sourcefile1>
+    <sourcefile2> ... <sourcefilen>} to produce \texttt{sourcefile1\_rose,
+    sourcefile2\_rose, ...}.
+
+    \item Compile the \texttt{*\_rose} instrumented source files.
+
+\end{enumerate}
+
+For example, the following code:
+\begin{verbatim}
+    #include <stdlib.h>
+
+
+    int main( int argc, char** argv ) {
+
+        int z[ 2 ];
+        int* x;
+
+        int i = 0;
+        for( ; i >= 0; --i ) {
+            int* y;
+            y = (int*) malloc( sizeof( int ));
+            x = y;
+        }
+
+        // error, y is out of scope so assigning to x leaks the malloc in the
+        // for loop
+        x = z;
+
+        return 0;
+    }
+\end{verbatim}
+
+is transformed into:
+
+\begin{verbatim}
+#include "RuntimeSystem.h"
+#include <stdlib.h>
+
+extern int RuntimeSystem_original_main(int argc,char **argv,char **envp)
+{
+  RuntimeSystem_roseConfirmFunctionSignature("RuntimeSystem_original_main",3,"SgTypeInt","",0,"SgTypeInt","",0,"SgPointerType","SgTypeChar",2);
+  
+  RuntimeSystem_roseCreateVariable("envp","envp","SgPointerType","SgTypeChar",2,((unsigned long long )(&envp)),sizeof(envp),1,"","0","transformation","10");
+  
+  RuntimeSystem_roseCreateVariable("argv","argv","SgPointerType","SgTypeChar",2,((unsigned long long )(&argv)),sizeof(argv),1,"","0","transformation","13");
+  
+  RuntimeSystem_roseCreateVariable("argc","argc","SgTypeInt","",0,((unsigned long long )(&argc)),sizeof(argc),1,"","0","transformation","16");
+  int z[2UL];
+  
+  RuntimeSystem_roseCreateVariable("z","z","SgArrayType","SgTypeInt",1,((unsigned long long )(&z)),sizeof(z),0,"","0","transformation","20");
+  
+  RuntimeSystem_roseCreateHeap("z","L14R__scope____SgSS2____scope__z","SgArrayType","SgTypeInt",1,((unsigned long long )(&z)),sizeof(z),0,0,"","assignment_scope_for.c","8","23",1,2UL);
+  int *x;
+  
+  RuntimeSystem_roseCreateVariable("x","x","SgPointerType","SgTypeInt",1,((unsigned long long )(&x)),sizeof(x),0,"","0","transformation","27");
+  int i = 0;
+  
+  RuntimeSystem_roseCreateVariable("i","i","SgTypeInt","",0,((unsigned long long )(&i)),sizeof(i),1,"","0","transformation","31");
+  
+  RuntimeSystem_roseInitVariable("SgTypeInt","",0,"",((unsigned long long )(&i)),sizeof(i),0,0,"assignment_scope_for.c","11","34");
+  RuntimeSystem_roseEnterScope("for:12");
+  
+  RuntimeSystem_roseAccessVariable(((unsigned long long )(&i)),sizeof(i),((unsigned long long )(&i)),sizeof(i),1,"assignment_scope_for.c","12","38");
+  
+  RuntimeSystem_roseAccessVariable(((unsigned long long )(&i)),sizeof(i),((unsigned long long )(&i)),sizeof(i),1,"assignment_scope_for.c","12","41");
+  for (; i >= 0; --i) {
+    int *y;
+    
+    RuntimeSystem_roseCreateVariable("y","y","SgPointerType","SgTypeInt",1,((unsigned long long )(&y)),sizeof(y),0,"","0","transformation","46");
+    y = ((int *)(malloc(((sizeof(int ))))));
+    
+    RuntimeSystem_roseCreateHeap("y","L14R__scope____SgSS2____scope____SgSS3____scope____SgSS4____scope__y","SgPointerType","SgTypeInt",1,((unsigned long long )(&y)),sizeof(y),((long long )((sizeof(int )))),1,"","assignment_scope_for.c","14","50",0);
+    
+    RuntimeSystem_roseInitVariable("SgPointerType","SgTypeInt",1,"",((unsigned long long )(&y)),sizeof(y),1,1,"assignment_scope_for.c","14","53");
+    
+    RuntimeSystem_roseAccessVariable(((unsigned long long )(&y)),sizeof(y),((unsigned long long )(&y)),sizeof(y),1,"assignment_scope_for.c","15","56");
+    x = y;
+    
+    RuntimeSystem_roseInitVariable("SgPointerType","SgTypeInt",1,"",((unsigned long long )(&x)),sizeof(x),0,1,"assignment_scope_for.c","15","60");
+  }
+  
+  RuntimeSystem_roseExitScope("assignment_scope_for.c","16","64","for(;i >= 0;--i) {int *y;y =((int *)(malloc(((sizeof(int ))))));x = y;}");
+// error, y is out of scope so assigning to x leaks the malloc in the
+// for loop
+  x = z;
+  
+  RuntimeSystem_roseInitVariable("SgPointerType","SgTypeInt",1,"",((unsigned long long )(&x)),sizeof(x),0,1,"assignment_scope_for.c","19","69");
+  int rstmt = 0;
+  RuntimeSystem_roseCheckpoint("assignment_scope_for.c","22","72");
+  return rstmt;
+}
+
+
+int main(int argc,char **argv,char **envp)
+{
+  int exit_code = RuntimeSystem_original_main(argc,argv,envp);
+  RuntimeSystem_roseRtedClose("RuntimeSystem.cpp:main");
+  return exit_code;
+}
+\end{verbatim}
+
+which, in the call to \texttt{RuntimeSystem\_roseInitVariable} that immediately
+follows \texttt{x = z} will detect the memory leak and terminate the program.
+
+\subsection{Configuration}
+
+At present, configuration is very limited.  When the runtime system is
+initialized, it searches for \texttt{RTED.cfg} in the current directory.  If
+such a file exists, it is read as a newline separated list of key value pairs.
+If the runtime system was compiled with QT enabled, then the qt debugger can be
+enabled so that the GUI debugger is opened when the first violation is found.
+Also, invidual policies for errors types can be configured.  See the RTED doxygen
+documentation for more information.
+
+
+\subsection{Partial Compilation}
+
+At present the transformation does not properly support partial compilation.
+This is not a fundamental challenge to the current design, it merely reflects
+the incomplete state of the project.  See also section
+\ref{RTED:known-limitations}.
+%}}}
+
+
+\section{Extending the Runtime System}%{{{
+
+The runtime system is separate from the transformations.  Users who wish to use
+the runtime system for other purposes, perhaps other sorts of runtime checks,
+can do so by compiling the runtime system (in
+\texttt{<rose-dir>/projects/RTED/CppRuntimeSystem}) and using it separately.
+The doxygen documentation has more information on the organization of the
+various components of the runtime system, especially the documentation for the
+\texttt{Runtimesystem} class.
+
+%}}}
+
+
+\section{Known Limitations}%{{{
+
+\label{RTED:known-limitations}
+
+
+Apart from being incomplete, there are some known limitations.
+
+\begin{enumerate}
+    
+    \item The runtime system presently assumes all pointers have a fixed size.
+    This size is determined at the compile time \emph{of the runtime system} via
+    \texttt{sizeof( void* )}.
+
+    \item Similarly, the size of basic types is determined when the runtime
+    system is compiled.
+
+    \item Separate compilation is not properly handled yet.  At present, globals
+    and types in the global namespace are reported to the runtime system via
+    calls injected into \texttt{main}.  This obviously doesn't work when compiling a file
+    that doesn't define \texttt{main}.
+
+    \item There is some support for handling C I/O usage, and although there is
+    some code related to C++ I/O support, it is extremely preliminary.
+
+    \item There is no support for C++ object initializers.
+
+    \item Typedefs are not resolved by the instrumentation.  Although this is
+    not difficult, it does mean that the runtime system treats all typedefs as a
+    single type, and distinct from their actual type.
+
+\end{enumerate}
+
+\subsection{A Note on RTED Scoring}
+
+The RTED suite includes scoring tests.  Presently the RTED support in ROSE is
+checked by ensuring that an error is found on the expected line.  The reference
+messages for RTED include information that is not currently output by
+instrumented inputs (such as variable names).  However, much of the missing
+information is actually collected by the runtime system and is simply not
+output.
+
+
+%}}}
+%}}}

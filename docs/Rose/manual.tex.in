@@ -288,6 +288,10 @@
 
 \input{binaryAnalysis}
 
+% djh, 10/28/2009: putting RTED manual/chapter here for lack of a better place.
+% Perhaps it should be moved.
+\input{RTED}
+
 % This is ROSE/tests/tests.tex
 \input{tests}
 
@@ -295,6 +299,7 @@
 \input{testing}
 
 \input{appendix}
+
 
 \input{developersAppendix}
 
