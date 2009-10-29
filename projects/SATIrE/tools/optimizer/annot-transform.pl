@@ -180,9 +180,6 @@ unrolled(M_Loop, K, annotation(M_Annot, wcet_constraint(Term)), NewAnnots) :-
   replace(Term, M_Loop, M_Loop*K, Term1), 
   (   nested_in(M_Annot, M_Loop)
   ->  list_from_to(1, K, Ns),
-      % Workaround until ROSE will embrace {} unrolled blocks
-      % sub_string(M_Annot, 0, _, 2, S1), 
-      %string_to_atom(S1, M_AnnotBase),
       M_AnnotBase = M_Annot,
       maplist(unroll_clone(M_AnnotBase, M_Annot, Term1, Ns), Ns, NewAnnots) ;
     NewAnnots = [annotation(M_Annot, wcet_constraint(Term1))]).

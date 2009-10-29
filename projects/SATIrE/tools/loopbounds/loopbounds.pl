@@ -320,8 +320,11 @@ is_real_for_loop(for_statement(ForInit,
 			       ForTest,
 			       ForStep,
 			       Body,
-			       _An, AnalysisInfo, _Fi),
-		 Info, AnalysisInfo, Body, IterationVar,
+			       _An,
+			       AnalysisInfo % Merged preinfo for all 4 children
+			      , _Fi),
+		 Info, AnalysisInfo,
+		 Body, IterationVar,
 		 (Min..Max),
 		 Step) :-
 %  write('% '), unparse(for_statement(ForInit,ForTest,ForStep,[], _, _, _)), nl,   gtrace,
@@ -703,7 +706,7 @@ iter_children([], [], _, _).
 %-----------------------------------------------------------------------
 % Annotate Constraints
 %% constraints(?I, ?I, ?I, +Fs, -Fs_Annot).
-constraints(I, I, I, Fs, [/*Scope,*/ Fs_Annot]) :-
+constraints(I, I, I, Fs, /*Scope,*/ Fs_Annot) :-
   % We need to guarantee that Fs is an induction-variable-
   % based loop, and that the induction variable I is transp().
   %term_stripped(Fsc, Fs),
