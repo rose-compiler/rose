@@ -121,37 +121,37 @@ assertions(y, y, y, Statement, AssertedStatement) :-
 				   CounterAssert], DA, AI, FI).
 
 
-assertions(y, y, y, global(Decls, An, Ai, Fi),
-	  global([Assert|Decls1], An, Ai, Fi)) :-
-  default_values(PPI, DA, AI, _),
-  Assert = 
-  function_declaration(
-   function_parameter_list(
-    [initialized_name(null,
-		      initialized_name_annotation(type_int, '', default, null),
-		      analysis_info([]), AFI)], DA, AI, AFI),
-		       null,
-		       function_declaration_annotation(
-		         function_type(type_void,
-				       ellipses, [type_int]),
-                      assert,
-		declaration_modifier([default],
-				     type_modifier([default],
-						   default, default, default),
-				     public, extern),
-	       PPI), analysis_info([]), AFI),
+% assertions(y, y, y, global(Decls, An, Ai, Fi),
+% 	  global([Assert|Decls1], An, Ai, Fi)) :-
+%   default_values(PPI, DA, AI, _),
+%   Assert = 
+%   function_declaration(
+%    function_parameter_list(
+%     [initialized_name(null,
+% 		      initialized_name_annotation(type_int, '', default, null),
+% 		      analysis_info([]), AFI)], DA, AI, AFI),
+% 		       null,
+% 		       function_declaration_annotation(
+% 		         function_type(type_void,
+% 				       ellipses, [type_int]),
+%                       assert,
+% 		declaration_modifier([default],
+% 				     type_modifier([default],
+% 						   default, default, default),
+% 				     public, extern),
+% 	       PPI), analysis_info([]), AFI),
 
-  AFI = file_info('/usr/include/assert.h', 1, 1),
-  Include = cpreprocessorIncludeDeclaration('#include <assert.h>\n', before,Fi),
-  Decls = [D|Ds],
-  D =.. D_u,     append(Dhead, [Dan, Dai, Dfi], D_u),
-  Dan =.. Dan_u, append(Dan_head, [preprocessing_info(PPIs)], Dan_u),
+%   AFI = file_info('/usr/include/assert.h', 1, 1),
+%   Include = cpreprocessorIncludeDeclaration('#include <assert.h>\n', before,Fi),
+%   Decls = [D|Ds],
+%   D =.. D_u,     append(Dhead, [Dan, Dai, Dfi], D_u),
+%   Dan =.. Dan_u, append(Dan_head, [preprocessing_info(PPIs)], Dan_u),
 
-  append(Dan_head, [preprocessing_info([Include|PPIs])], Dan_u1),
-  Dan1 =.. Dan_u1,
-  append(Dhead, [Dan1, Dai, Dfi], D_u1),
-  D1 =.. D_u1, 
-  Decls1 = [D1|Ds].
+%   append(Dan_head, [preprocessing_info([Include|PPIs])], Dan_u1),
+%   Dan1 =.. Dan_u1,
+%   append(Dhead, [Dan1, Dai, Dfi], D_u1),
+%   D1 =.. D_u1, 
+%   Decls1 = [D1|Ds].
 
 assertions(I, I, I, Term, Term).
 
