@@ -428,6 +428,12 @@ get_loopbound(Fs, Bound, I, Info, InfoInner, PostCondition) :-
   ;   Low = 0  ), % Early exits or multiple exit conditions not handled yet
   High is ceil((IV_high + 1 /*LE*/) / abs(Increment)),
   Bound=Low..High, 
+
+  !,
+  (   High #> 65536
+  ->  format('% ** Ignoring overly large loop bound ~w.~n', [Bound]), fail
+  ;   true),
+  
   write(' --> '), write('Bound= '), writeln(Bound),
 
   % Try to find the Induction Variable interval;
