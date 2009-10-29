@@ -1,3 +1,27 @@
+2009-10-29 04:49  hamilton37
+
+	* [r7971] /trunk/ROSE/docs/Rose/RTED.tex,
+	  /trunk/ROSE/docs/Rose/manual.tex.in: RTED documentation in ROSE
+	  manual.
+
+2009-10-28 23:56  dquinlan
+
+	* [r7970] /trunk/ROSE/src/backend/asmUnparser/unparseAsm.C:
+	  Modified unparer to output comments differently (selectable).
+
+2009-10-28 22:38  matzke
+
+	* [r7969] /trunk/ROSE/src/frontend/Disassemblers/Disassembler.C:
+	  Disassembler: uses deleteAST() rather than delete
+	  
+	  Fixes memory pool corruption
+
+2009-10-28 20:03  brown223
+
+	* [r7968]
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/README:
+	  Further notes on c++ class recognition
+
 2009-10-28 17:40  liao6
 
 	* [r7966] /trunk/ROSE/scripts/roseFreshTestStub-Leo-daily.sh:
