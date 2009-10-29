@@ -11257,6 +11257,8 @@ SgTryStmt::post_construction_initialization()
              }
 
           set_catch_statement_seq_root( catchStatement );
+          // Liao, 10/29/2009, missing parent pointer
+          catchStatement->set_parent(this); 
         }
    }
 
