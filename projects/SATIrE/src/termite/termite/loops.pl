@@ -48,7 +48,7 @@
 
 %% is_const_val(+Term, -Val) is semidet.
 %% is_const_val(-Term, +Val) is nondet.
-%% @todo implement constant analysis result for VarRefExp
+% @todo implement constant analysis result for VarRefExp
 is_const_val(Term, Val) :- isIntVal(Term, Val).
 
 %% isStepsize(+Term, -InductionVar, -Val) is semidet.
@@ -215,16 +215,16 @@ isForMultiTestOp(and_op(_, N2, _, _, _), Op) :- isForMultiTestOp(N2, Op).
 
 %% isWhileStatement(+WhileStmt,-Condition,-Var,-Body,-Annot,-Ai,-Fi) is semidet.
 %% isWhileStatement(-WhileStmt,+Condition,+Var,+Body,+Annot,+Ai,+Fi) is det.
-%% FIXME rename this!
+% FIXME rename this!
 isWhileStatement(while_stmt(Condition, Body, Annot, Ai, Fi),
 		 Condition, Var, Body, Annot, Ai, Fi) :- 
   isForTestOp(Condition, Op),
   isBinOpLhs(Op, Var),
   isVar(Var, _).
 
-%% isDoWhileStatement(+DoWhileStmt,-Condition,-Var,-Body,-Annot,-Ai-Fi)
-%% is semidet.
+%% isDoWhileStatement(+DoWhileStmt,-Condition,-Var,-Body,-Annot,-Ai,-Fi) is semidet.
 %% isDoWhileStatement(-DoWhileStmt,+Condition,+Var,+Body,+Annot,+Ai,+Fi) is det.
+%
 isDoWhileStatement(do_while_stmt(Body, Condition, Annot, Ai, Fi),
 		 Condition, Var, Body, Annot, Ai, Fi) :-
   isForTestOp(Condition, Op),

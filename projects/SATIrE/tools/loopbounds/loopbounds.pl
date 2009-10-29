@@ -1,8 +1,6 @@
 #!/usr/bin/pl -q  -O -L0 -G0 -T0 -t main -s 
 % -*- prolog -*-
 
-%% :- module(loopbounds,[main/0]).
-
 %-----------------------------------------------------------------------
 /** <module> Loop analysis
 
@@ -65,6 +63,19 @@ GNU General Public License for more details.
    use_module(library(clpfd)).
 :- use_module(library(types)).
 %   use_module(library(swi/pce_profile)).
+
+% Before doing anything else, set up handling to halt if warnings or errors
+% are encountered.
+:- dynamic prolog_reported_problems/0.
+% If the Prolog compiler encounters warnings or errors, record this fact in
+% a global flag. We let message_hook fail because that signals Prolog to
+% format output as usual (otherwise, we would have to worry about formatting
+% error messages).
+user:message_hook(_Term, warning, _Lines) :-
+    assert(prolog_reported_problems), !, fail.
+user:message_hook(_Term, error, _Lines) :-
+    assert(prolog_reported_problems), !, fail.
+
 
 %-----------------------------------------------------------------------
 % Symbolic & Numeric Loop bounds
@@ -313,8 +324,7 @@ is_real_for_loop(for_statement(ForInit,
 		 Info, AnalysisInfo, Body, IterationVar,
 		 (Min..Max),
 		 Step) :-
-  write('% '), unparse(for_statement(ForInit,ForTest,ForStep,[], _, _, _)), nl,
-%  gtrace,
+%  write('% '), unparse(for_statement(ForInit,ForTest,ForStep,[], _, _, _)), nl,   gtrace,
   (isSimpleForInit(ForInit, IterationVar, B1v)
   -> (
       term_interval(AnalysisInfo, B1v, B1),
@@ -479,7 +489,7 @@ replace_loopbody(for_statement(Init, Test, Incr,
 
 %% loop_bounds(+Info, -InfoInner, -InfoPost, +Fs, -Fs_Annot).
 loop_bounds(Info, InfoInner, InfoPost, Fs, Fs_Annot) :- 
-  get_loopbound(Fs, Bound, /*InductionVar*/_, Info, InfoIn, _InfoPo), !,
+  get_loopbound(Fs, Bound, /*InductionVar*/_, Info, InfoIn, _InfoPo),
   A = wcet_loopbound(Bound), write('% '), pragma_text(Annot, A), writeln(A),
 
   (   Fs = for_statement(_,_,_,basic_block(Stmts, _, _, _), _, _, _),
@@ -490,14 +500,14 @@ loop_bounds(Info, InfoInner, InfoPost, Fs, Fs_Annot) :-
   ),
 
   empty_assoc(InfoPost),
-  merge_info(Info, InfoIn, InfoInner).
+  merge_info(Info, InfoIn, InfoInner), !.
 %  merge_info(Info, InfoPo, InfoPost).
   %writeln(InfoIn),
   %writeln(InfoInner),
   %writeln(InfoPost),nl.
 loop_bounds(I, I, I, Term, Term).
 
-
+% Return the label of the first non-loopbound node
 get_bb_marker(Stmts, Marker) :-
   member(Stmt, Stmts),
   \+ pragma_text(Stmt, wcet_loopbound(_)),
@@ -785,5 +795,9 @@ main :-
   halt.
 
 main :-
-  writeln('% Usage: loopbounds <Input >Output'),
+  format(user_error, '% Usage: loopbounds <Input >Output', []),
   halt(1).
+
+% Finish error handling (see top of source file) by halting with an error
+% condition of Prolog generated any warnings or errors.
+%:- (prolog_reported_problems -> halt(1) ; true).

@@ -109,15 +109,19 @@ clean-termite:
               termite-pdf.ind termite-pdf.ilg $(INPUTFILES) \
 	      termite-html.tex termite-pdf.tex \
 	      termspec.tex c2term.txt term2c.txt \
-	      termite_spec.pl types.pl
+	      termite_spec.pl types.pl while2for.pl comefrom.pl
 	rm -rf termite.pdf termite-html ltx2htm-inst ltx2htm-build
 
 termite_spec.pl: $(top_srcdir)/src/termite/termite/termite_spec.pl
 	cp --preserve=timestamps $< $@
 types.pl: $(top_srcdir)/tools/loopbounds/types.pl
 	cp --preserve=timestamps $< $@
+while2for.pl: $(top_srcdir)/tools/loopbounds/while2for.pl
+	cp --preserve=timestamps $< $@
+comefrom.pl: $(top_srcdir)/tools/loopbounds/comefrom.pl
+	cp --preserve=timestamps $< $@
 
-%.tex: %.pl types.pl  termite_spec.pl
+%.tex: %.pl while2for.pl types.pl comefrom.pl termite_spec.pl
 	export TERMITE_LIB=$(top_srcdir)/src/termite/termite && \
 	echo "use_module(library(doc_latex)), \
 	      getenv('PWD', CurDir), \

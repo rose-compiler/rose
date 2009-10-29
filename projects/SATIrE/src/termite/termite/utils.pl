@@ -119,7 +119,7 @@ foldl1([X|Xs], Pred, Result) :-
 % pred(LHS, RHS, Result)
 % ==
 % Thanks to Markus Triska for the definition.
-foldl([], _, Result, Result). 
+foldl([], _, Result, Result) :- !. 
 foldl(List, Pred, Start, Result) :- 
   fold_lag(List, Start, Pred, Result). 
 
@@ -207,7 +207,7 @@ replace_nth([X|Xs], N, E, R, [X|Ys]) :-
   replace_nth(Xs, N1, E, R, Ys).
 
 
-%% helper functions for basic term replacing
+% helper functions for basic term replacing
 % FIXME: ..=
 un_op(Term, F, A) :-
   functor(Term, F, 1),
