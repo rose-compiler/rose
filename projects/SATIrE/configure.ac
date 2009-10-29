@@ -150,7 +150,15 @@ AS_IF([test "x$with_swi_prolog" = xyes],
        AC_MSG_RESULT([Termite will be built WITHOUT SWI-Prolog support.])
        have_swi_prolog=0])
 
+with_swi_prolog58=no
+if [[ x$with_swi_prolog = xyes ]] ; then
+   if $PL --version |grep -q "SWI-Prolog version 5.8"; then
+      with_swi_prolog58=yes
+   fi
+fi
+
 AM_CONDITIONAL(WITH_SWI_PROLOG, [test "x$with_swi_prolog" = xyes])
+AM_CONDITIONAL(WITH_SWI_PROLOG58, [test "x$with_swi_prolog58" = xyes])
 AC_SUBST(have_swi_prolog)
 
 
@@ -254,6 +262,11 @@ AC_OUTPUT
 SWI_STATUS="disabled"
 if [[ x$with_swi_prolog = xyes ]]; then
     SWI_STATUS="enabled"
+    if [[ x$with_swi_prolog58 = xyes ]]; then
+       SWI_STATUS="enabled (version 5.8.x)"
+    else
+       SWI_STATUS="enabled (version != 5.8.x, Termite docs will NOT be built)"
+    fi
 fi
 
 PAG_STATUS="disabled"
