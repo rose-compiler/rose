@@ -16,6 +16,6 @@ annot-weave: annot-weave.pl
 
 %: %.pl Makefile
 	TERMITE_LIB=$(top_srcdir)/src/termite/termite \
-	  $(SWI_PLC) -o $@ -c $(scrdir)/$<
+	  $(SWI_PLC) -o $@ -c $(srcdir)/$<
 
 endif
