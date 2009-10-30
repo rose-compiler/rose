@@ -8,7 +8,7 @@ boost_1_35_0.tar.gz:
      All installations of ROSE (any platform) require boost.
 
 doxygen-1.5.6.src.tar.gz:
-     Doxegen is required to build the documentation which is both distributed with ROSE
+     Doxygen is required to build the documentation which is both distributed with ROSE
      and make available via the ROSE web site.
 
 ghostscript-8.62.tar.gz:
