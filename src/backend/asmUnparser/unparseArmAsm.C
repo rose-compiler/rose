@@ -62,9 +62,15 @@ static std::string unparseArmSign(ArmSignForExpressionUnparsing sign) {
   }
 }
 
-/* Helper function for unparseArmExpression(SgAsmExpression*) */
-static std::string unparseArmExpression(SgAsmExpression* expr, ArmSignForExpressionUnparsing sign) {
-    std::string result;
+/* Helper function for unparseArmExpression(SgAsmExpression*)
+ * 
+ * If this function is called for an EXPR node that cannot appear at the top of an ARM instruction operand tree then the node
+ * might create two strings: the primary expression return value and an additional string returned through the SUFFIX
+ * argument. What to do with the additional string depends on layers higher up in the call stack.
+ * 
+ * The sign will be prepended to the result if EXPR is a value expression of some sort. */
+static std::string unparseArmExpression(SgAsmExpression* expr, ArmSignForExpressionUnparsing sign, std::string *suffix=NULL) {
+    std::string result, extra;
     if (!isSgAsmValueExpression(expr)) {
         result += unparseArmSign(sign);
     }
@@ -93,10 +99,6 @@ static std::string unparseArmExpression(SgAsmExpression* expr, ArmSignForExpress
         case V_SgAsmUnaryRrx:
             result = unparseArmExpression(isSgAsmUnaryExpression(expr)->get_operand(), arm_sign_none) + ", rrx";
             break;
-        case V_SgAsmBinaryAddPostupdate: // These are only used outside memory refs in LDM* and STM* instructions
-        case V_SgAsmBinarySubtractPostupdate:
-            result = unparseArmExpression(isSgAsmBinaryExpression(expr)->get_lhs(), arm_sign_none) + "!";
-            break;
         case V_SgAsmUnaryArmSpecialRegisterList:
             result += unparseArmExpression(isSgAsmUnaryExpression(expr)->get_operand(), arm_sign_none) + "^";
             break;
@@ -111,53 +113,89 @@ static std::string unparseArmExpression(SgAsmExpression* expr, ArmSignForExpress
             result += "}";
             break;
         }
+
+
+        case V_SgAsmBinaryAdd: {
+            /* This node cannot appear at the top of an ARM instruction operand tree */
+            SgAsmBinaryExpression *e = isSgAsmBinaryExpression(expr);
+            result += unparseArmExpression(e->get_lhs(), arm_sign_none) + ", " +
+                      unparseArmExpression(e->get_rhs(), arm_sign_plus);
+            break;
+        }
+
+        case V_SgAsmBinarySubtract: {
+            /* This node cannot appear at the top of an ARM instruction operand tree */
+            SgAsmBinaryExpression *e = isSgAsmBinaryExpression(expr);
+            result += unparseArmExpression(e->get_lhs(), arm_sign_none) + ", " +
+                      unparseArmExpression(e->get_rhs(), arm_sign_minus);
+            break;
+        }
+
+        case V_SgAsmBinaryAddPreupdate: {
+            /* This node cannot appear at the top of an ARM instruction operand tree */
+            SgAsmBinaryExpression *e = isSgAsmBinaryExpression(expr);
+            result += unparseArmExpression(e->get_lhs(), arm_sign_none) + ", " +
+                      unparseArmExpression(e->get_rhs(), arm_sign_plus);
+            extra = "!";
+            break;
+        }
+            
+        case V_SgAsmBinarySubtractPreupdate: {
+            /* This node cannot appear at the top of an ARM instruction operand tree */
+            SgAsmBinaryExpression *e = isSgAsmBinaryExpression(expr);
+            result += unparseArmExpression(e->get_lhs(), arm_sign_none) + ", " +
+                      unparseArmExpression(e->get_rhs(), arm_sign_minus);
+            extra = "!";
+            break;
+        }
+
+        case V_SgAsmBinaryAddPostupdate: {
+            /* Two styles of syntax depending on whether this is at top-level or inside a memory reference expression. */
+            SgAsmBinaryExpression *e = isSgAsmBinaryExpression(expr);
+            if (suffix) {
+                result += unparseArmExpression(e->get_lhs(), arm_sign_none);
+                extra = ", " + unparseArmExpression(e->get_rhs(), arm_sign_plus);
+            } else {
+                /* Used by LDM* and STM* instructions outside memory reference expressions. RHS is unused. */
+                result = unparseArmExpression(e->get_lhs(), arm_sign_none) + "!";
+            }
+            break;
+        }
+            
+        case V_SgAsmBinarySubtractPostupdate: {
+            /* Two styles of syntax depending on whether this is at top-level or inside a memory reference expression. */
+            SgAsmBinaryExpression *e = isSgAsmBinaryExpression(expr);
+            if (suffix) {
+                result += unparseArmExpression(e->get_lhs(), arm_sign_none);
+                extra = ", " + unparseArmExpression(e->get_rhs(), arm_sign_minus);
+            } else {
+                /* Used by LDM* and STM* instructions outside memory reference expressions. RHS is unused. */
+                result += unparseArmExpression(e->get_lhs(), arm_sign_none) + "!";
+            }
+            break;
+        }
+
         case V_SgAsmMemoryReferenceExpression: {
             SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(expr);
             SgAsmExpression* addr = mr->get_address();
             switch (addr->variantT()) {
                 case V_SgAsmRegisterReferenceExpression:
-                    result += "[" + unparseArmExpression(addr, arm_sign_none) + "]";
-                    break;
                 case V_SgAsmBinaryAdd:
-                    result += "[" +
-                              unparseArmExpression(isSgAsmBinaryExpression(addr)->get_lhs(), arm_sign_none) + ", " +
-                              unparseArmExpression(isSgAsmBinaryExpression(addr)->get_rhs(), arm_sign_plus) +
-                              "]";
-                    break;
                 case V_SgAsmBinarySubtract:
-                    result += "[" +
-                              unparseArmExpression(isSgAsmBinaryExpression(addr)->get_lhs(), arm_sign_none) + ", " +
-                              unparseArmExpression(isSgAsmBinaryExpression(addr)->get_rhs(), arm_sign_minus) +
-                              "]";
-                    break;
                 case V_SgAsmBinaryAddPreupdate:
-                    result += "[" +
-                              unparseArmExpression(isSgAsmBinaryExpression(addr)->get_lhs(), arm_sign_none) + ", " +
-                              unparseArmExpression(isSgAsmBinaryExpression(addr)->get_rhs(), arm_sign_plus) +
-                              "]!";
-                    break;
                 case V_SgAsmBinarySubtractPreupdate:
-                    result += "[" +
-                              unparseArmExpression(isSgAsmBinaryExpression(addr)->get_lhs(), arm_sign_none) + ", " +
-                              unparseArmExpression(isSgAsmBinaryExpression(addr)->get_rhs(), arm_sign_minus) +
-                              "]!";
-                    break;
                 case V_SgAsmBinaryAddPostupdate:
-                    result += "[" +
-                              unparseArmExpression(isSgAsmBinaryExpression(addr)->get_lhs(), arm_sign_none) +
-                              "], " +
-                              unparseArmExpression(isSgAsmBinaryExpression(addr)->get_rhs(), arm_sign_plus);
-                    break;
                 case V_SgAsmBinarySubtractPostupdate:
-                    result += "[" +
-                              unparseArmExpression(isSgAsmBinaryExpression(addr)->get_lhs(), arm_sign_none) +
-                              "], " + 
-                              unparseArmExpression(isSgAsmBinaryExpression(addr)->get_rhs(), arm_sign_minus);
                     break;
                 default: ROSE_ASSERT (!"Bad addressing mode");
             }
+
+            std::string suffix;
+            result += "[" + unparseArmExpression(addr, arm_sign_none, &suffix) + "]";
+            result += suffix;
             break;
         }
+
         case V_SgAsmArmRegisterReferenceExpression:
             result += unparseArmRegister(isSgAsmArmRegisterReferenceExpression(expr)->get_arm_register_code());
             break;
@@ -172,6 +210,15 @@ static std::string unparseArmExpression(SgAsmExpression* expr, ArmSignForExpress
             ROSE_ASSERT (false);
         }
     }
+
+    /* The extra data should be passed back up the call stack so it can be inserted into the ultimate return string. We can't
+     * insert it here because the string can't be generated strictly left-to-right. If "suffix" is the null pointer then the
+     * caller isn't expecting a suffix and we'll have to just do our best -- the result will not be valid ARM assembly. */
+    if (extra.size()>0 && !suffix)
+        result = "\"" + result + "\" and \"" + extra + "\"";
+    if (suffix)
+        *suffix = extra;
+
     if (expr->get_replacement() != "") {
         result += " <" + expr->get_replacement() + ">";
     }
