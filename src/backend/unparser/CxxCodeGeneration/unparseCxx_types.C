@@ -136,7 +136,7 @@ string get_type_name(SgType* t)
 
                   if ( (ftype = isSgMemberFunctionType(btype)) != NULL) {
                       string res = get_type_name(ftype->get_return_type()) +  "("
-                        +string(mpointer_type->get_class_of()->get_qualified_name().str())
+                        +get_type_name(mpointer_type->get_class_type())
                         + "::*" + ")" + "(" ;
                       SgTypePtrList::iterator p = ftype->get_arguments().begin();
                       while ( p != ftype->get_arguments().end() )
@@ -149,7 +149,7 @@ string get_type_name(SgType* t)
                   }
                   else {
                      return get_type_name(btype) + "(" +
-                       string(mpointer_type->get_class_of()->get_qualified_name().str()) + "::*" + ")";
+                       get_type_name(mpointer_type->get_class_type()) + "::*" + ")";
                   }
                }
           case T_CLASS:              
@@ -549,7 +549,7 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                unparseType(ftype->get_return_type(), info); // first part
                curprint ( "(");
             // curprint ( "\n/* mpointer_type->get_class_of() = " + mpointer_type->get_class_of()->sage_class_name() + " */ \n";
-               curprint ( mpointer_type->get_class_of()->get_qualified_name().str());
+               curprint ( get_type_name(mpointer_type->get_class_type()) );
                curprint ( "::*");
              }
             else
@@ -609,7 +609,7 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                unparseType(btype, info);
             // curprint ( "\n/* end of btype */ \n";
                curprint ( "(");
-               curprint ( mpointer_type->get_class_of()->get_qualified_name().str());
+               curprint ( get_type_name(mpointer_type->get_class_type()) );
                curprint ( "::*");
              }
             else
