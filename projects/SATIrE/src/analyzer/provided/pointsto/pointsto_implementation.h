@@ -317,6 +317,7 @@ private:
 #endif
     void performFunctionEndBookkeeping(SgFunctionDeclaration *fdecl);
     SgType *stripOnePointerLayer(SgType *type);
+    SgType *stripType(SgType *arg_type);
     SgFunctionSymbol *findFunctionSymbolFromDeclaration(
             SgFunctionDeclaration *fd);
     void ensurePointerLocation(Location * &location);

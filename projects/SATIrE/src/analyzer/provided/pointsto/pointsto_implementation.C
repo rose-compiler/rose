@@ -433,9 +433,7 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
                     if (result->baseLocation() == NULL)
                     {
                         SgType *t = varSym->get_type();
-                        t = t->stripType(SgType::STRIP_MODIFIER_TYPE
-                                       | SgType::STRIP_REFERENCE_TYPE
-                                       | SgType::STRIP_TYPEDEF_TYPE);
+                        t = stripType(t);
                      // The array may be n-dimensional, so we create n
                      // levels of pointers; the innermost level (containing
                      // the base elements) gets the list of symbols
@@ -448,10 +446,7 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
                             l->pointTo(arrayNode);
 
                             l = arrayNode;
-                            t = a->get_base_type()->stripType(
-                                        SgType::STRIP_MODIFIER_TYPE
-                                      | SgType::STRIP_REFERENCE_TYPE
-                                      | SgType::STRIP_TYPEDEF_TYPE);
+                            t = stripType(a->get_base_type());
                         }
                         if (l != result)
                             l->symbols = result->symbols;
@@ -2765,9 +2760,7 @@ PointsToAnalysis::Implementation::pickThePointer(
  // references, modifiers wrapped around it
     operand = binOp->get_lhs_operand();
     SgType *t = operand->get_type();
-    t = t->stripType(SgType::STRIP_MODIFIER_TYPE
-                   | SgType::STRIP_REFERENCE_TYPE
-                   | SgType::STRIP_TYPEDEF_TYPE);
+    t = stripType(t);
     if (isSgPointerType(t) || isSgArrayType(t) || isSgStringVal(operand))
     {
         result = a;
@@ -2783,9 +2776,7 @@ PointsToAnalysis::Implementation::pickThePointer(
      // see if the second operand is the pointer, same game as above
         operand = binOp->get_rhs_operand();
         t = operand->get_type();
-        t = t->stripType(SgType::STRIP_MODIFIER_TYPE
-                       | SgType::STRIP_REFERENCE_TYPE
-                       | SgType::STRIP_TYPEDEF_TYPE);
+        t = stripType(t);
         if (isSgPointerType(t) || isSgArrayType(t) || isSgStringVal(operand))
         {
             result = b;
@@ -4849,7 +4840,8 @@ PointsToAnalysis::Implementation::expressionLocation(SgExpression *expr)
  // If this expression refers to a function, make sure the location we are
  // returning is a function location and has at least as many argument
  // locations as dictated by the static type of the expression.
-    if (SgFunctionType *ft = isSgFunctionType(expr->get_type()))
+    SgType *strippedType = stripType(expr->get_type());
+    if (SgFunctionType *ft = isSgFunctionType(strippedType))
     {
         assert(result != NULL);
         if (result->baseLocation() == NULL)
@@ -5034,9 +5026,7 @@ PointsToAnalysis::Implementation::stripOnePointerLayer(
         SgType *arg_type)
 {
     SgType *type = arg_type;
-    type = type->stripType(SgType::STRIP_MODIFIER_TYPE
-                         | SgType::STRIP_REFERENCE_TYPE
-                         | SgType::STRIP_TYPEDEF_TYPE);
+    type = stripType(type);
     if (!isSgPointerType(type) && !isSgArrayType(type)
                                && !isSgTypeString(type))
     {
@@ -5050,9 +5040,7 @@ PointsToAnalysis::Implementation::stripOnePointerLayer(
     }
 
     type = type->dereference();
-    type = type->stripType(SgType::STRIP_MODIFIER_TYPE
-                         | SgType::STRIP_REFERENCE_TYPE
-                         | SgType::STRIP_TYPEDEF_TYPE);
+    type = stripType(type);
 
 #if VERBOSE_DEBUG
     std::cout
@@ -5062,6 +5050,16 @@ PointsToAnalysis::Implementation::stripOnePointerLayer(
         << std::endl;
 #endif
 
+    return type;
+}
+
+SgType *
+PointsToAnalysis::Implementation::stripType(SgType *arg_type)
+{
+    SgType *type = arg_type;
+    type = type->stripType(SgType::STRIP_MODIFIER_TYPE
+                         | SgType::STRIP_REFERENCE_TYPE
+                         | SgType::STRIP_TYPEDEF_TYPE);
     return type;
 }
 
