@@ -39,6 +39,10 @@ namespace ELF{
 // #include "AstStatistics.h"
 #include "Ast.h"
 
+// DQ (6/3/2007): added internal support for AST visualization
+// // #include "astVisualization/wholeAST_API.h"
+#include "wholeAST_API.h"
+ 
 // DQ (10/18/2003) Why is this commented out (what is it)
 //#include "AgProcessing.h"
 
