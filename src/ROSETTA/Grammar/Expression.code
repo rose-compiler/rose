@@ -3281,7 +3281,8 @@ $CLASSNAME::get_type() const
      SgType* returnType = NULL;
      if (classDefinition != NULL)
         {
-          returnType = SgPointerMemberType::createType(baseType,classDefinition);
+	  SgClassType* classType = classDefinition->get_declaration()->get_type();
+          returnType = SgPointerMemberType::createType(baseType,classType);
         }
        else
         {
