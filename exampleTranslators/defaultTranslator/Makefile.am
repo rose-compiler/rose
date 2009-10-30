@@ -2,9 +2,10 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES)
 
-bin_PROGRAMS = defaultTranslator
+bin_PROGRAMS = defaultTranslator preprocessingInfoDumper
 
-defaultTranslator_SOURCES = defaultTranslator.C
+defaultTranslator_SOURCES = defaultTranslator.C 
+preprocessingInfoDumper_SOURCES = preprocessingInfoDumper.C
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 

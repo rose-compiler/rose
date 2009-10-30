@@ -16,8 +16,8 @@ int main( int argc, char* argv[] )
    {
      // Liao, 10/23/2009, enable command options to change internal behaviors of the dot graph generator
      vector<string>  argvList (argv, argv+ argc);
-     //CustomMemoryPoolDOTGeneration::init_filters(argvList);
-     generateGraphOfAST_initFilters(argvList);
+//     generateGraphOfAST_initFilters(argvList);
+     CustomMemoryPoolDOTGeneration::s_Filter_Flags* filter_flags = new CustomMemoryPoolDOTGeneration::s_Filter_Flags(argvList);
 
      //SgProject* project = frontend(argc,argv);
      SgProject* project = frontend(argvList);
@@ -34,7 +34,7 @@ int main( int argc, char* argv[] )
      if (numberOfASTnodesBeforeMerge < MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH)
         {
        // default generated graphof whole AST excludes front-end specific IR node (e.g. builtin functions)
-          generateWholeGraphOfAST(filename+"_WholeAST");
+          generateWholeGraphOfAST(filename+"_WholeAST", filter_flags);
 
        // The call to generateWholeGraphOfAST is the same as the following:
        // set<SgNode*> skippedNodeSet = getSetOfFrontendSpecificNodes();

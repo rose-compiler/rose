@@ -15,6 +15,8 @@ File List:
 
 * test parser:    parseOmp.C 
 
+Please avoid to use file names which differ from each other only by suffix.
+
 By Liao, 9/19/2008
 Latest modified: 10/28/2008
 

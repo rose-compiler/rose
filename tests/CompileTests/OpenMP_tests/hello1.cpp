@@ -7,9 +7,6 @@
 #include <iostream>
 using namespace std;
 
-// By pass the bug of template instantiation problems within class member functions
-void foo() { std::cout <<1<<"1"<<std::endl; }
-
 class Hello 
 {
   private:

@@ -14,7 +14,8 @@ int main(void)
 #pragma omp single
     printf ("Using %d threads.\n",omp_get_num_threads());
 #pragma omp for nowait
-    for (i=0;i<20;i+=3)
+    for (i=0;i<2;i+=1)
+    //for (i=0;i<20;i+=3)
     {
       a[i]=i*2;
       printf("Iteration %2d is carried out by thread %2d\n",\

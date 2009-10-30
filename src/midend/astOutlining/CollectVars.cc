@@ -29,40 +29,6 @@ dump (const ASTtools::VarSymSet_t& V, const std::string& tag)
     cerr << tag << '{' << ASTtools::toString (V) << '}' << endl;
 }
 
-#if 0
-//collect clause variables from an OpenMP statement's clause with a variable list
-static void
-collectOmpClauseVars(SgOmpClauseBodyStatement * clause_stmt, ASTtools::VarSymSet_t& omp_syms, const VariantT & vt)
-{
-  ROSE_ASSERT(clause_stmt != NULL);
-  Rose_STL_Container<SgOmpClause*> p_clause =
-    NodeQuery::queryNodeList<SgOmpClause>(clause_stmt->get_clauses(),vt);
-
-  if (p_clause.size()== 0)  // Does a matching clause exist? 
-    return;
-
-  // ROSE_ASSERT(p_clause.size() ==1); // multiple reduction clauses may exist
-  //cout<<"Found private clause:"<<isSgOmpPrivateClause(p_clause[0])->unparseToString()<<endl;
-
-  for (int i =0; i< p_clause.size(); i++)
-  {
-    SgInitializedNamePtrList namelist = isSgOmpVariablesClause(p_clause[i])->get_variables();
-    SgInitializedNamePtrList::const_iterator iter = namelist.begin();
-    for (; iter!=namelist.end(); iter++)
-    {
-      SgInitializedName * iname = *iter;
-      ROSE_ASSERT(iname != NULL);
-      SgSymbol* symbol = iname->get_symbol_from_symbol_table();
-      ROSE_ASSERT(symbol);
-      SgVariableSymbol* varsymbol = isSgVariableSymbol(symbol);
-      ROSE_ASSERT( varsymbol != NULL);
-      omp_syms.insert(varsymbol);
-    }
-  } // for all matched clauses
-}
-
-#endif
-
 //! Collect the variables to be passed if 's' is to be outlined
 // It classifies variables used in s as the following categories
 //  * L: locally declared  

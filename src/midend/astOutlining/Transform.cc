@@ -37,7 +37,12 @@ SgClassDeclaration* Outliner::generateParameterStructureDeclaration(
   ROSE_ASSERT (isSgGlobal(func_scope) != NULL);
   string decl_name = func_name_str+"_data";
   
-  result = buildStructDeclaration(decl_name);
+  result = buildStructDeclaration(decl_name, getGlobalScope(s));
+//  result ->setForward(); // cannot do this!! it becomes prototype
+//  if (result->get_firstNondefiningDeclaration()  )
+//   ROSE_ASSERT(isSgClassDeclaration(result->get_firstNondefiningDeclaration())->isForward() == true);
+//   cout<<"Debug Outliner::generateParameterStructureDeclaration(): struct address ="<<result <<" firstNondefining address ="<<result->get_firstNondefiningDeclaration()<<endl;
+
   // insert member variable declarations to it
   SgClassDefinition *def = result->get_definition();
   ROSE_ASSERT (def != NULL); 
@@ -77,7 +82,7 @@ SgClassDeclaration* Outliner::generateParameterStructureDeclaration(
   {
     global_scoped_ancestor = global_scoped_ancestor->get_parent();
    }
-  cout<<"global_scoped_ancestor class_name: "<<global_scoped_ancestor->class_name()<<endl; 
+//  cout<<"global_scoped_ancestor class_name: "<<global_scoped_ancestor->class_name()<<endl; 
   ROSE_ASSERT (isSgStatement(global_scoped_ancestor));
   insertStatementBefore(isSgStatement(global_scoped_ancestor), result); 
   moveUpPreprocessingInfo(result,isSgStatement(global_scoped_ancestor));

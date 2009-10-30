@@ -299,56 +299,6 @@ ASTtools::collectLocalVisibleVarSyms (const SgStatement* root,
 void ASTtools::collectVarRefsUsingAddress(const SgStatement* s, std::set<SgVarRefExp* >& varSetB)
 {
   SageInterface::collectUseByAddressVariableRefs(s, varSetB);
-#if 0  
-  Rose_STL_Container <SgNode*> var_refs = NodeQuery::querySubTree (const_cast<SgStatement *> (s), V_SgVarRefExp);
-
-  Rose_STL_Container<SgNode*>::iterator iter = var_refs.begin();
-  for (; iter!=var_refs.end(); iter++)
-  {
-    SgVarRefExp* ref = isSgVarRefExp(*iter); 
-    ROSE_ASSERT(ref != NULL);
-    ROSE_ASSERT(ref->get_parent() != NULL);
-    // case 1: ref is used as an operator for & (SgAddressofOp)
-    // TODO tolerate possible type casting operations in between ?
-    if (isSgAddressOfOp(ref->get_parent())) 
-    {
-      if (Outliner::enable_debug)
-      cout<<"Found a reference used as an operator for SgAddressofOp:"<<ref->unparseToString()<<endl;
-      varSetB.insert(ref);
-    }
-    // case 2. ref is used as a function call's parameter, and the parameter has reference type in C++
-    else if ((SageInterface::is_Cxx_language())&&(isSgExprListExp(ref->get_parent())))  
-    {
-      SgNode* grandparent = ref->get_parent()->get_parent();
-      ROSE_ASSERT(grandparent);
-      if (isSgFunctionCallExp(grandparent)) // Is used as a function call's parameter 
-      {
-        // find which parameter ref is in SgExpressionPtrList
-        int param_index =0;
-        SgExpressionPtrList expList = isSgExprListExp(ref->get_parent())->get_expressions();
-        Rose_STL_Container<SgExpression*>::const_iterator iter= expList.begin();
-        for (; iter!=expList.end(); iter++)
-        {
-          if (*iter == ref)
-            break;
-          else  
-            param_index++;
-        }
-        // find the parameter type of the corresponding function declaration
-        SgFunctionRefExp * funcRef = isSgFunctionRefExp(isSgFunctionCallExp(grandparent)->get_function()); 
-        SgFunctionDeclaration* funcDecl = isSgFunctionSymbol(funcRef->get_symbol())->get_declaration();
-        SgInitializedNamePtrList nameList = funcDecl->get_args();
-        //TODO tolerate typedef chains
-        if (isSgReferenceType(nameList[param_index]->get_type()))
-        {
-          if (Outliner::enable_debug)
-           cout<<"Found a reference used as a function call parameter with C++ reference type:"<<ref->unparseToString()<<endl;
-          varSetB.insert(ref);
-        }
-      } 
-    } 
-  }
-#endif  
 }
 
 
@@ -375,7 +325,7 @@ void ASTtools::collectVarRefsOfTypeWithoutAssignmentSupport(const SgStatement* s
 //! Collect variables to be replaced by pointer dereferencing (pd)
 // We collect those used by address OR those do not support assignment
 // We exclude C++ reference types since they do not support dereferencing 
-// 
+// We also collect structure or class types, passing by reference is more efficient for them 
 // PointerDereferenceingVars =
 //   PassByRefParameters \intersection (UsingByAddress \union NotAssignableVars) - PointerDereferencedVars
 //   Liao, 8/14/2009
@@ -388,6 +338,23 @@ void ASTtools::collectPointerDereferencingVarSyms(const SgStatement*s, VarSymSet
   collectVarRefsUsingAddress(s, varSetB);
   // not assignable
   collectVarRefsOfTypeWithoutAssignmentSupport(s,varSetB);
+
+  // Also collect structure or class types, passing by reference is more efficient for them
+  Rose_STL_Container <SgNode*> var_refs = NodeQuery::querySubTree (const_cast<SgStatement *> (s), V_SgVarRefExp);
+  Rose_STL_Container<SgNode*>::iterator iter2 = var_refs.begin();
+  for (; iter2!=var_refs.end(); iter2++)
+  {
+    SgVarRefExp* ref = isSgVarRefExp(*iter2);
+    SgType* vtype = isSgVariableSymbol(ref->get_symbol())->get_declaration()->get_type();
+//cout<<"Debug: ASTtools::collectPointerDereferencingVarSyms() vtype is :"<< vtype->class_name() <<endl;
+    if (isSgClassType(vtype))
+    {
+      if (Outliner::enable_debug)
+        cout<<"Found a reference of class/structure type:"<<ref->unparseToString()<<endl;
+      varSetB.insert(ref);
+    }
+  }
+   
 
   // convert variable references to symbols
   for (iter=varSetB.begin(); iter!=varSetB.end(); iter++)

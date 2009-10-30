@@ -7,15 +7,17 @@ using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
 
-  //! Generate a symbol set from an initialized name list
-static void convert (const SgInitializedNamePtrList input, ASTtools::VarSymSet_t& output)
+  //! Generate a symbol set from an initialized name list, 
+  //filter out struct/class typed names
+static void convertAndFilter (const SgInitializedNamePtrList input, ASTtools::VarSymSet_t& output)
   {
     for (SgInitializedNamePtrList::const_iterator iter =  input.begin(); iter != input.end(); iter++)
     {
       const SgInitializedName * iname = *iter;
       SgVariableSymbol* symbol = isSgVariableSymbol(iname->get_symbol_from_symbol_table ()); 
       ROSE_ASSERT (symbol != NULL);
-      output.insert(symbol);
+      if (! isSgClassType(symbol->get_type()))
+        output.insert(symbol);
     }
   }
 
@@ -543,8 +545,8 @@ namespace OmpSupport
       upperAdjust = 1;
     SageInterface::setLoopLowerBound(for_loop, buildVarRefExp(lower_decl));
     SageInterface::setLoopUpperBound(for_loop, buildAddOp(buildVarRefExp(upper_decl),buildIntVal(upperAdjust)));
-
-    transOmpVariables(target, bb1); // This should happen before the barrier is inserted.
+    ROSE_ASSERT (orig_upper != NULL);
+    transOmpVariables(target, bb1, orig_upper); // This should happen before the barrier is inserted.
     // GOMP_loop_end ();  or GOMP_loop_end_nowait (); 
     string func_loop_end_name = "GOMP_loop_end"; 
     if (hasClause(target, V_SgOmpNowaitClause)) 
@@ -767,7 +769,7 @@ namespace OmpSupport
       SageInterface::setLoopLowerBound(for_loop, buildVarRefExp(lower_decl)); 
       SageInterface::setLoopUpperBound(for_loop, buildVarRefExp(upper_decl)); 
 
-       transOmpVariables(target, bb1); // This should happen before the barrier is inserted.
+       transOmpVariables(target, bb1,orig_upper); // This should happen before the barrier is inserted.
       // insert barrier if there is no nowait clause
       if (!hasClause(target, V_SgOmpNowaitClause)) 
       {
@@ -849,9 +851,10 @@ SgFunctionDeclaration* generatedOutlinedTask(SgNode* node, std::string& wrapper_
   std::copy(syms.begin(), syms.end(), std::inserter(pdSyms,pdSyms.begin()));
 
   //exclude firstprivate variables: they are read only in fact
+  //TODO keep class typed variables!!!  even if they are firstprivate or private!! 
   SgInitializedNamePtrList fp_vars = collectClauseVariables (target, V_SgOmpFirstprivateClause);
   ASTtools::VarSymSet_t fp_syms, pdSyms2;
-  convert (fp_vars, fp_syms);
+  convertAndFilter (fp_vars, fp_syms);
   set_difference (pdSyms.begin(), pdSyms.end(),
       fp_syms.begin(), fp_syms.end(),
       std::inserter(pdSyms2, pdSyms2.begin()));
@@ -859,7 +862,8 @@ SgFunctionDeclaration* generatedOutlinedTask(SgNode* node, std::string& wrapper_
   // Similarly , exclude private variable, also read only
  SgInitializedNamePtrList p_vars = collectClauseVariables (target, V_SgOmpPrivateClause);
  ASTtools::VarSymSet_t p_syms, pdSyms3;
- convert (p_vars, p_syms);
+ convertAndFilter (p_vars, p_syms);
+  //TODO keep class typed variables!!!  even if they are firstprivate or private!! 
   set_difference (pdSyms2.begin(), pdSyms2.end(),
       p_syms.begin(), p_syms.end(),
       std::inserter(pdSyms3, pdSyms3.begin()));
@@ -1368,137 +1372,235 @@ SgFunctionDeclaration* generatedOutlinedTask(SgNode* node, std::string& wrapper_
   {
     return isInClauseVariableList(var, clause_stmt, VariantVector(vt));
   }
-  //! Translate clauses with variable lists, such as private, firstprivate, lastprivate, reduction, etc.
-  //bb1 is the affected code block by the clause.
-  //Command steps are: insert local declarations for the variables:(all)
-  //                   initialize the local declaration:(firstprivate, reduction)
-  //                   variable substitution for the variables:(all)
-  //                   save local copy back to its global one:(reduction, lastprivate)
-  // Note that a variable could be both firstprivate and lastprivate                  
-  void transOmpVariables(SgStatement* ompStmt, SgBasicBlock* bb1)
+
+static void insertOmpLastprivateCopyBackStmts(SgStatement* ompStmt, vector <SgStatement* >& end_stmt_list,  SgBasicBlock* bb1, SgInitializedName* orig_var, SgVariableDeclaration* local_decl, SgExpression* orig_loop_upper)
+{
+  /* if (i is the last iteration)
+   *   *shared_i_p = local_i
+   *
+   * The judge of last iteration is based on the iteration space increment direction and loop stop conditions
+   * Incremental loops
+   *      < upper:   last iteration ==> i >= upper
+   *      <=     :                      i> upper
+   * Decremental loops     
+   *      > upper:   last iteration ==> i <= upper
+   *      >=     :                      i < upper
+   * AST: Orphaned worksharing OmpStatement is SgOmpForStatement->get_body() is SgForStatement
+   *     
+   *  We use bottom up traversal, the inner omp for loop has already been translated, so we have to get the original upper bound via parameter
+   *
+   *  Another tricky case is that when some threads don't get any iterations to work on, the initial _p_index may still trigger the lastprivate 's 
+   *     if (_p_index>orig_bound) statement
+   *  We add a condition to test if the thread really worked on at least on iteration before compare the _p_index and the original boundary
+   * */
+  // lastprivate can be used with loop constructs or sections.
+  SgStatement* save_stmt = NULL;
+  if (isSgOmpForStatement(ompStmt))
   {
-    ROSE_ASSERT( ompStmt != NULL);
-    ROSE_ASSERT( bb1 != NULL);
-    SgOmpClauseBodyStatement* clause_stmt = isSgOmpClauseBodyStatement(ompStmt);
-    ROSE_ASSERT( clause_stmt!= NULL);
-
-    // collect variables 
-   SgInitializedNamePtrList var_list = collectAllClauseVariables(clause_stmt);
-   // Only keep the unique ones
-   sort (var_list.begin(), var_list.end());;
-   SgInitializedNamePtrList:: iterator new_end = unique (var_list.begin(), var_list.end());
-   var_list.erase(new_end, var_list.end());
-   VariableSymbolMap_t var_map; 
-
-   vector <SgStatement* > front_stmt_list, end_stmt_list;  
-  
-   for (size_t i=0; i< var_list.size(); i++)
-   {
-     SgInitializedName* orig_var = var_list[i];
-     ROSE_ASSERT(orig_var != NULL);
-     string orig_name = orig_var->get_name().getString();
-     SgType* orig_type =  orig_var->get_type();
-     SgVariableSymbol* orig_symbol = isSgVariableSymbol(orig_var->get_symbol_from_symbol_table());
-     ROSE_ASSERT(orig_symbol!= NULL);
-
-     VariantVector vvt (V_SgOmpPrivateClause);
-     vvt.push_back(V_SgOmpFirstprivateClause);
-     vvt.push_back(V_SgOmpLastprivateClause);
-     vvt.push_back(V_SgOmpReductionClause);
- 
-    // a local private copy
-    SgVariableDeclaration* local_decl = NULL;
-    SgOmpClause::omp_reduction_operator_enum r_operator = SgOmpClause::e_omp_reduction_unkown  ;
-    bool isReductionVar = isInClauseVariableList(orig_var, clause_stmt,V_SgOmpReductionClause);
-
-    // step 1. Insert local declaration for private, firstprivate, lastprivate and reduction
-    if (isInClauseVariableList(orig_var, clause_stmt, vvt))
+    ROSE_ASSERT (orig_loop_upper != NULL);
+    Rose_STL_Container <SgNode*> loops = NodeQuery::querySubTree (bb1, V_SgForStatement);
+    ROSE_ASSERT (loops.size() != 0); // there must be 1 for loop under SgOmpForStatement
+    SgForStatement* top_loop = isSgForStatement(loops[0]);
+    ROSE_ASSERT (top_loop != NULL);
+    //Get essential loop information
+    SgInitializedName* loop_index;
+    SgExpression* loop_lower, *loop_upper, *loop_step;
+    SgStatement* loop_body;
+    bool  isIncremental;
+    bool isInclusiveBound;
+    bool isCanonical = SageInterface::isCanonicalForLoop (top_loop, &loop_index, & loop_lower, & loop_upper, & loop_step, &loop_body, & isIncremental, & isInclusiveBound);
+    ROSE_ASSERT (isCanonical == true);
+    SgExpression* if_cond= NULL;
+    SgStatement* if_cond_stmt = NULL;
+    //TODO we need the original upper bound!!
+    if (isIncremental)
     {
-      local_decl = buildVariableDeclaration("_p_"+orig_name, orig_type, NULL, bb1);
-     //   prependStatement(local_decl, bb1);
-     front_stmt_list.push_back(local_decl);   
-      // record the map from old to new symbol
-     var_map.insert( VariableSymbolMap_t::value_type( orig_symbol, getFirstVarSym(local_decl)) ); 
-    }
-
-    // step 2. Initialize the local copy for firstprivate, reduction TODO copyin, copyprivate?
-    if (isInClauseVariableList(orig_var, clause_stmt,V_SgOmpFirstprivateClause))
-    {
-      SgExprStatement* init_stmt = buildAssignStatement(buildVarRefExp(local_decl), buildVarRefExp(orig_var, bb1));
-     front_stmt_list.push_back(init_stmt);   
-    } else if (isReductionVar)
-    {
-      r_operator = getReductionOperationType(orig_var, clause_stmt);
-      SgExprStatement* init_stmt = buildAssignStatement(buildVarRefExp(local_decl), createInitialValueExp(r_operator));
-      front_stmt_list.push_back(init_stmt);   
-    }
-
-    // step 3. Save the value back for lastprivate and reduction
-     if (isInClauseVariableList(orig_var, clause_stmt,V_SgOmpLastprivateClause))
-    {
-      SgExprStatement* save_stmt = buildAssignStatement(buildVarRefExp(orig_var, bb1), buildVarRefExp(local_decl));
-     // appendStatement(save_stmt, bb1);
-     end_stmt_list.push_back(save_stmt);   
-    } else if (isReductionVar)
-    { // Two ways to do the reduction operation: 
-      //1. builtin function TODO
-      //    __sync_fetch_and_add_4(&shared, (unsigned int)local);
-      //2. using atomic runtime call: 
-      //    GOMP_atomic_start ();
-      //    shared = shared op local;
-      //    GOMP_atomic_end ();
-      // We use the 2nd method only for now for simplicity and portability
-      SgExprStatement* atomic_start_stmt = buildFunctionCallStmt("GOMP_atomic_start", buildVoidType(), NULL, bb1); 
-      end_stmt_list.push_back(atomic_start_stmt);   
-      SgExpression* r_exp = NULL;
-      switch (r_operator)
+      if (isInclusiveBound) // <= --> >
       {
-        case SgOmpClause::e_omp_reduction_plus:
-          r_exp = buildAddOp(buildVarRefExp(orig_var, bb1), buildVarRefExp(local_decl)); 
-          break;
-        case SgOmpClause::e_omp_reduction_mul:
-          r_exp = buildMultiplyOp(buildVarRefExp(orig_var, bb1), buildVarRefExp(local_decl)); 
-          break;
-        case SgOmpClause::e_omp_reduction_minus:
-          r_exp = buildSubtractOp(buildVarRefExp(orig_var, bb1), buildVarRefExp(local_decl)); 
-          break;
-        case SgOmpClause::e_omp_reduction_bitand:
-          r_exp = buildBitAndOp(buildVarRefExp(orig_var, bb1), buildVarRefExp(local_decl)); 
-          break;
-        case SgOmpClause::e_omp_reduction_bitor:
-          r_exp = buildBitOrOp(buildVarRefExp(orig_var, bb1), buildVarRefExp(local_decl)); 
-          break;
-        case SgOmpClause::e_omp_reduction_bitxor: 
-          r_exp = buildBitXorOp(buildVarRefExp(orig_var, bb1), buildVarRefExp(local_decl)); 
-          break;
-        case SgOmpClause::e_omp_reduction_logand:
-          r_exp = buildAndOp(buildVarRefExp(orig_var, bb1), buildVarRefExp(local_decl)); 
-          break;
-        case SgOmpClause::e_omp_reduction_logor:
-          r_exp = buildOrOp(buildVarRefExp(orig_var, bb1), buildVarRefExp(local_decl)); 
-          break;
-        // TODO Fortran operators.   
-        case SgOmpClause::e_omp_reduction_and: // Fortran .and.
-        case SgOmpClause::e_omp_reduction_or: // Fortran .or.
-        case SgOmpClause::e_omp_reduction_eqv: 
-        case SgOmpClause::e_omp_reduction_neqv:
-        case SgOmpClause::e_omp_reduction_max:
-        case SgOmpClause::e_omp_reduction_min:
-        case SgOmpClause::e_omp_reduction_iand:
-        case SgOmpClause::e_omp_reduction_ior:
-        case SgOmpClause::e_omp_reduction_ieor:
-        case SgOmpClause::e_omp_reduction_unkown: 
-        case SgOmpClause::e_omp_reduction_last:
-        default:
-          cerr<<"Illegal or unhandled reduction operator type:"<< r_operator<<endl;
+        if_cond= buildGreaterThanOp(buildVarRefExp(loop_index, bb1), copyExpression(orig_loop_upper));
       }
-      SgStatement* reduction_stmt = buildAssignStatement(buildVarRefExp(orig_var, bb1), r_exp);
-      end_stmt_list.push_back(reduction_stmt);   
-      SgExprStatement* atomic_end_stmt = buildFunctionCallStmt("GOMP_atomic_end", buildVoidType(), NULL, bb1);  
-      end_stmt_list.push_back(atomic_end_stmt);   
+      else // < --> >=
+      {
+        if_cond= buildGreaterOrEqualOp(buildVarRefExp(loop_index, bb1), copyExpression(orig_loop_upper));
+      }
     }
+    else
+    { // decremental loop
+      if (isInclusiveBound) // >= --> <
+      {
+        if_cond= buildLessThanOp(buildVarRefExp(loop_index, bb1), copyExpression(orig_loop_upper));
+      }
+      else // > --> <=
+      {
+        if_cond= buildLessOrEqualOp(buildVarRefExp(loop_index, bb1), copyExpression(orig_loop_upper));
+      }
+    }
+    // Add (_p_index != _p_lower) as another condition, making sure the current thread really worked on at least one iteration
+    // Otherwise some thread which does not run any iteration may have a big initial _p_index and trigger the if statement's condition
+    if_cond_stmt = buildExprStatement(buildAndOp(buildNotEqualOp(buildVarRefExp(loop_index, bb1), copyExpression(loop_lower)), if_cond)) ;
+     
+    SgStatement* true_body = buildAssignStatement(buildVarRefExp(orig_var, bb1), buildVarRefExp(local_decl));
+    save_stmt = buildIfStmt(if_cond_stmt, true_body, NULL);
+  }
+  else
+  {
+    cerr<<"Unhandled SgOmpxx for lastprivate variable: \nOmpStatement is:"<< ompStmt->class_name()<<endl;
+    cerr<<"lastprivate variable is:"<<orig_var->get_name().getString()<<endl;
+    ROSE_ASSERT (false);
+  }
+  end_stmt_list.push_back(save_stmt);
+
+}
+
+  //!Generate copy-back statements for reduction variables
+  // end_stmt_list: the statement lists to be appended
+  // bb1: the affected code block by the reduction clause
+  // orig_var: the reduction variable's original copy
+  // local_decl: the local copy of the reduction variable
+  // Two ways to do the reduction operation: 
+  //1. builtin function TODO
+  //    __sync_fetch_and_add_4(&shared, (unsigned int)local);
+  //2. using atomic runtime call: 
+  //    GOMP_atomic_start ();
+  //    shared = shared op local;
+  //    GOMP_atomic_end ();
+  // We use the 2nd method only for now for simplicity and portability
+static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator_enum r_operator, vector <SgStatement* >& end_stmt_list,  SgBasicBlock* bb1, SgInitializedName* orig_var, SgVariableDeclaration* local_decl)
+{
+
+  SgExprStatement* atomic_start_stmt = buildFunctionCallStmt("GOMP_atomic_start", buildVoidType(), NULL, bb1); 
+  end_stmt_list.push_back(atomic_start_stmt);   
+  SgExpression* r_exp = NULL;
+  switch (r_operator) 
+  {
+    case SgOmpClause::e_omp_reduction_plus:
+      r_exp = buildAddOp(buildVarRefExp(orig_var, bb1), buildVarRefExp(local_decl)); 
+      break;
+    case SgOmpClause::e_omp_reduction_mul:
+      r_exp = buildMultiplyOp(buildVarRefExp(orig_var, bb1), buildVarRefExp(local_decl)); 
+      break;
+    case SgOmpClause::e_omp_reduction_minus:
+      r_exp = buildSubtractOp(buildVarRefExp(orig_var, bb1), buildVarRefExp(local_decl)); 
+      break;
+    case SgOmpClause::e_omp_reduction_bitand:
+      r_exp = buildBitAndOp(buildVarRefExp(orig_var, bb1), buildVarRefExp(local_decl)); 
+      break;
+    case SgOmpClause::e_omp_reduction_bitor:
+      r_exp = buildBitOrOp(buildVarRefExp(orig_var, bb1), buildVarRefExp(local_decl)); 
+      break;
+    case SgOmpClause::e_omp_reduction_bitxor: 
+      r_exp = buildBitXorOp(buildVarRefExp(orig_var, bb1), buildVarRefExp(local_decl)); 
+      break;
+    case SgOmpClause::e_omp_reduction_logand:
+      r_exp = buildAndOp(buildVarRefExp(orig_var, bb1), buildVarRefExp(local_decl)); 
+      break;
+    case SgOmpClause::e_omp_reduction_logor:
+      r_exp = buildOrOp(buildVarRefExp(orig_var, bb1), buildVarRefExp(local_decl)); 
+      break;
+      // TODO Fortran operators.   
+    case SgOmpClause::e_omp_reduction_and: // Fortran .and.
+    case SgOmpClause::e_omp_reduction_or: // Fortran .or.
+    case SgOmpClause::e_omp_reduction_eqv: 
+    case SgOmpClause::e_omp_reduction_neqv:
+    case SgOmpClause::e_omp_reduction_max:
+    case SgOmpClause::e_omp_reduction_min:
+    case SgOmpClause::e_omp_reduction_iand:
+    case SgOmpClause::e_omp_reduction_ior:
+    case SgOmpClause::e_omp_reduction_ieor:
+    case SgOmpClause::e_omp_reduction_unkown: 
+    case SgOmpClause::e_omp_reduction_last:
+    default:
+        cerr<<"Illegal or unhandled reduction operator type:"<< r_operator<<endl;
+    }
+    SgStatement* reduction_stmt = buildAssignStatement(buildVarRefExp(orig_var, bb1), r_exp);
+    end_stmt_list.push_back(reduction_stmt);   
+    SgExprStatement* atomic_end_stmt = buildFunctionCallStmt("GOMP_atomic_end", buildVoidType(), NULL, bb1);  
+    end_stmt_list.push_back(atomic_end_stmt);   
+  }
+
+    //! Translate clauses with variable lists, such as private, firstprivate, lastprivate, reduction, etc.
+    //bb1 is the affected code block by the clause.
+    //Command steps are: insert local declarations for the variables:(all)
+    //                   initialize the local declaration:(firstprivate, reduction)
+    //                   variable substitution for the variables:(all)
+    //                   save local copy back to its global one:(reduction, lastprivate)
+    // Note that a variable could be both firstprivate and lastprivate                  
+    void transOmpVariables(SgStatement* ompStmt, SgBasicBlock* bb1, SgExpression * orig_loop_upper/*= NULL*/)
+    {
+      ROSE_ASSERT( ompStmt != NULL);
+      ROSE_ASSERT( bb1 != NULL);
+      SgOmpClauseBodyStatement* clause_stmt = isSgOmpClauseBodyStatement(ompStmt);
+      ROSE_ASSERT( clause_stmt!= NULL);
+
+      // collect variables 
+     SgInitializedNamePtrList var_list = collectAllClauseVariables(clause_stmt);
+     // Only keep the unique ones
+     sort (var_list.begin(), var_list.end());;
+     SgInitializedNamePtrList:: iterator new_end = unique (var_list.begin(), var_list.end());
+     var_list.erase(new_end, var_list.end());
+     VariableSymbolMap_t var_map; 
+
+     vector <SgStatement* > front_stmt_list, end_stmt_list;  
     
-   } // end for (each variable)
+     for (size_t i=0; i< var_list.size(); i++)
+     {
+       SgInitializedName* orig_var = var_list[i];
+       ROSE_ASSERT(orig_var != NULL);
+       string orig_name = orig_var->get_name().getString();
+       SgType* orig_type =  orig_var->get_type();
+       SgVariableSymbol* orig_symbol = isSgVariableSymbol(orig_var->get_symbol_from_symbol_table());
+       ROSE_ASSERT(orig_symbol!= NULL);
+
+       VariantVector vvt (V_SgOmpPrivateClause);
+       vvt.push_back(V_SgOmpFirstprivateClause);
+       vvt.push_back(V_SgOmpLastprivateClause);
+       vvt.push_back(V_SgOmpReductionClause);
+   
+      // a local private copy
+      SgVariableDeclaration* local_decl = NULL;
+      SgOmpClause::omp_reduction_operator_enum r_operator = SgOmpClause::e_omp_reduction_unkown  ;
+      bool isReductionVar = isInClauseVariableList(orig_var, clause_stmt,V_SgOmpReductionClause);
+
+      // step 1. Insert local declaration for private, firstprivate, lastprivate and reduction
+      if (isInClauseVariableList(orig_var, clause_stmt, vvt))
+      {
+        SgInitializer * init = NULL;
+        // use copy constructor for firstprivate on C++ class object variables
+        if (isInClauseVariableList(orig_var, clause_stmt,V_SgOmpFirstprivateClause))
+        {
+          init = buildAssignInitializer(buildVarRefExp(orig_var, bb1));
+        }
+        local_decl = buildVariableDeclaration("_p_"+orig_name, orig_type, init, bb1);
+       //   prependStatement(local_decl, bb1);
+       front_stmt_list.push_back(local_decl);   
+        // record the map from old to new symbol
+       var_map.insert( VariableSymbolMap_t::value_type( orig_symbol, getFirstVarSym(local_decl)) ); 
+      }
+      // step 2. Initialize the local copy for reduction TODO copyin, copyprivate?
+#if 0
+      if (isInClauseVariableList(orig_var, clause_stmt,V_SgOmpFirstprivateClause))
+      {
+        SgExprStatement* init_stmt = buildAssignStatement(buildVarRefExp(local_decl), buildVarRefExp(orig_var, bb1));
+       front_stmt_list.push_back(init_stmt);   
+      } else 
+#endif    
+      if (isReductionVar)
+      {
+        r_operator = getReductionOperationType(orig_var, clause_stmt);
+        SgExprStatement* init_stmt = buildAssignStatement(buildVarRefExp(local_decl), createInitialValueExp(r_operator));
+        front_stmt_list.push_back(init_stmt);   
+      }
+
+      // step 3. Save the value back for lastprivate and reduction
+      if (isInClauseVariableList(orig_var, clause_stmt,V_SgOmpLastprivateClause))
+      {
+        insertOmpLastprivateCopyBackStmts (ompStmt, end_stmt_list, bb1, orig_var, local_decl, orig_loop_upper);
+      } else if (isReductionVar)
+      { 
+        insertOmpReductionCopyBackStmts(r_operator, end_stmt_list, bb1, orig_var, local_decl);
+      }
+
+     } // end for (each variable)
 
    // step 4. Variable replacement for all original bb1
    replaceVariableReferences(bb1, var_map); 

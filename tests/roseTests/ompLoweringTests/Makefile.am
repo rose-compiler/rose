@@ -14,6 +14,7 @@ GOMP_PATH = @gomp_omp_runtime_library_path@
 C_TESTCODES_REQUIRED_TO_COMPILE = \
         barrier.c \
         dynamicChunk.c \
+	lastprivateOrphaned.c \
         master.c \
         nowait.c \
         ompfor5.c \
@@ -84,11 +85,18 @@ if !OS_MACOSX
    C_TESTCODES_REQUIRED_TO_RUN += threadprivate.c threadprivate2.c threadprivate3.c
 endif
 
+# C++ test codes which can only be compiled
 CXX_TESTCODES_REQUIRED_TO_COMPILE = 
 
-#CXX_TESTCODES_REQUIRED_TO_RUN =
+# C++ test codes which can be compiled and linked to final executables
 CXX_TESTCODES_REQUIRED_TO_RUN =  \
 	hello1.cpp \
+	helloNested.cpp \
+	objectPrivate.cpp \
+	objectFirstPrivate.cpp \
+	objectLastprivate.cpp \
+	orphanedAtomic.cpp \
+	preprocessingInfo2.cpp \
 	task_link.cpp \
 	task_tree.cpp
 

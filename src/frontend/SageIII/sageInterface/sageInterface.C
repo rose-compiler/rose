@@ -6111,7 +6111,7 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
 
 //! Based on AstInterface::IsFortranLoop() and ASTtools::getLoopIndexVar()
 //TODO check the loop index is not being written in the loop body
-bool SageInterface::isCanonicalForLoop(SgNode* loop,SgInitializedName** ivar/*=NULL*/, SgExpression** lb/*=NULL*/, SgExpression** ub/*=NULL*/, SgExpression** step/*=NULL*/, SgStatement** body/*=NULL*/, bool *hasIncrementalIterationSpace/*= NULL*/)
+bool SageInterface::isCanonicalForLoop(SgNode* loop,SgInitializedName** ivar/*=NULL*/, SgExpression** lb/*=NULL*/, SgExpression** ub/*=NULL*/, SgExpression** step/*=NULL*/, SgStatement** body/*=NULL*/, bool *hasIncrementalIterationSpace/*= NULL*/, bool* isInclusiveUpperBound/*=NULL*/)
 {
   ROSE_ASSERT(loop != NULL);
   SgForStatement* fs = isSgForStatement(loop);
@@ -6164,12 +6164,26 @@ bool SageInterface::isCanonicalForLoop(SgNode* loop,SgInitializedName** ivar/*=N
     return false;
   switch (test->variantT()) {
     case V_SgLessOrEqualOp:
+       if (isInclusiveUpperBound != NULL)
+         *isInclusiveUpperBound = true;
+       if (hasIncrementalIterationSpace != NULL)
+         *hasIncrementalIterationSpace = true;
+       break;
     case V_SgLessThanOp:
+       if (isInclusiveUpperBound != NULL)
+         *isInclusiveUpperBound = false;
        if (hasIncrementalIterationSpace != NULL)
          *hasIncrementalIterationSpace = true;
        break;
     case V_SgGreaterOrEqualOp:
+       if (isInclusiveUpperBound != NULL)
+         *isInclusiveUpperBound = true;
+        if (hasIncrementalIterationSpace != NULL)
+         *hasIncrementalIterationSpace = false;
+      break;
     case V_SgGreaterThanOp:
+       if (isInclusiveUpperBound != NULL)
+         *isInclusiveUpperBound = false;
        if (hasIncrementalIterationSpace != NULL)
          *hasIncrementalIterationSpace = false;
       break;
@@ -10439,14 +10453,35 @@ bool SageInterface::isUseByAddressVariableRef(SgVarRefExp* ref)
           param_index++;
       }
       // find the parameter type of the corresponding function declaration
-      SgFunctionRefExp * funcRef = isSgFunctionRefExp(isSgFunctionCallExp(grandparent)->get_function());
-      SgFunctionDeclaration* funcDecl = isSgFunctionSymbol(funcRef->get_symbol())->get_declaration();
-      SgInitializedNamePtrList nameList = funcDecl->get_args();
-      //TODO tolerate typedef chains
-      if (isSgReferenceType(nameList[param_index]->get_type()))
+      SgExpression* func_exp = isSgFunctionCallExp(grandparent)->get_function();
+      ROSE_ASSERT (func_exp);
+      SgFunctionRefExp * funcRef = isSgFunctionRefExp(func_exp);
+      if (funcRef) // regular functions
       {
-        result = true;
+        SgFunctionDeclaration* funcDecl = isSgFunctionSymbol(funcRef->get_symbol())->get_declaration();
+        SgInitializedNamePtrList nameList = funcDecl->get_args();
+        //TODO tolerate typedef chains
+        if (isSgReferenceType(nameList[param_index]->get_type()))
+        {
+          result = true;
+        }
+      } //It also could be a dot or arrow expression where its right hand operand is a SgMemberFunctionRefExp
+      else if (isSgDotExp (func_exp) || isSgArrowExp(func_exp)) // ArrowExp TODO
+      {
+        SgBinaryOp* binOp = isSgBinaryOp(func_exp);
+        ROSE_ASSERT (binOp);
+        SgMemberFunctionRefExp* mfuncRef = isSgMemberFunctionRefExp(binOp->get_rhs_operand_i());
+        ROSE_ASSERT (mfuncRef);
+        SgMemberFunctionDeclaration * mfuncDecl = isSgMemberFunctionSymbol (mfuncRef->get_symbol())->get_declaration();
+        ROSE_ASSERT (mfuncDecl);
+        SgInitializedNamePtrList nameList = mfuncDecl->get_args();
+        //TODO tolerate typedef chains
+        if (isSgReferenceType(nameList[param_index]->get_type()))
+        {
+          result = true;
+        }
       }
+
     }
   }
   return result;

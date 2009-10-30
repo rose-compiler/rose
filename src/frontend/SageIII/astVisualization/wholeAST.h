@@ -124,7 +124,6 @@ class CustomAstDOTGeneration
           void internalGenerateGraph( std::string filename, SgProject* project );
    };
 
-
 // Build a similar coloring mechanism as for the ROSE traversals developed by Markus,
 // but do this for the Memory Pool based traversals.
 class CustomMemoryPoolDOTGenerationData : public ROSE_VisitTraversal
@@ -189,9 +188,49 @@ class CustomMemoryPoolDOTGeneration
           typedef CustomAstDOTGenerationData::NodeType NodeType;
           typedef CustomAstDOTGenerationData::EdgeType EdgeType;
 
+        // Liao, 10/23/2009, use flags to turn on/off filters, 0 : off, 1: on
+         class s_Filter_Flags
+         {
+           public:
+             int m_asmFileFormat;          /*asmFileFormatFilter()*/
+             int m_asmType;            /* asmTypeFilter()*/
+             int m_binaryExecutableFormat; /*binaryExecutableFormatFilter()*/
+             int m_commentAndDirective;    /* commentAndDirectiveFilter()*/  
+             int m_ctorInitializer;    /*ctorInitializerListFilter()*/
+
+             int m_default; /* defaultFilter ()*/
+             int m_defaultColor;           /*defaultColorFilter()*/
+             int m_edge;   /* edgeFilter ()*/
+             int m_emptySymbolTable;  /*emptySymbolTableFilter()*/ 
+             int m_expression; /* expressionFilter ()*/
+
+             int m_fileInfo;               /* fileInfoFilter ()*/
+             int m_frontendCompatibility;  /* frontendCompatibilityFilter()*/
+             int m_symbol;  /*symbolFilter ()*/
+             int m_type;   /* typeFilter ()*/
+             int m_variableDeclaration; /*variableDeclarationFilter()*/
+
+             int m_variableDefinition; /*variableDefinitionFilter()*/
+             //! Default constructor
+             s_Filter_Flags ();
+             //! Constructor from command line options
+             s_Filter_Flags (std::vector <std::string>& argvList);
+             //! Print out help about command options to set flags
+             void print_commandline_help();
+             ~s_Filter_Flags ();
+             void print_filter_flags();
+           private:
+            //! Set default values for filter flags
+             void setDefault();
+         };
+        
+         s_Filter_Flags* filterFlags; // each instance has its own flag set
+
        // Store a DOT graph (really just a list of nodes and edges in a traversal)
           CustomMemoryPoolDOTGenerationData DOTgraph;
-
+          // Constructors
+          CustomMemoryPoolDOTGeneration();
+          CustomMemoryPoolDOTGeneration(s_Filter_Flags* f = NULL);
       // ~CustomMemoryPoolDOTGeneration();
 
        // Call add functions in CustomMemoryPoolDOTGenerationData class
@@ -228,33 +267,6 @@ class CustomMemoryPoolDOTGeneration
        // DQ (3/2/2009): Ignore empty symbol tables
           void emptySymbolTableFilter(SgNode* n);
 
-        // Liao, 10/23/2009, use flags to turn on/off filters, 0 : off, 1: on
-         struct s_Filter_Flags
-         {
-           int m_asmFileFormat;          /*asmFileFormatFilter()*/
-           int m_asmType;            /* asmTypeFilter()*/
-           int m_binaryExecutableFormat; /*binaryExecutableFormatFilter()*/
-           int m_commentAndDirective;    /* commentAndDirectiveFilter()*/  
-           int m_ctorInitializer;    /*ctorInitializerListFilter()*/
-
-           int m_default; /* defaultFilter ()*/
-           int m_defaultColor;           /*defaultColorFilter()*/
-           int m_edge;   /* edgeFilter ()*/
-           int m_emptySymbolTable;  /*emptySymbolTableFilter()*/ 
-           int m_expression; /* expressionFilter ()*/
-
-           int m_fileInfo;               /* fileInfoFilter ()*/
-           int m_frontendCompatibility;  /* frontendCompatibilityFilter()*/
-           int m_symbol;  /*symbolFilter ()*/
-           int m_type;   /* typeFilter ()*/
-           int m_variableDeclaration; /*variableDeclarationFilter()*/
-
-           int m_variableDefinition; /*variableDefinitionFilter()*/
-         };
-
-         //static int useExpressionFilter ;
-         static struct s_Filter_Flags filterFlags;
-
        // DQ (3/2/2009): Ignore expression IR nodes
           void expressionFilter(SgNode* n);
 
@@ -269,15 +281,8 @@ class CustomMemoryPoolDOTGeneration
 
        // DQ (10/18/2009): Added support to skip output of binary expression type information in generation of AST visualization.
           void asmTypeFilter(SgNode* n);
-        //! Initialize filter flags from command line options
-          static void init_filters(std::vector <std::string>& argvList);
-        //! Initialize filter flags for the default cases
-          static void init_filters();
-        // print out command line option help  
-          static void print_help();
-         //! print out the current values of the filter flags
-          static void print_filter_flags ();
-
+      private:
+         void internal_init(s_Filter_Flags* f = NULL);
    };
 
 #endif //WHOLE_AST_H

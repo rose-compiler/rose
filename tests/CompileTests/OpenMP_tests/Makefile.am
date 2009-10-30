@@ -36,6 +36,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	hello-ordered.c \
 	lastprivate0.c \
 	lastprivate.c \
+	lastprivateOrphaned.c \
 	limits_threads.c \
 	lockarray.c \
 	lu_factorization.c \
@@ -89,6 +90,12 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
 	hello1.cpp \
+	helloNested.cpp \
+	objectPrivate.cpp \
+	objectFirstPrivate.cpp \
+	objectLastprivate.cpp \
+	orphanedAtomic.cpp \
+	preprocessingInfo2.cpp \
 	task_link.cpp \
 	task_tree.cpp 
 

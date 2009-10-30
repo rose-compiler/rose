@@ -5,15 +5,19 @@
 #include <vector>
 // external API for generation of graphs of AST
 
-//! Initialize filters to be used from command line options. Should call this before calling frontend()
-// Liao, 10/26/2009
-void generateGraphOfAST_initFilters (std::vector <std::string>& argvList);
+#include "wholeAST.h"
 
+//! Generate a whole AST graph with a specified filename, using filter_flags to turn on/off builtin node filters and using skippedNodeSet to exclude customized node set.
+void generateWholeGraphOfAST( std::string filename, std::set<SgNode*> & skippedNodeSet, CustomMemoryPoolDOTGeneration::s_Filter_Flags* flags);
+//!Generate a whole AST graph with a specified filename and a set of explicitly excluded nodes
 void generateWholeGraphOfAST( std::string filename, std::set<SgNode*> & skippedNodeSet );
 
+//! Generate a whole AST graph with a specified filename, and the default filter sets, excluding frontend-specific nodes by default
 void generateWholeGraphOfAST( std::string filename);
+//! Generate a whole AST graph with a specified filename and a set of filter flags, excluding frontend-specific nodes by default
+void generateWholeGraphOfAST( std::string filename, CustomMemoryPoolDOTGeneration::s_Filter_Flags* flags);
 
-void generateWholeGraphOfAST_filteredFrontendSpecificNodes( std::string filename);
+void generateWholeGraphOfAST_filteredFrontendSpecificNodes( std::string filename, CustomMemoryPoolDOTGeneration::s_Filter_Flags* flags/*=NULL*/);
 
 void generateGraphOfAST( SgProject* project, std::string filename, std::set<SgNode*> skippedNodeSet );
 

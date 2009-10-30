@@ -370,9 +370,12 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
 // DQ (5/28/2007): Added new AST Merge API
 #include "astMergeAPI.h"
 
+#if 0
+// Liao, 10/28/2009, moved to rose.h after #include "AstDOTGeneration.h"
 // DQ (6/3/2007): added internal support for AST visualization
 // #include "astVisualization/wholeAST_API.h"
 #include "wholeAST_API.h"
+#endif 
 
 // DQ (9/1/2006): It is currently an error to normalize the source file names stored 
 // in the SgProject IR node to be absolute paths if they didn't originally appear 
