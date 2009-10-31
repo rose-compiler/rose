@@ -1916,7 +1916,7 @@ ROSE API and a moderate level of detail.  Only functionality expected to be usef
 development of ROSE based tools by external users are presented.  Lower level details are
 available in other documentation or via the doxygen generated documentation.
 
-Some helpful notes from Robb, other ideas, issues, etc.:
+Some helpful notes, other ideas, issues, etc.:
 \begin{enumerate}
    \item Class-based \\
 	It seems that interfaces are more useful if we place them in a
@@ -1963,6 +1963,10 @@ Some helpful notes from Robb, other ideas, issues, etc.:
 	into the library. If they don't match then there will probably
 	be runtime issues and HDF5 can report this before the user
 	gets a core dump.  ROSE could do something similar.
+
+   \item Namespace aliases can be used to provide alternative shorter
+   namespace names for users, so we can focus on having names that are
+   as clear as possible.
 \end{enumerate}
 
 Outline where to put list of functions/functionality for each category of the API.
