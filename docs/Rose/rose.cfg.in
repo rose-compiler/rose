@@ -1259,5 +1259,6 @@ DOT_CLEANUP            = YES
 # The SEARCHENGINE tag specifies whether or not a search engine should be 
 # used. If set to NO the values of all tags below this one will be ignored.
 
-#SEARCHENGINE           = NO 
+# DQ (10/29/2009): Commented out as a test becuase it appears to take forever.
+# SEARCHENGINE           = NO 
 SEARCHENGINE           = YES 

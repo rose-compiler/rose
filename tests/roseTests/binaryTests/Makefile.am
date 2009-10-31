@@ -306,7 +306,7 @@ CLEANFILES = unparsed.s callgraph.gml output _binary_tree.dot cfg.dot dfg.dot Te
 if ROSE_BUILD_OS_IS_CYGWIN
 check-local:
 	@echo "*****************************************************************************************"
-	@echo "*** ROSE/tests/roseTests/programAnalysisTests/binaryTests: (commented out for Cygwin) ***"
+	@echo "*** ROSE/tests/roseTests/binaryTests: (commented out for Cygwin) ***"
 	@echo "*****************************************************************************************"
 else
 
@@ -319,7 +319,7 @@ check-local: runTest test1 $(TEST_PASSED_TARGETS)
 	./runTest $(BINARY_SAMPLES)/buffer2.bin > output
 	$(MAKE) test_samples.passed
 	@echo "*********************************************************************"
-	@echo "*** ROSE/tests/roseTests/programAnalysisTests/binaryTests: passed ***"
+	@echo "*** ROSE/tests/roseTests/binaryTests: passed ***"
 	@echo "*********************************************************************"
 endif
 
@@ -334,7 +334,7 @@ else
 
 check-local:
 	@echo "**********************************************************************"
-	@echo "*** ROSE/tests/roseTests/programAnalysisTests/binaryTests: skipped ***"
+	@echo "*** ROSE/tests/roseTests/binaryTests: skipped ***"
 	@echo "**********************************************************************"
 
 endif

@@ -85,6 +85,7 @@ std::string unparseX86Register(X86RegisterClass cl, int reg, X86PositionInRegist
 }
 
 static std::string x86TypeToPtrName(SgAsmType* ty) {
+  ROSE_ASSERT(ty != NULL);
   switch (ty->variantT()) {
     case V_SgAsmTypeByte: return "BYTE";
     case V_SgAsmTypeWord: return "WORD";

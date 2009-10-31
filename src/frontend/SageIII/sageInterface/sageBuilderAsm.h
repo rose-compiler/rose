@@ -1,6 +1,9 @@
 #ifndef ROSE_SAGEBUILDERASM_H
 #define ROSE_SAGEBUILDERASM_H
 
+// DQ (10/28/2009): Thes function are not similar in name to the 
+// associated "build" functions in the sageBuilder.h.
+
 namespace SageBuilderAsm {
   SgAsmByteValueExpression* makeByteValue(uint8_t val);
   SgAsmWordValueExpression* makeWordValue(uint16_t val);

@@ -1904,87 +1904,282 @@ centralize it and make ROSE more clear to users. There are four levels:
 \end{enumerate}
 
 \newpage
-% Blue Book
+% Blue Book (reference to legendary PDF documentation)
 \section{ROSE API (PUT YOUR LISTS OF FUNCTIONS HERE)}
-Outline where to put list of functions/functionality for each catagory of the API.
-\begin{enumerate}
-   \item Story Of ROSE (JK)
-   \item User API (All)
-   \begin{enumerate}
-      \item frontend (Yi)
-      \item midend (All)
-      \begin{enumerate}
-         \item Analysis (TP)
-         \begin{enumerate}
-            \item Construct (TP \& DQ)
-\commentout{
-*** This can't be used because the nesting is too deep for LaTeX ***
-               \begin{enumerate}
-                  \item Source (TP)
-                  \item Binary (DQ)
-               \end{enumerate}
-}
-            \item Use (TP \& DQ)
-\commentout{
-*** This can't be used because the nesting is too deep for LaTeX ***
-               \begin{enumerate}
-                  \item Source (TP)
-                  \item Binary (DQ)
-               \end{enumerate}
-}
-         \end{enumerate}
-         \item Transformation
-            \begin{enumerate}
-               \item Source (L)
-               \item Binary (DQ)
-            \end{enumerate}
-      \end{enumerate}
-      \item backend (DQ) \\
-{\small
-           {\bf int backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp = NULL, UnparseDelegate* unparseDelagate = NULL );} \\
-           This function generates source code from the AST and calls the backend
-           compiler. The integer error code from the backend compiler is returned.
-           UnparseFormatHelp permits limited control over the formatting of the 
-           generated source code. UnparseDelegate is currently ignored. For binaries,
-           this function generates an assembler listing with section information and
-           a reassembled binary executable.
 
-           {\bf int backendUsingOriginalInputFile ( SgProject* project );} \\
-           This is useful as a test code for testing ROSE for use on projects that target Compass or any
-           other analysis only tool using ROSE. Called in tests/testAnalysis.C for example.
-}
-      \item Utility
-      \begin{enumerate}
-         \item AST Utility
-         \begin{enumerate}
-            \item AST Visualization (DQ)
-            \item AST Traversal (Yi)
-            \item AST Query (A)
-            \item AST Consistancy Tests (L)
-            \item AST Postprocessing (L)
-            \item AST File I/O Support (T)
-         \end{enumerate}
-         \item Performance monitoring (DQ)
-         \item Language specific name support (DQ)
-         \item Support for comments and CPP directives (Yi)
-         \item GUI Support (JK \& T)
-         \item Binary Analysis connection to IDA PRO (A \& T)
-         \item Database Support (A)
-         \item Graphs and Graph Analysis (T)
-         \item Performance Metric Annotation (L)
-         \item Abstract Handles (L)
-         \item Macro Rewrapper (A)
-         \item Command-line processing support (Yi)
-         \item Common string support (DQ)
-         \item Common file and path support (Yi)
-         \item Miscellaneous Support (DQ)
-      \end{enumerate}
-   \end{enumerate}
-   \item IR (PC)
+    This is a group effort to define a better set of high level documents for ROSE
+that will explain what is in ROSE at a high level and what users need to know about the
+ROSE API and a moderate level of detail.  Only functionality expected to be useful to the
+development of ROSE based tools by external users are presented.  Lower level details are
+available in other documentation or via the doxygen generated documentation.
+
+Outline where to put list of functions/functionality for each category of the API.
+
+\subsection{Story Of ROSE (JK)}
+   This is a section that Jeff Keasler has specific ideas about how to write and
+for which he will provide an outline to start the process.
+
+\subsection{User API (All)}
+   The ROSE User Application Program Interface (API) is the subset of ROSE that is
+typically required by users to write ROSE based applications for the general
+processing of software (source code or executable).  Specialized projects may
+require deeper levels of the ROSE software than present in this API and many
+project may not use but a small part of this API.  This documentation is
+to present ROSE at a high level while covering enough detail to make it
+clear what different parts of ROSE are available.
+
+   ROSE will soon be represented by a number of namespaces.  The
+API will be represented by four namespaces (the Intermediate Representation
+is expected to be in its own namespace.  It is not clear if there should
+be a single top level namespace or if there should be namespace
+aliases that would permit alternative shorter names (an option).
+
+\subsubsection{frontend (Yi)}
+{\bf Interm proposed namespace name: {\em ROSE\_Frontend}} \\
+\fixme{Liao will be proposing namespace names for us to agree upon separately.}
+    The frontend of ROSE takes the source code or binary executable 
+and generates an Abstract Syntax Tree (AST), which for the basis of 
+further work. The AST forms a structural representation of the source
+code or binary executable.
+\fixme{We might discover that the frontend and backend are too simple to 
+deserve their own namespaces.}
+\begin{enumerate}
+   \item {\bf SgProject* frontend (int argc, char** argv);} \\
+   Generates an AST represented by the root node ({\em SgProject}) from
+   the commandline in the form defined by {\tt main(int argc, char** argv)}.
+
+   \item {\bf SgProject* frontend (const std::vector$<$std::string$>$ \& argv);} \\
+   Generates an AST represented by the root node ({\em SgProject}) from
+   an alternative representation of the command line more useful when 
+   custom command line editing is required by the translator.
+
+   \item {\bf SgProject* frontendShell (int argc, char** argv);} \\
+   Generates an AST represented by the root node ({\em SgProject}) from
+   the common command line form, but for files that might be conditionally 
+   compiled later.
+
+   \item {\bf SgProject* frontendShell (const std::vector$<$std::string$>$ \& argv);} \\
+   Generates an AST represented by the root node ({\em SgProject}) from
+   the alternative command line form, but for files that might be conditionally 
+   compiled later.
 \end{enumerate}
 
+
+\subsubsection{midend (All)}
+{\bf Interm proposed namespace name: {\em ROSE\_Midend}} \\
+   The midend of ROSE is typically where the user interacts with the AST
+or uses features in ROSE to generate alternative graphs to represent
+specific types of program analysis. The midend includes both analysis
+and transformation capabilities and is used by the users to build 
+custom analyzes and transformations.
+
+\paragraph{Analysis (TP)}
+{\bf Interm proposed namespace name: {\em ROSE\_Analysis}} \\
+   Analysis within ROSE by definition does not modify the AST structure.
+It might add attributes to IR nodes, but it does not change the structure 
+of the AST.  In may cases it may generate specific data structures and
+separate analysis may traverse these data structures; thus both are covered
+separately.
+
+\subparagraph{Construct (TP \& DQ)}
+   This covers the construction of various data structures that are part of
+specific forms of analysis or are used in subsequent forms of analysis.
+We separate out the API that is specific for source code and binary executable.
+\begin{enumerate}
+     \item Source (TP)
+     \item Binary (DQ)
+\end{enumerate}
+
+\subparagraph{Use (TP \& DQ)}
+   The use of the data structures built to some forms of analysis (e.g. call graph)
+can be used to support subsequent forms of analysis that operate on the generated
+data structures. We separate out the API that is specific for source code and 
+binary executable.
+\begin{enumerate}
+   \item Source (TP)
+   \item Binary (DQ)
+\end{enumerate}
+
+\paragraph{Transformation}
+{\bf Interm proposed namespace name: {\em ROSE\_Transformation}} \\
+   Transformation by definition modifies the structure of the AST and can be used
+to define instrumentation, optimizations, and custom translation.
+\subparagraph{Source (L)}
+\begin{enumerate}
+   \item Instrumentation
+   \item Optimization
+         These include a range of optimizations relevant for general performance
+         optimization of scientific applications.
+   \begin{enumerate}
+      \item Inlining
+      \item Loop optimizations:fusion, fusion, unrolling, blocking, loop
+                  interchange, array copy, etc.
+      \item Constant Folding
+      \item Finite Differencing
+      \item Partial Redundancy Elimination
+   \end{enumerate}
+
+   \item General Transformations \\
+         These include outlining,
+   \begin{enumerate}
+      \item Outlining
+      \item ImplicitCodeGeneration \\
+            This work makes C++ implicit semantics explicit for C style analysis.
+      \item FunctionCallNormalization \\
+            This is a library of function call normalizations to support binary
+            analysis.
+      \item AST Copy support \\
+            This support permits arbitrary subtrees (or the whole AST) to be copied
+            with control over deep or shallow copying via a single function.
+      \item AST Merge support \\
+            This work permits the merging of separate AST's and the sharing of their
+            identically names language declarations to support whole program
+            analysis. Duplicate parts of the merged AST are deleted.
+      \item Static Binary Rewriting \\
+            A restricted set of transformations are possible on a binary executable,
+            this section details this work.
+   \end{enumerate}
+\end{enumerate}
+
+\subparagraph{Binary (DQ)}
+\begin{enumerate}
+   \item Static Binary Rewriting \\
+         A restricted set of transformations are possible on a binary executable,
+         this section details this work.
+\end{enumerate}
+
+\subsubsection{backend (DQ)}
+{\bf Interm proposed namespace name: {\em ROSE\_Backend}} \\
+   The backend part of ROSE generates the code and produces a final executable
+(just like any other compiler).  Users don't typically work on any aspect of 
+the backend; thus is has a simple API.
+\begin{enumerate}
+   \item {\bf int backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp = NULL, UnparseDelegate* unparseDelagate = NULL );} \\
+   This function generates source code from the AST and calls the backend
+   compiler. The integer error code from the backend compiler is returned.
+   UnparseFormatHelp permits limited control over the formatting of the 
+   generated source code. UnparseDelegate is currently ignored. For binaries,
+   this function generates an assembler listing with section information and
+   a reassembled binary executable.
+
+   \item {\bf int backendUsingOriginalInputFile ( SgProject* project );} \\
+   This is useful as a test code for testing ROSE for use on projects that target Compass or any
+   other analysis only tool using ROSE. Called in tests/testAnalysis.C for example.
+\end{enumerate}
+
+\subsubsection{Utility}
+{\bf Interm proposed namespace name: {\em ROSE\_Support}} \\
+   These features are important to how applications are developed using ROSE.
+
+\paragraph{AST Utility}
+   A collection of the utility support in ROSE is specific to the AST and this are 
+presented together:
+\begin{enumerate}
+   \item AST Traversal (Yi)
+   \item AST Query (A)
+   \item AST Postprocessing (L)
+         After transformations to the AST, it is frequently required to call a
+         standard AST fixup that will fill in missing pieces of the AST and do a few simple
+         tests to validate the AST.
+   \item AST Consistency Tests (L)
+         This is the highest level of internal consistency testing available in ROSE.
+         This test is typically run after the frontend processing (by the user) to
+         verify a correct AST before midend processing.
+
+   \item AST Visualization (DQ)
+         Visualization of the AST and related graphs generated from program analysis forms
+         an approach to both internal debugging and presentation of specific sorts of
+         results.
+   \begin{enumerate}
+      \item {\bf viz }
+   \end{enumerate}
+
+
+   \item AST File I/O Support (T)
+         This support permits the AST to be written to a file and read in from a file.
+         It is useful for assembling the AST from a whole application and many other
+         specialized tools.
+\end{enumerate}
+
+Other useful utility functions in ROSE 
+\begin{enumerate}
+   \item Performance monitoring (DQ) \\
+   The {\em TimingPerformance} class defines a simple mechanism used throughout ROSE to
+   report the execution performance of different parts of the compilation process.
+   As a class variables can be generated on the stack (to record the starting time of
+   an execution phase and the destructor for the class will record the elapsed time
+   of the execution phase.  
+   \begin{enumerate}
+      \item {\bf TimingPerformance $<$variable name$>$ ( std::string );} \\
+      This constructor builds and starts a timer, the descructor is automatically called
+      the end of the scope and records the elapsed time.  The data is saved internally and
+      output in a final report in either of two forms (using cout or to a file).
+
+      \item {\bf TimingPerformance::generateReport();} \\
+      A report is generated at the end of the execution when
+      either the last  {\em TimingPerformance} destructor is called of when the 
+      report function is called explicitly.
+
+      \item {\bf TimingPerformance::generateReportToFile(project);} \\
+      Write the CSV formatted file of performance data (accumulated over multiple runs)
+      Execute the function to generate the data into the report fine independent of the 
+      level of verbosity specified from the command-line (does no output to cout or cerr).
+      This data can be used by a separate program to graph the different times required
+      to run different parts of ROSE on a wide range of files.  It is used mostly for
+      debugging complexity issues inside the compiler or in user developed tools using 
+      ROSE.
+
+      \item {\bf TimingPerformance::set\_project ( SgProject* project );} \\
+      If set, the report will be generated upon calling the destructor for
+      the {\em TimingPerformance} object. 
+
+   \end{enumerate}
+
+   \item Language specific name support (DQ) \\
+         This section contains the support for generating unique names for language
+         constructs and handling mangled and unmangled names for use in ROSE based tools.
+
+   \item Support for comments and CPP directives (Yi)
+   \item GUI Support (JK \& T)
+   \item Binary Analysis connection to IDA PRO (A \& T)
+   \item Database Support (A)
+   \item Graphs and Graph Analysis (T)
+   \item Performance Metric Annotation (L)
+   \item Abstract Handles (L)
+   \item Macro Rewrapper (A)
+         This is a feature not yet ready to be a part of the user API in ROSE.
+
+   \item Command-line processing support (Yi)
+
+   \item Common string support (DQ) \\
+         These function support common operations on strings used within ROSE and 
+         useful within ROSE-based tools.
+
+   \item Common file and path support (Yi)
+
+   \item Miscellaneous Support (DQ) \\
+         Output of usage information, ROSE version number support, etc.
+   \begin{enumerate}
+      \item {\bf void SgFile::usage ( int status );} \\
+      This function reports information about ROSE options.
+      \item {\bf std::string version ();} \\
+      This function provides a string form of the version number of ROSE.
+   \end{enumerate}
+
+\end{enumerate}
+
+
+\subsection{IR (PC)}
+{\bf Interm proposed namespace name: {\em ROSE\_IR}} \\
+   The Intermediate Representation (IR) used in ROSE has data types used
+within the interfaces of the ROSE API.  An understanding of the ROSE API 
+thus requires some familiarity with the hierarchical organization of the 
+IR.  However this the IR is perhaps best represented by the Doxygen
+generated web pages which present both the hierarchy of C++ classes 
+used to represent the IR and the details of the individual classes.
+
 \newpage
-% Red Book
+% Red Book (reference to legendary PDF documentation)
 \section{ROSE Example Projects}
    These project demonstrate types of tools that have been built using ROSE and are 
 small enough to include within the ROSE distribution (taken from the ROSE/projects
