@@ -2077,25 +2077,49 @@ presented together:
 \begin{enumerate}
    \item AST Traversal (Yi)
    \item AST Query (A)
-   \item AST Postprocessing (L)
+   \item AST Postprocessing (L) \\
          After transformations to the AST, it is frequently required to call a
          standard AST fixup that will fill in missing pieces of the AST and do a few simple
          tests to validate the AST.
-   \item AST Consistency Tests (L)
+   \item AST Consistency Tests (L) \\
          This is the highest level of internal consistency testing available in ROSE.
          This test is typically run after the frontend processing (by the user) to
          verify a correct AST before midend processing.
 
-   \item AST Visualization (DQ)
+   \item AST Visualization (DQ) \\
          Visualization of the AST and related graphs generated from program analysis forms
          an approach to both internal debugging and presentation of specific sorts of
          results.
    \begin{enumerate}
-      \item {\bf viz }
+      \item {\bf void generatePDF ( const SgProject \& project );} \\
+      Generates a PDF file from the AST.
+
+      \item {\bf void generateDOT ( const SgProject \& project, std::string filenamePostfix );} \\
+      Generates a DOT file representing the AST (information about types and many IR nodes
+      that are considered attributes to AST nodes are not represented).
+      The resulting graph is of the input source code excluding header files.
+      The result is a tree (formally).
+
+      \item {\bf void generateDOT\_withIncludes ( const SgProject \& project, std::string filenamePostfix );} \\
+      Generates a DOT file representing the AST (information about types and many IR nodes
+      that are considered attributes to AST nodes are not represented).
+      The resulting graph is of the input source code plus all header files (so it can be
+      very large). The result is a tree (formally).
+
+      \item {\bf void generateDOTforMultipleFile ( const SgProject \& project, std::string filenamePostfix );} \\
+      Generates a DOT file representing the AST (information about types and many IR nodes
+      that are considered attributes to AST nodes are not represented).
+      The resulting graph is of all of the files specified on the command line.
+      The result is a tree (formally).
+
+      \item {\bf void generateAstGraph ( const SgProject* project, int maxSize, std::string filenameSuffix );} \\
+      Generates a DOT file representing the AST and includes information about types and many IR nodes
+      that are considered attributes to AST nodes are not represented by the other
+      functions above. The resulting graph is of all of the files specified on the command line.
+      The result is general graph (not a tree) (formally).
    \end{enumerate}
 
-
-   \item AST File I/O Support (T)
+   \item AST File I/O Support (T) \\
          This support permits the AST to be written to a file and read in from a file.
          It is useful for assembling the AST from a whole application and many other
          specialized tools.
@@ -2140,22 +2164,62 @@ Other useful utility functions in ROSE
          constructs and handling mangled and unmangled names for use in ROSE based tools.
 
    \item Support for comments and CPP directives (Yi)
+
    \item GUI Support (JK \& T)
+
    \item Binary Analysis connection to IDA PRO (A \& T)
+
    \item Database Support (A)
+
    \item Graphs and Graph Analysis (T)
+
    \item Performance Metric Annotation (L)
+
    \item Abstract Handles (L)
-   \item Macro Rewrapper (A)
+
+   \item Macro Rewrapper (A) \\
          This is a feature not yet ready to be a part of the user API in ROSE.
 
-   \item Command-line processing support (Yi)
+   \item Command line processing support (Yi) \\
+   ROSE based tools can add options to their command line or process options of the
+   command line.  These function represent command line support for users to detect
+   specialized options or manipulate the command line to add options before processing
+   using ROSE (by the frontend API).
 
    \item Common string support (DQ) \\
          These function support common operations on strings used within ROSE and 
          useful within ROSE-based tools.
+   \begin{enumerate}
+      \item {\bf int ROSE::containsString ( const std::string \& masterString, const std::string \& targetString );} \\
+      Returns result (zero or nonzero) based on containment of {\em targetString} in {\em masterString}.
+      \fixme{This function might not be significant enough to be in the API.}
+   \end{enumerate}
 
-   \item Common file and path support (Yi)
+   \item Common file and path support (Yi) \\
+   ROSE based tools frequently have to do some simple simple file name handling
+   and this API provides simple access to these functions.
+   \fixme{These function currently are in the {\bf ROSE} namespace which we would like to eliminate.}
+   \begin{enumerate}
+      \item {\bf string ROSE::getWorkingDirectory ();} \\
+      Returns working directory of ROSE installation, uses call to {\em getcwd()}.
+
+      \item {\bf std::string ROSE::getSourceDirectory ( std::string fileNameWithPath );} \\
+      Return the source directory associated with an installation of ROSE.
+
+      \item {\bf string ROSE::getPathFromFileName ( const string fileName );} \\
+      Returns the path associated with the input filename string.
+
+      \item {\bf std::string ROSE::stripPathFromFileName ( const std::string \& fileNameWithPath );} \\
+      Returns the path associated with the file.
+
+      \item {\bf std::string ROSE::getFileNameWithoutPath ( SgStatement* statementPointer );} \\
+      Returns the name of file associated the specific statement of the AST. The returned
+      string excludes the files path.
+
+      \item {\bf std::string ROSE::getFileName ( SgLocatedNode* locatedNodePointer );} \\
+      Returns the name of file associated the specific statement or expression of the AST.
+      The returned string is the absolute path plus file name.
+   \end{enumerate}
 
    \item Miscellaneous Support (DQ) \\
          Output of usage information, ROSE version number support, etc.
