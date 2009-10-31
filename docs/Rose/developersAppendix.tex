@@ -1904,6 +1904,7 @@ centralize it and make ROSE more clear to users. There are four levels:
 \end{enumerate}
 
 \newpage
+% Blue Book
 \section{ROSE API (PUT YOUR LISTS OF FUNCTIONS HERE)}
 Outline where to put list of functions/functionality for each catagory of the API.
 \begin{enumerate}
@@ -1938,7 +1939,20 @@ Outline where to put list of functions/functionality for each catagory of the AP
                \item Binary (DQ)
             \end{enumerate}
       \end{enumerate}
-      \item backend (DQ)
+      \item backend (DQ) \\
+{\small
+           {\bf int backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp = NULL, UnparseDelegate* unparseDelagate = NULL );} \\
+           This function generates source code from the AST and calls the backend
+           compiler. The integer error code from the backend compiler is returned.
+           UnparseFormatHelp permits limited control over the formatting of the 
+           generated source code. UnparseDelegate is currently ignored. For binaries,
+           this function generates an assembler listing with section information and
+           a reassembled binary executable.
+
+           {\bf int backendUsingOriginalInputFile ( SgProject* project );} \\
+           This is useful as a test code for testing ROSE for use on projects that target Compass or any
+           other analysis only tool using ROSE. Called in tests/testAnalysis.C for example.
+}
       \item Utility
       \begin{enumerate}
          \item AST Utility
@@ -1969,9 +1983,8 @@ Outline where to put list of functions/functionality for each catagory of the AP
    \item IR (PC)
 \end{enumerate}
 
-
-
 \newpage
+% Red Book
 \section{ROSE Example Projects}
    These project demonstrate types of tools that have been built using ROSE and are 
 small enough to include within the ROSE distribution (taken from the ROSE/projects
