@@ -1,3 +1,89 @@
+2009-10-31 04:38  dquinlan
+
+	* [r7993] /trunk/ROSE/docs/Rose/developersAppendix.tex: Added API
+	  information for backend.
+
+2009-10-31 04:14  dquinlan
+
+	* [r7992] /trunk/ROSE/docs/Rose/developersAppendix.tex: Added
+	  outline for ROSE API: ROSE API (PUT YOUR LISTS OF FUNCTIONS
+	  HERE).
+
+2009-10-31 04:13  dquinlan
+
+	* [r7991] /trunk/ROSE/docs/Rose/developersAppendix.tex: Added
+	  outline for ROSE API: ROSE API (PUT YOUR LISTS OF FUNCTIONS
+	  HERE).
+
+2009-10-30 21:44  matzke
+
+	* [r7990] /trunk/ROSE/README.OSX: Fixed typo
+
+2009-10-30 20:25  liao6
+
+	* [r7989]
+	  /trunk/ROSE/exampleTranslators/DOTGenerator/dotGeneratorWholeASTGraph.C,
+	  /trunk/ROSE/exampleTranslators/defaultTranslator/Makefile.am,
+	  /trunk/ROSE/exampleTranslators/defaultTranslator/preprocessingInfoDumper.C,
+	  /trunk/ROSE/src/frontend/SageIII/astVisualization/wholeAST.C,
+	  /trunk/ROSE/src/frontend/SageIII/astVisualization/wholeAST.h,
+	  /trunk/ROSE/src/frontend/SageIII/astVisualization/wholeAST_API.h,
+	  /trunk/ROSE/src/frontend/SageIII/sage3.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.h,
+	  /trunk/ROSE/src/midend/astOutlining/CollectVars.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Transform.cc,
+	  /trunk/ROSE/src/midend/astOutlining/VarSym.cc,
+	  /trunk/ROSE/src/midend/ompLowering/omp_lowering.cpp,
+	  /trunk/ROSE/src/midend/ompLowering/omp_lowering.h,
+	  /trunk/ROSE/src/rose.h,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/README,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/hello1.cpp,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/helloNested.cpp,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/lastprivate.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/lastprivateOrphaned.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/objectFirstPrivate.cpp,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/objectLastprivate.cpp,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/objectPrivate.cpp,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/ompfor.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/orphanedAtomic.cpp,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/preprocessingInfo2.cpp,
+	  /trunk/ROSE/tests/roseTests/ompLoweringTests/Makefile.am: OpenMP
+	  C++:
+	  * handle private, firstprivate, and lastprivate applied to class
+	  objects
+	  * parameter passing: pass-by-reference for class typed parameters
+	  whole AST graph generator
+	  * a filter flag structure to set default filters and accept user
+	  defined settings, including from command line options
+
+2009-10-30 19:54  matzke
+
+	* [r7988] /trunk/ROSE/src/backend/asmUnparser/unparseArmAsm.C:
+	  Assembler: ARM operand unparser can be invoked from arbitrary
+	  node
+	  
+	  The ARM instruction operand unparser (that generates ARM assembly
+	  from
+	  a SgAsmExpression) can be invoked from arbitrary nodes in the
+	  expression
+	  tree rather than just the top node. Note that the string returned
+	  by
+	  invoking it in the middle of an expression will probably not be
+	  valid
+	  ARM assembly.
+	  
+	  For instance, invoking the unparser at the
+	  SgAsmBinarySubtractPreupdate
+	  node of the following instruction:
+	  
+	  str r14, [r13, #-4]!
+	  
+	  will result in the string:
+	  
+	  "r13, #-4" and "!"
+
 2009-10-29 18:44  liao6
 
 	* [r7974] /trunk/ROSE/src/ROSETTA/Grammar/Statement.code,
