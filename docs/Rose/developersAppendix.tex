@@ -1725,31 +1725,34 @@ centralize it and make ROSE more clear to users. There are four levels:
          This analysis can handle either source code analysis, binary analysis, or both.
          Program analysis on source code includes:
          \begin{enumerate}
-            \item Call Graph Analysis
-            \item Class Hierarchy Analysis
-            \item Control Flow Analysis
-            \item Def-Use Analysis
-            \item Dominance Analysis
-            \item Dominator Trees And Dominance Frontiers Analysis (old)
-            \item Connection of Open Analysis (old)
-            \item Pointer Analysis
-            \item Procedural Slicing (old; not used) 
-            \item Side-Effect Analysis
-            \item Value Propagation Analysis
-            \item Static Interprocedural Slicing (replaces Procedural Slicing)
-            \item Liveness Analysis
-            \item AST Interpreter (Interpretation of Concrete Semantics using AST)
-         \end{enumerate}
-      \item Program analysis on binaries includes:
-         \begin{enumerate}
-            \item Call graph Analysis
-            \item Control Flow Analysis
-            \item Constant Propogation
-            \item Data Flow Analysis
-            \item InstructionSemantics
-            \item Library Identification (FLIRT)
-            \item Dwarf Debug Format
-            \item Analysis of the Binary File Format
+            \item Program analysis on source code includes:
+            \begin{enumerate}
+               \item Call Graph Analysis
+               \item Class Hierarchy Analysis
+               \item Control Flow Analysis
+               \item Def-Use Analysis
+               \item Dominance Analysis
+               \item Dominator Trees And Dominance Frontiers Analysis (old)
+               \item Connection of Open Analysis (old)
+               \item Pointer Analysis
+               \item Procedural Slicing (old; not used) 
+               \item Side-Effect Analysis
+               \item Value Propagation Analysis
+               \item Static Interprocedural Slicing (replaces Procedural Slicing)
+               \item Liveness Analysis
+               \item AST Interpreter (Interpretation of Concrete Semantics using AST)
+            \end{enumerate}
+            \item Program analysis on binaries includes:
+            \begin{enumerate}
+               \item Call graph Analysis
+               \item Control Flow Analysis
+               \item Constant Propogation
+               \item Data Flow Analysis
+               \item InstructionSemantics
+               \item Library Identification (FLIRT)
+               \item Dwarf Debug Format
+               \item Analysis of the Binary File Format
+            \end{enumerate}
          \end{enumerate}
 
       \item ROSE Transformation API \\
@@ -1789,11 +1792,13 @@ centralize it and make ROSE more clear to users. There are four levels:
                   this section details this work.
             \end{enumerate}
          \end{enumerate}
+%        \end{enumerate}
 
       \item AST Traversals \\
          ROSE provides a number of different techniques to define traversals of the AST
          and associated graphs formed from the AST. 
    \end{enumerate}
+%  \end{enumerate}
 
    \item ROSE Backend \\
       Code generation from the AST (unparsing) and optionally calling the backend
@@ -1898,6 +1903,75 @@ centralize it and make ROSE more clear to users. There are four levels:
 
 \end{enumerate}
 
+\newpage
+\section{ROSE API (PUT YOUR LISTS OF FUNCTIONS HERE)}
+Outline where to put list of functions/functionality for each catagory of the API.
+\begin{enumerate}
+   \item Story Of ROSE (JK)
+   \item User API (All)
+   \begin{enumerate}
+      \item frontend (YI)
+      \item midend (All)
+      \begin{enumerate}
+         \item Analysis (TP)
+         \begin{enumerate}
+            \item Construct (TP \& DQ)
+\commentout{
+*** This can't be used because the nesting is too deep for LaTeX ***
+               \begin{enumerate}
+                  \item Source (TP)
+                  \item Binary (DQ)
+               \end{enumerate}
+}
+            \item Use (TP \& DQ)
+\commentout{
+*** This can't be used because the nesting is too deep for LaTeX ***
+               \begin{enumerate}
+                  \item Source (TP)
+                  \item Binary (DQ)
+               \end{enumerate}
+}
+         \end{enumerate}
+         \item Transformation
+            \begin{enumerate}
+               \item Source (L)
+               \item Binary (DQ)
+            \end{enumerate}
+      \end{enumerate}
+      \item backend (DQ)
+      \item Utility
+      \begin{enumerate}
+         \item AST Utility
+         \begin{enumerate}
+            \item AST Visualization (DQ)
+            \item AST Traversal (Yi)
+            \item AST Query (A)
+            \item AST Consistancy Tests (L)
+            \item AST Postprocessing (L)
+            \item AST File I/O Support (T)
+         \end{enumerate}
+         \item Performance monitoring (DQ)
+         \item Language specific name support (DQ)
+         \item Support for comments and CPP directives (Yi)
+         \item GUI Support (JK \& T)
+         \item Binary Analysis connection to IDA PRO (A \& T)
+         \item Database Support (A)
+         \item Graphs and Graph Analysis (T)
+         \item Performance Metric Annotation (L)
+         \item Abstract Handles (L)
+         \item Macro Rewrapper (A)
+         \item Command-line processing support (Yi)
+         \item Common string support (DQ)
+         \item Common file and path support (Yi)
+         \item Miscellaneous Support (DQ)
+      \end{enumerate}
+   \end{enumerate}
+   \item IR (PC)
+\end{enumerate}
+
+
+
+\newpage
 \section{ROSE Example Projects}
    These project demonstrate types of tools that have been built using ROSE and are 
 small enough to include within the ROSE distribution (taken from the ROSE/projects
