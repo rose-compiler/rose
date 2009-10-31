@@ -2025,20 +2025,20 @@ deserve their own namespaces.}
 \begin{enumerate}
 	\item Parsing functions \\
    These methods parse a particular entity from a binary file and
-	fill in an existing IR node that was recently constructed.
-	See parse() methods in src/frontend/ExecFormats/*.C
+   fill in an existing IR node that was recently constructed.
+   See parse() methods in src/frontend/ExecFormats/*.C
    \item Disassembly \\
-	Disassembling a buffer into a std::map of instructions.  ROSE
-	normally calls this automatically, does a little analysis to
-	organize instructions into basic blocks and basic blocks into
-	functions, and links everything into the AST. However, its
-	also useful to call the disassembler explicitly. Disassemblers
-	can be specialized by derivation. There's a number of
-	functions and full doxygen documentation (the actual functions
-	that disassemble a \_single\_ x86, ARM, or PowerPC instruction
-	are only lightly documented). \\
-	See doxygen for Disassembler class. \\
-	See src/frontend/Disassembler/Disassembler.h
+   Disassembling a buffer into a std::map of instructions.  ROSE
+   normally calls this automatically, does a little analysis to
+   organize instructions into basic blocks and basic blocks into
+   functions, and links everything into the AST. However, its
+   also useful to call the disassembler explicitly. Disassemblers
+   can be specialized by derivation. There's a number of
+   functions and full doxygen documentation (the actual functions
+   that disassemble a \_single\_ x86, ARM, or PowerPC instruction
+   are only lightly documented). \\
+   See doxygen for Disassembler class. \\
+   See src/frontend/Disassembler/Disassembler.h
 \end{enumerate}
 
 
@@ -2088,6 +2088,7 @@ We separate out the API that is specific for source code and binary executable.
    \end{enumerate}
 
    \item Binary (DQ) \\
+   \fixme{These might be too low level for the proposed API.}
    \begin{enumerate}
       \item Call Graph Analysis \\
       The Partitioner::mark\_call\_targets() computes a call graph
@@ -2115,8 +2116,10 @@ We separate out the API that is specific for source code and binary executable.
       Part of constant propagation.
 
       \item Dwarf Debug Format \\
-      This is automatically constructed as part of reading the binary executable if it is available.
-
+      The Dwarf Debug Format structure is automatically constructed 
+      as part of reading the binary executable if it is available.
+      Command line options to ROSE translators permit optionally 
+      skipping the parsing of the Dwarf format.
    \end{enumerate}
 \end{enumerate}
 
