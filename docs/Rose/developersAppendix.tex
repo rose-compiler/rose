@@ -2154,51 +2154,53 @@ binary executable.
       to a more useful location in ROSE.  Likely should be put in the {\em midend} as part
       of {\em analysis}.
 
-      \item Dynamic analysis of instruction execution \\
+      \item Dynamic Analysis of Instruction Execution \\
       There are three interfaces:
       \begin{enumerate}
-         \item Ptrace: uses the Unix ptrace() system call to trace over the network a binary executing on a remote linux machine.
+         \item Ptrace: Uses the Unix ptrace() system call to trace over 
+         the network a binary executing on a remote linux machine.
          \item Pin: Traces an executable running on the same machine as ROSE.
-%        \item Ether: Traces an executable running in Windows XP on a Xen virtual machine on the same hardware as ROSE.
+         \item Ether: Traces an executable running in Windows XP on 
+         a Xen virtual machine on the same hardware as ROSE.
       \end{enumerate}
 
-      \item Detecting unreferenced regions \\
-	Finding what regions of the binary were never referenced
-	during parsing.  The binary I/O utilities keep track of
-	everything that was read during parsing and this information
-	is available through an ExtentMap (see utilities below). The
-	inverse of the ExtentMap will show what hasn't been
-	referenced.\\
-	See doxygen for ExtentMap class.
-
-      \item Basic block detection \\
-        Organize instructions into basic blocks.  The Partitioner
-        class is reponsible for taking a set of instructions and
-        deciding which instructions belong together in a basic
-        block. This analysis is normally called automatically by ROSE
-        as part of its disassembly procedure, but it's also useful to
-        call this explicitly (especially if you also called the
-        Disassembler explicitly, since the disassemlber doesn't
-        actually put things into basic blocks).
-        Fully documented in doxygen. See Partitioner class. \\
-        See src/frontend/Disassembler/Partitioner.h
-
-      \item Function boundary detection \\
-        Organize basic blocks into functions. The Partitioner class is
-        responsible for taking a set of basic blocks and figuring out
-        how to organize them into functions. It can look at other
-        parts of a binary AST (like symbol tables), is fully
-        configurable, and can be specialized by derivation.
-        See doxygen for Partitioner class. \\
-        See src/frontend/Disassembler/Partitioner.h
-
-      \item Dynamic Analysis \\
+      \item General Dynamic Analysis \\
       Uses Ether/Xen to execute the specimen in Windows XP on a
       virtual machine and adds new SgAsmGenericSections containing
       disassembled instructions to the AST as those areas
       are discovered.  Can then unparse the AST to a new executable.
 \newline
       This is work in progress.
+
+      \item Detecting unreferenced regions \\
+      Finding what regions of the binary were never referenced
+      during parsing.  The binary I/O utilities keep track of
+      everything that was read during parsing and this information
+      is available through an ExtentMap (see utilities below). The
+      inverse of the ExtentMap will show what hasn't been
+      referenced.\\
+      See doxygen for ExtentMap class.
+
+      \item Basic block detection \\
+      Organize instructions into basic blocks.  The Partitioner
+      class is reponsible for taking a set of instructions and
+      deciding which instructions belong together in a basic
+      block. This analysis is normally called automatically by ROSE
+      as part of its disassembly procedure, but it's also useful to
+      call this explicitly (especially if you also called the
+      Disassembler explicitly, since the disassemlber doesn't
+      actually put things into basic blocks).
+      Fully documented in doxygen. See Partitioner class. \\
+      See src/frontend/Disassembler/Partitioner.h
+
+      \item Function boundary detection \\
+      Organize basic blocks into functions. The Partitioner class is
+      responsible for taking a set of basic blocks and figuring out
+      how to organize them into functions. It can look at other
+      parts of a binary AST (like symbol tables), is fully
+      configurable, and can be specialized by derivation.
+      See doxygen for Partitioner class. \\
+      See src/frontend/Disassembler/Partitioner.h
 
    \end{enumerate}
 \end{enumerate}
@@ -2467,55 +2469,49 @@ Other useful utility functions in ROSE
    \end{enumerate}
 
    \item ExtentMap \\
-	A class for keeping track of contiguous regions of an address
-	space. Can be used to manage free lists, or keep track what
-	parts of a file have been referenced. Similar to std::map but
-	having different lookup functions and able to combine adjacent
-	regions into single entries in its data structure.
-
-	See doxygen ExecMap class.
-	See src/frontend/ExecFormats/ExecGeneric.C.
+   A class for keeping track of contiguous regions of an address
+   space. Can be used to manage free lists, or keep track what
+   parts of a file have been referenced. Similar to std::map but
+   having different lookup functions and able to combine adjacent
+   regions into single entries in its data structure. \\
+   See doxygen ExecMap class. \\
+   See src/frontend/ExecFormats/ExecGeneric.C.
 
    \item Debug dumps \\
-	The dump() methods scattered throughout
-	src/frontend/ExecFormats/*.C generate human-readable tables
-	describing all details of the SgAsm* nodes. They all take the
-	same arguments. These are what produce the *.dump files. \\
-	See src/frontend/ExecFormats/*.C
+   The dump() methods scattered throughout
+   src/frontend/ExecFormats/*.C generate human-readable tables
+   describing all details of the SgAsm* nodes. They all take the
+   same arguments. These are what produce the *.dump files. \\
+   See src/frontend/ExecFormats/*.C
 
    \item String Management \\
-	Functions that manage strings that might be stored in various
-	kinds of string tables in a binary file.  Modifying strings,
-	sharing storage, repacking tables, reallocating individual
-	strings, avoidance of certain file regions, etc.
-
-	See src/frontend/ExecFormats/ExecGeneric.C
+   Functions that manage strings that might be stored in various
+   kinds of string tables in a binary file.  Modifying strings,
+   sharing storage, repacking tables, reallocating individual
+   strings, avoidance of certain file regions, etc. \\
+   See src/frontend/ExecFormats/ExecGeneric.C
 
    \item Section I/O \\
-	A variety of functions for reading the original content of a
-	binary section either by file offset or through a
-	MemoryMap. Also functions for writing back to the file.
-
-	Defined for SgAsmGenericFile and SgAsmGenericSection.
-	See src/frontend/ExecFormats/ExecGeneric.C
+   A variety of functions for reading the original content of a
+   binary section either by file offset or through a
+   MemoryMap. Also functions for writing back to the file. \\
+   Defined for SgAsmGenericFile and SgAsmGenericSection. \\
+   See src/frontend/ExecFormats/ExecGeneric.C
 
    \item MemoryMap \\
-	A data structure similar to std::map that maps one address
-	space into another (typically a virtual memory address space
-	into a file address space).  This allows ROSE to create a
-	memory address space separate from its own and manage it as a
-	program loader would do.
-
-	See doxygen MemoryMap class.
-	See src/frontend/ExecFormats/MemoryMap.h
+   A data structure similar to std::map that maps one address
+   space into another (typically a virtual memory address space
+   into a file address space).  This allows ROSE to create a
+   memory address space separate from its own and manage it as a
+   program loader would do. \\
+   See doxygen MemoryMap class. \\
+   See src/frontend/ExecFormats/MemoryMap.h
 
    \item Data conversion \\
-	Functions for converting data from file format to memory
-	format. Most of these are to handle byte order, but there are
-	some other encodings as well.
-
-        See src/frontend/ExecFormats/ExecGeneric.C
-
+   Functions for converting data from file format to memory
+   format. Most of these are to handle byte order, but there are
+   some other encodings as well. \\
+   See src/frontend/ExecFormats/ExecGeneric.C
 
    \item Miscellaneous Support (DQ) \\
          Output of usage information, ROSE version number support, etc.
