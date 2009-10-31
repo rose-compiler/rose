@@ -1707,10 +1707,13 @@ simply invoke {\tt ssh-keygen} and be sure not to specify a passphrase.
 
 \section{ROSE API Refactoring}
 
+{\bf This is the outline of the API, add API functions to the next section.}
+
 This a draft design for a new High Level ROSE API where high level function interfaces will be
 located that call mechanisms for analysis, transformation, and expected user level support
 for ROSE tools. This support is presently spread around in ROSE and this API would
-centralize it and make ROSE more clear to users. There are four levels:
+centralize it and make ROSE more clear to users.
+There are four levels:
 \begin{enumerate}
    \item ROSE Frontend \\
       Generation of Abstract Syntax Tree (AST) from source code or binary executable.
@@ -1913,6 +1916,55 @@ ROSE API and a moderate level of detail.  Only functionality expected to be usef
 development of ROSE based tools by external users are presented.  Lower level details are
 available in other documentation or via the doxygen generated documentation.
 
+% Some helpful notes from Robb
+Other Ideas, Issues, etc.
+\begin{enumerate}
+   \item Class-based \\
+	It seems that interfaces are more useful if we place them in a
+	class rather than a namespace.
+
+   \item Virtual vs. not-virtual \\
+	Except where performance is an issue, it's useful to have
+	mostly virtual methods.
+
+   \item Namespace \\
+	The ROSE API should be in a "rose" namespace which all of our
+	source files each import.
+
+   \item Naming style \\
+	Agree on style. Most of ROSE uses SomeClass for classes and
+	someMethod for methods and functions.
+
+   \item Macros \\
+	Header file macros should all be the same form, such as
+	ROSE\_WHATEVER\_H.  Feature macros should use a common form
+	(perhaps ROSE\_HAS\_WHATEVER or ROSE\_USES\_WHATEVER). Function
+	like macros should be replaced with inline functions. Value
+	macros should be replaced with static const data members.
+
+   \item Who manages pointed-to memory \\
+	Classes with pointers should have a clear statement of who
+	manages the pointed-to memory: the class or the caller. Also,
+	if the caller manages memory then when can the caller delete
+	that memory (must it wait until the object that uses it is
+	deleted or did the object make a copy)?
+
+   \item Include files \\
+	Must the end user include all of rose (rose.h) in order to use
+	a particular class?  Our compiling would be *so*much*faster*
+	if each file included only what it actually used. (We could
+	still have a "rose.h"-like file that includes everything for
+	the lazy end user.)
+
+   \item Some provision for header/library consistency \\
+	For instance, certain functions in the HDF5 API (like H5\_init()
+	that initializes the library) pass a version number from a
+	header file that gets compared with a version number compiled
+	into the library. If they don't match then there will probably
+	be runtime issues and HDF5 can report this before the user
+	gets a core dump.  ROSE could do something similar.
+\end{enumerate}
+
 Outline where to put list of functions/functionality for each category of the API.
 
 \subsection{Story Of ROSE (JK)}
@@ -1964,6 +2016,27 @@ deserve their own namespaces.}
    compiled later.
 \end{enumerate}
 
+\paragraph{Notes from Robb}
+\fixme{This might be too low level for the proposed API.}
+\begin{enumerate}
+	\item Parsing functions \\
+   These methods parse a particular entity from a binary file and
+	fill in an existing IR node that was recently constructed.
+	See parse() methods in src/frontend/ExecFormats/*.C
+   \item Disassembly \\
+	Disassembling a buffer into a std::map of instructions.  ROSE
+	normally calls this automatically, does a little analysis to
+	organize instructions into basic blocks and basic blocks into
+	functions, and links everything into the AST. However, its
+	also useful to call the disassembler explicitly. Disassemblers
+	can be specialized by derivation. There's a number of
+	functions and full doxygen documentation (the actual functions
+	that disassemble a \_single\_ x86, ARM, or PowerPC instruction
+	are only lightly documented). \\
+	See doxygen for Disassembler class. \\
+	See src/frontend/Disassembler/Disassembler.h
+\end{enumerate}
+
 
 \subsubsection{Midend (All)}
 {\bf Interm proposed namespace name: {\em ROSE\_Midend}} \\
@@ -2012,11 +2085,33 @@ We separate out the API that is specific for source code and binary executable.
 
    \item Binary (DQ) \\
    \begin{enumerate}
-      \item Call Graph Analysis
-      \item Control Flow Analysis
-      \item Constant Propogation
-      \item Data Flow Analysis
+      \item Call Graph Analysis \\
+      The Partitioner::mark\_call\_targets() computes a call graph
+      based on x86 "CALL" and "FARCALL" instructions, but doesn't
+      return any useful information (it uses it immediately to
+      partition basic blocks into functions).
+
+      \item Control Flow Analysis \\
+      The Partitioner::detectBasicBlocks() method computes an
+      basic-block level call graph returned as a
+      Partitioner::BasicBlockStarts data structure. It looks at all
+      instructions that explicitly change the flow of
+      control. However, it might backward from what one would
+      expect: for every instruction, it records what other
+      instructions call that instruction. (It was done this way
+      because that's the info that's needed to detect function
+      boundaries.)
+
+      \item Constant Propogation \\
+      Constant propagation for binaries is in the
+      FindConstantsPolicy which is used with instruction
+      semantics. This code is not well documented.
+
+      \item Data Flow Analysis \\
+      Part of constant propagation.
+
       \item Dwarf Debug Format \\
+      This is automatically constructed as part of reading the binary executable if it is available.
 
    \end{enumerate}
 \end{enumerate}
@@ -2035,6 +2130,12 @@ binary executable.
    \item Binary (DQ) \\
    \begin{enumerate}
       \item InstructionSemantics \\
+	Implemented in the X86InstructionSemantics class, which
+	requires a policy class (such as FindConstantsPolicy) at
+	compile time.
+
+	The implementation only supports 32-bit x86 and is not well
+	documented.
       
       \item Library Identification (FLIRT) \\
       This has not yet been moved from {\tt developersScratchSpace/Dan/libraryIdentification\_tests}
@@ -2045,6 +2146,53 @@ binary executable.
       This has not yet been moved from {\tt developersScratchSpace/Dan/astEquivalence\_tests}
       to a more useful location in ROSE.  Likely should be put in the {\em midend} as part
       of {\em analysis}.
+
+      \item Dynamic analysis of instruction execution \\
+      There are three interfaces:
+      \begin{enumerate}
+         \item Ptrace: uses the Unix ptrace() system call to trace over the network a binary executing on a remote linux machine.
+         \item Pin: Traces an executable running on the same machine as ROSE.
+%        \item Ether: Traces an executable running in Windows XP on a Xen virtual machine on the same hardware as ROSE.
+      \end{enumerate}
+
+      \item Detecting unreferenced regions \\
+	Finding what regions of the binary were never referenced
+	during parsing.  The binary I/O utilities keep track of
+	everything that was read during parsing and this information
+	is available through an ExtentMap (see utilities below). The
+	inverse of the ExtentMap will show what hasn't been
+	referenced.\\
+	See doxygen for ExtentMap class.
+
+      \item Basic block detection \\
+        Organize instructions into basic blocks.  The Partitioner
+        class is reponsible for taking a set of instructions and
+        deciding which instructions belong together in a basic
+        block. This analysis is normally called automatically by ROSE
+        as part of its disassembly procedure, but it's also useful to
+        call this explicitly (especially if you also called the
+        Disassembler explicitly, since the disassemlber doesn't
+        actually put things into basic blocks).
+        Fully documented in doxygen. See Partitioner class. \\
+        See src/frontend/Disassembler/Partitioner.h
+
+      \item Function boundary detection \\
+        Organize basic blocks into functions. The Partitioner class is
+        responsible for taking a set of basic blocks and figuring out
+        how to organize them into functions. It can look at other
+        parts of a binary AST (like symbol tables), is fully
+        configurable, and can be specialized by derivation.
+        See doxygen for Partitioner class. \\
+        See src/frontend/Disassembler/Partitioner.h
+
+      \item Dynamic Analysis \\
+      Uses Ether/Xen to execute the specimen in Windows XP on a
+      virtual machine and adds new SgAsmGenericSections containing
+      disassembled instructions to the AST as those areas
+      are discovered.  Can then unparse the AST to a new executable.
+\newline
+      This is work in progress.
+
    \end{enumerate}
 \end{enumerate}
 
@@ -2068,7 +2216,7 @@ to define instrumentation, optimizations, and custom translation.
    \end{enumerate}
 
    \item General Transformations \\
-         These include outlining,
+         These include outlining, AST copy, and AST merge support, etc.
    \begin{enumerate}
       \item Outlining
       \item ImplicitCodeGeneration \\
@@ -2089,8 +2237,10 @@ to define instrumentation, optimizations, and custom translation.
 \subparagraph{Binary (DQ)}
 \begin{enumerate}
    \item Static Binary Rewriting \\
-         A restricted set of transformations are possible on a binary executable,
-         this section details this work.
+         A restricted set of transformations are possible on a binary executable.
+         Existing work supports moving and/or resizing a section. We don't handle 
+         all cases since this is incredibly complicated. \\
+         See {\bf SgAsmGenericFile::shift\_extend()}.
 \end{enumerate}
 
 \subsubsection{Backend (DQ)}
@@ -2110,6 +2260,34 @@ the backend; thus is has a simple API.
    \item {\bf int backendUsingOriginalInputFile ( SgProject* project );} \\
    This is useful as a test code for testing ROSE for use on projects that target Compass or any
    other analysis only tool using ROSE. Called in tests/testAnalysis.C for example.
+
+   \item Assembler \\
+   Generating machine code from SgAsmInstruction nodes. The
+   Assembler class is reponsible for taking SgAsmInstruction
+   nodes and generating machine code, placing the result in a
+   buffer.  The assembler can be specialized by derivation.
+
+   Note: currently we only have an x86-64 assembler. The 32-bit
+   needs a bit more work.  The x86 assembler is generated
+   automatically from the Intel Instruction Set Reference
+   documentation and is thus substantially smaller than the x86
+   disassembler.
+
+   See doxygen Assembler class.
+   See src/frontend/Disassembler/Assembler.h
+
+   \item Control of Assembler \\
+   Various aspects of assembly can be controlled through
+   properties of the Assembler object.  For instance, should the
+   assembler use smallest possible data encodings or honor the
+   sizes of the instruction operands in the AST; should
+   instruction prefixes be emitted in the same order and
+   cardinality as the original parse, or in the order recommended
+   by Intel; etc.
+
+   See doxygen Assembler class.
+   See src/frontend/Disassembler/Assembler.h
+
 \end{enumerate}
 
 \subsubsection{Utility}
@@ -2265,6 +2443,57 @@ Other useful utility functions in ROSE
       Returns the name of file associated the specific statement or expression of the AST.
       The returned string is the absolute path plus file name.
    \end{enumerate}
+
+   \item ExtentMap \\
+	A class for keeping track of contiguous regions of an address
+	space. Can be used to manage free lists, or keep track what
+	parts of a file have been referenced. Similar to std::map but
+	having different lookup functions and able to combine adjacent
+	regions into single entries in its data structure.
+
+	See doxygen ExecMap class.
+	See src/frontend/ExecFormats/ExecGeneric.C.
+
+   \item Debug dumps \\
+	The dump() methods scattered throughout
+	src/frontend/ExecFormats/*.C generate human-readable tables
+	describing all details of the SgAsm* nodes. They all take the
+	same arguments. These are what produce the *.dump files. \\
+	See src/frontend/ExecFormats/*.C
+
+   \item String Management \\
+	Functions that manage strings that might be stored in various
+	kinds of string tables in a binary file.  Modifying strings,
+	sharing storage, repacking tables, reallocating individual
+	strings, avoidance of certain file regions, etc.
+
+	See src/frontend/ExecFormats/ExecGeneric.C
+
+   \item Section I/O \\
+	A variety of functions for reading the original content of a
+	binary section either by file offset or through a
+	MemoryMap. Also functions for writing back to the file.
+
+	Defined for SgAsmGenericFile and SgAsmGenericSection.
+	See src/frontend/ExecFormats/ExecGeneric.C
+
+   \item MemoryMap \\
+	A data structure similar to std::map that maps one address
+	space into another (typically a virtual memory address space
+	into a file address space).  This allows ROSE to create a
+	memory address space separate from its own and manage it as a
+	program loader would do.
+
+	See doxygen MemoryMap class.
+	See src/frontend/ExecFormats/MemoryMap.h
+
+   \item Data conversion \\
+	Functions for converting data from file format to memory
+	format. Most of these are to handle byte order, but there are
+	some other encodings as well.
+
+        See src/frontend/ExecFormats/ExecGeneric.C
+
 
    \item Miscellaneous Support (DQ) \\
          Output of usage information, ROSE version number support, etc.
