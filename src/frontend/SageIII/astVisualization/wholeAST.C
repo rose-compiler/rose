@@ -930,7 +930,7 @@ CustomMemoryPoolDOTGeneration::binaryExecutableFormatFilter(SgNode* node)
   // Use this as a way to reduce the number of IR nodes in the generated AST to simplify debugging.
      SgAsmElfSection* elfSection = isSgAsmElfSection(node);
      SgAsmElfDynamicSection* elfDynamicSection = isSgAsmElfDynamicSection(node);
-     if (elfSection != NULL && elfSection->get_name() != ".text" && elfSection->get_name() != ".data" && elfDynamicSection == NULL )
+     if (elfSection != NULL && elfSection->get_name()->get_string() != ".text" && elfSection->get_name()->get_string() != ".data" && elfDynamicSection == NULL )
         {
           skipNode(node);
         }
@@ -938,7 +938,7 @@ CustomMemoryPoolDOTGeneration::binaryExecutableFormatFilter(SgNode* node)
 #if 0
      SgAsmGenericSymbol* symbol = isSgAsmGenericSymbol(node);
   // if (symbol != NULL && symbol->get_name() != ".text" && symbol->get_name() != ".data" && symbol->get_name().find("start") == std::string::npos)
-     if (symbol != NULL && symbol->get_name() != ".text" && symbol->get_name() != ".data" && symbol->get_name().find("__s") == std::string::npos)
+     if (symbol != NULL && symbol->get_name()->get_string() != ".text" && symbol->get_name()->get_string() != ".data" && symbol->get_name()->get_string().find("__s") == std::string::npos)
         {
           skipNode(node);
         }
@@ -2220,6 +2220,17 @@ generateWholeGraphOfAST( string filename, CustomMemoryPoolDOTGeneration::s_Filte
    {
   // set<SgNode*> skippedNodeSet = getSetOfFrontendSpecificNodes();
   // SimpleColorMemoryPoolTraversal::generateGraph(filename+"_beforeMergeWholeAST",skippedNodeSet);
+
+  // DQ (10/29/2009): Added code to output the default flag setting...
+  // CustomMemoryPoolDOTGeneration::print_filter_flags();
+  // CustomMemoryPoolDOTGeneration::init_filters();
+
+  // DQ: Turn these off for my sake...
+  // CustomMemoryPoolDOTGeneration::filterFlags.m_binaryExecutableFormat = 1;/*binaryExecutableFormatFilter()*/
+  // CustomMemoryPoolDOTGeneration::filterFlags.m_asmFileFormat = 1;         /*asmFileFormatFilter()*/
+  // CustomMemoryPoolDOTGeneration::filterFlags.m_asmType = 1;               /* asmTypeFilter()*/
+
+  // CustomMemoryPoolDOTGeneration::print_filter_flags();
 
   // Make this the default type of graph that we produce (filtering frontend specific IR nodes)
      if (flags == NULL ) 

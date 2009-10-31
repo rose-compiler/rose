@@ -3590,6 +3590,11 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                printf ("DEBUG: node: %p = %s = %s parent: %p = %s \n",
                        node, node->class_name().c_str(), SageInterface::get_name(node).c_str(),
                        parent, parent->class_name().c_str());
+
+               if (parent->get_freepointer() != AST_FileIO::IS_VALID_POINTER() )
+                  {
+                    printf ("Error: In TestChildPointersInMemoryPool::visit() for %s at %p \n",parent->class_name().c_str(),parent);
+                  }
 #endif
                vector<pair<SgNode*,string> > v = parent->returnDataMemberPointers();
 #if 0
