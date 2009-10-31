@@ -45,6 +45,7 @@
 
 % don't compare against top
 compval(top, V, V, _, _, _) :- !.
+compval('BOTTOM', V, V, _, _, _) :- !.
 compval(Val, _, int_val(null, value_annotation(Val, PPI), AI, FI), PPI, AI, FI).
 
 % look up type for some variable
@@ -155,7 +156,7 @@ interval_assert(Var:VarType->[Min,Max], AssertionExpr) :-
   ;  AndOp = and_op(GE, LE, binary_op_annotation(type_int, PPI), AI, FI)
   ),
 
-  % ignore comparison with top
+  % ignore comparison with top and bot
   compval(Min, VarRef, MinVal, PPI, AI, FI),
   compval(Max, VarRef, MaxVal, PPI, AI, FI),
   GE = greater_or_equal_op(VarRef, MinVal, TypeAn, AI, FI),

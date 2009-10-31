@@ -124,12 +124,26 @@ UndeclareStmt(vars), _:
 FunctionExit(_, vars), _:
   kill_vars(@, vars);
 
+// -- Local edge handling is somewhat obscure. We need to remove global and
+// -- aliased variables from the local analysis info because the called
+// -- function may modify them. We used to "remove" them by setting their
+// -- values to top, but since top wins out in the combination operator,
+// -- this meant information loss if the local edge's analysis value was
+// -- propagated first (rather than evaluating the path through the function
+// -- first, applying the retfunc, and propagating that result). Solution:
+// -- Remove globals by setting their values to bot; the analysis can come
+// -- back later and fill in some interval. Hope this works now.
 FunctionCall(name,_), local_edge:
   if @ != bot then
     let f <= @; in
       let result =
-      lift([(v,i)->top !! (v,i) <- f\top,
-                          if islocal(v) && !isaliasedlocal(v, context)])
+   /* lift([(v,i)->top !! (v,i) <- f\top,
+                          if islocal(v) && !isaliasedlocal(v, context)]) */
+      let locals = ([(v,i)->top !! (v,i) <- f\top,
+                     if islocal(v) && !isaliasedlocal(v, context)]);
+          globals = [(v,bot)->top !! (v,_) <- f\top,
+                     if isglobal(v) || isaliasedlocal(v, context)];
+      in  lift(override(locals, globals))
       ; in /*println(val-aststring(name), " local: ", result)*/ result
   else
     bot
@@ -152,8 +166,11 @@ FunctionCall(name,_), call_edge:
 ExternalCall(_,_,_), local_edge:
   if @ != bot then
     let f <= @; in
-      lift([(v,i)->top !! (v,i) <- f\top,
-                          if islocal(v) && !isaliasedlocal(v, context)])
+      let locals = ([(v,i)->top !! (v,i) <- f\top,
+                     if islocal(v) && !isaliasedlocal(v, context)]);
+          globals = [(v,bot)->top !! (v,_) <- f\top,
+                     if isglobal(v) || isaliasedlocal(v, context)];
+      in  lift(override(locals, globals))
   else
     bot
   ;
@@ -454,6 +471,12 @@ int_bool(_) = true;
 
 updatestate :: itvl_State, Expression, itvl_Interval, ContextInfo -> itvl_IntervalStatePair;
 updatestate(bot, _, _, _) = (top,bot);
+// -- Global variables passed through calls may become bot. However, we
+// -- don't want to drag bot values all the way through the analysis. In any
+// -- computation based on a bot value, kill the result by turning it into
+// -- top instead.
+updatestate(state, exp, bot, context) =
+    updatestate(state, exp, top, context);
 // -- Update state state by assigning the value value to the variable
 // -- referenced by expression exp (if any). Yields a pair of the value
 // -- and the new state.
@@ -897,7 +920,7 @@ intersect_min(top, b) = b;
 intersect_min(bot, b) = b;
 intersect_min(a, b) = if drop(a) < drop(b) then a else b;
 
-ret(a, bot) = bot; // -- a;
+ret(a, bot) = a; // -- bot; // -- a;
 ret(bot, b) = b;
 ret(_, top) = top;
 ret(top, _) = top;
