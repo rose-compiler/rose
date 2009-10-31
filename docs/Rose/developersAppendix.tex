@@ -1986,8 +1986,38 @@ separately.
 specific forms of analysis or are used in subsequent forms of analysis.
 We separate out the API that is specific for source code and binary executable.
 \begin{enumerate}
-     \item Source (TP)
-     \item Binary (DQ)
+   \item Source (TP) \\
+   \begin{enumerate}
+      \item Call Graph Analysis
+      \item Class Hierarchy Analysis
+      \item Control Flow Analysis
+      \item Def-Use Analysis
+      \item Dominance Analysis
+      \item Dominator Trees And Dominance Frontiers Analysis (might be old)
+
+      \item Connection of Open Analysis (might be old) \\
+      This might be something for Colorado State to comment upon.
+
+      \item Pointer Analysis \\
+
+      \item Procedural Slicing (might be the old version; not used) 
+
+      \item Side-Effect Analysis
+
+      \item Value Propagation Analysis
+
+      \item Static Interprocedural Slicing (replaces Procedural Slicing)
+      \item Liveness Analysis
+   \end{enumerate}
+
+   \item Binary (DQ) \\
+   \begin{enumerate}
+      \item Call Graph Analysis
+      \item Control Flow Analysis
+      \item Constant Propogation
+      \item Data Flow Analysis
+      \item Dwarf Debug Format
+   \end{enumerate}
 \end{enumerate}
 
 \subparagraph{Use (TP \& DQ)}
@@ -1996,8 +2026,17 @@ can be used to support subsequent forms of analysis that operate on the generate
 data structures. We separate out the API that is specific for source code and 
 binary executable.
 \begin{enumerate}
-   \item Source (TP)
-   \item Binary (DQ)
+   \item Source (TP) \\
+   \begin{enumerate}
+      \item AST Interpreter (Interpretation of Concrete Semantics using AST)
+   \end{enumerate}
+
+   \item Binary (DQ) \\
+   \begin{enumerate}
+      \item InstructionSemantics
+      \item Library Identification (FLIRT)
+      \item Analysis of the Binary File Format
+   \end{enumerate}
 \end{enumerate}
 
 \paragraph{Transformation}
@@ -2035,9 +2074,6 @@ to define instrumentation, optimizations, and custom translation.
             This work permits the merging of separate AST's and the sharing of their
             identically names language declarations to support whole program
             analysis. Duplicate parts of the merged AST are deleted.
-      \item Static Binary Rewriting \\
-            A restricted set of transformations are possible on a binary executable,
-            this section details this work.
    \end{enumerate}
 \end{enumerate}
 
