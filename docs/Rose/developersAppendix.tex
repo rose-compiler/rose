@@ -1916,8 +1916,7 @@ ROSE API and a moderate level of detail.  Only functionality expected to be usef
 development of ROSE based tools by external users are presented.  Lower level details are
 available in other documentation or via the doxygen generated documentation.
 
-% Some helpful notes from Robb
-Other Ideas, Issues, etc.
+Some helpful notes from Robb, other ideas, issues, etc.:
 \begin{enumerate}
    \item Class-based \\
 	It seems that interfaces are more useful if we place them in a
@@ -1950,6 +1949,7 @@ Other Ideas, Issues, etc.
 	deleted or did the object make a copy)?
 
    \item Include files \\
+   \fixme{DQ has a bias toward a single rose.h since it avoids bugs due to different orderings of includes.}
 	Must the end user include all of rose (rose.h) in order to use
 	a particular class?  Our compiling would be *so*much*faster*
 	if each file included only what it actually used. (We could
@@ -2017,7 +2017,7 @@ deserve their own namespaces.}
 \end{enumerate}
 
 \paragraph{Notes from Robb}
-\fixme{This might be too low level for the proposed API.}
+\fixme{These might be too low level for the proposed API.}
 \begin{enumerate}
 	\item Parsing functions \\
    These methods parse a particular entity from a binary file and
