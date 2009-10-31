@@ -2392,6 +2392,21 @@ Other useful utility functions in ROSE
    \item Language specific name support (DQ) \\
          This section contains the support for generating unique names for language
          constructs and handling mangled and unmangled names for use in ROSE based tools.
+   \begin{enumerate}
+      \item {\bf virtual SgName SgStatment::get\_qualified\_name() const;} \\
+       Qualified names provide a more readable for of newarly unique name for constructs.
+       This function is implemented on all SgStatment objects.
+
+      \item {\bf virtual SgName SgStatment::get\_mangled\_name() const;} \\
+       Mangled name support so that unique names can be generated.
+
+      \item {\bf SgName SgDeclarationStatement::generate\_alternative\_name\_for\_unnamed\_declaration ( SgNode* parent ) const;} \\
+      Support for name mangling of unnamed classes embedded in SgVariableDeclaration and SgTypedefDeclaration.
+
+      \item {\bf SgName SgDeclarationStatement::generate\_alternative\_name\_for\_unnamed\_declaration\_in\_scope ( SgScopeStatement* scope ) const;} \\
+      Support for generation of names for unnamed declarations in scopes.
+
+   \end{enumerate}
 
    \item Support for comments and CPP directives (Yi)
 
