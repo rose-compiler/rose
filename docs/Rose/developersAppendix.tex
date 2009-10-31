@@ -1934,7 +1934,7 @@ is expected to be in its own namespace.  It is not clear if there should
 be a single top level namespace or if there should be namespace
 aliases that would permit alternative shorter names (an option).
 
-\subsubsection{frontend (Yi)}
+\subsubsection{Frontend (Yi)}
 {\bf Interm proposed namespace name: {\em ROSE\_Frontend}} \\
 \fixme{Liao will be proposing namespace names for us to agree upon separately.}
     The frontend of ROSE takes the source code or binary executable 
@@ -1965,7 +1965,7 @@ deserve their own namespaces.}
 \end{enumerate}
 
 
-\subsubsection{midend (All)}
+\subsubsection{Midend (All)}
 {\bf Interm proposed namespace name: {\em ROSE\_Midend}} \\
    The midend of ROSE is typically where the user interacts with the AST
 or uses features in ROSE to generate alternative graphs to represent
@@ -2016,7 +2016,8 @@ We separate out the API that is specific for source code and binary executable.
       \item Control Flow Analysis
       \item Constant Propogation
       \item Data Flow Analysis
-      \item Dwarf Debug Format
+      \item Dwarf Debug Format \\
+
    \end{enumerate}
 \end{enumerate}
 
@@ -2033,9 +2034,17 @@ binary executable.
 
    \item Binary (DQ) \\
    \begin{enumerate}
-      \item InstructionSemantics
-      \item Library Identification (FLIRT)
-      \item Analysis of the Binary File Format
+      \item InstructionSemantics \\
+      
+      \item Library Identification (FLIRT) \\
+      This has not yet been moved from {\tt developersScratchSpace/Dan/libraryIdentification\_tests}
+      to a more useful location in ROSE.  Likely should be put in the {\em midend} as part
+      of {\em analysis}.
+
+      \item Analysis of the Binary File Format \\
+      This has not yet been moved from {\tt developersScratchSpace/Dan/astEquivalence\_tests}
+      to a more useful location in ROSE.  Likely should be put in the {\em midend} as part
+      of {\em analysis}.
    \end{enumerate}
 \end{enumerate}
 
@@ -2084,7 +2093,7 @@ to define instrumentation, optimizations, and custom translation.
          this section details this work.
 \end{enumerate}
 
-\subsubsection{backend (DQ)}
+\subsubsection{Backend (DQ)}
 {\bf Interm proposed namespace name: {\em ROSE\_Backend}} \\
    The backend part of ROSE generates the code and produces a final executable
 (just like any other compiler).  Users don't typically work on any aspect of 
