@@ -2158,10 +2158,10 @@ binary executable.
       There are three interfaces:
       \begin{enumerate}
          \item Ptrace: Uses the Unix ptrace() system call to trace over 
-         the network a binary executing on a remote linux machine.
+               the network a binary executing on a remote linux machine.
          \item Pin: Traces an executable running on the same machine as ROSE.
          \item Ether: Traces an executable running in Windows XP on 
-         a Xen virtual machine on the same hardware as ROSE.
+               a Xen virtual machine on the same hardware as ROSE.
       \end{enumerate}
 
       \item General Dynamic Analysis \\
@@ -2169,8 +2169,7 @@ binary executable.
       virtual machine and adds new SgAsmGenericSections containing
       disassembled instructions to the AST as those areas
       are discovered.  Can then unparse the AST to a new executable.
-\newline
-      This is work in progress.
+      {\em This is work in progress.}
 
       \item Detecting unreferenced regions \\
       Finding what regions of the binary were never referenced
@@ -2280,9 +2279,8 @@ the backend; thus is has a simple API.
    needs a bit more work.  The x86 assembler is generated
    automatically from the Intel Instruction Set Reference
    documentation and is thus substantially smaller than the x86
-   disassembler.
-
-   See doxygen Assembler class.
+   disassembler. \\
+   See doxygen Assembler class. \\
    See src/frontend/Disassembler/Assembler.h
 
    \item Control of Assembler \\
@@ -2292,9 +2290,8 @@ the backend; thus is has a simple API.
    sizes of the instruction operands in the AST; should
    instruction prefixes be emitted in the same order and
    cardinality as the original parse, or in the order recommended
-   by Intel; etc.
-
-   See doxygen Assembler class.
+   by Intel; etc. \\
+   See doxygen Assembler class. \\
    See src/frontend/Disassembler/Assembler.h
 
 \end{enumerate}
@@ -2518,8 +2515,12 @@ Other useful utility functions in ROSE
    \begin{enumerate}
       \item {\bf void SgFile::usage ( int status );} \\
       This function reports information about ROSE options.
-      \item {\bf std::string version ();} \\
-      This function provides a string form of the version number of ROSE.
+      \item {\bf std::string version\_message ();} \\
+      This function provides a string form of the version message 
+      (e.g. output by {\em --version} option in ROSE).
+      \item {\bf std::string version\_number ();} \\
+      This function provides a string form of the version number of ROSE
+      (in the form major.minor.patch).
    \end{enumerate}
 
 \end{enumerate}

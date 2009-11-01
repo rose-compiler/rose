@@ -306,7 +306,7 @@ $(generated_upcCompile_files_for_manual):
 
 $(generated_upcTrans_files_for_manual):
 	$(MAKE) -C$(top_builddir)/projects/UpcTranslation check
-	
+
 generated_files_for_manual = \
 	$(generated_ompLowering_files_for_manual) \
 	$(generated_autoPar_files_for_manual) \
