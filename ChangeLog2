@@ -1,3 +1,91 @@
+2009-10-31 22:52  dquinlan
+
+	* [r8006] /trunk/ROSE/docs/Rose/developersAppendix.tex: More edting
+	  on the ROSE API.
+
+2009-10-31 22:34  dquinlan
+
+	* [r8005] /trunk/ROSE/docs/Rose/developersAppendix.tex: More edting
+	  on the ROSE API.
+
+2009-10-31 22:20  dquinlan
+
+	* [r8004] /trunk/ROSE/docs/Rose/developersAppendix.tex: More edting
+	  on the ROSE API.
+
+2009-10-31 22:11  dquinlan
+
+	* [r8003] /trunk/ROSE/docs/Rose/developersAppendix.tex: More edting
+	  on the ROSE API.
+
+2009-10-31 22:01  dquinlan
+
+	* [r8001] /trunk/ROSE/docs/Rose/developersAppendix.tex: More edting
+	  on the ROSE API.
+
+2009-10-31 21:54  dquinlan
+
+	* [r8000] /trunk/ROSE/docs/Rose/developersAppendix.tex: More edting
+	  on the ROSE API.
+
+2009-10-31 21:07  dquinlan
+
+	* [r7999] /trunk/ROSE/docs/Rose/developersAppendix.tex: More edting
+	  on the ROSE API.
+
+2009-10-31 20:37  dquinlan
+
+	* [r7998] /trunk/ROSE/docs/Rose/developersAppendix.tex: More edting
+	  on the ROSE API.
+
+2009-10-31 20:25  dquinlan
+
+	* [r7997] /trunk/ROSE/docs/Rose/developersAppendix.tex: More edting
+	  on the ROSE API.
+
+2009-10-31 19:32  dquinlan
+
+	* [r7996]
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_39.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_40.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/astStructRecognition.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/structureRecognitionSupport.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/structureRecognitionSupport.h,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/variableInitialization.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/variableInitialization.h,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/virtualTableLoad.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/virtualTableLoad.h,
+	  /trunk/ROSE/docs/Rose/developersAppendix.tex,
+	  /trunk/ROSE/docs/Rose/rose.cfg.in,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/README,
+	  /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/grammarReturnDataMemberPointers.macro,
+	  /trunk/ROSE/src/backend/asmUnparser/unparseX86Asm.C,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/sageFunctionPrototypes.h,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/sage_gen_be.C,
+	  /trunk/ROSE/src/frontend/SageIII/astVisualization/wholeAST.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilderAsm.h,
+	  /trunk/ROSE/src/midend/astDiagnostics/AstConsistencyTests.C,
+	  /trunk/ROSE/tests/roseTests/binaryTests/Makefile.am: Fixed a few
+	  bugs and added new features and documentation.
+	  
+	  Detailed changes in this commit:
+	  1) Fixed bug reported by Gergo (test2009_39.C).
+	  2) Added documentation to specify ROSE API (where everyone can
+	  assemble their assigned
+	  parts of the API. ROSE API documentation in section 1.22 of
+	  ROSE_DeveloperInstructions.pdf.
+	  3) Added mechanism to specify SgAsmInstructions (any subtree) and
+	  search for it in the
+	  AST. This is currently a part of the
+	  developersScratchSpace/Dan/binaryDataStructureRecognition_tests
+	  directory.
+	  4) Added build functions to SgAsmNodes (binary AST construction
+	  support similar to what
+	  is well developed for source code handling in ROSE).
+
 2009-10-31 04:38  dquinlan
 
 	* [r7993] /trunk/ROSE/docs/Rose/developersAppendix.tex: Added API
