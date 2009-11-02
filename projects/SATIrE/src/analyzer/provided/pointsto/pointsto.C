@@ -117,6 +117,12 @@ PointsToAnalysis::symbol_location(SgSymbol *sym)
     return location_representative(p_impl->symbol_location(sym));
 }
 
+bool
+PointsToAnalysis::symbol_has_location(SgSymbol *sym)
+{
+    return p_impl->symbol_has_location(sym);
+}
+
 #if HAVE_PAG
 PointsToAnalysis::Location *
 PointsToAnalysis::symbol_location(

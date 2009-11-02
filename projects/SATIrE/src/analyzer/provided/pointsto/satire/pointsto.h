@@ -103,6 +103,7 @@ public:
 
  // The location corresponding to a given variable or function symbol.
     Location *symbol_location(SgSymbol *sym);
+    bool symbol_has_location(SgSymbol *sym);
 #if HAVE_PAG
     Location *symbol_location(SgSymbol *sym,
                               const ContextInformation::Context &context);
