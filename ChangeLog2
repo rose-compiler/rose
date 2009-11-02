@@ -1,3 +1,12 @@
+2009-11-02 16:48  matzke
+
+	* [r8037] /trunk/ROSE/scripts/dotgenLetterPDF: removed reference to
+	  /usr/bin/time
+	  
+	  This executable is not on all systems and didn't appear to be
+	  used for
+	  anything important anyway.
+
 2009-11-02 02:47  saebjornsen1
 
 	* [r8023] /trunk/ROSE/CMakeLists.txt,
