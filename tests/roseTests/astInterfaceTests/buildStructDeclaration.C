@@ -65,6 +65,10 @@ int main (int argc, char *argv[])
   // pop the final scope after all AST insertion
   popScopeStack ();
 
+  //Declare a struct variable
+  SgVariableDeclaration * varDecl2 = SageBuilder::buildVariableDeclaration("temp", decl2->get_type(), NULL, globalScope);
+  appendStatement(varDecl2, globalScope);
+
   AstTests::runAllTests(project);
   return backend (project);
 }

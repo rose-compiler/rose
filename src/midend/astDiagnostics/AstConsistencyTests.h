@@ -57,7 +57,7 @@ class AstTests
           static unsigned int numSingleSuccs(SgNode* node);
           static bool isProblematic(SgNode* node);
 
-       // test codes that traverse the AST
+       //! Test codes that traverse the AST
           static void runAllTests(SgProject* sageProject);
           static bool isCorrectAst(SgProject* sageProject);
    };

@@ -3150,6 +3150,9 @@ SgClassDeclaration* SageBuilder::buildNondefiningClassDeclaration_nfi(const SgNa
 #if (REUSE_CLASS_DECLARATION_FROM_SYMBOL == 0)
      SgClassDeclaration* nondefdecl = new SgClassDeclaration(name,kind,NULL,NULL);
      ROSE_ASSERT(nondefdecl != NULL);
+     //Liao, we ask for explicit creation of SgClassType to avoid duplicated type nodes
+     if (nondefdecl->get_type() == NULL)
+       nondefdecl->set_type(SgClassType::createType(nondefdecl));
 
      printf ("SageBuilder::buildNondefiningClassDeclaration_nfi(): (and setting source position) nondefdecl = %p \n",nondefdecl);
 
@@ -3227,6 +3230,8 @@ SgClassDeclaration* SageBuilder::buildNondefiningClassDeclaration_nfi(const SgNa
             // DQ (1/25/2009): We only want to build a new declaration if we can't reuse the existing declaration.
                nondefdecl = new SgClassDeclaration(name,kind,NULL,NULL);
                ROSE_ASSERT(nondefdecl != NULL);
+               if (nondefdecl->get_type() == NULL)
+                 nondefdel->set_type(SgClassType::createType(nondefdecl));
 
                printf ("SageBuilder::buildNondefiningClassDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
 
@@ -3521,7 +3526,6 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
      if (scope == NULL)
           scope = SageBuilder::topScopeStack();
 
-  // TODO How about class type??
   // step 1. Build defining declaration
      SgClassDefinition* classDef = buildClassDefinition();
 
@@ -3581,6 +3585,8 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
        // DQ (1/25/2009): We only want to build a new declaration if we can't reuse the existing declaration.
           nondefdecl = new SgClassDeclaration(name,kind,NULL,NULL);
           ROSE_ASSERT(nondefdecl != NULL);
+          if (nondefdecl->get_type() == NULL)
+            nondefdecl->set_type(SgClassType::createType(nondefdecl));
 
  //         printf ("SageBuilder::buildClassDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
 
@@ -3621,6 +3627,25 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
   // nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
   // nondefdecl->set_definingDeclaration(defdecl);
      defdecl->set_firstNondefiningDeclaration(nondefdecl);
+
+     // Liao, 10/30/2009
+     // The SgClassDeclaration constructor will automatically generate a SgClassType internally if NULL is passed for SgClassType
+     // This is not desired when building a defining declaration and an inefficience in the constructor
+     // Ideally, only the first nondefining class declaration should have a dedicated SgClassType and 
+     // the defining class declaration (and other nondefining declaration) just shared that SgClassType.
+     if (defdecl->get_type () != NULL) 
+     {
+       // if a defining class declaration's type is associated with a defining class.
+       // This is a wrong SgClassType and has to be reset
+       if (defdecl->get_type()->get_declaration() == isSgDeclarationStatement(defdecl) )
+       {
+         delete (defdecl->get_type ());
+       }
+     }
+     // patch up the SgClassType for the defining class declaration
+     ROSE_ASSERT (nondefdecl->get_type() != NULL); 
+     ROSE_ASSERT (nondefdecl->get_type()->get_declaration() == isSgDeclarationStatement(nondefdecl)); 
+     defdecl->set_type(nondefdecl->get_type()); 
 
   // I don't think this is always a forward declaration (e.g. if it is not used in a prototype).
   // Checking the olded EDG/ROSE interface it appears that it is always marked forward (unless 
