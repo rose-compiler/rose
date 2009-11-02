@@ -999,6 +999,11 @@ HEADER_USER_DEFINED_BINARY_EXPRESSION_START
           SgType* get_type() const;
 HEADER_USER_DEFINED_BINARY_EXPRESSION_END
 
+HEADER_PSEUDO_DESTRUCTOR_REF_START
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+HEADER_PSEUDO_DESTRUCTOR_REF_END
 
 // #########################################################
 // #########################################################
@@ -5325,4 +5330,13 @@ SgUserDefinedBinaryOp::get_type() const
    }
 
 SOURCE_USER_DEFINED_BINARY_EXPRESSION_END
+
+SOURCE_PSEUDO_DESTRUCTOR_REF_START
+void
+SgPseudoDestructorRefExp::post_construction_initialization()
+   {
+     SgMemberFunctionType *memFnType = new SgMemberFunctionType(SgTypeVoid::createType(), false, p_object_type);
+     set_expression_type(memFnType);
+   }
+SOURCE_PSEUDO_DESTRUCTOR_REF_END
 
