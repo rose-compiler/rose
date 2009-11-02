@@ -1,5 +1,7 @@
 #include "satire.h"
 
+#include "aslanalysis.h"
+
 // Here we want to use the TermPrinter, but pretend that it is being used
 // without PAG (regardless of whether PAG is actually supported locally)
 // because then it insists on using the DFI printer, but we have no DFI to
@@ -183,6 +185,8 @@ void outputProgramRepresentation(Program *program, AnalyzerOptions *options)
     {
         if (program->prologTerm == NULL)
         {
+            SATIrE::Analyses::ASLAnalysis aslAnalyzer;
+            aslAnalyzer.run(program->astRoot);
             TimingPerformance timer("Output Prolog term:");
             TermPrinter<void *> tp(NULL, "", program->icfg);
             if (options->analysisWholeProgram())

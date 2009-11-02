@@ -36,6 +36,9 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
 #include <sstream>
 #include <iostream>
 
+#include <aslanalysis.h>
+#include <aslattribute.h>
+
 
 /* See main.C-template and toProlog.C for examples how to use this */
   
@@ -356,6 +359,15 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
           callsite_annot->addSubterm(new PrologInt(csa->bb->id));
           results->addFirstElement(callsite_annot);
           /* TODO: add information on possible call targets? */
+        }
+        SgExpression *function = fc->get_function();
+        if (function->attributeExists(ASL_ATTRIBUTE_ID)) {
+          ASLAttribute *attribute =
+            (ASLAttribute *) function->getAttribute(ASL_ATTRIBUTE_ID);
+          std::string str = attribute->toString();
+          PrologCompTerm *asl_annot = new PrologCompTerm("asl_annot");
+          asl_annot->addSubterm(new PrologAtom(str));
+          results->addFirstElement(asl_annot);
         }
       }
 #endif

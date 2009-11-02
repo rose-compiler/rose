@@ -12,7 +12,8 @@ libsatire_la_LIBADD = analyzer/icfgbuilder/libIcfgBuilder.la \
                       analyzer/astaccess/libAstAccess.la \
                       analyzer/astnumbering/libAstNumbering.la \
                       analyzer/support/libAnalysisSupport.la \
-                      analyzer/provided/pointsto/libPointsTo.la
+                      analyzer/provided/pointsto/libPointsTo.la \
+                      analyzer/provided/aslan/libASLan.la
 
 INCLUDES = -I$(top_builddir)/src/satire \
        -I$(top_srcdir)/src/termite/satire \
