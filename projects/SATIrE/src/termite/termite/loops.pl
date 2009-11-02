@@ -48,7 +48,7 @@
 
 %% is_const_val(+Term, -Val) is semidet.
 %% is_const_val(-Term, +Val) is nondet.
-% @todo implement constant analysis result for VarRefExp
+% @tbd implement constant analysis result for VarRefExp
 is_const_val(Term, Val) :- isIntVal(Term, Val).
 
 %% isStepsize(+Term, -InductionVar, -Val) is semidet.
