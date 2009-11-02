@@ -5,7 +5,6 @@ void fixupTemplateDeclarations( SgNode* node )
    {
   // DQ (7/7/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("Fixup template declarations:");
-
   // This simplifies how the traversal is called!
      FixupTemplateDeclarations astFixupTraversal;
 

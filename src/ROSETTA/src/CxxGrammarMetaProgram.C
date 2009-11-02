@@ -53,10 +53,18 @@ main(int argc, char * argv[])
 
   // First build the C++ grammar
 
+     std::string target_directory = ".";
+     if(argc == 2)
+       target_directory = std::string(argv[1]);
+
+
   // For base level grammar use prefix "Sg" to be compatable with SAGE
      Grammar sageGrammar ( /* name of grammar */ "Cxx_Grammar", 
                            /* Prefix to names */ "Sg", 
-                           /* Parent Grammar  */ "ROSE_BaseGrammar");
+                           /* Parent Grammar  */ "ROSE_BaseGrammar",
+                           /* No parent Grammar */ NULL,
+                           target_directory 
+                           );
 
   // Build the header files and source files representing the
   // grammar's implementation

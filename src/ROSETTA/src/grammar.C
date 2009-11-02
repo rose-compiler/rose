@@ -53,7 +53,8 @@ Grammar::Grammar ()
 Grammar::Grammar ( const string& inputGrammarName, 
                    const string& inputPrefixName, 
                    const string& inputGrammarNameBaseClass, 
-                   const Grammar* inputParentGrammar )
+                   const Grammar* inputParentGrammar,
+                   const string& t_directory)
    {
   // The constructor builds a grammar.  The inputs are strings:
   //    inputGrammarName          -- The name of the grammar (used in the construction of filenames etc.)
@@ -66,6 +67,7 @@ Grammar::Grammar ( const string& inputGrammarName,
 
   // Intialize some member data 
   // By default the parent grammar is not known
+     target_directory = t_directory;
      parentGrammar = NULL;
 
   // We want to set the parent grammar as early as possible since the specification of terminals/nonterminals is
@@ -126,6 +128,8 @@ Grammar::Grammar ( const string& inputGrammarName,
          this->astVariantToNodeMap[c] = name;
          ++c;
        }
+       if( !astNodeList.eof() )
+         std::cout << "We have the path " << ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR << std::endl;
        ROSE_ASSERT (astNodeList.eof());
        astNodeList.close();
      }
@@ -2512,7 +2516,7 @@ Grammar::buildCode ()
      StringUtility::FileWithLineNumbers miscSupport = buildMiscSupportDeclarations ();
      ROSE_ArrayGrammarHeaderFile += miscSupport;
 
-     Grammar::writeFile(ROSE_ArrayGrammarHeaderFile, ".", getGrammarName(), ".h");
+     Grammar::writeFile(ROSE_ArrayGrammarHeaderFile, target_directory, getGrammarName(), ".h");
 #if 1
      // AST SOURCE FILE GENERATION
      StringUtility::FileWithLineNumbers ROSE_ArrayGrammarSourceFile;
@@ -2556,7 +2560,7 @@ Grammar::buildCode ()
      string memoryPoolTraversalSupport = buildMemoryPoolBasedTraversalSupport();
      ROSE_ArrayGrammarSourceFile.push_back(StringUtility::StringWithLineNumber(memoryPoolTraversalSupport, "", 1));
 
-     Grammar::writeFile(ROSE_ArrayGrammarSourceFile, ".", getGrammarName(), ".C");
+     Grammar::writeFile(ROSE_ArrayGrammarSourceFile, target_directory, getGrammarName(), ".C");
 
 #endif
 
@@ -2582,8 +2586,8 @@ Grammar::buildCode ()
   // ROSE_ASSERT(false);
 
   // DQ(10/22/2007): fixed missed variable renaming.
-  // Grammar::writeFile(ROSE_ArrayGrammarSourceFile, ".", getGrammarName() + "NewAndDeleteOperators", ".C");
-     Grammar::writeFile(ROSE_NewAndDeleteOperatorSourceFile, ".", getGrammarName() + "NewAndDeleteOperators", ".C");
+  // Grammar::writeFile(ROSE_ArrayGrammarSourceFile, target_directory, getGrammarName() + "NewAndDeleteOperators", ".C");
+     Grammar::writeFile(ROSE_NewAndDeleteOperatorSourceFile, target_directory, getGrammarName() + "NewAndDeleteOperators", ".C");
 #endif
 
 
@@ -2603,7 +2607,7 @@ Grammar::buildCode ()
 
   // printf ("Exiting after building traverse memory pool functions \n");
   // ROSE_ASSERT(false);
-     Grammar::writeFile(ROSE_TraverseMemoryPoolSourceFile, ".", getGrammarName() + "TraverseMemoryPool", ".C");
+     Grammar::writeFile(ROSE_TraverseMemoryPoolSourceFile, target_directory, getGrammarName() + "TraverseMemoryPool", ".C");
 #endif
 
 
@@ -2623,7 +2627,7 @@ Grammar::buildCode ()
 
   // printf ("Exiting after building code to check data members which are pointers to IR nodes \n");
   // ROSE_ASSERT(false);
-     Grammar::writeFile(ROSE_CheckingIfDataMembersAreInMemoryPoolSourceFile, ".", getGrammarName() + "CheckingIfDataMembersAreInMemoryPool", ".C");
+     Grammar::writeFile(ROSE_CheckingIfDataMembersAreInMemoryPoolSourceFile, target_directory, getGrammarName() + "CheckingIfDataMembersAreInMemoryPool", ".C");
 #endif
 
 #if 1
@@ -2632,7 +2636,7 @@ Grammar::buildCode ()
   // generate code for return a list of variants in the class hierarchy subtree
   // --------------------------------------------
      string returnClassHierarchySubTreeFileName = string(getGrammarName()) + "ReturnClassHierarchySubTree.C";
-     fstream ROSE_returnClassHierarchySubTreeSourceFile(returnClassHierarchySubTreeFileName.c_str(),ios::out);
+     fstream ROSE_returnClassHierarchySubTreeSourceFile(std::string(target_directory+"/"+returnClassHierarchySubTreeFileName).c_str(),ios::out);
      ROSE_ASSERT (ROSE_returnClassHierarchySubTreeSourceFile.good() == true);
 
      ROSE_returnClassHierarchySubTreeSourceFile << includeHeaderString;
@@ -2653,7 +2657,7 @@ Grammar::buildCode ()
   // generate code for return a list of variants in the class hierarchy subtree
   // --------------------------------------------
      string memoryPoolTraversalFileName = "AstQueryMemoryPool.h";
-     fstream ROSE_memoryPoolTraversalSourceFile(memoryPoolTraversalFileName.c_str(),ios::out);
+     fstream ROSE_memoryPoolTraversalSourceFile(std::string(target_directory+"/"+ memoryPoolTraversalFileName).c_str(),ios::out);
      ROSE_ASSERT (ROSE_memoryPoolTraversalSourceFile.good() == true);
 
   // Now build the source code for the terminals and non-terminals in the grammar
@@ -2684,7 +2688,7 @@ Grammar::buildCode ()
 
   // printf ("Exiting after building code to return data members which are pointers to IR nodes \n");
   // ROSE_ASSERT(false);
-     Grammar::writeFile(ROSE_ReturnDataMemberPointersSourceFile, ".", getGrammarName() + "ReturnDataMemberPointers", ".C");
+     Grammar::writeFile(ROSE_ReturnDataMemberPointersSourceFile, target_directory, getGrammarName() + "ReturnDataMemberPointers", ".C");
 #endif
 
 #if 1
@@ -2702,7 +2706,7 @@ Grammar::buildCode ()
 
   // printf ("Exiting after building code to return references data members which are pointers to IR nodes \n");
   // ROSE_ASSERT(false);
-     Grammar::writeFile(ROSE_ProcessDataMemberReferenceToPointersSourceFile, ".", getGrammarName() + "ProcessDataMemberReferenceToPointers", ".C");
+     Grammar::writeFile(ROSE_ProcessDataMemberReferenceToPointersSourceFile, target_directory, getGrammarName() + "ProcessDataMemberReferenceToPointers", ".C");
 #endif
 
 #if 1
@@ -2722,7 +2726,7 @@ Grammar::buildCode ()
 
   // printf ("Exiting after building code to get the child index from any IR node \n");
   // ROSE_ASSERT(false);
-     Grammar::writeFile(ROSE_GetChildIndexSourceFile, ".", getGrammarName() + "GetChildIndex", ".C");
+     Grammar::writeFile(ROSE_GetChildIndexSourceFile, target_directory, getGrammarName() + "GetChildIndex", ".C");
 #endif
 
 #if 1
@@ -2740,7 +2744,7 @@ Grammar::buildCode ()
 
   // printf ("Exiting after copy member functions \n");
   // ROSE_ASSERT(false);
-     Grammar::writeFile(ROSE_CopyMemberFunctionsSourceFile, ".", getGrammarName() + "CopyMemberFunctions", ".C");
+     Grammar::writeFile(ROSE_CopyMemberFunctionsSourceFile, target_directory, getGrammarName() + "CopyMemberFunctions", ".C");
 #endif
 
 
@@ -2758,7 +2762,7 @@ Grammar::buildCode ()
   // Generate the implementations of the tree traversal functions
      buildTreeTraversalFunctions(*rootNode, ROSE_treeTraversalFunctionsSourceFile);
      cout << "DONE: buildTreeTraversalFunctions()" << endl;
-     Grammar::writeFile(ROSE_treeTraversalFunctionsSourceFile, ".", getGrammarName() + "TreeTraversalSuccessorContainer", ".C");
+     Grammar::writeFile(ROSE_treeTraversalFunctionsSourceFile, target_directory, getGrammarName() + "TreeTraversalSuccessorContainer", ".C");
 
      //---------------------------------------------------------------------------------------------
      // generate what is necessary for SAGE support in AstProcessing classes
@@ -2766,7 +2770,7 @@ Grammar::buildCode ()
      cout << "building TreeTraversalAccessEnums ... ";
      string treeTraversalClassHeaderFileName = getGrammarName();
      treeTraversalClassHeaderFileName += "TreeTraversalAccessEnums.h";
-     ofstream ROSE_treeTraversalClassHeaderFile(treeTraversalClassHeaderFileName.c_str());
+     ofstream ROSE_treeTraversalClassHeaderFile(string(target_directory+"/"+treeTraversalClassHeaderFileName).c_str());
      ROSE_ASSERT (ROSE_treeTraversalClassHeaderFile.good() == true);
      ROSE_treeTraversalClassHeaderFile << "// GENERATED HEADER FILE --- DO NOT MODIFY!"
 				       << endl << endl;
@@ -2776,7 +2780,7 @@ Grammar::buildCode ()
   // MS: not really needed because of typeid(node).name()
   // MS: generation of VariantName Strings
      string variantEnumNamesFileName = string(getGrammarName())+"VariantEnumNames.C";
-     ofstream variantEnumNamesFile(variantEnumNamesFileName.c_str());
+     ofstream variantEnumNamesFile(string(target_directory+"/"+variantEnumNamesFileName).c_str());
      ROSE_ASSERT(variantEnumNamesFile.good() == true);     
      string  variantEnumNames=buildVariantEnumNames();
 
@@ -2792,7 +2796,7 @@ Grammar::buildCode ()
 
      buildRTIFile(rootNode, rtiFile);
      cout << "DONE: buildRTIFile" << endl;
-     Grammar::writeFile(rtiFile, ".", getGrammarName() + "RTI", ".C");
+     Grammar::writeFile(rtiFile, target_directory, getGrammarName() + "RTI", ".C");
 
 #if 0
   // DQ (11/27/2005): Support for renaming transformations for ROSE project 
@@ -2825,7 +2829,7 @@ Grammar::buildCode ()
 
   // printf ("Exiting after building traverse memory pool functions \n");
   // ROSE_ASSERT(false);
-     Grammar::writeFile(ROSE_ConstructorTakingStorageClassSourceFile, ".", "SourcesOfIRNodesAstFileIOSupport", ".C");
+     Grammar::writeFile(ROSE_ConstructorTakingStorageClassSourceFile, target_directory+"/astFileIO/", "SourcesOfIRNodesAstFileIOSupport", ".C");
 #endif
 #if 1
   // --------------------------------------------
@@ -2836,7 +2840,7 @@ Grammar::buildCode ()
      ROSE_ASSERT (rootNode != NULL);
      buildStringForMemoryPoolSupport(rootNode,ROSE_MemoryPoolSupportFile);
      cout << "DONE: buildStringForMemoryPoolSupport()" << endl;
-     Grammar::writeFile(ROSE_MemoryPoolSupportFile, ".", getGrammarName() + "MemoryPoolSupport", ".h");
+     Grammar::writeFile(ROSE_MemoryPoolSupportFile, target_directory, getGrammarName() + "MemoryPoolSupport", ".h");
   // --------------------------------------------
   // generate code for memory pool support source
   // --------------------------------------------
@@ -2845,7 +2849,7 @@ Grammar::buildCode ()
      ROSE_ASSERT (rootNode != NULL);
      buildStringForMemoryPoolSupportSource(rootNode,ROSE_MemoryPoolSupportFile);
      cout << "DONE: buildStringForMemoryPoolSupportSource()" << endl;
-     Grammar::writeFile(ROSE_MemoryPoolSupportFile, ".", getGrammarName() + "MemoryPoolSupport", ".C");
+     Grammar::writeFile(ROSE_MemoryPoolSupportFile, target_directory, getGrammarName() + "MemoryPoolSupport", ".C");
 #endif
 
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -2882,12 +2886,12 @@ Grammar::buildCode ()
 
   // printf ("Exiting after building code for new constructors without source position information \n");
   // ROSE_ASSERT(false);
-     Grammar::writeFile(ROSE_NewConstructorsSourceFile, ".", getGrammarName() + "NewConstructors", ".C");
+     Grammar::writeFile(ROSE_NewConstructorsSourceFile, target_directory, getGrammarName() + "NewConstructors", ".C");
 #endif
 
 #if 1
      string outputClassesAndFieldsSourceFileName = string(getGrammarName()) + "ClassesAndFields.txt";
-     ofstream ROSE_outputClassesAndFieldsSourceFile(outputClassesAndFieldsSourceFileName.c_str());
+     ofstream ROSE_outputClassesAndFieldsSourceFile(string(target_directory+"/"+outputClassesAndFieldsSourceFileName).c_str());
      ROSE_ASSERT (ROSE_outputClassesAndFieldsSourceFile.good() == true);
 
      printf ("Calling outputClassesAndFields() \n");

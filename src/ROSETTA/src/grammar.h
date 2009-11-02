@@ -170,6 +170,9 @@ class Grammar
           std::map<size_t, std::string> astVariantToNodeMap;
           std::map<size_t, Terminal*>   astVariantToTerminalMap;
 
+          //The directory name we should generate the files to
+          std::string target_directory;
+
           Terminal* rootNode;
 
        // This is a pointer to the lower level grammar (every grammar has a lower level grammar except the C++ grammar)
@@ -236,7 +239,8 @@ class Grammar
           Grammar ( const std::string& inputGrammarName, 
                     const std::string& inputPrefixName,
                     const std::string& inputGrammarNameBaseClass = "ROSE_BaseGrammar",
-                    const Grammar* parentGrammar = NULL );
+                    const Grammar* parentGrammar = NULL,
+                    const std::string& t_directory = "");
 
 	  std::string grammarName;
 	  std::string grammarPrefixName;
