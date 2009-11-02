@@ -11,8 +11,8 @@ esac
 # problem if it is not present (removes dependence within ROSE on dot).
 if (`dot -V >& /dev/null`) then
    echo "Found dot program in user's path, generating postscript file ..."
-   /usr/bin/time dot -v -Gratio=compact -Gfontname="Helvetica" $input -Tps2 -o $output.ps_temp -Gordering="out" -Gsize="7.5,10"
-   /usr/bin/time ps2pdf $output.ps_temp $output
+   dot -v -Gratio=compact -Gfontname="Helvetica" $input -Tps2 -o $output.ps_temp -Gordering="out" -Gsize="7.5,10"
+   ps2pdf $output.ps_temp $output
    rm -f $output.ps_temp
 else
    echo "Can't find GraphViz dot program in user's path, ignoring conversion to postscript file (not a problem) ..."
