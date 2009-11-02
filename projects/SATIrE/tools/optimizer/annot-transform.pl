@@ -101,6 +101,12 @@ commutative(+).
 commutative(*).
 commutative(=).
 
+% Distributivity: Int*X/Int -> Int/Int*X
+simplify(A*(B/C), AC*B) :-
+  number(A),
+  number(C),
+  AC is A/C.
+
 % op(Int, X) -> op(X, Int)
 simplify(Term, TermS) :-
   bin_op(Term, F, A, B),
@@ -108,7 +114,6 @@ simplify(Term, TermS) :-
   number(A),
   \+ number(B),
   bin_op(TermS, F, B, A).
-
 
 % X*Int =< Y -> X =< Y/Int
 simplify(Term, TermS) :-
@@ -175,12 +180,12 @@ nested_in(M1, M2) :-
 
 % loop unrolling
 % --------------
-unrolled(M, K, annotation(M, wcet_loopbound(Lo..Up)), 
-              [annotation(M, wcet_loopbound(Lo1..Up1))]) :-
+unrolled(M, K, _, annotation(M, wcet_loopbound(Lo..Up)), 
+                 [annotation(M, wcet_loopbound(Lo1..Up1))]) :-
   Lo1 is floor(Lo/K),
   Up1 is ceiling(Up/K).
 
-unrolled(M_Loop, K, annotation(M_Annot, wcet_constraint(Term)), NewAnnots) :-
+unrolled(M_Loop, K, _, annotation(M_Annot, wcet_constraint(Term)), NewAnnots) :-
   replace(Term, M_Loop, M_Loop*K, Term1), 
   (   nested_in(M_Annot, M_Loop)
   ->  list_from_to(1, K, Ns),
@@ -206,16 +211,16 @@ sumterm(Base, [N|Ns], Sum) :-
 
 % loop blocking
 % --------------
-blocked(M, K, N, annotation(M, wcet_loopbound(Bound)), 
-             [annotation(M, wcet_loopbound(New)),
-              annotation(Mblk, wcet_loopbound(K))]) :-
+blocked(M, K, N, _, annotation(M, wcet_loopbound(Bound)), 
+                   [annotation(M, wcet_loopbound(New)),
+                    annotation(Mblk, wcet_loopbound(K))]) :-
   New is ceiling(Bound/K),
   repeat_string('_1', N, S1),
   string_concat(M, S1, S2), string_to_atom(S2, Mblk).
 
 % this rule moves annotations to their new locations deeper in the tree
-blocked(M_blk, _, _, annotation(Mann, wcet_constraint(Term)), 
-                    [annotation(Mnew, wcet_constraint(Term1))]) :-
+blocked(M_blk, _, _, _, annotation(Mann, wcet_constraint(Term)), 
+                       [annotation(Mnew, wcet_constraint(Term1))]) :-
   string_concat(M_blk, '_1', M_newroot),
   replace(Mann, M_blk, M_newroot, Mnew),
   replace(Term, M_blk, M_newroot, Term1).
@@ -224,8 +229,24 @@ blocked(M_blk, _, _, annotation(Mann, wcet_constraint(Term)),
 
 % loop fusion
 % --------------
-fused(M_orig, M_fused, annotation(M_orig,  Annot), 
-                      [annotation(M_fused, Annot)]).
+fused(M_orig, M_fused, _, annotation(M_orig,  Annot), 
+                         [annotation(M_fused, Annot)]).
+
+
+% loop interchange
+% -----------------
+interchanged(M_out, M_in, _, annotation(M_out, wcet_loopbound(Lo..Up)),
+                            [annotation(M_in,  wcet_loopbound(Lo..Up))]).
+interchanged(M_out, M_in, _, annotation(M_in,  wcet_loopbound(Lo..Up)),
+                            [annotation(M_out, wcet_loopbound(Lo..Up))]).
+interchanged(M_out, M_in, Annotations,
+	     annotation(M_Annot, wcet_constraint(Lhs=<Rhs)), 
+            [annotation(M_Annot, wcet_constraint(Lhs1=<Rhs1))]) :-
+  member(annotation(M_in, wcet_loopbound(Lo..Up)), Annotations),
+  replace(Lhs, M_out, M_in/Lo, Lhs1),
+  replace(Rhs, M_out, M_in/Up, Rhs1).
+
+
 
 %-----------------------------------------------------------------------
 %
@@ -234,29 +255,29 @@ fused(M_orig, M_fused, annotation(M_orig,  Annot),
 apply_transformations([end], Annotations, Annotations) :- !.
 apply_transformations([T|Ts], Annotations, Result) :-
   write('Processing '), write(T), writeln(':'),
-  apply_transformation(T, Annotations, AnnotationsT),
+  apply_transformation(T, Annotations, Annotations, AnnotationsT),
   apply_transformations(Ts, AnnotationsT, Result).
 
-apply_transformation(_, [], []).
-apply_transformation(T, [A|As], ATs) :-
-  write('    '), writeln(A),
+apply_transformation(_, _, [], []).
+apply_transformation(T, OAs, [A|As], ATs) :-
+  write('    '), writeln(A), 
   write('  ->'),
-  apply(T, A, ATs_trans),
+  apply(T, OAs, A, ATs_trans),
   write(ATs_trans), nl, 
   %ATs_trans = ATs_sim, !,
   maplist(simplify_term, ATs_trans, ATs_sim), !, 
-  %((ATs_trans \= ATs_sim) -> write('  ->'), write(ATs_sim), nl ; true), 
+  ((ATs_trans \= ATs_sim) -> write('  ->'), write(ATs_sim), nl ; true), 
   nl,
-  apply_transformation(T, As, ATs_rem),
+  apply_transformation(T, OAs, As, ATs_rem),
   append(ATs_sim, ATs_rem, ATs).
 
-apply(Transformation, Annot, NewAnnots) :- 
+apply(Transformation, OldAnnots, Annot, NewAnnots) :- 
   bin_op(Transformation, F, Mt, K),
-  call(F, Mt, K, Annot, NewAnnots).
-apply(Transformation, Annot, NewAnnots) :- 
+  call(F, Mt, K, OldAnnots, Annot, NewAnnots).
+apply(Transformation, OldAnnots, Annot, NewAnnots) :- 
   tern_op(Transformation, F, Mt, K, N),
-  call(F, Mt, K, N, Annot, NewAnnots).
-apply(_, A, [A]).
+  call(F, Mt, K, N, OldAnnots, Annot, NewAnnots).
+apply(_, _, A, [A]).
   
 %-----------------------------------------------------------------------
 % MAIN
