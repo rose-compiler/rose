@@ -1,7 +1,7 @@
 #!/bin/sh
 
 JOBS=-j8 # 8 parallel compiler jobs
-CCARGS="CXX=g++-4.2.0 CC=gcc-4.2.0"
+CCARGS="CXX=g++ CC=gcc"
 PREFIX="`pwd`/install"
 
 ENABLE_CLANG="0"
