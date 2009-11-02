@@ -382,7 +382,7 @@ Grammar::generateStorageClassesFiles()
    {
 
   // Building the file StorageClasses.h
-     ofstream AstSpecificDataHeaderFile ("AstSpecificDataManagingClass.h") ;
+     ofstream AstSpecificDataHeaderFile ( std::string(target_directory+"/astFileIO/AstSpecificDataManagingClass.h").c_str()) ;
      std::cout << "Building StorageClasses header" << std::flush;
      StringUtility::FileWithLineNumbers readFromFile = readFileWithPos("../Grammar/grammarStaticDataManagingClassHeader.macro");
      std::string dataMembers = buildStaticDataMemberListClassEntries(*rootNode);
@@ -413,7 +413,7 @@ Grammar::generateStorageClassesFiles()
      readFromFile = GrammarString::copyEdit(readFromFile,"$REPLACE_STORAGECLASSDATAMEMBERS", dataMembersStorageClass.c_str() );
      StorageClassHeaderFile += readFromFile;
      buildStorageClassHeaderFiles(*rootNode,StorageClassHeaderFile);
-     Grammar::writeFile(StorageClassHeaderFile, ".", "StorageClasses", ".h");
+     Grammar::writeFile(StorageClassHeaderFile, target_directory, "StorageClasses", ".h");
      std::cout << "... done " << std::endl;
 
   // Building the file StorageClasses.C
@@ -513,7 +513,7 @@ Grammar::generateStorageClassesFiles()
 
      StorageClassSourceFile << "\n\n";
      StorageClassSourceFile << "#endif // STORAGE_CLASSES_H\n";
-     Grammar::writeFile(StorageClassSourceFile, ".", "StorageClasses", ".C");
+     Grammar::writeFile(StorageClassSourceFile, target_directory, "StorageClasses", ".C");
      std::cout << "... done " << std::endl;
      return;
    }

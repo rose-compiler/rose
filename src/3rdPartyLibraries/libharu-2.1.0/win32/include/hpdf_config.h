@@ -48,10 +48,10 @@
 #undef HPDF_DEBUG_TRACE
 
 /* libpng is not available */
-#undef HPDF_NOPNGLIB
+//#undef HPDF_NOPNGLIB
 
 /* zlib is not available */
-#undef HPDF_NOZLIB
+//#undef HPDF_NOZLIB
 
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT

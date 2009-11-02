@@ -1,0 +1,68 @@
+
+include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
+
+
+########### next target ###############
+
+set(bug125_SRCS bug125.C)
+
+kde4_add_executable(bug125 ${bug125_SRCS})
+
+target_link_libraries(bug125 ${KDE4_KDECORE_LIBS})
+
+
+########### next target ###############
+
+set(qualifiedName_SRCS qualifiedName.C)
+
+kde4_add_executable(qualifiedName ${qualifiedName_SRCS})
+
+target_link_libraries(qualifiedName ${KDE4_KDECORE_LIBS})
+
+
+########### install files ###############
+
+
+
+
+#original Makefile.am contents follow:
+
+#include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+#
+## To keep compile commands tidy, please ONLY put required include flags here.
+#INCLUDES = $(ROSE_INCLUDES)
+#
+## The bug numbers come from ROSE's SciDAC bug trackers
+#noinst_PROGRAMS = \
+#       bug125 \
+#       qualifiedName
+#
+#bug125_SOURCES = bug125.C
+#qualifiedName_SOURCES = qualifiedName.C
+#
+#LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+#
+#VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
+#
+#VALGRIND =
+#
+#testbug125:bug125 
+#	./bug125 -c $(srcdir)/inputbug125.C
+#
+#testqualifiedName: qualifiedName
+#	./qualifiedName -c $(top_srcdir)/projects/autoTuning/tests/jacobi.c
+#
+#EXTRA_DIST =  inputbug125.C
+#
+#check-local:
+#	@$(MAKE) testbug125 testqualifiedName
+#
+#distclean-local:
+#	rm -rf Makefile
+#
+#clean-local:
+#	rm -rf *.o *.ps *.pdf *.dot rose_*.C rose_*.c core *.int.c *.ti a.out roseTestProgram.C
+#
+#cleandata:
+#	rm -f *.ti *.ii rose_*.C rose_*.c *.dot test*.o rose_*.o
+#

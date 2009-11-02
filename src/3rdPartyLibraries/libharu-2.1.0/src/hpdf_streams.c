@@ -26,7 +26,9 @@
 
 // DQ (9/28/2009): The inclusion of "hpdf_config.h" still is not turning ZLIB off,
 // so try this more drastic action to turn it off (this is a problem for UBUNTU systems).
-#define HPDF_NOZLIB
+#ifndef HPDF_NOZLIB
+#define HPDF_NOZLIB 1
+#endif
 
 #ifndef HPDF_NOZLIB
 #include <zlib.h>

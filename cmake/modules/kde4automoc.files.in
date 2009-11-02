@@ -1,0 +1,4 @@
+MOC_INCLUDES:
+@_moc_incs@
+SOURCES:
+@_moc_files@
