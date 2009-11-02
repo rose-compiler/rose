@@ -1968,6 +1968,11 @@ buildModuleStatementAndDefinition (string name, SgScopeStatement* scope)
   // nondefiningClassDeclaration->set_endOfConstruct(SOURCE_POSITION);
      setSourcePosition(nondefiningClassDeclaration);
 
+ // Liao 10/30/2009. we now ask for explicit creation of SgClassType. The constructor will not create it by default
+     if (nondefiningClassDeclaration->get_type () == NULL)
+       nondefiningClassDeclaration->set_type (SgClassType::createType(nondefiningClassDeclaration));
+     classDeclaration->set_type(nondefiningClassDeclaration->get_type ());
+
   // Set the internal reference to the non-defining declaration
      classDeclaration->set_firstNondefiningDeclaration(nondefiningClassDeclaration);
 
@@ -2042,6 +2047,10 @@ buildDerivedTypeStatementAndDefinition (string name, SgScopeStatement* scope)
   // Set the non defining declaration in the defining declaration (both are required)
      SgDerivedTypeStatement* nondefiningClassDeclaration = new SgDerivedTypeStatement(name.c_str(),SgClassDeclaration::e_struct,NULL,NULL);
      assert(classDeclaration != NULL);
+   // Liao 10/30/2009. we now ask for explicit creation of SgClassType. The constructor will not create it by default
+     if (nondefiningClassDeclaration->get_type () == NULL) 
+       nondefiningClassDeclaration->set_type (SgClassType::createType(nondefiningClassDeclaration));
+     classDeclaration->set_type(nondefiningClassDeclaration->get_type ());
 
   // nondefiningClassDeclaration->set_endOfConstruct(SOURCE_POSITION);
 

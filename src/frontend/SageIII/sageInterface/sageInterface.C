@@ -7100,6 +7100,8 @@ void SageInterface::setPragma(SgPragmaDeclaration* decl, SgPragma *pragma)
     ROSE_ASSERT(scope);
     SgClassDeclaration* nondefdecl = isSgClassDeclaration(structDecl->get_firstNondefiningDeclaration());
     ROSE_ASSERT(nondefdecl);
+    SgClassDeclaration* defdecl = isSgClassDeclaration(structDecl->get_definingDeclaration());
+      ROSE_ASSERT(defdecl);
     // Liao, 9/2/2009
     // fixup missing scope when bottomup AST building is used
     if (structDecl->get_scope() == NULL)
@@ -7125,14 +7127,27 @@ void SageInterface::setPragma(SgPragmaDeclaration* decl, SgPragma *pragma)
       mysymbol = new SgClassSymbol(nondefdecl);
       ROSE_ASSERT(mysymbol);
       scope->insert_symbol(name, mysymbol);
-      SgClassDeclaration* defdecl = isSgClassDeclaration(structDecl->get_definingDeclaration());
-      ROSE_ASSERT(defdecl);
       defdecl->set_scope(scope);
       nondefdecl->set_scope(scope);
 
       defdecl->set_parent(scope);
       nondefdecl->set_parent(scope);
     }
+    //fixup SgClassType, which is associated with the first non-defining declaration only
+    //and the other declarations share it.
+    if (nondefdecl->get_type() == NULL)
+    {
+      nondefdecl->set_type(SgClassType::createType(nondefdecl));
+    }
+    ROSE_ASSERT (nondefdecl->get_type() != NULL);
+    if (defdecl->get_type()!= nondefdecl->get_type())
+    {
+      if (defdecl->get_type()) 
+        delete defdecl->get_type();
+      defdecl->set_type(nondefdecl->get_type());
+    }
+    ROSE_ASSERT (defdecl->get_type() != NULL);
+    ROSE_ASSERT (defdecl->get_type() == nondefdecl->get_type());
   }
   void SageInterface::fixClassDeclaration(SgClassDeclaration* classDecl, SgScopeStatement* scope)
   {

@@ -163,11 +163,11 @@ AstTests::runAllTests(SgProject* sageProject)
   // It is a proper place to put any tests of the AST that must always pass!
 
   // Possible future tests: 
-  //    1) Test for redundent statements in the same basic block.
+  //    1) Test for redundant statements in the same basic block.
   //       This is a current bug which the AST tests didn't catch.
 
   // DQ (7/6/2005): Introduce tracking of performance of ROSE.
-  // ROSE_Performance::TimingPerformance("AST Consistancy Tests");
+  // ROSE_Performance::TimingPerformance("AST Consistency Tests");
      TimingPerformance timer ("AST Consistency Tests:");
 
   // printf ("Exiting at top of AstTests::runAllTests() \n");
@@ -557,6 +557,23 @@ AstTests::runAllTests(SgProject* sageProject)
                        }
                     ROSE_ASSERT(declarationStatement->get_firstNondefiningDeclaration() != NULL);
                  // ROSE_ASSERT(declarationStatement->get_definingDeclaration() != NULL);
+
+                 // Liao 10/30/2009, We enforce a unique SgClassType node for SgClassDeclaration and its derived classes
+                 // SgClassType should be associated with the first nondefining class declaration
+                 // All other relevant declarations (defining and other nondefining declarations) should share this type node
+                    SgClassType * cls_type = isSgClassType (*i); 
+                    if (cls_type)
+                    {
+                      SgClassDeclaration * cls_decl = isSgClassDeclaration (cls_type->get_declaration());
+                      ROSE_ASSERT (cls_decl);
+                      if (cls_decl->get_firstNondefiningDeclaration()!= NULL)
+                        if (isSgClassDeclaration(cls_decl->get_firstNondefiningDeclaration()) != cls_decl )
+                        {
+                          printf("    Warning: found a SgClassType which is NOT associated with the first nondefining class declaration\n");
+                          printf("    Warning: SgClassType = %p name = %s associated with SgClassDeclaration =%p\n", cls_type, cls_type->get_name().getString().c_str(), cls_decl);
+                          ROSE_ASSERT (false);
+                        }
+                    }  
 
                  // DQ (10/20/2004): Added test to find locations where the mangled template 
                  // class names might be used in unparsing!

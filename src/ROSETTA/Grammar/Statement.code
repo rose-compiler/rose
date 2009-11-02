@@ -9897,6 +9897,13 @@ SgClassDeclaration::post_construction_initialization()
           set_type(SgClassType::createType(this)); 
 #else
   // Only build a type if one does not exist
+  // Liao, 10/30/2009. We should not create SgClassType during constructing
+  // Since only the first nondefining class declaration should have a dedicated SgClassType node
+  // the defining class declaration (and other nondefining declaration) just shared that SgClassType.
+  // The constructor does not know if a defining or nondefining declaration is being built
+  // so we have to let users to create SgClassType by themselves after calling the constructor
+  // This will ultimately avoid duplicated SgClassType nodes in the AST
+#if 0 
      if (get_type() == NULL)
         {
 #if 0
@@ -9906,6 +9913,7 @@ SgClassDeclaration::post_construction_initialization()
 #endif
           set_type(SgClassType::createType(this));
         }
+#endif        
      
 #endif
    }
