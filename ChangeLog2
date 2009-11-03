@@ -1,3 +1,22 @@
+2009-11-02 22:29  liao6
+
+	* [r8039] /trunk/ROSE/src/ROSETTA/Grammar/Statement.code,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/sage_gen_be.C,
+	  /trunk/ROSE/src/frontend/OpenFortranParser_SAGE_Connection/fortran_support.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/midend/astDiagnostics/AstConsistencyTests.C,
+	  /trunk/ROSE/src/midend/astDiagnostics/AstConsistencyTests.h,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/buildStructDeclaration.C,
+	  /trunk/ROSE/tutorial/addStruct.C: Fixed the duplicated
+	  SgClassType nodes for a class declaration
+	  * Enforce a rule that SgClassType, similar to a symbol, should be
+	  associated with the first non-defining declaration of
+	  SgClassDeclaration
+	  * We now require explicit creation of SgClassType outside of the
+	  SgClassDeclaration's constructor
+	  * Added an AST consistency check for this rule
+
 2009-11-02 16:48  matzke
 
 	* [r8037] /trunk/ROSE/scripts/dotgenLetterPDF: removed reference to
