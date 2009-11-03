@@ -3921,6 +3921,50 @@ IR.  However this the IR is perhaps best represented by the Doxygen
 generated web pages which present both the hierarchy of C++ classes 
 used to represent the IR and the details of the individual classes.
 
+Due to the number of nodes in the IR it is more productive to identify
+here any elements that should be considered for removal from the
+existing IR rather than listing elements which should be kept.
+
+For the sake of simplifying the user interface and reducing confusion,
+the IR has been reviewed to identify nodes which are not being used
+with a view to a decision as to whether these nodes should remain
+in the IR.  The following nodes have thus far been identified as
+being unused:
+\begin{itemize}
+\item SgAsmUnaryPlus
+\item SgAsmUnaryMinus
+\item SgCommonSymbol
+\item SgDefaultSymbol
+\item SgDirectory
+\item SgDirectoryList
+\item SgExpressionRoot
+\item SgFileList
+\item SgInterfaceSymbol
+\item SgIntrinsicSymbol
+\item SgModuleSymbol
+\item SgOptions
+\item SgRefExp
+\item SgSpawnStmt
+\item SgTypeGlobalVoid
+\item SgUnknownArrayOrFunctionReference
+\item SgVariantExpression
+\item SgVariantStatement
+\end{itemize}
+
+If we choose to split the ROSE header files, it would also be prudent
+to consider if the IR definition header file (Cxx\_Grammar.h) can
+or should be split.  This should be done by identifying groupings of
+related nodes.  Suggested groupings include:
+\begin{itemize}
+\item IRCore.h (SgNode, all other nodes not identified below and common functionality such as variants)
+\item IRSupport.h (SgSupport and subclasses)
+\item IRExpr.h (SgExpression and subclasses)
+\item IRStmt.h (SgStatement and subclasses)
+\item IRDecl.h (SgDeclarationStatement and subclasses)
+\item IRType.h (SgType and subclasses)
+\item IRAsm.h (SgAsmNode and subclasses)
+\end{itemize}
+
 \newpage
 
 % Red Book (reference to legendary PDF documentation)
