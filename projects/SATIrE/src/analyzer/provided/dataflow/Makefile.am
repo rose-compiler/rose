@@ -160,7 +160,7 @@ if WITH_SWI_PROLOG
 INCLUDES += -I$(SWI_PROLOG_INCLUDE_DIR)
 endif
 
-$(srcdir)/satiredfa.C: satire/satiredfa.h satiredfa_analyzers satiredfa_cases
+satiredfa.C: satire/satiredfa.h satiredfa_analyzers satiredfa_cases
 
 satiredfa_analyzers:
 	rm -f satiredfa_analyzers
