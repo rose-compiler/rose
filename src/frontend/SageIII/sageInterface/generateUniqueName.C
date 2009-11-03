@@ -816,6 +816,7 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
                case V_SgNullStatement:
                case V_SgReturnStmt:
                case V_SgBreakStmt:
+               case V_SgContinueStmt:
                case V_SgBasicBlock:
                case V_SgForStatement:
                case V_SgForInitStatement:
