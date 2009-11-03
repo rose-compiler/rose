@@ -261,30 +261,20 @@ AC_OUTPUT
 
 # SUMMARY
 
-SWI_STATUS="disabled"
+SWI_STATUS="no"
 if [[ x$with_swi_prolog = xyes ]]; then
-    SWI_STATUS="enabled"
+    SWI_STATUS="yes"
     if [[ x$with_swi_prolog58 = xyes ]]; then
-       SWI_STATUS="enabled (version 5.8.x)"
+       SWI_STATUS="yes (version 5.8.x)"
     else
-       SWI_STATUS="enabled (version != 5.8.x, Termite docs will NOT be built)"
+       SWI_STATUS="yes (version != 5.8.x, Termite docs will NOT be built)"
     fi
-fi
-
-PAG_STATUS="disabled"
-if [[ x$with_pag = xyes ]]; then
-    PAG_STATUS="enabled"
-fi
-
-CBMC_STATUS="disabled"
-if [[ x$with_cbmc = xyes ]]; then
-    CBMC_STATUS="enabled"
 fi
 
 echo
 echo "------------------------------------------------------------------------"
 echo "  SATIrE configuration summary:"
-echo "    PAG .................." $PAG_STATUS
+echo "    PAG .................." $with_pag
 echo "    SWI-Prolog............" $SWI_STATUS
-echo "    CBMC ................." $CBMC_STATUS
+echo "    CBMC ................." $with_cbmc
 echo "------------------------------------------------------------------------"
