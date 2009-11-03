@@ -133,7 +133,8 @@ DISTCHECK_CONFIGURE_FLAGS = --with-boost=$(ac_boost_path)
 # DQ (7/25/2008): If ROSE was originallly configured with Fortran (by tuning 
 # on the java support) then make sure it is tested as part of the distcheck rule.
 if ROSE_USE_OPEN_FORTRAN_PARSER
-   DISTCHECK_CONFIGURE_FLAGS += --with-java
+#  DISTCHECK_CONFIGURE_FLAGS += --with-java
+   DISTCHECK_CONFIGURE_FLAGS += --with-java=$(JAVA_PATH)
 endif
 
 # DQ (7/25/2008): If ROSE was originallly configured to use the HPC Toolkit

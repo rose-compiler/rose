@@ -5,8 +5,13 @@
 
 #define BACKEND_VERBOSE_LEVEL 2
 
+// DQ (11/1/2009): replaced "version()" with separate "version_number()" and "version_message()" functions.
+// returns a string containing the current version message (includes the version number).
+std::string version_message();
+
+// DQ (11/1/2009): replaced "version()" with separate "version_number()" and "version_message()" functions.
 // returns a string containing the current version number
-std::string version();
+std::string version_number();
 
 // Simple interface for ROSE (error codes are in SgProject.frontendErrorCode(), backendErrorCode() )
 SgProject* frontend ( int argc, char** argv);
