@@ -63,6 +63,7 @@ for sample in $(find $SAMPLE_DIR \( -type d -name .svn -prune -false \) -o -type
 
     # Skip certain file names
     case "$samplebase" in
+	*.txt) continue ;;
 	Makefile.*) continue ;;
 	*~)         continue ;;
     esac
