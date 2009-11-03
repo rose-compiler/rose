@@ -16,10 +16,8 @@ int main(int argc, char **argv)
           interp.parseCommandLine(argvList);
 
           SgProject *prj = frontend(argvList);
-          SgSourceFile *file = isSgSourceFile((*prj)[0]);
-          ROSE_ASSERT(file != NULL);
-          SgGlobal *global = file->get_globalScope();
-          SgFunctionSymbol *testSym = global->lookup_function_symbol("test");
+          SgFunctionSymbol *testSym = prjFindGlobalFunction(prj, "test");
+          ROSE_ASSERT(testSym != NULL);
 
           StackFrameP head(new SMTStackFrame(&interp, testSym));
           head->initializeGlobals(prj);

@@ -56,9 +56,11 @@ TEST_INPUTS = \
     testInput/core/constructors.C \
     testInput/core/globals.c \
     testInput/core/initunion.c \
+    testInput/core/malloc.c \
     testInput/core/mdarr.c \
     testInput/core/nestedUnion.c \
     testInput/core/pointersFunctions.C \
+    testInput/core/realloc.c \
     testInput/core/varargs.c \
     testInput/extcall/hello.c \
     testInput/smt/simpleIntegerOverflow.c \
@@ -115,6 +117,8 @@ check-local: $(TEST_INPUTS)
 	./coreTest -interp:expectedReturnValue 0 $(srcdir)/testInput/core/initunion.c
 	./coreTest -interp:expectedReturnValue 10 $(srcdir)/testInput/core/varargs.c
 	./coreTest -interp:expectedReturnValue 78 $(srcdir)/testInput/core/mdarr.c
+	./coreTest -interp:expectedReturnValue 3 $(srcdir)/testInput/core/malloc.c
+	./coreTest -interp:expectedReturnValue 66 $(srcdir)/testInput/core/realloc.c
 if ROSE_USE_LIBFFI
 	./extcallInterpreter $(srcdir)/testInput/extcall/hello.c ; test $$? = 123
 endif

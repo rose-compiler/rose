@@ -209,7 +209,13 @@ class Value : public boost::enable_shared_from_this<Value>
      virtual void buildDynamicTypesAtOffset(size_t offset, std::vector<SgClassType *> &types) const;
      virtual bool hasDynamicTypeAtOffset(SgClassType *t, size_t offset) const;
 
-     virtual ValueP dereference() const;
+     //! Dereferences the Value.  It may return a NULL Value (ValueP()) if
+     //  the pointer is NULL.
+     virtual ValueP unsafeDereference() const;
+
+     //! Dereferences the Value.  Guaranteed to return a valid Value (throws an exception
+     //  when dereferencing a NULL pointer).
+     ValueP dereference() const;
 
      virtual SgFunctionSymbol *getStaticFunctionSymbol() const;
      virtual void setStaticFunctionSymbol(SgFunctionSymbol *sym);
@@ -277,6 +283,19 @@ class Value : public boost::enable_shared_from_this<Value>
          by C99 6.7.8p10.  This method is special in that it only needs to be implemented
          by "real" values, rather than passthrough values such as OffsetValue. */
      virtual void assignDefault();
+
+     /*! Reinterprets this Value to (an array of) the given type.  This is called when a
+         pointer to the Value (particularly a void pointer returned by malloc) is cast. */
+     virtual void reinterpret(SgType *newType);
+
+     /*! Performs a reallocation operation on this region of memory, as though the realloc
+         function was called with an argument being a pointer to this region. */
+     virtual void realloc(size_t newSize);
+
+     //! Retrieves the eventual target and offset of this value.  The intention is that
+     //  target and offset can act as a unique pair for pointer comparison and pointer
+     //  arithmetic.
+     virtual void targetOffset(const_ValueP &target, size_t &offset) const;
 
      Value(Position pos, StackFrameP owner);
      virtual ~Value();
@@ -349,7 +368,7 @@ class PointerValue : public BasePrimValue
 
             FOREACH_BOOL_BINARY_PRIMOP(DECLARE_BINOP_FN)
 
-            ValueP dereference() const;
+            ValueP unsafeDereference() const;
 
             SgType *defaultType() const;
 
@@ -500,10 +519,46 @@ class memcmpFnValue : public BuiltinFunctionValue
             ValueP call(SgFunctionType *fnType, const std::vector<ValueP> &args) const;
      };
 
+void interpMemset(StackFrameP owner, ValueP sArea, ValueP cVal, SgType *cValType, size_t n);
+
 class memsetFnValue : public BuiltinFunctionValue
      {
        public:
             memsetFnValue(Position pos, StackFrameP owner) : BuiltinFunctionValue(pos, owner) {}
+            std::string functionName() const;
+            ValueP call(SgFunctionType *fnType, const std::vector<ValueP> &args) const;
+     };
+
+class mallocFnValue : public BuiltinFunctionValue
+     {
+       public:
+            mallocFnValue(Position pos, StackFrameP owner) : BuiltinFunctionValue(pos, owner) {}
+            std::string functionName() const;
+            ValueP call(SgFunctionType *fnType, const std::vector<ValueP> &args) const;
+     };
+
+ValueP interpMalloc(StackFrameP owner, size_t size);
+
+class reallocFnValue : public BuiltinFunctionValue
+     {
+       public:
+            reallocFnValue(Position pos, StackFrameP owner) : BuiltinFunctionValue(pos, owner) {}
+            std::string functionName() const;
+            ValueP call(SgFunctionType *fnType, const std::vector<ValueP> &args) const;
+     };
+
+class freeFnValue : public BuiltinFunctionValue
+     {
+       public:
+            freeFnValue(Position pos, StackFrameP owner) : BuiltinFunctionValue(pos, owner) {}
+            std::string functionName() const;
+            ValueP call(SgFunctionType *fnType, const std::vector<ValueP> &args) const;
+     };
+
+class __builtin_expectFnValue : public BuiltinFunctionValue
+     {
+       public:
+            __builtin_expectFnValue(Position pos, StackFrameP owner) : BuiltinFunctionValue(pos, owner) {}
             std::string functionName() const;
             ValueP call(SgFunctionType *fnType, const std::vector<ValueP> &args) const;
      };
@@ -531,7 +586,7 @@ class BaseCompoundValue : public Value
             void forEachSubfield(FieldVisitor &visit, long offset = 0) = 0;
             void forEachPrim(FieldVisitor &visit, long offset = 0);
 
-            ValueP dereference() const;
+            ValueP unsafeDereference() const;
 
             bool getConcreteValueBool() const;
             char getConcreteValueChar() const;
@@ -566,6 +621,8 @@ class BaseCompoundValue : public Value
     we are able to handle most forms of pointer arithmetic. */
 class CompoundValue : public BaseCompoundValue
      {
+       friend class DynamicValue;
+
        public:
        typedef std::map<size_t, ValueP> fieldMap_t;
 
@@ -647,6 +704,8 @@ class OffsetValue : public BaseCompoundValue
 
        void forEachSubfield(FieldVisitor &visit, long offset = 0);
        void destroy();
+
+       void targetOffset(const_ValueP &target, size_t &offset) const;
      };
 
 /*! UnionDiscriminantValue is to UnionValue as OffsetValue is to CompoundValue.  Calls to
@@ -670,6 +729,7 @@ class UnionDiscriminantValue : public BaseCompoundValue
        void forEachSubfield(FieldVisitor &visit, long offset = 0);
        void setDiscriminantAtOffset(size_t offset, SgSymbol *discriminant);
        void destroy();
+       void targetOffset(const_ValueP &target, size_t &offset) const;
      };
 
 /*! UnionValues change their underlying storage in response to calls to setDiscriminant. */
@@ -700,6 +760,41 @@ class UnionValue : public BaseCompoundValue
        void setDiscriminantAtOffset(size_t offset, SgSymbol *discriminant);
        void destroy();
        void assignDefault();
+     };
+
+/*! DynamicValue is the Value pointed to by the result of malloc().  It changes its underlying
+    storage in response to calls to reinterpret(), which is called when the pointer is cast. */
+
+class DynamicValue : public BaseCompoundValue
+     {
+       size_t size;
+       
+       /*! We need to be able to support the value being initialized
+           (i.e. using memset or calloc) before it is reinterpreted.
+           We therefore initialize the Value with a "canary" field
+           which we test for validity upon reinterpretation.  The
+           isCanary boolean indicates whether the canary is in place.
+
+           A more robust approach would involve multiple canaries,
+           one for each byte of the allocated region.  By scanning
+           for defined canaries we would be able to determine exactly
+           which regions the client program has initialized. */
+       bool storageIsCanary;
+
+       ValueP storage;
+       SgType *storageType;
+
+       public:
+       DynamicValue(size_t size, Position pos, StackFrameP owner);
+
+       std::string show() const;
+       size_t forwardValidity() const;
+       void forEachSubfield(FieldVisitor &visit, long offset);
+       ValueP fieldAtOffset(size_t offset);
+       const_ValueP fieldAtOffset(size_t offset) const;
+       void reinterpret(SgType *newType);
+       void destroy();
+       void realloc(size_t newSize);
      };
 
 class BasePrimTypeValue : public BasePrimValue
@@ -1104,7 +1199,7 @@ class StackFrame : public boost::enable_shared_from_this<StackFrame>
 
      void defaultInitialize(ValueP var, bool isStatic);
 
-     void assignInitialize(ValueP var, SgExpression *rhs, SgType *varApt, bool isStatic = false);
+     void assignInitialize(ValueP var, SgAssignInitializer *assignInit, SgType *varApt, bool isStatic = false);
      void ctorInitialize(ValueP var, SgConstructorInitializer *ctorInit, SgType *varApt, bool isStatic = false);
      void aggregateInitialize(ValueP var, SgAggregateInitializer *aggInit, SgType *varApt, bool isStatic = false);
      void initialize(ValueP var, SgInitializer *init, SgType *varApt, bool isStatic = false);
@@ -1242,6 +1337,8 @@ class StackFrame : public boost::enable_shared_from_this<StackFrame>
      virtual ~StackFrame();
 
    };
+
+SgFunctionSymbol *prjFindGlobalFunction(const SgProject *prj, const SgName &fnName);
 
 }; // namespace Interp
 
