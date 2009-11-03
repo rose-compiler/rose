@@ -129,9 +129,11 @@ buildClassDeclarationAndDefinition (string name, SgScopeStatement* scope)
   // Set the non defining declaration in the defining declaration (both are required)
      SgClassDeclaration* nondefiningClassDeclaration = new SgClassDeclaration(fileInfo,name.c_str(),SgClassDeclaration::e_struct,NULL,NULL);
      assert(classDeclaration != NULL);
+     nondefiningClassDeclaration->set_type(SgClassType::createType(nondefiningClassDeclaration));
 
   // Set the internal reference to the non-defining declaration
      classDeclaration->set_firstNondefiningDeclaration(nondefiningClassDeclaration);
+     classDeclaration->set_type(nondefiningClassDeclaration->get_type());
 
   // Set the defining and no-defining declarations in the non-defining class declaration!
      nondefiningClassDeclaration->set_firstNondefiningDeclaration(nondefiningClassDeclaration);
