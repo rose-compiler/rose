@@ -176,7 +176,7 @@ void ASLAnalysis::run(SgProject* root){
    traverse(root,preorder);
    
    // create AST attributes
-   for(AbstractSites::iterator i=aslRepository.begin();i!=aslRepository.end();++i,callEnumeration=0){
+   for(AbstractSites::iterator i=aslRepository.begin();i!=aslRepository.end();++i,callEnumeration=1){
       functionName=i->first;
 #ifdef DEBUG
       std::cout<<"Function "<<functionName<<" contains a call site of a function pointers"<<std::endl;
