@@ -1,3 +1,10 @@
+2009-11-03 18:30  panas2
+
+	* [r8053]
+	  /trunk/ROSE/tests/roseTests/binaryTests/testSampleBinaries.sh:
+	  Modified ignore list so that the tests do not pick up
+	  CMakeFile.txt
+
 2009-11-02 22:29  liao6
 
 	* [r8039] /trunk/ROSE/src/ROSETTA/Grammar/Statement.code,
