@@ -64,6 +64,8 @@ CLEANFILES = termpretty.c++ \
 	     dfiparser.c++ dfiparser.h dfiscanner.c++ \
              dfiparser.tab.c++ dfiparser.tab.h++
 
+BUILT_SOURCES =	#dfiparser.tab.c++ dfiparser.tab.h++ 
+
 if WITH_SWI_PROLOG # ---------------------------------------------------
 
 INCLUDES += -I$(SWI_PROLOG_INCLUDE_DIR) 
@@ -76,12 +78,10 @@ nobase_dist_data_DATA = \
 
 else # -----------------------------------------------------------------
 
-BUILT_SOURCES = \
-	termparser.tab.c++ termparser.tab.h++ \
-	dfiparser.tab.c++ dfiparser.tab.h++ \
-	termparser.c++ termparser.h termlexer.c++
+BUILT_SOURCES += termparser.tab.h++ 
+
 nodist_libtermsupport_la_SOURCES += $(BUILT_SOURCES)
-CLEANFILES += termparser.c++ termparser.h termlexer.c++ termparser.tab.c++ \
+CLEANFILES += termparser.c++ termparser.h termlexer.c++ \
               termparser.tab.h++
 libtermsupport_la_SOURCES += termparser.y++ termlexer.l++
 nobase_include_HEADERS += satire/termparser.h
@@ -89,13 +89,10 @@ nobase_include_HEADERS += satire/termparser.h
 .PHONY: $(srcdir)/TermToRose.C
 $(srcdir)/TermToRose.C: termparser.tab.h++
 
-termparser.tab.c++: $(srcdir)/termparser.y++ Makefile
+termparser.tab.h++: $(srcdir)/termparser.y++ Makefile
 	$(YACC) -d $(srcdir)/termparser.y++ && \
-	mv y.tab.c termparser.tab.c++ && \
+	rm y.tab.c && \
 	mv y.tab.h termparser.tab.h++
-
-# dummy dependendcy for make -j
-termparser.tab.h++: termparser.tab.c++
 
 endif # ----------------------------------------------------------------
 
