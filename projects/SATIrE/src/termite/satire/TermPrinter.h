@@ -488,10 +488,10 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
         /* mapping: structure locations to named members */
         // "structlocation_member_location" terms
       }
-#elif HAVE_SATIRE_ICFG
+#elif HAVE_SATIRE_ICFG && !HAVE_PAG
       /* context-insensitive points-to information */
       if (isSgProject(astNode) && cfg != NULL
-          && cfg->contextSensitivePointsToAnalysis != NULL) {
+          && cfg->pointsToAnalysis != NULL) {
         using SATIrE::Analyses::PointsToAnalysis;
         PointsToAnalysis *pto = cfg->pointsToAnalysis;
 
