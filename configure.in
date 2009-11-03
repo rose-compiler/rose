@@ -1,6 +1,6 @@
 # DQ (5/30/2007): Move to new modern automake macros (previous versions have been depricated)
 # AC_INIT
-AC_INIT(ROSE, 0.9.4a)
+AC_INIT(ROSE, 0.9.5a)
 
 # DQ (5/30/2007): Move to newer version of autoconf (I think this is required to get the new macros).
 # This is reported as bad style at http://sources.redhat.com/automake/automake.html#Extending-aclocal
@@ -565,7 +565,8 @@ AC_CHECK_PROGS(TCLSH, [tclsh])
 AM_CONDITIONAL(ROSE_USE_TCLSH, [test "x$TCLSH" = "xtclsh"])
 echo "value of TCLSH variable = $TCLSH"
 
-
+# DQ & PC (11/3/2009): Debugging the Java support.
+if false; then
 if test "x$JAVA_HOME" = "x"; then
   JAVA="`which javac`"
   if test -f /usr/bin/javaconfig; then # Mac Java
@@ -581,6 +582,7 @@ if test "x$JAVA_HOME" = "x"; then
 
   fi
   JAVA_HOME="`dirname $JAVA`/.."
+fi
 fi
 # Call supporting macro for the Java path required by the Open Fortran Parser (for Fortran 2003 support)
 # Use our classpath in case the user's is messed up

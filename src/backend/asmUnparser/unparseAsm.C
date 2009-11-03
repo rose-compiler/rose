@@ -3,6 +3,7 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+#define PUT_COMMENTS_IN_COLUMN_ON_RIGHT  1
 
 // DQ (10/28/2009): Removing magic numbers to specify register names (using enum values instead).
 // const char* regnames8l[16] = {"al", "cl", "dl", "bl", "spl", "bpl", "sil", "dil", "r8b", "r9b", "r10b", "r11b", "r12b", "r13b", "r14b", "r15b"};
@@ -26,9 +27,12 @@ std::string unparseInstruction(SgAsmInstruction* insn) {
         result += unparseExpression(operands[i]);
     }
 
+#if !PUT_COMMENTS_IN_COLUMN_ON_RIGHT
     /* Comment */
     if (insn->get_comment()!="")
         result += " <" + insn->get_comment() + ">";
+#endif
+
     return result;
 }
 
@@ -174,7 +178,6 @@ unparseAsmStatement(SgAsmStatement* stmt)
 
      ROSE_ASSERT (stmt != NULL);
 
-#define PUT_COMMENTS_IN_COLUMN_ON_RIGHT  1
 #define RIGHT_COMMENT_COLUMN_BOUNDARY   55
 
      std::string result;
@@ -207,7 +210,7 @@ unparseAsmStatement(SgAsmStatement* stmt)
 #if PUT_COMMENTS_IN_COLUMN_ON_RIGHT
                 std::string instructionString = unparseInstructionWithAddress(isSgAsmInstruction(stmt));
                result += instructionString;
-               if (commentString.empty() == true)
+               if (commentString.empty() == false)
                   {
                     size_t instructionStringSize = instructionString.size();
                     for (size_t i = instructionStringSize; i <= RIGHT_COMMENT_COLUMN_BOUNDARY; i++)

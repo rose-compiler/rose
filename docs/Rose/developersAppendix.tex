@@ -1906,8 +1906,13 @@ There are four levels:
 
 \end{enumerate}
 
+
+% Put onto a new page for development
 \newpage
+
 % Blue Book (reference to legendary PDF documentation)
+% http://www-cdf.fnal.gov/offline/PostScript/BLUEBOOK.PDF
+
 \section{ROSE API (PUT YOUR LISTS OF FUNCTIONS HERE)}
 
     This is a group effort to define a better set of high level documents for ROSE
@@ -1976,6 +1981,8 @@ Outline where to put list of functions/functionality for each category of the AP
 for which he will provide an outline to start the process.
 
 \subsection{User API (All)}
+{\bf Proposed location of new ROSE API: {\em ROSE/src/API}}
+
    The ROSE User Application Program Interface (API) is the subset of ROSE that is
 typically required by users to write ROSE based applications for the general
 processing of software (source code or executable).  Specialized projects may
@@ -1989,6 +1996,8 @@ API will be represented by four namespaces (the Intermediate Representation
 is expected to be in its own namespace.  It is not clear if there should
 be a single top level namespace or if there should be namespace
 aliases that would permit alternative shorter names (an option).
+
+
 
 \subsubsection{Frontend (Yi)}
 {\bf Interm proposed namespace name: {\em ROSE\_Frontend}} \\
@@ -2536,7 +2545,10 @@ generated web pages which present both the hierarchy of C++ classes
 used to represent the IR and the details of the individual classes.
 
 \newpage
+
 % Red Book (reference to legendary PDF documentation)
+%  http://www.adobe.com/devnet/postscript/pdfs/PLRM.pdf
+
 \section{ROSE Example Projects}
    These project demonstrate types of tools that have been built using ROSE and are 
 small enough to include within the ROSE distribution (taken from the ROSE/projects

@@ -366,6 +366,9 @@ SgProject::processCommandLine(const vector<string>& input_argv)
   // return value for calls to SLA
      int optionCount = 0;
 
+#if 1
+  // DQ (11/1/2009): To be consistant with other tools disable -h and -help options (use --h and --help instead).
+  // This is a deprecated option
   //
   // help option (allows alternative -h or -help instead of just -rose:help)
   //
@@ -375,13 +378,15 @@ SgProject::processCommandLine(const vector<string>& input_argv)
      if( optionCount > 0 )
         {
        // printf ("option -help found \n");
-          printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
+          printf ("This is a deprecated option in ROSE (use --h or --help instead).\n");
+          cout << version_message() << endl;
        // ROSE::usage(0);
           SgFile::usage(0);
           exit(0);
         }
 
   // printf ("After SgProject processing -help option argc = %d \n",argc);
+#endif
 
   //
   // help option (allows alternative --h or --help)
@@ -392,8 +397,10 @@ SgProject::processCommandLine(const vector<string>& input_argv)
      if( optionCount > 0 )
         {
        // printf ("option --help found \n");
-          printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
+       // printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
+       // version();
        // ROSE::usage(0);
+          cout << version_message() << endl;
           SgFile::usage(0);
           exit(0);
         }
@@ -407,19 +414,27 @@ SgProject::processCommandLine(const vector<string>& input_argv)
      if ( optionCount > 0 )
         {
        // printf ("SgProject::processCommandLine(): option --version found \n");
-          printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
+       // printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
+          cout << version_message() << endl;
           exit(0);
         }
 
+#if 1
+  // DQ (11/1/2009): To be consistant with other tools disable -h and -help options (use --h and --help instead).
+  // This is a deprecated option
+  //
   // Use 1 at end of argument list to SLA to force removal of option from argv and decrement of agrc
   // optionCount = sla(&argc, argv, "--", "($)", "(V|version)",1);
      optionCount = sla_none(local_commandLineArgumentList, "-rose:", "($)", "(V|version)",1);
      if ( optionCount > 0 )
         {
        // printf ("SgProject::processCommandLine(): option --version found \n");
-          printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
+       // printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
+          printf ("This is a deprecated option in ROSE (use --V or --version instead).\n");
+          cout << version_message() << endl;
           exit(0);
         }
+#endif
 
 #if 0
   // DQ (8/6/2006): Not sure that I want this here!
@@ -430,7 +445,8 @@ SgProject::processCommandLine(const vector<string>& input_argv)
         {
        // function in SAGE III to access version number of EDG
           extern std::string edgVersionString();
-          printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
+       // printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
+          cout << version_message() << endl;
           printf ("     Using C++ and C frontend from EDG (version %s) internally \n",edgVersionString().c_str());
         }
 #endif
@@ -859,8 +875,9 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           CommandlineProcessing::isOption(argv,"--", "(h|help)",true)    == true ||
           CommandlineProcessing::isOption(argv,"-","(h|help)",true)      == true )
         {
-          printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
+       // printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
        // ROSE::usage(0);
+          cout << version_message() << endl;
           usage(0);
        // exit(0);
         }
@@ -871,7 +888,8 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         {
        // function in SAGE III to access version number of EDG
           extern std::string edgVersionString();
-          printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
+       // printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
+          cout << version_message() << endl;
           printf ("     Using C++ and C frontend from EDG (version %s) internally \n",edgVersionString().c_str());
         }
 
