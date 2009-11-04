@@ -105,10 +105,12 @@ Return: The number of value found.  If pname is not a list, the number of
   #endif
 #endif
 
+#include <boost/regex.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <regex.h>
+// #include <regex.h>
   /* next line added by Bobby, 10/25/2001 */
 #include <string.h>
 #ifdef __cplusplus
