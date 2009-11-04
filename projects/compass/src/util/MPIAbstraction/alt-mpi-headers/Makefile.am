@@ -50,7 +50,7 @@ $(ALTMPI_HDRS_MAIN): $(MPI_HDRS) $(srcdir)/gen-headers.py
 
 #==========================================================================
 
-EXTRA_DIST = gen-headers.py
+EXTRA_DIST = CMakeLists.txt gen-headers.py
 
 clean-local:
 	rm -f *.ti a.out rose_*.c

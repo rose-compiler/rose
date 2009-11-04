@@ -51,3 +51,5 @@ distclean-local:
 
 
 
+
+EXTRA_DIST = CMakeLists.txt

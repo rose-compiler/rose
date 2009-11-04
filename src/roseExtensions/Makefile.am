@@ -8,3 +8,5 @@ SUBDIRS = \
    highLevelGrammar \
    roseHPCToolkit \
    qtWidgets
+
+EXTRA_DIST = CMakeLists.txt

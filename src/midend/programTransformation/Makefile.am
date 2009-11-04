@@ -4,3 +4,5 @@ SUBDIRS = partialRedundancyElimination finiteDifferencing functionCallNormalizat
 
 
 
+
+EXTRA_DIST = CMakeLists.txt

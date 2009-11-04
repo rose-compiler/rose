@@ -15,3 +15,5 @@ libunparseCxx_la_SOURCES = $(unparseCxxCodeGeneration_sources)
 clean-local:
 	rm -rf ii_files ti_files core
 
+
+EXTRA_DIST = CMakeLists.txt

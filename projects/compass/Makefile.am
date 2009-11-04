@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS = src tools
 
-EXTRA_DIST = extensions
+EXTRA_DIST = CMakeLists.txt extensions
 
 check-local:
 	@echo "***************************************************************************"

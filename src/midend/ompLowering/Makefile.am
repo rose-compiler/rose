@@ -7,7 +7,7 @@ libompLowering_la_SOURCES = omp_lowering.cpp
 
 include_HEADERS = omp_lowering.h libgomp_g.h
 
-EXTRA_DIST = README
+EXTRA_DIST = CMakeLists.txt README
 
 clean-local:
 	rm -rf Templates.DB ii_files ti_files core

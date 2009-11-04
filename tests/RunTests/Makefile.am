@@ -9,3 +9,5 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # SUBDIRS = A++Tests P++Tests
 SUBDIRS = A++Tests AstDeleteTests
 
+
+EXTRA_DIST = CMakeLists.txt

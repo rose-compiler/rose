@@ -23,5 +23,5 @@ headerTarget_HEADERS = AstProcessing_BottomUp_impl.h\
 
 endif
 
-EXTRA_DIST = 
+EXTRA_DIST = CMakeLists.txt 
 

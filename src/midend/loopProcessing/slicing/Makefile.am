@@ -30,3 +30,5 @@ include_HEADERS =  CompSliceDepGraph.h  CompSliceImpl.h      DynamicCompSlice.h 
 
 
 
+
+EXTRA_DIST = CMakeLists.txt

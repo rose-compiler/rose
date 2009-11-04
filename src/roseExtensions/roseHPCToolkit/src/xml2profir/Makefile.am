@@ -9,7 +9,7 @@ libxml2profir_la_SOURCES = convert.cc factory.cc process.cc query.cc
 
 else # !ROSE_BUILD_ROSEHPCT
 
-EXTRA_DIST = convert.cc factory.cc process.cc query.cc
+EXTRA_DIST = CMakeLists.txt convert.cc factory.cc process.cc query.cc
 
 endif
 

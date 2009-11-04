@@ -13,7 +13,7 @@ HPCT_FILES = PAPI_FP_OPS.xml \
 	     PAPI_L2_TCM.xml
 
 # Extra files that need to be included in a distribution tarball.
-EXTRA_DIST = $(HPCT_FILES) \
+EXTRA_DIST = CMakeLists.txt $(HPCT_FILES) \
 	profiled.c profiled-save.out profiled-p93-save.pdf \
 	command-line-static.tex static.tex
 

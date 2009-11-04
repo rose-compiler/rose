@@ -28,3 +28,5 @@ include_HEADERS =  CFG.h CFGImpl.h
 
 
 
+
+EXTRA_DIST = CMakeLists.txt

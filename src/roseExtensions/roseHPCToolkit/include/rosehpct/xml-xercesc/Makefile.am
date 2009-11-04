@@ -5,3 +5,5 @@ xmlincdir = $(rosehpctincdir)/xml-xercesc
 xmlinc_HEADERS = xml.hh
 
 # eof
+
+EXTRA_DIST = CMakeLists.txt

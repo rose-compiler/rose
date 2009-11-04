@@ -54,7 +54,7 @@ clean-local:
 	rm -rf rose_inputProgram*.C \
           rose_transformation_*.C *.C.pdf
 
-EXTRA_DIST = ASTRewrite.docs
+EXTRA_DIST = CMakeLists.txt ASTRewrite.docs
 
 
 

@@ -55,5 +55,5 @@ headerTarget_HEADERS = qce-config.h\
 
 endif
 
-EXTRA_DIST = 
+EXTRA_DIST = CMakeLists.txt 
 

@@ -32,7 +32,7 @@ headerTarget_HEADERS = CompilerOutputWidget.h\
 
 endif
 
-EXTRA_DIST = res.qrc \
+EXTRA_DIST = CMakeLists.txt res.qrc \
 	images/gears.gif \
 	images/compile_warning.png \
 	images/compile_error.png \

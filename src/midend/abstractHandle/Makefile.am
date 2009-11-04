@@ -15,5 +15,5 @@ clean-local:
 # This directory also contains a self-contained example 
 # using a simple loop data structure to demonstrate the usage.
 # It can be released separated from ROSE
-EXTRA_DIST = README testMyLoop.cpp myloop.h loopAdapter.h loopAdapter.cpp \
+EXTRA_DIST = CMakeLists.txt README testMyLoop.cpp myloop.h loopAdapter.h loopAdapter.cpp \
             makefile-myloop

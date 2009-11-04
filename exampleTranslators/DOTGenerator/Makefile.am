@@ -15,7 +15,7 @@ LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 # Express this explicitly:
 # dotGenerator.o: $(top_builddir)/src/midend/astRewriteMechanism/rewriteTreeTraversal.o
 
-EXTRA_DIST = $(TESTCODES)
+EXTRA_DIST = CMakeLists.txt $(TESTCODES)
 
 CLEANFILES = testdot_01.C.Preorder.dot testdot_01.C.Postorder.dot testdot_01.C.TopDown.dot testdot_01.C.BottomUp.dot testdot_01.C.TopDownBottomUp.dot
 

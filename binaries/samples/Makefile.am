@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-EXTRA_DIST =					\
+EXTRA_DIST = CMakeLists.txt 					\
     ARPPRODUCTICON.exe				\
     PFE32.EXE					\
     arm-ctrlaltdel				\

@@ -65,7 +65,7 @@ headerTarget_HEADERS = qtcolorbutton.h \
 
 endif
 
-EXTRA_DIST = qtgradientdialog.ui \
+EXTRA_DIST = CMakeLists.txt qtgradientdialog.ui \
 	     qtgradienteditor.ui \
 	     qtgradientviewdialog.ui \
 	     qtgradientview.ui

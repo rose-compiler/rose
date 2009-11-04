@@ -35,7 +35,7 @@ headerTarget_HEADERS = AstGraphWidget.h\
 
 endif
 
-EXTRA_DIST = LayoutControl.ui \
+EXTRA_DIST = CMakeLists.txt LayoutControl.ui \
 	icons.qrc \
 	icons/start-here.png \
 	icons/media-playback-pause.png \

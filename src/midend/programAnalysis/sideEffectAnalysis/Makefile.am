@@ -23,3 +23,5 @@ clean:
 	rm -f a.out
 
 
+
+EXTRA_DIST = CMakeLists.txt

@@ -5,3 +5,5 @@ sageincdir = $(rosehpctincdir)/sage
 sageinc_HEADERS = sage.hh collectors.hh
 
 # eof
+
+EXTRA_DIST = CMakeLists.txt

@@ -39,7 +39,7 @@ else
 endif
 
 # DQ (2/11/2009): Save the $(MOC_SOURCES) files into the distribution.
-EXTRA_DIST = QRException.h \
+EXTRA_DIST = CMakeLists.txt QRException.h \
              QRMacros.h \
              QRMain.h \
              QRMain_p.h \

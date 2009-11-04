@@ -22,3 +22,5 @@ include_HEADERS = \
    ColData.h  Connection.h  dbheaders.h  GlobalDatabaseConnection.h  Query.h  Result.h  Row.h
 
 dist_noinst_DATA = README
+
+EXTRA_DIST = CMakeLists.txt

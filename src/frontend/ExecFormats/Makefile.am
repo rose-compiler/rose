@@ -27,4 +27,4 @@ libroseExecFormats_la_SOURCES = \
 include_HEADERS = IntelPinSupport.h Loader.h LoaderELF.h LoaderELFObj.h LoaderPE.h MemoryMap.h
 
 # Make sure that this is distributed even if ROSE was not configured using: -with-IntelPin=<path>
-EXTRA_DIST = IntelPinSupport.C
+EXTRA_DIST = CMakeLists.txt IntelPinSupport.C

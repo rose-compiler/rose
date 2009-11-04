@@ -8,4 +8,4 @@ libimplicitCodeGeneration_la_SOURCES = analysisUtils.C defaultFunctionGenerator.
 
 include_HEADERS = analysisUtils.h defaultFunctionGenerator.h destructorCallAnnotator.h shortCircuitingTransformation.h
 
-EXTRA_DIST = README
+EXTRA_DIST = CMakeLists.txt README

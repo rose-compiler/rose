@@ -71,7 +71,7 @@ endif
 # Build the list of object files
 TEST_Objects = ${TESTCODES:.C=.o}
 
-EXTRA_DIST = $(TESTCODES)
+EXTRA_DIST = CMakeLists.txt $(TESTCODES)
 
 CLEANFILES = 
 

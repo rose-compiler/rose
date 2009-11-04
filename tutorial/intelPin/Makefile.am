@@ -192,7 +192,7 @@ check-local:
 # endif of configuration for ROSE_USE_INTEL_PIN
 endif
 
-EXTRA_DIST = \
+EXTRA_DIST = CMakeLists.txt \
      README dynamicStaticBinaryAnalysis.C staticDynamicBinaryAnalysis.C dynamicBinaryInfo.C \
      graphTrace.C imageload.C input_testcode.C commandlineHandling.C
 

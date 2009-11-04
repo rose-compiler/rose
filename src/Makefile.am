@@ -93,7 +93,7 @@ libroseLibraries = \
    $(libroseQtExtension)
 
 
-EXTRA_DIST = extra.docs
+EXTRA_DIST = CMakeLists.txt extra.docs
 
 # Header files that need to be included in the distribution
 include_HEADERS = \

@@ -15,3 +15,5 @@ clean-local:
 distclean-local:
 	rm -rf Templates.DB
 
+
+EXTRA_DIST = CMakeLists.txt

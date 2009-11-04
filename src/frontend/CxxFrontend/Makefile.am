@@ -8,7 +8,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 SUBDIRS = EDG_3.3 EDG_3.10 EDG_4.0 EDG_SAGE_Connection
 # SUBDIRS = EDG_3.3 EDG_4.0 EDG_SAGE_Connection
 
-EXTRA_DIST = Makefile.am.forBinaryEDG
+EXTRA_DIST = CMakeLists.txt Makefile.am.forBinaryEDG
 
 if ROSE_USE_NEW_EDG_INTERFACE
 if ROSE_USE_EDG_VERSION_4

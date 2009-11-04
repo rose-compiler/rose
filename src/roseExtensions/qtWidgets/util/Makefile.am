@@ -49,7 +49,7 @@ headerTarget_HEADERS = AsmToSourceMapper.h\
 
 endif
 
-EXTRA_DIST = MetricBgDelegateConfig.ui \
+EXTRA_DIST = CMakeLists.txt MetricBgDelegateConfig.ui \
 	util.qrc \
 	AppIcons/info.png \
 	AppIcons/document-properties.png \

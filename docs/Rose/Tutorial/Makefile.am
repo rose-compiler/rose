@@ -67,6 +67,6 @@ $(TUTORIAL_NAME): tutorial.tex gettingStarted.tex $(latexFiles)
 
 docs: pdf
 
-EXTRA_DIST = $(latexFiles)
+EXTRA_DIST = CMakeLists.txt $(latexFiles)
 
 CLEANFILES = *.out *.log *.aux *.lof *.toc *.dvi *.ps *.pdf *.gz

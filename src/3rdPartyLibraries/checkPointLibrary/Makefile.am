@@ -91,3 +91,5 @@ noinst_HEADERS = ckpt.h  ckptimpl.h  cs.h  sys.h
 # include_HEADERS = 
 
 
+
+EXTRA_DIST = CMakeLists.txt

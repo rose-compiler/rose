@@ -14,3 +14,5 @@ libunparseLanguageIndependenceSupport_la_SOURCES = $(unparseLanguageIndependence
 clean-local:
 	rm -rf ii_files ti_files core
 
+
+EXTRA_DIST = CMakeLists.txt

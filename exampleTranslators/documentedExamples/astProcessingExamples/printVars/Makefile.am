@@ -14,7 +14,7 @@ LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 TESTCODES = testInput1.C
 
 include_HEADERS = MyTraversal.h
-EXTRA_DIST = $(TESTCODES)
+EXTRA_DIST = CMakeLists.txt $(TESTCODES)
 
 CLEANFILES = testInput1.C.dot
 

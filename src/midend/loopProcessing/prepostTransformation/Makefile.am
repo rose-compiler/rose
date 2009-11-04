@@ -28,3 +28,5 @@ include_HEADERS =  BreakupStmt.h  LoopUnroll.h  PrePostTransformation.h Privatiz
 
 
 
+
+EXTRA_DIST = CMakeLists.txt

@@ -21,5 +21,5 @@ headerTarget_HEADERS = MetricFilter.h
 
 endif
 
-EXTRA_DIST = MetricFilter.ui
+EXTRA_DIST = CMakeLists.txt MetricFilter.ui
 

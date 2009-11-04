@@ -5,7 +5,7 @@ SUBDIRS = util xml profir xml2profir sage profir2sage \
 
 include ../Make.inc
 
-EXTRA_DIST = rosehpct.cc
+EXTRA_DIST = CMakeLists.txt rosehpct.cc
 
 if ROSE_BUILD_ROSEHPCT
 

@@ -28,3 +28,5 @@ include_HEADERS =  AnalysisInterface.h  ProcessAstTree.h  StmtInfoCollect.h Loop
 
 
 
+
+EXTRA_DIST = CMakeLists.txt

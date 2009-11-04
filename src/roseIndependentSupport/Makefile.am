@@ -8,3 +8,5 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # SUBDIRS = graphicalUserInterface graphics visualization dot2gml
 # SUBDIRS = graphicalUserInterface dot2gml
 SUBDIRS = dot2gml
+
+EXTRA_DIST = CMakeLists.txt

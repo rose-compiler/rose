@@ -263,7 +263,7 @@ check-local:
 	@echo "***********************************************************************************************************************************************************"
 endif
 
-EXTRA_DIST = demo.txt
+EXTRA_DIST = CMakeLists.txt demo.txt
 
 # There should be no temporary files generated as part of the demo (in this directory).
 clean-local:

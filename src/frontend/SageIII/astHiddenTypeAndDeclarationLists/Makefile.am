@@ -14,3 +14,5 @@ libastHiddenTypeAndDeclarationLists_la_DEPENDENCIES =
 
 include_HEADERS = \
      HiddenList.h  HiddenList_Intersection.h  HiddenList_Output.h
+
+EXTRA_DIST = CMakeLists.txt

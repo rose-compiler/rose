@@ -13,3 +13,5 @@ libunparseFortran_la_SOURCES = $(unparseFortranCodeGeneration_sources)
 
 clean-local:
 	rm -rf ii_files ti_files core
+
+EXTRA_DIST = CMakeLists.txt

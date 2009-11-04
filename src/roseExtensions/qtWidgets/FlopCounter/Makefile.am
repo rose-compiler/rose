@@ -22,5 +22,5 @@ headerTarget_HEADERS = FlopCounter.h\
 
 endif
 
-EXTRA_DIST = 
+EXTRA_DIST = CMakeLists.txt 
 

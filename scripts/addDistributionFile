@@ -1,0 +1,21 @@
+#!/bin/sh
+
+extrafilename=$1
+
+for extrafile in `find . -name $extrafilename` ; do
+	makefile="`dirname $extrafile`/Makefile.am"
+	if [ ! -e $makefile ] ; then
+		echo makefile not found
+	else
+		if grep -q "^EXTRA_DIST *=" $makefile ; then
+			if grep -q "^EXTRA_DIST *=.*$extrafilename" $makefile ; then
+				:
+			else
+				sed -i "s/^EXTRA_DIST *= */EXTRA_DIST = $extrafilename /" $makefile
+			fi
+		else
+			echo >> $makefile
+			echo "EXTRA_DIST = $extrafilename" >> $makefile
+		fi
+	fi
+done

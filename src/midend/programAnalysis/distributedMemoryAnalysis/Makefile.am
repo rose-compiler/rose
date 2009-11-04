@@ -22,6 +22,6 @@ include_HEADERS =  functionNames.h DistributedMemoryAnalysis.h DistributedMemory
 
 endif
 
-EXTRA_DIST = DistributedMemoryAnalysis.C functionNames.C functionNames.h \
+EXTRA_DIST = CMakeLists.txt DistributedMemoryAnalysis.C functionNames.C functionNames.h \
              DistributedMemoryAnalysis.h \
 	     DistributedMemoryAnalysisImplementation.h functionLevelTraversal.h

@@ -39,7 +39,7 @@ distclean-local:
 	rm -rf Templates.DB
 
 # Note: queryVariant.C is included in nodeQuery.C
-EXTRA_DIST = queryVariant.C QueryLib.docs 
+EXTRA_DIST = CMakeLists.txt queryVariant.C QueryLib.docs 
 
 # A way to add additional error checking at compile time
 # ROSE_WARNINGS = -Wall -W -Wswitch-enum -Wswitch-default -Wswitch

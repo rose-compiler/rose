@@ -32,6 +32,6 @@ roseQt_LDADD = $(ROSEHPCT_BUILD_ROOT)/src/librosehpct.la \
                $(LIBS_WITH_RPATH)
 endif
 
-EXTRA_DIST = MainWindow.ui \
+EXTRA_DIST = CMakeLists.txt MainWindow.ui \
 			 MainWindow.h
 			 res.qrc

@@ -1,7 +1,7 @@
 #------------ AsmView Makefile.am -----------
 include ../Make.inc 
 
-EXTRA_DIST = SrcBinView.ui
+EXTRA_DIST = CMakeLists.txt SrcBinView.ui
 
 if ROSE_WITH_ROSEQT
 

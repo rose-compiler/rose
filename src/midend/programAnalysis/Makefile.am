@@ -30,7 +30,7 @@ distclean-local:
 
 # AUTOMAKE_OPTIONS = foreign
 
-EXTRA_DIST = OpenAnalysis
+EXTRA_DIST = CMakeLists.txt OpenAnalysis
 
 
 

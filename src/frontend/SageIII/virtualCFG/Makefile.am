@@ -24,3 +24,5 @@ include_HEADERS = \
      cfgToDot.h \
      filteredCFG.h \
      filteredCFGImpl.h
+
+EXTRA_DIST = CMakeLists.txt

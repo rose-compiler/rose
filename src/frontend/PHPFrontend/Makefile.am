@@ -12,3 +12,5 @@ dist_include_HEADERS = PHPFrontend.h
 
 include_HEADERS = 
 
+
+EXTRA_DIST = CMakeLists.txt

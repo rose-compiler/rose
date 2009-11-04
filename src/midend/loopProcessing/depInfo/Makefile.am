@@ -26,3 +26,5 @@ include_HEADERS =  DepEDD.h       DepInfo.h     DepInfoUpdate.h  DomainInfo.h \
                    DepInfoAnal.h  DepInfoSet.h  DepRel.h   DomainInfoUpdate.h \
                    ReuseAnalysis.h StmtDepAnal.h
 
+
+EXTRA_DIST = CMakeLists.txt

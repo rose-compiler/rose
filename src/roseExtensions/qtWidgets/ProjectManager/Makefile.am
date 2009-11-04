@@ -32,5 +32,5 @@ headerTarget_HEADERS = CmdLineEditDialog.h\
 
 endif
 
-EXTRA_DIST = CmdLineEditDialog.ui
+EXTRA_DIST = CMakeLists.txt CmdLineEditDialog.ui
 

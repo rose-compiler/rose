@@ -28,7 +28,7 @@ rosetta-files-built:
 #    AST_FILE_IO.h
 #    StorageClasses.h
 
-EXTRA_DIST = StorageClassMemoryManagement.C
+EXTRA_DIST = CMakeLists.txt StorageClassMemoryManagement.C
 
 # DQ (3/28/2006): Remove all generated code
 clean-local:

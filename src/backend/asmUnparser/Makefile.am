@@ -11,3 +11,5 @@ libroseAsmUnparser_la_SOURCES = unparseX86Asm.C unparseArmAsm.C unparsePowerpcAs
 dist_include_HEADERS = unparseAsm.h
 
 include_HEADERS = 
+
+EXTRA_DIST = CMakeLists.txt

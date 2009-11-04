@@ -1,6 +1,6 @@
 include $(top_srcdir)/src/roseExtensions/qtWidgets/Make.inc
 
-EXTRA_DIST = test.C icons.h
+EXTRA_DIST = CMakeLists.txt test.C icons.h
 
 
 if ROSE_USE_QT

@@ -25,3 +25,5 @@ include_HEADERS = \
    TypedFusion.h DGBaseGraphImpl.h  GraphAccess.h GraphUtils.h\
    GraphUpdate.h    SCCAnalysis.h GraphDotOutput.h GraphIO.h \
    MultiGraphObserve.h
+
+EXTRA_DIST = CMakeLists.txt

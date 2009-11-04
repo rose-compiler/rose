@@ -48,7 +48,7 @@ include_HEADERS = \
 
 # Removed AstTests.h AstStatistics.h 
 
-EXTRA_DIST = AstProcessing.docs
+EXTRA_DIST = CMakeLists.txt AstProcessing.docs
 
 
 

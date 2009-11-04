@@ -32,7 +32,7 @@ check-local:
 	@echo "*****************************************************************************************************************"
 
 
-EXTRA_DIST = $(TESTCODES_REQUIRED_TO_PASS)
+EXTRA_DIST = CMakeLists.txt $(TESTCODES_REQUIRED_TO_PASS)
 
 clean-local:
 	rm -f *.o test1 *.s rm *.out rose_*.C *.C.pdf *.dot core local_test-isystemOption.C *.dump *.new

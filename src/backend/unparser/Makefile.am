@@ -24,6 +24,6 @@ include_HEADERS = $(unparser_headers)
 clean-local:
 	rm -rf Templates.DB ii_files ti_files core
 
-EXTRA_DIST = unparser.docs
+EXTRA_DIST = CMakeLists.txt unparser.docs
 
 # eof

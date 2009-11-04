@@ -34,3 +34,5 @@ include_HEADERS = \
 
 
 
+
+EXTRA_DIST = CMakeLists.txt

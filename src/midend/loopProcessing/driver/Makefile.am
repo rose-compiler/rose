@@ -26,3 +26,5 @@ include_HEADERS =  BlockingAnal.h  InterchangeAnal.h  CopyArrayAnal.h  \
                     LoopTransformOptions.h  LoopTransformInterface.h\
                    FusionAnal.h   
 
+
+EXTRA_DIST = CMakeLists.txt

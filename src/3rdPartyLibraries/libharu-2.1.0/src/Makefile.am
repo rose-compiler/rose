@@ -20,3 +20,5 @@ libhpdf_la_LIBADD = @LTLIBOBJS@
 libhpdf_la_LDFLAGS = -release @VERSION@
 # JJW for ROSE: Added this line to enable building outside source tree
 libhpdf_la_INCLUDES = -I$(top_srcdir)/include
+
+EXTRA_DIST = CMakeLists.txt

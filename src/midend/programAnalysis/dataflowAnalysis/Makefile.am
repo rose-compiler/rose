@@ -29,3 +29,5 @@ include_HEADERS = DataFlowAnalysis.h DefUseChain.h ReachingDefinition.h
 
 
 
+
+EXTRA_DIST = CMakeLists.txt

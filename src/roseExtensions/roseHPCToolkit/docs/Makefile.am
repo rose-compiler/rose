@@ -1,5 +1,5 @@
 # ROSE-HPCT module documentation
 
-EXTRA_DIST = roseHPCToolkit.docs
+EXTRA_DIST = CMakeLists.txt roseHPCToolkit.docs
 
 # eof

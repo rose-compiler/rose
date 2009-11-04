@@ -60,7 +60,7 @@ $(TEST_Objects): $(TESTCODES)
 include_HEADERS = \
      ControlStructure.h  GenGeneration.h  GenRepresentation.h  helpFunctions.h
 
-EXTRA_DIST = $(TESTCODES)
+EXTRA_DIST = CMakeLists.txt $(TESTCODES)
 
 clean-local:
 	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files

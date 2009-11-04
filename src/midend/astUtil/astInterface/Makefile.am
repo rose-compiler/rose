@@ -28,3 +28,5 @@ include_HEADERS =  AstInterface.h  CPPAstInterface.h AstInterface_ROSE.h
 
 
 
+
+EXTRA_DIST = CMakeLists.txt

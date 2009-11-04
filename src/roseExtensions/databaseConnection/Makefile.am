@@ -110,3 +110,5 @@ endif
 
 
 
+
+EXTRA_DIST = CMakeLists.txt

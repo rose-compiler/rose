@@ -17,3 +17,5 @@ libastVisualization_la_DEPENDENCIES =
 
 include_HEADERS = AstAttributeDOT.h  astGraph.h astGraphTemplateImpl.h wholeAST.h wholeAST_API.h copyGraph.h walrus.h
 
+
+EXTRA_DIST = CMakeLists.txt

@@ -21,3 +21,5 @@ distclean-local:
 
 include_HEADERS =  DepGraphBuild.h  DepGraph.h  DepGraphTransform.h  LoopAnalysis.h  TransDepGraph.h TransDepGraphImpl.h
 
+
+EXTRA_DIST = CMakeLists.txt

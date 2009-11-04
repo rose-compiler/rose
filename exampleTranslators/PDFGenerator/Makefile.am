@@ -8,7 +8,7 @@ pdfGenerator_SOURCES = pdfGenerator.C
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-EXTRA_DIST = 
+EXTRA_DIST = CMakeLists.txt 
 CLEANFILES = 
 
 clean-local:

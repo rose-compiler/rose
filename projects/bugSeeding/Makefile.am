@@ -17,7 +17,7 @@ clean-local:
 	rm -f *.o *~ bugSeeding bugSeeding.tex rose_*.C *.log *.aux *.out *.dot *.pdf
 	rm -rf examples
 
-EXTRA_DIST = introduction.tex design.tex appendix.tex \
+EXTRA_DIST = CMakeLists.txt introduction.tex design.tex appendix.tex \
    bugSeeding.h bugSeedingSupport.h bugSeedingAttributes.h \
    cloneGrainularity.h  vulnerabilityDetection.h \
    bufferOverFlowSecurityFlaw.h inputCode_bufferOverflow_arrayIndexing.C

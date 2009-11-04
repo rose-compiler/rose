@@ -28,5 +28,5 @@ headerTarget_HEADERS = light_vector.h\
 
 endif
 
-EXTRA_DIST = 
+EXTRA_DIST = CMakeLists.txt 
 

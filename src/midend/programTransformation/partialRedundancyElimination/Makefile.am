@@ -12,3 +12,5 @@ include_HEADERS = expressionTreeEqual.h pre.h controlFlowGraph.h
 
 clean-local:
 	rm -rf Templates.DB ii_files ti_files core
+
+EXTRA_DIST = CMakeLists.txt

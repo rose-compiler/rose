@@ -31,3 +31,5 @@ include_HEADERS =  SymbolicMultiply.h  SymbolicPlus.h    SymbolicVal.h \
 
 
 
+
+EXTRA_DIST = CMakeLists.txt

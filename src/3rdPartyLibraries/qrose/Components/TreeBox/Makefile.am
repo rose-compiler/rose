@@ -29,7 +29,7 @@ endif
 
 endif
 
-EXTRA_DIST = QRListViewItem.h \
+EXTRA_DIST = CMakeLists.txt QRListViewItem.h \
              QRTreeBox.h \
              QRTreeVisitor.h
               

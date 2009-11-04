@@ -30,3 +30,5 @@ include_HEADERS = \
      fixupSourcePositionInformation.h \
      fixupEnumValues.h \
      fixupFriendTemplateDeclarations.h
+
+EXTRA_DIST = CMakeLists.txt

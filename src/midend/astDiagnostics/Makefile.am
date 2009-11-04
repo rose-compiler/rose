@@ -33,4 +33,4 @@ include_HEADERS = AstDiagnostics.h AstConsistencyTests.h AstWarnings.h AstStatis
 clean-local:
 	rm -rf Templates.DB ii_files ti_files core
 
-EXTRA_DIST = AstDiagnostics.docs
+EXTRA_DIST = CMakeLists.txt AstDiagnostics.docs

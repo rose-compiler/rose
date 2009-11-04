@@ -26,6 +26,6 @@ headerTarget_HEADERS = KiviatInfo.h\
 
 endif
 
-EXTRA_DIST = KiviatInfo.ui \
+EXTRA_DIST = CMakeLists.txt KiviatInfo.ui \
 	MetricsWidget.ui
 

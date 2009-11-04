@@ -50,7 +50,7 @@ check-local:
 	@echo "*** ROSE/projects/compass/util/C-API: make check rule complete (terminated normally) ***"
 	@echo "*********************************************************************************************************************"
 
-EXTRA_DIST = MPI.api MPI-api.c testCodes
+EXTRA_DIST = CMakeLists.txt MPI.api MPI-api.c testCodes
 
 clean-local:
 	rm -f *.ti a.out rose_*.c

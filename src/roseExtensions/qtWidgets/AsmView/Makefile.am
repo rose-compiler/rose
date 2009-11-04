@@ -23,5 +23,5 @@ headerTarget_HEADERS = AsmTreeNode.h\
 
 endif
 
-EXTRA_DIST = ConfigureAsmViewDelegate.ui
+EXTRA_DIST = CMakeLists.txt ConfigureAsmViewDelegate.ui
 

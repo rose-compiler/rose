@@ -16,3 +16,5 @@ distclean-local:
 	rm -rf Templates.DB
 
 include_HEADERS = CheckWhichAreMarked.h  FindStatements.h  KeepAttribute.h  MarkingNodes.h  RemovalOfNodes.h  SlicingCriterion.h  Slicing.h
+
+EXTRA_DIST = CMakeLists.txt

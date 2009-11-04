@@ -20,3 +20,5 @@ SUBDIRS = \
 # "make docs" rule (at the top level directory) can query the file to
 # determin if this is a distribution.
 # EXTRA_DIST = midend.docs
+
+EXTRA_DIST = CMakeLists.txt

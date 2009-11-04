@@ -13,7 +13,7 @@ TEST_HSFILES = tests/identityTranslator/Main.hs \
 
 TEST_CFILES = tests/simplify/simplifyTest.C
 
-EXTRA_DIST = $(NONGENERATED_HSFILES) sage3.h.C WrapCxxContainers.h $(TEST_HSFILES) $(TEST_CFILES) disabled.html
+EXTRA_DIST = CMakeLists.txt $(NONGENERATED_HSFILES) sage3.h.C WrapCxxContainers.h $(TEST_HSFILES) $(TEST_CFILES) disabled.html
 
 if USE_HASKELL
 

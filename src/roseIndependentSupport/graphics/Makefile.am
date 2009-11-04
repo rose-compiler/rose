@@ -12,3 +12,5 @@ include_HEADERS = \
      stlDOTgraph.h \
      stlgraph.h
 
+
+EXTRA_DIST = CMakeLists.txt

@@ -23,7 +23,7 @@ testbug125:bug125
 testqualifiedName: qualifiedName
 	./qualifiedName -c $(top_srcdir)/projects/autoTuning/tests/jacobi.c
 
-EXTRA_DIST =  inputbug125.C
+EXTRA_DIST = CMakeLists.txt inputbug125.C
 
 check-local:
 	@$(MAKE) testbug125 testqualifiedName

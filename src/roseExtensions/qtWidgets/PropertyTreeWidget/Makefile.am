@@ -23,5 +23,5 @@ headerTarget_HEADERS = PropertyTreeModel.h\
 
 endif
 
-EXTRA_DIST = 
+EXTRA_DIST = CMakeLists.txt 
 

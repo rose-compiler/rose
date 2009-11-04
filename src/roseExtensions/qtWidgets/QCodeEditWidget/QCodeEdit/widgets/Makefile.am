@@ -63,7 +63,7 @@ headerTarget_HEADERS = qcalltip.h\
 
 endif
 
-EXTRA_DIST = editconfig.ui \
+EXTRA_DIST = CMakeLists.txt editconfig.ui \
 	formatconfig.ui \
 	gotoline.ui \
 	searchreplace.ui

@@ -16,7 +16,7 @@ nodist_textEditPainterDemo_SOURCES = moc_mainwidget.cxx  moc_customtextedit.cxx 
 
 BUILT_SOURCES = ui_DemoWidget.h
 
-EXTRA_DIST = DemoWidget.ui
+EXTRA_DIST = CMakeLists.txt DemoWidget.ui
 
 textEditPainterDemo_LDADD = $(QT_LDFLAGS)
                    

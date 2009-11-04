@@ -22,3 +22,5 @@ java_files_made: FrontEnd.java
 	touch java_files_made
 
 CLEANFILES = *.class java_files_made
+
+EXTRA_DIST = CMakeLists.txt

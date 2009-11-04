@@ -22,3 +22,5 @@ distclean-local:
 	rm -rf Templates.DB
 
 include_HEADERS = DebugTool.h  DefUseExtension.h  DependenceGraph.h  InterproceduralInfo.h  SimpleDirectedGraph.h  SlicingInfo.h EDefUse.h SDGLibraryExtender.h CreateSlice.h CreateSliceSet.h ControlFlowGraph.h
+
+EXTRA_DIST = CMakeLists.txt

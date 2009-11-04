@@ -8,3 +8,5 @@ distclean-local:
 
 include_HEADERS =  DominatorTree.h filteredCFG.h DominanceFrontier.h DominatorTreeImpl.h
 
+
+EXTRA_DIST = CMakeLists.txt
