@@ -1,7 +1,7 @@
 /* -*- C++ -*-
 Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
           2007-2009 Adrian Prantl <adrian@complang.tuwien.ac.at>
-	  2009 Gergö Barany <gergo@complang.tuwien.ac.at>
+          2009 Gergö Barany <gergo@complang.tuwien.ac.at>
 */
 #ifndef PROLOGTRAVERSAL_H_
 #define  PROLOGTRAVERSAL_H_
@@ -76,7 +76,7 @@ public:
     int argc;
     char **argv;
     assert(PL_is_initialised(&argc, &argv) 
-	   && "please run init_termite(argc, argv) first.");
+     && "please run init_termite(argc, argv) first.");
 #endif  
     withPagAnalysisResults = (analysis_info != 0); 
     rootTerm = new PrologAtom("error");
@@ -106,17 +106,23 @@ private:
   int getArity(SgNode* astNode);
 
   /** create leaf nodes*/
-  PrologCompTerm* leafTerm(SgNode* astNode, SynthesizedAttributesList synList);
+  PrologCompTerm* leafTerm(SgNode* astNode, SynthesizedAttributesList synList,
+                           PrologTerm* specific, PrologTerm* ar, PrologTerm* fiTerm);
   /** create unary nodes*/
-  PrologCompTerm* unaryTerm(SgNode* astNode, SynthesizedAttributesList synList);
+  PrologCompTerm* unaryTerm(SgNode* astNode, SynthesizedAttributesList synList,
+                           PrologTerm* specific, PrologTerm* ar, PrologTerm* fiTerm);
   /** create binary nodes*/
-  PrologCompTerm* binaryTerm(SgNode* astNode, SynthesizedAttributesList synList);
+  PrologCompTerm* binaryTerm(SgNode* astNode, SynthesizedAttributesList synList,
+                           PrologTerm* specific, PrologTerm* ar, PrologTerm* fiTerm);
   /** create ternary nodes*/
-  PrologCompTerm* ternaryTerm(SgNode* astNode, SynthesizedAttributesList synList);
+  PrologCompTerm* ternaryTerm(SgNode* astNode, SynthesizedAttributesList synList,
+                           PrologTerm* specific, PrologTerm* ar, PrologTerm* fiTerm);
   /** create quaternary nodes*/
-  PrologCompTerm* quaternaryTerm(SgNode* astNode, SynthesizedAttributesList synList);
+  PrologCompTerm* quaternaryTerm(SgNode* astNode, SynthesizedAttributesList synList,
+                           PrologTerm* specific, PrologTerm* ar, PrologTerm* fiTerm);
   /** create list nodes*/
-  PrologCompTerm* listTerm(SgNode* astNode, SynthesizedAttributesList synList);
+  PrologCompTerm* listTerm(SgNode* astNode, SynthesizedAttributesList synList,
+                           PrologTerm* specific, PrologTerm* ar, PrologTerm* fiTerm);
 
   /** the current term */
   PrologTerm* rootTerm;
@@ -213,8 +219,8 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
     fi = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
     if (isSgLocatedNode(astNode)) {
       std::cerr << "** WARNING: FileInfo for Node " << astNode->class_name()  
-		<< " \"" << astNode->unparseToString() 
-		<< "\" was not set." << std::endl;
+        << " \"" << astNode->unparseToString() 
+        << "\" was not set." << std::endl;
     }
   }
 
@@ -228,39 +234,15 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
   }
 
   if (!fi->isFrontendSpecific()) {
-
-    /* depending on the number of successors, use different predicate names*/
-    if(isContainer(astNode))
-      t = listTerm(astNode, synList);
-    else {  
-      switch (getArity(astNode)) {
-      case 0:
-	t = leafTerm(astNode, synList);
-	break;
-      case 1:
-	t = unaryTerm(astNode, synList);
-	break;
-      case 2:
-	t = binaryTerm(astNode, synList);
-	break;
-      case 3:
-	t = ternaryTerm(astNode, synList);
-	break;
-      case 4:
-	t = quaternaryTerm(astNode, synList);
-	break;
-      default:
-	t = listTerm(astNode, synList);
-	break;
-      }
-    }
     /* add node specific information to the term*/
-    termConv.addSpecific(astNode, (PrologCompTerm*)t);
+    PrologTerm* specific = termConv.getSpecific(astNode);
+ 
+    /* analysis results */
+    PrologTerm* ar = NULL;
 
     /* add analysis information to the term*/
     if (SgStatement* n = isSgStatement(astNode)) {
       /* analysis result */
-      PrologCompTerm* ar = new PrologCompTerm("analysis_info");
       PrologList *results = getAnalysisResultList(n);
 
       /* function IDs, if appropriate */
@@ -277,11 +259,9 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
       }
 #endif
 
-      ar->addSubterm(results);
-      ((PrologCompTerm*)t)->addSubterm(ar);
+      ar = new PrologCompTerm("analysis_info", 1, results);
     } else {
       /* default: empty analysis result */
-      PrologCompTerm* ar = new PrologCompTerm("analysis_info");
       PrologList *results = new PrologList();
 
       /* variable IDs, if appropriate */
@@ -314,22 +294,22 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
               std::map<std::string, unsigned long>::iterator idi;
               idi = cfg->globalvarnames_ids.find(varname);
               if (idi != cfg->globalvarnames_ids.end()) {
-                varid_annot = new PrologCompTerm("variable_id");
-                varid_annot->addSubterm(new PrologInt(idi->second));
+                varid_annot = new PrologCompTerm("variable_id", 1,
+                                                 new PrologInt(idi->second));
               }
             }
           }
           if (varid_annot == NULL) {
-            varid_annot = new PrologCompTerm("variable_id");
-            varid_annot->addSubterm(new PrologInt(INT_MAX));
+            varid_annot = new PrologCompTerm("variable_id", 1,
+                                             new PrologInt(INT_MAX));
           }
           results->addFirstElement(varid_annot);
         }
       }
       if (sym != NULL) {
         if (cfg != NULL && !cfg->varsyms_ids.empty()) {
-          PrologCompTerm *varid_annot = new PrologCompTerm("variable_id");
-          varid_annot->addSubterm(varidTerm(sym));
+          PrologCompTerm *varid_annot = new PrologCompTerm("variable_id", 1,
+                                                           varidTerm(sym));
           results->addFirstElement(varid_annot);
         }
       }
@@ -356,9 +336,9 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
         if (cfg != NULL) {
           CallSiteAttribute *csa = (CallSiteAttribute *)
                 fc->getAttribute("SATIrE ICFG call block");
-          PrologCompTerm *callsite_annot = new PrologCompTerm("call_site");
           PrologInt *callsite = new PrologInt(csa->bb->id);
-          callsite_annot->addSubterm(callsite);
+          PrologCompTerm *callsite_annot = new PrologCompTerm("call_site", 1,
+                                                              callsite);
           results->addFirstElement(callsite_annot);
           /* add information on possible call targets */
           if (!isSgFunctionRefExp(function)) {
@@ -367,11 +347,12 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
             if (pto != NULL) {
               PointsToAnalysis::Location *loc =
                   pto->expressionLocation(function);
+              PrologInt *pLocation =
+                new PrologInt(pto->location_id(pto->base_location(loc)));
               PrologCompTerm *callsite_location =
-                  new PrologCompTerm("callsite_location");
-              callsite_location->addSubterm(callsite);
-              callsite_location->addSubterm(
-                  new PrologInt(pto->location_id(pto->base_location(loc))));
+                new PrologCompTerm("callsite_location", 2,
+                                   callsite,
+                                   pLocation);
               results->addFirstElement(callsite_location);
             }
           }
@@ -380,8 +361,8 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
           ASLAttribute *attribute =
             (ASLAttribute *) function->getAttribute(ASL_ATTRIBUTE_ID);
           std::string str = attribute->toString();
-          PrologCompTerm *asl_annot = new PrologCompTerm("asl_annot");
-          asl_annot->addSubterm(new PrologAtom(str));
+          PrologCompTerm *asl_annot = new PrologCompTerm("asl_annot", 1,
+                                                         new PrologAtom(str));
           results->addFirstElement(asl_annot);
         }
       }
@@ -393,8 +374,7 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
         if (cfg != NULL && cfg->contextInformation != NULL) {
           PrologTerm *callStrings = cfg->contextInformation->toPrologTerm();
           PrologCompTerm *callStringInfo
-              = new PrologCompTerm("callstringinfo");
-          callStringInfo->addSubterm(callStrings);
+            = new PrologCompTerm("callstringinfo", 1, callStrings);
           results->addFirstElement(callStringInfo);
         }
       }
@@ -410,14 +390,11 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
 
         /* mapping: locations to their contents; this automagically defines
          * the set of all locations */
-        PrologCompTerm *locationInfo = new PrologCompTerm("locations");
         PrologList *locations = new PrologList();
         std::vector<PointsToAnalysis::Location *> locs;
         pto->interesting_locations(locs);
         std::vector<PointsToAnalysis::Location *>::const_iterator loc;
         for (loc = locs.begin(); loc != locs.end(); ++loc) {
-          PrologCompTerm *loct = new PrologCompTerm("location_varids_funcs");
-          loct->addSubterm(new PrologInt(pto->location_id(*loc)));
           PrologList *varids = new PrologList();
           PrologList *funcs = new PrologList();
           const std::list<SgSymbol *> &syms = pto->location_symbols(*loc);
@@ -436,16 +413,18 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
               std::abort(); // }}}
             }
           }
-          loct->addSubterm(varids);
-          loct->addSubterm(funcs);
+          PrologCompTerm *loct
+            = new PrologCompTerm("location_varids_funcs", 3,
+                                 new PrologInt(pto->location_id(*loc)),
+                                 varids,
+                                 funcs);
           locations->addFirstElement(loct);
         }
-        locationInfo->addSubterm(locations);
+        PrologCompTerm *locationInfo = new PrologCompTerm("locations", 1,
+                                                          locations);
         results->addFirstElement(locationInfo);
 
         /* mapping: variables to locations in each context */
-        PrologCompTerm *variable_locations
-          = new PrologCompTerm("variable_locations");
         PrologList *vlocs = new PrologList();
         std::map<SgVariableSymbol *, unsigned long>::const_iterator v;
         for (v = cfg->varsyms_ids.begin(); v != cfg->varsyms_ids.end(); ++v) {
@@ -454,33 +433,35 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
           std::vector<ContextInformation::Context>::const_iterator ctx;
           for (ctx = ctxs.begin(); ctx != ctxs.end(); ++ctx) {
             if (pto->symbol_has_location(v->first, *ctx)) {
+              PrologInt *pLocation = new PrologInt(
+                  pto->location_id(pto->symbol_location(v->first, *ctx)));
               PrologCompTerm *vcl
-                = new PrologCompTerm("varid_context_location");
-              vcl->addSubterm(varidTerm(v->first));
-              vcl->addSubterm(ctx->toPrologTerm());
-              vcl->addSubterm(new PrologInt(
-                  pto->location_id(pto->symbol_location(v->first, *ctx))));
+                = new PrologCompTerm("varid_context_location", 3,
+                                     varidTerm(v->first),
+                                     ctx->toPrologTerm(),
+                                     pLocation);
               vlocs->addFirstElement(vcl);
             }
           }
         }
-        variable_locations->addSubterm(vlocs);
+        PrologCompTerm *variable_locations
+          = new PrologCompTerm("variable_locations", 1, vlocs);
         results->addFirstElement(variable_locations);
 
         /* mapping (or graph...): points-to relationships */
-        PrologCompTerm *points_to_relations
-          = new PrologCompTerm("points_to_relations");
         PrologList *points_tos = new PrologList();
         for (loc = locs.begin(); loc != locs.end(); ++loc) {
           PointsToAnalysis::Location *base = pto->base_location(*loc);
           if (pto->valid_location(base)) {
-            PrologCompTerm *points_to = new PrologCompTerm("->");
-            points_to->addSubterm(new PrologInt(pto->location_id(*loc)));
-            points_to->addSubterm(new PrologInt(pto->location_id(base)));
+            PrologCompTerm *points_to
+              = new PrologCompTerm("->", 2,
+                                   new PrologInt(pto->location_id(*loc)),
+                                   new PrologInt(pto->location_id(base)));
             points_tos->addFirstElement(points_to);
           }
         }
-        points_to_relations->addSubterm(points_tos);
+        PrologCompTerm *points_to_relations
+          = new PrologCompTerm("points_to_relations", 1, points_tos);
         results->addFirstElement(points_to_relations);
 
         /* mapping: function nodes to return and argument locations */
@@ -497,14 +478,11 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
 
         /* mapping: locations to their contents; this automagically defines
          * the set of all locations */
-        PrologCompTerm *locationInfo = new PrologCompTerm("locations");
         PrologList *locations = new PrologList();
         std::vector<PointsToAnalysis::Location *> locs;
         pto->interesting_locations(locs);
         std::vector<PointsToAnalysis::Location *>::const_iterator loc;
         for (loc = locs.begin(); loc != locs.end(); ++loc) {
-          PrologCompTerm *loct = new PrologCompTerm("location_varids_funcs");
-          loct->addSubterm(new PrologInt(pto->location_id(*loc)));
           PrologList *varids = new PrologList();
           PrologList *funcs = new PrologList();
           const std::list<SgSymbol *> &syms = pto->location_symbols(*loc);
@@ -523,45 +501,49 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
               std::abort(); // }}}
             }
           }
-          loct->addSubterm(varids);
-          loct->addSubterm(funcs);
+          PrologCompTerm *loct
+            = new PrologCompTerm("location_varids_funcs", 3,
+                                 new PrologInt(pto->location_id(*loc)),
+                                 varids,
+                                 funcs);
           locations->addFirstElement(loct);
         }
-        locationInfo->addSubterm(locations);
+        PrologCompTerm *locationInfo = new PrologCompTerm("locations", 1,
+                                                          locations);
         results->addFirstElement(locationInfo);
 
         /* mapping: variables to locations in each context */
-        PrologCompTerm *variable_locations
-          = new PrologCompTerm("variable_locations");
         PrologList *vlocs = new PrologList();
         std::map<SgVariableSymbol *, unsigned long>::const_iterator v;
         for (v = cfg->varsyms_ids.begin(); v != cfg->varsyms_ids.end(); ++v) {
           if (pto->symbol_has_location(v->first)) {
+            PrologInt *pLocation = new PrologInt(
+                pto->location_id(pto->symbol_location(v->first)));
             PrologCompTerm *vcl
-              = new PrologCompTerm("varid_location");
-            vcl->addSubterm(varidTerm(v->first));
-            vcl->addSubterm(new PrologInt(
-                pto->location_id(pto->symbol_location(v->first))));
+              = new PrologCompTerm("varid_location", 2,
+                                   varidTerm(v->first),
+                                   pLocation);
             vlocs->addFirstElement(vcl);
           }
         }
-        variable_locations->addSubterm(vlocs);
+        PrologCompTerm *variable_locations
+          = new PrologCompTerm("variable_locations", 1, vlocs);
         results->addFirstElement(variable_locations);
 
         /* mapping (or graph...): points-to relationships */
-        PrologCompTerm *points_to_relations
-          = new PrologCompTerm("points_to_relations");
         PrologList *points_tos = new PrologList();
         for (loc = locs.begin(); loc != locs.end(); ++loc) {
           PointsToAnalysis::Location *base = pto->base_location(*loc);
           if (pto->valid_location(base)) {
-            PrologCompTerm *points_to = new PrologCompTerm("->");
-            points_to->addSubterm(new PrologInt(pto->location_id(*loc)));
-            points_to->addSubterm(new PrologInt(pto->location_id(base)));
+            PrologCompTerm *points_to
+              = new PrologCompTerm("->", 2,
+                                   new PrologInt(pto->location_id(*loc)),
+                                   new PrologInt(pto->location_id(base)));
             points_tos->addFirstElement(points_to);
           }
         }
-        points_to_relations->addSubterm(points_tos);
+        PrologCompTerm *points_to_relations
+           = new PrologCompTerm("points_to_relations", 1, points_tos);
         results->addFirstElement(points_to_relations);
 
         /* mapping: function nodes to return and argument locations */
@@ -571,12 +553,41 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
       }
 #endif
 
-      ar->addSubterm(results);
-      ((PrologCompTerm*)t)->addSubterm(ar);
+      ar = new PrologCompTerm("analysis_info", 1, results);
     }
 
     /* add file info term */
-    ((PrologCompTerm*)t)->addSubterm(termConv.getFileInfo(fi));
+    PrologTerm* fiTerm = termConv.getFileInfo(fi);
+
+    assert(specific != NULL);
+    assert(ar != NULL);
+    assert(fiTerm != NULL);
+
+    /* depending on the number of successors, use different predicate names*/
+    if(isContainer(astNode))
+      t = listTerm(astNode, synList, specific, ar, fiTerm);
+    else {
+      switch (getArity(astNode)) {
+      case 0:
+        t = leafTerm(astNode, synList, specific, ar, fiTerm);
+        break;
+      case 1:
+        t = unaryTerm(astNode, synList, specific, ar, fiTerm);
+        break;
+      case 2:
+        t = binaryTerm(astNode, synList, specific, ar, fiTerm);
+        break;
+      case 3:
+        t = ternaryTerm(astNode, synList, specific, ar, fiTerm);
+        break;
+      case 4:
+        t = quaternaryTerm(astNode, synList, specific, ar, fiTerm);
+        break;
+      default:
+        t = listTerm(astNode, synList, specific, ar, fiTerm);
+        break;
+      }
+    }
   }
   else {
     t = new PrologAtom("null");
@@ -656,72 +667,79 @@ TermPrinter<DFI_STORE_TYPE>::pagToProlog(
 /* Create a prolog term representing a leaf node.*/
 template<typename DFI_STORE_TYPE>
 PrologCompTerm* TermPrinter<DFI_STORE_TYPE>::leafTerm(
-  SgNode* astNode, SynthesizedAttributesList synList) 
+  SgNode* astNode, SynthesizedAttributesList synList,
+  PrologTerm* specific, PrologTerm* ar, PrologTerm* fiTerm)
 {
-	PrologCompTerm* t = 
-	  new PrologCompTerm(termConv.prologize(astNode->class_name()));
-	return t;
+  PrologCompTerm* t =
+    new PrologCompTerm(termConv.prologize(astNode->class_name()), 0+3,
+                       specific, ar, fiTerm);
+  return t;
 }
 
 /* Create a prolog term representing a unary operator.*/
 template<typename DFI_STORE_TYPE>
 PrologCompTerm* TermPrinter<DFI_STORE_TYPE>::unaryTerm(
-  SgNode* astNode, SynthesizedAttributesList synList) 
+  SgNode* astNode, SynthesizedAttributesList synList,
+  PrologTerm* specific, PrologTerm* ar, PrologTerm* fiTerm)
 {
-	PrologCompTerm* t = 
-	  new PrologCompTerm(termConv.prologize(astNode->class_name()));
-	/* add children's subterms*/
-	t->addSubterm(synList.at(0));
-	return t;
+  PrologCompTerm* t =
+    new PrologCompTerm(termConv.prologize(astNode->class_name()), 1+3,
+                       synList.at(0),
+                       specific, ar, fiTerm);
+  return t;
 }
 
 /* Create a prolog term representing a binary operator.*/
 template<typename DFI_STORE_TYPE>
 PrologCompTerm* TermPrinter<DFI_STORE_TYPE>::binaryTerm(
-  SgNode* astNode, SynthesizedAttributesList synList) 
+  SgNode* astNode, SynthesizedAttributesList synList,
+  PrologTerm* specific, PrologTerm* ar, PrologTerm* fiTerm)
 {
-	PrologCompTerm* t = 
-	  new PrologCompTerm(termConv.prologize(astNode->class_name()));
-	/* add children's subterms*/
-	t->addSubterm(synList.at(0));
-	t->addSubterm(synList.at(1));
-	return t;
+  PrologCompTerm* t =
+    new PrologCompTerm(termConv.prologize(astNode->class_name()), 2+3,
+                       synList.at(0),
+                       synList.at(1),
+                       specific, ar, fiTerm);
+  return t;
 }
 
 /* Create a prolog term representing a ternary operator.*/
 template<typename DFI_STORE_TYPE>
 PrologCompTerm* TermPrinter<DFI_STORE_TYPE>::ternaryTerm(
-  SgNode* astNode, SynthesizedAttributesList synList) 
+  SgNode* astNode, SynthesizedAttributesList synList,
+  PrologTerm* specific, PrologTerm* ar, PrologTerm* fiTerm)
 {
-	PrologCompTerm* t = 
-	  new PrologCompTerm(termConv.prologize(astNode->class_name()));
-	t->addSubterm(synList.at(0)); 
-	t->addSubterm(synList.at(1));
-	t->addSubterm(synList.at(2));
-	return t;
+  PrologCompTerm* t =
+    new PrologCompTerm(termConv.prologize(astNode->class_name()), 3+3,
+                       synList.at(0),
+                       synList.at(1),
+                       synList.at(2),
+                       specific, ar, fiTerm);
+  return t;
 }
 
 /* Create a prolog term representing a quaternary operator.*/
 template<typename DFI_STORE_TYPE>
 PrologCompTerm* TermPrinter<DFI_STORE_TYPE>::quaternaryTerm(
-  SgNode* astNode, SynthesizedAttributesList synList) 
+  SgNode* astNode, SynthesizedAttributesList synList,
+  PrologTerm* specific, PrologTerm* ar, PrologTerm* fiTerm)
 {
-	PrologCompTerm* t = 
-          new PrologCompTerm(termConv.prologize(astNode->class_name()));
-	t->addSubterm(synList.at(0));
-	t->addSubterm(synList.at(1));
-	t->addSubterm(synList.at(2));
-	t->addSubterm(synList.at(3));
-	return t;
+  PrologCompTerm* t =
+    new PrologCompTerm(termConv.prologize(astNode->class_name()), 4+3,
+                       synList.at(0),
+                       synList.at(1),
+                       synList.at(2),
+                       synList.at(3),
+                       specific, ar, fiTerm);
+  return t;
 }
 
 /* Create a prolog term representing a node with more than four successors.*/
 template<typename DFI_STORE_TYPE>
 PrologCompTerm* TermPrinter<DFI_STORE_TYPE>::listTerm(
-  SgNode* astNode, SynthesizedAttributesList synList) 
+  SgNode* astNode, SynthesizedAttributesList synList,
+  PrologTerm* specific, PrologTerm* ar, PrologTerm* fiTerm)
 {
-  PrologCompTerm* t = 
-   new PrologCompTerm(termConv.prologize(astNode->class_name()));
   /* add children's subterms to list */
   PrologList* l = new PrologList();
   SynthesizedAttributesList::reverse_iterator it;
@@ -748,7 +766,10 @@ PrologCompTerm* TermPrinter<DFI_STORE_TYPE>::listTerm(
     it++;
   }
   /* add list to term*/
-  t->addSubterm(l);
+  PrologCompTerm* t =
+   new PrologCompTerm(termConv.prologize(astNode->class_name()), 1+3,
+                      l,
+                      specific, ar, fiTerm);
   return t;
 }
 
@@ -774,7 +795,7 @@ PrologCompTerm*
 TermPrinter<DFI_STORE_TYPE>::functionIdAnnotation(std::string funcname,
                                                   SgFile *file) {
   std::multimap<std::string, Procedure *>::iterator mmi, limit;
-  PrologCompTerm *funcid_annot = new PrologCompTerm("function_id");
+  PrologTerm *funcid_value = NULL;
   mmi = cfg->proc_map.lower_bound(funcname);
   if (mmi != cfg->proc_map.end()) {
     /* If we got here, we found *some* functions with the correct name in
@@ -793,13 +814,16 @@ TermPrinter<DFI_STORE_TYPE>::functionIdAnnotation(std::string funcname,
         nonStaticCandidate = p;
     }
     if (staticCandidate != NULL)
-      funcid_annot->addSubterm(new PrologInt(staticCandidate->procnum));
+      funcid_value = new PrologInt(staticCandidate->procnum);
     else if (nonStaticCandidate != NULL)
-      funcid_annot->addSubterm(new PrologInt(nonStaticCandidate->procnum));
+      funcid_value = new PrologInt(nonStaticCandidate->procnum);
     else
-      funcid_annot->addSubterm(new PrologInt(INT_MAX));
+      funcid_value = new PrologInt(INT_MAX);
   } else
-    funcid_annot->addSubterm(new PrologInt(INT_MAX));
+    funcid_value = new PrologInt(INT_MAX);
+  assert(funcid_value != NULL);
+  PrologCompTerm *funcid_annot
+    = new PrologCompTerm("function_id", 1, funcid_value);
   return funcid_annot;
 }
 #endif

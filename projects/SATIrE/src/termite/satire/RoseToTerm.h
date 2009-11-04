@@ -17,7 +17,7 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
  */
 class RoseToTerm {
 public:
-  void addSpecific(SgNode*,PrologCompTerm*);
+  PrologTerm* getSpecific(SgNode*);
   PrologCompTerm* getFileInfo(Sg_File_Info*);
   static std::string prologize(std::string);
 private:

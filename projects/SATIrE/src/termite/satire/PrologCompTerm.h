@@ -98,18 +98,34 @@ public:
   }
 
   PrologCompTerm(term_t t) : PrologTerm(t) {
+    term_t name;
+    int arity;
+    PL_get_name_arity(t, &name, &arity);
+    while (arity --> 0)
+      subterms.push_back(NULL);
   };
 
-  PrologCompTerm(std::string name, size_t n, ...) {
-    // FIXME.. this should be done directly!!
-    term = PL_new_term_ref();
-    PL_put_atom_chars(term, name.c_str());
-    if(n > 0) {
+  PrologCompTerm(std::string name, size_t n, ...) : PrologTerm()
+  {
+ // GB (2009-11-03): More sophisticated construction of composite terms. The
+ // "term" member variable is initialized by the default constructor invoked
+ // above. We copy the argument terms to a new argument list, create a
+ // functor, and hope that everything works out well.
+    atom_t functorAtom = PL_new_atom(name.c_str());
+    if (n > 0) {
+      functor_t functor = PL_new_functor(functorAtom, n);
+      term_t args = PL_new_term_refs(n);
+      PL_cons_functor_v(term, functor, args);
       va_list params;
       va_start(params, n);
-      for (size_t i=0; i < n; i++)
-        addSubterm(va_arg(params, PrologTerm *));
+      for (size_t i = 0; i < n; i++) {
+        PrologTerm *arg_i = va_arg(params, PrologTerm *);
+        PL_unify_arg(i+1, term, arg_i->getTerm());
+        subterms.push_back(arg_i);
+      }
       va_end(params);
+    } else {
+      term = functorAtom;
     }
   }
 
@@ -140,6 +156,7 @@ public:
       std::cerr<<display(term)<<" . addFirstSubTerm("
 	       <<t->getRepresentation()<<");"<<std::endl;
 #   endif
+    assert(0 && "this function does not exist");
 
     term_t old_term = term;
     int arity;
@@ -192,17 +209,27 @@ public:
 
     assert(PL_unify_arg(arity+1, term, t->getTerm()));
 
+    subterms.push_back(t);
+
 #   if DEBUG_TERMITE
       std::cerr<<" --> "<<display(term)<<" !"<<std::endl;
 #   endif
   }
 
   /// the i-th subterm
-  PrologTerm* at(int i) {      
-    term_t arg = PL_new_term_ref();
-    PL_get_arg(i+1, term, arg);
-    return newPrologTerm(arg);
+  PrologTerm* at(int i) {
+    if (subterms[i] != NULL)
+      return subterms[i];
+    else {
+      term_t arg = PL_new_term_ref();
+      PL_get_arg(i+1, term, arg);
+      subterms[i] = newPrologTerm(arg);
+      return subterms[i];
+    }
   }
+
+private:
+  std::vector<PrologTerm *> subterms;
 };
 
 class PrologInfixOperator : public PrologCompTerm {

@@ -15,12 +15,12 @@
 using namespace std;
 
 /**
- * add node specific info to a term.
+ * get node specific info for a term.
  * This function, depending on the type of the node, uses private helper functions.
  * No actual work is done here.
  */
-void
-RoseToTerm::addSpecific(SgNode* astNode, PrologCompTerm* t) {
+PrologTerm*
+RoseToTerm::getSpecific(SgNode* astNode) {
   PrologCompTerm* a = NULL;
   string cname = astNode->class_name();
   if (SgValueExp* n = dynamic_cast<SgValueExp*>(astNode)) {
@@ -89,8 +89,7 @@ RoseToTerm::addSpecific(SgNode* astNode, PrologCompTerm* t) {
   } else if (SgPragma* n = isSgPragma(astNode)) {
     a = getPragmaSpecific(n);
   } else {
-    a = new PrologCompTerm("default_annotation");
-    a->addSubterm(new PrologAtom("null"));
+    a = new PrologCompTerm("default_annotation", 1, new PrologAtom("null"));
   }
 
   // add preprocessing info
@@ -98,7 +97,7 @@ RoseToTerm::addSpecific(SgNode* astNode, PrologCompTerm* t) {
     a->addSubterm(getPreprocessingInfo(n->getAttachedPreprocessingInfo()));
   }
 
-  t->addSubterm(a);
+  return a;
 }
 
 PrologCompTerm*

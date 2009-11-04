@@ -158,6 +158,10 @@ class PrologList : public PrologTerm {
 
   /// get the i-th element
   PrologTerm* at(int i) {
+    assert(i >= 0);
+    if ((unsigned) i < mTerms.size())
+      return mTerms[i];
+
     term_t t = PL_copy_term_ref(term);
 
     for (int c = 0; c < i; c++)

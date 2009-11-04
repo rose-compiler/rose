@@ -63,7 +63,6 @@ PrologTerm *PrologTerm::wrap_PL_Term(term_t t)
 PrologTerm* PrologTerm::newPrologTerm(term_t t)
 {
   PrologTerm *pt = wrap_PL_Term(t);
-  garbage_bin.push_front(pt);
   return pt;
 }
 

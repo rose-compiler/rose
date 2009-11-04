@@ -155,11 +155,6 @@ class PrologTerm {
   }
 
   virtual ~PrologTerm() {
-    // Free all children that were generated on-the-fly
-    // TODO: replace this with some sorrt of smart pointer
-    for (std::deque<PrologTerm*>::iterator p = garbage_bin.begin(); 
-	 p != garbage_bin.end(); ++p)
-      delete *p;
   }
   /// returns the arity of the term
   virtual int getArity() { 
@@ -247,8 +242,6 @@ protected:
     PL_discard_foreign_frame(fid);
     return r;
   }
-
-  std::deque<PrologTerm*> garbage_bin;
 
   // Create a new PrologTerm from a real Prolog Atom
   // it will automatically be freed at the end of this object's lifetime
