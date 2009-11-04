@@ -4277,7 +4277,7 @@ SgAsmElfSymverDefinedSection::unparse(std::ostream &f) const
     const SgAsmElfSymverDefinedAuxPtrList& auxes = entry->get_entries()->get_entries();
     size_t num_aux = auxes.size();
     size_t first_aux = entry_size;// we always stick Aux's just after Entry
-    size_t next_entry = first_aux + ( num_aux * sizeof(aux_size) );
+    size_t next_entry = first_aux + ( num_aux * aux_size );
     if(nentries -1 == ent){
       next_entry=0; // final entry: next is null (0)
     }
@@ -4596,7 +4596,7 @@ SgAsmElfSymverNeededSection::unparse(std::ostream &f) const
     const SgAsmElfSymverNeededAuxPtrList& auxes = entry->get_entries()->get_entries();
     size_t num_aux = auxes.size();
     size_t first_aux = entry_size;// we always stick Aux's just after Entry
-    size_t next_entry = first_aux + ( num_aux * sizeof(aux_size) );
+    size_t next_entry = first_aux + ( num_aux * aux_size );
     if(nentries -1 == ent){
       next_entry=0; // final entry: next is null (0)
     }
