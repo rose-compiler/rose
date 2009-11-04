@@ -3,7 +3,7 @@
 
 using namespace std;
 
-/** Clears the p_isModified bit for @p node and all children, recurisvely. Returns true iff node or one of its descendents had
+/** Clears the p_isModified bit for @p node and all children, recursively. Returns true iff node or one of its descendants had
  *  p_isModified set. */
 bool checkIsModifiedFlag( SgNode *node)
    {

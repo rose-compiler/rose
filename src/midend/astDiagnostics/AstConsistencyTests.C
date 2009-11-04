@@ -453,11 +453,12 @@ AstTests::runAllTests(SgProject* sageProject)
        // printf ("Exiting after call to TestMappingOfDeclarationsInMemoryPoolToSymbols::test() \n");
        // ROSE_ASSERT(false);
         }
+
      if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
           cout << "Test declarations for mapping to declaration associated with symbol(uses memory pool) finished." << endl;
 
 
-  // DQ (6/26/2006): Test the parent pointers of IR nodes in memory pool.
+  // DQ (6/26/2006): Test expressions for l-value flags
      if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
           cout << "Test expressions for properly set l-values started." << endl;
         {
@@ -470,7 +471,7 @@ AstTests::runAllTests(SgProject* sageProject)
           cout << "Test expressions for properly set l-values finished." << endl;
 
 
-  // DQ (2/23/2009): Test the declarations to make sure that defining and non-defining appear int eh same file (for outlining consistancy).
+  // DQ (2/23/2009): Test the declarations to make sure that defining and non-defining appear in the same file (for outlining consistency).
      TestMultiFileConsistancy::test();
 
 

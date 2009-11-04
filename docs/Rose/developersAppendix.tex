@@ -2242,26 +2242,32 @@ to define instrumentation, optimizations, and custom translation.
       \item Inlining
       \begin{lstlisting}
       /* Inline a function call site*/
-      bool inline (SgFunctionCallExp *);
+      bool inlining (SgFunctionCallExp *);
 
       /* Inline all call sites to a function within a root AST node,
          return the number of call sites being inlined. */
-      int inline (SgNode* root, SgFunctionDeclartion *);
+      int inlining (SgNode* root, SgFunctionDeclartion *);
+
+      /* Inline all call sites to a function with a qualified name,
+         return the number of call sites being inlined. */
+      int inlining (SgNode* root, const std::string &qualified_func_name);
 
       /*Aggressive inline all call sites whenever possible for an AST,
         return the number of call sites being inlined. */
-      int inline(SgNode* root);
+      int inlining(SgNode* root);
 
       \end{lstlisting}
       \item Loop optimizations:fusion, fusion, unrolling, blocking, loop
                   interchange, array copy, etc.
-\fixme{How about Fortran loops?}
+Most API functions take SgNode* instead of SgForStatement* to be compatible for both C and Fortran loops.
        \begin{lstlisting}
-       /* Normalize a for loop, return true if successful. */
-       bool loopNormalization (SgForStatement *loop);
+
+       //! Normalize a loop, return true if successful
+       //! The loop can be either C for loop or Fortran DO loop
+       bool loopNormalization (SgNode* loop);
 
       /* Check if a for-loop has a canonical form, return loop index, 
-         bounds, step, and body if requested. */
+         bounds, step, body and so on if requested. */
        bool isCanonicalForLoop (SgNode *loop, SgInitializedName **ivar=NULL, 
             SgExpression **lb=NULL, SgExpression **ub=NULL, SgExpression **step=NULL, 
             SgStatement **body=NULL, bool *hasIncrementalIterationSpace=NULL, 
@@ -2270,15 +2276,18 @@ to define instrumentation, optimizations, and custom translation.
        /* Unroll a target loop with a specified unrolling factor. 
           It handles steps larger than 1 and adds a fringe loop 
           if the iteration count is not evenly divisible by the unrolling factor. */
-       bool loopUnrolling (SgForStatement *loop, size_t unrolling_factor);
+       bool loopUnrolling (SgNode *loop, size_t unrolling_factor);
+
+       //! Unroll and jam a loop, with a given unrolling factor
+       bool loopUnrollAndJam (SgNode *loop, size_t unrolling_factor);
 
        /*   Tile the n-level (starting from 1) loop of a perfectly nested loop nest 
             using tiling size s. */
-       bool loopTiling (SgForStatement *loopNest, size_t targetLevel, size_t tileSize);
+       bool loopTiling (SgNode *loopNest, size_t targetLevel, size_t tileSize);
 
        /* Interchange/permutate a n-level perfectly-nested loop rooted at 'loop' 
           using a lexicographical order number within (0,depth!). */
-       bool loopInterchange (SgForStatement *loop, size_t depth, size_t lexicoOrder);
+       bool loopInterchange (SgNode*loop, size_t depth, size_t lexicoOrder);
 
        /*  Normalize loop init stmt by promoting the single variable declaration statement 
            outside of the for loop header's init statement, e.g. for (int i=0;) becomes 
@@ -2286,11 +2295,11 @@ to define instrumentation, optimizations, and custom translation.
            if necessary. */
        bool normalizeForLoopInitDeclaration (SgForStatement *loop);
 
-       /*  Fuse two loops into one loop and return the fused loop */
-       SgForStatement* loopFusion (SgForStatement* loop1, SgForStatement* loop2);
+       //! Fuse two loops into one loop, return the fused loop
+       SgNode* loopFusion (SgNode* loop1, SgNode* loop2);
       
        /* Loop fission: break a loop into multiple loops */
-       std::vector<std::SgForStatement*> loopFission (SgForStatement* src_loop);
+       std::vector<std::SgNode*> loopFission (SgNode* src_loop);
 
 // TODO array copy 
        \end{lstlisting}
@@ -2303,6 +2312,12 @@ to define instrumentation, optimizations, and custom translation.
 
        \end{lstlisting}
       \item Finite Differencing  \fixme{what is this?}
+       \begin{lstlisting}
+       //! Do finite differencing on one expression within one context.
+        void doFiniteDifferencingOne(SgExpression* e,
+                             SgBasicBlock* root, RewriteRule* rules);
+       \end{lstlisting}
+
       \item Partial Redundancy Elimination
        \begin{lstlisting}
        /* Apply partial redundancy elimination on AST rooted at r*/
@@ -2321,6 +2336,7 @@ to define instrumentation, optimizations, and custom translation.
       void commandLineProcessing(std::vector<std::string> &argvList);
 
       //! Returns true iff the statement is "outlineable."
+      //! Print out reasons for s that can not be outlined if 'verbose' is true
       bool isOutlineable (const SgStatement* s, bool verbose = false);
 
       //! Preprocess a statement for outlining
@@ -2456,6 +2472,13 @@ to define instrumentation, optimizations, and custom translation.
            This work permits the merging of separate AST's and the sharing of their
            identically names language declarations to support whole program
            analysis. Duplicate parts of the merged AST are deleted.
+         \begin{lstlisting}
+         //! Merge AST tree from multiple files
+         int mergeAST( SgProject* project );
+         //! Merge AST from mulitple AST binary dump files
+         SgProject * mergeAST(std::vector <FILE *> files);
+         \end{lstlisting}
+
 
        \end{enumerate} % end of general transformation
    \end{enumerate}  % end of transformation
@@ -2528,10 +2551,69 @@ presented together:
          After transformations to the AST, it is frequently required to call a
          standard AST fixup that will fill in missing pieces of the AST and do a few simple
          tests to validate the AST.
+         It can also support bottom-up AST construction by patching up symbols, scope information etc.
+    
+         \begin{lstlisting}
+         //! Fixeup missing pieces of the AST
+         void AstPostProcessing(SgNode* node);
+         
+         // Do we want to expose individual fixup to users? 
+         // Some examples are given below 
+         //! Connect variable reference to the right variable symbols when feasible, 
+         //! return the number of references being fixed. 
+         int fixVariableReferences (SgNode *root);
+
+         //! Patch up symbol, scope, and parent information when 
+         //! a declaration's scope is known. 
+         void fixVariableDeclaration (SgVariableDeclaration *varDecl, SgScopeStatement *scope);
+         void fixClassDeclaration (SgClassDeclaration *classDecl, SgScopeStatement *scope);
+         void fixNamespaceDeclaration (SgNamespaceDeclarationStatement *structDecl, SgScopeStatement *scope);
+         void fixLabelStatement (SgLabelStatement *label_stmt, SgScopeStatement *scope);
+
+         \end{lstlisting}
+
    \item AST Consistency Tests (L) \\
          This is the highest level of internal consistency testing available in ROSE.
          This test is typically run after the frontend processing (by the user) to
          verify a correct AST before midend processing.
+         \begin{lstlisting}
+        //! Run all known AST consistency tests
+         AstTests::runAllTests(SgNode* root); 
+        
+        //! Do we want to expose individual tests?
+        // Derived class vs. a function call 
+        // Tests on a tree vs. memory pools
+       
+         //! Test on memory pools
+         AstTests::testUniqueStatementsInScopes(); 
+
+         //! Test on a whole/sub tree
+         AstTests::testUniqueStatementsInScopes(SgNode* root); 
+
+         AstTests::testMangledNames();
+         AstTests::testMangledNames(SgNode* root);
+
+         AstTests::testCompilerGeneratedNodes();
+         AstTests::testCompilerGeneratedNodes(SgNode* root);
+
+         AstTests::testAstCycles();
+         AstTests::testTemplates();
+         AstTests::testDefiningAndNondefiningDeclarations();
+         AstTests::testSymbolTables();
+         AstTests::testMemberFunctions();
+         AstTests::testExpressionTypes();
+
+         AstTests::testParentPointersInMemoryPool();
+         AstTests::testChildPointersInMemoryPool();
+
+         AstTests::testMappingOfDeclarationsToSymbols();
+         AstTests::testExpressionLValue();
+        //! Test the declarations to make sure that 
+        //defining and non-defining appear in the same file
+         AstTests::testMultipleFiles();
+         AstTests::testTypesInMemoryPool();
+         \end{lstlisting}
+
 
    \item AST Visualization (DQ) \\
          Visualization of the AST and related graphs generated from program analysis forms
@@ -2636,8 +2718,45 @@ Other useful utility functions in ROSE
    \item Graphs and Graph Analysis (T)
 
    \item Performance Metric Annotation (L)
+   namespace \lstinline{PerformanceMetric} \fixme{single or plural form in name convention?}
+\begin{lstlisting}
+  //! Loads HPCToolkit XML or GNU gprof text profiling data files given on the command-line
+  // and create a list of tree representations (called profile trees) for them.
+  ProfileTreeList_t loadProfilingFiles(std::vector<std::string>& argvList);
 
-   \item Abstract Handles (L)
+  //! Attach performance metrics from the profile trees to the AST tree.
+  void attachMetrics (const ProfileTreeList_t& profiles,
+                      SgProject* proj, bool verbose = false);
+
+  //! Propagate specified metrics from statement level to parent scopes 
+  // (loop, function, file and project levels)
+  void propagateMetrics(SgProject * project, const std::vector<string> metricNames);
+
+  //!Collect metric names from an AST attached with performance metrics
+  void collectMetricnames(SgNode* root, std::vector<std::string>& metricNames); 
+
+  //! Get a metric from a SgNode based on its name
+  MetricAttr* getMetric(SgNode*, std::string metric_name);
+
+
+\end{lstlisting}
+
+   \item Abstract Handles (L)\\
+     Abstract handles (namespace \lstinline{AbstractHandle}) are used to specify arbitrary language constructs within an application.
+     \begin{lstlisting}
+     //! Get SgNode from an abstract handle string
+     SgNode* getSgNodeFromAbstracthandle(const std::string& s);  
+
+     //! Create an abstract node from a SgNode
+     abstract_node * buildAbstractNode(SgNode*);
+
+     //! Create and abstract handle from an abstract node
+     abstract_handle* buildAbstractHandle (abstract_node *);
+
+     //! Create an abstract handle from a handle string
+     abstract_handle* buildAbstractHandle(std::string handle_string);
+
+     \end{lstlisting}
 
    \item Macro Rewrapper (A) \\
          This is a feature not yet ready to be a part of the user API in ROSE.

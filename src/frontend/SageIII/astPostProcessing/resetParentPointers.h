@@ -6,7 +6,7 @@
 
      Interface for resetting parent pointers (called by temporaryAstFixes()
      function, but also required to reset parent pointers after any addition
-     of new AST fragements to the AST).
+     of new AST fragments to the AST).
 
      \internal This function can be called directly as well.
   */

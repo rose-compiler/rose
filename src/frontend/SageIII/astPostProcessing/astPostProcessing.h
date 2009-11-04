@@ -41,7 +41,7 @@ void postProcessingSupport (SgNode* node);
 
 /*! \brief This does all post-processing fixup and translation of the Sage III AST.
 
-    This function was added to provide a more representative name, the post processign does not
+    This function was added to provide a more representative name, the post processing does not
     just include temporary fixes.  We might make if nore explicit what function are representative
     of temporary fixes later (at the moment I think there are none that are temporary).
     This does all post-processing fixup of the AST including:
