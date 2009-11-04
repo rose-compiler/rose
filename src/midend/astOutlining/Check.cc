@@ -70,16 +70,18 @@ isHiddenType (const SgType* type)
   {
     const SgNamedType* n = isSgNamedType (base_type);
     if (n)
-    {
+    { // Get the declaration of a named type
       const SgDeclarationStatement* decl = n->get_declaration ();
       if (decl)
       {
         const SgScopeStatement* scope = decl->get_scope ();
         while (!isSgGlobal (scope))
         {
+          // Non-global scoped declaration, not within a class or name space, 
+          // a hidden type!
           if (!isSgClassDefinition (scope)
               && !isSgNamespaceDefinitionStatement (scope))
-            return true; // Is a hidden type!
+            return true; 
           scope = scope->get_scope ();
         }
       }

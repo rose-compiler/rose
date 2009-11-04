@@ -9,4 +9,6 @@ The frontend support are located in:
 
 Headers: src/frontend/SageIII/omp.h  
 
+Please refer to the Chapter named "OpenMP support" in the ROSE manual (http://www.rosecompiler.org/ROSE_UserManual/ROSE-UserManual.pdf) for details about how to use this new feature. 
+
 

@@ -2218,18 +2218,95 @@ binary executable.
    Transformation by definition modifies the structure of the AST and can be used
 to define instrumentation, optimizations, and custom translation.
 \subparagraph{Source (L)}
+\lstset{language={C++},basicstyle=\small} 
 \begin{enumerate}
    \item Instrumentation
+   \begin{lstlisting}
+
+   /* Instrument(Add a statement, often a function call) into a function right
+      before the return points, handle multiple return statements and return
+      expressions with side effects. Return the number of statements inserted.
+    */
+   int instrumentEndOfFunction (SgFunctionDeclaration *func, SgStatement *s);
+
+   /* Instrument(Add a statement, often a function call) into a function at
+      the very beginning.  */
+   int instrumentBeginOfFunction (SgFunctionDeclaration *func, SgStatement *s);
+   \end{lstlisting}
    \item Optimization
          These include a range of optimizations relevant for general performance
          optimization of scientific applications.
    \begin{enumerate}
       \item Inlining
+      \begin{lstlisting}
+      /* Inline a function call site*/
+      bool inline (SgFunctionCallExp *);
+
+      /* Inline all call sites to a function within a root AST node,
+         return the number of call sites being inlined. */
+      int inline (SgNode* root, SgFunctionDeclartion *);
+
+      /*Aggressive inline all call sites whenever possible for an AST,
+        return the number of call sites being inlined. */
+      int inline(SgNode* root);
+
+      \end{lstlisting}
       \item Loop optimizations:fusion, fusion, unrolling, blocking, loop
                   interchange, array copy, etc.
+\fixme{How about Fortran loops?}
+       \begin{lstlisting}
+       /* Normalize a for loop, return true if successful. */
+       bool loopNormalization (SgForStatement *loop);
+
+      /* Check if a for-loop has a canonical form, return loop index, 
+         bounds, step, and body if requested. */
+       bool isCanonicalForLoop (SgNode *loop, SgInitializedName **ivar=NULL, 
+            SgExpression **lb=NULL, SgExpression **ub=NULL, SgExpression **step=NULL, 
+            SgStatement **body=NULL, bool *hasIncrementalIterationSpace=NULL, 
+            bool *isInclusiveUpperBound=NULL);
+
+       /* Unroll a target loop with a specified unrolling factor. 
+          It handles steps larger than 1 and adds a fringe loop 
+          if the iteration count is not evenly divisible by the unrolling factor. */
+       bool loopUnrolling (SgForStatement *loop, size_t unrolling_factor);
+
+       /*   Tile the n-level (starting from 1) loop of a perfectly nested loop nest 
+            using tiling size s. */
+       bool loopTiling (SgForStatement *loopNest, size_t targetLevel, size_t tileSize);
+
+       /* Interchange/permutate a n-level perfectly-nested loop rooted at 'loop' 
+          using a lexicographical order number within (0,depth!). */
+       bool loopInterchange (SgForStatement *loop, size_t depth, size_t lexicoOrder);
+
+       /*  Normalize loop init stmt by promoting the single variable declaration statement 
+           outside of the for loop header's init statement, e.g. for (int i=0;) becomes 
+           int i_x; for (i_x=0;..) and rewrite the loop with the new index variable, 
+           if necessary. */
+       bool normalizeForLoopInitDeclaration (SgForStatement *loop);
+
+       /*  Fuse two loops into one loop and return the fused loop */
+       SgForStatement* loopFusion (SgForStatement* loop1, SgForStatement* loop2);
+      
+       /* Loop fission: break a loop into multiple loops */
+       std::vector<std::SgForStatement*> loopFission (SgForStatement* src_loop);
+
+// TODO array copy 
+       \end{lstlisting}
       \item Constant Folding
-      \item Finite Differencing
+       \begin{lstlisting}
+        /* Constant folding an AST subtree rooted at 'root'. 
+          Avoid folding floating point typed expressions 
+          by default to ensure accuracy. */
+         void constantFolding (SgNode* root, bool foldFloatPoint = false);
+
+       \end{lstlisting}
+      \item Finite Differencing  \fixme{what is this?}
       \item Partial Redundancy Elimination
+       \begin{lstlisting}
+       /* Apply partial redundancy elimination on AST rooted at r*/
+       void partialRedundancyElimination(SgNode* r);
+       \end{lstlisting}
+
    \end{enumerate}
 
    \item General Transformations \\
