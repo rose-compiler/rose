@@ -2220,7 +2220,9 @@ to define instrumentation, optimizations, and custom translation.
 \subparagraph{Source (L)}
 \lstset{language={C++},basicstyle=\small} 
 \begin{enumerate}
-   \item Instrumentation
+   \item Instrumentation 
+   \fixme{Do we need this section at all? Can be covered in general
+   translations}
    \begin{lstlisting}
 
    /* Instrument(Add a statement, often a function call) into a function right
@@ -2307,26 +2309,156 @@ to define instrumentation, optimizations, and custom translation.
        void partialRedundancyElimination(SgNode* r);
        \end{lstlisting}
 
-   \end{enumerate}
+   \end{enumerate} % end of optimization
 
    \item General Transformations \\
          These include outlining, AST copy, and AST merge support, etc.
    \begin{enumerate}
-      \item Outlining
+      \item Outlining  
+\fixme{Discuss setting internal flags and debugging support}
+      \begin{lstlisting}
+      //! Accept a set of command line options to set internal behaviors
+      void commandLineProcessing(std::vector<std::string> &argvList);
+
+      //! Returns true iff the statement is "outlineable."
+      bool isOutlineable (const SgStatement* s, bool verbose = false);
+
+      //! Preprocess a statement for outlining
+      SgBasicBlock* preprocess (SgStatement* s);
+
+       //! Outlines the given basic block into a function named 'name'
+       Result outlineBlock (SgBasicBlock* b, const std::string& name);
+
+      //! Outline to a new function with the specified name, calling 
+      //! preprocessing internally
+      Result outline (SgStatement* s, const std::string& func_name);
+
+      //! Stores the main results of an outlining transformation.
+      struct Result
+      {
+        //! The outlined function's declaration and definition.
+        SgFunctionDeclaration* decl_;
+      
+        //! A call statement to invoke the outlined function.
+        SgStatement* call_;
+      
+        //! A SgFile pointer to the newly generated source file containing the
+        // outlined function if -rose:outline:new_file is specified (useNewFile==true)
+        SgFile* file_;
+      }
+       \end{lstlisting}
+
       \item ImplicitCodeGeneration \\
             This work makes C++ implicit semantics explicit for C style analysis.
+\fixme{The granularity for transformation targets? flag to ignore headers, other files?}
+       \begin{lstlisting}
+       //! Make implicit compiler-generated function explicit,
+       //  including default constructors, destructors and copy constructors.
+       void defaultFunctionGenerator(SgProject *prj);
+
+       //! The same as the above, except that it operates on the file scope
+       void defaultFunctionGenerator(SgFile* f);
+
+       //! The same as the above, except that it operates on a target class
+       void defaultFunctionGenerator(SgClassDeclaration* c_decl);
+
+       //!Annotates the AST with calls to class destructors whenever objects
+       go out of scope.
+       void destructorCallAnnotator(SgProject *prj);
+
+       //! Transforms the evaluation of short-circuited expressions to explicitly
+       //! evaluate each step.  A prerequisite of destructorCallAnnotator.
+       void shortCircuitingTransformation(SgProject *prj);
+
+       \end{lstlisting}
+      
+
       \item FunctionCallNormalization \\
             This is a library of function call normalizations to support binary
             analysis.
-      \item AST Copy support \\
-            This support permits arbitrary subtrees (or the whole AST) to be copied
-            with control over deep or shallow copying via a single function.
-      \item AST Merge support \\
-            This work permits the merging of separate AST's and the sharing of their
-            identically names language declarations to support whole program
-            analysis. Duplicate parts of the merged AST are deleted.
-   \end{enumerate}
-\end{enumerate}
+       \begin{lstlisting}
+       //! Ensure that no statement will have more than one function call
+       //! This is to be done by inserting new temporary variables to replace extra calls
+       class FunctionCallNormalization:: public SgSimpleProcessing; 
+       \end{lstlisting}
+
+      \item AST creation/building \\      
+            Build AST pieces, transparently taking care of side effects as much as possible.
+           Used to replace the direct call to constructors. 
+       \begin{lstlisting}
+       //! Type builders
+       SgTypeBool * buildBoolType ();
+       SgTypeInt * buildIntType ();
+       ...
+       //! Expression builders
+       SgNullExpression *buildNullExpression ();
+       SgIntVal *  buildIntVal (int value=0);
+       SgVarRefExp * buildVarRefExp (const std::string &varName, SgScopeStatement *scope=NULL);
+       ...
+       //! Statement builders
+       SgVariableDeclaration * buildVariableDeclaration (const SgName &name, SgType *type, 
+                                   SgInitializer *varInit=NULL, SgScopeStatement *scope=NULL);
+       SgWhileStmt * buildWhileStmt (SgStatement *condition, SgStatement *body);
+       SgClassDeclaration * buildStructDeclaration (const std::string &name, 
+                                       SgScopeStatement *scope=NULL); 
+       ...
+
+       //! Misc builders
+       SgFile * buildFile (const std::string &inputFileName, const std::string &outputFileName, 
+                                 SgProject *project=NULL);
+       SgInitializedName * buildInitializedName (const std::string &name, SgType *type);
+       PreprocessingInfo * buildComment (SgLocatedNode *target, const std::string &content, 
+                  PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before, 
+     PreprocessingInfo::DirectiveType dtype=PreprocessingInfo::CpreprocessorUnknownDeclaration);
+       \end{lstlisting}
+
+      \item AST insert, deletion, move and replacement \\
+            Manipulate AST pieces
+       \begin{lstlisting}
+       PreprocessingInfo * insertHeader (const std::string &filename, 
+           PreprocessingInfo::RelativePositionType position=PreprocessingInfo::after, 
+           bool isSystemHeader=false, SgScopeStatement *scope=NULL);
+       void insertStatement (SgStatement *targetStmt, SgStatement *newStmt, 
+            bool insertBefore=true);
+       void insertStatementList (SgStatement *targetStmt, 
+            const std::vector< SgStatement * > &newStmts, bool insertBefore=true);
+       void insertStatementBefore (SgStatement *targetStmt, SgStatement *newStmt);
+       void insertStatementAfter (SgStatement *targetStmt, SgStatement *newStmt);
+       void appendStatement (SgStatement *stmt, SgScopeStatement *scope=NULL);
+       void prependStatement (SgStatement *stmt, SgScopeStatement *scope=NULL);
+       ...
+       void deepDelete (SgNode *root);
+       void deleteAST (SgNode *node);
+       void removeStatement (SgStatement *stmt);
+       
+       ...
+       void replaceExpression (SgExpression *oldExp, SgExpression *newExp, 
+            bool keepOldExp=false);
+       void replaceStatement (SgStatement *oldStmt, SgStatement *newStmt, 
+            bool movePreprocessinInfo=false);
+       
+       void moveStatementsBetweenBlocks (SgBasicBlock *sourceBlock, 
+            SgBasicBlock *targetBlock);
+       \end{lstlisting}
+       \item AST Copy support \\
+         This support permits arbitrary subtrees (or the whole AST) to be copied
+         with control over deep or shallow copying via a single function.
+         \begin{lstlisting}
+         SgNode * deepCopyNode (const SgNode *subtree);
+         SgNode * shallowCopyNode (const SgNode *subtree);
+         template<typename NodeType>
+           NodeType * deepCopy (const NodeType *subtree);
+         SgExpression *        copyExpression (SgExpression *e);
+         SgStatement *  copyStatement (SgStatement *s);
+         \end{lstlisting}
+
+       \item AST Merge support \\
+           This work permits the merging of separate AST's and the sharing of their
+           identically names language declarations to support whole program
+           analysis. Duplicate parts of the merged AST are deleted.
+
+       \end{enumerate} % end of general transformation
+   \end{enumerate}  % end of transformation
 
 \subparagraph{Binary (DQ)}
 \begin{enumerate}

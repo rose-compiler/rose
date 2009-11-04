@@ -128,7 +128,7 @@ class FindTemporaries : public AstSimpleProcessing
                SgClassDeclaration *cd = isSgClassDeclaration(ci->get_class_decl());
                ROSE_ASSERT(cd);
 
-            // DQ (9/25/2007): Moved from std::list to std:vector uniformally in ROSE.
+            // DQ (9/25/2007): Moved from std::list to std:vector uniformly in ROSE.
             // temps.push_front(cd);
                temps.insert(temps.begin(),cd);
 		       }
@@ -222,7 +222,7 @@ blockObjectsAllocated(SgStatement *block, SgStatement *stop)
      
 /*! Returns the list of objects allocated at the given statement, not including
   the given statement if a VariableDeclaration.  List in reverse order,
-  i.e. order of destruction.  Does not proceed any further than a node satistfying stopCond.
+  i.e. order of destruction.  Does not proceed any further than a node satisfying stopCond.
   Itf omitInit true, omit objects allocated at the start of a loop which will not be 
  */
 /* implementation technique: startOfCurrent helps ensure items inserted in reverse order for the current block, while blocks, visited from inner to outer are in the correct order  */
