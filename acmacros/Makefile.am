@@ -38,7 +38,7 @@ reconf:
 distclean-local:
 	$(btng_remove_auto_psrc_links)
 
-EXTRA_DIST =	\
+EXTRA_DIST = CMakeLists.txt 	\
 aux/.psrc.in t4/parallel-serial-runner.in	\
 arg-with-environment.m4	\
 check-typename.m4	\

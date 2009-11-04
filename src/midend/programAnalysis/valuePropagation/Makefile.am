@@ -29,3 +29,5 @@ include_HEADERS =  ValueAnnot.h ValuePropagate.h
 
 
 
+
+EXTRA_DIST = CMakeLists.txt

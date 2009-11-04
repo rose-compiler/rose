@@ -29,7 +29,7 @@ endif
 
 endif
 
-EXTRA_DIST = QRButtons.h  \
+EXTRA_DIST = CMakeLists.txt QRButtons.h  \
 	     QRButtons_p.h \
              QREdit_p.h \
              QRProgress_p.h \

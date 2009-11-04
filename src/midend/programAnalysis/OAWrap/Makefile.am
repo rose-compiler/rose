@@ -27,3 +27,5 @@ include_HEADERS =  OAWrap.h SAGE2OA.h OAConfig.h
 
 
 
+
+EXTRA_DIST = CMakeLists.txt

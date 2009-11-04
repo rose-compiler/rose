@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/OpenFortranParser_SAGE_Connection
 
-EXTRA_DIST = preproc-fortran.ll preproc-fortran-fixed.ll
+EXTRA_DIST = CMakeLists.txt preproc-fortran.ll preproc-fortran-fixed.ll
 DISTCLEANFILES = preproc-fortran.cc preproc-fortran-fixed.cc
 
 # DQ (3/14/2009): We have to clear the LDFLAGS variable...  This is not so great.

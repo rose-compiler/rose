@@ -15,3 +15,5 @@ docs:
 	@echo "Skipping the creation of documentation within the docs rule (for now)."
 
 
+
+EXTRA_DIST = CMakeLists.txt

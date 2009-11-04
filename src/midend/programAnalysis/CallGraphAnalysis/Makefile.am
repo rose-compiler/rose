@@ -17,3 +17,5 @@ distclean-local:
 include_HEADERS = CallGraph.h ClassHierarchyGraph.h
 
 
+
+EXTRA_DIST = CMakeLists.txt

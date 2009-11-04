@@ -5,3 +5,5 @@ profirincdir = $(rosehpctincdir)/profir
 profirinc_HEADERS = profir.hh
 
 # eof
+
+EXTRA_DIST = CMakeLists.txt

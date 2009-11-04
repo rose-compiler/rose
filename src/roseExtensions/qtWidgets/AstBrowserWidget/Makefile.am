@@ -23,5 +23,5 @@ headerTarget_HEADERS = AstBrowserWidget.h\
 
 endif
 
-EXTRA_DIST = 
+EXTRA_DIST = CMakeLists.txt 
 

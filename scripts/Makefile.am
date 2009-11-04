@@ -11,7 +11,7 @@ distributedScripts = \
      nmiBuildAndTestFarm
 
 # scripts put into the distribution
-EXTRA_DIST = README $(distributedScripts)
+EXTRA_DIST = CMakeLists.txt README $(distributedScripts)
 
 # install the tools in 'bin' (a subsect of EXTRA_DIST)
 bin_SCRIPTS =  $(distributedScripts)

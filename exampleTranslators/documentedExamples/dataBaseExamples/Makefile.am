@@ -35,7 +35,7 @@ LDADD = $(ROSE_LIBS)
 # CCLD  = $(AUX_LINKER) $(CC)
 # CXXLD = $(AUX_LINKER) $(CXX)
 
-EXTRA_DIST = customtable_example.C rosedb_example.C databasegraph_example.C simplecallgraph_example.C 
+EXTRA_DIST = CMakeLists.txt customtable_example.C rosedb_example.C databasegraph_example.C simplecallgraph_example.C 
 
 CLEANFILES = 
 

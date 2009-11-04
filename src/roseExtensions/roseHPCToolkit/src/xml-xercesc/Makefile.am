@@ -9,7 +9,7 @@ include ../../Make.inc
 #
 #else # !ROSE_BUILD_ROSEHPCT
 
-EXTRA_DIST = elem.cc handler.cc parser.cc util.cc
+EXTRA_DIST = CMakeLists.txt elem.cc handler.cc parser.cc util.cc
 
 #endif
 

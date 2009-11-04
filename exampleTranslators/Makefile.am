@@ -11,3 +11,5 @@ SUBDIRS = \
 # Current examples are in developersScratchSpace/Dan/QRose_tests.
 #    graphicalUserInterfaceExamples
 
+
+EXTRA_DIST = CMakeLists.txt

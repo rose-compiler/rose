@@ -36,7 +36,7 @@ generatedFiles = inputCode_OutlineLoop$(EXEEXT) \
 
 #docs: $(generatedFiles) 
 # declarations.c is used to test "outline -rose:outline:preproc-only"
-EXTRA_DIST = \
+EXTRA_DIST = CMakeLists.txt \
 	inputCode_OutlineLoop.cc \
 	inputCode_OutlineLoop2.c \
 	inputCode_OutlineNonLocalJumps.cc \

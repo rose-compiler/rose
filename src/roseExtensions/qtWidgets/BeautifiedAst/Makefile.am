@@ -26,7 +26,7 @@ headerTarget_HEADERS = BAstModel.h\
 
 endif
 
-EXTRA_DIST = BeautifiedAst.qrc \
+EXTRA_DIST = CMakeLists.txt BeautifiedAst.qrc \
 	icons/loop.png \
 	icons/sourcefile.gif \
 	icons/class.gif \

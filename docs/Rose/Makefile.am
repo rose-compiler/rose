@@ -327,7 +327,7 @@ docs: latex-docs html-docs
 
 html-docs: html
 
-EXTRA_DIST = \
+EXTRA_DIST = CMakeLists.txt \
    WEB_DOCS_README AvailableDocumentation.docs.in \
    sage.cfg.in rose.cfg.in roseQtWidgets.doxygen.in \
    fixme.sty  acknowledgments.tex bothlevel.c \

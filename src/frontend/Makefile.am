@@ -13,5 +13,5 @@ SUBDIRS = SageIII CxxFrontend OpenFortranParser_SAGE_Connection BinaryDisassembl
 # is part of a contract to add Fortran support to ROSE using the Open 64 compiler.  It supports a roughly
 # Fortran 77 level of details, however it uses IR nodes that have been extended or removed (in a few cases)
 # as part of adding the Fortran 2003 support using the Open Fortan Parser.
-EXTRA_DIST = Open64 frontend.docs
+EXTRA_DIST = CMakeLists.txt Open64 frontend.docs
 

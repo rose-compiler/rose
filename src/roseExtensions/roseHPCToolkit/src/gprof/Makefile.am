@@ -9,7 +9,7 @@ libgprof_la_SOURCES = gprof_info.cc
 
 else # !ROSE_BUILD_ROSEHPCT
 
-EXTRA_DIST = gprof_info.cc
+EXTRA_DIST = CMakeLists.txt gprof_info.cc
 
 endif
 

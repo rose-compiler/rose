@@ -20,5 +20,5 @@ headerTarget_HEADERS = KiviatView.h
 
 endif
 
-EXTRA_DIST = 
+EXTRA_DIST = CMakeLists.txt 
 

@@ -36,3 +36,5 @@ include_HEADERS = \
 
 # noinst_PROGRAMS = testForBug
 # testForBug_SOURCES = testForBug.C
+
+EXTRA_DIST = CMakeLists.txt

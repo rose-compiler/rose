@@ -40,7 +40,7 @@ libroseutil_la_LIBADD = \
 
 include_HEADERS = setup.h processSupport.h rose_paths.h
 
-EXTRA_DIST = setup.h utilDocumentation.docs
+EXTRA_DIST = CMakeLists.txt setup.h utilDocumentation.docs
 
 # DQ (4/5/2009): Added rose_paths.C to clean rule, instead of to the DISTCLEANFILES
 clean-local:

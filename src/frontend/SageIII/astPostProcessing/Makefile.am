@@ -63,3 +63,5 @@ include_HEADERS = \
      insertFortranContainsStatement.h \
      markLhsValues.h \
      fixupUseAndUsingDeclarations.h
+
+EXTRA_DIST = CMakeLists.txt

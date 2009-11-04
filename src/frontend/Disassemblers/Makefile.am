@@ -18,3 +18,5 @@ include_HEADERS = \
 	Assembler.h AssemblerX86.h AssemblerX86Init.h 
 
 dist_include_HEADERS =
+
+EXTRA_DIST = CMakeLists.txt

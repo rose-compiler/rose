@@ -67,3 +67,5 @@ AM_CXXFLAGS = -Wno-unknown-pragmas
 # CXXFLAGS = -g -Wall -Wno-unknown-pragmas
 
 endif
+
+EXTRA_DIST = CMakeLists.txt

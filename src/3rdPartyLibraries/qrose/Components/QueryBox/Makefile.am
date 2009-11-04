@@ -28,7 +28,7 @@ endif
 
 endif
 
-EXTRA_DIST = QRQueryBox.h \
+EXTRA_DIST = CMakeLists.txt QRQueryBox.h \
              QRQueryDomain.h \
              QRQueryOp.h \
              QRQueryRange.h 

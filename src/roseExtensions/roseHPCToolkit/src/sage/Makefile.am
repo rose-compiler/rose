@@ -9,7 +9,7 @@ libsage_la_SOURCES = collect.cc  depth.cc  metric.cc  propagate.cc
 
 else # !ROSE_BUILD_ROSEHPCT
 
-EXTRA_DIST = collect.cc  depth.cc  metric.cc  propagate.cc
+EXTRA_DIST = CMakeLists.txt collect.cc  depth.cc  metric.cc  propagate.cc
 
 endif
 

@@ -1275,7 +1275,7 @@ inputCode_dwarfAnalysis.out: dwarfInstructionAddressToSourceLineAnalysis inputCo
 
 # Note that we have made multiple copies of "inputCode_ExampleTraversals.C"
 # so that the processing could be done in parallel with out collisions.
-EXTRA_DIST = \
+EXTRA_DIST = CMakeLists.txt \
    inputCode_1.C \
    inputCode_BuildCFG.C \
    inputCode_InstrumentationTranslator.C \

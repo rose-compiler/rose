@@ -18,3 +18,5 @@ else
 endif
 
 endif
+
+EXTRA_DIST = CMakeLists.txt

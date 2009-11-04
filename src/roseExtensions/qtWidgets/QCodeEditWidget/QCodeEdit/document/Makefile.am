@@ -37,5 +37,5 @@ headerTarget_HEADERS = qdocument.h\
 
 endif
 
-EXTRA_DIST = 
+EXTRA_DIST = CMakeLists.txt 
 

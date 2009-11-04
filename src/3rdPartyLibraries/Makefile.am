@@ -4,3 +4,5 @@
 SUBDIRS = MSTL libharu-2.1.0 fortran-parser antlr-jars qrose
 # checkPointLibrary
 
+
+EXTRA_DIST = CMakeLists.txt

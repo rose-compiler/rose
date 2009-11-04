@@ -7,3 +7,5 @@ SUBDIRS = Framework Widgets Components QRoseLib
 
 
 
+
+EXTRA_DIST = CMakeLists.txt

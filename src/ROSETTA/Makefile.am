@@ -6,7 +6,7 @@ ACLOCAL = @ACLOCAL@ -I ../config -I ../acmacros
 
 LIBS = @LIBS@ ${ROSETTA_LIBS}
 
-EXTRA_DIST = astNodeList
+EXTRA_DIST = CMakeLists.txt astNodeList
 
 # ***********************************************************************
 #                      Documentation Support

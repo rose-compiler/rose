@@ -23,5 +23,5 @@ headerTarget_HEADERS = MetricsConfig.h\
 
 endif
 
-EXTRA_DIST = MetricsConfig.ui
+EXTRA_DIST = CMakeLists.txt MetricsConfig.ui
 

@@ -20,5 +20,5 @@ headerTarget_HEADERS = RoseCodeEdit.h
 
 endif
 
-EXTRA_DIST = 
+EXTRA_DIST = CMakeLists.txt 
 

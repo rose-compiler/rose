@@ -11,7 +11,7 @@ endif
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # DQ this file is used in the ROSE User Manual so we need it here
-EXTRA_DIST = inputRewrite1.C exampleRewrite1.C
+EXTRA_DIST = CMakeLists.txt inputRewrite1.C exampleRewrite1.C
 
 CLEANFILES = 
 

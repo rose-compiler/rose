@@ -5,3 +5,5 @@ xml2profirincdir = $(rosehpctincdir)/xml2profir
 xml2profirinc_HEADERS = xml2profir.hh
 
 # eof
+
+EXTRA_DIST = CMakeLists.txt

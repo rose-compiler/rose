@@ -35,7 +35,7 @@ endif
 
 endif
 
-EXTRA_DIST = cindent.h \
+EXTRA_DIST = CMakeLists.txt cindent.h \
              markerwidget.h \
              qeditor.h   \
              qsourcecolorizer.h \

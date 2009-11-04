@@ -9,7 +9,7 @@ libprofir2sage_la_SOURCES = attach.cc
 
 else # !ROSE_BUILD_ROSEHPCT
 
-EXTRA_DIST = attach.cc
+EXTRA_DIST = CMakeLists.txt attach.cc
 
 endif
 

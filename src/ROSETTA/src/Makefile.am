@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES)
 
-EXTRA_DIST = \
+EXTRA_DIST = CMakeLists.txt \
    ROSETTA_macros.h  grammar.h grammarString.h terminal.h
 
 # Define the template repository path used in the autoconf

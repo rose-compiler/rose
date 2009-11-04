@@ -18,4 +18,4 @@ CLEANFILES =
 
 endif
 
-EXTRA_DIST = QRAstInfo.h QRCoords.h  QRIcons.h QRPixmap.h QRAttribute.h  QRoseComponent.h
+EXTRA_DIST = CMakeLists.txt QRAstInfo.h QRCoords.h  QRIcons.h QRPixmap.h QRAttribute.h  QRoseComponent.h

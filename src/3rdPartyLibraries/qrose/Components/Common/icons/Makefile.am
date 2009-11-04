@@ -42,7 +42,7 @@ icons_DATA= \
    zoomout.xpm
 endif
 
-EXTRA_DIST = \
+EXTRA_DIST = CMakeLists.txt \
    cachebroadcast.xpm \
    doquery.xpm   \
    method_npublic_decl.xpm \

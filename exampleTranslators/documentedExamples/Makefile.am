@@ -11,3 +11,5 @@ SUBDIRS = \
 # for us.
 # astProcessingExamples
 
+
+EXTRA_DIST = CMakeLists.txt

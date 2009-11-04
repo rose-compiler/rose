@@ -5,3 +5,5 @@ sageincdir = $(rosehpctincdir)/gprof
 sageinc_HEADERS = gprof_info.hh
 
 # eof
+
+EXTRA_DIST = CMakeLists.txt

@@ -28,7 +28,7 @@ headerTarget_HEADERS = QCodeEditWidget.h
 
 endif
 
-EXTRA_DIST = example.qrc \
+EXTRA_DIST = CMakeLists.txt example.qrc \
 	QCodeEdit.qrc \
 	goto.png \
 	copy.png \

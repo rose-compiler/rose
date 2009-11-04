@@ -27,7 +27,7 @@ include_HEADERS = \
    DOTRepresentationImpl.h DOTGenerationImpl.h \
    DOTSubgraphRepresentationImpl.h
 
-EXTRA_DIST = MSTL.docs
+EXTRA_DIST = CMakeLists.txt MSTL.docs
 
 
 

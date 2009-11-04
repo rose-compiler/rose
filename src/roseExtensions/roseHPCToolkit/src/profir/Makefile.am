@@ -9,7 +9,7 @@ libprofir_la_SOURCES = profir.cc
 
 else # !ROSE_BUILD_ROSEHPCT
 
-EXTRA_DIST = profir.cc
+EXTRA_DIST = CMakeLists.txt profir.cc
 
 endif
 

@@ -8,3 +8,5 @@ include ../../Make.inc
 rosehpctinc_HEADERS = rosehpct.hh
 
 # eof
+
+EXTRA_DIST = CMakeLists.txt

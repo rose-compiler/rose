@@ -3,3 +3,5 @@
 SUBDIRS = rosehpct
 
 # eof
+
+EXTRA_DIST = CMakeLists.txt

@@ -24,3 +24,5 @@ distclean-local:
 include_HEADERS = \
    sqlite3x.h
 
+
+EXTRA_DIST = CMakeLists.txt

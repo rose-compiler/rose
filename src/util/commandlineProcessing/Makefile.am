@@ -36,7 +36,7 @@ clean-local:
 distclean-local:
 	rm -rf Templates.DB
 
-EXTRA_DIST = commandlineProcessingDocumentation.docs
+EXTRA_DIST = CMakeLists.txt commandlineProcessingDocumentation.docs
 
 
 
