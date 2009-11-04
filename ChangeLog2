@@ -1,3 +1,37 @@
+2009-11-04 19:53  liao6
+
+	* [r8064] /trunk/ROSE/docs/Rose/developersAppendix.tex,
+	  /trunk/ROSE/src/midend/astOutlining/Outliner.hh,
+	  /trunk/ROSE/src/midend/programTransformation/functionCallNormalization/FunctionNormalization.C,
+	  /trunk/ROSE/src/midend/programTransformation/implicitCodeGeneration/destructorCallAnnotator.C,
+	  /trunk/ROSE/src/midend/programTransformation/implicitCodeGeneration/shortCircuitingTransformation.h,
+	  /trunk/ROSE/tests/roseTests/programTransformationTests/Makefile.am:
+	  More API text for transformation support
+
+2009-11-04 14:45  matzke
+
+	* [r8063] /trunk/ROSE/src/frontend/ExecFormats/ExecELF.C:
+	  ExecFormats: fixed unparse error for symbol versions
+	  
+	  Thanks to Matt for this patch.
+
+2009-11-04 14:20  dquinlan
+
+	* [r8062] /trunk/ROSE/Makefile.am, /trunk/ROSE/config/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/virtualTableLoad.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/virtualTableLoad.h,
+	  /trunk/ROSE/src/util/commandlineProcessing/sla++.C: Fixed a few
+	  bugs and added new features and documentation.
+	  
+	  Detailed changes in this commit:
+	  1) Replaces use of regex.h with boost/regex.h in sla++.C.
+	  This is now tests on both Linux and MS Visual Studio.
+	  This change was required for use of ROSE with MSC.
+	  2) Added EXTRA_DIST entries for two missing CMake specific
+	  files (rose_config.h.in.cmake and
+	  config/rose_edg_required_macros_and_functions.h.cmake).
+	  3) Added more virtual function table support for binary work.
+
 2009-11-04 00:30  liao6
 
 	* [r8059] /trunk/ROSE/docs/Rose/developersAppendix.tex,
