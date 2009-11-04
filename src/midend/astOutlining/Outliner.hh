@@ -125,7 +125,7 @@ namespace Outliner
    */
   Result outline (SgStatement* s);
 
-  //! Outline to a new function with the specified name.
+  //! Outline to a new function with the specified name, calling preprocessing internally
   Result outline (SgStatement* s, const std::string& func_name);
 
   //! If 's' is an outline pragma, this function "executes" it.

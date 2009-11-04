@@ -2,7 +2,7 @@ class SgProject;
 class SgNode;
 
 /*
- * Perform the transformation on the given project.  See implemeneation notes for details
+ * Perform the transformation on the given project.  See implementation notes for details
  */
 void shortCircuitingTransformation(SgProject *prj);
 

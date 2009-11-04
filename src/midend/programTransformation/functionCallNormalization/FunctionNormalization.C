@@ -47,7 +47,7 @@ The Algorithm:
 2. generate list of (direct) function calls in the statement (not considering statements associated with the current one)
 3. for each function call, generate a structure containing the 3 statements, one of each type (some may be null in some cases)
 4. insert the newly created statements where appropriate
-5. replace in the original expression the function calls with thier corresponding variables (at the highest level)
+5. replace in the original expression the function calls with their corresponding variables (at the highest level)
 */
 
 void

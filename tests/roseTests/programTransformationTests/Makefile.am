@@ -48,8 +48,8 @@ implicitCodeGenerationTest_LDADD = $(LDADD)
 FORCE_TEST_CODES_TO_RUN:
 	$(srcdir)/TestDriver $(srcdir)
 	@echo "SKIPPING TEST CODES FOR functionNormalization RUN BY \"make check\" rule in tests/roseTests/programTransformationTests directory ..."
-#	testFunctionNormalization -c $(src_dir)/functionNormalizationTest1.C
-#	testFunctionNormalization -c $(src_dir)/functionNormalizationTest2.C
+#	./testFunctionNormalization -c $(srcdir)/functionNormalizationTest1.C
+#	./testFunctionNormalization -c $(srcdir)/functionNormalizationTest2.C
 
 testPass1: preTest
 	./preTest $(srcdir)/pass1.C
