@@ -139,6 +139,14 @@ private:
 
   /** create integer term with variable ID or "null" atom */
   PrologTerm* varidTerm(SgVariableSymbol *symbol);
+  /** create a term containing the procnum for the given procedure, when
+   * looked up in a certain file (the file matters for static functions);
+   * and a term containing a pair Entry-Exit of ICFG labels; plus a helper
+   * function */
+  PrologCompTerm* functionIdAnnotation(std::string funcname, SgFile *file);
+  PrologCompTerm* functionEntryExitAnnotation(std::string funcname,
+                                              SgFile *file);
+  Procedure* procedureNode(std::string funcname, SgFile *file);
 #else
   /** dummy member */
   void *cfg;
@@ -147,9 +155,6 @@ private:
   PrologList* getAnalysisResultList(SgStatement* stmt);
   PrologCompTerm* pagToProlog(std::string name, std::string analysis,
                               std::string dfi);
-  /** create a term containing the procnum for the given procedure, when
-   * looked up in a certain file (the file matters for static functions) */
-  PrologCompTerm* functionIdAnnotation(std::string funcname, SgFile *file);
 };
 
 typedef TermPrinter<void*> BasicTermPrinter;
@@ -256,6 +261,11 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
         while (p != NULL && !isSgFile(p))
           p = p->get_parent();
         results->addFirstElement(functionIdAnnotation(funcname, isSgFile(p)));
+        PrologTerm* entryExit
+          = functionEntryExitAnnotation(funcname, isSgFile(p));
+        if (entryExit != NULL) {
+          results->addFirstElement(entryExit);
+        }
       }
 #endif
 
@@ -791,11 +801,10 @@ TermPrinter<DFI_STORE_TYPE>::varidTerm(SgVariableSymbol *sym)
 }
 
 template<typename DFI_STORE_TYPE>
-PrologCompTerm*
-TermPrinter<DFI_STORE_TYPE>::functionIdAnnotation(std::string funcname,
-                                                  SgFile *file) {
+Procedure*
+TermPrinter<DFI_STORE_TYPE>::procedureNode(std::string funcname,
+                                           SgFile *file) {
   std::multimap<std::string, Procedure *>::iterator mmi, limit;
-  PrologTerm *funcid_value = NULL;
   mmi = cfg->proc_map.lower_bound(funcname);
   if (mmi != cfg->proc_map.end()) {
     /* If we got here, we found *some* functions with the correct name in
@@ -810,21 +819,47 @@ TermPrinter<DFI_STORE_TYPE>::functionIdAnnotation(std::string funcname,
       if (p->isStatic && p->containingFile == file) {
         staticCandidate = p;
         break;
-      } else if (!p->isStatic)
+      } else if (!p->isStatic) {
         nonStaticCandidate = p;
+      }
     }
     if (staticCandidate != NULL)
-      funcid_value = new PrologInt(staticCandidate->procnum);
+      return staticCandidate;
     else if (nonStaticCandidate != NULL)
-      funcid_value = new PrologInt(nonStaticCandidate->procnum);
-    else
-      funcid_value = new PrologInt(INT_MAX);
-  } else
+      return nonStaticCandidate;
+  }
+  return NULL;
+}
+
+template<typename DFI_STORE_TYPE>
+PrologCompTerm*
+TermPrinter<DFI_STORE_TYPE>::functionIdAnnotation(std::string funcname,
+                                                  SgFile *file) {
+  Procedure* p = procedureNode(funcname, file);
+  PrologInt* funcid_value = NULL;
+  if (p != NULL) {
+    funcid_value = new PrologInt(p->procnum);
+  } else {
     funcid_value = new PrologInt(INT_MAX);
-  assert(funcid_value != NULL);
+  }
   PrologCompTerm *funcid_annot
     = new PrologCompTerm("function_id", 1, funcid_value);
   return funcid_annot;
+}
+
+template<typename DFI_STORE_TYPE>
+PrologCompTerm*
+TermPrinter<DFI_STORE_TYPE>::functionEntryExitAnnotation(
+    std::string funcname, SgFile *file) {
+  Procedure* p = procedureNode(funcname, file);
+  PrologCompTerm* entryExit = NULL;
+  if (p != NULL) {
+    PrologCompTerm* pair = new PrologCompTerm("-", 2,
+                                   new PrologInt(p->entry->id),
+                                   new PrologInt(p->exit->id));
+    entryExit = new PrologCompTerm("function_entry_exit", 1, pair);
+  }
+  return entryExit;
 }
 #endif
 
