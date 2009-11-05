@@ -696,8 +696,24 @@ PrologCompTerm*
 RoseToTerm::getVarRefExpSpecific(SgVarRefExp* vr) {
   PrologCompTerm* annot = new PrologCompTerm("var_ref_exp_annotation");
   SgInitializedName* n = vr->get_symbol()->get_declaration();
-  /* type*/
-  annot->addSubterm(getTypeSpecific(n->get_typeptr()));
+  /* type: in general, this can be taken "as is" from the ROSE AST. However,
+   * ROSE (up to 0.9.4a-8xxx at least) gets a detail wrong: a declaration
+   * like "int arr[]" as a function parameter declares a *pointer*, not an
+   * array. Thus we check whether the variable might be of this sort, and if
+   * yes, we must make a pointer type for it. */
+  PrologTerm* typeSpecific = NULL;
+  SgInitializedName* vardecl = vr->get_symbol()->get_declaration();
+  SgType* t = vr->get_type()->stripType(SgType::STRIP_MODIFIER_TYPE
+                                      | SgType::STRIP_REFERENCE_TYPE
+                                      | SgType::STRIP_TYPEDEF_TYPE);
+  if (isSgFunctionParameterList(vardecl->get_parent()) && isSgArrayType(t)) {
+    SgType* baseType = isSgArrayType(t)->get_base_type();
+    PrologTerm* baseTypeSpecific = getTypeSpecific(baseType);
+    typeSpecific = new PrologCompTerm("pointer_type", 1, baseTypeSpecific);
+  } else {
+    typeSpecific = getTypeSpecific(n->get_typeptr());
+  }
+  annot->addSubterm(typeSpecific);
   /* name*/
   annot->addSubterm(new PrologAtom(n->get_name().getString()));
   /* static? (relevant for unparsing if scope is a class)*/
