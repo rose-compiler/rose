@@ -322,11 +322,11 @@ main()
     symdefAux1a->get_name()->set_string("version-1");
 
     SgAsmElfSymverDefinedEntry* symdefEntry2 = new SgAsmElfSymverDefinedEntry(symver_def);
-    SgAsmElfSymverDefinedAux* symdefAux2a = new SgAsmElfSymverDefinedAux(symdefEntry2, symver_def);
-    SgAsmElfSymverDefinedAux* symdefAux2b = new SgAsmElfSymverDefinedAux(symdefEntry2, symver_def);
+    new SgAsmElfSymverDefinedAux(symdefEntry2, symver_def);
+    new SgAsmElfSymverDefinedAux(symdefEntry2, symver_def);
 
     /* Very strange case, but technically legal - zero Aux */
-    SgAsmElfSymverDefinedEntry* symdefEntry3 = new SgAsmElfSymverDefinedEntry(symver_def);
+    new SgAsmElfSymverDefinedEntry(symver_def);
 
     SgAsmElfSymverNeededSection* symver_need = new SgAsmElfSymverNeededSection(fhdr,shstrtab);
     symver_need->get_name()->set_string(".gnu.version_d-test");
