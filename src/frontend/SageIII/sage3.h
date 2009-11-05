@@ -174,8 +174,27 @@
 //		      __GNUC_PATCHLEVEL__ >= 0)))
 //#include <unordered_map>
 //#else   
+
+#if ROSE_MICROSOFT_OS
+// DQ (11/4/2009): MS Visual Studio version of hash_multimap
+#include <cliext/hash_map>
+#else
+// DQ (11/4/2009): Use the GNU depricated stuff (what works in ROSE at the moment)
 #include <ext/hash_map>
+#endif
+
 //#endif
+
+// DQ (11/4/2009): Use Boost instead of depricated GNU stuff
+// DQ (11/4/2009): Use the Boost hash map
+// #include <boost/hash_map> 
+// #include <hash_set>
+// #include <hash_map>
+// #include <boost/asio/detail/hash_map.hpp>
+// #include <boost/serialization/hash_map.hpp>
+// #include <boost/unordered_map.hpp>
+// #include <boost/serialization/hash_map.hpp>
+
 #if 0
 // See above the <ext/hash_map> section.
 // using namespace __gnu_cxx;

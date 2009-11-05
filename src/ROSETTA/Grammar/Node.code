@@ -761,6 +761,8 @@ typedef SgAsmElfSymverNeededAuxPtrList*              SgAsmElfSymverNeededAuxPtrL
 typedef Rose_STL_Container<SgAsmPERVASizePair*> SgAsmPERVASizePairPtrList;
 typedef SgAsmPERVASizePairPtrList* SgAsmPERVASizePairPtrListPtr;
 
+#if 1
+// DQ (11/4/2009): Trying to use the boost hash_map support
 
 // DQ (4/23/2009): See comments in sage3.h about the <ext/hash_map> section.
 // using namespace __gnu_cxx;
@@ -772,7 +774,13 @@ namespace rose_hash
   // using __gnu_cxx::hash;
   // #else
 
+#if ROSE_MICROSOFT_OS
+  // DQ (11/4/2009): MS Visual Studio version of hash_multimap
+     using namespace cliext;
+#else
+  // DQ (11/4/2009): Use the depricated GNU stuff (what works in ROSE currently)
      using namespace __gnu_cxx;
+#endif
 
   // DQ (4/23/2009): These should be put into this namespace so that we don't contaminate the global scope.
   // DQ (8/19/2008): This is already defined in src/frontend/SageIII/astMerge/buildMangledNameMap.h
@@ -848,7 +856,7 @@ namespace rose_hash
              }
         };
    }
-
+#endif
 
 
 
@@ -858,6 +866,7 @@ namespace rose_hash
 // DQ (8/19/2008): Note that "rose_hash" is a namespace defined above.
 // class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>
 typedef rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string> rose_graph_string_node_hash_multimap_base_type;
+
 class rose_graph_string_node_hash_multimap : public rose_graph_string_node_hash_multimap_base_type
    {
   // Need to document why we are using hash_multimap type here.  Why a hash (obvious), then why a multimap? 
