@@ -12,30 +12,32 @@ AC_ARG_WITH([java],
 
 JAVAC=$javasetting
 USE_JAVA=1
-echo "JAVA_HOME = ${JAVA_HOME}"
+#echo "JAVA_HOME = ${JAVA_HOME}"
 if test "x$javasetting" = xno; then
-  echo 'test "x$javasetting" = xno;'
+# echo 'test "x$javasetting" = xno;'
   JAVAC=""
   USE_JAVA=0
 elif test "x$javasetting" = xyes || test "x$javasetting" = xtry; then
-  echo 'test x$javasetting = xyes || test x$javasetting = xtry;'
+# echo 'test x$javasetting = xyes || test x$javasetting = xtry;'
   JAVA_PATH="${JAVA_HOME}"
-  echo "JAVA_PATH = ${JAVA_PATH}"
+# echo "JAVA_PATH = ${JAVA_PATH}"
   if test "x$JAVA_PATH" = x; then
-    echo 'test x$JAVA_PATH = x;'
+#   echo 'test x$JAVA_PATH = x;'
 # DQ & PC (11/3/2009): Search for javac instead of java since we require
 # the JDK and this should detect that it is missign as early as possible.
-    if which javac; then
+    JAVAC="`which javac`"
+  # if which javac > /dev/null; then
+    if test $? -eq 0; then
     # echo 'which javac;'
-      echo "java = ${JAVA}"
-      JAVAC="`which javac`"
-      echo "javac = ${JAVAC}"
+    # echo "java = ${JAVA}"
+    # JAVAC="`which javac`"
+    # echo "javac = ${JAVAC}"
 # DQ & PC (11/3/2009): Fixing support for Java that causes problems for CERT and our new RedHat Release 5 systems.
-      JAVAC="`readlink -f ${JAVAC}`"
-      echo "javac = ${JAVAC}"
+      ROSE_CANON_SYMLINK(JAVAC, "${JAVAC}")
+    # echo "javac = ${JAVAC}"
       JAVAC_BASENAME=`basename ${JAVAC}`
       if test x${JAVAC_BASENAME} == "xjavac"; then
-         echo "Found Sun or IBM Java (javac)"
+         : # echo "Found Sun or IBM Java (javac)"
       else
        # This is likely the Eclipse Java (ecj).
        # DQ (11/3/2009): If this is IBM Java then it should also work with ROSE and this macro.
@@ -43,16 +45,16 @@ elif test "x$javasetting" = xyes || test "x$javasetting" = xtry; then
       fi
     # AS_SET_CATFILE(JAVA_PATH, "`pwd`", "`dirname ${JAVA}`/../..")
       AS_SET_CATFILE(JAVA_PATH, "`pwd`", "`dirname ${JAVAC}`/..")
-      echo "After setting value: JAVA_PATH = ${JAVA_PATH}"
+    # echo "After setting value: JAVA_PATH = ${JAVA_PATH}"
     elif "x$javasetting" = "xyes"; then
       AC_MSG_ERROR([--with-java was given but "java" is not in PATH and JAVA_HOME was not set])
     else # $javasetting is "try", so it is not an error for Java to not be found
-      echo 'FALSE case: x$javasetting = xyes;'
+    # echo 'FALSE case: x$javasetting = xyes;'
       JAVAC=""
       USE_JAVA=0
     fi
   else
-    echo 'FALSE test x$JAVA_PATH = x;'
+  # echo 'FALSE test x$JAVA_PATH = x;'
 # DQ & PC (11/3/2009): Search for javac instead of java since we require
 # the JDK and this should detect that it is missign as early as possible.
 #   JAVA="${JAVA_PATH}/bin/java"
@@ -63,7 +65,7 @@ elif test -d "${javasetting}"; then
 # the JDK and this should detect that it is missign as early as possible.
   if test -x "${javasetting}/bin/javac"; then
     JAVA_PATH="${javasetting}"
-    echo "After setting value using javasetting: JAVA_PATH = ${JAVA_PATH}"
+  # echo "After setting value using javasetting: JAVA_PATH = ${JAVA_PATH}"
     JAVAC="${javasetting}/bin/javac"
   else
     AC_MSG_ERROR([Argument to --with-java should be either a javac executable or a top-level JDK install directory (with bin/javac present)])
@@ -75,21 +77,29 @@ else
   AC_MSG_ERROR([Argument to --with-java should be either a javac executable or a top-level JDK install directory (with bin/javac present)])
 fi
 
-echo "USE_JAVA = $USE_JAVA"
+# echo "USE_JAVA = $USE_JAVA"
 if test "x$USE_JAVA" = x1; then
-  AC_MSG_RESULT([$JAVAC])
+# AC_MSG_RESULT([$JAVAC])
+  AC_MSG_RESULT(yes)
 else
   AC_MSG_RESULT([not requested])
 fi
 
-echo "Before checking for Java JVM: JAVA_PATH = ${JAVA_PATH}"
+# echo "Before checking for Java JVM: JAVA_PATH = ${JAVA_PATH}"
 
 if test "x$USE_JAVA" = x1; then
 
 # DQ (11/3/2009): This was moved from down below to check for java before the jvm
-  JAVA="${JAVA_PATH}/bin/java"
+# Fix the case of Apple OSX support.
+# echo "Before OS specific JAVA = ${JAVA}"
+  if test "x$build_vendor" = xapple; then
+     JAVA_BIN="${JAVA_PATH}/Commands"
+  else
+     JAVA_BIN="${JAVA_PATH}/bin"
+  fi
 
-  echo "JAVA = ${JAVA}"
+  JAVA="${JAVA_BIN}/java"
+# echo "JAVA = ${JAVA}"
   AC_MSG_CHECKING(for java)
   if test -x "${JAVA}"; then
     AC_MSG_RESULT(yes)
@@ -116,7 +126,8 @@ if test "x$USE_JAVA" = x1; then
   fi
   AC_MSG_RESULT([$JAVA_JVM_INCLUDE and $JAVA_JVM_LINK])
 
-  JAR="${JAVA_PATH}/bin/jar"
+# JAR="${JAVA_PATH}/bin/jar"
+  JAR="${JAVA_BIN}/jar"
 
   AC_MSG_CHECKING(for jar)
   if test -x "${JAR}"; then
