@@ -190,7 +190,7 @@ class RtedTransformation : public AstSimpleProcessing {
 
 
   // ********************* Deep copy classes in headers into source **********
-  void instrumentClassDeclarationIntoTopOfAllSourceFiles(SgProject* project, SgClassDeclaration* classDecl);
+  SgClassDeclaration* instrumentClassDeclarationIntoTopOfAllSourceFiles(SgProject* project, SgClassDeclaration* classDecl);
   bool hasPrivateDataMembers(SgClassDeclaration* cd_copy);
   void moveupPreprocessingInfo(SgProject* project);
   void insertNamespaceIntoSourceFile(SgSourceFile* sf);
@@ -318,8 +318,10 @@ class RtedTransformation : public AstSimpleProcessing {
   bool isFileIOVariable(SgType* type);
   void addFileIOFunctionCall(SgVarRefExp* n, bool read);
   void insertCheckIfThisNull(SgThisExp* texp);
-
+  
+ public:
   void visit_isSgVarRefExp(SgVarRefExp* n);
+ private:
   void visit_isSgPointerDerefExp(SgPointerDerefExp* n);
   void visit_isSgArrowExp(SgArrowExp* n);
 

@@ -7,6 +7,8 @@
 #include "RtedTransformation.h"
 //#include "RuntimeSystem.h"
 
+#include "RtedVisit.h"
+
 using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
@@ -78,7 +80,15 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
   ROSE_ASSERT(size_t_member);
   ROSE_ASSERT(roseCheckIfThisNULL);
 
+
+  // Traverse Variables
+  InheritedAttribute inheritedAttribute(false,false);
+  VariableTraversal varTraversal(this);
+ // Call the traversal starting at the project (root) node of the AST
+  varTraversal.traverseInputFiles(project,inheritedAttribute);
+  // traverse visit function further below
   traverseInputFiles(project,preorder);
+
 
   vector<SgClassDeclaration*> traverseClasses;
   //*******************************************
@@ -132,8 +142,9 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
 	    "    with number of datamembers: " << vec.size() << "   defining " <<
 	    (classDecl->get_definingDeclaration()==classDecl) << endl;
 	  if (hasPrivateDataMembers(classDecl)) {
-	    instrumentClassDeclarationIntoTopOfAllSourceFiles(project, classDecl);
-	  }
+	    SgClassDeclaration* cdl = instrumentClassDeclarationIntoTopOfAllSourceFiles(project, classDecl);
+	    //traverseClasses.push_back(cdl);
+	  } //else
 	    traverseClasses.push_back(classDecl);
 	} else if (    	filename.find("include-staging")==string::npos ||
 			filename.find("/usr/include")==string::npos) {
@@ -156,11 +167,17 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
   }
   moveupPreprocessingInfo(project);
 
+
   // traverse all header files and collect information
   vector<SgClassDeclaration*>::const_iterator travClassIt = traverseClasses.begin();
   for (;travClassIt!=traverseClasses.end();++travClassIt) {
+	  // traverse the new classes with RTED namespace
     traverse(*travClassIt,preorder);
   }
+
+
+
+
 
   // ---------------------------------------
   // Perform all transformations...
@@ -481,7 +498,7 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
  * -----------------------------------------------------------*/
 
 void RtedTransformation::visit(SgNode* n) {
-
+	cerr <<"Traversing node : " << n->class_name() << endl;
 
   // find function definitions (incl. main) ******************************************
   if (isSgFunctionDefinition(n)) {
@@ -527,21 +544,13 @@ void RtedTransformation::visit(SgNode* n) {
     visit_isArrayPntrArrRefExp(n);
   } // pntrarrrefexp
   /*
-    else if (isSgVarRefExp(n) && 
-    (isSgExprListExp(isSgVarRefExp(n)->get_parent()) ||
-    isSgExprListExp(isSgVarRefExp(n)->get_parent()->get_parent()))  ) {
-    // handles calls to functions that contain array varRefExp
-    // and puts the varRefExp on stack to be used by RuntimeSystem
-    // should now be handled by all expressions at function level
-    //visit_isArrayExprListExp(n);
-    }
-  */
   else if (isSgVarRefExp(n)) {
     // if this is a varrefexp and it is not initialized, we flag it.
     // do only if it is by itself or on right hand side of assignment
     cerr << " @@@@@@@@@ DETECTED Variable access : " << n->unparseToString() << endl;
     visit_isSgVarRefExp(isSgVarRefExp(n));
   }
+  */
   else if (isSgPointerDerefExp(n)) {
     // if this is a varrefexp and it is not initialized, we flag it.
     // do only if it is by itself or on right hand side of assignment

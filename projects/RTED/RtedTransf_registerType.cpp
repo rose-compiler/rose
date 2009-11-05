@@ -32,24 +32,23 @@ bool RtedTransformation::hasClassConstructor(SgClassDeclaration* classdec) {
 }
 
 void RtedTransformation::visit_isClassDefinition(SgClassDefinition* cdef) {
-  //cerr << "Found class definition : " << cdef->unparseToString() << endl;
+	//cerr << "Found class definition : " << cdef->unparseToString() << endl;
 	vector<RtedClassElement*> elements;
-	
-  // We want to skip compiler generated template instantiation classes.
-  // Depending on compiler version, etc., we may visit classes such as:
-  //
-  //    class std::basic_ostream< char, std::char_traits< char >>::sentry
-  //    struct std::basic_string< char, std::char_traits< char >, allocator< char >>::_Rep 
-  //
-  // Since we're not intstrumenting these classes, we shouldn't register their
-  // types.
-  if(   cdef -> get_file_info() -> isCompilerGenerated()
-        && cdef -> get_declaration() -> get_file_info() -> isCompilerGenerated() ) {
 
-    //cerr << "Skipping compiler generated class" << cdef->unparseToString() <<endl;
-    return;
-  }
+	// We want to skip compiler generated template instantiation classes.
+	// Depending on compiler version, etc., we may visit classes such as:
+	//
+	//    class std::basic_ostream< char, std::char_traits< char >>::sentry
+	//    struct std::basic_string< char, std::char_traits< char >, allocator< char >>::_Rep
+	//
+	// Since we're not intstrumenting these classes, we shouldn't register their
+	// types.
+	if (cdef -> get_file_info() -> isCompilerGenerated()
+			&& cdef -> get_declaration() -> get_file_info() -> isCompilerGenerated()) {
 
+		//cerr << "Skipping compiler generated class" << cdef->unparseToString() <<endl;
+		return;
+	}
 	Rose_STL_Container<SgDeclarationStatement*> members = cdef->get_members();
 	Rose_STL_Container<SgDeclarationStatement*>::const_iterator itMem = members.begin();
 	for (;itMem!=members.end();++itMem) {
@@ -100,8 +99,11 @@ void RtedTransformation::visit_isClassDefinition(SgClassDefinition* cdef) {
 			elements);
 	std::map<SgClassDefinition*,RtedClassDefinition*>::const_iterator it =
 	class_definitions.find(cdef);
-	if (it==class_definitions.end())
-	class_definitions[cdef]=cd;
+	if (it==class_definitions.end()) {
+		cerr << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Found ClassDefinition " << cdef->get_qualified_name().str() << endl;
+		cerr << ">>>>>>>>>>>>>>> cdef = " << cdef << endl;
+		class_definitions[cdef]=cd;
+	}
 }
 
 void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass) {
@@ -136,7 +138,10 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass) 
 		//cerr << "  the surrounding statement is (2): " << stmt->class_name()
 		//		<< endl;
 	}
-	if (!stmt || isSgGlobal(stmt)
+	cerr << " -----------> stmt : " << stmt->unparseToString() << " ::::: "<<
+		stmt->class_name() <<  " isSgGlobal(stmt) : " << isSgGlobal(stmt) <<
+			"   getScope: " << isSgGlobal(stmt->get_scope()) << endl;
+	if (!stmt || isSgGlobal(stmt)    || isSgGlobal(stmt->get_scope())
 	// catch the case where a class (or union) is within another class - this is consider	to be global
 			|| (isSgVariableDeclaration(stmt) && isSgClassDefinition(
 					stmt->get_parent()))) {
@@ -158,12 +163,12 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass) 
 			} else {
 				stmt = mainFirst;
 				scope = stmt->get_scope();
-				global_stmt=false;
+				global_stmt = false;
 			}
 		} else {
 			stmt = mainFirst;
 			scope = stmt->get_scope();
-			global_stmt=false;
+			global_stmt = false;
 		}
 	} else {
 		cerr << "  the surrounding statement is (3): " << stmt->class_name()
@@ -232,14 +237,33 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass) 
 		appendExpression(arg_list, buildString(isunionType));
 		appendExpression(arg_list, rtedClass->sizeClass);
 
+		// search for classDef in classesNamespace that contains all introduced RTED:Classes
+		std::map<SgClassDefinition*, SgClassDefinition*>::const_iterator
+		cit = classesInRTEDNamespace.find(rtedClass->classDef);
+		SgClassDefinition* rtedModifiedClass = NULL;
+		if (cit!=classesInRTEDNamespace.end()) {
+			rtedModifiedClass = cit->second;
+			cerr << "Found rtedModifiedClass : " << rtedModifiedClass->get_qualified_name().str() << endl;
+			cerr << "Found rtedModifiedClass Declaration: " << rtedModifiedClass->get_declaration()->unparseToString()  << endl;
+			cerr << "Found rtedModifiedClass Declaration Type: " << rtedModifiedClass->get_declaration()->get_type()->unparseToString() << endl;
+			cerr << "Address of rtedModifiedClass : " << rtedModifiedClass->get_declaration()->get_type() << endl;
+			cerr << "Address of defining rtedModifiedClass : " << rtedModifiedClass->get_declaration()->get_definingDeclaration() << endl;
+			cerr << "Address of nondefining rtedModifiedClass : " << rtedModifiedClass->get_declaration()->get_firstNondefiningDeclaration() << endl;
+			cerr << "Address of rtedModifiedClass->get_declaration()->get_type()->get_declaration() : " << rtedModifiedClass->get_declaration()->get_type()->get_declaration()
+			<< "    Addr of rtedModifiedClass->get_declaration()->get_firstNondefiningDeclaration() : " << rtedModifiedClass->get_declaration()->get_firstNondefiningDeclaration() << endl;
+			ROSE_ASSERT(rtedModifiedClass->get_declaration()->get_type()->get_declaration() == rtedModifiedClass->get_declaration()->get_firstNondefiningDeclaration());
+		} else
+		cerr << "Did not find rtedModifiedClass using : " << rtedClass->classDef->get_qualified_name().str() << endl;
+
 		// go through each element and add name, type, basetype, offset and size
 		std::vector<RtedClassElement*> elementsC = rtedClass->elements;
+		//if (rtedModifiedClass) elementsC = rtedModifiedClass->elements;
 		std::vector<RtedClassElement*>::const_iterator itClass = elementsC.begin();
 		for (;itClass!=elementsC.end();++itClass) {
 			RtedClassElement* element = *itClass;
 			string manglElementName = element->manglElementName;
 			SgDeclarationStatement* sgElement = element->sgElement;
-			//SgExpression* sgElementCopy = deepCopy(sgElement);
+			//SgExpression* sgElements = deepCopy(sgElement);
 			SgExpression* elemName = buildString(manglElementName);
 
 			// FIXME 1: This will not work for references.  Consider:
@@ -267,12 +291,7 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass) 
 			ROSE_ASSERT(rtedClass->classDef);
 			// cerr << " Type: " <<  rtedClass->classDef->get_declaration()->get_type()->class_name() << endl;
 
-			// search for classDef in classesNamespace that contains all introduced RTED:Classes
-			std::map<SgClassDefinition*, SgClassDefinition*>::const_iterator
-			cit = classesInRTEDNamespace.find(rtedClass->classDef);
-			SgClassDefinition* rtedModifiedClass = NULL;
-			if (cit!=classesInRTEDNamespace.end())
-			rtedModifiedClass = cit->second;
+
 			//		 cerr << " +++++++++++++ Looking for class : " << rtedClass->classDef->get_declaration()->get_qualified_name().str()
 			//	 << "    found : " << rtedModifiedClass << "   " << rtedModifiedClass->get_declaration()->get_qualified_name().str() << endl;
 
@@ -282,6 +301,7 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass) 
 			bool classHasConstructor=hasClassConstructor(rtedClass->classDef->get_declaration());
 			classHasConstructor=false;
 			if (rtedModifiedClass==NULL) {
+				cerr << "rtedModifiedClass==NULL" << endl;
 				// this is a C or C++ class in a source file without constructor
 				if ( classHasConstructor==false)
 				nullPointer = buildCastExp(buildIntVal(0),
@@ -294,10 +314,23 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass) 
 				ROSE_ASSERT(rtedModifiedClass);
 				nullPointer = buildCastExp(buildIntVal(0),
 						buildPointerType(rtedModifiedClass->get_declaration()->get_type()));
+				cerr << "################ SOMETHING WRONG ? rtedModifiedClass :" << rtedModifiedClass
+				<< "   rtedClass : " << rtedClass->classDef << endl;
+				cerr << "What is the type : " << rtedModifiedClass->get_declaration()->get_type()->unparseToString() << endl;
+				//ROSE_ASSERT(rtedModifiedClass->get_declaration()!=rtedClass->classDef->get_declaration());
+				//ROSE_ASSERT(rtedModifiedClass->get_declaration()==rtedClass->classDef->get_declaration());
+				//abort();
 			}
 
 			SgExpression* derefPointer = buildPointerDerefExp(nullPointer);
 			SgVariableDeclaration* varDecl = isSgVariableDeclaration(sgElement);
+			SgClassDefinition* cdeftest = isSgClassDefinition(varDecl->get_parent());
+			cerr << " varDecl->get_parent() : " << varDecl->get_parent()->class_name() << endl;
+			cerr << " rtedModifiedClass : " << rtedModifiedClass << endl;
+			cerr << " cdeftest : " << cdeftest << endl;
+			ROSE_ASSERT(cdeftest);
+			//if (rtedModifiedClass)
+			//ROSE_ASSERT(cdeftest==rtedModifiedClass);
 			if (varDecl) {
 				SgVarRefExp* varref = buildVarRefExp(varDecl);
 
@@ -359,25 +392,25 @@ void RtedTransformation::insertRegisterTypeCall(RtedClassDefinition* rtedClass) 
 			if (vardecl) {
 				SgDeclarationStatement * sdecl = vardecl->get_baseTypeDefiningDeclaration ();
 				if (isSgClassDeclaration(sdecl))
-					insertBefore=false;
+				insertBefore=false;
 			}
 			// is it a struct (classdecl) below the variable? then append afterwards
 			// else before
 			cerr << "isSgClassDefinition(stmt): " << isSgClassDefinition(stmt) <<
 			" isSgClassDeclaration(stmt): " << isSgClassDeclaration(stmt) <<
 			"   :: " << stmt->class_name() <<
-				"   " << stmt->unparseToString()<<endl;
-//			abort();
+			"   " << stmt->unparseToString()<<endl;
+			//			abort();
 			if (insertBefore)
-				insertStatementBefore( isSgStatement( stmt ), exprStmt );
+			insertStatementBefore( isSgStatement( stmt ), exprStmt );
 			else
-				insertStatementAfter( isSgStatement( stmt ), exprStmt );
+			insertStatementAfter( isSgStatement( stmt ), exprStmt );
 		}
 	}
 	else {
 		cerr
 		<< "RuntimeInstrumentation :: Surrounding Block is not Block! : "
-		<< name << " : " << scope->class_name() << endl;
+		<< name << " : " << scope->class_name() << "    stmt:" << stmt->unparseToString() << endl;
 		ROSE_ASSERT(false);
 	}
 } else {

@@ -94,14 +94,16 @@ void RtedTransformation::insertNamespaceIntoSourceFile(SgSourceFile* sf) {
   sourceFileRoseNamespaceMap[sf] = rosenamesp; //make_pair(rosenamesp, rosenamesp2);
 }
 
-void RtedTransformation::instrumentClassDeclarationIntoTopOfAllSourceFiles(
+SgClassDeclaration* RtedTransformation::instrumentClassDeclarationIntoTopOfAllSourceFiles(
 									   SgProject* project, SgClassDeclaration* classDecl) {
   // **********************
   cerr <<"@@@ instrumenting into top "<< endl;
   // deep copy the classdecl and make it unparseable
   SgClassDeclaration* cd_copy = isSgClassDeclaration(deepCopyNode(classDecl));
-  SgClassType* type_copy = new SgClassType(cd_copy);
-  cd_copy->set_type(type_copy);
+ // cout << ">>>>>> Original ClassType :::: " << classDecl->get_type() << endl;
+ // cout << ">>>>>> Copied ClassType :::: " << cd_copy->get_type() << endl;
+ // SgClassType* type_copy = new SgClassType(cd_copy);
+  //cd_copy->set_type(type_copy);
   ROSE_ASSERT(cd_copy);
   vector<SgNode*> nodes2 = NodeQuery::querySubTree(cd_copy, V_SgLocatedNode);
   vector<SgNode*>::const_iterator nodesIT2 = nodes2.begin();
@@ -125,7 +127,28 @@ void RtedTransformation::instrumentClassDeclarationIntoTopOfAllSourceFiles(
     file_info->setOutputInCodeGeneration();
   }
   cd_copy->set_firstNondefiningDeclaration(cdn_copy);
+  SgClassType* cls_type = SgClassType::createType(cdn_copy);
+  cls_type->set_declaration(cdn_copy);
+  ROSE_ASSERT(cls_type != NULL);
+  ROSE_ASSERT (cls_type->get_declaration() == cdn_copy);
+  cdn_copy->set_type(cls_type);
   cdn_copy->set_definingDeclaration(cd_copy);
+  cd_copy->set_type(cdn_copy->get_type());
+
+  cerr << "@@@@@@@@@@@@@@ Original Class classDecl : " << classDecl << " :: " << cd_copy << endl;
+  cerr << "@@@@@@@@@@@@@@ Original Class nondefining : " << classDecl->get_firstNondefiningDeclaration()<< " :: " << cdn_copy << endl;
+
+  cerr << "@@@@@@@@@@@@@@@@@@ TYPE OF cd_copy->get_type() : " <<
+	  cd_copy->get_type() << endl;
+  cerr << "@@@@@@@@@@@@@@@@@@ TYPE OF cdn_copy->get_type() : " <<
+  cdn_copy->get_type() << endl;
+
+  cerr << "@@@@@@@@@@@@@@@@@@ TYPE OF cd_copy->get_type()->declaration : " <<
+	  cd_copy->get_type()->get_declaration() << endl;
+  cerr << "@@@@@@@@@@@@@@@@@@ TYPE OF cd_copy->definingDeclaration : " <<
+	  cd_copy->get_definingDeclaration() << endl;
+  cerr << "@@@@@@@@@@@@@@@@@@ TYPE OF cd_copy->set_firstNondefiningDeclaration : " <<
+	  cd_copy->get_firstNondefiningDeclaration() << endl;
 
   // **********************
   // add to top of each source file
@@ -188,12 +211,14 @@ void RtedTransformation::instrumentClassDeclarationIntoTopOfAllSourceFiles(
 	    SageInterface::appendStatement(cd_copy, firstNamespace->get_definition() );
 	    ROSE_ASSERT(cdn_copy->get_symbol_from_symbol_table() != NULL);
 
-	    //classesInRTEDNamespace.push_back(cd_copy->get_name().str());
 	    classesInRTEDNamespace[classDecl->get_definition()] = cd_def;
+//	    classesInRTEDNamespace[cd_def] = cd_def;
+
 	  } else {
 	    cerr << "ERROR ::: No sourceFile in sourceFileNamespaceMap found for :" <<sf-> get_file_info() -> get_filename() <<endl;
 	    exit(1);
 	  }
     }
   }
+  return cd_copy;
 }
