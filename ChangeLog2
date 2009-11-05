@@ -1,3 +1,26 @@
+2009-11-05 16:06  dquinlan
+
+	* [r8074] /trunk/ROSE/config/support-GraphViz.m4,
+	  /trunk/ROSE/configure.in, /trunk/ROSE/docs/Rose/Makefile.am,
+	  /trunk/ROSE/tutorial/Makefile.am: Added support to test for
+	  GraphViz's dot and skip test for pdf files if dot is unavailable.
+
+2009-11-05 15:19  matzke
+
+	* [r8073]
+	  /trunk/ROSE/tests/roseTests/binaryTests/testElfConstruct.C:
+	  ExecFormats: fixed compiler warnings
+	  
+	  Removed unused variables from test case. The object allocations
+	  remain
+	  because one of their side effects is to add the node to the AST.
+
+2009-11-05 13:59  dquinlan
+
+	* [r8072] /trunk/ROSE/src/ROSETTA/Grammar/Node.code,
+	  /trunk/ROSE/src/frontend/SageIII/sage3.h: Added support for
+	  hash_multimap to Windows optional support (under development).
+
 2009-11-05 04:11  dquinlan
 
 	* [r8070]
