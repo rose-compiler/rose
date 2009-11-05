@@ -37,6 +37,7 @@ V0.?.? ? AP,GB,DE,FB...
   - New termite_lint utility checks for sanity of Termite terms.
   - Termite now comes with a manual.
 	Check out docs/termite.pdf and docs/termite-html/index.html!
+  - Greatly reduced memory footprint and execution speed
 
 * Building SATIrE without PAG [GB]
   - SATIrE can now be built without requiring PAG; use --without-pag

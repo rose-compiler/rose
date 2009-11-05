@@ -43,7 +43,7 @@ static inline string makeInameID(PrologCompTerm* annot) {
 /* Error handling. Macros are used to keep a useful line number. */
 #define TERM_ASSERT(t, assertion) do { \
     if (!(assertion)) \
-      cerr << "** ERROR: In" << t->getArity() << "-ary Term\n  >>"	\
+      cerr << "** ERROR: In " << t->getArity() << "-ary Term\n  >>"	\
 	   << t->getRepresentation() << "<<\n:" << endl;		\
     ROSE_ASSERT(assertion);						\
   } while (0)

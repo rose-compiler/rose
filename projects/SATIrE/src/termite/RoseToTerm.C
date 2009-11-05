@@ -4,6 +4,7 @@
 */
 #include <satire_rose.h>
 #include <list>
+#include <cctype>
 #include "termite.h" 
 // GB (2009-02-25): Use the term printer without DFI stuff.
 #undef HAVE_PAG
@@ -13,6 +14,11 @@
 #include "satire.h"
 
 using namespace std;
+
+/* Helper Macro to attach the preprocessing information to each node's
+   annotation */
+#define PPI(NODE) \
+  getPreprocessingInfo((NODE)->getAttachedPreprocessingInfo())
 
 /**
  * get node specific info for a term.
@@ -92,37 +98,35 @@ RoseToTerm::getSpecific(SgNode* astNode) {
     a = new PrologCompTerm("default_annotation", 1, new PrologAtom("null"));
   }
 
-  // add preprocessing info
-  if (SgLocatedNode* n = dynamic_cast<SgLocatedNode*>(astNode)) {
-    a->addSubterm(getPreprocessingInfo(n->getAttachedPreprocessingInfo()));
-  }
+//   // add preprocessing info
+//   if (SgLocatedNode* n = dynamic_cast<SgLocatedNode*>(astNode)) {
+//     a->addSubterm(getPreprocessingInfo(n->getAttachedPreprocessingInfo()));
+//   }
 
   return a;
 }
 
 PrologCompTerm*
 RoseToTerm::getPreprocessingInfo(AttachedPreprocessingInfoType* inf) {
-  PrologCompTerm* pi = new PrologCompTerm("preprocessing_info");
   PrologList* l = new PrologList();
   if (inf != NULL) {
     for (AttachedPreprocessingInfoType::reverse_iterator it = inf->rbegin();
 	 it != inf->rend(); ++it) {
-      PrologCompTerm* ppd = new PrologCompTerm(
-        re.DirectiveTypes[(*it)->getTypeOfDirective()]);
-
-      bool escapeRepresentation =
+      bool escape =
           (*it)->getTypeOfDirective()
           != PreprocessingInfo::CpreprocessorIncludeDeclaration;
-      ppd->addSubterm(new PrologAtom((*it)->getString(),
-                                     escapeRepresentation));
-      ppd->addSubterm(getEnum((*it)->getRelativePosition(),
-			    re.RelativePositionTypes));
 
-      ppd->addSubterm(getFileInfo((*it)->get_file_info()));
+      PrologCompTerm* ppd = 
+	new PrologCompTerm(re.DirectiveTypes[(*it)->getTypeOfDirective()],
+			   3,
+			   new PrologAtom((*it)->getString(), escape),
+			   getEnum((*it)->getRelativePosition(),
+				   re.RelativePositionTypes),
+			   getFileInfo((*it)->get_file_info()));
       l->addFirstElement(ppd);
     }
   }
-  pi->addSubterm(l);
+  PrologCompTerm* pi = new PrologCompTerm("preprocessing_info", 1, l);
   return pi;
 }
 
@@ -136,17 +140,15 @@ RoseToTerm::getPreprocessingInfo(AttachedPreprocessingInfoType* inf) {
 PrologCompTerm*
 RoseToTerm::getFileInfo(Sg_File_Info* inf) {		
   ROSE_ASSERT(inf != NULL);
-  PrologCompTerm* fi = new PrologCompTerm("file_info");
-  fi->addSubterm(new PrologAtom(inf->get_filename()));
-  fi->addSubterm(new PrologInt(inf->get_line()));
-  fi->addSubterm(new PrologInt(inf->get_col()));
-  return fi;
+  return new PrologCompTerm("file_info", 3,
+			    new PrologAtom(inf->get_filename()),
+			    new PrologInt(inf->get_line()),
+			    new PrologInt(inf->get_col()));
 }
 
 /**
  * convert ZigZagCase to zig_zag_case.
- * The reason we need this is that in PROLOG strings
- * starting with uppercase letters are variables.
+ * (In Prolog, strings starting with uppercase letters are free variables)
  */
 string 
 RoseToTerm::prologize(string s) {
@@ -159,8 +161,8 @@ RoseToTerm::prologize(string s) {
   }
   //lowercase first char (without prepending underscore)
   if(it != s.end()) {
-    if(isUpper(*it)) {
-      t.push_back(toLower(*it));
+    if(isupper(*it)) {
+      t.push_back(tolower(*it));
     } else {
       t.push_back(*it);
     }
@@ -169,28 +171,15 @@ RoseToTerm::prologize(string s) {
   //replace an uppercase letter with an underscore
   //and its lowercase equivalent
   while(it != s.end()) {
-    if(isUpper(*it)) {
+    if(isupper(*it)) {
       t.push_back('_');
-      t.push_back(toLower(*it));
+      t.push_back(tolower(*it));
     } else {
       t.push_back(*it);
     }
     it++;
   }
   return t;
-}
-
-
-/** get lower case of upper case letter*/
-char 
-RoseToTerm::toLower(const char c) {
-  return (c - ('A'-'a'));
-};
-
-/** is a letter upper case?*/
-bool 
-RoseToTerm::isUpper(const char c) {
-  return (('A' <= c) && ('Z' >= c));
 }
 
 /** check whether we have seen the type before, and store it for future
@@ -213,12 +202,13 @@ RoseToTerm::typeWasDeclaredBefore(std::string type) {
 PrologCompTerm*  
 RoseToTerm::getFunctionDeclarationSpecific(SgFunctionDeclaration* decl) {
   /* create annotation term*/
-  PrologCompTerm* t = new PrologCompTerm("function_declaration_annotation");
-  /* add type and name*/
-  t->addSubterm(getTypeSpecific(decl->get_type()));
-  t->addSubterm(new PrologAtom(decl->get_name().getString()));
-  t->addSubterm(getDeclarationModifierSpecific(&(decl->get_declarationModifier())));
-  return t;
+  return new PrologCompTerm
+    ("function_declaration_annotation", 4,
+     /* add type and name*/
+     getTypeSpecific(decl->get_type()),
+     new PrologAtom(decl->get_name().getString()),
+     getDeclarationModifierSpecific(&(decl->get_declarationModifier())),
+     PPI(decl));
 }
 
 
@@ -235,15 +225,14 @@ RoseToTerm::getFunctionTypeSpecific(SgType* mytype) {
   SgFunctionType* ftype = isSgFunctionType(mytype);
   ROSE_ASSERT(ftype != NULL);
   /*this is a nested type*/
-  PrologCompTerm* t = new PrologCompTerm("function_type");
-  /*recurse with getTypeSpecific*/
-  t->addSubterm(getTypeSpecific(ftype->get_return_type()));
-  /*we need to know wether it has ellipses for the constructor when unparsing*/
-  t->addSubterm(getEnum(ftype->get_has_ellipses(),
-			re.ellipses_flags));
-  /*arguments*/
-  t->addSubterm(getTypePtrListSpecific(ftype->get_arguments()));
-  return t;
+  return new PrologCompTerm
+    ("function_type", 3,
+     /*recurse with getTypeSpecific*/
+     getTypeSpecific(ftype->get_return_type()),
+     /*we need to know wether it has ellipses to unparse the constructor*/
+     getEnum(ftype->get_has_ellipses(), re.ellipses_flags),
+     /*arguments*/
+     getTypePtrListSpecific(ftype->get_arguments()));
 }
 
 
@@ -262,18 +251,16 @@ RoseToTerm::getMemberFunctionTypeSpecific(SgType* mytype) {
   SgMemberFunctionType* ftype = isSgMemberFunctionType(mytype);
   ROSE_ASSERT(ftype != NULL);
   /*this is a nested type*/
-  PrologCompTerm* t = new PrologCompTerm("member_function_type");
-  /*recurse with getTypeSpecific*/
-  t->addSubterm(getTypeSpecific(ftype->get_return_type()));
-  /*we need to know wether it has ellipses for the constructor when unparsing*/
-  t->addSubterm(getEnum(ftype->get_has_ellipses(),
-			re.ellipses_flags));
-  /*arguments*/
-  t->addSubterm(getTypePtrListSpecific(ftype->get_arguments()));
-  /* mfunc_specifier*/
-  t->addSubterm(getEnum(ftype->get_mfunc_specifier(), 
-			re.declaration_modifiers));
-  return t;
+  return new PrologCompTerm
+    ("member_function_type", 4,
+     /*recurse with getTypeSpecific*/
+     getTypeSpecific(ftype->get_return_type()),
+    /*we need to know wether it has ellipses for the constructor for unparsing*/
+     getEnum(ftype->get_has_ellipses(), re.ellipses_flags),
+     /*arguments*/
+     getTypePtrListSpecific(ftype->get_arguments()),
+     /* mfunc_specifier*/
+     getEnum(ftype->get_mfunc_specifier(), re.declaration_modifiers));
 }
 
 
@@ -305,9 +292,6 @@ RoseToTerm::getEnumTypeSpecific(SgType* mtype) {
   /*make sure we are actually dealing with a class type*/
   SgEnumType* ctype = isSgEnumType(mtype);
   ROSE_ASSERT(ctype != NULL);
-  /*netsted type -> nested term*/
-  PrologCompTerm* t = new PrologCompTerm("enum_type");
-  ROSE_ASSERT(t != NULL);
   /*add base type*/
   string id = ctype->get_name().str();
   if (id == "") {
@@ -318,8 +302,9 @@ RoseToTerm::getEnumTypeSpecific(SgType* mtype) {
     }
   }
   ROSE_ASSERT(id != "" && id != "''");
-  t->addSubterm(new PrologAtom(id));
-  return t;
+
+  /*nested type -> nested term*/
+  return new PrologCompTerm("enum_type", 1, new PrologAtom(id));
 }
 
 
@@ -335,18 +320,19 @@ RoseToTerm::getClassTypeSpecific(SgType* mtype) {
   /*make sure we are actually dealing with a class type*/
   SgClassType* ctype = isSgClassType(mtype);
   ROSE_ASSERT(ctype != NULL);
-  /*netsted type -> nested term*/
-  PrologCompTerm* t = new PrologCompTerm("class_type");
-  ROSE_ASSERT(t != NULL);
-  /*add base type*/
-  t->addSubterm(new PrologAtom(ctype->get_name().str()));
+
   SgClassDeclaration* d = isSgClassDeclaration(ctype->get_declaration());
   ROSE_ASSERT(d != NULL);
-  /* what kind of class is this?*/
-  t->addSubterm(getEnum(d->get_class_type(), re.class_types));
-  /* add qualified name of scope*/
-  t->addSubterm(new PrologAtom(d->get_scope()->get_scope()->get_qualified_name().getString()));
-  return t;
+
+  return new PrologCompTerm
+    ("class_type", 3, 
+     /*add base type*/
+     new PrologAtom(ctype->get_name().str()),
+     /* what kind of class is this?*/
+     getEnum(d->get_class_type(), re.class_types),
+     /* add qualified name of scope*/
+     new PrologAtom
+     (d->get_scope()->get_scope()->get_qualified_name().getString()));
 }
 
 /**
@@ -362,14 +348,12 @@ RoseToTerm::getTypedefTypeSpecific(SgType* mtype) {
   ROSE_ASSERT(tp != NULL);
 
   /* create term and add name*/
-  PrologCompTerm* t = new PrologCompTerm("typedef_type");
-  t->addSubterm(new PrologAtom(tp->get_name().getString()));
-
-  /* add base type */
-  if (tp->get_base_type() != NULL)
-    t->addSubterm(getTypeSpecific(tp->get_base_type()));
-  else t->addSubterm(new PrologAtom("null"));
-  return t;
+  return new PrologCompTerm
+    ("typedef_type", 2,
+     new PrologAtom(tp->get_name().getString()),
+     (tp->get_base_type() != NULL /* add base type */
+      ? getTypeSpecific(tp->get_base_type())
+      : new PrologAtom("null")));
 }
 
 /**
@@ -380,13 +364,13 @@ RoseToTerm::getTypedefTypeSpecific(SgType* mtype) {
 PrologCompTerm* 
 RoseToTerm::getConstructorInitializerSpecific(SgConstructorInitializer* ci) {
   ROSE_ASSERT(ci != NULL);
-  /* create annotation term*/
-  PrologCompTerm* t = new PrologCompTerm("constructor_initializer_annotiation");
   /* get name from class declaration*/
   SgClassDeclaration* dec = ci->get_class_decl();
   ROSE_ASSERT(dec != NULL);
-  t->addSubterm(new PrologAtom(dec->get_qualified_name().getString()));
-  return t;
+  return new PrologCompTerm
+    ("constructor_initializer_annotation", 2,
+     new PrologAtom(dec->get_qualified_name().getString()),
+     PPI(ci));
 }
 
 /**
@@ -398,10 +382,11 @@ PrologCompTerm*
 RoseToTerm::getNewExpSpecific(SgNewExp* ne) {
   ROSE_ASSERT(ne != NULL);
   /*create annot term*/
-  PrologCompTerm* t = new PrologCompTerm("new_exp_annotation");
-  /* add type term*/
-  t->addSubterm(getTypeSpecific(ne->get_specified_type()));
-  return t;
+  return new PrologCompTerm
+    ("new_exp_annotation", 2,
+     getTypeSpecific(ne->get_specified_type()), /* add type term*/
+     PPI(ne)
+    );
 }
 
 
@@ -417,18 +402,14 @@ RoseToTerm::getArrayTypeSpecific(SgType* mtype) {
   /*make sure we are actually dealing with an array type*/
   SgArrayType* a = isSgArrayType(mtype);
   ROSE_ASSERT(a != NULL);
-  PrologCompTerm* t = new PrologCompTerm("array_type");
-  ROSE_ASSERT(t != NULL);
-  /* get nested type*/
-  t->addSubterm(getTypeSpecific(a->get_base_type()));
-  /* get expression*/
-  if (a->get_index()) {
-    t->addSubterm(traverseSingleNode(a->get_index()));
-  } else {
-    t->addSubterm(new PrologAtom("null"));
-  }
-  return t;
+  return new PrologCompTerm
+    ("array_type", 2,
+     getTypeSpecific(a->get_base_type()), /* get nested type*/ 
+     (a->get_index() /* get expression*/
+      ? traverseSingleNode(a->get_index())
+      : new PrologAtom("null")));
 }
+
 /**
  * class: SgModifierType
  * term: modifier_type(nested,tmod)
@@ -440,13 +421,10 @@ RoseToTerm::getModifierTypeSpecific(SgType* stype) {
   /*make sure we are actually dealing with a modifier type*/
   SgModifierType* m = isSgModifierType(stype);
   ROSE_ASSERT(m != NULL);
-  PrologCompTerm* t = new PrologCompTerm("modifier_type");
-  ROSE_ASSERT(t != NULL);
-  /* add the base type*/
-  t->addSubterm(getTypeSpecific(m->get_base_type()));
-  /* add the type modifier*/
-  t->addSubterm(getTypeModifierSpecific(&(m->get_typeModifier())));
-  return t;
+  return new PrologCompTerm
+    ("modifier_type", 2,
+     /* base type*/ getTypeSpecific(m->get_base_type()),
+     /* type modifier*/ getTypeModifierSpecific(&(m->get_typeModifier())));
 }
 
 
@@ -504,11 +482,10 @@ RoseToTerm::getTypeSpecific(SgType* stype) {
 	     cn == "SgTypeVoid"  ||
 	     cn == "SgTypeWchar"
 	      ) {  
-    t =  new 
-      PrologAtom(prologize(cn));
+    t =  new PrologAtom(prologize(cn));
   } else {
-    PrologCompTerm* ct  = new PrologCompTerm("not_yet_implemented");
-    ct->addSubterm(new PrologAtom(stype->class_name()));
+    PrologCompTerm* ct  = new PrologCompTerm
+      ("not_yet_implemented", 1, new PrologAtom(stype->class_name()));
     t = ct;
   }
   /*we should have created some type info here*/
@@ -526,19 +503,13 @@ RoseToTerm::getTypeSpecific(SgType* stype) {
  */
 PrologCompTerm* 
 RoseToTerm::getUnaryOpSpecific(SgUnaryOp* op) {
-  PrologCompTerm* annot = new PrologCompTerm("unary_op_annotation");
-  // GB (2008-12-04): Generating a self-documenting atom instead of an
-  // opaque numerical constant.
-  // annot->addSubterm(new PrologInt((int) op->get_mode()));
-  annot->addSubterm(new PrologAtom(
-              op->get_mode() == SgUnaryOp::prefix ? "prefix" : "postfix"));
-  annot->addSubterm(getTypeSpecific(op->get_type()));
+  PrologTerm *e3, *e4;
   if(SgThrowOp* thrw = dynamic_cast<SgThrowOp*>(op)) {
     /*Throw Ops also have a 'throw kind'*/
     // GB (2008-08-23): As of ROSE 0.9.3.a-1593, throw ops no longer have a
     // type list. Or was it only removed temporarily? TODO: Check again
     // sometime.
-    annot->addSubterm(getEnum(thrw->get_throwKind(), re.throw_kinds));
+    e3 = getEnum(thrw->get_throwKind(), re.throw_kinds);
 #if 0
     SgTypePtrListPtr types = thrw->get_typeList ();
     SgTypePtrList::iterator it = types->begin();
@@ -547,18 +518,26 @@ RoseToTerm::getUnaryOpSpecific(SgUnaryOp* op) {
       l->addElement(getTypeSpecific(*it));
       it++;
     }
+#else
+    e4 = new PrologAtom("null");
 #endif
   } else if (SgCastExp* cst = dynamic_cast<SgCastExp*>(op)) {
     /*Casts have a cast type*/
-    annot->addSubterm(getEnum(cst->get_cast_type(), re.cast_types));
+    e3 = getEnum(cst->get_cast_type(), re.cast_types);
     /*assure that arity = 4*/
-    annot->addSubterm(new PrologAtom("null"));
+    e4 = new PrologAtom("null");
   } else {
     /*assure that arity = 4*/
-    annot->addSubterm(new PrologAtom("null"));
-    annot->addSubterm(new PrologAtom("null"));
+    e3 = new PrologAtom("null");
+    e4 = new PrologAtom("null");
   }
-  return annot;
+  return new PrologCompTerm
+    ("unary_op_annotation", 4+1,
+     new PrologAtom(op->get_mode() == SgUnaryOp::prefix ? "prefix" : "postfix"),
+     getTypeSpecific(op->get_type()),
+     e3, 
+     e4,
+     PPI(op));			    
 }
 
 /**
@@ -568,10 +547,10 @@ RoseToTerm::getUnaryOpSpecific(SgUnaryOp* op) {
  */
 PrologCompTerm* 
 RoseToTerm::getBinaryOpSpecific(SgBinaryOp* op) {
-  PrologCompTerm* annot = new PrologCompTerm("binary_op_annotation");
-  /*add the type*/
-  annot->addSubterm(getTypeSpecific(op->get_type()));
-  return annot;
+  return new PrologCompTerm
+    ("binary_op_annotation", 2,
+     getTypeSpecific(op->get_type()),
+     PPI(op));
 }
 
 /**
@@ -583,95 +562,74 @@ RoseToTerm::getBinaryOpSpecific(SgBinaryOp* op) {
  */
 PrologCompTerm* 
 RoseToTerm::getValueExpSpecific(SgValueExp* astNode) {
-  PrologCompTerm* t = new PrologCompTerm("value_annotation");
+  PrologTerm *val;
   /* int and enum types */	
   if(SgIntVal* n = dynamic_cast<SgIntVal*>(astNode)) {
-    t->addSubterm(new PrologInt(n->get_value()));
+    val = new PrologInt(n->get_value());
   } else if(SgUnsignedIntVal* n = dynamic_cast<SgUnsignedIntVal*>(astNode)) {
-    t->addSubterm(new PrologInt(n->get_value()));
+    val = new PrologInt(n->get_value());
   } else if(SgShortVal* n = dynamic_cast<SgShortVal*>(astNode)) {
-    t->addSubterm(new PrologInt(n->get_value()));
+    val = new PrologInt(n->get_value());
   } else if(SgUnsignedShortVal* n = dynamic_cast<SgUnsignedShortVal*>(astNode)) {
-    t->addSubterm(new PrologInt(n->get_value()));
+    val = new PrologInt(n->get_value());
   } else if (SgLongIntVal* n = dynamic_cast<SgLongIntVal*>(astNode)) {
-    /*create ostringstream*/
-    //ostringstream o;
-    /* let the << handle the conversion to string*/
-    //o << n->get_value();
-    //string s = o.str();
-    /* add a new PrologAtom*/
-    //t->addSubterm(new PrologAtom(s));
-    t->addSubterm(new PrologInt(n->get_value()));
+    val = new PrologInt(n->get_value());
   } else if (SgUnsignedLongVal* n = dynamic_cast<SgUnsignedLongVal*>(astNode)) {
-    //ostringstream o;
-    //o << n->get_value();
-    //string s = o.str();
-    //t->addSubterm(new PrologAtom(s));
-    t->addSubterm(new PrologInt(n->get_value()));
+    val = new PrologInt(n->get_value());
   } else if (SgLongLongIntVal* n = dynamic_cast<SgLongLongIntVal*>(astNode)) {
-    //ostringstream o;
-    //o << n->get_value();
-    //string s = o.str();
-    //t->addSubterm(new PrologAtom(s));
-    t->addSubterm(new PrologInt(n->get_value()));
+    val = new PrologInt(n->get_value());
   } else if (SgUnsignedLongLongIntVal* n = dynamic_cast<SgUnsignedLongLongIntVal*>(astNode)) {
-    //ostringstream o;
-    //o << n->get_value();
-    //string s = o.str();
-    //t->addSubterm(new PrologAtom(s));
-    t->addSubterm(new PrologInt(n->get_value()));
+    val = new PrologInt(n->get_value());
   } else if(SgEnumVal* n = dynamic_cast<SgEnumVal*>(astNode)) { /*FIXME*/
     /* value*/
-    t->addSubterm(new PrologInt(n->get_value())); 
+    val = new PrologInt(n->get_value()); 
     /* name of value*/
-    t->addSubterm(new PrologAtom(n->get_name().getString()));
+    val = new PrologAtom(n->get_name().getString());
     /* name of declaration*/
     SgEnumType *type = isSgEnumDeclaration(n->get_declaration())->get_type();
     ROSE_ASSERT(type != NULL);
-    t->addSubterm(getEnumTypeSpecific(type));
+    val = getEnumTypeSpecific(type);
   }
   /* float types */
   else if (SgFloatVal* n = dynamic_cast<SgFloatVal*>(astNode)) {
     ostringstream o;
     o << n->get_value();
     string s = o.str();
-    t->addSubterm(new PrologAtom(s));
+    val = new PrologAtom(s);
   } else if (SgDoubleVal* n = dynamic_cast<SgDoubleVal*>(astNode)) {
     ostringstream o;
     o << n->get_value();
     string s = o.str();
-    t->addSubterm(new PrologAtom(s));
+    val = new PrologAtom(s);
   } else if (SgLongDoubleVal* n = dynamic_cast<SgLongDoubleVal*>(astNode)) {
     ostringstream o;
     o << n->get_value();
     string s = o.str();
-    t->addSubterm(new PrologAtom(s));
+    val = new PrologAtom(s);
   } 
   /* boolean type */ 
   else if (SgBoolValExp* n = dynamic_cast<SgBoolValExp*>(astNode)) {
     ostringstream o;
     o << n->get_value();
     string s = o.str();
-    t->addSubterm(new PrologAtom(s));
+    val = new PrologAtom(s);
   } 
   /* char and string types */
   else if (SgCharVal* n = dynamic_cast<SgCharVal*>(astNode)) {
-    //t->addSubterm(new PrologAtom(escape_string(std::string(1, (unsigned char)n->get_value()))));
-    t->addSubterm(new PrologInt((int)n->get_value())); 
+    val = new PrologInt((int)n->get_value()); 
   } else if (SgUnsignedCharVal* n = dynamic_cast<SgUnsignedCharVal*>(astNode)) {
-    //t->addSubterm(new PrologAtom(escape_string(std::string(1, n->get_value()))));
-    t->addSubterm(new PrologInt((unsigned)n->get_value())); 
+    val = new PrologInt((unsigned)n->get_value()); 
   } else if (SgWcharVal* n = dynamic_cast<SgWcharVal*>(astNode)) {
     ostringstream o;
     o << n->get_valueUL();
     string s = o.str();
-    t->addSubterm(new PrologAtom(s));
+    val = new PrologAtom(s);
   } else if (SgStringVal* n = dynamic_cast<SgStringVal*>(astNode)) {
-    t->addSubterm(new PrologAtom(n->get_value()));
+    val = new PrologAtom(n->get_value());
   } else {
-    t->addSubterm(new PrologAtom("null"));
+    val = new PrologAtom("null");
   }
-  return t;
+  return new PrologCompTerm("value_annotation", 2, val, PPI(astNode));
 }
 /**
  * class: SgAssignInitializer
@@ -680,9 +638,9 @@ RoseToTerm::getValueExpSpecific(SgValueExp* astNode) {
  */
 PrologCompTerm*  
 RoseToTerm::getAssignInitializerSpecific(SgAssignInitializer* ai) {
-  PrologCompTerm* annot = new PrologCompTerm("assign_initializer_annotation");
-  annot->addSubterm(getTypeSpecific(ai->get_type()));
-  return annot;
+  return new PrologCompTerm("assign_initializer_annotation", 2,
+			    getTypeSpecific(ai->get_type()),
+			    PPI(ai));
 }
 /**
  * class: SgVarRefExp
@@ -694,7 +652,6 @@ RoseToTerm::getAssignInitializerSpecific(SgAssignInitializer* ai) {
  */
 PrologCompTerm* 
 RoseToTerm::getVarRefExpSpecific(SgVarRefExp* vr) {
-  PrologCompTerm* annot = new PrologCompTerm("var_ref_exp_annotation");
   SgInitializedName* n = vr->get_symbol()->get_declaration();
   /* type: in general, this can be taken "as is" from the ROSE AST. However,
    * ROSE (up to 0.9.4a-8xxx at least) gets a detail wrong: a declaration
@@ -713,31 +670,39 @@ RoseToTerm::getVarRefExpSpecific(SgVarRefExp* vr) {
   } else {
     typeSpecific = getTypeSpecific(n->get_typeptr());
   }
-  annot->addSubterm(typeSpecific);
-  /* name*/
-  annot->addSubterm(new PrologAtom(n->get_name().getString()));
   /* static? (relevant for unparsing if scope is a class)*/
+  PrologTerm *isStatic;
   SgDeclarationStatement* vdec = n->get_declaration();
   if (vdec != NULL) {
-    annot->addSubterm(getEnum(vdec->get_declarationModifier().get_storageModifier().isStatic(),
-                              re.static_flags));
+    isStatic = 
+      getEnum(vdec->get_declarationModifier().get_storageModifier().isStatic(),
+	      re.static_flags);
   } else {
-    annot->addSubterm(getEnum(0, re.static_flags));
+    isStatic = getEnum(0, re.static_flags);
   }
+  PrologTerm* scope;
   if (vdec != NULL) {
     /* named scope or irrelevant?*/
-    if(SgNamespaceDefinitionStatement* scn = isSgNamespaceDefinitionStatement(vdec->get_parent())) {
-      annot->addSubterm(getNamespaceScopeName(scn));
-    } else if (SgClassDefinition* scn = isSgClassDefinition(vdec->get_parent())) {
-      annot->addSubterm(getClassScopeName(scn));
+    if (SgNamespaceDefinitionStatement* scn = 
+	isSgNamespaceDefinitionStatement(vdec->get_parent())) {
+      scope = getNamespaceScopeName(scn);
+    } else if (SgClassDefinition* scn = 
+	       isSgClassDefinition(vdec->get_parent())) {
+      scope = getClassScopeName(scn);
     } else {
-      annot->addSubterm(new PrologAtom("null"));
+      scope = new PrologAtom("null");
     }
   } else {
-    annot->addSubterm(new PrologAtom("null"));
+    scope = new PrologAtom("null");
   }
 
-  return annot;
+  return new PrologCompTerm
+    ("var_ref_exp_annotation", 5,
+     typeSpecific,
+     /* name*/ new PrologAtom(n->get_name().getString()),
+     isStatic,
+     scope,
+     PPI(vr));
 }
 
 /**
@@ -750,21 +715,23 @@ RoseToTerm::getVarRefExpSpecific(SgVarRefExp* vr) {
  */
 PrologCompTerm* 
 RoseToTerm::getInitializedNameSpecific(SgInitializedName* n) {
-  PrologCompTerm* t = new PrologCompTerm("initialized_name_annotation");
-  t->addSubterm(getTypeSpecific(n->get_typeptr()));
-  t->addSubterm(new PrologAtom(n->get_name().getString()));
-  /* static? (relevant for unparsing if scope is a class)*/
-  t->addSubterm(getEnum(n->get_storageModifier().isStatic(), 
-			re.static_flags));
   /* named scope or irrelevant?*/
-  if(SgNamespaceDefinitionStatement* scn = isSgNamespaceDefinitionStatement(n->get_scope())) {
-    t->addSubterm(getNamespaceScopeName(scn));
+  PrologTerm* scope;
+  if(SgNamespaceDefinitionStatement* scn = 
+     isSgNamespaceDefinitionStatement(n->get_scope())) {
+    scope = getNamespaceScopeName(scn);
   } else if (SgClassDefinition* scn = isSgClassDefinition(n->get_scope())) {
-    t->addSubterm(getClassScopeName(scn));
+    scope = getClassScopeName(scn);
   } else {
-    t->addSubterm(new PrologAtom("null"));
+    scope = new PrologAtom("null");
   }
-  return t;
+  return new PrologCompTerm
+    ("initialized_name_annotation", 4,
+     getTypeSpecific(n->get_typeptr()),
+     new PrologAtom(n->get_name().getString()),
+     /* static? (relevant for unparsing if scope is a class)*/
+     getEnum(n->get_storageModifier().isStatic(), re.static_flags),
+     scope);
 }
 
 /**
@@ -776,15 +743,17 @@ RoseToTerm::getInitializedNameSpecific(SgInitializedName* n) {
  * */
 PrologCompTerm* 
 RoseToTerm::getClassDeclarationSpecific(SgClassDeclaration* cd) {
-  PrologCompTerm* t = new PrologCompTerm("class_declaration_annotation");
-  /* add name and type*/
-  t->addSubterm(new PrologAtom(cd->get_name().str()));
-  t->addSubterm(getEnum(cd->get_class_type(), re.class_types));
   PrologTerm *typet = getTypeSpecific(cd->get_type());
   typeWasDeclaredBefore(typet->getRepresentation());
-  t->addSubterm(getTypeSpecific(cd->get_type()));
-  return t;
+  return new PrologCompTerm
+    ("class_declaration_annotation", 4,
+     /* add name and type*/
+     new PrologAtom(cd->get_name().str()),
+     getEnum(cd->get_class_type(), re.class_types),
+     getTypeSpecific(cd->get_type()),
+     PPI(cd));
 }
+
 /**
  * class: SgClassDefinition
  * term: class_definition_annotation(fileinfo)
@@ -792,12 +761,11 @@ RoseToTerm::getClassDeclarationSpecific(SgClassDeclaration* cd) {
  * */
 PrologCompTerm* 
 RoseToTerm::getClassDefinitionSpecific(SgClassDefinition* def) {
-  PrologCompTerm* t = new PrologCompTerm("class_definition_annotation");
-  /* add end of construct*/
-  Sg_File_Info* eoc = def->get_endOfConstruct();
-  ROSE_ASSERT(eoc != NULL);
-  t->addSubterm(getFileInfo(eoc));
-  return t;
+  return new PrologCompTerm
+    ("class_definition_annotation", 2,
+     /* add end of construct*/
+     getFileInfo(def->get_endOfConstruct()),
+     PPI(def));
 }
 
 /**
@@ -807,27 +775,26 @@ RoseToTerm::getClassDefinitionSpecific(SgClassDefinition* def) {
  * arg unnamed: unnamed namespace
  */
 PrologCompTerm* 
-RoseToTerm::getNamespaceDeclarationStatementSpecific(SgNamespaceDeclarationStatement* dec) {
-  ROSE_ASSERT(dec != NULL);
-  PrologCompTerm* t = new PrologCompTerm("namespace_declaration_statement");
-  /* name*/
-  t->addSubterm(new PrologAtom(dec->get_name().getString()));
-  /* unnamed?*/
-  t->addSubterm(new PrologInt((int) dec->get_isUnnamedNamespace()));
-  return t;
+RoseToTerm::getNamespaceDeclarationStatementSpecific
+(SgNamespaceDeclarationStatement* dec) {
+  return new PrologCompTerm
+    ("namespace_declaration_statement", 3,
+     /* name*/ new PrologAtom(dec->get_name().getString()),
+     /* unnamed?*/ new PrologInt((int) dec->get_isUnnamedNamespace()),
+     PPI(dec));
 }
 
 /** create a list of atoms from a bit vector*/
 PrologTerm* 
 RoseToTerm::getBitVector(const SgBitVector &v, const vector<string> &names) {
   PrologList* l = new PrologList;
-  SgBitVector::const_iterator it = v.begin();
-  vector<string>::const_iterator name = names.begin();
+  reverse_iterator<SgBitVector::const_iterator> it = v.rbegin();
+  reverse_iterator<vector<string>::const_iterator> name = names.rbegin();
   
   ROSE_ASSERT(v.size() <= names.size());
-  while(it != v.end()) {
+  while(it != v.rend()) {
     if (*it == true)
-      l->addElement(new PrologAtom(*name));
+      l->addFirstElement(new PrologAtom(*name));
     it++;
     name++;
   }
@@ -848,13 +815,10 @@ RoseToTerm::getEnum(int enum_val, const vector<string> &names) {
  * */
 PrologCompTerm* 
 RoseToTerm::getConditionalExpSpecific(SgConditionalExp* c) {
-  SgType* t = c->get_type();
-  ROSE_ASSERT(t != NULL);
-  PrologTerm*  t_term = getTypeSpecific(t);
-  ROSE_ASSERT(t_term != NULL);
-  PrologCompTerm* annot = new PrologCompTerm("conditional_exp_annotation");
-  annot->addSubterm(t_term);
-  return annot;
+  return new PrologCompTerm
+    ("conditional_exp_annotation", 2,
+     getTypeSpecific(c->get_type()),
+     PPI(c));
 }
 
 /**
@@ -864,12 +828,12 @@ RoseToTerm::getConditionalExpSpecific(SgConditionalExp* c) {
  * */
 PrologCompTerm*  
 RoseToTerm::getLabelStatementSpecific(SgLabelStatement* label) {
-  //get naem of the label
+  //get name of the label
   string s = *(new string(label->get_label().getString()));
   // create a term containing the name;
-  PrologCompTerm* t = new PrologCompTerm("label_annotation");
-  t->addSubterm(new PrologAtom(s));
-  return t;
+  return new PrologCompTerm("label_annotation", 2,
+			    new PrologAtom(s),
+			    PPI(label));
 }
 
 /**
@@ -903,15 +867,16 @@ RoseToTerm::getEnumDeclarationSpecific(SgEnumDeclaration* d) {
     }
   }
   ROSE_ASSERT(ename != "");
-  //create term
-  PrologCompTerm* t = new PrologCompTerm("enum_declaration_annotation");
-  ROSE_ASSERT(t != NULL);
-  t->addSubterm(new PrologAtom(ename));
-  t->addSubterm(getDeclarationAttributes(d));
-  t->addSubterm(new PrologInt(d->get_embedded()));
   PrologTerm *typet = getTypeSpecific(d->get_type());
   typeWasDeclaredBefore(typet->getRepresentation());
-  return t;
+
+  //create term
+  return new PrologCompTerm
+    ("enum_declaration_annotation", 4,
+     new PrologAtom(ename),
+     getDeclarationAttributes(d),
+     new PrologInt(d->get_embedded()),
+     PPI(d));
 }
 
 /**
@@ -921,14 +886,15 @@ RoseToTerm::getEnumDeclarationSpecific(SgEnumDeclaration* d) {
  */
 PrologCompTerm* 
 RoseToTerm::getDeclarationAttributes(SgDeclarationStatement* s) {
-  PrologCompTerm* t = new PrologCompTerm("decl_attributes");
-  t->addSubterm(new PrologInt(s->get_nameOnly()));
-  t->addSubterm(new PrologInt(s->get_forward()));
-  t->addSubterm(new PrologInt(s->get_externBrace()));
-  t->addSubterm(new PrologInt(s->get_skipElaborateType()));
-  // ROSE 0.8.8a:	t->addSubterm(new PrologInt(s->get_need_name_qualifier()));
-  t->addSubterm(new PrologInt(0)); // set dummy value
-  return t;
+  PrologCompTerm* t = new PrologCompTerm
+    ("decl_attributes", 6,
+     new PrologInt(s->get_nameOnly()),
+     new PrologInt(s->get_forward()),
+     new PrologInt(s->get_externBrace()),
+     new PrologInt(s->get_skipElaborateType()),
+     // ROSE 0.8.8a: new PrologInt(s->get_need_name_qualifier()),
+     new PrologInt(0), // set dummy value
+     PPI(s));
 }
 
 
@@ -939,10 +905,10 @@ RoseToTerm::getDeclarationAttributes(SgDeclarationStatement* s) {
  */
 PrologCompTerm* 
 RoseToTerm::getDeleteExpSpecific(SgDeleteExp* de) {
-  PrologCompTerm* t = new PrologCompTerm("delete_exp_annotation");
-  t->addSubterm(new PrologInt(de->get_is_array()));
-  t->addSubterm(new PrologInt(de->get_need_global_specifier()));
-  return t;
+  return new PrologCompTerm("delete_exp_annotation", 3,
+			    new PrologInt(de->get_is_array()),
+			    new PrologInt(de->get_need_global_specifier()),
+			    PPI(de));
 }
 
 /**
@@ -952,10 +918,9 @@ RoseToTerm::getDeleteExpSpecific(SgDeleteExp* de) {
  */
 PrologCompTerm* 
 RoseToTerm::getRefExpSpecific(SgRefExp* re) {
-  PrologCompTerm* t = new PrologCompTerm("ref_exp_annotation");
-  ROSE_ASSERT(t != NULL);
-  t->addSubterm(getTypeSpecific(re->get_type()));
-  return t;
+  return new PrologCompTerm("ref_exp_annotation", 2,
+			    getTypeSpecific(re->get_type()),
+			    PPI(re));
 }
 
 /**
@@ -967,10 +932,6 @@ RoseToTerm::getRefExpSpecific(SgRefExp* re) {
 PrologCompTerm* 
 RoseToTerm::getVariableDeclarationSpecific(SgVariableDeclaration* d) {
   ROSE_ASSERT(d != NULL);
-  /* create annotation term*/
-  PrologCompTerm* t = new PrologCompTerm("variable_declaration_specific");
-  t->addSubterm(getDeclarationModifierSpecific(&(d->get_declarationModifier())));
-
   /* add base type forward declaration */
   SgNode *baseTypeDecl = NULL;
   if (d->get_variableDeclarationContainsBaseTypeDefiningDeclaration()) {
@@ -995,11 +956,14 @@ RoseToTerm::getVariableDeclarationSpecific(SgVariableDeclaration* d) {
       }
     }
   }
-  t->addSubterm(baseTypeDecl != NULL
-                  ? traverseSingleNode(baseTypeDecl)
-                  : new PrologAtom("null"));
 
-  return t;
+  return new PrologCompTerm
+    ("variable_declaration_specific", 3,
+     getDeclarationModifierSpecific(&(d->get_declarationModifier())),
+     (baseTypeDecl != NULL
+      ? traverseSingleNode(baseTypeDecl)
+      : new PrologAtom("null")),
+     PPI(d));
 }
 
 /**
@@ -1009,9 +973,9 @@ RoseToTerm::getVariableDeclarationSpecific(SgVariableDeclaration* d) {
  */
 PrologCompTerm* 
 RoseToTerm::getVarArgSpecific(SgExpression* e) {
-  PrologCompTerm* t = new PrologCompTerm("vararg_annotation");
-  t->addSubterm(getTypeSpecific(e->get_type()));
-  return t;
+  return new PrologCompTerm("vararg_annotation", 2,
+			    getTypeSpecific(e->get_type()),
+			    PPI(e));
 }
 
 /**
@@ -1046,10 +1010,10 @@ RoseToTerm::traverseSingleNode(SgNode* astNode) {
  */
 PrologCompTerm* 
 RoseToTerm::getBaseClassModifierSpecific(SgBaseClassModifier* b) {
-  PrologCompTerm* t = new PrologCompTerm("base_class_modifier");
-  t->addSubterm(new PrologInt((int) b->get_modifier()));
-  t->addSubterm(new PrologInt((int) b->get_accessModifier().get_modifier()));
-  return t;
+  return new PrologCompTerm
+    ("base_class_modifier", 2,
+     new PrologInt((int) b->get_modifier()),
+     new PrologInt((int) b->get_accessModifier().get_modifier()));
 }
 
 /**
@@ -1059,11 +1023,10 @@ RoseToTerm::getBaseClassModifierSpecific(SgBaseClassModifier* b) {
  */
 PrologCompTerm* 
 RoseToTerm::getFunctionModifierSpecific(SgFunctionModifier* f) {
-  PrologCompTerm* t = new PrologCompTerm("function_modifier");
-  /* get bit vector and convert to PROLOG*/
-  t->addSubterm(getBitVector(f->get_modifierVector(), 
-			     re.function_modifiers));
-  return t;
+  return new PrologCompTerm
+    ("function_modifier", 1,
+     /* get bit vector and convert to PROLOG*/
+     getBitVector(f->get_modifierVector(), re.function_modifiers));
 }
 
 /**
@@ -1073,12 +1036,12 @@ RoseToTerm::getFunctionModifierSpecific(SgFunctionModifier* f) {
  */
 PrologCompTerm* 
 RoseToTerm::getSpecialFunctionModifierSpecific(SgSpecialFunctionModifier* f) {
-  PrologCompTerm* t = new PrologCompTerm("special_function_modifier");
-  /* get bit vector and convert to PROLOG*/
-  t->addSubterm(getBitVector(f->get_modifierVector(),
-			     re.special_function_modifiers));
-  return t;
+  return new PrologCompTerm
+    ("special_function_modifier", 1,
+     /* get bit vector and convert to PROLOG*/
+     getBitVector(f->get_modifierVector(),re.special_function_modifiers));
 }
+
 /**
  * class: SgLinkageModifier
  * term: linkage_modifier(a)
@@ -1086,9 +1049,8 @@ RoseToTerm::getSpecialFunctionModifierSpecific(SgSpecialFunctionModifier* f) {
  */
 PrologCompTerm* 
 RoseToTerm::getLinkageModifierSpecific(SgLinkageModifier* a) {
-  PrologCompTerm* t = new PrologCompTerm("linkage_modifier");
-  t->addSubterm(new PrologInt((int) a->get_modifier()));
-  return t;
+  return new PrologCompTerm("linkage_modifier", 1,
+			    new PrologInt((int) a->get_modifier()));
 }
 /**
  * class: SgStorageModifier
@@ -1097,9 +1059,8 @@ RoseToTerm::getLinkageModifierSpecific(SgLinkageModifier* a) {
  */
 PrologCompTerm* 
 RoseToTerm::getStorageModifierSpecific(SgStorageModifier* a) {
-  PrologCompTerm* t = new PrologCompTerm("storage_modifier");
-  t->addSubterm(getEnum(a->get_modifier(), re.storage_modifiers));
-  return t;
+  return new PrologCompTerm("storage_modifier", 1,
+			    getEnum(a->get_modifier(), re.storage_modifiers));
 }
 /**
  * class: SgElaboratedTypeModifier
@@ -1108,9 +1069,8 @@ RoseToTerm::getStorageModifierSpecific(SgStorageModifier* a) {
  */
 PrologCompTerm* 
 RoseToTerm::getElaboratedTypeModifierSpecific(SgElaboratedTypeModifier* a) {
-  PrologCompTerm* t = new PrologCompTerm("elaborated_type_modifier");
-  t->addSubterm(new PrologInt((int) a->get_modifier()));
-  return t;
+  return new PrologCompTerm("elaborated_type_modifier", 1,
+			    new PrologInt((int) a->get_modifier()));
 }
 /**
  * class: SgConstVolatileModifier
@@ -1119,9 +1079,8 @@ RoseToTerm::getElaboratedTypeModifierSpecific(SgElaboratedTypeModifier* a) {
  */
 PrologCompTerm* 
 RoseToTerm::getConstVolatileModifierSpecific(SgConstVolatileModifier* a) {
-  PrologCompTerm* t = new PrologCompTerm("const_volatile_modifier");
-  t->addSubterm(getEnum(a->get_modifier(), re.cv_modifiers));
-  return t;
+  return new PrologCompTerm("const_volatile_modifier", 1,
+			    getEnum(a->get_modifier(), re.cv_modifiers));
 }
 /**
  * class: SgUPC_AccessModifier
@@ -1130,9 +1089,9 @@ RoseToTerm::getConstVolatileModifierSpecific(SgConstVolatileModifier* a) {
  */
 PrologCompTerm* 
 RoseToTerm::getUPC_AccessModifierSpecific(SgUPC_AccessModifier* a) {
-  PrologCompTerm* t = new PrologCompTerm("upc_access_modifier");
-  t->addSubterm(getEnum(a->get_modifier(), re.upc_access_modifiers));
-  return t;
+  return new PrologCompTerm
+    ("upc_access_modifier", 1,
+     getEnum(a->get_modifier(), re.upc_access_modifiers));
 }
 
 /**
@@ -1145,18 +1104,15 @@ RoseToTerm::getUPC_AccessModifierSpecific(SgUPC_AccessModifier* a) {
  */
 PrologCompTerm* 
 RoseToTerm::getTypeModifierSpecific(SgTypeModifier* a) {
-  PrologCompTerm* t = new PrologCompTerm("type_modifier");
-  ROSE_ASSERT(t != NULL);
-  /* get bit vector and convert to PROLOG*/
-  t->addSubterm(getBitVector(a->get_modifierVector(), re.type_modifiers));
-  /* add enums*/
-  t->addSubterm(getEnum(a->get_upcModifier().get_modifier(), 
-			re.upc_access_modifiers));
-  t->addSubterm(getEnum(a->get_constVolatileModifier().get_modifier(),
-			re.cv_modifiers));
-  t->addSubterm(getEnum(a->get_elaboratedTypeModifier().get_modifier(), 
-			   re.elaborated_type_modifiers));
-  return t;
+  return new PrologCompTerm
+    ("type_modifier", 4,
+     /* get bit vector and convert to PROLOG*/
+     getBitVector(a->get_modifierVector(), re.type_modifiers),
+     /* add enums*/
+     getEnum(a->get_upcModifier().get_modifier(), re.upc_access_modifiers),
+     getEnum(a->get_constVolatileModifier().get_modifier(), re.cv_modifiers),
+     getEnum(a->get_elaboratedTypeModifier().get_modifier(), 		   
+	     re.elaborated_type_modifiers));
 }
 
 /**
@@ -1169,17 +1125,12 @@ RoseToTerm::getTypeModifierSpecific(SgTypeModifier* a) {
  */
 PrologCompTerm* 
 RoseToTerm::getDeclarationModifierSpecific(SgDeclarationModifier* dm) {
-  PrologCompTerm* t = new PrologCompTerm("declaration_modifier");
-  ROSE_ASSERT(t != NULL);
-  t->addSubterm(getBitVector(dm->get_modifierVector(), 
-			     re.declaration_modifiers));
-  t->addSubterm(getTypeModifierSpecific(&(dm->get_typeModifier())));
-  t->addSubterm(getEnum(dm->get_accessModifier().get_modifier(), 
-			re.access_modifiers));
-  t->addSubterm(getEnum(dm->get_storageModifier().get_modifier(),
-			re.storage_modifiers));
-  return t;
-	
+  return new PrologCompTerm
+    ("declaration_modifier", 4,
+     getBitVector(dm->get_modifierVector(), re.declaration_modifiers),
+     getTypeModifierSpecific(&(dm->get_typeModifier())),
+     getEnum(dm->get_accessModifier().get_modifier(), re.access_modifiers),
+     getEnum(dm->get_storageModifier().get_modifier(),re.storage_modifiers));
 }
 
 /**
@@ -1197,11 +1148,10 @@ RoseToTerm::getFunctionRefExpSpecific(SgFunctionRefExp* r) {
   SgType* tpe = s->get_type();
   ROSE_ASSERT(tpe != NULL);
   /*create Prolog Term*/
-  PrologCompTerm* t = new PrologCompTerm("function_ref_exp_annotation");
-  ROSE_ASSERT(t != NULL);
-  t->addSubterm(new PrologAtom(s->get_name().getString()));
-  t->addSubterm(getTypeSpecific(tpe));
-  return t;
+  return new PrologCompTerm("function_ref_exp_annotation", 3,
+			    new PrologAtom(s->get_name().getString()),
+			    getTypeSpecific(tpe),
+			    PPI(r));
 	
 }
 /**
@@ -1215,23 +1165,17 @@ RoseToTerm::getFunctionRefExpSpecific(SgFunctionRefExp* r) {
 PrologCompTerm* 
 RoseToTerm::getMemberFunctionRefExpSpecific(SgMemberFunctionRefExp* r) {
   ROSE_ASSERT(r != NULL);
-  PrologCompTerm* t = new PrologCompTerm("member_function_ref_exp_annotation");
-  ROSE_ASSERT(t != NULL);
   /* get member function symbol information*/
   SgMemberFunctionSymbol* s = r->get_symbol();
   ROSE_ASSERT(s != NULL);
-  t->addSubterm(getMemberFunctionSymbolSpecific(s));
-  // virtual call?
-  t->addSubterm(new PrologInt(r->get_virtual_call()));
-  // type
-  SgType* tpe = s->get_type();
-  ROSE_ASSERT(tpe != NULL);
-  t->addSubterm(getTypeSpecific(tpe));
-  // need qualifier?
-  t->addSubterm(new PrologInt(r->get_need_qualifier()));
-  /*create Prolog Term*/
-  return t;
-	
+
+  return new PrologCompTerm
+    ("member_function_ref_exp_annotation", 5,
+     getMemberFunctionSymbolSpecific(s),
+     new PrologInt(r->get_virtual_call()), // virtual call?
+     getTypeSpecific(s->get_type()),   // type
+     new PrologInt(r->get_need_qualifier()),   // need qualifier?
+     PPI(r));
 }
 
 /**
@@ -1243,10 +1187,9 @@ PrologCompTerm*
 RoseToTerm::getFunctionCallExpSpecific(SgFunctionCallExp* c) {
   ROSE_ASSERT(c != NULL);
   /* create Prolog Term*/
-  PrologCompTerm* t = new PrologCompTerm("function_call_exp_annotation");
-  ROSE_ASSERT(t != NULL);
-  t->addSubterm(getTypeSpecific(c->get_type()));
-  return t;
+  return new PrologCompTerm("function_call_exp_annotation", 2,
+			    getTypeSpecific(c->get_type()),
+			    PPI(c));
 }
 
 
@@ -1261,18 +1204,19 @@ RoseToTerm::getFunctionCallExpSpecific(SgFunctionCallExp* c) {
 
 PrologCompTerm* 
 RoseToTerm::getMemberFunctionDeclarationSpecific(SgMemberFunctionDeclaration* decl) {
-  /* create term and append type and name */
-  PrologCompTerm* t = new PrologCompTerm("member_function_declaration_annotation");
-  t->addSubterm(getTypeSpecific(decl->get_type()));
-  /* add the nodes name*/
-  t->addSubterm(new PrologAtom(decl->get_name().getString()));
   /* add scope */
   SgClassDefinition* def = decl->get_class_scope();
-  /* we add the complete class scope name here */
-  t->addSubterm(getClassScopeName(def));
-  /* add declaration modifier specific*/
-  t->addSubterm(getDeclarationModifierSpecific(&(decl->get_declarationModifier())));	
-  return t;
+
+  /* create term and append type and name */
+  return new PrologCompTerm
+    ("member_function_declaration_annotation", 5,
+     getTypeSpecific(decl->get_type()),
+     new PrologAtom(decl->get_name().getString()), /* add the node's name*/
+     /* we add the complete class scope name here */
+     getClassScopeName(def),
+     /* add declaration modifier specific*/
+     getDeclarationModifierSpecific(&(decl->get_declarationModifier())),
+     PPI(decl));
 }
 
 /**
@@ -1289,11 +1233,10 @@ RoseToTerm::getClassScopeName(SgClassDefinition* def) {
   ROSE_ASSERT(decl != NULL);
   string qname = decl->get_qualified_name().getString();
   /* create a PrologCompTerm*/
-  PrologCompTerm* t = new PrologCompTerm("class_scope");
-  ROSE_ASSERT(t != NULL);
-  t->addSubterm(new PrologAtom(qname));
-  t->addSubterm(getEnum(decl->get_class_type(), re.class_types));
-  return t;
+  return new PrologCompTerm("class_scope", 3,
+			    new PrologAtom(qname),
+			    getEnum(decl->get_class_type(), re.class_types),
+			    PPI(def));
 }
 
 /**
@@ -1310,12 +1253,13 @@ RoseToTerm::getNamespaceScopeName(SgNamespaceDefinitionStatement* def) {
   SgNamespaceDeclarationStatement* decl = def->get_namespaceDeclaration();
   ROSE_ASSERT(decl != NULL);
   /* create annotation term*/
-  PrologCompTerm* t = new PrologCompTerm("namespace_scope");
-  /* add qualified name*/
-  t->addSubterm(new PrologAtom(decl->get_qualified_name().getString()));
-  /* add unnamed */
-  t->addSubterm(new PrologInt((int)decl->get_isUnnamedNamespace()));
-  return t;
+  return new PrologCompTerm
+    ("namespace_scope", 3,
+     /* add qualified name*/
+     new PrologAtom(decl->get_qualified_name().getString()),
+     /* add unnamed */
+     new PrologInt((int)decl->get_isUnnamedNamespace()),
+     PPI(def));
 }
 
 
@@ -1327,7 +1271,6 @@ RoseToTerm::getNamespaceScopeName(SgNamespaceDefinitionStatement* def) {
  */
 PrologCompTerm* 
 RoseToTerm::getMemberFunctionSymbolSpecific(SgMemberFunctionSymbol* sym) {
-  PrologCompTerm* t = new PrologCompTerm("member_function_symbol_annotation");
   SgMemberFunctionDeclaration* orig_decl = sym->get_declaration();
   ROSE_ASSERT(orig_decl != NULL);
   /* save wether original node had declaration*/
@@ -1348,11 +1291,15 @@ RoseToTerm::getMemberFunctionSymbolSpecific(SgMemberFunctionSymbol* sym) {
   // causes problems within the nested traversal. Therefore: Copy the parent
   // pointer manually. (It took me two days to find this bug, BTW.)
   cop_decl->set_parent(orig_decl->get_parent());
-  t->addSubterm(traverseSingleNode(cop_decl));
   /* add scope*/
   SgClassDefinition* cdef = orig_decl->get_class_scope();
   ROSE_ASSERT(cdef != NULL);
-  t->addSubterm(getClassScopeName(cdef));
+  
+  PrologCompTerm* t = new PrologCompTerm
+    ("member_function_symbol_annotation", 3, 
+     traverseSingleNode(cop_decl),
+     getClassScopeName(cdef));
+
   delete cop_decl;
   return t;
 }
@@ -1365,22 +1312,22 @@ RoseToTerm::getMemberFunctionSymbolSpecific(SgMemberFunctionSymbol* sym) {
  */
 PrologCompTerm* 
 RoseToTerm::getSizeOfOpSpecific(SgSizeOfOp* o) {
+  PrologTerm* e1, *e2;
   ROSE_ASSERT(o != NULL);
-  PrologCompTerm* t = new PrologCompTerm("size_of_op_annotation");
   /* create type info if types are present*/
   SgType* otype = o->get_operand_type();
   if (otype != NULL) {
-    t->addSubterm(getTypeSpecific(otype));
+    e1 = getTypeSpecific(otype);
   } else {
-    t->addSubterm(new PrologAtom("null"));
+    e1 = new PrologAtom("null");
   }
   SgType* etype = o->get_type();
   if (etype != NULL) {
-    t->addSubterm(getTypeSpecific(etype));
+    e2 = getTypeSpecific(etype);
   } else {
-    t->addSubterm(new PrologAtom("null"));
+    e2 = new PrologAtom("null");
   }
-  return t;
+  return new PrologCompTerm("size_of_op_annotation", 3, e1, e2, PPI(o));
 }
 
 
@@ -1394,17 +1341,18 @@ RoseToTerm::getSizeOfOpSpecific(SgSizeOfOp* o) {
 PrologCompTerm* 
 RoseToTerm::getTypedefDeclarationSpecific(SgTypedefDeclaration* d) {
   ROSE_ASSERT(d != NULL);
-  /*create annotation term*/
-  PrologCompTerm* t = new PrologCompTerm("typedef_annotation");
   /*get name*/
   // FIXME :: t->addSubterm(new PrologAtom(d->get_qualified_name().getString()));
-  t->addSubterm(new PrologAtom(d->get_name().getString()));
-  /*get base type*/
-  t->addSubterm(getTypeSpecific(d->get_base_type()));
-  /* the base type declaration is no longer in the typedef annotation; it is
-   * now a child of the typedef declaration itself */
-  return t;
-	
+
+  return new PrologCompTerm
+    ("typedef_annotation", 3,
+     new PrologAtom(d->get_name().getString()),
+     /*get base type*/
+     getTypeSpecific(d->get_base_type()),
+     /* the base type declaration is no longer in the typedef
+      * annotation; it is now a child of the typedef declaration
+      * itself */
+     PPI(d));	
 }
 
 
@@ -1434,12 +1382,12 @@ RoseToTerm::getTypePtrListSpecific(SgTypePtrList& tl) {
  */
 PrologCompTerm* 
 RoseToTerm::getPragmaSpecific(SgPragma* n) {
-  PrologCompTerm* t = new PrologCompTerm("pragma_annotation");
   // Adrian 2007-11-27:
   // This is to work around a bug in ROSE?/EDG? that inserts whitespaces
   // Hopefully I can remove it in a later revision
   string s = n->get_pragma();
-  s.erase(remove_if(s.begin(), s.end(), bind1st(equal_to<char>(), ' ')), s.end());
-  t->addSubterm(new PrologAtom(s));
-  return t;
+  s.erase(remove_if( s.begin(), s.end(), 
+		     bind1st(equal_to<char>(), ' ')), 
+	  s.end());
+  return new PrologCompTerm("pragma_annotation", 1, new PrologAtom(s));
 }

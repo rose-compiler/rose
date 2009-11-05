@@ -86,10 +86,6 @@ private:
 
   PrologCompTerm* getPragmaSpecific(SgPragma*);
 		
-  static char toLower(const char);
-  static bool isUpper(const char);
-		
-	       	
 };
 
 #endif
