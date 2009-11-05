@@ -59,7 +59,17 @@ publicly.
 #include <stdlib.h>
 
 #include "ETrt.h"
+#ifdef ET_PAPI
+#define C99
+#include "papi.h"
+#else
 #include "cycle.h"
+#endif
+
+#if 0
+/* Less memory/cache overhead when this mode enabled */
+#define POST_PROCESS_SEQ_TO_LOOP
+#endif
 
 /****************/
 /*    Macros    */
@@ -88,6 +98,10 @@ struct ET_LocInfo
 /*    Loops    */
 /***************/
 
+#ifdef ET_PAPI
+static int ET_EventSet = PAPI_NULL ;
+#endif
+
 /* for each loop, keep a pointer to __FILE__ and __LINE__ info */
 /* This information should be user selectable, with respect to */
 /* input source or output source */
@@ -97,7 +111,9 @@ struct ET_CallEdge
 {
    ET_Idx_t seqId ;
    ET_Idx_t parentSeqId ;
+#ifndef POST_PROCESS_SEQ_TO_LOOP
    int level ;
+#endif
 } ;
 
 /* Keep a mapping from loop number to loop sequence ID(s) */
@@ -112,21 +128,22 @@ static struct ET_SeqNode
 {
    struct ET_CallEdge edge ;
    ET_Idx_t next  ;
-} ET_SeqIdOverlow[ET_MAX_LOOP_SEQ_OVERFLOW] ;
+} ET_SeqIdOverflow[ET_MAX_LOOP_SEQ_OVERFLOW] ;
 
 /* Holds a sequence number cursor for each loop level */
 /* Need to be careful here, because the code may */
 /* contain recursion. */
 static int ET_loopLevel ;
 static ET_Idx_t ET_loopStack[ET_MAX_LOOP_DEPTH] ;
+#ifdef ET_PAPI
+static long_long ET_loopTime[ET_MAX_LOOP_DEPTH] ;
+#else
 static ticks ET_loopTime[ET_MAX_LOOP_DEPTH] ;
+#endif
 
+#ifndef POST_PROCESS_SEQ_TO_LOOP
 /* this is purely for convenience */
 static ET_Idx_t ET_seqToLoop[ET_MAX_SEQ_LOOP_MAP] ;
-
-#if 1
-#else
-#define POST_PROCESS_SEQ_TO_LOOP
 #endif
 
 /****************/
@@ -134,7 +151,12 @@ static ET_Idx_t ET_seqToLoop[ET_MAX_SEQ_LOOP_MAP] ;
 /****************/
 
 /* Accumulate information for loop Sequence IDs */
+#ifdef ET_PAPI
+static long_long ET_loopStat[ET_MAX_LOOP_SEQ_OVERFLOW] ;
+#else
 static double ET_loopStat[ET_MAX_LOOP_SEQ_OVERFLOW] ;
+#endif
+static int    ET_loopIter[ET_MAX_LOOP_SEQ_OVERFLOW] ;
 
 /***************/
 /*   Segments  */
@@ -183,11 +205,17 @@ static struct ET_SegPairNode
 
 /* trace currently active segment */
 static ET_Idx_t ET_currStartSegSeqId ;
+#ifdef ET_PAPI
+static long_long ET_startSegCounter ;
+#else
 static ticks ET_startSegCounter ;
+#endif
 
+#ifndef POST_PROCESS_SEQ_TO_LOOP
 /* this is purely for convenience */
 static ET_Idx_t ET_startSeqToId[ET_MAX_SEQ_LOOP_MAP] ;
 static ET_Idx_t ET_stopSeqToId[ET_MAX_SEQ_LOOP_MAP] ;
+#endif
 
 struct PairTrack
 {
@@ -202,7 +230,11 @@ static struct PairTrack ET_pairToSeq[ET_MAX_SEGMENTS] ;
 /*******************/
 
 /* Accumulate information for Segment Pair Ids */
+#if ET_PAPI
+static long_long ET_segStat[ET_MAX_SEGMENTS] ;
+#else
 static double ET_segStat[ET_MAX_SEGMENTS] ;
+#endif
 
 /*************************/
 /*    Static Functions   */
@@ -230,9 +262,14 @@ static ET_Idx_t ET_GetNextPairId()
    return ++ET_pairId ;
 }
 
+#ifndef POST_PROCESS_SEQ_TO_LOOP
 static ET_Idx_t RegisterSeg(struct ET_SegId *baseSegId, ET_Idx_t segId,
                             ET_Idx_t loopContext, ET_Idx_t (*seqFunc)(),
-                            ET_Idx_t *ET_seqToId )
+                            ET_Idx_t *ET_seqToId)
+#else
+static ET_Idx_t RegisterSeg(struct ET_SegId *baseSegId, ET_Idx_t segId,
+                            ET_Idx_t loopContext, ET_Idx_t (*seqFunc)() )
+#endif
 {
    ET_Idx_t segSeqId ;
 
@@ -448,13 +485,13 @@ static struct ET_CallEdge *ET_findSeqNode(ET_Idx_t loopId, ET_Idx_t seqId)
       ET_Idx_t cursor = -ET_loopSeqId[loopId].seqId ;
       while(cursor != 0)
       {
-         if (ET_SeqIdOverlow[cursor].edge.seqId == seqId)
+         if (ET_SeqIdOverflow[cursor].edge.seqId == seqId)
          {
-            retVal = &ET_SeqIdOverlow[cursor].edge ;
+            retVal = &ET_SeqIdOverflow[cursor].edge ;
             break ;
          }
 
-         cursor = ET_SeqIdOverlow[cursor].next ;
+         cursor = ET_SeqIdOverflow[cursor].next ;
       }
    }
    return retVal ;
@@ -514,25 +551,50 @@ ET_Idx_t ET_RegisterStopSeg(const char *fileName,
 
 void ET_StartSeg(ET_Idx_t segId)
 {
+#ifndef POST_PROCESS_SEQ_TO_LOOP
    ET_currStartSegSeqId = RegisterSeg(ET_startSegId, segId,
                                       ET_loopStack[ET_loopLevel],
                                       ET_GetNextStartSegId,
                                       ET_startSeqToId ) ;
+#else
+   ET_currStartSegSeqId = RegisterSeg(ET_startSegId, segId,
+                                      ET_loopStack[ET_loopLevel],
+                                      ET_GetNextStartSegId) ;
+#endif
+#ifdef ET_PAPI
+   PAPI_read(ET_EventSet, &ET_startSegCounter) ;
+#else
    ET_startSegCounter = getticks() ;
+#endif
 
    return ;
 }
 
 void ET_StopSeg(ET_Idx_t segId)
 {
+#ifdef ET_PAPI
+   long_long stopTime ;
+   PAPI_read(ET_EventSet, &stopTime) ;
+#else
    ticks stopTime = getticks() ;
+#endif
+#ifndef POST_PROCESS_SEQ_TO_LOOP
    ET_Idx_t stopSegSeqId = RegisterSeg(ET_stopSegId, segId,
                                        ET_loopStack[ET_loopLevel],
                                        ET_GetNextStopSegId,
                                        ET_stopSeqToId ) ;
+#else
+   ET_Idx_t stopSegSeqId = RegisterSeg(ET_stopSegId, segId,
+                                       ET_loopStack[ET_loopLevel],
+                                       ET_GetNextStopSegId) ;
+#endif
    ET_Idx_t pairId = RegisterPair(ET_currStartSegSeqId, stopSegSeqId) ;
 
+#ifdef ET_PAPI
+   ET_segStat[pairId] += stopTime - ET_startSegCounter ;
+#else
    ET_segStat[pairId] += elapsed(stopTime, ET_startSegCounter) ;
+#endif
 
    return ;
 }
@@ -589,11 +651,12 @@ void ET_PushLoopSeqId(ET_Idx_t loopId)
          ET_Idx_t cursor = ET_freeHead ;
          ++ET_freeHead ; /* advance to next empty entry */
 
-         ET_SeqIdOverlow[cursor].edge.seqId       = ET_loopSeqId[loopId].seqId ;
-         ET_SeqIdOverlow[cursor].edge.parentSeqId = ET_loopSeqId[loopId].parentSeqId ;
-         ET_SeqIdOverlow[cursor].edge.level       = ET_loopSeqId[loopId].level ;
-         ET_SeqIdOverlow[cursor].next             = ET_freeHead ;
-
+         ET_SeqIdOverflow[cursor].edge.seqId       = ET_loopSeqId[loopId].seqId ;
+         ET_SeqIdOverflow[cursor].edge.parentSeqId = ET_loopSeqId[loopId].parentSeqId ;
+         ET_SeqIdOverflow[cursor].next             = ET_freeHead ;
+#ifndef POST_PROCESS_SEQ_TO_LOOP
+         ET_SeqIdOverflow[cursor].edge.level       = ET_loopSeqId[loopId].level ;
+#endif
          ET_loopSeqId[loopId].seqId       = -cursor ;
          ET_loopSeqId[loopId].parentSeqId = -32768 ; /* debugging sentinel */
 
@@ -601,11 +664,11 @@ void ET_PushLoopSeqId(ET_Idx_t loopId)
          ++ET_freeHead ;
 
          seqId = ET_GetNextSeqId() ;
-         ET_SeqIdOverlow[cursor].edge.seqId       = seqId ;
-         ET_SeqIdOverlow[cursor].edge.parentSeqId = parentSeqId ;
-         ET_SeqIdOverlow[cursor].edge.level       = ET_loopLevel ;
-         ET_SeqIdOverlow[cursor].next             = 0 ; /* end of chain */
+         ET_SeqIdOverflow[cursor].edge.seqId       = seqId ;
+         ET_SeqIdOverflow[cursor].edge.parentSeqId = parentSeqId ;
+         ET_SeqIdOverflow[cursor].next             = 0 ; /* end of chain */
 #ifndef POST_PROCESS_SEQ_TO_LOOP
+         ET_SeqIdOverflow[cursor].edge.level       = ET_loopLevel ;
          /* This adds a performance hit */
          ET_seqToLoop[seqId] = loopId ;
 #endif
@@ -617,8 +680,8 @@ void ET_PushLoopSeqId(ET_Idx_t loopId)
       seqId = ET_GetNextSeqId() ;
       ET_loopSeqId[loopId].seqId       = seqId ;
       ET_loopSeqId[loopId].parentSeqId = parentSeqId ;
-      ET_loopSeqId[loopId].level       = ET_loopLevel ;
 #ifndef POST_PROCESS_SEQ_TO_LOOP
+      ET_loopSeqId[loopId].level       = ET_loopLevel ;
       /* This adds a performance hit */
       ET_seqToLoop[seqId] = loopId ;
 #endif
@@ -630,12 +693,12 @@ void ET_PushLoopSeqId(ET_Idx_t loopId)
       ET_Idx_t cursor ;
       ET_Idx_t lastCursor ;
       for (cursor = -ET_loopSeqId[loopId].seqId ; cursor != 0;
-           cursor = ET_SeqIdOverlow[cursor].next)
+           cursor = ET_SeqIdOverflow[cursor].next)
       {
          lastCursor = cursor ;
-         if (ET_SeqIdOverlow[cursor].edge.parentSeqId == parentSeqId)
+         if (ET_SeqIdOverflow[cursor].edge.parentSeqId == parentSeqId)
          {
-            seqId = ET_SeqIdOverlow[cursor].edge.seqId ;
+            seqId = ET_SeqIdOverflow[cursor].edge.seqId ;
             break ;
          }
       }
@@ -647,14 +710,14 @@ void ET_PushLoopSeqId(ET_Idx_t loopId)
          cursor = ET_freeHead ;
          ++ET_freeHead ;
 
-         ET_SeqIdOverlow[lastCursor].next = cursor ;
+         ET_SeqIdOverflow[lastCursor].next = cursor ;
 
          seqId = ET_GetNextSeqId() ;
-         ET_SeqIdOverlow[cursor].edge.seqId       = seqId ;
-         ET_SeqIdOverlow[cursor].edge.parentSeqId = parentSeqId ;
-         ET_SeqIdOverlow[cursor].edge.level       = ET_loopLevel ;
-         ET_SeqIdOverlow[cursor].next             = 0 ; /* end of chain */
+         ET_SeqIdOverflow[cursor].edge.seqId       = seqId ;
+         ET_SeqIdOverflow[cursor].edge.parentSeqId = parentSeqId ;
+         ET_SeqIdOverflow[cursor].next             = 0 ; /* end of chain */
 #ifndef POST_PROCESS_SEQ_TO_LOOP
+         ET_SeqIdOverflow[cursor].edge.level       = ET_loopLevel ;
          /* This adds a performance hit */
          ET_seqToLoop[seqId] = loopId ;
 #endif
@@ -666,7 +729,11 @@ void ET_PushLoopSeqId(ET_Idx_t loopId)
    /***************************/
    ++ET_loopLevel ;
    ET_loopStack[ET_loopLevel] = seqId ;
+#ifdef ET_PAPI
+   PAPI_read(ET_EventSet, &ET_loopTime[ET_loopLevel]) ;
+#else
    ET_loopTime[ET_loopLevel]  = getticks() ;
+#endif
 
 #ifdef ET_DEBUG
    printf("Entering Loop %d, Seq %d\n", (int)loopId, (int)seqId) ;
@@ -675,13 +742,18 @@ void ET_PushLoopSeqId(ET_Idx_t loopId)
    return ;
 }
 
-#ifdef ET_DEBUG
-void ET_PopLoopSeqId(int loopId)
-#else
-void ET_PopLoopSeqId()
-#endif
+void ET_PopLoopSeqId(int iterations)
 {
-#ifdef ET_DEBUG
+#ifdef ET_PAPI
+   long_long stopTime ;
+   PAPI_read(ET_EventSet, &stopTime) ;
+#else
+   ticks stopTime = getticks() ;
+#endif
+   ET_Idx_t idx ;
+#if 0
+   This code needs TLC since ET_PopLoopSeqId(int loopId) is no longer the API.
+
    /* loopId is not really needed... */
    /* it just allows for a check that loops are properly nested */
    int err = 0 ;
@@ -701,9 +773,9 @@ void ET_PopLoopSeqId()
    {
       ET_Idx_t cursor ;
       for (cursor = -ET_loopSeqId[loopId].seqId; cursor != 0;
-           cursor = ET_SeqIdOverlow[cursor].next)
+           cursor = ET_SeqIdOverflow[cursor].next)
       {
-         if(ET_SeqIdOverlow[cursor].edge.seqId == ET_loopStack[ET_loopLevel])
+         if(ET_SeqIdOverflow[cursor].edge.seqId == ET_loopStack[ET_loopLevel])
             break ;
       }
       if (cursor == 0)
@@ -712,7 +784,7 @@ void ET_PopLoopSeqId()
       }
       else
       {
-         seqId = ET_SeqIdOverlow[cursor].edge.seqId ;
+         seqId = ET_SeqIdOverflow[cursor].edge.seqId ;
       }
    }
    if (err)
@@ -722,8 +794,14 @@ void ET_PopLoopSeqId()
    }
    printf("Exiting Loop %d, Seq %d\n", (int)loopId, (int)seqId) ;
 #endif
-   ET_loopStat[ET_loopStack[ET_loopLevel]] +=
-      elapsed(getticks(),ET_loopTime[ET_loopLevel]) ;
+   idx = ET_loopStack[ET_loopLevel] ;
+#ifdef ET_PAPI
+  ET_loopStat[idx] += stopTime - ET_loopTime[ET_loopLevel] ;
+#else
+   ET_loopStat[idx] +=
+      elapsed(stopTime,ET_loopTime[ET_loopLevel]) ;
+#endif
+   ET_loopIter[idx] += iterations ;
    --ET_loopLevel ;
 }
 
@@ -731,25 +809,259 @@ void ET_PopLoopSeqId()
 void ET_PopLoopSeqIds(int levels)
 {
    int i ;
+#ifdef ET_RECORD_STATS
+#ifdef ET_PAPI
+   long_long stop ;
+   PAPI_read(ET_EventSet, &stop) ;
+#else
    ticks stop = getticks() ;
+#endif
+#endif
 
    for (i=0; i<levels; ++i)
    {
+#ifdef ET_RECORD_STATS
+      /* Currently, don't record times or iterations for aborted loops. */
+
+#ifdef ET_PAPI
+      ET_loopStat[ET_loopStack[ET_loopLevel]] +=
+         stop - ET_loopTime[ET_loopLevel] ;
+#else
       ET_loopStat[ET_loopStack[ET_loopLevel]] +=
          elapsed(stop,ET_loopTime[ET_loopLevel]) ;
+#endif
+#endif
       --ET_loopLevel ;
    }
 }
 
+/*************************************************/
+/*                Post-processing                */
+/*************************************************/
+
+#define NIL 0
+
+#ifdef POST_PROCESS_SEQ_TO_LOOP
+#define ET_TypeNone     0
+#define ET_TypeLoop     1
+#define ET_TypeStartSeg 2
+#define ET_TypeStopSeg  3
+
+struct ET_TreeNode
+{
+   ET_Idx_t seqId ;  /* loop or (start)segment sequence Id */
+   ET_Idx_t id ;     /* loop or (start)segment Id */
+   struct ET_TreeNode **child ;
+   int numChildren ;
+   int type ;
+} ;
+
+struct ET_HashChain {
+   struct ET_TreeNode  *entry ;
+   struct ET_HashChain *next ;
+} ;
+
+struct ET_HashTable {
+   struct ET_HashChain **chainHead ;
+   int                   size ;
+} ;
+
+static struct ET_HashTable *ET_HashCreate(int tableSize)
+{
+   struct ET_HashTable *retVal =
+      (struct ET_HashTable *) malloc(sizeof(struct ET_HashTable)) ;
+
+   retVal->size = tableSize ;
+   retVal->chainHead = 
+      (struct ET_HashChain **) calloc(retVal->size, sizeof(struct ET_HashChain *)) ;
+
+   return retVal ;
+}
+
+static unsigned ET_HashFunction(int seqId, int tableSize)
+{
+   return (seqId % tableSize) ;
+}
+
+static void ET_HashInsert(struct ET_HashTable *hashTable, struct ET_TreeNode *item)
+{
+   unsigned hashVal = ET_HashFunction(item->seqId, hashTable->size) ;
+
+   struct ET_HashChain *node = (struct ET_HashChain *) malloc(sizeof(struct ET_HashChain)) ;
+   node->entry = item ;
+   node->next = NIL ;
+
+   if (hashTable->chainHead[hashVal] == NIL) {
+      hashTable->chainHead[hashVal] = node ;
+   }
+   else {
+      /* Add new entries to the end of the list.  this
+         eliminates some annoying restart diffs that occurred before
+         when new nodesets were added to the beginning of the list. */
+
+      struct ET_HashChain *currNode ;
+      currNode = hashTable->chainHead[hashVal] ;
+      while ((item->seqId != currNode->entry->seqId) && (currNode->next != NIL)) {
+         currNode = currNode->next ;
+      }
+      if (item->seqId == currNode->entry->seqId) {
+         printf("ET_HashInsert: Node inserted twice\n") ;
+         exit(-1) ;
+      }
+      else {
+         currNode->next = node ;
+      }
+   }
+
+   return ;
+}
+
+static struct ET_TreeNode *ET_HashFind(struct ET_HashTable *hashTable, ET_Idx_t seqId)
+{
+   struct ET_TreeNode *retVal = NIL ;
+   unsigned hashVal = ET_HashFunction(seqId, hashTable->size) ;
+   struct ET_HashChain *currNode = hashTable->chainHead[hashVal] ;
+
+   while ((currNode != NIL) && (seqId != currNode->entry->seqId)) {
+      currNode = currNode->next ;
+   }
+   if (currNode != NIL) {
+      retVal = currNode->entry ;
+   }
+
+   return retVal ;
+}
+
+static struct ET_TreeNode *ET_TreeNodeCreate(int type, ET_Idx_t seqId, ET_Idx_t id)
+{
+   struct ET_TreeNode *retVal = (struct ET_TreeNode *) malloc(sizeof(struct ET_TreeNode)) ;
+   retVal->type  = type ;
+   retVal->seqId = seqId ;
+   retVal->id    = id ;
+   retVal->numChildren = 0 ;
+   retVal->child = 0 ;
+
+   return retVal ;
+}
+
+static void ET_TreeNodeAddChild(struct ET_TreeNode *parent, struct ET_TreeNode *child)
+{
+   int i ;
+   int j ;
+   for (i=0; i < parent->numChildren; ++i) {
+      /* keep in mind -- loops are processed to completion, then segments are added */
+      if (parent->type == ET_TypeLoop) {
+         if (child->seqId < parent->child[i]->seqId) {
+            break ;
+         }
+      }
+      else /* parent->type == ET_TypeStartSeg */{
+      }
+   }
+   parent->child = (struct ET_TreeNode **)
+      realloc(parent->child, (parent->numChildren+1)*sizeof(struct ET_TreeNode *)) ;
+   for (j=parent->numChildren; j>i; --j) {
+      parent->child[j] = parent->child[j-1] ;
+   }
+   parent->child[i] = child ;
+   ++parent->numChildren ;
+
+   return ;
+}
+
+static void ET_TreeNodeAdd(struct ET_HashTable *hashTable,
+                           struct ET_CallEdge *item, int id, int type)
+{
+   ET_Idx_t seqId       = item->seqId ;
+   ET_Idx_t parentSeqId = item->parentSeqId ;
+   struct ET_TreeNode *node ;
+
+   if ((node = ET_HashFind(hashTable, seqId)) != NIL) {
+      if (node->id == -1) {
+         node->id = id ;
+      }
+      else if (node->id != id) {
+         printf("ET_TreeNodeAdd:  Tree construction error\n") ;
+         exit(-1) ;
+      }
+   }
+   else /* seqId not registered in Hash Table */ {
+      node = ET_TreeNodeCreate(type, seqId, id) ;
+      ET_HashInsert(hashTable, node) ;
+   }
+   if (parentSeqId <= 0) {
+      struct ET_TreeNode *root = ET_HashFind(hashTable, 0) ;
+      ET_TreeNodeAddChild(root, node) ;
+   }
+   else {
+      struct ET_TreeNode *parentNode ;
+      if ((parentNode = ET_HashFind(hashTable, parentSeqId)) == 0) {
+         parentNode = ET_TreeNodeCreate(ET_TypeLoop, parentSeqId, -1) ;
+         ET_HashInsert(hashTable, parentNode) ;
+      }
+      ET_TreeNodeAddChild(parentNode, node) ;
+   }
+}
+
+static struct ET_TreeNode *ET_CreateTree(int numLoops)
+{
+   ET_Idx_t loopId ;
+   int size = numLoops/4 ;
+   struct ET_HashTable *hashTable = ET_HashCreate(size) ;
+   struct ET_TreeNode *root = ET_TreeNodeCreate(ET_TypeLoop, 0, 0) ;
+   ET_HashInsert(hashTable, root) ;
+
+   for (loopId = 1; loopId<=numLoops; ++loopId) {
+      if (ET_loopSeqId[loopId].seqId > 0) {
+         ET_TreeNodeAdd(hashTable, &ET_loopSeqId[loopId], loopId, ET_TypeLoop) ;
+      }
+      else {
+         ET_Idx_t i ;
+         for (i = -ET_loopSeqId[loopId].seqId; i != 0; i=ET_SeqIdOverflow[i].next) {
+            ET_TreeNodeAdd(hashTable, &ET_SeqIdOverflow[i].edge, loopId, ET_TypeLoop) ;
+         }
+      }
+   }
+   return root ;
+}
+
+static void ET_ShowTree(struct ET_TreeNode *tree, int level)
+{
+   int i ;
+   if (level != -1) {
+#ifdef ET_PAPI
+      printf("%*cL %5d%*c%14lld  %10d\n", level+1, ' ',
+#else
+      printf("%*cL %5d%*c%15.1f  %10d\n", level+1, ' ',
+#endif
+             (int)tree->id, 25-(level+1), ' ',
+             ET_loopStat[tree->seqId], ET_loopIter[tree->seqId]) ;
+   }
+
+   for (i=0; i<tree->numChildren; ++i) {
+      ET_ShowTree(tree->child[i], level+1) ;
+   }
+
+   return ;
+}
+
+#endif
+
 void ET_LogStats()
 {
+#ifndef POST_PROCESS_SEQ_TO_LOOP
    int i ;
    int numLoops = ET_GetNextSeqId() ;
    int numPairs = ET_GetNextPairId() ;
    for (i=1; i<numLoops; ++i)
    {
       int loopId = ET_seqToLoop[i] ;
-      printf("%16.2f %s %d %s\n", ET_loopStat[i],
+#ifdef  ET_PAPI
+      printf("%14lld %10d %s %d %s\n",
+#else
+      printf("%16.2f %10d %s %d %s\n",
+#endif
+             ET_loopStat[i], ET_loopIter[i],
              ET_loopLoc[loopId].fileName,
              ET_loopLoc[loopId].line,
              ET_loopLoc[loopId].funcName ) ;
@@ -759,7 +1071,11 @@ void ET_LogStats()
       int segStart = ET_startSeqToId[ET_pairToSeq[i].start] ;
       int segStop  = ET_stopSeqToId[ET_pairToSeq[i].stop] ;
       
+#ifdef  ET_PAPI
+      printf("%14lld\n", ET_segStat[i]) ;
+#else
       printf("%16f\n", ET_segStat[i]) ;
+#endif
       printf("                %s %d %s\n",
              ET_startSegLoc[segStart].fileName,
              ET_startSegLoc[segStart].line,
@@ -769,6 +1085,11 @@ void ET_LogStats()
              ET_stopSegLoc[segStop].line,
              ET_stopSegLoc[segStop].funcName ) ;
    }
+#else
+   /* Do not modify ShowTree to handle this output. */
+   /* That could accidentally lead to a security error. */
+   printf("ET_Logstats() currently unavailable as a post-processing feature.\n") ;
+#endif
 }
 
 void ET_SanityCheck()
@@ -789,11 +1110,49 @@ void ET_Dump()
 {
    int i ;
    int numLoops = ET_GetNextSeqId() ;
+#ifndef POST_PROCESS_SEQ_TO_LOOP
    for (i=1; i<numLoops; ++i)
    {
       int loopId = ET_seqToLoop[i] ;
       struct ET_CallEdge *node = ET_findSeqNode(loopId, i) ;
-      printf("%*cL %5d%*c%15.1f\n", node->level+1, ' ',
-             (int)loopId, 25-(node->level+1), ' ', ET_loopStat[i]) ;
+#ifdef ET_PAPI
+      printf("%*cL %5d%*c%14lld  %10d\n", node->level+1, ' ',
+#else
+      printf("%*cL %5d%*c%15.1f  %10d\n", node->level+1, ' ',
+#endif
+             (int)loopId, 25-(node->level+1), ' ',
+             ET_loopStat[i], ET_loopIter[i]) ;
    }
+#else
+   struct ET_TreeNode *tree = ET_CreateTree(numLoops-1) ;
+   ET_ShowTree(tree, -1) ;
+#endif
 }
+
+void ET_Init()
+{
+#ifdef ET_PAPI
+   int retval ;
+   retval = PAPI_library_init(PAPI_VER_CURRENT);
+   if (retval != PAPI_VER_CURRENT) {
+      printf("Papi not initialized properly\n") ;
+      exit(-1) ;
+   }
+   retval = PAPI_create_eventset(&ET_EventSet);
+   if (retval != PAPI_OK) {
+      printf("Papi event set not created\n") ;
+      exit(-1) ;
+   }
+   retval = PAPI_add_event(ET_EventSet, PAPI_TOT_INS);
+   if (retval != PAPI_OK) {
+      printf("PAPI_TOT_INS not available\n") ;
+      exit(-1) ;
+   }
+   retval = PAPI_start(ET_EventSet);
+   if (retval != PAPI_OK) {
+      printf("Papi count not start counter for PAPI_TOT_INS\n") ;
+      exit(-1) ;
+   }
+#endif
+}
+
