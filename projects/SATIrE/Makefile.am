@@ -4,7 +4,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS= src tools examples
 DIST_SUBDIRS = src tools examples docs
-DISTCHECK_CONFIGURE_FLAGS=--with-rosedir=$(ROSEDIR) --with-boostdir=$(BOOSTDIR) CXX=$(CXX)
+DISTCHECK_CONFIGURE_FLAGS=--with-rosedir=$(ROSEDIR) --with-boostdir=$(BOOSTDIR) --with-boost-compiler-string=$(BOOST_COMPILER_STRING) CXX=$(CXX)
 
 if WITH_PAG
 DISTCHECK_CONFIGURE_FLAGS += --with-pagdir=$(PAGDIR)

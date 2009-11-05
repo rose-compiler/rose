@@ -98,6 +98,7 @@ BOOST_COMPILER_STRING=""
 AC_ARG_WITH(boost_compiler_string,
   [  --with-boost-compiler-string=STR    Boost compiler string (default: "")],
   [BOOST_COMPILER_STRING="$withval"])
+AC_SUBST(BOOST_COMPILER_STRING)
 
 
 # Check for SWI-Prolog (optional)
