@@ -222,8 +222,15 @@ copyWebPagesPanas: make-web-pages
 $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz: make-web-pages
 	tar -zcf $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz ROSE_WebPages
 
-# Simpler rule
+if ROSE_USE_GRAPHVIZ_DOT
+# Simpler rule to build pdf documentation (requires GraphViz's dot program)
 latex-docs: pdf
+else
+# Alternative documentation rule to output error message and exit with error.
+latex-docs:
+	echo "Error: GraphViz's dot program is not available, no latex-based documentation can be built."
+	exit 1
+endif
 
 # simpler target for building manual only
 manual: $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf
