@@ -235,6 +235,8 @@ AC_DEFINE_UNQUOTED([ROSE_BOOST_PATH],"$ac_boost_path",[Location (unquoted) of Bo
 #AC_DEFINE([ROSE_WAVE_PATH],"$ac_boost_path/wave",[Location of Wave specified on configure line.])
 AC_DEFINE_UNQUOTED([ROSE_WAVE_PATH],"$ac_boost_path/wave",[Location (unquoted) of Wave specified on configure line.])
 
+# DQ (11/5/2009): Added test for GraphViz's ``dot'' program
+ROSE_SUPPORT_GRAPHVIZ
 # exit 1
 
 AX_BOOST_THREAD

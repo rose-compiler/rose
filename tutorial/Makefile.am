@@ -326,8 +326,10 @@ testASTGraphGenerator: ASTGraphGenerator
 	./ASTGraphGenerator $(srcdir)/inputCode_2.C
 	@echo "Generate pdf file (default name: test.pdf) from dot file ..."
 	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_2.C.dot inputCode_2.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e inputCode_2.pdf; then exit 1; fi
+endif
 
 testAST_PDF_Generator: AST_PDF_Generator
 	@echo "Generating PDF file ..."
@@ -338,24 +340,30 @@ testWholeASTGraphGenerator_small: wholeASTGraphGenerator
 	./wholeASTGraphGenerator $(srcdir)/inputCode_wholeAST_1.C
 	@echo "Generate pdf file (default name: test.pdf) from dot file ..."
 	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_wholeAST_1_WholeAST.dot inputCode_WholeAST_small.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e inputCode_WholeAST_small.pdf; then exit 1; fi
+endif
 
 testWholeASTGraphGenerator_large: wholeASTGraphGenerator
 	@echo "Generating dot file of whole AST ..."
 	./wholeASTGraphGenerator $(srcdir)/inputCode_wholeAST_2.C
 	@echo "Generate pdf file (default name: test.pdf) from dot file ..."
 	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_wholeAST_2_WholeAST.dot inputCode_WholeAST_large.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e inputCode_WholeAST_large.pdf; then exit 1; fi
+endif
 
 # DQ (9/6/2008): Added test to generate a graph of the binary for the tiny program example (with debugging data).
 testBinaryASTGraphGenerator: wholeASTGraphGenerator
 	gcc -g $(srcdir)/inputCode_binaryAST_1.c -o inputCode_binaryAST_1
 	./wholeASTGraphGenerator inputCode_binaryAST_1
 	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_binaryAST_1_WholeAST.dot inputCode_binaryAST_1_WholeAST.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e inputCode_binaryAST_1_WholeAST.pdf; then exit 1; fi
+endif
 
 testLoopRecognition: loopRecognition
 	./loopRecognition $(srcdir)/inputCode_1.C
@@ -422,21 +430,27 @@ testBuildCFG: buildCFG
 #	$(top_srcdir)/scripts/dotgenLetterPDF controlFlowGraph.dot controlFlowGraph.ps
 #	$(top_srcdir)/scripts/dotgenLetterPDF foo.dot controlFlowGraph.ps
 	$(top_srcdir)/scripts/dotgenLetterPDF main.dot controlFlowGraph.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e controlFlowGraph.pdf; then exit 1; fi
+endif
 
 testBuildCFG_testfile1: buildCFG
 	./buildCFG $(srcdir)/inputCode_ControlFlowGraphAnalysis_testfile1.c
 	@echo "Building postscript file from foo.dot ..."
 	$(top_srcdir)/scripts/dotgenLetterPDF testCFG.dot controlFlowGraph_testfile1.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e controlFlowGraph_testfile1.pdf; then exit 1; fi
+endif
 
 testVirtualCFG: virtualCFG
 	./virtualCFG $(srcdir)/inputCode_ControlFlowGraphAnalysis.C > vcfg.dot || (rm -f vcfg.dot; exit 1)
 	$(top_srcdir)/scripts/dotgenLetterPDF vcfg.dot vcfg.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e vcfg.pdf; then exit 1; fi
+endif
 
 # Both this and the testCallGraphAnalysis rule generate a file called callGraph.ps
 testBuildCG: buildCG
@@ -444,16 +458,20 @@ testBuildCG: buildCG
 	@echo "Building postscript file from DATABASE.dot ..."
 #	$(top_srcdir)/scripts/dotgenLetterPDF controlFlowGraph.dot controlFlowGraph.ps
 	$(top_srcdir)/scripts/dotgenLetterPDF callGraph.dot callGraph.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e callGraph.pdf; then exit 1; fi
+endif
 
 testClassHierarchyGraph: classHierarchyGraph
 	./classHierarchyGraph $(srcdir)/inputCode_ClassHierarchyGraph.C
 	@echo "Building postscript file from DATABASE.dot ..."
 #	$(top_srcdir)/scripts/dotgenLetterPDF controlFlowGraph.dot controlFlowGraph.ps
 	$(top_srcdir)/scripts/dotgenLetterPDF classHier.dot classHierarchyGraph.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e classHierarchyGraph.pdf; then exit 1; fi
+endif
 
 testCodeCoverage: codeCoverage
 	./codeCoverage -c $(srcdir)/inputCode_ExampleCodeCoverage.C
@@ -473,8 +491,10 @@ testCallGraphAnalysis: callGraphAnalysis
 #	$(top_srcdir)/scripts/dotgenLetterPDF callgraph.dot callGraph.ps
 #	$(top_srcdir)/scripts/dotgen callgraph.dot callGraph.ps
 	$(top_srcdir)/scripts/dotgenLetterPDF callGraph.dot callGraph.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e callGraph.pdf; then exit 1; fi
+endif
 
 testTemplateExample1: identityTranslator
 	./identityTranslator -c $(srcdir)/inputCode_templateExample1.C
@@ -540,12 +560,16 @@ testCustomGraphGeneration: customGraphGeneration customGraphGenerationWithFilter
 	./customGraphGeneration
 	@echo "Building postscript file from foo.dot ..."
 	$(top_srcdir)/scripts/dotgenLetterPDF customGraph.dot customGraph.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e customGraph.pdf; then exit 1; fi
+endif
 	./customGraphGenerationWithFiltering
 	$(top_srcdir)/scripts/dotgenLetterPDF customGraphWithFiltering.dot customGraphWithFiltering_test.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e customGraphWithFiltering_test.pdf; then exit 1; fi
+endif
 
 testInlineTransformations: inlineTransformations
 	./inlineTransformations -c $(srcdir)/inputCode_inlineTransformations.C
@@ -575,15 +599,19 @@ testDataFlowGraph: dataFlowGraph
 	./dataFlowGraph -c $(srcdir)/inputCode_dataFlowGraphAnalysis.C
 	@echo "Building postscript file from inputCode_dataFlowGraphAnalysis.C.dot ..."
 	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_dataFlowGraphAnalysis.C.dot inputCode_dataFlowGraphAnalysis.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e inputCode_dataFlowGraphAnalysis.pdf; then exit 1; fi
+endif
 
 testDataFlowGraph_testfile1: dataFlowGraph
 	./dataFlowGraph -c $(srcdir)/inputCode_dataFlowGraphAnalysis_testfile1.C
 	@echo "Building postscript file from inputCode_dataFlowGraphAnalysis.C.dot ..."
 	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_dataFlowGraphAnalysis_testfile1.C.dot inputCode_dataFlowGraphAnalysis_testfile1.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e inputCode_dataFlowGraphAnalysis_testfile1.pdf; then exit 1; fi
+endif
 
 testGraphTraversal: graphTraversal
 	./graphTraversal
@@ -593,18 +621,24 @@ testWholeGraphAST: wholeGraphAST
 	@echo "Building postscript file from wholeGraphAST.dot and wholeGraphASTPool.dot ..."
 #	$(top_srcdir)/scripts/dotgenLetterPDF wholeGraphAST.dot wholeGraphAST.ps
 	$(top_srcdir)/scripts/dotgenLetterPDF wholeGraphAST1.dot wholeGraphAST.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 	if ! test -e wholeGraphAST.pdf; then exit 1; fi
+endif
 #	$(top_srcdir)/scripts/dotgenLetterPDF wholeGraphASTPool.dot wholeGraphASTPool.ps
 	$(top_srcdir)/scripts/dotgenLetterPDF wholeGraphASTPool1.dot wholeGraphASTPool.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e wholeGraphASTPool.pdf; then exit 1; fi
+endif
 
 testCustomGraphGenerationWithColors: customGraphGenerationWithColors
 	./customGraphGenerationWithColors $(srcdir)/inputCode_customGraphGenerationWithColors.C
 	@echo "Building postscript file from customGraphGenerationWithColors.dot and customGraphGenerationWithColors.dot ..."
 	$(top_srcdir)/scripts/dotgenLetterPDF customGraphGenerationWithColors.dot customGraphGenerationWithColors.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e customGraphGenerationWithColors.pdf; then exit 1; fi
+endif
 
 testConstantFoldingTransformation: constantFoldingTransformation
 #	./customGraphGenerationWithColors $(srcdir)/inputCode_constantFoldingTransformation.C
@@ -633,8 +667,10 @@ testGraphGenerationOfSubtree: graphGenerationOfSubtree
 	./graphGenerationOfSubtree $(srcdir)/inputCode_graphGenerationOfSubtree.C
 	@echo "Generate postscript file (default name: test.pdf) from dot file ..."
 	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_graphGenerationOfSubtree.subtree.dot inputCode_2.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e inputCode_2.pdf; then exit 1; fi
+endif
 
 testSwitchWithoutDefault: switchWithoutDefault
 	./switchWithoutDefault -rose:verbose 0 -I$(srcdir) -c $(srcdir)/inputCode_switchWithoutDefault.C
@@ -796,10 +832,11 @@ inputCode_ASTGraphGenerator.pdf: ASTGraphGenerator
 	./ASTGraphGenerator $(ROSE_FLAGS) $(srcdir)/inputCode_ASTGraphGenerator.C
 	@echo "Generate postscript file (default name: test.pdf) from dot file ..."
 	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_ASTGraphGenerator.C.dot inputCode_ASTGraphGenerator.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 #	rm inputCode_ASTGraphGenerator.pdf
 	if ! test -e inputCode_ASTGraphGenerator.pdf; then exit 1; fi
-
+endif
 
 inputCode_AST_PDF_Generator.pdf: AST_PDF_Generator
 	@echo "Generating required documentation for tutorial (inputCode_AST_PDF_Generator.pdf) ..."
@@ -807,24 +844,30 @@ inputCode_AST_PDF_Generator.pdf: AST_PDF_Generator
 	cp $(srcdir)/inputCode_ASTGraphGenerator.C inputCode_AST_PDF_Generator.C
 	./AST_PDF_Generator $(ROSE_FLAGS) inputCode_AST_PDF_Generator.C
 	cp -f inputCode_AST_PDF_Generator.C.pdf inputCode_AST_PDF_Generator.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e inputCode_AST_PDF_Generator.pdf; then exit 1; fi
+endif
 
 inputCode_ASTWholeGraphGenerator_small.pdf: wholeASTGraphGenerator
 	@echo "Generating dot file of whole AST ..."
 	./wholeASTGraphGenerator $(srcdir)/inputCode_wholeAST_1.C
 	@echo "Generate pdf file (default name: test.pdf) from dot file ..."
 	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_wholeAST_1_WholeAST.dot inputCode_ASTWholeGraphGenerator_small.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e inputCode_ASTWholeGraphGenerator_small.pdf; then exit 1; fi
+endif
 
 inputCode_ASTWholeGraphGenerator_large.pdf: wholeASTGraphGenerator
 	@echo "Generating dot file of whole AST ..."
 	./wholeASTGraphGenerator $(srcdir)/inputCode_wholeAST_2.C
 	@echo "Generate pdf file (default name: test.pdf) from dot file ..."
 	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_wholeAST_2_WholeAST.dot inputCode_ASTWholeGraphGenerator_large.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e inputCode_ASTWholeGraphGenerator_large.pdf; then exit 1; fi
+endif
 
 rose_inputCode_IdentityTranslator.C: identityTranslator
 	@echo "Generate executable from compilation of input code (identityTranslator) ..."
@@ -1040,24 +1083,29 @@ controlFlowGraph.pdf: buildCFG
 	./buildCFG $(ROSE_FLAGS) $(srcdir)/inputCode_ControlFlowGraphAnalysis.C
 	@echo "Building postscript file from main.dot ..."
 	$(top_srcdir)/scripts/dotgenLetterPDF main.dot controlFlowGraph.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e controlFlowGraph.pdf; then exit 1; fi
+endif
 
 vcfg.pdf: virtualCFG
 	@echo "Building an example virtual Control Flow Graph (virtualCFG) ..."
 	./virtualCFG $(ROSE_FLAGS) $(srcdir)/inputCode_ControlFlowGraphAnalysis.C > vcfg.dot || (rm -f vcfg.dot; exit 1)
 	$(top_srcdir)/scripts/dotgenLetterPDF vcfg.dot vcfg.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e vcfg.pdf; then exit 1; fi
+endif
 
 defuseAnalysis_pic1.pdf: defuseAnalysis
 	@echo "Building an example DefUse ..."
 	./defuseAnalysis $(ROSE_FLAGS) $(srcdir)/input_defuseAnalysis.C
 	@echo "DefUseAnalysis: Building postscript file from foo.dot ..."
 	$(top_srcdir)/scripts/dotgenLetterPDF dfa.dot defuseAnalysis_pic1.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e defuseAnalysis_pic1.pdf; then exit 1; fi
-
+endif
 
 
 binaryAnalysis_pic1.pdf: binaryAnalysis
@@ -1071,10 +1119,14 @@ binaryAnalysis_pic1.pdf: binaryAnalysis
 	split -42 rose_bin_example.s rose_bin_example.s.
 	@echo "BinaryAnalysis: Building postscript file from cfg.dot & dfg.dot ..."
 	$(top_srcdir)/scripts/dotgenLetterPDF cfg.dot binaryAnalysis_pic1.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 	if ! test -e binaryAnalysis_pic1.pdf; then exit 1; fi
+endif
 	$(top_srcdir)/scripts/dotgenLetterPDF dfg.dot binaryAnalysis_pic2.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e binaryAnalysis_pic2.pdf; then exit 1; fi
+endif
 
 # DQ (8/17/2008): Added example to show how to use traversal on AST for binary executable format.
 binaryAnalysis_pic3.pdf: binaryAnalysis_symbolTable
@@ -1084,10 +1136,14 @@ binaryAnalysis_pic3.pdf: binaryAnalysis_symbolTable
 #	DQ (9/6/2008): We are not ready for these yet, so don't generate them.
 #	@echo "BinaryAnalysis: Building postscript file from AST and whole graph dot files..."
 	$(top_srcdir)/scripts/dotgenLetterPDF bin_example_2_WholeAST.dot binaryAnalysis_pic3.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 	if ! test -e binaryAnalysis_pic3.pdf; then exit 1; fi
+endif
 	$(top_srcdir)/scripts/dotgenLetterPDF bin_example_2.dot binaryAnalysis_pic4.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e binaryAnalysis_pic4.pdf; then exit 1; fi
+endif
 
 # rose_bin_example.s.aa: binaryAnalysis_pic1.pdf
 
@@ -1127,15 +1183,19 @@ callGraph.pdf: callGraphAnalysis buildCG
 #	$(top_srcdir)/scripts/dotgen callgraph.dot callGraph.ps
 #	$(top_srcdir)/scripts/dotgen DATABASE.dot callGraph.ps
 	$(top_srcdir)/scripts/dotgenLetterPDF callGraph.dot callGraph.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e callGraph.pdf; then exit 1; fi
+endif
 
 classHierarchyGraph.pdf: classHierarchyGraph
 	./classHierarchyGraph $(srcdir)/inputCode_ClassHierarchyGraph.C
 	@echo "Building postscript file from classHier.dot ..."
 	$(top_srcdir)/scripts/dotgenLetterPDF classHier.dot classHierarchyGraph.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e classHierarchyGraph.pdf; then exit 1; fi
+endif
 
 rose_inputCode_templateExample1.C: identityTranslator $(srcdir)/inputCode_templateExample1.C
 	@echo "Generate executable from compilation of input code (template example #1) ..."
@@ -1188,19 +1248,25 @@ customGraph.pdf: customGraphGeneration
 	./customGraphGeneration 
 	@echo "Building postscript file from foo.dot ..."
 	$(top_srcdir)/scripts/dotgenLetterPDF customGraph.dot customGraph.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e customGraph.pdf; then exit 1; fi
+endif
 
 customGraphWithFiltering.pdf: customGraphGenerationWithFiltering
 	./customGraphGenerationWithFiltering
 	$(top_srcdir)/scripts/dotgenLetterPDF customGraphWithFiltering.dot customGraphWithFiltering.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 	if ! test -e customGraphWithFiltering.pdf; then exit 1; fi
+endif
 
 graphTraversal.pdf: graphTraversal
 	./graphTraversal
 	$(top_srcdir)/scripts/dotgenLetterPDF graphTraversal.dot graphTraversal.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e graphTraversal.pdf; then exit 1; fi
+endif
 
 # Liao, 2/13/2008 , added this
 rose_inputCode_addStruct.C:addStruct
@@ -1242,8 +1308,10 @@ dataFlowGraph.pdf: dataFlowGraph
 #	$(top_srcdir)/scripts/dotgenLetterPDF callgraph.dot dataFlowGraph.ps
 #	$(top_srcdir)/scripts/dotgen inputCode_dataFlowGraphAnalysis.C.dot dataFlowGraph.ps
 	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_dataFlowGraphAnalysis.C.dot dataFlowGraph.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e dataFlowGraph.pdf; then exit 1; fi
+endif
 
 traversalShortCircuit.out: traversalShortCircuit
 	./traversalShortCircuit $(ROSE_FLAGS) -c $(srcdir)/inputCode_traversalShortCircuit.C > traversalShortCircuit.out
@@ -1253,8 +1321,10 @@ wholeGraphAST.pdf: wholeGraphAST
 	@echo "Building postscript file from wholeGraphAST.dot and wholeGraphASTPool.dot ..."
 	$(top_srcdir)/scripts/dotgenLetterPDF wholeGraphAST1.dot wholeGraphAST.pdf
 	$(top_srcdir)/scripts/dotgenLetterPDF wholeGraphASTPool1.dot wholeGraphASTPool.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e wholeGraphAST.pdf; then exit 1; fi
+endif
 
 rose_inputCode_seedBugsExample_arrayIndexing.C: seedBugsExample_arrayIndexing
 	./seedBugsExample_arrayIndexing $(ROSE_FLAGS) -c $(srcdir)/inputCode_seedBugsExample_arrayIndexing.C
@@ -1265,8 +1335,10 @@ rose_inputCode_VolatileTypeModifier.C: volatileTypeModifier
 inputCode_dwarfAnalysis.pdf: dwarfAnalysis inputCode_dwarfAnalysis
 	./dwarfAnalysis -rose:visualize_dwarf_only -rose:read_executable_file_format_only inputCode_dwarfAnalysis
 	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_dwarfAnalysis.dot inputCode_dwarfAnalysis.pdf
+if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e inputCode_dwarfAnalysis.pdf; then exit 1; fi
+endif
 
 inputCode_dwarfAnalysis.out: dwarfInstructionAddressToSourceLineAnalysis inputCode_dwarfAnalysis
 	./dwarfInstructionAddressToSourceLineAnalysis inputCode_dwarfAnalysis > inputCode_dwarfAnalysis.out
