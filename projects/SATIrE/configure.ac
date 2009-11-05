@@ -94,9 +94,9 @@ AC_ARG_WITH(boost_libdir,
 AC_SUBST(BOOST_LIB_DIR)
 
 # additional Boost stuff: it encodes the compiler version into its lib names
-BOOST_COMPILER_STRING="gcc42"
+BOOST_COMPILER_STRING=""
 AC_ARG_WITH(boost_compiler_string,
-  [  --with-boost-compiler-string=STR    Boost compiler string (default: gcc42)],
+  [  --with-boost-compiler-string=STR    Boost compiler string (default: "")],
   [BOOST_COMPILER_STRING="$withval"])
 
 
@@ -211,9 +211,9 @@ AS_IF([test "x$with_pag" != xno],
       [AC_MSG_RESULT([skipping check for PAG])])
 AM_CONDITIONAL(WITH_PAG, [test "x$with_pag" = xyes])
 
-AC_CHECK_FILE(${BOOST_LIB_DIR}/libboost_filesystem-${BOOST_COMPILER_STRING}-mt.so,
+AC_CHECK_FILE(${BOOST_LIB_DIR}/libboost_filesystem${BOOST_COMPILER_STRING}-mt.so,
     AC_MSG_RESULT([found Boost (hopefully)]),
-    [echo "Could not find 'libboost_filesystem-${BOOST_COMPILER_STRING}-mt.so' in '${BOOST_LIB_DIR}'."
+    [echo "Could not find 'libboost_filesystem${BOOST_COMPILER_STRING}-mt.so' in '${BOOST_LIB_DIR}'."
      echo "Please consider using one of the --with-boost* options."
      exit -1 ])
 
