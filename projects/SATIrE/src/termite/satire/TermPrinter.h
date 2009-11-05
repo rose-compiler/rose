@@ -413,7 +413,24 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
             if (SgVariableSymbol *varsym = isSgVariableSymbol(*s)) {
               varids->addFirstElement(varidTerm(varsym));
             } else if (SgFunctionSymbol *funsym = isSgFunctionSymbol(*s)) {
-              funcs->addFirstElement(new PrologAtom(funsym->get_name().str()));
+              std::string funcname = funsym->get_name().str();
+              Sg_File_Info* fi = funsym->get_declaration()->get_file_info();
+              assert(fi != NULL);
+              SgNode* p = funsym->get_declaration();
+              while (p != NULL && !isSgFile(p))
+                p = p->get_parent();
+              SgFile* file = isSgFile(p);
+              assert(file != NULL);
+              Procedure* proc = procedureNode(funcname, file);
+           // If a Procedure node for this function exists, i.e., we have a
+           // definition for it, then mangle its function number into its
+           // name for unique display.
+              if (proc != NULL) {
+                std::stringstream name;
+                name << funcname << "::" << proc->procnum;
+                funcname = name.str();
+              }
+              funcs->addFirstElement(new PrologAtom(funcname));
             } else { // {{{ error handling
               std::cerr
                 << "* unexpected symbol type in points-to location: "
@@ -501,7 +518,24 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
             if (SgVariableSymbol *varsym = isSgVariableSymbol(*s)) {
               varids->addFirstElement(varidTerm(varsym));
             } else if (SgFunctionSymbol *funsym = isSgFunctionSymbol(*s)) {
-              funcs->addFirstElement(new PrologAtom(funsym->get_name().str()));
+              std::string funcname = funsym->get_name().str();
+              Sg_File_Info* fi = funsym->get_declaration()->get_file_info();
+              assert(fi != NULL);
+              SgNode* p = funsym->get_declaration();
+              while (p != NULL && !isSgFile(p))
+                p = p->get_parent();
+              SgFile* file = isSgFile(p);
+              assert(file != NULL);
+              Procedure* proc = procedureNode(funcname, file);
+           // If a Procedure node for this function exists, i.e., we have a
+           // definition for it, then mangle its function number into its
+           // name for unique display.
+              if (proc != NULL) {
+                std::stringstream name;
+                name << funcname << "::" << proc->procnum;
+                funcname = name.str();
+              }
+              funcs->addFirstElement(new PrologAtom(funcname));
             } else { // {{{ error handling
               std::cerr
                 << "* unexpected symbol type in points-to location: "
