@@ -1981,6 +1981,140 @@ Outline where to put list of functions/functionality for each category of the AP
    This is a section that Jeff Keasler has specific ideas about how to write and
 for which he will provide an outline to start the process.
 
+% This is email from Jeff Keasler which I have copied out and put here so
+% that we can have one place to look at it.  It is not included into the 
+% document (notice that it is commented out).
+\commentout{
+Getting Started With ROSE
+
+Introduction -- 4 to 7 (single sided) pages
+   ROSE is a tool to convert human readable programs into
+   data structures that are easily manipulated with algorithms.
+
+   ROSE can help you analyse or transform your software.
+
+      Analysis tasks include:
+         Security Analysis
+            Code conformance
+            Bug Checking
+         Dependency Analysis
+            Control Flow
+            Data Flow
+
+      Transformation tasks include:
+         Optimization
+         Instrumentation
+         Automatic parallelization
+
+   Applications based on ROSE are formally called ``translators''.
+
+   Structure of a ROSE translator
+      frontend(argc, argv)
+      commandline
+      analysis/transformation
+      AstTests::runAllTests(project);
+      backend(project)
+
+   The Fundamental data structure in ROSE is the AST
+       Single expression (a = b + c) displayed as an AST (dot file diagram).
+       A group of statements within a scope as represented within the AST.
+
+
+
+Reference -- about 30 to 40 pages.
+
+   AST IR Nodes
+
+      Introduction
+         What is an IR Node (with example nodes mentioned)?
+         Naming and usage (SgXXXXX, isSgxxxxx)?
+
+         Hello world ---  a translator that produces a dot file.
+
+         Output to help you work with the AST
+            Dot
+            Pdf
+
+      Basic properties
+         Parent
+         Children
+         Scope
+         Attributes
+         SG_File_Info
+         node->sage_class_name()
+
+      Common Operations on an IR Node.
+         Insert/delete/modify
+            High/Mid/Low level
+         Find
+            AST Query
+            SgSymbolTable
+         Traversal
+
+      Specializations of SgNode
+         SgLocatedNode
+         SgSupport
+         SgSymbol
+         SgType
+         SgAsmNode
+
+
+      Important IR nodes
+         SgBasicBlock
+         SgStatement
+         ...
+
+      For a complete description of all IR Nodes, see doc XXX.
+
+   AST Features
+
+      Special Scopes
+         Prepend/Append operations for all scopes
+         SgGlobal
+         Functions
+         NameSpaces
+         Classes
+         templates
+
+      Types
+        Declarations/Parameters create an SgInitialized name
+        classes ?
+        declaration vs. defining declaration?
+        SgModifier, SgTypeModifier,
+           SgStorageModifier, SgAccessModifier, SgDeclarationModifier
+        working with types
+           manipulation
+           string representation
+
+      Variables (SgVarRef)
+         Scalars
+         Arrays
+         Classes
+
+      Functions
+           Parameters -- SgInitialized Names
+              Accessing, creating
+           defining delcaration
+
+      Classes (whole separate section needed for classes?)
+
+
+   Objects and Memory
+      By mindful of scope for SgName, because they quickly self destruct.
+      Use/Reuse of SgXXX objects on the heap.
+
+   Unparser
+      User added annotations
+
+-----------------------------
+(possible separate document)
+
+buildinterface
+sageinterface
+
+}
+
+
 \subsection{User API (All)}
 {\bf Proposed location of new ROSE API: {\em ROSE/src/API}}
 
