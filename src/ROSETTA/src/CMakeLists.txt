@@ -75,7 +75,8 @@ set(GRAMMAR_SOURCE_FILES
 add_executable(CxxGrammarMetaProgram ${CxxGrammarMetaProgram_SRCS} ${rose_util_src})
 
 #build ROSETTA
-target_link_libraries(CxxGrammarMetaProgram ${KDE4_KDECORE_LIBS} rose_util_lib)
+# target_link_libraries(CxxGrammarMetaProgram ${KDE4_KDECORE_LIBS} rose_util_lib)
+target_link_libraries(CxxGrammarMetaProgram ${KDE4_KDECORE_LIBS} rose_util_lib ${Boost_LIBRARIES})
 
 #Generate the edg-sage connection using ROSETTA
 add_custom_command(
