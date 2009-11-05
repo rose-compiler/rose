@@ -233,9 +233,14 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
     /* Adrian 2009/10/27:
        ROSE insists on wrapping loop bodies into a second SgBasicBlock now.
        We don't need that */
-    assert(synList.size() == 1);
-    t = synList.at(0);
-    return t;
+ // GB (2009-11-05): We can't assert his here because it fails sometimes.
+ // (Don't know when.) If the condition is true, take the way out;
+ // otherwise, continue and maybe risk duplicated basic blocks.
+ // assert(synList.size() == 1);
+    if (synList.size() == 1) {
+      t = synList.at(0);
+      return t;
+    }
   }
 
   if (!fi->isFrontendSpecific()) {
