@@ -2,19 +2,11 @@
 
 #include "aslanalysis.h"
 
-// Here we want to use the TermPrinter, but pretend that it is being used
-// without PAG (regardless of whether PAG is actually supported locally)
-// because then it insists on using the DFI printer, but we have no DFI to
-// print here. So... we pretend that we are building without PAG.
-#ifdef HAVE_PAG
-#  define SATIRE_UTILS_HAVE_PAG_TMP HAVE_PAG
-#  undef HAVE_PAG
-#endif
+// We want to use the TermPrinter, but without the DFI printer because we
+// have no DFI to print here.
+#define DO_NOT_USE_DFIPRINTER 1
 #include "TermPrinter.h"
-#ifdef SATIRE_UTILS_HAVE_PAG_TMP
-#  define HAVE_PAG SATIRE_UTILS_HAVE_PAG_TMP
-#  undef SATIRE_UTILS_HAVE_PAG_TMP
-#endif
+#undef DO_NOT_USE_DFIPRINTER
 
 namespace SATIrE {
 

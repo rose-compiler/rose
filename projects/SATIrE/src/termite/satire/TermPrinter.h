@@ -25,7 +25,7 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
 #  include <cfg_support.h>
 #endif
 
-#if HAVE_PAG
+#if HAVE_PAG && !defined(DO_NOT_USE_DFIPRINTER)
 #  include <config.h>
 // GB (2008-10-03): The declaration (and definition) of PagDfiTextPrinter is
 // now provided in a special header.
@@ -62,7 +62,7 @@ public:
 #endif
             )
       :
-#if HAVE_PAG
+#if HAVE_PAG && !defined(DO_NOT_USE_DFIPRINTER)
       pagDfiTextPrinter(analysis_info),
 #endif
       analysisname(analysisname_ != "" ? analysisname_ : "unknown")
@@ -95,7 +95,7 @@ protected:
     defaultSynthesizedAttribute() {return new PrologAtom("null");};
 
   bool withPagAnalysisResults;
-#if HAVE_PAG
+#if HAVE_PAG && !defined(DO_NOT_USE_DFIPRINTER)
     PagDfiTextPrinter<DFI_STORE_TYPE> pagDfiTextPrinter;
 #endif
 
@@ -616,7 +616,7 @@ TermPrinter<DFI_STORE_TYPE>::getAnalysisResultList(SgStatement* stmt)
   PrologList *infos;
   infos = new PrologList();
 
-#if HAVE_PAG
+#if HAVE_PAG && !defined(DO_NOT_USE_DFIPRINTER)
   if (withPagAnalysisResults && stmt->get_attributeMechanism()) {
     PrologTerm *preInfo, *postInfo;
      preInfo = pagToProlog("pre_info",  analysisname,
