@@ -1,3 +1,49 @@
+2009-11-05 04:11  dquinlan
+
+	* [r8070]
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/structureRecognitionSupport.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/structureRecognitionSupport.h,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/testProgram_1.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/virtualTableLoad.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/virtualTableLoad.h,
+	  /trunk/ROSE/docs/Rose/developersAppendix.tex,
+	  /trunk/ROSE/docs/Rose/installRose.tex,
+	  /trunk/ROSE/src/ROSETTA/src/CMakeLists.txt: Fixed a few bugs and
+	  added new features and documentation.
+	  
+	  Detailed changes in this commit:
+	  1) Added Boost Libs to CMake to link ROSETTA as
+	  a result of recently modified use of boost/regex.
+	  2) Added some documentation to docs/Rose/installRose.tex
+	  and docs/Rose/developersAppendix.tex.
+	  3) Added more virtual function table support for binary work.
+
+2009-11-05 02:14  dquinlan
+
+	* [r8069] /trunk/ROSE/src/util/commandlineProcessing/sla++.C:
+	  Removed use of extern C which was part of old code (should fix
+	  CERT bug).
+
+2009-11-05 02:05  dquinlan
+
+	* [r8068] /trunk/ROSE/acmacros/canonicalize-symlink.m4,
+	  /trunk/ROSE/config/support-java.m4: Fixed Java support for Linux
+	  and Apple.
+
+2009-11-05 00:23  liao6
+
+	* [r8067] /trunk/ROSE/docs/Rose/developersAppendix.tex: more API
+	  text
+
+2009-11-04 23:41  liao6
+
+	* [r8066] /trunk/ROSE/docs/Rose/developersAppendix.tex,
+	  /trunk/ROSE/src/frontend/SageIII/astPostProcessing/astPostProcessing.h,
+	  /trunk/ROSE/src/frontend/SageIII/astPostProcessing/checkIsModifiedFlag.C,
+	  /trunk/ROSE/src/frontend/SageIII/astPostProcessing/resetParentPointers.h,
+	  /trunk/ROSE/src/midend/astDiagnostics/AstConsistencyTests.C: More
+	  API text
+
 2009-11-04 19:53  liao6
 
 	* [r8064] /trunk/ROSE/docs/Rose/developersAppendix.tex,
