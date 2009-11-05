@@ -1743,6 +1743,7 @@ There are four levels:
                \item Value Propagation Analysis
                \item Static Interprocedural Slicing (replaces Procedural Slicing)
                \item Liveness Analysis
+               \item Dependence Analysis
                \item AST Interpreter (Interpretation of Concrete Semantics using AST)
             \end{enumerate}
             \item Program analysis on binaries includes:
@@ -2094,6 +2095,7 @@ We separate out the API that is specific for source code and binary executable.
 
       \item Static Interprocedural Slicing (replaces Procedural Slicing)
       \item Liveness Analysis
+      \item Dependence Analysis
    \end{enumerate}
 
    \item Binary (DQ) \\
@@ -2395,7 +2397,8 @@ Most API functions take SgNode* instead of SgForStatement* to be compatible for 
        \begin{lstlisting}
        //! Ensure that no statement will have more than one function call
        //! This is to be done by inserting new temporary variables to replace extra calls
-       class FunctionCallNormalization:: public SgSimpleProcessing; 
+        void functionCallNormalization(SgNode* root);
+
        \end{lstlisting}
 
       \item AST creation/building \\      
@@ -2409,23 +2412,24 @@ Most API functions take SgNode* instead of SgForStatement* to be compatible for 
        //! Expression builders
        SgNullExpression *buildNullExpression ();
        SgIntVal *  buildIntVal (int value=0);
-       SgVarRefExp * buildVarRefExp (const std::string &varName, SgScopeStatement *scope=NULL);
+       SgVarRefExp * buildVarRefExp (const std::string &varName, 
+                                     SgScopeStatement *scope=NULL);
        ...
        //! Statement builders
-       SgVariableDeclaration * buildVariableDeclaration (const SgName &name, SgType *type, 
-                                   SgInitializer *varInit=NULL, SgScopeStatement *scope=NULL);
+       SgVariableDeclaration * buildVariableDeclaration (const SgName &name, 
+                                  SgType *type, SgInitializer *varInit=NULL, 
+                                              SgScopeStatement *scope=NULL);
        SgWhileStmt * buildWhileStmt (SgStatement *condition, SgStatement *body);
        SgClassDeclaration * buildStructDeclaration (const std::string &name, 
                                        SgScopeStatement *scope=NULL); 
        ...
 
        //! Misc builders
-       SgFile * buildFile (const std::string &inputFileName, const std::string &outputFileName, 
-                                 SgProject *project=NULL);
-       SgInitializedName * buildInitializedName (const std::string &name, SgType *type);
-       PreprocessingInfo * buildComment (SgLocatedNode *target, const std::string &content, 
-                  PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before, 
-     PreprocessingInfo::DirectiveType dtype=PreprocessingInfo::CpreprocessorUnknownDeclaration);
+       SgFile * buildFile (const std::string &inputFileName, 
+          const std::string &outputFileName, SgProject *project=NULL);
+       SgInitializedName * buildInitializedName (const std::string &name, 
+                                                  SgType *type);
+       ... 
        \end{lstlisting}
 
       \item AST insert, deletion, move and replacement \\
@@ -2464,8 +2468,8 @@ Most API functions take SgNode* instead of SgForStatement* to be compatible for 
          SgNode * shallowCopyNode (const SgNode *subtree);
          template<typename NodeType>
            NodeType * deepCopy (const NodeType *subtree);
-         SgExpression *        copyExpression (SgExpression *e);
-         SgStatement *  copyStatement (SgStatement *s);
+         SgExpression * copyExpression (SgExpression *e);
+         SgStatement * copyStatement (SgStatement *s);
          \end{lstlisting}
 
        \item AST Merge support \\
@@ -2474,7 +2478,8 @@ Most API functions take SgNode* instead of SgForStatement* to be compatible for 
            analysis. Duplicate parts of the merged AST are deleted.
          \begin{lstlisting}
          //! Merge AST tree from multiple files
-         int mergeAST( SgProject* project );
+         void mergeAST( SgProject* project );
+
          //! Merge AST from mulitple AST binary dump files
          SgProject * mergeAST(std::vector <FILE *> files);
          \end{lstlisting}
@@ -2559,16 +2564,17 @@ presented together:
          
          // Do we want to expose individual fixup to users? 
          // Some examples are given below 
+
          //! Connect variable reference to the right variable symbols when feasible, 
          //! return the number of references being fixed. 
          int fixVariableReferences (SgNode *root);
 
          //! Patch up symbol, scope, and parent information when 
          //! a declaration's scope is known. 
-         void fixVariableDeclaration (SgVariableDeclaration *varDecl, SgScopeStatement *scope);
-         void fixClassDeclaration (SgClassDeclaration *classDecl, SgScopeStatement *scope);
-         void fixNamespaceDeclaration (SgNamespaceDeclarationStatement *structDecl, SgScopeStatement *scope);
-         void fixLabelStatement (SgLabelStatement *label_stmt, SgScopeStatement *scope);
+         void fixVariableDeclaration (SgVariableDeclaration *varDecl, SgScopeStatement *s);
+         void fixClassDeclaration (SgClassDeclaration *classDecl, SgScopeStatement *s);
+         void fixNamespaceDeclaration (SgNamespaceDeclarationStatement *decl, SgScopeStatement *s);
+         void fixLabelStatement (SgLabelStatement *label_stmt, SgScopeStatement *s);
 
          \end{lstlisting}
 
@@ -2646,6 +2652,9 @@ presented together:
       that are considered attributes to AST nodes are not represented by the other
       functions above. The resulting graph is of all of the files specified on the command line.
       The result is general graph (not a tree) (formally).
+ 
+ By Liao, What about\\
+ \lstinline{void generateDOTforWholeAST(const SgProject* project, std::string filenameSuffix, FilterSetting* fs)}.
    \end{enumerate}
 
    \item AST File I/O Support (T) \\
