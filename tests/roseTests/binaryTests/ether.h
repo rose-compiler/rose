@@ -47,6 +47,16 @@ public:
         event_port = xc_evtchn_bind_interdomain(xc_event_iface, DOMID_SELF, cmd.u.ether.comm.event_channel_port);
         if (event_port<0)
             throw("cannot bind ether event port");
+
+        /* DEBUG */
+        printf("After init:\n");
+        printf("    domain:             %d\n", dom);
+        printf("    xc_iface:           %d\n", xc_iface);
+        printf("    xc_event_iface:     %d\n", xc_event_iface);
+        printf("    shared_page:        %p\n", shared_page);
+        printf("    shared_page_mfn:    0x%lx\n", shared_page_mfn);
+        printf("    event_channel_port: %d\n", cmd.u.ether.comm.event_channel_port);
+        printf("    event_port:         %u\n", event_port);
     }
 
     /** Terminates the connection with the hypervisor. */
@@ -60,7 +70,8 @@ public:
             event_port = -1;
         }
         if (shared_page!=NULL) {
-            release_lock();
+            if (is_lock_held())
+                release_lock();
             munmap((void*)shared_page, getpagesize());
             shared_page = NULL;
             shared_page_mfn = 0;
@@ -170,7 +181,8 @@ public:
     /** Cause domainU to resume execution. This should be called after the client is done processing an event. It releases the
      *  shared page lock and resumes execution of the domainU. */
     void resume() {
-        release_lock();
+        if (is_lock_held())  /*perhaps this should be an exception instead!*/
+            release_lock();
         xc_domain_unpause(xc_iface, dom); /*not always necessary, but doesn't hurt*/
     }
 
@@ -258,6 +270,7 @@ private:
      * order to initialize it properly.  The @p dom parameter is normally only specified by the constructor in order
      * to send a message to the hypervisor before this object is connected. */
     void domctl(const xen_domctl &cmd, domid_t dom=0) {
+        domctl(const_cast<xen_domctl*>(&cmd), dom);
     }
     void domctl(xen_domctl &cmd, domid_t dom=0) {
         domctl(&cmd, dom);

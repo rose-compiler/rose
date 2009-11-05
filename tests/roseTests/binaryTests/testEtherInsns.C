@@ -43,87 +43,100 @@ static void termination_handler(int signo)
 
 int main(int argc, char *argv[])
 {
-    int domU=1;
-    int status;
-    char filter_name[16], *rest;
+    try {
+        int domU=1;
+        int status;
+        char filter_name[16], *rest;
 
-    /* Parse command-line arguments */
-    if (argc!=4) {
-        fprintf(stderr, "usage: %s DOMID EXENAME\n", argv[0]);
-        exit(1);
-    }
-    
-    char *rose_args[3];
-    rose_args[0] = argv[0];
-    rose_args[1] = argv[1];
-    rose_args[2] = NULL;
-    SgProject *project = frontend(3, rose_args);
-
-    domU = strtol(argv[2], &rest, 0);
-    if (domU<=0) {
-        fprintf(stderr, "%s: invalid domain ID: %s\n", argv[0], argv[2]);
-        exit(1);
-    }
-    if (strlen(argv[3])>=sizeof filter_name) {
-        fprintf(stderr, "%s: filter name is too long: %s\n", argv[0], argv[3]);
-        exit(1);
-    }
-    strncpy(filter_name, argv[3], sizeof filter_name);
-    filter_name[sizeof(filter_name)-1] = '\0';
-
-    /* Create the disassembler based on static analysis */
-    struct T1: public SgSimpleProcessing {
-        Disassembler *disassembler;
-        T1(): disassembler(NULL) {}
-        void visit(SgNode *node) {
-            SgAsmGenericHeader *fhdr = isSgAsmGenericHeader(node);
-            if (!disassembler && fhdr)
-                disassembler = Disassembler::create(fhdr);
+        /* Parse command-line arguments */
+        if (argc!=4) {
+            fprintf(stderr, "usage: %s DOMID EXENAME\n", argv[0]);
+            exit(1);
         }
-    };
-    T1 analysis;
-    analysis.traverse(project, preorder);
-    assert(analysis.disassembler!=NULL);
 
-    /* Set up communication with Xen/Ether */
-    Ether ether(domU);
-    ether.set_single_step(true);
-    ether.set_single_step_notify(true);
-    ether.add_name_filter(filter_name);
+        char *rose_args[3];
+        rose_args[0] = argv[0];
+        rose_args[1] = argv[1];
+        rose_args[2] = NULL;
+        SgProject *project = frontend(2, rose_args);
 
-    /* Set termination handlers here, or we'll leave hypervisor in a bad state! */
-    if (setjmp(unwind_to_main)>0) {
-        status = 1;
-        goto done;
-    }
-    struct sigaction sa;
-    sa.sa_handler = termination_handler;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = 0;
-    sigaction(SIGINT, &sa, NULL);
+        domU = strtol(argv[2], &rest, 0);
+        if (domU<=0) {
+            fprintf(stderr, "%s: invalid domain ID: %s\n", argv[0], argv[2]);
+            exit(1);
+        }
+        if (strlen(argv[3])>=sizeof filter_name) {
+            fprintf(stderr, "%s: filter name is too long: %s\n", argv[0], argv[3]);
+            exit(1);
+        }
+        strncpy(filter_name, argv[3], sizeof filter_name);
+        filter_name[sizeof(filter_name)-1] = '\0';
 
-    /* Event loop */
-    while (!terminating) {
-        int event = ether.next_event();
-        if (ETHER_NOTIFY_INSTRUCTION==event) {
-            const struct instruction_info *insn_info = (const struct instruction_info*)ether.event_data();
-            rose_addr_t va = insn_info->registers.eip; /*or perhaps insn_info->guest_rip?*/
-            SgAsmInstruction *insn = NULL;
-            try {
-                insn = analysis.disassembler->disassembleOne(insn_info->instruction, va, sizeof(insn_info->instruction), va);
-                printf("0x%08"PRIx64": %s\n", va, unparseInstruction(insn).c_str());
-            } catch(const Disassembler::Exception &e) {
-                printf("0x%08"PRIx64": cannot disassemble: %s\n", va, e.mesg.c_str());
+        /* Create the disassembler based on static analysis */
+        struct T1: public SgSimpleProcessing {
+            Disassembler *disassembler;
+            T1(): disassembler(NULL) {}
+            void visit(SgNode *node) {
+                SgAsmGenericHeader *fhdr = isSgAsmGenericHeader(node);
+                if (!disassembler && fhdr)
+                    disassembler = Disassembler::create(fhdr);
             }
-        } else {
-            printf("received event %d\n", event);
-        }
-        
-        /* Unlock the shared page and cause the domainU to resume execution. */
-        ether.resume();
-    }
+        };
+        T1 analysis;
+        analysis.traverse(project, preorder);
+        assert(analysis.disassembler!=NULL);
 
-done:
-    return 0;
+        /* Set up communication with Xen/Ether */
+        Ether ether(domU);
+        ether.set_single_step(true);
+        ether.set_single_step_notify(true);
+        ether.add_name_filter(filter_name);
+
+        /* Set termination handlers here, or we'll leave hypervisor in a bad state! */
+        if (setjmp(unwind_to_main)>0) {
+            status = 1;
+            goto done;
+        }
+        struct sigaction sa;
+        sa.sa_handler = termination_handler;
+        sigemptyset(&sa.sa_mask);
+        sa.sa_flags = 0;
+        sigaction(SIGINT, &sa, NULL);
+
+        /* Event loop */
+        while (!terminating) {
+            int event=-1;
+            try {
+                event = ether.next_event();
+            } catch(const Ether::Exception &e) {
+                printf("Ether::Exception: %s (skipping event)\n", e.mesg.c_str());
+                ether.resume();
+                continue;
+            }
+
+            if (ETHER_NOTIFY_INSTRUCTION==event) {
+                const struct instruction_info *insn_info = (const struct instruction_info*)ether.event_data();
+                rose_addr_t va = insn_info->registers.eip; /*or perhaps insn_info->guest_rip?*/
+                SgAsmInstruction *insn = NULL;
+                try {
+                    insn = analysis.disassembler->disassembleOne(insn_info->instruction, va, sizeof(insn_info->instruction), va);
+                    printf("0x%08"PRIx64": %s\n", va, unparseInstruction(insn).c_str());
+                } catch(const Disassembler::Exception &e) {
+                    printf("0x%08"PRIx64": cannot disassemble: %s\n", va, e.mesg.c_str());
+                }
+            } else {
+                printf("received event %d\n", event);
+            }
+
+            /* Unlock the shared page and cause the domainU to resume execution. */
+            ether.resume();
+        }
+
+    done:
+        return 0;
+    } catch(const Ether::Exception &e) {
+        fprintf(stderr, "Ether::Exception: %s\n", e.mesg.c_str());
+        throw;
+    }
 }
 
