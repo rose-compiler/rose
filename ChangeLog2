@@ -1,3 +1,22 @@
+2009-11-05 19:04  panas2
+
+	* [r8077] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_copyClass.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_registerType.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RtedVisit.h,
+	  /trunk/ROSE/projects/RTED/RtedVisit_Variable.cpp: Enabled
+	  checkfast tests in RTED to work by default without configuring
+	  ROSE with RTED. I also checked in initial refactoring of the
+	  visitor pattern.
+
+2009-11-05 18:27  dquinlan
+
+	* [r8076] /trunk/ROSE/docs/Rose/developersAppendix.tex: Added
+	  subsubsection for ROSE Install Tree design to ROSE API.
+
 2009-11-05 16:06  dquinlan
 
 	* [r8074] /trunk/ROSE/config/support-GraphViz.m4,
