@@ -289,7 +289,7 @@ term_argumentmatch(Term, [A]) :-
 
 body_alternatives(A | B, FA/N | Alts) :-
     !,
-    ( A = A1 where _C
+    ( A = (A1 where _C)
       -> functor(A1, FA, N)
       ;  functor(A, FA, N) ),
     body_alternatives(B, Alts).

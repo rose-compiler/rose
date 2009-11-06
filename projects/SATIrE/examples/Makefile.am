@@ -257,7 +257,7 @@ itvl_stresstest: interval
 		echo    "(told you this was strict)"; \
 		exit 1; \
 	fi
-	$(DESTDIR)/$(bindir)/termite_lint itvl_stresstest.term
+	@cd $(testdir)/interval; $(DESTDIR)/$(bindir)/termite_lint itvl_stresstest.term
 	@cd $(testdir)/interval; export TERMITE_LIB=$(datadir)/termite; $(SWI_PL) -q -O -t main -s validator.pl < itvl_stresstest.term > itvl_stresstest_assert.term
 	@cd $(testdir)/interval; $(DESTDIR)/$(bindir)/term2c itvl_stresstest_assert.term -o itvl_stresstest_assert.c
 	@cd $(testdir)/interval; $(CC) -std=c99 -DINCLUDE_ASSERT_H -o itvl_stresstest_assert itvl_stresstest_assert.c

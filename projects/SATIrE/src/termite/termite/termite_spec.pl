@@ -380,13 +380,14 @@ name ::=
     {Name} where atom(Name).
 
 scope_name ::=  % name of a scope
-    {::}
-  | class_scope(scope_name, class_kind, preprocessing_info)
+  {::}
+  | class_scope(name, class_kind, preprocessing_info)
   | name.
 
 class_kind ::=
     {class}
-  | {struct}.
+  | {struct}
+  | {union}.
 
 number_or_string ::=
     {It} where ( numberatom(It) ; number(It) ; string(It) ; atom(It) ).
