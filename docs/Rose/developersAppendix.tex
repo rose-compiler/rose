@@ -2208,28 +2208,531 @@ specific forms of analysis or are used in subsequent forms of analysis.
 We separate out the API that is specific for source code and binary executable.
 \begin{enumerate}
    \item Source (TP) \\
+   \lstset{language={C++},basicstyle=\small} 
    \begin{enumerate}
       \item Call Graph Analysis
+      \begin{lstlisting}
+<CallGraph.h>
+  void buildCallGraph();
+  template<typename Predicate> void buildCallGraph(Predicate pred);
+  SgIncidenceDirectedGraph *getGraph(); 
+
+  SgGraphNode* findNode ( Rose_STL_Container<SgGraphNode*> & nodeList, SgFunctionDeclaration* functionDeclaration);
+  SgGraphNode* findNode ( Rose_STL_Container<SgGraphNode*> & nodeList, Properties* functionProperties );
+  SgGraphNode* findNode ( Rose_STL_Container<SgGraphNode*> & nodeList, std::string name );
+  SgGraphNode* findNode ( Rose_STL_Container<SgGraphNode*> & nodeList, std::string name, int );
+  SgGraphEdge* findEdge (SgIncidenceDirectedGraph* graph, SgGraphNode* from, SgGraphNode* to);
+  SgGraphNode* findNode(SgGraph* graph, std::string nid);
+
+  sqlite3x::sqlite3_connection* open_db(std::string gDB  );
+  void createSchema ( sqlite3x::sqlite3_connection& gDB, std::string dbName );
+  //Will load all graphs represented in the database into one graph
+  SgIncidenceDirectedGraph* loadCallGraphFromDB (sqlite3x::sqlite3_connection& gDB);
+  void writeSubgraphToDB ( sqlite3x::sqlite3_connection& gDB,SgIncidenceDirectedGraph* callGraph );
+  void solveFunctionPointers (  sqlite3x::sqlite3_connection& gDB);
+  void solveVirtualFunctions (  sqlite3x::sqlite3_connection& gDB, std::string dbHierarchy );
+
+      \end{lstlisting}
+
       \item Class Hierarchy Analysis
+      \begin{lstlisting}
+<ClassHierarchyGraph.h>
+  void setAST( SgNode *proj );
+  SgIncidenceDirectedGraph* getClassHierarchyGraph();
+  SgGraphNode* findNode(SgNode*);
+  
+  SgClassDefinitionPtrList getSubclasses( SgClassDefinition * );
+  SgClassDefinitionPtrList getDirectSubclasses( SgClassDefinition * );
+  SgClassDefinitionPtrList getAncestorClasses( SgClassDefinition * );
+
+      \end{lstlisting}
+
       \item Control Flow Analysis
+      \begin{lstlisting}
+<virtualCFG.h> 
+
+  //! A node in the control flow graph.  Each CFG node corresponds to an AST
+  //! node, but there can be several CFG nodes for a given AST node.  
+  class CFGNode {
+    public:
+    CFGNode(): node(0), index(0) {}
+    explicit CFGNode(SgNode* node, unsigned int index = 0): node(node), index(index) {
+      assert (!node || isSgStatement(node) || isSgExpression(node) || isSgInitializedName(node));
+    }
+    //! Pretty string for Dot node labels, etc.
+    std::string toString() const;
+    //! String for debugging graphs
+    std::string toStringForDebugging() const;
+    //! ID to use for Dot, etc.
+    std::string id() const;
+    //! The underlying AST node
+    SgNode* getNode() const {return node;}
+    //! An identifying index within the AST node given by getNode()
+    unsigned int getIndex() const {return index;}
+    //! Outgoing control flow edges from this node
+    std::vector<CFGEdge> outEdges() const;
+    //! Incoming control flow edges to this node
+    std::vector<CFGEdge> inEdges() const;
+    //! Test whether this node satisfies a (fairly arbitrary) standard for
+    //! "interestingness".  There are many administrative nodes in the raw CFG
+    //! (nodes that do not correspond to operations in the program), and this
+    //! function filters them out.
+    bool isInteresting() const;
+    //! Equality operator
+    bool operator==(const CFGNode& o) const {return node == o.node && index == o.index;}
+    //! Disequality operator
+    bool operator!=(const CFGNode& o) const {return !(*this == o);}
+    //! Less-than operator
+    bool operator<(const CFGNode& o) const {return node < o.node || (node == o.node && index < o.index);}
+  }; // end class CFGNode
+
+  //! A control flow edge connecting two CFG nodes, with an edge condition to
+  //! indicate edge types
+  class CFGEdge {
+    public:
+    //! Constructor
+    CFGEdge(CFGNode src, CFGNode tgt): src(src), tgt(tgt) {}
+    //! Pretty string for Dot node labels, etc.
+    std::string toString() const;
+    //! String for debugging graphs
+    std::string toStringForDebugging() const;
+    //! ID to use for Dot, etc.
+    std::string id() const;
+    //! The source (beginning) CFG node
+    CFGNode source() const {return src;}
+    //! The target (ending) CFG node
+    CFGNode target() const {return tgt;}
+    //! The control flow condition that enables this edge
+    EdgeConditionKind condition() const;
+    //! The label of the case represented by an eckCaseLabel edge
+    SgExpression* caseLabel() const;
+    //! The expression of the computed goto represented by the eckArithmeticIf* conditions
+    unsigned int computedGotoCaseIndex() const;
+    //! The test or case key that is tested as a condition of this control flow edge
+    SgExpression* conditionBasedOn() const;
+    //! Variables going out of scope across this edge (not extensively tested)
+    std::vector<SgInitializedName*> scopesBeingExited() const;
+    //! Variables coming into scope across this edge (not extensively tested)
+    std::vector<SgInitializedName*> scopesBeingEntered() const;
+    //! Compare equality of edges
+    bool operator==(const CFGEdge& o) const {return src == o.src && tgt == o.tgt;}
+    //! Compare disequality of edges
+    bool operator!=(const CFGEdge& o) const {return src != o.src || tgt != o.tgt;}
+  }; // end CFGEdge
+
+    class InterestingNode {
+    public:
+    InterestingNode(CFGNode n): n(n) {}
+    std::string toString() const {return n.toString();}
+    std::string toStringForDebugging() const {return n.toStringForDebugging();}
+    std::string id() const {return n.id();}
+    SgNode* getNode() const {return n.getNode();}
+    unsigned int getIndex() const {return n.getIndex();}
+    std::vector<InterestingEdge> outEdges() const;
+    std::vector<InterestingEdge> inEdges() const;
+    bool isInteresting() const {return true;}
+    bool operator==(const InterestingNode& o) const {return n == o.n;}
+    bool operator!=(const InterestingNode& o) const {return !(*this == o);}
+    bool operator<(const InterestingNode& o) const {return n < o.n;}
+  };
+
+  class InterestingEdge {
+    public:
+    InterestingEdge(CFGPath p): p(p) {}
+    std::string toString() const {return p.toString();}
+    std::string toStringForDebugging() const {return p.toStringForDebugging();}
+    std::string id() const {return p.id();}
+    InterestingNode source() const {return InterestingNode(p.source());}
+    InterestingNode target() const {return InterestingNode(p.target());}
+    EdgeConditionKind condition() const {return p.condition();}
+    SgExpression* caseLabel() const {return p.caseLabel();}
+    SgExpression* conditionBasedOn() const {return p.conditionBasedOn();}
+    std::vector<SgInitializedName*> scopesBeingExited() const {return p.scopesBeingExited();}
+    std::vector<SgInitializedName*> scopesBeingEntered() const {return p.scopesBeingEntered();}
+    bool operator==(const InterestingEdge& o) const {return p == o.p;}
+    bool operator!=(const InterestingEdge& o) const {return p != o.p;}
+  };
+
+  inline InterestingNode makeInterestingCfg(SgNode* start);
+  //! Returns CFG node for just before start
+  inline CFGNode makeCfg(SgNode* start);
+  //! The first CFG node for a construct (before the construct starts to
+  //! execute)
+  inline CFGNode cfgBeginningOfConstruct(SgNode* c) ;
+  //! The last CFG node for a construct (after the entire construct has finished
+  //! executing).  This node may not actually be reached if, for example, a goto
+  //! causes a loop to be exited in the middle
+  inline CFGNode cfgEndOfConstruct(SgNode* c);
+
+
+
+
+      \end{lstlisting}
+
       \item Def-Use Analysis
-      \item Dominance Analysis
+      \begin{lstlisting}
+<DefUseAnalysis.h>
+  // def-use-public-functions -----------
+  int run();
+  int run(bool debug);
+  multitype getDefMultiMapFor(SgNode* node);
+  multitype  getUseMultiMapFor(SgNode* node);
+  std::vector < SgNode* > getDefFor(SgNode* node, SgInitializedName* initName);
+  std::vector < SgNode* > getUseFor(SgNode* node, SgInitializedName* initName);
+  bool isNodeGlobalVariable(SgInitializedName* node);
+  std::vector <SgInitializedName*> getGlobalVariables();
+  // the following one is used for parallel traversal
+  int start_traversal_of_one_function(SgFunctionDefinition* proc);
+
+<DefUseAnalysis_perFunction.h>
+  FilteredCFGNode < IsDFAFilter > run(SgFunctionDefinition* function, bool& abortme);
+
+      \end{lstlisting}
+
+      \item Dominance Analysis (CI 2007)
+      \begin{lstlisting}
+<DominatorTree.h>
+  // ! Constructor for the DominatorForwardBackwardWrapperClass
+  DominatorForwardBackwardWrapperClass(Direction dir):treeDirection(dir)
+  // ! returns whether this is a dominator tree (PRE) or a
+  // post-dominator tree (POST)
+  Direction getDirection()
+
+  // CI (01/23/2007): Implemented the DT for the VirtualCFG interface with
+  // the Lingauer-Tarjan algorithm
+  //! TemplatedDominatorTree constructs a dominator/postdominator tree for a cfg. For the template parameter any cfg following Jeremias interface may be used
+  //!constructor for the DT. Head is the start point for the DT construction. DT works for SgFunctionDefintion nodes, unexpected behaviour for non-SgFunctionDefinition!!!
+  //Direction determines Pre/Post-Dominator construction
+  TemplatedDominatorTree(SgNode * head, Direction d =
+		DominatorForwardBackwardWrapperClass <
+		CFGFilterFunction >::PRE_DOMINATOR);
+  //! writes the DT in DOT-notation to the file given in filename		
+  void writeDot(char *filename);
+  // ! returns the number of nodes in the tree
+  int getSize()
+  //! returns the set of nodes directly dominated by nodeID
+  std::set<int> getDirectDominatedSet(int nodeID)
+  // ! for a given nodeID, return the id of its immediate dominator
+  int getImDomID(int i)
+  //! get the ImDomID for given SgNode, returns negative for non-cfg-node
+  int getImDomID(VirtualCFG::FilteredCFGNode < CFGFilterFunction > node)
+  //! calculates if a dominates b, i.e. a is on the path from b to the root
+  bool dominates(int a,int b)
+  //! returns true if node a dominates node b, see dominates(int a,int b)		
+  bool dominates(VirtualCFG::FilteredCFGNode < CFGFilterFunction > a,VirtualCFG::FilteredCFGNode < CFGFilterFunction > b)
+  // ! for an CFG Node, return the corresponding id
+  int getID(VirtualCFG::FilteredCFGNode < CFGFilterFunction > node)
+
+  /* ! \class DominanceFrontier
+     This class constructs the dominance (or post-dominance) frontiers for
+	 all nodes in a ControlFlowGraph. A dominance (post-dominance) frontier
+	 for node X is simply the set of nodes such that a given node Y from the 
+	 set is not dominated (post-dominated) by X, but there is an immediate
+	 predecessor of Y that is dominated (post-dominated) by X.
+	 The type of frontier we construct is determined by the DominatorTree
+	 that DominanceFrontier is initialized with.
+ */
+  template < typename CFGFilterFunction > class TemplatedDominanceFrontier:public DominatorForwardBackwardWrapperClass <
+  //! retunrs a set of ID's with the nodes dominance-frontier
+  std::set<int> getFrontier(int node)
+  //! construct the domnancefrontier
+  TemplatedDominanceFrontier(TemplatedDominatorTree < CFGFilterFunction > dt):DominatorForwardBackwardWrapperClass < CFGFilterFunction > (dt.getDirection()),
+  //! debug method to print forntiers
+  void printFrontiers()
+
+      \end{lstlisting}
+
       \item Dominator Trees And Dominance Frontiers Analysis (might be old)
+      \begin{lstlisting}
+<ControlFlowGraph.h>
+  //! The constructor for ControlFlowGraph. Builds a CFG rooted at head
+  ControlFlowGraph(SgNode * head);
+  //! from a given CFGImpl node, create one (or more) ControlNodes
+  void createNode(CFGNodeImpl * node);
+  //! return the number of nodes in the CFG
+  int getSize() {return _numNodes;}
+  //! given a node id (and which numbering scheme to use), return the appropriate control node
+  ControlNode * getNode(int id, ID_dir dir) {return (dir == FORWARD)?_forIndex[id]:_backIndex[id];}
+  //! dump the contents of the original CFGImpl to a dot file
+  void outputCFGImpl();
+
+<SimpleDirectedGraphNode.h>
+  //! get the nodes which are pointed to by the current node
+  std::set<SimpleDirectedGraphNode *> getSuccessors() {return _succs;}
+  //! get the nodes which point to the current node
+  std::set<SimpleDirectedGraphNode *> getPredecessors() {return _preds;}
+  //! add an edge from the current node to n
+  void addSuccessor(SimpleDirectedGraphNode * n) {_succs.insert(n);}
+  //! add an edge from n to the current node
+  void addPredecessor(SimpleDirectedGraphNode * n) {_preds.insert(n);}
+  //! test whether n is a successor of the current node
+  bool hasSuccessor(SimpleDirectedGraphNode * n) {return _succs.count(n) != 0;}
+  //! test whether n is a predecessor of the current node
+  bool hasPredecessor(SimpleDirectedGraphNode * n) {return _preds.count(n) != 0;}
+  //! return the number of outgoing edges
+  int numSuccessors() {return _succs.size();}
+  //! return the number of incoming edges
+  int numPredecessors() {return _preds.size();}
+  //! virtual function to support displaying node information
+  virtual void writeOut(std::ostream & os)
+
+<DominatorTree.h>
+  DominatorTree(SgNode * head, Direction d = PRE);
+  //! get the CFG the dominator tree is built from
+  ControlFlowGraph * getCFG() {return _cfg;}
+  //! returns whether this is a dominator tree (PRE) or a post-dominator tree (POST)
+  Direction getDirection() {return _dir;}
+  //! returns the corresponding direction for the numbering of the CFG.
+  ControlFlowGraph::ID_dir getCFGDirection() {return _iddir;}
+  //! returns the number of nodes in the tree
+  int getSize() {return _size;}
+  //! for a given node, return the id of its immediate dominator
+  int getDom(ControlNode * node) {return doms[node->getID(_iddir)];}
+  //! for a given node id, return the id of its immediate dominator
+  int getDom(int id) {return doms[id];}
+  void printCFG();
+  void printDominators();
+
+<DominanceFrontier.h>
+  DominanceFrontier(DominatorTree * dt) : _dt(dt),
+					  _size(_dt->getSize()),
+					  _domFrontier(new std::set<int>[_size])
+  /*! get the dominance frontier for a given node (these need to be
+  referenced against the CFG to determine the actual nodes in the
+  frontier
+  */
+  std::set<int> getFrontier(int id) {return _domFrontier[id];}
+  void printFrontier();
+      \end{lstlisting}
+
 
       \item Connection of Open Analysis (might be old) \\
       This might be something for Colorado State to comment upon.
+      \begin{lstlisting}
+<CallGraph/CallGraph.h>
+  //-------------------------------------
+  // CallGraph information access
+  //-------------------------------------
+  Node *Entry() { return entry; }; // FIXME
+  Node *Exit() { return exit; };
+  IRInterface &GetIRInterface() { return ir; }
 
-      \item Pointer Analysis \\
+  class Node : public DGraph::Node {
+  public:
+    unsigned int getID () { return label; }
+    bool IsDefined() { return (def != 0); }
+    bool IsUsed() { return (uses.size() != 0); }
+    ProcHandle GetDef() { return def; }
+    void dump(std::ostream& os);
+    void shortdump(CallGraph* cgraph, std::ostream& os);
+    void longdump(CallGraph* cgraph, std::ostream& os);
+    friend class CallGraph::NodeUsesIterator;
+    void add_def(ProcHandle h) { def = h; }
+    void add_use(ExprHandle h) { uses.push_back(h); }
+  }
 
-      \item Procedural Slicing (might be the old version; not used) 
+  class Edge : public DGraph::Edge {
+  public:
+    EdgeType getType() { return type; }
+    void dump (std::ostream& os);
+  };  
+
+
+<SSA/DomeTree.h>
+  DomTree (DGraph& g);
+  Node* domtree_node (DGraph::Node* n) { return dom_tree_node[n]; }
+  void compute_dominance_frontiers ();
+  void dump (ostream&);
+
+<SSA/Phi.h>
+  Phi (const SymHandle& var_name, CFG* _cfg) { sym = var_name; cfg = _cfg; }
+  void dump (ostream&);
+  void add_arg (CFG::Node* c_n, LeafHandle a_n) { args[c_n] = a_n; }
+  LeafHandle arg (CFG::Node* n) { return args[n]; }
+  int num_args () { return args.size(); }
+
+<SSA/SSA.h>
+  class Def {
+  public:
+    virtual void dump (ostream&) = 0;
+    virtual std::list<Use*>* uses_list () = 0;
+  };
+  class Use {
+  public:
+    virtual void dump (ostream&) = 0;
+    virtual Def* def () = 0;
+  };
+  class LeafDef : public Def {
+  public:
+    LeafDef (LeafHandle l) : Def() { leaf = l; }
+    void dump (ostream&);
+    std::list<Use*>* uses_list () { return &uses; }
+  };
+  class PhiDef : public Def {
+  public:
+    PhiDef (Phi* p) : Def() { phi = p; }
+    void dump (ostream&);
+    std::list<Use*>* uses_list () { return &uses; }
+  };
+  class LeafUse : public Use {
+  public:
+    LeafUse (LeafHandle l) : Use() { leaf = l; }
+    void dump (ostream&);
+    Def* def () { return definition; }
+  };
+  class PhiUse : public Use {
+  public:
+    PhiUse (Phi* p) : Use() { phi = p; }
+    void dump (ostream&);
+    Def* def () { return definition; }
+  };
+
+
+
+
+<CFG/CFG.h>
+  Node *Entry() { return entry; };
+  Node *Exit() { return exit; };
+  IRInterface &GetIRInterface() { return ir; }
+  Node* splitBlock(Node*, StmtHandle /* CFG::NodeStatementsIterator */);
+  void connect (Node* src, Node* dst, EdgeType type) 
+  void connect (Node* src, Node* dst, EdgeType type, ExprHandle expr)
+  void connect (Node*, NodeLabelList&);
+  void connect (NodeLabelList&, Node*);
+  void disconnect (Edge* e) { remove(e); }
+  CFG::Node* node_from_label (StmtLabel);
+
+
+<CFG/RIFG.h> // Representation Independent Flowgraph Interface
+	virtual unsigned int HighWaterMarkNodeId()=0;  // largest node id in the graph
+	virtual int IsValid(RIFGNodeId n)=0;     // is the node id still valid, or has it been freed
+	virtual int GetFanin(TarjanIntervals *, RIFGNodeId)=0;
+	virtual RIFGNodeId GetRootNode()=0;
+	virtual RIFGNodeId GetFirstNode()=0;
+	virtual RIFGNodeId GetLastNode()=0;
+	virtual RIFGNodeId GetNextNode(RIFGNodeId n)=0;
+	virtual RIFGNodeId GetPrevNode(RIFGNodeId n)=0;
+	virtual RIFGNodeId GetEdgeSrc(RIFGEdgeId e)=0;
+	virtual RIFGNodeId GetEdgeSink(RIFGEdgeId e)=0;
+	virtual RIFGNodeId *GetTopologicalMap(TarjanIntervals *)=0;
+	virtual RIFGNode *GetRIFGNode(RIFGNodeId n)=0;
+	virtual RIFGEdge *GetRIFGEdge(RIFGEdgeId e)=0;
+	virtual RIFGEdgeIterator *GetEdgeIterator(RIFG &fg, RIFGNodeId n,  EdgeDirection ed)=0;
+	virtual RIFGNodeIterator *GetNodeIterator(RIFG &fg, ForwardBackward fb)=0;
+
+
+<CFG/OARIFG.h>
+  unsigned int HighWaterMarkNodeId();  // largest node id in the graph
+  int IsValid(RIFGNodeId n);     // is the node id still valid, or has it been freed
+  int GetFanin(TarjanIntervals *, RIFGNodeId);
+  RIFGNodeId GetRootNode();
+  RIFGNodeId GetFirstNode();
+  RIFGNodeId GetLastNode();
+  RIFGNodeId GetNextNode(RIFGNodeId n);
+  RIFGNodeId GetPrevNode(RIFGNodeId n);
+  RIFGNodeId GetEdgeSrc(RIFGEdgeId e);
+  RIFGNodeId GetEdgeSink(RIFGEdgeId e);
+  RIFGNodeId *GetTopologicalMap(TarjanIntervals *);
+  RIFGNode *GetRIFGNode(RIFGNodeId n);
+  RIFGEdge *GetRIFGEdge(RIFGEdgeId e);
+  RIFGEdgeIterator *GetEdgeIterator(RIFG &fg, RIFGNodeId n, RIFG::EdgeDirection ed);
+  RIFGNodeIterator *GetNodeIterator(RIFG &fg, RIFG::ForwardBackward fb);
+
+      \end{lstlisting}
+
+      \item Pointer Analysis 
+      \begin{lstlisting}
+<SteensgaardPtrAnal.h>
+  void output(std::ostream& out) { Impl::output(out); }
+
+<steensgaard.h>
+   ECR * union_with(ECR *that) 
+   ECR* get_ecr()  { return find_group(); }
+   ECR* get_type() 
+   void set_type(ECR *that) 
+   std::list<ECR*>& get_pending() {return find_group()->pending;}
+   Lambda* get_lambda() { return lambda; }
+   void set_lambda(Lambda* l) { lambda = l; } 
+
+
+<PtrAnal.h>
+  void operator()( AstInterface& fa,  const AstNodePtr& program);
+  bool may_alias(AstInterface& fa, const AstNodePtr& r1, const AstNodePtr& r2);
+  VarRef translate_exp(const AstNodePtr& exp) const;
+  StmtRef translate_stmt(const AstNodePtr& stmt) const;
+
+  virtual bool may_alias(const std::string& x, const std::string& y) = 0;
+  virtual Stmt x_eq_y(const std::string& x, const std::string& y) = 0; 
+  virtual Stmt x_eq_addr_y(const std::string& x, const std::string& y) = 0; 
+  virtual Stmt x_eq_deref_y(const std::string& x, 
+                            const std::string& field,
+                            const std::string& y) = 0;
+  virtual Stmt x_eq_field_y(const std::string& x, 
+                            const std::string& field,
+                            const std::string& y) = 0;
+  virtual Stmt deref_x_eq_y(const std::string& x, 
+                            const std::list<std::string>& field,
+                            const std::string& y) = 0;
+  virtual Stmt field_x_eq_y(const std::string& x, 
+                            const std::list<std::string>& field,
+                            const std::string& y) = 0;
+  virtual Stmt allocate_x(const std::string& x) = 0;
+  virtual Stmt x_eq_op_y(OpType op, const std::string& x, const std::list<std::string>& y) =0;
+  virtual Stmt funcdef_x(const std::string& x, const std::list<std::string>& params,
+                          const std::list<std::string>& ouput) = 0;
+  virtual Stmt funccall_x ( const std::string& x, const std::list<std::string>& args,
+                            const std::list<std::string>& result)=0; 
+  virtual Stmt funcexit_x( const std::string& x) = 0;
+
+  virtual void contrl_flow(Stmt stmt1, Stmt stmt2, CFGConfig::EdgeType t) {}
+
+      \end{lstlisting}
+
 
       \item Side-Effect Analysis
+      \begin{lstlisting}
+<sideEffect.h>
+  //! "Constructor" to return a concrete instance of side effect implementation.
+  static SideEffectAnalysis* create();
+  //! Perform the side effect analysis on the given project
+  virtual int calcSideEffect(SgProject& project) = 0;
+  //! Perform the side effect analysis on a file
+  virtual int calcSideEffect(SgFile& file) = 0;
+  //! Perform the side effect analysis on a node
+  virtual int calcSideEffect(SgNode& node) = 0;
+  //! Return the list of invoked functions encountered during the analysis.
+  virtual list<const char* > getCalledFunctions() = 0;
+  //! Return a list of side effects for the given function.
+  virtual list<const char* > getGMOD(const char* func) = 0;
+  //! Return a list of side effects for the given statement.
+  virtual list<const char* > getDMOD(const char* stmt) = 0;
+  //! Return the identifier associated with this node and to be passed to getDMOD
+  virtual string getNodeIdentifier(SgNode *node) = 0;
+
+//! Utility function to return the fully qualified name of a function given a function call expression AST node.
+string getQualifiedFunctionName(SgFunctionCallExp *astNode);
+//! Utility function to return the fully qualified name of a function given a fucntion declaration AST node.
+string getQualifiedFunctionName(SgFunctionDeclaration *astNode);
+      \end{lstlisting}
 
       \item Value Propagation Analysis
+      \begin{lstlisting}
+<ValuePropagate.h>
+  void build( AstInterface& fa, const AstNodePtr& head,
+                   ReachingDefinitionAnalysis& r, 
+                   AliasAnalysisInterface& alias,
+	           FunctionSideEffectInterface* f = 0);
+  void build (AstInterface& fa, const AstNodePtr& head, 
+                   AliasAnalysisInterface& alias,
+	           FunctionSideEffectInterface* f = 0);
+  bool known_value( const AstNodePtr& exp, 
+ 		  HasValueDescriptor* result = 0, bool *change = 0);
+  HasValueMap& get_value_map() { return valmap; }
 
-      \item Static Interprocedural Slicing (replaces Procedural Slicing)
-      \item Liveness Analysis
-      \item Dependence Analysis
+      \end{lstlisting}
+
+
+
    \end{enumerate}
 
    \item Binary (DQ) \\
@@ -2276,6 +2779,401 @@ binary executable.
 \begin{enumerate}
    \item Source (TP) \\
    \begin{enumerate}
+
+      \item Procedural Slicing (might be the old version; not used) 
+      \begin{lstlisting}
+<Slicing.h>
+  /*!
+    \brief Interface 1:
+    Performs a complete slice, that is slices the input file and produces a compilable output file. 
+  */
+  static void completeSlice(SgProject* sgproject);
+  /*! 
+    \brief
+    Interface 2: This function performs the same slicing as sliceOnlyStmts, however in addition this function includes statements connected to the control structure as well as return statements.
+  */
+  static void sliceOnlyStmtWithControl(SgProject* sgproject, set<SgNode*>& stmt);
+
+  /*! 
+    \brief
+    Interface 3:
+    This function finds only the statements that directly affect the slicing criterion. This function
+    gives the same statements as the definition use associations gives. The protected function "onlyStmts" does the actual work, while this function is supposed to be the public one, which is called.
+  */
+  static void sliceOnlyStmts(SgProject* sgproject,set<SgNode*>&  stmt_in_slice);
+
+
+      \end{lstlisting}
+
+
+      \item Static Interprocedural Slicing (replaces Procedural Slicing)
+      \begin{lstlisting}
+<ControlFlowGraph.h>
+  //! The constructor for ControlFlowGraph. Builds a CFG rooted at head
+  ControlFlowGraph(SgNode * head);
+  //! from a given CFGImpl node, create one (or more) ControlNodes
+  void createNode(CFGNodeImpl * node);
+  //! return the number of nodes in the CFG
+  int getSize() {return _numNodes;}
+  //! given a node id (and which numbering scheme to use), return the appropriate control node
+  ControlNode * getNode(int id, ID_dir dir) {return (dir == FORWARD)?_forIndex[id]:_backIndex[id];}
+  //! dump the contents of the original CFGImpl to a dot file
+  void outputCFGImpl();
+
+<CreateSlice.h>
+    CreateSlice(std::set < SgNode * >saveNodes):_toSave(saveNodes)
+    // bool traverse(SgNode * node) {return traverse(node, false);}
+    bool traverse(SgNode * node)
+
+<CreateSliceSet.h>
+    CreateSliceSet(SystemDependenceGraph *program,std::list<SgNode*> targets);
+    std::set<SgNode*> computeSliceSet();
+    std::set<SgNode*> computeSliceSet(SgNode * node);
+
+<DefUseExtension.h>
+namespace DUVariableAnalysisExt
+{
+	SgNode * getNextParentInterstingNode(SgNode* node);
+	bool isDef(SgNode * node);
+	bool isDef(SgNode * node,bool treadFunctionCallAsDef);
+	bool isIDef(SgNode * node);
+	bool isIUse(SgNode* node);
+	bool test(SgNode* node);
+	bool isUse(SgNode * node);
+	bool isAssignmentExpr(SgNode*node);
+	bool isFunctionParameter(SgNode*node);
+	bool isPointerType(SgVarRefExp * ref);
+	bool isComposedType(SgVarRefExp * ref);																										
+	bool isMemberVar(SgVarRefExp * ref);
+	bool functionUsesAddressOf(SgVarRefExp * node,SgFunctionCallExp * call);
+}
+
+<DependenceGraph.h>
+class DependenceGraph {
+  void debugCoutNodeList()
+  const char *getEdgeName(EdgeType type);
+  DependenceNode *createNode(DependenceNode::NodeType type,SgNode * identifyingNode);
+  DependenceNode *createNode(SgNode * node);
+  void deleteNode(DependenceNode * node);
+  DependenceNode *getNode(SgNode * node);
+  // (NodeType type, SgNode * node = NULL, std::string depName= "")
+  DependenceNode *getNode(DependenceNode::NodeType type,SgNode * identifyingNode);
+  DependenceNode * getExistingNode(SgNode * node);
+  DependenceNode * getExistingNode(DependenceNode::NodeType type,SgNode * identifyingNode);
+  // ! return the InterproceduralInfo object associated with the
+  // DependenceGraph
+  InterproceduralInfo *getInterprocedural()
+  /* ! \brief create an edge of type e between from and to
+
+     Params: - DependenceNode * from: the source of the edge -
+     DependenceNode * to: the sink of the edge - EdgeType e: the type of the 
+     edge
+
+     Side effects: Inserts the Edge (from, to) into the set associated with
+     e by _edgetype_map. Inserts e into the set associated with Edge(from,
+     to) by _edge_map.
+
+  */
+  virtual void establishEdge(DependenceNode * from, DependenceNode * to, EdgeType e=CONTROL);
+  virtual void removeEdge(DependenceNode * from, DependenceNode * to, EdgeType e=CONTROL);
+  /* ! \brief determine if there is an edge of type e between from and to
+
+     Params: - DependenceNode * from: the source of the edge -
+     DependenceNode * to: the sink of the edge - EdgeType e: the type of the 
+     edge
+
+     Return: true if e is in the set associated with Edge(from, to) by
+     _edge_map. */
+  bool edgeExists(DependenceNode * from, DependenceNode * to, EdgeType e);
+  bool hasOutgingEdge(DependenceNode * src,EdgeType compare);
+
+  /* ! \brief returns all edges between from and to
+
+     Params: - DependenceNode * from: the source of the edge -
+     DependenceNode * to: the sink of the edge
+
+     Return: the set of EdgeTypes associated with Edge(from, to) by
+     _edge_map.
+
+  */
+  std::set < EdgeType > edgeType(DependenceNode * from, DependenceNode * to);
+  /*    std::list <DependenceNode*> getParents(DependenceNode * current)
+	{
+	std::list <DependenceNode*> parentList;
+	return parentList;
+	}*/
+  // ! writes a dot file representing this dependence graph to filename
+  virtual void writeDot(char *filename);
+  bool isLibraryFunction(SgFunctionDeclaration * sgFD) const
+}
+
+class ControlDependenceGraph:public DependenceGraph {
+ public:
+
+  /* ! \brief Contstructor for ControlDependenceGraph
+
+     Params: - SgNode * head: The root of the AST that you want to build the 
+     CDG for - InterproceduralInfo * ii: the InterproceduralInfo object for
+     storing interprocedural information
+
+     Side effects: - initializes _interprocedural
+
+     If ii is NULL, we assume that we are not doing interprocedural
+     analysis. Otherwise, we assume that ii is a newly allocated (but not
+     yet initialized) object. */
+  ControlDependenceGraph(SgFunctionDefinition * head, InterproceduralInfo * ii = NULL);
+  void computeInterproceduralInformation(InterproceduralInfo * ii);
+  void computeAdditionalFunctioncallDepencencies();
+
+}
+
+class DataDependenceGraph:public DependenceGraph
+{
+
+ public:
+
+  /* ! \brief Contstructor for DataDependenceGraph
+     Params: - SgNode * head: The root of the AST that you want to build the 
+     DDG for - InterproceduralInfo * ii: the InterproceduralInfo object for
+     storing interprocedural information
+     Side effects: - adds data dependence edges to nodes from
+     _interprocedural
+     If ii is NULL, we assume that we are not doing interprocedural
+     analysis. Otherwise, we assume that ii is an InterproceduralInfo object 
+     that has been initialized by the CDG for the same procedure */
+#ifdef NEWDU
+  DataDependenceGraph(SgNode * head,EDefUse * du, InterproceduralInfo * ii = NULL);
+#else
+  DataDependenceGraph(SgNode * head, InterproceduralInfo * ii = NULL);
+#endif
+  // ! calls establishEdge with EdgeType defaulted to DATA
+  /*    virtual void establishEdge(DependenceNode * from, DependenceNode * to)
+	{
+        DependenceGraph::establishEdge(from, to, DATA);
+	}*/
+  void computeInterproceduralInformation(InterproceduralInfo * ii);
+}
+
+class MergedDependenceGraph:public DependenceGraph
+{
+ public:
+
+  /* ! \brief creates a new dependence node that reflects the argument (not
+     a direct copy)
+     Params: - DependenceNode * node: The node we want to make a "copy" of
+     Return: If we've already "copied" the node, return the existing
+     DependenceNode. Otherwise create a new one.
+     Side effects: calls createNode appropriately to perform "copies," so
+     _sgnode_map or _depend_map may be updated.
+     If the node we are adding is an interprocedural node, we want to copy
+     the _interproc pointer, not node itself. If it's an SgNode, we want to
+     build the DependenceNode around that, as opposed to node. If it's
+     neither, we just copy the argument. */
+  DependenceNode * _importNode(DependenceNode * node);
+
+  /* ! \brief creates a backward slice starting from node
+     Params: - SgNode * node: the slicing criterion
+     Return: returns a set of SgNodes which belong in the slice with slicing 
+     criterion node.
+     This function calls getSlice, and prunes the returned values to find
+     just the SgNodes. */
+  std::set < SgNode * >slice(SgNode * node);
+
+  /* ! \brief creates a backward slice starting from node
+     Params: - DependenceNode * node: the slicing criterion
+     Return: returns a set of DependenceNodes which belong in the slice with 
+     slicing criterion node.
+     This is a more general version of slice, which operates on any
+     DependenceNode. */
+  virtual std::set < DependenceNode * >getSlice(DependenceNode * node) = 0;
+}
+
+class FunctionDependenceGraph:public MergedDependenceGraph
+{
+ public:
+  /* ! \brief Constructor for FunctionDependenceGraph, initialized with the
+     CDG and DDG for the function.
+     Params: - ControlDependenceGraph * cdg: a previously built CDG for the
+     function - DataDependenceGraph * ddg: a previously build DDG for the
+     function - InterproceduralInfo * ii: If NULL, we aren't doing
+     interprocedural. Otherwise, the fully initialized InterproceduralInfo
+     object for the function.
+  */
+  FunctionDependenceGraph(ControlDependenceGraph * cdg, DataDependenceGraph * ddg,
+			  InterproceduralInfo * ii = NULL);
+  /* ! \brief gets a slice with slicing criterion node
+     This simply does a backwards reachability across all edges to produce
+     the slice. */
+  virtual std::set < DependenceNode * >getSlice(DependenceNode * node);
+}
+
+class SystemDependenceGraph:public MergedDependenceGraph
+{
+ public:
+  void addLibraryExtender(SDGLibraryExtender * le)
+  SystemDependenceGraph(){debug=false;}
+  SgNode *getMainFunction();
+  void createSafeConfiguration(SgFunctionDeclaration *fDef);
+  bool isKnownLibraryFunction(SgFunctionDeclaration *fDec);
+  void createConnectionsForLibaryFunction(SgFunctionDeclaration *fDec);
+  void parseProject(SgProject *project);
+    
+  /*! once all functions have been added to the SystemDependenceGraph this function performas the connection of callsites to all possible called functions and establishes summary-edges*/
+  void performInterproceduralAnalysis();
+  void computeSummaryEdges();
+  void cleanUp(std::set<SgNode*> preserve);
+
+  /* ! \brief adds a PDG to our SDG
+
+     Params: - FunctionDependenceGraph * pdg: The PDG to add to the SDG
+
+     Side effects: Merges PDG in using _mergeGraph. Maps function PDG
+     represents to the PDG itself in _funcs_map. */
+  void addFunction(FunctionDependenceGraph * pdg);
+  void createFunctionStub(InterproceduralInfo * info);
+    
+  void addFunction(ControlDependenceGraph * cdg, DataDependenceGraph * ddg);
+  InterproceduralInfo * getInterproceduralInformation(SgFunctionDeclaration * dec)
+  void addInterproceduralInformation(InterproceduralInfo * info)
+  void doInterproceduralConnections(InterproceduralInfo * ii);
+    
+
+  /* ! \brief links all the functions together
+
+     After the PDGs have been merged into the SDG, each call site is linked
+     to the PDG associated with the function that it calls: - The callsite
+     node is linked to the entry node with a "call" edge - Each actual-in
+     node is linked to the formal-in node with a "call" edge - Each
+     formal-out node is linked to the actual-out node with a "return" edge */
+  void process();
+
+  /* ! \brief performs a backwards slice with slicing criterion node
+
+     getSlice is defined according to the paper by Horowitz et al. as a two
+     phase operation. The first operation does backwards reachability to
+     "mark" nodes while not traversing return edges. Thus it ignores functin 
+     calls. The second phase does backwards reachability from all marked
+     nodes while not traversing call edges. Thus it ignores calling
+     functions. The final set of reachable nodes is the interprocedural
+     slice. */
+  virtual std::set < DependenceNode * >getSlice(DependenceNode * node);
+
+  /* ! \brief retrieve the PDGs in the graph
+
+     Returns: a set of FunctionDependenceGraph that comprise the
+     SystemDependenceGraph */
+  std::set < FunctionDependenceGraph * >getPDGs();
+}
+
+<EDefUse.h>
+class EDefUse
+{
+public:
+  EDefUse(SgProject * proj);
+      int run(bool debug);
+      // get the vector of defining and usage nodes for a specific node and a initializedName
+      std::vector < SgNode* > getDefFor(SgNode* node, SgInitializedName* initName);
+      std::vector < SgNode* > getUseFor(SgNode* node, SgInitializedName* initName);
+      std::vector < std::pair < SgInitializedName* , SgNode* > >  getDefMultiMapFor(SgNode* node);
+      // return whether a node is a global node
+      bool isNodeGlobalVariable(SgInitializedName* node);
+};
+
+<InterproceduralInfo.h>
+class InterproceduralInfo
+{
+	public:
+	static SgNode * identifyEntryNode(SgFunctionDeclaration * dec)
+	static 	SgNode * identifyEntryNode(SgFunctionDefinition * def)
+        // ! the callsite - one per SgFunctionCallExp
+    void setCallInterestingNode(int id,SgNode * node)
+    SgNode * getCallInterestingNode(int id)
+	SgNode * getActualReturn(int id)
+	SgNode * getActualIn(int id,int varNr)
+	int getActualInCount(int id)
+	void addActualIn(int id,SgExpression * node)
+	void setSliceImportantNode(int id,SgNode * node)
+	void setActualReturn(int id,SgNode * node)
+	//! returns the node for the function call, which contains the function call
+	SgNode * getSliceImportantFunctionCallNode(int i)
+	std::set<SgNode *> getExitNodes()
+	void addParameterToFunctionCall(SgNode * functionCall,SgExpression * param)
+	int callSiteCount()
+	SgNode * getFunctionCallExpNode(int i)
+	SgNode * getFunctionEntry()
+	void setEllipse(SgNode * formal)
+	SgNode* getEllipse()
+	bool isUndefined()
+	int getFormalCount()
+	SgNode * getFormal(int nr)
+	void setFormalReturn(SgNode *  node)
+	SgNode * getFormalReturn()
+	// add this DependenceNode to the list of nodes which lead to exiting this function
+	void addExitNode(SgNode * node)
+	InterproceduralInfo(SgFunctionDeclaration* functionDeclaration)
+   
+	/* ! \brief Gets the function declaration that the InterproceduralInfo object is for.
+	   Returns: The SgFunctionDeclaration node that is associated with this object */
+	SgFunctionDeclaration * foo(){return decl;}
+	SgFunctionDefinition * getFunctionDefinition()
+    SgFunctionDeclaration * getFunctionDeclaration()
+   int addFunctionCall(SgNode * functionCall)
+
+};
+
+<SimpleDirectedGraph.h>
+  //! get all the nodes in the graph
+  std::set<SimpleDirectedGraphNode *> getNodes() {return _nodes;}
+  //! Add a node to the graph
+  virtual void addNode(SimpleDirectedGraphNode * node) 
+  //! Add a link to the graph between "from" and to "to"
+  virtual void addLink(SimpleDirectedGraphNode * from, SimpleDirectedGraphNode * to) 
+  //! Check if a node containing data is in the graph
+  bool nodeExists(SimpleDirectedGraphNode * node) 
+  //! Check if a dependence is in the graph
+  bool linkExists(SimpleDirectedGraphNode * from, SimpleDirectedGraphNode * to) 
+  void printGraph() 
+  virtual void writeDot(char * filename) 
+  std::set<SimpleDirectedGraphNode *> getReachable(SimpleDirectedGraphNode * start, TraverseDirection dir) {
+}
+
+<SlicingInfo.h>
+    // ! Returns the SgFunctionDeclaration that we are targeting
+    SgFunctionDeclaration *getTargetFunction()
+    // ! Returns the statements that are part of the slicing criterion
+    SgNode *getSlicingCriterion()
+    std::list < SgNode * >getSlicingTargets()
+
+      \end{lstlisting}
+
+
+      \item Liveness Analysis
+      \begin{lstlisting}
+<LivenessAnalysis.h>
+ LivenessAnalysis(bool debug, DefUseAnalysis* dfa_p)
+  SgFunctionDefinition* getFunction(SgNode* node);
+  int getNumberOfNodesVisited();
+  // Run liveness analysis on the entire project
+  //bool run(bool debug=false);
+  // Run liveness analysis for a single function
+  FilteredCFGNode < IsDFAFilter > run(SgFunctionDefinition* function, bool& abortme);
+  std::vector<SgInitializedName*> getIn(SgNode* sgNode) { return in[sgNode];}
+  std::vector<SgInitializedName*> getOut(SgNode* sgNode) { return out[sgNode];}
+  int getVisited(SgNode* n) {return visited[n];}
+  void setIn(SgNode* sgNode, std::vector<SgInitializedName*> vec) { in[sgNode]= vec;}
+  void setOut(SgNode* sgNode, std::vector<SgInitializedName*> vec ) { out[sgNode]=vec;}
+  // used by ASTTraversals
+  template <class T> T merge_no_dups( T& v1,  T& v2);
+  void fixupStatementsINOUT(SgFunctionDefinition* funcDecl);
+
+      \end{lstlisting}
+
+      \item Dependence Analysis
+      \begin{lstlisting}
+
+      \end{lstlisting}
+
+
       \item AST Interpreter (Interpretation of Concrete Semantics using AST)
    \end{enumerate}
 
