@@ -26,7 +26,7 @@ set(INSTALL_TARGETS_DEFAULT_ARGS  RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
 
 cmake_minimum_required(VERSION 2.6)
 add_definitions(${QT_DEFINITIONS} ${KDE4_DEFINITIONS})
-enable_language(Fortran)
+#enable_language(Fortran)
 
 set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g " )
 #set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -DHAVE_CONFIG_H" )
@@ -46,7 +46,7 @@ include(ConfigureChecks)
 
 include(MacroLibrary)
 include(FindMySQL)
-include(FindOpenSSL)
+#include(FindOpenSSL)
 #include(FindSQLITE3)
 include(FindJava)
 
@@ -70,8 +70,8 @@ if(NOT Boost_FOUND)
 endif(NOT Boost_FOUND)
 
 
-find_library(M_LIB m)
-find_library(RT_LIB rt)
+#find_library(M_LIB m)
+#find_library(RT_LIB rt)
 
 
 set( link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${RT_LIB} ${OPENSSL_LIBRARIES} )
@@ -90,6 +90,7 @@ configure_file(${ROSE_TOP_SRC_DIR}/rose_config.h.in.cmake ${ROSE_TOP_BINARY_DIR}
      ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/
      ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/astFileIO
      ${ROSE_TOP_SRC_DIR}
+     ${ROSE_TOP_SRC_DIR}/winspecific
      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII 
      ${ROSE_TOP_SRC_DIR}/src/ROSETTA/src/
      ${ROSE_TOP_SRC_DIR}/src 
