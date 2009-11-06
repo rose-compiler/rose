@@ -1,3 +1,30 @@
+2009-11-06 19:28  dquinlan
+
+	* [r8096]
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/astStructRecognition.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/generateSourceCodeForDataStructures.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/generateSourceCodeForDataStructures.h,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/structureRecognitionSupport.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/structureRecognitionSupport.h,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/testProgram_1.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/variableInitialization.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/virtualTableLoad.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/binaryDataStructureRecognition_tests/virtualTableLoad.h:
+	  These should be my last direct checkin to svn, moving to git.
+
+2009-11-06 17:28  matzke
+
+	* [r8095] /trunk/ROSE/scripts/rgit,
+	  /trunk/ROSE/scripts/rgit/README, /trunk/ROSE/scripts/rgit/rgit,
+	  /trunk/ROSE/scripts/rgit/tests,
+	  /trunk/ROSE/scripts/rgit/tests/mergepass,
+	  /trunk/ROSE/scripts/rgit/tests/nobins,
+	  /trunk/ROSE/scripts/rgit/tests/setup-spizella.com,
+	  /trunk/ROSE/scripts/rgit/tests/show-environment,
+	  /trunk/ROSE/scripts/rgit/tests/thorough: Rgit: scripts for
+	  combining Git with Subversion
+
 2009-11-06 01:44  panas2
 
 	* [r8091] /trunk/ROSE/projects/RTED/CppRuntimeSystem/Makefile.am,
