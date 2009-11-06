@@ -381,8 +381,12 @@ name ::=
 
 scope_name ::=  % name of a scope
     {::}
-  | class_scope(scope_name, todo /* class kind (struct, union, etc.) */)
+  | class_scope(scope_name, class_kind, preprocessing_info)
   | name.
+
+class_kind ::=
+    {class}
+  | {struct}.
 
 number_or_string ::=
     {It} where ( numberatom(It) ; number(It) ; string(It) ; atom(It) ).

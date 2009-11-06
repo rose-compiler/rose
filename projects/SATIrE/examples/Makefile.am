@@ -119,19 +119,23 @@ init.token:
 	find `dirname $<` -name '*.h' -exec cp '{}' $(testdir) ';'
 	find $(testdir) -name '*.h' -exec chmod u+w '{}' ';'
 
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term -I$(shell dirname $<) TEST0.c -o TEST1.pl
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.pl -o TEST2.c
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term -I$(shell dirname $<) TEST2.c -o TEST3.pl
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST3.pl -o TEST4.c
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term -I$(shell dirname $<) TEST0.c -o TEST1.term
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.term -o TEST2.c
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term -I$(shell dirname $<) TEST2.c -o TEST3.term
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST3.term -o TEST4.c
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/termite_lint TEST1.term
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/termite_lint TEST3.term
 
 %.termite: %.C
 	@echo "TERMITE: performing a translation circle of" $<
 	cp $< $(testdir)/TEST0.C
 	chmod u+w $(testdir)/TEST0.C
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term -I$(shell dirname $<) TEST0.C -o TEST1.pl
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.pl -o TEST2.C
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term -I$(shell dirname $<) TEST2.C -o TEST3.pl
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST3.pl -o TEST4.C
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term -I$(shell dirname $<) TEST0.C -o TEST1.term
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.term -o TEST2.C
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term -I$(shell dirname $<) TEST2.C -o TEST3.term
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST3.term -o TEST4.C
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/termite_lint TEST1.term
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/termite_lint TEST3.term
 
 termite: init.token
 	@echo
@@ -253,6 +257,7 @@ itvl_stresstest: interval
 		echo    "(told you this was strict)"; \
 		exit 1; \
 	fi
+	$(DESTDIR)/$(bindir)/termite_lint itvl_stresstest.term
 	@cd $(testdir)/interval; export TERMITE_LIB=$(datadir)/termite; $(SWI_PL) -q -O -t main -s validator.pl < itvl_stresstest.term > itvl_stresstest_assert.term
 	@cd $(testdir)/interval; $(DESTDIR)/$(bindir)/term2c itvl_stresstest_assert.term -o itvl_stresstest_assert.c
 	@cd $(testdir)/interval; $(CC) -std=c99 -DINCLUDE_ASSERT_H -o itvl_stresstest_assert itvl_stresstest_assert.c
