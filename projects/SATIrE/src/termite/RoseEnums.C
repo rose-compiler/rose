@@ -226,6 +226,9 @@ static const char* e_DirectiveType[] = {
   "cpreprocessorUnknownDeclaration",
   "c_StyleComment",
   "cplusplusStyleComment",
+  "fortranStyleComment",
+  "cpreprocessorBlankLine",
+
   "cpreprocessorIncludeDeclaration",
   "cpreprocessorIncludeNextDeclaration",
   "cpreprocessorDefineDeclaration",
@@ -253,9 +256,20 @@ static const char* e_DirectiveType[] = {
   "lineReplacement",
   "clinkageSpecificationStart",
   "clinkageSpecificationEnd",
+  // DQ (11/17/2008): Added support for #ident
+  "cpreprocessorIdentDeclaration",
 
-  // Added support for Fortran comments
-  "fortranStyleComment"
+  // DQ (11/17/2008): This handles the case CPP declarations (called "linemarkers")
+  // (see Google for more details) such as: "# 1 "test2008_05.F90"", "# 1 "<built-in>"", 
+  // "# 1 "<command line>"" "# 1 "test2008_05.F90""
+  // The first token is the line number,
+  // the second token is the filename (or string),
+  // the optional tokens (zero or more) are flags:
+  //   '1' indicates the start of a new file.
+  //   '2' indicates returning to a file (having included another file).
+  //   '3' indicates that the following text comes from a system header file, so certain warnings should be supressed. 
+  //   '4' indicates that the following text should be treated as being wrapped in an implicit 'extern "C"' block
+  "cpreprocessorCompilerGeneratedLinemarker"
 };
 
 /////////////////////////////////////////////////////////////////////////
