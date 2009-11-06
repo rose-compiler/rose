@@ -1,6 +1,6 @@
 ## Process this file with automake to create Makefile.in.
 
-SUBDIRS = grato pig analyzer termite
+SUBDIRS = grato pig analyzer termite aral
 
 nobase_include_HEADERS = satire/satire_rose.h
 

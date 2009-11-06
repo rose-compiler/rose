@@ -246,6 +246,8 @@ src/analyzer/Makefile
 src/grato/Makefile
 src/pig/Makefile
 src/satire/satire_rose.h
+src/aral/Makefile
+src/aral/src/Makefile
 src/Makefile
 examples/Makefile
 tools/Makefile

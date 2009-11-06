@@ -1,6 +1,7 @@
 /*********************************
 * ARAL Scanner                   *
 * Author: Markus Schordan, 2009. *
+* (C) Markus Schordan            *
 **********************************/
 
 %{
@@ -10,8 +11,8 @@
 
 #include <string>
 #include <cstring>
-#include "parser_decls.h"
-#include "parser.H"
+#include "aralparser_decls.h"
+#include "aralparser.h"
 
 YY_BUFFER_STATE gInputBuffer;
 
@@ -24,32 +25,72 @@ YY_BUFFER_STATE gInputBuffer;
 %option 8bit
 %option noreject
 %option never-interactive
-%option outfile="lexer.C"
+
 
 digit                   [0-9]
 letter                  [a-zA-Z_]
 hexdigit                [a-fA-F0-9]
-single			[{}<>(),;]
+single			[{}<>(),;:=+*/%^$-]
 
 %%
 "//".*                  ; /* comment */
 
-{single}		{  return *yytext; }
-\"(digit|letter|" ")*\"	{ yylval.string = strdup(yytext+1); return STRING; }
+"ANALYSIS"		{ return ANALYSIS; }
+"CONFIG"		{ return CONFIG; }
+"MAPPING"|"IDMAP"	{ return MAPPING; }
+"RESULT"		{ return RESULT; }
+"TYPE"			{ return TYPE; }
+"DATA"			{ return DATA; }
+"END"			{ return END; }
+"NAME"			{ return NAME; }
+"noflow"		{ return NOFLOW; }
+"pre"			{ return PRE; }
+"post"			{ return POST; }
+"program"		{ return PROGRAM_SCOPE; }
+"file"			{ return FILE_SCOPE; }
+"function"		{ return FUNCTION_SCOPE; }
+
+"label"			{ return TYPE_LABEL; }
+"tuple"			{ return TYPE_TUPLE; }
+"set"			{ return TYPE_SET; }
+"map"			{ return TYPE_MAP; }
+"list"			{ return TYPE_LIST; }
+"lift"			{ return TYPE_LIFT; }
+"int"			{ return TYPE_INT; }
+"float"			{ return TYPE_FLOAT; }
+"string"		{ return TYPE_STRING; }
+"progid"		{ return TYPE_PROGID; }
+"funcid"		{ return TYPE_FUNCID; }
+"stmtid"		{ return TYPE_STMTID; }
+"exprid"		{ return TYPE_EXPRID; }
+"varid"			{ return TYPE_VARID; }
+
+"default"		{ return DEFAULT; }
+"->"			{ return RIGHTARROW; }
+"\\"			{ return MAPSEPARATOR; }
+"<="			{ return LT; }
+">="			{ return GT; }
+"!="			{ return NEQ; }
+"and"			{ return AND; }
+"or"			{ return OR; }
+"not"			{ return NOT; }
+
+{single}		{  return *araltext; }
+\"[^"\n]**["\n]	{ int slen=strlen(araltext+1); char* snew=(char*)malloc(slen-1+1);strncpy(snew,araltext+1,slen-1);snew[slen-1]=0; arallval.string = snew; return STRING; }
 "["			{ return '['; }
 "]"			{ return ']'; }
 
 "top"			      { return TOP; }
 "bot"			      { return BOT; }
-{letter}({letter}|{digit})*  { yylval.idstring = strdup(yytext); /* = lookup(yytext); */ return IDENT; }
-{digit}{digit}*              { yylval.intval = atoi(yytext); return INTEGER; }
-"@"{digit}{digit}*              { yylval.intval = atoi(yytext+1); return LABEL; }
-"#"{digit}{digit}*              { yylval.intval = atoi(yytext+1); return IDCODE; }
+{letter}({letter}|{digit})*  { arallval.idstring = strdup(araltext); /* = lookup(araltext); */ return IDENT; }
+{digit}{digit}*              { arallval.intval = atoi(araltext); return INTEGER; }
+"@"{digit}{digit}*              { arallval.intval = atoi(araltext+1); return LABEL; }
+"#"{digit}{digit}*              { arallval.intval = atoi(araltext+1); return IDCODE; }
 
 
 [ \t\r]                      ; /* white space */
 \n                           ; /* we are using #option yylineno */ 
-.                            printf("ERROR 1: Lexical error! : <%s>\n",yytext); exit(1);
+.                            printf("ERROR 1: Lexical error! : <%s>\n",araltext); exit(1);
 
 %%
 
@@ -58,13 +99,13 @@ InitializeLexer(const std::string& tokenizeString)
 {
   yylineno = 1;
   const char* inputBytes = tokenizeString.c_str();
-  gInputBuffer = yy_scan_bytes(inputBytes, tokenizeString.length());
+  gInputBuffer = aral_scan_bytes(inputBytes, tokenizeString.length());
 }
 
 void
 FinishLexer()
 {
-  yy_delete_buffer(gInputBuffer);
+  aral_delete_buffer(gInputBuffer);
 }
 
 #if 0

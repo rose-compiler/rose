@@ -6,7 +6,7 @@
 // These are global declarations needed for the lexer and parser files.
 
 // ARAL classes
-#include "../satire/aral.h"
+#include "aralir.h"
 using namespace Aral;
 
 // Front End specific classes
@@ -14,14 +14,14 @@ class CCompiler;
 void InitializeParser(const std::string& inString, CCompiler* compilerAlias);
 void FinishParser();
 
-void InitializeLexer(const std::string& tokenizeString);
-void FinishLexer();
+//void InitializeLexer(const std::string& tokenizeString);
+//void FinishLexer();
 
-extern char* yytext;
-extern int yylineno;
-extern bool yydeprecated;
-int yylex();
-int yyparse();
-void yyerror(const char*);
+extern char* araltext;
+extern int arallineno;
+extern bool araldeprecated;
+int arallex();
+int aralparse();
+void aralerror(const char*);
 
 #endif

@@ -1,0 +1,383 @@
+/***************************************************************
+ * ARAL Parser                                                 *
+ * Author: Markus Schordan, 2009.                              *
+ * (C) Markus Schordan                                         *
+ ***************************************************************/
+
+%{
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "aralparser_decls.h"
+
+char *input_filename = NULL;
+char tempfilename[30];
+char *output_filename = tempfilename;
+Aral::Data* aralIrRoot;
+
+//void process_unit(struct func *);
+
+void MSG(char* s)
+{
+#ifdef TEST 
+	printf("%s",s);
+#endif
+}
+
+#ifndef NDEBUG
+#ifndef YYDEBUG
+#define YYDEBUG 1
+#endif
+#endif
+
+%}
+
+%union {
+char* idstring; /* IDENT */
+char* string; /* STRING */
+long intval; /* INTEGER */
+int length; /* #elements */
+Data* araldata;
+Set* aralset;
+Map* aralmap;
+MapList* aralmaplist;
+List* arallist;
+ResultDataList* aralresultdatalist;
+Tuple* araltuple;
+MapPair* aralmappair;
+ScopeSpecifier* scopespecifier;
+LocationSpecifier locationspecifier;
+DataSectionItem* datasectionitem;
+DataSectionItemList* datasectionitemlist;
+ResultSection* resultsection;
+ResultSectionList* resultsectionlist;
+char* sectionname;
+Analysis* aralanalysis;
+}
+
+%right NOT
+%left OR
+%left AND
+%left '=' NEQ
+%left '<' '>' GT LT 
+%left '+' '-'
+%left '*' '/' '%'
+%left '^'
+
+%token ';' ',' 
+%token '{' '}' '[' ']' '(' ')'
+%token TOP BOT
+%token <idstring> IDENT 
+%token <intval> INTEGER IDCODE LABEL
+%token <string> STRING
+%token ANALYSIS MAPPING RESULT TYPE DATA END NAME
+%token PROGRAM_SCOPE NOFLOW PRE POST FUNCTION_SCOPE FILE_SCOPE
+%token DEFAULT RIGHTARROW CONFIG
+
+%token TYPE_MAP MAPSEPARATOR
+%token TYPE_LABEL TYPE_TUPLE TYPE_SET TYPE_LIST TYPE_LIFT 
+%token TYPE_INT TYPE_FLOAT TYPE_STRING
+%token TYPE_PROGID TYPE_FUNCID TYPE_STMTID TYPE_EXPRID TYPE_VARID
+%token LT GT NEQ '='
+
+%type <araldata> context element basic_element data constraint opt_config_section
+%type <aralset> set set_elements opt_set_elements
+%type <aralmaplist> opt_map_section map_list
+%type <aralmap> mapdef map 
+%type <aralmap> map_elements opt_map_elements
+%type <arallist> list_elements opt_list_elements
+%type <arallist> tuple_elements opt_tuple_elements
+%type <aralresultdatalist> data_list
+%type <aralmappair> mapping_element
+%type <scopespecifier> scope_specifier
+%type <locationspecifier> location_specifier
+%type <datasectionitem> data_section_item
+%type <datasectionitemlist> data_section_item_list data_section
+%type <resultsection> result_section
+%type <resultsectionlist> opt_result_section_list result_section_list
+%type <sectionname> name_section
+%type <aralanalysis> analysis;
+
+%start start
+
+%%
+
+start		: analysis
+		;
+analysis	: ANALYSIS opt_config_section opt_map_section opt_result_section_list END {aralIrRoot=new Analysis($2,$3,$4);}
+		;
+
+opt_config_section: /* eps */ { $$=0; }
+		| CONFIG element { $$=$2; }		
+		;
+
+opt_map_section: /* eps */ { $$=new MapList(); }
+		| MAPPING map_list { $$=$2; }
+		;
+
+map_list	: /* eps */ { $$=new MapList(); }
+		| map_list mapdef  { $1->addBack($2);}
+		;
+
+mapdef		: TYPE_MAP '(' type ',' type ')' ':' map ';' {$$=$8;}
+		;
+
+opt_result_section_list: /* eps */ {$$=new ResultSectionList();}
+		| result_section_list {$$=$1;}
+		;
+
+result_section_list: result_section { $$=new ResultSectionList(); $$->addFront($1); }
+		| result_section_list result_section { $1->addBack($2); $$=$1; }
+		;
+
+result_section	: RESULT name_section type_section data_section END { $$=new ResultSection($2,0,$4); }
+		;
+name_section	: NAME IDENT {$$=$2;}
+		;
+type_section	: TYPE opt_type_decls
+
+opt_type_decls	: /* eps */
+		| type_decls
+		;
+
+type_decls	: type_equations context_type type
+		| type_equations type
+		| context_type type
+		| type
+		;
+
+type_equations	: type_equation
+		| type_equations type_equation
+		;
+
+type_equation	: IDENT '=' type ';'
+		;
+
+context_type	: '<' type '>'
+		;
+
+data_section	: DATA data_section_item_list { $$=$2;}
+		;
+
+data_section_item_list: /* eps */ { $$=new DataSectionItemList(); }
+		| data_section_item_list data_section_item { $1->addBack($2); $$=$1; }
+		;
+
+data_section_item: scope_specifier location_specifier data_list ';' { $$=new DataSectionItem($1,$2,$3); }
+		;
+
+scope_specifier	: PROGRAM_SCOPE { $$=new ScopeSpecifier(ScopeSpecifier::E_PROGRAM_SCOPE);}
+		| FILE_SCOPE '(' STRING ')' { $$=new ScopeSpecifier(ScopeSpecifier::E_FILE_SCOPE,std::string($3));}
+		| FUNCTION_SCOPE '(' STRING ')' { $$=new ScopeSpecifier(ScopeSpecifier::E_FUNCTION_SCOPE,std::string($3));}
+		| LABEL {$$=new ScopeSpecifier(ScopeSpecifier::E_LABEL_SCOPE,new Label($1));}
+		;
+location_specifier: NOFLOW { $$=Aral::E_NOFLOW;}
+		| PRE {$$=Aral::E_PRE; }
+		| POST {$$=Aral::E_POST; }
+		;
+
+/* build a ResultDataList */
+data_list	: data { $$=new ResultDataList(); $$->addFront($1);}
+		| data_list ',' data { $1->addBack($3); $$=$1;}
+		;
+
+data		: context element { $$=new ResultData($1,$2); }
+		;
+
+context		: /* eps */ {$$=0;}
+		| '<' element '>' {$$=$2;}
+		;
+
+element		: basic_element
+		| set {$$=$1;}
+		| map {$$=$1;}
+		| '$' constraint '$' { $$=$2; }
+		| '[' opt_list_elements ']' { $$=$2; }
+		| '(' opt_tuple_elements ')' 
+		  { 
+			Tuple* tupleobj=new Tuple($2->size());
+			int pos=0;
+			for(List::iterator i=$2->begin();i!=$2->end();++i,++pos) {
+				Aral::Data* temp=(*i)->deepCopy();
+				tupleobj->setAt(pos,temp);
+			}
+			delete $2;
+			$$=tupleobj;
+		  }
+		;
+
+set		: '{' opt_set_elements '}' { $$=$2; }
+		;
+
+map		: '{' DEFAULT RIGHTARROW element MAPSEPARATOR opt_map_elements '}' 
+		{ 
+			assert($6);
+			$$=$6; $$->setDefaultElement($4);
+		}
+		;
+
+opt_map_elements: /* empty */
+		{
+			$$ = new Map();
+		}
+		| map_elements
+		{
+			$$=$1;
+		}
+opt_set_elements: /* empty */
+		{
+			$$ = new Set();
+		}
+		| set_elements
+		{
+			$$=$1;
+		}
+		;
+opt_list_elements: /* empty */
+		{
+			$$ = new List();
+		}
+		| list_elements
+		{
+			$$=$1;
+		}
+		;
+opt_tuple_elements: /* empty */
+		{
+			$$ = new List();
+		}
+		| tuple_elements
+		{
+			$$=$1;
+		}
+		;
+map_elements	:
+ 		mapping_element
+		{ 	
+			$$ = new Map();
+			$$ -> add($1);
+		}
+		| map_elements ',' mapping_element	
+		{ 
+			$1->add($3);
+			$$=$1; 
+		} 
+    		;
+mapping_element	: element RIGHTARROW element 
+		{ 
+			MapPair* tupleobj=new MapPair();
+			tupleobj->setAt(0,$1); 
+			tupleobj->setAt(1,$3);
+			$$=tupleobj;
+		}
+
+set_elements:
+ 	element
+	{ 	
+		$$ = new Set();
+		$$ -> add($1);
+	}
+	| set_elements ',' element	
+	{ 
+		$1->add($3);
+		$$=$1; 
+	} 
+    	;
+
+list_elements:
+ 	element
+	{ 	
+		$$ = new List();
+		$$ -> addBack($1);
+	}
+	| list_elements ',' element	
+	{ 
+		$1->addBack($3);
+		$$=$1; 
+	} 
+    	;
+
+tuple_elements:
+ 	element
+	{ 	
+		$$ = new List();
+		$$ -> addBack($1);
+	}
+	| tuple_elements ',' element	
+	{ 
+		$1->addBack($3);
+		$$=$1; 
+	} 
+    	;
+
+basic_element	: IDENT { $$=new Ident($1); }
+		| STRING { $$=new String($1); }
+		| INTEGER { $$=new Int32($1); }
+		| LABEL { $$=new Label($1); }
+		| IDCODE { $$=new VarId($1); }
+		| TOP { $$=new TopElement(); }
+ 		| BOT { $$=new BotElement(); }
+		;
+
+type		: TYPE_LABEL 
+		| TYPE_TUPLE '(' opt_type_list ')'
+		| TYPE_SET '(' type ')' 
+		| TYPE_MAP '(' type ',' type ')' 
+		| TYPE_LIST '(' type ')'
+		| TYPE_LIFT '(' type ')'
+		| TYPE_INT '(' INTEGER ')'
+		| TYPE_FLOAT | TYPE_STRING
+		| TYPE_PROGID | TYPE_FUNCID | TYPE_STMTID | TYPE_EXPRID | TYPE_VARID
+		| IDENT
+		;
+
+opt_type_list	: /* eps */
+		| type_list
+		;
+
+type_list	: type
+		| type_list ',' type
+		;
+
+constraint	: basic_element { $$=$1; }
+		| NOT constraint { $$=new InfixOperator("not",0,$2); /* temporary, will be replaced with PrefixOperator */}
+		| constraint '<' constraint { $$=new InfixOperator("<",$1,$3); }
+		| constraint '>' constraint { $$=new InfixOperator(">",$1,$3); }
+		| constraint GT constraint  { $$=new InfixOperator(">=",$1,$3); }
+		| constraint LT constraint  { $$=new InfixOperator("<=",$1,$3); }
+		| constraint '=' constraint { $$=new InfixOperator("=",$1,$3); }
+		| constraint NEQ constraint { $$=new InfixOperator("!=",$1,$3); }
+		| constraint '+' constraint { $$=new InfixOperator("+",$1,$3); }
+		| constraint '-' constraint { $$=new InfixOperator("-",$1,$3); }
+		| constraint '/' constraint { $$=new InfixOperator("/",$1,$3); }
+		| constraint '*' constraint { $$=new InfixOperator("*",$1,$3); }
+		| constraint '%' constraint { $$=new InfixOperator("%",$1,$3); }
+		| constraint '^' constraint { $$=new InfixOperator("^",$1,$3); }
+		| constraint AND constraint { $$=new InfixOperator("and",$1,$3); }
+		| constraint OR  constraint { $$=new InfixOperator("or",$1,$3); }
+		| '(' constraint ')'        { $$=$2; } 
+		;
+%%
+
+void
+aralerror(const char* errorMessage)
+{
+  /* arallineno, errorMessage, araltext */
+  fprintf(stderr,"ARAL parse error: line %d: %s at %s\n",arallineno,errorMessage,araltext);
+}
+
+#if 0
+void process_unit(struct func *unit)
+{
+  /* build symboltables for all functions */
+  build_symtab(unit);
+
+  /********************************************/
+  /* insert analysis and optimizations here!! */
+  /********************************************/
+
+  /* output unit */
+  output_unit(output_filename,unit); 
+}
+#endif
