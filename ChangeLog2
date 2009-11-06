@@ -1,3 +1,17 @@
+2009-11-06 01:44  panas2
+
+	* [r8091] /trunk/ROSE/projects/RTED/CppRuntimeSystem/Makefile.am,
+	  /trunk/ROSE/projects/RTED/Makefile.am: Commented out testing for
+	  32bit for now and also fixed distclean issue
+
+2009-11-05 22:28  keasler
+
+	* [r8090]
+	  /trunk/ROSE/projects/StaticDynamicAnalysis/DynamicCPU/ETrt.c,
+	  /trunk/ROSE/projects/StaticDynamicAnalysis/DynamicCPU/ETrt.h,
+	  /trunk/ROSE/projects/StaticDynamicAnalysis/DynamicCPU/traceCPU.C:
+	  Add PAPI trace option and improve trace in general.
+
 2009-11-05 19:04  panas2
 
 	* [r8077] /trunk/ROSE/projects/RTED/Makefile.am,
