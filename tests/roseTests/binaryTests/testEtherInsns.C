@@ -117,10 +117,11 @@ int main(int argc, char *argv[])
             if (ETHER_NOTIFY_INSTRUCTION==event) {
                 const struct instruction_info *insn_info = (const struct instruction_info*)ether.event_data();
                 rose_addr_t va = insn_info->registers.eip; /*or perhaps insn_info->guest_rip?*/
-                SgAsmInstruction *insn = NULL;
                 try {
+                    SgAsmInstruction *insn = NULL;
                     insn = analysis.disassembler->disassembleOne(insn_info->instruction, va, sizeof(insn_info->instruction), va);
                     printf("0x%08"PRIx64": %s\n", va, unparseInstruction(insn).c_str());
+                    deleteAST(insn);
                 } catch(const Disassembler::Exception &e) {
                     printf("0x%08"PRIx64": cannot disassemble: %s\n", va, e.mesg.c_str());
                 }
