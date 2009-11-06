@@ -1,0 +1,102 @@
+
+Information on git-svn usage:
+   http://maymay.net/blog/2009/02/24/how-to-use-git-svn-as-the-only-subversion-client-youll-need/
+
+Commands used one to setup and maintain GIT and not used by users afterward:
+   Command to use git-svn support (checkes out a git-based SVN repository):
+      git svn clone file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE ROSE
+
+   To update git repository from SVN use (from in the git repository):
+      git svn fetch
+
+
+
+We will try to give you a fast introduction to git, but you should also consider looking up these documents
+  http://*www.*kernel.org/pub/software/scm/git/docs/gittutorial.html
+  http://*book.git-scm.com/
+  http://*www.*sourcemage.org/Git_Guide ( more like a FAQ )
+  http://*stackoverflow.com/questions/315911/git-for-beginners-the-definitive-practical-guide
+
+
+The first step of using a ROSE git repository is to create a local copy 
+    
+     git clone /usr/casc/overture/ROSE/git/ROSE.git
+
+The next step is to list all the branches available in the central git repository
+  
+     git branch -a
+
+Make a local branch for every branch in the central repository that you are interested in that tracks the central git repository branch with the same name. For the branch origin/cmake you would for example do:
+
+     git branch cmake --track origin/cmake
+
+Since you can not check in to the master branch, you have to checkout one of the branches. E.g
+
+     git checkout cmake
+
+Use this command to switch between branches. 
+
+After doing some changes you can push those to the central git by doing
+
+     git push origin branch-name
+
+which in the case of the cmake branch would be
+
+     git push cmake
+
+
+############## WE DESCRIBE HOW TO CREATE A NEW BRANCH  ####################
+
+Suppose you want to do some experimental work on cmake, first checkout cmake
+     git checkout cmake
+
+Then create a branch of cmake
+     git branch experiment
+
+Then change to that branch
+
+      git checkout experiment
+
+When you want to merge back those changes if they are successful
+
+     git checkout cmake
+     git merge experiment
+
+############## WE DESCRIBE HOW YOU MAKE CHANGES TO YOUR BRANCH #############
+
+Given your experimental branch
+   git checkout experiment
+
+Create a new file and make git track it
+    touch new-file.txt
+    git add new-file.txt
+
+Then commit it
+
+     git commit -a
+
+If you want these changes to be pushed to the central git repository type
+
+    git push origin experiment
+
+Since this branch did not exist before, git also created it. 
+
+To get changes from the experiment branch on the central git repository type
+
+    git pull origin experiment
+
+
+After Peter runs: git fetch (on the git svn clone):
+   Copy the changes from all branches in the origin repository to the local repository
+   tracking branches:
+      git fetch origin
+
+   Merge the changes on the svn branch with my current branch:
+      git merge origin/svn
+
+
+How to add a file:
+   git add <file name>
+
+
+
