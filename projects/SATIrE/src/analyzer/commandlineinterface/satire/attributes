@@ -102,3 +102,5 @@ STRING_ATTR(ContextGraphFileName, "")
 #endif
 
 BOOL_ATTR(verbatimArgs, Off)
+
+STRING_ATTR(AralInputFileName, "")

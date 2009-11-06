@@ -10,6 +10,7 @@ INCLUDES = -I$(ROSE_INCLUDE_DIR) \
 	-I$(top_srcdir)/src/analyzer/support/satire \
 	-I$(top_srcdir)/src/termite/satire \
 	-I$(top_srcdir)/src/analyzer/astnumbering/satire \
+    -I$(top_srcdir)/src/aral/src/satire \
 	-I$(top_srcdir)/src/analyzer/annotation/satire
 
 if WITH_PAG

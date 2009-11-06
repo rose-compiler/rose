@@ -119,6 +119,9 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo(""),_n
     "   --output-sourceprefix=<PREFIX> generate for each input file one output file\n"
     "                            with prefixed name\n"
     "\n"
+    " Analysis data input options:\n"
+    "   --read-aral=<FILENAME>   read ARAL information from specified file\n"
+    "\n"
 #if HAVE_PAG
     " GDL output options:\n"
     "   --gdl-preinfo            output analysis info before cfg nodes\n"

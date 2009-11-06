@@ -8,6 +8,10 @@
 #include "TermPrinter.h"
 #undef DO_NOT_USE_DFIPRINTER
 
+// This is the ARAL input file pointer, which is global because the ARAL
+// parser uses advanced late 1970s parsing technology.
+extern FILE *aralin;
+
 namespace SATIrE {
 
 AnalyzerOptions *extractOptions(int argc, char **argv)
@@ -200,6 +204,50 @@ void outputProgramRepresentation(Program *program, AnalyzerOptions *options)
             program->prologTerm = tp.getTerm();
         }
     }
+}
+
+// helper function
+static void addAralResults(Program *program, Aral::ResultSection *results);
+
+void attachAralInformation(Program *program, AnalyzerOptions *options)
+{
+    std::string aralFileName = options->getAralInputFileName();
+    FILE *aralFile = std::fopen(aralFileName.c_str(), "r");
+    {{{ if (aralFile == NULL)
+    {
+        std::cerr
+            << "** ERROR: could not open file '"
+            << aralFileName
+            << "' for reading"
+            << std::endl;
+        std::exit(EXIT_FAILURE);
+    } }}}
+
+    aralin = aralFile;
+    Aral::Analysis *aralRoot = Aral::Translator::frontEnd();
+    aralin = NULL;
+    fclose(aralFile);
+    {{{ if (aralRoot == NULL)
+    {
+        std::cerr
+            << "** ERROR: ARAL parser failure"
+            << std::endl;
+    } }}}
+
+    Aral::ResultSectionList *results = aralRoot->getResultSectionList();
+    Aral::List::iterator r;
+    for (r = results->begin(); r != results->end(); ++r)
+    {
+        Aral::ResultSection *result
+            = dynamic_cast<Aral::ResultSection *>(*r);
+        assert(result != NULL);
+        addAralResults(program, result);
+    }
+}
+
+static void addAralResults(Program *program, Aral::ResultSection *results)
+{
+ // TODO: Implement this when Aral::ResultSection is more strictly typed.
 }
 
 }

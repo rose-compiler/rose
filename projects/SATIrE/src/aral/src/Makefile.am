@@ -1,3 +1,5 @@
+## Process this file with automake to create Makefile.in.
+
 INCLUDES = -I$(ROSE_INCLUDE_DIR) \
     -I$(BOOST_INCLUDE_DIR) \
     -I$(top_builddir)/src/satire \
@@ -16,6 +18,7 @@ INCLUDES = -I$(ROSE_INCLUDE_DIR) \
 
 bin_PROGRAMS = aral
 lib_LTLIBRARIES = libaral.la
+nobase_include_HEADERS = satire/aralir.h satire/aralparser_decls.h
 
 aral_SOURCES = aral.C
 aral_LDADD = libaral.la

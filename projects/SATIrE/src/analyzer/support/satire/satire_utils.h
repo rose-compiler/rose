@@ -27,6 +27,10 @@ void outputRoseAst(SgProject *astRoot, AnalyzerOptions *options);
 // user.
 void outputProgramRepresentation(Program *program, AnalyzerOptions *options);
 
+// This function attaches ARAL analysis information to the appropriate parts
+// of the program representation.
+void attachAralInformation(Program *program, AnalyzerOptions *options);
+
 }
 
 #endif

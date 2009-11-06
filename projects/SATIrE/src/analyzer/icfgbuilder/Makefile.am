@@ -25,6 +25,7 @@ INCLUDES += -I$(ROSE_INCLUDE_DIR) \
     -I$(top_srcdir)/src/analyzer/provided/aslan/satire \
 	-I$(top_srcdir)/src/analyzer/support/satire \
 	-I$(top_srcdir)/src/analyzer/annotation/satire \
+    -I$(top_srcdir)/src/aral/src/satire \
 	-I$(top_srcdir)/src/termite/satire \
 	-I$(top_builddir)/src/termite/satire
 

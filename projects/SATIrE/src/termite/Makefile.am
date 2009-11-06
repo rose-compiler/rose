@@ -14,6 +14,7 @@ INCLUDES = -I$(top_builddir)/src/satire \
 	   -I$(top_srcdir)/src/analyzer/provided/aslan/satire \
 	   -I$(top_srcdir)/src/analyzer/support \
 	   -I$(top_srcdir)/src/analyzer/support/satire \
+       -I$(top_srcdir)/src/aral/src/satire \
 	   -I$(ROSE_INCLUDE_DIR) \
 	   -I$(BOOST_INCLUDE_DIR)
 

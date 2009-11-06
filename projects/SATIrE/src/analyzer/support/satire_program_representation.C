@@ -13,6 +13,9 @@ Program::Program(AnalyzerOptions *o)
     if (options->buildIcfg())
         icfg = createICFG(astRoot, options);
 
+    if (options->getAralInputFileName() != "")
+        attachAralInformation(this, options);
+
  // Run any provided analyzers that were specified on the command line.
  // Logically, this is part of program construction because the user asked
  // for an annotated program.

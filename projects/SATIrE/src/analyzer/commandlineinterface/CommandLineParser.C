@@ -195,6 +195,11 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->checkIcfgOn();
   } else if (optionMatch(argv[i], "--no-check-icfg")) {
     cl->checkIcfgOff();
+  } else if (optionMatchPrefix(argv[i], "--read-aral=")) {
+    cl->setAralInputFileName(strdup(argv[i]+prefixLength));
+    // force construction of ICFG, since otherwise we have no way to use the
+    // ARAL information
+    cl->buildIcfgOn();
   } else if (optionMatchPrefix(argv[i], "--output-source=")) {
     if (strlen(argv[i]+prefixLength) == 0) {
       cl->setOptionsErrorMessage("empty output file name");

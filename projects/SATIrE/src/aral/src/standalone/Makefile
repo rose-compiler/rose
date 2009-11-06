@@ -1,0 +1,59 @@
+CC = g++ -g
+LD = gcc -g
+YACC = bison
+
+DISTNAME = aral11
+ARAL_SOURCES = ../aral.C ../aralir.C ../aralparser.yxx ../aralscanner.lxx \
+               ../satire/aralir.h ../satire/aralparser_decls.h
+
+All: aral
+
+aralparser.h aralparser.C: aralparser.yxx
+	${YACC} --defines=aralparser.h -p aral -o aralparser.C aralparser.yxx
+
+aralscanner.C: aralscanner.lxx aralparser.h
+	flex --prefix=aral -o aralscanner.C aralscanner.lxx
+
+aral :	aral.C aralscanner.C aralparser.h aralir.C aralir.h 
+	$(CC) aral.C aralscanner.C aralparser.C aralir.C -I. -lfl -o aral 
+
+.PHONY: clean
+clean:
+	rm -f aralscanner.C aralparser.[cChH] symtab.c
+	rm -f aral aral.exe
+	rm -f *~
+	rm -f tests/*~
+	rm -f $(DISTNAME).tar.gz
+
+
+### The following targets (dist, distclean, distcheck) only make sense for
+### developers working inside the SATIrE source tree.
+dist:
+	rm -rf _dist/
+	rm -f $(DISTNAME).tar.gz
+	mkdir _dist/
+	mkdir _dist/aral/
+	cp $(ARAL_SOURCES) Makefile _dist/aral/
+	cd _dist && \
+		tar vczf $(DISTNAME).tar.gz aral/
+	mv _dist/$(DISTNAME).tar.gz .
+	rm -rf _dist/
+
+distclean: clean
+	rm -f $(DISTNAME).tar.gz
+	rm -rf _dist/
+
+distcheck: distclean dist
+	rm -rf _build
+	mkdir _build
+	cp $(DISTNAME).tar.gz _build
+	cd _build && \
+		tar vxzf $(DISTNAME).tar.gz && \
+		cd aral && \
+		make All && \
+		make clean
+	rm -rf _build
+	@echo "============================================"
+	@echo "$(DISTNAME) archives ready for distribution:"
+	@echo "$(DISTNAME).tar.gz"
+	@echo "============================================"
