@@ -275,10 +275,10 @@ RoseToTerm::getPointerTypeSpecific(SgType* mytype) {
   SgPointerType* ptype = isSgPointerType(mytype);
   ROSE_ASSERT(ptype != NULL);
   /* nested type */
-  PrologCompTerm* t = new PrologCompTerm("pointer_type");
-  /* get base type with recursion*/
-  t->addSubterm(getTypeSpecific(ptype->get_base_type()));
-  return t;
+  return new PrologCompTerm
+    ("pointer_type", 1,
+     /* get base type with recursion*/
+     getTypeSpecific(ptype->get_base_type()));
 }
 
 
@@ -857,6 +857,7 @@ RoseToTerm::getGotoStatementSpecific(SgGotoStatement* sgoto) {
  */
 PrologCompTerm* 
 RoseToTerm::getEnumDeclarationSpecific(SgEnumDeclaration* d) {
+  ROSE_ASSERT(d != NULL);
   //get Enum name
   string ename = d->get_name().getString();
   if (ename == "") {
@@ -886,15 +887,15 @@ RoseToTerm::getEnumDeclarationSpecific(SgEnumDeclaration* d) {
  */
 PrologCompTerm* 
 RoseToTerm::getDeclarationAttributes(SgDeclarationStatement* s) {
-  PrologCompTerm* t = new PrologCompTerm
-    ("decl_attributes", 6,
+  ROSE_ASSERT(s != NULL);
+  return new PrologCompTerm
+    ("decl_attributes", 5,
      new PrologInt(s->get_nameOnly()),
      new PrologInt(s->get_forward()),
      new PrologInt(s->get_externBrace()),
      new PrologInt(s->get_skipElaborateType()),
      // ROSE 0.8.8a: new PrologInt(s->get_need_name_qualifier()),
-     new PrologInt(0), // set dummy value
-     PPI(s));
+     new PrologInt(0)); // set dummy value
 }
 
 

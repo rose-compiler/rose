@@ -2778,7 +2778,7 @@ TermToRose::createPragma(Sg_File_Info* fi, PrologCompTerm* t) {
 
 
 /**
- * Post Creation Initializiatoin of SgDeclarationStatement
+ * Post Creation Initialization of SgDeclarationStatement
  * */
 void
 TermToRose::pciDeclarationStatement(SgDeclarationStatement* s,PrologTerm* t) {
@@ -2786,7 +2786,7 @@ TermToRose::pciDeclarationStatement(SgDeclarationStatement* s,PrologTerm* t) {
   PrologCompTerm* atts = isPrologCompTerm(t);
   TERM_ASSERT(t, atts != NULL);
   TERM_ASSERT(t, s != NULL);
-  TERM_ASSERT(t, atts->getArity() == 5);
+  ARITY_ASSERT(atts, 5);
   /* set flags (subterms are ints, implicit cast to bool)*/
   s->set_nameOnly(toInt(atts->at(0)));
   s->set_forward(toInt(atts->at(1)));

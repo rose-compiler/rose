@@ -22,8 +22,11 @@ public:
     if(n > 0) {
       va_list params;
       va_start(params, n);
-      for (size_t i=0; i < n; i++)
-        addSubterm(va_arg(params, PrologTerm *));
+      for (size_t i=0; i < n; i++) {
+	PrologTerm* t = va_arg(params, PrologTerm *);
+	assert(t != NULL);
+        addSubterm(t);
+      }
       va_end(params);
     }
   }
@@ -120,6 +123,7 @@ public:
       va_start(params, n);
       for (size_t i = 0; i < n; i++) {
         PrologTerm *arg_i = va_arg(params, PrologTerm *);
+	assert(arg_i != NULL);
         PL_unify_arg(i+1, term, arg_i->getTerm());
         subterms.push_back(arg_i);
       }
