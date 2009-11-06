@@ -7,6 +7,7 @@ EXTRA_DIST = index_array.txt \
 	     extract-actual-error.sed extract-expected-error.sed
 
 #if ROSE_USE_RTED
+if !OS_VENDOR_REDHAT_32BIT
 
 # To keep compile commands tidy, please ONLY put required include flags here.
 INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I. -Winvalid-pch -pthreads
@@ -843,5 +844,9 @@ check-local: runtimeCheck  checkfast \
 
 else
 check-local: runtimeCheck checkfast
+
+endif
+
+
 
 endif
