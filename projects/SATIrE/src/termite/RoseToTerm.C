@@ -95,14 +95,15 @@ RoseToTerm::getSpecific(SgNode* astNode) {
   } else if (SgPragma* n = isSgPragma(astNode)) {
     a = getPragmaSpecific(n);
   } else {
-    a = new PrologCompTerm("default_annotation", 1, new PrologAtom("null"));
+    if (SgLocatedNode* n = dynamic_cast<SgLocatedNode*>(astNode)) {
+      // add preprocessing info
+      a = new PrologCompTerm("default_annotation", 2, 
+			     new PrologAtom("null"),
+			     PPI(n));
+    } else {
+      a = new PrologCompTerm("default_annotation", 1, new PrologAtom("null"));
+    }
   }
-
-//   // add preprocessing info
-//   if (SgLocatedNode* n = dynamic_cast<SgLocatedNode*>(astNode)) {
-//     a->addSubterm(getPreprocessingInfo(n->getAttachedPreprocessingInfo()));
-//   }
-
   return a;
 }
 
@@ -385,8 +386,7 @@ RoseToTerm::getNewExpSpecific(SgNewExp* ne) {
   return new PrologCompTerm
     ("new_exp_annotation", 2,
      getTypeSpecific(ne->get_specified_type()), /* add type term*/
-     PPI(ne)
-    );
+     PPI(ne));
 }
 
 
@@ -532,12 +532,12 @@ RoseToTerm::getUnaryOpSpecific(SgUnaryOp* op) {
     e4 = new PrologAtom("null");
   }
   return new PrologCompTerm
-    ("unary_op_annotation", 4+1,
+    ("unary_op_annotation", 5,
      new PrologAtom(op->get_mode() == SgUnaryOp::prefix ? "prefix" : "postfix"),
      getTypeSpecific(op->get_type()),
      e3, 
      e4,
-     PPI(op));			    
+     PPI(op));	    
 }
 
 /**
@@ -1297,7 +1297,7 @@ RoseToTerm::getMemberFunctionSymbolSpecific(SgMemberFunctionSymbol* sym) {
   ROSE_ASSERT(cdef != NULL);
   
   PrologCompTerm* t = new PrologCompTerm
-    ("member_function_symbol_annotation", 3, 
+    ("member_function_symbol_annotation", 2, 
      traverseSingleNode(cop_decl),
      getClassScopeName(cdef));
 
