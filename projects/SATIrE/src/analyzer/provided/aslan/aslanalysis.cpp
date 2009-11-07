@@ -7,7 +7,7 @@
  *******************************************
  */ 
 
-// #define DEBUG
+//#define DEBUG
 
 #ifdef HAVE_CONFIG_H
 #include <rose_config.h>
@@ -170,10 +170,19 @@ void ASLAnalysis::storeLocalSite(SgNode* node){
    
 void ASLAnalysis::run(SgProject* root){
    std::string functionName="";
-   int callEnumeration=0;
+   int callEnumeration=1;
    
    // calculate the analysis result db
    traverse(root,preorder);
+   
+   // and see if there is any unsaved local data
+   if(currentFunction.length()>0){ // have been in a function
+      if((localSites!=NULL)&&(localSites->size()>0)){ // previous function contained local sites
+         aslRepository[currentFunction]=localSites;
+         currentFunction="";
+         localSites=NULL;
+      }
+   }
    
    // create AST attributes
    for(AbstractSites::iterator i=aslRepository.begin();i!=aslRepository.end();++i,callEnumeration=1){
