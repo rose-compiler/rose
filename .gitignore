@@ -1,6 +1,7 @@
 # Editor backups
 *~
-
+# editor temp file
+*.swp
 # /
 Makefile.in
 /aclocal.m4
