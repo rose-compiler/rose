@@ -717,6 +717,13 @@ SgClassDefinition* buildClassDefinition_nfi(SgClassDeclaration *d = NULL);
 //! Build a structure first nondefining declaration, without file info
 SgClassDeclaration* buildNondefiningClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope);
 
+// DQ (11/7/2009): Added functions to build C++ class.
+SgClassDeclaration* buildNondefiningClassDeclaration ( SgName name, SgScopeStatement* scope );
+SgClassDeclaration* buildDefiningClassDeclaration    ( SgName name, SgScopeStatement* scope );
+
+// DQ (11/7/2009): Added function to build C++ class (builts both the definig and non-defining declarations).
+SgClassDeclaration* buildClassDeclaration    ( SgName name, SgScopeStatement* scope );
+
 //! Build an enum first nondefining declaration, without file info
 SgEnumDeclaration* buildNondefiningEnumDeclaration_nfi(const SgName& name, SgScopeStatement* scope);
 
