@@ -1,6 +1,7 @@
 ## Process this file with automake to create Makefile.in.
 
 INCLUDES = -I$(ROSE_INCLUDE_DIR) \
+	-I$(BOOST_INCLUDE_DIR) \
 	-I$(top_builddir)/src/satire \
 	-I$(top_srcdir)/src/analyzer/astaccess \
 	-I$(top_srcdir)/src/analyzer/icfgbuilder/satire \
