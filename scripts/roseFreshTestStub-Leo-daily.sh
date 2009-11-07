@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# test modifications
 # Stub file to include settings for roseFreshTest-common
 # the java libraries are platform-dependent! e.g.: i386 vs. amd64
 
