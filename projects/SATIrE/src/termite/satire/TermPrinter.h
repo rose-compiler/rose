@@ -359,16 +359,66 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
           if (!isSgFunctionRefExp(function)) {
             using SATIrE::Analyses::PointsToAnalysis;
             PointsToAnalysis *pto = cfg->pointsToAnalysis;
+            PointsToAnalysis *cspta = cfg->contextSensitivePointsToAnalysis;
+            PrologList *callsite_locs = NULL;
+#if HAVE_PAG
+            /* output context-sensitive callsite-target location mapping;
+             * but only for the contexts that are actually relevant for the
+             * calling function */
+            SgNode *p = fc->get_parent();
+            while (p != NULL && !isSgFunctionDeclaration(p))
+              p = p->get_parent();
+            assert(isSgFunctionDeclaration(p));
+            std::string funcname =
+              isSgFunctionDeclaration(p)->get_name().str();
+            while (p != NULL && !isSgFile(p))
+              p = p->get_parent();
+            assert(isSgFile(p));
+            Procedure *proc = procedureNode(funcname, isSgFile(p));
+            if (cspta != NULL) {
+              const std::vector<ContextInformation::Context> &ctxs
+                = cfg->contextInformation->allContexts();
+              std::vector<ContextInformation::Context>::const_iterator ctx;
+              for (ctx = ctxs.begin(); ctx != ctxs.end(); ++ctx) {
+                if (ctx->procnum != proc->procnum)
+                  continue;
+                PointsToAnalysis::Location *loc =
+                  cspta->expressionLocation(function, *ctx);
+                PrologInt *pLocation =
+                  new PrologInt(cspta->location_id(cspta->base_location(loc)));
+                PrologCompTerm *ccl =
+                  new PrologCompTerm("context_location", 2,
+                                     ctx->toPrologTerm(),
+                                     pLocation);
+                if (callsite_locs == NULL)
+                  callsite_locs = new PrologList();
+                callsite_locs->addFirstElement(ccl);
+              }
+              PointsToAnalysis::Location *loc =
+                cspta->expressionLocation(function);
+              PrologInt *pLocation =
+                new PrologInt(cspta->location_id(cspta->base_location(loc)));
+              if (callsite_locs == NULL)
+                callsite_locs = new PrologList();
+              callsite_locs->addFirstElement(pLocation);
+            }
+#else
             if (pto != NULL) {
               PointsToAnalysis::Location *loc =
-                  pto->expressionLocation(function);
+                pto->expressionLocation(function);
               PrologInt *pLocation =
                 new PrologInt(pto->location_id(pto->base_location(loc)));
-              PrologCompTerm *callsite_location =
-                new PrologCompTerm("callsite_location", 2,
-                                   callsite,
-                                   pLocation);
-              results->addFirstElement(callsite_location);
+              if (callsite_locs == NULL)
+                callsite_locs = new PrologList();
+              callsite_locs->addFirstElement(pLocation);
+            }
+#endif
+            if (callsite_locs != NULL) {
+              PrologCompTerm *callsite_locations =
+                  new PrologCompTerm("callsite_locations", 2,
+                                     callsite,
+                                     callsite_locs);
+              results->addFirstElement(callsite_locations);
             }
           }
         }
