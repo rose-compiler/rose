@@ -1591,6 +1591,36 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
         break;
     }
 
+    if (SgInitializer *init = isSgInitializer(node))
+    {
+        SgNode *p = init->get_parent();
+     // Trace upwards to the first enclosing initialized name or
+     // initializer.
+        while (p != NULL && !isSgInitializedName(p) && !isSgInitializer(p))
+            p = p->get_parent();
+        SgInitializedName *initname = isSgInitializedName(p);
+        if (initname != NULL && result != NULL)
+        {
+         // We are at an "outermost" (i.e., not nested) initializer node for
+         // some initialized name. See if it's global...
+            if (isSgGlobal(initname->get_scope()))
+            {
+             // .... because for global variables, we need to associate the
+             // initialized name with its initializer: Global variables are
+             // not directly visited by the ICFG traversal.
+                SgSymbol *sym = initname->get_symbol_from_symbol_table();
+                Location *loc = symbol_location(sym);
+                SgType *symtype = NULL;
+                if (SgVariableSymbol *varsym = isSgVariableSymbol(sym))
+                    symtype = varsym->get_type();
+                else if (SgEnumFieldSymbol *enumsym = isSgEnumFieldSymbol(sym))
+                    symtype = enumsym->get_type();
+                if (symtype != NULL)
+                    result = initializerAssignment(symtype, loc, result);
+            }
+        }
+    }
+
 #if VERBOSE_DEBUG
  // Display the synthesized attribute for this node.
     std::cout
