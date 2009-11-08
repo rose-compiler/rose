@@ -224,7 +224,7 @@ void attachAralInformation(Program *program, AnalyzerOptions *options)
     } }}}
 
     aralin = aralFile;
-    Aral::Analysis *aralRoot = Aral::Translator::frontEnd();
+    Aral::AralFile *aralRoot = Aral::Translator::frontEnd();
     aralin = NULL;
     fclose(aralFile);
     {{{ if (aralRoot == NULL)

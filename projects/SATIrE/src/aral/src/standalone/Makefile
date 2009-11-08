@@ -2,7 +2,7 @@ CC = g++ -g
 LD = gcc -g
 YACC = bison
 
-DISTNAME = aral11
+DISTNAME = aral15
 ARAL_SOURCES = ../aral.C ../aralir.C ../aralparser.yxx ../aralscanner.lxx \
                ../satire/aralir.h ../satire/aralparser_decls.h
 

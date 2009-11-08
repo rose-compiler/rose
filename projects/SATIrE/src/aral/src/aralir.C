@@ -9,14 +9,14 @@
 
 /* Implementation */
 
-Aral::Analysis* Aral::Translator::frontEnd() { 
+Aral::AralFile* Aral::Translator::frontEnd() { 
 	aralparse(); 
 	if(aralIrRoot) 
-		return dynamic_cast<Analysis*>(aralIrRoot);
+		return dynamic_cast<AralFile*>(aralIrRoot);
 	else 
 		return 0;
 	}
-std::string Aral::Translator::backEnd(Analysis* r) {
+std::string Aral::Translator::backEnd(AralFile* r) {
 	return r->toString(); 
 } 
 
@@ -28,6 +28,8 @@ Aral::Int32::Int32(int v) {
 	_value=v;
 }
 
+Aral::Label::Label(int label):_label(label) {}
+
 Aral::Set::Set() {}
 
 Aral::List::List() {}
@@ -36,9 +38,9 @@ Aral::MapList::MapList() {}
 
 Aral::Map::Map():_defaultElement(0) {}
 
-Aral::ResultDataList::ResultDataList() {}
+Aral::InfoElementList::InfoElementList() {}
 
-Aral::DataSectionItemList::DataSectionItemList() {}
+Aral::AnnotationDataList::AnnotationDataList() {}
 
 Aral::Tuple::Tuple(int size) {
 	for(int i=0;i<size;i++) {
@@ -50,10 +52,15 @@ Aral::MapPair::MapPair():Tuple(2) {}
 Aral::TopElement::TopElement() {}
 Aral::BotElement::BotElement() {}
 
-Aral::InfixOperator::InfixOperator(std::string op):_operator(op),_left(0),_right(0) {}
-Aral::InfixOperator::InfixOperator(std::string op, Data* l, Data* r):_operator(op),_left(l),_right(r) {}
+Aral::BinaryOperator::BinaryOperator(std::string op):_operator(op),_left(0),_right(0) {}
+Aral::BinaryOperator::BinaryOperator(std::string op, Data* l, Data* r):_operator(op),_left(l),_right(r) {}
 
-Aral::Analysis::Analysis(Data* configData,MapList* mapList, ResultSectionList* resultSectionList):
+Aral::UnaryOperator::UnaryOperator(std::string op):_operator(op),_operand(0) {}
+Aral::UnaryOperator::UnaryOperator(std::string op, Data* operand):_operator(op),_operand(operand) {}
+
+Aral::Constraint::Constraint(Data* d):_expr(d) {}
+
+Aral::AralFile::AralFile(Data* configData,MapList* mapList, ResultSectionList* resultSectionList):
 			_configData(configData),
 			_mapList(mapList),
 			_resultSectionList(resultSectionList) {}
@@ -89,8 +96,8 @@ Aral::MapList::~MapList() {
 	}
 }
 
-Aral::ResultDataList::~ResultDataList() {
-	for(Aral::ResultDataList::iterator i=begin();i!=end();i++) {
+Aral::InfoElementList::~InfoElementList() {
+	for(Aral::InfoElementList::iterator i=begin();i!=end();i++) {
 		delete *i;
 	}
 }
@@ -101,7 +108,7 @@ Aral::ResultSectionList::~ResultSectionList() {
 	}
 }
 
-Aral::DataSectionItemList::~DataSectionItemList() {
+Aral::AnnotationDataList::~AnnotationDataList() {
 	for(Aral::List::iterator i=begin();i!=end();i++) {
 		delete *i;
 	}
@@ -126,16 +133,24 @@ Aral::Ident::~Ident() {}
 Aral::String::~String() {}
 Aral::TopElement::~TopElement() {}
 Aral::BotElement::~BotElement() {}
-Aral::InfixOperator::~InfixOperator() { 
+Aral::BinaryOperator::~BinaryOperator() { 
 	if(_left) delete _left;
 	if(_right) delete _right;
 }
-Aral::DataSectionItem::~DataSectionItem() {
-	delete _scopeSpecifier;
-	delete _resultDataList;
+Aral::UnaryOperator::~UnaryOperator() { 
+	if(_operand) delete _operand;
+}
+Aral::Constraint::~Constraint() {
+	assert(_expr);
+	delete _expr;
 }
 
-Aral::Analysis::~Analysis() {
+Aral::AnnotationData::~AnnotationData() {
+	delete _locationSpecifier;
+	delete _infoElementList;
+}
+
+Aral::AralFile::~AralFile() {
 	if(_configData) delete _configData;
 	if(_mapList) delete _mapList;
 	if(_resultSectionList) delete _resultSectionList;
@@ -248,8 +263,8 @@ void Aral::Tuple::setAt(Aral::TuplePos pos, Aral::Data* data) {
 }
 
 /* isEqual */
-bool Aral::InfixOperator::isEqual(Data* d) {
-	if(InfixOperator* op=dynamic_cast<Aral::InfixOperator*>(d)) {
+bool Aral::BinaryOperator::isEqual(Data* d) {
+	if(BinaryOperator* op=dynamic_cast<Aral::BinaryOperator*>(d)) {
 		return (_operator==op->getOperator() 
 			&& _left->isEqual(op->getLeftOperand())
 			&& _right->isEqual(op->getRightOperand()));
@@ -257,10 +272,24 @@ bool Aral::InfixOperator::isEqual(Data* d) {
 		return false;
 	}
 }
+bool Aral::UnaryOperator::isEqual(Data* d) {
+	if(UnaryOperator* op=dynamic_cast<Aral::UnaryOperator*>(d)) {
+		return (_operator==op->getOperator() 
+			&& _operand->isEqual(op->getOperand()));
+	} else {
+		return false;
+	}
+}
+bool Aral::Constraint::isEqual(Data* d) {
+	if(Constraint* constr=dynamic_cast<Aral::Constraint*>(d)) {
+		return getExpr()->isEqual(constr->getExpr());
+	} else {
+		return false;
+	}
+}
 
-
-bool Aral::ResultData::isEqual(Aral::Data* o) { 
-	if(Aral::ResultData* ord=dynamic_cast<Aral::ResultData*>(o)) {
+bool Aral::InfoElement::isEqual(Aral::Data* o) { 
+	if(Aral::InfoElement* ord=dynamic_cast<Aral::InfoElement*>(o)) {
 		bool contextIsEqual=false;
 		Data* d1=getContext();
 		Data* od1=ord->getContext();
@@ -373,8 +402,8 @@ bool Aral::List::isEqual(Data* o) {
 	}
 	return false;
 }
-bool Aral::DataSectionItemList::isEqual(Data* o) { 
-	if(Aral::List* o2=dynamic_cast<Aral::DataSectionItemList*>(o)) {
+bool Aral::AnnotationDataList::isEqual(Data* o) { 
+	if(Aral::List* o2=dynamic_cast<Aral::AnnotationDataList*>(o)) {
 		if(size()==o2->size()) {
 			for(Aral::List::iterator i=begin(),j=o2->begin(); i!=end() && j!=o2->end(); i++,j++) {
 				if(!(*i)->isEqual(*j))
@@ -385,8 +414,8 @@ bool Aral::DataSectionItemList::isEqual(Data* o) {
 	}
 	return false;
 }
-bool Aral::ResultDataList::isEqual(Data* o) { 
-	if(Aral::List* o2=dynamic_cast<Aral::ResultDataList*>(o)) {
+bool Aral::InfoElementList::isEqual(Data* o) { 
+	if(Aral::List* o2=dynamic_cast<Aral::InfoElementList*>(o)) {
 		if(size()==o2->size()) {
 			for(Aral::List::iterator i=begin(),j=o2->begin(); i!=end() && j!=o2->end(); i++,j++) {
 				if(!(*i)->isEqual(*j))
@@ -484,15 +513,19 @@ Aral::Data* Aral::ResultSection::deepCopy() {
   // the 0 represents the type which is not implemented yet (and not necessary for using ARAL)
   return new Aral::ResultSection(getName(),0,getData()->deepCopy());
 }
-Aral::Analysis* Aral::Analysis::deepCopy() {
+Aral::AralFile* Aral::AralFile::deepCopy() {
   	ResultSectionList* rsl=dynamic_cast<ResultSectionList*>(this->getResultSectionList()->deepCopy());
   	assert(rsl);
   	MapList* ml=dynamic_cast<MapList*>(getMapList()->deepCopy());
   	assert(ml);
-  	return new Aral::Analysis(getConfigData()->deepCopy(),ml,rsl);
+  	return new Aral::AralFile(getConfigData()->deepCopy(),ml,rsl);
 }
 
-Aral::Data* Aral::ResultData::deepCopy() {
+Aral::Data* Aral::AnnotationData::deepCopy() { 
+  return new AnnotationData(_locationSpecifier,_flowSpecifier,dynamic_cast<InfoElementList*>(_infoElementList->deepCopy()));
+};
+
+Aral::Data* Aral::InfoElement::deepCopy() {
   Aral::Data* d1=getContext();
   Aral::Data* d2=getData();
   Aral::Data* d1copy=0;
@@ -500,7 +533,7 @@ Aral::Data* Aral::ResultData::deepCopy() {
     d1copy=d1->deepCopy();
   }
   assert(d2!=0);
-  return new Aral::ResultData(d1copy,d2->deepCopy());
+  return new Aral::InfoElement(d1copy,d2->deepCopy());
 }
 
 Aral::Data* Aral::Tuple::deepCopy() {
@@ -573,16 +606,23 @@ Aral::Data* Aral::VarId::deepCopy() {
 Aral::Data* Aral::ExpId::deepCopy() {
 	return new ExpId(_id);
 }
-Aral::Data* Aral::InfixOperator::deepCopy() {
-	return new Aral::InfixOperator(_operator,_left,_right);
+Aral::Data* Aral::BinaryOperator::deepCopy() {
+	return new Aral::BinaryOperator(_operator,_left->deepCopy(),_right->deepCopy());
 }
+Aral::Data* Aral::UnaryOperator::deepCopy() {
+	return new Aral::UnaryOperator(_operator,_operand->deepCopy());
+}
+Aral::Data* Aral::Constraint::deepCopy() {
+	return new Aral::Constraint(_expr->deepCopy());
+}
+
 /* accept Methods */
-void Aral::Analysis::accept(AbstractDataVisitor& v) {
-	v.preVisitAnalysis(this);
+void Aral::AralFile::accept(AbstractDataVisitor& v) {
+	v.preVisitAralFile(this);
 	if(_configData) _configData->accept(v);
 	if(_mapList) _mapList->accept(v);
 	if(_resultSectionList) _resultSectionList->accept(v);
-	v.postVisitAnalysis(this);
+	v.postVisitAralFile(this);
 }
 
 void Aral::ResultSection::accept(AbstractDataVisitor& v) {
@@ -590,22 +630,22 @@ void Aral::ResultSection::accept(AbstractDataVisitor& v) {
 	_data->accept(v);
 	v.postVisitResultSection(this);
 }
-void Aral::DataSectionItem::accept(AbstractDataVisitor& v) {
-	v.preVisitDataSectionItem(this);
-	_resultDataList->accept(v);
-	v.postVisitDataSectionItem(this);
+void Aral::AnnotationData::accept(AbstractDataVisitor& v) {
+	v.preVisitAnnotationData(this);
+	_infoElementList->accept(v);
+	v.postVisitAnnotationData(this);
 }
-void Aral::ResultData::accept(AbstractDataVisitor& v) {
-	v.preVisitResultData(this);
+void Aral::InfoElement::accept(AbstractDataVisitor& v) {
+	v.preVisitInfoElement(this);
 	Aral::Data* d1=getContext();
 	if(d1) {
     		d1->accept(v);
   	}
-	v.inVisitResultData(this);
+	v.inVisitInfoElement(this);
 	Aral::Data* d2=getData();
   	assert(d2!=0);
 	d2->accept(v);	
-	v.postVisitResultData(this);
+	v.postVisitInfoElement(this);
 }
 void Aral::Set::accept(AbstractDataVisitor& v) {
 	v.preVisitSet(this);
@@ -661,14 +701,14 @@ void Aral::MapList::accept(AbstractDataVisitor& v) {
 	}
 	v.postVisitMapList(this);
 }
-void Aral::ResultDataList::accept(AbstractDataVisitor& v) {
-	v.preVisitResultDataList(this);
-	for(ResultDataList::iterator i=begin(); i!=end(); i++) {
+void Aral::InfoElementList::accept(AbstractDataVisitor& v) {
+	v.preVisitInfoElementList(this);
+	for(InfoElementList::iterator i=begin(); i!=end(); i++) {
 		if(i!=begin())
-			v.inVisitResultDataList(this);
+			v.inVisitInfoElementList(this);
 		(*i)->accept(v);
 	}
-	v.postVisitResultDataList(this);
+	v.postVisitInfoElementList(this);
 }
 void Aral::ResultSectionList::accept(AbstractDataVisitor& v) {
 	v.preVisitResultSectionList(this);
@@ -679,14 +719,14 @@ void Aral::ResultSectionList::accept(AbstractDataVisitor& v) {
 	}
 	v.postVisitResultSectionList(this);
 }
-void Aral::DataSectionItemList::accept(AbstractDataVisitor& v) {
-	v.preVisitDataSectionItemList(this);
-	for(DataSectionItemList::iterator i=begin(); i!=end(); i++) {
+void Aral::AnnotationDataList::accept(AbstractDataVisitor& v) {
+	v.preVisitAnnotationDataList(this);
+	for(AnnotationDataList::iterator i=begin(); i!=end(); i++) {
 		if(i!=begin())
-			v.inVisitDataSectionItemList(this);
+			v.inVisitAnnotationDataList(this);
 		(*i)->accept(v);
 	}
-	v.postVisitDataSectionItemList(this);
+	v.postVisitAnnotationDataList(this);
 }
 void Aral::Int32::accept(AbstractDataVisitor& v) {
 	v.preVisitInt32(this);
@@ -724,13 +764,36 @@ std::string Aral::Data::toString() {
 	Aral::DataToStringVisitor v;
 	return v.dataToString(this);
 }
-void Aral::InfixOperator::accept(AbstractDataVisitor& v) {
-	v.preVisitInfixOperator(this);
+void Aral::BinaryOperator::accept(AbstractDataVisitor& v) {
+	v.preVisitBinaryOperator(this);
 	if(_left) _left->accept(v);
-	v.inVisitInfixOperator(this);
+	v.inVisitBinaryOperator(this);
 	if(_right) _right->accept(v);
-	v.postVisitInfixOperator(this);
+	v.postVisitBinaryOperator(this);
 }
+void Aral::UnaryOperator::accept(AbstractDataVisitor& v) {
+	v.preVisitUnaryOperator(this);
+	if(_operand) _operand->accept(v);
+	v.postVisitUnaryOperator(this);
+}
+void Aral::Constraint::accept(AbstractDataVisitor& v) {
+	v.preVisitConstraint(this);
+	assert(_expr);
+	_expr->accept(v);
+	v.postVisitConstraint(this);
+}
+
+
+Aral::LocationSpecifier::LocationSpecifier():_specifier(E_PROGRAM_LOCSPEC),_name(""),_label(0){}
+Aral::LocationSpecifier::LocationSpecifier(Aral::LocationSpecifier::Specifier spec):_specifier(spec),_name(""),_label(0){}
+Aral::LocationSpecifier::LocationSpecifier(Aral::LocationSpecifier::Specifier spec,std::string name):_specifier(spec),_name(name),_label(0){}
+Aral::LocationSpecifier::LocationSpecifier(Aral::Label* lab):_specifier(E_LABEL_LOCSPEC),_name(""),_label(lab){}
+void Aral::LocationSpecifier::setSpecifier(Aral::LocationSpecifier::Specifier spec) { _specifier=spec; }
+Aral::LocationSpecifier::Specifier Aral::LocationSpecifier::getSpecifier() { return _specifier;}
+void Aral::LocationSpecifier::setName(std::string s) {_name=s;}
+std::string Aral::LocationSpecifier::getName() {return _name;}
+Aral::Label* Aral::LocationSpecifier::getLabel() {return _label;}
+Aral::LocationSpecifier::~LocationSpecifier() { if(_label) delete _label; }
 
 
 /* *XXX*toString auxiliary Functions for some functions */
@@ -759,25 +822,25 @@ std::string Aral::Value::valueToString() {
 	ss << _value;
 	return ss.str();
 }
-std::string Aral::ScopeSpecifier::toString() {
+std::string Aral::LocationSpecifier::toString() {
 	std::stringstream ss;
 	switch(getSpecifier()) {
-	case E_PROGRAM_SCOPE: ss << "program";break;
-	case E_FUNCTION_SCOPE: ss << "function(\""<<getName()<<"\")";break;
-	case E_FILE_SCOPE: ss << "file(\""<<getName()<<"\")";break;
-	case E_LABEL_SCOPE: assert(_label);ss << getLabel()->toString();break;
+	case E_PROGRAM_LOCSPEC: ss << "program";break;
+	case E_FUNCTION_LOCSPEC: ss << "function(\""<<getName()<<"\")";break;
+	case E_FILE_LOCSPEC: ss << "file(\""<<getName()<<"\")";break;
+	case E_LABEL_LOCSPEC: assert(_label);ss << getLabel()->toString();break;
 	default: assert(0);
 	} 
 	return ss.str();
 }
 
 
-std::string Aral::DataSectionItem::specifiersToString() {
+std::string Aral::AnnotationData::specifiersToString() {
 	std::stringstream ss;
-	assert(_scopeSpecifier);
-	ss<<_scopeSpecifier->toString();
+	assert(_locationSpecifier);
+	ss<<_locationSpecifier->toString();
 	ss<<" ";
-	switch(_locationSpecifier) {
+	switch(_flowSpecifier) {
 	case E_PRE: ss<<"pre";break;
 	case E_POST: ss<<"post";break;
 	case E_NOFLOW: ss<<"noflow";break;
@@ -786,16 +849,22 @@ std::string Aral::DataSectionItem::specifiersToString() {
 	return ss.str();
 }
 
-std::string Aral::InfixOperator::infixOperatorToString() { return " "+_operator+" "; }
+std::string Aral::BinaryOperator::binaryOperatorToString() { return " "+_operator+" "; }
+std::string Aral::UnaryOperator::unaryOperatorToString() { return _operator+" "; }
 
 bool
-Aral::InfixOperator::isConsistentNode() {
+Aral::BinaryOperator::isConsistentNode() {
 	return (_operator!="" && _left!=0 && _right!=0);
 }
 
+bool
+Aral::UnaryOperator::isConsistentNode() {
+	return (_operator!="" && _operand!=0);
+}
+
 /* Visitor */
-void Aral::EmptyDataVisitor::preVisitAnalysis(Analysis* o){}
-void Aral::EmptyDataVisitor::postVisitAnalysis(Analysis* o){}
+void Aral::EmptyDataVisitor::preVisitAralFile(AralFile* o){}
+void Aral::EmptyDataVisitor::postVisitAralFile(AralFile* o){}
 
 void Aral::EmptyDataVisitor::preVisitResultSectionList(ResultSectionList* o){}
 void Aral::EmptyDataVisitor::inVisitResultSectionList(ResultSectionList* o){}
@@ -806,18 +875,18 @@ void Aral::EmptyDataVisitor::postVisitResultSection(ResultSection* o){}
 void Aral::EmptyDataVisitor::preVisitMapList(MapList* o){}
 void Aral::EmptyDataVisitor::inVisitMapList(MapList* o){}
 void Aral::EmptyDataVisitor::postVisitMapList(MapList* o){}
-void Aral::EmptyDataVisitor::preVisitDataSectionItemList(DataSectionItemList* o){}
-void Aral::EmptyDataVisitor::inVisitDataSectionItemList(DataSectionItemList* o){}
-void Aral::EmptyDataVisitor::postVisitDataSectionItemList(DataSectionItemList* o){}
+void Aral::EmptyDataVisitor::preVisitAnnotationDataList(AnnotationDataList* o){}
+void Aral::EmptyDataVisitor::inVisitAnnotationDataList(AnnotationDataList* o){}
+void Aral::EmptyDataVisitor::postVisitAnnotationDataList(AnnotationDataList* o){}
 void Aral::EmptyDataVisitor::preVisitMap(Map* o){}
 void Aral::EmptyDataVisitor::inVisitMap(Map* o){}
 void Aral::EmptyDataVisitor::postVisitMap(Map* o){}
 
-void Aral::EmptyDataVisitor::preVisitDataSectionItem(DataSectionItem* o){}
-void Aral::EmptyDataVisitor::postVisitDataSectionItem(DataSectionItem* o){}
-void Aral::EmptyDataVisitor::preVisitResultData(ResultData* o){}
-void Aral::EmptyDataVisitor::inVisitResultData(ResultData* o){}
-void Aral::EmptyDataVisitor::postVisitResultData(ResultData* o){}
+void Aral::EmptyDataVisitor::preVisitAnnotationData(AnnotationData* o){}
+void Aral::EmptyDataVisitor::postVisitAnnotationData(AnnotationData* o){}
+void Aral::EmptyDataVisitor::preVisitInfoElement(InfoElement* o){}
+void Aral::EmptyDataVisitor::inVisitInfoElement(InfoElement* o){}
+void Aral::EmptyDataVisitor::postVisitInfoElement(InfoElement* o){}
 void Aral::EmptyDataVisitor::preVisitTuple(Tuple* o){}
 void Aral::EmptyDataVisitor::inVisitTuple(Tuple* o){}
 void Aral::EmptyDataVisitor::postVisitTuple(Tuple* o){}
@@ -830,9 +899,9 @@ void Aral::EmptyDataVisitor::postVisitSet(Set* o){}
 void Aral::EmptyDataVisitor::preVisitList(List* o){}
 void Aral::EmptyDataVisitor::inVisitList(List* o){}
 void Aral::EmptyDataVisitor::postVisitList(List* o){}
-void Aral::EmptyDataVisitor::preVisitResultDataList(List* o){}
-void Aral::EmptyDataVisitor::inVisitResultDataList(List* o){}
-void Aral::EmptyDataVisitor::postVisitResultDataList(List* o){}
+void Aral::EmptyDataVisitor::preVisitInfoElementList(InfoElementList* o){}
+void Aral::EmptyDataVisitor::inVisitInfoElementList(InfoElementList* o){}
+void Aral::EmptyDataVisitor::postVisitInfoElementList(InfoElementList* o){}
 void Aral::EmptyDataVisitor::preVisitInt32(Int32* o){}
 void Aral::EmptyDataVisitor::postVisitInt32(Int32* o){}
 void Aral::EmptyDataVisitor::preVisitTopElement(TopElement* o){}
@@ -849,17 +918,23 @@ void Aral::EmptyDataVisitor::preVisitIdent(Ident* o){}
 void Aral::EmptyDataVisitor::postVisitIdent(Ident* o){}
 void Aral::EmptyDataVisitor::preVisitString(String* o){}
 void Aral::EmptyDataVisitor::postVisitString(String* o){}
-void Aral::EmptyDataVisitor::preVisitInfixOperator(InfixOperator* o){}
-void Aral::EmptyDataVisitor::inVisitInfixOperator(InfixOperator* o){}
-void Aral::EmptyDataVisitor::postVisitInfixOperator(InfixOperator* o){}
+void Aral::EmptyDataVisitor::preVisitBinaryOperator(BinaryOperator* o){}
+void Aral::EmptyDataVisitor::inVisitBinaryOperator(BinaryOperator* o){}
+void Aral::EmptyDataVisitor::postVisitBinaryOperator(BinaryOperator* o){}
+void Aral::EmptyDataVisitor::preVisitUnaryOperator(UnaryOperator* o){}
+void Aral::EmptyDataVisitor::postVisitUnaryOperator(UnaryOperator* o){}
+void Aral::EmptyDataVisitor::preVisitConstraint(Constraint* o){}
+void Aral::EmptyDataVisitor::postVisitConstraint(Constraint* o){}
 
+Aral::DataToStringVisitor::DataToStringVisitor():_withinMappingSection(false),s("") {
+}
 std::string Aral::DataToStringVisitor::dataToString(Aral::Data* o){
 	s="";
 	o->accept(*this);
 	return s;
 }
-void Aral::DataToStringVisitor::preVisitAnalysis(Analysis* o){ s+="ANALYSIS\n";}
-void Aral::DataToStringVisitor::postVisitAnalysis(Analysis* o){ s+="END\n";}
+void Aral::DataToStringVisitor::preVisitAralFile(AralFile* o){ s+="ANALYSIS\n";}
+void Aral::DataToStringVisitor::postVisitAralFile(AralFile* o){ s+="END\n";}
 
 void Aral::DataToStringVisitor::preVisitResultSectionList(ResultSectionList* o){}
 void Aral::DataToStringVisitor::inVisitResultSectionList(ResultSectionList* o){}
@@ -867,18 +942,18 @@ void Aral::DataToStringVisitor::postVisitResultSectionList(ResultSectionList* o)
 void Aral::DataToStringVisitor::preVisitResultSection(ResultSection* o){ s+="\nRESULT\nNAME "+o->getName()+"\nTYPE\nDATA\n"; }
 void Aral::DataToStringVisitor::postVisitResultSection(ResultSection* o){ s+="END\n";}
 
-void Aral::DataToStringVisitor::preVisitDataSectionItem(DataSectionItem* o){ s+=o->specifiersToString()+" "; }
-void Aral::DataToStringVisitor::postVisitDataSectionItem(DataSectionItem* o){ s+="\n";}
+void Aral::DataToStringVisitor::preVisitAnnotationData(AnnotationData* o){ s+=o->specifiersToString()+" "; }
+void Aral::DataToStringVisitor::postVisitAnnotationData(AnnotationData* o){ s+="\n";}
 
-void Aral::DataToStringVisitor::preVisitResultData(ResultData* o){
+void Aral::DataToStringVisitor::preVisitInfoElement(InfoElement* o){
   if(Data* d=o->getContext()) // if no context exists the pointer is 0.
     s+="<";
 }
-void Aral::DataToStringVisitor::inVisitResultData(ResultData* o){
+void Aral::DataToStringVisitor::inVisitInfoElement(InfoElement* o){
   if(Data* d=o->getContext()) // if no context exists the pointer is 0.
     s+=">";
 }
-void Aral::DataToStringVisitor::postVisitResultData(ResultData* o){}
+void Aral::DataToStringVisitor::postVisitInfoElement(InfoElement* o){}
 void Aral::DataToStringVisitor::preVisitTuple(Tuple* o){ s+="("; }
 void Aral::DataToStringVisitor::inVisitTuple(Tuple* o){ s+=","; }
 void Aral::DataToStringVisitor::postVisitTuple(Tuple* o){ s+=")"; }
@@ -891,19 +966,34 @@ void Aral::DataToStringVisitor::postVisitSet(Set* o){ s+="}"; }
 void Aral::DataToStringVisitor::preVisitList(List* o){ s+="["; }
 void Aral::DataToStringVisitor::inVisitList(List* o){ s+=","; }
 void Aral::DataToStringVisitor::postVisitList(List* o){ s+="]"; }
-void Aral::DataToStringVisitor::preVisitResultDataList(List* o){}
-void Aral::DataToStringVisitor::inVisitResultDataList(List* o){s+=",\n";}
-void Aral::DataToStringVisitor::postVisitResultDataList(List* o){s+=";";}
+void Aral::DataToStringVisitor::preVisitInfoElementList(InfoElementList* o){}
+void Aral::DataToStringVisitor::inVisitInfoElementList(InfoElementList* o){s+=",\n";}
+void Aral::DataToStringVisitor::postVisitInfoElementList(InfoElementList* o){s+=";";}
 
-void Aral::DataToStringVisitor::preVisitMapList(MapList* o){s+="MAPPING\n";}
-void Aral::DataToStringVisitor::inVisitMapList(MapList* o){}
-void Aral::DataToStringVisitor::postVisitMapList(MapList* o){}
-void Aral::DataToStringVisitor::preVisitDataSectionItemList(DataSectionItemList* o){}
-void Aral::DataToStringVisitor::inVisitDataSectionItemList(DataSectionItemList* o){}
-void Aral::DataToStringVisitor::postVisitDataSectionItemList(DataSectionItemList* o){}
-void Aral::DataToStringVisitor::preVisitMap(Map* o){ s+="map(string,string):{default->" + o->getDefaultElement()->toString()+" \\ "; }
+void Aral::DataToStringVisitor::preVisitMapList(MapList* o){s+="MAPPING\n"; _withinMappingSection=true;}
+
+/* we only have a MapList in the mapping section. In this MapList we have maps that must be separated by ';'. */
+void Aral::DataToStringVisitor::inVisitMapList(MapList* o){ s+=";\n"; }
+/* we only have a MapList in the mapping section. In this MapList we have maps that must be terminated by ';'. */
+void Aral::DataToStringVisitor::postVisitMapList(MapList* o){
+	if(o->size()>0)
+		s+=";\n"; // only if the MapList has at least one element it must be terminated by ';'.
+	_withinMappingSection=false;
+}
+void Aral::DataToStringVisitor::preVisitAnnotationDataList(AnnotationDataList* o){}
+void Aral::DataToStringVisitor::inVisitAnnotationDataList(AnnotationDataList* o){}
+void Aral::DataToStringVisitor::postVisitAnnotationDataList(AnnotationDataList* o){}
+void Aral::DataToStringVisitor::preVisitMap(Map* o){ 
+	/* The type of a map is only printed in the mapping section right before the map-data */
+	if(_withinMappingSection) {
+		s+="map(string,string):"; // TODO: type info
+	}
+	s+="{default->" + o->getDefaultElement()->toString();
+	if(o->size()>0)
+		s+=" \\ "; // we only need the map-separator, if there is at least one element in the map.
+}
 void Aral::DataToStringVisitor::inVisitMap(Map* o){ s+=","; }
-void Aral::DataToStringVisitor::postVisitMap(Map* o){ s+="};\n"; }
+void Aral::DataToStringVisitor::postVisitMap(Map* o){ s+="}"; }
 
 void Aral::DataToStringVisitor::preVisitInt32(Int32* o){ s+= o->valueToString(); }
 void Aral::DataToStringVisitor::postVisitInt32(Int32* o){}
@@ -921,6 +1011,12 @@ void Aral::DataToStringVisitor::preVisitIdent(Ident* o){ s+=o->identToString(); 
 void Aral::DataToStringVisitor::postVisitIdent(Ident* o){}
 void Aral::DataToStringVisitor::preVisitString(String* o){ s+="\""+o->stringToString()+"\""; }
 void Aral::DataToStringVisitor::postVisitString(String* o){}
-void Aral::DataToStringVisitor::preVisitInfixOperator(InfixOperator* o){s+="(";}
-void Aral::DataToStringVisitor::inVisitInfixOperator(InfixOperator* o){s+=o->infixOperatorToString(); }
-void Aral::DataToStringVisitor::postVisitInfixOperator(InfixOperator* o){s+=")";}
+void Aral::DataToStringVisitor::preVisitBinaryOperator(BinaryOperator* o){s+="(";}
+void Aral::DataToStringVisitor::inVisitBinaryOperator(BinaryOperator* o){s+=o->binaryOperatorToString(); }
+void Aral::DataToStringVisitor::postVisitBinaryOperator(BinaryOperator* o){s+=")";}
+
+void Aral::DataToStringVisitor::preVisitUnaryOperator(UnaryOperator* o){s+="("+o->unaryOperatorToString();}
+void Aral::DataToStringVisitor::postVisitUnaryOperator(UnaryOperator* o){s+=")";}
+
+void Aral::DataToStringVisitor::preVisitConstraint(Constraint* o){s+="$";}
+void Aral::DataToStringVisitor::postVisitConstraint(Constraint* o){s+="$";}

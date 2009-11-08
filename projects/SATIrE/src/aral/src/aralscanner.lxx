@@ -14,7 +14,7 @@
 #include "aralparser_decls.h"
 #include "aralparser.h"
 
-YY_BUFFER_STATE gInputBuffer;
+//YY_BUFFER_STATE gInputBuffer;
 
 //static char *lookup(char *);    /* lookup function for identifiers */
 
@@ -46,9 +46,9 @@ single			[{}<>(),;:=+*/%^$-]
 "noflow"		{ return NOFLOW; }
 "pre"			{ return PRE; }
 "post"			{ return POST; }
-"program"		{ return PROGRAM_SCOPE; }
-"file"			{ return FILE_SCOPE; }
-"function"		{ return FUNCTION_SCOPE; }
+"program"		{ return PROGRAM_LOCSPEC; }
+"file"			{ return FILE_LOCSPEC; }
+"function"		{ return FUNCTION_LOCSPEC; }
 
 "label"			{ return TYPE_LABEL; }
 "tuple"			{ return TYPE_TUPLE; }
@@ -67,10 +67,11 @@ single			[{}<>(),;:=+*/%^$-]
 
 "default"		{ return DEFAULT; }
 "->"			{ return RIGHTARROW; }
-"\\"			{ return MAPSEPARATOR; }
+"\\"			{ return MAPSEPARATOR; /* deprecated */}
 "<="			{ return LT; }
 ">="			{ return GT; }
-"!="			{ return NEQ; }
+"<>"			{ return NEQ; } 
+"!="			{ return NEQ; /* deprecated */}
 "and"			{ return AND; }
 "or"			{ return OR; }
 "not"			{ return NOT; }
@@ -94,19 +95,21 @@ single			[{}<>(),;:=+*/%^$-]
 
 %%
 
+#if 0
 void
 InitializeLexer(const std::string& tokenizeString)
 {
-  yylineno = 1;
+  arallineno = 1;
   const char* inputBytes = tokenizeString.c_str();
-  gInputBuffer = aral_scan_bytes(inputBytes, tokenizeString.length());
+  gInputBuffer = yy_scan_bytes(inputBytes, tokenizeString.length());
 }
 
 void
 FinishLexer()
 {
-  aral_delete_buffer(gInputBuffer);
+  yy_delete_buffer(gInputBuffer);
 }
+#endif
 
 #if 0
 /******************************************************************/
