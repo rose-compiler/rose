@@ -250,7 +250,7 @@ target_link_libraries(testSharedRoseLib ${KDE4_KDECORE_LIBS} rose edg33 ${link_w
 # rose_support binary_frontend virtualCFG rose_util_lib astFixup  
     
     roseDisassemblers
-    libsageInterface roseExecFormats midend unparser
+    libsageInterface roseBinaryFormats midend unparser
     libastHiddenTypeAndDeclarationLists roseAsmUnparser libastPostProcessing
     libhpdf
     )

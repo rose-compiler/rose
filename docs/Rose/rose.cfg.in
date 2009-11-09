@@ -418,6 +418,12 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories 
 # with spaces.
 
+# NOTE: Robb places doxygen comments for Sg* class methods in the *.C files
+#       rather than the docs/testDoxygen/*.docs files. This keeps the documentation
+#       near the function it documents. Unfortunately the *.C files need to be
+#       listed explicitly here (we can't add "*.C" to FILE_PATTERNS because
+#       doing so creates *lots* of doxygen entries for undocumented stuff).
+
 INPUT                  = \
                          @top_pwd@/rose.docs \
                          @top_pwd@/docs/Rose/AvailableDocumentation.docs \
@@ -427,20 +433,53 @@ INPUT                  = \
 			 @top_srcdir@/src/ROSETTA/src/binaryInstruction.C \
                          @top_srcdir@/src/frontend/CxxFrontend/EDG_3.3/documentation.docs \
 			 @top_srcdir@/src/frontend/Disassemblers \
-			 @top_srcdir@/src/frontend/ExecFormats/ExecGeneric.C \
-			 @top_srcdir@/src/frontend/ExecFormats/ExecELF.C \
-			 @top_srcdir@/src/frontend/ExecFormats/ExecNE.C \
-			 @top_srcdir@/src/frontend/ExecFormats/ExecLE.C \
-			 @top_srcdir@/src/frontend/ExecFormats/ExecDOS.C \
-			 @top_srcdir@/src/frontend/ExecFormats/ExecPE.C \
-			 @top_srcdir@/src/frontend/ExecFormats/Interpretation.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/DataConversion.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/ElfDynamicLinking.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/ElfErrorFrame.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/ElfFileHeader.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/ElfNote.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/ElfRelocation.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/ElfSection.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/ElfSectionTable.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/ElfSegmentTable.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/ElfStringTable.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/ElfSymbolTable.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/ElfSymbolVersion.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/ExecDOS.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/ExecGeneric.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/ExecLE.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/ExecNE.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/ExtentMap.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/GenericDynamicLinking.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/GenericFile.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/GenericFormat.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/GenericHeader.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/GenericSection.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/GenericString.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/Hexdump.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/IntelPinSupport.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/Interpretation.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/Loader.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/LoaderELF.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/LoaderELFObj.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/LoaderPE.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/MemoryMap.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/PeExport.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/PeFileHeader.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/PeImport.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/PeSection.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/PeSectionTable.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/PeStringTable.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/PeSymbolTable.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/Rva.C \
+			 @top_srcdir@/src/frontend/BinaryFormats/stringify.C \
                          @top_srcdir@/src/frontend/Open64/documentation.docs \
                          @top_srcdir@/src/frontend/SageIII/docs \
 			 @top_srcdir@/src/frontend/SageIII/astPostProcessing/checkIsModifiedFlag.C \
                          @top_srcdir@/src/frontend/SageIII/sageInterface \
                          @top_srcdir@/src/frontend/SageIII/virtualCFG \
 			 @top_srcdir@/src/frontend/SageIII/virtualCFG/virtualBinCFG.C \
-			 @top_srcdir@/src/frontend/ExecFormats \
+			 @top_srcdir@/src/frontend/BinaryFormats \
                          @top_srcdir@/src/midend/ompLowering \
                          @top_srcdir@/src/midend/midend.docs \
                          @top_srcdir@/src/midend/astDiagnostics/AstDiagnostics.docs \

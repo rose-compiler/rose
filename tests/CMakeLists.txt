@@ -6,7 +6,7 @@ target_link_libraries(testTranslator rose edg33 ${link_with_libraries} ${Boost_L
     libastMerge libsageInterface libastTokenStream 
     libastHiddenTypeAndDeclarationLists libastVisualization 
     roseDisassemblers
-    libsageInterface roseExecFormats midend unparser
+    libsageInterface roseBinaryFormats midend unparser
     libastHiddenTypeAndDeclarationLists roseAsmUnparser libastPostProcessing
     libhpdf
     )

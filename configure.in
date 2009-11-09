@@ -1206,8 +1206,8 @@ src/frontend/CxxFrontend/EDG_SAGE_Connection/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
 src/frontend/PHPFrontend/Makefile
 src/frontend/BinaryDisassembly/Makefile
+src/frontend/BinaryFormats/Makefile
 src/frontend/Disassemblers/Makefile
-src/frontend/ExecFormats/Makefile
 src/midend/Makefile
 src/midend/abstractHandle/Makefile
 src/midend/astInlining/Makefile
