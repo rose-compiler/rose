@@ -21,7 +21,7 @@ noinst_PROGRAMS = \
     buildSizeOfOp abiStuffTest abiStuffTestUPC buildNullStatement \
     buildForStmt canonicalLoop loopNormalization collectReadWriteVariables \
     typeTraits livenessAnalysis buildProcedureHeaderStatement replaceMacroCalls \
-    buildAbstractHandle getDependentDecls
+    buildAbstractHandle getDependentDecls buildStructDeclaration2
 
 # list of test SAGE AST builders 
 buildFunctionDeclaration_SOURCES = buildFunctionDeclaration.C
@@ -35,6 +35,7 @@ attachComment_SOURCES            = attachComment.C
 insertHeader_SOURCES             = insertHeader.C
 buildExpression_SOURCES          = buildExpression.C
 buildStructDeclaration_SOURCES   = buildStructDeclaration.C
+buildStructDeclaration2_SOURCES   = buildStructDeclaration2.C
 lookupNamedType_SOURCES          = lookupNamedType.C           
 buildFile_SOURCES                = buildFile.C           
 movePreprocessingInfo_SOURCES    = movePreprocessingInfo.C
@@ -82,6 +83,7 @@ generatedCodeExamples = \
   rose_inputInsertHeader.C \
   rose_inputbuildExpression.C \
   rose_inputbuildStructDeclaration.C \
+  rose_inputbuildStructDeclaration2.C \
   rose_inputLookupNamedType.C \
   rose_inputbuildFile.C \
   rose_inputMovePreprocessingInfo.C \
@@ -141,6 +143,8 @@ rose_inputbuildExpression.C: buildExpression
 	./buildExpression$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildExpression.C
 rose_inputbuildStructDeclaration.C:buildStructDeclaration
 	./buildStructDeclaration$(EXEEXT)  $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildStructDeclaration.C
+rose_inputbuildStructDeclaration2.C:buildStructDeclaration2
+	./buildStructDeclaration2$(EXEEXT)  $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildStructDeclaration2.C
 rose_inputLookupNamedType.C:lookupNamedType
 	./lookupNamedType$(EXEEXT)  $(TEST_CXXFLAGS) -c $(srcdir)/inputLookupNamedType.C
 rose_inputMovePreprocessingInfo.C:movePreprocessingInfo
@@ -241,7 +245,7 @@ EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDecla
        inputloopNormalization.C inputcollectReadWriteVariables.C inputtypeTraits.C \
        inputlivenessAnalysis.C inputbuildProcedureHeaderStatement.f inputreplaceMacroCalls.C \
        inputbuildAbstractHandle.C inputloopUnrolling.C inputgetDependentDecls.C \
-       inputloopInterchange.C inputloopTiling.C
+       inputloopInterchange.C inputloopTiling.C inputbuildStructDeclaration2.C
 
 check-local:
 	@echo "Test for ROSE SAGE Interfaces."
