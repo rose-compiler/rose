@@ -79,19 +79,16 @@ namespace Aral {
 
 	class ResultSection : public Data {
 	public:
-		ResultSection(std::string name,Data* type,Data* data) {
-			_name=name;
-			_data=data;
-		}
+		ResultSection(std::string name,Data* type,AnnotationDataList* data);
 		void accept(Aral::AbstractDataVisitor&);
 		Data* deepCopy();
 		bool isEqual(Data*) { return false; }
 		std::string getName() { return _name; }
-		Data* getData() { return _data; }
+		AnnotationDataList* getAnnotationDataList() { return _annotationDataList; }
 		virtual ~ResultSection();
 	private:
 		std::string _name;
-		Data* _data;
+		AnnotationDataList* _annotationDataList;
 	};
 	class LocationSpecifier {
 	public:

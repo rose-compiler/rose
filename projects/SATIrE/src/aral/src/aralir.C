@@ -40,6 +40,10 @@ Aral::Map::Map():_defaultElement(0) {}
 
 Aral::InfoElementList::InfoElementList() {}
 
+Aral::ResultSection::ResultSection(std::string name,Data* type,AnnotationDataList* data):
+	    _name(name),
+	    _annotationDataList(data) {}
+
 Aral::AnnotationDataList::AnnotationDataList() {}
 
 Aral::Tuple::Tuple(int size) {
@@ -511,7 +515,7 @@ bool Aral::BotElement::isLessThan(Data* o) {
 /* data deepCopy Methods */
 Aral::Data* Aral::ResultSection::deepCopy() {
   // the 0 represents the type which is not implemented yet (and not necessary for using ARAL)
-  return new Aral::ResultSection(getName(),0,getData()->deepCopy());
+  return new Aral::ResultSection(getName(),0,dynamic_cast<AnnotationDataList*>(getAnnotationDataList()->deepCopy()));
 }
 Aral::AralFile* Aral::AralFile::deepCopy() {
   	ResultSectionList* rsl=dynamic_cast<ResultSectionList*>(this->getResultSectionList()->deepCopy());
@@ -627,7 +631,7 @@ void Aral::AralFile::accept(AbstractDataVisitor& v) {
 
 void Aral::ResultSection::accept(AbstractDataVisitor& v) {
 	v.preVisitResultSection(this);
-	_data->accept(v);
+	_annotationDataList->accept(v);
 	v.postVisitResultSection(this);
 }
 void Aral::AnnotationData::accept(AbstractDataVisitor& v) {

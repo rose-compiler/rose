@@ -4,7 +4,7 @@ YACC = bison
 
 DISTNAME = aral15
 ARAL_SOURCES = ../aral.C ../aralir.C ../aralparser.yxx ../aralscanner.lxx \
-               ../satire/aralir.h ../satire/aralparser_decls.h
+               ../satire/aralir.h ../satire/aralparser_decls.h ../example1.C
 
 All: aral
 
