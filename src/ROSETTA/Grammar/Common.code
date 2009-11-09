@@ -326,8 +326,8 @@ $CLASSNAME::variantT() const {
 int
 $CLASSNAME::variant() const
    {
-     // This function is used in SAGE
-     assert(this != NULL);
+  // This function is used in SAGE
+     ROSE_ASSERT(this != NULL);
      return $CLASSTAG;
    }
 #endif
@@ -335,14 +335,14 @@ $CLASSNAME::variant() const
 const char*
 $CLASSNAME::sage_class_name() const
    {
-     assert(this != NULL);
+     ROSE_ASSERT(this != NULL);
      return "$CLASSNAME";  
    }
 
 std::string
 $CLASSNAME::class_name() const
    {
-     assert(this != NULL);
+     ROSE_ASSERT(this != NULL);
      return "$CLASSNAME";  
    }
 
