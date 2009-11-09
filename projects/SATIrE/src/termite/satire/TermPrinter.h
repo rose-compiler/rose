@@ -358,7 +358,6 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
           /* add information on possible call targets */
           if (!isSgFunctionRefExp(function)) {
             using SATIrE::Analyses::PointsToAnalysis;
-            PointsToAnalysis *pto = cfg->pointsToAnalysis;
             PointsToAnalysis *cspta = cfg->contextSensitivePointsToAnalysis;
             PrologList *callsite_locs = NULL;
 #if HAVE_PAG
@@ -403,6 +402,7 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
               callsite_locs->addFirstElement(pLocation);
             }
 #else
+            PointsToAnalysis *pto = cfg->pointsToAnalysis;
             if (pto != NULL) {
               PointsToAnalysis::Location *loc =
                 pto->expressionLocation(function);

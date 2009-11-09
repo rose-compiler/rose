@@ -536,7 +536,7 @@ weak_update_v(s, v, value) =
 merged_var_values :: itvl_State, *VariableSymbolNT -> itvl_Interval;
 merged_var_values(top, _) = top;
 merged_var_values(_, [!]) =
-    println("in merged_var_values: merging empty variable list!")
+    // -- println("in merged_var_values: merging empty variable list!")
     top;
 merged_var_values(lift(s), v::[!]) = s{!varsym_varid(v)!};
 merged_var_values(lift(s) as ls, v::vs) =
