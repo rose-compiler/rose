@@ -16,12 +16,15 @@ INCLUDES = -I$(ROSE_INCLUDE_DIR) \
     -I$(top_builddir)/src/termite/satire \
     -I$(top_srcdir)/src/aral/src/satire
 
-bin_PROGRAMS = aral
+bin_PROGRAMS = aral aral_example1
 lib_LTLIBRARIES = libaral.la
 nobase_include_HEADERS = satire/aralir.h satire/aralparser_decls.h
 
 aral_SOURCES = aral.C
 aral_LDADD = libaral.la
+
+aral_example1_SOURCES = example1.C
+aral_example1_LDADD = libaral.la
 
 BUILT_SOURCES = aralparser.h
 
