@@ -11,7 +11,7 @@
 #include "general_token_defs.h"
 
 // DQ (12/22/2008): I would appreciate it if this were a better name...
-#if CAN_NOT_COMPILE_WITH_ROSE != true
+#if !CAN_NOT_COMPILE_WITH_ROSE 
 #include <boost/preprocessor/iteration/iterate.hpp> // Liao, 7/10/2009, required by GCC 4.4.0 for a #define line of BOOST_PP_ITERATION_DEPTH
 #include <boost/wave/cpplexer/cpp_lex_token.hpp>    // token class
 #include <boost/wave/cpplexer/cpp_lex_iterator.hpp>   // lexer type

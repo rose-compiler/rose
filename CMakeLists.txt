@@ -27,11 +27,11 @@ set(INSTALL_TARGETS_DEFAULT_ARGS  RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
 cmake_minimum_required(VERSION 2.6)
 add_definitions(${QT_DEFINITIONS} ${KDE4_DEFINITIONS})
 #enable_language(Fortran)
-
-set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g " )
+# /TP 
+set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g /CLR /SUBSYSTEM:WINDOWS /MDd /TP" )
 #set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -DHAVE_CONFIG_H" )
 #set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fexceptions -DHAVE_CONFIG_H" )
-set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g " )
+set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g /CLR /SUBSYSTEM:WINDOWS /MDd /TP" )
 
 #set(  CMAKE_VERBOSE_MAKEFILE  true )
 

@@ -20,7 +20,7 @@ class PtrSetWrap
   class Iterator 
   {
     const VoidPtrSet *impl;
-    VoidPtrSet::iterator p;
+    VoidPtrSet::const_iterator p;
     Iterator( const VoidPtrSet* _impl) 
             : impl(_impl) { Reset(); }
     Iterator( const VoidPtrSet* _impl, const VoidPtrSet::iterator _p) 
