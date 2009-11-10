@@ -179,3 +179,9 @@ If you don't like that, undo with:
 
   $ git reset --hard backup  # undoes the merge
   $ git branch -d backup # deletes the "backup" branch
+
+
+############# Build a new branch which is merged from two other branches ##############
+
+   git checkout -b dan_andreas_merge_test
+
