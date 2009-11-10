@@ -1,0 +1,8 @@
+README for the new Hudson support in ROSE (Continuous Integeration)
+
+How to logon to the tux269 machine:
+   ssh -L 8080:localhost:8080 tux269
+
+How to bring up the hudson web page:
+   firefox http://localhost:8080/job/ROSE/ &
+

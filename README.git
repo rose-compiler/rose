@@ -22,6 +22,11 @@ The first step of using a ROSE git repository is to create a local copy
     
      git clone /usr/casc/overture/ROSE/git/ROSE.git
 
+on laptop use:
+     git clone ssh://dquinlan@tux281.llnl.gov/usr/casc/overture/ROSE/git/ROSE.git git-rose-dan
+
+
+
 The next step is to list all the branches available in the central git repository
   
      git branch -a
