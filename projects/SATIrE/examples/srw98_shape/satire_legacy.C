@@ -64,7 +64,7 @@ get_statement_post_info(DFI_STORE store, SgStatement *stmt)
 }
 #endif
 
-DFI_STORE perform_pag_analysis(ANALYSIS)(SgProject *root,AnalyzerOptions* opt)
+DFI_STORE perform_pag_analysis(ANALYSIS)(SATIrE::Program *program,AnalyzerOptions* opt)
 {
     TimingPerformance timer("PAG analysis and visualization part:");
     TimingPerformance *nestedTimer;
@@ -73,13 +73,14 @@ DFI_STORE perform_pag_analysis(ANALYSIS)(SgProject *root,AnalyzerOptions* opt)
   
     if (verbose) std::cout << "collecting functions ... " << std::flush;
     nestedTimer = new TimingPerformance("SATIrE ICFG construction:");
-    ProcTraversal s;
+    ProcTraversal s(program);
     s.setPrintCollectedFunctionNames(opt->printCollectedFunctionNames());
+    SgProject *root = program->astRoot;
     s.traverse(root, preorder);
     if (verbose) std::cout << "done" << std::endl;
 
     if (verbose) std::cout << "generating cfg ... " << std::flush;
-    CFGTraversal t(s, opt);
+    CFGTraversal t(s, program, opt);
     if (!opt->numberExpressions()) {
       t.numberExpressions(false);
     }

@@ -391,7 +391,7 @@ Implementation::outputAnnotatedProgram(Program *program, bool prefixFiles)
         {
             TimingPerformance timer("Output Termite term:");
             TermPrinter<DFI_STORE> tp((DFI_STORE) analysisInfo, identifier(),
-                                      program->icfg);
+                                      program->icfg, program);
 
             if (program->options->analysisWholeProgram())
                 tp.traverse(program->astRoot);

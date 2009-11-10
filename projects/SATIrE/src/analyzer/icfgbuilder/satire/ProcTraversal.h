@@ -12,7 +12,7 @@
 class ProcTraversal : public AstSimpleProcessing
 {
 public:
-  ProcTraversal();
+  ProcTraversal(SATIrE::Program *program);
   std::deque<Procedure *> *get_procedures() const;
   unsigned long original_ast_nodes, original_ast_statements;
   void setPrintCollectedFunctionNames(bool pcf) ;
@@ -37,6 +37,7 @@ private:
   int procnum;
   bool _printCollectedFunctionNames;
   TimingPerformance *timer;
+  SATIrE::Program *program;
 };
 
 /* find default constructor method in a given class declaration

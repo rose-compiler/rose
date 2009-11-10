@@ -11,6 +11,8 @@
 #include "ProcTraversal.h"
 #include "TermPrinter.h"
 
+#include <satire.h>
+
 // GB (2008-08-21): ROSE defines macros TRUE and FALSE, then goes redefining
 // them in a header called general.h. PAG (here in iterate.h) also includes
 // a file called general.h, which is redirected to ROSE's general.h. That in
@@ -56,7 +58,7 @@
 #endif
 
 
-DFI_STORE perform_pag_analysis(ANALYSIS)(SgProject* root,AnalyzerOptions* opt);
+DFI_STORE perform_pag_analysis(ANALYSIS)(SATIrE::Program *program,AnalyzerOptions* opt);
 std::string get_statement_pre_info_string(DFI_STORE store, SgStatement* stmt);
 std::string get_statement_post_info_string(DFI_STORE store, SgStatement* stmt);
 carrier_type_o(CARRIER_TYPE) get_statement_pre_info(DFI_STORE store, SgStatement *stmt);

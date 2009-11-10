@@ -41,7 +41,7 @@ void DataFlowAnalysis::run(Program *program)
 
     /* Build the program's ICFG if necessary. */
     if (program->icfg == NULL)
-        program->icfg = createICFG(program->astRoot, options);
+        program->icfg = createICFG(program, options);
 
     /* Run this analysis. */
     if (verbose)

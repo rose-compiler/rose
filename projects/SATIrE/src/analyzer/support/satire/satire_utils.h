@@ -17,7 +17,7 @@ SgProject *createRoseAst(AnalyzerOptions *options);
 // This function computes the ICFG for a given AST and a given set of
 // options. Also tests the ICFG if requested by the analyzer options, and
 // outputs a visualization if requested by the analyzer options.
-CFG *createICFG(SgProject *astRoot, AnalyzerOptions *options);
+CFG *createICFG(Program *program, AnalyzerOptions *options);
 
 // This function generates various representations of the AST -- source
 // or binary AST -- as requested by the options.
@@ -30,6 +30,9 @@ void outputProgramRepresentation(Program *program, AnalyzerOptions *options);
 // This function attaches ARAL analysis information to the appropriate parts
 // of the program representation.
 void attachAralInformation(Program *program, AnalyzerOptions *options);
+
+// Find the enclosing SgFile, if any.
+SgFile *traceBackToFileNode(SgNode *node);
 
 }
 

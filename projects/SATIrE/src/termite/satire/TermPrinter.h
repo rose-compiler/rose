@@ -23,6 +23,7 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
 
 #if HAVE_SATIRE_ICFG
 #  include <cfg_support.h>
+#  include <satire_program_representation.h>
 #endif
 
 #if HAVE_PAG && !defined(DO_NOT_USE_DFIPRINTER)
@@ -59,6 +60,7 @@ public:
             , std::string analysisname_ = ""
 #if HAVE_SATIRE_ICFG
             , CFG *cfg = 0
+            , SATIrE::Program *program = 0
 #endif
             )
       :
@@ -68,8 +70,10 @@ public:
       analysisname(analysisname_ != "" ? analysisname_ : "unknown")
 #if HAVE_SATIRE_ICFG
     , cfg(cfg)
+    , program(program)
 #else
     , cfg(NULL)
+    , program(NULL)
 #endif
   { 
 #if HAVE_SWI_PROLOG
@@ -136,6 +140,7 @@ private:
 #if HAVE_SATIRE_ICFG
   /** the CFG */
   CFG *cfg;
+  SATIrE::Program *program;
 
   /** create integer term with variable ID or "null" atom */
   PrologTerm* varidTerm(SgVariableSymbol *symbol);
@@ -150,6 +155,7 @@ private:
 #else
   /** dummy member */
   void *cfg;
+  void *program;
 #endif
 
   PrologList* getAnalysisResultList(SgStatement* stmt);
@@ -285,7 +291,10 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
       if (SgVarRefExp *v = isSgVarRefExp(astNode))
         sym = v->get_symbol();
       if (SgInitializedName *in = isSgInitializedName(astNode)) {
-        sym = isSgVariableSymbol(in->get_symbol_from_symbol_table());
+        if (program != NULL)
+            sym = program->get_symbol(in);
+        else
+            sym = isSgVariableSymbol(in->get_symbol_from_symbol_table());
         if (sym == NULL) {
           /* ROSE has NULL symbols for some unused things; for example,
            * argument names in forward function declarations. But also for

@@ -9,13 +9,17 @@
 #include "IrCreation.h"
 #include "ExprLabeler.h"
 
-ProcTraversal::ProcTraversal()
+#include <satire.h>
+
+ProcTraversal::ProcTraversal(SATIrE::Program *program)
   : procedures(new std::deque<Procedure *>()),
     node_id(0), 
     procnum(0), 
     original_ast_nodes(0), 
     original_ast_statements(0),
-    timer(NULL) {
+    timer(NULL),
+    program(program)
+{
   setPrintCollectedFunctionNames(false);
 // GB (2008-06-25): Some ROSE nodes have tight checks on what types they may
 // be associated with, especially concerning pointer base types. Let's hope
@@ -24,8 +28,14 @@ ProcTraversal::ProcTraversal()
       = Ir::createPointerType(Ir::createPointerType(SgTypeVoid::createType()));
   global_return_variable_symbol
       = Ir::createVariableSymbol("$tmpvar$retvar", global_unknown_type);
+  program->global_map["$tmpvar$retvar"]
+      = std::make_pair(global_return_variable_symbol,
+                       global_return_variable_symbol->get_declaration());
   global_this_variable_symbol
       = Ir::createVariableSymbol("$tmpvar$this", global_unknown_type);
+  program->global_map["$tmpvar$this"]
+      = std::make_pair(global_this_variable_symbol,
+                       global_this_variable_symbol->get_declaration());
 }
 
 std::deque<Procedure *>*
@@ -220,6 +230,8 @@ ProcTraversal::visit(SgNode *node) {
             SgVariableSymbol *var
                 = Ir::createVariableSymbol(varname.str(),
                         global_unknown_type);
+            program->global_map[varname.str()]
+                = std::make_pair(var, var->get_declaration());
             global_argument_variable_symbols.push_back(var);
         }
      // now create the param assignments
@@ -258,6 +270,8 @@ ProcTraversal::visit(SgNode *node) {
           SgVariableSymbol *lhs
             = Ir::createVariableSymbol("$tmpvar$" + baseclass->get_name(),
                                        baseclass->get_type());
+          program->global_map["$tmpvar$" + baseclass->get_name()]
+              = std::make_pair(lhs, lhs->get_declaration());
           SgMemberFunctionDeclaration* fd=get_default_constructor(baseclass);
           assert(fd);
           SgType* basetype=baseclass->get_type();

@@ -59,12 +59,14 @@ PointsToAnalysis::run(Program *program)
     p_impl->run(program);
 }
 
+#if 0
 void
 PointsToAnalysis::run(CFG *icfg)
 {
     TimingPerformance timer("Steensgaard-style points-to analysis on ICFG:");
     p_impl->run(icfg);
 }
+#endif
 
 void
 PointsToAnalysis::print()

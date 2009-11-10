@@ -4,6 +4,8 @@
 #ifndef H_CFGTRAVERSAL
 #define H_CFGTRAVERSAL
 
+namespace SATIrE { class Program; }
+
 #include <satire_rose.h>
 
 #include <map>
@@ -16,7 +18,8 @@ class CFGTraversal : public AstSimpleProcessing
 {
 public:
  // CFGTraversal(std::deque<Procedure *> *);
-    CFGTraversal(ProcTraversal &, AnalyzerOptions *options = NULL);
+    CFGTraversal(ProcTraversal &, SATIrE::Program *program,
+                 AnalyzerOptions *options = NULL);
     CFG *getCFG();
 
  // Can be called before the traversal to choose whether the expressions and
@@ -69,6 +72,8 @@ private:
     TimingPerformance *traversalTimer;
 
     bool flag_numberExpressions;
+
+    SATIrE::Program *program;
 };
 
 // GB (2008-04-04): This class can be used to traverse the SATIrE ICFG. The

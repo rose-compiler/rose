@@ -5,6 +5,8 @@
 #include <cstdlib>
 #include "EqualityTraversal.h"
 
+static SATIrE::Program *globalProgram;
+
 // If DEBUG_EQUALITY_TRAVERSAL is defined to a true value, the equality
 // traversal dumps some interesting information onto stdout. This
 // information is a sort of profile that shows where the bottlenecks are.
@@ -175,8 +177,9 @@ size_t NodeHash::hashVarious(const NodeInfo& node)
 
     case V_SgVarRefExp:
         {
-            SgInitializedName *decl = isSgVarRefExp(node.first)
-                                          ->get_symbol()->get_declaration();
+            SgInitializedName *decl
+                = globalProgram->get_symbol(isSgVarRefExp(node.first))
+                               ->get_declaration();
             lowerOrderBits = hashMangledName(decl);
         }
         break;
@@ -438,8 +441,12 @@ bool NodeEqual::compareVarious(const NodeInfo& s1, const NodeInfo& s2) {
 
   case V_SgVarRefExp:
     {
-        SgInitializedName *i1 = isSgVarRefExp(s1.first)->get_symbol()->get_declaration();
-        SgInitializedName *i2 = isSgVarRefExp(s2.first)->get_symbol()->get_declaration();
+        SgInitializedName *i1
+            = globalProgram->get_symbol(isSgVarRefExp(s1.first))
+                           ->get_declaration();
+        SgInitializedName *i2
+            = globalProgram->get_symbol(isSgVarRefExp(s2.first))
+                           ->get_declaration();
         return compareNamedThings(i1, i2);
     }
     break;
@@ -535,6 +542,11 @@ bool NodeEqual::operator()(const NodeInfo& s1, const NodeInfo& s2) const {
   return compareVarious(s1, s2);
 }
 
+EqualityTraversal::EqualityTraversal(SATIrE::Program *program)
+ : program(program)
+{
+    globalProgram = program;
+}
 
 // TODO actually use this - maybe
 bool EqualityTraversal::equal_child_ids(SgNode* n, SgNode* m) {

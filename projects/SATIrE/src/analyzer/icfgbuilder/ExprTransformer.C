@@ -10,6 +10,8 @@
 #include "ExprTransformer.h"
 #include "IrCreation.h"
 
+#include <satire.h>
+
 bool
 ExprInfo::isPure() const
 {
@@ -59,9 +61,9 @@ ExprTransformer::ExprTransformer(int node_id_, int procnum_, int expnum_,
 #endif
 
 ExprTransformer::ExprTransformer(int node_id, int procnum, int expnum,
-        CFG *cfg, BasicBlock *after, SgStatement *stmt)
-  : node_id(node_id), procnum(procnum), expnum(expnum), cfg(cfg),
-    after(after), retval(after), stmt(stmt),
+        SATIrE::Program *program, BasicBlock *after, SgStatement *stmt)
+  : node_id(node_id), procnum(procnum), expnum(expnum), cfg(program->icfg),
+    program(program), after(after), retval(after), stmt(stmt),
     el(expnum, cfg, (*cfg->procedures)[procnum]),
     stmt_start(NULL),
     stmt_end(new StatementAttribute(after, POS_POST))
@@ -157,7 +159,11 @@ ExprTransformer::newReturnVariable(std::string funcname)
 {
     std::stringstream varname;
     varname << "$tmpvar$" << funcname << "$return_" << expnum++;
-    return Ir::createVariableSymbol(varname.str(), cfg->global_unknown_type);
+    SgVariableSymbol *result
+        = Ir::createVariableSymbol(varname.str(), cfg->global_unknown_type);
+    program->global_map[varname.str()]
+        = std::make_pair(result, result->get_declaration());
+    return result;
 }
 
 SgVariableSymbol *
@@ -165,7 +171,11 @@ ExprTransformer::newLogicalVariable()
 {
     std::stringstream varname;
     varname << "$tmpvar$logical_" << expnum++;
-    return Ir::createVariableSymbol(varname.str(), cfg->global_unknown_type);
+    SgVariableSymbol *result
+       = Ir::createVariableSymbol(varname.str(), cfg->global_unknown_type);
+    program->global_map[varname.str()]
+        = std::make_pair(result, result->get_declaration());
+    return result;
 }
 
 SgVariableSymbol *
@@ -179,6 +189,8 @@ ExprTransformer::icfgArgumentVarSym(unsigned int i)
         SgVariableSymbol *varsym
             = Ir::createVariableSymbol(varname.str(),
                                        cfg->global_unknown_type);
+        program->global_map[varname.str()]
+            = std::make_pair(varsym, varsym->get_declaration());
         cfg->global_argument_variable_symbols.push_back(varsym);
     }
 

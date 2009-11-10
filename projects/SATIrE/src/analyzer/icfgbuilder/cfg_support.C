@@ -7,6 +7,8 @@
 #include <cstring>
 #include <cstdlib>
 
+#include "EqualityTraversal.h"
+
 const char * const edgetypenames[] =
 {
     "local_edge",
@@ -19,10 +21,12 @@ const char * const edgetypenames[] =
     "<NOT AN EDGE!>"
 };
 
-CFG::CFG()
+CFG::CFG(SATIrE::Program *program)
   : global_return_variable_symbol(NULL), global_this_variable_symbol(NULL),
-    global_unknown_type(NULL), analyzerOptions(NULL),
-    pointsToAnalysis(NULL), contextSensitivePointsToAnalysis(NULL)
+    global_unknown_type(NULL), program(program),
+    equalityTraversal(new EqualityTraversal(program)),
+    analyzerOptions(NULL), pointsToAnalysis(NULL),
+    contextSensitivePointsToAnalysis(NULL)
 #if HAVE_PAG
     , contextInformation(NULL)
 #endif

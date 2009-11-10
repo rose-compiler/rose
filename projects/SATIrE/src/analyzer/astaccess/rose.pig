@@ -12,7 +12,7 @@
 
 #include "syntree.h"
 
-#include <satire_rose.h>
+#include <satire.h>
 
 #include "pignodelist.h"
 #include "IrCreation.h"

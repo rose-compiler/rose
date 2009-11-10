@@ -324,6 +324,8 @@ private:
     void ensureArgumentCount(Location *, size_t n);
     SgFunctionSymbol *canonicalSymbol(SgFunctionSymbol *fsym);
 
+    Program *program;
+
 #if 0
  // These instance variables pass information upwards in the AST (from the
  // leaves towards the root): In functions using varargs, va_list variables

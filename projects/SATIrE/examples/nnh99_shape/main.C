@@ -57,7 +57,9 @@ int main(int argc, char **argv)
   /* Run the frontend to construct an abstract syntax tree from
    * the files specified on the command line (which has been processed
    * and commands only relevant to the analyzer have been removed). */
-  SgProject* ast_root = frontend(opt->getCommandLineNum(), opt->getCommandLineCarray());
+  // SgProject* ast_root = frontend(opt->getCommandLineNum(), opt->getCommandLineCarray());
+  SATIrE::Program *program = new SATIrE::Program(opt);
+  SgProject *ast_root = program->astRoot;
   
   /* Make sure everything is OK... */
   if(opt->checkRoseAst()) {
@@ -70,7 +72,7 @@ int main(int argc, char **argv)
    * information. Use the StatementAttributeTraversal class for accessing
    * the analysis information on each statement */
 
-  DFI_STORE analysis_info = perform_pag_analysis(ANALYSIS)(ast_root,opt);
+  DFI_STORE analysis_info = perform_pag_analysis(ANALYSIS)(program,opt);
 
   /* Extract all Pairs of Expressions from the Program so that they
    * can be compared for aliasing. */

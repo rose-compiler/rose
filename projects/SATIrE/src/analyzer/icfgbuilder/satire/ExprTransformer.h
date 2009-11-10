@@ -50,8 +50,9 @@ public:
     BasicBlock *get_last() const;
     BasicBlock *get_retval() const;
 
-    ExprTransformer(int node_id, int procnum, int expnum, CFG *cfg,
-                    BasicBlock *after, SgStatement *stmt);
+    ExprTransformer(int node_id, int procnum, int expnum,
+                    SATIrE::Program *program, BasicBlock *after,
+                    SgStatement *stmt);
     SgExpression *transformExpression(SgExpression *expr,
                                       SgExpression *original_expr);
 
@@ -67,6 +68,7 @@ private:
     int procnum;
     int expnum;
     CFG *cfg;
+    SATIrE::Program *program;
     BasicBlock *after, *last;
     BasicBlock *retval;
     SgStatement *stmt;

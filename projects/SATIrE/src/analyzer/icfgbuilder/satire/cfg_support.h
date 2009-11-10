@@ -16,7 +16,9 @@
 #include "kfg_types.h"
 // #include "iface.h"
 
-#include "EqualityTraversal.h"
+// #include "EqualityTraversal.h"
+class EqualityTraversal;
+#include <satire_rose.h>
 #include "AnalyzerOptions.h"
 
 enum
@@ -31,6 +33,8 @@ class BasicBlock;
 class CallBlock;
 class Procedure;
 class CFG;
+
+namespace SATIrE { class Program; }
 
 #include "Context.h"
 
@@ -141,7 +145,8 @@ public:
  // the type to assign to these global variables
     SgType *global_unknown_type;
 
-    EqualityTraversal equalityTraversal;
+    SATIrE::Program *program;
+    EqualityTraversal *equalityTraversal;
 
     AnalyzerOptions *analyzerOptions;
 
@@ -153,7 +158,7 @@ public:
     ContextInformation *contextInformation;
 #endif
 
-    CFG();
+    CFG(SATIrE::Program *program);
     ~CFG();
 
 #if 0
@@ -166,6 +171,7 @@ public:
     char *dupstr(const char *str);
 
 private:
+    CFG();
 #if 0
     std::vector<BlockListIterator *> iteratorsToDelete;
 #endif

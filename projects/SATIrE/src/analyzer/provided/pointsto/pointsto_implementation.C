@@ -266,7 +266,7 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
          // return variables, we do not want the retvar's location; rather,
          // we need to look up the called function's return location.
             SgVarRefExp *varRef = isSgVarRefExp(node);
-            SgSymbol *varSym = varRef->get_symbol();
+            SgSymbol *varSym = program->get_symbol(varRef);
             if (varSym == icfgTraversal->get_icfg()
                                        ->global_return_variable_symbol)
             {
@@ -1026,8 +1026,7 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
         result = NULL;
         if (!isSgClassDefinition(node->get_parent()->get_parent()))
         {
-            SgSymbol *sym
-                = isSgInitializedName(node)->get_symbol_from_symbol_table();
+            SgSymbol *sym = program->get_symbol(isSgInitializedName(node));
             b = synlist[SgInitializedName_initptr];
             if (sym == NULL && b != NULL)
                 sym = findSymbolForInitializedName(
@@ -1608,7 +1607,7 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
              // .... because for global variables, we need to associate the
              // initialized name with its initializer: Global variables are
              // not directly visited by the ICFG traversal.
-                SgSymbol *sym = initname->get_symbol_from_symbol_table();
+                SgSymbol *sym = program->get_symbol(initname);
                 Location *loc = symbol_location(sym);
                 SgType *symtype = NULL;
                 if (SgVariableSymbol *varsym = isSgVariableSymbol(sym))
@@ -3239,7 +3238,7 @@ PointsToAnalysis::Implementation::structMemberLocation(
         PointsToAnalysis::Location *structure,
         SgExpression *lhsExpr, SgVarRefExp *varRef)
 {
-    SgVariableSymbol *sym = varRef->get_symbol();
+    SgVariableSymbol *sym = program->get_symbol(varRef);
     Location *result = NULL;
 
 #if DEBUG
@@ -3545,7 +3544,7 @@ PointsToAnalysis::Implementation::getVariableSymbolsFromDeclaration(
     SgInitializedNamePtrList &initnames = vardecl->get_variables();
     SgInitializedNamePtrList::iterator i;
     for (i = initnames.begin(); i != initnames.end(); ++i)
-        syms.push_back((*i)->get_symbol_from_symbol_table());
+        syms.push_back(program->get_symbol(*i));
     return syms;
 }
 
@@ -3748,7 +3747,7 @@ PointsToAnalysis::Implementation::findSymbolForInitializedName(
         SgInitializedName *initname)
 {
     SgSymbol *sym = NULL;
-    sym = initname->get_symbol_from_symbol_table();
+    sym = program->get_symbol(initname);
     if (sym == NULL)
     {
         std::string name = Utils::name(initname);
@@ -3793,12 +3792,13 @@ PointsToAnalysis::Implementation::findSymbolForInitializedName(
 }
 
 void
-PointsToAnalysis::Implementation::run(Program *program)
+PointsToAnalysis::Implementation::run(Program *program_)
 {
  // SgProject *ast = program->astRoot; // actually: run on program->icfg
 
  // traverse(ast);
  // IcfgTraversal::traverse(program->icfg);
+    this->program = program_;
     run(program->icfg);
 }
 
@@ -4025,7 +4025,8 @@ PointsToAnalysis::Implementation::doDot(std::string filename)
 PointsToAnalysis::Implementation::Implementation(bool contextSensitive)
   : info(new PointsToAnalysis::PointsToInformation()),
     auxiliaryTraversal(new Implementation(info, this, info)),
-    icfgTraversal(this), contextSensitive(contextSensitive), mainInfo(info)
+    icfgTraversal(this), contextSensitive(contextSensitive), mainInfo(info),
+    program(NULL)
 {
  // The constructor without arguments constructs a "fresh" instance with a
  // new info object. It also creates an auxiliary implementation instance
@@ -4044,7 +4045,8 @@ PointsToAnalysis::Implementation::Implementation(
     auxiliaryTraversal(NULL),
     icfgTraversal(icfgTraversal),
     contextSensitive(false), // this instance works with a given info object
-    mainInfo(mainInfo)
+    mainInfo(mainInfo),
+    program(icfgTraversal->program)
 {
  // The private constructor with an info argument constructs an "auxiliary"
  // instance of the implementation class, sharing an existing info object.

@@ -21,10 +21,12 @@
 #define REPLACE_FOR_BY_WHILE
 
 // CFGTraversal::CFGTraversal(std::deque<Procedure *> *procs)
-CFGTraversal::CFGTraversal(ProcTraversal &p, AnalyzerOptions *options)
-    : node_id(0), procnum(0), cfg(new CFG()), real_cfg(NULL), proc(NULL),
-      call_num(0), lognum(0), expnum(0), current_statement(NULL),
-      traversalTimer(NULL), flag_numberExpressions(true)
+CFGTraversal::CFGTraversal(ProcTraversal &p, SATIrE::Program *program,
+                           AnalyzerOptions *options)
+    : node_id(0), procnum(0), cfg(new CFG(program)), real_cfg(NULL),
+      proc(NULL), call_num(0), lognum(0), expnum(0),
+      current_statement(NULL), traversalTimer(NULL),
+      flag_numberExpressions(true), program(program)
 {
   TimingPerformance timer("Initial setup of ICFG (entry, exit, argument nodes):");
   cfg->procedures = p.get_procedures();
@@ -36,6 +38,9 @@ CFGTraversal::CFGTraversal(ProcTraversal &p, AnalyzerOptions *options)
   cfg->global_argument_variable_symbols = p.global_argument_variable_symbols;
   cfg->global_this_variable_symbol = p.global_this_variable_symbol;
   cfg->global_unknown_type = p.global_unknown_type;
+
+  if (program->icfg == NULL)
+      program->icfg = cfg;
 
 // GB (2008-05-05): Refactored.
   setProcedureEndNodes();
@@ -75,7 +80,7 @@ CFGTraversal::processProcedureArgBlocks()
             cfg->registerStatementLabel(z, current_statement);
           }
 #else
-          ExprTransformer et(node_id, (*i)->procnum, expnum, cfg, NULL,
+          ExprTransformer et(node_id, (*i)->procnum, expnum, program, NULL,
                   current_statement);
           et.transformExpression(new_expr, aa->get_rhs());
 #endif
@@ -222,7 +227,7 @@ CFGTraversal::atTraversalEnd() {
         if (cfg->analyzerOptions->runPointsToAnalysis())
         {
             cfg->pointsToAnalysis = new SATIrE::Analyses::PointsToAnalysis();
-            cfg->pointsToAnalysis->run(cfg);
+            cfg->pointsToAnalysis->run(program);
         }
         else
             cfg->pointsToAnalysis = NULL;
@@ -257,7 +262,7 @@ CFGTraversal::atTraversalEnd() {
          // Clean up PAG stuff when we're done using it.
             mapping_forced_cleanup(cfg);
 
-            cfg->contextSensitivePointsToAnalysis->run(cfg);
+            cfg->contextSensitivePointsToAnalysis->run(program);
             if (cfg->analyzerOptions->outputPointsToGraph())
             {
                 cfg->contextSensitivePointsToAnalysis->doDot(
@@ -836,7 +841,7 @@ CFGTraversal::number_exprs()
  // equality traversal.
     EqualityTraversal::SynthesizedAttributesList emptySynAttributes;
     for (g_itr = cfg->globals.begin(); g_itr != cfg->globals.end(); ++g_itr)
-        cfg->equalityTraversal.evaluateSynthesizedAttribute((*g_itr)->get_type(),
+        cfg->equalityTraversal->evaluateSynthesizedAttribute((*g_itr)->get_type(),
                                                             emptySynAttributes);
 #endif
  // traverse everything else
@@ -844,7 +849,7 @@ CFGTraversal::number_exprs()
     IcfgExprSetTraversal iest(&expr_set, &type_set);
     iest.traverse(cfg);
 #else
-    IcfgHashingTraversal iht(cfg->equalityTraversal, type_set);
+    IcfgHashingTraversal iht(*cfg->equalityTraversal, type_set);
     iht.traverse(cfg);
 #endif
     delete nestedTimer;
@@ -866,7 +871,7 @@ CFGTraversal::number_exprs()
 #else
  // Now get all expressions from the traversal and put them into our maps.
     std::vector<EqualityId> ids;
-    cfg->equalityTraversal.get_all_exprs(ids);
+    cfg->equalityTraversal->get_all_exprs(ids);
  // Start numbering expressions with the current size of numbers_exprs. We
  // do this because numbers_exprs might already contain some expressions
  // that are put there by the points-to analysis (var refs for fake
@@ -878,7 +883,7 @@ CFGTraversal::number_exprs()
     for (id = ids.begin(); id != ids.end(); ++id)
     {
         const std::vector<SgNode *> &exprs
-            = cfg->equalityTraversal.get_nodes_for_id(*id);
+            = cfg->equalityTraversal->get_nodes_for_id(*id);
         for (expr = exprs.begin(); expr != exprs.end(); ++expr)
         {
          // The reference returned by get_nodes_for_id is const so that we
@@ -903,7 +908,7 @@ CFGTraversal::number_exprs()
          // referring to them.
             if (SgVarRefExp *varRef = isSgVarRefExp(e))
             {
-                SgVariableSymbol *sym = varRef->get_symbol();
+                SgVariableSymbol *sym = program->get_symbol(varRef);
                 cfg->varsyms_ids[sym] = i;
                 cfg->ids_varsyms[i] = sym;
 #if 0
@@ -1028,14 +1033,14 @@ CFGTraversal::number_exprs()
  // GB (2008-05-20): Finally switched to using the AST hashing mechanism for
  // types as well.
     ids.clear();
-    cfg->equalityTraversal.get_all_types(ids);
+    cfg->equalityTraversal->get_all_types(ids);
     std::vector<SgNode *>::const_iterator type;
     cfg->numbers_types.reserve(ids.size());
     unsigned long j = 0;
     for (id = ids.begin(); id != ids.end(); ++id)
     {
         const std::vector<SgNode *> &types
-            = cfg->equalityTraversal.get_nodes_for_id(*id);
+            = cfg->equalityTraversal->get_nodes_for_id(*id);
         for (type = types.begin(); type != types.end(); ++type)
         {
             SgType *t = const_cast<SgType *>(isSgType(*type));
@@ -1070,8 +1075,7 @@ CFGTraversal::processGlobalVariableDeclarations(SgGlobal *global)
       if (const SgVariableDeclaration *vardecl = isSgVariableDeclaration(*itr))
       {
           SgInitializedName *initname = vardecl->get_variables().front();
-          SgVariableSymbol *varsym
-              = isSgVariableSymbol(initname->get_symbol_from_symbol_table());
+          SgVariableSymbol *varsym = program->get_symbol(initname);
           std::string name;
        // GB (2008-08-04): Global variable names are not unique. Some global
        // variable names in different files refer to the same variable,
@@ -1336,7 +1340,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
         for (int z = node_id; z < et.get_node_id(); ++z)
             cfg->registerStatementLabel(z, current_statement);
 #else
-        ExprTransformer et(node_id, proc->procnum, expnum, cfg, if_block,
+        ExprTransformer et(node_id, proc->procnum, expnum, program, if_block,
                 cond);
         new_expr = et.transformExpression(new_expr, cond->get_expression());
 #endif
@@ -1430,7 +1434,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
             for (int z = node_id; z < et.get_node_id(); ++z)
               cfg->registerStatementLabel(z, current_statement);
 #else
-            ExprTransformer et(node_id, proc->procnum, expnum, cfg, init_block,
+            ExprTransformer et(node_id, proc->procnum, expnum, program, init_block,
                     init_expr);
             et.transformExpression(new_expr, init_expr->get_expression());
 #endif
@@ -1477,7 +1481,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
                   cfg->registerStatementLabel(z, current_statement);
               }
 #else
-              ExprTransformer et(node_id, proc->procnum, expnum, cfg,
+              ExprTransformer et(node_id, proc->procnum, expnum, program,
                       init_block, init_decl);
               new_expr = et.transformExpression(new_expr, init);
 #endif
@@ -1531,7 +1535,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
           cfg->registerStatementLabel(z, current_statement);
         }
 #else
-        ExprTransformer et(node_id, proc->procnum, expnum, cfg, for_block,
+        ExprTransformer et(node_id, proc->procnum, expnum, program, for_block,
                 cond);
         new_expr = et.transformExpression(new_expr, cond->get_expression());
 #endif
@@ -1574,7 +1578,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
           cfg->registerStatementLabel(z, current_statement);
         }
 #else
-        ExprTransformer et_inc(node_id, proc->procnum, expnum, cfg, incr_block,
+        ExprTransformer et_inc(node_id, proc->procnum, expnum, program, incr_block,
                 current_statement);
         new_expr_inc = et_inc.transformExpression(new_expr_inc,
                                                   fors->get_increment());
@@ -1669,7 +1673,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 	  cfg->registerStatementLabel(z, current_statement);
 	}
 #else
-    ExprTransformer et(node_id, proc->procnum, expnum, cfg, while_block,
+    ExprTransformer et(node_id, proc->procnum, expnum, program, while_block,
             cond);
     new_expr = et.transformExpression(new_expr, cond->get_expression());
 #endif
@@ -1727,7 +1731,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
                     cfg->registerStatementLabel(z, current_statement);
 	}
 #else
-    ExprTransformer et(node_id, proc->procnum, expnum, cfg, dowhile_block,
+    ExprTransformer et(node_id, proc->procnum, expnum, program, dowhile_block,
             cond);
     new_expr = et.transformExpression(new_expr, cond->get_expression());
 #endif
@@ -1838,7 +1842,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 	  cfg->registerStatementLabel(z, current_statement);
 	}
 #else
-    ExprTransformer et(node_id, proc->procnum, expnum, cfg, switch_block,
+    ExprTransformer et(node_id, proc->procnum, expnum, program, switch_block,
             item_sel);
     new_expr = et.transformExpression(
             new_expr, isSgExprStatement(item_sel)->get_expression());
@@ -2014,7 +2018,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 	  cfg->registerStatementLabel(z, current_statement);
 	}
 #else
-      ExprTransformer et(node_id, proc->procnum, expnum, cfg, new_block,
+      ExprTransformer et(node_id, proc->procnum, expnum, program, new_block,
               current_statement);
       new_expr = et.transformExpression(new_expr, returns->get_expression());
 #endif
@@ -2110,7 +2114,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
           for (int z = node_id; z < et.get_node_id(); ++z)
               cfg->registerStatementLabel(z, current_statement);
 #else
-          ExprTransformer et(node_id, proc->procnum, expnum, cfg, new_block,
+          ExprTransformer et(node_id, proc->procnum, expnum, program, new_block,
                   current_statement);
           new_expr = et.transformExpression(new_expr, orig_expr);
 #endif
@@ -2149,7 +2153,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 	      cfg->registerStatementLabel(z, current_statement);
 	    }
 #else
-        ExprTransformer et(node_id, proc->procnum, expnum, cfg, after,
+        ExprTransformer et(node_id, proc->procnum, expnum, program, after,
                 current_statement);
         new_expr = et.transformExpression(new_expr, constr_init);
 #endif
@@ -2305,7 +2309,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
                     cfg->registerStatementLabel(z, current_statement);
 	  }
 #else
-      ExprTransformer et(node_id, proc->procnum, expnum, cfg, new_block,
+      ExprTransformer et(node_id, proc->procnum, expnum, program, new_block,
               current_statement);
       new_expr = et.transformExpression(new_expr, exprs->get_expression());
 #endif

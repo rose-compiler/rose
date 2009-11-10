@@ -43,7 +43,7 @@ public:
     virtual std::string description() const;
 
     virtual void run(Program *program);
-    virtual void run(CFG *icfg);
+ // virtual void run(CFG *icfg);
 
     virtual void processResults(Program *program);
 

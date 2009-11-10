@@ -36,8 +36,8 @@ SgProject *createRoseAst(AnalyzerOptions *options)
     else if (options->inputTermiteAst())
     {
         TermToRose conv;
-	astRoot = dynamic_cast<SgProject*>
-	  (conv.toRose(options->getInputTermiteAstFileName().c_str()));
+        astRoot = dynamic_cast<SgProject*>(
+                conv.toRose(options->getInputTermiteAstFileName().c_str()));
 	ROSE_ASSERT(astRoot);
     }
     else 
@@ -54,7 +54,7 @@ SgProject *createRoseAst(AnalyzerOptions *options)
     return astRoot;
 }
 
-CFG *createICFG(SgProject *astRoot, AnalyzerOptions *options)
+CFG *createICFG(Program *program, AnalyzerOptions *options)
 {
     TimingPerformance *nestedTimer;
     bool verbose = options->verbose();
@@ -62,17 +62,17 @@ CFG *createICFG(SgProject *astRoot, AnalyzerOptions *options)
     /* Collect procedures. */
     nestedTimer = new TimingPerformance("SATIrE ICFG construction:");
     if (verbose) std::cout << "collecting functions ... " << std::flush;
-    ProcTraversal s;
+    ProcTraversal s(program);
     s.setPrintCollectedFunctionNames(options->printCollectedFunctionNames());
-    s.traverse(astRoot, preorder);
+    s.traverse(program->astRoot, preorder);
     if (verbose) std::cout << "done" << std::endl;
 
     /* Create the ICFG itself. */
     if (verbose) std::cout << "generating cfg ... " << std::flush;
-    CFGTraversal t(s, options);
+    CFGTraversal t(s, program, options);
     if (!options->numberExpressions())
         t.numberExpressions(false);
-    t.traverse(astRoot, preorder);
+    t.traverse(program->astRoot, preorder);
     if (verbose) std::cout << "done" << std::endl;
     delete nestedTimer;
 
@@ -173,7 +173,7 @@ void outputProgramRepresentation(Program *program, AnalyzerOptions *options)
          * constructed; in other words, all we need to do here is to ensure
          * that the ICFG exists. */
         if (program->icfg == NULL)
-            program->icfg = createICFG(program->astRoot, options);
+            program->icfg = createICFG(program, options);
     }
 
     /* Handle command line option --output-term. */
@@ -184,7 +184,7 @@ void outputProgramRepresentation(Program *program, AnalyzerOptions *options)
             SATIrE::Analyses::ASLAnalysis aslAnalyzer;
             aslAnalyzer.run(program->astRoot);
             TimingPerformance timer("Output Prolog term:");
-            TermPrinter<void *> tp(NULL, "", program->icfg);
+            TermPrinter<void *> tp(NULL, "", program->icfg, program);
             if (options->analysisWholeProgram())
                 tp.traverse(program->astRoot);
             else
@@ -248,6 +248,13 @@ void attachAralInformation(Program *program, AnalyzerOptions *options)
 static void addAralResults(Program *program, Aral::ResultSection *results)
 {
  // TODO: Implement this when Aral::ResultSection is more strictly typed.
+}
+
+SgFile *traceBackToFileNode(SgNode *node)
+{
+    while (node != NULL && !isSgFile(node))
+        node = node->get_parent();
+    return isSgFile(node);
 }
 
 }
