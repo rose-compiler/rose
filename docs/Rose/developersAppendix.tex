@@ -2206,6 +2206,7 @@ separately.
    This covers the construction of various data structures that are part of
 specific forms of analysis or are used in subsequent forms of analysis.
 We separate out the API that is specific for source code and binary executable.
+\lstset{language={C++},basicstyle=\small} 
 \begin{enumerate}
    \item Source (TP) \\
    \lstset{language={C++},basicstyle=\small} 
@@ -2727,6 +2728,36 @@ string getQualifiedFunctionName(SgFunctionDeclaration *astNode);
       \end{lstlisting}
 
 
+
+      \item Static Interprocedural Slicing (replaces Procedural Slicing)
+      \item Liveness Analysis
+      \item Dependence Analysis
+   \begin{lstlisting}
+   //! Perform dependence analysis on a function
+   //! Return a dependence graph
+   DependenceGraph doDependenceAnalysis (SgFunctionDeclaration* func);
+
+   //! The details of DependenceGraph need to be discussed
+   /* The graph may be based on the graph support in ROSE
+      Essential information should include:
+    A node: 
+       SgInitializedName* var;    // the accessed variable
+       SgExpression*      varRef; // the original variable reference expression 
+       AccessType         aType;  // read or write access
+       std::vector<edge*> edges;  // associated in/out edges for this node
+    An edge:
+       Node* src;      // source (i) of the dependence
+       Node* sink;      // sink (j) of the dependence
+       DependenceType dType; // true, anti or output dependence
+       SgStatement* carryLoop; // Which level of loop carries this dependence
+       DependenceDirection direction; // < access i happens before j in a loop
+                                      // = access i and j happen in the same iteration
+                                      // > access i happens before j in a loop
+       size_t distance;      // dependence distance: 
+                             // e.g. for () { b[i-1] -> b [i]; } 
+                             //  distance = i - (i-1) = 1
+   */ 
+   \end{lstlisting}
 
    \end{enumerate}
 
@@ -3274,7 +3305,6 @@ class InterproceduralInfo
    Transformation by definition modifies the structure of the AST and can be used
 to define instrumentation, optimizations, and custom translation.
 \subparagraph{Source (L)}
-\lstset{language={C++},basicstyle=\small} 
 \begin{enumerate}
    \item Instrumentation 
    \fixme{Do we need this section at all? Can be covered in general
