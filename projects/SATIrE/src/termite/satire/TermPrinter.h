@@ -280,7 +280,7 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
       }
 #endif
 
-      ar = new PrologCompTerm("analysis_info", 1, results);
+      ar = new PrologCompTerm("analysis_info", /*1,*/ results);
     } else {
       /* default: empty analysis result */
       PrologList *results = new PrologList();
@@ -318,13 +318,13 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
               std::map<std::string, unsigned long>::iterator idi;
               idi = cfg->globalvarnames_ids.find(varname);
               if (idi != cfg->globalvarnames_ids.end()) {
-                varid_annot = new PrologCompTerm("variable_id", 1,
+                varid_annot = new PrologCompTerm("variable_id", //1,
                                                  new PrologInt(idi->second));
               }
             }
           }
           if (varid_annot == NULL) {
-            varid_annot = new PrologCompTerm("variable_id", 1,
+            varid_annot = new PrologCompTerm("variable_id", //1,
                                              new PrologInt(INT_MAX));
           }
           results->addFirstElement(varid_annot);
@@ -332,7 +332,7 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
       }
       if (sym != NULL) {
         if (cfg != NULL && !cfg->varsyms_ids.empty()) {
-          PrologCompTerm *varid_annot = new PrologCompTerm("variable_id", 1,
+          PrologCompTerm *varid_annot = new PrologCompTerm("variable_id", //1,
                                                            varidTerm(sym));
           results->addFirstElement(varid_annot);
         }
@@ -361,7 +361,7 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
           CallSiteAttribute *csa = (CallSiteAttribute *)
                 fc->getAttribute("SATIrE ICFG call block");
           PrologInt *callsite = new PrologInt(csa->bb->id);
-          PrologCompTerm *callsite_annot = new PrologCompTerm("call_site", 1,
+          PrologCompTerm *callsite_annot = new PrologCompTerm("call_site", //1,
                                                               callsite);
           results->addFirstElement(callsite_annot);
           /* add information on possible call targets */
@@ -395,7 +395,7 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
                 PrologInt *pLocation =
                   new PrologInt(cspta->location_id(cspta->base_location(loc)));
                 PrologCompTerm *ccl =
-                  new PrologCompTerm("context_location", 2,
+                  new PrologCompTerm("context_location", //2,
                                      ctx->toPrologTerm(),
                                      pLocation);
                 if (callsite_locs == NULL)
@@ -424,7 +424,7 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
 #endif
             if (callsite_locs != NULL) {
               PrologCompTerm *callsite_locations =
-                  new PrologCompTerm("callsite_locations", 2,
+		new PrologCompTerm("callsite_locations", //2,
                                      callsite,
                                      callsite_locs);
               results->addFirstElement(callsite_locations);
@@ -435,7 +435,7 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
           ASLAttribute *attribute =
             (ASLAttribute *) function->getAttribute(ASL_ATTRIBUTE_ID);
           std::string str = attribute->toString();
-          PrologCompTerm *asl_annot = new PrologCompTerm("asl_annot", 1,
+          PrologCompTerm *asl_annot = new PrologCompTerm("asl_annot", //1,
                                                          new PrologAtom(str));
           results->addFirstElement(asl_annot);
         }
@@ -448,7 +448,7 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
         if (cfg != NULL && cfg->contextInformation != NULL) {
           PrologTerm *callStrings = cfg->contextInformation->toPrologTerm();
           PrologCompTerm *callStringInfo
-            = new PrologCompTerm("callstringinfo", 1, callStrings);
+            = new PrologCompTerm("callstringinfo", /*1,*/ callStrings);
           results->addFirstElement(callStringInfo);
         }
       }
@@ -505,13 +505,13 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
             }
           }
           PrologCompTerm *loct
-            = new PrologCompTerm("location_varids_funcs", 3,
+            = new PrologCompTerm("location_varids_funcs", //3,
                                  new PrologInt(pto->location_id(*loc)),
                                  varids,
                                  funcs);
           locations->addFirstElement(loct);
         }
-        PrologCompTerm *locationInfo = new PrologCompTerm("locations", 1,
+        PrologCompTerm *locationInfo = new PrologCompTerm("locations", //1,
                                                           locations);
         results->addFirstElement(locationInfo);
 
@@ -527,7 +527,7 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
               PrologInt *pLocation = new PrologInt(
                   pto->location_id(pto->symbol_location(v->first, *ctx)));
               PrologCompTerm *vcl
-                = new PrologCompTerm("varid_context_location", 3,
+                = new PrologCompTerm("varid_context_location", //3,
                                      varidTerm(v->first),
                                      ctx->toPrologTerm(),
                                      pLocation);
@@ -536,7 +536,7 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
           }
         }
         PrologCompTerm *variable_locations
-          = new PrologCompTerm("variable_locations", 1, vlocs);
+          = new PrologCompTerm("variable_locations", /*1,*/ vlocs);
         results->addFirstElement(variable_locations);
 
         /* mapping (or graph...): points-to relationships */
@@ -545,14 +545,14 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
           PointsToAnalysis::Location *base = pto->base_location(*loc);
           if (pto->valid_location(base)) {
             PrologCompTerm *points_to
-              = new PrologCompTerm("->", 2,
+              = new PrologCompTerm("->", //2,
                                    new PrologInt(pto->location_id(*loc)),
                                    new PrologInt(pto->location_id(base)));
             points_tos->addFirstElement(points_to);
           }
         }
         PrologCompTerm *points_to_relations
-          = new PrologCompTerm("points_to_relations", 1, points_tos);
+          = new PrologCompTerm("points_to_relations", /*1,*/ points_tos);
         results->addFirstElement(points_to_relations);
 
         /* mapping: function nodes to return and argument locations */
@@ -616,7 +616,7 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
                                  funcs);
           locations->addFirstElement(loct);
         }
-        PrologCompTerm *locationInfo = new PrologCompTerm("locations", 1,
+        PrologCompTerm *locationInfo = new PrologCompTerm("locations", //1,
                                                           locations);
         results->addFirstElement(locationInfo);
 
@@ -628,14 +628,14 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
             PrologInt *pLocation = new PrologInt(
                 pto->location_id(pto->symbol_location(v->first)));
             PrologCompTerm *vcl
-              = new PrologCompTerm("varid_location", 2,
+              = new PrologCompTerm("varid_location", //2,
                                    varidTerm(v->first),
                                    pLocation);
             vlocs->addFirstElement(vcl);
           }
         }
         PrologCompTerm *variable_locations
-          = new PrologCompTerm("variable_locations", 1, vlocs);
+          = new PrologCompTerm("variable_locations", /*1,*/ vlocs);
         results->addFirstElement(variable_locations);
 
         /* mapping (or graph...): points-to relationships */
@@ -644,14 +644,14 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
           PointsToAnalysis::Location *base = pto->base_location(*loc);
           if (pto->valid_location(base)) {
             PrologCompTerm *points_to
-              = new PrologCompTerm("->", 2,
+              = new PrologCompTerm("->", //2,
                                    new PrologInt(pto->location_id(*loc)),
                                    new PrologInt(pto->location_id(base)));
             points_tos->addFirstElement(points_to);
           }
         }
         PrologCompTerm *points_to_relations
-           = new PrologCompTerm("points_to_relations", 1, points_tos);
+	  = new PrologCompTerm("points_to_relations", /*1,*/ points_tos);
         results->addFirstElement(points_to_relations);
 
         /* mapping: function nodes to return and argument locations */
@@ -661,7 +661,7 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
       }
 #endif
 
-      ar = new PrologCompTerm("analysis_info", 1, results);
+      ar = new PrologCompTerm("analysis_info", /*1,*/ results);
     }
 
     /* add file info term */
@@ -779,7 +779,7 @@ PrologCompTerm* TermPrinter<DFI_STORE_TYPE>::leafTerm(
   PrologTerm* specific, PrologTerm* ar, PrologTerm* fiTerm)
 {
   PrologCompTerm* t =
-    new PrologCompTerm(termConv.prologize(astNode->class_name()), 0+3,
+    new PrologCompTerm(termConv.prologize(astNode->class_name()), //0+3,
                        specific, ar, fiTerm);
   return t;
 }
@@ -791,7 +791,7 @@ PrologCompTerm* TermPrinter<DFI_STORE_TYPE>::unaryTerm(
   PrologTerm* specific, PrologTerm* ar, PrologTerm* fiTerm)
 {
   PrologCompTerm* t =
-    new PrologCompTerm(termConv.prologize(astNode->class_name()), 1+3,
+    new PrologCompTerm(termConv.prologize(astNode->class_name()), //1+3,
                        synList.at(0),
                        specific, ar, fiTerm);
   return t;
@@ -804,7 +804,7 @@ PrologCompTerm* TermPrinter<DFI_STORE_TYPE>::binaryTerm(
   PrologTerm* specific, PrologTerm* ar, PrologTerm* fiTerm)
 {
   PrologCompTerm* t =
-    new PrologCompTerm(termConv.prologize(astNode->class_name()), 2+3,
+    new PrologCompTerm(termConv.prologize(astNode->class_name()), //2+3,
                        synList.at(0),
                        synList.at(1),
                        specific, ar, fiTerm);
@@ -818,7 +818,7 @@ PrologCompTerm* TermPrinter<DFI_STORE_TYPE>::ternaryTerm(
   PrologTerm* specific, PrologTerm* ar, PrologTerm* fiTerm)
 {
   PrologCompTerm* t =
-    new PrologCompTerm(termConv.prologize(astNode->class_name()), 3+3,
+    new PrologCompTerm(termConv.prologize(astNode->class_name()), //3+3,
                        synList.at(0),
                        synList.at(1),
                        synList.at(2),
@@ -833,7 +833,7 @@ PrologCompTerm* TermPrinter<DFI_STORE_TYPE>::quaternaryTerm(
   PrologTerm* specific, PrologTerm* ar, PrologTerm* fiTerm)
 {
   PrologCompTerm* t =
-    new PrologCompTerm(termConv.prologize(astNode->class_name()), 4+3,
+    new PrologCompTerm(termConv.prologize(astNode->class_name()), //4+3,
                        synList.at(0),
                        synList.at(1),
                        synList.at(2),
@@ -875,7 +875,7 @@ PrologCompTerm* TermPrinter<DFI_STORE_TYPE>::listTerm(
   }
   /* add list to term*/
   PrologCompTerm* t =
-   new PrologCompTerm(termConv.prologize(astNode->class_name()), 1+3,
+    new PrologCompTerm(termConv.prologize(astNode->class_name()), //1+3,
                       l,
                       specific, ar, fiTerm);
   return t;
@@ -941,7 +941,7 @@ TermPrinter<DFI_STORE_TYPE>::functionIdAnnotation(std::string funcname,
     funcid_value = new PrologInt(INT_MAX);
   }
   PrologCompTerm *funcid_annot
-    = new PrologCompTerm("function_id", 1, funcid_value);
+    = new PrologCompTerm("function_id", /*1,*/ funcid_value);
   return funcid_annot;
 }
 
@@ -952,10 +952,10 @@ TermPrinter<DFI_STORE_TYPE>::functionEntryExitAnnotation(
   Procedure* p = procedureNode(funcname, file);
   PrologCompTerm* entryExit = NULL;
   if (p != NULL) {
-    PrologCompTerm* pair = new PrologCompTerm("-", 2,
+    PrologCompTerm* pair = new PrologCompTerm("-", //2,
                                    new PrologInt(p->entry->id),
                                    new PrologInt(p->exit->id));
-    entryExit = new PrologCompTerm("function_entry_exit", 1, pair);
+    entryExit = new PrologCompTerm("function_entry_exit", /*1,*/ pair);
   }
   return entryExit;
 }

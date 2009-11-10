@@ -22,4 +22,11 @@
 #include "PrologInt.h"
 #include "PrologVariable.h"
 
+PrologCompTerm* isPrologCompTerm(PrologTerm* t);
+PrologList* isPrologList(PrologTerm* t);
+PrologAtom* isPrologAtom(PrologTerm* t);
+PrologInt* isPrologInt(PrologTerm* t);
+PrologFloat* isPrologFloat(PrologTerm* t);
+PrologVariable* isPrologVariable(PrologTerm* t);
+
 #endif

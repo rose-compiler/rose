@@ -123,10 +123,66 @@ bool init_termite(int argc, char **argv, bool interactive)
   return PL_initialise(ac, av);
 }
 
-#else
+PrologCompTerm* isPrologCompTerm(PrologTerm* pt) { 
+  term_t t = pt->getTerm();
+  term_t h = PL_new_term_ref();
+  if (PL_term_type(t) == PL_TERM && !PL_get_head(t, h))
+    return (PrologCompTerm*)pt;
+  else return NULL;
+}
+PrologList* isPrologList(PrologTerm* pt)  { 
+  term_t t = pt->getTerm();
+  term_t h = PL_new_term_ref();
+  if ((PL_term_type(t) == PL_ATOM && PL_get_nil(t))
+      || (PL_term_type(t) == PL_TERM && PL_get_head(t, h)))
+    return (PrologList*)pt;
+  else return NULL;
+}
+PrologAtom* isPrologAtom(PrologTerm* pt) {
+  term_t t = pt->getTerm();
+  if (PL_term_type(t) == PL_ATOM && !PL_get_nil(t))
+  return (PrologAtom*)pt;
+    else return NULL;
+}
+PrologInt* isPrologInt(PrologTerm* pt) {
+  term_t t = pt->getTerm();
+  if (PL_term_type(t) == PL_INTEGER)
+    return (PrologInt*)pt;
+  else return NULL;
+}
+PrologFloat* isPrologFloat(PrologTerm* pt) {
+  term_t t = pt->getTerm();
+  if (PL_term_type(t) == PL_FLOAT)
+    return (PrologFloat*)pt;
+  else return NULL;
+}
+PrologVariable* isPrologVariable(PrologTerm* pt) {
+  term_t t = pt->getTerm();
+  if (PL_term_type(t) == PL_VARIABLE)
+    return (PrologVariable*)pt;
+  else return NULL;
+}
+
+#else //////////////////////////////////////////////////////////////////
 
 bool init_termite(int argc, char **argv, bool) {
   return true;
+}
+
+PrologCompTerm* isPrologCompTerm(PrologTerm* t) { 
+  return dynamic_cast<PrologCompTerm*>t;
+}
+PrologList* isPrologList(PrologTerm* t) { 
+  return dynamic_cast<PrologList*>t;
+}
+PrologAtom* isPrologAtom(PrologTerm* t) { 
+  return dynamic_cast<PrologAtom*>t;
+}
+PrologInt* isPrologInt(PrologTerm* t) { 
+  return dynamic_cast<PrologInt*>t;
+}
+PrologVariable* isPrologVariable(PrologTerm* t) { 
+  return dynamic_cast<PrologVariable*>t;
 }
 
 #endif

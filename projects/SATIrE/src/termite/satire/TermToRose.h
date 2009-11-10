@@ -77,11 +77,6 @@ private:
   SgClassDeclaration* setClassDeclarationBody(SgClassDeclaration*, SgNode*);
 
   SgLabelStatement* makeLabel(Sg_File_Info*, std::string);
-  PrologInt* isPrologInt(PrologTerm*);
-  PrologList* isPrologList(PrologTerm*);
-  PrologCompTerm* isPrologCompTerm(PrologTerm*);
-  PrologAtom* isPrologAtom(PrologTerm*);
-  //PrologString* isPrologString(PrologTerm*); /* DEPRECATED */
   std::string* toStringP(PrologTerm*);
   int toInt(PrologTerm*);
   void pciDeclarationStatement(SgDeclarationStatement*,PrologTerm*);

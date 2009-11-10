@@ -161,24 +161,24 @@ void TermToRose::unparse(string filename, string dir, string suffix,
   if (filename != "") {
     // All into one big file
     ofstream ofile(filename.c_str());
-    if (SgProject* project = dynamic_cast<SgProject*>(node))
+    if (SgProject* project = isSgProject(node))
       for (int i = 0; i < project->numberOfFiles(); ++i) {
 	SgSourceFile *sageFile = isSgSourceFile((*project)[i]);
     if (sageFile != NULL)
 	    ofile << globalUnparseToString(sageFile->get_globalScope(), unparseInfo);
       }
-    else if (SgSourceFile* file = dynamic_cast<SgSourceFile*>(node))
+    else if (SgSourceFile* file = isSgSourceFile(node))
       ofile << globalUnparseToString(file->get_globalScope(), unparseInfo);
     else ofile << node->unparseToString();
   } else {
     // seperate files
-    if (SgProject* project = dynamic_cast<SgProject*>(node))
+    if (SgProject* project = isSgProject(node))
       for (int i = 0; i < project->numberOfFiles(); ++i) {
         SgSourceFile *file = isSgSourceFile((*project)[i]);
         if (file != NULL)
           unparseFile(*file, dir, suffix, unparseInfo);
       }
-    else if (SgSourceFile* file = dynamic_cast<SgSourceFile*>(node))
+    else if (SgSourceFile* file = isSgSourceFile(node))
       unparseFile(*file, dir, suffix, unparseInfo);
     else cout << node->unparseToString();
   }
@@ -240,11 +240,11 @@ SgNode*
 TermToRose::toRose(PrologTerm* t) {
 
   SgNode* node;
-  if(PrologCompTerm* c = dynamic_cast<PrologCompTerm*>(t)) {
+  if(PrologCompTerm* c = isPrologCompTerm(t)) {
 
     string tname = c->getName();
     debug("converting " + tname + "\n");
-    if (dynamic_cast<PrologList*>(c->at(0))) {
+    if (isPrologList(c->at(0))) {
       node = listToRose(c,tname);
     } else {
       switch (c->getSubTerms().size()) {
@@ -269,16 +269,16 @@ TermToRose::toRose(PrologTerm* t) {
 
   SgLocatedNode* ln = isSgLocatedNode(node);
   // Create the attached PreprocessingInfo
-  PrologCompTerm* ct = dynamic_cast<PrologCompTerm*>(t);
+  PrologCompTerm* ct = isPrologCompTerm(t);
   if (ln != NULL && ct != NULL) {
     PrologCompTerm* annot = 
-      dynamic_cast<PrologCompTerm*>(ct->at(ct->getArity()-3));
+      isPrologCompTerm(ct->at(ct->getArity()-3));
     TERM_ASSERT(t, annot);
 
     PrologCompTerm* ppil = 
-      dynamic_cast<PrologCompTerm*>(annot->at(annot->getArity()-1));
+      isPrologCompTerm(annot->at(annot->getArity()-1));
     if (ppil) {
-      PrologList* l = dynamic_cast<PrologList*>(ppil->at(0));
+      PrologList* l = isPrologList(ppil->at(0));
       if (l) {
 	for (deque<PrologTerm*>::iterator it = l->getSuccs()->begin();
 	     it != l->getSuccs()->end(); ++it) {
@@ -553,7 +553,7 @@ TermToRose::listToRose(PrologCompTerm* t,string tname) {
     EXPECT_TERM_NAME_ARITY(PrologCompTerm*, annot, t->at(1),
 		 "variable_declaration_specific", 3);
     PrologTerm* typeDeclTerm = annot->at(1);
-    if (!(dynamic_cast<PrologAtom*>(typeDeclTerm))) {
+    if (!(isPrologAtom(typeDeclTerm))) {
       varDeclBaseTypeDecl = isSgDeclarationStatement(toRose(typeDeclTerm));
       declarationStatementsWithoutScope.push_back(varDeclBaseTypeDecl);
     }
@@ -569,7 +569,7 @@ TermToRose::listToRose(PrologCompTerm* t,string tname) {
     cur = toRose(*it);
     if(cur != (SgNode*) 0) {
       succs->push_back(cur);
-      debug("added successor of type " + dynamic_cast<PrologCompTerm*>(*it)->at(0)->getName());
+      debug("added successor of type " + isPrologCompTerm(*it)->at(0)->getName());
     } else {
       debug("did not add NULL successor");
     }
@@ -689,7 +689,7 @@ Sg_File_Info*
 TermToRose::createFileInfo(PrologTerm* t) {
   debug("unparsing file info");
   Sg_File_Info *fi = NULL;
-  if (PrologAtom *a = dynamic_cast<PrologAtom*>(t)) {
+  if (PrologAtom *a = isPrologAtom(t)) {
     /*node new or file info removed during transformation*/
     /*=> only possible atom: null*/
     assert(a->getName() == "null");
@@ -840,15 +840,15 @@ TermToRose::createTypedefType(PrologTerm* t) {
       basetype = new SgTypeInt();
       //decl = new SgTypedefDeclaration(FI,n,basetype,NULL,NULL,NULL);
     }
-    decl = createTypedefDeclaration(FI,
-        new PrologCompTerm("typedef_declaration", 4,
-			   new PrologAtom("null"),
-			   new PrologCompTerm("typedef_annotation", 3,
-					      annot->at(0), annot->at(1), 
-					      new PrologAtom("null"),
-					      new PrologAtom("null")),
-			   new PrologAtom("null"),
-			   new PrologAtom("null")));
+    decl = createTypedefDeclaration
+      (FI, new PrologCompTerm("typedef_declaration", //4,
+			      new PrologAtom("null"),
+			      new PrologCompTerm("typedef_annotation", //3,
+						 annot->at(0), annot->at(1), 
+						 new PrologAtom("null"),
+						 new PrologAtom("null")),
+			      new PrologAtom("null"),
+			      new PrologAtom("null")));
     TERM_ASSERT(t, decl != NULL);
     tpe = SgTypedefType::createType(decl);
     declarationStatementsWithoutScope.push_back(decl);
@@ -892,7 +892,7 @@ TermToRose::createType(PrologTerm* t) {
       type = createTypedefType(t);
     } else TERM_ASSERT(t, false && "Unknown type enountered");
   }
-  if (PrologAtom* a = dynamic_cast<PrologAtom*>(t)) {
+  if (PrologAtom* a = isPrologAtom(t)) {
     string tname = a->getName();
     if (tname == "null") {
       warn_msg("warning: no type created");
@@ -1036,8 +1036,8 @@ TermToRose::unescape_char(std::string s) {
     debug("unparsing " + fromTerm->getName()); \
     PrologCompTerm* annot = retrieveAnnotation(fromTerm); \
     TERM_ASSERT(fromTerm, annot != NULL); \
-    PrologAtom* a = dynamic_cast<PrologAtom*>(annot->at(0)); \
-    PrologInt* i = dynamic_cast<PrologInt*>(annot->at(0)); \
+    PrologAtom* a = isPrologAtom(annot->at(0)); \
+    PrologInt* i = isPrologInt(annot->at(0)); \
     TERM_ASSERT(fromTerm, (a != 0) || (i != 0)); \
     TYPE value; \
     if (a) { \
@@ -1110,9 +1110,9 @@ TermToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
     PrologCompTerm* annot = retrieveAnnotation(t);
     TERM_ASSERT(t, annot != NULL);
     char number;
-    if (PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0))) {
+    if (PrologAtom* s = isPrologAtom(annot->at(0))) {
       number = unescape_char(s->getName());
-    } else if (PrologInt* val = dynamic_cast<PrologInt*>(annot->at(0))) {
+    } else if (PrologInt* val = isPrologInt(annot->at(0))) {
       number = val->getValue();
     } else {
       TERM_ASSERT(t, false && "Must be either a string or an int");
@@ -1125,9 +1125,9 @@ TermToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
     PrologCompTerm* annot = retrieveAnnotation(t);
     TERM_ASSERT(t, annot != NULL);
     unsigned char number;
-    if (PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0))) {
+    if (PrologAtom* s = isPrologAtom(annot->at(0))) {
       number = unescape_char(s->getName());
-    } else if (PrologInt* val = dynamic_cast<PrologInt*>(annot->at(0))) {
+    } else if (PrologInt* val = isPrologInt(annot->at(0))) {
       number = val->getValue();
     } else {
       TERM_ASSERT(t, false && "Must be either a string or an int");
@@ -1203,7 +1203,7 @@ TermToRose::createUnaryOp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
   ARITY_ASSERT(annot, 5);
   // GB (2008-12-04): A unary op's mode is now represented by an atom
   // 'prefix' or 'postfix', not by a numerical constant.
-  // PrologInt* mode = dynamic_cast<PrologInt*>(annot->at(0));
+  // PrologInt* mode = isPrologInt(annot->at(0));
   EXPECT_TERM(PrologAtom*, mode, annot->at(0));
   SgType* sgtype = createType(annot->at(1));
   ROSE_ASSERT(sgtype != NULL);
@@ -1276,7 +1276,7 @@ TermToRose::createProject(Sg_File_Info* fi,deque<SgNode*>* succs) {
 
   for (deque<SgNode*>::iterator it = succs->begin();
        it != succs->end(); ++it) {
-    SgSourceFile* file = dynamic_cast<SgSourceFile*>(*it);
+    SgSourceFile* file = isSgSourceFile(*it);
     if (file != NULL) { // otherwise, it's a binary file, which shouldn't happen
       fl.push_back(file);
       file->set_parent(project);
@@ -1468,7 +1468,7 @@ TermToRose::createSizeOfOp(Sg_File_Info* fi,SgNode* child1,PrologCompTerm* t) {
 SgReturnStmt* 
 TermToRose::createReturnStmt(Sg_File_Info* fi, SgNode* succ,PrologCompTerm* t) {
   /* get expression*/
-  SgExpression* exp = dynamic_cast<SgExpression*>(succ);
+  SgExpression* exp = isSgExpression(succ);
   SgReturnStmt* s  = new SgReturnStmt(fi,exp);
   if (exp != NULL) {
     //debug(exp->get_type()->class_name());
@@ -1486,7 +1486,7 @@ TermToRose::createBasicBlock(Sg_File_Info* fi,deque<SgNode*>* succs) {
   deque<SgNode*>::iterator it = succs->begin();
   /*first statement comes in the constructor*/
   if(it != succs->end()) {
-    b = new SgBasicBlock(fi,dynamic_cast<SgStatement*>(*it));
+    b = new SgBasicBlock(fi,isSgStatement(*it));
     it++;
     debug("adding nonempty statement");
   } else {
@@ -1549,7 +1549,7 @@ TermToRose::createInitializedName(Sg_File_Info* fi, SgNode* succ, PrologCompTerm
   /* create the name*/
   SgName sgnm = *toStringP(annot->at(1));
   /* create the initializer and the initialized name*/
-  SgInitializer* sgini = dynamic_cast<SgInitializer*>(succ);
+  SgInitializer* sgini = isSgInitializer(succ);
   SgInitializedName* siname = new SgInitializedName(sgnm,tpe,sgini,NULL);
   TERM_ASSERT(t, siname != NULL);
   TERM_ASSERT(t, siname->get_parent() == NULL);
@@ -1571,7 +1571,7 @@ TermToRose::inameFromAnnot(PrologCompTerm* annot) {
   /* get type*/
   SgType* tpe = createType(annot->at(0));
   /* create name*/
-  PrologAtom *nstring = dynamic_cast<PrologAtom*>(annot->at(1));
+  PrologAtom *nstring = isPrologAtom(annot->at(1));
   SgName sgnm = nstring->getName().c_str();
   SgInitializedName* siname = new SgInitializedName(sgnm,tpe,NULL);
   TERM_ASSERT(annot, siname != NULL);
@@ -1650,7 +1650,7 @@ TermToRose::createFunctionParameterList(Sg_File_Info* fi,deque<SgNode*>* succs) 
   deque<SgNode*>::iterator it = succs->begin();
   while(it != succs->end()) {
     if((*it) != NULL) {
-      l->append_arg(dynamic_cast<SgInitializedName*>(*it));
+      l->append_arg(isSgInitializedName(*it));
       (*it)->set_parent(l);
     }
     it++;
@@ -1724,8 +1724,7 @@ TermToRose::createMemberFunctionDeclaration(Sg_File_Info* fi, SgNode* par_list_u
   debug("member function declaration:");
   /* cast parameter list and function definition (if exists)*/
   EXPECT_NODE(SgFunctionParameterList*, par_list, par_list_u);
-  SgFunctionDefinition* func_def = 
-    dynamic_cast<SgFunctionDefinition*>(func_def_u);
+  SgFunctionDefinition* func_def = isSgFunctionDefinition(func_def_u);
   EXPECT_NODE(SgCtorInitializerList*, ctor_list, ctor_list_u);
   /* get annotation*/
   PrologCompTerm* annot = retrieveAnnotation(t);
@@ -1841,7 +1840,7 @@ TermToRose::createVarRefExp(Sg_File_Info* fi, PrologCompTerm* t) {
  */
 SgAssignInitializer*
 TermToRose::createAssignInitializer(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
-  SgExpression* exp = dynamic_cast<SgExpression*>(succ);
+  SgExpression* exp = isSgExpression(succ);
   // not true.. TERM_ASSERT(t, exp != NULL);
   SgAssignInitializer* ai = new SgAssignInitializer(fi,exp);
   TERM_ASSERT(t, ai != NULL);
@@ -1860,8 +1859,8 @@ TermToRose::createBinaryOp(Sg_File_Info* fi,SgNode* lnode,SgNode* rnode,PrologCo
     debug("op type: " + op_name);
   }
   /*get lhs and rhs operand*/
-  SgExpression* lhs = dynamic_cast<SgExpression*>(lnode);
-  SgExpression* rhs = dynamic_cast<SgExpression*>(rnode);
+  SgExpression* lhs = isSgExpression(lnode);
+  SgExpression* rhs = isSgExpression(rnode);
   abort_unless((lhs != NULL) && (rhs != NULL), "Operands of binary operator must be an expression");
   PrologCompTerm* annot = retrieveAnnotation(t);
   abort_unless(annot != NULL, "Could not retrieve annotation for binary operator");
@@ -2041,10 +2040,10 @@ TermToRose::createExprStatement(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* 
   /* create statement*/
   SgExprStatement* es = NULL;
   debug("creating expression statenemt");
-  if (SgExpressionRoot* er = dynamic_cast<SgExpressionRoot*>(succ)) {
+  if (SgExpressionRoot* er = isSgExpressionRoot(succ)) {
     /*either with an expression statment as successor*/
     es = new SgExprStatement(fi,er);
-  } else if (SgExpression* exp = dynamic_cast<SgExpression*>(succ)) {
+  } else if (SgExpression* exp = isSgExpression(succ)) {
     /*...or with an expression*/
     es = new SgExprStatement(fi,exp);
   }
@@ -2204,16 +2203,16 @@ TermToRose::createForInitStatement(Sg_File_Info* fi,deque<SgNode*>* succs) {
 /** create SgForStatement*/
 SgForStatement*
 TermToRose::createForStatement(Sg_File_Info* fi, SgNode* child1, SgNode* child2, SgNode* child3, SgNode* child4,PrologCompTerm* t) {
-  SgForInitStatement* ini_stmt = dynamic_cast<SgForInitStatement*>(child1);
-  SgStatement* test_stmt = dynamic_cast<SgStatement*>(child2);
-  SgStatement* loop_body = dynamic_cast<SgStatement*>(child4);
+  SgForInitStatement* ini_stmt = isSgForInitStatement(child1);
+  SgStatement* test_stmt = isSgStatement(child2);
+  SgStatement* loop_body = isSgStatement(child4);
   SgForStatement* f = NULL;
   //std::cerr<<ini_stmt<<std::endl;
-  if (SgExpression* e = dynamic_cast<SgExpression*>(child3)) {
+  if (SgExpression* e = isSgExpression(child3)) {
     f = new SgForStatement(fi,test_stmt,e,loop_body);
-  } else if (SgExpression* e = dynamic_cast<SgExpression*>(child3)) {
+  } else if (SgExpression* e = isSgExpression(child3)) {
     f = new SgForStatement(fi,test_stmt,e,loop_body);
-  } else if (SgExprStatement* s = dynamic_cast<SgExprStatement*>(child3)) {
+  } else if (SgExprStatement* s = isSgExprStatement(child3)) {
     f = new SgForStatement(fi,test_stmt,s->get_expression(),loop_body);
   }
   TERM_ASSERT(t, f != NULL);
@@ -2706,10 +2705,10 @@ TermToRose::createTypedefDeclaration(Sg_File_Info* fi, PrologCompTerm* t) {
 
     string id;
     if (ct->getName() == "class_declaration") 
-      id = dynamic_cast<PrologCompTerm*>(ct->at(1))->at(2)->getRepresentation();
+      id = isPrologCompTerm(ct->at(1))->at(2)->getRepresentation();
       //id = ct->at(1)->getRepresentation();
     else if (ct->getName() == "enum_declaration")
-      id = dynamic_cast<PrologCompTerm*>(ct->at(1))->at(0)->getRepresentation();
+      id = isPrologCompTerm(ct->at(1))->at(0)->getRepresentation();
     else id = ct->getRepresentation();
     //cerr<<"TDDECKL>>>>"<<id<<endl;
     // Try to look it up
@@ -2833,42 +2832,6 @@ TermToRose::addSymbol(SgScopeStatement* scope, SgDeclarationStatement* s) {
     if (decl) scope->insert_symbol(decl->get_name(), new SgClassSymbol(decl));
   }
 }
-
-/**
- * cast to PrologInt (analogous to the is... functions of ROSE)
- */
-PrologInt*
-TermToRose::isPrologInt(PrologTerm* t) {
-  return dynamic_cast<PrologInt*>(t);
-}
-/**
- * cast to PrologList (analogous to the is... functions of ROSE)
- */
-PrologList*
-TermToRose::isPrologList(PrologTerm* t) {
-  return dynamic_cast<PrologList*>(t);
-}
-/**
- * cast to PrologAtom (analogous to the is... functions of ROSE)
- */
-PrologAtom*
-TermToRose::isPrologAtom(PrologTerm* t) {
-  return dynamic_cast<PrologAtom*>(t);
-}
-/**
- * cast to PrologCompTerm (analogous to the is... functions of ROSE)
- */
-PrologCompTerm*
-TermToRose::isPrologCompTerm(PrologTerm* t) {
-  return dynamic_cast<PrologCompTerm*>(t);
-}
-/** DEPRECATED
- * cast to PrologString (analogous to the is... functions of ROSE)
- *
-PrologString*
-TermToRose::isPrologString(PrologTerm* t) {
-  return dynamic_cast<PrologString*>(t);
-}*/
 
 /**
  * create std::string* from PrologAtom*

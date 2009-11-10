@@ -108,6 +108,8 @@ public:
       subterms.push_back(NULL);
   };
 
+#if 0
+  // AP (2009-11-10) Deprecated. Use the somewhat less flexible versions below.
   PrologCompTerm(std::string name, size_t n, ...) : PrologTerm()
   {
  // GB (2009-11-03): More sophisticated construction of composite terms. The
@@ -132,6 +134,120 @@ public:
       term = functorAtom;
     }
   }
+#endif
+
+# define COMPTERM_CONSTRUCTOR(N)		      \
+  atom_t functorAtom = PL_new_atom(name.c_str());     \
+  functor_t functor = PL_new_functor(functorAtom, N); \
+  term_t args = PL_new_term_refs(N);		      \
+  PL_cons_functor_v(term, functor, args)
+
+  PrologCompTerm(std::string name, PrologTerm* t1) : PrologTerm()
+  {
+    COMPTERM_CONSTRUCTOR(1);
+    PL_unify_arg(1, term, t1->getTerm());
+    subterms.push_back(t1);
+  }
+
+  PrologCompTerm(std::string name, PrologTerm* t1, PrologTerm* t2) 
+  : PrologTerm()
+  {
+    COMPTERM_CONSTRUCTOR(2);
+    PL_unify_arg(1, term, t1->getTerm());
+    PL_unify_arg(2, term, t2->getTerm());
+    subterms.push_back(t1);
+    subterms.push_back(t2);
+  }
+
+  PrologCompTerm(std::string name, 
+		 PrologTerm* t1, PrologTerm* t2, PrologTerm* t3) 
+  : PrologTerm()
+  {
+    COMPTERM_CONSTRUCTOR(3);
+    PL_unify_arg(1, term, t1->getTerm());
+    PL_unify_arg(2, term, t2->getTerm());
+    PL_unify_arg(3, term, t3->getTerm());
+    subterms.push_back(t1);
+    subterms.push_back(t2);
+    subterms.push_back(t3);
+  }
+
+  PrologCompTerm(std::string name, 
+		 PrologTerm* t1, PrologTerm* t2, PrologTerm* t3, 
+		 PrologTerm* t4) 
+  : PrologTerm()
+  {
+    COMPTERM_CONSTRUCTOR(4);
+    PL_unify_arg(1, term, t1->getTerm());
+    PL_unify_arg(2, term, t2->getTerm());
+    PL_unify_arg(3, term, t3->getTerm());
+    PL_unify_arg(4, term, t4->getTerm());
+    subterms.push_back(t1);
+    subterms.push_back(t2);
+    subterms.push_back(t3);
+    subterms.push_back(t4);
+  }
+
+  PrologCompTerm(std::string name, 
+		 PrologTerm* t1, PrologTerm* t2, PrologTerm* t3, 
+		 PrologTerm* t4, PrologTerm* t5) 
+  : PrologTerm()
+  {
+    COMPTERM_CONSTRUCTOR(5);
+    PL_unify_arg(1, term, t1->getTerm());
+    PL_unify_arg(2, term, t2->getTerm());
+    PL_unify_arg(3, term, t3->getTerm());
+    PL_unify_arg(4, term, t4->getTerm());
+    PL_unify_arg(5, term, t5->getTerm());
+    subterms.push_back(t1);
+    subterms.push_back(t2);
+    subterms.push_back(t3);
+    subterms.push_back(t4);
+    subterms.push_back(t5);
+  }
+
+  PrologCompTerm(std::string name, 
+		 PrologTerm* t1, PrologTerm* t2, PrologTerm* t3,
+ 		 PrologTerm* t4, PrologTerm* t5, PrologTerm* t6) 
+  : PrologTerm()
+  {
+    COMPTERM_CONSTRUCTOR(6);
+    PL_unify_arg(1, term, t1->getTerm());
+    PL_unify_arg(2, term, t2->getTerm());
+    PL_unify_arg(3, term, t3->getTerm());
+    PL_unify_arg(4, term, t4->getTerm());
+    PL_unify_arg(5, term, t5->getTerm());
+    PL_unify_arg(6, term, t6->getTerm());
+    subterms.push_back(t1);
+    subterms.push_back(t2);
+    subterms.push_back(t3);
+    subterms.push_back(t4);
+    subterms.push_back(t5);
+    subterms.push_back(t6);
+  }
+
+  PrologCompTerm(std::string name, 
+		 PrologTerm* t1, PrologTerm* t2, PrologTerm* t3, 
+		 PrologTerm* t4, PrologTerm* t5, PrologTerm* t6, PrologTerm* t7)
+  : PrologTerm()
+  {
+    COMPTERM_CONSTRUCTOR(7);
+    PL_unify_arg(1, term, t1->getTerm());
+    PL_unify_arg(2, term, t2->getTerm());
+    PL_unify_arg(3, term, t3->getTerm());
+    PL_unify_arg(4, term, t4->getTerm());
+    PL_unify_arg(5, term, t5->getTerm());
+    PL_unify_arg(6, term, t6->getTerm());
+    PL_unify_arg(7, term, t7->getTerm());
+    subterms.push_back(t1);
+    subterms.push_back(t2);
+    subterms.push_back(t3);
+    subterms.push_back(t4);
+    subterms.push_back(t5);
+    subterms.push_back(t6);
+    subterms.push_back(t7);
+  }
+
 
   /// Creates a compound term with the given name. no subterms added yet.
   PrologCompTerm(std::string functor = "#ERROR") {
