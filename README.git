@@ -185,3 +185,28 @@ If you don't like that, undo with:
 
    git checkout -b dan_andreas_merge_test
 
+
+########### Build a new branch to test an merge with someone elses branch ################
+
+Build a new brach to test a merge
+   112  12:22   git checkout -b dan_andreas_merge_test
+
+Pull the changes from the target of the test merge
+   114  12:24   git pull origin andreas
+
+Resolve conflict by checking in (git add) the new changed file
+   122  12:25   git add tests/roseTests/binaryTests/Makefile.am
+
+Commit the changes to the local repository
+   123  12:26   git commit -a
+
+Return to my original branch
+   124  12:27   git checkout dan
+
+Copy the changes from the test branch to my original branch
+   125  12:27   git fetch dan_andreas_merge_test  // failed
+   126  12:27   git pull dan_andreas_merge_test   // failed
+   129  12:28   git merge dan_andreas_merge_test  // this worked!
+
+Delete the test branch
+   131  12:28   git branch -d dan_andreas_merge_test
