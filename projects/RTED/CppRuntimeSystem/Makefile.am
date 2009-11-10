@@ -52,4 +52,6 @@ check-local:
 	./RuntimeSystemCppTest
 
 
+clean-local:
+	rm -rf *.dot Templates.DB *~ rose_rose* test *.bin *.txt *.c *.cpp 
 
