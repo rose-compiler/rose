@@ -39,12 +39,6 @@ testBinCG_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 testElfStrtab_SOURCES = testElfStrtab.C
 testElfStrtab_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
-
-# Tests ELF string table reallocation functions by changing some strings.  At first glance this would appear to be something
-# quite easy to do, but it turns out to involve lots of details.
-testElfStrtab_SOURCES = testElfStrtab.C
-testElfStrtab_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-
 # Reads in an ELF executable and changes the byte order from little-endian to big-endian or vice versa and writes out a new
 # file. Note that the byte order change affects the ELF file format but not the executable described by that format.
 testElfByteOrder_SOURCES = testElfByteOrder.C
@@ -151,6 +145,14 @@ TEST_PASSED_TARGETS=$(patsubst %,test_%.passed,$(noinst_PROGRAMS)) test_assemble
 
 test_execFormatsTest.passed: execFormatsTest
 	: $< not currently tested
+	@touch $@
+
+test_testBinCFG.passed: testBinCFG
+	$(VALGRIND) ./testBinCFG $(BINARY_SAMPLES)/libm-2.3.6.so
+	@touch $@
+
+test_testBinCG.passed: testBinCG
+	$(VALGRIND) ./testBinCG $(BINARY_SAMPLES)/libm-2.3.6.so
 	@touch $@
 
 test_testElfStrtab.passed: testElfStrtab
@@ -340,7 +342,7 @@ endif
 
 # Don't delete things indiscriminately!
 clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) ii_files ti_files DATABASE DATABASE.dot
+	rm -rf $(CXX_TEMPLATE_OBJECTS) ii_files ti_files DATABASE DATABASE.dot cfg_x86.dot  cg_x86.dot
 
 distclean-local:
 	rm -rf Templates.DB 

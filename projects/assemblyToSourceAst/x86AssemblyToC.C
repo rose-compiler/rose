@@ -503,7 +503,7 @@ int main(int argc, char** argv) {
   appendStatement(whileStmt, body);
   policy.whileBody = sw;
   X86InstructionSemantics<X86CTranslationPolicy, WordWithExpression> t(policy);
-  vector<SgNode*> instructions = NodeQuery::querySubTree(asmFiles[0], V_SgAsmx86Instruction);
+  vector<SgNode*> instructions = NodeQuery::querySubTree(proj, V_SgAsmx86Instruction);
   for (size_t i = 0; i < instructions.size(); ++i) {
     SgAsmx86Instruction* insn = isSgAsmx86Instruction(instructions[i]);
     ROSE_ASSERT (insn);
