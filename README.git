@@ -2,6 +2,10 @@
 Information on git-svn usage:
    http://maymay.net/blog/2009/02/24/how-to-use-git-svn-as-the-only-subversion-client-youll-need/
 
+The Video:
+   http://www.youtube.com/watch?v=4XpnKHJAok8
+
+
 Commands used one to setup and maintain GIT and not used by users afterward:
    Command to use git-svn support (checkes out a git-based SVN repository):
       git svn clone file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE ROSE
