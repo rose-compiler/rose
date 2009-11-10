@@ -2206,6 +2206,7 @@ separately.
    This covers the construction of various data structures that are part of
 specific forms of analysis or are used in subsequent forms of analysis.
 We separate out the API that is specific for source code and binary executable.
+\lstset{language={C++},basicstyle=\small} 
 \begin{enumerate}
    \item Source (TP) \\
    \lstset{language={C++},basicstyle=\small} 
@@ -2256,9 +2257,7 @@ We separate out the API that is specific for source code and binary executable.
   class CFGNode {
     public:
     CFGNode(): node(0), index(0) {}
-    explicit CFGNode(SgNode* node, unsigned int index = 0): node(node), index(index) {
-      assert (!node || isSgStatement(node) || isSgExpression(node) || isSgInitializedName(node));
-    }
+    explicit CFGNode(SgNode* node, unsigned int index = 0): node(node), index(index)
     //! Pretty string for Dot node labels, etc.
     std::string toString() const;
     //! String for debugging graphs
@@ -2510,9 +2509,6 @@ We separate out the API that is specific for source code and binary executable.
       This might be something for Colorado State to comment upon.
       \begin{lstlisting}
 <CallGraph/CallGraph.h>
-  //-------------------------------------
-  // CallGraph information access
-  //-------------------------------------
   Node *Entry() { return entry; }; // FIXME
   Node *Exit() { return exit; };
   IRInterface &GetIRInterface() { return ir; }
@@ -2733,6 +2729,36 @@ string getQualifiedFunctionName(SgFunctionDeclaration *astNode);
 
 
 
+      \item Static Interprocedural Slicing (replaces Procedural Slicing)
+      \item Liveness Analysis
+      \item Dependence Analysis
+   \begin{lstlisting}
+   //! Perform dependence analysis on a function
+   //! Return a dependence graph
+   DependenceGraph doDependenceAnalysis (SgFunctionDeclaration* func);
+
+   //! The details of DependenceGraph need to be discussed
+   /* The graph may be based on the graph support in ROSE
+      Essential information should include:
+    A node: 
+       SgInitializedName* var;    // the accessed variable
+       SgExpression*      varRef; // the original variable reference expression 
+       AccessType         aType;  // read or write access
+       std::vector<edge*> edges;  // associated in/out edges for this node
+    An edge:
+       Node* src;      // source (i) of the dependence
+       Node* sink;      // sink (j) of the dependence
+       DependenceType dType; // true, anti or output dependence
+       SgStatement* carryLoop; // Which level of loop carries this dependence
+       DependenceDirection direction; // < access i happens before j in a loop
+                                      // = access i and j happen in the same iteration
+                                      // > access i happens before j in a loop
+       size_t distance;      // dependence distance: 
+                             // e.g. for () { b[i-1] -> b [i]; } 
+                             //  distance = i - (i-1) = 1
+   */ 
+   \end{lstlisting}
+
    \end{enumerate}
 
    \item Binary (DQ) \\
@@ -2743,6 +2769,16 @@ string getQualifiedFunctionName(SgFunctionDeclaration *astNode);
       based on x86 "CALL" and "FARCALL" instructions, but doesn't
       return any useful information (it uses it immediately to
       partition basic blocks into functions).
+
+      \begin{lstlisting}
+<RoseBin_CallGraphAnalysis.h>
+ RoseBin_CallGraphAnalysis(SgAsmNode* global, RoseBin_abstract* ,
+			   GraphAlgorithms* algo):RoseBin_FlowAnalysis(global,algo) 
+  // run this analysis
+  void run(RoseBin_Graph* vg, std::string fileN, bool multiedge) ;
+  void getConnectedComponents(std::map<int,std::set<SgAsmFunctionDeclaration*> >& ret);
+
+      \end{lstlisting}
 
       \item Control Flow Analysis \\
       The Partitioner::detectBasicBlocks() method computes an
@@ -2755,6 +2791,16 @@ string getQualifiedFunctionName(SgFunctionDeclaration *astNode);
       because that's the info that's needed to detect function
       boundaries.)
 
+      \begin{lstlisting}
+<RoseBin_ControlFlowAnalysis>
+  RoseBin_ControlFlowAnalysis(SgAsmNode* global, bool forward, RoseBin_abstract* ,
+			      bool printedges,GraphAlgorithms* algo)
+  // run this analysis
+  void run(RoseBin_Graph* vg, std::string fileN, bool multiedge) ;
+  void printGraph(std::string fileName, std::set<std::string>& filter);
+
+      \end{lstlisting}
+
       \item Constant Propogation \\
       Constant propagation for binaries is in the
       FindConstantsPolicy which is used with instruction
@@ -2762,6 +2808,36 @@ string getQualifiedFunctionName(SgFunctionDeclaration *astNode);
 
       \item Data Flow Analysis \\
       Part of constant propagation.
+
+      \begin{lstlisting}
+<RoseBin_DataFlowAnalysis>
+  RoseBin_DataFlowAnalysis(SgAsmNode* global, bool forward, RoseBin_abstract*
+			   ,GraphAlgorithms* algo):RoseBin_FlowAnalysis(global,algo) {
+  void writeToFile(bool w);
+  void traverseNodes(RoseBin_DataFlowAbstract* analysis);
+  void init();
+  void traverseGraph(std::vector <SgGraphNode*>& rootNodes,
+		     RoseBin_DataFlowAbstract* defuse,
+		     bool interprocedural);
+  void init(bool interp, bool pedges) {
+  void init(bool interp, bool pedges, RoseBin_Graph* g) {
+  int nrOfMemoryWrites() {
+  int nrOfRegisterWrites() {
+  int nrOfDefinitions() {
+  int nrOfUses() {
+  RoseBin_DefUseAnalysis* getDefUseAnalysis() { return defuse;}
+  void run(RoseBin_Graph* vg, std::string fileN, bool multiedge) ;
+  std::set < SgGraphNode* >
+    getDefFor(SgGraphNode* node, std::pair<X86RegisterClass, int> initName);
+  std::set < SgGraphNode* >
+    getDefFor( uint64_t inst, std::pair<X86RegisterClass, int> initName);
+  std::set < uint64_t >
+    getDefForInst( uint64_t inst, std::pair<X86RegisterClass, int> initName);
+  RoseBin_DataFlowAbstract* getVariableAnalysis() {return variableAnalysis;}
+
+      \end{lstlisting}
+
+
 
       \item Dwarf Debug Format \\
       The Dwarf Debug Format structure is automatically constructed 
@@ -2877,31 +2953,22 @@ class DependenceGraph {
   virtual void establishEdge(DependenceNode * from, DependenceNode * to, EdgeType e=CONTROL);
   virtual void removeEdge(DependenceNode * from, DependenceNode * to, EdgeType e=CONTROL);
   /* ! \brief determine if there is an edge of type e between from and to
-
      Params: - DependenceNode * from: the source of the edge -
      DependenceNode * to: the sink of the edge - EdgeType e: the type of the 
      edge
-
      Return: true if e is in the set associated with Edge(from, to) by
      _edge_map. */
   bool edgeExists(DependenceNode * from, DependenceNode * to, EdgeType e);
   bool hasOutgingEdge(DependenceNode * src,EdgeType compare);
 
   /* ! \brief returns all edges between from and to
-
      Params: - DependenceNode * from: the source of the edge -
      DependenceNode * to: the sink of the edge
-
      Return: the set of EdgeTypes associated with Edge(from, to) by
      _edge_map.
 
   */
   std::set < EdgeType > edgeType(DependenceNode * from, DependenceNode * to);
-  /*    std::list <DependenceNode*> getParents(DependenceNode * current)
-	{
-	std::list <DependenceNode*> parentList;
-	return parentList;
-	}*/
   // ! writes a dot file representing this dependence graph to filename
   virtual void writeDot(char *filename);
   bool isLibraryFunction(SgFunctionDeclaration * sgFD) const
@@ -2909,15 +2976,11 @@ class DependenceGraph {
 
 class ControlDependenceGraph:public DependenceGraph {
  public:
-
   /* ! \brief Contstructor for ControlDependenceGraph
-
      Params: - SgNode * head: The root of the AST that you want to build the 
      CDG for - InterproceduralInfo * ii: the InterproceduralInfo object for
      storing interprocedural information
-
      Side effects: - initializes _interprocedural
-
      If ii is NULL, we assume that we are not doing interprocedural
      analysis. Otherwise, we assume that ii is a newly allocated (but not
      yet initialized) object. */
@@ -2929,9 +2992,7 @@ class ControlDependenceGraph:public DependenceGraph {
 
 class DataDependenceGraph:public DependenceGraph
 {
-
  public:
-
   /* ! \brief Contstructor for DataDependenceGraph
      Params: - SgNode * head: The root of the AST that you want to build the 
      DDG for - InterproceduralInfo * ii: the InterproceduralInfo object for
@@ -2946,18 +3007,12 @@ class DataDependenceGraph:public DependenceGraph
 #else
   DataDependenceGraph(SgNode * head, InterproceduralInfo * ii = NULL);
 #endif
-  // ! calls establishEdge with EdgeType defaulted to DATA
-  /*    virtual void establishEdge(DependenceNode * from, DependenceNode * to)
-	{
-        DependenceGraph::establishEdge(from, to, DATA);
-	}*/
   void computeInterproceduralInformation(InterproceduralInfo * ii);
 }
 
 class MergedDependenceGraph:public DependenceGraph
 {
  public:
-
   /* ! \brief creates a new dependence node that reflects the argument (not
      a direct copy)
      Params: - DependenceNode * node: The node we want to make a "copy" of
@@ -2970,7 +3025,6 @@ class MergedDependenceGraph:public DependenceGraph
      build the DependenceNode around that, as opposed to node. If it's
      neither, we just copy the argument. */
   DependenceNode * _importNode(DependenceNode * node);
-
   /* ! \brief creates a backward slice starting from node
      Params: - SgNode * node: the slicing criterion
      Return: returns a set of SgNodes which belong in the slice with slicing 
@@ -2978,7 +3032,6 @@ class MergedDependenceGraph:public DependenceGraph
      This function calls getSlice, and prunes the returned values to find
      just the SgNodes. */
   std::set < SgNode * >slice(SgNode * node);
-
   /* ! \brief creates a backward slice starting from node
      Params: - DependenceNode * node: the slicing criterion
      Return: returns a set of DependenceNodes which belong in the slice with 
@@ -3252,7 +3305,6 @@ class InterproceduralInfo
    Transformation by definition modifies the structure of the AST and can be used
 to define instrumentation, optimizations, and custom translation.
 \subparagraph{Source (L)}
-\lstset{language={C++},basicstyle=\small} 
 \begin{enumerate}
    \item Instrumentation 
    \fixme{Do we need this section at all? Can be covered in general
@@ -3701,6 +3753,51 @@ presented together:
          This support permits the AST to be written to a file and read in from a file.
          It is useful for assembling the AST from a whole application and many other
          specialized tools.
+         \begin{lstlisting}
+<AST_FILE_IO.h>
+    // sets up the lost of pool sizes that contain valid entries 
+       static void startUp ( SgProject* root ); 
+
+    // sets up the lost of pool sizes that contain valid entries 
+       static unsigned long getSizeOfMemoryPool ( const int position ); 
+       static unsigned long getSizeOfMemoryPoolUpToAst ( AstData* astInPool, const int position ); 
+       static unsigned long getAccumulatedPoolSizeOfNewAst( const int position);
+       static unsigned long getAccumulatedPoolSizeOfAst( AstData* astInPool, const int position);
+       static unsigned long getPoolSizeOfNewAst( const int sgVariant);
+       static unsigned long getTotalNumberOfNodesOfAstInMemoryPool ( ); 
+       static unsigned long getTotalNumberOfNodesOfNewAst ();
+       static bool areFreepointersContainingGlobalIndices ( );
+
+    // some methods not used so far ... or not more used   
+       static unsigned long getGlobalIndexFromSgClassPointer ( SgNode* pointer ) ;
+       static SgNode* getSgClassPointerFromGlobalIndex ( unsigned long globalIndex) ;
+       static void compressAstInMemoryPool() ;
+       static void resetValidAstAfterWriting();
+       static void clearAllMemoryPools ( );
+       static void deleteStaticData( );
+       static void deleteStoredAsts( );
+       static void setStaticDataOfAst(AstData* astInPool);
+       static int getNumberOfAsts ();
+       static void addNewAst (AstData* newAst);
+       static void extendMemoryPoolsForRebuildingAST ( );
+       static void writeASTToStream ( std::ostream& out );
+       static void writeASTToFile ( std::string fileName );
+       static std::string writeASTToString ();
+       static SgProject* readASTFromStream ( std::istream& in );
+       static SgProject* readASTFromFile (std::string fileName );
+       static SgProject* readASTFromString ( const std::string& s );
+       static void printFileMaps () ;
+       static void printListOfPoolSizes () ;
+       static void printListOfPoolSizesOfAst (int index) ;
+       static AstData* getAst (int index) ;
+       static AstData* getAstWithRoot (SgProject* root) ;
+
+       template <class TYPE>
+       static void registerAttribute ( ); 
+       static const std::map <std::string, CONSTRUCTOR>& getRegisteredAttributes ();
+
+         \end{lstlisting}
+
 \end{enumerate}
 
 Other useful utility functions in ROSE 
@@ -3759,12 +3856,394 @@ Other useful utility functions in ROSE
    \item Support for comments and CPP directives (Yi)
 
    \item GUI Support (JK \& T)
+         \begin{lstlisting}
+<QRButtons.h>
+	QRButtons(std::string caption = "");
+	QRButtons(QROSE::Orientation orientation, std::string caption = "");
+	void addButtons(int numButtons, Type type);
+	unsigned numButtons() const;
+	QAbstractButton* operator [](int id) const;
+	int getId(QAbstractButton *button);
+   Type getType(int id) const;
+	void setCaption(const char *caption0, ...);
+	void setCaption(int id, const char *fmt_caption, ...);
+	void setPicture(int id, const char *filename);
+   void setPicture(int id, const char *xpm[]);
+	void setBtnChecked(int id, bool check);
+	bool isBtnChecked(int id) const;
+   bool isBtnCheckable(int id) const;
+   void setBtnEnabled(int id, bool enable);
+   bool isBtnEnabled(int id) const;
+
+
+<QREdit.h>
+   QREdit(Type type = Line, const char *caption = 0);
+   void setText(std::string text);
+   std::string getText() const;   
+   void clear();
+   void setReadOnly(bool readOnly);
+   bool isReadOnly() const;
+   void setFont(QFont font);
+   QFont getFont() const;
+   void setTextColor(QColor color);
+   QColor getTextColor() const;   
+   void setBgColor(QColor color);
+   QColor getBgColor() const;
+
+
+<QRProgress.h>
+   QRProgress(bool useLabel = true, bool autoHide = false);
+   void set(int totalSteps);
+   void set(int currentStep, int totalSteps);
+   void tick(int steps = -1);
+   void tick(std::string txt, int steps = -1);
+   int value() const;
+   int maximum() const;
+   void reset();
+
+
+<QRSelect.h>
+   QRSelect(Type type = Combo, const char *caption = 0);
+   Type getType() const;
+   void setList(const std::list<std::string> &lst, bool append = false);   
+   std::list<std::string> getList() const;
+   void addItem(std::string text);
+   void removeItem(int index);
+   void clear();
+   unsigned count() const;
+   void setText(int index, std::string text);
+   std::string getText(int index) const;
+   void setPicture(int index, const char *filename);
+   void setPicture(int index, const char* xpm[]);
+   void setSelected(int index, bool checked = true);
+   std::list<int> getSelected() const;
+   bool isSelected(int index) const;
+
+<QRSeperator.h>
+   QRSeparator();
+   QRSeparator(QROSE::Orientation orientation);
+
+
+<QRTable.h>
+   QRTable();
+   QRTable(int numCols, ...);
+   // colId is the column after which to insert n columns
+   // if colId = -1, then it adds columns at the end
+   void addCols(int numCols, int colId = -1);
+   void removeCol(int colId);   
+   void setColHeaders(const char *caption0, ...);
+   void showColHeader(bool show = true);
+   void addRows(int numRows, int rowId = -1);
+   void removeRow(int rowId);
+   void setRowHeaders(const char *caption0, ...);
+   void showRowHeader(bool show = true);
+
+   // the following methods allow you to set the attributes of one or more cells
+   // col=c, row=r : sets attribute of cell (c,r)
+   // col=All, row=r: sets attribute of row r
+   // col=c, row=All, sets attributes of column c
+   // col=All, row=All: sets attributes of all cells
+   // col=c, row=Header: sets attributes of column header c
+   // col=Header, row=r: sets attribute of row header r
+   // col=All, row=Header: sets attributes of all column headers
+   // col=Header, row=All: sets attribute of all row headers
+   // col=Header, row=Header: sets atttributes of all headers
+   void setText(std::string text, int col, int row = All);
+   void clearText(int col, int row = All);
+   void setPicture(const char *icon_filename, int col, int row = All);
+   void setPicture(const char *xpm[], int col, int row = All);
+   void clearPicture(int col, int row = All);
+   void setTextColor(QColor color, int col, int row = All);
+   void setBgColor(QColor color, int col, int row = All);
+   void setFont(QFont font, int col, int row = All);
+   QFont getFont(int col, int row) const;
+   void setType(Type type, int col, int row = All);
+   Type getType(int col, int row) const;
+   void setChecked(bool checked, int col, int row = All);
+   bool isChecked(int col, int row) const;
+   bool isCheckable(int col, int row) const;
+   void setEnabled(bool enabled, int col, int row = All);
+   bool isEnabled(int col, int row) const;
+   void setHAlignment(bool left, bool right, int col, int row = All);
+   void setVAlignment(bool top, bool bottom, int col, int row = All);
+   void activateCell(int col, int row);
+   // sets width and height of columns and rows
+   void setHDim(int col, int width = -1);
+   void setVDim(int row, int height = -1);
+
+<QRToolBar.h>
+    QRToolBar(QROSE::Orientation orientation, bool showText = true,
+              bool showPic = true, bool picBesidesText = true);
+    int addButton(std::string caption, std::string icon_filename = "");
+    int addButton(std::string caption, const char *icon_xpm[]);
+    int addToggleButton(std::string caption, std::string icon_filename = "");
+    int addToggleButton(std::string caption, const char *icon_xpm[]);
+    void insertSeparator();
+    void setCaption(int id, std::string caption);
+    void setPicture(int id, std::string filename);
+    void setPicture(int id, const char *xpm[]);
+    void setEnabled(int id, bool enable);
+    bool isEnabled(int id) const;
+    void setChecked(int id, bool checked);
+    bool isChecked(int id) const;
+    bool isCheckable(int id) const;
+    void setHidden(bool enable);
+    bool isHidden() const;
+    void setHidden(int id, bool enable);
+    bool isHidden(int id) const;
+    unsigned numButtons() const;
+    QAction* getAction(int id) const;
+    int getId(QAction *action) const;
+
+<QRTree.h>
+     TableModel(QRTree *tree);
+     int rowCount(const QModelIndex &parent = QModelIndex()) const;
+     QVariant data(const QModelIndex &index, int role) const;
+     QVariant headerData(int section, Qt::Orientation orientation,
+                         int role = Qt::DisplayRole) const;
+
+
+         \end{lstlisting}
 
    \item Binary Analysis connection to IDA PRO (A \& T)
+
+\begin{lstlisting}
+<RoseBin_DB_IDAPRO.h>
+  /****************************************************
+   * resolve for each instruction which type it has
+   ****************************************************/
+  SgAsmInstruction* createInstruction(int address, 
+					 SgAsmFunctionDeclaration* bb, 
+					 std::string mnemonic);
+  /****************************************************
+   * process all jump instructions and resolve destination
+   ****************************************************/
+  void process_jumps();
+  SgAsmInstruction* process_jumps_get_target(SgAsmx86Instruction* inst);
+  /****************************************************
+   * for testing, how many instructions where created
+   ****************************************************/
+  int get_numberOfInstructions() {
+  /****************************************************
+   * for testing, how many functions where created
+   ****************************************************/
+  int get_numberOfFunctions() {
+  /****************************************************
+   * process all comments in the DB
+   ****************************************************/
+  void process_comments_query(MYSQL* conn, MYSQL_RES* res_set);
+  /****************************************************
+   * process all functions in the DB
+   ****************************************************/
+  void process_functions_query(MYSQL* conn, MYSQL_RES* res_set,
+			       SgAsmBlock* globalBlock,
+			       std::list<std::string> functionName);
+  /****************************************************
+   * process all instructions in the DB
+   * add the instructions to the blocks
+   ****************************************************/
+  void process_instruction_query(MYSQL* conn, MYSQL_RES* res_set);
+  /****************************************************
+   * process operand strings. used in process_operand_tuples
+   ****************************************************/
+  void process_operand_strings_query(MYSQL* conn, MYSQL_RES* res_set);
+  /****************************************************
+   * process operand expressions. used in process_operand_tuples
+   ****************************************************/
+  void process_operand_root_query(MYSQL* conn, MYSQL_RES* res_set);
+  /****************************************************
+   * process expression tree. used in process_operand_tuples
+   ****************************************************/
+  void process_expression_tree_query(MYSQL* conn, MYSQL_RES* res_set);
+  /****************************************************
+   * process operand expressions. used in process_operand_tuples
+   ****************************************************/
+  void process_operand_expressions_query(MYSQL* conn, MYSQL_RES* res_set);
+  /****************************************************
+   * process substitutions. used for Navi
+   ****************************************************/
+  void process_substitutions_query(MYSQL* conn, MYSQL_RES* res_set);
+  /****************************************************
+   * process operand tuples. 
+   * Handles all expressions to be added to the instructions.
+   ****************************************************/
+  void process_operand_tuples_query(MYSQL* conn, MYSQL_RES* res_set);
+  /****************************************************
+   * check the type of each operand
+   ****************************************************/
+  std::string resolveType(exprTreeType* expt);
+  /****************************************************
+   * process callgraph
+   ****************************************************/
+  void process_callgraph_query(MYSQL* conn, MYSQL_RES* res_set);
+
+<RoseBin.h>
+  RoseBin(char* host, 
+	  char* user, 
+	  char* passw, 
+	  char* dbase)
+  // allow filtering of functions
+  void setFunctionFilter(std::list<std::string> functionName);
+  void visit(SgNode* node);
+  // connect to the DB
+  void connect_DB(const char* socket);
+  // query the DB to retrieve all data
+  SgAsmNode* retrieve_DB_IDAPRO();
+  // close the DB
+  void close_DB();
+  // unparse the AST to assembly
+  void unparse(char* fileName);
+  void test();
+
+\end{lstlisting}
 
    \item Database Support (A)
 
    \item Graphs and Graph Analysis (T)
+
+\begin{lstlisting}
+
+<HEADER_GRAPH_START>
+ //! Simple edge type used to input data to Boost algorithms
+     typedef std::pair<int, int> BoostEdgeType;
+  // DQ (4/29/2009): Added support for boost edges to be used in boost graph library algorithms.
+  // We need this local type so that the member access functions for data members of this type can be resolved.
+  // typedef std::vector<SgGraph::BoostEdgeType> SgBoostEdgeList;
+     typedef std::vector<BoostEdgeType> SgBoostEdgeList;
+  // typedef SgBoostEdgeList* SgBoostEdgeListPtr;
+  // DQ (4/29/2009): Added support for boost edges to be used in boost graph library algorithms.
+     typedef std::vector<int> SgBoostEdgeWeightList;
+  // typedef SgBoostEdgeWeightList* SgBoostEdgeWeightListPtr;
+     int hashCode( const char* p, int len) const; // hash a character array
+  // void initialize_graph_id();
+     void append_properties( int addr, const std::string & prop );
+ //! Support for adding SgGraphNode to SgGraph.
+     SgGraphNode* addNode( const std::string & name = "", SgNode* sg_node = NULL);
+ //! Add support for externally build SgGraphNode objects
+     SgGraphNode* addNode( SgGraphNode* node );
+ //! Support for adding SgGraphEdge to SgGraph.
+     SgGraphEdge* addEdge( SgGraphNode* a, SgGraphNode* b, const std::string & name = "");
+ //! Add support for externally build SgGraphNode objects
+     SgGraphEdge* addEdge( SgGraphEdge* edge );
+     void post_construction_initialization();
+
+ //! Support for Boost Minimum Spanning Tree.
+  // std::vector <BoostEdgeDescriptor> generateSpanningTree();
+     std::vector <SgGraphEdge*> generateSpanningTree();
+  // tps (4/30/2009): Added properties for nodes and edges
+  // todo: this will be replaced with AstAttributes once the graph conversion is done.
+  std::string getProperty(SgGraph::GraphProperties property, SgGraphNode* node);
+  std::string getProperty(SgGraph::GraphProperties property, SgGraphEdge* edge);
+  void setProperty(SgGraph::GraphProperties property, SgGraphNode* node, std::string value);
+  void setProperty(SgGraph::GraphProperties property, SgGraphEdge* edge, std::string value);
+
+ // tps (4/30/2009): The following are functions on the graph that were used before 
+ // in the old graph implementation
+  //std::set<SgGraphEdge*> getEdge(SgGraphNode* src, SgGraphNode* trg);
+     void checkIfGraphNodeExists(const std::string& trg_mnemonic, std::vector<SgGraphNode*>& nodes);
+ //! Check if the node is present in the graph.
+     bool exists( SgGraphNode* node );
+ //! Check if the edge is present in the graph.
+     bool exists( SgGraphEdge* edge );
+ //! Builds a set of edges that are associated with a specific node.
+     std::set<SgGraphEdge*> computeEdgeSet( SgGraphNode* node );
+  //! Integer index version of "std::set<SgGraphEdge*> computeEdgeSet( SgGraphNode* node );"
+     std::set<int> computeEdgeSet( int node_index );
+ //! Build set of node index pairs associated with node index (one of the value of the pair will be equal to the input node_index).
+     std::set< std::pair<int,int> > computeNodeIndexPairSet( int node_index );
+ //! Builds a set of node index values associated with a label.
+     std::set<SgGraphNode*> computeNodeSet( const std::string & label );
+ //! Builds a set of all nodes in the graph.
+     std::set<SgGraphNode*> computeNodeSet();
+  //! Integer index version of "std::set<SgGraphNode*> computeNodeSet( const std::string & label );"
+     std::set<int> computeNodeIndexSet( const std::string & label );
+  // Number of nodes in graph.
+     size_t numberOfGraphNodes() const;
+  // Number of edges in graph.
+     size_t numberOfGraphEdges() const;
+
+     void display_node_index_to_edge_multimap() const;
+     void display_node_index_to_node_map() const;
+     void display_edge_index_to_edge_map() const;
+     void display_node_index_pair_to_edge_multimap() const;
+     void display_string_to_node_index_multimap() const;
+     void display_string_to_edge_index_multimap() const;
+
+//! Resize the internal hash tables based on the number of nodes (hash_maps and hash_multimaps for edges are made larger by multiplying by the value "numberOfEdges" ).
+     void resize_hash_maps( size_t numberOfNodes, size_t numberOfEdges = 10 );
+  //! Report the size in bytes of the graph (includes all edges and ndes from all hash_maps and hash_multimaps).
+     size_t memory_usage();
+
+
+<HEADER_GRAPH_POSTDECLARATION_START>
+// DQ (4/29/2009): Added support for boost edges to be used in boost graph library algorithms.
+// We need this global type so that the member access functions (defined outside the class)
+// for data members of this type can be resolved.
+typedef SgGraph::SgBoostEdgeList SgBoostEdgeList;
+typedef SgBoostEdgeList* SgBoostEdgeListPtr;
+// DQ (4/29/2009): Added support for boost edges to be used in boost graph library algorithms.
+typedef SgGraph::SgBoostEdgeWeightList SgBoostEdgeWeightList;
+typedef SgBoostEdgeWeightList* SgBoostEdgeWeightListPtr;
+// Supporting graph type required by Boost Graph Library.
+// typedef boost::graph_traits < SgGraph::BoostGraphType >::edge_descriptor BoostEdgeDescriptor;
+
+
+<HEADER_GRAPHNODE_START>
+     void append_properties( int addr, const std::string & prop );	
+     void post_construction_initialization();
+
+<HEADER_GRAPHEDGE_START>
+     void append_properties( int addr, const std::string & prop );
+     void post_construction_initialization();
+
+<HEADER_DIRECTED_GRAPH_EDGE_START>
+     public:
+       // DQ (8/18/2008): This is part of the OLD interface introduced for backward compatability!
+          SgDirectedGraphEdge(std::string name, std::string type, int n, SgGraphNode* from, SgGraphNode* to);
+          SgGraphNode* get_from() { return p_node_A; }
+          SgGraphNode* get_to()   { return p_node_B; }
+
+<HEADER_GRAPH_NODE_LIST_START>
+     public:
+          typedef rose_hash::hash_multimap<std::string,SgGraphNode*, rose_hash::hash_string, rose_hash::eqstr_string> local_hash_multimap_type;
+          typedef local_hash_multimap_type::iterator iterator;
+
+
+<HEADER_GRAPH_EDGE_LIST_START>
+     public:
+          typedef rose_hash::hash_multimap<SgGraphNode*,SgGraphEdge*, rose_hash::hash_graph_node, rose_hash::eqstr_graph_node> local_hash_multimap_type;
+          typedef local_hash_multimap_type::iterator iterator;
+
+<HEADER_UNDIRECTED_GRAPH_EDGE_START>
+          SgGraphNode* get_node1() { return p_node_A; }
+          SgGraphNode* get_node2() { return p_node_B; }
+
+
+<HEADER_INCIDENCE_DIRECTED_GRAPH_START>
+  // tps (4/30/2009): The following are functions on the graph that were used before 
+  // in the old graph implementation
+  	  std::set<SgGraphEdge*> getEdge(SgGraphNode* src);
+  	  bool checkIfGraphEdgeExists(SgGraphNode* src);
+     void post_construction_initialization();
+ //! Support for adding SgGraphEdge to SgGraph.
+     SgDirectedGraphEdge* addDirectedEdge( SgGraphNode* a, SgGraphNode* b, const std::string & name = "");
+ //! Add support for externally build SgGraphNode objects
+     SgDirectedGraphEdge* addDirectedEdge( SgDirectedGraphEdge* edge  );
+	// tps (4/30/2009): Added to support functionality for DirectedGraphs		   
+     void getSuccessors(SgGraphNode* node, std::vector <SgGraphNode*>& vec );
+     void getPredecessors(SgGraphNode* node, std::vector <SgGraphNode*>& vec );
+     std::set<SgDirectedGraphEdge*> getDirectedEdge(SgGraphNode* src, SgGraphNode* trg);
+     bool checkIfDirectedGraphEdgeExists(SgGraphNode* src, SgGraphNode* trg);
+  // DQ (8/18/2009): Added support for construction of sets of edges.
+     std::set<SgDirectedGraphEdge*> computeEdgeSetIn( SgGraphNode* node );
+     std::set<int> computeEdgeSetIn( int node_index );
+     std::set<SgDirectedGraphEdge*> computeEdgeSetOut( SgGraphNode* node );
+     std::set<int> computeEdgeSetOut( int node_index );
+
+
+
+
+\end{lstlisting}
 
    \item Performance Metric Annotation (L)
    namespace \lstinline{PerformanceMetric} \fixme{single or plural form in name convention?}
