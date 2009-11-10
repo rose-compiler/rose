@@ -553,10 +553,10 @@ buildVariableDeclaration_nfi(const SgName & name, SgType *type, SgInitializer *v
 
 //!Build a typedef declaration, such as: typedef int myint; 
 SgTypedefDeclaration* 
-buildTypedefDeclaration(const std::string& name, SgType* base_type);
+buildTypedefDeclaration(const std::string& name, SgType* base_type, SgScopeStatement* scope = NULL);
 
 SgTypedefDeclaration* 
-buildTypedefDeclaration_nfi(const std::string& name, SgType* base_type);
+buildTypedefDeclaration_nfi(const std::string& name, SgType* base_type, SgScopeStatement* scope = NULL);
 
 //! Build an empty SgFunctionParameterList, possibly with some initialized names filled in
 SgFunctionParameterList * buildFunctionParameterList(SgInitializedName* in1 = NULL, SgInitializedName* in2 = NULL, SgInitializedName* in3 = NULL, SgInitializedName* in4 = NULL, SgInitializedName* in5 = NULL, SgInitializedName* in6 = NULL, SgInitializedName* in7 = NULL, SgInitializedName* in8 = NULL, SgInitializedName* in9 = NULL, SgInitializedName* in10 = NULL);
