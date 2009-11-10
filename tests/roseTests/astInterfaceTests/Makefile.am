@@ -21,7 +21,7 @@ noinst_PROGRAMS = \
     buildSizeOfOp abiStuffTest abiStuffTestUPC buildNullStatement \
     buildForStmt canonicalLoop loopNormalization collectReadWriteVariables \
     typeTraits livenessAnalysis buildProcedureHeaderStatement replaceMacroCalls \
-    buildAbstractHandle getDependentDecls buildStructDeclaration2
+    buildAbstractHandle getDependentDecls buildStructDeclaration2 buildTypedefDeclaration
 
 # list of test SAGE AST builders 
 buildFunctionDeclaration_SOURCES = buildFunctionDeclaration.C
@@ -58,6 +58,7 @@ livenessAnalysis_SOURCES         =livenessAnalysis.C
 buildProcedureHeaderStatement_SOURCES = buildProcedureHeaderStatement.C
 replaceMacroCalls_SOURCES             = replaceMacroCalls.C
 buildAbstractHandle_SOURCES         = buildAbstractHandle.C
+buildTypedefDeclaration_SOURCES         = buildTypedefDeclaration.C
 loopUnrolling_SOURCES               = loopUnrolling.C
 getDependentDecls_SOURCES           = getDependentDecls.C
 loopInterchange_SOURCES             = loopInterchange.C
@@ -106,6 +107,7 @@ generatedCodeExamples = \
   rose_inputbuildProcedureHeaderStatement.f \
   rose_inputreplaceMacroCalls.C \
   rose_inputbuildAbstractHandle.C \
+  rose_inputbuildTypedefDeclaration.C \
   rose_inputloopUnrolling.C \
   rose_inputgetDependentDecls.C \
   rose_inputloopInterchange.C \
@@ -203,6 +205,8 @@ endif
 rose_inputbuildAbstractHandle.C:buildAbstractHandle
 	./buildAbstractHandle$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildAbstractHandle.C
 
+rose_inputbuildTypedefDeclaration.C:buildTypedefDeclaration
+	./buildTypedefDeclaration$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildTypedefDeclaration.C
 rose_inputgetDependentDecls.C:getDependentDecls
 	./getDependentDecls$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputgetDependentDecls.C
 
@@ -245,7 +249,8 @@ EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDecla
        inputloopNormalization.C inputcollectReadWriteVariables.C inputtypeTraits.C \
        inputlivenessAnalysis.C inputbuildProcedureHeaderStatement.f inputreplaceMacroCalls.C \
        inputbuildAbstractHandle.C inputloopUnrolling.C inputgetDependentDecls.C \
-       inputloopInterchange.C inputloopTiling.C inputbuildStructDeclaration2.C
+       inputloopInterchange.C inputloopTiling.C inputbuildStructDeclaration2.C \
+       inputbuildTypedefDeclaration.C
 
 check-local:
 	@echo "Test for ROSE SAGE Interfaces."
