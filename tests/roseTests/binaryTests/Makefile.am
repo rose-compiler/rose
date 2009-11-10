@@ -68,7 +68,7 @@ findConstants_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 disassemble_SOURCES = disassemble.C
 disassemble_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
-testEtherInsns_SOURCES = testEtherInsns.C ether.C
+testEtherInsns_SOURCES = testEtherInsns.C
 testEtherInsns_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 ###############################################################################################################################

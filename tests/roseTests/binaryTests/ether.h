@@ -3,6 +3,8 @@
 
 #include "rose.h"
 
+#ifdef ROSE_USE_ETHER
+
 extern "C" {
 #include <xenctrl.h>
 #include <xen/domctl.h>
@@ -305,4 +307,5 @@ private:
     evtchn_port_t event_port;                   /**< Our end of the event channel that was created by the constructor. */
 };
 
-#endif 
+#endif /*ROSE_USE_ETHER*/
+#endif /*ROSE_ETHER_H*/

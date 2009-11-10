@@ -10,6 +10,14 @@
 
 #include "rose.h"
 
+#ifndef ROSE_USE_ETHER
+#include <stdio.h>
+int main(int argc, char *argv[]) {
+    printf("%s: Ether is not available. Test is skipped.\n", argv[0]);
+    return 0;
+}
+#else
+
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
@@ -141,3 +149,4 @@ int main(int argc, char *argv[])
     }
 }
 
+#endif /*ROSE_USE_ETHER*/
