@@ -23,6 +23,8 @@ endif
 
 SYNDIR=$(top_builddir)/src/analyzer/astaccess/satire
 
+INCLUDES += -I$(SYNDIR)
+
 noinst_LTLIBRARIES = libAstAccess.la
 nobase_include_HEADERS = satire/ast_support_funcs.h \
                          satire/iface.h \

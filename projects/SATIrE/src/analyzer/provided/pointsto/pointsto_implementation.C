@@ -3799,6 +3799,7 @@ PointsToAnalysis::Implementation::run(Program *program_)
  // traverse(ast);
  // IcfgTraversal::traverse(program->icfg);
     this->program = program_;
+    auxiliaryTraversal->program = program_;
     run(program->icfg);
 }
 
