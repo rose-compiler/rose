@@ -823,7 +823,7 @@ clean-local:
 if ROSE_USE_RTED
 # run/C/floating_point_errors
 check-local: runtimeCheck  checkfast \
-				run/C/allocation_deallocation_errors \
+			run/C/allocation_deallocation_errors \
 				run/C/array_index_out_of_bound \
 				run/C/C99_specific_errors \
 				run/C/input_output_errors \
@@ -841,12 +841,15 @@ check-local: runtimeCheck  checkfast \
 	@echo "***************************************************************************************"
 	@echo "*** ROSE/projects/runtimeErrorCheck: make check rule complete (terminated normally) ***"
 	@echo "***************************************************************************************"
-
 else
-check-local: runtimeCheck checkfast
-
+# DQ (11/10/2009): Comment out, with permission from Thomas, the RTED test until we 
+# can explore the RedHat version 5 problem, 32-bit problem, and Mac OSX problem.
+# check-local: runtimeCheck checkfast
+check-local:
+	@echo "\n RTED short tests not run (Commented out temporarily):"
+	@echo "***********************************************************************************************************"
+	@echo "****** ROSE/projects/runtimeErrorCheck: make check not run here: configure --enable-rted=<RTED Path> ******"
+	@echo "***********************************************************************************************************"
 endif
-
-
 
 endif

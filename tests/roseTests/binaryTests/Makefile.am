@@ -42,8 +42,8 @@ testElfStrtab_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Tests ELF string table reallocation functions by changing some strings.  At first glance this would appear to be something
 # quite easy to do, but it turns out to involve lots of details.
-testElfStrtab_SOURCES = testElfStrtab.C
-testElfStrtab_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+# testElfStrtab_SOURCES = testElfStrtab.C
+# testElfStrtab_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Reads in an ELF executable and changes the byte order from little-endian to big-endian or vice versa and writes out a new
 # file. Note that the byte order change affects the ELF file format but not the executable described by that format.

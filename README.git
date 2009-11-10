@@ -49,6 +49,11 @@ which in the case of the cmake branch would be
 
      git push cmake
 
+########## Building a Branch for a development team member ################
+
+     git branch matt master
+     git push origin matt
+
 
 ############## WE DESCRIBE HOW TO CREATE A NEW BRANCH  ####################
 
@@ -104,4 +109,73 @@ How to add a file:
    git add <file name>
 
 
+################# How to Test Git Commands ####################
 
+Some Git commands like "reset --hard", "rebase", etc. can make changes
+that you might not expect if you're new, and there's not always an easy,
+intuitive way to recover if you make a mistake.  So here's what I do if
+I want to just try out a command:
+
+   $ git branch backup # create a "backup" branch of your current branch
+   $ ... # live dangerously
+
+If everything looks good, delete the backup:
+
+   $ git branch -D backup
+
+Otherwise to recover your original branch:
+
+   $ git reset --hard backup
+   $ git branch -d backup
+
+A word of caution: this method doesn't make a backup of files that
+aren't managed by Git. So do a "git status" first to see if you need
+to be careful of any new files or changes that aren't committed yet.
+
+Another word of caution: don't change history for what you've already
+pushed to the central repo!  If you pushed something by mistake then
+it's better to push a fix (see "git revert") than change history to make
+it look like your bad commit never happened.
+
+
+####################### How to update #######################
+
+You situation might be different, but I update from origin/master.
+These commands might be useful to you.
+
+  $ git fetch
+
+will grab all the content from the central repo and make your remote
+"origin/*" branches up-to-date. It won't affect any of your local
+branches and so is always safe to do. (It's actually the first half of
+what a "git pull" does -- "git pull" is a fetch and then a merge.)
+
+  $ git whatchanged origin/master ^dan
+
+will show you what commits are in the "master" branch on the central
+repo but aren't on your "dan" branch.  Add a "-p" to see the actual
+patches. These are the things that would get merged if you did a "git
+merge origin/master" into your "dan" branch.
+
+  $ git whatchanged dan ^origin/dan
+
+will show you changes in your local "dan" branch that you haven't pushed
+to the central repo yet.  These are the changes that would get pushed by
+a "git push" command.
+
+BTW. the syntax "foo ^bar" is the same as "foo..bar" but I think the
+former is more intuitive, especially when foo and bar have both diverged
+from their common ancestor.
+
+If you merge from master and then decide you shouldn't have, you can
+easily undo the merge:
+
+  $ git fetch   # update your remote branches; always safe to do
+  $ git branch  # make sure you're on "dan"
+  $ git branch backup # create a temporary backup branch
+  $ git merge origin/master # merge changes from remote master
+
+If you don't like that, undo with:
+
+  $ git reset --hard backup  # undoes the merge
+  $ git branch -d backup # deletes the "backup" branch
