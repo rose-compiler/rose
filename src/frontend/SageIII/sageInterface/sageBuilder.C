@@ -3674,8 +3674,10 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
      ROSE_ASSERT(nondefdecl != NULL);
 #else
 
-#if 1
+#if 0
   // DQ (11/7/2009): Refactored the code to build a non-defining declaration
+  // DQ (11/10/2009): This refactoring of the code below breaks a number of tests in tests/roseTests/astInterfaceTests.
+  // TODO: Refactor this after we pass all of our tests.
      SgClassDeclaration* nondefdecl = buildNondefiningClassDeclaration (name,scope);
 #else
   // Get the nondefining declaration from the symbol if it has been built (if this works, 
