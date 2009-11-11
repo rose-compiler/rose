@@ -3322,6 +3322,14 @@ PointsToAnalysis::Implementation::structMemberLocation(
          // access type and collapsing the structure if necessary.
             SgClassType *struct_type
                 = isSgClassType(lhsExpr->get_type()->findBaseType());
+	    if (struct_type == NULL) {
+	      std::cerr<<"**ERROR lhsExpr " << Ir::fragmentToString(lhsExpr)
+		       <<" at " 
+		       << lhsExpr->get_file_info()->get_filename() << ":" 
+		       << lhsExpr->get_file_info()->get_line()
+		       << " is not a struct_type." <<std::endl;
+	      assert(false);
+	    }
             materializeAllStructMembers(structure, struct_type);
          // Now that the structure is materialized, we can perform a simple
          // lookup.
