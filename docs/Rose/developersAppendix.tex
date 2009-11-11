@@ -3228,6 +3228,86 @@ class InterproceduralInfo
 
 
       \item AST Interpreter (Interpretation of Concrete Semantics using AST)
+\begin{lstlisting}
+<interp_core.h>
+
+namespace Interp {
+/* Search for a global function in all translation units.
+   Can be used to search for the "main" function. */
+SgFunctionSymbol *prjFindGlobalFunction(const SgProject *prj, const SgName &fnName);
+
+class Value {
+     public:
+     /*! These functions return concrete representations where possible.
+         They could also be used to implement casting. */
+     virtual bool getConcreteValueBool() const;
+     virtual char getConcreteValueChar() const;
+     virtual double getConcreteValueDouble() const;
+     virtual float getConcreteValueFloat() const;
+     virtual int getConcreteValueInt() const;
+     virtual long double getConcreteValueLongDouble() const;
+     virtual long int getConcreteValueLong() const;
+     virtual long long int getConcreteValueLongLong() const;
+     virtual short getConcreteValueShort() const;
+     virtual unsigned char getConcreteValueUnsignedChar() const;
+     virtual unsigned int getConcreteValueUnsignedInt() const;
+     virtual unsigned long long int getConcreteValueUnsignedLongLong() const;
+     virtual unsigned long getConcreteValueUnsignedLong() const;
+     virtual unsigned short getConcreteValueUnsignedShort() const;
+};
+
+typedef boost::shared_ptr<Value> ValueP;
+
+template <typename PrimType>
+class IntegralPrimTypeValue : public GenericPrimTypeValue<PrimType>
+   {
+     public:
+     IntegralPrimTypeValue(Position pos, StackFrameP owner)
+             : GenericPrimTypeValue<PrimType>(pos, owner) {}
+     IntegralPrimTypeValue(PrimType v, Position pos, StackFrameP owner)
+             : GenericPrimTypeValue<PrimType>(v, pos, owner) {}
+   }
+
+/* FloatingPointPrimTypeValue - likewise */
+
+typedef IntegralPrimTypeValue<bool> BoolValue;
+typedef IntegralPrimTypeValue<char> CharValue;
+typedef FloatingPointPrimTypeValue<double> DoubleValue;
+typedef FloatingPointPrimTypeValue<float> FloatValue;
+typedef IntegralPrimTypeValue<int> IntValue;
+typedef FloatingPointPrimTypeValue<long double> LongDoubleValue;
+typedef IntegralPrimTypeValue<long int> LongIntValue;
+typedef IntegralPrimTypeValue<long long int> LongLongIntValue;
+typedef IntegralPrimTypeValue<short> ShortValue;
+typedef IntegralPrimTypeValue<unsigned char> UnsignedCharValue;
+typedef IntegralPrimTypeValue<unsigned int> UnsignedIntValue;
+typedef IntegralPrimTypeValue<unsigned long long int> UnsignedLongLongIntValue;
+typedef IntegralPrimTypeValue<unsigned long> UnsignedLongValue;
+typedef IntegralPrimTypeValue<unsigned short> UnsignedShortValue;
+
+class Interpretation {
+     /* Create an empty interpretation. */
+     Interpretation();
+};
+
+class StackFrame {
+     public:
+     /* Create a stack frame within the given interpretation
+        to interpret the given function. */
+     StackFrame(Interpretation *currentInterp, SgFunctionSymbol *funSym);
+
+     /* Initialize global variables over the given project.
+        To be called before interpretation of the "main" function. */
+     void initializeGlobals(SgProject *project);
+
+     /* Interprets this stack frame's function with the given arguments.
+        Returns the return value of the function. */
+     ValueP interpFunction(const std::vector<ValueP> &args);
+
+};
+
+}
+\end{lstlisting}
    \end{enumerate}
 
    \item Binary (DQ) \\
