@@ -138,10 +138,18 @@ RoseToTerm::getPreprocessingInfo(AttachedPreprocessingInfoType* inf) {
 PrologCompTerm*
 RoseToTerm::getFileInfo(Sg_File_Info* inf) {		
   ROSE_ASSERT(inf != NULL);
-  return new PrologCompTerm("file_info", /*3,*/
-			    new PrologAtom(inf->get_filename()),
-			    new PrologInt(inf->get_line()),
-			    new PrologInt(inf->get_col()));
+  if (inf->ok()) {
+    return new PrologCompTerm("file_info", /*3,*/
+			      new PrologAtom(inf->get_filename()),
+			      new PrologInt(inf->get_line()),
+			      new PrologInt(inf->get_col()));
+  } else {
+    cerr<<"**WARNING file info broken"<<endl;
+    return new PrologCompTerm("file_info", /*3,*/
+			      new PrologAtom("BROKEN Sg_File_Info"),
+			      new PrologInt(0),
+			      new PrologInt(0));
+  }
 }
 
 /**
