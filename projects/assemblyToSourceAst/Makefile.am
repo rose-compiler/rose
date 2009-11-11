@@ -62,23 +62,23 @@ include_HEADERS = x86AssemblyToC.h satProblem.h powerpcInstructionSemantics.h x8
 #powerpcAssemblyToCDemo-powerpcAssemblyToC.o: powerpcInstructionSemantics.h
 
 test_assemblyToC:
-	if test -e $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386; then \
-	  ./x86AssemblyToCDemo -c $(srcdir)/outputFileTemplate.C $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386; \
+	if test -e $(top_srcdir)/binaries/samples/fnord.i386; then \
+	  ./x86AssemblyToCDemo -c $(srcdir)/outputFileTemplate.C $(top_srcdir)/binaries/samples/fnord.i386; \
 	fi
 
 test_assemblyToNetlist:
-	if test -e $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386; then \
-	  ./x86AssemblyToNetlist $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386; \
+	if test -e $(top_srcdir)/binaries/samples/fnord.i386; then \
+	  ./x86AssemblyToNetlist $(top_srcdir)/binaries/samples/fnord.i386; \
 	fi
 
 test_assemblyToBtor:
-	if test -e $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386; then \
-	  ./x86AssemblyToBtor start $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386; \
+	if test -e $(top_srcdir)/binaries/samples/fnord.i386; then \
+	  ./x86AssemblyToBtor start $(top_srcdir)/binaries/samples/fnord.i386; \
 	fi
 
 test_assemblyToReadWriteSets:
-	if test -e $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386; then \
-	  ./readAndWriteSets $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386 > fnord.rws ; \
+	if test -e $(top_srcdir)/binaries/samples/fnord.i386; then \
+	  ./readAndWriteSets $(top_srcdir)/binaries/samples/fnord.i386 > fnord.rws ; \
 	fi
 
 
