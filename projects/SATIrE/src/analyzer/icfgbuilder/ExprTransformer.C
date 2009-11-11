@@ -155,12 +155,12 @@ ExprTransformer::newReturnBlock()
 }
 
 SgVariableSymbol *
-ExprTransformer::newReturnVariable(std::string funcname)
+ExprTransformer::newReturnVariable(std::string funcname, SgType *type)
 {
     std::stringstream varname;
     varname << "$tmpvar$" << funcname << "$return_" << expnum++;
     SgVariableSymbol *result
-        = Ir::createVariableSymbol(varname.str(), cfg->global_unknown_type);
+        = Ir::createVariableSymbol(varname.str(), type);
     program->global_map[varname.str()]
         = std::make_pair(result, result->get_declaration());
     return result;
@@ -316,7 +316,8 @@ ExprTransformer::evaluateSynthesizedAttribute(
 
      // Make a new return variable and a ReturnAssignment.
         SgVariableSymbol *var
-            = newReturnVariable(name != NULL ? *name : "unknown_func");
+            = newReturnVariable((name != NULL ? *name : "unknown_func"),
+                                call->get_type());
         SgVariableSymbol *retvar = cfg->global_return_variable_symbol;
         ReturnAssignment *ra = Ir::createReturnAssignment(var, retvar);
 

@@ -93,7 +93,7 @@ private:
     BasicBlock *newBasicBlock();
     CallBlock *newCallBlock();
     CallBlock *newReturnBlock();
-    SgVariableSymbol *newReturnVariable(std::string funcname);
+    SgVariableSymbol *newReturnVariable(std::string funcname, SgType *type);
     SgVariableSymbol *newLogicalVariable();
     SgVariableSymbol *icfgArgumentVarSym(unsigned int i);
     SgVarRefExp *icfgArgumentVarRef(unsigned int i);
