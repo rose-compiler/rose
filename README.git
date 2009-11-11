@@ -214,3 +214,8 @@ Copy the changes from the test branch to my original branch
 
 Delete the test branch
    131  12:28   git branch -d dan_andreas_merge_test
+
+
+#################### GITK ############################
+
+gitk master HEAD andreas cmake dan jeff liao matt peter robb svn thomas windows yi
