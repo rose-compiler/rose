@@ -1379,7 +1379,7 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
      // We need to unify the lhs operand, which is the va_list object, with
      // the enclosing function's ellipsis parameter.
         result = synlist[SgVarArgStartOp_lhs_operand];
-#if DEBUG
+#if VERBOSE_DEBUG
         std::cout
             << "var arg start lhs op: "
             << (result != NULL ? result->id : 0) << " "
@@ -1403,7 +1403,7 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
         }
         else if (a->ellipsis_location != result)
         {
-#if DEBUG
+#if VERBOSE_DEBUG
             std::cout
                 << "unifying va_list " << result->id
                 << "with ellipsis_location "
@@ -2906,6 +2906,12 @@ PointsToAnalysis::Implementation::newSpecialFunctionContext(
     Location *arg_dummy = synlist[SgFunctionCallExp_args];
     Location *return_location = NULL;
 
+#if VERBOSE_DEBUG
+    std::cout
+        << "new special function context for: " << name
+        << std::endl;
+#endif
+
     if (name == "__assert_fail") {
      // __assert_fail never returns. So we return NULL.
         return_location = NULL;
@@ -2921,41 +2927,52 @@ PointsToAnalysis::Implementation::newSpecialFunctionContext(
     } else if (name == "__fxstat") {
      // This is some internal stuff used by fstat. We are not interested in
      // the arguments and return nothing.
+        ensureArgumentCount(arg_dummy, 3);
         return_location = NULL;
     } else if (name == "__lxstat") {
      // This is some internal stuff used by lstat. We are not interested in
      // the arguments and return nothing.
+        ensureArgumentCount(arg_dummy, 3);
         return_location = NULL;
     } else if (name == "__xmknod") {
      // This is some internal stuff used by mknod. We are not interested in
      // the arguments and return nothing.
+        ensureArgumentCount(arg_dummy, 4);
         return_location = NULL;
     } else if (name == "__xstat") {
      // This is some internal stuff used by stat. We are not interested in
      // the arguments and return nothing.
+        ensureArgumentCount(arg_dummy, 3);
         return_location = NULL;
     } else if (name == "access") {
      // int access(const char *pathname, int mode);
      // Ignore everything, the return location is NULL (an integer that is
      // not a pointer).
+        ensureArgumentCount(arg_dummy, 2);
         return_location = NULL;
     } else if (name == "atoi") {
      // Ignore the argument, return nothing.
+        ensureArgumentCount(arg_dummy, 1);
         return_location = NULL;
     } else if (name == "close") {
      // Ignore the argument, return nothing.
+        ensureArgumentCount(arg_dummy, 1);
         return_location = NULL;
     } else if (name == "exit") {
      // Ignore the argument, return nothing.
+        ensureArgumentCount(arg_dummy, 1);
         return_location = NULL;
     } else if (name == "fclose") {
      // Ignore the argument, return nothing.
+        ensureArgumentCount(arg_dummy, 1);
         return_location = NULL;
     } else if (name == "fcntl") {
-     // Ignore the arguments, return nothing.
+     // Ignore the arguments (one, two, or three), return nothing.
+        ensureArgumentCount(arg_dummy, 3);
         return_location = NULL;
     } else if (name == "fflush") {
      // Ignore the argument, return nothing.
+        ensureArgumentCount(arg_dummy, 1);
         return_location = NULL;
     } else if (name == "fgets") {
      // Return the first argument (the same pointer). Make sure the first
@@ -2965,24 +2982,31 @@ PointsToAnalysis::Implementation::newSpecialFunctionContext(
         return_location = arg_dummy->arg_locations[0];
     } else if (name == "fileno") {
      // Ignore the argument, return nothing.
+        ensureArgumentCount(arg_dummy, 1);
         return_location = NULL;
     } else if (name == "fopen") {
      // Ignore the arguments, return a newly allocated FILE structure.
+        ensureArgumentCount(arg_dummy, 2);
         return_location = newAllocationSite();
     } else if (name == "fprintf") {
      // Ignore the arguments, return nothing.
+        ensureArgumentCount(arg_dummy, 3);
         return_location = NULL;
     } else if (name == "fputc") {
      // Ignore the arguments, return nothing.
+        ensureArgumentCount(arg_dummy, 2);
         return_location = NULL;
     } else if (name == "free") {
      // Ignore the argument, return nothing.
+        ensureArgumentCount(arg_dummy, 1);
         return_location = NULL;
     } else if (name == "fsync") {
      // Ignore the argument, return nothing.
+        ensureArgumentCount(arg_dummy, 1);
         return_location = NULL;
     } else if (name == "ftruncate") {
      // Ignore the arguments, return nothing.
+        ensureArgumentCount(arg_dummy, 2);
         return_location = NULL;
     } else if (name == "getcwd") {
      // Return the first argument (the same pointer).
@@ -2994,44 +3018,52 @@ PointsToAnalysis::Implementation::newSpecialFunctionContext(
      // several call sites, depending on the contents of the string it is
      // passed. Conservatively, we must assume that it returns the *same*
      // string at all sites, regardless of the argument.
+        ensureArgumentCount(arg_dummy, 1);
         ensurePointerLocation(
                 specialFunctionAuxLocation("getenv_return_location"));
         return_location = specialFunctionAuxLocation("getenv_return_location");
     } else if (name == "getpid") {
-     // Return nothing.
+     // Return nothing. No arguments.
         return_location = NULL;
     } else if (name == "getpwuid") {
      // The getpwuid function may return a pointer to a statically-allocated
      // structure, so we must assume that it will return the same pointer at
      // several call sites.
+        ensureArgumentCount(arg_dummy, 1);
         ensurePointerLocation(
                 specialFunctionAuxLocation("getpwuid_return_location"));
         return_location
             = specialFunctionAuxLocation("getpwuid_return_location");
     } else if (name == "gettimeofday") {
      // Ignore the arguments, return nothing.
+        ensureArgumentCount(arg_dummy, 2);
         return_location = NULL;
     } else if (name == "getuid") {
-     // Return nothing.
+     // Return nothing. No arguments.
         return_location = NULL;
     } else if (name == "isatty") {
      // Ignore the argument, return nothing.
+        ensureArgumentCount(arg_dummy, 1);
         return_location = NULL;
     } else if (name == "localtime") {
      // This function returns a pointer to a statically-allocated structure.
+        ensureArgumentCount(arg_dummy, 1);
         ensurePointerLocation(
                 specialFunctionAuxLocation("localtime_return_location"));
         return_location
             = specialFunctionAuxLocation("localtime_return_location");
     } else if (name == "lseek") {
      // Ignore the arguments, return nothing.
+        ensureArgumentCount(arg_dummy, 3);
         return_location = NULL;
     } else if (name == "malloc") {
      // we ignore the size argument completely, it is not a pointer
      // the returned pointer is new for each context
+        ensureArgumentCount(arg_dummy, 1);
         return_location = newAllocationSite();
     } else if (name == "memcmp") {
      // Ignore the arguments, return nothing.
+        ensureArgumentCount(arg_dummy, 3);
         return_location = NULL;
     } else if (name == "memcpy") {
      // We ignore the size argument (the third argument) completely; for the
@@ -3053,13 +3085,16 @@ PointsToAnalysis::Implementation::newSpecialFunctionContext(
         ensurePointerLocation(arg_dummy->arg_locations[0]);
         return_location = arg_dummy->arg_locations[0];
     } else if (name == "open") {
-     // Ignore the arguments, return nothing.
+     // Ignore the arguments (two or three), return nothing.
+        ensureArgumentCount(arg_dummy, 3);
         return_location = NULL;
     } else if (name == "printf") {
      // Ignore the arguments, return nothing.
+        ensureArgumentCount(arg_dummy, 2);
         return_location = NULL;
     } else if (name == "read") {
      // Ignore the arguments, return nothing.
+        ensureArgumentCount(arg_dummy, 3);
         return_location = NULL;
     } else if (name == "realloc") {
      // This function may return its first argument, or may return a newly
@@ -3088,9 +3123,11 @@ PointsToAnalysis::Implementation::newSpecialFunctionContext(
         return_location = specialFunctionAuxLocation("sighandler_location");
     } else if (name == "sleep") {
      // Ignore the arguments, return nothing.
+        ensureArgumentCount(arg_dummy, 1);
         return_location = NULL;
     } else if (name == "sprintf") {
      // Ignore the arguments, return nothing.
+        ensureArgumentCount(arg_dummy, 3);
         return_location = NULL;
     } else if (name == "strcat") {
      // This is sort of a copy of the second argument's pointed-to region
@@ -3103,6 +3140,7 @@ PointsToAnalysis::Implementation::newSpecialFunctionContext(
         return_location = arg_dummy->arg_locations[0];
     } else if (name == "strcmp") {
      // Ignore the arguments, return nothing.
+        ensureArgumentCount(arg_dummy, 2);
         return_location = NULL;
     } else if (name == "strcpy") {
      // This is sort of a copy of the second argument's pointed-to region
@@ -3115,9 +3153,11 @@ PointsToAnalysis::Implementation::newSpecialFunctionContext(
         return_location = arg_dummy->arg_locations[0];
     } else if (name == "strlen") {
      // Ignore the argument, return nothing.
+        ensureArgumentCount(arg_dummy, 1);
         return_location = NULL;
     } else if (name == "strncmp") {
      // Ignore the arguments, return nothing.
+        ensureArgumentCount(arg_dummy, 2);
         return_location = NULL;
     } else if (name == "strncpy") {
      // This is sort of a copy of the second argument's pointed-to region
@@ -3139,18 +3179,25 @@ PointsToAnalysis::Implementation::newSpecialFunctionContext(
                                  arg_dummy->arg_locations[0]->baseLocation());
     } else if (name == "tolower") {
      // Ignore the argument, return nothing.
+        ensureArgumentCount(arg_dummy, 1);
         return_location = NULL;
     } else if (name == "toupper") {
      // Ignore the argument, return nothing.
+        ensureArgumentCount(arg_dummy, 1);
         return_location = NULL;
     } else if (name == "unlink") {
      // Ignore the argument, return nothing.
+        ensureArgumentCount(arg_dummy, 1);
         return_location = NULL;
     } else if (name == "write") {
      // Ignore the arguments, return nothing.
+        ensureArgumentCount(arg_dummy, 3);
         return_location = NULL;
     }
 
+#if 0
+ // These summaries are not used anymore. If you decide to revive them, make
+ // sure to have ensureArgumentCount calls in all the right places.
  // Functions specific to sqlite3
     else if (name == "sqlite3FreeX") {
      // Ignore the argument, return nothing.
@@ -3189,6 +3236,7 @@ PointsToAnalysis::Implementation::newSpecialFunctionContext(
      // Ignore the arguments, return nothing.
         return_location = NULL;
     }
+#endif
 
     else
     {
@@ -5360,6 +5408,8 @@ PointsToAnalysis::PointsToInformation::PointsToInformation()
     specialFunctionNames.insert("unlink");
     specialFunctionNames.insert("write");
 
+#if 0
+ // Not used anymore.
  // Functions specific to sqlite3
  // First iteration: Memory management and error handling.
     specialFunctionNames.insert("sqlite3FreeX");
@@ -5370,6 +5420,7 @@ PointsToAnalysis::PointsToInformation::PointsToInformation()
     specialFunctionNames.insert("sqlite3StrDup");
     specialFunctionNames.insert("sqlite3StrNDup");
     specialFunctionNames.insert("sqlite3ErrorMsg");
+#endif
 
  // Second iteration: Maybe OS-specific stuff? Or StrICmp?
 }
