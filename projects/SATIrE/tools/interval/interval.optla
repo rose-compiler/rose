@@ -469,6 +469,13 @@ int_bool :: snum -> bool;
 int_bool(0) = false;
 int_bool(_) = true;
 
+lvalue(VarRefExp(_)) = true;
+lvalue(PointerDerefExp(_)) = true;
+lvalue(PntrArrRefExp(_,_)) = true;
+lvalue(DotExp(_,_)) = true;
+lvalue(ArrowExp(_,_)) = true;
+lvalue(_) = false;
+
 updatestate :: itvl_State, Expression, itvl_Interval, ContextInfo -> itvl_IntervalStatePair;
 updatestate(bot, _, _, _) = (top,bot);
 // -- Global variables passed through calls may become bot. However, we
@@ -497,9 +504,10 @@ updatestate(state, exp, value, context) =
                    case syms of
                 // -- no var: could be an error; could also be harmless, if
                 // -- this updatestate call resulted from an equality check
-                   [!]    => println("warning: no varsyms for exp in updatestate: ",
-                                     exp, " :: ", expr_asttext(exp))
-                             state;
+                   [!]    => if lvalue(exp) then 
+                                 println("**ERROR: no varsyms for exp in updatestate: ", exp, " :: ", expr_asttext(exp))
+                                 error("Exiting")
+                             else state;
                 // -- singleton var, may be an array name: strong update of
                 // -- scalar variables, weak update of arrays
                    v::[!] => if is_array_location(loc) then
@@ -660,7 +668,7 @@ branch(exp, state, edge, isLoopBody, context) =
     // --print("Maybe\n") 
     branch_condition_effects(exp, state, newstate, edge, isLoopBody, context)
   else if c = bot then 
-    print("FIXME c=bot\n")
+    // --print("FIXME c=bot\n")
     state
   else if drop(c) = edge then  
     // -- This edge will ALWAYS be taken
