@@ -221,7 +221,11 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
 
 #if HAVE_SATIRE_ICFG
   if (cfg == NULL)
-      cfg = get_global_cfg();
+    cfg = get_global_cfg();
+  assert(cfg != NULL);
+  if (program == NULL)
+    program = cfg->program;
+  assert(program != NULL);
 #endif
 
   /* See if this node is intended to be unparsed -> decls inserted by EDG will be stripped */
@@ -289,12 +293,9 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
 #if HAVE_SATIRE_ICFG
       SgVariableSymbol *sym = NULL;
       if (SgVarRefExp *v = isSgVarRefExp(astNode))
-        sym = v->get_symbol();
+        sym = program->get_symbol(v);
       if (SgInitializedName *in = isSgInitializedName(astNode)) {
-        if (program != NULL)
-            sym = program->get_symbol(in);
-        else
-            sym = isSgVariableSymbol(in->get_symbol_from_symbol_table());
+        sym = program->get_symbol(in);
         if (sym == NULL) {
           /* ROSE has NULL symbols for some unused things; for example,
            * argument names in forward function declarations. But also for
@@ -302,6 +303,8 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
            * totally allowed). Look up this variable in the special little
            * table for global variable IDs; if it's not there, we invent a
            * number for these and hope that nothing breaks. */
+          /* GB (2009-11-11): Since we now use SATIrE's own global symbol
+           * table, the branch below is probably dead code. */
           PrologCompTerm *varid_annot = NULL;
           SgVariableDeclaration *d = isSgVariableDeclaration(in->get_parent());
           if (d != NULL && isSgGlobal(d->get_parent())
