@@ -2860,6 +2860,7 @@ PointsToAnalysis::Implementation::newAllocationSite()
                                 NULL, NULL, NULL, NULL);
     initname->set_scope(mainInfo->dummyGlobalScope);
     SgVariableSymbol *sym = new SgVariableSymbol(initname);
+    program->global_map[name.str()] = std::make_pair(sym, initname);
 #if HAVE_PAG
     addVariableIdForSymbol(sym);
 #endif
