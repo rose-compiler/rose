@@ -3724,7 +3724,12 @@ PointsToAnalysis::Implementation::initializeArray(
         PointsToAnalysis::Location *a, PointsToAnalysis::Location *b)
 {
     if (a->baseLocation() == NULL)
+    {
         a->pointTo(createLocation());
+     // copy symbols: both the pointing array node and the pointed-to array
+     // node have the same name(s), which is not the cleanest design
+        a->baseLocation()->symbols = a->symbols;
+    }
     Location *elements = a->baseLocation();
  // b is a dummy location containing the array elements; use these in turn
  // to initialize elements. This means that each array element will be

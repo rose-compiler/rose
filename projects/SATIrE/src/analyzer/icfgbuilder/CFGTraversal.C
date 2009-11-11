@@ -228,6 +228,16 @@ CFGTraversal::atTraversalEnd() {
         {
             cfg->pointsToAnalysis = new SATIrE::Analyses::PointsToAnalysis();
             cfg->pointsToAnalysis->run(program);
+#if !HAVE_PAG
+         // Output context-insensitive points-to analysis results if
+         // requested, and PAG is not present. If PAG is present, this is
+         // done below.
+            if (cfg->analyzerOptions->outputPointsToGraph())
+            {
+                cfg->pointsToAnalysis->doDot(
+                        cfg->analyzerOptions->getPointsToGraphName());
+            }
+#endif
         }
         else
             cfg->pointsToAnalysis = NULL;
