@@ -613,7 +613,7 @@ PrologTerm* TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(
             }
           }
           PrologCompTerm *loct
-            = new PrologCompTerm("location_varids_funcs", 3,
+            = new PrologCompTerm("location_varids_funcs", // 3,
                                  new PrologInt(pto->location_id(*loc)),
                                  varids,
                                  funcs);

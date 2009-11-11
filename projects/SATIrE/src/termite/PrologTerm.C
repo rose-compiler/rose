@@ -170,19 +170,19 @@ bool init_termite(int argc, char **argv, bool) {
 }
 
 PrologCompTerm* isPrologCompTerm(PrologTerm* t) { 
-  return dynamic_cast<PrologCompTerm*>t;
+  return dynamic_cast<PrologCompTerm*>(t);
 }
 PrologList* isPrologList(PrologTerm* t) { 
-  return dynamic_cast<PrologList*>t;
+  return dynamic_cast<PrologList*>(t);
 }
 PrologAtom* isPrologAtom(PrologTerm* t) { 
-  return dynamic_cast<PrologAtom*>t;
+  return dynamic_cast<PrologAtom*>(t);
 }
 PrologInt* isPrologInt(PrologTerm* t) { 
-  return dynamic_cast<PrologInt*>t;
+  return dynamic_cast<PrologInt*>(t);
 }
 PrologVariable* isPrologVariable(PrologTerm* t) { 
-  return dynamic_cast<PrologVariable*>t;
+  return dynamic_cast<PrologVariable*>(t);
 }
 
 #endif

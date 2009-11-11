@@ -18,6 +18,7 @@ public:
   
   PrologCompTerm(std::string name = "#ERROR") : mName(name) {};
 
+#if 0
   PrologCompTerm(std::string name, size_t n, ...) : mName(name) {
     if(n > 0) {
       va_list params;
@@ -29,6 +30,79 @@ public:
       }
       va_end(params);
     }
+  }
+#endif
+
+  PrologCompTerm(std::string name, PrologTerm* t1)
+  : mName(name)
+  {
+    mSubterms.push_back(t1);
+  }
+
+  PrologCompTerm(std::string name, PrologTerm* t1, PrologTerm* t2) 
+  : mName(name)
+  {
+    mSubterms.push_back(t1);
+    mSubterms.push_back(t2);
+  }
+
+  PrologCompTerm(std::string name, 
+		 PrologTerm* t1, PrologTerm* t2, PrologTerm* t3) 
+  : mName(name)
+  {
+    mSubterms.push_back(t1);
+    mSubterms.push_back(t2);
+    mSubterms.push_back(t3);
+  }
+
+  PrologCompTerm(std::string name, 
+		 PrologTerm* t1, PrologTerm* t2, PrologTerm* t3, 
+		 PrologTerm* t4) 
+  : mName(name)
+  {
+    mSubterms.push_back(t1);
+    mSubterms.push_back(t2);
+    mSubterms.push_back(t3);
+    mSubterms.push_back(t4);
+  }
+
+  PrologCompTerm(std::string name, 
+		 PrologTerm* t1, PrologTerm* t2, PrologTerm* t3, 
+		 PrologTerm* t4, PrologTerm* t5) 
+  : mName(name)
+  {
+    mSubterms.push_back(t1);
+    mSubterms.push_back(t2);
+    mSubterms.push_back(t3);
+    mSubterms.push_back(t4);
+    mSubterms.push_back(t5);
+  }
+
+  PrologCompTerm(std::string name, 
+		 PrologTerm* t1, PrologTerm* t2, PrologTerm* t3,
+ 		 PrologTerm* t4, PrologTerm* t5, PrologTerm* t6) 
+  : mName(name)
+  {
+    mSubterms.push_back(t1);
+    mSubterms.push_back(t2);
+    mSubterms.push_back(t3);
+    mSubterms.push_back(t4);
+    mSubterms.push_back(t5);
+    mSubterms.push_back(t6);
+  }
+
+  PrologCompTerm(std::string name, 
+		 PrologTerm* t1, PrologTerm* t2, PrologTerm* t3, 
+		 PrologTerm* t4, PrologTerm* t5, PrologTerm* t6, PrologTerm* t7)
+  : mName(name)
+  {
+    mSubterms.push_back(t1);
+    mSubterms.push_back(t2);
+    mSubterms.push_back(t3);
+    mSubterms.push_back(t4);
+    mSubterms.push_back(t5);
+    mSubterms.push_back(t6);
+    mSubterms.push_back(t7);
   }
   
   int getArity() { return mSubterms.size(); };
