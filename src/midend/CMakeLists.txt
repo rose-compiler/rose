@@ -278,7 +278,7 @@ ${CMAKE_SOURCE_DIR}/src/midend/astDiagnostics/AstPerformance.C
 ${CMAKE_SOURCE_DIR}/src/midend/astDiagnostics/AstStatistics.C
 )
 
-add_library( midend ${midend_src}  )
+add_library( midend STATIC ${midend_src}  )
 add_dependencies( midend ROSETTA )
 
 ########### install files ###############
