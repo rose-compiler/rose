@@ -41,6 +41,7 @@ private:
   std::map<std::string,SgType*> typeMap;
   std::map<std::string,SgDeclarationStatement*> declarationMap;
   std::map<std::string,SgInitializedName*> initializedNameMap;
+  std::map<SgInitializedName*, SgVariableSymbol*> variableSymbolMap;
 
   /* arity specific node generation*/
   SgNode* leafToRose(PrologCompTerm*, std::string);
@@ -100,6 +101,9 @@ private:
   SgFunctionDeclaration* createDummyFunctionDeclaration(std::string*, PrologTerm*);
   SgFunctionSymbol* createDummyFunctionSymbol(std::string*, PrologTerm*);
   SgMemberFunctionSymbol* createDummyMemberFunctionSymbol(PrologTerm*);
+  SgVariableSymbol* createVariableSymbol(SgInitializedName*);
+  void storeVariableSymbolFromDeclaration(SgScopeStatement*,
+                                          SgDeclarationStatement*);
   void fakeNamespaceScope(std::string, int, SgDeclarationStatement*);
   SgTypedefType* createTypedefType(PrologTerm*);
   /* type specific node generation */

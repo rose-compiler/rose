@@ -72,8 +72,18 @@ public:
     if (SgEnumDeclaration *edecl = isSgEnumDeclaration(n)) {
       setInitNameScopes(edecl->get_enumerators(), edecl->get_scope());
     }
-    if (SgFunctionParameterList *plist = isSgFunctionParameterList(n))
-      setInitNameScopes(plist->get_args(), plist->get_scope());
+    if (SgFunctionParameterList *plist = isSgFunctionParameterList(n)) {
+      /* try to ensure that function parameters are entered in the function
+       * definition's symbol table -- if this is a function definition */
+      SgFunctionDeclaration *fdecl
+        = isSgFunctionDeclaration(plist->get_parent());
+      SgFunctionDefinition *fdef = fdecl->get_definition();
+      if (fdef != NULL) {
+        setInitNameScopes(plist->get_args(), fdef);
+      } else {
+        setInitNameScopes(plist->get_args(), plist->get_scope());
+      }
+    }
     if (SgClassDeclaration *cdecl = isSgClassDeclaration(n)) {
       if (cdecl->get_scope() == NULL) {
         cdecl->set_scope(scope);

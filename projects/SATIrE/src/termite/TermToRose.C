@@ -1502,6 +1502,11 @@ TermToRose::createBasicBlock(Sg_File_Info* fi,deque<SgNode*>* succs) {
     } else debug("empty statement not added");
     it++;
   }
+  /* manual recreation of symbol tables; the automatic stuff doesn't seem to
+   * work here */
+  for (it = succs->begin(); it != succs->end(); ++it) {
+    storeVariableSymbolFromDeclaration(b, isSgDeclarationStatement(*it));
+  }
   return b;
 }
 
@@ -1710,6 +1715,24 @@ TermToRose::setFunctionDeclarationBody(SgFunctionDeclaration* func_decl, SgNode*
     func_def->set_declaration(func_decl);
     /* set defining declaration ROSE 0.9.0b */
     func_decl->set_definingDeclaration(func_decl);
+    /** fix function argument symbols: the symbols for the function
+     * arguments from the decl node must be inserted in the def's symbol
+     * table */
+    SgInitializedNamePtrList &args = func_decl->get_args();
+    SgInitializedNamePtrList::iterator i;
+    for (i = args.begin(); i != args.end(); ++i) {
+      /* create or look up variable symbol */
+      SgVariableSymbol *varSym = createVariableSymbol(*i);
+      func_def->insert_symbol(varSym->get_name(), varSym);
+#if 0
+      std::cout
+          << "entering " << varSym->get_name().str()
+          << "@" << (void *) varSym
+          << " as " << i - args.begin() << "-th argument of "
+          << func_decl->get_name().str()
+          << std::endl;
+#endif
+    }
   } else {
   }
   return func_decl;
@@ -1824,7 +1847,7 @@ TermToRose::createVarRefExp(Sg_File_Info* fi, PrologCompTerm* t) {
   }
   TERM_ASSERT(t, init_name != NULL);
   /*cast variable symbol*/
-  SgVariableSymbol* var_sym = new SgVariableSymbol(init_name);
+  SgVariableSymbol* var_sym = createVariableSymbol(init_name);
   TERM_ASSERT(t, var_sym != NULL);
   /*create VarRefExp*/
   SgVarRefExp* vre = new SgVarRefExp(fi,var_sym);
@@ -1833,6 +1856,27 @@ TermToRose::createVarRefExp(Sg_File_Info* fi, PrologCompTerm* t) {
   //init_name->set_parent(var_sym);
   var_sym->set_parent(vre);
   return vre;
+}
+
+/** create SgVariableSymbol */
+SgVariableSymbol*
+TermToRose::createVariableSymbol(SgInitializedName *init_name) {
+  /** can't create a new variable symbol for each reference to the variable
+   * because analyzers expect the symbols to be shared */
+  SgVariableSymbol *varsym = NULL;
+  if (variableSymbolMap.find(init_name) != variableSymbolMap.end()) {
+    varsym = variableSymbolMap[init_name];
+  } else {
+    varsym = new SgVariableSymbol(init_name);
+#if 0
+    std::cout
+        << "* created varsym " << (void *) varsym << " for init_name "
+        << init_name->get_name().str() << "@" << (void *) init_name
+        << std::endl;
+#endif
+    variableSymbolMap[init_name] = varsym;
+  }
+  return varsym;
 }
 
 /**
@@ -2219,6 +2263,7 @@ TermToRose::createForStatement(Sg_File_Info* fi, SgNode* child1, SgNode* child2,
   SgStatementPtrList::iterator it = ini_stmt->get_init_stmt().begin();
   while(it != ini_stmt->get_init_stmt().end()) {
     f->append_init_stmt(*it);
+    storeVariableSymbolFromDeclaration(f, isSgDeclarationStatement(*it));
     it++;
   }
   //f->append_init_stmt(ini_stmt);
@@ -2385,6 +2430,7 @@ TermToRose::createClassDefinition(Sg_File_Info* fi, deque<SgNode*>* succs,Prolog
     d->append_member(s);
     s->set_parent(d);
     //s->set_scope(d);
+    storeVariableSymbolFromDeclaration(d, s);
     it++;
   }
   /* set the end of construct*/
@@ -2830,6 +2876,23 @@ TermToRose::addSymbol(SgScopeStatement* scope, SgDeclarationStatement* s) {
   {
     SgClassDeclaration *decl = isSgClassDeclaration(s);
     if (decl) scope->insert_symbol(decl->get_name(), new SgClassSymbol(decl));
+  }
+}
+
+/**
+ * if the declaration refers to a variable, store its symbol in the scope's
+ * symbol table; do nothing otherwise
+ */
+void
+TermToRose::storeVariableSymbolFromDeclaration(SgScopeStatement *scope,
+                                               SgDeclarationStatement *decl) {
+  if (SgVariableDeclaration *varDecl = isSgVariableDeclaration(decl)) {
+    assert(!varDecl->get_variables().empty());
+    SgInitializedName *init_name = varDecl->get_variables().front();
+    assert(init_name != NULL);
+    SgVariableSymbol *varSym = createVariableSymbol(init_name);
+    assert(varSym != NULL);
+    scope->insert_symbol(varSym->get_name(), varSym);
   }
 }
 

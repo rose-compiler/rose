@@ -144,7 +144,7 @@ RoseToTerm::getFileInfo(Sg_File_Info* inf) {
 			      new PrologInt(inf->get_line()),
 			      new PrologInt(inf->get_col()));
   } else {
-    cerr<<"**WARNING file info broken"<<endl;
+    // cerr<<"**WARNING file info broken"<<endl;
     return new PrologCompTerm("file_info", /*3,*/
 			      new PrologAtom("BROKEN Sg_File_Info"),
 			      new PrologInt(0),

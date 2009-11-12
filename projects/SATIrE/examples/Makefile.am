@@ -59,7 +59,6 @@ EXTRA_DIST= \
 	srw98_shape/tests/srw98_data.h \
 	srw98_shape/tests/nnh_xnil.C \
 	srw98_shape/tests/nnh_xysel3shared.C \
-	srw98_shape/tests/srw98_listinsert.C \
 	\
 	pointsto_live_variables/pointsto_live_variables.optla \
 	pointsto_live_variables/runtests.custom \
@@ -202,7 +201,7 @@ pointsto_live_variables: init.token
 	@chmod u+w $(testdir)/interval/intvltest.c
 	@cd $(testdir)/interval; ./interval --run-pointsto-analysis --callstringlength=2 --output-term=intvltest.term intvltest.c
 	@echo "testing termite -> icfgbuilder..."
-	@cd $(testdir)/interval; ./interval --run-pointsto-analysis --callstringlength=2 --input-termite-ast=intvltest.term
+	@cd $(testdir)/interval; ./interval --run-pointsto-analysis --output-pointsto-graph=`basename $< .c`_pointsto --callstringlength=2 --input-termite-ast=intvltest.term
 	@echo "generating assertions..."
 	@cd $(testdir)/interval; export TERMITE_LIB=$(datadir)/termite; $(SWI_PL) -q -O -t main -s validator.pl < intvltest.term > intvltest1.term
 	@cd $(testdir)/interval; $(DESTDIR)/$(bindir)/termite_lint intvltest1.term; if [ $$? -ne 0 ]; then echo "*** termite_lint was not quite satisfied with that term!"; fi

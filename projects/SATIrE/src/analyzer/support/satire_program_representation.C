@@ -74,6 +74,14 @@ Program::get_symbol(SgInitializedName *initName)
 
     if (vardecl && isSgGlobal(vardecl->get_parent()))
         assert(result != NULL);
+    if (result == NULL && vardecl != NULL && name != "")
+    {
+        std::cerr
+            << "*** error: failed to lookup symbol for variable "
+            << name << "@" << (void *) initName
+            << std::endl;
+        assert(result != NULL);
+    }
     return result;
 }
 
