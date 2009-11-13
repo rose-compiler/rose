@@ -188,7 +188,7 @@ void postProcessingSupport (SgNode* node)
   // initializeExplicitScopeData(node);
      initializeExplicitScopes(node);
 
-  // DQ (5/28/2006): Fixup names in declarations that are inconsistant (e.g. where more than one non-defining declaration exists)
+  // DQ (5/28/2006): Fixup names in declarations that are inconsistent (e.g. where more than one non-defining declaration exists)
      resetNamesInAST();
 
   // DQ (3/17/2007): This should be empty
