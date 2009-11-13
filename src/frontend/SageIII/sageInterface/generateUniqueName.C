@@ -22,7 +22,25 @@ SageInterface::declarationPositionString( SgDeclarationStatement* declaration )
      int line_number   = fileInfo->get_line();
      int column_number = fileInfo->get_col();
 
-     string returnString = "_F" + StringUtility::numberToString(file_id) + "_L" + StringUtility::numberToString(line_number) + "_C" +  StringUtility::numberToString(column_number);
+     // Liao, 11/9/2009
+     // for translation generated SgNode, the file_id might be negative, like -3
+     // But naively inserting "-3" into the return string will break the rule for identifier in C/C++.
+     // In this case, we convert it to N3
+     string fileIdString;
+     if (file_id<0)
+     {
+       fileIdString+="N";
+       file_id = -1* file_id;
+     }
+     fileIdString+=StringUtility::numberToString(file_id);
+
+     string returnString = "_F" + fileIdString + "_L" + StringUtility::numberToString(line_number) + "_C" +  StringUtility::numberToString(column_number);
+     //string returnString = "_F" + StringUtility::numberToString(file_id) + "_L" + StringUtility::numberToString(line_number) + "_C" +  StringUtility::numberToString(column_number);
+     
+     // Liao, 11/9/2009
+     // the returned string should not have '-', which will break the rule for identifier in C/C++
+     size_t pos1 = returnString.find("-"); 
+     ROSE_ASSERT (pos1 == string::npos);
 
      return returnString;
    }
