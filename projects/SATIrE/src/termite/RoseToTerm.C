@@ -144,11 +144,15 @@ RoseToTerm::getFileInfo(Sg_File_Info* inf) {
 			      new PrologInt(inf->get_line()),
 			      new PrologInt(inf->get_col()));
   } else {
-    // cerr<<"**WARNING file info broken"<<endl;
+#if 0
+    cerr<<"**WARNING file info broken"<<endl;
     return new PrologCompTerm("file_info", /*3,*/
 			      new PrologAtom("BROKEN Sg_File_Info"),
 			      new PrologInt(0),
 			      new PrologInt(0));
+#else
+    return getFileInfo(Sg_File_Info::Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode());
+#endif
   }
 }
 
