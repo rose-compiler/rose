@@ -1143,10 +1143,10 @@ class Interpretation
      typedef std::map<std::string, ValueP> builtins_t;
 
      private:
-     builtins_t _builtinFns;
+     mutable builtins_t *_builtinFns;
 
      protected:
-     virtual void registerBuiltinFns(builtins_t &builtins);
+     virtual void registerBuiltinFns(builtins_t &builtins) const;
 
      public:
      bool trace, errorTrace;
@@ -1154,7 +1154,7 @@ class Interpretation
 
      Interpretation();
 
-     const builtins_t &builtinFns() { return _builtinFns; }
+     const builtins_t &builtinFns() const;
 
      virtual void parseCommandLine(std::vector<std::string> &args);
 
@@ -1339,6 +1339,8 @@ class StackFrame : public boost::enable_shared_from_this<StackFrame>
    };
 
 SgFunctionSymbol *prjFindGlobalFunction(const SgProject *prj, const SgName &fnName);
+
+std::string valueToString(ValueP strArray);
 
 }; // namespace Interp
 

@@ -153,8 +153,19 @@ class AssertFunctionValue : public BuiltinFunctionValue
 
    };
 
+class __mkbvvarFnValue : public BuiltinFunctionValue
+     {
+       public:
+            __mkbvvarFnValue(Position pos, StackFrameP owner) : BuiltinFunctionValue(pos, owner) {}
+            std::string functionName() const;
+            ValueP call(SgFunctionType *fnType, const std::vector<ValueP> &args) const;
+     };
+
 class SMTInterpretation : public Interpretation
      {
+
+       protected:
+       void registerBuiltinFns(builtins_t &builtins) const;
 
        public:
        std::string smtSolver;
@@ -192,8 +203,6 @@ class SMTStackFrame : public StackFrame
           StackFrameP newStackFrame(SgFunctionSymbol *funSym, ValueP thisBinding);
 
           ValueP evalExpr(SgExpression *expr, bool arrPtrConv = true);
-
-          ValueP evalFunctionRefExp(SgFunctionSymbol *sym);
 
           void evalIfStmt(SgIfStmt *ifStmt, BlockStackFrameP &curFrame);
 
