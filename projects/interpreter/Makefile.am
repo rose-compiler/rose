@@ -68,6 +68,7 @@ TEST_INPUTS = \
     testInput/smt/absBug.c \
     testInput/smt/excludedMiddle.c \
     testInput/smt/reverse.c \
+    testInput/smt/mkbvvar.c \
     testInput/md5.c
 
 EXTRA_DIST = interp_core.h interp_extcall.h interp_maple.h interp_mpi.h interp_smt.h maple++.h typeLayoutStore.h smtlib.h $(TEST_INPUTS)
@@ -129,4 +130,5 @@ if ROSE_USE_TEST_SMT_SOLVER
 	./smtTest -interp:smtSolver "$(TEST_SMT_SOLVER)" $(srcdir)/testInput/smt/excludedMiddle.c
 	./smtTest -interp:smtSolver "$(TEST_SMT_SOLVER)" $(srcdir)/testInput/smt/reverse.c
 	./smtTest -interp:smtSolver "$(TEST_SMT_SOLVER)" -interp:expectAssertionFailure -DSMT $(srcdir)/testInput/md5.c
+	./smtTest -interp:smtSolver "$(TEST_SMT_SOLVER)" $(srcdir)/testInput/smt/mkbvvar.c
 endif

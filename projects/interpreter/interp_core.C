@@ -1507,7 +1507,11 @@ ValueP StackFrame::evalVarRefExp(SgVarRefExp *vr)
 ValueP StackFrame::evalFunctionRefExp(SgFunctionSymbol *sym)
    {
      const Interpretation::builtins_t &builtins = interp()->builtinFns();
-     Interpretation::builtins_t::const_iterator bi = builtins.find(sym->get_declaration()->get_qualified_name().getString());
+     string qualName = sym->get_declaration()->get_qualified_name().getString();
+     if (qualName[0] != ':') /* Bug: implicitly defined functions lack name qualification */
+          qualName = "::" + qualName;
+
+     Interpretation::builtins_t::const_iterator bi = builtins.find(qualName);
 
      if (bi != builtins.end())
         {
@@ -1520,12 +1524,19 @@ ValueP StackFrame::evalFunctionRefExp(SgFunctionSymbol *sym)
      return ValueP(new StaticFunctionValue(sym, PTemp, shared_from_this()));
    }
 
-Interpretation::Interpretation()
+Interpretation::Interpretation() : _builtinFns(NULL) {}
+
+const Interpretation::builtins_t &Interpretation::builtinFns() const
    {
-     registerBuiltinFns(_builtinFns);
+     if (_builtinFns == NULL)
+        {
+          _builtinFns = new builtins_t;
+          registerBuiltinFns(*_builtinFns);
+        }
+     return *_builtinFns;
    }
 
-void Interpretation::registerBuiltinFns(builtins_t &builtins)
+void Interpretation::registerBuiltinFns(builtins_t &builtins) const
    {
      builtins["::memcpy"] = ValueP(new memcpyFnValue(PGlob, StackFrameP()));
      builtins["::memcmp"] = ValueP(new memcmpFnValue(PGlob, StackFrameP()));
@@ -2191,6 +2202,20 @@ ValueP StackFrame::stringToValue(const std::string &str)
      ValueP chrZero (new CharValue(0, PTemp, shared_from_this()));
      strArray->primAtOffset(str.size())->assign(chrZero, charType, charType);
      return strArray;
+   }
+
+string valueToString(ValueP strArray)
+   {
+     stringstream ss;
+     for (size_t i = 0;; ++i)
+        {
+          ValueP chr = strArray->primAtOffset(i);
+          char c = chr->getConcreteValueChar();
+          if (c == 0)
+               break;
+          ss << c;
+        }
+     return ss.str();
    }
 
 ValueP StackFrame::evalStringVal(SgStringVal *strVal)
@@ -2873,7 +2898,11 @@ void Interpretation::parseCommandLine(vector<string> &args)
      errorTrace = CommandlineProcessing::isOption(args, "-interp:", "errorTrace", true);
    }
 
-Interpretation::~Interpretation() {}
+Interpretation::~Interpretation()
+   {
+     if (_builtinFns != NULL)
+          delete _builtinFns;
+   }
 
 SgFunctionSymbol *prjFindGlobalFunction(const SgProject *prj, const SgName &fnName)
    {
