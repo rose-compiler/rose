@@ -53,7 +53,8 @@ ENABLE_BUILD_BINARY_EDG=1
 KEEP_TEST_DIR=0
 # my additional stuff
 ENABLE_UPLOAD_SVN=1
-#ENABLE_UPLOAD_CHANGELOG2=1
+# enable generating a ChangeLog2 for the SciDAC external repository
+ENABLE_UPLOAD_CHANGELOG2=1
 ENABLE_UPLOAD_WEB=1
 # using external benchmarks
 ENABLE_EXTERNAL_TEST=1
