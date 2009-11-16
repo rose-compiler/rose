@@ -499,7 +499,7 @@ FFIfunctionReturnType(SgFunctionDeclaration *fd)
         {
           SgMemberFunctionType *mft = isSgMemberFunctionType(ft);
           ROSE_ASSERT(mft);
-          return SgPointerType::createType(mft->get_struct_name()->get_declaration()->get_type());
+          return SgPointerType::createType(mft->get_class_type());
         }
      return ft->get_return_type();
    }
@@ -533,11 +533,11 @@ haskellFFItype(SgDeclarationStatement *ds, SgType *t, char &quantifier)
           string ts;
           if (SgMemberFunctionType *mft = isSgMemberFunctionType(ft))
              {
-               SgType *ct = mft->get_struct_name()->get_declaration()->get_type();
+               SgType *ct = mft->get_class_type();
                SgMemberFunctionDeclaration *mfd = isSgMemberFunctionDeclaration(ds);
                if (mfd && !mfd->get_declarationModifier().get_storageModifier().isStatic() && !mfd->get_specialFunctionModifier().isConstructor())
                   {
-                    string ctStr = haskellFFItype(mft->get_struct_name()->get_declaration(), ct, quantifier);
+                    string ctStr = haskellFFItype(isSgClassType(ct->stripTypedefsAndModifiers())->get_declaration(), ct, quantifier);
                     if (ctStr.empty()) return "";
                     ts = "Ptr (" + ctStr + ") -> ";
                   }

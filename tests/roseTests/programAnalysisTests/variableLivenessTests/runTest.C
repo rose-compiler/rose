@@ -740,7 +740,7 @@ int main( int argc, char * argv[] )
       results.clear();      outputResults.clear();
       vector<string> as;
       results.insert(pair<int,  vector<string> >( make_pair(8, as )));
-      testOneFunction("::main",argvList, debug, 23, results,outputResults);
+      testOneFunction("::main",argvList, debug, 25, results,outputResults);
     }
 
     if (startNrInt==2 || testAll) {
@@ -749,7 +749,7 @@ int main( int argc, char * argv[] )
       results.clear();      outputResults.clear();
       vector<string> as;
       results.insert(pair<int,  vector<string> >( make_pair(8, as )));
-      testOneFunction("::main",argvList, debug, 21, results,outputResults);
+      testOneFunction("::main",argvList, debug, 23, results,outputResults);
     }
 
     if (startNrInt==3 || testAll) {
@@ -771,7 +771,7 @@ int main( int argc, char * argv[] )
       vector<string> out(arrout,arrout+1);
       outputResults.insert(pair<int,  vector<string> >( make_pair(8, out )));
 #endif
-      testOneFunction("::main", argvList, debug, 17, results,outputResults);
+      testOneFunction("::main", argvList, debug, 18, results,outputResults);
     }
 
     if (startNrInt==4 || testAll) {
@@ -808,7 +808,7 @@ int main( int argc, char * argv[] )
       vector<string> out14;
       outputResults.insert(pair<int,  vector<string> >( make_pair(14, in14 )));
 
-      testOneFunction("::main", argvList, debug, 19, results, outputResults);
+      testOneFunction("::main", argvList, debug, 20, results, outputResults);
     }
 
     if (startNrInt==6 || testAll) {
@@ -821,7 +821,7 @@ int main( int argc, char * argv[] )
       vector<string> out22;
       outputResults.insert(pair<int,  vector<string> >( make_pair(22, out22 )));
 
-      testOneFunction("::main", argvList, debug, 28, results,outputResults);
+      testOneFunction("::main", argvList, debug, 29, results,outputResults);
     }
 
 #if 1
@@ -846,7 +846,7 @@ int main( int argc, char * argv[] )
       string out12[] = {"i","p","x"};
       vector<string> out12v(out12,out12+3);
       outputResults.insert(pair<int,  vector<string> >( make_pair(20, out12v )));
-      testOneFunction("::main", argvList, debug, 34, results,outputResults);
+      testOneFunction("::main", argvList, debug, 36, results,outputResults);
     }
 
     if (startNrInt==9 || testAll) {
@@ -864,7 +864,7 @@ int main( int argc, char * argv[] )
       vector<string> out12v(out12,out12+1);
       outputResults.insert(pair<int,  vector<string> >( make_pair(12, out12v )));
 
-      testOneFunction("::main", argvList, debug, 32, results,outputResults);
+      testOneFunction("::main", argvList, debug, 33, results,outputResults);
     }
 
     if (startNrInt==10 || testAll) {
@@ -899,14 +899,14 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 15 -----------------------------------------
       argvList[1]=srcdir+"tests/test15.C";
       results.clear();  outputResults.clear();
-      testOneFunction("::main", argvList, debug, 26, results,outputResults);
+      testOneFunction("::main", argvList, debug, 27, results,outputResults);
     }
 
     if (startNrInt==18 || testAll) {
       // ------------------------------ TESTCASE 18 -----------------------------------------
       argvList[1]=srcdir+"tests/test18.C";
       results.clear();  outputResults.clear();
-      testOneFunction("::main", argvList, debug, 53, results,outputResults);
+      testOneFunction("::main", argvList, debug, 56, results,outputResults);
     }
 
     if (startNrInt==19 || testAll) {
@@ -927,21 +927,21 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 21 -----------------------------------------
       argvList[1]=srcdir+"tests/test21.C";
       results.clear();      outputResults.clear();
-      testOneFunction("::func",argvList, debug, 10, results,outputResults);
+      testOneFunction("::func",argvList, debug, 11, results,outputResults);
     }
 
     if (startNrInt==22 || testAll) {
       // ------------------------------ TESTCASE 22 -----------------------------------------
       argvList[1]=srcdir+"tests/test22.C";
       results.clear();      outputResults.clear();
-      testOneFunction("::func",argvList, debug, 17, results,outputResults);
+      testOneFunction("::func",argvList, debug, 18, results,outputResults);
     }
 
     if (startNrInt==23 || testAll) {
       // ------------------------------ TESTCASE 23 -----------------------------------------
       argvList[1]=srcdir+"tests/test23.C";
       results.clear();      outputResults.clear();
-      testOneFunction("::func",argvList, debug, 35, results,outputResults);
+      testOneFunction("::func",argvList, debug, 37, results,outputResults);
     }
 #endif
 

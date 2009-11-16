@@ -6,7 +6,9 @@ EXTRA_DIST = index_array.txt \
 	     upcparam.h upcparam_s.h \
 	     extract-actual-error.sed extract-expected-error.sed
 
-#if ROSE_USE_RTED
+# Currently, we exclude 32bit and MacOS
+if !OS_VENDOR_REDHAT_32BIT
+if !OS_MACOSX
 
 # To keep compile commands tidy, please ONLY put required include flags here.
 INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I. -Winvalid-pch -pthreads
@@ -844,4 +846,8 @@ check-local: runtimeCheck  checkfast \
 else
 check-local: runtimeCheck checkfast
 
+endif
+
+
+endif
 endif

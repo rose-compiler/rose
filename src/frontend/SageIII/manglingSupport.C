@@ -653,3 +653,45 @@ mangleExpression (const SgExpression* expr)
     return mangled_name.str ();
   }
 
+bool
+declarationHasTranslationUnitScope (const SgDeclarationStatement* decl)
+   {
+     SgNode *declParent = decl->get_parent();
+     VariantT declParentV = declParent->variantT();
+
+     if (declParentV == V_SgGlobal || declParentV == V_SgNamespaceDefinitionStatement)
+        {
+       // If the declaration is static (in the C sense), it will have translation unit scope.
+          if (decl->get_declarationModifier().get_storageModifier().isStatic())
+               return true;
+
+       // Likewise if the declaration is an inline function.
+          if (const SgFunctionDeclaration *fnDecl = isSgFunctionDeclaration(decl))
+             {
+               if (fnDecl->get_functionModifier().isInline())
+                    return true;
+             }
+        }
+
+  // Likewise if the declaration is an anonymous namespace
+     if (const SgNamespaceDeclarationStatement *nsDecl = isSgNamespaceDeclarationStatement(decl))
+        {
+          if (nsDecl->get_isUnnamedNamespace())
+               return true;
+        }
+
+     return false;
+   }
+
+string
+mangleTranslationUnitQualifiers (const SgDeclarationStatement* decl)
+   {
+     if (declarationHasTranslationUnitScope(decl))
+        {
+          return "_file_id_" + StringUtility::numberToString(SageInterface::getEnclosingFileNode(const_cast<SgDeclarationStatement *>(decl))->get_file_info()->get_file_id()) + "_";
+        }
+     else
+        {
+          return "";
+        }
+   }

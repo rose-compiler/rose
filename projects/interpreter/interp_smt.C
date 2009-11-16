@@ -426,6 +426,28 @@ ValueP AssertFunctionValue::call(SgFunctionType *fnType, const vector<ValueP> &a
      return ValueP();
    }
 
+string __mkbvvarFnValue::functionName() const { return "__mkbvvar"; }
+
+ValueP __mkbvvarFnValue::call(SgFunctionType *fnType, const vector<ValueP> &args) const
+   {
+     ValueP valP = args[0], nameP = args[1];
+     ValueP valPrim = valP->dereference()->prim();
+     ValueP nameArr = nameP->dereference();
+
+     BVValue *bvValPrim = dynamic_cast<BVValue *>(valPrim.get());
+     if (bvValPrim == NULL)
+        {
+          throw InterpError("This type of value does not support holding a bvvar");
+        }
+
+     string name = valueToString(nameArr);
+     bvvarP newVar (new bvvar(bvValPrim->getBits(), name));
+     bvbaseP varName (new bvname(newVar));
+     ValueP varVal (new BVValue(varName, PTemp, owner));
+     bvValPrim->assign(varVal, bvValPrim->defaultType(), bvValPrim->defaultType());
+     return ValueP();
+   }
+
 ValueP SMTStackFrame::newValue(SgType *t, Position pos, Context ctx)
    {
      t = t->stripTypedefsAndModifiers();
@@ -470,14 +492,6 @@ ValueP SMTStackFrame::evalExpr(SgExpression *expr, bool arrPtrConv)
           case V_SgUnsignedShortVal: return evalIntSymPrimExpr<SgUnsignedShortVal>(expr);
           default: return StackFrame::evalExpr(expr, arrPtrConv);
         }
-   }
-
-ValueP SMTStackFrame::evalFunctionRefExp(SgFunctionSymbol *sym)
-   {
-     if (sym->get_name() == "assert")
-          return ValueP(new AssertFunctionValue(PTemp, shared_from_this()));
-
-     return StackFrame::evalFunctionRefExp(sym);
    }
 
 void SMTInterpretation::parseCommandLine(vector<string> &args)
@@ -825,6 +839,12 @@ ValueP SMTStackFrame::evalOrOp(SgExpression *lhs, SgExpression *rhs)
      return evalShortCircuitExp(lhs, NULL, rhs);
    }
 
+void SMTInterpretation::registerBuiltinFns(builtins_t &builtins) const
+   {
+     Interpretation::registerBuiltinFns(builtins);
+     builtins["::__mkbvvar"] = ValueP(new __mkbvvarFnValue(PGlob, StackFrameP()));
+     builtins["::assert"] = ValueP(new AssertFunctionValue(PGlob, StackFrameP()));
+   }
 
 /*
 int main(int argc, char **argv)

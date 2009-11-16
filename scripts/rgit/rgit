@@ -1,0 +1,784 @@
+#!/usr/bin/perl
+use Digest::SHA1 qw(sha1_hex);
+use strict;
+my $version = "1.0.0"; # 2009-11-06
+
+# --debug turns on $do_debug, which causes some debugging output to be emitted.
+my $do_debug = 0;
+
+# --dry-run turns on $do_dryrun, which generally does everything except push changes to the central repository.
+my $do_dryrun = 0;
+
+###############################################################################################################################
+package Lock;
+
+our @lock_list;
+
+sub new {
+  my($cls,$name,$comment) = @_;
+  my($lock) = bless {name=>$name, locked=>0, comment=>""}, $cls;
+  $lock->comment($comment) if $comment ne "";
+  push @lock_list, $lock;
+  return $lock;
+}
+
+sub DESTROY {
+  my($self) = @_;
+  $self->release() if $self->{locked};
+}
+
+sub release_all {
+  $_->release() for grep {$_->{locked}} @lock_list;
+}
+
+# Returns the name of the lock file.
+sub lockfile {
+  my($self) = @_;
+  return (-d "/var/tmp" ? "/var/tmp" : "/tmp") . "/rgit-$self->{name}.lock";
+}
+
+# Obtain lock. Returns $self on success; dies on failure.
+sub obtain {
+  my($self) = @_;
+  my($lckfile) = $self->lockfile();
+  my($tmpfile) = "$lckfile.$$";
+
+  for (my $ntries=0; $ntries<100; $ntries++) {
+    # If the main lockfile exists then someone (possibly us) owns the lock.
+    if (open LOCK, "<", $lckfile) {
+      my $pid = <LOCK>; chomp $pid;
+      close LOCK;
+      die "$lckfile: cannot obtain recursive lock (PID=$pid)\n" if $pid == $$;
+      die "$lckfile: possible stale lock from PID $pid\n" unless 1==kill 0, $pid;
+      die "$lckfile: lock held by PID $pid\n";
+    }
+
+    # Create the temporary lock file.  If it exists then it must be stale because we already checked above.
+    die if -e $tmpfile;
+    open LOCK, ">", $tmpfile or die "$tmpfile: $!\n";
+    print LOCK "$$\n";
+    print LOCK $self->{comment} if $self->{comment} ne "";
+    close LOCK;
+
+    # Try to obtain the lock. If "ln" fails then someone else grabbed the lock since we checked above.
+    if (link $tmpfile, $lckfile) {
+      $self->{locked} = 1;
+      return $self;
+    }
+    unlink $tmpfile;
+  }
+  die "$lckfile: cannot obtain lock\n";
+}
+
+# Release the lock (after checking that we really have it!)
+sub release {
+  my($self) = @_;
+  my($lckfile) = $self->lockfile();
+  my($tmpfile) = "$lckfile.$$";
+
+  die "$lckfile: lock is not self-owned\n" unless $self->{locked};
+  open LOCK, "<", $lckfile or die "$lckfile: lock does not exist\n";
+  my $pid = <LOCK>; chomp $pid;
+  close LOCK;
+  die "$lckfile: lock is not self-owned\n" unless $pid == $$;
+
+  unlink $lckfile or die "$lckfile: $!";
+  unlink $tmpfile or die "$tmpfile: $!";
+  $self->{locked} = 0;
+  return 1;
+}
+
+# Add a comment to a lock. If we hold the lock then the comment is added to the end of the file. Returns $self.
+sub comment {
+  my($self,@comments) = @_;
+  my($lckfile) = $self->lockfile();
+  my($tmpfile) = "$lckfile.$$";
+  my($comment) = join "", map {/\n$/s?$_:"$_\n"} @comments;
+
+  if ($self->{locked}) {
+    open LOCK, ">>", $tmpfile or die "$tmpfile: $!";
+    print LOCK $comment;
+    close LOCK;
+  }
+
+  $self->{comment} .= $comment;
+  return $self;
+}
+
+
+###############################################################################################################################
+package Git;
+
+sub new {
+  my($cls,$repo) = @_;
+  return bless {repo=>$repo}, $cls;
+}
+
+sub repo {
+  my($self) = @_;
+  return $self->{repo};
+}
+
+# Returns the name of the current branch
+sub curbranch {
+  my($self) = @_;
+  my @cur = grep {/^\*/} $self->command("branch");
+  die "no current branch" unless 1==@cur;
+  return ($cur[0] =~ /^\*\s+(.*?)\s*$/)[0];
+}
+
+# Returns the list of branches
+sub branches {
+  my($self) = @_;
+  my @retval = map {(/^\*?\s+(\S*)$/)[0]} $self->command("branch", "-a");
+  return @retval;
+}
+
+# Turns something into a SHA1 by calling git-rev-parse
+sub sha1 {
+  my($self,@args) = @_;
+  return ($self->command("rev-parse",@args))[0];
+}
+
+# Returns the list of all tags
+sub tags {
+  my($self) = @_;
+  return $self->command("tag", "-l");
+}
+
+# Returns tags associated with a particular commit
+sub tags_of {
+  my($self,$commit) = @_;
+  $commit = $self->sha1($commit);
+  my @retval;
+  for my $tag ($self->command("tag","--contains=$commit")) {
+    local($_) = $self->command("show $tag |egrep ^commit |head -n1");
+    push @retval, $tag if /^commit\s+$commit/;
+  }
+  return @retval;
+}
+
+# Create a unique tag by appending a integer counter.
+sub unique_tag {
+  my($self,$base) = @_;
+  ($base) = $base =~ /(.*)(-\d+)?$/; #remove existing serial number if any
+  my $max = 0;
+  for my $tag ($self->tags) {
+    if ($tag =~ /^$base-(\d+)$/) {
+      $max = $1 if $1 > $max;
+    }
+  }
+  return sprintf "%s-%05d", $base, $max+1;
+}
+
+# Runs a Git command and returns the lines of stdout it produces, sans linefeeds.
+sub command {
+  local($_);
+  my($self) = shift;
+  my($opts) = shift if 'HASH' eq ref $_[0];
+  my($command) = shift;
+  my(@args) = @_;
+  $opts ||= {};
+
+  my $repo = $self->repo();
+  my $cmd = "cd $repo && git " . join " ", $command, @args;
+  print STDERR ":: $cmd\n" if $do_debug;
+  my @retval;
+
+  if ($opts->{stdout}) {
+    system $cmd and die "failed: $cmd";
+  } else {
+    open GIT, "-|", $cmd or die "failed: $cmd";
+    while (<GIT>) {
+      chomp;
+      push @retval, $_;
+    }
+    close GIT or die "failed: $cmd\n";
+  }
+  return @retval;
+}
+
+# Create a new namespace by creating a shared "*-master" branch, but does not check out that branch.
+sub make_namespace {
+  my($self,$ns) = @_;
+  my @branches = $self->branches();
+  $self->command("push origin origin/master:refs/heads/$ns-master") unless grep {$_ eq "remotes/origin/$ns-master"} @branches;
+  $self->command("branch $ns-master origin/$ns-master") unless grep {$_ eq "$ns-master"} @branches;
+}
+
+# Clones $self into directory $private_dir (defaults to basename of $self repository) and checks out $ns-master (creating it if
+# necessary).  If $private_dir already exists then we skip the clone and fetch instead.  If the name space ($ns) is undefined
+# then we check out "master", which must exist.  Returns a new Git object pointing to the $private repository.
+sub clone {
+  my($self,$private_dir,$ns) = @_;
+
+  # Choose a $private_dir if necessary
+  if ($private_dir eq "") {
+    ($private_dir) = $self->repo() =~ /.*\/(.*)/;
+    if ($private_dir eq "") {
+      $private_dir = `mktemp`;
+      chomp $private_dir;
+      unlink $private_dir;
+    }
+  }
+
+  # If the private directory already exists then use it, otherwise clone $self
+  unless (-d $private_dir) {
+    system "git", "clone", $self->repo, $private_dir and die "git clone failed";
+  }
+  my($private) = Git->new($private_dir);
+  $private->command("fetch");
+
+  # Create the name-space (if necessary) and check it out (or "master")
+  if ($ns ne "") {
+    $private->make_namespace($ns);
+    $private->command("checkout $ns-master");
+  } else {
+    $private->command("checkout master");
+  }
+
+  return $private;
+}
+
+# Check out (creating if necessary) a branch and merge from remote
+sub checkout {
+  my($self,$branch) = @_;
+
+  $self->command("branch $branch origin/$branch") unless grep {$_ eq $branch} $self->branches;
+  $self->command("checkout $branch");
+  $self->command("merge origin/$branch");
+}
+
+# Create a branch (resetting it if it exists) to point to the specified committish.  If no committish is specified then use
+# the remote branch with the corresponding name.
+sub checkout_hard {
+  my($self,$branch,$committish) = @_;
+  $committish ||= "origin/$branch";
+
+  $self->command("branch $branch $committish") unless grep {$_ eq $branch} $self->branches;
+  $self->command("checkout -f $branch");
+  system "find @{[$self->repo]} -type d |xargs chmod u+w"; # make sure we can delete directory contents
+  $self->command("reset --hard $committish"); # in case we didn't just create it
+  $self->command("clean -f -d -q -x");
+}
+
+# Returns the subversion revision number for a particular commit object.
+sub svnrev {
+  my($self,$sha1) = @_;
+  for my $line ($self->command("log -1 $sha1")) {
+    return $1 if $line =~ /^\s*git-svn-id:.*?@(\d+)\s/;
+  }
+  die "$sha1 is not a subversion commit"
+}
+
+# Removes binary EDG tarballs by rewriting history
+sub remove_edg_tarballs {
+  my($self,$commitspec) = @_;
+  print "Removing binary EDG tarballs from $commitspec...\n";
+  my($cmd) = "git rm --cached --ignore-unmatch --quiet src/frontend/CxxFrontend/roseBinaryEDG-*.tar.gz";
+  $self->command({stdout=>1}, "filter-branch --force --index-filter '$cmd' $commitspec");
+}
+
+# Applies change sets from $other repository or branch to $self repository's current branch.  The $other may in fact
+# be the same repository as $self.
+sub apply_patches {
+  my($self,$other,$commitspec) = @_;
+  my $patchdir = `mktemp -d`; chomp $patchdir;
+  my(@patches) = $other->command("format-patch -o $patchdir --binary $commitspec");
+  return unless @patches;
+  for (my $i=0; $i<@patches; $i++) {
+    my($patchfile) = $patches[$i];
+    my($desc) = $patchfile =~ /\d+-([^\/]*)$/; $desc =~ s/-/ /g; $desc =~ s/\.patch$//;
+    my($skip) = -z $patchfile;
+    printf "%-8s %4d/%1d: %1s\n", $skip?"Skipping":"Applying", $i+1, 0+@patches, $desc;
+    $self->command("am $patchfile") unless $skip;
+    unlink $patchfile;
+  }
+  system "rm -rf $patchdir";
+}
+
+###############################################################################################################################
+package main;
+
+# Parses command-line
+sub parse {
+  my($args,%specs) = @_;
+  my(@retval,$switch);
+  for my $arg (@$args) {
+    my($key,$val);
+    if ($arg =~ /^(--(.*?))=(.*)/) {
+      ($switch,$key,$val) = ($1,"$2=",$3);
+    } elsif ($arg =~ /^(--no-(.*))$/) {
+      ($switch,$key,$val) = ($1,$2,0);
+    } elsif ($arg =~ /^(--(.*))$/) {
+      ($switch,$key,$val) = ($1,$2,1);
+    } else {
+      push @retval, $arg;
+      next;
+    }
+    if (!exists $specs{$key}) {
+      die "unknown switch: $switch\n";
+    } elsif (ref $specs{$key}) {
+      ${$specs{$key}} = $val;
+    } else {
+      die;
+    }
+  }
+  return @retval;
+}
+
+# Clones the central repo for development work
+# Usage: clone [--namespace=NS] CENTRAL [LOCAL]
+# Where: CENTRAL:  the (remote) name of the central, shared repository
+#        LOCAL:    the local name of the new repository
+#
+# If you need to supply a password then it's likely that you missed the second password prompt and we'll time out. If that
+# happens, change directories to your new workspace and run "rgit namespace NS" where "NS" is your name space (e.g., "aaa").
+sub do_clone {
+  my($ns);
+  my @args = parse(\@_, "namespace="=>\$ns);
+
+  die "no namespace given" if $ns eq ""; # FIXME: To be implemented later
+  die "usage" if @args<1 || @args>2;
+  if ($do_dryrun) {
+    print "$0: bailing for --dry-run\n";
+    exit 0;
+  }
+  my $central = Git->new($args[0]);
+  $central->clone($args[1],$ns);
+}
+
+# Creates and checks out a new namespace
+# This should be run inside your work space Git repository
+sub do_namespace {
+  my @args = parse(\@_);
+  die "usage" unless @args == 1;
+  my($ns) = @args;
+
+  my($git) = Git->new(".");
+  $git->make_namespace($ns) unless $do_dryrun;
+  $git->command("checkout $ns-master");
+}
+
+# Creates the (bare) central repo from a git-svn repo
+# Arguments:
+#        GITSVN:  the local name of the Git repo that was created with "git svn".
+#        CENTRAL: the local name of the new central repository.
+sub do_svn_clone {
+  my @args = parse(\@_);
+  die "usage" unless @args == 2;
+  my($gitsvn_dir,$central_dir) = @args;
+  die unless -d $gitsvn_dir; # must be local
+  die if -d $central_dir; # must not exist yet
+  if ($do_dryrun) {
+    print "$0: bailing for --dry-run\n";
+    exit 0;
+  }
+
+  # Set up the git-svn repository so that the "temp" branch is what will become "master" in the central repo
+  my $gitsvn = Git->new($gitsvn_dir);
+  my @trunk_revs = $gitsvn->command("rev-list trunk");
+  printf "Subversion trunk contains %d revision%s.\n", scalar(@trunk_revs), 1==@trunk_revs?"":"s";
+  die "subversion trunk must not be empty" unless @trunk_revs;
+  my $oldbranch = $gitsvn->curbranch;
+  $gitsvn->checkout_hard("temp-$$", "trunk");  # replace "trunk" with something else if desired, like $trunk_revs[-1]
+  system "git clone --bare $gitsvn_dir $central_dir" and die "git-clone failed";
+  $gitsvn->command("checkout $oldbranch");
+  $gitsvn->command("branch -D temp-$$");
+
+  # Make sure the central current branch is named "master" and remove all other branches and tags.
+  print "Deleting stale central branches and tags...\n";
+  my $central = Git->new($central_dir);
+  my $curbranch = $central->curbranch;
+  $central->command("branch -D $_") for grep {$_ ne $curbranch} $central->branches;
+  $central->command("tag -d $_") for $central->tags;
+  $central->command("branch -M $curbranch master") unless $curbranch eq "master";
+  $central->remove_edg_tarballs("HEAD");
+
+  # Set up initial branches and tags in the central repository
+  print "Setting up central branches...\n";
+  $central->command("branch svn-master master");
+  $central->command("branch svn-trunk master");
+
+  print "Central repository is ready: $central_dir\n";
+}
+
+# Pulls new commits from the git-svn repository into the central repository, using a local working space. This command must run
+# on a machine containing the git-svn repository (i.e., it must be local).
+#
+# Arguments are:
+#    --no-fetch: Skip the usual "git svn fetch" that would be run in the git-svn repository
+#    CENTRAL:    The URI of the central repository
+#    WORKSPACE:  The work space directory where CENTRAL is cloned
+#    GITSVN:     The local name of the git-svn repository
+#
+# Algorithm:
+#    The svn-trunk branch in the central repo tracks the svn trunk, but we don't use remote tracking branches because
+#    subversion is not able to store any useful information about merge operations.  We want to be able to merge branches
+#    and use the full power of Git in the central repository and yet be able to communicate with Subversion.  Therefore,
+#    we also store Subversion's revision numbers, rN, on the svn-trunk branch of the central repository.
+#
+#    A pull from subversion effectively updates the svn-trunk branch of the central repository so that it includes the new
+#    subversion revisions. We have some things to watch out for: a commit in the git-svn repository will not have the same
+#    SHA1 as the central repository because git-svn plays games with commit messages.  Also, we don't want all the EDG tarballs
+#    to show up in the central git repository -- they are not source code, they can be regenerated, and their unique names
+#    make it unecessary to manage revisions. In fact, including them in a Git repository substantially increases the size
+#    of the repository. A better place for them would be an plain directory outside any SCM system (perhaps a Web or FTP server).
+#
+#    A pull from subversion works like this:
+#     1. Clone the CENTRAL repository to a local WORKSPACE repository
+#     2. Find the Subversion revision number, rN, for the svn-trunk branch (see below).
+#     3. Find the commit, R, associated with rN in the GITSVN repo.
+#     4. Obtain patch sets for R..trunk in GITSVN
+#     5. Discard patch sets that match certain criteria (e.g., generated files)
+#     6. Apply remaining patch sets to the svn-trunk branch in the WORKSPACE
+#     7. Push svn-trunk from WORKSPACE to CENTRAL
+#     8. Merge svn-trunk into svn-master in WORKSPACE (could conflict)
+#     9. Push svn-master from WORKSPACE to CENTRAL
+#    10. Merge master into svn-master in WORKSPACE (could conflict)
+#    11. Push svm-master from WORKSPACE to CENTRAL again
+#
+sub do_svn_pull {
+  my($do_fetch)=1;
+  my(@args) = parse(\@_, "fetch"=>\$do_fetch);
+  die "usage" unless 3==@args;
+  my($central_uri,$local_dir,$svn_dir) = @args;
+
+  # Only one of these should run per git-svn repo
+  my($lock) = Lock->new(sha1_hex($svn_dir), "svn-pull from $svn_dir")->obtain();
+
+  # Make sure git-svn repository is up to date with respect to the Subversion repository.
+  my($svn) = Git->new($svn_dir);
+  if ($do_fetch) {
+    print "Fetching commits from Subversion...\n";
+    $svn->command({stdout=>1}, "svn fetch");
+  }
+
+  # Clone (or update) a local copy of the central repository; and access the local git-svn repo
+  my($git) = Git->new($central_uri)->clone($local_dir,"svn");
+  $git->command("config core.whitespace -trailing-space,-space-before-tab,-indent-with-non-tab,-cr-at-eol");
+
+  # Get a list of svn revisions we need to have in the git repo
+  $git->checkout_hard("svn-trunk");
+  my($have_rev) = $git->svnrev("svn-trunk"); # most recent rev we have
+  my($since) = $svn->command("svn find-rev r$have_rev"); # SHA1 in the svn repo
+  my($ncommits) = scalar($svn->command("rev-list --reverse $since..trunk"));
+  printf "Subversion is %d commit%s ahead of the central repository.\n", $ncommits, 1==$ncommits?"":"s";
+  return unless $ncommits;
+
+  # Temporarily remove EDG tarballs and apply the result to the local repo. We actually remove tarballs one commit previous
+  # to what we need so that the first diff won't contain deletions for tarballs which don't exist in the central repo.
+  my($prev_branch) = $svn->curbranch;
+  $svn->checkout_hard("temp-$$", "trunk");
+  $svn->remove_edg_tarballs("HEAD ^$since^");
+  $git->apply_patches($svn,"HEAD~$ncommits..HEAD");
+  $svn->command("checkout $prev_branch");
+  $svn->command("branch -D temp-$$");
+
+  # Push patched svn-trunk back to CENTRAL
+  unless ($do_dryrun) {
+    print "Pushing patched svn-trunk to central repo...\n";
+    $git->command("push origin svn-trunk");
+  }
+
+  # Merge svn-trunk into svn-master (this is optional and might result in conflicts)
+  print "Merging svn-trunk into svn-master...\n";
+  $git->checkout_hard("svn-master");
+  $git->command("merge svn-trunk");
+  $git->command("push origin svn-master") unless $do_dryrun;
+
+  # Merge "master" into "svn-master" (this is optional and might result in conflicts)
+  print "Merging master into svn-master...\n";
+  $git->command("merge master");
+  $git->command("push origin svn-master") unless $do_dryrun;
+
+  $lock->release();
+}
+
+# Pushes commits from the central repository to the git-svn repository and then into the Subversion repository.
+#
+# Arguments are:
+#    CENTRAL:    The URI of the central repository
+#    WORKSPACE:  The work space directory where CENTRAL is cloned
+#    GITSVN:     The local name of the git-svn repository
+#
+# Preconditions:
+#    1. The "trunk" branch in the git-svn repository must correspond to the trunk of the Subversion repository.
+#    2. The "svn-trunk" of the central repository should correspond to the "trunk" in the git-svn repository.
+#
+# The algorithm is:
+#    2. Decide what change sets need to be ultimately be pushed to Subversion: we will push all commits that appear
+#       on the "svn-master" branch but do not appear on the "svn-trunk" branch.  We'll call these the "candidates".
+#    3. Verify that the candidates do not contain binary EDG tarballs (see pull_from_svn).
+#    4. Since Subversion is not able to represent merges in any useful way, generate patches for each of the candidates.
+#    5. Apply candidate patches to a temporary branch based on the "svn-trunk" branch. This step could result in conflicts
+#       which would need to be handled manually.  If conflicts are handled manually, then we must ensure that the preconditions
+#       are still valid.
+#    6. Apply the (now conflict-free) patches to a temporary branch in the git-svn repository. This temporary branch is based
+#       on the "trunk" branch and will be the data for the "git svn dcommit" below.
+#    7. Run "git svn dcommit" in the git-svn repository. This will make commits to Subversion, and rebase our temporary branch
+#       by modifying the commit messages to include the "git-svn-id:" lines, which contain the Subversion revision numbers.
+#    8. Merge the "svn-master" branch into the "svn-trunk" branch using "ours" strategy.  The commit message should be the
+#       same "git-svn-id:" line as from the previously most recent commit on "svn-trunk".
+#    9. Push svn-trunk back to the central repository.
+#
+# Issues:
+#    1. It's possible that someone else could commit to the Subversion repository in the middle of what we're doing. If that
+#       happens, "git svn dcommit" fetches the changes and tries to continue. However, we then clobber those changes in the
+#       central repo when we do the ours-strategy merge.
+#
+sub do_svn_push {
+  die "usage" unless @_ == 3;
+  my($central_uri,$local_dir,$svn_dir) = parse(\@_);
+
+  # Only one of these should run per git-svn repo
+  my($lock) = Lock->new(sha1_hex($svn_dir), "svn-push to $svn_dir")->obtain();
+
+  # Clone (or update) a local copy of the central repository; and access the local git-svn repo
+  my($git) = Git->new($central_uri)->clone($local_dir,"svn");
+  my($svn) = Git->new($svn_dir);
+  $git->command("config core.whitespace -trailing-space,-space-before-tab,-indent-with-non-tab,-cr-at-eol");
+  $git->checkout_hard("svn-master");
+  $git->checkout_hard("svn-trunk");
+
+  # Get list of candidates for pushing to subversion
+  my $ncommits = scalar($git->command("rev-list svn-master ^svn-trunk"));
+  printf "The central repository is %d commit%s ahead of subversion.\n", $ncommits, 1==$ncommits?"":"s";
+  return unless $ncommits;
+
+  # Rebase candidates onto temp branch above svn-trunk. This step could fail with conflicts!  We could rebase directly
+  # onto the "trunk" branch of the git-svn repository, but we do it in the workspace instead because we'd rather handle
+  # conflicts in a pure Git repository than a git-svn repository.
+  # FIXME: We need a way to recover from conflict failure.
+  $git->checkout_hard("temp-$$", "svn-trunk");
+  $git->apply_patches($git, "svn-master ^svn-trunk");
+
+  # Copy patches into git-svn repository. These should be conflict-free now since the "svn-trunk" branch in the workspace
+  # corresponds to the "trunk" branch in the git-svn repository.
+  # FIXME: We sould make sure that $git.svn-trunk is up-to-date with $svn.trunk, which is up-to-date with subversion.
+  $svn->checkout_hard("temp-$$", "trunk");
+  $svn->apply_patches($git, "temp-$$ ^svn-trunk");
+
+  # dcommit into Subversion
+  my($old_trunk) = $svn->sha1("trunk");
+  print "The following commits in $svn_dir would be sent to subversion:\n";
+  print "    $_\n" for $svn->command("log --pretty=oneline trunk..temp-$$");
+  if ($do_dryrun) {
+    print "$0: bailing due to --dry-run\n";
+    exit 0;
+  }
+  print "Abort now if something looks wrong, otherwise press ENTER: ";
+  my $ans = <STDIN>;
+  $svn->command({stdout=>1}, "svn dcommit"); # moves trunk
+		
+  # pull from git-svn back onto the "svn-trunk" branch. We're essentially replacing the commits "temp-$$ ^svn-trunk" with
+  # the new commits from git-svn since those new ones have the "git-svn-id:" line in their commit messages.
+  $git->checkout_hard("svn-trunk");
+  $git->apply_patches($svn, "trunk ^$old_trunk");
+
+  # Merge svn-master into svn-trunk, keeping the svn-trunk version
+  my($gitsvn_mesg) = grep {/^\s+git-svn-id:/} $git->command("log -1 svn-trunk");
+  $git->command("merge --log --strategy=ours -m 'Automatic merge from rgit-svn-push' -m '$gitsvn_mesg' origin/svn-master");
+
+  # Push svn-trunk back to central repo
+  $git->command("push origin svn-trunk");
+}
+
+# Sort Git branches for testing, returning a list where the most important branch is first.  This is the sort order:
+#    0. Branches that contain a pass/fail tag are removed from consideration if $tagbase is defined.
+#    1. Branches that contain "master" come before branches that don't contain master.
+sub sort_branches_for_testing {
+  my($git,$tagbase,@branches) = @_;
+
+  # Delete branches that have already been tested
+  my(@list);
+  for my $branch (@branches) {
+    next if $tagbase && grep {/^$tagbase-(pass|fail)-\d+$/} $git->tags_of($branch);
+    push @list, $branch;
+  }
+
+  my $order = sub {
+    my($a,$b) = @_;
+    my(@c1) = $git->command("rev-list master ^$a"); # commits on master but not branch A
+    my(@c2) = $git->command("rev-list master ^$b"); # commits on master but not branch B
+    return scalar(@c1) <=> scalar(@c2);  # the fewer the better
+  };
+
+  return sort {&{$order}($a,$b)} @list;
+}
+
+# Runs a test
+# Arguments:
+#   --script=SCRIPT   The name of the test script run in the LOCAL dir
+#   --tag=NAME        Name of the test; testing tagname (TAG-{run,pass,fail}-N)
+#   --branch=BRANCH   Attempt to test a single branch rather one of the "*-master" branches
+#   --retest          Ignore existing pass/fail tags and retest. This usually works best in conjunction with --branch
+#   --local           Do not push result tags back to central repository
+#  CENTRAL            URI of the central repository
+#  LOCAL              working directory where CENTRAL is cloned. Test must have exclusive access while running.
+#
+sub do_test {
+  my($script,$tagbase,$test_branch,$retest,$local);
+  my @args = parse(\@_, "script="=>\$script, "tag="=>\$tagbase, "branch="=>\$test_branch, retest=>\$retest, local=>\$local);
+  die "no script" unless defined $script;
+  die "no tag" unless defined $tagbase;
+  die "usage" unless 1==@args || 2==@args;
+  my($central_dir,$local_dir) = @args;
+  my($lock) = Lock->new($tagbase)->obtain();
+  $lock->comment("tag: $tagbase", "script: $script");
+  my($git) = Git->new($central_dir)->clone($local_dir);
+
+  # Choose a branch to test */
+  my @remotes = defined($test_branch) ? "origin/$test_branch" : grep {/origin\/\S+-master$/} $git->branches;
+  @remotes = sort_branches_for_testing($git,($retest?undef:$tagbase),@remotes);
+  if (!@remotes) {
+    print "Nothing left to test.\n";
+    return;
+  }
+
+  # Test the highest-priority branch
+  my $remote = $remotes[0];
+  print "==============================================================================\n";
+  print "      Running test \"$tagbase\" on branch $remote\n";
+  print "==============================================================================\n";
+  $lock->comment("branch: $remote");
+  $lock->comment("commit: " . $git->sha1($remote));
+
+  # Prepare environment
+  my $orig = $git->curbranch;
+  $git->checkout_hard("temp-$$", $remote);
+
+  # Run the test
+  my $tmpfile = `mktemp`; chomp $tmpfile;
+  print "Output is in $tmpfile\n";
+  $lock->comment("output: $tmpfile");
+  my $testcmd = "cd " . $git->repo() . " && ($script) 6>&1 >$tmpfile 2>&1";
+  my $status = system("$testcmd") ? "fail" : "pass";
+
+  # Create the pass/fail tag
+  my $status_tag = $git->unique_tag("$tagbase-$status");
+  $git->command("tag -F $tmpfile $status_tag");
+  $git->command("push origin tag $status_tag") unless $local || $do_dryrun;
+  unlink $tmpfile;
+
+  # Restore environment
+  $git->command("checkout $orig");
+  $git->command("branch -D temp-$$");
+  $lock->release();
+  print "Test ${status}ed. Output is in tag $status_tag.\n";
+}
+
+# Merges one of the *-master branches into the "master" branch.
+# Arguments:
+#    --preconditions=SCRIPT: name of the script that decides whether preconditions have been met. It will be invoked with
+#             the current working directory set to WORKSPC and arguments will be the of the form NAME=BOOL where NAME is
+#             the name of a test that has passed or failed, and BOOL is "1" if the test passed and "0" if the test failed.
+#    CENTRAL: The URI of the (remote) central repository
+#    WORKSPC: The name of a directory containing a clone of CENTRAL (created if necessary)
+#
+# A "*-master" branch is a candidate for merging into "master" if it satisfies both of these conditions:
+#    A. It must have passed all prerequisite tests
+#    B. It must contain everything in "master"
+#
+# Condition B ensures that the merge would be a fast-forward and therefore if the candidate passes tests then
+# "master" would also pass those same tests after the merge.
+#
+# Even though the merge is a fast-forward, we create a two-parent merge-commit ("git merge --no-ff"). Doing this means that
+# every first-parent ancestor of "master" will have passed prerequisite tests. This allows us to use git-bisect to find bugs.
+#
+# Sample precondition script using perl, making sure that at least five tests have passed and none have failed.
+#    #!/usr/bin/perl
+#    my $npass = grep {(split /=/)[1]} @ARGV;
+#    exit($npass<5 || $npass!=@ARGV ? 1 : 0);
+#
+sub do_merge {
+  my($preconditions);
+  my(@args) = parse(\@_, "preconditions="=>\$preconditions);
+  die "no precondition specified" unless $preconditions;
+  die "usage" unless 2==@args;
+  my($central_uri,$local_dir) = @args;
+
+  # Only one of these should run per central repo
+  my($lock) = Lock->new("merge","merging in repo $central_uri")->obtain();
+
+  my($git) = Git->new($central_uri)->clone($local_dir);
+  my @remotes = grep {/origin\/\S+-master$/} $git->branches;
+  for my $remote (@remotes) {
+
+    # "*-master" must contain something to merge.
+    next unless $git->command("rev-list $remote ^origin/master");
+
+    # "*-master" must contain all of "master"
+    my(@need) = $git->command("rev-list origin/master ^$remote");
+    if (@need) {
+      print "$remote: not merged because it does not contain master\n";
+      next;
+    }
+
+    # "*-master" must satisfy preconditions
+    my(@args);
+    my(@tags) = $git->tags_of($remote);
+    for my $tag (@tags) {
+      if ($tag =~ /(.*)-(pass|fail)-\d+$/) {
+	push @args, "$1=" . ($2 eq "pass" ? 1 : 0);
+      }
+    }
+    if (system $preconditions, @args) {
+      print "$remote: not merged because it fails precondition tests\n";
+      next;
+    }
+
+    print "$remote: merging into master...\n";
+    $git->checkout_hard("master");
+    $git->command("merge --no-ff --log $remote");
+  }
+
+  $git->command("push origin master") unless $do_dryrun;
+  $lock->release();
+}
+
+###############################################################################################################################
+
+while (@ARGV) {
+  local($_) = shift @ARGV;
+  if ($_ eq "--debug") {
+    $do_debug++;
+  } elsif ($_ eq "--dry-run") {
+    $do_dryrun = 1;
+  } elsif ($_ eq "--version") {
+    print "$0: version $version\n";
+  } elsif (/^-/) {
+    print STDERR "$0: unknown switch: $_\n";
+    exit 1
+  } elsif ($_ eq "clone") {
+    do_clone(@ARGV);
+    exit 0;
+  } elsif ($_ eq "svn-clone") {
+    do_svn_clone(@ARGV);
+    exit 0;
+  } elsif ($_ eq "svn-pull") {
+    do_svn_pull(@ARGV);
+    exit 0;
+  } elsif ($_ eq "svn-push") {
+    do_svn_push(@ARGV);
+    exit 0;
+  } elsif ($_ eq "svn-sync") {
+    do_svn_pull(@ARGV);
+    do_svn_push(@ARGV);
+    exit 0;
+  } elsif ($_ eq "test") {
+    do_test(@ARGV);
+    exit 0;
+  } elsif ($_ eq "merge") {
+    do_merge(@ARGV);
+    exit 0;
+  } elsif ($_ eq "namespace") {
+    do_namespace(@ARGV);
+    exit 0;
+  } elsif ($_ eq "prune") {
+    print STDERR "$0: prune: not implemented yet\n";
+    exit 1;
+  } else {
+    die "unknown command: $_"
+  }
+}

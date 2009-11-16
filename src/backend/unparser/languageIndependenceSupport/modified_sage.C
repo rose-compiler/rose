@@ -520,6 +520,8 @@ int GetOperatorVariant(SgExpression* expr) {
   case V_SgArrowExp:
    {
        SgExpression *mfunc = isSgBinaryOp(func)->get_rhs_operand(); 
+       if (mfunc->variantT() == V_SgPseudoDestructorRefExp)
+            return V_SgFunctionCallExp;
        SgMemberFunctionRefExp* mfunc_ref =
              isSgMemberFunctionRefExp(mfunc);
        assert (mfunc_ref != 0);
@@ -938,6 +940,7 @@ bool Unparse_MOD_SAGE::PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
           case CLASSNAME_REF:
           case FUNCTION_REF:
           case MEMBER_FUNCTION_REF:
+          case PSEUDO_DESTRUCTOR_REF:
           case BOOL_VAL:
           case SHORT_VAL:
           case CHAR_VAL:

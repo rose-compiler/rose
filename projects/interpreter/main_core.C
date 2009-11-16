@@ -17,13 +17,11 @@ int main(int argc, char **argv)
           interp.parseCommandLine(argvList);
 
           SgProject *prj = frontend(argvList);
-          SgSourceFile *file = isSgSourceFile((*prj)[0]);
-          ROSE_ASSERT(file != NULL);
-          SgGlobal *global = file->get_globalScope();
-          SgFunctionSymbol *testSym = global->lookup_function_symbol("test");
+          SgFunctionSymbol *testSym = prjFindGlobalFunction(prj, "test");
 
           StackFrameP head(new StackFrame(&interp, testSym));
           head->initializeGlobals(prj);
+          ROSE_ASSERT(testSym != NULL);
           ValueP rv = head->interpFunction(vector<ValueP>(1, ValueP(new IntValue(1, PTemp, head))));
           cout << "Returned " << (rv.get() ? rv->show() : "<<nothing>>") << endl;
         }
