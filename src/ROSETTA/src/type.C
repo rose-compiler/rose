@@ -345,7 +345,7 @@ Grammar::setUpTypes ()
             "SgType* type = NULL");
      CUSTOM_CREATE_TYPE_MACRO(PointerMemberType,
             "SOURCE_CREATE_TYPE_FOR_POINTER_MEMBER_TYPE",
-            "SgType* type = NULL, SgClassDefinition* def = NULL");
+            "SgType* type = NULL, SgType* class_type = NULL");
      CUSTOM_CREATE_TYPE_MACRO(ReferenceType,
             "SOURCE_CREATE_TYPE_FOR_REFERENCE_TYPE",
             "SgType* type = NULL");
@@ -407,7 +407,8 @@ Grammar::setUpTypes ()
      ReferenceType.setDataPrototype     ("SgType*","base_type","= NULL",
 					 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     PointerMemberType.setDataPrototype ("SgClassDefinition*","class_of","= NULL",
+     PointerMemberType.setFunctionPrototype  ("HEADER_POINTER_MEMBER_TYPE", "../Grammar/Type.code" );
+     PointerMemberType.setDataPrototype ("SgType*","class_type","= NULL",
 					 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      NamedType.setFunctionPrototype ("HEADER_VIRTUAL_GET_NAME", "../Grammar/Type.code" );
@@ -546,7 +547,7 @@ Grammar::setUpTypes ()
   // FunctionType.setDataPrototype       ("SgTypePtrList", "arguments","");
 
      MemberFunctionType.setFunctionPrototype ("HEADER_MEMBER_FUNCTION_TYPE", "../Grammar/Type.code" );        
-     MemberFunctionType.setDataPrototype     ("SgClassDefinition*", "struct_name","= NULL",
+     MemberFunctionType.setDataPrototype     ("SgType*", "class_type","= NULL",
 					      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      MemberFunctionType.setDataPrototype     ("unsigned int", "mfunc_specifier","= 0",
 					      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
