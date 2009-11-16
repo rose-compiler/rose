@@ -118,7 +118,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      mergeTest_130.C \
      mergeTest_131.C \
      mergeTest_133.C \
-     mergeTest_134.C
+     mergeTest_134.C \
+     mergeTest_135.C
 
 # This fails for GNU g++ version 4.3
 #    mergeTest_07.C

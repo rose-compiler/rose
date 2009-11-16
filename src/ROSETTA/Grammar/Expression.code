@@ -999,6 +999,11 @@ HEADER_USER_DEFINED_BINARY_EXPRESSION_START
           SgType* get_type() const;
 HEADER_USER_DEFINED_BINARY_EXPRESSION_END
 
+HEADER_PSEUDO_DESTRUCTOR_REF_START
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+HEADER_PSEUDO_DESTRUCTOR_REF_END
 
 // #########################################################
 // #########################################################
@@ -3281,7 +3286,8 @@ $CLASSNAME::get_type() const
      SgType* returnType = NULL;
      if (classDefinition != NULL)
         {
-          returnType = SgPointerMemberType::createType(baseType,classDefinition);
+	  SgClassType* classType = classDefinition->get_declaration()->get_type();
+          returnType = SgPointerMemberType::createType(baseType,classType);
         }
        else
         {
@@ -4202,11 +4208,11 @@ $CLASSNAME::get_type() const
   // printf ("$CLASSNAME::get_type(): p_expression_type has been removed, getting the return type from the stored internal operand \n");
 
      ROSE_ASSERT(get_operand() != NULL);
-     SgType* returnType = get_operand()->get_type();
+     SgType* returnType = p_expression_type ? p_expression_type : get_operand()->get_type();
 
      ROSE_ASSERT(returnType != NULL);
 
-     if (get_operand()->variantT() != V_SgStringVal)
+     if (!p_expression_type && get_operand()->variantT() != V_SgStringVal)
         {
           SgType* retElemType = SageInterface::getElementType(returnType);
           if (retElemType != NULL)
@@ -5324,4 +5330,13 @@ SgUserDefinedBinaryOp::get_type() const
    }
 
 SOURCE_USER_DEFINED_BINARY_EXPRESSION_END
+
+SOURCE_PSEUDO_DESTRUCTOR_REF_START
+void
+SgPseudoDestructorRefExp::post_construction_initialization()
+   {
+     SgMemberFunctionType *memFnType = new SgMemberFunctionType(SgTypeVoid::createType(), false, p_object_type);
+     set_expression_type(memFnType);
+   }
+SOURCE_PSEUDO_DESTRUCTOR_REF_END
 

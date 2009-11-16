@@ -272,11 +272,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
 	    ROSE_ASSERT (ft);
 	    SgMemberFunctionType* mft = isSgMemberFunctionType(ft);
 	    ROSE_ASSERT (mft);
-	    SgClassDefinition* cd = mft->get_struct_name();
-	    ROSE_ASSERT (cd);
-	    SgClassDeclaration* decl = cd->get_declaration();
-	    ROSE_ASSERT (decl);
-	    SgClassType* ct = new SgClassType(decl);
+	    SgType* ct = mft->get_class_type();
 	    thisptrtype = new SgPointerType(ct);
 	  }
           SgConstVolatileModifier& thiscv = fundecl->get_declarationModifier().get_typeModifier().get_constVolatileModifier();

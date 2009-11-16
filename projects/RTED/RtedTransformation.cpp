@@ -121,8 +121,17 @@ void RtedTransformation::transform(SgProject* project, set<string> &rtedfiles) {
   vector<SgNode*> results = NodeQuery::querySubTree(project,V_SgClassDeclaration);
   // insert at top of all C files in reverse order
   // only if the class has a constructor and if it is declared in a header file
-  vector<SgNode*>::const_reverse_iterator classIt = results.rbegin();
-  for (;classIt!=results.rend();classIt++) {
+  // tps (11/06/2009) : it seems that the reverse iterator does not work on MAC OS, so I added another loop to get the reverse vector
+  vector<SgNode*>::const_iterator classItR = results.begin();
+  vector<SgNode*> resultsInv;
+  for (;classItR!=results.end();classItR++) {
+    resultsInv.insert(resultsInv.begin(),*classItR);
+  }
+  ROSE_ASSERT(resultsInv.size()==results.size());
+  //vector<SgNode*>::const_reverse_iterator classIt = results.rbegin();
+  //  for (;classIt!=results.rend();classIt++) {
+  vector<SgNode*>::const_iterator classIt = resultsInv.begin();
+  for (;classIt!=resultsInv.end();classIt++) {
     SgClassDeclaration* classDecl = isSgClassDeclaration(*classIt);
     if (classDecl->get_definingDeclaration()==classDecl)
       if (//classDecl->get_class_type()==SgClassDeclaration::e_class &&

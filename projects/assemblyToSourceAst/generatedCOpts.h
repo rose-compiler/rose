@@ -2,7 +2,7 @@
 #define GENERATEDCOPTS_H
 
 //#include "rose.h"
-#include "x86AssemblyToC.h"
+//#include "x86AssemblyToC.h"
 #include "filteredCFG.h"
 #include <fstream>
 #include <set>
@@ -65,11 +65,6 @@ typedef std::map<SgLabelStatement*, std::set<SgGotoStatement*> > GotoMap;
 
 GotoMap buildGotoMap(SgBasicBlock* bb);
 
-#if 0
-std::set<SgInitializedName*> computeLiveVars(SgStatement* stmt, const X86AssemblyToCWithVariables& conv, std::map<SgLabelStatement*, std::set<SgInitializedName*> >& liveVarsForLabels, std::set<SgInitializedName*> currentLiveVars, bool actuallyRemove);
-
-void removeDeadStores(SgBasicBlock* switchBody, const X86AssemblyToCWithVariables& conv);
-#endif
 
 void removeEmptyBasicBlocks(SgNode* top);
 

@@ -1722,16 +1722,35 @@ SgNullExpression* SageBuilder::buildNullExpression() {
   return e;
 }
 
-SgAssignInitializer * SageBuilder::buildAssignInitializer(SgExpression * operand_i /*= NULL*/)
+SgAssignInitializer * SageBuilder::buildAssignInitializer(SgExpression * operand_i /*= NULL*/, SgType * expression_type /* = UNLL */)
 {
-  // seems to work even SgAssignInitializer is not a unary expression in SAGE III AST, should double check it later on
-  return buildUnaryExpression<SgAssignInitializer>(operand_i);
+  SgAssignInitializer* result = new SgAssignInitializer(operand_i, expression_type);
+  ROSE_ASSERT(result);   
+  if (operand_i!=NULL) 
+  { 
+    operand_i->set_parent(result);
+  // set lvalue, it asserts operand!=NULL 
+    markLhsValues(result);
+  }
+  setOneSourcePositionForTransformation(result);
+  return result; 
 }
 
-SgAssignInitializer * SageBuilder::buildAssignInitializer_nfi(SgExpression * operand_i /*= NULL*/)
+SgAssignInitializer * SageBuilder::buildAssignInitializer_nfi(SgExpression * operand_i /*= NULL*/, SgType * expression_type /* = UNLL */)
 {
-  // seems to work even SgAssignInitializer is not a unary expression in SAGE III AST, should double check it later on
-  return buildUnaryExpression_nfi<SgAssignInitializer>(operand_i);
+  SgAssignInitializer* result = new SgAssignInitializer(operand_i, expression_type);
+  ROSE_ASSERT(result);   
+  if (operand_i!=NULL) 
+  { 
+    operand_i->set_parent(result);
+  // set lvalue, it asserts operand!=NULL 
+    markLhsValues(result);
+  }
+  result->set_startOfConstruct(NULL);
+  result->set_endOfConstruct(NULL);
+  result->set_operatorPosition(NULL);
+  result->set_need_paren(false);
+  return result; 
 }
 
 //! Build an aggregate initializer
