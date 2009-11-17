@@ -796,7 +796,8 @@ namespace rose_hash
  */
      struct hash_string
         {
-          rose_hash::hash<const char*> hasher;
+//          rose_hash::hash<const char*> hasher;
+          hash<const char*> hasher;
           size_t operator()(const std::string & name) const
              {
                return hasher(name.c_str());
