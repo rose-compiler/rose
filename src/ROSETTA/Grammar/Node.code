@@ -4,6 +4,12 @@ HEADER_NODE_PREDECLARATION_START
 #include <semaphore.h>
 #include "sage3.h"
 
+#ifdef _MSC_VER 
+  #include <hash_set>
+  #include <hash_map>
+    using namespace stdext;
+#endif
+
 // DQ (4/21/2009): This is not handled uniformally in sage3.h.
 // DQ (8/8/2008): This is required to process the "stat64 struct in SgAsmGenericFile
 // JJW (8/26/2008): Changed to struct stat with _FILE_OFFSET_BITS == 64 (see
@@ -776,7 +782,8 @@ namespace rose_hash
 
 #if ROSE_MICROSOFT_OS
   // DQ (11/4/2009): MS Visual Studio version of hash_multimap
-     using namespace cliext;
+//     using namespace cliext;
+   
 #else
   // DQ (11/4/2009): Use the depricated GNU stuff (what works in ROSE currently)
      using namespace __gnu_cxx;
