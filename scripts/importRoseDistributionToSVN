@@ -81,15 +81,20 @@ rm -rf ${ROSE_DIST_DIR}/libltdl
 find . -name Makefile.in | xargs rm -rf
 # remove generated scanners and parsers available from the source distribution
 # But should not be put into the external repository
-rm -rf ${ROSE_DIST_DIR}/src/frontend/CxxFrontend/EDG_SAGE_Connection/ompparser.cc
-rm -rf ${ROSE_DIST_DIR}/src/frontend/CxxFrontend/EDG_SAGE_Connection/ompparser.h
-rm -rf ${ROSE_DIST_DIR}/src/frontend/CxxFrontend/EDG_SAGE_Connection/omplexer.cc
+rm -rf ${ROSE_DIST_DIR}/src/frontend/SageIII/ompparser.cc
+rm -rf ${ROSE_DIST_DIR}/src/frontend/SageIII/ompparser.h
+rm -rf ${ROSE_DIST_DIR}/src/frontend/SageIII/omplexer.cc
 rm -rf ${ROSE_DIST_DIR}/src/frontend/OpenFortranParser_SAGE_Connection/preproc-fortran.cc
 rm -rf ${ROSE_DIST_DIR}/src/frontend/OpenFortranParser_SAGE_Connection/preproc-fortran-fixed.cc
 rm -rf ${ROSE_DIST_DIR}/src/frontend/SageIII/preproc.cc
 # dot2gml is not yet in distribution, added them here as a precaution 
 rm -rf ${ROSE_DIST_DIR}/src/roseIndependentSupport/dot2gml/parseDotGrammar.cc
+rm -rf ${ROSE_DIST_DIR}/src/roseIndependentSupport/dot2gml/parseDotGrammar.h
 rm -rf ${ROSE_DIST_DIR}/src/roseIndependentSupport/dot2gml/parseDot.cc
+rm -rf ${ROSE_DIST_DIR}/projects/DocumentationGenerator/doxygenComment.C
+rm -rf ${ROSE_DIST_DIR}/src/midend/programAnalysis/annotationLanguageParser/language-lexer.cc
+rm -rf ${ROSE_DIST_DIR}/src/midend/programAnalysis/annotationLanguageParser/language-parser.cc
+rm -rf ${ROSE_DIST_DIR}/src/midend/programAnalysis/annotationLanguageParser/language.tab.h
 
 # add ChangeLog2 into the distribution
 # Liao, 11/17/2009
