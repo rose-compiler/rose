@@ -92,7 +92,6 @@ configure_file(${ROSE_TOP_SRC_DIR}/rose_config.h.in.cmake ${ROSE_TOP_BINARY_DIR}
      ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/
      ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/astFileIO
      ${ROSE_TOP_SRC_DIR}
-     ${ROSE_TOP_SRC_DIR}/winspecific
      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII 
      ${ROSE_TOP_SRC_DIR}/src/ROSETTA/src/
      ${ROSE_TOP_SRC_DIR}/src 
@@ -178,6 +177,11 @@ configure_file(${ROSE_TOP_SRC_DIR}/rose_config.h.in.cmake ${ROSE_TOP_BINARY_DIR}
      ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/libharu-2.1.0/win32/include/
      ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/astInterface )
 
+IF(WIN32) 
+set( ROSE_INCLUDES $ROSE_INCLUDES
+     ${ROSE_TOP_SRC_DIR}/winspecific )
+ENDIF()
+     
 include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 #include_directories( ${ROSE_INCLUDES} )
 
