@@ -41,7 +41,10 @@ diff /tmp/ChangeLog2 ChangeLog2
 if [ $? -ne 0 ]; then
   echo "Updating ChangeLog2...." #>>$mailtext
   cp /tmp/ChangeLog2 ChangeLog2
-  ${SVN} commit -m"Automatic updates of ChangeLog2" ChangeLog2
+# Liao, 11/16/2009, 
+#  We no longer change ChangeLog2 for the internal svn repository
+# But we do update it in the working copy and have it available for the distribution
+#  ${SVN} commit -m"Automatic updates of ChangeLog2" ChangeLog2
 else
   echo "ChangeLog2 is up-to-date. No action is needed" # >>$mailtext
 fi

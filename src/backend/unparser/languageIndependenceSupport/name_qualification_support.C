@@ -149,14 +149,14 @@ Unparser_Nameq::generateNameQualifier( SgDeclarationStatement* declarationStatem
    {
   // DQ (11/11/2004) This function encapsulates the details of determining the qualifier 
   // for a qualified name.  It is useful for references to named types, variables, 
-  // functions, ane member functions.
+  // functions, and member functions.
   // There are a few C++ constructs where name qualification is forced (the context 
   // requires name qualification and the function can determine the context, I think). 
   // Here, the function "info.set_forceQualifiedNames()" is used, these cases are:
   //    1) function parameter types
   //    2) template arguments
   //    3) types appearing in variable declarations
-  // In addition there are a number of cases where the name qualifiction is skipped depending 
+  // In addition there are a number of cases where the name qualification is skipped depending 
   // on context (calling "info.set_SkipQualifiedNames()"), these are:
   //    1) output of type definitions in variable declarations (e.g. "struct X { int i; } X_variable;")
   //    2) output of type definitions in typedef declarations (e.g. "typedef struct X { int i; } X_type;")

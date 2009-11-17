@@ -2212,7 +2212,7 @@ DefaultFunctionGenerator::generateDefaultFunctionType(defaultEnumFunctionType en
     }
   
   SgMemberFunctionType *func_type = 
-    new SgMemberFunctionType(func_return_type, false, parentClassDef);
+    new SgMemberFunctionType(func_return_type, false, parentClassDef->get_declaration()->get_type());
   func_type->set_orig_return_type(func_return_type); //unparser will complain otherwise,reason?
   if (func_param_type != NULL)
      {

@@ -355,6 +355,9 @@ struct hash_nodeptr
   SgDeclarationStatement * getNonInstantiatonDeclarationForClass
     (SgTemplateInstantiationMemberFunctionDecl * memberFunctionInstantiation);
 
+  //! a better version for SgVariableDeclaration::set_baseTypeDefininingDeclaration(), handling all side effects automatically
+  //! Used to have a struct declaration embedded into a variable declaration
+  void setBaseTypeDefiningDeclaration(SgVariableDeclaration* var_decl, SgDeclarationStatement *base_decl);
 
   // DQ (10/14/2006): This function tests the AST to see if for a non-defining declaration, the 
   // bool declarationPreceedsDefinition ( SgClassDeclaration* classNonDefiningDeclaration, SgClassDeclaration* classDefiningDeclaration );

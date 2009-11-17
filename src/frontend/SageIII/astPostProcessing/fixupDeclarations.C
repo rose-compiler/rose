@@ -38,10 +38,42 @@ fixupDeclarations( SgNode* node )
                virtual ~ResetDefinitionsInNonDefiningClassDeclarationsOnMemoryPool() {};         
         };
 
+     // PC (10/26/2009): This deletes dangling class definitions associated with classes that are declared but not defined.
+     // Their existence interferes with the AST merge mechanism.
+     class DeleteUnreferencedClassDefinitionsInMemoryPool : public ROSE_VisitTraversal
+        {
+          public:
+            // Required traversal function
+               void visit (SgNode* node)
+                  {
+                    SgClassDefinition* classDefinition = isSgClassDefinition(node);
+                    if (classDefinition != NULL)
+                       {
+                         SgClassDeclaration* classDeclaration = isSgClassDeclaration(classDefinition->get_parent());
+                         if (classDeclaration != NULL)
+                            {
+                              if (classDeclaration->get_definition() == NULL)
+                                 {
+                                   if (classDefinition->get_members().size() > 0)
+                                      {
+                                        std::cerr << "Warning: about to delete a dangling class definition with " << classDefinition->get_members().size() << " members!" << std::endl;
+                                      }
+                                   delete classDefinition;
+                                 }
+                            }
+                       }
+                  }
+
+               virtual ~DeleteUnreferencedClassDefinitionsInMemoryPool() {};         
+        };
+
 #if 1
   // This will traverse the whole memory pool
      ResetDefinitionsInNonDefiningClassDeclarationsOnMemoryPool traversal;
      traversal.traverseMemoryPool();
+
+     DeleteUnreferencedClassDefinitionsInMemoryPool deleteTraversal;
+     SgClassDefinition::traverseMemoryPoolNodes(deleteTraversal);
 #else
   // DQ (10/20/2007): We can alternatively just traverse the types of IR nodes that are relavant, 
   // instead of the whole memory pool.  This is a cool feature of the memory pool traversal in this
