@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -vx
 # This script checks if a new ChangeLog2 file needs to be checked in.
 # Please run this script before running the daily regression test scripts
 # which updating the external repository. 
@@ -16,14 +16,15 @@ roseRepositoryUrl=file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
    # an existing local copy of ROSE, not a very secure choice, but efficient
 ROSE_TOP=/home/liao6/rose
 cd ${ROSE_TOP}
-rm ChangeLog2
-${SVN} update -r head ChangeLog2
-if test -f ChangeLog2; then
-  :
-else
-  echo "Fatal Error: ROSE/ChangeLog2 does not exist as expected!" #>&2
-  exit 1
-fi
+
+#rm -rf ChangeLog2
+#${SVN} update -r head ChangeLog2
+#if test -f ChangeLog2; then
+#  :
+#else
+#  echo "Fatal Error: ROSE/ChangeLog2 does not exist as expected!" #>&2
+#  exit 1
+#fi
 
 # generate a fresh one off the head into /tmp/ChangeLog2
 rm -rf /tmp/ChangeLog2
