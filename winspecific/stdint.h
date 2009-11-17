@@ -30,8 +30,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef _MSC_VER // [
-#error "Use this header only with Microsoft Visual C++ compilers!"
-#endif // _MSC_VER ]
+// tps (11/17/2009) : Commented this out so it still works with Linux.
+//#error "Use this header only with Microsoft Visual C++ compilers!"
+#else
 
 #ifndef _MSC_STDINT_H_ // [
 #define _MSC_STDINT_H_
@@ -246,4 +247,5 @@ typedef uint64_t  uintmax_t;
 
 #endif // _MSC_STDINT_H_ ]
 
+#endif // _MSC_VER ]
 
