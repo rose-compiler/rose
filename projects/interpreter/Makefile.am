@@ -56,9 +56,11 @@ TEST_INPUTS = \
     testInput/core/constructors.C \
     testInput/core/globals.c \
     testInput/core/initunion.c \
+    testInput/core/malloc.c \
     testInput/core/mdarr.c \
     testInput/core/nestedUnion.c \
     testInput/core/pointersFunctions.C \
+    testInput/core/realloc.c \
     testInput/core/varargs.c \
     testInput/extcall/hello.c \
     testInput/smt/simpleIntegerOverflow.c \
@@ -66,6 +68,7 @@ TEST_INPUTS = \
     testInput/smt/absBug.c \
     testInput/smt/excludedMiddle.c \
     testInput/smt/reverse.c \
+    testInput/smt/mkbvvar.c \
     testInput/md5.c
 
 EXTRA_DIST = interp_core.h interp_extcall.h interp_maple.h interp_mpi.h interp_smt.h maple++.h typeLayoutStore.h smtlib.h $(TEST_INPUTS)
@@ -115,6 +118,8 @@ check-local: $(TEST_INPUTS)
 	./coreTest -interp:expectedReturnValue 0 $(srcdir)/testInput/core/initunion.c
 	./coreTest -interp:expectedReturnValue 10 $(srcdir)/testInput/core/varargs.c
 	./coreTest -interp:expectedReturnValue 78 $(srcdir)/testInput/core/mdarr.c
+	./coreTest -interp:expectedReturnValue 3 $(srcdir)/testInput/core/malloc.c
+	./coreTest -interp:expectedReturnValue 66 $(srcdir)/testInput/core/realloc.c
 if ROSE_USE_LIBFFI
 	./extcallInterpreter $(srcdir)/testInput/extcall/hello.c ; test $$? = 123
 endif
@@ -125,4 +130,5 @@ if ROSE_USE_TEST_SMT_SOLVER
 	./smtTest -interp:smtSolver "$(TEST_SMT_SOLVER)" $(srcdir)/testInput/smt/excludedMiddle.c
 	./smtTest -interp:smtSolver "$(TEST_SMT_SOLVER)" $(srcdir)/testInput/smt/reverse.c
 	./smtTest -interp:smtSolver "$(TEST_SMT_SOLVER)" -interp:expectAssertionFailure -DSMT $(srcdir)/testInput/md5.c
+	./smtTest -interp:smtSolver "$(TEST_SMT_SOLVER)" $(srcdir)/testInput/smt/mkbvvar.c
 endif

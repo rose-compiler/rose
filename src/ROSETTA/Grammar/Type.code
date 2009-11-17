@@ -848,6 +848,9 @@ HEADER_MEMBER_FUNCTION_TYPE_START
       //! I forget why this is here.
           SgMemberFunctionType * mkAnotherType(SgType *);
 
+      //! \deprecated The struct_name property has been replaced by the class_type property, an SgType
+          SgClassDefinition* get_struct_name() const;
+
 HEADER_MEMBER_FUNCTION_TYPE_END
 
 HEADER_PARTIAL_FUNCTION_TYPE_START
@@ -874,6 +877,10 @@ HEADER_TYPE_COMPLEX_TYPE_START
           static $CLASSNAME* createType(SgType* base_type);
 HEADER_TYPE_COMPLEX_TYPE_END
 
+HEADER_POINTER_MEMBER_TYPE_START
+      //! \deprecated The class_of property has been replaced by the class_type property, an SgType
+          SgClassDefinition* get_class_of() const;
+HEADER_POINTER_MEMBER_TYPE_END
 
 // #########################################################
 // #########################################################
@@ -969,9 +976,9 @@ $CLASSNAME::get_mangled (void) const
      string base_str = SgPointerType::get_mangled ().getString ();
 
   // Mangle the class name
-     const SgClassDefinition* cls_def = get_class_of ();
-     ROSE_ASSERT (cls_def);
-     string cls_name = cls_def->get_mangled_name ().getString ();
+     const SgType* cls_type = get_class_type ();
+     ROSE_ASSERT (cls_type);
+     string cls_name = cls_type->get_mangled ().getString ();
 
   // Now embed the fully qualified class name in it
      string mangled_name (base_str);
@@ -1919,6 +1926,20 @@ SOURCE_POINTER_TYPE_END
 
 
 SOURCE_POINTER_MEMBER_TYPE_START
+
+// PC (10/29/2009): Deprecated compatibility routine for those still using get_class_of()
+SgClassDefinition*
+SgPointerMemberType::get_class_of() const
+   {
+     if (get_class_type() == NULL)
+          return NULL;
+     SgClassType *clsType = isSgClassType(get_class_type()->stripTypedefsAndModifiers());
+     ROSE_ASSERT(clsType != NULL);
+     SgClassDeclaration *clsDecl = isSgClassDeclaration(clsType->get_declaration()->get_definingDeclaration());
+     ROSE_ASSERT(clsDecl != NULL);
+     return clsDecl->get_definition();
+   }
+
 SOURCE_POINTER_MEMBER_TYPE_END
 
 
@@ -2816,14 +2837,14 @@ SOURCE_MEMBER_FUNCTION_TYPE_START
 SgMemberFunctionType::SgMemberFunctionType ( SgPartialFunctionType* ft )
    : SgFunctionType(ft)
    {
-     p_struct_name     = ft->p_struct_name;
+     p_class_type      = ft->p_class_type ;
      p_mfunc_specifier = ft->p_mfunc_specifier;
    }
 
 void
 SgMemberFunctionType::post_construction_initialization()
    { 
-     p_struct_name=0; 
+     p_class_type =0; 
      p_mfunc_specifier = 0;
    }
 
@@ -2871,10 +2892,10 @@ SgMemberFunctionType::get_mangled (void) const
   // Compute class scope
   //! \todo Figure out why member function types are sometimes used
   //! incorrectly in place of plain function types.
-     const SgClassDefinition* cls = get_struct_name ();
-     if (cls)
+     const SgType* cls_type = get_class_type ();
+     if (cls_type)
        {
-         SgName class_scope = cls->get_mangled_name ();
+         SgName class_scope = cls_type->get_mangled ();
          mangled_cls_tag += class_scope;
        }
 
@@ -3212,7 +3233,7 @@ SgMemberFunctionType::mkAnotherType(SgType *rtype)
           part_type->append_argument((*p));
           p++;
         }
-     part_type->set_struct_name(this->get_struct_name());
+     part_type->set_class_type(this->get_class_type());
      part_type->set_mfunc_specifier(this->get_mfunc_specifier());
 
      SgMemberFunctionType *ntype = SgMemberFunctionType::createType(part_type);
@@ -3220,6 +3241,19 @@ SgMemberFunctionType::mkAnotherType(SgType *rtype)
           return NULL;
        else
           return ntype;
+   }
+
+// PC (10/29/2009): Deprecated compatibility routine for those still using get_struct_name()
+SgClassDefinition*
+SgMemberFunctionType::get_struct_name() const
+   {
+     if (get_class_type() == NULL)
+          return NULL;
+     SgClassType *clsType = isSgClassType(get_class_type()->stripTypedefsAndModifiers());
+     ROSE_ASSERT(clsType != NULL);
+     SgClassDeclaration *clsDecl = isSgClassDeclaration(clsType->get_declaration()->get_definingDeclaration());
+     ROSE_ASSERT(clsDecl != NULL);
+     return clsDecl->get_definition();
    }
 
 
@@ -3604,9 +3638,9 @@ SOURCE_CREATE_TYPE_FOR_MEMBER_FUNCTION_TYPE_END
 
 SOURCE_CREATE_TYPE_FOR_POINTER_MEMBER_TYPE_START
 $CLASSNAME*
-$CLASSNAME::createType ( SgType* base_type, SgClassDefinition *class_definition )
+$CLASSNAME::createType ( SgType* base_type, SgType *class_type )
    {
-     $CLASSNAME* returnType = new $CLASSNAME(base_type,class_definition);
+     $CLASSNAME* returnType = new $CLASSNAME(base_type,class_type);
      assert(returnType != NULL);
      return returnType;
    }

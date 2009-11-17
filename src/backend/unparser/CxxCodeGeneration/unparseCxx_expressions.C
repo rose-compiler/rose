@@ -142,6 +142,7 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
           case STMT_EXPR:               { unparseStatementExpression(expr, info); break; }
           case ASM_OP:                  { unparseAsmOp (expr, info); break; }
           case DESIGNATED_INITIALIZER:  { unparseDesignatedInitializer(expr, info); break; }
+          case PSEUDO_DESTRUCTOR_REF:   { unparsePseudoDtorRef(expr, info); break; }
 
           default:
              {
@@ -4037,3 +4038,22 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
      unparseExpression(di->get_memberInit(), info);
    }
 
+void
+Unparse_ExprStmt::unparsePseudoDtorRef(SgExpression* expr, SgUnparse_Info & info)
+   {
+     SgPseudoDestructorRefExp* pdre = isSgPseudoDestructorRefExp(expr);
+     ROSE_ASSERT(pdre != NULL);
+     SgType *objt = pdre->get_object_type();
+
+     curprint ( "~" );
+     if (SgNamedType *nt = isSgNamedType(objt))
+        {
+          curprint ( nt->get_name().str() );
+        }
+     else
+        {
+       // PC: I do not think this case will ever occur in practice.  If it does, the resulting
+       // code will be invalid.  It may, however, appear in an implicit template instantiation.
+          unp->u_type->unparseType(objt, info);
+        }
+   }

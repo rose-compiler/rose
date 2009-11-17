@@ -627,6 +627,9 @@ int AstMergeSupport ( SgProject* project )
                     int nextErrorCode = 0;
 #if 1
                  // int fileIndex = 0;
+                    int chdirError = chdir(workingDirectory.c_str());
+                    ROSE_ASSERT (chdirError == 0);
+
                     SgFile* newFile = determineFileType( vector<string>(argv, argv+argc), nextErrorCode,  project );
                     ROSE_ASSERT (newFile != NULL);
 
@@ -636,6 +639,8 @@ int AstMergeSupport ( SgProject* project )
                     errorCode = errorCode >= nextErrorCode ? errorCode : nextErrorCode;
                   }
              }
+
+          AstPostProcessing(project);
 
 #if 0
        // Build the AST Merge object (this is not the final interface)

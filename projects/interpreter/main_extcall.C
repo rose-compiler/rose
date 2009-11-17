@@ -14,10 +14,8 @@ int main(int argc, char **argv)
           interp.parseCommandLine(argvList);
 
           SgProject *prj = frontend(argvList);
-          SgSourceFile *file = isSgSourceFile((*prj)[0]);
-          ROSE_ASSERT(file != NULL);
-          SgGlobal *global = file->get_globalScope();
-          SgFunctionSymbol *testSym = global->lookup_function_symbol("main");
+          SgFunctionSymbol *testSym = prjFindGlobalFunction(prj, "main");
+          ROSE_ASSERT(testSym != NULL);
 
           vector<void *> libList = buildLibraryList(prj);
           StackFrameP head(new ExternalCallingStackFrame(libList, &interp, testSym));
