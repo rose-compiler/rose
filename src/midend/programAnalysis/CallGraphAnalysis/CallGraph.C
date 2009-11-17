@@ -776,110 +776,112 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
             SgType *leftType = leftSide->get_type()->findBaseType();
             crtClass = isSgClassType( leftType );
 
-            SgMemberFunctionRefExp *memberFunctionRefExp =
-              isSgMemberFunctionRefExp( isSgBinaryOp( functionExp )->get_rhs_operand() );
-
-            std::cout << "SgArrowExp" << std::endl;
-
-            //AS(122805) In the case of a constructor initializer it is possible that a call to a constructor initializer may
-            //return a type corresponding to an operator some-type() declared within the constructed class. An example is:
-            //   struct Foo {
-            //      operator  bool () const
-            //          { return true; }
-            //   };
-            //
-            //   struct Bar {
-            //      bool foobar()
-            //          { return Foo (); }
-            //   };
-            //where the call to the constructor of the class Foo will cause a call to the operator bool(), where bool corresponds
-            //type of the member function foobar declared within Bar.
-
-
-
-            if(isSgConstructorInitializer(leftSide)!= NULL)
+            if (SgMemberFunctionRefExp *memberFunctionRefExp =
+              isSgMemberFunctionRefExp( isSgBinaryOp( functionExp )->get_rhs_operand() ) )
             {
-              SgClassDeclaration* constInit = isSgConstructorInitializer(leftSide)->get_class_decl();
 
-              //ROSE_ASSERT(constInit!=NULL);
-              if(constInit)
-                crtClass = constInit->get_type();
-              else{
-                //AS(010306) A compiler constructed SgConstructorInitializer may wrap a function call which return a class type.
-                //In an dot or arrow expression this returned class type may be used as an expression left hand side. To handle
-                //this case the returned class type must be extracted from the expression list. An example demonstrating this is:
-                //class Vector3d {
-                //   public:
-                //    Vector3d(){};
-                //    Vector3d(const Vector3d &vector3d){};
-                //   Vector3d     cross() const
-                //        { return Vector3d();};
-                //   void   GetZ(){};
-                //};
-                //void foo(){
-                //  Vector3d vn1;
-                //  (vn1.cross()).GetZ();
-                //}
+              std::cout << "SgArrowExp" << std::endl;
 
-                SgExprListExp* expLst = isSgExprListExp(isSgConstructorInitializer(leftSide)->get_args());
-                ROSE_ASSERT(expLst!=NULL);
-                ROSE_ASSERT(expLst->get_expressions().size()==1);
-                SgClassType* lhsClassType = isSgClassType(isSgFunctionCallExp(*expLst->get_expressions().begin())->get_type()->stripType(SgType::STRIP_TYPEDEF_TYPE) );
-                //                        std::cout << "expLst:" << expLst->unparseToString() << " " << (*expLst->get_expressions().begin())->get_type(SgType::STRIP_TYPEDEF_TYPE)->class_name()  << std::endl;
-                crtClass = lhsClassType;
+              //AS(122805) In the case of a constructor initializer it is possible that a call to a constructor initializer may
+              //return a type corresponding to an operator some-type() declared within the constructed class. An example is:
+              //   struct Foo {
+              //      operator  bool () const
+              //          { return true; }
+              //   };
+              //
+              //   struct Bar {
+              //      bool foobar()
+              //          { return Foo (); }
+              //   };
+              //where the call to the constructor of the class Foo will cause a call to the operator bool(), where bool corresponds
+              //type of the member function foobar declared within Bar.
+
+
+
+              if(isSgConstructorInitializer(leftSide)!= NULL)
+              {
+                SgClassDeclaration* constInit = isSgConstructorInitializer(leftSide)->get_class_decl();
+
+                //ROSE_ASSERT(constInit!=NULL);
+                if(constInit)
+                  crtClass = constInit->get_type();
+                else{
+                  //AS(010306) A compiler constructed SgConstructorInitializer may wrap a function call which return a class type.
+                  //In an dot or arrow expression this returned class type may be used as an expression left hand side. To handle
+                  //this case the returned class type must be extracted from the expression list. An example demonstrating this is:
+                  //class Vector3d {
+                  //   public:
+                  //    Vector3d(){};
+                  //    Vector3d(const Vector3d &vector3d){};
+                  //   Vector3d     cross() const
+                  //        { return Vector3d();};
+                  //   void   GetZ(){};
+                  //};
+                  //void foo(){
+                  //  Vector3d vn1;
+                  //  (vn1.cross()).GetZ();
+                  //}
+
+                  SgExprListExp* expLst = isSgExprListExp(isSgConstructorInitializer(leftSide)->get_args());
+                  ROSE_ASSERT(expLst!=NULL);
+                  ROSE_ASSERT(expLst->get_expressions().size()==1);
+                  SgClassType* lhsClassType = isSgClassType(isSgFunctionCallExp(*expLst->get_expressions().begin())->get_type()->stripType(SgType::STRIP_TYPEDEF_TYPE) );
+                  //                        std::cout << "expLst:" << expLst->unparseToString() << " " << (*expLst->get_expressions().begin())->get_type(SgType::STRIP_TYPEDEF_TYPE)->class_name()  << std::endl;
+                  crtClass = lhsClassType;
+                }
+
+
+                ROSE_ASSERT(crtClass!=NULL);
               }
 
+              memberFunctionDeclaration =
+                isSgMemberFunctionDeclaration( memberFunctionRefExp->get_symbol()->get_declaration() );
+              ROSE_ASSERT ( memberFunctionDeclaration && crtClass );
 
-              ROSE_ASSERT(crtClass!=NULL);
-            }
-
-            memberFunctionDeclaration =
-              isSgMemberFunctionDeclaration( memberFunctionRefExp->get_symbol()->get_declaration() );
-            ROSE_ASSERT ( memberFunctionDeclaration && crtClass );
-
-            //Set function to first non-defining declaration
-            SgMemberFunctionDeclaration *nonDefDecl =
-              isSgMemberFunctionDeclaration( memberFunctionDeclaration->get_firstNondefiningDeclaration() );
-            if ( nonDefDecl )
-              memberFunctionDeclaration = nonDefDecl;
+              //Set function to first non-defining declaration
+              SgMemberFunctionDeclaration *nonDefDecl =
+                isSgMemberFunctionDeclaration( memberFunctionDeclaration->get_firstNondefiningDeclaration() );
+              if ( nonDefDecl )
+                memberFunctionDeclaration = nonDefDecl;
 
 
-            //Construct the Properties
+              //Construct the Properties
 
-            Properties* fctProps = createEmptyProperty(memberFunctionDeclaration, memberFunctionDeclaration->get_type()->findBaseType());
+              Properties* fctProps = createEmptyProperty(memberFunctionDeclaration, memberFunctionDeclaration->get_type()->findBaseType());
 
-            ROSE_ASSERT ( isSgFunctionDeclaration( fctProps->functionDeclaration ) );
-            ROSE_ASSERT ( fctProps->functionType );
+              ROSE_ASSERT ( isSgFunctionDeclaration( fctProps->functionDeclaration ) );
+              ROSE_ASSERT ( fctProps->functionType );
 
-            if ( !( isSgThisExp( leftSide ) || !( memberFunctionDeclaration->get_functionModifier().isVirtual() ) ) )
-            {
-              fctProps->isPolymorphic = true;
-              fctProps->invokedClass = isSgClassDeclaration( crtClass->get_declaration()->get_definingDeclaration() )->get_definition();
-              ROSE_ASSERT(fctProps->invokedClass!=NULL);
-              cout << "SET polymorphic on class " << fctProps->invokedClass->get_qualified_name().getString()
-                << "\t" << fctProps << "\n";
-            }
+              if ( !( isSgThisExp( leftSide ) || !( memberFunctionDeclaration->get_functionModifier().isVirtual() ) ) )
+              {
+                fctProps->isPolymorphic = true;
+                fctProps->invokedClass = isSgClassDeclaration( crtClass->get_declaration()->get_definingDeclaration() )->get_definition();
+                ROSE_ASSERT(fctProps->invokedClass!=NULL);
+                cout << "SET polymorphic on class " << fctProps->invokedClass->get_qualified_name().getString()
+                  << "\t" << fctProps << "\n";
+              }
 
-            functionList.push_back( fctProps );
+              functionList.push_back( fctProps );
 
-            // returns the list of all in-class declarations of functions potentially called
-            // ( may be several because of polymorphism )
-            bool polymorphic = false;
-            if ( !isSgThisExp( leftSide ) )
-              polymorphic = true;
+              // returns the list of all in-class declarations of functions potentially called
+              // ( may be several because of polymorphism )
+              bool polymorphic = false;
+              if ( !isSgThisExp( leftSide ) )
+                polymorphic = true;
 
-            std::vector<Properties*> fD =
-              CallTargetSet::solveMemberFunctionCall( crtClass, classHierarchy,
-                  memberFunctionDeclaration, polymorphic );
-            for ( std::vector<Properties*>::iterator it = fD.begin(); it != fD.end(); it++ )
-            {
-              ROSE_ASSERT((*it)->functionType ); 
-              functionList.push_back( *it );
+              std::vector<Properties*> fD =
+                CallTargetSet::solveMemberFunctionCall( crtClass, classHierarchy,
+                    memberFunctionDeclaration, polymorphic );
+              for ( std::vector<Properties*>::iterator it = fD.begin(); it != fD.end(); it++ )
+              {
+                ROSE_ASSERT((*it)->functionType ); 
+                functionList.push_back( *it );
 
-              //                       std::cout << "Found member function Call " << (*it)->unparseToString() << std::endl;
+                //                       std::cout << "Found member function Call " << (*it)->unparseToString() << std::endl;
+
+              }
 
             }
-
 
           }
           break;

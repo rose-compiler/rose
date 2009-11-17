@@ -230,50 +230,66 @@ SageBuilder::buildVariableDeclaration \
 
 //!Build a typedef declaration, such as: typedef int myint; 
 SgTypedefDeclaration* 
-SageBuilder::buildTypedefDeclaration(const std::string& name, SgType* base_type)
+SageBuilder::buildTypedefDeclaration(const std::string& name, SgType* base_type, SgScopeStatement* scope /*= NULL*/)
 {
-   SgScopeStatement* scope = SageBuilder::topScopeStack();
-   ROSE_ASSERT(scope!=NULL);
-
-   SgTypedefDeclaration* type_decl = new SgTypedefDeclaration(SgName(name),base_type,NULL, NULL, NULL);
-   ROSE_ASSERT(type_decl);
-   type_decl->set_firstNondefiningDeclaration (type_decl);
-   setOneSourcePositionForTransformation(type_decl);
-
-   if (scope != NULL)
-   {
-     SgTypedefSymbol* typedef_symbol = new SgTypedefSymbol(type_decl);
-     ROSE_ASSERT(typedef_symbol);
-     scope->insert_symbol(SgName(name),typedef_symbol);
-     type_decl->set_scope(scope);
-     type_decl->set_parent(scope);
-   }
-
-   return type_decl;
+  SgTypedefDeclaration* type_decl = buildTypedefDeclaration_nfi(name, base_type, scope);
+  setOneSourcePositionForTransformation(type_decl);
+  return type_decl;
 }
 
 //!Build a typedef declaration, such as: typedef int myint; 
+// The side effects include: creating SgTypedefType, SgTypedefSymbol, and add SgTypedefType to the base type
 SgTypedefDeclaration* 
-SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_type)
+SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_type,  SgScopeStatement* scope /*= NULL*/)
 {
-   SgScopeStatement* scope = SageBuilder::topScopeStack();
-   ROSE_ASSERT(scope!=NULL);
+  ROSE_ASSERT (base_type != NULL);
+  if (scope == NULL )
+    scope = SageBuilder::topScopeStack();
 
-   SgTypedefDeclaration* type_decl = new SgTypedefDeclaration(SgName(name),base_type,NULL, NULL, NULL);
-   ROSE_ASSERT(type_decl);
-   type_decl->set_firstNondefiningDeclaration (type_decl);
-   setOneSourcePositionNull(type_decl);
+  // We don't yet support bottom up construction for this node yet    
+  ROSE_ASSERT(scope!=NULL);
 
-   if (scope != NULL)
-   {
-     SgTypedefSymbol* typedef_symbol = new SgTypedefSymbol(type_decl);
-     ROSE_ASSERT(typedef_symbol);
-     scope->insert_symbol(SgName(name),typedef_symbol);
-     type_decl->set_scope(scope);
-     type_decl->set_parent(scope);
-   }
+  SgDeclarationStatement * base_decl= NULL;
+  if (isSgNamedType(base_type))
+  {
+    isSgNamedType(base_type)->get_declaration();
+  }
+  // SgTypedefDeclaration (Sg_File_Info *startOfConstruct, SgName name="", SgType *base_type=NULL, SgTypedefType *type=NULL, SgDeclarationStatement *declaration=NULL, SgSymbol *parent_scope=NULL)
+  // SgTypedefDeclaration (SgName name="", SgType *base_type=NULL, SgTypedefType *type=NULL, SgDeclarationStatement *declaration=NULL, SgSymbol *parent_scope=NULL)
+  //
+  // Create the first nondefining declaration
+  SgTypedefDeclaration* type_decl = new SgTypedefDeclaration(SgName(name),base_type,NULL, NULL, NULL);
+  ROSE_ASSERT(type_decl);
+  type_decl->set_firstNondefiningDeclaration (type_decl);
+  type_decl->set_definingDeclaration(NULL);
+  setOneSourcePositionNull(type_decl);
 
-   return type_decl;
+  // Symbol and SgTypedefType should be associated with the first nondefining declaration
+  // Create SgTypedefType
+  // This is already included in the constructor
+  // SgTypedefType::createType (type_decl);
+  if (scope != NULL)
+  {
+    SgTypedefSymbol* typedef_symbol = new SgTypedefSymbol(type_decl);
+    ROSE_ASSERT(typedef_symbol);
+    scope->insert_symbol(SgName(name),typedef_symbol);
+    type_decl->set_scope(scope);
+    type_decl->set_parent(scope);
+  }
+
+  //TODO double check when to create defining declaration
+  //I tried two cases so far and the simplest typedef int MYINT will not have defining typedef declaration
+  // the complex typedef struct frame {} frame; has a defining typedef declaration
+  // base declaration should be associated with defining typedef declaration
+  if (base_decl) 
+  {
+    SgTypedefDeclaration* def_type_decl = new SgTypedefDeclaration(SgName(name),base_type,type_decl->get_type(), base_decl, NULL);
+    def_type_decl->set_firstNondefiningDeclaration(type_decl);
+    type_decl->set_definingDeclaration(def_type_decl);
+    setOneSourcePositionNull(def_type_decl);
+  }
+
+  return type_decl;
 }
 
 //-----------------------------------------------
@@ -1706,16 +1722,35 @@ SgNullExpression* SageBuilder::buildNullExpression() {
   return e;
 }
 
-SgAssignInitializer * SageBuilder::buildAssignInitializer(SgExpression * operand_i /*= NULL*/)
+SgAssignInitializer * SageBuilder::buildAssignInitializer(SgExpression * operand_i /*= NULL*/, SgType * expression_type /* = UNLL */)
 {
-  // seems to work even SgAssignInitializer is not a unary expression in SAGE III AST, should double check it later on
-  return buildUnaryExpression<SgAssignInitializer>(operand_i);
+  SgAssignInitializer* result = new SgAssignInitializer(operand_i, expression_type);
+  ROSE_ASSERT(result);   
+  if (operand_i!=NULL) 
+  { 
+    operand_i->set_parent(result);
+  // set lvalue, it asserts operand!=NULL 
+    markLhsValues(result);
+  }
+  setOneSourcePositionForTransformation(result);
+  return result; 
 }
 
-SgAssignInitializer * SageBuilder::buildAssignInitializer_nfi(SgExpression * operand_i /*= NULL*/)
+SgAssignInitializer * SageBuilder::buildAssignInitializer_nfi(SgExpression * operand_i /*= NULL*/, SgType * expression_type /* = UNLL */)
 {
-  // seems to work even SgAssignInitializer is not a unary expression in SAGE III AST, should double check it later on
-  return buildUnaryExpression_nfi<SgAssignInitializer>(operand_i);
+  SgAssignInitializer* result = new SgAssignInitializer(operand_i, expression_type);
+  ROSE_ASSERT(result);   
+  if (operand_i!=NULL) 
+  { 
+    operand_i->set_parent(result);
+  // set lvalue, it asserts operand!=NULL 
+    markLhsValues(result);
+  }
+  result->set_startOfConstruct(NULL);
+  result->set_endOfConstruct(NULL);
+  result->set_operatorPosition(NULL);
+  result->set_need_paren(false);
+  return result; 
 }
 
 //! Build an aggregate initializer
