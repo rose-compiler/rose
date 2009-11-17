@@ -178,7 +178,7 @@ configure_file(${ROSE_TOP_SRC_DIR}/rose_config.h.in.cmake ${ROSE_TOP_BINARY_DIR}
      ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/astInterface )
 
 IF(WIN32) 
-set( ROSE_INCLUDES $ROSE_INCLUDES
+set( ROSE_INCLUDES ${ROSE_INCLUDES}
      ${ROSE_TOP_SRC_DIR}/winspecific )
 ENDIF()
      
