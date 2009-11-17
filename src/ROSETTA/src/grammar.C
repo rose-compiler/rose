@@ -93,13 +93,19 @@ Grammar::Grammar ( const string& inputGrammarName,
 
   // JJW 2-12-2008 Use a file for this list so the numbers will be more stable
      {
-#if !ROSE_MICROSOFT_OS
+
+#if 1
+//#if !ROSE_MICROSOFT_OS
+		 // TPS (11/4/2009) : This will work now not using cygwin
 	   std::string astNodeListFilename = std::string(ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR) + "/src/ROSETTA/astNodeList";
 #else
 	// DQ (4/4/2009): MSVS is not interpreting the type correctly here...(fixed rose_paths.[hC])
     // DQ (4/11/2009): Using cygwin generated rose_paths.C files so need to map cygwin file prefix to Windows file prefix.
        std::string astNodeListFilename = ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "/src/ROSETTA/astNodeList";
-	   string prefixString = "/cygdrive/c";
+    // TPS (11/4/2009) : Since we are not using Cygwin anymore, this line is incorrect.
+//	   string prefixString = "/cygdrive/c";
+	   string prefixString = ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR;
+	   printf("prefix == %s\n",prefixString.c_str());
 	   size_t prefixLocation = astNodeListFilename.find(prefixString);
 	   ROSE_ASSERT(prefixLocation != string::npos);
 	   ROSE_ASSERT(prefixLocation == 0);
