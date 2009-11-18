@@ -48,11 +48,16 @@ myname="`./getRealName "$myuserid" || echo "$myuserid"`"
 #------------------------------------------------------
 # Preprocessing Section
 #------------------------------------------------------
+rm -rf ${ROSE_TOP}
+mkdir -p ${ROSE_TOP}
+
 # we update ChangeLog2 when needed here
+# We now save ChangeLog2 into the test dir and no longer commit it to the svn repository
+
 # Only Liao can enable this option now due to the installation of the required software
 if [ 0$ENABLE_UPLOAD_CHANGELOG2 -ne 0 ] ; then
   # update the log
-  /home/liao6/rose/scripts/updateChangeLog2.sh
+  /home/liao6/rose/scripts/updateChangeLog2.sh ${ROSE_TOP}
   if [ $? -ne 0 ]; then
     echo "Error: updateChangeLog2.sh finishes abnormally!" 
     exit 1
@@ -62,8 +67,6 @@ if [ 0$ENABLE_UPLOAD_CHANGELOG2 -ne 0 ] ; then
 fi
 
 set -e
-rm -rf ${ROSE_TOP}
-mkdir -p ${ROSE_TOP}
 cd ${ROSE_TOP}
 # This is required so that the DESTDIR part of "make distcheck" doesn't fail by
 # running out of space on /tmp on tux270

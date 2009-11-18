@@ -90,7 +90,7 @@ StructLayoutInfo NonpackedTypeLayoutGenerator::layoutType(SgType* t) const {
           layoutOneField(classdecl->get_type(), classdecl, isUnion, currentOffset, layout);
         } // else continue;
       }
-      if (layout.size % layout.alignment != 0) {
+      if (layout.alignment != 0 && layout.size % layout.alignment != 0) {
         size_t paddingNeeded = layout.alignment - (layout.size % layout.alignment);
         if (!isUnion) {
           layout.fields.push_back(StructLayoutEntry(NULL, layout.size, paddingNeeded));

@@ -516,6 +516,7 @@ SgPrintStatement
 SgProcedureHeaderStatement
 SgProgramHeaderStatement
 SgProject
+SgPseudoDestructorRefExp
 SgQualifiedName
 SgQualifiedNameType
 SgReadStatement

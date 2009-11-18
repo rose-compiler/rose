@@ -266,6 +266,14 @@ size_t Value::backwardValidity() const { return 0; }
 
 ValueP Value::dereference() const
    {
+     ValueP val = unsafeDereference();
+     if (val == ValueP())
+          throw InterpError("Attempt to dereference a NULL pointer!");
+     return val;
+   }
+
+ValueP Value::unsafeDereference() const
+   {
      throw InterpError("Attempt to dereference a value that cannot be dereferenced!");
    }
 
@@ -518,6 +526,8 @@ void BaseCompoundValue::setDiscriminantAtOffset(size_t offset, SgSymbol *discrim
 ValueP PointerValue::eval##opname(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const \
    { \
      const PointerValue *rhsPtr = dynamic_cast<const PointerValue *>(rhs->prim().get()); \
+     lhsApt = lhsApt->stripTypedefsAndModifiers(); \
+     rhsApt = rhsApt->stripTypedefsAndModifiers(); \
      if ((!isSgPointerType(lhsApt) && !isSgArrayType(lhsApt)) \
       || (!isSgPointerType(rhsApt) && !isSgArrayType(rhsApt))) \
         { \
@@ -539,6 +549,7 @@ FOREACH_BOOL_BINARY_PRIMOP(DEFINE_PV_BOOL_BINOP_FN)
 
 ValueP PointerValue::primAssign(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt)
    {
+     rhsApt = rhsApt->stripTypedefsAndModifiers();
      if (isSgFunctionType(rhsApt))
         {
        // implicit function-to-pointer conversion
@@ -546,6 +557,7 @@ ValueP PointerValue::primAssign(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt
           target = boost::const_pointer_cast<Value, const Value>(rhs);
           return shared_from_this();
         }
+     lhsApt = lhsApt->stripTypedefsAndModifiers();
      const PointerValue *rhsPtr = dynamic_cast<const PointerValue *>(rhs->prim().get());
      if ((!isSgPointerType(lhsApt) && !isSgArrayType(lhsApt) && !isSgTypeString(lhsApt))
       || (!isSgPointerType(rhsApt) && !isSgArrayType(rhsApt) && !isSgTypeString(rhsApt)))
@@ -580,12 +592,8 @@ string PointerValue::show() const
 
 size_t PointerValue::forwardValidity() const { return sizeof(void*); }
 
-ValueP PointerValue::dereference() const
+ValueP PointerValue::unsafeDereference() const
    {
-     if (target.get() == NULL)
-        {
-          throw InterpError("Attempt to dereference a NULL pointer!");
-        }
      return target;
    }
 
@@ -614,8 +622,33 @@ ValueP PointerValue::evalAddOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt)
 
 ValueP PointerValue::evalSubtractOp(const_ValueP rhs, SgType *lhsApt, SgType *rhsApt) const
    {
-     ValueP ofs = adjustedOffset(lhsApt, -rhs->getConcreteValueInt());
-     return ValueP(new PointerValue(ofs, PTemp, owner));
+     if (SgPointerType *rhsPtrT = isSgPointerType(rhsApt->stripTypedefsAndModifiers()))
+        {
+          /* The rules for pointer subtraction are C99 6.5.6p9, in particular:
+              "When two pointers are subtracted, both shall point to elements of the same array object,
+              or one past the last element of the array object..." */
+          if (rhs->unsafeDereference() == ValueP())
+             {
+            /* Subtracting the NULL pointer from a pointer is undefined (see above) but some programs use a result to determine alignment */
+               cerr << "Warning: pointer difference from NULL requested" << endl;
+               return ValueP(new IntegralPrimTypeValue<ptrdiff_t>(0, PTemp, owner));
+             }
+          SgType *rhsBaseT = rhsPtrT->get_base_type();
+          const StructLayoutInfo &info = typeLayout(rhsBaseT);
+          const_ValueP lhsTarget, rhsTarget;
+          size_t lhsOffset, rhsOffset;
+          target->targetOffset(lhsTarget, lhsOffset);
+          rhs->dereference()->targetOffset(rhsTarget, rhsOffset);
+          if (lhsTarget != rhsTarget)
+               throw InterpError("Pointer difference requested, but pointers point to different areas");
+          ptrdiff_t diff = (lhsOffset-rhsOffset)/info.size;
+          return ValueP(new IntegralPrimTypeValue<ptrdiff_t>(diff, PTemp, owner));
+        }
+     else
+        {
+          ValueP ofs = adjustedOffset(lhsApt, -rhs->getConcreteValueInt());
+          return ValueP(new PointerValue(ofs, PTemp, owner));
+        }
    }
 
 ValueP PointerValue::evalPrefixPlusPlusOp(SgType *apt)
@@ -686,9 +719,9 @@ string ThisNonstaticFunctionValue::show() const
      return ss.str();
    }
 
-ValueP BaseCompoundValue::dereference() const
+ValueP BaseCompoundValue::unsafeDereference() const
    {
-     return prim()->dereference();
+     return prim()->unsafeDereference();
    }
 
 ValueP BaseCompoundValue::evalPrefixPlusPlusOp(SgType *apt)
@@ -774,9 +807,20 @@ void OffsetValue::destroy()
      throw InterpError("OffsetValues cannot be destroyed");
    }
 
+void OffsetValue::targetOffset(const_ValueP &target, size_t &offset) const
+   {
+     base->targetOffset(target, offset);
+     offset += this->offset;
+   }
+
 void UnionDiscriminantValue::destroy()
    {
      throw InterpError("UnionDiscriminantValues cannot be destroyed");
+   }
+
+void UnionDiscriminantValue::targetOffset(const_ValueP &target, size_t &offset) const
+   {
+     base->targetOffset(target, offset);
    }
 
 std::string CompoundValue::show() const
@@ -907,6 +951,12 @@ void Value::setNonstaticFunctionSymbol(SgMemberFunctionSymbol *sym)
 StackFrameP Value::createStackFrame() const
    {
      throw InterpError("Attempt to create a stack frame for a non-function object!");
+   }
+
+void Value::targetOffset(const_ValueP &target, size_t &offset) const
+   {
+     target = shared_from_this();
+     offset = 0;
    }
 
 SgFunctionSymbol *StaticFunctionValue::getStaticFunctionSymbol() const
@@ -1044,7 +1094,7 @@ void Value::buildDynamicTypesAtOffset(size_t offset, vector<SgClassType *> &type
 
 void CompoundValue::buildDynamicTypesAtOffset(size_t offset, vector<SgClassType *> &types) const
    {
-     if (offset == 0) types.push_back(dynamicType);
+     if (offset == 0 && dynamicType != NULL) types.push_back(dynamicType);
      fieldAtOffset(offset)->buildDynamicTypesAtOffset(0, types);
    }
 
@@ -1117,6 +1167,114 @@ void UnionValue::setDiscriminantAtOffset(size_t offset, SgSymbol *discriminant)
    }
 
 void UnionValue::destroy()
+   {
+     if (storage)
+          storage->destroy();
+   }
+
+DynamicValue::DynamicValue(size_t size, Position pos, StackFrameP owner) :
+        BaseCompoundValue(pos, owner),
+        size(size),
+        storageIsCanary(true),
+        storage(owner->newValue(SgTypeInt::createType(), pos)) {}
+
+string DynamicValue::show() const
+   {
+     if (storageIsCanary)
+        {
+          stringstream ss;
+          ss << "<<undefined dynamic, size=" << size << ", canary valid=" << storage->valid() << ">>";
+          return ss.str();
+        }
+     return "{<<dynamic>> " + storage->show() + "}";
+   }
+
+size_t DynamicValue::forwardValidity() const
+   {
+     return size;
+   }
+
+void DynamicValue::forEachSubfield(FieldVisitor &visit, long offset)
+   {
+     if (storage)
+        {
+          if (storageIsCanary)
+               visit(offset, storage);
+          else
+               storage->forEachSubfield(visit, offset);
+        }
+   }
+
+ValueP DynamicValue::fieldAtOffset(size_t offset)
+   {
+     if (!storage)
+          throw InterpError("Attempt to access uninitialised storage");
+     if (offset == 0)
+          return storage;
+     return storage->fieldAtOffset(offset);
+   }
+
+const_ValueP DynamicValue::fieldAtOffset(size_t offset) const
+   {
+     return const_cast<DynamicValue *>(this)->fieldAtOffset(offset);
+   }
+
+void DynamicValue::reinterpret(SgType *newType)
+   {
+     if (storageType == newType || newType->variantT() == V_SgTypeVoid)
+          return;
+
+     if (!storageIsCanary)
+        {
+          cerr << "Warning: Attempt to re-reinterpret a DynamicValue to " << newType->unparseToString() << endl;
+          return;
+        }
+
+     const StructLayoutInfo &info = typeLayout(newType);
+     size_t elems = size/info.size;
+     if (elems*info.size != size)
+        {
+          cerr << "Warning: DynamicValue::reinterpret: size of storage (" << size << ") not an exact multiple of size of dynamic type " << newType->unparseToString() << " (" << info.size << ")" << endl;
+        }
+
+     ValueP newStorage (new CompoundValue(newType, elems, pos, owner));
+     if (storage->valid())
+        {
+          interpMemset(owner, newStorage, storage, SgTypeInt::createType(), size);
+        }
+     storage = newStorage;
+     storageIsCanary = false;
+     storageType = newType;
+   }
+
+void DynamicValue::realloc(size_t newSize)
+   {
+     size = newSize;
+     if (storageIsCanary)
+          return;
+
+     CompoundValue *cv = dynamic_cast<CompoundValue *>(storage.get());
+     const StructLayoutInfo &info = typeLayout(storageType);
+     size_t oldElems = cv->size/info.size, newElems = newSize/info.size;
+     if (newElems > oldElems)
+        {
+          for (size_t elem = oldElems; elem < newElems; ++elem)
+             {
+               cv->fields[elem*info.size] = owner->newValue(storageType, PTemp);
+             }
+        }
+     else if (newElems < oldElems)
+        {
+          for (size_t elem = newElems; elem < oldElems; ++elem)
+             {
+               cv->fields[elem*info.size]->destroy();
+               cv->fields.erase(elem*info.size);
+             }
+        }
+     cv->size = newElems * info.size;
+   }
+
+void DynamicValue::destroy()
    {
      if (storage)
           storage->destroy();
@@ -1349,7 +1507,11 @@ ValueP StackFrame::evalVarRefExp(SgVarRefExp *vr)
 ValueP StackFrame::evalFunctionRefExp(SgFunctionSymbol *sym)
    {
      const Interpretation::builtins_t &builtins = interp()->builtinFns();
-     Interpretation::builtins_t::const_iterator bi = builtins.find(sym->get_declaration()->get_qualified_name().getString());
+     string qualName = sym->get_declaration()->get_qualified_name().getString();
+     if (qualName[0] != ':') /* Bug: implicitly defined functions lack name qualification */
+          qualName = "::" + qualName;
+
+     Interpretation::builtins_t::const_iterator bi = builtins.find(qualName);
 
      if (bi != builtins.end())
         {
@@ -1362,16 +1524,27 @@ ValueP StackFrame::evalFunctionRefExp(SgFunctionSymbol *sym)
      return ValueP(new StaticFunctionValue(sym, PTemp, shared_from_this()));
    }
 
-Interpretation::Interpretation()
+Interpretation::Interpretation() : _builtinFns(NULL) {}
+
+const Interpretation::builtins_t &Interpretation::builtinFns() const
    {
-     registerBuiltinFns(_builtinFns);
+     if (_builtinFns == NULL)
+        {
+          _builtinFns = new builtins_t;
+          registerBuiltinFns(*_builtinFns);
+        }
+     return *_builtinFns;
    }
 
-void Interpretation::registerBuiltinFns(builtins_t &builtins)
+void Interpretation::registerBuiltinFns(builtins_t &builtins) const
    {
      builtins["::memcpy"] = ValueP(new memcpyFnValue(PGlob, StackFrameP()));
      builtins["::memcmp"] = ValueP(new memcmpFnValue(PGlob, StackFrameP()));
      builtins["::memset"] = ValueP(new memsetFnValue(PGlob, StackFrameP()));
+     builtins["::malloc"] = ValueP(new mallocFnValue(PGlob, StackFrameP()));
+     builtins["::realloc"] = ValueP(new reallocFnValue(PGlob, StackFrameP()));
+     builtins["::free"] = ValueP(new freeFnValue(PGlob, StackFrameP()));
+     builtins["::__builtin_expect"] = ValueP(new __builtin_expectFnValue(PGlob, StackFrameP()));
    }
 
 ValueP StackFrame::evalMemberFunctionRefExp(SgMemberFunctionSymbol *sym)
@@ -1406,8 +1579,20 @@ ValueP Value::evalCastExp(ValueP fromVal, SgType *fromType, SgType *toType)
      return fromVal;
    }
 
+void Value::reinterpret(SgType *newType)
+   {
+     cout << "NOTE: value reinterpreted to " << newType->unparseToString() << endl;
+   }
+
+void Value::realloc(size_t newSize)
+   {
+     throw InterpError("This type of value does not support reallocation");
+   }
+
 ValueP PointerValue::evalCastExp(ValueP fromVal, SgType *fromType, SgType *toType)
    {
+     fromType = fromType->stripTypedefsAndModifiers();
+     toType = toType->stripTypedefsAndModifiers();
      if (isSgPointerType(toType) && isSgTypeInt(fromType))
         {
           if (fromVal->prim()->getConcreteValueInt() != 0)
@@ -1417,6 +1602,12 @@ ValueP PointerValue::evalCastExp(ValueP fromVal, SgType *fromType, SgType *toTyp
           setTarget(ValueP());
           return shared_from_this();
         }
+     else if (isSgPointerType(toType) && isSgFunctionType(fromType))
+        {
+       // implicit function-to-pointer conversion
+          setTarget(fromVal);
+          return shared_from_this();
+        }
      else if ((!isSgPointerType(fromType) && !isSgArrayType(fromType) && !isSgTypeString(fromType))
            || (!isSgPointerType(toType)   && !isSgArrayType(toType)   && !isSgTypeString(toType)))
         {
@@ -1424,6 +1615,8 @@ ValueP PointerValue::evalCastExp(ValueP fromVal, SgType *fromType, SgType *toTyp
         }
      else
         {
+          SgType *toTargType = SageInterface::getElementType(toType);
+          fromVal->dereference()->reinterpret(toTargType);
           return fromVal;
         }
    }
@@ -1680,6 +1873,12 @@ ValueP memsetFnValue::call(SgFunctionType *fnType, const std::vector<ValueP> &ar
 
      size_t n = getConcreteValueF<size_t>::f(nVal->prim());
 
+     interpMemset(owner, sArea, cVal, fnType->get_arguments()[1], n);
+     return ValueP();
+   }
+
+void interpMemset(StackFrameP owner, ValueP sArea, ValueP cVal, SgType *cValType, size_t n)
+   {
      struct PrimSet : FieldVisitor
         {
           size_t n;
@@ -1703,10 +1902,80 @@ ValueP memsetFnValue::call(SgFunctionType *fnType, const std::vector<ValueP> &ar
              }
         };
 
-     PrimSet ps(n, cVal, fnType->get_arguments()[1], owner);
+     PrimSet ps(n, cVal, cValType, owner);
      sArea->forEachPrim(ps);
+   }
 
+string mallocFnValue::functionName() const { return "malloc"; }
+
+ValueP mallocFnValue::call(SgFunctionType *fnType, const std::vector<ValueP> &args) const
+   {
+     if (args.size() != 1)
+        {
+          throw InterpError("Function malloc called with incorrect arity");
+        }
+     ValueP sizeVal = args[0];
+     size_t size = getConcreteValueF<size_t>::f(sizeVal->prim());
+
+     ValueP area (new DynamicValue(size, PHeap, owner));
+     ValueP areaPtr (new PointerValue(area, PTemp, owner));
+
+     return areaPtr;
+   }
+
+string reallocFnValue::functionName() const { return "realloc"; }
+
+ValueP reallocFnValue::call(SgFunctionType *fnType, const std::vector<ValueP> &args) const
+   {
+     if (args.size() != 2)
+        {
+          throw InterpError("Function realloc called with incorrect arity");
+        }
+     ValueP ptrVal = args[0], sizeVal = args[1];
+     size_t size = getConcreteValueF<size_t>::f(sizeVal->prim());
+
+     ValueP area = ptrVal->unsafeDereference();
+     if (area == ValueP())
+        {
+          ValueP newArea (new DynamicValue(size, PHeap, owner));
+          ValueP newAreaPtr (new PointerValue(newArea, PTemp, owner));
+
+          return newAreaPtr;
+        }
+     if (size == 0)
+        {
+          area->destroy();
+          return ValueP(new PointerValue(ValueP(), PTemp, owner));
+        }
+
+     area->realloc(size);
+     return ptrVal;
+   }
+
+string freeFnValue::functionName() const { return "free"; }
+
+ValueP freeFnValue::call(SgFunctionType *fnType, const std::vector<ValueP> &args) const
+   {
+     if (args.size() != 1)
+        {
+          throw InterpError("Function free called with incorrect arity");
+        }
+     ValueP ptr = args[0];
+
+     ptr->dereference()->destroy();
      return ValueP();
+   }
+
+string __builtin_expectFnValue::functionName() const { return "__builtin_expect"; }
+
+ValueP __builtin_expectFnValue::call(SgFunctionType *fnType, const std::vector<ValueP> &args) const
+   {
+     if (args.size() != 2)
+        {
+          throw InterpError("Function __builtin_expect called with incorrect arity");
+        }
+     ValueP result = args[0];
+     return result;
    }
 
 ValueP StackFrame::evalDotExp(SgExpression *lhs, SgExpression *rhs)
@@ -1932,8 +2201,21 @@ ValueP StackFrame::stringToValue(const std::string &str)
         }
      ValueP chrZero (new CharValue(0, PTemp, shared_from_this()));
      strArray->primAtOffset(str.size())->assign(chrZero, charType, charType);
-     ValueP strPtr (new PointerValue(strArray, PTemp, shared_from_this()));
-     return strPtr;
+     return strArray;
+   }
+
+string valueToString(ValueP strArray)
+   {
+     stringstream ss;
+     for (size_t i = 0;; ++i)
+        {
+          ValueP chr = strArray->primAtOffset(i);
+          char c = chr->getConcreteValueChar();
+          if (c == 0)
+               break;
+          ss << c;
+        }
+     return ss.str();
    }
 
 ValueP StackFrame::evalStringVal(SgStringVal *strVal)
@@ -2020,7 +2302,8 @@ ValueP StackFrame::evalExpr(SgExpression *expr, bool arrPtrConv)
      if (arrPtrConv)
         {
           SgType *exprType = expr->get_type()->stripTypedefsAndModifiers();
-          if (exprType->variantT() == V_SgArrayType)
+          VariantT exprTypeV = exprType->variantT();
+          if (exprTypeV == V_SgArrayType || exprTypeV == V_SgTypeString)
              {
                return ValueP(new PointerValue(val, PTemp, shared_from_this()));
              }
@@ -2070,10 +2353,13 @@ void StackFrame::evalBasicBlock(SgBasicBlock *bb, BlockStackFrameP &curFrame)
      curFrame = BlockStackFrameP(new BasicBlockStackFrame(curFrame, shared_from_this(), bb));
    }
 
-void StackFrame::assignInitialize(ValueP var, SgExpression *rhs, SgType *varApt, bool isStatic)
+void StackFrame::assignInitialize(ValueP var, SgAssignInitializer *assignInit, SgType *varApt, bool isStatic)
    {
-     // TODO: special handling for SgStringVals.  See C99 6.3.2.1p3
-     var->assign(evalExpr(rhs), varApt, rhs->get_type());
+     VariantT initTypeV = assignInit->get_type()->stripTypedefsAndModifiers()->variantT();
+     bool arrPtrConv = true;
+     if (initTypeV == V_SgArrayType || initTypeV == V_SgTypeString)
+          arrPtrConv = false;
+     var->assign(evalExpr(assignInit->get_operand(), arrPtrConv), varApt, assignInit->get_operand()->get_type());
    }
 
 void StackFrame::ctorInitialize(ValueP var, SgConstructorInitializer *ctorInit, SgType *varApt, bool isStatic)
@@ -2186,7 +2472,7 @@ void StackFrame::initialize(ValueP var, SgInitializer *init, SgType *varApt, boo
         {
           switch (init->variantT())
              {
-               case V_SgAssignInitializer: assignInitialize(var, isSgAssignInitializer(init)->get_operand(), varApt, isStatic); break;
+               case V_SgAssignInitializer: assignInitialize(var, isSgAssignInitializer(init), varApt, isStatic); break;
                case V_SgConstructorInitializer: ctorInitialize(var, isSgConstructorInitializer(init), varApt, isStatic); break;
                case V_SgAggregateInitializer: aggregateInitialize(var, isSgAggregateInitializer(init), varApt, isStatic); break;
                default: cerr << "StackFrame::initialize: unrecognized initializer " << init->class_name() << endl; break;
@@ -2612,6 +2898,24 @@ void Interpretation::parseCommandLine(vector<string> &args)
      errorTrace = CommandlineProcessing::isOption(args, "-interp:", "errorTrace", true);
    }
 
-Interpretation::~Interpretation() {}
+Interpretation::~Interpretation()
+   {
+     if (_builtinFns != NULL)
+          delete _builtinFns;
+   }
+
+SgFunctionSymbol *prjFindGlobalFunction(const SgProject *prj, const SgName &fnName)
+   {
+     const SgFilePtrList &files = prj->get_fileList();
+     for (SgFilePtrList::const_iterator i = files.begin(); i != files.end(); ++i)
+        {
+          SgSourceFile *srcFile = isSgSourceFile(*i);
+          if (srcFile == NULL) continue;
+          SgGlobal *global = srcFile->get_globalScope();
+          SgFunctionSymbol *funSym = global->lookup_function_symbol(fnName);
+          if (funSym != NULL) return funSym;
+        }
+     return NULL;
+   }
 
 };

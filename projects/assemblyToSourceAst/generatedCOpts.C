@@ -605,6 +605,7 @@ void addDirectJumpsToSwitchCases(const CTranslationPolicy& conv) {
   map<uint64_t, SgLabelStatement*> addressToTargetMap;
   vector<SgNode*> cases = NodeQuery::querySubTree(conv.getSwitchBody(), V_SgCaseOptionStmt);
   vector<SgNode*> blocks = NodeQuery::querySubTree(conv.getWhileBody(), V_SgBasicBlock);
+  //Remove if = label
   for (size_t i = 0; i < blocks.size(); ++i) {
     SgStatementPtrList& stmts = isSgBasicBlock(blocks[i])->get_statements();
     if (stmts.size() < 2) continue;
@@ -625,6 +626,8 @@ void addDirectJumpsToSwitchCases(const CTranslationPolicy& conv) {
     stmts.erase(stmts.end() - 2, stmts.end());
     appendStatement(buildGotoStatement(tgt), isSgBasicBlock(blocks[i]));
   }
+
+
   for (size_t i = 0; i < cases.size(); ++i) {
     SgCaseOptionStmt* c = isSgCaseOptionStmt(cases[i]);
     SgExpression* addrExpr = c->get_key();
@@ -713,25 +716,6 @@ void getPredecessorsFromEnd(SgStatement* s, set<SgStatement*>& result, const map
   }
 }
 
-#if 0
-set<SgInitializedName*> makeAllPossibleVars(const X86AssemblyToCWithVariables& conv) {
-  set<SgInitializedName*> result;
-  for (size_t i = 0; i < 16; ++i) {
-    if (conv.gprSym[i]) {
-      result.insert(conv.gprSym[i]->get_declaration());
-    }
-  }
-  for (size_t i = 0; i < 16; ++i) {
-    if (conv.flagsSym[i]) {
-      result.insert(conv.flagsSym[i]->get_declaration());
-    }
-  }
-  // result.insert(conv.ipSym->get_declaration());
-  result.insert(conv.sf_xor_ofSym->get_declaration());
-  result.insert(conv.zf_or_cfSym->get_declaration());
-  return result;
-}
-#endif
 
 void getUsedVariables(SgExpression* e, set<SgInitializedName*>& vars) {
   ROSE_ASSERT (e);
@@ -765,132 +749,7 @@ GotoMap buildGotoMap(SgBasicBlock* bb) {
   return gotoMap;
 }
 
-#if 0
-set<SgInitializedName*> computeLiveVars(SgStatement* stmt, const X86AssemblyToCWithVariables& conv, map<SgLabelStatement*, set<SgInitializedName*> >& liveVarsForLabels, set<SgInitializedName*> currentLiveVars, bool actuallyRemove) {
-  switch (stmt->variantT()) {
-    case V_SgBasicBlock: {
-      const SgStatementPtrList& stmts = isSgBasicBlock(stmt)->get_statements();
-      for (size_t i = stmts.size(); i > 0; --i) {
-        currentLiveVars = computeLiveVars(stmts[i - 1], conv, liveVarsForLabels, currentLiveVars, actuallyRemove);
-      }
-      return currentLiveVars;
-    }
-    case V_SgPragmaDeclaration: return currentLiveVars;
-    case V_SgDefaultOptionStmt: return currentLiveVars;
-    case V_SgCaseOptionStmt: {
-      return computeLiveVars(isSgCaseOptionStmt(stmt)->get_body(), conv, liveVarsForLabels, currentLiveVars, actuallyRemove);
-    }
-    case V_SgLabelStatement: {
-      liveVarsForLabels[isSgLabelStatement(stmt)] = currentLiveVars;
-      return currentLiveVars;
-    }
-    case V_SgGotoStatement: {
-      return liveVarsForLabels[isSgGotoStatement(stmt)->get_label()];
-    }
-    case V_SgSwitchStatement: {
-      SgSwitchStatement* s = isSgSwitchStatement(stmt);
-      SgBasicBlock* swBody = s->get_body();
-      ROSE_ASSERT (swBody);
-      const SgStatementPtrList& bodyStmts = swBody->get_statements();
-      set<SgInitializedName*> liveForBody; // Assumes any statement in the body is possible
-      for (size_t i = 0; i < bodyStmts.size(); ++i) {
-        setUnionInplace(liveForBody, computeLiveVars(bodyStmts[i], conv, liveVarsForLabels, currentLiveVars, actuallyRemove));
-      }
-      return computeLiveVars(s->get_item_selector(), conv, liveVarsForLabels, liveForBody, actuallyRemove);
-    }
-    case V_SgContinueStmt: {
-      return makeAllPossibleVars(conv);
-    }
-    case V_SgIfStmt: {
-      set<SgInitializedName*> liveForBranches = computeLiveVars(isSgIfStmt(stmt)->get_true_body(), conv, liveVarsForLabels, currentLiveVars, actuallyRemove);
-      setUnionInplace(liveForBranches, (isSgIfStmt(stmt)->get_false_body() != NULL ? computeLiveVars(isSgIfStmt(stmt)->get_false_body(), conv, liveVarsForLabels, currentLiveVars, actuallyRemove) : set<SgInitializedName*>()));
-      return computeLiveVars(isSgIfStmt(stmt)->get_conditional(), conv, liveVarsForLabels, liveForBranches, actuallyRemove);
-    }
-    case V_SgWhileStmt: {
-      while (true) {
-        set<SgInitializedName*> liveVarsSave = currentLiveVars;
-        currentLiveVars = computeLiveVars(isSgWhileStmt(stmt)->get_body(), conv, liveVarsForLabels, currentLiveVars, false);
-        currentLiveVars = computeLiveVars(isSgWhileStmt(stmt)->get_condition(), conv, liveVarsForLabels, currentLiveVars, false);
-        setUnionInplace(currentLiveVars, liveVarsSave);
-        if (liveVarsSave == currentLiveVars) break;
-      }
-      if (actuallyRemove) {
-        set<SgInitializedName*> liveVarsSave = currentLiveVars;
-        currentLiveVars = computeLiveVars(isSgWhileStmt(stmt)->get_body(), conv, liveVarsForLabels, currentLiveVars, true);
-        currentLiveVars = computeLiveVars(isSgWhileStmt(stmt)->get_condition(), conv, liveVarsForLabels, currentLiveVars, true);
-        setUnionInplace(currentLiveVars, liveVarsSave);
-      }
-      return currentLiveVars;
-    }
-    case V_SgBreakStmt: return set<SgInitializedName*>();
-    case V_SgExprStatement: {
-      SgExpression* e = isSgExprStatement(stmt)->get_expression();
-      switch (e->variantT()) {
-        case V_SgAssignOp: {
-          SgVarRefExp* lhs = isSgVarRefExp(isSgAssignOp(e)->get_lhs_operand());
-          ROSE_ASSERT (lhs);
-          SgInitializedName* in = lhs->get_symbol()->get_declaration();
-          if (currentLiveVars.find(in) == currentLiveVars.end()) {
-            if (actuallyRemove) {
-              // cerr << "Removing assignment " << e->unparseToString() << endl;
-              isSgStatement(stmt->get_parent())->remove_statement(stmt);
-            }
-            return currentLiveVars;
-          } else {
-            currentLiveVars.erase(in);
-            getUsedVariables(isSgAssignOp(e)->get_rhs_operand(), currentLiveVars);
-            return currentLiveVars;
-          }
-        }
-        case V_SgFunctionCallExp: {
-          getUsedVariables(e, currentLiveVars);
-          SgFunctionRefExp* fr = isSgFunctionRefExp(isSgFunctionCallExp(e)->get_function());
-          ROSE_ASSERT (fr);
-          if (fr->get_symbol()->get_declaration() == conv.interruptSym->get_declaration()) {
-            setUnionInplace(currentLiveVars, makeAllPossibleVars(conv));
-            return currentLiveVars;
-          } else {
-            return currentLiveVars;
-          }
-        }
-        default: {
-          getUsedVariables(e, currentLiveVars);
-          return currentLiveVars;
-        }
-      }
-    }
-    case V_SgVariableDeclaration: {
-      ROSE_ASSERT (isSgVariableDeclaration(stmt)->get_variables().size() == 1);
-      SgInitializedName* in = isSgVariableDeclaration(stmt)->get_variables()[0];
-      bool isConst = isConstType(in->get_type());
-      if (currentLiveVars.find(in) == currentLiveVars.end() && isConst) {
-        if (actuallyRemove) {
-          // cerr << "Removing decl " << stmt->unparseToString() << endl;
-          isSgStatement(stmt->get_parent())->remove_statement(stmt);
-        }
-        return currentLiveVars;
-      } else {
-        currentLiveVars.erase(in);
-        if (in->get_initializer()) {
-          getUsedVariables(in->get_initializer(), currentLiveVars);
-        }
-        return currentLiveVars;
-      }
-    }
-    default: cerr << "computeLiveVars: " << stmt->class_name() << endl; abort();
-  }
-}
 
-void removeDeadStores(SgBasicBlock* switchBody, const X86AssemblyToCWithVariables& conv) {
-  map<SgLabelStatement*, set<SgInitializedName*> > liveVars;
-  while (true) {
-    map<SgLabelStatement*, set<SgInitializedName*> > liveVarsSave = liveVars;
-    computeLiveVars(switchBody, conv, liveVars, set<SgInitializedName*>(), false);
-    if (liveVars == liveVarsSave) break;
-  }
-  computeLiveVars(switchBody, conv, liveVars, set<SgInitializedName*>(), true);
-}
-#endif
 
 void removeEmptyBasicBlocks(SgNode* top) {
   bool changed = true;

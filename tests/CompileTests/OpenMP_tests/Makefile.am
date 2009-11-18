@@ -70,6 +70,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	set_num_threads.c \
 	single.c \
 	single_copyprivate.c \
+	sizeof.c \
 	spmd1.c \
 	staticChunk.c \
 	subteam2.c \

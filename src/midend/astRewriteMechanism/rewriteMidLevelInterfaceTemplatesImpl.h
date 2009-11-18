@@ -341,6 +341,11 @@ MidLevelRewrite<ASTNodeCollection>::fileStringToNodeCollection (
      ROSE_ASSERT (transformationASTPointer != NULL);
      ROSE_ASSERT (errorCode <= 2);
 
+  // GB (9/4/2009): Construction of a SgFile using determineFileType() no
+  // longer calls the AST fixups. So we need to call them here, before the
+  // AST is returned to user code.
+     AstPostProcessing(transformationASTPointer);
+
   // printf ("DONE: Calling SgProject constructor \n");
 
 #if 0

@@ -387,6 +387,7 @@ nodeColor( SgExpression* expression )
                case V_SgFunctionCallExp:
                case V_SgFunctionRefExp:
                case V_SgMemberFunctionRefExp:
+               case V_SgPseudoDestructorRefExp:
                     returnString = "violet";
                     break;
 

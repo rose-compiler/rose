@@ -1171,6 +1171,12 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                               printf ("Note that sharedClassDeclaration->get_symbol_from_symbol_table() == NULL \n");
                             }
 
+                        // PC (10/26/2009): merge definingDeclaration pointers
+                           if (matchingNodeInMergedAST_classDeclaration->get_definingDeclaration() == NULL)
+                              {
+                                matchingNodeInMergedAST_classDeclaration->set_definingDeclaration(classDeclaration->get_definingDeclaration());
+                              }
+
                       // printf ("addAssociatedNodes(): Exiting as part of test! (case V_SgClassDeclaration) \n");
                       // ROSE_ASSERT(false);
                        }
