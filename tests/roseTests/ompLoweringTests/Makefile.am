@@ -18,6 +18,7 @@ C_TESTCODES_REQUIRED_TO_COMPILE = \
         master.c \
         nowait.c \
         ompfor5.c \
+	sizeof.c \
         staticChunk.c \
         task_orphaned.c \
         task_underIf.c \
