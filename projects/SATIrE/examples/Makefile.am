@@ -16,6 +16,7 @@ EXTRA_DIST= \
         sl2rd/tests/rdtest10all.C sl2rd/tests/rdtest10p1.C \
         sl2rd/tests/rdtest10p2.C  sl2rd/tests/rdtest10p3.C \
         sl2rd/sl2rd.set sl2rd/sl2rd.optla sl2rd/runtests \
+	\
         constprop/constprop.optla \
 	constprop/tests/cconstants.c  constprop/tests/classes_and_returns.C  \
 	constprop/tests/demo2.C       constprop/tests/intval.c \
@@ -33,33 +34,6 @@ EXTRA_DIST= \
 	constprop/tests/forinit.c     constprop/tests/manyargs.c \
 	constprop/tests/simpleif.c   constprop/tests/test6.C \
 	\
-	nnh99_shape/nnh99_shape.set      nnh99_shape/nnh99_shape.optla \
-	nnh99_shape/main.C               nnh99_shape/main.h \
-	nnh99_shape/Makefile.custom \
-	nnh99_shape/GraphStats.h \
-	nnh99_shape/satire_legacy.h      nnh99_shape/satire_legacy.C \
-	nnh99_shape/tests/nnh_xsely.C \
-	nnh99_shape/tests/nnh_xysel3.C \
-	nnh99_shape/tests/nnh_xselnil.C \
-	nnh99_shape/tests/nnh_xy.C \
-	nnh99_shape/tests/nnh_xysel2.C \
-	nnh99_shape/tests/srw98_data.h \
-	nnh99_shape/tests/nnh_xnil.C \
-	\
-	srw98_shape/srw98_shape.set               srw98_shape/srw98_shape.optla \
-	srw98_shape/main.C                        srw98_shape/main.h \
-	srw98_shape/Makefile.custom \
-	srw98_shape/GraphStats.h \
-	srw98_shape/satire_legacy.h      srw98_shape/satire_legacy.C \
-	srw98_shape/tests/nnh_xsely.C \
-	srw98_shape/tests/nnh_xysel3.C \
-	srw98_shape/tests/nnh_xselnil.C \
-	srw98_shape/tests/nnh_xy.C \
-	srw98_shape/tests/nnh_xysel2.C \
-	srw98_shape/tests/srw98_data.h \
-	srw98_shape/tests/nnh_xnil.C \
-	srw98_shape/tests/nnh_xysel3shared.C \
-	\
 	pointsto_live_variables/pointsto_live_variables.optla \
 	pointsto_live_variables/runtests.custom \
 	pointsto_live_variables/tests/lv_noalias.c \
@@ -72,7 +46,7 @@ testdir=installcheck-executable-examples
 # The tests are now split into separate targets to facilitate a
 # paralellized run of the testsuite (make -j #N installcheck)
 
-TESTS_WITH_PAG = sl1rd sl2rd nnh99_shape srw98_shape pointsto_live_variables testsuite interval satire_driver
+TESTS_WITH_PAG = sl1rd sl2rd pointsto_live_variables testsuite interval satire_driver
 TESTS_WITHOUT_PAG = termite
 
 if WITH_SWI_PROLOG
@@ -166,24 +140,6 @@ sl2rd: init.token
 	chmod u+rwx -R $(testdir)/sl2rd
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -p sl2rd_ -u sl2rd
 	$(MAKE) check -C $(testdir)/sl2rd
-
-nnh99_shape: init.token
-	@echo
-	@echo "Testing nnh99_shape"
-	@echo "====================="
-	cp -ur $(top_srcdir)/examples/nnh99_shape $(testdir)
-	chmod u+rwx -R $(testdir)/nnh99_shape
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u nnh99_shape
-	$(MAKE) check -C $(testdir)/nnh99_shape
-
-srw98_shape: init.token
-	@echo
-	@echo "Testing srw98_shape"
-	@echo "====================="
-	cp -ur $(top_srcdir)/examples/srw98_shape $(testdir)
-	chmod u+rwx -R $(testdir)/srw98_shape
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u srw98_shape
-	$(MAKE) check -C $(testdir)/srw98_shape
 
 pointsto_live_variables: init.token
 	@echo
