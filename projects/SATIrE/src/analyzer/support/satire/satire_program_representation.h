@@ -2,6 +2,7 @@
 #define H_SATIRE_PROGRAM_REPRESENTATION
 
 #include "satire.h"
+#include "aralir.h"
 
 namespace SATIrE
 {
@@ -45,5 +46,19 @@ private:
 };
 
 }
+
+// MS: 2009
+class AstAralAttribute: public AstAttribute {
+  public:
+    void setInfoElementList(Aral::InfoElementList* ieList) {
+      _infoElementList=ieList;
+    }
+    Aral::InfoElementList* getInfoElementList() {
+      return _infoElementList;
+    }
+  private:
+    Aral::InfoElementList* _infoElementList;
+};
+
 
 #endif

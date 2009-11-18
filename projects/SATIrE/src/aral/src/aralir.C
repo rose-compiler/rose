@@ -28,7 +28,7 @@ Aral::Int32::Int32(int v) {
 	_value=v;
 }
 
-Aral::Label::Label(int label):_label(label) {}
+Aral::Label::Label(long label):_label(label) {}
 
 Aral::Set::Set() {}
 
@@ -180,6 +180,10 @@ int Aral::Int32::getValue() {
 int Aral::Tuple::getSize() {
 	return size();
 }
+long Aral::Label::getNumber() {
+        return _label; 
+}
+
 Aral::Data* Aral::Tuple::getAt(Aral::TuplePos pos) {
 	return operator[](pos);
 }

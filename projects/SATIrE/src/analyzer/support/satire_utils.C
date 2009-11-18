@@ -245,9 +245,53 @@ void attachAralInformation(Program *program, AnalyzerOptions *options)
     }
 }
 
-static void addAralResults(Program *program, Aral::ResultSection *results)
+
+
+// MS: Mapping of ARAL 0.9.15 to ROSE-AST Nodes, November 2009.
+static void addAralResults(Program* program, Aral::ResultSection* resultSection)
 {
- // TODO: Implement this when Aral::ResultSection is more strictly typed.
+ // MS:TODO: utilize flow-specifier, implement file/function/program loc-specs and test
+
+  int label=0;
+  std::string analysisName=resultSection->getName();
+  AstAralAttribute* attribute=new AstAralAttribute();
+  Aral::AnnotationDataList* annotDataList=resultSection->getAnnotationDataList();
+  for(Aral::AnnotationDataList::iterator i=annotDataList->begin();
+      i!=annotDataList->end();
+      ++i) {
+    Aral::AnnotationData* data=dynamic_cast<Aral::AnnotationData*>(*i);
+    assert(data);
+    // the data ist attached to the ROSE-AST according to the information
+    // in the LocationSpecifier.
+    SgNode* node=0;
+
+
+    Aral::LocationSpecifier* locSpec=data->getLocationSpecifier();
+    switch(locSpec->getSpecifier()) {
+    case Aral::LocationSpecifier::E_PROGRAM_LOCSPEC:
+      // we ignore it for now
+      break;
+    case Aral::LocationSpecifier::E_FUNCTION_LOCSPEC:
+      // we ignore it for now
+      break;
+    case Aral::LocationSpecifier::E_FILE_LOCSPEC:
+      // SgFile* file=traceBackToFileNode(node);
+      // we ignore it for now
+      break;
+    case Aral::LocationSpecifier::E_LABEL_LOCSPEC:
+      Aral::Label* aralLabel=locSpec->getLabel();
+      long labelNumber=aralLabel->getNumber();
+      node=program->icfg->labeledStatement(labelNumber);
+      Aral::FlowSpecifier flowSpec=data->getFlowSpecifier();
+      Aral::InfoElementList* infoElemList=data->getInfoElementList();
+      // if the analysis is context-sensitive we may have more than one element,
+      // otherwise we have exactly one InfoElement in the list with context=0.
+      // we put the InfoElementList in the Attribute, and let the Attribute
+      // provide a richer interface.
+      attribute->setInfoElementList(infoElemList);
+      node->addNewAttribute(analysisName,attribute);
+    }
+  }
 }
 
 SgFile *traceBackToFileNode(SgNode *node)

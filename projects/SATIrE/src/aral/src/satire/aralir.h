@@ -267,15 +267,16 @@ namespace Aral {
 	};
 	class Label : public Data {
 	public:
-		Label(int label);
+		Label(long label);
 		virtual ~Label();
 		std::string labelToString();
+	  	long getNumber();
 		bool isEqual(Data*);
 		bool isLessThan(Data*);
 		void accept(AbstractDataVisitor& v);
 		Data* deepCopy();
 	protected:
-		int _label;
+		long _label;
 	};
 	class Ident : public Data {
 	public:
