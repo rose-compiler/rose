@@ -4,7 +4,7 @@ YACC = bison
 
 DISTNAME = aral15
 ARAL_SOURCES = ../aral.C ../aralir.C ../aralparser.yxx ../aralscanner.lxx \
-               ../satire/aralir.h ../satire/aralparser_decls.h ../example1.C
+               ../satire/aralir.h ../satire/aralparser_decls.h ../aralexample1.C ../runtests ../tests
 
 All: aral
 
@@ -16,6 +16,9 @@ aralscanner.C: aralscanner.lxx aralparser.h
 
 aral :	aral.C aralscanner.C aralparser.h aralir.C aralir.h 
 	$(CC) aral.C aralscanner.C aralparser.C aralir.C -I. -lfl -o aral 
+
+check:
+	./runtests
 
 .PHONY: clean
 clean:
@@ -33,7 +36,8 @@ dist:
 	rm -f $(DISTNAME).tar.gz
 	mkdir _dist/
 	mkdir _dist/aral/
-	cp $(ARAL_SOURCES) Makefile _dist/aral/
+	cp -r $(ARAL_SOURCES) Makefile _dist/aral/
+	rm _dist/aral/tests/*.alf
 	cd _dist && \
 		tar vczf $(DISTNAME).tar.gz aral/
 	mv _dist/$(DISTNAME).tar.gz .
