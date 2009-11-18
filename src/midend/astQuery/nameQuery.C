@@ -966,11 +966,11 @@ NameQuery::queryNameTypeName (SgNode * astNode)
 	  SgPointerMemberType *pointerMemberType =
 	    isSgPointerMemberType (type);
 	  ROSE_ASSERT (pointerMemberType != NULL);
-	  SgClassDefinition *classDefinition =
-	    pointerMemberType->get_class_of ();
-	  ROSE_ASSERT (classDefinition != NULL);
+	  SgClassType *classType =
+	   isSgClassType(pointerMemberType->get_class_type()->stripTypedefsAndModifiers());
+	  ROSE_ASSERT (classType != NULL);
 	  SgClassDeclaration *classDeclaration =
-	    classDefinition->get_declaration ();
+	   isSgClassDeclaration(classType->get_declaration());
 	  ROSE_ASSERT (classDeclaration != NULL);
 	  typeName = classDeclaration->get_name ().str ();
 	  break;
@@ -1007,11 +1007,11 @@ NameQuery::queryNameTypeName (SgNode * astNode)
 	  SgMemberFunctionType *memberFunctionType =
 	    isSgMemberFunctionType (type);
 	  ROSE_ASSERT (memberFunctionType != NULL);
-	  SgClassDefinition *classDefinition =
-	    memberFunctionType->get_struct_name ();
-	  ROSE_ASSERT (classDefinition != NULL);
+	  SgClassType *classType =
+	   isSgClassType(memberFunctionType->get_class_type()->stripTypedefsAndModifiers());
+	  ROSE_ASSERT (classType != NULL);
 	  SgClassDeclaration *classDeclaration =
-	    classDefinition->get_declaration ();
+	   isSgClassDeclaration(classType->get_declaration());
 	  ROSE_ASSERT (classDeclaration != NULL);
 	  typeName = classDeclaration->get_name ().str ();
 	  break;

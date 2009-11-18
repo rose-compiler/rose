@@ -120,6 +120,34 @@ SageInterface::getNonInstantiatonDeclarationForClass ( SgTemplateInstantiationMe
       return parentDeclaration;
    }
 
+//! Liao, 11/9/2009
+  //! a better version for SgVariableDeclaration::set_baseTypeDefininingDeclaration(), handling all side effects automatically
+  //! Used to have a struct declaration embedded into a variable declaration
+  void SageInterface::setBaseTypeDefiningDeclaration(SgVariableDeclaration* var_decl, SgDeclarationStatement *base_decl)
+{
+  ROSE_ASSERT (var_decl && base_decl);
+
+  // try to remove it from the scope's declaration list
+  // If the struct decl was previously inserted into its scope
+  if (base_decl->get_parent() != NULL)
+  {
+    if (base_decl->get_scope() == base_decl->get_parent())
+    {
+      SgStatementPtrList stmt_list = base_decl->get_scope()->generateStatementList();
+      if (find(stmt_list.begin(), stmt_list.end(), base_decl) != stmt_list.end())
+        SageInterface::removeStatement(base_decl);
+    }
+  } 
+  base_decl->set_parent(var_decl);
+  var_decl->set_baseTypeDefiningDeclaration(base_decl);
+
+  //Set an internal mangled name for the anonymous declaration, if necessary
+  //  resetNamesInAST(); // this will trigger mangleNameMap.size() ==0 assertion.
+  // We call resetEmptyNames directly instead. 
+  ResetEmptyNames t1;
+  t1.traverseMemoryPool();
+}
+
 // DQ (11/4/2007): This looks for a forward temple member function declaration of matching name exists in the specified scope.
 bool
 SageInterface::isPrototypeInScope ( SgScopeStatement* scope, SgFunctionDeclaration* functionDeclaration, SgDeclarationStatement* startingAtDeclaration )

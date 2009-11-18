@@ -195,6 +195,8 @@ Grammar::setUpExpressions ()
   // User defined operator for Fortran named operators.
      NEW_TERMINAL_MACRO (UserDefinedUnaryOp,    "UserDefinedUnaryOp",    "USER_DEFINED_UNARY_OP" );
 
+     NEW_TERMINAL_MACRO (PseudoDestructorRefExp, "PseudoDestructorRefExp", "PSEUDO_DESTRUCTOR_REF");
+
      NEW_NONTERMINAL_MACRO (UnaryOp,
                             ExpressionRoot | MinusOp            | UnaryAddOp | NotOp           | PointerDerefExp | 
                             AddressOfOp    | MinusMinusOp       | PlusPlusOp | BitComplementOp | CastExp         |
@@ -227,7 +229,7 @@ Grammar::setUpExpressions ()
           VarArgCopyOp        | VarArgStartOneOperandOp | NullExpression      | VariantExpression   | SubscriptExpression      |
           ColonShapeExp       | AsteriskShapeExp        | /*UseOnlyExpression |*/ ImpliedDo         | IOItemExpression         |
        /* UseRenameExpression | */ StatementExpression  | AsmOp               | LabelRefExp         | ActualArgumentExpression |
-          UnknownArrayOrFunctionReference,
+          UnknownArrayOrFunctionReference               | PseudoDestructorRefExp,
           "Expression","ExpressionTag", false);
 
   // ***********************************************************************
@@ -675,6 +677,8 @@ Grammar::setUpExpressions ()
 
      UserDefinedUnaryOp.editSubstitute  ( "PRECEDENCE_VALUE", " 2" );
      UserDefinedBinaryOp.editSubstitute ( "PRECEDENCE_VALUE", " 2" );
+
+     PseudoDestructorRefExp.editSubstitute ( "PRECEDENCE_VALUE", " 2" );
 
 #if 0
   // Extra required Fortran IR nodes
@@ -1405,6 +1409,12 @@ Grammar::setUpExpressions ()
      UnknownArrayOrFunctionReference.setDataPrototype ( "SgExprListExp*", "expression_list", "= NULL",
            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+     PseudoDestructorRefExp.setFunctionPrototype ( "HEADER_PSEUDO_DESTRUCTOR_REF", "../Grammar/Expression.code" );
+     PseudoDestructorRefExp.setDataPrototype ( "SgType*", "object_type", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     PseudoDestructorRefExp.setDataPrototype ( "SgType*", "expression_type", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (12/31/2007): Support for named actual arguments to functions (fortran specific).
      ActualArgumentExpression.setFunctionPrototype ( "HEADER_ACTUAL_ARGUMENT_EXPRESSION", "../Grammar/Expression.code" );
      ActualArgumentExpression.setDataPrototype     ( "SgName", "argument_name", "= \"\"",
@@ -1757,4 +1767,8 @@ Grammar::setUpExpressions ()
   // DQ (10/8/2008): Unclear if this is how we should hancle this!
   // UserDefinedUnaryOp.setFunctionSource  ( "SOURCE_GET_TYPE_FROM_SYMBOL","../Grammar/Expression.code" );
   // UserDefinedBinaryOp.setFunctionSource ( "SOURCE_GET_TYPE_FROM_SYMBOL","../Grammar/Expression.code" );
+
+     PseudoDestructorRefExp.setFunctionSource ( "SOURCE_GET_TYPE_CLASS_DECL", "../Grammar/Expression.code" );
+     PseudoDestructorRefExp.setFunctionSource ( "SOURCE_PSEUDO_DESTRUCTOR_REF", "../Grammar/Expression.code" );
+
    }
