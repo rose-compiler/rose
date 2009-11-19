@@ -242,6 +242,7 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
           virtual void unparseVarArgCopyOp            (SgExpression* expr, SgUnparse_Info& info);
 //        virtual void unparseNullExpression          (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseDesignatedInitializer   (SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparsePseudoDtorRef           (SgExpression* expr, SgUnparse_Info& info);
 
       //! unparse statement functions implememted in unparse_stmt.C
        // DQ (4/25/2005): Made this virtual so that Gabriel could build a specialized unparser.

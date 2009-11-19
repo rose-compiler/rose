@@ -792,9 +792,9 @@ TransformationSupport::getTypeName ( SgType* type )
              {
                SgPointerMemberType* pointerMemberType = isSgPointerMemberType(type);
                ROSE_ASSERT (pointerMemberType != NULL);
-               SgClassDefinition* classDefinition = pointerMemberType->get_class_of();
-               ROSE_ASSERT (classDefinition != NULL);
-               SgClassDeclaration* classDeclaration = classDefinition->get_declaration();
+               SgClassType* classType = isSgClassType(pointerMemberType->get_class_type()->stripTypedefsAndModifiers());
+               ROSE_ASSERT (classType != NULL);
+               SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
                ROSE_ASSERT (classDeclaration != NULL);
                typeName = classDeclaration->get_name().str();
                break;
@@ -816,9 +816,9 @@ TransformationSupport::getTypeName ( SgType* type )
              {
                SgMemberFunctionType* memberFunctionType = isSgMemberFunctionType(type);
                ROSE_ASSERT (memberFunctionType != NULL);
-               SgClassDefinition* classDefinition = memberFunctionType->get_struct_name();
-               ROSE_ASSERT (classDefinition != NULL);
-               SgClassDeclaration* classDeclaration = classDefinition->get_declaration();
+               SgClassType* classType = isSgClassType(memberFunctionType->get_class_type()->stripTypedefsAndModifiers());
+               ROSE_ASSERT (classType != NULL);
+               SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
                ROSE_ASSERT (classDeclaration != NULL);
                typeName = classDeclaration->get_name().str();
                break;

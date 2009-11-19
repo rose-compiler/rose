@@ -7963,8 +7963,11 @@ SgFunctionDeclaration::get_mangled_name() const
           const SgScopeStatement* par_scope = get_scope();
           SgName scope_name = mangleQualifiers(par_scope);
 
+       // Compute the translation unit qualification, if any.
+          string xlation_unit_qual = mangleTranslationUnitQualifiers(this);
+
        // Compute the final mangled name.
-          mangledName = joinMangledQualifiers (scope_name, func_name + "__" + type_name);
+          mangledName = joinMangledQualifiers (scope_name, xlation_unit_qual + func_name + "__" + type_name);
 
        // p_globalMangledNameMap[function] = mangledName;
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgFunctionDeclaration*>(this),mangledName);

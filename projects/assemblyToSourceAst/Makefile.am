@@ -16,7 +16,7 @@ lib_LTLIBRARIES = libroseBtorSupport.la libroseSatProblem.la
 
 BUILT_SOURCES = libroseBtorSupport.la libroseSatProblem.la
 
-x86AssemblyToCDemo_SOURCES = x86AssemblyToC.C generatedCOpts.C generatedCOpts.h
+x86AssemblyToCDemo_SOURCES = x86AssemblyToC.C generatedCOpts.C generatedCOpts.h x86AssemblyToC.h
 x86AssemblyToCDemo_CPPFLAGS = $(ROSE_INCLUDES)
 x86AssemblyToCDemo_LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 powerpcAssemblyToCDemo_SOURCES = powerpcAssemblyToC.C generatedCOpts.C generatedCOpts.h powerpcInstructionSemantics.h
@@ -62,23 +62,23 @@ include_HEADERS = x86AssemblyToC.h satProblem.h powerpcInstructionSemantics.h x8
 #powerpcAssemblyToCDemo-powerpcAssemblyToC.o: powerpcInstructionSemantics.h
 
 test_assemblyToC:
-	if test -e $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386; then \
-	  ./x86AssemblyToCDemo -c $(srcdir)/outputFileTemplate.C $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386; \
+	if test -e $(top_srcdir)/binaries/samples/fnord.i386; then \
+	  ./x86AssemblyToCDemo -c $(srcdir)/outputFileTemplate.C $(top_srcdir)/binaries/samples/fnord.i386; \
 	fi
 
 test_assemblyToNetlist:
-	if test -e $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386; then \
-	  ./x86AssemblyToNetlist $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386; \
+	if test -e $(top_srcdir)/binaries/samples/fnord.i386; then \
+	  ./x86AssemblyToNetlist $(top_srcdir)/binaries/samples/fnord.i386; \
 	fi
 
 test_assemblyToBtor:
-	if test -e $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386; then \
-	  ./x86AssemblyToBtor start $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386; \
+	if test -e $(top_srcdir)/binaries/samples/fnord.i386; then \
+	  ./x86AssemblyToBtor start $(top_srcdir)/binaries/samples/fnord.i386; \
 	fi
 
 test_assemblyToReadWriteSets:
-	if test -e $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386; then \
-	  ./readAndWriteSets $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386 > fnord.rws ; \
+	if test -e $(top_srcdir)/binaries/samples/fnord.i386; then \
+	  ./readAndWriteSets $(top_srcdir)/binaries/samples/fnord.i386 > fnord.rws ; \
 	fi
 
 
@@ -101,7 +101,7 @@ test-dep: powerpcAssemblyToCDemo powerpcInstructionSemantics.h
 ppc-check:
 	-rm powerpcAssemblyToCDemo-powerpcAssemblyToC.o
 	$(MAKE) powerpcAssemblyToCDemo
-	./powerpcAssemblyToCDemo -c $(srcdir)/powerpcOutputFileTemplate.C $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.ppc
+	./powerpcAssemblyToCDemo -c $(srcdir)/powerpcOutputFileTemplate.C $(top_srcdir)/binaries/samples/fnord.ppc
 
 CLEANFILES = outputFileTemplate.o rose_outputFileTemplate.C fnord.rws
 

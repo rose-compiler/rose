@@ -109,8 +109,8 @@ configure_file(${ROSE_TOP_SRC_DIR}/rose_config.h.in.cmake ${ROSE_TOP_BINARY_DIR}
      ${ROSE_TOP_SRC_DIR}/src/frontend/OpenFortranParser_SAGE_Connection 
      ${ROSE_TOP_SRC_DIR}/src/frontend/PHPFrontend 
      ${ROSE_TOP_SRC_DIR}/src/frontend/BinaryDisassembly 
+     ${ROSE_TOP_SRC_DIR}/src/frontend/BinaryFormats 
      ${ROSE_TOP_SRC_DIR}/src/frontend/Disassemblers 
-     ${ROSE_TOP_SRC_DIR}/src/frontend/ExecFormats 
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser 
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/formatSupport 
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/languageIndependenceSupport 

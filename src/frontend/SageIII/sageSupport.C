@@ -687,25 +687,6 @@ SgProject::processCommandLine(const vector<string>& input_argv)
      vector<string> argv = get_originalCommandLineArgumentList();
      ROSE_ASSERT(argv.size() > 0);
 
-     //AS (2/22/08): GCC looks for system headers in '-I' first. We need to support this. 
-//     for (unsigned int i = argv.size()-1; i >= 0; i--)
-     for (unsigned int i = 0; i < argv.size(); i++)
-
-        {
-       // find the source code filenames and modify them to be the output filenames
-          unsigned int length = argv[i].size();
-       // look only for -I include directories (directories where #include<filename> will be found)
-          if ( (length > 2) && (argv[i][0] == '-') && (argv[i][1] == 'I') )
-             {
-            // AS Changed source code to support absolute paths 
-            // replaceRelativePath 
-            
-               std::string includeDirectorySpecifier =  argv[i].substr(2);
-               includeDirectorySpecifier = StringUtility::getAbsolutePathFromRelativePath(includeDirectorySpecifier );
-               p_preincludeDirectoryList.insert(p_preincludeDirectoryList.begin(),includeDirectorySpecifier);
-             }
-
-        } 
   // DQ (12/22/2008): This should only be called once (outside of the loop over all command line arguments!
   // DQ (12/8/2007): This leverages existing support in commandline processing
   // printf ("In SgProject::processCommandLine(): Calling CommandlineProcessing::generateSourceFilenames(argv) \n");
@@ -2838,6 +2819,28 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
         }
 #endif
 
+     //AS(063006) Changed implementation so that real paths can be found later
+     vector<string> includePaths;
+
+  // skip the 0th entry since this is just the name of the program (e.g. rose)
+     for (unsigned int i=1; i < argv.size(); i++)
+        {
+       // most options appear as -<option>
+       // have to process +w2 (warnings option) on some compilers so include +<option>
+          if ( argv[i].size() >= 2 && (argv[i][0] == '-') && (argv[i][1] == 'I') )
+             {
+            // int length = strlen(argv[i]);
+            // printf ("Look for include path:  argv[%d] = %s length = %d \n",i,argv[i],length);
+ 
+            // AS: Did changes to get absolute path
+               std::string includeDirectorySpecifier =  argv[i].substr(2);
+#if 1
+               includeDirectorySpecifier = StringUtility::getAbsolutePathFromRelativePath(includeDirectorySpecifier );
+#endif               
+               includePaths.push_back(includeDirectorySpecifier);
+             }
+        }
+
 #if 0
   // This functionality has been moved to before source name extraction since the 
   // -isystem dir will be extracted as a file name and treated as a source file name 
@@ -2864,6 +2867,15 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      }
 #else
   // DQ (1/13/2009): The preincludeDirectoryList was built if the -isystem <dir> option was used
+
+//AS (2/22/08): GCC looks for system headers in '-I' first. We need to support this. 
+//PC (10/20/2009): This code was moved from SgProject as it is file-specific (required by AST merge)
+     for (vector<string>::iterator i = includePaths.begin(); i != includePaths.end(); ++i)
+        {
+          commandLine.push_back("--sys_include");
+          commandLine.push_back(*i);
+        }
+
      for (SgStringList::iterator i = project->get_preincludeDirectoryList().begin(); i != project->get_preincludeDirectoryList().end(); i++)
         {
        // Build the preinclude directory list
@@ -3170,31 +3182,6 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // Now add the include paths to the end so that EDG knows where to find head files to process
   // Add all input include paths so that the EDG front end will know where to find headers
 
-     //AS(063006) Changed implementation so that real paths can be found later
-     vector<string> includePaths;
-
-  // skip the 0th entry since this is just the name of the program (e.g. rose)
-     for (unsigned int i=1; i < argv.size(); i++)
-        {
-       // most options appear as -<option>
-       // have to process +w2 (warnings option) on some compilers so include +<option>
-          if ( argv[i].size() >= 2 && (argv[i][0] == '-') && (argv[i][1] == 'I') )
-             {
-            // int length = strlen(argv[i]);
-            // printf ("Look for include path:  argv[%d] = %s length = %d \n",i,argv[i],length);
- 
-            // AS: Did changes to get absolute path
-               std::string includeDirectorySpecifier =  argv[i].substr(2);
-#if 1
-               includeDirectorySpecifier = "-I"+StringUtility::getAbsolutePathFromRelativePath(includeDirectorySpecifier );
-#else               
-
-               includeDirectorySpecifier = "-I"+includeDirectorySpecifier;
-#endif               
-               includePaths.push_back(includeDirectorySpecifier);
-             }
-        }
-
 #if 0
      for (int i=0; i < includePathCounter; i++)
         {
@@ -3203,7 +3190,10 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #endif
 
   // Add the -I definitions to the command line
-     inputCommandLine.insert(inputCommandLine.end(), includePaths.begin(), includePaths.end());
+     for (vector<string>::const_iterator i = includePaths.begin(); i != includePaths.end(); ++i)
+        {
+          inputCommandLine.push_back("-I" + *i);
+        }
 
   // *******************************************************************
   // Handle general edg options (-xxx)
@@ -3771,6 +3761,33 @@ SgProject::parse()
 
           nameIterator++;
           i++;
+        }
+
+  // GB (8/19/2009): Moved the AstPostProcessing call from
+  // SgFile::callFrontEnd to this point. Thus, it is only called once for
+  // the whole project rather than once per file. Repeated calls to
+  // AstPostProcessing are slow due to repeated memory pool traversals. The
+  // AstPostProcessing is only to be called if there are input files to run
+  // it on, and they are meant to be used in some way other than just
+  // calling the backend on them. (If only the backend is used, this was
+  // never called by SgFile::callFrontEnd either.)
+     if ( !get_fileList().empty() && !get_useBackendOnly() )
+        {
+          AstPostProcessing(this);
+        }
+
+  // GB (9/4/2009): Moved the secondary pass over source files (which
+  // attaches the preprocessing information) to this point. This way, the
+  // secondary pass over each file runs after all fixes have been done. This
+  // is relevant where the AstPostProcessing mechanism must first mark nodes
+  // to be output before preprocessing information is attached.
+     SgFilePtrList &files = get_fileList();
+     SgFilePtrList::iterator fIterator;
+     for (fIterator = files.begin(); fIterator != files.end(); ++fIterator)
+        {
+          SgFile *file = *fIterator;
+          ROSE_ASSERT(file != NULL);
+          file->secondaryPassOverSourceFile();
         }
 
      if ( get_verbose() > 0 )
@@ -4597,7 +4614,11 @@ SgFile::callFrontEnd()
      printf("FMZ :: before AstPostProcessing astScopeStack = %p \n",stmp);
 #endif
  
-     AstPostProcessing(this);
+  // GB (8/19/2009): Commented this out and moved it to SgProject::parse().
+  // Repeated calls to AstPostProcessing (one per file) can be slow on
+  // projects consisting of multiple files due to repeated memory pool
+  // traversals.
+  // AstPostProcessing(this);
 
   // FMZ: 05/30/2008.  Do not generate .rmod file for the PU imported by "use" stmt
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
@@ -4613,8 +4634,20 @@ SgFile::callFrontEnd()
         }
 #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 
+#if 0
+     printf ("Leaving SgFile::callFrontEnd(): fileNameIndex = %d \n",fileNameIndex);
+     display("At bottom of SgFile::callFrontEnd()");
+#endif
+
+  // return the error code associated with the call to the C++ Front-end
+     return frontendErrorLevel;
+   }
 
 
+
+void
+SgFile::secondaryPassOverSourceFile()
+   {
   // **************************************************************************
   //                      Secondary Pass Over Source File
   // **************************************************************************
@@ -4631,6 +4664,9 @@ SgFile::callFrontEnd()
   //    4) All tokens (each is classified as to what specific type of token it is)
   //
   // There is no secondary processing for binaries.
+
+  // GB (9/4/2009): Factored out the secondary pass. It is now done after
+  // the whole project has been constructed and fixed up.
 
      if (get_binary_only() == true)
         {
@@ -4662,7 +4698,7 @@ SgFile::callFrontEnd()
              {
                if (get_verbose() > 1)
                   {
-                    printf ("In SgFile::callFrontEnd(): calling attachAllPreprocessingInfo() \n");
+                    printf ("In SgFile::secondaryPassOverSourceFile(): calling attachAllPreprocessingInfo() \n");
                   }
 
             // printf ("Secondary pass over source file = %s to comment comments and CPP directives \n",this->get_file_info()->get_filenameString().c_str());
@@ -4731,9 +4767,6 @@ SgFile::callFrontEnd()
 
   // ROSE_ASSERT(SgNode::get_globalFunctionTypeTable() != NULL);
   // ROSE_ASSERT(SgNode::get_globalFunctionTypeTable()->get_parent() != NULL);
-
-  // return the error code associated with the call to the C++ Front-end
-     return frontendErrorLevel;
    }
 
 
@@ -8113,12 +8146,19 @@ void replaceOmpPragmaWithOmpStatement(SgPragmaDeclaration* pdecl, SgStatement* o
 }
 
 // Convert omp_pragma_list to SgOmpxxx nodes
-void convert_OpenMP_pragma_to_AST ()
+void convert_OpenMP_pragma_to_AST (SgSourceFile *sageFilePtr)
 {
   list<SgPragmaDeclaration* >::reverse_iterator iter; // bottom up handling for nested cases
+  ROSE_ASSERT (sageFilePtr != NULL);
   for (iter = omp_pragma_list.rbegin(); iter != omp_pragma_list.rend(); iter ++)
   {
+    // Liao, 11/18/2009
+    // It is possible that several source files showing up in a single compilation line
+    // We have to check if the pragma declaration's file information matches the current file being processed
+    // Otherwise we will process the same pragma declaration multiple times!!
     SgPragmaDeclaration* decl = *iter; 
+    if (decl->get_file_info()->get_filename()!= sageFilePtr->get_file_info()->get_filename())
+      continue;
     OmpAttributeList* oattlist= getOmpAttributeList(decl);
     ROSE_ASSERT (oattlist != NULL) ;
     vector <OmpAttribute* > ompattlist = oattlist->ompAttriList;
@@ -8204,7 +8244,7 @@ void build_OpenMP_AST(SgSourceFile *sageFilePtr)
   } //end if (fortran)
   else// for  C/C++ pragma's OmpAttributeList --> SgOmpxxx nodes
   {
-    convert_OpenMP_pragma_to_AST();
+    convert_OpenMP_pragma_to_AST( sageFilePtr);
   }
 }
 // Liao, 5/31/2009 an entry point for OpenMP related processing

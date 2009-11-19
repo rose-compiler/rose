@@ -1,391 +1,173 @@
 #include "rose.h"
+
+#define MAINFILE
+static SgBasicBlock* bb; // Global location to append new statements
+
+static size_t WordWithExpression_nameCounter = 0;
+
+
 #include "x86AssemblyToC.h"
 #include "integerOps.h"
-#include "generatedCOpts.h"
-#include <boost/static_assert.hpp>
-#include <boost/lexical_cast.hpp>
 #include <iostream>
 
 using namespace std;
 using namespace IntegerOps;
 using namespace SageInterface;
 using namespace SageBuilder;
+#if 1
+set<SgInitializedName*> makeAllPossibleVars(const X86CTranslationPolicy& conv) {
+  set<SgInitializedName*> result;
+  for (size_t i = 0; i < 16; ++i) {
+    if (conv.gprSym[i]) {
+      result.insert(conv.gprSym[i]->get_declaration());
+    }
+  }
+  for (size_t i = 0; i < 16; ++i) {
+    if (conv.flagsSym[i]) {
+      result.insert(conv.flagsSym[i]->get_declaration());
+    }
+  }
+   result.insert(conv.ipSym->get_declaration());
+  result.insert(conv.sf_xor_ofSym->get_declaration());
+  if(conv.zf_or_cfSym != NULL)
+  result.insert(conv.zf_or_cfSym->get_declaration());
+  return result;
+}
+#endif
 
-static SgBasicBlock* bb; // Global location to append new statements
+#if 1
+set<SgInitializedName*> computeLiveVars(SgStatement* stmt, const X86CTranslationPolicy& conv, map<SgLabelStatement*, set<SgInitializedName*> >& liveVarsForLabels, set<SgInitializedName*> currentLiveVars, bool actuallyRemove) {
+  switch (stmt->variantT()) {
+    case V_SgBasicBlock: {
+      const SgStatementPtrList& stmts = isSgBasicBlock(stmt)->get_statements();
+      for (size_t i = stmts.size(); i > 0; --i) {
+        currentLiveVars = computeLiveVars(stmts[i - 1], conv, liveVarsForLabels, currentLiveVars, actuallyRemove);
+      }
+      return currentLiveVars;
+    }
+    case V_SgPragmaDeclaration: return currentLiveVars;
+    case V_SgDefaultOptionStmt: return currentLiveVars;
+    case V_SgCaseOptionStmt: {
+      return computeLiveVars(isSgCaseOptionStmt(stmt)->get_body(), conv, liveVarsForLabels, currentLiveVars, actuallyRemove);
+    }
+    case V_SgLabelStatement: {
+      liveVarsForLabels[isSgLabelStatement(stmt)] = currentLiveVars;
+      return currentLiveVars;
+    }
+    case V_SgGotoStatement: {
+      return liveVarsForLabels[isSgGotoStatement(stmt)->get_label()];
+    }
+    case V_SgSwitchStatement: {
+      SgSwitchStatement* s = isSgSwitchStatement(stmt);
+      SgBasicBlock* swBody = isSgBasicBlock(s->get_body());
+      ROSE_ASSERT (swBody);
+      const SgStatementPtrList& bodyStmts = swBody->get_statements();
+      set<SgInitializedName*> liveForBody; // Assumes any statement in the body is possible
+      for (size_t i = 0; i < bodyStmts.size(); ++i) {
+        setUnionInplace(liveForBody, computeLiveVars(bodyStmts[i], conv, liveVarsForLabels, currentLiveVars, actuallyRemove));
+      }
+      return computeLiveVars(s->get_item_selector(), conv, liveVarsForLabels, liveForBody, actuallyRemove);
+    }
+    case V_SgContinueStmt: {
+      return makeAllPossibleVars(conv);
+    }
+    case V_SgIfStmt: {
+      set<SgInitializedName*> liveForBranches = computeLiveVars(isSgIfStmt(stmt)->get_true_body(), conv, liveVarsForLabels, currentLiveVars, actuallyRemove);
+      setUnionInplace(liveForBranches, (isSgIfStmt(stmt)->get_false_body() != NULL ? computeLiveVars(isSgIfStmt(stmt)->get_false_body(), conv, liveVarsForLabels, currentLiveVars, actuallyRemove) : set<SgInitializedName*>()));
+      return computeLiveVars(isSgIfStmt(stmt)->get_conditional(), conv, liveVarsForLabels, liveForBranches, actuallyRemove);
+    }
+    case V_SgWhileStmt: {
+      while (true) {
+        set<SgInitializedName*> liveVarsSave = currentLiveVars;
+        currentLiveVars = computeLiveVars(isSgWhileStmt(stmt)->get_body(), conv, liveVarsForLabels, currentLiveVars, false);
+        currentLiveVars = computeLiveVars(isSgWhileStmt(stmt)->get_condition(), conv, liveVarsForLabels, currentLiveVars, false);
+        setUnionInplace(currentLiveVars, liveVarsSave);
+        if (liveVarsSave == currentLiveVars) break;
+      }
+      if (actuallyRemove) {
+        set<SgInitializedName*> liveVarsSave = currentLiveVars;
+        currentLiveVars = computeLiveVars(isSgWhileStmt(stmt)->get_body(), conv, liveVarsForLabels, currentLiveVars, true);
+        currentLiveVars = computeLiveVars(isSgWhileStmt(stmt)->get_condition(), conv, liveVarsForLabels, currentLiveVars, true);
+        setUnionInplace(currentLiveVars, liveVarsSave);
+      }
+      return currentLiveVars;
+    }
+    case V_SgBreakStmt: return set<SgInitializedName*>();
+    case V_SgExprStatement: {
+      SgExpression* e = isSgExprStatement(stmt)->get_expression();
+      switch (e->variantT()) {
+        case V_SgAssignOp: {
+          SgVarRefExp* lhs = isSgVarRefExp(isSgAssignOp(e)->get_lhs_operand());
+          ROSE_ASSERT (lhs);
+          SgInitializedName* in = lhs->get_symbol()->get_declaration();
+          if (currentLiveVars.find(in) == currentLiveVars.end()) {
+            if (actuallyRemove) {
+              // cerr << "Removing assignment " << e->unparseToString() << endl;
+              isSgStatement(stmt->get_parent())->remove_statement(stmt);
+            }
+            return currentLiveVars;
+          } else {
+            currentLiveVars.erase(in);
+            getUsedVariables(isSgAssignOp(e)->get_rhs_operand(), currentLiveVars);
+            return currentLiveVars;
+          }
+        }
+        case V_SgFunctionCallExp: {
+          getUsedVariables(e, currentLiveVars);
+          SgFunctionRefExp* fr = isSgFunctionRefExp(isSgFunctionCallExp(e)->get_function());
+          ROSE_ASSERT (fr);
+          if (fr->get_symbol()->get_declaration() == conv.interruptSym->get_declaration()) {
+            setUnionInplace(currentLiveVars, makeAllPossibleVars(conv));
+            return currentLiveVars;
+          } else {
+            return currentLiveVars;
+          }
+        }
+        default: {
+          getUsedVariables(e, currentLiveVars);
+          return currentLiveVars;
+        }
+      }
+    }
+    case V_SgVariableDeclaration: {
+      ROSE_ASSERT (isSgVariableDeclaration(stmt)->get_variables().size() == 1);
+      SgInitializedName* in = isSgVariableDeclaration(stmt)->get_variables()[0];
+      bool isConst = isConstType(in->get_type());
+      if (currentLiveVars.find(in) == currentLiveVars.end() && isConst) {
+        if (actuallyRemove) {
+          // cerr << "Removing decl " << stmt->unparseToString() << endl;
+          isSgStatement(stmt->get_parent())->remove_statement(stmt);
+        }
+        return currentLiveVars;
+      } else {
+        currentLiveVars.erase(in);
+        if (in->get_initializer()) {
+          getUsedVariables(in->get_initializer(), currentLiveVars);
+        }
+        return currentLiveVars;
+      }
+    }
+    default: cerr << "computeLiveVars: " << stmt->class_name() << endl; abort();
+  }
+}
 
-static size_t WordWithExpression_nameCounter = 0;
+void removeDeadStores(SgBasicBlock* switchBody, const X86CTranslationPolicy& conv) {
+  map<SgLabelStatement*, set<SgInitializedName*> > liveVars;
+  while (true) {
+    map<SgLabelStatement*, set<SgInitializedName*> > liveVarsSave = liveVars;
+    computeLiveVars(switchBody, conv, liveVars, set<SgInitializedName*>(), false);
+    if (liveVars == liveVarsSave) break;
+  }
+  computeLiveVars(switchBody, conv, liveVars, set<SgInitializedName*>(), true);
+}
+#endif
+
+
+
 
 // This builds variable declarations and variable references for each symbolic value
 // These are returnd and taken as arguments by the primative functions.
-template <size_t Len>
-struct WordWithExpression {
-  private:
-  SgVariableSymbol* sym;
-  public:
-  WordWithExpression(SgExpression* expr) {
-    std::string name = "var" + boost::lexical_cast<std::string>(WordWithExpression_nameCounter);
-    ++WordWithExpression_nameCounter;
-    SgVariableDeclaration* decl = buildVariableDeclaration(name, SgTypeUnsignedLongLong::createType(), buildAssignInitializer(buildBitAndOp(expr, buildUnsignedLongLongIntValHex(SHL1<unsigned long long, Len>::value - 1))), bb);
-    appendStatement(decl, bb);
-    sym = getFirstVarSym(decl);
-  }
-  SgExpression* expr() const {return buildVarRefExp(sym);}
-  private: BOOST_STATIC_ASSERT (Len <= 64); // FIXME handle longer operations
-};
-
 // Operations build IR nodes to represent the expressions.
-struct X86CTranslationPolicy: public CTranslationPolicy {
-  X86CTranslationPolicy(SgSourceFile* sourceFile, SgAsmGenericFile* asmFile);
-
-  SgAsmGenericFile* asmFile;
-  SgGlobal* globalScope;
-  SgFunctionSymbol* paritySym;
-  SgFunctionSymbol* mulhi16Sym;
-  SgFunctionSymbol* mulhi32Sym;
-  SgFunctionSymbol* mulhi64Sym;
-  SgFunctionSymbol* imulhi16Sym;
-  SgFunctionSymbol* imulhi32Sym;
-  SgFunctionSymbol* imulhi64Sym;
-  SgFunctionSymbol* div8Sym;
-  SgFunctionSymbol* mod8Sym;
-  SgFunctionSymbol* div16Sym;
-  SgFunctionSymbol* mod16Sym;
-  SgFunctionSymbol* div32Sym;
-  SgFunctionSymbol* mod32Sym;
-  SgFunctionSymbol* div64Sym;
-  SgFunctionSymbol* mod64Sym;
-  SgFunctionSymbol* idiv8Sym;
-  SgFunctionSymbol* imod8Sym;
-  SgFunctionSymbol* idiv16Sym;
-  SgFunctionSymbol* imod16Sym;
-  SgFunctionSymbol* idiv32Sym;
-  SgFunctionSymbol* imod32Sym;
-  SgFunctionSymbol* idiv64Sym;
-  SgFunctionSymbol* imod64Sym;
-  SgFunctionSymbol* bsrSym;
-  SgFunctionSymbol* bsfSym;
-  SgVariableSymbol* gprSym[16];
-  SgVariableSymbol* ipSym;
-  SgVariableSymbol* flagsSym[16];
-  SgVariableSymbol* sf_xor_ofSym;
-  SgVariableSymbol* zf_or_cfSym;
-  SgFunctionSymbol* memoryReadByteSym;
-  SgFunctionSymbol* memoryReadWordSym;
-  SgFunctionSymbol* memoryReadDWordSym;
-  SgFunctionSymbol* memoryReadQWordSym;
-  SgFunctionSymbol* memoryWriteByteSym;
-  SgFunctionSymbol* memoryWriteWordSym;
-  SgFunctionSymbol* memoryWriteDWordSym;
-  SgFunctionSymbol* memoryWriteQWordSym;
-  SgFunctionSymbol* abortSym;
-  SgFunctionSymbol* interruptSym;
-  SgFunctionSymbol* startingInstructionSym;
-  SgBasicBlock* switchBody;
-  SgStatement* whileBody;
-  std::map<uint64_t, SgAsmBlock*> blocks;
-  std::map<uint64_t, SgLabelStatement*> labelsForBlocks;
-  std::set<uint64_t> externallyVisibleBlocks;
-
-  SgFunctionSymbol* addHelperFunction(const std::string& name, SgType* returnType, SgFunctionParameterList* params);
-
-  template <size_t Len>
-  WordWithExpression<Len> number(uint64_t n) {
-    return buildUnsignedLongLongIntValHex(n);
-  }
-
-  template <size_t From, size_t To, size_t Len>
-  WordWithExpression<To - From> extract(WordWithExpression<Len> a) {
-    return (From == 0) ? a.expr() : buildRshiftOp(a.expr(), buildIntVal(From)); // Other bits will automatically be masked off
-  }
-
-  template <size_t Len1, size_t Len2>
-  WordWithExpression<Len1 + Len2> concat(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
-    // Concats a on LSB side of b
-    return buildBitOrOp(a.expr(), buildLshiftOp(b.expr(), buildIntVal(Len1)));
-  }
-
-  WordWithExpression<1> true_() {return buildIntVal(1);}
-  WordWithExpression<1> false_() {return buildIntVal(0);}
-  WordWithExpression<1> undefined_() {return buildIntVal(0);}
-
-  template <size_t Len>
-  WordWithExpression<Len> and_(WordWithExpression<Len> a, WordWithExpression<Len> b) {
-    return buildBitAndOp(a.expr(), b.expr());
-  }
-
-  template <size_t Len>
-  WordWithExpression<Len> or_(WordWithExpression<Len> a, WordWithExpression<Len> b) {
-    return buildBitOrOp(a.expr(), b.expr());
-  }
-
-  template <size_t Len>
-  WordWithExpression<Len> xor_(WordWithExpression<Len> a, WordWithExpression<Len> b) {
-    return buildBitXorOp(a.expr(), b.expr());
-  }
-
-  template <size_t Len>
-  WordWithExpression<Len> invert(WordWithExpression<Len> a) {
-    return buildBitXorOp(a.expr(), buildUnsignedLongLongIntValHex(GenMask<unsigned long long, Len>::value));
-  }
-
-  template <size_t Len>
-  WordWithExpression<Len> negate(WordWithExpression<Len> a) {
-    return buildAddOp(buildBitXorOp(a.expr(), buildUnsignedLongLongIntValHex(GenMask<unsigned long long, Len>::value)), buildIntVal(1));
-  }
-
-  template <size_t Len>
-  WordWithExpression<Len> ite(WordWithExpression<1> sel, WordWithExpression<Len> a, WordWithExpression<Len> b) {
-    return buildConditionalExp(sel.expr(), a.expr(), b.expr());
-  }
-
-  template <size_t Len>
-  WordWithExpression<1> equalToZero(WordWithExpression<Len> a) {
-    return buildEqualityOp(a.expr(), buildIntVal(0));
-  }
-
-  template <size_t Len>
-  WordWithExpression<Len> add(WordWithExpression<Len> a, WordWithExpression<Len> b) {
-    return buildAddOp(a.expr(), b.expr());
-  }
-
-  template <size_t Len>
-  WordWithExpression<Len> addWithCarries(WordWithExpression<Len> a, WordWithExpression<Len> b, WordWithExpression<1> carryIn, WordWithExpression<Len>& carries) {
-    WordWithExpression<Len + 1> e = buildAddOp(a.expr(), buildAddOp(b.expr(), carryIn.expr()));
-    carries = buildRshiftOp(
-                buildBitXorOp(buildBitXorOp(a.expr(), b.expr()), e.expr()),
-                buildIntVal(1));
-    return extract<0, Len>(e);
-  }
-
-  template <size_t Len1, size_t Len2>
-  WordWithExpression<Len1> rotateLeft(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
-    return buildBitOrOp(buildLshiftOp(a.expr(), b.expr()), buildRshiftOp(a.expr(), buildModOp(buildSubtractOp(buildIntVal(Len1), b.expr()), buildIntVal(Len1))));
-  }
-
-  template <size_t Len1, size_t Len2>
-  WordWithExpression<Len1> rotateRight(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
-    return buildBitOrOp(buildRshiftOp(a.expr(), b.expr()), buildLshiftOp(a.expr(), buildModOp(buildSubtractOp(buildIntVal(Len1), b.expr()), buildIntVal(Len1))));
-  }
-
-  template <size_t Len1, size_t Len2>
-  WordWithExpression<Len1> shiftLeft(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
-    return buildLshiftOp(a.expr(), b.expr());
-  }
-
-  template <size_t Len1, size_t Len2>
-  WordWithExpression<Len1> shiftRight(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
-    return buildRshiftOp(a.expr(), b.expr());
-  }
-
-  template <size_t Len1, size_t Len2>
-  WordWithExpression<Len1> shiftRightArithmetic(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
-    return buildBitOrOp(
-             buildRshiftOp(a.expr(), b.expr()),
-             buildConditionalExp(
-               buildBitAndOp(a.expr(), buildUnsignedLongLongIntValHex(SHL1<unsigned long long, Len1 - 1>::value)),
-               buildBitComplementOp(buildRshiftOp(buildUnsignedLongLongIntValHex(GenMask<unsigned long long, Len1>::value), b.expr())),
-               buildUnsignedLongLongIntValHex(0)));
-  }
-
-  template <size_t Len1, size_t Len2>
-  WordWithExpression<Len1> generateMask(WordWithExpression<Len2> w) { // Set lowest w bits of result
-    return buildConditionalExp(
-             buildGreaterOrEqualOp(w.expr(), buildIntVal(Len1)),
-             buildUnsignedLongLongIntValHex(GenMask<unsigned long long, Len1>::value),
-             buildSubtractOp(
-               buildLshiftOp(buildUnsignedLongLongIntValHex(1), w.expr()),
-               buildIntVal(1)));
-  }
-
-  template <size_t Len1, size_t Len2>
-  WordWithExpression<Len1 + Len2> unsignedMultiply(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
-    return buildMultiplyOp(a.expr(), b.expr());
-  }
-
-  // FIXME
-  template <size_t Len1, size_t Len2>
-  WordWithExpression<Len1 + Len2> signedMultiply(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
-    return buildMultiplyOp(a.expr(), b.expr());
-  }
-
-  template <size_t Len1, size_t Len2>
-  WordWithExpression<Len1> unsignedDivide(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
-    return buildDivideOp(a.expr(), b.expr());
-  }
-
-  template <size_t Len1, size_t Len2>
-  WordWithExpression<Len2> unsignedModulo(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
-    return buildModOp(a.expr(), b.expr());
-  }
-
-  // FIXME
-  template <size_t Len1, size_t Len2>
-  WordWithExpression<Len1> signedDivide(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
-    return buildDivideOp(a.expr(), b.expr());
-  }
-
-  // FIXME
-  template <size_t Len1, size_t Len2>
-  WordWithExpression<Len2> signedModulo(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
-    return buildModOp(a.expr(), b.expr());
-  }
-
-  template <size_t From, size_t To>
-  WordWithExpression<To> signExtend(WordWithExpression<From> a) {
-    return buildBitOrOp(a.expr(), buildConditionalExp(buildNotEqualOp(buildBitAndOp(a.expr(), buildUnsignedLongLongIntValHex(SHL1<unsigned long long, (From - 1)>::value)), buildIntVal(0)), buildUnsignedLongLongIntValHex(SHL1<unsigned long long, To>::value - SHL1<unsigned long long, From>::value), buildIntVal(0)));
-  }
-
-  template <size_t Len>
-  WordWithExpression<Len> leastSignificantSetBit(WordWithExpression<Len> a) {
-    return buildFunctionCallExp(bsfSym, buildExprListExp(a.expr()));
-  }
-
-  template <size_t Len>
-  WordWithExpression<Len> mostSignificantSetBit(WordWithExpression<Len> a) {
-    return buildFunctionCallExp(bsrSym, buildExprListExp(a.expr()));
-  }
-
-  WordWithExpression<1> readFlag(X86Flag flag) {
-    SgVariableSymbol* fl = flagsSym[flag];
-    ROSE_ASSERT (fl);
-    return buildVarRefExp(fl);
-  }
-
-  void writeFlag(X86Flag flag, WordWithExpression<1> value) {
-    SgVariableSymbol* fl = flagsSym[flag];
-    ROSE_ASSERT (fl);
-    appendStatement(buildAssignStatement(buildVarRefExp(fl), value.expr()), bb);
-  }
-
-  WordWithExpression<32> readGPR(X86GeneralPurposeRegister num) {
-    return buildVarRefExp(gprSym[num]);
-  }
-
-  void writeGPR(X86GeneralPurposeRegister num, WordWithExpression<32> val) {
-    appendStatement(buildExprStatement(buildAssignOp(buildVarRefExp(gprSym[num]), val.expr())), bb);
-  }
-
-  WordWithExpression<16> readSegreg(X86SegmentRegister sr) {
-    return buildIntValHex(0x2B); // FIXME
-  }
-
-  void writeSegreg(X86SegmentRegister sr, WordWithExpression<16> val) {
-    // FIXME
-  }
-
-  WordWithExpression<32> readIP() {
-    return buildVarRefExp(ipSym);
-  }
-
-  void writeIP(WordWithExpression<32> val) {
-    appendStatement(buildExprStatement(buildAssignOp(buildVarRefExp(ipSym), val.expr())), bb);
-  }
-
-  template <size_t Len>
-  WordWithExpression<Len> readMemory(X86SegmentRegister segreg, WordWithExpression<32> address, WordWithExpression<1> cond) {
-    SgFunctionSymbol* mrSym = NULL;
-    switch (Len) {
-      case 8: mrSym = memoryReadByteSym; break;
-      case 16: mrSym = memoryReadWordSym; break;
-      case 32: mrSym = memoryReadDWordSym; break;
-      case 64: mrSym = memoryReadQWordSym; break;
-      default: ROSE_ASSERT (false);
-    }
-    ROSE_ASSERT (mrSym);
-    return buildConditionalExp(cond.expr(), buildFunctionCallExp(mrSym, buildExprListExp(address.expr())), buildIntVal(0));
-  }
-
-  template <size_t Len>
-  void writeMemory(X86SegmentRegister segreg, WordWithExpression<32> address, WordWithExpression<Len> data,
-                   WordWithExpression<1> cond) {
-      SgFunctionSymbol* mwSym = NULL;
-      switch (Len) {
-        case 8: mwSym = memoryWriteByteSym; break;
-        case 16: mwSym = memoryWriteWordSym; break;
-        case 32: mwSym = memoryWriteDWordSym; break;
-        case 64: mwSym = memoryWriteQWordSym; break;
-        default: ROSE_ASSERT (false);
-      }
-      ROSE_ASSERT (mwSym);
-      appendStatement(buildIfStmt(buildNotEqualOp(cond.expr(), buildIntVal(0)),
-                                  buildExprStatement(buildFunctionCallExp(mwSym, buildExprListExp(address.expr(),
-                                                                                                  data.expr()))),
-                                  NULL),
-                      bb);
-  }
-  template <size_t Len>
-  void writeMemory(X86SegmentRegister segreg, WordWithExpression<32> address, WordWithExpression<Len> data,
-                   WordWithExpression<32> repeat, WordWithExpression<1> cond) {
-      writeMemory(segreg, address, data, cond);
-  }
-
-// Thee might exist so that static analysis can be used to generate more about the indirect jump.
-  WordWithExpression<32> filterIndirectJumpTarget(const WordWithExpression<32>& addr) {
-    return addr;
-  }
-
-  WordWithExpression<32> filterCallTarget(const WordWithExpression<32>& addr) {
-    return addr;
-  }
-
-  WordWithExpression<32> filterReturnTarget(const WordWithExpression<32>& addr) {
-    return addr;
-  }
-
-  void hlt() {
-    appendStatement(buildExprStatement(buildFunctionCallExp(abortSym, buildExprListExp())), bb);
-  }
-
-  void interrupt(uint8_t num) {
-    appendStatement(buildExprStatement(buildFunctionCallExp(interruptSym, buildExprListExp(buildIntVal(num)))), bb);
-  }
-
-  WordWithExpression<64> rdtsc() {
-    return buildUnsignedLongLongIntValHex(0); // FIXME
-  }
-
-  void startBlock(uint64_t addr) {
-  }
-
-  void finishBlock(uint64_t addr) {
-  }
-
-  void startInstruction(SgAsmInstruction* insn) {
-    bb = buildBasicBlock();
-    appendStatement(buildCaseOptionStmt(buildUnsignedLongLongIntValHex(insn->get_address()), bb), switchBody);
-    appendStatement(buildPragmaDeclaration(unparseInstructionWithAddress(insn), bb), bb);
-  }
-
-  void finishInstruction(SgAsmInstruction* insn) {
-    appendStatement(buildContinueStmt(), bb);
-  }
-
-  virtual bool isMemoryWrite(SgFunctionRefExp* func) const {
-    return (
-        func->get_symbol()->get_declaration() == memoryWriteByteSym->get_declaration() ||
-        func->get_symbol()->get_declaration() == memoryWriteWordSym->get_declaration() ||
-        func->get_symbol()->get_declaration() == memoryWriteDWordSym->get_declaration() ||
-        func->get_symbol()->get_declaration() == memoryWriteQWordSym->get_declaration());
-  }
-  virtual bool isMemoryRead(SgFunctionRefExp* func) const {
-    return (
-        func->get_symbol()->get_declaration() == memoryReadByteSym->get_declaration() ||
-        func->get_symbol()->get_declaration() == memoryReadWordSym->get_declaration() ||
-        func->get_symbol()->get_declaration() == memoryReadDWordSym->get_declaration() ||
-        func->get_symbol()->get_declaration() == memoryReadQWordSym->get_declaration());
-  }
-  virtual bool isVolatileOperation(SgExpression* e) const {
-    return (
-        isSgFunctionCallExp(e) &&
-        isSgFunctionRefExp(isSgFunctionCallExp(e)->get_function()) &&
-        isSgFunctionRefExp(isSgFunctionCallExp(e)->get_function())->get_symbol()->get_declaration() == interruptSym->get_declaration());
-  }
-  virtual SgStatement* getWhileBody() const {return whileBody;}
-  virtual SgBasicBlock* getSwitchBody() const {return switchBody;}
-  virtual SgVariableSymbol* getIPSymbol() const {return ipSym;}
-  virtual const std::map<uint64_t, SgLabelStatement*>& getLabelsForBlocks() const {return labelsForBlocks;}
-  virtual const std::set<uint64_t>& getExternallyVisibleBlocks() const {return externallyVisibleBlocks;}
-};
 
 #if 0 // Unused
 static int sizeOfInsnSize(X86InstructionSize s) {
@@ -491,6 +273,11 @@ int main(int argc, char** argv) {
   ROSE_ASSERT(newFile != NULL);
   SgGlobal* g = newFile->get_globalScope();
   ROSE_ASSERT (g);
+
+#if 0
+// DQ (11/19/2009): Git generated a conflict here, but I had not changed anything.
+
+<<<<<<< HEAD:projects/assemblyToSourceAst/x86AssemblyToC.C
   SgFunctionDeclaration* decl = buildDefiningFunctionDeclaration("run", SgTypeVoid::createType(), buildFunctionParameterList(), g);
   appendStatement(decl, g);
   vector<SgNode*> asmFiles = NodeQuery::querySubTree(proj, V_SgAsmGenericFile);
@@ -508,8 +295,121 @@ int main(int argc, char** argv) {
     SgAsmx86Instruction* insn = isSgAsmx86Instruction(instructions[i]);
     ROSE_ASSERT (insn);
     t.processInstruction(insn);
+=======
+#endif
+
+  //I am doing some experimental work to enable functions in the C representation
+  //Set this flag to true in order to enable that work
+  bool enable_functions = false;
+  //Jeremiah did some work to enable a simplification and normalization of the 
+  //C representation. Enable this work by setting this flag to true.
+  bool enable_normalizations = false;
+
+  if( enable_functions == false)
+  {
+    //Representation of C normalizations withotu functions
+    SgFunctionDeclaration* decl = buildDefiningFunctionDeclaration("run", SgTypeVoid::createType(), buildFunctionParameterList(), g);
+    appendStatement(decl, g);
+    vector<SgNode*> asmFiles = NodeQuery::querySubTree(proj, V_SgAsmGenericFile);
+    ROSE_ASSERT (asmFiles.size() == 1);
+    SgBasicBlock* body = decl->get_definition()->get_body();
+    //  ROSE_ASSERT(isSgAsmFile(asmFiles[0]));
+    //  X86CTranslationPolicy policy(newFile, isSgAsmFile(asmFiles[0]));
+    X86CTranslationPolicy policy(newFile, isSgAsmGenericFile(asmFiles[0]));
+    ROSE_ASSERT( isSgAsmGenericFile(asmFiles[0]) != NULL);
+
+    policy.switchBody = buildBasicBlock();
+    removeDeadStores(policy.switchBody,policy);
+
+    SgSwitchStatement* sw = buildSwitchStatement(buildVarRefExp(policy.ipSym), policy.switchBody);
+    ROSE_ASSERT(isSgBasicBlock(sw->get_body()));
+
+    SgWhileStmt* whileStmt = buildWhileStmt(buildBoolValExp(true), sw);
+
+    appendStatement(whileStmt, body);
+    policy.whileBody = sw;
+
+    X86InstructionSemantics<X86CTranslationPolicy, WordWithExpression> t(policy);
+    //AS FIXME: This query gets noting in the form in the repository. Doing this hack since we only 
+    //have one binary file anyways.
+    //vector<SgNode*> instructions = NodeQuery::querySubTree(asmFiles[0], V_SgAsmx86Instruction);
+    vector<SgNode*> instructions = NodeQuery::querySubTree(proj, V_SgAsmx86Instruction);
+
+    std::cout << "Instruction\n";
+    for (size_t i = 0; i < instructions.size(); ++i) {
+      SgAsmx86Instruction* insn = isSgAsmx86Instruction(instructions[i]);
+      ROSE_ASSERT (insn);
+      t.processInstruction(insn);
+    }
+
+
+    if ( enable_normalizations == true )
+    {
+      //Enable normalizations of C representation
+      //This is done heuristically where some steps
+      //are repeated. It is not clear which order is 
+      //the best
+      {
+        plugInAllConstVarDefs(policy.switchBody,policy) ;
+        simplifyAllExpressions(policy.switchBody);
+        removeIfConstants(policy.switchBody);
+        removeDeadStores(policy.switchBody,policy);
+        removeUnusedVariables(policy.switchBody);
+      }
+      {
+        plugInAllConstVarDefs(policy.switchBody,policy) ;
+        simplifyAllExpressions(policy.switchBody);
+        removeIfConstants(policy.switchBody);
+        removeDeadStores(policy.switchBody,policy);
+      }
+      removeUnusedVariables(policy.switchBody);
+    }
+
+  
+  }else{ //Experimental changes to introduce functions into the C representation
+
+
+    //When trying to add function I get that symbols are not defined
+
+    //Iterate over the functions separately
+    vector<SgNode*> asmFunctions = NodeQuery::querySubTree(proj, V_SgAsmFunctionDeclaration);
+    vector<SgNode*> asmFiles = NodeQuery::querySubTree(proj, V_SgAsmGenericFile);
+    ROSE_ASSERT (asmFiles.size() == 1);
+
+    for(int j = 0; j < asmFunctions.size(); j++ )
+    {
+
+      SgAsmFunctionDeclaration* binFunc = isSgAsmFunctionDeclaration( asmFunctions[j] );
+      SgFunctionDeclaration* decl = buildDefiningFunctionDeclaration("my"+binFunc->get_name(), SgTypeVoid::createType(), buildFunctionParameterList(), g);
+
+      appendStatement(decl, g);
+      SgBasicBlock* body = decl->get_definition()->get_body();
+      X86CTranslationPolicy policy(newFile, isSgAsmGenericFile(asmFiles[0]));
+      ROSE_ASSERT( isSgAsmGenericFile(asmFiles[0]) != NULL);
+      policy.switchBody = buildBasicBlock();
+      SgSwitchStatement* sw = buildSwitchStatement(buildVarRefExp(policy.ipSym), policy.switchBody);
+      SgWhileStmt* whileStmt = buildWhileStmt(buildBoolValExp(true), sw);
+      appendStatement(whileStmt, body);
+      policy.whileBody = sw;
+      X86InstructionSemantics<X86CTranslationPolicy, WordWithExpression> t(policy);
+      vector<SgNode*> instructions = NodeQuery::querySubTree(binFunc, V_SgAsmx86Instruction);
+
+      for (size_t i = 0; i < instructions.size(); ++i) {
+        SgAsmx86Instruction* insn = isSgAsmx86Instruction(instructions[i]);
+        ROSE_ASSERT (insn);
+        t.processInstruction(insn);
+      }
+
+    }
+
+    //addDirectJumpsToSwitchCases(policy);
+
+
   }
+
   proj->get_fileList().erase(proj->get_fileList().end() - 1); // Remove binary file before calling backend
+
   AstTests::runAllTests(proj);
+
   return backend(proj);
 }

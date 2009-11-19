@@ -6,8 +6,9 @@ EXTRA_DIST = index_array.txt \
 	     upcparam.h upcparam_s.h \
 	     extract-actual-error.sed extract-expected-error.sed
 
-#if ROSE_USE_RTED
+# Currently, we exclude 32bit and MacOS
 if !OS_VENDOR_REDHAT_32BIT
+if !OS_MACOSX
 
 # To keep compile commands tidy, please ONLY put required include flags here.
 INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I. -Winvalid-pch -pthreads
@@ -437,7 +438,15 @@ rted_source/%_rose.upc: runtimeCheck rted_source/%.upc $(srcdir)/$(RTS) $(srcdir
 #  1: file extension (.c, .cpp, .f, ... )
 #  2: compile command
 #  3: additional parameters, like linking against debugger ...
-COMPILING_RUNTIME_SYSTEM = @echo " >>>>>  compiling instrumented debugger code (with _s) ... $(filter rted_source/%$(strip $(1)), $^)"; \
+#COMPILING_RUNTIME_SYSTEM =  @echo -n "$(2) -g -o $@ $(filter rted_source/%$(strip $(1)), $^) \
+#				      $(srcdir)/$(RTS) \
+#				      $(INCLUDES) \
+#				      -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) \
+#	 		              -I$(dir $(patsubst rted_source/%, $(srcdir)/%, $@)) \
+#				      -I$(top_builddir) \
+#				      -I$(srcdir) \
+#				      $(3) $(RTED_LIB)";
+COMPILING_RUNTIME_SYSTEM = @echo " !>>>>>  compiling instrumented debugger code (with _s) ... $(filter rted_source/%$(strip $(1)), $^)"; \
 			   $(2) -g -o $@ $(filter rted_source/%$(strip $(1)), $^) \
 				      $(srcdir)/$(RTS) \
 				      $(INCLUDES) 
@@ -451,14 +460,6 @@ COMPILING_RUNTIME_SYSTEM +=    -I$(dir $(patsubst rted_source/%, $(srcdir)/%, $@
 					  || { cat $@.compile.err; false; }; \
 			   if [ $$? -ne 0 ]; then exit 1; fi; \
 			   echo -n " done.";
-# COMPILING_RUNTIME_SYSTEM +=   echo -n "$(2) -g -o $@ $(filter rted_source/%$(strip $(1)), $^) \
-#				      $(srcdir)/$(RTS) \
-#				      $(INCLUDES) \
-#				      -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) \
-#	 		              -I$(dir $(patsubst rted_source/%, $(srcdir)/%, $@)) \
-#				      -I$(top_builddir) \
-#				      -I$(srcdir) \
-#				      $(3) $(RTED_LIB)";
 
 rted_source/%.bin: rted_source/%_rose.c rted_source/%_s_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	$(call COMPILING_RUNTIME_SYSTEM, .c, $(RTED_CC))
@@ -852,4 +853,6 @@ check-local:
 	@echo "***********************************************************************************************************"
 endif
 
+
+endif
 endif

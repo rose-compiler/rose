@@ -37,7 +37,7 @@ TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 ROSE_TOP=/home/liao6/daily-test-rose/${TIMESTAMP}
 
 # for regular build and tests
-CONFIGURE_FLAGS=(--with-boost=${BOOST_ROOT} --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-qt=/usr/apps/qt/4.5.1 --with-roseQt --with-haskell=/home/liao6/opt/ghc-6.10.4/bin --with-gomp_omp_runtime_library=/home/liao6/opt/gcc-svn/lib/ --prefix=${ROSE_TOP}/install "$@")
+CONFIGURE_FLAGS=(--with-boost=${BOOST_ROOT} --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-qt=/usr/apps/qt/4.5.1 --with-roseQt --with-haskell=/home/liao6/opt/ghc-6.10.4/bin --with-pch --with-gomp_omp_runtime_library=/home/liao6/opt/gcc-svn/lib/ --prefix=${ROSE_TOP}/install "$@")
 
 SVNOP=checkout
 # check out the revision of the past 11:00pm PDT (06:00am UTC)
@@ -53,6 +53,7 @@ ENABLE_BUILD_BINARY_EDG=1
 KEEP_TEST_DIR=0
 # my additional stuff
 ENABLE_UPLOAD_SVN=1
+# enable generating a ChangeLog2 for the SciDAC external repository
 ENABLE_UPLOAD_CHANGELOG2=1
 ENABLE_UPLOAD_WEB=1
 # using external benchmarks
