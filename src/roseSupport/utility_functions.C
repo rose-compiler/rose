@@ -1075,8 +1075,27 @@ ROSE::getNextStatement ( SgStatement *currentStatement )
 							 {
 								 SgStatementPtrList & statementList = scope->getStatementList();
 								 Rose_STL_Container<SgStatement*>::iterator i;
-								 for (i = statementList.begin();(*i)!=currentStatement;i++) {}
-								 // now i == currentStatement
+                                                                 // Liao, 11/18/2009, Handle the rare case that current statement is not found
+                                                                 // in its scope's statement list
+								 //for (i = statementList.begin();(*i)!=currentStatement;i++) 
+								 for (i = statementList.begin();(*i)!=currentStatement && i!= statementList.end();i++) 
+                                                                 {
+                                                                 //  SgStatement* cur_stmt = *i;
+                                                                 //  cout<<"Skipping current statement: "<<cur_stmt->class_name()<<endl;
+                                                                 //  cout<<cur_stmt->get_file_info()->displayString()<<endl;
+                                                                 }
+								 // currentStatement is not found in the list
+                                                                 if (i ==  statementList.end()) 
+                                                                 {
+                                                                   cerr<<"fatal error: ROSE::getNextStatement(): current statement is not found within its scope's statement list"<<endl;
+                                                                   cerr<<"current statement is "<<currentStatement->class_name()<<endl;
+                                                                   cerr<<currentStatement->get_file_info()->displayString()<<endl;
+                                                                   cerr<<"Its scope is "<<scope->class_name()<<endl;
+                                                                   cerr<<scope->get_file_info()->displayString()<<endl;
+                                                                   ROSE_ASSERT (false);
+                                                                  }
+                                                                 //  now i == currentStatement
+                                                                 ROSE_ASSERT (*i == currentStatement);
 								 i++;
 								 if (statementList.end() == i) nextStatement=NULL;
 								 else nextStatement=*i;
