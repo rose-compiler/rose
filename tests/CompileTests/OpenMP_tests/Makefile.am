@@ -11,6 +11,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	3loops.c \
 	jacobi.c \
 	atomic.c \
+	atoms-2.c \
 	barrier.c \
 	collapse.c \
 	copyin.c \
@@ -70,6 +71,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	set_num_threads.c \
 	single.c \
 	single_copyprivate.c \
+	sizeof.c \
 	spmd1.c \
 	staticChunk.c \
 	subteam2.c \
@@ -122,16 +124,22 @@ $(C_TESTCODES_REQUIRED_TO_PASS) \
 $(CXX_TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING)
 
+# Liao 11/18/2009
+# Test for a bug which happens when more than two source files show in the command line
+# the translator should now be able to avoid duplicated processing of pragma statements
+bonds-2.o: $(srcdir)/atoms-2.c $(srcdir)/bonds-2.c parseOmp
+	./parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/atoms-2.c $(srcdir)/bonds-2.c
 
 check-local:
 	@echo "Test for ROSE OpenMP Parser."
 	@$(MAKE) $(PASSING_C_TEST_Objects) 
 	@$(MAKE) $(PASSING_CXX_TEST_Objects)
+	@$(MAKE) bonds-2.o
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/OpenMP_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
 
-EXTRA_DIST = $(ALL_TESTCODES) README
+EXTRA_DIST = $(ALL_TESTCODES) README bonds-2.c
 
 clean-local:
 	rm -f *.o rose_*.* *.out

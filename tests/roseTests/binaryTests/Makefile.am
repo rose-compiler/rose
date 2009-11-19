@@ -18,7 +18,7 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIde
 ###############################################################################################################################
 
 noinst_PROGRAMS = execFormatsTest testElfStrtab testElfByteOrder testElfWordSize testElfSchulz testElfConstruct \
-	          testPeConstruct shiftResizeSection findConstants disassemble
+	          testPeConstruct shiftResizeSection findConstants disassemble testEtherInsns
 
 # Parses an executable to produce a dump file (*.dump), an assembly file (rose_*.s), and a new executable created by unparsing
 # the AST (*.new). The *.new file is typically identical to the original executable.
@@ -67,6 +67,9 @@ findConstants_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 # Disassembles an executable according to various command-line switches.
 disassemble_SOURCES = disassemble.C
 disassemble_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+testEtherInsns_SOURCES = testEtherInsns.C
+testEtherInsns_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 ###############################################################################################################################
 # DEMOS
@@ -236,6 +239,10 @@ test_samples.passed: disassemble execFormatsTest $(srcdir)/testSampleBinaries.sh
 	   echo "Full output is in `pwd`/test_samples.out"; \
 	   false; \
 	fi
+
+test_testEtherInsns.passed: testEtherInsns
+	@echo "testEtherInsns cannot be run automatically--it requires human interaction.     (SKIPPED)"
+
 
 ###############################################################################################################################
 # Miscellaneous....
