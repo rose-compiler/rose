@@ -1,7 +1,9 @@
 #!/bin/sh -ex
 
 if test $ROSE_TEST_GCC_VERSION != 4.1.2 ; then
+	set +ex
 	. /usr/apps/gcc/$ROSE_TEST_GCC_VERSION/setup.sh
+	set -ex
 fi
 
 if test $ROSE_TEST_BUILD_STYLE = cmake ; then
