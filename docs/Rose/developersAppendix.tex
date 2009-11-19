@@ -2170,7 +2170,7 @@ deserve their own namespaces.}
 	\item Parsing functions \\
    These methods parse a particular entity from a binary file and
    fill in an existing IR node that was recently constructed.
-   See parse() methods in src/frontend/ExecFormats/*.C
+   See parse() methods in src/frontend/BinaryFormats/*.C
    \item Disassembly \\
    Disassembling a buffer into a std::map of instructions.  ROSE
    normally calls this automatically, does a little analysis to
@@ -4417,28 +4417,28 @@ typedef SgBoostEdgeWeightList* SgBoostEdgeWeightListPtr;
    having different lookup functions and able to combine adjacent
    regions into single entries in its data structure. \\
    See doxygen ExecMap class. \\
-   See src/frontend/ExecFormats/ExecGeneric.C.
+   See src/frontend/BinaryFormats/ExtentMap.C.
 
    \item Debug dumps \\
    The dump() methods scattered throughout
-   src/frontend/ExecFormats/*.C generate human-readable tables
+   src/frontend/BinaryFormats/*.C generate human-readable tables
    describing all details of the SgAsm* nodes. They all take the
    same arguments. These are what produce the *.dump files. \\
-   See src/frontend/ExecFormats/*.C
+   See src/frontend/BinaryFormats/*.C
 
    \item String Management \\
    Functions that manage strings that might be stored in various
    kinds of string tables in a binary file.  Modifying strings,
    sharing storage, repacking tables, reallocating individual
    strings, avoidance of certain file regions, etc. \\
-   See src/frontend/ExecFormats/ExecGeneric.C
+   See src/frontend/BinaryFormats/GenericString.C
 
    \item Section I/O \\
    A variety of functions for reading the original content of a
    binary section either by file offset or through a
    MemoryMap. Also functions for writing back to the file. \\
    Defined for SgAsmGenericFile and SgAsmGenericSection. \\
-   See src/frontend/ExecFormats/ExecGeneric.C
+   See src/frontend/BinaryFormats/GenericFile.C src/frontendBinaryFormats/GenericSection.C
 
    \item MemoryMap \\
    A data structure similar to std::map that maps one address
@@ -4447,13 +4447,13 @@ typedef SgBoostEdgeWeightList* SgBoostEdgeWeightListPtr;
    memory address space separate from its own and manage it as a
    program loader would do. \\
    See doxygen MemoryMap class. \\
-   See src/frontend/ExecFormats/MemoryMap.h
+   See src/frontend/BinaryFormats/MemoryMap.h
 
    \item Data conversion \\
    Functions for converting data from file format to memory
    format. Most of these are to handle byte order, but there are
    some other encodings as well. \\
-   See src/frontend/ExecFormats/ExecGeneric.C
+   See src/frontend/BinaryFormats/ExecGeneric.C
 
    \item Miscellaneous Support (DQ) \\
          Output of usage information, ROSE version number support, etc.
