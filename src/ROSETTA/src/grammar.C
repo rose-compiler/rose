@@ -341,7 +341,15 @@ Grammar::writeFile ( const StringUtility::FileWithLineNumbers& outputString,
   // char* directoryName = GrammarString::stringDuplicate(directoryName);
 
      string outputFilename = (directoryName == "." ? "" : directoryName + "/") + className + fileExtension;
-     // printf ("outputFilename = %s \n",outputFilename.c_str());
+#ifdef _MSC_VER
+	 // tps(11/19/2009) :
+     // ./astFileIO//SourceOfIRNodesAstFileIOSupport.C fails to run on Windows under Debug mode
+	outputFilename =  std::replace( outputFilename.begin(), outputFilename.end(), './', '' );
+	outputFilename =  std::replace( outputFilename.begin(), outputFilename.end(), '//', '\\' );
+	outputFilename =  std::replace( outputFilename.begin(), outputFilename.end(), '/', '\\' );
+
+#endif
+	 printf ("outputFilename = %s \n",outputFilename.c_str());
      ofstream ROSE_ShowFile(outputFilename.c_str());
      ROSE_ASSERT (ROSE_ShowFile.good() == true);
 
