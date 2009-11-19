@@ -181,7 +181,7 @@ ResetEmptyNames::visit(SgNode* node)
                  // DQ (2/11/2007): This mechanism generates the same name for the same structure (more suitable for use with AST merge)
                     SgName new_name = "__unnamed_class__";
 
-                 // DQ (3/10/2007): Added a unique string based on the source position infomation so that the different un-named declarations would not be confused.
+                 // DQ (3/10/2007): Added a unique string based on the source position information so that the different un-named declarations would not be confused.
                  // See test2004_105.C for an example of where this is important.
                     new_name += SageInterface::declarationPositionString(definingDeclaration) + string("_");
 

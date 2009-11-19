@@ -536,6 +536,8 @@ HEADER_UNARY_ADD_OPERATOR_END
 
 
 HEADER_SIZEOF_OPERATOR_START
+ // Liao, 11/17/2009
+ int replace_expression(SgExpression*, SgExpression*) ROSE_DEPRECATED_FUNCTION;
 HEADER_SIZEOF_OPERATOR_END
 
 
@@ -999,6 +1001,11 @@ HEADER_USER_DEFINED_BINARY_EXPRESSION_START
           SgType* get_type() const;
 HEADER_USER_DEFINED_BINARY_EXPRESSION_END
 
+HEADER_PSEUDO_DESTRUCTOR_REF_START
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+HEADER_PSEUDO_DESTRUCTOR_REF_END
 
 // #########################################################
 // #########################################################
@@ -2976,6 +2983,28 @@ $CLASSNAME::get_type() const
      return returnType;
    }
 
+// Liao, 11/17/2009
+int
+SgSizeOfOp::replace_expression (SgExpression *o, SgExpression *n)
+   {
+  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // structural change to the AST, thus it is free to set the parent of the new expression.
+
+     ROSE_ASSERT(o != NULL);
+     ROSE_ASSERT(n != NULL);
+
+     if (get_operand_expr() == o)
+        {
+          set_operand_expr(n);
+          return 1;
+        }
+       else
+        {
+          printf ("Warning: inside of SgSizeOfOp::replace_expression original SgExpression unidentified \n");
+          return 0;
+        }
+   } 
+
 SOURCE_SIZE_OF_OPERATOR_EXPRESSION_END
 
 SOURCE_TYPE_ID_OPERATOR_EXPRESSION_START
@@ -3281,7 +3310,8 @@ $CLASSNAME::get_type() const
      SgType* returnType = NULL;
      if (classDefinition != NULL)
         {
-          returnType = SgPointerMemberType::createType(baseType,classDefinition);
+	  SgClassType* classType = classDefinition->get_declaration()->get_type();
+          returnType = SgPointerMemberType::createType(baseType,classType);
         }
        else
         {
@@ -4202,11 +4232,11 @@ $CLASSNAME::get_type() const
   // printf ("$CLASSNAME::get_type(): p_expression_type has been removed, getting the return type from the stored internal operand \n");
 
      ROSE_ASSERT(get_operand() != NULL);
-     SgType* returnType = get_operand()->get_type();
+     SgType* returnType = p_expression_type ? p_expression_type : get_operand()->get_type();
 
      ROSE_ASSERT(returnType != NULL);
 
-     if (get_operand()->variantT() != V_SgStringVal)
+     if (!p_expression_type && get_operand()->variantT() != V_SgStringVal)
         {
           SgType* retElemType = SageInterface::getElementType(returnType);
           if (retElemType != NULL)
@@ -5324,4 +5354,13 @@ SgUserDefinedBinaryOp::get_type() const
    }
 
 SOURCE_USER_DEFINED_BINARY_EXPRESSION_END
+
+SOURCE_PSEUDO_DESTRUCTOR_REF_START
+void
+SgPseudoDestructorRefExp::post_construction_initialization()
+   {
+     SgMemberFunctionType *memFnType = new SgMemberFunctionType(SgTypeVoid::createType(), false, p_object_type);
+     set_expression_type(memFnType);
+   }
+SOURCE_PSEUDO_DESTRUCTOR_REF_END
 
