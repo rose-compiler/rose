@@ -28,6 +28,7 @@ set(CxxGrammarMetaProgram_SRCS
     outputClassesAndFields.C)
 
 set(GRAMMAR_SOURCE_FILES
+     ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/Node.code 
      ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/Statement.code 
      ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/grammarClassDefinitionMacros.macro 
      ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/grammarVariantFunctionDefinitionMacros.macro 
@@ -49,8 +50,7 @@ set(GRAMMAR_SOURCE_FILES
      ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/parserSourceCode.macro 
      ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/LocatedNode.code 
      ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/dataMemberAccessFunctions.macro 
-     ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/grammarMainClassParseFunctionSourceCode.macro 
-     ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/Node.code 
+     ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/grammarMainClassParseFunctionSourceCode.macro
      ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/BinaryInstruction.code 
      ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/grammarClassDeclarationMacros.macro 
      ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/grammarMainClassSourceCodeMacros.macro 
@@ -101,7 +101,7 @@ add_custom_command(
 #add_custom_target( ROSETTA ALL DEPENDS ${GENERATED_HEADERS} ${GENERATED_SRC} COMMENT "Generating files" )
 
 add_custom_target( ROSETTA ALL DEPENDS ${ROSETTA_HEADERS} ${ROSETTA_SRC}
-    ${STORAGECLASSES_SRC}    )
+     ${STORAGECLASSES_SRC}    )
 #add_custom_target( ROSETTA ALL DEPENDS copy_ROSETTA COMMENT "Generating files" )
 
 
