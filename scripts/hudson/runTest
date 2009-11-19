@@ -1,9 +1,15 @@
 #!/bin/sh -ex
 
 if test $ROSE_TEST_GCC_VERSION != 4.1.2 ; then
-	set +ex
-	. /usr/apps/gcc/$ROSE_TEST_GCC_VERSION/setup.sh
-	set -ex
+	GCCROOT=/usr/apps/gcc/$ROSE_TEST_GCC_VERSION
+	if test -e $GCCROOT/setup.sh ; then
+		set +ex
+		. $GCCROOT/setup.sh
+		set -ex
+	else
+		export PATH="$GCCROOT/bin:$PATH"
+		export LD_LIBRARY_PATH="$GCCROOT/lib:$LD_LIBRARY_PATH"
+	fi
 fi
 
 if test $ROSE_TEST_BUILD_STYLE = cmake ; then
