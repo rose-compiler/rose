@@ -276,6 +276,7 @@ int main(int argc, char** argv) {
 
 #if 0
 // DQ (11/19/2009): Git generated a conflict here, but I had not changed anything.
+// I think this is related to an update from Andreas's branch 2 weeks ago.
 
 <<<<<<< HEAD:projects/assemblyToSourceAst/x86AssemblyToC.C
   SgFunctionDeclaration* decl = buildDefiningFunctionDeclaration("run", SgTypeVoid::createType(), buildFunctionParameterList(), g);
