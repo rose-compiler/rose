@@ -27,8 +27,6 @@ extern "C" {
 #  include <xen/hvm/ether.h>
 }
 
-#  include "ether.h" /*not same as <xen/hvm/ether.h>, but rather ether support functions from GA Tech*/
-
 #include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
