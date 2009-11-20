@@ -176,6 +176,9 @@ namespace ELF{
 #include "IntelPinSupport.h"
 #endif
 
+// Support for Xen/Ether hypervisor
+#include "ether.h"
+
 // DQ (4/20/2009): Added support to optionally get more information out about new delete operators.
 // #define COMPILE_DEBUG_STATEMENTS 1
 
