@@ -293,7 +293,7 @@ SgExpression* ToExpression( AstInterface& fa, const AstNodePtr& _s)
 // Strip leading "const" and tailing '&'
 string StripParameterType( const string& name)
 {
-  char *const_start = strstr( name.c_str(), "const");
+  const char *const_start = strstr( name.c_str(), "const");
   string r = (const_start == 0 || const_start - name.c_str() != 5)? name : string(const_start + 5);
   ROSE_ASSERT (!r.empty());
   size_t end = r.size()-1;
@@ -729,6 +729,7 @@ NewFunc( const string& name, SgType*  rtype, const list<SgInitializedName*>& arg
 
 SgClassSymbol* AstInterfaceImpl :: GetClass( const string& val, char** start)
 {
+    const char* cfc;
     string classname = "";
     for ( size_t size = 0 ; size < val.size(); ++size) { 
       if (val[size] == ' ' || val[size] == '&' || val[size] == ':')
@@ -736,8 +737,8 @@ SgClassSymbol* AstInterfaceImpl :: GetClass( const string& val, char** start)
       classname.push_back(val[size]);
     }
     if (start != 0) {
-      *start = strstr( val.c_str(), "::");
-      *start += 2;
+      cfc = strstr( val.c_str(), "::");
+      *start = (char *)cfc + 2;
     }
 
   SgClassSymbol* classSym = LookupClass(classname.c_str());
