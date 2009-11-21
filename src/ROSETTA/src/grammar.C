@@ -31,7 +31,7 @@ vector<grammarFile*> Grammar::fileList;
 // #                   Grammar Member Functions                   #
 // ################################################################
 
-#define WRITE_SEPARATE_FILES_FOR_EACH_CLASS false
+#define WRITE_SEPARATE_FILES_FOR_EACH_CLASS 0
 
 string replaceString(string patternInInput, string replacePattern, string input) {
   string::size_type posIter = input.find(patternInInput);
@@ -344,9 +344,9 @@ Grammar::writeFile ( const StringUtility::FileWithLineNumbers& outputString,
 #ifdef _MSC_VER
 	 // tps(11/19/2009) :
      // ./astFileIO//SourceOfIRNodesAstFileIOSupport.C fails to run on Windows under Debug mode
-	outputFilename =  std::replace( outputFilename.begin(), outputFilename.end(), './', '' );
-	outputFilename =  std::replace( outputFilename.begin(), outputFilename.end(), '//', '\\' );
-	outputFilename =  std::replace( outputFilename.begin(), outputFilename.end(), '/', '\\' );
+	//std::replace( outputFilename.begin(), outputFilename.end(), './', '' );
+	//std::replace( outputFilename.begin(), outputFilename.end(), '//', '\\' );
+	std::replace( outputFilename.begin(), outputFilename.end(), '/', '\\' );
 
 #endif
 	 printf ("outputFilename = %s \n",outputFilename.c_str());
@@ -388,10 +388,10 @@ Grammar::generateStringListsFromSubtreeLists ( Terminal & node,
   vector<GrammarString *> &listOfIncludes = (node.*listFunction)(Terminal::SUBTREE_LIST,Terminal::INCLUDE_LIST);
   vector<GrammarString *> &listOfExcludes = (node.*listFunction)(Terminal::SUBTREE_LIST,Terminal::EXCLUDE_LIST);
 
-#define PREORDER_TRAVERSAL false
+#define PREORDER_TRAVERSAL 0
 
-#if !ROSE_MICROSOFT_OS
-#if (PREORDER_TRAVERSAL == true)
+//#if !ROSE_MICROSOFT_OS
+#if PREORDER_TRAVERSAL 
 
   for( grammarStringIterator = listOfIncludes.begin(); 
        grammarStringIterator != listOfIncludes.end(); 
@@ -409,7 +409,7 @@ Grammar::generateStringListsFromSubtreeLists ( Terminal & node,
 #endif
 
 #endif
-#endif
+//#endif
 
   if (node.getBaseClass() != NULL) {
     // Recursive function call
@@ -423,8 +423,8 @@ Grammar::generateStringListsFromSubtreeLists ( Terminal & node,
   checkListOfGrammarStrings(excludeList);
 #endif
 
-#if !ROSE_MICROSOFT_OS
-#if (PREORDER_TRAVERSAL == false)
+//#if !ROSE_MICROSOFT_OS
+#if !PREORDER_TRAVERSAL 
 
   for( grammarStringIterator = listOfIncludes.begin(); 
        grammarStringIterator != listOfIncludes.end(); 
@@ -442,7 +442,7 @@ Grammar::generateStringListsFromSubtreeLists ( Terminal & node,
 #endif
 
 #endif
-#endif
+//#endif
    }
 
 
@@ -461,10 +461,10 @@ Grammar::generateStringListsFromLocalLists ( Terminal & node,
   vector<GrammarString *> &listOfIncludes = (node.*listFunction)(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
   vector<GrammarString *> &listOfExcludes = (node.*listFunction)(Terminal::LOCAL_LIST,Terminal::EXCLUDE_LIST);
   
-#define PREORDER_TRAVERSAL false
+#define PREORDER_TRAVERSAL 0
 
-#if !ROSE_MICROSOFT_OS
-#if (PREORDER_TRAVERSAL == true)
+//#if !ROSE_MICROSOFT_OS
+#if PREORDER_TRAVERSAL
 
   for( grammarStringIterator = listOfIncludes.begin(); 
        grammarStringIterator != listOfIncludes.end(); 
@@ -482,7 +482,7 @@ Grammar::generateStringListsFromLocalLists ( Terminal & node,
 #endif
 
 #endif
-#endif
+//#endif
 
   if (node.getBaseClass() != NULL) {
     // Recursive function call
@@ -496,8 +496,8 @@ Grammar::generateStringListsFromLocalLists ( Terminal & node,
   checkListOfGrammarStrings(excludeList);
 #endif
 
-#if !ROSE_MICROSOFT_OS
-#if (PREORDER_TRAVERSAL == false)
+//#if !ROSE_MICROSOFT_OS
+#if !PREORDER_TRAVERSAL
 
   for( grammarStringIterator = listOfIncludes.begin(); 
        grammarStringIterator != listOfIncludes.end(); 
@@ -515,7 +515,7 @@ Grammar::generateStringListsFromLocalLists ( Terminal & node,
 #endif
 
 #endif
-#endif
+//#endif
 }
 
 
@@ -1660,14 +1660,14 @@ Grammar::buildHeaderFiles( Terminal & node, StringUtility::FileWithLineNumbers &
 
      editedHeaderFileString = editSubstitution (node,editedHeaderFileString);
 
-#if !ROSE_MICROSOFT_OS
+//#if !ROSE_MICROSOFT_OS
 #if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
   // Now write out the file (each class in its own file)!
      string fileExtension = ".h";
      string directoryName = sourceCodeDirectoryName();
      writeFile ( editedHeaderFileString, directoryName, node.getName(), fileExtension );
 #endif
-#endif
+//#endif
 
   // Also output strings to single file (this outputs everything to a single file)
      outputFile += editedHeaderFileString;
@@ -1941,7 +1941,7 @@ Grammar::buildSourceFiles( Terminal & node, StringUtility::FileWithLineNumbers &
   // Now apply the edit/subsitution specified within the grammar (by the user)
      editedSourceFileString = editSubstitution (node,editedSourceFileString);
 
-#if !ROSE_MICROSOFT_OS
+//#if !ROSE_MICROSOFT_OS
 #if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
   // Now write out the file!
      string fileExtension = ".C";
@@ -1949,7 +1949,7 @@ Grammar::buildSourceFiles( Terminal & node, StringUtility::FileWithLineNumbers &
 
      writeFile ( editedSourceFileString, directoryName, node.getName(), fileExtension );
 #endif
-#endif
+//#endif
 
 #if 1
 // Also output strings to single file
