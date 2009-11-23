@@ -6,6 +6,7 @@ add_subdirectory(CxxFrontend)
 #AS Add openfortran parser later
 #add_subdirectory(OpenFortranParser_SAGE_Connection)
 add_subdirectory(BinaryDisassembly)
+add_subdirectory(BinaryLoader)
 add_subdirectory(Disassemblers)
 add_subdirectory(ExecFormats)
 add_subdirectory(PHPFrontend)
