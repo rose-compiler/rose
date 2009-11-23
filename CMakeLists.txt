@@ -27,11 +27,12 @@ set(INSTALL_TARGETS_DEFAULT_ARGS  RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
 cmake_minimum_required(VERSION 2.6)
 add_definitions(${QT_DEFINITIONS} ${KDE4_DEFINITIONS})
 #enable_language(Fortran)
-# /TP 
-set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g /CLR /SUBSYSTEM:WINDOWS /MDd /TP" )
+
+#/CLR  /MDd /TP 
+set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g " )
 #set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -DHAVE_CONFIG_H" )
 #set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fexceptions -DHAVE_CONFIG_H" )
-set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g /CLR /SUBSYSTEM:WINDOWS /MDd /TP" )
+set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g " )
 
 #set(  CMAKE_VERBOSE_MAKEFILE  true )
 
@@ -63,10 +64,11 @@ endif(NOT BISON_FOUND)
 
 include(ConvenienceLibs)
 
+SET(Boost_ADDITIONAL_VERSIONS "1.39.0" "1.40.0" )
 #Ensure that Boost is found
-find_package( Boost 1.35.0 COMPONENTS date_time filesystem program_options regex system wave )
+find_package( Boost 1.36.0 COMPONENTS date_time filesystem program_options regex system wave )
 if(NOT Boost_FOUND)
-    message(FATAL_ERROR "Could not find Boost version 1.35.0 or newer command")
+    message(FATAL_ERROR "Could not find Boost version 1.36.0 or newer command")
 endif(NOT Boost_FOUND)
 
 
@@ -90,7 +92,6 @@ configure_file(${ROSE_TOP_SRC_DIR}/rose_config.h.in.cmake ${ROSE_TOP_BINARY_DIR}
      ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/
      ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/astFileIO
      ${ROSE_TOP_SRC_DIR}
-     ${ROSE_TOP_SRC_DIR}/winspecific
      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII 
      ${ROSE_TOP_SRC_DIR}/src/ROSETTA/src/
      ${ROSE_TOP_SRC_DIR}/src 
@@ -110,8 +111,8 @@ configure_file(${ROSE_TOP_SRC_DIR}/rose_config.h.in.cmake ${ROSE_TOP_BINARY_DIR}
      ${ROSE_TOP_SRC_DIR}/src/frontend/OpenFortranParser_SAGE_Connection 
      ${ROSE_TOP_SRC_DIR}/src/frontend/PHPFrontend 
      ${ROSE_TOP_SRC_DIR}/src/frontend/BinaryDisassembly 
-     ${ROSE_TOP_SRC_DIR}/src/frontend/BinaryFormats 
      ${ROSE_TOP_SRC_DIR}/src/frontend/Disassemblers 
+     ${ROSE_TOP_SRC_DIR}/src/frontend/ExecFormats 
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser 
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/formatSupport 
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/languageIndependenceSupport 
@@ -176,6 +177,11 @@ configure_file(${ROSE_TOP_SRC_DIR}/rose_config.h.in.cmake ${ROSE_TOP_BINARY_DIR}
      ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/libharu-2.1.0/win32/include/
      ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/astInterface )
 
+IF(WIN32) 
+set( ROSE_INCLUDES ${ROSE_INCLUDES}
+     ${ROSE_TOP_SRC_DIR}/winspecific )
+ENDIF()
+     
 include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 #include_directories( ${ROSE_INCLUDES} )
 

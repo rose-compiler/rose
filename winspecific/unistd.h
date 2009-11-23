@@ -4,7 +4,9 @@
 
 #else
 
+#ifdef _MSC_VER 
 #  include <io.h>
 #  include <process.h>
+#endif
 
 #endif
