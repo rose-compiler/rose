@@ -6,7 +6,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # SUBDIRS = SageIII EDG EDG_SAGE_Connection BinaryDisassembly
 # SUBDIRS = SageIII EDG EDG_SAGE_Connection OpenFortranParser_SAGE_Connection BinaryDisassembly ObjdumpDisassembler
 # SUBDIRS = SageIII BinaryDisassembly ObjdumpDisassembler OpenFortranParser_SAGE_Connection EDG EDG_SAGE_Connection
-SUBDIRS = SageIII CxxFrontend OpenFortranParser_SAGE_Connection BinaryDisassembly Disassemblers ExecFormats PHPFrontend
+SUBDIRS = SageIII CxxFrontend OpenFortranParser_SAGE_Connection BinaryDisassembly Disassemblers ExecFormats PHPFrontend BinaryLoader
 
 # Until we revisit this this, we want to include specific documentation that has been put into this directory.
 # Note that OpenFortranParser_SAGE_Connection has the newer work to support Fortran in ROSE.  This work

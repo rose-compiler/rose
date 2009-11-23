@@ -132,6 +132,9 @@ namespace ELF{
 #include "powerpcInstructionEnum.h"
 #include "powerpcInstructionProperties.h"
 
+// Files in src/frontent/BinaryLoader
+#include "binaryLoader.h"
+
 // Files in src/frontend/Disassemblers
 #include "Disassembler.h"
 #include "DisassemblerArm.h"
