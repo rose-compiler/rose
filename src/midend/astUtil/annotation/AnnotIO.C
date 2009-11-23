@@ -51,7 +51,7 @@ bool is_id( char c)
 int is_operator( char c)
 {
   string op = "<>+-*/&.$";
-  char *p = strchr(op.c_str(), c);
+  const char *p = strchr(op.c_str(), c);
   if (p == 0)
       return 0;
   return p - op.c_str() + 1;

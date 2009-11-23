@@ -1,8 +1,6 @@
 #ifndef ROSE_ETHER_H
 #define ROSE_ETHER_H
 
-#include "rose.h"
-
 #ifdef ROSE_USE_ETHER
 
 extern "C" {

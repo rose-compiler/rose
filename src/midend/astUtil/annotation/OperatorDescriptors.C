@@ -89,7 +89,7 @@ OperatorDeclaration& OperatorDeclaration:: read ( istream& in )
          c = peek_ch(in);
       }
       // Append () for "::operator()" ?
-      char* opstart = strrchr(signiture.c_str(), ':');
+      const char* opstart = strrchr(signiture.c_str(), ':');
       if (opstart != 0 && string(opstart+1) == "operator") {
          signiture = signiture + "()";
          read_ch(in,'(');
