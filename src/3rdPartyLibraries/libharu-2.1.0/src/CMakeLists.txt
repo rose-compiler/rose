@@ -59,7 +59,8 @@ set(hpdf_LIB_SRCS
     hpdf_utils.c
     hpdf_xref.c)
 
-add_library(libhpdf SHARED ${hpdf_LIB_SRCS})
+add_library(libhpdf STATIC ${hpdf_LIB_SRCS})
+
 
 #target_link_libraries(libhpdf ${KDE4_KDECORE_LIBS})
 

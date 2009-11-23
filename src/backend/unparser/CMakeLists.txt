@@ -33,7 +33,7 @@ set( unparser_SRC
       ./languageIndependenceSupport/unparseLanguageIndependentConstructs.C
   )
 
-add_library(unparser ${unparser_SRC})
+add_library(unparser STATIC ${unparser_SRC})
 add_dependencies( unparser ROSETTA )
 ########### install files ###############
 
