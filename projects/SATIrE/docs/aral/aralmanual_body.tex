@@ -387,7 +387,7 @@ TYPE
 lift(set(tuple(label,varid)));
 \end{verbatim}
 
-This type is not equivalent with the type MyLiftedSet. It is structurally equivalent but not name equivalent - combined types that are not associated with a name get assigned a generic type name internally. It is ensured that structurally equivalent ``unnamed'' types in different TYPE sections are associated with the same generic type name.
+This type is not equivalent with the type MyLiftedSet. It is structurally equivalent but not name equivalent - combined types that are not associated with a name are anonymous types. It is ensured that structurally equivalent anonymous types in different TYPE sections are equivalent.
 
 
 \chapter{File Format}
