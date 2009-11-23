@@ -54,6 +54,8 @@ ResultSection* resultsection;
 ResultSectionList* resultsectionlist;
 char* sectionname;
 AralFile* aralfile;
+Type* araltype;
+ComplexType* complexaraltype;
 }
 
 %right NOT
@@ -98,6 +100,8 @@ AralFile* aralfile;
 %type <resultsectionlist> opt_result_section_list result_section_list
 %type <sectionname> name_section
 %type <aralfile> aral_file;
+%type <araltype> type_equation context_type type opt_type_list 
+%type <complexaraltype> type_list
 
 %start start
 
@@ -151,10 +155,10 @@ type_equations	: type_equation
 		| type_equations type_equation
 		;
 
-type_equation	: IDENT '=' type ';'
+type_equation	: IDENT '=' type ';' { $$=new ComplexType($1,$3); }
 		;
 
-context_type	: '<' type '>'
+context_type	: '<' type '>' { $$=new ComplexType("context",$2); }
 		;
 
 data_section	: DATA annot_data_list { $$=$2;}
@@ -328,24 +332,29 @@ basic_element	: STRING { $$=new String($1); }
 		| IDENT { $$=new Ident($1); }
 		;
 
-type		: TYPE_LABEL 
-		| TYPE_TUPLE '(' opt_type_list ')'
-		| TYPE_SET '(' type ')' 
-		| TYPE_MAP '(' type ',' type ')' 
-		| TYPE_LIST '(' type ')'
-		| TYPE_LIFT '(' type ')'
-		| TYPE_INT '(' INTEGER ')'
-		| TYPE_FLOAT | TYPE_STRING
-		| TYPE_PROGID | TYPE_FUNCID | TYPE_STMTID | TYPE_EXPRID | TYPE_VARID
-		| IDENT
+type		: TYPE_LABEL { $$=new ComplexType("label"); }
+		| TYPE_TUPLE '(' opt_type_list ')' { $$=new ComplexType("tuple",$3); }
+		| TYPE_SET '(' type ')' { $$=new ComplexType("set",$3); }
+		| TYPE_MAP '(' type ',' type ')' { ComplexType* ct=new ComplexType("map",$3); ct->push_back($5); $$=ct; }
+		| TYPE_LIST '(' type ')' { $$=new ComplexType("list",$3); }
+		| TYPE_LIFT '(' type ')' { $$=new ComplexType("lift",$3); }
+		| TYPE_INT '(' INTEGER ')' { $$=new IntType(32); }
+		| TYPE_FLOAT { $$=new ComplexType("float"); }
+		| TYPE_STRING { $$=new ComplexType("string"); }
+		| TYPE_PROGID { $$=new ComplexType("progid"); }
+		| TYPE_FUNCID { $$=new ComplexType("funcid"); }
+		| TYPE_STMTID { $$=new ComplexType("stmtid"); }
+		| TYPE_EXPRID { $$=new ComplexType("exprid"); }
+		| TYPE_VARID { $$=new ComplexType("varid"); }
+		| IDENT { $$=new ComplexType("ident"); }
 		;
 
-opt_type_list	: /* eps */
-		| type_list
+opt_type_list	: /* eps */ { $$=new ComplexType("tuple",0); }
+		| type_list { $$=$1; }
 		;
 
-type_list	: type
-		| type_list ',' type
+type_list	: type { $$=new ComplexType("tuple",$1); }
+		| type_list ',' type { $$=$1; $$->push_back($3); }
 		;
 
 constraint	: basic_element             { $$=$1; }

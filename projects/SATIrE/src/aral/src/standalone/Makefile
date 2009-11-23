@@ -38,6 +38,10 @@ dist:
 	mkdir _dist/aral/
 	cp -r $(ARAL_SOURCES) Makefile _dist/aral/
 	rm _dist/aral/tests/*.alf
+
+	mkdir _dist/aral/docs
+	cp ../../docs/aralmanual.pdf _dist/aral/docs
+
 	cd _dist && \
 		tar vczf $(DISTNAME).tar.gz aral/
 	mv _dist/$(DISTNAME).tar.gz .

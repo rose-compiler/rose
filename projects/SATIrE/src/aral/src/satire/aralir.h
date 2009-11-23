@@ -22,6 +22,7 @@
 #include <sstream>
 #include <iostream>
 #include <cassert>
+#include <cmath>
 
 namespace Aral {
 
@@ -605,6 +606,75 @@ namespace Aral {
 
 		std::string s;
 	};
+
+class Type;
+class ComplexType;
+class BasicType;
+
+class Type {
+public:
+      virtual bool isEqual(Type*)=0;
+      virtual std::string toString()=0;
+};
+
+class ComplexType : public Type, public std::vector<Type*> {
+public:
+	ComplexType(std::string name) { _name=name; }
+	ComplexType(std::string name,Type* type) { _name=name; push_back(type); }
+	bool isEqual(Type* other0) {
+           if(ComplexType* other=dynamic_cast<ComplexType*>(other0))
+	     if(!(_name==other->_name && size()==other->size()))
+	     	return false;
+	     else
+	        for(std::vector<Type*>::iterator i=begin(),j=other->begin(); i!=end() && j!=other->end();i++,j++)
+	     	  if(!(*i)->isEqual(*j))
+		    return false;
+           else
+             return false;
+     	   return true;
+	}
+	std::string toString() {
+	   std::string s;
+	   s+=_name+"(";
+	   std::stringstream ss;
+	   ss << size();
+	   //s+=ss.str();
+	   for(std::vector<Type*>::iterator i=begin(); i!=end();i++) {
+	     if(i!=begin())
+	       s+=",";
+	     s+=(*i)->toString();
+	   }
+	   s+=")";
+	   return s;
+        }
+protected:
+	std::string _name;
+};
+
+class IntType : public Type {
+public:
+      IntType(int bits) {
+         _start=0;
+	 _end=pow(2,bits);
+	 _bits=bits;
+      }
+      bool isEqual(Type* other) { return true; }
+      bool isEqual(ComplexType*) { return true; }
+      bool isEqual(BasicType*) { return true;}
+      bool isValueOfType(long value) {
+          return(value>=_start && value <= _end);
+      }
+      std::string toString() {
+	std::stringstream ss;
+	ss << _bits;
+	return "int("+ss.str()+")";
+      }
+
+private:
+      double _start;
+      double _end;
+      int _bits;
+};
 
 } // end of namespace Aral
 
