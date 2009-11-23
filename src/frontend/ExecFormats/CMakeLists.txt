@@ -19,7 +19,7 @@ set(roseExecFormats_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/ExecFormats/Interpretation.C
    )
 
-add_library( roseExecFormats ${roseExecFormats_SRC} )
+add_library( roseExecFormats STATIC ${roseExecFormats_SRC} )
 add_dependencies( roseExecFormats ROSETTA )
 
 ########### install files ###############
