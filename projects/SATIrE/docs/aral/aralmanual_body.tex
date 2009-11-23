@@ -73,119 +73,28 @@ analysis information.
 
 %\outcomment{
 
-\chapter{File Format}
+\chapter{Language}
 
-An ARAL file consists of three sections where some have several subsections. The grammar for the ARAL file
-is shown in Fig.~\ref{fig:annotationfileformat}. In the file
-information is provided about the configuration of the analyzer and
-the system level parameters that were taken into account by the
-analysis, the type of the analysis data, and the data that was
-computed for each program point. The three sections are:
+TODO: the language shall be described by discussion of type-system
+and data-representation only. The mapping and file structure shall be
+explained in the file format chapter. ARAL is for administration
+of analysis results (combination of files etc.). A COMPUTATION section will allow compact representation of analysis results.\\
 
-\begin{description}
-\item [Configuration Section.] In this section the values of system
-level parameters and configuration options of the analyzer are
-provided.
-\item [Mapping Section.] If an analyzer uses unique identifiers for
-program constructs such as functions, statements, expressions,
-variables a mapping to some readable representation can be provided in
-this section. For example, the unique identifier for an expression can
-be E22, but the better readable representation is the expression as
-used in the source code, ``$a+b$''. The mapping section allows to
-provide such information. Alternatively the readable information can
-be represented in the analysis information itself, but usually the
-unique identifiers are better suitable for tools, but the readable
-form is only used in visualization or output that is presented to the
-user. Therefore this important indirection is supported in ARAL.
-\item [Result Section.] An arbitrary number of results sections are allowed.
-Each result section consists of three sub sections.
-
-\begin{description}
-\item [Name Section.] An identifier is provided for the name of the analysis that was performed.
-\item [Type Section.] An analysis Data Type Definition must be
-provided.  The Type Definition allows to define exactly what kind of
-analysis information is used in the annotations, such as whether a set
-is lifted or not (i.e. whether it may contain a special element for
-the top and bottom element of a lattice), value ranges of numbers, or
-whether constraints are reported as annotations. This section allows
-to specify the type of the data that is provided in the DATA section.
-\item [Data Section.]
-In the data section the actual analysis data is provided. The grammar
-for the annotation data is shown in Fig. \ref{fig:aralone} and
-Fig. \ref{fig:araltwo}. The DATA section may hold arbitrary many
-elements of annotation data. An element of annotation data consists of the following three entities:
-
-\begin{description}
-\item [Location Specifier.] Each analysis information is associated with a
-program location and its corresponding program fragment. The program
-location is represented by an optional Location Reference and a unique
-label. The label is represented by a unique number.
-The Location Reference allows to specify with which
-part of a program fragment an annotation is associated with. This allows to
-annotate multiple subexpressions of an expression without breaking up
-the expression. An example is 'param($N$):12' for specifying that an annotation
-of the $N$th formal parameter of a function is associated with label 12.
-
-\item [Flow Specifier.] A Flow Specifier allows to define whether an analysis information is a pre or post information in a flow-sensitive information. If the information is flow-insensitive it is denoted as 'noflow'.
-\item [List of Data Elements.] A data element consists of
-\begin{description}
-\item [Context.] For a context-sensitive analysis each context is represented in the annotations by an identifier which allows to keep context sensitive information separate. For a context-insensitive analysis the context identifier is the same for all analysis results computed for a program or function.
-\item [Data.] The analysis data represents the analysis
-information computed at a location in a program. A location can be
-associated with a function, a statement, an expression, or with a scope.
-\end{description}
-\end{description}
-\end{description}
-
-Analysis data can consist of a set, list, tuple, map, string, int, float,
-constraint, or specific program information: numeric VariableIds,
-ExpressionIds, StatementIds, FunctionIds and Labels. Two special
-symbols exist for the top and bottom element of lattices, 'top' and 'bot'. Sets, lists,
-and maps can only contain data elements of the same type, whereas
-tuples can contain elements of different type. In an constraint
-(in)equations on program locations can be provided
-(e.g. flow-constraints). In a data element the types of data can be
-arbitrarily nested and combined.
-\end{description}
-
-\outcomment{
-An ARAL analysis information annotation consists of:
-
-\begin{description}
-\item [Analysis Identifier.] Allows to identify the analysis information and associate the data with semantics.
-\item [Location.] Each analysis information is associated with a
-program location and its corresponding program fragment. The program
-location is represented by an optional Location Reference and a unique
-label. The label is represented by a unique number and a mapping of
-labels is maintained by the IR-Mapper (see Section
-\ref{section:architecture}) between the AST and the ICFG
-representation. The Location Reference allows to specify with which
-part of a program fragment an annotation is associated. This allows to
-annotate multiple subexpressions of an expression without breaking up
-the expression. An example is param($N$) for specifying an annotation
-of the $N$th formal parameter of a function, or 'entry' and 'exit' for
-denoting that an annotation is the entry or exit information of a
-function (see Fig \ref{example:sourcelevel2}).
-\item [Flow-Specifier.] A Flow-Specifier allows to define whether an analysis information is a pre or post information in a flow-sensitive information. If the information is flow-insensitive it is denoted as '-'.
-\item [List of Data Elements.] A data element consists of
-\begin{description}
-\item [Context Identifier.] For a context-sensitive analysis each context is represented in the annotations by an identifier which allows to keep context sensitive information separate. For a context-insensitive analysis the context identifier is the same for all analysis results computed for a program or function.
-\item [Analysis Data.] The analysis data represents the analysis
-information computed at a location in a program. A location can be
-associated with a function, a statement, an expression, or with a scope.
-\end{description}
-\end{description}
-
-Analysis data can consist of a set, list, tuple, map, string, number,
-constraints, or specific program information: numeric VariableIds,
-ExpressionIds, StatementIds, FunctionIds and Labels. Two special
-symbols exist for the top and bottom element of lattices. Sets, lists,
-and maps can only contain data elements of the same type, whereas
-tuples can contain elements of different type. In an constraint
-(in)equations on program locations can be provided
-(e.g. flow-constraints). In a data element the types of data can be
-arbitrarily nested and combined.
-}
+ARAL is a strictly typed language. A data element can only have
+exactly one type and there is no void type. For a proper use of the
+language it is important to be aware of the concept of the mapping
+section and the result section(s). In a result section analysis data
+is reqpresented independent from the intermediate representation on
+which is was computed. The mapping section defines how the analysis
+information of a result section is associated with locations in a
+source code of a program and similarly, how it is associated with
+locations in an intermediate representation. The two different kinds
+of sectionos support a separation of concerns: the analysis data
+itself and how it is associated with locations in a program. The
+locations are labeled, and those labels are used in the data
+section. For expressions (and its subexpressions) IDs are computed
+that those IDs are used in the DATA section. A mapping section can
+provide information on how to map the IDs to source code constructs.
 
 \section{ARAL Grammar}
 
@@ -410,6 +319,8 @@ left & \texttt{* / \%}\\\hline
 left & \texttt{\^}\\\hline
 \end{tabular}
 
+The operators (except for \texttt{\%} and \texttt{\^} ) conform to the UML2 object constraint language.
+
 \outcomment{
 {\footnotesize
 \vspace{0.2cm} \textbf{Acknowledgements.} 
@@ -422,7 +333,180 @@ contract No 215068 funded by the 7th EU R\&D Framework Programme.
 }
 }
 
-\chapter{ARAL API}
+\section{Type System}
+
+ARAL provides (from version 0.9.16 upwards) a type system. The type
+system ensures that the mappings provided in the mapping section
+conform to the specified type and that the data represented in the
+DATA subsection of a result section conforms to the type(s) defined in
+the respective TYPE section of that result section.
+
+The type system is based on name equivalence of types, and two types are equivalent if one of the following conditions holds
+
+\begin{itemize}
+\item They are the same basic type.
+\item They are formed by applying the same constructor on to structurally equivalent types (this only applies to pre-defined types).
+\item They have the same name.
+\end{itemize}
+
+Predefined types are set, list, map, tuple, and basic types. New types can be introduced by combining other types and associating names with those types.
+For example, in a TYPE section for the results of a reaching definition analysis we can define the type as
+\begin{verbatim}
+TYPE
+T = tuple(label,varid); 
+RD = lift(set(T));
+\end{verbatim}
+
+This defines a type RD to be a lifted type of T which is a tuple of a label and a variable-idnumber. In the corresponding DATA section information such as 
+\begin{verbatim}
+DATA
+{(@2,#5),(@2,#6)}
+\end{verbatim}
+
+can be represented. This DATA section represents the fact that at label 2, two variables with id-numbers 5 and 6 may be defined. 
+
+A mapping section may define a type that is also defined in a DATA section. The type checker ensures that if the same name is used for a type in the mapping section and in a data section, or in multiple data sections, that the types are indeed equivalent. This allows to include mapping sections in different ARAL files without the need to have a DATA section around that produces DATA for which this mapping is indeed required. It also permits that different DATA sections can define the same types of the same name. This allows to easily merge different ARAL files.
+
+The type of an analysis result can be defined by introducing new type names or without doing so. Here are examples of 2 different TYPE sections that define types for the same type of analysis results:
+
+\begin{verbatim}
+TYPE
+MyLiftedSet = lift(set(tuple(label,varid)));
+
+TYPE
+MyLab = Label;
+MyTuple = tuple(MyLab,varid);
+MySet = set(MyTuple);
+MyLiftedSet = lift(MySet);
+\end{verbatim}
+
+The type for this analysis can also be defined as 
+
+\begin{verbatim}
+TYPE
+lift(set(tuple(label,varid)));
+\end{verbatim}
+
+This type is not equivalent with the type MyLiftedSet. It is structurally equivalent but not name equivalent - combined types that are not associated with a name get assigned a generic type name internally. It is ensured that structurally equivalent ``unnamed'' types in different TYPE sections are associated with the same generic type name.
+
+
+\chapter{File Format}
+
+An ARAL file consists of three sections where some have several subsections. The grammar for the ARAL file
+is shown in Fig.~\ref{fig:annotationfileformat}. In the file
+information is provided about the configuration of the analyzer and
+the system level parameters that were taken into account by the
+analysis, the type of the analysis data, and the data that was
+computed for each program point. The three sections are:
+
+\begin{description}
+\item [Configuration Section.] In this section the values of system
+level parameters and configuration options of the analyzer are
+provided.
+\item [Mapping Section.] If an analyzer uses unique identifiers for
+program constructs such as functions, statements, expressions,
+variables a mapping to some readable representation can be provided in
+this section. For example, the unique identifier for an expression can
+be E22, but the better readable representation is the expression as
+used in the source code, ``$a+b$''. The mapping section allows to
+provide such information. Alternatively the readable information can
+be represented in the analysis information itself, but usually the
+unique identifiers are better suitable for tools, but the readable
+form is only used in visualization or output that is presented to the
+user. Therefore this important indirection is supported in ARAL.
+\item [Result Section.] An arbitrary number of results sections are allowed.
+Each result section consists of three sub sections.
+
+\begin{description}
+\item [Name Section.] An identifier is provided for the name of the analysis that was performed.
+\item [Type Section.] An analysis Data Type Definition must be
+provided.  The Type Definition allows to define exactly what kind of
+analysis information is used in the annotations, such as whether a set
+is lifted or not (i.e. whether it may contain a special element for
+the top and bottom element of a lattice), value ranges of numbers, or
+whether constraints are reported as annotations. This section allows
+to specify the type of the data that is provided in the DATA section.
+\item [Data Section.]
+In the data section the actual analysis data is provided. The grammar
+for the annotation data is shown in Fig. \ref{fig:aralone} and
+Fig. \ref{fig:araltwo}. The DATA section may hold arbitrary many
+elements of annotation data. An element of annotation data consists of the following three entities:
+
+\begin{description}
+\item [Location Specifier.] Each analysis information is associated with a
+program location and its corresponding program fragment. The program
+location is represented by an optional Location Reference and a unique
+label. The label is represented by a unique number.
+The Location Reference allows to specify with which
+part of a program fragment an annotation is associated with. This allows to
+annotate multiple subexpressions of an expression without breaking up
+the expression. An example is 'param($N$):12' for specifying that an annotation
+of the $N$th formal parameter of a function is associated with label 12.
+
+\item [Flow Specifier.] A Flow Specifier allows to define whether an analysis information is a pre or post information in a flow-sensitive information. If the information is flow-insensitive it is denoted as 'noflow'.
+\item [List of Data Elements.] A data element consists of
+\begin{description}
+\item [Context.] For a context-sensitive analysis each context is represented in the annotations by an identifier which allows to keep context sensitive information separate. For a context-insensitive analysis the context identifier is the same for all analysis results computed for a program or function.
+\item [Data.] The analysis data represents the analysis
+information computed at a location in a program. A location can be
+associated with a function, a statement, an expression, or with a scope.
+\end{description}
+\end{description}
+\end{description}
+
+Analysis data can consist of a set, list, tuple, map, string, int, float,
+constraint, or specific program information: numeric VariableIds,
+ExpressionIds, StatementIds, FunctionIds and Labels. Two special
+symbols exist for the top and bottom element of lattices, 'top' and 'bot'. Sets, lists,
+and maps can only contain data elements of the same type, whereas
+tuples can contain elements of different type. In an constraint
+(in)equations on program locations can be provided
+(e.g. flow-constraints). In a data element the types of data can be
+arbitrarily nested and combined.
+\end{description}
+
+\outcomment{
+An ARAL analysis information annotation consists of:
+
+\begin{description}
+\item [Analysis Identifier.] Allows to identify the analysis information and associate the data with semantics.
+\item [Location.] Each analysis information is associated with a
+program location and its corresponding program fragment. The program
+location is represented by an optional Location Reference and a unique
+label. The label is represented by a unique number and a mapping of
+labels is maintained by the IR-Mapper (see Section
+\ref{section:architecture}) between the AST and the ICFG
+representation. The Location Reference allows to specify with which
+part of a program fragment an annotation is associated. This allows to
+annotate multiple subexpressions of an expression without breaking up
+the expression. An example is param($N$) for specifying an annotation
+of the $N$th formal parameter of a function, or 'entry' and 'exit' for
+denoting that an annotation is the entry or exit information of a
+function (see Fig \ref{example:sourcelevel2}).
+\item [Flow-Specifier.] A Flow-Specifier allows to define whether an analysis information is a pre or post information in a flow-sensitive information. If the information is flow-insensitive it is denoted as '-'.
+\item [List of Data Elements.] A data element consists of
+\begin{description}
+\item [Context Identifier.] For a context-sensitive analysis each context is represented in the annotations by an identifier which allows to keep context sensitive information separate. For a context-insensitive analysis the context identifier is the same for all analysis results computed for a program or function.
+\item [Analysis Data.] The analysis data represents the analysis
+information computed at a location in a program. A location can be
+associated with a function, a statement, an expression, or with a scope.
+\end{description}
+\end{description}
+
+Analysis data can consist of a set, list, tuple, map, string, number,
+constraints, or specific program information: numeric VariableIds,
+ExpressionIds, StatementIds, FunctionIds and Labels. Two special
+symbols exist for the top and bottom element of lattices. Sets, lists,
+and maps can only contain data elements of the same type, whereas
+tuples can contain elements of different type. In an constraint
+(in)equations on program locations can be provided
+(e.g. flow-constraints). In a data element the types of data can be
+arbitrarily nested and combined.
+}
+
+
+
+\chapter{API}
 
 The ARAL API allows to read, access, manipulate, and write ARAL files.
 

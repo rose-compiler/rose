@@ -39,8 +39,11 @@ dist:
 	cp -r $(ARAL_SOURCES) Makefile _dist/aral/
 	rm _dist/aral/tests/*.alf
 
+# including the aralmanual.pdf in the distribution requires
+# that the satire/docs are built.
+# the aralmanual.pdf can also be built separately in satire/docs/aral
 	mkdir _dist/aral/docs
-	cp ../../docs/aralmanual.pdf _dist/aral/docs
+	cp ../../../../docs/aral/aralmanual.pdf _dist/aral/docs
 
 	cd _dist && \
 		tar vczf $(DISTNAME).tar.gz aral/
