@@ -431,7 +431,7 @@ The ARAL API allows to read, access, manipulate, and write ARAL files.
 To create the ARAL-IR from an ARAL file the parser must be invoked
 with \verb+Aral::Translator::frontEnd();+
 If no parse-error occurred, the Front End returns a pointer to the
-root of the ARAL-IR of type \verb+Aral::Analysis*+.
+root of the ARAL-IR of type \verb+Aral::File*+.
 The ARAL-IR, once available in memory, can be deleted by calling
 the destructor of the root object. The destructors are implemented to
 perform a deep-destruct.
