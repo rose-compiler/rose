@@ -5915,7 +5915,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // DQ (3/31/2004): New cleaned up source file handling
      Rose_STL_Container<string> argcArgvList = argv;
 
-  // DQ (9/25/2007): Moved to std::vector from std::list uniformally within ROSE.
+  // DQ (9/25/2007): Moved to std::vector from std::list uniformly within ROSE.
   // Remove the first argument (argv[0])
   // argcArgvList.pop_front();
      argcArgvList.erase(argcArgvList.begin());
@@ -5995,6 +5995,15 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                ROSE_ASSERT(objectNameSpecified == false);
                objectNameSpecified = true;
              }
+
+          // Liao, 11/19/2009
+          // We now only handles compilation for SgFile::compileOutput(), 
+          // so we need to remove linking related flags such as '-lxx' from the original command line
+          // Otherwise gcc will complain:  -lm: linker input file unused because linking not done
+          if (i->substr(0,2) == "-l") 
+          {
+            argcArgvList.erase(find(argcArgvList.begin(),argcArgvList.end(),*i));
+          }
         }
 
   // DQ (4/14/2005): Fixup quoted strings in args fix "-DTEST_STRING_MACRO="Thu Apr 14 08:18:33 PDT 2005" 
@@ -6104,12 +6113,26 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
           std::string objectFileName = generateOutputFileName();
        // printf ("In buildCompilerCommandLineOptions: objectNameSpecified = %s objectFileName = %s \n",objectNameSpecified ? "true" : "false",objectFileName.c_str());
 
-       // DQ (7/14/2004): Suggested fix from Andreas
+       // DQ (7/14/2004): Suggested fix from Andreas, make the object file name explicit
           if (objectNameSpecified == false)
              {
+             //  cout<<"making object file explicit for compilation only mode without -o options"<<endl;
                compilerNameString.push_back("-o");
                compilerNameString.push_back(currentDirectory + "/" + objectFileName);
              }
+        }
+        else // Liao 11/19/2009, changed to support linking multiple source files within one command line
+          // We change the compilation mode for each individual file to compile-only even
+          // when the original command line is to generate the final executable.
+          // We generate the final executable at the SgProject level from object files of each source file
+        {
+//          cout<<"turn on compilation only at the file compilation level"<<endl;
+          compilerNameString.push_back("-c");
+          // For compile+link mode, -o is used for the final executable, if it exists
+          // We make -o objectfile explicit 
+          std::string objectFileName = generateOutputFileName();
+          compilerNameString.push_back("-o");
+          compilerNameString.push_back(currentDirectory + "/" + objectFileName);
         }
 #if 0
      printf ("At base of buildCompilerCommandLineOptions: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
@@ -6118,6 +6141,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      printf ("Exiting at base of buildCompilerCommandLineOptions() ... \n");
      ROSE_ASSERT (false);
 #endif
+
+#if 0 // moved to the linking phase function of SgProject
      // Liao, 9/23/2009, optional linker flags to support OpenMP lowering targeting GOMP
      if (get_openmp_lowering())
      {
@@ -6138,8 +6163,18 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #endif          
      }
 
+#endif
+
+#if 0     
+     cout<<"Debug: SgFile::buildCompilerCommandLineOptions() compilerNameString is "<<endl;
+     for (vector<string>::iterator iter = compilerNameString.begin(); iter != compilerNameString.end(); iter++)
+     {
+       std::string str = *iter;
+       cout<<"\t"<<str<<endl;
+      }
+#endif      
      return compilerNameString;
-   }
+   } // end of SgFile::buildCompilerCommandLineOptions()
 
 
 int
@@ -6317,7 +6352,10 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& c
    }
 
 
-
+//! project level compilation and linking
+// three cases: 1. preprocessing only
+//              2. compilation: 
+//              3. linking:
 int
 SgProject::compileOutput( const std::string& compilerName )
    {
@@ -6325,6 +6363,7 @@ SgProject::compileOutput( const std::string& compilerName )
      TimingPerformance timer ("AST Backend Compilation (SgProject):");
 
      int errorCode = 0;
+     int linkingReturnVal = 0;
      int i = 0;
 
      if (numberOfFiles() == 0)
@@ -6333,12 +6372,13 @@ SgProject::compileOutput( const std::string& compilerName )
           printf ("ROSE using %s as backend compiler: no input files \n",compilerName.c_str());
 
        // DQ (8/24/2008): We can't recreate same behavior on exit as GNU on exit with no
-       // files since it causes the test immediately after buinding librose.so to fail.
+       // files since it causes the test immediately after building librose.so to fail.
        // exit(1);
         }
 
   // printf ("In SgProject::compileOutput(): get_C_PreprocessorOnly() = %s \n",get_C_PreprocessorOnly() ? "true" : "false");
 
+  // case 1: preprocessing only
      if (get_C_PreprocessorOnly() == true)
         {
        // DQ (10/16/2005): Handle special case (issue a single compile command for all files)
@@ -6416,10 +6456,11 @@ SgProject::compileOutput( const std::string& compilerName )
        // printf ("Exiting after call to compiler using -E option! \n");
        // ROSE_ASSERT(false);
         }
-       else
+       else // non-preprocessing-only case
         {
        // printf ("In Project::compileOutput(): Compiling numberOfFiles() = %d \n",numberOfFiles());
 
+// case 2: compilation  for each file 
        // Typical case
           for (i=0; i < numberOfFiles(); i++)
              {
@@ -6439,9 +6480,24 @@ SgProject::compileOutput( const std::string& compilerName )
 
             // printf ("In Project::compileOutput(): (BASE of loop) file = %d errorCode = %d localErrorCode = %d \n",i,errorCode,localErrorCode);
              }
-        }
 
-     return errorCode;
+// case 3: linking at the project level
+           // Liao, 11/19/2009, 
+           // I really want to just move the SgFile::compileOutput() to SgProject::compileOutput() 
+           // and have both compilation and linking finished at the same time, just as the original command line does.
+           // Then we don't have to compose compilation command line for each of the input source file
+           //  or to compose the final linking command line. 
+           //
+           // But there may be some advantages of doing the compilation and linking separately at two levels.
+           // I just discussed it with Dan.
+           // The two level scheme is needed to support mixed language input, like a C file and a Fortran file
+           // In this case, we cannot have a single one level command line to compile and link those two files
+           // We have to compile each of them first and finally link the object files.
+             linkingReturnVal = link (compilerName);
+        } // end if preprocessing-only is false
+
+     //return errorCode;
+     return errorCode + linkingReturnVal;
    }
 
 
@@ -6475,24 +6531,99 @@ SgFile::isPrelinkPhase() const
   // return (project == NULL) ? false : project->get_prelink();
    }
 
+//! Preprocessing command line and pass it to generate the final linking command line
 int
 SgProject::link ( std::string linkerName )
    {
-  // Compile the output file from the unparing
-     vector<string> argv = get_originalCommandLineArgumentList();
+     // Liao, 11/20/2009
+     // translator test1.o will have ZERO SgFile attached with SgProject
+     // Special handling for this case
+     if (numberOfFiles()== 0)
+     {
+       if (get_verbose() >0)
+         cout<<"SgProject::link may encountering an object file ..."<<endl;
+    }
+    else // normal cases that rose translators will actually do something about the input files
+         // and we have SgFile for each of the files.
+     //if ((numberOfFiles()== 0) || get_compileOnly() || get_file(0).get_skipfinalCompileStep() 
+     if ( get_compileOnly() || get_file(0).get_skipfinalCompileStep() 
+         ||get_file(0).get_skip_unparse())
+     {
+       if (get_verbose() >0)
+         cout<<"Skipping SgProject::link ..."<<endl;
+       return 0;
+     }
+                    
+  // Compile the output file from the unparsing
+     vector<string> argcArgvList= get_originalCommandLineArgumentList();
 
   // error checking
-     ROSE_ASSERT (argv.size() > 1);
+    if (numberOfFiles()!= 0) 
+       ROSE_ASSERT (argcArgvList.size() > 1);
      ROSE_ASSERT(linkerName != "");
 
   // strip out any rose options before passing the command line.
-     SgFile::stripRoseCommandLineOptions( argv );
+     SgFile::stripRoseCommandLineOptions( argcArgvList );
 
   // strip out edg specific options that would cause an error in the backend linker (compiler).
-     SgFile::stripEdgCommandLineOptions( argv );
+     SgFile::stripEdgCommandLineOptions( argcArgvList );
+
+   // remove the original compiler/linker name
+     argcArgvList.erase(argcArgvList.begin()); 
+
+     // remove all original file names
+     Rose_STL_Container<string> sourceFilenames = get_sourceFileNameList();
+     for (Rose_STL_Container<string>::iterator i = sourceFilenames.begin(); i != sourceFilenames.end(); i++)
+     {
+#if USE_ABSOLUTE_PATHS_IN_SOURCE_FILE_LIST
+#error "USE_ABSOLUTE_PATHS_IN_SOURCE_FILE_LIST is not supported yet"
+       // DQ (9/1/2006): Check for use of absolute path and convert filename to absolute path if required
+       bool usesAbsolutePath = ((*i)[0] == '/');
+       if (usesAbsolutePath == false)
+       {
+         string targetSourceFileToRemove = StringUtility::getAbsolutePathFromRelativePath(*i);
+         argcArgvList.remove(targetSourceFileToRemove);
+       }
+       else
+       {
+         argcArgvList.remove(*i);
+       }
+#else
+       if (find(argcArgvList.begin(),argcArgvList.end(),*i) != argcArgvList.end())
+       {
+         argcArgvList.erase(find(argcArgvList.begin(),argcArgvList.end(),*i));
+       }
+#endif
+     }
+     // fix double quoted strings
+     // DQ (4/14/2005): Fixup quoted strings in args fix "-DTEST_STRING_MACRO="Thu Apr 14 08:18:33 PDT 2005" 
+     // to be -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\"  This is a problem in the compilation of
+     // a Kull file (version.cc), when the backend is specified as /usr/apps/kull/tools/mpig++-3.4.1.  The
+     // problem is that /usr/apps/kull/tools/mpig++-3.4.1 is a wrapper for a shell script /usr/local/bin/mpiCC
+     // which does not tend to observe quotes well.  The solution is to add additional escaped quotes.
+     for (Rose_STL_Container<string>::iterator i = argcArgvList.begin(); i != argcArgvList.end(); i++)
+     {
+       std::string::size_type startingQuote = i->find("\"");
+       if (startingQuote != std::string::npos)
+       {
+         std::string::size_type endingQuote   = i->rfind("\"");
+
+         // There should be a double quote on both ends of the string
+         ROSE_ASSERT (endingQuote != std::string::npos);
+
+         std::string quotedSubstring = i->substr(startingQuote,endingQuote);
+
+         std::string fixedQuotedSubstring = std::string("\\\"") + quotedSubstring + std::string("\\\"");
+
+         // Now replace the quotedSubstring with the fixedQuotedSubstring
+         i->replace(startingQuote,endingQuote,fixedQuotedSubstring);
+
+         // printf ("Modified argument = %s \n",(*i).c_str());
+       }
+     }  
 
   // Call the compile
-     int errorCode = link ( argv, linkerName );
+     int errorCode = link ( argcArgvList, linkerName );
 
   // return the error code from the compilation
      return errorCode;
@@ -6501,9 +6632,11 @@ SgProject::link ( std::string linkerName )
 int
 SgProject::link ( const std::vector<std::string>& argv, std::string linkerName )
    {
+       // argv.size could be 0 after strip off compiler name, original source file, etc
+      // ROSE_ASSERT(argv.size() > 0);
+
   // This link function will be moved into the SgProject IR node when complete
      const std::string whiteSpace = " ";
-
   // printf ("This link function is not longer called (I think!) \n");
   // ROSE_ASSERT(false);
 
@@ -6524,23 +6657,49 @@ SgProject::link ( const std::vector<std::string>& argv, std::string linkerName )
         }
      
   // This is a better implementation since it will include any additional command line options that target the linker
-     Rose_STL_Container<string> l = argv;
+     Rose_STL_Container<string> linkingCommand ; 
 
-  // remove the name of the translator (argv[0]) from the command line input
-     ROSE_ASSERT(l.size() > 0);
+     linkingCommand.push_back (linkerName);
+     // find all object files generated at file level compilation
+     // The assumption is that -o objectFileName is made explicit and
+     // is generated by SgFile::generateOutputFileName()
+     for (int i=0; i < numberOfFiles(); i++)
+     {
+       linkingCommand.push_back(get_file(i).generateOutputFileName());
+     }
 
-  // DQ (9/25/2007): Moved to std::vector from std::list uniformally within ROSE.
-  // l.pop_front();
-  // l.erase(l.begin());
-     l[0] = linkerName;
+     // Add any options specified in the original command line (after preprocessing)
+     linkingCommand.insert(linkingCommand.end(), argv.begin(), argv.end());
 
-  // std::string linkerCommandLine = linkerName + whiteSpace + StringUtility::listToString(l);
-#if 0
-     if ( get_verbose() > 1 )
-          printf ("linkerCommandLine = %s \n",linkerCommandLine.c_str());
+     //Check if -o option exists, otherwise append -o a.out to the command line
+     
+     //Additional libraries to be linked with
+     // Liao, 9/23/2009, optional linker flags to support OpenMP lowering targeting GOMP
+     if ((numberOfFiles() !=0) && (get_file(0).get_openmp_lowering()))
+     {
+#ifdef USE_ROSE_GOMP_OPENMP_LIBRARY       
+       // lib path is available if --with-gomp_omp_runtime_library=XXX is used
+       if (USE_ROSE_GOMP_OPENMP_LIBRARY)
+       {
+         string gomp_lib_path(GCC_GOMP_OPENMP_LIB_PATH);
+         ROSE_ASSERT (gomp_lib_path.size() != 0);
+         linkingCommand.push_back(gomp_lib_path+"/libgomp.a"); // static linking for simplicity
+         linkingCommand.push_back("-lpthread");
+       }
 #endif
+     }
 
-     int status = systemFromVector(l);
+     if ( get_verbose() > 1 )
+     {
+       cout<<"linking command line is "<<endl;
+       for (vector<string>::iterator iter = linkingCommand.begin(); iter != linkingCommand.end(); iter++)
+       {
+         std::string str = *iter;
+         cout<<"\t"<<str<<endl;
+       }
+     }
+
+     int status = systemFromVector(linkingCommand);
 
      if ( get_verbose() > 1 )
           printf ("linker error status = %d \n",status);

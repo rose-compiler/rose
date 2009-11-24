@@ -67,7 +67,7 @@ class AstInterfaceImpl : public ObserveObject< AstObserver>
   SgFunctionSymbol* LookupFunction(const char* start) const;
   SgClassSymbol* LookupClass(const char* start) const;
   SgSymbol* CreateDeclarationStmts( const std:: string& _decl);
-  SgClassSymbol* GetClass( const std:: string& name, char** start = 0);
+  SgClassSymbol* GetClass( const std:: string& name, const char** start = 0);
   SgClassSymbol* NewClass( const std:: string& name);
   SgClassSymbol* AddClass( SgClassDeclaration* d) ;
 
