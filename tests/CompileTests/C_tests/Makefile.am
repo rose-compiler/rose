@@ -89,7 +89,7 @@ TEST_Exe_Objects = ${TESTCODES_REQUIRED_TO_RUN:.c=.o}
 
 PASSING_TEST_Executables =  ${TEST_Exe_Objects:.o=.out}
 check_PROGRAMS = $(PASSING_TEST_Executables)
-TESTS= $(check_PROGRAMS)  
+TESTS= $(check_PROGRAMS) caller.out 
 
 testTranslator=../../testTranslator
 
@@ -100,6 +100,14 @@ $(TEST_Objects): ../../testTranslator
 
 test2005_168.o: $(srcdir)/test2005_168.c
 	$(testTranslator) $(ROSE_FLAGS) -I$(top_srcdir)/src/util/commandlineProcessing -c $(srcdir)/test2005_168.c
+# Liao 11/19/2009
+# Custom tests to test rose translators as a linker (generating the final executables) for multiple files
+# simplest case: generate .o with -c
+caller.o: $(srcdir)/callee.c $(srcdir)/caller.c
+	$(testTranslator) $(ROSE_FLAGS) -c $^
+# default case: generate executable a.out from any number of input files	
+caller.out: $(srcdir)/callee.c $(srcdir)/caller.c
+	$(testTranslator) $(ROSE_FLAGS) $^ -o caller.out
 
 # Customized test that modifies testTranslator to remove empty elses to test dangling else unparsing
 test2008_02.o: $(srcdir)/test2008_02.c
@@ -121,7 +129,7 @@ test2008_02.o: $(srcdir)/test2008_02.c
 # Include makefile rules specific to QMTest
 #include $(top_srcdir)/config/QMTest_makefile.inc
 
-EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def
+EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def callee.c caller.c
 
 copyFiles:
 	cp $(srcdir)/*.h $(top_srcdir)/tests/CompileTests/C_tests
@@ -132,12 +140,13 @@ check-local:
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
 	@$(MAKE) $(PASSING_TEST_Objects)
+#	@$(MAKE) caller.o caller.out
 	@echo "*********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/C_tests: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************"
 
 clean-local:
-	rm -f *.o rose_*.[cC] rose_performance_report_lockfile.lock
+	rm -f *.o rose_*.[cC] rose_performance_report_lockfile.lock *.out
 	rm -rf QMTest
 
 ################################################################################

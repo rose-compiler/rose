@@ -30,7 +30,7 @@ SgAsmGenericFile::ctor()
     p_holes->set_parent(this);
 }
 
-/** Loads file contents into memory (actually, just mmaps the file) */
+/** Loads file contents into memory */
 SgAsmGenericFile *
 SgAsmGenericFile::parse(std::string fileName)
 {
@@ -43,12 +43,22 @@ SgAsmGenericFile::parse(std::string fileName)
         throw FormatError(mesg + ": " + strerror(errno));
     }
 
+#if 1           /* see also, SgAsmGenericFile::~SgAsmGenericFile() */
+    /* To be more portable across operating systems, read the file into memory rather than mapping it. */
+    unsigned char *mapped = (unsigned char*)malloc(p_sb.st_size);
+    if (!mapped)
+        throw FormatError("Could not allocate memory for binary file");
+    ssize_t nread = read(p_fd, mapped, p_sb.st_size);
+    if (nread!=p_sb.st_size)
+        throw FormatError("Could not read entire binary file");
+#else
     /* Map the file into memory so we don't have to read it explicitly */
     unsigned char *mapped = (unsigned char*)mmap(NULL, p_sb.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE, p_fd, 0);
     if (!mapped) {
         std::string mesg = "Could not mmap binary file";
         throw FormatError(mesg + ": " + strerror(errno));
     }
+#endif
 
     /* Make file contents available through an STL vector without actually reading the file */
     p_data = SgFileContentList(mapped, p_sb.st_size);
@@ -68,8 +78,13 @@ SgAsmGenericFile::~SgAsmGenericFile()
     
     /* Unmap and close */
     unsigned char *mapped = p_data.pool();
-    if (mapped && p_data.size()>0)
+    if (mapped && p_data.size()>0) {
+#if 1           /* see also, SgAsmGenericFile::parse() */
+        free(mapped);
+#else
         munmap(mapped, p_data.size());
+#endif
+    }
     p_data.clear();
 
     if ( p_fd >= 0 )

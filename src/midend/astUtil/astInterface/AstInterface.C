@@ -727,9 +727,8 @@ NewFunc( const string& name, SgType*  rtype, const list<SgInitializedName*>& arg
   return AddFunc(d);
 }
 
-SgClassSymbol* AstInterfaceImpl :: GetClass( const string& val, char** start)
+SgClassSymbol* AstInterfaceImpl :: GetClass( const string& val, const char** start)
 {
-    const char* cfc;
     string classname = "";
     for ( size_t size = 0 ; size < val.size(); ++size) { 
       if (val[size] == ' ' || val[size] == '&' || val[size] == ':')
@@ -737,8 +736,7 @@ SgClassSymbol* AstInterfaceImpl :: GetClass( const string& val, char** start)
       classname.push_back(val[size]);
     }
     if (start != 0) {
-      cfc = strstr( val.c_str(), "::");
-      *start = (char *)cfc + 2;
+      *start = strstr( val.c_str(), "::") + 2;
     }
 
   SgClassSymbol* classSym = LookupClass(classname.c_str());
@@ -2629,7 +2627,7 @@ CreateConstant( const string& valtype, const string& val)
       return AstNodePtrImpl(fr);
   }
   else if (valtype == "memberfunction") {
-      char *start = 0;
+      const char *start = 0;
       SgClassSymbol *c = impl->GetClass(val, &start);
       if (c == 0) {
          cerr << "Error: cannot find class declaration for " << val << endl;
@@ -2647,7 +2645,7 @@ CreateConstant( const string& valtype, const string& val)
       return AstNodePtrImpl(fr);
   }
   else if (valtype == "field") {
-      char *start = 0;
+      const char *start = 0;
       SgClassSymbol *c = impl->GetClass(val, &start);
       if (c == 0) {
          cerr << "Error: cannot find class declaration for " << val << endl;
