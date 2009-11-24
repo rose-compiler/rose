@@ -222,7 +222,7 @@ add_dependencies(rose ROSETTA OMPPARSER ROSE_PREPROCESSOR )
 #target_link_libraries(rose ${libastMerge}) # library name are global, should not use ${}
 # we need to double check if this solution will be portable on different platforms
 target_link_libraries(rose libastMerge edg33 libsageInterface libastTokenStream libastHiddenTypeAndDeclarationLists
-   libastVisualization roseDisassemblers roseExecFormats midend unparser
+   libastVisualization roseDisassemblers roseBinaryFormats midend unparser 
    libastHiddenTypeAndDeclarationLists roseAsmUnparser libastPostProcessing libhpdf
  )
 
@@ -240,11 +240,16 @@ set(testSharedRoseLib_SRCS testRoseLib.C)
 
 add_executable(testSharedRoseLib ${testSharedRoseLib_SRCS}  )
 
-target_link_libraries(testSharedRoseLib ${KDE4_KDECORE_LIBS} rose ${link_with_libraries} ${Boost_LIBRARIES}
-# edg33 rose_support binary_frontend virtualCFG rose_util_lib astFixup  
-# libsageInterface    libastTokenStream  libastHiddenTypeAndDeclarationLists
-# libastVisualization    roseDisassemblers roseExecFormats midend unparser
-# libastHiddenTypeAndDeclarationLists roseAsmUnparser libastPostProcessing libhpdf
+
+target_link_libraries(testSharedRoseLib ${KDE4_KDECORE_LIBS} rose edg33 ${link_with_libraries} ${Boost_LIBRARIES}
+    libastMerge libsageInterface libastTokenStream 
+    libastHiddenTypeAndDeclarationLists libastVisualization 
+# rose_support binary_frontend virtualCFG rose_util_lib astFixup  
+    
+    roseDisassemblers
+    libsageInterface roseBinaryFormats midend unparser
+    libastHiddenTypeAndDeclarationLists roseAsmUnparser libastPostProcessing
+    libhpdf
     )
 
 ########### install files ###############

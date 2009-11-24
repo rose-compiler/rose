@@ -8,7 +8,8 @@ add_subdirectory(CxxFrontend)
 add_subdirectory(BinaryDisassembly)
 add_subdirectory(BinaryFormats)
 add_subdirectory(Disassemblers)
-add_subdirectory(PHPFrontend)
+#TP COMMENTED OUT FOR NOW. ADD LATER
+#add_subdirectory(PHPFrontend)
 
 
 ########### install files ###############
