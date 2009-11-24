@@ -1,6 +1,12 @@
 #ifndef ROSE_MEMORY_MAP_H
 #define ROSE_MEMORY_MAP_H
 
+// tps (11/23/2009) Commented this out since it is not working on Windows
+#ifdef _MSC_VER
+class MemoryMap;
+typedef size_t ssize_t;
+#else
+
 #include <sys/mman.h> /*mmap include for PROT_READ, PROT_WRITE, PROT_EXEC, and PROT_NONE*/
 
 /** A MemoryMap is an efficient mapping from virtual addresses to source bytes.  The source bytes can be bytes of a file,
@@ -252,5 +258,7 @@ private:
 inline bool operator<(const MemoryMap::MapElement &a, const MemoryMap::MapElement &b) {
     return a.get_va() < b.get_va();
 }
+
+#endif
 
 #endif
