@@ -7,8 +7,9 @@ add_subdirectory(CxxFrontend)
 #add_subdirectory(OpenFortranParser_SAGE_Connection)
 add_subdirectory(BinaryDisassembly)
 add_subdirectory(Disassemblers)
-add_subdirectory(ExecFormats)
-add_subdirectory(PHPFrontend)
+#TP COMMENTED OUT FOR NOW. ADD LATER
+#add_subdirectory(ExecFormats)
+#add_subdirectory(PHPFrontend)
 
 
 ########### install files ###############
