@@ -3455,7 +3455,7 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
                 FUNC_SYMBOL      = 0x08,                /**< Address of a function symbol in a symbol table */
                 FUNC_PATTERN     = 0x10,                /**< Appears to be a function based on pattern of instructions */
                 FUNC_GRAPH       = 0x20,                /**< Implied by inter-basicblock branching */
-                FUNC_USERDEF     = 0x40,                /**< User-defined algorithm */
+                FUNC_USERDEF     = 0x40,                /**< User-defined algorithm. See Partitioner::addFunctionDetector(). */
                 FUNC_DEFAULT     = 0x7f                 /**< Default value for Partitioner class */
         };
 

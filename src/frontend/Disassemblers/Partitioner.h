@@ -12,9 +12,15 @@
  *  terminatesBasicBlock virtual method is used to make this determination.
  *
  *  Once instructions are assigned to basic blocks, the partitioner assigns the basic blocks to functions using a variety of
- *  heuristics, the set of which is determined by the values specified in the Partioner's {\tt set\_heuristics} method. These
+ *  heuristics, the set of which is determined by the values specified in the Partioner's set_heuristics() method. These
  *  are documented in the SgAsmFunctionDeclaration class (see the FunctionReason enumeration).  When a function is created,
- *  its {\tt reason} attribute will contain a bit vector describing which heuristics detected this function. */
+ *  its reason attribute will contain a bit vector describing which heuristics detected this function.
+ *
+ *  Certain methods of the Disassembler class need a Partitioner. When one of those methods are called, the Disassembler
+ *  object will create a default Partitioner unless one has already been explicitly created and added to the Disassembler with
+ *  the Disassembler::set_partitioner() method.  ROSE has a set of built-in Disassembler objects that use default-constructed
+ *  Partitioner objects, but sometimes the end user wants to influence the way functions are detected. The documentation for
+ *  the Disassembler class has an example of how this can be done. */
 class Partitioner {
     /*======================================================================================================================
      * Data types
