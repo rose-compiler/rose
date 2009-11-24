@@ -14,15 +14,20 @@ endif
 # INCLUDES = $(ROSE_INCLUDES)
 INCLUDES = $(ROSE_INCLUDES) $(INTEL_PIN_INCLUDE_PATHS)
 
-# This will cause the dynamic library to be built (as libroseExecFormats.so)
-noinst_LTLIBRARIES = libroseExecFormats.la
+# This will cause the dynamic library to be built (as libroseBinaryFormats.so)
+noinst_LTLIBRARIES = libroseBinaryFormats.la
 
-libroseExecFormats_la_DEPENDENCIES =
-libroseExecFormats_la_SOURCES = \
+libroseBinaryFormats_la_DEPENDENCIES =
+libroseBinaryFormats_la_SOURCES = \
    $(INTEL_PIN_SUPPORT) \
-   ExecGeneric.C ExecDOS.C ExecELF.C ExecPE.C ExecNE.C ExecLE.C \
+   DataConversion.C ExecGeneric.C ExtentMap.C Hexdump.C Interpretation.C MemoryMap.C Rva.C \
+   GenericDynamicLinking.C GenericFile.C GenericFormat.C GenericHeader.C GenericSection.C GenericString.C \
+   PeExport.C PeFileHeader.C PeImport.C PeSection.C PeSectionTable.C PeStringTable.C PeSymbolTable.C \
+   ElfDynamicLinking.C ElfErrorFrame.C ElfFileHeader.C ElfNote.C ElfRelocation.C ElfSection.C ElfSectionTable.C \
+   ElfSegmentTable.C ElfStringTable.C ElfSymbolTable.C ElfSymbolVersion.C \
    Loader.C LoaderELF.C LoaderELFObj.C LoaderPE.C \
-   MemoryMap.C Interpretation.C
+   ExecDOS.C ExecNE.C ExecLE.C
+
 
 include_HEADERS = IntelPinSupport.h Loader.h LoaderELF.h LoaderELFObj.h LoaderPE.h MemoryMap.h
 

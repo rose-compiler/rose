@@ -48,7 +48,7 @@ CONFIGURE_FLAGS=(--with-boost=${BOOST_ROOT} --enable-dq-developer-tests --with-R
 
 
 ROSE_SVNROOT=file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
-MAILADDRS="panas2@llnl.gov liao6@llnl.gov dquinlan@llnl.gov"
+MAILADDRS="panas2@llnl.gov liao6@llnl.gov dquinlan@llnl.gov  saebjornsen1@llnl.gov collingbourne2@llnl.gov matzke1@llnl.gov"
 
 # the right version of subversion is essential!!
 SVN=/nfs/apps/subversion/1.4.5/bin/svn

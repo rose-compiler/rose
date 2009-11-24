@@ -3122,7 +3122,7 @@ DisassemblerX86::decodeOpcode0F()
         case 0x39:
             throw ExceptionX86("bad opcode 0x0f39", this);
         case 0x3A:
-            ROSE_ASSERT(!"0F3A");
+            throw ExceptionX86("not implemented 0x0f3a", this);
         case 0x3B:
             throw ExceptionX86("bad opcode 0x0f3b", this);
         case 0x3C:
@@ -3887,7 +3887,7 @@ DisassemblerX86::decodeOpcode0F()
         case 0x78: {
             switch (mmPrefix()) {
                 case mmNone:
-                    ROSE_ASSERT(!"vmread not supported");
+                    throw ExceptionX86("vmread not supported", this);
                 case mmF3:
                     throw ExceptionX86("bad mm prefix F3 for opcode 0x0f78", this);
                 case mm66: {
@@ -3921,7 +3921,7 @@ DisassemblerX86::decodeOpcode0F()
         case 0x79: {
             switch (mmPrefix()) {
                 case mmNone:
-                    ROSE_ASSERT(!"vmwrite not supported");
+                    throw ExceptionX86("vmwrite not supported", this);
                 case mmF3:
                     throw ExceptionX86("bad mm prefix F3 for opcode 0x0f79", this);
                 case mm66:

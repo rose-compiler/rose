@@ -536,6 +536,8 @@ HEADER_UNARY_ADD_OPERATOR_END
 
 
 HEADER_SIZEOF_OPERATOR_START
+ // Liao, 11/17/2009
+ int replace_expression(SgExpression*, SgExpression*) ROSE_DEPRECATED_FUNCTION;
 HEADER_SIZEOF_OPERATOR_END
 
 
@@ -2980,6 +2982,28 @@ $CLASSNAME::get_type() const
      ROSE_ASSERT(returnType != NULL);
      return returnType;
    }
+
+// Liao, 11/17/2009
+int
+SgSizeOfOp::replace_expression (SgExpression *o, SgExpression *n)
+   {
+  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // structural change to the AST, thus it is free to set the parent of the new expression.
+
+     ROSE_ASSERT(o != NULL);
+     ROSE_ASSERT(n != NULL);
+
+     if (get_operand_expr() == o)
+        {
+          set_operand_expr(n);
+          return 1;
+        }
+       else
+        {
+          printf ("Warning: inside of SgSizeOfOp::replace_expression original SgExpression unidentified \n");
+          return 0;
+        }
+   } 
 
 SOURCE_SIZE_OF_OPERATOR_EXPRESSION_END
 

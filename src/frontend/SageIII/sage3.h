@@ -308,7 +308,7 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
 // DQ (6/15/2008): This had to be moved here so that source files only including "sage3.h"
 // would see the required declarations (now that "Cxx_Grammar.h" references declarations in
 // the "Exec" namespace.
-// Files in src/frontend/ExecFormats
+// Files in src/frontend/BinaryFormats
 // This is included in the "ExecELF.h" and "ExecPE.h" files already.
 // #include "ExecGeneric.h"
    #include "ExecELF.h"

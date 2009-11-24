@@ -240,11 +240,15 @@ set(testSharedRoseLib_SRCS testRoseLib.C)
 
 add_executable(testSharedRoseLib ${testSharedRoseLib_SRCS}  )
 
-target_link_libraries(testSharedRoseLib ${KDE4_KDECORE_LIBS} rose ${link_with_libraries} ${Boost_LIBRARIES}
-# edg33 rose_support binary_frontend virtualCFG rose_util_lib astFixup  
-# libsageInterface    libastTokenStream  libastHiddenTypeAndDeclarationLists
-# libastVisualization    roseDisassemblers roseExecFormats midend unparser
-# libastHiddenTypeAndDeclarationLists roseAsmUnparser libastPostProcessing libhpdf
+target_link_libraries(testSharedRoseLib ${KDE4_KDECORE_LIBS} rose edg33 ${link_with_libraries} ${Boost_LIBRARIES}
+    libastMerge libsageInterface libastTokenStream 
+    libastHiddenTypeAndDeclarationLists libastVisualization 
+# rose_support binary_frontend virtualCFG rose_util_lib astFixup  
+    
+    roseDisassemblers
+    libsageInterface roseBinaryFormats midend unparser
+    libastHiddenTypeAndDeclarationLists roseAsmUnparser libastPostProcessing
+    libhpdf
     )
 
 ########### install files ###############
