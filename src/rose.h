@@ -130,7 +130,7 @@ namespace ELF{
 // Files in src/frontend/ExecFormats
 #ifndef _MSC_VER
 // tps (11/23/2009) : Commented out right now to make progress in Windows
-#error "Do not execute this"
+//#error "Do not execute this"
 #include "MemoryMap.h"
 #include "Loader.h"
 #include "LoaderELF.h"
@@ -170,7 +170,7 @@ namespace ELF{
 // Files in src/backend/asmUnparser
 #include "unparseAsm.h"
 #else
-#error "Do execute this"
+//#error "Do execute this"
 #endif
 
 
