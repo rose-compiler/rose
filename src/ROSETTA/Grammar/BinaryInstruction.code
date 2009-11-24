@@ -1846,10 +1846,12 @@ HEADER_ELF_SYMVER_DEFINED_ENTRY_END
 HEADER_ELF_SYMVER_DEFINED_AUX_START
 	public:
 		/** Elfxx_Verdaux, Note: same for 32bit and 64bit */
+# pragma pack (1)
 		struct ElfSymverDefinedAux_disk { 
 			uint32_t      vda_name;   /**< Offset (in bytes) to strings table to name string */
 		        uint32_t      vda_next;   /**< Offset (in bytes) to next verdaux entry */
-		} __attribute__((packed));
+		};// __attribute__((packed));
+# pragma pack ()
 
 
                 explicit SgAsmElfSymverDefinedAux(SgAsmElfSymverDefinedEntry *symver_def_entry,
@@ -2131,10 +2133,12 @@ HEADER_PE_RVA_SIZE_PAIR_START
 	public:
 		/* File format for an RVA/Size pair. Such pairs are considered to be part of the PE file header.  All fields are
 		 * little endian. */
+# pragma pack (1)
 		struct RVASizePair_disk {
 			uint32_t    e_rva;
 			uint32_t    e_size;
-		} __attribute__((packed));
+		};// __attribute__((packed));
+# pragma pack ()
 
 		explicit SgAsmPERVASizePair(const SgAsmPERVASizePair::RVASizePair_disk *disk)
 			: p_e_rva(0), p_e_size(0), p_section(NULL) {
@@ -2310,13 +2314,15 @@ HEADER_PE_SECTION_END
 
 HEADER_PE_IMPORT_DIRECTORY_START
 	public:
+	# pragma pack (1)
 		struct PEImportDirectory_disk {
 			uint32_t ilt_rva;		/* 0x00 Import Lookup Table RVA */
 			uint32_t time;			/* 0x04 Zero until the image is bound, then time stamp of the DLL */
 			uint32_t forwarder_chain;	/* 0x08 Index of the first forwarder chain */
 			uint32_t dll_name_rva;    	/* 0x0c address of NUL-terminated DLL name */
 			uint32_t iat_rva;		/* 0x10 Import Address Table (Thunk Table) RVA */
-		} __attribute__((packed));		/* 0x14 */
+		};// __attribute__((packed));		/* 0x14 */
+# pragma pack ()
 
 		SgAsmPEImportDirectory(SgAsmPEImportSection *isec, size_t idx, rose_addr_t *rva_p)
 			{ctor(isec,idx,rva_p);}
@@ -2396,6 +2402,7 @@ HEADER_PE_IMPORT_SECTION_END
 HEADER_PE_EXPORT_DIRECTORY_START
 	public:
 		/* An Export Section begins with the Export Directory */
+# pragma pack (1)
 		struct PEExportDirectory_disk {
 			uint32_t res1;         /* 0x00 Reserved, must be zero */
 			uint32_t timestamp;    /* 0x04 Time that export data was created */
@@ -2408,7 +2415,8 @@ HEADER_PE_EXPORT_DIRECTORY_START
 			uint32_t expaddr_rva;  /* 0x1c Location of Export Address Table */
 			uint32_t nameptr_rva;  /* 0x20 Location of Export Name Pointer Table */
 			uint32_t ordinals_rva; /* 0x24 Location of Ordinal Table */
-		} __attribute__((packed));     /* 0x28 */
+		};// __attribute__((packed));     /* 0x28 */
+# pragma pack ()
 
 		explicit SgAsmPEExportDirectory(SgAsmPEExportSection *s)
 			{ctor(s);}
@@ -2502,6 +2510,7 @@ HEADER_PE_COFF_SYMBOL_TABLE_END
 HEADER_PE_SECTION_TABLE_ENTRY_START
 	public:
 		/* File format of a section table entry. All fields are little endian. Sections are ordered by RVA. */
+# pragma pack (1)
 		struct PESectionTableEntry_disk {
 			char     name[8];          /* NUL-padded */
 			uint32_t virtual_size;     /* virtual memory size, >= physical_size and difference is zero filled */
@@ -2512,7 +2521,8 @@ HEADER_PE_SECTION_TABLE_ENTRY_START
 			uint32_t n_relocs;         /* number of relocation entries; should be zero for executables */
 			uint32_t n_coff_line_nums; /* number of COFF line number entries */
 			uint32_t flags;            /* PESectionFlags bits: code, data, caching, paging, shared, permissions, etc.*/
-		} __attribute__((packed));
+		};// __attribute__((packed));
+# pragma pack ()
 
 		/* These come from the windows PE documentation and
 		 * http://en.wikibooks.org/wiki/X86_Disassembly/Windows_Executable_Files */
@@ -2570,6 +2580,7 @@ HEADER_PE_COFF_SYMBOL_START
        // This was previously a #define macro in ExecPE.h (so we have to avoid the macro defining it as "static const unsigned int 18 = 18"
           static const unsigned int COFFSymbol_disk_size = 18;
 
+# pragma pack (1)
           struct COFFSymbol_disk {
                union {
                    char            st_name[8];
@@ -2583,7 +2594,8 @@ HEADER_PE_COFF_SYMBOL_START
                uint16_t            st_type;
                unsigned char       st_storage_class;
                unsigned char       st_num_aux_entries;
-             } __attribute__((packed));
+             };// __attribute__((packed));
+# pragma pack ()
 
           SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAsmGenericSection *strtab, size_t idx);
        // virtual ~COFFSymbol() {}
@@ -2651,6 +2663,7 @@ HEADER_NE_FILE_HEADER_START
            * e_sssp: The value specified in SS is an index (1-origin) into the segment table. If SS addresses the automatic data segment
            *         and SP is zero then SP is set to the address obtained by adding the size of the automatic data segment to the size
            *         of the stack. */
+# pragma pack (1)
           struct NEFileHeader_disk {
                unsigned char e_magic[2];           /* 0x00 magic number "NE" */
                unsigned char e_linker_major;       /* 0x02 linker major version number */
@@ -2682,7 +2695,8 @@ HEADER_NE_FILE_HEADER_START
                uint16_t    e_fastload_nsectors;    /* 0x3a size of fast-load area in sectors (only for Windows) */
                uint16_t    e_res1;                 /* 0x3c reserved */
                uint16_t    e_winvers;              /* 0x3e expected version number for Windows (only for Windows) */
-             } __attribute__((packed));              /* 0x40 */
+             };// __attribute__((packed));              /* 0x40 */
+# pragma pack ()
 
           /* Bit flags for the NE header 'e_flags' member.
            *
@@ -2957,12 +2971,14 @@ HEADER_NE_RELOC_ENTRY_END
 HEADER_NE_SECTION_TABLE_ENTRY_START
      public:
        /* File format of a section table entry. All fields are little endian. */
+# pragma pack ()
           struct NESectionTableEntry_disk {
                uint16_t    sector;                 /* 0x00 File offset (sector size defined in hdr); zero means no file data */
                uint16_t    physical_size;          /* 0x02 Length of segment in file; zero means 64k if sector is non-zero */
                uint16_t    flags;                  /* 0x04 Segment bit flags */
                uint16_t    virtual_size;           /* 0x06 Total size of segment when mapped to memory; zero means 64k */
-             } __attribute__((packed));              /* 0x08 */
+             };// __attribute__((packed));              /* 0x08 */
+# pragma pack ()
 
           enum NESectionFlags {
                SF_RESERVED         = 0x0e08,       /* these bits are reserved */
