@@ -18,7 +18,7 @@ libroseBinaryLibraries = \
    $(top_builddir)/src/frontend/BinaryDisassembly/libbinaryFrontend.la \
    $(top_builddir)/src/midend/binaryAnalyses/libbinaryMidend.la \
    $(top_builddir)/src/frontend/Disassemblers/libroseDisassemblers.la \
-   $(top_builddir)/src/frontend/ExecFormats/libroseExecFormats.la \
+   $(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la \
    $(top_builddir)/src/backend/asmUnparser/libroseAsmUnparser.la 
 
 if ROSE_USE_SQLITE_DATABASE

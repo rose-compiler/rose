@@ -1,0 +1,206 @@
+DQ (6/10/2008): 
+These notes document how we want to connect the
+classes defined in this directory with the IR nodes
+that we need to build to represent the binary 
+executable file format.
+
+
+Design of existing data structures:
+
+From ExecELF.h:
+ElfFileHeader 
+   ExecHeader (isa)
+   ElfSectionTable (data member)
+      ElfSectionTableEntry (container)
+      ElfSection
+         ElfSection (isa)
+         ExecSegment (data member)
+
+   ElfSegmentTable (data member)
+      ExecSection (isa)
+      ElfSegmentTableEntry (container)
+         ExecSegment
+
+ElfDynamicSegment
+   ElfDynamicEntry (container)
+
+% This is not yet used in any data structure (that I can see)
+ElfSymbolSection
+   ElfSymbol
+
+
+From ExecGeneric.h:
+ExecFile
+   ExecSection (data member)
+      ExecFile (data member)
+      ExecSegment (container)
+         ExecSection (data member)
+
+
+From ExecPE.h:
+DOSFileHeader
+
+PEFileHeader
+   ExecHeader (isa)
+   RVASizePair (container)
+
+ObjectTableEntry_disk
+
+ObjectTableEntry
+
+ObjectTable
+   ExecSection (isa)
+   ObjectTableEntry (container)
+
+ImportDirectory_disk
+
+ImportDirectory
+
+ImportSegment
+   ExecSegment (isa)
+   ImportDirectory (container)
+
+
+
+New IR nodes:
+   ExecSegment
+   ExecSection
+   ExecHeader
+   ExecFile
+
+
+   ElfFileHeader 
+   ElfSectionTable
+   ElfSectionTableEntry
+   ElfSection
+   ElfSegmentTable
+   ElfSegmentTableEntry
+   ElfDynamicSegment
+   ElfDynamicEntry
+
+   ElfSymbolSection
+   ElfSymbol
+
+   DOSFileHeader
+   PEFileHeader
+   RVASizePair
+
+   ObjectTableEntry_disk
+   ObjectTableEntry
+   ObjectTable
+   ImportDirectory_disk
+   ImportDirectory
+   ImportSegment
+
+Build these specific IR nodes so far:
+   SgAsmGenericFormat
+   SgAsmGenericSegment
+   SgAsmGenericSection
+   SgAsmGenericHeader
+   SgAsmGenericFile
+   SgAsmGenericArchitecture
+   SgAsmGenericSectionList
+   SgAsmGenericSegmentList
+   SgAsmGenericSupport
+
+
+Questions:
+1) Where is the raw file format?
+2) Where is ElfSymbolSection used?
+
+
+Ideas: 
+   To make sure that we have absolutely everything, could we build
+the function to reconstruct the binary executable from the representation
+that we have?  And then test it to make sure it is identical.
+
+
+
+(8/4/2008): Additional notes
+
+1) In AsmElfSectionTableEntry.setDataPrototype("SgCharList","extra","= NULL",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+   the type is supposed to be "const unsigned char*", but this is a problem for ROSETTA to
+   support. Both because it is "const" and because it is not clear if it is pointer to a
+   unsigned char, an offset that only has to be 8 bits wide, or a C style string.
+   Depending upon which of these is true we need to represent it differently.
+
+   "extra" is intended to point to some uninterpretted bytes (i.e., a
+   "hole") in the file.  These bytes can contain any value, including
+   zero and values greater than 127. (RPM 8/14/2008)
+
+2) For AsmElfSection.setDataPrototype("AsmElfSection*","linked_section","= NULL",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+   We should likely be using an STL container, rather than a linked list here.
+
+   An ELF section can point to one other optional associated
+   section. This isn't a linked list but rather just a pointer to some
+   other section. For instance, some sections that contain names
+   (symbol tables, dynamic linking, etc) point to a string table where
+   the names are stored. Nothing prevents multiple sections from
+   sharing the same string table. (RPM 8/14/2008)
+
+3) AsmElfSegmentTableEntry variable have a prefix of "p_" this is confusing to ROSETTA,
+   since it reserves this for all data members as part of supporting the code generation.
+
+4) Enum types need additional values: 
+   a) "undefined = 0", if possible, and 
+   b) "default = <nonzero value>"
+
+   This provides seperate values for use by the destructor and default values to make it
+   clear when values are uninitialized properly.
+
+5) A lot of data members are public and don't have access functions, this complicates the
+   move to support the new IR nodes.
+
+6) I think that "sh_type" should be of type "Section_Type".
+
+(8/13/2008): Additional comments after making initial release to Robb of his work using
+             the new IR nodes.
+
+1) SgAsmGenericFile currently contains two STL lists and it maybe should contain pointers to two
+   IR nodes that contain STL list.  This is only true if the elements of the lists are 
+   supposed to be children in the AST for the binary format.  the relevant data members
+   are: "sections" and "headers".
+
+   Currently there are no automatically generated access functions for these, but there
+   are two access function manual implemented (one for each data member).
+
+
+2) AsmGenericFile data member "data" is a "char*" type and should likely be an STL list 
+   (SgUnsignedCharList).  
+
+   FIXME
+
+   "data" is intended to point to the entire executable file contents
+   before (and while) the file is being parsed. We use mmap() rather
+   than fread() throughout the parser for convenient, simple
+   code. Both consider the data to be untyped (void*). However, we
+   consistently treat the file as a stream of 8-bit bytes (unsigned
+   char*). Furthermore, since the file is opened for read-only (mapped
+   PROT_READ, MAP_PRIVATE) we also treat the buffer as constant (const
+   unsigned char*). (RPM 8/14/2008)
+
+3) The following IR nodes will be removed soon:
+      SgAsmProgramHeader
+      SgAsmProgramHeaderList
+      SgAsmSectionHeader
+      SgAsmSectionHeaderList
+   Because they are redundant with the new IR node design for binary executable file
+   formats using Robb's work.
+
+4) It might be that SgAsmExecutableFileFormat should be derived from SgAsmFile instead of
+   SgAsmNode.  But upon reflection the file format is not an executable file it is the
+   organization of the executable file.
+
+5) IR nodes that are all derived from SgAsmExecutableFileFormat could be organized by
+   executable file format (Generic, ELF, PE, NE, LE, DOS).  This would reduce the number of direved
+   classed from 28 classes to 5 (Generic, ELF, PE, NE, LE).  This makes not essential 
+   difference except to better organize the work and maybe provide a logical location for
+   some of the binary executable file format specific details to live.
+
+
+6) Removed SgAsmGenericSection::p_header data member.  Under the new IR nodes design it is
+   redundant with the IR node parent pointer.  A "get_header()" member function was
+   implemented to preserve the semantics of the original code, and is implemented using
+   the parent pointer ("get_parent()").  The calls to the "set_header()" have been 
+   fixed up in the code to call the set_parent() function; using the same input paremeter.
+
