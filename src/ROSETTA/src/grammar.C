@@ -346,7 +346,7 @@ Grammar::writeFile ( const StringUtility::FileWithLineNumbers& outputString,
      // ./astFileIO//SourceOfIRNodesAstFileIOSupport.C fails to run on Windows under Debug mode
 	//std::replace( outputFilename.begin(), outputFilename.end(), './', '' );
 	//std::replace( outputFilename.begin(), outputFilename.end(), '//', '\\' );
-	std::replace( outputFilename.begin(), outputFilename.end(), '/', '\\' );
+	//std::replace( outputFilename.begin(), outputFilename.end(), '/', '\\' );
 
 #endif
 	 printf ("outputFilename = %s \n",outputFilename.c_str());
