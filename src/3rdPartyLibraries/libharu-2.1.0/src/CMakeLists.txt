@@ -2,7 +2,7 @@
 include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} ${ROSE_INCLUDES} )
 
 #set 
-set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H  -DHPDF_NOZLIB -DHPDF_NOPNGLIB " )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DHAVE_CONFIG_H  -DHPDF_NOZLIB -DHPDF_NOPNGLIB"  )
 
 ########### next target ###############
 
