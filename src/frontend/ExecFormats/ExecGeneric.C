@@ -2104,7 +2104,7 @@ SgAsmGenericSection::set_offset(addr_t offset)
 
 /** Returns starting byte offset in the file */
 rose_addr_t
-SgAsmGenericSection::get_end_offset() const
+SgAsmGenericSection::get_end_offset()
 {
     return get_offset() + get_size();
 }
@@ -2175,7 +2175,7 @@ SgAsmGenericSection::set_mapped_preferred_rva(addr_t a)
 
 /** Returns (non-relative) virtual address if mapped, zero otherwise. */
 rose_addr_t
-SgAsmGenericSection::get_mapped_preferred_va() const
+SgAsmGenericSection::get_mapped_preferred_va()
 {
     ROSE_ASSERT(this != NULL);
     if (is_mapped())
@@ -2191,7 +2191,7 @@ SgAsmGenericSection::get_mapped_preferred_va() const
  *  p_mapped_actual_rva regardless of whether p_mapped_actual_rva is non-zero (this doesn't matter in ELF, where the base
  *  virtual address is always zero anyway). */
 rose_addr_t
-SgAsmGenericSection::get_mapped_actual_va() const
+SgAsmGenericSection::get_mapped_actual_va()
 {
     ROSE_ASSERT(this != NULL);
     return get_base_va() + get_mapped_actual_rva();
@@ -2658,7 +2658,7 @@ SgAsmGenericSection::unparse_holes(std::ostream &f) const
  *
  *  NOTE: The MemoryMap class is a better interface to this same information. [RPM 2009-09-09] */
 rose_addr_t
-SgAsmGenericSection::get_rva_offset(addr_t rva) const
+SgAsmGenericSection::get_rva_offset(addr_t rva)
 {
     return get_va_offset(rva + get_base_va());
 }
@@ -2667,7 +2667,7 @@ SgAsmGenericSection::get_rva_offset(addr_t rva) const
  *
  *  NOTE: The MemoryMap class is a better interface to this same information. [RPM 2009-09-09] */
 rose_addr_t
-SgAsmGenericSection::get_va_offset(addr_t va) const
+SgAsmGenericSection::get_va_offset(addr_t va)
 {
     ROSE_ASSERT(is_mapped());
     ROSE_ASSERT(va >= get_base_va());

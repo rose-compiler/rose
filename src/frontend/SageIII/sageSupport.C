@@ -8188,12 +8188,19 @@ void replaceOmpPragmaWithOmpStatement(SgPragmaDeclaration* pdecl, SgStatement* o
 }
 
 // Convert omp_pragma_list to SgOmpxxx nodes
-void convert_OpenMP_pragma_to_AST ()
+void convert_OpenMP_pragma_to_AST (SgSourceFile *sageFilePtr)
 {
   list<SgPragmaDeclaration* >::reverse_iterator iter; // bottom up handling for nested cases
+  ROSE_ASSERT (sageFilePtr != NULL);
   for (iter = omp_pragma_list.rbegin(); iter != omp_pragma_list.rend(); iter ++)
   {
+    // Liao, 11/18/2009
+    // It is possible that several source files showing up in a single compilation line
+    // We have to check if the pragma declaration's file information matches the current file being processed
+    // Otherwise we will process the same pragma declaration multiple times!!
     SgPragmaDeclaration* decl = *iter; 
+    if (decl->get_file_info()->get_filename()!= sageFilePtr->get_file_info()->get_filename())
+      continue;
     OmpAttributeList* oattlist= getOmpAttributeList(decl);
     ROSE_ASSERT (oattlist != NULL) ;
     vector <OmpAttribute* > ompattlist = oattlist->ompAttriList;
@@ -8279,7 +8286,7 @@ void build_OpenMP_AST(SgSourceFile *sageFilePtr)
   } //end if (fortran)
   else// for  C/C++ pragma's OmpAttributeList --> SgOmpxxx nodes
   {
-    convert_OpenMP_pragma_to_AST();
+    convert_OpenMP_pragma_to_AST( sageFilePtr);
   }
 }
 // Liao, 5/31/2009 an entry point for OpenMP related processing
