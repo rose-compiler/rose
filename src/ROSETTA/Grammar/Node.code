@@ -831,11 +831,12 @@ namespace rose_hash
         };
 
 // hashing function for s_s
-size_t hash_value(const int & s)
+#ifdef _MSC_VER 
+inline size_t hash_value(const int & s)
 {
   return s;
 }
-
+#endif
 
 
 
