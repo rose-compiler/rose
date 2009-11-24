@@ -104,7 +104,7 @@ namespace ELF{
   #include "RoseBin.h"
 #endif
 
-// Files in src/frontend/ExecFormats
+// Files in src/frontend/BinaryFormats
 #include "MemoryMap.h"
 #include "Loader.h"
 #include "LoaderELF.h"
@@ -178,6 +178,9 @@ namespace ELF{
 // Note that pin.H (in it's header files) will define "TRUE" and "FALSE" as macros.
 #include "IntelPinSupport.h"
 #endif
+
+// Support for Xen/Ether hypervisor
+#include "ether.h"
 
 // DQ (4/20/2009): Added support to optionally get more information out about new delete operators.
 // #define COMPILE_DEBUG_STATEMENTS 1

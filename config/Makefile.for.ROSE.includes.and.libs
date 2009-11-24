@@ -61,7 +61,8 @@ if ROSE_USE_MYSQL_DATABASE
 
  # MySQL support is setup optionally at compile time (see configure --help, for details)
    MYSQL_DATABASE_LIBS    = $(MYSQL_LDFLAGS)
-   MYSQL_DATABASE_INCLUDE = $(MYSQL_CFLAGS)
+   MYSQL_DATABASE_INCLUDE = $(MYSQL_INCLUDE)
+   MYSQL_DATABASE_CLFAGS  = $(MYSQL_CFLAGS)
 endif
 
 # DQ (12/22/2008): Specification of Boost path for use with "-isystem" option (may be GNU
@@ -194,6 +195,11 @@ if ROSE_USE_INTEL_PIN
 #endif
 endif
 
+if ROSE_USE_ETHER
+  ROSE_ETHER_INCLUDE = -I$(ETHER_PREFIX)/include
+  ROSE_ETHER_LIBS    = -L$(ETHER_PREFIX)/lib -lxenctrl
+endif
+
 # Note use of "-isystem" option in ROSE_BOOST_PREINCLUDE_PATH to have the 
 # boost specified on the configure
 # command-line be used instead of the OS version of boost that is sometimes
@@ -219,8 +225,8 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/frontend/PHPFrontend \
      -I$(top_srcdir)/src/frontend/BinaryDisassembly \
      -I$(top_srcdir)/src/frontend/BinaryLoader \
+     -I$(top_srcdir)/src/frontend/BinaryFormats \
      -I$(top_srcdir)/src/frontend/Disassemblers \
-     -I$(top_srcdir)/src/frontend/ExecFormats \
      -I$(top_srcdir)/src/backend/unparser \
      -I$(top_srcdir)/src/backend/unparser/formatSupport \
      -I$(top_srcdir)/src/backend/unparser/languageIndependenceSupport \
@@ -298,7 +304,8 @@ ROSE_INCLUDES = \
      $(SQLITE3_CFLAGS) \
      $(ROSE_BOOST_NORMAL_INCLUDE_PATH) -DBOOST_REGEX_MATCH_EXTRA \
      $(ROSE_PCH_INCLUDE) \
-     $(INTEL_PIN_INCLUDE_PATHS)
+     $(INTEL_PIN_INCLUDE_PATHS) \
+     $(ROSE_ETHER_INCLUDE)
 
 # DQ (12/22/2008): Move Boost directory to front and used "-isystem" option so
 # that a system with a previous (older) installation of boost does not interfer 
@@ -335,7 +342,7 @@ ROSE_LIBS = $(top_builddir)/src/librose.la -lm  $(JAVA_JVM_LINK) $(MYSQL_DATABAS
   $(BOOST_REGEX_LIB)  $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB)  \
   $(BOOST_WAVE_LIB) $(SQLITE3_LDFLAGS)  $(RT_LIBS) \
   $(ROSE_YICES_LIBS_WITH_PATH) $(ROSE_PHP_LIBS_WITH_PATH) $(ROSE_DWARF_LIBS_WITH_PATH) \
-  $(ROSE_GUI_LIBS_WITH_PATH) $(ROSE_QT_LIBS_WITH_PATH) $(ROSE_SSL_LIBS)
+  $(ROSE_GUI_LIBS_WITH_PATH) $(ROSE_QT_LIBS_WITH_PATH) $(ROSE_SSL_LIBS) $(ROSE_ETHER_LIBS)
 
 # DQ (3/13/2009): Removed this from ROSE_LIBS because libtool warnings say it should be in AM_LDFLAGS
 # (this is because it has been moved from being linked statically to being linked dynamically).
