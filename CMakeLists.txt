@@ -26,13 +26,15 @@ set(INSTALL_TARGETS_DEFAULT_ARGS  RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
 
 cmake_minimum_required(VERSION 2.6)
 add_definitions(${QT_DEFINITIONS} ${KDE4_DEFINITIONS})
-#enable_language(Fortran)
+if (!WIN32)
+enable_language(Fortran)
+endif (!WIN32)
 
 #/CLR  /MDd /TP 
-set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g " )
+set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
 #set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -DHAVE_CONFIG_H" )
 #set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fexceptions -DHAVE_CONFIG_H" )
-set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g " )
+set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
 
 #set(  CMAKE_VERBOSE_MAKEFILE  true )
 
@@ -47,8 +49,10 @@ include(ConfigureChecks)
 
 include(MacroLibrary)
 include(FindMySQL)
-#include(FindOpenSSL)
-#include(FindSQLITE3)
+if (!WIN32)
+include(FindOpenSSL)
+include(FindSQLITE3)
+endif (!WIN32)
 include(FindJava)
 
 include(FindFlex)
@@ -64,17 +68,16 @@ endif(NOT BISON_FOUND)
 
 include(ConvenienceLibs)
 
-SET(Boost_ADDITIONAL_VERSIONS "1.39.0" "1.40.0" )
 #Ensure that Boost is found
-find_package( Boost 1.36.0 COMPONENTS date_time filesystem program_options regex system wave )
+find_package( Boost 1.35.0 COMPONENTS date_time filesystem program_options regex system wave )
 if(NOT Boost_FOUND)
-    message(FATAL_ERROR "Could not find Boost version 1.36.0 or newer command")
+    message(FATAL_ERROR "Could not find Boost version 1.35.0 or newer command")
 endif(NOT Boost_FOUND)
 
-
-#find_library(M_LIB m)
-#find_library(RT_LIB rt)
-
+if (!WIN32)
+find_library(M_LIB m)
+find_library(RT_LIB rt)
+endif (!WIN32)
 
 set( link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${RT_LIB} ${OPENSSL_LIBRARIES} )
 
@@ -113,7 +116,6 @@ configure_file(${ROSE_TOP_SRC_DIR}/rose_config.h.in.cmake ${ROSE_TOP_BINARY_DIR}
      ${ROSE_TOP_SRC_DIR}/src/frontend/BinaryFormats 
      ${ROSE_TOP_SRC_DIR}/src/frontend/BinaryDisassembly 
      ${ROSE_TOP_SRC_DIR}/src/frontend/Disassemblers 
-     ${ROSE_TOP_SRC_DIR}/src/frontend/ExecFormats 
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser 
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/formatSupport 
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/languageIndependenceSupport 
