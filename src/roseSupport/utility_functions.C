@@ -308,6 +308,8 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
             else
              {
             // Use the default name for C++ compiler (defined at configure time)
+              if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
+                 printf ("Link using the default linker (when handling non-C programs) \n");
                finalCombinedExitStatus = project->link();
              }
 
