@@ -15,6 +15,10 @@
 
 #include <iostream>
 
+#ifdef _MSC_VER
+#include <hash_map>
+#include <hash_set>
+#else
 #include <ext/hash_map>
 #include <ext/hash_set>
 
@@ -30,7 +34,7 @@ namespace __gnu_cxx {
     }
   };
 }
-
+#endif
 
 
 class DefUseAnalysis : public DFAnalysis, Support {
