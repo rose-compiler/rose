@@ -18,7 +18,12 @@
 #define ROSE_PREVENT_CONSTRUCTION_ON_STACK
 inline void preventConstructionOnStack(SgNode* n) {
 #ifndef NDEBUG
+#ifdef _MSC_VER
+  // tps (11/24/2009) : Think this is the MS version of __builtin_frame_address
+  void* frameaddr = _ReturnAddress();
+#else
   void* frameaddr = __builtin_frame_address(0);
+#endif
   signed long dist = (char*)n - (char*)frameaddr;
   assert (dist < -10000 || dist > 10000);
 #endif
