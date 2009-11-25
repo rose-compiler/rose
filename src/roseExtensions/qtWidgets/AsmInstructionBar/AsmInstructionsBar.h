@@ -2,6 +2,7 @@
 #ifndef ASM_INSTRUCTION_BAR
 #define ASM_INSTRUCTION_BAR
 
+#include <stdint.h>
 #include <vector>
 #include <QList>
 #include <QVector>
