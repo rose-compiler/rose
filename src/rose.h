@@ -41,10 +41,10 @@ namespace ELF{
 
 // DQ (6/3/2007): added internal support for AST visualization
 // // #include "astVisualization/wholeAST_API.h"
-#ifndef _MSC_VER
+//#ifndef _MSC_VER
 // tps (11/23/2009) : Commented out right now to make progress in Windows
 #include "wholeAST_API.h"
-#endif 
+//#endif 
 // DQ (10/18/2003) Why is this commented out (what is it)
 //#include "AgProcessing.h"
 
@@ -52,11 +52,11 @@ namespace ELF{
 // which has not defined yet (circular reference in the header files)
 // #include "AstRestructure.h"
 
-#ifndef _MSC_VER
+//#ifndef _MSC_VER
 // tps (11/23/2009) : Commented out right now to make progress in Windows
 #include "rewrite.h"
 #include "roseTranslators.h"
-#endif
+//#endif
 
 // this is a temporary fix (will become obsolete)
 #include "AstClearVisitFlags.h"
@@ -88,10 +88,10 @@ namespace ELF{
 #include "AstAttributeDOT.h"
 
 // DQ (3/11/2006): Jeremiah Willcock's inliner
-#ifndef _MSC_VER
+//#ifndef _MSC_VER
 // tps (11/23/2009) : Commented out right now to make progress in Windows
 #include "inliner.h"
-#endif
+//#endif
 
 // DQ (3/18/2006): Jeremiah Willcock's partial redundancy elimination (PRE)
 #ifndef _MSC_VER
@@ -107,12 +107,12 @@ namespace ELF{
 #endif
 
 // DQ (5/8/2007): Added Robert Preissl's support for hidden type and declartion lists.
-#ifndef _MSC_VER
+//#ifndef _MSC_VER
 // tps (11/23/2009) : Commented out right now to make progress in Windows
 #include "HiddenList.h"
 #include "HiddenList_Output.h"
 #include "HiddenList_Intersection.h"
-#endif
+//#endif
 
 // DQ (1/25/2008): Added cfgToDot.h as suggested by Jeremiah
 #include "cfgToDot.h"
@@ -127,15 +127,15 @@ namespace ELF{
 #endif
 #endif
 
+#include "Loader.h"
+#include "LoaderELF.h"
+#include "LoaderELFObj.h"
+#include "LoaderPE.h"
 // Files in src/frontend/ExecFormats
 #ifndef _MSC_VER
 // tps (11/23/2009) : Commented out right now to make progress in Windows
 //#error "Do not execute this"
 #include "MemoryMap.h"
-#include "Loader.h"
-#include "LoaderELF.h"
-#include "LoaderELFObj.h"
-#include "LoaderPE.h"
 
 #include "RoseBin_abstract.h"
 #include "RoseFile.h"
@@ -146,6 +146,7 @@ namespace ELF{
 #include "RoseBin_ControlFlowAnalysis.h"
 #include "RoseBin_DataFlowAnalysis.h"
 #include "RoseBin_CallGraphAnalysis.h"
+#endif
 
 #include "AST_BIN_Traversal.h"
 
@@ -169,9 +170,6 @@ namespace ELF{
 
 // Files in src/backend/asmUnparser
 #include "unparseAsm.h"
-#else
-//#error "Do execute this"
-#endif
 
 
 
@@ -217,7 +215,9 @@ namespace ELF{
 #endif
 
 // Support for Xen/Ether hypervisor
+#ifndef _MSC_VER
 #include "ether.h"
+#endif
 
 // DQ (4/20/2009): Added support to optionally get more information out about new delete operators.
 // #define COMPILE_DEBUG_STATEMENTS 1
