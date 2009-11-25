@@ -2553,7 +2553,18 @@ Grammar::buildCode ()
   // string includeHeaderAstFileIO ="#include \"astFileIO/AST_FILE_IO.h\"\n\n";
      string includeHeaderAstFileIO ="#include \"AST_FILE_IO.h\"\n\n";
      includeHeaderString += includeHeaderAstFileIO;
-     includeHeaderString += "\nusing namespace std;\n";
+
+	 // tps (11/23/2009) : Needed to comply with Windows
+#ifdef _MSC_VER
+	 string l1 = "#ifdef _MSC_VER \n";
+     string l2 = "typedef LONG_PTR ssize_t \n";
+     string l3 = "#endif \n";
+	 includeHeaderString += l1;
+     includeHeaderString += l2;
+     includeHeaderString += l3;
+#endif
+
+	 includeHeaderString += "\nusing namespace std;\n";
 
      ROSE_ArrayGrammarSourceFile.push_back(StringUtility::StringWithLineNumber(includeHeaderString, "", 1));
 
