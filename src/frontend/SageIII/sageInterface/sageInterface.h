@@ -555,10 +555,13 @@ void replaceMacroCallsWithExpandedStrings(SgPragmaDeclaration* target);
   \brief set Sg_File_Info for a SgNode
 */
 //! Build and attach comment, comment style is inferred from the language type of the target node if not provided
-PreprocessingInfo* attachComment(SgLocatedNode* target, const std::string & content,
+   PreprocessingInfo* attachComment(SgLocatedNode* target, const std::string & content,
                PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before,
                PreprocessingInfo::DirectiveType dtype= PreprocessingInfo::CpreprocessorUnknownDeclaration);
 
+// DQ (11/25/2009): Added matching support for adding comments to SgAsm nodes.
+// Build and attach comment
+// void attachComment(SgAsmStatement* target, const std::string & content );
 
 // DQ (7/20/2008): I am not clear were I should put this function, candidates include: SgLocatedNode or SgInterface
 //! Add a string to be unparsed to support code generation for back-end specific tools or compilers.

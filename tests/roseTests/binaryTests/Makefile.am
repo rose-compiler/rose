@@ -17,13 +17,24 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIde
 # The executables...
 ###############################################################################################################################
 
-noinst_PROGRAMS = execFormatsTest testElfStrtab testElfByteOrder testElfWordSize testElfSchulz testElfConstruct \
+#noinst_PROGRAMS = execFormatsTest testBinCFG testBinCG testElfStrtab testElfByteOrder testElfWordSize testElfSchulz testElfConstruct \
+#	          testPeConstruct shiftResizeSection findConstants disassemble
+noinst_PROGRAMS = execFormatsTest testBinCFG testBinCG testElfStrtab testElfByteOrder testElfWordSize testElfSchulz testElfConstruct \
 	          testPeConstruct shiftResizeSection findConstants disassemble testEtherInsns
 
 # Parses an executable to produce a dump file (*.dump), an assembly file (rose_*.s), and a new executable created by unparsing
 # the AST (*.new). The *.new file is typically identical to the original executable.
 execFormatsTest_SOURCES = execFormatsTest.C
 execFormatsTest_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+#Test the binary control flow graph that uses the semantic representation to perform an accurate analysis
+testBinCFG_SOURCES = testBinCFG.C
+testBinCFG_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+#Test the binary call graph that uses the semantic representation to perform an accurate analysis
+testBinCG_SOURCES = testBinCG.C
+testBinCG_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
 
 # Tests ELF string table reallocation functions by changing some strings.  At first glance this would appear to be something
 # quite easy to do, but it turns out to involve lots of details.
@@ -139,6 +150,14 @@ TEST_PASSED_TARGETS=$(patsubst %,test_%.passed,$(noinst_PROGRAMS)) test_assemble
 
 test_execFormatsTest.passed: execFormatsTest
 	: $< not currently tested
+	@touch $@
+
+test_testBinCFG.passed: testBinCFG
+	$(VALGRIND) ./testBinCFG $(BINARY_SAMPLES)/libm-2.3.6.so
+	@touch $@
+
+test_testBinCG.passed: testBinCG
+	$(VALGRIND) ./testBinCG $(BINARY_SAMPLES)/libm-2.3.6.so
 	@touch $@
 
 test_testElfStrtab.passed: testElfStrtab
@@ -332,7 +351,7 @@ endif
 
 # Don't delete things indiscriminately!
 clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) ii_files ti_files DATABASE DATABASE.dot
+	rm -rf $(CXX_TEMPLATE_OBJECTS) ii_files ti_files DATABASE DATABASE.dot cfg_x86.dot  cg_x86.dot
 
 distclean-local:
 	rm -rf Templates.DB 

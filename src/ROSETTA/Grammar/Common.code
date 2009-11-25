@@ -292,6 +292,16 @@ HEADER_START
 
     public:
 
+      // DQ (11/21/2009): Added function to add new Regular Expression attributes and return pointer 
+      // to current node (so that it will work cleanly with build functions to specify patterns).
+      // virtual SgNode* addRegExpAttribute();
+      /*! \brief Support for AST matching using regular expression.
+
+          This support is incomplete and the subject of current research to define 
+          RegEx trees to support inexact matching.
+       */
+          $CLASSNAME* addRegExpAttribute(std::string s, AstRegExAttribute* a);
+
 // *** COMMON CODE SECTION ENDS HERE ***
 HEADER_END
 
@@ -326,8 +336,8 @@ $CLASSNAME::variantT() const {
 int
 $CLASSNAME::variant() const
    {
-     // This function is used in SAGE
-     assert(this != NULL);
+  // This function is used in SAGE
+     ROSE_ASSERT(this != NULL);
      return $CLASSTAG;
    }
 #endif
@@ -335,14 +345,14 @@ $CLASSNAME::variant() const
 const char*
 $CLASSNAME::sage_class_name() const
    {
-     assert(this != NULL);
+     ROSE_ASSERT(this != NULL);
      return "$CLASSNAME";  
    }
 
 std::string
 $CLASSNAME::class_name() const
    {
-     assert(this != NULL);
+     ROSE_ASSERT(this != NULL);
      return "$CLASSNAME";  
    }
 
@@ -353,6 +363,29 @@ $CLASSNAME::executeVisitorMemberFunction (ROSE_VisitorPattern & visitor)
    {
      ROSE_ASSERT(this != NULL);
      visitor.visit(this);
+   }
+
+$CLASSNAME*
+$CLASSNAME::addRegExpAttribute(std::string s, AstRegExAttribute* a)
+   {
+  // This function is currently only supported for the AST used the represent Binary executables.
+     if (isSgAsmNode(this) != NULL)
+        {
+       // Support for regex specification.
+          std::string prefixCode = "REGEX:";
+          addNewAttribute(prefixCode + s,a);
+        }
+
+  /* Return "this" so that it can be used with the build function interface to add regex attributes.
+     Example is:
+     SgAsmInstruction* target = buildx86Instruction(x86_mov,
+                   buildAsmMemoryReferenceExpression(
+                        buildAsmDWordValue(0x8049c8c)->addRegExpAttribute("*"),
+                        buildAsmx86RegisterReferenceExpression(x86_regclass_segment,segmentRegister),
+                        buildAsmTypeDoubleWord() ),
+                   buildAsmDWordValue(0x8048858)->addRegExpAttribute("*"));
+   */
+     return this;
    }
 
 // *** COMMON CODE SECTION ENDS HERE ***

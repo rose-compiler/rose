@@ -6631,7 +6631,7 @@ SgDeclarationStatement::get_declaration_associated_with_symbol() const
 
                if (declarationAssociatedWithSymbol->get_symbol_from_symbol_table() == NULL)
                   {
-                    printf ("Using original this declarationAssociatedWithSymbol->get_symbol_from_symbol_table() == NULL: declarationAssociatedWithSymbol = %p = %s = %s \n",
+                    printf ("Error: No symbol found, declarationAssociatedWithSymbol->get_symbol_from_symbol_table() == NULL: declarationAssociatedWithSymbol = %p = %s = %s \n",
                          declarationAssociatedWithSymbol,declarationAssociatedWithSymbol->class_name().c_str(),SageInterface::get_name(declarationAssociatedWithSymbol).c_str());
                     SgScopeStatement* scope = declarationAssociatedWithSymbol->get_scope();
                     printf ("declarationAssociatedWithSymbol scope = %p = %s = %s \n",scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str());
