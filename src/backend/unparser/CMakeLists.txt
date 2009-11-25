@@ -2,14 +2,37 @@
 include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 add_subdirectory(CxxCodeGeneration)
+if (WIN32)
+  message ("WARNING : Fortran and Php not supported yet")
+else (WIN32)
+# tps (11/23/2009) commented out fortran and php for windows for now
 add_subdirectory(FortranCodeGeneration)
 add_subdirectory(PHPCodeGeneration)
+endif (WIN32)
 add_subdirectory(languageIndependenceSupport)
 add_subdirectory(formatSupport)
 
 
 ########### next target ###############
 
+if (WIN32)
+set( unparser_SRC
+      ./CxxCodeGeneration/unparseCxx_types.C
+      ./CxxCodeGeneration/unparseCxx_expressions.C
+      ./CxxCodeGeneration/unparseCxx_statements.C
+      ./astUnparseAttribute.C
+      ./unparser.C
+      ./unparse_sym.C
+      ./formatSupport/unparseFormatHelp.C
+      ./formatSupport/unparse_format.C
+      ./languageIndependenceSupport/modified_sage_isUnaryOp.C
+      ./languageIndependenceSupport/unparser_opt.C
+      ./languageIndependenceSupport/modified_sage.C
+      ./languageIndependenceSupport/name_qualification_support.C
+      ./languageIndependenceSupport/unparse_debug.C
+      ./languageIndependenceSupport/unparseLanguageIndependentConstructs.C
+  )
+else (WIN32)
 set( unparser_SRC
       ./FortranCodeGeneration/unparseFortran_expressions.C
       ./FortranCodeGeneration/unparseFortran_modfile.C
@@ -32,8 +55,9 @@ set( unparser_SRC
       ./languageIndependenceSupport/unparse_debug.C
       ./languageIndependenceSupport/unparseLanguageIndependentConstructs.C
   )
+endif (WIN32)
 
-add_library(unparser ${unparser_SRC})
+add_library(unparser STATIC ${unparser_SRC})
 add_dependencies( unparser ROSETTA )
 ########### install files ###############
 

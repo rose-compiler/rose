@@ -3113,12 +3113,22 @@ struct eqstr
  */
 struct hash_Name
    {
+#ifndef _MSC_VER 
      rose_hash::hash<const char*> hasher;
+#else
+   public:
+      static const size_t bucket_size = 4;
+      static const size_t min_buckets = 8;
+#endif
 
      public:
           size_t operator()(const SgName & name) const
              {
+#ifdef _MSC_VER 
+               return stdext::hash_compare<const char*>()(name.str()); 
+#else
                return hasher(name.str());
+#endif
              }
    };
 
@@ -3132,6 +3142,28 @@ struct hash_Name
     when Ken Kennedy visited LLNL.
 
  */
+ // tps (11/19/2009) : Constructor of hash_multimap in MSVS is different
+ #ifdef _MSC_VER
+class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>
+   {
+     protected:
+          SgNode * parent;
+
+     public:
+       // DQ (12/22/2005): Added initialization of parent pointer as suggested by Jochen
+          rose_hash_multimap()
+             : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>(), parent(NULL)
+             {}
+// tps (11/18/2009) : this constructor is not valid, see Node.code
+#if 0
+          rose_hash_multimap(int sz) 
+             : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>(sz), parent(NULL)
+             {}
+#endif
+          rose_hash_multimap(const rose_hash_multimap& rhs) 
+             : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>((rose_hash_multimap)rhs),parent(rhs.parent)
+             {}
+#else
 class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>
    {
      protected:
@@ -3148,7 +3180,7 @@ class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, ha
           rose_hash_multimap(const rose_hash_multimap& rhs) 
              : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>((rose_hash_multimap)rhs),parent(rhs.parent)
              {}
-
+#endif
           void set_parent(SgNode * new_parent) 
              {
                parent = new_parent;

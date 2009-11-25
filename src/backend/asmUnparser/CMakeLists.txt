@@ -8,7 +8,7 @@ set( roseAsmUnparser_SRC
      unparseX86Asm.C unparseArmAsm.C unparsePowerpcAsm.C unparseAsm.C
    )
 
-add_library(  roseAsmUnparser ${roseAsmUnparser_SRC} )
+add_library(  roseAsmUnparser STATIC ${roseAsmUnparser_SRC} )
 add_dependencies( roseAsmUnparser ROSETTA )
 ########### install files ###############
 
