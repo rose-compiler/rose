@@ -1720,7 +1720,11 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
      outputTemplateSpecializationSpecifier(decl_stmt);
    #endif
 #else
-   #warning "Non-GNU backends not specifically addressed, assuming g++ version 3.4.x compliant ..."
+#ifndef _MSC_VER
+#warning "Non-GNU backends not specifically addressed, assuming g++ version 3.4.x compliant ..."
+#else
+#pragma message ("Non-GNU backends not specifically addressed, assuming g++ version 3.4.x compliant ...")
+#endif
 #endif
 
      SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(decl_stmt);

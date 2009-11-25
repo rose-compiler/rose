@@ -1,5 +1,9 @@
 #include "rose.h"
 
+#ifdef _MSC_VER
+#include "unparseAsm.h"
+#endif
+
 static std::string unparseArmRegister(
          SgAsmArmRegisterReferenceExpression::arm_register_enum code) {
   int c = (int)code;
