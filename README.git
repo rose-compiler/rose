@@ -219,3 +219,9 @@ Delete the test branch
 #################### GITK ############################
 
 gitk master HEAD andreas cmake dan jeff liao matt peter robb svn thomas windows yi
+
+################ SHOW ###############################
+
+To see what branches are tracked and the semantics of "git pull" use:
+   $ git remote show origin
+
