@@ -11,7 +11,7 @@
 #include "general_token_defs.h"
 
 // DQ (12/22/2008): I would appreciate it if this were a better name...
-#if CAN_NOT_COMPILE_WITH_ROSE != true
+#if !CAN_NOT_COMPILE_WITH_ROSE 
 #include <boost/preprocessor/iteration/iterate.hpp> // Liao, 7/10/2009, required by GCC 4.4.0 for a #define line of BOOST_PP_ITERATION_DEPTH
 #include <boost/wave/cpplexer/cpp_lex_token.hpp>    // token class
 #include <boost/wave/cpplexer/cpp_lex_iterator.hpp>   // lexer type
@@ -43,7 +43,7 @@ class Sg_File_Info;
 // DQ (1/21/2008): Need forward declaration
 class SgFile;
 
-#if CAN_NOT_COMPILE_WITH_ROSE != true
+#if !CAN_NOT_COMPILE_WITH_ROSE 
 
 typedef boost::wave::cpplexer::lex_token<> token_type;
 typedef std::vector<token_type>            token_container;
@@ -57,7 +57,7 @@ class  PreprocessingInfo
    {
 
   // This is part of Wave support in ROSE.
-#if CAN_NOT_COMPILE_WITH_ROSE != true
+#if !CAN_NOT_COMPILE_WITH_ROSE 
      public:
 /*
        //AS using the lexer_token from boost_wave in order to store structures
@@ -290,7 +290,7 @@ class  PreprocessingInfo
          ~PreprocessingInfo();
           PreprocessingInfo();
 
-#if CAN_NOT_COMPILE_WITH_ROSE != true
+#if !CAN_NOT_COMPILE_WITH_ROSE 
        // AS (112105) Added constructors to support macros
           PreprocessingInfo(token_container, DirectiveType, RelativePositionType); 
           PreprocessingInfo(rose_macro_call*, RelativePositionType); 
@@ -506,7 +506,7 @@ class ROSEAttributesListContainer
    };
 
 
-#if CAN_NOT_COMPILE_WITH_ROSE != true
+#if !CAN_NOT_COMPILE_WITH_ROSE 
 
 extern token_container wave_tokenStream;
 

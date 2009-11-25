@@ -797,7 +797,7 @@ atTraversalEnd()
 //      error: there are no arguments to ∆cvLoadImage« that depend on a template parameter, so a declaration of <function name> must be available
 // which requires:
 //      -fpermissive to compile without error (and then it generates a lot of warnings).
-#if !defined(__CYGWIN__)
+#if !_MSC_VER
   #include "AstSharedMemoryParallelProcessing.h"
 #endif
 
