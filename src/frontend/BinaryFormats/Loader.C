@@ -267,13 +267,13 @@ Loader::create_map(MemoryMap *map, const SgAsmGenericSectionPtrList &unordered_s
             rose_addr_t rtsz = mem_size - ltsz;
 
             /* Permissions */
-            unsigned mapperms=PROT_NONE;
+            unsigned mapperms=MemoryMap::PROT_NONE;
             if (section->get_mapped_rperm())
-                mapperms |= PROT_READ;
+                mapperms |= MemoryMap::PROT_READ;
             if (section->get_mapped_wperm())
-                mapperms |= PROT_WRITE;
+                mapperms |= MemoryMap::PROT_WRITE;
             if (section->get_mapped_xperm())
-                mapperms |= PROT_EXEC;
+                mapperms |= MemoryMap::PROT_EXEC;
 
             /* Map the left part to the file; right part is anonymous. */
             if (p_debug)

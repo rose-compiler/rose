@@ -38,6 +38,10 @@
 // DQ (9/29/2006): This is required for 64-bit g++ 3.4.4 compiler.
 #include <errno.h>
 
+// tps (11/10/2009): This include is needed in windows to find the realpath
+#if ROSE_MICROSOFT_OS
+#include <unistd.h>
+#endif
 // DQ (12/31/2005): This is allowed in C files where it can not 
 // effect the users applcation (just not in header files).
 using namespace std;
@@ -142,8 +146,9 @@ StringUtility::getAbsolutePathFromRelativePath ( const std::string & relativePat
 
 #if ROSE_MICROSOFT_OS
 	 const char* resultingPath = NULL;
-	 printf ("Error: realPath() not supported in MSVC (work around not implemented) \n");
-	 ROSE_ASSERT(false);
+	 printf ("WARNING: realPath() not supported in MSVC (work around not implemented) \n");
+// tps (11/10/200): Did not find corresponding function call in Windows. Commented out for now. Seems to work.
+	 //	 ROSE_ASSERT(false);
 #else
   // DQ (9/3/2006): Note that "realpath()" 
   // can return an error if it processes a file or directory that does not exist.  This is 

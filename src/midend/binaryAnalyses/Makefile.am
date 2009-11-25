@@ -65,13 +65,14 @@ BINARY_DISASSEMBLY_HEADER_FILES = \
    instructionSemantics/semanticsModule.h \
    instructionSemantics/x86InstructionSemantics.h \
    libraryIdentification/functionIdentification.h \
-   libraryIdentification/libraryIdentification.h
+   libraryIdentification/libraryIdentification.h \
+   ether.h
 
 
 
 include_HEADERS = $(BINARY_DISASSEMBLY_HEADER_FILES)
 
-EXTRA_DIST = CMakeLists.txt 
+EXTRA_DIST = CMakeLists.txt
 
 
 clean-local:

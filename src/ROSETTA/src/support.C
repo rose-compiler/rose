@@ -219,7 +219,7 @@ Grammar::setUpSupport ()
           "Support", "SupportTag", false);
 #endif
 
-#if !ROSE_MICROSOFT_OS
+//#if !ROSE_MICROSOFT_OS
 // DQ (3/30/2009): This is the moved because "#if !0" is a problem for MSVS.
 // Note that OLD_GRAPH_NODES is set to "1" above...
 // #if 0 // !OLD_GRAPH_NODES == 0
@@ -240,7 +240,7 @@ Grammar::setUpSupport ()
           FormatItemList        | DataStatementGroup        | DataStatementObject | 
           DataStatementValue,
           "Support", "SupportTag", false);
-#endif
+//#endif
 
 
   // ***********************************************************************
@@ -1172,10 +1172,12 @@ Grammar::setUpSupport ()
 //       the SgGraph indexed by integer values.
 
 // DQ (5/2/2009): This is put into rose_paths.h
+// the warning macro is causing problems in Windows
+#if !_MSC_VER
 #ifndef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
 #warning "ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY not set"
 #endif
-
+#endif
   // ******************************************************************************
   //                                SgGraphNode
   // ******************************************************************************

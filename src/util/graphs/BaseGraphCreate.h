@@ -14,6 +14,9 @@ typedef MultiGraphElemTemplate<void*> BaseGraphEdge;
 // with additional interfaces to multigraph and graph access
 class BaseGraphCreate 
   : public MultiGraphCreate,
+#if _MSC_VER
+	  public
+#endif
            GraphAccessTemplate<BaseGraphNode,BaseGraphEdge>
 {
  protected:
@@ -117,7 +120,7 @@ class BaseGraphCreateWrap : public BaseGraphCreate
 #endif  
   { switch (dir) {
 // DQ (8/31/2009): This is required for EDG to compile this code!
-#ifdef USE_ROSE
+#ifdef USE_ROSE 
       case ::GraphAccess::EdgeOut: 
 #else
      case GraphAccess::EdgeOut: 
