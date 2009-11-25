@@ -13,7 +13,7 @@ set( libsageInterface_SRC
      abiStuff.C
    )
 
-add_library( libsageInterface ${libsageInterface_SRC}  )
+add_library( libsageInterface STATIC ${libsageInterface_SRC}  )
 add_dependencies( libsageInterface ROSETTA )
 
 ########### install files ###############

@@ -8,7 +8,7 @@ set( libastTokenStream_SRC
      createMap.C  doCompleteMapping.C  linearizeAST.C unparseMacro.C
    )
 
-add_library( libastTokenStream ${libastTokenStream_SRC}  )
+add_library( libastTokenStream STATIC ${libastTokenStream_SRC}  )
 add_dependencies( libastTokenStream ROSETTA )
 
 ########### install files ###############

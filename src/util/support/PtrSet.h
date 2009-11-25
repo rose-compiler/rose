@@ -20,7 +20,7 @@ class PtrSetWrap
   class Iterator 
   {
     const VoidPtrSet *impl;
-    VoidPtrSet::iterator p;
+    VoidPtrSet::const_iterator p;
     Iterator( const VoidPtrSet* _impl) 
             : impl(_impl) { Reset(); }
     Iterator( const VoidPtrSet* _impl, const VoidPtrSet::iterator _p) 
@@ -67,7 +67,12 @@ class PtrSetWrap
   };
 
   const_iterator begin() const { return Iterator(&impl); }
+#if _MSC_VER
+//#if ROSE_MICROSOFT_OS
+  const_iterator end() const { return Iterator(&impl); }
+#else
   const_iterator end() const { return Iterator(&impl, impl.end()); }
+#endif
   const_iterator find(const T* t) const { return Iterator(&impl,impl.find((void*)t)); }
   iterator begin() { return Iterator(&impl); }
   iterator end() { return Iterator(&impl, impl.end()); }
