@@ -7,7 +7,11 @@
 #include "sage3.h"
 
 // DQ (3/20/2009): Trying to fix error on Cygwin platform.
+#ifdef _MSC_VER
+#pragma message ("Error: pthread.h is unavailable on MSVC, we might want to use boost.thread library.")
+#else
 #include <pthread.h>
+#endif
 
 #include "AstSharedMemoryParallelProcessing.h"
 
@@ -142,6 +146,7 @@ AstSharedMemoryParallelTopDownBottomUpProcessing<I, S>::traverseInParallel(
         begin = end;
     }
 
+#ifndef _MSC_VER
     // Start a thread for each of the parallelizable traversals with its share
     // of the initial inherited attributes.
     pthread_t *threads = new pthread_t[numberOfThreads];
@@ -166,6 +171,7 @@ AstSharedMemoryParallelTopDownBottomUpProcessing<I, S>::traverseInParallel(
     for (i = 0; i < numberOfThreads; i++)
         pthread_join(threads[i], (void **) &finalResults[i]);
     delete threads;
+#endif
 
     // Flatten the nested list of traversal results.
     SynthesizedAttributeTypeList *flatFinalResults = new SynthesizedAttributeTypeList;

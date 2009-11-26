@@ -616,7 +616,12 @@ SgSymbol* AstInterfaceImpl::CreateDeclarationStmts( const string& _decl)
   // to support testing of the loop processor in parallel.  This is modified below to
   // make the name unique for each process.
      char uniqueFilename[] = "/tmp/_astInterface_Tmp_XXXXXX.c";
-     int fd = mkstemp(uniqueFilename);
+#ifdef _MSC_VER
+#pragma message ("Need support for MSVC file I/O (commented out use of linux mkstemp() function).")
+	 printf ("Need MSVC file I/O support. \n");
+	 ROSE_ASSERT(false);
+#else
+	 int fd = mkstemp(uniqueFilename);
      if (fd == -1) {
        perror("mkstemp: ");
        abort();
@@ -624,6 +629,7 @@ SgSymbol* AstInterfaceImpl::CreateDeclarationStmts( const string& _decl)
 
      write(fd, _decl.c_str(), _decl.size());
      write(fd, "\n", 1);
+#endif
 
      int error = 0;
      vector<string> argv;

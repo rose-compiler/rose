@@ -32,9 +32,19 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
 
   std::map < SgGraphNode*,int> visitedCounter;
 
+#ifdef _MSC_VER
+  typedef rose_hash::hash_map <SgGraphNode*, SgGraphNode*,rose_hash::hash_graph_node> BeforeMapType;
+#else
   typedef rose_hash::hash_map <SgGraphNode*, SgGraphNode*,rose_hash::hash_graph_node,rose_hash::eqstr_graph_node> BeforeMapType;
+#endif
+
   BeforeMapType nodeBeforeMap;
+#ifdef _MSC_VER
+  typedef rose_hash::hash_set < SgGraphNode*,rose_hash::hash_graph_node> nodeHashSetType;
+#else
   typedef rose_hash::hash_set < SgGraphNode*,rose_hash::hash_graph_node,rose_hash::eqstr_graph_node> nodeHashSetType;
+#endif
+
   nodeHashSetType visited;
 
   void traverseEdges(RoseBin_DataFlowAbstract* analysis);

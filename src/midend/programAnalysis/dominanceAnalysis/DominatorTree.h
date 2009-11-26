@@ -85,11 +85,11 @@ namespace DominatorTreesAndDominanceFrontiers
 
 			//!constructor for the DT. Head is the start point for the DT construction. DT works for SgFunctionDefintion nodes, unexpected behaviour for non-SgFunctionDefinition!!!
 			//Direction determines Pre/Post-Dominator construction
-			TemplatedDominatorTree(SgNode * head, Direction d =
-					DominatorForwardBackwardWrapperClass <
-					CFGFilterFunction >::PRE_DOMINATOR);
-
-
+#ifdef _MSC_VER
+			TemplatedDominatorTree( SgNode * head, Direction d =	PRE_DOMINATOR );
+#else
+			TemplatedDominatorTree(SgNode * head, Direction d =	DominatorForwardBackwardWrapperClass <CFGFilterFunction>::PRE_DOMINATOR);
+#endif
 			// TemplatedDominatorTree(VirtualCFG::FilteredCFGNode<CFGFilterFunction> 
 			// cfg , Direction d = PRE);
 
