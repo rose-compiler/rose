@@ -119,20 +119,20 @@ namespace ELF{
 
 // DQ (1/24/2008): Add these here to permit simple and uniform support of binaries.
 // File in src/frontend/BinaryDisassembly
-#ifndef _MSC_VER
+// #ifndef _MSC_VER
 // tps (11/23/2009) : Commented out right now to make progress in Windows
 #include "RoseBin_support.h"
 #ifdef HASH_ROSE_USE_BINARYSQL
   #include "RoseBin.h"
 #endif
-#endif
+// #endif
 
 #include "Loader.h"
 #include "LoaderELF.h"
 #include "LoaderELFObj.h"
 #include "LoaderPE.h"
 // Files in src/frontend/ExecFormats
-#ifndef _MSC_VER
+// #ifndef _MSC_VER
 // tps (11/23/2009) : Commented out right now to make progress in Windows
 //#error "Do not execute this"
 #include "MemoryMap.h"
@@ -146,7 +146,7 @@ namespace ELF{
 #include "RoseBin_ControlFlowAnalysis.h"
 #include "RoseBin_DataFlowAnalysis.h"
 #include "RoseBin_CallGraphAnalysis.h"
-#endif
+// #endif
 
 #include "AST_BIN_Traversal.h"
 
