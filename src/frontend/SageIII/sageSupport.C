@@ -2900,7 +2900,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // This includes a generated header file that defines the __builtin functions and a number 
   // of predefined macros obtained from the backend compiler.  The new EDG/Sage interface
   // does not require this function and I think that the file is not generated in this case 
-  // which is why there is a test for it's existance to see if it should be include.  I would
+  // which is why there is a test for it's existence to see if it should be include.  I would
   // rather see a more direct test.
      for (Rose_STL_Container<string>::iterator i = Cxx_ConfigIncludeDirs.begin(); i != Cxx_ConfigIncludeDirs.end(); i++)
         {
