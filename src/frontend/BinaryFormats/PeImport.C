@@ -81,9 +81,14 @@ SgAsmPEImportDirectory::unparse(std::ostream &f, const SgAsmPEImportSection *sec
             addr_t spos = name_section->write(f, p_dll_name_rva.get_rel(), p_dll_name->get_string());
             name_section->write(f, spos, '\0');
         } else {
-            fprintf(stderr, "%s: error: unable to locate section to contain Import Directory Name RVA 0x%08"PRIx64"\n", 
+#ifdef _MSC_VER
+			fprintf(stderr, "error: unable to locate section to contain Import Directory Name RVA 0x%08"PRIx64"\n", 
+                    p_dll_name_rva.get_rva());
+#else
+			fprintf(stderr, "%s: error: unable to locate section to contain Import Directory Name RVA 0x%08"PRIx64"\n", 
                     __func__, p_dll_name_rva.get_rva());
-        }
+#endif
+		}
     }
     if (p_ilt)
         p_ilt->unparse(f, fhdr, p_ilt_rva);
@@ -106,8 +111,11 @@ SgAsmPEImportDirectory::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         sprintf(p, "%sPEImportDirectory.", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-
+#ifdef _MSC_VER
+	const int w = _cpp_max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+#else
+	const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+#endif
     fprintf(f, "%s%-*s = %s",          p, w, "dll_name_rva", p_dll_name_rva.to_string().c_str());
     if (p_dll_name)
         fprintf(f, " \"%s\"", p_dll_name->c_str());
@@ -228,8 +236,11 @@ SgAsmPEImportILTEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         sprintf(p, "%sentry.", prefix);
     }
+#ifdef _MSC_VER
+    const int w = _cpp_max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+#else
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-
+#endif
     switch (p_entry_type) {
       case ILT_ORDINAL:
         fprintf(f, "%s%-*s = 0x%04x (%u)\n", p, w, "ordinal", p_ordinal, p_ordinal);
@@ -359,8 +370,11 @@ SgAsmPEImportLookupTable::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         sprintf(p, "%s%s.", prefix, tabbr);
     }
+#ifdef _MSC_VER
+    const int w = _cpp_max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+#else
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-    
+#endif
     fprintf(f, "%s%-*s = %zu\n", p, w, "nentries", p_entries->get_vector().size());
     for (size_t i=0; i<p_entries->get_vector().size(); i++) {
         SgAsmPEImportILTEntry *ilt_entry = p_entries->get_vector()[i];
@@ -444,8 +458,11 @@ SgAsmPEImportHNTEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         sprintf(p, "%sHNTEntry.", prefix);
     }
+#ifdef _MSC_VER
+    const int w = _cpp_max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+#else
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-    
+#endif
     fprintf(f, "%s%-*s = %u\t\"%s\"", p, w, "hint/name", p_hint, p_name->c_str());
     if ((p_name->get_string().size()+1)%2)
         fprintf(f, " + '\\%03o'", p_padding);
@@ -583,8 +600,11 @@ SgAsmPEImportSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         sprintf(p, "%sPEImportSection.", prefix);
     }
+#ifdef _MSC_VER
+    const int w = _cpp_max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+#else
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-    
+#endif
     SgAsmPESection::dump(f, p, -1);
     fprintf(f, "%s%-*s = %zu\n", p, w, "ndirectories", p_import_directories->get_vector().size());
     for (size_t i=0; i<p_import_directories->get_vector().size(); i++)
