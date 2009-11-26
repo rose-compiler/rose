@@ -11812,7 +11812,13 @@ SgUnparse_Info::SgUnparse_Info (  )
      if (p_forceDefaultConstructorToTriggerError == true)
         {
           printf ("SgUnparse_Info constructor called in inappropriate location (part of debugging code) counter = %d \n",counter);
+#if 1
+       // DQ (11/9/2009): This can be allowed to be uncommented!
           ROSE_ABORT();
+#else
+       // DQ (11/9/2009): Allow this to support debugging of the unparser (posabily recursive behavior) \n");
+          printf ("Warning: Allow this to support debugging of the unparser (posabily recursive behavior) \n");
+#endif
         }
 
   // Test the variant virtual function

@@ -174,7 +174,9 @@ Unparser_Nameq::generateNameQualifier( SgDeclarationStatement* declarationStatem
           SageInterface::get_name(declarationStatement).c_str(),outputQualifiedName ? "QUALIFIED" : "NON-QUALIFIED");
 #endif
 
-#if TRACE_NAME_QUALIFICATION && false
+//#if TRACE_NAME_QUALIFICATION && false
+#if TRACE_NAME_QUALIFICATION 
+#if 0
      cur << "/* In generateNameQualifier info.SkipQualifiedNames()                         = " << (info.SkipQualifiedNames() == true ? "true" : "false") << " */\n ";
      cur << "/* In generateNameQualifier declarationStatement                              = " << declarationStatement->class_name() << " */\n ";
      cur << "/* In generateNameQualifier info.get_current_scope()                          = " << StringUtility::numberToString(info.get_current_scope()) << " */\n ";
@@ -187,6 +189,7 @@ Unparser_Nameq::generateNameQualifier( SgDeclarationStatement* declarationStatem
      cur << "/* In generateNameQualifier declarationStatement->get_parent() == get_scope() = " << ((declarationStatement->get_parent() == declarationStatement->get_scope()) ? "true" : "false") << " */\n ";
 
   // info.display("In generateNameQualifier(): The C++ support is more complex and can require qualified names");
+#endif
 #endif
 
   // DQ (6/6/2007): If the scope supports defining declaration then the scope can be named

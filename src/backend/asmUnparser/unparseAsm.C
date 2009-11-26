@@ -1,5 +1,7 @@
 #include "rose.h"
-
+#ifdef _MSC_VER
+#include "unparseAsm.h"
+#endif
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
@@ -52,8 +54,12 @@ std::string unparseMnemonic(SgAsmInstruction *insn) {
         case V_SgAsmPowerpcInstruction:
             return unparsePowerpcMnemonic(isSgAsmPowerpcInstruction(insn));
         default:
-            std::cerr <<"Unhandled variant " <<insn->class_name() <<" in " <<__func__ <<std::endl;
-            abort();
+#ifdef _MSC_VER
+			std::cerr <<"Unhandled variant " <<insn->class_name() <<std::endl;
+#else
+			std::cerr <<"Unhandled variant " <<insn->class_name() <<" in " <<__func__ <<std::endl;
+#endif
+		abort();
     }
 }
 
@@ -78,8 +84,12 @@ std::string unparseExpression(SgAsmExpression *expr) {
         case V_SgAsmPowerpcInstruction:
             return unparsePowerpcExpression(expr);
         default:
-            std::cerr <<"Unhandled variant " <<insn->class_name() <<" in " <<__func__ <<std::endl;
-            abort();
+#ifdef _MSC_VER
+			std::cerr <<"Unhandled variant " <<insn->class_name() << std::endl;
+#else
+			std::cerr <<"Unhandled variant " <<insn->class_name() <<" in " <<__func__ <<std::endl;
+#endif
+			abort();
     }
 }
 

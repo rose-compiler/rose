@@ -106,15 +106,24 @@ int64_t getAsmSignedConstant(SgAsmValueExpression *e);
 // in the original file to the symbols in the newer separate file).
 // typedef rose_hash::hash_map<SgNode*, SgNode*, hash_nodeptr> ReplacementMapType;
 // void supplementReplacementSymbolMap ( const ReplacementMapTraversal::ReplacementMapType & inputReplacementMap );
+#ifdef _MSC_VER
+inline size_t hash_value(SgNode* t) {return (size_t)t;}
+#endif
+
 struct hash_nodeptr
    {
-     rose_hash::hash<char*> hasher;
-
+#ifndef _MSC_VER
+	   rose_hash::hash<char*> hasher;
+#endif
      public:
           size_t operator()(SgNode* node) const
              {
-               return (size_t) node;
-             }
+#ifdef _MSC_VER
+				 return (size_t) hash_value(node);
+#else
+				 return (size_t) node;
+#endif
+		  }
    };
 
  void supplementReplacementSymbolMap ( rose_hash::hash_map<SgNode*, SgNode*, hash_nodeptr> & inputReplacementMap );
@@ -555,10 +564,13 @@ void replaceMacroCallsWithExpandedStrings(SgPragmaDeclaration* target);
   \brief set Sg_File_Info for a SgNode
 */
 //! Build and attach comment, comment style is inferred from the language type of the target node if not provided
-PreprocessingInfo* attachComment(SgLocatedNode* target, const std::string & content,
+   PreprocessingInfo* attachComment(SgLocatedNode* target, const std::string & content,
                PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before,
                PreprocessingInfo::DirectiveType dtype= PreprocessingInfo::CpreprocessorUnknownDeclaration);
 
+// DQ (11/25/2009): Added matching support for adding comments to SgAsm nodes.
+// Build and attach comment
+// void attachComment(SgAsmStatement* target, const std::string & content );
 
 // DQ (7/20/2008): I am not clear were I should put this function, candidates include: SgLocatedNode or SgInterface
 //! Add a string to be unparsed to support code generation for back-end specific tools or compilers.

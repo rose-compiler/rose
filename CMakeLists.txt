@@ -28,11 +28,13 @@ enable_language(Fortran)
 endif (!WIN32)
 
 #/CLR  /MDd /TP 
+if (WIN32)
+set( CMAKE_CXX_FLAGS " /CLR /TP " )
+set( CMAKE_C_FLAGS "  " )
+else (WIN32)
 set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
 set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
-
-#set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -DHAVE_CONFIG_H" )
-#set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fexceptions -DHAVE_CONFIG_H" )
+endif (WIN32)
 
 #set(  CMAKE_VERBOSE_MAKEFILE  true )
 

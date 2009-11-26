@@ -3888,7 +3888,7 @@ SageInterface::generateProjectName( const SgProject* project, bool supressSuffix
    {
   // This function generates a string to use as a unique project name for
   // a collection of files.  The last file will include it's suffix so that
-  // we generate proper names that cummunicate the source language.
+  // we generate proper names that communicate the source language.
   // Also also allows the single file case to be consistant with the previous
   // version of names generated for "DOT" files in the tutorial.
 
@@ -3932,8 +3932,8 @@ SageInterface::generateProjectName( const SgProject* project, bool supressSuffix
 
           string filenameWithoutPathOrSuffix = StringUtility::stripPathFromFileName(filenameWithoutSuffix);
 
-       // printf ("filenameWithoutSuffix       = %s \n",filenameWithoutSuffix.c_str());
-       // printf ("filenameWithoutPathOrSuffix = %s \n",filenameWithoutPathOrSuffix.c_str());
+          printf ("filenameWithoutSuffix       = %s \n",filenameWithoutSuffix.c_str());
+          printf ("filenameWithoutPathOrSuffix = %s \n",filenameWithoutPathOrSuffix.c_str());
 
           filename = filenameWithoutPathOrSuffix;
 
@@ -3945,15 +3945,15 @@ SageInterface::generateProjectName( const SgProject* project, bool supressSuffix
                n++;
              }
 
-       // printf ("In SageInterface:generateProjectName(): modified absolute filename = %s \n",filename.c_str());
+          printf ("In SageInterface:generateProjectName(): modified absolute filename = %s \n",filename.c_str());
 
           projectName += filename;
 
-       // printf ("In SageInterface:generateProjectName(): evolving projectName = %s \n",projectName.c_str());
+          printf ("In SageInterface:generateProjectName(): evolving projectName = %s \n",projectName.c_str());
         }
      while (i != fileList.end());
 
-  // printf ("In SageInterface:generateProjectName(): projectName = %s \n",projectName.c_str());
+     printf ("In SageInterface:generateProjectName(): projectName = %s \n",projectName.c_str());
 
      return projectName;
    }

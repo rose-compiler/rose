@@ -1,0 +1,12 @@
+README for the new Hudson support in ROSE (Continuous Integeration)
+
+New Web Server Support:
+   http://tux269.llnl.gov:8080/job/ROSE/
+
+Previous directions before web server support:
+   How to logon to the tux269 machine:
+      ssh -X -L 8080:localhost:8080 tux269
+
+   How to bring up the hudson web page:
+      firefox http://localhost:8080/job/ROSE/ &
+
