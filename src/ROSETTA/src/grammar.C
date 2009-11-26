@@ -2443,7 +2443,16 @@ Grammar::buildCode ()
        "#define $IFDEF_MARKER_H \n\n" \
        "#include <sstream>\n" \
        "#include \"AstAttributeMechanism.h\"\n\n";
-     string footerString = "\n\n\n#endif // ifndef IFDEF_MARKER_H \n\n\n";
+	 // tps (11/25/2009) : Added ssize_t for Windows
+#ifdef _MSC_VER
+	 string l1 = "#ifdef _MSC_VER \n";
+     string l2 = "typedef LONG_PTR ssize_t; \n";
+     string l3 = "#endif \n";
+	 headerString += l1;
+     headerString += l2;
+     headerString += l3;
+#endif
+	 string footerString = "\n\n\n#endif // ifndef IFDEF_MARKER_H \n\n\n";
 
   // Get the strings onto the heap so that copy edit can process it (is this poor design? MS: yes)
      headerString = GrammarString::copyEdit (headerString,"$IFDEF_MARKER",getGrammarName());
@@ -2553,7 +2562,18 @@ Grammar::buildCode ()
   // string includeHeaderAstFileIO ="#include \"astFileIO/AST_FILE_IO.h\"\n\n";
      string includeHeaderAstFileIO ="#include \"AST_FILE_IO.h\"\n\n";
      includeHeaderString += includeHeaderAstFileIO;
-     includeHeaderString += "\nusing namespace std;\n";
+
+	 // tps (11/23/2009) : Needed to comply with Windows
+#ifdef _MSC_VER
+	 string ll1 = "#ifdef _MSC_VER \n";
+     string ll2 = "typedef LONG_PTR ssize_t; \n";
+     string ll3 = "#endif \n";
+	 includeHeaderString += ll1;
+     includeHeaderString += ll2;
+     includeHeaderString += ll3;
+#endif
+
+	 includeHeaderString += "\nusing namespace std;\n";
 
      ROSE_ArrayGrammarSourceFile.push_back(StringUtility::StringWithLineNumber(includeHeaderString, "", 1));
 
