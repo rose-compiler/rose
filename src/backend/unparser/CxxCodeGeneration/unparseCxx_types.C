@@ -5,6 +5,8 @@
 
 #include "rose.h"
 #include "unparser.h"
+#include "Cxx_Grammar.h"
+
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
@@ -156,7 +158,8 @@ string get_type_name(SgType* t)
               {
                 SgClassType* class_type = isSgClassType(t);
                 ROSE_ASSERT(class_type != NULL);
-                SgClassDeclaration *cdecl = isSgClassDeclaration(class_type->get_declaration());
+                SgClassDeclaration* cdecl;
+				cdecl = isSgClassDeclaration(class_type->get_declaration());
                 SgName nm = cdecl->get_qualified_name();
                 //printf ("In unparseType(%p): nm = %s \n",t,nm.str());
                 if (nm.getString() != "")

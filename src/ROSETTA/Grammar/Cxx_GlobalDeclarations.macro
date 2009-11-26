@@ -22,7 +22,7 @@ inline void preventConstructionOnStack(SgNode* n) {
   // tps (11/24/2009) : What is the MS version of __builtin_frame_address
   // FIXME: This needs to be fixed.
   void* frameaddr = 0;
-#pragma message ( " This will not work. Need to fix this")
+#pragma message ( " Cxx_GlobalDeclarations.macro: __builtin_frame_address not known in Windows.This will not work. Need to fix this")
 #else
   void* frameaddr = __builtin_frame_address(0);
 #endif
