@@ -541,7 +541,11 @@ traverseInputFiles(SgProject* projectNode)
     SgTreeTraversal<DummyAttribute, SynthesizedAttributeType>
         ::traverseInputFiles(projectNode, da, postorder);
 }
-
+#ifdef _MSC_VER
+//class BooleanQueryInheritedAttributeType;
+#include "../astQuery/booleanQuery.h"
+#include "../astQuery/booleanQueryInheritedAttribute.h"
+#endif
 // MS: 07/29/04
 template <class InheritedAttributeType, class SynthesizedAttributeType>
 SynthesizedAttributeType SgTreeTraversal<InheritedAttributeType, SynthesizedAttributeType>::
