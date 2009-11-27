@@ -23,9 +23,6 @@ name_or_addr(const SgAsmFunctionDeclaration *f)
 
 class AnalyzeFunctions : public SgSimpleProcessing {
   public:
-    AnalyzeFunctions(SgProject *project) {
-        traverse(project, postorder);
-    }
     void visit(SgNode *node) {
         SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(node);
         if (func) {
@@ -47,6 +44,31 @@ class AnalyzeFunctions : public SgSimpleProcessing {
     }
 };
 
+/* Analyze only functions that are defined in an interpretation that includes a Windows PE file header. */
+class AnalyzePeFunctions: public SgSimpleProcessing {
+  public:
+    void visit(SgNode *node) {
+        SgAsmInterpretation *interp = isSgAsmInterpretation(node);
+        if (interp) {
+            const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+            bool contains_pe_header = false;
+            for (size_t i=0; i<headers.size() && !contains_pe_header; ++i)
+                contains_pe_header = isSgAsmPEFileHeader(headers[i])!=NULL;
+            if (contains_pe_header) {
+                std::cout <<"Found a PE file header\n";
+                AnalyzeFunctions().traverse(node, postorder);
+            }
+        }
+    }
+};
+
 int main(int argc, char *argv[]) {
-    AnalyzeFunctions(frontend(argc, argv));
+    SgProject *project = frontend(argc, argv);
+#if 1
+    /* Analyze only functions under a Windows PE File Header */
+    AnalyzePeFunctions().traverse(project, postorder);
+#else
+    /* Analyze all functions */
+    AnalyzeFunctions().traverse(project, postorder);
+#endif
 }
