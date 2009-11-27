@@ -1790,6 +1790,11 @@ Unparse_ExprStmt::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
 void
 Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
    {
+#ifdef _MSC_VER
+#pragma message ("WARNING: Commented out body of unparseMFuncRef()")
+	   printf ("Error: Commented out body of unparseMFuncRef() \n");
+	   ROSE_ASSERT(false);
+#else
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
      ROSE_ASSERT(mfunc_ref != NULL);
 
@@ -2019,6 +2024,8 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
 #if 0
      printf ("Leaving unparseMFuncRef \n");
      curprint ( "\n/* leaving unparseMFuncRef */ \n");
+#endif
+
 #endif
    }
 

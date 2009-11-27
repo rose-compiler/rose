@@ -211,6 +211,10 @@ class NullPattern: public Pattern {
 
   virtual SgNode* subst(PatternVariables& vars) const {
     ROSE_ASSERT (!"Should not use NullPattern in substitutions");
+
+#ifdef _MSC_VER
+    return false;
+#endif
   }
 };
 
@@ -274,6 +278,10 @@ class AddIntsPattern: public Pattern {
 
   virtual bool match(SgNode* top, PatternVariables& vars) const {
     ROSE_ASSERT (false);
+
+#ifdef _MSC_VER
+    return false;
+#endif
   }
 
   virtual SgNode* subst(PatternVariables& vars) const {

@@ -1,7 +1,11 @@
 // Author: Gergo Barany
 // $Id: AstSharedMemoryParallelSimpleProcessing.C,v 1.1 2008/01/08 02:56:39 dquinlan Exp $
 
+#ifdef _MSC_VER
+#pragma message ("Error: pthread.h is unavailable on MSVC, we might want to use boost.thread library.")
+#else
 #include <pthread.h>
+#endif
 
 #include "sage3.h"
 
