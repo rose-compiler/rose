@@ -1,6 +1,8 @@
 #ifndef ROSE_MEMORY_MAP_H
 #define ROSE_MEMORY_MAP_H
 
+
+
 /** A MemoryMap is an efficient mapping from virtual addresses to source bytes.  The source bytes can be bytes of a file,
  *  bytes stored in some memory buffer, or bytes initialized to zero and are described by the MemoryMap::MapElement class.
  *  The mapping can be built piecemeal and the data structure will coalesce adjacent memory areas when possible. If an attempt
@@ -261,3 +263,5 @@ inline bool operator<(const MemoryMap::MapElement &a, const MemoryMap::MapElemen
 }
 
 #endif
+
+

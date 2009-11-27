@@ -1,0 +1,135 @@
+This README is specific to the VM support of ROSE.
+ROSE supports a release (of ROSE) which is a VM that has
+all the required software installed and which will work
+with the freely available VM player (ref source).
+
+All software installed in this VM is freely available on the web.
+The specific version of ROSE used is the one from the external
+SVN repository (see links at www.roseCompiler.org).
+
+Security Notes:
+    Since I used scp, I had to add my tux270.llnl.gov machine as a host (it ask and I
+    responded "yes"), is this an issue.
+
+About this VM:
+    The OS is CentOS5.2 (the reason is that it is essentally a stable modern version of
+    RedHat)
+
+    The default GNU compiler is: 4.1.2 (this will work fine)
+
+Errors that I got while installing ROSE on the VM:
+   1) Error building qt:
+{standard input}: Assembler messages:
+{standard input}:46745: Fatal error: can't write .obj/release-shared/qmime.o: No space left on device
+{standard input}:46745: Fatal error: can't close .obj/release-shared/qmime.o: No space left on device
+gmake[1]: *** [.obj/release-shared/qmime.o] Error 1
+gmake[1]: Leaving directory `/home/user/rose-prerequisites/qt-x11-opensource-src-4.4.1/src/gui'
+gmake: *** [sub-gui-make_default-ordered] Error 2
+
+   2) Error running "configure" in ROSE compile tree:
+[user@rose compileTree]$ /home/user/svn-rose/configure --with-boost=/home/user/local/boost_1_37_0_install-gxx-4.1.2
+/home/user/svn-rose/configure: line 88: echo: write error: No space left on device
+/home/user/svn-rose/configure: line 89: echo: write error: No space left on device
+/home/user/svn-rose/configure: line 201: echo: write error: No space left on device
+/home/user/svn-rose/configure: line 1321: cannot create temp file for here document: No space left on device
+/home/user/svn-rose/configure: line 1332: cannot create temp file for here document: No space left on device
+/
+
+Instructions to build ROSE support in VM (these have been done for you):
+   1) svn checkout https://outreach.scidac.gov/svn/rose/trunk svn-rose
+      This will permit users to run "svn up" to update there installation of
+      ROSE as often as they like, however, many time a full rebuild of
+      ROSE will be required, depending on which files are modified;
+      build, configure, make, make install.
+
+   2) Copy rose-prerequisites
+         scp dquinlan@tux270:~/local/boost_1_37_0.tar.gz .
+         scp dquinlan@tux270.llnl.gov:~/local/boost_1_37_0.tar.gz .
+         scp dquinlan@tux270.llnl.gov:~/local/graphviz-2.20.2.tar.gz .
+         scp dquinlan@tux270.llnl.gov:~/local/zgrviewer-0.8.1.zip .
+         scp dquinlan@tux270.llnl.gov:~/local/qt-x11-opensource-src-4.4.1.tar.gz .
+
+       * Note that bjam does not appear to be required.
+         scp dquinlan@tux270.llnl.gov:~/local/boost-jam-3.1.12-1-linuxx86.tgz .
+
+   3) Install required rose prerequisites
+      a) untar and configure boost:
+           ./configure --prefix=/home/user/local/boost_1_37_0_install-gxx-4.1.2
+           make
+           make install
+
+      b) untar and configure qt
+          ./configure -prefix /home/user/local/qt-4.4.1_install-gxx-4.1.2
+          make
+          make install
+
+   4) Need to edit the .bashrc file:
+      a) to add boost to LD library path.
+
+
+
+Output of history (remove later):
+    1  pwd
+    2  svn checkout https://outreach.scidac.gov/svn/rose/trunk svn-rose
+    3
+         pwd
+    4  cd svn-rose
+    5  echo $path
+    6  echo $PATH
+    7  ./build
+    8  pwd
+    9  scp dquinlan@tux270:~/local/boost_1_37_0.tar.gz .
+   10  scp dquinlan@tux270.llnl.gov:~/local/boost_1_37_0.tar.gz .
+   11  scp dquinlan@tux270.llnl.gov:~/local/graphviz-2.20.2.tar.gz .
+   12  scp dquinlan@tux270.llnl.gov:~/local/zgrviewer-0.8.1.zip .
+   13  scp dquinlan@tux270.llnl.gov:~/local/qt-x11-opensource-src-4.4.1.tar.gz .
+   14  scp dquinlan@tux270.llnl.gov:~/local/boost-jam-3.1.12-1-linuxx86.tgz .
+   15  ls
+   16  pwd
+   17  mkdir ~/local
+   18  ls *gz
+   19  mv *gz ~/local
+   20  ls
+   21  mv *.zip ~/local
+   22  ls
+   23  cd ..
+   24  ls
+   25  cd local
+   26  mv local rose-prerequisites
+   27  pwd
+   28  cd ..
+   29  mv local rose-prerequisites
+   30  ls
+   31  cd rose-prerequisites/
+   32  ls
+   33  tar -zxf boost-jam-3.1.12-1-linuxx86.tgz 
+   34  ls
+   35  cd boost-jam-3.1.12-1-linuxx86
+   36  ls
+   37  ls -l
+   38  echo $SHELL
+   39  cd 
+   40  ls
+   41  ls -al
+   42  cp .bashrc .bashrc.original
+   43  emacs .bashrc &
+   44  pwd
+   45  cd rose
+   46  cd rose-prerequisites/
+   47  ls
+   48  tar -zxf boost_1_37_0.tar.gz 
+   49  which bjam
+   50  pwd
+   51  cd boost_1_37_0
+   52  ls
+   53  #configure --prefix=/home/user/local/
+   54  which g++
+   55  g++ --version
+   56  configure --prefix=/home/user/local/boost_1_37_0_install-gxx-4.1.2
+   57  ./configure --prefix=/home/user/local/boost_1_37_0_install-gxx-4.1.2
+   58  ls
+   59  h
+   60  history
+   61  owd
+   62  pwd
+   63  history > instructions.txt

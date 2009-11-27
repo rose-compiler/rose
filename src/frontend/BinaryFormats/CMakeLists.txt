@@ -56,7 +56,7 @@ set(roseBinaryFormats_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/BinaryFormats/ExecLE.C 
    )
 
-add_library( roseBinaryFormats ${roseBinaryFormats_SRC} )
+add_library( roseBinaryFormats STATIC ${roseBinaryFormats_SRC} )
 add_dependencies( roseBinaryFormats ROSETTA )
 
 ########### install files ###############

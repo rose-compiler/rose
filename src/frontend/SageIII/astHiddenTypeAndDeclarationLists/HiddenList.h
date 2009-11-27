@@ -76,11 +76,18 @@ struct HashFunction_String
                         return x;
                 }*/
         public:
-
+#if _MSC_VER
+					   public:
+      static const size_t bucket_size = 4;
+      static const size_t min_buckets = 8;
+#endif
                 int operator()(const std::string & in) const
                 {
+#if _MSC_VER
+                        return stdext::hash_compare<char*>()((char*)in.c_str());
+#else
                         return rose_hash::hash<char*>()((char*)in.c_str());
-
+#endif
                 }
 
 };
@@ -229,11 +236,21 @@ struct cmp_SgSymbolPointer {
 struct HashFunction_SymbolHashMap {
 
         public:
+			#if _MSC_VER
+					   public:
+      static const size_t bucket_size = 4;
+      static const size_t min_buckets = 8;
+#endif
+
                 int operator()(SgSymbol* S) const
                 {
                         // calculate hashfunction-value based on address of SgSymbol
+#if _MSC_VER
+                        return stdext::hash_compare<int>()((int)S);
+#else
                         return rose_hash::hash<int>()((long int)S);
-                }
+#endif
+				}
 
 };
 
@@ -320,8 +337,11 @@ typedef rose_hash::hash_map<std::string, SymbolHashMap, HashFunction_String, cmp
 // ad using directives: used for storing namespaces
 //  Key: (qualified) Name of namespace
 //  Value: std::vector of struct symbol table
+#ifdef _MSC_VER
+typedef rose_hash::hash_map<std::string, Vector_Of_SymbolInformation, HashFunction_String> StringVectorHashMap;
+#else
 typedef rose_hash::hash_map<std::string, Vector_Of_SymbolInformation, HashFunction_String, eqstr3> StringVectorHashMap;
-
+#endif
 
 // calculating the valid scope; make only an intersection of the entries of StringVectorHashMap(VScopeStack) that match with ValidScope
 // typedef std::set<SgDeclarationStatement*, eqstr_SgDeclarationStatement> SetSgDeclarationStatements;
@@ -364,20 +384,23 @@ struct NamespaceInformation {
 };
 
 typedef std::vector<NamespaceInformation> VectorOfNamespaceInformation;
+#ifdef _MSC_VER
+typedef rose_hash::hash_map<std::string, VectorOfNamespaceInformation, HashFunction_String> String_VectorOfNamespaceInformation_HashMap;
+#else
 typedef rose_hash::hash_map<std::string, VectorOfNamespaceInformation, HashFunction_String, eqstr3> String_VectorOfNamespaceInformation_HashMap;
-
+#endif
 
 typedef std::vector<NamespaceInformation>::iterator it_VectorOfNamespaceInformation;
-
 struct it_VectorOfNamespaceInformation_boolean {
-
-        it_VectorOfNamespaceInformation it_vec_namesp_info;
+        std::vector<NamespaceInformation>::iterator it_vec_namesp_info;
         bool first_namespace_occurence;
-
 };
 
+#ifdef _MSC_VER
+typedef rose_hash::hash_map<std::string, it_VectorOfNamespaceInformation_boolean, HashFunction_String> String_it_VectorOfNamespaceInformation_boolean;
+#else
 typedef rose_hash::hash_map<std::string, it_VectorOfNamespaceInformation_boolean, HashFunction_String, eqstr3> String_it_VectorOfNamespaceInformation_boolean;
-
+#endif
 
 // Robert Preissl, June 20 2007: in addition to the SetSgUsingDirectiveStatementsWithSgScopeStatement (and also for using decl.) we keep a special data structure that keeps
 //  track of where using directives (and decl.) occur in the source-code relative to other declarations.
@@ -409,11 +432,21 @@ struct LinkedListStackSetSgDeclarationStatements {
 struct HashFunction_SgUsingDirectiveStatement {
 
         public:
+			#if _MSC_VER
+					   public:
+      static const size_t bucket_size = 4;
+      static const size_t min_buckets = 8;
+#endif
+
                 int operator()(SgUsingDirectiveStatement* using_dir) const
                 {
                         // calculate hashfunction-value based on address of SgUsingDirectiveStatement
+#if _MSC_VER
+                        return stdext::hash_compare<int>()((int)using_dir);
+#else
                         return rose_hash::hash<int>()((long int)using_dir);
-                }
+#endif
+				}
 
 };
 
@@ -426,11 +459,20 @@ typedef rose_hash::hash_map<SgUsingDirectiveStatement*, LinkedListStackSetSgDecl
 struct HashFunction_SgUsingDeclarationStatement {
 
         public:
+#if _MSC_VER
+					   public:
+      static const size_t bucket_size = 4;
+      static const size_t min_buckets = 8;
+#endif
                 int operator()(SgUsingDeclarationStatement* using_decl) const
                 {
                         // calculate hashfunction-value based on address of SgUsingDeclarationStatement
+#if _MSC_VER
+                        return stdext::hash_compare<int>()((int)using_decl);
+#else
                         return rose_hash::hash<int>()((long int)using_decl);
-                }
+#endif
+				}
 
 };
 
@@ -503,8 +545,12 @@ class HiddenListComputationTraversal : public AstTopDownBottomUpProcessing<Inher
                 String_VectorOfNamespaceInformation_HashMap NamespacesHashMap;
 
                 // Robert Preissl, June 18 2007: in addition to the NamespacesHashMap
+#ifndef _MSC_VER
+// tps (11/25/2009) : FIXME; This will not work on windows right now
                 String_it_VectorOfNamespaceInformation_boolean NamespacesIteratorHashMap;
-
+#else
+#pragma message ("WARNING: HiddenList : Change implementation to work under windows.")
+#endif
                 // hash_map (Key: name / Value: vector of symbols) for storing symbols of a class
                 //  will be used for updating the current scope if an SgMemberFunctionDeclaration is encountered
                 StringVectorHashMap ClassHashMap;
@@ -569,6 +615,8 @@ class HiddenListComputationTraversal : public AstTopDownBottomUpProcessing<Inher
 
                              // NamespacesIteratorHashMap[it->first] = it_VecOfNamespInfo;
 
+#ifndef _MSC_VER
+// tps (11/25/2009) : FIXME; This will not work on windows right now
                                 String_it_VectorOfNamespaceInformation_boolean::iterator foundValue = NamespacesIteratorHashMap.find(it->first);
                                 if (foundValue == NamespacesIteratorHashMap.end())
                                     {
@@ -578,7 +626,10 @@ class HiddenListComputationTraversal : public AstTopDownBottomUpProcessing<Inher
                                     {
                                       foundValue->second = it_VecOfNamespInfo;
                                     }
+#else
+#pragma message ("WARNING HiddenList : Change implementation to work under windows.")
 
+#endif
                         }
 
                 };
@@ -599,6 +650,8 @@ class HiddenListComputationTraversal : public AstTopDownBottomUpProcessing<Inher
                                 it_VecOfNamespInfo.it_vec_namesp_info = (it->second).begin();
                                 it_VecOfNamespInfo.first_namespace_occurence = false;
 
+#ifndef _MSC_VER
+// tps (11/25/2009) : FIXME; This will not work on windows right now
                              // DQ (9/25/2007): This is a problem piece of code that is caught by STL debugging.
                              // NamespacesIteratorHashMap[it->first] = it_VecOfNamespInfo;
                                 String_it_VectorOfNamespaceInformation_boolean::iterator foundValue = NamespacesIteratorHashMap.find(it->first);
@@ -609,8 +662,10 @@ class HiddenListComputationTraversal : public AstTopDownBottomUpProcessing<Inher
                                    else
                                     {
                                       foundValue->second = it_VecOfNamespInfo;
-                                    }
-                                    
+                                   }
+#else
+#pragma message ("WARNING HiddenList : Change implementation to work under windows.")
+#endif                                    
                         }
 
                 };

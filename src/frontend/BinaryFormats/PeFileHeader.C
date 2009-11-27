@@ -127,7 +127,15 @@ SgAsmPEFileHeader::parse()
      * smallest possible documented size of the optional header. Also it's possible for the optional header to extend beyond
      * the end of the file, in which case that part should be read as zero. */
     PE32OptHeader_disk oh32;
-    addr_t need32 = sizeof(PEFileHeader_disk) + std::min(p_e_nt_hdr_size, (addr_t)(sizeof oh32));
+#ifdef _MSC_VER
+#pragma message ("ERROR: Wrong value computed for MSVC.")
+	printf ("ERROR: Wrong value computed for MSVC.\n");
+	ROSE_ASSERT(false);
+
+	addr_t need32 = 0;
+#else
+	addr_t need32 = sizeof(PEFileHeader_disk) + std::min(p_e_nt_hdr_size, (addr_t)(sizeof oh32));
+#endif
     if (need32>get_size())
         extend(need32-get_size());
     if (sizeof(oh32)!=read_content_local(sizeof fh, &oh32, sizeof oh32, false))
@@ -174,7 +182,15 @@ SgAsmPEFileHeader::parse()
     } else if (8==p_exec_format->get_word_size()) {
         /* We guessed wrong. This is a 64-bit header, not 32-bit. */
         PE64OptHeader_disk oh64;
+#ifdef _MSC_VER
+#pragma message ("ERROR: Wrong value computed for MSVC.")
+	printf ("ERROR: Wrong value computed for MSVC.\n");
+	ROSE_ASSERT(false);
+
+	addr_t need64 = 0;
+#else
         addr_t need64 = sizeof(PEFileHeader_disk) + std::min(p_e_nt_hdr_size, (addr_t)(sizeof oh64));
+#endif
         if (need64>get_size())
             extend(need64-get_size());
         if (sizeof(oh64)!=read_content_local(sizeof fh, &oh64, sizeof oh64))
@@ -587,11 +603,24 @@ SgAsmPEFileHeader::reallocate()
                 if (0==nfound++) {
                     min_offset = pesec->get_offset();
                 } else {
-                    min_offset = std::min(min_offset, pesec->get_offset());
+#ifdef _MSC_VER
+#pragma message ("ERROR: std::min() skipped for MSVC.")
+                    printf ("ERROR: std::min() skipped for MSVC.\n");
+                    ROSE_ASSERT(false);
+#else
+                    min_offset = std::min(min_offset, pesec->get_offset() );
+#endif
                 }
             }
         }
+#ifdef _MSC_VER
+#pragma message ("ERROR: std::max() skipped for MSVC.")
+        printf ("ERROR: std::max() skipped for MSVC.\n");
+        ROSE_ASSERT(false);
+        addr_t header_size2 = 0;
+#else
         addr_t header_size2 = std::max(header_size, min_offset);
+#endif
         if (p_e_header_size==header_size2)
             header_size = header_size2;
 
@@ -737,7 +766,15 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         sprintf(p, "%sPEFileHeader.", prefix);
     }
+
+#ifdef _MSC_VER
+#pragma message ("ERROR: std::max() skipped for MSVC.")
+    printf ("ERROR: std::max() skipped for MSVC.\n");
+    ROSE_ASSERT(false);
+	int w = 0;
+#else
     int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+#endif
 
     time_t t = p_e_time;
     char time_str[128];
@@ -785,7 +822,14 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_num_rvasize_pairs", p_e_num_rvasize_pairs);
     for (unsigned i = 0; i < p_rvasize_pairs->get_pairs().size(); i++) {
         sprintf(p, "%sPEFileHeader.pair[%d].", prefix, i);
+#ifdef _MSC_VER
+#pragma message ("ERROR: std::max() skipped for MSVC.")
+        printf ("ERROR: std::max() skipped for MSVC.\n");
+        ROSE_ASSERT(false);
+	    w = 0;
+#else
         w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+#endif
         fprintf(f, "%s%-*s = rva %s,\tsize 0x%08"PRIx64" (%"PRIu64")\n", p, w, "..",
                 p_rvasize_pairs->get_pairs()[i]->get_e_rva().to_string().c_str(),
                 p_rvasize_pairs->get_pairs()[i]->get_e_size(), p_rvasize_pairs->get_pairs()[i]->get_e_size());
