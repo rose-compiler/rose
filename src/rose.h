@@ -66,10 +66,10 @@ namespace ELF{
 // #include "AstMerge.h"
 
 // DQ (5/26/2007): Use the new AST merge mechanism.
-#ifndef _MSC_VER
+// #ifndef _MSC_VER
 // tps (11/23/2009) : Commented out right now to make progress in Windows
 #include "merge.h"
-#endif
+// #endif
 // JH (01/18/2006): adding the include file for the AST file I/O (by Jochen)
 #ifndef _MSC_VER
 // tps (11/23/2009) : Commented out right now to make progress in Windows
@@ -94,17 +94,17 @@ namespace ELF{
 //#endif
 
 // DQ (3/18/2006): Jeremiah Willcock's partial redundancy elimination (PRE)
-#ifndef _MSC_VER
+// #ifndef _MSC_VER
 // tps (11/23/2009) : Commented out right now to make progress in Windows
 #include "pre.h"
-#endif
+// #endif
 // DQ (4/8/2006): Constant folding of the AST (cleans out redundant
 // constant expresion trees save in translation from the frontend).
 // Required to be run before PRE!
-#ifndef _MSC_VER
+// #ifndef _MSC_VER
 // tps (11/23/2009) : Commented out right now to make progress in Windows
 #include "constantFolding.h"
-#endif
+// #endif
 
 // DQ (5/8/2007): Added Robert Preissl's support for hidden type and declartion lists.
 //#ifndef _MSC_VER
