@@ -21,6 +21,22 @@
 // #include "../../../developersScratchSpace/Dan/colorAST_tests/colorTraversal.h"
 #include "../astVisualization/wholeAST_API.h"
 
+#if 0 // def _MSC_VER
+// DQ (11/27/2009): I think this should be required for GNU, but only MSVC reports this as an error.
+#include "buildMangledNameMap.h"
+#include "buildReplacementMap.h"
+
+// DQ (11/27/2009): This appears to be required for MSVC (I think it is correct for GNU as well).
+extern std::set<SgNode*> getSetOfFrontendSpecificNodes();
+extern void testUniqueNameGenerationTraversal();
+void fixupTraversal( const ReplacementMapTraversal::ReplacementMapType & replacementMap, const std::set<SgNode*> & deleteList );
+std::set<SgNode*> buildRequiredNodeList(SgNode* project);
+std::set<SgNode*> computeSetDifference(const std::set<SgNode*> & listToDelete, const std::set<SgNode*> & requiredNodesTest);
+void deleteSetErrorCheck( SgProject* project, const std::set<SgNode*> & listToDelete );
+std::set<SgNode*> computeSetIntersection(const std::set<SgNode*> & listToDelete, const std::set<SgNode*> & requiredNodesTest);
+void deleteNodes ( std::set<SgNode*> & listToDelete );
+#endif
+
 #define MAX_NUMBER_OF_IR_NODES_TO_GRAPH 2000
 #define DISPLAY_INTERNAL_DATA 0
 
@@ -41,7 +57,12 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
   // DQ (5/27/2007): Implement this as a local variable!
   // set<SgNode*> finalDeleteSet;
 
-  // Note that skipFrontendSpecificIRnodes alows the generated graphs to skip the 
+#ifdef _MSC_VER
+  // DQ (11/27/2009): This appears to be required for MSVC (I think it is correct for GNU as well).
+  // extern set<SgNode*> getSetOfFrontendSpecificNodes();
+#endif
+
+	 // Note that skipFrontendSpecificIRnodes alows the generated graphs to skip the 
   // representation or IR nodes that are marked to be frontend specific.
 
      printf ("\n\n");
@@ -75,7 +96,13 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
   // ****************************************************************************
   // Test the generateUniqueName() function (everywhere in the AST, so that we will know that we can rely on it!)
      printf ("Running testUniqueNameGenerationTraversal (more AST tests) \n");
-     testUniqueNameGenerationTraversal();
+
+#ifdef _MSC_VER
+  // DQ (11/27/2009): This appears to be required for MSVC (I think it is correct for GNU as well).
+  // extern void testUniqueNameGenerationTraversal();
+#endif
+
+	 testUniqueNameGenerationTraversal();
      printf ("Running testUniqueNameGenerationTraversal (more AST tests): DONE \n");
 
   // TestParentPointersOfSymbols::test();
@@ -112,7 +139,14 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
      printf ("\n\n************************************************************\n");
   // MangledNameMapTraversal::SetOfNodesType intermediateDeleteSet;
      set<SgNode*>  intermediateDeleteSet;
+#ifdef _MSC_VER
+  // DQ (11/27/2009): MSVC does not appear to support optional specification of size of hash table.
+#pragma message ("WARNING: MSVC does not appear to support optional specification of size of hash table.")
+	 printf ("WARNING: MSVC does not appear to support optional specification of size of hash table.");
+     MangledNameMapTraversal::MangledNameMapType mangledNameMap; // (mangledNameHashTableSize);
+#else
      MangledNameMapTraversal::MangledNameMapType mangledNameMap (mangledNameHashTableSize);
+#endif
 
      printf ("Calling getMangledNameMap() \n");
      generateMangledNameMap(mangledNameMap,intermediateDeleteSet);
@@ -207,7 +241,14 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
           numberOfASTnodesAfterCopy,numberOfASTnodesAfterCopy-numberOfASTnodesBeforeCopy,(long int)intermediateDeleteSet.size());
 
   // DQ (2/19/2007): Build the replacement map externally and pass it in to avoid copying.
+#ifdef _MSC_VER
+  // DQ (11/27/2009): MSVC does not appear to support optional specification of size of hash table.
+#pragma message ("WARNING: MSVC does not appear to support optional specification of size of hash table.")
+	 printf ("WARNING: MSVC does not appear to support optional specification of size of hash table.");
+     ReplacementMapTraversal::ReplacementMapType replacementMap; // (replacementHashTableSize);
+#else
      ReplacementMapTraversal::ReplacementMapType replacementMap(replacementHashTableSize);
+#endif
 
   // ****************************************************************************
   // ***********************   Generate Replacement Map   ***********************
@@ -627,7 +668,14 @@ int AstMergeSupport ( SgProject* project )
                     int nextErrorCode = 0;
 #if 1
                  // int fileIndex = 0;
-                    int chdirError = chdir(workingDirectory.c_str());
+#ifdef _MSC_VER
+#pragma message ("WARNING: MSVC does not support chdir() function in Linux.")
+					printf ("ERROR: MSVC does not support chdir() function in Linux.");
+					ROSE_ASSERT(false);
+					int chdirError = -1;
+#else
+					int chdirError = chdir(workingDirectory.c_str());
+#endif
                     ROSE_ASSERT (chdirError == 0);
 
                     SgFile* newFile = determineFileType( vector<string>(argv, argv+argc), nextErrorCode,  project );

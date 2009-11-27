@@ -4,7 +4,7 @@
 using namespace std;
 
 void
-WalrusGraph::Counter::Counter::visit ( SgNode* astNode )
+WalrusGraph::Counter::visit ( SgNode* astNode )
    {
      SgLocatedNode* locatedNode = isSgLocatedNode(astNode);
      if ( (isBinary == true) || (locatedNode != NULL && locatedNode->get_file_info()->isFrontendSpecific() == false))
@@ -14,7 +14,7 @@ WalrusGraph::Counter::Counter::visit ( SgNode* astNode )
    }
 
 void
-WalrusGraph::OutputEdges::OutputEdges::visit ( SgNode* astNode )
+WalrusGraph::OutputEdges::visit ( SgNode* astNode )
    {
   // printf ("astNode = %p = %s \n",astNode,astNode->class_name().c_str());
 
@@ -43,7 +43,7 @@ WalrusGraph::OutputEdges::OutputEdges::visit ( SgNode* astNode )
    }
 
 void
-WalrusGraph::OutputNodes::OutputNodes::visit ( SgNode* astNode )
+WalrusGraph::OutputNodes::visit ( SgNode* astNode )
    {
      int numberOfNodes = node_to_index_map.size();
      static int num = 0;

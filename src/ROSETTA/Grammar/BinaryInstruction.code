@@ -1233,8 +1233,8 @@ HEADER_GENERIC_STRTAB_START
 		ExtentMap& get_freelist();
 
 		//These should be pure virtual but ROSETTA apparently doesn't support that (RPM 2008-10-03)
-		virtual SgAsmStringStorage *create_storage(addr_t offset, bool shared) {abort();}
-		virtual addr_t get_storage_size(const SgAsmStringStorage*) {abort();}
+		virtual SgAsmStringStorage *create_storage(addr_t offset, bool shared) {abort(); return NULL;}
+		virtual addr_t get_storage_size(const SgAsmStringStorage*) {abort(); return 0;}
 		virtual void rebind(SgAsmStringStorage*, addr_t) {abort();}
 		typedef std::vector<class SgAsmStringStorage*> referenced_t;
 	private:

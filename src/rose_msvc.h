@@ -98,4 +98,35 @@
 // This is defined in <sys/param.h> but MSVS does not support that header file.
 #define MAXPATHLEN PATH_MAX
 
+#if 0 // def _MSC_VER
+// DQ (11/27/2009): Needed to cope with bug in MS library: it fails to define min/max 
+template <class T>
+inline T max(const T& a, const T& b) 
+   {
+     return (a > b) ? a : b;
+   }
+
+template <class T>
+inline T min(const T& a, const T& b) 
+   { 
+     return (a < b) ? a : b;
+   }
+#endif 
+
+// DQ (11/27/2009): Needed to cope with bug in MS library: it fails to define min/max 
+// This solution is from the web at: http://www.codeproject.com/Messages/3178857/Overcoming-problem-with-std-min-std-max-sharpdefin.aspx
+// And then I simplified it to just undefine the min and max macros (which seems to be all that is required.
+// #define NOMINMAX
+// #ifndef max
+// #define max(a,b)            (((a) > (b)) ? (a) : (b))
+// #endif
+// #ifndef min
+// #define min(a,b)            (((a) < (b)) ? (a) : (b))
+// #endif
+// #include <afxcontrolbars.h>
+#undef max
+#undef min
+// ...contine to use std::mix, std::max from here on
+
+
 #endif
