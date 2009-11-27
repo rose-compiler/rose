@@ -494,9 +494,9 @@ pattern1(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap
     SgAsmx86Instruction *insn1 = isSgAsmx86Instruction(ii->second);
     if (!insn1) return insns.end();
     if (insn1->get_kind()!=x86_push) return insns.end();
-    SgAsmExpressionPtrList &operands = insn1->get_operandList()->get_operands();
-    if (operands.size()!=1) return insns.end();
-    SgAsmx86RegisterReferenceExpression *rre = isSgAsmx86RegisterReferenceExpression(operands[0]);
+    const SgAsmExpressionPtrList &opands1 = insn1->get_operandList()->get_operands();
+    if (opands1.size()!=1) return insns.end();
+    SgAsmx86RegisterReferenceExpression *rre = isSgAsmx86RegisterReferenceExpression(opands1[0]);
     if (!rre) return insns.end();
     if (rre->get_register_class()!=x86_regclass_gpr || rre->get_register_number()!=x86_gpr_bp) return insns.end();
 
@@ -506,12 +506,12 @@ pattern1(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap
     SgAsmx86Instruction *insn2 = isSgAsmx86Instruction(ij->second);
     if (!insn2) return insns.end();
     if (insn2->get_kind()!=x86_mov) return insns.end();
-    operands = insn2->get_operandList()->get_operands();
-    if (operands.size()!=2) return insns.end();
-    rre = isSgAsmx86RegisterReferenceExpression(operands[0]);
+    const SgAsmExpressionPtrList &opands2 = insn2->get_operandList()->get_operands();
+    if (opands2.size()!=2) return insns.end();
+    rre = isSgAsmx86RegisterReferenceExpression(opands2[0]);
     if (!rre) return insns.end();
     if (rre->get_register_class()!=x86_regclass_gpr || rre->get_register_number()!=x86_gpr_bp) return insns.end();
-    rre = isSgAsmx86RegisterReferenceExpression(operands[1]);
+    rre = isSgAsmx86RegisterReferenceExpression(opands2[1]);
     if (!rre) return insns.end();
     if (rre->get_register_class()!=x86_regclass_gpr || rre->get_register_number()!=x86_gpr_sp) return insns.end();
 
@@ -584,6 +584,7 @@ Partitioner::mark_func_patterns(SgAsmGenericHeader*, const Disassembler::Instruc
         if (found==insns.end()) found = pattern1(insns, ii);
         if (found==insns.end()) found = pattern2(insns, ii);
         if (found==insns.end()) found = pattern3(insns, ii);
+
         
         /* We found a function entry point */
         if (found!=insns.end())
