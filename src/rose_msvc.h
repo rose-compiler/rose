@@ -128,5 +128,9 @@ inline T min(const T& a, const T& b)
 #undef min
 // ...contine to use std::mix, std::max from here on
 
+#ifdef _MSC_VER
+// DQ (11/27/2009): "__func__" is C99, but MSVC uses "__FUNCTION__" instead.
+#define __func__ __FUNCTION__
+#endif
 
 #endif
