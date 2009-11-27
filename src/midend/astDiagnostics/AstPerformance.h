@@ -10,6 +10,10 @@
 #include <vector>
 #include <list>
 
+#ifdef _MSC_VER
+#include <time.h>
+#endif
+
 #include <assert.h>
 
 /*! \brief This is a mechanism for reporting the performance of processing of the AST, subtrees, 

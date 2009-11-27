@@ -51,8 +51,12 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
     if (func) {
       vector<SgNode*> list;
       FindInstructionsVisitorx86 vis;
-      AstQueryNamespace::querySubTree(func, std::bind2nd( vis, &list ));
-
+#ifdef _MSC_VER
+#pragma message ("WARNING: Removed reference to AstQueryNamespace::querySubTree()")
+	  ROSE_ASSERT(false);
+#else
+	  AstQueryNamespace::querySubTree(func, std::bind2nd( vis, &list ));
+#endif
       int validInstructions = func->nrOfValidInstructions(list);
       funcMap[func]=counter;
       nodesMap[func]=count;

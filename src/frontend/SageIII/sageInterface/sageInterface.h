@@ -106,15 +106,24 @@ int64_t getAsmSignedConstant(SgAsmValueExpression *e);
 // in the original file to the symbols in the newer separate file).
 // typedef rose_hash::hash_map<SgNode*, SgNode*, hash_nodeptr> ReplacementMapType;
 // void supplementReplacementSymbolMap ( const ReplacementMapTraversal::ReplacementMapType & inputReplacementMap );
+#ifdef _MSC_VER
+inline size_t hash_value(SgNode* t) {return (size_t)t;}
+#endif
+
 struct hash_nodeptr
    {
-     rose_hash::hash<char*> hasher;
-
+#ifndef _MSC_VER
+	   rose_hash::hash<char*> hasher;
+#endif
      public:
           size_t operator()(SgNode* node) const
              {
-               return (size_t) node;
-             }
+#ifdef _MSC_VER
+				 return (size_t) hash_value(node);
+#else
+				 return (size_t) node;
+#endif
+		  }
    };
 
  void supplementReplacementSymbolMap ( rose_hash::hash_map<SgNode*, SgNode*, hash_nodeptr> & inputReplacementMap );
