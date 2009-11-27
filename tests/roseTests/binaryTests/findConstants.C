@@ -44,18 +44,20 @@ class AnalyzeFunctions : public SgSimpleProcessing {
     }
 };
 
-/* Analyze only functions that are defined in an interpretation that includes a Windows PE file header. */
-class AnalyzePeFunctions: public SgSimpleProcessing {
-  public:
-    void visit(SgNode *node) {
+/* Analyze only interpretations that point only to 32-bit x86 instructions. */
+class AnalyzeX86Functions: public SgSimpleProcessing {
+public:
+    size_t ninterps;
+    AnalyzeX86Functions(): ninterps(0) {}
+    void visit(SgNode* node) {
         SgAsmInterpretation *interp = isSgAsmInterpretation(node);
         if (interp) {
             const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
-            bool contains_pe_header = false;
-            for (size_t i=0; i<headers.size() && !contains_pe_header; ++i)
-                contains_pe_header = isSgAsmPEFileHeader(headers[i])!=NULL;
-            if (contains_pe_header) {
-                std::cout <<"Found a PE file header\n";
+            bool only_x86 = true;
+            for (size_t i=0; i<headers.size() && only_x86; ++i)
+                only_x86 = 4==headers[i]->get_word_size();
+            if (only_x86) {
+                ++ninterps;
                 AnalyzeFunctions().traverse(node, postorder);
             }
         }
@@ -64,11 +66,11 @@ class AnalyzePeFunctions: public SgSimpleProcessing {
 
 int main(int argc, char *argv[]) {
     SgProject *project = frontend(argc, argv);
-#if 1
-    /* Analyze only functions under a Windows PE File Header */
-    AnalyzePeFunctions().traverse(project, postorder);
-#else
-    /* Analyze all functions */
-    AnalyzeFunctions().traverse(project, postorder);
-#endif
+    AnalyzeX86Functions analysis;
+    analysis.traverse(project, postorder);
+    if (0==analysis.ninterps) {
+        std::cout <<"file(s) didn't have any 32-bit x86 headers.\n";
+    } else {
+        std::cout <<"analyzed headers: " <<analysis.ninterps<< "\n";
+    }
 }
