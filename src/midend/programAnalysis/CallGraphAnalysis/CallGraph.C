@@ -950,13 +950,14 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
   SgGraphNode*
 findNode(SgGraph* graph, std::string nid)
 {
-  const rose_graph_string_integer_hash_multimap& nidToInt =
-    graph->get_string_to_node_index_multimap();
-  const rose_graph_integer_node_hash_map & intToNode =
-    graph->get_node_index_to_node_map ();
+#ifdef _MSC_VER
+#pragma message ("WARNING: commenting out use of hashmap in graph support for MSVC.")
+    return NULL;
+#else
+  const rose_graph_string_integer_hash_multimap& nidToInt  = graph->get_string_to_node_index_multimap();
+  const rose_graph_integer_node_hash_map &       intToNode = graph->get_node_index_to_node_map ();
 
   rose_graph_string_integer_hash_multimap::const_iterator iItr = nidToInt.find(nid);
-
 
   if( iItr != nidToInt.end() )
   {
@@ -983,6 +984,7 @@ findNode(SgGraph* graph, std::string nid)
     return intToNode.find(n)->second;
   }else
     return NULL;
+#endif
 };
 
 

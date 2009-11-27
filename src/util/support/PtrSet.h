@@ -98,12 +98,17 @@ class PtrSetWrap
   void operator |= (const PtrSetWrap<T>& that)
     { impl.insert(that.impl.begin(), that.impl.end()); }
   void operator -= (const PtrSetWrap<T>& that)
-    { for (VoidPtrSet::iterator p = that.impl.begin();
-           p !=  that.impl.end(); ++p) {
-         VoidPtrSet::iterator p1 = impl.find(*p);
-         if (p1 != impl.end())
-           impl.erase(p1);
-      }
+    {
+#ifdef _MSC_VER
+	  for (VoidPtrSet::const_iterator p = that.impl.begin(); p !=  that.impl.end(); ++p) 
+#else
+	  for (VoidPtrSet::iterator p = that.impl.begin(); p !=  that.impl.end(); ++p) 
+#endif
+	     {
+           VoidPtrSet::iterator p1 = impl.find(*p);
+           if (p1 != impl.end())
+                impl.erase(p1);
+         }
     }      
   void Clear() { impl.clear(); }
 
@@ -142,8 +147,9 @@ class AppendPtrSet : public CollectObject<T*>
 };
 
 
+// DQ (11/25/2009): Changed name from SelectObject to SelectObjectBase to avoid SelectObject function ambiguity using Microsoft Visual Studio
 template<class T>
-class SelectSTLSet : public SelectObject<T>
+class SelectSTLSet : public SelectObjectBase<T>
 {
   std::set<T> res;
  public:
@@ -153,8 +159,10 @@ class SelectSTLSet : public SelectObject<T>
       return (res.find(cur) != res.end());
    }
 };
+
+// DQ (11/25/2009): Changed name from SelectObject to SelectObjectBase to avoid SelectObject function ambiguity using Microsoft Visual Studio
 template<class T>
-class SelectPtrSet : public SelectObject<T*>
+class SelectPtrSet : public SelectObjectBase<T*>
 {
   PtrSetWrap<T> res;
  public:
@@ -169,8 +177,10 @@ class SelectPtrSet : public SelectObject<T*>
       return (res.IsMember(cur));
    }
 };
+
+// DQ (11/25/2009): Changed name from SelectObject to SelectObjectBase to avoid SelectObject function ambiguity using Microsoft Visual Studio
 template<class T>
-class NotSelectPtrSet : public SelectObject<T*>
+class NotSelectPtrSet : public SelectObjectBase<T*>
 {
   PtrSetWrap<T> res;
  public:

@@ -6,7 +6,9 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+#ifndef _MSC_VER
 #include <sys/resource.h>
+#endif
 #endif
 
 // DQ (12/8/2006): Linux memory usage mechanism (no longer used, implemented internally (below)).
@@ -90,7 +92,12 @@ ROSE_MemoryUsage::getMemoryUsageKilobytes() const
 int
 ROSE_MemoryUsage::getPageSizeBytes() const
    {
+#ifdef _MSC_VER
+#pragma message ("WARNING: getpagesize() Linux support not available in Windows.")
+	 return 0;
+#else
      return getpagesize();
+#endif
    }
 
 #if 0
@@ -104,7 +111,12 @@ ROSE_MemoryUsage::getCurrentMemoryUsage()
 double
 ROSE_MemoryUsage::getPageSizeMegabytes() const
    {
+#ifdef _MSC_VER
+#pragma message ("WARNING: getpagesize() Linux support not available in Windows.")
+	 return 0;
+#else
      return getpagesize() / (1024.0 * 1024.0);
+#endif
    }
 
 double
@@ -339,8 +351,11 @@ AstPerformance::getLock()
           if ( counter > 0 )
                printf ("Waiting for lock! counter = %lu userTolerance = %lu \n",counter,userTolerance);
 
+#ifdef _MSC_VER
+#pragma message ("WARNING: sleep() Linux support not available in Windows.")
+#else
           sleep(1);
-
+#endif
           counter++;
 
        // DQ (8/24/2008): If after waiting a short while and the lock is still there, then report the issue.
