@@ -3143,8 +3143,11 @@ struct hash_Name
 
  */
  // tps (11/19/2009) : Constructor of hash_multimap in MSVS is different
- #ifdef _MSC_VER
-class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>
+#ifdef _MSC_VER
+// DQ (11/27/2009): Trying to fix MSVC compiler warning: 
+//    warning C4717: 'rose_hash_multimap::rose_hash_multimap' : recursive on all control paths, function will cause runtime stack overflow.
+// class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>
+class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*>
    {
      protected:
           SgNode * parent;
@@ -3152,7 +3155,8 @@ class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, ha
      public:
        // DQ (12/22/2005): Added initialization of parent pointer as suggested by Jochen
           rose_hash_multimap()
-             : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>(), parent(NULL)
+          // : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>(), parent(NULL)
+             : rose_hash::hash_multimap<SgName, SgSymbol*>(), parent(NULL)
              {}
 // tps (11/18/2009) : this constructor is not valid, see Node.code
 #if 0
@@ -3160,9 +3164,12 @@ class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, ha
              : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>(sz), parent(NULL)
              {}
 #endif
+#if 0
           rose_hash_multimap(const rose_hash_multimap& rhs) 
-             : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>((rose_hash_multimap)rhs),parent(rhs.parent)
+          // : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>((rose_hash_multimap)rhs),parent(rhs.parent)
+             : rose_hash::hash_multimap<SgName, SgSymbol*>(const_cast<rose_hash_multimap>(rhs)),parent(rhs.parent)
              {}
+#endif
 #else
 class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>
    {
