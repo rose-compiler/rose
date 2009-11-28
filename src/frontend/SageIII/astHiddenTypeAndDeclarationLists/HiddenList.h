@@ -574,8 +574,8 @@ class HiddenListComputationTraversal : public AstTopDownBottomUpProcessing<Inher
 // tps (11/25/2009) : FIXME; This will not work on windows right now
                 String_it_VectorOfNamespaceInformation_boolean NamespacesIteratorHashMap;
 #else
-#pragma message ("WARNING: HiddenList : Change implementation to work under windows.")
-             // DQ (11/27/2009): ???
+// #pragma message ("WARNING: HiddenList : Change implementation to work under windows.")
+             // DQ (11/27/2009): I think this is fixed now.
                 String_it_VectorOfNamespaceInformation_boolean NamespacesIteratorHashMap;
 #endif
                 // hash_map (Key: name / Value: vector of symbols) for storing symbols of a class
@@ -642,7 +642,7 @@ class HiddenListComputationTraversal : public AstTopDownBottomUpProcessing<Inher
 
                              // NamespacesIteratorHashMap[it->first] = it_VecOfNamespInfo;
 
-#ifndef _MSC_VER
+// #ifndef _MSC_VER
 // tps (11/25/2009) : FIXME; This will not work on windows right now
                                 String_it_VectorOfNamespaceInformation_boolean::iterator foundValue = NamespacesIteratorHashMap.find(it->first);
                                 if (foundValue == NamespacesIteratorHashMap.end())
@@ -653,10 +653,9 @@ class HiddenListComputationTraversal : public AstTopDownBottomUpProcessing<Inher
                                     {
                                       foundValue->second = it_VecOfNamespInfo;
                                     }
-#else
-#pragma message ("WARNING HiddenList : Change implementation to work under windows.")
-
-#endif
+// #else
+// #pragma message ("WARNING HiddenList : Change implementation to work under windows.")
+// #endif
                         }
 
                 };
@@ -677,7 +676,7 @@ class HiddenListComputationTraversal : public AstTopDownBottomUpProcessing<Inher
                                 it_VecOfNamespInfo.it_vec_namesp_info = (it->second).begin();
                                 it_VecOfNamespInfo.first_namespace_occurence = false;
 
-#ifndef _MSC_VER
+// #ifndef _MSC_VER
 // tps (11/25/2009) : FIXME; This will not work on windows right now
                              // DQ (9/25/2007): This is a problem piece of code that is caught by STL debugging.
                              // NamespacesIteratorHashMap[it->first] = it_VecOfNamespInfo;
@@ -690,9 +689,9 @@ class HiddenListComputationTraversal : public AstTopDownBottomUpProcessing<Inher
                                     {
                                       foundValue->second = it_VecOfNamespInfo;
                                    }
-#else
-#pragma message ("WARNING HiddenList : Change implementation to work under windows.")
-#endif                                    
+// #else
+// #pragma message ("WARNING HiddenList : Change implementation to work under windows.")
+// #endif                                    
                         }
 
                 };
