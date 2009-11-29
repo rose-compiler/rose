@@ -181,8 +181,7 @@ bool DepInfo:: operator *= ( const DepInfo &info2)
   assert(cols() == info2.rows());
   DepInfo info1(*this);
   int commLevel1 = info1.CommonLevel();
-  *this = DepInfoGenerator::GetDepInfo(info1.rows(), info2.cols(), DEPTYPE_TRANS,
-                                       commLevel1);
+  *this = DepInfoGenerator::GetDepInfo(info1.rows(), info2.cols(), DEPTYPE_TRANS, commLevel1);
   for (int i = 0; i < info1.rows(); i++) {
     for (int j = 0; j < info2.cols(); j++) {
       for (int k = 0; k < info1.cols(); k++) {
