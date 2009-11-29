@@ -5,7 +5,14 @@
 #include <inttypes.h>
 
 #include <algorithm>
+
+#ifdef _MSC_VER
+// DQ (11/27/2009): This header file is not available using MSVS (Windows).
+// #include <wait.h>
+#else
+// DQ (11/27/2009): This header file is not available using MSVS (Windows).
 #include <sys/wait.h>
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // functions
@@ -87,7 +94,12 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
         delete ef; ef=NULL;
         /* Use file(1) to try to figure out the file type to report in the exception */
         int child_stdout[2];
-        pipe(child_stdout);
+#ifdef _MSC_VER
+#pragma message ("WARNING: Commented out use of functions from sys/wait.h")
+		printf ("ERROR: Commented out use of functions from sys/wait.h \n");
+		ROSE_ASSERT(false);
+#else
+		pipe(child_stdout);
         pid_t pid = fork();
         if (0==pid) {
             close(0);
@@ -109,6 +121,7 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
         } else {
             throw FormatError("unrecognized file format");
         }
+#endif
     }
 
     ef->set_tracking_references(false); /*all done parsing*/

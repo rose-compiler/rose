@@ -13,12 +13,16 @@
 // care of that.
 struct AstSharedMemoryParallelProcessingSynchronizationInfo
 {
+#ifdef _MSC_VER
+#pragma message ("Error: pthread.h is unavailable on MSVC, we might want to use boost.thread library.")
+#else
     // mutex that controls access to the global stuff here
     pthread_mutex_t *mutex;
     // signal broadcast by last worker thread to arrive at a synchronization point
     pthread_cond_t *synchronizationEvent;
     // signal sent by workers when they exit
     pthread_cond_t *threadFinishedEvent;
+#endif
 
     // global counter of the number of threads that are still working (i.e.
     // have not sent a synchronizationEvent)

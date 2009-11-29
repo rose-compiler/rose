@@ -18,6 +18,18 @@
 #ifdef _MSC_VER
 #include <hash_map>
 #include <hash_set>
+#if 0
+template <> struct hash <SgNode*> {
+    size_t operator()(SgNode* const & n) const {
+      return (size_t) n;
+    }
+    size_t operator()(SgNode* const & n1, SgNode* const & n2) const {
+      ROSE_ASSERT(n1);
+      ROSE_ASSERT(n2);
+      return ( n1==n2);
+    }
+  };
+#endif
 #else
 #include <ext/hash_map>
 #include <ext/hash_set>
@@ -52,8 +64,11 @@ class DefUseAnalysis : public DFAnalysis, Support {
 
   typedef std::map< SgNode* , multitype > tabletype;
   // typedef std::map< SgNode* , int > convtype;
+#ifdef _MSC_VER
+  typedef hash_map< SgNode* , int > convtype;
+#else
   typedef __gnu_cxx::hash_map< SgNode* , int > convtype;
-
+#endif
 
   // local functions ---------------------
   void find_all_global_variables();

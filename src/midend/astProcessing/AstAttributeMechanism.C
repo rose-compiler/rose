@@ -230,4 +230,17 @@ AstAttributeMechanism::AstAttributeMechanism ( const AstAttributeMechanism & X )
 #endif
    }
 
+// ********************************************
+//              AstRegExAttribute
+// ********************************************
+
+AstRegExAttribute::AstRegExAttribute()
+   : expression("")
+   {
+   }
+
+AstRegExAttribute::AstRegExAttribute(const std::string & s)
+   {
+     expression = s;
+   }
 
