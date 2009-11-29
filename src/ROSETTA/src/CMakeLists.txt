@@ -27,6 +27,7 @@ set(CxxGrammarMetaProgram_SRCS
     buildConstructorsWithoutSourcePositionInformation.C
     outputClassesAndFields.C)
 
+
 # input files to generate source files
 set(GRAMMAR_SOURCE_FILES
      ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/Node.code 
