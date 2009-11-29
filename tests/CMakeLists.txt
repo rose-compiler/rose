@@ -2,7 +2,10 @@
 include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} ${Boost_INCLUDE_DIRS} )
 
 add_executable( testTranslator testTranslator.C )
-target_link_libraries(testTranslator rose ${link_with_libraries} 
+target_link_libraries(testTranslator rose ${link_with_libraries} )
+
+add_subdirectory (translatorTests)
+
 # ${Boost_LIBRARIES}
 #    libastMerge libsageInterface libastTokenStream 
 #    libastHiddenTypeAndDeclarationLists libastVisualization 
@@ -10,7 +13,7 @@ target_link_libraries(testTranslator rose ${link_with_libraries}
 #    libsageInterface roseExecFormats midend unparser
 #    libastHiddenTypeAndDeclarationLists roseAsmUnparser libastPostProcessing
 #    libhpdf
-    )
+
 
 #include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #

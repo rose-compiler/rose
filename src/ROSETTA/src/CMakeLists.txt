@@ -324,4 +324,3 @@ add_custom_target( ROSETTA ALL DEPENDS ${ROSETTA_HEADERS} ${ROSETTA_SRC}
 #
 #
 #
-#

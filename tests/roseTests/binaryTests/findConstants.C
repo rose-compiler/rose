@@ -23,9 +23,6 @@ name_or_addr(const SgAsmFunctionDeclaration *f)
 
 class AnalyzeFunctions : public SgSimpleProcessing {
   public:
-    AnalyzeFunctions(SgProject *project) {
-        traverse(project, postorder);
-    }
     void visit(SgNode *node) {
         SgAsmFunctionDeclaration *func = isSgAsmFunctionDeclaration(node);
         if (func) {
@@ -47,6 +44,33 @@ class AnalyzeFunctions : public SgSimpleProcessing {
     }
 };
 
+/* Analyze only interpretations that point only to 32-bit x86 instructions. */
+class AnalyzeX86Functions: public SgSimpleProcessing {
+public:
+    size_t ninterps;
+    AnalyzeX86Functions(): ninterps(0) {}
+    void visit(SgNode* node) {
+        SgAsmInterpretation *interp = isSgAsmInterpretation(node);
+        if (interp) {
+            const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+            bool only_x86 = true;
+            for (size_t i=0; i<headers.size() && only_x86; ++i)
+                only_x86 = 4==headers[i]->get_word_size();
+            if (only_x86) {
+                ++ninterps;
+                AnalyzeFunctions().traverse(node, postorder);
+            }
+        }
+    }
+};
+
 int main(int argc, char *argv[]) {
-    AnalyzeFunctions(frontend(argc, argv));
+    SgProject *project = frontend(argc, argv);
+    AnalyzeX86Functions analysis;
+    analysis.traverse(project, postorder);
+    if (0==analysis.ninterps) {
+        std::cout <<"file(s) didn't have any 32-bit x86 headers.\n";
+    } else {
+        std::cout <<"analyzed headers: " <<analysis.ninterps<< "\n";
+    }
 }

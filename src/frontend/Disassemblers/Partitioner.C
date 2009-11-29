@@ -65,6 +65,16 @@ Partitioner::detectBasicBlocks(const Disassembler::InstructionMap &insns) const
     return bb_starts;
 }
 
+/** Update basic blocks so that every function start also starts a basic block. */
+void
+Partitioner::update_basic_blocks(const FunctionStarts& func_starts, BasicBlockStarts& bb_starts/*out*/)
+{
+    for (FunctionStarts::const_iterator i=func_starts.begin(); i!=func_starts.end(); i++) {
+        if (bb_starts.find(i->first)==bb_starts.end())
+            bb_starts[i->first] = BasicBlockStarts::mapped_type();
+    }
+}
+
 /* Find beginnings of functions. */
 Partitioner::FunctionStarts
 Partitioner::detectFunctions(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insns,
@@ -87,24 +97,28 @@ Partitioner::detectFunctions(SgAsmInterpretation *interp, const Disassembler::In
         mark_call_targets(insns, func_starts);
     
     /* All function entry points are also the starts of basic blocks. */
-    for (FunctionStarts::iterator i=func_starts.begin(); i!=func_starts.end(); i++) {
-        if (bb_starts.find(i->first)==bb_starts.end())
-            bb_starts[i->first] = BasicBlockStarts::mapped_type();
-    }
+    update_basic_blocks(func_starts, bb_starts);
 
     /* This one depends on basic block starts being consistent with function starts. */
     if (p_func_heuristics & SgAsmFunctionDeclaration::FUNC_GRAPH) {
         mark_graph_edges(insns, bb_starts, func_starts);
-        /* All function entry points are also the starts of basic blocks. */
-        for (FunctionStarts::iterator i=func_starts.begin(); i!=func_starts.end(); i++) {
-            if (bb_starts.find(i->first)==bb_starts.end())
-                bb_starts[i->first] = BasicBlockStarts::mapped_type();
-        }
+        update_basic_blocks(func_starts, bb_starts);
     }
 
     /* This doesn't detect new functions, it just gives names to ELF .plt trampolines */
     for (size_t i=0; i<headers.size(); i++) {
         name_plt_entries(headers[i], insns, func_starts);
+    }
+
+    /* Run user-defined function detectors, making sure that the basic block starts are up-to-date for each call. */
+    if (p_func_heuristics & SgAsmFunctionDeclaration::FUNC_USERDEF) {
+        for (size_t i=0; i<p_func_detectors.size(); i++) {
+            for (size_t j=0; j<=headers.size(); j++) {
+                SgAsmGenericHeader *hdr = 0==j ? NULL : headers[j-1];
+                p_func_detectors[i](hdr, insns, bb_starts, func_starts);
+                update_basic_blocks(func_starts, bb_starts);
+            }
+        }
     }
 
     return func_starts;
@@ -399,10 +413,19 @@ Partitioner::mark_func_symbols(SgAsmGenericHeader *fhdr, const Disassembler::Ins
             SgAsmGenericSymbol *symbol = symbols[j];
             if (symbol->get_def_state()==SgAsmGenericSymbol::SYM_DEFINED && symbol->get_type()==SgAsmGenericSymbol::SYM_FUNC) {
                 rose_addr_t value = symbol->get_value();
+
+                if (insns.find(value)!=insns.end()) {
+                    func_starts[value].reason |= SgAsmFunctionDeclaration::FUNC_SYMBOL;
+                    if (func_starts[value].name=="")
+                        func_starts[value].name = symbol->get_name()->get_string();
+                }
+
+                /* Sometimes weak symbol values are offsets from a section (this code handles that), but other times they're
+                 * the value is used directly (the above code handled that case). */            
                 SgAsmGenericSection *section = symbol->get_bound();
                 if (section && symbol->get_binding()==SgAsmGenericSymbol::SYM_WEAK)
                     value += section->get_header()->get_base_va() + section->get_mapped_actual_rva();
-                if (insns.find(symbol->get_value())!=insns.end()) {
+                if (insns.find(value)!=insns.end()) {
                     func_starts[value].reason |= SgAsmFunctionDeclaration::FUNC_SYMBOL;
                     if (func_starts[value].name=="")
                         func_starts[value].name = symbol->get_name()->get_string();
@@ -463,12 +486,110 @@ Partitioner::mark_graph_edges(const Disassembler::InstructionMap &insns,
     }
 }
 
-/* Look for instruction patterns */
+/** See Partitioner::mark_func_patterns. Tries to match "push rbp; mov rbp,rsp" (or the 32-bit equivalent) */
+static Disassembler::InstructionMap::const_iterator
+pattern1(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap::const_iterator ii)
+{
+    /* Look for "push rbp" */
+    SgAsmx86Instruction *insn1 = isSgAsmx86Instruction(ii->second);
+    if (!insn1) return insns.end();
+    if (insn1->get_kind()!=x86_push) return insns.end();
+    const SgAsmExpressionPtrList &opands1 = insn1->get_operandList()->get_operands();
+    if (opands1.size()!=1) return insns.end();
+    SgAsmx86RegisterReferenceExpression *rre = isSgAsmx86RegisterReferenceExpression(opands1[0]);
+    if (!rre) return insns.end();
+    if (rre->get_register_class()!=x86_regclass_gpr || rre->get_register_number()!=x86_gpr_bp) return insns.end();
+
+    /* Look for "mov rbp,rsp" */
+    Disassembler::InstructionMap::const_iterator ij=insns.find(ii->first + insn1->get_raw_bytes().size());
+    if (ij==insns.end()) return insns.end();
+    SgAsmx86Instruction *insn2 = isSgAsmx86Instruction(ij->second);
+    if (!insn2) return insns.end();
+    if (insn2->get_kind()!=x86_mov) return insns.end();
+    const SgAsmExpressionPtrList &opands2 = insn2->get_operandList()->get_operands();
+    if (opands2.size()!=2) return insns.end();
+    rre = isSgAsmx86RegisterReferenceExpression(opands2[0]);
+    if (!rre) return insns.end();
+    if (rre->get_register_class()!=x86_regclass_gpr || rre->get_register_number()!=x86_gpr_bp) return insns.end();
+    rre = isSgAsmx86RegisterReferenceExpression(opands2[1]);
+    if (!rre) return insns.end();
+    if (rre->get_register_class()!=x86_regclass_gpr || rre->get_register_number()!=x86_gpr_sp) return insns.end();
+
+    return ii;
+}
+
+/** See Partitioner::mark_func_patterns. Tries to match "nop;nop;nop" followed by something that's not a nop and returns the
+ *  something that's not a nop if successful. */
+static Disassembler::InstructionMap::const_iterator
+pattern2(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap::const_iterator ii)
+{
+    /* Look for three "nop" instructions */
+    for (size_t i=0; i<3; i++) {
+        SgAsmx86Instruction *nop = isSgAsmx86Instruction(ii->second);
+        if (!nop) return insns.end();
+        if (nop->get_kind()!=x86_nop) return insns.end();
+        if (nop->get_operandList()->get_operands().size()!=0) return insns.end(); /*only zero-arg NOPs allowed*/
+        ii = insns.find(ii->first + nop->get_raw_bytes().size());
+        if (ii==insns.end()) return insns.end();
+    }
+    
+    /* Look for something that's not a "nop"; this is the function entry point. */
+    SgAsmx86Instruction *notnop = isSgAsmx86Instruction(ii->second);
+    if (!notnop) return insns.end();
+    if (notnop->get_kind()==x86_nop) return insns.end();
+    return ii;
+}
+
+/** See Partitioner::mark_func_patterns. Tries to match "leave;ret" followed by one or more "nop" followed by a non-nop
+ *  instruction and if matching, returns the iterator for the non-nop instruction. */
+static Disassembler::InstructionMap::const_iterator
+pattern3(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap::const_iterator ii)
+{
+    /* leave; ret; nop */
+    for (size_t i=0; i<3; i++) {
+        SgAsmx86Instruction *insn = isSgAsmx86Instruction(ii->second);
+        if (!insn) return insns.end();
+        if ((i==0 && insn->get_kind()!=x86_leave) ||
+            (i==1 && insn->get_kind()!=x86_ret)   ||
+            (i==2 && insn->get_kind()!=x86_nop))
+            return insns.end();
+        ii = insns.find(ii->first + insn->get_raw_bytes().size());
+        if (ii==insns.end()) return insns.end();
+    }
+    
+    /* Zero or more "nop" instructions */
+    while (1) {
+        SgAsmx86Instruction *insn = isSgAsmx86Instruction(ii->second);
+        if (!insn) return insns.end();
+        if (insn->get_kind()!=x86_nop) break;
+        ii = insns.find(ii->first + insn->get_raw_bytes().size());
+        if (ii==insns.end()) return insns.end();
+    }
+    
+    /* This must be something that's not a "nop", but make sure it's an x86 instruction anyway. */
+    SgAsmx86Instruction *insn = isSgAsmx86Instruction(ii->second);
+    if (!insn) return insns.end();
+    return ii;
+}
+        
+/* Look for instruction patterns. */
 void
 Partitioner::mark_func_patterns(SgAsmGenericHeader*, const Disassembler::InstructionMap &insns,
                                 FunctionStarts &func_starts/*out*/) const
 {
-    /* FIXME: not implemented yet. [RPM 2009-06-10] */
+    for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+        Disassembler::InstructionMap::const_iterator found = insns.end();
+
+        /* Try each pattern until one succeeds */
+        if (found==insns.end()) found = pattern1(insns, ii);
+        if (found==insns.end()) found = pattern2(insns, ii);
+        if (found==insns.end()) found = pattern3(insns, ii);
+
+        
+        /* We found a function entry point */
+        if (found!=insns.end())
+            func_starts[found->first].reason |= SgAsmFunctionDeclaration::FUNC_PATTERN;
+    }
 }
 
 /* Gives names to the dynamic linking trampolines in the .plt section. */

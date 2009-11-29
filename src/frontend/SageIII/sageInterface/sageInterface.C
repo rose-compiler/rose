@@ -3899,7 +3899,7 @@ SageInterface::generateProjectName( const SgProject* project, bool supressSuffix
    {
   // This function generates a string to use as a unique project name for
   // a collection of files.  The last file will include it's suffix so that
-  // we generate proper names that cummunicate the source language.
+  // we generate proper names that communicate the source language.
   // Also also allows the single file case to be consistant with the previous
   // version of names generated for "DOT" files in the tutorial.
 
