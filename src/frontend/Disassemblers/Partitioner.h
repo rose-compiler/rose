@@ -12,9 +12,15 @@
  *  terminatesBasicBlock virtual method is used to make this determination.
  *
  *  Once instructions are assigned to basic blocks, the partitioner assigns the basic blocks to functions using a variety of
- *  heuristics, the set of which is determined by the values specified in the Partioner's {\tt set\_heuristics} method. These
+ *  heuristics, the set of which is determined by the values specified in the Partioner's set_heuristics() method. These
  *  are documented in the SgAsmFunctionDeclaration class (see the FunctionReason enumeration).  When a function is created,
- *  its {\tt reason} attribute will contain a bit vector describing which heuristics detected this function. */
+ *  its reason attribute will contain a bit vector describing which heuristics detected this function.
+ *
+ *  Certain methods of the Disassembler class need a Partitioner. When one of those methods are called, the Disassembler
+ *  object will create a default Partitioner unless one has already been explicitly created and added to the Disassembler with
+ *  the Disassembler::set_partitioner() method.  ROSE has a set of built-in Disassembler objects that use default-constructed
+ *  Partitioner objects, but sometimes the end user wants to influence the way functions are detected. The documentation for
+ *  the Disassembler class has an example of how this can be done. */
 class Partitioner {
     /*======================================================================================================================
      * Data types
@@ -93,6 +99,21 @@ public:
     /*======================================================================================================================
      * Methods for finding the beginnings of functions.
      *======================================================================================================================*/
+public:
+    /** Data type for user-defined function detectors. */
+    typedef void (*FunctionDetector)(SgAsmGenericHeader*, const Disassembler::InstructionMap&, const BasicBlockStarts&,
+                                     FunctionStarts&/*out*/);
+
+    /** Adds a user-defined function detector to this partitioner. Any number of detectors can be added and they will be run
+     *  in the order they were added, after the built-in methods run.  Each user-defined detector will be called first with
+     *  the SgAmGenericHeader pointing to null, then once for each file header. The user-defined methods are run only if the
+     *  SgAsmFunctionDeclaration::FUNC_USERDEF is set (see set_heuristics()), which is the default.   The reason for having
+     *  user-defined function detectors is that the detection of functions influences the shape of the AST and so it is easier
+     *  to apply those analyses here, before the AST is built, rather than in the mid-end after the AST is built. */
+    void addFunctionDetector(FunctionDetector f) {
+        p_func_detectors.push_back(f);
+    }
+    
 private:
     /** Marks program entry addresses (stored in the SgAsmGenericHeader) as functions. */
     void mark_entry_targets(SgAsmGenericHeader*, const Disassembler::InstructionMap &insns,
@@ -131,7 +152,11 @@ private:
                           const BasicBlockStarts &basicBlockStarts, FunctionStarts &functionStarts/*out*/) const;
 
     /** Match instruction patterns to locate starts of functions. Compilers sometimes use templates to generate function
-     *  prologues and epilogues. */
+     *  prologues and epilogues. Each pattern matcher is a separate function called with the instruction map and a starting
+     *  point (iterator) into that map. If the matcher detects a match at that location then it should return an iterator
+     *  pointing to the function entry point, otherwise it should return the end iterator.  Returning an iterator rather than
+     *  true/false allows the matcher to operate on patterns that precede a function entry point (e.g., a series of x86 NOP
+     *  instructions often indicates that a function entry point follows with the next non-NOP instruction). */
     void mark_func_patterns(SgAsmGenericHeader*, const Disassembler::InstructionMap &insns,
                             FunctionStarts &func_starts/*out*/) const;
 
@@ -166,13 +191,17 @@ private:
     std::map<rose_addr_t, SgAsmBlock*> buildBasicBlocks(const Disassembler::InstructionMap &insns,
                                                         const BasicBlockStarts &bb_starts) const;
 
+    /** Update basic blocks so that every function start also starts a basic block. */
+    static void update_basic_blocks(const FunctionStarts& func_starts, BasicBlockStarts& bb_starts/*out*/);
+
 
     
     /*======================================================================================================================
      * Data members
      *======================================================================================================================*/
 private:
-    unsigned p_func_heuristics;         /**< Bit mask of SgAsmFunctionDeclaration::FunctionReason bits. */
+    unsigned p_func_heuristics;                         /**< Bit mask of SgAsmFunctionDeclaration::FunctionReason bits. */
+    std::vector<FunctionDetector> p_func_detectors;     /**< List of user-defined function detection methods. */
 };
 
 

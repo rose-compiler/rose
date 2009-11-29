@@ -68,7 +68,13 @@ class VarInfo : public MapObject<SymbolicVal, SymbolicBound>
 
 };
 
+#ifdef _MSC_VER
+// DQ (11/27/2009): When using MSVC, this should be using "typename" instead of "class"
+// Not that this might be the better fix and should work for Linux as well (g++).
+template <class Stmt, typename Interface>
+#else
 template <class Stmt, class Interface>
+#endif
 class SymbolicBoundAnalysis 
   : public MapObject<SymbolicVal, SymbolicBound>, private SymbolicVisitor
 {
