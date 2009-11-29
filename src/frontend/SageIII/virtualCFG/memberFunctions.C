@@ -2601,6 +2601,9 @@ SgExpression::cfgIndexForEnd() const
    {
      std::cerr << "Bad expression case " << this->class_name() << " in cfgIndexForEnd()" << std::endl;
      ROSE_ASSERT (false);
+
+  // DQ (11/28/2009): This function was already commented out, but must return a value for use in MSVC.
+     return 0;
    }
 
 bool
@@ -2625,11 +2628,17 @@ SgExpression::cfgFindNextChildIndex(SgNode* n) {
   std::vector<CFGEdge> SgExpression::cfgOutEdges(unsigned int) {
     std::cerr << "Bad expression case " << this->class_name() << " in cfgOutEdges()" << std::endl;
     ROSE_ASSERT (false);
+
+  // DQ (11/28/2009): This function was already commented out, but must return a value for use in MSVC.
+     return std::vector<CFGEdge>();
   }
 
   std::vector<CFGEdge> SgExpression::cfgInEdges(unsigned int) {
     std::cerr << "Bad expression case " << this->class_name() << " in cfgInEdges()" << std::endl;
     ROSE_ASSERT (false);
+
+  // DQ (11/28/2009): This function was already commented out, but must return a value for use in MSVC.
+     return std::vector<CFGEdge>();
   }
 
 unsigned int

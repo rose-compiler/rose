@@ -4,8 +4,9 @@
 #include "errno.h"
 #include "rose_attributes_list.h"
 
-
-#if CAN_NOT_COMPILE_WITH_ROSE != true
+// DQ (11/28/2009): I think this is equivalent to "USE_ROSE"
+// #if CAN_NOT_COMPILE_WITH_ROSE != true
+#if (CAN_NOT_COMPILE_WITH_ROSE == 0)
 token_container wave_tokenStream;
 
 ///////////////////////////////////////////////////////////////////////////////

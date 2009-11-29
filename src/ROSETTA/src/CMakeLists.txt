@@ -5,7 +5,12 @@ include_directories( ${ROSE_INCLUDES} )
 
 ########### next target ###############
 
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -DROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR_DEFINED=\"${CMAKE_SOURCE_DIR}\"" )
+if (WIN32)
+# DQ (11/28/2009): MSVC does not accept the option "-fexceptions".
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR_DEFINED=\"${CMAKE_SOURCE_DIR}\"" )
+else (WIN32)
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -DROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR_DEFINED=\"${CMAKE_SOURCE_DIR}\"" )
+endif (WIN32)
 
 set(CxxGrammarMetaProgram_SRCS
     CxxGrammarMetaProgram.C

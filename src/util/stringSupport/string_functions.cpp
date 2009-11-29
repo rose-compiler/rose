@@ -152,7 +152,7 @@ StringUtility::getAbsolutePathFromRelativePath ( const std::string & relativePat
   // const char* resultingPath = NULL;
 	 printf ("WARNING: realPath() not supported in MSVC (attempt at work around implemented) relativePath = %s \n",relativePath.c_str());
 
-	 // tps (11/10/200): Did not find corresponding function call in Windows. Commented out for now. Seems to work.
+  // tps (11/10/200): Did not find corresponding function call in Windows. Commented out for now. Seems to work.
   // ROSE_ASSERT(false);
 
   // DQ (11/27/2009): This is a try at work around for realpath() not being available in Windows (does not work yet).
@@ -174,7 +174,7 @@ StringUtility::getAbsolutePathFromRelativePath ( const std::string & relativePat
 #else
   // DQ (9/3/2006): Note that "realpath()" 
   // can return an error if it processes a file or directory that does not exist.  This is 
-  // a problem for include paths that are specified on the commadline and which don't exist; 
+  // a problem for include paths that are specified on the commandline and which don't exist; 
   // most compilers silently ignore these and we have to at least ignore them.
      const char* resultingPath = realpath( relativePath.c_str(), resolved_path);
 #endif

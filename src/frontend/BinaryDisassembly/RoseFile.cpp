@@ -5,7 +5,13 @@
  * Decription : Interface to user
  ****************************************************/
 #include "rose.h"
+
+#ifdef _MSC_VER
+#include <time.h>
+#else
+// This header file is not available in MSVC.
 #include <sys/time.h>
+#endif
 
 using namespace std;
 /****************************************************

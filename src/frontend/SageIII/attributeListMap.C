@@ -1,8 +1,9 @@
 #include "rose.h"
 #include "rose_config.h"
 
-#if CAN_NOT_COMPILE_WITH_ROSE != true
-
+// DQ (11/28/2009): I think this is equivalent to "USE_ROSE"
+// #if CAN_NOT_COMPILE_WITH_ROSE != true
+#if (CAN_NOT_COMPILE_WITH_ROSE == 0)
 
 #include "attributeListMap.h"
 

@@ -1,7 +1,13 @@
 #include "rose.h"
 #include "rose_paths.h"
 #include <sys/stat.h>
+
+#ifdef _MSC_VER
+#pragma message ("WARNING: wait.h header file not available in MSVC.")
+#else
 #include <sys/wait.h>
+#endif
+
 #include <libgen.h>
 
 //FMZ (5/19/2008): 
