@@ -5,12 +5,8 @@ include_directories( ${ROSE_INCLUDES} )
 
 ########### next target ###############
 
-if (WIN32)
-# DQ (11/28/2009): MSVC does not accept the option "-fexceptions".
-  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR_DEFINED=\"${CMAKE_SOURCE_DIR}\"" )
-else (WIN32)
-  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -DROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR_DEFINED=\"${CMAKE_SOURCE_DIR}\"" )
-endif (WIN32)
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -DROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR_DEFINED=\"${CMAKE_SOURCE_DIR}\"" )
+
 
 set(CxxGrammarMetaProgram_SRCS
     CxxGrammarMetaProgram.C
@@ -75,8 +71,6 @@ set(GRAMMAR_SOURCE_FILES
      ../astNodeList
    )
 
-
-
 add_executable(CxxGrammarMetaProgram ${CxxGrammarMetaProgram_SRCS} ${rose_util_src})
 
 #build ROSETTA
@@ -85,12 +79,12 @@ target_link_libraries(CxxGrammarMetaProgram ${KDE4_KDECORE_LIBS} rose_util_lib $
 
 #Generate the edg-sage connection using ROSETTA
 add_custom_command(
-   OUTPUT ${ROSETTA_HEADERS} ${ROSETTA_SRC} 
-   PRE_BUILD
- COMMAND
-    ${CMAKE_COMMAND}  -E copy_directory  ${ROSE_TOP_SRC_DIR}/src/ROSETTA/Grammar ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/Grammar
-    COMMAND
-    ${CMAKE_COMMAND}  -E make_directory  ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/astFileIO
+    OUTPUT ${ROSETTA_HEADERS} ${ROSETTA_SRC}
+    PRE_BUILD
+   COMMAND
+   ${CMAKE_COMMAND}  -E copy_directory  ${ROSE_TOP_SRC_DIR}/src/ROSETTA/Grammar ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/Grammar
+   COMMAND
+   ${CMAKE_COMMAND}  -E make_directory  ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/astFileIO
 
    COMMAND CxxGrammarMetaProgram ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/  
    DEPENDS ${GRAMMAR_SOURCE_FILES}
@@ -98,7 +92,6 @@ add_custom_command(
 #   COMMENT "Generating files using ROSETTA"
 #   DEPENDS ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/Grammar CxxGrammarMetaProgram  ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/astFileIO
 #   COMMAND CxxGrammarMetaProgram DEPENDS createSymlink CxxGrammarMetaProgram ${GRAMMAR_SOURCE_FILES}
-
 )
 
 
@@ -309,7 +302,6 @@ add_custom_target( ROSETTA ALL DEPENDS ${ROSETTA_HEADERS} ${ROSETTA_SRC}
 #	rm -rf Cxx_Grammar.h Cxx_Grammar.C Cxx_GrammarTreeTraversal.C Cxx_GrammarTreeTraversalClass.h \
 #          Cxx_GrammarTreeTraversalClass.C
 #	rm -rf grammar.tex grammar.dot
-#
 #
 #
 #

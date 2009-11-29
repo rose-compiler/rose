@@ -274,6 +274,31 @@ int main(int argc, char** argv) {
   SgGlobal* g = newFile->get_globalScope();
   ROSE_ASSERT (g);
 
+#if 0
+// DQ (11/19/2009): Git generated a conflict here, but I had not changed anything.
+// I think this is related to an update from Andreas's branch 2 weeks ago.
+
+<<<<<<< HEAD:projects/assemblyToSourceAst/x86AssemblyToC.C
+  SgFunctionDeclaration* decl = buildDefiningFunctionDeclaration("run", SgTypeVoid::createType(), buildFunctionParameterList(), g);
+  appendStatement(decl, g);
+  vector<SgNode*> asmFiles = NodeQuery::querySubTree(proj, V_SgAsmGenericFile);
+  ROSE_ASSERT (asmFiles.size() == 1);
+  SgBasicBlock* body = decl->get_definition()->get_body();
+  X86CTranslationPolicy policy(newFile, isSgAsmGenericFile(asmFiles[0]));
+  policy.switchBody = buildBasicBlock();
+  SgSwitchStatement* sw = buildSwitchStatement(buildVarRefExp(policy.ipSym), policy.switchBody);
+  SgWhileStmt* whileStmt = buildWhileStmt(buildBoolValExp(true), sw);
+  appendStatement(whileStmt, body);
+  policy.whileBody = sw;
+  X86InstructionSemantics<X86CTranslationPolicy, WordWithExpression> t(policy);
+  vector<SgNode*> instructions = NodeQuery::querySubTree(proj, V_SgAsmx86Instruction);
+  for (size_t i = 0; i < instructions.size(); ++i) {
+    SgAsmx86Instruction* insn = isSgAsmx86Instruction(instructions[i]);
+    ROSE_ASSERT (insn);
+    t.processInstruction(insn);
+=======
+#endif
+
   //I am doing some experimental work to enable functions in the C representation
   //Set this flag to true in order to enable that work
   bool enable_functions = false;
