@@ -9,7 +9,12 @@
 
 // Include files to get the current path
 #include <unistd.h>
+
+#ifdef _MSC_VER
+#pragma message ("WARNING: param.h header file not available in MSVC.")
+#else
 #include <sys/param.h>
+#endif
 
 #if 1
 // DQ (5/9/2007): This is used to support the work with WAVE.

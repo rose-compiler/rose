@@ -32,7 +32,12 @@ typedef std::vector<std::list<token_type> > token_container_container;
 
 //Include files to get the current path
 #include <unistd.h>
+
+#ifdef _MSC_VER
+#pragma message ("WARNING: param.h header file not available in MSVC.")
+#else
 #include <sys/param.h>
+#endif
 
 // #include <iostream>
 // #include <fstream>

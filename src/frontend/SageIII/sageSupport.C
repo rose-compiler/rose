@@ -8,7 +8,11 @@
 #include <sys/wait.h>
 #endif
 
+#ifdef _MSC_VER
+#pragma message ("WARNING: libgen.h header file not available in MSVC.")
+#else
 #include <libgen.h>
+#endif
 
 //FMZ (5/19/2008): 
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
