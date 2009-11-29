@@ -12,6 +12,7 @@ else (WIN32)
   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -DROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR_DEFINED=\"${CMAKE_SOURCE_DIR}\"" )
 endif (WIN32)
 
+
 set(CxxGrammarMetaProgram_SRCS
     CxxGrammarMetaProgram.C
     grammar.C
