@@ -1,3 +1,4 @@
+# DQ (11/29/2009): This file is a current merge problem in master.
 
 include_directories( ${ROSE_INCLUDES} )
 #include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
@@ -26,6 +27,7 @@ set(CxxGrammarMetaProgram_SRCS
     buildStorageClasses.C
     buildConstructorsWithoutSourcePositionInformation.C
     outputClassesAndFields.C)
+
 
 # input files to generate source files
 set(GRAMMAR_SOURCE_FILES
@@ -121,6 +123,7 @@ add_custom_target( ROSETTA ALL
 
 
 #original Makefile.am contents follow:
+
 
 
 #
