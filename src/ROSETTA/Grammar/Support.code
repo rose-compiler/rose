@@ -3716,7 +3716,8 @@ HEADER_NAME_START
        // Added to support assignments to string variables.
           operator std::string () const;
 
-          int is_null(void) const;
+       // DQ (11/28/2009): Fixed return value of function to be "bool" instead of "int"
+          bool is_null(void) const;
           void replace_space(char t);
           SgName& operator<<(const std::string& str);
 
@@ -8500,7 +8501,7 @@ SgName::operator<(const SgName& n1) const
      return p_char < n1.p_char;
    }
 
-int
+bool
 SgName::is_null(void) const
    {
      ROSE_ASSERT(this != NULL);
