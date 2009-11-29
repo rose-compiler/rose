@@ -110,7 +110,8 @@ namespace AbstractHandle{
   virtual abstract_node* getParent() const;
 
 #ifdef _MSC_VER
-#pragma message ("WARNING: MSVC does not handle covariant return types properly.")
+// DQ (11/27/2009): MSVC does not appear to support covariant types, but no message is required.
+// #pragma message ("WARNING: MSVC does not handle covariant return types properly.")
 #else
   //Get the raw IR node associated with the current abstract node
   virtual void * getNode() const {return NULL;};
