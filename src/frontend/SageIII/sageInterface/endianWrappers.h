@@ -21,9 +21,9 @@ static inline uint64_t roseBswap64(uint64_t x) {
   return bswap_64(x);
 }
 #else
+
 #ifdef HAVE_MACHINE_ENDIAN_H
 #include <machine/endian.h>
-
 static inline uint16_t roseBswap16(uint16_t x) {
   return _OSSwapInt16(x);
 }
@@ -37,10 +37,17 @@ static inline uint64_t roseBswap64(uint64_t x) {
 }
 
 #else
+#ifdef _MSC_VER
+#pragma message ("WARNING EndianWrappers.h: MS: Could not find endian swapping code" )
+#include <sys/types.h>
+
+#else
 #error "Could not find endian swapping code"
 #endif
 #endif
+#endif
 
+#ifndef _MSC_VER
 #ifdef WORDS_BIGENDIAN
 static inline uint16_t getLittleEndian16(uint16_t x) {return roseBswap16(x);}
 static inline uint32_t getLittleEndian32(uint32_t x) {return roseBswap32(x);}
@@ -69,4 +76,5 @@ static inline uint64_t getSwitchedEndian64(bool isBigEndian, uint64_t x) {
   return isBigEndian ? getBigEndian64(x) : getLittleEndian64(x);
 }
 
+#endif
 #endif // ROSE_ENDIANWRAPPERS_H

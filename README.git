@@ -1,0 +1,252 @@
+
+Information on git-svn usage:
+   http://maymay.net/blog/2009/02/24/how-to-use-git-svn-as-the-only-subversion-client-youll-need/
+
+The Video:
+   http://www.youtube.com/watch?v=4XpnKHJAok8
+
+
+Commands used one to setup and maintain GIT and not used by users afterward:
+   Command to use git-svn support (checkes out a git-based SVN repository):
+      git svn clone file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE ROSE
+
+   To update git repository from SVN use (from in the git repository):
+      git svn fetch
+
+
+
+We will try to give you a fast introduction to git, but you should also consider looking up these documents
+  http://*www.*kernel.org/pub/software/scm/git/docs/gittutorial.html
+  http://*book.git-scm.com/
+  http://*www.*sourcemage.org/Git_Guide ( more like a FAQ )
+  http://*stackoverflow.com/questions/315911/git-for-beginners-the-definitive-practical-guide
+
+
+The first step of using a ROSE git repository is to create a local copy 
+    
+     git clone /usr/casc/overture/ROSE/git/ROSE.git
+
+on laptop use:
+     git clone ssh://dquinlan@tux281.llnl.gov/usr/casc/overture/ROSE/git/ROSE.git git-rose-dan
+
+
+
+The next step is to list all the branches available in the central git repository
+  
+     git branch -a
+
+Make a local branch for every branch in the central repository that you are interested in that tracks the central git repository branch with the same name. For the branch origin/cmake you would for example do:
+
+     git branch cmake --track origin/cmake
+
+Since you can not check in to the master branch, you have to checkout one of the branches. E.g
+
+     git checkout cmake
+
+Use this command to switch between branches. 
+
+After doing some changes you can push those to the central git by doing
+
+     git push origin branch-name
+
+which in the case of the cmake branch would be
+
+     git push cmake
+
+########## Building a Branch for a development team member ################
+
+     git branch matt master
+     git push origin matt
+
+
+############## WE DESCRIBE HOW TO CREATE A NEW BRANCH  ####################
+
+Suppose you want to do some experimental work on cmake, first checkout cmake
+     git checkout cmake
+
+Then create a branch of cmake
+     git branch experiment
+
+Then change to that branch
+
+      git checkout experiment
+
+When you want to merge back those changes if they are successful
+
+     git checkout cmake
+     git merge experiment
+
+############## WE DESCRIBE HOW YOU MAKE CHANGES TO YOUR BRANCH #############
+
+Given your experimental branch
+   git checkout experiment
+
+Create a new file and make git track it
+    touch new-file.txt
+    git add new-file.txt
+
+Then commit it
+
+     git commit -a
+
+If you want these changes to be pushed to the central git repository type
+
+    git push origin experiment
+
+Since this branch did not exist before, git also created it. 
+
+To get changes from the experiment branch on the central git repository type
+
+    git pull origin experiment
+
+
+After Peter runs: git fetch (on the git svn clone):
+   Copy the changes from all branches in the origin repository to the local repository
+   tracking branches:
+      git fetch origin
+
+   Merge the changes on the svn branch with my current branch:
+      git merge origin/svn
+
+
+How to add a file:
+   git add <file name>
+
+
+################# How to Test Git Commands ####################
+
+Some Git commands like "reset --hard", "rebase", etc. can make changes
+that you might not expect if you're new, and there's not always an easy,
+intuitive way to recover if you make a mistake.  So here's what I do if
+I want to just try out a command:
+
+   $ git branch backup # create a "backup" branch of your current branch
+   $ ... # live dangerously
+
+If everything looks good, delete the backup:
+
+   $ git branch -D backup
+
+Otherwise to recover your original branch:
+
+   $ git reset --hard backup
+   $ git branch -d backup
+
+A word of caution: this method doesn't make a backup of files that
+aren't managed by Git. So do a "git status" first to see if you need
+to be careful of any new files or changes that aren't committed yet.
+
+Another word of caution: don't change history for what you've already
+pushed to the central repo!  If you pushed something by mistake then
+it's better to push a fix (see "git revert") than change history to make
+it look like your bad commit never happened.
+
+
+#################### Most form of common update ####################
+
+Generally I am on my own branch, so the first step is to switch to "master"
+   git checkout master
+
+Get the updates from master to my local repository
+   git pull
+
+Check the status
+   git status
+
+Switch to my branch
+   git checkout dan
+
+Check that I am on the correct branch
+   git branch -a
+
+Now merge the changes from "master" into my branch
+   git merge master
+
+Note that this will most likely go smoothly if all changes
+are tken only from "master".  so it might be helpful (to
+avoid conflicts) to NOT try to update using anyone else's
+branch.
+ 
+
+####################### How to update #######################
+
+You situation might be different, but I update from origin/master.
+These commands might be useful to you.
+
+  $ git fetch
+
+will grab all the content from the central repo and make your remote
+"origin/*" branches up-to-date. It won't affect any of your local
+branches and so is always safe to do. (It's actually the first half of
+what a "git pull" does -- "git pull" is a fetch and then a merge.)
+
+  $ git whatchanged origin/master ^dan
+
+will show you what commits are in the "master" branch on the central
+repo but aren't on your "dan" branch.  Add a "-p" to see the actual
+patches. These are the things that would get merged if you did a "git
+merge origin/master" into your "dan" branch.
+
+  $ git whatchanged dan ^origin/dan
+
+will show you changes in your local "dan" branch that you haven't pushed
+to the central repo yet.  These are the changes that would get pushed by
+a "git push" command.
+
+BTW. the syntax "foo ^bar" is the same as "foo..bar" but I think the
+former is more intuitive, especially when foo and bar have both diverged
+from their common ancestor.
+
+If you merge from master and then decide you shouldn't have, you can
+easily undo the merge:
+
+  $ git fetch   # update your remote branches; always safe to do
+  $ git branch  # make sure you're on "dan"
+  $ git branch backup # create a temporary backup branch
+  $ git merge origin/master # merge changes from remote master
+
+If you don't like that, undo with:
+
+  $ git reset --hard backup  # undoes the merge
+  $ git branch -d backup # deletes the "backup" branch
+
+############# Build a new branch which is merged from two other branches ##############
+
+   git checkout -b dan_andreas_merge_test
+
+
+########### Build a new branch to test an merge with someone elses branch ################
+
+Build a new brach to test a merge
+   112  12:22   git checkout -b dan_andreas_merge_test
+
+Pull the changes from the target of the test merge
+   114  12:24   git pull origin andreas
+
+Resolve conflict by checking in (git add) the new changed file
+   122  12:25   git add tests/roseTests/binaryTests/Makefile.am
+
+Commit the changes to the local repository
+   123  12:26   git commit -a
+
+Return to my original branch
+   124  12:27   git checkout dan
+
+Copy the changes from the test branch to my original branch
+   125  12:27   git fetch dan_andreas_merge_test  // failed
+   126  12:27   git pull dan_andreas_merge_test   // failed
+   129  12:28   git merge dan_andreas_merge_test  // this worked!
+
+Delete the test branch
+   131  12:28   git branch -d dan_andreas_merge_test
+
+
+#################### GITK ############################
+
+gitk master HEAD andreas cmake dan jeff liao matt peter robb svn thomas windows yi
+
+################ SHOW ###############################
+
+To see what branches are tracked and the semantics of "git pull" use:
+   $ git remote show origin
+

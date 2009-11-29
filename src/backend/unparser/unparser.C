@@ -8,6 +8,10 @@
 // include "array_class_interface.h"
 #include "unparser.h"
 
+#ifdef _MSC_VER
+#include "unparseAsm.h"
+#endif
+
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 

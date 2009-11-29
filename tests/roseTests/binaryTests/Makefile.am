@@ -17,13 +17,24 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIde
 # The executables...
 ###############################################################################################################################
 
-noinst_PROGRAMS = execFormatsTest testElfStrtab testElfByteOrder testElfWordSize testElfSchulz testElfConstruct \
+#noinst_PROGRAMS = execFormatsTest testBinCFG testBinCG testElfStrtab testElfByteOrder testElfWordSize testElfSchulz testElfConstruct \
+#	          testPeConstruct shiftResizeSection findConstants disassemble
+noinst_PROGRAMS = execFormatsTest testBinCFG testBinCG testElfStrtab testElfByteOrder testElfWordSize testElfSchulz testElfConstruct \
 	          testPeConstruct shiftResizeSection findConstants disassemble testEtherInsns
 
 # Parses an executable to produce a dump file (*.dump), an assembly file (rose_*.s), and a new executable created by unparsing
 # the AST (*.new). The *.new file is typically identical to the original executable.
 execFormatsTest_SOURCES = execFormatsTest.C
 execFormatsTest_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+#Test the binary control flow graph that uses the semantic representation to perform an accurate analysis
+testBinCFG_SOURCES = testBinCFG.C
+testBinCFG_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+#Test the binary call graph that uses the semantic representation to perform an accurate analysis
+testBinCG_SOURCES = testBinCG.C
+testBinCG_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
 
 # Tests ELF string table reallocation functions by changing some strings.  At first glance this would appear to be something
 # quite easy to do, but it turns out to involve lots of details.
@@ -141,6 +152,14 @@ test_execFormatsTest.passed: execFormatsTest
 	: $< not currently tested
 	@touch $@
 
+test_testBinCFG.passed: testBinCFG
+	$(VALGRIND) ./testBinCFG $(BINARY_SAMPLES)/libm-2.3.6.so
+	@touch $@
+
+test_testBinCG.passed: testBinCG
+	$(VALGRIND) ./testBinCG $(BINARY_SAMPLES)/libm-2.3.6.so
+	@touch $@
+
 test_testElfStrtab.passed: testElfStrtab
 	$(VALGRIND) ./testElfStrtab $(BINARY_SAMPLES)/arm-poweroff
 	@touch $@
@@ -231,6 +250,9 @@ test_assembler.passed: disassemble
 
 # This tests lots of sample binaries. We cannot run it concurrently with the other tests because some of the output
 # names could conflict with the other tests (we don't know what files are in the sample binaries directory).
+# NOTE: When we get too many tests to reasonably run serially, we can split them into multiple make rules, where each
+# rule either runs a single subdirectory of samples and/or each rule runs different tests by referencing different
+# configuration files. Don't forget to update the mostlyclean-local rule as well.
 test_samples.passed: disassemble execFormatsTest $(srcdir)/testSampleBinaries.sh $(srcdir)/testSampleBinaries.conf
 	@if $(srcdir)/testSampleBinaries.sh $(BINARY_SAMPLES) $(srcdir)/testSampleBinaries.conf 99>&1 >test_samples.out 2>&1; \
 	then \
@@ -250,14 +272,14 @@ test_testEtherInsns.passed: testEtherInsns
 
 # Don't delete things indiscriminately--sometimes developers have other related files that should not be touched!
 MOSTLYCLEANFILES = \
-	$(addsuffix .new,  $(notdir $(wildcard $(BINARY_SAMPLES)/*))) \
-	$(addsuffix .dump, $(notdir $(wildcard $(BINARY_SAMPLES)/*))) \
-	$(addprefix rose_, $(addsuffix .s, $(notdir $wildcard $(BINARY_SAMPLES)/*))) \
         $(TEST_PASSED_TARGETS) test_testElfSchulz-{1,2}.passed \
 	a.out arm-ctrlaltdel.ans arm-ctrlaltdel.dump-{1,2,3} arm-ctrlaltdel.new.new \
 	arm-poweroff.{new.dump,new.new} rose_arm-ctrlaltdel.new.s rose_arm-poweroff.new.s \
 	rose_schulz-sample{1,2}.so.new.s schulz-sample{1,2}.so.{new.dump,new.new} test_findConstants.ans \
 	test_disassemble.ans test_samples.{passed,out}
+
+mostlyclean-local:
+	$(srcdir)/testSampleBinaries.sh --cleanup $(BINARY_SAMPLES) $(srcdir)/testSampleBinaries.conf
 
 
 ###############################################################################################################################
@@ -332,7 +354,7 @@ endif
 
 # Don't delete things indiscriminately!
 clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) ii_files ti_files DATABASE DATABASE.dot
+	rm -rf $(CXX_TEMPLATE_OBJECTS) ii_files ti_files DATABASE DATABASE.dot cfg_x86.dot  cg_x86.dot
 
 distclean-local:
 	rm -rf Templates.DB 

@@ -17,6 +17,11 @@
 #include <limits.h>
 #include <map>
 
+#ifdef _MSC_VER
+// DQ (11/26/2009): Required for definition of PATH_MAX in MSVC.
+#include "rose_msvc.h"
+#endif
+
 namespace AbstractHandle{
 
   //source position information:
@@ -104,8 +109,13 @@ namespace AbstractHandle{
   //Get parent node, used for generate parent handle automatically
   virtual abstract_node* getParent() const;
 
+#ifdef _MSC_VER
+// DQ (11/27/2009): MSVC does not appear to support covariant types, but no message is required.
+// #pragma message ("WARNING: MSVC does not handle covariant return types properly.")
+#else
   //Get the raw IR node associated with the current abstract node
   virtual void * getNode() const {return NULL;};
+#endif
 
   //Find a node from a string for a abstract handle's string format, starting from this node
   // eg. find a file node from a string like SourceFile<name,/home/liao6/names.cpp>

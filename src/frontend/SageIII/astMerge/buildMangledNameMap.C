@@ -1,6 +1,10 @@
 // #include <merge.h>
 #include "rose.h"
 
+#ifdef _MSC_VER
+#include "buildMangledNameMap.h"
+#endif
+
 using namespace std;
 
 MangledNameMapTraversal::MangledNameMapTraversal ( MangledNameMapType & m, SetOfNodesType & deleteSet )
