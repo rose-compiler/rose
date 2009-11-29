@@ -33,7 +33,8 @@ set(ROSETTA_SRC
     ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarReturnClassHierarchySubTree.C      
     ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarGetChildIndex.C
     ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarReturnDataMemberPointers.C  
-    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/StorageClasses.C
+# DQ(11/29/2009): Handle this later after we have everything else compiling.
+#   ${CMAKE_BINARY_DIR}/src/frontend/SageIII/StorageClasses.C
     ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarMemoryPoolSupport.C  
     ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarRTI.C
 #Does not seem to be compiled
