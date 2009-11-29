@@ -98,7 +98,7 @@ set( STORAGECLASSES_SRC
 #     ${CMAKE_SOURCE_DIR}/src/util/support/DAG.C
       ${CMAKE_SOURCE_DIR}/src/util/support/VectorCommandOptions.C
       ${CMAKE_SOURCE_DIR}/src/util/stringSupport/string_functions.cpp
-      ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
+#     ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
 
      )
 
