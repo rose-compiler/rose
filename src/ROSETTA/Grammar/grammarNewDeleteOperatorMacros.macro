@@ -313,3 +313,10 @@ void $CLASSNAME::operator delete ( void *Pointer, size_t sizeOfObject )
      $CLASSNAME_allocation_mutex.unlock();
    }
 
+// DQ (11/27/2009): I have moved this member function definition to outside of the
+// class declaration to make Cxx_Grammar.h smaller, easier, and faster to parse.
+// This is part of work to reduce the size of the Cxx_Grammar.h file for MSVS. 
+// DQ (4/5/2007): This is not the correct operator that we want, but appears to be required to compile ROSE with ROSE.
+// Also, note comment below from Robb (copied from the Common.code file).
+/* RPM (2009-06-03): Apparently this must all be on one line for configuration "--with-javaport"; reverting r5427 */
+void $CLASSNAME::operator delete (void* pointer) { $CLASSNAME::operator delete (pointer,sizeof($CLASSNAME)); };

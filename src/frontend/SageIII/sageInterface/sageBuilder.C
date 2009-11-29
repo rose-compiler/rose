@@ -3553,7 +3553,132 @@ SgNamespaceDeclarationStatement * SageBuilder::buildNamespaceDeclaration_nfi(con
    }
 
 
+// DQ (11/7/2009): Added more uniform support for building class declarations.
+SgClassDeclaration*
+SageBuilder::buildNondefiningClassDeclaration ( SgName name, SgScopeStatement* scope )
+   {
+     SgClassDeclaration* defdecl    = NULL;
+     SgClassDeclaration* nondefdecl = NULL;
 
+  // DQ (1/26/2009): It seems that (scope == NULL) can happen in the tests/roseTests/astInterfaceTests test codes.
+  // ROSE_ASSERT(scope != NULL);
+     SgClassSymbol* mysymbol = NULL;
+     if (scope != NULL)
+        {
+          mysymbol = scope->lookup_class_symbol(name);
+        }
+       else
+        {
+       // Liao 9/2/2009: This is not an error. We support bottomup AST construction and scope can be unkown.   
+       // DQ (1/26/2009): I think this should be an error, but that appears it would
+       // break the existing interface. Need to discuss this with Liao.
+       // printf ("Warning: In SageBuilder::buildClassDeclaration_nfi(): scope == NULL \n");
+        }
+
+  // printf ("In SageBuilder::buildClassDeclaration_nfi(): mysymbol = %p \n",mysymbol);
+     if (mysymbol != NULL) // set links if nondefining declaration already exists.
+        {
+          nondefdecl = isSgClassDeclaration(mysymbol->get_declaration());
+
+          ROSE_ASSERT(nondefdecl != NULL);
+          ROSE_ASSERT(nondefdecl->get_parent() != NULL);
+
+          nondefdecl->set_definingDeclaration(defdecl);
+
+          ROSE_ASSERT(nondefdecl->get_definingDeclaration() == defdecl);
+          ROSE_ASSERT(nondefdecl->get_firstNondefiningDeclaration() != defdecl);
+        }
+       else // build a nondefnining declaration if it does not exist
+        {
+       // DQ (1/25/2009): We only want to build a new declaration if we can't reuse the existing declaration.
+
+          SgClassDeclaration::class_types kind = SgClassDeclaration::e_class;
+          nondefdecl = new SgClassDeclaration(name,kind,NULL,NULL);
+          ROSE_ASSERT(nondefdecl != NULL);
+          if (nondefdecl->get_type() == NULL)
+            nondefdecl->set_type(SgClassType::createType(nondefdecl));
+
+ //         printf ("SageBuilder::buildClassDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
+
+       // The nondefining declaration will not appear in the source code, but is compiler
+       // generated (so we have something about the class that we can reference; e.g in
+       // types).  At the moment we make it a transformation, there might be another kind 
+       // of source position that would be more precise.  FIXME.
+       // setOneSourcePositionNull(nondefdecl);
+          setOneSourcePositionForTransformation(nondefdecl);
+
+          nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
+          nondefdecl->set_definingDeclaration(defdecl);
+          nondefdecl->setForward();
+       // Liao, 9/2/2009. scope stack is optional, it can be empty
+      //    nondefdecl->set_parent(topScopeStack());
+          nondefdecl->set_parent(scope);
+
+          if (scope != NULL)
+             {
+               mysymbol = new SgClassSymbol(nondefdecl);
+               scope->insert_symbol(name, mysymbol);
+             }
+            else
+             {
+            // Liao 9/2/2009: This is not an error. We support bottomup AST construction and scope can be unknown.
+            // DQ (1/26/2009): I think this should be an error, but that appears it would
+            // break the existing interface. Need to discuss this with Liao.
+            //   printf ("Warning: no scope provided to support symbol table entry! \n");
+             }
+        }
+
+     ROSE_ASSERT(nondefdecl != NULL);
+
+     return nondefdecl;
+   }
+
+// DQ (11/7/2009): Added more uniform support for building class declarations.
+SgClassDeclaration*
+SageBuilder::buildDefiningClassDeclaration ( SgName name, SgScopeStatement* scope )
+   {
+     SgClassDeclaration* nondefiningClassDeclaration = buildNondefiningClassDeclaration(name,scope);
+     ROSE_ASSERT(nondefiningClassDeclaration != NULL);
+
+     SgClassDefinition* definingClassDefinition = buildClassDefinition();
+     ROSE_ASSERT(definingClassDefinition != NULL);
+
+     SgClassDeclaration::class_types kind = SgClassDeclaration::e_class;
+     SgClassDeclaration* definingClassDeclaration = new SgClassDeclaration (name,kind,NULL,definingClassDefinition);
+     ROSE_ASSERT(definingClassDeclaration != NULL);
+
+     printf ("SageBuilder::buildDefiningClassDeclaration(): definingClassDeclaration = %p \n",definingClassDeclaration);
+
+     setOneSourcePositionForTransformation(definingClassDeclaration);
+
+  // constructor is side-effect free
+     definingClassDefinition->set_declaration(definingClassDeclaration);
+     definingClassDeclaration->set_definingDeclaration(definingClassDeclaration);
+     definingClassDeclaration->set_firstNondefiningDeclaration(nondefiningClassDeclaration);
+
+     nondefiningClassDeclaration->set_definingDeclaration(definingClassDeclaration);
+
+  // some error checking
+     ROSE_ASSERT(nondefiningClassDeclaration->get_definingDeclaration() != NULL);
+     ROSE_ASSERT(nondefiningClassDeclaration->get_firstNondefiningDeclaration() != NULL);
+     ROSE_ASSERT(definingClassDeclaration->get_firstNondefiningDeclaration() != NULL);
+     ROSE_ASSERT(definingClassDeclaration->get_definition() != NULL);
+
+     ROSE_ASSERT(definingClassDeclaration->get_definition()->get_parent() != NULL);
+
+     return definingClassDeclaration;
+   }
+
+// DQ (11/7/2009): Added more uniform support for building class declarations.
+SgClassDeclaration*
+SageBuilder::buildClassDeclaration ( SgName name, SgScopeStatement* scope )
+   {
+     ROSE_ASSERT(scope != NULL);
+     SgClassDeclaration* definingClassDeclaration = buildDefiningClassDeclaration(name,scope);
+     ROSE_ASSERT(definingClassDeclaration != NULL);
+
+     return definingClassDeclaration;
+   }
 
 // DQ (1/24/2009): Built this "nfi" version but factored the code.
 SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgClassDeclaration* nonDefiningDecl )
@@ -3582,6 +3707,13 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
   // SgClassDeclaration* nondefdecl = new SgClassDeclaration (name,kind,NULL,NULL);
      SgClassDeclaration* nondefdecl = (nonDefiningDecl != NULL) ? nonDefiningDecl : new SgClassDeclaration (name,kind,NULL,NULL);
      ROSE_ASSERT(nondefdecl != NULL);
+#else
+
+#if 0
+  // DQ (11/7/2009): Refactored the code to build a non-defining declaration
+  // DQ (11/10/2009): This refactoring of the code below breaks a number of tests in tests/roseTests/astInterfaceTests.
+  // TODO: Refactor this after we pass all of our tests.
+     SgClassDeclaration* nondefdecl = buildNondefiningClassDeclaration (name,scope);
 #else
   // Get the nondefining declaration from the symbol if it has been built (if this works, 
   // then we likely don't need the "SgClassDeclaration* nonDefiningDecl" parameter).
@@ -3652,6 +3784,7 @@ SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, 
             //   printf ("Warning: no scope provided to support symbol table entry! \n");
              }
         }
+#endif
 #endif
 
 //     printf ("SageBuilder::buildClassDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
