@@ -53,13 +53,17 @@ std::string unparseMnemonic(SgAsmInstruction *insn) {
             return unparseArmMnemonic(isSgAsmArmInstruction(insn));
         case V_SgAsmPowerpcInstruction:
             return unparsePowerpcMnemonic(isSgAsmPowerpcInstruction(insn));
-        default:
+
+		default:
+			{
 #ifdef _MSC_VER
-			std::cerr <<"Unhandled variant " <<insn->class_name() <<std::endl;
+			  std::cerr <<"Unhandled variant " <<insn->class_name() <<std::endl;
 #else
-			std::cerr <<"Unhandled variant " <<insn->class_name() <<" in " <<__func__ <<std::endl;
+			  std::cerr <<"Unhandled variant " <<insn->class_name() <<" in " <<__func__ <<std::endl;
 #endif
-		abort();
+              abort();
+			  return "error in unparseMnemonic";
+			}
     }
 }
 
