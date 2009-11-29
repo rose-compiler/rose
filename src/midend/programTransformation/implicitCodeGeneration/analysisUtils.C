@@ -17,6 +17,9 @@ stmt_pos findPosition(SgNode *n)
 	     }
 	}
      ROSE_ASSERT(false);
+
+  /* Avoid MSVC warning */
+     return 0;
    }
 
 stmt_pos_list findFollowingPositions(SgInitializedName *in)

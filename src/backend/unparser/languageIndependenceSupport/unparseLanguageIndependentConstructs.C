@@ -1979,7 +1979,9 @@ UnparseLanguageIndependentConstructs::unparseBoolVal(SgExpression* expr, SgUnpar
      if (unp->opt.get_num_opt() || (C_language_support == true))
         {
        // we want to print the boolean values as numerical values
-          if (bool_val->get_value() == true)
+       // DQ (11/29/2009): get_value() returns an "int" and MSVC issues a warning for mixed type predicates.
+       // if (bool_val->get_value() == true)
+          if (bool_val->get_value() != 0)
              {
                curprint ( "1");
              }
@@ -1991,7 +1993,9 @@ UnparseLanguageIndependentConstructs::unparseBoolVal(SgExpression* expr, SgUnpar
        else
         {
        // print them as "true" or "false"
-          if (bool_val->get_value() == true)
+       // DQ (11/29/2009): get_value() returns an "int" and MSVC issues a warning for mixed type predicates.
+       // if (bool_val->get_value() == true)
+          if (bool_val->get_value() != 0)
              {
                curprint (  "true");
              }
