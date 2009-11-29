@@ -19,6 +19,7 @@
 inline void preventConstructionOnStack(SgNode* n) {
 #ifndef NDEBUG
 #ifdef _MSC_VER
+  // DQ (11/28/2009): There does not appear to be an equivalent function in Windows for GNU __builtin_frame_address()
   // tps (11/24/2009) : What is the MS version of __builtin_frame_address
   // FIXME: This needs to be fixed.
   void* frameaddr = 0;
