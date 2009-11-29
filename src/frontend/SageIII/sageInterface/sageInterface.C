@@ -3932,8 +3932,8 @@ SageInterface::generateProjectName( const SgProject* project, bool supressSuffix
 
           string filenameWithoutPathOrSuffix = StringUtility::stripPathFromFileName(filenameWithoutSuffix);
 
-          printf ("filenameWithoutSuffix       = %s \n",filenameWithoutSuffix.c_str());
-          printf ("filenameWithoutPathOrSuffix = %s \n",filenameWithoutPathOrSuffix.c_str());
+       // printf ("filenameWithoutSuffix       = %s \n",filenameWithoutSuffix.c_str());
+       // printf ("filenameWithoutPathOrSuffix = %s \n",filenameWithoutPathOrSuffix.c_str());
 
           filename = filenameWithoutPathOrSuffix;
 
@@ -3945,15 +3945,15 @@ SageInterface::generateProjectName( const SgProject* project, bool supressSuffix
                n++;
              }
 
-          printf ("In SageInterface:generateProjectName(): modified absolute filename = %s \n",filename.c_str());
+       // printf ("In SageInterface:generateProjectName(): modified absolute filename = %s \n",filename.c_str());
 
           projectName += filename;
 
-          printf ("In SageInterface:generateProjectName(): evolving projectName = %s \n",projectName.c_str());
+       // printf ("In SageInterface:generateProjectName(): evolving projectName = %s \n",projectName.c_str());
         }
      while (i != fileList.end());
 
-     printf ("In SageInterface:generateProjectName(): projectName = %s \n",projectName.c_str());
+  // printf ("In SageInterface:generateProjectName(): projectName = %s \n",projectName.c_str());
 
      return projectName;
    }
