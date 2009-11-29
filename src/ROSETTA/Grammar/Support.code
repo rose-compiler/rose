@@ -3101,6 +3101,10 @@ std::ostream & operator<< ( std::ostream & os, const std::vector<bool> & bv );
 
 /*! \brief Name equality operator support for symbol tables within ROSE.
  */
+#ifdef _MSC_VER 
+// DQ (11/29/2009): attempting to fix: error C2903: 'rebind' : symbol is neither a class template nor a function template
+// #pragma message ("WARNING: struct eqstr skipped for MSVC.")
+#else
 struct eqstr
    {
      bool operator()(const SgName& s1, const SgName& s2) const
@@ -3108,6 +3112,7 @@ struct eqstr
           return s1.getString() == s2.getString();
         }
    };
+#endif
 
 /*! \brief Hash name support for symbol tables within ROSE.
  */
@@ -5256,7 +5261,12 @@ SgSymbolTable::SgSymbolTable()
    {
   // This should always be a non-null pointer (and never shared)!
      int symbolTableSize = 17;
+#ifdef _MSC_VER
+	 printf ("WARNING: Symbol table built using default constructor in SgSymbolTable(). \n");
+     p_table = new BaseHashType();
+#else
      p_table = new BaseHashType(symbolTableSize);
+#endif
      ROSE_ASSERT (p_table != NULL);
    }
 
@@ -5274,7 +5284,12 @@ SgSymbolTable::SgSymbolTable(int symbolTableSize)
   // AJ (10/21/2004): Adjusted implementation to use new STL hash map interface
   // p_table = new SgSymbolHashMultiMap(sz);
 
+#ifdef _MSC_VER
+	 printf ("WARNING: Symbol table built using default constructor in SgSymbolTable(int symbolTableSize). \n");
+     p_table = new BaseHashType();
+#else
      p_table = new BaseHashType(symbolTableSize);
+#endif
      ROSE_ASSERT (p_table != NULL);
    }
 
@@ -5645,8 +5660,14 @@ SgSymbolTable::remove_function_type( const SgName & name )
 
      ROSE_ASSERT (p_table != NULL);
 
+#ifdef _MSC_VER
+  // DQ (11/29/2009): MSVC requires a different use of nonstandard.
+     list<rose_hash::hash_multimap<SgName, SgSymbol*>::iterator> deleteList;
+     rose_hash::hash_multimap<SgName, SgSymbol*>::iterator it = get_table()->find(name);
+#else
      list<rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
      rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it = get_table()->find(name);
+#endif
      while (it != get_table()->end() && (*it).first == name)
         {
           ROSE_ASSERT(it->second->variantT() == V_SgFunctionTypeSymbol);
@@ -5656,7 +5677,12 @@ SgSymbolTable::remove_function_type( const SgName & name )
         }
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
+#ifdef _MSC_VER
+  // DQ (11/29/2009): MSVC requires a different use of nonstandard.
+     list<rose_hash::hash_multimap<SgName, SgSymbol*>::iterator>::iterator i = deleteList.begin();
+#else
      list<rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
+#endif
      while (i != deleteList.end())
         {
        // DQ (5/9/2007): Moved to after the call to "p_symbolSet.erase((*i)->second);"

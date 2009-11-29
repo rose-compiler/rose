@@ -1298,7 +1298,9 @@ std::ostream & operator<< ( std::ostream & os, const rose_graph_integerpair_edge
 // DQ (5/1/2009): This is added to support lookup of indexes based on labels (can be used for nodes or edges).
 // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
 #ifdef _MSC_VER 
-typedef rose_hash::hash_multimap<std::string, int,rose_hash::hash_string> rose_graph_string_integer_hash_multimap_base_type;
+// DQ (11/29/2009): fix for: MSVC error C2064: term does not evaluate to a function taking 2 arguments
+// typedef rose_hash::hash_multimap<std::string, int,rose_hash::hash_string> rose_graph_string_integer_hash_multimap_base_type;
+typedef rose_hash::hash_multimap<std::string, int> rose_graph_string_integer_hash_multimap_base_type;
 #else
 typedef rose_hash::hash_multimap<std::string, int,rose_hash::hash_string,rose_hash::eqstr_string> rose_graph_string_integer_hash_multimap_base_type;
 #endif

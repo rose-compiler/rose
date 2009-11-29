@@ -1,9 +1,9 @@
 // DQ (10/15/2007): This controls the output of debugging information within the fixupCopy() member function of many IR nodes.
 // These member functions are used to handle custom IR node specific details of correcting references made by the AST copy 
 // mechanism between the original AST and the copy of the AST.
+// DQ (11/29/2009): Note that MSVC does not support use of "false" in macros, so use "0" instead.
 #define DEBUG_FIXUP_COPY 0
-
-#define DEBUG_FIXUP_COPY_OUTPUT_MAP false
+#define DEBUG_FIXUP_COPY_OUTPUT_MAP 0
 
 void outputMap ( SgCopyHelp & help );
 

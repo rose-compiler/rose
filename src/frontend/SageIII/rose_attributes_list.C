@@ -119,8 +119,9 @@ void PreprocessingInfo::unpacked( char* storePointer )
      std::cout << " but survived " << std::endl;
 #endif
 
-
-#if CAN_NOT_COMPILE_WITH_ROSE != true
+// DQ (11/29/2009): MSVC does not understnad use of "true" in macros.
+// #if CAN_NOT_COMPILE_WITH_ROSE != true
+#if (CAN_NOT_COMPILE_WITH_ROSE == 0)
 
   // DQ and AS (6/23/2006): and the stuff of macros ...
   // AS add macro definition
@@ -137,7 +138,9 @@ void PreprocessingInfo::unpacked( char* storePointer )
 // Member functions for class PreprocessingInfo
 // ********************************************
 
-#if CAN_NOT_COMPILE_WITH_ROSE != true
+// DQ (11/29/2009): MSVC does not understnad use of "true" in macros.
+// #if CAN_NOT_COMPILE_WITH_ROSE != true
+#if (CAN_NOT_COMPILE_WITH_ROSE == 0)
 
 // AS(012006) Added to support macros
 PreprocessingInfo::rose_macro_call* PreprocessingInfo::get_macro_call(){ return macroCall; } 
