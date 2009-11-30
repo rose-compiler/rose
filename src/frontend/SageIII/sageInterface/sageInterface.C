@@ -5400,7 +5400,9 @@ class FindUsedAndAllLabelsVisitor: public AstSimpleProcessing {
     if (isSgWhileStmt(loopStmt)) return isSgWhileStmt(loopStmt)->get_body();
     if (isSgForStatement(loopStmt)) return isSgForStatement(loopStmt)->get_loop_body();
     if (isSgDoWhileStmt(loopStmt)) return isSgDoWhileStmt(loopStmt)->get_body();
-    ROSE_ASSERT (!"Bad loop kind");
+
+	ROSE_ASSERT (!"Bad loop kind");
+    return NULL;
   }
 
   void SageInterface::setLoopBody(SgScopeStatement* loopStmt, SgStatement* body) {
@@ -5420,7 +5422,9 @@ class FindUsedAndAllLabelsVisitor: public AstSimpleProcessing {
     if (isSgWhileStmt(loopStmt)) return isSgWhileStmt(loopStmt)->get_condition();
     if (isSgForStatement(loopStmt)) return isSgForStatement(loopStmt)->get_test();
     if (isSgDoWhileStmt(loopStmt)) return isSgDoWhileStmt(loopStmt)->get_condition();
-    ROSE_ASSERT (!"Bad loop kind");
+
+	ROSE_ASSERT (!"Bad loop kind");
+    return NULL;
   }
 
   void SageInterface::setLoopCondition(SgScopeStatement* loopStmt, SgStatement* cond) {
@@ -8355,6 +8359,9 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
       case V_SgUnsignedLongLongIntVal: return isSgUnsignedLongLongIntVal(expr)->get_value();
       default: ROSE_ASSERT (!"Bad kind in getIntegerConstantValue");
     }
+
+    ROSE_ASSERT (!"Bad kind return in getIntegerConstantValue");
+	return 0;
   }
 
 

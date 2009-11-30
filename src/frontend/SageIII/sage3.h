@@ -178,7 +178,7 @@
 //#include <unordered_map>
 //#else   
 
-#if     _MSC_VER
+#ifdef _MSC_VER
 // DQ (11/4/2009): MS Visual Studio version of hash_multimap
 #include <cliext/hash_map>
 #else
