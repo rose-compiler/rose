@@ -98,7 +98,15 @@ void RoseFile::setFunctionFilter(list<string> functionName) {
 
 inline double getTime() {
   timeval tv;
+
+#ifdef _MSC_VER
+#pragma message ("WARNING: Linux gettimeofday() not available in MSVC.")
+  printf ("WARNING: Linux gettimeofday() not available in MSVC. \n");
+  tv.tv_sec  = 0;
+  tv.tv_usec = 0;
+#else
   gettimeofday(&tv, NULL);
+#endif
   return tv.tv_sec + tv.tv_usec * 1.e-6;
 }
 

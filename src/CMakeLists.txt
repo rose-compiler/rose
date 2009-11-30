@@ -25,6 +25,9 @@ set(ROSETTA_SRC
     ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarCheckingIfDataMembersAreInMemoryPool.C
     ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarCopyMemberFunctions.C
     ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarGetChildIndex.C
+    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarReturnDataMemberPointers.C  
+# DQ(11/29/2009): Handle this later after we have everything else compiling.
+#   ${CMAKE_BINARY_DIR}/src/frontend/SageIII/StorageClasses.C
     ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarMemoryPoolSupport.C  
     ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarNewAndDeleteOperators.C                
     ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarNewConstructors.C
