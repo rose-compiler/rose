@@ -1,6 +1,10 @@
 #ifndef ROSE_X86INSTRUCTIONSEMANTICS_H
 #define ROSE_X86INSTRUCTIONSEMANTICS_H
 
+/* See tests/roseTests/binaryTests/SemanticVerification for ideas about how to test your work here. Note that the test is not
+ * run automatically because it depends on setting up a slave machine who's architecture is what is being simulated by the
+ * instruction semantics (not necessarily the same architecture that's running ROSE). */
+
 //#include "rose.h"
 #include "semanticsModule.h"
 #include <cassert>
