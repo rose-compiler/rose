@@ -250,20 +250,3 @@ gitk master HEAD andreas cmake dan jeff liao matt peter robb svn thomas windows 
 To see what branches are tracked and the semantics of "git pull" use:
    $ git remote show origin
 
-Is this a problem?:
-    49  7:46    cd ROSE
-    51  7:46    cd git-rose-windows/
-    56  7:48    ./build
-    58  9:23    git branch
-    60  9:23    git checkout master
-    61  9:24    ls
-    65  9:24    git checkout windows
-    70  9:26    emacs src/ROSETTA/src/CMakeLists.txt &
-    77  9:35    git add src/ROSETTA/src/CMakeLists.txt
-    79  9:35    git merge master
-    80  9:36    git status
-    81  9:37    git branch -a
-    82  9:37    git pull
-    83  9:38    git blame rose_config.h.in.cmake
-    85  9:40    pwd
-    86  9:40    history

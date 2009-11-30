@@ -52,6 +52,8 @@ Current problems:
 For Linux:
 Command to run cmake to build ROSE:
      cmake /home/dquinlan/ROSE/svn-rose -DBOOST_ROOT=/home/dquinlan/local/boost_1_37_0.gxx-4.2.4
+  OR
+     cmake /home/dquinlan/ROSE/git-rose-windows -DBOOST_ROOT=/home/dquinlan/local/boost_1_37_0.gxx-4.2.4
 
 Note that CMake will compile ROSE dramatically faster.  The reasons seem to be:
    1) it is able to extract greater parallelism in the build process

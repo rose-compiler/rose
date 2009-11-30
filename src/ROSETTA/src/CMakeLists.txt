@@ -105,13 +105,6 @@ add_custom_command(
 #   COMMAND CxxGrammarMetaProgram ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/  
 #   DEPENDS ${GRAMMAR_SOURCE_FILES}
 # DQ (11/30/2009): END: This was one of the possible versions that were a part of a conflict.
-
-#   PRE_BUILD
-#   COMMAND CxxGrammarMetaProgram ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/  
-#   COMMAND CxxGrammarMetaProgram ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/  
-#   COMMENT "Generating files using ROSETTA"
-#   DEPENDS ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/Grammar CxxGrammarMetaProgram  ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/astFileIO
-#   COMMAND CxxGrammarMetaProgram DEPENDS createSymlink CxxGrammarMetaProgram ${GRAMMAR_SOURCE_FILES}
 )
 
 
