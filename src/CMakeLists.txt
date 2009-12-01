@@ -38,7 +38,8 @@ set(ROSETTA_SRC
     ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarTraverseMemoryPool.C
     ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarTreeTraversalSuccessorContainer.C
     ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarVariantEnumNames.C
-    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/StorageClasses.C
+# DQ (11/30/2009): This is redundant with the file specification above.
+#   ${CMAKE_BINARY_DIR}/src/frontend/SageIII/StorageClasses.C
 #Does not seem to be compiled
 #    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/astFileIO/SourcesOfIRNodesAstFileIOSupport.C
 
