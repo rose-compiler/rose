@@ -34,7 +34,12 @@
 #endif
 */
 
+#ifdef _MSC_VER
+// DQ (11/28/2009): MSVC does not permit use of "false" in macros.
+#define ROSE_INTERNAL_DEBUG 0
+#else
 #define ROSE_INTERNAL_DEBUG false
+#endif
 
 #define NEWSYMTABLESIZE 5
 

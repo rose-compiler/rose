@@ -687,7 +687,7 @@ static bool isCompilerGenerated(SgNode *node)
  */
 static string StripParameterType( const string& name)
 {
-  char *const_start = strstr( name.c_str(), "const");
+  const char *const_start = strstr( name.c_str(), "const");
   string r = (const_start == 0)? name : string(const_start + 5);
   int end = r.size()-1;
   if (r[end] == '&') {
@@ -3200,6 +3200,9 @@ SgInitializer *DefaultFunctionGenerator::normalizeInitializer(SgInitializer *ori
 
       cout << "DefaultFunctionGenerator::normalizeInitializer: unknown case (type = " << origInit->class_name() << ")" << endl;
       ROSE_ABORT();
+
+  /* Avoid MSVC warning */
+     return NULL;
    }
 
 SgFunctionCallExp *DefaultFunctionGenerator::translateAssignmentToOperatorEqCall(SgExpression *lhs, SgExpression *rhs, SgClassDefinition *clsDef)

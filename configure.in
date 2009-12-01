@@ -1122,6 +1122,19 @@ AM_CONDITIONAL(ROSE_WITH_ROSEQT,test x"$with_roseQt" != x"no")
 AC_ARG_ENABLE(assembly-semantics, AS_HELP_STRING([--enable-assembly-semantics], [Enable semantics-based analysis of assembly code]))
 AM_CONDITIONAL(ROSE_USE_ASSEMBLY_SEMANTICS, [test "x$enable_assembly_semantics" = xyes])
 
+# Xen and Ether [RPM 2009-10-28]
+AC_ARG_WITH(ether,
+        [  --with-ether=PATH   prefix of Xen/Ether installation
+                      Xen is a hypervisor for running virtual machines (http://www.xen.org)
+                      Ether is a layer on top of Xen for accessing Windows XP OS-level data
+                      structures (http://ether.gtisc.gatech.edu)],
+        [AC_DEFINE(ROSE_USE_ETHER, 1, [Defined if Ether from Georgia Tech is available.])
+	 if test "$with_ether" = "yes"; then ETHER_PREFIX=/usr; else ETHER_PREFIX="$with_ether"; fi],
+        [with_ether=no])
+AC_SUBST(ETHER_PREFIX)
+AM_CONDITIONAL(ROSE_USE_ETHER,test "$with_ether" != "no")
+
+
 # PC (7/10/2009): The Haskell build system expects a fully numeric version number.
 PACKAGE_VERSION_NUMERIC=`echo $PACKAGE_VERSION | sed -e 's/\([[a-z]]\+\)/\.\1/; y/a-i/1-9/'`
 AC_SUBST(PACKAGE_VERSION_NUMERIC)
@@ -1132,6 +1145,7 @@ echo "Testing the value of CPPFLAGS: (CPPFLAGS = $CPPFLAGS)"
 
 echo "subdirs $subdirs"
 AC_CONFIG_SUBDIRS([libltdl src/3rdPartyLibraries/libharu-2.1.0])
+
 
 # RV 9/14/2005: Removed src/3rdPartyLibraries/PDFLibrary/Makefile
 # JJW 1/30/2008: Removed rose_paths.h as it is now built by a separate Makefile included from $(top_srcdir)/Makefile.am
@@ -1192,8 +1206,8 @@ src/frontend/CxxFrontend/EDG_SAGE_Connection/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
 src/frontend/PHPFrontend/Makefile
 src/frontend/BinaryDisassembly/Makefile
+src/frontend/BinaryFormats/Makefile
 src/frontend/Disassemblers/Makefile
-src/frontend/ExecFormats/Makefile
 src/midend/Makefile
 src/midend/abstractHandle/Makefile
 src/midend/astInlining/Makefile

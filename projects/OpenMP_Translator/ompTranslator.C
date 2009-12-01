@@ -484,7 +484,7 @@ Rose_STL_Container<string>* OmpFrontend::parsePragmaString ( enum omp_construct_
   // DQ (1/3/2007): This is meaningless code!
      rtstrings->empty();
 
-     char *offset;
+     const char *offset;
      const char *input = pragmaChars;
      char matchchars[100] = "";
      char argchars[100] = "";

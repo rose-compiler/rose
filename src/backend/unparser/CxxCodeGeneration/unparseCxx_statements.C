@@ -2115,6 +2115,7 @@ Unparse_ExprStmt::unparseForInitStmt (SgStatement* stmt, SgUnparse_Info& info)
 
      while(i != forInitStmt->get_init_stmt().end())
         {
+       // curprint(" /* unparseForInitStmt: " + (*i)->class_name() + " */ ");
           unparseStatement(*i, newinfo);
           i++;
 
@@ -2143,8 +2144,9 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
      newinfo.set_SkipSemiColon();
      newinfo.set_inConditional();  // set to prevent printing line and file information
 
-  // curprint ( string(" /* initializer */ ";
+  // curprint(" /* initializer */ ");
      SgStatement *tmp_stmt = for_stmt->get_for_init_stmt();
+  // curprint(" /* initializer: " + tmp_stmt->class_name() + " */ ");
   // ROSE_ASSERT(tmp_stmt != NULL);
      if (tmp_stmt != NULL)
         {
@@ -2164,7 +2166,7 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
 #else
   // DQ (12/13/2005): New code for handling the test (which could be a declaration!)
   // printf ("Output the test in the for statement format newinfo.inConditional() = %s \n",newinfo.inConditional() ? "true" : "false");
-  // curprint ( string(" /* test */ ";
+  // curprint (" /* test */ ");
      SgStatement *test_stmt = for_stmt->get_test();
      ROSE_ASSERT(test_stmt != NULL);
   // if ( test_stmt != NULL )
@@ -3824,24 +3826,66 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                        }
 #else
                  // DQ (8/5/2005): generate more faithful representation of assignment operator!
+#if 0
+                    ninfo.display ("In Unparse_ExprStmt::unparseVarDeclStmt --- handling the initializer");
+#endif
+
                     SgConstructorInitializer* constructor = isSgConstructorInitializer(tmp_init);
 #if 0
                     if (constructor != NULL)
                        {
+                      // curprint(" /* unparseVarDeclStmt (initializer constructor): " + constructor->class_name() + " */ ");
                          printf ("constructor->get_need_name()                   = %s \n",constructor->get_need_name()                   ? "true" : "false");
                          printf ("constructor->get_is_explicit_cast()            = %s \n",constructor->get_is_explicit_cast()            ? "true" : "false");
                          printf ("constructor->get_need_parenthesis_after_name() = %s \n",constructor->get_need_parenthesis_after_name() ? "true" : "false");
                          printf ("constructor->get_associated_class_unknown()    = %s \n",constructor->get_associated_class_unknown()    ? "true" : "false");
+
+                      // DQ (11/9/2009): Added support for debugging test2009_40.C.
+                         SgMemberFunctionDeclaration * associatedConstructor = constructor->get_declaration();
+                         printf ("associatedConstructor = %p \n",associatedConstructor);
+                         if (associatedConstructor != NULL)
+                            {
+                              printf ("associatedConstructor = %s \n",associatedConstructor->class_name().c_str());
+                              printf ("associatedConstructor is private   = %s \n",associatedConstructor->get_declarationModifier().get_accessModifier().isPrivate()   ? "true" : "false");
+                              printf ("associatedConstructor is protected = %s \n",associatedConstructor->get_declarationModifier().get_accessModifier().isProtected() ? "true" : "false");
+                              printf ("associatedConstructor is public    = %s \n",associatedConstructor->get_declarationModifier().get_accessModifier().isPublic()    ? "true" : "false");
+
+                           // printf ("associatedConstructor is public    = %s \n",associatedConstructor->get_declarationModifier().get_accessModifier().isPublic()    ? "true" : "false");
+#if 0
+                              SgUnparse_Info local_info;
+                              printf ("stmt is = %s \n",stmt->unparseToString(&local_info).c_str());
+                              printf ("constructor is = %s \n",constructor->unparseToString(&local_info).c_str());
+                              printf ("associatedConstructor is = %s \n",associatedConstructor->unparseToString(&local_info).c_str());
+#endif
+                            }
                        }
+
+                    curprint(" /* unparseVarDeclStmt (initializer): " + tmp_init->class_name() + " */ ");
 #endif
                     if ( (tmp_init->variant() == ASSIGN_INIT) ||
                          (tmp_init->variant() == AGGREGATE_INIT) ||
                       // ( (constructor != NULL) && constructor->get_need_name() && constructor->get_is_explicit_cast() ) )
                       // DQ (7/12/2006): Bug fix reported by Peter Collingbourne
                       // ( (constructor != NULL) && (constructor->get_need_name() || constructor->get_associated_class_unknown()) ) )
+
+                      // DQ (11/9/2009): Turn off this optional handling since "IntStack::Iter z = (&x)" is not interpreted 
+                      // the same as "IntStack::Iter z(&x)" at least in a SgForInitializationStatement (see test2009_40.C).
+                      // I think that this was always cosmetic anyway.
+                      // ( (constructor != NULL) && (constructor->get_need_name() || constructor->get_associated_class_unknown() || ninfo.inConditional()) ) )
+                      // ( false ) )
                          ( (constructor != NULL) && (constructor->get_need_name() || constructor->get_associated_class_unknown() || ninfo.inConditional()) ) )
                        {
-                         curprint ( string(" = "));
+                      // DQ (11/9/2009): Skip the case of when we are in a isSgForInitStmt, since this is a bug in GNU g++ (at least version 4.2)
+                      // See test2009_40.C test2009_41.C, and test2009_42.C
+                      // curprint ( string(" = "));
+                         if ( constructor != NULL && isSgForInitStatement(stmt->get_parent()) != NULL )
+                            {
+                           // curprint (" = ");
+                            }
+                           else
+                            {
+                              curprint (" = ");
+                            }
                        }
 #endif
 

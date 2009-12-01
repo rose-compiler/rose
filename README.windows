@@ -1,0 +1,62 @@
+CMake is now checked in by Andreas, so we can play with it building ROSE using CMake
+under both Linux and Windows.
+
+
+For Windows:
+To run rdesktop from my Linux machine:
+     wxp -g 5 -s tux245-0
+
+*** NOTE: if running in fullscreen mode use "CTRL-ALT-ENTER" to get out.
+
+
+
+Check out a new version of ROSE from SVN (on our tux245-0 system this is in:
+/cygdrive/c/ROSE/svn-rose)
+
+
+Run Cmake GUI (from Start Menu).
+   We are using CMake 2.6 Patch 4.
+   1) Specify the source code location ("where is the source code?")
+   2) Specify the location of the build tree ("Where to build the binaries?")
+   3) * Optional: There are different views (Simple, Advance, and Grouped)
+   4) Click "Configure" button.
+   5) The install directory needs to be setup (click on "...")
+   6) Click "Configure" button.
+   7) Click "Generate" button (which will appear after "configure" passes).
+
+Current problems:
+   1) First error: The top level ROSE/CMakeLists.txt file has some things that
+      will need to be commented out (languages (fortran), and a few libraries (m_lib,
+      rt_lib))
+
+   8) After passing ("Generating done"), close CMake GUI. 
+
+   9) In "Explorer" (or any file tool), enter the compile tree directory
+      and click on "Project.sln" to start the MS Visual Studio ROSE project.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+For Linux:
+Command to run cmake to build ROSE:
+     cmake /home/dquinlan/ROSE/svn-rose -DBOOST_ROOT=/home/dquinlan/local/boost_1_37_0.gxx-4.2.4
+  OR
+     cmake /home/dquinlan/ROSE/git-rose-windows -DBOOST_ROOT=/home/dquinlan/local/boost_1_37_0.gxx-4.2.4
+
+Note that CMake will compile ROSE dramatically faster.  The reasons seem to be:
+   1) it is able to extract greater parallelism in the build process
+   2) it does not use libtool
+
+

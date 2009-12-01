@@ -4,6 +4,8 @@ HEADER_NODE_PREDECLARATION_START
 #include <semaphore.h>
 #include "sage3.h"
 
+
+
 // DQ (4/21/2009): This is not handled uniformally in sage3.h.
 // DQ (8/8/2008): This is required to process the "stat64 struct in SgAsmGenericFile
 // JJW (8/26/2008): Changed to struct stat with _FILE_OFFSET_BITS == 64 (see
@@ -764,8 +766,18 @@ typedef SgAsmPERVASizePairPtrList* SgAsmPERVASizePairPtrListPtr;
 #if 1
 // DQ (11/4/2009): Trying to use the boost hash_map support
 
+#ifdef _MSC_VER 
+// tps (11/17/2009) : Changed this so that it works under Windows.
+  #include <hash_set>
+  #include <hash_map>
+  #include <iostream>
+  using namespace std;
+  using namespace stdext;
+#endif
+
 // DQ (4/23/2009): See comments in sage3.h about the <ext/hash_map> section.
 // using namespace __gnu_cxx;
+
 namespace rose_hash 
    {
   // The condition here is not needed for GCC 4.2, but is needed (and does not completely work) for earlier versions
@@ -776,11 +788,14 @@ namespace rose_hash
 
 #if ROSE_MICROSOFT_OS
   // DQ (11/4/2009): MS Visual Studio version of hash_multimap
-     using namespace cliext;
+//     using namespace cliext;
+   using namespace stdext;
 #else
   // DQ (11/4/2009): Use the depricated GNU stuff (what works in ROSE currently)
      using namespace __gnu_cxx;
 #endif
+
+
 
   // DQ (4/23/2009): These should be put into this namespace so that we don't contaminate the global scope.
   // DQ (8/19/2008): This is already defined in src/frontend/SageIII/astMerge/buildMangledNameMap.h
@@ -794,25 +809,68 @@ namespace rose_hash
 
 /*! \brief Hash name support for symbol tables within ROSE.
  */
+
      struct hash_string
         {
+// tps (11/17/2009) : Changed this so that it works under Windows.
+#ifndef _MSC_VER 
           rose_hash::hash<const char*> hasher;
+#else
+   public:
+      static const size_t bucket_size = 4;
+      static const size_t min_buckets = 8;
+#endif
           size_t operator()(const std::string & name) const
              {
+#ifdef _MSC_VER 
+               return stdext::hash_compare<const char*>()(name.c_str()); 
+#else
                return hasher(name.c_str());
+#endif
              }
         };
+
+// hashing function for s_s
+#ifdef _MSC_VER 
+inline size_t hash_value(const int & s)
+{
+  return s;
+}
+#endif
+
+
 
      struct hash_integer
         {
+// tps (11/17/2009) : Changed this so that it works under Windows.
+#ifdef _MSC_VER 
+   public:
+      static const size_t bucket_size = 4;
+      static const size_t min_buckets = 8;
+#endif
           size_t operator()(const int n) const
              {
+#ifdef _MSC_VER 
+//		return (size_t) stdext::hash_compare<int, std::less<int> > >()(n);
+        return (size_t) hash_value(n);
+//               return stdext::hash_compare<int>()(n); 
+#else
                return n;
+#endif
              }
         };
 
+
+
+
      struct hash_integer_pair
         {
+// tps (11/17/2009) : Changed this so that it works under Windows.
+#ifdef _MSC_VER 
+   public:
+      static const size_t bucket_size = 4;
+      static const size_t min_buckets = 8;
+#endif
           size_t operator()(const std::pair<int,int> & p) const
              {
             // DQ (4/30/2009): This subject should be reviewed!
@@ -850,6 +908,12 @@ namespace rose_hash
      struct hash_graph_node
         {
        // rose_hash::hash<const SgGraphNode*> hasher;
+	   // tps (11/17/2009) : Changed this so that it works under Windows.
+#ifdef _MSC_VER 
+   public:
+      static const size_t bucket_size = 4;
+      static const size_t min_buckets = 8;
+#endif
           size_t operator()(const SgGraphNode* ptr) const
              {
                return (size_t) ptr;
@@ -865,7 +929,12 @@ namespace rose_hash
 
 // DQ (8/19/2008): Note that "rose_hash" is a namespace defined above.
 // class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>
+// tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
+#ifdef _MSC_VER 
+typedef rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string> rose_graph_string_node_hash_multimap_base_type;
+#else
 typedef rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string> rose_graph_string_node_hash_multimap_base_type;
+#endif
 
 class rose_graph_string_node_hash_multimap : public rose_graph_string_node_hash_multimap_base_type
    {
@@ -884,9 +953,12 @@ class rose_graph_string_node_hash_multimap : public rose_graph_string_node_hash_
           rose_graph_string_node_hash_multimap()
              : rose_graph_string_node_hash_multimap_base_type(), parent(NULL)
              {}
+			 // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
+#if 0
           rose_graph_string_node_hash_multimap(int sz) 
              : rose_graph_string_node_hash_multimap_base_type(sz), parent(NULL)
              {}
+#endif
           rose_graph_string_node_hash_multimap(const rose_graph_string_node_hash_multimap & rhs)
           // DQ (4/30/2009): This fixed a problem reported by Thomas Panas relative to seg-faults when using the copy constructor (forced his code to use references).
           // : rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>((rose_graph_string_node_hash_multimap)rhs),parent(rhs.parent)
@@ -932,7 +1004,12 @@ typedef rose_graph_string_node_hash_multimap rose_graph_hash_multimap;
  */
 
 // DQ (4/29/2009): Added to support ROSE Graph IR nodes
+// tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
+#ifdef _MSC_VER 
+typedef rose_hash::hash_multimap<SgGraphNode*, SgGraphEdge*, rose_hash::hash_graph_node> rose_graph_node_edge_hash_multimap_base_type;
+#else
 typedef rose_hash::hash_multimap<SgGraphNode*, SgGraphEdge*, rose_hash::hash_graph_node, rose_hash::eqstr_graph_node> rose_graph_node_edge_hash_multimap_base_type;
+#endif
 class rose_graph_node_edge_hash_multimap : public rose_graph_node_edge_hash_multimap_base_type
    {
   // This class is used to map nodes to edges in the highest level graph class.
@@ -946,9 +1023,12 @@ class rose_graph_node_edge_hash_multimap : public rose_graph_node_edge_hash_mult
           rose_graph_node_edge_hash_multimap()
              : rose_graph_node_edge_hash_multimap_base_type()
              {}
+	 // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
+#if 0
           rose_graph_node_edge_hash_multimap(int sz) 
              : rose_graph_node_edge_hash_multimap_base_type(sz)
              {}
+#endif
           rose_graph_node_edge_hash_multimap(const rose_graph_node_edge_hash_multimap& rhs) 
           // DQ (4/30/2009): This fixed a problem reported by Thomas Panas relative to seg-faults when using the copy constructor (forced his code to use references).
           // : rose_hash::hash_multimap<SgGraphNode*, SgGraphEdge*, rose_hash::hash_graph_node, rose_hash::eqstr_graph_node>((rose_graph_node_edge_hash_multimap)rhs)
@@ -985,8 +1065,12 @@ std::ostream & operator<< ( std::ostream & os, const rose_graph_node_edge_hash_m
  */
 
 // DQ (4/30/2009): Added to support more of the Graph functionality in new ROSE IR nodes
-// typedef rose_hash::hash_map<int,SgGraphNode*, rose_hash::hash_integer, rose_hash::eqstr_graph_node> rose_graph_integer_node_hash_map_base_type;
-typedef rose_hash::hash_map<int,SgGraphNode*, rose_hash::hash_integer> rose_graph_integer_node_hash_map_base_type;
+// typedef rose_hash::hash_map<int,SgGraphNode*, rose_hash::hash_integer, rose_hash::eqstr_graph_node> rose_graph_integer_node_hash_map_base_type
+#ifdef _MSC_VER
+typedef rose_hash::hash_map<int, SgGraphNode*, stdext::hash_compare <int, greater<int> > > rose_graph_integer_node_hash_map_base_type;
+#else
+typedef rose_hash::hash_map<int, SgGraphNode*, rose_hash::hash_integer> rose_graph_integer_node_hash_map_base_type;
+#endif
 class rose_graph_integer_node_hash_map : public rose_graph_integer_node_hash_map_base_type
    {
      protected:
@@ -997,9 +1081,15 @@ class rose_graph_integer_node_hash_map : public rose_graph_integer_node_hash_map
           rose_graph_integer_node_hash_map()
              : rose_graph_integer_node_hash_map_base_type()
              {}
+// tps (11/18/2009) : Is this constructor wrong? Should it be a pair of (int,SgGraphNode)?
+#if 0
+// example from MSDN microsoft hash_map:
+// hash_map <int, int, hash_compare <int, less<int> > > hm1;
+//   hm1.insert( Int_Pair( 1, 10 ) );
           rose_graph_integer_node_hash_map(int sz) 
              : rose_graph_integer_node_hash_map_base_type(sz)
              {}
+#endif
           rose_graph_integer_node_hash_map(const rose_graph_integer_node_hash_map& rhs) 
              : rose_graph_integer_node_hash_map_base_type(rhs),parent(rhs.parent)
              {}
@@ -1036,7 +1126,11 @@ std::ostream & operator<< ( std::ostream & os, const rose_graph_integer_node_has
 
 // DQ (4/30/2009): Added to support more of the Graph functionality in new ROSE IR nodes
 // typedef rose_hash::hash_map<int,SgGraphEdge*, rose_hash::hash_integer, rose_hash::eqstr_graph_edge> rose_graph_integer_edge_hash_map_base_type;
+#ifdef _MSC_VER
+typedef rose_hash::hash_map<int,SgGraphEdge*> rose_graph_integer_edge_hash_map_base_type;
+#else
 typedef rose_hash::hash_map<int,SgGraphEdge*, rose_hash::hash_integer> rose_graph_integer_edge_hash_map_base_type;
+#endif
 class rose_graph_integer_edge_hash_map : public rose_graph_integer_edge_hash_map_base_type
    {
   // This class is used to map nodes to edges in the highest level graph class.
@@ -1051,9 +1145,12 @@ class rose_graph_integer_edge_hash_map : public rose_graph_integer_edge_hash_map
           rose_graph_integer_edge_hash_map()
              : rose_graph_integer_edge_hash_map_base_type()
              {}
+// tps (11/18/2009) : I assume this is wrong, it should be a pair
+#if 0
           rose_graph_integer_edge_hash_map(int sz) 
              : rose_graph_integer_edge_hash_map_base_type(sz)
              {}
+#endif
           rose_graph_integer_edge_hash_map(const rose_graph_integer_edge_hash_map& rhs) 
              : rose_graph_integer_edge_hash_map_base_type(rhs),parent(rhs.parent)
              {}
@@ -1105,9 +1202,12 @@ class rose_graph_integer_edge_hash_multimap : public rose_graph_integer_edge_has
           rose_graph_integer_edge_hash_multimap()
              : rose_graph_integer_edge_hash_multimap_base_type()
              {}
+// tps (11/18/2009) : I assume this is wrong, it should be a pair
+#if 0
           rose_graph_integer_edge_hash_multimap(int sz) 
              : rose_graph_integer_edge_hash_multimap_base_type(sz)
              {}
+#endif
           rose_graph_integer_edge_hash_multimap(const rose_graph_integer_edge_hash_multimap& rhs) 
              : rose_graph_integer_edge_hash_multimap_base_type(rhs),parent(rhs.parent)
              {}
@@ -1144,7 +1244,11 @@ std::ostream & operator<< ( std::ostream & os, const rose_graph_integer_edge_has
 
 // DQ (4/30/2009): Added to support more of the Graph functionality in new ROSE IR nodes
 // typedef rose_hash::hash_multimap<std::pair<int,int>,SgGraphEdge*, rose_hash::hash_integer_pair, rose_hash::eqstr_integer_pair> rose_graph_integerpair_edge_hash_multimap_base_type;
+#ifdef _MSC_VER
+typedef rose_hash::hash_multimap<std::pair<int,int>,SgGraphEdge*> rose_graph_integerpair_edge_hash_multimap_base_type;
+#else
 typedef rose_hash::hash_multimap<std::pair<int,int>,SgGraphEdge*, rose_hash::hash_integer_pair> rose_graph_integerpair_edge_hash_multimap_base_type;
+#endif
 class rose_graph_integerpair_edge_hash_multimap : public rose_graph_integerpair_edge_hash_multimap_base_type
    {
   // This class is used to map nodes to edges in the highest level graph class.
@@ -1159,9 +1263,12 @@ class rose_graph_integerpair_edge_hash_multimap : public rose_graph_integerpair_
           rose_graph_integerpair_edge_hash_multimap()
              : rose_graph_integerpair_edge_hash_multimap_base_type()
              {}
+// tps (11/18/2009) : I assume this is wrong, it should be a pair
+#if 0
           rose_graph_integerpair_edge_hash_multimap(int sz) 
              : rose_graph_integerpair_edge_hash_multimap_base_type(sz)
              {}
+#endif
           rose_graph_integerpair_edge_hash_multimap(const rose_graph_integerpair_edge_hash_multimap& rhs) 
              : rose_graph_integerpair_edge_hash_multimap_base_type(rhs),parent(rhs.parent)
              {}
@@ -1197,7 +1304,14 @@ std::ostream & operator<< ( std::ostream & os, const rose_graph_integerpair_edge
  */
 
 // DQ (5/1/2009): This is added to support lookup of indexes based on labels (can be used for nodes or edges).
+// tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
+#ifdef _MSC_VER 
+// DQ (11/29/2009): fix for: MSVC error C2064: term does not evaluate to a function taking 2 arguments
+// typedef rose_hash::hash_multimap<std::string, int,rose_hash::hash_string> rose_graph_string_integer_hash_multimap_base_type;
+typedef rose_hash::hash_multimap<std::string, int> rose_graph_string_integer_hash_multimap_base_type;
+#else
 typedef rose_hash::hash_multimap<std::string, int,rose_hash::hash_string,rose_hash::eqstr_string> rose_graph_string_integer_hash_multimap_base_type;
+#endif
 class rose_graph_string_integer_hash_multimap : public rose_graph_string_integer_hash_multimap_base_type
    {
      protected:
@@ -1209,9 +1323,12 @@ class rose_graph_string_integer_hash_multimap : public rose_graph_string_integer
           rose_graph_string_integer_hash_multimap()
              : rose_graph_string_integer_hash_multimap_base_type(), parent(NULL)
              {}
+ 	 // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
+#if 0
           rose_graph_string_integer_hash_multimap(int sz) 
              : rose_graph_string_integer_hash_multimap_base_type(sz), parent(NULL)
              {}
+#endif
           rose_graph_string_integer_hash_multimap(const rose_graph_string_integer_hash_multimap & rhs)
              : rose_graph_string_integer_hash_multimap_base_type(rhs),parent(rhs.parent)
              {}

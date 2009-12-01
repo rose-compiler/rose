@@ -5,7 +5,13 @@
  * Decription : Interface to user
  ****************************************************/
 #include "rose.h"
+
+#ifdef _MSC_VER
+#include <time.h>
+#else
+// This header file is not available in MSVC.
 #include <sys/time.h>
+#endif
 
 using namespace std;
 /****************************************************
@@ -92,7 +98,15 @@ void RoseFile::setFunctionFilter(list<string> functionName) {
 
 inline double getTime() {
   timeval tv;
+
+#ifdef _MSC_VER
+#pragma message ("WARNING: Linux gettimeofday() not available in MSVC.")
+  printf ("WARNING: Linux gettimeofday() not available in MSVC. \n");
+  tv.tv_sec  = 0;
+  tv.tv_usec = 0;
+#else
   gettimeofday(&tv, NULL);
+#endif
   return tv.tv_sec + tv.tv_usec * 1.e-6;
 }
 

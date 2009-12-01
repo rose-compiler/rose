@@ -8,7 +8,7 @@ set( libastHiddenTypeAndDeclarationLists_SRC
      HiddenList.C  HiddenList_Intersection.C HiddenList_Output.C NamespacesAndClassTraversal.C
    )
 
-add_library( libastHiddenTypeAndDeclarationLists ${libastHiddenTypeAndDeclarationLists_SRC}  )
+add_library( libastHiddenTypeAndDeclarationLists STATIC ${libastHiddenTypeAndDeclarationLists_SRC}  )
 add_dependencies( libastHiddenTypeAndDeclarationLists ROSETTA )
 
 ########### install files ###############

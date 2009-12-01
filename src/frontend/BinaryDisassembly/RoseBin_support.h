@@ -16,7 +16,11 @@
 
 #include "RoseBin_IDAPRO_exprTree.h"
 
+#ifdef _MSC_VER
+#include <time.h>
+#else
 #include <sys/time.h>
+#endif
 
 #include "x86InstructionProperties.h"
 
@@ -90,13 +94,16 @@ namespace RoseBin_DataTypes {
  extern DataTypes Rose_Data;
 }
 
-
-
+#ifdef _MSC_VER
+#include <hash_map>
+#include <hash_set>
+#else
 #include <ext/hash_map>
 #include <ext/hash_set>
-
+#endif
 
 class SgDirectedGraphNode;
+#ifndef _MSC_VER
 namespace __gnu_cxx {
   template <> struct hash <SgDirectedGraphNode*> {
     size_t operator()(SgDirectedGraphNode* const & n) const {
@@ -122,9 +129,12 @@ namespace __gnu_cxx {
     }
   };
 }
-#else
-
 #endif
+#else
+// DQ (11/27/2009): No message is required, since this is the correct fix for MSVC.
+// #pragma message ("WARNING: Commented out hash_map operators in RoseBin_support.h for Windows. Might need to fix this.")
+#endif
+
 
 
 
@@ -297,12 +307,13 @@ class RoseBin_support {
     comment = newComment;
   }
 
+#ifndef _MSC_VER
   static inline double getTime() {
     timeval tv;
     gettimeofday(&tv, NULL);
     return tv.tv_sec + tv.tv_usec * 1.e-6;
   }
-
+#endif
 
 
 };

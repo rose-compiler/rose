@@ -1,7 +1,7 @@
 #ifndef ROSE_MEMORY_MAP_H
 #define ROSE_MEMORY_MAP_H
 
-#include <sys/mman.h> /*mmap include for PROT_READ, PROT_WRITE, PROT_EXEC, and PROT_NONE*/
+
 
 /** A MemoryMap is an efficient mapping from virtual addresses to source bytes.  The source bytes can be bytes of a file,
  *  bytes stored in some memory buffer, or bytes initialized to zero and are described by the MemoryMap::MapElement class.
@@ -9,6 +9,14 @@
  *  is made to define a mapping from a virtual address to multiple source bytes then an exception is raised. */
 class MemoryMap {
 public:
+    /** Mapping permissions. */
+    enum Protection {
+        PROT_READ       = 0x1,          /**< Pages can be read. */
+        PROT_WRITE      = 0x2,          /**< Pages can be written. */
+        PROT_EXEC       = 0x4,          /**< Pages can be executed. */
+        PROT_NONE       = 0x0           /**< Pages cannot be accessed. */
+    };
+    
     /** A MemoryMap is composed of zero or more MapElements. Each map element describes a mapping from contiguous virtual
      *  addresses to contiguous file/memory bytes. A map element can point to a buffer supplied by the caller or a buffer
      *  allocated and managed by the MemoryMap itself. MemoryMap-managed buffers are used for anonymous maps where the backing
@@ -19,9 +27,10 @@ public:
      *  const base address to the constructor.
      *
      *  The map element also tracks what permissions would be used if the memory were actually mapped for real. These
-     *  permissions are bit flags PROT_EXEC, PROT_READ, PROT_WRITE, and PROT_NONE from <sys/mman.h>. The presence or absence
-     *  of the PROT_WRITE bit here has no relation to the is_read_only() value -- it is legal for ROSE to write new values
-     *  to a memory location that is mapped without PROT_WRITE, but not to a memory location where is_read_only() is true. */
+     *  permissions are bit flags PROT_EXEC, PROT_READ, PROT_WRITE, and PROT_NONE from the Protection enum. The presence or
+     *  absence of the PROT_WRITE bit here has no relation to the is_read_only() value -- it is legal for ROSE to write new
+     *  values to a memory location that is mapped without PROT_WRITE, but not to a memory location where is_read_only() is
+     *  true. */
     class MapElement {
     public:
         MapElement()
@@ -160,7 +169,7 @@ public:
         mutable void *base;             /**< The buffer to which 'offset' applies */
         rose_addr_t offset;             /**< Offset with respect to 'base' */
         bool read_only;                 /**< If set then write() is not allowed */
-        unsigned mapperms;              /**< Mapping permissions (PROT_READ, PROT_WRITE, and PROT_EXEC from <sys/mman.h>) */
+        unsigned mapperms;              /**< Mapping permissions (PROT_READ, PROT_WRITE, and PROT_EXEC from Protection enum) */
 
         /** If non-null then the element describes an anonymous mapping, one that is initially all zero.  The 'base' data
          *  member in this case will initially be NULL and will be allocated when a MemoryMap::write() modifies the anonymous
@@ -254,3 +263,5 @@ inline bool operator<(const MemoryMap::MapElement &a, const MemoryMap::MapElemen
 }
 
 #endif
+
+

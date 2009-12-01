@@ -190,7 +190,13 @@ const MemoryMap::MapElement *
 MemoryMap::find(rose_addr_t va) const
 {
     if (!sorted) {
-        sort(elements.begin(), elements.end());
+#ifdef _MSC_VER
+#pragma message ("WARNING: commented out use of std::sort() for MSVS.")
+		printf ("ERROR: commented out use of std::sort() for MSVS.");
+		ROSE_ASSERT(false);
+#else
+		sort(elements.begin(), elements.end());
+#endif
         sorted = true;
     }
 
@@ -213,7 +219,13 @@ rose_addr_t
 MemoryMap::find_free(rose_addr_t start_va, size_t size, rose_addr_t alignment) const
 {
     if (!sorted) {
+#ifdef _MSC_VER
+#pragma message ("WARNING: commented out use of std::sort() for MSVS.")
+		printf ("ERROR: commented out use of std::sort() for MSVS.");
+		ROSE_ASSERT(false);
+#else
         sort(elements.begin(), elements.end());
+#endif
         sorted = true;
     }
 
@@ -239,7 +251,13 @@ MemoryMap::find_free(rose_addr_t start_va, size_t size, rose_addr_t alignment) c
 const std::vector<MemoryMap::MapElement> &
 MemoryMap::get_elements() const {
     if (!sorted) {
+#ifdef _MSC_VER
+#pragma message ("WARNING: commented out use of std::sort() for MSVS.")
+		printf ("ERROR: commented out use of std::sort() for MSVS.");
+		ROSE_ASSERT(false);
+#else
         sort(elements.begin(), elements.end());
+#endif
         sorted = true;
     }
     return elements;
@@ -307,7 +325,13 @@ void
 MemoryMap::dump(FILE *f, const char *prefix) const
 {
     if (!sorted) {
+#ifdef _MSC_VER
+#pragma message ("WARNING: commented out use of std::sort() for MSVS.")
+		printf ("ERROR: commented out use of std::sort() for MSVS.");
+		ROSE_ASSERT(false);
+#else
         sort(elements.begin(), elements.end());
+#endif
         sorted = true;
     }
 

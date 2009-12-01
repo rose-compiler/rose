@@ -23,7 +23,8 @@
  *  and providing an implementation for the virtual can_disassemble() method.  An instance of the new class is registered with
  *  ROSE by calling the Disassembler's register_subclass() class method. When ROSE needs to disassemble something, it calls the
  *  can_disassemble() methods for all known disassemblers, and the first one that returns a new disassembler object will be
- *  used for the disassembly.
+ *  used for the disassembly.  Class derivation can also be used to influence various disassembler settings--see the example
+ *  below.
  *
  *  If an error occurs during the disassembly of a single instruction, the disassembler will throw an exception. When
  *  disassembling multiple instructions the exceptions are saved in a map, by virtual address, and the map is returned to the
@@ -70,6 +71,35 @@
  *  Disassembler::InstructionMap::iterator ii;
  *  for (ii=insns.begin(); ii!=insns.end(); ++ii)
  *      std::cout <<unparseInstructionWithAddress(ii->second) <<std::endl;
+ *  @endcode
+ *
+ *  The following example shows how one can influence how ROSE disassembles instructions. Let's say you have a problem with
+ *  the way ROSE is partitioning instructions into functions: it's applying the instruction pattern detector too aggressively
+ *  when disassembling x86 programs, so you want to turn it off.  Here's how you would do that. First, create a subclass of
+ *  the Disassembler you want to influence.  All the work is in the can_disassemble() method.
+ *
+ *  @code
+ *  class MyDisassembler: public DisassemblerX86 {
+ *  public:
+ *      virtual Disassembler *can_disassemble(SgAsmGenericHeader *hdr) const {
+ *          Disassembler *d = DisassemblerX86::can_disassemble(hdr);
+ *          if (!d) return NULL;
+ *          delete d;
+ *          Partitioner *p = new Partitioner;
+ *          unsigned h = p->get_heuristics();
+ *          h &= ~SgAsmFunctionDeclaration::FUNC_PATTERN;
+ *          p->set_heuristics(h);
+ *          d = new MyDisassembler;
+ *          d->set_partitioner(p);
+ *          return d;
+ *      }
+ *  };
+ *  @endcode
+ *
+ *  Then the new class is registered with ROSE:
+ *
+ *  @code
+ *  Disassembler::register_subclass(new MyDisassembler);
  *  @endcode
  */
 class Disassembler {

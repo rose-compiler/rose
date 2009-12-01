@@ -9599,3 +9599,4 @@ Constant propagation in function "_fini"
     nt = <top>
     ?15 = <top>
     memory =     <top>
+analyzed headers: 1

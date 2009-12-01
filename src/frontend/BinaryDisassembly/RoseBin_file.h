@@ -19,7 +19,9 @@
 #include "RoseBin_IDAPRO_callGraph.h"
 #include "RoseBin_IDAPRO_branchGraph.h"
 
+#ifndef _MSC_VER
 #include <cxxabi.h>
+#endif
 
 class RoseBin_FILE  {
  private:

@@ -42,6 +42,6 @@ clean-local:
 			rm -f ./"$${f}" ;\
 		done ;\
 	'
-	rm -f rose_* a*.out
+	rm -f rose_* a*.out *.o
 
 EXTRA_DIST = test_filenames_unix_meta_chars.pl

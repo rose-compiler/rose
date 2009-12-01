@@ -438,7 +438,15 @@ rted_source/%_rose.upc: runtimeCheck rted_source/%.upc $(srcdir)/$(RTS) $(srcdir
 #  1: file extension (.c, .cpp, .f, ... )
 #  2: compile command
 #  3: additional parameters, like linking against debugger ...
-COMPILING_RUNTIME_SYSTEM = @echo " >>>>>  compiling instrumented debugger code (with _s) ... $(filter rted_source/%$(strip $(1)), $^)"; \
+#COMPILING_RUNTIME_SYSTEM =  @echo -n "$(2) -g -o $@ $(filter rted_source/%$(strip $(1)), $^) \
+#				      $(srcdir)/$(RTS) \
+#				      $(INCLUDES) \
+#				      -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) \
+#	 		              -I$(dir $(patsubst rted_source/%, $(srcdir)/%, $@)) \
+#				      -I$(top_builddir) \
+#				      -I$(srcdir) \
+#				      $(3) $(RTED_LIB)";
+COMPILING_RUNTIME_SYSTEM = @echo " !>>>>>  compiling instrumented debugger code (with _s) ... $(filter rted_source/%$(strip $(1)), $^)"; \
 			   $(2) -g -o $@ $(filter rted_source/%$(strip $(1)), $^) \
 				      $(srcdir)/$(RTS) \
 				      $(INCLUDES) 
@@ -452,14 +460,6 @@ COMPILING_RUNTIME_SYSTEM +=    -I$(dir $(patsubst rted_source/%, $(srcdir)/%, $@
 					  || { cat $@.compile.err; false; }; \
 			   if [ $$? -ne 0 ]; then exit 1; fi; \
 			   echo -n " done.";
-# COMPILING_RUNTIME_SYSTEM +=   echo -n "$(2) -g -o $@ $(filter rted_source/%$(strip $(1)), $^) \
-#				      $(srcdir)/$(RTS) \
-#				      $(INCLUDES) \
-#				      -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) \
-#	 		              -I$(dir $(patsubst rted_source/%, $(srcdir)/%, $@)) \
-#				      -I$(top_builddir) \
-#				      -I$(srcdir) \
-#				      $(3) $(RTED_LIB)";
 
 rted_source/%.bin: rted_source/%_rose.c rted_source/%_s_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	$(call COMPILING_RUNTIME_SYSTEM, .c, $(RTED_CC))
@@ -824,7 +824,7 @@ clean-local:
 if ROSE_USE_RTED
 # run/C/floating_point_errors
 check-local: runtimeCheck  checkfast \
-				run/C/allocation_deallocation_errors \
+			run/C/allocation_deallocation_errors \
 				run/C/array_index_out_of_bound \
 				run/C/C99_specific_errors \
 				run/C/input_output_errors \
@@ -842,10 +842,15 @@ check-local: runtimeCheck  checkfast \
 	@echo "***************************************************************************************"
 	@echo "*** ROSE/projects/runtimeErrorCheck: make check rule complete (terminated normally) ***"
 	@echo "***************************************************************************************"
-
 else
-check-local: runtimeCheck checkfast
-
+# DQ (11/10/2009): Comment out, with permission from Thomas, the RTED test until we 
+# can explore the RedHat version 5 problem, 32-bit problem, and Mac OSX problem.
+# check-local: runtimeCheck checkfast
+check-local:
+	@echo "\n RTED short tests not run (Commented out temporarily):"
+	@echo "***********************************************************************************************************"
+	@echo "****** ROSE/projects/runtimeErrorCheck: make check not run here: configure --enable-rted=<RTED Path> ******"
+	@echo "***********************************************************************************************************"
 endif
 
 

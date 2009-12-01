@@ -42,10 +42,18 @@ static std::string unparsePowerpcRegister(PowerpcRegisterClass cl, int reg, Powe
       return "fpscr";
     }
     case powerpc_regclass_spr: {
-      return sprToString((PowerpcSpecialPurposeRegister)reg);
-    }
+#ifndef _MSC_VER
+		return sprToString((PowerpcSpecialPurposeRegister)reg);
+#else
+		return "WARNING: Unsupported in Windows: prToString((PowerpcSpecialPurposeRegister)reg)";
+#endif
+   }
     case powerpc_regclass_tbr: {
+#ifndef _MSC_VER
       return tbrToString((PowerpcTimeBaseRegister)reg);
+#else
+		return "WARNING: Unsupported in Windows: tbrToString((PowerpcTimeBaseRegister)reg);";
+#endif
     }
     case powerpc_regclass_msr: {
       return "msr";
@@ -61,6 +69,11 @@ static std::string unparsePowerpcRegister(PowerpcRegisterClass cl, int reg, Powe
       abort();
       break;
   }
+
+#ifdef _MSC_VER
+  // DQ (11/29/2009): MSVC reports a warning for a path that does not have a return stmt.
+     return "ERROR in unparsePowerpcRegister()";
+#endif
 }
 
 /* Helper for unparsePowerpcExpression(SgAsmExpression*) */

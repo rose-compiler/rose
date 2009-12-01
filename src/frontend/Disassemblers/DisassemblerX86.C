@@ -229,7 +229,7 @@ DisassemblerX86::effectiveAddressSize() const
             case x86_insnsize_16: return x86_insnsize_32;
             case x86_insnsize_32: return x86_insnsize_16;
             case x86_insnsize_64: return x86_insnsize_32;
-            default: ROSE_ASSERT(false);
+			default: { ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return insnSize; }
         }
     } else {
         return insnSize;
@@ -254,7 +254,7 @@ DisassemblerX86::effectiveOperandSize() const
                     return x86_insnsize_64;
                 return x86_insnsize_16;
             }
-            default: ROSE_ASSERT(false);
+			default: { ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return insnSize; }
         }
     } else {
         X86InstructionSize s = insnSize;
@@ -290,7 +290,7 @@ DisassemblerX86::mmPrefix() const
                 return mmF3;
             }
         }
-        default: ROSE_ASSERT(false);
+		default: { ROSE_ASSERT(false);  /* avoid MSCV warning by adding return stmt */ return mmNone; }
     }
 }
 
@@ -311,7 +311,7 @@ DisassemblerX86::sizeToMode(X86InstructionSize s)
         case x86_insnsize_16: return rmWord;
         case x86_insnsize_32: return rmDWord;
         case x86_insnsize_64: return rmQWord;
-        default: ROSE_ASSERT(false);
+		default: { ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return rmWord; }
     }
 }
 
@@ -323,7 +323,7 @@ DisassemblerX86::sizeToPos(X86InstructionSize s)
         case x86_insnsize_16: return x86_regpos_word;
         case x86_insnsize_32: return x86_regpos_dword;
         case x86_insnsize_64: return x86_regpos_qword;
-        default: abort();;
+		default: { abort(); /* avoid MSCV warning by adding return stmt */ return x86_regpos_all; }
     }
 }
 
@@ -335,7 +335,7 @@ DisassemblerX86::sizeToType(X86InstructionSize s)
         case x86_insnsize_16: return SgAsmTypeWord::createType();
         case x86_insnsize_32: return SgAsmTypeDoubleWord::createType();
         case x86_insnsize_64: return SgAsmTypeQuadWord::createType();
-        default: abort();;
+        default: abort();
     }
 }
 
@@ -529,6 +529,9 @@ DisassemblerX86::makeSegmentRegister(X86SegmentRegister so, bool insn64)
         case x86_segreg_ss: return makeRegister(insn64 ? x86_segreg_ds : x86_segreg_ss, rmSegment);
         default: ROSE_ASSERT(!"Bad segment register in makeSegmentRegister");
     }
+
+ /* avoid MSCV warning by adding return stmt */
+	return NULL;
 }
 
 
@@ -814,7 +817,7 @@ DisassemblerX86::getImmForAddr()
         case x86_insnsize_16: return getImmWord();
         case x86_insnsize_32: return getImmDWord();
         case x86_insnsize_64: return getImmQWord();
-        default: ROSE_ASSERT(false);
+		default: { ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return NULL; }
     }
 }
 
@@ -825,7 +828,7 @@ DisassemblerX86::getImmIv()
         case x86_insnsize_16: return getImmWord();
         case x86_insnsize_32: return getImmDWord();
         case x86_insnsize_64: return getImmQWord();
-        default: ROSE_ASSERT(false);
+		default: { ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return NULL; }
     }
 }
 
@@ -874,7 +877,7 @@ DisassemblerX86::getImmIzAsIv()
             return getImmDWord();
         }
         default:
-            ROSE_ASSERT(false);
+			{ ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return NULL; }
     }
 }
 
@@ -3122,7 +3125,7 @@ DisassemblerX86::decodeOpcode0F()
         case 0x39:
             throw ExceptionX86("bad opcode 0x0f39", this);
         case 0x3A:
-            ROSE_ASSERT(!"0F3A");
+            throw ExceptionX86("not implemented 0x0f3a", this);
         case 0x3B:
             throw ExceptionX86("bad opcode 0x0f3b", this);
         case 0x3C:
@@ -3887,7 +3890,7 @@ DisassemblerX86::decodeOpcode0F()
         case 0x78: {
             switch (mmPrefix()) {
                 case mmNone:
-                    ROSE_ASSERT(!"vmread not supported");
+                    throw ExceptionX86("vmread not supported", this);
                 case mmF3:
                     throw ExceptionX86("bad mm prefix F3 for opcode 0x0f78", this);
                 case mm66: {
@@ -3921,7 +3924,7 @@ DisassemblerX86::decodeOpcode0F()
         case 0x79: {
             switch (mmPrefix()) {
                 case mmNone:
-                    ROSE_ASSERT(!"vmwrite not supported");
+                    throw ExceptionX86("vmwrite not supported", this);
                 case mmF3:
                     throw ExceptionX86("bad mm prefix F3 for opcode 0x0f79", this);
                 case mm66:
@@ -5141,7 +5144,7 @@ DisassemblerX86::decodeX87InstructionD8()
             case 5: return makeInstruction(x86_fsubr, "fsubr", makeRegister(0, rmST), modrm);
             case 6: return makeInstruction(x86_fdiv, "fdiv",   makeRegister(0, rmST), modrm);
             case 7: return makeInstruction(x86_fdivr, "fdivr", makeRegister(0, rmST), modrm);
-            default: ROSE_ASSERT(false);
+			default: { ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return NULL; }
         }
     }
 }
@@ -5220,6 +5223,8 @@ DisassemblerX86::decodeX87InstructionD9()
             default: throw ExceptionX86("bad ModR/M value for x87 opcode 0xd9", this);
         }
     }
+ /* avoid MSCV warning by adding return stmt */
+	return NULL;
 }
 
 SgAsmx86Instruction *
@@ -5253,6 +5258,8 @@ DisassemblerX86::decodeX87InstructionDA()
             default: throw ExceptionX86("bad ModR/M value for x87 opcode 0xda", this);
         }
     }
+ /* avoid MSCV warning by adding return stmt */
+	return NULL;
 }
 
 SgAsmx86Instruction *
@@ -5296,6 +5303,8 @@ DisassemblerX86::decodeX87InstructionDB()
             default: throw ExceptionX86("bad ModR/M value for x87 opcode 0xdb", this);
         }
     }
+ /* avoid MSCV warning by adding return stmt */
+	return NULL;
 }
 
 SgAsmx86Instruction *
@@ -5327,6 +5336,8 @@ DisassemblerX86::decodeX87InstructionDC()
             default: ROSE_ASSERT(false);
         }
     }
+ /* avoid MSCV warning by adding return stmt */
+	return NULL;
 }
 
 SgAsmx86Instruction *
@@ -5376,6 +5387,8 @@ DisassemblerX86::decodeX87InstructionDD()
             default: ROSE_ASSERT(false);
         }
     }
+ /* avoid MSCV warning by adding return stmt */
+	return NULL;
 }
 
 SgAsmx86Instruction *
@@ -5412,6 +5425,8 @@ DisassemblerX86::decodeX87InstructionDE()
             default: ROSE_ASSERT(false);
         }
     }
+ /* avoid MSCV warning by adding return stmt */
+	return NULL;
 }
 
 SgAsmx86Instruction *
@@ -5452,6 +5467,8 @@ DisassemblerX86::decodeX87InstructionDF()
             default: ROSE_ASSERT(false);
         }
     }
+ /* avoid MSCV warning by adding return stmt */
+	return NULL;
 }
 
 SgAsmx86Instruction *
@@ -5468,6 +5485,8 @@ DisassemblerX86::decodeGroup1(SgAsmExpression* imm)
         case 7: return makeInstruction(x86_cmp, "cmp", modrm, imm);
         default: ROSE_ASSERT(false);
     }
+ /* avoid MSCV warning by adding return stmt */
+	return NULL;
 }
 
 SgAsmx86Instruction *
@@ -5492,6 +5511,8 @@ DisassemblerX86::decodeGroup2(SgAsmExpression* count)
         case 7: return makeInstruction(x86_sar, "sar", modrm, count);
         default: ROSE_ASSERT(false);
     }
+ /* avoid MSCV warning by adding return stmt */
+	return NULL;
 }
 
 SgAsmx86Instruction *
@@ -5517,6 +5538,8 @@ DisassemblerX86::decodeGroup3(SgAsmExpression* immMaybe)
         default:
             ROSE_ASSERT(false);
     }
+ /* avoid MSCV warning by adding return stmt */
+	return NULL;
 }
 
 SgAsmx86Instruction *
@@ -5527,6 +5550,8 @@ DisassemblerX86::decodeGroup4()
         case 1: return makeInstruction(x86_dec, "dec", modrm);
         default: throw ExceptionX86("bad ModR/M value for Group 4 opcode", this);
     }
+ /* avoid MSCV warning by adding return stmt */
+	return NULL;
 }
 
 SgAsmx86Instruction *
@@ -5554,6 +5579,8 @@ DisassemblerX86::decodeGroup5()
         default:
             ROSE_ASSERT(false);
     }
+ /* avoid MSCV warning by adding return stmt */
+	return NULL;
 }
 
 SgAsmx86Instruction *
@@ -5570,6 +5597,8 @@ DisassemblerX86::decodeGroup6()
         case 7: throw ExceptionX86("bad ModR/M value for Group 6 opcode", this);
         default: ROSE_ASSERT(false);
     }
+ /* avoid MSCV warning by adding return stmt */
+	return NULL;
 }
 
 SgAsmx86Instruction *
@@ -5658,6 +5687,8 @@ DisassemblerX86::decodeGroup7()
         default:
             ROSE_ASSERT(false);
     }
+ /* avoid MSCV warning by adding return stmt */
+	return NULL;
 }
 
 SgAsmx86Instruction *
@@ -5674,6 +5705,8 @@ DisassemblerX86::decodeGroup8(SgAsmExpression* imm)
         case 7: return makeInstruction(x86_btc, "btc", modrm, imm);
         default: ROSE_ASSERT(false);
     }
+ /* avoid MSCV warning by adding return stmt */
+	return NULL;
 }
 
 SgAsmx86Instruction *
@@ -5683,6 +5716,8 @@ DisassemblerX86::decodeGroup11(SgAsmExpression* imm)
         case 0: return makeInstruction(x86_mov, "mov", modrm, imm);
         default: throw ExceptionX86("bad ModR/M value for Group 11 opcode", this);
     }
+ /* avoid MSCV warning by adding return stmt */
+	return NULL;
 }
 
 SgAsmx86Instruction *
@@ -5731,6 +5766,8 @@ DisassemblerX86::decodeGroup15()
         default:
             ROSE_ASSERT(false);
     }
+ /* avoid MSCV warning by adding return stmt */
+	return NULL;
 }
 
 SgAsmx86Instruction *

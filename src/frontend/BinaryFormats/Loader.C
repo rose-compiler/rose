@@ -259,21 +259,29 @@ Loader::create_map(MemoryMap *map, const SgAsmGenericSectionPtrList &unordered_s
             } else if (offset+file_size>total) {
                 if (p_debug)
                     fprintf(p_debug, "    Map crosses end-of-file at 0x%08"PRIx64"\n", total);
-                ltsz = std::min(mem_size, total-offset);
+#ifdef _MSC_VER
+				ltsz = _cpp_min(mem_size, total-offset);
+#else
+				ltsz = std::min(mem_size, total-offset);
+#endif
             } else {
                 /* Map falls entirely within the file, but mem size might be larger than file size */
+#ifdef _MSC_VER
+                ltsz = _cpp_min(mem_size, file_size);
+#else
                 ltsz = std::min(mem_size, file_size);
-            }
+#endif
+			}
             rose_addr_t rtsz = mem_size - ltsz;
 
             /* Permissions */
-            unsigned mapperms=PROT_NONE;
+            unsigned mapperms=MemoryMap::PROT_NONE;
             if (section->get_mapped_rperm())
-                mapperms |= PROT_READ;
+                mapperms |= MemoryMap::PROT_READ;
             if (section->get_mapped_wperm())
-                mapperms |= PROT_WRITE;
+                mapperms |= MemoryMap::PROT_WRITE;
             if (section->get_mapped_xperm())
-                mapperms |= PROT_EXEC;
+                mapperms |= MemoryMap::PROT_EXEC;
 
             /* Map the left part to the file; right part is anonymous. */
             if (p_debug)

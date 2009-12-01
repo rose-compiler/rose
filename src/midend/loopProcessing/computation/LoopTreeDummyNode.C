@@ -64,7 +64,8 @@ CodeGen( LoopTransformInterface &la, const AstNodePtr& c) const
       return fa.CreateIf( cond1, c );
    }
 
-LoopTreeNode* ApproachAncesLoop( LoopTreeNode* start, SelectObject<LoopTreeNode*>& sel)
+// DQ (11/25/2009): Changed name from SelectObject to SelectObjectBase to avoid SelectObject function ambiguity using Microsoft Visual Studio
+LoopTreeNode* ApproachAncesLoop( LoopTreeNode* start, SelectObjectBase<LoopTreeNode*>& sel)
 {
    LoopTreeNode* l = 0;
       for (l = start->Parent(); l != 0 && l->ChildCount() == 1; 
@@ -144,7 +145,8 @@ bool LoopTreeRestrLoopRange :: RemoveSelf()
       return false;
 }
 
-class SelectRestrLoopAnces : public SelectObject<LoopTreeNode*>
+// DQ (11/25/2009): Changed name from SelectObject to SelectObjectBase to avoid SelectObject function ambiguity using Microsoft Visual Studio
+class SelectRestrLoopAnces : public SelectObjectBase<LoopTreeNode*>
 {
   LoopTreeRestrLoopRange *node;
  public:
@@ -255,7 +257,8 @@ bool LoopTreeRestrLoopRange :: MergeSibling( int opt)
       return false;
    }
 
-class SelectRelateLoopAnces : public SelectObject<LoopTreeNode*>
+// DQ (11/25/2009): Changed name from SelectObject to SelectObjectBase to avoid SelectObject function ambiguity using Microsoft Visual Studio
+class SelectRelateLoopAnces : public SelectObjectBase<LoopTreeNode*>
 {
   LoopTreeRelateLoopIvar *node;
  public:
