@@ -151,8 +151,8 @@ set(MSTL_SRC
    )
 
 set(EDG_SAGE_Connection_SRC
-    ${CMAKE_SOURCE_DIR}/src/frontend/CxxFrontend/EDG_SAGE_Connection/sage_gen_be.C
-    ${CMAKE_SOURCE_DIR}/src/frontend/CxxFrontend/EDG_SAGE_Connection/wrapperFunctionsForEDG.C
+    ${CMAKE_SOURCE_DIR}/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/sage_gen_be.C
+    ${CMAKE_SOURCE_DIR}/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/wrapperFunctionsForEDG.C
    )
 
 set(virtualCFG_SRC
