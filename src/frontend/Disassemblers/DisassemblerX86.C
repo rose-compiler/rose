@@ -335,7 +335,7 @@ DisassemblerX86::sizeToType(X86InstructionSize s)
         case x86_insnsize_16: return SgAsmTypeWord::createType();
         case x86_insnsize_32: return SgAsmTypeDoubleWord::createType();
         case x86_insnsize_64: return SgAsmTypeQuadWord::createType();
-        default: abort();
+		default: { abort(); /* avoid MSCV warning by adding return stmt */ return NULL; }
     }
 }
 
@@ -5085,6 +5085,9 @@ DisassemblerX86::decodeOpcode0F()
         default:
             ROSE_ASSERT(false);
     }
+
+ // avoid MSCV warning by adding return stmt
+	return NULL;
 }
 
 /* SSSE3 (opcode 0F38) */
@@ -5132,7 +5135,7 @@ DisassemblerX86::decodeX87InstructionD8()
             case 5: return makeInstruction(x86_fsubr, "fsubr", modrm);
             case 6: return makeInstruction(x86_fdiv, "fdiv",  modrm);
             case 7: return makeInstruction(x86_fdivr, "fdivr", modrm);
-            default: ROSE_ASSERT(false);
+			default: { ROSE_ASSERT(false); /* avoid MSCV warning by adding return stmt */ return NULL; }
         }
     } else { // Two-operand register forms
         switch (regField) {
