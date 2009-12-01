@@ -56,7 +56,7 @@ if [ -f $CLANGDIR/Driver/TermDumper.cpp ] ; then
 fi
 
 echo "applying clang patch"
-currentsrcdir=`pwd`
+currentsrcdir=@srcdir@
 pushd $CLANGDIR
 patch -p0 < $currentsrcdir/clang-termite.patch || exit_failure "failed to apply clang patch"
 popd
