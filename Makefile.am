@@ -234,8 +234,8 @@ binary_edg_tarball: rose_binary_compatibility_signature
 	BINARY_EDG_DIRNAME=roseBinaryEDG-$(build_triplet_without_redhat)-@GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX@-`cat rose_binary_compatibility_signature` && \
 	rm -rf $${BINARY_EDG_DIRNAME} && \
 	mkdir $${BINARY_EDG_DIRNAME} && \
-	sed "s@^dependency_libs.*@dependency_libs=''@" src/frontend/CxxFrontend/libroseEDG.la > $${BINARY_EDG_DIRNAME}/libroseEDG.la && \
-	cp -Rp src/frontend/CxxFrontend/.libs $${BINARY_EDG_DIRNAME}/ && \
+	sed "s@^dependency_libs.*@dependency_libs=''@" src/frontend/CxxFrontend/EDG/libroseEDG.la > $${BINARY_EDG_DIRNAME}/libroseEDG.la && \
+	cp -Rp src/frontend/CxxFrontend/EDG/.libs $${BINARY_EDG_DIRNAME}/ && \
 	tardir=$${BINARY_EDG_DIRNAME} && $(am__tar) | GZIP=$(GZIP_ENV) gzip -c >$${BINARY_EDG_DIRNAME}.tar.gz && \
 	rm -rf $${BINARY_EDG_DIRNAME}
 
@@ -285,7 +285,7 @@ source_with_binary_edg_dist: copy_binary_edg_tarball_to_source_tree
 	cat $(top_srcdir)/docs/Makefile.am | \
 		grep -v 'DEVELOPER_DISTRIBUTION_DIRECTORY *=' > \
 		$(distdir)/docs/Makefile.am # Remove SUBDIRS reference to testDoxygen
-	cp $(top_srcdir)/src/frontend/CxxFrontend/Makefile.am.forBinaryEDG $(distdir)/src/frontend/CxxFrontend/Makefile.am
+	cp $(top_srcdir)/src/frontend/CxxFrontend/EDG/Makefile.am.forBinaryEDG $(distdir)/src/frontend/CxxFrontend/Makefile.am
 	echo "" >> $(distdir)/src/frontend/CxxFrontend/Makefile.am
 	cd $(distdir)/src/frontend/CxxFrontend; echo "EXTRA_DIST = `echo *.tar.gz`" >> Makefile.am
 	cd $(distdir) && ./build
