@@ -475,8 +475,14 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
      scope_stmt->get_symbol_table()->get_table()->erase(found_it);
 
   // insert the new_name in the symbol table
+#ifdef _MSC_VER
+  // DQ (11/28/2009): Unclear if this code is a problem (testing).
+#pragma message ("WARNING: this code does not apprear to compile with MSVC.")
+	 printf ("ERROR: this code does not apprear to compile with MSVC. \n");
+	 ROSE_ASSERT(false);
+#else
      found_it = scope_stmt->get_symbol_table()->get_table()->insert(pair<SgName,SgSymbol*> ( new_name,associated_symbol));
-
+#endif
   // if insertion failed
      if (found_it == scope_stmt->get_symbol_table()->get_table()->end())
         {
@@ -2919,8 +2925,13 @@ SageInterface::fixupReferencesToSymbols( const SgScopeStatement* this_scope,  Sg
 
   // This is used to fixup the AST by resetting references to IR nodes (leveraged from AST merge).
      int replacementHashTableSize = 1001;
+#ifdef _MSC_VER
+#pragma message ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC.")
+	 printf ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC. \n");
+     ReplacementMapTraversal::ReplacementMapType replacementMap;
+#else
      ReplacementMapTraversal::ReplacementMapType replacementMap(replacementHashTableSize);
-
+#endif
      int counter = 0;
      while (i != this_symbolTable->get_table()->end())
         {
@@ -3888,7 +3899,7 @@ SageInterface::generateProjectName( const SgProject* project, bool supressSuffix
    {
   // This function generates a string to use as a unique project name for
   // a collection of files.  The last file will include it's suffix so that
-  // we generate proper names that cummunicate the source language.
+  // we generate proper names that communicate the source language.
   // Also also allows the single file case to be consistant with the previous
   // version of names generated for "DOT" files in the tutorial.
 
@@ -5389,7 +5400,9 @@ class FindUsedAndAllLabelsVisitor: public AstSimpleProcessing {
     if (isSgWhileStmt(loopStmt)) return isSgWhileStmt(loopStmt)->get_body();
     if (isSgForStatement(loopStmt)) return isSgForStatement(loopStmt)->get_loop_body();
     if (isSgDoWhileStmt(loopStmt)) return isSgDoWhileStmt(loopStmt)->get_body();
-    ROSE_ASSERT (!"Bad loop kind");
+
+	ROSE_ASSERT (!"Bad loop kind");
+    return NULL;
   }
 
   void SageInterface::setLoopBody(SgScopeStatement* loopStmt, SgStatement* body) {
@@ -5409,7 +5422,9 @@ class FindUsedAndAllLabelsVisitor: public AstSimpleProcessing {
     if (isSgWhileStmt(loopStmt)) return isSgWhileStmt(loopStmt)->get_condition();
     if (isSgForStatement(loopStmt)) return isSgForStatement(loopStmt)->get_test();
     if (isSgDoWhileStmt(loopStmt)) return isSgDoWhileStmt(loopStmt)->get_condition();
-    ROSE_ASSERT (!"Bad loop kind");
+
+	ROSE_ASSERT (!"Bad loop kind");
+    return NULL;
   }
 
   void SageInterface::setLoopCondition(SgScopeStatement* loopStmt, SgStatement* cond) {
@@ -6669,7 +6684,12 @@ SgAssignInitializer* SageInterface::splitExpression(SgExpression* from, string n
 
   bool SageInterface::isConstantTrue(SgExpression* e) {
   switch (e->variantT()) {
-    case V_SgBoolValExp: return isSgBoolValExp(e)->get_value() == true;
+#ifdef _MSC_VER
+  // DQ (11/28/2009): This fixes a warning in MSVC (likely p_value should be a "bool" instead of an "int").
+    case V_SgBoolValExp: return (isSgBoolValExp(e)->get_value() != 0);
+#else
+    case V_SgBoolValExp: return (isSgBoolValExp(e)->get_value() == true);
+#endif
     case V_SgIntVal: return isSgIntVal(e)->get_value() != 0;
     case V_SgCastExp: return isConstantTrue(isSgCastExp(e)->get_operand());
     case V_SgNotOp: return isConstantFalse(isSgNotOp(e)->get_operand());
@@ -7529,7 +7549,8 @@ PreprocessingInfo* SageInterface::attachArbitraryText(SgLocatedNode* target,
 void SageInterface::replaceMacroCallsWithExpandedStrings(SgPragmaDeclaration* target)
 {
   // This is part of Wave support in ROSE.
-#if CAN_NOT_COMPILE_WITH_ROSE != true
+// #if CAN_NOT_COMPILE_WITH_ROSE != true
+#if CAN_NOT_COMPILE_WITH_ROSE == 0
   ROSE_ASSERT(target != NULL);
   AttachedPreprocessingInfoType *info=  target->getAttachedPreprocessingInfo ();
   if (info == NULL) return;
@@ -8338,6 +8359,9 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
       case V_SgUnsignedLongLongIntVal: return isSgUnsignedLongLongIntVal(expr)->get_value();
       default: ROSE_ASSERT (!"Bad kind in getIntegerConstantValue");
     }
+
+    ROSE_ASSERT (!"Bad kind return in getIntegerConstantValue");
+	return 0;
   }
 
 
@@ -9556,7 +9580,13 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
 
   // This is used to fixup the AST by resetting references to IR nodes (leveraged from AST merge).
      int replacementHashTableSize = 1001;
+#ifdef _MSC_VER
+#pragma message ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC.")
+	 printf ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC. \n");
+     ReplacementMapTraversal::ReplacementMapType replacementMap;
+#else
      ReplacementMapTraversal::ReplacementMapType replacementMap(replacementHashTableSize);
+#endif
 
   // DQ (3/2/2009): Now use the collectDependentDeclarationsCopyType object to generate the mapping 
   // from the symbols in the old AST to the new symbols in the new AST (generated as part of the AST 
@@ -10243,7 +10273,16 @@ SgNode* SageInterface::getSgNodeFromAbstractHandleString(const std::string& inpu
   {
     if (handle->getNode()!=NULL)
     {
-      SgNode* result = (SgNode*)(handle->getNode()->getNode());
+#ifdef _MSC_VER
+     // DQ (11/28/2009): This is related to the use of covariant return types (I think).
+		SgNode* result = NULL; // (SgNode*)(handle->getNode()->getNode());
+
+#pragma message ("WARNING: covariant return type for get_node() not supported in MSVC.")
+		printf ("ERROR: covariant return type for get_node() not supported in MSVC. \n");
+		ROSE_ASSERT(false);
+#else
+		SgNode* result = (SgNode*)(handle->getNode()->getNode());
+#endif
       // deallocate memory, should not do this!!
       // May corrupt the internal std maps used in abstract handle namespace
       //delete handle->getNode();

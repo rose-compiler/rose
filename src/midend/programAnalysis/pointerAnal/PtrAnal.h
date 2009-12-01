@@ -52,9 +52,21 @@ private:
    class hash {
     public:
       size_t operator()(void * p) const { return (size_t) p; }
+
+#ifdef _MSC_VER 
+   public:
+      static const size_t bucket_size = 4;
+      static const size_t min_buckets = 8;
+#endif
    };
+
+#ifdef _MSC_VER
+  typedef rose_hash::hash_map<void*, VarRef> NameMap;
+  typedef rose_hash::hash_map<void*, std::pair<size_t,size_t> > StmtMap;
+#else
   typedef rose_hash::hash_map<void*, VarRef, PtrAnal::hash> NameMap;
   typedef rose_hash::hash_map<void*, std::pair<size_t,size_t>, PtrAnal::hash> StmtMap;
+#endif
 
   std::list<std::string> fdefined;
   NameMap namemap;

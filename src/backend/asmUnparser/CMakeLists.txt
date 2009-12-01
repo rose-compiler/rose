@@ -8,11 +8,13 @@ set( roseAsmUnparser_SRC
      unparseX86Asm.C unparseArmAsm.C unparsePowerpcAsm.C unparseAsm.C
    )
 
-add_library(  roseAsmUnparser ${roseAsmUnparser_SRC} )
+add_library(  roseAsmUnparser STATIC ${roseAsmUnparser_SRC} )
 add_dependencies( roseAsmUnparser ROSETTA )
 ########### install files ###############
 
-install(FILES  unparseAsm.h DESTINATION src/frontend/PHPFrontend/CMakeLists.txt )
+# tps: (11/25/2009): This seems wrong
+#install(FILES  unparseAsm.h DESTINATION src/frontend/PHPFrontend/CMakeLists.txt )
+install(FILES  unparseAsm.h DESTINATION ${INCLUDE_INSTALL_DIR})
 
 
 

@@ -16,9 +16,15 @@ class UF_elem
    unsigned size;
  public:
    // Create a set containing a single element. Its group id is a pointer to itself
-   UF_elem () : p_group(this), size(1) {}
+
+// DQ (11/29/2009): MSVC reports a warning when "this" is used in the preinitialization list.
+// UF_elem () : p_group(this), size(1) {}
+   UF_elem () : size(1) { p_group = this; }
+
    UF_elem (const UF_elem& that)  // no copying, can only modify using union_with 
-    : p_group(this), size(1) {}
+ // : p_group(this), size(1) {}
+    : size(1) { p_group = this; }
+
    // Check if two elements belong to the same group
    bool in_same_group(UF_elem *that) 
      {

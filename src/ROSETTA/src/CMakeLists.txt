@@ -2,11 +2,11 @@
 include_directories( ${ROSE_INCLUDES} )
 #include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
-
 ########### next target ###############
 
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -DROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR_DEFINED=\"${CMAKE_SOURCE_DIR}\"" )
 
+# source files for the code generator
 set(CxxGrammarMetaProgram_SRCS
     CxxGrammarMetaProgram.C
     grammar.C
@@ -27,7 +27,9 @@ set(CxxGrammarMetaProgram_SRCS
     buildConstructorsWithoutSourcePositionInformation.C
     outputClassesAndFields.C)
 
+# input files to generate source files
 set(GRAMMAR_SOURCE_FILES
+     ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/Node.code 
      ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/Statement.code 
      ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/grammarClassDefinitionMacros.macro 
      ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/grammarVariantFunctionDefinitionMacros.macro 
@@ -49,8 +51,7 @@ set(GRAMMAR_SOURCE_FILES
      ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/parserSourceCode.macro 
      ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/LocatedNode.code 
      ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/dataMemberAccessFunctions.macro 
-     ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/grammarMainClassParseFunctionSourceCode.macro 
-     ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/Node.code 
+     ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/grammarMainClassParseFunctionSourceCode.macro
      ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/BinaryInstruction.code 
      ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/grammarClassDeclarationMacros.macro 
      ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/grammarMainClassSourceCodeMacros.macro 
@@ -70,39 +71,50 @@ set(GRAMMAR_SOURCE_FILES
      ../astNodeList
    )
 
-
-
 add_executable(CxxGrammarMetaProgram ${CxxGrammarMetaProgram_SRCS} ${rose_util_src})
 
-#build ROSETTA
+# build ROSETTA code generator
 # target_link_libraries(CxxGrammarMetaProgram ${KDE4_KDECORE_LIBS} rose_util_lib)
 target_link_libraries(CxxGrammarMetaProgram ${KDE4_KDECORE_LIBS} rose_util_lib ${Boost_LIBRARIES})
 
-#Generate the edg-sage connection using ROSETTA
+get_target_property (META_EXE_LOC CxxGrammarMetaProgram LOCATION) 
+
+# define a custom command to call the code generator and generate source/header files
+# Generate the edg-sage connection using ROSETTA
 add_custom_command(
    OUTPUT ${ROSETTA_HEADERS} ${ROSETTA_SRC} 
-   PRE_BUILD
- COMMAND
-    ${CMAKE_COMMAND}  -E copy_directory  ${ROSE_TOP_SRC_DIR}/src/ROSETTA/Grammar ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/Grammar
-    COMMAND
-    ${CMAKE_COMMAND}  -E make_directory  ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/astFileIO
+#  depend on the code generator and input files
+   DEPENDS CxxGrammarMetaProgram ${GRAMMAR_SOURCE_FILES}
+#  We need to copy the input files  to the build tree since 
+#  the code generator will output the generated source files into the same directory as where the input files locate
+   COMMAND
+       ${CMAKE_COMMAND}  -E copy_directory  ${ROSE_TOP_SRC_DIR}/src/ROSETTA/Grammar ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/Grammar
+#   create this directory is needed since a few generated files will be put there        
+   COMMAND
+      ${CMAKE_COMMAND}  -E make_directory  ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/astFileIO
+   COMMAND ${META_EXE_LOC}
+      ARGS ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/
 
-   COMMAND CxxGrammarMetaProgram ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/  
-   DEPENDS ${GRAMMAR_SOURCE_FILES}
-
-#   COMMENT "Generating files using ROSETTA"
-#   DEPENDS ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/Grammar CxxGrammarMetaProgram  ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/astFileIO
-#   COMMAND CxxGrammarMetaProgram DEPENDS createSymlink CxxGrammarMetaProgram ${GRAMMAR_SOURCE_FILES}
-
+# DQ (11/30/2009): START: This was one of the possible versions that were a part of a conflict.
+#    OUTPUT ${ROSETTA_HEADERS} ${ROSETTA_SRC}
+#    PRE_BUILD
+#   COMMAND
+#   ${CMAKE_COMMAND}  -E copy_directory  ${ROSE_TOP_SRC_DIR}/src/ROSETTA/Grammar ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/Grammar
+#   COMMAND
+#   ${CMAKE_COMMAND}  -E make_directory  ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/astFileIO
+#   COMMAND CxxGrammarMetaProgram ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/  
+#   DEPENDS ${GRAMMAR_SOURCE_FILES}
+# DQ (11/30/2009): END: This was one of the possible versions that were a part of a conflict.
 )
 
 
 
-#add_custom_target( ROSETTA ALL DEPENDS ${GENERATED_HEADERS} ${GENERATED_SRC} COMMENT "Generating files" )
-
-add_custom_target( ROSETTA ALL DEPENDS ${ROSETTA_HEADERS} ${ROSETTA_SRC}
-    ${STORAGECLASSES_SRC}    )
+# a custom target depending on generated rosetta source and header files to trigger the building process
+add_custom_target( ROSETTA ALL 
+       DEPENDS ${ROSETTA_HEADERS} ${ROSETTA_SRC} ${STORAGECLASSES_SRC}    
+    )
 #add_custom_target( ROSETTA ALL DEPENDS copy_ROSETTA COMMENT "Generating files" )
+#add_custom_target( ROSETTA ALL DEPENDS ${GENERATED_HEADERS} ${GENERATED_SRC} COMMENT "Generating files" )
 
 
 

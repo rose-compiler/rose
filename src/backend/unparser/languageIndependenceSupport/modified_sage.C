@@ -579,6 +579,8 @@ int GetOperatorVariant(SgExpression* expr) {
      {
        printf ("Error: default case reached in GetOperatorVariant func_name = %s \n",func_name.c_str());
        assert(false);
+    /* avoid MSCV warning by adding return stmt */
+       return -1;
      }
 }
 
@@ -596,7 +598,8 @@ SgExpression* GetFirstOperand(SgExpression* expr) {
           return op2->get_lhs_operand();
     }
   }
-  return 0;
+
+  return NULL;
 }
 
 //-----------------------------------------------------------------------------------
@@ -855,14 +858,29 @@ bool Unparse_MOD_SAGE::PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
           return true;
         }
 
-     if ( parentExpr == NULL || parentExpr->variantT() == V_SgExpressionRoot || 
-          expr->variantT() == V_SgExprListExp || expr->variantT() == V_SgConstructorInitializer || expr->variantT() == V_SgDesignatedInitializer)
+  // DQ (11/9/2009): I think this can no longer be true since we have removed the use of SgExpressionRoot.
+     ROSE_ASSERT(parentExpr == NULL || parentExpr->variantT() != V_SgExpressionRoot);
+
+#if 0
+  // DQ (11/9/2009): Debugging test2009_40.C, but not this causes test2001_01.C to fail!
+  // if (parentExpr != NULL && parentExpr->variantT() == V_SgConstructorInitializer)
+     if (expr->variantT() == V_SgConstructorInitializer)
+        {
+          return true;
+        }
+#endif
+
+  // DQ (11/9/2009): Debugging test2009_40.C)
+  // if ( parentExpr == NULL || parentExpr->variantT() == V_SgExpressionRoot || expr->variantT() == V_SgExprListExp || expr->variantT() == V_SgConstructorInitializer || expr->variantT() == V_SgDesignatedInitializer)
+  // if ( parentExpr == NULL || parentExpr->variantT() == V_SgExpressionRoot || expr->variantT() == V_SgExprListExp || /* expr->variantT() == V_SgConstructorInitializer || */ expr->variantT() == V_SgDesignatedInitializer)
+     if ( parentExpr == NULL || parentExpr->variantT() == V_SgExpressionRoot || expr->variantT() == V_SgExprListExp || expr->variantT() == V_SgConstructorInitializer || expr->variantT() == V_SgDesignatedInitializer)
         {
 #if DEBUG_PARENTHESIS_PLACEMENT
           printf ("     Special case of parentExpr == NULL || SgExpressionRoot || SgExprListExp || SgConstructorInitializer || SgDesignatedInitializer (return false) \n");
 #endif
           return false;
         }
+
 #if 1
     // Liao, 8/27/2008, bug 229
     // A nasty workaround since set_need_paren() has no definite effect 
@@ -1720,7 +1738,11 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
      outputTemplateSpecializationSpecifier(decl_stmt);
    #endif
 #else
-   #warning "Non-GNU backends not specifically addressed, assuming g++ version 3.4.x compliant ..."
+#ifndef _MSC_VER
+#warning "Non-GNU backends not specifically addressed, assuming g++ version 3.4.x compliant ..."
+#else
+#pragma message ("Non-GNU backends not specifically addressed, assuming g++ version 3.4.x compliant ...")
+#endif
 #endif
 
      SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(decl_stmt);

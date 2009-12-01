@@ -139,8 +139,11 @@
 // does not follwo the new rules for what qualifies as a valid AST.  Time is needed for the AST Interface code 
 // to be adapted to the new rules.  Not clear how this will effect the unparser!!!
 // In the future we want to make this value "TRUE" this is a work around until then.
+#ifdef _MSC_VER
+#define STRICT_ERROR_CHECKING 0
+#else
 #define STRICT_ERROR_CHECKING false
-
+#endif
 
 // DQ (11/7/2007): Reimplementation of "fixup" support for the AST copy mechanism.
 // This version separates the fixup into three phases:
@@ -175,7 +178,7 @@
 //#include <unordered_map>
 //#else   
 
-#if ROSE_MICROSOFT_OS
+#ifdef _MSC_VER
 // DQ (11/4/2009): MS Visual Studio version of hash_multimap
 #include <cliext/hash_map>
 #else
@@ -308,7 +311,7 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
 // DQ (6/15/2008): This had to be moved here so that source files only including "sage3.h"
 // would see the required declarations (now that "Cxx_Grammar.h" references declarations in
 // the "Exec" namespace.
-// Files in src/frontend/ExecFormats
+// Files in src/frontend/BinaryFormats
 // This is included in the "ExecELF.h" and "ExecPE.h" files already.
 // #include "ExecGeneric.h"
    #include "ExecELF.h"
