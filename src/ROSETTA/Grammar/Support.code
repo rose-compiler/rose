@@ -5892,8 +5892,13 @@ SgSymbolTable::remove( const SgSymbol* symbol )
           symbol,symbol->class_name().c_str(),SageInterface::get_name(symbol).c_str(),
           symbolBasis,symbolBasis->class_name().c_str(),SageInterface::get_name(symbolBasis).c_str(),this);
 #endif
+#ifdef _MSC_VER
+     rose_hash::hash_multimap<SgName, SgSymbol*>::iterator elementToDelete = get_table()->end();
+     rose_hash::hash_multimap<SgName, SgSymbol*>::iterator it = get_table()->find(name);
+#else
      rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator elementToDelete = get_table()->end();
      rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it = get_table()->find(name);
+#endif
      while ( (it != get_table()->end()) && (elementToDelete == get_table()->end()) && ((*it).first == name) )
         {
        // printf ("Looking for symbol to remove (Make sure that we find the correct element) \n");
