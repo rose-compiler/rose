@@ -9,16 +9,18 @@ typedef std::vector<token_type>             token_container;
 typedef std::list<token_type>               token_list_container;
 typedef std::vector<std::list<token_type> > token_container_container;
 
-
 // DQ (11/28/2009): I think this is equivalent to "USE_ROSE"
 // DQ (11/28/2008): What does this evaluate to???  Does this mix C++ constants with CPP values (does this make sense? Is "true" defined?)
 // #if CAN_NOT_COMPILE_WITH_ROSE != true
-#if (CAN_NOT_COMPILE_WITH_ROSE == 0)
+#if !CAN_NOT_COMPILE_WITH_ROSE
 
 ///////////////////////////////////////////////////////////////////////////////
 //  Include Wave itself
+#ifdef _MSC_VER
+#pragma message ("WARNING: commented out use of boost/wave.hpp header file.")
+#else
 #include <boost/wave.hpp>
-
+#endif
 ///////////////////////////////////////////////////////////////////////////////
 // Include the lexer stuff
 #include <boost/wave/cpplexer/cpp_lex_token.hpp>    // token class
@@ -26,9 +28,7 @@ typedef std::vector<std::list<token_type> > token_container_container;
 
 #include "advanced_preprocessing_hooks.h"
 #include "attributeListMap.h"
-
 #endif
-
 
 //Include files to get the current path
 #include <unistd.h>
@@ -94,6 +94,11 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr,  std::map<std::string,ROSEAtt
 void
 attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& attributeMapForAllFiles)
    {
+#ifdef _MSC_VER
+#pragma message ("WARNING: Wave support not ported to Windows MSVC.")
+	   printf ("ERROR: Wave support not ported to Windows MSVC. \n");
+	   ROSE_ASSERT(false);
+#else
      ROSE_ASSERT(sageFilePtr != NULL);
      std::string sourceFileName = sageFilePtr->getFileName();
 
@@ -562,6 +567,9 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
      if (SgProject::get_verbose() >= 1)
           std::cout << "Size of mapFilenameToAttributes:" << mapFilenameToAttributes.size() << std::endl;
 
+#endif
+
+// endif for ifdef _MSC_VER
 #endif
 
 #if 0
