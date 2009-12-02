@@ -131,7 +131,8 @@ namespace __gnu_cxx {
 }
 #endif
 #else
-#pragma message ("WARNING: Commented out hash_map operators in RoseBin_support.h for Windows. Might need to fix this.")
+// DQ (11/27/2009): No message is required, since this is the correct fix for MSVC.
+// #pragma message ("WARNING: Commented out hash_map operators in RoseBin_support.h for Windows. Might need to fix this.")
 #endif
 
 

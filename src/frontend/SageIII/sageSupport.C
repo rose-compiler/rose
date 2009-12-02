@@ -1,8 +1,18 @@
 #include "rose.h"
 #include "rose_paths.h"
 #include <sys/stat.h>
+
+#ifdef _MSC_VER
+#pragma message ("WARNING: wait.h header file not available in MSVC.")
+#else
 #include <sys/wait.h>
+#endif
+
+#ifdef _MSC_VER
+#pragma message ("WARNING: libgen.h header file not available in MSVC.")
+#else
 #include <libgen.h>
+#endif
 
 //FMZ (5/19/2008): 
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
@@ -41,6 +51,13 @@ using namespace OmpSupport;
 
 // DQ (9/17/2009): This appears to only be required for the GNU 4.1.x compiler (not for any earlier or later versions).
 extern const std::string ROSE_GFORTRAN_PATH;
+
+#ifdef _MSC_VER
+// DQ (11/29/2009): MSVC does not support sprintf, but "_snprintf" is equivalent 
+// (note: printf_S is the safer version but with a different function argument list).
+// We can use a macro to handle this portability issue for now.
+#define snprintf _snprintf
+#endif
 
 std::string
 SgValueExp::get_constant_folded_value_as_string()
@@ -5379,6 +5396,9 @@ SgSourceFile::build_classpath()
      fprintf(stderr, "Fortran parser not supported \n");
      ROSE_ASSERT(false);
   // abort();
+
+  // DQ (11/30/2009): MSVC requires a return stmt from a non-void function (an error, not a warning).
+	 return "error in SgSourceFile::build_classpath()";
    }
 
 int
@@ -5387,6 +5407,9 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
      fprintf(stderr, "Fortran parser not supported \n");
      ROSE_ASSERT(false);
   // abort();
+
+  // DQ (11/30/2009): MSVC requires a return stmt from a non-void function (an error, not a warning).
+	 return -1;
    }
 #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 
@@ -5544,9 +5567,16 @@ SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputComm
 int
 SgSourceFile::build_PHP_AST()
    {
-     string phpFileName = this->get_sourceFileNameWithPath();                                 
-     int frontendErrorLevel = php_main(phpFileName, this);
+     string phpFileName = this->get_sourceFileNameWithPath();
+#ifdef _MSC_VER
+#pragma message ("WARNING: PHP not supported within initial MSVC port of ROSE.")
+	 printf ("WARNING: PHP not supported within initial MSVC port of ROSE.");
+	 ROSE_ASSERT(false);
 
+	 int frontendErrorLevel = -1;
+#else
+     int frontendErrorLevel = php_main(phpFileName, this);
+#endif
      return frontendErrorLevel;
    }
 
@@ -7321,6 +7351,11 @@ StringUtility::popen_wrapper ( const string & command, vector<string> & result )
 
      result = vector<string>();
 
+#ifdef _MSC_VER
+#pragma message ("WARNING: Linux popen() not supported within MSVC.")
+	 printf ("WARNING: Linux popen() not supported within MSVC.");
+	 ROSE_ASSERT(false);
+#else
      if ((fp = popen(command.c_str (), "r")) == NULL)
         {
           cerr << "Files or processes cannot be created" << endl;
@@ -7347,6 +7382,7 @@ StringUtility::popen_wrapper ( const string & command, vector<string> & result )
           cerr << ("Cannot execute pclose");
           returnValue = false;
         }
+#endif
 
      return returnValue;
    }

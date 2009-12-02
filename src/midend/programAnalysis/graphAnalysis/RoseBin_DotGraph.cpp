@@ -35,8 +35,12 @@ RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
 
   // DQ (4/23/2009): Added a typedef to refactor the specification of the type (and add the explicit reference to the hash function).
   // rose_hash::hash_set <std::string> funcNames;
+#ifdef _MSC_VER
+    typedef rose_hash::hash_set <std::string> funcNamesType;
+#else
     typedef rose_hash::hash_set <std::string,rose_hash::hash_string> funcNamesType;
-    funcNamesType funcNames;
+#endif
+	funcNamesType funcNames;
 
     rose_graph_integer_node_hash_map resultSet;
 

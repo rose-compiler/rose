@@ -16,6 +16,9 @@ SgAsmGenericString::get_string() const
 {
     ROSE_ASSERT(!"should have been pure virtual if ROSETTA supported that.");
     abort();
+
+ // DQ (11/27/2009): MSVC requires a return stmt for any non-void return type of a function.
+	return "error in SgAsmGenericString::get_string()";
 }
 
 void

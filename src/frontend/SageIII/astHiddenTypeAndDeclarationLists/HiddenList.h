@@ -235,11 +235,10 @@ struct cmp_SgSymbolPointer {
 // HashFunction for SymbolHashMap
 struct HashFunction_SymbolHashMap {
 
-        public:
-			#if _MSC_VER
-					   public:
-      static const size_t bucket_size = 4;
-      static const size_t min_buckets = 8;
+     public:
+#if _MSC_VER
+          static const size_t bucket_size = 4;
+          static const size_t min_buckets = 8;
 #endif
 
                 int operator()(SgSymbol* S) const
@@ -328,17 +327,27 @@ typedef std::deque<SymbolInformation*> Vector_Of_SymbolInformation;
 // this hash_map contains:
 //  Key: pointer to SgSymbol
 //  Value: struct of booleans for getting class, namespace & validity information
+#ifdef _MSC_VER
+typedef rose_hash::hash_map<SgSymbol*, SymbolHashMapValue*> SymbolHashMap;
+#else
 typedef rose_hash::hash_map<SgSymbol*, SymbolHashMapValue*, HashFunction_SymbolHashMap /*equal_symbol*/> SymbolHashMap;
+#endif
 // this hash_map contains:
 //  Key: symbol-name from the SymbolTable
 //  Value: HashMap of Pointers & boolean if scope can be named of this symbols
+#ifdef _MSC_VER
+// typedef rose_hash::hash_map<std::string, SymbolHashMap, HashFunction_String> ScopeStackEntry;
+typedef rose_hash::hash_map<std::string, SymbolHashMap> ScopeStackEntry;
+#else
 typedef rose_hash::hash_map<std::string, SymbolHashMap, HashFunction_String, cmp_string> ScopeStackEntry;
+#endif
 
 // ad using directives: used for storing namespaces
 //  Key: (qualified) Name of namespace
 //  Value: std::vector of struct symbol table
 #ifdef _MSC_VER
-typedef rose_hash::hash_map<std::string, Vector_Of_SymbolInformation, HashFunction_String> StringVectorHashMap;
+// typedef rose_hash::hash_map<std::string, Vector_Of_SymbolInformation, HashFunction_String> StringVectorHashMap;
+typedef rose_hash::hash_map<std::string, Vector_Of_SymbolInformation> StringVectorHashMap;
 #else
 typedef rose_hash::hash_map<std::string, Vector_Of_SymbolInformation, HashFunction_String, eqstr3> StringVectorHashMap;
 #endif
@@ -385,7 +394,8 @@ struct NamespaceInformation {
 
 typedef std::vector<NamespaceInformation> VectorOfNamespaceInformation;
 #ifdef _MSC_VER
-typedef rose_hash::hash_map<std::string, VectorOfNamespaceInformation, HashFunction_String> String_VectorOfNamespaceInformation_HashMap;
+// typedef rose_hash::hash_map<std::string, VectorOfNamespaceInformation, HashFunction_String> String_VectorOfNamespaceInformation_HashMap;
+typedef rose_hash::hash_map<std::string, VectorOfNamespaceInformation> String_VectorOfNamespaceInformation_HashMap;
 #else
 typedef rose_hash::hash_map<std::string, VectorOfNamespaceInformation, HashFunction_String, eqstr3> String_VectorOfNamespaceInformation_HashMap;
 #endif
@@ -397,7 +407,9 @@ struct it_VectorOfNamespaceInformation_boolean {
 };
 
 #ifdef _MSC_VER
-typedef rose_hash::hash_map<std::string, it_VectorOfNamespaceInformation_boolean, HashFunction_String> String_it_VectorOfNamespaceInformation_boolean;
+// DQ (11/27/2009): Unclear now to fix this.
+// typedef rose_hash::hash_map<std::string, it_VectorOfNamespaceInformation_boolean, HashFunction_String> String_it_VectorOfNamespaceInformation_boolean;
+typedef rose_hash::hash_map<std::string, it_VectorOfNamespaceInformation_boolean> String_it_VectorOfNamespaceInformation_boolean;
 #else
 typedef rose_hash::hash_map<std::string, it_VectorOfNamespaceInformation_boolean, HashFunction_String, eqstr3> String_it_VectorOfNamespaceInformation_boolean;
 #endif
@@ -452,8 +464,11 @@ struct HashFunction_SgUsingDirectiveStatement {
 
 //  Key: Address of SgUsingDirectiveStatement
 //  Value: LinkedListStackSetSgDeclarationStatements
+#ifdef _MSC_VER
+typedef rose_hash::hash_map<SgUsingDirectiveStatement*, LinkedListStackSetSgDeclarationStatements> UsingDirectiveStatement_LinkedListStackSetSgDeclarationStatements_HashMap;
+#else
 typedef rose_hash::hash_map<SgUsingDirectiveStatement*, LinkedListStackSetSgDeclarationStatements, HashFunction_SgUsingDirectiveStatement> UsingDirectiveStatement_LinkedListStackSetSgDeclarationStatements_HashMap;
-
+#endif
 
 // HashFunction for UsingDeclarationStatement_LinkedListStackSetSgDeclarationStatements_HashMap
 struct HashFunction_SgUsingDeclarationStatement {
@@ -478,17 +493,27 @@ struct HashFunction_SgUsingDeclarationStatement {
 
 //  Key: Address of SgUsingDirectiveStatement
 //  Value: LinkedListStackSetSgDeclarationStatements
+#if _MSC_VER
+typedef rose_hash::hash_map<SgUsingDeclarationStatement*, LinkedListStackSetSgDeclarationStatements> UsingDeclarationStatement_LinkedListStackSetSgDeclarationStatements_HashMap;
+#else
 typedef rose_hash::hash_map<SgUsingDeclarationStatement*, LinkedListStackSetSgDeclarationStatements, HashFunction_SgUsingDeclarationStatement> UsingDeclarationStatement_LinkedListStackSetSgDeclarationStatements_HashMap;
-
+#endif
 
 //  Key: Address of SgUsingDirectiveStatement
 //  Value: SetSgDeclarationStatements
+#if _MSC_VER
+typedef rose_hash::hash_map<SgUsingDirectiveStatement*, SetSgDeclarationStatements> UsingDirectiveStatement_SetSgDeclarationStatements_HashMap;
+#else
 typedef rose_hash::hash_map<SgUsingDirectiveStatement*, SetSgDeclarationStatements, HashFunction_SgUsingDirectiveStatement> UsingDirectiveStatement_SetSgDeclarationStatements_HashMap;
+#endif
 
 //  Key: Address of SgUsingDirectiveStatement
 //  Value: SetSgDeclarationStatements
+#if _MSC_VER
+typedef rose_hash::hash_map<SgUsingDeclarationStatement*, SetSgDeclarationStatements> UsingDeclarationStatement_SetSgDeclarationStatements_HashMap;
+#else
 typedef rose_hash::hash_map<SgUsingDeclarationStatement*, SetSgDeclarationStatements, HashFunction_SgUsingDeclarationStatement> UsingDeclarationStatement_SetSgDeclarationStatements_HashMap;
-
+#endif
 
 /*
 // object for Post-Order Traversal
@@ -549,7 +574,9 @@ class HiddenListComputationTraversal : public AstTopDownBottomUpProcessing<Inher
 // tps (11/25/2009) : FIXME; This will not work on windows right now
                 String_it_VectorOfNamespaceInformation_boolean NamespacesIteratorHashMap;
 #else
-#pragma message ("WARNING: HiddenList : Change implementation to work under windows.")
+// #pragma message ("WARNING: HiddenList : Change implementation to work under windows.")
+             // DQ (11/27/2009): I think this is fixed now.
+                String_it_VectorOfNamespaceInformation_boolean NamespacesIteratorHashMap;
 #endif
                 // hash_map (Key: name / Value: vector of symbols) for storing symbols of a class
                 //  will be used for updating the current scope if an SgMemberFunctionDeclaration is encountered
@@ -615,7 +642,7 @@ class HiddenListComputationTraversal : public AstTopDownBottomUpProcessing<Inher
 
                              // NamespacesIteratorHashMap[it->first] = it_VecOfNamespInfo;
 
-#ifndef _MSC_VER
+// #ifndef _MSC_VER
 // tps (11/25/2009) : FIXME; This will not work on windows right now
                                 String_it_VectorOfNamespaceInformation_boolean::iterator foundValue = NamespacesIteratorHashMap.find(it->first);
                                 if (foundValue == NamespacesIteratorHashMap.end())
@@ -626,10 +653,9 @@ class HiddenListComputationTraversal : public AstTopDownBottomUpProcessing<Inher
                                     {
                                       foundValue->second = it_VecOfNamespInfo;
                                     }
-#else
-#pragma message ("WARNING HiddenList : Change implementation to work under windows.")
-
-#endif
+// #else
+// #pragma message ("WARNING HiddenList : Change implementation to work under windows.")
+// #endif
                         }
 
                 };
@@ -650,7 +676,7 @@ class HiddenListComputationTraversal : public AstTopDownBottomUpProcessing<Inher
                                 it_VecOfNamespInfo.it_vec_namesp_info = (it->second).begin();
                                 it_VecOfNamespInfo.first_namespace_occurence = false;
 
-#ifndef _MSC_VER
+// #ifndef _MSC_VER
 // tps (11/25/2009) : FIXME; This will not work on windows right now
                              // DQ (9/25/2007): This is a problem piece of code that is caught by STL debugging.
                              // NamespacesIteratorHashMap[it->first] = it_VecOfNamespInfo;
@@ -663,9 +689,9 @@ class HiddenListComputationTraversal : public AstTopDownBottomUpProcessing<Inher
                                     {
                                       foundValue->second = it_VecOfNamespInfo;
                                    }
-#else
-#pragma message ("WARNING HiddenList : Change implementation to work under windows.")
-#endif                                    
+// #else
+// #pragma message ("WARNING HiddenList : Change implementation to work under windows.")
+// #endif                                    
                         }
 
                 };

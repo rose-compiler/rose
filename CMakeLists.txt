@@ -131,8 +131,8 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII 
      ${ROSE_TOP_SRC_DIR}/src/ROSETTA/src/
      ${ROSE_TOP_SRC_DIR}/src 
-     ${ROSE_TOP_SRC_DIR}/src/frontend/CxxFrontend/EDG_SAGE_Connection/
-     ${ROSE_TOP_SRC_DIR}/src/frontend/CxxFrontend/EDG_3.3/src
+     ${ROSE_TOP_SRC_DIR}/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/
+     ${ROSE_TOP_SRC_DIR}/src/frontend/CxxFrontend/EDG/EDG_3.3/src
      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII 
      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astFixup 
      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astPostProcessing 

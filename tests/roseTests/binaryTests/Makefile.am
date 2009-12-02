@@ -1,5 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+SUBDIRS = SemanticVerification
+
 EXTRA_DIST = runTest.C arm-ctrlaltdel.ans \
 	     runExecFormatsTest testShiftResizeSection.sh \
 	     test_findConstants.ans test_disassemble.ans \
@@ -250,6 +252,9 @@ test_assembler.passed: disassemble
 
 # This tests lots of sample binaries. We cannot run it concurrently with the other tests because some of the output
 # names could conflict with the other tests (we don't know what files are in the sample binaries directory).
+# NOTE: When we get too many tests to reasonably run serially, we can split them into multiple make rules, where each
+# rule either runs a single subdirectory of samples and/or each rule runs different tests by referencing different
+# configuration files. Don't forget to update the mostlyclean-local rule as well.
 test_samples.passed: disassemble execFormatsTest $(srcdir)/testSampleBinaries.sh $(srcdir)/testSampleBinaries.conf
 	@if $(srcdir)/testSampleBinaries.sh $(BINARY_SAMPLES) $(srcdir)/testSampleBinaries.conf 99>&1 >test_samples.out 2>&1; \
 	then \
@@ -269,14 +274,14 @@ test_testEtherInsns.passed: testEtherInsns
 
 # Don't delete things indiscriminately--sometimes developers have other related files that should not be touched!
 MOSTLYCLEANFILES = \
-	$(addsuffix .new,  $(notdir $(wildcard $(BINARY_SAMPLES)/*))) \
-	$(addsuffix .dump, $(notdir $(wildcard $(BINARY_SAMPLES)/*))) \
-	$(addprefix rose_, $(addsuffix .s, $(notdir $wildcard $(BINARY_SAMPLES)/*))) \
         $(TEST_PASSED_TARGETS) test_testElfSchulz-{1,2}.passed \
 	a.out arm-ctrlaltdel.ans arm-ctrlaltdel.dump-{1,2,3} arm-ctrlaltdel.new.new \
 	arm-poweroff.{new.dump,new.new} rose_arm-ctrlaltdel.new.s rose_arm-poweroff.new.s \
 	rose_schulz-sample{1,2}.so.new.s schulz-sample{1,2}.so.{new.dump,new.new} test_findConstants.ans \
 	test_disassemble.ans test_samples.{passed,out}
+
+mostlyclean-local:
+	$(srcdir)/testSampleBinaries.sh --cleanup $(BINARY_SAMPLES) $(srcdir)/testSampleBinaries.conf
 
 
 ###############################################################################################################################

@@ -1433,7 +1433,11 @@ Terminal::buildPointerInMemoryPoolCheck ()
                        {
                          s += "     if ( p_" + varNameString + " != NULL )\n" ;
                          s += "        { \n" ;
+						 s += "#ifdef _MSC_VER \n" ;
+                         s += "          rose_hash::hash_multimap<SgName, SgSymbol*>::iterator it; \n" ;
+						 s += "#else \n" ;
                          s += "          rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it; \n" ;
+						 s += "#endif \n" ;
                          s += "          for (it = p_" + varNameString + "->begin(); it != p_" + varNameString + "->end(); ++it)\n" ;
                          s += "             {\n";
                          s += "               if ( it->second != NULL )\n" ;

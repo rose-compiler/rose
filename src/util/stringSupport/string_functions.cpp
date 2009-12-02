@@ -41,6 +41,9 @@
 // tps (11/10/2009): This include is needed in windows to find the realpath
 #if ROSE_MICROSOFT_OS
 #include <unistd.h>
+
+// DQ (11/27/2009): this is required for use of GetFullPathName() (below).
+#include <windows.h>
 #endif
 // DQ (12/31/2005): This is allowed in C files where it can not 
 // effect the users applcation (just not in header files).
@@ -145,14 +148,33 @@ StringUtility::getAbsolutePathFromRelativePath ( const std::string & relativePat
      char resolved_path[MAXPATHLEN];
 
 #if ROSE_MICROSOFT_OS
+     resolved_path[0] = '\0';
+  // const char* resultingPath = NULL;
+	 printf ("WARNING: realPath() not supported in MSVC (attempt at work around implemented) relativePath = %s \n",relativePath.c_str());
+
+  // tps (11/10/200): Did not find corresponding function call in Windows. Commented out for now. Seems to work.
+  // ROSE_ASSERT(false);
+
+  // DQ (11/27/2009): This is a try at work around for realpath() not being available in Windows (does not work yet).
+  // DWORD WINAPI GetFullPathName( __in   LPCTSTR lpFileName, __in   DWORD nBufferLength, __out  LPTSTR lpBuffer, __out  LPTSTR *lpFilePart );
+  // char resolved_file[MAXPATHLEN];
+  // resolved_file[0] = '\0';
+	 LPSTR* resolved_file = NULL;
+  // LPSTR resolved_path[MAXPATHLEN];
+  // char resultingPath[MAXPATHLEN];
+  // resultingPath[0] = '\0';
+	 ROSE_ASSERT(relativePath.empty() == false);
+	 int status = ::GetFullPathName(relativePath.c_str(), relativePath.size(), resolved_path, resolved_file);
+  // if (status != 0)
+  //      ::WCMD_print_error();
+  // ROSE_ASSERT(status != 0);
+	 printf ("In MSVC -- StringUtility::getAbsolutePathFromRelativePath(): relativePath = %s resolved_path = %s \n",relativePath.c_str(),(resolved_path[0] != '\0') ? resolved_path : "NULL STRING");
+
 	 const char* resultingPath = NULL;
-	 printf ("WARNING: realPath() not supported in MSVC (work around not implemented) \n");
-// tps (11/10/200): Did not find corresponding function call in Windows. Commented out for now. Seems to work.
-	 //	 ROSE_ASSERT(false);
 #else
   // DQ (9/3/2006): Note that "realpath()" 
   // can return an error if it processes a file or directory that does not exist.  This is 
-  // a problem for include paths that are specified on the commadline and which don't exist; 
+  // a problem for include paths that are specified on the commandline and which don't exist; 
   // most compilers silently ignore these and we have to at least ignore them.
      const char* resultingPath = realpath( relativePath.c_str(), resolved_path);
 #endif

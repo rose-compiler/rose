@@ -3,7 +3,13 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 add_subdirectory(CallGraphAnalysis)
 add_subdirectory(OAWrap)
+
+# DQ (11/25/2009) Comment out under Windows.
+if (!WIN32)
+message ("Commented out use of OpenAnalysis in Windows.")
 add_subdirectory(CFG)
+endif (!WIN32)
+
 add_subdirectory(dataflowAnalysis)
 add_subdirectory(valuePropagation)
 add_subdirectory(defUseAnalysis)

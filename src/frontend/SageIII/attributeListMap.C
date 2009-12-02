@@ -1,14 +1,20 @@
 #include "rose.h"
 #include "rose_config.h"
 
-#if CAN_NOT_COMPILE_WITH_ROSE != true
-
+// DQ (11/28/2009): I think this is equivalent to "USE_ROSE"
+// #if CAN_NOT_COMPILE_WITH_ROSE != true
+#if (CAN_NOT_COMPILE_WITH_ROSE == 0)
 
 #include "attributeListMap.h"
 
 // Include files to get the current path
 #include <unistd.h>
+
+#ifdef _MSC_VER
+#pragma message ("WARNING: param.h header file not available in MSVC.")
+#else
 #include <sys/param.h>
+#endif
 
 #if 1
 // DQ (5/9/2007): This is used to support the work with WAVE.

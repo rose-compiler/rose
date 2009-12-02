@@ -12,7 +12,6 @@
 
 // ROSE standard include files
 
-
 #include <cstdio>
 #include <ostream>
 #include <string>
@@ -25,7 +24,6 @@
 #include <boost/wave/preprocessing_hooks.hpp>
 
 #include "attributeListMap.h"
-
 
 #if 0
 namespace {

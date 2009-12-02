@@ -21,7 +21,8 @@ class LoopTreeTransform
 
 class LoopTreeDistributeNode : public LoopTreeTransform
 {
-  typedef SelectObject<LoopTreeNode*>& SelectLoopTreeNode;
+// DQ (11/25/2009): Changed name from SelectObject to SelectObjectBase to avoid SelectObject function ambiguity using Microsoft Visual Studio
+  typedef SelectObjectBase<LoopTreeNode*>& SelectLoopTreeNode;
   LoopTreeNode* Distribute( LoopTreeNode *n, SelectLoopTreeNode sel, 
                             ObserveTransform &ob);
  public:

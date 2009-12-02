@@ -3101,6 +3101,10 @@ std::ostream & operator<< ( std::ostream & os, const std::vector<bool> & bv );
 
 /*! \brief Name equality operator support for symbol tables within ROSE.
  */
+#ifdef _MSC_VER 
+// DQ (11/29/2009): attempting to fix: error C2903: 'rebind' : symbol is neither a class template nor a function template
+// #pragma message ("WARNING: struct eqstr skipped for MSVC.")
+#else
 struct eqstr
    {
      bool operator()(const SgName& s1, const SgName& s2) const
@@ -3108,6 +3112,7 @@ struct eqstr
           return s1.getString() == s2.getString();
         }
    };
+#endif
 
 /*! \brief Hash name support for symbol tables within ROSE.
  */
@@ -3143,8 +3148,27 @@ struct hash_Name
 
  */
  // tps (11/19/2009) : Constructor of hash_multimap in MSVS is different
- #ifdef _MSC_VER
-class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>
+#ifdef _MSC_VER
+// DQ (11/27/2009): Trying to fix MSVC compiler warning: 
+//    warning C4717: 'rose_hash_multimap::rose_hash_multimap' : recursive on all control paths, function will cause runtime stack overflow.
+
+#if 0
+template<class _Kty> inline size_t hash_value(const _Kty& _Keyval);
+	{	// hash _Keyval to size_t value one-to-one
+	return ((size_t)_Keyval ^ _HASH_SEED);
+	}
+#else
+inline size_t hash_value(const SgName & _Keyval)
+   {
+     printf ("In custom hash_value function \n");
+     ROSE_ASSERT(false);
+
+     return 0;
+   }
+#endif
+
+// class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>
+class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*>
    {
      protected:
           SgNode * parent;
@@ -3152,7 +3176,8 @@ class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, ha
      public:
        // DQ (12/22/2005): Added initialization of parent pointer as suggested by Jochen
           rose_hash_multimap()
-             : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>(), parent(NULL)
+          // : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>(), parent(NULL)
+          // : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>(), parent(NULL)
              {}
 // tps (11/18/2009) : this constructor is not valid, see Node.code
 #if 0
@@ -3160,9 +3185,12 @@ class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, ha
              : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>(sz), parent(NULL)
              {}
 #endif
+#if 0
           rose_hash_multimap(const rose_hash_multimap& rhs) 
-             : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>((rose_hash_multimap)rhs),parent(rhs.parent)
+          // : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>((rose_hash_multimap)rhs),parent(rhs.parent)
+             : rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name>(const_cast<rose_hash_multimap>(rhs)),parent(rhs.parent)
              {}
+#endif
 #else
 class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>
    {
@@ -3716,7 +3744,8 @@ HEADER_NAME_START
        // Added to support assignments to string variables.
           operator std::string () const;
 
-          int is_null(void) const;
+       // DQ (11/28/2009): Fixed return value of function to be "bool" instead of "int"
+          bool is_null(void) const;
           void replace_space(char t);
           SgName& operator<<(const std::string& str);
 
@@ -4865,167 +4894,167 @@ HEADER_UNPARSE_INFO_START
      private:
 
        // DQ (1/3/2009): This is similar code to what is in SgModifier::checkBit, setBit, unsetBit; so it could be refactored.
-          int checkBit(unparse_type_num bit) const;
+          bool checkBit(unparse_type_num bit) const;
           void setBit(unparse_type_num bit);
           void unsetBit(unparse_type_num bit);
 
      public:
 
        // access function to SgUnparse_Info 
-          int isUnsetAccess() const;
+          bool isUnsetAccess() const;
           void set_isUnsetAccess();
-          int isPrivateAccess() const;
+          bool isPrivateAccess() const;
           void set_isPrivateAccess();
-          int isProtectedAccess() const;
+          bool isProtectedAccess() const;
           void set_isProtectedAccess();
-          int isPublicAccess() const;
+          bool isPublicAccess() const;
           void set_isPublicAccess();
 
-          int isPointerToSomething() const;
+          bool isPointerToSomething() const;
           void set_isPointerToSomething();
           void unset_isPointerToSomething();
 
-          int isReferenceToSomething() const;
+          bool isReferenceToSomething() const;
           void set_isReferenceToSomething();
           void unset_isReferenceToSomething();
 	 
-          int inVarDecl() const;
+          bool inVarDecl() const;
           void set_inVarDecl();
           void unset_inVarDecl();
 	 
-          int inArgList() const;
+          bool inArgList() const;
           void set_inArgList();
           void unset_inArgList();
 	 
-          int SkipSemiColon() const;
+          bool SkipSemiColon() const;
           void set_SkipSemiColon();
           void unset_SkipSemiColon();
 
-          int inEnumDecl() const;
+          bool inEnumDecl() const;
           void set_inEnumDecl();
           void unset_inEnumDecl();
 
-          int inTemplateList() const;
+          bool inTemplateList() const;
           void set_inTemplateList();
           void unset_inTemplateList();
 
-          int SkipBaseType() const;
+          bool SkipBaseType() const;
           void set_SkipBaseType();
           void unset_SkipBaseType();
 
-          int inAggregateInitializer() const;
+          bool inAggregateInitializer() const;
           void set_inAggregateInitializer();
           void unset_inAggregateInitializer();
 
-          int isWithType() const;
+          bool isWithType() const;
           void set_isWithType();
           void unset_isWithType();
 
-          int inConditional() const;
+          bool inConditional() const;
           void set_inConditional();
           void unset_inConditional();
 
-          int SkipDefinition() const;
+          bool SkipDefinition() const;
           void set_SkipDefinition();
           void unset_SkipDefinition();
 
-          int SkipClassSpecifier() const;
+          bool SkipClassSpecifier() const;
           void set_SkipClassSpecifier();
           void unset_SkipClassSpecifier();
 
-          int inEmbeddedDecl() const;
+          bool inEmbeddedDecl() const;
           void set_inEmbeddedDecl();
           void unset_inEmbeddedDecl();
 
-          int SkipGlobal() const;
+          bool SkipGlobal() const;
           void set_SkipGlobal();
           void unset_SkipGlobal();
 
-          int SkipAtomic() const;
+          bool SkipAtomic() const;
           void set_SkipAtomic();
           void unset_SkipAtomic();
 
-          int PrintName() const;
+          bool PrintName() const;
           void set_PrintName();
           void unset_PrintName();
 
-          int CheckAccess() const;
+          bool CheckAccess() const;
           void set_CheckAccess();
           void unset_CheckAccess();
 
-          int SkipFunctionQualifier() const;
+          bool SkipFunctionQualifier() const;
           void set_SkipFunctionQualifier();
           void unset_SkipFunctionQualifier();
 
-          int isArrayType() const;
+          bool isArrayType() const;
           void set_isArrayType();
           void unset_isArrayType();
 
-          int inRhsExpr() const;
+          bool inRhsExpr() const;
           void set_inRhsExpr();
           void unset_inRhsExpr();
 
-          int SkipParen() const;
+          bool SkipParen() const;
           void set_SkipParen();
           void unset_SkipParen();
 
-          int isTypeSecondPart() const;
+          bool isTypeSecondPart() const;
           void set_isTypeSecondPart();
           void unset_isTypeSecondPart();
 
-          int isTypeFirstPart() const;
+          bool isTypeFirstPart() const;
           void set_isTypeFirstPart();
           void unset_isTypeFirstPart();
 
-          int SkipInitializer() const;
+          bool SkipInitializer() const;
           void set_SkipInitializer();
           void unset_SkipInitializer();
 
-          int SkipComments() const;
+          bool SkipComments() const;
           void set_SkipComments();
           void unset_SkipComments();
 
        // MS: 09/03/03
-          int SkipWhitespaces() const;
+          bool SkipWhitespaces() const;
           void set_SkipWhitespaces();
           void unset_SkipWhitespaces();
 
-          int SkipCPPDirectives() const;
+          bool SkipCPPDirectives() const;
           void set_SkipCPPDirectives();
           void unset_SkipCPPDirectives();
 
-          int SkipEnumDefinition() const;
+          bool SkipEnumDefinition() const;
           void set_SkipEnumDefinition();
           void unset_SkipEnumDefinition();
 
-          int SkipFunctionDefinition() const;
+          bool SkipFunctionDefinition() const;
           void set_SkipFunctionDefinition();
           void unset_SkipFunctionDefinition();
 
-          int SkipClassDefinition() const;
+          bool SkipClassDefinition() const;
           void set_SkipClassDefinition();
           void unset_SkipClassDefinition();
 
-          int AddSemiColonAfterDeclaration() const;
+          bool AddSemiColonAfterDeclaration() const;
           void set_AddSemiColonAfterDeclaration();
           void unset_AddSemiColonAfterDeclaration();
 
        // DQ (11/04/03): Added to support unparsing control flow (SgForStmt, SgSwitch,
        //                etc.) to make prefix more precise. Can't add case to anything 
        //                but switch, and capture declarations in for loops, for example.
-          int SkipBasicBlock() const;
+          bool SkipBasicBlock() const;
           void set_SkipBasicBlock();
           void unset_SkipBasicBlock();
 
        // DQ (3/18/2004): Added to support unparsing of class templates in variables but 
        // not in in instatiated template declarations (unless the template is transformed 
        // in which case another test is used).
-          int outputClassTemplateName() const;
+          bool outputClassTemplateName() const;
           void set_outputClassTemplateName();
           void unset_outputClassTemplateName();
 
        // DQ (5/27/2005): support (see documentation above)
-          int outputCompilerGeneratedStatements() const;
+          bool outputCompilerGeneratedStatements() const;
           void set_outputCompilerGeneratedStatements();
           void unset_outputCompilerGeneratedStatements();
 
@@ -5033,35 +5062,35 @@ HEADER_UNPARSE_INFO_START
       //! Control output of constant folded values, the default is to ignore constant 
       //! folded values and unparse the original code (as if no constant folding were done).
       //! (default is unset)
-          int SkipConstantFoldedExpressions() const;
+          bool SkipConstantFoldedExpressions() const;
           void set_SkipConstantFoldedExpressions();
           void unset_SkipConstantFoldedExpressions();
 
        // DQ and PC (6/1/2006): Added Peter's suggested fixes to support unparsing fully qualified names.
-          int forceQualifiedNames() const;
+          bool forceQualifiedNames() const;
           void set_forceQualifiedNames();
           void unset_forceQualifiedNames();
 
        // DQ and PC (6/1/2006): Added Peter's suggested fixes to support unparsing fully qualified names.
-          int skipCheckAccess() const;
+          bool skipCheckAccess() const;
           void set_skipCheckAccess();
           void unset_skipCheckAccess();
 
        // DQ (10/11/2006): Added to support new implementation of name qualification
-          int SkipQualifiedNames() const;
+          bool SkipQualifiedNames() const;
           void set_SkipQualifiedNames();
           void unset_SkipQualifiedNames();
 
-          int requiresGlobalNameQualification() const;
+          bool requiresGlobalNameQualification() const;
           void set_requiresGlobalNameQualification();
           void unset_requiresGlobalNameQualification();
 
        // DQ (9/22/2007): Added optional handling of Fortran type attributes, these may have to be setup for each different kind of type attribute.
-          int useTypeAttributes() const;
+          bool useTypeAttributes() const;
           void set_useTypeAttributes();
           void unset_useTypeAttributes();
 
-          int SkipFormatting() const;
+          bool SkipFormatting() const;
           void set_SkipFormatting();
           void unset_SkipFormatting();
 
@@ -5122,7 +5151,7 @@ HEADER_UNPARSE_INFO_START
 
        // FMZ (5/8/2008) Added to support to generate fortran XX.rose_mod file for a module
        // the code will based on fortran unparser code
-          int outputFortranModFile() const;
+          bool outputFortranModFile() const;
           void set_outputFortranModFile();
           void unset_outputFortranModFile();
 
@@ -5233,7 +5262,12 @@ SgSymbolTable::SgSymbolTable()
    {
   // This should always be a non-null pointer (and never shared)!
      int symbolTableSize = 17;
+#ifdef _MSC_VER
+	 printf ("WARNING: Symbol table built using default constructor in SgSymbolTable(). \n");
+     p_table = new BaseHashType();
+#else
      p_table = new BaseHashType(symbolTableSize);
+#endif
      ROSE_ASSERT (p_table != NULL);
    }
 
@@ -5251,7 +5285,12 @@ SgSymbolTable::SgSymbolTable(int symbolTableSize)
   // AJ (10/21/2004): Adjusted implementation to use new STL hash map interface
   // p_table = new SgSymbolHashMultiMap(sz);
 
+#ifdef _MSC_VER
+	 printf ("WARNING: Symbol table built using default constructor in SgSymbolTable(int symbolTableSize). \n");
+     p_table = new BaseHashType();
+#else
      p_table = new BaseHashType(symbolTableSize);
+#endif
      ROSE_ASSERT (p_table != NULL);
    }
 
@@ -5622,8 +5661,14 @@ SgSymbolTable::remove_function_type( const SgName & name )
 
      ROSE_ASSERT (p_table != NULL);
 
+#ifdef _MSC_VER
+  // DQ (11/29/2009): MSVC requires a different use of nonstandard.
+     list<rose_hash::hash_multimap<SgName, SgSymbol*>::iterator> deleteList;
+     rose_hash::hash_multimap<SgName, SgSymbol*>::iterator it = get_table()->find(name);
+#else
      list<rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
      rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it = get_table()->find(name);
+#endif
      while (it != get_table()->end() && (*it).first == name)
         {
           ROSE_ASSERT(it->second->variantT() == V_SgFunctionTypeSymbol);
@@ -5633,7 +5678,12 @@ SgSymbolTable::remove_function_type( const SgName & name )
         }
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
+#ifdef _MSC_VER
+  // DQ (11/29/2009): MSVC requires a different use of nonstandard.
+     list<rose_hash::hash_multimap<SgName, SgSymbol*>::iterator>::iterator i = deleteList.begin();
+#else
      list<rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator>::iterator i = deleteList.begin();
+#endif
      while (i != deleteList.end())
         {
        // DQ (5/9/2007): Moved to after the call to "p_symbolSet.erase((*i)->second);"
@@ -5842,8 +5892,13 @@ SgSymbolTable::remove( const SgSymbol* symbol )
           symbol,symbol->class_name().c_str(),SageInterface::get_name(symbol).c_str(),
           symbolBasis,symbolBasis->class_name().c_str(),SageInterface::get_name(symbolBasis).c_str(),this);
 #endif
+#ifdef _MSC_VER
+     rose_hash::hash_multimap<SgName, SgSymbol*>::iterator elementToDelete = get_table()->end();
+     rose_hash::hash_multimap<SgName, SgSymbol*>::iterator it = get_table()->find(name);
+#else
      rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator elementToDelete = get_table()->end();
      rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it = get_table()->find(name);
+#endif
      while ( (it != get_table()->end()) && (elementToDelete == get_table()->end()) && ((*it).first == name) )
         {
        // printf ("Looking for symbol to remove (Make sure that we find the correct element) \n");
@@ -8387,7 +8442,8 @@ bool
 SgInitializedName::checkBit ( unsigned int bit ) const
    {
      ROSE_ASSERT (bit < e_last_gnu_variable_attribute);
-     return p_gnu_attribute_modifierVector[bit];
+  // return p_gnu_attribute_modifierVector[bit];
+     return (p_gnu_attribute_modifierVector[bit] == true);
    }
 
 void
@@ -8499,7 +8555,7 @@ SgName::operator<(const SgName& n1) const
      return p_char < n1.p_char;
    }
 
-int
+bool
 SgName::is_null(void) const
    {
      ROSE_ASSERT(this != NULL);
@@ -11891,7 +11947,7 @@ SgUnparse_Info & SgUnparse_Info::operator= ( const SgUnparse_Info & X )
      return *this;
    }
 
-int
+bool
 SgUnparse_Info::checkBit(unparse_type_num bit) const
    {
   // if(p_unparse_attribute & bit) return 1; else return 0;
@@ -11988,7 +12044,7 @@ SgUnparse_Info::post_construction_initialization()
      p_current_scope = NULL;
    }
 
-int
+bool
 SgUnparse_Info::isUnsetAccess() const
    { return p_access_attribute == a_unset_access; }
 
@@ -11996,7 +12052,7 @@ void
 SgUnparse_Info::set_isUnsetAccess()
    { p_access_attribute = a_unset_access; }
 
-int
+bool
 SgUnparse_Info::isPrivateAccess() const
    { return p_access_attribute == a_private_access; }
 
@@ -12004,31 +12060,35 @@ void
 SgUnparse_Info::set_isPrivateAccess()
    { p_access_attribute = a_private_access; }
 
-int
+bool
 SgUnparse_Info::isProtectedAccess() const
    { return p_access_attribute == a_protected_access; }
 
 void
 SgUnparse_Info::set_isProtectedAccess()
    { p_access_attribute = a_protected_access; } 
-int
+
+bool
 SgUnparse_Info::isPublicAccess() const
    { return p_access_attribute == a_public_access; }
+
 void
 SgUnparse_Info::set_isPublicAccess()
    { p_access_attribute = a_public_access; }  
 
-int
+bool
 SgUnparse_Info::isPointerToSomething() const
    { return checkBit(b_isPointerToSomething); }
+
 void
 SgUnparse_Info::set_isPointerToSomething()
    { setBit(b_isPointerToSomething); }
+
 void
 SgUnparse_Info::unset_isPointerToSomething()
    { unsetBit(b_isPointerToSomething); }
 
-int
+bool
 SgUnparse_Info::isReferenceToSomething() const
    { return checkBit(b_isReferenceToSomething); }
 
@@ -12040,7 +12100,7 @@ void
 SgUnparse_Info::unset_isReferenceToSomething()
    { unsetBit(b_isReferenceToSomething); }
 
-int
+bool
 SgUnparse_Info::inVarDecl() const
    { return checkBit(b_inVarDecl); }
 
@@ -12052,7 +12112,7 @@ void
 SgUnparse_Info::unset_inVarDecl()
    { unsetBit(b_inVarDecl); }
 
-int
+bool
 SgUnparse_Info::inArgList() const
    { return checkBit(b_inArgList); }
 
@@ -12064,7 +12124,7 @@ void
 SgUnparse_Info::unset_inArgList()
    { unsetBit(b_inArgList); }
 
-int
+bool
 SgUnparse_Info::SkipSemiColon() const
    { return checkBit(b_SkipSemiColon); }
 
@@ -12076,7 +12136,7 @@ void
 SgUnparse_Info::unset_SkipSemiColon()
    { unsetBit(b_SkipSemiColon); }
 
-int
+bool
 SgUnparse_Info::inEnumDecl() const
    { return checkBit(b_inEnumDecl); }
 
@@ -12088,7 +12148,7 @@ void
 SgUnparse_Info::unset_inEnumDecl()
    { unsetBit(b_inEnumDecl); }
 
-int
+bool
 SgUnparse_Info::inTemplateList() const
    { return checkBit(b_inTemplateList); }
 
@@ -12100,7 +12160,7 @@ void
 SgUnparse_Info::unset_inTemplateList()
    { unsetBit(b_inTemplateList); }
 
-int
+bool
 SgUnparse_Info::SkipBaseType() const
    { return checkBit(b_SkipBaseType); }
 
@@ -12112,7 +12172,7 @@ void
 SgUnparse_Info::unset_SkipBaseType()
    { unsetBit(b_SkipBaseType); }
 
-int
+bool
 SgUnparse_Info::inAggregateInitializer() const
    { return checkBit(b_inAggregateInitializer); }
 
@@ -12124,7 +12184,7 @@ void
 SgUnparse_Info::unset_inAggregateInitializer()
    { unsetBit(b_inAggregateInitializer); }
 
-int
+bool
 SgUnparse_Info::isWithType() const
    { return checkBit(b_isWithType); }
 
@@ -12136,7 +12196,7 @@ void
 SgUnparse_Info::unset_isWithType()
    { unsetBit(b_isWithType); }
 
-int
+bool
 SgUnparse_Info::inConditional() const
    { return checkBit(b_inConditional); }
 
@@ -12150,7 +12210,7 @@ SgUnparse_Info::unset_inConditional()
 
 // DQ (1/23/03) Modified use of SkipDefinition to separate the functionality across
 // different types of definitions (Enum, Function, and Class definitions).
-int
+bool
 SgUnparse_Info::SkipDefinition() const
    { // return checkBit(b_SkipDefinition);
      return checkBit(b_SkipEnumDefinition) && 
@@ -12176,7 +12236,7 @@ SgUnparse_Info::unset_SkipDefinition()
      unsetBit(b_SkipClassDefinition);
    }
 
-int
+bool
 SgUnparse_Info::SkipClassSpecifier() const
    { return checkBit(b_SkipClassSpecifier); }
 
@@ -12188,7 +12248,7 @@ void
 SgUnparse_Info::unset_SkipClassSpecifier()
    { unsetBit(b_SkipClassSpecifier); }
 
-int
+bool
 SgUnparse_Info::inEmbeddedDecl() const
    { return checkBit(b_inEmbeddedDecl); }
 
@@ -12200,7 +12260,7 @@ void
 SgUnparse_Info::unset_inEmbeddedDecl()
    { unsetBit(b_inEmbeddedDecl); }
 
-int
+bool
 SgUnparse_Info::SkipGlobal() const
    { return checkBit(b_SkipGlobal); }
 
@@ -12212,7 +12272,7 @@ void
 SgUnparse_Info::unset_SkipGlobal()
    { unsetBit(b_SkipGlobal); }
 
-int
+bool
 SgUnparse_Info::SkipAtomic() const
    { return checkBit(b_SkipAtomic); }
 
@@ -12224,7 +12284,7 @@ void
 SgUnparse_Info::unset_SkipAtomic()
    { unsetBit(b_SkipAtomic); }
 
-int
+bool
 SgUnparse_Info::PrintName() const
    { return checkBit(b_PrintName); }
 
@@ -12236,7 +12296,7 @@ void
 SgUnparse_Info::unset_PrintName()
    { unsetBit(b_PrintName); }
 
-int
+bool
 SgUnparse_Info::CheckAccess() const
    { return checkBit(b_CheckAccess); }
 
@@ -12248,7 +12308,7 @@ void
 SgUnparse_Info::unset_CheckAccess()
    { unsetBit(b_CheckAccess); }
 
-int
+bool
 SgUnparse_Info::SkipFunctionQualifier() const
    { return checkBit(b_SkipFunctionQualifier); }
 
@@ -12260,7 +12320,7 @@ void
 SgUnparse_Info::unset_SkipFunctionQualifier()
    { unsetBit(b_SkipFunctionQualifier); }
 
-int
+bool
 SgUnparse_Info::isArrayType() const
    { return checkBit(b_isArrayType); }
 
@@ -12272,7 +12332,7 @@ void
 SgUnparse_Info::unset_isArrayType()
    { unsetBit(b_isArrayType); }
 
-int
+bool
 SgUnparse_Info::inRhsExpr() const
    { return checkBit(b_inRhsExpr); }
 
@@ -12284,7 +12344,7 @@ void
 SgUnparse_Info::unset_inRhsExpr()
    { unsetBit(b_inRhsExpr); }
 
-int
+bool
 SgUnparse_Info::SkipParen() const
    { return checkBit(b_SkipParen); }
 
@@ -12296,7 +12356,7 @@ void
 SgUnparse_Info::unset_SkipParen()
    { unsetBit(b_SkipParen); }
 
-int
+bool
 SgUnparse_Info::isTypeSecondPart() const
    { return checkBit(b_isTypeSecondPart); }
 
@@ -12308,7 +12368,7 @@ void
 SgUnparse_Info::unset_isTypeSecondPart()
    { unsetBit(b_isTypeSecondPart); }
 
-int
+bool
 SgUnparse_Info::isTypeFirstPart() const
    { return checkBit(b_isTypeFirstPart); }
 
@@ -12331,7 +12391,7 @@ SgUnparse_Info::set_operator_name(const std::string& on)
    }
 
 //! (1/15/03) DQ: Added to support use of unparser in rewrite mechanism
-int
+bool
 SgUnparse_Info::SkipInitializer() const
    { return checkBit(b_SkipInitializer); }
 
@@ -12344,7 +12404,7 @@ SgUnparse_Info::unset_SkipInitializer()
    { unsetBit(b_SkipInitializer); }
 
 //! (1/15/03) DQ: Added to support use of unparser in rewrite mechanism
-int
+bool
 SgUnparse_Info::SkipComments() const
    { return checkBit(b_SkipComments); }
 
@@ -12357,7 +12417,7 @@ SgUnparse_Info::unset_SkipComments()
    { unsetBit(b_SkipComments); }
 
 //! (09/03/03) MS: Added to make whitespace optional
-int
+bool
 SgUnparse_Info::SkipWhitespaces() const
    { return checkBit(b_SkipWhitespaces); }
 
@@ -12370,7 +12430,7 @@ SgUnparse_Info::unset_SkipWhitespaces()
    { unsetBit(b_SkipWhitespaces); }
 
 //! (1/15/03) DQ: Added to support use of unparser in rewrite mechanism
-int
+bool
 SgUnparse_Info::SkipCPPDirectives() const
    { return checkBit(b_SkipCPPDirectives); }
 
@@ -12382,7 +12442,7 @@ void
 SgUnparse_Info::unset_SkipCPPDirectives()
    { unsetBit(b_SkipCPPDirectives); }
 
-int
+bool
 SgUnparse_Info::SkipEnumDefinition() const
    { return checkBit(b_SkipEnumDefinition); }
 
@@ -12394,7 +12454,7 @@ void
 SgUnparse_Info::unset_SkipEnumDefinition()
    { unsetBit(b_SkipEnumDefinition); }
 
-int
+bool
 SgUnparse_Info::SkipFunctionDefinition() const
    { return checkBit(b_SkipFunctionDefinition); }
 
@@ -12406,7 +12466,7 @@ void
 SgUnparse_Info::unset_SkipFunctionDefinition()
    { unsetBit(b_SkipFunctionDefinition); }
 
-int
+bool
 SgUnparse_Info::SkipClassDefinition() const
    { return checkBit(b_SkipClassDefinition); }
 
@@ -12418,7 +12478,7 @@ void
 SgUnparse_Info::unset_SkipClassDefinition()
    { unsetBit(b_SkipClassDefinition); }
 
-int
+bool
 SgUnparse_Info::AddSemiColonAfterDeclaration() const
    { return checkBit(b_AddSemiColonAfterDeclaration); }
 
@@ -12430,7 +12490,7 @@ void
 SgUnparse_Info::unset_AddSemiColonAfterDeclaration()
    { unsetBit(b_AddSemiColonAfterDeclaration); }
 
-int
+bool
 SgUnparse_Info::SkipBasicBlock() const
    { return checkBit(b_SkipBasicBlock); }
 
@@ -12445,7 +12505,7 @@ SgUnparse_Info::unset_SkipBasicBlock()
 // DQ (3/18/2004): Added to support unparsing of class templates in variables but 
 // not in in instatiated template declarations (unless the template is transformed 
 // in which case another test is used).
-int
+bool
 SgUnparse_Info::outputClassTemplateName() const
    { return checkBit(b_outputClassTemplateName); }
 
@@ -12458,7 +12518,7 @@ SgUnparse_Info::unset_outputClassTemplateName()
    { unsetBit(b_outputClassTemplateName); }
 
 // DQ (5/27/2005): support (see documentation above, in header file enum value)
-int
+bool
 SgUnparse_Info::outputCompilerGeneratedStatements() const
    { return checkBit(b_outputCompilerGeneratedStatements); }
 
@@ -12472,7 +12532,7 @@ SgUnparse_Info::unset_outputCompilerGeneratedStatements()
 
 
 // DQ (4/5/2006): Added support for constant folded values to be optionally output
-int
+bool
 SgUnparse_Info::SkipConstantFoldedExpressions() const
    { return checkBit(b_SkipConstantFoldedExpressions); }
 
@@ -12486,7 +12546,7 @@ SgUnparse_Info::unset_SkipConstantFoldedExpressions()
 
 
 // DQ and PC (6/1/2006): Added Peter's suggested fixes to support unparsing fully qualified names.
-int
+bool
 SgUnparse_Info::forceQualifiedNames() const
    { return checkBit(b_forceQualifiedNames); }
 
@@ -12498,7 +12558,7 @@ void
 SgUnparse_Info::unset_forceQualifiedNames()
    { unsetBit(b_forceQualifiedNames); }
 
-int
+bool
 SgUnparse_Info::skipCheckAccess() const
    { return checkBit(b_skipCheckAccess); }
 
@@ -12511,7 +12571,7 @@ SgUnparse_Info::unset_skipCheckAccess()
    { unsetBit(b_skipCheckAccess); }
 
 // DQ (10/11/2006): Added to support new implementation of name qualification
-int
+bool
 SgUnparse_Info::SkipQualifiedNames() const
    { return checkBit(b_SkipQualifiedNames); }
 
@@ -12523,7 +12583,7 @@ void
 SgUnparse_Info::unset_SkipQualifiedNames()
    { unsetBit(b_SkipQualifiedNames); }
 
-int
+bool
 SgUnparse_Info::requiresGlobalNameQualification() const
    { return checkBit(b_requiresGlobalNameQualification); }
 
@@ -12536,7 +12596,7 @@ SgUnparse_Info::unset_requiresGlobalNameQualification()
    { unsetBit(b_requiresGlobalNameQualification); }
 
 // DQ (9/22/2007): Added optional handling of Fortran type attributes, these may have to be setup for each different kind of type attribute.
-int
+bool
 SgUnparse_Info::useTypeAttributes() const
    { return checkBit(b_useTypeAttributes); }
 
@@ -12551,7 +12611,7 @@ SgUnparse_Info::unset_useTypeAttributes()
 // DQ (12/26/2007): Added support to restrict formatting of Fortran code.
 // This allows us to put statements on the same line as if-stmt, where-stmt, etc.
 // Plus it allows us to skip the insertion of leading 6 spaces in fixed format output.
-int
+bool
 SgUnparse_Info::SkipFormatting() const
    { return checkBit(b_SkipFormatting); }
 
@@ -12631,7 +12691,7 @@ SgUnparse_Info::unset_array_index_list()
 
 // FMZ : Added to support to generated XX.rose_mod file for a module
 //       (based on fortran unparser).
-int
+bool
 SgUnparse_Info::outputFortranModFile() const
    { return checkBit(b_outputFortranModFile); }
 
