@@ -2186,7 +2186,9 @@ struct X86InstructionSemantics {
             case x86_repe_cmpsd:  REP_CMPS(d, 4, e,  STRINGOP_LOOP_E);  break;
 #           undef REP_CMPS
 
-#           define CMPS(suffix, len) {                                                                                         \
+#           define CMPS(suffix, len) do {                                                                                         \
+               /* Compare strings; Intel Instruction Set Reference 3-154 Vol 2a, March 2009 for                                \
+                * opcodes 0xa6 and 0xa7 with no prefix. */                                                                     \
                 ROSE_ASSERT(operands.size() == 0);                                                                             \
                 ROSE_ASSERT(insn->get_addressSize() == x86_insnsize_32);                                                       \
                 doAddOperation<(len * 8)>(STRINGOP_LOAD_SI(len, policy.true_()),                                               \
@@ -2200,10 +2202,23 @@ struct X86InstructionSemantics {
                 policy.writeGPR(x86_gpr_di,                                                                                    \
                                 policy.add(policy.readGPR(x86_gpr_di),                                                         \
                                            policy.ite(policy.readFlag(x86_flag_df), number<32>(-(len)), number<32>(len))));    \
-            }
+            } while (0)
+
             case x86_cmpsb: CMPS(b, 1); break;
             case x86_cmpsw: CMPS(w, 2); break;
-            case x86_cmpsd: CMPS(d, 4); break;
+            case x86_cmpsd:
+                /* This mnemonic, CMPSD, refers to two instructions: opcode A7 compares registers SI and DI (16-, 32-, or
+                 * 64-bits) and sets the status flags. Opcode "F2 0F C2 /r ib" takes three arguments (an MMX register, an MMX
+                 * or 64-bit register, and an 8-bit immediate) and compares floating point values.  The instruction semantics
+                 * layer doesn't handle floating point instructions yet and reports them as "Bad instruction". */
+                if (0==operands.size()) {
+                    CMPS(d, 4);
+                } else {
+                    /* Floating point instructions are not handled yet. */
+                    std::cerr <<"Bad instruction [0x" <<std::hex <<insn->get_address() <<": " <<unparseInstruction(insn) <<"]"
+                              <<" (skipping semantic analysis)\n";
+                }
+                break;
 #           undef CMPS
 
 #           define MOVS(suffix, len) {                                                                                         \
