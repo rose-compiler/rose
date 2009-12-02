@@ -10,8 +10,10 @@ typedef std::list<token_type>               token_list_container;
 typedef std::vector<std::list<token_type> > token_container_container;
 
 
+// DQ (11/28/2009): I think this is equivalent to "USE_ROSE"
 // DQ (11/28/2008): What does this evaluate to???  Does this mix C++ constants with CPP values (does this make sense? Is "true" defined?)
-#if CAN_NOT_COMPILE_WITH_ROSE != true
+// #if CAN_NOT_COMPILE_WITH_ROSE != true
+#if (CAN_NOT_COMPILE_WITH_ROSE == 0)
 
 ///////////////////////////////////////////////////////////////////////////////
 //  Include Wave itself
@@ -30,7 +32,12 @@ typedef std::vector<std::list<token_type> > token_container_container;
 
 //Include files to get the current path
 #include <unistd.h>
+
+#ifdef _MSC_VER
+#pragma message ("WARNING: param.h header file not available in MSVC.")
+#else
 #include <sys/param.h>
+#endif
 
 // #include <iostream>
 // #include <fstream>

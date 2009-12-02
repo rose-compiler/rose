@@ -1538,13 +1538,16 @@ Grammar::buildHeaderStringBeforeMarker( const string& marker, const string& file
        if (pos != string::npos) {
 	 headerFileTemplate.erase(headerFileTemplate.begin() + i + 1, headerFileTemplate.end());
 	 headerFileTemplate[i].str = headerFileTemplate[i].str.substr(0, pos);
- // headerFileTemplate[i].filename += " before marker " + marker;
+  // headerFileTemplate[i].filename += " before marker " + marker;
 	 headerFileTemplate.insert(headerFileTemplate.begin(), StringUtility::StringWithLineNumber("", "" /* "<before output of buildHeaderStringBeforeMarker " + marker + " " + fileName + ">" */, 1));
 	 headerFileTemplate.insert(headerFileTemplate.end(), StringUtility::StringWithLineNumber("", "" /* "<after output of buildHeaderStringBeforeMarker " + marker + " " + fileName + ">" */, 1));
 	 return headerFileTemplate;
        }
      }
      ROSE_ASSERT (!"Marker not found");
+
+  // DQ (11/28/2009): MSVC warns that this function should return a value from all paths.
+     return headerFileTemplate;
    }
 
 StringUtility::FileWithLineNumbers
@@ -1566,6 +1569,9 @@ Grammar::buildHeaderStringAfterMarker( const string& marker, const string& fileN
        }
      }
      ROSE_ASSERT (!"Marker not found");
+
+  // DQ (11/28/2009): MSVC warns that this function should return a value from all paths.
+     return headerFileTemplate;
    }
 
 void
@@ -3898,4 +3904,7 @@ Terminal* lookupTerminal(const vector<Terminal*>& tl, const std::string& name) {
   }
   cerr << "Reached end of terminal list in search for '" << name << "'" << endl;
   ROSE_ASSERT (false);
+
+// DQ (11/28/2009): MSVC warns that this function should return a value from all paths.
+  return NULL;
 }

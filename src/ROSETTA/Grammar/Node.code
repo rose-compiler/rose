@@ -1126,7 +1126,11 @@ std::ostream & operator<< ( std::ostream & os, const rose_graph_integer_node_has
 
 // DQ (4/30/2009): Added to support more of the Graph functionality in new ROSE IR nodes
 // typedef rose_hash::hash_map<int,SgGraphEdge*, rose_hash::hash_integer, rose_hash::eqstr_graph_edge> rose_graph_integer_edge_hash_map_base_type;
+#ifdef _MSC_VER
+typedef rose_hash::hash_map<int,SgGraphEdge*> rose_graph_integer_edge_hash_map_base_type;
+#else
 typedef rose_hash::hash_map<int,SgGraphEdge*, rose_hash::hash_integer> rose_graph_integer_edge_hash_map_base_type;
+#endif
 class rose_graph_integer_edge_hash_map : public rose_graph_integer_edge_hash_map_base_type
    {
   // This class is used to map nodes to edges in the highest level graph class.
@@ -1240,7 +1244,11 @@ std::ostream & operator<< ( std::ostream & os, const rose_graph_integer_edge_has
 
 // DQ (4/30/2009): Added to support more of the Graph functionality in new ROSE IR nodes
 // typedef rose_hash::hash_multimap<std::pair<int,int>,SgGraphEdge*, rose_hash::hash_integer_pair, rose_hash::eqstr_integer_pair> rose_graph_integerpair_edge_hash_multimap_base_type;
+#ifdef _MSC_VER
+typedef rose_hash::hash_multimap<std::pair<int,int>,SgGraphEdge*> rose_graph_integerpair_edge_hash_multimap_base_type;
+#else
 typedef rose_hash::hash_multimap<std::pair<int,int>,SgGraphEdge*, rose_hash::hash_integer_pair> rose_graph_integerpair_edge_hash_multimap_base_type;
+#endif
 class rose_graph_integerpair_edge_hash_multimap : public rose_graph_integerpair_edge_hash_multimap_base_type
    {
   // This class is used to map nodes to edges in the highest level graph class.
@@ -1298,7 +1306,9 @@ std::ostream & operator<< ( std::ostream & os, const rose_graph_integerpair_edge
 // DQ (5/1/2009): This is added to support lookup of indexes based on labels (can be used for nodes or edges).
 // tps (11/18/2009) : This cannot be correct since the constructor takes a string not an int.
 #ifdef _MSC_VER 
-typedef rose_hash::hash_multimap<std::string, int,rose_hash::hash_string> rose_graph_string_integer_hash_multimap_base_type;
+// DQ (11/29/2009): fix for: MSVC error C2064: term does not evaluate to a function taking 2 arguments
+// typedef rose_hash::hash_multimap<std::string, int,rose_hash::hash_string> rose_graph_string_integer_hash_multimap_base_type;
+typedef rose_hash::hash_multimap<std::string, int> rose_graph_string_integer_hash_multimap_base_type;
 #else
 typedef rose_hash::hash_multimap<std::string, int,rose_hash::hash_string,rose_hash::eqstr_string> rose_graph_string_integer_hash_multimap_base_type;
 #endif

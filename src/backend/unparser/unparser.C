@@ -1280,7 +1280,8 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
        // Open the file where we will put the generated code
           string outputFilename = get_output_filename(*file);
 
-          if ( SgProject::get_verbose() == true )
+       // if ( SgProject::get_verbose() == true )
+          if ( SgProject::get_verbose() > 0 )
                printf ("Calling the unparser: outputFilename = %s \n",outputFilename.c_str());
 
           fstream ROSE_OutputFile(outputFilename.c_str(),ios::out);
