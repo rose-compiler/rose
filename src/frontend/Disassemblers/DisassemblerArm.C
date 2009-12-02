@@ -79,10 +79,13 @@ SgAsmArmInstruction::get_successors() {
             /* Branch target */
             ROSE_ASSERT(exprs.size()==1);
             SgAsmExpression *dest = exprs[0];
-            ROSE_ASSERT(isSgAsmValueExpression(dest));
-            rose_addr_t target_va = SageInterface::getAsmConstant(isSgAsmValueExpression(dest));
-            retval.insert(target_va);
-
+            if (isSgAsmValueExpression(dest)) {
+                rose_addr_t target_va = SageInterface::getAsmConstant(isSgAsmValueExpression(dest));
+                retval.insert(target_va);
+            } else {
+                /* Could also be a register reference expression, but we don't know the successor in that case. */
+            }
+            
             /* Fall-through address */
             if (get_condition()!=arm_cond_al)
                 retval.insert(get_address()+4);
