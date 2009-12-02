@@ -1504,6 +1504,7 @@ tests/roseTests/astRewriteTests/Makefile
 tests/roseTests/astSymbolTableTests/Makefile
 tests/roseTests/astTokenStreamTests/Makefile
 tests/roseTests/binaryTests/Makefile
+tests/roseTests/binaryTests/SemanticVerification/Makefile
 tests/roseTests/loopProcessingTests/Makefile
 tests/roseTests/ompLoweringTests/Makefile
 tests/roseTests/programAnalysisTests/Makefile
@@ -1614,7 +1615,6 @@ developersScratchSpace/Dan/algorithmRecognition_tests/Makefile
 developersScratchSpace/Robb/Makefile
 developersScratchSpace/Robb/BinaryTools/Makefile
 developersScratchSpace/Robb/DynamicLinking/Makefile
-developersScratchSpace/Robb/SemanticVerification/Makefile
 developersScratchSpace/Robb/extras/Makefile
 binaries/Makefile
 binaries/samples/Makefile

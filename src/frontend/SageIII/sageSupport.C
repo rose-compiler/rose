@@ -5371,6 +5371,9 @@ SgSourceFile::build_classpath()
      fprintf(stderr, "Fortran parser not supported \n");
      ROSE_ASSERT(false);
   // abort();
+
+  // DQ (11/30/2009): MSVC requires a return stmt from a non-void function (an error, not a warning).
+	 return "error in SgSourceFile::build_classpath()";
    }
 
 int
@@ -5379,6 +5382,9 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
      fprintf(stderr, "Fortran parser not supported \n");
      ROSE_ASSERT(false);
   // abort();
+
+  // DQ (11/30/2009): MSVC requires a return stmt from a non-void function (an error, not a warning).
+	 return -1;
    }
 #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 
