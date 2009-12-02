@@ -11,6 +11,8 @@
     )
 
     message ("Starting to run: ${PROJECT_SOURCE_DIR}/config/create_system_headers ${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH} ./include-staging/${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS ${PROJECT_SOURCE_DIR}")
+# we split several commands into different execute_process ()
+# otherwise cmake may skip executing the last ones!!!    
   execute_process(
 #  /home/liao6/daily-test-rose/cmake/rose.cmake.git/config/create_system_headers c++ ./include-staging/c++_HEADERS /home/liao6/daily-test-rose/cmake/rose.cmake.git    
     COMMAND ${PROJECT_SOURCE_DIR}/config/create_system_headers ${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH} ./include-staging/${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS ${PROJECT_SOURCE_DIR}
