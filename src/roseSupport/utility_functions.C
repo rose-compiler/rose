@@ -932,7 +932,12 @@ ROSE::getWorkingDirectory ()
      const unsigned int maxPathNameLength = 10000;
      char* currentDirectory = new char [maxPathNameLength+1];
 
-     const char* getcwdResult = getcwd(currentDirectory,maxPathNameLength);
+#ifdef _MSC_VER
+#pragma message ("Linux getcwd() function unavailable in MSVC.")
+	 const char* getcwdResult = NULL; // getcwd(currentDirectory,maxPathNameLength);
+#else
+	 const char* getcwdResult = getcwd(currentDirectory,maxPathNameLength);
+#endif
      if (!getcwdResult) {
        perror("getcwd: ");
        ROSE_ABORT();

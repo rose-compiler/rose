@@ -38,7 +38,9 @@ static inline uint64_t roseBswap64(uint64_t x) {
 
 #else
 #ifdef _MSC_VER
-#pragma message ("WARNING EndianWrappers.h: MS: Could not find endian swapping code" )
+// DQ (11/28/2009): Since it seems we can compile everything, let this be something we 
+// fix if we have probelems linking. Remove the warning for now to focus on a clean compile.
+// #pragma message ("WARNING EndianWrappers.h: MS: Could not find endian swapping code" )
 #include <sys/types.h>
 
 #else

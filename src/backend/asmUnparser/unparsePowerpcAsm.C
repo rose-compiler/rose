@@ -69,6 +69,11 @@ static std::string unparsePowerpcRegister(PowerpcRegisterClass cl, int reg, Powe
       abort();
       break;
   }
+
+#ifdef _MSC_VER
+  // DQ (11/29/2009): MSVC reports a warning for a path that does not have a return stmt.
+     return "ERROR in unparsePowerpcRegister()";
+#endif
 }
 
 /* Helper for unparsePowerpcExpression(SgAsmExpression*) */

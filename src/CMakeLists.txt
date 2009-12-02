@@ -25,6 +25,9 @@ set(ROSETTA_SRC
     ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarCheckingIfDataMembersAreInMemoryPool.C
     ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarCopyMemberFunctions.C
     ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarGetChildIndex.C
+    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarReturnDataMemberPointers.C  
+# DQ(11/29/2009): Handle this later after we have everything else compiling.
+#   ${CMAKE_BINARY_DIR}/src/frontend/SageIII/StorageClasses.C
     ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarMemoryPoolSupport.C  
     ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarNewAndDeleteOperators.C                
     ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarNewConstructors.C
@@ -78,6 +81,10 @@ set( STORAGECLASSES_SRC
    )
 
 #add_library(storageclasses ${STORAGECLASSES_SRC} )
+
+# DQ (11/28/2009): Note that both DAG.C and DirectedGraph.C contain only templates and 
+# are included in other source files as required. They do not need to be compiled 
+# separately and generate a warning to the MSVC linker because they contain no symbols.
   set(rose_util_src 
       ${CMAKE_SOURCE_DIR}/src/util/stringSupport/FileNameClassifier.C
       ${CMAKE_BINARY_DIR}/src/util/rose_paths.C
@@ -89,12 +96,12 @@ set( STORAGECLASSES_SRC
       ${CMAKE_SOURCE_DIR}/src/util/commandlineProcessing/commandline_processing.C
       ${CMAKE_SOURCE_DIR}/src/util/commandlineProcessing/sla++.C
       ${CMAKE_SOURCE_DIR}/src/util/processSupport.C
-      ${CMAKE_SOURCE_DIR}/src/util/support/DirectedGraph.C
+#     ${CMAKE_SOURCE_DIR}/src/util/support/DirectedGraph.C
       ${CMAKE_SOURCE_DIR}/src/util/support/CommandOptions.C
-      ${CMAKE_SOURCE_DIR}/src/util/support/DAG.C
+#     ${CMAKE_SOURCE_DIR}/src/util/support/DAG.C
       ${CMAKE_SOURCE_DIR}/src/util/support/VectorCommandOptions.C
       ${CMAKE_SOURCE_DIR}/src/util/stringSupport/string_functions.cpp
-      ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
+#     ${CMAKE_SOURCE_DIR}/src/util/stringSupport/escape.C
 
      )
 
@@ -144,8 +151,8 @@ set(MSTL_SRC
    )
 
 set(EDG_SAGE_Connection_SRC
-    ${CMAKE_SOURCE_DIR}/src/frontend/CxxFrontend/EDG_SAGE_Connection/sage_gen_be.C
-    ${CMAKE_SOURCE_DIR}/src/frontend/CxxFrontend/EDG_SAGE_Connection/wrapperFunctionsForEDG.C
+    ${CMAKE_SOURCE_DIR}/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/sage_gen_be.C
+    ${CMAKE_SOURCE_DIR}/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/wrapperFunctionsForEDG.C
    )
 
 set(virtualCFG_SRC

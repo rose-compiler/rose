@@ -107,6 +107,9 @@ int DepRel :: GetMinAlign() const
   default:
     assert(false);
   }
+
+  /* Avoid MSVC warning */
+     return -1;
 }
 
 int DepRel :: GetMaxAlign() const
@@ -126,6 +129,8 @@ int DepRel :: GetMaxAlign() const
   default:
     assert(false);
   }
+  /* Avoid MSVC warning */
+     return -1;
 }
 
 bool DepRel :: IsTop() const
@@ -318,7 +323,7 @@ DepRel Reverse( const DepRel &e)
   case DEPDIR_ALL:
     return e;
   default:
-    assert(false);
+	  { assert(false); /* Avoid MSVC warning */ return e; }
   }
 }
 
@@ -341,7 +346,7 @@ DepRel operator - (const DepRel &e)
   case DEPDIR_NE:
     return DepRel(DEPDIR_EQ, lo, hi);
   default:
-    assert(false);
+	  { assert(false); /* Avoid MSVC warning */ return e; }
   }
 }
 

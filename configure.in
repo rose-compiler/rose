@@ -984,7 +984,8 @@ SETUP_EDG
 # Find md5 or md5sum and create a signature for ROSE binary compatibility
 AC_CHECK_PROGS(MD5, [md5 md5sum], [false])
 AC_SUBST(MD5)
-if test -e ${srcdir}/src/frontend/CxxFrontend/EDG_SAGE_Connection; then
+if test -e ${srcdir}/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection; then
+  has_edg_source=yes
   if test "x$MD5" = "xfalse"; then
     AC_MSG_WARN([Could not find either md5 or md5sum -- building binary EDG tarballs is disabled])
     binary_edg_tarball_enabled=no
@@ -992,9 +993,11 @@ if test -e ${srcdir}/src/frontend/CxxFrontend/EDG_SAGE_Connection; then
     binary_edg_tarball_enabled=yes
   fi
 else
+  has_edg_source=no
   binary_edg_tarball_enabled=no # This is a binary release version of ROSE anyway
 fi
 
+AM_CONDITIONAL(ROSE_HAS_EDG_SOURCE, [test "x$has_edg_source" = "xyes"])
 AM_CONDITIONAL(BINARY_EDG_TARBALL_ENABLED, [test "x$binary_edg_tarball_enabled" = "xyes"])
 
 release_binary_compatibility_signature="RELEASE_BINARY_COMPATIBILITY_SIGNATURE" # This variable will be substituted in binary-EDG release copies of configure.in
@@ -1012,7 +1015,7 @@ full_expected_binary_edg_tarball="${srcdir}/src/frontend/CxxFrontend/${expected_
 
 AC_SUBST(build_triplet_without_redhat) dnl This is done even with EDG source, since it is used to determine the binary to make in roseFreshTest
 
-if test -e ${srcdir}/src/frontend/CxxFrontend/EDG_SAGE_Connection; then
+if test -e ${srcdir}/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection; then
   : # We have EDG source code
 else
   echo ""
@@ -1146,6 +1149,41 @@ echo "Testing the value of CPPFLAGS: (CPPFLAGS = $CPPFLAGS)"
 echo "subdirs $subdirs"
 AC_CONFIG_SUBDIRS([libltdl src/3rdPartyLibraries/libharu-2.1.0])
 
+dnl ---------------------------------------------------------------
+dnl CLASSPATH_COND_IF(COND, SHELL-CONDITION, [IF-TRUE], [IF-FALSE])
+dnl ---------------------------------------------------------------
+dnl Automake 1.11 can emit conditional rules for AC_CONFIG_FILES,
+dnl using AM_COND_IF.  This wrapper uses it if it is available,
+dnl otherwise falls back to code compatible with Automake 1.9.6.
+AC_DEFUN([CLASSPATH_COND_IF],
+[m4_ifdef([AM_COND_IF],
+  [AM_COND_IF([$1], [$3], [$4])],
+  [if $2; then
+     m4_default([$3], [:])
+   else
+     m4_default([$4], [:])
+   fi
+])])
+
+CLASSPATH_COND_IF([ROSE_HAS_EDG_SOURCE], [test "x$has_edg_source" = "xyes"], [
+AC_CONFIG_FILES([
+src/frontend/CxxFrontend/EDG/Makefile
+src/frontend/CxxFrontend/EDG/EDG_3.3/Makefile
+src/frontend/CxxFrontend/EDG/EDG_3.3/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_3.3/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_3.10/Makefile
+src/frontend/CxxFrontend/EDG/EDG_3.10/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_3.10/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_3.10/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_3.10/lib/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.0/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.0/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.0/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.0/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_4.0/lib/Makefile
+src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/Makefile
+])], [])
+
 
 # RV 9/14/2005: Removed src/3rdPartyLibraries/PDFLibrary/Makefile
 # JJW 1/30/2008: Removed rose_paths.h as it is now built by a separate Makefile included from $(top_srcdir)/Makefile.am
@@ -1189,20 +1227,6 @@ src/frontend/SageIII/astTokenStream/Makefile
 src/frontend/SageIII/astHiddenTypeAndDeclarationLists/Makefile
 src/frontend/SageIII/astVisualization/Makefile
 src/frontend/CxxFrontend/Makefile
-src/frontend/CxxFrontend/EDG_3.3/Makefile
-src/frontend/CxxFrontend/EDG_3.3/misc/Makefile
-src/frontend/CxxFrontend/EDG_3.3/src/Makefile
-src/frontend/CxxFrontend/EDG_3.10/Makefile
-src/frontend/CxxFrontend/EDG_3.10/misc/Makefile
-src/frontend/CxxFrontend/EDG_3.10/src/Makefile
-src/frontend/CxxFrontend/EDG_3.10/src/disp/Makefile
-src/frontend/CxxFrontend/EDG_3.10/lib/Makefile
-src/frontend/CxxFrontend/EDG_4.0/Makefile
-src/frontend/CxxFrontend/EDG_4.0/misc/Makefile
-src/frontend/CxxFrontend/EDG_4.0/src/Makefile
-src/frontend/CxxFrontend/EDG_4.0/src/disp/Makefile
-src/frontend/CxxFrontend/EDG_4.0/lib/Makefile
-src/frontend/CxxFrontend/EDG_SAGE_Connection/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
 src/frontend/PHPFrontend/Makefile
 src/frontend/BinaryDisassembly/Makefile

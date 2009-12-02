@@ -118,25 +118,33 @@ class BaseGraphCreateWrap : public BaseGraphCreate
 #else  
   TranslateDirection( GraphAccess::EdgeDirection dir) const
 #endif  
-  { switch (dir) {
-// DQ (8/31/2009): This is required for EDG to compile this code!
+   {
+     switch (dir)
+        {
+  // DQ (8/31/2009): This is required for EDG to compile this code!
 #ifdef USE_ROSE 
-      case ::GraphAccess::EdgeOut: 
+          case ::GraphAccess::EdgeOut: 
 #else
-     case GraphAccess::EdgeOut: 
+          case GraphAccess::EdgeOut: 
 #endif
-       return GraphImpl::EdgeOut;
-// DQ (8/31/2009): This is required for EDG to compile this code!
+               return GraphImpl::EdgeOut;
+
+       // DQ (8/31/2009): This is required for EDG to compile this code!
 #ifdef USE_ROSE
-     case ::GraphAccess::EdgeIn: 
+          case ::GraphAccess::EdgeIn: 
 #else
-     case GraphAccess::EdgeIn: 
+          case GraphAccess::EdgeIn: 
 #endif
-       return GraphImpl::EdgeIn;
-     default:
-       assert(false);
+               return GraphImpl::EdgeIn;
+
+          default:
+               assert(false);
+        }
+
+  // DQ (11/28/2009): This should be unreachable code, but MSVC warns if a path does not contain a return stmt.
+     assert(false);
+     return GraphImpl::EdgeIn;
    }
-  }
 
 };
 

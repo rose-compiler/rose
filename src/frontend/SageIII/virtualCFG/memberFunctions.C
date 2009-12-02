@@ -478,7 +478,7 @@ unsigned int SgForAllStatement::cfgFindChildIndex(SgNode* tgt) {
     return 2;
   } else if (tgt == this->get_body()) {
     return 4;
-  } else ROSE_ASSERT (!"Bad child in SgForAllStatement::cfgFindChildIndex()");
+  } else { ROSE_ASSERT (!"Bad child in SgForAllStatement::cfgFindChildIndex()"); /* avoid MSVC warning. */ return 0; }
 }
 
 unsigned int SgForAllStatement::cfgFindNextChildIndex(SgNode* n) {
@@ -2601,6 +2601,9 @@ SgExpression::cfgIndexForEnd() const
    {
      std::cerr << "Bad expression case " << this->class_name() << " in cfgIndexForEnd()" << std::endl;
      ROSE_ASSERT (false);
+
+  // DQ (11/28/2009): This function was already commented out, but must return a value for use in MSVC.
+     return 0;
    }
 
 bool
@@ -2625,11 +2628,17 @@ SgExpression::cfgFindNextChildIndex(SgNode* n) {
   std::vector<CFGEdge> SgExpression::cfgOutEdges(unsigned int) {
     std::cerr << "Bad expression case " << this->class_name() << " in cfgOutEdges()" << std::endl;
     ROSE_ASSERT (false);
+
+  // DQ (11/28/2009): This function was already commented out, but must return a value for use in MSVC.
+     return std::vector<CFGEdge>();
   }
 
   std::vector<CFGEdge> SgExpression::cfgInEdges(unsigned int) {
     std::cerr << "Bad expression case " << this->class_name() << " in cfgInEdges()" << std::endl;
     ROSE_ASSERT (false);
+
+  // DQ (11/28/2009): This function was already commented out, but must return a value for use in MSVC.
+     return std::vector<CFGEdge>();
   }
 
 unsigned int
@@ -3188,7 +3197,10 @@ unsigned int
 SgCastExp::cfgFindChildIndex(SgNode* n)
    {
      if (n == this->get_operand()) return 0;
-     ROSE_ASSERT (!"Bad child in cfgFindChildIndex on SgCastExp");
+
+	 ROSE_ASSERT (!"Bad child in cfgFindChildIndex on SgCastExp");
+  // DQ (11/29/2009): Avoid MSVC warning about missing return.
+	 return 0;
    }
 
 unsigned int
@@ -3632,6 +3644,9 @@ SgDesignatedInitializer::cfgFindChildIndex(SgNode* n)
    {
      if (n == this->get_memberInit()) return 0;
      ROSE_ASSERT (!"Bad child in cfgFindChildIndex on SgDesignatedInitializer");
+
+  // DQ (11/29/2009): Avoid MSVC warning about missing return.
+	 return 0;
    }
 
 unsigned int
