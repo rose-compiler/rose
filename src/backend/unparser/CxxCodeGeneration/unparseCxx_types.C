@@ -5,7 +5,7 @@
 
 #include "rose.h"
 #include "unparser.h"
-#include "Cxx_Grammar.h"
+// #include "Cxx_Grammar.h"
 
 
 // DQ (12/31/2005): This is OK if not declared in a header file
@@ -48,6 +48,12 @@ string get_type_name(SgType* t)
    {
   // printf ("t->class_name() = %s \n",t->class_name().c_str());
 
+#ifdef _MSC_VER
+#pragma message ("WARNING: Commented out body of get_type_name()")
+	   printf ("Error: Commented out body of get_type_name() \n");
+	   ROSE_ASSERT(false);
+	   return "ERROR IN get_type_name()";
+#else
      switch (t->variant())
         {
           case T_UNKNOWN:            return "UNKNOWN"; 
@@ -277,6 +283,7 @@ string get_type_name(SgType* t)
                break;
              }
         }
+#endif
 }
 
 //-----------------------------------------------------------------------------------
@@ -713,6 +720,11 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
      info.display("Inside of Unparse_Type::unparseClassType");
 #endif
 
+#ifdef _MSC_VER
+#pragma message ("WARNING: Commented out body of unparseClassType()")
+	   printf ("Error: Commented out body of unparseClassType() \n");
+	   ROSE_ASSERT(false);
+#else
      SgClassType* class_type = isSgClassType(type);
      ROSE_ASSERT(class_type != NULL);
 
@@ -924,6 +936,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                   }
              }
         }
+#endif
    }
 
 

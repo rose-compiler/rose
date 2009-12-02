@@ -46,7 +46,12 @@ class rose_exception
 void ROSE_ABORT() __THROW __attribute__ ((__noreturn__));
 #else
 // DQ (9/3/2009): This is required for Mac OSX to correctly compile
+#ifdef _MSC_VER
+// DQ (11/28/2009): This is a warning in MSVC ("warning C4273: 'abort' : inconsistent dll linkage")
+void ROSE_ABORT(void);
+#else
 void ROSE_ABORT();
+#endif
 #endif
 
 // throw rose_exception with user defined abort message

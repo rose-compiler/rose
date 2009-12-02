@@ -139,8 +139,11 @@
 // does not follwo the new rules for what qualifies as a valid AST.  Time is needed for the AST Interface code 
 // to be adapted to the new rules.  Not clear how this will effect the unparser!!!
 // In the future we want to make this value "TRUE" this is a work around until then.
+#ifdef _MSC_VER
+#define STRICT_ERROR_CHECKING 0
+#else
 #define STRICT_ERROR_CHECKING false
-
+#endif
 
 // DQ (11/7/2007): Reimplementation of "fixup" support for the AST copy mechanism.
 // This version separates the fixup into three phases:
@@ -175,7 +178,7 @@
 //#include <unordered_map>
 //#else   
 
-#if     _MSC_VER
+#ifdef _MSC_VER
 // DQ (11/4/2009): MS Visual Studio version of hash_multimap
 #include <cliext/hash_map>
 #else

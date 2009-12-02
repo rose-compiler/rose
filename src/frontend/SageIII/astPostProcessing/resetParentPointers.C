@@ -363,8 +363,11 @@ ResetParentPointers::resetParentPointersInType (SgType* typeNode, SgNode* previo
                  // Since the defintion is shared only set it if it is not already set!
                     if (classDefinition->get_parent() == NULL)
                        {
+#ifndef _MSC_VER
+// DQ (11/28/2009): fatal error C1017: invalid integer constant expression
 #if PRINT_SIDE_EFFECT_WARNINGS || DEBUG_PARENT_INITIALIZATION
                          printf ("Note: It would be better to set the parent of the class definition in the EDG/Sage connection (I think) \n");
+#endif
 #endif
                          if (classDeclaration->get_definingDeclaration() != NULL)
                               classDefinition->set_parent(classDeclaration->get_definingDeclaration());

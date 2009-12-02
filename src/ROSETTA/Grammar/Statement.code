@@ -489,25 +489,32 @@ HEADER_DECLARATION_STATEMENT_START
        // this is to distinguish a forward declaration (class or function)
        // class X;
        // class X { };
-          int  isForward() const;
+
+       // DQ (11/28/2009): Changed return type from "int" to "bool"
+          bool  isForward() const;
           void setForward();
           void unsetForward();
 
        // this is to distinguish cases like this
        // class-P pvar;            -- isNameOnly=1
        // class-P { int a; } pvar; -- isNameOnly=0
-          int  isNameOnly() const;
+
+       // DQ (11/28/2009): Changed return type from "int" to "bool"
+          bool  isNameOnly() const;
           void setNameOnly();
           void unsetNameOnly();
 
-          int  isExternBrace() const;
+       // DQ (11/28/2009): Changed return type from "int" to "bool"
+          bool  isExternBrace() const;
           void setExternBrace();
           void unsetExternBrace();
 
        // this is to distinguish cases like this
        // class P var;
        // P var;
-          int  skipElaborateType() const;
+
+       // DQ (11/28/2009): Changed return type from "int" to "bool"
+          bool  skipElaborateType() const;
           void setSkipElaborateType();
           void unsetSkipElaborateType();
 
@@ -5344,7 +5351,8 @@ void
 SgDeclarationStatement::post_construction_initialization()
    {}
 
-int
+// DQ (11/28/2009): Changed return type from "int" to "bool"
+bool
 SgDeclarationStatement::isForward() const 
    { return get_forward(); }
 
@@ -5356,7 +5364,8 @@ void
 SgDeclarationStatement::unsetForward() 
    { set_forward(false); }
 
-int
+// DQ (11/28/2009): Changed return type from "int" to "bool"
+bool
 SgDeclarationStatement::isNameOnly() const 
    { return get_nameOnly(); }
 
@@ -5368,7 +5377,8 @@ void
 SgDeclarationStatement::unsetNameOnly() 
    { set_nameOnly(false); }
 
-int
+// DQ (11/28/2009): Changed return type from "int" to "bool"
+bool
 SgDeclarationStatement::isExternBrace() const 
    { return get_externBrace(); }
 
@@ -5380,7 +5390,8 @@ void
 SgDeclarationStatement::unsetExternBrace() 
    { set_externBrace(false); }
 
-int
+// DQ (11/28/2009): Changed return type from "int" to "bool"
+bool
 SgDeclarationStatement::skipElaborateType() const 
    { return get_skipElaborateType(); }
 

@@ -146,6 +146,9 @@ namespace VirtualBinCFG {
             // No key
             return eckUnconditional;
         }
+#else
+    // DQ (11/28/2009): This function was already commented out, but must return a value for use in MSVC.
+       return eckFalse;
 #endif
     }
 

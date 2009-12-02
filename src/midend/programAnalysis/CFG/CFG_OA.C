@@ -32,6 +32,7 @@ OpenAnalysis::ROSE_CFG_Wrap :: ~ROSE_CFG_Wrap()
 }
 #endif
 
+#ifndef _MSC_VER
 #ifndef USE_ROSE
 // DQ (8/29/2009): EDG reports  this as an error:
 // error: declaration is incompatible with function template "void OpenAnalysis::BuildCFG(AstInterface &, const AstNodePtr &, BuildCFGConfig<Node> &)" 
@@ -45,8 +46,10 @@ void OpenAnalysis::BuildCFG ( AstInterface& fa, const AstNodePtr& head, BuildCFG
   OA2ROSE_CFG_Translate( wrap, ng);
 }
 #endif
+#endif
 
 
+#ifndef _MSC_VER
 #ifndef USE_ROSE
 // DQ (8/29/2009): EDG reports  this as an error:
 // error: declaration is incompatible with function template "void OpenAnalysis::OA2ROSE_CFG_Translate(OpenAnalysis::ROSE_CFG_Wrap &, BuildCFGConfig<Node> &)"
@@ -88,7 +91,7 @@ void OpenAnalysis::OA2ROSE_CFG_Translate ( ROSE_CFG_Wrap& wrap, BuildCFGConfig<N
    }
 }
 #endif
-
+#endif
 
 
 
