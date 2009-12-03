@@ -44,6 +44,37 @@ if  [ "$MACHINE" = "i686" ]; then
     PROCESS_NUM=16
 fi
 # 64-bit machine--------
+if  [ "$MACHINE" = "x86_64" ]; then
+    # gcc version as an axis
+    if [ "$GCC_VERSION" == "3.4" ]; then
+      source /home/liao6/set.gcc3.4
+    fi  
+    if [ "$GCC_VERSION" == "4.0" ]; then
+      source /usr/apps/gcc/4.0.4/setup.sh
+    fi  
+    if [ "$GCC_VERSION" == "4.1" ]; then
+       # nothing to set for 4.1, the default gcc compilera
+        echo "using the default gcc"
+    fi
+    if [ "$GCC_VERSION" == "4.2"]; then
+      source /usr/apps/gcc/4.2.4/setup.sh
+    fi  
+    if [ "$GCC_VERSION" == "4.3" ]; then
+      source /usr/apps/gcc/4.3.2/setup.sh
+    fi  
+    if [ "$GCC_VERSION" == "4.4" ]; then
+      source /usr/apps/gcc/4.4.1/setup.sh
+    fi  
+    echo `which gcc`
+    OPT=/home/liao6/64home/opt
+    export OPT
+    export JAVA_HOME=${OPT}/jdk1.6.0_07
+    export BOOST_ROOT=${OPT}/boost-1.36.0
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${JAVA_HOME}/jre/lib/amd64/server:${BOOST_ROOT}/lib
+    export PATH=$JAVA_HOME/bin:/home/liao6/64home/opt/git-1.6.5.2/bin:$PATH
+    PROCESS_NUM=4
+fi
+
 # mac os machine--------
 
 # prepare and 
@@ -74,11 +105,10 @@ cd ROSE-build
 ../configure --with-boost=${BOOST_ROOT} --with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall
 
 # minimum build for binaries
-make -C src/util ${PROCESS_NUM}
-make -C src/ROSETTA ${PROCESS_NUM}
-make -C src/frontend/CxxFrontend ${PROCESS_NUM}
-
-make binary_edg_tarball
+make -C src/util -j${PROCESS_NUM} &&
+make -C src/ROSETTA -j${PROCESS_NUM} &&
+make -C src/frontend/CxxFrontend -j${PROCESS_NUM} &&
+make binary_edg_tarball -j${PROCESS_NUM}
 #make source_with_binary_edg_dist DOT_SVNREV=-12345
 # copy it to a centralized file location
 cp roseBinaryEDG-*.tar.gz /usr/casc/overture/ROSE/git/ROSE_EDG_Binaries/.
