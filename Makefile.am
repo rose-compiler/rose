@@ -285,7 +285,6 @@ source_with_binary_edg_dist: copy_binary_edg_tarball_to_source_tree
 	cat $(top_srcdir)/docs/Makefile.am | \
 		grep -v 'DEVELOPER_DISTRIBUTION_DIRECTORY *=' > \
 		$(distdir)/docs/Makefile.am # Remove SUBDIRS reference to testDoxygen
-	cp $(top_srcdir)/src/frontend/CxxFrontend/EDG/Makefile.am.forBinaryEDG $(distdir)/src/frontend/CxxFrontend/Makefile.am
 	echo "" >> $(distdir)/src/frontend/CxxFrontend/Makefile.am
 	cd $(distdir)/src/frontend/CxxFrontend; echo "EXTRA_DIST = `echo *.tar.gz`" >> Makefile.am
 	cd $(distdir) && ./build
