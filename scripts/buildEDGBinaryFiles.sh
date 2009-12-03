@@ -22,8 +22,9 @@ if  test "$MACHINE" = "i686" ; then
       source /usr/apps/gcc/4.0.4/setup.sh
     fi  
     if [ "$GCC_VERSION" == "4.1" ]; then
-       # nothing to set for 4.1, the default gcc compiler
-    fi  
+       # nothing to set for 4.1, the default gcc compilera
+        echo "using the default gcc"
+    fi
     if [ "$GCC_VERSION" == "4.2"]; then
       source /usr/apps/gcc/4.2.4/setup.sh
     fi  
@@ -55,10 +56,10 @@ if [ $? -ne 0 ]; then
     exit 1
 fi 
 
-GIT_REPO_URL = `grep url .git/config | cut -f 3 -d' '`
-if [ "$GIT_REPO_URL" != "/usr/casc/overture/ROSE/git/ROSE.git" ]; then
+GIT_REPO_URL=`grep url .git/config | cut -f 3 -d' '`
+if [ "$GIT_REPO_URL" != "file:///usr/casc/overture/ROSE/git/ROSE.git" ]; then
     echo $GIT_REPO_URL
-    echo "Error: the git URL is not /usr/casc/overture/ROSE/git/ROSE.git "
+    echo "Error: the git URL is not file:///usr/casc/overture/ROSE/git/ROSE.git "
     exit 1
 fi  
 
