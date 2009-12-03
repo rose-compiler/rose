@@ -1,4 +1,5 @@
 #!/bin/sh
+##!/bin/sh -vx
 ######################################################################################
 # Author:             Bobby Philip                                                   #
 # Creation Date:      11/05/2001                                                     #
@@ -33,7 +34,7 @@ process_headers()
   target_parent_dir="`dirname "$3"`"
   target_base_dir="`basename "$3"`"
   target_dir="`cd \"$target_parent_dir\" 2>/dev/null && pwd || echo \"$target_parent_dir\"`/$target_base_dir"
-
+# roseHome is the top rose source tree
   roseHome="$4"
 
 # echo "*****************************************"
@@ -193,7 +194,7 @@ fi
  case "$compilerName" in
   # Support for compiling ROSE with GNU g++ compiler
   # g++|gcc|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|roseTranslator)
-    g++|gcc|icpc|icc|mpicc|mpic++|mpiCC|mpicxx)
+    g++|gcc|icpc|icc|mpicc|mpic++|mpiCC|mpicxx|c++)
          if [ "$compilerName" = "gcc" -o "$compilerName" = "icc" -o "$compilerName" = "mpicc" ]
          then
             is_C_compiler="yes"

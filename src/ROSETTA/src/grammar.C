@@ -2568,7 +2568,6 @@ Grammar::buildCode ()
   // string includeHeaderAstFileIO ="#include \"astFileIO/AST_FILE_IO.h\"\n\n";
      string includeHeaderAstFileIO ="#include \"AST_FILE_IO.h\"\n\n";
      includeHeaderString += includeHeaderAstFileIO;
-
 	 // tps (11/23/2009) : Needed to comply with Windows
 #ifdef _MSC_VER
 	 string ll1 = "#ifdef _MSC_VER \n";
@@ -2987,7 +2986,9 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(Terminal* grammarnode) {
  // in the traversal island issue, but it does not have a container member,
  // so we need not mention it in this code.)
     std::string nodeName = grammarnode->getName();
-    std::cout << "both single and container members in node " << nodeName << std::endl;
+// Liao I made more exceptions for some OpenMP specific nodes for now
+// The traversal generator has already been changed accordingly.
+//    std::cout << "both single and container members in node " << nodeName << std::endl;
     ROSE_ASSERT(nodeName == "SgVariableDeclaration"
 	||nodeName == "SgOmpClauseBodyStatement"
 	||nodeName == "SgOmpParallelStatement"
