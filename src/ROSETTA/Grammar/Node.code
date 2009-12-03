@@ -1257,7 +1257,7 @@ inline size_t hash_value(const std::pair<int,int> & p)
 typedef rose_hash::hash_multimap<std::pair<int,int>,SgGraphEdge*> rose_graph_integerpair_edge_hash_multimap_base_type;
 #else
 // DQ (12/1/2009): I can't get this to work under MCVC (so comment it out for now).
-#pragma message ("Grammer/Node.code: I can't get this to work under MCVC (so comment it out for now).")
+#pragma message ("I can't get this to work under MCVC (so comment it out for now).")
 // Use size_t to get this to compile for now.
 typedef rose_hash::hash_multimap<size_t,SgGraphEdge*> rose_graph_integerpair_edge_hash_multimap_base_type;
 #endif
