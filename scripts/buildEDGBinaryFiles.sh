@@ -9,11 +9,11 @@
 
 # top rose git working copy, for hudson, it should be the hudson root directory?
 # ROSE_TOP=/home/liao6/daily-test-rose/rose.git
-MACHINE =`uname -m`
+MACHINE=`uname -m`
 echo Found a $MACHINE ....
 PROCESSE_NUM=4
 # 32-bit machine--------
-if  test "$MACHINE" = "i686" ; then
+if  [ "$MACHINE" = "i686" ]; then
     # gcc version as an axis
     if [ "$GCC_VERSION" == "3.4" ]; then
       source /home/liao6/set.gcc3.4
@@ -34,7 +34,7 @@ if  test "$MACHINE" = "i686" ; then
     if [ "$GCC_VERSION" == "4.4" ]; then
       source /home/liao6/set.gcc4.4.1
     fi  
-
+    echo `which gcc`
     source /usr/apps/qt/4.5.1/setup.sh
     export JAVA_HOME=/usr/apps/java/jdk1.6.0_11
     export BOOST_ROOT="/home/liao6/opt/boost_1_35_0"
@@ -57,11 +57,11 @@ if [ $? -ne 0 ]; then
 fi 
 
 GIT_REPO_URL=`grep url .git/config | cut -f 3 -d' '`
-if [ "$GIT_REPO_URL" != "file:///usr/casc/overture/ROSE/git/ROSE.git" ]; then
-    echo $GIT_REPO_URL
-    echo "Error: the git URL is not file:///usr/casc/overture/ROSE/git/ROSE.git "
-    exit 1
-fi  
+#if [ "$GIT_REPO_URL" != "file:///usr/casc/overture/ROSE/git/ROSE.git" ]; then
+#    echo $GIT_REPO_URL
+#    echo "Error: the git URL is not file:///usr/casc/overture/ROSE/git/ROSE.git "
+#    exit 1
+#fi  
 
 git pull
 ./build
