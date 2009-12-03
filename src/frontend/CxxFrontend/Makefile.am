@@ -1,13 +1,29 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+release_binary_compatibility_signature=$(shell ${top_srcdir}/scripts/bincompat-sig)
+BINARY_EDG_DIRNAME=roseBinaryEDG-${build_triplet_without_redhat}-${GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX}-${release_binary_compatibility_signature}
+BINARY_URL=file:///usr/casc/overture/ROSE/git/ROSE_EDG_Binaries
+
+
 if ROSE_HAS_EDG_SOURCE
 
 SUBDIRS = EDG
 
-else
-BINARY_EDG_DIRNAME=@EXPECTED_BINARY_EDG_DIRNAME@
 
-BINARY_URL=file:///usr/casc/overture/ROSE/git/ROSE_EDG_Binaries
+$(BINARY_EDG_DIRNAME).tar.gz: EDG/libroseEDG.la
+	mkdir $(BINARY_EDG_DIRNAME)
+	cp -r EDG/libroseEDG.* EDG/.libs $(BINARY_EDG_DIRNAME)/
+	tar czf $(BINARY_EDG_DIRNAME).tar.gz $(BINARY_EDG_DIRNAME)
+	rm -rf $(BINARY_EDG_DIRNAME)
+
+upload: $(BINARY_EDG_DIRNAME).tar.gz
+	cp $< /usr/casc/overture/ROSE/git/ROSE_EDG_Binaries
+
+else
+
+DIST_SUBDIRS= EDG 
+SUBDIRS= 
+
 
 all: EDG/libroseEDG.la
 
@@ -15,7 +31,7 @@ all: EDG/libroseEDG.la
 # DQ (9/14/2009): When doing nmi-postmortem testing, the $(srcdir)/$(BINARY_EDG_DIRNAME).tar.gz is already unzipped
 
 %.tar.gz:
-	curl ${BINARY_URL}/$@ > $@
+	curl ${BINARY_URL}/$@  -o $@
 
 EDG/libroseEDG.la: $(BINARY_EDG_DIRNAME).tar.gz
 	if test "$(am__untar)" != "false"; then \

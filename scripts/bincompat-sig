@@ -1,0 +1,150 @@
+#!/usr/bin/perl -w
+
+# The purpose of this script is to compute a binary compatibility
+# signature for a project based on Git.  The assumption is that the
+# project has an associated submodule with content that can only be
+# distributed in binary form.  The submodule has dependencies on the
+# supermodule which affect binary compatibility, and all files which
+# are depended on are referred to as dependent files.  This signature
+# is computed by the MD5 hash of the concatenation of the paths and
+# SHA-1 hashes of all dependent files.
+#
+# The story is complicated by repository forking - the user may make
+# changes to dependent files.  Since an external user cannot rebuild
+# the associated submodule, for external users we need to compute the
+# signature using the closest commit to a canonical repository and hope
+# for the best.  A canonical repository is used to identify a commit
+# that is a best common ancestor of HEAD and the canonical repository's
+# canonical branch (cf. git-merge-base).
+#
+# The concepts "dependent file", "canonical repository",
+# "canonical branch" and "is an external user" are project-specific and
+# are defined by the below three functions.
+
+use strict;
+use FindBin;
+use lib "$FindBin::Bin";
+use Git;
+use Digest::MD5;
+
+# The below is user-configurable
+
+# Given a file path, returns true iff the path names a dependent file.
+sub is_dependent_file {
+	my ($path) = @_;
+	return ($path =~ m@^src/ROSETTA/@ || $path eq "src/frontend/CxxFrontend/EDG");
+}
+
+# A list of canonical repositories.  This need not include every repository;
+# if regex or other pattern matching is required this can be done in
+# canonical_repo_branch below.
+my @canonical_repos = qw(
+	file:///usr/casc/overture/ROSE/git/ROSE.git
+);
+
+# Given a remote repository URL, returns the name of the canonical branch iff
+# the URL identifies a canonical repository, undef otherwise.
+sub canonical_repo_branch {
+	my ($repo) = @_;
+	# The internal central repository and (TODO) the external central repository.
+	return "master" if grep { $repo eq $_ } @canonical_repos;
+	return "master" if $repo =~ m@^ssh://.*/usr/casc/overture/ROSE/git/ROSE\.git$@;
+	return undef;
+}
+
+# Given a path to the working copy, returns true iff this is an external user.
+sub needs_canonical_repo {
+	return 0;
+	my ($wcpath) = @_;
+	# Whether this is an external user is defined by whether the user does not have
+	# the EDG submodule checked out.
+	return (! -e "$wcpath/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection");
+}
+
+# The below should not need to be modified
+
+my $repo = Git->repository(Directory => $FindBin::Bin);
+
+my $MODE = 0; my $TYPE = 1; my $OBJECT = 2; my $PATH = 3;
+
+sub parse_ls_tree_line {
+	my ($line) = @_;
+	my $hline = [split /\s/, $line, 4];
+	return $hline;
+}
+
+sub get_significance_data_for {
+	my ($file) = @_;
+	return $file->[$OBJECT];
+}
+
+sub add_significance_data {
+	my ($commit, $hash) = @_;
+	my @ls_tree_lines = $repo->command("ls-tree", "-r", $commit);
+	my @files = map { parse_ls_tree_line $_ } @ls_tree_lines;
+	my @dependent_files = sort { $a->[$PATH] cmp $b->[$PATH] } grep { is_dependent_file $_->[$PATH] } @files;
+	for my $dependent_file (@dependent_files) {
+		$hash->add($dependent_file->[$PATH]);
+		$hash->add("\0");
+		$hash->add(get_significance_data_for($dependent_file));
+		$hash->add("\0");
+	}
+}
+
+sub merge_base {
+	my @commits = @_;
+	return $repo->command_oneline("merge-base", @commits);
+}
+
+sub find_canonical_ref {
+	my @remotes = $repo->command("remote");
+	my %remotes;
+	for my $remote (@remotes) {
+		my $url = $repo->config("remote.$remote.url");
+		$remotes{$remote} = $url;
+		my $branch = canonical_repo_branch($url);
+		if (defined $branch) {
+			my $canon_ref = "refs/remotes/$remote/$branch";
+			if (! -e $repo->repo_path . "/" . $canon_ref) {
+				print STDERR <<ERROR;
+The remote tracking ref $canon_ref does not exist in this repository.
+Please ensure that your remotes are up to date (use "git fetch $remote").
+ERROR
+				exit 1;
+			}
+			return $canon_ref;
+		}
+	}
+	print STDERR <<ERROR;
+Unable to find a remote tracking a canonical repository.  Please add a
+canonical repository as a remote and ensure it is up to date.  Currently
+configured remotes are:
+
+ERROR
+	for my $remote (@remotes) {
+		print STDERR "   $remote => $remotes{$remote}\n";
+	}
+	print STDERR <<ERROR;
+
+Potential canonical repositories include:
+
+ERROR
+	for my $canonical_repo (@canonical_repos) {
+		print STDERR "   $canonical_repo\n";
+	}
+
+	exit 1;
+}
+
+my $relevant_commit;
+
+if (needs_canonical_repo($repo->wc_path)) {
+	my $canon_ref = find_canonical_ref;
+	$relevant_commit = $repo->merge_base("HEAD", $canon_ref);
+} else {
+	$relevant_commit = "HEAD";
+}
+
+my $hash = Digest::MD5->new;
+add_significance_data($relevant_commit, $hash);
+print $hash->hexdigest . "\n";
