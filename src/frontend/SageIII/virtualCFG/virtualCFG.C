@@ -656,7 +656,7 @@ namespace VirtualCFG {
           return st->cfgForEnd();
         }
       }
-      default: ROSE_ASSERT (!"Invalid Fortran label type");
+	  default: { ROSE_ASSERT (!"Invalid Fortran label type"); /* avoid MSVC warning of no return stmt */ return st->cfgForEnd(); }
     }
   }
 
