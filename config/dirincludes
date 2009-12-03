@@ -7,6 +7,9 @@
 ############################################################
 
 #given a target directory name, creates a list of include subdirectories
+#
+# this is used to find all subdirectories of ROSE_BUILD/include-staging/BAckendCompiler_HEADERS
+# and save them into a list
 if [ $# -ne 2 ] 
 then
   echo "ERROR: Usage is create_include_path parentdir includedir" 1>&2

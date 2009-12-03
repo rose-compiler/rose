@@ -5,6 +5,7 @@ add_executable( testTranslator testTranslator.C )
 target_link_libraries(testTranslator rose ${link_with_libraries} )
 
 add_subdirectory (translatorTests)
+enable_testing()
 
 # ${Boost_LIBRARIES}
 #    libastMerge libsageInterface libastTokenStream 
