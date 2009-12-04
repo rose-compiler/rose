@@ -132,6 +132,8 @@ struct X86InstructionSemantics {
         return extract<Len - 1, Len>(carries);
     }
 
+    /* FIXME: the Pentium4 architecture defines most bits up to bit 22, however this function is ignoring the high-order bits
+     *        because most policies don't even define the top 16 bits. They all need to be fixed! [rpm 2009-12-02] */
     Word(32) readEflags() {
         return policy.concat(readFlags(), number<16>(0x0000));
     }
