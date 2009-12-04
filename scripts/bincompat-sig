@@ -63,21 +63,29 @@ sub needs_canonical_repo {
 
 # The below should not need to be modified
 
+# Using FindBin ensures that the script works no matter where it is invoked from
 my $repo = Git->repository(Directory => $FindBin::Bin);
 
+# Assigns indices into the result of parse_ls_tree_line, i.e.
+# $ git ls-tree HEAD
+# 100644 blob e2493c0aeaf5d11b750011a444bb684b62d6c608    .gitignore
+# ^mode  ^type ^object                                    ^path
 my $MODE = 0; my $TYPE = 1; my $OBJECT = 2; my $PATH = 3;
 
+# Parses line of ls-tree output
 sub parse_ls_tree_line {
 	my ($line) = @_;
 	my $hline = [split /\s/, $line, 4];
 	return $hline;
 }
 
+# Returns data for an object which is used to compute a signature
 sub get_significance_data_for {
 	my ($file) = @_;
 	return $file->[$OBJECT];
 }
 
+# adds data used to compute a signature from the given commit to the given hash
 sub add_significance_data {
 	my ($commit, $hash) = @_;
 	my @ls_tree_lines = $repo->command("ls-tree", "-r", $commit);
@@ -91,11 +99,15 @@ sub add_significance_data {
 	}
 }
 
+# Convenience function for git-merge-base(1)
 sub merge_base {
 	my @commits = @_;
 	return $repo->command_oneline("merge-base", @commits);
 }
 
+# Finds a remote in the current repository which refers to a canonical
+# repository.  Returns a ref which can be used to refer to the
+# canonical branch of that repository.
 sub find_canonical_ref {
 	my @remotes = $repo->command("remote");
 	my %remotes;
@@ -136,8 +148,18 @@ ERROR
 	exit 1;
 }
 
+# This file only exists in tarballs, in which we will not have access to the git history
+if (-e $repo->wc_path."/bincompat-sig") {
+	open(SIG, $repo->wc_path."/bincompat-sig") or die "couldn't open signature file: $!";
+	print <SIG>;
+	close(SIG);
+	exit 0;
+}
+
 my $relevant_commit;
 
+# If the user cannot generate the binary content themselves, revert to the most specific commit
+# that is common to both the user's branch and the canonical repository
 if (needs_canonical_repo($repo->wc_path)) {
 	my $canon_ref = find_canonical_ref;
 	$relevant_commit = $repo->merge_base("HEAD", $canon_ref);

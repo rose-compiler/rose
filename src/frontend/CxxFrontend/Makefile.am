@@ -11,7 +11,14 @@ ALL_COMPILERS = GNU-3.4 GNU-4.0 GNU-4.1 GNU-4.2 GNU-4.3 GNU-4.4
 %.tar.gz:
 	curl ${BINARY_URL}/$@  -o $@
 
-EXTRA_DIST = $(foreach ARCH,$(ALL_ARCHS),$(foreach COMPILER,$(ALL_COMPILERS),roseBinaryEDG-$(ARCH)-$(COMPILER)-$(release_binary_compatibility_signature).tar.gz))
+# This line includes different EDG tarballs depending on the value of the environment variable DIST_EDG
+# if DIST_EDG == all:
+#   include all EDG binaries
+# if DIST_EDG == current:
+#   include only binaries for the current architecture
+# otherwise:
+#   no binaries
+EXTRA_DIST = $(if $(findstring all,$(DIST_EDG)), $(foreach ARCH,$(ALL_ARCHS),$(foreach COMPILER,$(ALL_COMPILERS),roseBinaryEDG-$(ARCH)-$(COMPILER)-$(release_binary_compatibility_signature).tar.gz)), $(if $(findstring current,$(DIST_EDG)), $(BINARY_EDG_DIRNAME).tar.gz))
 
 if ROSE_HAS_EDG_SOURCE
 
@@ -19,6 +26,7 @@ SUBDIRS = EDG
 
 #create tar-ball
 $(BINARY_EDG_DIRNAME).tar.gz: EDG/libroseEDG.la
+	rm -rf $(BINARY_EDG_DIRNAME)
 	mkdir $(BINARY_EDG_DIRNAME)
 	cp -r EDG/libroseEDG.* EDG/.libs $(BINARY_EDG_DIRNAME)/
 	tar czf $(BINARY_EDG_DIRNAME).tar.gz $(BINARY_EDG_DIRNAME)
