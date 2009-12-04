@@ -301,7 +301,7 @@ int main(int argc, char** argv) {
 
   //I am doing some experimental work to enable functions in the C representation
   //Set this flag to true in order to enable that work
-  bool enable_functions = false;
+  bool enable_functions = true;
   //Jeremiah did some work to enable a simplification and normalization of the 
   //C representation. Enable this work by setting this flag to true.
   bool enable_normalizations = false;
@@ -379,9 +379,12 @@ int main(int argc, char** argv) {
 
     for(int j = 0; j < asmFunctions.size(); j++ )
     {
-
       SgAsmFunctionDeclaration* binFunc = isSgAsmFunctionDeclaration( asmFunctions[j] );
-      SgFunctionDeclaration* decl = buildDefiningFunctionDeclaration("my"+binFunc->get_name(), SgTypeVoid::createType(), buildFunctionParameterList(), g);
+
+      if( binFunc->get_name().c_str() == NULL || binFunc->get_name() == "" ) 
+        binFunc->set_name( "my" + boost::lexical_cast<std::string>(j)   );
+
+      SgFunctionDeclaration* decl = buildDefiningFunctionDeclaration( binFunc->get_name() , SgTypeVoid::createType(), buildFunctionParameterList(), g);
 
       appendStatement(decl, g);
       SgBasicBlock* body = decl->get_definition()->get_body();
