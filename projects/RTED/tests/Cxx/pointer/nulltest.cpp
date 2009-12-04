@@ -1,4 +1,7 @@
 #include <iostream>
+
+using namespace std;
+
 class TestClassClass
 {
     public:
