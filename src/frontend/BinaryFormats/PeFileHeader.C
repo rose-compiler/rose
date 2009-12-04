@@ -4,6 +4,7 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+
 void
 SgAsmPERVASizePair::ctor(const RVASizePair_disk *disk) {
     p_e_rva  = le_to_host(disk->e_rva);
