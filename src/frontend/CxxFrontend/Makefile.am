@@ -13,11 +13,15 @@ ALL_COMPILERS = GNU-3.4 GNU-4.0 GNU-4.1 GNU-4.2 GNU-4.3 GNU-4.4
 
 # This line includes different EDG tarballs depending on the value of the environment variable DIST_EDG
 # Default
-#   no binaries distributed  as EXTRA_DIST
-# if DIST_EDG == all:
-#   include all EDG binaries for all platforms and compiler versions 
+#    DIST_EDG == current
+DIST_EDG ?= current
+
 # if DIST_EDG == current:
 #   include only binaries for the current architecture and current compiler version
+# if DIST_EDG == all:
+#   include all EDG binaries for all platforms and compiler versions 
+# if DIST_EDG == none:
+#   no binaries distributed as EXTRA_DIST
 EXTRA_DIST = $(if $(findstring all,$(DIST_EDG)), $(foreach ARCH,$(ALL_ARCHS),$(foreach COMPILER,$(ALL_COMPILERS),roseBinaryEDG-$(ARCH)-$(COMPILER)-$(release_binary_compatibility_signature).tar.gz)), $(if $(findstring current,$(DIST_EDG)), $(BINARY_EDG_DIRNAME).tar.gz))
 
 if ROSE_HAS_EDG_SOURCE
