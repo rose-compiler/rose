@@ -2,10 +2,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS = SemanticVerification
 
-EXTRA_DIST = runTest.C arm-ctrlaltdel.ans \
-	     runExecFormatsTest testShiftResizeSection.sh \
-	     test_findConstants.ans test_disassemble.ans \
-             testSampleBinaries.sh testSampleBinaries.conf
+EXTRA_DIST = runTest.C arm-ctrlaltdel.ans runExecFormatsTest testShiftResizeSection.sh test_findConstants.ans \
+		test_disassemble.ans testSampleBinaries.sh testSampleBinaries.conf testFunctionDetection.pl
 
 BINARY_SAMPLES = $(top_srcdir)/binaries/samples
 
@@ -19,10 +17,11 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIde
 # The executables...
 ###############################################################################################################################
 
-#noinst_PROGRAMS = execFormatsTest testBinCFG testBinCG testElfStrtab testElfByteOrder testElfWordSize testElfSchulz testElfConstruct \
-#	          testPeConstruct shiftResizeSection findConstants disassemble
-noinst_PROGRAMS = execFormatsTest testBinCFG testBinCG testElfStrtab testElfByteOrder testElfWordSize testElfSchulz testElfConstruct \
-	          testPeConstruct shiftResizeSection findConstants disassemble testEtherInsns
+# Each executable will have a test_*.passed target for testing and a demo_* target for interactive demo. The former is the
+# name of a file that is created when the test is successful, the later is a phony target.
+noinst_PROGRAMS = execFormatsTest testBinCFG testBinCG testElfStrtab testElfByteOrder testElfWordSize testElfSchulz \
+		testElfConstruct testPeConstruct shiftResizeSection findConstants disassemble testEtherInsns \
+		expandCoreDump functionBoundaries
 
 # Parses an executable to produce a dump file (*.dump), an assembly file (rose_*.s), and a new executable created by unparsing
 # the AST (*.new). The *.new file is typically identical to the original executable.
@@ -84,6 +83,14 @@ disassemble_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 testEtherInsns_SOURCES = testEtherInsns.C
 testEtherInsns_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
+# Program to show function boundary information for a binary executable
+functionBoundaries_SOURCES=functionBoundaries.C
+functionBoundaries_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+# Program to add read-only data to ELF core dumps.
+expandCoreDump_SOURCES=expandCoreDump.C
+expandCoreDump_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
 ###############################################################################################################################
 # DEMOS
 #
@@ -140,6 +147,17 @@ demo_disassemble: disassemble demo_findConstants
 	./disassemble --search-following --search-immediate --search-words --search-allbytes --search-unused --search-nonexe --search-deadend --search-unknown $(BINARY_SAMPLES)/i686-test1.O0.bin
 	@echo "output has been dumped to i686-test1.O0.bin.dump"
 
+demo_testBinCFG: testBinCFG demo_disassemble
+	: no demo yet for testBinCFG
+
+demo_expandCoreDump: expandCoreDump demo_testBinCFG
+	: no demo yet for expandCoreDump
+
+demo_functionBoundaries: functionBoundaries demo_exapndCoreDump
+	@echo; echo; echo "Demo for $<";
+	@echo "The functionBoundaries tool prints information about what binary functions were detected and why."
+	./functionBoundaries $(BINARY_SAMPLES)/i686-test1.O3.bin
+
 ###############################################################################################################################
 # TESTS
 #
@@ -147,6 +165,9 @@ demo_disassemble: disassemble demo_findConstants
 # are any differences.
 #
 # Each passing test creates a *.passed file so that a subsequent "make" doesn't need to rerun the test.
+#
+# Some of the targets depend on other tests because ROSE should not execute concurrently in the same working directory for
+# specimen binaries having the same names due to ROSE creating files in the CWD based on the base name of the specimen.
 ###############################################################################################################################
 TEST_PASSED_TARGETS=$(patsubst %,test_%.passed,$(noinst_PROGRAMS)) test_assembler.passed
 
@@ -267,6 +288,24 @@ test_samples.passed: disassemble execFormatsTest $(srcdir)/testSampleBinaries.sh
 test_testEtherInsns.passed: testEtherInsns
 	@echo "testEtherInsns cannot be run automatically--it requires human interaction.     (SKIPPED)"
 
+test_expandCoreDump.passed: expandCoreDump
+	@echo "expandCoreDump is not currently tested."
+
+# Tests for detecting the locations of functions, written this way for parallelism.
+test_functionBoundaries_1.passed: functionBoundaries $(BINARY_SAMPLES)/i686-test1.O0.bin test_disassemble.passed
+	./functionBoundaries $(BINARY_SAMPLES)/i686-test1.O0.bin >functionBoundaries_1.ans
+	diff -u {$(srcdir),.}/functionBoundaries_1.ans
+	touch $@
+test_functionBoundaries_2.passed: functionBoundaries $(BINARY_SAMPLES)/i686-test1.O3.bin test_findConstants.passed
+	./functionBoundaries $(BINARY_SAMPLES)/i686-test1.O3.bin >functionBoundaries_2.ans
+	diff -u {$(srcdir),.}/functionBoundaries_2.ans
+	touch $@
+test_functionBoundaries_3.passed: functionBoundaries $(BINARY_SAMPLES)/i686-test1.O3-stripped.bin
+	./functionBoundaries $(BINARY_SAMPLES)/i686-test1.O3-stripped.bin >functionBoundaries_3.ans
+	diff -u {$(srcdir),.}/functionBoundaries_3.ans
+	touch $@
+test_functionBoundaries.passed: test_functionBoundaries_1.passed test_functionBoundaries_2.passed test_functionBoundaries_3.passed
+	touch $@
 
 ###############################################################################################################################
 # Miscellaneous....
@@ -278,7 +317,8 @@ MOSTLYCLEANFILES = \
 	a.out arm-ctrlaltdel.ans arm-ctrlaltdel.dump-{1,2,3} arm-ctrlaltdel.new.new \
 	arm-poweroff.{new.dump,new.new} rose_arm-ctrlaltdel.new.s rose_arm-poweroff.new.s \
 	rose_schulz-sample{1,2}.so.new.s schulz-sample{1,2}.so.{new.dump,new.new} test_findConstants.ans \
-	test_disassemble.ans test_samples.{passed,out}
+	test_disassemble.ans test_samples.{passed,out} \
+	test_functionBoundaries_{1,2,3}.passed functionBoundaries_{1,2,3}.ans
 
 mostlyclean-local:
 	$(srcdir)/testSampleBinaries.sh --cleanup $(BINARY_SAMPLES) $(srcdir)/testSampleBinaries.conf

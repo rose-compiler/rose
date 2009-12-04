@@ -1612,10 +1612,6 @@ developersScratchSpace/Dan/constructName_tests/Makefile
 developersScratchSpace/Dan/dataFlow_tests/Makefile
 developersScratchSpace/Dan/binaryDataStructureRecognition_tests/Makefile
 developersScratchSpace/Dan/algorithmRecognition_tests/Makefile
-developersScratchSpace/Robb/Makefile
-developersScratchSpace/Robb/BinaryTools/Makefile
-developersScratchSpace/Robb/DynamicLinking/Makefile
-developersScratchSpace/Robb/extras/Makefile
 binaries/Makefile
 binaries/samples/Makefile
 ])
