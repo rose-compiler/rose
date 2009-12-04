@@ -1,4 +1,7 @@
+# Please be careful about where to put your tests and variable settings
+# The order matters!!
 
+#----- put platform independent settings in this section-----------------
 cmake_minimum_required(VERSION 2.6)
 project (ROSE)
 
@@ -19,9 +22,32 @@ set(INSTALL_TARGETS_DEFAULT_ARGS  RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
                                                                         COMPONENT
                                                                         Devel
                                                                         )
-
 # a new definition to tweak code for cmake 
 add_definitions (-DUSE_CMAKE)
+#set(  CMAKE_VERBOSE_MAKEFILE  true )
+
+set(ROSE_TOP_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+set(ROSE_TOP_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
+
+#Generate our configure file
+
+# --------- please do all system, platform, software tests here --------------
+# a set of common features: including endian, stdio.h, printf, size of long int ,etc
+#taken from LyX
+include(ConfigureChecks)
+#include(KDE4Defaults)
+#  a collection of macros which extend the built-in cmake commands
+include(MacroLibrary)
+# Try to find MySQL / MySQL Embedded library
+# MYSQL_FOUND,MYSQL_INCLUDE_DIR,MYSQL_LIBRARIES, etc
+include(FindMySQL)
+
+# we are not ready yet to use QT and KDE
+#include( FindKDE4Internal )
+#find_package(KDE4 REQUIRED)
+#add_definitions(${QT_DEFINITIONS} ${KDE4_DEFINITIONS})
+#message ("QT_DEFINITIONS= ${QT_DEFINITIONS}")
+#message ("KDE4_DEFINITIONS= ${KDE4_DEFINITIONS}")
 
 if (!WIN32)
 enable_language(Fortran)
@@ -36,22 +62,6 @@ set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
 set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
 endif (WIN32)
 
-#set(  CMAKE_VERBOSE_MAKEFILE  true )
-
-set(ROSE_TOP_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-set(ROSE_TOP_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
-
-#Generate our configure file
-
-# a set of common features: including endian, stdio.h, printf, size of long int ,etc
-#taken from LyX
-include(ConfigureChecks)
-#include(KDE4Defaults)
-#  a collection of macros which extend the built-in cmake commands
-include(MacroLibrary)
-# Try to find MySQL / MySQL Embedded library
-# MYSQL_FOUND,MYSQL_INCLUDE_DIR,MYSQL_LIBRARIES, etc
-include(FindMySQL)
 
 if (!WIN32)
 include(FindOpenSSL)
@@ -75,10 +85,10 @@ endif(NOT BISON_FOUND)
 
 #Ensure that Boost is found
 # environment variable BOOST_ROOT can help to find a user-specified path to Boost
-SET(Boost_ADDITIONAL_VERSIONS "1.39.0" "1.40.0" )
-find_package( Boost 1.36.0 COMPONENTS date_time filesystem program_options regex system wave )
+SET(Boost_ADDITIONAL_VERSIONS "1.36.0" "1.39.0" "1.40.0" )
+find_package( Boost 1.35.0 COMPONENTS date_time filesystem program_options regex system wave )
 if(NOT Boost_FOUND)
-    message(FATAL_ERROR "Could not find Boost version 1.36.0 or newer command")
+    message(FATAL_ERROR "Could not find Boost version 1.35.0 or newer command")
 endif(NOT Boost_FOUND)
 include_directories(${Boost_INCLUDE_DIRS})
 
@@ -90,11 +100,26 @@ endif (!WIN32)
 # define a global variable to collect all common linked third-party libraries for rose
 set( link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${RT_LIB} ${OPENSSL_LIBRARIES} )
 
+# Check compilers and version numbers, Liao 11/25/2009
+# the module is located in src/cmake/modules
+include(roseChooseBackendCompiler)
+include(roseGenerateBackendCompilerSpecificHeaders)
 
-
-#include(ManualStuff.cmake)
-
-#include(ConfigureChecks.cmake)
+# --------- finish all fundamental tests, now set derivative variables
+# Liao 12/1/2009, This is essential to find the right include path from either build or installation tree
+# for a translator
+if (HAVE_DLFCN_H)
+  if (HAVE_DLADDR)
+    set (use_rose_in_build_tree_var TRUE)
+    set (CMAKE_SHARED_LINKER_FLAGS ${CMAKE_SHARED_LINKER_FLAGS} -ldl)
+# this following line won't work since it only set the environment variable for cmake's session
+# not for ctest session. Still no good way to set it within cmake
+# fortunately,   
+    set ($ENV{ROSE_IN_BUILD_TREE} ${ROSE_TOP_BINARY_DIR})
+  endif (HAVE_DLADDR)
+else (HAVE_DLFCN_H)
+  set (use_rose_in_build_tree_var, FALSE)
+endif (HAVE_DLFCN_H)
 
  set( LIBHARU_SOURCE_DIR ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/libharu-200910170404 )
  set( LIBHARU_BINARY_DIR ${ROSE_TOP_BINARY_DIR}/src/3rdPartyLibraries/libharu-200910170404 )
@@ -194,12 +219,6 @@ set( ROSE_INCLUDES ${ROSE_INCLUDES}
      ${ROSE_TOP_SRC_DIR}/winspecific )
 ENDIF()
 
-# we are not ready yet to use QT and KDE
-#include( FindKDE4Internal )
-#find_package(KDE4 REQUIRED)
-#add_definitions(${QT_DEFINITIONS} ${KDE4_DEFINITIONS})
-#message ("QT_DEFINITIONS= ${QT_DEFINITIONS}")
-#message ("KDE4_DEFINITIONS= ${KDE4_DEFINITIONS}")
 
 include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 #include_directories( ${ROSE_INCLUDES} )
@@ -211,12 +230,6 @@ add_subdirectory(src)
 add_subdirectory(tests)
 
 enable_testing()
-
-# Check compilers and version numbers, Liao 11/25/2009
-# the module is located in src/cmake/modules
-include(roseChooseBackendCompiler)
-
-include(roseGenerateBackendCompilerSpecificHeaders)
 
 # put this to the end to catch all variables defined above
 # e.g. compiler names, versions etc.
