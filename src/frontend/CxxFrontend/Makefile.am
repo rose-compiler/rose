@@ -12,12 +12,12 @@ ALL_COMPILERS = GNU-3.4 GNU-4.0 GNU-4.1 GNU-4.2 GNU-4.3 GNU-4.4
 	curl ${BINARY_URL}/$@  -o $@
 
 # This line includes different EDG tarballs depending on the value of the environment variable DIST_EDG
+# Default
+#   no binaries distributed  as EXTRA_DIST
 # if DIST_EDG == all:
-#   include all EDG binaries
+#   include all EDG binaries for all platforms and compiler versions 
 # if DIST_EDG == current:
-#   include only binaries for the current architecture
-# otherwise:
-#   no binaries
+#   include only binaries for the current architecture and current compiler version
 EXTRA_DIST = $(if $(findstring all,$(DIST_EDG)), $(foreach ARCH,$(ALL_ARCHS),$(foreach COMPILER,$(ALL_COMPILERS),roseBinaryEDG-$(ARCH)-$(COMPILER)-$(release_binary_compatibility_signature).tar.gz)), $(if $(findstring current,$(DIST_EDG)), $(BINARY_EDG_DIRNAME).tar.gz))
 
 if ROSE_HAS_EDG_SOURCE
@@ -39,7 +39,8 @@ tarball: $(BINARY_EDG_DIRNAME).tar.gz
 upload: $(BINARY_EDG_DIRNAME).tar.gz
 	cp $< /usr/casc/overture/ROSE/git/ROSE_EDG_Binaries
 
-else
+else 
+#------------------- no EDG sources
 
 DIST_SUBDIRS= EDG 
 SUBDIRS= 
