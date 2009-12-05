@@ -14,7 +14,7 @@ ALL_COMPILERS = GNU-3.4 GNU-4.0 GNU-4.1 GNU-4.2 GNU-4.3 GNU-4.4
 # This line includes different EDG tarballs depending on the value of the environment variable DIST_EDG
 # Default
 #    DIST_EDG == current
-DIST_EDG ?= current
+DIST_EDG = current
 
 # if DIST_EDG == current:
 #   include only binaries for the current architecture and current compiler version
