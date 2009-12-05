@@ -63,6 +63,14 @@ sub needs_canonical_repo {
 
 # The below should not need to be modified
 
+# This file only exists in tarballs, in which we will not have access to the git history
+if (-e "$FindBin::Bin/../bincompat-sig") {
+	open(SIG, "$FindBin::Bin/../bincompat-sig") or die "couldn't open signature file: $!";
+	print <SIG>;
+	close(SIG);
+	exit 0;
+}
+
 # Using FindBin ensures that the script works no matter where it is invoked from
 my $repo = Git->repository(Directory => $FindBin::Bin);
 
@@ -146,14 +154,6 @@ ERROR
 	}
 
 	exit 1;
-}
-
-# This file only exists in tarballs, in which we will not have access to the git history
-if (-e $repo->wc_path."/bincompat-sig") {
-	open(SIG, $repo->wc_path."/bincompat-sig") or die "couldn't open signature file: $!";
-	print <SIG>;
-	close(SIG);
-	exit 0;
 }
 
 my $relevant_commit;
