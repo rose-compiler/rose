@@ -23,9 +23,9 @@ set(INSTALL_TARGETS_DEFAULT_ARGS  RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
 # a new definition to tweak code for cmake 
 add_definitions (-DUSE_CMAKE)
 
-if (!WIN32)
+if (NOT WIN32)
 enable_language(Fortran)
-endif (!WIN32)
+endif (NOT WIN32)
 
 #/CLR  /MDd /TP 
 if (WIN32)
@@ -53,10 +53,10 @@ include(MacroLibrary)
 # MYSQL_FOUND,MYSQL_INCLUDE_DIR,MYSQL_LIBRARIES, etc
 include(FindMySQL)
 
-if (!WIN32)
+if (NOT WIN32)
 include(FindOpenSSL)
 include(FindSQLITE3)
-endif (!WIN32)
+endif (NOT WIN32)
 
 include(FindJava)
 
@@ -82,10 +82,10 @@ if(NOT Boost_FOUND)
 endif(NOT Boost_FOUND)
 include_directories(${Boost_INCLUDE_DIRS})
 
-if (!WIN32)
+if (NOT WIN32)
 find_library(M_LIB m)
 find_library(RT_LIB rt)
-endif (!WIN32)
+endif (NOT WIN32)
 
 # define a global variable to collect all common linked third-party libraries for rose
 set( link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${RT_LIB} ${OPENSSL_LIBRARIES} )

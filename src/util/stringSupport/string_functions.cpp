@@ -73,6 +73,9 @@ StringUtility::findfile(std::string patternString, std::string pathString)
 
 #if ROSE_MICROSOFT_OS
 	 printf ("Error: MSVS implementation of StringUtility::findfile required (not implemented) \n");
+#ifdef _MSC_VER
+#define __builtin_constant_p(exp) (0)
+#endif
 	 ROSE_ASSERT(false);
 #else
      DIR* dir;			      /* pointer to the scanned directory. */

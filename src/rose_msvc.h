@@ -2,6 +2,7 @@
 // (it is initial work with no clear idea if MSVC will be supported in the future).
 
 
+
 // DQ (3/22/2009): Added support for detection of Microsoft specific usage.
 // Determine if this is a WIN32 (e.g., Windows NT or Windows 95) system.
 #ifndef ROSE_WIN32
