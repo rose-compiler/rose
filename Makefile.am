@@ -1,21 +1,13 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 
-# Use automake conditional to build Public and Developer distributions
-#    Public: includes all of ROSE and binary of EDG work and parts that
-#            are more restricted.
-#    Developer: This version includes all EDG source code and some parts that
-#             might be more restricted.
-# This next line will be removed for binary distributions, leaving the variable empty
-DEVELOPER_DISTRIBUTION_DIRECTORY = developersScratchSpace proposals
-
 # DQ (1/18/2009): Added demo directory to support showoffs :-).
 # DQ "config" and "src" must preceed any other directories, and 
 # "tutorial" and "exampleTranslators" must preceed "docs" since 
 # they generate data that is subsequently used in the generated 
 # ROSE documentation (examples, input codes, and generated output).
 # SUBDIRS = config src projects tests tutorial exampleTranslators docs developersScratchSpace tools proposals scripts
-SUBDIRS = libltdl config src projects tests tutorial exampleTranslators docs tools scripts demo binaries $(DEVELOPER_DISTRIBUTION_DIRECTORY)
+SUBDIRS = libltdl config src projects tests tutorial exampleTranslators docs tools scripts demo binaries
 
 
 ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I /usr/share/aclocal
