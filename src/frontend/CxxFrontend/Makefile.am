@@ -24,6 +24,8 @@ DIST_EDG = current
 #   no binaries distributed as EXTRA_DIST
 EXTRA_DIST = $(if $(findstring all,$(DIST_EDG)), $(foreach ARCH,$(ALL_ARCHS),$(foreach COMPILER,$(ALL_COMPILERS),roseBinaryEDG-$(ARCH)-$(COMPILER)-$(release_binary_compatibility_signature).tar.gz)), $(if $(findstring current,$(DIST_EDG)), $(BINARY_EDG_DIRNAME).tar.gz))
 
+DIST_SUBDIRS= 
+
 if ROSE_HAS_EDG_SOURCE
 
 SUBDIRS = EDG
@@ -46,7 +48,6 @@ upload: $(BINARY_EDG_DIRNAME).tar.gz
 else 
 #------------------- no EDG sources
 
-DIST_SUBDIRS= EDG 
 SUBDIRS= 
 
 
