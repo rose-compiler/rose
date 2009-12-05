@@ -58,6 +58,9 @@ namespace VirtualBinCFG {
     public:
         explicit CFGNode(SgAsmInstruction *node, const AuxiliaryInformation *info = NULL)
             : node(node), info(info) {
+#ifdef _MSC_VER
+#define __builtin_constant_p(exp) (0)
+#endif
             ROSE_ASSERT(node);
         }
         std::string toString() const;
