@@ -4,7 +4,7 @@
 #define ROSE_H
 
 #ifdef _MSC_VER
-#pragma message("Compiling rose.h - this should happen just once (within midend project.). \n")
+#pragma message("Compiling rose.h - this should happen just once (within midend project.). \n") 
 #endif
 
 // DQ (4/21/2009): Andreas needs to add a comment about what this is for...
