@@ -286,3 +286,10 @@ and the old one has been saved (and should be accessible for a short while).
       b. To push:
            NOT CLEAR WHAT the SUBMODULE COMMAND IS.
 
+################## Build a new GIT repository ####################
+
+   Building a shared repository that would then be used to clone
+from to generate local repositories:
+   "git init --bare --shared=true"
+
+
