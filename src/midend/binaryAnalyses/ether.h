@@ -10,6 +10,8 @@ extern "C" {
 #include <xen/hvm/ether.h>
 }
 
+#include <sys/mman.h>
+
 class Ether {
 private:
     Ether() {}
