@@ -1,4 +1,6 @@
-/* Algorithms to detect where functions begin in the set of machine instructions. See detectFunctionStarts() near the end of this file. */
+/* Algorithms to detect what instructions make up basic blocks (see detectBasicBlocks()), what basic blocks make up
+ * functions (see detectFunctions()), and how to create the resulting SgAsmBlock and SgAsmFunctionDeclaration IR nodes from
+ * this information (see buildTree()). */
 #define __STDC_FORMAT_MACROS
 #include "rose.h"
 #include <inttypes.h>
@@ -49,23 +51,24 @@ Partitioner::detectBasicBlocks(const Disassembler::InstructionMap &insns) const
                     /* The CALL is acting more like a "PUSH EIP" and should not end the basic block. */
                 } else if (bb_starts.find(next_va)==bb_starts.end()) {
                     bb_starts[next_va] = BasicBlockStarts::mapped_type();
-                }
+                }   
             }
         }
 
         /* If this instruction has multiple known successors then make each of those successors the beginning of a basic
-         * block. However, if there's only one successor and it's the fall-through address then ignore it. */
+         * block (provided there's an instruction at that address). However, if there's only one successor and it's the
+         * fall-through address then ignore it. */
         Disassembler::AddressSet successors = insn->get_successors();
         for (Disassembler::AddressSet::const_iterator si=successors.begin(); si!=successors.end(); ++si) {
             rose_addr_t successor_va = *si;
-            if (successor_va != next_va || successors.size()>1)
+            if ((successor_va != next_va || successors.size()>1) && insns.find(successor_va)!=insns.end())
                 bb_starts[successor_va].insert(insn_va);
         }
     }
     return bb_starts;
 }
 
-/** Update basic blocks so that every function start also starts a basic block. */
+/* Update basic blocks so that every function start also starts a basic block. */
 void
 Partitioner::update_basic_blocks(const FunctionStarts& func_starts, BasicBlockStarts& bb_starts/*out*/)
 {
@@ -75,6 +78,38 @@ Partitioner::update_basic_blocks(const FunctionStarts& func_starts, BasicBlockSt
     }
 }
 
+/** Checks consistency of functions, basic blocks, and instructions. Every function should start with a basic block and every
+ *  basic block should start with an instruction. */
+void
+Partitioner::check_consistency(const Disassembler::InstructionMap& insns, const BasicBlockStarts& bb_starts,
+                               const FunctionStarts& func_starts, bool verbose)
+{
+    if (verbose) {
+        fprintf(stderr, "===== Checking Partitioner data consistency ====\n");
+        fprintf(stderr, "functions at");
+    }
+    for (FunctionStarts::const_iterator fi=func_starts.begin(); fi!=func_starts.end(); fi++) {
+        if (verbose)
+            fprintf(stderr, " 0x%08"PRIx64, fi->first);
+        if (!verbose && bb_starts.find(fi->first)==bb_starts.end())
+            check_consistency(insns, bb_starts, func_starts, true);
+        ROSE_ASSERT(bb_starts.find(fi->first)!=bb_starts.end());
+    }
+    if (verbose)
+        fprintf(stderr, "\nbasic blocks at");
+    for (BasicBlockStarts::const_iterator bi=bb_starts.begin(); bi!=bb_starts.end(); bi++) {
+        if (verbose)
+            fprintf(stderr, " 0x%08"PRIx64, bi->first);
+        if (!verbose && insns.find(bi->first)==insns.end())
+            check_consistency(insns, bb_starts, func_starts, true);
+        ROSE_ASSERT(insns.find(bi->first)!=insns.end());
+    }
+    if (verbose) {
+        fprintf(stderr, "\n");
+        fprintf(stderr, "============== Consistency checks out OK =======\n");
+    }
+}
+            
 /* Find beginnings of functions. */
 Partitioner::FunctionStarts
 Partitioner::detectFunctions(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insns,
@@ -95,15 +130,16 @@ Partitioner::detectFunctions(SgAsmInterpretation *interp, const Disassembler::In
     }
     if (p_func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_TARGET)
         mark_call_targets(insns, func_starts);
-    
-    /* All function entry points are also the starts of basic blocks. */
     update_basic_blocks(func_starts, bb_starts);
 
-    /* This one depends on basic block starts being consistent with function starts. */
+#if 0
+    /* FIXME: Temporarily commented out because I don't think it understands that functions can overlap with each other.
+     * [RPM 2009-12-06] */
     if (p_func_heuristics & SgAsmFunctionDeclaration::FUNC_GRAPH) {
         mark_graph_edges(insns, bb_starts, func_starts);
         update_basic_blocks(func_starts, bb_starts);
     }
+#endif
 
     /* This doesn't detect new functions, it just gives names to ELF .plt trampolines */
     for (size_t i=0; i<headers.size(); i++) {
@@ -119,15 +155,32 @@ Partitioner::detectFunctions(SgAsmInterpretation *interp, const Disassembler::In
                 update_basic_blocks(func_starts, bb_starts);
             }
         }
+        check_consistency(insns, bb_starts, func_starts); /*user-supplied code is prone to errors.*/
+    }
+
+    /* Mark the heads of instruction sequences as functions regardless of whether p_func_heuristics has the FUNC_INSNHEAD bit
+     * set. This is required because buildTree() requires that every instruction belongs to a function.  This should be called
+     * before methods that operate at the basic block level, namely mark_func_padding() and mark_func_discont(). */
+    mark_insn_heads(insns, bb_starts, func_starts);
+    update_basic_blocks(func_starts, bb_starts);
+
+    /* Run analyses that improve upon what we've already detected. */
+    if (p_func_heuristics & SgAsmFunctionDeclaration::FUNC_INTERPAD) {
+        mark_func_padding(insns, bb_starts, func_starts);
+        update_basic_blocks(func_starts, bb_starts);
+    }
+    if (p_func_heuristics & SgAsmFunctionDeclaration::FUNC_DISCONT) {
+        mark_func_discont(insns, bb_starts, func_starts);
+        update_basic_blocks(func_starts, bb_starts);
     }
 
     return func_starts;
 }
 
-/* Organize instructions into basic blocks and functions. */
-SgAsmBlock *
-Partitioner::buildTree(const Disassembler::InstructionMap &insns, const BasicBlockStarts &bb_starts,
-                       const FunctionStarts &func_starts) const
+/* Organize instructions into basic blocks and function. */
+SgAsmBlock*
+Partitioner::buildTree(const Disassembler::InstructionMap& insns, const BasicBlockStarts& bb_starts,
+                       const FunctionStarts& func_starts) const
 {
     SgAsmBlock *retval = new SgAsmBlock();
     std::map<rose_addr_t, SgAsmBlock*> bbs = buildBasicBlocks(insns, bb_starts);
@@ -140,6 +193,53 @@ Partitioner::buildTree(const Disassembler::InstructionMap &insns, const BasicBlo
         ROSE_ASSERT(bbsi!=bb_starts.end());
     }
 
+    /* The worklist holds instruction addresses that need to be processed. */
+    Disassembler::AddressSet workset;
+    for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ii++)
+        workset.insert(ii->first);
+        
+    /* Process instructions through the outer loop in order of address, but the inner loop will remove reachable instructions
+     * in arbitrary order if instructions overlap. */
+    while (workset.size()>0) {
+        rose_addr_t addr = *(workset.begin());
+        Disassembler::InstructionMap::const_iterator ii = insns.find(addr);
+        FunctionStarts::const_iterator fi = func_starts.find(addr); ROSE_ASSERT(fi!=func_starts.end());
+        BasicBlockStarts::const_iterator bi = bb_starts.find(addr); ROSE_ASSERT(bi!=bb_starts.end());
+
+        /* Build the function IR node */
+        SgAsmFunctionDeclaration *func = new SgAsmFunctionDeclaration;
+        func->set_address(addr); /*lowest instruction address of function, but not necessarily the entry point*/
+        retval->get_statementList().push_back(func);
+        func->set_parent(retval);
+        func->set_name(fi->second.name);
+        func->set_reason(fi->second.reason);
+        
+        /* Build the basic blocks */
+        SgAsmBlock *block = NULL;
+        while (1) {
+            if (block==NULL) {
+                block = new SgAsmBlock;
+                block->set_id(addr);                    /* I'm not sure what this is for. [RPM 2009-12-07] */
+                block->set_address(addr);
+                func->get_statementList().push_back(block);
+                block->set_parent(func);
+            }
+            block->get_statementList().push_back(ii->second);
+            ii->second->set_parent(block);
+            workset.erase(addr);
+
+            addr += ii->second->get_raw_bytes().size();
+            ii = insns.find(addr);
+            if (ii==insns.end())
+                break; /*reached the end of an instruction sequence, block, and function*/
+            if (func_starts.find(addr)!=func_starts.end())
+                break; /*reached a new function; choose next lowest insn so functions are defined in address order*/
+            if (bb_starts.find(addr)!=bb_starts.end())
+                block = NULL; /*reached a new basic block*/
+        }
+    }
+
+#if 0 /*Old code replaced by above code. [RPM 2009-12-07]*/
     /* If there are any basic blocks whose addresses are less than the first known function, then create a new function to
      * hold all such basic blocks. */
     if (bbs.size()>0) {
@@ -191,8 +291,9 @@ Partitioner::buildTree(const Disassembler::InstructionMap &insns, const BasicBlo
         SgAsmFunctionDeclaration *func = fi->second;
         ROSE_ASSERT(func->get_statementList().size()>0);
     }
+#endif
 
-#if 0 /* Turned off because this is very slow */
+#if 0 /* Turned off because this is very slow, but kept here for future debugging. */
     /* Sanity checks */
     for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
         SgAsmInstruction *insn = ii->second;
@@ -664,3 +765,245 @@ Partitioner::name_plt_entries(SgAsmGenericHeader *fhdr, const Disassembler::Inst
         }
     }
 }
+
+/* Returns information about the end of a function. */
+std::pair<rose_addr_t, rose_addr_t>
+Partitioner::end_of_function(rose_addr_t addr, const Disassembler::InstructionMap& insns, const BasicBlockStarts& bb_starts, 
+                             const FunctionStarts& func_starts)
+{
+    Disassembler::InstructionMap::const_iterator ii = insns.find(addr);
+    ROSE_ASSERT(ii!=insns.end());
+    ROSE_ASSERT(func_starts.find(addr)!=func_starts.end());
+    ROSE_ASSERT(bb_starts.find(addr)!=bb_starts.end());
+    rose_addr_t last_block_addr = addr;
+
+    while (1) {
+        rose_addr_t next_addr = ii->first + ii->second->get_raw_bytes().size();
+        if (func_starts.find(next_addr)!=func_starts.end())
+            break; /*we hit the next function*/
+        ii = insns.find(next_addr);
+        if (ii==insns.end())
+            break; /*we've advanced past the last instruction*/
+        if (bb_starts.find(next_addr)!=bb_starts.end())
+            last_block_addr = next_addr;
+        addr = next_addr;
+    }
+    return std::pair<rose_addr_t, rose_addr_t>(addr, last_block_addr);
+}
+
+/* Returns information about the end of a block. */
+rose_addr_t
+Partitioner::end_of_block(rose_addr_t addr, const Disassembler::InstructionMap& insns, const BasicBlockStarts& bb_starts)
+{
+    Disassembler::InstructionMap::const_iterator ii = insns.find(addr);
+    ROSE_ASSERT(ii!=insns.end());
+    ROSE_ASSERT(bb_starts.find(addr)!=bb_starts.end());
+    while (1) {
+        rose_addr_t next_addr = ii->first + ii->second->get_raw_bytes().size();
+        if (bb_starts.find(next_addr)!=bb_starts.end())
+            break; /*we hit the next basic block*/
+        ii = insns.find(next_addr);
+        if (ii == insns.end())
+            break;
+        addr = next_addr;
+    }
+    return addr;
+}
+
+/* Splits trailing NOP padding into their own functional units. */
+void
+Partitioner::mark_func_padding(const Disassembler::InstructionMap& insns, const BasicBlockStarts& bb_starts,
+                               FunctionStarts &func_starts/*out*/) const
+{
+    std::set<rose_addr_t> new_functions;
+    for (FunctionStarts::iterator fi=func_starts.begin(); fi!=func_starts.end(); fi++) {
+        std::pair<rose_addr_t, rose_addr_t> end = end_of_function(fi->first, insns, bb_starts, func_starts);
+        rose_addr_t last_insn_addr = end.first;
+        rose_addr_t last_bb_addr = end.second;
+        if (last_bb_addr==fi->first)
+            continue; /*function has only one basic block*/
+        
+        /* Are the instructions from last_bb_addr through last_insn_addr all no-ops? */
+        bool all_nops = true;
+        for (rose_addr_t addr=last_bb_addr; all_nops && addr<=last_insn_addr; /*void*/) {
+            Disassembler::InstructionMap::const_iterator ii = insns.find(addr);
+            ROSE_ASSERT(ii!=insns.end());
+
+            /*FIXME: We should have a more portable way to find instructions with no effect [RPM 2009-12-05]*/
+            SgAsmx86Instruction     *insn_x86 = isSgAsmx86Instruction(ii->second);
+            SgAsmArmInstruction     *insn_arm = isSgAsmArmInstruction(ii->second);
+            SgAsmPowerpcInstruction *insn_ppc = isSgAsmPowerpcInstruction(ii->second);
+            ROSE_ASSERT(insn_x86 || insn_arm || insn_ppc);
+            all_nops = insn_x86 && insn_x86->get_kind()==x86_nop; /*only x86 has NOPs*/
+            addr += ii->second->get_raw_bytes().size();
+        }
+        
+        /* If the last basic block of function is all no-ops and is not the only basic block of the function then create a new
+         * functional unit containing just the last basic block. */
+        if (all_nops) {
+            ROSE_ASSERT(last_bb_addr!=fi->first);
+            ROSE_ASSERT(func_starts.find(last_bb_addr)==func_starts.end());
+            new_functions.insert(last_bb_addr);
+        }
+    }
+    
+    /* Create the new functions. */
+    for (std::set<rose_addr_t>::iterator fi=new_functions.begin(); fi!=new_functions.end(); fi++)
+        func_starts[*fi].reason |= SgAsmFunctionDeclaration::FUNC_INTERPAD;
+}
+
+/* Marks the start of each instruction stream as a function if not done so already. */
+void
+Partitioner::mark_insn_heads(const Disassembler::InstructionMap& insns, const BasicBlockStarts& bb_starts,
+                             FunctionStarts &func_starts/*out*/) const
+{
+    Disassembler::AddressSet heads;
+    for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ii++) {
+        rose_addr_t addr = ii->first;
+        if (heads.find(addr)==heads.end() && func_starts.find(addr)==func_starts.end())
+            func_starts[addr].reason |= SgAsmFunctionDeclaration::FUNC_INSNHEAD;
+        addr += ii->second->get_raw_bytes().size();
+        if (insns.find(addr)!=insns.end())
+            heads.insert(addr);
+
+        /* Clean up abandoned instruction sequences to keep the set small and fast. */
+        static const size_t maxinsn = 20; /*a value larger than the largest possible instruction*/
+        if (addr>maxinsn && heads.size()>maxinsn) {
+            Disassembler::AddressSet::iterator lb = heads.lower_bound(addr-maxinsn);
+            if (lb!=heads.end())
+                heads.erase(heads.begin(), lb);
+        }
+        
+    }
+}
+
+/* Return the set of nodes reachable from a given node. */
+void
+Partitioner::discont_subgraph(DiscontGraph& graph, DiscontGraph::iterator gi, Disassembler::AddressSet *result)
+{
+    ROSE_ASSERT(gi!=graph.end());
+    if (gi->second.first!=0) return; /*already visited this node*/
+    gi->second.first = 1;
+    result->insert(gi->first);
+    const Disassembler::AddressSet& edges = gi->second.second;
+    for (Disassembler::AddressSet::const_iterator ei=edges.begin(); ei!=edges.end(); ei++)
+        discont_subgraph(graph, graph.find(*ei), result);
+}
+
+/* Find blocks for noncontiguous functions */
+void
+Partitioner::mark_func_discont(const Disassembler::InstructionMap& insns, const BasicBlockStarts& bb_starts,
+                               FunctionStarts& func_starts/*out*/) const
+{
+
+   /* Map from insn address to basic block address for all instructions */
+    typedef std::map<rose_addr_t, rose_addr_t> Insn2Block;
+    Insn2Block insn2block;
+
+    /* Build the nodes of the graph and initialize the instruction-to-block mapping. */
+    DiscontGraph graph;
+    for (BasicBlockStarts::const_iterator bbi=bb_starts.begin(); bbi!=bb_starts.end(); bbi++) {
+        rose_addr_t addr = bbi->first;
+        rose_addr_t hi_addr = end_of_block(addr, insns, bb_starts);
+        while (addr<=hi_addr) {
+            Disassembler::InstructionMap::const_iterator ii = insns.find(addr);
+            ROSE_ASSERT(ii!=insns.end());
+            insn2block[addr] = bbi->first;
+            addr += ii->second->get_raw_bytes().size();
+        }
+        if (func_starts.find(bbi->first)==func_starts.end())
+            graph[bbi->first].first = 0; /*instantiate node and clear its mark*/
+    }
+
+    /* Build the edges of the graph. */
+    for (DiscontGraph::iterator gi=graph.begin(); gi!=graph.end(); gi++) {      /*gi is iterator for callee*/
+        rose_addr_t callee_block_addr = gi->first;
+        BasicBlockStarts::const_iterator bbi = bb_starts.find(callee_block_addr);
+        const Disassembler::AddressSet& callers = bbi->second;
+        for (Disassembler::AddressSet::const_iterator ci=callers.begin(); ci!=callers.end(); ci++) {
+            rose_addr_t caller_insn_addr = *ci;
+            rose_addr_t caller_block_addr = insn2block[caller_insn_addr];
+            DiscontGraph::iterator gi2 = graph.find(caller_block_addr);         /*gi2 is iterator for caller*/
+            if (gi2!=graph.end()) {
+                gi2->second.second.insert(callee_block_addr);                   /*forward edge*/
+                gi->second.second.insert(caller_block_addr);                    /*backward edge*/
+            }
+        }
+    }
+
+#if 0
+    /* Print the graph */
+    fprintf(stderr, "DiscontGraph contains %zu nodes:\n", graph.size());
+    for (DiscontGraph::iterator gi=graph.begin(); gi!=graph.end(); gi++) {
+        fprintf(stderr, "  0x%08"PRIx64"(%d):", gi->first, gi->second.first);
+        for (Disassembler::AddressSet::iterator ci=gi->second.second.begin(); ci!=gi->second.second.end(); ci++)
+            fprintf(stderr, " 0x%08"PRIx64, *ci);
+        fprintf(stderr, "\n");
+    }
+#endif
+
+    /* Identify subgraphs */
+    for (DiscontGraph::iterator gi=graph.begin(); gi!=graph.end(); gi++) {
+        if (gi->second.first!=0) continue; /*already visited this node; set by discont_subgraph()*/
+        Disassembler::AddressSet nodes;
+        discont_subgraph(graph, gi, &nodes);
+
+        /* Find the callers of this subgraph which are not in this subgraph. Abort the loop if we find more than one. */
+        Disassembler::AddressSet external_callers;
+        for (Disassembler::AddressSet::iterator ni=nodes.begin(); ni!=nodes.end() && external_callers.size()<=1; ni++) {
+            BasicBlockStarts::const_iterator bbi = bb_starts.find(*ni);
+            ROSE_ASSERT(bbi!=bb_starts.end());
+            for (Disassembler::AddressSet::const_iterator ci=bbi->second.begin(); ci!=bbi->second.end(); ci++) {
+                rose_addr_t caller_insn_addr = *ci;
+                rose_addr_t caller_block_addr = insn2block[caller_insn_addr];
+                if (graph.find(caller_block_addr)==graph.end()) {
+                    external_callers.insert(caller_block_addr);
+                    if (external_callers.size()>1) break;
+                }
+            }
+        }
+        
+        /* If there's just one external caller then the blocks of this subgraph can be considered part of that external
+         * caller's function. */
+        if (1==external_callers.size()) {
+            for (Disassembler::AddressSet::iterator ni=nodes.begin(); ni!=nodes.end();  ni++) {
+                func_starts[*ni].reason |= SgAsmFunctionDeclaration::FUNC_DISCONT;
+                func_starts[*ni].part_of = *(external_callers.begin());
+            }
+        }
+    }
+    
+
+    /* Clean up phase. We dont actually need func_start entries for discont functions whose "part_of" points to
+     * the previous function. It doesn't hurt to keep them, but it makes it easier to debug other parts of the partitioner if
+     * we prune away the unecessary ones. We must take into account function overlapping. */
+    Disassembler::AddressSet can_delete;
+    for (FunctionStarts::iterator fi=func_starts.begin(); fi!=func_starts.end(); fi++) {
+        rose_addr_t first_func_addr = fi->first;
+        if (fi->second.reason & SgAsmFunctionDeclaration::FUNC_DISCONT) continue; /*DISCONT is handled by inner loop*/
+        if (can_delete.find(first_func_addr)!=can_delete.end()) continue; /*virtually deleted*/
+
+        rose_addr_t func_addr = first_func_addr;
+        while (1) {
+            /* Find next function */
+            rose_addr_t func_last_addr = end_of_function(func_addr, insns, bb_starts, func_starts).first;
+            Disassembler::InstructionMap::const_iterator ii = insns.find(func_last_addr);
+            ROSE_ASSERT(ii!=insns.end());
+            rose_addr_t next_func_addr = func_last_addr + ii->second->get_raw_bytes().size();
+            FunctionStarts::iterator fi2 = func_starts.find(next_func_addr);
+            if (fi2==func_starts.end()) break;
+
+            /* Does next function point to the same thing as the outer loop? If so, we can eventually delete it, otherwise
+             * we need to stop searching since we can only combine adjacent equivalent functions. */
+            if ((fi2->second.reason & SgAsmFunctionDeclaration::FUNC_DISCONT) && fi2->second.part_of==first_func_addr) {
+                can_delete.insert(fi2->first);
+            } else {
+                break;
+            }
+            func_addr = next_func_addr;
+        }
+    }
+    for (Disassembler::AddressSet::iterator di=can_delete.begin(); di!=can_delete.end(); di++)
+        func_starts.erase(*di);
+}
+

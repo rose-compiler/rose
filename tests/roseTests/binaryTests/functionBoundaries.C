@@ -38,14 +38,17 @@ class ShowFunctions : public SgSimpleProcessing {
             /* Reason that this is a function */
             unsigned r = defn->get_reason();
             printf("    %3zu 0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64"  ", ++nfuncs, func_start, func_end-func_start, func_end);
-            printf(" %c%c%c%c%c%c%c",
-                   r & SgAsmFunctionDeclaration::FUNC_ENTRY_POINT ? 'E' : '.',
+            printf(" %c%c%c%c%c%c%c%c%c",
+                   r & SgAsmFunctionDeclaration::FUNC_ENTRY_POINT ? 'E' : 
+                   (r & SgAsmFunctionDeclaration::FUNC_INSNHEAD ? 'H' : '.'), /*never same time as 'E'*/
                    r & SgAsmFunctionDeclaration::FUNC_CALL_TARGET ? 'C' : '.',
                    r & SgAsmFunctionDeclaration::FUNC_EH_FRAME    ? 'X' : '.',
                    r & SgAsmFunctionDeclaration::FUNC_SYMBOL      ? 'S' : '.',
                    r & SgAsmFunctionDeclaration::FUNC_PATTERN     ? 'P' : '.', 
                    r & SgAsmFunctionDeclaration::FUNC_GRAPH       ? 'G' : '.', 
-                   r & SgAsmFunctionDeclaration::FUNC_USERDEF     ? 'U' : '.');
+                   r & SgAsmFunctionDeclaration::FUNC_USERDEF     ? 'U' : '.',
+                   r & SgAsmFunctionDeclaration::FUNC_INTERPAD    ? 'N' : '.', 
+                   r & SgAsmFunctionDeclaration::FUNC_DISCONT     ? 'D' : '.');
 
             /* Kind of function */
             switch (defn->get_function_kind()) {
@@ -121,11 +124,12 @@ main(int argc, char *argv[])
     printf("    Key for reason(s) address is a suspected function:\n");
     printf("      E = entry address         C = call target           X = exception frame\n");
     printf("      S = function symbol       P = instruction pattern   G = interblock branch graph\n");
-    printf("      U = user-def detection\n");
+    printf("      U = user-def detection    N = NOP padding           D = discontiguous blocks\n");
+    printf("      H = insn sequence head\n");
     printf("\n");
-    printf("    Num    Start      Size       End       Reason    Kind   Name\n");
-    printf("    --- ---------- ---------- ----------   ------- -------- --------------------------------\n");
+    printf("    Num    Start      Size       End       Reason      Kind   Name\n");
+    printf("    --- ---------- ---------- ----------   --------- -------- --------------------------------\n");
     ShowFunctions().traverseInputFiles(project, preorder);
-    printf("    --- ---------- ---------- ----------   ------- -------- --------------------------------\n");
+    printf("    --- ---------- ---------- ----------   --------- -------- --------------------------------\n");
     return 0;
 }

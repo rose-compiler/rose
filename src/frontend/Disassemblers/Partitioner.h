@@ -29,19 +29,20 @@ public:
 
     /** Map of basic block starting addresses. The key is the RVA of the first instruction in the basic block; the value is the
      *  set of all addresses of instructions known to branch to this basic block (i.e., set of all known callers). */
-    typedef std::map<rose_addr_t, std::set<rose_addr_t> > BasicBlockStarts;
+    typedef std::map<rose_addr_t, Disassembler::AddressSet> BasicBlockStarts;
 
     /** Map of function starting addresses. The key is the RVA of the first instruction in the function; the value consists of
      *  a bit flag indicating why we think this is the beginning of a function, and a name (if known) of the function. */
     struct FunctionStart {
         FunctionStart()
-            : reason(SgAsmFunctionDeclaration::FUNC_NONE)
+            : reason(SgAsmFunctionDeclaration::FUNC_NONE), part_of(0)
             {}
         FunctionStart(SgAsmFunctionDeclaration::FunctionReason reason, std::string name)
-            : reason(reason), name(name)
+            : reason(reason), name(name), part_of(0)
             {}
         unsigned reason;                        /** SgAsmFunctionDeclaration::FunctionReason bit flags */
         std::string name;                       /** Name of function if known. */
+        rose_addr_t part_of;                    /** If reason&FUNC_DISCONT, part_of points to main function */
     };
     typedef std::map<rose_addr_t, FunctionStart> FunctionStarts;
 
@@ -165,6 +166,33 @@ private:
     void name_plt_entries(SgAsmGenericHeader*, const Disassembler::InstructionMap &insns,
                           FunctionStarts &func_starts/*out*/) const;
 
+    /** Splits the no-operation (usually, but not necessarily, NOP instructions) off the end of functions to create seperate
+     *  functional units for them.  This is important since some kinds of analysis are sensitive to this padding. */
+    void mark_func_padding(const Disassembler::InstructionMap& insns, const BasicBlockStarts& bb_starts,
+                           FunctionStarts &func_starts/*out*/) const;
+
+    /** Marks the beginning of a sequence of contiguous instructions as a function, taking into account that separate
+     *  sequences of instructions may overlap with each other.  For instance, if the disassembler disassembled 15 multi-byte
+     *  instructions beginning at address A, and 15 separate instructions beginning at address A+1 then there are two
+     *  instruction sequences and each will be marked as a function.  This method should always be invoked regardless of
+     *  whether the FUNC_INSNHEAD bit is set in the heuristics, because the Partitioner::buildTree() requires that every
+     *  instruction belongs to a function. It does not set the FUNC_INSHEAD bit of the FunctionStart::reason member if a
+     *  function start already exists at that address. */
+    void mark_insn_heads(const Disassembler::InstructionMap& insns, const BasicBlockStarts& bb_starts,
+                         FunctionStarts &func_starts/*out*/) const;
+
+    /** A graph describing how basic blocks branch to other basic blocks.  This graph is used by mark_func_discont(). Any
+     *  block which is the first block of a function is not included in the graph, nor are the edges to/from those blocks.
+     *  Edges from a basic block back to the same basic block are also excluded.  The map key is the address of the node. The
+     *  map's first value is a marker used during graph traversal and the second value is the set of nodes to which a node
+     *  branches. */
+    typedef std::map<rose_addr_t, std::pair<int, std::set<rose_addr_t> > > DiscontGraph;
+
+    /** Looks at the branching relationships between basic blocks in an attempt to discover all the blocks of a function that
+     *  has been split into discontiguous parts by the compiler. This is invoked when the
+     *  SgAsmFunctionDeclaration::FUNC_DISCONT bit is set for the partitioning heuristics. */
+    void mark_func_discont(const Disassembler::InstructionMap& insns, const BasicBlockStarts& bb_starts,
+                           FunctionStarts& func_starts/*out*/) const;
 
 
     
@@ -194,8 +222,38 @@ private:
     /** Update basic blocks so that every function start also starts a basic block. */
     static void update_basic_blocks(const FunctionStarts& func_starts, BasicBlockStarts& bb_starts/*out*/);
 
+    /** Returns information about the end of a function. Given the starting address of a function, this method returns the address
+     *  of the last instruction of a function and the address of the basic block to which that instruction belongs. This is not as
+     *  trivial as it might seem because:
+     *
+     *      * Instruction sizes might be variable (e.g., x86 architectures), so we can't back up through the instructions.
+     *      * Basic blocks could overlap due to variable instruction sizes. For example, two overlapping blocks could start
+     *        at addresses A and A+1.  Since x86 instruction streams are "self healing" it is likely that the instructions
+     *        starting at A and A+1 will converge before the end of the blocks, and the blocks will share some of their final
+     *        instructions.
+     *      * Functions can overlap for the same reason basic blocks overlap. Similarly, their basic blocks will most likely
+     *        converge so that two overlapping functions share some of their final basic blocks.
+     *
+     *  Once the AST is built, finding the last instruction or its basic block is trivial.
+     *
+     *  The return value is a pair of addresses containing the address of the final instruction and the address of that
+     *  instruction's basic block. */
+    static std::pair<rose_addr_t, rose_addr_t> end_of_function(rose_addr_t addr, const Disassembler::InstructionMap&,
+                                                               const BasicBlockStarts&, const FunctionStarts&);
 
-    
+    /** Returns the address of the last instruction of a basic block.  Basic blocks can overlap, so a naive implementation
+     *  that uses std::map::upper_bound() isn't possible -- we must iterate through the instructions. */
+    static rose_addr_t end_of_block(rose_addr_t addr, const Disassembler::InstructionMap&, const BasicBlockStarts&);
+
+    /** Return the set of nodes reachable from a given node. */
+    static void discont_subgraph(DiscontGraph& graph, DiscontGraph::iterator gi, Disassembler::AddressSet *result);
+
+    /** Checks consistency of functions, basic blocks, and instructions. Every function should start with a basic block and
+     *  every basic block should start with an instruction. If verbose is set then the list of function start addresses and
+     *  basic block start addresses is displayed; otherwise the lists are displayed only if an inconsistency is detected. */
+    static void check_consistency(const Disassembler::InstructionMap& insns, const BasicBlockStarts& bb_starts,
+                                  const FunctionStarts& func_starts, bool verbose=false);
+
     /*======================================================================================================================
      * Data members
      *======================================================================================================================*/
