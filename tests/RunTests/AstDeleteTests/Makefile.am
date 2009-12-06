@@ -14,7 +14,7 @@ TESTCODES_REQUIRED_TO_PASS = \
 TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS)
 
-TEST_Objects = ${TESTCODES:.c=.o}
+TEST_Objects = ${TESTCODES:.C=.o}
 
 
 $(TEST_Objects): memoryTranslator
