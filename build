@@ -224,7 +224,7 @@ echo ""
 echo "*******************************************************************************************"
 echo "Note that due to ROSE compatibility with libtool 1.5 and 2.0, some warnings will be output."
 echo "These warnings come from configure.in and aclocal.m4, and can be safely ignored."
-echo "These messages from from the use of aclocal, acheader, autoconf, and automake."
+echo "These messages from the use of aclocal, acheader, autoconf, and automake."
 echo ""
 echo "Rose Project Management."
 echo "*******************************************************************************************"
@@ -252,6 +252,17 @@ echo "Running automake ..."
 # automake -a -c -i --foreign || : exit 1
 # DQ (9/26/2009): Testing for "is not a standard library name" is not required any more!
 # automake -a -c -i 2>&1 | grep -v "is not a standard library name" 1>&2 || : exit 1
+
+echo ""
+echo "*******************************************************************************************"
+echo "Note that due to ROSE support for binary only distributions of EDG we do not distribute any"
+echo "Makefile.am files in 'src/frontend/CxxFrontend/EDG/' to the general audience." 
+echo "The warnings regarding missing Makefile.in can be safely ignored"
+echo ""
+echo "Rose Project Management."
+echo "*******************************************************************************************"
+
+
 automake -a -c -i 2>&1 || : exit 1
 
 # DQ (9/26/2009): tracking down error when not using the correct automake version.

@@ -1,3 +1,6 @@
+/* This file is not in use since the original .h.in version is being used by cmake,
+   which in turn calls the shell script create_system_headers to generate .h from .h.in.
+*/
 /* JJW (12/8/2008): Do not include these definitions for EDG 3.10 */
 #ifndef ROSE_USE_NEW_EDG_INTERFACE
 

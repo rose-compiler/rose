@@ -47,8 +47,11 @@ Local_GetFieldName(AstInterface& fa, const AstNodePtr& field)
        assert(name != "");
        return "d:" + name;
     }
-   std::cerr << "Not field name: " << AstToString(field) << "\n";
+    std::cerr << "Not field name: " << AstToString(field) << "\n";
     assert(false);
+
+ /* Avoid MSVC warning */
+	return "error";
 }
 
 static std::string 

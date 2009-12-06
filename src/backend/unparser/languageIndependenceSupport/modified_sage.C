@@ -579,6 +579,8 @@ int GetOperatorVariant(SgExpression* expr) {
      {
        printf ("Error: default case reached in GetOperatorVariant func_name = %s \n",func_name.c_str());
        assert(false);
+    /* avoid MSCV warning by adding return stmt */
+       return -1;
      }
 }
 
@@ -596,7 +598,8 @@ SgExpression* GetFirstOperand(SgExpression* expr) {
           return op2->get_lhs_operand();
     }
   }
-  return 0;
+
+  return NULL;
 }
 
 //-----------------------------------------------------------------------------------

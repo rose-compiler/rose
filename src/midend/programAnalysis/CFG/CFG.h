@@ -63,7 +63,7 @@ inline std::string CFGConfig::EdgeType2String( EdgeType e)
   case COND_FALSE: return "false";
   case ALWAYS: return "always";
   default:
-     assert(false);
+	  { assert(false); /* Avoid MSVC warning */ return "error"; }
   }
 }
 

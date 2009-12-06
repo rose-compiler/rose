@@ -84,28 +84,32 @@ FILE* popenReadFromVector(const vector<string>& argv) {
 #endif
 }
 
-int pcloseFromVector(FILE* f) { // Assumes there is only one child process
-  int status;
+int pcloseFromVector(FILE* f)
+   {
+  // Assumes there is only one child process
+
+  // DQ (11/28/2009): MSVC warns of status not being used, so initialize it.
+     int status = 0;
 
 #if !ROSE_MICROSOFT_OS
   /* pid_t err = */ wait(&status);
 #else
-  printf ("Error: no MSVS implementation available pcloseFromVector()(not implemented) \n");
-  assert(false);
+     printf ("Error: no MSVS implementation available pcloseFromVector()(not implemented) \n");
+     assert(false);
 #endif
 
-  fclose(f);
-  return status;
-}
+     fclose(f);
+     return status;
+   }
 
 rose_exception::rose_exception( const char *what )
     : what_( what )
 {}
 
 const char *rose_exception::what() const throw()
-{
-    return what_;
-}
+   {
+     return what_;
+   }
 
 // DQ (8/22/2009): Added throw since EDG wants to see that the throw options match when ROSE_ABORT 
 // is a macro to "abort()" in "stdlib.h". Als, attributes are not permitted in a function definition
