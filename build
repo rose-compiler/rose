@@ -253,15 +253,16 @@ echo "Running automake ..."
 # DQ (9/26/2009): Testing for "is not a standard library name" is not required any more!
 # automake -a -c -i 2>&1 | grep -v "is not a standard library name" 1>&2 || : exit 1
 
-echo ""
-echo "*******************************************************************************************"
-echo "Note that due to ROSE support for binary only distributions of EDG we do not distribute any"
-echo "Makefile.am files in 'src/frontend/CxxFrontend/EDG/' to the general audience." 
-echo "The warnings regarding missing Makefile.in can be safely ignored"
-echo ""
-echo "Rose Project Management."
-echo "*******************************************************************************************"
-
+if [ \! -d src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/ ] ; then
+    echo ""
+    echo "*******************************************************************************************"
+    echo "Note that due to ROSE support for binary only distributions of EDG we do not distribute any"
+    echo "Makefile.am files in 'src/frontend/CxxFrontend/EDG/' to the general audience." 
+    echo "The warnings regarding missing Makefile.in can be safely ignored"
+    echo ""
+    echo "Rose Project Management."
+    echo "*******************************************************************************************"
+fi
 
 automake -a -c -i 2>&1 || : exit 1
 
