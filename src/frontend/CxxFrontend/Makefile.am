@@ -31,6 +31,18 @@ EXTRA_DIST = $(if $(findstring all,$(DIST_EDG)), $(ALL_TARBALLS), $(if $(findstr
 
 DIST_SUBDIRS= 
 
+# if tarballs for all-archs and compiler combinations are available
+#    move 
+# else 
+#    do nothing
+deploy_tarballs:
+	for tarball in $(ALL_TARBALLS:%=$(BINARY_EDG_TARBALL_STAGING_PATH)/%) ; do \
+		if test \! -e $$tarball ; then \
+			exit 0 ; \
+		fi ; \
+	done && \
+	mv $(ALL_TARBALLS:%=$(BINARY_EDG_TARBALL_STAGING_PATH)/%) $(BINARY_EDG_TARBALL_PATH)
+
 if ROSE_HAS_EDG_SOURCE
 
 SUBDIRS = EDG
@@ -56,17 +68,6 @@ tarball: $(BINARY_EDG_DIRNAME).tar.gz
 upload: $(BINARY_EDG_DIRNAME).tar.gz
 	cp $< $(BINARY_EDG_TARBALL_PATH)
 
-# if tarballs for all-archs and compiler combinations are available
-#    move 
-# else 
-#    do nothing
-deploy_tarballs:
-	for tarball in $(ALL_TARBALLS:%=$(BINARY_EDG_TARBALL_STAGING_PATH)/%) ; do \
-		if test \! -e $$tarball ; then \
-			exit 0 ; \
-		fi ; \
-	done && \
-	mv $(ALL_TARBALLS:%=$(BINARY_EDG_TARBALL_STAGING_PATH)/%) $(BINARY_EDG_TARBALL_PATH)
 
 
 else 
