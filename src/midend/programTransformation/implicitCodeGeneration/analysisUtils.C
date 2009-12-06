@@ -8,7 +8,7 @@ stmt_pos findPosition(SgNode *n)
    {
      SgBasicBlock *bb = isSgBasicBlock(n->get_parent());
      ROSE_ASSERT(bb);
-     SgStatementPtrList &stmts = bb->get_statements();
+     SgStatementPtrList & stmts = bb->get_statements();
      for (SgStatementPtrList::iterator i = stmts.begin(); i != stmts.end(); ++i)
 	{
 	  if (*i == n)
@@ -17,6 +17,9 @@ stmt_pos findPosition(SgNode *n)
 	     }
 	}
      ROSE_ASSERT(false);
+
+  /* Avoid MSVC warning */
+     return stmt_pos(&stmts, stmts.end(), bb);
    }
 
 stmt_pos_list findFollowingPositions(SgInitializedName *in)

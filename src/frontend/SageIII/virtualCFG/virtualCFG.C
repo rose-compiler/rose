@@ -27,7 +27,7 @@ namespace VirtualCFG {
 	case 0: return "Start";
 	case 1: return "After parameters";
 	case 2: return "End";
-	default: ROSE_ASSERT (!"Bad index");
+	default: { ROSE_ASSERT (!"Bad index"); /* Avoid MSVC warning. */ return "error"; }
       }
     } else {
       return toStringForDebugging();
@@ -327,6 +327,11 @@ namespace VirtualCFG {
       // No key
       return eckUnconditional;
     }
+
+ // DQ (11/29/2009): It should be an error to reach this point in the function.
+    ROSE_ASSERT(false);
+ // DQ (11/29/2009): Avoid MSVC warning.
+    return eckFalse;
   }
 
   SgExpression* CFGEdge::caseLabel() const {
@@ -368,6 +373,9 @@ namespace VirtualCFG {
       return isSgAssignInitializer(v1->get_initializer())->get_operand();
     } else {
       ROSE_ASSERT (!"Bad statement type in getExpressionForTest");
+
+   // DQ (11/29/2009): Avoid MSVC warning about missign return stmt.
+	  return NULL;
     }
   }
 
@@ -648,7 +656,7 @@ namespace VirtualCFG {
           return st->cfgForEnd();
         }
       }
-      default: ROSE_ASSERT (!"Invalid Fortran label type");
+	  default: { ROSE_ASSERT (!"Invalid Fortran label type"); /* avoid MSVC warning of no return stmt */ return st->cfgForEnd(); }
     }
   }
 

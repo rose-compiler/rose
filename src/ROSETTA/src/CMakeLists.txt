@@ -1,4 +1,3 @@
-# DQ (11/29/2009): This file is a current merge problem in master.
 
 include_directories( ${ROSE_INCLUDES} )
 #include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
@@ -27,7 +26,6 @@ set(CxxGrammarMetaProgram_SRCS
     buildStorageClasses.C
     buildConstructorsWithoutSourcePositionInformation.C
     outputClassesAndFields.C)
-
 
 # input files to generate source files
 set(GRAMMAR_SOURCE_FILES
@@ -75,7 +73,7 @@ set(GRAMMAR_SOURCE_FILES
 
 add_executable(CxxGrammarMetaProgram ${CxxGrammarMetaProgram_SRCS} ${rose_util_src})
 
-#build ROSETTA code generator
+# build ROSETTA code generator
 # target_link_libraries(CxxGrammarMetaProgram ${KDE4_KDECORE_LIBS} rose_util_lib)
 target_link_libraries(CxxGrammarMetaProgram ${KDE4_KDECORE_LIBS} rose_util_lib ${Boost_LIBRARIES})
 
@@ -85,25 +83,28 @@ get_target_property (META_EXE_LOC CxxGrammarMetaProgram LOCATION)
 # Generate the edg-sage connection using ROSETTA
 add_custom_command(
    OUTPUT ${ROSETTA_HEADERS} ${ROSETTA_SRC} 
-# depend on the code generator and input files
+#  depend on the code generator and input files
    DEPENDS CxxGrammarMetaProgram ${GRAMMAR_SOURCE_FILES}
-# We need to copy the input files  to the build tree since 
-#   the code generator will output the generated source files into the same directory as where the input files locate
+#  We need to copy the input files  to the build tree since 
+#  the code generator will output the generated source files into the same directory as where the input files locate
    COMMAND
        ${CMAKE_COMMAND}  -E copy_directory  ${ROSE_TOP_SRC_DIR}/src/ROSETTA/Grammar ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/Grammar
-#create this directory is needed since a few generated files will be put there        
-    COMMAND
+#   create this directory is needed since a few generated files will be put there        
+   COMMAND
       ${CMAKE_COMMAND}  -E make_directory  ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/astFileIO
-    COMMAND ${META_EXE_LOC}
-    ARGS ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/
+   COMMAND ${META_EXE_LOC}
+      ARGS ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/
 
-#   PRE_BUILD
+# DQ (11/30/2009): START: This was one of the possible versions that were a part of a conflict.
+#    OUTPUT ${ROSETTA_HEADERS} ${ROSETTA_SRC}
+#    PRE_BUILD
+#   COMMAND
+#   ${CMAKE_COMMAND}  -E copy_directory  ${ROSE_TOP_SRC_DIR}/src/ROSETTA/Grammar ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/Grammar
+#   COMMAND
+#   ${CMAKE_COMMAND}  -E make_directory  ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/astFileIO
 #   COMMAND CxxGrammarMetaProgram ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/  
-#   COMMAND CxxGrammarMetaProgram ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/  
-#   COMMENT "Generating files using ROSETTA"
-#   DEPENDS ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/Grammar CxxGrammarMetaProgram  ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/astFileIO
-#   COMMAND CxxGrammarMetaProgram DEPENDS createSymlink CxxGrammarMetaProgram ${GRAMMAR_SOURCE_FILES}
-
+#   DEPENDS ${GRAMMAR_SOURCE_FILES}
+# DQ (11/30/2009): END: This was one of the possible versions that were a part of a conflict.
 )
 
 
@@ -123,7 +124,6 @@ add_custom_target( ROSETTA ALL
 
 
 #original Makefile.am contents follow:
-
 
 
 #

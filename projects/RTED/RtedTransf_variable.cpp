@@ -969,13 +969,13 @@ void RtedTransformation::visit_isAssignInitializer(SgNode* n) {
 	SgScopeStatement* scope = stmt->get_scope();
 	ROSE_ASSERT(scope);
 	//	SgType* type = initName->get_type();
-	SgVarRefExp* varRef = buildVarRefExp(initName, scope);
-	varRef->get_file_info()->unsetOutputInCodeGeneration();
-	ROSE_ASSERT(varRef);
 
-	// dont do this if the variable is global
-	if (isSgGlobal(initName->get_scope())) {
+	// dont do this if the variable is global or an enum constant
+	if (isSgGlobal(initName->get_scope()) || isSgEnumDeclaration(initName->get_parent())) {
 	} else {
+		SgVarRefExp* varRef = buildVarRefExp(initName, scope);
+		varRef->get_file_info()->unsetOutputInCodeGeneration();
+		ROSE_ASSERT(varRef);
 		//insertThisStatementLater[exprStmt]=stmt;
 		bool ismalloc = false;
 		if (isSgNewExp(assign->get_operand()))
