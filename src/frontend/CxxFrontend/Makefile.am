@@ -2,7 +2,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 release_binary_compatibility_signature=$(shell ${top_srcdir}/scripts/bincompat-sig)
 BINARY_EDG_DIRNAME=roseBinaryEDG-${build_triplet_without_redhat}-${GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX}-${release_binary_compatibility_signature}
-BINARY_URL=file:///usr/casc/overture/ROSE/git/ROSE_EDG_Binaries
+BINARY_PATH=/usr/casc/overture/ROSE/git/ROSE_EDG_Binaries
+BINARY_URL=file://$(BINARY_PATH)
 
 ALL_ARCHS = i686-pc-linux-gnu x86_64-pc-linux-gnu
 ALL_COMPILERS = GNU-3.4 GNU-4.0 GNU-4.1 GNU-4.2 GNU-4.3 GNU-4.4
@@ -49,7 +50,7 @@ tarball: $(BINARY_EDG_DIRNAME).tar.gz
 
 #upload tarball to a central location
 upload: $(BINARY_EDG_DIRNAME).tar.gz
-	cp $< /usr/casc/overture/ROSE/git/ROSE_EDG_Binaries
+	cp $< $(BINARY_PATH)
 
 else 
 #------------------- no EDG sources
