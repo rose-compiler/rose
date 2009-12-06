@@ -5,8 +5,6 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-#define PUT_COMMENTS_IN_COLUMN_ON_RIGHT  1
-
 // DQ (10/28/2009): Removing magic numbers to specify register names (using enum values instead).
 // const char* regnames8l[16] = {"al", "cl", "dl", "bl", "spl", "bpl", "sil", "dil", "r8b", "r9b", "r10b", "r11b", "r12b", "r13b", "r14b", "r15b"};
 // const char* regnames8h[16] = {"ah", "ch", "dh", "bh", "", "", "", "", "", "", "", "", "", "", "", ""};
@@ -28,12 +26,6 @@ std::string unparseInstruction(SgAsmInstruction* insn) {
         if (i != 0) result += ", ";
         result += unparseExpression(operands[i]);
     }
-
-#if !PUT_COMMENTS_IN_COLUMN_ON_RIGHT
-    /* Comment */
-    if (insn->get_comment()!="")
-        result += " <" + insn->get_comment() + ">";
-#endif
 
     return result;
 }
@@ -188,105 +180,92 @@ hexdump ( rose_addr_t base_addr, const char *prefix, const SgUnsignedCharList & 
      return returnString;
    }
 
-// DQ (8/23/2008): I think this should take an SgAsmStatement
-// string unparseAsmStatement(SgAsmNode* stmt)
 std::string
 unparseAsmStatement(SgAsmStatement* stmt)
-   {
+{
   // This function should use the same mechanism as the source code
   // for output of strings so that it can eventually work with QROSE.
 
-     ROSE_ASSERT (stmt != NULL);
+    ROSE_ASSERT (stmt != NULL);
 
-#define RIGHT_COMMENT_COLUMN_BOUNDARY   55
+    static const size_t RIGHT_COMMENT_COLUMN_BOUNDARY = 55;
+    std::string result;
+    std::string commentString = stmt->get_comment();
 
-     std::string result;
-     std::string commentString;
-     if (stmt->get_comment().empty() == false)
-        {
-          commentString = stmt->get_comment();
-
-#if !PUT_COMMENTS_IN_COLUMN_ON_RIGHT
-          result = "/* " + commentString + " */\n";
-#endif
+    switch (stmt->variantT()) {
+        case V_SgAsmx86Instruction:
+        case V_SgAsmArmInstruction:
+        case V_SgAsmPowerpcInstruction: {
+            SgAsmInstruction* insn = isSgAsmInstruction(stmt);
+            SgAsmBlock* blk = isSgAsmBlock(insn->get_parent());
+            ROSE_ASSERT(blk!=NULL);
+            if (blk && insn->get_address()==blk->get_address())
+                result += "\n";
+            size_t max_length = 6;
+            result += hexdump(insn->get_address(),"",insn->get_raw_bytes(),max_length);
+            result += "   ";
+            std::string instructionString = unparseInstruction(insn);
+            result += instructionString;
+            if (!commentString.empty()) {
+                size_t instructionStringSize = instructionString.size();
+                for (size_t i = instructionStringSize; i <= RIGHT_COMMENT_COLUMN_BOUNDARY; i++)
+                    result += (i == instructionStringSize || i == RIGHT_COMMENT_COLUMN_BOUNDARY) ? " " : "-";
+                result = result + "/* " + commentString + " */";
+            }
+            result += "\n";
+            return result;
         }
 
-     /* Virtual address and raw bytes */
-     SgAsmInstruction* asmInstruction = isSgAsmInstruction(stmt);
-     if (asmInstruction != NULL)
-        {
-          size_t max_length = 6;
-          result += hexdump(stmt->get_address(),"",asmInstruction->get_raw_bytes(),max_length);
-          result += " :: ";
+        case V_SgAsmBlock: {
+            /* The boundary between two blocks is represented by either a "Function" line or a blank line. The
+             * SgAsmInstruction will provide the linefeed. */
+            SgAsmBlock* blk = isSgAsmBlock(stmt);
+            if (blk->get_statementList().size()==0) {
+                char addrbuf[64];
+                sprintf(addrbuf, "0x%08"PRIx64, blk->get_address());
+                result = result + "\n" + addrbuf + "  /* empty basic block! */\n";
+            }
+            for (size_t i = 0; i < blk->get_statementList().size(); ++i) {
+                result += unparseAsmStatement(blk->get_statementList()[i]);
+            }
+            return result;
         }
 
-     switch (stmt->variantT())
-        {
-          case V_SgAsmx86Instruction:
-          case V_SgAsmArmInstruction:
-          case V_SgAsmPowerpcInstruction:
-             {
-            // return result + unparseInstructionWithAddress(isSgAsmInstruction(stmt)) + '\n';
-#if PUT_COMMENTS_IN_COLUMN_ON_RIGHT
-                std::string instructionString = unparseInstructionWithAddress(isSgAsmInstruction(stmt));
-               result += instructionString;
-               if (commentString.empty() == false)
-                  {
-                    size_t instructionStringSize = instructionString.size();
-                    for (size_t i = instructionStringSize; i <= RIGHT_COMMENT_COLUMN_BOUNDARY; i++)
-                       {
-                      // Format the comments nicely
-                         if (i == instructionStringSize || i == RIGHT_COMMENT_COLUMN_BOUNDARY)
-                              result += " ";
-                           else
-                              result += "-";
-                       }
-                    result = result + "/* " + commentString + " */\n";
+        case V_SgAsmFunctionDeclaration: {
+            /* Function heading. The first SgAsmInstruction will provide the ending linefeed. */
+            SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(stmt);
+            result += "\n";
+            if (0==func->get_statementList().size()) {
+                char addrbuf[64];
+                sprintf(addrbuf, "0x%08"PRIx64, func->get_address());
+                result = result + addrbuf + ": ";
+            }
+            result += "========== Function";
+            if (func->get_name().size()>0) {
+                result = result + " <" + func->get_name() + ">";
+            } else {
+                result = result + " of unknown name";
+            }
 
-                    return result;
-                  }
-                 else
-                  {
-                    return result + '\n';
-                  }
-#else
-               return result + unparseInstructionWithAddress(isSgAsmInstruction(stmt)) + '\n';
-#endif
-             }
+            /* Basic blocks */
+            if (0==func->get_statementList().size())
+                result += "  /* empty function! */\n";
+            for (size_t i = 0; i < func->get_statementList().size(); ++i) {
+                result += unparseAsmStatement(func->get_statementList()[i]);
+            }
+            return result;
+        }
 
-          case V_SgAsmBlock:
-             {
-               SgAsmBlock* blk = isSgAsmBlock(stmt);
-               result = result + "/* Block " + StringUtility::intToHex(blk->get_address()) + " */\n";
-               for (size_t i = 0; i < blk->get_statementList().size(); ++i)
-                  {
-                    result += unparseAsmStatement(blk->get_statementList()[i]);
-                  }
-               return result;
-             }
-
-          case V_SgAsmFunctionDeclaration:
-             {
-               SgAsmFunctionDeclaration* blk = isSgAsmFunctionDeclaration(stmt);
-               result = result + "/* Function " + blk->get_name() + " at " + StringUtility::intToHex(blk->get_address()) + " */\n";
-               for (size_t i = 0; i < blk->get_statementList().size(); ++i)
-                  {
-                    result += unparseAsmStatement(blk->get_statementList()[i]);
-                  }
-               return result;
-             }
-
-          default:
-             {
-               std::cerr << "Unhandled variant " << stmt->class_name() << " in unparseX86Statement" << std::endl;
-               ROSE_ASSERT (false);
+        default: {
+            std::cerr << "Unhandled variant " << stmt->class_name() << " in unparseX86Statement" << std::endl;
+            ROSE_ASSERT (false);
 #ifdef _MSC_VER
             // DQ (11/29/2009): MSVC reports a warning for a path that does not have a return stmt.
-               return "ERROR in unparseMnemonic()";
+            return "ERROR in unparseMnemonic()";
 #endif
-             }
         }
-   }
+    }
+}
 
 std::string
 unparseAsmInterpretation(SgAsmInterpretation* interp)
