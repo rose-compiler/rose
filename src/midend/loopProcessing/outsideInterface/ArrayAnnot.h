@@ -173,7 +173,10 @@ class ArrayCollection
   virtual bool read_annot_name( const std::string& annotName) const 
     { return annotName == "array"; }
  public:
-  ArrayCollection() : CPPTypeCollection<ArrayDefineDescriptor>(this) {}
+  // DQ (11/30/2009): MSVC reports a warning about use of "this" in preinitialization
+  // list, but I don't think we can modify this code to avoid the warning.
+	 ArrayCollection() : CPPTypeCollection<ArrayDefineDescriptor>(this) {}
+
   void Dump() const 
     { std::cerr << "arrays: \n"; BaseClass::Dump(); }
 };

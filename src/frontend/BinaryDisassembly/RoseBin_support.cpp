@@ -193,7 +193,7 @@ bool isAsmUnconditionalBranch(SgAsmInstruction* insn) {
   switch (insn->variantT()) {
     case V_SgAsmx86Instruction: return x86InstructionIsUnconditionalBranch(isSgAsmx86Instruction(insn));
     // case V_SgAsmArmInstruction: return armInstructionIsUnconditionalBranch(isSgAsmArmInstruction(insn));
-    default: ROSE_ASSERT (!"Bad instruction type");
+	default: { ROSE_ASSERT (!"Bad instruction type"); /* Avoid MSVC warning. */ return false; }
   }
 }
 
@@ -201,7 +201,7 @@ bool isAsmBranch(SgAsmInstruction* insn) {
   switch (insn->variantT()) {
     case V_SgAsmx86Instruction: return x86InstructionIsControlTransfer(isSgAsmx86Instruction(insn));
     // case V_SgAsmArmInstruction: return armInstructionIsBranch(isSgAsmArmInstruction(insn));
-    default: ROSE_ASSERT (!"Bad instruction type");
+	default: { ROSE_ASSERT (!"Bad instruction type"); /* Avoid MSVC warning. */ return false; }
   }
 }
 
@@ -209,6 +209,6 @@ bool getAsmKnownBranchTarget(SgAsmInstruction* insn, uint64_t& addr) {
   switch (insn->variantT()) {
     case V_SgAsmx86Instruction: return x86GetKnownBranchTarget(isSgAsmx86Instruction(insn), addr);
     // case V_SgAsmArmInstruction: return armGetKnownBranchTarget(isSgAsmArmInstruction(insn), addr);
-    default: ROSE_ASSERT (!"Bad instruction type");
+	default: { ROSE_ASSERT (!"Bad instruction type"); /* Avoid MSVC warning. */ return false; }
   }
 }

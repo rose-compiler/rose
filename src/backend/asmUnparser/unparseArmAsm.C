@@ -31,6 +31,9 @@ static std::string unparseArmRegister(
     return result;
   } else {
     ROSE_ASSERT (!"Bad ARM register");
+
+ // DQ (11/28/2009): MSVC warns about a path that does not have a return stmt.
+    return "error in unparseArmRegister";
   }
 }
 
@@ -53,7 +56,13 @@ static std::string unparseArmCondition(ArmInstructionCondition cond) { // Unpars
     case arm_cond_le: return "le";
     case arm_cond_al: return "";
     case arm_cond_nv: return "nv";
-    default: ROSE_ASSERT (false);
+
+	default:
+       {
+         ROSE_ASSERT (false);
+      // DQ (11/28/2009): MSVC warns about a path that does not have a return stmt.
+         return "error in unparseArmRegister";
+	   }
   }
 }
 
@@ -62,7 +71,13 @@ static std::string unparseArmSign(ArmSignForExpressionUnparsing sign) {
     case arm_sign_none: return "";
     case arm_sign_plus: return "+";
     case arm_sign_minus: return "-";
-    default: ROSE_ASSERT (false);
+
+	default:
+       {
+         ROSE_ASSERT (false);
+      // DQ (11/28/2009): MSVC warns about a path that does not have a return stmt.
+         return "error in unparseArmRegister";
+	   }
   }
 }
 

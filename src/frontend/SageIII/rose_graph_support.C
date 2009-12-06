@@ -514,6 +514,11 @@ SgGraph::resize_hash_maps( size_t numberOfNodes, size_t numberOfEdges )
   // Note that the next larger prime number will be used by the 
   // hash_map and hash_multimap for the internal table size.
 
+#ifdef _MSC_VER
+#pragma message ("WARNING: std::hash_map::resize() function not available in MSVC.")
+	 printf ("std::hash_map::resize() function not available in MSVC. \n");
+	 ROSE_ASSERT(false);
+#else
      p_node_index_to_node_map.resize(numberOfNodes);
      p_edge_index_to_edge_map.resize(numberOfEdges);
 
@@ -522,6 +527,7 @@ SgGraph::resize_hash_maps( size_t numberOfNodes, size_t numberOfEdges )
 
      p_string_to_node_index_multimap.resize(numberOfNodes);
      p_string_to_edge_index_multimap.resize(numberOfEdges);
+#endif
 // #endif
    }
 
