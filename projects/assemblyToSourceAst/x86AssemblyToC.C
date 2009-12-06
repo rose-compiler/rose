@@ -301,7 +301,7 @@ int main(int argc, char** argv) {
 
   //I am doing some experimental work to enable functions in the C representation
   //Set this flag to true in order to enable that work
-  bool enable_functions = true;
+  bool enable_functions = false;
   //Jeremiah did some work to enable a simplification and normalization of the 
   //C representation. Enable this work by setting this flag to true.
   bool enable_normalizations = false;
