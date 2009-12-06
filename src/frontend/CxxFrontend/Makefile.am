@@ -7,7 +7,7 @@ BINARY_EDG_TARBALL_PATH=/usr/casc/overture/ROSE/git/ROSE_EDG_Binaries
 BINARY_EDG_TARBALL_URL=file://$(BINARY_EDG_TARBALL_PATH)
 
 ALL_ARCHS = i686-pc-linux-gnu x86_64-pc-linux-gnu
-ALL_COMPILERS = GNU-3.4 GNU-4.0 GNU-4.1 GNU-4.2 GNU-4.3 GNU-4.4
+ALL_COMPILERS = GNU-4.0 GNU-4.1 GNU-4.2 GNU-4.3
 
 #fetch tar-ball 
 %.tar.gz:
