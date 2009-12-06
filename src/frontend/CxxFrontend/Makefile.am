@@ -66,7 +66,7 @@ tarball: $(BINARY_EDG_DIRNAME).tar.gz
 
 #upload tarball to a central location
 upload: $(BINARY_EDG_DIRNAME).tar.gz
-	cp $< $(BINARY_EDG_TARBALL_PATH)
+	cp $< $(BINARY_EDG_TARBALL_STAGING_PATH)
 
 
 
