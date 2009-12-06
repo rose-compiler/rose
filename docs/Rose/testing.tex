@@ -4,6 +4,7 @@
 % Date: 8/7/06
 % File: qm.tex
 % Purpose: qm.sh documentation
+% Updated 12/5/2009
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -21,6 +22,25 @@ external nightly testing).  Different levels of testing
 with different types of feedback provide a basis for the health
 of the project to be visible to either the individual developer,
 the rest of the team, or to an external audience.
+
+   Out testing exists on three levels, and uses external
+tools (Hudson: http://wiki.hudson-ci.org/display/HUDSON/Meet+Hudson).
+% We have added a new level of testing using Hudson
+% (http://wiki.hudson-ci.org/display/HUDSON/Meet+Hudson).
+% It will make things more robust shortly, I think, but in the mean time
+% we have managed to make the external SVN repository less
+% robust in the process. The process now is that we have
+\begin{enumerate}
+   \item Hudson test each "git" branch before it gets checked into the internal
+     SVN repository. For this we use an internal compile farm of
+     about 7 machines and test different versions of configure options
+     (including different versions of compilers).
+   \item Test the internal SVN repository on different architectures, and if it passes
+     push it out to the external repository.
+   \item  Checkout the external SVN repository and have it be tested on the
+     external compile farm of about 25 machines (with different OS's) at
+     NMI (University of Wisc, Madison).
+\end{enumerate}
 
    We test so that we can detect errors as quickly as possible and
 provide as much transparency as possible to our external users.
@@ -66,7 +86,7 @@ Atuomated tests verify this or identify developers who are at fault.
 Peer pressure is generally enough so that everyone fixes their code 
 in the morning as a result of results of nightly tests.
 
-   The external SVN repository also has a number of braches, these support
+   The external SVN repository also has a number of branches, these support
 external collaborations and represent a community of people who contribute
 work to the ROSE project (which is a community open source project).
 
