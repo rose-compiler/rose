@@ -4,8 +4,9 @@
 #include "errno.h"
 #include "rose_attributes_list.h"
 
-
-#if CAN_NOT_COMPILE_WITH_ROSE != true
+// DQ (11/28/2009): I think this is equivalent to "USE_ROSE"
+// #if CAN_NOT_COMPILE_WITH_ROSE != true
+#if (CAN_NOT_COMPILE_WITH_ROSE == 0)
 token_container wave_tokenStream;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -14,7 +15,11 @@ token_container wave_tokenStream;
 
 
 //  Include Wave itself
+#ifdef _MSC_VER
+#pragma message ("WARNING: commented out use of boost/wave.hpp header file.")
+#else
 #include <boost/wave.hpp>
+#endif
 
 // #include <boost/wave/grammars/cpp_xpression_grammar.hpp> //as_string
 
@@ -118,8 +123,9 @@ void PreprocessingInfo::unpacked( char* storePointer )
      std::cout << " but survived " << std::endl;
 #endif
 
-
-#if CAN_NOT_COMPILE_WITH_ROSE != true
+// DQ (11/29/2009): MSVC does not understnad use of "true" in macros.
+// #if CAN_NOT_COMPILE_WITH_ROSE != true
+#if (CAN_NOT_COMPILE_WITH_ROSE == 0)
 
   // DQ and AS (6/23/2006): and the stuff of macros ...
   // AS add macro definition
@@ -136,7 +142,9 @@ void PreprocessingInfo::unpacked( char* storePointer )
 // Member functions for class PreprocessingInfo
 // ********************************************
 
-#if CAN_NOT_COMPILE_WITH_ROSE != true
+// DQ (11/29/2009): MSVC does not understnad use of "true" in macros.
+// #if CAN_NOT_COMPILE_WITH_ROSE != true
+#if (CAN_NOT_COMPILE_WITH_ROSE == 0)
 
 // AS(012006) Added to support macros
 PreprocessingInfo::rose_macro_call* PreprocessingInfo::get_macro_call(){ return macroCall; } 
@@ -150,12 +158,24 @@ const token_container* PreprocessingInfo::get_token_stream(){ return tokenStream
 
 void PreprocessingInfo::push_back_token_stream(token_type tok){ 
   tokenStream->push_back(tok);
+#ifdef _MSC_VER
+#pragma message ("WARNING: Use of Wave commented out.")
+  printf ("Error: use of wave commented out.\n");
+  ROSE_ASSERT(false);
+#else
   internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str()) ;
+#endif
   } 
 
 void PreprocessingInfo::push_front_token_stream(token_type tok){ 
   tokenStream->insert(tokenStream->begin(),tok);
-  internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str()) ;
+#ifdef _MSC_VER
+#pragma message ("WARNING: Use of Wave commented out.")
+  printf ("Error: use of wave commented out.\n");
+  ROSE_ASSERT(false);
+#else
+  internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str());
+#endif
   } 
 
 
@@ -181,7 +201,13 @@ PreprocessingInfo::PreprocessingInfo(token_container tokCont, DirectiveType type
   // columnNumber = colNo; //macroDef->macrodef.columnNumber;
 
      (*tokenStream)= tokCont;
-     internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str());
+#ifdef _MSC_VER
+#pragma message ("WARNING: Use of Wave commented out.")
+  printf ("Error: use of wave commented out.\n");
+  ROSE_ASSERT(false);
+#else
+    internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str());
+#endif
 
      if(SgProject::get_verbose() >= 1)
          std::cout << " String for declaration:" << internalString<< " at line: " << lineNo << " and col:" << colNo << std::endl;
@@ -239,7 +265,13 @@ PreprocessingInfo::PreprocessingInfo(rose_macro_call* mcall, RelativePositionTyp
   // DQ (12/23/2006): Mark this as a comment or directive (mostly so that we can know that the parent being NULL is not meaningful.
      file_info->setCommentOrDirective();
 
-     internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str()) ;
+#ifdef _MSC_VER
+#pragma message ("WARNING: Use of Wave commented out.")
+     printf ("Error: use of wave commented out.\n");
+     ROSE_ASSERT(false);
+#else
+     internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str());
+#endif
    }
 
 PreprocessingInfo::PreprocessingInfo(rose_macro_definition* mdef, RelativePositionType relPos) 
@@ -307,8 +339,15 @@ PreprocessingInfo::PreprocessingInfo(rose_macro_definition* mdef, RelativePositi
   // DQ (12/23/2006): Mark this as a comment or directive (mostly so that we can know that the parent being NULL is not meaningful.
      file_info->setCommentOrDirective();
 
-     internalString = string("#define\t")+string(boost::wave::util::impl::as_string(*tokenStream).c_str()) ;
-     if(SgProject::get_verbose() >= 1)
+#ifdef _MSC_VER
+#pragma message ("WARNING: Use of Wave commented out.")
+     printf ("Error: use of wave commented out.\n");
+     ROSE_ASSERT(false);
+#else
+     internalString = string("#define\t")+string(boost::wave::util::impl::as_string(*tokenStream).c_str());
+#endif
+
+	 if(SgProject::get_verbose() >= 1)
          std::cout << "Internal string is: " << internalString << std::endl;
   //     internalString = boost::wave::util::impl::as_string(tokenStream) ;
    }
@@ -372,8 +411,15 @@ PreprocessingInfo::PreprocessingInfo(rose_include_directive* inclDir, RelativePo
      copy (expression.begin(), expression.end(),
          inserter(*tokenStream, tokenStream->end()));
 
+#ifdef _MSC_VER
+#pragma message ("WARNING: Use of Wave commented out.")
+     printf ("Error: use of wave commented out.\n");
+     ROSE_ASSERT(false);
+#else
      internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str()) +"\n";
-     if(SgProject::get_verbose() >= 1)
+#endif
+
+	 if(SgProject::get_verbose() >= 1)
         std::cout << "INTERNAL IF STRING: " << internalString << std::endl;
 
    }

@@ -32,6 +32,7 @@ check_function_exists(closedir HAVE_CLOSEDIR)
 check_include_file(ctype.h HAVE_CTYPE_H)
 check_include_file(c_asm.h HAVE_C_ASM_H)
 check_include_file(dlfcn.h HAVE_DLFCN_H)
+set (CMAKE_REQUIRED_LIBRARIES dl)
 check_function_exists(dladdr HAVE_DLADDR)
 
 check_include_file(dlfcn.h HAVE_DLADDR  )

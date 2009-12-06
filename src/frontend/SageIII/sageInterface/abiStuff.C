@@ -26,6 +26,8 @@ StructLayoutInfo ChainableTypeLayoutGenerator::layoutType(SgType* t) const {
       }
     }
   }
+  // DQ (12/1/2009): MSVC reports: warning C4715: 'ChainableTypeLayoutGenerator::layoutType' : not all control paths return a value
+  // but it not clear how to modify this code to avoid that warning.
 }
 
 void NonpackedTypeLayoutGenerator::layoutOneField(SgType* fieldType, SgNode* decl, bool isUnion, size_t& currentOffset, StructLayoutInfo& layout) const {
