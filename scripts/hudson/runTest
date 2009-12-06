@@ -38,6 +38,13 @@ rm -rf ROSE-build
 mkdir ROSE-build
 cd ROSE-build
 ../configure ${CONFIGURE_FLAGS}
+
+if test $ROSE_TEST_BUILD_STYLE = edg ; then
+	make -j8 binary_edg_tarball
+	make -Csrc/frontend/CxxFrontend upload BINARY_PATH=/usr/casc/overture/ROSE/git/ROSE_EDG_Binaries-staging
+	exit 0
+fi
+
 make -j8
 
 # GCC 4.3 and 4.4 do not currently pass make check
