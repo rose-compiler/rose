@@ -210,4 +210,8 @@ binary_edg_tarball:
 	$(MAKE) -C src/ROSETTA/src
 	$(MAKE) -C src/frontend/CxxFrontend tarball
 
+binary_edg_tarball_and_upload: 
+	$(MAKE) binary_edg_tarball 
+	$(MAKE) -Csrc/frontend/CxxFrontend upload
+
 endif
