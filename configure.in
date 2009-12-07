@@ -984,7 +984,7 @@ SETUP_EDG
 # Find md5 or md5sum and create a signature for ROSE binary compatibility
 AC_CHECK_PROGS(MD5, [md5 md5sum], [false])
 AC_SUBST(MD5)
-if test -e ${srcdir}/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection; then
+if test -e ${srcdir}/src/frontend/CxxFrontend/EDG/Makefile.am; then
   has_edg_source=yes
   if test "x$MD5" = "xfalse"; then
     AC_MSG_WARN([Could not find either md5 or md5sum -- building binary EDG tarballs is disabled])
@@ -1000,42 +1000,9 @@ fi
 AM_CONDITIONAL(ROSE_HAS_EDG_SOURCE, [test "x$has_edg_source" = "xyes"])
 AM_CONDITIONAL(BINARY_EDG_TARBALL_ENABLED, [test "x$binary_edg_tarball_enabled" = "xyes"])
 
-release_binary_compatibility_signature="RELEASE_BINARY_COMPATIBILITY_SIGNATURE" # This variable will be substituted in binary-EDG release copies of configure.in
-
-# DQ (9/17/2009): Added build_cpu so that we could make the naming different for 32bit vs. 64bit.
+#The build_triplet_without_redhat variable is used only in src/frontend/CxxFrontend/Makefile.am to determine the binary edg name
 build_triplet_without_redhat=`${srcdir}/config/cleanConfigGuessOutput "$build" "$build_cpu" "$build_vendor"`
-
-# DQ (9/14/2009): Added compiler name and major and minor 
-# version numbers to the generate ROSE EDG binary name.
-# expected_binary_edg_dirname="roseBinaryEDG-${build_triplet_without_redhat}-${release_binary_compatibility_signature}"
-expected_binary_edg_dirname="roseBinaryEDG-${build_triplet_without_redhat}-$GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX-${release_binary_compatibility_signature}"
-
-expected_binary_edg_tarball="${expected_binary_edg_dirname}.tar.gz"
-full_expected_binary_edg_tarball="${srcdir}/src/frontend/CxxFrontend/${expected_binary_edg_tarball}"
-
 AC_SUBST(build_triplet_without_redhat) dnl This is done even with EDG source, since it is used to determine the binary to make in roseFreshTest
-
-if test -e ${srcdir}/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection; then
-  : # We have EDG source code
-else
-  echo ""
-  echo "These are the available binaries:"
-  ls -l ${srcdir}/src/frontend/CxxFrontend
-  echo ""
-  AC_MSG_CHECKING([for an appropriate binary version of EDG])
-  if test -f ${full_expected_binary_edg_tarball}; then
-    AC_MSG_RESULT([$expected_binary_edg_tarball])
-  else
-    AC_MSG_RESULT([no])
-    AC_MSG_ERROR([Could not find a binary version of EDG for architecture ${build} in ${srcdir}/src/frontend/CxxFrontend; it should be named \"${expected_binary_edg_tarball}\".  This distribution cannot be used on this platform.])
-  fi
-fi
-
-EXPECTED_BINARY_EDG_DIRNAME="${expected_binary_edg_dirname}"
-
-echo "EXPECTED_BINARY_EDG_DIRNAME = $EXPECTED_BINARY_EDG_DIRNAME" 
-
-AC_SUBST(EXPECTED_BINARY_EDG_DIRNAME)
 
 dnl ---------------------------------------------------------------------
 dnl (8/29/2007): This was added to provide more portable times upon the 
@@ -1165,6 +1132,7 @@ AC_DEFUN([CLASSPATH_COND_IF],
    fi
 ])])
 
+# This list should be the same as in build (search for Makefile.in)
 CLASSPATH_COND_IF([ROSE_HAS_EDG_SOURCE], [test "x$has_edg_source" = "xyes"], [
 AC_CONFIG_FILES([
 src/frontend/CxxFrontend/EDG/Makefile
@@ -1563,55 +1531,9 @@ docs/Rose/Tutorial/gettingStarted.tex
 docs/testDoxygen/test.cfg
 docs/testDoxygen/Makefile
 tools/Makefile
-proposals/Makefile
 scripts/Makefile
 demo/Makefile
 demo/qrose/Makefile
-developersScratchSpace/Makefile
-developersScratchSpace/Dan/Makefile
-developersScratchSpace/Dan/C_tests/Makefile
-developersScratchSpace/Dan/C99_tests/Makefile
-developersScratchSpace/Dan/Cxx_tests/Makefile
-developersScratchSpace/Dan/C_subset_of_Cxx_tests/Makefile
-developersScratchSpace/Dan/Fortran_tests/Makefile
-developersScratchSpace/Dan/Fortran_tests/LANL_POP/Makefile
-developersScratchSpace/Dan/RoseExample_tests/Makefile
-developersScratchSpace/Dan/ExpressionTemplateExample_tests/Makefile
-developersScratchSpace/Dan/PythonExample_tests/Makefile
-developersScratchSpace/Dan/UPC_tests/Makefile
-developersScratchSpace/Dan/copyAST_tests/Makefile
-developersScratchSpace/Dan/colorAST_tests/Makefile
-developersScratchSpace/Dan/mergeAST_tests/Makefile
-developersScratchSpace/Dan/unparseToString_tests/Makefile
-developersScratchSpace/Dan/OpenMP_C_tests/Makefile
-developersScratchSpace/Dan/boost_tests/Makefile
-developersScratchSpace/Dan/virtualCFG_tests/Makefile
-developersScratchSpace/Dan/translator_tests/Makefile
-developersScratchSpace/Dan/sourcePosition_tests/Makefile
-developersScratchSpace/Dan/preinclude_tests/Makefile
-developersScratchSpace/Dan/tokenStream_tests/Makefile
-developersScratchSpace/Dan/mergeTraversal_tests/Makefile
-developersScratchSpace/Dan/collectAllCommentsAndDirectives_tests/Makefile
-developersScratchSpace/Dan/nameQualificationAndTypeElaboration_tests/Makefile
-developersScratchSpace/Dan/Disassembler_tests/Makefile
-developersScratchSpace/Dan/Dwarf_tests/Makefile
-developersScratchSpace/Dan/Yices_tests/Makefile
-developersScratchSpace/Dan/Compass_tests/Makefile
-developersScratchSpace/Dan/astEquivalence_tests/Makefile
-developersScratchSpace/Dan/MicrosoftWindows_tests/Makefile
-developersScratchSpace/Dan/QRose_tests/Makefile
-developersScratchSpace/Dan/libraryIdentification_tests/Makefile
-developersScratchSpace/Dan/Pin_tests/Makefile
-developersScratchSpace/Dan/SimPoints_tests/Makefile
-developersScratchSpace/Dan/SimPoints_tests/runpinpoints.sh
-developersScratchSpace/Dan/SimPoints_tests/Step2.sh
-developersScratchSpace/Dan/graph_tests/Makefile
-developersScratchSpace/Dan/fileLocation_tests/Makefile
-developersScratchSpace/Dan/callGraph_tests/Makefile
-developersScratchSpace/Dan/constructName_tests/Makefile
-developersScratchSpace/Dan/dataFlow_tests/Makefile
-developersScratchSpace/Dan/binaryDataStructureRecognition_tests/Makefile
-developersScratchSpace/Dan/algorithmRecognition_tests/Makefile
 binaries/Makefile
 binaries/samples/Makefile
 ])

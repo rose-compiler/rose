@@ -2,6 +2,8 @@
 #include <iostream>
 #include <stdlib.h>
 
+using namespace std;
+
 #ifndef SIZE
 #define SIZE 100
 #endif
