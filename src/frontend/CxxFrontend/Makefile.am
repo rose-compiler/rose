@@ -54,10 +54,11 @@ EDG/libroseEDG.la:
 $(BINARY_EDG_DIRNAME).tar.gz: EDG/libroseEDG.la
 	rm -rf $(BINARY_EDG_DIRNAME)
 	mkdir $(BINARY_EDG_DIRNAME)
-#old script for creating binary tarball replaced dependency_libs with an empty list. We have not observed this to be non-empty so leave
-#it as-is for now.
-#	sed "s@^dependency_libs.*@dependency_libs=''@" src/frontend/CxxFrontend/EDG/libroseEDG.la > $${BINARY_EDG_DIRNAME}/libroseEDG.la  
-	cp -r EDG/libroseEDG.* EDG/.libs $(BINARY_EDG_DIRNAME)/
+# Replace dependency_libs with an empty list. This is required when
+# compiling with non-system compilers as this variable will contain
+# a system specific path
+	sed "s@^dependency_libs.*@dependency_libs=''@" EDG/libroseEDG.la > ${BINARY_EDG_DIRNAME}/libroseEDG.la  
+	cp -r EDG/.libs $(BINARY_EDG_DIRNAME)/
 	tar czf $(BINARY_EDG_DIRNAME).tar.gz $(BINARY_EDG_DIRNAME)
 	rm -rf $(BINARY_EDG_DIRNAME)
 

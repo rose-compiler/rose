@@ -32,7 +32,10 @@ use Digest::MD5;
 # Given a file path, returns true iff the path names a dependent file.
 sub is_dependent_file {
 	my ($path) = @_;
-	return ($path =~ m@^src/ROSETTA/@ || $path eq "src/frontend/CxxFrontend/EDG");
+	return ($path =~ m@^src/ROSETTA/@ # ROSETTA generated header files are used by the EDG/SAGE connection
+	     || $path eq "src/frontend/CxxFrontend/EDG" # The reference to the EDG submodule
+	     || $path eq "src/frontend/CxxFrontend/Makefile.am" # Rules for generating the tarball
+	     );
 }
 
 # A list of canonical repositories.  This need not include every repository;
