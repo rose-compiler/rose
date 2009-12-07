@@ -6,8 +6,11 @@ BINARY_EDG_TARBALL_STAGING_PATH=/usr/casc/overture/ROSE/git/ROSE_EDG_Binaries-st
 BINARY_EDG_TARBALL_DISTRIBUTION_PATH=/usr/casc/overture/ROSE/git/ROSE_EDG_Binaries
 BINARY_EDG_TARBALL_URL=file://$(BINARY_EDG_TARBALL_DISTRIBUTION_PATH)
 
-ALL_ARCHS = i686-pc-linux-gnu x86_64-pc-linux-gnu
-ALL_COMPILERS = GNU-4.0 GNU-4.1 GNU-4.2 GNU-4.3
+ALL_ARCHS = i686-pc-linux-gnu x86_64-pc-linux-gnu i686-apple-darwin
+STD_GNU_COMPILERS = GNU-4.0 GNU-4.1 GNU-4.2 GNU-4.3
+COMPILERS_i686_pc_linux_gnu = $(STD_GNU_COMPILERS)
+COMPILERS_x86_64_pc_linux_gnu = $(STD_GNU_COMPILERS)
+COMPILERS_i686_apple_darwin = GNU-4.0
 
 #fetch tar-ball 
 %.tar.gz:
@@ -19,7 +22,7 @@ ALL_COMPILERS = GNU-4.0 GNU-4.1 GNU-4.2 GNU-4.3
 DIST_EDG = current
 
 # all EDG binaries for all platforms and compiler versions 
-ALL_TARBALLS = $(foreach ARCH,$(ALL_ARCHS),$(foreach COMPILER,$(ALL_COMPILERS),roseBinaryEDG-$(ARCH)-$(COMPILER)-$(release_binary_compatibility_signature).tar.gz))
+ALL_TARBALLS = $(foreach ARCH,$(ALL_ARCHS),$(foreach COMPILER,$(COMPILERS_$(subst -,_,$(ARCH))),roseBinaryEDG-$(ARCH)-$(COMPILER)-$(release_binary_compatibility_signature).tar.gz))
 
 # if DIST_EDG == current:
 #   include only binaries for the current architecture and current compiler version
