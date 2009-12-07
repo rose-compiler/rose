@@ -37,7 +37,7 @@ libroseQtExtension = $(top_builddir)/src/roseExtensions/qtWidgets/libRoseQtWidge
 else
 libroseQtExtension =
 endif
-   
+
 # TODO: correct list!
 libroseLibraries = \
    $(top_builddir)/src/3rdPartyLibraries/MSTL/libmstl.la \
