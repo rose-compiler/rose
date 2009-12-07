@@ -75,7 +75,7 @@ if (-e "$FindBin::Bin/../bincompat-sig") {
 }
 
 # Using FindBin ensures that the script works no matter where it is invoked from
-my $repo = Git->repository(Directory => $FindBin::Bin);
+my $repo = Git->repository(Directory => "$FindBin::Bin/..");
 
 # Assigns indices into the result of parse_ls_tree_line, i.e.
 # $ git ls-tree HEAD
