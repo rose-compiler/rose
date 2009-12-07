@@ -3,8 +3,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 release_binary_compatibility_signature=$(shell ${top_srcdir}/scripts/bincompat-sig)
 BINARY_EDG_DIRNAME=roseBinaryEDG-${build_triplet_without_redhat}-${GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX}-${release_binary_compatibility_signature}
 BINARY_EDG_TARBALL_STAGING_PATH=/usr/casc/overture/ROSE/git/ROSE_EDG_Binaries-staging
-BINARY_EDG_TARBALL_PATH=/usr/casc/overture/ROSE/git/ROSE_EDG_Binaries
-BINARY_EDG_TARBALL_URL=file://$(BINARY_EDG_TARBALL_PATH)
+BINARY_EDG_TARBALL_DISTRIBUTION_PATH=/usr/casc/overture/ROSE/git/ROSE_EDG_Binaries
+BINARY_EDG_TARBALL_URL=file://$(BINARY_EDG_TARBALL_DISTRIBUTION_PATH)
 
 ALL_ARCHS = i686-pc-linux-gnu x86_64-pc-linux-gnu
 ALL_COMPILERS = GNU-4.0 GNU-4.1 GNU-4.2 GNU-4.3
@@ -41,13 +41,15 @@ deploy_tarballs:
 			exit 0 ; \
 		fi ; \
 	done && \
-	mv $(ALL_TARBALLS:%=$(BINARY_EDG_TARBALL_STAGING_PATH)/%) $(BINARY_EDG_TARBALL_PATH)
+	mv $(ALL_TARBALLS:%=$(BINARY_EDG_TARBALL_STAGING_PATH)/%) $(BINARY_EDG_TARBALL_DISTRIBUTION_PATH)
 
 if ROSE_HAS_EDG_SOURCE
 
 SUBDIRS = EDG
 
 EDG/libroseEDG.la:
+	$(MAKE) -C ../../util
+	$(MAKE) -C ../../ROSETTA/src
 	$(MAKE) -CEDG libroseEDG.la
 
 #create tar-ball
@@ -63,11 +65,14 @@ $(BINARY_EDG_DIRNAME).tar.gz: EDG/libroseEDG.la
 	rm -rf $(BINARY_EDG_DIRNAME)
 
 #generate a tar-ball, but don't upload it
-tarball: $(BINARY_EDG_DIRNAME).tar.gz
+binary_edg_tarball: $(BINARY_EDG_DIRNAME).tar.gz
 
 #upload tarball to a central location
-upload: $(BINARY_EDG_DIRNAME).tar.gz
-	cp $< $(BINARY_EDG_TARBALL_STAGING_PATH)
+upload_edg_binary: 
+	if [ \! -e $(BINARY_EDG_TARBALL_STAGING_PATH)/$(BINARY_EDG_DIRNAME).tar.gz ] ; then \
+	   $(MAKE) binary_edg_tarball && \
+	   cp $(BINARY_EDG_DIRNAME).tar.gz $(BINARY_EDG_TARBALL_STAGING_PATH) ;  \
+	fi
 
 
 

@@ -206,12 +206,9 @@ if ROSE_HAS_EDG_SOURCE
 # 1
 # This rule generates the simple binary tarball for the directories: EDG and EDG_SAGE_Connection
 binary_edg_tarball: 
-	$(MAKE) -C src/util
-	$(MAKE) -C src/ROSETTA/src
-	$(MAKE) -C src/frontend/CxxFrontend tarball
+	$(MAKE) -C src/frontend/CxxFrontend binary_edg_tarball
 
-binary_edg_tarball_and_upload: 
-	$(MAKE) binary_edg_tarball 
-	$(MAKE) -Csrc/frontend/CxxFrontend upload
+upload_edg_binary:
+	$(MAKE) -C src/frontend/CxxFrontend upload_edg_binary
 
 endif
