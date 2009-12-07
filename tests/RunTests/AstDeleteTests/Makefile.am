@@ -18,7 +18,7 @@ TEST_Objects = ${TESTCODES:.C=.o}
 
 
 $(TEST_Objects): memoryTranslator
-	./memoryTranslator $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.c)
+	./memoryTranslator $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.C)
 
 
 # This rule is run after automake's internal check rule (which we don't want to use)
