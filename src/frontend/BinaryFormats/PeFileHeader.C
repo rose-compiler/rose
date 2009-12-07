@@ -4,6 +4,7 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+
 void
 SgAsmPERVASizePair::ctor(const RVASizePair_disk *disk) {
     p_e_rva  = le_to_host(disk->e_rva);
@@ -127,7 +128,7 @@ SgAsmPEFileHeader::parse()
      * smallest possible documented size of the optional header. Also it's possible for the optional header to extend beyond
      * the end of the file, in which case that part should be read as zero. */
     PE32OptHeader_disk oh32;
-    addr_t need32 = sizeof(PEFileHeader_disk) + std::min(p_e_nt_hdr_size, (addr_t)(sizeof oh32));
+	addr_t need32 = sizeof(PEFileHeader_disk) + std::min(p_e_nt_hdr_size, (addr_t)(sizeof oh32));
     if (need32>get_size())
         extend(need32-get_size());
     if (sizeof(oh32)!=read_content_local(sizeof fh, &oh32, sizeof oh32, false))
@@ -587,10 +588,11 @@ SgAsmPEFileHeader::reallocate()
                 if (0==nfound++) {
                     min_offset = pesec->get_offset();
                 } else {
-                    min_offset = std::min(min_offset, pesec->get_offset());
+                    min_offset = std::min(min_offset, pesec->get_offset() );
                 }
             }
         }
+
         addr_t header_size2 = std::max(header_size, min_offset);
         if (p_e_header_size==header_size2)
             header_size = header_size2;
@@ -737,8 +739,8 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         sprintf(p, "%sPEFileHeader.", prefix);
     }
-    int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
+    int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     time_t t = p_e_time;
     char time_str[128];
     strftime(time_str, sizeof time_str, "%c", localtime(&t));

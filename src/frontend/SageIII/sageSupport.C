@@ -1,8 +1,18 @@
 #include "rose.h"
 #include "rose_paths.h"
 #include <sys/stat.h>
+
+#ifdef _MSC_VER
+#pragma message ("WARNING: wait.h header file not available in MSVC.")
+#else
 #include <sys/wait.h>
+#endif
+
+#ifdef _MSC_VER
+#pragma message ("WARNING: libgen.h header file not available in MSVC.")
+#else
 #include <libgen.h>
+#endif
 
 //FMZ (5/19/2008): 
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
@@ -41,6 +51,13 @@ using namespace OmpSupport;
 
 // DQ (9/17/2009): This appears to only be required for the GNU 4.1.x compiler (not for any earlier or later versions).
 extern const std::string ROSE_GFORTRAN_PATH;
+
+#ifdef _MSC_VER
+// DQ (11/29/2009): MSVC does not support sprintf, but "_snprintf" is equivalent 
+// (note: printf_S is the safer version but with a different function argument list).
+// We can use a macro to handle this portability issue for now.
+#define snprintf _snprintf
+#endif
 
 std::string
 SgValueExp::get_constant_folded_value_as_string()
@@ -276,7 +293,16 @@ findRoseSupportPathFromBuild(const string& buildTreeLocation,
     return string(ROSE_AUTOMAKE_TOP_BUILDDIR) + "/" + buildTreeLocation;
   }
 }
-
+//! Check if we can get an installation prefix of rose based on the current running translator.
+// There are two ways
+//   1. if dladdr is supported: we resolve a rose function (roseInstallPrefix()) to obtain the 
+//      file (librose.so) defining this function 
+//      Then we check the parent directory of librose.so
+//          if .libs or src --> in a build tree
+//          otherwise: librose.so is in an installation tree
+//   2. if dladdr is not supported or anything goes wrong, we check an environment variable
+//     ROSE_IN_BUILD_TREE to tell if the translator is started from a build tree or an installation tree
+//     Otherwise we pass the --prefix= ROSE_AUTOMAKE_PREFIX as the installation prefix
 bool roseInstallPrefix(std::string& result) {
 #ifdef HAVE_DLADDR
   {
@@ -297,9 +323,18 @@ bool roseInstallPrefix(std::string& result) {
     if (prefixCS == NULL) {free(libroseName); goto default_check;}
     string prefix = prefixCS;
     free(libroseName);
-    if (libdirBasename == ".libs") {
+// Liao, 12/2/2009
+// Check the librose's parent directory name to tell if it is within a build or installation tree
+// This if statement has the assumption that libtool is used to build librose so librose.so is put under .libs 
+// which is not true for cmake building system
+// For cmake, librose is created directly under build/src
+//    if (libdirBasename == ".libs") {
+    if (libdirBasename == ".libs" || libdirBasename == "src") {
       return false;
     } else {
+      // the translator must locate in the installation_tree/lib 
+      // TODO what about lib64??
+      ROSE_ASSERT (libdirBasename == "lib");
       result = prefix;
       return true;
     }
@@ -310,9 +345,16 @@ default_check:
   // Emit a warning that the hard-wired prefix is being used
   cerr << "Warning: roseInstallPrefix() is using the hard-wired prefix and ROSE_IN_BUILD_TREE even though it should be relocatable" << endl;
 #endif
+  // dladdr is not supported, we check an environment variables to tell if the 
+  // translator is running from a build tree or an installation tree
   if (getenv("ROSE_IN_BUILD_TREE") != NULL) {
     return false;
   } else {
+// Liao, 12/1/2009 
+// this variable is set via a very bad way, there is actually a right way to use --prefix VALUE within automake/autoconfig
+// config/build_rose_paths.Makefile
+// Makefile:       @@echo "const std::string ROSE_AUTOMAKE_PREFIX        = \"/home/liao6/opt/roseLatest\";" >> src/util/rose_paths.C
+// TODO fix this to support both automake and cmake 's installation configuration options
     result = ROSE_AUTOMAKE_PREFIX;
     return true;
   }
@@ -2900,7 +2942,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // This includes a generated header file that defines the __builtin functions and a number 
   // of predefined macros obtained from the backend compiler.  The new EDG/Sage interface
   // does not require this function and I think that the file is not generated in this case 
-  // which is why there is a test for it's existance to see if it should be include.  I would
+  // which is why there is a test for it's existence to see if it should be include.  I would
   // rather see a more direct test.
      for (Rose_STL_Container<string>::iterator i = Cxx_ConfigIncludeDirs.begin(); i != Cxx_ConfigIncludeDirs.end(); i++)
         {
@@ -5354,6 +5396,9 @@ SgSourceFile::build_classpath()
      fprintf(stderr, "Fortran parser not supported \n");
      ROSE_ASSERT(false);
   // abort();
+
+  // DQ (11/30/2009): MSVC requires a return stmt from a non-void function (an error, not a warning).
+	 return "error in SgSourceFile::build_classpath()";
    }
 
 int
@@ -5362,6 +5407,9 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
      fprintf(stderr, "Fortran parser not supported \n");
      ROSE_ASSERT(false);
   // abort();
+
+  // DQ (11/30/2009): MSVC requires a return stmt from a non-void function (an error, not a warning).
+	 return -1;
    }
 #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 
@@ -5519,9 +5567,16 @@ SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputComm
 int
 SgSourceFile::build_PHP_AST()
    {
-     string phpFileName = this->get_sourceFileNameWithPath();                                 
-     int frontendErrorLevel = php_main(phpFileName, this);
+     string phpFileName = this->get_sourceFileNameWithPath();
+#ifdef _MSC_VER
+#pragma message ("WARNING: PHP not supported within initial MSVC port of ROSE.")
+	 printf ("WARNING: PHP not supported within initial MSVC port of ROSE.");
+	 ROSE_ASSERT(false);
 
+	 int frontendErrorLevel = -1;
+#else
+     int frontendErrorLevel = php_main(phpFileName, this);
+#endif
      return frontendErrorLevel;
    }
 
@@ -7338,6 +7393,11 @@ StringUtility::popen_wrapper ( const string & command, vector<string> & result )
 
      result = vector<string>();
 
+#ifdef _MSC_VER
+#pragma message ("WARNING: Linux popen() not supported within MSVC.")
+	 printf ("WARNING: Linux popen() not supported within MSVC.");
+	 ROSE_ASSERT(false);
+#else
      if ((fp = popen(command.c_str (), "r")) == NULL)
         {
           cerr << "Files or processes cannot be created" << endl;
@@ -7364,6 +7424,7 @@ StringUtility::popen_wrapper ( const string & command, vector<string> & result )
           cerr << ("Cannot execute pclose");
           returnValue = false;
         }
+#endif
 
      return returnValue;
    }

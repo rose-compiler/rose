@@ -70,7 +70,12 @@ class RoseBin_DataFlowAbstract { //: public GraphAlgorithms {
  protected:
    rose_hash::hash_map <uint64_t, RoseBin_Variable*> variables;
    GraphAlgorithms* g_algo;
+#ifdef _MSC_VER
+   typedef rose_hash::hash_map <std::string, uint64_t,rose_hash::hash_string> variablesReverseType;
+#else
    typedef rose_hash::hash_map <std::string, uint64_t,rose_hash::hash_string,rose_hash::eqstr_string> variablesReverseType;
+#endif
+
 // rose_hash::hash_map <std::string, uint64_t> variablesReverse;
    variablesReverseType variablesReverse;
 
@@ -83,8 +88,11 @@ class RoseBin_DataFlowAbstract { //: public GraphAlgorithms {
   typedef std::multimap< std::pair<X86RegisterClass, int>, SgGraphNode*> multitype;
   //typedef std::map< SgGraphNode*, multitype> tabletype;
   //typedef __gnu_cxx::hash_multimap< std::pair<X86RegisterClass, int> , SgGraphNode*> multitype;
+#ifdef _MSC_VER
+  typedef rose_hash::hash_map< SgGraphNode*, multitype,rose_hash::hash_graph_node> tabletype;
+#else
   typedef rose_hash::hash_map< SgGraphNode*, multitype,rose_hash::hash_graph_node,rose_hash::eqstr_graph_node> tabletype;
-
+#endif
 
   // statistics
   int nrOfMemoryWrites;

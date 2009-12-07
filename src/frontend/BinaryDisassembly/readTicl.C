@@ -6,6 +6,7 @@
 
 using namespace ticl;
 
+// DQ (12/1/2009): Fixed Use of "// std::out ..." in define (below) with "\" line continuation (reported by MSVC).
 #define FILL_IN_STRUCT(STRUCT_NAME,FORMAT, FILENAME)			\
   string line;								\
   directory+="/";							\
@@ -13,7 +14,7 @@ using namespace ticl;
   filename =directory+string( FILENAME );				\
   ifstream myfile;							\
   /*vector<STRUCT_NAME> vec_##STRUCT_NAME;*/ /*= new vector<STRUCT_NAME>();*/ \
-  //std::cout << "Opening file:" << filename << std::endl;		\
+  /* std::cout << "Opening file:" << filename << std::endl;	*/	\
   myfile.open(filename.c_str());					\
 									\
   if (myfile.is_open())							\

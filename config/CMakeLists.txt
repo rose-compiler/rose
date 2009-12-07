@@ -1,7 +1,8 @@
 
 include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/rose_edg_required_macros_and_functions.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/rose_edg_required_macros_and_functions.h)
+# Moved to roseGenerateBackendCompilerSpecificHeaders.cmake
+#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/rose_edg_required_macros_and_functions.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/rose_edg_required_macros_and_functions.h)
 
 
 ########### install files ###############

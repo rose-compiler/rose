@@ -1009,7 +1009,12 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
                            break;
 
                          case ROSE_HASH_MULTIMAP:
+                        // s += "     rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it; \n" ;
+                           s += "#ifdef _MSC_VER \n";
+                           s += "     rose_hash::hash_multimap<SgName, SgSymbol*>::iterator it; \n" ;
+                           s += "#else \n";
                            s += "     rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it; \n" ;
+                           s += "#endif \n";
                            s += "     unsigned int tempListCount" + varNameString + " = 0; \n" ;
                            s += "     SgSymbol** tempList" + varNameString + " = new SgSymbol* [ source->p_" + varNameString + "->size() ]; \n" ;
                            s += "     for (it = source->p_" + varNameString + "->begin(); it != source->p_" + varNameString + "->end(); ++it)\n" ;
@@ -1048,7 +1053,12 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
                            s += "        }\n";
                            s += "      delete [] tempList" + varNameString + "; \n";
 #else
+                        // s += "     rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n" ;
+                           s += "#ifdef _MSC_VER \n";
+                           s += "     rose_hash::hash_multimap<std::string, SgGraphNode*>::iterator it; \n" ;
+                           s += "#else \n";
                            s += "     rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n" ;
+                           s += "#endif \n";
                            s += "     unsigned int tempListCount" + varNameString + " = 0; \n" ;
                            s += "     SgGraphNode** tempList" + varNameString + " = new SgGraphNode* [ source->p_" + varNameString + ".size() ]; \n" ;
                            s += "     for (it = source->p_" + varNameString + ".begin(); it != source->p_" + varNameString + ".end(); ++it)\n" ;
@@ -1607,7 +1617,12 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
                       break;
                     case ROSE_HASH_MULTIMAP:
                       s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
+                   // s += "     rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it; \n " ;
+                      s += "#ifdef _MSC_VER \n";
+                      s += "     rose_hash::hash_multimap<SgName, SgSymbol*>::iterator it; \n " ;
+                      s += "#else \n";
                       s += "     rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it; \n " ;
+                      s += "#endif \n";
                       s += "     for (it = p_" + varNameString + "->begin(); it != p_" + varNameString + "->end(); ++it)\n " ;
                       s += "        {\n";
                       s += "          it->second = (SgSymbol*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex( (unsigned long)(it->second) ) ); \n";
@@ -1626,7 +1641,12 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
 #else
                    // DQ (4/25/2009): Removing pointer to type for data member to improve the interface...
                       s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
+                   // s += "     rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
+                      s += "#ifdef _MSC_VER \n";
+                      s += "     rose_hash::hash_multimap<std::string, SgGraphNode*>::iterator it; \n " ;
+                      s += "#else \n";
                       s += "     rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
+                      s += "#endif \n";
                       s += "     for (it = p_" + varNameString + ".begin(); it != p_" + varNameString + ".end(); ++it)\n " ;
                       s += "        {\n";
                       s += "          it->second = (SgGraphNode*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex( (unsigned long)(it->second) ) ); \n";
@@ -1646,7 +1666,12 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
 #else
                    // DQ (4/25/2009): Removing pointer to type for data member to improve the interface...
                       s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
+                   // s += "     rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
+                      s += "#ifdef _MSC_VER \n";
+                      s += "     rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*>::iterator it; \n " ;
+                      s += "#else \n";
                       s += "     rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
+                      s += "#endif \n";
                       s += "     for (it = p_" + varNameString + ".begin(); it != p_" + varNameString + ".end(); ++it)\n " ;
                       s += "        {\n";
                       s += "          it->second = (SgDirectedGraphEdge*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex( (unsigned long)(it->second) ) ); \n";
@@ -1666,7 +1691,12 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
 #else
                    // DQ (4/25/2009): Removing pointer to type for data member to improve the interface...
                       s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
+                   // s += "     rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
+                      s += "#ifdef _MSC_VER \n";
+                      s += "     rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*>::iterator it; \n " ;
+                      s += "#else \n";
                       s += "     rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
+                      s += "#endif \n";
                       s += "     for (it = p_" + varNameString + ".begin(); it != p_" + varNameString + ".end(); ++it)\n " ;
                       s += "        {\n";
                       s += "          it->second = (SgUndirectedGraphEdge*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex( (unsigned long)(it->second) ) ); \n";

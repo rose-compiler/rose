@@ -158,7 +158,7 @@ ${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstPDFGeneration.C
 ${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstTextAttributesHandling.C
 ${CMAKE_SOURCE_DIR}/src/midend/astProcessing/Ast.C
 ${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstTraversal.C
-${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstSharedMemoryParallelSimpleProcessing.C
+#${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstSharedMemoryParallelSimpleProcessing.C
 ${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstReverseSimpleProcessing.C
 ${CMAKE_SOURCE_DIR}/src/midend/astQuery/nodeQueryInheritedAttribute.C
 ${CMAKE_SOURCE_DIR}/src/midend/astQuery/nameQuery.C
@@ -172,17 +172,17 @@ ${CMAKE_SOURCE_DIR}/src/midend/astQuery/nameQueryInheritedAttribute.C
 #${CMAKE_SOURCE_DIR}/src/midend/astQuery/queryVariant.C
 ${CMAKE_SOURCE_DIR}/src/midend/astQuery/nodeQuery.C
 ${CMAKE_SOURCE_DIR}/src/midend/astRewriteMechanism/rewriteLowLevelInterface.C
-${CMAKE_SOURCE_DIR}/src/midend/astRewriteMechanism/inputProgram1.C
+#${CMAKE_SOURCE_DIR}/src/midend/astRewriteMechanism/inputProgram1.C
 ${CMAKE_SOURCE_DIR}/src/midend/astRewriteMechanism/nodeCollection.C
 ${CMAKE_SOURCE_DIR}/src/midend/astRewriteMechanism/rewriteDebuggingSupport.C
 ${CMAKE_SOURCE_DIR}/src/midend/astRewriteMechanism/rewriteHighLevelInterface.C
-${CMAKE_SOURCE_DIR}/src/midend/astRewriteMechanism/inputProgram3.C
-${CMAKE_SOURCE_DIR}/src/midend/astRewriteMechanism/inputProgram2.C
+#${CMAKE_SOURCE_DIR}/src/midend/astRewriteMechanism/inputProgram3.C
+#${CMAKE_SOURCE_DIR}/src/midend/astRewriteMechanism/inputProgram2.C
 ${CMAKE_SOURCE_DIR}/src/midend/astRewriteMechanism/rewriteMidLevelInterface.C
 ${CMAKE_SOURCE_DIR}/src/midend/astRewriteMechanism/rewriteSynthesizedAttribute.C
 ${CMAKE_SOURCE_DIR}/src/midend/astRewriteMechanism/rewriteAccumulatedAttribute.C
-${CMAKE_SOURCE_DIR}/src/midend/astRewriteMechanism/rewriteTemplateInstantiations.C
-${CMAKE_SOURCE_DIR}/src/midend/astRewriteMechanism/inputProgram4.C
+#${CMAKE_SOURCE_DIR}/src/midend/astRewriteMechanism/rewriteTemplateInstantiations.C
+#${CMAKE_SOURCE_DIR}/src/midend/astRewriteMechanism/inputProgram4.C
 ${CMAKE_SOURCE_DIR}/src/midend/astRewriteMechanism/rewriteTypeDeclaration.C
 ${CMAKE_SOURCE_DIR}/src/midend/astRewriteMechanism/rewriteASTFragementString.C
 ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/implicitCodeGeneration/defaultFunctionGenerator.C
@@ -278,7 +278,7 @@ ${CMAKE_SOURCE_DIR}/src/midend/astDiagnostics/AstPerformance.C
 ${CMAKE_SOURCE_DIR}/src/midend/astDiagnostics/AstStatistics.C
 )
 
-add_library( midend ${midend_src}  )
+add_library( midend STATIC ${midend_src}  )
 add_dependencies( midend ROSETTA )
 
 ########### install files ###############

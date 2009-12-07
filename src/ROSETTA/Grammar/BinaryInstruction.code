@@ -1234,8 +1234,8 @@ HEADER_GENERIC_STRTAB_START
 		ExtentMap& get_freelist();
 
 		//These should be pure virtual but ROSETTA apparently doesn't support that (RPM 2008-10-03)
-		virtual SgAsmStringStorage *create_storage(addr_t offset, bool shared) {abort();}
-		virtual addr_t get_storage_size(const SgAsmStringStorage*) {abort();}
+		virtual SgAsmStringStorage *create_storage(addr_t offset, bool shared) {abort(); return NULL;}
+		virtual addr_t get_storage_size(const SgAsmStringStorage*) {abort(); return 0;}
 		virtual void rebind(SgAsmStringStorage*, addr_t) {abort();}
 		typedef std::vector<class SgAsmStringStorage*> referenced_t;
 	private:
@@ -1266,6 +1266,15 @@ HEADER_ELF_HEADER_START
 		/* File format of an ELF header. Byte order of members depends on e_ident value. This code comes directly from
 		 * "System V Application Binary Interface, Edition 4.1" and the FreeBSD elf(5) man page, and the "Executable and
 		 * Linkable Format (ELF) Portable Formats Specifications, Version 1.2" and not from any header file. */
+
+/* Some structures are used to represent certain things whose layout is very precise in binary files, thus we need to make
+ * sure the compiler doesn't insert alignment padding between the struct members.  ROSE can be compiled on an architecture
+ * that has different alignment constraints than the architecture that these structs describe. GNU compilers have long used
+ * the attribute mechanism. Microsoft compilers on the other hand use pragmas. GCC versions 4.0 and earlier do not recognize
+ * the Microsoft pragmas and issue compiler errors when one is encountered. */
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
 		struct Elf32FileHeader_disk {
 			unsigned char       e_ident_magic[4];       /* 0x7f, 'E', 'L', 'F' */
 			unsigned char       e_ident_file_class;     /* 1=>32-bit; 2=>64-bit; other is error */
@@ -1285,7 +1294,11 @@ HEADER_ELF_HEADER_START
 			uint16_t            e_shentsize;            /* size of each entry in the section header table */
 			uint16_t            e_shnum;                /* number of section headers, or zero for extended entries */
 			uint16_t            e_shstrndx;             /* index of name section, or SHN_UNDEF, or SHN_XINDEX */
-		} __attribute__((packed));
+		}
+#ifndef _MSC_VER
+		 __attribute__((packed))
+#endif
+		;
 
 		struct Elf64FileHeader_disk {
 			unsigned char       e_ident_magic[4];
@@ -1306,7 +1319,14 @@ HEADER_ELF_HEADER_START
 			uint16_t            e_shentsize;
 			uint16_t            e_shnum;
 			uint16_t            e_shstrndx;
-		} __attribute__((packed));
+		}
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+	        ;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
 
 		/* Non-parsing constructor */
 		explicit SgAsmElfFileHeader(SgAsmGenericFile *f)
@@ -1404,18 +1424,25 @@ HEADER_ELF_SECTION_TABLE_ENTRY_START
 		 * comes directly from "Executable and Linkable Format (ELF)", Portable Formats Specification, Version 1.1, Tool
                  * Interface Standards (TIS) and not from any header file. The 64-bit structure is gleaned from the Linux
                  * elf(5) man page. */
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
 		struct Elf32SectionTableEntry_disk {
-			uint32_t	sh_name;	/** 0x00 Section name; index into section header string table */
-			uint32_t        sh_type;        /** 0x04 Section contents and semantics (see SectionType enum) */
-			uint32_t        sh_flags;       /** 0x08 Bit flags (see SectionFlags enum) */
-			uint32_t        sh_addr;        /** 0x0c Desired mapped address */
-			uint32_t        sh_offset;      /** 0x10 Section location in file unless sh _type==SHT_NOBITS */
-			uint32_t        sh_size;        /** 0x14 Section size in bytes */
-			uint32_t        sh_link;        /** 0x18 Section ID of another section; meaning depends on section type */
-			uint32_t        sh_info;        /** 0x1c Extra info depending on section type */
-			uint32_t        sh_addralign;   /** 0x20 Mapped alignment (0 and 1=>byte aligned); sh_addr must be aligned*/
-			uint32_t        sh_entsize;     /** 0x24 If non-zero, size in bytes of each array member in the section */
-		} __attribute__((packed));              /* 0x28 */
+			uint32_t	sh_name;	/* 0x00 Section name; index into section header string table */
+			uint32_t        sh_type;        /* 0x04 Section contents and semantics (see SectionType enum) */
+			uint32_t        sh_flags;       /* 0x08 Bit flags */
+			uint32_t        sh_addr;        /* 0x0c Desired mapped address */
+			uint32_t        sh_offset;      /* 0x10 Section location in file unless sh_type==SHT_NOBITS */
+			uint32_t        sh_size;        /* 0x14 Section size in bytes */
+			uint32_t        sh_link;        /* 0x18 Section ID of another section; meaning depends on section type */
+			uint32_t        sh_info;        /* 0x1c Extra info depending on section type */
+			uint32_t        sh_addralign;   /* 0x20 Mapped alignment (0 and 1=>byte aligned); sh_addr must be aligned*/
+			uint32_t        sh_entsize;     /* 0x24 If non-zero, size in bytes of each array member in the section */
+		}              				/* 0x28 */
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
 
 		struct Elf64SectionTableEntry_disk {
 			uint32_t	sh_name;	/* 0x00 see Elf32SectionTableEntry_disk */
@@ -1428,7 +1455,14 @@ HEADER_ELF_SECTION_TABLE_ENTRY_START
 			uint32_t        sh_info;	/* 0x2c */
 			uint64_t        sh_addralign;	/* 0x30 */
 			uint64_t        sh_entsize;	/* 0x38 */
-		} __attribute__((packed));		/* 0x40 */
+		}					/* 0x40 */
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
 
 		SgAsmElfSectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex,
 			const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk);
@@ -1630,25 +1664,48 @@ HEADER_ELF_RELOC_ENTRY_START
 			R_X86_64_NUM      =24
 		};
 
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
 		struct Elf32RelaEntry_disk {
 			uint32_t	r_offset;
 			uint32_t	r_info;
 			uint32_t	r_addend;
-		} __attribute__((packed));
+		}
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
 		struct Elf64RelaEntry_disk {
 			uint64_t	r_offset;
 			uint64_t	r_info;
 			uint64_t	r_addend;
-		} __attribute__((packed));
+		}
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
 
 		struct Elf32RelEntry_disk {
 			uint32_t	r_offset;
 			uint32_t	r_info;
-		} __attribute__((packed));
+		}
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
+
 		struct Elf64RelEntry_disk {
 			uint64_t	r_offset;
 			uint64_t	r_info;
-		} __attribute__((packed));
+		}
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
 
 		SgAsmElfRelocEntry(SgAsmElfRelocSection *section)
 			: p_r_offset(0), p_r_addend(0), p_sym(0), p_type(R_386_NONE)
@@ -1767,16 +1824,29 @@ HEADER_ELF_DYNAMIC_ENTRY_START
 			DT_FILTER   = 0x7fffffff, /* pointer ?          ?         Shared object ot get values from */
 		};
 
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
 		struct Elf32DynamicEntry_disk {
 			uint32_t            d_tag;  /* Entry type, one of the DT_* constants */
 			uint32_t            d_val;  /* Tag's value */
-		} __attribute__((packed));
+		}
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
 
 		struct Elf64DynamicEntry_disk {
 			uint64_t            d_tag;  /* Entry type, one of the DT_* constants */
 			uint64_t            d_val;  /* Tag's value */
-		} __attribute__((packed));
-
+		}
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
 		explicit SgAsmElfDynamicEntry(SgAsmElfDynamicSection *dynsec)
 			: p_d_tag(DT_NULL), p_name(NULL)
 			{ctor(dynsec);}
@@ -1914,6 +1984,9 @@ HEADER_ELF_SYMVER_DEFINED_SECTION_END
 
 HEADER_ELF_SYMVER_DEFINED_ENTRY_START
 	public:
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
 		/** Elfxx_Verdef, Note, same for 32bit and 64bit */
 		struct ElfSymverDefinedEntry_disk { 
 			uint16_t      vd_version;   /**< version of this struct: This field shall be set to 1 */
@@ -1923,8 +1996,14 @@ HEADER_ELF_SYMVER_DEFINED_ENTRY_START
 			uint32_t      vd_hash;      /**< Hash of version name */
 			uint32_t      vd_aux;       /**< Offset (in bytes) to start of array of verdaux entries */
 			uint32_t      vd_next;      /**< Offset (in bytes) to next verdef entry */
-		} __attribute__((packed));
-
+		}
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
 
 		explicit SgAsmElfSymverDefinedEntry(SgAsmElfSymverDefinedSection *symver_defined)
 		  	{ctor(symver_defined);}
@@ -1938,11 +2017,21 @@ HEADER_ELF_SYMVER_DEFINED_ENTRY_END
 
 HEADER_ELF_SYMVER_DEFINED_AUX_START
 	public:
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
 		/** Elfxx_Verdaux, Note: same for 32bit and 64bit */
 		struct ElfSymverDefinedAux_disk { 
 			uint32_t      vda_name;   /**< Offset (in bytes) to strings table to name string */
 		        uint32_t      vda_next;   /**< Offset (in bytes) to next verdaux entry */
-		} __attribute__((packed));
+		}
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
 
 
                 explicit SgAsmElfSymverDefinedAux(SgAsmElfSymverDefinedEntry *symver_def_entry,
@@ -1975,6 +2064,9 @@ HEADER_ELF_SYMVER_NEEDED_SECTION_END
 
 HEADER_ELF_SYMVER_NEEDED_ENTRY_START
 	public:
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
 		/** Elfxx_Verneed, Note, same for 32bit and 64bit */
 		struct ElfSymverNeededEntry_disk { 
 			uint16_t      vn_version;  /**< version of this struct: This field shall be set to 1 */
@@ -1982,7 +2074,14 @@ HEADER_ELF_SYMVER_NEEDED_ENTRY_START
 			uint32_t      vn_file;     /**< Offset (in bytes) to strings table to file string */
 			uint32_t      vn_aux;      /**< Offset (in bytes) to start of array of vernaux entries */
 			uint32_t      vn_next;     /**< Offset (in bytes) to next verneed entry */
-		} __attribute__((packed));
+		}
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
 
 
 		explicit SgAsmElfSymverNeededEntry(SgAsmElfSymverNeededSection *symver_needed)
@@ -1999,6 +2098,9 @@ HEADER_ELF_SYMVER_NEEDED_ENTRY_END
 
 HEADER_ELF_SYMVER_NEEDED_AUX_START
 	public:
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
 		/** Elfxx_Verdaux, Note: same for 32bit and 64bit */
 		struct ElfSymverNeededAux_disk { 
 			uint32_t      vna_hash;  /**< Hash of version name */
@@ -2006,7 +2108,14 @@ HEADER_ELF_SYMVER_NEEDED_AUX_START
 			uint16_t      vna_other; /**< Version index of this entry (bit 15 is special) */
 			uint32_t      vna_name;  /**< Offset (in bytes) to strings table to name string */
 		        uint32_t      vna_next;  /**< Offset (in bytes) to next vernaux entry */
-		} __attribute__((packed));
+		}
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
 
 
                 SgAsmElfSymverNeededAux(SgAsmElfSymverNeededEntry *symver_needed_entry,
@@ -2079,6 +2188,9 @@ HEADER_ELF_SEGMENT_TABLE_ENTRY_START
 			PF_PROC_MASK    = 0xf0000000    /* Processor-specific bits */
 		};
 
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
 		/* File format of an ELF Segment header. Byte order of members depends on e_ident value in file header. This code
 		 * comes directly from "Executable and Linkable Format (ELF)", Portable Formats Specification, Version 1.1, Tool
 		 * Interface Standards (TIS) and not from any header file. The 64-bit structure is gleaned from the Linux elf(5)
@@ -2093,7 +2205,11 @@ HEADER_ELF_SEGMENT_TABLE_ENTRY_START
 			uint32_t        p_memsz;        /* 0x24 number of bytes when mapped (may be zero) */
 			uint32_t        p_flags;	/* 0x28 */
 			uint32_t        p_align;        /* 0x2c alignment for file and memory (0,1=>none); power of two */
-		} __attribute__((packed));              /* 0x30 */
+		}              				/* 0x30 */
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
 
 		struct Elf64SegmentTableEntry_disk {
 			uint32_t        p_type;		/* 0x00 */
@@ -2104,7 +2220,14 @@ HEADER_ELF_SEGMENT_TABLE_ENTRY_START
 			uint64_t        p_filesz;	/* 0x20 */
 			uint64_t        p_memsz;	/* 0x28 */
 			uint64_t        p_align;	/* 0x30 */
-		} __attribute__((packed));		/* 0x38 */
+		}					/* 0x38 */
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
 
 
 		SgAsmElfSegmentTableEntry(SgAsmExecutableFileFormat::ByteOrder sex,
@@ -2170,6 +2293,9 @@ HEADER_ELF_SYMBOL_START
 			STT_TLS		= 6	/* thread-local data object */
 		};
 
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
 		struct Elf32SymbolEntry_disk {
 			uint32_t      st_name;  /* Name offset into string table */
 			uint32_t      st_value; /* Value: absolute value, address, etc. depending on sym type */
@@ -2177,7 +2303,11 @@ HEADER_ELF_SYMBOL_START
 			unsigned char st_info;  /* Type and binding attributes */
 			unsigned char st_res1;  /* Reserved; always zero */
 			uint16_t      st_shndx; /* Section index or special meaning */
-		} __attribute__((packed));
+		}
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
 
 		struct Elf64SymbolEntry_disk {
 			uint32_t      st_name;
@@ -2186,7 +2316,14 @@ HEADER_ELF_SYMBOL_START
 			uint16_t      st_shndx;
 			uint64_t      st_value;
 			uint64_t      st_size;
-		} __attribute__((packed));
+		}
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
 
 		explicit SgAsmElfSymbol(SgAsmElfSymbolSection *symtab)
 			{ctor(symtab);}
@@ -2214,12 +2351,22 @@ HEADER_ELF_SYMBOL_END
 
 HEADER_PE_RVA_SIZE_PAIR_START
 	public:
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
 		/* File format for an RVA/Size pair. Such pairs are considered to be part of the PE file header.  All fields are
 		 * little endian. */
 		struct RVASizePair_disk {
 			uint32_t    e_rva;
 			uint32_t    e_size;
-		} __attribute__((packed));
+		}
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
 
 		explicit SgAsmPERVASizePair(const SgAsmPERVASizePair::RVASizePair_disk *disk)
 			: p_e_rva(0), p_e_size(0), p_section(NULL) {
@@ -2239,6 +2386,9 @@ HEADER_PE_RVA_SIZE_PAIR_LIST_END
 
 HEADER_PE_FILE_HEADER_START
 	public:
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
 		/* File format of a PE File Header. All fields are little endian. */
 		struct PEFileHeader_disk {
 			unsigned char e_magic[4];	/* 0x00 magic number "PE\0\0" */
@@ -2249,7 +2399,11 @@ HEADER_PE_FILE_HEADER_START
 			uint32_t    e_coff_nsyms;       /* 0x10 number of symbols in COFF symbol table */
 			uint16_t    e_nt_hdr_size;      /* 0x14 num remaining bytes in the header following the 'flags' field */
 			uint16_t    e_flags;            /* 0x16 Bit flags: exe file, program/library image, fixed address, etc. */
-		} __attribute__((packed));              /* 0x18 */
+		}              				/* 0x18 */
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
 
 		struct PE32OptHeader_disk {
 			uint16_t    e_opt_magic;        /* 0x18 magic number */
@@ -2282,7 +2436,11 @@ HEADER_PE_FILE_HEADER_START
 			uint32_t    e_heap_commit_size; /* 0x6c Size (bytes) of valid local heap */
 			uint32_t    e_loader_flags;     /* 0x70 Reserved, must be zero */
 			uint32_t    e_num_rvasize_pairs;/* 0x74 Num RVASizePair entries that follow this member; part of header */
-		} __attribute__((packed));		/* 0x78 */
+		}					/* 0x78 */
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
 
 		struct PE64OptHeader_disk {
 			uint16_t    e_opt_magic;	/* 0x18 */
@@ -2315,7 +2473,14 @@ HEADER_PE_FILE_HEADER_START
 			uint64_t    e_heap_commit_size;	/* 0x78 */
 			uint32_t    e_loader_flags;	/* 0x80 */
 			uint32_t    e_num_rvasize_pairs;/* 0x84 */
-		} __attribute__((packed));		/* 0x88 */
+		}					/* 0x88 */
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
 
 		/* Bit flags for the PE header 'flags' member */
 		enum HeaderFlags {
@@ -2389,13 +2554,23 @@ HEADER_PE_SECTION_END
 
 HEADER_PE_IMPORT_DIRECTORY_START
 	public:
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
 		struct PEImportDirectory_disk {
 			uint32_t ilt_rva;		/* 0x00 Import Lookup Table RVA */
 			uint32_t time;			/* 0x04 Zero until the image is bound, then time stamp of the DLL */
 			uint32_t forwarder_chain;	/* 0x08 Index of the first forwarder chain */
 			uint32_t dll_name_rva;    	/* 0x0c address of NUL-terminated DLL name */
 			uint32_t iat_rva;		/* 0x10 Import Address Table (Thunk Table) RVA */
-		} __attribute__((packed));		/* 0x14 */
+		}					/* 0x14 */
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
 
 		SgAsmPEImportDirectory(SgAsmPEImportSection *isec, size_t idx, rose_addr_t *rva_p)
 			{ctor(isec,idx,rva_p);}
@@ -2474,6 +2649,9 @@ HEADER_PE_IMPORT_SECTION_END
 
 HEADER_PE_EXPORT_DIRECTORY_START
 	public:
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
 		/* An Export Section begins with the Export Directory */
 		struct PEExportDirectory_disk {
 			uint32_t res1;         /* 0x00 Reserved, must be zero */
@@ -2487,7 +2665,14 @@ HEADER_PE_EXPORT_DIRECTORY_START
 			uint32_t expaddr_rva;  /* 0x1c Location of Export Address Table */
 			uint32_t nameptr_rva;  /* 0x20 Location of Export Name Pointer Table */
 			uint32_t ordinals_rva; /* 0x24 Location of Ordinal Table */
-		} __attribute__((packed));     /* 0x28 */
+		}     				/* 0x28 */
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
 
 		explicit SgAsmPEExportDirectory(SgAsmPEExportSection *s)
 			{ctor(s);}
@@ -2580,6 +2765,9 @@ HEADER_PE_COFF_SYMBOL_TABLE_END
 
 HEADER_PE_SECTION_TABLE_ENTRY_START
 	public:
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
 		/* File format of a section table entry. All fields are little endian. Sections are ordered by RVA. */
 		struct PESectionTableEntry_disk {
 			char     name[8];          /* NUL-padded */
@@ -2591,7 +2779,14 @@ HEADER_PE_SECTION_TABLE_ENTRY_START
 			uint32_t n_relocs;         /* number of relocation entries; should be zero for executables */
 			uint32_t n_coff_line_nums; /* number of COFF line number entries */
 			uint32_t flags;            /* PESectionFlags bits: code, data, caching, paging, shared, permissions, etc.*/
-		} __attribute__((packed));
+		}
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
 
 		/* These come from the windows PE documentation and
 		 * http://en.wikibooks.org/wiki/X86_Disassembly/Windows_Executable_Files */
@@ -2649,6 +2844,9 @@ HEADER_PE_COFF_SYMBOL_START
        // This was previously a #define macro in ExecPE.h (so we have to avoid the macro defining it as "static const unsigned int 18 = 18"
           static const unsigned int COFFSymbol_disk_size = 18;
 
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
           struct COFFSymbol_disk {
                union {
                    char            st_name[8];
@@ -2662,7 +2860,14 @@ HEADER_PE_COFF_SYMBOL_START
                uint16_t            st_type;
                unsigned char       st_storage_class;
                unsigned char       st_num_aux_entries;
-             } __attribute__((packed));
+             }
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
 
           SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAsmGenericSection *strtab, size_t idx);
        // virtual ~COFFSymbol() {}
@@ -2723,6 +2928,9 @@ HEADER_PE_STRING_SECTION_END
 HEADER_NE_FILE_HEADER_START
 
      public:
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
           /* File format of an NE File Header. All fields are little endian.
            *
            * NOTES
@@ -2761,7 +2969,14 @@ HEADER_NE_FILE_HEADER_START
                uint16_t    e_fastload_nsectors;    /* 0x3a size of fast-load area in sectors (only for Windows) */
                uint16_t    e_res1;                 /* 0x3c reserved */
                uint16_t    e_winvers;              /* 0x3e expected version number for Windows (only for Windows) */
-             } __attribute__((packed));              /* 0x40 */
+             }              			   /* 0x40 */
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
 
           /* Bit flags for the NE header 'e_flags' member.
            *
@@ -3035,13 +3250,23 @@ HEADER_NE_RELOC_ENTRY_END
 
 HEADER_NE_SECTION_TABLE_ENTRY_START
      public:
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
        /* File format of a section table entry. All fields are little endian. */
           struct NESectionTableEntry_disk {
                uint16_t    sector;                 /* 0x00 File offset (sector size defined in hdr); zero means no file data */
                uint16_t    physical_size;          /* 0x02 Length of segment in file; zero means 64k if sector is non-zero */
                uint16_t    flags;                  /* 0x04 Segment bit flags */
                uint16_t    virtual_size;           /* 0x06 Total size of segment when mapped to memory; zero means 64k */
-             } __attribute__((packed));              /* 0x08 */
+             }              			   /* 0x08 */
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
 
           enum NESectionFlags {
                SF_RESERVED         = 0x0e08,       /* these bits are reserved */
@@ -3092,6 +3317,9 @@ HEADER_LE_FILE_HEADER_START
           static bool is_LE (SgAsmGenericFile*);
           static SgAsmLEFileHeader *parse(SgAsmDOSFileHeader*);
 
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
        /* File format of an LE/LX File Header (they are identical except bytes 0x2c-0x2f) */
           struct LEFileHeader_disk {
               unsigned char e_magic[2];           /* 0x00 magic number "LX" */
@@ -3140,7 +3368,14 @@ HEADER_LE_FILE_HEADER_START
               uint32_t    e_num_instance_preload; /* 0xa0 number of instance data pages found in the preload section */
               uint32_t    e_num_instance_demand;  /* 0xa4 number of instance data pages found in the demand section */
               uint32_t    e_heap_size;            /* 0xa8 number of bytes added to auto data segment by loader (not used by 32-bit) */
-          } __attribute__((packed));              /* 0xac */
+          }              			  /* 0xac */
+#ifndef _MSC_VER
+	  __attribute__((packed))
+#endif
+	  ;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
 
           enum LEFileHeaderFlags {
               HF_RESERVED         = 0xbffc5ccb,   /* Reserved bits */
@@ -3265,12 +3500,22 @@ HEADER_LE_PAGE_TABLE_ENTRY_START
         * executable file. Entries in the page table use 1-origin indices.  This table is parallel with the Fixup Page Table (they
         * are both indexed by the logical page number). */
 
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
        /* File format for a page table entry */
           struct LEPageTableEntry_disk {
                uint16_t            pageno_hi;
                unsigned char       pageno_lo;
                unsigned char       flags;
-             } __attribute__((packed));
+             }
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
 
           SgAsmLEPageTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk);
 
@@ -3290,6 +3535,9 @@ HEADER_LE_PAGE_TABLE_ENTRY_END
 HEADER_LE_ENTRY_POINT_START
 
      public:
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
        /* If 0x01 bit of "flags" is clear then the remainder (next 9 bytes) of the entry point is not stored in the file and the
         * next entry point description follows immediately after the flag. */
           struct LEEntryPoint_disk {
@@ -3298,7 +3546,14 @@ HEADER_LE_ENTRY_POINT_START
               uint8_t     entry_type;     /* 0x03 Flags for entry type */
               uint32_t    entry_offset;   /* 0x04 Offset of entry point */
               uint16_t    res1;           /* 0x08 Reserved */
-          } __attribute__((packed));      /* 0x0a */
+          }      			  /* 0x0a */
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
 
           SgAsmLEEntryPoint(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLEEntryPoint::LEEntryPoint_disk *disk);
           SgAsmLEEntryPoint(SgAsmExecutableFileFormat::ByteOrder sex, unsigned flags);
@@ -3318,6 +3573,9 @@ HEADER_LE_ENTRY_POINT_END
 HEADER_LE_SECTION_TABLE_ENTRY_START
 
      public:
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
        /* File format of a section table entry. Fields are big- or little-endian depending on file header. */
           struct LESectionTableEntry_disk {
                uint32_t    mapped_size;            /* 0x00 virtual segment size in bytes */
@@ -3326,7 +3584,14 @@ HEADER_LE_SECTION_TABLE_ENTRY_START
                uint32_t    pagemap_index;          /* 0x0c */
                uint32_t    pagemap_nentries;       /* 0x10 number of entries in the page map */
                uint32_t    res1;                   /* 0x14 reserved */
-             } __attribute__((packed));              /* 0x18 */
+             }                                     /* 0x18 */
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
 
        /* SF_BIG_BIT: The "big/default" bit, for data segments, controls the setting of the Big bit in the segment descriptor. (The
         *             Big bit, or B-bit, determines whether ESP or SP is used as the stack pointer.) For code segments, this bit
@@ -3383,6 +3648,9 @@ HEADER_LE_SECTION_TABLE_ENTRY_END
 
 HEADER_DOS_HEADER_START
 	public:
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
 		struct DOSFileHeader_disk {
 			unsigned char e_magic[2];          /* 0x00 "MZ" */
 			uint16_t      e_last_page_size;    /* 0x02 bytes used on last page of file (1 page == 512 bytes);
@@ -3401,12 +3669,23 @@ HEADER_DOS_HEADER_START
 			uint16_t      e_relocs_offset;     /* 0x18 file address of relocation table */
 			uint16_t      e_overlay;           /* 0x1a overlay number (zero indicates main program) */
 			uint32_t      e_res1;              /* 0x1c unknown purpose */
-		} __attribute__((packed));                 /* 0x20 */
+		}                 			   /* 0x20 */
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
 
 		struct DOSRelocEntry_disk {
 			uint16_t      offset;		   /* 0x00 */
 			uint16_t      segment;		   /* 0x02 */
-		} __attribute__((packed));		   /* 0x04 */
+		}		   			   /* 0x04 */
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
 
 		explicit SgAsmDOSFileHeader(SgAsmGenericFile *f)
 			: SgAsmGenericHeader(f), p_relocs(NULL), p_rm_section(NULL)
@@ -3428,6 +3707,9 @@ HEADER_DOS_HEADER_END
 
 HEADER_DOS_EXTENDED_HEADER_START
 	public:
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
 		struct DOSExtendedHeader_disk {
 			uint32_t      e_res1;     /* 0x00 reserved */
 			uint16_t      e_oemid;    /* 0x04 OEM Identifier */
@@ -3438,8 +3720,14 @@ HEADER_DOS_EXTENDED_HEADER_START
 			uint32_t      e_res5;	  /* 0x14 reserved */
 			uint32_t      e_res6;	  /* 0x18 reserved */
 			uint32_t      e_lfanew;   /* 0x1c file offset of new exe (PE) header */
-		} __attribute__((packed));        /* 0x20 */
-
+		}        			  /* 0x20 */
+#ifndef _MSC_VER
+		__attribute__((packed))
+#endif
+		;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
 		explicit SgAsmDOSExtendedHeader(SgAsmDOSFileHeader *fhdr)
 			: SgAsmGenericSection(fhdr->get_file(), fhdr)
 			{ctor();}
@@ -3554,16 +3842,17 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
 	/** Reasons why an instruction might be considered the beginning of a function. These bit flags are also used by
 	 *  the instruction partitioner (Partitioner class) to determine what heuristics are used when partitioning
 	 *  instructions into functions. */
-	enum FunctionReason {
-		FUNC_NONE	 = 0x00,		/**< Used for initialization; not a bit flag */
-		FUNC_ENTRY_POINT = 0x01,		/**< An entry point specified in the file header */
-		FUNC_CALL_TARGET = 0x02,		/**< Target of a CALL-like instruction */
-		FUNC_EH_FRAME	 = 0x04,		/**< Address mentioned in the ELF .eh_frame section */
-		FUNC_SYMBOL	 = 0x08,		/**< Address of a function symbol in a symbol table */
-		FUNC_PATTERN	 = 0x10,		/**< Appears to be a function based on pattern of instructions */
-		FUNC_GRAPH	 = 0x20,		/**< Implied by inter-basicblock branching */
-		FUNC_DEFAULT     = 0x3f			/**< Default value for Partitioner class */
-	};
+        enum FunctionReason {
+                FUNC_NONE        = 0x00,                /**< Used for initialization; not a bit flag */
+                FUNC_ENTRY_POINT = 0x01,                /**< An entry point specified in the file header */
+                FUNC_CALL_TARGET = 0x02,                /**< Target of a CALL-like instruction */
+                FUNC_EH_FRAME    = 0x04,                /**< Address mentioned in the ELF .eh_frame section */
+                FUNC_SYMBOL      = 0x08,                /**< Address of a function symbol in a symbol table */
+                FUNC_PATTERN     = 0x10,                /**< Appears to be a function based on pattern of instructions */
+                FUNC_GRAPH       = 0x20,                /**< Implied by inter-basicblock branching */
+                FUNC_USERDEF     = 0x40,                /**< User-defined algorithm. See Partitioner::addFunctionDetector(). */
+                FUNC_DEFAULT     = 0x7f                 /**< Default value for Partitioner class */
+        };
 
 	//! enum declaration as specified in proposed Sabre database schema
 	enum function_kind_enum {

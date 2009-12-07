@@ -1,5 +1,7 @@
 #include "rose.h"
-
+#ifdef _MSC_VER
+#include "unparseAsm.h"
+#endif
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
@@ -51,9 +53,17 @@ std::string unparseMnemonic(SgAsmInstruction *insn) {
             return unparseArmMnemonic(isSgAsmArmInstruction(insn));
         case V_SgAsmPowerpcInstruction:
             return unparsePowerpcMnemonic(isSgAsmPowerpcInstruction(insn));
-        default:
-            std::cerr <<"Unhandled variant " <<insn->class_name() <<" in " <<__func__ <<std::endl;
-            abort();
+
+		default:
+			{
+#ifdef _MSC_VER
+			  std::cerr <<"Unhandled variant " <<insn->class_name() <<std::endl;
+#else
+			  std::cerr <<"Unhandled variant " <<insn->class_name() <<" in " <<__func__ <<std::endl;
+#endif
+              abort();
+			  return "error in unparseMnemonic";
+			}
     }
 }
 
@@ -77,9 +87,19 @@ std::string unparseExpression(SgAsmExpression *expr) {
             return unparseArmExpression(expr);
         case V_SgAsmPowerpcInstruction:
             return unparsePowerpcExpression(expr);
-        default:
-            std::cerr <<"Unhandled variant " <<insn->class_name() <<" in " <<__func__ <<std::endl;
-            abort();
+		default:
+		   {
+#ifdef _MSC_VER
+			std::cerr <<"Unhandled variant " <<insn->class_name() << std::endl;
+#else
+			std::cerr <<"Unhandled variant " <<insn->class_name() <<" in " <<__func__ <<std::endl;
+#endif
+			abort();
+#ifdef _MSC_VER
+         // DQ (11/29/2009): MSVC reports a warning for a path that does not have a return stmt.
+            return "ERROR in unparseMnemonic()";
+#endif
+		   }
     }
 }
 
@@ -260,6 +280,10 @@ unparseAsmStatement(SgAsmStatement* stmt)
              {
                std::cerr << "Unhandled variant " << stmt->class_name() << " in unparseX86Statement" << std::endl;
                ROSE_ASSERT (false);
+#ifdef _MSC_VER
+            // DQ (11/29/2009): MSVC reports a warning for a path that does not have a return stmt.
+               return "ERROR in unparseMnemonic()";
+#endif
              }
         }
    }

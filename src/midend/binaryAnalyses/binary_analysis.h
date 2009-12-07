@@ -35,11 +35,13 @@ SgIncidenceDirectedGraph* constructCFG_BB(SgAsmStatement* blocks, const Partitio
 /***************************************************************************************************
  * The goal of the function is to create a control flow graph.
  */
+SgIncidenceDirectedGraph* constructCFG( SgAsmInterpretation *interp );
 SgIncidenceDirectedGraph* constructCFG( const  Partitioner::FunctionStarts& func_starts, const Partitioner::BasicBlockStarts& bb_starts,const Disassembler::InstructionMap& instMap );
 
 /****************************
  * The goal of this function is to create a binary control flow graph. It does this by construcing a CFG and then finding the
  * subset of the CFG that is a call graph.
  */
+SgIncidenceDirectedGraph* constructCallGraph( SgAsmInterpretation *interp );
 SgIncidenceDirectedGraph* constructCallGraph( const  Partitioner::FunctionStarts& func_starts,const Partitioner::BasicBlockStarts& bb_starts, const Disassembler::InstructionMap& instMap  );
 

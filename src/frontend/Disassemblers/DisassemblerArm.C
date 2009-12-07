@@ -79,10 +79,13 @@ SgAsmArmInstruction::get_successors() {
             /* Branch target */
             ROSE_ASSERT(exprs.size()==1);
             SgAsmExpression *dest = exprs[0];
-            ROSE_ASSERT(isSgAsmValueExpression(dest));
-            rose_addr_t target_va = SageInterface::getAsmConstant(isSgAsmValueExpression(dest));
-            retval.insert(target_va);
-
+            if (isSgAsmValueExpression(dest)) {
+                rose_addr_t target_va = SageInterface::getAsmConstant(isSgAsmValueExpression(dest));
+                retval.insert(target_va);
+            } else {
+                /* Could also be a register reference expression, but we don't know the successor in that case. */
+            }
+            
             /* Fall-through address */
             if (get_condition()!=arm_cond_al)
                 retval.insert(get_address()+4);
@@ -335,6 +338,8 @@ DisassemblerArm::makeDataProcInstruction(uint8_t opcode, bool s, SgAsmExpression
         case 0x1F: return MAKE_INSN2(mvns, 3, rd, rhsOperand);
         default: ROSE_ASSERT (false);
     }
+// DQ (11/29/2009): Avoid MSVC warning.
+   return NULL;
 }
 
 SgAsmDoubleWordValueExpression *
@@ -373,7 +378,12 @@ DisassemblerArm::decodeMemoryAddress(SgAsmExpression* rn) const
       case 5: return SageBuilderAsm::makeSubtractPreupdate(rn, offset);
       case 6: return SageBuilderAsm::makeAdd(rn, offset);
       case 7: return SageBuilderAsm::makeAddPreupdate(rn, offset);
-      default: ROSE_ASSERT (false);
+      default:
+		  {
+            ROSE_ASSERT (false);
+         // DQ (11/29/2009): Avoid MSVC warning.
+            return NULL;
+		  }
     }
 }
 
@@ -410,6 +420,8 @@ DisassemblerArm::decodeMultiplyInstruction() const
         case 0xF: return MAKE_INSN4(smlals, 5, rd, rn, rm, rs);
         default: ROSE_ASSERT (false);
     }
+// DQ (11/29/2009): Avoid MSVC warning.
+   return NULL;
 }
 
 SgAsmArmInstruction *
@@ -454,6 +466,8 @@ DisassemblerArm::decodeExtraLoadStores() const
         case 7: return MAKE_INSN2(ldrsh, 3, rd, memref);
         default: ROSE_ASSERT (false);
     }
+// DQ (11/29/2009): Avoid MSVC warning.
+   return NULL;
 }
 
 SgAsmArmInstruction *
@@ -540,6 +554,8 @@ DisassemblerArm::decodeMiscInstruction() const
         default: ROSE_ASSERT (false);
       }
     }
+// DQ (11/29/2009): Avoid MSVC warning.
+   return NULL;
 }
 
 SgAsmArmInstruction *
@@ -632,7 +648,9 @@ DisassemblerArm::disassemble()
                     base = SageBuilderAsm::makeSubtractPostupdate(rn, offset);
                 }
               }
-              switch (((insn >> 21) & 62) | bit20) { // p, u, s, l
+
+           // DQ (11/29/2009): This is a MSVC warning: warning C4805: '|' : unsafe mix of type 'uint32_t' and type 'bool' in operation
+			  switch (((insn >> 21) & 62) | bit20) { // p, u, s, l
                 case 0x0: return MAKE_INSN2(stmda, 3, rn, regs);
                 case 0x1: return MAKE_INSN2(ldmda, 3, rn, regs);
                 case 0x2: return MAKE_INSN2(stmda, 3, rn, SageBuilderAsm::makeArmSpecialRegisterList(regs));
@@ -691,5 +709,8 @@ DisassemblerArm::disassemble()
           }
         }
       }
-      ROSE_ASSERT (!"Fell off end of disassemble");
+
+   ROSE_ASSERT (!"Fell off end of disassemble");
+// DQ (11/29/2009): Avoid MSVC warning.
+   return NULL;
 }

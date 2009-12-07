@@ -354,7 +354,7 @@ SgIncidenceDirectedGraph* constructCallGraph( const  Partitioner::FunctionStarts
   Partitioner::BasicBlockStarts func_bb_starts;
 
   //Check assumption that the functions are sorted according to address in file.
-  rose_addr_t last_addr = func_bb_starts.begin()->first;
+  rose_addr_t last_addr = func_starts.begin()->first;
   for( Partitioner::FunctionStarts::const_iterator funcItr = func_starts.begin() ; funcItr != func_starts.end(); ++funcItr )
         {
           ROSE_ASSERT(last_addr <= funcItr->first);
@@ -412,3 +412,94 @@ SgIncidenceDirectedGraph* constructCallGraph( const  Partitioner::FunctionStarts
   //Construct a callgraph using the selected subset of the CFG.
   return constructCFG(func_starts, func_bb_starts, instMap);
 };
+
+
+/****************************
+ * The goal of this function is to create a binary control flow graph.  
+ */
+SgIncidenceDirectedGraph* constructCallGraph( SgAsmInterpretation *interp )
+{
+  /* Build the disassembler */
+  Disassembler *d = Disassembler::create(interp);
+  //if (do_debug)
+  //  d->set_debug(stderr);
+  d->set_search( Disassembler::SEARCH_DEFAULT  );
+
+  /* RPM: you don't actually need to pass "bad", which returns the addresses/error messages for instructions that
+   *      couldn't be disassembled.  Just d->disassembleInterp(interp). */
+  /* Disassemble instructions, linking them into the interpretation */
+  Disassembler::BadMap bad;
+  Disassembler::InstructionMap instMap = d->disassembleInterp(interp, NULL, &bad);
+
+
+  /* Create the CFG */
+  Partitioner part; 
+
+  /* RPM: BasicBlockStarts is contains the callers, not the callees.  It's a map where the keys (first element of each
+   *      pair) are the address of the first instruction of each basic block and the values (second element of each
+   *      pair) are the virtual addresses of instructions that branch to that basic block.  For instance, if you have
+   *          0x3000: JMP 0x5000
+   *                  ...
+   *          0x4000: CALL 0x5000
+   *                  ...
+   *          0x5000: NOP
+   *      then the BasicBlockStarts will contain the pair (0x5000, [0x3000, 0x4000]). */
+  //BasicBlockStarts is a basic block together with a set of know callees
+
+
+  Partitioner::BasicBlockStarts bb_starts = part.detectBasicBlocks(instMap); //The CFG 
+  Partitioner::FunctionStarts func_starts = part.detectFunctions(interp, instMap, bb_starts);
+
+
+  // SgAsmBlock* blocks = part.partition(interp->get_header(), instMap);
+  return constructCallGraph(func_starts,bb_starts,instMap);
+
+};
+
+
+
+
+/****************************
+ * The goal of this function is to create a binary control flow graph. It does this by construcing a CFG and then finding the
+ * subset of the CG that is a call graph.
+ */
+SgIncidenceDirectedGraph* constructCFG( SgAsmInterpretation *interp )
+{
+  /* Build the disassembler */
+  Disassembler *d = Disassembler::create(interp);
+  //if (do_debug)
+  //  d->set_debug(stderr);
+  d->set_search( Disassembler::SEARCH_DEFAULT  );
+
+  /* RPM: you don't actually need to pass "bad", which returns the addresses/error messages for instructions that
+   *      couldn't be disassembled.  Just d->disassembleInterp(interp). */
+  /* Disassemble instructions, linking them into the interpretation */
+  Disassembler::BadMap bad;
+  Disassembler::InstructionMap instMap = d->disassembleInterp(interp, NULL, &bad);
+
+
+  /* Create the CFG */
+  Partitioner part; 
+
+  /* RPM: BasicBlockStarts is contains the callers, not the callees.  It's a map where the keys (first element of each
+   *      pair) are the address of the first instruction of each basic block and the values (second element of each
+   *      pair) are the virtual addresses of instructions that branch to that basic block.  For instance, if you have
+   *          0x3000: JMP 0x5000
+   *                  ...
+   *          0x4000: CALL 0x5000
+   *                  ...
+   *          0x5000: NOP
+   *      then the BasicBlockStarts will contain the pair (0x5000, [0x3000, 0x4000]). */
+  //BasicBlockStarts is a basic block together with a set of know callees
+
+
+  Partitioner::BasicBlockStarts bb_starts = part.detectBasicBlocks(instMap); //The CFG 
+  Partitioner::FunctionStarts func_starts = part.detectFunctions(interp, instMap, bb_starts);
+
+
+  // SgAsmBlock* blocks = part.partition(interp->get_header(), instMap);
+  return constructCFG(func_starts,bb_starts,instMap);
+
+};
+
+

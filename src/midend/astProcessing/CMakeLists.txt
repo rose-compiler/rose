@@ -9,16 +9,25 @@ set( libastprocessing_SRC
    AstNodePtrs.C AstSuccessorsSelectors.C AstAttributeMechanism.C 
    AstReverseSimpleProcessing.C AstRestructure.C AstClearVisitFlags.C 
    AstTraversal.C AstCombinedSimpleProcessing.C 
-   AstSharedMemoryParallelSimpleProcessing.C
    )
+if (!WIN32)
+set( libastprocessing_SRC  ${libastprocessing_SRC} 
+   AstSharedMemoryParallelSimpleProcessing.C 
+   )
+endif (!WIN32)
+
 #add_library( libastprocessingSources  ${libastprocessing_SRC} )
 #add_dependencies( libastprocessingSources ROSETTA )
 
 
 ########### install files ###############
 
+if (WIN32)
+#tps commented out AstSharedMemoryParallelProcessing.h for Windows 
+install(FILES  AstPDFGeneration.h AstNodeVisitMapping.h AstAttributeMechanism.h     AstTextAttributesHandling.h AstDOTGeneration.h AstProcessing.h     AstSimpleProcessing.h AstTraverseToRoot.h AstNodePtrs.h     AstSuccessorsSelectors.h AstReverseProcessing.h     AstReverseSimpleProcessing.h Ast.h AstRestructure.h AstClearVisitFlags.h     AstTraversal.h AstCombinedProcessing.h AstCombinedProcessingImpl.h     AstCombinedSimpleProcessing.h StackFrameVector.h DESTINATION ${INCLUDE_INSTALL_DIR})
+else (WIN32)
 install(FILES  AstPDFGeneration.h AstNodeVisitMapping.h AstAttributeMechanism.h     AstTextAttributesHandling.h AstDOTGeneration.h AstProcessing.h     AstSimpleProcessing.h AstTraverseToRoot.h AstNodePtrs.h     AstSuccessorsSelectors.h AstReverseProcessing.h     AstReverseSimpleProcessing.h Ast.h AstRestructure.h AstClearVisitFlags.h     AstTraversal.h AstCombinedProcessing.h AstCombinedProcessingImpl.h     AstCombinedSimpleProcessing.h StackFrameVector.h AstSharedMemoryParallelProcessing.h     AstSharedMemoryParallelProcessingImpl.h AstSharedMemoryParallelSimpleProcessing.h DESTINATION ${INCLUDE_INSTALL_DIR})
-
+endif (WIN32)
 
 
 #original Makefile.am contents follow:

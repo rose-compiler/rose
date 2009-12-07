@@ -1,31 +1,20 @@
+include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} ${Boost_INCLUDE_DIRS} )
 
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
+add_executable (bug125 bug125.C)
+add_executable (qualifiedName qualifiedName.C)
 
+target_link_libraries(bug125 rose ${link_with_libraries} )
+target_link_libraries(qualifiedName rose ${link_with_libraries} )
 
-########### next target ###############
+ENABLE_TESTING()
+ADD_TEST (
+#  testbug125 bug125 -c ${ROSE_TOP_SRC_DIR}/tests/translatorTests/inputbug125.C
+  testbug125 bug125 -c ${CMAKE_CURRENT_SOURCE_DIR}/inputbug125.C
+)
 
-set(bug125_SRCS bug125.C)
-
-kde4_add_executable(bug125 ${bug125_SRCS})
-
-target_link_libraries(bug125 ${KDE4_KDECORE_LIBS})
-
-
-########### next target ###############
-
-set(qualifiedName_SRCS qualifiedName.C)
-
-kde4_add_executable(qualifiedName ${qualifiedName_SRCS})
-
-target_link_libraries(qualifiedName ${KDE4_KDECORE_LIBS})
-
-
-########### install files ###############
-
-
-
-
-#original Makefile.am contents follow:
+ADD_TEST(
+  testqualifiedName qualifiedName -c ${ROSE_TOP_SRC_DIR}/projects/autoTuning/tests/jacobi.c
+)
 
 #include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #
@@ -52,7 +41,7 @@ target_link_libraries(qualifiedName ${KDE4_KDECORE_LIBS})
 #testqualifiedName: qualifiedName
 #	./qualifiedName -c $(top_srcdir)/projects/autoTuning/tests/jacobi.c
 #
-#EXTRA_DIST =  inputbug125.C
+#EXTRA_DIST = CMakeLists.txt inputbug125.C
 #
 #check-local:
 #	@$(MAKE) testbug125 testqualifiedName
