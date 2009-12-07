@@ -58,7 +58,7 @@ sub needs_canonical_repo {
 	my ($wcpath) = @_;
 	# Whether this is an external user is defined by whether the user does not have
 	# the EDG submodule checked out.
-	return (! -e "$wcpath/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection");
+	return (! -e "$wcpath/src/frontend/CxxFrontend/EDG/Makefile.am");
 }
 
 # The below should not need to be modified
