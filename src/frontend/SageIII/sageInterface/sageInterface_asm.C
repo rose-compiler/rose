@@ -15,8 +15,12 @@ SageInterface::getAsmConstant(SgAsmValueExpression *expr)
         case V_SgAsmQuadWordValueExpression:
             return isSgAsmQuadWordValueExpression(expr)->get_value();
         default: 
-            std::cerr << "Bad variant " << expr->class_name() << " in " <<__func__ << std::endl;
-            abort();
+		  {
+			 std::cerr << "Bad variant " << expr->class_name() << " in " <<__func__ << std::endl;
+		     abort();
+		  // DQ (11/30/2009): avoid MSVC warning of path without return stmt.
+			 return 0;
+		  }
     }
 }
 
@@ -33,8 +37,12 @@ SageInterface::getAsmSignedConstant(SgAsmValueExpression *expr)
         case V_SgAsmQuadWordValueExpression:
             return (int64_t)(isSgAsmQuadWordValueExpression(expr)->get_value());
         default:
-            std::cerr <<"Bad variant " <<expr->class_name() <<" in " <<__func__ <<std::endl;
-            abort();
+		   {
+			 std::cerr <<"Bad variant " <<expr->class_name() <<" in " <<__func__ <<std::endl;
+			 abort();
+		  // DQ (11/30/2009): avoid MSVC warning of path without return stmt.
+			 return 0;
+		   }
     }
 }
 

@@ -1857,7 +1857,12 @@ void
 SimpleColorMemoryPoolTraversal::markFirstAST ()
    {
   // Mark the IR node that are in the first AST before the deep AST copy
+#ifdef _MSC_VER
+   // DQ (11/27/2009): I think that MSVC is correct and this should be a const_iterator (GNU is lacks because it is a const reference).
+     set<SgNode*>::const_iterator i = setOfIRnodes.begin();
+#else
      set<SgNode*>::iterator i = setOfIRnodes.begin();
+#endif
      while (i != setOfIRnodes.end())
         {
           string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=6,peripheries=1,color=\"blue\",fillcolor=peru,fontname=\"7x13bold\",fontcolor=black,style=filled";
@@ -1888,7 +1893,12 @@ void
 SimpleColorMemoryPoolTraversal::buildExcludeList ()
    {
   // Mark the IR node that are in the first AST before the deep AST copy
+#ifdef _MSC_VER
+   // DQ (11/27/2009): I think that MSVC is correct and this should be a const_iterator (GNU is lacks because it is a const reference).
+     set<SgNode*>::const_iterator i = setOfIRnodes.begin();
+#else
      set<SgNode*>::iterator i = setOfIRnodes.begin();
+#endif
      while (i != setOfIRnodes.end())
         {
 #if 0
@@ -2241,6 +2251,10 @@ generateWholeGraphOfAST( string filename, CustomMemoryPoolDOTGeneration::s_Filte
 void
 generateWholeGraphOfAST_filteredFrontendSpecificNodes( string filename, CustomMemoryPoolDOTGeneration::s_Filter_Flags* flags)
    {
+#ifdef _MSC_VER
+  // DQ (11/27/2009): This appears to be required for MSVC (I think it is correct for GNU as well).
+	 extern set<SgNode*> getSetOfFrontendSpecificNodes();
+#endif
      set<SgNode*> skippedNodeSet = getSetOfFrontendSpecificNodes();
      SimpleColorMemoryPoolTraversal::generateGraph(filename,skippedNodeSet, flags);
    }

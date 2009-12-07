@@ -12,7 +12,7 @@ INCLUDES = -Winvalid-pch $(ROSE_INCLUDES)
 # Binary distributions of ROSE store the binary for EDG related code in the source tree.
 # JJW (8/3/2008): See src/frontend/CxxFrontend/Makefile.am.forBinaryEDG for
 # more information on this process.
-libroseEDGlibraries = frontend/CxxFrontend/libroseEDG.la
+libroseEDGlibraries = frontend/CxxFrontend/EDG/libroseEDG.la
 
 libroseBinaryLibraries = \
    $(top_builddir)/src/frontend/BinaryDisassembly/libbinaryFrontend.la \

@@ -31,7 +31,7 @@ vector<grammarFile*> Grammar::fileList;
 // #                   Grammar Member Functions                   #
 // ################################################################
 
-#define WRITE_SEPARATE_FILES_FOR_EACH_CLASS false
+#define WRITE_SEPARATE_FILES_FOR_EACH_CLASS 0
 
 string replaceString(string patternInInput, string replacePattern, string input) {
   string::size_type posIter = input.find(patternInInput);
@@ -93,13 +93,19 @@ Grammar::Grammar ( const string& inputGrammarName,
 
   // JJW 2-12-2008 Use a file for this list so the numbers will be more stable
      {
-#if !ROSE_MICROSOFT_OS
+
+#if 1
+//#if !ROSE_MICROSOFT_OS
+		 // TPS (11/4/2009) : This will work now not using cygwin
 	   std::string astNodeListFilename = std::string(ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR) + "/src/ROSETTA/astNodeList";
 #else
 	// DQ (4/4/2009): MSVS is not interpreting the type correctly here...(fixed rose_paths.[hC])
     // DQ (4/11/2009): Using cygwin generated rose_paths.C files so need to map cygwin file prefix to Windows file prefix.
        std::string astNodeListFilename = ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "/src/ROSETTA/astNodeList";
-	   string prefixString = "/cygdrive/c";
+    // TPS (11/4/2009) : Since we are not using Cygwin anymore, this line is incorrect.
+//	   string prefixString = "/cygdrive/c";
+	   string prefixString = ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR;
+	   printf("prefix == %s\n",prefixString.c_str());
 	   size_t prefixLocation = astNodeListFilename.find(prefixString);
 	   ROSE_ASSERT(prefixLocation != string::npos);
 	   ROSE_ASSERT(prefixLocation == 0);
@@ -335,7 +341,15 @@ Grammar::writeFile ( const StringUtility::FileWithLineNumbers& outputString,
   // char* directoryName = GrammarString::stringDuplicate(directoryName);
 
      string outputFilename = (directoryName == "." ? "" : directoryName + "/") + className + fileExtension;
-     // printf ("outputFilename = %s \n",outputFilename.c_str());
+#ifdef _MSC_VER
+	 // tps(11/19/2009) :
+     // ./astFileIO//SourceOfIRNodesAstFileIOSupport.C fails to run on Windows under Debug mode
+	//std::replace( outputFilename.begin(), outputFilename.end(), './', '' );
+	//std::replace( outputFilename.begin(), outputFilename.end(), '//', '\\' );
+	//std::replace( outputFilename.begin(), outputFilename.end(), '/', '\\' );
+
+#endif
+	 printf ("outputFilename = %s \n",outputFilename.c_str());
      ofstream ROSE_ShowFile(outputFilename.c_str());
      ROSE_ASSERT (ROSE_ShowFile.good() == true);
 
@@ -374,10 +388,10 @@ Grammar::generateStringListsFromSubtreeLists ( Terminal & node,
   vector<GrammarString *> &listOfIncludes = (node.*listFunction)(Terminal::SUBTREE_LIST,Terminal::INCLUDE_LIST);
   vector<GrammarString *> &listOfExcludes = (node.*listFunction)(Terminal::SUBTREE_LIST,Terminal::EXCLUDE_LIST);
 
-#define PREORDER_TRAVERSAL false
+#define PREORDER_TRAVERSAL 0
 
-#if !ROSE_MICROSOFT_OS
-#if (PREORDER_TRAVERSAL == true)
+//#if !ROSE_MICROSOFT_OS
+#if PREORDER_TRAVERSAL 
 
   for( grammarStringIterator = listOfIncludes.begin(); 
        grammarStringIterator != listOfIncludes.end(); 
@@ -395,7 +409,7 @@ Grammar::generateStringListsFromSubtreeLists ( Terminal & node,
 #endif
 
 #endif
-#endif
+//#endif
 
   if (node.getBaseClass() != NULL) {
     // Recursive function call
@@ -409,8 +423,8 @@ Grammar::generateStringListsFromSubtreeLists ( Terminal & node,
   checkListOfGrammarStrings(excludeList);
 #endif
 
-#if !ROSE_MICROSOFT_OS
-#if (PREORDER_TRAVERSAL == false)
+//#if !ROSE_MICROSOFT_OS
+#if !PREORDER_TRAVERSAL 
 
   for( grammarStringIterator = listOfIncludes.begin(); 
        grammarStringIterator != listOfIncludes.end(); 
@@ -428,7 +442,7 @@ Grammar::generateStringListsFromSubtreeLists ( Terminal & node,
 #endif
 
 #endif
-#endif
+//#endif
    }
 
 
@@ -447,10 +461,10 @@ Grammar::generateStringListsFromLocalLists ( Terminal & node,
   vector<GrammarString *> &listOfIncludes = (node.*listFunction)(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
   vector<GrammarString *> &listOfExcludes = (node.*listFunction)(Terminal::LOCAL_LIST,Terminal::EXCLUDE_LIST);
   
-#define PREORDER_TRAVERSAL false
+#define PREORDER_TRAVERSAL 0
 
-#if !ROSE_MICROSOFT_OS
-#if (PREORDER_TRAVERSAL == true)
+//#if !ROSE_MICROSOFT_OS
+#if PREORDER_TRAVERSAL
 
   for( grammarStringIterator = listOfIncludes.begin(); 
        grammarStringIterator != listOfIncludes.end(); 
@@ -468,7 +482,7 @@ Grammar::generateStringListsFromLocalLists ( Terminal & node,
 #endif
 
 #endif
-#endif
+//#endif
 
   if (node.getBaseClass() != NULL) {
     // Recursive function call
@@ -482,8 +496,8 @@ Grammar::generateStringListsFromLocalLists ( Terminal & node,
   checkListOfGrammarStrings(excludeList);
 #endif
 
-#if !ROSE_MICROSOFT_OS
-#if (PREORDER_TRAVERSAL == false)
+//#if !ROSE_MICROSOFT_OS
+#if !PREORDER_TRAVERSAL
 
   for( grammarStringIterator = listOfIncludes.begin(); 
        grammarStringIterator != listOfIncludes.end(); 
@@ -501,7 +515,7 @@ Grammar::generateStringListsFromLocalLists ( Terminal & node,
 #endif
 
 #endif
-#endif
+//#endif
 }
 
 
@@ -1524,13 +1538,16 @@ Grammar::buildHeaderStringBeforeMarker( const string& marker, const string& file
        if (pos != string::npos) {
 	 headerFileTemplate.erase(headerFileTemplate.begin() + i + 1, headerFileTemplate.end());
 	 headerFileTemplate[i].str = headerFileTemplate[i].str.substr(0, pos);
- // headerFileTemplate[i].filename += " before marker " + marker;
+  // headerFileTemplate[i].filename += " before marker " + marker;
 	 headerFileTemplate.insert(headerFileTemplate.begin(), StringUtility::StringWithLineNumber("", "" /* "<before output of buildHeaderStringBeforeMarker " + marker + " " + fileName + ">" */, 1));
 	 headerFileTemplate.insert(headerFileTemplate.end(), StringUtility::StringWithLineNumber("", "" /* "<after output of buildHeaderStringBeforeMarker " + marker + " " + fileName + ">" */, 1));
 	 return headerFileTemplate;
        }
      }
      ROSE_ASSERT (!"Marker not found");
+
+  // DQ (11/28/2009): MSVC warns that this function should return a value from all paths.
+     return headerFileTemplate;
    }
 
 StringUtility::FileWithLineNumbers
@@ -1552,6 +1569,9 @@ Grammar::buildHeaderStringAfterMarker( const string& marker, const string& fileN
        }
      }
      ROSE_ASSERT (!"Marker not found");
+
+  // DQ (11/28/2009): MSVC warns that this function should return a value from all paths.
+     return headerFileTemplate;
    }
 
 void
@@ -1646,14 +1666,14 @@ Grammar::buildHeaderFiles( Terminal & node, StringUtility::FileWithLineNumbers &
 
      editedHeaderFileString = editSubstitution (node,editedHeaderFileString);
 
-#if !ROSE_MICROSOFT_OS
+//#if !ROSE_MICROSOFT_OS
 #if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
   // Now write out the file (each class in its own file)!
      string fileExtension = ".h";
      string directoryName = sourceCodeDirectoryName();
      writeFile ( editedHeaderFileString, directoryName, node.getName(), fileExtension );
 #endif
-#endif
+//#endif
 
   // Also output strings to single file (this outputs everything to a single file)
      outputFile += editedHeaderFileString;
@@ -1927,7 +1947,7 @@ Grammar::buildSourceFiles( Terminal & node, StringUtility::FileWithLineNumbers &
   // Now apply the edit/subsitution specified within the grammar (by the user)
      editedSourceFileString = editSubstitution (node,editedSourceFileString);
 
-#if !ROSE_MICROSOFT_OS
+//#if !ROSE_MICROSOFT_OS
 #if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
   // Now write out the file!
      string fileExtension = ".C";
@@ -1935,7 +1955,7 @@ Grammar::buildSourceFiles( Terminal & node, StringUtility::FileWithLineNumbers &
 
      writeFile ( editedSourceFileString, directoryName, node.getName(), fileExtension );
 #endif
-#endif
+//#endif
 
 #if 1
 // Also output strings to single file
@@ -2429,7 +2449,16 @@ Grammar::buildCode ()
        "#define $IFDEF_MARKER_H \n\n" \
        "#include <sstream>\n" \
        "#include \"AstAttributeMechanism.h\"\n\n";
-     string footerString = "\n\n\n#endif // ifndef IFDEF_MARKER_H \n\n\n";
+	 // tps (11/25/2009) : Added ssize_t for Windows
+#ifdef _MSC_VER
+	 string l1 = "#ifdef _MSC_VER \n";
+     string l2 = "typedef LONG_PTR ssize_t; \n";
+     string l3 = "#endif \n";
+	 headerString += l1;
+     headerString += l2;
+     headerString += l3;
+#endif
+	 string footerString = "\n\n\n#endif // ifndef IFDEF_MARKER_H \n\n\n";
 
   // Get the strings onto the heap so that copy edit can process it (is this poor design? MS: yes)
      headerString = GrammarString::copyEdit (headerString,"$IFDEF_MARKER",getGrammarName());
@@ -2539,7 +2568,17 @@ Grammar::buildCode ()
   // string includeHeaderAstFileIO ="#include \"astFileIO/AST_FILE_IO.h\"\n\n";
      string includeHeaderAstFileIO ="#include \"AST_FILE_IO.h\"\n\n";
      includeHeaderString += includeHeaderAstFileIO;
-     includeHeaderString += "\nusing namespace std;\n";
+	 // tps (11/23/2009) : Needed to comply with Windows
+#ifdef _MSC_VER
+	 string ll1 = "#ifdef _MSC_VER \n";
+     string ll2 = "typedef LONG_PTR ssize_t; \n";
+     string ll3 = "#endif \n";
+	 includeHeaderString += ll1;
+     includeHeaderString += ll2;
+     includeHeaderString += ll3;
+#endif
+
+	 includeHeaderString += "\nusing namespace std;\n";
 
      ROSE_ArrayGrammarSourceFile.push_back(StringUtility::StringWithLineNumber(includeHeaderString, "", 1));
 
@@ -2947,7 +2986,9 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(Terminal* grammarnode) {
  // in the traversal island issue, but it does not have a container member,
  // so we need not mention it in this code.)
     std::string nodeName = grammarnode->getName();
-    std::cout << "both single and container members in node " << nodeName << std::endl;
+// Liao I made more exceptions for some OpenMP specific nodes for now
+// The traversal generator has already been changed accordingly.
+//    std::cout << "both single and container members in node " << nodeName << std::endl;
     ROSE_ASSERT(nodeName == "SgVariableDeclaration"
 	||nodeName == "SgOmpClauseBodyStatement"
 	||nodeName == "SgOmpParallelStatement"
@@ -3864,4 +3905,7 @@ Terminal* lookupTerminal(const vector<Terminal*>& tl, const std::string& name) {
   }
   cerr << "Reached end of terminal list in search for '" << name << "'" << endl;
   ROSE_ASSERT (false);
+
+// DQ (11/28/2009): MSVC warns that this function should return a value from all paths.
+  return NULL;
 }

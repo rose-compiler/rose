@@ -1,15 +1,16 @@
-#SET($ENV{BOOST_INCLUDE}
-#    /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/boost_1_35/include/boost-1_35/)
-#SET($ENV{BOOST_LIBRARYDIR}
-#    /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/boost_1_35/lib)
-#SET($ENV{BOOST_ROOT}
-#    /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/boost_1_35/)
+# Please be careful about where to put your tests and variable settings
+# The order matters!!
 
+#----- put platform independent settings in this section-----------------
+cmake_minimum_required(VERSION 2.6)
+project (ROSE)
+
+# Why do we have to have a copy of some standard built-in modules inside rose?
 set( CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" "${CMAKE_SOURCE_DIR}/cmake/modules"  ${CMAKE_MODULE_PATH})
+#message ("CMAKE_MODULE_PATH = ${CMAKE_MODULE_PATH}")
 
-#include( FindKDE4Internal )
-#find_package(KDE4 REQUIRED)
-set( INCLUDE_INSTALL_DIR "/usr/include")
+# default paths to install header, executable, and libraries
+set(INCLUDE_INSTALL_DIR "/usr/include")
 set(BIN_INSTALL_DIR      "bin"   )   # The install dir for executables
 set(LIB_INSTALL_DIR      "lib" )
 
@@ -21,18 +22,8 @@ set(INSTALL_TARGETS_DEFAULT_ARGS  RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
                                                                         COMPONENT
                                                                         Devel
                                                                         )
-
-
-
-cmake_minimum_required(VERSION 2.6)
-add_definitions(${QT_DEFINITIONS} ${KDE4_DEFINITIONS})
-enable_language(Fortran)
-
-set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g " )
-#set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -DHAVE_CONFIG_H" )
-#set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fexceptions -DHAVE_CONFIG_H" )
-set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g " )
-
+# a new definition to tweak code for cmake 
+add_definitions (-DUSE_CMAKE)
 #set(  CMAKE_VERBOSE_MAKEFILE  true )
 
 set(ROSE_TOP_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
@@ -40,14 +31,43 @@ set(ROSE_TOP_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 #Generate our configure file
 
+# --------- please do all system, platform, software tests here --------------
+# a set of common features: including endian, stdio.h, printf, size of long int ,etc
 #taken from LyX
 include(ConfigureChecks)
 #include(KDE4Defaults)
-
+#  a collection of macros which extend the built-in cmake commands
 include(MacroLibrary)
+# Try to find MySQL / MySQL Embedded library
+# MYSQL_FOUND,MYSQL_INCLUDE_DIR,MYSQL_LIBRARIES, etc
 include(FindMySQL)
+
+# we are not ready yet to use QT and KDE
+#include( FindKDE4Internal )
+#find_package(KDE4 REQUIRED)
+#add_definitions(${QT_DEFINITIONS} ${KDE4_DEFINITIONS})
+#message ("QT_DEFINITIONS= ${QT_DEFINITIONS}")
+#message ("KDE4_DEFINITIONS= ${KDE4_DEFINITIONS}")
+
+if (!WIN32)
+enable_language(Fortran)
+endif (!WIN32)
+
+#/CLR  /MDd /TP 
+if (WIN32)
+set( CMAKE_CXX_FLAGS " /CLR /TP " )
+set( CMAKE_C_FLAGS "  " )
+else (WIN32)
+set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
+set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
+endif (WIN32)
+
+
+if (!WIN32)
 include(FindOpenSSL)
-#include(FindSQLITE3)
+include(FindSQLITE3)
+endif (!WIN32)
+
 include(FindJava)
 
 include(FindFlex)
@@ -61,27 +81,45 @@ if(NOT BISON_FOUND)
     message(FATAL_ERROR "Could not find BISON command")
 endif(NOT BISON_FOUND)
 
-include(ConvenienceLibs)
+# include(ConvenienceLibs) # Not in use
 
 #Ensure that Boost is found
+# environment variable BOOST_ROOT can help to find a user-specified path to Boost
+SET(Boost_ADDITIONAL_VERSIONS "1.36.0" "1.39.0" "1.40.0" )
 find_package( Boost 1.35.0 COMPONENTS date_time filesystem program_options regex system wave )
 if(NOT Boost_FOUND)
     message(FATAL_ERROR "Could not find Boost version 1.35.0 or newer command")
 endif(NOT Boost_FOUND)
+include_directories(${Boost_INCLUDE_DIRS})
 
-
+if (!WIN32)
 find_library(M_LIB m)
 find_library(RT_LIB rt)
+endif (!WIN32)
 
-
+# define a global variable to collect all common linked third-party libraries for rose
 set( link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${RT_LIB} ${OPENSSL_LIBRARIES} )
 
+# Check compilers and version numbers, Liao 11/25/2009
+# the module is located in src/cmake/modules
+include(roseChooseBackendCompiler)
+include(roseGenerateBackendCompilerSpecificHeaders)
 
-configure_file(${ROSE_TOP_SRC_DIR}/rose_config.h.in.cmake ${ROSE_TOP_BINARY_DIR}/rose_config.h)
-
-#include(ManualStuff.cmake)
-
-#include(ConfigureChecks.cmake)
+# --------- finish all fundamental tests, now set derivative variables
+# Liao 12/1/2009, This is essential to find the right include path from either build or installation tree
+# for a translator
+if (HAVE_DLFCN_H)
+  if (HAVE_DLADDR)
+    set (use_rose_in_build_tree_var TRUE)
+    set (CMAKE_SHARED_LINKER_FLAGS ${CMAKE_SHARED_LINKER_FLAGS} -ldl)
+# this following line won't work since it only set the environment variable for cmake's session
+# not for ctest session. Still no good way to set it within cmake
+# fortunately,   
+    set ($ENV{ROSE_IN_BUILD_TREE} ${ROSE_TOP_BINARY_DIR})
+  endif (HAVE_DLADDR)
+else (HAVE_DLFCN_H)
+  set (use_rose_in_build_tree_var, FALSE)
+endif (HAVE_DLFCN_H)
 
  set( LIBHARU_SOURCE_DIR ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/libharu-200910170404 )
  set( LIBHARU_BINARY_DIR ${ROSE_TOP_BINARY_DIR}/src/3rdPartyLibraries/libharu-200910170404 )
@@ -93,8 +131,8 @@ configure_file(${ROSE_TOP_SRC_DIR}/rose_config.h.in.cmake ${ROSE_TOP_BINARY_DIR}
      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII 
      ${ROSE_TOP_SRC_DIR}/src/ROSETTA/src/
      ${ROSE_TOP_SRC_DIR}/src 
-     ${ROSE_TOP_SRC_DIR}/src/frontend/CxxFrontend/EDG_SAGE_Connection/
-     ${ROSE_TOP_SRC_DIR}/src/frontend/CxxFrontend/EDG_3.3/src
+     ${ROSE_TOP_SRC_DIR}/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/
+     ${ROSE_TOP_SRC_DIR}/src/frontend/CxxFrontend/EDG/EDG_3.3/src
      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII 
      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astFixup 
      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astPostProcessing 
@@ -108,10 +146,11 @@ configure_file(${ROSE_TOP_SRC_DIR}/rose_config.h.in.cmake ${ROSE_TOP_BINARY_DIR}
      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/astFileIO 
      ${ROSE_TOP_SRC_DIR}/src/frontend/OpenFortranParser_SAGE_Connection 
      ${ROSE_TOP_SRC_DIR}/src/frontend/PHPFrontend 
-     ${ROSE_TOP_SRC_DIR}/src/frontend/BinaryDisassembly 
      ${ROSE_TOP_SRC_DIR}/src/frontend/BinaryFormats 
      ${ROSE_TOP_SRC_DIR}/src/frontend/BinaryLoader
+     ${ROSE_TOP_SRC_DIR}/src/frontend/BinaryDisassembly 
      ${ROSE_TOP_SRC_DIR}/src/frontend/Disassemblers 
+     ${ROSE_TOP_SRC_DIR}/src/frontend/ExecFormats 
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser 
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/formatSupport 
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/languageIndependenceSupport 
@@ -176,18 +215,27 @@ configure_file(${ROSE_TOP_SRC_DIR}/rose_config.h.in.cmake ${ROSE_TOP_BINARY_DIR}
      ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/libharu-2.1.0/win32/include/
      ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/astInterface )
 
+IF(WIN32) 
+set( ROSE_INCLUDES ${ROSE_INCLUDES}
+     ${ROSE_TOP_SRC_DIR}/winspecific )
+ENDIF()
+
+
 include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 #include_directories( ${ROSE_INCLUDES} )
-
- 
-
-
 
 set(QT_INCLUDES ${ROSE_INCLUDES} ${Boost_INCLUDE_DIRS} )
 
 add_subdirectory(config)
 add_subdirectory(src)
 add_subdirectory(tests)
+
+enable_testing()
+
+# put this to the end to catch all variables defined above
+# e.g. compiler names, versions etc.
+configure_file(${ROSE_TOP_SRC_DIR}/rose_config.h.in.cmake ${ROSE_TOP_BINARY_DIR}/rose_config.h)
+
 ########### install files ###############
 
 #install(FILES  rose_config.h DESTINATION ${INCLUDE_INSTALL_DIR} )

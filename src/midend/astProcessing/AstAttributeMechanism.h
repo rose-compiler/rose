@@ -181,4 +181,21 @@ class AstAttributeMechanism : public AttributeMechanism<std::string,AstAttribute
           AstAttributeMechanism ();
    };
 
+
+// DQ (11/21/2009): Added new kind of attribute for handling regex trees.
+/*!
+ *  \brief Attribute corresponding to a regex expression.
+ *
+ *  A RegEx attribute is added to each lart of an AST tree pattern 
+ *  specification to a RegEx tree.
+ */
+class AstRegExAttribute : public AstAttribute
+   {
+     public:
+          std::string expression;
+
+          AstRegExAttribute();
+          AstRegExAttribute(const std::string & s);
+   };
+
 #endif

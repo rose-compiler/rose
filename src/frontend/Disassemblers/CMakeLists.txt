@@ -15,7 +15,7 @@ set(roseDisassemblers_SRC
    ${CMAKE_SOURCE_DIR}/src/frontend/Disassemblers/AssemblerX86Init.C
    )
 
-add_library( roseDisassemblers ${roseDisassemblers_SRC} ) 
+add_library( roseDisassemblers STATIC ${roseDisassemblers_SRC} ) 
 add_dependencies( roseDisassemblers ROSETTA  )
 
 ########### install files ###############

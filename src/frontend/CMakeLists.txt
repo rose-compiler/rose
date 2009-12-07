@@ -9,8 +9,10 @@ add_subdirectory(BinaryDisassembly)
 add_subdirectory(BinaryLoader)
 add_subdirectory(BinaryFormats)
 add_subdirectory(Disassemblers)
+#TP COMMENTED OUT FOR NOW. ADD LATER
+if (!WIN32)
 add_subdirectory(PHPFrontend)
-
+endif (!WIN32)
 
 ########### install files ###############
 

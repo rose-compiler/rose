@@ -20,6 +20,9 @@ using namespace std;
 #define OUTPUT_HIDDEN_LIST_DATA 0
 #define OUTPUT_DEBUGGING_INFORMATION 0
 
+#ifdef _MSC_VER
+#include "Cxx_Grammar.h"
+#endif
 
 
 
@@ -1787,6 +1790,11 @@ Unparse_ExprStmt::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
 void
 Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
    {
+#ifdef _MSC_VER
+#pragma message ("WARNING: Commented out body of unparseMFuncRef()")
+	   printf ("Error: Commented out body of unparseMFuncRef() \n");
+	   ROSE_ASSERT(false);
+#else
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
      ROSE_ASSERT(mfunc_ref != NULL);
 
@@ -1805,7 +1813,8 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
 
   // DQ (2/16/2004): error in templates (test2004_18.C)
      ROSE_ASSERT (cdef != NULL);
-     SgClassDeclaration* cdecl = cdef->get_declaration();
+     SgClassDeclaration* cdecl;
+	 cdecl = cdef->get_declaration();
 #if 0
      printf ("Inside of unparseMFuncRef expr = %p (name = %s::%s) \n",expr,cdecl->get_name().str(),mfd->get_name().str());
      curprint ( "\n /* Inside of unparseMFuncRef */ \n");
@@ -2015,6 +2024,8 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
 #if 0
      printf ("Leaving unparseMFuncRef \n");
      curprint ( "\n/* leaving unparseMFuncRef */ \n");
+#endif
+
 #endif
    }
 

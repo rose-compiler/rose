@@ -1,21 +1,13 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 
-# Use automake conditional to build Public and Developer distributions
-#    Public: includes all of ROSE and binary of EDG work and parts that
-#            are more restricted.
-#    Developer: This version includes all EDG source code and some parts that
-#             might be more restricted.
-# This next line will be removed for binary distributions, leaving the variable empty
-DEVELOPER_DISTRIBUTION_DIRECTORY = developersScratchSpace proposals
-
 # DQ (1/18/2009): Added demo directory to support showoffs :-).
 # DQ "config" and "src" must preceed any other directories, and 
 # "tutorial" and "exampleTranslators" must preceed "docs" since 
 # they generate data that is subsequently used in the generated 
 # ROSE documentation (examples, input codes, and generated output).
 # SUBDIRS = config src projects tests tutorial exampleTranslators docs developersScratchSpace tools proposals scripts
-SUBDIRS = libltdl config src projects tests tutorial exampleTranslators docs tools scripts demo binaries $(DEVELOPER_DISTRIBUTION_DIRECTORY)
+SUBDIRS = libltdl config src projects tests tutorial exampleTranslators docs tools scripts demo binaries
 
 
 ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I /usr/share/aclocal
@@ -78,7 +70,10 @@ detect_rosec:
 # (because it has the file: config/Makefile.for.ROSE.includes.and.libs)
 # EXTRA_DIST = stamp-h.in stamp-h1.in GNU_HEADERS config
 # EXTRA_DIST = stamp-h.in stamp-h1.in rose.docs.in GNU_HEADERS COPYWRITE ROSE_ResearchPapers
-EXTRA_DIST = cmake CMakeLists.txt rose_config.h.in.cmake stamp-h.in stamp-h1.in rose.docs.in COPYRIGHT LicenseInformation ROSE_ResearchPapers README.OSX README.Cygwin build ChangeLog2
+EXTRA_DIST = cmake CMakeLists.txt rose_config.h.in.cmake stamp-h.in stamp-h1.in rose.docs.in COPYRIGHT LicenseInformation ROSE_ResearchPapers README.OSX README.Cygwin build ChangeLog2 bincompat-sig
+
+bincompat-sig:
+	$(srcdir)/scripts/bincompat-sig > $@
 
 # At some point we want to put tals into the distribution (likely just PDF files, but not yet).
 # ROSE_Talks
@@ -234,8 +229,8 @@ binary_edg_tarball: rose_binary_compatibility_signature
 	BINARY_EDG_DIRNAME=roseBinaryEDG-$(build_triplet_without_redhat)-@GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX@-`cat rose_binary_compatibility_signature` && \
 	rm -rf $${BINARY_EDG_DIRNAME} && \
 	mkdir $${BINARY_EDG_DIRNAME} && \
-	sed "s@^dependency_libs.*@dependency_libs=''@" src/frontend/CxxFrontend/libroseEDG.la > $${BINARY_EDG_DIRNAME}/libroseEDG.la && \
-	cp -Rp src/frontend/CxxFrontend/.libs $${BINARY_EDG_DIRNAME}/ && \
+	sed "s@^dependency_libs.*@dependency_libs=''@" src/frontend/CxxFrontend/EDG/libroseEDG.la > $${BINARY_EDG_DIRNAME}/libroseEDG.la && \
+	cp -Rp src/frontend/CxxFrontend/EDG/.libs $${BINARY_EDG_DIRNAME}/ && \
 	tardir=$${BINARY_EDG_DIRNAME} && $(am__tar) | GZIP=$(GZIP_ENV) gzip -c >$${BINARY_EDG_DIRNAME}.tar.gz && \
 	rm -rf $${BINARY_EDG_DIRNAME}
 
@@ -285,7 +280,6 @@ source_with_binary_edg_dist: copy_binary_edg_tarball_to_source_tree
 	cat $(top_srcdir)/docs/Makefile.am | \
 		grep -v 'DEVELOPER_DISTRIBUTION_DIRECTORY *=' > \
 		$(distdir)/docs/Makefile.am # Remove SUBDIRS reference to testDoxygen
-	cp $(top_srcdir)/src/frontend/CxxFrontend/Makefile.am.forBinaryEDG $(distdir)/src/frontend/CxxFrontend/Makefile.am
 	echo "" >> $(distdir)/src/frontend/CxxFrontend/Makefile.am
 	cd $(distdir)/src/frontend/CxxFrontend; echo "EXTRA_DIST = `echo *.tar.gz`" >> Makefile.am
 	cd $(distdir) && ./build
