@@ -189,6 +189,9 @@ class InterproceduralInfo
 			if (formal.size()>(unsigned int)nr && nr>=0)
 			return formal[nr];
 			ROSE_ASSERT(false);
+
+         // DQ (12/1/2009): avoid MSVC warning of non-void function without return stmt.
+			return NULL;
 		}
 	
 		void setFormalReturn(SgNode *  node)

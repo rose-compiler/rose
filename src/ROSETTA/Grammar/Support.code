@@ -7617,7 +7617,11 @@ SgSymbolTable::get_symbols() const
      set<SgNode*> returnSet;
 
      ROSE_ASSERT(p_table != NULL);
+#ifdef _MSC_VER
+     rose_hash::hash_multimap<SgName, SgSymbol*>::iterator i = get_table()->begin();
+#else
      rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator i = get_table()->begin();
+#endif
      while (i != p_table->end())
         {
           ROSE_ASSERT(i->second != NULL);
@@ -10746,7 +10750,14 @@ SgFile::getWorkingDirectory ()
      for (i=0; i < maxPathNameLength; i++)
           currentDirectory[i] = '\0';  // set to NULL string
 
+#ifdef _MSC_VER
+#pragma message ("WARNING: support for Linux getcwd() unavailable in Microsoft Visual Studio.")
+	 printf ("Error: support for Linux getcwd() unavailable in Microsoft Visual Studio.");
+	 ROSE_ASSERT(false);
+     char* returnString = NULL;
+#else
      char* returnString = getcwd(currentDirectory,maxPathNameLength - 1);
+#endif
      ROSE_ASSERT (returnString != NULL);
      currentDirectory[maxPathNameLength - 1] = 0; // Just in case
 
