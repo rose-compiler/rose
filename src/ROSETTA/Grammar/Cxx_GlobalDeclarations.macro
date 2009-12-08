@@ -53,13 +53,13 @@ inline void preventConstructionOnStack(SgNode* n)
    #if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER == 0)
   // For the GNU 4.0.x make this a warning, since it appears to fail due to a 
   // poor implementaiton for just this compiler and no other version of GNU.
-#if 0
   // Just that we are pringing this warning is a problem for many tests (maybe this should be enable within verbose mode).
      if (dist < -10000 || dist > 10000)
         {
+#if 0
           printf ("Warning: preventConstructionOnStack() reporting object on stack, not allowed. dist = %ld \n",dist);
-        }
 #endif
+        }
    #else
   // For all other versions of the GNU compiler make this an error.
      assert (dist < -10000 || dist > 10000);
