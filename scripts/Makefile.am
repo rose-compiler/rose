@@ -8,10 +8,11 @@ distributedScripts = \
      check-dist-file dotgenLetter  generateDirectoryGraph \
      libtoolcp     \
      dotgenLetterPDF dotgenLetterPNG \
-     nmiBuildAndTestFarm
+     nmiBuildAndTestFarm \
+     bincompat-sig Error.pm Git.pm
 
 # scripts put into the distribution
-EXTRA_DIST = CMakeLists.txt README $(distributedScripts)
+EXTRA_DIST = CMakeLists.txt README $(distributedScripts) 
 
 # install the tools in 'bin' (a subsect of EXTRA_DIST)
 bin_SCRIPTS =  $(distributedScripts)
