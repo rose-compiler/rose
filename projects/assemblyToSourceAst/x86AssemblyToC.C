@@ -379,9 +379,12 @@ int main(int argc, char** argv) {
 
     for(int j = 0; j < asmFunctions.size(); j++ )
     {
-
       SgAsmFunctionDeclaration* binFunc = isSgAsmFunctionDeclaration( asmFunctions[j] );
-      SgFunctionDeclaration* decl = buildDefiningFunctionDeclaration("my"+binFunc->get_name(), SgTypeVoid::createType(), buildFunctionParameterList(), g);
+
+      if( binFunc->get_name().c_str() == NULL || binFunc->get_name() == "" ) 
+        binFunc->set_name( "my" + boost::lexical_cast<std::string>(j)   );
+
+      SgFunctionDeclaration* decl = buildDefiningFunctionDeclaration( binFunc->get_name() , SgTypeVoid::createType(), buildFunctionParameterList(), g);
 
       appendStatement(decl, g);
       SgBasicBlock* body = decl->get_definition()->get_body();

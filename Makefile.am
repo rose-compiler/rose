@@ -201,102 +201,14 @@ docs: FORCE_DOCS_TO_BE_MADE
       echo "Please look at the ROSE web site for documentation (www.roseCompiler.org)"; \
    fi
 
-
-clean_binary_distribution: distdir
-	rm -rf $(distdir)/src/frontend/CxxFrontend/EDG*
-	rm -rf $(distdir)/src/frontend/CxxFrontend/Makefile.am # Will be replaced with another version in the binary_edg_tarball rule
-	rm -rf $(distdir)/proposals
-	rm -rf $(distdir)/developersScratchSpace
-# Dan said this is OK 5/27/2009	
-#	rm -rf $(distdir)/projects/assemblyToSourceAst
-	rm -rf $(distdir)/docs/testDoxygen
-
-if BINARY_EDG_TARBALL_ENABLED
-
-rose_binary_compatibility_signature:
-	find $(srcdir)/src/ROSETTA $(srcdir)/src/frontend/CxxFrontend \( -name \*.C -o -name \*.c -o -name \*.h -o -name \*.code -o -name \*.macro -o -name astNodeList -o -name \*.yy \) -a -print | env LC_ALL=C sort | xargs cat -ve | \
-	@MD5@ | cut -f 1 -d \  > rose_binary_compatibility_signature
-	cat rose_binary_compatibility_signature
-
-.PHONY : rose_binary_compatibility_signature # Always rebuild the file when needed
+if ROSE_HAS_EDG_SOURCE
 
 # 1
 # This rule generates the simple binary tarball for the directories: EDG and EDG_SAGE_Connection
-binary_edg_tarball: rose_binary_compatibility_signature
-	cd src/ROSETTA/src; $(MAKE)
-	cd src/frontend/CxxFrontend; $(MAKE)
-#	BINARY_EDG_DIRNAME=roseBinaryEDG-$(build_triplet_without_redhat)-`cat rose_binary_compatibility_signature` &&
-	BINARY_EDG_DIRNAME=roseBinaryEDG-$(build_triplet_without_redhat)-@GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX@-`cat rose_binary_compatibility_signature` && \
-	rm -rf $${BINARY_EDG_DIRNAME} && \
-	mkdir $${BINARY_EDG_DIRNAME} && \
-	sed "s@^dependency_libs.*@dependency_libs=''@" src/frontend/CxxFrontend/EDG/libroseEDG.la > $${BINARY_EDG_DIRNAME}/libroseEDG.la && \
-	cp -Rp src/frontend/CxxFrontend/EDG/.libs $${BINARY_EDG_DIRNAME}/ && \
-	tardir=$${BINARY_EDG_DIRNAME} && $(am__tar) | GZIP=$(GZIP_ENV) gzip -c >$${BINARY_EDG_DIRNAME}.tar.gz && \
-	rm -rf $${BINARY_EDG_DIRNAME}
+binary_edg_tarball: 
+	$(MAKE) -C src/frontend/CxxFrontend binary_edg_tarball
 
-# 2
-# This rule will insert the binary compatability signature into the filename for the generated binary.
-copy_binary_edg_tarball_to_source_tree: binary_edg_tarball rose_binary_compatibility_signature
-#	BINARY_EDG_DIRNAME=roseBinaryEDG-$(build_triplet_without_redhat)-`cat rose_binary_compatibility_signature`
-#	BINARY_EDG_DIRNAME=roseBinaryEDG-$(build_triplet_without_redhat)-@GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX@-`cat rose_binary_compatibility_signature` && 
-#	$(top_srcdir)/scripts/copy_binary_edg_tarball_to_source_tree $(top_srcdir) "@build_triplet_without_redhat@"
-	$(top_srcdir)/scripts/copy_binary_edg_tarball_to_source_tree $(top_srcdir) "@build_triplet_without_redhat@" "@GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX@"
-
-# 3
-# Commits the EDG binary into the SVN repository.
-# copy_binary_edg_tarball_to_source_tree_svn: binary_edg_tarball rose_binary_compatibility_signature
-copy_binary_edg_tarball_to_source_tree_svn: copy_binary_edg_tarball_to_source_tree
-#	BINARY_EDG_DIRNAME=roseBinaryEDG-$(build_triplet_without_redhat)-`cat rose_binary_compatibility_signature` && 
-#	$(top_srcdir)/scripts/copy_binary_edg_tarball_to_source_tree_svn `sed -n 5p $(top_srcdir)/.svn/entries` "@build_triplet_without_redhat@"
-	$(top_srcdir)/scripts/copy_binary_edg_tarball_to_source_tree_svn `sed -n 5p $(top_srcdir)/.svn/entries` "@build_triplet_without_redhat@" "@GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX@" `sed -n 4p $(top_srcdir)/.svn/entries`
-
-# 4
-# Builds source release containing the EDG binary.
-# source_with_binary_edg_dist: rose_binary_compatibility_signature
-# source_with_binary_edg_dist: copy_binary_edg_tarball_to_source_tree
-
-# DQ (9/16/2009): I think it is an error to call the copy_binary_edg_tarball_to_source_tree_svn rule, 
-#    call copy_binary_edg_tarball_to_source_tree (as it used to be). It fails to work on a distribution
-#    because there in no ".svn/entries" file.
-#    ../sourcetree/scripts/copy_binary_edg_tarball_to_source_tree_svn `sed -n 5p ../sourcetree/.svn/entries` "i686-apple-darwin" "GNU-4.0"
-#    sed: ../sourcetree/.svn/entries: No such file or directory
-# source_with_binary_edg_dist: copy_binary_edg_tarball_to_source_tree_svn
-source_with_binary_edg_dist: copy_binary_edg_tarball_to_source_tree
-	@ROSE_BINARY_COMPATIBILITY_SIGNATURE=`cat rose_binary_compatibility_signature` && \
-	if test `ls -1 $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-$${ROSE_BINARY_COMPATIBILITY_SIGNATURE}.tar.gz | wc -l` -eq 0; then echo "Error: Could not find any binary versions of EDG with signature $${ROSE_BINARY_COMPATIBILITY_SIGNATURE} in $(srcdir)/src/frontend/CxxFrontend.  This distribution cannot be made because it would not be usable on any platform." >&2; exit 1; fi && \
-	if test `ls -1 $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-*.tar.gz | grep -v $${ROSE_BINARY_COMPATIBILITY_SIGNATURE} | wc -l` -ne 0; then echo "Error: The following obsolete binary versions of EDG were found in $(srcdir)/src/frontend/CxxFrontend." >&2; ls -1 $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-*.tar.gz | grep -v $${ROSE_BINARY_COMPATIBILITY_SIGNATURE} >&2; exit 1; fi && \
-	$(MAKE) clean_binary_distribution && \
-	cp $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-$${ROSE_BINARY_COMPATIBILITY_SIGNATURE}.tar.gz $(distdir)/src/frontend/CxxFrontend && \
-	cat $(top_srcdir)/configure.in | \
-		grep -v '^developersScratchSpace/' | \
-		grep -v '^proposals/' | \
-		grep -v '^src/frontend/CxxFrontend/EDG' | \
-		grep -v '^docs/testDoxygen/' | \
-		sed s/RELEASE_BINARY_COMPATIBILITY_SIGNATURE/$${ROSE_BINARY_COMPATIBILITY_SIGNATURE}/g > \
-		$(distdir)/configure.in
-	cat $(top_srcdir)/Makefile.am | \
-		grep -v 'DEVELOPER_DISTRIBUTION_DIRECTORY *=' > \
-		$(distdir)/Makefile.am # Remove SUBDIRS references to developersScratchSpace and proposals
-	cat $(top_srcdir)/docs/Makefile.am | \
-		grep -v 'DEVELOPER_DISTRIBUTION_DIRECTORY *=' > \
-		$(distdir)/docs/Makefile.am # Remove SUBDIRS reference to testDoxygen
-	echo "" >> $(distdir)/src/frontend/CxxFrontend/Makefile.am
-	cd $(distdir)/src/frontend/CxxFrontend; echo "EXTRA_DIST = `echo *.tar.gz`" >> Makefile.am
-	cd $(distdir) && ./build
-	find $(distdir)/ -name Makefile.in~ | xargs rm -rf
-	find $(distdir)/ -depth -name .svn -exec rm -rf {} \;
-	find $(distdir)/ -depth -name autom4te.cache -exec rm -rf {} \;
-	tardir=$(distdir) && $(am__tar) | GZIP=$(GZIP_ENV) gzip -c >$(PACKAGE)-$(VERSION)-source-with-EDG-binary$(DOT_SVNREV).tar.gz
-	$(am__remove_distdir)
-
-# DQ (9/10/2009): Build a tarball for testing at NMI (ROSE without EDG source)
-# Some of the names of these makefile rules should be changed to be more specific.
-$(PACKAGE)-$(VERSION)-source-with-EDG-binary.tar.gz: source_with_binary_edg_dist
-#	$(MAKE) copy_binary_edg_tarball_to_source_tree
-#	$(MAKE) copy_binary_edg_tarball_to_source_tree_svn
-#	$(MAKE) source_with_binary_edg_dist
-
-# DQ (9/14/2009): this can fail if the most recent binaries are not available.
-binary_tarball: $(PACKAGE)-$(VERSION)-source-with-EDG-binary.tar.gz
+upload_edg_binary:
+	$(MAKE) -C src/frontend/CxxFrontend upload_edg_binary
 
 endif
