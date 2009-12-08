@@ -4,6 +4,7 @@ SUBDIRS = SemanticVerification
 
 EXTRA_DIST = runTest.C arm-ctrlaltdel.ans runExecFormatsTest testShiftResizeSection.sh test_findConstants.ans \
 		test_disassemble.ans testSampleBinaries.sh testSampleBinaries.conf testFunctionDetection.pl
+		functionBoundaries_1.ans functionBoundaries_2.ans functionBoundaries_3.ans
 
 BINARY_SAMPLES = $(top_srcdir)/binaries/samples
 
