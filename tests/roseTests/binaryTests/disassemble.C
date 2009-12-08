@@ -13,6 +13,7 @@ main(int argc, char *argv[])
     bool do_debug = false;
     bool do_reassemble = false;
     bool do_dot = false;
+    bool do_quiet = false;
     int exit_status = 0;
 
     char **new_argv = (char**)calloc(argc+2, sizeof(char*));
@@ -57,13 +58,15 @@ main(int argc, char *argv[])
         } else if (!strcmp(argv[i], "--no-search-funcsyms")) {
             search &= ~Disassembler::SEARCH_FUNCSYMS;
         } else if (!strcmp(argv[i], "--dot")) {
-            do_dot = true;
+            do_dot = true;      /* generate dot files showing the AST */
         } else if (!strcmp(argv[i], "--show-bad")) {
-            show_bad = true;
+            show_bad = true;    /* show details about failed disassembly or assembly */
         } else if (!strcmp(argv[i], "--reassemble")) {
-            do_reassemble = true;
+            do_reassemble = true; /* reassemble what we disassembled in order to test the assembler */
         } else if (!strcmp(argv[i], "--debug")) {
-            do_debug = true;
+            do_debug = true;    /* dump lots of debugging information */
+        } else if (!strcmp(argv[i], "--quiet")) {
+            do_quiet = true;    /* do not emit the instructions to stdout (they're still stored in the *.dump file) */
         } else {
             new_argv[new_argc++] = argv[i];
         }
@@ -93,9 +96,11 @@ main(int argc, char *argv[])
         /* Disassemble instructions, linking them into the interpretation */
         Disassembler::BadMap bad;
         d->disassemble(interp, NULL, &bad);
+        if (!do_quiet)
+            fputs(unparseAsmInterpretation(interp).c_str(), stdout);
 
         /* Results */
-        printf("disassembled %zu instruction%s + %zu failure%s",
+        printf("disassembled %zu instruction%s + %zu failure%s for this interpretation",
                d->get_ndisassembled(), 1==d->get_ndisassembled()?"":"s", bad.size(), 1==bad.size()?"":"s");
         if (bad.size()>0) {
             if (show_bad) {

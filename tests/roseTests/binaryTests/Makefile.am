@@ -257,7 +257,7 @@ test_findConstants.passed: findConstants
 	@touch $@
 
 test_disassemble.passed: disassemble
-	$(VALGRIND) ./disassemble --search-following --search-immediate --search-words --no-search-allbytes --search-unused --search-nonexe --search-deadend --no-search-unknown $(BINARY_SAMPLES)/i686-test1.O0.bin
+	$(VALGRIND) ./disassemble --quiet --search-following --search-immediate --search-words --no-search-allbytes --search-unused --search-nonexe --search-deadend --no-search-unknown $(BINARY_SAMPLES)/i686-test1.O0.bin
 	@mv i686-test1.O0.bin.dump test_disassemble.ans
 #	Commenting this out on only RedHat 32-bit systems is not enough (also fails on Max OSX; for the same reason).
 if !OS_VENDOR_REDHAT_32BIT
@@ -269,7 +269,7 @@ endif
 # We're using the buffer2.bin from projects/BinQ for now because it's 64-bit; the one in our own srcdir is 32-bit and
 # the assembler isn't completely working yet for 32-bit. [RPM 2009-07-21]
 test_assembler.passed: disassemble
-	$(VALGRIND) ./disassemble --reassemble --show-bad $(top_srcdir)/projects/BinQ/buffer2.bin
+	$(VALGRIND) ./disassemble --quiet --reassemble --show-bad $(top_srcdir)/projects/BinQ/buffer2.bin
 	@touch $@
 
 # This tests lots of sample binaries. We cannot run it concurrently with the other tests because some of the output
