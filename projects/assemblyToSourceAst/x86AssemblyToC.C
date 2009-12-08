@@ -301,7 +301,7 @@ int main(int argc, char** argv) {
 
   //I am doing some experimental work to enable functions in the C representation
   //Set this flag to true in order to enable that work
-  bool enable_functions = false;
+  bool enable_functions = true;
   //Jeremiah did some work to enable a simplification and normalization of the 
   //C representation. Enable this work by setting this flag to true.
   bool enable_normalizations = false;
@@ -379,9 +379,28 @@ int main(int argc, char** argv) {
 
     for(int j = 0; j < asmFunctions.size(); j++ )
     {
-
       SgAsmFunctionDeclaration* binFunc = isSgAsmFunctionDeclaration( asmFunctions[j] );
-      SgFunctionDeclaration* decl = buildDefiningFunctionDeclaration("my"+binFunc->get_name(), SgTypeVoid::createType(), buildFunctionParameterList(), g);
+
+      //Some functions may be unnamed so we need to generate a name for those
+      std::string funcName;
+      if (binFunc->get_name().size()==0) {
+	char addr_str[64];
+	sprintf(addr_str, "0x%"PRIx64, binFunc->get_statementList()[0]->get_address());
+	funcName = std::string("my_") + addr_str;;
+      } else {
+	funcName = "my" + binFunc->get_name();
+      }
+
+      //Functions can have illegal characters in their name. Need to replace those characters
+      for ( int i = 0 ; i < funcName.size(); i++ )
+      {
+	char& currentCharacter = funcName.at(i);
+	if ( currentCharacter == '.' )
+	  currentCharacter = '_';
+      }
+
+
+      SgFunctionDeclaration* decl = buildDefiningFunctionDeclaration(funcName, SgTypeVoid::createType(), buildFunctionParameterList(), g);
 
       appendStatement(decl, g);
       SgBasicBlock* body = decl->get_definition()->get_body();
@@ -410,7 +429,7 @@ int main(int argc, char** argv) {
 
   proj->get_fileList().erase(proj->get_fileList().end() - 1); // Remove binary file before calling backend
 
-  AstTests::runAllTests(proj);
+//  AstTests::runAllTests(proj);
 
   return backend(proj);
 }
