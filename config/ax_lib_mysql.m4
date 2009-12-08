@@ -26,6 +26,7 @@
 #
 #   This macro calls:
 #
+#     AC_SUBST(MYSQL_INCLUDES)
 #     AC_SUBST(MYSQL_CFLAGS)
 #     AC_SUBST(MYSQL_LDFLAGS)
 #     AC_SUBST(MYSQL_VERSION)
@@ -65,6 +66,7 @@ AC_DEFUN([AX_LIB_MYSQL],
         [want_mysql="no"] dnl JJW (7/29/2008): Default should be no MySQL
     )
 
+    MYSQL_INCLUDES=""
     MYSQL_CFLAGS=""
     MYSQL_LDFLAGS=""
     MYSQL_VERSION=""
@@ -82,6 +84,7 @@ AC_DEFUN([AX_LIB_MYSQL],
         if test "$MYSQL_CONFIG" != "no"; then
             AC_MSG_CHECKING([for MySQL libraries])
 
+            MYSQL_INCLUDES="`$MYSQL_CONFIG --include`"
             MYSQL_CFLAGS="`$MYSQL_CONFIG --cflags`"
             MYSQL_LDFLAGS="`$MYSQL_CONFIG --libs`"
 
@@ -144,6 +147,7 @@ AC_DEFUN([AX_LIB_MYSQL],
     fi
 
     AC_SUBST([MYSQL_VERSION])
+    AC_SUBST([MYSQL_INCLUDE])
     AC_SUBST([MYSQL_CFLAGS])
     AC_SUBST([MYSQL_LDFLAGS])
 ])
