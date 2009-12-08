@@ -4,10 +4,13 @@
 #ifdef ROSE_USE_ETHER
 
 extern "C" {
+#include <sys/mman.h>
 #include <xenctrl.h>
 #include <xen/domctl.h>
 #include <xen/hvm/ether.h>
 }
+
+#include <sys/mman.h>
 
 class Ether {
 private:
