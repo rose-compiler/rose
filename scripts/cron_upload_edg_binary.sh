@@ -7,11 +7,14 @@ CONFIGURE_FLAGS="--with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE
 git fetch origin
 if test "`git rev-parse HEAD`" != "`git rev-parse origin/master`" ; then
   git checkout origin/master
+  git submodule update
   ./build
   if test -e ROSE-build ; then chmod -R u+w ROSE-build ; fi
   rm -rf ROSE-build
   mkdir ROSE-build
   cd ROSE-build
   ../configure ${CONFIGURE_FLAGS}
-  make -j8 upload_edg_binary BINARY_EDG_TARBALL_STAGING_PATH=/usr/casc/overture/ROSE/git/ROSE_EDG_Binaries
+# make -j8 upload_edg_binary BINARY_EDG_TARBALL_STAGING_PATH=/usr/casc/overture/ROSE/git/ROSE_EDG_Binaries
+  make -j8 upload_edg_binary BINARY_EDG_TARBALL_STAGING_PATH=`pwd`
+  scp roseBinaryEDG* dquinlan@tux281:/usr/casc/overture/ROSE/git/ROSE_EDG_Binaries
 fi
