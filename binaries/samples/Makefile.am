@@ -22,6 +22,7 @@ EXTRA_DIST = CMakeLists.txt 					\
     i386-poweroff				\
     i686-test1.O0.bin				\
     i686-test1.O3.bin				\
+    i686-test1.O3-stripped.bin			\
     libm-2.3.6.so				\
     pocketputty.exe				\
     pocketputty2.exe				\

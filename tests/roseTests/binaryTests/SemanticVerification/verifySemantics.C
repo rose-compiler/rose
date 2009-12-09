@@ -561,8 +561,8 @@ public:
             case x86_flag_if:    bitidx =  9; s = "if"; break;
             case x86_flag_df:    bitidx = 10; s = "df"; break;
             case x86_flag_of:    bitidx = 11; s = "of"; break;
-            case x86_flag_iopl0: bitidx = 12; s = "iop10"; break;
-            case x86_flag_iopl1: bitidx = 13; s = "iop11"; break;
+            case x86_flag_iopl0: bitidx = 12; s = "iopl0"; break;
+            case x86_flag_iopl1: bitidx = 13; s = "iopl1"; break;
             case x86_flag_nt:    bitidx = 14; s = "nt"; break;
             case x86_flag_15:    bitidx = 15; s = "15f"; break;
             case x86_flag_rf:    bitidx = 16; s = "rf"; break;
@@ -603,8 +603,8 @@ public:
             case x86_flag_if:    bitidx =  9; s = "if"; break;
             case x86_flag_df:    bitidx = 10; s = "df"; break;
             case x86_flag_of:    bitidx = 11; s = "of"; break;
-            case x86_flag_iopl0: bitidx = 12; s = "iop10"; break;
-            case x86_flag_iopl1: bitidx = 13; s = "iop11"; break;
+            case x86_flag_iopl0: bitidx = 12; s = "iopl0"; break;
+            case x86_flag_iopl1: bitidx = 13; s = "iopl1"; break;
             case x86_flag_nt:    bitidx = 14; s = "nt"; break;
             case x86_flag_15:    bitidx = 15; s = "15f"; break;
             case x86_flag_rf:    bitidx = 16; s = "rf"; break;

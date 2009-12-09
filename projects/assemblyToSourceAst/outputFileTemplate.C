@@ -39,7 +39,8 @@ unsigned int rax, rbx, rcx, rdx, rsi, rdi, rsp, rbp, r8, r9, r10, r11, r12, r13,
 // These are the 8-bit lower bytes, which seem to be used fairly often
 unsigned int al, bl, cl, dl, sil, dil, spl, bpl, r8b, r9b, r10b, r11b, r12b, r13b, r14b, r15b;
 uint32_t ip;
-bool cf, pf, af, zf, sf, df, of;
+bool cf, f1, pf, f3, af, f5, zf, sf, tf, iflg, df, of, iopl0, iopl1, nt, f15;
+bool rf, vm, ac, vif, vip, id, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31;
 bool sf_xor_of;
 bool zf_or_cf;
 

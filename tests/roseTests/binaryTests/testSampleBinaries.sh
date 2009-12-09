@@ -27,7 +27,7 @@ test_parser() {
 	local basename=$(basename $sample)
 	rm -f rose_$basename.s $basename.new $basename.dump
     else
-        ./execFormatsTest -rose:read_binary_file_format_only -rose:binary $sample
+	(set -x; ./execFormatsTest -rose:read_binary_file_format_only -rose:binary $sample) || return 1
     fi
 }
 
@@ -39,7 +39,7 @@ test_unparser() {
     if [ -n "$cleanup" ]; then
 	rm -f rose_$sample.s $sample.new $sample.dump
     else
-	./execFormatsTest -rose:read_binary_file_format_only -rose:binary $sample
+	(set -x; ./execFormatsTest -rose:read_binary_file_format_only -rose:binary $sample) || return 1
     fi
 }
 
@@ -51,7 +51,7 @@ test_disassembler() {
 	local basename=$(basename $sample)
 	rm -f rose_$basename.s $basename.new $basename.dump
     else
-        ./disassemble -rose:binary $sample
+	(set -x; ./disassemble -rose:binary --show-bad $sample) || return 1
     fi
 }
 
@@ -63,7 +63,7 @@ test_assembler() {
 	local basename=$(basename $sample)
 	rm -f rose_$basename.s $basename.new $basename.dump
     else
-	./disassemble -rose:binary --reassemble $sample
+	(set -x; ./disassemble -rose:binary --reassemble --show-bad $sample) || return 1
     fi
 }
 
