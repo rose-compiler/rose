@@ -34,8 +34,10 @@ testExampleRoseWorkspace:
 	./build --srcpath $(absolute_path_srcdir); \
 	echo "Building the compile tree in the source tree for the example ROSE workspace."; \
 	./configure --with-boost=$(ac_boost_path) --prefix=@prefix@; \
-	make; \
-	make check
+	make;
+
+# This may be the cause of recursion in the make "check rule"
+#	make check
 
 
 # DQ (12/7/2009): Run a test of the ROSE example workspace generator.
