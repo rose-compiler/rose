@@ -235,7 +235,8 @@ private:
 
     /** Throw an exceptions if the instruction requires the "Mod" part of the ModR/M byte to have the value 3. */
     void requireMemory() const {
-        ROSE_ASSERT(modregrmByteSet);
+        if (!modregrmByteSet)
+            throw ExceptionX86("requires Mod/RM byte", this);
         if (modeField == 3)
             throw ExceptionX86("requires memory", this);
     }
