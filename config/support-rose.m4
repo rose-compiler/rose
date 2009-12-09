@@ -975,7 +975,8 @@ SETUP_EDG
 # Find md5 or md5sum and create a signature for ROSE binary compatibility
 AC_CHECK_PROGS(MD5, [md5 md5sum], [false])
 AC_SUBST(MD5)
-if test -e ${srcdir}/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection; then
+# if test -e ${srcdir}/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection; then
+if test -e ${srcdir}/src/frontend/CxxFrontend/EDG/Makefile.am; then
   has_edg_source=yes
   if test "x$MD5" = "xfalse"; then
     AC_MSG_WARN([Could not find either md5 or md5sum -- building binary EDG tarballs is disabled])

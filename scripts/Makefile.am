@@ -31,7 +31,7 @@ testExampleRoseWorkspace:
 	$(srcdir)/buildExampleRoseWorkspaceScript.sh $(absolute_path_srcdir) $(ExampleRoseWorkspaceTestDirectory) || exit 1
 	echo "Exiting after calling script: $(srcdir)/buildExampleRoseWorkspaceScript.sh"
 	cd $(ExampleRoseWorkspaceTestDirectory)/buildExampleRoseWorkspaceDirectory; \
-	./build --srcpath $(absolute_path_srcdir); \
+	./build --srcpath $(absolute_path_srcdir) --verbose; \
 	echo "Building the compile tree in the source tree for the example ROSE workspace."; \
 	./configure --with-boost=$(ac_boost_path) --prefix=@prefix@; \
 	make;
@@ -41,7 +41,10 @@ testExampleRoseWorkspace:
 
 
 # DQ (12/7/2009): Run a test of the ROSE example workspace generator.
-check-local:
+# This requires an installed version of ROSE so it should be an 
+# installcheck rule.
+# check-local:
+installcheck:
 	$(MAKE) testExampleRoseWorkspace
 
 clean-local:
