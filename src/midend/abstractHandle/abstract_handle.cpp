@@ -1,6 +1,9 @@
 /*! 
  * Generic implementation for abstract handles of language constructs
  */
+// tps (12/09/2009) : Playing with precompiled headers in Windows. Requires rose.h as the first line in source files.
+#include "rose.h"
+
 #include "abstract_handle.h"
 #include <utility>
 #include <sstream>

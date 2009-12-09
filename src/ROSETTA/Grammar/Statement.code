@@ -2731,6 +2731,8 @@ SgStatement::get_symbol_from_symbol_table() const
    {
      printf ("Error: virtual function SgStatement::get_symbol_from_symbol_table() called on base class SgStatement = %p = %s \n",this,this->class_name().c_str());
      ROSE_ASSERT(false);
+	// tps (12/9/2009) : MSC requires a return value
+     return NULL;
    }
 
 
