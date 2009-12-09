@@ -214,10 +214,6 @@ private:
      * We only handle instructions that appear as the first instruction in an ELF .plt entry. */
     static rose_addr_t get_indirection_addr(SgAsmInstruction*);
 
-    /** Creates a map of basic blocks and fills them with the appropriate instructions. The instructions are reparented to be
-     *  children of the returned basic blocks.  This function returns only basic blocks that have at least one instruction. */
-    std::map<rose_addr_t, SgAsmBlock*> buildBasicBlocks(const Disassembler::InstructionMap&, const BasicBlockStarts&) const;
-
     /** Update basic blocks so that every function start also starts a basic block. */
     static void update_basic_blocks(const FunctionStarts& func_starts, BasicBlockStarts& bb_starts/*out*/);
 

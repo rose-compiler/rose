@@ -324,41 +324,6 @@ Partitioner::buildTree(const Disassembler::InstructionMap& insns, const BasicBlo
     return retval;
 }
 
-#if 0 /*FIXME: no longer used? [RPM 2009-12-08]*/
-/* Organize instructions into basic blocks based on address of first insn in each block. */
-std::map<rose_addr_t, SgAsmBlock*>
-Partitioner::buildBasicBlocks(const Disassembler::InstructionMap &c_insns, const BasicBlockStarts &bb_starts) const
-{
-    std::map<rose_addr_t, SgAsmBlock*> retval;
-    Disassembler::InstructionMap insns(c_insns);
-    while (insns.size()>0) {
-        /* Create the basic block */
-        Disassembler::InstructionMap::iterator ii = insns.begin();
-        SgAsmBlock *bb = new SgAsmBlock;
-        bb->set_id(ii->first);
-        bb->set_address(ii->first);
-        retval.insert(std::make_pair(ii->first, bb));
-
-        /* Insert instructions */
-        while (ii!=insns.end()) {
-            rose_addr_t insn_va = ii->first;
-            SgAsmInstruction *insn = ii->second;
-            ROSE_ASSERT(insn_va==insn->get_address());
-
-            bb->get_statementList().push_back(insn);
-            insn->set_parent(bb);
-            insns.erase(ii);
-
-            insn_va += insn->get_raw_bytes().size();
-            if (bb_starts.find(insn_va)!=bb_starts.end())
-                break;
-            ii = insns.find(insn_va);
-        }
-    }
-    return retval;
-}
-#endif
-
 /* class method */
 rose_addr_t
 Partitioner::value_of(SgAsmValueExpression *e)
