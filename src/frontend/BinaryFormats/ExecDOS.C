@@ -199,8 +199,7 @@ SgAsmDOSFileHeader::add_rm_section(addr_t max_offset)
     if (p_e_total_pages>0)
         rm_end -= 512 - (p_e_last_page_size%512);
 
-    ROSE_ASSERT(rm_end >= rm_offset);
-    addr_t rm_size = rm_end - rm_offset;
+    addr_t rm_size = rm_end>rm_offset ? rm_end-rm_offset : 0;
     if (rm_size == 0)
         return NULL;
 
