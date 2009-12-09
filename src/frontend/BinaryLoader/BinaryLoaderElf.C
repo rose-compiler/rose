@@ -78,6 +78,7 @@ Rose_STL_Container<string> getLdPreload(SgAsmElfFileHeader* /*header*/)
   for(; iter != iterEnd; ++iter){
     ret.push_back(*iter);
   }
+  return ret;
 }
 
 Rose_STL_Container<string> parseLdPath(const std::string& rawPath)
@@ -93,6 +94,7 @@ Rose_STL_Container<string> parseLdPath(const std::string& rawPath)
   for(; iter != iterEnd; ++iter){
     ret.push_back(*iter);
   }
+  return ret;
 }
 Rose_STL_Container<string> getLdLibraryPaths(SgAsmElfFileHeader* /*header*/)
 {
@@ -385,10 +387,10 @@ public:
 
 private:
   SgAsmElfSymbol* p_symbol;
+  SgAsmElfSymbolSection* p_parent;
   SgAsmElfSymverEntry* p_version_entry;
   SgAsmElfSymverDefinedEntry* p_version_def;
   SgAsmElfSymverNeededAux* p_version_need;
-  SgAsmElfSymbolSection* p_parent;
 };
 
 
@@ -799,7 +801,6 @@ relocate_X86_JMP_SLOT(SgAsmElfRelocEntry* reloc,
     sourceSymbol->get_value() + (sourceSection->get_mapped_actual_rva() - sourceSection->get_mapped_preferred_rva());
 
   SgFileContentList contents = targetSection->get_data();
-  const rose_addr_t reloc_value = symbol_va;
 
   if(addrSize == 4){
     ROSE_ASSERT(symbol_va <= UINT_MAX);
@@ -817,7 +818,7 @@ relocate_X86_JMP_SLOT(SgAsmElfRelocEntry* reloc,
     if(sourceSection)
       sourceSectionName = sourceSection->get_name()->c_str();
 
-    printf("*0x%08"PRIx64"[%s]=0x%08X"PRIx64"[%s]\n",reloc_va,targetSectionName,symbol_va,sourceSectionName);
+    printf("*0x%08"PRIx64"[%s]=0x%08"PRIx64"[%s]\n",reloc_va,targetSectionName,symbol_va,sourceSectionName);
   }
 
 
@@ -833,7 +834,7 @@ relocate_X86_64_RELATIVE(SgAsmElfRelocEntry* reloc,
   ROSE_ASSERT(NULL != reloc);
   ROSE_ASSERT(NULL != parentSection); // could fix to just use getEnclosingNode
 
-  SgAsmElfSection* linkedSection = parentSection->get_linked_section();
+  //SgAsmElfSection* linkedSection = parentSection->get_linked_section();
   //ROSE_ASSERT(NULL != linkedSymbolSection); 
 
   ROSE_ASSERT(0 == reloc->get_sym());// _RELATIVE relocs must set their symbol index to zero
@@ -874,7 +875,7 @@ relocate_X86_64_RELATIVE(SgAsmElfRelocEntry* reloc,
   if(get_verbose() > 0){
     const char* targetSectionName = targetSection->get_name()->c_str();
 
-    printf("*0x%08"PRIx64"[%s]=0x%08X"PRIx64"\n",reloc_va,targetSectionName,reloc_value);
+    printf("*0x%08"PRIx64"[%s]=0x%08"PRIx64"\n",reloc_va,targetSectionName,reloc_value);
   }
 }
 
@@ -958,7 +959,7 @@ relocate_X86_64_64(SgAsmElfRelocEntry* reloc,
     if(sourceSection)
       sourceSectionName = sourceSection->get_name()->c_str();
 
-    printf("*0x%08"PRIx64"[%s]=0x%08X"PRIx64"[%s]\n",reloc_va,targetSectionName,&reloc_value,sourceSectionName);
+    printf("*0x%08"PRIx64"[%s]=0x%08"PRIx64"[%s]\n",reloc_va,targetSectionName,reloc_value,sourceSectionName);
   }
 }
 
@@ -992,7 +993,7 @@ void performRelocation(SgAsmElfRelocEntry* reloc,
     const char* relocStr="";
     if(header)
       relocStr = reloc->to_string(reloc->get_type(),isa);
-    printf("%16s '%25s' 0x%016x",relocStr,symbolName.c_str(),reloc->get_r_offset());
+    printf("%16s '%25s' 0x%016lx",relocStr,symbolName.c_str(),reloc->get_r_offset());
   }
 
     // TODO support other than x86
@@ -1065,6 +1066,7 @@ void performRelocations(SgAsmElfFileHeader* elfHeader,
   }
 }
 
+#if 0
 VersionedSymbol makeVersionedSymbol(SgAsmElfSymbol* symbol)
 {
   VersionedSymbol vsymbol(symbol);
@@ -1103,7 +1105,7 @@ VersionedSymbol makeVersionedSymbol(SgAsmElfSymbol* symbol)
   }
   
 }
-
+#endif
 
 // [ Reference Elf TIS Portal Formats Specification, Version 1.1 ] 
 bool relocateInterpLibraries(SgAsmInterpretation* interp)
@@ -1151,7 +1153,7 @@ bool relocateInterpLibraries(SgAsmInterpretation* interp)
       for(size_t sym=0; sym< elfSection->get_symbols()->get_symbols().size(); ++sym){
 	SgAsmElfSymbol* symbol = elfSection->get_symbols()->get_symbols()[sym];
 	if(verbose)
-	  printf("Considering symbol [%d] - '%s' : ", sym, symbol->get_name()->c_str());
+	  printf("Considering symbol [%zu] - '%s' : ", sym, symbol->get_name()->c_str());
 
 	VersionedSymbol symver = versionResolver.get_versioned_symbol(symbol);
 	if(symver.get_is_local()){
@@ -1233,6 +1235,7 @@ bool relocateInterpLibraries(SgAsmInterpretation* interp)
     ROSE_ASSERT(NULL != elfHeader);
     performRelocations(elfHeader, extentSortedSections,masterSymbolMap);
   }  
+  return true;
 }
 
 }// end namespace ElfSupport
@@ -1253,7 +1256,7 @@ bool BinaryLoaderElf::relocateAllLibraries(SgBinaryComposite* binaryFile)
     BinaryLoader::ElfSupport::relocateInterpLibraries(binaryFile->get_interpretations()->get_interpretations()[i]);
   }
   
-
+  return true;
 
   /*
   // 1. Get section map (name -> list<section*>)
@@ -1754,7 +1757,7 @@ relocate_X86_Symbol(const SgAsmElfRelocEntry* reloc,
     if(sourceSection)
       sourceSectionName = sourceSection->get_name()->c_str();
 
-    printf("*0x%08"PRIx64"[%s]=0x%08X"PRIx64"[%s]\n",reloc_va,targetSectionName,symbol_va,sourceSectionName);
+    printf("*0x%08"PRIx64"[%s]=0x%08"PRIx64"[%s]\n",reloc_va,targetSectionName,symbol_va,sourceSectionName);
   }
 }
 
@@ -1876,7 +1879,7 @@ relocate_386_32(const SgAsmElfRelocEntry* reloc,
     if(sourceSection)
       sourceSectionName = sourceSection->get_name()->c_str();
 
-    printf("*0x%08"PRIx64"[%s]=0x%08X"PRIx64"[%s]\n",reloc_va,targetSectionName,symbol_va,sourceSectionName);
+    printf("*0x%08"PRIx64"[%s]=0x%08"PRIx64"[%s]\n",reloc_va,targetSectionName,symbol_va,sourceSectionName);
   }
 }
 

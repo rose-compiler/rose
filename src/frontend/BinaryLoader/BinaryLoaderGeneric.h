@@ -15,6 +15,9 @@ class BinaryLoaderGeneric
   void set_perform_dynamic_linking(bool);
   bool get_perform_dynamic_linking() const;
 
+  void set_perform_layout(bool);
+  bool get_perform_layout() const;
+
   void set_perform_relocations(bool);
   bool get_perform_relocations() const;
 
@@ -75,6 +78,7 @@ class BinaryLoaderGeneric
  private: 
   int p_verbose;
   bool p_perform_dynamic_linking;
+  bool p_perform_layout;
   bool p_perform_relocations;
   bool p_perform_disassembly;
 };
