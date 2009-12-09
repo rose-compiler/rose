@@ -3752,7 +3752,7 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
                 FUNC_GRAPH       = 0x020,               /**< Implied by inter-basicblock branching */
                 FUNC_USERDEF     = 0x040,               /**< User-defined algorithm. See Partitioner::addFunctionDetector(). */
 		FUNC_INTERPAD    = 0x080,		/**< Created to represent NOP padding between other functions. */
-		FUNC_DISCONT     = 0x100,		/**< Blocks of function are not contiguous. */
+		FUNC_DISCONT     = 0x100,		/**< Blocks of function are not contiguous in memory. */
 		FUNC_INSNHEAD    = 0x200,		/**< For initial instructions not in any other function (is always run) */
                 FUNC_DEFAULT     = 0x3ff                /**< Default value for Partitioner class */
         };

@@ -127,60 +127,84 @@ Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, Addre
 {
     InstructionMap insns;
     SgAsmInstruction *insn = NULL;
-    rose_addr_t va = start_va;
+    rose_addr_t va=0, next_va=start_va;
 
     if (p_debug)
         fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: disassembling basic block\n", start_va);
 
-    while (1) {
-        /* Disassemble the instruction */
-        try {
-            insn = disassembleOne(map, va, NULL);
-        } catch(const Exception &e) {
-            if ((p_search & SEARCH_UNKNOWN) && e.bytes.size()>0) {
-                insn = make_unknown_instruction(e);
-            } else {
-                if (insns.size()==0 || !(p_search & SEARCH_DEADEND)) {
-                    if (p_debug)
-                        fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: disassembly failed in basic block 0x%08"PRIx64": %s\n",
-                                e.ip, start_va, e.mesg.c_str());
-                    for (InstructionMap::iterator ii=insns.begin(); ii!=insns.end(); ++ii)
-                        SageInterface::deleteAST(ii->second);
-                    throw;
+    do { /*tail recursion*/
+
+        /* Disassemble each instruction of what we naively consider to be a basic block (semantic analysis may prove
+         * otherwise). This loop exits locally if we reach an address that cannot be disassembled (and we're not calling
+         * make_unknown_instruction()) or we reach an instruction that naively terminates a basic block.  In the former case,
+         * INSN will be the last instruction, VA is its virtual address, and NEXT_VA is the address of the following
+         * instruction; otherwise INSN is null, VA is the address where disassembly failed, and NEXT_VA is meaningless. */
+        while (1) {
+            va = next_va;
+            try {
+                insn = disassembleOne(map, va, NULL);
+            } catch(const Exception &e) {
+                if ((p_search & SEARCH_UNKNOWN) && e.bytes.size()>0) {
+                    insn = make_unknown_instruction(e);
+                } else {
+                    if (insns.size()==0 || !(p_search & SEARCH_DEADEND)) {
+                        if (p_debug)
+                            fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: "
+                                    "disassembly failed in basic block 0x%08"PRIx64": %s\n",
+                                    e.ip, start_va, e.mesg.c_str());
+                        for (InstructionMap::iterator ii=insns.begin(); ii!=insns.end(); ++ii)
+                            SageInterface::deleteAST(ii->second);
+                        throw;
+                    }
+                    /* Terminate tail recursion. Make sure we don't try to disassemble here again within this call, even if
+                     * semantic analysis can prove that the next instruction address is the only possible successor. */
+                    insn = NULL;
+                    break;
                 }
+            }
+            next_va = va + insn->get_raw_bytes().size();
+            insns.insert(std::make_pair(va, insn));
+            p_ndisassembled++;
+
+            /* Is this the end of a basic block? This is naive logic that bases the decision only on the single instruction.
+             * A more thorough analysis can be performed below in the get_block_successors() call. */          
+            if (insn->terminatesBasicBlock()) {
+                if (p_debug)
+                    fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: \"%s\" at 0x%08"PRIx64" naively terminates block\n",
+                            start_va, unparseMnemonic(insn).c_str(), va);
                 break;
             }
-        }
-        insns.insert(std::make_pair(va, insn));
-        p_ndisassembled++;
 
-        /* Is this the end of a basic block? */
-        if (insn->terminatesBasicBlock()) {
-            if (p_debug)
-                fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: \"%s\" terminates block\n", va, unparseMnemonic(insn).c_str());
-            break;
+            /* Progress report */
+            if (0==p_ndisassembled % 10000)
+                fprintf(stderr, "Disassembler[va 0x%08"PRIx64"]: disassembled %zu instructions\n", va, p_ndisassembled);
         }
 
-        /* Advance to the next instruction */
-        va += insn->get_raw_bytes().size();
-
-        /* Progress report */
-        if (0==p_ndisassembled % 10000)
-            fprintf(stderr, "Disassembler[va 0x%08"PRIx64"]: disassembled %zu instructions\n", va, p_ndisassembled);
-    }
-
-    /* Add last instruction's successors to returned successors. */
-    if (successors) {
-        AddressSet suc = insn->get_successors();
-        successors->insert(suc.begin(), suc.end());
-        if (p_debug) {
-            fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: basic block successors:", start_va);
-            for (AddressSet::iterator si=suc.begin(); si!=suc.end(); si++)
-                fprintf(p_debug, " 0x%08"PRIx64, *si);
-            fprintf(p_debug, "\n");
+        /* Try to figure out the successor addresses.  If we can prove that the only successor is the address following the
+         * last instruction then we can continue disassembling as if this were a single basic block. */
+        bool complete=false;
+        AddressSet suc = get_block_successors(insns, &complete);
+        if (insn && complete && suc.size()==1 && *(suc.begin())==next_va) {
+            if (p_debug) {
+                fprintf(p_debug,
+                        "Disassembler[va 0x%08"PRIx64"]: further analysis proves basic block continues after 0x%08"PRIx64"\n",
+                        start_va, va);
+            }
+        } else {
+            insn = NULL; /*terminate recursion*/
         }
-    }
 
+        /* Save block successors in return value before we exit scope */
+        if (!insn && successors) {
+            successors->insert(suc.begin(), suc.end());
+            if (p_debug) {
+                fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: basic block successors:", start_va);
+                for (AddressSet::iterator si=suc.begin(); si!=suc.end(); si++)
+                    fprintf(p_debug, " 0x%08"PRIx64, *si);
+                fprintf(p_debug, "\n");
+            }
+        }
+    } while (insn);
     return insns;
 }
 
@@ -509,40 +533,36 @@ Disassembler::disassembleInterp(SgAsmInterpretation *interp, AddressSet *success
     const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
     AddressSet worklist;
 
+    /* Use the memory map attached to the interpretation, or build a new one and attach it. */
     MemoryMap *map = interp->get_map();
-    if (!map)
+    if (!map) {
         map = new MemoryMap();
-    
+        for (size_t i=0; i<headers.size(); i++) {
+            if (NULL==interp->get_map()) {
+                Loader *loader = Loader::find_loader(headers[i]);
+                if (p_search & SEARCH_NONEXE) {
+                    loader->map_all_sections(map, headers[i]->get_sections()->get_sections());
+                } else {
+                    loader->map_code_sections(map, headers[i]->get_sections()->get_sections());
+                }
+            }
+        }
+        interp->set_map(map);
+    }
+    if (p_debug) {
+        fprintf(p_debug, "Disassembler: MemoryMap for disassembly:\n");
+        map->dump(p_debug, "    ");
+    }
+
+    /* Seed disassembly with entry points and function symbols from each header. */
     for (size_t i=0; i<headers.size(); i++) {
-        /* Seed disassembly with entry points. */
         SgRVAList entry_rvalist = headers[i]->get_entry_rvas();
         for (size_t j=0; j<entry_rvalist.size(); j++) {
             rose_addr_t entry_va = entry_rvalist[j].get_rva() + headers[i]->get_base_va();
             worklist.insert(entry_va);
         }
-
-        /* Seed disassembly with function entry points. */
         if (p_search & SEARCH_FUNCSYMS)
             search_function_symbols(&worklist, map, headers[i]);
-
-        /* Incrementally build the map describing the relationship between virtual memory and binary file(s), but don't do
-         * this if the interpretation already had a mapping before this function was called. */
-        if (NULL==interp->get_map()) {
-            Loader *loader = Loader::find_loader(headers[i]);
-            if (p_search & SEARCH_NONEXE) {
-                loader->map_all_sections(map, headers[i]->get_sections()->get_sections());
-            } else {
-                loader->map_code_sections(map, headers[i]->get_sections()->get_sections());
-            }
-        }
-    }
-
-    /* Use map stored in interpretation, or save the one we just created. */
-    if (NULL==interp->get_map())
-        interp->set_map(map);
-    if (p_debug) {
-        fprintf(p_debug, "Disassembler: MemoryMap for disassembly:\n");
-        map->dump(p_debug, "    ");
     }
 
     /* Disassemble all that we've mapped, according to aggressiveness settings. */
@@ -608,4 +628,16 @@ Disassembler::mark_referenced_instructions(SgAsmInterpretation *interp, const Me
             file->set_tracking_references(was_tracking);
         throw;
     }
+}
+
+/* Add last instruction's successors to returned successors.  Architecture-specific disassemblers sometimes override this
+ * virtual method to do something more interesting. */
+Disassembler::AddressSet
+Disassembler::get_block_successors(const InstructionMap& insns, bool *complete)
+{
+    ROSE_ASSERT(insns.size()>0);
+    InstructionMap::const_iterator ii = insns.end();
+    --ii;
+    *complete = false; /*FIXME: we can be more sure about some instructions*/
+    return ii->second->get_successors();
 }

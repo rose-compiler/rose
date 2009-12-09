@@ -78,8 +78,7 @@ Partitioner::update_basic_blocks(const FunctionStarts& func_starts, BasicBlockSt
     }
 }
 
-/** Checks consistency of functions, basic blocks, and instructions. Every function should start with a basic block and every
- *  basic block should start with an instruction. */
+/* Checks consistency of functions, basic blocks, and instructions. */
 void
 Partitioner::check_consistency(const Disassembler::InstructionMap& insns, const BasicBlockStarts& bb_starts,
                                const FunctionStarts& func_starts, bool verbose)
@@ -109,7 +108,56 @@ Partitioner::check_consistency(const Disassembler::InstructionMap& insns, const 
         fprintf(stderr, "============== Consistency checks out OK =======\n");
     }
 }
-            
+
+/* Checks final consistency of AST.  Note that this is very slow! */
+void
+Partitioner::check_consistency(const Disassembler::InstructionMap& insns)
+{
+    for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+        SgAsmInstruction *insn = ii->second;
+
+        /* Every instruction belongs to a basic block which points to that instruction. */
+        SgAsmBlock *block = isSgAsmBlock(insn->get_parent());
+        {
+            ROSE_ASSERT(block!=NULL);
+            bool found = false;
+            const SgAsmStatementPtrList &iv = block->get_statementList();
+            for (size_t i=0; !found && i<iv.size(); i++) {
+                ROSE_ASSERT(isSgAsmInstruction(iv[i]));
+                found = insn == iv[i];
+            }
+            ROSE_ASSERT(found);
+        }
+
+        /* Every basic block belongs to a function which points to that basic block. */
+        SgAsmFunctionDeclaration *function = isSgAsmFunctionDeclaration(block->get_parent());
+        {
+            ROSE_ASSERT(function!=NULL);
+            bool found = false;
+            const SgAsmStatementPtrList &bv = function->get_statementList();
+            for (size_t i=0; !found && i<bv.size(); i++) {
+                ROSE_ASSERT(isSgAsmBlock(bv[i]));
+                found = block == bv[i];
+            }
+            ROSE_ASSERT(found);
+        }
+
+        /* Every function belongs to the top block which points to that function. */
+        SgAsmBlock *top = isSgAsmBlock(function->get_parent());
+        {
+            ROSE_ASSERT(top!=NULL);
+            bool found = false;
+            const SgAsmStatementPtrList &fv = top->get_statementList();
+            for (size_t i=0; !found && i<fv.size(); i++) {
+                ROSE_ASSERT(fv[i]!=NULL);
+                ROSE_ASSERT(isSgAsmFunctionDeclaration(fv[i]));
+                found = function == fv[i];
+            }
+            ROSE_ASSERT(found);
+        }
+    }
+}
+
 /* Find beginnings of functions. */
 Partitioner::FunctionStarts
 Partitioner::detectFunctions(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insns,
@@ -182,8 +230,13 @@ SgAsmBlock*
 Partitioner::buildTree(const Disassembler::InstructionMap& insns, const BasicBlockStarts& bb_starts,
                        const FunctionStarts& func_starts) const
 {
+    /* This can be cleared for debugging, in which case the discontiguous function chunks marked with FUNC_DISCONT are not
+     * folded into their main function.  When set, they are folded in and the FUNC_DISCONT bit is set for the main function to
+     * indicate that it contains discontiguous chunks. */
+    static const bool join_discont_chunks = true;
+
+    check_consistency(insns, bb_starts, func_starts, true);
     SgAsmBlock *retval = new SgAsmBlock();
-    std::map<rose_addr_t, SgAsmBlock*> bbs = buildBasicBlocks(insns, bb_starts);
     std::map<rose_addr_t, SgAsmFunctionDeclaration*> funcs;
 
     /* Every function start must also be a basic block start. This buildTree method will work fine even if we encounter a
@@ -194,156 +247,84 @@ Partitioner::buildTree(const Disassembler::InstructionMap& insns, const BasicBlo
     }
 
     /* The worklist holds instruction addresses that need to be processed. */
-    Disassembler::AddressSet workset;
+    Disassembler::AddressSet workset, saved;
     for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ii++)
         workset.insert(ii->first);
         
-    /* Process instructions through the outer loop in order of address, but the inner loop will remove reachable instructions
-     * in arbitrary order if instructions overlap. */
-    while (workset.size()>0) {
-        rose_addr_t addr = *(workset.begin());
-        Disassembler::InstructionMap::const_iterator ii = insns.find(addr);
-        FunctionStarts::const_iterator fi = func_starts.find(addr); ROSE_ASSERT(fi!=func_starts.end());
-        BasicBlockStarts::const_iterator bi = bb_starts.find(addr); ROSE_ASSERT(bi!=bb_starts.end());
-
-        /* Build the function IR node */
-        SgAsmFunctionDeclaration *func = new SgAsmFunctionDeclaration;
-        func->set_address(addr); /*lowest instruction address of function, but not necessarily the entry point*/
-        retval->get_statementList().push_back(func);
-        func->set_parent(retval);
-        func->set_name(fi->second.name);
-        func->set_reason(fi->second.reason);
+    /* First pass is for normal functions, second pass is for detached chunks. */
+    for (size_t pass=0; pass<2; pass++) {
         
-        /* Build the basic blocks */
-        SgAsmBlock *block = NULL;
-        while (1) {
-            if (block==NULL) {
-                block = new SgAsmBlock;
-                block->set_id(addr);                    /* I'm not sure what this is for. [RPM 2009-12-07] */
-                block->set_address(addr);
-                func->get_statementList().push_back(block);
-                block->set_parent(func);
+        /* Process instructions through the outer loop in order of address, but the inner loop will remove reachable instructions
+         * in arbitrary order if instructions overlap. */
+        while (workset.size()>0) {
+            rose_addr_t addr = *(workset.begin());
+            Disassembler::InstructionMap::const_iterator ii = insns.find(addr);
+            FunctionStarts::const_iterator fi = func_starts.find(addr); ROSE_ASSERT(fi!=func_starts.end());
+            BasicBlockStarts::const_iterator bi = bb_starts.find(addr); ROSE_ASSERT(bi!=bb_starts.end());
+            bool is_detached = (fi->second.reason & SgAsmFunctionDeclaration::FUNC_DISCONT)!=0;
+
+            /* Get or create the SgAsmFunctionDeclaration; or save work for second pass. */
+            SgAsmFunctionDeclaration* func = NULL;
+            if (0==pass && is_detached && join_discont_chunks) {
+                /* Detached chunks are saved for the second pass */
+                do {
+                    saved.insert(addr);
+                    workset.erase(addr);
+                    addr += ii->second->get_raw_bytes().size();
+                    ii = insns.find(addr);
+                } while (ii!=insns.end() && func_starts.find(ii->first)==func_starts.end());
+                continue;
+            } else if (1==pass && is_detached) {
+                /* Use an existing function IR node */
+                ROSE_ASSERT(funcs.find(fi->second.part_of)!=funcs.end());
+                func = funcs[fi->second.part_of];
+                func->set_reason(func->get_reason() | SgAsmFunctionDeclaration::FUNC_DISCONT);
+            } else {
+                /* Build a new function IR node */
+                func = new SgAsmFunctionDeclaration;
+                func->set_address(addr); /*lowest instruction address of function, but not necessarily the entry point*/
+                retval->get_statementList().push_back(func);
+                func->set_parent(retval);
+                func->set_name(fi->second.name);
+                func->set_reason(fi->second.reason);
+                func->set_entry_va(addr);
+                funcs[addr] = func;
             }
-            block->get_statementList().push_back(ii->second);
-            ii->second->set_parent(block);
-            workset.erase(addr);
 
-            addr += ii->second->get_raw_bytes().size();
-            ii = insns.find(addr);
-            if (ii==insns.end())
-                break; /*reached the end of an instruction sequence, block, and function*/
-            if (func_starts.find(addr)!=func_starts.end())
-                break; /*reached a new function; choose next lowest insn so functions are defined in address order*/
-            if (bb_starts.find(addr)!=bb_starts.end())
-                block = NULL; /*reached a new basic block*/
-        }
-    }
+            /* Build the basic blocks */
+            SgAsmBlock *block = NULL;
+            while (1) {
+                if (block==NULL) {
+                    block = new SgAsmBlock;
+                    block->set_id(addr);                    /* I'm not sure what this is for. [RPM 2009-12-07] */
+                    block->set_address(addr);
+                    func->get_statementList().push_back(block);
+                    block->set_parent(func);
+                }
+                block->get_statementList().push_back(ii->second);
+                ii->second->set_parent(block);
+                workset.erase(addr);
 
-#if 0 /*Old code replaced by above code. [RPM 2009-12-07]*/
-    /* If there are any basic blocks whose addresses are less than the first known function, then create a new function to
-     * hold all such basic blocks. */
-    if (bbs.size()>0) {
-        rose_addr_t lowest_func_addr = func_starts.size()>0 ? func_starts.begin()->first : bbs.begin()->first;
-        rose_addr_t lowest_bb_addr = bbs.begin()->first;
-        if (lowest_bb_addr < lowest_func_addr || func_starts.size()==0) {
-            SgAsmFunctionDeclaration *f = new SgAsmFunctionDeclaration;
-            f->set_address(lowest_bb_addr);
-            funcs.insert(std::make_pair(lowest_bb_addr, f));
-            retval->get_statementList().push_back(f);
-            f->set_parent(retval);
-        }
-    }
-
-    /* Build the list of functions based on their entry addresses. We'll populate them with basic blocks below. Discard
-     * function starts that don't have any basic blocks (we could keep them as empty functions, but various analyses assume
-     * that a function always has at least one instruction). */
-    for (FunctionStarts::const_iterator i = func_starts.begin(); i != func_starts.end(); ++i) {
-        if (bbs.find(i->first)!=bbs.end()) {
-            SgAsmFunctionDeclaration* f = new SgAsmFunctionDeclaration();
-            f->set_address(i->first);
-            f->set_name(i->second.name);
-            f->set_reason(i->second.reason);
-            funcs.insert(std::make_pair(i->first, f));
-            retval->get_statementList().push_back(f);
-            f->set_parent(retval);
-        }
-    }
-
-    /* Add basic blocks to functions */
-    for (std::map<rose_addr_t, SgAsmBlock*>::iterator bbi=bbs.begin(); bbi!=bbs.end(); ++bbi) {
-        SgAsmBlock *bb = bbi->second;
-        uint64_t bb_va = bb->get_address();
-        ROSE_ASSERT(bbi->first==bb->get_address());
-
-        /* This is based on the algorithm in putInstructionsIntoBasicBlocks, with the same restrictions.  This is not quite as
-         * good as what IDA does -- I've read that it takes control flow into account so functions can be non-contiguous in
-         * memory. [Willcock r587 2008-05-30] */
-        std::map<rose_addr_t, SgAsmFunctionDeclaration*>::const_iterator fi = funcs.upper_bound(bb_va);
-        ROSE_ASSERT(fi!=funcs.begin());
-        --fi;
-        SgAsmFunctionDeclaration *func = fi->second;
-        func->get_statementList().push_back(bb);
-        bb->set_parent(func);
-    }
-
-    /* Make sure every function has at least one basic block */
-    for (std::map<rose_addr_t, SgAsmFunctionDeclaration*>::iterator fi=funcs.begin(); fi!=funcs.end(); ++fi) {
-        SgAsmFunctionDeclaration *func = fi->second;
-        ROSE_ASSERT(func->get_statementList().size()>0);
-    }
-#endif
-
-#if 0 /* Turned off because this is very slow, but kept here for future debugging. */
-    /* Sanity checks */
-    for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-        SgAsmInstruction *insn = ii->second;
-
-        /* Every instruction belongs to a basic block which points to that instruction. */
-        SgAsmBlock *block = isSgAsmBlock(insn->get_parent());
-        {
-            ROSE_ASSERT(block!=NULL);
-            bool found = false;
-            const SgAsmStatementPtrList &iv = block->get_statementList();
-            for (size_t i=0; !found && i<iv.size(); i++) {
-                ROSE_ASSERT(isSgAsmInstruction(iv[i]));
-                found = insn == iv[i];
+                addr += ii->second->get_raw_bytes().size();
+                ii = insns.find(addr);
+                if (ii==insns.end())
+                    break; /*reached the end of an instruction sequence, block, and function*/
+                if (func_starts.find(addr)!=func_starts.end())
+                    break; /*reached a new function; choose next lowest insn so functions are defined in address order*/
+                if (bb_starts.find(addr)!=bb_starts.end())
+                    block = NULL; /*reached a new basic block*/
             }
-            ROSE_ASSERT(found);
         }
 
-        /* Every basic block belongs to a function which points to that basic block. */
-        SgAsmFunctionDeclaration *function = isSgAsmFunctionDeclaration(block->get_parent());
-        {
-            ROSE_ASSERT(function!=NULL);
-            bool found = false;
-            const SgAsmStatementPtrList &bv = function->get_statementList();
-            for (size_t i=0; !found && i<bv.size(); i++) {
-                ROSE_ASSERT(isSgAsmBlock(bv[i]));
-                found = block == bv[i];
-            }
-            ROSE_ASSERT(found);
-        }
-
-        /* Every function belongs to the top block which points to that function. */
-        SgAsmBlock *top = isSgAsmBlock(function->get_parent());
-        ROSE_ASSERT(top==retval);
-        {
-            ROSE_ASSERT(top!=NULL);
-            bool found = false;
-            const SgAsmStatementPtrList &fv = top->get_statementList();
-            for (size_t i=0; !found && i<fv.size(); i++) {
-                ROSE_ASSERT(fv[i]!=NULL);
-                ROSE_ASSERT(isSgAsmFunctionDeclaration(fv[i]));
-                found = function == fv[i];
-            }
-            ROSE_ASSERT(found);
-        }
+        workset = saved;
+        saved.clear();
     }
-#endif
 
+    check_consistency(insns); /*DEBUGGING [RPM 2009-12-09]*/
     return retval;
 }
 
+#if 0 /*FIXME: no longer used? [RPM 2009-12-08]*/
 /* Organize instructions into basic blocks based on address of first insn in each block. */
 std::map<rose_addr_t, SgAsmBlock*>
 Partitioner::buildBasicBlocks(const Disassembler::InstructionMap &c_insns, const BasicBlockStarts &bb_starts) const
@@ -376,6 +357,7 @@ Partitioner::buildBasicBlocks(const Disassembler::InstructionMap &c_insns, const
     }
     return retval;
 }
+#endif
 
 /* class method */
 rose_addr_t

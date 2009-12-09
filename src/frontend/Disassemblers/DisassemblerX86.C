@@ -2,8 +2,10 @@
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
+#include <sstream>
 
 #include "integerOps.h"
+#include "findConstants.h"
 
 /* See header file for full documentation. */
 
@@ -163,8 +165,71 @@ DisassemblerX86::make_unknown_instruction(const Exception &e)
     return insn;
 }
 
+/* Used by get_block_successors(). Override superclass methods so that they doesn't try to traverse the AST, which hasn't been
+ * created yet. */
+class BlockSuccessorsPolicy: public FindConstantsPolicy {
+public:
+    void startInstruction(SgAsmInstruction* insn) {
+        addr = insn->get_address();
+        newIp = number<32>(addr);
+        rsets[addr].setToBottom(); //optional?
+        currentRset = rsets[addr];
+        currentInstruction = isSgAsmx86Instruction(insn);
+    }
+};
 
+/* Obtain block successors */
+Disassembler::AddressSet
+DisassemblerX86::get_block_successors(const InstructionMap& insns, bool* complete)
+{
+    AddressSet successors = Disassembler::get_block_successors(insns, complete);
+    InstructionMap::const_iterator ii = insns.end();
+    --ii;
+    SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(ii->second);
+    ROSE_ASSERT(last_insn!=NULL);
 
+    /* FIXME: Instruction semantics are not implemented for AMD64 and will fail an assertion. [RPM 2009-12-08]*/
+    if (last_insn->get_baseSize()==x86_insnsize_64) {
+        static bool printed=false;
+        if (!printed) {
+            fprintf(stderr, "DisassemblerX86: FIXME: instruction semantics not implemented for 64-bit code\n");
+            printed = true;
+        }
+        return successors;
+    }
+
+    if (p_debug)
+        fprintf(p_debug, "block 0x%08"PRIx64" semantic analysis... ", insns.begin()->first);
+    
+    BlockSuccessorsPolicy policy;
+    X86InstructionSemantics<BlockSuccessorsPolicy, XVariablePtr> semantics(policy);
+    for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ii++) {
+        semantics.processInstruction(isSgAsmx86Instruction(ii->second));
+#if 0   /*Turn on for even more debugging*/
+        if (p_debug) {
+            std::ostringstream s;
+            s <<unparseInstructionWithAddress(ii->second) <<"\n" <<policy.currentRset;
+            s <<"    ip = " <<policy.readIP() <<"\n";
+            fputs(s.str().c_str(), p_debug);
+        }
+#endif
+    }
+    XVariablePtr<32> newip = policy.readIP();
+    if (newip->get().name==0) {
+        if (p_debug)
+            fprintf(p_debug, "yields ip=0x%08"PRIx64"\n", newip->get().offset);
+        successors.clear();
+        successors.insert(newip->get().offset);
+        /* Assume that a CALL instruction eventually executes a RET that causes execute to resume at the address following the
+         * CALL. This is true 99% of the time. */
+        if (last_insn->get_kind()==x86_call)
+            successors.insert(last_insn->get_address() + last_insn->get_raw_bytes().size());
+        *complete = true; /*this is the complete set of successors*/
+    } else if (p_debug) {
+        fprintf(p_debug, "yields ip=<unknown>\n");
+    }
+    return successors;
+}
 
 /*========================================================================================================================
  * Methods for reading bytes of the instruction.  These keep track of how much has been read, which in turn is used by

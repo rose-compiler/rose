@@ -67,6 +67,9 @@ main(int argc, char *argv[])
             do_debug = true;    /* dump lots of debugging information */
         } else if (!strcmp(argv[i], "--quiet")) {
             do_quiet = true;    /* do not emit the instructions to stdout (they're still stored in the *.dump file) */
+        } else if (argv[i][0]=='-') {
+            printf("switch passed along to ROSE proper: %s\n", argv[i]);
+            new_argv[new_argc++] = argv[i];
         } else {
             new_argv[new_argc++] = argv[i];
         }
@@ -96,8 +99,10 @@ main(int argc, char *argv[])
         /* Disassemble instructions, linking them into the interpretation */
         Disassembler::BadMap bad;
         d->disassemble(interp, NULL, &bad);
-        if (!do_quiet)
+        if (!do_quiet) {
             fputs(unparseAsmInterpretation(interp).c_str(), stdout);
+            fputs("\n\n", stdout);
+        }
 
         /* Results */
         printf("disassembled %zu instruction%s + %zu failure%s for this interpretation",
@@ -113,6 +118,21 @@ main(int argc, char *argv[])
             }
         } else {
             printf("\n");
+        }
+        printf("used this memory map:\n");
+        interp->get_map()->dump(stdout, "    ");
+
+        /* Figure out what part of the memory mapping does not have instructions. */
+        ExtentMap extents=interp->get_map()->va_extents();
+        std::vector<SgNode*> insns = NodeQuery::querySubTree(interp, V_SgAsmInstruction);
+        for (size_t j=0; j<insns.size(); j++) {
+            SgAsmInstruction *insn = isSgAsmInstruction(insns[j]);
+            extents.erase(insn->get_address(), insn->get_raw_bytes().size());
+        }
+        size_t unused = extents.size();
+        if (unused>0) {
+            printf("These addresses (%zu byte%s) do not contain instructions:\n", unused, 1==unused?"":"s");
+            extents.dump_extents(stdout, "    ", NULL, 0);
         }
 
         /* Generate graph of the AST */

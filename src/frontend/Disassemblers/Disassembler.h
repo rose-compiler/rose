@@ -458,6 +458,11 @@ public:
     /** Marks parts of the file that correspond to instructions as having been referenced. */
     void mark_referenced_instructions(SgAsmInterpretation*, const MemoryMap*, const InstructionMap&);
 
+    /** Calculates the successor addresses of a basic block and adds them to a successors set. The successors is always
+     *  non-null when called. If the function is able to determine the complete set of successors then it should set @p
+     *  complete to true before returning. */
+    virtual AddressSet get_block_successors(const InstructionMap&, bool *complete);
+
 private:
     /** Initialize class (e.g., register built-in disassemblers). */
     static void initclass();

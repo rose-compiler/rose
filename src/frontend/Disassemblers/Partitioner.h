@@ -216,8 +216,7 @@ private:
 
     /** Creates a map of basic blocks and fills them with the appropriate instructions. The instructions are reparented to be
      *  children of the returned basic blocks.  This function returns only basic blocks that have at least one instruction. */
-    std::map<rose_addr_t, SgAsmBlock*> buildBasicBlocks(const Disassembler::InstructionMap &insns,
-                                                        const BasicBlockStarts &bb_starts) const;
+    std::map<rose_addr_t, SgAsmBlock*> buildBasicBlocks(const Disassembler::InstructionMap&, const BasicBlockStarts&) const;
 
     /** Update basic blocks so that every function start also starts a basic block. */
     static void update_basic_blocks(const FunctionStarts& func_starts, BasicBlockStarts& bb_starts/*out*/);
@@ -246,13 +245,16 @@ private:
     static rose_addr_t end_of_block(rose_addr_t addr, const Disassembler::InstructionMap&, const BasicBlockStarts&);
 
     /** Return the set of nodes reachable from a given node. */
-    static void discont_subgraph(DiscontGraph& graph, DiscontGraph::iterator gi, Disassembler::AddressSet *result);
+    static void discont_subgraph(DiscontGraph&, DiscontGraph::iterator, Disassembler::AddressSet *result);
 
     /** Checks consistency of functions, basic blocks, and instructions. Every function should start with a basic block and
      *  every basic block should start with an instruction. If verbose is set then the list of function start addresses and
      *  basic block start addresses is displayed; otherwise the lists are displayed only if an inconsistency is detected. */
-    static void check_consistency(const Disassembler::InstructionMap& insns, const BasicBlockStarts& bb_starts,
-                                  const FunctionStarts& func_starts, bool verbose=false);
+    static void check_consistency(const Disassembler::InstructionMap&, const BasicBlockStarts&,
+                                  const FunctionStarts&, bool verbose=false);
+
+    /** Checks final consistency of AST.  Note that this is very slow! */
+    static void check_consistency(const Disassembler::InstructionMap&);
 
     /*======================================================================================================================
      * Data members
