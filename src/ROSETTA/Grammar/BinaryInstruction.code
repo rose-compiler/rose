@@ -64,8 +64,14 @@ HEADER_BINARY_INSTRUCTION_START
 		std::vector<VirtualBinCFG::CFGEdge> cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info);
 		std::vector<VirtualBinCFG::CFGEdge> cfgBinInEdges(const VirtualBinCFG::AuxiliaryInformation* info);
 		void append_sources( SgAsmInstruction* instruction );
-		virtual bool terminatesBasicBlock() {abort();} //subclasses must redefine
-		virtual std::set<rose_addr_t> get_successors() {abort();} //subclasses must redefine
+		virtual bool terminatesBasicBlock() {abort();
+			// tps (12/9/2009) : MSC requires a return value
+		     return false;
+		} //subclasses must redefine
+		virtual std::set<rose_addr_t> get_successors() {abort();
+			// tps (12/9/2009) : MSC requires a return value
+		     return false;
+		} //subclasses must redefine
 HEADER_BINARY_INSTRUCTION_END
 
 
@@ -4227,6 +4233,8 @@ SOURCE_BINARY_EXPRESSION_START
 
 SgAsmType* SgAsmExpression::get_type() {
   ROSE_ASSERT (!"Cannot get the type of this SgAsmExpression");
+	// tps (12/9/2009) : MSC requires a return value
+     return NULL;
 }
 
 SOURCE_BINARY_EXPRESSION_END
@@ -4456,6 +4464,9 @@ SOURCE_BINARY_REGISTER_REFERENCE_EXPRESSION_START
 // Note that the auto-generated version of this is const
 SgAsmType* SgAsmRegisterReferenceExpression::get_type() {
   ROSE_ASSERT (false);
+	// tps (12/9/2009) : MSC requires a return value
+     return NULL;
+  
 }
 
 SOURCE_BINARY_REGISTER_REFERENCE_EXPRESSION_END

@@ -1,3 +1,5 @@
+// tps (12/09/2009) : Playing with precompiled headers in Windows. Requires rose.h as the first line in source files.
+#include "rose.h"
 // Author: Markus Schordan
 // $Id: AstPDFGeneration.C,v 1.5 2007/02/19 16:08:38 vuduc2 Exp $
 

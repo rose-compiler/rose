@@ -1,3 +1,5 @@
+// tps (12/09/2009) : Playing with precompiled headers in Windows. Requires rose.h as the first line in source files.
+#include "rose.h"
 // Author: Markus Schordan
 // $Id: AstNodeVisitMapping.C,v 1.2 2006/04/24 00:21:32 dquinlan Exp $
 

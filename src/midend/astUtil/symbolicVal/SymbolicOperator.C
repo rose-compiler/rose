@@ -1,3 +1,5 @@
+// tps (12/09/2009) : Playing with precompiled headers in Windows. Requires rose.h as the first line in source files.
+#include "rose.h"
 #include "Matrix.h"
 #include "SymbolicExpr.h"
 #include "SymbolicPlus.h"
@@ -74,6 +76,9 @@ SymbolicVal ApplyBinOP( SymOpType t, const SymbolicVal &v1,
   default:
     assert(false);
   }
+	// tps (12/07/2009) This part is never reached
+	assert(false);
+	return NULL;
 }
 
 SymbolicVal operator * (const SymbolicVal &v1, const SymbolicVal &v2)
@@ -133,6 +138,9 @@ SymbolicVal Max( const SymbolicVal &v1, const SymbolicVal &v2,
            default:
               assert(0);
            }
+	// tps (12/07/2009) This part is never reached
+	assert(false);
+	return NULL;
         } 
         
 SymbolicVal Min( const SymbolicVal &v1, const SymbolicVal &v2,
@@ -159,6 +167,9 @@ SymbolicVal Min( const SymbolicVal &v1, const SymbolicVal &v2,
            default:
               assert(0);
            }
+	// tps (12/07/2009) This part is never reached
+	assert(false);
+	return NULL;
          }
 
 class EQOperator : public SymbolicVisitor
@@ -538,6 +549,9 @@ CompareRel Reverse( CompareRel rel)
    default:
       assert(0);
   }
+	// tps (12/07/2009) This part is never reached
+	assert(false);
+	return rel;
 }
 
 bool operator < (const SymbolicVal &v1, const SymbolicVal& v2)

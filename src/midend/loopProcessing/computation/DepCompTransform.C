@@ -1,3 +1,5 @@
+// tps (12/09/2009) : Playing with precompiled headers in Windows. Requires rose.h as the first line in source files.
+#include "rose.h"
 #include <stdlib.h>
 #include <sstream>
 
@@ -296,8 +298,9 @@ OutmostCopyRoot( CopyArrayUnit& unit, DepCompAstRefGraphCreate& refDep, LoopTree
      }
      if (!ep.ReachEnd())
         break;
-     LoopTreeInterface interface;
-     unit.root = GetEnclosingLoop(unit.root, interface);
+// tps (12/09/09) : FIX : Changed the name "interface" to interfaces , as interface is a keyword in MSVC.
+     LoopTreeInterface interfaces;
+     unit.root = GetEnclosingLoop(unit.root, interfaces);
   }
   LoopTreeNode* res = unit.root;
   if (res == 0)
@@ -312,13 +315,14 @@ OutmostCopyRoot( CopyArrayUnit& unit, DepCompAstRefGraphCreate& refDep, LoopTree
                                                                                               
 LoopTreeNode*  DepCompCopyArrayCollect:: ComputeCommonRoot(CopyArrayUnit::NodeSet& refs)
 {
-    LoopTreeInterface interface;
+// tps (12/09/09) : FIX : Changed the name "interface" to interfaces , as interface is a keyword in MSVC.
+	LoopTreeInterface interfaces;
     CopyArrayUnit::NodeSet::const_iterator rp = refs.begin();
 
-    LoopTreeNode *curroot = GetEnclosingLoop((*rp)->GetInfo().stmt, interface);
+    LoopTreeNode *curroot = GetEnclosingLoop((*rp)->GetInfo().stmt, interfaces);
     for ( ++rp; !rp.ReachEnd(); ++rp) {
       const DepCompAstRefGraphNode* n = *rp;
-      LoopTreeNode* nroot = GetCommonLoop(interface, curroot, n->GetInfo().stmt);
+      LoopTreeNode* nroot = GetCommonLoop(interfaces, curroot, n->GetInfo().stmt);
       if (nroot == 0) {
          curroot = get_stmtref_info().get_tree_root();
          break;
@@ -333,7 +337,8 @@ bool EnforceCopyRootRemove(NodeIter nodes, const DepCompAstRefGraphNode* outnode
                            int copylevel,
                      DepCompCopyArrayCollect::CopyArrayUnit::NodeSet& cuts)
 {
-   LoopTreeInterface interface;
+// tps (12/09/09) : FIX : Changed the name "interface" to interfaces , as interface is a keyword in MSVC.
+	LoopTreeInterface interfaces;
    bool removeall = true; 
    LoopTreeNode* outstmt = outnode->GetInfo().stmt;
    for ( ; !nodes.ReachEnd(); ++nodes) {
@@ -343,8 +348,8 @@ bool EnforceCopyRootRemove(NodeIter nodes, const DepCompAstRefGraphNode* outnode
       LoopTreeNode* stmt = cur->GetInfo().stmt;
       LoopTreeNode* tmp = 0;
       if (stmt == outstmt ||
-          ((tmp = GetCommonLoop(interface,stmt, outstmt)) != 0 && 
-             GetLoopLevel(tmp, interface) >= copylevel))  {
+          ((tmp = GetCommonLoop(interfaces,stmt, outstmt)) != 0 && 
+             GetLoopLevel(tmp, interfaces) >= copylevel))  {
           cuts.insert(cur);
       }
       else

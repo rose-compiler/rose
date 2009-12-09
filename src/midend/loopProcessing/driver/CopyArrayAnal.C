@@ -1,3 +1,5 @@
+// tps (12/09/2009) : Playing with precompiled headers in Windows. Requires rose.h as the first line in source files.
+#include "rose.h"
 #include <CopyArrayAnal.h>
 #include <CommandOptions.h>
 #include <ReuseAnalysis.h>
@@ -156,7 +158,8 @@ void CopyArrayUnderSizeLimit::
 ModifyCopyArrayCollect(LoopTransformInterface& li,
                       DepCompCopyArrayCollect& collect, DepCompAstRefGraphCreate& refDep)
 {
-   LoopTreeInterface interface;
+// tps (12/09/09) : FIX : Changed the name "interface" to interfaces , as interface is a keyword in MSVC.
+	LoopTreeInterface interfaces;
    if (DebugCopyRoot()) 
       std::cerr << "copydim = " << copydim << std::endl;
    for (DepCompCopyArrayCollect::iterator arrays = collect.begin();
@@ -175,11 +178,11 @@ ModifyCopyArrayCollect(LoopTransformInterface& li,
                break;
           if (cuts.size() == unit.refs.size()) {
              assert(origroot != unit.root);
-             LoopTreeNode* n = origroot, *p = GetEnclosingLoop(n,interface);
+             LoopTreeNode* n = origroot, *p = GetEnclosingLoop(n,interfaces);
              LoopTreeNode* rootloop = (unit.root->GetLoopInfo() == 0)? 0 : unit.root;
              while (n != rootloop && p != rootloop) {
                  n = p;
-                 p = GetEnclosingLoop(p, interface); 
+                 p = GetEnclosingLoop(p, interfaces); 
              }
              if (DebugCopyRoot()) 
                std::cerr << "resetting copy root to be " << n->toString() << std::endl;
@@ -213,7 +216,7 @@ ModifyCopyArrayCollect(LoopTransformInterface& li,
            if (reuselevel > copylevel) {
               LoopTreeNode *cur = origroot;  
               for (int curlevel = origroot->LoopLevel(); reuselevel  <= curlevel; 
-                   cur = GetEnclosingLoop(cur, interface), --curlevel);
+                   cur = GetEnclosingLoop(cur, interfaces), --curlevel);
               if (DebugCopyRoot()) 
                   std::cerr << "After reuse anal, resetting copy root to be " << cur->toString() << std::endl;
               unit.root = cur;

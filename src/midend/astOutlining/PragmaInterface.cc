@@ -283,8 +283,14 @@ collectAbstractHandles(SgProject* proj,  TargetList_t& targets)
         {
           if (shandle->getNode() != NULL)
           { // get SgNode from the handle
+#ifdef _MSC_VER
+ // tps (12/09/09) :  error C2039: 'getNode' : is not a member of 'AbstractHandle::abstract_node'
+	SgNode* target_node = NULL;
+	assert(false);
+#else
             SgNode* target_node = (SgNode*) (shandle->getNode()->getNode());
-            ROSE_ASSERT(isSgStatement(target_node));
+#endif
+			ROSE_ASSERT(isSgStatement(target_node));
             targets.push_back(isSgStatement(target_node));
             if (Outliner::enable_debug)
               cout<<"Found a matching target from a handle:"<<target_node->unparseToString()<<endl;
@@ -300,6 +306,10 @@ collectAbstractHandles(SgProject* proj,  TargetList_t& targets)
       // TODO do we care about the memory leak here?
     } //end if sfile
   } // end for 
+#ifdef _MSC_VER
+//tps (12/09/09) : error C4716: '`anonymous namespace'::collectAbstractHandles' : must return a value
+  return 0;
+#endif
 }
 
 //-------------------top level drivers----------------------------------------

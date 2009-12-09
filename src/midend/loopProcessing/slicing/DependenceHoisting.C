@@ -1,3 +1,5 @@
+// tps (12/09/2009) : Playing with precompiled headers in Windows. Requires rose.h as the first line in source files.
+#include "rose.h"
 
 #include <stdlib.h>
 
@@ -156,7 +158,8 @@ void DependenceHoisting ::
 Analyze( LoopTreeDepComp &comp, LoopTreeTransDepGraphCreate *tg, 
          CompSliceNest& result)
 {
-  LoopTreeInterface interface;
+// tps (12/09/09) : FIX : Changed the name "interface" to interfaces , as interface is a keyword in MSVC.
+	LoopTreeInterface interfaces;
   LoopTreeNode *root = comp.GetLoopTreeRoot();
   int rootlevel = root->LoopLevel();
   int size, slicesize;
@@ -175,8 +178,8 @@ Analyze( LoopTreeDepComp &comp, LoopTreeTransDepGraphCreate *tg,
   if (stmt == 0) return;
   size = 0;
   int index = stmt->LoopLevel()-1;
-  for (LoopTreeNode *loop = GetEnclosingLoop(stmt, interface); 
-       index >= rootlevel; loop = GetEnclosingLoop(loop, interface)) {
+  for (LoopTreeNode *loop = GetEnclosingLoop(stmt, interfaces); 
+       index >= rootlevel; loop = GetEnclosingLoop(loop, interfaces)) {
     SliceInfo curloop(stmt, loop, index--);
     TransSlicingAnal anal;
     if (anal.LoopSlicible( comp, tg, curloop, buf1)) {
@@ -190,15 +193,15 @@ Analyze( LoopTreeDepComp &comp, LoopTreeTransDepGraphCreate *tg,
     for ( stmtIter++; (stmt= stmtIter.Current()); stmtIter++) {
       SliceInfo curloop(stmt);
       index = stmt->LoopLevel()-1;
-      LoopTreeNode *loop = GetEnclosingLoop(stmt, interface);
-      for ( ; index >= rootlevel; loop = GetEnclosingLoop(loop, interface)) {
+      LoopTreeNode *loop = GetEnclosingLoop(stmt, interfaces);
+      for ( ; index >= rootlevel; loop = GetEnclosingLoop(loop, interfaces)) {
         curloop.SetLoop(loop, index--);
 	if (anal.LoopSlicible( comp, tg, curloop, buf1)) 
            break;
       } 
       if (loop == 0) break;
-      for (loop = GetEnclosingLoop(loop, interface);
-           index >= rootlevel; loop = GetEnclosingLoop(loop, interface)) {
+      for (loop = GetEnclosingLoop(loop, interfaces);
+           index >= rootlevel; loop = GetEnclosingLoop(loop, interfaces)) {
         SliceInfo curloop1(stmt, loop,index--);
         if (anal.LoopSlicible( comp, tg, curloop1, buf2) ) {
            tmpSlices[size++] = anal;
