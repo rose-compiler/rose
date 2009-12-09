@@ -19,7 +19,8 @@ COMPILERS_i686_apple_darwin = GNU-4.0
 # This line includes different EDG tarballs depending on the value of the environment variable DIST_EDG
 # Default
 #    DIST_EDG == current
-DIST_EDG = current
+#    Liao 12/8/2009, make the default value to be the one used most often (lightweight distribution package)
+DIST_EDG = none
 
 # all EDG binaries for all platforms and compiler versions 
 ALL_TARBALLS = $(foreach ARCH,$(ALL_ARCHS),$(foreach COMPILER,$(COMPILERS_$(subst -,_,$(ARCH))),roseBinaryEDG-$(ARCH)-$(COMPILER)-$(release_binary_compatibility_signature).tar.gz))
