@@ -212,3 +212,8 @@ upload_edg_binary:
 	$(MAKE) -C src/frontend/CxxFrontend upload_edg_binary
 
 endif
+
+
+testHudsonRunScript:
+	$(top_srcdir)/srcipts/hudson/testHudsonRunScript.sh;
+# $(top_srcdir)/srcipts/hudson/runTest

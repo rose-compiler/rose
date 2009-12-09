@@ -10,3 +10,14 @@ Previous directions before web server support:
    How to bring up the hudson web page:
       firefox http://localhost:8080/job/ROSE/ &
 
+How to reproduce bugs that Hudson finds:
+
+   1) Find the failed test within the Husdon web pages.
+      Check the build log to see what machine was used to do the build.
+   2) ssh to the correct machine using the "hudson-rose" account.
+   3) Source the file to setup the environment variables.
+      "source ~/startHudson-common"
+   4) Using the commands from the runScript (found in scripts/hudson)
+      issue any of al of the commands in the order specified in the runScript.
+      For example, run the edg specific commands if that was the part that failed.
+
