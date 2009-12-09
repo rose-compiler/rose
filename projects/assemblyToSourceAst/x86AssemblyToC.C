@@ -22,7 +22,7 @@ set<SgInitializedName*> makeAllPossibleVars(const X86CTranslationPolicy& conv) {
       result.insert(conv.gprSym[i]->get_declaration());
     }
   }
-  for (size_t i = 0; i < 16; ++i) {
+  for (size_t i = 0; i < conv.nflags; ++i) {
     if (conv.flagsSym[i]) {
       result.insert(conv.flagsSym[i]->get_declaration());
     }
@@ -235,22 +235,42 @@ X86CTranslationPolicy::X86CTranslationPolicy(SgSourceFile* f, SgAsmGenericFile* 
   gprSym[13] = globalScope->lookup_variable_symbol("r13"); ROSE_ASSERT (gprSym[13]);
   gprSym[14] = globalScope->lookup_variable_symbol("r14"); ROSE_ASSERT (gprSym[14]);
   gprSym[15] = globalScope->lookup_variable_symbol("r15"); ROSE_ASSERT (gprSym[15]);
+
+  /* Complete set of Intel Pentium flag bits in the "eflags" register */
+  ROSE_ASSERT(nflags==32); /* be sure to define all of them below */
   flagsSym[0] = globalScope->lookup_variable_symbol("cf"); ROSE_ASSERT (flagsSym[0]);
-  flagsSym[1] = NULL;
+  flagsSym[1] = globalScope->lookup_variable_symbol("f1"); ROSE_ASSERT(flagsSym[1]);    /*usually called "1f"*/
   flagsSym[2] = globalScope->lookup_variable_symbol("pf"); ROSE_ASSERT (flagsSym[2]);
-  flagsSym[3] = NULL;
+  flagsSym[3] = globalScope->lookup_variable_symbol("f3"); ROSE_ASSERT(flagsSym[3]);    /*usually called "3f"*/
   flagsSym[4] = globalScope->lookup_variable_symbol("af"); ROSE_ASSERT (flagsSym[4]);
-  flagsSym[5] = NULL;
+  flagsSym[5] = globalScope->lookup_variable_symbol("f5"); ROSE_ASSERT(flagsSym[5]);    /*usually called "5f"*/
   flagsSym[6] = globalScope->lookup_variable_symbol("zf"); ROSE_ASSERT (flagsSym[6]);
   flagsSym[7] = globalScope->lookup_variable_symbol("sf"); ROSE_ASSERT (flagsSym[7]);
-  flagsSym[8] = NULL;
-  flagsSym[9] = NULL;
+  flagsSym[8] = globalScope->lookup_variable_symbol("tf"); ROSE_ASSERT(flagsSym[8]);
+  flagsSym[9] = globalScope->lookup_variable_symbol("iflg"); ROSE_ASSERT(flagsSym[9]);  /*usually called "if"*/
   flagsSym[10] = globalScope->lookup_variable_symbol("df"); ROSE_ASSERT (flagsSym[10]);
   flagsSym[11] = globalScope->lookup_variable_symbol("of"); ROSE_ASSERT (flagsSym[11]);
-  flagsSym[12] = NULL;
-  flagsSym[13] = NULL;
-  flagsSym[14] = NULL;
-  flagsSym[15] = NULL;
+  flagsSym[12] = globalScope->lookup_variable_symbol("iopl0"); ROSE_ASSERT(flagsSym[12]); /*this and iopl1 are a two-bit field*/
+  flagsSym[13] = globalScope->lookup_variable_symbol("iopl1"); ROSE_ASSERT(flagsSym[13]);
+  flagsSym[14] = globalScope->lookup_variable_symbol("nt"); ROSE_ASSERT(flagsSym[14]);
+  flagsSym[15] = globalScope->lookup_variable_symbol("f15"); ROSE_ASSERT(flagsSym[15]); /*usually called "15f"*/
+  flagsSym[16] = globalScope->lookup_variable_symbol("rf"); ROSE_ASSERT(flagsSym[16]);
+  flagsSym[17] = globalScope->lookup_variable_symbol("vm"); ROSE_ASSERT(flagsSym[17]);
+  flagsSym[18] = globalScope->lookup_variable_symbol("ac"); ROSE_ASSERT(flagsSym[18]);
+  flagsSym[19] = globalScope->lookup_variable_symbol("vif"); ROSE_ASSERT(flagsSym[19]);
+  flagsSym[20] = globalScope->lookup_variable_symbol("vip"); ROSE_ASSERT(flagsSym[20]);
+  flagsSym[21] = globalScope->lookup_variable_symbol("id"); ROSE_ASSERT(flagsSym[21]);
+  flagsSym[22] = globalScope->lookup_variable_symbol("f22"); ROSE_ASSERT(flagsSym[22]); /*usually called "22f", etc...*/
+  flagsSym[23] = globalScope->lookup_variable_symbol("f23"); ROSE_ASSERT(flagsSym[23]);
+  flagsSym[24] = globalScope->lookup_variable_symbol("f24"); ROSE_ASSERT(flagsSym[24]);
+  flagsSym[25] = globalScope->lookup_variable_symbol("f25"); ROSE_ASSERT(flagsSym[25]);
+  flagsSym[26] = globalScope->lookup_variable_symbol("f26"); ROSE_ASSERT(flagsSym[26]);
+  flagsSym[27] = globalScope->lookup_variable_symbol("f27"); ROSE_ASSERT(flagsSym[27]);
+  flagsSym[28] = globalScope->lookup_variable_symbol("f28"); ROSE_ASSERT(flagsSym[28]);
+  flagsSym[29] = globalScope->lookup_variable_symbol("f29"); ROSE_ASSERT(flagsSym[29]);
+  flagsSym[30] = globalScope->lookup_variable_symbol("f30"); ROSE_ASSERT(flagsSym[30]);
+  flagsSym[31] = globalScope->lookup_variable_symbol("f31"); ROSE_ASSERT(flagsSym[31]);
+
   ipSym = globalScope->lookup_variable_symbol("ip"); ROSE_ASSERT (ipSym);
   LOOKUP_FUNC(memoryReadByte);
   LOOKUP_FUNC(memoryReadWord);
@@ -377,11 +397,14 @@ int main(int argc, char** argv) {
     vector<SgNode*> asmFiles = NodeQuery::querySubTree(proj, V_SgAsmGenericFile);
     ROSE_ASSERT (asmFiles.size() == 1);
 
-    for(int j = 0; j < asmFunctions.size(); j++ )
+    for(size_t j = 0; j < asmFunctions.size(); j++ )
     {
-
       SgAsmFunctionDeclaration* binFunc = isSgAsmFunctionDeclaration( asmFunctions[j] );
-      SgFunctionDeclaration* decl = buildDefiningFunctionDeclaration("my"+binFunc->get_name(), SgTypeVoid::createType(), buildFunctionParameterList(), g);
+
+      if( binFunc->get_name().c_str() == NULL || binFunc->get_name() == "" ) 
+        binFunc->set_name( "my" + boost::lexical_cast<std::string>(j)   );
+
+      SgFunctionDeclaration* decl = buildDefiningFunctionDeclaration( binFunc->get_name() , SgTypeVoid::createType(), buildFunctionParameterList(), g);
 
       appendStatement(decl, g);
       SgBasicBlock* body = decl->get_definition()->get_body();

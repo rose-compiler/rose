@@ -32,7 +32,10 @@ use Digest::MD5;
 # Given a file path, returns true iff the path names a dependent file.
 sub is_dependent_file {
 	my ($path) = @_;
-	return ($path =~ m@^src/ROSETTA/@ || $path eq "src/frontend/CxxFrontend/EDG");
+	return ($path =~ m@^src/ROSETTA/@ # ROSETTA generated header files are used by the EDG/SAGE connection
+	     || $path eq "src/frontend/CxxFrontend/EDG" # The reference to the EDG submodule
+	     || $path eq "src/frontend/CxxFrontend/Makefile.am" # Rules for generating the tarball
+	     );
 }
 
 # A list of canonical repositories.  This need not include every repository;
@@ -58,7 +61,7 @@ sub needs_canonical_repo {
 	my ($wcpath) = @_;
 	# Whether this is an external user is defined by whether the user does not have
 	# the EDG submodule checked out.
-	return (! -e "$wcpath/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection");
+	return (! -e "$wcpath/src/frontend/CxxFrontend/EDG/Makefile.am");
 }
 
 # The below should not need to be modified
@@ -72,7 +75,7 @@ if (-e "$FindBin::Bin/../bincompat-sig") {
 }
 
 # Using FindBin ensures that the script works no matter where it is invoked from
-my $repo = Git->repository(Directory => $FindBin::Bin);
+my $repo = Git->repository(Directory => "$FindBin::Bin/..");
 
 # Assigns indices into the result of parse_ls_tree_line, i.e.
 # $ git ls-tree HEAD

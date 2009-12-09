@@ -160,7 +160,8 @@ Check that I am on the correct branch
    git branch -a
 
 Now merge the changes from "master" into my branch
-   git merge master
+#  git merge master # Wrong
+   git merge origin/master
 
 Note that this will most likely go smoothly if all changes
 are tken only from "master".  so it might be helpful (to

@@ -365,9 +365,9 @@ MemoryMap::dump(FILE *f, const char *prefix) const
 
         fprintf(f, "%sva 0x%08"PRIx64" + 0x%08zx = 0x%08"PRIx64" %c%c%c at %-9s + 0x%08"PRIx64"\n",
                 prefix, me.get_va(), me.get_size(), me.get_va()+me.get_size(),
-                0==(me.get_mapperms()&PROT_READ) ?'-':'r',
-                0==(me.get_mapperms()&PROT_WRITE)?'-':'w',
-                0==(me.get_mapperms()&PROT_EXEC) ?'-':'x',
+                0==(me.get_mapperms()&MM_PROT_READ) ?'-':'r',
+                0==(me.get_mapperms()&MM_PROT_WRITE)?'-':'w',
+                0==(me.get_mapperms()&MM_PROT_EXEC) ?'-':'x',
                 basename.c_str(), elements[i].get_offset());
     }
 }

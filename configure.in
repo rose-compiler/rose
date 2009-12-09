@@ -24,7 +24,6 @@ else
   GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS
 fi
 
-
 # Debugging strange behaviour associated with changing 
 # the order of the header file generation.
 ROSE_SUPPORT_ROSE_PART_2
@@ -47,6 +46,7 @@ AC_DEFUN([CLASSPATH_COND_IF],
    fi
 ])])
 
+# This list should be the same as in build (search for Makefile.in)
 CLASSPATH_COND_IF([ROSE_HAS_EDG_SOURCE], [test "x$has_edg_source" = "xyes"], [
 AC_CONFIG_FILES([
 src/frontend/CxxFrontend/EDG/Makefile

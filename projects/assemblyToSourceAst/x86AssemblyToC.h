@@ -91,7 +91,8 @@ struct X86CTranslationPolicy: public CTranslationPolicy {
   SgFunctionSymbol* bsfSym;
   SgVariableSymbol* gprSym[16];
   SgVariableSymbol* ipSym;
-  SgVariableSymbol* flagsSym[16];
+  static const size_t nflags = 32;
+  SgVariableSymbol* flagsSym[nflags]; /* "eflags" register is 32 bits; Pentium4 architecture defines most bits up to bit 21*/
   SgVariableSymbol* sf_xor_ofSym;
   SgVariableSymbol* zf_or_cfSym;
   SgFunctionSymbol* memoryReadByteSym;
@@ -270,12 +271,16 @@ struct X86CTranslationPolicy: public CTranslationPolicy {
     return buildFunctionCallExp(bsrSym, buildExprListExp(a.expr()));
   }
 
+  /** Reads one of the bit flags from the Pentium4 "eflags" register. Each bit is represented separately rather than one
+    *  value for the entire register. */
   WordWithExpression<1> readFlag(X86Flag flag) {
     SgVariableSymbol* fl = flagsSym[flag];
     ROSE_ASSERT (fl);
     return buildVarRefExp(fl);
   }
 
+  /** Sets or clears one of the bit flags from the Pentium4 "eflags" register. Each bit is represented separately rather than
+   *  one value for the entire register. */
   void writeFlag(X86Flag flag, WordWithExpression<1> value) {
     SgVariableSymbol* fl = flagsSym[flag];
     ROSE_ASSERT (fl);

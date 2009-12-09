@@ -1,0 +1,28 @@
+Functions detected from binary executable:
+    Key for reason(s) address is a suspected function:
+      E = entry address         C = call target           X = exception frame
+      S = function symbol       P = instruction pattern   G = interblock branch graph
+      U = user-def detection
+
+    Num    Start      Size       End       Reason    Kind   Name
+    --- ---------- ---------- ----------   ------- -------- --------------------------------
+      1 0x080482c8 0x00000024 0x080482ec   .C.SP..  unknown _init
+      2 0x080482e0 0x00000010 0x080482f0   .....G.  unknown
+      3 0x080482f0 0x00000010 0x08048300   .C.....  unknown signal
+      4 0x08048300 0x00000010 0x08048310   .C.....  unknown puts
+      5 0x08048310 0x00000010 0x08048320   .C.....  unknown __libc_start_main
+      6 0x08048320 0x00000010 0x08048330   .C.....  unknown _exit
+      7 0x08048330 0x00000010 0x08048340   .C.....  unknown __gmon_start__
+      8 0x08048340 0x00000024 0x08048364   E..S...  unknown _start
+      9 0x08048364 0x0000002c 0x08048390   .C.SP..  unknown call_gmon_start
+     10 0x08048390 0x00000040 0x080483d0   .C.SP..  unknown __do_global_dtors_aux
+     11 0x080483d0 0x00000040 0x08048410   .C.SP..  unknown frame_dummy
+     12 0x08048410 0x00000030 0x08048440   ...SP..  unknown main
+     13 0x08048440 0x00000020 0x08048460   ...SP..  unknown bar
+     14 0x08048460 0x00000020 0x08048480   ...SP..  unknown foo
+     15 0x08048480 0x00000030 0x080484b0   ...SP..  unknown handler
+     16 0x080484b0 0x00000070 0x08048520   ...SP..  unknown __libc_csu_init
+     17 0x08048520 0x00000060 0x08048580   ...SP..  unknown __libc_csu_fini
+     18 0x08048580 0x00000030 0x080485b0   .C.SP..  unknown __do_global_ctors_aux
+     19 0x080485b0 0x0000001a 0x080485ca   .C.SP..  unknown _fini
+    --- ---------- ---------- ----------   ------- -------- --------------------------------
