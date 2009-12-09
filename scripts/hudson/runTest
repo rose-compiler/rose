@@ -45,13 +45,21 @@ if test $ROSE_TEST_BUILD_STYLE = edg ; then
 	exit 0
 fi
 
-make -j8
+# Save the output of make for later processing (e.g. similar to makeCheckLineCount.pl)
+# make -j8
+make -j8 | tee make_output.txt
+grep -n "Making check in " make_output.txt | ../scripts/checkMakeSpew.pl | tee makeSpewLineCount.txt
 
 # GCC 4.3 and 4.4 do not currently pass make check
 # Known unresolved issues:
 #  - RTED test failures due to obsolete STL headers used in test suite
 #  - Unparser generates (C++ and Fortran) code that is incompatible with these compilers
 if test \! \( $ROSE_TEST_GCC_VERSION = 4.3.2 -o $ROSE_TEST_GCC_VERSION = 4.4.1 \) ; then
-	make -j8 check
+ # DQ (12/9/2009): Save output from "make check" rule and measure the test spew.
+ # make -j8 check
+	make -j8 check | tee make_check_output.txt;
+   grep -n "Making check in " make_check_output.txt | ../scripts/checkMakeSpew.pl | tee makeCheckSpewLineCount.txt
+
+ # The distcheck rule builds a distribution and reruns all the tests; including the rules: install, docs, installcheck
 	make -j8 distcheck
 fi

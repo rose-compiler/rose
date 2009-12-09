@@ -1,8 +1,36 @@
+# DQ (5/30/2007): Move to new modern automake macros (previous versions have been depricated)
+# AC_INIT
 AC_INIT(ROSE, 0.9.5a)
+
+# DQ (5/30/2007): Move to newer version of autoconf (I think this is required to get the new macros).
+# This is reported as bad style at http://sources.redhat.com/automake/automake.html#Extending-aclocal
+# DQ (12/21/2001) Make sure that only autoconf 2.52 or later is used (since so many details are not backward compatabile)
+# AC_PREREQ([2.52])
 AC_PREREQ([2.59])
+
 AC_CONFIG_SRCDIR([README])
+
+# DQ (5/30/2007): Added square brackets to try to conform to new standard
 AC_CONFIG_AUX_DIR([config])
+
+# DQ (1/16/2007): Also use the tar option ``tar-pax'' from
+# ``info automake'' (wait until after we are done with the release).
+# Change the version number for ROSE here!
+# AM_INIT_AUTOMAKE(tar-pax,ROSE,0.8.11a)
+# AM_INIT_AUTOMAKE(ROSE, 0.8.11a)
 AM_INIT_AUTOMAKE([foreign tar-pax 1.9.5])
+
+# DQ (9/26/2009): this is not a defined macro.  This is handled in the build script.
+# AM_PREREQ(1.9.6)
+
+# JJW (10/8/2008): Make default CFLAGS, CXXFLAGS, and FFLAGS empty (from
+# <URL:http://osdir.com/ml/sysutils.autoconf.general/2003-11/msg00124.html>)
+true ${CFLAGS:=}
+true ${CXXFLAGS:=}
+true ${FFLAGS:=}
+
+# DQ (6/5/2007): Try to make package name use upper case for ROSE (this does not work)
+# AC_PACKAGE_TARNAME([ROSE])
 
 # DQ (3/11/2006): Changed name of config.h to rose_config.h 
 # to avoid collisions with other projects using a config.h file.
@@ -12,9 +40,8 @@ AM_CONFIG_HEADER(rose_config.h)
 # this configure.in file.  This permits other projects to call this same
 # macro and setup the variables and macros that an external project may 
 # also require.
-ROSE_SUPPORT_ROSE
+ROSE_SUPPORT_ROSE_PART_1
 
-# This should be wrapped into a single macro.
 # JJW (12/10/2008): We don't preprocess the header files for the new interface
 rm -rf ./include-staging
 if test x$enable_new_edg_interface = xyes; then
@@ -28,8 +55,13 @@ fi
 # the order of the header file generation.
 ROSE_SUPPORT_ROSE_PART_2
 
+# DQ (9/21/2009): Debugging for RH release 5
+echo "Testing the value of CC: (CC = $CC)"
+echo "Testing the value of CPPFLAGS: (CPPFLAGS = $CPPFLAGS)"
 
-# This appears to be a problem when put into the ROSE SUPPORT ROSE macro.
+echo "subdirs $subdirs"
+AC_CONFIG_SUBDIRS([libltdl src/3rdPartyLibraries/libharu-2.1.0])
+
 dnl ---------------------------------------------------------------
 dnl CLASSPATH_COND_IF(COND, SHELL-CONDITION, [IF-TRUE], [IF-FALSE])
 dnl ---------------------------------------------------------------
@@ -67,8 +99,8 @@ src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/Makefile
 ])], [])
 
 
-# Build the autoconf generated files (Makefiles etc. within the 
-# subdirectories of the build tree for ROSE).
+# RV 9/14/2005: Removed src/3rdPartyLibraries/PDFLibrary/Makefile
+# JJW 1/30/2008: Removed rose_paths.h as it is now built by a separate Makefile included from $(top_srcdir)/Makefile.am
 AC_CONFIG_FILES([
 stamp-h
 Makefile
@@ -453,6 +485,40 @@ binaries/samples/Makefile
 ])
 
 
+# DQ (10/24/2009): We don't need to support EDG 3.10 anymore.
+# src/frontend/CxxFrontend/EDG_3.10/Makefile
+# src/frontend/CxxFrontend/EDG_3.10/misc/Makefile
+# src/frontend/CxxFrontend/EDG_3.10/src/Makefile
+# src/frontend/CxxFrontend/EDG_3.10/src/disp/Makefile
+# src/frontend/CxxFrontend/EDG_3.10/lib/Makefile
+
+
+# DQ (9/12/2009): Removed so that this can be added properly a little later.
+# This currently breaks "make distcheck"
+# projects/StaticDynamicAnalysis/DynamicCPU/Makefile
+
+
+# DQ (12/31/2008): Skip these, since we don't have SPEC and NAS benchmarks setup yet.
+# developersScratchSpace/Dan/Fortran_tests/NPB3.2-SER/Makefile
+# developersScratchSpace/Dan/Fortran_tests/NPB3.2-SER/BT/Makefile
+# developersScratchSpace/Dan/SpecCPU2006/Makefile
+# developersScratchSpace/Dan/SpecCPU2006/config/Makefile
+# developersScratchSpace/Dan/SpecCPU2006/config/rose.cfg
+
+# DQ (9/12/2008): Removed older version of QRose (now an external project)
+# src/roseIndependentSupport/graphicalUserInterface/Makefile
+# src/roseIndependentSupport/graphicalUserInterface/src/Makefile
+# src/roseIndependentSupport/graphicalUserInterface/src/QRTree/Makefile
+# src/roseIndependentSupport/graphicalUserInterface/src/QRCodeBox/Makefile
+# src/roseIndependentSupport/graphicalUserInterface/src/QRGui/Makefile
+# src/roseIndependentSupport/graphicalUserInterface/src/QRGui/icons22/Makefile
+# src/roseIndependentSupport/graphicalUserInterface/src/QRQueryBox/Makefile
+# exampleTranslators/graphicalUserInterfaceExamples/Makefile
+# exampleTranslators/graphicalUserInterfaceExamples/slicing/Makefile
+# exampleTranslators/graphicalUserInterfaceExamples/attributes/Makefile
+# exampleTranslators/graphicalUserInterfaceExamples/query/Makefile
+# exampleTranslators/graphicalUserInterfaceExamples/layout/Makefile
+
 AC_CONFIG_COMMANDS([default],[[
      echo "Ensuring Grammar in the compile tree (assuming source tree is not the same as the compile tree)."
      pathToSourceDir="`cd $srcdir && pwd`"
@@ -460,15 +526,17 @@ AC_CONFIG_COMMANDS([default],[[
 ]],[[
 ]])
 
-
 # Generate rose_paths.C
 AC_CONFIG_COMMANDS([rose_paths.C], [[
 	make src/util/rose_paths.C
 ]])
 
+# echo "Calling AC OUTPUT in configure.in file"
+
 # Now generate all the output files (specified above)
 AC_OUTPUT
 
+# echo "Reached base of configure.in file ..."
 echo ""
 echo "******************************"
 echo "Configure Terminated Normally!"

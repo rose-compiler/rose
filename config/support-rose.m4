@@ -1,4 +1,4 @@
-AC_DEFUN([ROSE_SUPPORT_ROSE],
+AC_DEFUN([ROSE_SUPPORT_ROSE_PART_1],
 [
 # Begin macro ROSE_SUPPORT_ROSE.
 
@@ -10,9 +10,6 @@ AC_DEFUN([ROSE_SUPPORT_ROSE],
 # a way to set up there environment and define the many macros that an
 # application using ROSE might require.
 # *********************************************************************
-
-# DQ (9/26/2009): this is not a defined macro.  This is handled in the build script.
-# AM_PREREQ(1.9.6)
 
 AMTAR ?= $(TAR)
 
@@ -32,16 +29,6 @@ if test "$am__untar" = "false"; then
    echo "am__untar set to false -- this will be a problem later."
    exit 1
 fi
-
-
-# JJW (10/8/2008): Make default CFLAGS, CXXFLAGS, and FFLAGS empty (from
-# <URL:http://osdir.com/ml/sysutils.autoconf.general/2003-11/msg00124.html>)
-true ${CFLAGS:=}
-true ${CXXFLAGS:=}
-true ${FFLAGS:=}
-
-# DQ (6/5/2007): Try to make package name use upper case for ROSE (this does not work)
-# AC_PACKAGE_TARNAME([ROSE])
 
 # DQ (3/20/2009): Trying to get information about what system we are on so that I
 # can detect Cygwin and OSX (and other operating systems in the future).
@@ -255,6 +242,14 @@ AX_LIB_MYSQL
 # Test this macro here at the start to avoid long processing times (before it fails)
 CHOOSE_BACKEND_COMPILER
 
+# For testing the configure script generation this link can be commented out
+# to improve performance of tests unrelated to backend compiler headr files.
+# DQ (9/17/2006): This must be done for BOTH C++ and C compilers (since the
+# compiler-specific header files for each can be different; as is the case 
+# for GNU).
+# GENERATE_BACKEND COMPILER_SPECIFIC_HEADERS
+# GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS
+
 
 # End macro ROSE_SUPPORT_ROSE.
 ]
@@ -267,14 +262,6 @@ CHOOSE_BACKEND_COMPILER
 AC_DEFUN([ROSE_SUPPORT_ROSE_PART_2],
 [
 # Begin macro ROSE_SUPPORT_ROSE.
-
-# For testing the configure script generation this link can be commented out
-# to improve performance of tests unrelated to backend compiler headr files.
-# DQ (9/17/2006): This must be done for BOTH C++ and C compilers (since the
-# compiler-specific header files for each can be different; as is the case 
-# for GNU).
-# GENERATE_BACKEND COMPILER_SPECIFIC_HEADERS
-# GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS
 
 # echo "DONE: configure.in ...(after calling: generate backend C compiler specific headers)"
 # echo "Exiting in configure.in ...(after calling: generate backend C compiler specific headers)"
@@ -975,7 +962,6 @@ SETUP_EDG
 # Find md5 or md5sum and create a signature for ROSE binary compatibility
 AC_CHECK_PROGS(MD5, [md5 md5sum], [false])
 AC_SUBST(MD5)
-# if test -e ${srcdir}/src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection; then
 if test -e ${srcdir}/src/frontend/CxxFrontend/EDG/Makefile.am; then
   has_edg_source=yes
   if test "x$MD5" = "xfalse"; then
@@ -1100,13 +1086,6 @@ AM_CONDITIONAL(ROSE_USE_ETHER,test "$with_ether" != "no")
 # PC (7/10/2009): The Haskell build system expects a fully numeric version number.
 PACKAGE_VERSION_NUMERIC=`echo $PACKAGE_VERSION | sed -e 's/\([[a-z]]\+\)/\.\1/; y/a-i/1-9/'`
 AC_SUBST(PACKAGE_VERSION_NUMERIC)
-
-# DQ (9/21/2009): Debugging for RH release 5
-echo "Testing the value of CC: (CC = $CC)"
-echo "Testing the value of CPPFLAGS: (CPPFLAGS = $CPPFLAGS)"
-
-echo "subdirs $subdirs"
-AC_CONFIG_SUBDIRS([libltdl src/3rdPartyLibraries/libharu-2.1.0])
 
 # End macro ROSE_SUPPORT_ROSE_PART_2.
 ]
