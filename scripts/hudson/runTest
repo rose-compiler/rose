@@ -53,5 +53,6 @@ make -j8
 #  - Unparser generates (C++ and Fortran) code that is incompatible with these compilers
 if test \! \( $ROSE_TEST_GCC_VERSION = 4.3.2 -o $ROSE_TEST_GCC_VERSION = 4.4.1 \) ; then
 	make -j8 check
+	make -j8 docs
 	make -j8 distcheck
 fi
