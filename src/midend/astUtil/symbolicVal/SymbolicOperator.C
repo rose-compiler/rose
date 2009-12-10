@@ -140,7 +140,7 @@ SymbolicVal Max( const SymbolicVal &v1, const SymbolicVal &v2,
            }
 	// tps (12/07/2009) This part is never reached
 	assert(false);
-	return NULL;
+	return v2;
         } 
         
 SymbolicVal Min( const SymbolicVal &v1, const SymbolicVal &v2,
