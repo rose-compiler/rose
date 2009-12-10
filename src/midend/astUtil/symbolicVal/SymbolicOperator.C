@@ -78,7 +78,7 @@ SymbolicVal ApplyBinOP( SymOpType t, const SymbolicVal &v1,
   }
 	// tps (12/07/2009) This part is never reached
 	assert(false);
-	return NULL;
+	return r;
 }
 
 SymbolicVal operator * (const SymbolicVal &v1, const SymbolicVal &v2)
@@ -169,7 +169,7 @@ SymbolicVal Min( const SymbolicVal &v1, const SymbolicVal &v2,
            }
 	// tps (12/07/2009) This part is never reached
 	assert(false);
-	return NULL;
+	return v2;
          }
 
 class EQOperator : public SymbolicVisitor
