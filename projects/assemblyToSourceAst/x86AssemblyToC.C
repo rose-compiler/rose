@@ -267,37 +267,19 @@ X86CTranslationPolicy::X86CTranslationPolicy(SgSourceFile* f, SgAsmGenericFile* 
 }
 
 int main(int argc, char** argv) {
-  SgProject* proj = frontend(argc, argv);
+
+  std::string binaryFilename = (argc >= 1 ? argv[argc-1]   : "" );
+  std::vector<std::string> newArgv(argv,argv+argc);
+  newArgv.push_back("-rose:output");
+  newArgv.push_back(binaryFilename+"-binarySemantics.C");
+
+  SgProject* proj = frontend(newArgv);
+  
   ROSE_ASSERT (proj);
   SgSourceFile* newFile = isSgSourceFile(proj->get_fileList().front());
   ROSE_ASSERT(newFile != NULL);
   SgGlobal* g = newFile->get_globalScope();
   ROSE_ASSERT (g);
-
-#if 0
-// DQ (11/19/2009): Git generated a conflict here, but I had not changed anything.
-// I think this is related to an update from Andreas's branch 2 weeks ago.
-
-<<<<<<< HEAD:projects/assemblyToSourceAst/x86AssemblyToC.C
-  SgFunctionDeclaration* decl = buildDefiningFunctionDeclaration("run", SgTypeVoid::createType(), buildFunctionParameterList(), g);
-  appendStatement(decl, g);
-  vector<SgNode*> asmFiles = NodeQuery::querySubTree(proj, V_SgAsmGenericFile);
-  ROSE_ASSERT (asmFiles.size() == 1);
-  SgBasicBlock* body = decl->get_definition()->get_body();
-  X86CTranslationPolicy policy(newFile, isSgAsmGenericFile(asmFiles[0]));
-  policy.switchBody = buildBasicBlock();
-  SgSwitchStatement* sw = buildSwitchStatement(buildVarRefExp(policy.ipSym), policy.switchBody);
-  SgWhileStmt* whileStmt = buildWhileStmt(buildBoolValExp(true), sw);
-  appendStatement(whileStmt, body);
-  policy.whileBody = sw;
-  X86InstructionSemantics<X86CTranslationPolicy, WordWithExpression> t(policy);
-  vector<SgNode*> instructions = NodeQuery::querySubTree(proj, V_SgAsmx86Instruction);
-  for (size_t i = 0; i < instructions.size(); ++i) {
-    SgAsmx86Instruction* insn = isSgAsmx86Instruction(instructions[i]);
-    ROSE_ASSERT (insn);
-    t.processInstruction(insn);
-=======
-#endif
 
   //I am doing some experimental work to enable functions in the C representation
   //Set this flag to true in order to enable that work
@@ -306,13 +288,16 @@ int main(int argc, char** argv) {
   //C representation. Enable this work by setting this flag to true.
   bool enable_normalizations = false;
 
+  vector<SgNode*> asmFiles = NodeQuery::querySubTree(proj, V_SgAsmGenericFile);
+  ROSE_ASSERT (asmFiles.size() == 1);
+
+
+
   if( enable_functions == false)
   {
     //Representation of C normalizations withotu functions
     SgFunctionDeclaration* decl = buildDefiningFunctionDeclaration("run", SgTypeVoid::createType(), buildFunctionParameterList(), g);
     appendStatement(decl, g);
-    vector<SgNode*> asmFiles = NodeQuery::querySubTree(proj, V_SgAsmGenericFile);
-    ROSE_ASSERT (asmFiles.size() == 1);
     SgBasicBlock* body = decl->get_definition()->get_body();
     //  ROSE_ASSERT(isSgAsmFile(asmFiles[0]));
     //  X86CTranslationPolicy policy(newFile, isSgAsmFile(asmFiles[0]));
@@ -374,8 +359,6 @@ int main(int argc, char** argv) {
 
     //Iterate over the functions separately
     vector<SgNode*> asmFunctions = NodeQuery::querySubTree(proj, V_SgAsmFunctionDeclaration);
-    vector<SgNode*> asmFiles = NodeQuery::querySubTree(proj, V_SgAsmGenericFile);
-    ROSE_ASSERT (asmFiles.size() == 1);
 
     for(int j = 0; j < asmFunctions.size(); j++ )
     {
@@ -416,6 +399,8 @@ int main(int argc, char** argv) {
 
       for (size_t i = 0; i < instructions.size(); ++i) {
         SgAsmx86Instruction* insn = isSgAsmx86Instruction(instructions[i]);
+	if( insn->get_kind() == x86_nop )
+	  continue;
         ROSE_ASSERT (insn);
         t.processInstruction(insn);
       }
@@ -430,6 +415,8 @@ int main(int argc, char** argv) {
   proj->get_fileList().erase(proj->get_fileList().end() - 1); // Remove binary file before calling backend
 
 //  AstTests::runAllTests(proj);
+
+  //Compile the resulting project
 
   return backend(proj);
 }
