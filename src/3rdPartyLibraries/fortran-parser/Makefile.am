@@ -41,10 +41,10 @@ java-stuff:
 	-mkdir build/fortran
 	$(JAVAC) $(OFP_CLASSPATH) -d build $(srcdir)/src/fortran/ofp/parser/java/IActionEnums.java
 	$(JAVAC) $(OFP_CLASSPATH) -d build $(srcdir)/src/fortran/ofp/parser/java/IFortranParserAction.java
-	$(JAVA) $(OFP_CLASSPATH) org.antlr.Tool -lib $(srcdir)/src/fortran/ofp/parser/ -fo . $(srcdir)/src/fortran/ofp/parser/FortranLexer.g
+	$(JAVA) $(OFP_CLASSPATH) org.antlr.Tool -lib $(srcdir)/src/fortran/ofp/parser/ -Xconversiontimeout 1000000 -fo . $(srcdir)/src/fortran/ofp/parser/FortranLexer.g
 	sed "s/LexerLexer/Lexer/g" FortranLexerLexer.java > FortranLexer.java
 	rm FortranLexerLexer.java
-	$(JAVA) $(OFP_CLASSPATH) org.antlr.Tool -fo . $(srcdir)/src/fortran/ofp/parser/FortranParser.g
+	$(JAVA) $(OFP_CLASSPATH) org.antlr.Tool -Xconversiontimeout 1000000 -fo . $(srcdir)/src/fortran/ofp/parser/FortranParser.g
 	sed "s/ParserParser/Parser/g" FortranParserParser.java > FortranParser.java
 	rm FortranParserParser.java FortranLexer.tokens FortranParser.tokens
 	-mkdir tmp

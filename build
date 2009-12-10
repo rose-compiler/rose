@@ -253,15 +253,32 @@ echo "Running automake ..."
 # DQ (9/26/2009): Testing for "is not a standard library name" is not required any more!
 # automake -a -c -i 2>&1 | grep -v "is not a standard library name" 1>&2 || : exit 1
 
-echo ""
-echo "*******************************************************************************************"
-echo "Note that due to ROSE support for binary only distributions of EDG we do not distribute any"
-echo "Makefile.am files in 'src/frontend/CxxFrontend/EDG/' to the general audience." 
-echo "The warnings regarding missing Makefile.in can be safely ignored"
-echo ""
-echo "Rose Project Management."
-echo "*******************************************************************************************"
-
+# This list should be the same as in configure.in (search for CLASSPATH_COND_IF)
+if [ \! -e src/frontend/CxxFrontend/EDG/Makefile.am ] ; then
+    # Automake will expect these files to always exist even if they are
+    # in a conditional.  Since we know that they will not be used during
+    # the build process itself, we can create zero-length dummy files.
+    for file in \
+src/frontend/CxxFrontend/EDG/Makefile.in \
+src/frontend/CxxFrontend/EDG/EDG_3.3/Makefile.in \
+src/frontend/CxxFrontend/EDG/EDG_3.3/misc/Makefile.in \
+src/frontend/CxxFrontend/EDG/EDG_3.3/src/Makefile.in \
+src/frontend/CxxFrontend/EDG/EDG_3.10/Makefile.in \
+src/frontend/CxxFrontend/EDG/EDG_3.10/misc/Makefile.in \
+src/frontend/CxxFrontend/EDG/EDG_3.10/src/Makefile.in \
+src/frontend/CxxFrontend/EDG/EDG_3.10/src/disp/Makefile.in \
+src/frontend/CxxFrontend/EDG/EDG_3.10/lib/Makefile.in \
+src/frontend/CxxFrontend/EDG/EDG_4.0/Makefile.in \
+src/frontend/CxxFrontend/EDG/EDG_4.0/misc/Makefile.in \
+src/frontend/CxxFrontend/EDG/EDG_4.0/src/Makefile.in \
+src/frontend/CxxFrontend/EDG/EDG_4.0/src/disp/Makefile.in \
+src/frontend/CxxFrontend/EDG/EDG_4.0/lib/Makefile.in \
+src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/Makefile.in
+    do
+        mkdir -p $(dirname $file)
+        touch $file
+    done
+fi
 
 automake -a -c -i 2>&1 || : exit 1
 

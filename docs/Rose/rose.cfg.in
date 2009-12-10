@@ -431,7 +431,7 @@ INPUT                  = \
                          @top_srcdir@/src/frontend/frontend.docs \
                          @top_srcdir@/docs/testDoxygen \
 			 @top_srcdir@/src/ROSETTA/src/binaryInstruction.C \
-                         @top_srcdir@/src/frontend/CxxFrontend/EDG_3.3/documentation.docs \
+                         @top_srcdir@/src/frontend/CxxFrontend/EDG/EDG_3.3/documentation.docs \
 			 @top_srcdir@/src/frontend/Disassemblers \
 			 @top_srcdir@/src/frontend/BinaryFormats/DataConversion.C \
 			 @top_srcdir@/src/frontend/BinaryFormats/ElfDynamicLinking.C \
