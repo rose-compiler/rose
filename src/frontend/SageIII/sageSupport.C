@@ -334,7 +334,14 @@ bool roseInstallPrefix(std::string& result) {
     } else {
       // the translator must locate in the installation_tree/lib 
       // TODO what about lib64??
-      ROSE_ASSERT (libdirBasename == "lib");
+       if (libdirBasename != "lib")
+          {
+            printf ("Error: unexpected libdirBasename = %s (result = %s, prefix = %s) \n",libdirBasename.c_str(),result.c_str(),prefix.c_str());
+          }
+
+   // DQ (12/5/2009): Is this really what we need to assert?
+   // ROSE_ASSERT (libdirBasename == "lib");
+
       result = prefix;
       return true;
     }

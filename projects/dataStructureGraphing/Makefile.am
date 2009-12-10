@@ -10,7 +10,9 @@ INCLUDES = $(ROSE_INCLUDES)
 # LDADD = $(ROSE_LIBS)
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+# DQ (12/5/2009): Skip testing of this code to establish the size of the problem!
 if !ROSE_BUILD_OS_IS_CYGWIN
+# if ROSE_BUILD_OS_IS_CYGWIN
 
 bin_PROGRAMS = cgraphpp
 
