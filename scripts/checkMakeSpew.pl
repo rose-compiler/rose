@@ -28,10 +28,14 @@ while ($lineNumber <= $#lineArray)
      $_ = $previousLine;
 
    # Build the target string to search for
-     $targetString = "$previousValue:Making check in ";
+     $targetStringMake      = "$previousValue:Making all in ";
+     $targetStringMakeCheck = "$previousValue:Making check in ";
 
-   # Remove the "#:Making check in " substring.
-     s/$targetString//g;
+   # Remove the "#:Making all in " substring (for compiling using make).
+     s/$targetStringMake//g;
+
+   # Remove the "#:Making check in " substring (for tests using the make check rule).
+     s/$targetStringMakeCheck//g;
 
    # Remove the end of line character
      s/\n//g;
