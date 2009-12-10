@@ -6,7 +6,7 @@ add_executable (qualifiedName qualifiedName.C)
 target_link_libraries(bug125 rose ${link_with_libraries} )
 target_link_libraries(qualifiedName rose ${link_with_libraries} )
 
-#ENABLE_TESTING()
+ENABLE_TESTING()
 ADD_TEST (
 #  testbug125 bug125 -c ${ROSE_TOP_SRC_DIR}/tests/translatorTests/inputbug125.C
   testbug125 bug125 -c ${CMAKE_CURRENT_SOURCE_DIR}/inputbug125.C

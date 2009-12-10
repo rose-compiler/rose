@@ -293,7 +293,16 @@ findRoseSupportPathFromBuild(const string& buildTreeLocation,
     return string(ROSE_AUTOMAKE_TOP_BUILDDIR) + "/" + buildTreeLocation;
   }
 }
-
+//! Check if we can get an installation prefix of rose based on the current running translator.
+// There are two ways
+//   1. if dladdr is supported: we resolve a rose function (roseInstallPrefix()) to obtain the 
+//      file (librose.so) defining this function 
+//      Then we check the parent directory of librose.so
+//          if .libs or src --> in a build tree
+//          otherwise: librose.so is in an installation tree
+//   2. if dladdr is not supported or anything goes wrong, we check an environment variable
+//     ROSE_IN_BUILD_TREE to tell if the translator is started from a build tree or an installation tree
+//     Otherwise we pass the --prefix= ROSE_AUTOMAKE_PREFIX as the installation prefix
 bool roseInstallPrefix(std::string& result) {
 #ifdef HAVE_DLADDR
   {
@@ -314,9 +323,18 @@ bool roseInstallPrefix(std::string& result) {
     if (prefixCS == NULL) {free(libroseName); goto default_check;}
     string prefix = prefixCS;
     free(libroseName);
-    if (libdirBasename == ".libs") {
+// Liao, 12/2/2009
+// Check the librose's parent directory name to tell if it is within a build or installation tree
+// This if statement has the assumption that libtool is used to build librose so librose.so is put under .libs 
+// which is not true for cmake building system
+// For cmake, librose is created directly under build/src
+//    if (libdirBasename == ".libs") {
+    if (libdirBasename == ".libs" || libdirBasename == "src") {
       return false;
     } else {
+      // the translator must locate in the installation_tree/lib 
+      // TODO what about lib64??
+      ROSE_ASSERT (libdirBasename == "lib");
       result = prefix;
       return true;
     }
@@ -327,9 +345,16 @@ default_check:
   // Emit a warning that the hard-wired prefix is being used
   cerr << "Warning: roseInstallPrefix() is using the hard-wired prefix and ROSE_IN_BUILD_TREE even though it should be relocatable" << endl;
 #endif
+  // dladdr is not supported, we check an environment variables to tell if the 
+  // translator is running from a build tree or an installation tree
   if (getenv("ROSE_IN_BUILD_TREE") != NULL) {
     return false;
   } else {
+// Liao, 12/1/2009 
+// this variable is set via a very bad way, there is actually a right way to use --prefix VALUE within automake/autoconfig
+// config/build_rose_paths.Makefile
+// Makefile:       @@echo "const std::string ROSE_AUTOMAKE_PREFIX        = \"/home/liao6/opt/roseLatest\";" >> src/util/rose_paths.C
+// TODO fix this to support both automake and cmake 's installation configuration options
     result = ROSE_AUTOMAKE_PREFIX;
     return true;
   }

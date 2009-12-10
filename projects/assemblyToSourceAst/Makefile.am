@@ -62,25 +62,16 @@ include_HEADERS = x86AssemblyToC.h satProblem.h powerpcInstructionSemantics.h x8
 #powerpcAssemblyToCDemo-powerpcAssemblyToC.o: powerpcInstructionSemantics.h
 
 test_assemblyToC:
-	if test -e $(top_srcdir)/binaries/samples/fnord.i386; then \
-	  ./x86AssemblyToCDemo -c $(srcdir)/outputFileTemplate.C $(top_srcdir)/binaries/samples/fnord.i386; \
-	fi
+	./x86AssemblyToCDemo -c $(srcdir)/outputFileTemplate.C $(top_srcdir)/binaries/samples/fnord.i386 
 
 test_assemblyToNetlist:
-	if test -e $(top_srcdir)/binaries/samples/fnord.i386; then \
-	  ./x86AssemblyToNetlist $(top_srcdir)/binaries/samples/fnord.i386; \
-	fi
+	./x86AssemblyToNetlist $(top_srcdir)/binaries/samples/fnord.i386 
 
 test_assemblyToBtor:
-	if test -e $(top_srcdir)/binaries/samples/fnord.i386; then \
-	  ./x86AssemblyToBtor start $(top_srcdir)/binaries/samples/fnord.i386; \
-	fi
+	./x86AssemblyToBtor start $(top_srcdir)/binaries/samples/fnord.i386 
 
 test_assemblyToReadWriteSets:
-	if test -e $(top_srcdir)/binaries/samples/fnord.i386; then \
-	  ./readAndWriteSets $(top_srcdir)/binaries/samples/fnord.i386 > fnord.rws ; \
-	fi
-
+	./readAndWriteSets $(top_srcdir)/binaries/samples/fnord.i386 > fnord.rws  
 
 # DQ (3/15/2009): Changed this from check to check-local rule (as required by automake).
 check-local: test_assemblyToC test_assemblyToNetlist test_assemblyToBtor test_assemblyToReadWriteSets

@@ -354,7 +354,7 @@ SgIncidenceDirectedGraph* constructCallGraph( const  Partitioner::FunctionStarts
   Partitioner::BasicBlockStarts func_bb_starts;
 
   //Check assumption that the functions are sorted according to address in file.
-  rose_addr_t last_addr = func_bb_starts.begin()->first;
+  rose_addr_t last_addr = func_starts.begin()->first;
   for( Partitioner::FunctionStarts::const_iterator funcItr = func_starts.begin() ; funcItr != func_starts.end(); ++funcItr )
         {
           ROSE_ASSERT(last_addr <= funcItr->first);

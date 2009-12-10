@@ -11,10 +11,10 @@ class MemoryMap {
 public:
     /** Mapping permissions. */
     enum Protection {
-        PROT_READ       = 0x1,          /**< Pages can be read. */
-        PROT_WRITE      = 0x2,          /**< Pages can be written. */
-        PROT_EXEC       = 0x4,          /**< Pages can be executed. */
-        PROT_NONE       = 0x0           /**< Pages cannot be accessed. */
+        MM_PROT_READ    = 0x1,          /**< Pages can be read. */
+        MM_PROT_WRITE   = 0x2,          /**< Pages can be written. */
+        MM_PROT_EXEC    = 0x4,          /**< Pages can be executed. */
+        MM_PROT_NONE    = 0x0           /**< Pages cannot be accessed. */
     };
     
     /** A MemoryMap is composed of zero or more MapElements. Each map element describes a mapping from contiguous virtual
@@ -27,14 +27,14 @@ public:
      *  const base address to the constructor.
      *
      *  The map element also tracks what permissions would be used if the memory were actually mapped for real. These
-     *  permissions are bit flags PROT_EXEC, PROT_READ, PROT_WRITE, and PROT_NONE from the Protection enum. The presence or
-     *  absence of the PROT_WRITE bit here has no relation to the is_read_only() value -- it is legal for ROSE to write new
-     *  values to a memory location that is mapped without PROT_WRITE, but not to a memory location where is_read_only() is
-     *  true. */
+     *  permissions are bit flags MM_PROT_EXEC, MM_PROT_READ, MM_PROT_WRITE, and MM_PROT_NONE from the Protection enum. The
+     *  presence or absence of the MM_PROT_WRITE bit here has no relation to the is_read_only() value -- it is legal for ROSE
+     *  to write new values to a memory location that is mapped without MM_PROT_WRITE, but not to a memory location where
+     *  is_read_only() is true. */
     class MapElement {
     public:
         MapElement()
-            : va(0), size(0), base(NULL), offset(0), read_only(false), mapperms(PROT_NONE), anonymous(NULL) {}
+            : va(0), size(0), base(NULL), offset(0), read_only(false), mapperms(MM_PROT_NONE), anonymous(NULL) {}
         
         MapElement(const MapElement &other) {
             init(other);
@@ -52,19 +52,19 @@ public:
 
         /** Creates a mapping relative to a memory buffer.  The MemoryMap will coalesce adjacent elements having the same base
          *  when possible, but never elements having different bases. */
-        MapElement(rose_addr_t va, size_t size, void *base, rose_addr_t offset, unsigned perms=PROT_NONE)
+        MapElement(rose_addr_t va, size_t size, void *base, rose_addr_t offset, unsigned perms=MM_PROT_NONE)
             : va(va), size(size), base(base), offset(offset), read_only(false), mapperms(perms), anonymous(NULL) {}
 
         /** Create a mapping relative to a read-only memory buffer. The MemoryMap will coalesce adjacent elements having the
          *  same base when possible, but never elements having different bases. */
-        MapElement(rose_addr_t va, size_t size, const void *base, rose_addr_t offset, unsigned perms=PROT_NONE)
+        MapElement(rose_addr_t va, size_t size, const void *base, rose_addr_t offset, unsigned perms=MM_PROT_NONE)
             : va(va), size(size), base(const_cast<void*>(base)), offset(offset), read_only(true), mapperms(perms), anonymous(NULL)
             {}
 
         /** Creates an anonymous mapping where all addresses of the mapping are initially contain zero bytes. Note that memory
          *  is not allocated (and the base address is not assigned) until a write attempt is made. The implementation is free
          *  to coalesce compatible adjacent anonymous regions as it sees fit, reallocating memory as necessary. */
-        MapElement(rose_addr_t va, size_t size, unsigned perms=PROT_NONE)
+        MapElement(rose_addr_t va, size_t size, unsigned perms=MM_PROT_NONE)
             : va(va), size(size), base(NULL), offset(0), read_only(false), mapperms(perms), anonymous(new size_t) {
             *anonymous = 0; /*no storage allocated yet for 'base'*/
         }
@@ -156,7 +156,7 @@ public:
             base = NULL;
             offset = 0;
             read_only = 0;
-            mapperms = PROT_NONE;
+            mapperms = MM_PROT_NONE;
         }
 
         /** Helper function for merge() when this and @p other element are both anonymous. This method will allocate storage
@@ -169,7 +169,7 @@ public:
         mutable void *base;             /**< The buffer to which 'offset' applies */
         rose_addr_t offset;             /**< Offset with respect to 'base' */
         bool read_only;                 /**< If set then write() is not allowed */
-        unsigned mapperms;              /**< Mapping permissions (PROT_READ, PROT_WRITE, and PROT_EXEC from Protection enum) */
+        unsigned mapperms;              /**< Mapping permissions (MM_PROT_{READ,WRITE,EXEC} from Protection enum) */
 
         /** If non-null then the element describes an anonymous mapping, one that is initially all zero.  The 'base' data
          *  member in this case will initially be NULL and will be allocated when a MemoryMap::write() modifies the anonymous
