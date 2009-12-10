@@ -1,5 +1,9 @@
 // tps (12/09/2009) : Playing with precompiled headers in Windows. Requires rose.h as the first line in source files.
+#ifdef _MSC_VER
+// seems to cause problems under Linux
 #include "rose.h"
+#endif
+
 // Original Author (AstProcessing classes): Markus Schordan
 // Rewritten by: Gergo Barany
 // $Id: AstSimpleProcessing.C,v 1.4 2008/01/08 02:56:39 dquinlan Exp $
