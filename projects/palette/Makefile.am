@@ -1,6 +1,10 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 
+# DQ (12/5/2009): Skip testing of this code to establish the size of the problem!
+# if !ROSE_BUILD_OS_IS_CYGWIN
+# if ROSE_BUILD_OS_IS_CYGWIN
+
 INCLUDES = $(ROSE_INCLUDES) -I$(compass_support_dir)  -I$(compass_prereqs_dir) -I$(compass_support_bdir)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
@@ -59,6 +63,7 @@ check-local: switch_without_default null_deref qsolve simple_example sortTest
 	@diff -U1000 $(srcdir)/check_correct_answers current_answers
 	@rm compass_parameters current_answers current_answers.temp
 	@echo "Test passed"
+# endif
 
 EXTRA_DIST = check_correct_answers gen_rose_tables.tcl rose.P
 clean-local:
