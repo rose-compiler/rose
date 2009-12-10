@@ -1,0 +1,8 @@
+ /*!
+     \defgroup ROSE_AST_InliningGroup Inlining Transformations
+     \ingroup ROSE_ProgramTransformationGroup
+
+     \brief Inlining support for function in the AST to be inlined where they are called.
+
+  */
+
