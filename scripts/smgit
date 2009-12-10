@@ -1,0 +1,307 @@
+#!/usr/bin/perl -w
+
+use strict;
+use Cwd;
+use IO::File;
+use Getopt::Std;
+use Data::Dumper;
+
+sub foreach_submodule {
+	my ($code) = @_;
+	if (-f  ".git/config") {
+		my @modules=();
+		my $fh = new IO::File;
+		if ($fh->open("<.git/config")) {
+			while (<$fh>) {
+				chomp;
+				next unless /^\[submodule "(\S*)"\]$/;
+				push @modules, $1;
+			}
+			$fh->close();
+		}
+		foreach my $name (@modules) {
+			my $dir = getcwd;
+			chdir $name;
+			&$code($name);
+			chdir $dir;
+		}
+	}
+}
+
+sub goto_supermodule {
+	my $dots = ".";
+	my $lastdev = 0; my $lastino = 0;
+	my $supermod;
+	while (1) {
+		my ($dev, $ino) = stat $dots;
+		last if $dev == $lastdev and $ino == $lastino;
+		if (-e "$dots/.git") {
+			$supermod = $dots;
+		}
+		$lastdev = $dev; $lastino = $ino;
+		$dots .= "/..";
+	}
+	chdir $supermod;
+}
+
+sub rev_parse {
+	my $rev = $_[0];
+	my $parsed_rev = `git rev-parse -q --verify $rev`;
+	return undef if $?;
+	chomp $parsed_rev;
+	return $parsed_rev;
+}
+
+sub symbolic_ref {
+	my $rev = $_[0];
+	my $parsed_rev = `git symbolic-ref -q $rev`;
+	return undef if $?;
+	chomp $parsed_rev;
+	return $parsed_rev;
+}
+
+sub merge_base {
+	my @refs = @_;
+	my $space_refs = join " ", @refs;
+	my $merge_base = `git merge-base $space_refs`;
+	return undef if $?;
+	chomp $merge_base;
+	return $merge_base;
+}
+
+sub show_ref {
+	my $refs = {};
+	open(SHOW_REF, "git show-ref|");
+	while (my $line = <SHOW_REF>) {
+		chomp $line;
+		my ($object, $ref) = split /\s+/, $line;
+		$refs->{$ref} = $object;
+	}
+	return $refs;
+}
+
+# Switch to the remote branch by creating a local branch with the same name.
+# If the branch already exists, and is a fast forward of the remote branch, fast forward the local branch.
+# Otherwise, use a detached HEAD.
+sub goto_remote_branch {
+	my $branch = $_[0];
+	my $local_branch = rev_parse("refs/heads/$branch");
+	if (!defined $local_branch) {
+		system("git checkout -b $branch refs/remotes/origin/$branch");
+		return;
+	}
+	my $remote_branch = rev_parse("refs/remotes/origin/$branch");
+	my $merge_base = merge_base($local_branch, $remote_branch);
+	if ($merge_base eq $local_branch) { # fast forward
+		system("git checkout $branch") and die "could not git checkout: $?";
+		system("git merge refs/remotes/origin/$branch") and die "could not git merge: $?";
+		return;
+	}
+# otherwise give up and use a detached HEAD
+	system("git checkout $remote_branch") and die "could not git checkout: $?";
+}
+
+# Try to find a remote branch that matches the current (possibly detached) HEAD.
+# Prefer the supplied name if given.
+# Create (or fast-forward) a local branch with the same name as the remote branch if found.
+# Otherwise, consider all remote branches.
+sub switch_to_branch {
+	my $preferred_branch = $_[0];
+	my $HEAD = rev_parse("HEAD");
+	my $preferred_ref;
+	$preferred_ref = rev_parse("refs/heads/$preferred_branch") if defined $preferred_branch;
+	if (defined $preferred_ref and $preferred_ref eq $HEAD) { # goto the local branch matching the preferred branch
+		system "git", "checkout", $preferred_branch and die "could not checkout $preferred_branch: $?";
+		return;
+	}
+	$preferred_ref = rev_parse("refs/remotes/origin/$preferred_branch") if defined $preferred_branch;
+	if (defined $preferred_ref and $preferred_ref eq $HEAD) { # goto the remote branch matching the preferred branch
+		goto_remote_branch($preferred_branch);
+		return;
+	}
+	my $refs = &show_ref;
+	for my $ref (keys %$refs) {
+		if ($ref =~ m@^refs/heads/(.*)$@) {
+			my $local_branch = $1;
+			if ($refs->{$ref} eq $HEAD) {
+				system "git", "checkout", $local_branch and die "could not checkout $local_branch: $?";
+				return;
+			}
+		}
+		if ($ref =~ m@^refs/remotes/origin/(.*)$@) {
+			my $remote_branch = $1;
+			if ($refs->{$ref} eq $HEAD) {
+				goto_remote_branch($remote_branch);
+				return;
+			}
+		}
+	}
+}
+
+sub _update_submodules {
+	my ($branch, $init) = @_;
+	if (-e ".gitmodules") {
+		my @args = ( "git", "submodule", "update" );
+		push @args, "--init" if $init;
+		system @args and die "submodule update in `pwd`: $?";
+		my $rec_update_submodules = sub {
+			switch_to_branch($branch);
+			_update_submodules($branch, $init);
+		};
+		foreach_submodule($rec_update_submodules);
+	}
+}
+
+sub update_submodules {
+	my ($init) = @_;
+	my $sym_ref = symbolic_ref("HEAD");
+	my $branch = undef;
+	if (defined $sym_ref and $sym_ref =~ m@^refs/heads/(.*)$@) {
+		$branch = $1;
+	}
+	_update_submodules($branch, $init);
+}
+		
+
+sub do_clone {
+	my ($url, $path) = @_;
+	unless (defined $path) {
+		$url =~ m@/([^/]*)$@;
+		$path = $1;
+		$path =~ s/\.git$//;
+	}
+	system "git", "clone", $url, $path and die "Could not run git clone: $?";
+	chdir $path or die "Could not switch to extracted path: $!";
+	update_submodules(1);
+	return 0;
+}
+
+sub create_branch {
+	my ($branch_name, $branch_head) = @_;
+	system "git", "branch", $branch_name, $branch_head and die "cannot git branch: $?";
+	my $rec_create_branch = sub {
+		my $pwd = getcwd;
+		$pwd =~ m@/([^/]*)$@;
+		my $last_pwd = $1;
+		chdir ".." or die "cannot chdir ..: $!";
+		my $sub_head = rev_parse("$branch_head:$last_pwd");
+		defined $sub_head or die "could not rev-parse $branch_head:$last_pwd";
+		chdir $last_pwd or die "cannot chdir $last_pwd: $!";
+		create_branch($branch_name, $sub_head);
+	};
+	foreach_submodule($rec_create_branch);
+}
+
+sub do_branch {
+	my ($branch_name, $branch_head) = @_;
+	goto_supermodule();
+	$branch_head ||= "HEAD";
+	create_branch($branch_name, $branch_head);
+}
+
+sub commit_message {
+	my ($commit) = @_;
+	open(my $cat_file, "git cat-file -p $commit|");
+	while (my $line = <$cat_file>) {
+		chomp $line;
+		last if $line eq "";
+	}
+	my $msg = "";
+	while (my $line = <$cat_file>) {
+		$msg .= $line;
+	}
+	return $msg;
+}
+
+sub commit_has_effect {
+	my ($auto) = @_;
+	if ($auto) {
+		`git diff --exit-code`;
+		if ($? != 0) {
+			return 1;
+		}
+	}
+	`git diff --cached --exit-code`;
+	if ($? != 0) {
+		return 1;
+	}
+	return 0;
+}
+
+sub commit_all {
+	my ($auto, $rmsg, $rcommitted) = @_;
+	my $rec_commit_all = sub {
+		commit_all($auto, $rmsg, $rcommitted);
+		my $pwd = getcwd;
+		$pwd =~ m@/([^/]*)$@;
+		my $last_pwd = $1;
+		chdir ".." or die "cannot chdir ..: $!";
+		system "git add $last_pwd" and die "cannot git add submodule ref: $?";
+		chdir $last_pwd or die "cannot chdir $last_pwd: $!";
+	};
+	foreach_submodule($rec_commit_all);
+	if (commit_has_effect($auto)) {
+		my @args = ( "git", "commit" );
+		push @args, "-a" if $auto;
+		push @args, "-m", $$rmsg if defined $$rmsg;
+		system @args and die "cannot git commit: $?";
+		unless (defined $$rmsg) {
+			$$rmsg = commit_message("HEAD");
+		}
+		$$rcommitted = 1;
+	}
+}
+
+sub do_commit {
+	my %opt;
+	getopt('am:', \%opt);
+	my $auto = exists $opt{a};
+	my $msg = $opt{m};
+	goto_supermodule();
+	my $committed = 0;
+	commit_all($auto, \$msg, \$committed);
+	unless ($committed) {
+		print "No changes.\n";
+	}
+}
+
+sub do_checkout {
+	my ($branch) = @_;
+	goto_supermodule();
+	system "git", "checkout", $branch and die "cannot git checkout $branch: $?";
+	update_submodules();
+}
+
+sub _do_fetch {
+	system "git", "fetch" and die "cannot git fetch: $!";
+	foreach_submodule(\&_do_fetch);
+}
+
+sub do_fetch {
+	goto_supermodule();
+	_do_fetch(@_);
+}
+
+my $cmd = shift @ARGV;
+
+unless (defined $cmd) {
+	print "Subcommand argument required\n";
+	exit 1;
+}
+
+my %cmds = (
+		clone => \&do_clone,
+		checkout => \&do_checkout,
+		branch => \&do_branch,
+		commit => \&do_commit,
+		checkout => \&do_checkout,
+		fetch => \&do_fetch,
+           );
+
+my $proc = $cmds{$cmd};
+unless (defined $proc) {
+	print "Unknown subcommand $cmd\n";
+	exit 1;
+}
+
+&$proc(@ARGV);
