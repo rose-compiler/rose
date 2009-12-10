@@ -112,7 +112,7 @@ if test "x$want_boost" = "xyes"; then
  # Use this set of paths, and the set including "/home/dquinlan" for testing this macro.
  # for ac_boost_path_tmp in /usr /usr/local /opt /opt/local /home/dquinlan; do
    for ac_boost_path_tmp in /usr /usr/local /opt /opt/local ; do
-		if test -d "$ac_boost_path_tmp/include/boost" && test -r "$ac_boost_path_tmp/include/boost"; then
+		if test "x${ac_boost_path_tmp}/include" != "x${ROSE_BOOST_INCLUDE_PATH}" && test -d "$ac_boost_path_tmp/include/boost" && test -r "$ac_boost_path_tmp/include/boost"; then
 			PREVIOUSLY_INSTALLED_BOOST="$ac_boost_path_tmp/include/boost"
        # echo "Detected a previously installed version of boost library: PREVIOUSLY_INSTALLED_BOOST = $PREVIOUSLY_INSTALLED_BOOST"
 			break;

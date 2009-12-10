@@ -38,6 +38,13 @@ rm -rf ROSE-build
 mkdir ROSE-build
 cd ROSE-build
 ../configure ${CONFIGURE_FLAGS}
+
+if test $ROSE_TEST_BUILD_STYLE = edg ; then
+	make -j8 upload_edg_binary
+	make -Csrc/frontend/CxxFrontend deploy_tarballs
+	exit 0
+fi
+
 make -j8
 
 # GCC 4.3 and 4.4 do not currently pass make check
@@ -46,5 +53,6 @@ make -j8
 #  - Unparser generates (C++ and Fortran) code that is incompatible with these compilers
 if test \! \( $ROSE_TEST_GCC_VERSION = 4.3.2 -o $ROSE_TEST_GCC_VERSION = 4.4.1 \) ; then
 	make -j8 check
+	make -j8 docs
 	make -j8 distcheck
 fi

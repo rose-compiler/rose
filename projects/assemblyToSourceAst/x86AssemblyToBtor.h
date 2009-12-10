@@ -29,7 +29,7 @@ struct BtorTranslationPolicy;
 
 class BtorTranslationHooks {
   public:
-  ~BtorTranslationHooks() {}
+  virtual ~BtorTranslationHooks() {}
   virtual void startInstruction(BtorTranslationPolicy* policy, SgAsmx86Instruction* insn) = 0;
   virtual void finishInstruction(BtorTranslationPolicy* policy, SgAsmx86Instruction* insn) = 0;
   virtual void hlt(BtorTranslationPolicy* policy) = 0;
