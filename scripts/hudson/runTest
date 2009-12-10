@@ -64,8 +64,8 @@ if test $ROSE_TEST_BUILD_STYLE = edg ; then
 fi
 
 # Save the output of make for later processing (e.g. similar to makeCheckLineCount.pl)
-# make -j8
-make -j8 | tee make_output.txt
+# Make sure that stderr is written to stdout.
+make -j8 1>&2 | tee make_output.txt
 
 # This is not as useful so instead we want do measurements of spew on filtered output.
 # grep -n "Making all in " make_output.txt | ../scripts/checkMakeSpew.pl | tee makeSpewLineCount.txt
