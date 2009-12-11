@@ -305,7 +305,12 @@ SgGraph::addEdge( SgGraphEdge* edge )
        // p_node_index_pair_to_edge_multimap[std::pair<int,int>(edge->get_node_A(),edge->get_node_B())] = edge;
 #if 1
        // p_node_index_pair_to_edge_multimap.insert(std::pair<std::pair<int,int>,SgGraphEdge*>(std::pair<int,int>(edge->get_node_A()->get_index(),edge->get_node_B()->get_index()),edge));
-          p_node_index_pair_to_edge_multimap.insert(std::pair<std::pair<int,int>,SgGraphEdge*>(std::pair<int,int>(node_index_first,node_index_second),edge));
+#ifdef _MSC_VER
+// tps (12/09/09) : Cannot compile this right now.
+#pragma message("rose_graph_support.C: Problem compiling multimap")
+#else
+		  p_node_index_pair_to_edge_multimap.insert(std::pair<std::pair<int,int>,SgGraphEdge*>(std::pair<int,int>(node_index_first,node_index_second),edge));
+#endif
 #endif
 
        // Initialize the node index --> SgGraphEdge* multimap.
@@ -378,10 +383,15 @@ SgIncidenceDirectedGraph::addDirectedEdge( SgDirectedGraphEdge* edge )
        // Note that this significantly slows down the performance of the new graph support (appears to be about a factor of 10X).
        // Is there a better (faster) way to build the p_node_index_pair_to_edge_multimap? Yes, increase the size of the hash table (DONE).
 #if 1
-          p_node_index_pair_to_edge_multimap.insert(std::pair<std::pair<int,int>,SgGraphEdge*>(std::pair<int,int>(node_index_first,node_index_second),edge));
-	  //	 p_node_index_pair_to_edge_multimap.insert(std::pair<std::pair<int,int>,SgGraphEdge*>(std::pair<int,int>(node_index_second,node_index_first),redge));
+#ifndef _MSC_VER
+		  p_node_index_pair_to_edge_multimap.insert(std::pair<std::pair<int,int>,SgGraphEdge*>(std::pair<int,int>(node_index_first,node_index_second),edge));
+#else
+// tps (12/09/09) Does not work under Windows right now.
+#pragma message ("rose_graph_support.C: multimap does currently not work.")
 #endif
-
+		  //	 p_node_index_pair_to_edge_multimap.insert(std::pair<std::pair<int,int>,SgGraphEdge*>(std::pair<int,int>(node_index_second,node_index_first),redge));
+#endif
+		  
        // Initialize the node index --> SgGraphEdge* multimap.
        // printf ("In SgGraph::addEdge(): Insert edge %p = (%d,%d) on node %d (p_node_index_to_edge_multimap size = %zu) \n",edge,node_index_first,node_index_second,node_index_first,p_node_index_to_edge_multimap.size());
 
@@ -444,8 +454,11 @@ SgGraph::display_node_index_pair_to_edge_multimap() const
      rose_graph_integerpair_edge_hash_multimap::const_iterator i = p_node_index_pair_to_edge_multimap.begin();
      while (i != p_node_index_pair_to_edge_multimap.end())
         {
-          printf ("   node pair: (i->first.first = %d,i->first.second = %d) SgGraphEdge: i->second = %p = %d \n",i->first.first,i->first.second,i->second,i->second->get_index());
-          i++;
+#ifndef _MSC_VER
+// tps (12/08/09) : Does not work under windows:  error C2039: 'first' : is not a member of 'System::UInt32'
+			printf ("   node pair: (i->first.first = %d,i->first.second = %d) SgGraphEdge: i->second = %p = %d \n",i->first.first,i->first.second,i->second,i->second->get_index());
+#endif
+		  i++;
         }
 // #endif
    }

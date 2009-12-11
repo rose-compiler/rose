@@ -10,11 +10,11 @@ set( libastprocessing_SRC
    AstReverseSimpleProcessing.C AstRestructure.C AstClearVisitFlags.C 
    AstTraversal.C AstCombinedSimpleProcessing.C 
    )
-if (!WIN32)
+if (NOT WIN32)
 set( libastprocessing_SRC  ${libastprocessing_SRC} 
    AstSharedMemoryParallelSimpleProcessing.C 
    )
-endif (!WIN32)
+endif (NOT WIN32)
 
 #add_library( libastprocessingSources  ${libastprocessing_SRC} )
 #add_dependencies( libastprocessingSources ROSETTA )

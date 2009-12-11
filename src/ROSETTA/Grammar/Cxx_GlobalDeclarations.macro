@@ -29,7 +29,14 @@ inline void preventConstructionOnStack(SgNode* n)
   // DQ (11/28/2009): This was a fix suggested by Robb.
   // void* frameaddr = 0;
   // Build an "auto" variable (should be located near the stack frame, I think).
+// tps (12/4/2009)
+#if _MSC_VER >= 1600  // 1600 == VC++ 10.0
+//../Grammar/Cxx_GlobalDeclarations.macro(32): error C3530: 'auto' cannot be combined with any other type-specifier
+     unsigned int nonStackFrameReferenceVariable;
+  #pragma message ( " Cxx_GlobalDeclarations.macro: __builtin_frame_address not known in Windows. Workaround in VS 10.0")
+#else
      auto unsigned int nonStackFrameReferenceVariable;
+#endif
      void* frameaddr = &nonStackFrameReferenceVariable;
 
   // DQ (11/28/2009): I think we can comment out the pragma message now.

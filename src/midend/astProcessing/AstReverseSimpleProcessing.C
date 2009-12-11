@@ -1,3 +1,5 @@
+#include "rose.h"
+
 // Author: Markus Schordan
 // $Id: AstReverseSimpleProcessing.C,v 1.3 2008/01/08 02:56:38 dquinlan Exp $
 
