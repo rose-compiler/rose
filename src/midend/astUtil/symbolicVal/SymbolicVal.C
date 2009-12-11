@@ -1,3 +1,8 @@
+// tps (12/09/2009) : Playing with precompiled headers in Windows. Requires rose.h as the first line in source files.
+#ifdef _MSC_VER
+// seems to cause problems under Linux
+#include "rose.h"
+#endif
 #include "SymbolicVal.h"
 
 #include "SymbolicMultiply.h"
@@ -190,6 +195,9 @@ std::string RelToString( CompareRel r)
   default:
     assert(false);
   }
+	// tps (12/07/2009) This part is never reached
+	assert(false);
+	return NULL;
 }
 
 
@@ -227,6 +235,9 @@ AstNodePtr  SymbolicCond :: CodeGen(AstInterface &fa) const
   default:
      assert(false);
   }
+	// tps (12/07/2009) This part is never reached
+	assert(false);
+	return fa.CreateBinaryOP(AstInterface::BOP_EQ, val1.CodeGen(fa), val2.CodeGen(fa));
 }
 
 AstNodePtr SymbolicMultiply::

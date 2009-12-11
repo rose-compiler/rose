@@ -58,7 +58,7 @@ set( unparser_SRC
 endif (WIN32)
 
 add_library(unparser STATIC ${unparser_SRC})
-add_dependencies( unparser ROSETTA )
+add_dependencies( unparser ROSETTA roseh)
 ########### install files ###############
 
 install(FILES  $(unparser_headers) DESTINATION ${INCLUDE_INSTALL_DIR})

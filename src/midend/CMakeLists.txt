@@ -16,6 +16,7 @@ add_subdirectory(programAnalysis)
 add_subdirectory(programTransformation)
 ########### next target   ###############
 set( midend_src
+${CMAKE_SOURCE_DIR}/src/midend/midend_roseh_pch.cpp
 ${CMAKE_SOURCE_DIR}/src/midend/astOutlining/NameGenerator.cc
 ${CMAKE_SOURCE_DIR}/src/midend/astOutlining/Preprocess.cc
 ${CMAKE_SOURCE_DIR}/src/midend/astOutlining/Outliner.cc

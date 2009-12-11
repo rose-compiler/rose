@@ -24,6 +24,21 @@ set(INSTALL_TARGETS_DEFAULT_ARGS  RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
                                                                         )
 # a new definition to tweak code for cmake 
 add_definitions (-DUSE_CMAKE)
+
+
+if (NOT WIN32)
+enable_language(Fortran)
+endif (NOT WIN32)
+
+#/CLR  /MDd /TP 
+if (WIN32)
+set( CMAKE_CXX_FLAGS " /CLR /TP " )
+set( CMAKE_C_FLAGS "  " )
+else (WIN32)
+set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
+set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
+endif (WIN32)
+
 #set(  CMAKE_VERBOSE_MAKEFILE  true )
 
 set(ROSE_TOP_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
@@ -42,31 +57,11 @@ include(MacroLibrary)
 # MYSQL_FOUND,MYSQL_INCLUDE_DIR,MYSQL_LIBRARIES, etc
 include(FindMySQL)
 
-# we are not ready yet to use QT and KDE
-#include( FindKDE4Internal )
-#find_package(KDE4 REQUIRED)
-#add_definitions(${QT_DEFINITIONS} ${KDE4_DEFINITIONS})
-#message ("QT_DEFINITIONS= ${QT_DEFINITIONS}")
-#message ("KDE4_DEFINITIONS= ${KDE4_DEFINITIONS}")
 
-if (!WIN32)
-enable_language(Fortran)
-endif (!WIN32)
-
-#/CLR  /MDd /TP 
-if (WIN32)
-set( CMAKE_CXX_FLAGS " /CLR /TP " )
-set( CMAKE_C_FLAGS "  " )
-else (WIN32)
-set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
-set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
-endif (WIN32)
-
-
-if (!WIN32)
+if (NOT WIN32)
 include(FindOpenSSL)
 include(FindSQLITE3)
-endif (!WIN32)
+endif (NOT WIN32)
 
 include(FindJava)
 
@@ -92,10 +87,10 @@ if(NOT Boost_FOUND)
 endif(NOT Boost_FOUND)
 include_directories(${Boost_INCLUDE_DIRS})
 
-if (!WIN32)
+if (NOT WIN32)
 find_library(M_LIB m)
 find_library(RT_LIB rt)
-endif (!WIN32)
+endif (NOT WIN32)
 
 # define a global variable to collect all common linked third-party libraries for rose
 set( link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${RT_LIB} ${OPENSSL_LIBRARIES} )
