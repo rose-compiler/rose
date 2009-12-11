@@ -159,8 +159,8 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/util/commandlineProcessing 
      ${ROSE_TOP_SRC_DIR}/src/midend/abstractHandle 
      ${ROSE_TOP_SRC_DIR}/src/midend/astDiagnostics 
-     ${ROSE_TOP_SRC_DIR}/src/midend/astInlining 
-     ${ROSE_TOP_SRC_DIR}/src/midend/astOutlining  
+     ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/astInlining 
+     ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/astOutlining  
      ${ROSE_TOP_SRC_DIR}/src/midend/astProcessing 
      ${ROSE_TOP_SRC_DIR}/src/midend/astQuery 
      ${ROSE_TOP_SRC_DIR}/src/midend/astRewriteMechanism 
@@ -172,14 +172,14 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/midend/binaryAnalyses/dataflowanalyses 
      ${ROSE_TOP_SRC_DIR}/src/midend/binaryAnalyses/graph 
      ${ROSE_TOP_SRC_DIR}/src/midend/binaryAnalyses/instructionSemantics 
-     ${ROSE_TOP_SRC_DIR}/src/midend/loopProcessing/computation 
-     ${ROSE_TOP_SRC_DIR}/src/midend/loopProcessing/depGraph 
-     ${ROSE_TOP_SRC_DIR}/src/midend/loopProcessing/depInfo 
-     ${ROSE_TOP_SRC_DIR}/src/midend/loopProcessing/driver 
-     ${ROSE_TOP_SRC_DIR}/src/midend/loopProcessing/outsideInterface 
-     ${ROSE_TOP_SRC_DIR}/src/midend/loopProcessing/prepostTransformation 
-     ${ROSE_TOP_SRC_DIR}/src/midend/loopProcessing/slicing 
-     ${ROSE_TOP_SRC_DIR}/src/midend/ompLowering 
+     ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/computation 
+     ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/depGraph 
+     ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/depInfo 
+     ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/driver 
+     ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/outsideInterface 
+     ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/prepostTransformation 
+     ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/slicing 
+     ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/ompLowering 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/CFG 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/CallGraphAnalysis 

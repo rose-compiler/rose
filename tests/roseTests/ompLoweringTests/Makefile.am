@@ -138,7 +138,7 @@ TESTCODE_CURRENTLY_FAILING = \
 # we reuse the OpenMP sources files from the OpenMP compile test directory
 TEST_DIR = $(top_srcdir)/tests/CompileTests/OpenMP_tests
 # the place to find omp.h, libgomp_g.h etc
-TEST_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII -I$(top_srcdir)/src/midend/ompLowering
+TEST_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII -I$(top_srcdir)/src/midend/programTransformation/ompLowering
 
 noinst_PROGRAMS = roseomp
 roseomp_SOURCES = roseomp.C

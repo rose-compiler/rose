@@ -54,8 +54,8 @@ libroseLibraries = \
    $(libroseBinaryLibraries) \
    $(top_builddir)/src/midend/abstractHandle/libabstractHandle.la \
    $(top_builddir)/src/midend/astDiagnostics/libastDiagnostics.la \
-   $(top_builddir)/src/midend/astInlining/libastinlining.la \
-   $(top_builddir)/src/midend/astOutlining/libastOutliner.la \
+   $(top_builddir)/src/midend/programTransformation/astInlining/libastinlining.la \
+   $(top_builddir)/src/midend/programTransformation/astOutlining/libastOutliner.la \
    $(top_builddir)/src/midend/astProcessing/libastprocessing.la \
    $(top_builddir)/src/midend/astQuery/libquery.la \
    $(top_builddir)/src/midend/astRewriteMechanism/librewrite.la \
@@ -63,14 +63,14 @@ libroseLibraries = \
    $(top_builddir)/src/midend/astUtil/astInterface/libastInterface.la \
    $(top_builddir)/src/midend/astUtil/astSupport/libastSupport.la \
    $(top_builddir)/src/midend/astUtil/symbolicVal/libsymbolicVal.la \
-   $(top_builddir)/src/midend/loopProcessing/computation/libcomputation.la \
-   $(top_builddir)/src/midend/loopProcessing/depGraph/libdepGraph.la \
-   $(top_builddir)/src/midend/loopProcessing/depInfo/libdepInfo.la \
-   $(top_builddir)/src/midend/loopProcessing/driver/libdriver.la \
-   $(top_builddir)/src/midend/loopProcessing/outsideInterface/libarrayOptimization.la \
-   $(top_builddir)/src/midend/loopProcessing/prepostTransformation/libprepostloop.la \
-   $(top_builddir)/src/midend/loopProcessing/slicing/libslicing.la \
-   $(top_builddir)/src/midend/ompLowering/libompLowering.la \
+   $(top_builddir)/src/midend/programTransformation/loopProcessing/computation/libcomputation.la \
+   $(top_builddir)/src/midend/programTransformation/loopProcessing/depGraph/libdepGraph.la \
+   $(top_builddir)/src/midend/programTransformation/loopProcessing/depInfo/libdepInfo.la \
+   $(top_builddir)/src/midend/programTransformation/loopProcessing/driver/libdriver.la \
+   $(top_builddir)/src/midend/programTransformation/loopProcessing/outsideInterface/libarrayOptimization.la \
+   $(top_builddir)/src/midend/programTransformation/loopProcessing/prepostTransformation/libprepostloop.la \
+   $(top_builddir)/src/midend/programTransformation/loopProcessing/slicing/libslicing.la \
+   $(top_builddir)/src/midend/programTransformation/ompLowering/libompLowering.la \
    $(top_builddir)/src/midend/programAnalysis/CFG/libCFG.la \
    $(top_builddir)/src/midend/programAnalysis/CallGraphAnalysis/libCallGraph.la \
    $(top_builddir)/src/midend/programAnalysis/OAWrap/libOAWrap.la \
