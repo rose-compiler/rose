@@ -313,6 +313,11 @@ class RoseBin_support {
     gettimeofday(&tv, NULL);
     return tv.tv_sec + tv.tv_usec * 1.e-6;
   }
+#else
+    static inline double getTime() {
+	// tps (12/08/2009): GetTime unimplemented but will pass like this.
+		return 0;
+	}
 #endif
 
 

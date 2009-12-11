@@ -160,7 +160,8 @@ Check that I am on the correct branch
    git branch -a
 
 Now merge the changes from "master" into my branch
-   git merge master
+#  git merge master # Wrong
+   git merge origin/master
 
 Note that this will most likely go smoothly if all changes
 are tken only from "master".  so it might be helpful (to
@@ -249,4 +250,47 @@ gitk master HEAD andreas cmake dan jeff liao matt peter robb svn thomas windows 
 
 To see what branches are tracked and the semantics of "git pull" use:
    $ git remote show origin
+
+
+################### Updating to use the new GIT repository ####################
+
+Directions for how to update to the new repository.
+   We now have a new repository that splits off the EDG work into a 
+"git" submodule.  As a result new local repositories must be built.
+The new git repository has the same name and location as the old one
+and the old one has been saved (and should be accessible for a short while).
+
+   0) Rename your old local repository (for example, "mv git-rose-dan OLD_git-rose-dan")
+      so that you can build a new one (that will use the submodule mechanism).
+
+   1) Build a new local repository:
+      a. build the local repository:
+           "git clone /usr/casc/overture/ROSE/git/ROSE.git git-dq-main-rc"
+      b. build a local branch to match a branch in the remote repository:
+           "git branch git-dq-main-rc --track origin/git-dq-main-rc"
+      c. checkout that local branch (switch to it):
+           "git checkout dq-main-rc"
+
+   2) One-time update the local branch to use git's submodule mechanism.
+      a. merge your existing branch with master:
+           "git merge origin/master"
+         Note that I had to resolve a conflict in "configure.in" after this step.
+      b. initialize the submodule mechanism:
+           "git submodule init"
+      c. update the git submodule:
+           "git submodule update"
+
+   3) Forever after, or until better support is available, use:
+      a. To switch branches use BOTH:
+           "git checkout <branch-name>"
+           "git submodule update"
+      b. To push:
+           NOT CLEAR WHAT the SUBMODULE COMMAND IS.
+
+################## Build a new GIT repository ####################
+
+   Building a shared repository that would then be used to clone
+from to generate local repositories:
+   "git init --bare --shared=true"
+
 

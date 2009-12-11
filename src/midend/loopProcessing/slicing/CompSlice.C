@@ -1,4 +1,7 @@
-
+// tps (12/09/2009) : Playing with precompiled headers in Windows. Requires rose.h as the first line in source files.
+#ifdef _MSC_VER
+#include "rose.h"
+#endif
 #include <set>
 
 #include <const.h>
@@ -324,14 +327,15 @@ SymbolicVar SliceLoopIvar( AstInterface &fa, const CompSlice *slice)
   typedef std::set<std::string, std::less<std::string> > nameset;
   nameset sliceVars, usedVars;
   CompSlice::ConstLoopIterator loopIter = slice->GetConstLoopIterator();
-  LoopTreeInterface interface;
+// tps (12/09/09) : FIX : Changed the name "interface" to interfaces , as interface is a keyword in MSVC.
+  LoopTreeInterface interfaces;
   for (LoopTreeNode *loop; (loop = loopIter.Current()); loopIter.Advance()) {
     std::string name = loop->GetLoopInfo()->GetVar().GetVarName();
     sliceVars.insert( name);
     CompSlice::ConstStmtIterator stmtIter=loopIter.GetConstStmtIterator();
     for (LoopTreeNode *stmt; (stmt=stmtIter.Current()); stmtIter.Advance()) {
-       for (LoopTreeNode *l = GetEnclosingLoop(stmt,interface);
-            l != 0; l = GetEnclosingLoop(l, interface) ) {
+       for (LoopTreeNode *l = GetEnclosingLoop(stmt,interfaces);
+            l != 0; l = GetEnclosingLoop(l, interfaces) ) {
           if (l == loop) continue;
           name = l->GetLoopInfo()->GetVar().GetVarName();
           usedVars.insert( (name) );

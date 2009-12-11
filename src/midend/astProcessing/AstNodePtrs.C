@@ -1,3 +1,4 @@
+#include "rose.h"
 // Author: Markus Schordan
 // $Id: AstNodePtrs.C,v 1.3 2006/04/24 00:21:32 dquinlan Exp $
 

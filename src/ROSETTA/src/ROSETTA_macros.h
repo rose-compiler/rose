@@ -123,6 +123,7 @@ class DeleteFlag { // Wrapper for extra argument type checking
 
 #ifdef _MSC_VER
 // DQ (11/28/2009): This is a problem for MSVC ("warning C4273: 'abort' : inconsistent dll linkage").
+//#define __builtin_constant_p(exp) (0)
 #define ROSE_ASSERT assert
 #else
 #define ROSE_ASSERT assert

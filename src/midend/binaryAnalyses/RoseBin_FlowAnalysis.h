@@ -152,7 +152,8 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {//, public GraphAlgorit
 // DQ (4/23/2009): We need to specify the default template parameters explicitly.
 // rose_hash::hash_map <std::string, SgAsmInstruction*> local_visited;
 #ifdef _MSC_VER
-  rose_hash::hash_map <std::string, SgAsmInstruction*,rose_hash::hash_string> local_visited;
+//  rose_hash::hash_map <std::string, SgAsmInstruction*,rose_hash::hash_string> local_visited;
+  rose_hash::hash_map <std::string, SgAsmInstruction*> local_visited;
 #else
   rose_hash::hash_map <std::string, SgAsmInstruction*,rose_hash::hash_string,rose_hash::eqstr_string> local_visited;
 #endif

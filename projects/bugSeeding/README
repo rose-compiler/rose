@@ -40,3 +40,8 @@ tux270.llnl.gov{dquinlan}498: gv inputCode_bufferOverflow_arrayIndexing.C_afterC
 For more information:
 man -M /usr/apps/graphviz/2.6/man dot
 
+How to handle large scale applications:
+   1) output pairings of small test codes with each instance of the larger test code.
+   2) multiple seeded flaws into a large code will be also represented by a collection
+      of smaller test codes.
+

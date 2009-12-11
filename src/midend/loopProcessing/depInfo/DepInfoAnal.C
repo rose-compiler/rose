@@ -1,3 +1,7 @@
+// tps (12/09/2009) : Playing with precompiled headers in Windows. Requires rose.h as the first line in source files.
+#ifdef _MSC_VER
+#include "rose.h"
+#endif
 #include <sstream>
 #include <DoublyLinkedList.h>
 #include <DomainInfo.h>
@@ -11,6 +15,8 @@
 #include <iostream>
 #include <CommandOptions.h>
 #include <fstream>
+
+
 
 #ifdef BD_OMEGA
 #include <PlatoOmegaInterface.h>
