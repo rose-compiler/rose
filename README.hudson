@@ -10,3 +10,48 @@ Previous directions before web server support:
    How to bring up the hudson web page:
       firefox http://localhost:8080/job/ROSE/ &
 
+How to reproduce bugs that Hudson finds:
+
+   1) Find the failed test within the Husdon web pages.
+      Check the build log to see what machine was used to do the build.
+   2) ssh to the correct machine using the "hudson-rose" account.
+   3) Source the file to setup the environment variables.
+      "source ~/startHudson-common"
+   4) Using the commands from the runScript (found in scripts/hudson)
+      issue any of al of the commands in the order specified in the runScript.
+      For example, run the edg specific commands if that was the part that failed.
+
+
+
+Setting up Hudson:
+   1) Download from: http://hudson-ci.org/
+
+   2) Install using:
+      cd /home/dquinlan/local/hudson-1.336/ && screen -d -m java -jar /home/dquinlan/local/hudson-1.336/hudson.war --httpListenAddress=127.0.0.1"
+      where "/home/dquinlan/local/hudson-1.336/" is an example location for the
+      "hudson.war" file.
+      Note that this starts husdon in a screen and detaches. Type "screen -r" to visit the
+      screen, and ^ad to exit the screen.  At this point hudson is running in the
+      background.
+
+   3) To see Hudson run, point your browser to: "http://localhost:8080"
+
+   4) Add git plugin if you want to run Hudson with git.
+      Note that you have to click the button to restart Hudson, but it will
+      restart itself automatically.
+
+   5) Add a job, define a user (yourself), and setup the email and 
+      logation of git repository, etc.
+
+   6) Click "ENABLE AUTOREFRESH" (top right corner of window).
+
+   7) Add a machine to use for running jobs.
+      If the machine is taken off line, reset this by disabling the 
+      6 or so reason why hudson will take a machine offline (diskspace,
+      and other resource limitations) and then reset the build executor.
+
+   x) Setup your crontab to restart hudson if your machine is rebooted.
+      "@reboot cd /home/dquinlan/local/hudson-1.336/ && screen -d -m java -jar /home/dquinlan/local/hudson-1.336/hudson.war --httpListenAddress=127.0.0.1"
+
+
+

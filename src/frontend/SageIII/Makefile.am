@@ -16,7 +16,8 @@ AM_YFLAGS = -d
 # Flex flags
 AM_LFLAGS =
 # avoid unused Flex functions which are automatically generated
-CXXFLAGS+= -DYY_NO_TOP_STATE -DYY_NO_POP_STATE $(ROSE_OPTIMIZATION_LEVEL)
+#CXXFLAGS+= -DYY_NO_TOP_STATE -DYY_NO_POP_STATE $(ROSE_OPTIMIZATION_LEVEL)
+CXXFLAGS+= $(ROSE_OPTIMIZATION_LEVEL)
 # omplexer.cc needs a header generaetd from ompparser.yy
 omplexer.lo: ompparser.h omplexer.cc
 ompparser.h: ompparser.cc
