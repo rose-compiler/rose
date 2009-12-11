@@ -166,6 +166,9 @@ CommandlineProcessing::generateArgcArgvFromList ( Rose_STL_Container<string> arg
            ROSE_ABORT();
         }
       
+#ifdef _MSC_VER
+#define __builtin_constant_p(exp) (0)
+#endif
      ROSE_ASSERT (argv == NULL);
      argc = argList.size();
      argv = (char**) malloc (argc * sizeof(char**));
