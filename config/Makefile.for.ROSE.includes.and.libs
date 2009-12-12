@@ -239,8 +239,8 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/util/commandlineProcessing \
      -I$(top_srcdir)/src/midend/abstractHandle \
      -I$(top_srcdir)/src/midend/astDiagnostics \
-     -I$(top_srcdir)/src/midend/astInlining \
-     -I$(top_srcdir)/src/midend/astOutlining  \
+     -I$(top_srcdir)/src/midend/programTransformation/astInlining \
+     -I$(top_srcdir)/src/midend/programTransformation/astOutlining  \
      -I$(top_srcdir)/src/midend/astProcessing \
      -I$(top_srcdir)/src/midend/astQuery \
      -I$(top_srcdir)/src/midend/astRewriteMechanism \
@@ -252,13 +252,13 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/midend/binaryAnalyses/dataflowanalyses \
      -I$(top_srcdir)/src/midend/binaryAnalyses/graph \
      -I$(top_srcdir)/src/midend/binaryAnalyses/instructionSemantics \
-     -I$(top_srcdir)/src/midend/loopProcessing/computation \
-     -I$(top_srcdir)/src/midend/loopProcessing/depGraph \
-     -I$(top_srcdir)/src/midend/loopProcessing/depInfo \
-     -I$(top_srcdir)/src/midend/loopProcessing/driver \
-     -I$(top_srcdir)/src/midend/loopProcessing/outsideInterface \
-     -I$(top_srcdir)/src/midend/loopProcessing/prepostTransformation \
-     -I$(top_srcdir)/src/midend/ompLowering \
+     -I$(top_srcdir)/src/midend/programTransformation/loopProcessing/computation \
+     -I$(top_srcdir)/src/midend/programTransformation/loopProcessing/depGraph \
+     -I$(top_srcdir)/src/midend/programTransformation/loopProcessing/depInfo \
+     -I$(top_srcdir)/src/midend/programTransformation/loopProcessing/driver \
+     -I$(top_srcdir)/src/midend/programTransformation/loopProcessing/outsideInterface \
+     -I$(top_srcdir)/src/midend/programTransformation/loopProcessing/prepostTransformation \
+     -I$(top_srcdir)/src/midend/programTransformation/ompLowering \
      -I$(top_srcdir)/src/midend/programAnalysis \
      -I$(top_srcdir)/src/midend/programAnalysis/CFG \
      -I$(top_srcdir)/src/midend/programAnalysis/CallGraphAnalysis \

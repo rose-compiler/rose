@@ -24,6 +24,21 @@ set(INSTALL_TARGETS_DEFAULT_ARGS  RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
                                                                         )
 # a new definition to tweak code for cmake 
 add_definitions (-DUSE_CMAKE)
+
+
+if (NOT WIN32)
+enable_language(Fortran)
+endif (NOT WIN32)
+
+#/CLR  /MDd /TP 
+if (WIN32)
+set( CMAKE_CXX_FLAGS " /CLR /TP " )
+set( CMAKE_C_FLAGS "  " )
+else (WIN32)
+set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
+set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
+endif (WIN32)
+
 #set(  CMAKE_VERBOSE_MAKEFILE  true )
 
 set(ROSE_TOP_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
@@ -42,31 +57,11 @@ include(MacroLibrary)
 # MYSQL_FOUND,MYSQL_INCLUDE_DIR,MYSQL_LIBRARIES, etc
 include(FindMySQL)
 
-# we are not ready yet to use QT and KDE
-#include( FindKDE4Internal )
-#find_package(KDE4 REQUIRED)
-#add_definitions(${QT_DEFINITIONS} ${KDE4_DEFINITIONS})
-#message ("QT_DEFINITIONS= ${QT_DEFINITIONS}")
-#message ("KDE4_DEFINITIONS= ${KDE4_DEFINITIONS}")
 
-if (!WIN32)
-enable_language(Fortran)
-endif (!WIN32)
-
-#/CLR  /MDd /TP 
-if (WIN32)
-set( CMAKE_CXX_FLAGS " /CLR /TP " )
-set( CMAKE_C_FLAGS "  " )
-else (WIN32)
-set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
-set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
-endif (WIN32)
-
-
-if (!WIN32)
+if (NOT WIN32)
 include(FindOpenSSL)
 include(FindSQLITE3)
-endif (!WIN32)
+endif (NOT WIN32)
 
 include(FindJava)
 
@@ -92,10 +87,10 @@ if(NOT Boost_FOUND)
 endif(NOT Boost_FOUND)
 include_directories(${Boost_INCLUDE_DIRS})
 
-if (!WIN32)
+if (NOT WIN32)
 find_library(M_LIB m)
 find_library(RT_LIB rt)
-endif (!WIN32)
+endif (NOT WIN32)
 
 # define a global variable to collect all common linked third-party libraries for rose
 set( link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${RT_LIB} ${OPENSSL_LIBRARIES} )
@@ -164,8 +159,8 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/util/commandlineProcessing 
      ${ROSE_TOP_SRC_DIR}/src/midend/abstractHandle 
      ${ROSE_TOP_SRC_DIR}/src/midend/astDiagnostics 
-     ${ROSE_TOP_SRC_DIR}/src/midend/astInlining 
-     ${ROSE_TOP_SRC_DIR}/src/midend/astOutlining  
+     ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/astInlining 
+     ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/astOutlining  
      ${ROSE_TOP_SRC_DIR}/src/midend/astProcessing 
      ${ROSE_TOP_SRC_DIR}/src/midend/astQuery 
      ${ROSE_TOP_SRC_DIR}/src/midend/astRewriteMechanism 
@@ -177,14 +172,14 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/midend/binaryAnalyses/dataflowanalyses 
      ${ROSE_TOP_SRC_DIR}/src/midend/binaryAnalyses/graph 
      ${ROSE_TOP_SRC_DIR}/src/midend/binaryAnalyses/instructionSemantics 
-     ${ROSE_TOP_SRC_DIR}/src/midend/loopProcessing/computation 
-     ${ROSE_TOP_SRC_DIR}/src/midend/loopProcessing/depGraph 
-     ${ROSE_TOP_SRC_DIR}/src/midend/loopProcessing/depInfo 
-     ${ROSE_TOP_SRC_DIR}/src/midend/loopProcessing/driver 
-     ${ROSE_TOP_SRC_DIR}/src/midend/loopProcessing/outsideInterface 
-     ${ROSE_TOP_SRC_DIR}/src/midend/loopProcessing/prepostTransformation 
-     ${ROSE_TOP_SRC_DIR}/src/midend/loopProcessing/slicing 
-     ${ROSE_TOP_SRC_DIR}/src/midend/ompLowering 
+     ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/computation 
+     ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/depGraph 
+     ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/depInfo 
+     ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/driver 
+     ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/outsideInterface 
+     ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/prepostTransformation 
+     ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/loopProcessing/slicing 
+     ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/ompLowering 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/CFG 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/CallGraphAnalysis 
