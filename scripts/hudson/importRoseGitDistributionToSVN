@@ -116,10 +116,10 @@ rm -rf ${ROSE_DIST_DIR}/src/midend/programAnalysis/annotationLanguageParser/lang
 #cp ${ROSE_TOP_TEST_DIR}/ChangeLog2 ${ROSE_DIST_DIR}/.
 
 # restore a few third party Makefile.in which cannot yet been automatically built
-#cp ${ROSE_SRC}/src/3rdPartyLibraries/libharu-2.1.0/script/Makefile.in ${ROSE_DIST_DIR}/src/3rdPartyLibraries/libharu-2.1.0/script/Makefile.in
-#cp ${ROSE_SRC}/src/3rdPartyLibraries/libharu-2.1.0/Makefile.in ${ROSE_DIST_DIR}/src/3rdPartyLibraries/libharu-2.1.0/Makefile.in 
-#cp ${ROSE_SRC}/src/3rdPartyLibraries/libharu-2.1.0/src/Makefile.in ${ROSE_DIST_DIR}/src/3rdPartyLibraries/libharu-2.1.0/src/Makefile.in
-#cp ${ROSE_SRC}/src/3rdPartyLibraries/libharu-2.1.0/include/Makefile.in ${ROSE_DIST_DIR}/src/3rdPartyLibraries/libharu-2.1.0/include/Makefile.in
+cp ${ROSE_SRC}/src/3rdPartyLibraries/libharu-2.1.0/script/Makefile.in ${ROSE_DIST_DIR}/src/3rdPartyLibraries/libharu-2.1.0/script/Makefile.in
+cp ${ROSE_SRC}/src/3rdPartyLibraries/libharu-2.1.0/Makefile.in ${ROSE_DIST_DIR}/src/3rdPartyLibraries/libharu-2.1.0/Makefile.in 
+cp ${ROSE_SRC}/src/3rdPartyLibraries/libharu-2.1.0/src/Makefile.in ${ROSE_DIST_DIR}/src/3rdPartyLibraries/libharu-2.1.0/src/Makefile.in
+cp ${ROSE_SRC}/src/3rdPartyLibraries/libharu-2.1.0/include/Makefile.in ${ROSE_DIST_DIR}/src/3rdPartyLibraries/libharu-2.1.0/include/Makefile.in
 
 # Make sure no EDG copyrighted files exist
 #----------------------------------------------------
