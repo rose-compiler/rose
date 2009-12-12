@@ -204,12 +204,12 @@ TEST_Objects = ${ALL_TESTCODES:.C=.o}
 #	./merge $(ROSE_FLAGS) -I../colorAST_tests -c $(srcdir)/$(@:.o=.C)
 
 $(TEST_Objects): testMerge
-	echo "Copy the file to build a second one to test the AST merge ..."
-	cp $(srcdir)/$(@:.o=.C) $(@:.o=_alt.C)
+	@echo "Copy the file $@ to build a second alternative one to test the AST merge ..."
+	@cp $(srcdir)/$(@:.o=.C) $(@:.o=_alt.C)
 # 	$(VALGRIND) ./testMerge $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.C)
 	$(VALGRIND) ./testMerge $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.C) $(@:.o=_alt.C)
 #	Build an object file to prevent make rebuilding target (astMerge is an analysis only).
-	touch $@
+	@touch $@
 
 
 QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}

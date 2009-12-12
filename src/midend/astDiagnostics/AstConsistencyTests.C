@@ -2256,11 +2256,19 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
             // ROSE_ASSERT(firstNondefiningDeclaration != NULL);
                if (firstNondefiningDeclaration == definingDeclaration)
                   {
-                    printf ("Warning AST Consistancy Test: declaration %p = %s = %s has equal firstNondefiningDeclaration and definingDeclaration = %p \n",
-                         declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str(),firstNondefiningDeclaration);
-                    printf ("declaration->get_definingDeclaration() = %p declaration->get_firstNondefiningDeclaration() = %p \n",
-                         declaration->get_definingDeclaration(),declaration->get_firstNondefiningDeclaration());
-                    declaration->get_file_info()->display("firstNondefiningDeclaration == definingDeclaration: debug");
+                 // DQ (12/12/2009): Suppress the warning about this for the case of a
+                 // SgTypedefDeclaration if not set to verbose mode. This is important to
+                 // reducing the output from the tests of AST merge in the mergeAST_tests
+                 // directory.
+                    SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(declaration);
+                    if (typedefDeclaration == NULL || (SgProject::get_verbose() > 0) )
+                       {
+                         printf ("Warning AST Consistancy Test: declaration %p = %s = %s has equal firstNondefiningDeclaration and definingDeclaration = %p \n",
+                              declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str(),firstNondefiningDeclaration);
+                         printf ("declaration->get_definingDeclaration() = %p declaration->get_firstNondefiningDeclaration() = %p \n",
+                              declaration->get_definingDeclaration(),declaration->get_firstNondefiningDeclaration());
+                         declaration->get_file_info()->display("firstNondefiningDeclaration == definingDeclaration: debug");
+                       }
                   }
 
             // DQ (8/6/2007): Comment this out, at least for SgTypedefDeclaration it should be OK, MAYBE.

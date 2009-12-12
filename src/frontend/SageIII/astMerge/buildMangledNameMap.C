@@ -345,9 +345,12 @@ generateMangledNameMap (MangledNameMapTraversal::MangledNameMapType & mangledMap
      set<SgNode*> mangledNameReferenceSet = MangledNameMapTraversal::buildSetFromMangleNameMap(mangledMap);
      setOfIRnodesToDelete = computeSetDifference(setOfIRnodesToDelete,mangledNameReferenceSet);
 
-     printf ("numberOfNodes                         = %d \n",traversal.numberOfNodes);
-     printf ("numberOfNodesSharable                 = %d \n",traversal.numberOfNodesSharable);
-     printf ("numberOfNodesEvaluated                = %d \n",traversal.numberOfNodesEvaluated);
-     printf ("numberOfNodesAddedToManagledNameMap   = %d \n",traversal.numberOfNodesAddedToManagledNameMap);
-     printf ("numberOfNodesAlreadyInManagledNameMap = %d \n",traversal.numberOfNodesAlreadyInManagledNameMap);
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("numberOfNodes                         = %d \n",traversal.numberOfNodes);
+          printf ("numberOfNodesSharable                 = %d \n",traversal.numberOfNodesSharable);
+          printf ("numberOfNodesEvaluated                = %d \n",traversal.numberOfNodesEvaluated);
+          printf ("numberOfNodesAddedToManagledNameMap   = %d \n",traversal.numberOfNodesAddedToManagledNameMap);
+          printf ("numberOfNodesAlreadyInManagledNameMap = %d \n",traversal.numberOfNodesAlreadyInManagledNameMap);
+        }
    }

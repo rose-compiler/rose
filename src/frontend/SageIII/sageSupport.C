@@ -844,7 +844,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
   // if ( CommandlineProcessing::isOption(argc,argv,"-rose:","(astMerge)",true) == true )
      if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","(astMerge)",true) == true )
         {
-          printf ("-rose:astMerge option found \n");
+       // printf ("-rose:astMerge option found \n");
        // set something not yet defined!
           p_astMerge = true;
         }
