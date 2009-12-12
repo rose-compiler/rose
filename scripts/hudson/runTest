@@ -2,18 +2,20 @@
 
 export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:$LD_LIBRARY_PATH"
 
-echo "Output variables required by Hudson runTest script."
-echo "***************************************************"
-echo "LD_LIBRARY_PATH       = $LD_LIBRARY_PATH"
-echo "ROSE_TEST_BUILD_STYLE = ${ROSE_TEST_BUILD_STYLE}"
-echo "ROSE_TEST_BOOST_PATH  = ${ROSE_TEST_BOOST_PATH}"
-echo "ROSE_TEST_JAVA_PATH   = ${ROSE_TEST_JAVA_PATH}"
+echo "*******************************************************************"
+echo "         Output variables required by Hudson runTest script."
+echo "*******************************************************************"
+echo "LD_LIBRARY_PATH                   = $LD_LIBRARY_PATH"
+echo "ROSE_TEST_BUILD_SKIP_BUILD_SCRIPT = ${ROSE_TEST_BUILD_SKIP_BUILD_SCRIPT}"
+echo "ROSE_TEST_BUILD_STYLE             = ${ROSE_TEST_BUILD_STYLE}"
+echo "ROSE_TEST_BOOST_PATH              = ${ROSE_TEST_BOOST_PATH}"
+echo "ROSE_TEST_JAVA_PATH               = ${ROSE_TEST_JAVA_PATH}"
 
 echo "Environment variables required for ROSE_TEST_BUILD_STYLE = full"
-echo "ROSE_TEST_QT_PATH     = ${ROSE_TEST_QT_PATH}"
-echo "ROSE_TEST_SQLITE_PATH = ${ROSE_TEST_SQLITE_PATH}"
-echo "ROSE_TEST_RTED_PATH   = ${ROSE_TEST_RTED_PATH}"
-echo "***************************************************"
+echo "ROSE_TEST_QT_PATH                 = ${ROSE_TEST_QT_PATH}"
+echo "ROSE_TEST_SQLITE_PATH             = ${ROSE_TEST_SQLITE_PATH}"
+echo "ROSE_TEST_RTED_PATH               = ${ROSE_TEST_RTED_PATH}"
+echo "*******************************************************************"
 
 
 if test $ROSE_TEST_GCC_VERSION != 4.1.2 ; then
@@ -49,7 +51,12 @@ fi
 echo "CONFIGURE_FLAGS = ${CONFIGURE_FLAGS}"
 
 # Skip this for now but uncomment before checkin!
-./build
+if test $ROSE_TEST_BUILD_SKIP_BUILD_SCRIPT = yes ; then
+   echo "Skipping build at part of testing from makefile rule."
+else
+   echo "Hudson tests on a new branch must run the ROSE build script."
+   ./build
+fi
 
 if test -e ROSE-build ; then chmod -R u+w ROSE-build ; fi
 rm -rf ROSE-build

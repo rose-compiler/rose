@@ -29,7 +29,7 @@ echo "ac_rose_lib_path = $ac_rose_lib_path"
 # to be called to define all macros as required for arbitrary
 # ROSE projects.  The configure commandline should be the same
 # for both ROSE/configure and internal_rose_workspace/configure.
-ROSE_SUPPORT_ROSE
+ROSE_SUPPORT_ROSE_PART_1
 ROSE_SUPPORT_ROSE_PART_2
 
 # Specify the files to generate (Makefile.in's and any other required files).
