@@ -120,5 +120,5 @@ check-local:
 	@echo "***********************************************************************************************"
 
 clean-local:
-	rm -f *.o rose_*.[cC]
+	rm -f a.out *.o rose_*.[cC] roseTestProgram.C
 	rm -rf QMTest
