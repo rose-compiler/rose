@@ -82,12 +82,12 @@ fi
 # prepare and 
 # build source tree
 test -d trunk && cd trunk || (echo "expecting trunk, but not found..." && echo `pwd`&& exit 1)
-test -f ChangeLog2
-if [ $? -ne 0 ]; then
-    echo `pwd`
-    echo "Error: the current directory does not seem to be a ROSE top source directory!!!"
-    exit 1
-fi 
+#test -f ChangeLog2
+#if [ $? -ne 0 ]; then
+#    echo `pwd`
+#    echo "Error: the current directory does not seem to be a ROSE top source directory!!!"
+#    exit 1
+#fi 
 
 #GIT_REPO_URL=`grep url .git/config | cut -f 3 -d' '`
 #if [ "$GIT_REPO_URL" != "file:///usr/casc/overture/ROSE/git/ROSE.git" ]; then
@@ -102,8 +102,10 @@ if [ $? -ne 0 ]; then
 fi
 
 # minimum configuration options to build binaries
+if test -e ROSE-build ; then chmod -R u+w ROSE-build ; fi
 rm -rf ROSE-build
 mkdir ROSE-build
+
 cd ROSE-build
 
 ../configure --with-boost=${BOOST_ROOT} --with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall
