@@ -144,7 +144,7 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
   // ****************************************************************************
   // This traverses the memory pool (so it sees everything) and build mangled names
   // for anything that is judged to be sharable (see implementation for what is shared).
-     printf ("\n\n************************************************************\n");
+  // printf ("\n\n************************************************************\n");
   // MangledNameMapTraversal::SetOfNodesType intermediateDeleteSet;
      set<SgNode*>  intermediateDeleteSet;
 #ifdef _MSC_VER
@@ -240,7 +240,8 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
   // exponential so not practical.
      if (numberOfASTnodesBeforeMerge < MAX_NUMBER_OF_IR_NODES_TO_GRAPH)
         {
-          printf ("Generate the graph after the copy intermediateDeleteSet = %zu \n",intermediateDeleteSet.size());
+          if (SgProject::get_verbose() > 0)
+               printf ("Generate the graph after the copy intermediateDeleteSet = %zu \n",intermediateDeleteSet.size());
        // SimpleColorMemoryPoolTraversal::generateGraph(filename+"_afterMangledNameMapWholeAST",intermediateDeleteSet);
           generateWholeGraphOfAST(filename+"_afterMangledNameMapWholeAST",intermediateDeleteSet);
        // SimpleColorFilesTraversal::generateGraph(project,filename+"_afterMangledNameMap");
@@ -253,8 +254,10 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
 #endif
 
      int numberOfASTnodesAfterCopy = numberOfNodes();
-     printf ("After AST copy: numberOfASTnodesAfterCopy = %d (%d increase) intermediateDeleteSet = %ld \n",
-          numberOfASTnodesAfterCopy,numberOfASTnodesAfterCopy-numberOfASTnodesBeforeCopy,(long int)intermediateDeleteSet.size());
+
+     if (SgProject::get_verbose() > 0)
+          printf ("After AST copy: numberOfASTnodesAfterCopy = %d (%d increase) intermediateDeleteSet = %ld \n",
+               numberOfASTnodesAfterCopy,numberOfASTnodesAfterCopy-numberOfASTnodesBeforeCopy,(long int)intermediateDeleteSet.size());
 
   // DQ (2/19/2007): Build the replacement map externally and pass it in to avoid copying.
 #ifdef _MSC_VER
