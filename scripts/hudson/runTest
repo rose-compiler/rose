@@ -112,5 +112,5 @@ fi
 
 # Finally run the "make docs" test.
 echo "Starting make docs step"
-# make -j8 docs
+make -j8 docs
 echo "Done with make docs step"
