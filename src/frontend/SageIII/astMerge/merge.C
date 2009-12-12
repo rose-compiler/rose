@@ -65,10 +65,13 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
 	 // Note that skipFrontendSpecificIRnodes alows the generated graphs to skip the 
   // representation or IR nodes that are marked to be frontend specific.
 
-     printf ("\n\n");
-     printf ("**************************************************************** \n");
-     printf ("**********************  START AST MERGE ************************ \n");
-     printf ("**************************************************************** \n");
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("\n\n");
+          printf ("**************************************************************** \n");
+          printf ("**********************  START AST MERGE ************************ \n");
+          printf ("**************************************************************** \n");
+        }
 
   // DQ (5/31/2007): Force this to be true for testing AST merge
      ROSE_ASSERT(skipFrontendSpecificIRnodes == true);
@@ -77,7 +80,9 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
      string filename = SageInterface::generateProjectName(project);
 
      int numberOfASTnodesBeforeMerge = numberOfNodes();
-     printf ("numberOfASTnodesBeforeMerge = %d MAX_NUMBER_OF_IR_NODES_TO_GRAPH = %d \n",numberOfASTnodesBeforeMerge,MAX_NUMBER_OF_IR_NODES_TO_GRAPH);
+     if (SgProject::get_verbose() > 0)
+          printf ("numberOfASTnodesBeforeMerge = %d MAX_NUMBER_OF_IR_NODES_TO_GRAPH = %d \n",numberOfASTnodesBeforeMerge,MAX_NUMBER_OF_IR_NODES_TO_GRAPH);
+
      if (numberOfASTnodesBeforeMerge < MAX_NUMBER_OF_IR_NODES_TO_GRAPH)
         {
        // SimpleColorMemoryPoolTraversal::generateGraph(filename+"_beforeMerge");
@@ -95,15 +100,18 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
   // **************************   Mangled Name Tests   **************************
   // ****************************************************************************
   // Test the generateUniqueName() function (everywhere in the AST, so that we will know that we can rely on it!)
-     printf ("Running testUniqueNameGenerationTraversal (more AST tests) \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Running testUniqueNameGenerationTraversal (more AST tests) \n");
 
 #ifdef _MSC_VER
   // DQ (11/27/2009): This appears to be required for MSVC (I think it is correct for GNU as well).
   // extern void testUniqueNameGenerationTraversal();
 #endif
 
-	 testUniqueNameGenerationTraversal();
-     printf ("Running testUniqueNameGenerationTraversal (more AST tests): DONE \n");
+     testUniqueNameGenerationTraversal();
+
+     if (SgProject::get_verbose() > 0)
+          printf ("Running testUniqueNameGenerationTraversal (more AST tests): DONE \n");
 
   // TestParentPointersOfSymbols::test();
 
@@ -148,35 +156,43 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
      MangledNameMapTraversal::MangledNameMapType mangledNameMap (mangledNameHashTableSize);
 #endif
 
-     printf ("Calling getMangledNameMap() \n");
-     generateMangledNameMap(mangledNameMap,intermediateDeleteSet);
-     printf ("Calling getMangledNameMap(): DONE \n");
-     printf ("************************************************************\n\n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Calling getMangledNameMap() \n");
 
-     printf ("mangledNameMap.size() = %zu intermediateDeleteSet = %zu \n",mangledNameMap.size(),intermediateDeleteSet.size());
+     generateMangledNameMap(mangledNameMap,intermediateDeleteSet);
+
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("Calling getMangledNameMap(): DONE \n");
+          printf ("************************************************************\n\n");
+
+          printf ("mangledNameMap.size() = %zu intermediateDeleteSet = %zu \n",mangledNameMap.size(),intermediateDeleteSet.size());
 
 #if DISPLAY_INTERNAL_DATA 
-     printf ("\n\n**************************************** \n");
-     printf ("mangledNameMap computed by getMangledNameMap \n");
-     printf ("**************************************** \n");
-     MangledNameMapTraversal::displayMagledNameMap(mangledNameMap);
+          printf ("\n\n**************************************** \n");
+          printf ("mangledNameMap computed by getMangledNameMap \n");
+          printf ("**************************************** \n");
+          MangledNameMapTraversal::displayMagledNameMap(mangledNameMap);
 #endif
 
 #if DISPLAY_INTERNAL_DATA > 1
 
-     printf ("\n\n**************************************** \n");
-     printf ("Delete set computed by getMangledNameMap \n");
-     printf ("**************************************** \n");
-     displaySet(intermediateDeleteSet,"Delete set computed by getMangledNameMap");
+          printf ("\n\n**************************************** \n");
+          printf ("Delete set computed by getMangledNameMap \n");
+          printf ("**************************************** \n");
+          displaySet(intermediateDeleteSet,"Delete set computed by getMangledNameMap");
 #endif
-
+        }
+     
 #if 0
      printf ("Existing after creation of mangle name IR node map \n");
      ROSE_ASSERT(false);
 #endif
 
      int numberOfASTnodesBeforeCopy = numberOfNodes();
-     printf ("Before AST copy: numberOfASTnodesBeforeCopy = %d intermediateDeleteSet = %zu \n",numberOfASTnodesBeforeCopy,intermediateDeleteSet.size());
+
+     if (SgProject::get_verbose() > 0)
+          printf ("Before AST copy: numberOfASTnodesBeforeCopy = %d intermediateDeleteSet = %zu \n",numberOfASTnodesBeforeCopy,intermediateDeleteSet.size());
 
 #if 0
   // printf ("Generate the graph before the copy \n");
@@ -255,36 +271,51 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
   // ****************************************************************************
   // Build the replacement Map, locations (pointers to pointers) in the AST where updates will be done (during the fixupTraversal).
   // Their is not side-effect to the AST from this traversal (the memory pool is used so that ALL IR nodes will be traversed).
-     printf ("\n\n************************************************************\n");
-     printf ("Calling replacementMapTraversal() \n");
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("\n\n************************************************************\n");
+          printf ("Calling replacementMapTraversal() \n");
+        }
+
   // ReplacementMapTraversal::ReplacementMapType replacementMap = replacementMapTraversal(mangledNameMap,ODR_Violations,intermediateDeleteSet);
      replacementMapTraversal(mangledNameMap,replacementMap,ODR_Violations,intermediateDeleteSet);
-     printf ("Calling replacementMapTraversal(): DONE \n");
-     printf ("************************************************************\n\n");
+
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("Calling replacementMapTraversal(): DONE \n");
+          printf ("************************************************************\n\n");
 #if DISPLAY_INTERNAL_DATA
-     printf ("\n\n After replacementMapTraversal(): replacementMap: \n");
-     ReplacementMapTraversal::displayReplacementMap(replacementMap);
+          printf ("\n\n After replacementMapTraversal(): replacementMap: \n");
+          ReplacementMapTraversal::displayReplacementMap(replacementMap);
 
-     printf ("\n\n After replacementMapTraversal(): intermediateDeleteSet: \n");
-     displaySet(intermediateDeleteSet,"After replacementMapTraversal");
+          printf ("\n\n After replacementMapTraversal(): intermediateDeleteSet: \n");
+          displaySet(intermediateDeleteSet,"After replacementMapTraversal");
 #endif
-
+        }
+     
   // TestParentPointersOfSymbols::test();
 
-     printf ("After replacementMapTraversal: replacementMap = %ld intermediateDeleteSet = %ld \n",(long)replacementMap.size(),(long)intermediateDeleteSet.size());
+     if (SgProject::get_verbose() > 0)
+          printf ("After replacementMapTraversal: replacementMap = %ld intermediateDeleteSet = %ld \n",(long)replacementMap.size(),(long)intermediateDeleteSet.size());
 
 #if 0
      printf ("Exiting as part of test after computing the replacementMap ... \n");
      exit(1);
 #endif
 
-     printf ("Calling ReplacementMapTraversal::buildListOfODRviolations() \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Calling ReplacementMapTraversal::buildListOfODRviolations() \n");
+
      set<SgNode*> problemSubtreeSet = ReplacementMapTraversal::buildListOfODRviolations(ODR_Violations);
-     printf ("Calling ReplacementMapTraversal::buildListOfODRviolations(): DONE \n");
+
+     if (SgProject::get_verbose() > 0)
+          printf ("Calling ReplacementMapTraversal::buildListOfODRviolations(): DONE \n");
 
      if (numberOfASTnodesBeforeMerge < MAX_NUMBER_OF_IR_NODES_TO_GRAPH)
         {
-          printf ("Generate the graph after computing the replacement map (ODR_Violations.size() = %ld) \n",(long)ODR_Violations.size());
+          if (SgProject::get_verbose() > 0)
+               printf ("Generate the graph after computing the replacement map (ODR_Violations.size() = %ld) \n",(long)ODR_Violations.size());
+
        // SimpleColorFilesTraversal::generateGraph(project,filename+"_ODR_violations_afterReplacementMap",problemSubtreeSet);
           generateGraphOfAST(project,filename+"_ODR_violations_afterReplacementMap",problemSubtreeSet);
           set<SgNode*> skippedNodeSet = getSetOfFrontendSpecificNodes();
@@ -305,15 +336,23 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
   // are found in the replacement map are used to lookup the replacement values that are used to reset the 
   // pointers in the AST. As the replacement is computed the pointer values that are marked in the replacement
   // list for update are added to the intermediateDeleteSet.
-     printf ("\n\n************************************************************\n");
-     printf ("Calling fixupTraversal() \n");
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("\n\n************************************************************\n");
+          printf ("Calling fixupTraversal() \n");
+        }
+
      fixupTraversal(replacementMap,intermediateDeleteSet);
-     printf ("Calling fixupTraversal(): DONE \n");
-     printf ("************************************************************\n\n");
+
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("Calling fixupTraversal(): DONE \n");
+          printf ("************************************************************\n\n");
 #if DISPLAY_INTERNAL_DATA > 1
-     printf ("\n\n After replacementMapTraversal(): intermediateDeleteSet: \n");
-     displaySet(intermediateDeleteSet,"After fixupTraversal");
+          printf ("\n\n After replacementMapTraversal(): intermediateDeleteSet: \n");
+          displaySet(intermediateDeleteSet,"After fixupTraversal");
 #endif
+        }
 
 #if 0
      printf ("Exiting after fixupTraversal ... \n");
@@ -324,7 +363,9 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
 
      if (numberOfASTnodesBeforeMerge < MAX_NUMBER_OF_IR_NODES_TO_GRAPH)
         {
-          printf ("Generate the graph after the merge intermediateDeleteSet = %ld \n",(long)intermediateDeleteSet.size());
+          if (SgProject::get_verbose() > 0)
+               printf ("Generate the graph after the merge intermediateDeleteSet = %ld \n",(long)intermediateDeleteSet.size());
+
        // SimpleColorMemoryPoolTraversal::generateGraph(filename+"_afterMergeWholeAST",intermediateDeleteSet);
        // SimpleColorMemoryPoolTraversal::generateGraph(filename+"_afterMergeWholeAST",getSetOfFrontendSpecificNodes(requiredNodesSet));
        // set<SgNode*> emptySet;
@@ -338,8 +379,10 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
         }
 
      int numberOfASTnodesBeforeDelete = numberOfNodes();
-     printf ("Before AST delete: numberOfASTnodesBeforeDelete = %d intermediateDeleteSet = %ld finalDeleteSet = %ld \n",
-          numberOfASTnodesBeforeDelete,(long)intermediateDeleteSet.size(),(long)finalDeleteSet.size());
+
+     if (SgProject::get_verbose() > 0)
+          printf ("Before AST delete: numberOfASTnodesBeforeDelete = %d intermediateDeleteSet = %ld finalDeleteSet = %ld \n",
+               numberOfASTnodesBeforeDelete,(long)intermediateDeleteSet.size(),(long)finalDeleteSet.size());
 
   // ****************************************************************************
   // *****************  Compute Final Set of IR Nodes To Delete  ****************
@@ -352,37 +395,47 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
 
   // displayDeleteSet (intermediateDeleteSet);
 
-     printf ("requiredNodesSet.size() = %ld \n",(long)requiredNodesSet.size());
+     if (SgProject::get_verbose() > 0)
+          printf ("requiredNodesSet.size() = %ld \n",(long)requiredNodesSet.size());
 
 #if 0
      printf ("Exiting after computing required IR nodes ... \n");
      exit(1);
 #endif
 
-     printf ("Calling computeSetDifference() \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Calling computeSetDifference() \n");
   // Computer the set difference between the nodes to delete and the nodes that are required!
   // set<SgNode*> finalDeleteSet = computeSetDifference(intermediateDeleteSet,requiredNodesSet);
      finalDeleteSet = computeSetDifference(intermediateDeleteSet,requiredNodesSet);
-     printf ("Calling compute set difference(): DONE \n");
 
-     printf ("Output the set difference size = %ld \n",(long)finalDeleteSet.size());
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("Calling compute set difference(): DONE \n");
+          printf ("Output the set difference size = %ld \n",(long)finalDeleteSet.size());
 
 #if DISPLAY_INTERNAL_DATA
-     displaySet(finalDeleteSet,"finalDeleteSet");
+          displaySet(finalDeleteSet,"finalDeleteSet");
 #endif
+        }
 
   // DQ (2/15/2007): Error checking on the finalDeleteSet
   // deleteSetErrorCheck( project, requiredNodesSet );
      deleteSetErrorCheck( project, finalDeleteSet );
 
-     printf ("Calling computeSetIntersection() \n");
-     set<SgNode*> intersectionSet = computeSetIntersection(intermediateDeleteSet,requiredNodesSet);
-     printf ("Calling computeSetIntersection(): DONE \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Calling computeSetIntersection() \n");
 
-     printf ("intersectionSet.size() = %ld \n",(long)intersectionSet.size());
+     set<SgNode*> intersectionSet = computeSetIntersection(intermediateDeleteSet,requiredNodesSet);
+
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("Calling computeSetIntersection(): DONE \n");
+          printf ("intersectionSet.size() = %ld \n",(long)intersectionSet.size());
 #if DISPLAY_INTERNAL_DATA > 1
-     displaySet(intersectionSet,"intersectionSet");
+          displaySet(intersectionSet,"intersectionSet");
 #endif
+        }
 
 #if 0
   // DQ (2/19/2007): We can't pass the mangled name tests because we have IR nodes that are not linked to properly 
@@ -400,13 +453,20 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
   // ****************************************************************************
   // ************  Delete AST IR Node Made Redundant Due To Sharing  ************
   // ****************************************************************************
-     printf ("\n\n************************************************************\n");
-     printf ("Calling deleteNodes() \n");
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("\n\n************************************************************\n");
+          printf ("Calling deleteNodes() \n");
+        }
+
      deleteNodes(finalDeleteSet);
   // deleteNodes(intersectionSet);
-     printf ("Calling deleteNodes(): DONE \n");
-     printf ("************************************************************\n\n");
 
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("Calling deleteNodes(): DONE \n");
+          printf ("************************************************************\n\n");
+        }
 #if 0
   // Remove any simple unattached AST fragments not pointed to by other IR nodes
      printf ("Calling deleteOrphanIRnodesInMemoryPool() \n");
@@ -432,15 +492,18 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
      set<SgNode*> skippedNodeSet;
 
   // This option is controled by a commandline parameter "-merge:s" or "-merge:suppress_frontend_code"
-     printf ("skipFrontendSpecificIRnodes = %s \n",(skipFrontendSpecificIRnodes == true) ? "true" : "false");
+     if (SgProject::get_verbose() > 0)
+          printf ("skipFrontendSpecificIRnodes = %s \n",(skipFrontendSpecificIRnodes == true) ? "true" : "false");
      if (skipFrontendSpecificIRnodes == true)
         {
        // Skip IR nodes from the front-end
-          printf ("Calling getSetOfFrontendSpecificNodes() \n");
+          if (SgProject::get_verbose() > 0)
+               printf ("Calling getSetOfFrontendSpecificNodes() \n");
           skippedNodeSet = getSetOfFrontendSpecificNodes();
         }
   // printf ("sharedNodeSet size = %ld skippedNodeSet size = %ld \n",sharedNodeSet.size(),skippedNodeSet.size());
-     printf ("skippedNodeSet size = %ld \n",(long)skippedNodeSet.size());
+     if (SgProject::get_verbose() > 0)
+          printf ("skippedNodeSet size = %ld \n",(long)skippedNodeSet.size());
   // displaySet(skippedNodeSet,"result from getSetOfFrontendSpecificNodes() function");
 
   // set<SgNode*> skippedNodeSet          = sharedNodeSet;
@@ -475,13 +538,16 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
      AstTests::runAllTests(project);
      printf ("Running AST tests (after delete, and before graph generation): DONE \n");
 #else
-     printf ("Skipping AST tests (after delete, and before graph generation): DONE \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Skipping AST tests (after delete, and before graph generation): DONE \n");
 #endif
 
   // ******************************************************************************
   // ****************** Compute Efficency of AST Merge Mechanism ******************
   // ******************************************************************************
-     printf ("numberOfASTnodesBeforeMerge = %d numberOfASTnodesBeforeDelete = %d \n",numberOfASTnodesBeforeMerge,numberOfASTnodesBeforeDelete);
+     if (SgProject::get_verbose() > 0)
+          printf ("numberOfASTnodesBeforeMerge = %d numberOfASTnodesBeforeDelete = %d \n",numberOfASTnodesBeforeMerge,numberOfASTnodesBeforeDelete);
+
      double percentageDecrease = 100.0 - ( ((double) numberOfASTnodesAfterDelete) / ((double) numberOfASTnodesBeforeDelete) ) * 100.0;
      double numberOfFiles = project->numberOfFiles();
      double mergeEfficency = 0.0;
@@ -496,16 +562,19 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
           mergeEfficency = percentageDecrease * fileNumberMultiplier;
         }
 
-     printf ("\n\n");
-     printf ("******************************************************************************************************************************************************************** \n");
-     printf ("After AST delete: numberOfASTnodesBeforeMerge = %d numberOfASTnodesAfterDelete = %d (%d node decrease: %2.4lf percent decrease, mergeEfficency = %2.4lf) \n",
-          numberOfASTnodesBeforeMerge,numberOfASTnodesAfterDelete,numberOfASTnodesBeforeDelete-numberOfASTnodesAfterDelete,percentageDecrease,mergeEfficency);
-     printf ("******************************************************************************************************************************************************************** \n\n\n");
-
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("\n\n");
+          printf ("******************************************************************************************************************************************************************** \n");
+          printf ("After AST delete: numberOfASTnodesBeforeMerge = %d numberOfASTnodesAfterDelete = %d (%d node decrease: %2.4lf percent decrease, mergeEfficency = %2.4lf) \n",
+               numberOfASTnodesBeforeMerge,numberOfASTnodesAfterDelete,numberOfASTnodesBeforeDelete-numberOfASTnodesAfterDelete,percentageDecrease,mergeEfficency);
+          printf ("******************************************************************************************************************************************************************** \n\n\n");
+        }
 #if 0
      reportUnsharedDeclarationsTraversal();
 #else
-     printf ("Note: Skipping reportUnsharedDeclarationsTraversal(): generates a list of un-shared constructs \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Note: Skipping reportUnsharedDeclarationsTraversal(): generates a list of un-shared constructs \n");
 #endif
 
 #if 0
@@ -515,9 +584,9 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
      AstTests::runAllTests(project);
      printf ("Running AST tests (after delete): DONE \n");
 #else
-     printf ("Skipping AST tests (after delete): DONE \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Skipping AST tests (after delete): DONE \n");
 #endif
-
    }
 
 
@@ -551,20 +620,27 @@ int buildAstMergeCommandFile ( SgProject* project )
      string separator = "::";
      string workingDirectory = ROSE::getWorkingDirectory();
 
-     printf ("commandline      = %s \n",commandline.c_str());
-     printf ("separator        = %s \n",separator.c_str());
-     printf ("workingDirectory = %s \n",workingDirectory.c_str());
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("commandline      = %s \n",commandline.c_str());
+          printf ("separator        = %s \n",separator.c_str());
+          printf ("workingDirectory = %s \n",workingDirectory.c_str());
+        }
 
      string combinedDirectoryAndCommandline = workingDirectory + separator + commandline;
 
-     printf ("combinedDirectoryAndCommandline = %s \n",combinedDirectoryAndCommandline.c_str());
+     if (SgProject::get_verbose() > 0)
+          printf ("combinedDirectoryAndCommandline = %s \n",combinedDirectoryAndCommandline.c_str());
 
      astMergeSupportFile << combinedDirectoryAndCommandline << endl;
 
-     printf ("Closing file %s in setupAstMerge \n",astMergeCommandFilename.c_str());
+     if (SgProject::get_verbose() > 0)
+          printf ("Closing file %s in setupAstMerge \n",astMergeCommandFilename.c_str());
+
      astMergeSupportFile.close();
 
-     printf ("Leaving setupAstMerge \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Leaving setupAstMerge \n");
 
      return errorCode;
    }
@@ -572,7 +648,8 @@ int buildAstMergeCommandFile ( SgProject* project )
 
 int AstMergeSupport ( SgProject* project )
    {
-     printf ("Inside of AstMergeSupport \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Inside of AstMergeSupport \n");
 
      int errorCode = 0;
      string astMergeCommandFilename = project->get_astMergeCommandFile();
@@ -583,26 +660,32 @@ int AstMergeSupport ( SgProject* project )
        // This case allows either a single file to be better merged (with itself, which usally results in a 20% memory savings,
        // or with other files specificed explicitly on the command-line).  This should make it easier to test the AST merge in ROSE.
 
-          printf ("Note: -rose:astMerge specified without -rose:astMergeCommandFile filename \n");
+          if (SgProject::get_verbose() > 0)
+               printf ("Note: -rose:astMerge specified without -rose:astMergeCommandFile filename \n");
 
           ROSE_ASSERT (project->get_sourceFileNameList().size() > 0);
 
        // DQ (5/26/2007): output message to user about what AST merge will be doing!
-          if (project->get_sourceFileNameList().size() == 1)
+          if (SgProject::get_verbose() > 0)
              {
-            // specification of a single file ...
-               printf ("This case will cause a single file to be merged with itself, saving come from better sharing of the types. \n");
-             }
-            else
-             {
-            // specification of multiple files ...
-               printf ("This case will merge multiple files on the commandline to be merged sourceFileNameList().size() = %ld \n",(long)(project->get_sourceFileNameList().size()));
+               if (project->get_sourceFileNameList().size() == 1)
+                  {
+                 // specification of a single file ...
+                    printf ("This case will cause a single file to be merged with itself, saving come from better sharing of the types. \n");
+                  }
+                 else
+                  {
+                 // specification of multiple files ...
+                    printf ("This case will merge multiple files on the commandline to be merged sourceFileNameList().size() = %ld \n",(long)(project->get_sourceFileNameList().size()));
+                  }
              }
 
           errorCode = project->parse();
 
           bool skipFrontendSpecificIRnodes = true;
-          printf ("Calling mergeAST \n");
+
+          if (SgProject::get_verbose() > 0)
+               printf ("Calling mergeAST \n");
 
           mergeAST(project,skipFrontendSpecificIRnodes);
         }
@@ -612,7 +695,8 @@ int AstMergeSupport ( SgProject* project )
           ROSE_ASSERT(astMergeCommandFilename.empty() == false);
           ROSE_ASSERT(astMergeCommandFilename != "");
 
-          printf ("Inside of AstMergeSupport opening file %s \n",astMergeCommandFilename.c_str());
+          if (SgProject::get_verbose() > 0)
+               printf ("Inside of AstMergeSupport opening file %s \n",astMergeCommandFilename.c_str());
 
           ifstream astMergeSupportFile ( astMergeCommandFilename.c_str() , ios::in );
           if ( astMergeSupportFile.good() == false )
@@ -645,7 +729,8 @@ int AstMergeSupport ( SgProject* project )
             // The last line of the file does not yet trigger astMergeSupportFile.eof()
                if (fileString.size() > 0)
                   {
-                    printf ("fileString = %s \n",fileString.c_str());
+                    if (SgProject::get_verbose() > 0)
+                         printf ("fileString = %s \n",fileString.c_str());
 
                     string separator = "::";
                     std::string::size_type separatorPosition = fileString.find("::");
@@ -655,9 +740,12 @@ int AstMergeSupport ( SgProject* project )
                     separatorPosition += separator.size();
                     string commandline = fileString.substr(separatorPosition,fileString.size());
 
-                    printf ("commandline      = %s \n",commandline.c_str());
-                    printf ("separator        = %s \n",separator.c_str());
-                    printf ("workingDirectory = %s \n",workingDirectory.c_str());
+                    if (SgProject::get_verbose() > 0)
+                       {
+                         printf ("commandline      = %s \n",commandline.c_str());
+                         printf ("separator        = %s \n",separator.c_str());
+                         printf ("workingDirectory = %s \n",workingDirectory.c_str());
+                       }
 
                     Rose_STL_Container<string> argList = CommandlineProcessing::generateArgListFromString(commandline);
 
@@ -701,7 +789,8 @@ int AstMergeSupport ( SgProject* project )
 #endif
         }
 
-     printf ("Leaving AstMergeSupport \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Leaving AstMergeSupport \n");
 
      return errorCode;
    }

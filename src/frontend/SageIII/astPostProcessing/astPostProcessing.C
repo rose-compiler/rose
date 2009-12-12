@@ -17,9 +17,12 @@ void AstPostProcessing (SgNode* node)
   // DQ (3/17/2007): This should be empty
      if (SgNode::get_globalMangledNameMap().size() != 0)
         {
-          printf("AstPostProcessing(): found a node with globalMangledNameMap size not equal to 0: SgNode = %s =%s ", node->sage_class_name(), 
-                      SageInterface::get_name(node).c_str());
-          printf ("SgNode::get_globalMangledNameMap().size() != 0 size = %zu (clearing mangled name cache) \n",SgNode::get_globalMangledNameMap().size());
+          if (SgProject::get_verbose() > 0)
+             {
+               printf("AstPostProcessing(): found a node with globalMangledNameMap size not equal to 0: SgNode = %s =%s ", node->sage_class_name(),SageInterface::get_name(node).c_str());
+               printf ("SgNode::get_globalMangledNameMap().size() != 0 size = %zu (clearing mangled name cache) \n",SgNode::get_globalMangledNameMap().size());
+             }
+
           SgNode::clearGlobalMangledNameMap();
         }
      ROSE_ASSERT(SgNode::get_globalMangledNameMap().size() == 0);

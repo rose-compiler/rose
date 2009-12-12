@@ -786,7 +786,7 @@ $(TESTCODE_CURRENTLY_FAILING)
 EXTRA_ALL_TESTCODES = $(EXTRA_TESTCODES_REQUIRED_TO_PASS) $(TESTS_STILL_TOO_HARD)
 
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
-ROSE_FLAGS = -rose:verbose 0 --edg:restrict
+ROSE_FLAGS = --edg:no_warnings -rose:verbose 0 --edg:restrict
 
 ## Include the path to A++ and the transformation specification
 TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
@@ -806,13 +806,13 @@ EXTRA_TEST_Objects = ${EXTRA_ALL_TESTCODES:.C=.o}
 # $(TEST_Objects): copyExample $(srcdir)/$(@:.o=.C)
 # $(TEST_Objects): copyExample
 $(TEST_Objects): copyExample 
-	@echo "Calling Copy AST mechanism using TEST_Objects rule: "
+#	@echo "Calling Copy AST mechanism using TEST_Objects rule: "
 	$(VALGRIND) ./copyExample $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.C) 
 
 # Use tests from the Cxx_tests directory
 # $(EXTRA_TEST_Objects): copyExample $(srcdir)/$(@:.o=.C)
 $(EXTRA_TEST_Objects): copyExample
-	@echo "Copy the file to the local build tree so that we can change the file name suffix (to be a C language file) ..."
+#	@echo "Copy the file to the local build tree so that we can change the file name suffix (to be a C language file) ..."
 	$(VALGRIND) ./copyExample $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.o=.C)
 
 QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
