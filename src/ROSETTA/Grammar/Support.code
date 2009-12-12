@@ -9894,7 +9894,8 @@ Sg_File_Info::setShared()
      int temp_file_id = this->get_file_id();
      if (temp_file_id < 0)
         {
-          printf ("Warning: trying to share file id = %d < 0 \n",temp_file_id);
+          if (SgProject::get_verbose() > 0)
+               printf ("Warning: trying to share file id = %d < 0 \n",temp_file_id);
         }
 
      if (isShared() == false)

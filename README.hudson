@@ -53,5 +53,6 @@ Setting up Hudson:
    x) Setup your crontab to restart hudson if your machine is rebooted.
       "@reboot cd /home/dquinlan/local/hudson-1.336/ && screen -d -m java -jar /home/dquinlan/local/hudson-1.336/hudson.war --httpListenAddress=127.0.0.1"
 
-
-
+Additional setup issues for Hudson, configuration:
+* smtp server: smtp.llnl.gov
+* Enable security Access Control,  Security Realm: Hudson's own user database, Allow users to sign up,  Authorization: Matrix-based security 

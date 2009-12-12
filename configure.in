@@ -54,6 +54,8 @@ fi
 # Debugging strange behaviour associated with changing 
 # the order of the header file generation.
 ROSE_SUPPORT_ROSE_PART_2
+ROSE_SUPPORT_ROSE_PART_3
+ROSE_SUPPORT_ROSE_PART_4
 
 # DQ (9/21/2009): Debugging for RH release 5
 echo "Testing the value of CC: (CC = $CC)"

@@ -93,6 +93,9 @@ if test \! \( $ROSE_TEST_GCC_VERSION = 4.3.2 -o $ROSE_TEST_GCC_VERSION = 4.4.1 \
 	make -j8 check | tee make_check_output.txt;
    grep -n "Making check in " make_check_output.txt | ../scripts/checkMakeSpew.pl | tee makeCheckSpewLineCount.txt
 
- # The distcheck rule builds a distribution and reruns all the tests; including the rules: install, docs, installcheck
+ # The distcheck rule builds a distribution and reruns all the tests; including the rules: install, installcheck
 	make -j8 distcheck
 fi
+
+# Finally run the "make docs" test.
+make -j8 docs

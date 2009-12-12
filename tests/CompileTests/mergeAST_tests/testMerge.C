@@ -17,7 +17,9 @@ void commandLineProcessing (int & argc, char** & argv, bool & skipFrontendSpecif
   // list<string> l = CommandlineProcessing::generateArgListFromArgcArgv (argc,argv);
   // GB (09/26/2007)
      vector<string> l = CommandlineProcessing::generateArgListFromArgcArgv (argc,argv);
-     printf ("Preprocessor (before): argv = \n%s \n",StringUtility::listToString(l).c_str());
+
+     if (SgProject::get_verbose() > 0)
+          printf ("Preprocessor (before): argv = \n%s \n",StringUtility::listToString(l).c_str());
 
   // bool skipFrontendSpecificIRnodes = false;
   // Add a test for a custom command line option (and remove the options from the commandline; by passing true as last parameter)
@@ -30,8 +32,11 @@ void commandLineProcessing (int & argc, char** & argv, bool & skipFrontendSpecif
 
   // Adding a new command line parameter (for mechanisms in ROSE that take command lines)
 
-     printf ("l.size() = %zu \n",(size_t)l.size());
-     printf ("Preprocessor (after): argv = \n%s \n",StringUtility::listToString(l).c_str());
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("l.size() = %zu \n",(size_t)l.size());
+          printf ("Preprocessor (after): argv = \n%s \n",StringUtility::listToString(l).c_str());
+        }
    }
 
 int
@@ -62,9 +67,13 @@ main ( int argc, char** argv )
 
 #if 1
   // Run AST tests (takes a while on large ASTs, so we sometime skip this for some phases of development on AST merge)
-     printf ("Running AST tests in main() \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Running AST tests in main() \n");
+
      AstTests::runAllTests(project);
-     printf ("Running AST tests in main(): DONE \n");
+
+     if (SgProject::get_verbose() > 0)
+          printf ("Running AST tests in main(): DONE \n");
 #else
      printf ("Skipping AST tests in main(): DONE \n");
 #endif
@@ -96,7 +105,8 @@ main ( int argc, char** argv )
 #endif
 
   // End of AST Merge
-     printf ("Program Terminated Normally! \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Program Terminated Normally! \n");
      return errorCode;
    }
 

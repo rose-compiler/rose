@@ -745,7 +745,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                       // ROSE_ASSERT(isSgVariableSymbol(symbol) != NULL);
                       // ROSE_ASSERT(initializedName->get_symbol_from_symbol_table() != NULL);
 
-                         printf ("Skipping scopeSymbolTable->remove(symbol = %p = %s); \n",symbol,symbol->class_name().c_str());
+                         if (SgProject::get_verbose() > 0)
+                              printf ("Skipping scopeSymbolTable->remove(symbol = %p = %s); \n",symbol,symbol->class_name().c_str());
+
                       // scopeSymbolTable->remove(symbol);
                       // ROSE_ASSERT(initializedName->get_symbol_from_symbol_table() != NULL);
                       // scopeSymbolTable->remove(initializedName->get_symbol_from_symbol_table());
@@ -857,7 +859,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                          ROSE_ASSERT(typedefDeclaration->get_symbol_from_symbol_table() != NULL);
 
 
-                         printf ("Skipping scopeSymbolTable->remove(symbol = %p = %s); \n",symbol,symbol->class_name().c_str());
+                         if (SgProject::get_verbose() > 0)
+                              printf ("Skipping scopeSymbolTable->remove(symbol = %p = %s); \n",symbol,symbol->class_name().c_str());
+
                       // scopeSymbolTable->remove(typedefDeclaration->get_symbol_from_symbol_table());
 
                          ROSE_ASSERT(isSgTypedefDeclaration(matchingNodeInMergedAST) != NULL);
@@ -972,7 +976,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                  // printf ("Removing the associated typedef symbol from scopeSymbolTable = %p \n",scopeSymbolTable);
                     ROSE_ASSERT(namespaceDeclaration->get_symbol_from_symbol_table() != NULL);
 
-                    printf ("Skipping scopeSymbolTable->remove(symbol = %p = %s); \n",symbol,symbol->class_name().c_str());
+                    if (SgProject::get_verbose() > 0)
+                         printf ("Skipping scopeSymbolTable->remove(symbol = %p = %s); \n",symbol,symbol->class_name().c_str());
+
                  // scopeSymbolTable->remove(namespaceDeclaration->get_symbol_from_symbol_table());
 
                     ROSE_ASSERT(isSgNamespaceDeclarationStatement(matchingNodeInMergedAST) != NULL);
@@ -1115,7 +1121,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                                    classDeclaration,classDeclaration->class_name().c_str(),SageInterface::get_name(classDeclaration).c_str(),
                                    scopeSymbolTable,scopeStatement,scopeStatement->class_name().c_str());
 #endif
-                              printf ("Skipping scopeSymbolTable->remove(symbol = %p = %s); \n",symbol,symbol->class_name().c_str());
+                              if (SgProject::get_verbose() > 0)
+                                   printf ("Skipping scopeSymbolTable->remove(symbol = %p = %s); \n",symbol,symbol->class_name().c_str());
+
                            // scopeSymbolTable->remove(symbol);
                             }
 
@@ -1278,7 +1286,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                        {
                          ROSE_ASSERT(removeSymbol != NULL);
 
-                         printf ("Skipping scopeSymbolTable->remove(symbol = %p = %s); \n",symbol,symbol->class_name().c_str());
+                         if (SgProject::get_verbose() > 0)
+                              printf ("Skipping scopeSymbolTable->remove(symbol = %p = %s); \n",symbol,symbol->class_name().c_str());
+
                       // scopeSymbolTable->remove(removeSymbol);
                        }
 
@@ -1352,7 +1362,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                          SgSymbol* removeSymbol = enumDeclaration->get_symbol_from_symbol_table();
                          printf ("Removing removeSymbol = %p for enumDeclaration = %p from symbol table = %p \n",removeSymbol,enumDeclaration,scopeStatement->get_symbol_table());
 
-                         printf ("Skipping scopeSymbolTable->remove(removeSymbol = %p = %s); \n",removeSymbol,removeSymbol->class_name().c_str());
+                         if (SgProject::get_verbose() > 0)
+                              printf ("Skipping scopeSymbolTable->remove(removeSymbol = %p = %s); \n",removeSymbol,removeSymbol->class_name().c_str());
+
                       // scopeStatement->get_symbol_table()->remove(removeSymbol);
                        }
                   }
@@ -1426,7 +1438,10 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                               SgTemplateSymbol* templateSymbol = isSgTemplateSymbol(templateDeclaration->get_symbol_from_symbol_table());
                            // printf ("Removing the associated template symbol = %p from scopeSymbolTable = %p \n",templateSymbol,scopeSymbolTable);
                               ROSE_ASSERT(templateSymbol != NULL);
-                              printf ("Skipping scopeSymbolTable->remove(templateSymbol = %p = %s); \n",templateSymbol,templateSymbol->class_name().c_str());
+
+                              if (SgProject::get_verbose() > 0)
+                                   printf ("Skipping scopeSymbolTable->remove(templateSymbol = %p = %s); \n",templateSymbol,templateSymbol->class_name().c_str());
+
                            // scopeSymbolTable->remove(templateSymbol);
 
                               SgTemplateSymbol* sharedTemplateSymbol = isSgTemplateSymbol(sharedSymbol);

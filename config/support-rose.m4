@@ -992,6 +992,15 @@ AM_CONDITIONAL(BINARY_EDG_TARBALL_ENABLED, [test "x$binary_edg_tarball_enabled" 
 build_triplet_without_redhat=`${srcdir}/config/cleanConfigGuessOutput "$build" "$build_cpu" "$build_vendor"`
 AC_SUBST(build_triplet_without_redhat) dnl This is done even with EDG source, since it is used to determine the binary to make in roseFreshTest
 
+# End macro ROSE_SUPPORT_ROSE_PART_3.
+]
+)
+
+
+AC_DEFUN([ROSE_SUPPORT_ROSE_PART_4],
+[
+# Begin macro ROSE_SUPPORT_ROSE.
+
 dnl ---------------------------------------------------------------------
 dnl (8/29/2007): This was added to provide more portable times upon the 
 dnl suggestion of Matt Sottile at LANL.

@@ -32,6 +32,11 @@ echo "ac_rose_lib_path = $ac_rose_lib_path"
 ROSE_SUPPORT_ROSE_PART_1
 ROSE_SUPPORT_ROSE_PART_2
 
+# We don't want to call this macro.
+# ROSE_SUPPORT_ROSE_PART_3
+
+ROSE_SUPPORT_ROSE_PART_4
+
 # Specify the files to generate (Makefile.in's and any other required files).
 AC_CONFIG_FILES([
 Makefile
