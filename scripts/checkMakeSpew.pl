@@ -58,9 +58,10 @@ while ($lineNumber <= $#lineArray)
 sub numerically { int $a <=> int $b }
 @sortedList = reverse sort numerically @newlineArray;
 
-print "*****************************************";
-print "----- Output spew (lines:directory) -----";
-print "*****************************************";
+print "\n\n";
+print "***************************************** \n";
+print "***** Output spew (lines:directory) ***** \n";
+print "***************************************** \n";
 
 # Output the sorted list
 $lineNumber = 0;
