@@ -73,16 +73,17 @@ if test $ROSE_TEST_BUILD_STYLE = edg ; then
 fi
 
 # Save the output of make for later processing (e.g. similar to makeCheckLineCount.pl)
-# Make sure that stderr is written to stdout.
+# Make sure that stderr is written to stdout (using bash syntax "2>&1").
 # make -j8 1>&2 | tee make_output.txt
 echo "Starting compile step"
-make -j8 1>&2 | tee make_output.txt
+make -j8 2>&1 | tee make_output.txt
 echo "Done with compile step"
 
 # This is not as useful so instead we want do measurements of spew on filtered output.
 # grep -n "Making all in " make_output.txt | ../scripts/checkMakeSpew.pl | tee makeSpewLineCount.txt
 
 # Filter out the legitimate lines specific to compilation and linking (filter compile, links, and Qt specific tools).
+echo "Building the filtered_make_output.txt file"
 grep -v "Entering directory" make_output.txt | grep -v "Leaving directory" | grep -v "COMPILE" | grep -v "LINK" | grep -v "Qt-MOC" | grep -v "Qt-RCC" | grep -v "Qt-UIC" > filtered_make_output.txt
 echo "Built filtered_make_output.txt"
 
@@ -99,7 +100,7 @@ if test \! \( $ROSE_TEST_GCC_VERSION = 4.3.2 -o $ROSE_TEST_GCC_VERSION = 4.4.1 \
  # DQ (12/9/2009): Save output from "make check" rule and measure the test spew.
  # make -j8 check
    echo "Starting make check step"
-	make -j8 check | tee make_check_output.txt;
+	make -j8 check 2>&1 | tee make_check_output.txt;
    echo "Done with make check step"
    grep -n "Making check in " make_check_output.txt | ../scripts/checkMakeSpew.pl | tee makeCheckSpewLineCount.txt
 
