@@ -22,6 +22,7 @@
 # are defined by the below three functions.
 
 use strict;
+# Locate directory of original perl script 
 use FindBin;
 use lib "$FindBin::Bin";
 use Git;
@@ -40,6 +41,7 @@ sub is_dependent_file {
 # Liao, 12/11/2009, this Makefile.am is being changed frequently now
 # It is troublesome to use it for signature generation.
 #	     || $path eq "src/frontend/CxxFrontend/Makefile.am" # Rules for generating the tarball
+
 # A list of canonical repositories.  This need not include every repository;
 # if regex or other pattern matching is required this can be done in
 # canonical_repo_branch below.
