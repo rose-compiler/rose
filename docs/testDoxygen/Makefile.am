@@ -20,11 +20,6 @@ AvailableDocumentation.docs:
 docs: logo copyPublications test.cfg AvailableDocumentation.docs
 	doxygen test.cfg
 
-# DQ (5/8/2005): Added custon headers and footers for HTML generated documentation
-# See use of HTML_HEADER and HTML_FOOTER in test.cfg.in file
-# DIST_EXTRA = htmlHeaderFile.html htmlFooterFile.html test.cfg.in
-EXTRA_DIST = CMakeLists.txt htmlHeaderFile.html htmlFooterFile.html test.cfg.in
-
 # DQ (1/25/2006): Renamed clean rule since we don't want "make clean" 
 # at the top level directory to always remove this documentation.
 cleandocs:
@@ -40,9 +35,11 @@ copyPublications:
 # location where it will permanently reside in the source tree.
 copyDocumentation:
 	cp $(srcdir)/*.docs $(top_srcdir)/src/frontend/SageIII/docs
-
-else
-
-EXTRA_DIST = CMakeLists.txt 
-
 endif
+
+# DQ (5/8/2005): Added custon headers and footers for HTML generated documentation
+# See use of HTML_HEADER and HTML_FOOTER in test.cfg.in file
+# DIST_EXTRA = htmlHeaderFile.html htmlFooterFile.html test.cfg.in
+EXTRA_DIST = CMakeLists.txt htmlHeaderFile.html htmlFooterFile.html test.cfg.in
+
+

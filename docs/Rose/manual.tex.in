@@ -1,50 +1,18 @@
 \documentclass[10pt]{book}
-% \usepackage{epsfig}
-% \usepackage{psfig}
-% \usepackage{pdftex}
-% \usepackage{graphicx}
-% \usepackage{amsmath}
-%\usepackage{html,color,makeidx}
-
-%\usepackage{amsmath}
 \usepackage{verbatim}
-%\usepackage{moreverb}
-%\usepackage{graphics}    
-% \usepackage{epsfig}    
-%\usepackage{multicol}
-%\usepackage{color}
-%\usepackage{subfigure}
-
-%\usepackage{multirow}
-
 % Fixme margin note package (turn on draft mode)
 % \usepackage[final]{fixme}
 
 \usepackage[draft]{fixme}
-
 \usepackage{listings}
-% \lstloadlanguages{APP}
-
 \usepackage{html}
 \usepackage{color}
-
 \usepackage{multicol}
 \usepackage{multirow}
-
-% \usepackage{psfig}
 \usepackage{graphicx}
-
-% \psfigdriver{dvips}
 
 \newcommand{\mySmallFontSize}{\scriptsize}
 \newcommand{\mySmallestFontSize}{\tiny}
-
-% New commands to represent the location of example files (used in latex documentation)
-% \newcommand{\TranslatorExampleDirectory}{@top_srcdir@/ExampleTranslator/DocumentedExamples/SimpleTranslatorExamples}
-% \newcommand{\TranslatorExampleCompileTreeDirectory}{@top_pwd@/ExampleTranslator/DocumentedExamples/SimpleTranslatorExamples}
-% \newcommand{\AstRewriteExampleDirectory}{@top_srcdir@/ExampleTranslator/DocumentedExamples/AstRewriteExamples}
-
-% \newcommand{\DatabaseExampleDirectory}{/home/dquinlan/ROSE/NEW_ROSE/ExampleTranslator/DocumentedExamples/DataBaseExamples}
 
 \newcommand{\TranslatorExampleDirectory}{@top_srcdir@/exampleTranslators/documentedExamples/simpleTranslatorExamples}
 \newcommand{\TranslatorExampleCompileTreeDirectory}{@top_pwd@/exampleTranslators/documentedExamples/simpleTranslatorExamples}
@@ -94,15 +62,11 @@
 
 \makeatother %JCL
 
-% \endinput
 
 
 \addtolength{\oddsidemargin}{-1.0in}
 \addtolength{\evensidemargin}{-1.0in}
 \addtolength{\textwidth}{2.0in}
-%\addtolength{\textwidth}{1.0in}
-%\addtolength{\topmargin}{-0.5in}
-%\addtolength{\textheight}{1.5in}
 
 % \pagenumbering{roman}
 % \pagestyle{empty}
@@ -116,11 +80,6 @@
 %---------------------------------------------------------------------
 
 \begin{document}
-%\bibliographystyle{plain}
-%
-
-% This draft mode eliminates the figures (leaves boxes for where they would be)
-%\psdraft
 
 \title{ {\bf \textcolor{red}{         ROSE User Manual: \\ 
                                      A Tool for Building \\
@@ -155,17 +114,6 @@
          \textcolor{blue}{(from the {\it Hitchhiker's Guide To The Galaxy}).}
        }
 
-% \textcolor{blue}{Compiler infrastructure for tools is a bit} \\
-% \textcolor{blue}{like a cannon, sometime more than you really need,} \\ 
-% \textcolor{blue}{but often all that it takes to solve the problem} \\
-
-% Replaced with relative links
-% \htmladdnormallink{ROSE User Manual (postscript version)}{file://@top_pwd@/docs/Rose/ROSE-@VERSION@-UserManual.ps}
-% \htmladdnormallink{ROSE Tutorial (postscript version)}{file://@top_pwd@/docs/Rose/Tutorial/ROSE-@VERSION@-Tutorial.ps}
-% \htmladdnormallink{ROSE User Manual (html version)}{file://@top_pwd@/docs/Rose/ROSE_WebPages/ROSE_UserManual/manual.html}
-% \htmladdnormallink{ROSE Tutorial (html version)}{file://@top_pwd@/docs/Rose/ROSE_WebPages/ROSE_Tutorial/tutorial.html} 
-% \htmladdnormallink{ROSE HTML Reference (html only)}{file://@top_pwd@/docs/Rose/ROSE_WebPages/ROSE_HTML_Reference/index.html} 
-
 % This doesn't seem to work.  References to this label are not resolved.
 \label{Rose:postscriptVersionOfUserManual}
 
@@ -197,44 +145,7 @@
 \newpage
 %
 
-%\newpage
-% \input{Copyright}
-%\newpage
-
-% % Not sure why this causes a line to be printed in the latex file.
-% % The strange line is not printed if we place the lstset command 
-% % here (not sure why?).
-% \lstset{
-%    language=C++,
-%  % language=APP,
-%  % basicstyle=\small,                 % print whole listing small
-%    basicstyle=\scriptsize,            % print whole listing scriptsize
-%  % keywordstyle=\color{red}\bfseries\underbar, % underlined bold red keywords
-%  % keywordstyle=\bfseries\underbar, % underlined bold red keywords
-%    keywordstyle=\color{red}\bfseries, % underlined bold red keywords
-%    ndkeywordstyle=\color{blue}, % underlined bold red keywords
-%  % rdkeywordstyle=\color{blue}, % underlined bold red keywords
-%    identifierstyle={},                % nothing happens to other identifiers
-%  % identifierstyle=\color{blue},                % nothing happens to other identifiers
-%    commentstyle=\color{green},                % nothing happens to other identifiers
-%  % stringstyle=\ttfamily,             % typerwriter type for strings
-%  % stringstyle=\color{cyan}\ttfamily,             % typerwriter type for strings Magenta
-%    stringstyle=\color{magenta}\ttfamily,             % typerwriter type for strings Magenta
-%    stringspaces=false,                % no special string spaces
-%    labelstyle=\scriptsize,
-%    labelstep=1,
-%    labelsep=10pt
-% }
-
 \input{introduction}
-
-%\commentout{
-% Example of how to add color in LaTex
-% \begin{figure}
-% \colorbox{red}{Some red text\index{Color text}}
-% \caption[List of figure caption]{Figure 1 caption}
-% \end{figure}
-% \colorbox{red}{Some red text\index{Color text}}
 
 \input{gettingStarted}
 

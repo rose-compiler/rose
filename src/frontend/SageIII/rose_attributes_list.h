@@ -12,9 +12,16 @@
 
 // DQ (12/22/2008): I would appreciate it if this were a better name...
 #if !CAN_NOT_COMPILE_WITH_ROSE 
+#if _MSC_VER < 1600  // 1600 == VC++ 10.0
 #include <boost/preprocessor/iteration/iterate.hpp> // Liao, 7/10/2009, required by GCC 4.4.0 for a #define line of BOOST_PP_ITERATION_DEPTH
 #include <boost/wave/cpplexer/cpp_lex_token.hpp>    // token class
 #include <boost/wave/cpplexer/cpp_lex_iterator.hpp>   // lexer type
+#else
+#define CAN_NOT_COMPILE_WITH_ROSE 1
+// tps (12/4/2009) : This is not found in VC++ 10.0 and Boost 1.4
+#pragma message ("Boost preprocessor and wave not included yet for VC++ 10.0")
+
+#endif
 
 #endif
 
