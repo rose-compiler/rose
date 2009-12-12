@@ -953,6 +953,16 @@ AC_SUBST(CXX_SHARED_LIB_UPDATE)
 # rm -rf '$(CXX_TEMPLATE_REPOSITORY_PATH)'
 rm -rf Templates.DB
 
+# End macro ROSE_SUPPORT_ROSE_PART_2.
+]
+)
+
+
+
+AC_DEFUN([ROSE_SUPPORT_ROSE_PART_3],
+[
+# Begin macro ROSE_SUPPORT_ROSE.
+
 ## Setup the EDG specific stuff
 SETUP_EDG
 
@@ -1087,7 +1097,7 @@ AM_CONDITIONAL(ROSE_USE_ETHER,test "$with_ether" != "no")
 PACKAGE_VERSION_NUMERIC=`echo $PACKAGE_VERSION | sed -e 's/\([[a-z]]\+\)/\.\1/; y/a-i/1-9/'`
 AC_SUBST(PACKAGE_VERSION_NUMERIC)
 
-# End macro ROSE_SUPPORT_ROSE_PART_2.
+# End macro ROSE_SUPPORT_ROSE_PART_3.
 ]
 )
 
