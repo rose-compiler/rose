@@ -72,7 +72,11 @@ detect_rosec:
 # EXTRA_DIST = stamp-h.in stamp-h1.in rose.docs.in GNU_HEADERS COPYWRITE ROSE_ResearchPapers
 EXTRA_DIST = cmake CMakeLists.txt rose_config.h.in.cmake stamp-h.in stamp-h1.in rose.docs.in COPYRIGHT LicenseInformation ROSE_ResearchPapers README.OSX README.Cygwin build ChangeLog2 bincompat-sig
 
-bincompat-sig:
+# Liao, 12/11/2009. we should force this rule to run every time we want to make a distribution
+# otherwise the stale one can go into the distribution package
+cleanSig:
+	rm -rf bincompat-sig
+bincompat-sig: cleanSig
 	$(srcdir)/scripts/bincompat-sig > $@
 
 # At some point we want to put tals into the distribution (likely just PDF files, but not yet).
