@@ -480,7 +480,7 @@ INPUT                  = \
                          @top_srcdir@/src/frontend/SageIII/virtualCFG \
 			 @top_srcdir@/src/frontend/SageIII/virtualCFG/virtualBinCFG.C \
 			 @top_srcdir@/src/frontend/BinaryFormats \
-                         @top_srcdir@/src/midend/ompLowering \
+                         @top_srcdir@/src/midend/programTransformation/ompLowering \
                          @top_srcdir@/src/midend/midend.docs \
                          @top_srcdir@/src/midend/astDiagnostics/AstDiagnostics.docs \
                          @top_srcdir@/src/midend/programTransformation/astInlining/documentation.docs \
