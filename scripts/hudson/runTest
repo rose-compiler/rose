@@ -110,8 +110,8 @@ if test \! \( $ROSE_TEST_GCC_VERSION = 4.3.2 -o $ROSE_TEST_GCC_VERSION = 4.4.1 \
    echo "Done with make distcheck step"
 fi
 
-# Finally run the "make docs" test (on just the 4.1.2 version of gcc).
-if test \( $ROSE_TEST_GCC_VERSION = 4.1.2 \) ; then
+# Finally run the "make docs" test (on just the 4.2.4 version of gcc).
+if test \( $ROSE_TEST_GCC_VERSION = 4.2.4 \) ; then
    echo "Starting make docs step (exit normally even if it fails so that we can debug the docs rule)"
  # Exit normally even if it fails so that we can debug the docs rule.
    make -j8 docs || exit 0
