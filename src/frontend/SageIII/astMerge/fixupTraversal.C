@@ -219,19 +219,25 @@ fixupTraversal( const ReplacementMapTraversal::ReplacementMapType & replacementM
   // DQ (2/2/2007): Introduce tracking of performance of within AST merge
      TimingPerformance timer ("Reset the AST to share IR nodes:");
 
-     printf ("In fixupTraversal(): replacementMap.size() = %zu deleteList.size() = %zu \n",replacementMap.size(),deleteList.size());
+     if (SgProject::get_verbose() > 0)
+          printf ("In fixupTraversal(): replacementMap.size() = %zu deleteList.size() = %zu \n",replacementMap.size(),deleteList.size());
+
      FixupTraversal traversal(replacementMap,deleteList);
+
      traversal.traverseMemoryPool();
 
-     printf ("numberOfNodes                                                           = %d \n",traversal.numberOfNodes);
-     printf ("numberOfNodesTested                                                     = %d \n",traversal.numberOfNodesTested);
-     printf ("numberOfDataMemberPointersEvaluated                                     = %d \n",traversal.numberOfDataMemberPointersEvaluated);
-     printf ("numberOfValidDataMemberPointersEvaluated                                = %d \n",traversal.numberOfValidDataMemberPointersEvaluated);
-     printf ("numberOfValidDataMemberPointersWithValidKeyEvaluated                    = %d \n",traversal.numberOfValidDataMemberPointersWithValidKeyEvaluated);
-     printf ("numberOfValidDataMemberPointersWithValidKeyButNotInReplacementMap       = %d \n",traversal.numberOfValidDataMemberPointersWithValidKeyButNotInReplacementMap);
-     printf ("numberOfValidDataMemberPointersWithValidKeyAndInReplacementMap          = %d \n",traversal.numberOfValidDataMemberPointersWithValidKeyAndInReplacementMap);
-     printf ("numberOfValidDataMemberPointersWithValidKeyAndInReplacementMapEvaluated = %d \n",traversal.numberOfValidDataMemberPointersWithValidKeyAndInReplacementMapEvaluated);
-     printf ("numberOfValidDataMemberPointersReset                                    = %d \n",traversal.numberOfValidDataMemberPointersReset);
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("numberOfNodes                                                           = %d \n",traversal.numberOfNodes);
+          printf ("numberOfNodesTested                                                     = %d \n",traversal.numberOfNodesTested);
+          printf ("numberOfDataMemberPointersEvaluated                                     = %d \n",traversal.numberOfDataMemberPointersEvaluated);
+          printf ("numberOfValidDataMemberPointersEvaluated                                = %d \n",traversal.numberOfValidDataMemberPointersEvaluated);
+          printf ("numberOfValidDataMemberPointersWithValidKeyEvaluated                    = %d \n",traversal.numberOfValidDataMemberPointersWithValidKeyEvaluated);
+          printf ("numberOfValidDataMemberPointersWithValidKeyButNotInReplacementMap       = %d \n",traversal.numberOfValidDataMemberPointersWithValidKeyButNotInReplacementMap);
+          printf ("numberOfValidDataMemberPointersWithValidKeyAndInReplacementMap          = %d \n",traversal.numberOfValidDataMemberPointersWithValidKeyAndInReplacementMap);
+          printf ("numberOfValidDataMemberPointersWithValidKeyAndInReplacementMapEvaluated = %d \n",traversal.numberOfValidDataMemberPointersWithValidKeyAndInReplacementMapEvaluated);
+          printf ("numberOfValidDataMemberPointersReset                                    = %d \n",traversal.numberOfValidDataMemberPointersReset);
+        }
    }
 
 
@@ -261,6 +267,7 @@ FixupSubtreeTraversal::visit ( SgNode* node)
 
           printf ("FixupSubtreeTraversal::visit: node = %p = %s \n",node,node->class_name().c_str());
           printf ("Output the replacementMap: \n");
+
           ReplacementMapTraversal::displayReplacementMap (replacementMap);
         }
 

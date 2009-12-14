@@ -886,8 +886,11 @@ RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
 
 	// DQ (4/23/2009): We want the type defined in the base class.
 	// rose_hash::hash_map <string, SgAsmInstruction*>::iterator vis = local_visited.find(hexStr);
+#ifndef _MSC_VER
 	rose_hash::hash_map <string, SgAsmInstruction*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator vis = local_visited.find(hexStr);
-
+#else
+	rose_hash::hash_map <string, SgAsmInstruction*,rose_hash::hash_string>::iterator vis = local_visited.find(hexStr);
+#endif
 	if (vis!=local_visited.end())
 	  target_visited=true;
 

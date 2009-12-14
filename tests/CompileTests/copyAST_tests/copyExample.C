@@ -66,9 +66,13 @@ copyAST ( SgNode* node )
   // std::vector<SgNode*> intersectionNodeList_early = SageInterface::astIntersection(node,copyOfNode,&restrictedCopyType);
 
   // DQ (10/19/2007): This might really be required inorder to pass our strict tests of the AST.
-     printf ("Running the AST Post Processing Phase on the new copy of the AST! \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("Running the AST Post Processing Phase on the new copy of the AST! \n");
+
      AstPostProcessing(copyOfNode);
-     printf ("DONE: Running the AST Post Processing Phase on the new copy of the AST! \n");
+
+     if (SgProject::get_verbose() > 0)
+          printf ("DONE: Running the AST Post Processing Phase on the new copy of the AST! \n");
 
 #if 0
   // DQ (6/14/2007): Added support for simpler function for generation of graph of whole AST.
@@ -86,9 +90,13 @@ copyAST ( SgNode* node )
 #endif
 #endif
 
-     printf ("\n\nCompare two generated ASTs ... \n");
+     if (SgProject::get_verbose() > 0)
+          printf ("\n\nCompare two generated ASTs ... \n");
+
      std::vector<SgNode*> intersectionNodeList = SageInterface::astIntersection(node,copyOfNode,&restrictedCopyType);
-     printf ("DONE: Compare two generated ASTs ... \n");
+
+     if (SgProject::get_verbose() > 0)
+          printf ("DONE: Compare two generated ASTs ... \n");
 
   // DQ (11/2/2007): Make this a stricter test!
      ROSE_ASSERT(intersectionNodeList.size() == 0);
@@ -176,7 +184,7 @@ main ( int argc, char* argv[] )
      if (project->get_verbose() > 0)
           printf ("Calling the AST copy mechanism \n");
 
-     printf ("\n\nCalling the AST copy mechanism \n");
+  // printf ("\n\nCalling the AST copy mechanism \n");
 
 #if 1
      set<SgNode*> oldNodes;
@@ -197,7 +205,8 @@ main ( int argc, char* argv[] )
 
 #if 1
   // DQ (6/14/2007): Added support for simpler function for generation of graph of whole AST.
-     printf ("\n\nOutput a graph of the whole AST \n");
+     if (project->get_verbose() > 0)
+          printf ("\n\nOutput a graph of the whole AST \n");
 #if 1
      const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 4000;
      generateAstGraph(newProject,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);
@@ -213,11 +222,13 @@ main ( int argc, char* argv[] )
   // printOutTemplateDeclarations();
 
 #if 1
-     printf ("\n\nRunning tests on the original AST \n");
+  // printf ("\n\nRunning tests on the original AST \n");
      AstTests::runAllTests(project);
 #if 1
   // DQ (10/19/2007): Turning this off allows for a lot of things to work great, but it is cheating :-).
-     printf ("\n\nRunning tests on the copy of the AST \n");
+     if (project->get_verbose() > 0)
+          printf ("\n\nRunning tests on the copy of the AST \n");
+
      AstTests::runAllTests(newProject);
 #else
      printf ("\n\n##################  Skipping the tests on the copy of the AST  ################## \n");
@@ -267,9 +278,10 @@ main ( int argc, char* argv[] )
 #endif
 
 #if 1
-     printf ("Generate the dot output of the SAGE III AST \n");
+     if (project->get_verbose() > 0)
+          printf ("Generate the dot output of the SAGE III AST \n");
      generateDOT ( *project );
-     printf ("DONE: Generate the dot output of the SAGE III AST \n");
+  // printf ("DONE: Generate the dot output of the SAGE III AST \n");
 #endif
 
      if (project->get_verbose() > 0)

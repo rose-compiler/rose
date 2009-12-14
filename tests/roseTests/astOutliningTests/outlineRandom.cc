@@ -103,7 +103,8 @@ main (int argc, char* argv[])
 
   if (opts.make_pdfs_)
     {
-      cerr << "[Generating a PDF...]" << endl;
+      if (SgProject::get_verbose() > 0)
+           cerr << "[Generating a PDF...]" << endl;
       makePDF (proj);
     }
 
@@ -112,28 +113,34 @@ main (int argc, char* argv[])
       size_t count = 0;
       if (opts.preproc_only_)
         {
-          cerr << "[Running outliner's preprocessing phase only...]" << endl;
+          if (SgProject::get_verbose() > 0)
+               cerr << "[Running outliner's preprocessing phase only...]" << endl;
           count = preprocessRandom (proj,
                                     opts.num_outline_, opts.emit_stages_,
                                     opts.node_type_);
         }
       else
         {
-          cerr << "[Outlining...]" << endl;
+          if (SgProject::get_verbose() > 0)
+               cerr << "[Outlining...]" << endl;
           count = outlineRandom (proj,
                                  opts.num_outline_, opts.emit_stages_,
                                  opts.node_type_);
         }
-      cerr << "  [Processed " << count << " outline directives.]" << endl;
+      if (SgProject::get_verbose() > 0)
+           cerr << "  [Processed " << count << " outline directives.]" << endl;
 
       if (opts.make_pdfs_)
         {
-          cerr << "  [Making PDF of transformed AST...]" << endl;
+          if (SgProject::get_verbose() > 0)
+               cerr << "  [Making PDF of transformed AST...]" << endl;
           makePDF (proj, "outlined-");
         }
     }
 
-  cerr << "[Unparsing...]" << endl;
+  if (SgProject::get_verbose() > 0)
+       cerr << "[Unparsing...]" << endl;
+
   return backend (proj);
 }
 
@@ -166,7 +173,8 @@ getOptions (vector<string>& argvList, ProgramOptions& opts)
     }
 
   opts.num_outline_ = (size_t)num_outlines;
-  cerr << "==> Selecting up to " << num_outlines << " statements." << endl;
+  if (SgProject::get_verbose() > 0)
+       cerr << "==> Selecting up to " << num_outlines << " statements." << endl;
 
   // Optional
   if (CommandlineProcessing::isOption (argvList,
@@ -174,7 +182,8 @@ getOptions (vector<string>& argvList, ProgramOptions& opts)
                                        "preproc-only",
                                        true))
     {
-      cerr << "==> Running the outliner's preprocessing phase only." << endl;
+      if (SgProject::get_verbose() > 0)
+           cerr << "==> Running the outliner's preprocessing phase only." << endl;
       opts.preproc_only_ = true;
     }
 
@@ -183,7 +192,8 @@ getOptions (vector<string>& argvList, ProgramOptions& opts)
                                                     "-rose:outline:", "node",
                                                     node_type, true))
     {
-      cerr << "==> Only outlining '" << node_type << "' nodes." << endl;
+      if (SgProject::get_verbose() > 0)
+           cerr << "==> Only outlining '" << node_type << "' nodes." << endl;
       opts.node_type_ = node_type;
     }
 
@@ -194,7 +204,8 @@ getOptions (vector<string>& argvList, ProgramOptions& opts)
                                                     false)
       && verbosity_level >= 2)
     {
-      cerr << "==> Making PDFs." << endl;
+      if (SgProject::get_verbose() > 0)
+           cerr << "==> Making PDFs." << endl;
       opts.make_pdfs_ = true;
     }
 
@@ -202,7 +213,8 @@ getOptions (vector<string>& argvList, ProgramOptions& opts)
                                        "-rose:outline:", "emit-stages",
                                        true))
     {
-      cerr << "==> Emitting intermediate outlining results." << endl;
+      if (SgProject::get_verbose() > 0)
+           cerr << "==> Emitting intermediate outlining results." << endl;
       opts.emit_stages_ = true;
     }
 
@@ -358,7 +370,10 @@ void
 preprocess (SgStatement* s, bool emit = false)
 {
   static size_t count = 0;
-  cerr << "=== PREPROCESSING: " << toString (s, ++count) << " ===" << endl;
+
+  if (SgProject::get_verbose() > 0)
+       cerr << "=== PREPROCESSING: " << toString (s, ++count) << " ===" << endl;
+
   SgBasicBlock* b = Outliner::preprocess (s);
   ROSE_ASSERT (b);
   ASTtools::attachComment (toString (s, count), b);
@@ -374,9 +389,13 @@ preprocessRandom (SgProject* proj, size_t max_outline, bool emit_stages,
 {
   StmtList_t targets;
   selectStatements (proj, max_outline, node_type, targets);
-  dump (targets.begin (), targets.end ());
+
+  if (SgProject::get_verbose() > 0)
+       dump (targets.begin (), targets.end ());
+
   for_each (targets.begin (), targets.end (),
             bind2nd (ptr_fun (preprocess), emit_stages));
+
   return targets.size ();
 }
 
@@ -386,7 +405,10 @@ void
 outline (SgStatement* s, bool emit = false)
 {
   static size_t count = 0;
-  cerr << "=== OUTLINING: " << toString (s, ++count) << " ===" << endl;
+
+  if (SgProject::get_verbose() > 0)
+       cerr << "=== OUTLINING: " << toString (s, ++count) << " ===" << endl;
+
   Outliner::Result r = Outliner::outline (s);
   ROSE_ASSERT (r.isValid ());
   ASTtools::attachComment (toString (s, count), r.decl_);
@@ -402,9 +424,13 @@ outlineRandom (SgProject* proj, size_t max_outline, bool emit_stages,
 {
   StmtList_t targets;
   selectStatements (proj, max_outline, node_type, targets);
-  dump (targets.begin (), targets.end ());
+
+  if (SgProject::get_verbose() > 0)
+       dump (targets.begin (), targets.end ());
+
   for_each (targets.begin (), targets.end (),
             bind2nd (ptr_fun (outline), emit_stages));
+
   return targets.size ();
 }
 
