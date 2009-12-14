@@ -39,7 +39,9 @@ main ( int argc, char * argv[] )
 #endif
 
 #if 1
-     AST_FILE_IO::printListOfPoolSizes() ;
+  // DQ (12/12/2009): Allow output only when run in verbose mode to limit spew in testing.
+     if (SgProject::get_verbose() > 0)
+          AST_FILE_IO::printListOfPoolSizes() ;
 #endif
 
 

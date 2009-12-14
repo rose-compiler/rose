@@ -7,8 +7,10 @@
 if [ $# -ne 2 ]
 then
   echo "This script needs two arguments"
-  echo "Usage:$0 <sourcedir for ROSE> <proposed ROSE workspace path>"
-  echo "Exampe:$0 <ROSE srcdir> /home/dquinlan/ROSE/myWorkSpace"
+  echo "   Usage: $0 <sourcedir for ROSE> <proposed ROSE workspace path>"
+  echo ""
+  echo "   Example: $0 <ROSE srcdir> /home/dquinlan/ROSE/myWorkSpace"
+  echo ""
   exit 1
 fi
 

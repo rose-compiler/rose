@@ -218,9 +218,11 @@ upload_edg_binary:
 endif
 
 # Makefile rule to test the Hudson runTest script (used for all Hudson tests).
+# Note that empty ROSE_TEST_BUILD_STYLE maps to a minimal build.
 testHudsonRunScript:
-	export ROSE_TEST_GCC_VERSION=4.2.4; \
-   export ROSE_TEST_BUILD_STYLE=edg; \
+	export ROSE_TEST_BUILD_SKIP_BUILD_SCRIPT=yes; \
+   export ROSE_TEST_GCC_VERSION=4.2.4; \
+   export ROSE_TEST_BUILD_STYLE=; \
    export ROSE_TEST_BOOST_PATH=${MY_BOOST_ROOT}; \
    export ROSE_TEST_JAVA_PATH=${JAVA_PATH}; \
    cd $(top_srcdir); \
