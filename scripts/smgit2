@@ -135,9 +135,9 @@ sub switch_to_branch {
   } elsif ($refs{"refs/remotes/origin/$branch"} eq $HEAD) {
     if ($refs{"refs/heads/$branch"}) {
       if (merge_base("refs/heads/$branch", "refs/remotes/origin/$branch") eq $HEAD) {
-	# Remote branch matches HEAD and local branch can be fast-forwarded.
-	git "merge", "refs/remotes/origin/$branch" or die "$arg0: could not merge origin/$branch";
-	return;
+        # Remote branch matches HEAD and local branch can be fast-forwarded.
+        git "merge", "refs/remotes/origin/$branch" or die "$arg0: could not merge origin/$branch";
+        return;
       }
     } elsif ($branch) {
       # Remote branch matches head and local branch does not exist; create it.
@@ -278,12 +278,12 @@ sub do_commit {
   };
   execute $git_commit, submodules; # commit in submodules
   execute sub {git "add", map {$_->[0]} submodules or die}; # add submodule paths in top of ROSE
-  execute $git_commit, undef;	# commit in top of ROSE
+  execute $git_commit, undef;   # commit in top of ROSE
   unlink $msgfile;
 }
 
 # Merges some branch into the current branch using the following algorithm:
-#	(1) Merge (but do not commit) in the supermodule, ignoring conflicts for now
+#       (1) Merge (but do not commit) in the supermodule, ignoring conflicts for now
 #       (2) Do merges in the submodules
 #       (3) Add new submodule versions to supermodule, probably fixing most conflicts
 #       (4) Commit the merge from step 1, checking for and failing if conflicts remain
@@ -321,12 +321,12 @@ sub postorder {
 ###############################################################################################################################
 
 my %cmds = (branch      => \&do_branch,
-	    checkout    => \&do_checkout,
-	    clone       => \&do_clone,
-	    commit      => \&do_commit,
-	    help        => sub {execute ["git", "help", @_]}, # no need to execute in submodules
-	    merge       => \&do_merge,
-	   );
+            checkout    => \&do_checkout,
+            clone       => \&do_clone,
+            commit      => \&do_commit,
+            help        => sub {execute ["git", "help", @_]}, # no need to execute in submodules
+            merge       => \&do_merge,
+           );
 
 my $cmd = shift @ARGV;
 usage if $cmd =~ /^-/ || !$cmd;
