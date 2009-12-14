@@ -116,6 +116,9 @@ fi
  # Exit normally even if it fails so that we can debug the docs rule.
  # make -j8 docs || exit 0
  # make docs || exit 0
-   make docs
+
+ # Running with parallelism here does not tend to be very helpful since 
+ # doxygen is what has to run and it does not run in parallel.
+   make -j8 docs
    echo "Done with make docs step"
 # fi
