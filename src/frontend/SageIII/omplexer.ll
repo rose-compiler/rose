@@ -15,6 +15,11 @@ extern int omp_lex();
 #include <string.h>
 #include "ompparser.h"
 
+/* Moved from Makefile.am to the source file to work with --with-pch 
+Liao 12/10/2009 */
+#define YY_NO_TOP_STATE
+#define YY_NO_POP_STATE
+
 static const char* ompparserinput = NULL;
 static std::string gExpressionString;
 
