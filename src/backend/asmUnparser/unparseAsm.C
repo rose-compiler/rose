@@ -240,7 +240,7 @@ unparseAsmStatement(SgAsmStatement* stmt)
                 sprintf(addrbuf, "0x%08"PRIx64, func->get_address());
                 result = result + addrbuf + ": ";
             }
-            result += "========== Function";
+            result += "========== Function reasons=" + func->reason_str(false) + " ";
             if (func->get_name().size()>0) {
                 result = result + " <" + func->get_name() + ">";
             } else {

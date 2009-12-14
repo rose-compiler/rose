@@ -167,9 +167,15 @@ private:
                           FunctionStarts &func_starts/*out*/) const;
 
     /** Splits the no-operation (usually, but not necessarily, NOP instructions) off the end of functions to create seperate
-     *  functional units for them.  This is important since some kinds of analysis are sensitive to this padding. */
-    void mark_func_padding(const Disassembler::InstructionMap& insns, const BasicBlockStarts& bb_starts,
-                           FunctionStarts &func_starts/*out*/) const;
+     *  functional units for them.  This is important since some kinds of analysis are sensitive to this padding. This only
+     *  happens if the SgAsmFunctionDeclaration::FUNC_INTERPAD heuristic is enabled and the resulting function fragments will
+     *  have that bit set in their "reason" attribute. */
+    void mark_nop_padding(const Disassembler::InstructionMap&, const BasicBlockStarts&, FunctionStarts&/*out*/) const;
+
+    /** Splits zero padding off the end of functions to create separate functional units for them. This only happens if the
+     *  SgAsmFunctionDeclaration::FUNC_INTERPAD heuristic is enabled and the resulting function fragments will have that bit
+     *  set in their "reason" attribute. */
+    void mark_zero_padding(const Disassembler::InstructionMap&, const BasicBlockStarts&, FunctionStarts&/*out*/) const;
 
     /** Marks the beginning of a sequence of contiguous instructions as a function, taking into account that separate
      *  sequences of instructions may overlap with each other.  For instance, if the disassembler disassembled 15 multi-byte

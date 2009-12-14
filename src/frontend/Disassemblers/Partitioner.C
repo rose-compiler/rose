@@ -7,6 +7,26 @@
 
 /* See header file for full documentation. */
 
+/* This has no home, so it's here for now. */
+std::string
+SgAsmFunctionDeclaration::reason_str(bool do_pad) const
+{
+    const char *pad = do_pad ? "." : "";
+    std::string result;
+    unsigned r = get_reason();
+    result += r & SgAsmFunctionDeclaration::FUNC_ENTRY_POINT ? "E" : 
+              (r & SgAsmFunctionDeclaration::FUNC_INSNHEAD   ? "H" : pad); /*E and H are mutually exclusive*/
+    result += r & SgAsmFunctionDeclaration::FUNC_CALL_TARGET ? "C" : pad;
+    result += r & SgAsmFunctionDeclaration::FUNC_EH_FRAME    ? "X" : pad;
+    result += r & SgAsmFunctionDeclaration::FUNC_SYMBOL      ? "S" : pad;
+    result += r & SgAsmFunctionDeclaration::FUNC_PATTERN     ? "P" : pad;
+    result += r & SgAsmFunctionDeclaration::FUNC_GRAPH       ? "G" : pad;
+    result += r & SgAsmFunctionDeclaration::FUNC_USERDEF     ? "U" : pad;
+    result += r & SgAsmFunctionDeclaration::FUNC_INTERPAD    ? "N" : pad;
+    result += r & SgAsmFunctionDeclaration::FUNC_DISCONT     ? "D" : pad;
+    return result;
+}
+
 /* Partitions instructions into functions of basic blocks. */
 SgAsmBlock *
 Partitioner::partition(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insns) const
@@ -214,7 +234,9 @@ Partitioner::detectFunctions(SgAsmInterpretation *interp, const Disassembler::In
 
     /* Run analyses that improve upon what we've already detected. */
     if (p_func_heuristics & SgAsmFunctionDeclaration::FUNC_INTERPAD) {
-        mark_func_padding(insns, bb_starts, func_starts);
+        mark_nop_padding(insns, bb_starts, func_starts);
+        update_basic_blocks(func_starts, bb_starts);
+        mark_zero_padding(insns, bb_starts, func_starts);
         update_basic_blocks(func_starts, bb_starts);
     }
     if (p_func_heuristics & SgAsmFunctionDeclaration::FUNC_DISCONT) {
@@ -235,7 +257,7 @@ Partitioner::buildTree(const Disassembler::InstructionMap& insns, const BasicBlo
      * indicate that it contains discontiguous chunks. */
     static const bool join_discont_chunks = true;
 
-    check_consistency(insns, bb_starts, func_starts, true);
+    check_consistency(insns, bb_starts, func_starts, false);
     SgAsmBlock *retval = new SgAsmBlock();
     std::map<rose_addr_t, SgAsmFunctionDeclaration*> funcs;
 
@@ -757,13 +779,62 @@ Partitioner::end_of_block(rose_addr_t addr, const Disassembler::InstructionMap& 
     return addr;
 }
 
-/* Splits trailing NOP padding into their own functional units. */
+/* Splits trailing zero padding into their own functional units. */
 void
-Partitioner::mark_func_padding(const Disassembler::InstructionMap& insns, const BasicBlockStarts& bb_starts,
+Partitioner::mark_zero_padding(const Disassembler::InstructionMap& insns, const BasicBlockStarts& bb_starts,
                                FunctionStarts &func_starts/*out*/) const
 {
-    std::set<rose_addr_t> new_functions;
+    Disassembler::AddressSet new_functions;
     for (FunctionStarts::iterator fi=func_starts.begin(); fi!=func_starts.end(); fi++) {
+        if (fi->second.reason & SgAsmFunctionDeclaration::FUNC_INTERPAD) continue; /*some other kind of padding*/
+        rose_addr_t last_block_addr = end_of_function(fi->first, insns, bb_starts, func_starts).second;
+        if (last_block_addr==fi->first) continue; /*function only has one block*/
+        FunctionStarts::iterator next_func = func_starts.upper_bound(last_block_addr); /*irrespective of overlapping*/
+
+        /* Get extent of addresses to check for zero */
+        rose_addr_t stop_before; /*check zeros up to, but not including, this address*/
+        if (next_func!=func_starts.end()) {
+            stop_before = next_func->first;
+        } else {
+            rose_addr_t last_insn_addr = end_of_block(last_block_addr, insns, bb_starts);
+            Disassembler::InstructionMap::const_iterator ii = insns.find(last_insn_addr);
+            ROSE_ASSERT(ii!=insns.end());
+            stop_before = ii->first + ii->second->get_raw_bytes().size();
+        }
+
+        /* Check that all instructions of the last block contain zero up to the stop_before address. The last instruction(s)
+         * might actually extend past the stop_before address and might contain non-zero bytes that we aren't interested in. */
+        bool all_zero=true;
+        for (rose_addr_t addr=last_block_addr; addr<stop_before && all_zero; /*void*/) {
+            Disassembler::InstructionMap::const_iterator ii=insns.find(addr);
+            if (ii==insns.end()) break; /*we've reached the last instruction of the block*/
+            size_t nbytes = std::min(ii->second->get_raw_bytes().size(), stop_before-addr);
+            for (size_t i=0; i<nbytes && all_zero; i++)
+                all_zero = (ii->second->get_raw_bytes()[i] == 0);
+            addr += ii->second->get_raw_bytes().size();
+        }
+        
+        /* Create a new function start. */
+        if (all_zero) {
+            ROSE_ASSERT(last_block_addr!=fi->first);
+            ROSE_ASSERT(func_starts.find(last_block_addr)==func_starts.end());
+            new_functions.insert(last_block_addr);
+        }
+    }
+    
+    /* Create new functions. */
+    for (Disassembler::AddressSet::iterator fi=new_functions.begin(); fi!=new_functions.end(); fi++)
+        func_starts[*fi].reason |= SgAsmFunctionDeclaration::FUNC_INTERPAD;
+}
+
+/* Splits trailing NOP padding into their own functional units. */
+void
+Partitioner::mark_nop_padding(const Disassembler::InstructionMap& insns, const BasicBlockStarts& bb_starts,
+                              FunctionStarts &func_starts/*out*/) const
+{
+    Disassembler::AddressSet new_functions;
+    for (FunctionStarts::iterator fi=func_starts.begin(); fi!=func_starts.end(); fi++) {
+        if (fi->second.reason & SgAsmFunctionDeclaration::FUNC_INTERPAD) continue; /*some other kind of padding*/
         std::pair<rose_addr_t, rose_addr_t> end = end_of_function(fi->first, insns, bb_starts, func_starts);
         rose_addr_t last_insn_addr = end.first;
         rose_addr_t last_bb_addr = end.second;
@@ -795,7 +866,7 @@ Partitioner::mark_func_padding(const Disassembler::InstructionMap& insns, const 
     }
     
     /* Create the new functions. */
-    for (std::set<rose_addr_t>::iterator fi=new_functions.begin(); fi!=new_functions.end(); fi++)
+    for (Disassembler::AddressSet::iterator fi=new_functions.begin(); fi!=new_functions.end(); fi++)
         func_starts[*fi].reason |= SgAsmFunctionDeclaration::FUNC_INTERPAD;
 }
 

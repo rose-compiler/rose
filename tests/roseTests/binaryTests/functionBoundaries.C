@@ -19,7 +19,7 @@ class ShowFunctions : public SgSimpleProcessing {
         SgAsmFunctionDeclaration *defn = isSgAsmFunctionDeclaration(node);
         if (defn) {
             /* Scan through the function's instructions to find the range of addresses for the function. */
-            rose_addr_t func_start=~(rose_addr_t)0, func_end=0;
+            rose_addr_t func_start=~(rose_addr_t)0, func_end=0, ninsns=0, nbytes=0;
             SgAsmStatementPtrList func_stmts = defn->get_statementList();
             for (size_t i=0; i<func_stmts.size(); i++) {
                 SgAsmBlock *bb = isSgAsmBlock(func_stmts[i]);
@@ -28,27 +28,18 @@ class ShowFunctions : public SgSimpleProcessing {
                     for (size_t j=0; j<block_stmts.size(); j++) {
                         SgAsmInstruction *insn = isSgAsmInstruction(block_stmts[j]);
                         if (insn) {
+                            ninsns++;
                             func_start = std::min(func_start, insn->get_address());
                             func_end = std::max(func_end, insn->get_address()+insn->get_raw_bytes().size());
+                            nbytes += insn->get_raw_bytes().size();
                         }
                     }
                 }
             }
 
             /* Reason that this is a function */
-            unsigned r = defn->get_reason();
-            printf("    %3zu 0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64"  ", ++nfuncs, func_start, func_end-func_start, func_end);
-            printf(" %c%c%c%c%c%c%c%c%c",
-                   r & SgAsmFunctionDeclaration::FUNC_ENTRY_POINT ? 'E' : 
-                   (r & SgAsmFunctionDeclaration::FUNC_INSNHEAD ? 'H' : '.'), /*never same time as 'E'*/
-                   r & SgAsmFunctionDeclaration::FUNC_CALL_TARGET ? 'C' : '.',
-                   r & SgAsmFunctionDeclaration::FUNC_EH_FRAME    ? 'X' : '.',
-                   r & SgAsmFunctionDeclaration::FUNC_SYMBOL      ? 'S' : '.',
-                   r & SgAsmFunctionDeclaration::FUNC_PATTERN     ? 'P' : '.', 
-                   r & SgAsmFunctionDeclaration::FUNC_GRAPH       ? 'G' : '.', 
-                   r & SgAsmFunctionDeclaration::FUNC_USERDEF     ? 'U' : '.',
-                   r & SgAsmFunctionDeclaration::FUNC_INTERPAD    ? 'N' : '.', 
-                   r & SgAsmFunctionDeclaration::FUNC_DISCONT     ? 'D' : '.');
+            printf("    %3zu 0x%08"PRIx64" 0x%08"PRIx64" %5zu/%-6zu ", ++nfuncs, func_start, func_end, ninsns, nbytes);
+            fputs(defn->reason_str(true).c_str(), stdout);
 
             /* Kind of function */
             switch (defn->get_function_kind()) {
@@ -124,12 +115,12 @@ main(int argc, char *argv[])
     printf("    Key for reason(s) address is a suspected function:\n");
     printf("      E = entry address         C = call target           X = exception frame\n");
     printf("      S = function symbol       P = instruction pattern   G = interblock branch graph\n");
-    printf("      U = user-def detection    N = NOP padding           D = discontiguous blocks\n");
+    printf("      U = user-def detection    N = NOP/Zero padding      D = discontiguous blocks\n");
     printf("      H = insn sequence head\n");
     printf("\n");
-    printf("    Num    Start      Size       End       Reason      Kind   Name\n");
-    printf("    --- ---------- ---------- ----------   --------- -------- --------------------------------\n");
+    printf("    Num  Low-Addr   End-Addr  Insns/Bytes   Reason      Kind   Name\n");
+    printf("    --- ---------- ---------- ------------ --------- -------- --------------------------------\n");
     ShowFunctions().traverseInputFiles(project, preorder);
-    printf("    --- ---------- ---------- ----------   --------- -------- --------------------------------\n");
+    printf("    --- ---------- ---------- ------------ --------- -------- --------------------------------\n");
     return 0;
 }
