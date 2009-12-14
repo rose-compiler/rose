@@ -208,35 +208,43 @@ add_subdirectory(roseExtensions)
 
 ########### next target ###############
 set(rose_LIB_SRCS dummyCppFileForLibrose.C  
-# ${ROSETTA_SRC} ${sage3_SRC}
+# ${ROSETTA_SRC} 
+#    ${sage3_SRC}
     ${rose_support_src} 
-#    ${binaryFrontend_SRC} 
     ${EDG_SAGE_Connection_SRC}
     ${virtualCFG_SRC}
-#    ${rose_util_src}
     ${MSTL_SRC}
-#    ${astFixup_SRC}
-    ${phpFrontend_SRC}
-#    ${libastMerge_SRC}
-#${roseDisassemblers_SRC}
+#    ${phpFrontend_SRC}
     )
+
+# tps (12/14/2009) : Added new libraries, so that the project size under windows is smaller and I do not run out of heap space
+add_library(ROSETTA_LIB SHARED ${ROSETTA_SRC} 
+)
+add_dependencies(ROSETTA_LIB ROSETTA OMPPARSER ROSE_PREPROCESSOR ) 
+
+# tps (12/14/2009) : Added new libraries, so that the project size under windows is smaller and I do not run out of heap space
+add_library(SAGE3_LIB SHARED ${sage3_SRC}     
+)
+add_dependencies(SAGE3_LIB ROSETTA OMPPARSER ROSE_PREPROCESSOR ) 
+
 
 add_library(rose SHARED ${rose_LIB_SRCS} )
 #ROSE neeeds ${ROSETTA_HEADERS} and ${ROSETTA_SRC} to be build
-add_dependencies(rose ROSETTA OMPPARSER ROSE_PREPROCESSOR   ) 
+add_dependencies(rose ROSETTA OMPPARSER ROSE_PREPROCESSOR ) 
+
+# tps (12/14/2009) : Created a variable for the dependend libraries. Make sure that order is correct.
+set(ROSE_TARGET_LINK 
+   ROSETTA_LIB SAGE3_LIB PHP_FRONTEND_LIB
+   libastMerge edg33 libsageInterface libastTokenStream libastHiddenTypeAndDeclarationLists
+   libastVisualization roseDisassemblers roseBinaryFormats midend unparser astFixup binary_frontend
+   libastHiddenTypeAndDeclarationLists roseAsmUnparser libastPostProcessing libhpdf rose_util_lib 
+)
 
 #Liao, link static libraries into the shared librose library
 #target_link_libraries(rose ${libastMerge}) # library name are global, should not use ${}
 # we need to double check if this solution will be portable on different platforms
-target_link_libraries(rose libastMerge edg33 libsageInterface libastTokenStream libastHiddenTypeAndDeclarationLists
-   libastVisualization roseDisassemblers roseBinaryFormats midend unparser astFixup binaryFrontend
-   libastHiddenTypeAndDeclarationLists roseAsmUnparser libastPostProcessing libhpdf rose_util_lib
+target_link_libraries(rose ${ROSE_TARGET_LINK}
  )
-
-#target_link_libraries(rose ${KDE4_KDECORE_LIBS} m hpdf)
-#AS Hack to compile ROSE
-#target_link_libraries(rose ${KDE4_KDECORE_LIBS} m hpdf)
-#target_link_libraries(rose ${KDE4_KDECORE_LIBS} m )
 
 set_target_properties(rose PROPERTIES VERSION 1.0.0 SOVERSION 1)
 install(TARGETS rose ${INSTALL_TARGETS_DEFAULT_ARGS})
@@ -248,15 +256,8 @@ set(testSharedRoseLib_SRCS testRoseLib.C)
 add_executable(testSharedRoseLib ${testSharedRoseLib_SRCS}  )
 
 
-target_link_libraries(testSharedRoseLib ${KDE4_KDECORE_LIBS} rose edg33 ${link_with_libraries} ${Boost_LIBRARIES}
-    libastMerge libsageInterface libastTokenStream 
-    libastHiddenTypeAndDeclarationLists libastVisualization 
-# rose_support binary_frontend virtualCFG rose_util_lib astFixup  
-    
-    roseDisassemblers
-    libsageInterface roseBinaryFormats midend unparser
-    libastHiddenTypeAndDeclarationLists roseAsmUnparser libastPostProcessing
-    libhpdf
+target_link_libraries(testSharedRoseLib ${KDE4_KDECORE_LIBS} rose ${link_with_libraries} ${Boost_LIBRARIES}
+					${ROSE_TARGET_LINK}
     )
 
 ########### install files ###############
