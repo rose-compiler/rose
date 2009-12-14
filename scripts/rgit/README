@@ -1,3 +1,10 @@
+NOTE: ROSE doesn't use rgit, but some of the policies ROSE uses are
+very similar.  This directory is here to serve as input for the
+ROSE/Git documentation when we get around to writing it.
+
+
+
+
 "rgit" = "Robb's Git" or "ROSE Git"
 
 rgit is a source management system that supports the distributed power
@@ -839,3 +846,29 @@ Q12. Why does the rgit script fail during the "git filter-branch"?
    Note that "git filter-branch" is only run by the rgit
    administrative commands that interact with Subversion; developers
    probably wouldn't ever see this.
+
+Q13. How can I check ROSE out over a slow, flaky network?
+
+   If you network is slow and flaky (as mine is when we have very wet
+   weather) then "git clone" becomes hard to use. It must transfer MBs
+   of data, but if it's interrupted it deletes everything it
+   transferred.  So here's what I do:
+
+   1. Use rsync to copy the remote repo to my local machine:
+
+      $ rsync --recursive --partial --inplace --delete --progress \
+        matzke@prism.llnl.gov:/usr/casc/overture/ROSE/git/ROSE.git \
+        ROSE.git
+
+   2. Clone from the local ROSE.git
+
+      $ git clone ROSE.git workspace
+
+   3. Reconfigure workspace to use the remote ROSE.git rather than
+      my local copy:
+
+      $ vi workspace/.git/config
+
+      Change the "url" line under [remote "origin"].
+
+   4. Blow away ROSE.git so I don't use it accidently

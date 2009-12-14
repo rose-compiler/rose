@@ -86,7 +86,33 @@ EXTRA_DIST = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
 # foo.h          test2001_15.h   test2003_08.h   test2003_14.h  test2004_40.h   test2005_157.h  test2005_15.h   test2005_75.h  test2006_136.h   test2006_33.h    test2007_08.h   test2007_114.h  test2007_160a.h  test2007_40.h   test2007_47.h
 # test2001_05.h  test2001_18A.h  test2003_09.h   test2003_24.h  test2005_133.h  test2005_158.h  test2005_160.h  test2005_81.h  test2006_187a.h  test2006_36.h    test2007_101.h  test2007_136.h  test2007_160.h   test2007_41.h   test2007_48.h
 
+# This was a bug specific to the normalization of source file names to absolute paths
+# DQ (12/11/2009): At the moment it is an failing test because "thisIsAnError" will be 
+# interpreted to be a file.
+testUsingBadCommandline: ../../testTranslator
+	echo "class A { int x; float y;}; int main() { int x=0; return x; }" > roseTestProgram.C; \
+	../../testTranslator -DthisIsOK -D thisIsAnError -rose:verbose 0 roseTestProgram.C
+
+# This was a bug specific to the normalization of source file names to absolute paths
+testBuildUsingNoPath: ../../testTranslator
+	echo "class A { int x; float y;}; int main() { int x=0; return x; }" > roseTestProgram.C; \
+	../../testTranslator -rose:verbose 0 roseTestProgram.C
+
+# This was a bug specific to the normalization of source file names to absolute paths
+testBuildUsingRelativePath: ../../testTranslator
+	echo "class A { int x; float y;}; int main() { int x=0; return x; }" > roseTestProgram.C; \
+	../../testTranslator -rose:verbose 0 ../Cxx_tests/roseTestProgram.C
+
+# This was always worked but is the alternative to the normalization of source file names to absolute paths
+testBuildUsingAbsolutePath: ../../testTranslator
+	echo "class A { int x; float y;}; int main() { int x=0; return x; }" > roseTestProgram.C; \
+	../../testTranslator -rose:verbose 0 `pwd`/roseTestProgram.C
+
 check-local:
+#	@$(MAKE) testUsingBadCommandline
+	@$(MAKE) testBuildUsingNoPath
+	@$(MAKE) testBuildUsingRelativePath
+	@$(MAKE) testBuildUsingAbsolutePath
 	@echo "Tests of C++."
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "***********************************************************************************************"
@@ -94,5 +120,5 @@ check-local:
 	@echo "***********************************************************************************************"
 
 clean-local:
-	rm -f *.o rose_*.[cC]
+	rm -f a.out *.o rose_*.[cC] roseTestProgram.C
 	rm -rf QMTest

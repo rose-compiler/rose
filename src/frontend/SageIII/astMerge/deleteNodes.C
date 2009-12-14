@@ -87,7 +87,9 @@ void
 deleteSetErrorCheck( SgProject* project, const set<SgNode*> & listToDelete )
    {
   // DQ (2/15/2007): Error checking on the finalDeleteSet
-     printf ("In deleteSetErrorCheck(): calling computeSetIntersection() \n");
+
+     if (SgProject::get_verbose() > 0)
+          printf ("In deleteSetErrorCheck(): calling computeSetIntersection() \n");
 
   // set<SgNode*> intersectionSet = computeSetIntersection(project->get_file(0).get_globalScope()->get_symbol_table()->get_symbols(),listToDelete);
   // set<SgNode*> intersectionSet = computeSetIntersection(project->get_fileList()[0]->get_globalScope()->get_symbol_table()->get_symbols(),listToDelete);
@@ -98,33 +100,38 @@ deleteSetErrorCheck( SgProject* project, const set<SgNode*> & listToDelete )
 
      set<SgNode*> intersectionSet = computeSetIntersection(sourceFile->get_globalScope()->get_symbol_table()->get_symbols(),listToDelete);
 
-     printf ("In deleteSetErrorCheck(): calling computeSetIntersection(): DONE \n");
-
-     printf ("In deleteSetErrorCheck(): intersectionSet.size() = %zu \n",intersectionSet.size());
-     displaySet(intersectionSet,"intersectionSet");
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("In deleteSetErrorCheck(): calling computeSetIntersection(): DONE \n");
+          printf ("In deleteSetErrorCheck(): intersectionSet.size() = %zu \n",intersectionSet.size());
+          displaySet(intersectionSet,"intersectionSet");
+        }
 
      set<SgNode*>::iterator i = intersectionSet.begin();
      while ( i != intersectionSet.end())
         {
 #if 1
-          Sg_File_Info* fileInfo = (*i)->get_file_info();
-          printf ("In deleteSetErrorCheck(): intersectionSet result: i = %p = %s = %s at file = %s \n",
-               *i,(*i)->class_name().c_str(),SageInterface::get_name(*i).c_str(),(fileInfo != NULL) ? fileInfo->get_raw_filename().c_str() : "NULL");
-          switch((*i)->variantT())
+          if (SgProject::get_verbose() > 0)
              {
-               case V_SgClassSymbol:
+               Sg_File_Info* fileInfo = (*i)->get_file_info();
+               printf ("In deleteSetErrorCheck(): intersectionSet result: i = %p = %s = %s at file = %s \n",
+                    *i,(*i)->class_name().c_str(),SageInterface::get_name(*i).c_str(),(fileInfo != NULL) ? fileInfo->get_raw_filename().c_str() : "NULL");
+               switch((*i)->variantT())
                   {
-                    SgClassSymbol* classSymbol = isSgClassSymbol(*i);
-                    SgClassDeclaration* classDeclaration =  classSymbol->get_declaration();
-                    printf ("asociated classDeclaration                                    = %p = %s \n",classDeclaration,classDeclaration->get_name().str());
-                    printf ("asociated classDeclaration->get_definingDeclaration()         = %p \n",classDeclaration->get_definingDeclaration());
-                    printf ("asociated classDeclaration->get_firstNondefiningDeclaration() = %p \n",classDeclaration->get_firstNondefiningDeclaration());
-                    classDeclaration->get_file_info()->display("problem location");
-                  }
+                    case V_SgClassSymbol:
+                       {
+                         SgClassSymbol* classSymbol = isSgClassSymbol(*i);
+                         SgClassDeclaration* classDeclaration =  classSymbol->get_declaration();
+                         printf ("asociated classDeclaration                                    = %p = %s \n",classDeclaration,classDeclaration->get_name().str());
+                         printf ("asociated classDeclaration->get_definingDeclaration()         = %p \n",classDeclaration->get_definingDeclaration());
+                         printf ("asociated classDeclaration->get_firstNondefiningDeclaration() = %p \n",classDeclaration->get_firstNondefiningDeclaration());
+                         classDeclaration->get_file_info()->display("problem location");
+                       }
 
-               default:
-                  {
-                 // ignore these cases
+                    default:
+                       {
+                      // ignore these cases
+                       }
                   }
              }
 #endif

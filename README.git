@@ -292,5 +292,107 @@ and the old one has been saved (and should be accessible for a short while).
    Building a shared repository that would then be used to clone
 from to generate local repositories:
    "git init --bare --shared=true"
+However this must be done in an empty repository, I think.
 
+
+From:
+developmentScratchSpace.git
+tux281.llnl.gov{dquinlan}731: cd developmentScratchSpace_example/
+/usr/casc/overture/ROSE/git/developmentScratchSpace_example
+
+History from building a git repository:
+   721  17:24   git init
+   722  17:24   git add .
+   723  17:24   git commit -a
+   730  17:25   mkdir developmentScratchSpace.git
+   731  17:25   cd developmentScratchSpace.git/
+   735  17:26   git clone --bare --shared=true ../developmentScratchSpace_example/.git/
+   736  17:27   man git-clone
+   737  17:27   git clone --bare --shared ../developmentScratchSpace_example/.git/
+   740  17:27   cd developmentScratchSpace_example.git/
+   743  17:27   git log
+   745  17:27   cd ..
+   748  17:27   mv developmentScratchSpace_example.git/* .
+   749  17:27   rmdir developmentScratchSpace_example.git/
+   750  17:27   ls
+   751  17:27   git branch -a
+
+To build directory X as a git repository.
+   1) Start with X1 which is an example of what X should be as a git repository.
+   2) 
+
+
+First create a working repositry for the directory where you have the files you want to
+create a repository from. To build developmentScratchSpace.git as a final git repository:
+
+   cd /usr/casc/overture/ROSE/git/developmentScratchSpace_example
+   git init
+   git add .
+   git commit -a
+
+Then clone this working repository to create a bare repository that you will be the *only*
+    repository for this work you will clone from after this. The reason why we do this is
+    that it is not recommended to clone from a git working repository.
+
+   cd /usr/casc/overture/ROSE/git
+   git clone --bare --shared /usr/casc/overture/ROSE/git/developmentScratchSpace_example developmentScratchSpace.git 
+    ( pwd = /usr/casc/overture/ROSE/git/developmentScratchSpace.git)
+
+
+An example to build a git repository "Y" from a directory "X".
+This example also builds a local git repository "localY".
+
+   mkdir X
+   cd X
+   touch a.c
+   git init
+   git add .
+   git commit -a
+   cd ..
+   git clone --bare --shared X Y
+   git clone Y localY
+   cd localY/
+   #git branch dq-main-rc master
+   #git push origin dq-main-rc
+   #git checkout master
+   #git branch -d dq-main-rc
+   git branch dq-main-rc --track origin/dq-main-rc
+   git branch -a
+   git checkout dq-main-rc
+
+Bash script:
+#!/bin/sh -ex
+
+# This is the script to build a git repository "Y" from a directory "X"
+# and then build a local clone of the git repository "Y" and then build 
+# the required branch (a local branch that tracks a non-local branch).
+
+mkdir X
+cd X
+touch a.c
+git init
+git add .
+git commit -a -m "Added a.c as a test."
+cd ..
+git clone --bare --shared X Y
+git clone Y localY
+cd localY/
+
+# This will build a local branch 
+# git branch dq-main-rc master
+# This will build in in origin
+# git push origin dq-main-rc
+# This will delete the local branch so that we can call "git branch dq-main-rc --track origin/dq-main-rc"
+# git branch -d dq-main-rc
+
+# If we want to avoid building a local branch and then deleting it later then use:
+git push origin origin:refs/heads/dq-main-rc
+
+git branch dq-main-rc --track origin/dq-main-rc
+
+git push origin dq-main-rc
+
+git branch -a
+git checkout dq-main-rc
+ 
 

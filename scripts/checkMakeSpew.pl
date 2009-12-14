@@ -40,7 +40,7 @@ while ($lineNumber <= $#lineArray)
    # Remove the end of line character
      s/\n//g;
      $previousLine = $_;
-     $newline = "$count:$previousLine \n";
+     $newline = "$count\t: $previousLine \n";
    # print $newline; 
 
      $previousValue = $value;
@@ -58,6 +58,11 @@ while ($lineNumber <= $#lineArray)
 sub numerically { int $a <=> int $b }
 @sortedList = reverse sort numerically @newlineArray;
 
+print "\n\n";
+print "***************************************** \n";
+print "***** Output spew (lines:directory) ***** \n";
+print "***************************************** \n";
+
 # Output the sorted list
 $lineNumber = 0;
 while ($lineNumber <= $#sortedList)
@@ -65,3 +70,4 @@ while ($lineNumber <= $#sortedList)
      print$sortedList[$lineNumber];
      $lineNumber++;
    }
+print "*****************************************";
