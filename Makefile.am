@@ -174,7 +174,7 @@ distcheck-after:
 	@$(MAKE) rename_distribution
 
 # CLEANFILES = rose_binary_compatibility_signature rose_binary_compatibility_signature_src
-CLEANFILES = rose_binary_compatibility_signature
+CLEANFILES = rose_binary_compatibility_signature bincompat-sig
 
 find_rose_lock_files:
 #	du -a | grep rose_performance_report_lockfile
