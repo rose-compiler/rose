@@ -34,7 +34,7 @@ set( libastPostProcessing_SRC
      buildStatementNumbering.C
    )
 
-add_library( libastPostProcessing STATIC ${libastPostProcessing_SRC} )
+add_library( libastPostProcessing STATIC ${libastPostProcessing_SRC}  )
 add_dependencies( libastPostProcessing ROSETTA   )
 
 

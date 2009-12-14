@@ -87,7 +87,7 @@ ${CMAKE_SOURCE_DIR}/src/midend/astDiagnostics/AstStatistics.C
 )
 
 add_library( midend STATIC ${midend_src}  )
-add_dependencies( midend ROSETTA  )
+add_dependencies( midend ROSETTA midend_pa midend_pt midend_loopproc midend_binary )
 
 target_link_libraries(midend midend_pa midend_pt midend_loopproc midend_binary
  )
