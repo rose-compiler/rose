@@ -1,5 +1,6 @@
 #! /bin/sh
 
+
 # This is the default location for build to use as a reference
 # to its macro definitions used by Autoconf and Automake.
 ROSE_DISTRIBUTION=".."
