@@ -25,7 +25,8 @@ createSchema ( sqlite3x::sqlite3_connection& gDB, string dbName )
   gDB.executenonquery("CREATE TABLE IF NOT EXISTS Edges  (nid1 TEXT, nid2 TEXT, label TEXT, type TEXT, objClass TEXT);");
   gDB.executenonquery("CREATE TABLE IF NOT EXISTS Hierarchy ( Class TEXT, Subclass TEXT, ClassFile TEXT, SubclassFile TEXT, PRIMARY KEY ( Class, Subclass ) );");
 
-  cout << "Tables created\n";
+  if( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+    cout << "Tables created\n";
 }
 
 sqlite3x::sqlite3_connection* open_db(std::string dbName  )
@@ -40,7 +41,11 @@ sqlite3x::sqlite3_connection* open_db(std::string dbName  )
   SgIncidenceDirectedGraph*
 loadCallGraphFromDB (   sqlite3x::sqlite3_connection& gDB)
 {
-  cout << "Loading...\n";
+
+
+  if( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+    cout << "Loading...\n";
+
   SgIncidenceDirectedGraph* graph = new SgIncidenceDirectedGraph("CallGraph");
 
   string loadNodes = "SELECT nid,label,def,type,scope FROM Nodes;",
@@ -109,7 +114,6 @@ loadCallGraphFromDB (   sqlite3x::sqlite3_connection& gDB)
     }
   }
 
-  cout << "After recreating the graph\n";
   return graph;
 }
 
@@ -245,7 +249,9 @@ writeSubgraphToDB( sqlite3x::sqlite3_connection& gDB, SgIncidenceDirectedGraph* 
               to_property->functionDeclaration->get_mangled_name().getString();
           }
 
-          std::cout << "Creating edge between " << mnglName << " " << n2mnglName << " " << to_property->functionType->get_mangled( ).getString() << std::endl;
+	  if( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+	    std::cout << "Creating edge between " << mnglName << " " << n2mnglName << " " << to_property->functionType->get_mangled( ).getString() << std::endl;
+
           st << "INSERT INTO Edges VALUES (\"" << mnglName << "\", \"" << n2mnglName << "\", \"" << edge->get_name()
             << "\", \"" << to_property->functionType->get_mangled( ).getString() << "\", \"" << cls << "\");";
           //cout << st.str() << "\n";
@@ -269,7 +275,9 @@ writeSubgraphToDB( sqlite3x::sqlite3_connection& gDB, SgIncidenceDirectedGraph* 
   void
 solveFunctionPointers( sqlite3x::sqlite3_connection& gDB )
 {
-  cout << "Solving function pointers...\n";
+
+  if( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+    cout << "Solving function pointers...\n";
 
   string command = "";
   command = "INSERT INTO Edges SELECT e.nid1, nid, n1.label, e.type, e.objClass from Nodes n1, Edges e WHERE "
@@ -279,9 +287,12 @@ solveFunctionPointers( sqlite3x::sqlite3_connection& gDB )
   command = "DELETE FROM Edges WHERE nid2 = \"POINTER\" AND objClass = \"\";";
   gDB.executenonquery(command.c_str());
 
-  cout << command << "\t" << "CLEANUP\n";
+  if( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+  {
+    cout << command << "\t" << "CLEANUP\n";
 
-  cout << "Done with function pointers\n";
+    cout << "Done with function pointers\n";
+  }
 }
 
 // DQ (7/28/2005): Don't include the data base
@@ -296,7 +307,8 @@ solveVirtualFunctions( sqlite3x::sqlite3_connection& gDB, string dbHierarchy )
   {
 
 
-    cout << "Classes with virtual functions called:\n";
+    if( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+      cout << "Classes with virtual functions called:\n";
 
     //rows->showResult();
 
@@ -353,7 +365,8 @@ solveVirtualFunctions( sqlite3x::sqlite3_connection& gDB, string dbHierarchy )
 
         sqlite3x::sqlite3_reader r = cmd.executereader();
 
-        cout << "Now executing: " << command;
+	if( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+	  cout << "Now executing: " << command;
 
         std::vector<string> inserts;
         while( r.read() )
@@ -376,7 +389,8 @@ solveVirtualFunctions( sqlite3x::sqlite3_connection& gDB, string dbHierarchy )
   }
 
 
-  cout << "Done with virtual functions\n";
+  if( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+    cout << "Done with virtual functions\n";
 }
 
 
