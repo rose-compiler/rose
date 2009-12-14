@@ -13,17 +13,6 @@ add_subdirectory(programTransformation)
 ########### next target   ###############
 set( midend_src
 ${CMAKE_SOURCE_DIR}/src/midend/midend_roseh_pch.cpp
-${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/RoseBin_CallGraphAnalysis.cpp
-${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/RoseBin_FlowAnalysis.cpp
-${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/RoseBin_DataFlowAnalysis.cpp
-${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/RoseBin_CompareAnalysis.cpp
-${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/RoseBin_printInstructions.cpp
-${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/RoseBin_ControlFlowAnalysis.cpp
-${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_Emulate.cpp
-${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_DataFlowAbstract.cpp
-${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_VariableAnalysis.cpp
-${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/InterruptAnalysis.cpp
-${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_DefUseAnalysis.cpp
 ${CMAKE_SOURCE_DIR}/src/midend/abstractHandle/abstract_handle.cpp
 ${CMAKE_SOURCE_DIR}/src/midend/abstractHandle/loopAdapter.cpp
 ${CMAKE_SOURCE_DIR}/src/midend/abstractHandle/roseAdapter.cpp
@@ -98,8 +87,11 @@ ${CMAKE_SOURCE_DIR}/src/midend/astDiagnostics/AstStatistics.C
 )
 
 add_library( midend STATIC ${midend_src}  )
-add_dependencies( midend ROSETTA )
+add_dependencies( midend ROSETTA  )
 
+target_link_libraries(midend midend_pa midend_pt midend_loopproc midend_binary
+ )
+ 
 ########### install files ###############
 
 

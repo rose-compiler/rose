@@ -207,29 +207,30 @@ add_subdirectory(roseExtensions)
 
 
 ########### next target ###############
-set(rose_LIB_SRCS dummyCppFileForLibrose.C   ${ROSETTA_SRC} ${sage3_SRC}
+set(rose_LIB_SRCS dummyCppFileForLibrose.C  
+# ${ROSETTA_SRC} ${sage3_SRC}
     ${rose_support_src} 
-    ${binaryFrontend_SRC} 
+#    ${binaryFrontend_SRC} 
     ${EDG_SAGE_Connection_SRC}
     ${virtualCFG_SRC}
-    ${rose_util_src}
+#    ${rose_util_src}
     ${MSTL_SRC}
-    ${astFixup_SRC}
+#    ${astFixup_SRC}
     ${phpFrontend_SRC}
 #    ${libastMerge_SRC}
 #${roseDisassemblers_SRC}
     )
 
-add_library(rose SHARED ${rose_LIB_SRCS})
+add_library(rose SHARED ${rose_LIB_SRCS} )
 #ROSE neeeds ${ROSETTA_HEADERS} and ${ROSETTA_SRC} to be build
-add_dependencies(rose ROSETTA OMPPARSER ROSE_PREPROCESSOR ) 
+add_dependencies(rose ROSETTA OMPPARSER ROSE_PREPROCESSOR   ) 
 
 #Liao, link static libraries into the shared librose library
 #target_link_libraries(rose ${libastMerge}) # library name are global, should not use ${}
 # we need to double check if this solution will be portable on different platforms
 target_link_libraries(rose libastMerge edg33 libsageInterface libastTokenStream libastHiddenTypeAndDeclarationLists
-   libastVisualization roseDisassemblers roseBinaryFormats midend midend_pt midend_pa unparser 
-   libastHiddenTypeAndDeclarationLists roseAsmUnparser libastPostProcessing libhpdf
+   libastVisualization roseDisassemblers roseBinaryFormats midend unparser astFixup binaryFrontend
+   libastHiddenTypeAndDeclarationLists roseAsmUnparser libastPostProcessing libhpdf rose_util_lib
  )
 
 #target_link_libraries(rose ${KDE4_KDECORE_LIBS} m hpdf)
