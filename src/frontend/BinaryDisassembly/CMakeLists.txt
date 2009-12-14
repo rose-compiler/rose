@@ -133,8 +133,8 @@ file( APPEND ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/powerpcInstru
 
 
 
-#add_library( binary_frontend ${binaryFrontend_SRC} )
-#add_dependencies( binary_frontend ROSETTA )
+add_library( binary_frontend ${binaryFrontend_SRC} )
+add_dependencies( binary_frontend ROSETTA )
 
 
 

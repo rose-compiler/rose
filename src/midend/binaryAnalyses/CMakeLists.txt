@@ -4,6 +4,23 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 ########### next target ###############
 
+set( midend_binary_src
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/RoseBin_CallGraphAnalysis.cpp
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/RoseBin_FlowAnalysis.cpp
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/RoseBin_DataFlowAnalysis.cpp
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/RoseBin_CompareAnalysis.cpp
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/RoseBin_printInstructions.cpp
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/RoseBin_ControlFlowAnalysis.cpp
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_Emulate.cpp
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_DataFlowAbstract.cpp
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_VariableAnalysis.cpp
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/InterruptAnalysis.cpp
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_DefUseAnalysis.cpp
+)
+
+add_library( midend_binary STATIC ${midend_binary_src}  )
+add_dependencies( midend_binary ROSETTA )
+
 
 ########### install files ###############
 
