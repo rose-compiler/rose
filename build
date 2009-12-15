@@ -3,7 +3,7 @@
 
 # This is the default location for build to use as a reference
 # to its macro definitions used by Autoconf and Automake.
-ROSE_DISTRIBUTION=".."
+ROSE_DISTRIBUTION="."
 
 # Parse command-line
 do_quiet=yes
@@ -247,7 +247,7 @@ echo "ACLOCAL_INCLUDES = $ACLOCAL_INCLUDES"
 
 # DJH (20 July 2009): Some macros may be installed in non-standard locations
 # (e.g. libxml's on NMI build machines)
-echo "Running aclocal ...aclocal -I $ROSE_DISTRIBUTION/config -I $ROSE_DISTRIBUTION/acmacros -I /usr/share/aclocal $ACLOCAL_INCLUDES"
+echo "Running aclocal ... aclocal -I $ROSE_DISTRIBUTION/config -I $ROSE_DISTRIBUTION/acmacros -I /usr/share/aclocal $ACLOCAL_INCLUDES"
 # echo "Running aclocal ..."
 # aclocal -I ./config -I ./acmacros -I /usr/share/aclocal $ACLOCAL_INCLUDES || : exit 1
 aclocal -I $ROSE_DISTRIBUTION/config -I $ROSE_DISTRIBUTION/acmacros -I /usr/share/aclocal $ACLOCAL_INCLUDES || : exit 1
