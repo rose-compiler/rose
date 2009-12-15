@@ -1,0 +1,333 @@
+#!/usr/bin/perl
+my $help = <<EOF;
+Mostly like plain old git, except recurses into one level of submodules.
+
+There's not really anything magic about this script. For the most part,
+it just executes the given command in each submodule directory and then
+in the top-level ROSE repository. It can be invoked from any directory
+under ROSE (either in the ROSE repository or one of the submodules).
+
+A few git commands get special handling by this script:
+   clone          Takes the same arguments and switches as for Git
+                  but also initializes and updates submodules. The
+                  user is given a chance to change the URLs for the
+                  submodules before they're updated.
+
+   checkout       Checks out a branch in the main repo and all
+                  submodules, taking the same arguments and switches
+                  as for Git.  If the "-b" switch is specified then
+                  the branch is created in the same way as the "branch"
+                  command described below.
+
+   branch         Lists, creates, or deletes branches taking the
+                  same arguments and switches as Git.  When creating
+                  a new branch the specified branch head (if any)
+                  is the one defined in the main ROSE repository.
+                  The head of the new branch in the submodules will
+                  be chosen according to the commit registered in
+                  the branch head of the main ROSE repository.
+
+All other commands are identical to Git and are executed first in
+the submodules and then in the main ROSE repository.
+EOF
+
+use Cwd;
+use File::Temp 'tempfile';
+use Getopt::Std;
+use strict;
+
+my($arg0) = $0 =~ /([^\/]+)$/; # just the base name of this script
+
+sub TOP {undef}
+
+# Print usage message and exit
+sub usage {
+  open GIT, "-|", "git --help" or die;
+  while (<GIT>) {
+    s/\bgit\b/$arg0/;
+    s/^usage: $arg0.*/usage: $arg0 COMMAND [ARGS]\n$help/;
+    print;
+  }
+  close GIT;
+  exit 1;
+}
+
+# Returns true if specified directory looks like it's the top of ROSE
+sub is_top_of_rose {
+  my($dir) = @_;
+  return unless -d $dir && -d "$dir/.git";
+  return unless open MODULES, "$dir/.gitmodules";
+  my $has_edg = grep {m(^\[\s*submodule\s+\"src/frontend/CxxFrontend/EDG\"\s*]\s*$)} <MODULES>;
+  close MODULES;
+  return $has_edg;
+}
+
+# Returns absolute directory name for top of ROSE repo.  Your CWD must be somewhere inside ROSE to start with.
+sub top_of_rose {
+  my @comps = split /\//, getcwd;
+  while (@comps) {
+    my $s = join "/", @comps;
+    return $s if is_top_of_rose $s;
+    pop @comps;
+  }
+  die "$arg0: cannot find top of ROSE source tree (cwd=@{[getcwd]})";
+}
+
+# Returns submodule info. Each return value is an array ref with two elements: the path of the submodule with respect
+# to the supermodule, and the SHA1 as recorded in the supermodule.
+sub submodules {
+  my $cmd = "cd @{[top_of_rose]} && git submodule --quiet foreach 'echo \$sha1 \$path'";
+  open F, "-|", $cmd or die "$arg0:cannot obtain submodule names";
+  my @retval = map {chomp;[(split /\s+/, $_)[1,0]]} <F>;
+  close F or die "$arg0: cannot obtain submodule names";
+  return @retval;
+}
+
+# Like submodules, but return references instead.
+sub refs {
+  open F, "-|", "git show-ref" or die "$arg0:cannot obtain references";
+  my @retval = map {chomp;[(split /\s+/, $_)[1,0]]} <F>;
+  close F or die "$arg0: cannot obtain references";
+  return @retval;
+}
+
+# Run arbitrary git command in CWD and optionally return all stdout as an array of chomped lines. Returns true
+# on success, false on failure.
+sub git {
+  my($output) = shift @_ if 'ARRAY' eq ref $_[0];
+  my($opts) = shift @_ if 'HASH' eq ref $_[0];
+  my($cmd) = join " ", "git", @_;
+  $cmd = "(cd $opts->{cd} && $cmd)" if $opts->{cd};
+  print "+ $cmd\n";
+  if ($output) {
+    open F, "-|", $cmd or return;
+    while (<F>) {
+      chomp;
+      push @$output, $_;
+    }
+    close F or return;
+  } else {
+    system $cmd and return;
+  }
+  return 1;
+}
+
+# Wrappers around git commands that return a single line. Return undef on failure rather than die.
+sub git1 { my @output; git \@output, @_; return $output[0] }
+sub rev_parse { git1 "rev-parse -q --verify", ($_[0]||"HEAD") }
+sub symbolic_ref { git1 "symbolic-ref -q", ($_[0]||"HEAD") }
+sub merge_base { git1 "merge-base", @_ }
+
+
+# Try to find a branch that matches the current (possibly detached) HEAD, and switch to it.
+#   (1) Prefer the supplied name if specified
+#   (2) Otherwise, create or fast forward a local branch with the same name as the remote branch if found
+#   (3) Otherwise, consider all local and remote branches
+#   (4) Otherwise, leave things as they are
+sub switch_to_branch {
+  my($branch) = @_;
+  my $HEAD = rev_parse or die;
+  my %refs = map {@$_} refs; # hash indexed by ref name
+  if ($refs{"refs/heads/$branch"} eq $HEAD) {
+    # Local branch exists and matches $HEAD, so use it.
+    git "checkout", $branch or die "$0: could not checkout $branch";
+    return;
+  } elsif ($refs{"refs/remotes/origin/$branch"} eq $HEAD) {
+    if ($refs{"refs/heads/$branch"}) {
+      if (merge_base("refs/heads/$branch", "refs/remotes/origin/$branch") eq $HEAD) {
+        # Remote branch matches HEAD and local branch can be fast-forwarded.
+        git "merge", "refs/remotes/origin/$branch" or die "$arg0: could not merge origin/$branch";
+        return;
+      }
+    } elsif ($branch) {
+      # Remote branch matches head and local branch does not exist; create it.
+      git "checkout", "-b", $branch, "refs/remotes/origin/$branch" or die;
+      return;
+    }
+  }
+
+  # Choose any other local or remote branch that points to HEAD
+  ($branch) = map {/([^\/]+)$/} grep {m(^refs/(heads|remotes/origin)/) && $refs{$_} eq $HEAD} keys %refs;
+  switch_to_branch($branch) if $branch;
+}
+
+# Execute the supplied code for each submodule. The list of submodules are the same format as returned by &submodules.
+# To execute code in the top-level ROSE repo use undef (or an empty @modules).  The $code can be either a CODE reference,
+# a shell string, or an array of shell strings passed to system().  CODE is called with two args: the sha1 and the path;
+# shells are invoked with $sha1 and $path environment variables and die if they fail. All code is run with its CWD at the
+# top of the module.
+sub execute {
+  my($code,@modules) = @_;
+  push @modules, undef unless @modules;
+  for my $module (@modules) {
+    my($path,$sha1) = $module ? @$module : (".","HEAD");
+    print "==== In ROSE $path ====\n";
+    chdir(top_of_rose . "/$path") or die "$arg0: cannot chdir: $!";
+    &{$code}($path,$sha1);
+  }
+}
+
+# Saves the commit message in a temporary file and returns its name.
+sub save_commit_message {
+  my($commit) = @_;
+  my($tmp,$tmpname) = tempfile();
+  open GIT, "-|", "git cat-file -p $commit" or die;
+  1 while <GIT> =~ /\S/;
+  print $tmp join "", <GIT>;
+  close GIT;
+  close $tmp;
+  return $tmpname;
+}
+
+# Returns true if a commit would have an effect. First arg is true for "commit -a", false otherwise.
+# If the only change is in a submodule then "git diff" won't report any changes, but "git status" will.
+sub commit_has_effect {
+  my($allflag) = @_;
+  my $cmd = "git diff --quiet" . ($allflag ? "" : " --cached");
+  `$cmd`; return 1 if $?;
+  `git status`; return !$?;
+}
+
+###############################################################################################################################
+#                                  Functions implementing Git subcommands
+###############################################################################################################################
+
+# If we're creating a new branch then also create a new branch in the submodules.  Otherwise just have Git run
+# the specified command at the top of the ROSE repo and then in each submodule.
+sub do_branch {
+  my @args = @_;
+  execute sub {git "branch", @args or die};
+
+  my @switches;
+  push @switches, shift while $_[0]=~/^-/;
+  if (grep {/^(-[ravMmDd]+|--color|--no-color|--abbrev.*|--no-abbrev|--(no-)?merged|--contains)$/} @switches ) {
+    execute sub {git "branch", @args or die}, submodules;
+  } elsif (@_) {
+    my($newbranch,$branchhead) = ($_[0], $_[1]||"HEAD");
+    execute sub {
+      my($path) = @_;
+      my($rev) = git1 {cd=>".."}, "rev-parse $branchhead:$path" or die;
+      git "branch $newbranch $rev" or die;
+    }, submodules;
+  } else {
+    execute sub {git "branch", @args or die}, submodules;
+  }
+}
+
+# A checkout with the "-b" switch also create similar branches in the submodules.  Regardless of presence of "-b",
+# we also run "git submodule update". Otherwise just run the git command in the top of the ROSE repo.
+sub do_checkout {
+  my(@args) = @_; # for closures
+  my($create) = (join " ", @args) =~ /-b\s+(\S+)/;  # argument after "-b" switch, in which case $_[-1] is the branch head
+  execute sub {git "checkout", @args or die};
+  execute sub {
+    my($path) = @_;
+    my($rev) = git1 {cd=>".."}, "rev-parse $args[-1]:$path" or die;
+    git "branch $create $rev";
+  }, submodules if $create;
+  execute sub {git "submodule update" or die};
+  my($branch) = $create || $_[-1];
+  execute sub {switch_to_branch $branch}, submodules;
+}
+
+# Run a "clone" command. Arguments are the same as the real Git "clone" command.  This is the only command we
+# support that's run *outside* the git repository. It does the following:
+#    (1) git clone ....
+#    (2) git submodule init
+#    (3) $EDITOR .git/config # give user chance to edit submodule URLs before submodule update
+#    (4) git submodule update
+sub do_clone {
+  die "$arg0: --quiet not allowed" if grep {$_ eq "--quiet"} @_;
+  open GIT, "-|", "git clone @{[join ' ', @_]}" or die "$arg0: git clone failed";
+  my($dirline) = <GIT>;
+  close GIT or die "$arg0: git clone failed";
+  die "$arg0: where's the local repository?!?" unless $dirline =~ /^Initialized empty Git repository in\s+(.*?)\/.git\/?$/;
+  my $gitdir = $1;
+  chdir $gitdir or die "$arg0: cannot find Git repository at $gitdir: $!\n";
+  git "submodule init" or die;
+  print "Press ENTER to edit your config file and check the submodule URLs: "; scalar <STDIN>;
+  system($ENV{EDITOR}||"vi", ".git/config") and die;
+  print "$arg0: updating submodules...\n";
+  git "submodule update" or
+    die "$arg0: submodule update failed.  Fix your .git/config file and run \"git submodule update\" by hand.\n";
+  execute sub {switch_to_branch symbolic_ref}, submodules;
+}
+
+# Commits changes in the main ROSE repo and in the submodules.
+# FIXME: Some of Git's commit switches are not handled here; the "-a" and "-m" switches are the only ones that are.
+sub do_commit {
+  my(%opt,$msgfile);
+  getopts('avm:', \%opt);
+  $opt{a}=1 if exists $opt{a};
+  my $git_commit = sub {
+    my($path,$sha1) = @_;
+    unless (commit_has_effect($opt{a})) {
+      print "Nothing to commit.\n";
+      return;
+    }
+    my @cmd;
+    if ($msgfile) {
+      push @cmd, "-F", $msgfile;
+    } elsif ($opt{m}) {
+      push @cmd, "-m", $opt{m};
+    }
+    push @cmd, "-a" if exists $opt{a};
+    push @cmd, "-v" if exists $opt{v};
+    git "commit", @cmd or die "$arg0: cannot commit in submodule $path\n";
+    $msgfile = save_commit_message("HEAD"); #remember mesg so we don't have to retype it
+  };
+  execute $git_commit, submodules; # commit in submodules
+  execute sub {git "add", map {$_->[0]} submodules or die}; # add submodule paths in top of ROSE
+  execute $git_commit, undef;   # commit in top of ROSE
+  unlink $msgfile;
+}
+
+# Merges some branch into the current branch using the following algorithm:
+#       (1) Merge (but do not commit) in the supermodule, ignoring conflicts for now
+#       (2) Do merges in the submodules
+#       (3) Add new submodule versions to supermodule, probably fixing most conflicts
+#       (4) Commit the merge from step 1, checking for and failing if conflicts remain
+sub do_merge {
+  my($remote) = pop @_;
+  my(@switches) = @_;
+  execute sub { git "merge", "--no-commit", @switches, $remote } unless -f "@{[top_of_rose]}/.git/MERGE_HEAD";
+  execute sub {
+    my($path) = @_;
+    my($rev) = git1 {cd=>".."}, "rev-parse $remote:$path" or die;
+    git "merge $rev" or
+      die "Fix conflicts and commit in submodule $path, then run $arg0 merge command again.\n";
+  }, submodules;
+  execute sub {git "add", map {$_->[0]} submodules or die}; # add submodules, probably fixing conflicts
+  if (commit_has_effect) {
+    execute sub {git "commit -F .git/MERGE_MSG" or die} or
+      die "Fix conflicts, add to cache, and rerun $arg0 merge command (or commit manually).\n";
+  }
+}
+
+# Executes a command in every submodule and then the top ROSE repo regardless of whether any command fails. Exits
+# nonzero if any command exited with nonzero status.
+sub postorder {
+  my @args = @_; # for closures
+  my $exit;
+  for my $sm (submodules, undef) {
+    eval { execute sub {git @args}, $sm };
+    $exit ||= $@;
+  }
+  exit 1 if $exit;
+}
+
+###############################################################################################################################
+# MAIN PROGRAM
+###############################################################################################################################
+
+my %cmds = (branch      => \&do_branch,
+            checkout    => \&do_checkout,
+            clone       => \&do_clone,
+            commit      => \&do_commit,
+            help        => sub {execute ["git", "help", @_]}, # no need to execute in submodules
+            merge       => \&do_merge,
+           );
+
+my $cmd = shift @ARGV;
+usage if $cmd =~ /^-/ || !$cmd;
+$cmds{$cmd} ? &{$cmds{$cmd}}(@ARGV) : postorder $cmd, @ARGV;

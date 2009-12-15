@@ -1,0 +1,66 @@
+This is an internal workspace for the development of ROSE
+projects as part of initial development.  this work
+is not yet distributed in ROSE formally.
+
+Work is separated across a few directories:
+   developersScratchSpace
+       These are initial projects not sufficiently mature to 
+       be put into the internal projects directory.
+
+   projects
+       These are mature enough to be internal project but not
+       yet far enough along to be released in ROSE or which we
+       don't wish to release in ROSE publicly.
+
+   tests
+       These are represent internal tests that are not yet
+       moved into the ROSE/tests direcotyr for external
+       visability.  These test may be new and not well
+       enough tested, or a part of evolving work to pass
+       the tests and so not yet a formal part of the tests
+       in ROSE.  All test in this directory are intended 
+       for eventual migration to ROSE.  This directory 
+       could therefore form a higher level of criteria for
+       testing by Hudson as part of a release.
+
+
+Information about files:
+   build
+       This is a copy of the ROSE build script modified slightly to
+       reference the ROSE/config and ROSE/acmacro directories.
+       Later this file might be used as is an optionally take
+       the directory location of the config and acmaros directories
+       (as a command line option).
+
+
+   configure.ac
+       This is as simple of a autoconf/automake support example
+       as possible.  This work should the use of ROSE to define
+       projects outside of ROSE.
+
+Directories:
+   m4 
+       This directory has m4 files used by autoconf to 
+       specialize the configuration.  There are only a few 
+       relevant macros used and fewer still that are not
+       already in the ROSE distribution, so the few required
+       could be copied directly into ROSE/config so to
+       simplify the support required to define projects
+       external to ROSE.
+
+
+Notes about the autoconf build:
+   1) The reorganization of the macro calls in configure.ac and ROSE/configure.in
+permit a much simpler configure.ac file, but there are a number of things that
+are tested for the workspace which don't make since and can be avoided:
+     a. The setup on the include-staging directory (backend compiler specific 
+        include files).  This has been eliminated by building two macros and
+        calling the setup of the backend compiler specific include files only 
+        in ROSE/configure.in (and not in the workspace/configure.ac).
+     b. The generation of the compiler backend names.
+
+Using make install to update ROSE can likely be spead up by avoiding
+the relink that libtool does.  More information is available at:
+   http://sourceware.org/autobook/autobook/autobook_85.html
+
+

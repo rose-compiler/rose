@@ -693,6 +693,8 @@ AssemblerX86::to_str(X86InstructionKind kind)
         case x86_xsetbv:          return "xsetbv";          break;
         default: abort(); //should not happen since this is machine generated!
     }
+	// tps (12/7/2009) : Cannot get here. Returning control path to avoid warning in MSCV
+	return "Should never see this text.";
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                       D O   N O T   E D I T                                                      //

@@ -3,6 +3,10 @@
 #ifndef ROSE_H
 #define ROSE_H
 
+#ifdef _MSC_VER
+#pragma message("Compiling rose.h - this should happen just once (within midend project.). \n") 
+#endif
+
 // DQ (4/21/2009): Andreas needs to add a comment about what this is for...
 #define BOOST_WAVE_PREPROCESS_PRAGMA_BODY 1
 

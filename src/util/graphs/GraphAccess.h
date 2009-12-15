@@ -16,7 +16,9 @@ class GraphAccess {
        case EdgeIn: return EdgeOut;
        case BiEdge: return BiEdge;
       }
-      assert(false);
+		// tps (12/09/2009) : Removed warning : not all control paths return a value
+	  assert(false);
+	  return EdgeIn;
     }
 };
 
