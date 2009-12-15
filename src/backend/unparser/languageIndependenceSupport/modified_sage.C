@@ -706,6 +706,7 @@ int GetPrecedence(int variant)
      // Liao, 7/15/2009, UPC nodes     
           case V_SgUpcThreads:       return 0;
           case V_SgUpcMythread:       return 0;
+          case V_SgNullExpression:    return 0;
 #if 0
        // Template
           case V_:              return 0;
