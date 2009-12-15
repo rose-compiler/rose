@@ -20,8 +20,8 @@
 #------------------------------------------------------
 
 # the backup one is for testing only
-#REMOTE_SVN_REPOS=file:////home/liao6/backup/SCIDAC.MIRROR
-REMOTE_SVN_REPOS=https://outreach.scidac.gov/svn/rose
+REMOTE_SVN_REPOS=file:////home/liao6/backup/SCIDAC.MIRROR
+#REMOTE_SVN_REPOS=https://outreach.scidac.gov/svn/rose
 
 if [ $# -lt 2 ]
 then

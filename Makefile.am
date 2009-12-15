@@ -160,6 +160,12 @@ rename_distribution:
 # We reset distdir as shown on
 # http://jcalcote.wordpress.com/2008/02/23/autoconf-macros-exposed-at3/ to add the SVN
 # revision number
+# The final distribution package should be
+# rose-0.9.5a-8286.tar.gz
+#
+# Liao 12/14/2009
+# We don't use subversion anymore
+# We convert the number of git commits to a pseudo revision number instead
 distdir = $(PACKAGE)-$(VERSION)$(DOT_SVNREV)
 
 # Automake hook-ish rule to be run after dist rule (but hook runs before gzip so we can't use hook)

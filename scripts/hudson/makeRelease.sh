@@ -1,6 +1,7 @@
 #!/bin/bash
 # Liao 12/8/2009
-# Initial script to make external releases
+# Initial script to make external release packages
+# it assume 
 # Part of the work will be phased out once the external git repository is ready.
 
 # set up 32-bit environment
