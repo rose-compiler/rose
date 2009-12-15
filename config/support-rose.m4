@@ -350,11 +350,25 @@ AC_CHECK_TOOL(ROSE_OBJDUMP_PATH, [objdump], [no])
 AM_CONDITIONAL(ROSE_USE_OBJDUMP, [test "$ROSE_OBJDUMP_PATH" != "no"])
 AM_CONDITIONAL(ROSE_USE_BINARYCONTEXTLOOKUP, [test "$with_xml" != "no" -a "$ROSE_OBJDUMP_PATH" != "no"])
 
+# Check for availablity of wget (used for downloading the EDG binaries used in ROSE).
+AC_CHECK_TOOL(ROSE_WGET_PATH, [wget], [no])
+AM_CONDITIONAL(ROSE_USE_WGET, [test "$ROSE_WGET_PATH" != "no"])
+if test "$ROSE_WGET_PATH" = "no"; then
+   echo "ROSE does not require wget, but we are testing to see if it could be an";
+   echo "alternative to curl to download EDG binaries automatically.";
+   echo "***** wget was NOT found *****";
+else
+ # Not clear if we really should have ROSE configure automatically do something like this.
+   echo "ROSE might use wget to automatically download EDG binaries as required during the build (as an alternative to curl) ...";
+   echo "***** wget WAS found *****";
+fi
+
 # Check for availablity of curl (used for downloading the EDG binaries used in ROSE).
 AC_CHECK_TOOL(ROSE_CURL_PATH, [curl], [no])
 AM_CONDITIONAL(ROSE_USE_CURL, [test "$ROSE_CURL_PATH" != "no"])
 if test "$ROSE_CURL_PATH" = "no"; then
    echo "ROSE now requires curl to download EDG binaries automatically.";
+
    exit 1;
 else
  # Not clear if we really should have ROSE configure automatically do something like this.
