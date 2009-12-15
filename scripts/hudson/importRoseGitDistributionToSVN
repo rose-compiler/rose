@@ -20,8 +20,8 @@
 #------------------------------------------------------
 
 # the backup one is for testing only
-REMOTE_SVN_REPOS=file:////home/liao6/backup/SCIDAC.MIRROR
-#REMOTE_SVN_REPOS=https://outreach.scidac.gov/svn/rose
+#REMOTE_SVN_REPOS=file:////home/liao6/backup/SCIDAC.MIRROR
+REMOTE_SVN_REPOS=https://outreach.scidac.gov/svn/rose
 
 if [ $# -lt 2 ]
 then
@@ -69,7 +69,8 @@ cd ${ROSE_BUILD_PATH}
 # we now have a different name scheme
 # set max depth to avoid finding 
 # src/frontend/CxxFrontend/roseBinaryEDG-x86_64-pc-linux-gnu-GNU-4.2-14fb2b019a16bb36f47609dad91a1807.tar.gz
-ROSE_DISTRIBUTION=$(find . -maxdepth 1  -name  rose\*.tar.gz)
+# find the form of rose-version-rev.tar.gz
+ROSE_DISTRIBUTION=$(find . -maxdepth 1  -name  rose-\*-\*.tar.gz)
 
 if [ $? -ne 0 ]; then
    echo "Fatal error: cannot find the distribution package!"
