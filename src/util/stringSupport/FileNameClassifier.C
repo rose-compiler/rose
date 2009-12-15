@@ -287,7 +287,7 @@ namespace StringUtility
         string sysname;
      // We should have a proper implementation instead of defaulting to Windows.
 		printf ("Error: uname() not supported in MSVS (not implemented but will default to WINDOWS) \n");
-		ROSE_ASSERT(false);
+		assert(false);
 #else
         struct utsname val;
 
@@ -309,7 +309,10 @@ namespace StringUtility
     homeDir(string& dir)
     {
         const char* home = getenv("HOME");
-        ROSE_ASSERT(home);
+#ifdef _MSC_VER
+#define __builtin_constant_p(exp) (0)
+#endif
+		ROSE_ASSERT(home);
         dir = home;
     }
 

@@ -61,8 +61,7 @@ if ROSE_USE_MYSQL_DATABASE
 
  # MySQL support is setup optionally at compile time (see configure --help, for details)
    MYSQL_DATABASE_LIBS    = $(MYSQL_LDFLAGS)
-   MYSQL_DATABASE_INCLUDE = $(MYSQL_INCLUDE)
-   MYSQL_DATABASE_CLFAGS  = $(MYSQL_CFLAGS)
+   MYSQL_DATABASE_INCLUDE = $(MYSQL_CFLAGS)
 endif
 
 # DQ (12/22/2008): Specification of Boost path for use with "-isystem" option (may be GNU
@@ -224,8 +223,8 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/frontend/OpenFortranParser_SAGE_Connection \
      -I$(top_srcdir)/src/frontend/PHPFrontend \
      -I$(top_srcdir)/src/frontend/BinaryDisassembly \
-     -I$(top_srcdir)/src/frontend/BinaryLoader \
      -I$(top_srcdir)/src/frontend/BinaryFormats \
+     -I$(top_srcdir)/src/frontend/BinaryLoader \
      -I$(top_srcdir)/src/frontend/Disassemblers \
      -I$(top_srcdir)/src/backend/unparser \
      -I$(top_srcdir)/src/backend/unparser/formatSupport \
@@ -241,8 +240,8 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/util/commandlineProcessing \
      -I$(top_srcdir)/src/midend/abstractHandle \
      -I$(top_srcdir)/src/midend/astDiagnostics \
-     -I$(top_srcdir)/src/midend/astInlining \
-     -I$(top_srcdir)/src/midend/astOutlining  \
+     -I$(top_srcdir)/src/midend/programTransformation/astInlining \
+     -I$(top_srcdir)/src/midend/programTransformation/astOutlining  \
      -I$(top_srcdir)/src/midend/astProcessing \
      -I$(top_srcdir)/src/midend/astQuery \
      -I$(top_srcdir)/src/midend/astRewriteMechanism \
@@ -254,13 +253,13 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/midend/binaryAnalyses/dataflowanalyses \
      -I$(top_srcdir)/src/midend/binaryAnalyses/graph \
      -I$(top_srcdir)/src/midend/binaryAnalyses/instructionSemantics \
-     -I$(top_srcdir)/src/midend/loopProcessing/computation \
-     -I$(top_srcdir)/src/midend/loopProcessing/depGraph \
-     -I$(top_srcdir)/src/midend/loopProcessing/depInfo \
-     -I$(top_srcdir)/src/midend/loopProcessing/driver \
-     -I$(top_srcdir)/src/midend/loopProcessing/outsideInterface \
-     -I$(top_srcdir)/src/midend/loopProcessing/prepostTransformation \
-     -I$(top_srcdir)/src/midend/ompLowering \
+     -I$(top_srcdir)/src/midend/programTransformation/loopProcessing/computation \
+     -I$(top_srcdir)/src/midend/programTransformation/loopProcessing/depGraph \
+     -I$(top_srcdir)/src/midend/programTransformation/loopProcessing/depInfo \
+     -I$(top_srcdir)/src/midend/programTransformation/loopProcessing/driver \
+     -I$(top_srcdir)/src/midend/programTransformation/loopProcessing/outsideInterface \
+     -I$(top_srcdir)/src/midend/programTransformation/loopProcessing/prepostTransformation \
+     -I$(top_srcdir)/src/midend/programTransformation/ompLowering \
      -I$(top_srcdir)/src/midend/programAnalysis \
      -I$(top_srcdir)/src/midend/programAnalysis/CFG \
      -I$(top_srcdir)/src/midend/programAnalysis/CallGraphAnalysis \
