@@ -110,8 +110,9 @@ if test \! \( $ROSE_TEST_GCC_VERSION = 4.3.2 -o $ROSE_TEST_GCC_VERSION = 4.4.1 \
    echo "Done with make distcheck step"
 fi
 
+# DQ (12/16/2009): This appears to work everywhere byt on the 4.3.2 systems, verify this.
 # Finally run the "make docs" test (on just the 4.2.4 version of gcc).
-# if test \( $ROSE_TEST_GCC_VERSION = 4.2.4 \) ; then
+if test \! \( $ROSE_TEST_GCC_VERSION = 4.3.2 \) ; then
    echo "Starting make docs step (exit normally even if it fails so that we can debug the docs rule)"
  # Exit normally even if it fails so that we can debug the docs rule.
  # make -j8 docs || exit 0
@@ -121,4 +122,4 @@ fi
  # doxygen is what has to run and it does not run in parallel.
    make -j8 docs
    echo "Done with make docs step"
-# fi
+fi
