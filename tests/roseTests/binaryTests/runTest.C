@@ -113,9 +113,9 @@ int main(int argc, char** argv) {
 
   ROSE_ASSERT(callanalysis->nodesVisited()==20 || callanalysis->nodesVisited()==18 ||
 	      callanalysis->nodesVisited()==16 || callanalysis->nodesVisited()==10 || callanalysis->nodesVisited()==13 ||
-              callanalysis->nodesVisited()==14);
+              callanalysis->nodesVisited()==14 || callanalysis->nodesVisited()==21);
   ROSE_ASSERT(callanalysis->edgesVisited()==20 || callanalysis->edgesVisited()==8  || callanalysis->edgesVisited()==13 ||
-              callanalysis->edgesVisited()==14 || callanalysis->edgesVisited()==18);
+              callanalysis->edgesVisited()==14 || callanalysis->edgesVisited()==18 || callanalysis->edgesVisited()==21);
 
 
     //cerr << " creating dataflow graph ... " << endl;
@@ -140,10 +140,10 @@ int main(int argc, char** argv) {
   // These assertions are very sensitive to the heuristics used to find instructions and functions.
   ROSE_ASSERT(dfanalysis->nodesVisited()==218 || dfanalysis->nodesVisited()==211 || dfanalysis->nodesVisited()==200 ||
               dfanalysis->nodesVisited()==209 || dfanalysis->nodesVisited()==210 || dfanalysis->nodesVisited()==240 ||
-              dfanalysis->nodesVisited()==246);
+              dfanalysis->nodesVisited()==246 || dfanalysis->nodesVisited()==247);
   ROSE_ASSERT(dfanalysis->edgesVisited()==233 || dfanalysis->edgesVisited()==252 || dfanalysis->edgesVisited()==240 ||
               dfanalysis->edgesVisited()==253 || dfanalysis->edgesVisited()==251 || dfanalysis->edgesVisited()==281 ||
-              dfanalysis->edgesVisited()==288);
+              dfanalysis->edgesVisited()==288 || dfanalysis->edgesVisited()==289);
   ROSE_ASSERT(dfanalysis->nrOfMemoryWrites()==14 || dfanalysis->nrOfMemoryWrites()==8 || dfanalysis->nrOfMemoryWrites()==12 ||
               dfanalysis->nrOfMemoryWrites()==18);
   ROSE_ASSERT(dfanalysis->nrOfRegisterWrites()==23 ||dfanalysis->nrOfRegisterWrites()==56 ||

@@ -34,10 +34,17 @@ struct X86InstructionSemantics {
 #       define Word(Len) WordType<(Len)>
 #   endif
 
+    struct Exception {
+        Exception(const std::string &mesg, SgAsmInstruction *insn): mesg(mesg), insn(insn) {}
+        std::string mesg;
+        SgAsmInstruction *insn;
+    };
+    
     Policy& policy;
+    SgAsmInstruction *current_instruction;
 
     X86InstructionSemantics(Policy& policy)
-        : policy(policy)
+        : policy(policy), current_instruction(NULL)
         {}
     virtual ~X86InstructionSemantics() {}
 
@@ -85,8 +92,10 @@ struct X86InstructionSemantics {
     template<size_t N>
     void stos_semantics(SgAsmx86Instruction *insn) {
         const SgAsmExpressionPtrList& operands = insn->get_operandList()->get_operands();
-        ROSE_ASSERT(operands.size() == 0);
-        ROSE_ASSERT(insn->get_addressSize() == x86_insnsize_32);
+        if (operands.size()!=0)
+            throw Exception("instruction must have no operands", insn);
+        if (insn->get_addressSize()!=x86_insnsize_32)
+            throw Exception("address size must be 32 bits", insn);
 
         /* Fill memory pointed to by ES:[DI] with contents of AX. */
         policy.writeMemory(x86_segreg_es,
@@ -179,12 +188,11 @@ struct X86InstructionSemantics {
                         switch (rre->get_position_in_register()) {
                             case x86_regpos_low_byte: return extract<0, 8>(rawValue);
                             case x86_regpos_high_byte: return extract<8, 16>(rawValue);
-                            default: ROSE_ASSERT(!"Bad position in register");
+                            default: throw Exception("Bad position in register", current_instruction);
                         }
                     }
                     default: {
-                        fprintf(stderr, "Bad register class %s\n", regclassToString(rre->get_register_class()));
-                        abort();
+                        throw Exception("Bad register class", current_instruction);
                     }
                 }
                 break;
@@ -194,7 +202,8 @@ struct X86InstructionSemantics {
             }
             case V_SgAsmBinaryMultiply: {
                 SgAsmByteValueExpression* rhs = isSgAsmByteValueExpression(isSgAsmBinaryMultiply(e)->get_rhs());
-                ROSE_ASSERT(rhs);
+                if (!rhs)
+                    throw Exception("byte value expression expected", current_instruction);
                 SgAsmExpression* lhs = isSgAsmBinaryMultiply(e)->get_lhs();
                 return extract<0, 8>(policy.unsignedMultiply(read8(lhs), read8(rhs)));
             }
@@ -221,7 +230,8 @@ struct X86InstructionSemantics {
         switch (e->variantT()) {
             case V_SgAsmx86RegisterReferenceExpression: {
                 SgAsmx86RegisterReferenceExpression* rre = isSgAsmx86RegisterReferenceExpression(e);
-                ROSE_ASSERT(rre->get_position_in_register() == x86_regpos_word);
+                if (rre->get_position_in_register() != x86_regpos_word)
+                    throw Exception("size not implemented", current_instruction);
                 switch (rre->get_register_class()) {
                     case x86_regclass_gpr: {
                         X86GeneralPurposeRegister reg = (X86GeneralPurposeRegister)(rre->get_register_number());
@@ -234,8 +244,7 @@ struct X86InstructionSemantics {
                         return value;
                     }
                     default: {
-                        fprintf(stderr, "Bad register class %s\n", regclassToString(rre->get_register_class()));
-                        abort();
+                        throw Exception("bad register class", current_instruction);
                     }
                 }
                 break;
@@ -245,7 +254,8 @@ struct X86InstructionSemantics {
             }
             case V_SgAsmBinaryMultiply: {
                 SgAsmByteValueExpression* rhs = isSgAsmByteValueExpression(isSgAsmBinaryMultiply(e)->get_rhs());
-                ROSE_ASSERT(rhs);
+                if (!rhs)
+                    throw Exception("byte value expression expected", current_instruction);
                 SgAsmExpression* lhs = isSgAsmBinaryMultiply(e)->get_lhs();
                 return extract<0, 16>(policy.unsignedMultiply(read16(lhs), read8(rhs)));
             }
@@ -283,19 +293,19 @@ struct X86InstructionSemantics {
                             case x86_regpos_word:
                                 return policy.concat(extract<0, 16>(rawValue), number<16>(0));
                             default:
-                                ROSE_ASSERT(!"bad position in register");
+                                throw Exception("bad position in register", current_instruction);
                         }
                     }
                     case x86_regclass_segment: {
-                        ROSE_ASSERT(rre->get_position_in_register() == x86_regpos_dword ||
-                                    rre->get_position_in_register() == x86_regpos_all);
+                        if (rre->get_position_in_register() != x86_regpos_dword &&
+                            rre->get_position_in_register() != x86_regpos_all)
+                            throw Exception("size not implemented", current_instruction);
                         X86SegmentRegister sr = (X86SegmentRegister)(rre->get_register_number());
                         Word(16) value = policy.readSegreg(sr);
                         return policy.concat(value, number<16>(0));
                     }
                     default: {
-                        fprintf(stderr, "Bad register class %s\n", regclassToString(rre->get_register_class()));
-                        abort();
+                        throw Exception("bad register class", current_instruction);
                     }
                 }
                 break;
@@ -305,7 +315,8 @@ struct X86InstructionSemantics {
             }
             case V_SgAsmBinaryMultiply: {
                 SgAsmByteValueExpression* rhs = isSgAsmByteValueExpression(isSgAsmBinaryMultiply(e)->get_rhs());
-                ROSE_ASSERT(rhs);
+                if (!rhs)
+                    throw("byte value expression expected", current_instruction);
                 SgAsmExpression* lhs = isSgAsmBinaryMultiply(e)->get_lhs();
                 return extract<0, 32>(policy.unsignedMultiply(read32(lhs), read8(rhs)));
             }
@@ -357,13 +368,13 @@ struct X86InstructionSemantics {
                         switch (rre->get_position_in_register()) {
                             case x86_regpos_low_byte: updateGPRLowByte(reg, value); break;
                             case x86_regpos_high_byte: updateGPRHighByte(reg, value); break;
-                            default: ROSE_ASSERT(!"Bad position in register");
+                            default: throw Exception("size not implemented", current_instruction);
+
                         }
                         break;
                     }
                     default: {
-                        fprintf(stderr, "Bad register class %s\n", regclassToString(rre->get_register_class()));
-                        abort();
+                        throw Exception("bad register class", current_instruction);
                     }
                 }
                 break;
@@ -390,7 +401,8 @@ struct X86InstructionSemantics {
                         X86GeneralPurposeRegister reg = (X86GeneralPurposeRegister)(rre->get_register_number());
                         switch (rre->get_position_in_register()) {
                             case x86_regpos_word: updateGPRLowWord(reg, value); break;
-                            default: ROSE_ASSERT(!"Bad position in register");
+                            default: throw Exception("size not implemented", current_instruction);
+
                         }
                         break;
                     }
@@ -400,8 +412,7 @@ struct X86InstructionSemantics {
                         break;
                     }
                     default: {
-                        fprintf(stderr, "Bad register class %s\n", regclassToString(rre->get_register_class()));
-                        abort();
+                        throw Exception("bad register class", current_instruction);
                     }
                 }
                 break;
@@ -431,7 +442,8 @@ struct X86InstructionSemantics {
                             case x86_regpos_all: {
                                 break;
                             }
-                            default: ROSE_ASSERT(!"Bad position in register");
+                            default: throw Exception("size not implemented", current_instruction);
+
                         }
                         policy.writeGPR(reg, value);
                         break;
@@ -442,8 +454,7 @@ struct X86InstructionSemantics {
                         break;
                     }
                     default: {
-                        fprintf(stderr, "Bad register class %s\n", regclassToString(rre->get_register_class()));
-                        abort();
+                        throw Exception("bad register class", current_instruction);
                     }
                 }
                 break;
@@ -543,18 +554,20 @@ struct X86InstructionSemantics {
         switch (kind) {
 
             case x86_mov: {
-                ROSE_ASSERT(operands.size() == 2);
+                if (operands.size()!=2)
+                    throw Exception("instruction must have two operands", insn);
                 switch (numBytesInAsmType(operands[0]->get_type())) {
                     case 1: write8(operands[0], read8(operands[1])); break;
                     case 2: write16(operands[0], read16(operands[1])); break;
                     case 4: write32(operands[0], read32(operands[1])); break;
-                    default: ROSE_ASSERT("Bad size"); break;
+                    default: throw Exception("size not implemented", insn); break;
                 }
                 break;
             }
 
             case x86_xchg: {
-                ROSE_ASSERT(operands.size() == 2);
+                if (operands.size()!=2)
+                    throw Exception("instruction must have two operands", insn);
                 switch (numBytesInAsmType(operands[0]->get_type())) {
                     case 1: {
                         Word(8) temp = read8(operands[1]);
@@ -575,14 +588,15 @@ struct X86InstructionSemantics {
                         break;
                     }
                     default:
-                        ROSE_ASSERT("Bad size");
+                        throw Exception("size not implemented", insn);
                         break;
                 }
                 break;
             }
 
             case x86_movzx: {
-                ROSE_ASSERT(operands.size() == 2);
+                if (operands.size()!=2)
+                    throw Exception("instruction must have two operands", insn);
                 switch (numBytesInAsmType(operands[0]->get_type())) {
                     case 2: {
                         write16(operands[0], policy.concat(read8(operands[1]), number<8>(0)));
@@ -592,19 +606,21 @@ struct X86InstructionSemantics {
                         switch (numBytesInAsmType(operands[1]->get_type())) {
                             case 1: write32(operands[0], policy.concat(read8(operands[1]), number<24>(0))); break;
                             case 2: write32(operands[0], policy.concat(read16(operands[1]), number<16>(0))); break;
-                            default: ROSE_ASSERT("Bad size");
+                            default: throw Exception("size not implemented", insn);
+
                         }
                         break;
                     }
                     default:
-                        ROSE_ASSERT("Bad size");
+                        throw Exception("size not implemented", insn);
                         break;
                 }
                 break;
             }
 
             case x86_movsx: {
-                ROSE_ASSERT(operands.size() == 2);
+                if (operands.size()!=2)
+                    throw Exception("instruction must have two operands", insn);
                 switch (numBytesInAsmType(operands[0]->get_type())) {
                     case 2: {
                         Word(8) op1 = read8(operands[1]);
@@ -627,49 +643,55 @@ struct X86InstructionSemantics {
                                 break;
                             }
                             default:
-                                ROSE_ASSERT("Bad size");
+                                throw Exception("size not implemented", insn);
                         }
                         break;
                     }
                     default:
-                        ROSE_ASSERT("Bad size");
+                        throw Exception("size not implemented", insn);
                         break;
                 }
                 break;
             }
 
             case x86_cbw: {
-                ROSE_ASSERT(operands.size() == 0);
+                if (operands.size()!=0)
+                    throw Exception("instruction must have no operands", insn);
                 updateGPRLowWord(x86_gpr_ax, signExtend<8, 16>(extract<0, 8>(policy.readGPR(x86_gpr_ax))));
                 break;
             }
 
             case x86_cwde: {
-                ROSE_ASSERT(operands.size() == 0);
+                if (operands.size()!=0)
+                    throw Exception("instruction must have no operands", insn);
                 policy.writeGPR(x86_gpr_ax, signExtend<16, 32>(extract<0, 16>(policy.readGPR(x86_gpr_ax))));
                 break;
             }
 
             case x86_cwd: {
-                ROSE_ASSERT(operands.size() == 0);
+                if (operands.size()!=0)
+                    throw Exception("instruction must have no operands", insn);
                 updateGPRLowWord(x86_gpr_dx, extract<16, 32>(signExtend<16, 32>(extract<0, 16>(policy.readGPR(x86_gpr_ax)))));
                 break;
             }
 
             case x86_cdq: {
-                ROSE_ASSERT(operands.size() == 0);
+                if (operands.size()!=0)
+                    throw Exception("instruction must have no operands", insn);
                 policy.writeGPR(x86_gpr_dx, extract<32, 64>(signExtend<32, 64>(policy.readGPR(x86_gpr_ax))));
                 break;
             }
 
             case x86_lea: {
-                ROSE_ASSERT(operands.size() == 2);
+                if (operands.size()!=2)
+                    throw Exception("instruction must have two operands", insn);
                 write32(operands[0], readEffectiveAddress(operands[1]));
                 break;
             }
 
             case x86_and: {
-                ROSE_ASSERT(operands.size() == 2);
+                if (operands.size()!=2)
+                    throw Exception("instruction must have two operands", insn);
                 switch (numBytesInAsmType(operands[0]->get_type())) {
                     case 1: {
                         Word(8) result = policy.and_(read8(operands[0]), read8(operands[1]));
@@ -690,7 +712,7 @@ struct X86InstructionSemantics {
                         break;
                     }
                     default:
-                        ROSE_ASSERT(!"Bad size");
+                        throw Exception("size not implemented", insn);
                         break;
                 }
                 policy.writeFlag(x86_flag_of, policy.false_());
@@ -700,7 +722,8 @@ struct X86InstructionSemantics {
             }
 
             case x86_or: {
-                ROSE_ASSERT(operands.size() == 2);
+                if (operands.size()!=2)
+                    throw Exception("instruction must have two operands", insn);
                 switch (numBytesInAsmType(operands[0]->get_type())) {
                     case 1: {
                         Word(8) result = policy.or_(read8(operands[0]), read8(operands[1]));
@@ -721,7 +744,7 @@ struct X86InstructionSemantics {
                         break;
                     }
                     default:
-                        ROSE_ASSERT(!"Bad size");
+                        throw Exception("size not implemented", insn);
                         break;
                 }
                 policy.writeFlag(x86_flag_of, policy.false_());
@@ -731,7 +754,8 @@ struct X86InstructionSemantics {
             }
 
             case x86_test: {
-                ROSE_ASSERT(operands.size() == 2);
+                if (operands.size()!=2)
+                    throw Exception("instruction must have two operands", insn);
                 switch (numBytesInAsmType(operands[0]->get_type())) {
                     case 1: {
                         Word(8) result = policy.and_(read8(operands[0]), read8(operands[1]));
@@ -749,7 +773,7 @@ struct X86InstructionSemantics {
                         break;
                     }
                     default:
-                        ROSE_ASSERT(!"Bad size");
+                        throw Exception("size not implemented", insn);
                         break;
                 }
                 policy.writeFlag(x86_flag_of, policy.false_());
@@ -759,7 +783,8 @@ struct X86InstructionSemantics {
             }
 
             case x86_xor: {
-                ROSE_ASSERT(operands.size() == 2);
+                if (operands.size()!=2)
+                    throw Exception("instruction must have two operands", insn);
                 switch (numBytesInAsmType(operands[0]->get_type())) {
                     case 1: {
                         Word(8) result = policy.xor_(read8(operands[0]), read8(operands[1]));
@@ -780,7 +805,7 @@ struct X86InstructionSemantics {
                         break;
                     }
                     default:
-                        ROSE_ASSERT(!"Bad size");
+                        throw Exception("size not implemented", insn);
                         break;
                 }
                 policy.writeFlag(x86_flag_of, policy.false_());
@@ -790,7 +815,8 @@ struct X86InstructionSemantics {
             }
 
             case x86_not: {
-                ROSE_ASSERT(operands.size() == 1);
+                if (operands.size()!=1)
+                    throw Exception("instruction must have one operand", insn);
                 switch (numBytesInAsmType(operands[0]->get_type())) {
                     case 1: {
                         Word(8) result = policy.invert(read8(operands[0]));
@@ -808,14 +834,15 @@ struct X86InstructionSemantics {
                         break;
                     }
                     default:
-                        ROSE_ASSERT(!"Bad size");
+                        throw Exception("size not implemented", insn);
                         break;
                 }
                 break;
             }
 
             case x86_add: {
-                ROSE_ASSERT(operands.size() == 2);
+                if (operands.size()!=2)
+                    throw Exception("instruction must have two operands", insn);
                 switch (numBytesInAsmType(operands[0]->get_type())) {
                     case 1: {
                         Word(8) result = doAddOperation<8>(read8(operands[0]), read8(operands[1]), false, policy.false_());
@@ -833,14 +860,15 @@ struct X86InstructionSemantics {
                         break;
                     }
                     default:
-                        ROSE_ASSERT(!"Bad size");
+                        throw Exception("size not implemented", insn);
                         break;
                 }
                 break;
             }
 
             case x86_adc: {
-                ROSE_ASSERT(operands.size() == 2);
+                if (operands.size()!=2)
+                    throw Exception("instruction must have two operands", insn);
                 switch (numBytesInAsmType(operands[0]->get_type())) {
                     case 1: {
                         Word(8) result = doAddOperation<8>(read8(operands[0]), read8(operands[1]), false,
@@ -861,14 +889,15 @@ struct X86InstructionSemantics {
                         break;
                     }
                     default:
-                        ROSE_ASSERT(!"Bad size");
+                        throw Exception("size not implemented", insn);
                         break;
                 }
                 break;
             }
 
             case x86_sub: {
-                ROSE_ASSERT(operands.size() == 2);
+                if (operands.size()!=2)
+                    throw Exception("instruction must have two operands", insn);
                 switch (numBytesInAsmType(operands[0]->get_type())) {
                     case 1: {
                         Word(8) result = doAddOperation<8>(read8(operands[0]), policy.invert(read8(operands[1])), true,
@@ -889,14 +918,15 @@ struct X86InstructionSemantics {
                         break;
                     }
                     default:
-                        ROSE_ASSERT(!"Bad size");
+                        throw Exception("size not implemented", insn);
                         break;
                 }
                 break;
             }
 
             case x86_sbb: {
-                ROSE_ASSERT(operands.size() == 2);
+                if (operands.size()!=2)
+                    throw Exception("instruction must have two operands", insn);
                 switch (numBytesInAsmType(operands[0]->get_type())) {
                     case 1: {
                         Word(8) result = doAddOperation<8>(read8(operands[0]), policy.invert(read8(operands[1])), true,
@@ -917,14 +947,15 @@ struct X86InstructionSemantics {
                         break;
                     }
                     default:
-                        ROSE_ASSERT(!"Bad size");
+                        throw Exception("size not implemented", insn);
                         break;
                 }
                 break;
             }
 
             case x86_cmp: {
-                ROSE_ASSERT(operands.size() == 2);
+                if (operands.size()!=2)
+                    throw Exception("instruction must have two operands", insn);
                 switch (numBytesInAsmType(operands[0]->get_type())) {
                     case 1: {
                         doAddOperation<8>(read8(operands[0]), policy.invert(read8(operands[1])), true, policy.false_());
@@ -939,14 +970,15 @@ struct X86InstructionSemantics {
                         break;
                     }
                     default:
-                        ROSE_ASSERT(!"Bad size");
+                        throw Exception("size not implemented", insn);
                         break;
                 }
                 break;
             }
 
             case x86_neg: {
-                ROSE_ASSERT(operands.size() == 1);
+                if (operands.size()!=1)
+                    throw Exception("instruction must have one operand", insn);
                 switch (numBytesInAsmType(operands[0]->get_type())) {
                     case 1: {
                         Word(8) result = doAddOperation<8>(number<8>(0), policy.invert(read8(operands[0])), true,
@@ -967,14 +999,15 @@ struct X86InstructionSemantics {
                         break;
                     }
                     default:
-                        ROSE_ASSERT(!"Bad size");
+                        throw Exception("size not implemented", insn);
                         break;
                 }
                 break;
             }
 
             case x86_inc: {
-                ROSE_ASSERT(operands.size() == 1);
+                if (operands.size()!=1)
+                    throw Exception("instruction must have one operand", insn);
                 switch (numBytesInAsmType(operands[0]->get_type())) {
                     case 1: {
                         Word(8) result = doIncOperation<8>(read8(operands[0]), false, false);
@@ -992,14 +1025,15 @@ struct X86InstructionSemantics {
                         break;
                     }
                     default:
-                        ROSE_ASSERT(!"Bad size");
+                        throw Exception("size not implemented", insn);
                         break;
                 }
                 break;
             }
 
             case x86_dec: {
-                ROSE_ASSERT(operands.size() == 1);
+                if (operands.size()!=1)
+                    throw Exception("instruction must have one operand", insn);
                 switch (numBytesInAsmType(operands[0]->get_type())) {
                     case 1: {
                         Word(8) result = doIncOperation<8>(read8(operands[0]), true, false);
@@ -1017,14 +1051,15 @@ struct X86InstructionSemantics {
                         break;
                     }
                     default:
-                        ROSE_ASSERT(!"Bad size");
+                        throw Exception("size not implemented", insn);
                         break;
                 }
                 break;
             }
 
             case x86_cmpxchg: {
-                ROSE_ASSERT(operands.size() == 2);
+                if (operands.size()!=2)
+                    throw Exception("instruction must have two operands", insn);
                 switch (numBytesInAsmType(operands[0]->get_type())) {
                     case 1: {
                         Word(8) op0 = read8(operands[0]);
@@ -1051,7 +1086,7 @@ struct X86InstructionSemantics {
                         break;
                     }
                     default:
-                        ROSE_ASSERT(!"Bad size");
+                        throw Exception("size not implemented", insn);
                         break;
                 }
                 break;
@@ -1105,7 +1140,7 @@ struct X86InstructionSemantics {
                         break;
                     }
                     default:
-                        ROSE_ASSERT(!"Bad size");
+                        throw Exception("size not implemented", insn);
                 }
                 break;
             }
@@ -1155,7 +1190,7 @@ struct X86InstructionSemantics {
                         break;
                     }
                     default:
-                        ROSE_ASSERT(!"Bad size");
+                        throw Exception("size not implemented", insn);
                 }
                 break;
             }
@@ -1212,7 +1247,7 @@ struct X86InstructionSemantics {
                         break;
                     }
                     default:
-                        ROSE_ASSERT(!"Bad size");
+                        throw Exception("size not implemented", insn);
                 }
                 break;
             }
@@ -1259,7 +1294,7 @@ struct X86InstructionSemantics {
                         break;
                     }
                     default:
-                        ROSE_ASSERT(!"Bad size");
+                        throw Exception("size not implemented", insn);
                 }
                 break;
             }
@@ -1306,7 +1341,7 @@ struct X86InstructionSemantics {
                         break;
                     }
                     default:
-                        ROSE_ASSERT(!"Bad size");
+                        throw Exception("size not implemented", insn);
                 }
                 break;
             }
@@ -1362,7 +1397,7 @@ struct X86InstructionSemantics {
                         break;
                     }
                     default:
-                        ROSE_ASSERT(!"Bad size");
+                        throw Exception("size not implemented", insn);
                 }
                 break;
             }
@@ -1419,7 +1454,7 @@ struct X86InstructionSemantics {
                         break;
                     }
                     default:
-                        ROSE_ASSERT(!"Bad size");
+                        throw Exception("size not implemented", insn);
                 }
                 break;
             }
@@ -1450,7 +1485,7 @@ struct X86InstructionSemantics {
                         break;
                     }
                     default:
-                        ROSE_ASSERT(!"Bad size");
+                        throw Exception("size not implemented", insn);
                 }
                 break;
             }
@@ -1481,13 +1516,14 @@ struct X86InstructionSemantics {
                         break;
                     }
                     default:
-                        ROSE_ASSERT(!"Bad size");
+                        throw Exception("size not implemented", insn);
                 }
                 break;
             }
 
             case x86_bts: {
-                ROSE_ASSERT(operands.size() == 2);
+                if (operands.size()!=2)
+                    throw Exception("instruction must have two operands", insn);
                 /* All flags except CF are undefined */
                 policy.writeFlag(x86_flag_of, policy.undefined_());
                 policy.writeFlag(x86_flag_sf, policy.undefined_());
@@ -1529,7 +1565,7 @@ struct X86InstructionSemantics {
                             break;
                         }
                         default:
-                            ROSE_ASSERT(!"Bad size");
+                            throw Exception("size not implemented", insn);
                     }
                 }
                 break;
@@ -1583,7 +1619,7 @@ struct X86InstructionSemantics {
                         break;
                     }
                     default:
-                        ROSE_ASSERT(!"Bad size");
+                        throw Exception("size not implemented", insn);
                 }
                 policy.writeFlag(x86_flag_sf, policy.undefined_());
                 policy.writeFlag(x86_flag_zf, policy.undefined_());
@@ -1627,7 +1663,7 @@ struct X86InstructionSemantics {
                         break;
                     }
                     default:
-                        ROSE_ASSERT(!"Bad size");
+                        throw Exception("size not implemented", insn);
                 }
                 policy.writeFlag(x86_flag_sf, policy.undefined_());
                 policy.writeFlag(x86_flag_zf, policy.undefined_());
@@ -1672,7 +1708,7 @@ struct X86InstructionSemantics {
                         break;
                     }
                     default:
-                        ROSE_ASSERT(!"Bad size");
+                        throw Exception("size not implemented", insn);
                 }
                 policy.writeFlag(x86_flag_sf, policy.undefined_());
                 policy.writeFlag(x86_flag_zf, policy.undefined_());
@@ -1719,7 +1755,7 @@ struct X86InstructionSemantics {
                         break;
                     }
                     default:
-                        ROSE_ASSERT(!"Bad size");
+                        throw Exception("size not implemented", insn);
                 }
                 policy.writeFlag(x86_flag_sf, policy.undefined_());
                 policy.writeFlag(x86_flag_zf, policy.undefined_());
@@ -1731,7 +1767,8 @@ struct X86InstructionSemantics {
             }
 
             case x86_aaa: {
-                ROSE_ASSERT(operands.size() == 0);
+                if (operands.size()!=0)
+                    throw Exception("instruction must have no operands", insn);
                 Word(1) incAh = policy.or_(policy.readFlag(x86_flag_af),
                                            greaterOrEqualToTen(extract<0, 4>(policy.readGPR(x86_gpr_ax))));
                 updateGPRLowWord(x86_gpr_ax,
@@ -1750,7 +1787,8 @@ struct X86InstructionSemantics {
             }
 
             case x86_aas: {
-                ROSE_ASSERT(operands.size() == 0);
+                if (operands.size()!=0)
+                    throw Exception("instruction must have no operands", insn);
                 Word(1) decAh = policy.or_(policy.readFlag(x86_flag_af),
                                            greaterOrEqualToTen(extract<0, 4>(policy.readGPR(x86_gpr_ax))));
                 updateGPRLowWord(x86_gpr_ax,
@@ -1769,7 +1807,8 @@ struct X86InstructionSemantics {
             }
 
             case x86_aam: {
-                ROSE_ASSERT(operands.size() == 1);
+                if (operands.size()!=1)
+                    throw Exception("instruction must have one operand", insn);
                 Word(8) al = extract<0, 8>(policy.readGPR(x86_gpr_ax));
                 Word(8) divisor = read8(operands[0]);
                 Word(8) newAh = policy.unsignedDivide(al, divisor);
@@ -1783,7 +1822,8 @@ struct X86InstructionSemantics {
             }
 
             case x86_aad: {
-                ROSE_ASSERT(operands.size() == 1);
+                if (operands.size()!=1)
+                    throw Exception("instruction must have one operand", insn);
                 Word(8) al = extract<0, 8>(policy.readGPR(x86_gpr_ax));
                 Word(8) ah = extract<8, 16>(policy.readGPR(x86_gpr_ax));
                 Word(8) divisor = read8(operands[0]);
@@ -1797,7 +1837,8 @@ struct X86InstructionSemantics {
             }
 
             case x86_bswap: {
-                ROSE_ASSERT(operands.size() == 1);
+                if (operands.size()!=1)
+                    throw Exception("instruction must have one operand", insn);
                 Word(32) oldVal = read32(operands[0]);
                 Word(32) newVal = policy.concat(extract<24, 32>(oldVal),
                                                 policy.concat(extract<16, 24>(oldVal),
@@ -1808,9 +1849,10 @@ struct X86InstructionSemantics {
             }
 
             case x86_push: {
-                ROSE_ASSERT(operands.size() == 1);
-                ROSE_ASSERT(insn->get_addressSize() == x86_insnsize_32);
-                ROSE_ASSERT(insn->get_operandSize() == x86_insnsize_32);
+                if (operands.size()!=1)
+                    throw Exception("instruction must have one operand", insn);
+                if (insn->get_addressSize() != x86_insnsize_32 || insn->get_operandSize() != x86_insnsize_32)
+                        throw Exception("size not implemented", insn);
                 Word(32) oldSp = policy.readGPR(x86_gpr_sp);
                 Word(32) newSp = policy.add(oldSp, number<32>(-4));
                 policy.writeMemory(x86_segreg_ss, newSp, read32(operands[0]), policy.true_());
@@ -1819,8 +1861,10 @@ struct X86InstructionSemantics {
             }
 
             case x86_pushad: {
-                ROSE_ASSERT(operands.size() == 0);
-                ROSE_ASSERT(insn->get_addressSize() == x86_insnsize_32);
+                if (operands.size()!=0)
+                    throw Exception("instruction must have no operands", insn);
+                if (insn->get_addressSize() != x86_insnsize_32)
+                    throw Exception("size not implemented", insn);
                 Word(32) oldSp = policy.readGPR(x86_gpr_sp);
                 Word(32) newSp = policy.add(oldSp, number<32>(-32));
                 policy.writeMemory(x86_segreg_ss, newSp, policy.readGPR(x86_gpr_di), policy.true_());
@@ -1836,8 +1880,10 @@ struct X86InstructionSemantics {
             }
 
             case x86_pushfd: {
-                ROSE_ASSERT(operands.size() == 0);
-                ROSE_ASSERT(insn->get_addressSize() == x86_insnsize_32);
+                if (operands.size()!=0)
+                    throw Exception("instruction must have no operands", insn);
+                if (insn->get_addressSize() != x86_insnsize_32)
+                    throw Exception("size not implemented", insn);
                 Word(32) oldSp = policy.readGPR(x86_gpr_sp);
                 Word(32) newSp = policy.add(oldSp, number<32>(-4));
                 policy.writeMemory(x86_segreg_ss, newSp, readEflags(), policy.true_());
@@ -1846,9 +1892,10 @@ struct X86InstructionSemantics {
             }
 
             case x86_pop: {
-                ROSE_ASSERT(operands.size() == 1);
-                ROSE_ASSERT(insn->get_addressSize() == x86_insnsize_32);
-                ROSE_ASSERT(insn->get_operandSize() == x86_insnsize_32);
+                if (operands.size()!=1)
+                    throw Exception("instruction must have one operand", insn);
+                if (insn->get_addressSize() != x86_insnsize_32 || insn->get_operandSize() != x86_insnsize_32)
+                    throw Exception("size not implemented", insn);
                 Word(32) oldSp = policy.readGPR(x86_gpr_sp);
                 Word(32) newSp = policy.add(oldSp, number<32>(4));
                 write32(operands[0], readMemory<32>(x86_segreg_ss, oldSp, policy.true_()));
@@ -1857,8 +1904,10 @@ struct X86InstructionSemantics {
             }
 
             case x86_popad: {
-                ROSE_ASSERT(operands.size() == 0);
-                ROSE_ASSERT(insn->get_addressSize() == x86_insnsize_32);
+                if (operands.size()!=0)
+                    throw Exception("instruction must have no operands", insn);
+                if (insn->get_addressSize() != x86_insnsize_32)
+                    throw Exception("size not implemented", insn);
                 Word(32) oldSp = policy.readGPR(x86_gpr_sp);
                 Word(32) newSp = policy.add(oldSp, number<32>(32));
                 policy.writeGPR(x86_gpr_di, readMemory<32>(x86_segreg_ss, oldSp, policy.true_()));
@@ -1874,10 +1923,11 @@ struct X86InstructionSemantics {
             }
 
             case x86_leave: {
-                ROSE_ASSERT(operands.size() == 0);
+                if (operands.size()!=0)
+                    throw Exception("instruction must have no operands", insn);
                 policy.writeGPR(x86_gpr_sp, policy.readGPR(x86_gpr_bp));
-                ROSE_ASSERT(insn->get_addressSize() == x86_insnsize_32);
-                ROSE_ASSERT(insn->get_operandSize() == x86_insnsize_32);
+                if (insn->get_addressSize() != x86_insnsize_32 || insn->get_operandSize() != x86_insnsize_32)
+                    throw Exception("size not implemented", insn);
                 Word(32) oldSp = policy.readGPR(x86_gpr_sp);
                 Word(32) newSp = policy.add(oldSp, number<32>(4));
                 policy.writeGPR(x86_gpr_bp, readMemory<32>(x86_segreg_ss, oldSp, policy.true_()));
@@ -1886,9 +1936,10 @@ struct X86InstructionSemantics {
             }
 
             case x86_call: {
-                ROSE_ASSERT(operands.size() == 1);
-                ROSE_ASSERT(insn->get_addressSize() == x86_insnsize_32);
-                ROSE_ASSERT(insn->get_operandSize() == x86_insnsize_32);
+                if (operands.size()!=1)
+                    throw Exception("instruction must have one operand", insn);
+                if (insn->get_addressSize() != x86_insnsize_32 || insn->get_operandSize() != x86_insnsize_32)
+                    throw Exception("size not implemented", insn);
                 Word(32) oldSp = policy.readGPR(x86_gpr_sp);
                 Word(32) newSp = policy.add(oldSp, number<32>(-4));
                 policy.writeMemory(x86_segreg_ss, newSp, policy.readIP(), policy.true_());
@@ -1898,9 +1949,10 @@ struct X86InstructionSemantics {
             }
 
             case x86_ret: {
-                ROSE_ASSERT(operands.size() <= 1);
-                ROSE_ASSERT(insn->get_addressSize() == x86_insnsize_32);
-                ROSE_ASSERT(insn->get_operandSize() == x86_insnsize_32);
+                if (operands.size()!=0)
+                    throw Exception("instruction must have one operand", insn);
+                if (insn->get_addressSize() != x86_insnsize_32 || insn->get_operandSize() != x86_insnsize_32)
+                    throw Exception("size not implemented", insn);
                 Word(32) extraBytes = (operands.size() == 1 ? read32(operands[0]) : number<32>(0));
                 Word(32) oldSp = policy.readGPR(x86_gpr_sp);
                 Word(32) newSp = policy.add(oldSp, policy.add(number<32>(4), extraBytes));
@@ -1910,9 +1962,10 @@ struct X86InstructionSemantics {
             }
 
             case x86_loop: {
-                ROSE_ASSERT(insn->get_addressSize() == x86_insnsize_32);
-                ROSE_ASSERT(insn->get_operandSize() == x86_insnsize_32);
-                ROSE_ASSERT(operands.size() == 1);
+                if (operands.size()!=1)
+                    throw Exception("instruction must have one operand", insn);
+                if (insn->get_addressSize() != x86_insnsize_32 || insn->get_operandSize() != x86_insnsize_32)
+                    throw Exception("size not implemented", insn);
                 Word(32) oldCx = policy.readGPR(x86_gpr_cx);
                 Word(32) newCx = policy.add(number<32>(-1), oldCx);
                 policy.writeGPR(x86_gpr_cx, newCx);
@@ -1921,9 +1974,10 @@ struct X86InstructionSemantics {
                 break;
             }
             case x86_loopz: {
-                ROSE_ASSERT(insn->get_addressSize() == x86_insnsize_32);
-                ROSE_ASSERT(insn->get_operandSize() == x86_insnsize_32);
-                ROSE_ASSERT(operands.size() == 1);
+                if (operands.size()!=1)
+                    throw Exception("instruction must have one operand", insn);
+                if (insn->get_addressSize() != x86_insnsize_32 || insn->get_operandSize() != x86_insnsize_32)
+                    throw Exception("size not implemented", insn);
                 Word(32) oldCx = policy.readGPR(x86_gpr_cx);
                 Word(32) newCx = policy.add(number<32>(-1), oldCx);
                 policy.writeGPR(x86_gpr_cx, newCx);
@@ -1932,9 +1986,10 @@ struct X86InstructionSemantics {
                 break;
             }
             case x86_loopnz: {
-                ROSE_ASSERT(insn->get_addressSize() == x86_insnsize_32);
-                ROSE_ASSERT(insn->get_operandSize() == x86_insnsize_32);
-                ROSE_ASSERT(operands.size() == 1);
+                if (operands.size()!=1)
+                    throw Exception("instruction must have one operand", insn);
+                if (insn->get_addressSize() != x86_insnsize_32 || insn->get_operandSize() != x86_insnsize_32)
+                    throw Exception("size not implemented", insn);
                 Word(32) oldCx = policy.readGPR(x86_gpr_cx);
                 Word(32) newCx = policy.add(number<32>(-1), oldCx);
                 policy.writeGPR(x86_gpr_cx, newCx);
@@ -1945,7 +2000,8 @@ struct X86InstructionSemantics {
             }
 
             case x86_jmp: {
-                ROSE_ASSERT(operands.size() == 1);
+                if (operands.size()!=1)
+                    throw Exception("instruction must have one operand", insn);
                 policy.writeIP(policy.filterIndirectJumpTarget(read32(operands[0])));
                 break;
             }
@@ -1972,7 +2028,8 @@ struct X86InstructionSemantics {
 #           define FLAGCOMBO_ecxz  policy.equalToZero(policy.readGPR(x86_gpr_cx))
 
 #           define JUMP(tag) {                                                                                                 \
-                ROSE_ASSERT(operands.size() == 1);                                                                             \
+                if (operands.size()!=1)                                                                                        \
+                    throw Exception("instruction must have one operand", insn);                                                \
                 policy.writeIP(policy.ite(FLAGCOMBO_##tag,                                                                     \
                                           read32(operands[0]),                                                                 \
                                           policy.readIP()));                                                                   \
@@ -1998,7 +2055,8 @@ struct X86InstructionSemantics {
 #           undef JUMP
 
 #           define SET(tag) {                                                                                                  \
-                ROSE_ASSERT(operands.size() == 1);                                                                             \
+                if (operands.size()!=1)                                                                                        \
+                    throw Exception("instruction must have one operand", insn);                                                \
                 write8(operands[0], policy.concat(FLAGCOMBO_##tag, number<7>(0)));                                             \
             }
             case x86_setne: SET(ne); break;
@@ -2020,11 +2078,13 @@ struct X86InstructionSemantics {
 #           undef SET
                 
 #           define CMOV(tag) {                                                                                                 \
-                ROSE_ASSERT(operands.size() == 2);                                                                             \
+                if (operands.size()!=2)                                                                                        \
+                    throw Exception("instruction must have two operands", insn);                                               \
                 switch (numBytesInAsmType(operands[0]->get_type())) {                                                          \
                     case 2: write16(operands[0], policy.ite(FLAGCOMBO_##tag, read16(operands[1]), read16(operands[0]))); break; \
                     case 4: write32(operands[0], policy.ite(FLAGCOMBO_##tag, read32(operands[1]), read32(operands[0]))); break; \
-                    default: ROSE_ASSERT("Bad size"); break;                                                                   \
+                    default: throw Exception("size not implemented", insn);                                                    \
+                                                                                                                               \
                 }                                                                                                              \
             }
             case x86_cmovne:    CMOV(ne);       break;
@@ -2062,31 +2122,36 @@ struct X86InstructionSemantics {
 #           undef FLAGCOMBO_ecxz
 
             case x86_cld: {
-                ROSE_ASSERT(operands.size() == 0);
+                if (operands.size()!=0)
+                    throw Exception("instruction must have no operands", insn);
                 policy.writeFlag(x86_flag_df, policy.false_());
                 break;
             }
 
             case x86_std: {
-                ROSE_ASSERT(operands.size() == 0);
+                if (operands.size()!=0)
+                    throw Exception("instruction must have no operands", insn);
                 policy.writeFlag(x86_flag_df, policy.true_());
                 break;
             }
 
             case x86_clc: {
-                ROSE_ASSERT(operands.size() == 0);
+                if (operands.size()!=0)
+                    throw Exception("instruction must have no operands", insn);
                 policy.writeFlag(x86_flag_cf, policy.false_());
                 break;
             }
 
             case x86_stc: {
-                ROSE_ASSERT(operands.size() == 0);
+                if (operands.size()!=0)
+                    throw Exception("instruction must have no operands", insn);
                 policy.writeFlag(x86_flag_cf, policy.true_());
                 break;
             }
 
             case x86_cmc: {
-                ROSE_ASSERT(operands.size() == 0);
+                if (operands.size()!=0)
+                    throw Exception("instruction must have no operands", insn);
                 policy.writeFlag(x86_flag_cf, policy.invert(policy.readFlag(x86_flag_cf)));
                 break;
             }
@@ -2117,8 +2182,10 @@ struct X86InstructionSemantics {
                                           policy.readIP()))
 
 #           define REP_SCAS(suffix, len, repsuffix, loopmacro) {                                                               \
-                ROSE_ASSERT(operands.size() == 0);                                                                             \
-                ROSE_ASSERT(insn->get_addressSize() == x86_insnsize_32);                                                       \
+                if (operands.size()!=0)                                                                                        \
+                    throw Exception("instruction must have no operands", insn);                                                \
+                if (insn->get_addressSize() != x86_insnsize_32)                                                                \
+                    throw Exception("size not implemented", insn);                                                             \
                 Word(1) ecxNotZero = stringop_setup_loop();                                                                    \
                 doAddOperation<(len * 8)>(extract<0, (len * 8)>(policy.readGPR(x86_gpr_ax)),                                   \
                                           policy.invert(STRINGOP_LOAD_DI(len, ecxNotZero)),                                    \
@@ -2139,8 +2206,10 @@ struct X86InstructionSemantics {
 #           undef REP_SCAS
 
 #           define SCAS(suffix, len) {                                                                                         \
-                ROSE_ASSERT(operands.size() == 0);                                                                             \
-                ROSE_ASSERT(insn->get_addressSize() == x86_insnsize_32);                                                       \
+                if (operands.size()!=0)                                                                                        \
+                    throw Exception("instruction must have no operands", insn);                                                \
+                if (insn->get_addressSize() != x86_insnsize_32)                                                                \
+                    throw Exception("size not implemented", insn);                                                             \
                 doAddOperation<(len * 8)>(extract<0, (len * 8)>(policy.readGPR(x86_gpr_ax)),                                   \
                                           policy.invert(STRINGOP_LOAD_DI(len, policy.true_())),                                \
                                           true,                                                                                \
@@ -2156,8 +2225,10 @@ struct X86InstructionSemantics {
 #           undef SCAS
 
 #           define REP_CMPS(suffix, len, repsuffix, loopmacro) {                                                               \
-                ROSE_ASSERT(operands.size() == 0);                                                                             \
-                ROSE_ASSERT(insn->get_addressSize() == x86_insnsize_32);                                                       \
+                if (operands.size()!=0)                                                                                        \
+                    throw Exception("instruction must have no operands", insn);                                                \
+                if (insn->get_addressSize() != x86_insnsize_32)                                                                \
+                    throw Exception("size not implemented", insn);                                                             \
                 Word(1) ecxNotZero = stringop_setup_loop();                                                                    \
                 doAddOperation<(len * 8)>(STRINGOP_LOAD_SI(len, ecxNotZero),                                                   \
                                           policy.invert(STRINGOP_LOAD_DI(len, ecxNotZero)),                                    \
@@ -2188,11 +2259,13 @@ struct X86InstructionSemantics {
             case x86_repe_cmpsd:  REP_CMPS(d, 4, e,  STRINGOP_LOOP_E);  break;
 #           undef REP_CMPS
 
-#           define CMPS(suffix, len) do {                                                                                         \
+#           define CMPS(suffix, len) do {                                                                                      \
                /* Compare strings; Intel Instruction Set Reference 3-154 Vol 2a, March 2009 for                                \
                 * opcodes 0xa6 and 0xa7 with no prefix. */                                                                     \
-                ROSE_ASSERT(operands.size() == 0);                                                                             \
-                ROSE_ASSERT(insn->get_addressSize() == x86_insnsize_32);                                                       \
+                if (operands.size()!=0)                                                                                        \
+                    throw Exception("instruction must have no operands", insn);                                                \
+                if (insn->get_addressSize() != x86_insnsize_32)                                                                \
+                    throw Exception("size not implemented", insn);                                                             \
                 doAddOperation<(len * 8)>(STRINGOP_LOAD_SI(len, policy.true_()),                                               \
                                           policy.invert(STRINGOP_LOAD_DI(len, policy.true_())),                                \
                                           true,                                                                                \
@@ -2217,15 +2290,16 @@ struct X86InstructionSemantics {
                     CMPS(d, 4);
                 } else {
                     /* Floating point instructions are not handled yet. */
-                    std::cerr <<"Bad instruction [0x" <<std::hex <<insn->get_address() <<": " <<unparseInstruction(insn) <<"]"
-                              <<" (skipping semantic analysis)\n";
+                    throw Exception("instruction not implemented", insn);
                 }
                 break;
 #           undef CMPS
 
 #           define MOVS(suffix, len) {                                                                                         \
-                ROSE_ASSERT(operands.size() == 0);                                                                             \
-                ROSE_ASSERT(insn->get_addressSize() == x86_insnsize_32);                                                       \
+                if (operands.size()!=0)                                                                                        \
+                    throw Exception("instruction must have no operands", insn);                                                \
+                if (insn->get_addressSize() != x86_insnsize_32)                                                                \
+                    throw Exception("size not implemented", insn);                                                             \
                 policy.writeMemory(x86_segreg_es,                                                                              \
                                    policy.readGPR(x86_gpr_di),                                                                 \
                                    STRINGOP_LOAD_SI(len, policy.true_()),                                                      \
@@ -2243,8 +2317,10 @@ struct X86InstructionSemantics {
 #           undef MOVS
 
 #           define REP_MOVS(suffix, len) {                                                                                     \
-                ROSE_ASSERT(operands.size() == 0);                                                                             \
-                ROSE_ASSERT(insn->get_addressSize() == x86_insnsize_32);                                                       \
+                if (operands.size()!=0)                                                                                        \
+                    throw Exception("instruction must have no operands", insn);                                                \
+                if (insn->get_addressSize() != x86_insnsize_32)                                                                \
+                    throw Exception("size not implemented", insn);                                                             \
                 Word(1) ecxNotZero = stringop_setup_loop();                                                                    \
                 policy.writeMemory(x86_segreg_es, policy.readGPR(x86_gpr_di), STRINGOP_LOAD_SI(len, ecxNotZero), ecxNotZero);  \
                 policy.writeGPR(x86_gpr_si,                                                                                    \
@@ -2301,8 +2377,10 @@ struct X86InstructionSemantics {
             }
 
 #           define LODS(suffix, len, regupdate) {                                                                              \
-                ROSE_ASSERT(operands.size() == 0);                                                                             \
-                ROSE_ASSERT(insn->get_addressSize() == x86_insnsize_32);                                                       \
+                if (operands.size()!=0)                                                                                        \
+                    throw Exception("instruction must have no operands", insn);                                                \
+                if (insn->get_addressSize() != x86_insnsize_32)                                                                \
+                    throw Exception("size not implemented", insn);                                                             \
                 regupdate(x86_gpr_ax, STRINGOP_LOAD_SI(len, policy.true_()));                                                  \
                 policy.writeGPR(x86_gpr_si,                                                                                    \
                                 policy.add(policy.readGPR(x86_gpr_si),                                                         \
@@ -2320,14 +2398,16 @@ struct X86InstructionSemantics {
 #undef STRINGOP_LOOP_NE
 
             case x86_hlt: {
-                ROSE_ASSERT(operands.size() == 0);
+                if (operands.size()!=0)
+                    throw Exception("instruction must have no operands", insn);
                 policy.hlt();
                 policy.writeIP(number<32>((uint32_t)(insn->get_address())));
                 break;
             }
 
             case x86_rdtsc: {
-                ROSE_ASSERT(operands.size() == 0);
+                if (operands.size()!=0)
+                    throw Exception("instruction must have no operands", insn);
                 Word(64) tsc = policy.rdtsc();
                 policy.writeGPR(x86_gpr_ax, extract<0, 32>(tsc));
                 policy.writeGPR(x86_gpr_dx, extract<32, 64>(tsc));
@@ -2335,29 +2415,32 @@ struct X86InstructionSemantics {
             }
 
             case x86_int: {
-                ROSE_ASSERT(operands.size() == 1);
+                if (operands.size()!=1)
+                    throw Exception("instruction must have one operand", insn);
                 SgAsmByteValueExpression* bv = isSgAsmByteValueExpression(operands[0]);
-                ROSE_ASSERT(bv);
+                if (!bv)
+                    throw Exception("operand must be a byte value expression", insn);
                 policy.interrupt(bv->get_value());
                 break;
             }
 
                 /* This is a dummy version that should be replaced later FIXME */
             case x86_fnstcw: {
-                ROSE_ASSERT(operands.size() == 1);
+                if (operands.size()!=1)
+                    throw Exception("instruction must have one operand", insn);
                 write16(operands[0], number<16>(0x37f));
                 break;
             }
 
             case x86_fldcw: {
-                ROSE_ASSERT(operands.size() == 1);
+                if (operands.size()!=1)
+                    throw Exception("instruction must have one operand", insn);
                 read16(operands[0]); /* To catch access control violations */
                 break;
             }
 
             default: {
-                std::cerr <<"Bad instruction [0x" <<std::hex <<insn->get_address() <<": " <<unparseInstruction(insn) <<"]"
-                          <<" (skipping semantic analysis)\n";
+                throw Exception("instruction not implemented", insn);
                 break;
             }
         }
@@ -2365,6 +2448,7 @@ struct X86InstructionSemantics {
 
     void processInstruction(SgAsmx86Instruction* insn) {
         ROSE_ASSERT(insn);
+        current_instruction = insn;
         policy.startInstruction(insn);
         translate(insn);
         policy.finishInstruction(insn);

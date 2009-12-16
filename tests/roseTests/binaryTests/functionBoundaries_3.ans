@@ -2,33 +2,34 @@ Functions detected from binary executable:
     Key for reason(s) address is a suspected function:
       E = entry address         C = call target           X = exception frame
       S = function symbol       P = instruction pattern   G = interblock branch graph
-      U = user-def detection    N = NOP padding           D = discontiguous blocks
+      U = user-def detection    N = NOP/Zero padding      D = discontiguous blocks
       H = insn sequence head
 
-    Num    Start      Size       End       Reason      Kind   Name
-    --- ---------- ---------- ----------   --------- -------- --------------------------------
-      1 0x080482c8 0x00000028 0x080482f0   .C..P....  unknown
-      2 0x080482e0 0x00000010 0x080482f0   H........  unknown
-      3 0x080482f0 0x00000010 0x08048300   .C.......  unknown signal
-      4 0x08048300 0x00000010 0x08048310   .C.......  unknown puts
-      5 0x08048310 0x00000010 0x08048320   .C.......  unknown __libc_start_main
-      6 0x08048320 0x00000010 0x08048330   .C.......  unknown _exit
-      7 0x08048330 0x00000010 0x08048340   .C.......  unknown __gmon_start__
-      8 0x08048340 0x00000022 0x08048362   E........  unknown
-      9 0x08048362 0x00000002 0x08048364   .......N.  unknown
-     10 0x08048364 0x00000024 0x08048388   .C..P....  unknown
-     11 0x08048388 0x00000008 0x08048390   .......N.  unknown
-     12 0x08048390 0x00000040 0x080483d0   .C..P....  unknown
-     13 0x080483d0 0x00000034 0x08048404   .C..P....  unknown
-     14 0x08048404 0x0000000c 0x08048410   .......N.  unknown
-     15 0x08048410 0x00000030 0x08048440   ....P....  unknown
-     16 0x08048440 0x00000020 0x08048460   ....P....  unknown
-     17 0x08048460 0x00000020 0x08048480   ....P....  unknown
-     18 0x08048480 0x00000024 0x080484a4   ....P....  unknown
-     19 0x080484a4 0x0000000c 0x080484b0   .......N.  unknown
-     20 0x080484b0 0x00000070 0x08048520   ....P....  unknown
-     21 0x08048520 0x00000058 0x08048578   ....P....  unknown
-     22 0x08048578 0x00000008 0x08048580   .......N.  unknown
-     23 0x08048580 0x00000030 0x080485b0   .C..P....  unknown
-     24 0x080485b0 0x0000001a 0x080485ca   .C..P....  unknown
-    --- ---------- ---------- ----------   --------- -------- --------------------------------
+    Num  Low-Addr   End-Addr  Insns/Bytes   Reason      Kind   Name
+    --- ---------- ---------- ------------ --------- -------- --------------------------------
+      1 0x080482c8 0x080482ec    11/36     .C..P....  unknown
+      2 0x080482e0 0x080482ec     2/12     H........  unknown
+      3 0x080482ec 0x080482f0     2/4      .......N.  unknown
+      4 0x080482f0 0x08048300     3/16     .C.......  unknown signal
+      5 0x08048300 0x08048310     3/16     .C.......  unknown puts
+      6 0x08048310 0x08048320     3/16     .C.......  unknown __libc_start_main
+      7 0x08048320 0x08048330     3/16     .C.......  unknown _exit
+      8 0x08048330 0x08048340     3/16     .C.......  unknown __gmon_start__
+      9 0x08048340 0x08048362    14/34     E........  unknown
+     10 0x08048362 0x08048364     2/2      .......N.  unknown
+     11 0x08048364 0x08048388    15/36     .C..P....  unknown
+     12 0x08048388 0x08048390     8/8      .......N.  unknown
+     13 0x08048390 0x080483d0    21/64     .C..P....  unknown
+     14 0x080483d0 0x08048404    16/52     .C..P....  unknown
+     15 0x08048404 0x08048410    12/12     .......N.  unknown
+     16 0x08048410 0x08048440    14/48     ....P....  unknown
+     17 0x08048440 0x08048460    10/32     ....P....  unknown
+     18 0x08048460 0x08048480     8/32     ....P....  unknown
+     19 0x08048480 0x080484a4     8/36     ....P....  unknown
+     20 0x080484a4 0x080484b0    12/12     .......N.  unknown
+     21 0x080484b0 0x08048520    41/112    ....P....  unknown
+     22 0x08048520 0x08048578    33/88     ....P....  unknown
+     23 0x08048578 0x08048580     8/8      .......N.  unknown
+     24 0x08048580 0x080485b0    19/48     .C..P....  unknown
+     25 0x080485b0 0x080485ca    12/26     .C..P....  unknown
+    --- ---------- ---------- ------------ --------- -------- --------------------------------

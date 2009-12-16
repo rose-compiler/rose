@@ -360,7 +360,11 @@ int main(int argc, char** argv) {
     for (size_t i = 0; i < instructions.size(); ++i) {
       SgAsmx86Instruction* insn = isSgAsmx86Instruction(instructions[i]);
       ROSE_ASSERT (insn);
-      t.processInstruction(insn);
+      try {
+          t.processInstruction(insn);
+      } catch (const X86InstructionSemantics<X86CTranslationPolicy, WordWithExpression>::Exception &e) {
+          std::cout <<e.mesg <<": " <<unparseInstructionWithAddress(e.insn) <<"\n";
+      }
     }
 
 
@@ -421,7 +425,11 @@ int main(int argc, char** argv) {
       for (size_t i = 0; i < instructions.size(); ++i) {
         SgAsmx86Instruction* insn = isSgAsmx86Instruction(instructions[i]);
         ROSE_ASSERT (insn);
-        t.processInstruction(insn);
+        try {
+            t.processInstruction(insn);
+        } catch (const X86InstructionSemantics<X86CTranslationPolicy, WordWithExpression>::Exception &e) {
+            std::cout <<e.mesg <<": " <<unparseInstructionWithAddress(e.insn) <<"\n";
+        }
       }
 
     }

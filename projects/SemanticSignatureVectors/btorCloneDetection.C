@@ -49,8 +49,11 @@ std::string btorTranslateFunction(BtorTranslationPolicy& policy, SgAsmNode* func
     string s = unparseInstructionWithAddress(insn);
     fprintf(outfile, "\n%s\n", s.c_str());
 
-    t.processInstruction(insn);
-
+    try {
+        t.processInstruction(insn);
+    } catch (const X86InstructionSemantics<BtorTranslationPolicy, BtorWordType>::Exception &e) {
+        fprintf(stderr, "%s: %s\n", e.mesg.c_str(), unparseInstructionWithAddress(e.insn).c_str());
+    }
   }
   policy.setInitialState(entryPoint, initialConditionsAreUnknown);
   policy.addNexts();
