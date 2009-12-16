@@ -957,18 +957,21 @@ AC_SUBST(RT_LIBS)
 # AC_CONFIG_SUBDIRS(TESTS/PerformanceTests/BenchmarkBase)
 # AC_SUBST(optional_PERFORMANCE_subdirs)
 
+# DQ (12/16/2009): This option is now removed since the developersScratchSpace has been 
+# removed from the ROSE's git repository and it is a separate git repository that can be 
+# checked out internally by ROSE developers.
 # Set up for Dan Quinlan's development test directory.
-AC_ARG_ENABLE(dq-developer-tests,
-[--enable-dq-developer-tests   Development option for Dan Quinlan (disregard).],
-[ echo "Setting up optional ROSE/developersScratchSpace/Dan directory"
-if test -d ${srcdir}/developersScratchSpace; then
-  :
-else
-  echo "This is a non-developer version of ROSE (source distributed with EDG binary)"
-  enable_dq_developer_tests=no
-fi
-])
-AM_CONDITIONAL(DQ_DEVELOPER_TESTS,test "$enable_dq_developer_tests" = yes)
+# AC_ARG_ENABLE(dq-developer-tests,
+# [--enable-dq-developer-tests   Development option for Dan Quinlan (disregard).],
+# [ echo "Setting up optional ROSE/developersScratchSpace/Dan directory"
+# if test -d ${srcdir}/developersScratchSpace; then
+#   :
+# else
+#   echo "This is a non-developer version of ROSE (source distributed with EDG binary)"
+#   enable_dq_developer_tests=no
+# fi
+# ])
+# AM_CONDITIONAL(DQ_DEVELOPER_TESTS,test "$enable_dq_developer_tests" = yes)
 
 ## This should be set after a complex test (turn it on as default)
 AC_DEFINE([HAVE_EXPLICIT_TEMPLATE_INSTANTIATION],[],[Use explicit template instantiation.])
