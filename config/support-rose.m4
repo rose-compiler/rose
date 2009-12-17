@@ -1260,6 +1260,7 @@ src/frontend/CxxFrontend/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
 src/frontend/PHPFrontend/Makefile
 src/frontend/BinaryDisassembly/Makefile
+src/frontend/BinaryLoader/Makefile
 src/frontend/BinaryFormats/Makefile
 src/frontend/Disassemblers/Makefile
 src/midend/Makefile
