@@ -168,12 +168,12 @@ demo_12:
 	cd $(top_builddir)/projects/compass/tools/compass/gui; $(MAKE) demo
 	@echo "End of demo_12"
 
-if DQ_DEVELOPER_TESTS 
+# if DQ_DEVELOPER_TESTS 
 # Static binary rewriting
-demo_13:
-	cd $(top_builddir)/developersScratchSpace/Dan/translator_tests; $(MAKE) demo
-	@echo "End of demo_13"
-endif
+# demo_13:
+#	cd $(top_builddir)/developersScratchSpace/Dan/translator_tests; $(MAKE) demo
+#	@echo "End of demo_13"
+# endif
 
 # Template for more rules...
 # demo_15:
@@ -223,7 +223,6 @@ demoBinaryEquivalence: testBinaryEquivalence
 #              Standard Makefile Content
 # ******************************************************
 
-if DQ_DEVELOPER_TESTS 
 check-local:
 	@echo "ROSE demo."
 	@$(MAKE) $(PASSING_TEST_Objects)
@@ -235,17 +234,6 @@ check-local:
 	@echo "****************************************************************************"
 	@echo "******** ROSE/demo: make check rule complete (terminated normally) *********"
 	@echo "****************************************************************************"
-else
-check-local:
-	@echo "ROSE demo (skipping demos 2, 11a and 13 which referenced the developersScratchSpace directory)."
-	@$(MAKE) $(PASSING_TEST_Objects)
-	@echo "Testing demos..." 
-	make demo_3_test
-#	make demo_10
-	@echo "****************************************************************************"
-	@echo "******** ROSE/demo: make check rule complete (terminated normally) *********"
-	@echo "****************************************************************************"
-endif
 else
 check-local:
 	@echo "\nROSE demo requires Qt configure option (at least), Demo NOT run.  To run these reconfigure ROSE (see manual)"

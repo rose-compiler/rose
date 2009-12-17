@@ -3,9 +3,6 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # To keep compile commands tidy, please ONLY put required include flags here.
 INCLUDES = $(ROSE_INCLUDES)
 
-# "if" for DQ_DEVELOPER_TESTS (AutoMake conditional block)
-if DQ_DEVELOPER_TESTS
-
 noinst_PROGRAMS = certTests
 
 certTests_SOURCES = \
@@ -684,13 +681,6 @@ check-local:
 	@echo "********************************************************************************************************"
 	@echo "****** ROSE/developersScratchSpace/Dan/cert_tests: make check rule complete (terminated normally) ******"
 	@echo "********************************************************************************************************"
-else
-check-local:
-	@echo "\nDan Quinlan's CERT example tests NOT run.  To run these reconfigure with:"
-	@echo "********************************************************************************"
-	@echo "******** make check not run here: configure --enable-dq-developer-tests ********"
-	@echo "********************************************************************************"
-endif
 
 clean-local:
 	rm -rf *.o *.ps *.dot rose_*.C core *.int.c a.out
