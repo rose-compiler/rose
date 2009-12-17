@@ -678,9 +678,9 @@ check-local:
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
 #	@$(MAKE) $(PASSING_TEST_Objects)
-	@echo "********************************************************************************************************"
-	@echo "****** ROSE/developersScratchSpace/Dan/cert_tests: make check rule complete (terminated normally) ******"
-	@echo "********************************************************************************************************"
+	@echo "********************************************************************************"
+	@echo "****** ROSE/projects/CertSecureCodeProject: make check rule commented out ******"
+	@echo "********************************************************************************"
 
 clean-local:
 	rm -rf *.o *.ps *.dot rose_*.C core *.int.c a.out
