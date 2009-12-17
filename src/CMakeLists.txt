@@ -228,7 +228,7 @@ add_dependencies(rose ROSETTA OMPPARSER ROSE_PREPROCESSOR )
 #target_link_libraries(rose ${libastMerge}) # library name are global, should not use ${}
 # we need to double check if this solution will be portable on different platforms
 target_link_libraries(rose libastMerge edg33 libsageInterface libastTokenStream libastHiddenTypeAndDeclarationLists
-   libastVisualization roseDisassemblers roseBinaryFormats midend midend_pt midend_pa unparser 
+   libastVisualization roseDisassemblers roseBinaryFormats roseBinaryLoader midend midend_pt midend_pa unparser 
    libastHiddenTypeAndDeclarationLists roseAsmUnparser libastPostProcessing libhpdf
  )
 
