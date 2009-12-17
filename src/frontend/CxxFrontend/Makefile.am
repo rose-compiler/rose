@@ -6,7 +6,7 @@ BINARY_EDG_TARBALL_STAGING_PATH=/usr/casc/overture/ROSE/git/ROSE_EDG_Binaries-st
 BINARY_EDG_TARBALL_DISTRIBUTION_PATH=/usr/casc/overture/ROSE/git/ROSE_EDG_Binaries
 BINARY_EDG_TARBALL_URL=file://$(BINARY_EDG_TARBALL_DISTRIBUTION_PATH)
 # Liao, 12/11/2009, we mirror the internal BINARY_EDG_TARBALL_DISTRIBUTION_PATH to rosecompiler.org
-EXTERNAL_EDG_TARBALL_URL=http://www.rosecompiler.org/edg_binaries
+EXTERNAL_BINARY_EDG_TARBALL_URL=http://www.rosecompiler.org/edg_binaries
 
 AUTO_ARCHS = i686-pc-linux-gnu x86_64-pc-linux-gnu
 ALL_ARCHS = $(AUTO_ARCHS) i686-apple-darwin
@@ -17,7 +17,7 @@ COMPILERS_i686_apple_darwin = GNU-4.0
 
 #fetch tar-ball , try internal url first, then the external one
 %.tar.gz:
-	curl ${BINARY_EDG_TARBALL_URL}/$@  -o $@ || curl ${EXTERNAL_BINARY_EDG_TARBALL_URL}/$@  -o $@ 
+	test -d ${BINARY_EDG_TARBALL_URL} && curl ${BINARY_EDG_TARBALL_URL}/$@  -o $@ || curl ${EXTERNAL_BINARY_EDG_TARBALL_URL}/$@  -o $@ 
 
 # This line includes different EDG tarballs depending on the value of the environment variable DIST_EDG
 # Default
