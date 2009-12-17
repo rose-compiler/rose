@@ -11,14 +11,15 @@ source /home/liao6/rose/scripts/roseFreshTestStub-Leo-common.sh
 # using a time stamp to avoid overwriting previous tests
 TIMESTAMP=$(date +%Y%m%d_%H%M%S) 
 #ROSE_TOP=/home/liao6/daily-test-rose/${TIMESTAMP}
-ROSE_TOP=/home/liao6/daily-test-rose/release
+ROSE_TOP=/home/liao6/daily-test-rose/release-scidac
 
 # for regular build and tests
 CONFIGURE_FLAGS=( --with-boost=${BOOST_ROOT} --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --prefix=${ROSE_TOP}/install "$@")
 
 #ROSE_SVNROOT=file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
 ROSE_SVNROOT=https://outreach.scidac.gov/svn/rose/trunk
-MAILADDRS="liaoch@llnl.gov quinlan1@llnl.gov"
+MAILADDRS="liaoch@llnl.gov"
+#MAILADDRS="liaoch@llnl.gov quinlan1@llnl.gov"
 
 # the right version of subversion is essential!!
 # avoid .svn directories
@@ -33,7 +34,7 @@ SVNOP=export
 #SVNVERSIONOPTION=1303
 
 # How many processes for make
-MAKEFLAGS="-j16"
+MAKEFLAGS="-j8"
 
 # my additional stuff, not suitable for the external repository
 #ENABLE_UPLOAD_SVN=1

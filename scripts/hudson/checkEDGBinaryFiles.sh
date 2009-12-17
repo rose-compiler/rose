@@ -1,6 +1,12 @@
 #/bin/bash -vx
 # Liao 12/7/2009
 
+if [ $# -ne 0 ]
+  then
+    echo This script does not need targument to run.
+   exit 1
+fi
+
 # This script will check each tar.gz file 
 # from /usr/casc/overture/ROSE/git/ROSE_EDG_Binaries/
 # to make sure there is no EDG proprietary information there
