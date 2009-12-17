@@ -99,11 +99,13 @@ if test \! \( $ROSE_TEST_GCC_VERSION = 4.3.2 -o $ROSE_TEST_GCC_VERSION = 4.4.1 \
  # DQ (12/9/2009): Save output from "make check" rule and measure the test spew.
  # make -j8 check
    echo "Starting make check step"
-   # Andreas suggests that the use of "tee" is not passing error through to Hudson.
-	# make -j8 check 2>&1 | tee make_check_output.txt;
+ # Andreas suggests that the use of "tee" is not passing error through to Hudson.
+ # make -j8 check 2>&1 | tee make_check_output.txt;
 	make -j8 check
+ # Or perhaps: ( false || echo "testing" ) | tee make_check_output.txt
+ # ( make -j8 check || echo "error detected in make check rule"; exit 1 ) 2>&1 | tee make_check_output.txt
    echo "Done with make check step"
-   # grep -n "Making check in " make_check_output.txt | ../scripts/checkMakeSpew.pl | tee makeCheckSpewLineCount.txt
+ # grep -n "Making check in " make_check_output.txt | ../scripts/checkMakeSpew.pl | tee makeCheckSpewLineCount.txt
 
  # The distcheck rule builds a distribution and reruns all the tests; including the rules: install, installcheck
    echo "Starting make distcheck step"

@@ -3,9 +3,10 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # To keep compile commands tidy, please ONLY put required include flags here.
 INCLUDES = $(ROSE_INCLUDES)
 
-noinst_PROGRAMS = certTests
+# noinst_PROGRAMS = certTests
 
-certTests_SOURCES = \
+# certTests_SOURCES = \
+certTests_XXX = \
 		diagnose.C \
       PRE.C \
 		DCL.C \
@@ -677,7 +678,7 @@ check-local:
 	@echo "Dan Quinlan's development tests."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
-	@$(MAKE) $(PASSING_TEST_Objects)
+#	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "********************************************************************************************************"
 	@echo "****** ROSE/developersScratchSpace/Dan/cert_tests: make check rule complete (terminated normally) ******"
 	@echo "********************************************************************************************************"
