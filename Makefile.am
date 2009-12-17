@@ -235,3 +235,14 @@ testHudsonRunScript:
    $(top_srcdir)/scripts/hudson/runTest
 
 # $(top_srcdir)/scripts/hudson/testHudsonRunScript.sh;
+
+
+# DQ (12/16/2009): Added interesting "git" feature by Liao.
+# It is unclear if it is very meaningful since it represents 
+# individual work style more than anything else (but it's fun).
+CheckinCounts:
+	@echo "*****************************************************"
+	@echo "Generated list of checkins to ROSE sumarized by user."
+	@echo "*****************************************************"
+	cd $(top_srcdir); git shortlog -s -n
+	@echo "*****************************************************"
