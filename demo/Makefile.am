@@ -227,7 +227,7 @@ check-local:
 	@echo "ROSE demo."
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "Testing demos..." 
-	make demo_2_test
+#	make demo_2_test
 	make demo_3_test
 #	make demo_10
 #	make demo_13
