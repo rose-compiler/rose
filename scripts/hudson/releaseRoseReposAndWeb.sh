@@ -85,18 +85,19 @@ else
   exit 3
 fi
 
-if [ -d ${ROSE_BUILD_PATH} ]; then
-  if [ -f ${ROSE_BUILD_PATH}/rose_config.h ] ;
-   then
-     echo ${ROSE_BUILD_PATH} is verified to be a rose build tree
-   else
-     echo Fatal error: ${ROSE_BUILD_PATH} does not seem to be a rose build tree!
-     exit 3
-  fi
-else
-  echo Fatal error: ${ROSE_BUILD_PATH} does not exist!
-  exit 3
-fi
+# build tree should be empty usually
+#if [ -d ${ROSE_BUILD_PATH} ]; then
+#  if [ -f ${ROSE_BUILD_PATH}/rose_config.h ] ;
+#   then
+#     echo ${ROSE_BUILD_PATH} is verified to be a rose build tree
+#   else
+#     echo Fatal error: ${ROSE_BUILD_PATH} does not seem to be a rose build tree!
+#     exit 3
+#  fi
+#else
+#  echo Fatal error: ${ROSE_BUILD_PATH} does not exist!
+#  exit 3
+#fi
 
 if [ $SKIP_COMPILATION -ne 1 ]; then
   # only reconfigure as needed
