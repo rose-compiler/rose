@@ -610,8 +610,7 @@ test2004_104.C \
 test2004_109.C \
 test2004_110.C \
 test2004_112.C \
-test2004_115.C \
-inputForLoopLocator.C
+test2004_115.C 
 
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
