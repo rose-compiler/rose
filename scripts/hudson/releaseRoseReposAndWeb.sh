@@ -63,7 +63,7 @@ fi
 # build tree:  configure and build
 #--------------------------------------
 # always build fresh
-if [ $SKIP_COMPILATION -ne 1]; then
+if [ $SKIP_COMPILATION -ne 1 ]; then
   if test -e ROSE-build ; then chmod -R u+w ROSE-build ; fi
   rm -rf ROSE-build
   mkdir ROSE-build
@@ -98,7 +98,7 @@ else
   exit 3
 fi
 
-if [ $SKIP_COMPILATION -ne 1]; then
+if [ $SKIP_COMPILATION -ne 1 ]; then
   # only reconfigure as needed
   ../configure --with-boost=${BOOST_ROOT} --with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-qt=/usr/apps/qt/4.5.1 --with-roseQt --with-haskell=/home/liao6/opt/ghc-6.10.4/bin --with-pch --with-gomp_omp_runtime_library=/home/liao6/opt/gcc-svn/lib/ --prefix=$HOME/.hudson/tempInstall
   
