@@ -169,7 +169,6 @@
 
 \input{AstProcessing}
 
-% Comment out to test with Hudson since it appears to fail for some slaves.
 \input{AstRewrite}
 
 \input{ProgramAnalysis}
