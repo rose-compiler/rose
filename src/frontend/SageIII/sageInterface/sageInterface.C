@@ -243,17 +243,21 @@ SageInterface::astIntersection ( SgNode* original, SgNode* copy, SgCopyHelp* hel
      int AST_original_size = AST_original.size();
      int AST_copy_size     = AST_copy.size();
 
-     printf ("Original AST size         = %d \n",AST_original_size);
-     printf ("Copy of original AST size = %d \n",AST_copy_size);
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("Original AST size         = %d \n",AST_original_size);
+          printf ("Copy of original AST size = %d \n",AST_copy_size);
+        }
 
      int differenceInSizes = AST_original_size - AST_copy_size;
      if (differenceInSizes == 0)
         {
-          printf ("Copied AST is the SAME size as the original (size = %d) \n",AST_original_size);
+          if (SgProject::get_verbose() > 0)
+               printf ("Copied AST is the SAME size as the original (size = %d) \n",AST_original_size);
         }
        else
         {
-          printf ("Copied AST and the original are DIFFERENT sizes (original size = %d copyied size = %d) \n",AST_original_size,AST_copy_size);
+          printf ("Warning: Copied AST and the original are DIFFERENT sizes (original size = %d copyied size = %d) \n",AST_original_size,AST_copy_size);
         }
 
   // Compute the intersection (reference in the copy that point to the origal AST).
@@ -289,13 +293,17 @@ SageInterface::astIntersection ( SgNode* original, SgNode* copy, SgCopyHelp* hel
         }
 
   // Remove the types since they are allowed to be shared...
-     printf ("Remove the types that are allowed to be shared: deleteList.size() = %ld \n",(long)deleteList.size());
+     if (SgProject::get_verbose() > 0)
+          printf ("Remove the types that are allowed to be shared: deleteList.size() = %ld \n",(long)deleteList.size());
+
      for (std::vector<SgNode*>::iterator i = deleteList.begin(); i != deleteList.end(); i++)
         {
           meaningIntersectionList.erase(find(meaningIntersectionList.begin(),meaningIntersectionList.end(),*i));
         }
 
-     printf ("After removing the types there are meaningIntersectionList.size() = %ld \n",(long)meaningIntersectionList.size());
+     if (SgProject::get_verbose() > 0)
+          printf ("After removing the types there are meaningIntersectionList.size() = %ld \n",(long)meaningIntersectionList.size());
+
      for (int i = 0; i < (int)meaningIntersectionList.size(); i++)
         {
        // printf ("     meaningIntersectionList[%d] = %p = %s \n",i,meaningIntersectionList[i],(meaningIntersectionList[i] != NULL) ? meaningIntersectionList[i]->class_name().c_str() : "NULL");
@@ -365,7 +373,9 @@ SageInterface::astIntersection ( SgNode* original, SgNode* copy, SgCopyHelp* hel
                   }
              }
 
-          printf ("IR nodes different between the original AST and the copy of the AST = %zu \n",tmp_AST_original.size());
+          if (SgProject::get_verbose() > 0)
+               printf ("IR nodes different between the original AST and the copy of the AST = %zu \n",tmp_AST_original.size());
+
           for (int j = 0; j < (int)tmp_AST_original.size(); j++)
              {
                printf ("non matched IR node = %p = %s = %s \n",tmp_AST_original[j],tmp_AST_original[j]->class_name().c_str(),get_name(tmp_AST_original[j]).c_str());
@@ -2915,9 +2925,12 @@ SageInterface::fixupReferencesToSymbols( const SgScopeStatement* this_scope,  Sg
   // be that a symbol is enterted twice by the copy mechanism.  If so I want to fix this.
      if (this_symbolTable->get_table()->size() != copy_symbolTable->get_table()->size())
         {
-          printf ("Before fixup: this scope = %p = %s this_symbolTable->get_table()->size() = %zu \n",this_scope,this_scope->class_name().c_str(),this_symbolTable->get_table()->size());
-          printf ("Before fixup: copy scope = %p = %s copy_symbolTable->get_table()->size() = %zu \n",copy_scope,copy_scope->class_name().c_str(),copy_symbolTable->get_table()->size());
-          printf ("Warning the symbols tables in these different scopes are different sizes \n");
+          if (SgProject::get_verbose() > 0)
+              {
+               printf ("Before fixup: this scope = %p = %s this_symbolTable->get_table()->size() = %zu \n",this_scope,this_scope->class_name().c_str(),this_symbolTable->get_table()->size());
+               printf ("Before fixup: copy scope = %p = %s copy_symbolTable->get_table()->size() = %zu \n",copy_scope,copy_scope->class_name().c_str(),copy_symbolTable->get_table()->size());
+               printf ("Warning the symbols tables in these different scopes are different sizes \n");
+             }
         }
   // ROSE_ASSERT(this_symbolTable->get_table()->size() <= copy_symbolTable->get_table()->size());
 
@@ -2927,7 +2940,7 @@ SageInterface::fixupReferencesToSymbols( const SgScopeStatement* this_scope,  Sg
      int replacementHashTableSize = 1001;
 #ifdef _MSC_VER
 #pragma message ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC.")
-	 printf ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC. \n");
+     printf ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC. \n");
      ReplacementMapTraversal::ReplacementMapType replacementMap;
 #else
      ReplacementMapTraversal::ReplacementMapType replacementMap(replacementHashTableSize);
@@ -2984,8 +2997,11 @@ SageInterface::fixupReferencesToSymbols( const SgScopeStatement* this_scope,  Sg
             else
              {
             // DQ (3/4/2009): This case was broken out because copytest2007_14.C fails here.
-               printf ("Warning: Symbol number: %d (pair.first (SgName) = %s) pair.second (SgSymbol) = %p sage_class_name() = %s \n",counter,i->first.str(),i->second,i->second->class_name().c_str());
-               printf ("Warning: associated_symbol == NULL, need to investigate this (ignoring for now) \n");
+               if (SgProject::get_verbose() > 0)
+                  {
+                    printf ("Warning: Symbol number: %d (pair.first (SgName) = %s) pair.second (SgSymbol) = %p sage_class_name() = %s \n",counter,i->first.str(),i->second,i->second->class_name().c_str());
+                    printf ("Warning: associated_symbol == NULL, need to investigate this (ignoring for now) \n");
+                  }
              }
 
           counter++;
