@@ -1,6 +1,22 @@
 
 include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
+#${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstRestructure.C
+#${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstProcessing.C
+#${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstCombinedSimpleProcessing.C
+#${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstNodePtrs.C
+#${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstNodeVisitMapping.C
+#${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstDOTGeneration.C
+#${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstAttributeMechanism.C
+#${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstSimpleProcessing.C
+#${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstClearVisitFlags.C
+#${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstSuccessorsSelectors.C
+#${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstPDFGeneration.C
+#${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstTextAttributesHandling.C
+#${CMAKE_SOURCE_DIR}/src/midend/astProcessing/Ast.C
+#${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstTraversal.C
+#${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstSharedMemoryParallelSimpleProcessing.C
+#${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstReverseSimpleProcessing.C
 
 ########### next target ###############
 set( libastprocessing_SRC  
@@ -16,8 +32,8 @@ set( libastprocessing_SRC  ${libastprocessing_SRC}
    )
 endif (NOT WIN32)
 
-#add_library( libastprocessingSources  ${libastprocessing_SRC} )
-#add_dependencies( libastprocessingSources ROSETTA )
+add_library( midend_processing  ${libastprocessing_SRC} )
+add_dependencies( midend_processing ROSETTA )
 
 
 ########### install files ###############

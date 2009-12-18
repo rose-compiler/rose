@@ -797,6 +797,7 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgAsmElfSegmentTableEntry::SegmentType" ) ||
                  ( varTypeString == "SgAsmElfSegmentTableEntry::SegmentFlags" ) ||
                  ( varTypeString == "SgAsmElfDynamicEntry::EntryType") ||
+                 ( varTypeString == "SgAsmElfRelocEntry::RelocType") ||
                  ( varTypeString == "SgAsmNEEntryPoint::NEEntryFlags" ) ||
                  ( varTypeString == "SgAsmNERelocEntry::NERelocSrcType" ) ||
                  ( varTypeString == "SgAsmNERelocEntry::NERelocModifiers" ) ||
@@ -805,6 +806,7 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgInterfaceStatement::generic_spec_enum" ) ||
                  ( varTypeString == "SgAsmPEImportILTEntry::ILTEntryType" ) ||
                  ( varTypeString == "SgAsmElfSectionTableEntry::SectionType") ||
+                 ( varTypeString == "SgAsmElfSectionTableEntry::SectionFlags") ||
                  false 
               )
        {
