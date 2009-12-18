@@ -8,10 +8,11 @@
 # It will be called by another script: makeAndReleaseROSE.sh
 #
 # Use:
-#  ./makeRelease.sh 0.9.4a 2927 /home/liao6/daily-test-rose/release/upload/rose-0.9.4a-source-with-EDG-binary-2927.tar.gz
+#  ./thisScript.sh 0.9.4a 2927 /home/liao6/daily-test-rose/release/upload/rose-0.9.4a-source-with-EDG-binary-2927.tar.gz
 #
 # by Jeremiah, 10/14/2008
 # Modified by Liao, 11.25.2008
+
 if [ $# -lt 3 ]
 then
   echo This script needs three arguments
@@ -51,7 +52,8 @@ fi
 
 # This needs to match the browser you used to log in to Outreach; find it from http://browserspy.dk/useragent.php
 # this is also set in scidac-login.sh now, 7/30/2009, Liao
-USERAGENT='Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.12) Gecko/2009070610 Firefox/3.0.12'
+USERAGENT='Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5'
+#USERAGENT='Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.12) Gecko/2009070610 Firefox/3.0.12'
 #USERAGENT='Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.8.1.18) Gecko/20081029 Firefox/2.0.0.18'
 # The actual content to be filled into the web form
 
@@ -84,7 +86,7 @@ curl \
   -F "userfile=@$FULL_PACKAGE_NAME" \
   -F "type_id=$TYPEID" \
   -F "processor_id=$PROCESSORID" \
-  -F "release_notes=This is the latest stable ROSE source release with the EDG binaries for multiple platforms, including i686-pc-linux-gnu, x86_64-pc-linux-gnu, and i686-apple-darwin9.4.0." \
+  -F "release_notes=This is the latest stable ROSE source release without the EDG binaries (which will be automatically downloaded during configuration and building) for multiple platforms, including i686-pc-linux-gnu, x86_64-pc-linux-gnu, and i686-apple-darwin9.4.0." \
   -F "release_changes=" \
   -F "preformatted=0" \
   -F "submit=Release+File" \

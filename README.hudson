@@ -53,5 +53,22 @@ Setting up Hudson:
    x) Setup your crontab to restart hudson if your machine is rebooted.
       "@reboot cd /home/dquinlan/local/hudson-1.336/ && screen -d -m java -jar /home/dquinlan/local/hudson-1.336/hudson.war --httpListenAddress=127.0.0.1"
 
+Additional setup issues for Hudson, configuration:
+* smtp server: smtp.llnl.gov
+* Enable security Access Control,  Security Realm: Hudson's own user database, Allow users to sign up,  Authorization: Matrix-based security 
 
+How to setup slave machines:
 
+copy the required files from an example node:
+-bash-3.00$ pwd 
+/export
+-bash-3.00$ ls -al
+total 36
+drwxr-xr-x   5 root        root  4096 Dec 14 09:59 .
+drwxr-xr-x  27 root        root  4096 Dec 10 09:06 ..
+drwx------   2 root        root 16384 Oct 16  2008 lost+found
+drwxr-xr-x   4 root        root  4096 Nov 13 14:34 old
+drwxr-xr-x   3 hudson-rose rose  4096 Dec 14 12:40 tmp.hudson-rose
+-bash-3.00$ rsync -av --delete tux283:/export/tmp.hudson-rose .
+
+This should setup the /export/tmp.hudson-rose directory.

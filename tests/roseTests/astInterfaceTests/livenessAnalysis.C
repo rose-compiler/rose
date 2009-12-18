@@ -12,7 +12,7 @@ int main(int argc, char * argv[])
 {
   SgProject *project = frontend (argc, argv);
   // call liveness analysis
-  LivenessAnalysis* liv = SageInterface::call_liveness_analysis(project,true);
+  LivenessAnalysis* liv = SageInterface::call_liveness_analysis(project,false);
 
   SgFunctionDeclaration* func = SageInterface::findMain(project);
   ROSE_ASSERT(func != NULL);

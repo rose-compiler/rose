@@ -2,18 +2,20 @@
 
 export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:$LD_LIBRARY_PATH"
 
-echo "Output variables required by Hudson runTest script."
-echo "***************************************************"
-echo "LD_LIBRARY_PATH       = $LD_LIBRARY_PATH"
-echo "ROSE_TEST_BUILD_STYLE = ${ROSE_TEST_BUILD_STYLE}"
-echo "ROSE_TEST_BOOST_PATH  = ${ROSE_TEST_BOOST_PATH}"
-echo "ROSE_TEST_JAVA_PATH   = ${ROSE_TEST_JAVA_PATH}"
+echo "*******************************************************************"
+echo "         Output variables required by Hudson runTest script."
+echo "*******************************************************************"
+echo "LD_LIBRARY_PATH                   = $LD_LIBRARY_PATH"
+echo "ROSE_TEST_BUILD_SKIP_BUILD_SCRIPT = ${ROSE_TEST_BUILD_SKIP_BUILD_SCRIPT}"
+echo "ROSE_TEST_BUILD_STYLE             = ${ROSE_TEST_BUILD_STYLE}"
+echo "ROSE_TEST_BOOST_PATH              = ${ROSE_TEST_BOOST_PATH}"
+echo "ROSE_TEST_JAVA_PATH               = ${ROSE_TEST_JAVA_PATH}"
 
 echo "Environment variables required for ROSE_TEST_BUILD_STYLE = full"
-echo "ROSE_TEST_QT_PATH     = ${ROSE_TEST_QT_PATH}"
-echo "ROSE_TEST_SQLITE_PATH = ${ROSE_TEST_SQLITE_PATH}"
-echo "ROSE_TEST_RTED_PATH   = ${ROSE_TEST_RTED_PATH}"
-echo "***************************************************"
+echo "ROSE_TEST_QT_PATH                 = ${ROSE_TEST_QT_PATH}"
+echo "ROSE_TEST_SQLITE_PATH             = ${ROSE_TEST_SQLITE_PATH}"
+echo "ROSE_TEST_RTED_PATH               = ${ROSE_TEST_RTED_PATH}"
+echo "*******************************************************************"
 
 
 if test $ROSE_TEST_GCC_VERSION != 4.1.2 ; then
@@ -37,7 +39,9 @@ if test $ROSE_TEST_BUILD_STYLE = cmake ; then
 	exit 0
 fi
 
-CONFIGURE_FLAGS="--with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib --with-java=${ROSE_TEST_JAVA_PATH} --with-ROSE_LONG_MAKE_CHECK_RULE=yes --enable-dq-developer-tests"
+# Note that Boost 1.39 and greater require using "--with-boost-libdir"
+# CONFIGURE_FLAGS="--with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib --with-java=${ROSE_TEST_JAVA_PATH} --with-ROSE_LONG_MAKE_CHECK_RULE=yes --enable-dq-developer-tests"
+CONFIGURE_FLAGS="--with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib --with-java=${ROSE_TEST_JAVA_PATH} --with-ROSE_LONG_MAKE_CHECK_RULE=yes"
 
 if test $ROSE_TEST_BUILD_STYLE = full ; then
 	CONFIGURE_FLAGS="${CONFIGURE_FLAGS} --with-qt=${ROSE_TEST_QT_PATH} --with-roseQt --with-sqlite3=${ROSE_TEST_SQLITE_PATH} --with-rted=${ROSE_TEST_RTED_PATH}"
@@ -49,13 +53,20 @@ fi
 echo "CONFIGURE_FLAGS = ${CONFIGURE_FLAGS}"
 
 # Skip this for now but uncomment before checkin!
-./build
+if test $ROSE_TEST_BUILD_SKIP_BUILD_SCRIPT = yes ; then
+   echo "Skipping build at part of testing from makefile rule."
+else
+   echo "Hudson tests on a new branch must run the ROSE build script."
+   ./build
+fi
 
 if test -e ROSE-build ; then chmod -R u+w ROSE-build ; fi
 rm -rf ROSE-build
 mkdir ROSE-build
 cd ROSE-build
+echo "Starting configure step"
 ../configure ${CONFIGURE_FLAGS}
+echo "Done with configure step"
 
 if test $ROSE_TEST_BUILD_STYLE = edg ; then
 	make -j8 upload_edg_binary
@@ -63,10 +74,24 @@ if test $ROSE_TEST_BUILD_STYLE = edg ; then
 	exit 0
 fi
 
-# Save the output of make for later processing (e.g. similar to makeCheckLineCount.pl)
-# make -j8
-make -j8 | tee make_output.txt
-grep -n "Making all in " make_output.txt | ../scripts/checkMakeSpew.pl | tee makeSpewLineCount.txt
+# Andreas suggests that the use of "tee" is not passing error through to Hudson.
+echo "Starting compile step"
+if test false; then
+  make -j8 2>&1 | tee make_output.txt
+
+# Filter out the legitimate lines specific to compilation and linking (filter compile, links, and Qt specific tools).
+   echo "Building the filtered_make_output.txt file"
+   grep -v "Entering directory" make_output.txt | grep -v "Leaving directory" | grep -v "COMPILE" | grep -v "LINK" | grep -v "Qt-MOC" | grep -v "Qt-RCC" | grep -v "Qt-UIC" > filtered_make_output.txt
+   echo "Built filtered_make_output.txt"
+
+# Now process to count the number of lines of spew.
+   echo "Computing compile time spew"
+   grep -n "Making all in " filtered_make_output.txt | ../scripts/checkMakeSpew.pl | tee makeSpewLineCount.txt
+   echo "Done with compile time spew"
+else
+   make -j8 
+fi 
+echo "Done with compile step"
 
 # GCC 4.3 and 4.4 do not currently pass make check
 # Known unresolved issues:
@@ -75,9 +100,31 @@ grep -n "Making all in " make_output.txt | ../scripts/checkMakeSpew.pl | tee mak
 if test \! \( $ROSE_TEST_GCC_VERSION = 4.3.2 -o $ROSE_TEST_GCC_VERSION = 4.4.1 \) ; then
  # DQ (12/9/2009): Save output from "make check" rule and measure the test spew.
  # make -j8 check
-	make -j8 check | tee make_check_output.txt;
-   grep -n "Making check in " make_check_output.txt | ../scripts/checkMakeSpew.pl | tee makeCheckSpewLineCount.txt
+   echo "Starting make check step"
+ # Andreas suggests that the use of "tee" is not passing error through to Hudson.
+ # make -j8 check 2>&1 | tee make_check_output.txt;
+	make -j8 check
+ # Or perhaps: ( false || echo "testing" ) | tee make_check_output.txt
+ # ( make -j8 check || echo "error detected in make check rule"; exit 1 ) 2>&1 | tee make_check_output.txt
+   echo "Done with make check step"
+ # grep -n "Making check in " make_check_output.txt | ../scripts/checkMakeSpew.pl | tee makeCheckSpewLineCount.txt
 
- # The distcheck rule builds a distribution and reruns all the tests; including the rules: install, docs, installcheck
+ # The distcheck rule builds a distribution and reruns all the tests; including the rules: install, installcheck
+   echo "Starting make distcheck step"
 	make -j8 distcheck
+   echo "Done with make distcheck step"
+fi
+
+# DQ (12/16/2009): This appears to work everywhere byt on the 4.3.2 systems, verify this.
+# Finally run the "make docs" test (on just the 4.2.4 version of gcc).
+if test \! \( $ROSE_TEST_GCC_VERSION = 4.3.2 \) ; then
+   echo "Starting make docs step (exit normally even if it fails so that we can debug the docs rule)"
+ # Exit normally even if it fails so that we can debug the docs rule.
+ # make -j8 docs || exit 0
+ # make docs || exit 0
+
+ # Running with parallelism here does not tend to be very helpful since 
+ # doxygen is what has to run and it does not run in parallel.
+   make -j8 docs
+   echo "Done with make docs step"
 fi

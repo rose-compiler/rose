@@ -22,21 +22,28 @@
 # are defined by the below three functions.
 
 use strict;
+# Locate directory of original perl script 
 use FindBin;
-use lib "$FindBin::Bin";
-use Git;
+use lib "$FindBin::Bin"; # add the current perl script's path into module search path
+use Git;  # Git.pm is under rose/scripts/.
 use Digest::MD5;
 
 # The below is user-configurable
 
 # Given a file path, returns true iff the path names a dependent file.
+# Liao, 12/11/2009, this Makefile.am is being changed frequently now
+# It is troublesome to use it for signature generation.
+#	     || $path eq "src/frontend/CxxFrontend/Makefile.am" # Rules for generating the tarball
 sub is_dependent_file {
 	my ($path) = @_;
 	return ($path =~ m@^src/ROSETTA/@ # ROSETTA generated header files are used by the EDG/SAGE connection
 	     || $path eq "src/frontend/CxxFrontend/EDG" # The reference to the EDG submodule
-	     || $path eq "src/frontend/CxxFrontend/Makefile.am" # Rules for generating the tarball
 	     );
 }
+
+# Liao, 12/11/2009, this Makefile.am is being changed frequently now
+# It is troublesome to use it for signature generation.
+#	     || $path eq "src/frontend/CxxFrontend/Makefile.am" # Rules for generating the tarball
 
 # A list of canonical repositories.  This need not include every repository;
 # if regex or other pattern matching is required this can be done in
@@ -57,7 +64,7 @@ sub canonical_repo_branch {
 
 # Given a path to the working copy, returns true iff this is an external user.
 sub needs_canonical_repo {
-	return 0;
+	return 0; # TODO fix this!!
 	my ($wcpath) = @_;
 	# Whether this is an external user is defined by whether the user does not have
 	# the EDG submodule checked out.
@@ -66,6 +73,17 @@ sub needs_canonical_repo {
 
 # The below should not need to be modified
 
+# beginning of the execution
+# ----------------------------------------------------
+# make dist will save the signature to the top directory/bincompat-sig
+# which has the same name as the perl script under scripts/bincompat-sig
+# very confusing!
+# Liao, 12/11/2009
+#
+# Case 1: using a distribution package
+# Check the precomputed bincompat-sig
+# If it exist, it means this source tree is a distribution package
+# We directly get the precomputed signature to use and exit this script
 # This file only exists in tarballs, in which we will not have access to the git history
 if (-e "$FindBin::Bin/../bincompat-sig") {
 	open(SIG, "$FindBin::Bin/../bincompat-sig") or die "couldn't open signature file: $!";
@@ -74,6 +92,8 @@ if (-e "$FindBin::Bin/../bincompat-sig") {
 	exit 0;
 }
 
+# Case 2: using a ROSE git repository
+# for non distribution package: it must be a git repository
 # Using FindBin ensures that the script works no matter where it is invoked from
 my $repo = Git->repository(Directory => "$FindBin::Bin/..");
 
@@ -163,6 +183,8 @@ my $relevant_commit;
 
 # If the user cannot generate the binary content themselves, revert to the most specific commit
 # that is common to both the user's branch and the canonical repository
+# needs_canonical_repo() always returns 0 for now.
+# So we always assume a LLNL internal users are using the repository
 if (needs_canonical_repo($repo->wc_path)) {
 	my $canon_ref = find_canonical_ref;
 	$relevant_commit = $repo->merge_base("HEAD", $canon_ref);

@@ -7,7 +7,6 @@
 
 #include <QRAttribute.h>
 #include <QRException.h>
-#include <rose.h>
 #include <list>
 
 #include <QPixmap>

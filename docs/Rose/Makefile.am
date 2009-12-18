@@ -2,8 +2,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 
 # When debugging latex documentation skip using the --interaction=batchmode option
-# PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex --interaction=batchmode
-PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex 
+PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex --interaction=batchmode
+# PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex 
 
 # Later we will add ROSETTA documentation here ...
 SUBDIRS = Tutorial 
@@ -78,7 +78,8 @@ $(RoseDoxygenDocumentation): $(RoseDocsDependencies) $(ROSE_MAINPAGE_DOCUMENTATI
 # DQ (7/11/2009): Added rule to force generation of Doxygen documentation.
 doxygen_docs: $(RoseDocsDependencies) $(ROSE_MAINPAGE_DOCUMENTATION) rose.cfg
 	cd $(top_builddir)/src/frontend/SageIII; $(MAKE) sage.docs
-	doxygen rose.cfg
+	doxygen rose.cfg || exit 1
+	echo "Doxygen generated documentation terminated normally."
 
 # We can't specify the source directory to latex so we have to build
 # links to the files in the source directory.  Other ideas?
@@ -216,6 +217,18 @@ copyWebPages: make-web-pages
 	cd ROSE_WebPages; chmod -R a+rx *; rsync -avz * liaoch@web-dev.nersc.gov:/www/host/rosecompiler
 #	scp $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz quinlan1@cmg-1.llnl.gov:/green_dev/www/casc/rose
 
+# Liao 12/7/2009, we mirror the content of the internal 
+# /usr/casc/overture/ROSE/git/ROSE_EDG_Binaries
+# to a public http://www.rosecompiler.org/edg_binaries/
+EDG_BINARY_STASH_PATH=/usr/casc/overture/ROSE/git/ROSE_EDG_Binaries
+# *.tar.gz within rsync is essential to only synchronize .tar.gz files.
+# scripts/hudson/checkEDGBinaryFiles.sh untars all .tar.gz and grep for EDG files, it returns an error code 
+# if any EDG source files are found
+syncEDGBinaries:
+	test -d ${EDG_BINARY_STASH_PATH} && $(top_srcdir)/scripts/hudson/checkEDGBinaryFiles.sh && \
+	rsync -avz /usr/casc/overture/ROSE/git/ROSE_EDG_Binaries/*.tar.gz -e ssh liaoch@web-dev.nersc.gov:/www/host/rosecompiler/edg_binaries \
+	|| echo "${EDG_BINARY_STASH_PATH} does not exist, this rule can only run from within LLNL! "
+
 copyWebPagesPanas: make-web-pages
 	cd ROSE_WebPages; rsync -avz * panas2@web-dev.nersc.gov:/www/host/rosecompiler
 
@@ -248,21 +261,21 @@ rosePlatformConfigureOptions.txt:
 	mv $(top_srcdir)/scripts/nmiBuildAndTestFarm/build_configs/rosePlatformConfigureOptions.txt .
 
 ROSE_InstallationInstructions.pdf: $(latexFiles) $(latexDependences) ROSE_InstallationInstructions.tex
+	($(PDFLATEX) ROSE_InstallationInstructions.tex && \
 	$(PDFLATEX) ROSE_InstallationInstructions.tex && \
-	$(PDFLATEX) ROSE_InstallationInstructions.tex && \
-	$(PDFLATEX) ROSE_InstallationInstructions.tex
+	$(PDFLATEX) ROSE_InstallationInstructions.tex) || exit 1;
 
 ROSE_DeveloperInstructions.pdf: $(latexFiles) $(latexDependences) ROSE_DeveloperInstructions.tex
+	($(PDFLATEX) ROSE_DeveloperInstructions.tex && \
 	$(PDFLATEX) ROSE_DeveloperInstructions.tex && \
-	$(PDFLATEX) ROSE_DeveloperInstructions.tex && \
-	$(PDFLATEX) ROSE_DeveloperInstructions.tex
+	$(PDFLATEX) ROSE_DeveloperInstructions.tex) || exit 1
 
 # DQ (1/18/2009): Added support for demo guide to support running and 
 # presenting information from demos of different parts of ROSE.
 ROSE_DemoGuide.pdf: $(latexFiles) $(latexDependences) ROSE_DemoGuide.tex
+	($(PDFLATEX) ROSE_DemoGuide.tex && \
 	$(PDFLATEX) ROSE_DemoGuide.tex && \
-	$(PDFLATEX) ROSE_DemoGuide.tex && \
-	$(PDFLATEX) ROSE_DemoGuide.tex
+	$(PDFLATEX) ROSE_DemoGuide.tex) || exit 1
 
 
 # Liao, 10/21/2009, run external tests before making manual
@@ -324,9 +337,9 @@ generated_files_for_manual = \
 # manual.tex.in and reference.tex.in
 #
 $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf: $(generated_files_for_manual) manual.tex gettingStarted.tex $(latexFiles) $(latexDependences)
+	($(PDFLATEX) manual.tex && \
 	$(PDFLATEX) manual.tex && \
-	$(PDFLATEX) manual.tex && \
-	$(PDFLATEX) manual.tex && \
+	$(PDFLATEX) manual.tex) || exit 1 && \
 	mv -f manual.pdf $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf
 
 #docs: html-docs latex-docs
