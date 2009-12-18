@@ -87,7 +87,8 @@ ROSE_BUILD_PATH=`pwd`
 
 if [ $SKIP_COMPILATION -ne 1 ]; then
   # only reconfigure as needed
-  ../configure --with-boost=${BOOST_ROOT} --with-CXX_DEBUG=-g --with-qt=/usr/apps/qt/4.5.1 --with-roseQt --with-haskell=/home/liao6/opt/ghc-6.10.4/bin --prefix=$HOME/.hudson/tempInstall
+#  ../configure --with-boost=${BOOST_ROOT} --with-CXX_DEBUG=-g --with-qt=/usr/apps/qt/4.5.1 --with-roseQt --with-haskell=/home/liao6/opt/ghc-6.10.4/bin --prefix=$HOME/.hudson/tempInstall
+  ../configure --with-boost=${BOOST_ROOT} --with-CXX_DEBUG=-g --with-qt=/usr/apps/qt/4.5.1 --with-roseQt --prefix=$HOME/.hudson/tempInstall
   
   make -j${PROCESS_NUM} && \
   make dist -j${PROCESS_NUM} DOT_SVNREV=-$PSEUDO_REV_NUM
