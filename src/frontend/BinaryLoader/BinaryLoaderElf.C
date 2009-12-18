@@ -166,7 +166,8 @@ Rose_STL_Container<string> BinaryLoaderElf::getDLLs(SgAsmGenericHeader* header,
   std::set<string> alreadyLoadedSet;
   for(size_t i=0; i < dllFilesAlreadyLoaded.size(); ++i){
     boost::filesystem::path p(dllFilesAlreadyLoaded[i]);
-    alreadyLoadedSet.insert(p.filename());
+    //FIXME !! tps (12/18/2009) : Commented out for now since it assumes BOOST 1.4 and does not compile for anyone else 
+    //    alreadyLoadedSet.insert(p.filename());
   }
 
   const SgAsmGenericDLLPtrList &rawdlls = header->get_dlls();
@@ -188,11 +189,12 @@ Rose_STL_Container<string> BinaryLoaderElf::getDLLs(SgAsmGenericHeader* header,
       libPath /= dll;
       std::string file=libPath.file_string();
 
+    //FIXME !! tps (12/18/2009) : Commented out for now since it assumes BOOST 1.4 and does not compile for anyone else 
       printf("      trying '%s':", file.c_str());
-      if(!boost::filesystem::is_regular_file(libPath)){
-	printf(" file not found\n");
-	continue;
-      }
+      //   if(!boost::filesystem::is_regular_file(libPath)){
+      //	printf(" file not found\n");
+      //	continue;
+      //}
 
       // have to make sure it actually opens
       std::ifstream test(file.c_str());

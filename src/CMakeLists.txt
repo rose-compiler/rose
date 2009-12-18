@@ -241,7 +241,7 @@ set(ROSE_TARGET_LINK
    libastVisualization roseDisassemblers roseBinaryFormats 
    midend_static 
    unparser astFixup binary_frontend
-   libastHiddenTypeAndDeclarationLists roseAsmUnparser libastPostProcessing libhpdf rose_util_lib 
+   libastHiddenTypeAndDeclarationLists roseAsmUnparser libastPostProcessing libhpdf rose_util_lib roseBinaryLoader
 )
 
 #Liao, link static libraries into the shared librose library
