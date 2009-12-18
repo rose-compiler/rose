@@ -350,11 +350,25 @@ AC_CHECK_TOOL(ROSE_OBJDUMP_PATH, [objdump], [no])
 AM_CONDITIONAL(ROSE_USE_OBJDUMP, [test "$ROSE_OBJDUMP_PATH" != "no"])
 AM_CONDITIONAL(ROSE_USE_BINARYCONTEXTLOOKUP, [test "$with_xml" != "no" -a "$ROSE_OBJDUMP_PATH" != "no"])
 
+# Check for availablity of wget (used for downloading the EDG binaries used in ROSE).
+AC_CHECK_TOOL(ROSE_WGET_PATH, [wget], [no])
+AM_CONDITIONAL(ROSE_USE_WGET, [test "$ROSE_WGET_PATH" != "no"])
+if test "$ROSE_WGET_PATH" = "no"; then
+   echo "ROSE does not require wget, but we are testing to see if it could be an";
+   echo "alternative to curl to download EDG binaries automatically.";
+   echo "***** wget was NOT found *****";
+else
+ # Not clear if we really should have ROSE configure automatically do something like this.
+   echo "ROSE might use wget to automatically download EDG binaries as required during the build (as an alternative to curl) ...";
+   echo "***** wget WAS found *****";
+fi
+
 # Check for availablity of curl (used for downloading the EDG binaries used in ROSE).
 AC_CHECK_TOOL(ROSE_CURL_PATH, [curl], [no])
 AM_CONDITIONAL(ROSE_USE_CURL, [test "$ROSE_CURL_PATH" != "no"])
 if test "$ROSE_CURL_PATH" = "no"; then
    echo "ROSE now requires curl to download EDG binaries automatically.";
+
    exit 1;
 else
  # Not clear if we really should have ROSE configure automatically do something like this.
@@ -943,18 +957,21 @@ AC_SUBST(RT_LIBS)
 # AC_CONFIG_SUBDIRS(TESTS/PerformanceTests/BenchmarkBase)
 # AC_SUBST(optional_PERFORMANCE_subdirs)
 
+# DQ (12/16/2009): This option is now removed since the developersScratchSpace has been 
+# removed from the ROSE's git repository and it is a separate git repository that can be 
+# checked out internally by ROSE developers.
 # Set up for Dan Quinlan's development test directory.
-AC_ARG_ENABLE(dq-developer-tests,
-[--enable-dq-developer-tests   Development option for Dan Quinlan (disregard).],
-[ echo "Setting up optional ROSE/developersScratchSpace/Dan directory"
-if test -d ${srcdir}/developersScratchSpace; then
-  :
-else
-  echo "This is a non-developer version of ROSE (source distributed with EDG binary)"
-  enable_dq_developer_tests=no
-fi
-])
-AM_CONDITIONAL(DQ_DEVELOPER_TESTS,test "$enable_dq_developer_tests" = yes)
+# AC_ARG_ENABLE(dq-developer-tests,
+# [--enable-dq-developer-tests   Development option for Dan Quinlan (disregard).],
+# [ echo "Setting up optional ROSE/developersScratchSpace/Dan directory"
+# if test -d ${srcdir}/developersScratchSpace; then
+#   :
+# else
+#   echo "This is a non-developer version of ROSE (source distributed with EDG binary)"
+#   enable_dq_developer_tests=no
+# fi
+# ])
+# AM_CONDITIONAL(DQ_DEVELOPER_TESTS,test "$enable_dq_developer_tests" = yes)
 
 ## This should be set after a complex test (turn it on as default)
 AC_DEFINE([HAVE_EXPLICIT_TEMPLATE_INSTANTIATION],[],[Use explicit template instantiation.])
@@ -1243,6 +1260,7 @@ src/frontend/CxxFrontend/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
 src/frontend/PHPFrontend/Makefile
 src/frontend/BinaryDisassembly/Makefile
+src/frontend/BinaryLoader/Makefile
 src/frontend/BinaryFormats/Makefile
 src/frontend/Disassemblers/Makefile
 src/midend/Makefile

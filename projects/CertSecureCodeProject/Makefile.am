@@ -3,12 +3,10 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # To keep compile commands tidy, please ONLY put required include flags here.
 INCLUDES = $(ROSE_INCLUDES)
 
-# "if" for DQ_DEVELOPER_TESTS (AutoMake conditional block)
-if DQ_DEVELOPER_TESTS
+# noinst_PROGRAMS = certTests
 
-noinst_PROGRAMS = certTests
-
-certTests_SOURCES = \
+# certTests_SOURCES = \
+certTests_XXX = \
 		diagnose.C \
       PRE.C \
 		DCL.C \
@@ -612,8 +610,7 @@ test2004_104.C \
 test2004_109.C \
 test2004_110.C \
 test2004_112.C \
-test2004_115.C \
-inputForLoopLocator.C
+test2004_115.C 
 
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
@@ -680,17 +677,10 @@ check-local:
 	@echo "Dan Quinlan's development tests."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
-	@$(MAKE) $(PASSING_TEST_Objects)
-	@echo "********************************************************************************************************"
-	@echo "****** ROSE/developersScratchSpace/Dan/cert_tests: make check rule complete (terminated normally) ******"
-	@echo "********************************************************************************************************"
-else
-check-local:
-	@echo "\nDan Quinlan's CERT example tests NOT run.  To run these reconfigure with:"
+#	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "********************************************************************************"
-	@echo "******** make check not run here: configure --enable-dq-developer-tests ********"
+	@echo "****** ROSE/projects/CertSecureCodeProject: make check rule commented out ******"
 	@echo "********************************************************************************"
-endif
 
 clean-local:
 	rm -rf *.o *.ps *.dot rose_*.C core *.int.c a.out

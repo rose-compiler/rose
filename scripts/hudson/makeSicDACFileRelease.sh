@@ -17,7 +17,7 @@ SOURCE_REPOS=https://outreach.scidac.gov/svn/rose/trunk
 # it follows our convention like: top/sourcetree  top/build top/install etc
 # test on rev 2759 /home/liao6/daily-test-rose/20081029_050001
 #
-ROSE_TOP=/home/liao6/daily-test-rose/release
+ROSE_TOP=/home/liao6/daily-test-rose/release-scidac
 
 # How many types of platforms to support
 EDG_BIN_COUNT=3
@@ -54,8 +54,8 @@ fi
 
 REVISION_NO=`echo $LOG_TEXT| cut -d'-' -f 3`
 if [ "x$REVISION_NO" = "x" ]; then
-  echo "Fatal error: cannot get revision string!"
-  exit 1
+  echo "Possible error: cannot get revision string!"
+  REVISION_NO="unknown"
 fi
 
 #----------run a full round of test to generate the release package---------
