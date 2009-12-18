@@ -155,9 +155,21 @@ SgAsmElfSectionTable::parse()
             SgAsmElfSectionTableEntry *entry = entries[i];
             ROSE_ASSERT(entry->get_sh_link()<entries.size());
             SgAsmElfSection *linked = entry->get_sh_link()>0 ? is_parsed[entry->get_sh_link()] : NULL;
+	    SgAsmElfSection *relLinked = NULL;
+	    bool needRelLinked = false;
+	    if((entry->get_sh_type() == SgAsmElfSectionTableEntry::SHT_REL ||
+		entry->get_sh_type() == SgAsmElfSectionTableEntry::SHT_RELA) 
+	       && entry->get_sh_info() > 0){
+
+	      ROSE_ASSERT(entry->get_sh_info() < entries.size());
+	      // relocation sections have a second linked section stored in sh_info
+	      needRelLinked = true;
+	      relLinked = is_parsed[entry->get_sh_info()];
+	    }
+	       
             if (is_parsed[i]) {
                 /* This section has already been parsed. */
-            } else if (entry->get_sh_link()>0 && !linked) {
+            } else if ((entry->get_sh_link()>0 && linked == NULL) || (needRelLinked && relLinked == NULL)) {
                 /* Don't parse this section yet because it depends on something that's not parsed yet. */
                 try_again = true;
             } else {
@@ -198,7 +210,7 @@ SgAsmElfSectionTable::parse()
                   case SgAsmElfSectionTableEntry::SHT_REL: {
                       SgAsmElfSymbolSection *symbols = dynamic_cast<SgAsmElfSymbolSection*>(linked);
                       ROSE_ASSERT(symbols);
-                      SgAsmElfRelocSection *relocsec = new SgAsmElfRelocSection(fhdr, symbols);
+                      SgAsmElfRelocSection *relocsec = new SgAsmElfRelocSection(fhdr, symbols,relLinked);
                       relocsec->set_uses_addend(false);
                       is_parsed[i] = relocsec;
                       break;
@@ -206,7 +218,7 @@ SgAsmElfSectionTable::parse()
                   case SgAsmElfSectionTableEntry::SHT_RELA: {
                       SgAsmElfSymbolSection *symbols = dynamic_cast<SgAsmElfSymbolSection*>(linked);
                       ROSE_ASSERT(symbols);
-                      SgAsmElfRelocSection *relocsec = new SgAsmElfRelocSection(fhdr, symbols);
+                      SgAsmElfRelocSection *relocsec = new SgAsmElfRelocSection(fhdr, symbols,relLinked);
                       relocsec->set_uses_addend(true);
                       is_parsed[i] = relocsec;
                       break;
@@ -414,18 +426,18 @@ SgAsmElfSectionTableEntry::update_from_section(SgAsmElfSection *section)
         set_sh_addr(section->get_mapped_preferred_rva());
         set_sh_addralign(section->get_mapped_alignment());
         if (section->get_mapped_wperm()) {
-            p_sh_flags |= 0x01;
+	     p_sh_flags |= SHF_WRITE;
         } else {
-            p_sh_flags &= ~0x01;
+  	     p_sh_flags &= ~SHF_WRITE;
         }
         if (section->get_mapped_xperm()) {
-            p_sh_flags |= 0x04;
+	     p_sh_flags |=  SHF_EXECINSTR;
         } else {
-            p_sh_flags &= ~0x04;
+	     p_sh_flags &= ~SHF_EXECINSTR;
         }
     } else {
         set_sh_addr(0);
-        p_sh_flags &= ~0x05; /*clear write & execute bits*/
+        p_sh_flags &= ~(SHF_WRITE | SHF_EXECINSTR); /*clear write & execute bits*/
     }
     
     SgAsmElfSection *linked_to = section->get_linked_section();

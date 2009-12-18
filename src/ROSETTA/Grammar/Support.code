@@ -10129,6 +10129,8 @@ int SgFile::buildAST( std::vector<std::string> argv, std::vector<std::string> in
    {
      printf ("Base class of virtual function, SgFile::buildAST(), called by mistake! \n");
      ROSE_ASSERT(false);
+     // tps (12/11/2009): Windows error : needs a return value
+     return 0;
    }
 
 #if 0
