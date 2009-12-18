@@ -208,24 +208,25 @@ add_subdirectory(roseExtensions)
 
 ########### next target ###############
 set(rose_LIB_SRCS dummyCppFileForLibrose.C  
-# ${ROSETTA_SRC} 
-#    ${sage3_SRC}
+ ${ROSETTA_SRC} 
+    ${sage3_SRC}
     ${rose_support_src} 
     ${EDG_SAGE_Connection_SRC}
     ${virtualCFG_SRC}
     ${MSTL_SRC}
-#    ${phpFrontend_SRC}
     )
 
 # tps (12/14/2009) : Added new libraries, so that the project size under windows is smaller and I do not run out of heap space
-add_library(ROSETTA_LIB SHARED ${ROSETTA_SRC} 
-)
-add_dependencies(ROSETTA_LIB ROSETTA OMPPARSER ROSE_PREPROCESSOR ) 
+# Strangly enough the following lines work under LINUX but now Windows
+#add_library(ROSETTA_LIB SHARED ${ROSETTA_SRC} 
+#)
+#add_dependencies(ROSETTA_LIB ROSETTA  ) 
 
 # tps (12/14/2009) : Added new libraries, so that the project size under windows is smaller and I do not run out of heap space
-add_library(SAGE3_LIB SHARED ${sage3_SRC}     
-)
-add_dependencies(SAGE3_LIB ROSETTA OMPPARSER ROSE_PREPROCESSOR ) 
+# Strangly enough the following lines work under LINUX but now Windows
+#add_library(SAGE3_LIB SHARED ${sage3_SRC}     
+#)
+#add_dependencies(SAGE3_LIB ROSETTA_LIB ) 
 
 
 add_library(rose SHARED ${rose_LIB_SRCS} )
@@ -234,9 +235,12 @@ add_dependencies(rose ROSETTA OMPPARSER ROSE_PREPROCESSOR )
 
 # tps (12/14/2009) : Created a variable for the dependend libraries. Make sure that order is correct.
 set(ROSE_TARGET_LINK 
-   ROSETTA_LIB SAGE3_LIB PHP_FRONTEND_LIB
+#   ROSETTA_LIB SAGE3_LIB 
+#   PHP_FRONTEND_LIB
    libastMerge edg33 libsageInterface libastTokenStream libastHiddenTypeAndDeclarationLists
-   libastVisualization roseDisassemblers roseBinaryFormats midend unparser astFixup binary_frontend
+   libastVisualization roseDisassemblers roseBinaryFormats 
+   midend_static 
+   unparser astFixup binary_frontend
    libastHiddenTypeAndDeclarationLists roseAsmUnparser libastPostProcessing libhpdf rose_util_lib 
 )
 
