@@ -11,7 +11,21 @@ set( libastMerge_SRC
 # Liao, 11/10/2009
 # Using static library here as a "convenience" library to be merged into bigger shared librose.so
 add_library( libastMerge STATIC ${libastMerge_SRC}  )
-add_dependencies( libastMerge ROSETTA )
+add_dependencies( libastMerge_module ROSETTA )
+
+# tps (12/17/2009) : Experiments to create (small) dynamic libraries.
+# Currently the libastMerge.lib file under windows is 250 MB (static)
+#add_library( libastMerge_shared SHARED ${libastMerge_SRC}  )
+#add_library( libastMerge_module MODULE ${libastMerge_SRC}  )
+#add_dependencies( libastMerge ROSETTA )
+#add_dependencies( libastMerge_shared ROSETTA )
+
+# tps (12/17/2009) : Experiments to create (small) dynamic libraries.
+# I read that the symbols should be exported by default and that the
+# error message I get is a bug. But I cannot figure out how to create
+# dynamic libraries otherwise.
+#set_property(TARGET ROSETTA PROPERTY ENABLE_EXPORTS 1)
+#target_link_libraries(libastMerge_shared ROSETTA)
 
 ########### install files ###############
 
