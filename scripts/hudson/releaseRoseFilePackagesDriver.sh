@@ -16,7 +16,8 @@ export JAVA_HOME=/usr/apps/java/jdk1.6.0_11
 export BOOST_ROOT="/home/liao6/opt/boost_1_35_0"
 export LD_LIBRARY_PATH="/usr/apps/java/jdk1.6.0_11/lib:${JAVA_HOME}/jre/lib/i386/server:$LD_LIBRARY_PATH"
 export LD_LIBRARY_PATH="${BOOST_ROOT}/lib:${LD_LIBRARY_PATH}"
-export PATH="$JAVA_HOME/bin:/home/liao6/opt/git-1.6.5.2/bin:/usr/apps/automake/1.9.6/bin:$PATH:/home/liao6/opt/ghc-6.10.4/bin"
+#export PATH="$JAVA_HOME/bin:/home/liao6/opt/git-1.6.5.2/bin:/usr/apps/automake/1.9.6/bin:$PATH:/home/liao6/opt/ghc-6.10.4/bin"
+export PATH="$JAVA_HOME/bin:/home/liao6/opt/git-1.6.5.2/bin:/usr/apps/automake/1.9.6/bin:$PATH"
 PROCESS_NUM=8
 
 # sometimes, we want to skip the time consuming part
