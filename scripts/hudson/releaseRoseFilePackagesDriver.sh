@@ -3,10 +3,9 @@
 # x) build a distribution package off the internal git repository's
 # master branch, 
 # x) tag the internal git with a numeric release number
-# x) import the package to the external svn repository
-# x) update rosecompiler.org website
+# x) release a file package for ROSe
 # 
-# Liao 12/15/2009
+# Liao 12/18/2009
 
 # set up 32-bit environment
 #--------------------------------------
@@ -87,6 +86,30 @@ fi
 cd ROSE-build
 ROSE_BUILD_PATH=`pwd`
 
+if [ $SKIP_COMPILATION -ne 1 ]; then
+  # only reconfigure as needed
+#  ../configure --with-boost=${BOOST_ROOT} --with-CXX_DEBUG=-g --with-qt=/usr/apps/qt/4.5.1 --with-roseQt --with-haskell=/home/liao6/opt/ghc-6.10.4/bin --prefix=$HOME/.hudson/tempInstall
+  ../configure --with-boost=${BOOST_ROOT} --with-CXX_DEBUG=-g --with-qt=/usr/apps/qt/4.5.1 --with-roseQt --prefix=$HOME/.hudson/tempInstall
+  
+  make -j${PROCESS_NUM} && \
+  make dist -j${PROCESS_NUM} DOT_SVNREV=-$PSEUDO_REV_NUM
+fi
+
+if [ $? -ne 0  ]  ; then
+  echo  "Fatal error during make and make dist, aborting ..."
+  exit 3
+fi
+
+# ---------update external file packages
+/home/liao6/rose/scripts/hudson/releaseRoseFilePackages.sh $ROSE_SOURCE_PATH $ROSE_BUILD_PATH
+
+# --------- update external svn repository
+# this script can tolerate redundant update (trying to update the same package more than once is OK)
+#/home/liao6/rose/scripts/hudson/importRoseGitDistributionToSVN $ROSE_SOURCE_PATH $ROSE_BUILD_PATH
+# --------- update external web site
+#if [ $SKIP_COMPILATION -ne 1 ]; then
+# make -C docs/Rose copyWebPages
+#fi
 # build tree should be clean
 #if [ -d ${ROSE_BUILD_PATH} ]; then
 #  if [ -f ${ROSE_BUILD_PATH}/rose_config.h ] ;
@@ -101,40 +124,5 @@ ROSE_BUILD_PATH=`pwd`
 #  exit 3
 #fi
 
-if [ $SKIP_COMPILATION -ne 1 ]; then
-  # only reconfigure as needed
-  ../configure --with-boost=${BOOST_ROOT} --with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-qt=/usr/apps/qt/4.5.1 --with-roseQt --with-pch --prefix=$HOME/.hudson/tempInstall
-#../configure --with-boost=${BOOST_ROOT} --with-CXX_DEBUG=-g --with-CXX_WARNINGS=-Wall --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-qt=/usr/apps/qt/4.5.1 --with-roseQt --with-haskell=/home/liao6/opt/ghc-6.10.4/bin --with-pch --with-gomp_omp_runtime_library=/home/liao6/opt/gcc-svn/lib/ --prefix=$HOME/.hudson/tempInstall
-  
-  make -j${PROCESS_NUM} && \
-  make check -j${PROCESS_NUM} && \
-  make docs -j${PROCESS_NUM} &&  \
-  make dist -j${PROCESS_NUM} DOT_SVNREV=-$PSEUDO_REV_NUM && \
-  make distcheck -j${PROCESS_NUM}
-fi
 
-if [ $? -ne 0 ]; then
-  echo "Error in make && make check && make docs && make dist && make distcheck, aborting...."
-  exit 3
-fi
-
-# --------- update external svn repository
-# this script can tolerate redundant update (trying to update the same package more than once is OK)
-/home/liao6/rose/scripts/hudson/importRoseGitDistributionToSVN $ROSE_SOURCE_PATH $ROSE_BUILD_PATH
-
-if [ $? -ne 0 ]; then
-  echo "Error in importRoseGitDistributionToSVN, aborting ...."
-  exit 3
-fi
-
-
-# --------- update external web site
-if [ $SKIP_COMPILATION -ne 1 ]; then
- make -C docs/Rose copyWebPages
-fi
-
-# ---------update external file packages
-# SKIPPED here 
-# this is done by another weekly hudson job
-# /home/liao6/rose/scripts/hudson/releaseRoseFilePackages.sh $ROSE_SOURCE_PATH $ROSE_BUILD_PATH
 
