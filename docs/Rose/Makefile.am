@@ -4,7 +4,7 @@ include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 # When debugging latex documentation skip using the --interaction=batchmode option
 #PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex --interaction=batchmode
 # Liao 12/18/2009, use normal mode to ease finding bugs from hudson logs
-PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex 
+PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex -file-line-error -halt-on-error
 
 # Later we will add ROSETTA documentation here ...
 SUBDIRS = Tutorial 
@@ -338,11 +338,13 @@ generated_files_for_manual = \
 # manual.tex.in and reference.tex.in
 #
 $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf: $(generated_files_for_manual) manual.tex gettingStarted.tex $(latexFiles) $(latexDependences)
-	($(PDFLATEX) manual.tex && \
 	$(PDFLATEX) manual.tex && \
-	$(PDFLATEX) manual.tex) || exit 1 && \
-	mv -f manual.pdf $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf
+	$(PDFLATEX) manual.tex && \
+	$(PDFLATEX) manual.tex && \
+	cp -f manual.pdf $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf
 
+#	$(PDFLATEX) manual.tex) || exit 1 && \ 
+#	$(PDFLATEX) manual.tex && \ 
 #docs: html-docs latex-docs
 docs: latex-docs html-docs 
 
@@ -372,7 +374,7 @@ clean-local: clean-web-pages
 
 CLEANFILES = roseDoxygen.tags SageIntermediateForm *.log *.aux *.dvi \
 	     AstProcessing AstRewrite *.gz a.out roseDirectoryMap.ps roseDirectoryMap.pdf \
-	     $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf \
+	     manual.pdf $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf \
 	     rose.cfg roseCommandline.txt roseConfigureOptions* roseExecutionOutput.txt \
 	     roseHelpOutput.txt rose_roseTestProgram.C roseTestProgram.C sage.cfg \
 	     $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz footer.html \
