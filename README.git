@@ -27,7 +27,7 @@ The first step of using a ROSE git repository is to create a local copy
      git clone /usr/casc/overture/ROSE/git/ROSE.git
 
 on laptop use:
-     git clone ssh://dquinlan@tux281.llnl.gov/usr/casc/overture/ROSE/git/ROSE.git git-rose-dan
+     git clone ssh://dquinlan@tux281.llnl.gov/usr/casc/overture/ROSE/git/ROSE.git git-dq-main-rc
 
 
 
