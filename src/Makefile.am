@@ -191,7 +191,9 @@ uninstall-local:
 
 
 rebuildPrelinker:
-	rm -f frontend/CxxFrontend/EDG_3.3/util/edg_prelink.lo
+#	DQ (12/21/2009): The locaion of the EDG directory has been changed now that it is a submodule in our git repository.
+#	rm -f frontend/CxxFrontend/EDG_3.3/util/edg_prelink.lo
+	rm -f frontend/CxxFrontend/EDG/EDG_3.3/util/edg_prelink.lo
 	rm -f frontend/SageIII/Cxx_Grammar.lo
 	rm -f roseSupport/templateSupport.lo
 	$(MAKE)

@@ -97,6 +97,7 @@ all: EDG/libroseEDG.la
 
 #extract EDG tar-balls for the current architecture if that has not already been done
 EDG/libroseEDG.la: $(BINARY_EDG_DIRNAME).tar.gz
+	echo "am__untar = $(am__untar)"
 	if test "$(am__untar)" != "false"; then \
 	    echo "Found $<: proceeding to untar file $(BINARY_EDG_DIRNAME).tar.gz" >&2 && \
 	    GZIP=$(GZIP_ENV) gunzip -c $< | $(am__untar) && \
