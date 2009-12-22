@@ -16,8 +16,11 @@ COMPILERS_x86_64_pc_linux_gnu = $(STD_GNU_COMPILERS)
 COMPILERS_i686_apple_darwin = GNU-4.0
 
 #fetch tar-ball , try internal url first, then the external one
+# Liao, 12/18/2009, we switch to wget from curl for better coverage of users and stability
+# curl sometimes output the error message into the output tar ball file
 %.tar.gz:
-	test -d ${BINARY_EDG_TARBALL_URL} && curl ${BINARY_EDG_TARBALL_URL}/$@  -o $@ || curl ${EXTERNAL_BINARY_EDG_TARBALL_URL}/$@  -o $@ 
+	test -d ${BINARY_EDG_TARBALL_DISTRIBUTION_PATH} && cp ${BINARY_EDG_TARBALL_DISTRIBUTION_PATH}/$@  . || wget ${EXTERNAL_BINARY_EDG_TARBALL_URL}/$@
+#	test -d ${BINARY_EDG_TARBALL_URL} && curl ${BINARY_EDG_TARBALL_URL}/$@  -o $@ || curl ${EXTERNAL_BINARY_EDG_TARBALL_URL}/$@  -o $@ 
 
 # This line includes different EDG tarballs depending on the value of the environment variable DIST_EDG
 # Default
