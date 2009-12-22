@@ -34,8 +34,12 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xcmake" ; then
 	rm -rf ROSE-build-cmake
 	mkdir ROSE-build-cmake
 	cd ROSE-build-cmake
-	cmake .. -DBOOST_ROOT=${ROSE_TEST_BOOST_PATH}
+	cmake .. -DBOOST_ROOT=${ROSE_TEST_BOOST_PATH} && \
 	make -j8
+      if [ $? -ne 0 ]  ; then
+        echo "fatal error in cmake build , aborting..."
+        exit 3
+      fi
 	exit 0
 fi
 
@@ -69,8 +73,13 @@ echo "Starting configure step"
 echo "Done with configure step"
 
 if test "x$ROSE_TEST_BUILD_STYLE" = "xedg" ; then
-	make -j8 upload_edg_binary
+	make -j8 upload_edg_binary && \
 	make -Csrc/frontend/CxxFrontend deploy_tarballs
+      if [ $? -ne 0 ]  ; then
+        echo "fatal error when build edg binaries , aborting..."
+        exit 3
+      fi
+
 	exit 0
 fi
 
@@ -90,6 +99,10 @@ if test false; then
    echo "Done with compile time spew"
 else
    make -j8 
+   if [ $? -ne 0 ]  ; then
+        echo "fatal error during 'make'  , aborting..."
+        exit 3
+   fi
 fi 
 echo "Done with compile step"
 
@@ -106,12 +119,22 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
 	make -j8 check
  # Or perhaps: ( false || echo "testing" ) | tee make_check_output.txt
  # ( make -j8 check || echo "error detected in make check rule"; exit 1 ) 2>&1 | tee make_check_output.txt
+   if [ $? -ne 0 ]  ; then
+        echo "fatal error during 'make check'  , aborting..."
+        exit 3
+   fi
+
    echo "Done with make check step"
  # grep -n "Making check in " make_check_output.txt | ../scripts/checkMakeSpew.pl | tee makeCheckSpewLineCount.txt
 
  # The distcheck rule builds a distribution and reruns all the tests; including the rules: install, installcheck
    echo "Starting make distcheck step"
-	make -j8 distcheck
+   make -j8 distcheck
+   if [ $? -ne 0 ]  ; then
+        echo "fatal error during 'make distcheck'  , aborting..."
+        exit 3
+   fi
+
    echo "Done with make distcheck step"
 fi
 
@@ -126,5 +149,9 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \) ; then
  # Running with parallelism here does not tend to be very helpful since 
  # doxygen is what has to run and it does not run in parallel.
    make -j8 docs
+   if [ $? -ne 0 ]  ; then
+        echo "fatal error during 'make docs'  , aborting..."
+        exit 3
+   fi
    echo "Done with make docs step"
 fi
