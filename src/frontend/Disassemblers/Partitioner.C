@@ -78,7 +78,8 @@ Partitioner::detectBasicBlocks(const Disassembler::InstructionMap &insns) const
         /* If this instruction has multiple known successors then make each of those successors the beginning of a basic
          * block (provided there's an instruction at that address). However, if there's only one successor and it's the
          * fall-through address then ignore it. */
-        Disassembler::AddressSet successors = insn->get_successors();
+        bool complete;
+        Disassembler::AddressSet successors = insn->get_successors(&complete);
         for (Disassembler::AddressSet::const_iterator si=successors.begin(); si!=successors.end(); ++si) {
             rose_addr_t successor_va = *si;
             if ((successor_va != next_va || successors.size()>1) && insns.find(successor_va)!=insns.end())
@@ -401,9 +402,9 @@ Partitioner::mark_entry_targets(SgAsmGenericHeader *fhdr, const Disassembler::In
 {
     SgRVAList entries = fhdr->get_entry_rvas();
     for (size_t i=0; i<entries.size(); i++) {
-        rose_addr_t entry_rva = entries[i].get_rva();
-        if (insns.find(entry_rva)!=insns.end())
-            func_starts[entry_rva].reason |= SgAsmFunctionDeclaration::FUNC_ENTRY_POINT;
+        rose_addr_t entry_va = entries[i].get_rva() + fhdr->get_base_va();
+        if (insns.find(entry_va)!=insns.end())
+            func_starts[entry_va].reason |= SgAsmFunctionDeclaration::FUNC_ENTRY_POINT;
     }
 }
 
@@ -422,12 +423,12 @@ Partitioner::mark_call_targets(const Disassembler::InstructionMap &insns, Functi
         }
 
         if (insn && (x86_call==insn->get_kind() || x86_farcall==insn->get_kind())) {
-            rose_addr_t callee_rva = 0;
-            if (x86GetKnownBranchTarget(insn, callee_rva/*out*/) &&
-                insns.find(callee_rva)!=insns.end()) {
-                bool needs_reloc = callee_rva == insn->get_address() + insn->get_raw_bytes().size();
+            rose_addr_t callee_va = 0;
+            if (x86GetKnownBranchTarget(insn, callee_va/*out*/) &&
+                insns.find(callee_va)!=insns.end()) {
+                bool needs_reloc = callee_va == insn->get_address() + insn->get_raw_bytes().size();
                 if (!needs_reloc)
-                    func_starts[callee_rva].reason |= SgAsmFunctionDeclaration::FUNC_CALL_TARGET;
+                    func_starts[callee_va].reason |= SgAsmFunctionDeclaration::FUNC_CALL_TARGET;
             }
         }
     }

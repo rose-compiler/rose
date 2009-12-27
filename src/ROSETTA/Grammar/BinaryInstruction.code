@@ -68,7 +68,7 @@ HEADER_BINARY_INSTRUCTION_START
 			// tps (12/9/2009) : MSC requires a return value
 		     return false;
 		} //subclasses must redefine
-		virtual std::set<rose_addr_t> get_successors() {abort();
+		virtual std::set<rose_addr_t> get_successors(bool* complete) {abort();
 			// tps (12/9/2009) : MSC requires a return value
 		     std::set<rose_addr_t> t;
 		     return t;
@@ -3684,7 +3684,7 @@ SOURCE_BINARY_FILE_PROGRAM_HEADER_LIST_END
 HEADER_BINARY_X86_INSTRUCTION_START
 	public:
 		virtual bool terminatesBasicBlock();			/* implemented in DisassemblerX86.C */
-		virtual std::set<rose_addr_t> get_successors();		/* implemented in DisassemblerX86.C */
+		virtual std::set<rose_addr_t> get_successors(bool* complete);/* implemented in DisassemblerX86.C */
 HEADER_BINARY_X86_INSTRUCTION_END
 
 
@@ -3692,7 +3692,7 @@ HEADER_BINARY_X86_INSTRUCTION_END
 HEADER_BINARY_POWERPC_INSTRUCTION_START
 	public:
 		virtual bool terminatesBasicBlock();			/* implemented in DisassemblerPowerpc.C */
-		virtual std::set<rose_addr_t> get_successors();		/* implemented in DisassemblerPowerpc.C */
+		virtual std::set<rose_addr_t> get_successors(bool* complete);/* implemented in DisassemblerPowerpc.C */
 HEADER_BINARY_POWERPC_INSTRUCTION_END
 
 
@@ -3700,7 +3700,7 @@ HEADER_BINARY_POWERPC_INSTRUCTION_END
 HEADER_BINARY_ARM_INSTRUCTION_START
 	public:
 		virtual bool terminatesBasicBlock();			/* implemented in DisassemblerArm.C */
-		virtual std::set<rose_addr_t> get_successors();		/* implemented in DisassemblerArm.C */
+		virtual std::set<rose_addr_t> get_successors(bool* complete);/* implemented in DisassemblerArm.C */
 HEADER_BINARY_ARM_INSTRUCTION_END
 
 

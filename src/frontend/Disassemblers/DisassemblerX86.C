@@ -39,34 +39,86 @@
 
 
 Disassembler::AddressSet
-SgAsmx86Instruction::get_successors() {
+SgAsmx86Instruction::get_successors(bool *complete) {
     Disassembler::AddressSet retval;
-    rose_addr_t va;
+    *complete = true; /*assume true and prove otherwise*/
 
-    /* call, jmp, ja, jae, jb, jbe, jcxz, jecxz, jrcxz, je, jg, jge, jl, jle, jne, jno, jns, jo,
-     * jpe, jpo, js, loop, loopnz, loopz */
-    if (x86GetKnownBranchTarget(this, va/*out*/))
-        retval.insert(va);
-
-    /* Fall through address. */
     switch (get_kind()) {
-        case x86_unknown_instruction:
+        case x86_call:
+        case x86_farcall:
+        case x86_jmp:
+        case x86_farjmp: {
+            /* Unconditional branch to operand-specified address */
+            rose_addr_t va;
+            if (x86GetKnownBranchTarget(this, va/*out*/)) {
+                retval.insert(va);
+            } else {
+                *complete = false;
+            }
+            break;
+        }
+
+        case x86_ja:
+        case x86_jae:
+        case x86_jb:
+        case x86_jbe:
+        case x86_jcxz:
+        case x86_jecxz:
+        case x86_jrcxz:
+        case x86_je:
+        case x86_jg:
+        case x86_jge:
+        case x86_jl:
+        case x86_jle:
+        case x86_jne:
+        case x86_jno:
+        case x86_jns:
+        case x86_jo:
+        case x86_jpe:
+        case x86_jpo:
+        case x86_js:
+        case x86_loop:
+        case x86_loopnz:
+        case x86_loopz: {
+            /* Conditional branches to operand-specified address */
+            rose_addr_t va;
+            if (x86GetKnownBranchTarget(this, va/*out*/)) {
+                retval.insert(va);
+            } else {
+                *complete = false;
+            }
+            retval.insert(get_address() + get_raw_bytes().size());
+            break;
+        }
+
         case x86_ret:
         case x86_iret:
-        case x86_farcall:
-        case x86_farjmp:
-        case x86_hlt:
-        case x86_jmp:
         case x86_int1:
         case x86_int3:
         case x86_into:
-        case x86_retf:
         case x86_rsm:
         case x86_ud2:
+        case x86_retf: {
+            /* Unconditional branch to run-time specified address */
+            *complete = false;
             break;
-        default:
+        }
+
+        case x86_hlt: {
+            /* Instructions having no successor. */
+            break;
+        }
+
+        case x86_unknown_instruction: {
+            /* Instructions having unknown successors */
+            *complete = false;
+        }
+
+        default: {
+            /* Instructions that always fall through to the next instruction */
             retval.insert(get_address() + get_raw_bytes().size());
             break;
+        }
     }
     return retval;
 }
@@ -150,7 +202,8 @@ DisassemblerX86::disassembleOne(const MemoryMap *map, rose_addr_t start_va, Addr
 
     /* Note successors if necesssary */
     if (successors) {
-        AddressSet suc2 = insn->get_successors();
+        bool complete;
+        AddressSet suc2 = insn->get_successors(&complete);
         successors->insert(suc2.begin(), suc2.end());
     }
 
@@ -183,64 +236,58 @@ Disassembler::AddressSet
 DisassemblerX86::get_block_successors(const InstructionMap& insns, bool* complete)
 {
     AddressSet successors = Disassembler::get_block_successors(insns, complete);
-    InstructionMap::const_iterator ii = insns.end();
-    --ii;
-    SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(ii->second);
-    ROSE_ASSERT(last_insn!=NULL);
 
-#if 0 /*commented out now because X86InstructionSemantics will throw rather than die. [RPM 2009-12-16]*/
-    /* FIXME: Instruction semantics are not implemented for AMD64 and will fail an assertion. [RPM 2009-12-08]*/
-    if (last_insn->get_baseSize()==x86_insnsize_64) {
-        static bool printed=false;
-        if (!printed) {
-            fprintf(stderr, "DisassemblerX86: FIXME: instruction semantics not implemented for 64-bit code\n");
-            printed = true;
-        }
-        return successors;
-    }
-#endif
+    if (!complete) {
+        if (p_debug)
+            fprintf(p_debug, "block 0x%08"PRIx64" semantic analysis... ", insns.begin()->first);
 
-    if (p_debug)
-        fprintf(p_debug, "block 0x%08"PRIx64" semantic analysis... ", insns.begin()->first);
-
-    typedef X86InstructionSemantics<BlockSuccessorsPolicy, XVariablePtr> Semantics;
-    try {
-        BlockSuccessorsPolicy policy;
-        Semantics semantics(policy);
-        for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ii++) {
-            semantics.processInstruction(isSgAsmx86Instruction(ii->second));
+        typedef X86InstructionSemantics<BlockSuccessorsPolicy, XVariablePtr> Semantics;
+        try {
+            BlockSuccessorsPolicy policy;
+            Semantics semantics(policy);
+            for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ii++) {
+                semantics.processInstruction(isSgAsmx86Instruction(ii->second));
 #if 0   /*Turn on for even more debugging*/
-            if (p_debug) {
-                std::ostringstream s;
-                s <<unparseInstructionWithAddress(ii->second) <<"\n" <<policy.currentRset;
-                s <<"    ip = " <<policy.readIP() <<"\n";
-                fputs(s.str().c_str(), p_debug);
-            }
+                if (p_debug) {
+                    std::ostringstream s;
+                    s <<unparseInstructionWithAddress(ii->second) <<"\n" <<policy.currentRset;
+                    s <<"    ip = " <<policy.readIP() <<"\n";
+                    fputs(s.str().c_str(), p_debug);
+                }
 #endif
-        }
-        XVariablePtr<32> newip = policy.readIP();
-        if (newip->get().name==0) {
-            if (p_debug)
-                fprintf(p_debug, "yields ip=0x%08"PRIx64"\n", newip->get().offset);
-            successors.clear();
-            successors.insert(newip->get().offset);
-            /* Assume that a CALL instruction eventually executes a RET that causes execute to resume at the address following the
-             * CALL. This is true 99% of the time. */
-            if (last_insn->get_kind()==x86_call)
-                successors.insert(last_insn->get_address() + last_insn->get_raw_bytes().size());
-            *complete = true; /*this is the complete set of successors*/
-        } else if (p_debug) {
-            fprintf(p_debug, "yields ip=<unknown>\n");
-        }
-    } catch(const Semantics::Exception& e) {
-        /* Abandon entire basic block if we hit an instruction that's not implemented. */
-        if (p_debug) {
-            fprintf(p_debug, "throws \"%s\"", e.mesg.c_str());
-            if (e.insn)
-                fprintf(p_debug, " at 0x%08"PRIx64": %s\n", e.insn->get_address(), unparseInstruction(e.insn).c_str());
+            }
+            XVariablePtr<32> newip = policy.readIP();
+            if (newip->get().name==0) {
+                if (p_debug)
+                    fprintf(p_debug, "yields ip=0x%08"PRIx64"\n", newip->get().offset);
+                successors.clear();
+                successors.insert(newip->get().offset);
+                *complete = true; /*this is the complete set of successors*/
+            } else if (p_debug) {
+                fprintf(p_debug, "yields ip=<unknown>\n");
+            }
+        } catch(const Semantics::Exception& e) {
+            /* Abandon entire basic block if we hit an instruction that's not implemented. */
+            if (p_debug) {
+                fprintf(p_debug, "throws \"%s\"", e.mesg.c_str());
+                if (e.insn)
+                    fprintf(p_debug, " at 0x%08"PRIx64": %s\n", e.insn->get_address(), unparseInstruction(e.insn).c_str());
+            }
         }
     }
-    
+
+    /* Assume that a CALL instruction eventually executes a RET that causes execute to resume at the address following the
+     * CALL. This is true 99% of the time. */
+    {
+        ROSE_ASSERT(insns.size()>0);
+        InstructionMap::const_iterator ii = insns.end();
+        --ii;
+        SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(ii->second);
+        ROSE_ASSERT(last_insn!=NULL);
+        if (last_insn->get_kind()==x86_call || last_insn->get_kind()==x86_farcall)
+            successors.insert(last_insn->get_address() + last_insn->get_raw_bytes().size());
+    }
+
     return successors;
 }
 

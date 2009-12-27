@@ -560,6 +560,8 @@ Disassembler::disassembleInterp(SgAsmInterpretation *interp, AddressSet *success
         for (size_t j=0; j<entry_rvalist.size(); j++) {
             rose_addr_t entry_va = entry_rvalist[j].get_rva() + headers[i]->get_base_va();
             worklist.insert(entry_va);
+            if (p_debug)
+                fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: entry point\n", entry_va);
         }
         if (p_search & SEARCH_FUNCSYMS)
             search_function_symbols(&worklist, map, headers[i]);
@@ -638,6 +640,5 @@ Disassembler::get_block_successors(const InstructionMap& insns, bool *complete)
     ROSE_ASSERT(insns.size()>0);
     InstructionMap::const_iterator ii = insns.end();
     --ii;
-    *complete = false; /*FIXME: we can be more sure about some instructions*/
-    return ii->second->get_successors();
+    return ii->second->get_successors(complete);
 }

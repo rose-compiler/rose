@@ -67,9 +67,10 @@ static bool modifies_ip(SgAsmArmInstruction *insn)
 }
 
 Disassembler::AddressSet
-SgAsmArmInstruction::get_successors() {
+SgAsmArmInstruction::get_successors(bool *complete) {
     Disassembler::AddressSet retval;
     const std::vector<SgAsmExpression*> &exprs = get_operandList()->get_operands();
+    *complete = true; /*assume retval is the complete set of successors for now*/
 
     switch (get_kind()) {
         case arm_b:
@@ -84,6 +85,7 @@ SgAsmArmInstruction::get_successors() {
                 retval.insert(target_va);
             } else {
                 /* Could also be a register reference expression, but we don't know the successor in that case. */
+                *complete = false;
             }
             
             /* Fall-through address */
@@ -101,6 +103,8 @@ SgAsmArmInstruction::get_successors() {
             ROSE_ASSERT(rre);
             if (rre->get_arm_register_code()==SgAsmArmRegisterReferenceExpression::reg15) {
                 retval.insert(get_address()+4);
+            } else {
+                *complete = false;
             }
             break;
         }
@@ -121,8 +125,11 @@ SgAsmArmInstruction::get_successors() {
             break;
 
         default:
-            if (!modifies_ip(this) || get_condition()!=arm_cond_al)
+            if (!modifies_ip(this) || get_condition()!=arm_cond_al) {
                 retval.insert(get_address()+4);
+            } else {
+                *complete = false;
+            }
             break;
     }
     return retval;
@@ -179,7 +186,8 @@ DisassemblerArm::disassembleOne(const MemoryMap *map, rose_addr_t start_va, Addr
     
     /* Note successors if necessary */
     if (successors) {
-        AddressSet suc2 = insn->get_successors();
+        bool complete;
+        AddressSet suc2 = insn->get_successors(&complete);
         successors->insert(suc2.begin(), suc2.end());
     }
 

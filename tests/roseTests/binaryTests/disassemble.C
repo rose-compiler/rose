@@ -14,6 +14,7 @@ main(int argc, char *argv[])
     bool do_reassemble = false;
     bool do_dot = false;
     bool do_quiet = false;
+    bool do_skip_dos = false;
     int exit_status = 0;
 
     char **new_argv = (char**)calloc(argc+2, sizeof(char*));
@@ -59,6 +60,8 @@ main(int argc, char *argv[])
             search &= ~Disassembler::SEARCH_FUNCSYMS;
         } else if (!strcmp(argv[i], "--dot")) {
             do_dot = true;      /* generate dot files showing the AST */
+        } else if (!strcmp(argv[i], "--skip-dos")) {
+            do_skip_dos = true;
         } else if (!strcmp(argv[i], "--show-bad")) {
             show_bad = true;    /* show details about failed disassembly or assembly */
         } else if (!strcmp(argv[i], "--reassemble")) {
@@ -89,6 +92,19 @@ main(int argc, char *argv[])
     assert(interps.size()>0);
     for (size_t i=0; i<interps.size(); i++) {
         SgAsmInterpretation *interp = isSgAsmInterpretation(interps[i]);
+
+        /* Should we skip this interpretation? */
+        if (do_skip_dos) {
+            bool is_dos = false;
+            const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+            for (size_t j=0; j<headers.size() && !is_dos; j++) {
+                if (isSgAsmDOSFileHeader(headers[j])) {
+                    is_dos = true;
+                }
+            }
+            if (is_dos)
+                continue;
+        }
 
         /* Build the disassembler */
         Disassembler *d = Disassembler::create(interp);
@@ -137,6 +153,7 @@ main(int argc, char *argv[])
 
         /* Generate graph of the AST */
         if (do_dot) {
+            printf("Generating DOT graphs...\n");
             generateDOT(*project);
             generateAstGraph(project, INT_MAX);
         }

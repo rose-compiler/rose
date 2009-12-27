@@ -316,7 +316,7 @@ struct X86InstructionSemantics {
             case V_SgAsmBinaryMultiply: {
                 SgAsmByteValueExpression* rhs = isSgAsmByteValueExpression(isSgAsmBinaryMultiply(e)->get_rhs());
                 if (!rhs)
-                    throw("byte value expression expected", current_instruction);
+                    throw Exception("byte value expression expected", current_instruction);
                 SgAsmExpression* lhs = isSgAsmBinaryMultiply(e)->get_lhs();
                 return extract<0, 32>(policy.unsignedMultiply(read32(lhs), read8(rhs)));
             }
