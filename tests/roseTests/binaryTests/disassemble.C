@@ -5,6 +5,70 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+/* Traversal prints information about each SgAsmFunctionDeclaration node. */
+class ShowFunctions : public SgSimpleProcessing {
+public:
+    size_t nfuncs;
+    ShowFunctions()
+        : nfuncs(0)
+        {}
+    void show(SgNode *node) {
+        printf("Functions detected in this interpretation:\n");
+        printf("    Key for reason(s) address is a suspected function:\n");
+        printf("      E = entry address         C = call target           X = exception frame\n");
+        printf("      S = function symbol       P = instruction pattern   G = interblock branch graph\n");
+        printf("      U = user-def detection    N = NOP/Zero padding      D = discontiguous blocks\n");
+        printf("      H = insn sequence head\n");
+        printf("\n");
+        printf("    Num  Low-Addr   End-Addr  Insns/Bytes   Reason      Kind   Name\n");
+        printf("    --- ---------- ---------- ------------ --------- -------- --------------------------------\n");
+        traverse(node, preorder);
+        printf("    --- ---------- ---------- ------------ --------- -------- --------------------------------\n");
+    }
+    void visit(SgNode *node) {
+        SgAsmFunctionDeclaration *defn = isSgAsmFunctionDeclaration(node);
+        if (defn) {
+            /* Scan through the function's instructions to find the range of addresses for the function. */
+            rose_addr_t func_start=~(rose_addr_t)0, func_end=0, ninsns=0, nbytes=0;
+            SgAsmStatementPtrList func_stmts = defn->get_statementList();
+            for (size_t i=0; i<func_stmts.size(); i++) {
+                SgAsmBlock *bb = isSgAsmBlock(func_stmts[i]);
+                if (bb) {
+                    SgAsmStatementPtrList block_stmts = bb->get_statementList();
+                    for (size_t j=0; j<block_stmts.size(); j++) {
+                        SgAsmInstruction *insn = isSgAsmInstruction(block_stmts[j]);
+                        if (insn) {
+                            ninsns++;
+                            func_start = std::min(func_start, insn->get_address());
+                            func_end = std::max(func_end, insn->get_address()+insn->get_raw_bytes().size());
+                            nbytes += insn->get_raw_bytes().size();
+                        }
+                    }
+                }
+            }
+
+            /* Reason that this is a function */
+            printf("    %3zu 0x%08"PRIx64" 0x%08"PRIx64" %5zu/%-6zu ", ++nfuncs, func_start, func_end, ninsns, nbytes);
+            fputs(defn->reason_str(true).c_str(), stdout);
+
+            /* Kind of function */
+            switch (defn->get_function_kind()) {
+              case SgAsmFunctionDeclaration::e_unknown:    fputs("  unknown", stdout); break;
+              case SgAsmFunctionDeclaration::e_standard:   fputs(" standard", stdout); break;
+              case SgAsmFunctionDeclaration::e_library:    fputs("  library", stdout); break;
+              case SgAsmFunctionDeclaration::e_imported:   fputs(" imported", stdout); break;
+              case SgAsmFunctionDeclaration::e_thunk:      fputs("    thunk", stdout); break;
+              default:                                     fputs("    other", stdout); break;
+            }
+
+            /* Function name if known */
+            if (defn->get_name()!="")
+                printf(" %s", defn->get_name().c_str());
+            fputc('\n', stdout);
+        }
+    }
+};
+
 int
 main(int argc, char *argv[]) 
 {
@@ -15,6 +79,7 @@ main(int argc, char *argv[])
     bool do_dot = false;
     bool do_quiet = false;
     bool do_skip_dos = false;
+    bool do_show_functions = false;
     int exit_status = 0;
 
     char **new_argv = (char**)calloc(argc+2, sizeof(char*));
@@ -64,6 +129,8 @@ main(int argc, char *argv[])
             do_skip_dos = true;
         } else if (!strcmp(argv[i], "--show-bad")) {
             show_bad = true;    /* show details about failed disassembly or assembly */
+        } else if (!strcmp(argv[i], "--show-functions")) {
+            do_show_functions = true; /*show function summary*/
         } else if (!strcmp(argv[i], "--reassemble")) {
             do_reassemble = true; /* reassemble what we disassembled in order to test the assembler */
         } else if (!strcmp(argv[i], "--debug")) {
@@ -115,6 +182,8 @@ main(int argc, char *argv[])
         /* Disassemble instructions, linking them into the interpretation */
         Disassembler::BadMap bad;
         d->disassemble(interp, NULL, &bad);
+        if (do_show_functions)
+            ShowFunctions().show(interp);
         if (!do_quiet) {
             fputs(unparseAsmInterpretation(interp).c_str(), stdout);
             fputs("\n\n", stdout);
