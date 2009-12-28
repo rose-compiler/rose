@@ -49,7 +49,7 @@ install(FILES  setup.h processSupport.h rose_paths.h DESTINATION ${INCLUDE_INSTA
 #set( graphs DGBaseGraphImpl.C SCCAnalysis.C  TransAnalysis.C  TypedFusion.C )
 
 #add_library( roseutil SHARED ${graphs} )
-add_library(rose_util_lib ${rose_util_src}    )
+add_library(rose_util_lib STATIC ${rose_util_src}    )
 
 #original Makefile.am contents follow:
 

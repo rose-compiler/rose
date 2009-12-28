@@ -6,7 +6,7 @@ BINARY_EDG_TARBALL_STAGING_PATH=/usr/casc/overture/ROSE/git/ROSE_EDG_Binaries-st
 BINARY_EDG_TARBALL_DISTRIBUTION_PATH=/usr/casc/overture/ROSE/git/ROSE_EDG_Binaries
 BINARY_EDG_TARBALL_URL=file://$(BINARY_EDG_TARBALL_DISTRIBUTION_PATH)
 # Liao, 12/11/2009, we mirror the internal BINARY_EDG_TARBALL_DISTRIBUTION_PATH to rosecompiler.org
-EXTERNAL_EDG_TARBALL_URL=http://www.rosecompiler.org/edg_binaries
+EXTERNAL_BINARY_EDG_TARBALL_URL=http://www.rosecompiler.org/edg_binaries
 
 AUTO_ARCHS = i686-pc-linux-gnu x86_64-pc-linux-gnu
 ALL_ARCHS = $(AUTO_ARCHS) i686-apple-darwin
@@ -16,8 +16,11 @@ COMPILERS_x86_64_pc_linux_gnu = $(STD_GNU_COMPILERS)
 COMPILERS_i686_apple_darwin = GNU-4.0
 
 #fetch tar-ball , try internal url first, then the external one
+# Liao, 12/18/2009, we switch to wget from curl for better coverage of users and stability
+# curl sometimes output the error message into the output tar ball file
 %.tar.gz:
-	curl ${BINARY_EDG_TARBALL_URL}/$@  -o $@ || curl ${EXTERNAL_BINARY_EDG_TARBALL_URL}/$@  -o $@ 
+	test -d ${BINARY_EDG_TARBALL_DISTRIBUTION_PATH} && cp ${BINARY_EDG_TARBALL_DISTRIBUTION_PATH}/$@  . || wget ${EXTERNAL_BINARY_EDG_TARBALL_URL}/$@
+#	test -d ${BINARY_EDG_TARBALL_URL} && curl ${BINARY_EDG_TARBALL_URL}/$@  -o $@ || curl ${EXTERNAL_BINARY_EDG_TARBALL_URL}/$@  -o $@ 
 
 # This line includes different EDG tarballs depending on the value of the environment variable DIST_EDG
 # Default
@@ -97,6 +100,7 @@ all: EDG/libroseEDG.la
 
 #extract EDG tar-balls for the current architecture if that has not already been done
 EDG/libroseEDG.la: $(BINARY_EDG_DIRNAME).tar.gz
+	echo "am__untar = $(am__untar)"
 	if test "$(am__untar)" != "false"; then \
 	    echo "Found $<: proceeding to untar file $(BINARY_EDG_DIRNAME).tar.gz" >&2 && \
 	    GZIP=$(GZIP_ENV) gunzip -c $< | $(am__untar) && \

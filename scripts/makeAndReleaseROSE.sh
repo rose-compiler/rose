@@ -21,7 +21,7 @@ ROSE_TOP=/home/liao6/daily-test-rose/release
 #ROSE_TOP=/home/liao6/daily-test-rose/20081029_050001
 
 # How many types of platforms to support
-EDG_BIN_COUNT=3
+EDG_BIN_COUNT=0
 #The local directory with the scripts for our regression tests
 SCRIPT_TOP=/home/liao6/rose/scripts
 
@@ -95,6 +95,10 @@ mkdir -p ${UPLOAD_DIR}
 # unpack the package to the work dir and get the root dir of the distribution
 #----------------------------------------------------
 tar xzvf ${ROSE_DISTRIBUTION} -C ${UPLOAD_DIR} &>/dev/null
+if [ $? -ne 0 ]; then
+     echo "Fatal error for: tar xzvf ${ROSE_DISTRIBUTION} -C ${UPLOAD_DIR}"
+     exit 1
+fi
 
 cd ${UPLOAD_DIR}
 

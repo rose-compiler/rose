@@ -834,15 +834,15 @@ HEADER_GENERIC_SECTION_START
 		virtual void unparse(std::ostream&) const;
 		void unparse(std::ostream&, const ExtentMap&) const;
 		void unparse_holes(std::ostream&) const;
-		SgAsmGenericHeader *is_file_header();	/* true if section represents a top level file header */
+		SgAsmGenericHeader *is_file_header();	/** true if section represents a top level file header */
 
 		/* Functions for section extent within the file */
 		addr_t        get_size() const;
 		virtual void  set_size(addr_t);		/* Resize a section w/o regard to other sections or mapping */
 		addr_t        get_offset() const;
-		virtual void  set_offset(addr_t);		/* Move a section w/o regard to other sections or mapping */
-		addr_t        get_end_offset(); /* file offset for end of section */
-		void          extend(addr_t nbytes);         	/* make section larger by extending the end */
+		virtual void  set_offset(addr_t);		/** Move a section w/o regard to other sections or mapping */
+		addr_t        get_end_offset() const;		/** file offset for end of section */
+		void          extend(addr_t nbytes);         	/** make section larger by extending the end */
 		addr_t        write(std::ostream&, addr_t offset, size_t bufsize, const void *buf) const;
 		addr_t        write(std::ostream&, addr_t offset, const std::string &str) const;
 		addr_t        write(std::ostream&, addr_t offset, char c) const;
@@ -876,31 +876,32 @@ HEADER_GENERIC_SECTION_START
 		ExtentMap get_unreferenced_extents() const;	/* Returns parts of file that have not been referenced */
 
 		/* Functions related to mapping of sections into executable memory */
-		bool   	      is_mapped() const;                /* True iff non-zero mapped address and size */
-		void   	      clear_mapped();                 	/* Set mapped address and size to zero (unmapped)*/
+		bool   	      is_mapped() const;                /** True iff non-zero mapped address and size */
+		void   	      clear_mapped();                 	/** Set mapped address and size to zero (unmapped)*/
 		addr_t        get_mapped_size() const;
 		virtual void  set_mapped_size(addr_t);	      	/* Set mapped size w/o regard to other section mappings */
 		addr_t	      get_mapped_preferred_rva() const;	/* The virtual address indicated in the binary file */
 		virtual void  set_mapped_preferred_rva(addr_t); /* Move a section w/o regard to other section mappings */
 		addr_t 	      get_base_va() const;            	/* Convenience to get header's base VA */
-		addr_t 	      get_mapped_preferred_va();	/* Like get_mapped_preferred_rva() except returns absolute VA */
-		addr_t	      get_mapped_actual_va();		/* Like get_mapped_actual_rva() except returns absolute VA */
-		addr_t        get_va_offset(addr_t va);       	/* Return file offset for specified virtual address */
-		addr_t	      get_rva_offset(addr_t rva);     	/* Return file offset for specified relative virtual address */
+		addr_t 	      get_mapped_preferred_va() const;	/* Like get_mapped_preferred_rva() except returns absolute VA */
+		addr_t	      get_mapped_actual_va() const;	/* Like get_mapped_actual_rva() except returns absolute VA */
+		addr_t        get_va_offset(addr_t va) const;  	/* Return file offset for specified virtual address */
+		addr_t	      get_rva_offset(addr_t rva) const;	/* Return file offset for specified relative virtual address */
 
 		/* Accessors for private members */
-		SgAsmGenericString *get_name() const;		/* Same as standard ROSETTA accessor */
-		void set_name(SgAsmGenericString *s);		/* Like std accessor but sets parent of 's' */
+		SgAsmGenericString *get_name() const;		/** Same as standard ROSETTA accessor */
+		void set_name(SgAsmGenericString *s);		/** Like std accessor but sets parent of 's' */
 
 		/* Convenience functions */
 		ExtentPair get_file_extent() const;		/* Returns get_offset() and get_size() */
 		ExtentPair get_mapped_preferred_extent() const; /* Returns get_mapped_preferred_rva() and get_mapped_size() */
 
+		bool is_content_writable() const;               /** Returns true if a contents are writable. i.e. local_data_pool!=NULL */
 	protected:
 		void ctor(SgAsmGenericFile*, SgAsmGenericHeader*);
 
 	private:
-		/* This is an optional local, writable pool for the p_data member. Normally a section will point into the pool
+		/** This is an optional local, writable pool for the p_data member. Normally a section will point into the pool
 		 * for its SgAsmGenericFile which is memory-mapped (read-only) from the actual file being parsed. The default
 		 * unparsing action is to write the original data back to the file. By allowing a section to allocate its own
 		 * pool for p_data we create a very easy way to get data into the unparsed file (the alternative is to derive
@@ -1254,6 +1255,21 @@ HEADER_GENERIC_STRTAB_END
 
 HEADER_ELF_HEADER_START
 	public:
+		/** enum used for e_type */ 
+		enum ObjectType { 
+			 ET_NONE         = 0 		/** No file type */
+			,ET_REL          = 1 		/** Relocatable file */
+			,ET_EXEC         = 2 		/** Executable file */
+			,ET_DYN          = 3 		/** Shared object file */
+			,ET_CORE         = 4 		/** Core file */
+
+			,ET_LOOS         = 0xfe00	/** OS-specific range start */
+			,ET_HIOS         = 0xfeff	/** OS-specific range end */
+			,ET_LOPROC       = 0xff00	/** Processor-specific range start */
+			,ET_HIPROC       = 0xff00	/** Processor-specific range end */
+		};
+
+
 		/* File format of an ELF header. Byte order of members depends on e_ident value. This code comes directly from
 		 * "System V Application Binary Interface, Edition 4.1" and the FreeBSD elf(5) man page, and the "Executable and
 		 * Linkable Format (ELF) Portable Formats Specifications, Version 1.2" and not from any header file. */
@@ -1367,7 +1383,7 @@ HEADER_ELF_SECTION_TABLE_END
 
 HEADER_ELF_SECTION_TABLE_ENTRY_START
 	public:
-		/* Section types (host order). All other values are reserved. */
+		/** Section types (host order). All other values are reserved. */
 		enum SectionType {
 			SHT_NULL        = 0,            /**< Section header is inactive */
 			SHT_PROGBITS	= 1,            /**< Info defined by the program; format and meaning determined by prog */
@@ -1394,7 +1410,24 @@ HEADER_ELF_SECTION_TABLE_ENTRY_START
 			SHT_HIUSER      = 0xffffffff
 		};
 
-		/* File format of an ELF Section header. Byte order of members depends on e_ident value in file header. This code
+		/** Section Flags (host order).  All other values are reserved. */
+		enum SectionFlags {
+			SHF_NULL=		   0,	/** Invalid section flag (added for rose) */
+			SHF_WRITE=	     (1 << 0),	/** Writable */
+			SHF_ALLOC=	     (1 << 1),	/** Occupies memory during execution */
+			SHF_EXECINSTR=	     (1 << 2),	/** Executable */
+			SHF_MERGE=	     (1 << 4),	/** Might be merged */
+			SHF_STRINGS=	     (1 << 5),	/** Contains nul-terminated strings */
+			SHF_INFO_LINK=	     (1 << 6),	/** `sh_info' contains SHT index */
+			SHF_LINK_ORDER=	     (1 << 7),	/** Preserve order after combining */
+			SHF_OS_NONCONFORMING=(1 << 8),	/** Non-standard OS specific handling required */
+			SHF_GROUP=	     (1 << 9),	/** Section is member of a group.  */
+			SHF_TLS=	     (1 << 10),	/** Section hold thread-local data.  */
+			SHF_MASKOS=	     0x0ff00000,/** OS-specific.  */
+			SHF_MASKPROC=	     0xf0000000	/** Processor-specific */
+		};
+
+		/** File format of an ELF Section header. Byte order of members depends on e_ident value in file header. This code
 		 * comes directly from "Executable and Linkable Format (ELF)", Portable Formats Specification, Version 1.1, Tool
                  * Interface Standards (TIS) and not from any header file. The 64-bit structure is gleaned from the Linux
                  * elf(5) man page. */
@@ -1549,23 +1582,95 @@ HEADER_ELF_STRING_SECTION_END
 
 HEADER_ELF_RELOC_SECTION_START
 	public:
-		SgAsmElfRelocSection(SgAsmElfFileHeader *fhdr, SgAsmElfSymbolSection *symsec)
+		SgAsmElfRelocSection(SgAsmElfFileHeader *fhdr, SgAsmElfSymbolSection *symsec,SgAsmElfSection* targetsec)
 			: SgAsmElfSection(fhdr)
-			{ctor(symsec);}
+			{ctor(symsec,targetsec);}
 		using SgAsmElfSection::calculate_sizes;
 		virtual SgAsmElfRelocSection *parse();
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const;
 		virtual bool reallocate();
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+
 	private:
-		void ctor(SgAsmElfSymbolSection*);
+		void ctor(SgAsmElfSymbolSection*,SgAsmElfSection*);
 HEADER_ELF_RELOC_SECTION_END
 
 
 
 HEADER_ELF_RELOC_ENTRY_START
 	public:
+		/** Relocation Type (host order).  All other values are reserved. */
+		enum RelocType{
+			/** Intel 80386 specific definitions.  */
+			R_386_NONE	   =0,		/**< No reloc */
+			R_386_32	   =1,		/**< Direct 32 bit  */
+			R_386_PC32	   =2,		/**< PC relative 32 bit */
+			R_386_GOT32	   =3,		/**< 32 bit GOT entry */
+			R_386_PLT32	   =4,		/**< 32 bit PLT address */
+			R_386_COPY	   =5,		/**< Copy symbol at runtime */
+			R_386_GLOB_DAT	   =6,		/**< Create GOT entry */
+			R_386_JMP_SLOT	   =7,		/**< Create PLT entry */
+			R_386_RELATIVE	   =8,		/**< Adjust by program base */
+			R_386_GOTOFF	   =9,		/**< 32 bit offset to GOT */
+			R_386_GOTPC	   =10,		/**< 32 bit PC relative offset to GOT */
+			R_386_32PLT	   =11,
+			R_386_TLS_TPOFF    =14,		/**< Offset in static TLS block */
+			R_386_TLS_IE       =15,		/**< Address of GOT entry for static TLS block offset */
+			R_386_TLS_GOTIE    =16,		/**< GOT entry for static TLS block offset */
+			R_386_TLS_LE	   =17,		/**< Offset relative to static TLS block */
+			R_386_TLS_GD	   =18,		/**< Direct 32 bit for GNU version of general dynamic thread local data */
+			R_386_TLS_LDM	   =19,		/**< Direct 32 bit for GNU version of local dynamic thread local data in LE code */
+			R_386_16	   =20,
+			R_386_PC16	   =21,
+			R_386_8	           =22,
+			R_386_PC8	   =23,
+			R_386_TLS_GD_32    =24,		/**< Direct 32 bit for general dynamic thread local data */
+			R_386_TLS_GD_PUSH  =25,		/**< Tag for pushl in GD TLS code */
+			R_386_TLS_GD_CALL  =26,		/**< Relocation for call to __tls_get_addr() */
+			R_386_TLS_GD_POP   =27,		/**< Tag for popl in GD TLS code */
+			R_386_TLS_LDM_32   =28,		/**< Direct 32 bit for local dynamic thread local data in LE code */
+			R_386_TLS_LDM_PUSH =29,		/**< Tag for pushl in LDM TLS code */
+			R_386_TLS_LDM_CALL =30,		/**< Relocation for call to __tls_get_addr() in LDM code */
+			R_386_TLS_LDM_POP  =31,		/**< Tag for popl in LDM TLS code */
+			R_386_TLS_LDO_32   =32,		/**< Offset relative to TLS block */
+			R_386_TLS_IE_32    =33,		/**< GOT entry for negated static TLS block offset */
+			R_386_TLS_LE_32    =34,		/**< Negated offset relative to static TLS block */
+			R_386_TLS_DTPMOD32 =35,		/**< ID of module containing symbol */
+			R_386_TLS_DTPOFF32 =36,		/**< Offset in TLS block */
+			R_386_TLS_TPOFF32  =37,		/**< Negated offset in static TLS block */
+			/* This the last entry for x86  */
+			R_386_NUM	   =38,
+
+	                /** First Entry for X86-64 */
+			R_X86_64_NONE     =0,		/**<  No reloc */
+			R_X86_64_64       =1,		/**<  Direct 64 bit  */
+			R_X86_64_PC32     =2,		/**<  PC relative 32 bit signed */
+			R_X86_64_GOT32    =3,		/**<  32 bit GOT entry */
+			R_X86_64_PLT32    =4,		/**<  32 bit PLT address */
+			R_X86_64_COPY     =5,		/**<  Copy symbol at runtime */
+			R_X86_64_GLOB_DAT =6,		/**<  Create GOT entry */
+			R_X86_64_JUMP_SLOT=7,		/**<  Create PLT entry */
+			R_X86_64_RELATIVE =8,		/**<  Adjust by program base */
+			R_X86_64_GOTPCREL =9,		/**<  32 bit signed PC relative offset to GOT */
+			R_X86_64_32       =10,		/**<  Direct 32 bit zero extended */
+			R_X86_64_32S      =11,		/**<  Direct 32 bit sign extended */
+			R_X86_64_16       =12,		/**<  Direct 16 bit zero extended */
+			R_X86_64_PC16     =13,		/**<  16 bit sign extended pc relative */
+			R_X86_64_8        =14,		/**<  Direct 8 bit sign extended  */
+			R_X86_64_PC8      =15,		/**<  8 bit sign extended pc relative */
+			R_X86_64_DTPMOD64 =16,		/**<  ID of module containing symbol */
+			R_X86_64_DTPOFF64 =17,		/**<  Offset in module's TLS block */
+			R_X86_64_TPOFF64  =18,		/**<  Offset in initial TLS block */
+			R_X86_64_TLSGD    =19,		/**<  32 bit signed PC relative offset to two GOT entries for GD symbol */
+			R_X86_64_TLSLD    =20,		/**<  32 bit signed PC relative offset to two GOT entries for LD symbol */
+			R_X86_64_DTPOFF32 =21,		/**<  Offset in TLS block */
+			R_X86_64_GOTTPOFF =22,		/**<  32 bit signed PC relative offset to GOT entry for IE symbol */
+			R_X86_64_TPOFF32  =23,		/**<  Offset in initial TLS block */
+
+			R_X86_64_NUM      =24
+		};
+
 #ifdef _MSC_VER
 # pragma pack (1)
 #endif
@@ -1610,7 +1715,7 @@ HEADER_ELF_RELOC_ENTRY_START
 #endif
 
 		SgAsmElfRelocEntry(SgAsmElfRelocSection *section)
-			: p_r_offset(0), p_r_addend(0), p_sym(0), p_type(0)
+			: p_r_offset(0), p_r_addend(0), p_sym(0), p_type(R_386_NONE)
 			{ctor(section);}
 
 		void parse(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelocEntry::Elf32RelaEntry_disk *disk);
@@ -1625,8 +1730,10 @@ HEADER_ELF_RELOC_ENTRY_START
 		void dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbolSection *symtab) const;
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const
 			{dump(f, prefix, idx, NULL);}
+		static const char *to_string(RelocType,InsSetArchitecture);
 	private:
 		void ctor(SgAsmElfRelocSection*);
+
 HEADER_ELF_RELOC_ENTRY_END
 
 

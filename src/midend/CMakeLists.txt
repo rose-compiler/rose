@@ -13,54 +13,9 @@ add_subdirectory(programTransformation)
 ########### next target   ###############
 set( midend_src
 ${CMAKE_SOURCE_DIR}/src/midend/midend_roseh_pch.cpp
-${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/RoseBin_CallGraphAnalysis.cpp
-${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/RoseBin_FlowAnalysis.cpp
-${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/RoseBin_DataFlowAnalysis.cpp
-${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/RoseBin_CompareAnalysis.cpp
-${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/RoseBin_printInstructions.cpp
-${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/RoseBin_ControlFlowAnalysis.cpp
-${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_Emulate.cpp
-${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_DataFlowAbstract.cpp
-${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_VariableAnalysis.cpp
-${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/InterruptAnalysis.cpp
-${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_DefUseAnalysis.cpp
 ${CMAKE_SOURCE_DIR}/src/midend/abstractHandle/abstract_handle.cpp
 ${CMAKE_SOURCE_DIR}/src/midend/abstractHandle/loopAdapter.cpp
 ${CMAKE_SOURCE_DIR}/src/midend/abstractHandle/roseAdapter.cpp
-${CMAKE_SOURCE_DIR}/src/midend/astUtil/astInterface/CPPAstInterface.C
-${CMAKE_SOURCE_DIR}/src/midend/astUtil/astInterface/AstInterface.C
-${CMAKE_SOURCE_DIR}/src/midend/astUtil/symbolicVal/SymbolicVal.C
-${CMAKE_SOURCE_DIR}/src/midend/astUtil/symbolicVal/SymbolicOperator.C
-${CMAKE_SOURCE_DIR}/src/midend/astUtil/symbolicVal/SymbolicUnwrapCond.C
-${CMAKE_SOURCE_DIR}/src/midend/astUtil/symbolicVal/SymbolicBound.C
-${CMAKE_SOURCE_DIR}/src/midend/astUtil/symbolicVal/SymbolicFind.C
-${CMAKE_SOURCE_DIR}/src/midend/astUtil/symbolicVal/SymbolicExpr.C
-${CMAKE_SOURCE_DIR}/src/midend/astUtil/annotation/OperatorAnnotation.C
-${CMAKE_SOURCE_DIR}/src/midend/astUtil/annotation/AnnotIO.C
-${CMAKE_SOURCE_DIR}/src/midend/astUtil/annotation/AnnotGen.C
-${CMAKE_SOURCE_DIR}/src/midend/astUtil/annotation/AnnotCollect.C
-${CMAKE_SOURCE_DIR}/src/midend/astUtil/annotation/AnnotDescriptors.C
-${CMAKE_SOURCE_DIR}/src/midend/astUtil/annotation/OperatorDescriptors.C
-${CMAKE_SOURCE_DIR}/src/midend/astUtil/annotation/AnnotExpr.C
-${CMAKE_SOURCE_DIR}/src/midend/astUtil/annotation/TypeAnnotation.C
-${CMAKE_SOURCE_DIR}/src/midend/astUtil/astSupport/ProcessAstTree.C
-${CMAKE_SOURCE_DIR}/src/midend/astUtil/astSupport/StmtInfoCollect.C
-${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstRestructure.C
-${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstProcessing.C
-${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstCombinedSimpleProcessing.C
-${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstNodePtrs.C
-${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstNodeVisitMapping.C
-${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstDOTGeneration.C
-${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstAttributeMechanism.C
-${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstSimpleProcessing.C
-${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstClearVisitFlags.C
-${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstSuccessorsSelectors.C
-${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstPDFGeneration.C
-${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstTextAttributesHandling.C
-${CMAKE_SOURCE_DIR}/src/midend/astProcessing/Ast.C
-${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstTraversal.C
-#${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstSharedMemoryParallelSimpleProcessing.C
-${CMAKE_SOURCE_DIR}/src/midend/astProcessing/AstReverseSimpleProcessing.C
 ${CMAKE_SOURCE_DIR}/src/midend/astQuery/nodeQueryInheritedAttribute.C
 ${CMAKE_SOURCE_DIR}/src/midend/astQuery/nameQuery.C
 ${CMAKE_SOURCE_DIR}/src/midend/astQuery/astQueryInheritedAttribute.C
@@ -97,9 +52,21 @@ ${CMAKE_SOURCE_DIR}/src/midend/astDiagnostics/AstPerformance.C
 ${CMAKE_SOURCE_DIR}/src/midend/astDiagnostics/AstStatistics.C
 )
 
-add_library( midend STATIC ${midend_src}  )
-add_dependencies( midend ROSETTA )
+add_library( midend_static STATIC ${midend_src}  )
+add_dependencies( midend_static ROSETTA midend_processing midend_util midend_pa midend_pt midend_loopproc midend_binary )
 
+# tps (12/17/2009) : Experiments to create (small) dynamic libraries.
+# The following libraries could not be build.
+#add_library( midend_shared SHARED ${midend_src}  )
+#add_dependencies( midend_shared ROSETTA midend_processing midend_util midend_pa midend_pt midend_loopproc midend_binary )
+
+#add_library( midend_module MODULE ${midend_src}  )
+#add_dependencies( midend_module ROSETTA midend_processing midend_util midend_pa midend_pt midend_loopproc midend_binary )
+
+target_link_libraries(midend_static 
+     midend_processing midend_util midend_pa midend_pt midend_loopproc midend_binary
+ )
+ 
 ########### install files ###############
 
 
