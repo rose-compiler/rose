@@ -972,7 +972,18 @@ DisassemblerX86::getImmJz()
         val = IntegerOps::signExtend<32, 64>((uint64_t)val2);
     }
     uint64_t target = ip + insnbufat + val;
-    SgAsmValueExpression *retval = SageBuilderAsm::makeQWordValue(target);
+    SgAsmValueExpression *retval = NULL;
+    switch (insnSize) {
+        case x86_insnsize_16:
+            retval = SageBuilderAsm::makeWordValue(target);
+            break;
+        case x86_insnsize_32:
+            retval = SageBuilderAsm::makeDWordValue(target);
+            break;
+        default:
+            retval = SageBuilderAsm::makeQWordValue(target);
+            break;
+    }
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(bit_size);
     return retval;
@@ -1012,7 +1023,18 @@ DisassemblerX86::getImmJb()
     size_t bit_offset = 8*insnbufat;
     uint8_t val = getByte();
     uint64_t target = ip + insnbufat + IntegerOps::signExtend<8, 64>((uint64_t)val);
-    SgAsmValueExpression *retval = SageBuilderAsm::makeQWordValue(target);
+    SgAsmValueExpression *retval=NULL;
+    switch (insnSize) {
+        case x86_insnsize_16:
+            retval = SageBuilderAsm::makeWordValue(target);
+            break;
+        case x86_insnsize_32:
+            retval = SageBuilderAsm::makeDWordValue(target);
+            break;
+        default:
+            retval = SageBuilderAsm::makeQWordValue(target);
+            break;
+    }
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(8);
     return retval;
