@@ -225,7 +225,7 @@ bool mayAlias(const MemoryWrite& a, const MemoryWrite& b) {
 /** Returns true if memory locations @p a and @p b are the same (note that "same" is more strict than "overlap"). */
 bool mustAlias(const MemoryWrite& a, const MemoryWrite& b) {
     if (!mayAlias(a, b)) return false;
-    return a.address.offset == b.address.offset;
+    return a.address.name==b.address.name && a.address.offset==b.address.offset;
 }
 
 template <size_t From, size_t To>
