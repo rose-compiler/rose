@@ -121,7 +121,7 @@ hexdump ( rose_addr_t base_addr, const char *prefix, const SgUnsignedCharList & 
           if (i > 0)
                returnString += "\n";
 
-          sprintf(buffer,"%s0x%08"PRIx64, prefix, base_addr+i);
+          sprintf(buffer,"%s0x%08"PRIx64":", prefix, base_addr+i);
           returnString += buffer;
 
        // Output the hexadecimal representation
@@ -235,16 +235,14 @@ unparseAsmStatement(SgAsmStatement* stmt)
             /* Function heading. The first SgAsmInstruction will provide the ending linefeed. */
             SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(stmt);
             result += "\n";
-            if (0==func->get_statementList().size()) {
-                char addrbuf[64];
-                sprintf(addrbuf, "0x%08"PRIx64, func->get_address());
-                result = result + addrbuf + ": ";
-            }
-            result += "========== Function reasons=" + func->reason_str(false) + " ";
+            char addrbuf[64];
+            sprintf(addrbuf, "0x%08"PRIx64, func->get_address());
+            result = result + addrbuf + ": ";
+            result += "============================ Function (" + func->reason_str(false) + ")";
             if (func->get_name().size()>0) {
                 result = result + " <" + func->get_name() + ">";
             } else {
-                result = result + " of unknown name";
+                result = result + " unknown name";
             }
 
             /* Basic blocks */
