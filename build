@@ -1,5 +1,10 @@
 #! /bin/sh
 
+
+# This is the default location for build to use as a reference
+# to its macro definitions used by Autoconf and Automake.
+ROSE_DISTRIBUTION="."
+
 # Parse command-line
 do_quiet=yes
 do_timing=no
@@ -15,6 +20,14 @@ while [ "$#" -gt 0 ]; do
             ;;
         --quiet)
             echo "$0: warning: --quiet is now the default mode and is ignored"
+            ;;
+        --srcpath)
+            ROSE_DISTRIBUTION=$1
+            shift
+            echo "Found the ROSE source tree: ROSE_DISTRIBUTION = $ROSE_DISTRIBUTION"
+            echo "     e.g. ./build --srcpath /home/dquinlan/ROSE/git-dq-main-rc"
+          # echo "args = $0 $1 $2"
+          # exit 1
             ;;
         *)
 	    echo "$0: unrecognized argument: $arg" >&2
@@ -234,8 +247,10 @@ echo "ACLOCAL_INCLUDES = $ACLOCAL_INCLUDES"
 
 # DJH (20 July 2009): Some macros may be installed in non-standard locations
 # (e.g. libxml's on NMI build machines)
-echo "Running aclocal ..."
-aclocal -I ./config -I ./acmacros -I /usr/share/aclocal $ACLOCAL_INCLUDES || : exit 1
+echo "Running aclocal ... aclocal -I $ROSE_DISTRIBUTION/config -I $ROSE_DISTRIBUTION/acmacros -I /usr/share/aclocal $ACLOCAL_INCLUDES"
+# echo "Running aclocal ..."
+# aclocal -I ./config -I ./acmacros -I /usr/share/aclocal $ACLOCAL_INCLUDES || : exit 1
+aclocal -I $ROSE_DISTRIBUTION/config -I $ROSE_DISTRIBUTION/acmacros -I /usr/share/aclocal $ACLOCAL_INCLUDES || : exit 1
 
 echo "Running autoheader ..."
 # autoheader --warnings=obsolete,all || : exit 1

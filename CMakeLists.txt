@@ -142,6 +142,7 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/frontend/OpenFortranParser_SAGE_Connection 
      ${ROSE_TOP_SRC_DIR}/src/frontend/PHPFrontend 
      ${ROSE_TOP_SRC_DIR}/src/frontend/BinaryFormats 
+     ${ROSE_TOP_SRC_DIR}/src/frontend/BinaryLoader
      ${ROSE_TOP_SRC_DIR}/src/frontend/BinaryDisassembly 
      ${ROSE_TOP_SRC_DIR}/src/frontend/Disassemblers 
      ${ROSE_TOP_SRC_DIR}/src/frontend/ExecFormats 

@@ -2,8 +2,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 
 # When debugging latex documentation skip using the --interaction=batchmode option
-# PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex --interaction=batchmode
-PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex 
+#PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex --interaction=batchmode
+# Liao 12/18/2009, use normal mode to ease finding bugs from hudson logs
+PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex -file-line-error -halt-on-error
 
 # Later we will add ROSETTA documentation here ...
 SUBDIRS = Tutorial 
@@ -78,7 +79,8 @@ $(RoseDoxygenDocumentation): $(RoseDocsDependencies) $(ROSE_MAINPAGE_DOCUMENTATI
 # DQ (7/11/2009): Added rule to force generation of Doxygen documentation.
 doxygen_docs: $(RoseDocsDependencies) $(ROSE_MAINPAGE_DOCUMENTATION) rose.cfg
 	cd $(top_builddir)/src/frontend/SageIII; $(MAKE) sage.docs
-	doxygen rose.cfg
+	doxygen rose.cfg || exit 1
+	echo "Doxygen generated documentation terminated normally."
 
 # We can't specify the source directory to latex so we have to build
 # links to the files in the source directory.  Other ideas?
@@ -260,21 +262,21 @@ rosePlatformConfigureOptions.txt:
 	mv $(top_srcdir)/scripts/nmiBuildAndTestFarm/build_configs/rosePlatformConfigureOptions.txt .
 
 ROSE_InstallationInstructions.pdf: $(latexFiles) $(latexDependences) ROSE_InstallationInstructions.tex
+	($(PDFLATEX) ROSE_InstallationInstructions.tex && \
 	$(PDFLATEX) ROSE_InstallationInstructions.tex && \
-	$(PDFLATEX) ROSE_InstallationInstructions.tex && \
-	$(PDFLATEX) ROSE_InstallationInstructions.tex
+	$(PDFLATEX) ROSE_InstallationInstructions.tex) || exit 1;
 
 ROSE_DeveloperInstructions.pdf: $(latexFiles) $(latexDependences) ROSE_DeveloperInstructions.tex
+	($(PDFLATEX) ROSE_DeveloperInstructions.tex && \
 	$(PDFLATEX) ROSE_DeveloperInstructions.tex && \
-	$(PDFLATEX) ROSE_DeveloperInstructions.tex && \
-	$(PDFLATEX) ROSE_DeveloperInstructions.tex
+	$(PDFLATEX) ROSE_DeveloperInstructions.tex) || exit 1
 
 # DQ (1/18/2009): Added support for demo guide to support running and 
 # presenting information from demos of different parts of ROSE.
 ROSE_DemoGuide.pdf: $(latexFiles) $(latexDependences) ROSE_DemoGuide.tex
+	($(PDFLATEX) ROSE_DemoGuide.tex && \
 	$(PDFLATEX) ROSE_DemoGuide.tex && \
-	$(PDFLATEX) ROSE_DemoGuide.tex && \
-	$(PDFLATEX) ROSE_DemoGuide.tex
+	$(PDFLATEX) ROSE_DemoGuide.tex) || exit 1
 
 
 # Liao, 10/21/2009, run external tests before making manual
@@ -339,8 +341,10 @@ $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf: $(generated_files_for_manual)
 	$(PDFLATEX) manual.tex && \
 	$(PDFLATEX) manual.tex && \
 	$(PDFLATEX) manual.tex && \
-	mv -f manual.pdf $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf
+	cp -f manual.pdf $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf
 
+#	$(PDFLATEX) manual.tex) || exit 1 && \ 
+#	$(PDFLATEX) manual.tex && \ 
 #docs: html-docs latex-docs
 docs: latex-docs html-docs 
 
@@ -370,7 +374,7 @@ clean-local: clean-web-pages
 
 CLEANFILES = roseDoxygen.tags SageIntermediateForm *.log *.aux *.dvi \
 	     AstProcessing AstRewrite *.gz a.out roseDirectoryMap.ps roseDirectoryMap.pdf \
-	     $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf \
+	     manual.pdf $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf \
 	     rose.cfg roseCommandline.txt roseConfigureOptions* roseExecutionOutput.txt \
 	     roseHelpOutput.txt rose_roseTestProgram.C roseTestProgram.C sage.cfg \
 	     $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz footer.html \

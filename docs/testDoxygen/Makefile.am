@@ -1,8 +1,6 @@
 # This directory is for experimentation with ideas specific to
 # how we can use Doxygen to better document the ROSE project.
 
-if DQ_DEVELOPER_TESTS
-
 logo:
 #	Copy the logo file to the this directory
 	mkdir -p ROSE_HTML_Reference
@@ -35,7 +33,6 @@ copyPublications:
 # location where it will permanently reside in the source tree.
 copyDocumentation:
 	cp $(srcdir)/*.docs $(top_srcdir)/src/frontend/SageIII/docs
-endif
 
 # DQ (5/8/2005): Added custon headers and footers for HTML generated documentation
 # See use of HTML_HEADER and HTML_FOOTER in test.cfg.in file

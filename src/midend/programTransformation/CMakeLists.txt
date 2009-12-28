@@ -47,46 +47,6 @@ ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/astInlining/isPotentiallyMo
 ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/astInlining/replaceExpressionWithStatement.C
 ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/astInlining/inliner.C
 ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/astInlining/inlinerSupport.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/prepostTransformation/PrivatizeScalar.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/prepostTransformation/BreakupStmt.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/prepostTransformation/LoopUnroll.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/computation/LoopTreeTransform.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/computation/LoopTree.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/computation/LoopTreeDummyNode.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/computation/LoopTreeShadow.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/computation/DepCompTransform.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/computation/LoopTreeDepComp.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/computation/LoopTreeLocality.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/slicing/CompSliceDepGraph.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/slicing/DynamicCompSlice.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/slicing/CompSliceLocality.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/slicing/CompSlice.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/slicing/DependenceHoisting.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depGraph/TransDepGraph.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depGraph/DepGraphBuild.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depGraph/LoopAnalysis.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/outsideInterface/ArrayRewrite.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/outsideInterface/ArrayAnnot.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/outsideInterface/ArrayInterface.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/CopyArrayAnal.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/LoopTransformInterface.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/FusionAnal.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/NormalizeCPP.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/InterchangeAnal.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/LoopTransformOptions.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/TransformComputation.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/BlockingAnal.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver/TypedFusionImpl.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/StmtDepAnal.C
-#${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/DepTestStatistics.C
-#${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/PlatoOmegaInterface.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/DepInfo.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/DepRel.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/DepInfoSet.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/DomainInfo.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/DepEDD.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/ReuseAnalysis.C
-${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/depInfo/DepInfoAnal.C
 ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/implicitCodeGeneration/defaultFunctionGenerator.C
 ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/implicitCodeGeneration/destructorCallAnnotator.C
 ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/implicitCodeGeneration/analysisUtils.C
@@ -101,7 +61,7 @@ ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/finiteDifferencing/patternR
 )
 
 add_library( midend_pt STATIC ${midend_pt_src}  )
-add_dependencies( midend_pt ROSETTA )
+add_dependencies( midend_pt ROSETTA  )
 
 
 ########### install files ###############
