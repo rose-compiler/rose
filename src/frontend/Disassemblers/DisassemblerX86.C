@@ -218,14 +218,15 @@ DisassemblerX86::make_unknown_instruction(const Exception &e)
     return insn;
 }
 
-/* Used by get_block_successors(). Override superclass methods so that they doesn't try to traverse the AST, which hasn't been
+/* Used by get_block_successors(). Override superclass methods so that they don't try to traverse the AST, which hasn't been
  * created yet. */
 class BlockSuccessorsPolicy: public FindConstantsPolicy {
 public:
     void startInstruction(SgAsmInstruction* insn) {
         addr = insn->get_address();
         newIp = number<32>(addr);
-        rsets[addr].setToBottom(); //optional?
+        if (rsets.find(addr)==rsets.end())
+            rsets[addr].setToBottom();
         currentRset = rsets[addr];
         currentInstruction = isSgAsmx86Instruction(insn);
     }
@@ -237,9 +238,9 @@ DisassemblerX86::get_block_successors(const InstructionMap& insns, bool* complet
 {
     AddressSet successors = Disassembler::get_block_successors(insns, complete);
 
-    if (!complete) {
+    if (!*complete) {
         if (p_debug)
-            fprintf(p_debug, "block 0x%08"PRIx64" semantic analysis... ", insns.begin()->first);
+            fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: semantic analysis... ", insns.begin()->first);
 
         typedef X86InstructionSemantics<BlockSuccessorsPolicy, XVariablePtr> Semantics;
         try {

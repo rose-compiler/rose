@@ -187,7 +187,7 @@ Disassembler::disassembleBlock(const MemoryMap *map, rose_addr_t start_va, Addre
         if (insn && complete && suc.size()==1 && *(suc.begin())==next_va) {
             if (p_debug) {
                 fprintf(p_debug,
-                        "Disassembler[va 0x%08"PRIx64"]: further analysis proves basic block continues after 0x%08"PRIx64"\n",
+                        "Disassembler[va 0x%08"PRIx64"]: semantic analysis proves basic block continues after 0x%08"PRIx64"\n",
                         start_va, va);
             }
         } else {
