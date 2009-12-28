@@ -7,23 +7,42 @@
 
 /* See header file for full documentation. */
 
+static void
+add_to_reason_string(std::string &result, bool isset, bool do_pad, const std::string &abbr, const std::string &full) {
+    if (isset) {
+        if (do_pad) {
+            result += abbr;
+        } else {
+            if (result.size()>0) result += ", ";
+            result += full;
+        }
+    } else if (do_pad) {
+        result += ".";
+    }
+}
+
 /* This has no home, so it's here for now. */
 std::string
 SgAsmFunctionDeclaration::reason_str(bool do_pad) const
 {
-    const char *pad = do_pad ? "." : "";
     std::string result;
     unsigned r = get_reason();
-    result += r & SgAsmFunctionDeclaration::FUNC_ENTRY_POINT ? "E" : 
-              (r & SgAsmFunctionDeclaration::FUNC_INSNHEAD   ? "H" : pad); /*E and H are mutually exclusive*/
-    result += r & SgAsmFunctionDeclaration::FUNC_CALL_TARGET ? "C" : pad;
-    result += r & SgAsmFunctionDeclaration::FUNC_EH_FRAME    ? "X" : pad;
-    result += r & SgAsmFunctionDeclaration::FUNC_SYMBOL      ? "S" : pad;
-    result += r & SgAsmFunctionDeclaration::FUNC_PATTERN     ? "P" : pad;
-    result += r & SgAsmFunctionDeclaration::FUNC_GRAPH       ? "G" : pad;
-    result += r & SgAsmFunctionDeclaration::FUNC_USERDEF     ? "U" : pad;
-    result += r & SgAsmFunctionDeclaration::FUNC_INTERPAD    ? "N" : pad;
-    result += r & SgAsmFunctionDeclaration::FUNC_DISCONT     ? "D" : pad;
+
+    /* entry point and instruction heads are mutually exclusive, so we use the same column for both when padding. */
+    if (r & SgAsmFunctionDeclaration::FUNC_ENTRY_POINT) {
+        add_to_reason_string(result, true, do_pad, "E", "entry point");
+    } else {
+        add_to_reason_string(result, (r & SgAsmFunctionDeclaration::FUNC_INSNHEAD), do_pad, "H", "insn head");
+    }
+    
+    add_to_reason_string(result, (r & SgAsmFunctionDeclaration::FUNC_CALL_TARGET), do_pad, "C", "call target");
+    add_to_reason_string(result, (r & SgAsmFunctionDeclaration::FUNC_EH_FRAME),    do_pad, "X", "exception frame");
+    add_to_reason_string(result, (r & SgAsmFunctionDeclaration::FUNC_SYMBOL),      do_pad, "S", "symbol");
+    add_to_reason_string(result, (r & SgAsmFunctionDeclaration::FUNC_PATTERN),     do_pad, "P", "pattern");
+    add_to_reason_string(result, (r & SgAsmFunctionDeclaration::FUNC_GRAPH),       do_pad, "G", "graph");
+    add_to_reason_string(result, (r & SgAsmFunctionDeclaration::FUNC_USERDEF),     do_pad, "U", "user defined");
+    add_to_reason_string(result, (r & SgAsmFunctionDeclaration::FUNC_INTERPAD),    do_pad, "N", "NOP padding");
+    add_to_reason_string(result, (r & SgAsmFunctionDeclaration::FUNC_DISCONT),     do_pad, "D", "discontiguous");
     return result;
 }
 
