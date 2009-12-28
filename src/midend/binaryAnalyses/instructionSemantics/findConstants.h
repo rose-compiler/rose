@@ -1073,7 +1073,11 @@ struct FindConstantsPolicy {
     }
 
     void hlt() {} // FIXME
-    void interrupt(uint8_t num) {} // FIXME
+
+    void interrupt(uint8_t num) {
+        currentRset.setToBottom();
+    }
+
     XVariablePtr<64> rdtsc() { // FIXME
         return number<64>(0);
     }

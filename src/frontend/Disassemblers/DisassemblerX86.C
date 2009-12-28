@@ -238,6 +238,12 @@ DisassemblerX86::get_block_successors(const InstructionMap& insns, bool* complet
 {
     AddressSet successors = Disassembler::get_block_successors(insns, complete);
 
+    /* NOTE: We could also do semantic analysis when there's more than one successor, to try to narrow down which branch would
+     *       be taken. Sometimes conditional branches are used as unconditional branches to confuse a recursive disassembler
+     *       to try to get it to disassemble instructions at an unused address in order to preclude disassembly at a
+     *       later-discovered overlapping address. ROSE's disassembler doesn't suffer from this limitation -- it can
+     *       independently disassemble overlapping instruction sequences. Plus, doing semantic analysis on all the basic
+     *       blocks that end with conditional branches could get expensive. */
     if (!*complete) {
         if (p_debug)
             fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: semantic analysis... ", insns.begin()->first);
@@ -248,7 +254,7 @@ DisassemblerX86::get_block_successors(const InstructionMap& insns, bool* complet
             Semantics semantics(policy);
             for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ii++) {
                 semantics.processInstruction(isSgAsmx86Instruction(ii->second));
-#if 0   /*Turn on for even more debugging*/
+#if 0           /*Turn on for even more debugging*/
                 if (p_debug) {
                     std::ostringstream s;
                     s <<unparseInstructionWithAddress(ii->second) <<"\n" <<policy.currentRset;
