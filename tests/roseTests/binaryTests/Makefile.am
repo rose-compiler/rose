@@ -251,9 +251,22 @@ test_shiftResizeSection.passed: shiftResizeSection
 	@if diff -u {$(srcdir),.}/arm-ctrlaltdel.ans; then :; else echo "Answer differs from expected"; exit 1; fi
 	@touch $@
 
+# This test is *very* sensitive to changes to the Disassembler and Partitioner classes because they and this test all use
+# the findConstants instruction semantics. If the Disassembler or Partitioner is even slightly changed, it could make a
+# different number of calls to the instruction semantics, which changes the sequence number used to generate constant
+# names. Therefore, when comparing the test output with the answer, we will change all constant names from "v[0-9]+" to
+# "vXXX".  Any problems in the semantic analysis should still be caught since they would presumably affect lots of
+# other output too.  The test is still sensitive to minor formatting changes in unparseInstruction().
 test_findConstants.passed: findConstants
 	$(VALGRIND) ./findConstants $(BINARY_SAMPLES)/i686-test1.O3.bin >test_findConstants.ans
-	@if diff -u {$(srcdir),.}/test_findConstants.ans; then :; else echo "Answer differs from expected"; exit 1; fi
+	@bash -c 'if diff \
+            <(sed "s/v[0-9][0-9]*/vXXX/g" test_findConstants.ans) \
+            <(sed "s/v[0-9][0-9]*/vXXX/g" $(srcdir)/test_findConstants.ans) >/dev/null; then \
+          echo "*** $@: Result (test_findConstants.ans) differs from expected answer in $(srcdir)"; \
+	  echo "    (You should compare the files manually to verify the result, then copy it to"; \
+	  echo "     $(srcdir) if it looks OK.)"; \
+	  exit 1 ;\
+	fi'
 	@touch $@
 
 test_disassemble.passed: disassemble

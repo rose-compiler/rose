@@ -22,7 +22,7 @@ Functions detected from binary executable:
      13 0x08048390 0x080483d0    21/64     .C.SP....  unknown __do_global_dtors_aux
      14 0x080483d0 0x08048404    16/52     .C.SP....  unknown frame_dummy
      15 0x08048404 0x08048410    12/12     .......N.  unknown
-     16 0x08048410 0x08048440    14/48     ...SP....  unknown main
+     16 0x08048410 0x08048440    14/48     ...S.....  unknown main
      17 0x08048440 0x08048460    10/32     ...SP....  unknown bar
      18 0x08048460 0x08048480     8/32     ...SP....  unknown foo
      19 0x08048480 0x080484a4     8/36     ...SP....  unknown handler

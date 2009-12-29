@@ -672,7 +672,9 @@ Partitioner::mark_func_patterns(SgAsmGenericHeader*, const Disassembler::Instruc
 
         /* Try each pattern until one succeeds */
         if (found==insns.end()) found = pattern1(insns, ii);
+#if 0   /* Disabled because NOP's sometimes legitimately appear inside functions */
         if (found==insns.end()) found = pattern2(insns, ii);
+#endif
         if (found==insns.end()) found = pattern3(insns, ii);
 
         
@@ -938,7 +940,9 @@ Partitioner::mark_func_discont(const Disassembler::InstructionMap& insns, const 
     typedef std::map<rose_addr_t, rose_addr_t> Insn2Block;
     Insn2Block insn2block;
 
-    /* Build the nodes of the graph and initialize the instruction-to-block mapping. */
+    /* Build the nodes of the graph and initialize the instruction-to-block mapping. Exclude basic blocks that are
+     * entry blocks of functions. This also prevents CALL edges (or whatever instruction sequence is used for this
+     * architecture) from being added to the graph -- the graph will only contain other kinds of branches. */
     DiscontGraph graph;
     for (BasicBlockStarts::const_iterator bbi=bb_starts.begin(); bbi!=bb_starts.end(); bbi++) {
         rose_addr_t addr = bbi->first;
