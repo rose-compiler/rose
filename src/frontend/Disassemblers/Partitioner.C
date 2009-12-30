@@ -7,6 +7,11 @@
 
 /* See header file for full documentation. */
 
+/********************************************************************************************************************************
+ * These SgAsmFunctionDeclaration methods have no other home, so they're here for now. Do not move them into
+ * src/ROSETTA/Grammar/BinaryInstruction.code because then they can't be indexed by C-aware tools.
+ *
+ */
 static void
 add_to_reason_string(std::string &result, bool isset, bool do_pad, const std::string &abbr, const std::string &full) {
     if (isset) {
@@ -21,7 +26,6 @@ add_to_reason_string(std::string &result, bool isset, bool do_pad, const std::st
     }
 }
 
-/* This has no home, so it's here for now. */
 std::string
 SgAsmFunctionDeclaration::reason_str(bool do_pad) const
 {
@@ -45,6 +49,17 @@ SgAsmFunctionDeclaration::reason_str(bool do_pad) const
     add_to_reason_string(result, (r & SgAsmFunctionDeclaration::FUNC_DISCONT),     do_pad, "D", "discontiguous");
     return result;
 }
+/*
+ *
+ *******************************************************************************************************************************/
+
+
+
+
+
+
+
+
 
 /* Partitions instructions into functions of basic blocks. */
 SgAsmBlock *

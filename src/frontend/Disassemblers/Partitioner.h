@@ -26,7 +26,7 @@ class Partitioner {
      * Data types
      *======================================================================================================================*/
 public:
-
+    
     /** Map of basic block starting addresses. The key is the virtual address of the first instruction in the basic block; the
      *  value is the set of all virtual addresses of instructions known to branch to this basic block (i.e., set of all known
      *  callers). */
