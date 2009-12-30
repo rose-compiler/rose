@@ -249,6 +249,8 @@ outputTypeOfFileAndExit( const string & name )
 // code in ROSETTA.  These functions don't need to be generated since
 // there implementation is not as dependent upon the IR as other functions
 // (e.g. IR node member functions).
+//
+// Switches taking a second parameter need to be added to CommandlineProcessing::isOptionTakingSecondParameter().
 
 bool
 CommandlineProcessing::isOptionWithParameter ( vector<string> & argv, string optionPrefix, string option, string & optionParameter, bool removeOption )
@@ -1704,25 +1706,17 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_skip_unparse_asm_commands(true);
         }
 
-  // DQ (8/26/2008): support for optional more agressive mode of disassembly of binary from all 
-  // executable segments instead of just section based.
-  //
-     if ( CommandlineProcessing::isOption(argv,"-rose:","(aggressive)",true) == true )
-        {
-          printf ("option -rose:aggressive found (not handled internally) \n");
-
-       // DQ (10/12/2008): This was previously commented out, I think it need 
-       // to be available even if exactly what it means may still be in flux.
-       // set_aggressive(true);
-          SgBinaryComposite* binary = isSgBinaryComposite(this);
-          if (binary != NULL)
-             {
-               binary->set_aggressive(true);
-             }
-
-       // DQ (10/12/2008): I am less clear if we want to have more than one mechanism in place!
-       // Disassembler::aggressive_mode = true;
-        }
+  // RPM (12/29/2009): Disassembler aggressiveness.
+     if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "disassembler_search", stringParameter, true)) {
+         try {
+             unsigned heuristics = get_disassemblerSearchHeuristics();
+             heuristics = Disassembler::parse_switches(stringParameter, heuristics);
+             set_disassemblerSearchHeuristics(heuristics);
+         } catch(const Disassembler::Exception &e) {
+             fprintf(stderr, "%s in \"-rose:disassembler_search\" switch\n", e.mesg.c_str());
+             ROSE_ASSERT(!"error parsing -rose:disassembler_search");
+         }
+     }
 
   //
   // internal testing option (for internal use only, these may disappear at some point)
@@ -3726,10 +3720,6 @@ SgBinaryComposite::SgBinaryComposite ( vector<string> & argv ,  SgProject* proje
   // DQ (2/3/2009): This data member has disappeared (in favor of a list).
   // p_binaryFile = NULL;
 
-  // Assume a binary generated from a compiler for now since this 
-  // is easier, the more aggressive modes are still in development.
-     p_aggressive = false;
-
   // printf ("In the SgBinaryComposite constructor \n");
 
   // This constructor actually makes the call to EDG to build the AST (via callFrontEnd()).
@@ -4182,6 +4172,8 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           //AS(02/20/08):  When used with -M or -MM, -MF specifies a file to write 
           //the dependencies to. Need to tell ROSE to ignore that output paramater
           argument == "-MF" ||
+
+          argument == "-rose:disassembler_search" ||
           false)
         {
           result = true;
@@ -6827,7 +6819,7 @@ SgFile::usage ( int status )
           fputs(
 "\n"
 "This ROSE translator provides a means for operating on C, C++, and Fortran\n"
-"source code, as well as on x86 and ARM object code.\n"
+"source code, as well as on x86, ARM, and PowerPC object code.\n"
 "\n"
 "Usage: rose [OPTION]... FILENAME...\n"
 "\n"
@@ -6985,6 +6977,23 @@ SgFile::usage ( int status )
 "                             turn on internal support for cray pointers\n"
 "     -fortran:XXX            pass -XXX to independent semantic analysis\n"
 "                             (useful for turning on specific warnings in front-end)\n"
+"\n"
+"Control Disassembly:\n"
+"     -rose:disassembler_search HOW\n"
+"                             Influences how the disassembler searches for instructions\n"
+"                             to disassemble. HOW is a comma-separated list of search\n"
+"                             specifiers. Each specifier consists of an optional\n"
+"                             qualifier followed by either a word or integer. The\n"
+"                             qualifier indicates whether the search method should be\n"
+"                             added ('+') or removed ('-') from the set. The qualifier\n"
+"                             '=' acts like '+' but first clears the set.  The words\n"
+"                             are the lower-case versions of the Disassembler::SearchHeuristic\n"
+"                             enumerated constants without the leading \"SEARCH_\" (see\n"
+"                             doxygen documentation for the complete list and and their\n"
+"                             meanings).   An integer (decimal, octal, or hexadecimal using\n"
+"                             the usual C notation) can be used to set/clear multiple\n"
+"                             search bits at one time. See doxygen comments for the\n"
+"                             Disassembler::parse_switches class method for full details.\n"
 "\n"
 "Control code generation:\n"
 "     -rose:unparse_line_directives\n"

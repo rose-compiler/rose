@@ -15,6 +15,77 @@ void Disassembler::ctor() {
 #endif
 }
 
+unsigned
+Disassembler::parse_switches(const std::string &s, unsigned flags)
+{
+    size_t at=0;
+    while (at<s.size()) {
+        enum { SET_BIT, CLEAR_BIT, SET_VALUE, NOT_SPECIFIED } howset = NOT_SPECIFIED;
+
+        if (s[at]=='-') {
+            howset = CLEAR_BIT;
+            at++;
+        } else if (s[at]=='+') {
+            howset = SET_BIT;
+            at++;
+        } else if (s[at]=='=') {
+            howset = SET_VALUE;
+            at++;
+        }
+        if (at>=s.size())
+            throw Exception("heuristic name must follow qualifier");
+        
+             
+        size_t comma = s.find(",", at);
+        std::string word = std::string(s, at, comma-at);
+        if (word.size()==0)
+            throw Exception("heuristic name must follow comma");
+        
+        unsigned bits = 0;
+        if (word == "following") {
+            bits = SEARCH_FOLLOWING;
+        } else if (word == "immediate") {
+            bits = SEARCH_IMMEDIATE;
+        } else if (word == "words") {
+            bits = SEARCH_WORDS;
+        } else if (word == "allbytes") {
+            bits = SEARCH_ALLBYTES;
+        } else if (word == "unused") {
+            bits = SEARCH_UNUSED;
+        } else if (word == "nonexe") {
+            bits = SEARCH_NONEXE;
+        } else if (word == "deadend") {
+            bits = SEARCH_DEADEND;
+        } else if (word == "unknown") {
+            bits = SEARCH_UNKNOWN;
+        } else if (word == "funcsyms") {
+            bits = SEARCH_FUNCSYMS;
+        } else if (word == "default") {
+            bits = SEARCH_DEFAULT;
+            if (howset==NOT_SPECIFIED) howset = SET_VALUE;
+        } else if (isdigit(word[0])) {
+            bits = strtol(word.c_str(), NULL, 0);
+        } else {
+            throw Exception("unknown disassembler heuristic: " + word);
+        }
+
+        switch (howset) {
+            case SET_VALUE:
+                flags = 0;
+            case NOT_SPECIFIED:
+            case SET_BIT:
+                flags |= bits;
+                break;
+            case CLEAR_BIT:
+                flags &= ~bits;
+                break;
+        }
+
+        at = comma==std::string::npos ? s.size() : comma+1;
+    }
+    return flags;
+}
+
 /* Initialize the class */
 void
 Disassembler::initclass()
@@ -85,6 +156,14 @@ void
 Disassembler::disassembleInterpretation(SgAsmInterpretation *interp)
 {
     Disassembler *disassembler = Disassembler::create(interp);
+
+    /* Search methods specified with "-rose:disassembler_search" are stored in the SgFile object. Use them rather than the
+     * defaults built into the Disassembler class. */
+    SgNode *file = interp;
+    while (file && !isSgFile(file)) file = file->get_parent();
+    ROSE_ASSERT(file);
+    disassembler->set_search(isSgFile(file)->get_disassemblerSearchHeuristics());
+
     disassembler->disassemble(interp, NULL, NULL);
     delete disassembler;
 }

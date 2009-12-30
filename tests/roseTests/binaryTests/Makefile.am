@@ -145,7 +145,7 @@ demo_findConstants: findConstants demo_shiftResizeSection
 
 demo_disassemble: disassemble demo_findConstants
 	@echo; echo; echo "Demo for $<"; echo
-	./disassemble --search-following --search-immediate --search-words --search-allbytes --search-unused --search-nonexe --search-deadend --search-unknown $(BINARY_SAMPLES)/i686-test1.O0.bin
+	./disassemble -rose:disassembler_search following,immediate,words,allbytes,unused,nonexe,deadend,unknown $(BINARY_SAMPLES)/i686-test1.O0.bin
 	@echo "output has been dumped to i686-test1.O0.bin.dump"
 
 demo_testBinCFG: testBinCFG demo_disassemble
@@ -270,7 +270,7 @@ test_findConstants.passed: findConstants
 	@touch $@
 
 test_disassemble.passed: disassemble
-	$(VALGRIND) ./disassemble --quiet --search-following --search-immediate --search-words --no-search-allbytes --search-unused --search-nonexe --search-deadend --no-search-unknown $(BINARY_SAMPLES)/i686-test1.O0.bin
+	$(VALGRIND) ./disassemble --quiet -rose:disassembler_search following,immediate,words,-allbytes,unused,nonexe,deadend,-unknown $(BINARY_SAMPLES)/i686-test1.O0.bin
 	@mv i686-test1.O0.bin.dump test_disassemble.ans
 #	Commenting this out on only RedHat 32-bit systems is not enough (also fails on Max OSX; for the same reason).
 if !OS_VENDOR_REDHAT_32BIT

@@ -72,7 +72,6 @@ public:
 int
 main(int argc, char *argv[]) 
 {
-    unsigned search = Disassembler::SEARCH_DEFAULT;
     bool show_bad = false;
     bool do_debug = false;
     bool do_reassemble = false;
@@ -82,48 +81,17 @@ main(int argc, char *argv[])
     bool do_show_functions = false;
     int exit_status = 0;
 
+    /* Parse and remove the command-line switches intended for this executable, but leave the switches we don't
+     * understand so they can be handled by ROSE's frontend(). */
     char **new_argv = (char**)calloc(argc+2, sizeof(char*));
     int new_argc=0;
     new_argv[new_argc++] = argv[0];
     new_argv[new_argc++] = "-rose:read_executable_file_format_only";
     for (int i=1; i<argc; i++) {
-        if (!strcmp(argv[i], "--search-following")) {
-            search |= Disassembler::SEARCH_FOLLOWING;
-        } else if (!strcmp(argv[i], "--no-search-following")) {
-            search &= ~Disassembler::SEARCH_FOLLOWING;
-        } else if (!strcmp(argv[i], "--search-immediate")) {
-            search |= Disassembler::SEARCH_IMMEDIATE;
-        } else if (!strcmp(argv[i], "--no-search-immediate")) {
-            search &= ~Disassembler::SEARCH_IMMEDIATE;
-        } else if (!strcmp(argv[i], "--search-words")) {
-            search |= Disassembler::SEARCH_WORDS;
-        } else if (!strcmp(argv[i], "--no-search-words")) {
-            search &= ~Disassembler::SEARCH_WORDS;
-        } else if (!strcmp(argv[i], "--search-allbytes")) {
-            search |= Disassembler::SEARCH_ALLBYTES;
-        } else if (!strcmp(argv[i], "--no-search-allbytes")) {
-            search &= ~Disassembler::SEARCH_ALLBYTES;
-        } else if (!strcmp(argv[i], "--search-unused")) {
-            search |= Disassembler::SEARCH_UNUSED;
-        } else if (!strcmp(argv[i], "--no-search-unused")) {
-            search &= ~Disassembler::SEARCH_UNUSED;
-        } else if (!strcmp(argv[i], "--search-nonexe")) {
-            search |= Disassembler::SEARCH_NONEXE;
-        } else if (!strcmp(argv[i], "--no-search-nonexe")) {
-            search &= ~Disassembler::SEARCH_NONEXE;
-        } else if (!strcmp(argv[i], "--search-deadend")) {
-            search |= Disassembler::SEARCH_DEADEND;
-        } else if (!strcmp(argv[i], "--no-search-deadend")) {
-            search &= ~Disassembler::SEARCH_DEADEND;
-        } else if (!strcmp(argv[i], "--search-unknown")) {
-            search |= Disassembler::SEARCH_UNKNOWN;
-        } else if (!strcmp(argv[i], "--no-search-unknown")) {
-            search &= ~Disassembler::SEARCH_UNKNOWN;
-        } else if (!strcmp(argv[i], "--search-funcsyms")) {
-            search |= Disassembler::SEARCH_FUNCSYMS;
-        } else if (!strcmp(argv[i], "--no-search-funcsyms")) {
-            search &= ~Disassembler::SEARCH_FUNCSYMS;
-        } else if (!strcmp(argv[i], "--dot")) {
+        if (!strncmp(argv[i], "--search-", 9) || !strncmp(argv[i], "--no-search-", 12)) {
+            fprintf(stderr, "%s: search-related switches have been moved into ROSE's -rose:disassembler_search switch\n", argv[0]);
+            exit(1);
+        } if (!strcmp(argv[i], "--dot")) {
             do_dot = true;      /* generate dot files showing the AST */
         } else if (!strcmp(argv[i], "--skip-dos")) {
             do_skip_dos = true;
@@ -144,15 +112,9 @@ main(int argc, char *argv[])
             new_argv[new_argc++] = argv[i];
         }
     }
-    
-    /* The -rose:read_executable_file_format_only causes a prominent warning to be displayed:
-     *   >
-     *   >WARNING: Skipping instruction disassembly
-     *   >
-     */
-    SgProject *project = frontend(new_argc, new_argv);
-    printf("No, please ignore the previous warning; Rest assured, we're doing disassembly!\n\n");
 
+    /* Parse container but do not disassemble anything. */
+    SgProject *project = frontend(new_argc, new_argv);
 
     /* Process each interpretation individually */
     std::vector<SgNode*> interps = NodeQuery::querySubTree(project, V_SgAsmInterpretation);
@@ -177,7 +139,13 @@ main(int argc, char *argv[])
         Disassembler *d = Disassembler::create(interp);
         if (do_debug)
             d->set_debug(stderr);
-        d->set_search(search);
+
+        /* Set the disassembler instruction searching heuristics from the "-rose:disassembler_search" switch as stored
+         * in the SgFile node containing this interpretation. */
+        SgNode *file = interp;
+        while (file && !isSgFile(file)) file = file->get_parent();
+        ROSE_ASSERT(file);
+        d->set_search(isSgFile(file)->get_disassemblerSearchHeuristics());
 
         /* Disassemble instructions, linking them into the interpretation */
         Disassembler::BadMap bad;
