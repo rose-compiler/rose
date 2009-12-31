@@ -301,8 +301,11 @@ class Grammar
        // DQ (12/28/2009): I don't think we want this to be static, since I want to call sourceCodeDirectoryName().
        // static void writeFile ( const StringUtility::FileWithLineNumbers& outputString, const std::string& directoryName, 
        //                         const std::string& className, const std::string& fileExtension );
-          void writeFile ( const StringUtility::FileWithLineNumbers& outputString, const std::string& directoryName, 
-                           const std::string& className, const std::string& fileExtension );
+          void writeFile  ( const StringUtility::FileWithLineNumbers& outputString, const std::string& directoryName, 
+                            const std::string& className, const std::string& fileExtension );
+       // DQ (12/31/2009): Added mechanism to append generated text to files.
+          void appendFile ( const StringUtility::FileWithLineNumbers& outputString, const std::string& directoryName, 
+                            const std::string& className, const std::string& fileExtension );
 
           std::string generateTraverseSuccessorForLoopSource(std::string typeString, 
 							std::string memberVariableName, 
