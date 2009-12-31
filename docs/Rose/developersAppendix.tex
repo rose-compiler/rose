@@ -4752,3 +4752,70 @@ to put) in the ROSE API include:
    \item ompLowering (not for the user interface)
    \item OpenMP Reduction Variable Recognition
 \end{itemize}
+
+
+\newpage
+
+\section{How to add a commandline switch to ROSE translators}
+   The following instructions are only for ROSE developers to add 
+command line switches to {\em ALL} translators built using ROSE.
+the instructions serve mostly as an example and it is helpful to look
+at the referenced source code in the referenced files.
+
+Note that users may process the commandline directly and support in
+available in ROSE explicitly for this level of support (and an example is
+in the ROSE Tutorial).
+
+The following switch is an example of how to add such command line switches to ROSE.
+
+From Support.C in ROSE/src/ROSETTA/src:
+{
+\indent
+\begin{verbatim}
+File.setDataPrototype ( "bool", "F77_only", "= false",
+          NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+\end{verbatim} 
+}
+
+The look for the names (e.g. "F77_only") in "sageSupport.C" in ROSE/src/frontend/SageIII
+and put in the command line processing support as in:
+{
+\indent
+\begin{verbatim}
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(f77|F77|Fortran77)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("Fortran77 only mode ON \n");
+          set_F77_only(true);
+          set_Fortran_only(true);
+          if (get_sourceFileUsesFortran77FileExtension() == false)
+             {
+               printf ("Warning, Non Fortran77 source file name specificed with explicit -rose:Fortran77 Fortran 77 language option! \n");
+               set_F77_only(false);
+             }
+        }
+\end{verbatim} 
+}
+
+There are a few other details, so don't forget the initialize
+the value in the function "SgFile::initialization()" in Support.code
+in src/ROSETTA/Grammar:
+{
+\indent
+\begin{verbatim}
+     p_F77_only                = false;
+\end{verbatim} 
+}
+
+If your option takes a parameter, then you have to make this clear by adding it to the
+function (located in sageSupport.C):
+{
+\indent
+\begin{verbatim}
+     bool CommandlineProcessing::isOptionTakingSecondParameter( string argument )
+\end{verbatim} 
+}
+
+Also, don't forget to document your option in SgFile::usage() (also in sageSupport.C).
+
+
