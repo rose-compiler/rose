@@ -4,6 +4,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # before the subdirectories.
 SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG astTokenStream astHiddenTypeAndDeclarationLists astVisualization
 
+# DQ (12/29/2009): This is only used to handle generated code as smaller files.
+SUBDIRS += GENERATED_CODE_DIRECTORY_Cxx_Grammar
+
 # DQ (5/2/2009): This supports the optimization of the new 
 # Graph IR nodes (makes about 25% improvement, I think).
 # ROSE_OPTIMIZATION_LEVEL = -O3
@@ -52,16 +55,13 @@ EXTRA_DIST = CMakeLists.txt preproc-c.ll docs rtiHelpers.h attributeListMap.h \
              omplexer.cc ompparser.cc ompparser.h
 CLEANFILES = haveRosettaGeneratedSource
 
-# DISTCLEANFILES = preproc.cc ompparser.cc ompparser.h omplexer.cc
 DISTCLEANFILES = preproc-c.cc ompparser.cc ompparser.h omplexer.cc
 
-
-# DQ (10/18/2007): Added AST_FILE_IO.C StorageClasses.C
 # Some source code is generated (call make in ROSE/src/ROSETTA/src to generate these files)
 GENERATED_SOURCE = \
 	Cxx_Grammar.h \
-	Cxx_GrammarRTI.C \
 	Cxx_Grammar.C \
+	Cxx_GrammarRTI.C \
 	Cxx_GrammarMemoryPoolSupport.C \
 	AstQueryMemoryPool.h \
 	Cxx_GrammarReturnClassHierarchySubTree.C \
@@ -81,7 +81,6 @@ GENERATED_SOURCE = \
 	Cxx_GrammarProcessDataMemberReferenceToPointers.C \
 	Cxx_GrammarNewConstructors.C \
 	Cxx_GrammarGetChildIndex.C
-
 
 # DQ (4/23/2009): This file depends upon other files
 StorageClasses.lo: $(srcdir)/astFileIO/StorageClassMemoryManagement.C astFileIO/SourcesOfIRNodesAstFileIOSupport.C
@@ -158,11 +157,9 @@ libsage3_la_LIBADD  = \
    astVisualization/libastVisualization.la
 endif
 
-#	astFileIO/libastFileIO.la 
-#	astFileIO/libastFileIO.la 
-
-# $(CXX_TEMPLATE_OBJECTS)
-# libsage3_la_DEPENDENCIES = preproc.o $(GENERATED_OBJECTS) astFixup/*.o astPostProcessing/*.o astMerge/*.o astFileIO/*.o sageInterface/*.o virtualCFG/*.o 
+if ROSE_USE_SMALLER_GENERATED_FILES
+   libsage3_la_LIBADD += GENERATED_CODE_DIRECTORY_Cxx_Grammar/libgeneratedIR.la
+endif
 
 rose_attributes_list.lo : rose_attributes_list.h 
 
