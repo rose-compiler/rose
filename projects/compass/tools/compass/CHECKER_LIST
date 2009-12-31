@@ -12,7 +12,6 @@ binPrintAsmFunctions
 binPrintAsmInstruction
 binaryBufferOverflow
 binaryInterruptAnalysis
-blankTestChecker
 booleanIsHas
 bufferOverflowFunctions
 byteByByteStructureComparison

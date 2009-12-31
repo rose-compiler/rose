@@ -13,6 +13,18 @@ EXTRA_DIST = CMakeLists.txt
 # GENERATED_SOURCE = SgAddOp.C
 
 if ROSE_USE_SMALLER_GENERATED_FILES
+
+haveRosettaGeneratedSource:
+	cd $(top_builddir)/src/ROSETTA/src; $(MAKE)
+	touch haveRosettaGeneratedSource
+
+# Force ROSETTA to be run to generate the ROSE IR source code.
+force-haveRosettaGeneratedSource:
+	-rm *.h *.C
+	$(MAKE) haveRosettaGeneratedSource
+
+$(GENERATED_SOURCE): haveRosettaGeneratedSource
+
 noinst_LTLIBRARIES = libgeneratedIR.la
 libgeneratedIR_la_SOURCES = $(GENERATED_SOURCE)
 # nodist_libgeneratedIR_la_SOURCES = $(GENERATED_SOURCE)
@@ -21,6 +33,10 @@ endif
 # DQ (10/18/2007): Added AST_FILE_IO.h StorageClasses.h
 # Removed sla.h (redundant with location in src/util/commandlineProcessing/sla.h)
 # include_HEADERS = *.h
+
+test:
+	echo "Force ROSETTA to regenerate the source code for the ROSE IR."
+	cd $(top_builddir)/src/ROSETTA/src; $(MAKE)
 
 clean-local:
 #	rm -rf libgeneratedIR.la

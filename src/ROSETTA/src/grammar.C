@@ -380,6 +380,44 @@ Grammar::writeFile ( const StringUtility::FileWithLineNumbers & outputString,
    }
 
 
+void
+Grammar::appendFile ( const StringUtility::FileWithLineNumbers & outputString,
+                      const string & directoryName,
+                      const string & className,
+                      const string & fileExtension )
+   {
+  // char* directoryName = GrammarString::stringDuplicate(directoryName);
+     string outputFilename = (directoryName == "." ? "" : directoryName + "/") + className + fileExtension;
+
+     printf ("outputFilename = %s \n",outputFilename.c_str());
+     ofstream ROSE_ShowFile(outputFilename.c_str(),std::ios::out | std::ios::app);
+     if (ROSE_ShowFile.good() == false)
+        {
+          printf ("outputFilename = %s could not be opened, likely the directory is missing...\n",outputFilename.c_str());
+          string command = "mkdir -p " + target_directory + sourceCodeDirectoryName();
+
+       // DQ (12/28/2009): As I recall there is a more secure way to do this...see sageSupport.C for an example.
+          printf ("Calling system(%s): making a new directory in the build tree...\n",command.c_str());
+          system(command.c_str());
+
+       // retry opening the file...
+          ROSE_ShowFile.open(outputFilename.c_str());
+        }
+     ROSE_ASSERT (ROSE_ShowFile.good() == true);
+
+  // Select an output stream for the program tree display (cout or <filename>.C.roseShow)
+  // Macro OUTPUT_SHOWFILE_TO_FILE is defined in the transformation_1.h header file
+     ostream & outputStream = (OUTPUT_TO_FILE ? (ROSE_ShowFile) : (cout));
+     ROSE_ASSERT (outputStream.good() == true);
+
+     outputStream << StringUtility::toString(outputString, outputFilename);
+     ROSE_ASSERT (outputStream.good() == true);
+
+     ROSE_ShowFile.close();
+     ROSE_ASSERT (outputStream.good() == true);
+   }
+
+
 string
 Grammar::sourceCodeDirectoryName ()
    {
@@ -781,7 +819,19 @@ Grammar::buildNewAndDeleteOperators( Terminal & node, StringUtility::FileWithLin
 
   // printf ("editString = %s \n",editString.c_str());
 
+  // outputFile += editString;
+
+#if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
+  // Now write out the file (each class in its own file)!
+     string fileExtension = ".C";
+     string directoryName = target_directory + sourceCodeDirectoryName();
+     printf ("In buildNewAndDeleteOperators(): directoryName = %s \n",directoryName.c_str());
+
+  // This should append the string to the target file.
+     appendFile ( editString, directoryName, node.getName(), fileExtension );
+#else
      outputFile += editString;
+#endif
 
 #if 1
   // Call this function recursively on the children of this node in the tree
@@ -836,7 +886,19 @@ Grammar::buildTraverseMemoryPoolSupport( Terminal & node, StringUtility::FileWit
 
   // printf ("editString = %s \n",editString.c_str());
 
+  // outputFile += editString;
+
+#if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
+  // Now write out the file (each class in its own file)!
+     string fileExtension = ".C";
+     string directoryName = target_directory + sourceCodeDirectoryName();
+     printf ("In buildTraverseMemoryPoolSupport(): directoryName = %s \n",directoryName.c_str());
+
+  // This should append the string to the target file.
+     appendFile ( editString, directoryName, node.getName(), fileExtension );
+#else
      outputFile += editString;
+#endif
 
 #if 1
   // Call this function recursively on the children of this node in the tree
@@ -906,7 +968,19 @@ Grammar::buildStringForCheckingIfDataMembersAreInMemoryPoolSupport( Terminal & n
 
   // printf ("editString = %s \n",editString.c_str());
 
+  // outputFile += editString;
+
+#if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
+  // Now write out the file (each class in its own file)!
+     string fileExtension = ".C";
+     string directoryName = target_directory + sourceCodeDirectoryName();
+     printf ("In buildStringForCheckingIfDataMembersAreInMemoryPoolSupport(): directoryName = %s \n",directoryName.c_str());
+
+  // This should append the string to the target file.
+     appendFile ( editString, directoryName, node.getName(), fileExtension );
+#else
      outputFile += editString;
+#endif
 
 #if 1
   // Call this function recursively on the children of this node in the tree
@@ -1483,7 +1557,19 @@ Grammar::buildCopyMemberFunctions ( Terminal & node, StringUtility::FileWithLine
 
   // printf ("editString = %s \n",editString.c_str());
 
+  // outputFile += editString;
+
+#if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
+  // Now write out the file (each class in its own file)!
+     string fileExtension = ".C";
+     string directoryName = target_directory + sourceCodeDirectoryName();
+     printf ("In buildCopyMemberFunctions(): directoryName = %s \n",directoryName.c_str());
+
+  // This should append the string to the target file.
+     appendFile ( editString, directoryName, node.getName(), fileExtension );
+#else
      outputFile += editString;
+#endif
 
 #if 1
   // Call this function recursively on the children of this node in the tree
@@ -2621,7 +2707,12 @@ Grammar::buildCode ()
 
   // Now declare the classes representing the terminals and nonterminals within the grammar
      ROSE_ASSERT (rootNode != NULL);
+#if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
+     StringUtility::FileWithLineNumbers ROSE_ArrayGrammarEmptyHeaderFile;
+     buildHeaderFiles(*rootNode,ROSE_ArrayGrammarEmptyHeaderFile);
+#else
      buildHeaderFiles(*rootNode,ROSE_ArrayGrammarHeaderFile);
+#endif
 
   // DQ (12/29/2009): Attach endif associated with optional separate (smaller) header files.
      ROSE_ArrayGrammarHeaderFile.push_back(StringUtility::StringWithLineNumber(string("#endif // endif for ifdef ROSE_USING_SMALL_GENERATED_HEADER_FILES"),string(""),1));
@@ -2689,14 +2780,22 @@ Grammar::buildCode ()
   // Setup the data base of names (linking name strings to grammar element tags)
      buildVariantsStringDataBase(ROSE_ArrayGrammarSourceFile);
 
-#if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
-     printf ("Skipping output of source files into Cxx_Grammar.C ...\n");
-#else
   // Now build the source code for the terminals and non-terminals in the grammar
      ROSE_ASSERT (rootNode != NULL);
+#if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
+     printf ("Skipping output of source files into Cxx_Grammar.C ...\n");
+     StringUtility::FileWithLineNumbers ROSE_ArrayGrammarEmptySourceFile;
+
+  // Output all the source for each IR node into a single smaller file (one for each IR node).
+     buildSourceFiles(*rootNode,ROSE_ArrayGrammarEmptySourceFile);
+     buildNewAndDeleteOperators(*rootNode,ROSE_ArrayGrammarEmptySourceFile);
+     buildCopyMemberFunctions(*rootNode,ROSE_ArrayGrammarEmptySourceFile);
+     buildTraverseMemoryPoolSupport(*rootNode,ROSE_ArrayGrammarEmptySourceFile);
+     buildStringForCheckingIfDataMembersAreInMemoryPoolSupport(*rootNode,ROSE_ArrayGrammarEmptySourceFile);
+#else
      buildSourceFiles(*rootNode,ROSE_ArrayGrammarSourceFile);
-     cout << "DONE: buildSourceFiles()" << endl;
 #endif
+     cout << "DONE: buildSourceFiles()" << endl;
 
   // DQ (5/24/2005): Support for evaluation of memory sizes of IR nodes
      string memoryStorageEvaluationSupport = buildMemoryStorageEvaluationSupport();
@@ -2725,7 +2824,11 @@ Grammar::buildCode ()
   // Now build the source code for the terminals and non-terminals in the grammar
      ROSE_ASSERT (rootNode != NULL);
 
+#if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
+     printf ("When generating small files we combine the New and Delete oporators into the source files above. \n");
+#else
      buildNewAndDeleteOperators(*rootNode,ROSE_NewAndDeleteOperatorSourceFile);
+#endif
      cout << "DONE: buildNewAndDeletOperators()" << endl;
 
   // printf ("Exiting after building new and delete operators \n");
@@ -2748,7 +2851,11 @@ Grammar::buildCode ()
   // Now build the source code for the terminals and non-terminals in the grammar
      ROSE_ASSERT (rootNode != NULL);
 
+#if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
+     printf ("When generating small files we combine the Traversal Memory Pool support into the source files above. \n");
+#else
      buildTraverseMemoryPoolSupport(*rootNode,ROSE_TraverseMemoryPoolSourceFile);
+#endif
      cout << "DONE: buildTraverseMemoryPoolSupport()" << endl;
 
   // printf ("Exiting after building traverse memory pool functions \n");
@@ -2768,7 +2875,11 @@ Grammar::buildCode ()
   // Now build the source code for the terminals and non-terminals in the grammar
      ROSE_ASSERT (rootNode != NULL);
 
+#if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
+     printf ("When generating small files we combine the CheckingIfDataMembersAreInMemoryPool support into the source files above. \n");
+#else
      buildStringForCheckingIfDataMembersAreInMemoryPoolSupport(*rootNode,ROSE_CheckingIfDataMembersAreInMemoryPoolSourceFile);
+#endif
      cout << "DONE: buildStringForCheckingIfDataMembersAreInMemoryPoolSupport()" << endl;
 
   // printf ("Exiting after building code to check data members which are pointers to IR nodes \n");
@@ -2885,7 +2996,11 @@ Grammar::buildCode ()
   // Now build the source code for the terminals and non-terminals in the grammar
      ROSE_ASSERT (rootNode != NULL);
 
+#if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
+     printf ("When generating small files we combine the Copy Member functions into the source files above. \n");
+#else
      buildCopyMemberFunctions(*rootNode,ROSE_CopyMemberFunctionsSourceFile);
+#endif
      cout << "DONE: buildCopyMemberFunctions()" << endl;
 
   // printf ("Exiting after copy member functions \n");
@@ -3004,7 +3119,7 @@ Grammar::buildCode ()
   //   * AST_FILE_IO.C
   //   * StorageClasses.h
   //   * StorageClasses.C
-                                                                                                                                                                                                                          
+
      Grammar::generateAST_FILE_IOFiles();
      Grammar::generateStorageClassesFiles();
   /////////////////////////////////////////////////////////////////////////////////////////////
