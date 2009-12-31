@@ -389,8 +389,10 @@ Grammar::appendFile ( const StringUtility::FileWithLineNumbers & outputString,
   // char* directoryName = GrammarString::stringDuplicate(directoryName);
      string outputFilename = (directoryName == "." ? "" : directoryName + "/") + className + fileExtension;
 
-     printf ("outputFilename = %s \n",outputFilename.c_str());
+  // printf ("outputFilename = %s \n",outputFilename.c_str());
      ofstream ROSE_ShowFile(outputFilename.c_str(),std::ios::out | std::ios::app);
+#if 0
+  // At this point the file should already exist.
      if (ROSE_ShowFile.good() == false)
         {
           printf ("outputFilename = %s could not be opened, likely the directory is missing...\n",outputFilename.c_str());
@@ -403,6 +405,7 @@ Grammar::appendFile ( const StringUtility::FileWithLineNumbers & outputString,
        // retry opening the file...
           ROSE_ShowFile.open(outputFilename.c_str());
         }
+#endif
      ROSE_ASSERT (ROSE_ShowFile.good() == true);
 
   // Select an output stream for the program tree display (cout or <filename>.C.roseShow)
@@ -825,7 +828,7 @@ Grammar::buildNewAndDeleteOperators( Terminal & node, StringUtility::FileWithLin
   // Now write out the file (each class in its own file)!
      string fileExtension = ".C";
      string directoryName = target_directory + sourceCodeDirectoryName();
-     printf ("In buildNewAndDeleteOperators(): directoryName = %s \n",directoryName.c_str());
+  // printf ("In buildNewAndDeleteOperators(): directoryName = %s \n",directoryName.c_str());
 
   // This should append the string to the target file.
      appendFile ( editString, directoryName, node.getName(), fileExtension );
@@ -892,7 +895,7 @@ Grammar::buildTraverseMemoryPoolSupport( Terminal & node, StringUtility::FileWit
   // Now write out the file (each class in its own file)!
      string fileExtension = ".C";
      string directoryName = target_directory + sourceCodeDirectoryName();
-     printf ("In buildTraverseMemoryPoolSupport(): directoryName = %s \n",directoryName.c_str());
+  // printf ("In buildTraverseMemoryPoolSupport(): directoryName = %s \n",directoryName.c_str());
 
   // This should append the string to the target file.
      appendFile ( editString, directoryName, node.getName(), fileExtension );
@@ -974,7 +977,7 @@ Grammar::buildStringForCheckingIfDataMembersAreInMemoryPoolSupport( Terminal & n
   // Now write out the file (each class in its own file)!
      string fileExtension = ".C";
      string directoryName = target_directory + sourceCodeDirectoryName();
-     printf ("In buildStringForCheckingIfDataMembersAreInMemoryPoolSupport(): directoryName = %s \n",directoryName.c_str());
+  // printf ("In buildStringForCheckingIfDataMembersAreInMemoryPoolSupport(): directoryName = %s \n",directoryName.c_str());
 
   // This should append the string to the target file.
      appendFile ( editString, directoryName, node.getName(), fileExtension );
@@ -1563,7 +1566,7 @@ Grammar::buildCopyMemberFunctions ( Terminal & node, StringUtility::FileWithLine
   // Now write out the file (each class in its own file)!
      string fileExtension = ".C";
      string directoryName = target_directory + sourceCodeDirectoryName();
-     printf ("In buildCopyMemberFunctions(): directoryName = %s \n",directoryName.c_str());
+  // printf ("In buildCopyMemberFunctions(): directoryName = %s \n",directoryName.c_str());
 
   // This should append the string to the target file.
      appendFile ( editString, directoryName, node.getName(), fileExtension );

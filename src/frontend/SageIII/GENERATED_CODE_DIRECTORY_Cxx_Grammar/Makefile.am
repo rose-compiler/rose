@@ -26,7 +26,7 @@ force-haveRosettaGeneratedSource:
 $(GENERATED_SOURCE): haveRosettaGeneratedSource
 
 noinst_LTLIBRARIES = libgeneratedIR.la
-libgeneratedIR_la_SOURCES = $(GENERATED_SOURCE)
+nodist_libgeneratedIR_la_SOURCES = $(GENERATED_SOURCE)
 # nodist_libgeneratedIR_la_SOURCES = $(GENERATED_SOURCE)
 endif
 
@@ -38,9 +38,11 @@ test:
 	echo "Force ROSETTA to regenerate the source code for the ROSE IR."
 	cd $(top_builddir)/src/ROSETTA/src; $(MAKE)
 
+CLEANFILES = haveRosettaGeneratedSource
+
 clean-local:
 #	rm -rf libgeneratedIR.la
-	rm -rf *.h *.C
+	rm -rf *.h *.C *.loT
 
 printFiles:
 	echo "GENERATED_SOURCE = $(GENERATED_SOURCE)"
