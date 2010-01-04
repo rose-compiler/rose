@@ -34,6 +34,15 @@ endif (NOT WIN32)
 if (WIN32)
 set( CMAKE_CXX_FLAGS " /CLR /TP " )
 set( CMAKE_C_FLAGS "  " )
+
+# tps (1/4/2010) Do not know how to add flag to CMakeSetup yet
+set( enable-smaller-generated-files 1 )
+if (enable-smaller-generated-files)
+message ("Smaller generated files enabled")
+else (enable-smaller-generated-files)
+message ("Smaller generated files disabled")
+endif (enable-smaller-generated-files)
+
 else (WIN32)
 set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
 set( CMAKE_C_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )
