@@ -2,9 +2,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 
 # When debugging latex documentation skip using the --interaction=batchmode option
-#PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex --interaction=batchmode
+PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex --interaction=batchmode
 # Liao 12/18/2009, use normal mode to ease finding bugs from hudson logs
-PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex -file-line-error -halt-on-error
+# PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex -file-line-error -halt-on-error
 
 # Later we will add ROSETTA documentation here ...
 SUBDIRS = Tutorial 
@@ -249,7 +249,13 @@ endif
 # simpler target for building manual only
 manual: $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf
 
-pdf-local: $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf ROSE_DeveloperInstructions.pdf ROSE_DemoGuide.pdf 
+# DQ (1/4/2010): Make these separate steps (each takes a few seconds and this simplifies the debugging).
+# pdf-local: $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf ROSE_DeveloperInstructions.pdf ROSE_DemoGuide.pdf 
+pdf-local:
+	$(MAKE) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf || exit 1
+	$(MAKE) ROSE_InstallationInstructions.pdf || exit 1
+	$(MAKE) ROSE_DeveloperInstructions.pdf || exit 1
+	$(MAKE) ROSE_DemoGuide.pdf || exit 1
 
 # DQ (9/9/2009): Added generated list of NMI compile farm platform prerequisites for ROSE documentation (ROSE_InstallationInstructions.pdf)
 rosePlatformPrerequisites.txt:
@@ -346,7 +352,14 @@ $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf: $(generated_files_for_manual)
 #$(PDFLATEX) manual.tex) || exit 1 &&
 #$(PDFLATEX) manual.tex &&
 #docs: html-docs latex-docs
-docs: latex-docs html-docs 
+# docs: latex-docs html-docs 
+# DQ (1/4/2010): To simplify the debugging, make these separate steps.
+docs:
+	@echo "Build the LaTeX documentation first (should build quickly)"
+	$(MAKE) latex-docs || exit 1;
+	@echo "Build the HTML documentation second (should take a while because doxygen takes a while)"
+	$(MAKE) html-docs  || exit 1;
+	@echo "Done building the ROSE documentation (both LaTeX and HTML docs)"
 
 html-docs: html
 
