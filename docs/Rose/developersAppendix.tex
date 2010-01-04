@@ -4772,26 +4772,26 @@ From Support.C in ROSE/src/ROSETTA/src:
 {
 \indent
 \begin{verbatim}
-File.setDataPrototype ( "bool", "F77_only", "= false",
-          NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+File.setDataPrototype ( "bool", "F77\_only", "= false",
+          NO\_CONSTRUCTOR\_PARAMETER, BUILD\_FLAG\_ACCESS\_FUNCTIONS, NO\_TRAVERSAL, NO\_DELETE);
 \end{verbatim} 
 }
 
-The look for the names (e.g. "F77_only") in "sageSupport.C" in ROSE/src/frontend/SageIII
+The look for the names (e.g. "F77\_only") in "sageSupport.C" in ROSE/src/frontend/SageIII
 and put in the command line processing support as in:
 {
 \indent
 \begin{verbatim}
      if ( CommandlineProcessing::isOption(argv,"-rose:","(f77|F77|Fortran77)",true) == true )
         {
-          if ( SgProject::get_verbose() >= 1 )
+          if ( SgProject::get\_verbose() >= 1 )
                printf ("Fortran77 only mode ON \n");
-          set_F77_only(true);
-          set_Fortran_only(true);
-          if (get_sourceFileUsesFortran77FileExtension() == false)
+          set\_F77\_only(true);
+          set\_Fortran\_only(true);
+          if (get\_sourceFileUsesFortran77FileExtension() == false)
              {
                printf ("Warning, Non Fortran77 source file name specificed with explicit -rose:Fortran77 Fortran 77 language option! \n");
-               set_F77_only(false);
+               set\_F77\_only(false);
              }
         }
 \end{verbatim} 
@@ -4803,7 +4803,7 @@ in src/ROSETTA/Grammar:
 {
 \indent
 \begin{verbatim}
-     p_F77_only                = false;
+     p\_F77\_only                = false;
 \end{verbatim} 
 }
 
