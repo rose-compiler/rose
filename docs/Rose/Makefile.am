@@ -343,8 +343,8 @@ $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf: $(generated_files_for_manual)
 	$(PDFLATEX) manual.tex && \
 	cp -f manual.pdf $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf
 
-#	$(PDFLATEX) manual.tex) || exit 1 && \ 
-#	$(PDFLATEX) manual.tex && \ 
+#$(PDFLATEX) manual.tex) || exit 1 &&
+#$(PDFLATEX) manual.tex &&
 #docs: html-docs latex-docs
 docs: latex-docs html-docs 
 
