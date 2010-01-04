@@ -134,4 +134,9 @@ inline T min(const T& a, const T& b)
 #define __func__ __FUNCTION__
 #endif
 
+// DQ (12/28/2009): Moved this from where is was placed by Thomas in the ROSETTA grenerated code.
+// This simplifies the generated code to support splitting large generated files into smaller files.
+// tps (11/25/2009) : Added ssize_t for Windows
+typedef LONG_PTR ssize_t;
+
 #endif
