@@ -64,15 +64,10 @@ HEADER_BINARY_INSTRUCTION_START
 		std::vector<VirtualBinCFG::CFGEdge> cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info);
 		std::vector<VirtualBinCFG::CFGEdge> cfgBinInEdges(const VirtualBinCFG::AuxiliaryInformation* info);
 		void append_sources( SgAsmInstruction* instruction );
-		virtual bool terminatesBasicBlock() {abort();
-			// tps (12/9/2009) : MSC requires a return value
-		     return false;
-		} //subclasses must redefine
-		virtual std::set<rose_addr_t> get_successors(bool* complete) {abort();
-			// tps (12/9/2009) : MSC requires a return value
-		     std::set<rose_addr_t> t;
-		     return t;
-		} //subclasses must redefine
+		virtual bool terminatesBasicBlock(); /*subclasses must redefine*/
+		virtual bool is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t *target) {return false;}
+		virtual std::set<rose_addr_t> get_successors(bool* complete); /*subclasses must redefine*/
+		virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&, bool *complete);
 HEADER_BINARY_INSTRUCTION_END
 
 
@@ -3790,24 +3785,29 @@ SOURCE_BINARY_FILE_PROGRAM_HEADER_LIST_END
 
 HEADER_BINARY_X86_INSTRUCTION_START
 	public:
-		virtual bool terminatesBasicBlock();			/* implemented in DisassemblerX86.C */
-		virtual std::set<rose_addr_t> get_successors(bool* complete);/* implemented in DisassemblerX86.C */
+		/* These virtual functions are implemented in DisassemblerX86.C */
+		virtual bool terminatesBasicBlock();
+		virtual bool is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t *target);
+		virtual std::set<rose_addr_t> get_successors(bool* complete);
+		virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&, bool* complete);
 HEADER_BINARY_X86_INSTRUCTION_END
 
 
 
 HEADER_BINARY_POWERPC_INSTRUCTION_START
 	public:
-		virtual bool terminatesBasicBlock();			/* implemented in DisassemblerPowerpc.C */
-		virtual std::set<rose_addr_t> get_successors(bool* complete);/* implemented in DisassemblerPowerpc.C */
+		/* These virtual functions are implemented in DisassemblerPowerpc.C */
+		virtual bool terminatesBasicBlock();
+		virtual std::set<rose_addr_t> get_successors(bool* complete);
 HEADER_BINARY_POWERPC_INSTRUCTION_END
 
 
 
 HEADER_BINARY_ARM_INSTRUCTION_START
 	public:
-		virtual bool terminatesBasicBlock();			/* implemented in DisassemblerArm.C */
-		virtual std::set<rose_addr_t> get_successors(bool* complete);/* implemented in DisassemblerArm.C */
+		/* These virtual functions are implemented in DisassemblerArm.C */
+		virtual bool terminatesBasicBlock();
+		virtual std::set<rose_addr_t> get_successors(bool* complete);
 HEADER_BINARY_ARM_INSTRUCTION_END
 
 

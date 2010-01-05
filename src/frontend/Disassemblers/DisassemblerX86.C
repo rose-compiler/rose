@@ -37,6 +37,27 @@
  * SgAsmx86Instruction methods
  *========================================================================================================================*/
 
+bool
+SgAsmx86Instruction::terminatesBasicBlock() {
+    if (get_kind()==x86_unknown_instruction)
+        return true;
+    return x86InstructionIsControlTransfer(this);
+}
+
+bool
+SgAsmx86Instruction::is_function_call(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target)
+{
+    if (insns.size()==0)
+        return false;
+    SgAsmx86Instruction *last = isSgAsmx86Instruction(insns.back());
+    if (!last)
+        return false;
+    if (last->get_kind()!=x86_call && last->get_kind()!=x86_farcall)
+        return false;
+    if (!x86GetKnownBranchTarget(last, *target))
+        *target = 0;
+    return true;
+}
 
 Disassembler::AddressSet
 SgAsmx86Instruction::get_successors(bool *complete) {
@@ -123,11 +144,77 @@ SgAsmx86Instruction::get_successors(bool *complete) {
     return retval;
 }
 
-bool
-SgAsmx86Instruction::terminatesBasicBlock() {
-    if (get_kind()==x86_unknown_instruction)
-        return true;
-    return x86InstructionIsControlTransfer(this);
+/* Used by get_successors() for basic blocks. Override superclass method so that they don't try to traverse the AST, which
+ * hasn't been created yet. */
+class BlockSuccessorsPolicy: public FindConstantsPolicy {
+public:
+    void startInstruction(SgAsmInstruction* insn) {
+        addr = insn->get_address();
+        newIp = number<32>(addr);
+        if (rsets.find(addr)==rsets.end())
+            rsets[addr].setToBottom();
+        currentRset = rsets[addr];
+        currentInstruction = isSgAsmx86Instruction(insn);
+    }
+};
+
+/* "this" is only used to select the virtual function */
+Disassembler::AddressSet
+SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns, bool *complete)
+{
+    Disassembler::AddressSet successors = SgAsmInstruction::get_successors(insns, complete);
+
+#ifndef NDEBUG
+    {
+        /* Vector should be one basic block, i.e., a list of consecutive instructions. */
+        rose_addr_t va = insns.front()->get_address();
+        for (size_t i=0; i<insns.size(); i++) {
+            ROSE_ASSERT(insns[i]->get_address()==va);
+            va += insns[i]->get_raw_bytes().size();
+        }
+    }
+#endif
+
+    /* If we couldn't determine all the successors, or a cursory analysis couldn't narrow it down to a single successor then
+     * we'll do a more thorough analysis now. In the case where the cursory analysis returned a complete set containing two
+     * successors, a thorough analysis might be able to narrow it down to a single successor. */
+    if (!*complete || successors.size()>1) {
+        typedef X86InstructionSemantics<BlockSuccessorsPolicy, XVariablePtr> Semantics;
+        try {
+            BlockSuccessorsPolicy policy;
+            Semantics semantics(policy);
+            for (size_t i=0; i<insns.size(); i++) {
+                SgAsmx86Instruction* insn = isSgAsmx86Instruction(insns[i]);
+                semantics.processInstruction(insn);
+#if 0
+                std::ostringstream s;
+                s << "Analysis for " <<unparseInstructionWithAddress(insn) <<std::endl
+                  <<policy.currentRset
+                  <<"    ip = " <<policy.readIP() <<"\n";
+                fputs(s.str().c_str(), stderr);
+#endif
+            }
+            XVariablePtr<32> newip = policy.readIP();
+            if (newip->get().name==0) {
+                successors.clear();
+                successors.insert(newip->get().offset);
+                *complete = true; /*this is the complete set of successors*/
+            }
+        } catch(const Semantics::Exception& e) {
+            /* Abandon entire basic block if we hit an instruction that's not implemented. */
+        }
+    }
+
+    /* Assume that a CALL instruction eventually executes a RET that causes execution to resume at the address following the
+     * CALL. This is true 99% of the time. */
+    {
+        ROSE_ASSERT(insns.size()>0);
+        SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(insns.back());
+        ROSE_ASSERT(last_insn!=NULL);
+        if (last_insn->get_kind()==x86_call || last_insn->get_kind()==x86_farcall)
+            successors.insert(last_insn->get_address() + last_insn->get_raw_bytes().size());
+    }
+    return successors;
 }
 
 
@@ -216,86 +303,6 @@ DisassemblerX86::make_unknown_instruction(const Exception &e)
     SgAsmx86Instruction *insn = makeInstruction(x86_unknown_instruction, "unknown");
     insn->set_raw_bytes(e.bytes);
     return insn;
-}
-
-/* Used by get_block_successors(). Override superclass methods so that they don't try to traverse the AST, which hasn't been
- * created yet. */
-class BlockSuccessorsPolicy: public FindConstantsPolicy {
-public:
-    void startInstruction(SgAsmInstruction* insn) {
-        addr = insn->get_address();
-        newIp = number<32>(addr);
-        if (rsets.find(addr)==rsets.end())
-            rsets[addr].setToBottom();
-        currentRset = rsets[addr];
-        currentInstruction = isSgAsmx86Instruction(insn);
-    }
-};
-
-/* Obtain block successors */
-Disassembler::AddressSet
-DisassemblerX86::get_block_successors(const InstructionMap& insns, bool* complete)
-{
-    AddressSet successors = Disassembler::get_block_successors(insns, complete);
-
-    /* NOTE: We could also do semantic analysis when there's more than one successor, to try to narrow down which branch would
-     *       be taken. Sometimes conditional branches are used as unconditional branches to confuse a recursive disassembler
-     *       to try to get it to disassemble instructions at an unused address in order to preclude disassembly at a
-     *       later-discovered overlapping address. ROSE's disassembler doesn't suffer from this limitation -- it can
-     *       independently disassemble overlapping instruction sequences. Plus, doing semantic analysis on all the basic
-     *       blocks that end with conditional branches could get expensive. */
-    if (!*complete) {
-        if (p_debug)
-            fprintf(p_debug, "Disassembler[va 0x%08"PRIx64"]: semantic analysis... ", insns.begin()->first);
-
-        typedef X86InstructionSemantics<BlockSuccessorsPolicy, XVariablePtr> Semantics;
-        try {
-            BlockSuccessorsPolicy policy;
-            Semantics semantics(policy);
-            for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ii++) {
-                semantics.processInstruction(isSgAsmx86Instruction(ii->second));
-#if 0           /*Turn on for even more debugging*/
-                if (p_debug) {
-                    std::ostringstream s;
-                    s <<unparseInstructionWithAddress(ii->second) <<"\n" <<policy.currentRset;
-                    s <<"    ip = " <<policy.readIP() <<"\n";
-                    fputs(s.str().c_str(), p_debug);
-                }
-#endif
-            }
-            XVariablePtr<32> newip = policy.readIP();
-            if (newip->get().name==0) {
-                if (p_debug)
-                    fprintf(p_debug, "yields ip=0x%08"PRIx64"\n", newip->get().offset);
-                successors.clear();
-                successors.insert(newip->get().offset);
-                *complete = true; /*this is the complete set of successors*/
-            } else if (p_debug) {
-                fprintf(p_debug, "yields ip=<unknown>\n");
-            }
-        } catch(const Semantics::Exception& e) {
-            /* Abandon entire basic block if we hit an instruction that's not implemented. */
-            if (p_debug) {
-                fprintf(p_debug, "throws \"%s\"", e.mesg.c_str());
-                if (e.insn)
-                    fprintf(p_debug, " at 0x%08"PRIx64": %s\n", e.insn->get_address(), unparseInstruction(e.insn).c_str());
-            }
-        }
-    }
-
-    /* Assume that a CALL instruction eventually executes a RET that causes execute to resume at the address following the
-     * CALL. This is true 99% of the time. */
-    {
-        ROSE_ASSERT(insns.size()>0);
-        InstructionMap::const_iterator ii = insns.end();
-        --ii;
-        SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(ii->second);
-        ROSE_ASSERT(last_insn!=NULL);
-        if (last_insn->get_kind()==x86_call || last_insn->get_kind()==x86_farcall)
-            successors.insert(last_insn->get_address() + last_insn->get_raw_bytes().size());
-    }
-
-    return successors;
 }
 
 /*========================================================================================================================

@@ -92,12 +92,6 @@ private:
      * Miscellaneous helper methods
      *========================================================================================================================*/
 private:
-    /** Returns the known successor addresses of a basic block. This calls Disassembler::get_block_successors(), and then, if
-     *  the last instruction is a RET, does a bit of constant propagation analysis to see if the top of the stack is known.
-     *  This is intended to handle obfuscated code that replaces unconditional jumps with a PUSH/RET pair in an attempt to
-     *  confuse recursive disassembly. */
-    virtual AddressSet get_block_successors(const InstructionMap& insns, bool *complete);
-
     /** Constructs a register reference expression for the current data segment based on whether a segment override prefix has
      *  been encountered. */
     SgAsmExpression *currentDataSegment() const;

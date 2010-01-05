@@ -5,6 +5,34 @@
 
 /* See header file for full documentation of all methods in this file. */
 
+/* This has no other home, so it's here for now. Virtual method should be overridden by subclasses. */
+std::set<rose_addr_t>
+SgAsmInstruction::get_successors(bool *complete) {
+    abort();
+    // tps (12/9/2009) : MSC requires a return value
+    std::set<rose_addr_t> t;
+    return t;
+}
+
+/* This has no other home, so it's here for now. Virtual method to return successors of a basic block. */
+std::set<rose_addr_t>
+SgAsmInstruction::get_successors(const std::vector<SgAsmInstruction*>& basic_block, bool *complete/*out*/)
+{
+    if (basic_block.size()==0) {
+        if (complete) *complete = true;
+        return std::set<rose_addr_t>();
+    }
+    return basic_block.back()->get_successors(complete);
+}
+
+/* This has no other home, so it's here for now. */
+bool
+SgAsmInstruction::terminatesBasicBlock() {
+    abort();
+    // tps (12/9/2009) : MSC requires a return value
+    return false;
+}
+
 /* List of disassembler subclasses */
 std::vector<Disassembler*> Disassembler::disassemblers;
 
@@ -711,13 +739,12 @@ Disassembler::mark_referenced_instructions(SgAsmInterpretation *interp, const Me
     }
 }
 
-/* Add last instruction's successors to returned successors.  Architecture-specific disassemblers sometimes override this
- * virtual method to do something more interesting. */
+/* Add last instruction's successors to returned successors. */
 Disassembler::AddressSet
 Disassembler::get_block_successors(const InstructionMap& insns, bool *complete)
 {
-    ROSE_ASSERT(insns.size()>0);
-    InstructionMap::const_iterator ii = insns.end();
-    --ii;
-    return ii->second->get_successors(complete);
+    std::vector<SgAsmInstruction*> block;
+    for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii)
+        block.push_back(ii->second);
+    return block.front()->get_successors(block, complete);
 }
