@@ -1537,6 +1537,11 @@ tests/CompileTests/uninitializedField_tests/Makefile
 tests/CompileTests/sourcePosition_tests/Makefile
 tests/CompileTests/hiddenTypeAndDeclarationListTests/Makefile
 tests/CompileTests/sizeofOperation_tests/Makefile
+tests/CompileTests/MicrosoftWindows_tests/Makefile
+tests/CompileTests/nameQualificationAndTypeElaboration_tests/Makefile
+tests/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
+tests/CompilerOptionsTests/preinclude_tests/Makefile
+tests/CompilerOptionsTests/tokenStream_tests/Makefile
 tests/roseTests/Makefile
 tests/roseTests/PHPTests/Makefile
 tests/roseTests/astFileIOTests/Makefile
@@ -1553,6 +1558,9 @@ tests/roseTests/astSymbolTableTests/Makefile
 tests/roseTests/astTokenStreamTests/Makefile
 tests/roseTests/binaryTests/Makefile
 tests/roseTests/binaryTests/SemanticVerification/Makefile
+tests/roseTests/binaryTests/libraryIdentification_tests/Makefile
+tests/roseTests/binaryTests/Pin_tests/Makefile
+tests/roseTests/binaryTests/Dwarf_tests/Makefile
 tests/roseTests/loopProcessingTests/Makefile
 tests/roseTests/ompLoweringTests/Makefile
 tests/roseTests/programAnalysisTests/Makefile
@@ -1575,6 +1583,9 @@ tests/roseTests/roseHPCToolkitTests/data/03/PROFILE/Makefile
 tests/roseTests/roseHPCToolkitTests/data/03/struct_ls/Makefile
 tests/roseTests/roseHPCToolkitTests/data/Makefile
 tests/roseTests/utilTests/Makefile
+tests/roseTests/fileLocation_tests/Makefile
+tests/roseTests/graph_tests/Makefile
+tests/roseTests/mergeTraversal_tests/Makefile
 tests/translatorTests/Makefile
 tutorial/Makefile
 tutorial/exampleMakefile

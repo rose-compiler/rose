@@ -19,7 +19,10 @@ SUBDIRS =  \
      programAnalysisTests \
      programTransformationTests \
      roseHPCToolkitTests \
-     utilTests 
+     utilTests \
+     fileLocation_tests \
+     graph_tests \
+     mergeTraversal_tests
 
 check-local:
 	@echo "**********************************************************************************"
