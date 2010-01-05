@@ -258,7 +258,7 @@ set(ROSE_TARGET_LINK
    libastHiddenTypeAndDeclarationLists roseAsmUnparser libastPostProcessing libhpdf rose_util_lib roseBinaryLoader
 )
 
-elseif ( enable-smaller-generated-files )
+endif ( enable-smaller-generated-files )
 
 
 #Liao, link static libraries into the shared librose library
