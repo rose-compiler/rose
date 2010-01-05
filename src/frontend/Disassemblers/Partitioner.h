@@ -1,22 +1,50 @@
 #ifndef ROSE_DISASSEMBLER_PARTITIONER_H
 #define ROSE_DISASSEMBLER_PARTITIONER_H
 
+/** Partitions instructions into basic blocks and functions.
+ *
+ *  The Partitioner classes are responsible for partitioning the set of instructions disassembled by a Disassembler class into
+ *  AST nodes for basic blocks (SgAsmBlock) and functions (SgAsmFunctionDeclaration).  A basic block is a contiguous sequence
+ *  of nonoverlapping instructions where control flow enters at only the first instruction and exits at only the last
+ *  instruction. A function is a collection of basic blocks with a single entry point. In the final ROSE AST, each instruction
+ *  belongs to exactly one basic block, and each basic block belongs to exactly one function.
+ *
+ *  The partitioner organizes instructions into basic blocks by starting at a particular instruction and then looking at its
+ *  set of successor addresses from SgAsmInstruction::get_successors().  If the following address is the only successor then
+ *  the instruction at that address is added to the basic block and the process repeats.
+ *
+ *  The partitioner organizes basic blocks into functions in two phases. The first phase considers all disassembled
+ *  instructions and other available information such as symbol tables. The heuristics used to find function entry points are
+ *  controlled by setting or clearing various SgAsmFunctionDeclaration::FunctionReason bits with the set_heuristics() method.
+ *  Although this phase is part of the main partition() method, it can also be invoked explicitly by calling seed_functions().
+ *
+ *  The second phase uses a control flow graph (CFG) to create basic blocks and assign them to functions. While analyzing the
+ *  CFG additional function entry points might be recognized.  Some aspects of the second phase are also controlled by
+ *  set_heuristics(), such as recognition of x86 "CALL" targets as function entry points.  Although this phase is part of the
+ *  main partition() method, it can also be invoked explicitly by calling analyze_cfg().
+ *
+ *  Once all functions are detected and basic blocks are created and assigned to the functions, the AST can be created by
+ *  calling build_ast().
+ */
 class Partitioner {
 protected:
     struct Function;
-    
+
+    /** Represents a basic block within the Partitioner. Each basic block will become an SgAsmNode in the AST. */
     struct BasicBlock {
         BasicBlock(): sucs_complete(false), sucs_ninsns(0), function(NULL) {}
         const Disassembler::AddressSet& successors(bool *complete=NULL); /**< Calculates known successors */
         bool is_function_call(rose_addr_t*);    /**< True if basic block appears to call a function */
-        std::vector<SgAsmInstruction*> insns;   /**< Instructions composing this basic block, in address order */
+        std::vector<SgAsmInstruction*> insns;   /**< Non-empty set of instructions composing this basic block, in address order */
         Disassembler::AddressSet sucs;          /**< Cached set of known successors */
         bool sucs_complete;                     /**< Is the set of successors known completely? */
         size_t sucs_ninsns;                     /**< Number of instructions in block when "sucs" was computed */
-        Function* function;                     /**< Function to which this basic block is assigned */
+        Function* function;                     /**< Function to which this basic block is assigned, or null */
     };
     typedef std::map<rose_addr_t, BasicBlock*> BasicBlocks;
 
+    /** Represents a function within the Partitioner. Each non-empty function will become an SgAsmFunctionDeclaration in the
+     *  AST. */
     struct Function {
         Function(rose_addr_t entry_va): reason(0), pending(true), entry_va(entry_va) {}
         Function(rose_addr_t entry_va, unsigned r): reason(r), pending(true), entry_va(entry_va) {}
@@ -38,25 +66,39 @@ public:
     /* FIXME: Backward compatibility stuff prior to 2010-01-01. These are deprecated and should eventually be removed. They
      *        are currently used by src/midend/binaryAnalyses/binary_analysis.C for some of the CFG and call graph functions. */
 
-    /** Map of basic block starting addresses (DEPRECATED). The key is the virtual address of the first instruction in the
+    /** Map of basic block starting addresses. The key is the virtual address of the first instruction in the
      *  basic block; the value is the set of all virtual addresses of instructions known to branch to this basic block (i.e.,
-     *  set of all known callers). */
+     *  set of all known callers).
+     *
+     *  \deprecated This data type is used only for backward compatibility by detectBasicBlocks() and detectFunctions(). It
+     *  has been replaced by Partitioner::BasicBlocks. */
     typedef std::map<rose_addr_t, Disassembler::AddressSet> BasicBlockStarts;
 
-    /** Find the beginnings of basic blocks based on instruction type and call targets (DEPRECATED). */
+    /** Find the beginnings of basic blocks based on instruction type and call targets.
+     *
+     *  \deprecated This function is deprecated.  Basic blocks are now represented by Partitioner::BasicBlock
+     *  and the insn2block map. */
     BasicBlockStarts detectBasicBlocks(const Disassembler::InstructionMap&) const;
 
-    /** Map of function starting addresses (DEPRECATED). The key is the virtual address of the first instruction in the
-     *  function; the value consists of a bit flag indicating why we think this is the beginning of a function, and a name (if
-     *  known) of the function. */
+    /** Information about each function starting address.
+     *
+     *  \deprecated This data type is used only for backward compatibility by detectFunctions(). It has been replaced by
+     *  Partitioner::Function, which is capable of describing noncontiguous functions. */
     struct FunctionStart {
         FunctionStart(unsigned reason, std::string name): reason(reason), name(name) {}
         unsigned reason;                        /** SgAsmFunctionDeclaration::FunctionReason bit flags */
         std::string name;                       /** Name of function if known. */
     };
+
+    /** Map describing the starting address of each known function.
+     *
+     *  \deprecated This type has been replaced with Partitioner::Functions, which is capable of describing
+     *  noncontiguous functions. */
     typedef std::map<rose_addr_t, FunctionStart> FunctionStarts;
     
-    /** Returns a list of the currently defined functions (DEPRECATED). */
+    /** Returns a list of the currently defined functions.
+     *
+     *  \deprecated This function has been replaced by seed_functions() and analyze_cfg(). */
     FunctionStarts detectFunctions(SgAsmInterpretation*, const Disassembler::InstructionMap &insns,
                                    BasicBlockStarts &bb_starts/*out*/) const;
 
@@ -68,28 +110,25 @@ public:
     /** Sets the set of heuristics used by the partitioner.  The @p heuristics should be a bit mask containing the
      *  SgAsmFunctionDeclaration::FunctionReason bits. These same bits are assigned to the "reason" property of the resulting
      *  function nodes in the AST, depending on which heuristic detected the function. */
-    void set_heuristics(unsigned heuristics) {
+    virtual void set_heuristics(unsigned heuristics) {
         func_heuristics = heuristics;
     }
 
     /** Returns a bit mask of SgAsmFunctionDeclaration::FunctionReason bits indicating which heuristics would be used by the
      *  partitioner.  */
-    unsigned get_heuristics() const {
+    virtual unsigned get_heuristics() const {
         return func_heuristics;
     }
 
     /** Top-level function to run the partitioner on some instructions and build an AST */
-    SgAsmBlock* partition(SgAsmInterpretation*, const Disassembler::InstructionMap&);
+    virtual SgAsmBlock* partition(SgAsmInterpretation*, const Disassembler::InstructionMap&);
 
-    /** Reset partitioner to initial conditions */
-    void clear() {
-        insns.clear();
-        insn2block.clear();
-        functions.clear();
-    }
+    /** Reset partitioner to initial conditions by discarding all instructions, basic blocks, and functions. */
+    virtual void clear();
 
-    /** Adds additional instructions to be processed. */
-    void add_instructions(const Disassembler::InstructionMap& insns) {
+    /** Adds additional instructions to be processed. New instructions are only added at addresses that don't already have an
+     *  instruction. */
+    virtual void add_instructions(const Disassembler::InstructionMap& insns) {
         this->insns.insert(insns.begin(), insns.end());
     }
 
@@ -99,34 +138,39 @@ public:
      *  SgAsmFunctionDeclaration::FUNC_USERDEF is set (see set_heuristics()), which is the default.   The reason for having
      *  user-defined function detectors is that the detection of functions influences the shape of the AST and so it is easier
      *  to apply those analyses here, before the AST is built, rather than in the mid-end after the AST is built. */
-    void add_function_detector(FunctionDetector f) {
+    virtual void add_function_detector(FunctionDetector f) {
         user_detectors.push_back(f);
     }
     
-    /** Adds a new function definition to the partitioner. */
-    Function* add_function(rose_addr_t entry_va, unsigned reasons, std::string name="");
+    /** Adds a new function definition to the partitioner.  New functions can be added at any time, including during the
+     *  analyze_cfg() call. */
+    virtual Function* add_function(rose_addr_t entry_va, unsigned reasons, std::string name="");
 
-    /** Builds the AST describing all the functions */
-    SgAsmBlock* build_ast();
+    /** Builds the AST describing all the functions. The return value is an SgAsmBlock node that points to a list of
+     *  SgAsmFunctionDeclaration nodes (the functions), each of which points to a list of SgAsmBlock nodes (the basic
+     *  blocks). Any basic blocks that were not assigned to a function by the Partitioner will be added to a function named
+     *  "***unassigned blocks***" whose entry address will be the address of the lowest instruction and whose
+     * SgAsmFunctionDeclaration::get_reason() method will return zero. */
+    virtual SgAsmBlock* build_ast();
     
 protected:
-    void append(BasicBlock*, SgAsmInstruction*);        /**< Add instruction to basic block */
-    BasicBlock* find_bb_containing(rose_addr_t);        /**< Find basic block containing instruction address */
-    BasicBlock* find_bb_containing(SgAsmInstruction* insn) {return find_bb_containing(insn->get_address());}
-    void append(Function*, BasicBlock*);                /**< Append basic block to function */
-    rose_addr_t address(BasicBlock*) const;             /**< Return starting address of basic block */
-    BasicBlock* split(BasicBlock*, rose_addr_t);        /**< Split basic block in two at address */
-    void discover_blocks(Function*, rose_addr_t);       /**< Add specified block to function recursively */
-    void seed_functions(SgAsmInterpretation*);          /**< Find functions on basis other than CFG */
-    void analyze_cfg();                                 /**< Detect functions by analyzing the CFG */
-    SgAsmFunctionDeclaration* build_ast(Function*) const;/**< Build AST for a single function */
-    SgAsmBlock* build_ast(BasicBlock*) const;           /**< Build AST for a single basic block */
+    virtual void append(BasicBlock*, SgAsmInstruction*);        /**< Add instruction to basic block */
+    virtual BasicBlock* find_bb_containing(rose_addr_t);        /**< Find basic block containing instruction address */
+    virtual BasicBlock* find_bb_containing(SgAsmInstruction* insn) {return find_bb_containing(insn->get_address());}
+    virtual void append(Function*, BasicBlock*);                /**< Append basic block to function */
+    virtual rose_addr_t address(BasicBlock*) const;             /**< Return starting address of basic block */
+    virtual BasicBlock* split(BasicBlock*, rose_addr_t);        /**< Split basic block in two at address */
+    virtual void discover_blocks(Function*, rose_addr_t);       /**< Add specified block to function recursively */
+    virtual void seed_functions(SgAsmInterpretation*);          /**< Find functions on basis other than CFG */
+    virtual void analyze_cfg();                                 /**< Detect functions by analyzing the CFG */
+    virtual SgAsmFunctionDeclaration* build_ast(Function*) const;/**< Build AST for a single function */
+    virtual SgAsmBlock* build_ast(BasicBlock*) const;           /**< Build AST for a single basic block */
     
-    void mark_entry_targets(SgAsmGenericHeader*);       /**< Seeds functions for program entry points */
-    void mark_eh_frames(SgAsmGenericHeader*);           /**< Seeds functions for error handling frames */
-    void mark_func_symbols(SgAsmGenericHeader*);        /**< Seeds functions that correspond to function symbols */
-    void mark_func_patterns(SgAsmGenericHeader*);       /**< Seeds functions according to instruction patterns */
-    void name_plt_entries(SgAsmGenericHeader*);         /**< Assign names to ELF PLT functions */
+    virtual void mark_entry_targets(SgAsmGenericHeader*);       /**< Seeds functions for program entry points */
+    virtual void mark_eh_frames(SgAsmGenericHeader*);           /**< Seeds functions for error handling frames */
+    virtual void mark_func_symbols(SgAsmGenericHeader*);        /**< Seeds functions that correspond to function symbols */
+    virtual void mark_func_patterns(SgAsmGenericHeader*);       /**< Seeds functions according to instruction patterns */
+    virtual void name_plt_entries(SgAsmGenericHeader*);         /**< Assign names to ELF PLT functions */
 
     /** Return the virtual address that holds the branch target for an indirect branch. For example, when called with these
      *  instructions:

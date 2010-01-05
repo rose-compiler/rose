@@ -102,6 +102,29 @@ Partitioner::Function::clear_blocks()
     blocks.clear();
 }
 
+/* Return partitioner to initial state */
+void
+Partitioner::clear()
+{
+    /* Delete all functions */
+    for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+        fi->second->clear_blocks();
+        delete fi;
+    }
+    functions.clear();
+
+    /* Delete all basic blocks */
+    std::set<BasicBlock*> blocks;
+    for (size_t i=0; i<insn2block; i++)
+        blocks.insert(insn2block[i]);
+    for (std::set<BasicBlock*>::iterator bi=blocks.begin(); bi!=blocks.end(); ++bi)
+        delete *bi;
+    insn2block.clear();
+
+    /* Release (do not delete) all instructions */
+    insns.clear();
+}
+
 /* Return address of first instruction of basic block */
 rose_addr_t
 Partitioner::address(BasicBlock* bb) const
@@ -593,7 +616,7 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
          * function/block relationship is an edge in the abstract syntax tree), we have to remove this block from the other
          * function (and not add it to this one either).  We'll mark the function as being in conflict so we can try again
          * later. */
-        fprintf(stderr, "[conflicts F%08"PRIx64" \"%s\"]", bb->function->entry_va, bb->function->name.c_str());
+        fprintf(stderr, "[conflict F%08"PRIx64" \"%s\"]", bb->function->entry_va, bb->function->name.c_str());
         bb->function->pending = true;
         if (functions.find(va)==functions.end())
             add_function(va, SgAsmFunctionDeclaration::FUNC_GRAPH);
@@ -601,8 +624,9 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
         /* Add this block to the function and follow its successors. If a successor appears to be a function call then create
          * that function and don't add that block to this function. */
         rose_addr_t call_target = NO_TARGET;
-        if (bb->is_function_call(&call_target) && call_target!=NO_TARGET) {
-            fprintf(stderr, "[calling F%08"PRIx64"]", call_target);
+        if ((heuristics & SgAsmFunctionDeclaration::FUNC_CALL_TARGET) &&
+            bb->is_function_call(&call_target) && call_target!=NO_TARGET) {
+            fprintf(stderr, "[call F%08"PRIx64"]", call_target);
             add_function(call_target, SgAsmFunctionDeclaration::FUNC_CALL_TARGET);
         }
         append(f, bb);
@@ -651,7 +675,7 @@ Partitioner::build_ast()
         BasicBlock *bb = find_bb_containing(ii->first);
         if (!bb->function) {
             if (!catchall)
-                catchall = add_function(ii->first, 0, "***unassigned blocks***");
+                catchall = add_function(ii->first, 0, "***unassigned blocks***"); /*see documentation if changing this name*/
             append(catchall, bb);
         }
     }
