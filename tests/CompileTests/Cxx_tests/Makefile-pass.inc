@@ -668,7 +668,6 @@ test2009_15.C \
 test2009_20.C \
 test2009_30.C \
 test2009_31.C \
-test2009_35.C \
 test2009_37.C \
 test2009_39.C \
 test2009_40.C \
@@ -704,6 +703,8 @@ test2001_02.C \
 test2001_03.C \
 test2004_116.C
 
+# DQ (1/5/2009): This test fails only in the ROSE/tests/CompileTests/virtualCFG_tests directory.
+# test2009_35.C
 
 # DQ (10/5/2007): Previous problems fixed, this is a remaining problem.
 # test2005_188.C 

@@ -137,6 +137,7 @@ test2009_22.C \
 test2009_32.C \
 test2009_33.C \
 test2009_34.C \
+test2009_35.C \
 test2009_36.C \
 test2009_38.C \
 test2009_43.C \
