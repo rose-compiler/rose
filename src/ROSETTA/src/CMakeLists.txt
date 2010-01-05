@@ -88,7 +88,7 @@ get_target_property (META_EXE_LOC CxxGrammarMetaProgram LOCATION)
 add_custom_command(
    OUTPUT ${ROSETTA_HEADERS} ${ROSETTA_SRC} 
 #  depend on the code generator and input files
-   DEPENDS CxxGrammarMetaProgram ${GRAMMAR_SOURCE_FILES}
+   DEPENDS CxxGrammarMetaProgram ${GRAMMAR_SOURCE_FILES} libgeneratedIR   
 #  We need to copy the input files  to the build tree since 
 #  the code generator will output the generated source files into the same directory as where the input files locate
    COMMAND
@@ -115,8 +115,9 @@ add_custom_command(
 
 # a custom target depending on generated rosetta source and header files to trigger the building process
 add_custom_target( ROSETTA ALL 
-       DEPENDS ${ROSETTA_HEADERS} ${ROSETTA_SRC} ${STORAGECLASSES_SRC}    
+       DEPENDS ${ROSETTA_HEADERS} ${ROSETTA_SRC} ${STORAGECLASSES_SRC}
     )
+
 #add_custom_target( ROSETTA ALL DEPENDS copy_ROSETTA COMMENT "Generating files" )
 #add_custom_target( ROSETTA ALL DEPENDS ${GENERATED_HEADERS} ${GENERATED_SRC} COMMENT "Generating files" )
 
