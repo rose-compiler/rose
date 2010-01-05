@@ -79,27 +79,34 @@ Partitioner::BasicBlock::successors(bool *complete)
     return sucs;
 }
 
-/* Returns true if block ends with what appears to be a function call. */
+/* Returns true if block ends with what appears to be a function call. Don't modify @p target if this isn't a function call. */
 bool
 Partitioner::BasicBlock::is_function_call(rose_addr_t *target)
 {
     if (insns.size()==0)
         return false;
-    return insns.front()->is_function_call(insns, target);
+    rose_addr_t va;
+    if (insns.front()->is_function_call(insns, &va)) {
+        *target = va;
+        return true;
+    }
+    return false;
 }
 
 /* Release all blocks from a function. */
 void
 Partitioner::Function::clear_blocks()
 {
-    for (std::set<BasicBlock*>::iterator bi=blocks.begin(); bi!=blocks.end(); ++bi)
-        (*bi)->function = NULL;
+    for (BasicBlocks::iterator bi=blocks.begin(); bi!=blocks.end(); ++bi)
+        bi->second->function = NULL;
     blocks.clear();
 }
 
 /* Return address of first instruction of basic block */
 rose_addr_t
-Partitioner::address(BasicBlock* bb) const {
+Partitioner::address(BasicBlock* bb) const
+{
+    ROSE_ASSERT(bb->insns.size()>0);
     return bb->insns.front()->get_address();
 }
 
@@ -110,8 +117,8 @@ Partitioner::split(BasicBlock* bb1, rose_addr_t va)
 {
     ROSE_ASSERT(bb1==find_bb_containing(va));
     BasicBlock *bb2 = new BasicBlock;
-    if (bb1->function)
-        append(bb1->function, bb2);
+
+    /* Move some instructions from bb1 to bb2 */
     std::vector<SgAsmInstruction*>::iterator cut = bb1->insns.begin();
     while (cut!=bb1->insns.end() && (*cut)->get_address()<va) ++cut;
     for (std::vector<SgAsmInstruction*>::iterator ii=cut; ii!=bb1->insns.end(); ++ii) {
@@ -119,6 +126,11 @@ Partitioner::split(BasicBlock* bb1, rose_addr_t va)
         insn2block[(*ii)->get_address()] = bb2;
     }
     bb1->insns.erase(cut, bb1->insns.end());
+
+    /* Insert bb2 into the same function as bb1 */
+    if (bb1->function)
+        append(bb1->function, bb2);
+
     return bb2;
 }
 
@@ -146,7 +158,7 @@ Partitioner::append(Function* f, BasicBlock *bb)
     ROSE_ASSERT(bb);
     ROSE_ASSERT(bb->function==NULL);
     bb->function = f;
-    f->blocks.insert(bb);
+    f->blocks[address(bb)] = bb;
 }
 
 /* Find (or create) a basic block containing the specified instruction address. The address is assumed to be an instruction
@@ -548,7 +560,6 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
     if (ii==insns.end()) return; /* No instruction at this address. */
     SgAsmInstruction *insn = ii->second;
     static const rose_addr_t NO_TARGET = (rose_addr_t)-1;
-    rose_addr_t target_va = NO_TARGET; /*target of function call blocks*/
 
     /* This block might be the entry address of a function even before that function has any basic blocks assigned to it. */
     Functions::iterator fi = functions.find(va);
@@ -586,16 +597,20 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
         bb->function->pending = true;
         if (functions.find(va)==functions.end())
             add_function(va, SgAsmFunctionDeclaration::FUNC_GRAPH);
-    } else if (bb->is_function_call(&target_va)) {
-        /* If this block ends with what appears to be a function call then make sure the call target is marked as a function. */
-        if (target_va!=NO_TARGET)
-            add_function(target_va, SgAsmFunctionDeclaration::FUNC_CALL_TARGET);
     } else {
-        /* Add this block to the function and follow its successors */
+        /* Add this block to the function and follow its successors. If a successor appears to be a function call then create
+         * that function and don't add that block to this function. */
+        rose_addr_t call_target = NO_TARGET;
+        if (bb->is_function_call(&call_target) && call_target!=NO_TARGET) {
+            fprintf(stderr, "[calling F%08"PRIx64"]", call_target);
+            add_function(call_target, SgAsmFunctionDeclaration::FUNC_CALL_TARGET);
+        }
         append(f, bb);
         const Disassembler::AddressSet& suc = bb->successors();
-        for (Disassembler::AddressSet::const_iterator si=suc.begin(); si!=suc.end(); ++si)
-            discover_blocks(f, *si);
+        for (Disassembler::AddressSet::const_iterator si=suc.begin(); si!=suc.end(); ++si) {
+            if (*si!=call_target)
+                discover_blocks(f, *si);
+        }
     }
 }
 
@@ -669,17 +684,23 @@ Partitioner::build_ast(Function* f) const
     }
     
     SgAsmFunctionDeclaration *retval = new SgAsmFunctionDeclaration;
-
-    for (std::set<BasicBlock*>::iterator bi=f->blocks.begin(); bi!=f->blocks.end(); ++bi) {
-        SgAsmBlock *block = build_ast(*bi);
+    rose_addr_t next_block_va = f->entry_va;
+    unsigned reasons = f->reason;
+    
+    for (BasicBlocks::iterator bi=f->blocks.begin(); bi!=f->blocks.end(); ++bi) {
+        if (address(bi->second)!=next_block_va)
+            reasons |= SgAsmFunctionDeclaration::FUNC_DISCONT;
+        SgAsmBlock *block = build_ast(bi->second);
         retval->get_statementList().push_back(block);
         block->set_parent(retval);
+        SgAsmInstruction *last = bi->second->insns.back();
+        next_block_va = last->get_address() + last->get_raw_bytes().size();
     }
 
-    BasicBlock *first_block = *(f->blocks.begin());
+    BasicBlock *first_block = f->blocks.begin()->second;
     retval->set_address(address(first_block));
     retval->set_name(f->name);
-    retval->set_reason(f->reason);
+    retval->set_reason(reasons);
     retval->set_entry_va(f->entry_va);
     return retval;
 }

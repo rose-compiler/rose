@@ -15,6 +15,7 @@ protected:
         size_t sucs_ninsns;                     /**< Number of instructions in block when "sucs" was computed */
         Function* function;                     /**< Function to which this basic block is assigned */
     };
+    typedef std::map<rose_addr_t, BasicBlock*> BasicBlocks;
 
     struct Function {
         Function(rose_addr_t entry_va): reason(0), pending(true), entry_va(entry_va) {}
@@ -24,7 +25,7 @@ protected:
         void clear_blocks();                    /**< Remove all blocks from this function */
         unsigned reason;                        /**< SgAsmFunctionDeclaration::FunctionReason bit flags */
         std::string name;                       /**< Name of function if known */
-        std::set<BasicBlock*> blocks;           /**< Basic blocks belonging to this function */
+        BasicBlocks blocks;                     /**< Basic blocks belonging to this function */
         bool pending;                           /**< True if we need to (re)discover the basic blocks */
         rose_addr_t entry_va;                   /**< Entry virtual address */
     };

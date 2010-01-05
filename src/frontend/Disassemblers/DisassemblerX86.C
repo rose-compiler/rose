@@ -54,8 +54,9 @@ SgAsmx86Instruction::is_function_call(const std::vector<SgAsmInstruction*>& insn
         return false;
     if (last->get_kind()!=x86_call && last->get_kind()!=x86_farcall)
         return false;
-    if (!x86GetKnownBranchTarget(last, *target))
-        *target = 0;
+    rose_addr_t tmp;
+    if (x86GetKnownBranchTarget(last, tmp))
+        *target = tmp; /* "target" must not be modified if we don't know the target address. */
     return true;
 }
 

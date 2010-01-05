@@ -228,6 +228,29 @@ unparseAsmStatement(SgAsmStatement* stmt)
             for (size_t i = 0; i < blk->get_statementList().size(); ++i) {
                 result += unparseAsmStatement(blk->get_statementList()[i]);
             }
+#if 1
+            /* Show block successors */
+            if (blk->get_statementList().size()>0) {
+                std::vector<SgAsmInstruction*> insns;
+                for (size_t i=0; i<blk->get_statementList().size(); ++i) {
+                    SgAsmInstruction *insn = isSgAsmInstruction(blk->get_statementList()[i]);
+                    if (!insn) break;
+                    insns.push_back(insn);
+                }
+                if (insns.size()>0) {
+                    result += "            (successors:";
+                    bool complete;
+                    Disassembler::AddressSet suc = insns.front()->get_successors(insns, &complete);
+                    for (Disassembler::AddressSet::iterator si=suc.begin(); si!=suc.end(); si++) {
+                        char addrbuf[64];
+                        sprintf(addrbuf, " 0x%08"PRIx64, *si);
+                        result += addrbuf;
+                    }
+                    if (!complete) result += "...";
+                    result += ")\n";
+                }
+            }
+#endif
             return result;
         }
 
@@ -236,7 +259,7 @@ unparseAsmStatement(SgAsmStatement* stmt)
             SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(stmt);
             result += "\n";
             char addrbuf[64];
-            sprintf(addrbuf, "0x%08"PRIx64, func->get_address());
+            sprintf(addrbuf, "0x%08"PRIx64, func->get_entry_va());
             result = result + addrbuf + ": ";
             result += "============================ Function (" + func->reason_str(false) + ")";
             if (func->get_name().size()>0) {
