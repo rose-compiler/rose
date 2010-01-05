@@ -35,6 +35,7 @@ protected:
         BasicBlock(): sucs_complete(false), sucs_ninsns(0), function(NULL) {}
         const Disassembler::AddressSet& successors(bool *complete=NULL); /**< Calculates known successors */
         bool is_function_call(rose_addr_t*);    /**< True if basic block appears to call a function */
+        SgAsmInstruction* last_insn() const;    /**< Returns instruction with highest address */
         std::vector<SgAsmInstruction*> insns;   /**< Non-empty set of instructions composing this basic block, in address order */
         Disassembler::AddressSet sucs;          /**< Cached set of known successors */
         bool sucs_complete;                     /**< Is the set of successors known completely? */
@@ -51,6 +52,7 @@ protected:
         Function(rose_addr_t entry_va, unsigned r, const std::string& name)
             : reason(r), name(name), pending(true), entry_va(entry_va) {}
         void clear_blocks();                    /**< Remove all blocks from this function */
+        BasicBlock* last_block() const;         /**< Return pointer to block with highest address */
         unsigned reason;                        /**< SgAsmFunctionDeclaration::FunctionReason bit flags */
         std::string name;                       /**< Name of function if known */
         BasicBlocks blocks;                     /**< Basic blocks belonging to this function */
@@ -149,8 +151,7 @@ public:
     /** Builds the AST describing all the functions. The return value is an SgAsmBlock node that points to a list of
      *  SgAsmFunctionDeclaration nodes (the functions), each of which points to a list of SgAsmBlock nodes (the basic
      *  blocks). Any basic blocks that were not assigned to a function by the Partitioner will be added to a function named
-     *  "***unassigned blocks***" whose entry address will be the address of the lowest instruction and whose
-     * SgAsmFunctionDeclaration::get_reason() method will return zero. */
+     *  "***unassigned blocks***" whose entry address will be the address of the lowest instruction. */
     virtual SgAsmBlock* build_ast();
     
 protected:
@@ -158,11 +159,13 @@ protected:
     virtual BasicBlock* find_bb_containing(rose_addr_t);        /**< Find basic block containing instruction address */
     virtual BasicBlock* find_bb_containing(SgAsmInstruction* insn) {return find_bb_containing(insn->get_address());}
     virtual void append(Function*, BasicBlock*);                /**< Append basic block to function */
+    virtual void remove(Function*, BasicBlock*);                /**< Remove basic block from function */
     virtual rose_addr_t address(BasicBlock*) const;             /**< Return starting address of basic block */
     virtual BasicBlock* split(BasicBlock*, rose_addr_t);        /**< Split basic block in two at address */
     virtual void discover_blocks(Function*, rose_addr_t);       /**< Add specified block to function recursively */
     virtual void seed_functions(SgAsmInterpretation*);          /**< Find functions on basis other than CFG */
     virtual void analyze_cfg();                                 /**< Detect functions by analyzing the CFG */
+    virtual void post_cfg();                                    /**< Runs after analyzing the CFG */
     virtual SgAsmFunctionDeclaration* build_ast(Function*) const;/**< Build AST for a single function */
     virtual SgAsmBlock* build_ast(BasicBlock*) const;           /**< Build AST for a single basic block */
     
@@ -171,6 +174,8 @@ protected:
     virtual void mark_func_symbols(SgAsmGenericHeader*);        /**< Seeds functions that correspond to function symbols */
     virtual void mark_func_patterns(SgAsmGenericHeader*);       /**< Seeds functions according to instruction patterns */
     virtual void name_plt_entries(SgAsmGenericHeader*);         /**< Assign names to ELF PLT functions */
+    virtual void create_nop_padding();                          /**< Creates functions to hold NOP padding */
+    virtual void create_zero_padding();                         /**< Creates functions to hold zero padding */
 
     /** Return the virtual address that holds the branch target for an indirect branch. For example, when called with these
      *  instructions:

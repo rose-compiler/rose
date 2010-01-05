@@ -32,24 +32,30 @@ add_to_reason_string(std::string &result, bool isset, bool do_pad, const std::st
 std::string
 SgAsmFunctionDeclaration::reason_str(bool do_pad) const
 {
+    return reason_str(do_pad, get_reason());
+}
+
+/* Class method */
+std::string
+SgAsmFunctionDeclaration::reason_str(bool do_pad, unsigned r)
+{
     std::string result;
-    unsigned r = get_reason();
 
     /* entry point and instruction heads are mutually exclusive, so we use the same column for both when padding. */
-    if (r & SgAsmFunctionDeclaration::FUNC_ENTRY_POINT) {
+    if (r & FUNC_ENTRY_POINT) {
         add_to_reason_string(result, true, do_pad, "E", "entry point");
     } else {
-        add_to_reason_string(result, (r & SgAsmFunctionDeclaration::FUNC_INSNHEAD), do_pad, "H", "insn head");
+        add_to_reason_string(result, (r & FUNC_INSNHEAD), do_pad, "H", "insn head");
     }
     
-    add_to_reason_string(result, (r & SgAsmFunctionDeclaration::FUNC_CALL_TARGET), do_pad, "C", "call target");
-    add_to_reason_string(result, (r & SgAsmFunctionDeclaration::FUNC_EH_FRAME),    do_pad, "X", "exception frame");
-    add_to_reason_string(result, (r & SgAsmFunctionDeclaration::FUNC_SYMBOL),      do_pad, "S", "symbol");
-    add_to_reason_string(result, (r & SgAsmFunctionDeclaration::FUNC_PATTERN),     do_pad, "P", "pattern");
-    add_to_reason_string(result, (r & SgAsmFunctionDeclaration::FUNC_GRAPH),       do_pad, "G", "graph");
-    add_to_reason_string(result, (r & SgAsmFunctionDeclaration::FUNC_USERDEF),     do_pad, "U", "user defined");
-    add_to_reason_string(result, (r & SgAsmFunctionDeclaration::FUNC_INTERPAD),    do_pad, "N", "NOP padding");
-    add_to_reason_string(result, (r & SgAsmFunctionDeclaration::FUNC_DISCONT),     do_pad, "D", "discontiguous");
+    add_to_reason_string(result, (r & FUNC_CALL_TARGET), do_pad, "C", "call target");
+    add_to_reason_string(result, (r & FUNC_EH_FRAME),    do_pad, "X", "exception frame");
+    add_to_reason_string(result, (r & FUNC_SYMBOL),      do_pad, "S", "symbol");
+    add_to_reason_string(result, (r & FUNC_PATTERN),     do_pad, "P", "pattern");
+    add_to_reason_string(result, (r & FUNC_GRAPH),       do_pad, "G", "graph");
+    add_to_reason_string(result, (r & FUNC_USERDEF),     do_pad, "U", "user defined");
+    add_to_reason_string(result, (r & FUNC_INTERPAD),    do_pad, "N", "padding");
+    add_to_reason_string(result, (r & FUNC_DISCONT),     do_pad, "D", "discontiguous");
     return result;
 }
 /*
@@ -93,6 +99,14 @@ Partitioner::BasicBlock::is_function_call(rose_addr_t *target)
     return false;
 }
 
+/* Returns instruction with highest address */
+SgAsmInstruction *
+Partitioner::BasicBlock::last_insn() const
+{
+    ROSE_ASSERT(insns.size()>0);
+    return insns.back();
+}
+
 /* Release all blocks from a function. */
 void
 Partitioner::Function::clear_blocks()
@@ -102,6 +116,16 @@ Partitioner::Function::clear_blocks()
     blocks.clear();
 }
 
+/* Return block with highest address */
+Partitioner::BasicBlock *
+Partitioner::Function::last_block() const
+{
+    ROSE_ASSERT(blocks.size()>0);
+    BasicBlocks::const_iterator bi = blocks.end();
+    --bi;
+    return bi->second;
+}
+
 /* Return partitioner to initial state */
 void
 Partitioner::clear()
@@ -109,13 +133,13 @@ Partitioner::clear()
     /* Delete all functions */
     for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
         fi->second->clear_blocks();
-        delete fi;
+        delete fi->second;
     }
     functions.clear();
 
     /* Delete all basic blocks */
     std::set<BasicBlock*> blocks;
-    for (size_t i=0; i<insn2block; i++)
+    for (size_t i=0; i<insn2block.size(); i++)
         blocks.insert(insn2block[i]);
     for (std::set<BasicBlock*>::iterator bi=blocks.begin(); bi!=blocks.end(); ++bi)
         delete *bi;
@@ -138,6 +162,7 @@ Partitioner::address(BasicBlock* bb) const
 Partitioner::BasicBlock*
 Partitioner::split(BasicBlock* bb1, rose_addr_t va)
 {
+    ROSE_ASSERT(bb1);
     ROSE_ASSERT(bb1==find_bb_containing(va));
     BasicBlock *bb2 = new BasicBlock;
 
@@ -184,8 +209,19 @@ Partitioner::append(Function* f, BasicBlock *bb)
     f->blocks[address(bb)] = bb;
 }
 
+/* Remove a basic block from a function */
+void
+Partitioner::remove(Function* f, BasicBlock* bb) 
+{
+    ROSE_ASSERT(f);
+    ROSE_ASSERT(bb);
+    ROSE_ASSERT(bb->function==f);
+    bb->function = NULL;
+    f->blocks.erase(address(bb));
+}
+
 /* Find (or create) a basic block containing the specified instruction address. The address is assumed to be an instruction
- * boundary, not an arbitrary address. */
+ * boundary, not an arbitrary address. Returns null if there is no instruction at the specified address. */
 Partitioner::BasicBlock *
 Partitioner::find_bb_containing(rose_addr_t va)
 {
@@ -213,8 +249,7 @@ Partitioner::find_bb_containing(rose_addr_t va)
         }
         va = next_va;
     }
-    ROSE_ASSERT(bb);
-    ROSE_ASSERT(bb->insns.size()>0);
+    ROSE_ASSERT(!bb || bb->insns.size()>0);
     return bb;
 }
 
@@ -417,6 +452,98 @@ Partitioner::mark_func_patterns(SgAsmGenericHeader*)
     }
 }
 
+/* Look for NOP padding between functions */
+void
+Partitioner::create_nop_padding()
+{
+
+    /* Find no-op blocks that follow known functions and which are not already part of a function */
+    Disassembler::AddressSet new_functions;
+    for (Functions::iterator fi=functions.begin(); fi!=functions.end(); fi++) {
+        Function *func = fi->second;
+        if (func->reason & SgAsmFunctionDeclaration::FUNC_INTERPAD) continue; /*some other kind of padding*/
+        if (0==func->blocks.size()) continue;
+        SgAsmInstruction *last_insn = func->last_block()->last_insn();
+        rose_addr_t va = last_insn->get_address() + last_insn->get_raw_bytes().size();
+        BasicBlock *bb = find_bb_containing(va);
+        if (!bb || bb->function!=NULL) continue;
+
+        /* FIXME: We should have a more portable way to find blocks that are no-ops. */
+        bool is_noop=true;
+        for (size_t i=0; i<bb->insns.size() && is_noop; i++) {
+            SgAsmx86Instruction     *insn_x86 = isSgAsmx86Instruction(bb->insns[i]);
+            SgAsmArmInstruction     *insn_arm = isSgAsmArmInstruction(bb->insns[i]);
+            SgAsmPowerpcInstruction *insn_ppc = isSgAsmPowerpcInstruction(bb->insns[i]);
+            ROSE_ASSERT(insn_x86 || insn_arm || insn_ppc);
+            is_noop = (insn_x86 && insn_x86->get_kind()==x86_nop); /*only x86 has NOPs*/
+        }
+        if (!is_noop) continue;
+        new_functions.insert(va);
+    }
+    
+    /* Create functions */
+    for (Disassembler::AddressSet::iterator ai=new_functions.begin(); ai!=new_functions.end(); ++ai) {
+        Function *padfunc = add_function(*ai, SgAsmFunctionDeclaration::FUNC_INTERPAD);
+        BasicBlock *bb = find_bb_containing(*ai);
+        ROSE_ASSERT(bb!=NULL);
+        append(padfunc, bb);
+    }
+}
+
+/* Look for zero padding between functions. */
+void
+Partitioner::create_zero_padding()
+{
+    /* Find the address ranges that contain zero padding, irrespective of basic blocks. */
+    std::map<rose_addr_t/*begin_va*/, rose_addr_t/*end_va*/> new_functions;
+    for (Functions::iterator fi=functions.begin(); fi!=functions.end(); fi++) {
+        Function *left_func = fi->second;
+        if (left_func->reason & SgAsmFunctionDeclaration::FUNC_INTERPAD) continue; /*some other kind of padding*/
+        if (0==left_func->blocks.size()) continue;
+        SgAsmInstruction *insn = left_func->last_block()->last_insn();
+        rose_addr_t begin_va = insn->get_address() + insn->get_raw_bytes().size();
+        
+        rose_addr_t end_va = (rose_addr_t)-1;
+        Functions::iterator fi2 = fi;
+        ++fi2;
+        if (fi2!=functions.end())
+            end_va = fi2->first;
+
+        /* Are all bytes between begin_va (inclusive) and end_va (exclusive) zero? */
+        bool all_zero = true;
+        for (rose_addr_t va=begin_va; va<end_va && all_zero; /*void*/) {
+            Disassembler::InstructionMap::const_iterator ii=insns.find(va);
+            if (ii==insns.end()) {
+                end_va = va;
+                break;
+            }
+            size_t nbytes = std::min(ii->second->get_raw_bytes().size(), end_va-va);
+            for (size_t i=0; i<nbytes && all_zero; i++)
+                all_zero = (ii->second->get_raw_bytes()[i]==0);
+            va += ii->second->get_raw_bytes().size();
+        }
+        if (all_zero && begin_va<end_va)
+            new_functions[begin_va] = end_va;
+    }
+    
+    /* For ranges of zero bytes, find the blocks containing those instructions and add them to the padding function. The
+     * blocks are allowed to extend beyond the range of zeros and contain non-zero bytes. */
+    for (std::map<rose_addr_t, rose_addr_t>::iterator fi=new_functions.begin(); fi!=new_functions.end(); ++fi) {
+        rose_addr_t begin_va = fi->first;
+        rose_addr_t end_va = fi->second;
+        Function *padfunc = NULL;
+        for (rose_addr_t va=begin_va; va<end_va; /*void*/) {
+            BasicBlock *bb = find_bb_containing(va);
+            if (!bb || bb->function) break;
+            if (!padfunc)
+                padfunc = add_function(begin_va, SgAsmFunctionDeclaration::FUNC_INTERPAD);
+            append(padfunc, bb);
+            SgAsmInstruction *last_insn = bb->last_insn();
+            va = last_insn->get_address() + last_insn->get_raw_bytes().size();
+        }
+    }
+}
+
 /* class method */
 rose_addr_t
 Partitioner::value_of(SgAsmValueExpression *e)
@@ -594,6 +721,7 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
     /* Split an existing basic block if necessary since basic blocks can have only one entry address. */
     bool did_split = false;
     BasicBlock *bb = find_bb_containing(insn);
+    ROSE_ASSERT(bb!=NULL);
     if (va!=address(bb)) {
         fprintf(stderr, "[split from B%08"PRIx64"]", address(bb));
         did_split = true;
@@ -614,17 +742,16 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
     } else if (bb->function) {
         /* This block belongs to some other function. Since ROSE requires that blocks be owned by exactly one function (the
          * function/block relationship is an edge in the abstract syntax tree), we have to remove this block from the other
-         * function (and not add it to this one either).  We'll mark the function as being in conflict so we can try again
-         * later. */
+         * function.  We'll mark both the other function and this function as being in conflict and try again later. */
         fprintf(stderr, "[conflict F%08"PRIx64" \"%s\"]", bb->function->entry_va, bb->function->name.c_str());
-        bb->function->pending = true;
         if (functions.find(va)==functions.end())
             add_function(va, SgAsmFunctionDeclaration::FUNC_GRAPH);
+        bb->function->pending = f->pending = true;
     } else {
         /* Add this block to the function and follow its successors. If a successor appears to be a function call then create
          * that function and don't add that block to this function. */
         rose_addr_t call_target = NO_TARGET;
-        if ((heuristics & SgAsmFunctionDeclaration::FUNC_CALL_TARGET) &&
+        if ((func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_TARGET) &&
             bb->is_function_call(&call_target) && call_target!=NO_TARGET) {
             fprintf(stderr, "[call F%08"PRIx64"]", call_target);
             add_function(call_target, SgAsmFunctionDeclaration::FUNC_CALL_TARGET);
@@ -659,10 +786,21 @@ Partitioner::analyze_cfg()
         
         /* (Re)discover each function's blocks starting with the function entry point */
         for (size_t i=0; i<pending.size(); ++i) {
-            fprintf(stderr, "analyzing F%08"PRIx64" \"%s\" pass %zu: ", pending[i]->entry_va, pending[i]->name.c_str(), pass);
+            fprintf(stderr, "analyzing %s F%08"PRIx64" \"%s\" pass %zu: ",
+                    SgAsmFunctionDeclaration::reason_str(true, pending[i]->reason).c_str(),
+                    pending[i]->entry_va, pending[i]->name.c_str(), pass);
             discover_blocks(pending[i], pending[i]->entry_va);
             fprintf(stderr, "\n");
         }
+    }
+}
+
+void
+Partitioner::post_cfg()
+{
+    if (func_heuristics & SgAsmFunctionDeclaration::FUNC_INTERPAD) {
+        create_nop_padding();
+        create_zero_padding();
     }
 }
 
@@ -673,6 +811,7 @@ Partitioner::build_ast()
     Function *catchall = NULL;
     for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
         BasicBlock *bb = find_bb_containing(ii->first);
+        ROSE_ASSERT(bb!=NULL);
         if (!bb->function) {
             if (!catchall)
                 catchall = add_function(ii->first, 0, "***unassigned blocks***"); /*see documentation if changing this name*/
@@ -750,6 +889,7 @@ Partitioner::partition(SgAsmInterpretation* interp, const Disassembler::Instruct
     add_instructions(insns);
     seed_functions(interp);
     analyze_cfg();
+    post_cfg();
     return build_ast();
 }
 
