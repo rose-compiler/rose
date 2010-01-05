@@ -699,7 +699,7 @@ TEST_Objects = ${ALL_TESTCODES:.C=.o}
 # and a number of other tests require a path to the source directory.
 # $(TEST_Objects): preprocessor $(srcdir)/$(@:.o=.C)
 $(TEST_Objects): $(TEST_TRANSLATOR)
-	cp $(srcdir)/../../CompileTests/Cxx_tests/$(@:.o=.C) .
+#	cp $(srcdir)/../../CompileTests/Cxx_tests/$(@:.o=.C) .
 	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir)/../../CompileTests/Cxx_tests -c $(srcdir)/../../CompileTests/Cxx_tests/$(@:.o=.C)
 	rm -f $(@:.o=.C)
 

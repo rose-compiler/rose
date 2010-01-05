@@ -90,4 +90,5 @@ clean-local:
 	rm -rf QMTest
 
 
-EXTRA_DIST = CMakeLists.txt
+# EXTRA_DIST = CMakeLists.txt README $(ALL_TESTCODES)
+EXTRA_DIST = README $(ALL_TESTCODES)

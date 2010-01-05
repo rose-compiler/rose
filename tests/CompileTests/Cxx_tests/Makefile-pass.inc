@@ -152,6 +152,7 @@ test2004_78.C \
 test2004_79.C \
 test2004_80.C \
 test2004_81.C \
+test2004_83.C \
 test2004_82.C \
 test2004_84.C \
 test2004_85.C \
@@ -393,10 +394,12 @@ test2005_163.C \
 test2005_164.C \
 test2005_165.C \
 test2005_166.C \
+test2005_168.C \
 test2005_167.C \
 test2005_169.C \
 test2005_170.C \
 test2005_171.C \
+test2005_172.C \
 test2005_173.C \
 test2005_174.C \
 test2005_175.C \
@@ -457,6 +460,7 @@ test2006_39.C \
 test2006_40.C \
 test2006_41.C \
 test2006_42.C \
+test2006_44.C \
 test2006_46.C \
 test2006_47.C \
 test2006_50.C \
@@ -646,8 +650,42 @@ test2007_170.C \
 test2007_171.C \
 test2007_172.C \
 test2007_173.C \
+test2008_01.C \
 test2008_04.C \
+test2008_05.C \
+test2008_06.C \
+test2008_09.C \
+test2008_10.C \
+test2008_11.C \
+test2008_12.C \
+test2008_13.C \
+test2008_14.C \
+test2008_16.C \
+test2009_01.C \
+test2009_02.C \
+test2009_12.C \
+test2009_15.C \
 test2009_20.C \
+test2009_30.C \
+test2009_31.C \
+test2009_35.C \
+test2009_37.C \
+test2009_39.C \
+test2009_40.C \
+test2009_41.C \
+test2009_42.C \
+test_int_lexemes.C \
+test_int_lexemes_donot_pass.C \
+test_simple_int.C \
+test_wchars.C \
+lexPhase2003_01.C \
+math.C \
+inputForLoopLocator.C \
+X.C \
+inputBug317.C \
+inputBug327.C
+
+OLD_LIST = test2009_20.C \
 test2009_30.C \
 test2009_31.C \
 test_int_lexemes.C \

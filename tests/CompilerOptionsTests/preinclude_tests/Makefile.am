@@ -32,7 +32,7 @@ TEST_Objects = ${ALL_TESTCODES:.C=.o}
 # DQ (1/13/2009): The GNU option is "-include" not "--include"
 $(TEST_Objects): $(TEST_TRANSLATOR) $(srcdir)/$(@:.o=.C)
 	@echo "Calling Copy AST mechanism using TEST_Objects rule: "
-	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) -include $(srcdir)/test_preinclude_1.h -c $(srcdir)/$(@:.o=.C) &
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) -include $(srcdir)/test_preinclude_1.h -c $(srcdir)/$(@:.o=.C)
 
 QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
 
@@ -57,7 +57,7 @@ run_qm_tests:
 run_qm_gui:
 	cd QMTest; qmtest gui
 
-EXTRA_DIST = CMakeLists.txt test_preinclude_1.h
+EXTRA_DIST = CMakeLists.txt test_preinclude_1.h $(ALL_TESTCODES)
 
 check-local:
 	@echo "Development tests for ROSE preinclude mechanism."
@@ -68,3 +68,5 @@ check-local:
 	@echo "****** ROSE/tests/CompilerOptionsTests/preinclude_tests: make check rule complete (terminated normally) ******"
 	@echo "**************************************************************************************************************"
 
+clean-local:
+	rm -f *.o rose_*.C

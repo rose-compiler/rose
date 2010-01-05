@@ -6,7 +6,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 if ROSE_USE_BOOST_WAVE
 
-INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/../colorAST_tests
+INCLUDES = $(ROSE_INCLUDES)
 
 # This is a shorted list that tests more quickly.
 TESTCODES_REQUIRED_TO_PASS = \
@@ -36,7 +36,8 @@ ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0
 
 $(TEST_Objects): main
 	echo "Copy the file to build a second one to main ..."
-	$(VALGRIND) ./main $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+#	$(VALGRIND) ./main $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+	$(VALGRIND) ./main $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.C)
 
 bin_PROGRAMS = main
 
@@ -63,7 +64,7 @@ include $(top_srcdir)/config/QMTest_makefile.inc
 # EXTRA_DIST = tests 
 
 check-local:
-	@echo "Dan Quinlan's development tests for token stream examples."
+	@echo "Development tests for token stream examples."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
 	@$(MAKE) $(PASSING_TEST_Objects)
@@ -77,4 +78,4 @@ clean-local:
 	rm -f *.o rose_*.[cC] *.dot test200?_*.[cC]
 	rm -rf QMTest
 
-EXTRA_DIST = CMakeLists.txt
+EXTRA_DIST = CMakeLists.txt $(ALL_TESTCODES)

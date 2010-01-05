@@ -70,7 +70,7 @@ ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING)
 
-EXTRA_DIST = CMakeLists.txt 
+EXTRA_DIST = CMakeLists.txt $(ALL_TESTCODES)
 
 # File option to accumulate performance information about the compilation
 PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/Cxx_ROSE_PERFORMANCE_DATA.csv

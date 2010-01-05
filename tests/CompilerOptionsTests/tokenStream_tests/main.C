@@ -3,14 +3,16 @@
 
 bool VERBOSE_MESSAGES_OF_WAVE = false;
 
-int main( int argc, char * argv[] )
-{
-	// Build the AST used by ROSE
+int
+main( int argc, char * argv[] )
+   {
+  // Build the AST used by ROSE
 
-	SgProject* project = frontend(argc,argv);
+     SgProject* project = frontend(argc,argv);
 
-        if( project->get_wave() == true ){
-          // The linearized AST is not required after we have the maps of tokens to IR nodes and back.
+     if ( project->get_wave() == true )
+        {
+       // The linearized AST is not required after we have the maps of tokens to IR nodes and back.
           std::vector<SgNode*> macroVec2 = linearize_subtree(project);
 
           createMap map_tokenToAST(macroVec2,wave_tokenStream);
@@ -18,7 +20,6 @@ int main( int argc, char * argv[] )
           map_tokenToAST.printTokenToNodeMap();
         }
 
-
-//    mapSeparators(wave_tokenStream, macroVec2); 
-};
+  // mapSeparators(wave_tokenStream, macroVec2);
+   }
 
