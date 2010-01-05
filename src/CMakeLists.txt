@@ -236,6 +236,7 @@ add_dependencies(rose ROSETTA OMPPARSER ROSE_PREPROCESSOR )
 # tps (12/14/2009) : Created a variable for the dependend libraries. Make sure that order is correct.
 set(ROSE_TARGET_LINK 
 #   ROSETTA_LIB SAGE3_LIB 
+   libgeneratedIR
    PHP_FRONTEND_LIB
    libastMerge edg33 libsageInterface libastTokenStream libastHiddenTypeAndDeclarationLists
    libastVisualization roseDisassemblers roseBinaryFormats 

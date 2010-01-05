@@ -72,6 +72,9 @@ Grammar::Grammar ( const string& inputGrammarName,
      target_directory = t_directory;
      parentGrammar = NULL;
 
+     // tps (01/05/2010) : added printf for debugging 
+     // printf ("GRAMMAR Constructor values : target_directory : %s   inputParentGrammar %d \n",target_directory.c_str(),inputParentGrammar);
+  
   // We want to set the parent grammar as early as possible since the specification of terminals/nonterminals is
   // dependent upon the the current grammar being a "RootGrammar" (using the isRootGrammar() member function)
   // and the value of the boolean returned from isRootGrammardepends upon the pointer to the parentGrammar being set!
@@ -829,12 +832,17 @@ Grammar::buildNewAndDeleteOperators( Terminal & node, StringUtility::FileWithLin
      string fileExtension = ".C";
      string directoryName = target_directory + sourceCodeDirectoryName();
   // printf ("In buildNewAndDeleteOperators(): directoryName = %s \n",directoryName.c_str());
-
   // This should append the string to the target file.
+
+     // tps (01/04/2010) Debugging output
+     //     printf ("GRAMMAR Grammar::buildNewAndDeleteOperators : target_directory : %s  directoryName %s \n",target_directory.c_str(),directoryName.c_str());
      appendFile ( editString, directoryName, node.getName(), fileExtension );
 #else
      outputFile += editString;
 #endif
+
+
+
 
 #if 1
   // Call this function recursively on the children of this node in the tree
