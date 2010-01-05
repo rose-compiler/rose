@@ -1,0 +1,6 @@
+This directory contains tests that demonstrate the use of ROSE
+to compile Windows applications using WINE.  
+
+NOTE: you have to configure and make WINE; you can't just untar it since
+header files such as "wtypes.h" have to be generated.
+
