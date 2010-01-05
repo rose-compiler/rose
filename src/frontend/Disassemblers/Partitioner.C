@@ -626,7 +626,7 @@ Partitioner::name_plt_entries(SgAsmGenericHeader *fhdr)
         if (fi->second->name!="")
             continue; /* function already has a name */
 
-        if (func_addr <  elf->get_base_va() + plt->get_mapped_preferred_rva() &&
+        if (func_addr <  elf->get_base_va() + plt->get_mapped_preferred_rva() ||
             func_addr >= elf->get_base_va() + plt->get_mapped_preferred_rva() + plt->get_mapped_size())
             continue; /* function is not in the .plt section */
 
@@ -657,7 +657,7 @@ Partitioner::name_plt_entries(SgAsmGenericHeader *fhdr)
                     unsigned long symbol_idx = rel->get_sym();
                     ROSE_ASSERT(symbol_idx < symbols->get_symbols().size());
                     SgAsmElfSymbol *symbol = symbols->get_symbols()[symbol_idx];
-                    fi->second->name = symbol->get_name()->get_string();
+                    fi->second->name = symbol->get_name()->get_string() + "@plt";
                 }
             }
         }
@@ -666,7 +666,7 @@ Partitioner::name_plt_entries(SgAsmGenericHeader *fhdr)
 
 /* Seed function starts based on criteria other than control flow graph. */
 void
-Partitioner::seed_functions(SgAsmInterpretation *interp)
+Partitioner::pre_cfg(SgAsmInterpretation *interp)
 {
     const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
     for (size_t i=0; i<headers.size(); i++) {
@@ -678,11 +678,6 @@ Partitioner::seed_functions(SgAsmInterpretation *interp)
             mark_func_symbols(headers[i]);
         if (func_heuristics & SgAsmFunctionDeclaration::FUNC_PATTERN)
             mark_func_patterns(headers[i]);
-    }
-
-    /* This doesn't detect new functions, it just gives names to ELF .plt trampolines */
-    for (size_t i=0; i<headers.size(); i++) {
-        name_plt_entries(headers[i]);
     }
 
     /* Run user-defined function detectors, making sure that the basic block starts are up-to-date for each call. */
@@ -796,11 +791,18 @@ Partitioner::analyze_cfg()
 }
 
 void
-Partitioner::post_cfg()
+Partitioner::post_cfg(SgAsmInterpretation *interp)
 {
+    const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+
     if (func_heuristics & SgAsmFunctionDeclaration::FUNC_INTERPAD) {
         create_nop_padding();
         create_zero_padding();
+    }
+
+    /* This doesn't detect new functions, it just gives names to ELF .plt trampolines */
+    for (size_t i=0; i<headers.size(); i++) {
+        name_plt_entries(headers[i]);
     }
 }
 
@@ -887,9 +889,9 @@ Partitioner::partition(SgAsmInterpretation* interp, const Disassembler::Instruct
 {
     clear();
     add_instructions(insns);
-    seed_functions(interp);
+    pre_cfg(interp);
     analyze_cfg();
-    post_cfg();
+    post_cfg(interp);
     return build_ast();
 }
 

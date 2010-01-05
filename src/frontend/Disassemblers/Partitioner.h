@@ -163,9 +163,9 @@ protected:
     virtual rose_addr_t address(BasicBlock*) const;             /**< Return starting address of basic block */
     virtual BasicBlock* split(BasicBlock*, rose_addr_t);        /**< Split basic block in two at address */
     virtual void discover_blocks(Function*, rose_addr_t);       /**< Add specified block to function recursively */
-    virtual void seed_functions(SgAsmInterpretation*);          /**< Find functions on basis other than CFG */
+    virtual void pre_cfg(SgAsmInterpretation*);                 /**< Detects functions before analyzing the CFG */
     virtual void analyze_cfg();                                 /**< Detect functions by analyzing the CFG */
-    virtual void post_cfg();                                    /**< Runs after analyzing the CFG */
+    virtual void post_cfg(SgAsmInterpretation*);                /**< Detects functions after analyzing the CFG */
     virtual SgAsmFunctionDeclaration* build_ast(Function*) const;/**< Build AST for a single function */
     virtual SgAsmBlock* build_ast(BasicBlock*) const;           /**< Build AST for a single basic block */
     
