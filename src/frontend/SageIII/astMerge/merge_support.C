@@ -131,5 +131,3 @@ getSetOfSharedNodes()
      return t.nodeList;
    }
 
-
-
