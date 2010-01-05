@@ -106,13 +106,7 @@ SgAsmDwarfReferenceType.C              SgAsmLERelocTable.C                 SgCas
 
 
 message ( STATUS ">>>>>>>>>>>>>>>>>>>>>> CxxGrammarMetaProgram_SRCS : " ${CxxGrammarMetaProgram_SRCS} )
-#add_executable(CxxGrammarMetaProgram2 ${CxxGrammarMetaProgram_SRCS} ${rose_util_src})
-#target_link_libraries(CxxGrammarMetaProgram2 ${KDE4_KDECORE_LIBS} rose_util_lib ${Boost_LIBRARIES})
 get_target_property (META_EXE_LOC CxxGrammarMetaProgram LOCATION) 
-
-
-
-
 
 
 # define a custom command to call the code generator and generate source/header files
@@ -128,15 +122,12 @@ add_custom_command(
    COMMAND
       ${CMAKE_COMMAND}  -E make_directory  ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/GENERATED_CODE_DIRECTORY_Cxx_Grammar/astFileIO
    COMMAND
-       ${CMAKE_COMMAND}  -E copy_directory  ${ROSE_TOP_SRC_DIR}/src/ROSETTA/Grammar ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/Grammar
+       ${CMAKE_COMMAND}  -E copy_directory  ${ROSE_TOP_SRC_DIR}/src/ROSETTA/Grammar/ ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/Grammar/
 #   create this directory is needed since a few generated files will be put there        
    COMMAND ${META_EXE_LOC}
       ARGS ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/
 )
 
-
-# a custom target depending on generated rosetta source and header files to trigger the building process
-#add_custom_target( libgeneratedIR_SRC ALL     )
 
 
 add_library( libgeneratedIR STATIC ${libgeneratedIR_SRC} )
