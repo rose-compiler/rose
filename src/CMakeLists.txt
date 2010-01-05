@@ -233,6 +233,7 @@ add_library(rose SHARED ${rose_LIB_SRCS} )
 #ROSE neeeds ${ROSETTA_HEADERS} and ${ROSETTA_SRC} to be build
 add_dependencies(rose ROSETTA OMPPARSER ROSE_PREPROCESSOR ) 
 
+if ( enable-smaller-generated-files )
 # tps (12/14/2009) : Created a variable for the dependend libraries. Make sure that order is correct.
 set(ROSE_TARGET_LINK 
 #   ROSETTA_LIB SAGE3_LIB 
@@ -244,6 +245,21 @@ set(ROSE_TARGET_LINK
    unparser astFixup binary_frontend
    libastHiddenTypeAndDeclarationLists roseAsmUnparser libastPostProcessing libhpdf rose_util_lib roseBinaryLoader
 )
+
+else ( enable-smaller-generated-files )
+# tps (12/14/2009) : Created a variable for the dependend libraries. Make sure that order is correct.
+set(ROSE_TARGET_LINK 
+#   ROSETTA_LIB SAGE3_LIB 
+   PHP_FRONTEND_LIB
+   libastMerge edg33 libsageInterface libastTokenStream libastHiddenTypeAndDeclarationLists
+   libastVisualization roseDisassemblers roseBinaryFormats 
+   midend_static 
+   unparser astFixup binary_frontend
+   libastHiddenTypeAndDeclarationLists roseAsmUnparser libastPostProcessing libhpdf rose_util_lib roseBinaryLoader
+)
+
+elseif ( enable-smaller-generated-files )
+
 
 #Liao, link static libraries into the shared librose library
 #target_link_libraries(rose ${libastMerge}) # library name are global, should not use ${}
