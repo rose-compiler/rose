@@ -120,7 +120,7 @@ add_custom_command(
    COMMAND
       ${CMAKE_COMMAND}  -E make_directory  ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/Grammar
    COMMAND
-      ${CMAKE_COMMAND}  -E make_directory  ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/GENERATED_CODE_DIRECTORY_Cxx_Grammar/astFileIO
+      ${CMAKE_COMMAND}  -E make_directory  ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/astFileIO
    COMMAND
        ${CMAKE_COMMAND}  -E copy_directory  ${ROSE_TOP_SRC_DIR}/src/ROSETTA/Grammar/ ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/Grammar/
 #   create this directory is needed since a few generated files will be put there        
