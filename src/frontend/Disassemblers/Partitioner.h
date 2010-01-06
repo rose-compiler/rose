@@ -15,12 +15,12 @@
  *
  *  The partitioner organizes basic blocks into functions in two phases. The first phase considers all disassembled
  *  instructions and other available information such as symbol tables. The heuristics used to find function entry points are
- *  controlled by setting or clearing various SgAsmFunctionDeclaration::FunctionReason bits with the set_heuristics() method.
+ *  controlled by setting or clearing various SgAsmFunctionDeclaration::FunctionReason bits with the set_search() method.
  *  Although this phase is part of the main partition() method, it can also be invoked explicitly by calling seed_functions().
  *
  *  The second phase uses a control flow graph (CFG) to create basic blocks and assign them to functions. While analyzing the
  *  CFG additional function entry points might be recognized.  Some aspects of the second phase are also controlled by
- *  set_heuristics(), such as recognition of x86 "CALL" targets as function entry points.  Although this phase is part of the
+ *  set_search(), such as recognition of x86 "CALL" targets as function entry points.  Although this phase is part of the
  *  main partition() method, it can also be invoked explicitly by calling analyze_cfg().
  *
  *  Once all functions are detected and basic blocks are created and assigned to the functions, the AST can be created by
@@ -106,20 +106,40 @@ public:
 
 
 public:
-    Partitioner(): func_heuristics(SgAsmFunctionDeclaration::FUNC_DEFAULT) {}
+    Partitioner(): func_heuristics(SgAsmFunctionDeclaration::FUNC_DEFAULT), debug(NULL) {}
     virtual ~Partitioner() {}
 
     /** Sets the set of heuristics used by the partitioner.  The @p heuristics should be a bit mask containing the
      *  SgAsmFunctionDeclaration::FunctionReason bits. These same bits are assigned to the "reason" property of the resulting
      *  function nodes in the AST, depending on which heuristic detected the function. */
-    virtual void set_heuristics(unsigned heuristics) {
+    virtual void set_search(unsigned heuristics) {
         func_heuristics = heuristics;
     }
 
     /** Returns a bit mask of SgAsmFunctionDeclaration::FunctionReason bits indicating which heuristics would be used by the
      *  partitioner.  */
-    virtual unsigned get_heuristics() const {
+    virtual unsigned get_search() const {
         return func_heuristics;
+    }
+
+    /** Parses a string describing the heuristics and returns the bit vector that can be passed to set_search(). The input
+     *  string should be a comma-separated list (without white space) of search specifications. Each specification should be
+     *  an optional qualifier character followed by either an integer or a word. The accepted words are the lower-case
+     *  versions of the constants enumerated by SgAsmFunctionDeclaration::FunctionReason, but without the leading "FUNC_".
+     *  The qualifier determines whether the bits specified by the integer or word are added to the return value ("+") or
+     *  removed from the return value ("-").  The "=" qualifier acts like "+" but first zeros the return value. The default
+     *  qualifier is "+" except when the word is "default", in which case the specifier is "=". An optional initial bit mask
+     *  can be specified (defaults to SgAsmFunctionDeclaration::FUNC_DEFAULT). */
+    static unsigned parse_switches(const std::string&, unsigned initial_flags);
+
+    /** Sends diagnostics to the specified output stream. Null (the default) turns off debugging. */
+    void set_debug(FILE *f) {
+        debug = f;
+    }
+
+    /** Returns the file currently used for debugging; null implies no debugging. */
+    FILE *get_debug() const {
+        return debug;
     }
 
     /** Top-level function to run the partitioner on some instructions and build an AST */
@@ -137,7 +157,7 @@ public:
     /** Adds a user-defined function detector to this partitioner. Any number of detectors can be added and they will be run
      *  in the order they were added, after the built-in methods run.  Each user-defined detector will be called first with
      *  the SgAmGenericHeader pointing to null, then once for each file header. The user-defined methods are run only if the
-     *  SgAsmFunctionDeclaration::FUNC_USERDEF is set (see set_heuristics()), which is the default.   The reason for having
+     *  SgAsmFunctionDeclaration::FUNC_USERDEF is set (see set_search()), which is the default.   The reason for having
      *  user-defined function detectors is that the detection of functions influences the shape of the AST and so it is easier
      *  to apply those analyses here, before the AST is built, rather than in the mid-end after the AST is built. */
     virtual void add_function_detector(FunctionDetector f) {
@@ -195,8 +215,9 @@ protected:
     Disassembler::InstructionMap insns;                 /**< Set of all instructions to partition. */
     std::map<rose_addr_t, BasicBlock*> insn2block;      /**< Map from insns address to basic block */
     Functions functions;                                /**< All known functions, pending and complete */
-    unsigned func_heuristics;                           /**< Bit mask of SgAsmFunctionDeclaration::FunctionReason bits. */
-    std::vector<FunctionDetector> user_detectors;       /**< List of user-defined function detection methods. */
+    unsigned func_heuristics;                           /**< Bit mask of SgAsmFunctionDeclaration::FunctionReason bits */
+    std::vector<FunctionDetector> user_detectors;       /**< List of user-defined function detection methods */
+    FILE *debug;                                        /**< Stream where diagnistics are sent (or null) */
 };
 
 #endif

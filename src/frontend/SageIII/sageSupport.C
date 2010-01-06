@@ -1718,6 +1718,18 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
          }
      }
 
+  // RPM (1/4/2010): Partitioner function search methods
+     if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "partitioner_search", stringParameter, true)) {
+         try {
+             unsigned heuristics = get_partitionerSearchHeuristics();
+             heuristics = Partitioner::parse_switches(stringParameter, heuristics);
+             set_partitionerSearchHeuristics(heuristics);
+         } catch(const std::string &e) {
+             fprintf(stderr, "%s in \"-rose:partitioner_search\" switch\n", e.c_str());
+             ROSE_ASSERT(!"error parsing -rose:partitioner_search");
+         }
+     }
+
   //
   // internal testing option (for internal use only, these may disappear at some point)
   //
@@ -4174,6 +4186,7 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-MF" ||
 
           argument == "-rose:disassembler_search" ||
+          argument == "-rose:partitioner_search" ||
           false)
         {
           result = true;
@@ -6994,6 +7007,21 @@ SgFile::usage ( int status )
 "                             the usual C notation) can be used to set/clear multiple\n"
 "                             search bits at one time. See doxygen comments for the\n"
 "                             Disassembler::parse_switches class method for full details.\n"
+"     -rose:partitioner_search HOW\n"
+"                             Influences how the partitioner searches for functions.\n"
+"                             HOW is a comma-separated list of search specifiers. Each\n"
+"                             specifier consists of an optional qualifier followed by\n"
+"                             either a word or integer. The qualifier indicates whether\n"
+"                             the search method should be added ('+') or removed ('-')\n"
+"                             from the set. The qualifier '=' acts like '+' but first\n"
+"                             clears the set.  The words are the lower-case versions of\n"
+"                             most of the SgAsmFunctionDeclaration::FunctionReason\n"
+"                             enumerated constants without the leading \"FUNC_\" (see\n"
+"                             doxygen documentation for the complete list and and their\n"
+"                             meanings).   An integer (decimal, octal, or hexadecimal using\n"
+"                             the usual C notation) can be used to set/clear multiple\n"
+"                             search bits at one time. See doxygen comments for the\n"
+"                             Partitioner::parse_switches class method for full details.\n"
 "\n"
 "Control code generation:\n"
 "     -rose:unparse_line_directives\n"

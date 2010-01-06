@@ -172,6 +172,8 @@ Disassembler::disassemble(SgAsmInterpretation *interp, AddressSet *successors, B
 {
     InstructionMap insns = disassembleInterp(interp, successors, bad);
     Partitioner *p = p_partitioner ? p_partitioner : new Partitioner;
+    if (p_debug && !p_partitioner)
+        p->set_debug(get_debug());
     SgAsmBlock *top = p->partition(interp, insns);
     interp->set_global_block(top);
     top->set_parent(interp);
@@ -192,8 +194,16 @@ Disassembler::disassembleInterpretation(SgAsmInterpretation *interp)
     ROSE_ASSERT(file);
     disassembler->set_search(isSgFile(file)->get_disassemblerSearchHeuristics());
 
+    /* Partitioning methods are specified with "-rose:partitioner_search" and are stored in SgFile also. Use them rather than
+     * the default partitioner. */
+    Partitioner *partitioner = new Partitioner;
+    partitioner->set_search(isSgFile(file)->get_partitionerSearchHeuristics());
+    disassembler->set_partitioner(partitioner);
+
     disassembler->disassemble(interp, NULL, NULL);
+
     delete disassembler;
+    delete partitioner;
 }
 
 /* Accessor */

@@ -228,8 +228,9 @@ unparseAsmStatement(SgAsmStatement* stmt)
             for (size_t i = 0; i < blk->get_statementList().size(); ++i) {
                 result += unparseAsmStatement(blk->get_statementList()[i]);
             }
-#if 1
-            /* Show block successors */
+#if 0
+            /* Show block successors. This is mostly for debugging, but might be useful in regular output too.
+             * [RPM 2010-01-06] */        
             if (blk->get_statementList().size()>0) {
                 std::vector<SgAsmInstruction*> insns;
                 for (size_t i=0; i<blk->get_statementList().size(); ++i) {

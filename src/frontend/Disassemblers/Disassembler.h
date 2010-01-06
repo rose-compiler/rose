@@ -186,7 +186,7 @@ public:
     /** Given a string (presumably from the ROSE command-line), parse it and return the bit vector describing which search
      *  heuristics should be employed by the disassembler.  The input string should be a comma-separated list (without white
      *  space) of search specifications. Each specification should be an optional qualifier character followed by either an
-     *  integer or a word. The accepted words are the lower-case versions of the constants enumerated by SearchHeuristict, but
+     *  integer or a word. The accepted words are the lower-case versions of the constants enumerated by SearchHeuristic, but
      *  without the leading "SEARCH_".  The qualifier determines whether the bits specified by the integer or word are added
      *  to the return value ("+") or removed from the return value ("-").  The "=" qualifier acts like "+" but first zeros the
      *  return value. The default qualifier is "+" except when the word is "default", in which case the specifier is "=". An

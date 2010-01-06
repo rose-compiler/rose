@@ -68,7 +68,73 @@ SgAsmFunctionDeclaration::reason_str(bool do_pad, unsigned r)
 
 
 
+/* Parse argument for "-rose:partitioner" command-line swich */
+unsigned
+Partitioner::parse_switches(const std::string &s, unsigned flags)
+{
+    size_t at=0;
+    while (at<s.size()) {
+        enum { SET_BIT, CLEAR_BIT, SET_VALUE, NOT_SPECIFIED } howset = NOT_SPECIFIED;
 
+        if (s[at]=='-') {
+            howset = CLEAR_BIT;
+            at++;
+        } else if (s[at]=='+') {
+            howset = SET_BIT;
+            at++;
+        } else if (s[at]=='=') {
+            howset = SET_VALUE;
+            at++;
+        }
+        if (at>=s.size())
+            throw std::string("heuristic name must follow qualifier");
+        
+             
+        size_t comma = s.find(",", at);
+        std::string word = std::string(s, at, comma-at);
+        if (word.size()==0)
+            throw std::string("heuristic name must follow comma");
+        
+        unsigned bits = 0;
+        if (word=="entry" || word=="entry_point") {
+            bits = SgAsmFunctionDeclaration::FUNC_ENTRY_POINT;
+        } else if (word=="call" || word=="call_target") {
+            bits = SgAsmFunctionDeclaration::FUNC_CALL_TARGET;
+        } else if (word=="eh" || word=="eh_frame") {
+            bits = SgAsmFunctionDeclaration::FUNC_EH_FRAME;
+        } else if (word=="symbol") {
+            bits = SgAsmFunctionDeclaration::FUNC_SYMBOL;
+        } else if (word=="pattern") {
+            bits = SgAsmFunctionDeclaration::FUNC_PATTERN;
+        } else if (word=="userdef") {
+            bits = SgAsmFunctionDeclaration::FUNC_USERDEF;
+        } else if (word=="pad" || word=="padding" || word=="interpad") {
+            bits = SgAsmFunctionDeclaration::FUNC_INTERPAD;
+        } else if (word=="default") {
+            bits = SgAsmFunctionDeclaration::FUNC_DEFAULT;
+            if (howset==NOT_SPECIFIED) howset = SET_VALUE;
+        } else if (isdigit(word[0])) {
+            bits = strtol(word.c_str(), NULL, 0);
+        } else {
+            throw std::string("unknown partitioner heuristic: " + word);
+        }
+
+        switch (howset) {
+            case SET_VALUE:
+                flags = 0;
+            case NOT_SPECIFIED:
+            case SET_BIT:
+                flags |= bits;
+                break;
+            case CLEAR_BIT:
+                flags &= ~bits;
+                break;
+        }
+
+        at = comma==std::string::npos ? s.size() : comma+1;
+    }
+    return flags;
+}
 
 /* Return known successors of basic block and cache them. */
 const Disassembler::AddressSet&
@@ -646,7 +712,7 @@ Partitioner::name_plt_entries(SgAsmGenericHeader *fhdr)
             gotplt_va >= elf->get_base_va() + gotplt->get_mapped_preferred_rva() + gotplt->get_mapped_size())
             continue; /* PLT entry doesn't dereference a value in the .got.plt section */
         
-        /* Find the relocation entry whose offset is the gotplt_rva and use that entries symbol for the function name. */
+        /* Find the relocation entry whose offset is the gotplt_rva and use that entry's symbol for the function name. */
         for (std::set<SgAsmElfRelocSection*>::iterator ri=rsects.begin(); ri!=rsects.end() && fi->second->name==""; ri++) {
             SgAsmElfRelocEntryList *entries = (*ri)->get_entries();
             SgAsmElfSymbolSection *symbol_section = isSgAsmElfSymbolSection((*ri)->get_linked_section());
@@ -700,7 +766,7 @@ Partitioner::pre_cfg(SgAsmInterpretation *interp)
 void
 Partitioner::discover_blocks(Function *f, rose_addr_t va)
 {
-    fprintf(stderr, " B%08"PRIx64, va);
+    if (debug) fprintf(debug, " B%08"PRIx64, va);
     Disassembler::InstructionMap::const_iterator ii = insns.find(va);
     if (ii==insns.end()) return; /* No instruction at this address. */
     SgAsmInstruction *insn = ii->second;
@@ -709,7 +775,7 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
     /* This block might be the entry address of a function even before that function has any basic blocks assigned to it. */
     Functions::iterator fi = functions.find(va);
     if (fi!=functions.end() && fi->second!=f) {
-        fprintf(stderr, "[entry \"%s\"]", fi->second->name.c_str());
+        if (debug) fprintf(debug, "[entry \"%s\"]", fi->second->name.c_str());
         return;
     }
 
@@ -718,7 +784,7 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
     BasicBlock *bb = find_bb_containing(insn);
     ROSE_ASSERT(bb!=NULL);
     if (va!=address(bb)) {
-        fprintf(stderr, "[split from B%08"PRIx64"]", address(bb));
+        if (debug) fprintf(debug, "[split from B%08"PRIx64"]", address(bb));
         did_split = true;
         bb = split(bb, va);
     }
@@ -733,12 +799,12 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
         }
     } else if (bb->function && va==bb->function->entry_va) {
         /* This is a call to an existing function. Do not add it to the current function. */
-        fprintf(stderr, "[entry \"%s\"]", bb->function->name.c_str());
+        if (debug) fprintf(debug, "[entry \"%s\"]", bb->function->name.c_str());
     } else if (bb->function) {
         /* This block belongs to some other function. Since ROSE requires that blocks be owned by exactly one function (the
          * function/block relationship is an edge in the abstract syntax tree), we have to remove this block from the other
          * function.  We'll mark both the other function and this function as being in conflict and try again later. */
-        fprintf(stderr, "[conflict F%08"PRIx64" \"%s\"]", bb->function->entry_va, bb->function->name.c_str());
+        if (debug) fprintf(debug, "[conflict F%08"PRIx64" \"%s\"]", bb->function->entry_va, bb->function->name.c_str());
         if (functions.find(va)==functions.end())
             add_function(va, SgAsmFunctionDeclaration::FUNC_GRAPH);
         bb->function->pending = f->pending = true;
@@ -748,7 +814,7 @@ Partitioner::discover_blocks(Function *f, rose_addr_t va)
         rose_addr_t call_target = NO_TARGET;
         if ((func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_TARGET) &&
             bb->is_function_call(&call_target) && call_target!=NO_TARGET) {
-            fprintf(stderr, "[call F%08"PRIx64"]", call_target);
+            if (debug) fprintf(debug, "[call F%08"PRIx64"]", call_target);
             add_function(call_target, SgAsmFunctionDeclaration::FUNC_CALL_TARGET);
         }
         append(f, bb);
@@ -764,7 +830,7 @@ void
 Partitioner::analyze_cfg()
 {
     for (size_t pass=0; true; pass++) {
-        fprintf(stderr, "========== Partitioner::analyze_cfg() pass %zu ==========\n", pass);
+        if (debug) fprintf(debug, "========== Partitioner::analyze_cfg() pass %zu ==========\n", pass);
 
         /* Get a list of functions we need to analyze */
         std::vector<Function*> pending;
@@ -781,11 +847,13 @@ Partitioner::analyze_cfg()
         
         /* (Re)discover each function's blocks starting with the function entry point */
         for (size_t i=0; i<pending.size(); ++i) {
-            fprintf(stderr, "analyzing %s F%08"PRIx64" \"%s\" pass %zu: ",
-                    SgAsmFunctionDeclaration::reason_str(true, pending[i]->reason).c_str(),
-                    pending[i]->entry_va, pending[i]->name.c_str(), pass);
+            if (debug) {
+                fprintf(debug, "analyzing %s F%08"PRIx64" \"%s\" pass %zu: ",
+                        SgAsmFunctionDeclaration::reason_str(true, pending[i]->reason).c_str(),
+                        pending[i]->entry_va, pending[i]->name.c_str(), pass);
+            }
             discover_blocks(pending[i], pending[i]->entry_va);
-            fprintf(stderr, "\n");
+            if (debug) fprintf(debug, "\n");
         }
     }
 }
@@ -844,7 +912,7 @@ SgAsmFunctionDeclaration *
 Partitioner::build_ast(Function* f) const
 {
     if (f->blocks.size()==0) {
-        fprintf(stderr, "function F%08"PRIx64" \"%s\" has no basic blocks!\n", f->entry_va, f->name.c_str());
+        if (debug) fprintf(debug, "function F%08"PRIx64" \"%s\" has no basic blocks!\n", f->entry_va, f->name.c_str());
         return NULL;
     }
     

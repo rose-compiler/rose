@@ -147,6 +147,12 @@ main(int argc, char *argv[])
         ROSE_ASSERT(file);
         d->set_search(isSgFile(file)->get_disassemblerSearchHeuristics());
 
+        /* Build the instruction partitioner and set its search heuristics based on the "-rose:partitioner_search" switch as
+         * stored in the SgFile node containing this interpretation. */
+        Partitioner *p = new Partitioner();
+        p->set_search(isSgFile(file)->get_partitionerSearchHeuristics());
+        d->set_partitioner(p);
+
         /* Disassemble instructions, linking them into the interpretation */
         Disassembler::BadMap bad;
         d->disassemble(interp, NULL, &bad);
