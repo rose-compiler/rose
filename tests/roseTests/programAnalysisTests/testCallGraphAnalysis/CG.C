@@ -109,7 +109,8 @@ void sortedCallGraphDump(string fileName, SgIncidenceDirectedGraph* cg)
 
     }
 
-    std::cout << "We have output " << i << std::endl;
+    if( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+      std::cout << "We have output " << i << std::endl;
   }
 
   for (list<pair<SgGraphNode *,int> >::iterator it=cgNodes.begin();it!=cgNodes.end();it++)
@@ -137,7 +138,9 @@ void sortedCallGraphDump(string fileName, SgIncidenceDirectedGraph* cg)
     Properties* cur_property = dynamic_cast<Properties*>((it->first)->getAttribute("Properties"));
     SgFunctionDeclaration* cur_function = isSgFunctionDeclaration((it->first)->get_SgNode());
 
-    std::cout << "Node " << cur_function << " has " << calledNodes.size() << " calls to it." << std::endl;
+    if( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+      std::cout << "Node " << cur_function << " has " << calledNodes.size() << " calls to it." << std::endl;
+    
     if (calledNodes.size()==0)
     {
       /*

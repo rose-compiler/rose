@@ -77,6 +77,11 @@ using namespace std ;
 
 static const char *dumpFunc ;
 static SgType *ETtype ;
+static bool emitSeqSeg        = true ;
+static bool countIters        = true ;
+static bool instrumentWhile   = true ;
+static bool instrumentDoWhile = true ;
+static bool fullLoopStat      = true ;
 
 #define ANCHOR Sg_File_Info::generateDefaultFileInfoForTransformationNode()
 
@@ -208,7 +213,7 @@ static SgType *GetTypedef(SgGlobal *globalScope, const char *name,
 /* behavior.                                                */
 /************************************************************/
 
-static bool ContainsCall(SgStatement *stmt)
+static bool ContainsNonSimpleCall(SgStatement *stmt)
 {
    static std::set< std::string > segDB ;
    bool containsUnknownCall = false ;
@@ -228,7 +233,7 @@ static bool ContainsCall(SgStatement *stmt)
       } 
       else
       {
-         printf("File SEGDB.txt is absent. Segment results degraded.\n") ;
+         printf("File SEGDB.txt is absent. Sequential segment results degraded.\n") ;
          segDB.insert("_____") ;
       }
    }
@@ -269,14 +274,20 @@ static bool ContainsCall(SgStatement *stmt)
 /* a function.                                              */
 /************************************************************/
 
-static int ForLoopDepth(SgNode *baseScope, SgNode *stmt )
+static int LoopDepth(SgNode *baseScope, SgNode *stmt )
 {
    int level = 0 ;
    for (SgNode *scan = stmt; scan != baseScope; scan = scan->get_parent())
    {
-      if (isSgForStatement(scan))
+      if (isSgForStatement(scan) ||
+          (instrumentWhile && isSgWhileStmt(scan)) ||
+          (instrumentDoWhile && isSgDoWhileStmt(scan)) )
       {
-        ++level ;
+        if (!countIters ||
+            SageInterface::isCanonicalForLoop(scan, NULL, NULL, NULL, NULL) )
+        {
+          ++level ;
+        }
       }
    }
 
@@ -291,6 +302,9 @@ static void CreateSegmentProbe(SgFunctionDeclaration *funcDecl, SgBasicBlock *fu
                               SgStatement *begin, SgStatement *end, int *segmentCount,
                               bool finalSegmentInScope = false)
 {
+   if (emitSeqSeg == false)
+      return ;
+
    SgVariableDeclaration *stopSegDecl =
       ET_BuildDecl(funcBody, "ET_stopSeg", *segmentCount, ETtype, true) ;
    SgVariableDeclaration *startSegDecl =
@@ -326,100 +340,109 @@ static void CreateLoopProbe(SgFunctionDeclaration *funcDecl, SgBasicBlock *funcB
    SgExpression *lb ;
    SgExpression *ub ;
    SgExpression *step ;
+   bool isCanonicalFor = SageInterface::isCanonicalForLoop(stmt, NULL, &lb, &ub, &step) ;
 
-   /* generate loop iteration information */
-   if (SageInterface::isCanonicalForLoop(stmt, NULL, &lb, &ub, &step))
+   /* generate loop segment, and iteration information if requested */
+   if (countIters && !isCanonicalFor) {
+      Sg_File_Info *fileInfo = stmt->get_startOfConstruct() ;
+      printf("Non-canonical loop in %s:::%s at line %d\n",
+             fileInfo->get_filenameString().c_str(),
+             funcDecl->get_name().str(), fileInfo->get_line()) ;
+   }
+   else
    {
-      bool isDecreasing = false ;
-      bool adjustBound = false ;
+      SgExpression *its = NULL ;
+      if (countIters && isCanonicalFor) {
+         bool isDecreasing = false ;
+         bool adjustBound = false ;
 
-      SgExpression *high ;
-      SgExpression *max ;
-      SgExpression *minuend ;
-      SgExpression *subtrahend ;
-      SgExpression *its ;
+         SgExpression *high ;
+         SgExpression *max ;
+         SgExpression *minuend ;
+         SgExpression *subtrahend ;
 
-      SgVariableDeclaration *loopDecl =
-         ET_BuildDecl(funcBody, "ET_loop", *loopCount, ETtype, true) ;
-
-       SgExpression *tmp ;
-       SgForStatement* fs = isSgForStatement(stmt) ;
-       ROSE_ASSERT(fs) ;
-       SgBinaryOp* test = isSgBinaryOp(fs->get_test_expr());
-       ROSE_ASSERT(test) ;
-       switch (test->variantT())
-       {
-         case V_SgLessOrEqualOp:
-            adjustBound = true ;
-         case V_SgLessThanOp:
-            break;
-         case V_SgGreaterOrEqualOp:
+         SgExpression *tmp ;
+         SgForStatement* fs = isSgForStatement(stmt) ;
+         ROSE_ASSERT(fs) ;
+         SgBinaryOp* test = isSgBinaryOp(fs->get_test_expr());
+         ROSE_ASSERT(test) ;
+         switch (test->variantT())
+         {
+           case V_SgLessOrEqualOp:
              adjustBound = true ;
-         case V_SgGreaterThanOp:
-//         tmp = lb ;
-//         lb = ub ;
-//         ub = tmp ;
-           isDecreasing = true ;
-           break;
+           case V_SgLessThanOp:
+             break;
+           case V_SgGreaterOrEqualOp:
+             adjustBound = true ;
+           case V_SgGreaterThanOp:
+//           tmp = lb ;
+//           lb = ub ;
+//           ub = tmp ;
+             isDecreasing = true ;
+             break;
 //         case V_SgNotEqualOp: // Do we really want to allow this != operator ?
-//         break;
-         default:
-           /* do nothing */ ;
-       }
+//           break;
+           default:
+             /* do nothing */ ;
+         }
 
-       if (adjustBound)
-       {
-          high = buildAddOp(SageInterface::copyExpression(ub),
-                            buildIntVal(isDecreasing ? -1 : 1)) ;
-       }
-       else
-       {
-          high = SageInterface::copyExpression(ub) ;
-       }
+         if (adjustBound)
+         {
+            high = buildAddOp(SageInterface::copyExpression(ub),
+                              buildIntVal(isDecreasing ? -1 : 1)) ;
+         }
+         else
+         {
+            high = SageInterface::copyExpression(ub) ;
+         }
 
-       /* if step != const 1, we need to adjust high */
-       if (!(isSgIntVal(step) && (isSgIntVal(step)->get_value() == 1))) {
-          max = buildAddOp(high,
-                           buildSubtractOp(SageInterface::copyExpression(step), buildIntVal(1))) ;
-       }
-       else {
-          max = high ;
-       }
+         /* if step != const 1, we need to adjust high */
+         if (!(isSgIntVal(step) && (isSgIntVal(step)->get_value() == 1))) {
+            max = buildAddOp(high,
+                             buildSubtractOp(SageInterface::copyExpression(step), buildIntVal(1))) ;
+         }
+         else {
+            max = high ;
+         }
 
-       minuend    = max ;
-       subtrahend = SageInterface::copyExpression(lb) ;
+         minuend    = max ;
+         subtrahend = SageInterface::copyExpression(lb) ;
 #if 0
-       if (isDecreasing)
-       {
-          SgExpression *tmp ;
-          tmp = minuend ;
-          minuend = subtrahend ;
-          subtrahend = tmp ;
-       }
+         if (isDecreasing)
+         {
+            SgExpression *tmp ;
+            tmp = minuend ;
+            minuend = subtrahend ;
+            subtrahend = tmp ;
+         }
 #endif
 
-       /* The control logic is purely to clean up the output, since */
-       /* the compiler can do a fine job of folding integer constansts */
+         /* The control logic is purely to clean up the output, since */
+         /* the compiler can do a fine job of folding integer constansts */
 
-       its = buildDivideOp(buildSubtractOp(minuend, subtrahend),
-                           SageInterface::copyExpression(step)) ;
+         its = buildDivideOp(buildSubtractOp(minuend, subtrahend),
+                             SageInterface::copyExpression(step)) ;
 #if 0
-       if (!(isSgIntVal(step) && (isSgIntVal(step)->get_value() == 1))) {
-          its = buildDivideOp(buildSubtractOp(minuend, subtrahend),
-                              SageInterface::copyExpression(step)) ;
-       }
-       else {
-          if (!(isSgIntVal(subtrahend) &&
-                (isSgIntVal(subtrahend)->get_value() == 0))) {
-             its = buildSubtractOp(minuend, subtrahend) ;
-          }
-          else {
-             its = minuend ;
-          }
-       }
+         if (!(isSgIntVal(step) && (isSgIntVal(step)->get_value() == 1))) {
+            its = buildDivideOp(buildSubtractOp(minuend, subtrahend),
+                                SageInterface::copyExpression(step)) ;
+         }
+         else {
+            if (!(isSgIntVal(subtrahend) &&
+                  (isSgIntVal(subtrahend)->get_value() == 0))) {
+               its = buildSubtractOp(minuend, subtrahend) ;
+            }
+            else {
+               its = minuend ;
+            }
+         }
 #endif
+       }
 
        /* start loop code fragment */
+       SgVariableDeclaration *loopDecl =
+         ET_BuildDecl(funcBody, "ET_loop", *loopCount, ETtype, true) ;
+
        RegisterItem(funcDecl, funcBody, stmt,
                     "ET_RegisterLoop", ETtype, loopDecl, true) ;
        HandleItem(funcBody, stmt, "ET_PushLoopSeqId", buildVarRefExp(loopDecl), true) ;
@@ -428,13 +451,6 @@ static void CreateLoopProbe(SgFunctionDeclaration *funcDecl, SgBasicBlock *funcB
        HandleItem(funcBody, stmt, "ET_PopLoopSeqId", its, false) ;
 
        ++(*loopCount) ;
-   }
-   else
-   {
-      Sg_File_Info *fileInfo = stmt->get_startOfConstruct() ;
-      printf("Non-canonical loop in %s:::%s at line %d\n",
-             fileInfo->get_filenameString().c_str(),
-             funcDecl->get_name().str(), fileInfo->get_line()) ;
    }
 }
 
@@ -501,6 +517,40 @@ bool TransformFunction(SgFunctionDeclaration *funcDecl, SgBasicBlock *funcBody,
          simpleWork = false ;
          TransformFunction(funcDecl, funcBody, loopBody, loopCount, segmentCount) ; 
       }
+      else if (isSgWhileStmt(stmt)) /* could be embedded inside a statement */
+      {
+         /* At minimum, identifiers in code should be specialized for while */
+         SgWhileStmt *whileStatement = isSgWhileStmt(stmt) ;
+         SgBasicBlock *loopBody = SageInterface::ensureBasicBlockAsBodyOfWhile(whileStatement) ;
+         ROSE_ASSERT(loopBody) ;
+         if (instrumentWhile) {
+           if (segBegin != NULL)
+           {
+             CreateSegmentProbe(funcDecl, funcBody, segBegin, stmt, segmentCount) ;
+             segBegin = NULL ;
+           }
+           CreateLoopProbe(funcDecl, funcBody, stmt, loopCount) ;
+           simpleWork = false ;
+         }
+         TransformFunction(funcDecl, funcBody, loopBody, loopCount, segmentCount) ; 
+      }
+      else if (isSgDoWhileStmt(stmt)) /* could be embedded inside a statement */
+      {
+         /* At minimum, identifiers in code should be specialized for while */
+         SgDoWhileStmt *doWhileStatement = isSgDoWhileStmt(stmt) ;
+         SgBasicBlock *loopBody = SageInterface::ensureBasicBlockAsBodyOfDoWhile(doWhileStatement) ;
+         ROSE_ASSERT(loopBody) ;
+         if (instrumentDoWhile) {
+           if (segBegin != NULL)
+           {
+             CreateSegmentProbe(funcDecl, funcBody, segBegin, stmt, segmentCount) ;
+             segBegin = NULL ;
+           }
+           CreateLoopProbe(funcDecl, funcBody, stmt, loopCount) ;
+           simpleWork = false ;
+         }
+         TransformFunction(funcDecl, funcBody, loopBody, loopCount, segmentCount) ; 
+      }
       else if (isSgReturnStmt(stmt)) /* could be embedded inside a statement */
       {
          /* Note -- we should probably put the return statement in block scope */
@@ -508,11 +558,10 @@ bool TransformFunction(SgFunctionDeclaration *funcDecl, SgBasicBlock *funcBody,
 
          /* We do not currently count iterations for loops that are aborted */
 
-         int level = ForLoopDepth(funcBody, stmt) ;
+         int level = LoopDepth(funcBody, stmt) ;
          if ((segBegin != NULL) && !simpleWork)
          {
            CreateSegmentProbe(funcDecl, funcBody, segBegin, stmt, segmentCount) ;
-           simpleWork = false ;
            segBegin = NULL ;
          }
          if (level != 0)
@@ -528,8 +577,8 @@ bool TransformFunction(SgFunctionDeclaration *funcDecl, SgBasicBlock *funcBody,
 
          /* We do not currently count iterations for loops that are aborted */
 
-         int gotoLevel = ForLoopDepth(funcBody, stmt) ;
-         int labelLevel = ForLoopDepth(funcBody, isSgGotoStatement(stmt)->get_label()) ;
+         int gotoLevel = LoopDepth(funcBody, stmt) ;
+         int labelLevel = LoopDepth(funcBody, isSgGotoStatement(stmt)->get_label()) ;
          int levelDiff = gotoLevel - labelLevel ;
          if (segBegin != NULL)
          {
@@ -676,7 +725,7 @@ bool TransformFunction(SgFunctionDeclaration *funcDecl, SgBasicBlock *funcBody,
            }
          }
       }
-      else if (ContainsCall(stmt))
+      else if (ContainsNonSimpleCall(stmt))
       {
          if (segBegin != NULL)
          {
@@ -712,9 +761,12 @@ bool TransformFunction(SgFunctionDeclaration *funcDecl, SgBasicBlock *funcBody,
 int main (int argc, char *argv[])
 {
    /* indicate whether include files need to be added */
+   bool loopTransformApplied = false ;
+
+   /* more bools at top of file... */
    bool withPAPI = false ;
    bool showStats = false ;
-   bool loopTransformApplied = false ;
+   bool enablePostProcessing = false ;
 
    /***********************************************/
    /* Process command line options                */
@@ -733,6 +785,25 @@ int main (int argc, char *argv[])
    {
      withPAPI = true ;
    }
+   if ( CommandlineProcessing::isOption(
+           cmdLineArgs, "-et:", "(l|loops)", true) )
+   {
+     emitSeqSeg = false ;
+   }
+   if ( CommandlineProcessing::isOption(
+           cmdLineArgs, "-et:", "noiter", true) )
+   {
+     countIters = false ;
+   }
+   if ( CommandlineProcessing::isOption(
+           cmdLineArgs, "-et:", "fast", true) )
+   {
+     fullLoopStat = false ;
+     emitSeqSeg   = false ;
+     countIters   = false ;
+     withPAPI     = false ;
+     enablePostProcessing = true ;
+   }
 
    dumpFunc = (showStats ? "ET_LogStats" : "ET_Dump") ;
 
@@ -744,145 +815,164 @@ int main (int argc, char *argv[])
    SgProject* project = frontend(argc, argv);
    ROSE_ASSERT(project);
 
-   /* make sure AST is well formed */
-   AstTests::runAllTests(project);
+   if (project->get_fileList().empty() == false) {
 
-   /* set up some needed typedefs for runtime support */
+     /* make sure AST is well formed */
+     AstTests::runAllTests(project);
 
-   SgGlobal *globalScope = SageInterface::getFirstGlobalScope(project) ;
-   pushScopeStack(isSgScopeStatement(globalScope)) ;
-   ETtype = GetTypedef(globalScope, "ET_Idx_t", new SgTypeShort() ) ;
-   popScopeStack();   /* pop globalScope */
+     /* set up some needed typedefs for runtime support */
 
-   /* insert probes into each function in this file */
+     SgGlobal *globalScope = SageInterface::getFirstGlobalScope(project) ;
+     pushScopeStack(isSgScopeStatement(globalScope)) ;
+     ETtype = GetTypedef(globalScope, "ET_Idx_t", new SgTypeShort() ) ;
+     popScopeStack();   /* pop globalScope */
 
-   Rose_STL_Container<SgNode*> funcDefs =
-       NodeQuery::querySubTree(project, V_SgFunctionDefinition) ;
+     /* insert probes into each function in this file */
 
-   for (Rose_STL_Container<SgNode*>::iterator f_itr = funcDefs.begin();
-              f_itr != funcDefs.end(); ++f_itr)
-   {
-      SgFunctionDefinition *funcDef = isSgFunctionDefinition(*f_itr) ;
-      ROSE_ASSERT(funcDef);
+     Rose_STL_Container<SgNode*> funcDefs =
+         NodeQuery::querySubTree(project, V_SgFunctionDefinition) ;
+
+     for (Rose_STL_Container<SgNode*>::iterator f_itr = funcDefs.begin();
+                f_itr != funcDefs.end(); ++f_itr)
+     {
+        SgFunctionDefinition *funcDef = isSgFunctionDefinition(*f_itr) ;
+        ROSE_ASSERT(funcDef);
 
 #ifdef ET_DEBUG 
-      printf("--- %s ---\n", funcDef->get_qualified_name().str()) ;
+        printf("--- %s ---\n", funcDef->get_qualified_name().str()) ;
 #endif
 
-      SgBasicBlock *funcBody = funcDef->get_body() ;
-      if (funcBody == NULL)
-         continue ;  /* should be impossible to get here... */
+        SgBasicBlock *funcBody = funcDef->get_body() ;
+        if (funcBody == NULL)
+           continue ;  /* should be impossible to get here... */
 
-      SgFunctionDeclaration *funcDecl = funcDef->get_declaration() ;
-      ROSE_ASSERT(funcDecl);
+        SgFunctionDeclaration *funcDecl = funcDef->get_declaration() ;
+        ROSE_ASSERT(funcDecl);
 
-      /* don't transform header file code  */
-      if (strstr(funcDecl->get_name().str(), "operator"))
-         continue ;
+        /* don't transform header file code  */
+        if (strstr(funcDecl->get_name().str(), "operator"))
+           continue ;
 
 #ifdef ET_DEBUG
-      printf("--- %s ---\n", funcDecl->get_name().str()) ;
+        printf("--- %s ---\n", funcDecl->get_name().str()) ;
 #endif
 
-      int loopCount = 0 ;  /* used to create local variable names */
-      int segCount = 0 ;
+        int loopCount = 0 ;  /* used to create local variable names */
+        int segCount = 0 ;
 
-      TransformFunction(funcDecl, funcBody, funcBody, &loopCount, &segCount) ;
+        TransformFunction(funcDecl, funcBody, funcBody, &loopCount, &segCount) ;
 
-      if (loopCount != 0)
-      {
-         loopTransformApplied = true ;
-      }
-   }
+        if (loopCount != 0)
+        {
+           loopTransformApplied = true ;
+        }
+     }
 
-   /* files containing at least one loop require run-time support */
+     SgFunctionDeclaration *mainFunc = SageInterface::findMain(project) ;
+     if (countIters == false && (loopTransformApplied || mainFunc != NULL)) {
+        SageInterface::attachArbitraryText(globalScope,
+           std::string("#define ET_NO_COUNT_ITERS 1\n")) ;
+     }
 
-   if (loopTransformApplied)
-   {
-      SageInterface::attachArbitraryText(globalScope,
-         std::string("#include \"ETrt.h\"\n")) ;
-   }
+     /* files containing at least one loop require run-time support */
 
-   /* fold run-time support code into file containing main() */
+     if (loopTransformApplied)
+     {
+        SageInterface::attachArbitraryText(globalScope,
+           std::string("#include \"ETrt.h\"\n")) ;
+     }
 
-   SgFunctionDeclaration *mainFunc = SageInterface::findMain(project) ;
-   if (mainFunc != NULL)
-   {
+     /* fold run-time support code into file containing main() */
 
-      SgFunctionDefinition *mainFuncDef = mainFunc->get_definition() ;
+     if (mainFunc != NULL)
+     {
 
-      /* include ETrt.c just before main() in this file */
-      SageInterface::attachArbitraryText(globalScope,
-         std::string(withPAPI ? "#define ET_PAPI 1\n#include \"ETrt.c\"\n" :
-                                "#include \"ETrt.c\"\n")) ;
+        SgFunctionDefinition *mainFuncDef = mainFunc->get_definition() ;
 
-      if (withPAPI) {
-         /* Insert PAPI initialization code at top of main */
-         SgBasicBlock *mainBody = mainFuncDef->get_body() ;
+        /* include ETrt.c just before main() in this file */
+        if (!fullLoopStat) {
+          SageInterface::attachArbitraryText(globalScope,
+             std::string("#define ET_SIMPLE_LOOP_STATS 1\n") );
+        }
+        if (enablePostProcessing) {
+          SageInterface::attachArbitraryText(globalScope,
+             std::string("#define ET_POST_PROCESS_SEQ_TO_LOOP 1\n") );
+        }
+        if (withPAPI) {
+          SageInterface::attachArbitraryText(globalScope,
+             std::string("#define ET_PAPI 1\n\n") );
+        }
+        SageInterface::attachArbitraryText(globalScope,
+           std::string("#include \"ETrt.c\"\n") );
 
-         Rose_STL_Container<SgNode*> blockStmts =
-             NodeQuery::querySubTree(mainBody, V_SgStatement,
-                                     AstQueryNamespace::ChildrenOnly) ;
+        if (withPAPI) {
+           /* Insert PAPI initialization code at top of main */
+           SgBasicBlock *mainBody = mainFuncDef->get_body() ;
 
-         for (Rose_STL_Container<SgNode*>::iterator s_itr = blockStmts.begin();
-                 s_itr != blockStmts.end(); ++s_itr)
-         {
-            SgStatement *stmt = isSgStatement(*s_itr) ;
-            ROSE_ASSERT(stmt);
+           Rose_STL_Container<SgNode*> blockStmts =
+               NodeQuery::querySubTree(mainBody, V_SgStatement,
+                                       AstQueryNamespace::ChildrenOnly) ;
 
-            /* skip variable declarations */
-            if (isSgDeclarationStatement(stmt))
-               continue ;
+           for (Rose_STL_Container<SgNode*>::iterator s_itr = blockStmts.begin();
+                   s_itr != blockStmts.end(); ++s_itr)
+           {
+              SgStatement *stmt = isSgStatement(*s_itr) ;
+              ROSE_ASSERT(stmt);
 
-            SgExprListExp *papiArgs = new SgExprListExp(ANCHOR) ;
-            SgExprStatement *initCall = buildFunctionCallStmt(
-               SgName("ET_Init"), new SgTypeVoid(), papiArgs,
-               mainFuncDef->get_body()) ;
-            stmt->get_scope()->insert_statement(stmt, initCall) ;
+              /* skip variable declarations */
+              if (isSgDeclarationStatement(stmt))
+                 continue ;
 
-            break ;
-         }
-      }
+              SgExprListExp *papiArgs = new SgExprListExp(ANCHOR) ;
+              SgExprStatement *initCall = buildFunctionCallStmt(
+                 SgName("ET_Init"), new SgTypeVoid(), papiArgs,
+                 mainFuncDef->get_body()) ;
+              stmt->get_scope()->insert_statement(stmt, initCall) ;
 
-      /* insert finalization code at end of main() */
-      Rose_STL_Container<SgNode*> retStmts =
-          NodeQuery::querySubTree(mainFunc, V_SgReturnStmt) ;
+              break ;
+           }
+        }
 
-      if (retStmts.size() > 0)
-      {
-         for (Rose_STL_Container<SgNode*>::iterator r_itr = retStmts.begin();
-                 r_itr != retStmts.end(); ++r_itr)
-         {
-            SgReturnStmt *ret = isSgReturnStmt(*r_itr) ;
-            ROSE_ASSERT(ret);
+        /* insert finalization code at end of main() */
+        Rose_STL_Container<SgNode*> retStmts =
+            NodeQuery::querySubTree(mainFunc, V_SgReturnStmt) ;
 
-            SgExprListExp *sanityArgs = new SgExprListExp(ANCHOR) ;
-            SgExprStatement *sanityCall = buildFunctionCallStmt(
-               SgName("ET_SanityCheck"), new SgTypeVoid(), sanityArgs,
-               mainFuncDef->get_body()) ;
-            ret->get_scope()->insert_statement(ret, sanityCall) ;
+        if (retStmts.size() > 0)
+        {
+           for (Rose_STL_Container<SgNode*>::iterator r_itr = retStmts.begin();
+                   r_itr != retStmts.end(); ++r_itr)
+           {
+              SgReturnStmt *ret = isSgReturnStmt(*r_itr) ;
+              ROSE_ASSERT(ret);
 
-            SgExprListExp *logStatArgs = new SgExprListExp(ANCHOR) ;
-            SgExprStatement *logStatCall = buildFunctionCallStmt(
-               SgName(dumpFunc), new SgTypeVoid(), logStatArgs,
-               mainFuncDef->get_body()) ;
-            ret->get_scope()->insert_statement(ret, logStatCall) ;
-         }
-      }
-      else
-      {
-         SgExprListExp *sanityArgs = new SgExprListExp(ANCHOR) ;
-         SgExprStatement *sanityCall = buildFunctionCallStmt(
-            SgName("ET_SanityCheck"), new SgTypeVoid(), sanityArgs,
-            mainFuncDef->get_body()) ;
-         mainFuncDef->get_body()->append_statement(sanityCall) ;
+              SgExprListExp *sanityArgs = new SgExprListExp(ANCHOR) ;
+              SgExprStatement *sanityCall = buildFunctionCallStmt(
+                 SgName("ET_SanityCheck"), new SgTypeVoid(), sanityArgs,
+                 mainFuncDef->get_body()) ;
+              ret->get_scope()->insert_statement(ret, sanityCall) ;
 
-         SgExprListExp *logStatArgs = new SgExprListExp(ANCHOR) ;
-         SgExprStatement *logStatCall = buildFunctionCallStmt(
-            SgName(dumpFunc), new SgTypeVoid(), logStatArgs,
-            mainFuncDef->get_body()) ;
-         mainFuncDef->get_body()->append_statement(logStatCall) ;
-      }
+              SgExprListExp *logStatArgs = new SgExprListExp(ANCHOR) ;
+              SgExprStatement *logStatCall = buildFunctionCallStmt(
+                 SgName(dumpFunc), new SgTypeVoid(), logStatArgs,
+                 mainFuncDef->get_body()) ;
+              ret->get_scope()->insert_statement(ret, logStatCall) ;
+           }
+        }
+        else
+        {
+           SgExprListExp *sanityArgs = new SgExprListExp(ANCHOR) ;
+           SgExprStatement *sanityCall = buildFunctionCallStmt(
+              SgName("ET_SanityCheck"), new SgTypeVoid(), sanityArgs,
+              mainFuncDef->get_body()) ;
+           mainFuncDef->get_body()->append_statement(sanityCall) ;
+
+           SgExprListExp *logStatArgs = new SgExprListExp(ANCHOR) ;
+           SgExprStatement *logStatCall = buildFunctionCallStmt(
+              SgName(dumpFunc), new SgTypeVoid(), logStatArgs,
+              mainFuncDef->get_body()) ;
+           mainFuncDef->get_body()->append_statement(logStatCall) ;
+        }
+     }
    }
 
    /* make sure AST is well formed */

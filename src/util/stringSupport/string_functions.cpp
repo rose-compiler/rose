@@ -897,13 +897,13 @@ StringUtility::readFileWithPos ( const string& fileName )
      ifstream inputFile;
      inputFile.open( fileName.c_str(), ios::binary );
      if (inputFile.good() != true)
-     {
-	  //printf ("ERROR: File not found -- %s \n",fileName.c_str());
-	  //ROSE_ABORT();
-            std::string s( "ERROR: File not found -- " );
-            s += fileName;
-            throw s;
-     }
+        {
+	    // printf ("ERROR: File not found -- %s \n",fileName.c_str());
+	    // ROSE_ABORT();
+          std::string s( "ERROR: File not found -- " );
+          s += fileName;
+          throw s;
+        }
 
      ROSE_ASSERT (inputFile.good() == true);
 
@@ -931,15 +931,16 @@ StringUtility::readFileWithPos ( const string& fileName )
      delete[] buffer;
 
      StringUtility::FileWithLineNumbers result;
-     for (std::string::size_type pos = 0; pos != string::npos; ) {
-       std::string::size_type lastPos = pos;
-       pos = returnString.find('\n', lastPos);
-       result.push_back(StringUtility::StringWithLineNumber(returnString.substr(lastPos, pos - lastPos), fullFileName, line));
+     for (std::string::size_type pos = 0; pos != string::npos; )
+        {
+          std::string::size_type lastPos = pos;
+          pos = returnString.find('\n', lastPos);
+          result.push_back(StringUtility::StringWithLineNumber(returnString.substr(lastPos, pos - lastPos), fullFileName, line));
        // cerr << "Added line '" << returnString.substr(lastPos, pos - lastPos) << "' at line " << line << endl;
-       ++line;
-       ++pos; // Skip newline
-       if (pos == returnString.size()) break;
-   }
+          ++line;
+          ++pos; // Skip newline
+          if (pos == returnString.size()) break;
+        }
 
      result.push_back(StringUtility::StringWithLineNumber("", "", 1));
      return result;

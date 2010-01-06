@@ -8,6 +8,10 @@ include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 INCLUDES = $(ROSE_INCLUDES) -I$(compass_support_dir)  -I$(compass_prereqs_dir) -I$(compass_support_bdir)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+# If we are generating the smaller source files then Cxx_Grammar.h can't be used
+# to gather information required to run Palette, so skip this test.
+if !ROSE_USE_SMALLER_GENERATED_FILES
+
 PALETTEFLAGS = 
 
 BUILT_SOURCES = palette2cpp$(EXEEXT) $(srcdir)/rose.P
@@ -64,6 +68,8 @@ check-local: switch_without_default null_deref qsolve simple_example sortTest
 	@rm compass_parameters current_answers current_answers.temp
 	@echo "Test passed"
 # endif
+
+endif
 
 EXTRA_DIST = check_correct_answers gen_rose_tables.tcl rose.P
 clean-local:

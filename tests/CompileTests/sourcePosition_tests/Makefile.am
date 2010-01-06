@@ -680,4 +680,6 @@ clean-local:
 cleandata:
 	rm -f *.ti *.ii rose_*.C rose_*.c *.dot test*.o rose_*.o
 
+# EXTRA_DIST = CMakeLists.txt README $(ALL_TESTCODES)
+EXTRA_DIST = README
 
