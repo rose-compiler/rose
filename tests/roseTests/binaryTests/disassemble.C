@@ -73,7 +73,7 @@ int
 main(int argc, char *argv[]) 
 {
     bool show_bad = false;
-    bool do_debug = false;
+    bool do_debug_disassembler = false, do_debug_partitioner=false;
     bool do_reassemble = false;
     bool do_dot = false;
     bool do_quiet = false;
@@ -101,8 +101,13 @@ main(int argc, char *argv[])
             do_show_functions = true; /*show function summary*/
         } else if (!strcmp(argv[i], "--reassemble")) {
             do_reassemble = true; /* reassemble what we disassembled in order to test the assembler */
-        } else if (!strcmp(argv[i], "--debug")) {
-            do_debug = true;    /* dump lots of debugging information */
+        } else if (!strcmp(argv[i], "--debug")) {/* dump lots of debugging information */
+            do_debug_disassembler = true;
+            do_debug_partitioner = true;
+        } else if (!strcmp(argv[i], "--debug-disassembler")) {
+            do_debug_disassembler = true;
+        } else if (!strcmp(argv[i], "--debug-partitioner")) {
+            do_debug_partitioner = true;
         } else if (!strcmp(argv[i], "--quiet")) {
             do_quiet = true;    /* do not emit the instructions to stdout (they're still stored in the *.dump file) */
         } else if (argv[i][0]=='-') {
@@ -137,7 +142,7 @@ main(int argc, char *argv[])
 
         /* Build the disassembler */
         Disassembler *d = Disassembler::create(interp);
-        if (do_debug)
+        if (do_debug_disassembler)
             d->set_debug(stderr);
 
         /* Set the disassembler instruction searching heuristics from the "-rose:disassembler_search" switch as stored
@@ -150,6 +155,8 @@ main(int argc, char *argv[])
         /* Build the instruction partitioner and set its search heuristics based on the "-rose:partitioner_search" switch as
          * stored in the SgFile node containing this interpretation. */
         Partitioner *p = new Partitioner();
+        if (do_debug_partitioner)
+            p->set_debug(stderr);
         p->set_search(isSgFile(file)->get_partitionerSearchHeuristics());
         d->set_partitioner(p);
 

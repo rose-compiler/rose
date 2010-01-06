@@ -140,10 +140,10 @@ int main(int argc, char** argv) {
   // These assertions are very sensitive to the heuristics used to find instructions and functions.
   ROSE_ASSERT(dfanalysis->nodesVisited()==218 || dfanalysis->nodesVisited()==211 || dfanalysis->nodesVisited()==200 ||
               dfanalysis->nodesVisited()==209 || dfanalysis->nodesVisited()==210 || dfanalysis->nodesVisited()==240 ||
-              dfanalysis->nodesVisited()==246 || dfanalysis->nodesVisited()==247);
+              dfanalysis->nodesVisited()==246 || dfanalysis->nodesVisited()==247 || dfanalysis->nodesVisited()==244);
   ROSE_ASSERT(dfanalysis->edgesVisited()==233 || dfanalysis->edgesVisited()==252 || dfanalysis->edgesVisited()==240 ||
               dfanalysis->edgesVisited()==253 || dfanalysis->edgesVisited()==251 || dfanalysis->edgesVisited()==281 ||
-              dfanalysis->edgesVisited()==288 || dfanalysis->edgesVisited()==289);
+              dfanalysis->edgesVisited()==282 || dfanalysis->edgesVisited()==288 || dfanalysis->edgesVisited()==289);
   ROSE_ASSERT(dfanalysis->nrOfMemoryWrites()==14 || dfanalysis->nrOfMemoryWrites()==8 || dfanalysis->nrOfMemoryWrites()==12 ||
               dfanalysis->nrOfMemoryWrites()==18);
   ROSE_ASSERT(dfanalysis->nrOfRegisterWrites()==23 ||dfanalysis->nrOfRegisterWrites()==56 ||
@@ -151,7 +151,7 @@ int main(int argc, char** argv) {
               dfanalysis->nrOfRegisterWrites()==38);
   ROSE_ASSERT(dfanalysis->nrOfDefinitions()==105 || dfanalysis->nrOfDefinitions()==161 || dfanalysis->nrOfDefinitions()==147 ||
               dfanalysis->nrOfDefinitions()==152 || dfanalysis->nrOfDefinitions()==150 || dfanalysis->nrOfDefinitions()==176 ||
-              dfanalysis->nrOfDefinitions()==180);
+              dfanalysis->nrOfDefinitions()==180 || dfanalysis->nrOfDefinitions()==159);
   ROSE_ASSERT(dfanalysis->nrOfUses()==15 || dfanalysis->nrOfUses()==24 || dfanalysis->nrOfUses()==23 ||
               dfanalysis->nrOfUses()==25);
 

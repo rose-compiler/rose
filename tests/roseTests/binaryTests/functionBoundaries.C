@@ -73,17 +73,16 @@ public:
         delete d;
         d = new MyDisassembler;
         Partitioner *p = new Partitioner;
-        unsigned h = p->get_heuristics();
+        unsigned h = p->get_search();
         h &= ~SgAsmFunctionDeclaration::FUNC_PATTERN;
-        p->set_heuristics(h);
-        p->addFunctionDetector(user_pattern);
+        p->set_search(h);
+        p->add_function_detector(user_pattern);
         d->set_partitioner(p);
         return d;
     }
 private:
     /* Looks for "push bp" (any word size) and makes them the start of functions. */
-    static void user_pattern(SgAsmGenericHeader* hdr, const Disassembler::InstructionMap& insns,
-                             const Partitioner::BasicBlockStarts&, Partitioner::FunctionStarts &func_starts) {
+    static void user_pattern(Partitioner* p, SgAsmGenericHeader* hdr, const Disassembler::InstructionMap& insns) {
         if (hdr) return; /*this function doesn't depend on anything in a file header*/
         for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ii++) {
             rose_addr_t addr = ii->first;
@@ -94,7 +93,7 @@ private:
             SgAsmx86RegisterReferenceExpression *rre = isSgAsmx86RegisterReferenceExpression(operands[0]);
             if (!rre || rre->get_register_class()!=x86_regclass_gpr || rre->get_register_number()!=x86_gpr_bp) continue;
             printf("Marking 0x%08"PRIx64" as the start of a function.\n", addr);
-            func_starts[addr].reason |= SgAsmFunctionDeclaration::FUNC_USERDEF;
+            p->add_function(addr, SgAsmFunctionDeclaration::FUNC_USERDEF);
         }
     }
 };

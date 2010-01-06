@@ -62,7 +62,7 @@ protected:
     typedef std::map<rose_addr_t, Function*> Functions;
 
     /** Data type for user-defined function detectors. */
-    typedef void (*FunctionDetector)(Partitioner*, SgAsmGenericHeader*, const Disassembler::InstructionMap&, Functions&/*out*/);
+    typedef void (*FunctionDetector)(Partitioner*, SgAsmGenericHeader*, const Disassembler::InstructionMap&);
 
 public:
     /* FIXME: Backward compatibility stuff prior to 2010-01-01. These are deprecated and should eventually be removed. They
@@ -122,6 +122,16 @@ public:
         return func_heuristics;
     }
 
+    /** Adds a user-defined function detector to this partitioner. Any number of detectors can be added and they will be run
+     *  by pre_cfg() in the order they were added, after the built-in methods run.  Each user-defined detector will be called
+     *  first with the SgAmGenericHeader pointing to null, then once for each file header. The user-defined methods are run
+     *  only if the SgAsmFunctionDeclaration::FUNC_USERDEF is set (see set_search()), which is the default.   The reason for
+     *  having user-defined function detectors is that the detection of functions influences the shape of the AST and so it is
+     *  easier to apply those analyses here, before the AST is built, rather than in the mid-end after the AST is built. */
+    void add_function_detector(FunctionDetector f) {
+        user_detectors.push_back(f);
+    }
+    
     /** Parses a string describing the heuristics and returns the bit vector that can be passed to set_search(). The input
      *  string should be a comma-separated list (without white space) of search specifications. Each specification should be
      *  an optional qualifier character followed by either an integer or a word. The accepted words are the lower-case
@@ -154,16 +164,6 @@ public:
         this->insns.insert(insns.begin(), insns.end());
     }
 
-    /** Adds a user-defined function detector to this partitioner. Any number of detectors can be added and they will be run
-     *  in the order they were added, after the built-in methods run.  Each user-defined detector will be called first with
-     *  the SgAmGenericHeader pointing to null, then once for each file header. The user-defined methods are run only if the
-     *  SgAsmFunctionDeclaration::FUNC_USERDEF is set (see set_search()), which is the default.   The reason for having
-     *  user-defined function detectors is that the detection of functions influences the shape of the AST and so it is easier
-     *  to apply those analyses here, before the AST is built, rather than in the mid-end after the AST is built. */
-    virtual void add_function_detector(FunctionDetector f) {
-        user_detectors.push_back(f);
-    }
-    
     /** Adds a new function definition to the partitioner.  New functions can be added at any time, including during the
      *  analyze_cfg() call. */
     virtual Function* add_function(rose_addr_t entry_va, unsigned reasons, std::string name="");
