@@ -2020,7 +2020,7 @@ Grammar::buildSourceFiles( Terminal & node, StringUtility::FileWithLineNumbers &
      StringUtility::FileWithLineNumbers sourceBeforeInsertion;
 #if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
   // DQ (12/29/2009): Add this to the top of each file.
-     string sourceHeader = "\n#include \"rose.h\"\nusing namespace std;\n\n";
+     string sourceHeader = "\n#include \"sage3basic.h\"\nusing namespace std;\n\n";
      sourceBeforeInsertion.push_back(StringUtility::StringWithLineNumber(sourceHeader, "", 1));
 #else
   // StringUtility::FileWithLineNumbers sourceBeforeInsertion = buildHeaderStringBeforeMarker(sourceFileInsertionSeparator, fileName);
