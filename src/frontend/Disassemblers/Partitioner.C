@@ -287,6 +287,8 @@ Partitioner::remove(Function* f, BasicBlock* bb)
 Partitioner::BasicBlock *
 Partitioner::find_bb_containing(rose_addr_t va)
 {
+    static const bool allow_discontiguous_blocks = true;
+
     std::map<rose_addr_t, BasicBlock*>::iterator i2b_i = insn2block.find(va);
     if (i2b_i!=insn2block.end() && i2b_i->second!=NULL) return i2b_i->second;
 
@@ -299,17 +301,22 @@ Partitioner::find_bb_containing(rose_addr_t va)
         if (i2b_i!=insn2block.end() && i2b_i->second!=NULL)
             break; /*we've reached another block*/
         SgAsmInstruction *insn = ii->second;
-        rose_addr_t next_va = va + insn->get_raw_bytes().size();
+        va += insn->get_raw_bytes().size();
         if (!bb)
             bb = new BasicBlock;
         append(bb, insn);
         if (insn->terminatesBasicBlock()) {
             bool complete;
             const Disassembler::AddressSet& successors = bb->successors(&complete);
-            if (!complete || successors.size()!=1 || *(successors.begin())!=next_va)
-                break; /*we proved that this block (so far) always falls through to the next instruction*/
+#if 0 /*basic blocks contiguous in memory*/
+            if (!complete || successors.size()!=1 || *(successors.begin())!=va)
+                break;
+#else /*basic blocks not contigiguous in memory*/
+            if (!complete || successors.size()!=1)
+                break;
+            va = *(successors.begin());
+#endif
         }
-        va = next_va;
     }
     ROSE_ASSERT(!bb || bb->insns.size()>0);
     return bb;
