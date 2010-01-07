@@ -29,7 +29,8 @@ public:
         SgAsmFunctionDeclaration *defn = isSgAsmFunctionDeclaration(node);
         if (defn) {
             /* Scan through the function's instructions to find the range of addresses for the function. */
-            rose_addr_t func_start=~(rose_addr_t)0, func_end=0, ninsns=0, nbytes=0;
+            rose_addr_t func_start=~(rose_addr_t)0, func_end=0;
+            size_t ninsns=0, nbytes=0;
             SgAsmStatementPtrList func_stmts = defn->get_statementList();
             for (size_t i=0; i<func_stmts.size(); i++) {
                 SgAsmBlock *bb = isSgAsmBlock(func_stmts[i]);
