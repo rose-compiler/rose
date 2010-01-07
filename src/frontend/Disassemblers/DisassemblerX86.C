@@ -165,17 +165,6 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
 {
     Disassembler::AddressSet successors = SgAsmInstruction::get_successors(insns, complete);
 
-#ifndef NDEBUG
-    {
-        /* Vector should be one basic block, i.e., a list of consecutive instructions. */
-        rose_addr_t va = insns.front()->get_address();
-        for (size_t i=0; i<insns.size(); i++) {
-            ROSE_ASSERT(insns[i]->get_address()==va);
-            va += insns[i]->get_raw_bytes().size();
-        }
-    }
-#endif
-
     /* If we couldn't determine all the successors, or a cursory analysis couldn't narrow it down to a single successor then
      * we'll do a more thorough analysis now. In the case where the cursory analysis returned a complete set containing two
      * successors, a thorough analysis might be able to narrow it down to a single successor. */
@@ -203,6 +192,9 @@ SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns,
             }
         } catch(const Semantics::Exception& e) {
             /* Abandon entire basic block if we hit an instruction that's not implemented. */
+#if 0
+            fprintf(stderr, "semantic analysis failed: %s\n", e.mesg.c_str());
+#endif
         }
     }
 

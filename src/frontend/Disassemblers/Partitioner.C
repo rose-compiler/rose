@@ -234,7 +234,7 @@ Partitioner::split(BasicBlock* bb1, rose_addr_t va)
 
     /* Move some instructions from bb1 to bb2 */
     std::vector<SgAsmInstruction*>::iterator cut = bb1->insns.begin();
-    while (cut!=bb1->insns.end() && (*cut)->get_address()<va) ++cut;
+    while (cut!=bb1->insns.end() && (*cut)->get_address()!=va) ++cut;
     for (std::vector<SgAsmInstruction*>::iterator ii=cut; ii!=bb1->insns.end(); ++ii) {
         bb2->insns.push_back(*ii);
         insn2block[(*ii)->get_address()] = bb2;
@@ -245,6 +245,7 @@ Partitioner::split(BasicBlock* bb1, rose_addr_t va)
     if (bb1->function)
         append(bb1->function, bb2);
 
+    ROSE_ASSERT(bb2->insns.size()>0);
     return bb2;
 }
 
@@ -254,12 +255,7 @@ Partitioner::append(BasicBlock* bb, SgAsmInstruction* insn)
 {
     ROSE_ASSERT(bb);
     ROSE_ASSERT(insn);
-    if (bb->insns.size()>0) {
-        rose_addr_t next_va = bb->insns.back()->get_address() + bb->insns.back()->get_raw_bytes().size();
-        ROSE_ASSERT(insn->get_address()==next_va);
-    }
     ROSE_ASSERT(insn2block.find(insn->get_address())==insn2block.end()); /*insn must not already belong to a basic block*/
-
     bb->insns.push_back(insn);
     insn2block[insn->get_address()] = bb;
 }
