@@ -23,7 +23,7 @@ Functions detected from binary executable:
      14 0x08048460 0x08048480     8/32     ....P....  unknown
      15 0x08048480 0x080484b0    20/48     ....P....  unknown
      16 0x080484b0 0x08048513    37/91     ....P...D  unknown
-     17 0x08048520 0x08048578    24/60     ....P...D  unknown
+     17 0x08048520 0x08048578    24/60     ....P....  unknown
      18 0x08048578 0x08048580     8/8      .......N.  unknown
      19 0x08048580 0x080485b0    19/48     .C..P....  unknown
      20 0x080485b0 0x080485ca    12/26     .C..P....  unknown
