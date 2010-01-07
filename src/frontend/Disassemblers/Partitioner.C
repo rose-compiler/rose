@@ -751,7 +751,7 @@ Partitioner::pre_cfg(SgAsmInterpretation *interp)
         for (size_t i=0; i<user_detectors.size(); i++) {
             for (size_t j=0; j<=headers.size(); j++) {
                 SgAsmGenericHeader *hdr = 0==j ? NULL : headers[j-1];
-                user_detectors[i](this, hdr, insns, functions);
+                user_detectors[i](this, hdr, insns);
             }
         }
     }
