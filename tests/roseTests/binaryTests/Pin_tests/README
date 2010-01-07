@@ -1,0 +1,69 @@
+README for support of Intel Pin (Dynamic Binary Instrumentation) in ROSE
+
+An alternative example would be for a ROSE binary analysis tool to call the dynamic instrumentation (example not implemented yet).
+It is not clear if mixing dynamic and static analysis should be done by first calling a static tool to do some dynamic analysis 
+or a dynamic analysis to should do some static analysis.  It is likely that either is possible and which is required will depend 
+upon the problem being solved.
+
+
+
+Errors that I worked through:
+
+   1) E:Unable to load
+      this required reording the library directorys specified using "-L" on the command
+    line to build the shared "*.so" library used as a pin tool.
+
+
+
+How the Connection between ROSE and Intel Pin works
+
+   The goal has been to support mixed static and dynamic analysis in ROSE.
+We have use the Intel Pin dynamic instrumentation infrastructure to support 
+this.  Intel Pin is not open source, but it is distributed in binary form and 
+maintained by Intel.
+
+   Test codes are in the ROSE tutorial and the examples run as:
+$(INTEL_PIN_PATH)/pin -slow_asserts -t $(INTEL_PIN_TOOLS_PATH)/obj-intel64/icount.so -- ./input_testcode
+
+This executes the binary executable "input_testcode" which in an arbitrary
+binary.  The Pin tool that handles both the dynamic analysis is defined by
+the "-t" option and is "icount.so".  It is compiled to be a shared library.
+We mix static and dynamic analysis by allowing "icount.so" to use ROSE to 
+read the "input_testcode" binary at either the start or end of the dynamic
+analysis.  With the "input_testcode" binary read by ROSE the full binary
+AST is available, and any ROSE based analysis can be run.  If the 
+binary can be traced back to the original source files then those can also
+be compiled with ROSE (though I have not demonstrated that yet) and a
+combined static analysis of the source code, binary, and dynamic information
+can be used for analysis.  Examples of dynamic analysis can be recording
+the shared libraries used by an application, or recording a trace of the
+execution.  I am working on encoding the trace onto the 
+binary control flow as a compression mechanism to store the trace and support
+it's analysis (that might be one way of mixing analysis of the dynamic 
+trace with analysis of statically derived data).  
+
+That is basically it.  Using Intel Pin you can make the dynamic analysis
+as sophisticated as you want (it is between you and Intel Pin) and
+using ROSE you can make the static analysis as sophisticated as you want.
+And now is can be mixed together into the same tool.  We have I think
+effectively leveraged Intel Pin to support mixed static and dynamic analysis
+and we have clearly done so using there work (and I like using other people
+great work).
+
+What to use this for
+
+   This is a bit speculative, since we have no examples to deomonstrate this.
+One would use the dynamic analysis to profile the uses of resources 
+(e.g. Windows Registry, network connections, file access, etc.) and
+then use this information to compute more general feasilbe paths from 
+static and dynamic data where the dynamic trace may not have take a path it might
+be possible to determine that it could have and so learn about a feasible
+path and expand the set of feasible paths starting with an initial trace.  
+This would be an alternative to trying to prune the infeasible paths
+from the more general control flow graph (which it starting with and
+exponential set).  It is perhaps an interesting example, there are LOTS.
+
+Collecting data on the trace:
+   There are lots of ideas here, from collecting MPI trace date to collecting
+Microarchitecture-Independent Characterization of Applications (see MICA:
+http://users.elis.ugent.be/~kehoste/mica/).
