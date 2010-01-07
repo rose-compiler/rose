@@ -3,11 +3,49 @@
 
 #----- put platform independent settings in this section-----------------
 cmake_minimum_required(VERSION 2.6)
-project (ROSE)
+project (ROSE CXX C)
 
 # Why do we have to have a copy of some standard built-in modules inside rose?
 set( CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" "${CMAKE_SOURCE_DIR}/cmake/modules"  ${CMAKE_MODULE_PATH})
 #message ("CMAKE_MODULE_PATH = ${CMAKE_MODULE_PATH}")
+
+
+set(Boost_USE_STATIC_LIBS TRUE)        
+set(Boost_DEBUG TRUE)
+
+FIND_PACKAGE(Boost REQUIRED) 
+set (Boost_LIBRARY_DIRS ${Boost_INCLUDE_DIRS}/lib/ )
+set (Boost_LIBRARIES ${Boost_INCLUDE_DIRS}/lib/ )
+set (BOOST_LIBRARYDIR ${Boost_LIBRARY_DIRS} )
+set (BOOST_INCLUDEDIR ${Boost_INCLUDE_DIRS}/ )
+set (BOOST_ROOT ${Boost_INCLUDE_DIRS}/ )
+
+MESSAGE("Boost information:") 
+MESSAGE("  BOOST_ROOT: ${BOOST_ROOT}") 
+MESSAGE("  Boost_INCLUDE_DIRS: ${Boost_INCLUDE_DIRS}") 
+MESSAGE("  Boost_LIBRARIES: ${Boost_LIBRARIES}") 
+MESSAGE("  Boost_LIBRARY_DIRS: ${Boost_LIBRARY_DIRS}") 
+MESSAGE("  BOOST_LIBRARYDIR : ${BOOST_LIBRARYDIR}") 
+MESSAGE("  BOOST_INCLUDEDIR : ${BOOST_INCLUDEDIR}") 
+
+
+INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
+LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
+
+#set(BOOST_ROOT "C:\\ROSE\\vs_boost_1_37_0-install") 
+#Ensure that Boost is found
+# environment variable BOOST_ROOT can help to find a user-specified path to Boost
+#SET(Boost_ADDITIONAL_VERSIONS "1.36.0" "1.37" "1.37.0" "1.38.0" "1.39.0" "1.40.0" )
+find_package( Boost 1.35.0 COMPONENTS date_time filesystem program_options regex system wave REQUIRED)
+
+
+
+if(NOT Boost_FOUND)
+    message(FATAL_ERROR "Could not find Boost version 1.35.0 or newer command")
+endif(NOT Boost_FOUND)
+include_directories(${Boost_INCLUDE_DIRS})
+
+
 
 # default paths to install header, executable, and libraries
 set(INCLUDE_INSTALL_DIR "/usr/include")
@@ -219,8 +257,6 @@ MESSAGE( STATUS "CMAKE_COMPILER_IS_GNUCXX : " ${CMAKE_COMPILER_IS_GNUCXX} )
 MESSAGE( STATUS "CMAKE_AR: " ${CMAKE_AR} )
 MESSAGE( STATUS "CMAKE_RANLIB: " ${CMAKE_RANLIB} )
 
-#
-#MESSAGE( STATUS ": " ${} )
 
 # ------------------------- End of Generic CMake Variable Logging ------------------
 
@@ -235,13 +271,16 @@ include(FindOpenSSL)
 include(FindSQLITE3)
 endif (NOT WIN32)
 
+message(Status "Looking for JAVA ...")
 include(FindJava)
 
+message(Status "Looking for flex ...")
 include(FindFlex)
 if(NOT FLEX_FOUND)
     message(FATAL_ERROR "Could not find flex command")
 endif(NOT FLEX_FOUND)
 
+message(Status "Looking for BISON ...")
 include(FindBison)
 FIND_BISON()
 if(NOT BISON_FOUND)
@@ -250,14 +289,7 @@ endif(NOT BISON_FOUND)
 
 # include(ConvenienceLibs) # Not in use
 
-#Ensure that Boost is found
-# environment variable BOOST_ROOT can help to find a user-specified path to Boost
-SET(Boost_ADDITIONAL_VERSIONS "1.36.0" "1.39.0" "1.40.0" )
-find_package( Boost 1.35.0 COMPONENTS date_time filesystem program_options regex system wave )
-if(NOT Boost_FOUND)
-    message(FATAL_ERROR "Could not find Boost version 1.35.0 or newer command")
-endif(NOT Boost_FOUND)
-include_directories(${Boost_INCLUDE_DIRS})
+
 
 if (NOT WIN32)
 find_library(M_LIB m)
@@ -265,7 +297,11 @@ find_library(RT_LIB rt)
 endif (NOT WIN32)
 
 # define a global variable to collect all common linked third-party libraries for rose
+if (NOT WIN32)
 set( link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${RT_LIB} ${OPENSSL_LIBRARIES} )
+else (NOT WIN32)
+set( link_with_libraries ${Boost_LIBRARIES}   )
+endif (NOT WIN32)
 
 # Check compilers and version numbers, Liao 11/25/2009
 # the module is located in src/cmake/modules
@@ -275,6 +311,7 @@ include(roseGenerateBackendCompilerSpecificHeaders)
 # --------- finish all fundamental tests, now set derivative variables
 # Liao 12/1/2009, This is essential to find the right include path from either build or installation tree
 # for a translator
+message(Status "Running tests ...")
 if (HAVE_DLFCN_H)
   if (HAVE_DLADDR)
     set (use_rose_in_build_tree_var TRUE)
@@ -391,6 +428,7 @@ ENDIF()
 include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 #include_directories( ${ROSE_INCLUDES} )
 
+message(Status "Enabling QT ...")
 set(QT_INCLUDES ${ROSE_INCLUDES} ${Boost_INCLUDE_DIRS} )
 
 add_subdirectory(config)
@@ -402,6 +440,8 @@ enable_testing()
 # put this to the end to catch all variables defined above
 # e.g. compiler names, versions etc.
 configure_file(${ROSE_TOP_SRC_DIR}/rose_config.h.in.cmake ${ROSE_TOP_BINARY_DIR}/rose_config.h)
+message(Status "Finished ...")
+
 
 ########### install files ###############
 

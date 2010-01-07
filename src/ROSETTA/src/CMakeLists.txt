@@ -82,9 +82,13 @@ add_executable(CxxGrammarMetaProgram ${CxxGrammarMetaProgram_SRCS} ${rose_util_s
 target_link_libraries(CxxGrammarMetaProgram ${KDE4_KDECORE_LIBS} rose_util_lib ${Boost_LIBRARIES})
 
 get_target_property (META_EXE_LOC CxxGrammarMetaProgram LOCATION) 
+message(STATUS "META_EXE_LOC = " ${META_EXE_LOC} )
+#STRING(REGEX REPLACE "Debug" " " META_EXE_LOC2 ${META_EXE_LOC} )
+#message(STATUS "META_EXE_LOC2 = " ${META_EXE_LOC2} )
+
 
 if ( enable-smaller-generated-files  )
-
+message (STATUS "Smaller Generated Files Enabled")
 # define a custom command to call the code generator and generate source/header files
 # Generate the edg-sage connection using ROSETTA
 add_custom_command(
@@ -103,6 +107,7 @@ add_custom_command(
 )
 
 else ( enable-smaller-generated-files  )
+message (STATUS "Smaller Generated Files Disabled")
 
 # define a custom command to call the code generator and generate source/header files
 # Generate the edg-sage connection using ROSETTA
@@ -117,7 +122,11 @@ add_custom_command(
 #   create this directory is needed since a few generated files will be put there        
    COMMAND
       ${CMAKE_COMMAND}  -E make_directory  ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/astFileIO
+   COMMAND echo  "META_EXE_LOC =  ${META_EXE_LOC} ARGS ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/"
+#   STRING(REGEX REPLACE "\\\\" "/" META_EXE_LOC ${META_EXE_LOC} )
+#   COMMAND echo  "META_EXE_LOC =  ${META_EXE_LOC} ARGS ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/"
    COMMAND ${META_EXE_LOC}
+#   COMMAND "C:/ROSE/git-rose-tps/build/src/ROSETTA/src/Debug/CxxGrammarMetaProgram.exe "
       ARGS ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/
 )
 

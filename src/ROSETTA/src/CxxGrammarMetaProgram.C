@@ -77,7 +77,7 @@ main(int argc, char * argv[])
 
      printf ("Program Terminated Normally! \n");
      return 0;
-   }
+}
 
 
 
