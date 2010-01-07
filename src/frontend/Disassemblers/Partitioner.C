@@ -583,7 +583,7 @@ Partitioner::create_zero_padding()
                 end_va = va;
                 break;
             }
-            size_t nbytes = std::min(ii->second->get_raw_bytes().size(), end_va-va);
+            size_t nbytes = std::min((rose_addr_t)ii->second->get_raw_bytes().size(), end_va-va);
             for (size_t i=0; i<nbytes && all_zero; i++)
                 all_zero = (ii->second->get_raw_bytes()[i]==0);
             va += ii->second->get_raw_bytes().size();
