@@ -266,10 +266,13 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
 
     node->addNewAttribute("Properties",(*j)->properties );
 
-    std::cout << "Function: "
-      << (*j)->properties->functionDeclaration->get_scope()->get_qualified_name().getString() +
-      (*j)->properties->functionDeclaration->get_mangled_name().getString()
-      << " has declaration " << (*j)->isDefined() << "\n";
+    if( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+    {
+      std::cout << "Function: "
+	<< (*j)->properties->functionDeclaration->get_scope()->get_qualified_name().getString() +
+	(*j)->properties->functionDeclaration->get_mangled_name().getString()
+	<< " has declaration " << (*j)->isDefined() << "\n";
+    }
     nodeList.push_back( node );
     /*
     // show graph
@@ -288,7 +291,10 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
   }
 
   j = callGraphData.begin();
-  std::cout << "NodeList size: " << nodeList.size() << "\n";
+
+  if( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+    std::cout << "NodeList size: " << nodeList.size() << "\n";
+
   int totEdges = 0;
   while (j != callGraphData.end())
   {
@@ -332,7 +338,6 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
           newProp->hasDef =  false;
 
 
-        std::cout << "DUMMY " << std::endl;
         returnGraph->addNode( dummy );
         returnGraph->addDirectedEdge( startingNode, dummy, " " );
       }
@@ -352,14 +357,13 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
         ROSE_ASSERT ( endNode );
         if(findEdge(returnGraph,startingNode,endNode)==NULL)
         {
-          std::cout << "Added edge" << std::endl;
-
           ROSE_ASSERT(startingNode != NULL && endNode != NULL);
           returnGraph->addDirectedEdge( startingNode, endNode, " " );
-        }else 
-          std::cout << "Did not add edge since it already exist" << std::endl;
-        std::cout << "\tEndNode "
-          << (*k)->functionDeclaration->get_name().str() << "\t" << (*k)->hasDef << "\n";
+	}else if( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL ){
+	  std::cout << "Did not add edge since it already exist" << std::endl;
+	  std::cout << "\tEndNode " << (*k)->functionDeclaration->get_name().str() 
+	    << "\t" << (*k)->hasDef << "\n";
+	}
       }
       totEdges++;
       k++;
@@ -367,7 +371,8 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
     j++;
   }
 
-  std::cout << "Total number of edges: " << totEdges << "\n";
+  if( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+    std::cout << "Total number of edges: " << totEdges << "\n";
   // printf ("Return graph \n");
 
   graph = returnGraph;

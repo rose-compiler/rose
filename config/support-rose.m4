@@ -98,6 +98,19 @@ fi
 #echo "Exiting as a test!"
 #exit 1
 
+# DQ (12/29/2009): This is part of optional support to reduce the sizes of some of the ROSETTA generated files.
+AC_ARG_ENABLE(smaller-generated-files, AS_HELP_STRING([--enable-smaller-generated-files], [ROSETTA generates smaller files (but more of them so it takes longer to compile)]))
+AM_CONDITIONAL(ROSE_USE_SMALLER_GENERATED_FILES, [test "x$enable_smaller_generated_files" = xyes])
+if test "x$enable_smaller_generated_files" = "xyes"; then
+  AC_MSG_WARN([Using optional ROSETTA mechanim to generate numerous but smaller files for the ROSE IR.])
+  AC_DEFINE([ROSE_USE_SMALLER_GENERATED_FILES], [], [Whether to use smaller (but more numerous) generated files for the ROSE IR])
+#  ROSE_SUPPORT_SMALLER_GENERATED_FILES="TRUE"
+#else
+#  ROSE_SUPPORT_SMALLER_GENERATED_FILES="FALSE"
+fi
+#AC_SUBST(ROSE_SUPPORT_SMALLER_GENERATED_FILES)
+
+
 # JJW: This needs to be early as things like C++ header editing are not done for the new interface
 AC_ARG_ENABLE(new-edg-interface, AS_HELP_STRING([--enable-new-edg-interface], [Enable new (experimental) translator from EDG ASTs to Sage ASTs]))
 AM_CONDITIONAL(ROSE_USE_NEW_EDG_INTERFACE, [test "x$enable_new_edg_interface" = xyes])
@@ -1259,6 +1272,7 @@ src/frontend/SageIII/virtualCFG/Makefile
 src/frontend/SageIII/astTokenStream/Makefile
 src/frontend/SageIII/astHiddenTypeAndDeclarationLists/Makefile
 src/frontend/SageIII/astVisualization/Makefile
+src/frontend/SageIII/GENERATED_CODE_DIRECTORY_Cxx_Grammar/Makefile
 src/frontend/CxxFrontend/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
 src/frontend/PHPFrontend/Makefile
@@ -1523,6 +1537,11 @@ tests/CompileTests/uninitializedField_tests/Makefile
 tests/CompileTests/sourcePosition_tests/Makefile
 tests/CompileTests/hiddenTypeAndDeclarationListTests/Makefile
 tests/CompileTests/sizeofOperation_tests/Makefile
+tests/CompileTests/MicrosoftWindows_tests/Makefile
+tests/CompileTests/nameQualificationAndTypeElaboration_tests/Makefile
+tests/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
+tests/CompilerOptionsTests/preinclude_tests/Makefile
+tests/CompilerOptionsTests/tokenStream_tests/Makefile
 tests/roseTests/Makefile
 tests/roseTests/PHPTests/Makefile
 tests/roseTests/astFileIOTests/Makefile
@@ -1539,6 +1558,9 @@ tests/roseTests/astSymbolTableTests/Makefile
 tests/roseTests/astTokenStreamTests/Makefile
 tests/roseTests/binaryTests/Makefile
 tests/roseTests/binaryTests/SemanticVerification/Makefile
+tests/roseTests/binaryTests/libraryIdentification_tests/Makefile
+tests/roseTests/binaryTests/Pin_tests/Makefile
+tests/roseTests/binaryTests/Dwarf_tests/Makefile
 tests/roseTests/loopProcessingTests/Makefile
 tests/roseTests/ompLoweringTests/Makefile
 tests/roseTests/programAnalysisTests/Makefile
@@ -1561,6 +1583,9 @@ tests/roseTests/roseHPCToolkitTests/data/03/PROFILE/Makefile
 tests/roseTests/roseHPCToolkitTests/data/03/struct_ls/Makefile
 tests/roseTests/roseHPCToolkitTests/data/Makefile
 tests/roseTests/utilTests/Makefile
+tests/roseTests/fileLocation_tests/Makefile
+tests/roseTests/graph_tests/Makefile
+tests/roseTests/mergeTraversal_tests/Makefile
 tests/translatorTests/Makefile
 tutorial/Makefile
 tutorial/exampleMakefile
