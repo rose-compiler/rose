@@ -163,7 +163,8 @@ find_function1(P, FunctionTemplate, P2) :-
 distance_from_root(zipper(_, Nav), Distance) :- length(Nav, Distance).
 
 %% next_preorder(+Zipper, -Zipper)
-% Return the ``next'' node in a preorder traversal fashion.
+% @tbd change name to next_tdlr
+% Return the ``next'' node in a left-to-right traversal fashion.
 % Algorithm: (rechtssucher)
 %   try down(1)
 %   else while not try right() do up()

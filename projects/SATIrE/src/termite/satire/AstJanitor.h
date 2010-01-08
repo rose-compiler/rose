@@ -123,37 +123,6 @@ public:
       }
     }
 
-    // GB: This code seems rather pointless; setting initialized names'
-    // scopes is more easily achieved above. I think.
-    // Parent
-    //ROSE_ASSERT(n->get_parent() == attr.parent);
-#if 0
-    for (SgNode* n1 = n; 
-	 isSgInitializedName(n) && 
-	   (!isSgFunctionParameterList(   n->get_parent()) &&
-	    !isSgVariableDeclaration(	  n->get_parent()) &&
-	    !isSgCtorInitializerList(	  n->get_parent()) &&
-	    !isSgProcedureHeaderStatement(n->get_parent())
-	    ) ;  n1 = n1->get_parent()) {
-      // Walk upwards until we reach a suitable node
-      n->set_parent(n1->get_parent());
-      SgGlobal* glob = isSgGlobal(n1->get_parent());
-      if (glob || n1->get_parent() == NULL) {
-	// Enum Decl inside of a typedef, for example
-	SgInitializedName* iname = isSgInitializedName(n);
-	SgVariableDeclaration* vdec = new SgVariableDeclaration(FI);
-	vdec->append_variable(iname, iname->get_initializer());
-	vdec->set_parent(glob);
-	//vdec->setForward();
-	vdec->set_definingDeclaration(vdec);
-	n->set_parent(attr.conv->createDummyNondefDecl(vdec, FI, "", 
-					      iname->get_typeptr(), 
-					      iname->get_initializer()));
-      }
-      //std::cerr<<"Setting parent of "<<n->class_name()
-      //         <<" to "<<n->get_parent()->class_name()<<std::endl;
-    } 
-#endif
 
     if (isSgVariableDeclaration(n) && isSgForInitStatement(attr.parent))
       n->set_parent(attr.parent->get_parent());
