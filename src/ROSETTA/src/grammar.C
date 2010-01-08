@@ -73,7 +73,7 @@ Grammar::Grammar ( const string& inputGrammarName,
      parentGrammar = NULL;
 
      // tps (01/05/2010) : added printf for debugging 
-      printf ("GRAMMAR Constructor values : target_directory : %s   inputParentGrammar %d \n",target_directory.c_str(),inputParentGrammar);
+      //printf ("GRAMMAR Constructor values : target_directory : %s   inputParentGrammar %d \n",target_directory.c_str(),inputParentGrammar);
   
   // We want to set the parent grammar as early as possible since the specification of terminals/nonterminals is
   // dependent upon the the current grammar being a "RootGrammar" (using the isRootGrammar() member function)
@@ -835,7 +835,7 @@ Grammar::buildNewAndDeleteOperators( Terminal & node, StringUtility::FileWithLin
   // This should append the string to the target file.
 
      // tps (01/04/2010) Debugging output
-          printf ("GRAMMAR Grammar::buildNewAndDeleteOperators : target_directory : %s  directoryName %s \n",target_directory.c_str(),directoryName.c_str());
+       //   printf ("GRAMMAR Grammar::buildNewAndDeleteOperators : target_directory : %s  directoryName %s \n",target_directory.c_str(),directoryName.c_str());
      appendFile ( editString, directoryName, node.getName(), fileExtension );
 #else
      outputFile += editString;
@@ -2020,7 +2020,10 @@ Grammar::buildSourceFiles( Terminal & node, StringUtility::FileWithLineNumbers &
      StringUtility::FileWithLineNumbers sourceBeforeInsertion;
 #if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
   // DQ (12/29/2009): Add this to the top of each file.
-     string sourceHeader = "\n#include \"sage3basic.h\"\nusing namespace std;\n\n";
+//     string sourceHeader = "\n#include \"rose.h\"\nusing namespace std;\n\n";
+	// tps (01/06/2010) : If we include sage3.h instead of rose.h on Windows these files are
+		// currently only 7MB instead of 17MB - still to large though
+	 string sourceHeader = "\n#include \"sage3basic.h\"\nusing namespace std;\n\n";
      sourceBeforeInsertion.push_back(StringUtility::StringWithLineNumber(sourceHeader, "", 1));
 #else
   // StringUtility::FileWithLineNumbers sourceBeforeInsertion = buildHeaderStringBeforeMarker(sourceFileInsertionSeparator, fileName);
