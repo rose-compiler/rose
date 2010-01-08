@@ -13,6 +13,7 @@ set( CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" "${CMAKE_SOURCE_DIR}/cmake/mo
 set(Boost_USE_STATIC_LIBS TRUE)        
 set(Boost_DEBUG TRUE)
 
+if (WIN32)
 FIND_PACKAGE(Boost REQUIRED) 
 set (Boost_LIBRARY_DIRS ${Boost_INCLUDE_DIRS}/lib/ )
 set (Boost_LIBRARIES ${Boost_INCLUDE_DIRS}/lib/ )
@@ -31,6 +32,7 @@ MESSAGE("  BOOST_INCLUDEDIR : ${BOOST_INCLUDEDIR}")
 
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
 LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
+endif (WIN32)
 
 #set(BOOST_ROOT "C:\\ROSE\\vs_boost_1_37_0-install") 
 #Ensure that Boost is found
