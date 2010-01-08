@@ -1,4 +1,4 @@
-#include "sage3basic.h"
+
 /*
  * this includes the forward declarations of all the sage node classes
  * from the generated files (i.e. gives just the class names.)
@@ -7,24 +7,50 @@
 
 #ifndef SAGE3_CLASSES_H
 #define SAGE3_CLASSES_H
+#include "sage3basic.h"
 
 
-// DQ (7/6/2005): Added to support performance analysis of ROSE.
-// This is located in ROSE/src/midend/astDiagnostics
-//#include "AstPerformance.h"
+// DQ (12/9/2004): The name of this file has been changed to be the new location
+// of many future Sage III AST manipulation functions in the future.  A namespace
+// (SageInterface) is defined in sageInterface.h.
+// #include "sageSupport.h"
+#include "sageInterface.h"
+
+#include "AstProcessing.h"
+
+// Markus Kowarschik: Support for preprocessors declarations and comments
+#include "attachPreprocessingInfo.h"
+
+// Lingxiao's work to add comments from all header files to the AST.
+#include "attach_all_info.h"
+
+// DQ (8/20/2005): Changed name to make sure that we don't use the old 
+// header file (which has been removed).
+// #include "AstFixes.h"
+#include "astPostProcessing.h"
+
+
+
+//Liao, 10/9/2008, support for abstract handles for language constructs
+#include "abstract_handle.h"
+#include "roseAdapter.h"
+
+//Liao, 2/8/2008. SAGE III node building interface
+#include "sageBuilder.h"
+#include "sageBuilderAsm.h"
+
+
+// Liao, 11/14/2008, support for annotation-based array optimization
+// The headers bring some garbage which cannot be compiled
+//#include "ArrayAnnot.h"
+//#include "ArrayInterface.h"
+//include "ArrayRewrite.h"
+// Liao, 8/11/2009, support for OpenMP lowering
+#include "omp_lowering.h" 
+
 
 // DQ (5/28/2007): Added new AST Merge API
 #include "astMergeAPI.h"
-
-
-// DQ (9/1/2006): It is currently an error to normalize the source file names stored 
-// in the SgProject IR node to be absolute paths if they didn't originally appear 
-// that way on the commandline.  We have partial support for this but it is a bug
-// at the moment to use this.  However, we do now (work by Andreas) normalize the
-// source file name when input to EDG so that all Sg_File_Info objects store an
-// absolute path (unless modified using a #line directive, see test2004_60.C as an 
-// example).  The current work is an incremental solution.
-#define USE_ABSOLUTE_PATHS_IN_SOURCE_FILE_LIST 0
 
 // JJW 10-23-2007
 // Add possibility to include Valgrind header for memcheck

@@ -350,18 +350,6 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
 
 // Markus Schordan: temporary fixes for Ast flaws (modified by DQ)
 #include <typeinfo>
-#include "AstProcessing.h"
-
-// Markus Kowarschik: Support for preprocessors declarations and comments
-#include "attachPreprocessingInfo.h"
-
-// Lingxiao's work to add comments from all header files to the AST.
-#include "attach_all_info.h"
-
-// DQ (8/20/2005): Changed name to make sure that we don't use the old 
-// header file (which has been removed).
-// #include "AstFixes.h"
-#include "astPostProcessing.h"
 
 // DQ (12/9/2004): The name of this file has been changed to be the new location
 // of many future Sage III AST manipulation functions in the future.  A namespace
@@ -369,27 +357,6 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
 // #include "sageSupport.h"
 #include "sageInterface.h"
 
-//Liao, 2/8/2008. SAGE III node building interface
-#include "sageBuilder.h"
-#include "sageBuilderAsm.h"
-
-//Liao, 10/9/2008, support for abstract handles for language constructs
-#include "abstract_handle.h"
-#include "roseAdapter.h"
-
-// Liao, 11/14/2008, support for annotation-based array optimization
-// The headers bring some garbage which cannot be compiled
-//#include "ArrayAnnot.h"
-//#include "ArrayInterface.h"
-//include "ArrayRewrite.h"
-// Liao, 8/11/2009, support for OpenMP lowering
-#include "omp_lowering.h" 
-
-// DQ (5/27/2007): Removed all entries in this file (only had AST Merge API and 
-// these were moved to merge.h).  One less header file make everything a little simpler!
-// DQ (7/7/2005): This is now a file where temporary functions may be
-// implemented before movign them into Sage III more formally.
-// #include "sageSupport.h"
 
 // DQ (3/29/2006): Moved Rich's support for better name mangling to a 
 // separate file (out of the code generation via ROSETTA).
@@ -401,18 +368,19 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
 // attachPreprocessingInfo.C
 #define USE_OLD_MECHANISM_OF_HANDLING_PREPROCESSING_INFO 0
 
+// DQ (9/1/2006): It is currently an error to normalize the source file names stored 
+// in the SgProject IR node to be absolute paths if they didn't originally appear 
+// that way on the commandline.  We have partial support for this but it is a bug
+// at the moment to use this.  However, we do now (work by Andreas) normalize the
+// source file name when input to EDG so that all Sg_File_Info objects store an
+// absolute path (unless modified using a #line directive, see test2004_60.C as an 
+// example).  The current work is an incremental solution.
+#define USE_ABSOLUTE_PATHS_IN_SOURCE_FILE_LIST 0
+
 #include "RoseBin_support.h"
-
-
 // DQ (7/6/2005): Added to support performance analysis of ROSE.
 // This is located in ROSE/src/midend/astDiagnostics
 #include "AstPerformance.h"
-
-// DQ (5/28/2007): Added new AST Merge API
-//#include "astMergeAPI.h"
-
-
-
 
 #endif
 

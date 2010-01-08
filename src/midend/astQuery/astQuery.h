@@ -1,6 +1,7 @@
 #ifndef ROSE_AST_QUERY
 #define ROSE_AST_QUERY
 
+#include "sage3.h"
 #include "AstProcessing.h"
 
 #include <functional>
