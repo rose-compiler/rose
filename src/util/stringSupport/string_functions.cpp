@@ -149,6 +149,7 @@ StringUtility::getAbsolutePathFromRelativePath ( const std::string & relativePat
    {
      string returnString;
      char resolved_path[MAXPATHLEN];
+     resolved_path[0] = '\0';
 
 #if ROSE_MICROSOFT_OS
      resolved_path[0] = '\0';
@@ -173,13 +174,18 @@ StringUtility::getAbsolutePathFromRelativePath ( const std::string & relativePat
   // ROSE_ASSERT(status != 0);
 	 printf ("In MSVC -- StringUtility::getAbsolutePathFromRelativePath(): relativePath = %s resolved_path = %s \n",relativePath.c_str(),(resolved_path[0] != '\0') ? resolved_path : "NULL STRING");
 
-	 string resultingPath;
+	 string resultingPath="";
 #else
   // DQ (9/3/2006): Note that "realpath()" 
   // can return an error if it processes a file or directory that does not exist.  This is 
   // a problem for include paths that are specified on the commandline and which don't exist; 
   // most compilers silently ignore these and we have to at least ignore them.
-     string resultingPath = string(realpath( relativePath.c_str(), resolved_path));
+	 //	 string resultingPath="";
+	 // tps (01/08/2010) : This implementation was incorrect as it mixed char* and string. Fixed it.
+	 char* rp = realpath( relativePath.c_str(), resolved_path);
+         string resultingPath = "";
+	 if (rp!=NULL)
+	   resultingPath = string(rp);
 #endif
 
 	 //printf("resultingPath == %s    printErrorIfAny == %d \n",resultingPath.c_str(),printErrorIfAny);
@@ -218,7 +224,7 @@ StringUtility::getAbsolutePathFromRelativePath ( const std::string & relativePat
  //         returnString = "../"+returnString;
 #endif
 
-	 printf("returnString3 == %s    relativePath == %s   resolved_path == %s \n",returnString.c_str(),relativePath.c_str(),resolved_path);
+     //printf("returnString3 == %s    relativePath == %s   resolved_path == %s \n",returnString.c_str(),relativePath.c_str(),resolved_path);
 
 	 ROSE_ASSERT(returnString.empty() == false);
 
