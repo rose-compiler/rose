@@ -131,7 +131,7 @@ add_custom_command(
 
 
 add_library( libgeneratedIR STATIC ${libgeneratedIR_SRC} )
-#add_dependencies( libgeneratedIR CxxGrammarMetaProgram)
+add_dependencies( libgeneratedIR CxxGrammarMetaProgram)
 
 ########### install files ###############
 
