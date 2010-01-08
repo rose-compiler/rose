@@ -491,7 +491,7 @@ unparse1(_UI, continue_stmt(_, _, _)) :- !, write('continue ').
 unparse1(_UI, goto_statement(label_annotation(Label, _), _, _)) :- !, write('goto '), write(Label).
 unparse1(_UI, label_statement(label_annotation(Label, _), _, _)) :- !, write(Label), write(': ').
 unparse1(UI, basic_block(E1, An, Ai, Fi)) :- !, 
-  writeln(' {'),
+  writeln(' {'), 
   % We did the PPI stuff already
   unparse1(UI, bb(E1, An, Ai, Fi)),
   indent(Fi), writeln('}').
@@ -750,14 +750,16 @@ unparse_modifier(Mod) :-
   -> unparse_storage_modifier(StorageModifier)
   ;  true.
 
-unparse_storage_modifier(2) :- !, write('extern ').
-unparse_storage_modifier(3) :- !, write('static ').
-unparse_storage_modifier(4) :- !, write('auto ').
-unparse_storage_modifier(6) :- !, write('register ').
-unparse_storage_modifier(7) :- !, write('mutable ').
-unparse_storage_modifier(8) :- !, write('typedef ').
-unparse_storage_modifier(9) :- !, write('asm ').
-unparse_storage_modifier(_) :- !.
+%unparse_storage_modifier(2) :- !, write('extern ').
+%unparse_storage_modifier(3) :- !, write('static ').
+%unparse_storage_modifier(4) :- !, write('auto ').
+%unparse_storage_modifier(6) :- !, write('register ').
+%unparse_storage_modifier(7) :- !, write('mutable ').
+%unparse_storage_modifier(8) :- !, write('typedef ').
+%unparse_storage_modifier(9) :- !, write('asm ').
+unparse_storage_modifier(default) :- !.
+unparse_storage_modifier(unspecified) :- !.
+unparse_storage_modifier(M) :- write(M), write(' ').
 
 %% needs_semicolon(+Node) is det.
 % Succeeds if Node needs a semicolon ';' after itself during unparsing.
