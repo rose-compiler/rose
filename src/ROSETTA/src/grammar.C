@@ -2756,12 +2756,14 @@ Grammar::buildCode ()
   // Now build the source files
 
      // tps (Feb 23 2009): added rose.h since I had to remove it from the .h header files
-     string includeHeaderFileNameROSE = "rose.h";
-     string includeHeaderStringROSE =
-       "// MACHINE GENERATED ROSE SOURCE FILE --- DO NOT MODIFY!\n\n #include \"" + includeHeaderFileNameROSE + "\"\n\n";
+     // tps (01/09/2010) : removed it again to optimize binary sizes
+     //string includeHeaderFileNameROSE = "rose.h";
+     //     string includeHeaderStringROSE =
+     //  "// MACHINE GENERATED ROSE SOURCE FILE --- DO NOT MODIFY!\n\n #include \"" + includeHeaderFileNameROSE + "\"\n\n";
      
      string includeHeaderFileName = "sage3.h";
-     string includeHeaderString = includeHeaderStringROSE+
+     //     string includeHeaderString = includeHeaderStringROSE+
+     string includeHeaderString = 
        "// MACHINE GENERATED SOURCE FILE WITH ROSE --- DO NOT MODIFY!\n\n #include \"" + includeHeaderFileName + "\"\n\n";
      string includeHeaderStringWithoutROSE = 
        "// MACHINE GENERATED SOURCE FILE --- DO NOT MODIFY!\n\n #include \"" + includeHeaderFileName + "\"\n\n";
