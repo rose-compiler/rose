@@ -97,7 +97,7 @@ public:
      *  \deprecated This type has been replaced with Partitioner::Functions, which is capable of describing
      *  noncontiguous functions. */
     typedef std::map<rose_addr_t, FunctionStart> FunctionStarts;
-    
+
     /** Returns a list of the currently defined functions.
      *
      *  \deprecated This function has been replaced by seed_functions() and analyze_cfg(). */
