@@ -251,6 +251,7 @@ src/aral/src/Makefile
 src/Makefile
 examples/Makefile
 tools/Makefile
+tools/annotcheck/Makefile
 tools/icfgbuilder/Makefile
 tools/loopbounds/Makefile
 tools/optimizer/Makefile
