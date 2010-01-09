@@ -254,9 +254,10 @@ bool
 CommandlineProcessing::isOptionWithParameter ( vector<string> & argv, string optionPrefix, string option, string & optionParameter, bool removeOption )
    {
   // I could not make this work cleanly with valgrind withouth allocatting memory twice
-     string localString;
+     string localString ="";
 
-  // printf ("Calling sla for string! removeOption = %s \n",removeOption ? "true" : "false");
+     //   printf ("Calling sla for string! removeOption = %s \n",removeOption ? "true" : "false");
+     //printf ("   argv %d    optionPrefix %s  option %s   localString  %s \n",argv.size(), optionPrefix.c_str(), option.c_str() , localString.c_str() );
      int optionCount = sla(argv, optionPrefix, "($)^", option, &localString, removeOption ? 1 : -1);
   // printf ("DONE: Calling sla for string! optionCount = %d localString = %s \n",optionCount,localString.c_str());
 
