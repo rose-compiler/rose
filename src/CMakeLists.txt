@@ -204,40 +204,41 @@ add_subdirectory(roseIndependentSupport)
 add_subdirectory(roseExtensions)
 
 
+set(rose_rosetta_LIB_SRCS dummyCppFileForLibrose.C  
+ ${ROSETTA_SRC} 
+)
+
+add_library(rose_rosetta SHARED ${rose_rosetta_LIB_SRCS} )
+add_dependencies(rose_rosetta ROSETTA OMPPARSER ROSE_PREPROCESSOR ) 
+
+set(sage3_LIB_SRCS dummyCppFileForLibrose.C  
+ ${sage3_SRC} 
+)
+
+add_library(rose_sage3 SHARED ${sage3_LIB_SRCS} )
+add_dependencies(rose_sage3 ROSETTA OMPPARSER ROSE_PREPROCESSOR  ) 
 
 
 ########### next target ###############
 set(rose_LIB_SRCS dummyCppFileForLibrose.C  
- ${ROSETTA_SRC} 
-    ${sage3_SRC}
+# ${ROSETTA_SRC} 
+#    ${sage3_SRC}
     ${rose_support_src} 
     ${EDG_SAGE_Connection_SRC}
     ${virtualCFG_SRC}
     ${MSTL_SRC}
     )
 
-# tps (12/14/2009) : Added new libraries, so that the project size under windows is smaller and I do not run out of heap space
-# Strangly enough the following lines work under LINUX but now Windows
-#add_library(ROSETTA_LIB SHARED ${ROSETTA_SRC} 
-#)
-#add_dependencies(ROSETTA_LIB ROSETTA  ) 
-
-# tps (12/14/2009) : Added new libraries, so that the project size under windows is smaller and I do not run out of heap space
-# Strangly enough the following lines work under LINUX but now Windows
-#add_library(SAGE3_LIB SHARED ${sage3_SRC}     
-#)
-#add_dependencies(SAGE3_LIB ROSETTA_LIB ) 
-
 
 add_library(rose SHARED ${rose_LIB_SRCS} )
 #ROSE neeeds ${ROSETTA_HEADERS} and ${ROSETTA_SRC} to be build
-add_dependencies(rose ROSETTA OMPPARSER ROSE_PREPROCESSOR ) 
+add_dependencies(rose ROSETTA OMPPARSER ROSE_PREPROCESSOR rose_rosetta) 
 
 if ( enable-smaller-generated-files )
 # tps (12/14/2009) : Created a variable for the dependend libraries. Make sure that order is correct.
 set(ROSE_TARGET_LINK 
 #   ROSETTA_LIB SAGE3_LIB 
-   libgeneratedIR
+   libgeneratedIR rose_rosetta rose_sage3
    PHP_FRONTEND_LIB
    libastMerge edg33 libsageInterface libastTokenStream libastHiddenTypeAndDeclarationLists
    libastVisualization roseDisassemblers roseBinaryFormats 
@@ -250,7 +251,8 @@ else ( enable-smaller-generated-files )
 # tps (12/14/2009) : Created a variable for the dependend libraries. Make sure that order is correct.
 set(ROSE_TARGET_LINK 
 #   ROSETTA_LIB SAGE3_LIB 
-   PHP_FRONTEND_LIB
+   rose_rosetta rose_sage3 
+   PHP_FRONTEND_LIB 
    libastMerge edg33 libsageInterface libastTokenStream libastHiddenTypeAndDeclarationLists
    libastVisualization roseDisassemblers roseBinaryFormats 
    midend_static 
