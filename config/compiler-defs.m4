@@ -50,7 +50,9 @@ dnl predefined by a specific compiler
              for macro_i in $extra_icc_defines
                  do
                     echo $macro_i
-                    tmp_macro="$tmp_macro, $macro_i"
+                  # DQ (1/9/2010): Fixing support for Intel icc and icpc compiler.
+                  # tmp_macro="$tmp_macro, $macro_i"
+                    tmp_macro="$tmp_macro, \"$macro_i\""
                     echo " tmp_macro  $tmp_macro"
                  done
            # macroString=" -D__PURE_INTEL_C99_HEADERS__ ${tmp_macro} --preinclude rose_edg_macros_and_functions_required_for_icc.h "
