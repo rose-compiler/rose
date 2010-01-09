@@ -119,6 +119,12 @@ dnl predefined by a specific compiler
 # This is now setup in a separate macro and can be specified on the command line
 # AC_DEFINE_UNQUOTED(CXX_COMPILER_NAME, "$CXX")
 
+# DQ (1/9/2010): Detec the type of compiler being used. This is used to add the
+# library libimf with libm to support use of the Intel compiler.  I have added
+# AM conditional for GNu just for completeness.
+  AM_CONDITIONAL(USING_INTEL_COMPILER,test "x$compilerVendorName" = xIntel)
+  AM_CONDITIONAL(USING_GNU_COMPILER,test "x$compilerVendorName" = xGNU)
+
 # This string has all compiler specific predefined macros listed
   echo "Backend compiler specific macroString = $macroString"
 
