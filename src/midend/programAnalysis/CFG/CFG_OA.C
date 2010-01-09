@@ -33,30 +33,38 @@ OpenAnalysis::ROSE_CFG_Wrap :: ~ROSE_CFG_Wrap()
 #endif
 
 #ifndef _MSC_VER
-#ifndef USE_ROSE
+
+// DQ (1/9/2010): This should not be required now (see fix below)!
+// #ifndef USE_ROSE
 // DQ (8/29/2009): EDG reports  this as an error:
 // error: declaration is incompatible with function template "void OpenAnalysis::BuildCFG(AstInterface &, const AstNodePtr &, BuildCFGConfig<Node> &)" 
 // (declared at line 54 of "/home/dquinlan/ROSE/svn-rose/src/midend/programAnalysis/CFG/CFG.h")
 // void OpenAnalysis::BuildCFG ( AstInterface& fa, const AstNodePtr& head, BuildCFGConfig<Node>& ng)
 
-template <class Node, class Edge>
+// DQ (1/9/2010): The Intel compiler also catches this problem (class Edge template parameter not used in the template declaration)
+// template <class Node, class Edge>
+template <class Node>
 void OpenAnalysis::BuildCFG ( AstInterface& fa, const AstNodePtr& head, BuildCFGConfig<Node>& ng)
 {
   ROSE_CFG_Wrap wrap( head);
   OA2ROSE_CFG_Translate( wrap, ng);
 }
-#endif
+// #endif
 #endif
 
 
 #ifndef _MSC_VER
-#ifndef USE_ROSE
+
+// DQ (1/9/2010): This should not be required now (see fix below)!
+// #ifndef USE_ROSE
 // DQ (8/29/2009): EDG reports  this as an error:
 // error: declaration is incompatible with function template "void OpenAnalysis::OA2ROSE_CFG_Translate(OpenAnalysis::ROSE_CFG_Wrap &, BuildCFGConfig<Node> &)"
 // (declared at line 51 of "/home/dquinlan/ROSE/svn-rose/src/midend/programAnalysis/CFG/CFG.h")
 // void OpenAnalysis::OA2ROSE_CFG_Translate ( ROSE_CFG_Wrap& wrap, BuildCFGConfig<Node>& ng)
 
-template <class Node, class Edge>
+// DQ (1/9/2010): The Intel compiler also catches this problem (class Edge template parameter not used in the template declaration)
+// template <class Node, class Edge>
+template <class Node>
 void OpenAnalysis::OA2ROSE_CFG_Translate ( ROSE_CFG_Wrap& wrap, BuildCFGConfig<Node>& ng)
 {
   PtrMapWrap <CFG::Node,Node> nodeMap;
@@ -90,7 +98,7 @@ void OpenAnalysis::OA2ROSE_CFG_Translate ( ROSE_CFG_Wrap& wrap, BuildCFGConfig<N
         }
    }
 }
-#endif
+// #endif
 #endif
 
 
