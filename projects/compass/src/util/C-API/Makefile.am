@@ -33,10 +33,8 @@ LDADD = ../../compassSupport/libCompass.la \
 
 testC_API_SOURCES = testC-API.C
 
-test: libC-API.la testC-API$(EXEEXT) \
-	    $(srcdir)/c-string.api $(srcdir)/c-string.c
-	./testC-API$(EXEEXT) --api $(srcdir)/c-string.api -rose:C_only \
-	    -c $(srcdir)/c-string.c
+test: libC-API.la testC-API$(EXEEXT) $(srcdir)/c-string.api $(srcdir)/c-string.c
+	./testC-API$(EXEEXT) --api $(srcdir)/c-string.api -rose:C_only -c $(srcdir)/c-string.c
 
 check-local:
 	@$(MAKE) test

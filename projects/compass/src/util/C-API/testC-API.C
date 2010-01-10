@@ -28,22 +28,28 @@ public:
 
   virtual void visit (SgNode* n)
   {
+ // DQ (1/9/2010): This is a test for a bug that apprears to be in master!
+#if 0
     const SgFunctionCallExp* call = recognizer_.isCall (n);
+
     if (call)
       {
-	const C_API::FuncSig* sig = recognizer_.lookup (call);
-	ROSE_ASSERT (sig);
+        const C_API::FuncSig* sig = recognizer_.lookup (call);
+        ROSE_ASSERT (sig);
 
-	const Sg_File_Info* pos = call->get_startOfConstruct ();
-	ROSE_ASSERT (pos);
+        const Sg_File_Info* pos = call->get_startOfConstruct ();
+        ROSE_ASSERT (pos);
 
-	cout << "  [" << ++found_count_ << ']'
-	     << ' ' << sig->getName () << " (" << sig->getNumArgs () << " args)"
-	     << " at ["
-	     << pos->get_raw_filename () << ':' << pos->get_raw_line ()
-	     << ']'
-	     << endl;
+        cout << "  [" << ++found_count_ << ']'
+	          << ' ' << sig->getName () << " (" << sig->getNumArgs () << " args)"
+             << " at ["
+             << pos->get_raw_filename () << ':' << pos->get_raw_line ()
+             << ']'
+             << endl;
       }
+#else
+    printf ("Test to exclude compass C tests! n = %p = %s \n",n,n->class_name().c_str());
+#endif
   }
 
 protected:
@@ -91,6 +97,7 @@ main (int argc, char* argv[])
   RecognitionTraversal traversal (api_sigs);
   traversal.traverse (proj, preorder);
 
+  cerr << "[Terminated Normally ...]" << endl;
   return 0;
 }
 

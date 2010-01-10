@@ -11,7 +11,7 @@
 // Test use of C99 and common C constants
 void foo()
    {
-#if !defined(__CYGWIN__)
+#if !defined(__CYGWIN__) && !defined(__INTEL_COMPILER)
      float _Complex an_i = _Complex_I;
 
      _Complex_I;
