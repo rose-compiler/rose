@@ -56,7 +56,11 @@ dnl predefined by a specific compiler
                     echo " tmp_macro  $tmp_macro"
                  done
            # macroString=" -D__PURE_INTEL_C99_HEADERS__ ${tmp_macro} --preinclude rose_edg_macros_and_functions_required_for_icc.h "
-             macroString="{\"-D__PURE_INTEL_C99_HEADERS__\" ${tmp_macro}"
+           # DQ (1/9/2010): I put this back and commented out the problem directly in the UPC file: lock.upc directly.
+           # DQ (1/9/2010): This causes an error in math.h with an inconstant use of __THROW with the declaration of "abs()".
+           #   from math.h _LIBIMF_EXT _LIBIMF_INT   _LIBIMF_PUBAPI abs( _LIBIMF_INT __x );
+           # macroString="{\"-D__PURE_INTEL_C99_HEADERS__\" ${tmp_macro}"
+             macroString="{ \"-D__PURE_INTEL_C99_HEADERS__\" ${tmp_macro}"
              if test x$enable_new_edg_interface = xyes; then
                :
              else
@@ -124,6 +128,18 @@ dnl predefined by a specific compiler
 # AM conditional for GNu just for completeness.
   AM_CONDITIONAL(USING_INTEL_COMPILER,test "x$compilerVendorName" = xIntel)
   AM_CONDITIONAL(USING_GNU_COMPILER,test "x$compilerVendorName" = xGNU)
+
+  if test "x$compilerVendorName" = xIntel; then
+   # using_intel_compiler=true
+     AC_DEFINE([CXX_IS_INTEL_COMPILER],[1],[Is this an Intel compiler being used to compile ROSE.])
+  fi
+  if test "x$compilerVendorName" = xGNU; then
+   # using_gnu_compiler=true
+     AC_DEFINE([CXX_IS_GNU_COMPILER],[1],[Is this a GNU compiler being used to compile ROSE.])
+  fi
+# AC_DEFINE([CXX_IS_INTEL_COMPILER],test "x$compilerVendorName" = xIntel,[Is this an Intel compiler being used to compile ROSE.])
+# AC_DEFINE([CXX_IS_INTEL_COMPILER],[`test $using_intel_compiler`],[Is this an Intel compiler being used to compile ROSE.])
+# AC_DEFINE([CXX_IS_GNU_COMPILER],[`test $using_gnu_compiler`],[Is this a GNU compiler being used to compile ROSE.])
 
 # This string has all compiler specific predefined macros listed
   echo "Backend compiler specific macroString = $macroString"
