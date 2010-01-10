@@ -30,7 +30,7 @@ public:
   {
  // DQ (1/9/2010): This is a test for a bug that apprears to be in master!
  // Plus it only appears to effect the minumal build for ROSE using the 4.2.4 compiler.
-#if 0
+#if 1
     const SgFunctionCallExp* call = recognizer_.isCall (n);
 
     if (call)
