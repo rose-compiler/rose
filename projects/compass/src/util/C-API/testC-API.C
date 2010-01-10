@@ -29,6 +29,7 @@ public:
   virtual void visit (SgNode* n)
   {
  // DQ (1/9/2010): This is a test for a bug that apprears to be in master!
+ // Plus it only appears to effect the minumal build for ROSE using the 4.2.4 compiler.
 #if 0
     const SgFunctionCallExp* call = recognizer_.isCall (n);
 
@@ -49,6 +50,9 @@ public:
       }
 #else
     printf ("Test to exclude compass C tests! n = %p = %s \n",n,n->class_name().c_str());
+
+    printf ("Exiting as a test! \n");
+    ROSE_ASSERT(false);
 #endif
   }
 
