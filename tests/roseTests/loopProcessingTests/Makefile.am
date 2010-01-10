@@ -26,7 +26,10 @@ CLEANFILES = pt
 # This rule generates a dependency that forces the "make check" 
 # test to always compile the test code
 FORCE_TEST_CODES_TO_RUN:
+if USING_GNU_COMPILER
+#	This fails for the Intel icc or icpc compiler (restrict pointers are unparsed differently which causes dif to fail).
 	$(srcdir)/TestDriver $(srcdir)
+endif
 	echo "Commented out loopProcessor due to internal problems..."
 
 EXTRA_DIST = TestDriver mm.C fusiontest1.C lufac.C tridvpk.C rmatmult3.C dgemm.C rose_mm.C.wave-save rose_mm.C.withoutwave-save rose_mm.C.save rose_lufac.C.save rose_lufac_split.C.save rose_tridvpk.C.save rose_rmatmult3.C.save rose_dgemm.C.save rose_fusiontest1.C.save rose_mm_cp0.C.save rose_lufac_cp0.C.save rose_mm_cp2_bk3.C.save funcs.annot rose_mm.C.wave-save rose_mm.C.withoutwave-save rose_lufac.C.wave-save rose_lufac.C.withoutwave-save rose_lufac_split.C.wave-save rose_lufac_split.C.withoutwave-save rose_tridvpk.C.wave-save rose_tridvpk.C.withoutwave-save rose_rmatmult3.C.wave-save rose_rmatmult3.C.withoutwave-save rose_mm.C.wave-save rose_mm.C.withoutwave-save rose_mm_cp0.C.wave-save rose_mm_cp0.C.withoutwave-save rose_lufac_cp0.C.wave-save rose_lufac_cp0.C.withoutwave-save rose_mm_cp2_bk3.C.wave-save rose_mm_cp2_bk3.C.withoutwave-save
