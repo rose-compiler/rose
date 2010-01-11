@@ -253,7 +253,7 @@ set(ROSE_TARGET_LINK
 else ( enable-smaller-generated-files )
 # tps (12/14/2009) : Created a variable for the dependend libraries. Make sure that order is correct.
 set(ROSE_TARGET_LINK 
-#   PHP_FRONTEND_LIB 
+   PHP_FRONTEND_LIB 
    rose_MSTL rose_rosetta
    libastMerge edg33 libsageInterface libastTokenStream libastHiddenTypeAndDeclarationLists
    libastVisualization roseDisassemblers roseBinaryFormats 
