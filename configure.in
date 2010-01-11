@@ -1,3 +1,6 @@
+# DQ (1/11/2010): Consider handing configure options as specified at:
+#    https://projects.coin-or.org/BuildTools/wiki/user-configure
+
 AC_INIT(ROSE, 0.9.5a)
 AC_PREREQ([2.59])
 
