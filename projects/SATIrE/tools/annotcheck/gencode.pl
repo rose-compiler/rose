@@ -56,16 +56,28 @@ annotation_term(PragmaDecl, AnnotTerm) :-
 % Our all-in-one postorder traversal
 %
 
-% Initialize new counter variables before entering a loop
+% Loop bound code generation
 code_visit(Info, _, InfoT, Loop, LoopT) :-
   (   Loop = for_statement(_, _, _, Bb, _, _, _)
   ;   Loop = while_stmt(_, Bb, _, _, _)
   ;   Loop = do_while_stmt(Bb, _, _, _, _)
   ), 
   default_values(_PPI, An, Ai, Fi),
+
+  % Initialize new counter variables before entering a loop
   get_loop_marker(Bb, LoopMarker),
   intz_decl(LoopMarker, CounterDecl),
-  Loop1 = basic_block([CounterDecl,Loop], An, Ai, Fi),
+
+  % Generate an assertion right after the loop
+  Bb = basic_block(Stmts, _, _, _),
+  get_annot(Stmts, wcet_loopbound(Lo..Hi), _),
+
+  prolog_to_cxx((LoopMarker =< Hi) && (LoopMarker >= Lo), CxxExpr),
+  assert_expr(CxxExpr, Assert),
+
+  % Create the replacement loop
+  Loop1 = basic_block([CounterDecl,Loop,Assert], An, Ai, Fi),
+  
   % Also initialize implicit markers
   code_visit(Info, _, InfoT, Loop1, LoopT).
 
@@ -150,8 +162,7 @@ code_for(_, Stmt, Stmt).
 
 % SCOPE: int M = 0;
 code_for_term(_, wcet_scope(M), [MarkerDecl]) :-
-  atom_to_string(M, Ms),
-  intz_decl(Ms, MarkerDecl),
+  intz_decl(M, MarkerDecl),
   !.
 
 % MARKER: M++;
@@ -159,15 +170,12 @@ code_for_term(_, wcet_marker(M), [MarkerIncr]) :-
   plusplus_expr(M, MarkerIncr),
   !.
 
-% LOOPBOUND: assert(++M < LB);
-code_for_term(Context, wcet_loopbound(Lo..Hi), [MarkerIncr, Assert]) :-
-%  gtrace,
+% LOOPMARKER++;
+code_for_term(Context, wcet_loopbound(_), [MarkerIncr]) :-
   get_loop_marker(Context, M),
   plusplus_expr(M, MarkerIncr),
-
-  prolog_to_cxx((M =< Hi) && (M >= Lo), CxxExpr),
-  assert_expr(CxxExpr, Assert),
   !.
+
 
 % CONSTRAINT: assert(R);
 % fehlende scopes generieren
