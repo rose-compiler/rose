@@ -207,28 +207,16 @@ add_library(rose_MSTL STATIC ${MSTL_SRC} ${virtualCFG_SRC} ${rose_support_src} )
 add_dependencies(rose_MSTL ROSETTA OMPPARSER ROSE_PREPROCESSOR  ) 
 
 
-set(rose_rosetta_LIB_SRCS dummyCppFileForLibrose.C  
+set(rose_rosetta_LIB_SRCS  
  ${ROSETTA_SRC} 
 )
 
 add_library(rose_rosetta STATIC ${rose_rosetta_LIB_SRCS} )
 add_dependencies(rose_rosetta ROSETTA OMPPARSER ROSE_PREPROCESSOR ${Boost_LIBRARIES} ) 
 
-#set(sage3_LIB_SRCS dummyCppFileForLibrose.C  
-# ${sage3_SRC} 
-#)
-
-#add_library(rose_sage3 STATIC ${sage3_LIB_SRCS} )
-#add_dependencies(rose_sage3 ROSETTA OMPPARSER ROSE_PREPROCESSOR rose_rosetta ${Boost_LIBRARIES} ) 
-
-
 ########### next target ###############
 set(rose_LIB_SRCS dummyCppFileForLibrose.C  
-#    ${ROSETTA_SRC} 
     ${sage3_SRC}
-#    ${rose_support_src} 
-#    ${virtualCFG_SRC}
-#    ${MSTL_SRC}
     ${EDG_SAGE_Connection_SRC}
     )
 
@@ -241,7 +229,7 @@ if ( enable-smaller-generated-files )
 # tps (12/14/2009) : Created a variable for the dependend libraries. Make sure that order is correct.
 set(ROSE_TARGET_LINK 
    libgeneratedIR 
-#   PHP_FRONTEND_LIB 
+   PHP_FRONTEND_LIB 
    rose_MSTL rose_rosetta
    libastMerge edg33 libsageInterface libastTokenStream libastHiddenTypeAndDeclarationLists
    libastVisualization roseDisassemblers roseBinaryFormats 
