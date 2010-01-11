@@ -214,13 +214,6 @@ set(rose_rosetta_LIB_SRCS dummyCppFileForLibrose.C
 add_library(rose_rosetta STATIC ${rose_rosetta_LIB_SRCS} )
 add_dependencies(rose_rosetta ROSETTA OMPPARSER ROSE_PREPROCESSOR ${Boost_LIBRARIES} ) 
 
-#set(sage3_LIB_SRCS dummyCppFileForLibrose.C  
-# ${sage3_SRC} 
-#)
-
-#add_library(rose_sage3 STATIC ${sage3_LIB_SRCS} )
-#add_dependencies(rose_sage3 ROSETTA OMPPARSER ROSE_PREPROCESSOR rose_rosetta ${Boost_LIBRARIES} ) 
-
 
 ########### next target ###############
 set(rose_LIB_SRCS dummyCppFileForLibrose.C  
