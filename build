@@ -73,6 +73,8 @@ machine_name=`uname -n`
 echo ""
 echo "******************************************"
 echo "Building ROSE Project on: $machine_name"
+echo "Build Disk Usage Report:"
+df
 echo "******************************************"
 
 echo ""
