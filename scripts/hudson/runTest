@@ -19,7 +19,7 @@ echo "*******************************************************************"
 
 # Provide a disk usage report to support debugging when Hudson has a problem.
 echo "Disk usage report #1 (to support debugging when Hudson has a problem):"
-df .
+df || pwd
 
 if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
 	GCCROOT=/usr/apps/gcc/$ROSE_TEST_GCC_VERSION
