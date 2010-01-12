@@ -3,10 +3,25 @@
 #Never run this on a branch that has additional changes to master as it is Hudson that guarantees that what is on master is tested 
 #and ready for distribution.
 
+# This script only runs on the MAC OSX machine (ninjai).
+export PATH=$PATH:/Users/dquinlan/local/git-install/bin
+
+if test -f .git/config; then
+   echo "Verified that this is a git repository."
+else
+ # echo "This machine must be setup to access tux281.llnl.gov withouth passwd using ssh."
+ # git clone ssh://tux281.llnl.gov/usr/casc/overture/ROSE/git/ROSE.git git-rose
+   echo "Error: this is not a git repository... (must be setup manually)."
+   exit 1
+fi
+
 CONFIGURE_FLAGS="--with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib "
-git fetch origin
+# git fetch origin
 if test "`git rev-parse HEAD`" != "`git rev-parse origin/master`" ; then
-  git checkout origin/master
+  git checkout master
+  git pull
+# git fetch origin
+# git checkout origin/master
   git submodule update
   ./build
   if test -e ROSE-build ; then chmod -R u+w ROSE-build ; fi
@@ -18,3 +33,9 @@ if test "`git rev-parse HEAD`" != "`git rev-parse origin/master`" ; then
   make -j8 upload_edg_binary BINARY_EDG_TARBALL_STAGING_PATH=`pwd`
   scp roseBinaryEDG* dquinlan@tux281:/usr/casc/overture/ROSE/git/ROSE_EDG_Binaries
 fi
+
+echo "EDG binaries built and uploaded to /usr/casc/overture/ROSE/git/ROSE_EDG_Binaries on LC."
+
+echo "**************************"
+echo "Build terminated Normally."
+echo "**************************"
