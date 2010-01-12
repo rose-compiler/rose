@@ -19,7 +19,7 @@ echo "*******************************************************************"
 
 # Provide a disk usage report to support debugging when Hudson has a problem.
 echo "Disk usage report #1 (to support debugging when Hudson has a problem):"
-df || pwd
+df /export
 
 if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
 	GCCROOT=/usr/apps/gcc/$ROSE_TEST_GCC_VERSION
@@ -46,7 +46,7 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xcmake" ; then
 
 # Provide a disk usage report to support debugging when Hudson has a problem.
 echo "Disk usage report #2 (to support debugging when Hudson has a problem):"
-df || pwd
+df /export
 
 	exit 0
 fi
@@ -93,7 +93,7 @@ fi
 
 # Provide a disk usage report to support debugging when Hudson has a problem.
 echo "Disk usage report #3 (to support debugging when Hudson has a problem):"
-df || pwd
+df /export
 
 # Andreas suggests that the use of "tee" is not passing error through to Hudson.
 # DQ has confirmed that Andreas's point is true for bash but false for tcsh 
@@ -122,7 +122,7 @@ echo "Done with compile step"
 
 # Provide a disk usage report to support debugging when Hudson has a problem.
 echo "Disk usage report #4 (to support debugging when Hudson has a problem):"
-df || pwd
+df /export
 
 # GCC 4.3 and 4.4 do not currently pass make check
 # Known unresolved issues:
@@ -158,7 +158,7 @@ fi
 
 # Provide a disk usage report to support debugging when Hudson has a problem.
 echo "Disk usage report #5 (to support debugging when Hudson has a problem):"
-df || pwd
+df /export
 
 # DQ (12/16/2009): This appears to work everywhere byt on the 4.3.2 systems, verify this.
 # Finally run the "make docs" test (on just the 4.2.4 version of gcc).
@@ -180,5 +180,5 @@ fi
 
 # Provide a disk usage report to support debugging when Hudson has a problem.
 echo "Disk usage report #6 (to support debugging when Hudson has a problem):"
-df || pwd
+df /export
 
