@@ -219,9 +219,6 @@ add_dependencies(rose_rosetta ROSETTA OMPPARSER ROSE_PREPROCESSOR ${Boost_LIBRAR
 set(rose_LIB_SRCS dummyCppFileForLibrose.C  
 #    ${ROSETTA_SRC} 
     ${sage3_SRC}
-#    ${rose_support_src} 
-#    ${virtualCFG_SRC}
-#    ${MSTL_SRC}
     ${EDG_SAGE_Connection_SRC}
     )
 
