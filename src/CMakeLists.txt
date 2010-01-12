@@ -212,7 +212,7 @@ set(rose_rosetta_LIB_SRCS
 )
 
 add_library(rose_rosetta STATIC ${rose_rosetta_LIB_SRCS} )
-add_dependencies(rose_rosetta ROSETTA OMPPARSER ROSE_PREPROCESSOR ${Boost_LIBRARIES} ) 
+add_dependencies(rose_rosetta ROSETTA OMPPARSER ROSE_PREPROCESSOR ) 
 
 ########### next target ###############
 set(rose_LIB_SRCS dummyCppFileForLibrose.C  

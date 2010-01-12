@@ -15,11 +15,13 @@ set(Boost_DEBUG TRUE)
 
 if (WIN32)
 FIND_PACKAGE(Boost REQUIRED) 
-set (Boost_LIBRARY_DIRS ${Boost_INCLUDE_DIRS}/lib/ )
-set (Boost_LIBRARIES ${Boost_INCLUDE_DIRS}/lib/ )
-set (BOOST_LIBRARYDIR ${Boost_LIBRARY_DIRS} )
-set (BOOST_INCLUDEDIR ${Boost_INCLUDE_DIRS}/ )
-set (BOOST_ROOT ${Boost_INCLUDE_DIRS}/ )
+#set (Boost_INCLUDE_DIRS ${Boost_INCLUDE_DIRS}/../../ )
+
+#set (Boost_LIBRARY_DIRS ${Boost_INCLUDE_DIRS}/lib/ )
+#set (Boost_LIBRARIES ${Boost_INCLUDE_DIRS}/lib/ )
+#set (BOOST_LIBRARYDIR ${Boost_LIBRARY_DIRS} )
+#set (BOOST_INCLUDEDIR ${Boost_INCLUDE_DIRS}/ )
+#set (BOOST_ROOT ${Boost_INCLUDE_DIRS}/ )
 
 MESSAGE("Boost information:") 
 MESSAGE("  BOOST_ROOT: ${BOOST_ROOT}") 
