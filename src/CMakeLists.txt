@@ -207,7 +207,7 @@ add_library(rose_MSTL STATIC ${MSTL_SRC} ${virtualCFG_SRC} ${rose_support_src} )
 add_dependencies(rose_MSTL ROSETTA OMPPARSER ROSE_PREPROCESSOR  ) 
 
 
-set(rose_rosetta_LIB_SRCS dummyCppFileForLibrose.C  
+set(rose_rosetta_LIB_SRCS 
  ${ROSETTA_SRC} 
 )
 
