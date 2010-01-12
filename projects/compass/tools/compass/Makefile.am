@@ -35,6 +35,9 @@ check-local:
 # DQ (9/10/2009): Skip tests on Debian system to test ROSE (and focus first on where it works!)
 if !OS_VENDOR_DEBIAN
 	@$(MAKE) testNewChecker
+	@echo "***********************"
+	@echo "*** Testing compass ***"
+	@echo "***********************"
 	@$(MAKE) test
 endif
 	@echo "*****************************************************************************"
