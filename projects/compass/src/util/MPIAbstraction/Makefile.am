@@ -47,7 +47,7 @@ test: libMPIAbstraction.la testMPIAbstraction$(EXEEXT) \
 check-local:
 	echo "Output disk usage as part of debugging..."
 #	Note that df will always exit 1 (I don't know why), so call "pwd" so it will exit 0.
-	df /export
+#	df /export
 	@$(MAKE) test
 	@echo "*********************************************************************************************************************"
 	@echo "*** ROSE/projects/compass/util/C-API: make check rule complete (terminated normally) ***"
