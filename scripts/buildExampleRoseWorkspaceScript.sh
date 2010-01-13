@@ -6,7 +6,8 @@
 
 if [ $# -ne 2 ]
 then
-  echo "This script needs two arguments"
+  echo ""
+  echo "Error: this script needs two arguments"
   echo "   Usage: $0 <sourcedir for ROSE> <proposed ROSE workspace path>"
   echo ""
   echo "   Example: $0 <ROSE srcdir> /home/dquinlan/ROSE/myWorkSpace"
@@ -22,7 +23,10 @@ echo "newWorkspacePath = $newWorkspacePath"
 
 mkdir -p $newWorkspacePath
 echo "current directory = $PWD"
-cp -r $srcdir/scripts/buildExampleRoseWorkspaceDirectory $newWorkspacePath
+
+# DQ (1/12/2010): Use the name of the specified directory.
+# cp -r $srcdir/scripts/buildExampleRoseWorkspaceDirectory $newWorkspacePath
+cp -r $srcdir/scripts/buildExampleRoseWorkspaceDirectory/* $newWorkspacePath
 
 echo "Exiting after setting up new workspace at $newWorkspacePath"
 
