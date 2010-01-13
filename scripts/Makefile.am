@@ -20,7 +20,7 @@ bin_SCRIPTS =  $(distributedScripts)
 
 # DQ (12/7/2009): Test for the ROSE example workspace generator.
 # Build the directory in the compile tree.
-ExampleRoseWorkspaceTestDirectory = tmp
+ExampleRoseWorkspaceTestDirectory = tmpRoseWorkspace
 # This tests the new ROSE workspace
 testExampleRoseWorkspace:
 	echo "absolute_path_srcdir = $(absolute_path_srcdir)"
@@ -30,7 +30,7 @@ testExampleRoseWorkspace:
 	rm -rf $(ExampleRoseWorkspaceTestDirectory)
 	$(srcdir)/buildExampleRoseWorkspaceScript.sh $(absolute_path_srcdir) $(ExampleRoseWorkspaceTestDirectory) || exit 1
 	echo "Exiting after calling script: $(srcdir)/buildExampleRoseWorkspaceScript.sh"
-	cd $(ExampleRoseWorkspaceTestDirectory)/buildExampleRoseWorkspaceDirectory; \
+	cd $(ExampleRoseWorkspaceTestDirectory); \
 	./build --srcpath $(absolute_path_srcdir) --verbose; \
 	echo "Building the compile tree in the source tree for the example ROSE workspace."; \
 	./configure --with-boost=$(ac_boost_path) --prefix=@prefix@; \
@@ -45,7 +45,8 @@ testExampleRoseWorkspace:
 # installcheck rule.
 # check-local:
 installcheck:
-	$(MAKE) testExampleRoseWorkspace
+	@echo "Skipping test of new ROSE workspace support."
+#	$(MAKE) testExampleRoseWorkspace
 
 clean-local:
 	rm -rf *.a *.so *.o $(ExampleRoseWorkspaceTestDirectory)
