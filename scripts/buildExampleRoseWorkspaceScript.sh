@@ -21,12 +21,17 @@ echo "srcdir = $srcdir"
 newWorkspacePath=$2
 echo "newWorkspacePath = $newWorkspacePath"
 
+# Note that the "-p" option is not always portable.
 mkdir -p $newWorkspacePath
 echo "current directory = $PWD"
 
 # DQ (1/12/2010): Use the name of the specified directory.
 # cp -r $srcdir/scripts/buildExampleRoseWorkspaceDirectory $newWorkspacePath
-cp -r $srcdir/scripts/buildExampleRoseWorkspaceDirectory/* $newWorkspacePath
+cp -r $srcdir/scripts/buildExampleRoseWorkspaceDirectory/* $newWorkspacePath || exit 1
+
+# Run chmod so that the config directory will be able to be deleted 
+# by the make distclean rule in the automated ROSE tests.
+chmod -R +w $newWorkspacePath/config
 
 echo "Exiting after setting up new workspace at $newWorkspacePath"
 
