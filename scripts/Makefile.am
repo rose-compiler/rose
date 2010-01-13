@@ -45,7 +45,8 @@ testExampleRoseWorkspace:
 # installcheck rule.
 # check-local:
 installcheck:
-	$(MAKE) testExampleRoseWorkspace
+	@echo "Skipping test of new ROSE workspace support."
+#	$(MAKE) testExampleRoseWorkspace
 
 clean-local:
 	rm -rf *.a *.so *.o $(ExampleRoseWorkspaceTestDirectory)
