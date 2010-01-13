@@ -12,7 +12,7 @@ distributedScripts = \
      bincompat-sig Error.pm Git.pm
 
 # scripts put into the distribution
-EXTRA_DIST = CMakeLists.txt README $(distributedScripts) 
+EXTRA_DIST = CMakeLists.txt README $(distributedScripts) buildExampleRoseWorkspaceDirectory
 
 # install the tools in 'bin' (a subsect of EXTRA_DIST)
 bin_SCRIPTS =  $(distributedScripts)
@@ -45,8 +45,8 @@ testExampleRoseWorkspace:
 # installcheck rule.
 # check-local:
 installcheck:
-	@echo "Skipping test of new ROSE workspace support."
-#	$(MAKE) testExampleRoseWorkspace
+	@echo "Running test of new ROSE workspace support."
+	$(MAKE) testExampleRoseWorkspace
 
 clean-local:
 	rm -rf *.a *.so *.o $(ExampleRoseWorkspaceTestDirectory)
