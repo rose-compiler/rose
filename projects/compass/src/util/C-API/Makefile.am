@@ -44,7 +44,7 @@ check-local:
 #	df /export
 if BACKEND_COMPILER_VERSION_OK_FOR_ROSE_TESTING
 	echo "Skipping test rule in ROSE/projects/compass/src.util/C-API for GNU 4.2.x compiler"
-#	@$(MAKE) test
+	@$(MAKE) test
 else
 #	echo "Calling test rule in ROSE/projects/compass/src.util/C-API (for all other non-4.2.x compilers)"
 	echo "Skipping test rule in ROSE/projects/compass/src.util/C-API for GNU 4.2.x compiler"
