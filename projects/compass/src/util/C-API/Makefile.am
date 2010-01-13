@@ -39,7 +39,7 @@ test: libC-API.la testC-API$(EXEEXT) $(srcdir)/c-string.api $(srcdir)/c-string.c
 check-local:
 #	DQ (1/10/2009): Comment this out for now to test Hudson tests.
 #	Skip testing on 4.2 compilers only (debugging hudsons problem).
-	echo "Output disk usage as part of debugging..."
+#	echo "Output disk usage as part of debugging..."
 #	Note that df will always exit 1 (I don't know why), so call "pwd" so it will exit 0.
 #	df /export
 if BACKEND_COMPILER_VERSION_OK_FOR_ROSE_TESTING
