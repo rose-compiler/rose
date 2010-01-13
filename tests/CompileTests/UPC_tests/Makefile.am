@@ -51,7 +51,7 @@ if ROSE_USE_NEW_EDG_INTERFACE
 # JJW (12/15/2008): Force C99 mode so we can have declarations in the initializers of forall statements
 ROSE_FLAGS = --edg:no_warnings -rose:skipfinalCompileStep --edg:upc --edg:c99
 else
-ROSE_FLAGS = --edg:no_warnings -rose:skipfinalCompileStep -rose:UPC
+ROSE_FLAGS = --edg:no_warnings -rose:skipfinalCompileStep -rose:UPC -rose:verbose 2
 #ROSE_FLAGS = --edg:no_warnings -rose:skipfinalCompileStep --edg:upc
 endif
 #ROSE_FLAGS = --edg:no_warnings -w --edg:restrict --edg:upc -rose:verbose 3
