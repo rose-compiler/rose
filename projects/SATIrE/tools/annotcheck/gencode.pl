@@ -1,5 +1,6 @@
 #!/usr/bin/pl -q -t main -f
-% -*- mode: prolog; truncate-lines: 1; -*-
+% -*- mode: prolog; truncate-lines: true; -*-
+
 
 %-----------------------------------------------------------------------
 % gencode.pl

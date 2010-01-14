@@ -261,7 +261,7 @@ eval(exp, state, context) =
       AssignInitializer(e1) => eval(e1, state, context);
       NewExp(_,_,_)         => (top, state);
       FunctionRefExp()      => (top, state);
-      NullExpression()      => (top, state);
+      NullExpression()      => (duplift(1), state); // -- treat for (;;) as always true
       _                     => println("**WARNING: ignoring unknown exp: ",
                                        exp, ": ", expr_asttext(exp))
                                (top, state); 
@@ -649,9 +649,9 @@ constrain_array_index(s, _, _) = s;
 
 branch :: Expression, itvl_State, bool, bool, ContextInfo -> itvl_State;
 branch(exp, state, edge, isLoopBody, context) =
-  // -- print("\nbranching...\nexp: ") print(exp) 
-  // -- print("\nstate: ") print(state) 
-  // -- print("\nedge: ") print(edge)  
+  // -- print("branching... exp: ") print(exp) 
+  // -- print("\tstate: ") print(state) 
+  // -- print("\tedge: ") print(edge)  
   // -- print("\n")
 
   let pair = eval(exp, state, context); in
@@ -672,8 +672,8 @@ branch(exp, state, edge, isLoopBody, context) =
     state
   else if drop(c) = edge then  
     // -- This edge will ALWAYS be taken
-    // --print(newstate) print("\n") 
-    // --print("Always\n") 
+    // -- print(newstate) print("\n") 
+    // -- print("Always\n") 
     newstate
   else 
     // -- This edge will NEVER be taken
@@ -702,7 +702,11 @@ branch_condition_effects(exp, state, newstate, edge, isLoopBody, context) =
         _ => newstate;
       endcase
   else
-    lift([-> top])
+    case exp of
+      NullExpression()     => state;
+      // -- TODO: is_constant_value(exp) => state
+      _                    => lift([-> top]);
+    endcase
     //newstate
   ;
 
@@ -958,8 +962,8 @@ second_if_present(a, b) =
 // -- GB: this is not true anymore! -infty is top as well.
 min(a, top) = top;
 min(top, a) = top;
-min(a, bot) = bot;
-min(bot, b) = bot;
+min(a, bot) = a; /*bot;*/
+min(bot, b) = b; /*bot;*/
 min(a, b) = if drop(a) < drop(b) then a else b ;
 
 // -- all glory to polymorphism (... and the hypnotoad!)
@@ -1052,8 +1056,8 @@ wide(a, b) = lift(crunch(drop(a), drop(b), widen));
 
 widen((top, top), b) = b;
 widen((a1, a2), (b1, b2)) =
-  ( if a1=b1 then a1 else top /*min(a1, b1)*/ ,
-    if a2=b2 then a2 else top /*max(a1, b1)*/  );
+  ( if a1=b1 then a1 else /*top*/ min(a1, b1) ,
+    if a2=b2 then a2 else /*top*/ max(a1, b1)  );
 
 //widen((a1, a2), (b1, b2)) = let v1 <= b1 ;
 //                                v2 <= b2 ; in 
