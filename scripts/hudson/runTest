@@ -216,7 +216,7 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \) ; then
  # doxygen is what has to run and it does not run in parallel.
 
 # FIXME: commented out make distcheck
-#  make -j8 docs
+# make -j8 docs
    if [ $? -ne 0 ]  ; then
         echo "fatal error during 'make docs'  , aborting..."
         exit 3
