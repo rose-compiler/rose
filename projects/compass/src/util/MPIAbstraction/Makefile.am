@@ -61,7 +61,6 @@ endif
 
 EXTRA_DIST = CMakeLists.txt MPI.api MPI-api.c testCodes
 
-
 clean-local:
 	rm -f *.ti a.out rose_*.c
 
