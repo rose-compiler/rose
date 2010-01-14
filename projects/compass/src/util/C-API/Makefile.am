@@ -4,7 +4,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = -I$(srcdir)/.. -I$(srcdir)/../../compassSupport $(ROSE_INCLUDES)
 
-#==========================================================================
+# ==========================================================================
 # Auxiliary library.
 
 if ROSE_MPI
