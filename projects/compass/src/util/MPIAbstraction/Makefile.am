@@ -37,8 +37,7 @@ test: libMPIAbstraction.la testMPIAbstraction$(EXEEXT) \
 	@echo "============================================================"
 	@echo "Trying to recognize MPI abstractions in 'is.c'..."
 	@echo "============================================================"
-	./testMPIAbstraction$(EXEEXT) $(TEST_RUN_FLAGS) \
-	  -c $(srcdir)/testCodes/is.c
+	./testMPIAbstraction$(EXEEXT) $(TEST_RUN_FLAGS) -c $(srcdir)/testCodes/is.c || echo "error code returned is: $?; exit 1
 	@echo "============================================================"
 	@echo "Compare to a grep-based search (functions only)..."
 	@echo "============================================================"
@@ -58,6 +57,7 @@ endif
 	@echo "*************************************************************************************************"
 	@echo "*** ROSE/projects/compass/util/MPIAbstraction: make check rule complete (terminated normally) ***"
 	@echo "*************************************************************************************************"
+
 
 EXTRA_DIST = CMakeLists.txt MPI.api MPI-api.c testCodes
 
