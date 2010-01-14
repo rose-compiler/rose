@@ -42,20 +42,34 @@ if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
 	fi
 fi
 
-if test $ROSE_TEST_BUILD_STYLE = edg ; then
 
+# ************************************************************************
+# Force specific failures as part of testing a restricted subset of tests.
+# ************************************************************************
+if test $ROSE_TEST_BUILD_STYLE = edg ; then
  # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
    echo "This test is forced to exit with an error as part of debugging Hudson tests."
    exit 1
 fi
 
+if test \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \) ; then
+ # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
+   echo "This test is forced to exit with an error as part of debugging Hudson tests."
+   exit 1
+fi
 
 if test "x$ROSE_TEST_BUILD_STYLE" = "xcmake" ; then
 
  # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
    echo "This test is forced to exit with an error as part of debugging Hudson tests."
    exit 1
+fi
+# ************************************************************************
 
+
+
+
+if test "x$ROSE_TEST_BUILD_STYLE" = "xcmake" ; then
 	rm -rf ROSE-build-cmake
 	mkdir ROSE-build-cmake
 	cd ROSE-build-cmake
