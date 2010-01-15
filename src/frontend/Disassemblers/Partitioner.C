@@ -1,6 +1,11 @@
 /* Algorithms to detect where functions begin in the set of machine instructions. See detectFunctionStarts() near the end of this file. */
 #define __STDC_FORMAT_MACROS
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "Partitioner.h"
+#include "Assembler.h"
+#include "AssemblerX86.h"
+#include "unparseAsm.h"
 #include <inttypes.h>
 
 /* See header file for full documentation. */

@@ -5,7 +5,8 @@
  * Decription : unparser
  ****************************************************/
 
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #include <iomanip>
 
 /** Returns a string containing everthing before the first operand in a typical x86 assembly statement. */

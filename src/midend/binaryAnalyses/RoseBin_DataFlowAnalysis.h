@@ -16,7 +16,7 @@
 #include "RoseBin_Emulate.h"
 #include "RoseBin_VariableAnalysis.h"
 #include "RoseBin_DataFlowAbstract.h"
-
+#include "RoseBin_abstract.h"
 //class RoseBin;
 //class RoseFile;
 

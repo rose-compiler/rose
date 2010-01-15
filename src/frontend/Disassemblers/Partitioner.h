@@ -1,6 +1,6 @@
 #ifndef ROSE_DISASSEMBLER_PARTITIONER_H
 #define ROSE_DISASSEMBLER_PARTITIONER_H
-
+#include "Disassembler.h"
 /** Partitions instructions into basic blocks, functions, etc.
  *
  *  When grouping instructions into basic blocks, the partitioner looks at the instruction type and known successor addresses.

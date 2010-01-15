@@ -1,6 +1,8 @@
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #include "rose_paths.h"
 #include <sys/stat.h>
+#include "BinaryLoader.h"
 
 #ifdef _MSC_VER
 #pragma message ("WARNING: wait.h header file not available in MSVC.")

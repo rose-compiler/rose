@@ -4,6 +4,13 @@
 #ifndef __SB_CallAnalysis__
 #define __SB_CallAnalysis__
 
+#include "RoseSrc_CallGraphAnalysis.h"
+#include "RoseBin_DotGraph.h"
+#include "RoseBin_GMLGraph.h"
+#include "GraphAlgorithms.h"
+#include "RoseBin_abstract.h"
+#include "RoseObj.h"
+#include "RoseBin_CallGraphAnalysis.h"
 
 class SB_CallGraph {
  private:

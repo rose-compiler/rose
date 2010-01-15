@@ -1,6 +1,6 @@
 // tps (12/09/2009) : Playing with precompiled headers in Windows. Requires rose.h as the first line in source files.
 #ifdef _MSC_VER
-#include "rose.h"
+//#include "rose.h"
 #endif
 #include <vector>
 #include <iostream>

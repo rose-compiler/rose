@@ -1,3 +1,6 @@
+#ifndef __replaceMap
+#define __replaceMap
+
 struct hash_nodeptr
    {
 #ifndef _MSC_VER
@@ -88,3 +91,4 @@ replacementMapTraversal (
    ReplacementMapTraversal::ReplacementMapType & replacementMap,
    ReplacementMapTraversal::ODR_ViolationType  & violations,
    ReplacementMapTraversal::ListToDeleteType   & deleteList );
+#endif

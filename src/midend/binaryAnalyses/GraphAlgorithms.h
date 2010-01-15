@@ -3,6 +3,8 @@
 #ifndef __RoseBin_GraphAlgorithms__
 #define __RoseBin_GraphAlgorithms__
 
+#include "RoseBin_Graph.h"
+
 class GraphAlgorithms {
 private:
 

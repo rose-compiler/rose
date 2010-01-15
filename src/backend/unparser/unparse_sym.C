@@ -2,8 +2,8 @@
  * This C file contains the general function to unparse symbols as well as
  * functions to unparse every kind of symbol.
  */
-
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #include "unparser.h"
 
 // DQ (12/31/2005): This is OK if not declared in a header file

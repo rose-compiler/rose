@@ -4,8 +4,8 @@
  * Date : 7Sep07
  * Decription : Dataflow analysis
  ****************************************************/
-
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3
+#include "sage3basic.h"
 #include "RoseBin_DataFlowAnalysis.h"
 
 #include "dataflowanalyses/InterruptAnalysis.h"

@@ -1,3 +1,5 @@
+#ifndef __FIXUPTRAV
+#define __FIXUPTRAV
 
 class FixupTraversal : public ROSE_VisitTraversal
    {
@@ -56,3 +58,4 @@ class FixupSubtreeTraversal : public SgSimpleProcessing
 
 void fixupSubtreeTraversal( SgNode* node, const ReplacementMapTraversal::ReplacementMapType & inputReplacementMap, const FixupTraversal::listToDeleteType & inputListToDelete );
 
+#endif
