@@ -173,8 +173,13 @@ demo_rot13: rot13
 #
 # Each passing test creates a *.passed file so that a subsequent "make" doesn't need to rerun the test.
 #
-# Some of the targets depend on other tests because ROSE should not execute concurrently in the same working directory for
-# specimen binaries having the same names due to ROSE creating files in the CWD based on the base name of the specimen.
+#------------------------------------------------------------------------------------------------------------------------------
+# -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE --
+#
+# SOME OF THE TARGETS DEPEND ON OTHER TESTS BECAUSE ROSE SHOULD NOT EXECUTE CONCURRENTLY IN THE SAME WORKING DIRECTORY FOR
+# SPECIMEN BINARIES HAVING THE SAME NAMES DUE TO ROSE CREATING FILES IN THE CWD BASED ON THE BASE NAME OF THE SPECIMEN.
+# ------------------------------------------------------------------------------------------------------------------------------
+#
 ###############################################################################################################################
 TEST_PASSED_TARGETS=$(patsubst %,test_%.passed,$(noinst_PROGRAMS)) test_assembler.passed
 
@@ -186,7 +191,7 @@ test_testBinCFG.passed: testBinCFG
 	$(VALGRIND) ./testBinCFG $(BINARY_SAMPLES)/libm-2.3.6.so
 	@touch $@
 
-test_testBinCG.passed: testBinCG
+test_testBinCG.passed: testBinCG test_testBinCFG.passed
 	$(VALGRIND) ./testBinCG $(BINARY_SAMPLES)/libm-2.3.6.so
 	@touch $@
 
@@ -241,7 +246,7 @@ test_testElfSchulz-2.passed: testElfSchulz
 	    else echo "Libs differ; Schulz test-2 failed"; exit 1; fi
 	@touch $@
 
-test_so_file:
+test_so_file: test_testBinCFG.passed test_testBinCG.passed
 	$(VALGRIND) ./execFormatsTest $(BINARY_SAMPLES)/libm-2.3.6.so
 
 test_testElfConstruct.passed: testElfConstruct
