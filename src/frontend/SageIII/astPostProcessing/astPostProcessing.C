@@ -1,8 +1,11 @@
-
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
+
+// tps (01/14/2009): Had to define this locally as it is not part of sage3 but rose.h
+#define DIAGNOSTICS_VERBOSE_LEVEL 0
 
 // DQ (8/20/2005): Make this local so that it can't be called externally!
 void postProcessingSupport (SgNode* node);

@@ -1,6 +1,7 @@
 /* Generic Binary Files (SgAsmGenericFile and associated classes). */
 
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 
 #define __STDC_FORMAT_MACROS
 #include <boost/math/common_factor.hpp>

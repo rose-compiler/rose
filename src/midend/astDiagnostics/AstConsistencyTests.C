@@ -1,8 +1,10 @@
 // Author: Markus Schordan
 // $Id: AstConsistencyTests.C,v 1.8 2008/01/25 02:25:46 dquinlan Exp $
 
-#include "rose.h"
-
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+// tps : needed to define this here as it is defined in rose.h
+#define DIAGNOSTICS_VERBOSE_LEVEL 0
 #ifndef ASTTESTS_C
 #define ASTTESTS_C
 // DQ (8/9/2004): Modified to put code below outside of ASTTESTS_C if ... endif
@@ -10,7 +12,7 @@
 
 // DQ (3/6/2003): added from AstProcessing.h to avoid referencing
 // the traversal classes in AstFixes.h before they are defined.
-#include "sage3.h"
+//#include "sage3.h"
 #include "roseInternal.h"
 
 #include "AstConsistencyTests.h"

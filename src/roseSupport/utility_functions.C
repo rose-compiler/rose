@@ -1,5 +1,10 @@
 
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "AstPDFGeneration.h"
+#include "DotGeneration.h"
+#include "AstDOTGeneration.h"
+#include "wholeAST_API.h"
 
 // DQ (10/11/2007): This is commented out to avoid use of this mechanism.
 // #include <copy_unparser.h>

@@ -1,4 +1,5 @@
-#include "rose.h"
+// tps : Switching from rose.h to sage3 changed size from 20 MB to 9,8MB
+#include "sage3basic.h"
 
 #include "CreateSliceSet.h"
 #include <set>

@@ -1,7 +1,7 @@
 // ROSE is a tool for building preprocessors, this file is an example preprocessor built with ROSE.
 // rose.C: Example (default) ROSE Preprocessor: used for testing ROSE infrastructure
-
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #include "linearizeAST.h"
 #include <boost/lexical_cast.hpp>
 

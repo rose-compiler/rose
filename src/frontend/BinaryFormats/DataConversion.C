@@ -1,6 +1,6 @@
 /* Functions for data conversion. Functions such as byte swapping, etc. */
-
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 

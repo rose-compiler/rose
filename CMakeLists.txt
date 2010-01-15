@@ -85,8 +85,17 @@ endif ( enable-smaller-generated-files )
 
 #/CLR  /MDd /TP 
 if (WIN32)
-set( CMAKE_CXX_FLAGS " /CLR /TP " )
+# /TP to indicate files are C++
+# / CLR common intermediate language
+# /GL whole program optimization
+# /O1 optimization for small files
+# /Ob0 disable inline expansion
+# /MP multiple processors compilation
+# /0s small files
+set( CMAKE_CXX_FLAGS " /CLR /TP /MP " )
 set( CMAKE_C_FLAGS "  " )
+#set( CMAKE_CXX_FLAGS " /CLR /TP /O1 /Ob0 /MP /Os" )
+#set( CMAKE_C_FLAGS "  /O1 /Ob0 /MP /Os" )
 
 else (WIN32)
 set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )

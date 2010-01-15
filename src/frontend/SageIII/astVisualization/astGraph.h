@@ -1,6 +1,7 @@
 #ifndef AST_GRAPH_H
 #define AST_GRAPH_H
 
+#include "DOTRepresentation.h"
 // AST Graph support developed by Andreas
 
 // template <class T> class DOTRepresentation;

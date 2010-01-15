@@ -15,6 +15,10 @@
 #endif
 #endif
 
+// tps (01/14/2009) : I removed the dependency to rose.h in source file(filesize on Windows from 18 to 8MB)
+// Needed to redefined DIAGNOSTICS_VERBOSE_LEVEL locally.
+#define DIAGNOSTICS_VERBOSE_LEVEL 0
+
 #include <sstream>
 #include <iostream>
 #include <string>
