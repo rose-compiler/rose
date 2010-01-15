@@ -129,6 +129,7 @@ private:
     std::map<std::string, Location *> function_locations;
     std::map<std::pair<void *, std::string>, Location *>
         specialFunctionLocations;
+    std::map<std::string, Location *> staticVariableLocations;
     std::map<std::string, Location *> specialFunctionAuxLocations;
 
  // Location constants
@@ -282,7 +283,8 @@ private:
     void debugDump(SgNode *node);
  // FIXME: fix the name of this function
     Location *pickThePointer(SgBinaryOp *binOp, Location *a, Location *b);
-    Location *newAllocationSite();
+    Location *newAllocationSite(std::string varname = "");
+    Location *pointerToStaticVariable(std::string name);
     Location *newSpecialFunctionContext(std::string funcname,
                                         SynthesizedAttributesList synlist);
     bool isStructMemberReference(SgVarRefExp *varRef);

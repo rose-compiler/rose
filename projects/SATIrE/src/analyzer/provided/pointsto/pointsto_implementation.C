@@ -324,8 +324,10 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
              // A call-site-specific local return variable: Look up the call
              // target's return location.
 #if VERBOSE_DEBUG
+                std::string symnam = Utils::name(varSym);
                 std::cout
-                    << "--- looking at local return variable in context "
+                    << "--- looking at local return variable '"
+                    << symnam << "' in context "
                     << info->prefix << std::endl;
 #endif
                 if (!contextSensitive)
@@ -335,6 +337,12 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
                                                    "SATIrE: call target");
                     a = expressionLocation(ca->call_target);
                     result = a->baseLocation()->return_location;
+#if VERBOSE_DEBUG
+                    std::cout
+                        << "NOT context sensitive, result: "
+                        << (result != NULL ? result->id : 0)
+                        << std::endl;
+#endif
                 }
                 else
                 {
@@ -352,6 +360,11 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
                     BasicBlock *call_block
                         = icfg->call_target_call_block[ca->call_target];
                     int call_id = call_block->id;
+#if VERBOSE_DEBUG
+                    std::cout
+                        << "--  looking at call block " << call_id
+                        << std::endl;
+#endif
                  // See if the call block has outgoing call edges; if yes,
                  // we can fetch information from the call's child context.
                  // Otherwise, it's an external function to a (hopefully)
@@ -362,6 +375,13 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
                                 call_id, *info->context).begin();
                         end = icfg->contextInformation->childContexts(
                                 call_id, *info->context).end();
+#if VERBOSE_DEBUG
+                        std::cout
+                            << "-   need to consider "
+                            << end - beg
+                            << " child contexts"
+                            << std::endl;
+#endif
                         result = allInfos[*beg]->procedureLocation
                                            ->baseLocation()->return_location;
                         for (ctx = beg + 1; ctx != end; ++ctx)
@@ -2898,7 +2918,7 @@ PointsToAnalysis::Implementation::pickThePointer(
 }
 
 PointsToAnalysis::Location *
-PointsToAnalysis::Implementation::newAllocationSite()
+PointsToAnalysis::Implementation::newAllocationSite(std::string varname)
 {
     static int allocation_site = 0;
     std::stringstream name;
@@ -2906,7 +2926,7 @@ PointsToAnalysis::Implementation::newAllocationSite()
 
     Sg_File_Info *symfinfo
         = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
-    SgName symname = name.str();
+    SgName symname = (varname != "" ? varname : name.str());
 
     SgInitializedName *initname
         = new SgInitializedName(symfinfo, symname, mainInfo->ptr_to_void_type,
@@ -2931,6 +2951,38 @@ PointsToAnalysis::Implementation::newAllocationSite()
  // denoting the allocation site.
     Location *result = createDummyLocation(symbol_location(sym));
     return result;
+}
+
+PointsToAnalysis::Location *
+PointsToAnalysis::Implementation::pointerToStaticVariable(std::string name)
+{
+    Location *result = NULL;
+
+    std::map<std::string, Location *>::iterator pos
+        = info->staticVariableLocations.find(name);
+    if (pos == info->staticVariableLocations.end())
+    {
+        result = newAllocationSite(name);
+#if VERBOSE_DEBUG
+        std::cout
+            << "created new static variable site " << result->id
+            << " for '" << name << "'"
+            << std::endl;
+#endif
+        info->staticVariableLocations[name] = result;
+        return result;
+    }
+    else
+    {
+        result = pos->second;
+#if VERBOSE_DEBUG
+        std::cout
+            << "looked up location " << result-> id
+            << " for static variable site '" << name << "'"
+            << std::endl;
+#endif
+        return result;
+    }
 }
 
 PointsToAnalysis::Location *
@@ -2972,12 +3024,10 @@ PointsToAnalysis::Implementation::newSpecialFunctionContext(
     } else if (name == "__ctype_b_loc") {
      // This is apparently a function in glibc that returns a pointer to a
      // static lookup table to support the ctype.h functions.
-        ensurePointerLocation(specialFunctionAuxLocation("ctype_b_loc_table"));
-        return_location = specialFunctionAuxLocation("ctype_b_loc_table");
+        return_location = pointerToStaticVariable("ctype_b_loc_table");
     } else if (name == "__errno_location") {
      // The same as for the ctype stuff.
-        ensurePointerLocation(specialFunctionAuxLocation("errno_location"));
-        return_location = specialFunctionAuxLocation("errno_location");
+        return_location = pointerToStaticVariable("errno");
     } else if (name == "__fxstat") {
      // This is some internal stuff used by fstat. We are not interested in
      // the arguments and return nothing.
@@ -3073,9 +3123,7 @@ PointsToAnalysis::Implementation::newSpecialFunctionContext(
      // passed. Conservatively, we must assume that it returns the *same*
      // string at all sites, regardless of the argument.
         ensureArgumentCount(arg_dummy, 1);
-        ensurePointerLocation(
-                specialFunctionAuxLocation("getenv_return_location"));
-        return_location = specialFunctionAuxLocation("getenv_return_location");
+        return_location = pointerToStaticVariable("getenv_return_location");
     } else if (name == "getpid") {
      // Return nothing. No arguments.
         return_location = NULL;
@@ -3084,10 +3132,7 @@ PointsToAnalysis::Implementation::newSpecialFunctionContext(
      // structure, so we must assume that it will return the same pointer at
      // several call sites.
         ensureArgumentCount(arg_dummy, 1);
-        ensurePointerLocation(
-                specialFunctionAuxLocation("getpwuid_return_location"));
-        return_location
-            = specialFunctionAuxLocation("getpwuid_return_location");
+        return_location = pointerToStaticVariable("getpwuid_return_location");
     } else if (name == "gettimeofday") {
      // Ignore the arguments, return nothing.
         ensureArgumentCount(arg_dummy, 2);
@@ -3102,10 +3147,7 @@ PointsToAnalysis::Implementation::newSpecialFunctionContext(
     } else if (name == "localtime") {
      // This function returns a pointer to a statically-allocated structure.
         ensureArgumentCount(arg_dummy, 1);
-        ensurePointerLocation(
-                specialFunctionAuxLocation("localtime_return_location"));
-        return_location
-            = specialFunctionAuxLocation("localtime_return_location");
+        return_location = pointerToStaticVariable("localtime_return_location");
     } else if (name == "lseek") {
      // Ignore the arguments, return nothing.
         ensureArgumentCount(arg_dummy, 3);
@@ -3168,13 +3210,15 @@ PointsToAnalysis::Implementation::newSpecialFunctionContext(
      // returns the previous handler, which means that that handler must be
      // stored inside, and must be aliased to both the second argument and
      // the return value.
-        ensurePointerLocation(
-                specialFunctionAuxLocation("sighandler_location"));
+     // ensurePointerLocation(
+     //         specialFunctionAuxLocation("sighandler_location"));
         ensureArgumentCount(arg_dummy, 2);
-        ensurePointerLocation(arg_dummy->arg_locations[1]);
-        assign(specialFunctionAuxLocation("sighandler_location"),
-               arg_dummy->arg_locations[1]);
-        return_location = specialFunctionAuxLocation("sighandler_location");
+     // ensurePointerLocation(arg_dummy->arg_locations[1]);
+     // assign(specialFunctionAuxLocation("sighandler_location"),
+     //        arg_dummy->arg_locations[1]);
+     // return_location = specialFunctionAuxLocation("sighandler_location");
+        return_location = pointerToStaticVariable("sighandler_location");
+        assign(return_location, arg_dummy->arg_locations[1]);
     } else if (name == "sleep") {
      // Ignore the arguments, return nothing.
         ensureArgumentCount(arg_dummy, 1);
