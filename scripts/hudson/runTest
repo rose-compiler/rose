@@ -176,6 +176,7 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
  # Andreas suggests that the use of "tee" is not passing error through to Hudson.
  # make -j8 check 2>&1 | tee make_check_output.txt;
 	make -j8 check
+
  # Or perhaps: ( false || echo "testing" ) | tee make_check_output.txt
  # ( make -j8 check || echo "error detected in make check rule"; exit 1 ) 2>&1 | tee make_check_output.txt
    if [ $? -ne 0 ]  ; then
