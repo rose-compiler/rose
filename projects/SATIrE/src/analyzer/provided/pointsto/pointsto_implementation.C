@@ -718,7 +718,18 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
                 << "base location NULL in array ref exp on location "
                 << result->id << std::endl;
 #endif
-            result->pointTo(createLocation());
+            Location *representative = location_representative(result);
+            if (representative->baseLocation() != NULL)
+            {
+                result->pointTo(representative->baseLocation());
+            }
+            else
+            {
+                Location *base = createLocation(NULL);
+                result->pointTo(base);
+                if (representative != result)
+                    representative->pointTo(base);
+            }
         }
      // This is a dereference, so pending locations must be joined.
         join_pending_locations(result);
