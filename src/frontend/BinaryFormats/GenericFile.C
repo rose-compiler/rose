@@ -39,8 +39,8 @@ SgAsmGenericFile::parse(std::string fileName)
     set_name(fileName);
 #ifdef _MSC_VER
 #pragma message ("WARNING: MSVS des not support Linux open() function.")
-	printf ("ERROR: MSVS des not support Linux open() function.");
-	ROSE_ASSERT(false);
+    printf ("ERROR: MSVS des not support Linux open() function.");
+    ROSE_ASSERT(false);
 #else
     p_fd = open(fileName.c_str(), O_RDONLY);
 #endif
@@ -56,8 +56,8 @@ SgAsmGenericFile::parse(std::string fileName)
         throw FormatError("Could not allocate memory for binary file");
 #ifdef _MSC_VER
 #pragma message ("WARNING: MSVS des not support Linux read() function.")
-	printf ("ERROR: MSVS des not support Linux read() function.");
-	ROSE_ASSERT(false);
+    printf ("ERROR: MSVS des not support Linux read() function.");
+    ROSE_ASSERT(false);
     ssize_t nread = 0;
 #else
     ssize_t nread = read(p_fd, mapped, p_sb.st_size);
@@ -100,8 +100,7 @@ SgAsmGenericFile::~SgAsmGenericFile()
     }
     p_data.clear();
 
-    if ( p_fd >= 0 )
-	{
+    if ( p_fd >= 0 ) {
 #ifdef _MSC_VER
 #pragma message ("WARNING: MSVS des not support Linux close() function.")
         printf ("ERROR: MSVS des not support Linux close() function.");
@@ -109,7 +108,7 @@ SgAsmGenericFile::~SgAsmGenericFile()
 #else
         close(p_fd);
 #endif
-	}
+    }
 
  // Delete the pointers to the IR nodes containing the STL lists
     delete p_headers;
@@ -1215,14 +1214,14 @@ SgAsmGenericFile::fill_holes()
 
     /* Create the sections representing the holes */
     for (ExtentMap::iterator i=holes.begin(); i!=holes.end(); ++i) {
-      	SgAsmGenericSection *hole = new SgAsmGenericSection(this, NULL);
+        SgAsmGenericSection *hole = new SgAsmGenericSection(this, NULL);
         hole->set_offset((*i).first);
         hole->set_size((*i).second);
         hole->parse();
-      	hole->set_synthesized(true);
-      	hole->set_name(new SgAsmBasicString("hole"));
-      	hole->set_purpose(SgAsmGenericSection::SP_UNSPECIFIED);
-      	add_hole(hole);
+        hole->set_synthesized(true);
+        hole->set_name(new SgAsmBasicString("hole"));
+        hole->set_purpose(SgAsmGenericSection::SP_UNSPECIFIED);
+        add_hole(hole);
     }
 }
 
