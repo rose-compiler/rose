@@ -29,7 +29,7 @@ libroseBinaryFormats_la_SOURCES = \
    ExecDOS.C ExecNE.C ExecLE.C
 
 
-include_HEADERS = IntelPinSupport.h Loader.h LoaderELF.h LoaderELFObj.h LoaderPE.h MemoryMap.h
+include_HEADERS = DataConversion.h IntelPinSupport.h Loader.h LoaderELF.h LoaderELFObj.h LoaderPE.h MemoryMap.h
 
 # Make sure that this is distributed even if ROSE was not configured using: -with-IntelPin=<path>
 EXTRA_DIST = CMakeLists.txt IntelPinSupport.C

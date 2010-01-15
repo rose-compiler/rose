@@ -2107,6 +2107,8 @@ SgFile::processBackendSpecificCommandLineOptions ( const vector<string>& argvOri
    }
 
 
+/* This function suffers from the same problems as CommandlineProcessing::isExecutableFilename(), namely that the list of
+ * magic numbers used here needs to be kept in sync with changes to the binary parsers. */
 bool
 isBinaryExecutableFile ( string sourceFilename )
    {
@@ -2143,7 +2145,6 @@ isBinaryExecutableFile ( string sourceFilename )
 
       return returnValue;
     }
-
 
 bool
 isLibraryArchiveFile ( string sourceFilename )
@@ -2532,6 +2533,11 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
                               bool isBinaryExecutable = isBinaryExecutableFile(sourceFilename);
                               bool isLibraryArchive   = isLibraryArchiveFile(sourceFilename);
 
+                           // If -rose:binary was specified and the relatively simple-minded checks of isBinaryExecutableFile()
+                           // and isLibararyArchiveFile() both failed to detect anything, then assume this is an executable.
+                              if (!isBinaryExecutable && !isLibraryArchive)
+                                  isBinaryExecutable = true;
+                              
                            // printf ("isBinaryExecutable = %s isLibraryArchive = %s \n",isBinaryExecutable ? "true" : "false",isLibraryArchive ? "true" : "false");
                               if (isBinaryExecutable == true || isLibraryArchive == true)
                                  {
@@ -4016,6 +4022,12 @@ CommandlineProcessing::initExecutableFileSuffixList ( )
    }
 
 // DQ (1/16/2008): This function was moved from the commandling_processing.C file to support the debugging specific to binary analysis
+/* This function not only looks at the file name, but also checks that the file exists, can be opened for reading, and has
+ * specific values for its first two bytes. Checking the first two bytes here means that each time we add support for a new
+ * magic number in the binary parsers we have to remember to update this list also.  Another problem is that the binary
+ * parsers understand a variety of methods for neutering malicious binaries -- transforming them in ways that make them
+ * unrecognized by the operating system on which they're intended to run (and thus unrecongizable also by this function).
+ * Furthermore, CommandlineProcessing::isBinaryExecutableFile() contains similar magic number checking. [RPM 2010-01-15] */
 bool
 CommandlineProcessing::isExecutableFilename ( string name )
    {
@@ -4279,20 +4291,14 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
              {
             // printf ("In CommandlineProcessing::generateSourceFilenames(): Look for file names:  argv[%d] = %s length = %zu \n",counter,(*i).c_str(),(*i).size());
 
-            // bool foundSourceFile = false;
-
-            // printf ("isExecutableFilename(%s) = %s \n",(*i).c_str(),isExecutableFilename(*i) ? "true" : "false");
-            // if ( isSourceFilename(*i) == false && isObjectFilename(*i) == false && isValidFileWithExecutableFileSuffixes(*i) == true )
-            // if ( isSourceFilename(*i) == false && isObjectFilename(*i) == false && isExecutableFilename(*i) == true )
-               if ( isSourceFilename(*i) == false && ((isObjectFilename(*i) == false) || (binaryMode == true)) && isExecutableFilename(*i) == true )
-                  {
-                 // printf ("This is an executable file: *i = %s \n",(*i).c_str());
-                 // executableFileList.push_back(*i);
-                    if(isSourceCodeCompiler == false || binaryMode == true)
-                      sourceFileList.push_back(*i);
-                    goto incrementPosition;
-
-
+                 if (!isSourceFilename(*i) &&
+                     (binaryMode || !isObjectFilename(*i)) &&
+                     (binaryMode || isExecutableFilename(*i))) {
+                     // printf ("This is an executable file: *i = %s \n",(*i).c_str());
+                     // executableFileList.push_back(*i);
+                     if(isSourceCodeCompiler == false || binaryMode == true)
+                         sourceFileList.push_back(*i);
+                     goto incrementPosition;
                   }
 
             // PC (4/27/2006): Support for custom source file suffixes

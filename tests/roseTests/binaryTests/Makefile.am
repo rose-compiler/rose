@@ -22,7 +22,7 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIde
 # name of a file that is created when the test is successful, the later is a phony target.
 noinst_PROGRAMS = execFormatsTest testBinCFG testBinCG testElfStrtab testElfByteOrder testElfWordSize testElfSchulz \
 		testElfConstruct testPeConstruct shiftResizeSection findConstants disassemble testEtherInsns \
-		expandCoreDump functionBoundaries
+		expandCoreDump functionBoundaries rot13
 
 # Parses an executable to produce a dump file (*.dump), an assembly file (rose_*.s), and a new executable created by unparsing
 # the AST (*.new). The *.new file is typically identical to the original executable.
@@ -92,6 +92,9 @@ functionBoundaries_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 expandCoreDump_SOURCES=expandCoreDump.C
 expandCoreDump_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
+# Program that encodes/decodes data similar to ROT-13 but acceping binary data
+rot13_SOURCES=rot13.C
+
 ###############################################################################################################################
 # DEMOS
 #
@@ -158,6 +161,9 @@ demo_functionBoundaries: functionBoundaries demo_exapndCoreDump
 	@echo; echo; echo "Demo for $<";
 	@echo "The functionBoundaries tool prints information about what binary functions were detected and why."
 	./functionBoundaries $(BINARY_SAMPLES)/i686-test1.O3.bin
+
+demo_rot13: rot13
+	: no demo yet for rot13
 
 ###############################################################################################################################
 # TESTS
@@ -295,6 +301,9 @@ test_testEtherInsns.passed: testEtherInsns
 test_expandCoreDump.passed: expandCoreDump
 	@echo "expandCoreDump is not currently tested."
 
+test_rot13.passed: rot13
+	@echo "rot13 is not currently tested."
+
 # Tests for detecting the locations of functions, written this way for parallelism.
 test_functionBoundaries_1.passed: functionBoundaries $(BINARY_SAMPLES)/i686-test1.O0.bin test_disassemble.passed
 	./functionBoundaries $(BINARY_SAMPLES)/i686-test1.O0.bin >functionBoundaries_1.ans
@@ -310,6 +319,7 @@ test_functionBoundaries_3.passed: functionBoundaries $(BINARY_SAMPLES)/i686-test
 	touch $@
 test_functionBoundaries.passed: test_functionBoundaries_1.passed test_functionBoundaries_2.passed test_functionBoundaries_3.passed
 	touch $@
+
 
 ###############################################################################################################################
 # Miscellaneous....
