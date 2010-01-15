@@ -121,8 +121,8 @@ if test "x$ROSE_DUMP_HUDSON_ENV" = "xyes" ; then
    echo "export ROSE_TEST_RTED_PATH=$ROSE_TEST_RTED_PATH" >> HudsonEnvironment
    echo "export ROSE_TEST_QT_PATH=$ROSE_TEST_QT_PATH" >> HudsonEnvironment
 
-   echo "Finished dumping the Hudson environment...."
-   cat HudsonEnvironment
+   echo "Finished dumping the Hudson environment into: $PWD/HudsonEnvironment"
+   cat $PWD/HudsonEnvironment
 
    echo "Exiting after dumping the environment..."
    exit 1
