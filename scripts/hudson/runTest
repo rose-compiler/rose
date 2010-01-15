@@ -89,7 +89,8 @@ fi
 
 # Note that Boost 1.39 and greater require using "--with-boost-libdir"
 # CONFIGURE_FLAGS="--with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib --with-java=${ROSE_TEST_JAVA_PATH} --with-ROSE_LONG_MAKE_CHECK_RULE=yes --enable-dq-developer-tests"
-CONFIGURE_FLAGS="--with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib --with-java=${ROSE_TEST_JAVA_PATH} --with-ROSE_LONG_MAKE_CHECK_RULE=yes"
+# CONFIGURE_FLAGS="--with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib --with-java=${ROSE_TEST_JAVA_PATH} --with-ROSE_LONG_MAKE_CHECK_RULE=yes"
+CONFIGURE_FLAGS="--with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE_TEST_BOOST_PATH}/lib --with-java=${ROSE_TEST_JAVA_PATH} --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall"
 
 if test "x$ROSE_TEST_BUILD_STYLE" = "xfull" ; then
 
@@ -124,11 +125,8 @@ if test "x$ROSE_DUMP_HUDSON_ENV" = "xyes" ; then
    echo "Finished dumping the Hudson environment into: $PWD/HudsonEnvironment"
    cat $PWD/HudsonEnvironment
 
-   echo "Exiting after dumping the environment..."
-   exit 1
-else
-   echo "Exiting without dumping the environment..."
-   exit 1
+ # echo "Exiting after dumping the environment..."
+ # exit 1
 fi
 
 # Skip this for now but uncomment before checkin!
