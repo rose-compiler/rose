@@ -619,7 +619,39 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
          // when dereferencing a data pointer, make sure that it is indeed a
          // pointer location, i.e., that it has a base location
             if (a->baseLocation() == NULL)
-                a->pointTo(createLocation(NULL));
+            {
+                Location *representative = location_representative(a);
+                if (representative->baseLocation() != NULL)
+                {
+                    a->pointTo(representative->baseLocation());
+#if VERBOSE_DEBUG
+                    std::cout
+                        << "* dereferencing " << a->id
+                        << ": taking base location "
+                        << a->baseLocation()->id
+                        << " from representative "
+                        << representative->id
+                        << std::endl;
+#endif
+                }
+                else
+                {
+                    Location *base = createLocation(NULL);
+                    a->pointTo(base);
+                    if (a != representative)
+                      representative->pointTo(base);
+#if VERBOSE_DEBUG
+                    std::cout
+                        << "* dereferencing " << a->id
+                        << " with representative "
+                        << location_representative(a)->id
+                        << ": had to create new base location "
+                        << base->id
+                        << " for both"
+                        << std::endl;
+#endif
+                }
+            }
          // force pending joins: the dereference operation tells us that
          // this is indeed a pointer, so we must unify conditionally
          // assigned locations
@@ -712,7 +744,17 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
 
         if (result->collapseBase)
             collapseStructure(result->baseLocation());
+#if VERBOSE_DEBUG
+        std::cout
+            << "array access: dereference location " << result->id
+            << "... " << std::flush;
+#endif
         result = result->baseLocation();
+#if VERBOSE_DEBUG
+        std::cout
+            << "got result location " << result->id
+            << std::endl;
+#endif
         break;
 
     case V_SgAddOp:
@@ -4951,6 +4993,7 @@ PointsToAnalysis::Implementation::expressionLocation(SgExpression *expr)
     std::cout
         << "+-----" << std::endl
         << "result = " << (void *) result
+        << " (id " << (result != NULL ? result->id : 0) << ")"
         << ", baseLocation = "
         << (void *) (result != NULL ? result->baseLocation() : NULL)
         << std::endl;
