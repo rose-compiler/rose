@@ -24,15 +24,12 @@ info:
 	@echo "  Makefile include the template"
 	@echo
 
-temporary_builddir=/localtmp/vpavlu/build
 
 build/:
-	mkdir -p $(temporary_builddir)
-	ln -s $(temporary_builddir) build
+	mkdir -p build
 	
 build/$(ANALYSIS)/: build/
 	mkdir -p build/$(ANALYSIS)
-
 
 
 # -- common files need to be copied to builddir --
