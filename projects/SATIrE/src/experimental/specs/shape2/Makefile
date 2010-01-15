@@ -11,6 +11,8 @@
 all: nnh99shape srw98shape
 clean: nnh99clean srw98clean clean_
 
+MAKE=make CC="ccache gcc" CXX="ccache g++-4.2.0"
+
 # include Makefile_template for srw98 and nnh99
 nnh99shape:
 	@$(MAKE) -f Makefile_template shape ANALYSIS='nnh99' CARRIER='ShapeGraphSetLifted'
