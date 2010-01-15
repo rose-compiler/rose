@@ -107,7 +107,7 @@ echo "CONFIGURE_FLAGS = ${CONFIGURE_FLAGS}"
 
 # DQ (1/14/2010): Support for dumping the enviroment so that it 
 # can be easily sourced to permit Hudson tests to be reproduced.
-# ROSE_DUMP_HUDSON_ENV= "yes"
+ROSE_DUMP_HUDSON_ENV=yes
 if test "x$ROSE_DUMP_HUDSON_ENV" = "xyes" ; then
    echo "Dumping the Hudson environment...."
 #   rm -f HudsonEnvironment
