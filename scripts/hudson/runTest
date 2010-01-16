@@ -207,15 +207,19 @@ echo "Done with compile step"
 
 end_time_make_seconds="$(date +%s)"
 elapsed_make_time_seconds="$(expr $end_time_make_seconds - $start_time_make_seconds)"
-elapsed_make_time_minutes="$(expr $elapsed_make_time_seconds / 60)"
+
+# Note that if "$elapsed_make_time_seconds < 60" then it is an error to evaluate the expression "$elapsed_make_time_seconds / 60".
+# elapsed_make_time_minutes="$(expr $elapsed_make_time_seconds / 60)"
 # elapsed_make_time_modulo_seconds="$(expr $elapsed_make_time_seconds % 60)"
-if test $elapsed_make_time_seconds > 60; then
-   elapsed_make_time_minutes="$(expr ($elapsed_make_time_seconds) / 60)"
-else
-   elapsed_make_time_minutes="$elapsed_make_time_seconds"
-fi
+#if test $elapsed_make_time_seconds > 60; then
+#   elapsed_make_time_modulo_seconds="$(expr ($elapsed_make_time_seconds) / 60)"
+#else
+#   elapsed_make_time_modulo_seconds="$elapsed_make_time_seconds"
+#fi
+# elapsed_make_time_modulo_seconds="0"
 echo "***********************************************************************************************************"
-echo "Elapsed time for make test: $elapsed_make_time_minutes min $elapsed_make_time_modulo_seconds sec"
+# echo "Elapsed time for make test: $elapsed_make_time_minutes min $elapsed_make_time_modulo_seconds sec"
+echo "Elapsed time for make test: $elapsed_make_time_modulo_seconds sec"
 echo "***********************************************************************************************************"
 
 
@@ -252,13 +256,15 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
    end_time_make_check_seconds="$(date +%s)"
    elapsed_make_check_time_seconds="$(expr $end_time_make_check_seconds - $start_time_make_check_seconds)"
  # elapsed_make_check_time_minutes="$(expr $elapsed_make_check_time_seconds / 60)"
-   if test $elapsed_make_check_time_seconds > 60; then
-      elapsed_make_check_time_minutes="$(expr ($elapsed_make_check_time_seconds) / 60)"
-   else
-      elapsed_make_check_time_minutes="$elapsed_make_check_time_seconds"
-   fi
+ # if test $elapsed_make_check_time_seconds > 60; then
+ #    elapsed_make_check_time_minutes="$(expr ($elapsed_make_check_time_seconds) / 60)"
+ # else
+ #    elapsed_make_check_time_minutes="$elapsed_make_check_time_seconds"
+ # fi
+ # elapsed_make_check_time_minutes="0"
    echo "***********************************************************************************************************"
-   echo "Elapsed time for make check test: $elapsed_make_check_time_minutes min $elapsed_make_check_time_seconds sec"
+ # echo "Elapsed time for make check test: $elapsed_make_check_time_minutes min $elapsed_make_check_time_seconds sec"
+   echo "Elapsed time for make check test: $elapsed_make_check_time_seconds sec"
    echo "***********************************************************************************************************"
 
    echo "Done with make check step"
@@ -281,13 +287,15 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
 
    end_time_make_distcheck_seconds="$(date +%s)"
    elapsed_make_distcheck_time_seconds="$(expr $end_time_make_distcheck_seconds - $start_time_make_distcheck_seconds)"
-   if test $elapsed_make_distcheck_time_seconds > 60; then
-      elapsed_make_distcheck_time_minutes="$(expr ($elapsed_make_distcheck_time_seconds) / 60)"
-   else
-      elapsed_make_distcheck_time_minutes="$elapsed_make_distcheck_time_seconds"
-   fi
+ # if test $elapsed_make_distcheck_time_seconds > 60; then
+ #    elapsed_make_distcheck_time_minutes="$(expr ($elapsed_make_distcheck_time_seconds) / 60)"
+ # else
+ #    elapsed_make_distcheck_time_minutes="$elapsed_make_distcheck_time_seconds"
+ # fi
+ # elapsed_make_distcheck_time_minutes="0"
    echo "***********************************************************************************************************************"
-   echo "Elapsed time for make distcheck test: $elapsed_make_distcheck_time_minutes min $elapsed_make_distcheck_time_seconds sec"
+ # echo "Elapsed time for make distcheck test: $elapsed_make_distcheck_time_minutes min $elapsed_make_distcheck_time_seconds sec"
+   echo "Elapsed time for make distcheck test: $elapsed_make_distcheck_time_seconds sec"
    echo "***********************************************************************************************************************"
 fi
 
@@ -317,9 +325,11 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \); then
 
    end_time_make_docs_seconds="$(date +%s)"
    elapsed_make_docs_time_seconds="$(expr $end_time_make_docs_seconds - $start_time_make_docs_seconds)"
-   elapsed_make_docs_time_minutes="$(expr $elapsed_make_docs_time_seconds / 60)"
+ # elapsed_make_docs_time_minutes="$(expr $elapsed_make_docs_time_seconds / 60)"
+ # elapsed_make_docs_time_minutes="0"
    echo "********************************************************************************************************"
-   echo "Elapsed time for make docs test: $elapsed_make_docs_time_minutes min $elapsed_make_docs_time_seconds sec"
+ # echo "Elapsed time for make docs test: $elapsed_make_docs_time_minutes min $elapsed_make_docs_time_seconds sec"
+   echo "Elapsed time for make docs test: $elapsed_make_docs_time_seconds sec"
    echo "********************************************************************************************************"
 fi
 
@@ -329,6 +339,8 @@ fi
 
 end_time_seconds="$(date +%s)"
 elapsed_hudson_time_seconds="$(expr $end_time_seconds - $start_time_seconds)"
+
+# Note that this is always over 60 seconds so I think we should keep this.
 elapsed_hudson_time_minutes="$(expr $elapsed_seconds / 60)"
 echo "***********************************************************************************************"
 echo "Elapsed time for Hudson test: $elapsed_hudson_time_minutes min $elapsed_hudson_time_seconds sec"
