@@ -36,8 +36,8 @@ testC_API_SOURCES = testC-API.C
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
 
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
-VALGRIND = valgrind $(VALGRIND_OPTIONS)
-# VALGRIND =
+# VALGRIND = valgrind $(VALGRIND_OPTIONS)
+VALGRIND =
 
 test: libC-API.la testC-API$(EXEEXT) $(srcdir)/c-string.api $(srcdir)/c-string.c
 	$(VALGRIND) ./testC-API$(EXEEXT) --api $(srcdir)/c-string.api -rose:C_only -c $(srcdir)/c-string.c

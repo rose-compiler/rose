@@ -47,6 +47,7 @@ if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
 fi
 
 
+if test false; then
 # ************************************************************************
 # Force specific failures as part of testing a restricted subset of tests.
 # ************************************************************************
@@ -69,7 +70,7 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xcmake" ; then
    exit 1
 fi
 # ************************************************************************
-
+fi
 
 
 
@@ -218,8 +219,7 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
  # The distcheck rule builds a distribution and reruns all the tests; including the rules: install, installcheck
    echo "Starting make distcheck step"
 
-# FIXME: commented out make distcheck
-#  make -j8 distcheck
+   make -j8 distcheck
 
    if [ $? -ne 0 ]  ; then
         echo "fatal error during 'make distcheck'  , aborting..."
@@ -244,8 +244,7 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \) ; then
  # Running with parallelism here does not tend to be very helpful since 
  # doxygen is what has to run and it does not run in parallel.
 
-# FIXME: commented out make distcheck
-# make -j8 docs
+  make -j8 docs
    if [ $? -ne 0 ]  ; then
         echo "fatal error during 'make docs'  , aborting..."
         exit 3

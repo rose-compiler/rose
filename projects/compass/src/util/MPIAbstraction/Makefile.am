@@ -49,10 +49,10 @@ check-local:
 #	df /export
 if BACKEND_COMPILER_VERSION_OK_FOR_ROSE_TESTING
 	echo "Skipping test rule in ROSE/projects/compass/src.util/MPIAbstraction for GNU 4.2.x compiler"
-#	@$(MAKE) test
+	@$(MAKE) test
 else
 	echo "Skipping test rule in ROSE/projects/compass/src.util/MPIAbstraction for GNU 4.2.x compiler"
-#	@$(MAKE) test
+	@$(MAKE) test
 endif
 	@echo "*************************************************************************************************"
 	@echo "*** ROSE/projects/compass/util/MPIAbstraction: make check rule complete (terminated normally) ***"
