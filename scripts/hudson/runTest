@@ -198,7 +198,7 @@ if test "x$ROSE_SPEW_ANALYSIS" = "xyes" ; then
 else
    echo "Test compile step"
 
-   make -j16
+   /usr/bin/time make -j16
  # sleep 5
 
    if [ $? -ne 0 ]  ; then
@@ -247,7 +247,7 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
  # Andreas suggests that the use of "tee" is not passing error through to Hudson.
  # make -j8 check 2>&1 | tee make_check_output.txt;
 
-   make -j16 check
+   /usr/bin/time make -j16 check
  # sleep 5
 
  # Or perhaps: ( false || echo "testing" ) | tee make_check_output.txt
@@ -280,7 +280,7 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
    start_time_make_distcheck_seconds="$(date +%s)"
 
  # FIXME
-   make -j8 distcheck
+   /usr/bin/time make -j8 distcheck
  # sleep 5
 
    if [ $? -ne 0 ]  ; then
@@ -322,7 +322,7 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \); then
    start_time_make_docs_seconds="$(date +%s)"
 
  # FIXME
-   make -j8 docs
+   /usr/bin/time make -j8 docs
  # sleep 5
 
    if [ $? -ne 0 ]  ; then
@@ -357,8 +357,8 @@ echo "Elapsed time for Hudson test: $elapsed_hudson_time_minutes min $elapsed_hu
 echo "***********************************************************************************************"
 
 # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
-echo "Exiting as a test to simplify elapsed time tests."
-exit 1
+# echo "Exiting as a test to simplify elapsed time tests."
+# exit 1
 
 #end_time=`date`
 #echo "**************************************************************************************************"
