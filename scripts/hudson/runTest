@@ -197,7 +197,9 @@ if test "x$ROSE_SPEW_ANALYSIS" = "xyes" ; then
    echo "Done with compile time spew"
 else
    echo "Test compile step"
+
  # make -j16
+   sleep 5
 
  # if [ $? -ne 0 ]  ; then
  #      echo "fatal error during 'make'  , aborting..."
