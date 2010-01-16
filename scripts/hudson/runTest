@@ -201,10 +201,10 @@ else
  # make -j16
    sleep 5
 
- # if [ $? -ne 0 ]  ; then
- #      echo "fatal error during 'make'  , aborting..."
- #      exit 3
- # fi
+   if [ $? -ne 0 ]  ; then
+        echo "fatal error during 'make'  , aborting..."
+        exit 3
+   fi
 fi
 echo "Done with compile step"
 
@@ -247,6 +247,7 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
  # Andreas suggests that the use of "tee" is not passing error through to Hudson.
  # make -j8 check 2>&1 | tee make_check_output.txt;
  # make -j16 check
+   sleep 5
 
  # Or perhaps: ( false || echo "testing" ) | tee make_check_output.txt
  # ( make -j8 check || echo "error detected in make check rule"; exit 1 ) 2>&1 | tee make_check_output.txt
@@ -279,6 +280,7 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
 
  # FIXME
  # make -j8 distcheck
+   sleep 5
 
    if [ $? -ne 0 ]  ; then
         echo "fatal error during 'make distcheck'  , aborting..."
@@ -320,6 +322,8 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \); then
 
  # FIXME
  # make -j8 docs
+   sleep 5
+
    if [ $? -ne 0 ]  ; then
         echo "fatal error during 'make docs'  , aborting..."
         exit 3
