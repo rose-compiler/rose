@@ -81,7 +81,7 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xcmake" ; then
 	mkdir ROSE-build-cmake
 	cd ROSE-build-cmake
 	cmake .. -DBOOST_ROOT=${ROSE_TEST_BOOST_PATH} && \
-	make -j8
+	make -j16
       if [ $? -ne 0 ]  ; then
         echo "fatal error in cmake build , aborting..."
         exit 3
@@ -153,7 +153,7 @@ echo "Starting configure step"
 echo "Done with configure step"
 
 if test $ROSE_TEST_BUILD_STYLE = edg ; then
-	make -j8 upload_edg_binary && \
+	make -j16 upload_edg_binary && \
 	make -Csrc/frontend/CxxFrontend deploy_tarballs
       if [ $? -ne 0 ]  ; then
         echo "fatal error when build edg binaries , aborting..."
@@ -172,7 +172,12 @@ echo "Disk usage report #3 (to support debugging when Hudson has a problem):"
 # (where it was originally tested).
 echo "Starting compile step"
 if test false; then
-  make -j8 2>&1 | tee make_output.txt
+
+ # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
+   echo "It should be impossible to reach this branch (exiting in false branch)."
+   exit 1
+
+   make -j16 2>&1 | tee make_output.txt
 
 # Filter out the legitimate lines specific to compilation and linking (filter compile, links, and Qt specific tools).
    echo "Building the filtered_make_output.txt file"
@@ -184,7 +189,7 @@ if test false; then
    grep -n "Making all in " filtered_make_output.txt | ../scripts/checkMakeSpew.pl | tee makeSpewLineCount.txt
    echo "Done with compile time spew"
 else
-   make -j8
+   make -j16
    if [ $? -ne 0 ]  ; then
         echo "fatal error during 'make'  , aborting..."
         exit 3
@@ -206,7 +211,7 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
    echo "Starting make check step"
  # Andreas suggests that the use of "tee" is not passing error through to Hudson.
  # make -j8 check 2>&1 | tee make_check_output.txt;
-	make -j8 check
+	make -j16 check
 
  # Or perhaps: ( false || echo "testing" ) | tee make_check_output.txt
  # ( make -j8 check || echo "error detected in make check rule"; exit 1 ) 2>&1 | tee make_check_output.txt
@@ -221,7 +226,8 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
  # The distcheck rule builds a distribution and reruns all the tests; including the rules: install, installcheck
    echo "Starting make distcheck step"
 
-   make -j8 distcheck
+# FIXME
+#  make -j8 distcheck
 
    if [ $? -ne 0 ]  ; then
         echo "fatal error during 'make distcheck'  , aborting..."
@@ -246,7 +252,8 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \) ; then
  # Running with parallelism here does not tend to be very helpful since 
  # doxygen is what has to run and it does not run in parallel.
 
-  make -j8 docs
+# FIXME
+#  make -j8 docs
    if [ $? -ne 0 ]  ; then
         echo "fatal error during 'make docs'  , aborting..."
         exit 3
