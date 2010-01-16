@@ -37,7 +37,8 @@ test: libMPIAbstraction.la testMPIAbstraction$(EXEEXT) \
 	@echo "============================================================"
 	@echo "Trying to recognize MPI abstractions in 'is.c'..."
 	@echo "============================================================"
-	./testMPIAbstraction$(EXEEXT) $(TEST_RUN_FLAGS) -c $(srcdir)/testCodes/is.c || echo "error code returned is: $?; exit 1
+#	./testMPIAbstraction$(EXEEXT) $(TEST_RUN_FLAGS) -c $(srcdir)/testCodes/is.c || echo "error code returned is: $?"; exit 1
+	./testMPIAbstraction$(EXEEXT) $(TEST_RUN_FLAGS) -c $(srcdir)/testCodes/is.c
 	@echo "============================================================"
 	@echo "Compare to a grep-based search (functions only)..."
 	@echo "============================================================"
@@ -49,10 +50,10 @@ check-local:
 #	df /export
 if BACKEND_COMPILER_VERSION_OK_FOR_ROSE_TESTING
 	echo "Skipping test rule in ROSE/projects/compass/src.util/MPIAbstraction for GNU 4.2.x compiler"
-#	@$(MAKE) test
+	@$(MAKE) test
 else
 	echo "Skipping test rule in ROSE/projects/compass/src.util/MPIAbstraction for GNU 4.2.x compiler"
-#	@$(MAKE) test
+	@$(MAKE) test
 endif
 	@echo "*************************************************************************************************"
 	@echo "*** ROSE/projects/compass/util/MPIAbstraction: make check rule complete (terminated normally) ***"
