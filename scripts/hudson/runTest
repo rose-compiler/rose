@@ -210,7 +210,7 @@ end_time_make_seconds="$(date +%s)"
 elapsed_make_time_seconds="$(expr $end_time_make_seconds - $start_time_make_seconds)"
 
 # Note that if "$elapsed_make_time_seconds < 60" then it is an error to evaluate the expression "$elapsed_make_time_seconds / 60".
-# elapsed_make_time_minutes="$(expr $elapsed_make_time_seconds / 60)"
+elapsed_make_time_minutes="$(expr $elapsed_make_time_seconds / 60)"
 # elapsed_make_time_modulo_seconds="$(expr $elapsed_make_time_seconds % 60)"
 #if test $elapsed_make_time_seconds > 60; then
 #   elapsed_make_time_modulo_seconds="$(expr ($elapsed_make_time_seconds) / 60)"
@@ -219,8 +219,8 @@ elapsed_make_time_seconds="$(expr $end_time_make_seconds - $start_time_make_seco
 #fi
 # elapsed_make_time_modulo_seconds="0"
 echo "***********************************************************************************************************"
-# echo "Elapsed time for make test: $elapsed_make_time_minutes min $elapsed_make_time_modulo_seconds sec"
-echo "Elapsed time for make test: $elapsed_make_time_modulo_seconds sec"
+echo "Elapsed time for make test: $elapsed_make_time_minutes min $elapsed_make_time_modulo_seconds sec"
+# echo "Elapsed time for make test: $elapsed_make_time_modulo_seconds sec"
 echo "***********************************************************************************************************"
 
 
