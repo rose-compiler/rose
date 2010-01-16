@@ -196,13 +196,14 @@ if test "x$ROSE_SPEW_ANALYSIS" = "xyes" ; then
    grep -n "Making all in " filtered_make_output.txt | ../scripts/checkMakeSpew.pl | tee makeSpewLineCount.txt
    echo "Done with compile time spew"
 else
-#  make -j16
+   echo "Test compile step"
+ # make -j16
 
-   if [ $? -ne 0 ]  ; then
-        echo "fatal error during 'make'  , aborting..."
-        exit 3
-   fi
-fi 
+ # if [ $? -ne 0 ]  ; then
+ #      echo "fatal error during 'make'  , aborting..."
+ #      exit 3
+ # fi
+fi
 echo "Done with compile step"
 
 end_time_make_seconds="$(date +%s)"
