@@ -941,9 +941,11 @@ SgFunctionDeclaration* generatedOutlinedTask(SgNode* node, std::string& wrapper_
     SgStatement * body =  target->get_body();
     ROSE_ASSERT(body != NULL);
     // Save preprocessing info as early as possible, avoiding mess up from the outliner
-    AttachedPreprocessingInfoType save_buf1, save_buf2;
+    AttachedPreprocessingInfoType save_buf1, save_buf2, save_buf_inside;
     cutPreprocessingInfo(target, PreprocessingInfo::before, save_buf1) ;
     cutPreprocessingInfo(target, PreprocessingInfo::after, save_buf2) ;
+    // 1/15/2009, Liao, also handle the last #endif, which is attached inside of the target
+    cutPreprocessingInfo(target, PreprocessingInfo::inside, save_buf_inside) ;
      // generated an outlined function as the task
     std::string wrapper_name;
     ASTtools::VarSymSet_t syms;
@@ -983,6 +985,8 @@ SgFunctionDeclaration* generatedOutlinedTask(SgNode* node, std::string& wrapper_
     SageInterface::insertStatementAfter(func_call, s2); 
    // SageInterface::moveUpPreprocessingInfo(s2, target, PreprocessingInfo::after); 
    pastePreprocessingInfo(s2, PreprocessingInfo::after, save_buf2); 
+   // paste the preprocessing info with inside position to the outlined function's body
+   pastePreprocessingInfo(outlined_func->get_definition()->get_body(), PreprocessingInfo::inside, save_buf_inside); 
 
     // Postprocessing  to ensure the AST is legal 
     // Should not rely on this usually.
@@ -1075,7 +1079,7 @@ SgFunctionDeclaration* generatedOutlinedTask(SgNode* node, std::string& wrapper_
     SgExpression * parameter_cpyfn = NULL;
     SgExpression * parameter_arg_size = NULL;
     SgExpression * parameter_arg_align = NULL;
-    SgExpression * parameter_if_clause = buildIntVal(1);
+    SgExpression * parameter_if_clause =  NULL;
     SgExpression * parameter_untied = NULL;
     size_t parameter_count = syms.size();
     if ( parameter_count == 0) // No parameters to be passed at all
@@ -1095,11 +1099,16 @@ SgFunctionDeclaration* generatedOutlinedTask(SgNode* node, std::string& wrapper_
       parameter_arg_align = buildIntVal(sizeof(void*));
     }
 
-    // TODO better translation for if clause: should be a if statement here to evaluate the value at runtime
     if (hasClause(target, V_SgOmpIfClause))
     {
-      cerr<<"Warning: if clause is not yet implemented for omp task..."<<endl;
+      Rose_STL_Container<SgOmpClause*> clauses = getClause(target, V_SgOmpIfClause);
+      ROSE_ASSERT (clauses.size() ==1); // should only have one if ()
+      SgOmpIfClause * if_clause = isSgOmpIfClause (clauses[0]);
+      ROSE_ASSERT (if_clause->get_expression() != NULL);
+      parameter_if_clause = copyExpression(if_clause->get_expression());
     }
+    else
+      parameter_if_clause = buildIntVal(1);
 
     if (hasClause(target, V_SgOmpUntiedClause))
       parameter_untied = buildIntVal(1);
@@ -1894,8 +1903,11 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
      // The variable could be
      // 1. a function parameter: it is private to its enclosing parallel region
      // 2. a global variable: either a threadprivate variable or shared by default
+     // 3. is a variable declared within an orphaned function: it is private to its enclosing parallel region
      // ?? any other cases?? TODO
     {
+      SgFunctionDefinition* func_def = getEnclosingFunctionDefinition(start_stmt);
+      ROSE_ASSERT (func_def != NULL);
       if (isSgGlobal(var_scope))
       {
         set<SgInitializedName*> tp_vars = collectThreadprivateVariables();
@@ -1909,12 +1921,19 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
         // function parameters are private to its dynamically (non-lexically) nested parallel regions.
         result = false;
       }
-      else
+      else if (isAncestor(func_def,var_scope))
       {
+         // declared within an orphaned function, should be private
+          result = false;
+      } else
+      {
+#if 1
         cerr<<"Error: OmpSupport::isSharedInEnclosingConstructs() \n Unhandled variables within an orphaned construct:"<<endl;
         cerr<<"SgInitializedName name = "<<init_var->get_name().getString()<<endl;
         dumpInfo(init_var);
+        init_var->get_file_info()->display("tttt");
         ROSE_ASSERT(false);
+#endif        
       }
     }
     return result;

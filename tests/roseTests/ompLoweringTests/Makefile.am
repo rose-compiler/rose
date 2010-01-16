@@ -14,6 +14,7 @@ GOMP_PATH = @gomp_omp_runtime_library_path@
 C_TESTCODES_REQUIRED_TO_COMPILE = \
         barrier.c \
         dynamicChunk.c \
+	endif.c \
 	lastprivateOrphaned.c \
         master.c \
         nowait.c \
@@ -66,6 +67,7 @@ C_TESTCODES_REQUIRED_TO_RUN = \
         privatej.c \
         reduction.c \
         reduction2.c \
+	rice1.c \
         set_num_threads.c \
         single.c \
         subteam.c \

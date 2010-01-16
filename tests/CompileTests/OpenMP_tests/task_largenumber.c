@@ -8,6 +8,7 @@ void process (double input)
 {
   printf("processing %f by thread %d\n",input, omp_get_thread_num());
 }
+int cutoff =1000;
 int
 main ()
 {
@@ -18,7 +19,7 @@ main ()
       int i;
       printf("Using %d threads.\n",omp_get_num_threads());
       for (i = 0; i < LARGE_NUMBER; i++)
-        #pragma omp task
+        #pragma omp task if (i < cutoff)
          process (item[i]);
     }
   }
