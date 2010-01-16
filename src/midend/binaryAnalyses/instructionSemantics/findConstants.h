@@ -877,10 +877,10 @@ struct FindConstantsPolicy {
                 {}
             virtual void run() const {
                 LatticeElement<Len> res;
-                if (sel->get().name != 0 || sel->get().name == 0 && sel->get().offset == 1) {
+                if (sel->get().name != 0 || (sel->get().name == 0 && sel->get().offset == 1)) {
                     res.merge(ifTrue->get(), result->myName, result->def);
                 }
-                if (sel->get().name != 0 || sel->get().name == 0 && sel->get().offset == 0) {
+                if (sel->get().name != 0 || (sel->get().name == 0 && sel->get().offset == 0)) {
                     res.merge(ifFalse->get(), result->myName, result->def);
                 }
                 result->set(res);
@@ -1261,6 +1261,80 @@ public:
         };
         (new IC(result, a, b))->activate(); /*invokes the run() method above*/
         return result;
+    }
+};
+
+/** Instruction semantics policy for API-compliant function calls.  The main thing this does differently from
+ *  FindConstantsPolicy is that x86 CALL instructions initialize the register set and memory for the instruction at the next
+ *  address after the CALL assuming that the called function will honor the ABI specification and will return to the address
+ *  following the CALL. */
+class FindConstantsABIPolicy: public FindConstantsPolicy {
+public:
+    /* Returns the function containing the instruction. */
+    SgAsmFunctionDeclaration* find_function(SgAsmInstruction* insn) {
+        SgNode* n=insn;
+        while (n && !isSgAsmFunctionDeclaration(n))
+            n = n->get_parent();
+        return isSgAsmFunctionDeclaration(n);
+    }
+
+    /* Determines if the function contains an instruction at the specified address. */
+    bool function_contains_address(SgAsmFunctionDeclaration* f, rose_addr_t va) {
+        for (size_t i=0; i<f->get_statementList().size(); ++i) {
+            SgAsmBlock* block = isSgAsmBlock(f->get_statementList()[i]);
+            ROSE_ASSERT(block!=NULL);
+            for (size_t j=0; j<block->get_statementList().size(); ++j) {
+                SgAsmInstruction* insn = isSgAsmInstruction(block->get_statementList()[j]);
+                ROSE_ASSERT(insn!=NULL);
+                if (insn->get_address()==va)
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    /* Returns true if the function at the specified address complies with the ABI */
+    bool is_abi_compliant(rose_addr_t) {
+        return true; /* left as an exercise for later ;-) */
+    }
+
+    /* Determines if a CALL instruction in fact calls a function. Malware sometimes uses CALL instructions for unconditional
+     * jumps, in which case the instruction partitioner (Partitioner class) would have placed the call target in the same
+     * function as the CALL instruction (note that recursive calls are to the entry address of the function). */
+    bool is_abi_function_call(SgAsmInstruction* insn_) {
+        SgAsmx86Instruction* insn = isSgAsmx86Instruction(insn_);
+        ROSE_ASSERT(insn!=NULL);
+        if (insn->get_kind()!=x86_call && insn->get_kind()!=x86_farcall)
+            return false;
+        if (newIp->get().name!=0)
+            return true; /*if we don't know the call target then assume it's a function call*/
+        SgAsmFunctionDeclaration *caller = find_function(insn);
+        rose_addr_t callee = newIp->get().offset;
+        if (function_contains_address(caller, callee) && caller->get_entry_va()!=callee)
+            return false; /*intra-function branch*/
+        return is_abi_compliant(callee);
+    }
+
+    /* Augments superclass method so that the instruction following a CALL (provided this is really a function call and not
+     * just an intra-function branch) has a register set whose callee-preserved registers are actually reserved across the
+     * CALL instruction. We also preserve the stack pointer, frame pointer, and all memory. */
+    void finishInstruction(SgAsmInstruction* insn_) {
+        SgAsmx86Instruction* insn = isSgAsmx86Instruction(insn_);
+        ROSE_ASSERT(insn!=NULL);
+        if (is_abi_function_call(insn)) {
+            rose_addr_t call_va = insn->get_address();
+            rose_addr_t next_va = insn->get_address() + insn->get_raw_bytes().size();
+            RegisterSet rset;
+            rset.setToBottom();
+            rset.memoryWrites = rsets[call_va].memoryWrites;
+            rset.gpr[x86_gpr_bx] = rsets[call_va].gpr[x86_gpr_bx];
+            rset.gpr[x86_gpr_di] = rsets[call_va].gpr[x86_gpr_di];
+            rset.gpr[x86_gpr_si] = rsets[call_va].gpr[x86_gpr_si];
+            rset.gpr[x86_gpr_sp] = rsets[call_va].gpr[x86_gpr_sp];
+            rset.gpr[x86_gpr_bp] = rsets[call_va].gpr[x86_gpr_bp];
+            rsets[next_va].mergeIn(rset);
+        }
+        FindConstantsPolicy::finishInstruction(insn);
     }
 };
 

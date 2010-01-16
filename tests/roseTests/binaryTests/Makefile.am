@@ -4,7 +4,7 @@ SUBDIRS = SemanticVerification libraryIdentification_tests Dwarf_tests Pin_tests
 
 EXTRA_DIST = runTest.C arm-ctrlaltdel.ans runExecFormatsTest testShiftResizeSection.sh test_findConstants.ans \
 		test_disassemble.ans testSampleBinaries.sh testSampleBinaries.conf testFunctionDetection.pl \
-		functionBoundaries_1.ans functionBoundaries_2.ans functionBoundaries_3.ans
+		functionBoundaries_1.ans functionBoundaries_2.ans functionBoundaries_3.ans test_findConstantsABI.ans
 
 BINARY_SAMPLES = $(top_srcdir)/binaries/samples
 
@@ -22,7 +22,7 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIde
 # name of a file that is created when the test is successful, the later is a phony target.
 noinst_PROGRAMS = execFormatsTest testBinCFG testBinCG testElfStrtab testElfByteOrder testElfWordSize testElfSchulz \
 		testElfConstruct testPeConstruct shiftResizeSection findConstants disassemble testEtherInsns \
-		expandCoreDump functionBoundaries
+		expandCoreDump functionBoundaries findConstantsABI
 
 # Parses an executable to produce a dump file (*.dump), an assembly file (rose_*.s), and a new executable created by unparsing
 # the AST (*.new). The *.new file is typically identical to the original executable.
@@ -76,6 +76,10 @@ shiftResizeSection_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_L
 # Finds constant values and propagates them across instructions
 findConstants_SOURCES = findConstants.C
 findConstants_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+# Finds constant values and propagates them across instructions using an ABI
+findConstantsABI_SOURCES = findConstantsABI.C
+findConstantsABI_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 # Disassembles an executable according to various command-line switches.
 disassemble_SOURCES = disassemble.C
@@ -143,7 +147,11 @@ demo_findConstants: findConstants demo_shiftResizeSection
 	@echo; echo; echo "Demo for $<"; echo
 	./findConstants $(BINARY_SAMPLES)/i686-test1.O3.bin
 
-demo_disassemble: disassemble demo_findConstants
+demo_findConstantsABI: findConstantsABI demo_findConstants
+	@echo; echo; echo "Demo for $<"; echo
+	./findConstantsABI $(BINARY_SAMPLES)/i686-test1.O3.bin
+
+demo_disassemble: disassemble demo_findConstantsABI
 	@echo; echo; echo "Demo for $<"; echo
 	./disassemble -rose:disassembler_search following,immediate,words,allbytes,unused,nonexe,deadend,unknown $(BINARY_SAMPLES)/i686-test1.O0.bin
 	@echo "output has been dumped to i686-test1.O0.bin.dump"
@@ -270,6 +278,11 @@ test_findConstants.passed: findConstants
 	fi'
 	@touch $@
 
+test_findConstantsABI.passed: findConstantsABI
+	$(VALGRIND) ./findConstantsABI $(BINARY_SAMPLES)/i686-test1.O3.bin >test_findConstantsABI.ans
+	@if diff -u {$(srcdir),.}/test_findConstantsABI.ans; then :; else echo "Answer differs from expected"; exit 1; fi
+	@touch $@
+
 test_disassemble.passed: disassemble
 	$(VALGRIND) ./disassemble --quiet -rose:disassembler_search following,immediate,words,-allbytes,unused,nonexe,deadend,-unknown $(BINARY_SAMPLES)/i686-test1.O0.bin
 	@mv i686-test1.O0.bin.dump test_disassemble.ans
@@ -311,7 +324,7 @@ test_functionBoundaries_1.passed: functionBoundaries $(BINARY_SAMPLES)/i686-test
 	./functionBoundaries $(BINARY_SAMPLES)/i686-test1.O0.bin >functionBoundaries_1.ans
 	diff -u {$(srcdir),.}/functionBoundaries_1.ans
 	touch $@
-test_functionBoundaries_2.passed: functionBoundaries $(BINARY_SAMPLES)/i686-test1.O3.bin test_findConstants.passed
+test_functionBoundaries_2.passed: functionBoundaries $(BINARY_SAMPLES)/i686-test1.O3.bin test_findConstants.passed test_findConstantsABI.passed
 	./functionBoundaries $(BINARY_SAMPLES)/i686-test1.O3.bin >functionBoundaries_2.ans
 	diff -u {$(srcdir),.}/functionBoundaries_2.ans
 	touch $@
@@ -333,7 +346,7 @@ MOSTLYCLEANFILES = \
 	arm-poweroff.{new.dump,new.new} rose_arm-ctrlaltdel.new.s rose_arm-poweroff.new.s \
 	rose_schulz-sample{1,2}.so.new.s schulz-sample{1,2}.so.{new.dump,new.new} test_findConstants.ans \
 	test_disassemble.ans test_samples.{passed,out} \
-	test_functionBoundaries_{1,2,3}.passed functionBoundaries_{1,2,3}.ans
+	test_functionBoundaries_{1,2,3}.passed functionBoundaries_{1,2,3}.ans test_findConstantsABI.ans
 
 mostlyclean-local:
 	$(srcdir)/testSampleBinaries.sh --cleanup $(BINARY_SAMPLES) $(srcdir)/testSampleBinaries.conf
