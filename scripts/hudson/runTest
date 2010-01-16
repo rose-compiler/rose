@@ -349,8 +349,10 @@ elapsed_hudson_time_seconds="$(expr $end_time_seconds - $start_time_seconds)"
 
 # Note that this is always over 60 seconds so I think we should keep this.
 elapsed_hudson_time_minutes="$(expr $elapsed_hudson_time_seconds / 60)"
+elapsed_hudson_time_modulo_seconds="$(expr $elapsed_hudson_time_seconds % 60)"
 echo "***********************************************************************************************"
 echo "Elapsed time for Hudson test: $elapsed_hudson_time_minutes min $elapsed_hudson_time_seconds sec"
+echo "Elapsed time for Hudson test: $elapsed_hudson_time_minutes min $elapsed_hudson_time_modulo_seconds sec"
 echo "***********************************************************************************************"
 
 # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
