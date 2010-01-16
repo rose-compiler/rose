@@ -33,8 +33,8 @@ echo "Executing runTest for ROSE Project on: $machine_name start_time = $start_t
 echo "*****************************************************************************"
 
 # Provide a disk usage report to support debugging when Hudson has a problem.
-echo "Disk usage report #1 (to support debugging when Hudson has a problem):"
-#df /export
+# echo "Disk usage report #1 (to support debugging when Hudson has a problem):"
+# df /export
 
 if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
 	GCCROOT=/usr/apps/gcc/$ROSE_TEST_GCC_VERSION
@@ -89,9 +89,9 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xcmake" ; then
         exit 3
       fi
 
-# Provide a disk usage report to support debugging when Hudson has a problem.
-echo "Disk usage report #2 (to support debugging when Hudson has a problem):"
-#df /export
+ # Provide a disk usage report to support debugging when Hudson has a problem.
+ # echo "Disk usage report #2 (to support debugging when Hudson has a problem):"
+ # df /export
 
 	exit 0
 fi
@@ -166,8 +166,8 @@ if test $ROSE_TEST_BUILD_STYLE = edg ; then
 fi
 
 # Provide a disk usage report to support debugging when Hudson has a problem.
-echo "Disk usage report #3 (to support debugging when Hudson has a problem):"
-#df /export
+# echo "Disk usage report #3 (to support debugging when Hudson has a problem):"
+# df /export
 
 # Andreas suggests that the use of "tee" is not passing error through to Hudson.
 # DQ has confirmed that Andreas's point is true for bash but false for tcsh 
@@ -210,23 +210,22 @@ end_time_make_seconds="$(date +%s)"
 elapsed_make_time_seconds="$(expr $end_time_make_seconds - $start_time_make_seconds)"
 
 # Note that if "$elapsed_make_time_seconds < 60" then it is an error to evaluate the expression "$elapsed_make_time_seconds / 60".
-elapsed_make_time_minutes="$(expr $elapsed_make_time_seconds / 60)"
+# elapsed_make_time_minutes="$(expr $elapsed_make_time_seconds / 60)"
 # elapsed_make_time_modulo_seconds="$(expr $elapsed_make_time_seconds % 60)"
-#if test $elapsed_make_time_seconds > 60; then
+# if test $elapsed_make_time_seconds > 60; then
 #   elapsed_make_time_modulo_seconds="$(expr ($elapsed_make_time_seconds) / 60)"
-#else
+# else
 #   elapsed_make_time_modulo_seconds="$elapsed_make_time_seconds"
-#fi
+# fi
 # elapsed_make_time_modulo_seconds="0"
 echo "***********************************************************************************************************"
-echo "Elapsed time for make test: $elapsed_make_time_minutes min $elapsed_make_time_modulo_seconds sec"
-# echo "Elapsed time for make test: $elapsed_make_time_modulo_seconds sec"
+# echo "Elapsed time for make test: $elapsed_make_time_minutes min $elapsed_make_time_modulo_seconds sec"
+echo "Elapsed time for make test: $elapsed_make_time_modulo_seconds sec"
 echo "***********************************************************************************************************"
 
-
- # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
-   echo "Exiting as a test to simplify elapsed time tests."
-   exit 1
+# DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
+# echo "Exiting as a test to simplify elapsed time tests."
+# exit 1
 
 # Provide a disk usage report to support debugging when Hudson has a problem.
 # echo "Disk usage report #4 (to support debugging when Hudson has a problem):"
@@ -245,7 +244,7 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
    echo "Starting make check step"
  # Andreas suggests that the use of "tee" is not passing error through to Hudson.
  # make -j8 check 2>&1 | tee make_check_output.txt;
-#	make -j16 check
+ # make -j16 check
 
  # Or perhaps: ( false || echo "testing" ) | tee make_check_output.txt
  # ( make -j8 check || echo "error detected in make check rule"; exit 1 ) 2>&1 | tee make_check_output.txt
@@ -276,8 +275,8 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
 
    start_time_make_distcheck_seconds="$(date +%s)"
 
-# FIXME
-#  make -j8 distcheck
+ # FIXME
+ # make -j8 distcheck
 
    if [ $? -ne 0 ]  ; then
         echo "fatal error during 'make distcheck'  , aborting..."
@@ -301,8 +300,8 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
 fi
 
 # Provide a disk usage report to support debugging when Hudson has a problem.
-echo "Disk usage report #5 (to support debugging when Hudson has a problem):"
-#df /export
+# echo "Disk usage report #5 (to support debugging when Hudson has a problem):"
+# df /export
 
 # DQ (12/16/2009): This appears to work everywhere byt on the 4.3.2 systems, verify this.
 # Finally run the "make docs" test (on just the 4.2.4 version of gcc).
@@ -317,7 +316,8 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \); then
 
    start_time_make_docs_seconds="$(date +%s)"
 
-   make -j8 docs
+ # FIXME
+ # make -j8 docs
    if [ $? -ne 0 ]  ; then
         echo "fatal error during 'make docs'  , aborting..."
         exit 3
@@ -346,6 +346,10 @@ elapsed_hudson_time_minutes="$(expr $elapsed_seconds / 60)"
 echo "***********************************************************************************************"
 echo "Elapsed time for Hudson test: $elapsed_hudson_time_minutes min $elapsed_hudson_time_seconds sec"
 echo "***********************************************************************************************"
+
+# DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
+echo "Exiting as a test to simplify elapsed time tests."
+exit 1
 
 #end_time=`date`
 #echo "**************************************************************************************************"
