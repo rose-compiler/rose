@@ -4,7 +4,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = -I$(srcdir)/.. -I$(srcdir)/../../compassSupport $(ROSE_INCLUDES)
 
-# ==========================================================================
+#==========================================================================
 # Auxiliary library.
 
 if ROSE_MPI
@@ -33,8 +33,14 @@ LDADD = ../../compassSupport/libCompass.la \
 
 testC_API_SOURCES = testC-API.C
 
+VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
+
+# VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
+VALGRIND = valgrind $(VALGRIND_OPTIONS)
+# VALGRIND =
+
 test: libC-API.la testC-API$(EXEEXT) $(srcdir)/c-string.api $(srcdir)/c-string.c
-	./testC-API$(EXEEXT) --api $(srcdir)/c-string.api -rose:C_only -c $(srcdir)/c-string.c
+	$(VALGRIND) ./testC-API$(EXEEXT) --api $(srcdir)/c-string.api -rose:C_only -c $(srcdir)/c-string.c
 
 check-local:
 #	DQ (1/10/2009): Comment this out for now to test Hudson tests.
