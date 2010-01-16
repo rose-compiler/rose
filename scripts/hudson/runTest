@@ -23,9 +23,10 @@ echo "*******************************************************************"
 
 # Output the name of the machine where the build is being run (helpful for debugging).
 machine_name=`uname -n`
+start_time=`date`
 echo ""
 echo "****************************************************"
-echo "Executing runTest for ROSE Project on: $machine_name"
+echo "Executing runTest for ROSE Project on: $machine_name start_time = $start_time"
 echo "Build Disk Usage Report:"
 # df . || pwd
 echo "****************************************************"
@@ -171,7 +172,9 @@ echo "Disk usage report #3 (to support debugging when Hudson has a problem):"
 # DQ has confirmed that Andreas's point is true for bash but false for tcsh 
 # (where it was originally tested).
 echo "Starting compile step"
-if test false; then
+# if test false; then
+ROSE_SPEW_ANALYSIS=no
+if test "x$ROSE_SPEW_ANALYSIS" = "xyes" ; then
 
  # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
    echo "It should be impossible to reach this branch (exiting in false branch)."
@@ -265,3 +268,8 @@ fi
 echo "Disk usage report #6 (to support debugging when Hudson has a problem):"
 #df /export
 
+end_time=`date`
+echo ""
+echo "**************************************************************************************************"
+echo "Executing runTest for ROSE Project on: $machine_name start_time = $start_time end_time = $end_time"
+echo "**************************************************************************************************"
