@@ -220,7 +220,7 @@ elapsed_make_time_seconds="$(expr $end_time_make_seconds - $start_time_make_seco
 # elapsed_make_time_modulo_seconds="0"
 echo "***********************************************************************************************************"
 # echo "Elapsed time for make test: $elapsed_make_time_minutes min $elapsed_make_time_modulo_seconds sec"
-echo "Elapsed time for make test: $elapsed_make_time_modulo_seconds sec"
+echo "Elapsed time for make test: $elapsed_make_time_seconds sec"
 echo "***********************************************************************************************************"
 
 # DQ (1/14/2010): I am debugging the Hudson tests of failures on tux269.
