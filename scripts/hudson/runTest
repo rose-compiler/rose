@@ -104,7 +104,22 @@ CONFIGURE_FLAGS="--with-boost=${ROSE_TEST_BOOST_PATH} --with-boost-libdir=${ROSE
 
 # Setup the prefix directory so that an install tree can be generated 
 # for use with secondary testing of other projects using ROSE.
-CONFIGURE_PREFIX_DIR="${PWD}/ROSE-install"
+# We want the install tree for all the different versions of ROSE in the 
+# Hudson home directory so that any secondary tests will have it avaiable
+# for testing any platform.
+# Note that running make install is very quick so not a problem for a 
+# remotely mounted directory.
+# CONFIGURE_PREFIX_DIR="${PWD}/ROSE-install"
+MACHINE=`uname -m`
+if test "$MACHINE" = "i686" ; then
+  OS_MACHINE_LABEL=i686-linux
+else
+  OS_MACHINE_LABEL=amd64-linux
+fi
+
+# Define the platform specific install directory for ROSE (using same names as in rest of Hudson tests).
+# This directory will be built into the Hudson home directory.
+CONFIGURE_PREFIX_DIR="${HOME}/MasterInstallTree/ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install"
 echo "ROSE install tree will be: $CONFIGURE_PREFIX_DIR"
 
 if test "x$ROSE_TEST_BUILD_STYLE" = "xfull" ; then
