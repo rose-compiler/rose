@@ -83,11 +83,12 @@ if test "x$ROSE_TEST_BUILD_STYLE" = "xcmake" ; then
 	mkdir ROSE-build-cmake
 	cd ROSE-build-cmake
 	cmake .. -DBOOST_ROOT=${ROSE_TEST_BOOST_PATH} && \
-	make -j16
-      if [ $? -ne 0 ]  ; then
-        echo "fatal error in cmake build , aborting..."
-        exit 3
-      fi
+	make -j8
+
+   if [ $? -ne 0 ]  ; then
+      echo "fatal error in cmake build , aborting..."
+      exit 3
+   fi
 
  # Provide a disk usage report to support debugging when Hudson has a problem.
  # echo "Disk usage report #2 (to support debugging when Hudson has a problem):"
@@ -155,7 +156,7 @@ echo "Starting configure step"
 echo "Done with configure step"
 
 if test $ROSE_TEST_BUILD_STYLE = edg ; then
-	make -j16 upload_edg_binary && \
+	make -j8 upload_edg_binary && \
 	make -Csrc/frontend/CxxFrontend deploy_tarballs
       if [ $? -ne 0 ]  ; then
         echo "fatal error when build edg binaries , aborting..."
@@ -184,7 +185,7 @@ if test "x$ROSE_SPEW_ANALYSIS" = "xyes" ; then
    echo "It should be impossible to reach this branch (exiting in false branch)."
    exit 1
 
-   make -j16 2>&1 | tee make_output.txt
+   make -j8 2>&1 | tee make_output.txt
 
 # Filter out the legitimate lines specific to compilation and linking (filter compile, links, and Qt specific tools).
    echo "Building the filtered_make_output.txt file"
@@ -198,7 +199,7 @@ if test "x$ROSE_SPEW_ANALYSIS" = "xyes" ; then
 else
    echo "Test compile step"
 
-   make -j16
+   make -j8
  # sleep 5
 
    if [ $? -ne 0 ]  ; then
@@ -247,7 +248,7 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
  # Andreas suggests that the use of "tee" is not passing error through to Hudson.
  # make -j8 check 2>&1 | tee make_check_output.txt;
 
-   make -j16 check
+   make -j8 check
  # sleep 5
 
  # Or perhaps: ( false || echo "testing" ) | tee make_check_output.txt
@@ -280,7 +281,7 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
    start_time_make_distcheck_seconds="$(date +%s)"
 
  # FIXME
-   make -j16 distcheck
+   make -j8 distcheck
  # sleep 5
 
    if [ $? -ne 0 ]  ; then
@@ -322,7 +323,7 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \); then
    start_time_make_docs_seconds="$(date +%s)"
 
  # FIXME
-   make -j16 docs
+   make -j8 docs
  # sleep 5
 
    if [ $? -ne 0 ]  ; then
