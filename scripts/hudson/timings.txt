@@ -5,7 +5,16 @@ machines.  I have verified that a version of runTest that uses -j8 (as it used t
 pass all the tests.  The RTED "make -j16 check" problem should be easy to test separate 
 from Hudson.
 
-1/16/2010: Hudson timings
+Briefly, I improved the performance of running the Hudson tests by a total of about 10%,
+this was the best that I could do, without modifying ROSE directly.  It seems to
+work best if we let the slower machines (tux269, tux270) have a single Hudson
+executor, and the faster machines (tux282, tux283, and tux284) have 2 Hudson
+executors.  Since Tux268 is the only 32-bit Hudson slave it works best to have
+2 Hudson executors.
+
+Currently it takes 2 hours and 17 minutes to process a git checkin via Hudson.
+
+(1/16/2010) Hudson timings:
 
 These tests ran with only one job executing on each machine.
 
