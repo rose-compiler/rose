@@ -33,8 +33,14 @@ LDADD = ../../compassSupport/libCompass.la \
 
 testC_API_SOURCES = testC-API.C
 
+VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
+
+# VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
+# VALGRIND = valgrind $(VALGRIND_OPTIONS)
+VALGRIND =
+
 test: libC-API.la testC-API$(EXEEXT) $(srcdir)/c-string.api $(srcdir)/c-string.c
-	./testC-API$(EXEEXT) --api $(srcdir)/c-string.api -rose:C_only -c $(srcdir)/c-string.c
+	$(VALGRIND) ./testC-API$(EXEEXT) --api $(srcdir)/c-string.api -rose:C_only -c $(srcdir)/c-string.c
 
 check-local:
 #	DQ (1/10/2009): Comment this out for now to test Hudson tests.
@@ -43,12 +49,12 @@ check-local:
 #	Note that df will always exit 1 (I don't know why), so call "pwd" so it will exit 0.
 #	df /export
 if BACKEND_COMPILER_VERSION_OK_FOR_ROSE_TESTING
-	echo "Skipping test rule in ROSE/projects/compass/src.util/C-API for GNU 4.2.x compiler"
-#	@$(MAKE) test
+	echo "Running test rule in ROSE/projects/compass/src.util/C-API for GNU 4.2.x compiler"
+	@$(MAKE) test
 else
 #	echo "Calling test rule in ROSE/projects/compass/src.util/C-API (for all other non-4.2.x compilers)"
-	echo "Skipping test rule in ROSE/projects/compass/src.util/C-API for GNU 4.2.x compiler"
-#	@$(MAKE) test
+	echo "Running test rule in ROSE/projects/compass/src.util/C-API for GNU 4.2.x compiler"
+	@$(MAKE) test
 endif
 	@echo "********************************************************************************************"
 	@echo "*** ROSE/projects/compass/src.util/C-API: make check rule complete (terminated normally) ***"
