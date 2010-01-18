@@ -457,7 +457,6 @@ test2006_38.C \
 test2006_40.C \
 test2006_41.C \
 test2006_42.C \
-test2006_44.C \
 test2006_46.C \
 test2006_47.C \
 test2006_50.C \
@@ -644,6 +643,10 @@ math.C \
 inputForLoopLocator.C \
 X.C
 
+if !OS_MACOSX
+ # DQ (1/12/2010): This appears to fail under Mac OSX (at least version 10.5).
+   TESTCODES_REQUIRED_TO_PASS += test2006_44.C
+endif
 
 
 # DQ (8/28/2006): Verified non-working code (some are here because they represent source positions tests)

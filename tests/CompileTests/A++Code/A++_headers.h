@@ -12,7 +12,10 @@
 #endif
 
 #include <stdio.h> 
+/* DQ (1/9/2010): This is a problem for the Intel compiler! */
+#ifndef __INTEL_COMPILER
 #include <stdlib.h>
+#endif
 
 // We need these so we can make the function call that will sync the I/O!
 #if !USE_SAGE_PREPROCESSOR
