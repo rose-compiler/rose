@@ -37,7 +37,6 @@ test: libMPIAbstraction.la testMPIAbstraction$(EXEEXT) \
 	@echo "============================================================"
 	@echo "Trying to recognize MPI abstractions in 'is.c'..."
 	@echo "============================================================"
-#	./testMPIAbstraction$(EXEEXT) $(TEST_RUN_FLAGS) -c $(srcdir)/testCodes/is.c || echo "error code returned is: $?"; exit 1
 	./testMPIAbstraction$(EXEEXT) $(TEST_RUN_FLAGS) -c $(srcdir)/testCodes/is.c
 	@echo "============================================================"
 	@echo "Compare to a grep-based search (functions only)..."
@@ -45,16 +44,8 @@ test: libMPIAbstraction.la testMPIAbstraction$(EXEEXT) \
 	@grep -E --line-number 'MPI_[^ ]*[ ]*\(' $(srcdir)/testCodes/is.c
 
 check-local:
-	echo "Output disk usage as part of debugging..."
-#	Note that df will always exit 1 (I don't know why), so call "pwd" so it will exit 0.
-#	df /export
-if BACKEND_COMPILER_VERSION_OK_FOR_ROSE_TESTING
-	echo "Skipping test rule in ROSE/projects/compass/src.util/MPIAbstraction for GNU 4.2.x compiler"
+	echo "Running tests in ROSE/projects/compass/util/MPIAbstraction..."
 	@$(MAKE) test
-else
-	echo "Skipping test rule in ROSE/projects/compass/src.util/MPIAbstraction for GNU 4.2.x compiler"
-	@$(MAKE) test
-endif
 	@echo "*************************************************************************************************"
 	@echo "*** ROSE/projects/compass/util/MPIAbstraction: make check rule complete (terminated normally) ***"
 	@echo "*************************************************************************************************"
