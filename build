@@ -66,6 +66,15 @@ libtoolize_name=""
 test_libtoolize_version=""
 run_libtoolize=""
 
+# Output the name of the machine where the build is being run (helpful for debugging).
+machine_name=`uname -n`
+echo ""
+echo "******************************************"
+echo "Building ROSE Project on: $machine_name"
+echo "Build Disk Usage Report:"
+#df
+echo "******************************************"
+
 echo ""
 echo "******************************************"
 echo "Testing version of libtool (libtoolize)..."

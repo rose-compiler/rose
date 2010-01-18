@@ -49,7 +49,10 @@ TEST_TRANSLATOR = $(top_builddir)/tests/testTranslator $(ROSE_FLAGS)
 
 # This rule is run after automake's internal check rule (which we don't want to use)
 check-local:
+if USING_GNU_COMPILER
+#	This fails for the Intel icc or icpc compiler.
 	@$(MAKE) $(TEST_Objects)
+endif
 	@echo "*********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/A++Code: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************"
