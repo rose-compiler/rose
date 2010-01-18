@@ -105,7 +105,8 @@ Return: The number of value found.  If pname is not a list, the number of
   #endif
 #endif
 
-#include <boost/regex.h>
+// #include <boost/regex.h>
+#include <regex.h>
 #include <string.h>
 
 // DQ (11/4/2009): This is no longer required for modern C++ compilers!
