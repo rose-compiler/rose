@@ -398,3 +398,10 @@ echo "**************************************************************************
 #echo "**************************************************************************************************"
 #echo "Executing runTest for ROSE Project on: $machine_name start_time = $start_time end_time = $end_time"
 #echo "**************************************************************************************************"
+
+# Output the date and time of day at the end of the test (helpful for debugging).
+end_date=`date`
+echo ""
+echo "********************************************************************"
+echo "Executed runTest for ROSE Project on: $machine_name date = $end_date"
+echo "********************************************************************"
