@@ -80,7 +80,7 @@ Total throughput times for two hudson executors and running -j8 was: 2 hours 17 
    first (reordered the tests to put the "cmake" and "edg" last (however some are
    always run first so "cmake" and "edg" specific tests still provide quick feedback).
 
-   Note that one tux284, running two jobs at -j8 cause each to take about 118 minutes for
+   Note that on tux284, running two jobs at -j8 cause each to take about 118 minutes for
    the two of them, as opposed to 65-70 minutes each.  So doubling up the jobs on a 
    single Hudson slave is a little more efficent than running them separately unless Hudson
    has enough hardware to run them separately using -j16. But it does not make a lot of 
