@@ -42,17 +42,17 @@ set output 'diag.may.eps'
 set title "NNH99/SRW98 Comparison: May-Aliases"
 set ylabel "Number of May-Aliased Expressions"
 set yrange [ 0.00000 : ] noreverse nowriteback
-plot newhistogram, 'report.txt' using 6:xtic(1), '' using 12
+plot newhistogram, 'samp.txt' using 6:xtic(1), '' using 12
 
-set output 'diag.must.eps'
-set title "NNH99/SRW98 Comparison: Must-Aliases"
-set ylabel "Number of Must-Aliased Expressions"
-plot newhistogram, 'report.txt' using 7:xtic(1), '' using 13
-
-set output 'diag.time.analysis.eps'
-set title "NNH99/SRW98 Comparison: Analysis Runtime"
-set ylabel "Analysis Runtime (seconds)"
-plot newhistogram, 'report.txt' using 2:xtic(1), '' using 8
+#set output 'diag.must.eps'
+#set title "NNH99/SRW98 Comparison: Must-Aliases"
+#set ylabel "Number of Must-Aliased Expressions"
+#plot newhistogram, 'samp.txt' using 7:xtic(1), '' using 13
+#
+#set output 'diag.time.analysis.eps'
+#set title "NNH99/SRW98 Comparison: Analysis Runtime"
+#set ylabel "Analysis Runtime (seconds)"
+#plot newhistogram, 'samp.txt' using 2:xtic(1), '' using 8
 
 #set output 'diag.time.combined.eps'
 #set title "NNH99/SRW98 Comparison: Analysis Runtime"
@@ -60,17 +60,17 @@ plot newhistogram, 'report.txt' using 2:xtic(1), '' using 8
 #set style histogram rowstacked
 ##set yrange [ 0.00000 : 30.000 ] noreverse nowriteback
 #plot \
-#newhistogram "NNH99", 'report.txt' using 2:xtic(1), '' u 4, \
-#newhistogram "SRW98", 'report.txt' using 8:xtic(1), '' u 10
+#newhistogram "NNH99", 'samp.txt' using 2:xtic(1), '' u 4, \
+#newhistogram "SRW98", 'samp.txt' using 8:xtic(1), '' u 10
 
 
-set output 'diag.vs.may.eps'
-set title "NNH99 Compared to SRW98"
-set ylabel "Positive: NNH99 is better, Negative: NNh99 is worse"
-set yrange [ -10.000 : 10.000 ] noreverse nowriteback
-plot newhistogram, \
-'report.txt' using (column(12)-column(6)):xtic(1) title 6, \
-'report.txt' using (column(7)-column(13)):xtic(1) title 7, \
-'report.txt' using (column(8)-column(2)):xtic(1) title 2, \
-'report.txt' using (column(10)-column(4)):xtic(1) title 4
+#  set output 'diag.vs.may.eps'
+#  set title "NNH99 Compared to SRW98"
+#  set ylabel "Positive: NNH99 is better, Negative: NNh99 is worse"
+#  set yrange [ -10.000 : 10.000 ] noreverse nowriteback
+#  plot newhistogram, \
+#  'samp.txt' using (column(12)-column(6)):xtic(1) title 6, \
+#  'samp.txt' using (column(7)-column(13)):xtic(1) title 7, \
+#  'samp.txt' using (column(8)-column(2)):xtic(1) title 2, \
+#  'samp.txt' using (column(10)-column(4)):xtic(1) title 4
 

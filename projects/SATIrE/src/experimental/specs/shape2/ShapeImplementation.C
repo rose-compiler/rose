@@ -67,9 +67,15 @@ protected:
   }
 
   virtual void computeNumberOfNnhGraphs(SgStatement *stmt) {
-    o_SrwNnhPair gpair = o_extract_graphs(o_{DFI}_drop(get_statement_post_info(this->store,stmt)));
-    o_ShapeGraphList graphs = o_SrwNnhPair_select_2(gpair);
-    stats->addGraphCount(o_ShapeGraphList_length(graphs));
+    o_{DFI} sg = get_statement_post_info(this->store,stmt);
+
+    if (!o_{DFI}_istop(sg) && !o_{DFI}_isbottom(sg)) {
+      o_SrwNnhPair gpair = o_extract_graphs(o_{DFI}_drop(sg));
+      o_ShapeGraphList graphs = o_SrwNnhPair_select_2(gpair);
+      stats->addGraphCount(o_ShapeGraphList_length(graphs));
+    } else {
+      stats->addGraphCount(0);
+    }
   }
 
   ExprPairSet *statementPreMustAliases(SgStatement *stmt) {
