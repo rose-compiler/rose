@@ -547,7 +547,7 @@ struct X86InstructionSemantics {
 
     /* Virtual so that we can subclass X86InstructionSemantics and have an opportunity to override the translation of any
      * instruction. */
-    virtual void translate(SgAsmx86Instruction* insn) {
+    virtual void translate(SgAsmx86Instruction* insn) try {
         policy.writeIP(number<32>((unsigned int)(insn->get_address() + insn->get_raw_bytes().size())));
         X86InstructionKind kind = insn->get_kind();
         const SgAsmExpressionPtrList& operands = insn->get_operandList()->get_operands();
@@ -2444,6 +2444,10 @@ struct X86InstructionSemantics {
                 break;
             }
         }
+    } catch(const Exception&) {
+        throw;
+    } catch(...) {
+        throw Exception("instruction translation failed", insn);
     }
 
     void processInstruction(SgAsmx86Instruction* insn) {

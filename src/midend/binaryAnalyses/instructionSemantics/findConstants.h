@@ -990,6 +990,7 @@ struct FindConstantsPolicy {
 
     template <size_t Len1, size_t Len2>
     BINARY_COMPUTATION(unsignedDivide, Len1, Len2, Len1, {
+            if (0==b) throw std::string("division by zero");
             return (a / b);
         })
 
