@@ -12,6 +12,7 @@ debug_is_active("materialisation") = false;
 debug_is_active("assign")          = false;
 debug_is_active("conversion")      = false;
 debug_is_active("lowlevel")        = false;
+debug_is_active("alias")           = true;
 debug_is_active(level) = println("please set debug_is_active(", level, ")!") false;
 
 debug_print_str::str,str->snum;

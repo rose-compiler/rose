@@ -10,7 +10,7 @@
 #   - number of may aliases
 #   - number of must aliases
 #
-# usage:
+# usage: 
 #    ./measurements [OUTPUTDIR [REPORTNAME [CUSTOM_OPTIONS]]]
 #
 # results are written to %report<REPORTNAME>.txt

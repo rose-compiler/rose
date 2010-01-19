@@ -10,9 +10,10 @@ ShapeGraphSetLifted = flat(ShapeGraphSet)
 ENDDOMAIN
 
 UNIVERSAL
-option_kill_normalisation_temps : bool#
-option_kill_empty_graph         : bool#
-option_kill_unreachable_nodes   : bool#
+option_keep_tempvars          : bool#
+option_keep_helpvars          : bool#
+option_kill_unreachable_nodes : bool#
+option_aliases_commontail     : bool#
 
 option_omit_conversion_to_srw   : bool#
 
@@ -61,9 +62,6 @@ tassign_xsel_y::VariableId,VariableId,VariableId,ShapeGraphSet->ShapeGraphSet;
 #include "../common_normalisation.optla"
 #include "../common_debug.optla"
 
-//remove_empty_graph::ShapeGraphSet->ShapeGraphSet;
-//remove_empty_graph(g) = if g = {(({},{}),{})} then {(({},{}),{})} else if option_kill_empty_graph then g # (({},{}),{}) else g endif endif;
-
 extract_graphs::ShapeGraphSet->SrwNnhPair;
 extract_graphs(sg) =
   if option_omit_conversion_to_srw then
@@ -84,32 +82,32 @@ carrier_to_summarygraph(lifted_sg) = nnhSG_to_srwSG(drop(lifted_sg));
 
 assign_x_null::VariableId,ShapeGraphSet->ShapeGraphSet;
 assign_x_null(x,gset) =
-  let dummy = debug_print_str("lowlevel","x_null    ".varid_str(x)."\n"); in
+  //let dummy = debug_print_str("lowlevel","x_null    ".varid_str(x)."\n"); in
   enunion([fassign_x_null(x,g) !! g <-- gset]);
 
 assign_x_new::VariableId,ShapeGraphSet->ShapeGraphSet;
 assign_x_new(x,gset) =
-  let dummy = debug_print_str("lowlevel","x_new     ".varid_str(x)."\n"); in
+  //let dummy = debug_print_str("lowlevel","x_new     ".varid_str(x)."\n"); in
   enunion([fassign_x_new(x,g) !! g <-- gset]);
 
 assign_xsel_null::VariableId,VariableId,ShapeGraphSet->ShapeGraphSet;
 assign_xsel_null(x,sel,gset) =
-  let dummy = debug_print_str("lowlevel","xsel_null ".varid_str(x)."->".varid_str(sel)."\n"); in
+  //let dummy = debug_print_str("lowlevel","xsel_null ".varid_str(x)."->".varid_str(sel)."\n"); in
   enunion([fassign_xsel_null(x,sel,g) !! g <-- gset]);
 
 assign_x_y::VariableId,VariableId,ShapeGraphSet->ShapeGraphSet;
 assign_x_y(x,y,gset) =
-  let dummy = debug_print_str("lowlevel","x_y       ".varid_str(x)."\t".varid_str(y)."\n"); in
+  //let dummy = debug_print_str("lowlevel","x_y       ".varid_str(x)."\t".varid_str(y)."\n"); in
   enunion([fassign_x_y(x,y,g) !! g <-- gset]);
 
 assign_x_ysel::VariableId,VariableId,VariableId,ShapeGraphSet->ShapeGraphSet;
 assign_x_ysel(x,y,sel,gset) =
-  let dummy = debug_print_str("lowlevel","x_ysel     ".varid_str(x)."\t".varid_str(y)."->".varid_str(sel)."\n"); in
+  //let dummy = debug_print_str("lowlevel","x_ysel     ".varid_str(x)."\t".varid_str(y)."->".varid_str(sel)."\n"); in
   enunion([fassign_x_ysel(x,y,sel,g) !! g <-- gset]);
 
 assign_xsel_y::VariableId,VariableId,VariableId,ShapeGraphSet->ShapeGraphSet;
 assign_xsel_y(x,sel,y,gset) =
-  let dummy = debug_print_str("lowlevel","xsel_y     ".varid_str(x)."->".varid_str(sel)."\t".varid_str(y)."\n"); in
+  //let dummy = debug_print_str("lowlevel","xsel_y     ".varid_str(x)."->".varid_str(sel)."\t".varid_str(y)."\n"); in
   enunion([fassign_xsel_y(x,sel,y,g) !! g <-- gset]);
 
 enunion::ShapeGraphSetList->ShapeGraphSet;
@@ -251,6 +249,7 @@ materialise(x,y,sel,((S1,H1),is1) as G1) =
 
   // all ingoing edges (k,sel,{}) are ingoing edges after the materialisation.
   // (a) (y,sel,{}) can only become (y,sel,{x}) as the stmt was [x = y->sel]
+  // the old edge is CHANGED into the new edge, not added, to fulfill determinism requirement
   let H2ingoing_sgs_a = {Heap2G({new_edge})}; in
 
   // (b) but all other ingoing edges could point to {x} or {} after materialistion.

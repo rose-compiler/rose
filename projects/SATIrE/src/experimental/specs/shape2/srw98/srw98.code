@@ -10,9 +10,10 @@ ShapeGraphLifted = flat(ShapeGraph)
 ENDDOMAIN
 
 UNIVERSAL
-option_kill_normalisation_temps : bool#
-
-option_omit_conversion_to_nnh   : bool#
+option_keep_tempvars          : bool#
+option_keep_helpvars          : bool#
+option_omit_conversion_to_nnh : bool#
+option_aliases_commontail     : bool#
 
 GLOBAL
 globals: *VariableSymbolNT#
@@ -73,20 +74,21 @@ carrier_to_summarygraph(lifted_sg) = drop(lifted_sg);
 
 carrier_to_graphset::ShapeGraphLifted->ShapeGraphSet;
 carrier_to_graphset(lifted_sg) = srwSG_to_nnhSG_simplified(drop(lifted_sg));
+//carrier_to_graphset(lifted_sg) = srwSG_to_nnhSG(drop(lifted_sg)); // FIXME terminiert nicht unter 15min (bei 1200x130 scheitert das cartesian)
 
 // ----- begin simplified version for alias checks -----
 // generating the full set of all represented shape graphs is not feasible
 // in acceptable time. for the computation of alias sets it is also not
 // absolutely necessary:
 //   every edge could be NULL in an SRW graph -> there are no must aliases.
-//   it is therefore sufficient, to check for may_aliases/no_aliases
+//   it is therefore sufficient to check for may_aliases/no_aliases
 //
 // instead of generating the full set of shape graphs we only eliminate the
 // indeterminism from the graph, ie. all src,sel pairs that have more than
 // one target.
 // then one additional graph, the empty shape graph, is added to the set
 // of graphs on which alias testing is performed. this ensures that no must_aliases
-// are detected.
+// are included.
 
 // alias_performance_hack_1
 // 2009-04-29: lazy alias checking (alias_performance_hack_2)
@@ -101,21 +103,20 @@ srwSG_to_nnhSG_simplified(((S1,H1),IS1) as SG1) =
   let nnh_sgs = {sg !! sg <-- SG2_sgs, if is_compatible(sg)}; in
   nnh_sgs;
 
-gen_stack_edges_simplified::VarList,StackEdgeSet->ShapeGraphSet; 
+gen_stack_edges_simplified::VarList,StackEdgeSet->ShapeGraphSet;
 gen_stack_edges_simplified(    [],     _) = {};
-gen_stack_edges_simplified(var:Vs, edges) = 
+gen_stack_edges_simplified(var:Vs, edges) =
   let outedges_of_var = stackedges_by_var(var,edges); in
   let outedge_sgs     = {State2G({outedge}) !! outedge <-- outedges_of_var}; in
   cartesian(outedge_sgs, gen_stack_edges_simplified(Vs,edges));
 
 gen_heap_edges_simplified::NodeSelList,HeapEdgeSet->ShapeGraphSet;
 gen_heap_edges_simplified(            [],         _) = {};
-gen_heap_edges_simplified((src,sel):Rest,heap_edges) = 
+gen_heap_edges_simplified((src,sel):Rest,heap_edges) =
   let outedges    = heapedges_by_src_sel(src,sel,heap_edges); in
   let outedge_sgs = {Heap2G({e}) !! e <-- outedges}; in
   cartesian(outedge_sgs, gen_heap_edges_simplified(Rest,heap_edges));
 // ----- end -----
-
 
 
 // ----------------------------------------
@@ -235,8 +236,8 @@ compat_in((_,Y),(Y2,sel0,Z),(W,sel1,Z3),((Ev0,Es0),is0)) =
   && ((semeq(Y,W) && sel0=sel1) || (Z ? is0));
 
 compat_out::StackEdge,HeapEdge,HeapEdge,ShapeGraph->bool;
-compat_out((_,Y),(Y2,sel0,Z),(W,sel1,Z3),((Ev0,Es0),is0)) =
-  Y=Y2 && Z=Z3
+compat_out((_,Y),(Y2,sel0,Z),(Z1,sel1,W),((Ev0,Es0),is0)) =
+  Y=Y2 && Z=Z1
   && compatible3(Y,Z,W)
   && semneq(Z,W)
   && (semneq(Y,Z) || !(sel0=sel1));
@@ -249,11 +250,11 @@ compat_self((_,Y),(Y2,sel0,Z),(Z31,sel1,Z32),((Ev0,Es0),is0)) =
 
 aux_as::VariableId,VariableId,Node,VariableId,Node,ShapeGraph->HeapEdgeSet;
 aux_as(x,yp,Y,selp,Z,((Ev0,Es0),is0)) =
-  let newin = {(W,sel1,h(x,Z)) !! (W,sel1,Z3) <-- Es0,
-                if Z=Z3
+  let newin = {(W,sel1,h(x,Z)) !! (W,sel1,Z1) <-- Es0,
+                if Z=Z1
                 && compat_in((yp,Y),(Y,selp,Z),(W,sel1,Z),((Ev0,Es0),is0))};
-      newself = {(h(x,Z),sel1,h(x,Z)) !! (Z31,sel1,Z32) <-- Es0,
-                if Z=Z31 && Z=Z32
+      newself = {(h(x,Z),sel1,h(x,Z)) !! (Z21,sel1,Z22) <-- Es0,
+                if Z=Z21 && Z=Z22
                 && compat_self((yp,Y),(Y,selp,Z),(Z,sel1,Z),((Ev0,Es0),is0))};
       newout  = {(h(x,Z),sel1,W) !! (Z3,sel1,W) <-- Es0,
                 if Z=Z3
