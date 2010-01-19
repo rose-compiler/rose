@@ -5,6 +5,7 @@
 
 ANALYSIS='please set ANALYSIS and call from Makefile'
 CARRIER='please set CARRIER and call from Makefile'
+BUILD='please set BUILD and call from Makefile'
 
 ANALYSIS_MARKUP={ANALYSIS}
 CARRIER_MARKUP={DFI}
@@ -24,13 +25,11 @@ info:
 	@echo "  Makefile include the template"
 	@echo
 
-
-build/:
-	mkdir -p build
+$(BUILD)/:
+	mkdir -p $(BUILD)
 	
-build/$(ANALYSIS)/: build/
-	mkdir -p build/$(ANALYSIS)
-
+$(BUILD)/$(ANALYSIS)/: $(BUILD)/
+	mkdir -p $(BUILD)/$(ANALYSIS)
 
 # -- common files need to be copied to builddir --
 FILES_COMMON=attributes \
@@ -43,9 +42,9 @@ FILES_COMMON=attributes \
 
 
 define TEMPLATE_COMMON
-build/$(ANALYSIS)/$(1): $(1)
-	cp $(1) build/$(ANALYSIS)/
-	touch -c build/$(ANALYSIS)/main.C
+$(BUILD)/$(ANALYSIS)/$(1): $(1)
+	cp $(1) $(BUILD)/$(ANALYSIS)/
+	touch -c $(BUILD)/$(ANALYSIS)/main.C
 endef
 
 $(foreach file,$(FILES_COMMON),$(eval $(call TEMPLATE_COMMON,$(file))))
@@ -56,8 +55,8 @@ $(foreach file,$(FILES_COMMON),$(eval $(call TEMPLATE_COMMON,$(file))))
 FILES_CUSTOM=Makefile.custom
 
 define TEMPLATE_CUSTOM
-build/$(ANALYSIS)/$(1): $(ANALYSIS)/$(1)
-	cp $(ANALYSIS)/$(1) build/$(ANALYSIS)/
+$(BUILD)/$(ANALYSIS)/$(1): $(ANALYSIS)/$(1)
+	cp $(ANALYSIS)/$(1) $(BUILD)/$(ANALYSIS)/
 endef
 
 $(foreach file,$(FILES_CUSTOM),$(eval $(call TEMPLATE_CUSTOM,$(file))))
@@ -68,9 +67,9 @@ $(foreach file,$(FILES_CUSTOM),$(eval $(call TEMPLATE_CUSTOM,$(file))))
 FILES_SUBST=visualisation.c visualisation.h ShapeImplementation.C
 
 define TEMPLATE_SUBST
-build/$(ANALYSIS)/$(1): $(1)
+$(BUILD)/$(ANALYSIS)/$(1): $(1)
 	$(call FUNC_EXPAND,$$<,$$@)
-	touch -c build/$(ANALYSIS)/main.C
+	touch -c $(BUILD)/$(ANALYSIS)/main.C
 endef
 
 $(foreach file,$(FILES_SUBST),$(eval $(call TEMPLATE_SUBST,$(file))))
@@ -80,7 +79,7 @@ $(foreach file,$(FILES_SUBST),$(eval $(call TEMPLATE_SUBST,$(file))))
 
 # -- .optla is generated from .code file and all .optla--
 
-build/$(ANALYSIS)/$(ANALYSIS).optla: $(ANALYSIS)/$(ANALYSIS).code \
+$(BUILD)/$(ANALYSIS)/$(ANALYSIS).optla: $(ANALYSIS)/$(ANALYSIS).code \
               common.set \
               common_debug.optla \
 							common_tassign.optla \
@@ -93,19 +92,19 @@ build/$(ANALYSIS)/$(ANALYSIS).optla: $(ANALYSIS)/$(ANALYSIS).code \
   grep -v "prefix *: *$(ANALYSIS)" > $@
 
 # -- Makefile indicates wether newanalysis has already been run --
-build/$(ANALYSIS)/Makefile: build/$(ANALYSIS)/$(ANALYSIS).optla
-	pushd .; cd build/; newanalysis "$(ANALYSIS)"; popd
-	$(call FUNC_EXPAND,nnh99_main.C,build/$(ANALYSIS)/main.C)
+$(BUILD)/$(ANALYSIS)/Makefile: $(BUILD)/$(ANALYSIS)/$(ANALYSIS).optla
+	pushd .; cd $(BUILD)/; newanalysis "$(ANALYSIS)"; popd
+	$(call FUNC_EXPAND,nnh99_main.C,$(BUILD)/$(ANALYSIS)/main.C)
 
 
-shape: build/$(ANALYSIS)/ \
-       $(addprefix build/$(ANALYSIS)/,$(FILES_COMMON) $(FILES_CUSTOM) $(FILES_SUBST)) \
-			 build/$(ANALYSIS)/$(ANALYSIS).optla \
-			 build/$(ANALYSIS)/Makefile
-	make -C build/$(ANALYSIS)
+shape: $(BUILD)/$(ANALYSIS)/ \
+       $(addprefix $(BUILD)/$(ANALYSIS)/,$(FILES_COMMON) $(FILES_CUSTOM) $(FILES_SUBST)) \
+			 $(BUILD)/$(ANALYSIS)/$(ANALYSIS).optla \
+			 $(BUILD)/$(ANALYSIS)/Makefile
+	make -C $(BUILD)/$(ANALYSIS)
 
 clean:
-	[ ! -e "build/$(ANALYSIS)/" ] || make clean -C build/$(ANALYSIS)/
+	[ ! -e "$(BUILD)/$(ANALYSIS)/" ] || make clean -C $(BUILD)/$(ANALYSIS)/
 
 
 
