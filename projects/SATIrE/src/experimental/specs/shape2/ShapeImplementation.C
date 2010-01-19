@@ -107,12 +107,9 @@ protected:
           aliases->insert(pair);
         }
       }
-    } else if (opt->variantAliasesFromSummaryGraph()) {
-      // leave set empty, there are no must_aliases in
-      // srw-style summary graphs
     } else {
-      std::cout << "not variant for alias computation selected." << std::endl;
-      assert(0);
+      // leave set empty. the fast alias computation from the single
+      // srw-style summary graph representation can not find must_aliases
     }
 
     return aliases;
@@ -132,17 +129,13 @@ protected:
           aliases->insert(pair);
         }
       }
-    } else if (opt->variantAliasesFromSummaryGraph()) {
+    } else {
       for (i=candidate_pairs->begin(); i!=candidate_pairs->end(); i++) {
         pair = *i;
         if (o_is_may_alias_summarygraph(pair->first, pair->second, o_carrier_to_summarygraph(sg))) {
           aliases->insert(pair);
         }
       }
-
-    } else {
-      std::cout << "not variant for alias computation selected." << std::endl;
-      assert(0);
     }
     return aliases;
   }

@@ -61,11 +61,23 @@ public:
 
       } else if (optionMatch(argv[i], "--var-alias-from-graphset")) {
           scl->variantAliasesFromGraphSetOn();
-          scl->variantAliasesFromSummaryGraphOff();
       } else if (optionMatch(argv[i], "--var-alias-from-summary-graph")) {
-          scl->variantAliasesFromSummaryGraphOn();
           scl->variantAliasesFromGraphSetOff();
 
+      } else if (optionMatch(argv[i], "--var-keep-tempvars")) {
+          scl->variantKeepTempvarsOn();
+      } else if (optionMatch(argv[i], "--var-delete-tempvars")) {
+          scl->variantKeepTempvarsOff();
+
+      } else if (optionMatch(argv[i], "--var-keep-helpvars")) {
+          scl->variantKeepHelpvarsOn();
+      } else if (optionMatch(argv[i], "--var-delete-helpvars")) {
+          scl->variantKeepHelpvarsOff();
+
+      } else if (optionMatch(argv[i], "--var-aliases-common-tail")) {
+          scl->variantAliasesCommonTailOn();
+      } else if (optionMatch(argv[i], "--var-aliases-no-common-tail")) {
+          scl->variantAliasesCommonTailOff();
 
       } else {
           // pass argument to parent for parsing

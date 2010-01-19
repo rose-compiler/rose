@@ -59,7 +59,7 @@ assign(lhs,rhs,lifted_g) =
         let tmp = add_tmpvarid_like_expr(expr_at(lhs,0)); in
         [(OP_X_YSEL, [tmp,pick_arg(R,1),pick_arg(R,2)])] ++
         [(OP_XSEL_Y, [pick_arg(L,1),pick_arg(L,2),tmp])] ++
-        [(OP_X_NULL, [tmp])]
+        if option_keep_tempvars then [] else [(OP_X_NULL, [tmp])] endif
       endif;
 
     _ => print((R)!1!2) print(": ") error("unknown opcode\n");

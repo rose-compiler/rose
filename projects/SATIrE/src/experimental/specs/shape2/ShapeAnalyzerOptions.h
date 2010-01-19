@@ -61,7 +61,7 @@ public:
            + "\n"
              " Shape Analysis Based Aliases:\n" 
              "   --output-alias-text      print program with annotated alias pairs\n"
-             "   --output-alias-source    generate soure with annotated alias pairs\n"
+             "   --output-alias-source    generate source with annotated alias pairs\n"
              "   --annotate-aliases       annotate alias pairs in AST only\n"
              "   --alias-statistics=<FILENAME> write alias statistics fo FILE\n"
              "\n"
@@ -87,6 +87,10 @@ public:
              " Precision/Analysis Cost Tradeoffs\n"
              "   --var-alias-from-graphset compute aliases from deterministic graphset (precision)\n"
              "   --var-alias-from-summary-graph compute aliases from single graph (speed)\n"
+             "   --var-delete-tempvars    delete temporary variables if possible\n"
+             "   --var-keep-tempvars      keep temporary variables to relieve the summary node\n"
+             "   --var-aliases-common-tail use common-tail aliasing check (precision)\n"
+             "   --var-aliases-no-common-tail do not use common-tail aliasing check (speed)\n"
              ;
   }
 

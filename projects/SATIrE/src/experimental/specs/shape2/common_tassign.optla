@@ -32,13 +32,17 @@ tassign_xsel_new(x,sel,G) =
   let G1=G; in //FIXME
   let G2=assign_x_new(tmp,G1); in
   let G3=assign_xsel_y(x,sel,tmp,G2); in
-  let res = assign_x_null(tmp,G3); in
+  let res = if option_keep_helpvars then
+    G3
+  else
+    assign_x_null(tmp,G3)
+  endif; in
   //let dummy = debug_print_ShapeGraphSet("tassign","result",res); in
   res;
 
 tassign_x_y(x,y,G) =
   //let dummy = debug_print_str("tassign", "tassign_x_y(".varid_str(x).",".varid_str(y).")\n"); in
-  let res = 
+  let res =
   if x = y then
     G
   else
@@ -46,7 +50,11 @@ tassign_x_y(x,y,G) =
     let G1=assign_x_y(tmp,y,G); in
     let G2=assign_x_null(x,G1); in
     let G3=assign_x_y(x,tmp,G2); in
-    assign_x_null(tmp,G3)
+    if option_keep_helpvars then
+      G3
+    else
+      assign_x_null(tmp,G3)
+    endif
   endif; in
   //let dummy = debug_print_ShapeGraphSet("tassign","result",res); in
   res;
@@ -57,8 +65,12 @@ tassign_x_ysel(x,y,sel,G) =
   let G1=assign_x_ysel(tmp,y,sel,G); in
   let G2=assign_x_null(x,G1); in
   let G3=assign_x_y(x,tmp,G2); in
-  let res = assign_x_null(tmp,G3); in 
-  //let dummy = debug_print_ShapeGraphSet("tassign","result",res); in
+  let res = if option_keep_helpvars then
+    G3
+  else
+    assign_x_null(tmp,G3)
+  endif; in
+  //let dummy = debug_print_ShapeGraph("tassign","G",res); in
   res;
 
 
@@ -68,7 +80,11 @@ tassign_xsel_y(x,sel,y,G) =
   let G1=assign_x_y(tmp,y,G); in
   let G2=assign_xsel_null(x,sel,G1); in
   let G3=assign_xsel_y(x,sel,tmp,G2); in
-  let res=assign_x_null(tmp,G3); in
+  let res = if option_keep_helpvars then
+    G3
+  else
+    assign_x_null(tmp,G3)
+  endif; in
   //let dummy = debug_print_ShapeGraphSet("tassign","result",res); in
   res;
 
