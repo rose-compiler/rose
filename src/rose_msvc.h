@@ -137,6 +137,8 @@ inline T min(const T& a, const T& b)
 // DQ (12/28/2009): Moved this from where is was placed by Thomas in the ROSETTA grenerated code.
 // This simplifies the generated code to support splitting large generated files into smaller files.
 // tps (11/25/2009) : Added ssize_t for Windows
+// tps (01/04/2010) LONG_PTR is defined in windows.h
+#include <windows.h>
 typedef LONG_PTR ssize_t;
 
 #endif

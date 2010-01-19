@@ -3,6 +3,8 @@
 #ifndef ROSE_ASSEMBLER_X86_H
 #define ROSE_ASSEMBLER_X86_H
 
+#include "sage3.h"
+
 /** This class contains methods for assembling x86 instructions (SgAsmx86Instruction).
  *
  *  End users will generally not need to use the AssemblerX86 class directly. Instead, they will call Assembler::create() to

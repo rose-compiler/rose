@@ -4,6 +4,10 @@
 #ifndef ASTREVERSEPROCESSING_H
 #define ASTREVERSEPROCESSING_H
 
+// tps (01/08/2010) Added sage3basic since this doesnt compile under gcc4.1.2
+#include "sage3basic.h"
+#include "sage3.h"
+
 #include "AstProcessing.h"
 
 //////////////////////////////////////////////////////////////////////////////////////////
