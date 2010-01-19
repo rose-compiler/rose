@@ -257,15 +257,15 @@ test_shiftResizeSection.passed: shiftResizeSection
 # names. Therefore, when comparing the test output with the answer, we will change all constant names from "v[0-9]+" to
 # "vXXX".  Any problems in the semantic analysis should still be caught since they would presumably affect lots of
 # other output too.  The test is still sensitive to minor formatting changes in unparseInstruction().
+FIND_CONSTANTS_DIFF=diff <(sed "s/v[0-9][0-9]*/vXXX/g" test_findConstants.ans) \
+                         <(sed "s/v[0-9][0-9]*/vXXX/g" $(srcdir)/test_findConstants.ans)
 test_findConstants.passed: findConstants
 	$(VALGRIND) ./findConstants $(BINARY_SAMPLES)/i686-test1.O3.bin >test_findConstants.ans
-	@bash -c 'if diff \
-            <(sed "s/v[0-9][0-9]*/vXXX/g" test_findConstants.ans) \
-            <(sed "s/v[0-9][0-9]*/vXXX/g" $(srcdir)/test_findConstants.ans) >/dev/null; then \
+	@bash -c 'if $(FIND_CONSTANTS_DIFF); then \
           echo "*** $@: Result (test_findConstants.ans) differs from expected answer in $(srcdir)"; \
 	  echo "    (You should compare the files manually to verify the result, then copy it to"; \
-	  echo "     $(srcdir) if it looks OK.) Tail end of test result is:"; \
-	  head -n100 |sed "s/^/>    /"; \
+	  echo "     $(srcdir) if it looks OK.) Tail end of the difference is:"; \
+	  $(FIND_CONSTANTS_DIFF) |head -n100 |sed "s/^/findConstants> /"; \
 	  exit 1 ; \
 	fi'
 	@touch $@
