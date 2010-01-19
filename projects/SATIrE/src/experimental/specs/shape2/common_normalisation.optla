@@ -50,12 +50,16 @@ assign(lhs,rhs,lifted_g) =
         [(OP_X_Y,       [pick_arg(L,1),pick_arg(R,1)])] else
         [(OP_XSEL_Y,    [pick_arg(L,1),pick_arg(L,2),pick_arg(R,1)])] endif
         // remove temps as every def of a temp is only used once
-        ++ if is_tmpvarid(pick_arg(R,1)) then [(OP_X_NULL,[pick_arg(R,1)])] else [] endif;
+        ++ if is_tmpvarid(pick_arg(R,1)) && !option_keep_tempvars then
+             [(OP_X_NULL,[pick_arg(R,1)])]
+           else
+             []
+           endif;
 
     RHS_YSEL => if (L)!1!2 = LHS_X then
         [(OP_X_YSEL,    [pick_arg(L,1),pick_arg(R,1),pick_arg(R,2)])]
       else
-        // additional normalisation step when x.sel and y.sel meet 
+        // additional normalisation step when x.sel and y.sel meet
         let tmp = add_tmpvarid_like_expr(expr_at(lhs,0)); in
         [(OP_X_YSEL, [tmp,pick_arg(R,1),pick_arg(R,2)])] ++
         [(OP_XSEL_Y, [pick_arg(L,1),pick_arg(L,2),tmp])] ++

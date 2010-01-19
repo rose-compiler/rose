@@ -172,29 +172,34 @@ rec_transform_heapedges(in_Graph, startnodes, res_Graph) =
 // Auxiliary functions for graph conversion
 // ----------------------------------------
 
-// vpavlu 2009-03-29: cartesian product of ShapeGraphSets is the
-// generalisation of the candidate generation code used for the
-// materialisation
 cartesian::ShapeGraphSet,ShapeGraphSet -> ShapeGraphSet;
 cartesian({}, B) = B;
 cartesian( A,{}) = A;
-cartesian( A, B) = cartesian_l([sg_a !! sg_a <-- A],[sg_b !! sg_b <-- B]);
+cartesian( A, B) = { ((union(S1,S2),union(H1,H2)), union(is1,is2)) !! ((S1,H1),is1) <-- A, ((S2,H2),is2) <-- B};
 
-// AList x BList --> (a x BList) + (AList x BList)
-//               combine a(i) with each b in BList + recursion for remaining a(i+1..n)
-cartesian_l::ShapeGraphList,ShapeGraphList -> ShapeGraphSet;
-cartesian_l(  [], Bs) = {}; // done, we already had all combinations
-cartesian_l(a:As, Bs) = union(cartesian_r(a,Bs), cartesian_l(As,Bs));
-
-// a x BList --> (a x b) + (a x BList)
-//           combine a with b(i) + recursion for remaining b(i+1..n)
-cartesian_r::ShapeGraph,ShapeGraphList -> ShapeGraphSet;
-cartesian_r(a,   []) = {}; // done, we already had all combinations
-cartesian_r(a, b:Bs) = union({combSG(a,b)}, cartesian_r(a,Bs));
-
-// like comb, but for ShapeGraph not carrier
-combSG::ShapeGraph,ShapeGraph -> ShapeGraph;
-combSG( ((S1,H1),is1), ((S2,H2),is2) ) = ((union(S1,S2),union(H1,H2)), union(is1,is2));
+//  // vpavlu 2009-03-29: cartesian product of ShapeGraphSets is the
+//  // generalisation of the candidate generation code used for the
+//  // materialisation
+//  cartesian::ShapeGraphSet,ShapeGraphSet -> ShapeGraphSet;
+//  cartesian({}, B) = B;
+//  cartesian( A,{}) = A;
+//  cartesian( A, B) = cartesian_l([sg_a !! sg_a <-- A],[sg_b !! sg_b <-- B]);
+//  
+//  // AList x BList --> (a x BList) + (AList x BList)
+//  //               combine a(i) with each b in BList + recursion for remaining a(i+1..n)
+//  cartesian_l::ShapeGraphList,ShapeGraphList -> ShapeGraphSet;
+//  cartesian_l(  [], Bs) = {}; // done, we already had all combinations
+//  cartesian_l(a:As, Bs) = union(cartesian_r(a,Bs), cartesian_l(As,Bs));
+//  
+//  // a x BList --> (a x b) + (a x BList)
+//  //           combine a with b(i) + recursion for remaining b(i+1..n)
+//  cartesian_r::ShapeGraph,ShapeGraphList -> ShapeGraphSet;
+//  cartesian_r(a,   []) = {}; // done, we already had all combinations
+//  cartesian_r(a, b:Bs) = union({combSG(a,b)}, cartesian_r(a,Bs));
+//  
+//  // like comb, but for ShapeGraph not carrier
+//  combSG::ShapeGraph,ShapeGraph -> ShapeGraph;
+//  combSG( ((S1,H1),is1), ((S2,H2),is2) ) = ((union(S1,S2),union(H1,H2)), union(is1,is2));
 
 // reduces a list of operands with cartesian(_,_)
 map_cartesian::ShapeGraphSetList->ShapeGraphSet;
@@ -360,10 +365,11 @@ is_must_alias_graphset_lazy(a,b,g:grest) =
 // returns true if both expressions refer to the same node
 is_same_node::EnumAlias,Expression,Expression,ShapeGraph->bool;
 is_same_node(alias_type,expr_a,expr_b,(_,is0) as sg) =
+  //let dummy = println("is_same_node: ", alias_type, ",", expr_asttext(expr_a), ",", expr_asttext(expr_b)) false; in
 
   let null = {add_tmpvarid_like_expr(expr_a)}; in  // will be used to indicate "node not found" case
-  let a_nodes      = nodes_visited_by_expr(expr_a,sg,null);
-      b_nodes      = nodes_visited_by_expr(expr_b,sg,null);
+  let a_nodes      = nodes_visited_by_expr(expr_a,sg,null); // is reversed
+      b_nodes      = nodes_visited_by_expr(expr_b,sg,null); // is reversed
       a_sels       = reverse(selectors_visited_by_expr(expr_a));
       b_sels       = reverse(selectors_visited_by_expr(expr_b)); in
   let res = rec_is_same_node(alias_type, {} ? is0, a_sels, a_nodes, b_sels, b_nodes, null); in
@@ -395,15 +401,20 @@ rec_is_same_node(alias_type, summary_is_shared, a_sels, a:a_rest, b_sels, b:b_re
         // to the summary node POSSIBLY end at the same summary node
         true
       else
-        // FIXME! logic??
-        // a and b can still be aliases if the paths minus the
-        // last selector ended at the same node if the same
-        // selector was used on both paths
-        // (nb: while the selectors are identical on both paths, the elements in the selector- and nodelists can be dropped -- investigate: faster??)
-        if a_sels = [] || b_sels = [] || a_sels != b_sels then
-          false
+        if option_aliases_commontail then 
+          // a and b can still be aliases if the paths minus the
+          // last selector ended at the same node if the same
+          // selector was used on both paths
+          // (nb: while the selectors are identical on both paths, the elements
+          // in the selector- and nodelists can be dropped -- investigate: faster??)
+          if a_sels = [] || b_sels = [] || hd(a_sels) != hd(b_sels) then
+            false
+          else
+            rec_is_same_node(alias_type, summary_is_shared, tl(a_sels), a_rest, tl(b_sels), b_rest, null)
+          endif
         else
-          rec_is_same_node(alias_type, summary_is_shared, tl(a_sels), a_rest, tl(b_sels), b_rest, null)
+          // without the common tail improvement:
+          if Alias_Must = alias_type then false else true endif  // FIXME
         endif
       endif
     endif
@@ -536,7 +547,10 @@ hcd_foreach_rhs_stackedge(a, sels_a, edge_b:rest_b, sels_b, ((S,H),IS) as g) =
 has_common_destination::Node,VarList,Node,VarList,ShapeGraph -> bool;
 has_common_destination(a,           [], b,           [],               _) =
   //let dummy = println("x: a = b : ", a, " = ", b, " -> ", a=b) false; in
-  a = b;
+  //a = b && a != {};
+  a = b;  // two expressions leading to {} MAY be aliases in presence of a
+          // common tail. this test, however, is not aware of common tails,
+          // so the answer has to be a conservative one: may-alias, true.
 
 has_common_destination(a,           [], b, sel_b:rest_b, ((S,H),IS) as g) =
   //let dummy = println("x: has_common_dest(", a, ", [],", b, ",", sel_b, ":", rest_b, ",g)") false; in
