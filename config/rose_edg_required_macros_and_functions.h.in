@@ -537,7 +537,12 @@ was just float or double for complex<float> or complex<double>.
 
 /* gcc uses the C99 name _Complex_I in <complex.h>, but our EDG doesn't handle
    the GCC extension that they define it to. */
+#ifdef __INTEL_COMPILER
+/* #define _Complex_I __I__ */
+#else
 #define _Complex_I __I__
+#endif
+
 /* Disable inclusion of complex.h on Linux */
 #define _COMPLEX_H
 /* Disable inclusion of complex.h on Mac OS X */
@@ -638,4 +643,4 @@ __complex__ long double __builtin_cpowl(const __complex__ long double& __x,const
  */
 #define _GLIBCXX_EXTERN_TEMPLATE 0
 
-#endif // !ROSE_USE_NEW_EDG_INTERFACE
+#endif /* !ROSE_USE_NEW_EDG_INTERFACE */
