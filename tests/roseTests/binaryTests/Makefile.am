@@ -264,8 +264,9 @@ test_findConstants.passed: findConstants
             <(sed "s/v[0-9][0-9]*/vXXX/g" $(srcdir)/test_findConstants.ans) >/dev/null; then \
           echo "*** $@: Result (test_findConstants.ans) differs from expected answer in $(srcdir)"; \
 	  echo "    (You should compare the files manually to verify the result, then copy it to"; \
-	  echo "     $(srcdir) if it looks OK.)"; \
-	  exit 1 ;\
+	  echo "     $(srcdir) if it looks OK.) Tail end of test result is:"; \
+	  head -n100 |sed "s/^/>    /"; \
+	  exit 1 ; \
 	fi'
 	@touch $@
 
