@@ -263,7 +263,7 @@ namespace SATIrE {
                 Implementation::annotateProgram(program);
             }
 
-            void outputAnnotatedProgram(Program *program) {
+            void outputAnnotatedProgram(Program *program, bool prefixFiles) {
 
                 ShapeAnalyzerOptions *opt = (ShapeAnalyzerOptions*)program->options;
 

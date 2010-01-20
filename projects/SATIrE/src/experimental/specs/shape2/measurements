@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# runs srw and nnh on all testcases in tests/gnuplot/
+# runs srw and nnh on all testcases in tests/benchmark/
 # that end with .C
 # for each testcase these characteristics are recorded:
 #   - time for analysis [sec]
@@ -90,7 +90,7 @@ function run_analysis {
 
 
 echo
-echo "calling analyses to generate gnuplot diagrams"
+echo "calling analyses to collect benchmark data"
 echo
 
 # write comment to $report
@@ -116,7 +116,7 @@ dollar='$'
 tab='\\t'
 
 # write data rows to $report
-find tests/gnuplot -type f -name \*.C | sort | while IFS= read -r testcase; do
+find tests/benchmark -type f -name \*.C | sort | while IFS= read -r testcase; do
   for col in ${output_fields_per_row}; do
     eval echo -ne "${dollar}${col}${tab}" >> $outputdir/$report
   done
