@@ -2,7 +2,7 @@
 HEADER_NODE_PREDECLARATION_START
 
 #include <semaphore.h>
-#include "sage3.h"
+#include "sage3basic.h"
 
 
 
@@ -2055,6 +2055,7 @@ bool interproceduralControlFlowGraph = false;
 // ###############################
 // Start of source code for SgNode
 // ###############################
+
 
 // Support for global function type symbol table (moved to be static data pointer)
 // DQ (1/31/2006): Modified to build all types in the memory pools
