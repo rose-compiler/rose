@@ -188,6 +188,11 @@ SLA_FCN_BEGIN( sla_str, std::string ) {
 #endif
 #endif
   /* compile regular expression flind_re for flind */
+  //printf(" flind_re: %d %s    address: %d \n",flind_re.re_magic, flind_re, &flind_re);
+    //printf(" flind_exp: %s  \n",flind_exp.c_str());
+    //printf(" REG_EXTENDED: %d \n",REG_EXTENDED);
+    // errf != 0;
+    //    if (flind_re.re_magic==0)
   errf = regcomp(&flind_re, flind_exp.c_str(), REG_EXTENDED);
   if (errf != 0) {
     char buf[256];

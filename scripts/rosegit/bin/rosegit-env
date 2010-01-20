@@ -4,21 +4,22 @@
 #    Configures the environment for ROSE development and either runs the specified command or invokes a shell. The environment
 #    for the command or shell consists of:
 #
-#     ROSE_BLD: the absolute name of the top of the build directory
-#     ROSE_SRC: the absolute name of the top of the source directory
+#     ROSEGIT_BLD: the absolute name of the top of the build directory
+#     ROSEGIT_SRC: the absolute name of the top of the source directory
+#     ROSE_SRC:    the absolute name of the top of the ROSE source directory (same as ROSEGIT_SRC if compiling ROSE itself)
 #
 #    Various environment variables all beginning with "ROSEGIT_" (see defaults.conf)
 #     ROSEGIT_LOADED: non-empty if rosegit configuration files have been loaded
 #
 #    Shared library settings:
-#     LD_LIBRARY_PATH includes directories from various parts of the $ROSE_BLD hierarchy.
+#     LD_LIBRARY_PATH includes directories from various parts of the $ROSEGIT_BLD hierarchy.
 #
 # Usage: rosegit-env [SWITCHES] [COMMAND ARGS...]
 #    --blddir=DIR
-#         Use the specified directory as the top of the build tree rather than what's in $ROSE_BLD or guessing.
+#         Use the specified directory as the top of the build tree rather than what's in $ROSEGIT_BLD or guessing.
 #
 #    --srcdir=DIR
-#         Use the specified directory as the top of the source tree rather than what's in $ROSE_SRC or guessing.
+#         Use the specified directory as the top of the source tree rather than what's in $ROSEGIT_SRC or guessing.
 #
 #    --namespace=NS
 #         Use the specified three-letter namespace (lower case) to find configuration files.
@@ -36,10 +37,10 @@ config=
 while [ "$#" -gt 0 ]; do
     case "$1" in
 	--) shift; break;;
-	--blddir=*) ROSE_BLD="${1##--blddir=}"; shift;;
+	--blddir=*) ROSEGIT_BLD="${1##--blddir=}"; shift;;
 	--config=*) config="${1##--config=}"; shift;;
 	--namespace=*) ROSEGIT_NAMESPACE="${1##--namespace=}"; shift ;;
-	--srcdir=*) ROSE_SRC="${1##--srcdir=}"; shift;;
+	--srcdir=*) ROSEGIT_SRC="${1##--srcdir=}"; shift;;
 	-*) rosegit_die "unknown switch: $1";;
 	*) break;;
     esac
