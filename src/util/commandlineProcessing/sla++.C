@@ -105,8 +105,11 @@ Return: The number of value found.  If pname is not a list, the number of
   #endif
 #endif
 
+#if (_WIN32)
  #include <boost/regex.h>
-//#include <regex.h>
+#else
+ #include <regex.h>
+#endif
 #include <string.h>
 
 // DQ (11/4/2009): This is no longer required for modern C++ compilers!
