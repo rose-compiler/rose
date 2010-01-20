@@ -307,23 +307,25 @@ test_expandCoreDump.passed: expandCoreDump
 	@echo "expandCoreDump is not currently tested."
 
 test_rot13.passed: rot13
-	@echo "rot13 is not currently tested."
+	./rot13 --encode <$(BINARY_SAMPLES)/i686-test1.O0.bin |./rot13 --decode >test_rot13.ans
+	@if diff $(BINARY_SAMPLES)/i686-test1.O0.bin test_rot13.ans; then :; else echo "rot13 failure"; exit 1; fi
+	@touch $@
 
 # Tests for detecting the locations of functions, written this way for parallelism.
 test_functionBoundaries_1.passed: functionBoundaries $(BINARY_SAMPLES)/i686-test1.O0.bin test_disassemble.passed
 	./functionBoundaries $(BINARY_SAMPLES)/i686-test1.O0.bin >functionBoundaries_1.ans
 	diff -u {$(srcdir),.}/functionBoundaries_1.ans
-	touch $@
+	@touch $@
 test_functionBoundaries_2.passed: functionBoundaries $(BINARY_SAMPLES)/i686-test1.O3.bin test_findConstants.passed
 	./functionBoundaries $(BINARY_SAMPLES)/i686-test1.O3.bin >functionBoundaries_2.ans
 	diff -u {$(srcdir),.}/functionBoundaries_2.ans
-	touch $@
+	@touch $@
 test_functionBoundaries_3.passed: functionBoundaries $(BINARY_SAMPLES)/i686-test1.O3-stripped.bin
 	./functionBoundaries $(BINARY_SAMPLES)/i686-test1.O3-stripped.bin >functionBoundaries_3.ans
 	diff -u {$(srcdir),.}/functionBoundaries_3.ans
-	touch $@
+	@touch $@
 test_functionBoundaries.passed: test_functionBoundaries_1.passed test_functionBoundaries_2.passed test_functionBoundaries_3.passed
-	touch $@
+	@touch $@
 
 
 ###############################################################################################################################
@@ -336,7 +338,7 @@ MOSTLYCLEANFILES = \
 	a.out arm-ctrlaltdel.ans arm-ctrlaltdel.dump-{1,2,3} arm-ctrlaltdel.new.new \
 	arm-poweroff.{new.dump,new.new} rose_arm-ctrlaltdel.new.s rose_arm-poweroff.new.s \
 	rose_schulz-sample{1,2}.so.new.s schulz-sample{1,2}.so.{new.dump,new.new} test_findConstants.ans \
-	test_disassemble.ans test_samples.{passed,out} \
+	test_disassemble.ans test_samples.{passed,out} test_rot13.ans \
 	test_functionBoundaries_{1,2,3}.passed functionBoundaries_{1,2,3}.ans
 
 mostlyclean-local:
