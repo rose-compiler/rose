@@ -2,12 +2,13 @@
 #include "sage3basic.h"
 #include "rose_paths.h"
 #include <sys/stat.h>
-#include "BinaryLoader.h"
+#include "binaryLoader.h"
 
 #ifdef _MSC_VER
 #pragma message ("WARNING: wait.h header file not available in MSVC.")
 #else
 #include <sys/wait.h>
+#include "PHPFrontend.h"
 #endif
 
 #ifdef _MSC_VER

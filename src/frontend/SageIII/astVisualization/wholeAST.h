@@ -1,7 +1,7 @@
 #ifndef WHOLE_AST_H
 #define WHOLE_AST_H
 
-#include "ASTDotGeneration.h"
+#include "AstDOTGeneration.h"
 #include <string>
 #include <vector>
 

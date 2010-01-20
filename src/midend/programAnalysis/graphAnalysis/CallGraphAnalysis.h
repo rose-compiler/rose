@@ -6,7 +6,7 @@
 
 #include "RoseSrc_CallGraphAnalysis.h"
 #include "RoseBin_DotGraph.h"
-#include "RoseBin_GMLGraph.h"
+#include "RoseBin_GmlGraph.h"
 #include "GraphAlgorithms.h"
 #include "RoseBin_abstract.h"
 #include "RoseObj.h"

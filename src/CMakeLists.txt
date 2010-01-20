@@ -225,7 +225,7 @@ add_dependencies(rose_sage3 ROSETTA OMPPARSER ROSE_PREPROCESSOR rose_MSTL rose_r
 ########### next target ###############
 set(rose_LIB_SRCS dummyCppFileForLibrose.C      )
 
-add_library(rose STATIC ${rose_LIB_SRCS} )
+add_library(rose SHARED ${rose_LIB_SRCS} )
 #ROSE neeeds ${ROSETTA_HEADERS} and ${ROSETTA_SRC} to be build
 add_dependencies(rose ROSETTA OMPPARSER ROSE_PREPROCESSOR rose_sage3 ) 
 

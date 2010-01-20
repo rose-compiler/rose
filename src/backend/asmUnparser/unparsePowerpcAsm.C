@@ -10,6 +10,8 @@
 #include <iomanip>
 #include <boost/lexical_cast.hpp>
 #include "integerOps.h"
+#include "powerpcInstructionProperties.h"
+
 
 /****************************************************
  * resolve expression

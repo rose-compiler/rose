@@ -2,7 +2,7 @@
 #include "sage3basic.h"
 #include "Loader.h"
 #include "Disassembler.h"
-#include "BinaryLoader.h"
+#include "binaryLoader.h"
 
 #include "BinaryLoaderGeneric.h" // TODO remove
 using std::string;
