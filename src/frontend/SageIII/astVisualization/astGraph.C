@@ -2,7 +2,7 @@
 // used for testing ROSE infrastructure
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
-#include "AstGraph.h"
+#include "astGraph.h"
 using namespace std;
 
 
