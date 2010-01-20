@@ -425,14 +425,14 @@ AstTests::runAllTests(SgProject* sageProject)
 
   // DQ (6/26/2006): Test the parent pointers of IR nodes in memory pool.
      if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
-          cout << "Test parent's child pointers of IR nodes in memory pool started." << endl;
+          cout << "Test parents child pointers of IR nodes in memory pool started." << endl;
         {
           TimingPerformance timer ("AST IR node child pointers test:");
 
           TestChildPointersInMemoryPool::test();
         }
      if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
-          cout << "Test parent's child pointers of IR nodes in memory pool finished." << endl;
+          cout << "Test parents child pointers of IR nodes in memory pool finished." << endl;
 
 #if 0
   // DQ (3/7/2007): At some point I think I decided that this was not a valid test!
