@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# runs srw and nnh on all testcases in tests/benchmark/
+# runs srw and nnh on all testcases in tests/comparison/
 # that end with .C
 # for each testcase these characteristics are recorded:
 #   - time for analysis [sec]
@@ -17,7 +17,9 @@
 # CUSTOM_OPTIONS are passed through to the analyses to
 # influence the analyses' behaviour
 #
-
+# srw is always run with: --var-alias-from-summary-graph
+# nnh is always run with: --var-alias-from-graphset
+#
 
 cmdline="$0 $@"
 outputdir=$1
@@ -48,6 +50,12 @@ function run_analysis {
   ANALYSIS_NAME=srw98
   echo "$binary" | grep nnh99 > /dev/null 2>&1 && ANALYSIS_NAME=nnh99
 
+  if [ $ANALYSIS_NAME = 'srw98' ]; then
+    cmd="$cmd --var-alias-from-summary-graph"
+  else
+    cmd="$cmd --var-alias-from-graphset"
+  fi
+
   cmd="$binary $OPTIONS $testcase"
   echo -n $cmd
   time $cmd > $outputdir/tmp_output$setting 2>&1
@@ -76,6 +84,8 @@ function run_analysis {
     str=`cat $outputdir/tmp_output$setting | awk "/Annotate AST with alias pairs:/ {print \\$8, \\$12}"`
     time_alias=`echo $str | cut -f 1 -d ' '`
     mem_alias=`echo $str | cut -f 2 -d ' '`
+
+    exit
 
     may_alias=`cat $outputdir/tmp_alias_statistics$setting | awk "/sum\(post may_alias\):/ {print \\$3}"`
     must_alias=`cat $outputdir/tmp_alias_statistics$setting | awk "/sum\(post must_alias\):/ {print \\$3}"`
@@ -116,7 +126,7 @@ dollar='$'
 tab='\\t'
 
 # write data rows to $report
-find tests/benchmark -type f -name \*.C | sort | while IFS= read -r testcase; do
+find tests/comparison -type f -name \*.C | sort | while IFS= read -r testcase; do
   for col in ${output_fields_per_row}; do
     eval echo -ne "${dollar}${col}${tab}" >> $outputdir/$report
   done

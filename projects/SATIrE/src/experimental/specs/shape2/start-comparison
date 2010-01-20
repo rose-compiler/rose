@@ -1,0 +1,14 @@
+#!/bin/bash
+
+ANALYSIS_ARGS=" --pag-memsize-mb=2000 --pag-memsize-grow=30 --callstringlength=1"
+
+outputdir=comparison0
+i=0
+while [ -e $outputdir ]; do
+  i=$(( i + 1 ))
+  outputdir="comparison$i"
+done
+mkdir $outputdir
+
+./measurements-vs $outputdir _srw-sg_nnh-sgs_nokeep_tail_aliases  --var-delete-tempvars --var-aliases-common-tail "$ANALYSIS_ARGS"
+

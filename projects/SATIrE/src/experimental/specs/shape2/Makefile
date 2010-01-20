@@ -51,7 +51,7 @@ diagrams: report_fast_keep_aliases.txt \
 
 
 clean_:
-	-rm -rf $(BUILD)/* $(BUILD)
+	-rm -rf $(BUILD)
 	-rm -rf tmp_*
 	-rm -rf srw98.gdl nnh99.gdl
 	-rm -rf gen_*
