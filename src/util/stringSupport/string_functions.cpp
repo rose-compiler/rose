@@ -149,6 +149,7 @@ StringUtility::getAbsolutePathFromRelativePath ( const std::string & relativePat
    {
      string returnString;
      char resolved_path[MAXPATHLEN];
+     resolved_path[0] = '\0';
 
 #if ROSE_MICROSOFT_OS
      resolved_path[0] = '\0';
@@ -173,17 +174,23 @@ StringUtility::getAbsolutePathFromRelativePath ( const std::string & relativePat
   // ROSE_ASSERT(status != 0);
 	 printf ("In MSVC -- StringUtility::getAbsolutePathFromRelativePath(): relativePath = %s resolved_path = %s \n",relativePath.c_str(),(resolved_path[0] != '\0') ? resolved_path : "NULL STRING");
 
-	 const char* resultingPath = NULL;
+	 string resultingPath="";
 #else
   // DQ (9/3/2006): Note that "realpath()" 
   // can return an error if it processes a file or directory that does not exist.  This is 
   // a problem for include paths that are specified on the commandline and which don't exist; 
   // most compilers silently ignore these and we have to at least ignore them.
-     const char* resultingPath = realpath( relativePath.c_str(), resolved_path);
+	 //	 string resultingPath="";
+	 // tps (01/08/2010) : This implementation was incorrect as it mixed char* and string. Fixed it.
+	 char* rp = realpath( relativePath.c_str(), resolved_path);
+         string resultingPath = "";
+	 if (rp!=NULL)
+	   resultingPath = string(rp);
 #endif
 
+	 //printf("resultingPath == %s    printErrorIfAny == %d \n",resultingPath.c_str(),printErrorIfAny);
   // If there was an error then resultingPath is NULL, else it points to resolved_path.
-     if ( resultingPath == NULL )
+     if ( resultingPath.empty() == true ) //== NULL )
         {
        // DQ (9/4/2006): SgProject is not available within this code since it is used to compile 
        // ROSETTA before the IR nodes are defined!  So we should just comment it out.
@@ -203,15 +210,23 @@ StringUtility::getAbsolutePathFromRelativePath ( const std::string & relativePat
                printf ("Error: StringUtility::getAbsolutePathFromRelativePath incured an error in use of realpath() and is returning the input relativePath. \n");
              //}
 	    }
-          returnString = relativePath;
+	// printf("returnString0 == %s    relativePath == %s   resolved_path == %s \n",returnString.c_str(),relativePath.c_str(),resolved_path);
+		returnString = relativePath;
         }
        else
         {
        // "realpath()" worked so return the corrected absolute path.
+	// printf("returnString1 == %s    relativePath == %s   resolved_path == %s \n",returnString.c_str(),relativePath.c_str(),resolved_path);
           returnString = resolved_path;
         }
 
-     ROSE_ASSERT(returnString.empty() == false);
+#if ROSE_MICROSOFT_OS
+ //         returnString = "../"+returnString;
+#endif
+
+     //printf("returnString3 == %s    relativePath == %s   resolved_path == %s \n",returnString.c_str(),relativePath.c_str(),resolved_path);
+
+	 ROSE_ASSERT(returnString.empty() == false);
 
      return returnString;
    }
@@ -845,7 +860,7 @@ StringUtility::readFile ( const string& fileName )
      inputFile.open( fileName.c_str(), ios::binary );
      if (inputFile.good() != true)
 	{
-	  //printf ("ERROR: File not found -- %s \n",fileName.c_str());
+	  printf ("ERROR: File not found -- %s \n",fileName.c_str());
 	  //ROSE_ABORT();
             std::string s( "ERROR: File not found -- " );
             s += fileName;
@@ -893,12 +908,17 @@ StringUtility::readFileWithPos ( const string& fileName )
      char* buffer = NULL;
 
      string fullFileName = StringUtility::getAbsolutePathFromRelativePath(fileName);
-
+	 printf("Opening file : %s\n",fullFileName.c_str());
      ifstream inputFile;
-     inputFile.open( fileName.c_str(), ios::binary );
+	 // tps (01/05/2010) Changed to get this to work under Windows
+//#if ROSE_MICROSOFT_OS
+//     inputFile.open( fullFileName.c_str(), ios::binary );
+//#else
+	 inputFile.open( fileName.c_str(), ios::binary );
+//#endif
      if (inputFile.good() != true)
         {
-	    // printf ("ERROR: File not found -- %s \n",fileName.c_str());
+	     printf ("ERROR: File not found -- %s \n",fileName.c_str());
 	    // ROSE_ABORT();
           std::string s( "ERROR: File not found -- " );
           s += fileName;
