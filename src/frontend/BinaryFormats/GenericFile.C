@@ -1079,7 +1079,12 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
 void
 SgAsmGenericFile::dump(FILE *f) const
 {
-    fprintf(f, "File: \"%s\"\n", get_name().c_str());
+    /* Print only the basename (part after the last "/") because printing a full name interferes with the way we test ROSE */
+    std::string basename = get_name();
+    std::string::size_type slash = get_name().find_last_of("/");
+    if (slash!=std::string::nopos)
+        basename = get_name().substr(slash+1);
+    fprintf(f, "File: \"%s\"\n", basename.c_str());
     fprintf(f, "Encoding: %s\n", get_data_converter() ? get_data_converter()->name().c_str() : "none");
 
     SgAsmGenericSectionPtrList sections = get_sections();
