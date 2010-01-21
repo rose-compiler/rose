@@ -19,6 +19,14 @@ extern "C" {
 //
 //extern omp_rtl_enum rtl_type;
 
+//Runtime library initialization routine
+extern void XOMP_init (int argc, char ** argv);
+
+// Runtime library termination routine
+extern void XOMP_terminate (int exitcode);
+
+extern void XOMP_parallel_start (void (*func) (void *), void *data, unsigned numThread);
+extern void XOMP_parallel_end (void);
 
 extern void XOMP_barrier (void);
 extern void XOMP_critical_start (void** data); 
@@ -26,13 +34,23 @@ extern void XOMP_critical_end (void** data);
 extern bool XOMP_single(void);
 extern bool XOMP_master(void);
 
+extern void XOMP_atomic_start (void);
+extern void XOMP_atomic_end (void);
+
+// flush without variable list
+extern void XOMP_flush_all ();
+// omp flush with variable list, flush one by one, given each's start address and size
+extern void XOMP_flush_one (char * startAddress, int nbyte);
+
+
+// omp ordered directive
+extern void XOMP_ordered_start (void);
+extern void XOMP_ordered_end (void);
 /*
 extern void GOMP_barrier (void);
 
 extern void GOMP_critical_name_start (void **);
 extern void GOMP_critical_name_end (void **);
-extern void GOMP_atomic_start (void);
-extern void GOMP_atomic_end (void);
 
 extern bool GOMP_loop_static_start (long, long, long, long, long *, long *);
 extern bool GOMP_loop_dynamic_start (long, long, long, long, long *, long *);
@@ -127,11 +145,7 @@ extern bool GOMP_loop_ull_ordered_static_next (unsigned long long *,
 extern bool GOMP_loop_ull_ordered_dynamic_next (unsigned long long *,
                                                 unsigned long long *);
 
-extern void GOMP_ordered_start (void);
-extern void GOMP_ordered_end (void);
 
-extern void GOMP_parallel_start (void (*) (void *), void *, unsigned);
-extern void GOMP_parallel_end (void);
 
 extern void GOMP_task (void (*) (void *), void *, void (*) (void *, void *),
                        long, long, bool, unsigned);

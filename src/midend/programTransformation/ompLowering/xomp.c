@@ -55,6 +55,45 @@ static enum omp_rtl_enum get_rtl_type()
   return t;
 }
 
+
+//Runtime library initialization routine
+void XOMP_init (int argc, char ** argv)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#else   
+  _ompc_init (argc, argv);
+#endif    
+}
+
+// Runtime library termination routine
+void XOMP_terminate (int exitcode)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#else   
+  _ompc_terminate (exitcode);
+#endif    
+}
+
+void XOMP_parallel_start (void (*func) (void *), void *data, unsigned numThread)
+{
+
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+  GOMP_parallel_start (func, data, numThread);
+  func(data);
+#else   
+  _ompc_do_parallel (func, data); 
+#endif    
+}
+
+void XOMP_parallel_end (void)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+  GOMP_parallel_end ();
+#else   
+#endif    
+}
+
+
 void XOMP_barrier (void)
 {
 #ifdef GCC_GOMP_OPENMP_LIB_PATH  
@@ -108,5 +147,60 @@ extern bool XOMP_master(void)
 #else   
   return _ompc_is_master ();
 #endif    
+}
+
+void XOMP_atomic_start (void)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+  GOMP_atomic_start();
+#else   
+  _ompc_atomic_lock();
+#endif
+}
+
+void XOMP_atomic_end (void)
+{
+
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+   GOMP_atomic_end();
+#else   
+  _ompc_atomic_unlock();
+#endif
+}
+
+void XOMP_flush_all ()
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+  __sync_synchronize();
+#else   
+  _ompc_flush(0,0);
+#endif
+}
+
+void XOMP_flush_one(char * startAddress, int nbyte)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+  __sync_synchronize();
+#else   
+  _ompc_flush(startAddress,nbyte);
+#endif
+}
+
+void XOMP_ordered_start (void)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+   GOMP_ordered_start();
+#else   
+#endif
+
+}
+void XOMP_ordered_end (void)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+  GOMP_ordered_end();
+#else   
+
+#endif
+
 }
 

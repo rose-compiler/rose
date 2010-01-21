@@ -25,11 +25,12 @@ namespace OmpSupport
   //! The top level interface to translate OpenMP directives
   void lower_omp(SgSourceFile*);
 
+
   //! Insert #include "xxx.h", the interface of a runtime library to the compiler
   void insertRTLHeaders(SgSourceFile*);
 
-  //! Only needed for Omni
-  // int insertRTLinitAndCleanCode(SgProject* project); 
+  //! Insert runtime init and terminate routines to main() entry
+  void insertRTLinitAndCleanCode(SgSourceFile* ); 
 
   //! A driver to traverse AST trees and invoke individual translators for OpenMP constructs, (not in use)
   //! Postorder is preferred. 
