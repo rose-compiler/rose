@@ -3,6 +3,7 @@
 #include "rose_paths.h"
 #include <sys/stat.h>
 #include "binaryLoader.h"
+#include "Partitioner.h"
 
 #ifdef _MSC_VER
 #pragma message ("WARNING: wait.h header file not available in MSVC.")
