@@ -93,6 +93,229 @@ void XOMP_parallel_end (void)
 #endif    
 }
 
+void XOMP_task (void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
+                       long arg_size, long arg_align, bool if_clause, unsigned untied)
+{
+
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+// only gcc 4.4.x has task support
+#if __GNUC__ > 4 || \
+  (__GNUC__ == 4 && (__GNUC_MINOR__ > 4 || \
+                     (__GNUC_MINOR__ == 4 && \
+                      __GNUC_PATCHLEVEL__ >= 0)))
+
+ GOMP_task (fn, data, cpyfn, arg_size, arg_align, if_clause, untied);
+#endif
+
+#else
+#endif 
+}
+void XOMP_taskwait (void)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#if __GNUC__ > 4 || \
+  (__GNUC__ == 4 && (__GNUC_MINOR__ > 4 || \
+                     (__GNUC_MINOR__ == 4 && \
+                      __GNUC_PATCHLEVEL__ >= 0)))
+
+  GOMP_taskwait();
+#endif
+
+#else
+#endif 
+}
+
+// scheduler initialization, only meaningful used for OMNI
+void XOMP_loop_static_init(int lower, int upper, int stride, int chunk_size)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+  // empty operation for gomp
+#else   
+  _ompc_static_sched_init (lower, upper, stride, chunk_size);
+#endif    
+}
+
+void XOMP_loop_dynamic_init(int lower, int upper, int stride, int chunk_size)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#else   
+  _ompc_dynamic_sched_init (lower, upper, stride, chunk_size);
+#endif    
+}
+void XOMP_loop_guided_init(int lower, int upper, int stride, int chunk_size)
+{
+
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#else   
+  _ompc_guided_sched_init (lower, upper, stride, chunk_size);
+#endif    
+}
+
+void XOMP_loop_runtime_init(int lower, int upper, int stride)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+#else   
+  _ompc_runtime_sched_init (lower, upper, stride);
+#endif    
+}
+
+// if (start), 
+bool XOMP_loop_static_start (long start, long end, long incr, long chunk_size,long *istart, long *iend)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+  return GOMP_loop_static_start (start, end, incr, chunk_size, istart, iend);
+#else   
+  return _ompc_static_sched_next(istart, iend);
+#endif    
+}
+
+bool XOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size,long *istart, long *iend)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+  return GOMP_loop_dynamic_start (start, end, incr, chunk_size, istart, iend);
+#else   
+  return _ompc_dynamic_sched_next(istart, iend);
+#endif    
+
+}
+bool XOMP_loop_guided_start (long start, long end, long incr, long chunk_size,long *istart, long *iend)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+  return GOMP_loop_guided_start (start, end, incr, chunk_size, istart, iend);
+#else   
+  return _ompc_guided_sched_next(istart, iend);
+#endif    
+
+}
+bool XOMP_loop_runtime_start (long start, long end, long incr, long *istart, long *iend)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+  return GOMP_loop_runtime_start (start, end, incr, istart, iend);
+#else   
+  return _ompc_runtime_sched_next(istart, iend);
+#endif    
+
+}
+
+ // loop ordered start
+bool XOMP_loop_ordered_static_start (long start, long end, long incr, long chunk_size,long *istart, long *iend)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+  return GOMP_loop_ordered_static_start (start, end, incr, chunk_size, istart, iend);
+#else   
+#endif    
+}
+
+bool XOMP_loop_ordered_dynamic_start (long start, long end, long incr, long chunk_size,long *istart, long *iend)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+  return GOMP_loop_ordered_dynamic_start (start, end, incr, chunk_size, istart, iend);
+#else   
+#endif    
+}
+
+bool XOMP_loop_ordered_guided_start (long start, long end, long incr, long chunk_size,long *istart, long *iend)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+  return GOMP_loop_ordered_guided_start (start, end, incr, chunk_size, istart, iend);
+#else   
+#endif    
+}
+
+bool XOMP_loop_ordered_runtime_start (long start, long end, long incr, long *istart, long *iend)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+  return GOMP_loop_ordered_runtime_start (start, end, incr, istart, iend);
+#else   
+#endif    
+}
+
+
+// next
+bool XOMP_loop_static_next (long * l, long *u)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+  return GOMP_loop_static_next (l, u);
+#else   
+   return _ompc_static_sched_next(l, u);
+#endif    
+}
+
+bool XOMP_loop_dynamic_next (long *l, long *u)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+  return GOMP_loop_dynamic_next (l, u);
+#else   
+   return _ompc_dynamic_sched_next(l, u);
+#endif    
+}
+
+
+bool XOMP_loop_guided_next (long *l, long *u)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+  return GOMP_loop_guided_next (l, u);
+#else   
+   return _ompc_guided_sched_next(l, u);
+#endif    
+}
+
+
+bool XOMP_loop_runtime_next (long *l, long *u)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+  return GOMP_loop_runtime_next (l, u);
+#else   
+   return _ompc_runtime_sched_next(l, u);
+#endif    
+}
+
+
+bool XOMP_loop_ordered_static_next (long *a, long * b)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+  return XOMP_loop_ordered_static_next (a, b);
+#else   
+#endif    
+}
+
+bool XOMP_loop_ordered_dynamic_next (long * a, long * b)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+ return XOMP_loop_ordered_dynamic_next (a, b);
+#else   
+#endif    
+}
+bool XOMP_loop_ordered_guided_next (long *a, long *b)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+ return XOMP_loop_ordered_guided_next (a, b);
+#else   
+#endif    
+}
+bool XOMP_loop_ordered_runtime_next (long *a, long *b)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+ return XOMP_loop_ordered_runtime_next (a, b);
+#else   
+#endif    
+}
+
+void XOMP_loop_end (void)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+  GOMP_loop_end();
+#else   
+#endif    
+}
+
+void XOMP_loop_end_nowait (void)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+  GOMP_loop_end_nowait();
+#else   
+#endif    
+}
 
 void XOMP_barrier (void)
 {

@@ -28,6 +28,41 @@ extern void XOMP_terminate (int exitcode);
 extern void XOMP_parallel_start (void (*func) (void *), void *data, unsigned numThread);
 extern void XOMP_parallel_end (void);
 
+extern void XOMP_task (void (*) (void *), void *, void (*) (void *, void *),
+                       long, long, bool, unsigned);
+extern void XOMP_taskwait (void);
+
+// scheduler functions, union of runtime libary functions
+// empty body if not used by one
+// scheduler initialization, only meaningful used for OMNI
+extern void XOMP_loop_static_init(int lower, int upper, int stride, int chunk_size);
+extern void XOMP_loop_dynamic_init(int lower, int upper, int stride, int chunk_size);
+extern void XOMP_loop_guided_init(int lower, int upper, int stride, int chunk_size);
+extern void XOMP_loop_runtime_init(int lower, int upper, int stride);
+
+// if (start), 
+extern bool XOMP_loop_static_start (long, long, long, long, long *, long *);
+extern bool XOMP_loop_dynamic_start (long, long, long, long, long *, long *);
+extern bool XOMP_loop_guided_start (long, long, long, long, long *, long *);
+extern bool XOMP_loop_runtime_start (long, long, long, long *, long *);
+
+extern bool XOMP_loop_ordered_static_start (long, long, long, long, long *, long *);
+extern bool XOMP_loop_ordered_dynamic_start (long, long, long, long, long *, long *);
+extern bool XOMP_loop_ordered_guided_start (long, long, long, long, long *, long *);
+extern bool XOMP_loop_ordered_runtime_start (long, long, long, long *, long *);
+
+// next
+extern bool XOMP_loop_static_next (long *, long *);
+extern bool XOMP_loop_dynamic_next (long *, long *);
+extern bool XOMP_loop_guided_next (long *, long *);
+extern bool XOMP_loop_runtime_next (long *, long *);
+
+extern bool XOMP_loop_ordered_static_next (long *, long *);
+extern bool XOMP_loop_ordered_dynamic_next (long *, long *);
+extern bool XOMP_loop_ordered_guided_next (long *, long *);
+extern bool XOMP_loop_ordered_runtime_next (long *, long *);
+
+
 extern void XOMP_barrier (void);
 extern void XOMP_critical_start (void** data); 
 extern void XOMP_critical_end (void** data);
@@ -37,6 +72,9 @@ extern bool XOMP_master(void);
 extern void XOMP_atomic_start (void);
 extern void XOMP_atomic_end (void);
 
+extern void XOMP_loop_end (void);
+extern void XOMP_loop_end_nowait (void);
+   // --- end loop functions ---
 // flush without variable list
 extern void XOMP_flush_all ();
 // omp flush with variable list, flush one by one, given each's start address and size
@@ -52,26 +90,6 @@ extern void GOMP_barrier (void);
 extern void GOMP_critical_name_start (void **);
 extern void GOMP_critical_name_end (void **);
 
-extern bool GOMP_loop_static_start (long, long, long, long, long *, long *);
-extern bool GOMP_loop_dynamic_start (long, long, long, long, long *, long *);
-extern bool GOMP_loop_guided_start (long, long, long, long, long *, long *);
-extern bool GOMP_loop_runtime_start (long, long, long, long *, long *);
-
-extern bool GOMP_loop_ordered_static_start (long, long, long, long, long *, long *);
-extern bool GOMP_loop_ordered_dynamic_start (long, long, long, long, long *, long *);
-extern bool GOMP_loop_ordered_guided_start (long, long, long, long, long *, long *);
-extern bool GOMP_loop_ordered_runtime_start (long, long, long, long *, long *);
-
-extern bool GOMP_loop_static_next (long *, long *);
-extern bool GOMP_loop_dynamic_next (long *, long *);
-extern bool GOMP_loop_guided_next (long *, long *);
-extern bool GOMP_loop_runtime_next (long *, long *);
-
-extern bool GOMP_loop_ordered_static_next (long *, long *);
-extern bool GOMP_loop_ordered_dynamic_next (long *, long *);
-extern bool GOMP_loop_ordered_guided_next (long *, long *);
-extern bool GOMP_loop_ordered_runtime_next (long *, long *);
-
 extern void GOMP_parallel_loop_static_start (void (*)(void *), void *,
                                              unsigned, long, long, long, long);
 extern void GOMP_parallel_loop_dynamic_start (void (*)(void *), void *,
@@ -80,8 +98,6 @@ extern void GOMP_parallel_loop_guided_start (void (*)(void *), void *,
                                              unsigned, long, long, long, long);
 extern void GOMP_parallel_loop_runtime_start (void (*)(void *), void *,
                                               unsigned, long, long, long);
-extern void GOMP_loop_end (void);
-extern void GOMP_loop_end_nowait (void);
 
 extern bool GOMP_loop_ull_static_start (bool, unsigned long long,
                                         unsigned long long,
@@ -146,10 +162,6 @@ extern bool GOMP_loop_ull_ordered_dynamic_next (unsigned long long *,
                                                 unsigned long long *);
 
 
-
-extern void GOMP_task (void (*) (void *), void *, void (*) (void *, void *),
-                       long, long, bool, unsigned);
-extern void GOMP_taskwait (void);
 
 extern unsigned GOMP_sections_start (unsigned);
 extern unsigned GOMP_sections_next (void);
