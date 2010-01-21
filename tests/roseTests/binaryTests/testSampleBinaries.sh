@@ -51,7 +51,7 @@ test_disassembler() {
 	local basename=$(basename $sample)
 	rm -f rose_$basename.s $basename.new $basename.dump
     else
-	(set -x; ./disassemble -rose:binary --show-bad $sample) || return 1
+	(set -x; ./disassemble -rose:binary --quiet --show-bad $sample) || return 1
     fi
 }
 
@@ -63,7 +63,7 @@ test_assembler() {
 	local basename=$(basename $sample)
 	rm -f rose_$basename.s $basename.new $basename.dump
     else
-	(set -x; ./disassemble -rose:binary --reassemble --show-bad $sample) || return 1
+	(set -x; ./disassemble -rose:binary --quiet --reassemble --show-bad $sample) || return 1
     fi
 }
 

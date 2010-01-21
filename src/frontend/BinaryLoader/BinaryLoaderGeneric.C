@@ -436,11 +436,8 @@ bool BinaryLoaderGeneric::disassembleAllLibraries(SgBinaryComposite* binaryFile)
 {
   SgAsmInterpretationPtrList& interps = binaryFile->get_interpretations()->get_interpretations();
   for(size_t i=0; i < interps.size(); ++i){
-    //TODO fix when Dissemble gets fixed
     SgAsmInterpretation* interp = interps[i];
-    const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
-    Disassembler *disassembler = Disassembler::create(headers.front());
-    disassembler->disassemble(interp,NULL,NULL);
+    Disassembler::disassembleInterpretation(interp);
   }
   return true;
 }

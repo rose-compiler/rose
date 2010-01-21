@@ -1,4 +1,4 @@
-@@ -26,29 +26,28 @@
+@@ -27,29 +27,28 @@
    <   0x00008820 0x0000000c 0x0000882c  0x00000000 0x00010820 0x0000000c 0x0001082c rw-   16 .data
    <   0x0000882c 0x000000c8 0x000088f4  0x00000000 0x0001082c 0x000000c8 0x000108f4 rw-   17 .dynamic
    <   0x000088f4 0x00000008 0x000088fc  0x00000000 0x000108f4 0x00000008 0x000108fc rw-   18 .ctors
@@ -33,7 +33,7 @@
    ElfFileHeader.Header.Section.header                            = not associated
    ElfFileHeader.Header.Section.purpose                           = executable format header
    ElfFileHeader.Header.Section.mapped                            = <not mapped>
-@@ -498,22 +497,21 @@
+@@ -499,22 +498,21 @@
    ElfStringSection.Strtab.StringStorage[11].sec,offset,val       = section [5] ".dynstr", offset 0x00000059 (89), "stderr"
    ElfStringSection.Strtab.StringStorage[12].sec,offset,val       = section [5] ".dynstr", offset 0x00000029 (41), "abort"
    ElfStringSection.Strtab.StringStorage[13].sec,offset,val       = section [5] ".dynstr", offset 0x00000065 (101), "bindtextdomain"

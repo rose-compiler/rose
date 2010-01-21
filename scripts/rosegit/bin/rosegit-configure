@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Configures ROSE:
+# Configures sources for building:
 #    1. Runs "build" in the source tree if it looks like it needs it
 #    2. Runs whatever configure command was set in the rosegit configuration files for this user and branch
 #
@@ -12,9 +12,9 @@ source rosegit-functions.sh || exit 1
 rosegit_preamble
 
 # Run "build" if there's no configure file or there's a Makefile.am that's newer than configure
-if [ ! -f $ROSE_SRC/configure ] || [ $(find $ROSE_SRC -name Makefile.am -newer $ROSE_SRC/configure |wc -l) -gt 0 ]; then
-    (cd $ROSE_SRC && ./build) || exit 1
+if [ ! -f $ROSEGIT_SRC/configure ] || [ $(find $ROSEGIT_SRC -name Makefile.am -newer $ROSEGIT_SRC/configure |wc -l) -gt 0 ]; then
+    (cd $ROSEGIT_SRC && ./build --srcpath=$ROSE_SRC) || exit 1
 fi
 
 # Always run configure
-(cd $ROSE_BLD && eval $ROSE_SRC/configure $ROSEGIT_CONFIGURE $*) || exit 1
+(cd $ROSEGIT_BLD && eval $ROSEGIT_SRC/configure $ROSEGIT_CONFIGURE $*) || exit 1

@@ -31,34 +31,21 @@ rosegit_elapsed_human () {
     echo "${nsec}s"
 }
 
-# Configure the environment for building rose. The following environment variables are set if they have no values:
-#    ROSE_BLD -- the name of the top of the build tree, set to the absolute name of the current working directory
-#    ROSE_SRC -- the name of the top of the source tree
+# Configure certain environment variables:
+#   Adjust LD_LIBRARY_PATH so we can run executables without installing them and without going through the libtool shell script.
+#   This allows us to run debuggers on the uninstalled executables.
 rosegit_environment () {
-    [ -n "$ROSE_BLD" ] || ROSE_BLD=$(rosegit_find_builddir)
-    [ -n "$ROSE_SRC" ] || ROSE_SRC=$(rosegit_find_sources $ROSE_BLD)
+    [ -d "$ROSEGIT_SRC" ] || rosegit_die "no source directory"
+    [ -d "$ROSEGIT_BLD" ] || rosegit_die "no build directory"
 
-    # Sanity checks
-    [ -d "$ROSE_BLD" ] || rosegit_die "built tree is not a directory: $ROSE_BLD"
-    [ -d "$ROSE_BLD/.git" ] && rosegit_die "build tree appears to be a repository: $ROSE_BLD"
-    [ -d "$ROSE_SRC" ] || rosegit_die "no such directory: ROSE_SRC"
-    [ -d "$ROSE_SRC/.git" ] || rosegit_die "not a Git repository: $ROSE_SRC"
-    [ "$ROSE_SRC" = "$ROSE_BLD" ] && rosegit_die "build directory and source directory should not be the same: $ROSE_SRC"
-
-    # Make sure directory names are absolute and exported
-    export ROSE_BLD=$(cd $ROSE_BLD && pwd)
-    export ROSE_SRC=$(cd $ROSE_SRC && pwd)
-
-    # Adjust LD_LIBRARY_PATH so we can run executables without installing them and without going through the libtool shell script.
-    # This allows us to run debuggers on the uninstalled executables.
     if [ -d "$BOOST_ROOT" ]; then
 	type path-adjust >/dev/null 2>&1 && eval $(path-adjust --var=LD_LIBRARY_PATH remove --regexp /ROSE/ /boost_)
 	[ -d "$BOOST_ROOT"] && LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$BOOST_ROOT/lib"
     fi
-    LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROSE_BLD/src/.libs"
-    LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROSE_BLD/libltdl/.libs"
-    LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROSE_BLD/src/3rdPartyLibraries/libharu-2.1.0/src/.libs"
-    LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROSE_BLD/src/3rdPartyLibraries/qrose/QRoseLib/.libs"
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROSEGIT_BLD/src/.libs"
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROSEGIT_BLD/libltdl/.libs"
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROSEGIT_BLD/src/3rdPartyLibraries/libharu-2.1.0/src/.libs"
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROSEGIT_BLD/src/3rdPartyLibraries/qrose/QRoseLib/.libs"
     export LD_LIBRARY_PATH
 }
 
@@ -85,29 +72,55 @@ rosegit_find_builddir () {
     rosegit_die "could not find build dir starting search from $origdir"
 }
 
-# Finds a local Git repository containing ROSE by looking first in the specified directory (or current working directory), and
-# then in ancestor directories and subdirectories of the ancestors. The subdirectories must be named "sources/$cwdbase", where
+# Finds source and build directories
+#    ROSEGIT_BLD -- the name of the top of the build tree, set to the absolute name of the current working directory
+#    ROSEGIT_SRC -- the name of the top of the source tree corresponding to this build tree.
+#    ROSE_SRC    -- the name of the top of the source tree for ROSE (same as ROSEGIT_SRC if we're compiling ROSE itself)
+rosegit_find_directories () {
+    [ -n "$ROSEGIT_BLD" ] || ROSEGIT_BLD=$(rosegit_find_builddir)
+    [ -n "$ROSEGIT_SRC" ] || ROSEGIT_SRC=$(rosegit_find_sources $ROSEGIT_BLD)
+
+    # Sanity checks
+    [ -d "$ROSEGIT_BLD" ] || rosegit_die "built tree is not a directory: $ROSEGIT_BLD"
+    [ -d "$ROSEGIT_BLD/.git" ] && rosegit_die "build tree appears to be a repository: $ROSEGIT_BLD"
+    [ -d "$ROSEGIT_SRC" ] || rosegit_die "no such directory: ROSEGIT_SRC"
+    [ -d "$ROSEGIT_SRC/.git" ] || rosegit_die "not a Git repository: $ROSEGIT_SRC"
+    [ "$ROSEGIT_SRC" = "$ROSEGIT_BLD" ] && rosegit_die "build directory and source directory should not be the same: $ROSEGIT_SRC"
+
+    # Make sure directory names are absolute and exported
+    export ROSEGIT_BLD=$(cd $ROSEGIT_BLD && pwd)
+    export ROSEGIT_SRC=$(cd $ROSEGIT_SRC && pwd)
+
+    # Find the ROSE source tree
+    [ -f "$ROSEGIT_SRC/src/rose.h" ] && ROSE_SRC=$ROSEGIT_SRC
+    [ -z "$ROSE_SRC" -a -f "$ROSEGIT_SRC/config/ROSE_SOURCES" ] && ROSE_SRC=$(cat $ROSEGIT_SRC/config/ROSE_SOURCES)
+    [ -d "$ROSE_SRC" ] || rosegit_die "cannot find ROSE source tree (perhaps no \$ROSE_SRC environment variable?)"
+    export ROSE_SRC
+}
+
+# Finds a local Git repository containing source code by looking first in the specified directory (or current working directory),
+# and then in ancestor directories and subdirectories of the ancestors. The subdirectories must be named "sources/$cwdbase", where
 # $cwdbase is the base name of the current working directory.
 rosegit_find_sources () {
     local dir1="$1"; [ -n "$dir1" ] || dir1=.
-    local required="$2"; [ -n "$required" ] || required="src/rose.h"
     [ -d "$dir1" ] || rosegit_die "not a directory: $dir1"
     dir1=$(cd $dir1 && pwd)
 
     local cwdbase=$(basename $dir1)
 
     while [ "$dir1" != "/" ]; do
-	if [ -d $dir1/.git -a -e "$dir1/$required" ]; then
-	    echo $dir1
-	    return 0
-        fi
+	for required in configure.in configure.ac; do
+	    if [ -d $dir1/.git -a -e "$dir1/$required" ]; then
+		echo $dir1
+		return 0
+	    fi
 
-	dir2=$dir1/sources/$cwdbase
-	if [ -d $dir2/.git -a -e "$dir2/$required" ]; then
-	    echo $dir2
-	    return 0
-	fi
-
+	    dir2=$dir1/sources/$cwdbase
+	    if [ -d $dir2/.git -a -e "$dir2/$required" ]; then
+		echo $dir2
+		return 0
+	    fi
+	done
 	dir1=$(cd $dir1/..; pwd)
     done
 }
@@ -194,11 +207,9 @@ rosegit_namespace () {
 rosegit_preamble () {
     local config="$1";      # optional configuration file or directory
     if [ ! -n "$ROSEGIT_LOADED" ]; then
-	local blddir=$ROSE_BLD; [ -n "$blddir" ] || blddir=$(rosegit_find_builddir)
-	local srcdir=$ROSE_SRC; [ -n "$srcdir" ] || srcdir=$(rosegit_find_sources $blddir)
-	[ -d "$srcdir" ] || rosegit_die "could not find source directory"
-	local branch=$(cd $srcdir && git branch |sed -n '/^\*/s/^\* //p')
-	rosegit_load_config $srcdir $(rosegit_namespace) $branch $config
+	rosegit_find_directories
+	local branch=$(cd $ROSEGIT_SRC && git branch |sed -n '/^\*/s/^\* //p')
+	rosegit_load_config $ROSE_SRC $(rosegit_namespace) $branch $config
 	rosegit_environment
     fi
 
@@ -213,8 +224,9 @@ rosegit_show_environment () {
     echo "Machine:           $(hostname --long) [$(hostname --ip-address)]"
     echo "Operating system:  $(uname -s) $(uname -r) $(uname -v)"
     echo "Architecture:      $(uname -m) $(uname -i) $(uname -p)"
-    echo "ROSE source tree:  $ROSE_SRC"
-    echo "ROSE build tree:   $ROSE_BLD"
+    echo "Source tree:       $ROSEGIT_SRC"
+    echo "Build tree:        $ROSEGIT_BLD"
+    [ "$ROSEGIT_SRC" != "$ROSE_SRC" ] && echo "ROSE source tree:  $ROSE_SRC"
     echo "Software:"
     echo "    $(make --version |head -n1)"
     echo "    $(gcc --version |head -n1)"

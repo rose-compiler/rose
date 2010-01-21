@@ -1,4 +1,5 @@
-/* Algorithms to detect where functions begin in the set of machine instructions. See detectFunctionStarts() near the end of this file. */
+/* Algorithms to detect what instructions make up basic blocks and which blocks make up functions, and how to create the
+ * necessary SgAsmBlock and SgAsmFunctionDeclaration IR nodes from this information. */
 #define __STDC_FORMAT_MACROS
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
@@ -10,368 +11,354 @@
 
 /* See header file for full documentation. */
 
-/* Partitions instructions into functions of basic blocks. */
-SgAsmBlock *
-Partitioner::partition(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insns) const
-{
-    BasicBlockStarts bb_starts = detectBasicBlocks(insns);
-    FunctionStarts func_starts = detectFunctions(interp, insns, bb_starts);
-    return buildTree(insns, bb_starts, func_starts);
-}
 
-/* Find the beginnings of basic blocks based on instruction type and call targets. */
-Partitioner::BasicBlockStarts
-Partitioner::detectBasicBlocks(const Disassembler::InstructionMap &insns) const
-{
-    BasicBlockStarts bb_starts;
 
-    /* The first instruction always starts a basic block. */
-    if (insns.size()>0) {
-        rose_addr_t insn_va = insns.begin()->first;
-        bb_starts[insn_va] = BasicBlockStarts::mapped_type();
-    }
 
-    for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-        SgAsmInstruction *insn = ii->second;
-        rose_addr_t insn_va = insn->get_address();
-        rose_addr_t next_va = insn->get_address() + insn->get_raw_bytes().size();
 
-        /* If this instruction is one which terminates a basic block then make the next instruction (if any) the beginning of
-         * a basic block. However, a sequence like the following should not be a basic block boundary because the CALL is
-         * acting more like a "PUSH EIP" (we should probably just look at the CALL instruction itself rather than also looking
-         * for the following POP, but since ROSE doesn't currently apply the relocation tables before disassembling, the CALL
-         * with a zero offset is quite common. [RPM 2009-08-24] */
-        if (insn->terminatesBasicBlock()) {
-            Disassembler::InstructionMap::const_iterator found = insns.find(next_va);
-            if (found!=insns.end()) {
-                SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
-                SgAsmx86Instruction *insn2_x86 = isSgAsmx86Instruction(found->second);
-                rose_addr_t branch_target_va;
-                if (insn_x86 &&
-                    (insn_x86->get_kind()==x86_call || insn_x86->get_kind()==x86_farcall) &&
-                    x86GetKnownBranchTarget(insn_x86, branch_target_va) &&
-                    branch_target_va==next_va && insn2_x86->get_kind()==x86_pop) {
-                    /* The CALL is acting more like a "PUSH EIP" and should not end the basic block. */
-                } else if (bb_starts.find(next_va)==bb_starts.end()) {
-                    bb_starts[next_va] = BasicBlockStarts::mapped_type();
-                }
-            }
+/********************************************************************************************************************************
+ * These SgAsmFunctionDeclaration methods have no other home, so they're here for now. Do not move them into
+ * src/ROSETTA/Grammar/BinaryInstruction.code because then they can't be indexed by C-aware tools.
+ *
+ */
+static void
+add_to_reason_string(std::string &result, bool isset, bool do_pad, const std::string &abbr, const std::string &full) {
+    if (isset) {
+        if (do_pad) {
+            result += abbr;
+        } else {
+            if (result.size()>0) result += ", ";
+            result += full;
         }
-
-        /* If this instruction has multiple known successors then make each of those successors the beginning of a basic
-         * block. However, if there's only one successor and it's the fall-through address then ignore it. */
-        Disassembler::AddressSet successors = insn->get_successors();
-        for (Disassembler::AddressSet::const_iterator si=successors.begin(); si!=successors.end(); ++si) {
-            rose_addr_t successor_va = *si;
-            if (successor_va != next_va || successors.size()>1)
-                bb_starts[successor_va].insert(insn_va);
-        }
-    }
-    return bb_starts;
-}
-
-/** Update basic blocks so that every function start also starts a basic block. */
-void
-Partitioner::update_basic_blocks(const FunctionStarts& func_starts, BasicBlockStarts& bb_starts/*out*/)
-{
-    for (FunctionStarts::const_iterator i=func_starts.begin(); i!=func_starts.end(); i++) {
-        if (bb_starts.find(i->first)==bb_starts.end())
-            bb_starts[i->first] = BasicBlockStarts::mapped_type();
+    } else if (do_pad) {
+        result += ".";
     }
 }
 
-/* Find beginnings of functions. */
-Partitioner::FunctionStarts
-Partitioner::detectFunctions(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insns,
-                             BasicBlockStarts &bb_starts/*out*/) const
+std::string
+SgAsmFunctionDeclaration::reason_str(bool do_pad) const
 {
-    FunctionStarts func_starts;
-
-    const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
-    for (size_t i=0; i<headers.size(); i++) {
-        if (p_func_heuristics & SgAsmFunctionDeclaration::FUNC_ENTRY_POINT)
-            mark_entry_targets(headers[i], insns, func_starts);
-        if (p_func_heuristics & SgAsmFunctionDeclaration::FUNC_EH_FRAME)
-            mark_eh_frames(headers[i], insns, func_starts);
-        if (p_func_heuristics & SgAsmFunctionDeclaration::FUNC_SYMBOL)
-            mark_func_symbols(headers[i], insns, func_starts);
-        if (p_func_heuristics & SgAsmFunctionDeclaration::FUNC_PATTERN)
-            mark_func_patterns(headers[i], insns, func_starts);
-    }
-    if (p_func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_TARGET)
-        mark_call_targets(insns, func_starts);
-    
-    /* All function entry points are also the starts of basic blocks. */
-    update_basic_blocks(func_starts, bb_starts);
-
-    /* This one depends on basic block starts being consistent with function starts. */
-    if (p_func_heuristics & SgAsmFunctionDeclaration::FUNC_GRAPH) {
-        mark_graph_edges(insns, bb_starts, func_starts);
-        update_basic_blocks(func_starts, bb_starts);
-    }
-
-    /* This doesn't detect new functions, it just gives names to ELF .plt trampolines */
-    for (size_t i=0; i<headers.size(); i++) {
-        name_plt_entries(headers[i], insns, func_starts);
-    }
-
-    /* Run user-defined function detectors, making sure that the basic block starts are up-to-date for each call. */
-    if (p_func_heuristics & SgAsmFunctionDeclaration::FUNC_USERDEF) {
-        for (size_t i=0; i<p_func_detectors.size(); i++) {
-            for (size_t j=0; j<=headers.size(); j++) {
-                SgAsmGenericHeader *hdr = 0==j ? NULL : headers[j-1];
-                p_func_detectors[i](hdr, insns, bb_starts, func_starts);
-                update_basic_blocks(func_starts, bb_starts);
-            }
-        }
-    }
-
-    return func_starts;
+    return reason_str(do_pad, get_reason());
 }
 
-/* Organize instructions into basic blocks and functions. */
-SgAsmBlock *
-Partitioner::buildTree(const Disassembler::InstructionMap &insns, const BasicBlockStarts &bb_starts,
-                       const FunctionStarts &func_starts) const
+/* Class method */
+std::string
+SgAsmFunctionDeclaration::reason_str(bool do_pad, unsigned r)
 {
-    SgAsmBlock *retval = new SgAsmBlock();
-    std::map<rose_addr_t, SgAsmBlock*> bbs = buildBasicBlocks(insns, bb_starts);
-    std::map<rose_addr_t, SgAsmFunctionDeclaration*> funcs;
+    std::string result;
 
-    /* Every function start must also be a basic block start. This buildTree method will work fine even if we encounter a
-     * violation of this rule, but a violation probably indicates that there's bad logic elsewhere. */
-    for (FunctionStarts::const_iterator fsi=func_starts.begin(); fsi!=func_starts.end(); ++fsi) {
-        BasicBlockStarts::const_iterator bbsi = bb_starts.find(fsi->first);
-        ROSE_ASSERT(bbsi!=bb_starts.end());
-    }
-
-    /* If there are any basic blocks whose addresses are less than the first known function, then create a new function to
-     * hold all such basic blocks. */
-    if (bbs.size()>0) {
-        rose_addr_t lowest_func_addr = func_starts.size()>0 ? func_starts.begin()->first : bbs.begin()->first;
-        rose_addr_t lowest_bb_addr = bbs.begin()->first;
-        if (lowest_bb_addr < lowest_func_addr || func_starts.size()==0) {
-            SgAsmFunctionDeclaration *f = new SgAsmFunctionDeclaration;
-            f->set_address(lowest_bb_addr);
-            funcs.insert(std::make_pair(lowest_bb_addr, f));
-            retval->get_statementList().push_back(f);
-            f->set_parent(retval);
-        }
-    }
-
-    /* Build the list of functions based on their entry addresses. We'll populate them with basic blocks below. Discard
-     * function starts that don't have any basic blocks (we could keep them as empty functions, but various analyses assume
-     * that a function always has at least one instruction). */
-    for (FunctionStarts::const_iterator i = func_starts.begin(); i != func_starts.end(); ++i) {
-        if (bbs.find(i->first)!=bbs.end()) {
-            SgAsmFunctionDeclaration* f = new SgAsmFunctionDeclaration();
-            f->set_address(i->first);
-            f->set_name(i->second.name);
-            f->set_reason(i->second.reason);
-            funcs.insert(std::make_pair(i->first, f));
-            retval->get_statementList().push_back(f);
-            f->set_parent(retval);
-        }
-    }
-
-    /* Add basic blocks to functions */
-    for (std::map<rose_addr_t, SgAsmBlock*>::iterator bbi=bbs.begin(); bbi!=bbs.end(); ++bbi) {
-        SgAsmBlock *bb = bbi->second;
-        uint64_t bb_va = bb->get_address();
-        ROSE_ASSERT(bbi->first==bb->get_address());
-
-        /* This is based on the algorithm in putInstructionsIntoBasicBlocks, with the same restrictions.  This is not quite as
-         * good as what IDA does -- I've read that it takes control flow into account so functions can be non-contiguous in
-         * memory. [Willcock r587 2008-05-30] */
-        std::map<rose_addr_t, SgAsmFunctionDeclaration*>::const_iterator fi = funcs.upper_bound(bb_va);
-        ROSE_ASSERT(fi!=funcs.begin());
-        --fi;
-        SgAsmFunctionDeclaration *func = fi->second;
-        func->get_statementList().push_back(bb);
-        bb->set_parent(func);
-    }
-
-    /* Make sure every function has at least one basic block */
-    for (std::map<rose_addr_t, SgAsmFunctionDeclaration*>::iterator fi=funcs.begin(); fi!=funcs.end(); ++fi) {
-        SgAsmFunctionDeclaration *func = fi->second;
-        ROSE_ASSERT(func->get_statementList().size()>0);
-    }
-
-#if 0 /* Turned off because this is very slow */
-    /* Sanity checks */
-    for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-        SgAsmInstruction *insn = ii->second;
-
-        /* Every instruction belongs to a basic block which points to that instruction. */
-        SgAsmBlock *block = isSgAsmBlock(insn->get_parent());
-        {
-            ROSE_ASSERT(block!=NULL);
-            bool found = false;
-            const SgAsmStatementPtrList &iv = block->get_statementList();
-            for (size_t i=0; !found && i<iv.size(); i++) {
-                ROSE_ASSERT(isSgAsmInstruction(iv[i]));
-                found = insn == iv[i];
-            }
-            ROSE_ASSERT(found);
-        }
-
-        /* Every basic block belongs to a function which points to that basic block. */
-        SgAsmFunctionDeclaration *function = isSgAsmFunctionDeclaration(block->get_parent());
-        {
-            ROSE_ASSERT(function!=NULL);
-            bool found = false;
-            const SgAsmStatementPtrList &bv = function->get_statementList();
-            for (size_t i=0; !found && i<bv.size(); i++) {
-                ROSE_ASSERT(isSgAsmBlock(bv[i]));
-                found = block == bv[i];
-            }
-            ROSE_ASSERT(found);
-        }
-
-        /* Every function belongs to the top block which points to that function. */
-        SgAsmBlock *top = isSgAsmBlock(function->get_parent());
-        ROSE_ASSERT(top==retval);
-        {
-            ROSE_ASSERT(top!=NULL);
-            bool found = false;
-            const SgAsmStatementPtrList &fv = top->get_statementList();
-            for (size_t i=0; !found && i<fv.size(); i++) {
-                ROSE_ASSERT(fv[i]!=NULL);
-                ROSE_ASSERT(isSgAsmFunctionDeclaration(fv[i]));
-                found = function == fv[i];
-            }
-            ROSE_ASSERT(found);
-        }
-    }
-#endif
-
-    return retval;
-}
-
-/* Organize instructions into basic blocks based on address of first insn in each block. */
-std::map<rose_addr_t, SgAsmBlock*>
-Partitioner::buildBasicBlocks(const Disassembler::InstructionMap &c_insns, const BasicBlockStarts &bb_starts) const
-{
-    std::map<rose_addr_t, SgAsmBlock*> retval;
-    Disassembler::InstructionMap insns(c_insns);
-    while (insns.size()>0) {
-        /* Create the basic block */
-        Disassembler::InstructionMap::iterator ii = insns.begin();
-        SgAsmBlock *bb = new SgAsmBlock;
-        bb->set_id(ii->first);
-        bb->set_address(ii->first);
-        retval.insert(std::make_pair(ii->first, bb));
-
-        /* Insert instructions */
-        while (ii!=insns.end()) {
-            rose_addr_t insn_va = ii->first;
-            SgAsmInstruction *insn = ii->second;
-            ROSE_ASSERT(insn_va==insn->get_address());
-
-            bb->get_statementList().push_back(insn);
-            insn->set_parent(bb);
-            insns.erase(ii);
-
-            insn_va += insn->get_raw_bytes().size();
-            if (bb_starts.find(insn_va)!=bb_starts.end())
-                break;
-            ii = insns.find(insn_va);
-        }
-    }
-    return retval;
-}
-
-/* class method */
-rose_addr_t
-Partitioner::value_of(SgAsmValueExpression *e)
-{
-    if (!e) {
-        return 0;
-    } else if (isSgAsmWordValueExpression(e)) {
-        return isSgAsmWordValueExpression(e)->get_value();
-    } else if (isSgAsmDoubleWordValueExpression(e)) {
-        return isSgAsmDoubleWordValueExpression(e)->get_value();
-    } else if (isSgAsmQuadWordValueExpression(e)) {
-        return isSgAsmQuadWordValueExpression(e)->get_value();
+    /* entry point and instruction heads are mutually exclusive, so we use the same column for both when padding. */
+    if (r & FUNC_ENTRY_POINT) {
+        add_to_reason_string(result, true, do_pad, "E", "entry point");
     } else {
-        return 0;
+        add_to_reason_string(result, (r & FUNC_INSNHEAD), do_pad, "H", "insn head");
     }
+    
+    add_to_reason_string(result, (r & FUNC_CALL_TARGET), do_pad, "C", "call target");
+    add_to_reason_string(result, (r & FUNC_EH_FRAME),    do_pad, "X", "exception frame");
+    add_to_reason_string(result, (r & FUNC_SYMBOL),      do_pad, "S", "symbol");
+    add_to_reason_string(result, (r & FUNC_PATTERN),     do_pad, "P", "pattern");
+    add_to_reason_string(result, (r & FUNC_GRAPH),       do_pad, "G", "graph");
+    add_to_reason_string(result, (r & FUNC_USERDEF),     do_pad, "U", "user defined");
+    add_to_reason_string(result, (r & FUNC_INTERPAD),    do_pad, "N", "padding");
+    add_to_reason_string(result, (r & FUNC_DISCONT),     do_pad, "D", "discontiguous");
+    return result;
+}
+/*
+ *
+ *******************************************************************************************************************************/
+
+
+
+
+
+
+
+/* Parse argument for "-rose:partitioner" command-line swich */
+unsigned
+Partitioner::parse_switches(const std::string &s, unsigned flags)
+{
+    size_t at=0;
+    while (at<s.size()) {
+        enum { SET_BIT, CLEAR_BIT, SET_VALUE, NOT_SPECIFIED } howset = NOT_SPECIFIED;
+
+        if (s[at]=='-') {
+            howset = CLEAR_BIT;
+            at++;
+        } else if (s[at]=='+') {
+            howset = SET_BIT;
+            at++;
+        } else if (s[at]=='=') {
+            howset = SET_VALUE;
+            at++;
+        }
+        if (at>=s.size())
+            throw std::string("heuristic name must follow qualifier");
+        
+             
+        size_t comma = s.find(",", at);
+        std::string word = std::string(s, at, comma-at);
+        if (word.size()==0)
+            throw std::string("heuristic name must follow comma");
+        
+        unsigned bits = 0;
+        if (word=="entry" || word=="entry_point") {
+            bits = SgAsmFunctionDeclaration::FUNC_ENTRY_POINT;
+        } else if (word=="call" || word=="call_target") {
+            bits = SgAsmFunctionDeclaration::FUNC_CALL_TARGET;
+        } else if (word=="eh" || word=="eh_frame") {
+            bits = SgAsmFunctionDeclaration::FUNC_EH_FRAME;
+        } else if (word=="symbol") {
+            bits = SgAsmFunctionDeclaration::FUNC_SYMBOL;
+        } else if (word=="pattern") {
+            bits = SgAsmFunctionDeclaration::FUNC_PATTERN;
+        } else if (word=="userdef") {
+            bits = SgAsmFunctionDeclaration::FUNC_USERDEF;
+        } else if (word=="pad" || word=="padding" || word=="interpad") {
+            bits = SgAsmFunctionDeclaration::FUNC_INTERPAD;
+        } else if (word=="default") {
+            bits = SgAsmFunctionDeclaration::FUNC_DEFAULT;
+            if (howset==NOT_SPECIFIED) howset = SET_VALUE;
+        } else if (isdigit(word[0])) {
+            bits = strtol(word.c_str(), NULL, 0);
+        } else {
+            throw std::string("unknown partitioner heuristic: " + word);
+        }
+
+        switch (howset) {
+            case SET_VALUE:
+                flags = 0;
+            case NOT_SPECIFIED:
+            case SET_BIT:
+                flags |= bits;
+                break;
+            case CLEAR_BIT:
+                flags &= ~bits;
+                break;
+        }
+
+        at = comma==std::string::npos ? s.size() : comma+1;
+    }
+    return flags;
 }
 
-/* class method */
-rose_addr_t
-Partitioner::get_indirection_addr(SgAsmInstruction *g_insn)
+/* Return known successors of basic block and cache them. */
+const Disassembler::AddressSet&
+Partitioner::BasicBlock::successors(bool *complete)
 {
-    rose_addr_t retval = 0;
-
-    SgAsmx86Instruction *insn = isSgAsmx86Instruction(g_insn);
-    if (!insn ||
-        !x86InstructionIsUnconditionalBranch(insn) ||
-        1!=insn->get_operandList()->get_operands().size())
-        return retval;
-    
-    SgAsmMemoryReferenceExpression *mref = isSgAsmMemoryReferenceExpression(insn->get_operandList()->get_operands()[0]);
-    if (!mref)
-        return retval;
-
-    SgAsmExpression *mref_addr = mref->get_address();
-    if (isSgAsmBinaryExpression(mref_addr)) {
-        SgAsmBinaryExpression *mref_bin = isSgAsmBinaryExpression(mref_addr);
-        SgAsmx86RegisterReferenceExpression *reg = isSgAsmx86RegisterReferenceExpression(mref_bin->get_lhs());
-        SgAsmValueExpression *val = isSgAsmValueExpression(mref_bin->get_rhs());
-        if (reg->get_register_class()==x86_regclass_ip && val!=NULL) {
-            retval = value_of(val) + insn->get_address() + insn->get_raw_bytes().size();
-        }
-    } else if (isSgAsmValueExpression(mref_addr)) {
-        retval = value_of(isSgAsmValueExpression(mref_addr));
+    if (insns.size()!=sucs_ninsns) {
+        /* Compute successors from scratch. */
+        sucs.clear();
+        bool b;
+        if (!complete) complete=&b;
+        sucs = insns.front()->get_successors(insns, complete);
+        sucs_ninsns = insns.size();
     }
+    return sucs;
+}
 
-    return retval; /*calculated value, or defaults to zero*/
+/* Returns true if block ends with what appears to be a function call. Don't modify @p target if this isn't a function call. */
+bool
+Partitioner::BasicBlock::is_function_call(rose_addr_t *target)
+{
+    if (insns.size()==0)
+        return false;
+    rose_addr_t va;
+    if (insns.front()->is_function_call(insns, &va)) {
+        *target = va;
+        return true;
+    }
+    return false;
+}
+
+/* Returns instruction with highest address */
+SgAsmInstruction *
+Partitioner::BasicBlock::last_insn() const
+{
+    ROSE_ASSERT(insns.size()>0);
+    return insns.back();
+}
+
+/* Release all blocks from a function. */
+void
+Partitioner::Function::clear_blocks()
+{
+    for (BasicBlocks::iterator bi=blocks.begin(); bi!=blocks.end(); ++bi)
+        bi->second->function = NULL;
+    blocks.clear();
+}
+
+/* Return block with highest address */
+Partitioner::BasicBlock *
+Partitioner::Function::last_block() const
+{
+    ROSE_ASSERT(blocks.size()>0);
+    BasicBlocks::const_iterator bi = blocks.end();
+    --bi;
+    return bi->second;
+}
+
+/* Return partitioner to initial state */
+void
+Partitioner::clear()
+{
+    /* Delete all functions */
+    for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+        fi->second->clear_blocks();
+        delete fi->second;
+    }
+    functions.clear();
+
+    /* Delete all basic blocks */
+    std::set<BasicBlock*> blocks;
+    for (size_t i=0; i<insn2block.size(); i++)
+        blocks.insert(insn2block[i]);
+    for (std::set<BasicBlock*>::iterator bi=blocks.begin(); bi!=blocks.end(); ++bi)
+        delete *bi;
+    insn2block.clear();
+
+    /* Release (do not delete) all instructions */
+    insns.clear();
+}
+
+/* Return address of first instruction of basic block */
+rose_addr_t
+Partitioner::address(BasicBlock* bb) const
+{
+    ROSE_ASSERT(bb->insns.size()>0);
+    return bb->insns.front()->get_address();
+}
+
+/* Split a basic block into two so that the instruction before @p va remain in the original block and a new block is created
+ * to hold the instructions at @p va and after.  The new block is returned. Both blocks remain in the same function, if any. */
+Partitioner::BasicBlock*
+Partitioner::split(BasicBlock* bb1, rose_addr_t va)
+{
+    ROSE_ASSERT(bb1);
+    ROSE_ASSERT(bb1==find_bb_containing(va));
+    BasicBlock *bb2 = new BasicBlock;
+
+    /* Move some instructions from bb1 to bb2 */
+    std::vector<SgAsmInstruction*>::iterator cut = bb1->insns.begin();
+    while (cut!=bb1->insns.end() && (*cut)->get_address()!=va) ++cut;
+    for (std::vector<SgAsmInstruction*>::iterator ii=cut; ii!=bb1->insns.end(); ++ii) {
+        bb2->insns.push_back(*ii);
+        insn2block[(*ii)->get_address()] = bb2;
+    }
+    bb1->insns.erase(cut, bb1->insns.end());
+
+    /* Insert bb2 into the same function as bb1 */
+    if (bb1->function)
+        append(bb1->function, bb2);
+
+    ROSE_ASSERT(bb2->insns.size()>0);
+    return bb2;
+}
+
+/* Append instruction to basic block */
+void
+Partitioner::append(BasicBlock* bb, SgAsmInstruction* insn)
+{
+    ROSE_ASSERT(bb);
+    ROSE_ASSERT(insn);
+    ROSE_ASSERT(insn2block.find(insn->get_address())==insn2block.end()); /*insn must not already belong to a basic block*/
+    bb->insns.push_back(insn);
+    insn2block[insn->get_address()] = bb;
+}
+
+/* Append basic block to function */
+void
+Partitioner::append(Function* f, BasicBlock *bb)
+{
+    ROSE_ASSERT(f);
+    ROSE_ASSERT(bb);
+    ROSE_ASSERT(bb->function==NULL);
+    bb->function = f;
+    f->blocks[address(bb)] = bb;
+}
+
+/* Remove a basic block from a function */
+void
+Partitioner::remove(Function* f, BasicBlock* bb) 
+{
+    ROSE_ASSERT(f);
+    ROSE_ASSERT(bb);
+    ROSE_ASSERT(bb->function==f);
+    bb->function = NULL;
+    f->blocks.erase(address(bb));
+}
+
+/* Find (or create) a basic block containing the specified instruction address. The address is assumed to be an instruction
+ * boundary, not an arbitrary address. Returns null if there is no instruction at the specified address. */
+Partitioner::BasicBlock *
+Partitioner::find_bb_containing(rose_addr_t va)
+{
+    static const bool allow_discontiguous_blocks = true;
+
+    std::map<rose_addr_t, BasicBlock*>::iterator i2b_i = insn2block.find(va);
+    if (i2b_i!=insn2block.end() && i2b_i->second!=NULL) return i2b_i->second;
+
+    BasicBlock *bb = NULL;
+    while (1) {
+        Disassembler::InstructionMap::const_iterator ii = insns.find(va);
+        if (ii==insns.end())
+            break; /*no instruction*/
+        i2b_i = insn2block.find(va);
+        if (i2b_i!=insn2block.end() && i2b_i->second!=NULL)
+            break; /*we've reached another block*/
+        SgAsmInstruction *insn = ii->second;
+        va += insn->get_raw_bytes().size();
+        if (!bb)
+            bb = new BasicBlock;
+        append(bb, insn);
+        if (insn->terminatesBasicBlock()) {
+            bool complete;
+            const Disassembler::AddressSet& successors = bb->successors(&complete);
+#if 0 /*basic blocks contiguous in memory*/
+            if (!complete || successors.size()!=1 || *(successors.begin())!=va)
+                break;
+#else /*basic blocks not contigiguous in memory*/
+            if (!complete || successors.size()!=1)
+                break;
+            va = *(successors.begin());
+#endif
+        }
+    }
+    ROSE_ASSERT(!bb || bb->insns.size()>0);
+    return bb;
+}
+
+Partitioner::Function *
+Partitioner::add_function(rose_addr_t entry_va, unsigned reasons, std::string name)
+{
+    Function *f = NULL;
+    Functions::iterator fi = functions.find(entry_va);
+    if (fi==functions.end()) {
+        f = new Function(entry_va, reasons, name);
+        functions[entry_va] = f;
+    } else {
+        f = fi->second;
+        ROSE_ASSERT(f->entry_va==entry_va);
+        f->reason |= reasons;
+        if (name!="") f->name = name;
+    }
+    return f;
 }
 
 /* Marks program entry addresses as functions. */
 void
-Partitioner::mark_entry_targets(SgAsmGenericHeader *fhdr, const Disassembler::InstructionMap &insns,
-                                FunctionStarts &func_starts/*out*/) const
+Partitioner::mark_entry_targets(SgAsmGenericHeader *fhdr)
 {
     SgRVAList entries = fhdr->get_entry_rvas();
     for (size_t i=0; i<entries.size(); i++) {
-        rose_addr_t entry_rva = entries[i].get_rva();
-        if (insns.find(entry_rva)!=insns.end())
-            func_starts[entry_rva].reason |= SgAsmFunctionDeclaration::FUNC_ENTRY_POINT;
-    }
-}
-
-/* Marks CALL targets as functions. */
-void
-Partitioner::mark_call_targets(const Disassembler::InstructionMap &insns, FunctionStarts &func_starts/*out*/) const
-{
-    for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ii++) {
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(ii->second);
-
-        /* FIXME [RPM 2009-01-16] */
-        static bool reported=false;
-        if (!insn && !reported) {
-            fprintf(stderr, "%s:%u: warning: we only handle x86 instructions at this time.\n", __FILE__, __LINE__);
-            reported=true;
-        }
-
-        if (insn && (x86_call==insn->get_kind() || x86_farcall==insn->get_kind())) {
-            rose_addr_t callee_rva = 0;
-            if (x86GetKnownBranchTarget(insn, callee_rva/*out*/) &&
-                insns.find(callee_rva)!=insns.end()) {
-                bool needs_reloc = callee_rva == insn->get_address() + insn->get_raw_bytes().size();
-                if (!needs_reloc)
-                    func_starts[callee_rva].reason |= SgAsmFunctionDeclaration::FUNC_CALL_TARGET;
-            }
-        }
+        rose_addr_t entry_va = entries[i].get_rva() + fhdr->get_base_va();
+        if (insns.find(entry_va)!=insns.end())
+            add_function(entry_va, SgAsmFunctionDeclaration::FUNC_ENTRY_POINT);
     }
 }
 
 /** Use the Frame Descriptor Entry Records of the ELF .eh_frame section to mark functions. */
 void
-Partitioner::mark_eh_frames(SgAsmGenericHeader *fhdr, const Disassembler::InstructionMap &insns,
-                            FunctionStarts &func_starts/*out*/) const
+Partitioner::mark_eh_frames(SgAsmGenericHeader *fhdr)
 {
     SgAsmGenericSectionList *sections = fhdr->get_sections();
     for (size_t i=0; i<sections->get_sections().size(); i++) {
@@ -385,7 +372,7 @@ Partitioner::mark_eh_frames(SgAsmGenericHeader *fhdr, const Disassembler::Instru
                     SgAsmElfEHFrameEntryFD *fde = fd_entries->get_entries()[k];
                     rose_addr_t target = fde->get_begin_rva().get_rva();
                     if (insns.find(target)!=insns.end())
-                        func_starts[target].reason |= SgAsmFunctionDeclaration::FUNC_EH_FRAME;
+                        add_function(target, SgAsmFunctionDeclaration::FUNC_EH_FRAME);
                 }
             }
         }
@@ -394,8 +381,7 @@ Partitioner::mark_eh_frames(SgAsmGenericHeader *fhdr, const Disassembler::Instru
 
 /** Use symbol tables to determine function entry points. */
 void
-Partitioner::mark_func_symbols(SgAsmGenericHeader *fhdr, const Disassembler::InstructionMap &insns,
-                               FunctionStarts &func_starts/*out*/) const
+Partitioner::mark_func_symbols(SgAsmGenericHeader *fhdr)
 {
     SgAsmGenericSectionList *sections = fhdr->get_sections();
     for (size_t i=0; i<sections->get_sections().size(); i++) {
@@ -418,75 +404,17 @@ Partitioner::mark_func_symbols(SgAsmGenericHeader *fhdr, const Disassembler::Ins
             SgAsmGenericSymbol *symbol = symbols[j];
             if (symbol->get_def_state()==SgAsmGenericSymbol::SYM_DEFINED && symbol->get_type()==SgAsmGenericSymbol::SYM_FUNC) {
                 rose_addr_t value = symbol->get_value();
-
-                if (insns.find(value)!=insns.end()) {
-                    func_starts[value].reason |= SgAsmFunctionDeclaration::FUNC_SYMBOL;
-                    if (func_starts[value].name=="")
-                        func_starts[value].name = symbol->get_name()->get_string();
-                }
+                if (insns.find(value)!=insns.end())
+                    add_function(value, SgAsmFunctionDeclaration::FUNC_SYMBOL, symbol->get_name()->get_string());
 
                 /* Sometimes weak symbol values are offsets from a section (this code handles that), but other times they're
                  * the value is used directly (the above code handled that case). */            
                 SgAsmGenericSection *section = symbol->get_bound();
                 if (section && symbol->get_binding()==SgAsmGenericSymbol::SYM_WEAK)
                     value += section->get_header()->get_base_va() + section->get_mapped_actual_rva();
-                if (insns.find(value)!=insns.end()) {
-                    func_starts[value].reason |= SgAsmFunctionDeclaration::FUNC_SYMBOL;
-                    if (func_starts[value].name=="")
-                        func_starts[value].name = symbol->get_name()->get_string();
-                }
+                if (insns.find(value)!=insns.end())
+                    add_function(value, SgAsmFunctionDeclaration::FUNC_SYMBOL, symbol->get_name()->get_string());
             }
-        }
-    }
-}
-
-/* Use control flow graph to find function starts. */
-void
-Partitioner::mark_graph_edges(const Disassembler::InstructionMap &insns,
-                              const BasicBlockStarts &basicBlockStarts, FunctionStarts &functionStarts/*out*/) const
-{
-    std::set<rose_addr_t, std::greater<rose_addr_t> > pending_functions; /*sorted from highest to lowest*/
-    for (FunctionStarts::iterator i=functionStarts.begin(); i!=functionStarts.end(); i++)
-        pending_functions.insert(i->first);
-
-    while (!pending_functions.empty()) {
-        /* Find begin/end address of highest pending function */
-        rose_addr_t func_begin = *(pending_functions.begin());
-        rose_addr_t func_end = (rose_addr_t)-1;
-        FunctionStarts::iterator funci = functionStarts.find(func_begin);
-        ROSE_ASSERT(funci!=functionStarts.end());
-        if (++funci!=functionStarts.end())
-            func_end = funci->first;
-
-        /* First basic block of function under consideration is always part of that function. */
-        BasicBlockStarts::const_iterator bbi = basicBlockStarts.find(func_begin);
-        ROSE_ASSERT(bbi!=basicBlockStarts.end());
-
-        /* Find the first subsequent basic block that can be shown to not be a part of this function.  Such blocks satisfy one
-         * or more of these conditions. The first condition that is true determines the value of "called".
-         *    1. We've advanced beyond the end of the basic block list (called=false), or
-         *    2. This block's starting address is the starting address of another known function (called=false), or
-         *    3. This block has a caller address that is less than the start of this function (called=true), or
-         *    4. This block has a caller address that is beyond the assumed end of this function (called=true) */
-        bool called=false;
-        for (bbi++; bbi!=basicBlockStarts.end(); bbi++) {
-            if (functionStarts.find(bbi->first)!=functionStarts.end())
-                break; /*bb starts some other function*/
-            for (std::set<rose_addr_t>::const_iterator ci=bbi->second.begin(); !called && ci!=bbi->second.end(); ci++)
-                called = (*ci<func_begin || *ci>=func_end);
-            if (called)
-                break;
-        }
-
-        /* If this block isn't the start of a known function then we need to create a new function. Furthermore, we need to
-         * reevaluate the boundary of this function since its implied ending address has been reduced. */
-        if (called) {
-            rose_addr_t bb_addr = bbi->first;
-            ROSE_ASSERT(functionStarts.find(bb_addr)==functionStarts.end());
-            functionStarts[bb_addr].reason = SgAsmFunctionDeclaration::FUNC_GRAPH;
-            pending_functions.insert(bb_addr);
-        } else {
-            pending_functions.erase(func_begin);
         }
     }
 }
@@ -579,28 +507,168 @@ pattern3(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap
         
 /* Look for instruction patterns. */
 void
-Partitioner::mark_func_patterns(SgAsmGenericHeader*, const Disassembler::InstructionMap &insns,
-                                FunctionStarts &func_starts/*out*/) const
+Partitioner::mark_func_patterns(SgAsmGenericHeader*)
 {
     for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
         Disassembler::InstructionMap::const_iterator found = insns.end();
 
         /* Try each pattern until one succeeds */
         if (found==insns.end()) found = pattern1(insns, ii);
+#if 0   /* Disabled because NOP's sometimes legitimately appear inside functions */
         if (found==insns.end()) found = pattern2(insns, ii);
+#endif
         if (found==insns.end()) found = pattern3(insns, ii);
 
         
         /* We found a function entry point */
         if (found!=insns.end())
-            func_starts[found->first].reason |= SgAsmFunctionDeclaration::FUNC_PATTERN;
+            add_function(found->first, SgAsmFunctionDeclaration::FUNC_PATTERN);
     }
+}
+
+/* Look for NOP padding between functions */
+void
+Partitioner::create_nop_padding()
+{
+
+    /* Find no-op blocks that follow known functions and which are not already part of a function */
+    Disassembler::AddressSet new_functions;
+    for (Functions::iterator fi=functions.begin(); fi!=functions.end(); fi++) {
+        Function *func = fi->second;
+        if (func->reason & SgAsmFunctionDeclaration::FUNC_INTERPAD) continue; /*some other kind of padding*/
+        if (0==func->blocks.size()) continue;
+        SgAsmInstruction *last_insn = func->last_block()->last_insn();
+        rose_addr_t va = last_insn->get_address() + last_insn->get_raw_bytes().size();
+        BasicBlock *bb = find_bb_containing(va);
+        if (!bb || bb->function!=NULL) continue;
+
+        /* FIXME: We should have a more portable way to find blocks that are no-ops. */
+        bool is_noop=true;
+        for (size_t i=0; i<bb->insns.size() && is_noop; i++) {
+            SgAsmx86Instruction     *insn_x86 = isSgAsmx86Instruction(bb->insns[i]);
+            SgAsmArmInstruction     *insn_arm = isSgAsmArmInstruction(bb->insns[i]);
+            SgAsmPowerpcInstruction *insn_ppc = isSgAsmPowerpcInstruction(bb->insns[i]);
+            ROSE_ASSERT(insn_x86 || insn_arm || insn_ppc);
+            is_noop = (insn_x86 && insn_x86->get_kind()==x86_nop); /*only x86 has NOPs*/
+        }
+        if (!is_noop) continue;
+        new_functions.insert(va);
+    }
+    
+    /* Create functions */
+    for (Disassembler::AddressSet::iterator ai=new_functions.begin(); ai!=new_functions.end(); ++ai) {
+        Function *padfunc = add_function(*ai, SgAsmFunctionDeclaration::FUNC_INTERPAD);
+        BasicBlock *bb = find_bb_containing(*ai);
+        ROSE_ASSERT(bb!=NULL);
+        append(padfunc, bb);
+    }
+}
+
+/* Look for zero padding between functions. */
+void
+Partitioner::create_zero_padding()
+{
+    /* Find the address ranges that contain zero padding, irrespective of basic blocks. */
+    std::map<rose_addr_t/*begin_va*/, rose_addr_t/*end_va*/> new_functions;
+    for (Functions::iterator fi=functions.begin(); fi!=functions.end(); fi++) {
+        Function *left_func = fi->second;
+        if (left_func->reason & SgAsmFunctionDeclaration::FUNC_INTERPAD) continue; /*some other kind of padding*/
+        if (0==left_func->blocks.size()) continue;
+        SgAsmInstruction *insn = left_func->last_block()->last_insn();
+        rose_addr_t begin_va = insn->get_address() + insn->get_raw_bytes().size();
+        
+        rose_addr_t end_va = (rose_addr_t)-1;
+        Functions::iterator fi2 = fi;
+        ++fi2;
+        if (fi2!=functions.end())
+            end_va = fi2->first;
+
+        /* Are all bytes between begin_va (inclusive) and end_va (exclusive) zero? */
+        bool all_zero = true;
+        for (rose_addr_t va=begin_va; va<end_va && all_zero; /*void*/) {
+            Disassembler::InstructionMap::const_iterator ii=insns.find(va);
+            if (ii==insns.end()) {
+                end_va = va;
+                break;
+            }
+            size_t nbytes = std::min((rose_addr_t)ii->second->get_raw_bytes().size(), end_va-va);
+            for (size_t i=0; i<nbytes && all_zero; i++)
+                all_zero = (ii->second->get_raw_bytes()[i]==0);
+            va += ii->second->get_raw_bytes().size();
+        }
+        if (all_zero && begin_va<end_va)
+            new_functions[begin_va] = end_va;
+    }
+    
+    /* For ranges of zero bytes, find the blocks containing those instructions and add them to the padding function. The
+     * blocks are allowed to extend beyond the range of zeros and contain non-zero bytes. */
+    for (std::map<rose_addr_t, rose_addr_t>::iterator fi=new_functions.begin(); fi!=new_functions.end(); ++fi) {
+        rose_addr_t begin_va = fi->first;
+        rose_addr_t end_va = fi->second;
+        Function *padfunc = NULL;
+        for (rose_addr_t va=begin_va; va<end_va; /*void*/) {
+            BasicBlock *bb = find_bb_containing(va);
+            if (!bb || bb->function) break;
+            if (!padfunc)
+                padfunc = add_function(begin_va, SgAsmFunctionDeclaration::FUNC_INTERPAD);
+            append(padfunc, bb);
+            SgAsmInstruction *last_insn = bb->last_insn();
+            va = last_insn->get_address() + last_insn->get_raw_bytes().size();
+        }
+    }
+}
+
+/* class method */
+rose_addr_t
+Partitioner::value_of(SgAsmValueExpression *e)
+{
+    if (!e) {
+        return 0;
+    } else if (isSgAsmWordValueExpression(e)) {
+        return isSgAsmWordValueExpression(e)->get_value();
+    } else if (isSgAsmDoubleWordValueExpression(e)) {
+        return isSgAsmDoubleWordValueExpression(e)->get_value();
+    } else if (isSgAsmQuadWordValueExpression(e)) {
+        return isSgAsmQuadWordValueExpression(e)->get_value();
+    } else {
+        return 0;
+    }
+}
+
+/* class method */
+rose_addr_t
+Partitioner::get_indirection_addr(SgAsmInstruction *g_insn)
+{
+    rose_addr_t retval = 0;
+
+    SgAsmx86Instruction *insn = isSgAsmx86Instruction(g_insn);
+    if (!insn ||
+        !x86InstructionIsUnconditionalBranch(insn) ||
+        1!=insn->get_operandList()->get_operands().size())
+        return retval;
+    
+    SgAsmMemoryReferenceExpression *mref = isSgAsmMemoryReferenceExpression(insn->get_operandList()->get_operands()[0]);
+    if (!mref)
+        return retval;
+
+    SgAsmExpression *mref_addr = mref->get_address();
+    if (isSgAsmBinaryExpression(mref_addr)) {
+        SgAsmBinaryExpression *mref_bin = isSgAsmBinaryExpression(mref_addr);
+        SgAsmx86RegisterReferenceExpression *reg = isSgAsmx86RegisterReferenceExpression(mref_bin->get_lhs());
+        SgAsmValueExpression *val = isSgAsmValueExpression(mref_bin->get_rhs());
+        if (reg->get_register_class()==x86_regclass_ip && val!=NULL) {
+            retval = value_of(val) + insn->get_address() + insn->get_raw_bytes().size();
+        }
+    } else if (isSgAsmValueExpression(mref_addr)) {
+        retval = value_of(isSgAsmValueExpression(mref_addr));
+    }
+
+    return retval; /*calculated value, or defaults to zero*/
 }
 
 /* Gives names to the dynamic linking trampolines in the .plt section. */
 void
-Partitioner::name_plt_entries(SgAsmGenericHeader *fhdr, const Disassembler::InstructionMap &insns,
-                              FunctionStarts &func_starts/*out*/) const
+Partitioner::name_plt_entries(SgAsmGenericHeader *fhdr)
 {
     /* This function is ELF, x86 specific. [FIXME RPM 2009-02-06] */
     SgAsmElfFileHeader *elf = isSgAsmElfFileHeader(fhdr);
@@ -626,13 +694,13 @@ Partitioner::name_plt_entries(SgAsmGenericHeader *fhdr, const Disassembler::Inst
     if (rsects.empty()) return;
 
     /* Process each .plt trampoline */
-    for (FunctionStarts::iterator fi=func_starts.begin(); fi!=func_starts.end(); fi++) {
+    for (Functions::iterator fi=functions.begin(); fi!=functions.end(); fi++) {
         rose_addr_t func_addr = fi->first;
 
-        if (fi->second.name!="")
+        if (fi->second->name!="")
             continue; /* function already has a name */
 
-        if (func_addr <  elf->get_base_va() + plt->get_mapped_preferred_rva() &&
+        if (func_addr <  elf->get_base_va() + plt->get_mapped_preferred_rva() ||
             func_addr >= elf->get_base_va() + plt->get_mapped_preferred_rva() + plt->get_mapped_size())
             continue; /* function is not in the .plt section */
 
@@ -652,20 +720,319 @@ Partitioner::name_plt_entries(SgAsmGenericHeader *fhdr, const Disassembler::Inst
             gotplt_va >= elf->get_base_va() + gotplt->get_mapped_preferred_rva() + gotplt->get_mapped_size())
             continue; /* PLT entry doesn't dereference a value in the .got.plt section */
         
-        /* Find the relocation entry whose offset is the gotplt_rva and use that entries symbol for the function name. */
-        for (std::set<SgAsmElfRelocSection*>::iterator ri=rsects.begin(); ri!=rsects.end() && fi->second.name==""; ri++) {
+        /* Find the relocation entry whose offset is the gotplt_rva and use that entry's symbol for the function name. */
+        for (std::set<SgAsmElfRelocSection*>::iterator ri=rsects.begin(); ri!=rsects.end() && fi->second->name==""; ri++) {
             SgAsmElfRelocEntryList *entries = (*ri)->get_entries();
             SgAsmElfSymbolSection *symbol_section = isSgAsmElfSymbolSection((*ri)->get_linked_section());
             SgAsmElfSymbolList *symbols = symbol_section->get_symbols();
-            for (size_t ei=0; ei<entries->get_entries().size() && fi->second.name==""; ei++) {
+            for (size_t ei=0; ei<entries->get_entries().size() && fi->second->name==""; ei++) {
                 SgAsmElfRelocEntry *rel = entries->get_entries()[ei];
                 if (rel->get_r_offset()==gotplt_va) {
                     unsigned long symbol_idx = rel->get_sym();
                     ROSE_ASSERT(symbol_idx < symbols->get_symbols().size());
                     SgAsmElfSymbol *symbol = symbols->get_symbols()[symbol_idx];
-                    fi->second.name = symbol->get_name()->get_string();
+                    fi->second->name = symbol->get_name()->get_string() + "@plt";
                 }
             }
         }
     }
 }
+
+/* Seed function starts based on criteria other than control flow graph. */
+void
+Partitioner::pre_cfg(SgAsmInterpretation *interp)
+{
+    const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+    for (size_t i=0; i<headers.size(); i++) {
+        if (func_heuristics & SgAsmFunctionDeclaration::FUNC_ENTRY_POINT)
+            mark_entry_targets(headers[i]);
+        if (func_heuristics & SgAsmFunctionDeclaration::FUNC_EH_FRAME)
+            mark_eh_frames(headers[i]);
+        if (func_heuristics & SgAsmFunctionDeclaration::FUNC_SYMBOL)
+            mark_func_symbols(headers[i]);
+        if (func_heuristics & SgAsmFunctionDeclaration::FUNC_PATTERN)
+            mark_func_patterns(headers[i]);
+    }
+
+    /* Run user-defined function detectors, making sure that the basic block starts are up-to-date for each call. */
+    if (func_heuristics & SgAsmFunctionDeclaration::FUNC_USERDEF) {
+        for (size_t i=0; i<user_detectors.size(); i++) {
+            for (size_t j=0; j<=headers.size(); j++) {
+                SgAsmGenericHeader *hdr = 0==j ? NULL : headers[j-1];
+                user_detectors[i](this, hdr, insns);
+            }
+        }
+    }
+}
+
+/** Discover the basic blocks that belong to the current function. This function recursively adds basic blocks to function @p f
+ *  by following the successors of each block.  Two types of successors are recognized: "call successors" are successors
+ *  that invoke a function (on x86 this is usually a CALL instruction, see is_function_call()), and "flow control" successors
+ *  that usually (but not always) branches within a single function.  If a successor is an instruction belonging to some other
+ *  function then its either a function call (if it branches to the entry point of that function) or its a collision.
+ *  Collisions are resolved by discarding and rediscovering the blocks of the other function. */
+void
+Partitioner::discover_blocks(Function *f, rose_addr_t va)
+{
+    if (debug) fprintf(debug, " B%08"PRIx64, va);
+    Disassembler::InstructionMap::const_iterator ii = insns.find(va);
+    if (ii==insns.end()) return; /* No instruction at this address. */
+    SgAsmInstruction *insn = ii->second;
+    static const rose_addr_t NO_TARGET = (rose_addr_t)-1;
+
+    /* This block might be the entry address of a function even before that function has any basic blocks assigned to it. */
+    Functions::iterator fi = functions.find(va);
+    if (fi!=functions.end() && fi->second!=f) {
+        if (debug) fprintf(debug, "[entry \"%s\"]", fi->second->name.c_str());
+        return;
+    }
+
+    /* Split an existing basic block if necessary since basic blocks can have only one entry address. */
+    bool did_split = false;
+    BasicBlock *bb = find_bb_containing(insn);
+    ROSE_ASSERT(bb!=NULL);
+    if (va!=address(bb)) {
+        if (debug) fprintf(debug, "[split from B%08"PRIx64"]", address(bb));
+        did_split = true;
+        bb = split(bb, va);
+    }
+    
+    if (bb->function==f) {
+        /* This block already belongs to this function. However, if we split the block then its successors may have changed
+         * and we need to follow the new successors. */    
+        if (did_split) {
+            const Disassembler::AddressSet& suc = bb->successors();
+            for (Disassembler::AddressSet::const_iterator si=suc.begin(); si!=suc.end(); ++si)
+                discover_blocks(f, *si);
+        }
+    } else if (bb->function && va==bb->function->entry_va) {
+        /* This is a call to an existing function. Do not add it to the current function. */
+        if (debug) fprintf(debug, "[entry \"%s\"]", bb->function->name.c_str());
+    } else if (bb->function) {
+        /* This block belongs to some other function. Since ROSE requires that blocks be owned by exactly one function (the
+         * function/block relationship is an edge in the abstract syntax tree), we have to remove this block from the other
+         * function.  We'll mark both the other function and this function as being in conflict and try again later. */
+        if (debug) fprintf(debug, "[conflict F%08"PRIx64" \"%s\"]", bb->function->entry_va, bb->function->name.c_str());
+        if (functions.find(va)==functions.end())
+            add_function(va, SgAsmFunctionDeclaration::FUNC_GRAPH);
+        bb->function->pending = f->pending = true;
+    } else {
+        /* Add this block to the function and follow its successors. If a successor appears to be a function call then create
+         * that function and don't add that block to this function. */
+        rose_addr_t call_target = NO_TARGET;
+        if ((func_heuristics & SgAsmFunctionDeclaration::FUNC_CALL_TARGET) &&
+            bb->is_function_call(&call_target) && call_target!=NO_TARGET) {
+            if (debug) fprintf(debug, "[call F%08"PRIx64"]", call_target);
+            add_function(call_target, SgAsmFunctionDeclaration::FUNC_CALL_TARGET);
+        }
+        append(f, bb);
+        const Disassembler::AddressSet& suc = bb->successors();
+        for (Disassembler::AddressSet::const_iterator si=suc.begin(); si!=suc.end(); ++si) {
+            if (*si!=call_target)
+                discover_blocks(f, *si);
+        }
+    }
+}
+
+void
+Partitioner::analyze_cfg()
+{
+    for (size_t pass=0; true; pass++) {
+        if (debug) fprintf(debug, "========== Partitioner::analyze_cfg() pass %zu ==========\n", pass);
+
+        /* Get a list of functions we need to analyze */
+        std::vector<Function*> pending;
+        for (Functions::iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+            ROSE_ASSERT(fi->second->entry_va==fi->first);
+            if (fi->second->pending) {
+                fi->second->clear_blocks();
+                fi->second->pending = false; /*might be set back to true by discover_blocks() in loop below*/
+                pending.push_back(fi->second);
+            }
+        }
+        if (pending.size()==0)
+            break;
+        
+        /* (Re)discover each function's blocks starting with the function entry point */
+        for (size_t i=0; i<pending.size(); ++i) {
+            if (debug) {
+                fprintf(debug, "analyzing %s F%08"PRIx64" \"%s\" pass %zu: ",
+                        SgAsmFunctionDeclaration::reason_str(true, pending[i]->reason).c_str(),
+                        pending[i]->entry_va, pending[i]->name.c_str(), pass);
+            }
+            discover_blocks(pending[i], pending[i]->entry_va);
+            if (debug) fprintf(debug, "\n");
+        }
+    }
+}
+
+void
+Partitioner::post_cfg(SgAsmInterpretation *interp)
+{
+    const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+
+    if (func_heuristics & SgAsmFunctionDeclaration::FUNC_INTERPAD) {
+        create_nop_padding();
+        create_zero_padding();
+    }
+
+    /* This doesn't detect new functions, it just gives names to ELF .plt trampolines */
+    for (size_t i=0; i<headers.size(); i++) {
+        name_plt_entries(headers[i]);
+    }
+}
+
+SgAsmBlock *
+Partitioner::build_ast()
+{
+    /* Build a function to hold all the unassigned instructions. */
+    Function *catchall = NULL;
+    for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+        BasicBlock *bb = find_bb_containing(ii->first);
+        ROSE_ASSERT(bb!=NULL);
+        if (!bb->function) {
+            if (!catchall)
+                catchall = add_function(ii->first, 0, "***unassigned blocks***"); /*see documentation if changing this name*/
+            append(catchall, bb);
+        }
+    }
+
+    /* Build the AST */
+    SgAsmBlock *retval = new SgAsmBlock;
+    for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi) {
+        SgAsmFunctionDeclaration *func_decl = build_ast(fi->second);
+        if (!func_decl) continue;
+        retval->get_statementList().push_back(func_decl);
+        func_decl->set_parent(retval);
+    }
+
+    /* Return catchall blocks to the free pool */
+    if (catchall) {
+        catchall->clear_blocks();
+        functions.erase(catchall->entry_va);
+        delete catchall;
+    }
+
+    return retval;
+}
+
+SgAsmFunctionDeclaration *
+Partitioner::build_ast(Function* f) const
+{
+    if (f->blocks.size()==0) {
+        if (debug) fprintf(debug, "function F%08"PRIx64" \"%s\" has no basic blocks!\n", f->entry_va, f->name.c_str());
+        return NULL;
+    }
+    
+    SgAsmFunctionDeclaration *retval = new SgAsmFunctionDeclaration;
+    rose_addr_t next_block_va = f->entry_va;
+    unsigned reasons = f->reason;
+    
+    for (BasicBlocks::iterator bi=f->blocks.begin(); bi!=f->blocks.end(); ++bi) {
+        if (address(bi->second)!=next_block_va)
+            reasons |= SgAsmFunctionDeclaration::FUNC_DISCONT;
+        SgAsmBlock *block = build_ast(bi->second);
+        retval->get_statementList().push_back(block);
+        block->set_parent(retval);
+        SgAsmInstruction *last = bi->second->insns.back();
+        next_block_va = last->get_address() + last->get_raw_bytes().size();
+    }
+
+    BasicBlock *first_block = f->blocks.begin()->second;
+    retval->set_address(address(first_block));
+    retval->set_name(f->name);
+    retval->set_reason(reasons);
+    retval->set_entry_va(f->entry_va);
+    return retval;
+}
+
+SgAsmBlock *
+Partitioner::build_ast(BasicBlock* bb) const
+{
+    SgAsmBlock *retval = new SgAsmBlock;
+    retval->set_id(bb->insns.front()->get_address());
+    retval->set_address(bb->insns.front()->get_address());
+    for (std::vector<SgAsmInstruction*>::const_iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
+        retval->get_statementList().push_back(*ii);
+        (*ii)->set_parent(retval);
+    }
+    return retval;
+}
+
+/* Top-level function to run the partitioner on some instructions and build an AST */
+SgAsmBlock *
+Partitioner::partition(SgAsmInterpretation* interp, const Disassembler::InstructionMap& insns)
+{
+    clear();
+    add_instructions(insns);
+    pre_cfg(interp);
+    analyze_cfg();
+    post_cfg(interp);
+    return build_ast();
+}
+
+
+/* FIXME: Deprecated 2010-01-01 */
+Partitioner::BasicBlockStarts
+Partitioner::detectBasicBlocks(const Disassembler::InstructionMap &insns) const
+{
+    BasicBlockStarts bb_starts;
+
+    /* The first instruction always starts a basic block. */
+    if (insns.size()>0) {
+        rose_addr_t insn_va = insns.begin()->first;
+        bb_starts[insn_va] = BasicBlockStarts::mapped_type();
+    }
+
+    for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
+        SgAsmInstruction *insn = ii->second;
+        rose_addr_t insn_va = insn->get_address();
+        rose_addr_t next_va = insn->get_address() + insn->get_raw_bytes().size();
+
+        /* If this instruction is one which terminates a basic block then make the next instruction (if any) the beginning of
+         * a basic block. However, a sequence like the following should not be a basic block boundary because the CALL is
+         * acting more like a "PUSH EIP" (we should probably just look at the CALL instruction itself rather than also looking
+         * for the following POP, but since ROSE doesn't currently apply the relocation tables before disassembling, the CALL
+         * with a zero offset is quite common. [RPM 2009-08-24] */
+        if (insn->terminatesBasicBlock()) {
+            Disassembler::InstructionMap::const_iterator found = insns.find(next_va);
+            if (found!=insns.end()) {
+                SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
+                SgAsmx86Instruction *insn2_x86 = isSgAsmx86Instruction(found->second);
+                rose_addr_t branch_target_va;
+                if (insn_x86 &&
+                    (insn_x86->get_kind()==x86_call || insn_x86->get_kind()==x86_farcall) &&
+                    x86GetKnownBranchTarget(insn_x86, branch_target_va) &&
+                    branch_target_va==next_va && insn2_x86->get_kind()==x86_pop) {
+                    /* The CALL is acting more like a "PUSH EIP" and should not end the basic block. */
+                } else if (bb_starts.find(next_va)==bb_starts.end()) {
+                    bb_starts[next_va] = BasicBlockStarts::mapped_type();
+                }   
+            }
+        }
+
+        /* If this instruction has multiple known successors then make each of those successors the beginning of a basic
+         * block (provided there's an instruction at that address). However, if there's only one successor and it's the
+         * fall-through address then ignore it. */
+        bool complete;
+        Disassembler::AddressSet successors = insn->get_successors(&complete);
+        for (Disassembler::AddressSet::const_iterator si=successors.begin(); si!=successors.end(); ++si) {
+            rose_addr_t successor_va = *si;
+            if ((successor_va != next_va || successors.size()>1) && insns.find(successor_va)!=insns.end())
+                bb_starts[successor_va].insert(insn_va);
+        }
+    }
+    return bb_starts;
+}
+
+/* FIXME: Deprecated 2010-01-01 */
+Partitioner::FunctionStarts
+Partitioner::detectFunctions(SgAsmInterpretation*, const Disassembler::InstructionMap &insns,
+                             BasicBlockStarts &bb_starts/*out*/) const
+{
+    FunctionStarts retval;
+    for (Functions::const_iterator fi=functions.begin(); fi!=functions.end(); ++fi)
+        retval.insert(std::make_pair(fi->first, FunctionStart(fi->second->reason, fi->second->name)));
+    return retval;
+}
+

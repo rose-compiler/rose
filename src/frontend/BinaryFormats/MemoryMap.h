@@ -247,6 +247,9 @@ public:
      *  aborted early if a map element is marked read-only.  The return value is the number of bytes copied. */
     size_t write(const void *src_buf, rose_addr_t start_va, size_t size) const;
 
+    /** Returns just the virtual address extents for a memory map. */
+    ExtentMap va_extents() const;
+
     /** Prints the contents of the map for debugging. The @p prefix string is added to the beginning of every line of output
      *  and typically is used to indent the output. */
     void dump(FILE*, const char *prefix="") const;

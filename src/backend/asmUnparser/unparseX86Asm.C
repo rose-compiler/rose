@@ -9,6 +9,9 @@
 #include "sage3basic.h"
 #include <iomanip>
 
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 /** Returns a string containing everthing before the first operand in a typical x86 assembly statement. */
 std::string unparseX86Mnemonic(SgAsmx86Instruction *insn) {
     ROSE_ASSERT(insn!=NULL);
@@ -155,12 +158,30 @@ std::string unparseX86Expression(SgAsmExpression *expr, bool leaMode) {
             result = unparseX86Register(rr->get_register_class(), rr->get_register_number(), rr->get_position_in_register());
             break;
         }
-        case V_SgAsmByteValueExpression:
-        case V_SgAsmWordValueExpression:
-        case V_SgAsmDoubleWordValueExpression:
-        case V_SgAsmQuadWordValueExpression:
-            result = StringUtility::intToHex(SageInterface::getAsmConstant(isSgAsmValueExpression(expr)));
+        case V_SgAsmByteValueExpression: {
+            char buf[32];
+            sprintf(buf, "0x%02"PRIx64, SageInterface::getAsmConstant(isSgAsmValueExpression(expr)));
+            result = buf;
             break;
+        }
+        case V_SgAsmWordValueExpression: {
+            char buf[32];
+            sprintf(buf, "0x%04"PRIx64, SageInterface::getAsmConstant(isSgAsmValueExpression(expr)));
+            result = buf;
+            break;
+        }
+        case V_SgAsmDoubleWordValueExpression: {
+            char buf[32];
+            sprintf(buf, "0x%08"PRIx64, SageInterface::getAsmConstant(isSgAsmValueExpression(expr)));
+            result = buf;
+            break;
+        }
+        case V_SgAsmQuadWordValueExpression: {
+            char buf[32];
+            sprintf(buf, "0x%016"PRIx64, SageInterface::getAsmConstant(isSgAsmValueExpression(expr)));
+            result = buf;
+            break;
+        }
         default: {
             std::cerr << "Unhandled expression kind " << expr->class_name() << std::endl;
             ROSE_ASSERT (false);

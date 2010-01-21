@@ -225,7 +225,7 @@ bool mayAlias(const MemoryWrite& a, const MemoryWrite& b) {
 /** Returns true if memory locations @p a and @p b are the same (note that "same" is more strict than "overlap"). */
 bool mustAlias(const MemoryWrite& a, const MemoryWrite& b) {
     if (!mayAlias(a, b)) return false;
-    return a.address.offset == b.address.offset;
+    return a.address.name==b.address.name && a.address.offset==b.address.offset;
 }
 
 template <size_t From, size_t To>
@@ -990,6 +990,7 @@ struct FindConstantsPolicy {
 
     template <size_t Len1, size_t Len2>
     BINARY_COMPUTATION(unsignedDivide, Len1, Len2, Len1, {
+            if (0==b) throw std::string("division by zero");
             return (a / b);
         })
 
@@ -1073,7 +1074,11 @@ struct FindConstantsPolicy {
     }
 
     void hlt() {} // FIXME
-    void interrupt(uint8_t num) {} // FIXME
+
+    void interrupt(uint8_t num) {
+        currentRset.setToBottom();
+    }
+
     XVariablePtr<64> rdtsc() { // FIXME
         return number<64>(0);
     }

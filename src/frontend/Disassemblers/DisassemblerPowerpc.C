@@ -36,8 +36,10 @@
 
 
 Disassembler::AddressSet
-SgAsmPowerpcInstruction::get_successors() {
+SgAsmPowerpcInstruction::get_successors(bool *complete) {
     Disassembler::AddressSet retval;
+    *complete = true; /*assume retval is the complete set of successors for now*/
+
     switch (get_kind()) {
         case powerpc_bc:
         case powerpc_bca:
@@ -58,6 +60,7 @@ SgAsmPowerpcInstruction::get_successors() {
         case powerpc_bclr:
         case powerpc_bclrl:
             /* Conditional branches to count register; target is unknown */
+            *complete = false;
             retval.insert(get_address()+get_raw_bytes().size());
             break;
 
@@ -80,6 +83,7 @@ SgAsmPowerpcInstruction::get_successors() {
         case powerpc_rfi:
         case powerpc_sc:
             /* No known successors */
+            *complete = false;
             break;
 
         default:
@@ -156,7 +160,8 @@ DisassemblerPowerpc::disassembleOne(const MemoryMap *map, rose_addr_t start_va, 
 
     /* Note successors if necessary */
     if (successors) {
-        AddressSet suc2 = insn->get_successors();
+        bool complete;
+        AddressSet suc2 = insn->get_successors(&complete);
         successors->insert(suc2.begin(), suc2.end());
     }
 
