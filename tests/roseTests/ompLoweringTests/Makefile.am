@@ -12,7 +12,6 @@ GOMP_PATH = @gomp_omp_runtime_library_path@
 # Put test codes without main() entry here
 # They will be compiled only, not executed.
 C_TESTCODES_REQUIRED_TO_COMPILE = \
-        barrier.c \
         dynamicChunk.c \
 	endif.c \
 	lastprivateOrphaned.c \
@@ -31,6 +30,7 @@ C_TESTCODES_REQUIRED_TO_COMPILE = \
 C_TESTCODES_REQUIRED_TO_RUN = \
         3loops.c \
         atomic.c \
+        barrier.c \
         critical.c \
         critical_orphaned.c \
         empty.c \
@@ -178,7 +178,8 @@ if WITH_GOMP_OPENMP_LIB
 PASSING_C_TEST_Executables = ${C_TEST_OBJECT_REQUIRED_TO_RUN:.o=.out}
 PASSING_CXX_TEST_Executables = ${CXX_TEST_OBJECT_REQUIRED_TO_RUN:.o=.out}
 # TODO this might have problem with CXX objects!!
-MY_FINAL_LINK = $(GOMP_PATH)/libgomp.a -lpthread -lm
+MY_FINAL_LINK = $(top_builddir)/src/midend/programTransformation/ompLowering/libxomp.a $(GOMP_PATH)/libgomp.a -lpthread -lm
+#MY_FINAL_LINK = $(GOMP_PATH)/libgomp.a -lpthread -lm
 #MY_FINAL_LINK = -L$(GOMP_PATH) -lgomp -lpthread -lm # using static link for simplicity (avoid LD_LIBRARY_PATH )
 #%.out: %.o
 #	$(CC) $< -o $@ $(MY_FINAL_LINK)
