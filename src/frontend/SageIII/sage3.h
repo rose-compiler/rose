@@ -59,6 +59,9 @@
 #include <valgrind/memcheck.h>
 #endif
 
+/* The SgFile node needs default settings defined in Disassembler::SEARCH_DEFAULT */
+#include "Disassembler.h"
+
 #endif
 
 

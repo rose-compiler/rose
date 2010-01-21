@@ -1145,16 +1145,16 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "isObjectFile", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (8/26/2008): Adds support for more agressive disassembly of sections that are in
-  // executable segments but may be in non-executable segments.  Segments are sets of sections
-  // and the OS marks pages based on segment settings, not sections settings, so sections
-  // settings can be ignored.  This setting follows the segments setting it selecting executable
-  // sets of sections (segments), instead of section settings which could be ignored. Binaries
-  // built using compilers and intended for debugging follow more rules than arbitrary binaries.
-  // File.setDataPrototype         ( "bool", "aggressive", "= false",
-  //             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     BinaryComposite.setDataPrototype         ( "bool", "aggressive", "= false",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // RPM (12/29/2009): Switch to control how aggressive the disassembler is. It takes a list of words based loosely
+  // on the constants in the Disassembler::SearchHeuristic enum.
+     File.setDataPrototype("unsigned", "disassemblerSearchHeuristics", "= Disassembler::SEARCH_DEFAULT",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // RPM (1/5/2010): Switch to control how the Partitioner looks for functions. It takes a list of words based loosely
+  // on the constants in the SgAsmFunctionDeclaration::FunctionReason enum.
+     File.setDataPrototype("unsigned", "partitionerSearchHeuristics", "= SgAsmFunctionDeclaration::FUNC_DEFAULT",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
 
   // ******************************************************************************
