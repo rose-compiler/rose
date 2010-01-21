@@ -22,7 +22,7 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIde
 # name of a file that is created when the test is successful, the later is a phony target.
 noinst_PROGRAMS = execFormatsTest testBinCFG testBinCG testElfStrtab testElfByteOrder testElfWordSize testElfSchulz \
 		testElfConstruct testPeConstruct shiftResizeSection findConstants disassemble testEtherInsns \
-		expandCoreDump functionBoundaries findConstantsABI
+		expandCoreDump functionBoundaries findConstantsABI rot13
 
 # Parses an executable to produce a dump file (*.dump), an assembly file (rose_*.s), and a new executable created by unparsing
 # the AST (*.new). The *.new file is typically identical to the original executable.
@@ -96,6 +96,9 @@ functionBoundaries_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 expandCoreDump_SOURCES=expandCoreDump.C
 expandCoreDump_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
+# Program that encodes/decodes data similar to ROT-13 but acceping binary data
+rot13_SOURCES=rot13.C
+
 ###############################################################################################################################
 # DEMOS
 #
@@ -167,6 +170,9 @@ demo_functionBoundaries: functionBoundaries demo_exapndCoreDump
 	@echo "The functionBoundaries tool prints information about what binary functions were detected and why."
 	./functionBoundaries $(BINARY_SAMPLES)/i686-test1.O3.bin
 
+demo_rot13: rot13
+	: no demo yet for rot13
+
 ###############################################################################################################################
 # TESTS
 #
@@ -175,8 +181,13 @@ demo_functionBoundaries: functionBoundaries demo_exapndCoreDump
 #
 # Each passing test creates a *.passed file so that a subsequent "make" doesn't need to rerun the test.
 #
-# Some of the targets depend on other tests because ROSE should not execute concurrently in the same working directory for
-# specimen binaries having the same names due to ROSE creating files in the CWD based on the base name of the specimen.
+#------------------------------------------------------------------------------------------------------------------------------
+# -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE -- NOTICE --
+#
+# SOME OF THE TARGETS DEPEND ON OTHER TESTS BECAUSE ROSE SHOULD NOT EXECUTE CONCURRENTLY IN THE SAME WORKING DIRECTORY FOR
+# SPECIMEN BINARIES HAVING THE SAME NAMES DUE TO ROSE CREATING FILES IN THE CWD BASED ON THE BASE NAME OF THE SPECIMEN.
+# ------------------------------------------------------------------------------------------------------------------------------
+#
 ###############################################################################################################################
 TEST_PASSED_TARGETS=$(patsubst %,test_%.passed,$(noinst_PROGRAMS)) test_assembler.passed
 
@@ -188,7 +199,7 @@ test_testBinCFG.passed: testBinCFG
 	$(VALGRIND) ./testBinCFG $(BINARY_SAMPLES)/libm-2.3.6.so
 	@touch $@
 
-test_testBinCG.passed: testBinCG
+test_testBinCG.passed: testBinCG test_testBinCFG.passed
 	$(VALGRIND) ./testBinCG $(BINARY_SAMPLES)/libm-2.3.6.so
 	@touch $@
 
@@ -243,7 +254,7 @@ test_testElfSchulz-2.passed: testElfSchulz
 	    else echo "Libs differ; Schulz test-2 failed"; exit 1; fi
 	@touch $@
 
-test_so_file:
+test_so_file: test_testBinCFG.passed test_testBinCG.passed
 	$(VALGRIND) ./execFormatsTest $(BINARY_SAMPLES)/libm-2.3.6.so
 
 test_testElfConstruct.passed: testElfConstruct
@@ -265,14 +276,14 @@ test_shiftResizeSection.passed: shiftResizeSection
 # names. Therefore, when comparing the test output with the answer, we will change all constant names from "v[0-9]+" to
 # "vXXX".  Any problems in the semantic analysis should still be caught since they would presumably affect lots of
 # other output too.  The test is still sensitive to minor formatting changes in unparseInstruction().
-FIND_CONSTANTS_DIFF=diff <(sed "s/v[0-9][0-9]*/vXXX/g" test_findConstants.ans) \
-                         <(sed "s/v[0-9][0-9]*/vXXX/g" $(srcdir)/test_findConstants.ans)
+FIND_CONSTANTS_DIFF=diff -u <(sed "s/v[0-9][0-9]*/vXXX/g" $(srcdir)/test_findConstants.ans) \
+                            <(sed "s/v[0-9][0-9]*/vXXX/g" test_findConstants.ans)
 test_findConstants.passed: findConstants
 	$(VALGRIND) ./findConstants $(BINARY_SAMPLES)/i686-test1.O3.bin >test_findConstants.ans
-	@bash -c 'if $(FIND_CONSTANTS_DIFF); then \
+	@bash -c 'if $(FIND_CONSTANTS_DIFF) >/dev/null; then :; else \
           echo "*** $@: Result (test_findConstants.ans) differs from expected answer in $(srcdir)"; \
 	  echo "    (You should compare the files manually to verify the result, then copy it to"; \
-	  echo "     $(srcdir) if it looks OK.) Tail end of the difference is:"; \
+	  echo "     $(srcdir) if it looks OK.) First 100 lines of the difference are:"; \
 	  $(FIND_CONSTANTS_DIFF) |head -n100 |sed "s/^/findConstants> /"; \
 	  exit 1 ; \
 	fi'
@@ -319,6 +330,11 @@ test_testEtherInsns.passed: testEtherInsns
 test_expandCoreDump.passed: expandCoreDump
 	@echo "expandCoreDump is not currently tested."
 
+test_rot13.passed: rot13
+	./rot13 --encode <$(BINARY_SAMPLES)/i686-test1.O0.bin |./rot13 --decode >test_rot13.ans
+	@if diff $(BINARY_SAMPLES)/i686-test1.O0.bin test_rot13.ans; then :; else echo "rot13 failure"; exit 1; fi
+	@touch $@
+
 # Tests for detecting the locations of functions, written this way for parallelism.
 test_functionBoundaries_1.passed: functionBoundaries $(BINARY_SAMPLES)/i686-test1.O0.bin test_disassemble.passed
 	./functionBoundaries $(BINARY_SAMPLES)/i686-test1.O0.bin >functionBoundaries_1.ans
@@ -327,13 +343,14 @@ test_functionBoundaries_1.passed: functionBoundaries $(BINARY_SAMPLES)/i686-test
 test_functionBoundaries_2.passed: functionBoundaries $(BINARY_SAMPLES)/i686-test1.O3.bin test_findConstants.passed test_findConstantsABI.passed
 	./functionBoundaries $(BINARY_SAMPLES)/i686-test1.O3.bin >functionBoundaries_2.ans
 	diff -u {$(srcdir),.}/functionBoundaries_2.ans
-	touch $@
+	@touch $@
 test_functionBoundaries_3.passed: functionBoundaries $(BINARY_SAMPLES)/i686-test1.O3-stripped.bin
 	./functionBoundaries $(BINARY_SAMPLES)/i686-test1.O3-stripped.bin >functionBoundaries_3.ans
 	diff -u {$(srcdir),.}/functionBoundaries_3.ans
-	touch $@
+	@touch $@
 test_functionBoundaries.passed: test_functionBoundaries_1.passed test_functionBoundaries_2.passed test_functionBoundaries_3.passed
-	touch $@
+	@touch $@
+
 
 ###############################################################################################################################
 # Miscellaneous....
@@ -345,7 +362,7 @@ MOSTLYCLEANFILES = \
 	a.out arm-ctrlaltdel.ans arm-ctrlaltdel.dump-{1,2,3} arm-ctrlaltdel.new.new \
 	arm-poweroff.{new.dump,new.new} rose_arm-ctrlaltdel.new.s rose_arm-poweroff.new.s \
 	rose_schulz-sample{1,2}.so.new.s schulz-sample{1,2}.so.{new.dump,new.new} test_findConstants.ans \
-	test_disassemble.ans test_samples.{passed,out} \
+	test_disassemble.ans test_samples.{passed,out} test_rot13.ans\
 	test_functionBoundaries_{1,2,3}.passed functionBoundaries_{1,2,3}.ans test_findConstantsABI.ans
 
 mostlyclean-local:

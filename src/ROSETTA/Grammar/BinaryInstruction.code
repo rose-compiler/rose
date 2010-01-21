@@ -24,6 +24,7 @@ HEADER_GENERIC_SECTION_PREDECLARATION_END
 
 HEADER_GENERIC_FILE_PREDECLARATION_START
 #include "MemoryMap.h"
+#include "DataConversion.h"
 HEADER_GENERIC_FILE_PREDECLARATION_END
 
 HEADER_INTERPRETATION_PREDECLARATION_START
@@ -971,7 +972,7 @@ HEADER_GENERIC_HEADER_END
 HEADER_GENERIC_FILE_START
 	public:
 		SgAsmGenericFile()
-			: p_unreferenced_cache(NULL), p_fd(-1), p_headers(NULL), p_holes(NULL),
+			: p_unreferenced_cache(NULL), p_data_converter(NULL),p_fd(-1), p_headers(NULL), p_holes(NULL),
 			  p_truncate_zeros(false), p_tracking_references(true)
 			{ctor();}
 		virtual ~SgAsmGenericFile();				/* Destructor deletes children and unmaps/closes file */
@@ -984,6 +985,10 @@ HEADER_GENERIC_FILE_START
 		/* Tracking references */
 		const ExtentMap& get_unreferenced_extents() const;	/* Returns parts of file that have not been referenced */
 		void mark_referenced_extent(addr_t start_rva, addr_t size);
+
+		/* Converting encoding/decoding data is it's transferred from/to disk. */
+		void set_data_converter(DataConverter* dc) {p_data_converter=dc;}
+		DataConverter* get_data_converter() const {return p_data_converter;}
 
 		/* File contents */
 		rose_addr_t get_current_size() const;			/* Current size based on defined sections */
@@ -1058,6 +1063,7 @@ HEADER_GENERIC_FILE_START
 	private:
 		void ctor();
 		mutable ExtentMap *p_unreferenced_cache;
+		DataConverter *p_data_converter;
 HEADER_GENERIC_FILE_END
 
 

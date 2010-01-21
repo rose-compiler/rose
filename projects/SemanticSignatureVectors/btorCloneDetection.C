@@ -1,8 +1,6 @@
 /* Reads a binary file and disassembles according to command-line switches */
 
 #include "rose.h"
-
-#include "rose.h"
 #include "x86InstructionSemantics.h"
 #include "x86AssemblyToBtor.h"
 #include "BtorFunctionPolicy.h"
