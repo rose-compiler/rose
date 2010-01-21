@@ -1,6 +1,7 @@
 # Editor backups
 *~
 # editor temp file
+.*swo
 *.swp
 *.dump2
 *.o

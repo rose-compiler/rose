@@ -41,7 +41,7 @@ namespace OmpSupport
 #ifdef ENABLE_XOMP
       SageInterface::insertHeader("libxomp.h",PreprocessingInfo::after,false,globalscope);
       SageInterface::insertHeader("libgomp_g.h",PreprocessingInfo::after,false,globalscope);
-      SageInterface::insertHeader("ompcLib.h",PreprocessingInfo::after,false,globalscope);
+   //SageInterface::insertHeader("libompc.h",PreprocessingInfo::after,false,globalscope);
 #else    
     if (rtl_type == e_omni)
       SageInterface::insertHeader("ompcLib.h",PreprocessingInfo::after,false,globalscope);
@@ -52,8 +52,6 @@ namespace OmpSupport
 #endif      
   }
 
-
-#if 0
   //----------------------------
   //tasks:
   // * find the main entry for the application
@@ -63,148 +61,129 @@ namespace OmpSupport
   // * add global declarations for threadprivate variables
   // * add global declarations for lock variables
 
-  int insertRTLinitAndCleanCode(SgProject* project)
-    //int insertRTLinitAndCleanCode(SgProject* project, OmpFrontend *ompfrontend)
+  void insertRTLinitAndCleanCode(SgSourceFile* sgfile)
   {
+#ifdef ENABLE_XOMP
     bool hasMain= false;
     //find the main entry
     SgFunctionDefinition* mainDef=NULL;
-
-    // DQ (1/6/2007): The correct qualified name for "main" is "::main", at least in C++.
-    // however for C is should be "main".  Our name qualification is not language specific,
-    // however, for C is makes no sense to as for the qualified name, so the name we
-    // want to search for could be language specific.  The test code test2007_07.C 
-    // demonstrates that the function "main" can exist in both classes (as member functions)
-    // and in namespaces (as more meaningfully qualified names).  Because of this C++
-    // would have to qualify the global main function as "::main", I think.  Fixing 
-    // this details correctly turns on "hasMain" in the code below and fixes the linking
-    // problem we were having!
-    // string mainName = "main";
     string mainName = "::main";
+    ROSE_ASSERT(sgfile != NULL);
 
-    const SgFilePtrList& fileptrlist = project->get_fileList();
-
-    for (std::vector<SgFile*>::const_iterator i = fileptrlist.begin();i!=fileptrlist.end();i++)
+    SgFunctionDeclaration * mainDecl=findMain(sgfile);
+    if (mainDecl!= NULL)
     {
-      SgSourceFile* sgfile = isSgSourceFile(*i);
-      ROSE_ASSERT(sgfile != NULL);
+      // printf ("Found main function setting hasMain == true \n");
+      mainDef = mainDecl->get_definition();
+      hasMain = true;
+    }
 
-      SgFunctionDeclaration * mainDecl=findMain(sgfile);
-      if (mainDecl!= NULL)
-      {
-        // printf ("Found main function setting hasMain == true \n");
-        mainDef = mainDecl->get_definition();
-        hasMain = true;
-      }
+    //TODO declare pointers for threadprivate variables and global lock
+    //addGlobalOmpDeclarations(ompfrontend, sgfile->get_globalScope(), hasMain );
 
-      // declare pointers for threadprivate variables and global lock
-      addGlobalOmpDeclarations(ompfrontend, sgfile->get_globalScope(), hasMain );
+    if (! hasMain) return ;
+    // add parameter  int argc , char* argv[] if not exist
+    SgInitializedNamePtrList args = mainDef->get_declaration()->get_args();
+    SgType * intType=  SgTypeInt::createType();
+    SgType *charType=  SgTypeChar::createType();
 
-      if (hasMain){  // only insert into main function
-        // add parameter  int argc , char* argv[] if not exist
-        SgInitializedNamePtrList args = mainDef->get_declaration()->get_args();
-        SgType * intType=  SgTypeInt::createType();
-        SgType *charType=  SgTypeChar::createType();
-#if 1
-        if (args.size()==0){
-          SgFunctionParameterList *parameterList = mainDef->get_declaration()->get_parameterList();
-          ROSE_ASSERT(parameterList);
+#if 1   //patch up argc, argv if they do not exit yet
+    if (args.size()==0){
+      SgFunctionParameterList *parameterList = mainDef->get_declaration()->get_parameterList();
+      ROSE_ASSERT(parameterList);
 
-          // int argc
-          SgName name1("argc");
-          SgInitializedName *arg1 = buildInitializedName(name1,intType);
+      // int argc
+      SgName name1("argc");
+      SgInitializedName *arg1 = buildInitializedName(name1,intType);
 
-          //char* argv[]
-          SgName name2("argv");
-          SgPointerType *pType1= new SgPointerType(charType);
-          SgPointerType *pType2= new SgPointerType(pType1);
-          SgInitializedName *arg2 = buildInitializedName(name2,pType2);
+      //char** argv
+      SgName name2("argv");
+      SgPointerType *pType1= buildPointerType(charType);
+      SgPointerType *pType2= buildPointerType(pType1);
+      SgInitializedName *arg2 = buildInitializedName(name2,pType2);
 
-          appendArg(parameterList,arg1);
-          appendArg(parameterList,arg2);
+      appendArg(parameterList,arg1);
+      appendArg(parameterList,arg2);
 
-        } // end if (args.size() ==0)
+    } // end if (args.size() ==0)
 #endif
-        // add statements to prepare the runtime system
-        //int status=0;
-        SgIntVal * intVal = buildIntVal(0);
+    // add statements to prepare the runtime system
+    //int status=0;
+    SgIntVal * intVal = buildIntVal(0);
 
-        SgAssignInitializer * init2=buildAssignInitializer(intVal);
-        SgName *name1 = new SgName("status"); 
-        SgVariableDeclaration* varDecl1 = buildVariableDeclaration(*name1, SgTypeInt::createType(),init2, mainDef->get_body());
+    SgAssignInitializer * init2=buildAssignInitializer(intVal);
+    SgName *name1 = new SgName("status"); 
+    SgVariableDeclaration* varDecl1 = buildVariableDeclaration(*name1, SgTypeInt::createType(),init2, mainDef->get_body());
 
-        // cout<<"debug:"<<varDecl1->unparseToString()<<endl;
+    // cout<<"debug:"<<varDecl1->unparseToString()<<endl;
 
-        //_ompc_init(argc, argv);
-        SgType* voidtype =SgTypeVoid::createType();
-        SgFunctionType *myFuncType= new SgFunctionType(voidtype,false);
-        ROSE_ASSERT(myFuncType != NULL);
+    //_ompc_init(argc, argv);
+    SgType* voidtype =SgTypeVoid::createType();
+    SgFunctionType *myFuncType= new SgFunctionType(voidtype,false);
+    ROSE_ASSERT(myFuncType != NULL);
 
-        //SgExprListExp, two parameters (argc, argv)
-        // look up symbol tables for symbols
-        SgScopeStatement * currentscope = mainDef->get_body();
+    //SgExprListExp, two parameters (argc, argv)
+    // look up symbol tables for symbols
+    SgScopeStatement * currentscope = mainDef->get_body();
 
-        SgInitializedNamePtrList mainArgs = mainDef->get_declaration()->get_parameterList()->get_args();
-        Rose_STL_Container <SgInitializedName*>::iterator i= mainArgs.begin();
-        ROSE_ASSERT(mainArgs.size()==2);
+    SgInitializedNamePtrList mainArgs = mainDef->get_declaration()->get_parameterList()->get_args();
+    Rose_STL_Container <SgInitializedName*>::iterator i= mainArgs.begin();
+    ROSE_ASSERT(mainArgs.size()==2);
 
-        SgVarRefExp *var1 = buildVarRefExp(isSgInitializedName(*i), mainDef->get_body());
-        SgVarRefExp *var2 = buildVarRefExp(isSgInitializedName(*++i), mainDef->get_body());
+    SgVarRefExp *var1 = buildVarRefExp(isSgInitializedName(*i), mainDef->get_body());
+    SgVarRefExp *var2 = buildVarRefExp(isSgInitializedName(*++i), mainDef->get_body());
 
-        SgExprListExp * exp_list_exp = buildExprListExp();
-        appendExpression(exp_list_exp,var1);
-        appendExpression(exp_list_exp,var2);
+    SgExprListExp * exp_list_exp = buildExprListExp();
+    appendExpression(exp_list_exp,var1);
+    appendExpression(exp_list_exp,var2);
 
-        SgExprStatement * expStmt=  buildFunctionCallStmt (SgName("_ompc_init"),
-            buildVoidType(), exp_list_exp,currentscope);
+    SgExprStatement * expStmt=  buildFunctionCallStmt (SgName("XOMP_init"),
+	buildVoidType(), exp_list_exp,currentscope);
+    //  cout<<"debug:"<<expStmt->unparseToString()<<endl;
+    //prepend to main body
+    prependStatement(expStmt,currentscope);
+    prependStatement(varDecl1,currentscope);
 
-        //  cout<<"debug:"<<expStmt->unparseToString()<<endl;
-        //prepend to main body
-        prependStatement(expStmt,currentscope);
-        prependStatement(varDecl1,currentscope);
+    //---------------------- termination part
 
-        //  cout<<"debug:"<<mainDef->unparseToString()<<endl;
+    //  cout<<"debug:"<<mainDef->unparseToString()<<endl;
 
-        // search all return statements and add terminate() before them
-        //the body of this function is empty in the runtime library
-        // _ompc_terminate(status);
+    // search all return statements and add terminate() before them
+    //the body of this function is empty in the runtime library
+    // _ompc_terminate(status);
 
-        //SgExprListExp, 1 parameters (status) 
-        SgInitializedName *initName1= varDecl1->get_decl_item(*name1);
-        ROSE_ASSERT(initName1);
+    //SgExprListExp, 1 parameters (status) 
+    SgInitializedName *initName1= varDecl1->get_decl_item(*name1);
+    ROSE_ASSERT(initName1);
 
-        SgVarRefExp *var3 = buildVarRefExp(initName1,currentscope);
-        SgExprListExp * exp_list_exp2 = buildExprListExp();
-        appendExpression(exp_list_exp2,var3);
+    SgVarRefExp *var3 = buildVarRefExp(initName1,currentscope);
+    SgExprListExp * exp_list_exp2 = buildExprListExp();
+    appendExpression(exp_list_exp2,var3);
 
-        //build call exp stmt
-        SgExprStatement * expStmt2= buildFunctionCallStmt (SgName("_ompc_terminate"),
-            buildVoidType(),exp_list_exp2,mainDef->get_body());
+    //build call exp stmt
+    SgExprStatement * expStmt2= buildFunctionCallStmt (SgName("XOMP_terminate"),
+	buildVoidType(),exp_list_exp2,mainDef->get_body());
+    // find return statement, insert before it
+    Rose_STL_Container<SgNode*> rtList = NodeQuery::querySubTree(mainDef, V_SgReturnStmt);
+    if (rtList.size()>0)
+    {
+      for(Rose_STL_Container<SgNode*>::iterator i= rtList.begin();i!=rtList.end();i++)
+      {
+	SgStatement *targetBB= isSgStatement((*i)->get_parent());
+	ROSE_ASSERT(targetBB != NULL);
+	insertStatement(isSgStatement(*i),expStmt2);
+      }
+    }
+    else //if not found append to function body
+    {
+      appendStatement(expStmt2,currentscope);
+    }
+    // cout<<"debug terminate:"<<expStmt2->unparseToString()<<endl;
+    //   AstPostProcessing(mainDef->get_declaration());
+#endif  // ENABLE_XOMP
 
-        // find return statement, insert before it
-        Rose_STL_Container<SgNode*> rtList = NodeQuery::querySubTree(mainDef, V_SgReturnStmt);
-        if (rtList.size()>0)
-        {
-          for(Rose_STL_Container<SgNode*>::iterator i= rtList.begin();i!=rtList.end();i++)
-          {
-            SgStatement *targetBB= isSgStatement((*i)->get_parent());
-            ROSE_ASSERT(targetBB != NULL);
-            insertStatement(isSgStatement(*i),expStmt2);
-          }
-        }
-        else //if not found append to function body
-        {
-          appendStatement(expStmt2,currentscope);
-        }
-        // cout<<"debug terminate:"<<expStmt2->unparseToString()<<endl;
-        //   AstPostProcessing(mainDef->get_declaration());
-        return 0;
-      } // end if hasMain
-
-    } //end for sgfile
-    return 0;
+    return;
   }
-#endif 
 
   //! Replace references to oldVar within root with references to newVar
   int replaceVariableReferences(SgNode* root, SgVariableSymbol* oldVar, SgVariableSymbol* newVar)
@@ -962,6 +941,7 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
     SgScopeStatement * p_scope = target->get_scope();
     ROSE_ASSERT(p_scope != NULL);
 
+#ifndef ENABLE_XOMP  // direct use of gomp needs an explict call to the task in the original sequential process
     // generate a function call to it
     SgStatement* func_call = Outliner::generateCall (outlined_func, syms, readOnlyVars, wrapper_name,p_scope);
     ROSE_ASSERT(func_call != NULL);  
@@ -969,7 +949,7 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
     // Replace the parallel region with the function call statement
     // TODO should we introduce another level of scope here?
     SageInterface::replaceStatement(target,func_call, true);
-
+#endif
     //add GOMP_parallel_start (OUT_func_xxx, &__out_argv1__5876__, 0);
     // or GOMP_parallel_start (OUT_func_xxx, 0, 0); // if no variables need to be passed
     SgExpression * parameter2 = NULL;
@@ -979,8 +959,13 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
       parameter2 =  buildAddressOfOp(buildVarRefExp(wrapper_name, p_scope));
     SgExprListExp* parameters = buildExprListExp(buildFunctionRefExp(outlined_func), 
         parameter2, buildIntVal(0)); 
+#ifdef ENABLE_XOMP
+    SgExprStatement * s1 = buildFunctionCallStmt("XOMP_parallel_start", buildVoidType(), parameters, p_scope); 
+    SageInterface::replaceStatement(target, s1 , true);
+#else
     SgExprStatement * s1 = buildFunctionCallStmt("GOMP_parallel_start", buildVoidType(), parameters, p_scope); 
     SageInterface::insertStatementBefore(func_call, s1); 
+#endif
     // Keep preprocessing information
     // I have to use cut-paste instead of direct move since 
     // the preprocessing information may be moved to a wrong place during outlining
@@ -988,8 +973,13 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
    // SageInterface::moveUpPreprocessingInfo(s1, target, PreprocessingInfo::before); 
    pastePreprocessingInfo(s1, PreprocessingInfo::before, save_buf1); 
     // add GOMP_parallel_end ();
+#ifdef ENABLE_XOMP
+    SgExprStatement * s2 = buildFunctionCallStmt("XOMP_parallel_end", buildVoidType(), NULL, p_scope); 
+    SageInterface::insertStatementAfter(s1, s2);  // insert s2 after s1
+#else
     SgExprStatement * s2 = buildFunctionCallStmt("GOMP_parallel_end", buildVoidType(), NULL, p_scope); 
     SageInterface::insertStatementAfter(func_call, s2); 
+#endif
    // SageInterface::moveUpPreprocessingInfo(s2, target, PreprocessingInfo::after); 
    pastePreprocessingInfo(s2, PreprocessingInfo::after, save_buf2); 
    // paste the preprocessing info with inside position to the outlined function's body
@@ -1020,8 +1010,13 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
     ROSE_ASSERT(body != NULL);
     
     replaceStatement(target, body, true);
+#ifdef ENABLE_XOMP
+    SgExprStatement* func_call_stmt1 = buildFunctionCallStmt("XOMP_atomic_start", buildVoidType(), NULL, scope);
+    SgExprStatement* func_call_stmt2 = buildFunctionCallStmt("XOMP_atomic_end", buildVoidType(), NULL, scope);
+#else
     SgExprStatement* func_call_stmt1 = buildFunctionCallStmt("GOMP_atomic_start", buildVoidType(), NULL, scope);
     SgExprStatement* func_call_stmt2 = buildFunctionCallStmt("GOMP_atomic_end", buildVoidType(), NULL, scope);
+#endif
     insertStatementBefore(body, func_call_stmt1);
     insertStatementAfter(body, func_call_stmt2);
   }
@@ -1148,8 +1143,13 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
     ROSE_ASSERT(body != NULL);
 
     replaceStatement(target, body,true);
+#ifdef ENABLE_XOMP
+    SgExprStatement* func_call_stmt1 = buildFunctionCallStmt("XOMP_ordered_start", buildVoidType(), NULL, scope);
+    SgExprStatement* func_call_stmt2 = buildFunctionCallStmt("XOMP_ordered_end", buildVoidType(), NULL, scope);
+#else
     SgExprStatement* func_call_stmt1 = buildFunctionCallStmt("GOMP_ordered_start", buildVoidType(), NULL, scope);
     SgExprStatement* func_call_stmt2 = buildFunctionCallStmt("GOMP_ordered_end", buildVoidType(), NULL, scope);
+#endif
     insertStatementBefore(body, func_call_stmt1);
     insertStatementAfter(body, func_call_stmt2);
   }
@@ -1262,7 +1262,11 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
     SgScopeStatement * scope = target->get_scope();
     ROSE_ASSERT(scope != NULL );
 
+#ifdef ENABLE_XOMP
+    SgExprStatement* func_call_stmt = buildFunctionCallStmt("XOMP_flush_all", buildVoidType(), NULL, scope);
+#else
     SgExprStatement* func_call_stmt = buildFunctionCallStmt("__sync_synchronize", buildVoidType(), NULL, scope);
+#endif
     replaceStatement(target, func_call_stmt, true);
   }
 
@@ -2069,6 +2073,7 @@ It should also satisfy the restriction defined in specification 3.0 page 93  TOD
     patchUpFirstprivateVariables(file);
 
     insertRTLHeaders(file);
+    insertRTLinitAndCleanCode(file);
     //    translationDriver driver;
     // SgOmpXXXStatment is compiler-generated and has no file info
     //driver.traverseWithinFile(file,postorder);
