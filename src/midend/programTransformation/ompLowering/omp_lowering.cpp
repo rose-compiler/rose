@@ -380,6 +380,25 @@ namespace OmpSupport
     }
     return result;
   }
+#ifdef ENABLE_XOMP 
+  //! Generate XOMP loop schedule init function's name, union from OMNI's 
+  string generateGOMPLoopInitFuncName (bool isOrdered, SgOmpClause::omp_schedule_kind_enum s_kind)
+  {
+    // XOMP_loop_static_init() 
+    // XOMP_loop_ordered_static_init ()
+    // XOMP_loop_dynamic_init () 
+    // XOMP_loop_ordered_dynamic_init ()
+    // .....
+    string result;
+    result = "XOMP_loop_";
+    //TODO Handled ordered,Omni does not support ordered clause
+//    if (isOrdered)
+//      result +="ordered_";
+    result += toString(s_kind);  
+    result += "_init"; 
+    return result;
+  }
+#endif
 
   //! Generate GOMP loop schedule start function's name
   string generateGOMPLoopStartFuncName (bool isOrdered, SgOmpClause::omp_schedule_kind_enum s_kind)
@@ -390,7 +409,11 @@ namespace OmpSupport
     // GOMP_loop_ordered_dynamic_start ()
     // .....
     string result;
+#ifdef ENABLE_XOMP 
+    result = "XOMP_loop_";
+#else    
     result = "GOMP_loop_";
+#endif    
     // Handled ordered
     if (isOrdered)
       result +="ordered_";
@@ -409,7 +432,11 @@ namespace OmpSupport
     // GOMP_loop_ordered_dynamic_next()
     // .....
 
+#ifdef ENABLE_XOMP 
+    result = "XOMP_loop_";
+#else
     result = "GOMP_loop_";
+#endif    
     if (isOrdered)
       result +="ordered_";
     result += toString(s_kind);  
@@ -421,15 +448,17 @@ namespace OmpSupport
   // bb1 already has compiler-generated variable declarations for new loop control variables
   /*
    * start, end, incremental, chunk_size, own_start, own_end            
+   XOMP_loop_static_init(int lower, int upper, int stride, int chunk_size);
+
    if (GOMP_loop_dynamic_start (orig_lower, orig_upper, adj_stride, orig_chunk, &_p_lower, &_p_upper)) 
   //  if (GOMP_loop_ordered_dynamic_start (S, E, INCR, CHUNK, &_p_lower, &_p_upper))  
   { 
-  do                                                       
-  {                                                      
-  for (_p_index = _p_lower; _p_index < _p_upper; _p_index += orig_stride)
-  set_data (_p_index, iam);                                 
-  }                                                      
-  while (GOMP_loop_dynamic_next (&_p_lower, &_p_upper));                
+    do                                                       
+    {                                                      
+      for (_p_index = _p_lower; _p_index < _p_upper; _p_index += orig_stride)
+      set_data (_p_index, iam);                                 
+    }                                                      
+    while (GOMP_loop_dynamic_next (&_p_lower, &_p_upper));                
   // while (GOMP_loop_ordered_dynamic_next (&_p_lower, &_p_upper));     
   }
   GOMP_loop_end ();                                          
@@ -500,6 +529,21 @@ namespace OmpSupport
     int upper_adjust = 1;  // we use inclusive bounds, adjust them accordingly 
     if (!isIncremental) 
       upper_adjust = -1;
+#ifdef ENABLE_XOMP
+    // build function init stmt
+    //  _ompc_dynamic_sched_init(_p_loop_lower,_p_loop_upper,_p_loop_stride,5);
+    SgExprListExp* para_list_i = buildExprListExp(copyExpression(orig_lower), buildAddOp(copyExpression(orig_upper), buildIntVal(upper_adjust)),
+        createAdjustedStride(orig_stride, isIncremental)); 
+    if (s_kind != SgOmpClause::e_omp_schedule_auto && s_kind != SgOmpClause::e_omp_schedule_runtime)
+    {
+      appendExpression(para_list_i, copyExpression(orig_chunk_size));
+    }
+
+    string func_init_name= generateGOMPLoopInitFuncName(hasOrder, s_kind);
+    SgExprStatement* func_init_stmt = buildFunctionCallStmt(func_init_name, buildVoidType(), para_list_i, bb1);
+    appendStatement(func_init_stmt, bb1);
+#endif    
+    //build function start
     SgExprListExp* para_list = buildExprListExp(copyExpression(orig_lower), buildAddOp(copyExpression(orig_upper), buildIntVal(upper_adjust)),
         createAdjustedStride(orig_stride, isIncremental)); 
     if (s_kind != SgOmpClause::e_omp_schedule_auto && s_kind != SgOmpClause::e_omp_schedule_runtime)
@@ -534,7 +578,11 @@ namespace OmpSupport
     ROSE_ASSERT (orig_upper != NULL);
     transOmpVariables(target, bb1, orig_upper); // This should happen before the barrier is inserted.
     // GOMP_loop_end ();  or GOMP_loop_end_nowait (); 
+#ifdef ENABLE_XOMP
+    string func_loop_end_name = "XOMP_loop_end"; 
+#else    
     string func_loop_end_name = "GOMP_loop_end"; 
+#endif    
     if (hasClause(target, V_SgOmpNowaitClause)) 
     {
       func_loop_end_name+= "_nowait";
@@ -760,7 +808,11 @@ namespace OmpSupport
       if (!hasClause(target, V_SgOmpNowaitClause)) 
       {
         //insertStatementAfter(for_loop, buildFunctionCallStmt("GOMP_barrier", buildVoidType(), NULL, bb1));
+#ifdef ENABLE_XOMP
+        appendStatement(buildFunctionCallStmt("XOMP_barrier", buildVoidType(), NULL, bb1), bb1);
+#else	
         appendStatement(buildFunctionCallStmt("GOMP_barrier", buildVoidType(), NULL, bb1), bb1);
+#endif	
       }
     }
 
@@ -1120,7 +1172,11 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
     SgExprListExp* parameters = buildExprListExp(buildFunctionRefExp(outlined_func),
         parameter_data, parameter_cpyfn, parameter_arg_size, parameter_arg_align, parameter_if_clause, parameter_untied);
 
+#ifdef ENABLE_XOMP
+    SgExprStatement * s1 = buildFunctionCallStmt("XOMP_task", buildVoidType(), parameters, p_scope);
+#else    
     SgExprStatement * s1 = buildFunctionCallStmt("GOMP_task", buildVoidType(), parameters, p_scope);
+#endif
     SageInterface::replaceStatement(target,s1, true);
 
     // Keep preprocessing information
@@ -1231,8 +1287,11 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
     ROSE_ASSERT(target != NULL );
     SgScopeStatement * scope = target->get_scope();
     ROSE_ASSERT(scope != NULL );
-
+#ifdef ENABLE_XOMP
+    SgExprStatement* func_call_stmt = buildFunctionCallStmt("XOMP_taskwait", buildVoidType(), NULL, scope);
+#else    
     SgExprStatement* func_call_stmt = buildFunctionCallStmt("GOMP_taskwait", buildVoidType(), NULL, scope);
+#endif
     replaceStatement(target, func_call_stmt, true);
   }
 
