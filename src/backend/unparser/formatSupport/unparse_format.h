@@ -62,7 +62,7 @@ typedef enum
      FORMAT_AFTER_NESTED_STATEMENT,
    } FormatOpt;
 
-#include "UnparseFormatHelp.h"
+#include "unparseFormatHelp.h"
 class UnparseFormat 
    {
      int currentLine;   //! stores current line number being unparsed
