@@ -97,4 +97,4 @@ add_dependencies( roseBinaryFormats ROSETTA )
 
 ########### install files ###############
 
-install(FILES  IntelPinSupport.h Loader.h LoaderELF.h LoaderELFObj.h LoaderPE.h MemoryMap.h DESTINATION ${INCLUDE_INSTALL_DIR})
+install(FILES  DataConversion.h IntelPinSupport.h Loader.h LoaderELF.h LoaderELFObj.h LoaderPE.h MemoryMap.h DESTINATION ${INCLUDE_INSTALL_DIR})

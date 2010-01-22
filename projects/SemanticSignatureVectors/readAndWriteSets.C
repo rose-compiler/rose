@@ -277,7 +277,11 @@ int main(int argc, char** argv) {
   for (size_t i = 0; i < insns.size(); ++i) {
     SgAsmx86Instruction* b = isSgAsmx86Instruction(insns[i]);
     ROSE_ASSERT (b);
-    t.processInstruction(b);
+    try {
+        t.processInstruction(b);
+    } catch (const X86InstructionSemantics<ReadAndWriteSetPolicy, W>::Exception &e) {
+        fprintf(stderr, "%s: %s\n", e.mesg.c_str(), unparseInstructionWithAddress(e.insn).c_str());
+    }
   }
   VirtualBinCFG::AuxiliaryInformation info(proj);
   for (map<rose_addr_t, ReadAndWriteSet>::const_iterator i = policy.readAndWriteSets.begin(); i != policy.readAndWriteSets.end(); ++i) {
