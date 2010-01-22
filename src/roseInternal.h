@@ -15,7 +15,7 @@
 // #define FALSE false
 // #endif
 
-#include <cstdlib>
+//#include <cstdlib>
 
 
 // TH(2009-07-15): moving definitions of ROSE_ASSERT and ROSE_ABORT to util/processSupport.(h|C)
