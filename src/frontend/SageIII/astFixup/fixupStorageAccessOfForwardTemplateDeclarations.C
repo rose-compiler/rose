@@ -2,7 +2,7 @@
 #include "sage3basic.h"
 
 // tps : Added this as it is defined somewhere in rose.h
-#define DIAGNOSTICS_VERBOSE_LEVEL 0
+#include "AstDiagnostics.h"
 
 void
 fixupStorageAccessOfForwardTemplateDeclarations( SgNode* node )

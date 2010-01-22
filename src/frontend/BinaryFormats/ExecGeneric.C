@@ -53,53 +53,79 @@ SgAsmExecutableFileFormat::unparseBinaryFormat(std::ostream &f, SgAsmGenericFile
 SgAsmGenericFile *
 SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
 {
+    SgAsmGenericFile *ef=NULL;
     Loader::initclass();
-    SgAsmGenericFile *ef = (new SgAsmGenericFile())->parse(name);
-    ROSE_ASSERT(ef != NULL);
+    std::vector<DataConverter*> converters;
+    converters.push_back(NULL); /*no conversion*/
+    converters.push_back(new Rot13);
 
-    if (SgAsmElfFileHeader::is_ELF(ef)) {
-        (new SgAsmElfFileHeader(ef))->parse();
-    } else if (SgAsmDOSFileHeader::is_DOS(ef)) {
-        SgAsmDOSFileHeader *dos_hdr = new SgAsmDOSFileHeader(ef);
-        dos_hdr->parse(false); /*delay parsing the DOS Real Mode Section*/
+    try {
+        for (size_t ci=0; !ef && ci<converters.size(); ci++) {
+            ef = new SgAsmGenericFile();
+            ef->set_data_converter(converters[ci]);
+            converters[ci] = NULL;
+            ef->parse(name);
 
-        /* DOS Files can be overloaded to also be PE, NE, LE, or LX. Such files have an Extended DOS Header immediately after
-         * the DOS File Header (various forms of Extended DOS Header exist). The Extended DOS Header contains a file offset to
-         * a PE, NE, LE, or LX File Header, the first bytes of which are a magic number. The is_* methods check for this magic
-         * number. */
-        SgAsmGenericHeader *big_hdr = NULL;
-        if (SgAsmPEFileHeader::is_PE(ef)) {
-            SgAsmDOSExtendedHeader *dos2_hdr = new SgAsmDOSExtendedHeader(dos_hdr);
-            dos2_hdr->parse();
-            SgAsmPEFileHeader *pe_hdr = new SgAsmPEFileHeader(ef);
-            pe_hdr->set_offset(dos2_hdr->get_e_lfanew());
-            pe_hdr->parse();
-            big_hdr = pe_hdr;
-        } else if (SgAsmNEFileHeader::is_NE(ef)) {
-            SgAsmNEFileHeader::parse(dos_hdr);
-        } else if (SgAsmLEFileHeader::is_LE(ef)) { /*or LX*/
-            SgAsmLEFileHeader::parse(dos_hdr);
-        }
+            if (SgAsmElfFileHeader::is_ELF(ef)) {
+                (new SgAsmElfFileHeader(ef))->parse();
+            } else if (SgAsmDOSFileHeader::is_DOS(ef)) {
+                SgAsmDOSFileHeader *dos_hdr = new SgAsmDOSFileHeader(ef);
+                dos_hdr->parse(false); /*delay parsing the DOS Real Mode Section*/
+
+                /* DOS Files can be overloaded to also be PE, NE, LE, or LX. Such files have an Extended DOS Header
+                 * immediately after the DOS File Header (various forms of Extended DOS Header exist). The Extended DOS Header
+                 * contains a file offset to a PE, NE, LE, or LX File Header, the first bytes of which are a magic number. The
+                 * is_* methods check for this magic number. */
+                SgAsmGenericHeader *big_hdr = NULL;
+                if (SgAsmPEFileHeader::is_PE(ef)) {
+                    SgAsmDOSExtendedHeader *dos2_hdr = new SgAsmDOSExtendedHeader(dos_hdr);
+                    dos2_hdr->parse();
+                    SgAsmPEFileHeader *pe_hdr = new SgAsmPEFileHeader(ef);
+                    pe_hdr->set_offset(dos2_hdr->get_e_lfanew());
+                    pe_hdr->parse();
+                    big_hdr = pe_hdr;
+                } else if (SgAsmNEFileHeader::is_NE(ef)) {
+                    SgAsmNEFileHeader::parse(dos_hdr);
+                } else if (SgAsmLEFileHeader::is_LE(ef)) { /*or LX*/
+                    SgAsmLEFileHeader::parse(dos_hdr);
+                }
 
 #if 0 /*This iterferes with disassembling the DOS interpretation*/
-        /* Now go back and add the DOS Real-Mode section but rather than using the size specified in the DOS header, constrain
-         * it to not extend beyond the beginning of the PE, NE, LE, or LX file header. This makes detecting holes in the PE
-         * format much easier. */
-        dos_hdr->add_rm_section(big_hdr ? big_hdr->get_offset() : 0);
+                /* Now go back and add the DOS Real-Mode section but rather than using the size specified in the DOS header,
+                 * constrain it to not extend beyond the beginning of the PE, NE, LE, or LX file header. This makes detecting
+                 * holes in the PE format much easier. */
+                dos_hdr->add_rm_section(big_hdr ? big_hdr->get_offset() : 0);
 #else
-        dos_hdr->add_rm_section(0);
+                dos_hdr->add_rm_section(0);
 #endif
-
-    } else {
+            } else {
+                if (ef) delete ef->get_data_converter();
+                delete ef;
+                ef = NULL;
+            }
+        }
+    } catch(...) {
+        for (size_t ci=0; ci<converters.size(); ci++)
+            delete converters[ci];
+        if (ef) delete ef->get_data_converter();
+        delete ef;
+        ef = NULL;
+        throw;
+    }
+    
+    /* If no executable file could be parsed then try to use system tools to get the file type. On Unix-based systems, the
+     * "file" command does a thorough job of trying to figure out the type of file. If we can't figure out the file name then
+     * just throw some generic error. */
+    if (!ef) {
         delete ef; ef=NULL;
         /* Use file(1) to try to figure out the file type to report in the exception */
         int child_stdout[2];
 #ifdef _MSC_VER
 #pragma message ("WARNING: Commented out use of functions from sys/wait.h")
-		printf ("ERROR: Commented out use of functions from sys/wait.h \n");
-		ROSE_ASSERT(false);
+                printf ("ERROR: Commented out use of functions from sys/wait.h \n");
+                ROSE_ASSERT(false);
 #else
-		pipe(child_stdout);
+                pipe(child_stdout);
         pid_t pid = fork();
         if (0==pid) {
             close(0);
@@ -136,9 +162,9 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
         void visit(SgNode *node) {
             SgAsmGenericSymbol *symbol = isSgAsmGenericSymbol(node);
             if (symbol && symbol->get_type()==SgAsmGenericSymbol::SYM_FUNC) {
-               SgAsmGenericSection *section = symbol->get_bound();
-               if (section)
-                   section->set_contains_code(true);
+                SgAsmGenericSection *section = symbol->get_bound();
+                if (section)
+                    section->set_contains_code(true);
             }
         }
     } t1;
