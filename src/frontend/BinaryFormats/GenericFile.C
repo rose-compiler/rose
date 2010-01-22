@@ -62,7 +62,7 @@ SgAsmGenericFile::parse(std::string fileName)
 #else
     ssize_t nread = read(p_fd, mapped, nbytes);
 #endif
-    if (nread!=nbytes)
+    if (nread<0 || (size_t)nread!=nbytes)
         throw FormatError("Could not read entire binary file");
 
     /* Decode the memory if necessary */
@@ -755,7 +755,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
 {
     ROSE_ASSERT(s!=NULL);
     ROSE_ASSERT(s->get_file()==this);
-    ROSE_ASSERT(space & (ADDRSP_FILE|ADDRSP_MEMORY) != 0);
+    ROSE_ASSERT((space & (ADDRSP_FILE|ADDRSP_MEMORY)) != 0);
 
     const bool debug = false;
     static size_t ncalls=0;
