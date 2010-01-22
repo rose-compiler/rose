@@ -1,0 +1,10 @@
+#!/bin/bash
+#
+# Runs the equivalent of "rosegit-env make" but also filters most of the gmake garbage output
+#
+
+source rosegit-functions.sh || exit 1
+rosegit_preamble
+
+${ROSEGIT_MAKE:-make} "$@" 2>&1 | rosegit-filter-make-error --progress
+exit ${PIPESTATUS[0]}
