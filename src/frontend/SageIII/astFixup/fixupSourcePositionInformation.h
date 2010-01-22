@@ -70,3 +70,4 @@ class FixupSourcePositionConstructs : public ROSE_VisitTraversal
 void fixupSourcePositionConstructs();
 
 #endif
+
