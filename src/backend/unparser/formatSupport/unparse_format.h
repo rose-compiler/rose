@@ -7,11 +7,12 @@
 #ifndef UNPARSER_FORMAT_H
 #define UNPARSER_FORMAT_H
 
-// #include "rose.h"
-#include "sage3.h"
-#include "roseInternal.h"
+//#include "sage3.h"
+//#include "roseInternal.h"
 #include "unparser.h"
+class SgScopeStatement;
 
+class SgLocatedNode;
 class Unparser;
 
 #define KAI_NONSTD_IOSTREAM 1
@@ -61,8 +62,7 @@ typedef enum
      FORMAT_AFTER_NESTED_STATEMENT,
    } FormatOpt;
 
-// #include "unparseFormatHelp.h"
-
+#include "UnparseFormatHelp.h"
 class UnparseFormat 
    {
      int currentLine;   //! stores current line number being unparsed

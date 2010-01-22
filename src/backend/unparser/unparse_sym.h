@@ -10,7 +10,7 @@
 
 
 #include "unparser.h"
-
+class SgSymbol;
 class Unparser;
 
 class Unparse_Sym {
