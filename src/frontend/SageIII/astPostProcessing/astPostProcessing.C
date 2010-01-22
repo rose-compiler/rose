@@ -5,7 +5,7 @@
 using namespace std;
 
 // tps (01/14/2009): Had to define this locally as it is not part of sage3 but rose.h
-#define DIAGNOSTICS_VERBOSE_LEVEL 0
+#include "AstDiagnostics.h"
 
 // DQ (8/20/2005): Make this local so that it can't be called externally!
 void postProcessingSupport (SgNode* node);
