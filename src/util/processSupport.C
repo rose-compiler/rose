@@ -132,7 +132,7 @@ void ROSE_ABORT()
 }
 
 #endif
-
+#endif
 
 void ROSE_ABORT( const char *message )
 {
