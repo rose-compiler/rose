@@ -20,19 +20,6 @@
 
 // TH(2009-07-15): moving definitions of ROSE_ASSERT and ROSE_ABORT to util/processSupport.(h|C)
 #include "processSupport.h"
-/*
-// These are supported this way so that they can be redefined as required
-#ifndef ROSE_ASSERT
-#ifndef NDEBUG
-#define ROSE_ASSERT assert
-#else // We use assert(false) equivalents so often for "should not get here", but we don't want nontrivial side effects in asserts to be run when assert is disabled
-#define ROSE_ASSERT(x) do {if (__builtin_constant_p(x)) {if (x) {} else (std::abort)();}} while (0)
-#endif
-#endif
-#ifndef ROSE_ABORT
-#define ROSE_ABORT  abort
-#endif
-*/
 
 #ifdef _MSC_VER
 // DQ (11/28/2009): MSVC does not permit use of "false" in macros.

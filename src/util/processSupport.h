@@ -42,33 +42,20 @@ class rose_exception
 // void ROSE_ABORT();
 // #ifdef __APPLE__
 
-// tps (1/22/2010) : Problems with gcc4.3 - abort already defined
-#ifdef __GNUC__
-#  include <features.h>
-#if __GNUC_PREREQ(4,3)
-//       If gcc_version >= 4.3
-#else
-// not gcc
-
  #ifdef USE_ROSE
    // DQ (9/3/2009): This is required for EDG to correctly compile
    // tps (01/22/2010) : gcc43 requires abort(void)
-   void ROSE_ABORT(void) __THROW __attribute__ ((__noreturn__));
+   void ROSE_ABORT() __THROW __attribute__ ((__noreturn__));
  #else
      // DQ (9/3/2009): This is required for Mac OSX to correctly compile
      #ifdef _MSC_VER
        // DQ (11/28/2009): This is a warning in MSVC ("warning C4273: 'abort' : inconsistent dll linkage")
        void ROSE_ABORT(void);
      #else
-       void ROSE_ABORT(void);
+       void ROSE_ABORT();
    #endif // MSC
  #endif // USE_ROSE
-#endif // GNU_PRE
 
-#else // GNU
-// if not gcc
-void ROSE_ABORT(void);
-#endif
 
 // throw rose_exception with user defined abort message
 void ROSE_ABORT( const char *message );
