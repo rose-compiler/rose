@@ -59,6 +59,7 @@ class rose_exception
 #else
        void ROSE_ABORT();
 #endif
+#endif
    #endif // MSC
  #endif // USE_ROSE
 
