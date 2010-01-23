@@ -287,8 +287,6 @@ Partitioner::remove(Function* f, BasicBlock* bb)
 Partitioner::BasicBlock *
 Partitioner::find_bb_containing(rose_addr_t va)
 {
-    static const bool allow_discontiguous_blocks = true;
-
     std::map<rose_addr_t, BasicBlock*>::iterator i2b_i = insn2block.find(va);
     if (i2b_i!=insn2block.end() && i2b_i->second!=NULL) return i2b_i->second;
 
@@ -351,7 +349,7 @@ Partitioner::mark_entry_targets(SgAsmGenericHeader *fhdr)
     }
 }
 
-/** Use the Frame Descriptor Entry Records of the ELF .eh_frame section to mark functions. */
+/* Use the Frame Descriptor Entry Records of the ELF .eh_frame section to mark functions. */
 void
 Partitioner::mark_eh_frames(SgAsmGenericHeader *fhdr)
 {
@@ -374,7 +372,7 @@ Partitioner::mark_eh_frames(SgAsmGenericHeader *fhdr)
     }
 }
 
-/** Use symbol tables to determine function entry points. */
+/* Use symbol tables to determine function entry points. */
 void
 Partitioner::mark_func_symbols(SgAsmGenericHeader *fhdr)
 {
@@ -446,6 +444,7 @@ pattern1(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap
     return ii;
 }
 
+#if 0 /*commented out in Partitioner::mark_func_patterns()*/
 /** See Partitioner::mark_func_patterns. Tries to match "nop;nop;nop" followed by something that's not a nop and returns the
  *  something that's not a nop if successful. */
 static Disassembler::InstructionMap::const_iterator
@@ -467,6 +466,7 @@ pattern2(const Disassembler::InstructionMap& insns, Disassembler::InstructionMap
     if (notnop->get_kind()==x86_nop) return insns.end();
     return ii;
 }
+#endif
 
 /** See Partitioner::mark_func_patterns. Tries to match "leave;ret" followed by one or more "nop" followed by a non-nop
  *  instruction and if matching, returns the iterator for the non-nop instruction. */
@@ -924,13 +924,22 @@ Partitioner::build_ast(Function* f) const
     unsigned reasons = f->reason;
     
     for (BasicBlocks::iterator bi=f->blocks.begin(); bi!=f->blocks.end(); ++bi) {
-        if (address(bi->second)!=next_block_va)
+        BasicBlock *bb = bi->second;
+        if (address(bb)!=next_block_va)
             reasons |= SgAsmFunctionDeclaration::FUNC_DISCONT;
-        SgAsmBlock *block = build_ast(bi->second);
+        SgAsmBlock *block = build_ast(bb);
         retval->get_statementList().push_back(block);
         block->set_parent(retval);
-        SgAsmInstruction *last = bi->second->insns.back();
+        SgAsmInstruction *last = bb->insns.back();
         next_block_va = last->get_address() + last->get_raw_bytes().size();
+
+        /* The function is discontiguous if blocks do not follow one another or the instructions within a block are
+         * discontiguous. The former was checked above; the latter we check here. */
+        for (size_t i=1; 0==(reasons & SgAsmFunctionDeclaration::FUNC_DISCONT) && i<bb->insns.size(); ++i) {
+            if (bb->insns[i-1]->get_address() + bb->insns[i-1]->get_raw_bytes().size() != bb->insns[i]->get_address()) {
+                reasons |= SgAsmFunctionDeclaration::FUNC_DISCONT;
+            }
+        }
     }
 
     BasicBlock *first_block = f->blocks.begin()->second;
