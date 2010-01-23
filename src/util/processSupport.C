@@ -116,11 +116,11 @@ const char *rose_exception::what() const throw()
 // So this definition just uses "__THROW"
 // void ROSE_ABORT()
 // #ifdef __APPLE__
-#ifdef __GNUC__
-#  include <features.h>
-#if __GNUC_PREREQ(4,3)
+//#ifdef __GNUC__
+//#  include <features.h>
+//#if __GNUC_PREREQ(4,3)
 //       If gcc_version >= 4.3
-#else
+//#else
 
 #ifdef USE_ROSE
 void ROSE_ABORT() __THROW
@@ -131,8 +131,8 @@ void ROSE_ABORT()
     throw rose_exception( "abort" );
 }
 
-#endif
-#endif
+//#endif
+//#endif
 
 void ROSE_ABORT( const char *message )
 {

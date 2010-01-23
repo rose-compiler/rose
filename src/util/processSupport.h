@@ -52,14 +52,14 @@ class rose_exception
        // DQ (11/28/2009): This is a warning in MSVC ("warning C4273: 'abort' : inconsistent dll linkage")
        void ROSE_ABORT(void);
      #else
-#ifdef __GNUC__
-#  include <features.h>
-#if __GNUC_PREREQ(4,3)
+//#ifdef __GNUC__
+//#  include <features.h>
+//#if __GNUC_PREREQ(4,3)
 //       If gcc_version >= 4.3
-#else
+//#else
        void ROSE_ABORT();
-#endif
-#endif
+//#endif
+//#endif
    #endif // MSC
  #endif // USE_ROSE
 
