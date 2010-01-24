@@ -1,5 +1,5 @@
 /* For each function (SgAsmFunctionDeclaration) process each instruction (SgAsmInstruction) through the instruction semantics
- * layer using the FindConstantsPolicy. Output consists of each instruction followed by the registers and memory locations
+ * layer using the FindConstantsABIPolicy. Output consists of each instruction followed by the registers and memory locations
  * with constant or pseudo-constant values. */
 
 #define __STDC_FORMAT_MACROS
@@ -29,17 +29,13 @@ class AnalyzeFunctions : public SgSimpleProcessing {
             std::cout <<"==============================================\n"
                       <<"Constant propagation in function \"" <<name_or_addr(func) <<"\"\n"
                       <<"==============================================\n";
-            FindConstantsPolicy policy;
-            X86InstructionSemantics<FindConstantsPolicy, XVariablePtr> t(policy);
+            FindConstantsABIPolicy policy;
+            X86InstructionSemantics<FindConstantsABIPolicy, XVariablePtr> t(policy);
             std::vector<SgNode*> instructions = NodeQuery::querySubTree(func, V_SgAsmx86Instruction);
             for (size_t i=0; i<instructions.size(); i++) {
                 SgAsmx86Instruction *insn = isSgAsmx86Instruction(instructions[i]);
                 ROSE_ASSERT(insn);
-                try {
-                    t.processInstruction(insn);
-                } catch (const X86InstructionSemantics<FindConstantsPolicy, XVariablePtr>::Exception &e) {
-                    fprintf(stderr, "%s: %s\n", e.mesg.c_str(), unparseInstructionWithAddress(e.insn).c_str());
-                }
+                t.processInstruction(insn);
                 RegisterSet rset = policy.currentRset;
                 std::cout <<unparseInstructionWithAddress(insn) <<"\n"
                           <<rset;

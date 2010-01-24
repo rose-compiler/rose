@@ -358,7 +358,11 @@ int main(int argc, char** argv) {
   for (size_t i = 0; i < blocks.size(); ++i) {
     SgAsmBlock* b = isSgAsmBlock(blocks[i]);
     ROSE_ASSERT (b);
-    t.processBlock(b);
+    try {
+        t.processBlock(b);
+    } catch (const X86InstructionSemantics<NetlistTranslationPolicy, LitListType>::Exception &e) {
+        fprintf(stderr, "%s: %s\n", e.mesg.c_str(), unparseInstructionWithAddress(e.insn).c_str());
+    }
   }
   // Add "bogus IP" error
   policy.problem.identify(

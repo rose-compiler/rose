@@ -4,8 +4,6 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-
-
 SgAsmExecutableFileFormat::ByteOrder
 SgAsmExecutableFileFormat::host_order()
 {

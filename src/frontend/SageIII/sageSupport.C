@@ -249,14 +249,17 @@ outputTypeOfFileAndExit( const string & name )
 // code in ROSETTA.  These functions don't need to be generated since
 // there implementation is not as dependent upon the IR as other functions
 // (e.g. IR node member functions).
+//
+// Switches taking a second parameter need to be added to CommandlineProcessing::isOptionTakingSecondParameter().
 
 bool
 CommandlineProcessing::isOptionWithParameter ( vector<string> & argv, string optionPrefix, string option, string & optionParameter, bool removeOption )
    {
   // I could not make this work cleanly with valgrind withouth allocatting memory twice
-     string localString;
+     string localString ="";
 
-  // printf ("Calling sla for string! removeOption = %s \n",removeOption ? "true" : "false");
+     //   printf ("Calling sla for string! removeOption = %s \n",removeOption ? "true" : "false");
+     //printf ("   argv %d    optionPrefix %s  option %s   localString  %s \n",argv.size(), optionPrefix.c_str(), option.c_str() , localString.c_str() );
      int optionCount = sla(argv, optionPrefix, "($)^", option, &localString, removeOption ? 1 : -1);
   // printf ("DONE: Calling sla for string! optionCount = %d localString = %s \n",optionCount,localString.c_str());
 
@@ -1709,25 +1712,29 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_skip_unparse_asm_commands(true);
         }
 
-  // DQ (8/26/2008): support for optional more agressive mode of disassembly of binary from all 
-  // executable segments instead of just section based.
-  //
-     if ( CommandlineProcessing::isOption(argv,"-rose:","(aggressive)",true) == true )
-        {
-          printf ("option -rose:aggressive found (not handled internally) \n");
+  // RPM (12/29/2009): Disassembler aggressiveness.
+     if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "disassembler_search", stringParameter, true)) {
+         try {
+             unsigned heuristics = get_disassemblerSearchHeuristics();
+             heuristics = Disassembler::parse_switches(stringParameter, heuristics);
+             set_disassemblerSearchHeuristics(heuristics);
+         } catch(const Disassembler::Exception &e) {
+             fprintf(stderr, "%s in \"-rose:disassembler_search\" switch\n", e.mesg.c_str());
+             ROSE_ASSERT(!"error parsing -rose:disassembler_search");
+         }
+     }
 
-       // DQ (10/12/2008): This was previously commented out, I think it need 
-       // to be available even if exactly what it means may still be in flux.
-       // set_aggressive(true);
-          SgBinaryComposite* binary = isSgBinaryComposite(this);
-          if (binary != NULL)
-             {
-               binary->set_aggressive(true);
-             }
-
-       // DQ (10/12/2008): I am less clear if we want to have more than one mechanism in place!
-       // Disassembler::aggressive_mode = true;
-        }
+  // RPM (1/4/2010): Partitioner function search methods
+     if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "partitioner_search", stringParameter, true)) {
+         try {
+             unsigned heuristics = get_partitionerSearchHeuristics();
+             heuristics = Partitioner::parse_switches(stringParameter, heuristics);
+             set_partitionerSearchHeuristics(heuristics);
+         } catch(const std::string &e) {
+             fprintf(stderr, "%s in \"-rose:partitioner_search\" switch\n", e.c_str());
+             ROSE_ASSERT(!"error parsing -rose:partitioner_search");
+         }
+     }
 
   //
   // internal testing option (for internal use only, these may disappear at some point)
@@ -2112,6 +2119,8 @@ SgFile::processBackendSpecificCommandLineOptions ( const vector<string>& argvOri
    }
 
 
+/* This function suffers from the same problems as CommandlineProcessing::isExecutableFilename(), namely that the list of
+ * magic numbers used here needs to be kept in sync with changes to the binary parsers. */
 bool
 isBinaryExecutableFile ( string sourceFilename )
    {
@@ -2148,7 +2157,6 @@ isBinaryExecutableFile ( string sourceFilename )
 
       return returnValue;
     }
-
 
 bool
 isLibraryArchiveFile ( string sourceFilename )
@@ -2537,6 +2545,11 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
                               bool isBinaryExecutable = isBinaryExecutableFile(sourceFilename);
                               bool isLibraryArchive   = isLibraryArchiveFile(sourceFilename);
 
+                           // If -rose:binary was specified and the relatively simple-minded checks of isBinaryExecutableFile()
+                           // and isLibararyArchiveFile() both failed to detect anything, then assume this is an executable.
+                              if (!isBinaryExecutable && !isLibraryArchive)
+                                  isBinaryExecutable = true;
+                              
                            // printf ("isBinaryExecutable = %s isLibraryArchive = %s \n",isBinaryExecutable ? "true" : "false",isLibraryArchive ? "true" : "false");
                               if (isBinaryExecutable == true || isLibraryArchive == true)
                                  {
@@ -3731,10 +3744,6 @@ SgBinaryComposite::SgBinaryComposite ( vector<string> & argv ,  SgProject* proje
   // DQ (2/3/2009): This data member has disappeared (in favor of a list).
   // p_binaryFile = NULL;
 
-  // Assume a binary generated from a compiler for now since this 
-  // is easier, the more aggressive modes are still in development.
-     p_aggressive = false;
-
   // printf ("In the SgBinaryComposite constructor \n");
 
   // This constructor actually makes the call to EDG to build the AST (via callFrontEnd()).
@@ -4021,6 +4030,12 @@ CommandlineProcessing::initExecutableFileSuffixList ( )
    }
 
 // DQ (1/16/2008): This function was moved from the commandling_processing.C file to support the debugging specific to binary analysis
+/* This function not only looks at the file name, but also checks that the file exists, can be opened for reading, and has
+ * specific values for its first two bytes. Checking the first two bytes here means that each time we add support for a new
+ * magic number in the binary parsers we have to remember to update this list also.  Another problem is that the binary
+ * parsers understand a variety of methods for neutering malicious binaries -- transforming them in ways that make them
+ * unrecognized by the operating system on which they're intended to run (and thus unrecongizable also by this function).
+ * Furthermore, CommandlineProcessing::isBinaryExecutableFile() contains similar magic number checking. [RPM 2010-01-15] */
 bool
 CommandlineProcessing::isExecutableFilename ( string name )
    {
@@ -4187,6 +4202,9 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           //AS(02/20/08):  When used with -M or -MM, -MF specifies a file to write 
           //the dependencies to. Need to tell ROSE to ignore that output paramater
           argument == "-MF" ||
+
+          argument == "-rose:disassembler_search" ||
+          argument == "-rose:partitioner_search" ||
           false)
         {
           result = true;
@@ -4284,20 +4302,14 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
              {
             // printf ("In CommandlineProcessing::generateSourceFilenames(): Look for file names:  argv[%d] = %s length = %zu \n",counter,(*i).c_str(),(*i).size());
 
-            // bool foundSourceFile = false;
-
-            // printf ("isExecutableFilename(%s) = %s \n",(*i).c_str(),isExecutableFilename(*i) ? "true" : "false");
-            // if ( isSourceFilename(*i) == false && isObjectFilename(*i) == false && isValidFileWithExecutableFileSuffixes(*i) == true )
-            // if ( isSourceFilename(*i) == false && isObjectFilename(*i) == false && isExecutableFilename(*i) == true )
-               if ( isSourceFilename(*i) == false && ((isObjectFilename(*i) == false) || (binaryMode == true)) && isExecutableFilename(*i) == true )
-                  {
-                 // printf ("This is an executable file: *i = %s \n",(*i).c_str());
-                 // executableFileList.push_back(*i);
-                    if(isSourceCodeCompiler == false || binaryMode == true)
-                      sourceFileList.push_back(*i);
-                    goto incrementPosition;
-
-
+                 if (!isSourceFilename(*i) &&
+                     (binaryMode || !isObjectFilename(*i)) &&
+                     (binaryMode || isExecutableFilename(*i))) {
+                     // printf ("This is an executable file: *i = %s \n",(*i).c_str());
+                     // executableFileList.push_back(*i);
+                     if(isSourceCodeCompiler == false || binaryMode == true)
+                         sourceFileList.push_back(*i);
+                     goto incrementPosition;
                   }
 
             // PC (4/27/2006): Support for custom source file suffixes
@@ -6060,7 +6072,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                if (usesAbsolutePath == false)
                   {
                     string targetSourceFileToRemove = StringUtility::getAbsolutePathFromRelativePath(*i);
-                 // printf ("Converting source file to absolute path to search for it and remove it! targetSourceFileToRemove = %s \n",targetSourceFileToRemove.c_str());
+                  printf ("Converting source file to absolute path to search for it and remove it! targetSourceFileToRemove = %s \n",targetSourceFileToRemove.c_str());
                     argcArgvList.remove(targetSourceFileToRemove);
                   }
                  else
@@ -6695,6 +6707,7 @@ SgProject::link ( std::string linkerName )
        if (usesAbsolutePath == false)
        {
          string targetSourceFileToRemove = StringUtility::getAbsolutePathFromRelativePath(*i);
+		printf ("Converting source file to absolute path to search for it and remove it! targetSourceFileToRemove = %s \n",targetSourceFileToRemove.c_str());
          argcArgvList.remove(targetSourceFileToRemove);
        }
        else
@@ -6832,7 +6845,7 @@ SgFile::usage ( int status )
           fputs(
 "\n"
 "This ROSE translator provides a means for operating on C, C++, and Fortran\n"
-"source code, as well as on x86 and ARM object code.\n"
+"source code, as well as on x86, ARM, and PowerPC object code.\n"
 "\n"
 "Usage: rose [OPTION]... FILENAME...\n"
 "\n"
@@ -6990,6 +7003,38 @@ SgFile::usage ( int status )
 "                             turn on internal support for cray pointers\n"
 "     -fortran:XXX            pass -XXX to independent semantic analysis\n"
 "                             (useful for turning on specific warnings in front-end)\n"
+"\n"
+"Control Disassembly:\n"
+"     -rose:disassembler_search HOW\n"
+"                             Influences how the disassembler searches for instructions\n"
+"                             to disassemble. HOW is a comma-separated list of search\n"
+"                             specifiers. Each specifier consists of an optional\n"
+"                             qualifier followed by either a word or integer. The\n"
+"                             qualifier indicates whether the search method should be\n"
+"                             added ('+') or removed ('-') from the set. The qualifier\n"
+"                             '=' acts like '+' but first clears the set.  The words\n"
+"                             are the lower-case versions of the Disassembler::SearchHeuristic\n"
+"                             enumerated constants without the leading \"SEARCH_\" (see\n"
+"                             doxygen documentation for the complete list and and their\n"
+"                             meanings).   An integer (decimal, octal, or hexadecimal using\n"
+"                             the usual C notation) can be used to set/clear multiple\n"
+"                             search bits at one time. See doxygen comments for the\n"
+"                             Disassembler::parse_switches class method for full details.\n"
+"     -rose:partitioner_search HOW\n"
+"                             Influences how the partitioner searches for functions.\n"
+"                             HOW is a comma-separated list of search specifiers. Each\n"
+"                             specifier consists of an optional qualifier followed by\n"
+"                             either a word or integer. The qualifier indicates whether\n"
+"                             the search method should be added ('+') or removed ('-')\n"
+"                             from the set. The qualifier '=' acts like '+' but first\n"
+"                             clears the set.  The words are the lower-case versions of\n"
+"                             most of the SgAsmFunctionDeclaration::FunctionReason\n"
+"                             enumerated constants without the leading \"FUNC_\" (see\n"
+"                             doxygen documentation for the complete list and and their\n"
+"                             meanings).   An integer (decimal, octal, or hexadecimal using\n"
+"                             the usual C notation) can be used to set/clear multiple\n"
+"                             search bits at one time. See doxygen comments for the\n"
+"                             Partitioner::parse_switches class method for full details.\n"
 "\n"
 "Control code generation:\n"
 "     -rose:unparse_line_directives\n"

@@ -22,7 +22,11 @@ std::string btorTranslate(BtorTranslationPolicy& policy, SgProject* proj, FILE* 
   for (size_t i = 0; i < instructions.size(); ++i) {
     SgAsmx86Instruction* insn = isSgAsmx86Instruction(instructions[i]);
     ROSE_ASSERT (insn);
-    t.processInstruction(insn);
+    try {
+        t.processInstruction(insn);
+    } catch (const X86InstructionSemantics<BtorTranslationPolicy, BtorWordType>::Exception &e) {
+        fprintf(stderr, "%s: %s\n", e.mesg.c_str(), unparseInstructionWithAddress(e.insn).c_str());
+    }
   }
   policy.setInitialState(entryPoint, initialConditionsAreUnknown);
   // Add "bogus IP" error

@@ -1025,6 +1025,8 @@ int main(int argc, char *argv[]) {
             dump_registers(stderr, dbg.registers());
             dbg.cont();
             continue;
+        } catch (const X86InstructionSemantics<Verifier, VerifierValue>::Exception &e) {
+            fprintf(stderr, "%s: %s\n", e.mesg.c_str(), unparseInstructionWithAddress(e.insn).c_str());
         }
 
         /* Single step to cause the instruction to be executed remotely. Then compare our state with the remote state. */

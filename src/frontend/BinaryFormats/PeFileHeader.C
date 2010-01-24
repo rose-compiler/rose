@@ -296,7 +296,10 @@ SgAsmPEFileHeader::parse()
 
     /* The PE File Header has a fixed-size component followed by some number of RVA/Size pairs. The add_rvasize_pairs() will
      * extend  the header and parse the RVA/Size pairs. */
-    ROSE_ASSERT(get_e_num_rvasize_pairs() < 1000); /* just a sanity check before we allocate memory */
+    if (get_e_num_rvasize_pairs() > 1000) {
+        fprintf(stderr, "warning: PE File Header contains an unreasonable number of Rva/Size pairs. Limiting to 1000.\n");
+        set_e_num_rvasize_pairs(1000);
+    }
     add_rvasize_pairs();
 
     /* Construct the section table and its sections (non-synthesized sections). The specification says that the section table
