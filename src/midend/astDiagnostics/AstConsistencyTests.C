@@ -747,7 +747,8 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
   // Test all traversed nodes to make sure that they have a valid file info object
   // Note that SgFile and SgProject nodes don't have file info objects (so skip them)
   // if ( !isSgFile(node) && !isSgProject(node) )
-     if ( !isSgFile(node) && !isSgProject(node) && !isSgAsmNode(node))
+  // if ( !isSgFile(node) && !isSgProject(node) && !isSgAsmNode(node))
+     if ( !isSgFile(node) && !isSgProject(node) && !isSgAsmNode(node) && !isSgFileList(node) && !isSgDirectory(node))
         {
           Sg_File_Info* fileInfo = node->get_file_info();
           if ( fileInfo == NULL )
@@ -3490,6 +3491,9 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
                        }
                     break;
                   }
+
+            // DQ (1/23/2010): Added this case
+               case V_SgFileList:
 
             // DQ (10/4/2008): Added this case
                case V_SgRenamePair:

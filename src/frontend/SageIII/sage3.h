@@ -159,6 +159,10 @@
 //    3) Setup the references (SgVarRefExp objects pointers to SgVariableSymbol objects) 
 #define ALT_FIXUP_COPY 1
 
+// DQ (1/20/2010): This allows compatability with the older STL list of SgFile pointers.
+// The newer approach uses a pointer to a SgFileList IR node and this design permits
+// the use of directory structure support as required for scalable code generation.
+#define ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT 0
 
 // AJ (10/21/2004) : the current version of g++ 3.2.3 has the "hash_map" deprecated - this
 // deprecated hash_map is // in the global namespace and generates a warning every time

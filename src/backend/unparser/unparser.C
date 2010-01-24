@@ -1133,6 +1133,27 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                          break;
                        }
 
+                    case V_SgFileList:
+                       {
+                      // DQ (1/23/2010): Not sure how or if we should implement this
+                         const SgFileList* fileList = isSgFileList(astNode);
+                         ROSE_ASSERT(fileList != NULL);
+#if 0
+                         for (int i = 0; i < project->numberOfFiles(); i++)
+                            {
+                              SgFile* file = &(project->get_file(i));
+                              ROSE_ASSERT(file != NULL);
+                              string unparsedFileString = globalUnparseToString_OpenMPSafe(file,inputUnparseInfoPointer);
+                              string prefixString       = string("/* TOP:")      + string(ROSE::getFileName(file)) + string(" */ \n");
+                              string suffixString       = string("\n/* BOTTOM:") + string(ROSE::getFileName(file)) + string(" */ \n\n");
+                              returnString += prefixString + unparsedFileString + suffixString;
+                            }
+#else
+                         printf ("WARNING: SgFileList support not implemented for unparser...\n");
+#endif
+                         break;
+                       }
+
                  // Perhaps the support for SgFile and SgProject shoud be moved to this location?
                     default:
                          printf ("Error: default reached in node derived from SgSupport astNode = %s \n",astNode->sage_class_name());
@@ -1140,16 +1161,16 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                 }
              }
        // Liao, 8/28/2009, support for SgLocatedNodeSupport
-       if (isSgLocatedNodeSupport(astNode)!= NULL) 
-       {
-         if (isSgOmpClause(astNode))
-         {
-           SgOmpClause * omp_clause = const_cast<SgOmpClause*>(isSgOmpClause(astNode));
-           ROSE_ASSERT(omp_clause);
+          if (isSgLocatedNodeSupport(astNode)!= NULL) 
+             {
+               if (isSgOmpClause(astNode))
+                  {
+                    SgOmpClause * omp_clause = const_cast<SgOmpClause*>(isSgOmpClause(astNode));
+                    ROSE_ASSERT(omp_clause);
 
-           roseUnparser.u_exprStmt->unparseOmpClause(omp_clause, inheritedAttributeInfo);
-         }
-       }
+                    roseUnparser.u_exprStmt->unparseOmpClause(omp_clause, inheritedAttributeInfo);
+                  }
+             }
 
        // Turn OFF the error checking which triggers an if the default SgUnparse_Info constructor is called
        // GB (09/27/2007): Removed this error check, see above.
@@ -1169,6 +1190,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
           if (inputUnparseInfoPointer == NULL)
                delete inheritedAttributeInfoPointer;
         }
+
      return returnString;
    }
 
@@ -1218,7 +1240,6 @@ string get_output_filename( SgFile& file)
 #endif
    }
 
-#if 1
 // DQ (10/11/2007): I think this is redundant with the Unparser::unparseFile() member function
 // HOWEVER, this is called by the SgFile::unparse() member function, so it has to be here!
 
@@ -1407,18 +1428,57 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
           ROSE_OutputFile.close();
         }
    }
-#endif
 
 // DQ (10/11/2007): I think this is redundant with the Unparser::unparseProject() member function
 // But it is allowed to call it directly from the user's translator if compilation using the backend 
 // is not required!  So we have to allow it to be here.
-void unparseProject( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate)
+void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate)
    {
      ROSE_ASSERT(project != NULL);
+
+#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
      for (int i=0; i < project->numberOfFiles(); ++i)
         {
           SgFile & file = project->get_file(i);
           unparseFile(&file,unparseFormatHelp,unparseDelegate);
+        }
+#else
+  // DQ (1/23/2010): refactored the SgFileList
+     unparseFileList(project->get_fileList_ptr(),unparseFormatHelp,unparseDelegate);
+#endif
+   }
+
+// DQ (1/19/2010): Added support for handling directories of files.
+void unparseDirectory ( SgDirectory* directory, UnparseFormatHelp* unparseFormatHelp, UnparseDelegate *unparseDelegate )
+   {
+     ROSE_ASSERT(directory != NULL);
+
+#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
+     for (int i=0; i < directory->numberOfFiles(); ++i)
+        {
+          SgFile* file = directory->get_file(i);
+          unparseFile(file,unparseFormatHelp,unparseDelegate);
+        }
+#else
+  // DQ (1/23/2010): refactored the SgFileList
+     unparseFileList(directory->get_fileList(),unparseFormatHelp,unparseDelegate);
+#endif
+   }
+
+// DQ (1/19/2010): Added support for refactored handling directories of files.
+void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate)
+   {
+     ROSE_ASSERT(fileList != NULL);
+  // for (int i=0; i < fileList->numberOfFiles(); ++i)
+     for (size_t i=0; i < fileList->get_listOfFiles().size(); ++i)
+        {
+#if 0
+          SgFile & file = fileList->get_file(i);
+          unparseFile(&file,unparseFormatHelp,unparseDelegate);
+#else
+          SgFile* file = fileList->get_listOfFiles()[i];
+          unparseFile(file,unparseFormatHelp,unparseDelegate);
+#endif
         }
    }
 
