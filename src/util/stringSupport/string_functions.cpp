@@ -5,6 +5,10 @@
 // DQ (3/22/2009): Added MSVS support for ROSE.
 #include "rose_msvc.h"
 
+// DQ (1/21/2010): Use this to turn off the use of #line in ROSETTA generated code.
+#define SKIP_HASH_LINE_NUMBER_DECLARATIONS_IN_GENERATED_FILES
+
+
 #if !ROSE_MICROSOFT_OS
 // AS added to support the function getAbsolutePathFromRelativePath
 #include <sys/param.h>
@@ -947,11 +951,20 @@ StringUtility::readFileWithPos ( const string& fileName )
    }
 
 std::string
-StringUtility::StringWithLineNumber::toString() const {
-  std::ostringstream os;
-  os << "#line " << line << " \"" << (filename.empty() ? "" : getAbsolutePathFromRelativePath(filename)) << "\"\n" << str << std::endl;
-  return os.str();
-}
+StringUtility::StringWithLineNumber::toString() const
+   {
+     std::ostringstream os;
+
+  // DQ (1/21/2010): Added support for skipping these when in makes it easer to debug ROSETTA generated files.
+#ifdef SKIP_HASH_LINE_NUMBER_DECLARATIONS_IN_GENERATED_FILES
+  // os << str << std::endl;
+     os << "/* #line " << line << " \"" << (filename.empty() ? "" : getAbsolutePathFromRelativePath(filename)) << "\" */\n" << str << std::endl;
+#else
+     os << "#line " << line << " \"" << (filename.empty() ? "" : getAbsolutePathFromRelativePath(filename)) << "\"\n" << str << std::endl;
+#endif
+
+     return os.str();
+   }
 
 std::string
 StringUtility::toString(const StringUtility::FileWithLineNumbers& strings,
@@ -979,11 +992,20 @@ StringUtility::toString(const StringUtility::FileWithLineNumbers& strings,
 
     // Print out the #line directive (if needed) and the actual line
     if (needLineDirective) {
+#ifdef SKIP_HASH_LINE_NUMBER_DECLARATIONS_IN_GENERATED_FILES
+           /* Nothing to do here! */
+      if (strings[i].filename == "") { // Reset to actual input file
+        result += "/* #line " + numberToString(physicalLine + 1 /* Increment because number is the line number of the NEXT line after the #line directive */) + " \"" + filename + "\" */\n";
+      } else {
+        result += "/* #line " + numberToString(strings[i].line) + " \"" + strings[i].filename + "\" */\n";
+      }
+#else
       if (strings[i].filename == "") { // Reset to actual input file
         result += "#line " + numberToString(physicalLine + 1 /* Increment because number is the line number of the NEXT line after the #line directive */) + " \"" + filename + "\"\n";
       } else {
         result += "#line " + numberToString(strings[i].line) + " \"" + strings[i].filename + "\"\n";
       }
+#endif
       // These are only updated when a #line directive is actually printed,
       // largely because of the blank line exception above (so if a blank line
       // starts a new file, the #line directive needs to be emitted on the

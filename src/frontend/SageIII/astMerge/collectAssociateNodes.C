@@ -1836,6 +1836,11 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                break;
              }
 
+       // DQ (1/23/2010): These are relatively new IR nodes that are finally being used and tested.
+          case V_SgFileList:
+          case V_SgDirectory:
+          case V_SgDirectoryList:
+
        // Ignore these SgSupport cases since we don't permit them to be shared
           case V_SgRenamePair:
           case V_SgInterfaceBody:

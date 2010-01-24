@@ -410,7 +410,12 @@ SgProject::processCommandLine(const vector<string>& input_argv)
         }
 
   // Build the empty STL lists
+#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
      p_fileList.clear();
+#else
+     ROSE_ASSERT(p_fileList_ptr != NULL);
+     p_fileList_ptr->get_listOfFiles().clear();
+#endif
 
   // return value for calls to SLA
      int optionCount = 0;
