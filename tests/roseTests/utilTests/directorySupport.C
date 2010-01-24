@@ -21,6 +21,7 @@ main( int argc, char * argv[] )
      SgFile* file = project->get_fileList()[0];
      directory->get_fileList()->get_listOfFiles().push_back(file);
 
+
      file->set_parent(directory);
 #endif
 
