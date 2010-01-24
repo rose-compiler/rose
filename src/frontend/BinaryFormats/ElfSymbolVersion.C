@@ -240,7 +240,7 @@ SgAsmElfSymverDefinedEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
   /* compact one-line-per-entry format */
   if (0==idx)
     fprintf(f, "%s%-*s   %-8s %6s %10s %6s %-6s \n", p, w, "", "Version", "Index", "Hash", "Flags", "Names");
-  fprintf(f,   "%s%-*s =  0x%04zx  0x%04zx 0x%08zx 0x%04x ", p, w, "", p_version, p_index, p_hash, (uint32_t)p_flags);
+  fprintf(f,   "%s%-*s =  0x%04zx  0x%04zx 0x%08x 0x%04x ", p, w, "", p_version, p_index, p_hash, (uint32_t)p_flags);
 
   const SgAsmElfSymverDefinedAuxPtrList &entries=get_entries()->get_entries();
   if(entries.empty()){

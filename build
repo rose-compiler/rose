@@ -3,7 +3,7 @@
 
 # This is the default location for build to use as a reference
 # to its macro definitions used by Autoconf and Automake.
-ROSE_DISTRIBUTION="."
+ROSE_DISTRIBUTION=${ROSE_DISTRIBUTION:-.}
 
 # Parse command-line
 do_quiet=yes
@@ -21,14 +21,12 @@ while [ "$#" -gt 0 ]; do
         --quiet)
             echo "$0: warning: --quiet is now the default mode and is ignored"
             ;;
-        --srcpath)
-            ROSE_DISTRIBUTION=$1
-            shift
-            echo "Found the ROSE source tree: ROSE_DISTRIBUTION = $ROSE_DISTRIBUTION"
-            echo "     e.g. ./build --srcpath /home/dquinlan/ROSE/git-dq-main-rc"
-          # echo "args = $0 $1 $2"
-          # exit 1
+        --srcpath=*)
+            ROSE_DISTRIBUTION="${arg#*=}"
             ;;
+        --srcpath)
+	    ROSE_DISTRIBUTION="$1"; shift
+	    ;;
         *)
 	    echo "$0: unrecognized argument: $arg" >&2
 	    exit 1

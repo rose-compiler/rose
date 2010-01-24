@@ -780,8 +780,6 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
               isSgMemberFunctionRefExp( isSgBinaryOp( functionExp )->get_rhs_operand() ) )
             {
 
-              std::cout << "SgArrowExp" << std::endl;
-
               //AS(122805) In the case of a constructor initializer it is possible that a call to a constructor initializer may
               //return a type corresponding to an operator some-type() declared within the constructed class. An example is:
               //   struct Foo {

@@ -10589,6 +10589,8 @@ X aggressive
      p_skip_unparse_asm_commands = false;
      p_read_instructions_only    = false;
 
+     p_disassemblerSearchHeuristics = Disassembler::SEARCH_DEFAULT;
+
    }
 
 #if 0
