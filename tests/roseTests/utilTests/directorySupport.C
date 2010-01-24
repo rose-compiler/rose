@@ -14,7 +14,7 @@ main( int argc, char * argv[] )
 
      directory->set_parent(project);
 
-#if 1
+#if 0
   // Add a directory to the list in the SgProject node.
      project->get_directoryList()->get_listOfDirectories().push_back(directory);
 
