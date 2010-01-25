@@ -10,6 +10,32 @@
 
 
 #include "unparser.h"
+
+
+class SgExpression;
+class SgStatement;
+class SgOmpDefaultClause;
+class SgOmpScheduleClause;
+class SgOmpVariablesClause;
+class SgOmpExpressionClause;
+class SgTemplateParameter;
+class SgTemplateArgument;
+class SgFunctionDeclaration;
+class SgBasicBlock;
+class SgClassDefinition;
+class SgTemplateInstantiationDecl;
+class SgOmpClause;
+class SgOmpBodyStatement;
+class SgOmpThreadBodyStatement;
+class SgOmpFlushStatement;
+class SgOmpBarrierStatement;
+class SgOmpTaskwaitStatement;
+class SgNamespaceDefinitionStatement;
+class SgAsmOp;
+
+#include "Cxx_Grammar.h"
+
+
 #include "unparseLanguageIndependentConstructs.h"
 
 // using namespace std;

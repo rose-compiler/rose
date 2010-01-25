@@ -3,14 +3,14 @@
  * and fucntions that unparse directives.
  */
 
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "HiddenList.h"
 
 // include "array_class_interface.h"
 #include "unparser.h"
 
-#ifdef _MSC_VER
 #include "unparseAsm.h"
-#endif
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>

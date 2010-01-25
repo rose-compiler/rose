@@ -1,4 +1,5 @@
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 
 // DQ (8/10/2005): Test and fixup any template declaration that is mistakenly marked as compiler-generated.
 void fixupTemplateDeclarations( SgNode* node )

@@ -2761,7 +2761,7 @@ Grammar::buildCode ()
      //     string includeHeaderStringROSE =
      //  "// MACHINE GENERATED ROSE SOURCE FILE --- DO NOT MODIFY!\n\n #include \"" + includeHeaderFileNameROSE + "\"\n\n";
      
-     string includeHeaderFileName = "sage3.h";
+     string includeHeaderFileName = "sage3basic.h";
      //     string includeHeaderString = includeHeaderStringROSE+
      string includeHeaderString = 
        "// MACHINE GENERATED SOURCE FILE WITH ROSE --- DO NOT MODIFY!\n\n #include \"" + includeHeaderFileName + "\"\n\n";
