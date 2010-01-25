@@ -1247,6 +1247,10 @@ string get_output_filename( SgFile& file)
 void
 unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unparseDelegate )
    {
+  // DQ (1/24/2010): Refactored code to cal this more directly (part of support for SgDirectory).
+  // DQ (7/12/2005): Introduce tracking of performance of ROSE.
+     TimingPerformance timer ("AST Code Generation (unparsing):");
+
   // Call the unparser mechanism
 
   // printf ("Inside of unparseFile ( SgFile* file ) (using filename = %s) \n",file->get_unparse_output_filename().c_str());
@@ -1437,31 +1441,99 @@ void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, 
      ROSE_ASSERT(project != NULL);
 
 #if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
+#error "This implementation of the support for the older interface has been refactored"
      for (int i=0; i < project->numberOfFiles(); ++i)
         {
           SgFile & file = project->get_file(i);
           unparseFile(&file,unparseFormatHelp,unparseDelegate);
         }
 #else
+     if ( SgProject::get_verbose() > 0 )
+          printf ("Unparse the file list first, then the directory list \n");
+
   // DQ (1/23/2010): refactored the SgFileList
      unparseFileList(project->get_fileList_ptr(),unparseFormatHelp,unparseDelegate);
+
+     if ( SgProject::get_verbose() > 0 )
+          printf ("Unparse the directory list... \n");
+
+     for (int i = 0; i < project->numberOfDirectories(); ++i)
+        {
+          if ( SgProject::get_verbose() > 0 )
+               printf ("Unparse each directory (i = %d) \n",i);
+
+          ROSE_ASSERT(project->get_directoryList() != NULL);
+          SgDirectory* directory = project->get_directoryList()->get_listOfDirectories()[i];
+          unparseDirectory(directory,unparseFormatHelp,unparseDelegate);
+        }
 #endif
    }
 
 // DQ (1/19/2010): Added support for handling directories of files.
 void unparseDirectory ( SgDirectory* directory, UnparseFormatHelp* unparseFormatHelp, UnparseDelegate *unparseDelegate )
    {
+     int status = 0;
+
      ROSE_ASSERT(directory != NULL);
 
-#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
-     for (int i=0; i < directory->numberOfFiles(); ++i)
-        {
-          SgFile* file = directory->get_file(i);
-          unparseFile(file,unparseFormatHelp,unparseDelegate);
-        }
-#else
+#if 0
+  // Check the current directory
+     printf ("Current directory BEFORE building/moving to subdirectory defined by SgDirectory IR node. \n");
+     status = system ("pwd");
+     ROSE_ASSERT(status == 0);
+#endif
+
+  // Part of the unparcing support for directories is to change the current system directory.
+     string directoryName = directory->get_name();
+     ROSE_ASSERT(directoryName != "");
+
+     string mkdirCommand = string("mkdir -p ") + directoryName;
+
+  // DQ (1/24/2010): This is a potential security problem!
+     if ( SgProject::get_verbose() > 0 )
+          printf ("WARNING: calling system using mkdirCommand = %s \n",mkdirCommand.c_str());
+
+     status = system (mkdirCommand.c_str());
+     ROSE_ASSERT(status == 0);
+
+  // Now change the current working directory to the new directory
+     status = chdir(directoryName.c_str());
+     ROSE_ASSERT(status == 0);
+
+#if 0
+  // Check the current directory
+     printf ("Current directory AFTER building/moving to subdirectory defined by SgDirectory IR node. \n");
+     status = system ("pwd");
+     ROSE_ASSERT(status == 0);
+#endif
+
   // DQ (1/23/2010): refactored the SgFileList
      unparseFileList(directory->get_fileList(),unparseFormatHelp,unparseDelegate);
+
+  // printf ("Unparse the directory list... \n");
+     for (int i = 0; i < directory->numberOfDirectories(); ++i)
+        {
+       // printf ("Unparse each directory (i = %d) \n",i);
+          ROSE_ASSERT(directory->get_directoryList() != NULL);
+          SgDirectory* subdirectory = directory->get_directoryList()->get_listOfDirectories()[i];
+          unparseDirectory(subdirectory,unparseFormatHelp,unparseDelegate);
+        }
+
+  // DQ (1/24/2010): This is a potential security problem!
+     string chdirCommand = "..";
+
+     if ( SgProject::get_verbose() > 0 )
+          printf ("WARNING: calling system using chdirCommand = %s \n",chdirCommand.c_str());
+
+  // Now change the current working directory to the new directory
+     status = chdir(chdirCommand.c_str());
+     ROSE_ASSERT(status == 0);
+
+#if 0
+  // Check the current directory
+     printf ("Current directory AFTER cd .. (supporting SgDirectory IR node). \n");
+     status = system ("pwd");
+     ROSE_ASSERT(status == 0);
 #endif
    }
 
@@ -1472,13 +1544,8 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
   // for (int i=0; i < fileList->numberOfFiles(); ++i)
      for (size_t i=0; i < fileList->get_listOfFiles().size(); ++i)
         {
-#if 0
-          SgFile & file = fileList->get_file(i);
-          unparseFile(&file,unparseFormatHelp,unparseDelegate);
-#else
           SgFile* file = fileList->get_listOfFiles()[i];
           unparseFile(file,unparseFormatHelp,unparseDelegate);
-#endif
         }
    }
 

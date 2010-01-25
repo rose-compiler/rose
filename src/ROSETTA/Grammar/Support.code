@@ -4575,6 +4575,9 @@ HEADER_APPLICATION_PROJECT_START
       //! The total number of files in this project (equal to the number of source files specified on the command line)
           int numberOfFiles() const;
 
+      //! Total number of directories in the project.
+          int numberOfDirectories() const;
+
       //! Access function for retriving a SgFile object from the list stored internally
       //! This function is depricated and "operator[unsigned int]" should be used instead.
           SgFile& get_file ( int i ) const ROSE_DEPRECATED_FUNCTION;
@@ -10893,18 +10896,25 @@ SgFile::generateOutputFileName() const
 // DQ (8/20/2005): Removed default parameter from extern function declaration
 // extern void unparseFile( SgFile&, UnparseDelegate* repl = NULL );
 // Liao (2/8/2008): Removed default parameters due to conflicts with src/backend/unparser/unparser.h
-extern void unparseFile( SgFile* file, UnparseFormatHelp *unparseFormatHelp /* = NULL */, UnparseDelegate* unparseDelegate/* = NULL */);
+// extern void unparseFile( SgFile* file, UnparseFormatHelp *unparseFormatHelp /* = NULL */, UnparseDelegate* unparseDelegate/* = NULL */);
 
 void
 // SgFile::unparse ()
 SgFile::unparse ( UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate )
    {
+  // DQ (1/24/2010): This call to the timer has been moved to the unparseFile() function.
   // DQ (7/12/2005): Introduce tracking of performance of ROSE.
-     TimingPerformance timer ("AST Code Generation (unparsing):");
+  // TimingPerformance timer ("AST Code Generation (unparsing):");
 
   // printf ("Inside of SgFile::unparse () ROSE_DEBUG = %d  \n",ROSE_DEBUG);
 
+  // Not clear if we can or should eliminate this function.
+  // printf ("This SgFile::unparse() function should no longer be called (I think)! \n");
+  // ROSE_ASSERT(false);
+
   // Call the unparser mechanism
+  // DQ (1/24/2010): Moved the extern declaration for unparseFile() to be local to this function (better code design).
+     extern void unparseFile( SgFile* file, UnparseFormatHelp *unparseFormatHelp /* = NULL */, UnparseDelegate* unparseDelegate/* = NULL */);
      unparseFile ( this, unparseFormatHelp, unparseDelegate );
    }
 
@@ -11409,7 +11419,7 @@ SgProject::initialization()
      p_attributeMechanism                  = NULL;
 
   // DQ (1/23/2010): Added support for the project to have directory structure
-     p_directoryList = NULL;
+     p_directoryList                       = NULL;
 
   // DQ (3/9/2009): Allow the verbose level to be set before we even call the SgProject constructor (helps debug Intel Pin usage).
      if (p_verbose > 0)
@@ -11527,6 +11537,15 @@ SgProject::numberOfFiles() const
      return returnValue;
    }
 
+int
+SgProject::numberOfDirectories() const
+   {
+     ROSE_ASSERT (p_directoryList != NULL);
+     int returnValue = p_directoryList->get_listOfDirectories().size();
+
+     return returnValue;
+   }
+
 SgFile &
 SgProject::get_file ( int i ) const
    {
@@ -11570,6 +11589,7 @@ SgProject::set_file ( SgFile & file )
 void
 SgProject::unparse ( UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate )
    {
+#if 0
      for (int i = 0; i < numberOfFiles(); i++)
         {
        // printf ("In SgProject::unparse(): Unparsing file #%d \n",i);
@@ -11578,6 +11598,11 @@ SgProject::unparse ( UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unpa
        // DQ (3/18/2006): Added support for user defined control of code generation
           file.unparse(unparseFormatHelp,unparseDelegate);
         }
+#else
+  // DQ (1/24/2010): refactored code to call existing function.
+     extern void unparseProject( SgProject* project, UnparseFormatHelp *unparseFormatHelp /* = NULL */, UnparseDelegate* unparseDelegate/* = NULL */);
+     unparseProject( this, unparseFormatHelp, unparseDelegate);
+#endif
    }
 
 // Moved to sageSupport.C: int SgProject::compileOutput( const std::string& compilerName )

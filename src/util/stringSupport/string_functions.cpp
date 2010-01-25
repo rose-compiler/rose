@@ -912,14 +912,18 @@ StringUtility::readFileWithPos ( const string& fileName )
      char* buffer = NULL;
 
      string fullFileName = StringUtility::getAbsolutePathFromRelativePath(fileName);
-	 printf("Opening file : %s\n",fullFileName.c_str());
+
+  // printf("Opening file : %s\n",fullFileName.c_str());
+
      ifstream inputFile;
-	 // tps (01/05/2010) Changed to get this to work under Windows
+
+  // tps (01/05/2010) Changed to get this to work under Windows
 //#if ROSE_MICROSOFT_OS
 //     inputFile.open( fullFileName.c_str(), ios::binary );
 //#else
 	 inputFile.open( fileName.c_str(), ios::binary );
 //#endif
+
      if (inputFile.good() != true)
         {
 	     printf ("ERROR: File not found -- %s \n",fileName.c_str());

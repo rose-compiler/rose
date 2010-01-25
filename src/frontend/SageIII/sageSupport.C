@@ -6045,11 +6045,12 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // argcArgvList.pop_front();
      argcArgvList.erase(argcArgvList.begin());
 
+#if 0
+  // DQ (1/24/2010): Moved this inside of the true branch below.
      SgProject* project = isSgProject(this->get_parent());
      ROSE_ASSERT (project != NULL);
      Rose_STL_Container<string> sourceFilenames = project->get_sourceFileNameList();
 
-#if 0
      printf ("sourceFilenames.size() = %zu sourceFilenames = %s \n",sourceFilenames.size(),StringUtility::listToString(sourceFilenames).c_str());
 #endif
 
@@ -6058,6 +6059,14 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // if (get_skip_unparse() == true && get_skipfinalCompileStep() == false)
      if (get_skip_unparse() == false)
         {
+       // DQ (1/24/2010): Now that we have directory support, the parent of a SgFile does not have to be a SgProject.
+       // SgProject* project = isSgProject(this->get_parent())
+          SgProject* project = TransformationSupport::getProject(this);
+          ROSE_ASSERT (project != NULL);
+          Rose_STL_Container<string> sourceFilenames = project->get_sourceFileNameList();
+#if 0
+          printf ("sourceFilenames.size() = %zu sourceFilenames = %s \n",sourceFilenames.size(),StringUtility::listToString(sourceFilenames).c_str());
+#endif
           for (Rose_STL_Container<string>::iterator i = sourceFilenames.begin(); i != sourceFilenames.end(); i++)
              {
 #if 0
@@ -6196,26 +6205,27 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // is in the current directory (likely a generated file itself; e.g. swig or ROSE applied recursively, etc.)).
   // printf ("oldFileNamePathOnly.length() = %d \n",oldFileNamePathOnly.length());
      if (oldFileNamePathOnly.empty() == false)
-     {
-#if 1       
-// Liao, 5/15/2009
-// the input source file's path has to be the first one to be searched for header!
-// This is required since one of the SPEC CPU 2006 benchmarks: gobmk relies on this to be compiled.
-        vector<string>::iterator iter; 
-        // find the very first -Ixxx option's position
-        for (iter = compilerNameString.begin();iter!=compilerNameString.end(); iter++) 
         {
-          string cur_string =*iter;
-          string::size_type pos = cur_string.find("-I",0);
-          if (pos==0)
-            break;
-        }
-        // insert before the position
-        compilerNameString.insert(iter, std::string("-I") + oldFileNamePathOnly); 
+#if 1       
+       // Liao, 5/15/2009
+       // the input source file's path has to be the first one to be searched for header!
+       // This is required since one of the SPEC CPU 2006 benchmarks: gobmk relies on this to be compiled.
+          vector<string>::iterator iter;
+       // find the very first -Ixxx option's position
+          for (iter = compilerNameString.begin(); iter != compilerNameString.end(); iter++) 
+             {
+               string cur_string =*iter;
+               string::size_type pos = cur_string.find("-I",0);
+               if (pos==0)
+                    break;
+             }
+
+       // insert before the position
+          compilerNameString.insert(iter, std::string("-I") + oldFileNamePathOnly); 
 #else        
-        compilerNameString.push_back(std::string("-I") + oldFileNamePathOnly);
+          compilerNameString.push_back(std::string("-I") + oldFileNamePathOnly);
 #endif
-     }
+        }
 
   // DQ (4/20/2006): This allows the ROSE translator to be just a wrapper for the backend (vendor) compiler.
   // compilerNameString += get_unparse_output_filename();
@@ -6246,19 +6256,22 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                compilerNameString.push_back(currentDirectory + "/" + objectFileName);
              }
         }
-        else // Liao 11/19/2009, changed to support linking multiple source files within one command line
-          // We change the compilation mode for each individual file to compile-only even
-          // when the original command line is to generate the final executable.
-          // We generate the final executable at the SgProject level from object files of each source file
+       else
         {
-//          cout<<"turn on compilation only at the file compilation level"<<endl;
+       // Liao 11/19/2009, changed to support linking multiple source files within one command line
+       // We change the compilation mode for each individual file to compile-only even
+       // when the original command line is to generate the final executable.
+       // We generate the final executable at the SgProject level from object files of each source file
+
+       // cout<<"turn on compilation only at the file compilation level"<<endl;
           compilerNameString.push_back("-c");
-          // For compile+link mode, -o is used for the final executable, if it exists
-          // We make -o objectfile explicit 
+       // For compile+link mode, -o is used for the final executable, if it exists
+       // We make -o objectfile explicit 
           std::string objectFileName = generateOutputFileName();
           compilerNameString.push_back("-o");
           compilerNameString.push_back(currentDirectory + "/" + objectFileName);
         }
+
 #if 0
      printf ("At base of buildCompilerCommandLineOptions: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
 #endif
@@ -6267,8 +6280,9 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      ROSE_ASSERT (false);
 #endif
 
-#if 0 // moved to the linking phase function of SgProject
-     // Liao, 9/23/2009, optional linker flags to support OpenMP lowering targeting GOMP
+#if 0
+  // moved to the linking phase function of SgProject
+  // Liao, 9/23/2009, optional linker flags to support OpenMP lowering targeting GOMP
      if (get_openmp_lowering())
      {
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY       
@@ -6297,7 +6311,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        std::string str = *iter;
        cout<<"\t"<<str<<endl;
       }
-#endif      
+#endif
+
      return compilerNameString;
    } // end of SgFile::buildCompilerCommandLineOptions()
 
@@ -6643,7 +6658,10 @@ SgFile::isPrelinkPhase() const
      if (get_parent() != NULL)
         {
           ROSE_ASSERT ( get_parent() != NULL );
-          SgProject* project = isSgProject(get_parent());
+
+       // DQ (1/24/2010): Now that we have directory support, the parent of a SgFile does not have to be a SgProject.
+       // SgProject* project = isSgProject(get_parent());
+          SgProject* project = TransformationSupport::getProject(this);
 
           ROSE_ASSERT ( project != NULL );
           returnValue = project->get_prelink();
@@ -6660,31 +6678,40 @@ SgFile::isPrelinkPhase() const
 int
 SgProject::link ( std::string linkerName )
    {
-     // Liao, 11/20/2009
-     // translator test1.o will have ZERO SgFile attached with SgProject
-     // Special handling for this case
-     if (numberOfFiles()== 0)
-     {
-       if (get_verbose() >0)
-         cout<<"SgProject::link may encountering an object file ..."<<endl;
-    }
-    else // normal cases that rose translators will actually do something about the input files
-         // and we have SgFile for each of the files.
-     //if ((numberOfFiles()== 0) || get_compileOnly() || get_file(0).get_skipfinalCompileStep() 
-     if ( get_compileOnly() || get_file(0).get_skipfinalCompileStep() 
-         ||get_file(0).get_skip_unparse())
-     {
-       if (get_verbose() >0)
-         cout<<"Skipping SgProject::link ..."<<endl;
-       return 0;
-     }
-                    
+  // Liao, 11/20/2009
+  // translator test1.o will have ZERO SgFile attached with SgProject
+  // Special handling for this case
+     if (numberOfFiles() == 0)
+        {
+          if (get_verbose() >0)
+               cout << "SgProject::link may encountering an object file ..." << endl;
+
+       // DQ (1/24/2010): support for directories not in place yet.
+          if (numberOfDirectories() > 0)
+             {
+               printf ("Directory support for linking not implemented... (unclear what this means...)\n");
+               return 0;
+             }
+        }
+       else
+        {
+       // normal cases that rose translators will actually do something about the input files
+       // and we have SgFile for each of the files.
+       // if ((numberOfFiles()== 0) || get_compileOnly() || get_file(0).get_skipfinalCompileStep() 
+          if ( get_compileOnly() || get_file(0).get_skipfinalCompileStep() ||get_file(0).get_skip_unparse())
+             {
+               if (get_verbose() >0)
+                    cout << "Skipping SgProject::link ..." << endl;
+               return 0;
+             }
+        }
+
   // Compile the output file from the unparsing
-     vector<string> argcArgvList= get_originalCommandLineArgumentList();
+     vector<string> argcArgvList = get_originalCommandLineArgumentList();
 
   // error checking
-    if (numberOfFiles()!= 0) 
-       ROSE_ASSERT (argcArgvList.size() > 1);
+     if (numberOfFiles()!= 0) 
+          ROSE_ASSERT (argcArgvList.size() > 1);
      ROSE_ASSERT(linkerName != "");
 
   // strip out any rose options before passing the command line.
@@ -6707,7 +6734,7 @@ SgProject::link ( std::string linkerName )
        if (usesAbsolutePath == false)
        {
          string targetSourceFileToRemove = StringUtility::getAbsolutePathFromRelativePath(*i);
-		printf ("Converting source file to absolute path to search for it and remove it! targetSourceFileToRemove = %s \n",targetSourceFileToRemove.c_str());
+		   printf ("Converting source file to absolute path to search for it and remove it! targetSourceFileToRemove = %s \n",targetSourceFileToRemove.c_str());
          argcArgvList.remove(targetSourceFileToRemove);
        }
        else
