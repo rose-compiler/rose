@@ -78,7 +78,7 @@
 // #define _FILE_OFFSET_BITS 64
 #include <sys/stat.h>
 
-#include <cstdlib> // For abort()
+//#include <cstdlib> // For abort()
 
 // DQ (9/24/2004): Try again to remove use of set parent side effect in EDG/Sage III connection! This works!!!
 #define REMOVE_SET_PARENT_FUNCTION
