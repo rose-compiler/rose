@@ -78,7 +78,7 @@
 // #define _FILE_OFFSET_BITS 64
 #include <sys/stat.h>
 
-
+#include <cstdlib> // For abort()
 
 // DQ (9/24/2004): Try again to remove use of set parent side effect in EDG/Sage III connection! This works!!!
 #define REMOVE_SET_PARENT_FUNCTION
@@ -173,6 +173,16 @@
 
 
 //#endif
+
+#ifdef _MSC_VER
+// DQ (11/4/2009): MS Visual Studio version of hash_multimap
+#include <cliext/hash_map>
+#else
+// DQ (11/4/2009): Use the GNU depricated stuff (what works in ROSE at the moment)
+// tps (01/25/2010) : deprecated - does not work in setup.h
+#include <ext/hash_map>
+#endif
+
 
 // tps (01/22/2010) :refactored
 #include "setup.h"
@@ -283,6 +293,7 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
 // DQ (7/6/2005): Added to support performance analysis of ROSE.
 // This is located in ROSE/src/midend/astDiagnostics
 #include "AstPerformance.h"
+
 
 #endif
 
