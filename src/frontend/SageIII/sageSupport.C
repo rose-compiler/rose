@@ -6678,10 +6678,13 @@ SgFile::isPrelinkPhase() const
 int
 SgProject::link ( std::string linkerName )
    {
+  // DQ (1/25/2010): We have to now test for both numberOfFiles() and numberOfDirectories(),
+  // or perhaps define a more simple function to use more directly.
   // Liao, 11/20/2009
   // translator test1.o will have ZERO SgFile attached with SgProject
   // Special handling for this case
-     if (numberOfFiles() == 0)
+  // if (numberOfFiles() == 0)
+     if (numberOfFiles() == 0 && numberOfDirectories() == 0)
         {
           if (get_verbose() >0)
                cout << "SgProject::link may encountering an object file ..." << endl;
@@ -6700,7 +6703,7 @@ SgProject::link ( std::string linkerName )
        // if ((numberOfFiles()== 0) || get_compileOnly() || get_file(0).get_skipfinalCompileStep() 
           if ( get_compileOnly() || get_file(0).get_skipfinalCompileStep() ||get_file(0).get_skip_unparse())
              {
-               if (get_verbose() >0)
+               if (get_verbose() > 0)
                     cout << "Skipping SgProject::link ..." << endl;
                return 0;
              }

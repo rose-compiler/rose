@@ -47,6 +47,7 @@ check-local: $(TEST_Objects)
 	./testStrings
 	./testFileNameClassifier
 	./filenameSupport
+	$(MAKE) testDirectorySupport
 	@echo "********************************************************************************************"
 	@echo "****** ROSE/tests/roseTests/utilTests: make check rule complete (terminated normally) ******"
 	@echo "********************************************************************************************"
