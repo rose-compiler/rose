@@ -18,7 +18,7 @@
 #include <fstream>
 #include <cassert>
 #include <cstdio>
-#include <cstdlib> // For abort()
+
 
 // DQ (1/15/2007): Modern C++ compilers can handle these directly
 #include <list>
@@ -28,13 +28,7 @@
 #include <fstream>
 #include <stack>
 
-#ifdef _MSC_VER
-// DQ (11/4/2009): MS Visual Studio version of hash_multimap
-#include <cliext/hash_map>
-#else
-// DQ (11/4/2009): Use the GNU depricated stuff (what works in ROSE at the moment)
-#include <ext/hash_map>
-#endif
+
 
 // DQ (9/25/2007): Need to move this to here so that all of ROSE will see it.
 #define Rose_STL_Container std::vector
