@@ -19,6 +19,7 @@
 // DQ (3/22/2009): Added MSVS support for ROSE.
 #include "rose_msvc.h"
 
+#include <algorithm>
 #include "string_functions.h"
 // DQ (3/22/2009): Windows does not have this header.
 #if ROSE_MICROSOFT_OS

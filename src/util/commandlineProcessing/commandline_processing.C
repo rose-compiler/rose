@@ -8,6 +8,8 @@
 #include <string.h>
 #include <iostream>
 #include "commandline_processing.h"
+#include <vector>
+#include <algorithm>
 
 // Use Brian Gunney's String List Assignent (SLA) library
 #include "sla.h"
