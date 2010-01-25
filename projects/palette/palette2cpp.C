@@ -8,6 +8,9 @@
 #include <utility>
 #include "prologParser.h"
 #include "prologAst.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <algorithm>
 
 // We need the paths and functions from here, but not the redefinition of
 // operator<< on vectors
