@@ -13,7 +13,7 @@
 // AS added to support the function getAbsolutePathFromRelativePath
 #include <sys/param.h>
 #endif
-
+#include <algorithm>
 // AS added to support the function findfile
 #include <stdlib.h>
 #include <stdio.h>              /* standard input/output routines.    */

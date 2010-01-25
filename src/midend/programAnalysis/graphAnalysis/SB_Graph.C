@@ -1,7 +1,8 @@
-#include "rose.h"
-#include "SB_Graph.h"
+// tps (1/14/2010) : Switching from rose.h to sage3 changed size from 17,9 MB to 0,002MB
+//#include "rose.h"
+//#include "SB_Graph.h"
 
-using namespace std;
+//using namespace std;
 
 #if 0
 

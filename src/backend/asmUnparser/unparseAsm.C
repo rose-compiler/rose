@@ -1,7 +1,6 @@
-#include "rose.h"
-#ifdef _MSC_VER
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #include "unparseAsm.h"
-#endif
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 

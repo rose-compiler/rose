@@ -1,6 +1,6 @@
 #ifndef ROSE_LOADER_ELFOBJ_H
 #define ROSE_LOADER_ELFOBJ_H
-
+#include "LoaderELF.h"
 /** A loader suitable for ELF object files.
  *
  *  An ELF object file typically contains one section per function and each section has a preferred virtual address of zero.

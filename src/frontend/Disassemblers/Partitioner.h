@@ -1,6 +1,6 @@
 #ifndef ROSE_DISASSEMBLER_PARTITIONER_H
 #define ROSE_DISASSEMBLER_PARTITIONER_H
-
+#include "Disassembler.h"
 /** Partitions instructions into basic blocks and functions.
  *
  *  The Partitioner classes are responsible for partitioning the set of instructions disassembled by a Disassembler class into

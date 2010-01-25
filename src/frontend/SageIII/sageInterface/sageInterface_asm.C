@@ -1,6 +1,8 @@
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3. added integerops.h
+#include "sage3basic.h"
 #include <stdint.h>
 #include <iostream>
+#include "integerOps.h"
 
 uint64_t
 SageInterface::getAsmConstant(SgAsmValueExpression *expr)

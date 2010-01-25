@@ -4,7 +4,8 @@
  *  \brief Collect variable references that need to be passed through
  *  the outlined-function call interface.  SgBasicBlock.
  */
-#include <rose.h>
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #include <iostream>
 #include <list>
 #include <string>

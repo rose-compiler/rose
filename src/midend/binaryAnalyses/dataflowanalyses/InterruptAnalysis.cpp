@@ -1,7 +1,8 @@
-
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3 . Added unparseAsm.h
+#include "sage3basic.h"
 #include "InterruptAnalysis.h"
 //#include "string.h"
+#include "unparseAsm.h"
 
 
 using namespace std;

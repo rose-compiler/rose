@@ -1,4 +1,5 @@
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 
 const char* regclassToString(PowerpcRegisterClass n) {
   static const char* names[] = {"unknown", "gpr", "fpr", "cr", "fpscr", "spr", "tbr", "msr", "sr"};

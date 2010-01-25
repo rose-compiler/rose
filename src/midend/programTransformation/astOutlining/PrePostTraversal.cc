@@ -5,7 +5,8 @@
  *  attributes, i.e., implements a variation on the simple traversal
  *  that exposes the top-down and bottom-up visits.
  */
-#include <rose.h>
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #include "PrePostTraversal.hh"
 
 _DummyAttribute

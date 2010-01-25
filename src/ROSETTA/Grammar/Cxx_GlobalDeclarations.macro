@@ -7,7 +7,6 @@
 // define SgNULL_FILE ( new Sg_File_Info("NULL_FILE",0,0) )
 
 #include <string.h>
-
 #if 0
 // JJW 10-25-2007 nobody should be using these anymore
 #define SgSHALLOW_COPY SgShallowCopy::static_instance()
@@ -99,7 +98,8 @@ inline void preventConstructionOnStack(SgNode* n)
 //SgPragma*    Sgadd_pragma            ( SgAttributePtrList&       , char* );
 //SgPragma*    Sgadd_pragma            ( SgAttributePtrList&       , SgPragma* );
 //SgPragma*    Sgget_pragma            ( const SgAttributePtrList& , char* );
-void         print_pragma          ( SgAttributePtrList&       , std::ostream& );
+// tps : old mechanism - removed this line
+//void         print_pragma          ( SgAttributePtrList&       , std::ostream& );
 //int          remove_pragma         ( SgAttributePtrList&       , char* );
 
 //extern SgPragma *Sgfound_pragma_list[];

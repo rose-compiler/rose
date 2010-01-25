@@ -133,7 +133,16 @@ class DeleteFlag { // Wrapper for extra argument type checking
 #define ROSE_ASSERT assert
 #else
 #define ROSE_ASSERT assert
+
+//#ifdef __GNUC__
+//#  include <features.h>
+//#if __GNUC_PREREQ(4,3)
+//       If gcc_version >= 4.3
+//#define ROSE_ABORT
+//#else
 #define ROSE_ABORT  abort
+//#endif
+//#endif
 #endif
 
 // JJW (8/26/2008): Removing these

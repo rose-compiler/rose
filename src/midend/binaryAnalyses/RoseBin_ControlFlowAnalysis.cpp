@@ -6,10 +6,10 @@
  *              binary Tree
  * todo : color the variables and names in the src/bin tree
  ****************************************************/
-
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3
+#include "sage3basic.h"
 #include "RoseBin_ControlFlowAnalysis.h"
-
+#include "RoseBin_DotGraph.h"
 using namespace std;
 
 static bool debug=false;

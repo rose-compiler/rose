@@ -1,4 +1,5 @@
-#include "rose.h"
+// tps : Switching from rose.h to sage3 changed size from 22,7 MB to 12,4MB
+#include "sage3basic.h"
 
 #include "DependenceGraph.h"
 
