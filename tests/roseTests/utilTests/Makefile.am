@@ -55,7 +55,7 @@ endif
 
 clean-local:
 	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files
-	rm -f rose_*.C
+	rm -f rose_*.C *.dot
 	rm -rf xxx_new_directory_node_support
 
 distclean-local:
