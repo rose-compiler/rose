@@ -2,6 +2,8 @@
 // test cases are put into tests/roseTests/astInterfaceTests
 // Last modified, by Liao, Jan 10, 2008
 #include "sage3basic.h"
+#include "roseAdapter.h"
+#include "markLhsValues.h"
 #include "sageBuilder.h"
 #include <fstream>
 #include <boost/algorithm/string/trim.hpp>

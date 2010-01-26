@@ -1,5 +1,5 @@
 //#include "rose.h"
-#include "sage3.h"
+#include "sage3basic.h"
 #include "Cxx_Grammar.h"
 #include <roseTranslators.h>
 

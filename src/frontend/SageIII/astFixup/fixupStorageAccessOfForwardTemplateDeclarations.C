@@ -1,6 +1,7 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
-
+#include "AstFixup.h"
+#include "fixupStorageAccessOfForwardTemplateDeclarations.h"
 // tps : Added this as it is defined somewhere in rose.h
 #include "AstDiagnostics.h"
 
