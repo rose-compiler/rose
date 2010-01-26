@@ -1,5 +1,6 @@
 // MACHINE GENERATED SOURCE FILE --- DO NOT MODIFY!
 
+#include "sage3basic.h"
 #include "sage3.h"
 
 #if 1
