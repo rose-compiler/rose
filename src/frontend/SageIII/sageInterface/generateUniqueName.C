@@ -1325,6 +1325,24 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
                     break;
                   }
 
+            // DQ (1/23/2010): previously unhandled case ...
+               case V_SgFileList:
+                  {
+                    key = "__file_list_";
+                 // Make the key unique for each SgFileList object!
+                    key = key + StringUtility::numberToString(node);
+                    break;
+                  }
+
+            // DQ (1/23/2010): previously unhandled case ...
+               case V_SgDirectoryList:
+                  {
+                    key = "__directory_list_";
+                 // Make the key unique for each SgDirectoryList object!
+                    key = key + StringUtility::numberToString(node);
+                    break;
+                  }
+
                default:
                   {
                     printf ("Error: default reached in generateUniqueName() node = %p = %s \n",node,node->class_name().c_str());

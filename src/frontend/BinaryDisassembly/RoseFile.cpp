@@ -4,7 +4,9 @@
  * Date : 3Apr07
  * Decription : Interface to user
  ****************************************************/
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "unparseAsm.h"
 
 #ifdef _MSC_VER
 #include <time.h>

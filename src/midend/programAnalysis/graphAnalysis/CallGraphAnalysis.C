@@ -1,6 +1,5 @@
-#include "rose.h"
-#include "RoseSrc_CallGraphAnalysis.h"
-
+// tps : Switching from rose.h to sage3 changed size from 19,4 MB to 10MB
+#include "sage3basic.h"
 #include "CallGraphAnalysis.h"
 
 using namespace std;

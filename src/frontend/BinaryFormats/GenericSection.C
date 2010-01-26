@@ -1,7 +1,8 @@
 /* Generic Sections. SgAsmGenericSection serves as a base class for all binary file formats that divide a file into contiguous
  * parts.  The SgAsmGenericSection class describes such a part. Most binary formats will subclass this. */
 
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 

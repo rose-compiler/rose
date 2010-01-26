@@ -4,8 +4,8 @@
  * Date : 27 Sep07
  * Decription : DotGraph Visualization
  ****************************************************/
-
-#include "rose.h"
+// tps (1/14/2010) : Switching from rose.h to sage3 changed size from 17,3 MB to 6,9MB
+#include "sage3basic.h"
 #include "RoseBin_Graph.h"
 
 using namespace std;

@@ -1,7 +1,12 @@
 /* Algorithms to detect what instructions make up basic blocks and which blocks make up functions, and how to create the
  * necessary SgAsmBlock and SgAsmFunctionDeclaration IR nodes from this information. */
 #define __STDC_FORMAT_MACROS
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "Partitioner.h"
+#include "Assembler.h"
+#include "AssemblerX86.h"
+#include "unparseAsm.h"
 #include <inttypes.h>
 
 /* See header file for full documentation. */

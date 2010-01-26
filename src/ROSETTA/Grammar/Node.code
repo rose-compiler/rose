@@ -2229,9 +2229,10 @@ SgNode::removeAttribute(std::string s)
 bool
 SgNode::attributeExists(std::string s) const
    {
-     printf ("Error: calling SgNode::attributeExists(%s) \n",s.c_str());
+     printf ("Error: calling SgNode::attributeExists(%s) on node = %s \n",s.c_str(),class_name().c_str());
      ROSE_ASSERT(false);
-	// tps (12/9/2009) : MSC requires a return value
+
+  // tps (12/9/2009) : MSC requires a return value
      return false;
    }
 
