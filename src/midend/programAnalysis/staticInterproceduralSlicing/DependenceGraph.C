@@ -1,4 +1,5 @@
-#include "rose.h"
+// tps (1/14/2010) : Switching from rose.h to sage3 changed size from 20,9 MB to 10,7MB
+#include "sage3basic.h"
 
 #define SIMPLE_FILTER
 

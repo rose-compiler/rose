@@ -1,4 +1,7 @@
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "Assembler.h"
+#include "AssemblerX86.h"
 
 /* class method */
 Assembler *

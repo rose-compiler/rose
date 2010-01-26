@@ -15,6 +15,8 @@
 #endif
 #endif
 
+#include "AstDiagnostics.h"
+
 #include <sstream>
 #include <iostream>
 #include <string>

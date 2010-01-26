@@ -5,7 +5,13 @@
 comments and CPP directives back into the AST ansl also for the
 copy-based unparser.
 
+
  */
+#ifndef __fixupSourcePos
+#define __fixupSourcePos
+
+
+
 void fixupSourcePositionInformation ( SgNode* node );
 
 
@@ -62,3 +68,6 @@ class FixupSourcePositionConstructs : public ROSE_VisitTraversal
    };
 
 void fixupSourcePositionConstructs();
+
+#endif
+

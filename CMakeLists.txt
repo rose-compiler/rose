@@ -1,6 +1,7 @@
 # Please be careful about where to put your tests and variable settings
 # The order matters!!
 
+
 #----- put platform independent settings in this section-----------------
 cmake_minimum_required(VERSION 2.6)
 project (ROSE CXX C)
@@ -19,8 +20,8 @@ FIND_PACKAGE(Boost REQUIRED)
 
 #set (Boost_LIBRARY_DIRS ${Boost_INCLUDE_DIRS}/lib/ )
 #set (Boost_LIBRARIES ${Boost_INCLUDE_DIRS}/lib/ )
-#set (BOOST_LIBRARYDIR ${Boost_LIBRARY_DIRS} )
-#set (BOOST_INCLUDEDIR ${Boost_INCLUDE_DIRS}/ )
+set (BOOST_LIBRARYDIR ${Boost_LIBRARY_DIRS} )
+set (BOOST_INCLUDEDIR ${Boost_INCLUDE_DIRS}/ )
 #set (BOOST_ROOT ${Boost_INCLUDE_DIRS}/ )
 
 MESSAGE("Boost information:") 
@@ -85,8 +86,17 @@ endif ( enable-smaller-generated-files )
 
 #/CLR  /MDd /TP 
 if (WIN32)
-set( CMAKE_CXX_FLAGS " /CLR /TP " )
+# /TP to indicate files are C++
+# / CLR common intermediate language
+# /GL whole program optimization
+# /O1 optimization for small files
+# /Ob0 disable inline expansion
+# /MP multiple processors compilation
+# /0s small files
+set( CMAKE_CXX_FLAGS " /CLR /TP /MP " )
 set( CMAKE_C_FLAGS "  " )
+#set( CMAKE_CXX_FLAGS " /CLR /TP /O1 /Ob0 /MP /Os" )
+#set( CMAKE_C_FLAGS "  /O1 /Ob0 /MP /Os" )
 
 else (WIN32)
 set( CMAKE_CXX_FLAGS " -fexceptions -DHAVE_CONFIG_H -g -fPIC " )

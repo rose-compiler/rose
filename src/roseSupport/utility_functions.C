@@ -1,5 +1,10 @@
 
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "AstPDFGeneration.h"
+//#include "DotGeneration.h"
+#include "AstDOTGeneration.h"
+#include "wholeAST_API.h"
 
 // DQ (10/11/2007): This is commented out to avoid use of this mechanism.
 // #include <copy_unparser.h>
@@ -255,13 +260,18 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
 
   // printf ("Inside of backend(SgProject*): SgProject::get_verbose() = %d \n",SgProject::get_verbose());
   // printf ("Inside of backend(SgProject*): project->numberOfFiles() = %d \n",project->numberOfFiles());
-     if (project->numberOfFiles() > 0)
+
+  // DQ (1/25/2010): We have to now test for both numberOfFiles() and numberOfDirectories(),
+  // or perhaps define a more simple function to use more directly.
+  // if (project->numberOfFiles() > 0)
+     if (project->numberOfFiles() > 0 || project->numberOfDirectories() > 0)
         {
        // Compile generated C++ source code with vendor compiler.
        // Generate object file (required for further template processing 
        // if templates exist).
           if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
                printf ("Calling project->compileOutput() \n");
+
           finalCombinedExitStatus = project->compileOutput();
         }
        else
@@ -269,7 +279,7 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
         {
           if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
                printf ("   project->get_compileOnly() = %s \n",project->get_compileOnly() ? "true" : "false");
-#if 1
+
        // DQ (5/20/2005): If we have not permitted templates to be instantiated during initial 
        // compilation then we have to do the prelink step (this is however still new and somewhat 
        // problematic (buggy?)).  It relies upon the EDG mechansisms which are not well understood.
@@ -290,9 +300,6 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
 
                printf ("Skipping template support in backend(SgProject*) \n");
             // instantiateTemplates (project);
-#else
-               printf ("Skipping template support in backend(SgProject*) \n");
-#endif
              }
 
           if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )

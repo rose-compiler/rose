@@ -6,7 +6,8 @@
 // All other supporting functions should be declared with "static" (file scope only)
 // Liao, 5/24/2009
 
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #include "OmpAttribute.h"
 #include <cstdio>
 #include <cstdlib>
