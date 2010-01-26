@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 
-#include "sage3.h"
+//#include "sage3.h"
 SgFile* determineFileType ( std::vector<std::string> argv, int nextErrorCode, SgProject* project );
 
 #include "rewrite.h"

@@ -5,7 +5,7 @@
 //#include "rose.h"
 #endif
 
-
+#include "sage3basic.h"
 #include <iostream>
 #include <sstream>
 

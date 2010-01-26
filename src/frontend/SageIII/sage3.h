@@ -13,7 +13,7 @@
 // the use of directory structure support as required for scalable code generation.
 #define ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT 0
 
-#include "sage3basic.h"
+//#include "sage3basic.h"
 
 // DQ (12/9/2004): The name of this file has been changed to be the new location
 // of many future Sage III AST manipulation functions in the future.  A namespace

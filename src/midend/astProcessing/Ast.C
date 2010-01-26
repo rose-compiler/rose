@@ -7,7 +7,7 @@
 // Author: Markus Schordan, Vienna University of Technology, 2004.
 // $Id: Ast.C,v 1.3 2006/04/24 00:21:32 dquinlan Exp $
 
-
+#include "sage3basic.h"
 #include "Ast.h"
 
 Ast::iterator&

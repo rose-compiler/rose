@@ -4,7 +4,7 @@
 #ifndef ASTCOMBINEDPROCESSING_C
 #define ASTCOMBINEDPROCESSING_C
 
-#include "sage3.h"
+//#include "sage3.h"
 
 #include "AstCombinedProcessing.h"
 

@@ -7,7 +7,7 @@
 #ifndef ASTREVERSESIMPLEPROCESSING_C
 #define ASTREVERSESIMPLEPROCESSING_C
 
-#include "sage3.h"
+//#include "sage3.h"
 #include "AstReverseProcessing.h" 
 #include "AstReverseSimpleProcessing.h"
 

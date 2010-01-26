@@ -11,7 +11,7 @@
 #define ASTCLEARVISITFLAGS_C
 
 
-#include "sage3.h"
+#include "sage3basic.h"
 #include "roseInternal.h"
 #include <typeinfo>
 

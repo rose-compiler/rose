@@ -8,7 +8,7 @@
  *
  *  $Id: process.cc,v 1.1 2008/01/08 02:56:43 dquinlan Exp $
  */
-#include "rose.h"
+#include "sage3basic.h"
 //#include "rosehpct/xml2profir/xml2profir.hh"
 #include "sla.h"
 //#include "rosehpct/util/general.hh"
