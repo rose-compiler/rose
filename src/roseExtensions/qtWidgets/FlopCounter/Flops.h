@@ -2,10 +2,12 @@
 #ifndef FLOPS_H
 #define FLOPS_H
 
-
-
+#include <vector>
 #include <string>
 #include <map>
+#include <cassert>
+#include "AstAttributeMechanism.h"
+
 
 // include for VariantT
 //#include "sage3.h"
