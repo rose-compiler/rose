@@ -1452,6 +1452,7 @@ projects/RTED/CppRuntimeSystem/Makefile
 projects/RTED/CppRuntimeSystem/DebuggerQt/Makefile
 projects/taintcheck/Makefile
 projects/C_to_Promela/Makefile
+projects/OpenMP_Analysis/Makefile
 projects/OpenMP_Translator/Makefile
 projects/OpenMP_Translator/includes/Makefile
 projects/OpenMP_Translator/tests/Makefile
