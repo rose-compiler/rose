@@ -56,7 +56,6 @@ public:
           scl->aliasesAnnotateOn();
           scl->setaliasStatisticsFile(strdup(argv[i]+prefixLength));
 
-
       // Variants for Precision/Runtime tradeoff evaluation
 
       } else if (optionMatch(argv[i], "--var-alias-from-graphset")) {
@@ -78,6 +77,13 @@ public:
           scl->variantAliasesCommonTailOn();
       } else if (optionMatch(argv[i], "--var-aliases-no-common-tail")) {
           scl->variantAliasesCommonTailOff();
+
+      // remove {}->{} garbage rings when unreachable
+
+      } else if (optionMatch(argv[i], "--shape-gc")) {
+          scl->performShapeGCOn();
+      } else if (optionMatch(argv[i], "--no-shape-gc")) {
+          scl->performShapeGCOff();
 
       } else {
           // pass argument to parent for parsing

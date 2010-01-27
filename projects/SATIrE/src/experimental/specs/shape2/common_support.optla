@@ -669,9 +669,20 @@ check_inv5::NodeSet,HeapEdgeSet,NodeSet->bool;
 check_inv5(vars,H0,is0) = {} = {nx !! nx <-- vars, if n_into(nx,H0) > 1 && nx != {} && !(nx ? is0)};
 
 
+// minimalistic garbage collection: only removes unreachable {}->{} garbage loops
+remove_garbage_loop::ShapeGraph->ShapeGraph;
+remove_garbage_loop(((S,H),is0) as G) =
+  // if gc is activated and there is no edge: name -> sel -> sumloc
+  // then remove all sumloc -> sel -> sumloc (FIXME: and update sharing!)
+  if option_perform_shape_gc
+  && [] = [ edge !! (src,sel,dest) as edge <-- H, if src != {} && dest = {}] then
+    let H1  = {edge !! (src,sel,dest) as edge <-- H, if !(src = {} && dest = {})}; in
+    let is1 = intersect(is0, {nd !! nd <- extract_heapnodes(((S,H1),is0))}); in
+    ((S,H1),is1)
+  else
+    G
+  endif;
 
-
-// garbage collection (Markus Schordan)
 /*
 gc::{DFI}->{DFI};
 gc(lifted_sg) = if option_kill_unreachable_nodes then

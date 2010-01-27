@@ -27,3 +27,6 @@ BOOL_ATTR(variantKeepTempvars, Off)        // keep vs. remove normalisation temp
 BOOL_ATTR(variantKeepHelpvars, Off)        // keep vs. remove transferfunc tempvars
 BOOL_ATTR(variantAliasesCommonTail, Off)   // use common-tail test for aliases (more precision)
 
+// remove {}->{} garbage rings when unreachable
+
+BOOL_ATTR(performShapeGC, Off)

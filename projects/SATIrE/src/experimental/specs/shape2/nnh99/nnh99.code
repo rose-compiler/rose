@@ -14,6 +14,7 @@ option_keep_tempvars          : bool#
 option_keep_helpvars          : bool#
 option_kill_unreachable_nodes : bool#
 option_aliases_commontail     : bool#
+option_perform_shape_gc       : bool#
 
 option_omit_conversion_to_srw   : bool#
 
@@ -75,6 +76,16 @@ carrier_to_graphset(lifted_sg) = drop(lifted_sg);
 
 carrier_to_summarygraph::ShapeGraphSetLifted->ShapeGraph;
 carrier_to_summarygraph(lifted_sg) = nnhSG_to_srwSG(drop(lifted_sg));
+
+simple_gc::ShapeGraphSetLifted->ShapeGraphSetLifted;
+simple_gc(top) = top;
+simple_gc(bot) = bot;
+simple_gc(lifted_g) =
+  case drop(lifted_g) of sgs =>
+    lift({remove_garbage_loop(sg) !! sg <-- sgs});
+  endcase;
+
+
 
 // ----------------------------------------
 // Analysis Entry Point: Transfer Functions

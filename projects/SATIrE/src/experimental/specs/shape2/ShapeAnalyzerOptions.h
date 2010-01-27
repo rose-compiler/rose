@@ -83,6 +83,12 @@ public:
 #endif
              "   --foldgraphs             fold all shape graphs\n"
              "   --no-foldgraphs          do not fold shape graphs\n"
+
+             "\n"
+             " Garbage Collection in Shape Graphs\n"
+             "   --shape-gc               remove garbage from shape graphs when unreachable\n"
+             "   --no-shape-gc            do not perform garbage collection in graphs [default]\n"
+
              "\n"
              " Precision/Analysis Cost Tradeoffs\n"
              "   --var-alias-from-graphset compute aliases from deterministic graphset (precision)\n"

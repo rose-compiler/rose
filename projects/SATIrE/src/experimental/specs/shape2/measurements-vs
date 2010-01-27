@@ -85,8 +85,6 @@ function run_analysis {
     time_alias=`echo $str | cut -f 1 -d ' '`
     mem_alias=`echo $str | cut -f 2 -d ' '`
 
-    exit
-
     may_alias=`cat $outputdir/tmp_alias_statistics$setting | awk "/sum\(post may_alias\):/ {print \\$3}"`
     must_alias=`cat $outputdir/tmp_alias_statistics$setting | awk "/sum\(post must_alias\):/ {print \\$3}"`
   fi

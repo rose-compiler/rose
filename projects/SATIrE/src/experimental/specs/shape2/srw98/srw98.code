@@ -14,6 +14,7 @@ option_keep_tempvars          : bool#
 option_keep_helpvars          : bool#
 option_omit_conversion_to_nnh : bool#
 option_aliases_commontail     : bool#
+option_perform_shape_gc       : bool#
 
 GLOBAL
 globals: *VariableSymbolNT#
@@ -117,6 +118,15 @@ gen_heap_edges_simplified((src,sel):Rest,heap_edges) =
   let outedge_sgs = {Heap2G({e}) !! e <-- outedges}; in
   cartesian(outedge_sgs, gen_heap_edges_simplified(Rest,heap_edges));
 // ----- end -----
+
+// simple garbage collector
+simple_gc::ShapeGraphLifted->ShapeGraphLifted;
+simple_gc(top) = top;
+simple_gc(bot) = bot;
+simple_gc(lifted_g) =
+  case drop(lifted_g) of sg =>
+    lift(remove_garbage_loop(sg));
+  endcase;
 
 
 // ----------------------------------------

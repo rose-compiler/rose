@@ -32,3 +32,8 @@ PAG_BOOL get_universal_attribute__option_omit_conversion_to_nnh() {
     return !opt->convertToNNH();
 }
 
+// if garbage loops should be removed
+PAG_BOOL get_universal_attribute__option_perform_shape_gc() {
+    return opt->performShapeGC();
+}
+
