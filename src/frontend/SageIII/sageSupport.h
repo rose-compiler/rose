@@ -4,6 +4,7 @@
 // string getVariantName ( VariantT v );
 #ifndef __sagesupport
 #define __sagesupport
+
 //#include "setup.h"
 // DQ (7/7/2005): Temp location while I implement this function
 int buildAstMergeCommandFile ( SgProject* project );
