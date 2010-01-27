@@ -7161,6 +7161,58 @@ void SageInterface::setPragma(SgPragmaDeclaration* decl, SgPragma *pragma)
       markLhsValues(target);
   }
 
+// DQ (1/25/2010): Added to simplify handling of directories (e.g. for code generation).
+void SageInterface::moveToSubdirectory ( std::string directoryName, SgFile* file )
+   {
+  // This support makes use of the new SgDirectory IR node.  It causes the unparser to
+  // generate a subdirectory and unparse the file into the subdirectory.  It works
+  // by internally calling the system function "system()" to call "mkdir directoryName"
+  // and then chdir()" to change the current directory.  These steps are handled by the 
+  // unparser.
+
+  // This function just does the transformation to insert a SgDirectory IR node between
+  // the referenced SgFile and it's project (fixing up parents and file lists etc.).
+
+  // Add a directory and unparse the code (to the new directory)
+     SgDirectory* directory = new SgDirectory(directoryName);
+
+     SgFileList* parentFileList = isSgFileList(file->get_parent());
+     ROSE_ASSERT(parentFileList != NULL);
+     directory->set_parent(file->get_parent());
+
+     SgProject* project           = NULL;
+     SgDirectory* parentDirectory = isSgDirectory(parentFileList->get_parent());
+
+     if (parentDirectory != NULL)
+        {
+       // Add a directory to the list in the SgDirectory node.
+          parentDirectory->get_directoryList()->get_listOfDirectories().push_back(directory);
+
+       // Erase the reference to the file in the project's file list.
+       // parentDirectory->get_fileList().erase(find(parentDirectory->get_fileList().begin(),parentDirectory->get_fileList().end(),file));
+        }
+       else
+        {
+          project = isSgProject(parentFileList->get_parent());
+          ROSE_ASSERT(project != NULL);
+
+       // Add a directory to the list in the SgProject node.
+          project->get_directoryList()->get_listOfDirectories().push_back(directory);
+
+       // Erase the reference to the file in the project's file list.
+       // project->get_fileList().erase(find(project->get_fileList().begin(),project->get_fileList().end(),file));
+        }
+
+  // Put the file into the new directory.
+     directory->get_fileList()->get_listOfFiles().push_back(file);
+
+  // Erase the reference to the file in the project's file list.
+     parentFileList->get_listOfFiles().erase(find(parentFileList->get_listOfFiles().begin(),parentFileList->get_listOfFiles().end(),file));
+
+     file->set_parent(directory);
+}
+
+
 //------------------------- AST repair----------------------------
 //----------------------------------------------------------------
   void SageInterface::fixStructDeclaration(SgClassDeclaration* structDecl, SgScopeStatement* scope)
@@ -7773,6 +7825,7 @@ createInfoList (SgLocatedNode* s)
 //!Cut preprocessing information from a source node and save it into a buffer. Used in combination of pastePreprocessingInfo()
 void SageInterface::pastePreprocessingInfo (SgLocatedNode* dst_node, PreprocessingInfo::RelativePositionType pos, AttachedPreprocessingInfoType& save_buf)
 {
+  if (save_buf.size()==0) return;
   // if front
   AttachedPreprocessingInfoType* info = createInfoList (dst_node);
   ROSE_ASSERT (info);
@@ -7792,9 +7845,9 @@ void SageInterface::pastePreprocessingInfo (SgLocatedNode* dst_node, Preprocessi
     copy (save_buf.begin (), save_buf.end (), back_inserter (*info));
   else if (pos==PreprocessingInfo::inside)
   {
-    //TODO what if pos == PreprocessingInfo::inside ?
+    copy (save_buf.begin (), save_buf.end (), back_inserter (*info));
     cerr<<"SageInterface::pastePreprocessingInfo() pos==PreprocessingInfo::inside is not supported."<<endl;
-    ROSE_ASSERT(false);
+    save_buf[0]->display("ttt");
   }
 }
 
@@ -10140,11 +10193,13 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
    {
   // This function moves statements from one block to another (used by the outliner).
   // printf ("***** Moving statements from sourceBlock %p to targetBlock %p ***** \n",sourceBlock,targetBlock);
+    ROSE_ASSERT (sourceBlock && targetBlock);
 
      SgStatementPtrList & srcStmts = sourceBlock->get_statements();
 
      for (SgStatementPtrList::iterator i = srcStmts.begin(); i != srcStmts.end(); i++)
         {
+          // append statement to the target block
           targetBlock->append_statement(*i);
 
        // Make sure that the parents are set.
@@ -10185,10 +10240,16 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                             }
                          break;
                        }
-
+                     case V_SgFunctionDeclaration: // Liao 1/15/2009, I don't think there is any extra things to do here
+                       {
+                         SgFunctionDeclaration * funcDecl = isSgFunctionDeclaration(declaration);
+                         ROSE_ASSERT (funcDecl);
+                       }
+                     break;
                     default:
                        {
                          printf ("Moving this declaration = %p = %s = %s between blocks is not yet supported \n",declaration,declaration->class_name().c_str(),get_name(declaration).c_str());
+                         declaration->get_file_info()->display("file info");
                          ROSE_ASSERT(false);
                        }
                 }
