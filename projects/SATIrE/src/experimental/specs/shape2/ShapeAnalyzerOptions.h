@@ -86,6 +86,7 @@ public:
 
              "\n"
              " Shape Analysis Debug Messages\n"
+             "   --debug-astmatch         debug output: AST matches\n"
              "   --debug-assign           debug output: assigns\n"
              "   --debug-tassign          debug output: temporary assigns\n"
              "   --debug-lowlevel         debug output: lowlevel\n"

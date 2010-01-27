@@ -7,33 +7,33 @@
 // Year  : 2006, 2007, 2008
 
 tassign_x_null(x,sg) =
-  let dummy = debug_print_{LOWEREDDFI}("tassign","    input",sg); in
-  let dummy = debug_print_str("tassign", "  tassign_x_null(".varid_str(x).")\n"); in
+  let dummy = debug_print_{LOWEREDDFI}("assign","  input",sg); in
+  let dummy = debug_print_str("assign", "  tassign_x_null(".varid_str(x).")\n"); in
   let res=assign_x_null(x,sg); in
-  let dummy = debug_print_{LOWEREDDFI}("tassign","    result",res); in
-  let dummy = debug_print_str("tassign", "\n"); in
+  let dummy = debug_print_{LOWEREDDFI}("assign","  result",res); in
+  let dummy = debug_print_str("assign", "\n"); in
   res;
 
 tassign_xsel_null(x,sel,sg) =
-  let dummy = debug_print_{LOWEREDDFI}("tassign","    input",sg); in
-  let dummy = debug_print_str("tassign", "  tassign_xsel_null(".varid_str(x).",".varid_str(sel).")\n"); in
+  let dummy = debug_print_{LOWEREDDFI}("assign","  input",sg); in
+  let dummy = debug_print_str("assign", "  tassign_xsel_null(".varid_str(x).",".varid_str(sel).")\n"); in
   let res=assign_xsel_null(x,sel,sg); in
-  let dummy = debug_print_{LOWEREDDFI}("tassign","    result",res); in
-  let dummy = debug_print_str("tassign", "\n"); in
+  let dummy = debug_print_{LOWEREDDFI}("assign","  result",res); in
+  let dummy = debug_print_str("assign", "\n"); in
   res;
 
 tassign_x_new(x,G) =
-  let dummy = debug_print_{LOWEREDDFI}("tassign","    input",G); in
-  let dummy = debug_print_str("tassign", "  tassign_x_new(".varid_str(x).")\n"); in
+  let dummy = debug_print_{LOWEREDDFI}("assign","  input",G); in
+  let dummy = debug_print_str("assign", "  tassign_x_new(".varid_str(x).")\n"); in
   let G1=assign_x_null(x,G); in
   let res=assign_x_new(x,G1); in
-  let dummy = debug_print_{LOWEREDDFI}("tassign","    result",res); in
-  let dummy = debug_print_str("tassign", "\n"); in
+  let dummy = debug_print_{LOWEREDDFI}("assign","  result",res); in
+  let dummy = debug_print_str("assign", "\n"); in
   res;
 
 tassign_xsel_new(x,sel,G) =
-  let dummy = debug_print_{LOWEREDDFI}("tassign","    input",G); in
-  let dummy = debug_print_str("tassign", "  tassign_xsel_new(".varid_str(x).",".varid_str(sel).")\n"); in
+  let dummy = debug_print_{LOWEREDDFI}("assign","  input",G); in
+  let dummy = debug_print_str("assign", "  tassign_xsel_new(".varid_str(x).",".varid_str(sel).")\n"); in
   let tmp=add_tmpvarid_like_varid(sel); in
   let G1=assign_xsel_null(x,sel,G); in
   let G2=assign_x_new(tmp,G1); in
@@ -43,13 +43,13 @@ tassign_xsel_new(x,sel,G) =
   else
     assign_x_null(tmp,G3)
   endif; in
-  let dummy = debug_print_{LOWEREDDFI}("tassign","    result",res); in
-  let dummy = debug_print_str("tassign", "\n"); in
+  let dummy = debug_print_{LOWEREDDFI}("assign","  result",res); in
+  let dummy = debug_print_str("assign", "\n"); in
   res;
 
 tassign_x_y(x,y,G) =
-  let dummy = debug_print_{LOWEREDDFI}("tassign","    input",G); in
-  let dummy = debug_print_str("tassign", "  tassign_x_y(".varid_str(x).",".varid_str(y).")\n"); in
+  let dummy = debug_print_{LOWEREDDFI}("assign","  input",G); in
+  let dummy = debug_print_str("assign", "  tassign_x_y(".varid_str(x).",".varid_str(y).")\n"); in
   let res =
   if x = y then
     G
@@ -64,13 +64,13 @@ tassign_x_y(x,y,G) =
       assign_x_null(tmp,G3)
     endif
   endif; in
-  let dummy = debug_print_{LOWEREDDFI}("tassign","    result",res); in
-  let dummy = debug_print_str("tassign", "\n"); in
+  let dummy = debug_print_{LOWEREDDFI}("assign","  result",res); in
+  let dummy = debug_print_str("assign", "\n"); in
   res;
 
 tassign_x_ysel(x,y,sel,G) =
-  let dummy = debug_print_{LOWEREDDFI}("tassign","    input",G); in
-  let dummy = debug_print_str("tassign", "  tassign_x_ysel(".varid_str(x).",".varid_str(y).",".varid_str(sel).")\n"); in
+  let dummy = debug_print_{LOWEREDDFI}("assign","  input",G); in
+  let dummy = debug_print_str("assign", "  tassign_x_ysel(".varid_str(x).",".varid_str(y).",".varid_str(sel).")\n"); in
   let tmp=add_tmpvarid_like_varid(y); in
   let G1=assign_x_ysel(tmp,y,sel,G); in
   let G2=assign_x_null(x,G1); in
@@ -80,14 +80,14 @@ tassign_x_ysel(x,y,sel,G) =
   else
     assign_x_null(tmp,G3)
   endif; in
-  let dummy = debug_print_{LOWEREDDFI}("tassign","    result",res); in
-  let dummy = debug_print_str("tassign", "\n"); in
+  let dummy = debug_print_{LOWEREDDFI}("assign","  result",res); in
+  let dummy = debug_print_str("assign", "\n"); in
   res;
 
 
 tassign_xsel_y(x,sel,y,G) =
-  let dummy = debug_print_{LOWEREDDFI}("tassign","    input",G); in
-  let dummy = debug_print_str("tassign", "  tassign_xsel_y(".varid_str(x).",".varid_str(sel).",".varid_str(y).")\n"); in
+  let dummy = debug_print_{LOWEREDDFI}("assign","  input",G); in
+  let dummy = debug_print_str("assign", "  tassign_xsel_y(".varid_str(x).",".varid_str(sel).",".varid_str(y).")\n"); in
   let tmp=add_tmpvarid_like_varid(y); in
   let G1=assign_x_y(tmp,y,G); in
   let G2=assign_xsel_null(x,sel,G1); in
@@ -97,7 +97,7 @@ tassign_xsel_y(x,sel,y,G) =
   else
     assign_x_null(tmp,G3)
   endif; in
-  let dummy = debug_print_{LOWEREDDFI}("tassign","    result",res); in
-  let dummy = debug_print_str("tassign", "\n"); in
+  let dummy = debug_print_{LOWEREDDFI}("assign","  result",res); in
+  let dummy = debug_print_str("assign", "\n"); in
   res;
 

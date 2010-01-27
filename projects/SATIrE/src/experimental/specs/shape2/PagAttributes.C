@@ -33,6 +33,7 @@ PAG_BOOL get_universal_attribute__option_perform_shape_gc() {
 }
 
 // if debug output: assign, tassign, ...
+PAG_BOOL get_universal_attribute__option_debugmessage_astmatch()        { return opt->debugmessageAstmatch(); }
 PAG_BOOL get_universal_attribute__option_debugmessage_assign()          { return opt->debugmessageAssign(); }
 PAG_BOOL get_universal_attribute__option_debugmessage_tassign()         { return opt->debugmessageTassign(); }
 PAG_BOOL get_universal_attribute__option_debugmessage_lowlevel()        { return opt->debugmessageLowlevel(); }

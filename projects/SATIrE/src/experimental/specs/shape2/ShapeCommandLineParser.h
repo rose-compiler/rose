@@ -86,6 +86,8 @@ public:
           scl->performShapeGCOff();
 
       // debug output flags
+      } else if (optionMatch(argv[i], "--debug-astmatch")) {
+          scl->debugmessageAstmatchOn();
       } else if (optionMatch(argv[i], "--debug-assign")) {
           scl->debugmessageAssignOn();
       } else if (optionMatch(argv[i], "--debug-tassign")) {

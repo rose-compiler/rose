@@ -21,7 +21,7 @@ assign::Expression,Expression,{DFI}-> {DFI};
 assign(_,_,top) = top;
 assign(_,_,bot) = bot;
 assign(lhs,rhs,lifted_g) =
-  let dummy = debug_print_str("assign", expr_asttext(lhs)." = ".expr_asttext(rhs)."\n"); in
+  let dummy = debug_print_str("astmatch", expr_asttext(lhs)." = ".expr_asttext(rhs)."\n"); in
 
   // allocate one tempvar for each normalisation step
   let lhs_vars = allocate_tmpvars(lhs,expr_depth(lhs));

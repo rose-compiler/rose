@@ -7,6 +7,7 @@
 // Year  : 2008
 
 debug_is_active::str->bool;
+debug_is_active("astmatch")        = option_debugmessage_astmatch;
 debug_is_active("assign")          = option_debugmessage_assign;
 debug_is_active("tassign")         = option_debugmessage_tassign;
 debug_is_active("lowlevel")        = option_debugmessage_lowlevel;

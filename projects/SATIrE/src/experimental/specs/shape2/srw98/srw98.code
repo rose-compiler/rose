@@ -15,6 +15,7 @@ option_keep_helpvars                : bool#
 option_aliases_commontail           : bool#
 option_perform_shape_gc             : bool#
 
+option_debugmessage_astmatch        : bool#
 option_debugmessage_assign          : bool#
 option_debugmessage_tassign         : bool#
 option_debugmessage_lowlevel        : bool#

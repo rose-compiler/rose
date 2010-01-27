@@ -15,6 +15,7 @@ option_keep_helpvars                : bool#
 option_aliases_commontail           : bool#
 option_perform_shape_gc             : bool#
 
+option_debugmessage_astmatch        : bool#
 option_debugmessage_assign          : bool#
 option_debugmessage_tassign         : bool#
 option_debugmessage_lowlevel        : bool#
@@ -97,50 +98,50 @@ simple_gc(lifted_g) =
 
 assign_x_null::VariableId,ShapeGraphSet->ShapeGraphSet;
 assign_x_null(x,gset) =
-  let dummy = debug_print_{LOWEREDDFI}("lowlevel","        input", gset); in
-  let dummy = debug_print_str("lowlevel","      x_null    ".varid_str(x)."\n"); in
+  let dummy = debug_print_ShapeGraphSet("tassign","      input", gset); in
+  let dummy = debug_print_str("tassign","      x_null    ".varid_str(x)."\n"); in
   let res = enunion([fassign_x_null(x,g) !! g <-- gset]); in
-  let dummy = debug_print_{LOWEREDDFI}("lowlevel","        result", res); in
+  let dummy = debug_print_ShapeGraphSet("tassign","      result", res); in
   res;
 
 assign_x_new::VariableId,ShapeGraphSet->ShapeGraphSet;
 assign_x_new(x,gset) =
-  let dummy = debug_print_{LOWEREDDFI}("lowlevel","        input", gset); in
-  let dummy = debug_print_str("lowlevel","      x_new     ".varid_str(x)."\n"); in
+  let dummy = debug_print_ShapeGraphSet("tassign","      input", gset); in
+  let dummy = debug_print_str("tassign","      x_new     ".varid_str(x)."\n"); in
   let res = enunion([fassign_x_new(x,g) !! g <-- gset]); in
-  let dummy = debug_print_{LOWEREDDFI}("lowlevel","        result", res); in
+  let dummy = debug_print_ShapeGraphSet("tassign","      result", res); in
   res;
 
 assign_xsel_null::VariableId,VariableId,ShapeGraphSet->ShapeGraphSet;
 assign_xsel_null(x,sel,gset) =
-  let dummy = debug_print_{LOWEREDDFI}("lowlevel","        input", gset); in
-  let dummy = debug_print_str("lowlevel","      xsel_null ".varid_str(x)."->".varid_str(sel)."\n"); in
+  let dummy = debug_print_ShapeGraphSet("tassign","      input", gset); in
+  let dummy = debug_print_str("tassign","      xsel_null ".varid_str(x)."->".varid_str(sel)."\n"); in
   let res = enunion([fassign_xsel_null(x,sel,g) !! g <-- gset]); in
-  let dummy = debug_print_{LOWEREDDFI}("lowlevel","        result", res); in
+  let dummy = debug_print_ShapeGraphSet("tassign","      result", res); in
   res;
 
 assign_x_y::VariableId,VariableId,ShapeGraphSet->ShapeGraphSet;
 assign_x_y(x,y,gset) =
-  let dummy = debug_print_{LOWEREDDFI}("lowlevel","        input", gset); in
-  let dummy = debug_print_str("lowlevel","      x_y       ".varid_str(x)." ".varid_str(y)."\n"); in
+  let dummy = debug_print_ShapeGraphSet("tassign","      input", gset); in
+  let dummy = debug_print_str("tassign","      x_y       ".varid_str(x)." ".varid_str(y)."\n"); in
   let res = enunion([fassign_x_y(x,y,g) !! g <-- gset]); in
-  let dummy = debug_print_{LOWEREDDFI}("lowlevel","        result", res); in
+  let dummy = debug_print_ShapeGraphSet("tassign","      result", res); in
   res;
 
 assign_x_ysel::VariableId,VariableId,VariableId,ShapeGraphSet->ShapeGraphSet;
 assign_x_ysel(x,y,sel,gset) =
-  let dummy = debug_print_{LOWEREDDFI}("lowlevel","        input", gset); in
-  let dummy = debug_print_str("lowlevel","      x_ysel     ".varid_str(x)." ".varid_str(y)."->".varid_str(sel)."\n"); in
+  let dummy = debug_print_ShapeGraphSet("tassign","      input", gset); in
+  let dummy = debug_print_str("tassign","      x_ysel     ".varid_str(x)." ".varid_str(y)."->".varid_str(sel)."\n"); in
   let res = enunion([fassign_x_ysel(x,y,sel,g) !! g <-- gset]); in
-  let dummy = debug_print_{LOWEREDDFI}("lowlevel","        result", res); in
+  let dummy = debug_print_ShapeGraphSet("tassign","      result", res); in
   res;
 
 assign_xsel_y::VariableId,VariableId,VariableId,ShapeGraphSet->ShapeGraphSet;
 assign_xsel_y(x,sel,y,gset) =
-  let dummy = debug_print_{LOWEREDDFI}("lowlevel","        input", gset); in
-  let dummy = debug_print_str("lowlevel","      xsel_y     ".varid_str(x)."->".varid_str(sel)." ".varid_str(y)."\n"); in
+  let dummy = debug_print_ShapeGraphSet("tassign","      input", gset); in
+  let dummy = debug_print_str("tassign","      xsel_y     ".varid_str(x)."->".varid_str(sel)." ".varid_str(y)."\n"); in
   let res = enunion([fassign_xsel_y(x,sel,y,g) !! g <-- gset]); in
-  let dummy = debug_print_{LOWEREDDFI}("lowlevel","        result", res); in
+  let dummy = debug_print_ShapeGraphSet("tassign","      result", res); in
   res;
 
 enunion::ShapeGraphSetList->ShapeGraphSet;
@@ -151,25 +152,36 @@ enunion(car:cdr) = union(car,enunion(cdr));
 
 fassign_x_null::VariableId,ShapeGraph->ShapeGraphSet;
 fassign_x_null(x,g) =
-  {kill_x(x,g)};
+  let dummy = debug_print_ShapeGraph("lowlevel","          in", g); in
+  let dummy = debug_print_str("lowlevel","          fassign_x_null ".varid_str(x)."\n"); in
+  let res = {kill_x(x,g)}; in
+  let dummy = debug_print_ShapeGraphSet("lowlevel","          rs", res); in
+  res;
 
 fassign_x_y::VariableId,VariableId,ShapeGraph->ShapeGraphSet;
 fassign_x_y(x,y,((S1,H1),is1) as gi) =
+  let dummy = debug_print_ShapeGraph("lowlevel","          in", gi); in
+  let dummy = debug_print_str("lowlevel","          fassign_x_y ".varid_str(x)." ".varid_str(y)."\n"); in
+  let res =
   let S2  = union(
              {(z,gxy(x,y,nz)) !! (z,nz) <-- S1},                      // add x to all edges where y is already
              {(x,gxy(x,y,ny)) !! (y1,ny) <-- S1, if (y1 = y)});       // add a new edge (x,{x,y,...}) to where y pointed to
       H2  = {(gxy(x,y,nv),sel,gxy(x,y,nw)) !! (nv,sel,nw) <-- H1}; // add x to all edges where y is already
       is2 = {gxy(x,y,nz) !! nz <-- is1}; in
-  {((S2,H2),is2)};
+  {((S2,H2),is2)}; in
+  let dummy = debug_print_ShapeGraphSet("lowlevel","          rs", res); in
+  res;
 
 fassign_x_ysel::VariableId,VariableId,VariableId,ShapeGraph->ShapeGraphSet;
 fassign_x_ysel(x,y,ysel,((S1,H1),is1) as g) = // it is guaranteed that x!=y
+  let dummy = debug_print_ShapeGraph("lowlevel","          in", g); in
+  let dummy = debug_print_str("lowlevel","          fassign_x_ysel ".varid_str(x)." ".varid_str(y)."->".varid_str(ysel)."\n"); in
   /* three cases: (see popa, chapter 2.6 shape analysis, [x:=y.sel])
    * case 1: there is no (_,{y,_}) <-- S or no ({y,_},ysel, _) <-- H
    * case 2: there is    (_,{y,_}) <-- S   and ({y,_},ysel, u) <-- H where u != {}
    * case 3: there is    (_,{y,_}) <-- S   and ({y,_},ysel,{}) <-- H where u == {}
    */
-  if !var_exists(y,g) then
+  let res = if !var_exists(y,g) then
     // case 1a: uninitialised variable (null pointer deref in var)
     // FIXME nur weil leere graphen im set??  print("warn: dereferencing of uninitialised variable: ".varid_str(y)."\n")
     {kill_x(x,g)}
@@ -192,11 +204,15 @@ fassign_x_ysel(x,y,ysel,((S1,H1),is1) as g) = // it is guaranteed that x!=y
 
       endcase
     endif
-  endif;
+  endif; in
+  let dummy = debug_print_ShapeGraphSet("lowlevel","          rs", res); in
+  res;
 
 fassign_xsel_null::VariableId,VariableId,ShapeGraph->ShapeGraphSet;
 fassign_xsel_null(x,s,((S0,H0),is0) as g) =
-  if !var_exists(x,g) || !var_sel_exists(x,s,g) then
+  let dummy = debug_print_ShapeGraph("lowlevel","          in", g); in
+  let dummy = debug_print_str("lowlevel","          fassign_xsel_null ".varid_str(x)."->".varid_str(s)."\n"); in
+  let res = if !var_exists(x,g) || !var_sel_exists(x,s,g) then
     {g} // identity case as x.sel is not in graph
   else
     // edge (nx,sel,nu) <-- H0 and must be removed
@@ -214,11 +230,15 @@ fassign_xsel_null(x,s,((S0,H0),is0) as g) =
                   endif; in
         {((S1,H1),is1)};
     endcase
-  endif;
+  endif; in
+  let dummy = debug_print_ShapeGraphSet("lowlevel","          rs", res); in
+  res;
 
 fassign_xsel_y::VariableId,VariableId,VariableId,ShapeGraph->ShapeGraphSet;
 fassign_xsel_y(x,sel,y,((S1,H1),is1) as g) =
-  if !var_exists(x,g) || !var_exists(y,g) then
+  let dummy = debug_print_ShapeGraph("lowlevel","          in", g); in
+  let dummy = debug_print_str("lowlevel","          fassign_xsel_y ".varid_str(x)."->".varid_str(sel)." ".varid_str(y)."\n"); in
+  let res = if !var_exists(x,g) || !var_exists(y,g) then
     // in both cases identity, as kill_xsel has already been performed
     {g}
   else
@@ -228,11 +248,17 @@ fassign_xsel_y(x,sel,y,((S1,H1),is1) as g) =
     let H2  = union(H1, {(nx,sel,ny)}); in
     let is2 = if n_into(ny,H1) >= 1 then union(is1,{ny}) else is1 endif; in
     {((S2,H2),is2)}
-  endif;
+  endif; in
+  let dummy = debug_print_ShapeGraphSet("lowlevel","          rs", res); in
+  res;
 
 fassign_x_new::VariableId,ShapeGraph->ShapeGraphSet;
 fassign_x_new(x,((S1,H1),is1) as g) =
-  {((union(S1,{(x,{x})}),H1),is1)};
+  let dummy = debug_print_ShapeGraph("lowlevel","          in", g); in
+  let dummy = debug_print_str("lowlevel","          fassign_x_new ".varid_str(x)."\n"); in
+  let res = {((union(S1,{(x,{x})}),H1),is1)}; in
+  let dummy = debug_print_ShapeGraphSet("lowlevel","          rs", res); in
+  res;
 
 get_extern_edges   :: HeapEdgeSet -> HeapEdgeSet;
 get_intern_edges   :: HeapEdgeSet -> HeapEdgeSet;
