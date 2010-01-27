@@ -1,10 +1,15 @@
-#include "rose.h"
-#include "sage3.h"
-
+// tps (01/14/2010) : Switching from rose.h to sage3. Added buildMangledNameMap, buildReplacementMap, fixupTraversal, replaceExpressionWithStatement
+//#include "rose.h"
+#include "buildMangledNameMap.h" 
+#include "buildReplacementMap.h" 
+#include "fixupTraversal.h"
 #include "sageInterface.h"
+#include "replaceExpressionWithStatement.h"
 
-// DQ (10/14/2006): Added supporting help functions
-#include "rewrite.h"
+#include "constantFolding.h"
+
+// DQ (10/14/2006): Added supporting help functions. tps commented out since it caused no compilation errors
+//#include "rewrite.h"
 
 // Liao 1/24/2008 : need access to scope stack sometimes
 #include "sageBuilder.h"

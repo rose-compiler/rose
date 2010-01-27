@@ -1,3 +1,6 @@
+#include "astQuery.h"
+#include "sage3basic.h"
+
 /*!
  * Translation (directive lowering) support for OpenMP 3.0 C/C++
  *

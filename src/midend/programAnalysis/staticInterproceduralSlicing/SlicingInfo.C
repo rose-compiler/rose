@@ -1,4 +1,5 @@
-#include "rose.h"
+// tps (1/14/2010) : Switching from rose.h to sage3 changed size from 17,4 MB to 7,0MB
+#include "sage3basic.h"
 
 #include "SlicingInfo.h"
 #include <string>

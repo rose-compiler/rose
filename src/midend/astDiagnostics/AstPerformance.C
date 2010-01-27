@@ -1,5 +1,7 @@
 // One include file to include them all!
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "HiddenList.h"
 
 #if 1
 // file locking support

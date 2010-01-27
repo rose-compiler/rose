@@ -1,6 +1,7 @@
 /* unparser_opt.C */
 
-#include <rose.h>
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #include "unparser.h"
  // include "unparser_opt.h"
 

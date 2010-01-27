@@ -1,9 +1,12 @@
 
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #include "rewrite.h"
 #include "sageBuilder.h"
 #include <iostream>
 #include <iomanip>
+#include "pre.h"
+
 
 // DQ (8/1/2005): test use of new static function to create 
 // Sg_File_Info object that are marked as transformations

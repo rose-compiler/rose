@@ -1,6 +1,7 @@
 /* Copyright 2008 Lawrence Livermore National Security, LLC */
 
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
@@ -199,8 +200,7 @@ SgAsmDOSFileHeader::add_rm_section(addr_t max_offset)
     if (p_e_total_pages>0)
         rm_end -= 512 - (p_e_last_page_size%512);
 
-    ROSE_ASSERT(rm_end >= rm_offset);
-    addr_t rm_size = rm_end - rm_offset;
+    addr_t rm_size = rm_end>rm_offset ? rm_end-rm_offset : 0;
     if (rm_size == 0)
         return NULL;
 

@@ -1,7 +1,8 @@
 
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #include "rewrite.h"
-
+#include "AstConsistencyTests.h"
 // DQ (5/26/2007): Removed support for older AST merge
 // DQ (7/25/2005): Added to support AST Merge (by Milind)
 // #include "AstMerge.h"

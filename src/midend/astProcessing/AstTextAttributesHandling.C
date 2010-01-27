@@ -1,4 +1,5 @@
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 
 // Author: Markus Schordan
 // $Id: AstTextAttributesHandling.C,v 1.5 2008/01/08 02:56:39 dquinlan Exp $
