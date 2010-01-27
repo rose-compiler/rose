@@ -98,14 +98,15 @@ void XOMP_task (void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
 {
 
 #ifdef GCC_GOMP_OPENMP_LIB_PATH  
-// only gcc 4.4.x has task support
-#if __GNUC__ > 4 || \
-  (__GNUC__ == 4 && (__GNUC_MINOR__ > 4 || \
-                     (__GNUC_MINOR__ == 4 && \
-                      __GNUC_PATCHLEVEL__ >= 0)))
+//// only gcc 4.4.x has task support
+// It is fine to have older gcc to compile this, just remember to link with gcc 4.4 and beyond
+//#if __GNUC__ > 4 || \
+//  (__GNUC__ == 4 && (__GNUC_MINOR__ > 4 || \
+//                     (__GNUC_MINOR__ == 4 && \
+//                      __GNUC_PATCHLEVEL__ >= 0)))
 
  GOMP_task (fn, data, cpyfn, arg_size, arg_align, if_clause, untied);
-#endif
+//#endif
 
 #else
 #endif 
@@ -113,13 +114,13 @@ void XOMP_task (void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
 void XOMP_taskwait (void)
 {
 #ifdef GCC_GOMP_OPENMP_LIB_PATH  
-#if __GNUC__ > 4 || \
-  (__GNUC__ == 4 && (__GNUC_MINOR__ > 4 || \
-                     (__GNUC_MINOR__ == 4 && \
-                      __GNUC_PATCHLEVEL__ >= 0)))
-
+//#if __GNUC__ > 4 || \
+//  (__GNUC__ == 4 && (__GNUC_MINOR__ > 4 || \
+//                     (__GNUC_MINOR__ == 4 && \
+//                      __GNUC_PATCHLEVEL__ >= 0)))
+//
   GOMP_taskwait();
-#endif
+//#endif
 
 #else
 #endif 
@@ -274,7 +275,9 @@ bool XOMP_loop_runtime_next (long *l, long *u)
 bool XOMP_loop_ordered_static_next (long *a, long * b)
 {
 #ifdef GCC_GOMP_OPENMP_LIB_PATH  
-  return XOMP_loop_ordered_static_next (a, b);
+  bool rt = GOMP_loop_ordered_static_next (a, b);
+//  printf ("debug xomp: a =%d, b = %d \n",*a, *b);
+  return rt;
 #else   
 #endif    
 }
@@ -282,21 +285,21 @@ bool XOMP_loop_ordered_static_next (long *a, long * b)
 bool XOMP_loop_ordered_dynamic_next (long * a, long * b)
 {
 #ifdef GCC_GOMP_OPENMP_LIB_PATH  
- return XOMP_loop_ordered_dynamic_next (a, b);
+ return GOMP_loop_ordered_dynamic_next (a, b);
 #else   
 #endif    
 }
 bool XOMP_loop_ordered_guided_next (long *a, long *b)
 {
 #ifdef GCC_GOMP_OPENMP_LIB_PATH  
- return XOMP_loop_ordered_guided_next (a, b);
+ return GOMP_loop_ordered_guided_next (a, b);
 #else   
 #endif    
 }
 bool XOMP_loop_ordered_runtime_next (long *a, long *b)
 {
 #ifdef GCC_GOMP_OPENMP_LIB_PATH  
- return XOMP_loop_ordered_runtime_next (a, b);
+ return GOMP_loop_ordered_runtime_next (a, b);
 #else   
 #endif    
 }

@@ -1245,11 +1245,19 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
       string g_lock_name = "xomp_critical_user_" + c_name;
       SgGlobal* global = getGlobalScope(target);
       ROSE_ASSERT(global!=NULL);
-      SgVariableDeclaration* vardecl = buildVariableDeclaration(g_lock_name, buildPointerType(buildVoidType()), NULL, global);
-      setStatic(vardecl);
-      prependStatement(vardecl,global);
-      SgExprListExp * param1= buildExprListExp(buildAddressOfOp(buildVarRefExp(vardecl)));
-      SgExprListExp * param2= buildExprListExp(buildAddressOfOp(buildVarRefExp(vardecl)));
+      // the lock variable may already be declared.
+      SgVariableSymbol* sym = lookupVariableSymbolInParentScopes(SgName(g_lock_name),global); 
+      if (sym == NULL)
+      {
+        SgVariableDeclaration* vardecl = buildVariableDeclaration(g_lock_name, buildPointerType(buildVoidType()), NULL, global);
+        setStatic(vardecl);
+        prependStatement(vardecl,global);
+        sym = getFirstVarSym(vardecl);
+      }
+
+      SgExprListExp * param1= buildExprListExp(buildAddressOfOp(buildVarRefExp(sym)));
+      SgExprListExp * param2= buildExprListExp(buildAddressOfOp(buildVarRefExp(sym)));
+
       func_call_stmt1 = buildFunctionCallStmt("XOMP_critical_start", buildVoidType(), param1, scope);
       func_call_stmt2 = buildFunctionCallStmt("XOMP_critical_end", buildVoidType(), param2, scope);
 #else    
