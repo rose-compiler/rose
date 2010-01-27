@@ -3497,6 +3497,7 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
 
             // DQ (1/23/2010): Added this case
                case V_SgFileList:
+               case V_SgDirectoryList:
 
             // DQ (10/4/2008): Added this case
                case V_SgRenamePair:

@@ -6,10 +6,11 @@
 extern void process(int);
 extern void process2(int);
 int item[100];
+int cutoff = 100;
 void foo(int i)
 {
   if (i%2==0)
-    #pragma omp task
+    #pragma omp task if (i < cutoff)
     process (item[i]);
   else
    #pragma omp task

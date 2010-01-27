@@ -805,6 +805,38 @@ With known semantics of STL vectors, loops operating on vectors can also be para
 \label{Manual:autopar:doall_vector2-trans}
 \end{figure}
 
+\subsection{More Instructions}
+An executable file \textit{autoPar} is created during the process of
+building ROSE.  Users can use it to parallelize their codes.
+\textit{autoPar} will be installed to the path specified by
+\textit{--prefix=ROSE\_INSTALLATION\_PATH}. 
+%You can use \textit{autoPar} to generate an OpenMP version of your sequential code if your code is parallelizable.  
+Here are some instructions.
+
+During configuration, you might want to specify a prefix path, such as
+\textit{--prefix=/home/youraccount/opt/rose-rev-8345}.
+Then, follow the ROSE installation guide to build and install ROSE,
+often by typing \textit{make} and \textit{make install}. 
+
+The next step is to set environment variables for search paths for ROSE executables (including
+\textit{autoPar}) and shared libraries. Assume you are using bash, put the
+following lines into a file (e.g. set.rose) and source it (typing
+\textit{source set.rose})
+
+\begin{verbatim}
+ROSE_INS=/home/youraccount/opt/rose-rev-8345
+export ROSE_INS
+PATH=$ROSE_INS/bin:$PATH
+export PATH
+LD_LIBRARY_PATH=$ROSE_INS/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH
+\end{verbatim}
+
+Now you can use \textit{autoPar} to parallelize your code. 
+Assume you have a sequential file: \textit{file.c}, 
+just type \textit{autoPar -c file.c}.
+An output file \textit{rose\_file.c} will be generated. 
+If \textit{autoPar} can find anything parallelizable, the output file should have OpenMP pragmas generated. 
 
 %-------------------------------------------------------------
 %-------------------------------------------------------------

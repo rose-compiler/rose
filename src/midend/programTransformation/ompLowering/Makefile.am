@@ -5,7 +5,11 @@ INCLUDES = $(ROSE_INCLUDES)
 noinst_LTLIBRARIES = libompLowering.la
 libompLowering_la_SOURCES = omp_lowering.cpp
 
-include_HEADERS = omp_lowering.h libgomp_g.h
+lib_LIBRARIES = libxomp.a
+libxomp_a_SOURCES = xomp.c
+
+include_HEADERS = omp_lowering.h libgomp_g.h \
+           libompc.h  libxomp.h
 
 EXTRA_DIST = CMakeLists.txt README
 
