@@ -23,13 +23,24 @@ int main(int argc, char *argv[])
   {
     SgFunctionDefinition* proc = isSgFunctionDefinition(*i);
     ROSE_ASSERT (proc);
-    string output_file_name = StringUtility::stripPathFromFileName(proc->get_file_info()->get_filename());
-    cout<<"Processing a function named "<<proc->get_mangled_name().getString()<<endl;
-    output_file_name+="_"+proc->get_mangled_name().getString()+"_vcfg.dot";
-    cout<<"dot file name is "<<output_file_name<<endl;
-    std::ofstream graph(output_file_name.c_str());
+    string file_name = StringUtility::stripPathFromFileName(proc->get_file_info()->get_filename());
+    string file_func_name= file_name+ "_"+proc->get_mangled_name().getString();
+    
+    string full_output = file_func_name +"_vcfg.dot";
+    std::ofstream graph(full_output.c_str());
     //std::ofstream graph("graph.dot");
+    // Full CFG graph
     cfgToDotForDebugging(graph, "dotGraph", proc->cfgForBeginning());
+
+#if 0 // not ready
+    string simple_output = file_func_name +"_simple_vcfg.dot";
+    std::ofstream simplegraph(simple_output.c_str());
+    // Simplified CFG suitable for most analyses
+    // This will cause assertion failure
+    //VirtualCFG::cfgToDot(simplegraph, proc->get_declaration()->get_name(), VirtualCFG::makeInterestingCfg(proc)); 
+    // This will generate identical graph as cfgToDotForDebugging ()
+    VirtualCFG::cfgToDot(simplegraph, proc->get_declaration()->get_name(), proc->cfgForBeginning());
+#endif    
   }
   return 0;
 }
