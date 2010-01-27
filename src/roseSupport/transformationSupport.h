@@ -203,6 +203,7 @@ class TransformationSupport
        // DQ (9/26/03) Added here to eliminate ProjectQueryLibrary 
        // (which as mostly an experiment with the reverse traversal)
           static SgProject* getProject( const SgNode* astNode);
+          static SgDirectory* getDirectory( const SgNode* astNode);
           static SgFile* getFile( const SgNode* astNode);
           static SgSourceFile* getSourceFile( const SgNode* astNode);
           static SgBinaryComposite* getBinaryFile( const SgNode* astNode);

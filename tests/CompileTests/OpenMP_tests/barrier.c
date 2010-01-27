@@ -1,5 +1,10 @@
-extern void do_sth();
-void foo()
+#include<stdio.h> 
+
+void do_sth()
+{
+  printf ("hello.\n");  
+}
+int main(void)
 {
 #pragma omp parallel
   {
@@ -7,4 +12,5 @@ void foo()
 #pragma omp barrier
     do_sth();
   }
+  return 0;
 }

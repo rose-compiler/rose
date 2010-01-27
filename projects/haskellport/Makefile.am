@@ -29,6 +29,12 @@ LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -ldl $(LIBLTDL) $(top_builddir)/projects
 
 genStubsAndWrappers_SOURCES = genStubsAndWrappers.C
 
+# Liao 12/21/2009,  people could build haskellport first
+$(top_builddir)/projects/DocumentationGenerator/libROSEDoxygen.a:$(top_builddir)/libltdl/libltdlc.la
+	make -C $(top_builddir)/projects/DocumentationGenerator
+$(top_builddir)/libltdl/libltdlc.la:
+	make -C $(top_builddir)/libltdl
+
 ROSE/Sage3/Classes.hs WrapSage3Classes.C rose.cabal: run-genStubsAndWrappers-stamp
 	touch -c $@
 

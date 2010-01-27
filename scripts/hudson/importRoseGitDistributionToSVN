@@ -63,6 +63,16 @@ else
   exit 3
 fi
 
+# update ChangeLog2
+cd ${ROSE_SOURCE_PATH}
+if test -f ${ROSE_SOURCE_PATH}/ChangeLog2; then
+  :
+else
+  echo "Fatal Error: ${ROSE_SOURCE_PATH}/ChangeLog2 does not exist as expected!" 
+  exit 1
+fi
+rm -rf ChangeLog2
+git log --name-status --no-merges --pretty=medium &>ChangeLog2
 
 cd ${ROSE_BUILD_PATH}
 
@@ -140,17 +150,16 @@ rm -rf ${ROSE_DIST_DIR}/src/midend/programAnalysis/annotationLanguageParser/lang
 rm -rf ${ROSE_DIST_DIR}/src/midend/programAnalysis/annotationLanguageParser/language-parser.cc
 rm -rf ${ROSE_DIST_DIR}/src/midend/programAnalysis/annotationLanguageParser/language.tab.h
 
-# TODO change log2 ???
 # add ChangeLog2 into the distribution
 # Liao, 11/17/2009
-#if test -f ${ROSE_TOP_TEST_DIR}/ChangeLog2; then
-#  :
-#else
-#  echo "Fatal Error: ${ROSE_TOP_TEST_DIR}/ChangeLog2 does not exist as expected!" 
-#  exit 1
-#fi
-#
-#cp ${ROSE_TOP_TEST_DIR}/ChangeLog2 ${ROSE_DIST_DIR}/.
+if test -f ${ROSE_SOURCE_PATH}/ChangeLog2; then
+  :
+else
+  echo "Fatal Error: ${ROSE_SOURCE_PATH}/ChangeLog2 does not exist as expected!" 
+  exit 1
+fi
+cp ${ROSE_SOURCE_PATH}/ChangeLog2 ${ROSE_DIST_DIR}/.
+rm -rf .*.swp
 
 # restore a few third party Makefile.in which cannot yet been automatically built
 cp ${ROSE_SRC}/src/3rdPartyLibraries/libharu-2.1.0/script/Makefile.in ${ROSE_DIST_DIR}/src/3rdPartyLibraries/libharu-2.1.0/script/Makefile.in

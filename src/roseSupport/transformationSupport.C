@@ -2030,6 +2030,43 @@ TransformationSupport::getProject( const SgNode* astNode )
      return const_cast<SgProject*>(project);
    }
 
+SgDirectory*
+TransformationSupport::getDirectory( const SgNode* astNode )
+   {
+     ROSE_ASSERT(astNode != NULL);
+
+     const SgNode* parentNode = astNode;
+     while ( (isSgDirectory(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
+        {
+          parentNode = parentNode->get_parent();
+        }
+
+  // DQ (8/2/2005): Modified this so that we can return NULL so that AST framents 
+  // not associated with a primary AST can be used with this function!
+  // Check to see if we made it back to the root (current root is SgProject).
+  // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
+     if ( isSgDirectory(parentNode) == NULL &&
+          dynamic_cast<const SgType*>(parentNode) == NULL &&
+          dynamic_cast<const SgSymbol*>(parentNode) == NULL )
+        {
+       // printf ("Error: could not trace back to SgDirecoty node \n");
+       // ROSE_ASSERT(false);
+        }
+       else
+        {
+          if ( dynamic_cast<const SgType*>(parentNode) != NULL || dynamic_cast<const SgSymbol*>(parentNode) != NULL )
+             {
+               printf ("Error: can't locate an associated SgFile from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
+               return NULL;
+             }
+        }
+
+  // Make sure we have a SgFile node
+     const SgDirectory* directory = isSgDirectory(parentNode);
+
+     return const_cast<SgDirectory*>(directory);
+   }
+
 SgFile*
 TransformationSupport::getFile( const SgNode* astNode )
    {
