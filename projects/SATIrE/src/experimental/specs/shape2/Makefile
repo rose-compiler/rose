@@ -13,7 +13,7 @@ BUILD=build
 all: nnh99shape srw98shape
 clean: nnh99clean srw98clean clean_
 
-MAKE=make CC="ccache gcc" CXX="ccache g++-4.2.0"
+MAKE=make CC="gcc" CXX="g++-4.2.0"
 
 # include Makefile_template for srw98 and nnh99
 nnh99shape:
