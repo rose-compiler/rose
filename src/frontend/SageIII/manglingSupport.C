@@ -2,7 +2,7 @@
 // #include <cctype>
 // #include <sstream>
 
-#include "sage3.h"
+#include "sage3basic.h"
 
 using namespace std;
 

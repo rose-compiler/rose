@@ -1,5 +1,5 @@
-
-#include "rose.h"
+// tps (1/14/2010) : Switching from rose.h to sage3 changed size from 17,4 MB to 7,1MB
+#include "sage3basic.h"
 #include "SAGE2OA.h"
 
 // DQ (12/31/2005): This is OK if not declared in a header file

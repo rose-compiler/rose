@@ -2,7 +2,7 @@
 HEADER_NODE_PREDECLARATION_START
 
 #include <semaphore.h>
-#include "sage3.h"
+#include "sage3basic.h"
 
 
 
@@ -70,6 +70,7 @@ class ExtentMap : public std::map<rose_addr_t,rose_addr_t> {
 		void erase(const ExtentPair &extent)
 			{erase(extent.first, extent.second);}
 		void erase(rose_addr_t offset, rose_addr_t size);
+		void erase(const ExtentMap&);
 
 		/* Operator-like non-modifying methods */
 		ExtentMap subtract_from(const ExtentPair &extent) const
@@ -78,6 +79,7 @@ class ExtentMap : public std::map<rose_addr_t,rose_addr_t> {
 		ExtentMap overlap_with(const ExtentPair &extent) const
 			{return overlap_with(extent.first, extent.second);}
 		ExtentMap overlap_with(rose_addr_t offset, rose_addr_t size) const;
+		size_t size() const; /**< Number of bytes in extent map (not the number extents). */
 
 		/* Allocation-like methods */
 		std::map<rose_addr_t,rose_addr_t>::iterator best_fit(rose_addr_t size);
@@ -2054,6 +2056,7 @@ bool interproceduralControlFlowGraph = false;
 // Start of source code for SgNode
 // ###############################
 
+
 // Support for global function type symbol table (moved to be static data pointer)
 // DQ (1/31/2006): Modified to build all types in the memory pools
 // SgFunctionTypeTable* SgNode::Sgfunc_type_table = new SgFunctionTypeTable();
@@ -2226,9 +2229,10 @@ SgNode::removeAttribute(std::string s)
 bool
 SgNode::attributeExists(std::string s) const
    {
-     printf ("Error: calling SgNode::attributeExists(%s) \n",s.c_str());
+     printf ("Error: calling SgNode::attributeExists(%s) on node = %s \n",s.c_str(),class_name().c_str());
      ROSE_ASSERT(false);
-	// tps (12/9/2009) : MSC requires a return value
+
+  // tps (12/9/2009) : MSC requires a return value
      return false;
    }
 

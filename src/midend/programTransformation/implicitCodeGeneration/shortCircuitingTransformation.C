@@ -2,9 +2,11 @@
  * The goal of this transformation is to remove all short circuiting, to aid in analysis work.
  */
 
-#include <rose.h>
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #include <iostream>
 #include <analysisUtils.h>
+#include "AstPDFGeneration.h"
 
 using namespace std;
 

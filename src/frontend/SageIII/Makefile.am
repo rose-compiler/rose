@@ -189,7 +189,7 @@ test_roseh: roseh
 # DQ (10/18/2007): Added AST_FILE_IO.h StorageClasses.h
 # Removed sla.h (redundant with location in src/util/commandlineProcessing/sla.h)
 include_HEADERS = \
-   sage3.h rose_attributes_list.h \
+   sage3.h sage3basic.h rose_attributes_list.h \
    attachPreprocessingInfo.h \
    attachPreprocessingInfoTraversal.h \
    attach_all_info.h manglingSupport.h C++_include_files.h \

@@ -6,69 +6,11 @@
 mydir=${0%/*}; mydir=$(cd -- $mydir 2>/dev/null && pwd); [ -n "$mydir" ] || mydir="/bin"
 myname="${0##*/}"; [ "$myname" = "-bash" ] && myname="rosegit-functions.sh"
 
-# Returns the name of a branch that contains the specified commit.  If the commit is on more than one branch then return the
-# best one, where "best" is the branch with fewest commits between the specified commit and the branch head. Ties are broken
-# arbitrarily.
-rosegit_branch_of () {
-    local repo="$1";   [ -d "$repo" ]      || rosegit_die "not a repository: $repo"
-    local commit="$2"; [ -n "$commit" ]    || rosegit_die "no committish"
-
-    local head= found= score=none
-    commit=$(cd $repo && git rev-parse $commit)
-    for head in $(find $repo/.git/refs/{heads,remotes} -type f -printf '%f\n'); do
-	(cd $repo && git rev-list $head |grep $commit >/dev/null 2>&1) || continue
-	local sha1=$(cd $repo && git rev-parse $head)
-	local this_score=$(cd $repo && git rev-list $head ^$commit |wc -l)
-	#echo "head=$head($sha1) score=$this_score" >&2
-	if [ "$commit" = "$sha1" ]; then
-	    echo $head # Perfect match
-	    return 0
-	elif [ $this_score -eq 0 ]; then
-	    : commit is not reachable from this head
-	elif [ "$score" = "none" ]; then
-	    score=$this_score
-	    found=$head
-        elif [ $this_score -lt $score ]; then
-	    score=$this_score
-	    found=$head
-        fi
-    done
-    echo $found
-}
-
 # Debugging utility that to help show what the shell things the arguments are. Call it with any number of arguments and
 # they will be emitted on a line to standard error, each enclosed in square brackets.
 rosegit_checkargs () {
     perl -e 'print STDERR join(" ",map {"[$_]"} @ARGV), "\n"' -- "$@"
 }
-
-# Generates an e-mail message on standard output for a commit. The first line is a subject and the rest is the body.
-# Arguments are the repositoroy and the commit ID.
-rosegit_commit_mail () {
-    local repo="$1";
-    local commit="$2";
-
-    # Subject contains revision number and commit title (i.e., first line of commit message)
-    local subject=$(cd $repo && git log --pretty=oneline $commit^..$commit |cut -c42-255)
-    local svnid=$(cd $repo && git log $commit^..$commit |grep 'git-svn-id')
-    if [ -n "$svnid" ]; then
-	subject="rev $(echo $svnid |sed -r 's/.*@([0-9]+).*/\1/'): $subject"
-    else
-	subject="rev $(echo $commit |cut -c1-8): $subject"
-    fi
-    echo "$subject"
-
-    # Body contains commit header and diff stats. If the diff is small then it will be included also.
-    (cd $repo && git log --stat=100 $commit^..$commit)
-    local nchanges=$(cd $repo && git diff $commit^..$commit |wc -l)
-    if [ $nchanges -lt 100 ]; then
-	echo
-	(cd $repo && git diff $commit^..$commit)
-    else
-	echo
-	echo "Large patch. See repository if you're interested."
-    fi
-}    
     
 # Dies with a message
 rosegit_die () {
@@ -89,32 +31,21 @@ rosegit_elapsed_human () {
     echo "${nsec}s"
 }
 
-# Configure the environment for building rose. The following environment variables are set if they have no values:
-#    ROSE_BLD -- the name of the top of the build tree, set to the absolute name of the current working directory
-#    ROSE_SRC -- the name of the top of the source tree
+# Configure certain environment variables:
+#   Adjust LD_LIBRARY_PATH so we can run executables without installing them and without going through the libtool shell script.
+#   This allows us to run debuggers on the uninstalled executables.
 rosegit_environment () {
-    [ -n "$ROSE_BLD" ] || ROSE_BLD=$(rosegit_find_builddir)
-    [ -n "$ROSE_SRC" ] || ROSE_SRC=$(rosegit_find_sources $ROSE_BLD)
+    [ -d "$ROSEGIT_SRC" ] || rosegit_die "no source directory"
+    [ -d "$ROSEGIT_BLD" ] || rosegit_die "no build directory"
 
-    # Sanity checks
-    [ -d "$ROSE_BLD" ] || rosegit_die "built tree is not a directory: $ROSE_BLD"
-    [ -d "$ROSE_BLD/.git" ] && rosegit_die "build tree appears to be a repository: $ROSE_BLD"
-    [ -d "$ROSE_SRC" ] || rosegit_die "no such directory: ROSE_SRC"
-    [ -d "$ROSE_SRC/.git" ] || rosegit_die "not a Git repository: $ROSE_SRC"
-    [ "$ROSE_SRC" = "$ROSE_BLD" ] && rosegit_die "build directory and source directory should not be the same: $ROSE_SRC"
-
-    # Make sure directory names are absolute and exported
-    export ROSE_BLD=$(cd $ROSE_BLD && pwd)
-    export ROSE_SRC=$(cd $ROSE_SRC && pwd)
-
-    # Adjust LD_LIBRARY_PATH so we can run executables without installing them and without going through the libtool shell script.
-    # This allows us to run debuggers on the uninstalled executables.
-    type path-adjust >/dev/null 2>&1 && eval $(path-adjust --var=LD_LIBRARY_PATH remove --regexp /ROSE/ /boost_)
-    LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$BOOST_ROOT/lib"
-    LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROSE_BLD/src/.libs"
-    LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROSE_BLD/libltdl/.libs"
-    LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROSE_BLD/src/3rdPartyLibraries/libharu-2.1.0/src/.libs"
-    LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROSE_BLD/src/3rdPartyLibraries/qrose/QRoseLib/.libs"
+    if [ -d "$BOOST_ROOT" ]; then
+	type path-adjust >/dev/null 2>&1 && eval $(path-adjust --var=LD_LIBRARY_PATH remove --regexp /ROSE/ /boost_)
+	[ -d "$BOOST_ROOT"] && LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$BOOST_ROOT/lib"
+    fi
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROSEGIT_BLD/src/.libs"
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROSEGIT_BLD/libltdl/.libs"
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROSEGIT_BLD/src/3rdPartyLibraries/libharu-2.1.0/src/.libs"
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROSEGIT_BLD/src/3rdPartyLibraries/qrose/QRoseLib/.libs"
     export LD_LIBRARY_PATH
 }
 
@@ -141,64 +72,67 @@ rosegit_find_builddir () {
     rosegit_die "could not find build dir starting search from $origdir"
 }
 
-# Finds a local Git repository containing ROSE by looking first in the specified directory (or current working directory), and
-# then in ancestor directories and subdirectories of the ancestors. The subdirectories must be named "sources/$cwdbase", where
+# Finds source and build directories
+#    ROSEGIT_BLD -- the name of the top of the build tree, set to the absolute name of the current working directory
+#    ROSEGIT_SRC -- the name of the top of the source tree corresponding to this build tree.
+#    ROSE_SRC    -- the name of the top of the source tree for ROSE (same as ROSEGIT_SRC if we're compiling ROSE itself)
+rosegit_find_directories () {
+    [ -n "$ROSEGIT_BLD" ] || ROSEGIT_BLD=$(rosegit_find_builddir)
+    [ -n "$ROSEGIT_SRC" ] || ROSEGIT_SRC=$(rosegit_find_sources $ROSEGIT_BLD)
+
+    # Sanity checks
+    [ -d "$ROSEGIT_BLD" ] || rosegit_die "built tree is not a directory: $ROSEGIT_BLD"
+    [ -d "$ROSEGIT_BLD/.git" ] && rosegit_die "build tree appears to be a repository: $ROSEGIT_BLD"
+    [ -d "$ROSEGIT_SRC" ] || rosegit_die "no such directory: ROSEGIT_SRC"
+    [ -d "$ROSEGIT_SRC/.git" ] || rosegit_die "not a Git repository: $ROSEGIT_SRC"
+    [ "$ROSEGIT_SRC" = "$ROSEGIT_BLD" ] && rosegit_die "build directory and source directory should not be the same: $ROSEGIT_SRC"
+
+    # Make sure directory names are absolute and exported
+    export ROSEGIT_BLD=$(cd $ROSEGIT_BLD && pwd)
+    export ROSEGIT_SRC=$(cd $ROSEGIT_SRC && pwd)
+
+    # Find the ROSE source tree
+    [ -f "$ROSEGIT_SRC/src/rose.h" ] && ROSE_SRC=$ROSEGIT_SRC
+    [ -z "$ROSE_SRC" -a -f "$ROSEGIT_SRC/config/ROSE_SOURCES" ] && ROSE_SRC=$(cat $ROSEGIT_SRC/config/ROSE_SOURCES)
+    [ -d "$ROSE_SRC" ] || rosegit_die "cannot find ROSE source tree (perhaps no \$ROSE_SRC environment variable?)"
+    export ROSE_SRC
+}
+
+# Finds a local Git repository containing source code by looking first in the specified directory (or current working directory),
+# and then in ancestor directories and subdirectories of the ancestors. The subdirectories must be named "sources/$cwdbase", where
 # $cwdbase is the base name of the current working directory.
 rosegit_find_sources () {
-    local dir1="$1"
-    [ -n "$dir1" ] || dir1=.
+    local dir1="$1"; [ -n "$dir1" ] || dir1=.
     [ -d "$dir1" ] || rosegit_die "not a directory: $dir1"
     dir1=$(cd $dir1 && pwd)
 
     local cwdbase=$(basename $dir1)
 
     while [ "$dir1" != "/" ]; do
-	if [ -d $dir1/.git -a -e $dir1/src/rose.h ]; then
-	    echo $dir1
-	    return 0
-        fi
+	for required in configure.in configure.ac; do
+	    if [ -d $dir1/.git -a -e "$dir1/$required" ]; then
+		echo $dir1
+		return 0
+	    fi
 
-	dir2=$dir1/sources/$cwdbase
-	if [ -d $dir2/.git -a -e $dir2/src/rose.h ]; then
-	    echo $dir2
-	    return 0
-	fi
-
+	    dir2=$dir1/sources/$cwdbase
+	    if [ -d $dir2/.git -a -e "$dir2/$required" ]; then
+		echo $dir2
+		return 0
+	    fi
+	done
 	dir1=$(cd $dir1/..; pwd)
     done
 }
 
-# Returns the commit having the most recent tag matching the specified pattern for the specified branch. If no commit within
-# the last 40 has that tag then the 40th oldest (or some other if not that many) commit on the branch is returned.
-rosegit_latest_tag () {
-    local repo="$1";   [ -d "$repo" ]      || rosegit_die "not a repository: $repo"
-    local match="$2";  [ -n "$namespace" ] || match='*'
-    local branch="$3"; [ -n "$branch" ]    || rosegit_die "no branch name supplied"
-
-    local firstref=$(cd $repo && git describe --tags --long --candidates=40 --match "$match" $branch 2>/dev/null)
-    [ -n "$firstref" ] || firstref=$(cd $repo && git rev-parse $branch~40 2>/dev/null)
-    [ -n "$firstref" ] || firstref=$(cd $repo && git rev-parse $branch~30 2>/dev/null)
-    [ -n "$firstref" ] || firstref=$(cd $repo && git rev-parse $branch~20 2>/dev/null)
-    [ -n "$firstref" ] || firstref=$(cd $repo && git rev-parse $branch~10 2>/dev/null)
-    [ -n "$firstref" ] || firstref=$(cd $repo && git rev-parse $branch~5  2>/dev/null)
-    [ -n "$firstref" ] || firstref=$(cd $repo && git rev-parse $branch^   2>/dev/null)
-
-    case "$firstref" in
-	*-*) firstref=$(echo $firstref |perl -pe 's/-[^-]+-[^-]+$//') ;;
-    esac
-    echo $firstref
-}
-
-# Loads configuration files from the current branch of the specified repository. We use the current branch so as not to mess
-# with what might already be checked out in that repo (and we need to read the config before we clone). All variables starting
-# with "ROSEGIT" are exported; others are only exported if done so explicitly in the configuration files.
+# Loads configuration files.  All variables starting with "ROSEGIT" are exported; others are only exported if done so
+# explicitly in the configuration files.
 rosegit_load_config () {
     local repo="$1";   [ -d "$repo" ]      || rosegit_die "not a repository: $repo"
     local ns="$2";     [ -n "$ns" ]        || ns=$(rosegit_namespace)
     local branch="$3"; [ -n "$branch" ]    || rosegit_die "no branch name supplied"
     local config="$4";                     # optional file or directory
 
-    local branch_ns=$(echo $branch |cut -d- -f1)
     local confdir=$repo/scripts/rosegit/config
     config=$(eval "echo $config")          # expand tidle, etc.
     if [ -n "$config" ]; then
@@ -223,9 +157,8 @@ rosegit_load_config () {
     rosegit_load_config_file $defaults >&2
     [ -n "$ROSEGIT_LOADED" ] || rosegit_die "$defaults should have set ROSEGIT_LOADED"
 
-    # Load other config files. These are just shell scripts--the later, more specific files can override what the earlier ones did.
+    # Load other config files. These are just shell scripts. The later, more specific files can override what the earlier ones did.
     rosegit_load_config_file $confdir/$ns.conf >&2
-    rosegit_load_config_file $confdir/$ns.$branch_ns.conf >&2
     rosegit_load_config_file $confdir/$ns.$branch.conf    >&2
     [ -f "$config" ] && rosegit_load_config_file $config  >&2
 
@@ -248,36 +181,6 @@ rosegit_load_config_file () {
     fi
 }
 
-# Sends an e-mail message using configuration variables ROSEGIT_MAIL_X_* where X is specified as the first argument. The second
-# argument should be the name of a file that contains the message body.
-rosegit_mail () {
-    local mf="$1";   # mail facility
-    local subj="$2";
-    local file="$3";  [ -f "$file" ] || rosegit_die "no email body file: $file"
-    local x=$(rosegit_mail_var $mf)
-    [ -z "$x" -o "$x" = "no" -o "$x" = "false" ] && return 0
-    local to="$(rosegit_mail_var $mf TO)"
-    #rosegit_checkargs "$to"; exit 0
-    (echo "Subject: $subj"; echo "To: $to"; echo; fold --width=990 $file) |sendmail "$to"
-}
-
-# Helper that returns the value of an email variable
-rosegit_mail_var () {
-    local facility="$1"
-    local var="$2"
-    local v="\$ROSEGIT_MAIL"
-    [ -n "$facility" ] && v="${v}_$facility"
-    [ -n "$var"      ] && v="${v}_$var"
-    eval "local ret=\"$v\""
-    if [ -z "$facility" -o -n "$ret" ]; then
-	echo "$ret"
-    else
-	v="\$ROSEGIT_MAIL_$var"
-	eval "local ret=\"$v\""
-	echo "$ret"
-    fi
-}
-
 # Runs ROSEGIT_MAKE. Used by test scripts.
 rosegit_make () {
     eval "$ROSEGIT_MAKE" "$@"
@@ -289,8 +192,8 @@ rosegit_make () {
 rosegit_namespace () {
     local ns="$ROSEGIT_NAMESPACE"
     if [ ! -n "$ns" ]; then
-	local euser=$(whoami)
-	ns=$(grep "^$euser:" /etc/passwd |cut -d: -f5 |perl -ane 'print map {substr lc,0,1} @F')
+       local euser=$(whoami)
+       ns=$(grep "^$euser:" /etc/passwd |cut -d: -f5 |perl -ane 'print map {substr lc,0,1} @F')
     fi
     [ -n "$ns" ] || ns=$(whoami)
     [ -n "$ns" ] || ns=$USER
@@ -300,40 +203,18 @@ rosegit_namespace () {
     echo "$ns"
 }
 
-# Returns the next available serial number for the given tag. In order to make tags unique, they have three parts separated by
-# hyphens (the middle part may have additional hyphens).  For example, the tag "rpm-new-feature-123" has a name space "rpm" which
-# is typically the user's intials, a local name "new-feature", and a serial number "123".  The name space and local name together
-# are called the base name.
-rosegit_next_serial () {
-    local repo="$1";    [ -d "$repo" ]    || rosegit_die "not a repository: $repo"
-    local tagbase="$2"; [ -n "$tagbase" ] || rosegit_die "no tag basename specified"
-    local lastused=$(cd $repo && git tag -l "$tagbase-*" |perl -F- -ane 'print $F[-1]' |sort -nr |head -n1)
-    echo $((lastused+1))
-}
+# All scripts should call this function first to make sure the environment is set up properly
+rosegit_preamble () {
+    local config="$1";      # optional configuration file or directory
+    if [ ! -n "$ROSEGIT_LOADED" ]; then
+	rosegit_find_directories
+	local branch=$(cd $ROSEGIT_SRC && git branch |sed -n '/^\*/s/^\* //p')
+	rosegit_load_config $ROSE_SRC $(rosegit_namespace) $branch $config
+	rosegit_environment
+    fi
 
-# Returns the name of the ROSE git repository. This comes from the ROSEGIT_REPOSITORY variable, which the caller should set
-# explicitly if they use a command-line specified repository.
-rosegit_repository () {
-    [ -n "$ROSEGIT_REPOSITORY" ] || rosegit_die "Could not determine repository. Please set ROSEGIT_REPOSITORY config variable."
-    echo "$ROSEGIT_REPOSITORY"
-}
-
-# Runs a shell command and spits out its title on file 6 (so command output can be independently redirected) and an indication
-# of whether the command succeeded or failed, and how long it ran.
-rosegit_run () {
-    echo -n "+ "; rosegit_checkargs "$@"
-    local name="$1"; shift         # first arg is name, the rest are the command
-    local start_time=$(date +%s)
-    echo -n "$name..." >&6
-    [ -n "$XTERM" ] && echo -en "\033]0;$myname: $name\007" # set title of Xterm
-    #set -x
-    eval "$@"; local status=$?
-    #set +x
-    local end_time=$(date +%s)
-    local elapsed=$(rosegit_elapsed_human $((end_time - start_time)))
-    [ $status -eq 0 ] && echo "OK ($elapsed)" >&6
-    [ $status -ne 0 ] && echo "FAIL ($elapsed)" >&6
-    return $status
+    # Prevent errors about the progress report file being closed.
+    (echo -n "">&6) 2>/dev/null || exec 6>/dev/null
 }
 
 # Echos various environment settings to aid in debugging.
@@ -343,8 +224,9 @@ rosegit_show_environment () {
     echo "Machine:           $(hostname --long) [$(hostname --ip-address)]"
     echo "Operating system:  $(uname -s) $(uname -r) $(uname -v)"
     echo "Architecture:      $(uname -m) $(uname -i) $(uname -p)"
-    echo "Repository:        $(rosegit_repository)"
-    echo "Tester script:     $(rosegit_tester)"
+    echo "Source tree:       $ROSEGIT_SRC"
+    echo "Build tree:        $ROSEGIT_BLD"
+    [ "$ROSEGIT_SRC" != "$ROSE_SRC" ] && echo "ROSE source tree:  $ROSE_SRC"
     echo "Software:"
     echo "    $(make --version |head -n1)"
     echo "    $(gcc --version |head -n1)"
@@ -356,77 +238,6 @@ rosegit_show_environment () {
     echo "    $(tex --version |head -n1)"
     echo "    $(latex --version |head -n1)"
     echo "    $(swig -version |grep -i version)"
-    echo
-    echo "Working directory $(rosegit_workdir)"
-    df -h $(rosegit_workdir)
-    echo
-    echo "Uptime $(uptime)"
-    echo
-    echo "Memory usage (MB):"
-    free -tom
-}
-
-# Show various information about what is being tested.
-rosegit_show_info () {
-    local repo="$1"         # optional repository use when including commit info in output
-    local commit="$2"       # optional commit whose message is displayed
-
-    if [ -n "$commit" -a -n "$repo" ]; then
-	(cd $repo && git --no-pager log --dirstat $commit^..$commit)
-	echo
-    fi
-    echo "------------------------- Default Environment --------------------------"
-    rosegit_show_environment; echo
-    echo
-    echo "---------------------------- Configuration -----------------------------"
-    for var in $(export |sed -n 's/.*\(ROSEGIT[A-Za-z_0-9]*\).*/\1/p'); do
-	eval "echo $var=\"\$$var\""
-    done
-}
-
-# Returns all tags that are defined for the specified commit
-rosegit_tags_of () {
-    local repo="$1";    [ -d "$repo" ]    || rosegit_die "not a repository: $repo"
-    local commit="$2";  [ -n "$commit" ]  || rosegit_die "no committish for rosegit_tags_of"
-    local glob="$3";    [ -n "$glob" ]    || glob="*"
-
-    local tag= tags= commit=$(cd $repo && git rev-parse $commit)
-    for tag in "" $(cd $repo && git tag -l "$glob"); do
-	[ -n "$tag" ] || continue
-	[ "$commit" = $(cd $repo && git rev-parse "$tag") ] && tags="$tags $tag"
-    done
-    echo $tags
-}
-
-# Returns the name of the test script. This could be a file name or a whole shell command.
-rosegit_tester () {
-    [ -n "$ROSEGIT_TESTER" ] || rosegit_die "no test configured in ROSEGIT_TESTER"
-    echo "$ROSEGIT_TESTER"
-}
-
-# All tester scripts should call this function first.  It enables a test script to be called from rosegit-ats or by a user. When
-# called by a user it loads configuration files just like rosegit-ats would have done, and it can be called from any directory
-# of the build tree.
-rosegit_tester_preamble () {
-    local config="$1";      # optional configuration file or directory
-    if [ ! -n "$ROSEGIT_LOADED" ]; then
-	local blddir=$ROSE_BLD; [ -n "$blddir" ] || blddir=$(rosegit_find_builddir)
-	local srcdir=$ROSE_SRC; [ -n "$srcdir" ] || srcdir=$(rosegit_find_sources $blddir)
-	[ -d "$srcdir" ] || rosegit_die "could not find source directory"
-	local branch=$(cd $srcdir && git branch |sed -n '/^\*/s/^\* //p')
-	rosegit_load_config $srcdir $(rosegit_namespace) $branch $config
-    fi
-
-    rosegit_environment
-    export ROSEGIT_REPO="$ROSE_SRC"
-
-    # Prevent errors about the progress report file being closed.
-    (echo -n "">&6) 2>/dev/null || exec 6>/dev/null
-}
-
-# Returns the name of the scratch directory, caching it in $ROSEGIT_WORKDIR and creating it if necessary.
-rosegit_workdir () {
-    [ -n "$ROSEGIT_WORKDIR" ] || ROSEGIT_WORKDIR=/tmp/$(whoami)
-    mkdir -p $ROSEGIT_WORKDIR || rosegit_die "cannot create scratch directory: $ROSEGIT_WORKDIR"
-    echo $ROSEGIT_WORKDIR
+    echo "Configuration:"
+    eval "perl -e 'print qq{    \$_\n} for @ARGV' -- $ROSEGIT_CONFIGURE"
 }

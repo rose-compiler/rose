@@ -4,7 +4,8 @@
  *  \brief Implements a module to determine the '#if' directive
  *  context surrounding a specified target node.
  */
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #include "IfDirectiveContextFinder.hh"
 
 // ========================================================================

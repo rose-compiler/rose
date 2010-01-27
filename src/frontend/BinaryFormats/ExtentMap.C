@@ -3,7 +3,8 @@
  * single extent.  This class is used to keep track of what parts of a binary file have been parsed, and is also used to
  * manage string table free lists, among other things. */
 
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
@@ -149,6 +150,14 @@ ExtentMap::erase(rose_addr_t offset, rose_addr_t size)
     }
 }
 
+/** Removes the specified extents from this extent. */
+void
+ExtentMap::erase(const ExtentMap& subtrahend)
+{
+    for (const_iterator i=subtrahend.begin(); i!=subtrahend.end(); ++i)
+        erase((*i).first, (*i).second);
+}
+
 /** Return the extent that's the closest match in size without removing it from the map. If two extents tie for the best fit then
  *  return the one with the lower offset. Returns map.end() on failure. */
 ExtentMap::iterator
@@ -209,6 +218,16 @@ ExtentMap::allocate_at(const ExtentPair &request)
 {
     ROSE_ASSERT(subtract_from(request).size()==0); /*entire request should be on free list*/
     erase(request);
+}
+
+/** Number of bytes represented by extent. */
+size_t
+ExtentMap::size() const
+{
+    size_t retval=0;
+    for (const_iterator i=begin(); i!=end(); ++i)
+        retval += (*i).second;
+    return retval;
 }
 
 /** Print info about an extent map */

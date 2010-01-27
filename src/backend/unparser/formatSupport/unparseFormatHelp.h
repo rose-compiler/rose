@@ -10,7 +10,8 @@
 
 // #include "rose.h"
 #include "unparser.h"
-
+class SgUnparse_Info;
+class SgLocatedNode;
 class Unparser;
 
 class UnparseFormatHelp

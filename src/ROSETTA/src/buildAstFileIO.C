@@ -2,11 +2,13 @@
 // #                           Header Files                       #
 // ################################################################
 
+//#include "sage3basic.h"
 #include "ROSETTA_macros.h"
 #include "grammar.h"
 #include "terminal.h"
 #include "grammarString.h"
 #include <sstream>
+#include <algorithm>
 
 using namespace std;
 

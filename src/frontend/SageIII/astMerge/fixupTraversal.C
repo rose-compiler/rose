@@ -1,5 +1,14 @@
-// #include "merge.h"
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "collectAssociateNodes.h"
+#include "test_support.h"
+#include "merge_support.h"
+#include "buildMangledNameMap.h"
+#include "buildReplacementMap.h"
+#include "fixupTraversal.h"
+#include "collectAssociateNodes.h"
+#include "test_support.h"
+#include "fixupTraversal.h"
 
 using namespace std;
 

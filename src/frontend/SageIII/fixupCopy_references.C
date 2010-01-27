@@ -1,5 +1,5 @@
-#include "rose.h"
-
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #include "fixupCopy.h"
 
 // This file implementes support for the AST copy fixup.  It is specific to:

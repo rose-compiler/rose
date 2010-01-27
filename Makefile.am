@@ -234,6 +234,13 @@ testHudsonRunScript:
    cd $(top_srcdir); \
    $(top_srcdir)/scripts/hudson/runTest
 
+# This will cause the Hudson environment to be dumped to a file so that
+# it can be sourced to reproduce the environment required to run tests
+# in the hudson tmp directories as part of debugging.
+dumpHudsonEnv:
+	export ROSE_DUMP_HUDSON_ENV=yes; $(MAKE) testHudsonRunScript
+
+
 # $(top_srcdir)/scripts/hudson/testHudsonRunScript.sh;
 
 

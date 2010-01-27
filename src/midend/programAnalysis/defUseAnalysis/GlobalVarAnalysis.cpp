@@ -3,8 +3,9 @@
  * GlobalVar Analysis Definition
  * created by tps in Feb 2007
  *****************************************/
+// tps (1/14/2010) : Switching from rose.h to sage3 changed size from 17,3 MB to 7,0MB
 
-#include "rose.h"
+#include "sage3basic.h"
 #include "GlobalVarAnalysis.h"
 
 using namespace std;
