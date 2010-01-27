@@ -1,8 +1,8 @@
-#include "rose.h"
-
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
-
+#include "Loader.h"
 /* See header file for full documentation */
 
 rose_addr_t
@@ -319,6 +319,17 @@ MemoryMap::write(const void *src_buf, rose_addr_t start_va, size_t nbytes) const
         ncopied += n;
     }
     return ncopied;
+}
+
+ExtentMap
+MemoryMap::va_extents() const
+{
+    ExtentMap retval;
+    for (size_t i=0; i<elements.size(); i++) {
+        const MapElement& me = elements[i];
+        retval.insert(me.get_va(), me.get_size());
+    }
+    return retval;
 }
 
 void

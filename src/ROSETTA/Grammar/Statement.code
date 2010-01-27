@@ -3275,7 +3275,7 @@ SgStatement::get_scope(void) const
                   {
                     if (stmt->get_parent() == NULL)
                        {
-                      // printf ("Error: SgStatement has NULL parent at node = %p = %s \n",stmt,stmt->class_name().c_str());
+                         printf ("Error: SgStatement has NULL parent at node = %p = %s \n",stmt,stmt->class_name().c_str());
                          stmt->get_file_info()->display("Error: SgStatement has NULL parent");
                        }
                     ROSE_ASSERT(stmt->get_parent() != NULL);

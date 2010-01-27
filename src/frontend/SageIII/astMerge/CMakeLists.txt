@@ -4,13 +4,13 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 ########### next target ###############
 set( libastMerge_SRC     
-     merge_support.C test_support.C buildMangledNameMap.C buildSetOfFrontendSpecificNodes.C 
-     deleteNodes.C fixupTraversal.C nullifyAST.C buildReplacementMap.C collectAssociateNodes.C 
+     merge_support.C test_support.C buildMangledNameMap.C buildSetOfFrontendSpecificNodes.C
+     deleteNodes.C fixupTraversal.C nullifyAST.C buildReplacementMap.C collectAssociateNodes.C
      deleteOrphanNodes.C normalizeTypes.C requiredNodes.C merge.C AstFixParentTraversal.C
    )
 # Liao, 11/10/2009
 # Using static library here as a "convenience" library to be merged into bigger shared librose.so
-add_library( libastMerge STATIC ${libastMerge_SRC}  )
+add_library( libastMerge STATIC ${libastMerge_SRC} )
 add_dependencies( libastMerge ROSETTA )
 
 # tps (12/17/2009) : Experiments to create (small) dynamic libraries.

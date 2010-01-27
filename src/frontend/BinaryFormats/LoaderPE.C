@@ -1,5 +1,7 @@
-#include "rose.h"
-
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "Loader.h"
+#include "LoaderPE.h"
 
 /* Returns sections in order of their definition in the PE Section Table */
 SgAsmGenericSectionPtrList

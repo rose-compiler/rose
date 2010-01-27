@@ -1,8 +1,6 @@
 /* Reads a binary file and disassembles according to command-line switches */
 
 #include "rose.h"
-
-#include "rose.h"
 #include "x86InstructionSemantics.h"
 #include "x86AssemblyToBtor.h"
 #include "BtorFunctionPolicy.h"
@@ -49,8 +47,11 @@ std::string btorTranslateFunction(BtorTranslationPolicy& policy, SgAsmNode* func
     string s = unparseInstructionWithAddress(insn);
     fprintf(outfile, "\n%s\n", s.c_str());
 
-    t.processInstruction(insn);
-
+    try {
+        t.processInstruction(insn);
+    } catch (const X86InstructionSemantics<BtorTranslationPolicy, BtorWordType>::Exception &e) {
+        fprintf(stderr, "%s: %s\n", e.mesg.c_str(), unparseInstructionWithAddress(e.insn).c_str());
+    }
   }
   policy.setInitialState(entryPoint, initialConditionsAreUnknown);
   policy.addNexts();
@@ -209,61 +210,27 @@ main(int argc, char *argv[])
     for (size_t i=0; i<interps.size(); i++) {
         SgAsmInterpretation *interp = isSgAsmInterpretation(interps[i]);
 
-        /* Build the disassembler */
+        /* Disassemble and partitioner instructions into basic blocks and functions. The partitioner analyses the control flow
+         * graph (CFG) in order to discover functions and we find it convenient to use the same machinery to produce a
+         * SgIncidenceDirectedGraph below. So we'll provide our own partitioner object (rather than have the disassembler
+         * create a temporary one) so we can obtain its CFG after the disassembler is finished. */
         Disassembler *d = Disassembler::create(interp);
         if (do_debug)
             d->set_debug(stderr);
         d->set_search(search);
-
-        /* RPM: you don't actually need to pass "bad", which returns the addresses/error messages for instructions that
-         *      couldn't be disassembled.  Just d->disassembleInterp(interp). */
-        /* Disassemble instructions, linking them into the interpretation */
-        Disassembler::BadMap bad;
-        Disassembler::InstructionMap instMap = d->disassembleInterp(interp, NULL, &bad);
-
-
-        /* Create the CFG */
-        Partitioner part; 
-
-        /* RPM: BasicBlockStarts is contains the callers, not the callees.  It's a map where the keys (first element of each
-         *      pair) are the address of the first instruction of each basic block and the values (second element of each
-         *      pair) are the virtual addresses of instructions that branch to that basic block.  For instance, if you have
-         *          0x3000: JMP 0x5000
-         *                  ...
-         *          0x4000: CALL 0x5000
-         *                  ...
-         *          0x5000: NOP
-         *      then the BasicBlockStarts will contain the pair (0x5000, [0x3000, 0x4000]). */
-        //BasicBlockStarts is a basic block together with a set of know callees
-
-        
-        Partitioner::BasicBlockStarts bb_starts = part.detectBasicBlocks(instMap); //The CFG 
-        Partitioner::FunctionStarts func_starts = part.detectFunctions(interp, instMap, bb_starts);
+        Partitioner *part = new Partitioner;
+        d->set_partitioner(part);
+        Disassembler::InstructionMap instMap = d->disassembleInterp(interp);
         
 
-       // SgAsmBlock* blocks = part.partition(interp->get_header(), instMap);
-
-#if 0
-        { // Create cg
-        SgIncidenceDirectedGraph* cg = constructCallGraph(func_starts,bb_starts,instMap);
-
-        AstDOTGeneration dotgen;
-        dotgen.writeIncidenceGraphToDOTFile(cg, "cg_x86.dot");
-        }
+        /* Construct the SgIncidenceDirectedGraph CFG */
+        Partitioner::BasicBlockStarts bb_starts = part->detectBasicBlocks(instMap); /*DEPRECATED*/
+        Partitioner::FunctionStarts func_starts = part->detectFunctions(interp, instMap, bb_starts); /*DEPRECATED*/
+        SgAsmBlock *blocks = part->build_ast();
+        SgIncidenceDirectedGraph* cfg = constructCFG_BB(blocks, bb_starts, instMap);
 
 
-        { // Create cfg
-        SgIncidenceDirectedGraph* cfg = constructCFG(func_starts, bb_starts,instMap);
 
-        AstDOTGeneration dotgen;
-        dotgen.writeIncidenceGraphToDOTFile(cfg, "cfg_x86.dot");
-        }
-#endif
-
-        SgAsmBlock* blocks = part.buildTree(instMap, bb_starts, func_starts);
-        //SgAsmBlock* blocks = part.partition(interp->get_header(),instMap);
-        //frontend/Disassemblers/Partitioner.h:    typedef std::map<rose_addr_t, std::set<rose_addr_t> > BasicBlockStarts;
-        SgIncidenceDirectedGraph* cfg = constructCFG_BB(blocks, bb_starts,instMap);
 
         AstDOTGeneration dotgen;
 

@@ -3,7 +3,8 @@
  * DefUse Analysis Declaration (per Function)
  * created by tps in Feb 2007
  *****************************************/
-#include "rose.h"
+// tps : Switching from rose.h to sage3 changed size from 18,6 MB to 8,3MB
+#include "sage3basic.h"
 #include "DefUseAnalysis_perFunction.h"
 
 using namespace std;

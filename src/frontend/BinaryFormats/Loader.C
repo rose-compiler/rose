@@ -1,5 +1,9 @@
-#include "rose.h"
-
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "Loader.h"
+#include "LoaderELF.h"
+#include "LoaderELFObj.h"
+#include "LoaderPE.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 

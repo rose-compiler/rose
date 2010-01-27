@@ -1,7 +1,8 @@
 // This is the location of all the name qualification support functions
 // required for code generation (only applicable to C++)
 
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #include "unparser.h"
 // #include "name_qualification_support.h"
 

@@ -10,6 +10,8 @@
 
 #include "unparser.h"
 
+class SgType;
+class SgDeclarationStatement;
 // class Unparser;
 
 class Unparse_Type

@@ -16,6 +16,7 @@ outer_only.c \
 output_dep.c \
 output_dep2.c \
 output_dep3.c \
+plusplus.c \
 private.c \
 reduction.c \
 reduction_2.c \
@@ -28,11 +29,13 @@ true_dep_2.c \
 true_l2.c 
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
-ifstmt.C
+ifstmt.C \
+iteratorloop.C
 
 # the code which can not yet be parallelized now
 # Or the needed analyses(def-use, liveness, or dependence analysis) cannot handle them yet
 TESTCODE_CURRENTLY_FAILING = \
+livenessTest.c \
 iterator1.C \
 iterator_const1.C \
 list1.C \
@@ -64,6 +67,9 @@ C_TEST_Objects = ${C_TESTCODES_REQUIRED_TO_PASS:.c=.o}
 #C_TEST_Output = ${C_TESTCODES_REQUIRED_TO_PASS:.c=.out}
 
 CXX_TEST_Objects = ${CXX_TESTCODES_REQUIRED_TO_PASS:.C=.o}
+
+../autoPar:
+	$(MAKE) -C ../. autoPar
 
 $(C_TEST_Objects): ../autoPar $(@:.o=.c)
 	$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.c) | fold >$(@:.o=.out)

@@ -1,5 +1,9 @@
 README for the new Hudson support in ROSE (Continuous Integeration)
 
+How to reboot Hudson after (if not setup properly in crontab)
+   1) start Hudson: "screen -d -m ./startHudsonMaster
+   2) Detach screen: "CTRL-a d"
+
 New Web Server Support:
    http://tux269.llnl.gov:8080/job/ROSE/
 
@@ -72,3 +76,7 @@ drwxr-xr-x   3 hudson-rose rose  4096 Dec 14 12:40 tmp.hudson-rose
 -bash-3.00$ rsync -av --delete tux283:/export/tmp.hudson-rose .
 
 This should setup the /export/tmp.hudson-rose directory.
+
+Better is to run from the /export directory: "rsync -av tux282:/export/tmp.hudson-rose ."
+And likely we only really need the "opt" directory where all the compilers are located.
+

@@ -1,8 +1,35 @@
 /* PE Import Directory (SgAsmPEImportSection and related classes). Normally in the ".idata" section. */
 
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "Loader.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
+#include <stdarg.h>
+
+/* Optionally prints an error/warning/info message regarding import tables. The messages are silenced after a certain amount
+ * are printed. Returns true if printed; false if silenced. */
+static bool
+import_mesg(const char *fmt, ...)
+{
+    static size_t nprinted=0;
+    static const size_t max_to_print=15;
+
+    bool printed=false;
+    va_list ap;
+    va_start(ap, fmt);
+    
+    if (nprinted++ < max_to_print) {
+        vfprintf(stderr, fmt, ap);
+        if (nprinted==max_to_print)
+            fprintf(stderr, "Subsequent import messages will be suppressed.\n");
+        printed = true;
+    }
+    
+    va_end(ap);
+    return printed;
+}
+
 
 /* Constructor */
 void
@@ -43,12 +70,13 @@ SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section, size_t idx, addr_t *
         if (p_idx>=0)
             p_dll_name = new SgAsmBasicString(section->read_content_str(fhdr->get_loader_map(), p_dll_name_rva));
     } catch (const MemoryMap::NotMapped &e) {
-        fprintf(stderr, "SgAsmPEImportDirectory::ctor: error: in PE Import Directory entry %zu: "
-                "Name RVA starting at 0x%08"PRIx64" contains unmapped virtual address 0x%08"PRIx64"\n", 
-                idx, p_dll_name_rva.get_rva(), e.va);
-        if (e.map) {
-            fprintf(stderr, "Memory map in effect at time of error is:\n");
-            e.map->dump(stderr, "    ");
+        if (import_mesg("SgAsmPEImportDirectory::ctor: error: in PE Import Directory entry %zu: "
+                        "Name RVA starting at 0x%08"PRIx64" contains unmapped virtual address 0x%08"PRIx64"\n", 
+                        idx, p_dll_name_rva.get_rva(), e.va)) {
+            if (e.map) {
+                fprintf(stderr, "Memory map in effect at time of error is:\n");
+                e.map->dump(stderr, "    ");
+            }
         }
     }
     if (!p_dll_name)
@@ -81,14 +109,9 @@ SgAsmPEImportDirectory::unparse(std::ostream &f, const SgAsmPEImportSection *sec
             addr_t spos = name_section->write(f, p_dll_name_rva.get_rel(), p_dll_name->get_string());
             name_section->write(f, spos, '\0');
         } else {
-#ifdef _MSC_VER
-			fprintf(stderr, "error: unable to locate section to contain Import Directory Name RVA 0x%08"PRIx64"\n", 
-                    p_dll_name_rva.get_rva());
-#else
-			fprintf(stderr, "%s: error: unable to locate section to contain Import Directory Name RVA 0x%08"PRIx64"\n", 
-                    __func__, p_dll_name_rva.get_rva());
-#endif
-		}
+            import_mesg("error: unable to locate section to contain Import Directory Name RVA 0x%08"PRIx64"\n", 
+                        p_dll_name_rva.get_rva());
+        }
     }
     if (p_ilt)
         p_ilt->unparse(f, fhdr, p_ilt_rva);
@@ -278,11 +301,12 @@ SgAsmPEImportLookupTable::ctor(SgAsmPEImportSection *isec, rva_t rva, size_t idi
 
     /* Read the Import Lookup (or Address) Table, an array of 32 or 64 bit values, the last of which is zero */
     if (rva.get_section()!=isec) {
-        fprintf(stderr, "SgAsmPEImportSection::ctor: warning: %s RVA is outside PE Import Table\n", tname);
-        fprintf(stderr, "        Import Directory Entry #%zu\n", idir_idx);
-        fprintf(stderr, "        %s RVA is %s\n", tname, rva.to_string().c_str());
-        fprintf(stderr, "        PE Import Table mapped from 0x%08"PRIx64" to 0x%08"PRIx64"\n", 
-                isec->get_mapped_actual_rva(), isec->get_mapped_actual_rva()+isec->get_mapped_size());
+        import_mesg("SgAsmPEImportSection::ctor: warning: %s RVA is outside PE Import Table\n"
+                    "        Import Directory Entry #%zu\n"
+                    "        %s RVA is %s\n"
+                    "        PE Import Table mapped from 0x%08"PRIx64" to 0x%08"PRIx64"\n", 
+                    tname, idir_idx, tname, rva.to_string().c_str(),
+                    isec->get_mapped_actual_rva(), isec->get_mapped_actual_rva()+isec->get_mapped_size());
     }
 
     for (size_t i=0; 1; i++) {
@@ -292,12 +316,12 @@ SgAsmPEImportLookupTable::ctor(SgAsmPEImportSection *isec, rva_t rva, size_t idi
         try {
             isec->read_content(fhdr->get_loader_map(), rva.get_rva(), buf, fhdr->get_word_size());
         } catch (const MemoryMap::NotMapped &e) {
-            fprintf(stderr, "SgAsmPEImportSection::ctor: error: in PE Import Directory entry %zu: "
-                    "%s entry %zu starting at RVA 0x%08"PRIx64" contains unmapped virtual address 0x%08"PRIx64"\n",
-                    idir_idx, tname, i, rva.get_rva(), e.va);
-            if (e.map) {
-                fprintf(stderr, "Memory map in effect at time of error:\n");
-                e.map->dump(stderr, "    ");
+            if (import_mesg("SgAsmPEImportSection::ctor: error: in PE Import Directory entry %zu: "
+                            "%s entry %zu starting at RVA 0x%08"PRIx64" contains unmapped virtual address 0x%08"PRIx64"\n",
+                            idir_idx, tname, i, rva.get_rva(), e.va) &&
+                e.map) {
+                    fprintf(stderr, "Memory map in effect at time of error:\n");
+                    e.map->dump(stderr, "    ");
             }
         }
 
@@ -346,7 +370,7 @@ SgAsmPEImportLookupTable::unparse(std::ostream &f, const SgAsmPEFileHeader *fhdr
             try {
                 ilt_entry->unparse(f, fhdr, rva, i);
             } catch (const ShortWrite&) {
-                fprintf(stderr, "SgAsmPEImportLookupTable::unparse: error: ILT entry #%zu skipped (short write)\n", i);
+                import_mesg("SgAsmPEImportLookupTable::unparse: error: ILT entry #%zu skipped (short write)\n", i);
             }
         }
 
@@ -394,9 +418,9 @@ SgAsmPEImportHNTEntry::ctor(SgAsmPEImportSection *isec, rva_t rva)
     try {
         isec->read_content(fhdr->get_loader_map(), rva.get_rva(), &hint_disk, sizeof hint_disk);
     } catch (const MemoryMap::NotMapped &e) {
-        fprintf(stderr, "SgAsmPEImportHNTEntry::ctor: warning: hint at RVA 0x%08"PRIx64
-                " contains unmapped virtual address 0x%08"PRIx64"\n", rva.get_rva(), e.va);
-        if (e.map) {
+        if (import_mesg("SgAsmPEImportHNTEntry::ctor: warning: hint at RVA 0x%08"PRIx64
+                        " contains unmapped virtual address 0x%08"PRIx64"\n", rva.get_rva(), e.va) &&
+            e.map) {
             fprintf(stderr, "Memory map in effect at time of error:\n");
             e.map->dump(stderr, "    ");
         }
@@ -408,9 +432,9 @@ SgAsmPEImportHNTEntry::ctor(SgAsmPEImportSection *isec, rva_t rva)
     try {
         s = isec->read_content_str(fhdr->get_loader_map(), rva.get_rva()+2);
     } catch (const MemoryMap::NotMapped &e) {
-        fprintf(stderr, "SgAsmPEImportHNTEntry::ctor: warning: string at RVA 0x%08"PRIx64
-                " contains unmapped virtual address 0x%08"PRIx64"\n", rva.get_rva()+2, e.va);
-        if (e.map) {
+        if (import_mesg("SgAsmPEImportHNTEntry::ctor: warning: string at RVA 0x%08"PRIx64
+                        " contains unmapped virtual address 0x%08"PRIx64"\n", rva.get_rva()+2, e.va) &&
+            e.map) {
             fprintf(stderr, "Memory map in effect at time of error:\n");
             e.map->dump(stderr, "    ");
         }
@@ -425,9 +449,9 @@ SgAsmPEImportHNTEntry::ctor(SgAsmPEImportSection *isec, rva_t rva)
             isec->read_content(fhdr->get_loader_map(), rva.get_rva()+2+s.size()+1, &byte, 1);
             p_padding = byte;
         } catch (const MemoryMap::NotMapped &e) {
-            fprintf(stderr, "SgAsmPEImportHNTEntry::ctor: warning: padding at virtual address 0x%08"PRIx64
-                    " is not mapped\n", e.va);
-            if (e.map) {
+            if (import_mesg("SgAsmPEImportHNTEntry::ctor: warning: padding at virtual address 0x%08"PRIx64
+                            " is not mapped\n", e.va) &&
+                e.map) {
                 fprintf(stderr, "Memory map in effect at time of error:\n");
                 e.map->dump(stderr, "    ");
             }
@@ -527,11 +551,13 @@ SgAsmPEImportSection::parse()
 
         rva_t rva = idir->get_dll_name_rva();
         if (rva.get_section()!=this) {
-            fprintf(stderr, "SgAsmPEImportSection::ctor: warning: Name RVA is outside PE Import Table\n");
-            fprintf(stderr, "        Import Directory Entry #%zu\n", i);
-            fprintf(stderr, "        Name RVA is %s\n", rva.to_string().c_str());
-            fprintf(stderr, "        PE Import Table mapped from 0x%08"PRIx64" to 0x%08"PRIx64"\n", 
-                    get_mapped_actual_rva(), get_mapped_actual_rva()+get_mapped_size());
+            import_mesg("SgAsmPEImportSection::ctor: warning: Name RVA is outside PE Import Table\n"
+                        "        Import Directory Entry #%zu\n"
+                        "        Name RVA is %s\n"
+                        "        PE Import Table mapped from 0x%08"PRIx64" to 0x%08"PRIx64"\n",
+                        i,
+                        rva.to_string().c_str(),
+                        get_mapped_actual_rva(), get_mapped_actual_rva()+get_mapped_size());
         }
 
         /* Import Lookup Table */
@@ -580,7 +606,7 @@ SgAsmPEImportSection::unparse(std::ostream &f) const
         try {
             idir->unparse(f, this);
         } catch(const ShortWrite&) {
-            fprintf(stderr, "SgAsmImportSection::unparse: error: Import Directory #%zu skipped (short write)\n", i);
+            import_mesg("SgAsmImportSection::unparse: error: Import Directory #%zu skipped (short write)\n", i);
         }
     }
 

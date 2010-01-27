@@ -1,5 +1,8 @@
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 
-#include "rose.h"
+// tps : Added this as it is defined somewhere in rose.h
+#include "AstDiagnostics.h"
 
 void
 fixupStorageAccessOfForwardTemplateDeclarations( SgNode* node )

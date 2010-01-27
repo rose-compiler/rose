@@ -1,6 +1,5 @@
-// tps (12/09/2009) : Playing with precompiled headers in Windows. Requires rose.h as the first line in source files.
-#include "rose.h"
-#include "sage3.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 
 #include "CPPAstInterface.h"
 #include "AstInterface_ROSE.h"

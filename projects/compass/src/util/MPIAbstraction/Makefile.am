@@ -37,18 +37,19 @@ test: libMPIAbstraction.la testMPIAbstraction$(EXEEXT) \
 	@echo "============================================================"
 	@echo "Trying to recognize MPI abstractions in 'is.c'..."
 	@echo "============================================================"
-	./testMPIAbstraction$(EXEEXT) $(TEST_RUN_FLAGS) \
-	  -c $(srcdir)/testCodes/is.c
+	./testMPIAbstraction$(EXEEXT) $(TEST_RUN_FLAGS) -c $(srcdir)/testCodes/is.c
 	@echo "============================================================"
 	@echo "Compare to a grep-based search (functions only)..."
 	@echo "============================================================"
 	@grep -E --line-number 'MPI_[^ ]*[ ]*\(' $(srcdir)/testCodes/is.c
 
 check-local:
+	echo "Running tests in ROSE/projects/compass/util/MPIAbstraction..."
 	@$(MAKE) test
-	@echo "*********************************************************************************************************************"
-	@echo "*** ROSE/projects/compass/util/C-API: make check rule complete (terminated normally) ***"
-	@echo "*********************************************************************************************************************"
+	@echo "*************************************************************************************************"
+	@echo "*** ROSE/projects/compass/util/MPIAbstraction: make check rule complete (terminated normally) ***"
+	@echo "*************************************************************************************************"
+
 
 EXTRA_DIST = CMakeLists.txt MPI.api MPI-api.c testCodes
 
