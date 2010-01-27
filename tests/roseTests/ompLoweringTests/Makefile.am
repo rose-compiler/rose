@@ -14,7 +14,6 @@ OMNI_PATH = @omni_omp_runtime_support_path@
 # They will be compiled only, not executed.
 C_TESTCODES_REQUIRED_TO_COMPILE = \
         dynamicChunk.c \
-	endif.c \
 	lastprivateOrphaned.c \
         master.c \
         nowait.c \
@@ -129,6 +128,7 @@ TESTCODE_CURRENTLY_FAILING = \
         copyprivate2.c \
         copyprivate3.c \
         critical_dead.c \
+	endif.c \
         expressions.c \
         macroCalls.c \
         parallelsections.c \
@@ -209,9 +209,12 @@ endif
 
 else
 
+#Currently  GOMP takes precedence compared to Omni
+# if both of them are specified.
+# TODO: a better compiler/configuration option to  handle this
 if ROSE_USE_OMNI_OPENMP
 
-#-------------compile and run using Omni--------------------------------	
+#-------------compile and run using Omni-------------------------------
 # Only for C or CXX tests will main()
 #PASSING_TEST_Executables = ${PASSING_Objects_With_main:.o=.out}
 PASSING_C_TEST_Executables = ${C_TEST_OBJECT_REQUIRED_TO_RUN:.o=.out}
