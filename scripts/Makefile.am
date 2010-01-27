@@ -12,7 +12,7 @@ distributedScripts = \
      bincompat-sig Error.pm Git.pm
 
 # scripts put into the distribution
-EXTRA_DIST = CMakeLists.txt README $(distributedScripts) buildExampleRoseWorkspaceDirectory
+EXTRA_DIST = CMakeLists.txt README $(distributedScripts) buildExampleRoseWorkspaceDirectory hudson
 
 # install the tools in 'bin' (a subsect of EXTRA_DIST)
 bin_SCRIPTS =  $(distributedScripts)
