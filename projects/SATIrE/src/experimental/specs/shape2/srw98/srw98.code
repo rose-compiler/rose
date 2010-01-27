@@ -10,11 +10,17 @@ ShapeGraphLifted = flat(ShapeGraph)
 ENDDOMAIN
 
 UNIVERSAL
-option_keep_tempvars          : bool#
-option_keep_helpvars          : bool#
-option_omit_conversion_to_nnh : bool#
-option_aliases_commontail     : bool#
-option_perform_shape_gc       : bool#
+option_keep_tempvars                : bool#
+option_keep_helpvars                : bool#
+option_aliases_commontail           : bool#
+option_perform_shape_gc             : bool#
+
+option_debugmessage_assign          : bool#
+option_debugmessage_tassign         : bool#
+option_debugmessage_lowlevel        : bool#
+option_debugmessage_materialisation : bool#
+
+option_omit_conversion_to_nnh       : bool#
 
 GLOBAL
 globals: *VariableSymbolNT#

@@ -85,6 +85,16 @@ public:
       } else if (optionMatch(argv[i], "--no-shape-gc")) {
           scl->performShapeGCOff();
 
+      // debug output flags
+      } else if (optionMatch(argv[i], "--debug-assign")) {
+          scl->debugmessageAssignOn();
+      } else if (optionMatch(argv[i], "--debug-tassign")) {
+          scl->debugmessageTassignOn();
+      } else if (optionMatch(argv[i], "--debug-lowlevel")) {
+          scl->debugmessageLowlevelOn();
+      } else if (optionMatch(argv[i], "--debug-materialisation")) {
+          scl->debugmessageMaterialisationOn();
+
       } else {
           // pass argument to parent for parsing
           return CommandLineParser::handleOption(cl, i, argc, argv);

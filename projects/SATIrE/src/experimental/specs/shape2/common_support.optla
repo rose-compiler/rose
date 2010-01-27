@@ -685,7 +685,7 @@ remove_garbage_loop(((S,H),is0) as G) =
 
 /*
 gc::{DFI}->{DFI};
-gc(lifted_sg) = if option_kill_unreachable_nodes then
+gc(lifted_sg) = if option_... then
   case drop(lifted_sg) of sgs => lift(remove_empty_graph({gc_sg(sg) !! sg <-- sgs})); endcase
 else
   lift(remove_empty_graph(drop(lifted_sg)))

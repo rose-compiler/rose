@@ -10,13 +10,17 @@ ShapeGraphSetLifted = flat(ShapeGraphSet)
 ENDDOMAIN
 
 UNIVERSAL
-option_keep_tempvars          : bool#
-option_keep_helpvars          : bool#
-option_kill_unreachable_nodes : bool#
-option_aliases_commontail     : bool#
-option_perform_shape_gc       : bool#
+option_keep_tempvars                : bool#
+option_keep_helpvars                : bool#
+option_aliases_commontail           : bool#
+option_perform_shape_gc             : bool#
 
-option_omit_conversion_to_srw   : bool#
+option_debugmessage_assign          : bool#
+option_debugmessage_tassign         : bool#
+option_debugmessage_lowlevel        : bool#
+option_debugmessage_materialisation : bool#
+
+option_omit_conversion_to_srw       : bool#
 
 GLOBAL
 globals     : *VariableSymbolNT#
@@ -93,33 +97,51 @@ simple_gc(lifted_g) =
 
 assign_x_null::VariableId,ShapeGraphSet->ShapeGraphSet;
 assign_x_null(x,gset) =
-  //let dummy = debug_print_str("lowlevel","x_null    ".varid_str(x)."\n"); in
-  enunion([fassign_x_null(x,g) !! g <-- gset]);
+  let dummy = debug_print_{LOWEREDDFI}("lowlevel","        input", gset); in
+  let dummy = debug_print_str("lowlevel","      x_null    ".varid_str(x)."\n"); in
+  let res = enunion([fassign_x_null(x,g) !! g <-- gset]); in
+  let dummy = debug_print_{LOWEREDDFI}("lowlevel","        result", res); in
+  res;
 
 assign_x_new::VariableId,ShapeGraphSet->ShapeGraphSet;
 assign_x_new(x,gset) =
-  //let dummy = debug_print_str("lowlevel","x_new     ".varid_str(x)."\n"); in
-  enunion([fassign_x_new(x,g) !! g <-- gset]);
+  let dummy = debug_print_{LOWEREDDFI}("lowlevel","        input", gset); in
+  let dummy = debug_print_str("lowlevel","      x_new     ".varid_str(x)."\n"); in
+  let res = enunion([fassign_x_new(x,g) !! g <-- gset]); in
+  let dummy = debug_print_{LOWEREDDFI}("lowlevel","        result", res); in
+  res;
 
 assign_xsel_null::VariableId,VariableId,ShapeGraphSet->ShapeGraphSet;
 assign_xsel_null(x,sel,gset) =
-  //let dummy = debug_print_str("lowlevel","xsel_null ".varid_str(x)."->".varid_str(sel)."\n"); in
-  enunion([fassign_xsel_null(x,sel,g) !! g <-- gset]);
+  let dummy = debug_print_{LOWEREDDFI}("lowlevel","        input", gset); in
+  let dummy = debug_print_str("lowlevel","      xsel_null ".varid_str(x)."->".varid_str(sel)."\n"); in
+  let res = enunion([fassign_xsel_null(x,sel,g) !! g <-- gset]); in
+  let dummy = debug_print_{LOWEREDDFI}("lowlevel","        result", res); in
+  res;
 
 assign_x_y::VariableId,VariableId,ShapeGraphSet->ShapeGraphSet;
 assign_x_y(x,y,gset) =
-  //let dummy = debug_print_str("lowlevel","x_y       ".varid_str(x)."\t".varid_str(y)."\n"); in
-  enunion([fassign_x_y(x,y,g) !! g <-- gset]);
+  let dummy = debug_print_{LOWEREDDFI}("lowlevel","        input", gset); in
+  let dummy = debug_print_str("lowlevel","      x_y       ".varid_str(x)." ".varid_str(y)."\n"); in
+  let res = enunion([fassign_x_y(x,y,g) !! g <-- gset]); in
+  let dummy = debug_print_{LOWEREDDFI}("lowlevel","        result", res); in
+  res;
 
 assign_x_ysel::VariableId,VariableId,VariableId,ShapeGraphSet->ShapeGraphSet;
 assign_x_ysel(x,y,sel,gset) =
-  //let dummy = debug_print_str("lowlevel","x_ysel     ".varid_str(x)."\t".varid_str(y)."->".varid_str(sel)."\n"); in
-  enunion([fassign_x_ysel(x,y,sel,g) !! g <-- gset]);
+  let dummy = debug_print_{LOWEREDDFI}("lowlevel","        input", gset); in
+  let dummy = debug_print_str("lowlevel","      x_ysel     ".varid_str(x)." ".varid_str(y)."->".varid_str(sel)."\n"); in
+  let res = enunion([fassign_x_ysel(x,y,sel,g) !! g <-- gset]); in
+  let dummy = debug_print_{LOWEREDDFI}("lowlevel","        result", res); in
+  res;
 
 assign_xsel_y::VariableId,VariableId,VariableId,ShapeGraphSet->ShapeGraphSet;
 assign_xsel_y(x,sel,y,gset) =
-  //let dummy = debug_print_str("lowlevel","xsel_y     ".varid_str(x)."->".varid_str(sel)."\t".varid_str(y)."\n"); in
-  enunion([fassign_xsel_y(x,sel,y,g) !! g <-- gset]);
+  let dummy = debug_print_{LOWEREDDFI}("lowlevel","        input", gset); in
+  let dummy = debug_print_str("lowlevel","      xsel_y     ".varid_str(x)."->".varid_str(sel)." ".varid_str(y)."\n"); in
+  let res = enunion([fassign_xsel_y(x,sel,y,g) !! g <-- gset]); in
+  let dummy = debug_print_{LOWEREDDFI}("lowlevel","        result", res); in
+  res;
 
 enunion::ShapeGraphSetList->ShapeGraphSet;
 enunion([]) = {};

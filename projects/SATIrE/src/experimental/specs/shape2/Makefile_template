@@ -5,13 +5,16 @@
 
 ANALYSIS='please set ANALYSIS and call from Makefile'
 CARRIER='please set CARRIER and call from Makefile'
+LOWEREDCARRIER='please set CARRIER and call from Makefile'
 BUILD='please set BUILD and call from Makefile'
 
 ANALYSIS_MARKUP={ANALYSIS}
 CARRIER_MARKUP={DFI}
+LOWEREDCARRIER_MARKUP={LOWEREDDFI}
 
 define FUNC_EXPAND
 	sed "$(1)" -e "s/$(CARRIER_MARKUP)/$(CARRIER)/g" \
+             -e "s/$(LOWEREDCARRIER_MARKUP)/$(LOWEREDCARRIER)/g" \
              -e "s/$(ANALYSIS_MARKUP)/$(ANALYSIS)/g" > "$(2)"
 endef
 
@@ -90,6 +93,7 @@ $(BUILD)/$(ANALYSIS)/$(ANALYSIS).optla: $(ANALYSIS)/$(ANALYSIS).code \
 							common_transfer.optla 
 	cpp -C -P $< | \
   sed -e "s/$(CARRIER_MARKUP)/$(CARRIER)/g" \
+      -e "s/$(LOWEREDCARRIER_MARKUP)/$(LOWEREDCARRIER)/g" \
       -e "s/$(ANALYSIS_MARKUP)/$(ANALYSIS)/g" | \
   grep -v "prefix *: *$(ANALYSIS)" > $@
 

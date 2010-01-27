@@ -17,14 +17,14 @@ MAKE=make CC="ccache gcc" CXX="ccache g++-4.2.0"
 
 # include Makefile_template for srw98 and nnh99
 nnh99shape:
-	@$(MAKE) -f Makefile_template shape ANALYSIS='nnh99' CARRIER='ShapeGraphSetLifted' BUILD="$(BUILD)"
+	@$(MAKE) -f Makefile_template shape ANALYSIS='nnh99' CARRIER='ShapeGraphSetLifted' LOWEREDCARRIER='ShapeGraphSet' BUILD="$(BUILD)"
 nnh99clean:
-	@$(MAKE) -f Makefile_template clean ANALYSIS='nnh99' CARRIER='ShapeGraphSetLifted' BUILD="$(BUILD)"
+	@$(MAKE) -f Makefile_template clean ANALYSIS='nnh99' CARRIER='ShapeGraphSetLifted' LOWEREDCARRIER='ShapeGraphSet' BUILD="$(BUILD)"
 
 srw98shape:
-	@$(MAKE) -f Makefile_template shape ANALYSIS='srw98' CARRIER='ShapeGraphLifted' BUILD="$(BUILD)"
+	@$(MAKE) -f Makefile_template shape ANALYSIS='srw98' CARRIER='ShapeGraphLifted' LOWEREDCARRIER='ShapeGraph' BUILD="$(BUILD)"
 srw98clean:
-	@$(MAKE) -f Makefile_template clean ANALYSIS='srw98' CARRIER='ShapeGraphLifted' BUILD="$(BUILD)"
+	@$(MAKE) -f Makefile_template clean ANALYSIS='srw98' CARRIER='ShapeGraphLifted' LOWEREDCARRIER='ShapeGraph' BUILD="$(BUILD)"
 
 
 

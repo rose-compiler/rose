@@ -7,12 +7,10 @@
 // Year  : 2008
 
 debug_is_active::str->bool;
-debug_is_active("tassign")         = false;
-debug_is_active("materialisation") = false;
-debug_is_active("assign")          = false;
-debug_is_active("conversion")      = false;
-debug_is_active("lowlevel")        = false;
-debug_is_active("alias")           = true;
+debug_is_active("assign")          = option_debugmessage_assign;
+debug_is_active("tassign")         = option_debugmessage_tassign;
+debug_is_active("lowlevel")        = option_debugmessage_lowlevel;
+debug_is_active("materialisation") = option_debugmessage_materialisation;
 debug_is_active(level) = println("please set debug_is_active(", level, ")!") false;
 
 debug_print_str::str,str->snum;
@@ -40,7 +38,7 @@ debug_print_HeapEdgeSetList(level,label,     []) = if debug_is_active(level) the
 debug_print_HeapEdgeSetList(level,label,car:cdr) =
   if debug_is_active(level) then
     let i = 1 + debug_print_HeapEdgeSetList(level,label,cdr); in
-    print(label."(") print(i) print(") = ") print(car) print("\n") i
+    print("    ".label."(") print(i) print(") = ") print(car) print("\n") i
   else 0 endif;
 
 debug_print_HeapEdgeSet::str,str,HeapEdgeSet->snum;

@@ -17,11 +17,6 @@ PAG_BOOL get_universal_attribute__option_keep_helpvars() {
   return opt->variantKeepHelpvars();
 }
 
-// remove nodes that are not reachable
-PAG_BOOL get_universal_attribute__option_kill_unreachable_nodes() {
-    return false;
-}
-
 // if visualisation etc. do not require graph in srw format, omit conversion
 PAG_BOOL get_universal_attribute__option_omit_conversion_to_srw() {
     return !opt->convertToSRW();
@@ -36,4 +31,10 @@ PAG_BOOL get_universal_attribute__option_omit_conversion_to_nnh() {
 PAG_BOOL get_universal_attribute__option_perform_shape_gc() {
     return opt->performShapeGC();
 }
+
+// if debug output: assign, tassign, ...
+PAG_BOOL get_universal_attribute__option_debugmessage_assign()          { return opt->debugmessageAssign(); }
+PAG_BOOL get_universal_attribute__option_debugmessage_tassign()         { return opt->debugmessageTassign(); }
+PAG_BOOL get_universal_attribute__option_debugmessage_lowlevel()        { return opt->debugmessageLowlevel(); }
+PAG_BOOL get_universal_attribute__option_debugmessage_materialisation() { return opt->debugmessageMaterialisation(); }
 

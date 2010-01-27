@@ -85,6 +85,13 @@ public:
              "   --no-foldgraphs          do not fold shape graphs\n"
 
              "\n"
+             " Shape Analysis Debug Messages\n"
+             "   --debug-assign           debug output: assigns\n"
+             "   --debug-tassign          debug output: temporary assigns\n"
+             "   --debug-lowlevel         debug output: lowlevel\n"
+             "   --debug-materialisation  debug output: materialisation\n"
+
+             "\n"
              " Garbage Collection in Shape Graphs\n"
              "   --shape-gc               remove garbage from shape graphs when unreachable\n"
              "   --no-shape-gc            do not perform garbage collection in graphs [default]\n"

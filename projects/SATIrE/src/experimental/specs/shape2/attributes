@@ -30,3 +30,11 @@ BOOL_ATTR(variantAliasesCommonTail, Off)   // use common-tail test for aliases (
 // remove {}->{} garbage rings when unreachable
 
 BOOL_ATTR(performShapeGC, Off)
+
+// debug flags
+BOOL_ATTR(debugmessageAstmatch, Off)
+BOOL_ATTR(debugmessageAssign, Off)
+BOOL_ATTR(debugmessageTassign, Off)
+BOOL_ATTR(debugmessageLowlevel, Off)
+BOOL_ATTR(debugmessageMaterialisation, Off)
+
