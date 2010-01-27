@@ -1,7 +1,7 @@
 #ifndef ASTATTRIBUTEDOT_C
 #define ASTATTRIBUTEDOT_C
-
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #include "AstAttributeDOT.h"
 
 

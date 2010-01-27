@@ -1,6 +1,8 @@
-// #include <merge.h>
-#include "rose.h"
-
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "collectAssociateNodes.h"
+#include "test_support.h"
+#include "merge.h"
 using namespace std;
 
 void
@@ -1835,6 +1837,11 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                    }
                break;
              }
+
+       // DQ (1/23/2010): These are relatively new IR nodes that are finally being used and tested.
+          case V_SgFileList:
+          case V_SgDirectory:
+          case V_SgDirectoryList:
 
        // Ignore these SgSupport cases since we don't permit them to be shared
           case V_SgRenamePair:

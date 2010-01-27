@@ -23,6 +23,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	critical_orphaned.c \
 	dynamicChunk.c \
 	empty.c \
+	endif.c \
 	nowait.c \
 	expressions.c \
 	falsesharing.c \
@@ -67,6 +68,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	recursive.c \
 	reduction2.c \
 	reduction.c \
+	rice1.c \
 	section.c \
 	set_num_threads.c \
 	single.c \

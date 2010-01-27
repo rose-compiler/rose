@@ -1,5 +1,7 @@
-#include "rose.h"
-
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "Loader.h"
+#include "LoaderELF.h"
 /* Returns ELF Segments followed by ELF Sections */
 SgAsmGenericSectionPtrList
 LoaderELF::order_sections(const SgAsmGenericSectionPtrList &sections)

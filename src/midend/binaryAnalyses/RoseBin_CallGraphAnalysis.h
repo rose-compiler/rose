@@ -9,7 +9,7 @@
 #define __RoseBin_CallGraphAnalysis__
 
 #include "RoseBin_FlowAnalysis.h"
-
+#include "RoseBin_abstract.h"
 //class RoseBin;
 //class RoseFile;
 

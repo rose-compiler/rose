@@ -4502,12 +4502,25 @@ HEADER_APPLICATION_UNKNOWN_FILE_END
 
 
 HEADER_APPLICATION_FILE_LIST_START
+     public:
+
 HEADER_APPLICATION_FILE_LIST_END
 
 HEADER_APPLICATION_DIRECTORY_START
+     public:
+          int numberOfFiles() const;
+          SgFile* get_file(int i) const;
+
+          int numberOfDirectories() const;
+          SgDirectory* get_directory(int i) const;
+
+          void post_construction_initialization();
+
 HEADER_APPLICATION_DIRECTORY_END
 
 HEADER_APPLICATION_DIRECTORY_LIST_START
+     public:
+
 HEADER_APPLICATION_DIRECTORY_LIST_END
 
 HEADER_APPLICATION_PROJECT_START
@@ -4561,6 +4574,9 @@ HEADER_APPLICATION_PROJECT_START
 
       //! The total number of files in this project (equal to the number of source files specified on the command line)
           int numberOfFiles() const;
+
+      //! Total number of directories in the project.
+          int numberOfDirectories() const;
 
       //! Access function for retriving a SgFile object from the list stored internally
       //! This function is depricated and "operator[unsigned int]" should be used instead.
@@ -4672,6 +4688,14 @@ HEADER_APPLICATION_PROJECT_START
           SgStringList & get_excludeFileList();
           const SgStringList & get_excludeFileList() const;
           void set_excludeFileList(const SgStringList & excludeFileList);
+
+#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
+#else
+       // DQ (1/21/2010): In this case we want to support the previous interface so that we can transition easily.
+          SgFilePtrList & get_fileList() const;
+          void set_fileList(SgFilePtrList & fileList);
+#endif
+
 
 HEADER_APPLICATION_PROJECT_END
 
@@ -10568,6 +10592,8 @@ X aggressive
      p_skip_unparse_asm_commands = false;
      p_read_instructions_only    = false;
 
+     p_disassemblerSearchHeuristics = Disassembler::SEARCH_DEFAULT;
+
    }
 
 #if 0
@@ -10870,18 +10896,25 @@ SgFile::generateOutputFileName() const
 // DQ (8/20/2005): Removed default parameter from extern function declaration
 // extern void unparseFile( SgFile&, UnparseDelegate* repl = NULL );
 // Liao (2/8/2008): Removed default parameters due to conflicts with src/backend/unparser/unparser.h
-extern void unparseFile( SgFile* file, UnparseFormatHelp *unparseFormatHelp /* = NULL */, UnparseDelegate* unparseDelegate/* = NULL */);
+// extern void unparseFile( SgFile* file, UnparseFormatHelp *unparseFormatHelp /* = NULL */, UnparseDelegate* unparseDelegate/* = NULL */);
 
 void
 // SgFile::unparse ()
 SgFile::unparse ( UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate )
    {
+  // DQ (1/24/2010): This call to the timer has been moved to the unparseFile() function.
   // DQ (7/12/2005): Introduce tracking of performance of ROSE.
-     TimingPerformance timer ("AST Code Generation (unparsing):");
+  // TimingPerformance timer ("AST Code Generation (unparsing):");
 
   // printf ("Inside of SgFile::unparse () ROSE_DEBUG = %d  \n",ROSE_DEBUG);
 
+  // Not clear if we can or should eliminate this function.
+  // printf ("This SgFile::unparse() function should no longer be called (I think)! \n");
+  // ROSE_ASSERT(false);
+
   // Call the unparser mechanism
+  // DQ (1/24/2010): Moved the extern declaration for unparseFile() to be local to this function (better code design).
+     extern void unparseFile( SgFile* file, UnparseFormatHelp *unparseFormatHelp /* = NULL */, UnparseDelegate* unparseDelegate/* = NULL */);
      unparseFile ( this, unparseFormatHelp, unparseDelegate );
    }
 
@@ -11217,6 +11250,60 @@ SOURCE_APPLICATION_FILE_LIST_START
 SOURCE_APPLICATION_FILE_LIST_END
 
 SOURCE_APPLICATION_DIRECTORY_START
+int
+SgDirectory::numberOfFiles() const
+   {
+#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
+     return -1;
+#else
+     ROSE_ASSERT(p_fileList != NULL);
+     return p_fileList->get_listOfFiles().size();
+#endif
+   }
+
+SgFile*
+SgDirectory::get_file(int i) const
+   {
+#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
+     return NULL;
+#else
+     ROSE_ASSERT(p_fileList != NULL);
+     return p_fileList->get_listOfFiles()[i];
+#endif
+   }
+
+int
+SgDirectory::numberOfDirectories() const
+   {
+     ROSE_ASSERT(p_directoryList != NULL);
+     return p_directoryList->get_listOfDirectories().size();
+   }
+
+SgDirectory*
+SgDirectory::get_directory(int i) const
+   {
+     ROSE_ASSERT(p_directoryList != NULL);
+     return p_directoryList->get_listOfDirectories()[i];
+   }
+
+void 
+SgDirectory::post_construction_initialization()
+   {
+  // Make sure these data members start out as NULL.
+     ROSE_ASSERT(p_fileList == NULL);
+     ROSE_ASSERT(p_directoryList == NULL);
+
+  // Initialize pointers to valid opjects with empty lists.
+     p_fileList      = new SgFileList();
+     p_directoryList = new SgDirectoryList();
+
+     ROSE_ASSERT(p_fileList != NULL);
+     ROSE_ASSERT(p_directoryList != NULL);
+
+     p_fileList->set_parent(this);
+     p_directoryList->set_parent(this);
+   }
+
 SOURCE_APPLICATION_DIRECTORY_END
 
 SOURCE_APPLICATION_DIRECTORY_LIST_START
@@ -11250,8 +11337,12 @@ SgProject::SgProject( const SgProject & project )
   // p_defaultNumberOfCommandLineArguments(project.p_defaultNumberOfCommandLineArguments),
   // p_defaultCommandLineArgumentList(project.p_defaultCommandLineArgumentList),
 
+#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
+  // DQ (1/20/2010): This is no longer a list and is now a pointer to a SgFileList IR node.
+
   // Build the empty STL lists
      p_fileList.clear();
+#endif
 
   // print error message and quit
      printf ("ERROR: this SgProject copy constructor is not supposed to be used \n");
@@ -11298,7 +11389,17 @@ void
 SgProject::initialization()
    {
   // DQ (10/16/2005): This function initializes default values (until we use an automatically generated version)
+
+#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
      p_fileList.clear();
+#else
+  // Initialize to IR node
+     p_fileList_ptr = new SgFileList();
+     ROSE_ASSERT(p_fileList_ptr != NULL);
+
+     p_fileList_ptr->set_parent(this);
+#endif
+
   // p_numberOfCommandLineArguments        = 0;
   // p_commandLineArgumentList             = NULL;
   // p_defaultNumberOfCommandLineArguments = 0;
@@ -11316,6 +11417,9 @@ SgProject::initialization()
 
   // DQ (5/2/2006): Added initialization to prevent valgrind warning.
      p_attributeMechanism                  = NULL;
+
+  // DQ (1/23/2010): Added support for the project to have directory structure
+     p_directoryList                       = NULL;
 
   // DQ (3/9/2009): Allow the verbose level to be set before we even call the SgProject constructor (helps debug Intel Pin usage).
      if (p_verbose > 0)
@@ -11336,6 +11440,15 @@ SgProject::initialization()
   // the ROSE translator.
   // p_lookForIncludePaths                 = false;
   // p_lookForExcludePaths                 = false;
+
+  // DQ (1/20/2010): Added support for the project to have directory structure
+  // (usefult for large scale code generation).
+     ROSE_ASSERT(p_directoryList == NULL);
+
+  // Initialize pointers to valid opjects with empty lists.
+     p_directoryList = new SgDirectoryList();
+     ROSE_ASSERT(p_directoryList != NULL);
+     p_directoryList->set_parent(this);
    }
 
 // DQ (2/1/2007): Added new operator so that w could depricate the inconsistant usage of 
@@ -11343,10 +11456,16 @@ SgProject::initialization()
 SgFile*
 SgProject::operator[]( unsigned int i )
    {
-     ROSE_ASSERT(i < get_fileList().size());
 
   // Since we use an STL vector internally we can use the vector::operator[] directly.
+#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
+     ROSE_ASSERT(i < get_fileList().size());
      return p_fileList[i];
+#else
+     ROSE_ASSERT(p_fileList_ptr != NULL);
+     ROSE_ASSERT(i < (unsigned)numberOfFiles());
+     return p_fileList_ptr->get_listOfFiles()[i];
+#endif
    }
 
 // Moved to sageSupport.C: int SgProject::parse(const vector<string>& argv)
@@ -11375,16 +11494,54 @@ SgProject::parse()
    }
 #endif
 
+
+#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
+#else
+// DQ (1/21/2010): In this case we want to support the previous interface so that we can transition easily.
+
+SgFilePtrList &
+SgProject::get_fileList() const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_fileList_ptr->get_listOfFiles();
+   }
+
+void
+SgProject::set_fileList( SgFilePtrList & fileList )
+   {
+     ROSE_ASSERT (this != NULL);
+     set_isModified(true);
+
+     p_fileList_ptr->get_listOfFiles() = fileList;
+   }
+
+#endif
+
 int
 SgProject::numberOfFiles() const
    {
   // This function does not return a meaningful result until all the files have been processed
   // ROSE_ASSERT (p_fileList != NULL);
+
+#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
      int returnValue = p_fileList.size();
+#else
+     ROSE_ASSERT (p_fileList_ptr != NULL);
+     int returnValue = p_fileList_ptr->get_listOfFiles().size();
+#endif
   // ROSE_ASSERT ( returnValue > 0 );
 
   // Seems like a good upper bound for now!
   // ROSE_ASSERT ( returnValue < 100 );
+
+     return returnValue;
+   }
+
+int
+SgProject::numberOfDirectories() const
+   {
+     ROSE_ASSERT (p_directoryList != NULL);
+     int returnValue = p_directoryList->get_listOfDirectories().size();
 
      return returnValue;
    }
@@ -11396,8 +11553,16 @@ SgProject::get_file ( int i ) const
      ROSE_ASSERT (i >= 0);
      ROSE_ASSERT (i < numberOfFiles());
 
-  // ROSE_ASSERT (p_fileList != NULL);
-     SgFile* targetFile =  p_fileList[i];
+#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
+     SgFile* targetFile = p_fileList[i];
+#else
+     ROSE_ASSERT (p_fileList_ptr != NULL);
+     SgFile* targetFile = p_fileList_ptr->get_listOfFiles()[i];
+  // SgFile* targetFile = NULL;
+
+  // printf ("Exiting since this is not finished. \n");
+  // ROSE_ASSERT(false);
+#endif
      ROSE_ASSERT (targetFile != NULL);
 
      return *targetFile;
@@ -11407,13 +11572,28 @@ void
 SgProject::set_file ( SgFile & file )
    {
   // ROSE_ASSERT (p_fileList != NULL);
+
+#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
      p_fileList.push_back(&file);
+#else
+     ROSE_ASSERT (p_fileList_ptr != NULL);
+     p_fileList_ptr->get_listOfFiles().push_back(&file);
+
+  // DQ (1/25/2010): Set the parent of the file to point to the list (this is a change and may break some code).
+  // But it is consistant within ROSE for how we handle list objects in the IR.
+     file.set_parent(p_fileList_ptr);
+
+  // printf ("Exiting since this is not finished. \n");
+  // ROSE_ASSERT(false);
+#endif
+
      ROSE_ASSERT (numberOfFiles() > 0);
    }
 
 void
 SgProject::unparse ( UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate )
    {
+#if 0
      for (int i = 0; i < numberOfFiles(); i++)
         {
        // printf ("In SgProject::unparse(): Unparsing file #%d \n",i);
@@ -11422,6 +11602,11 @@ SgProject::unparse ( UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unpa
        // DQ (3/18/2006): Added support for user defined control of code generation
           file.unparse(unparseFormatHelp,unparseDelegate);
         }
+#else
+  // DQ (1/24/2010): refactored code to call existing function.
+     extern void unparseProject( SgProject* project, UnparseFormatHelp *unparseFormatHelp /* = NULL */, UnparseDelegate* unparseDelegate/* = NULL */);
+     unparseProject( this, unparseFormatHelp, unparseDelegate);
+#endif
    }
 
 // Moved to sageSupport.C: int SgProject::compileOutput( const std::string& compilerName )

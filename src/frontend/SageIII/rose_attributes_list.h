@@ -1,10 +1,10 @@
 #ifndef __ROSEAttributesList_H__
 #define __ROSEAttributesList_H__
 
-#include "setup.h"
+//#include "setup.h"
 
-#include <list>
-#include <vector>
+//#include <list>
+//#include <vector>
 #include <map>
 
 // Include the ROSE lex specific definitions of tokens

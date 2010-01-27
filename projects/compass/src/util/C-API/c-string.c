@@ -16,11 +16,14 @@ main (int argc, char* argv[])
     }
 
   /* Determine how much space we need. */
+  printf ("Determine how much space we need \n");
   for (i = 1; i < argc; ++i)
     {
       printf ("[%d] '%s'\n", i, argv[i]);
       n += strlen (argv[i]);
     }
+
+  printf ("Allocate a large buffer for all strings on command line, to be separated by a vertical bar. \n");
 
   /* Allocate a large buffer for all strings on command line, to be
    * separated by a vertical bar.
@@ -32,6 +35,8 @@ main (int argc, char* argv[])
       printf ("*** Out of memory allocating buffer for all strings! ***\n");
       return 1;
     }
+
+  printf ("Calling strcpy() \n");
 
   strcpy (concat_buf, argv[1]);
   for (i = 2; i < argc; ++i)

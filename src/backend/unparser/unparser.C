@@ -3,14 +3,14 @@
  * and fucntions that unparse directives.
  */
 
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "HiddenList.h"
 
 // include "array_class_interface.h"
 #include "unparser.h"
 
-#ifdef _MSC_VER
 #include "unparseAsm.h"
-#endif
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
@@ -1133,6 +1133,27 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                          break;
                        }
 
+                    case V_SgFileList:
+                       {
+                      // DQ (1/23/2010): Not sure how or if we should implement this
+                         const SgFileList* fileList = isSgFileList(astNode);
+                         ROSE_ASSERT(fileList != NULL);
+#if 0
+                         for (int i = 0; i < project->numberOfFiles(); i++)
+                            {
+                              SgFile* file = &(project->get_file(i));
+                              ROSE_ASSERT(file != NULL);
+                              string unparsedFileString = globalUnparseToString_OpenMPSafe(file,inputUnparseInfoPointer);
+                              string prefixString       = string("/* TOP:")      + string(ROSE::getFileName(file)) + string(" */ \n");
+                              string suffixString       = string("\n/* BOTTOM:") + string(ROSE::getFileName(file)) + string(" */ \n\n");
+                              returnString += prefixString + unparsedFileString + suffixString;
+                            }
+#else
+                         printf ("WARNING: SgFileList support not implemented for unparser...\n");
+#endif
+                         break;
+                       }
+
                  // Perhaps the support for SgFile and SgProject shoud be moved to this location?
                     default:
                          printf ("Error: default reached in node derived from SgSupport astNode = %s \n",astNode->sage_class_name());
@@ -1140,16 +1161,16 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                 }
              }
        // Liao, 8/28/2009, support for SgLocatedNodeSupport
-       if (isSgLocatedNodeSupport(astNode)!= NULL) 
-       {
-         if (isSgOmpClause(astNode))
-         {
-           SgOmpClause * omp_clause = const_cast<SgOmpClause*>(isSgOmpClause(astNode));
-           ROSE_ASSERT(omp_clause);
+          if (isSgLocatedNodeSupport(astNode)!= NULL) 
+             {
+               if (isSgOmpClause(astNode))
+                  {
+                    SgOmpClause * omp_clause = const_cast<SgOmpClause*>(isSgOmpClause(astNode));
+                    ROSE_ASSERT(omp_clause);
 
-           roseUnparser.u_exprStmt->unparseOmpClause(omp_clause, inheritedAttributeInfo);
-         }
-       }
+                    roseUnparser.u_exprStmt->unparseOmpClause(omp_clause, inheritedAttributeInfo);
+                  }
+             }
 
        // Turn OFF the error checking which triggers an if the default SgUnparse_Info constructor is called
        // GB (09/27/2007): Removed this error check, see above.
@@ -1169,6 +1190,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
           if (inputUnparseInfoPointer == NULL)
                delete inheritedAttributeInfoPointer;
         }
+
      return returnString;
    }
 
@@ -1218,7 +1240,6 @@ string get_output_filename( SgFile& file)
 #endif
    }
 
-#if 1
 // DQ (10/11/2007): I think this is redundant with the Unparser::unparseFile() member function
 // HOWEVER, this is called by the SgFile::unparse() member function, so it has to be here!
 
@@ -1226,6 +1247,10 @@ string get_output_filename( SgFile& file)
 void
 unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unparseDelegate )
    {
+  // DQ (1/24/2010): Refactored code to cal this more directly (part of support for SgDirectory).
+  // DQ (7/12/2005): Introduce tracking of performance of ROSE.
+     TimingPerformance timer ("AST Code Generation (unparsing):");
+
   // Call the unparser mechanism
 
   // printf ("Inside of unparseFile ( SgFile* file ) (using filename = %s) \n",file->get_unparse_output_filename().c_str());
@@ -1407,18 +1432,120 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
           ROSE_OutputFile.close();
         }
    }
-#endif
 
 // DQ (10/11/2007): I think this is redundant with the Unparser::unparseProject() member function
 // But it is allowed to call it directly from the user's translator if compilation using the backend 
 // is not required!  So we have to allow it to be here.
-void unparseProject( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate)
+void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate)
    {
      ROSE_ASSERT(project != NULL);
+
+#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
+#error "This implementation of the support for the older interface has been refactored"
      for (int i=0; i < project->numberOfFiles(); ++i)
         {
           SgFile & file = project->get_file(i);
           unparseFile(&file,unparseFormatHelp,unparseDelegate);
+        }
+#else
+     if ( SgProject::get_verbose() > 0 )
+          printf ("Unparse the file list first, then the directory list \n");
+
+  // DQ (1/23/2010): refactored the SgFileList
+     unparseFileList(project->get_fileList_ptr(),unparseFormatHelp,unparseDelegate);
+
+     if ( SgProject::get_verbose() > 0 )
+          printf ("Unparse the directory list... \n");
+
+     for (int i = 0; i < project->numberOfDirectories(); ++i)
+        {
+          if ( SgProject::get_verbose() > 0 )
+               printf ("Unparse each directory (i = %d) \n",i);
+
+          ROSE_ASSERT(project->get_directoryList() != NULL);
+          SgDirectory* directory = project->get_directoryList()->get_listOfDirectories()[i];
+          unparseDirectory(directory,unparseFormatHelp,unparseDelegate);
+        }
+#endif
+   }
+
+// DQ (1/19/2010): Added support for handling directories of files.
+void unparseDirectory ( SgDirectory* directory, UnparseFormatHelp* unparseFormatHelp, UnparseDelegate *unparseDelegate )
+   {
+     int status = 0;
+
+     ROSE_ASSERT(directory != NULL);
+
+#if 0
+  // Check the current directory
+     printf ("Current directory BEFORE building/moving to subdirectory defined by SgDirectory IR node. \n");
+     status = system ("pwd");
+     ROSE_ASSERT(status == 0);
+#endif
+
+  // Part of the unparcing support for directories is to change the current system directory.
+     string directoryName = directory->get_name();
+     ROSE_ASSERT(directoryName != "");
+
+     string mkdirCommand = string("mkdir -p ") + directoryName;
+
+  // DQ (1/24/2010): This is a potential security problem!
+     if ( SgProject::get_verbose() > 0 )
+          printf ("WARNING: calling system using mkdirCommand = %s \n",mkdirCommand.c_str());
+
+     status = system (mkdirCommand.c_str());
+     ROSE_ASSERT(status == 0);
+
+  // Now change the current working directory to the new directory
+     status = chdir(directoryName.c_str());
+     ROSE_ASSERT(status == 0);
+
+#if 0
+  // Check the current directory
+     printf ("Current directory AFTER building/moving to subdirectory defined by SgDirectory IR node. \n");
+     status = system ("pwd");
+     ROSE_ASSERT(status == 0);
+#endif
+
+  // DQ (1/23/2010): refactored the SgFileList
+     unparseFileList(directory->get_fileList(),unparseFormatHelp,unparseDelegate);
+
+  // printf ("Unparse the directory list... \n");
+     for (int i = 0; i < directory->numberOfDirectories(); ++i)
+        {
+       // printf ("Unparse each directory (i = %d) \n",i);
+          ROSE_ASSERT(directory->get_directoryList() != NULL);
+          SgDirectory* subdirectory = directory->get_directoryList()->get_listOfDirectories()[i];
+          unparseDirectory(subdirectory,unparseFormatHelp,unparseDelegate);
+        }
+
+  // DQ (1/24/2010): This is a potential security problem!
+     string chdirCommand = "..";
+
+     if ( SgProject::get_verbose() > 0 )
+          printf ("WARNING: calling system using chdirCommand = %s \n",chdirCommand.c_str());
+
+  // Now change the current working directory to the new directory
+     status = chdir(chdirCommand.c_str());
+     ROSE_ASSERT(status == 0);
+
+#if 0
+  // Check the current directory
+     printf ("Current directory AFTER cd .. (supporting SgDirectory IR node). \n");
+     status = system ("pwd");
+     ROSE_ASSERT(status == 0);
+#endif
+   }
+
+// DQ (1/19/2010): Added support for refactored handling directories of files.
+void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate)
+   {
+     ROSE_ASSERT(fileList != NULL);
+  // for (int i=0; i < fileList->numberOfFiles(); ++i)
+     for (size_t i=0; i < fileList->get_listOfFiles().size(); ++i)
+        {
+          SgFile* file = fileList->get_listOfFiles()[i];
+          unparseFile(file,unparseFormatHelp,unparseDelegate);
         }
    }
 

@@ -77,7 +77,6 @@ BINARY_DISASSEMBLY_HEADER_FILES = \
    readTicl.h RoseBin_file.h RoseFile.h \
    RoseBin_abstract.h \
    x86InstructionEnum.h x86InstructionProperties.h powerpcInstructionProperties.h armInstructionEnum.h powerpcInstructionEnum.h \
-   readTicl.h RoseBin_file.h RoseFile.h \
    RoseObj.h
 endif
 # DQ (1/19/2008): Removed this file from BINARY_DISASSEMBLY_HEADER_FILES since it is not available

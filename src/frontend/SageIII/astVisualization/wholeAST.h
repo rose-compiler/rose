@@ -1,6 +1,7 @@
 #ifndef WHOLE_AST_H
 #define WHOLE_AST_H
 
+#include "AstDOTGeneration.h"
 #include <string>
 #include <vector>
 

@@ -1,6 +1,7 @@
 
-#include "rose.h"
-#include "rewrite.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+//#include "sage3basic.h"
+//#include "rewrite.h"
 
 #if 0
 AST_Rewrite::AST_FragmentString::TypeDeclaration::

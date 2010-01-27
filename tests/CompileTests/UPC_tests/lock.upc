@@ -2,7 +2,12 @@
 */
 #include "upc_relaxed.h"
 #include <stdio.h>
+
+/* DQ (1/9/2010): This is a problem for the Intel compiler! */
+#ifndef __INTEL_COMPILER
 #include <stdlib.h> /*for srand() etc.*/
+#endif
+
 #include <math.h>
 
 #define N 1000
@@ -13,12 +18,18 @@ int main (){
   int i=0;
   int index;
 
+/* DQ (1/9/2010): This is a problem for the Intel compiler! */
+#ifndef __INTEL_COMPILER
   srand(MYTHREAD);
+#endif
   if ((lock=upc_all_lock_alloc())==NULL)
     upc_global_exit(1);
 
   upc_forall( i=0; i<N; i++; i){
+/* DQ (1/9/2010): This is a problem for the Intel compiler! */
+#ifndef __INTEL_COMPILER
     index = rand()%THREADS;
+#endif
     upc_lock(lock);
     arr[index]+=1;
     upc_unlock(lock);

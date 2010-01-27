@@ -4,7 +4,8 @@
  * Date : 5Apr07
  * Decription : unparser
  ****************************************************/
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3
+#include "sage3basic.h"
 #include "RoseBin_printInstructions.h"
 
 using namespace std;

@@ -1,5 +1,5 @@
-
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 
 #if 1
 // DQ (9/12/2009): Adding support for new name qualification (not ready yet).

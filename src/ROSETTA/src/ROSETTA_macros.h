@@ -11,10 +11,16 @@
 // added to the abstract C++ grammar.
 //#define HL_GRAMMARS
 
+
+// DQ (1/20/2010): This allows compatability with the older STL list of SgFile pointers.
+// The newer approach uses a pointer to a SgFileList IR node and this design permits
+// the use of directory structure support as required for scalable code generation.
+#define ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT 0
+
 //QY 11/9/04 added capabilities for building multiple constructors for statements including
 //ExpressionRoot (and others) as data members
-typedef enum { TAG_NO_CONSTRUCTOR_PARAMETER       , 
-               TAG_CONSTRUCTOR_PARAMETER          } 
+typedef enum { TAG_NO_CONSTRUCTOR_PARAMETER , 
+               TAG_CONSTRUCTOR_PARAMETER    } 
 ConstructParamEnumX;
 
 class ConstructParamEnum { // Wrapper for extra argument type checking
@@ -127,7 +133,16 @@ class DeleteFlag { // Wrapper for extra argument type checking
 #define ROSE_ASSERT assert
 #else
 #define ROSE_ASSERT assert
+
+//#ifdef __GNUC__
+//#  include <features.h>
+//#if __GNUC_PREREQ(4,3)
+//       If gcc_version >= 4.3
+//#define ROSE_ABORT
+//#else
 #define ROSE_ABORT  abort
+//#endif
+//#endif
 #endif
 
 // JJW (8/26/2008): Removing these

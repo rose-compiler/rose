@@ -8,6 +8,15 @@
 const double INFINITY = 1.0e+30;
 #else
    #warning "INFINITY is defined"
+
+// DQ (1/9/2010): The Intel compiler defines INFINITY as __infinity, but does not define __infinity (so define it explicitly for this test).
+// #if CXX_IS_INTEL_COMPILER
+// #define __infinity 1.0e+30
+#ifdef __INTEL_COMPILER
+#undef INFINITY
+#define INFINITY 1.0e+30
+#warning "Using Intel specific INFINITY"
+#endif
 #endif
 
 int main()
