@@ -11,6 +11,7 @@ firstprivate.c \
 inner_only.c \
 jacobi_seq.c \
 lastprivate.c \
+livenessTest.c \
 matrixmultiply.c \
 outer_only.c \
 output_dep.c \
@@ -35,7 +36,6 @@ iteratorloop.C
 # the code which can not yet be parallelized now
 # Or the needed analyses(def-use, liveness, or dependence analysis) cannot handle them yet
 TESTCODE_CURRENTLY_FAILING = \
-livenessTest.c \
 iterator1.C \
 iterator_const1.C \
 list1.C \
