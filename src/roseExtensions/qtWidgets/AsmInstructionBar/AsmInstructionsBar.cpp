@@ -1,6 +1,6 @@
 
 #include "sage3basic.h"
-
+#include "RoseBin_FlowAnalysis.h"
 #include <QMouseEvent>
 #include <QWheelEvent>
 #include <QGraphicsRectItem>
