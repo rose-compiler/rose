@@ -1,3 +1,4 @@
+#include "sage3basic.h"
 #include "macroRewrapper.h"
 #include <algorithm>
 #include <boost/lexical_cast.hpp>
