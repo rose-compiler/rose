@@ -1,5 +1,6 @@
-#include <rose.h>
-#include <boost/lexical_cast.hpp>
+// tps : Switching from rose.h to sage3 changed size from 18 MB to 8,2MB
+#include <sage3basic.h>
+//#include <boost/lexical_cast.hpp>
 #include "CallGraph.h"
 
 #ifdef HAVE_SQLITE3

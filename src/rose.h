@@ -131,6 +131,7 @@ namespace ELF{
 #endif
 // #endif
 
+#include "DataConversion.h"
 #include "Loader.h"
 #include "LoaderELF.h"
 #include "LoaderELFObj.h"

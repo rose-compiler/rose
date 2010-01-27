@@ -1,5 +1,5 @@
-
-#include "rose.h"
+// tps : Switching from rose.h to sage3 changed size from 19,4 MB to 8,8MB
+#include "sage3basic.h"
 
 #include <AstInterface_ROSE.h>
 #include "ControlFlowGraph.h"

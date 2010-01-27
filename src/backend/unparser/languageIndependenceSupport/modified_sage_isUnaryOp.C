@@ -3,7 +3,8 @@
  * This C file includes functions that test for operator overloaded functions and 
  * helper unparse functions such as unparse_helper and printSpecifier.
  */
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #include "unparser.h"
 
 // DQ (12/31/2005): This is OK if not declared in a header file

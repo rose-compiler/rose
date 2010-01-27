@@ -4,6 +4,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # before the subdirectories.
 SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG astTokenStream astHiddenTypeAndDeclarationLists astVisualization
 
+
 # DQ (12/29/2009): This is only used to handle generated code as smaller files.
 SUBDIRS += GENERATED_CODE_DIRECTORY_Cxx_Grammar
 
@@ -11,6 +12,7 @@ SUBDIRS += GENERATED_CODE_DIRECTORY_Cxx_Grammar
 # Graph IR nodes (makes about 25% improvement, I think).
 # ROSE_OPTIMIZATION_LEVEL = -O3
 ROSE_OPTIMIZATION_LEVEL =
+# ROSE_VERBOSE = -rose:verbose 2
 
 # Liao, 3/31/2009, moved the OpenMP parser here
 #Liao, 10/27/2008. I decide to parse OpenMP pragma string here
@@ -20,7 +22,9 @@ AM_YFLAGS = -d
 AM_LFLAGS =
 # avoid unused Flex functions which are automatically generated
 #CXXFLAGS+= -DYY_NO_TOP_STATE -DYY_NO_POP_STATE $(ROSE_OPTIMIZATION_LEVEL)
-CXXFLAGS+= $(ROSE_OPTIMIZATION_LEVEL)
+
+CXXFLAGS+= $(ROSE_OPTIMIZATION_LEVEL) $(ROSE_VERBOSE)
+
 # omplexer.cc needs a header generaetd from ompparser.yy
 omplexer.lo: ompparser.h omplexer.cc
 ompparser.h: ompparser.cc
@@ -34,7 +38,8 @@ all-local: roseh sage.docs
 # INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -I$(top_srcdir)/src/frontend/EDG/EDG_3.3/src $(WAVE_INCLUDES)
 # INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -I$(top_srcdir)/src/frontend/EDG/EDG_3.3/src
 # JJW 6-2-2008: We shouldn't be using anything from EDG outside these two directories
-INCLUDES = $(ROSE_INCLUDES) # -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -I$(top_srcdir)/src/frontend/EDG/EDG_3.3/src
+# INCLUDES = $(ROSE_INCLUDES) # -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -I$(top_srcdir)/src/frontend/EDG/EDG_3.3/src
+INCLUDES = $(ROSE_INCLUDES)
 
 ## The grammar generator (ROSETTA) should use its own template repository
 CXX_TEMPLATE_REPOSITORY_PATH = .
@@ -189,7 +194,7 @@ test_roseh: roseh
 # DQ (10/18/2007): Added AST_FILE_IO.h StorageClasses.h
 # Removed sla.h (redundant with location in src/util/commandlineProcessing/sla.h)
 include_HEADERS = \
-   sage3.h rose_attributes_list.h \
+   sage3.h sage3basic.h rose_attributes_list.h \
    attachPreprocessingInfo.h \
    attachPreprocessingInfoTraversal.h \
    attach_all_info.h manglingSupport.h C++_include_files.h \

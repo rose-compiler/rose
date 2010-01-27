@@ -4,7 +4,8 @@
  * helper unparse functions such as unparse_helper and printSpecifier.
  */
 
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #include "unparser.h"
 #include "modified_sage.h"
 // include "bool.h"

@@ -2,7 +2,8 @@
 // both simplifying the development and also permitting more specialized
 // optimizations (file specific compiler flags).
 
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 
 using namespace std;
 

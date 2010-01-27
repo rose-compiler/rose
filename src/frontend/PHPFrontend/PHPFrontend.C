@@ -1,4 +1,5 @@
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #include "rose_config.h"
 
 #ifndef USE_ROSE_PHP_SUPPORT // If PHP is disabled then compile a stub

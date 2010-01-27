@@ -1,4 +1,5 @@
-#include "rose.h"
+// tps : Switching from rose.h to sage3 
+#include "sage3basic.h"
 #include "ProcessAstTree.h"
 
 #include "AstInterface_ROSE.h"

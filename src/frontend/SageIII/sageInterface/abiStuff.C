@@ -1,4 +1,6 @@
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3
+#include "sage3basic.h"
+#include "abiStuff.h"
 #include <vector>
 
 using namespace std;
@@ -413,8 +415,12 @@ struct alignof {
           T t;
      };
 
+#ifndef USE_ROSE
+  // DQ (1/26/2010): this fails in EDG (so a problem for ROSE compiling ROSE).
      static const size_t v = offsetof(struct test, t);
-
+#else
+     static const size_t v = 0;
+#endif
 };
 
 enum testenum { testenum_x = INT_MAX };

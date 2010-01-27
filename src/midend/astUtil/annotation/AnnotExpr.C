@@ -1,8 +1,4 @@
-// tps (12/09/2009) : Playing with precompiled headers in Windows. Requires rose.h as the first line in source files.
-#ifdef _MSC_VER
-// seems to cause problems under Linux
-#include "rose.h"
-#endif
+
 
 #include "AnnotExpr.h"
 #include "SymbolicSelect.h"
@@ -16,7 +12,12 @@ template class CloseDescriptor< SymbolicValDescriptor, '{', '}'>;
 
 // DQ (8/30/2009): Debugging ROSE compiling ROSE (this statement does not compile using ROSE).
 #ifndef USE_ROSE
+
+// DQ (1/9/2010): This is a problem for the Intel icpc compiler (which uses EDG same as ROSE).
+#ifndef __INTEL_COMPILER
 template bool CloseDescriptor< SymbolicValDescriptor, '{', '}'>::read(istream&);
+#endif
+
 #endif
 
 void SymbolicValDescriptor :: set_val( const SymbolicVal& v) 

@@ -1,5 +1,8 @@
-#include "rose.h"
-
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "defaultFunctionGenerator.h"
+#include "AstConsistencyTests.h"
+#include "unparser.h"
 enum defaultEnumFunctionType {
   e_unknown =0,
   e_constructor=1,

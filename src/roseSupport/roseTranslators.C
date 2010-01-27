@@ -1,4 +1,6 @@
-
+//#include "rose.h"
+#include "sage3.h"
+#include "Cxx_Grammar.h"
 #include <roseTranslators.h>
 
 // DQ (12/31/2005): This is OK if not declared in a header file
