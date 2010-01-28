@@ -109,8 +109,8 @@ include_HEADERS = \
 # in each directory and we will link with the collection of all static libraries.
 # DQ (9/8/2006): The ROSE/docs/Rose/Makefile references the testSharedRoseLib program, so maybe is should be installed?
 # bin_PROGRAMS = testSharedRoseLib # testMultiRoseLib
+bin_PROGRAMS = roseCompiler
 noinst_PROGRAMS = testSharedRoseLib 
-
 all-local: testSharedRoseLib$(EXEEXT) 
 # Test if programs using ROSE can be run
 	@echo "Testing whether a simple program linked against ROSE can be run:" >&2
@@ -148,6 +148,10 @@ REQUIRED_LIBS = librose.la
 # DQ (3/14/2009): In this file we have to overwrite existing values in LDFLAGS (to build librose.so).
 # DQ (3/14/2009): We have to clear the LDFLAGS variable...  This is not so great.
 LDFLAGS =
+roseCompiler_SOURCES = roseCompiler.C
+roseCompiler_DEPENDENCIES = $(REQUIRED_LIBS)
+roseCompiler_LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 
 testSharedRoseLib_SOURCES = testRoseLib.C
 testSharedRoseLib_DEPENDENCIES = $(REQUIRED_LIBS)
