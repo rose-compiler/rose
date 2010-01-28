@@ -5,6 +5,11 @@
 //! re-enabled in the test suite, there are edge mismatches indicating that the
 //! CFG's in and out edge sets are not consistent.  The CFG is not recommended
 //! for use on Fortran code.
+class SgNode;
+class SgExpression;
+class SgInitializedName;
+class SgLabelSymbol;
+class SgLabelRefExp;
 
 namespace VirtualCFG {
 
