@@ -622,8 +622,8 @@ ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0
 $(TEST_Objects): fileLocation
 #	$(VALGRIND) ./statements $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir)/../Cxx_tests -c $(srcdir)/../Cxx_tests/$(@:.o=.C)
 	echo "Copy the file to the local build tree so that the tview program can access it with the generated .highlight file ..."
-	cp $(srcdir)/../Cxx_tests/$(@:.o=.C) $(@:.o=.C)
-	$(VALGRIND) ./fileLocation $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir)/../Cxx_tests -c $(@:.o=.C)
+	cp $(srcdir)/../../CompileTests/Cxx_tests/$(@:.o=.C) $(@:.o=.C)
+	$(VALGRIND) ./fileLocation $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir)/../../CompileTests/Cxx_tests -c $(@:.o=.C)
 
 # This was a bug specific to the normalization of source file names to absolute paths
 testFileLocation: fileLocation
@@ -631,7 +631,7 @@ testFileLocation: fileLocation
 
 check-local:
 #	@$(MAKE) testStatementPosition
-#	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "Development tests."
 	@echo "*****************************************************************************************************"
 	@echo "****** ROSE/tests/roseTests/fileLocation_tests: make check rule complete (terminated normally) ******"

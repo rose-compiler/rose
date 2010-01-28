@@ -1,4 +1,4 @@
-// This code test the classification of files.
+// This code tests the classification of files.
 // Files are classified at either unknown, user, 
 // or system (system includes system libaries).
 
@@ -41,7 +41,7 @@ isLink( const string & name )
        // string directoryName = dirname(name.c_str());
           string directoryName = dirname(c_version);
 
-          printf ("directoryName = %s \n",directoryName.c_str());
+       // printf ("directoryName = %s \n",directoryName.c_str());
 
           fileNameWithPath = directoryName;
         }
@@ -90,7 +90,7 @@ isLink( const string & name )
           printf("  inode:   %d\n",   (int) info.st_ino);
           printf(" dev id:   %d\n",   (int) info.st_dev);
           printf("   mode:   %08x\n",       info.st_mode);
-          printf("  links:   %d\n",         info.st_nlink);
+          printf("  links:   %zu\n",        info.st_nlink);
           printf("    uid:   %d\n",   (int) info.st_uid);
           printf("    gid:   %d\n",   (int) info.st_gid);
         }

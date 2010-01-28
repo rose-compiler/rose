@@ -27,6 +27,9 @@ LoaderELF::order_sections(const SgAsmGenericSectionPtrList &sections)
 MemoryMap *
 LoaderELF::load_code_sections(MemoryMap *map, const SgAsmGenericSectionPtrList &sections, bool allow_overmap)
 {
+#ifdef USE_ROSE
+   return NULL;
+#else
     struct: public Selector {
         Contribution contributes(SgAsmGenericSection *section) {
             SgAsmElfSection *s = isSgAsmElfSection(section);
@@ -42,4 +45,5 @@ LoaderELF::load_code_sections(MemoryMap *map, const SgAsmGenericSectionPtrList &
         }
     } s1;
     return create_map(map, sections, &s1, allow_overmap);
+#endif
 }
