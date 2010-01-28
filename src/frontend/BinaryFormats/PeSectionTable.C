@@ -50,11 +50,19 @@ SgAsmPESectionTableEntry::encode(PESectionTableEntry_disk *disk) const
     if (p_name.size()>8)
         fprintf(stderr, "warning: section name too long to store in PE file: \"%s\" (truncated)\n", p_name.c_str());
     memset(disk->name, 0, sizeof(disk->name));
+
 #ifdef _MSC_VER
     memcpy(disk->name, p_name.c_str(), _cpp_min(sizeof(disk->name), p_name.size()));
 #else
+#ifdef USE_ROSE
+ // DQ (1/27/2010): std::min() does not appear to be handle different type of arguments for ROSE. Need to look into this later.
+ // memcpy(disk->name, p_name.c_str(), std::min(sizeof(disk->name), (size_t)p_name.size()));
+    memcpy(disk->name, p_name.c_str(), std::min( (size_t)(sizeof(disk->name)), (size_t)(p_name.size()) ));
+#else
     memcpy(disk->name, p_name.c_str(), std::min(sizeof(disk->name), p_name.size()));
 #endif
+#endif
+
     host_to_le(p_virtual_size,     &(disk->virtual_size));
     host_to_le(p_rva,              &(disk->rva));
     host_to_le(p_physical_size,    &(disk->physical_size));
