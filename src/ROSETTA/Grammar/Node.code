@@ -2,9 +2,13 @@
 HEADER_NODE_PREDECLARATION_START
 
 #include <semaphore.h>
-#include "sage3basic.h"
 
-
+// tps (01/27/10): Added essential files..
+#include "rosedefs.h"
+class PreprocessingInfo;
+class AstRegExAttribute;
+class AstAttribute;
+class AstAttributeMechanism;
 
 // DQ (4/21/2009): This is not handled uniformally in sage3.h.
 // DQ (8/8/2008): This is required to process the "stat64 struct in SgAsmGenericFile
@@ -1920,18 +1924,18 @@ HEADER_START
       /* */
 
       /*! \brief Returns the CFG node for just before this AST node */
-          VirtualCFG::CFGNode cfgForBeginning()
-             {
-               ROSE_ASSERT (this);
-               return VirtualCFG::CFGNode(this, 0);
-             }
+          VirtualCFG::CFGNode cfgForBeginning();
+//             {
+//               ROSE_ASSERT (this);
+//               return VirtualCFG::CFGNode(this, 0);
+//             }
 
       /*! \brief Returns the CFG node for just after this AST node */
-          VirtualCFG::CFGNode cfgForEnd()
-             {
-               ROSE_ASSERT (this);
-               return VirtualCFG::CFGNode(this, this->cfgIndexForEnd());
-	          }
+          VirtualCFG::CFGNode cfgForEnd();
+ //            {
+ //              ROSE_ASSERT (this);
+ //              return VirtualCFG::CFGNode(this, this->cfgIndexForEnd());
+//	          }
       /* */
 
       /* name Control flow graph view helper functions
@@ -2040,7 +2044,22 @@ HEADER_PARSER_END
 
 
 SOURCE_START
+#include "VirtualCFG.h"
+// tps : moved this from the header_start
+     /*! \brief Returns the CFG node for just before this AST node */
+          VirtualCFG::CFGNode cfgForBeginning()
+             {
+               ROSE_ASSERT (this);
+               return VirtualCFG::CFGNode(this, 0);
+             }
 
+      /*! \brief Returns the CFG node for just after this AST node */
+          VirtualCFG::CFGNode cfgForEnd()
+             {
+               ROSE_ASSERT (this);
+               return VirtualCFG::CFGNode(this, this->cfgIndexForEnd());
+	          }
+	          
 // ########################################
 // Some global variables used within SAGE 3
 // ########################################

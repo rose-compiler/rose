@@ -2,7 +2,7 @@
 #define VIRTUAL_BIN_CFG_H
 
 #include <stdint.h>
-
+ 
 namespace VirtualBinCFG {
 
     class CFGEdge;
