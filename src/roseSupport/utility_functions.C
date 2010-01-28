@@ -1,6 +1,7 @@
 
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+#include "checkIsModifiedFlag.h"
 #include "AstPDFGeneration.h"
 //#include "DotGeneration.h"
 #include "AstDOTGeneration.h"

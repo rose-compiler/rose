@@ -35,7 +35,7 @@ protected:
         BasicBlock(): sucs_complete(false), sucs_ninsns(0), function(NULL) {}
         const Disassembler::AddressSet& successors(bool *complete=NULL); /**< Calculates known successors */
         bool is_function_call(rose_addr_t*);    /**< True if basic block appears to call a function */
-        SgAsmInstruction* last_insn() const;    /**< Returns instruction with highest address */
+        SgAsmInstruction* last_insn() const;    /**< Returns the last executed (exit) instruction of the block */
         std::vector<SgAsmInstruction*> insns;   /**< Non-empty set of instructions composing this basic block, in address order */
         Disassembler::AddressSet sucs;          /**< Cached set of known successors */
         bool sucs_complete;                     /**< Is the set of successors known completely? */
@@ -182,7 +182,7 @@ protected:
     virtual void remove(Function*, BasicBlock*);                /**< Remove basic block from function */
     virtual rose_addr_t address(BasicBlock*) const;             /**< Return starting address of basic block */
     virtual BasicBlock* split(BasicBlock*, rose_addr_t);        /**< Split basic block in two at address */
-    virtual void discover_blocks(Function*, rose_addr_t);       /**< Add specified block to function recursively */
+    virtual void discover_blocks(Function*, rose_addr_t);       /* see implementation */
     virtual void pre_cfg(SgAsmInterpretation*);                 /**< Detects functions before analyzing the CFG */
     virtual void analyze_cfg();                                 /**< Detect functions by analyzing the CFG */
     virtual void post_cfg(SgAsmInterpretation*);                /**< Detects functions after analyzing the CFG */

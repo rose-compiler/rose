@@ -2,7 +2,7 @@
 #include "sage3basic.h"
 #include <sstream>
 #include <vector>
-
+#include "sageBuilder.h"
 #include "CFG.h"
 #include <AstInterface_ROSE.h>
 #include "controlFlowGraph.h"

@@ -16,6 +16,7 @@ ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_DataFlowA
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_VariableAnalysis.cpp
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/InterruptAnalysis.cpp
 ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_DefUseAnalysis.cpp
+${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/instructionSemantics/findConstants.C
 )
 
 add_library( midend_binary STATIC ${midend_binary_src}  )

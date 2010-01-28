@@ -3,8 +3,9 @@
 #ifndef ROSE_DISASSEMBLER_POWERPC_H
 #define ROSE_DISASSEMBLER_POWERPC_H
 
-#include "sage3.h"
+//#include "sage3.h"
 #include "integerOps.h"
+#include "sageBuilderAsm.h"
 
 /** Disassembler for the PowerPC architecture.  This class is usually instantiated indirectly through Disassembler::create().
  *  Most of the useful disassembly methods can be found in the superclass. */

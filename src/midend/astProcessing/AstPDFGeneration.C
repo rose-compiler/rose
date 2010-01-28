@@ -6,7 +6,7 @@
 #ifndef ASTPDFGENERATION_C
 #define ASTPDFGENERATION_C
 
-#include "sage3.h"
+#include "sage3basic.h"
 #include "roseInternal.h"
 #include "AstNodeVisitMapping.h"
 #include <iostream>

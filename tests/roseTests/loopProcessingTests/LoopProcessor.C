@@ -1,7 +1,5 @@
 
-//#include "pre.h"
-//#include "finiteDifferencing.h"
-#include "sage3.h"
+#include "sage3basic.h"
 #include <CommandOptions.h>
 #include <LoopTransformInterface.h>
 #include <AnnotCollect.h>

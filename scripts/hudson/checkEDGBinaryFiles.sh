@@ -7,6 +7,22 @@ if [ $# -ne 0 ]
    exit 1
 fi
 
+# Check if any tar.gz files for Mac OS exist
+# The reason is that the 32-bit and 64-bit binaries are controlled by Hudson and they can be reliably generated
+# we use the signature of the latest 64-bit binary to check Mac OS binary
+cd /usr/casc/overture/ROSE/git/ROSE_EDG_Binaries/
+ls -ct roseBinaryEDG-x86_64*.tar.gz &>/tmp/.tttedg123
+EDG_SIGNATURE_SUFFIX=`head -1 /tmp/.tttedg123 | cut -f 8 -d'-'`
+rm -rf /tmp/.tttedg123
+
+ls roseBinaryEDG-i686-apple-darwin-GNU-*$EDG_SIGNATURE_SUFFIX
+
+if [ $? -ne 0  ]; then
+  echo "Cannot find the matching EDG binary for Mac OS! for signature "
+  echo $EDG_SIGNATURE_SUFFIX
+  exit 2
+fi
+
 # This script will check each tar.gz file 
 # from /usr/casc/overture/ROSE/git/ROSE_EDG_Binaries/
 # to make sure there is no EDG proprietary information there

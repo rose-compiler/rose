@@ -1,4 +1,6 @@
-#include <rose.h>
+#include <sage3basic.h>
+#include "AstPDFGeneration.h"
+#include "astGraph.h"
 #include <list>
 #include <analysisUtils.h>
 #include <shortCircuitingTransformation.h>
