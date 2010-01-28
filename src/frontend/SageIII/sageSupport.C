@@ -8,7 +8,8 @@
 
 #include "omp_lowering.h"
 #include "attachPreprocessingInfo.h"
-#include "sageSupport.h"
+#include "astMergeAPI.h"
+//#include "sageSupport.h"
 
 #include "binaryLoader.h"
 #include "Partitioner.h"
