@@ -1,7 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 
-
 # DQ (1/18/2009): Added demo directory to support showoffs :-).
 # DQ "config" and "src" must preceed any other directories, and 
 # "tutorial" and "exampleTranslators" must preceed "docs" since 
