@@ -32,12 +32,10 @@ extern void _ompc_copyin_thdprv(void *datap,void *global_datap,int size);
 // scheduling
 extern void _ompc_default_sched(int *lb, int *ub, int *step);
 extern void _ompc_static_bsched(int *lb, int *ub, int *step);
-
 extern void _ompc_static_sched_init(int lb, int up, int step, int chunk_size);
 extern void _ompc_dynamic_sched_init(int lb, int up, int step, int chunk_size);
 extern void _ompc_guided_sched_init(int lb, int up, int step, int chunk_size);
 extern void _ompc_runtime_sched_init(int lb, int up, int step);
-
 extern int _ompc_static_sched_next(int *lb, int *ub);
 extern int _ompc_dynamic_sched_next(int *lb, int *ub);
 extern int _ompc_guided_sched_next(int *lb, int *ub);
