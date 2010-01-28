@@ -141,13 +141,6 @@ echo "Starting configure step"
 ../configure --prefix=${CONFIGURE_PREFIX_DIR} ${CONFIGURE_FLAGS}
 echo "Done with configure step"
 
-# Provide a disk usage report to support debugging when Hudson has a problem.
-# echo "Disk usage report #3 (to support debugging when Hudson has a problem):"
-# df /export
-
-# Andreas suggests that the use of "tee" is not passing error through to Hudson.
-# DQ has confirmed that Andreas's point is true for bash but false for tcsh 
-# (where it was originally tested).
 echo "Starting compile step"
 
 start_time_make_seconds="$(date +%s)"
@@ -204,6 +197,49 @@ echo "**************************************************************************
 echo "Elapsed time for make distcheck test: $elapsed_make_distcheck_time_seconds sec"
 echo "***********************************************************************************************************************"
 
+echo "Now run the generated ROSE executable to compile ROSE..."
+
+echo "Current directory:"
+pwd
+
+echo "Change directories to the parent directory."
+cd ..
+
+echo "Current directory:"
+pwd
+
+if test -e ROSE-compiling-ROSE-build ; then chmod -R u+w ROSE-compiling-ROSE-build ; fi
+rm -rf ROSE-compiling-ROSE-build
+mkdir ROSE-compiling-ROSE-build
+cd ROSE-compiling-ROSE-build
+
+echo "Current directory:"
+pwd
+
+echo "Starting configure step to use ROSE to compile ROSE: CONFIGURE_PREFIX_DIR = ${CONFIGURE_PREFIX_DIR}"
+# ../configure ${CONFIGURE_FLAGS}
+# export path=${CONFIGURE_PREFIX_DIR}
+export PATH="${CONFIGURE_PREFIX_DIR}/bin:$PATH"
+../configure CXX=roseAnalysis ${CONFIGURE_FLAGS}
+echo "Done with configure step to use ROSE to compile ROSE"
+
+cd src
+
+echo "Current directory where we will compile ROSE using ROSE:"
+pwd
+
+echo "Test compile step of ROSE compiling ROSE"
+
+# make -j8
+sleep 5
+
+if [ $? -ne 0 ]  ; then
+     echo "fatal error during 'make'  , aborting..."
+     exit 3
+fi
+
+echo "Done with compile step of ROSE compiling ROSE"
+
 end_time_seconds="$(date +%s)"
 elapsed_hudson_time_seconds="$(expr $end_time_seconds - $start_time_seconds)"
 
@@ -214,6 +250,7 @@ echo "**************************************************************************
 echo "Elapsed time for Hudson test (total minutes): $elapsed_hudson_time_minutes"
 echo "Elapsed time for Hudson test (total seconds): $elapsed_hudson_time_seconds"
 echo "***********************************************************************************************"
+
 
 # Output the date and time of day at the end of the test (helpful for debugging).
 end_date=`date`
