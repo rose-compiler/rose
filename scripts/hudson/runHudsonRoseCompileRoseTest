@@ -235,7 +235,11 @@ echo "Calling testAnalysis to make sure it works."
 testAnalysis --help
 
 echo "Calling configure to build compile tree to build ROSE using ROSE."
-../configure CXX=testAnalysis ${CONFIGURE_FLAGS}
+
+# DQ (1/28/2010): Simplify the testing initially by skipping the Java support and Fortran support.
+# ../configure CXX=testAnalysis ${CONFIGURE_FLAGS}
+../configure CXX=testAnalysis --with-boost=/home/hudson-rose/tmp/opt/boost_1_37_0.gxx-4.2.4 --without-java
+
 echo "Done with configure step to use ROSE to compile ROSE"
 
 cd src
@@ -246,7 +250,7 @@ pwd
 echo "Test compile step of ROSE compiling ROSE"
 
 make -j6
-sleep 5
+# sleep 5
 
 if [ $? -ne 0 ]  ; then
      echo "fatal error during 'make'  , aborting..."
