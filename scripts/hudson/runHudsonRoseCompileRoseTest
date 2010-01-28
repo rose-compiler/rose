@@ -192,6 +192,8 @@ echo "**************************************************************************
 echo "Done with make check step"
 
 echo "Starting make install step (so we can save a installed copy for secondary tests)"
+start_time_make_distcheck_seconds="$(date +%s)"
+
 # make -j8 install
 sleep 5
 echo "Done with make install step (so we can save a installed copy for secondary tests)"
