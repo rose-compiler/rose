@@ -3,7 +3,7 @@
 // Author: Markus Schordan
 // $Id: AstSuccessorsSelectors.C,v 1.4 2008/01/08 02:56:39 dquinlan Exp $
 
-#include "sage3.h"
+#include "sage3basic.h"
 #include "roseInternal.h"
 #include <typeinfo>
 #include <algorithm>

@@ -15,7 +15,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************/
 
-#include "rose.h"
+#include "sage3basic.h"
 #include "fortran_support.h"
 
 // FMZ

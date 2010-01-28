@@ -109,6 +109,8 @@ dnl predefined by a specific compiler
              macroString="${macroString}}"
 
              compilerVendorName=GNU
+             echo "Support for ROSE roseTranslator|roseAnalysis as a backend for compiling ROSE generated code \"$BACKEND_CXX_COMPILER\" ";
+             echo "Support for ROSE roseTranslator|roseAnalysis as a backend for compiling ROSE generated code \"$macroString\" ";
              ;;
 
     *)

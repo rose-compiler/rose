@@ -1,4 +1,5 @@
-#include "rose.h"
+#include "sage3basic.h"
+#include "unparseAsm.h"
 #include "ItemTreeNode.h"
 #include "AsmTreeNode.h"
 

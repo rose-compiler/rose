@@ -6,8 +6,8 @@
 #define ASTPROCESSING_H
 
 // tps (01/08/2010) Added sage3basic since this doesnt compile under gcc4.1.2
-#include "sage3basic.h"
-#include "sage3.h"
+//#include "sage3basic.h"
+//#include "sage3.h"
 // Non-templated helper function in AstProcessing.C
 bool 
 SgTreeTraversal_inFileToTraverse(SgNode* node, bool traversalConstraint, SgFile* fileToVisit);
