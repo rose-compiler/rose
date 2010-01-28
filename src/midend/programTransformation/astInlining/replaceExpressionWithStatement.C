@@ -1,6 +1,8 @@
 
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+#include "sageBuilder.h"
+#include "astPostProcessing.h"
 #include "rewrite.h"
 #include <iostream>
 #include <iomanip>

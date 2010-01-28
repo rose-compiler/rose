@@ -23,7 +23,7 @@
  * http://java.sun.com/docs/books/jni/html/invoke.html 
  */
 // Include rose.h so that we can reference SgSourceFile::build_classpath() 
-#include "rose.h"
+#include "sage3basic.h"
 
 #include <string.h>
 #include <string>
