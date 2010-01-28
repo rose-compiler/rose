@@ -98,8 +98,10 @@ else
 fi
 
 # Define the platform specific install directory for ROSE (using same names as in rest of Hudson tests).
-# This directory will be built into the Hudson home directory.
-CONFIGURE_PREFIX_DIR="${HOME}/MasterInstallTree/ROSE-compile-ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install"
+# This directory will be built into the Hudson home directory. For testing the compilation of ROSE with
+# ROSE scripts we will reuse the install tree from the ROSE-matrix builds (at least for initial testing).
+# CONFIGURE_PREFIX_DIR="${HOME}/MasterInstallTree/ROSE-compile-ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install"
+CONFIGURE_PREFIX_DIR="${HOME}/MasterInstallTree/ROSE-matrix/ROSE_TEST_BUILD_STYLE/$ROSE_TEST_BUILD_STYLE/ROSE_TEST_GCC_VERSION/$ROSE_TEST_GCC_VERSION/label/$OS_MACHINE_LABEL/ROSE-install"
 echo "ROSE install tree will be: $CONFIGURE_PREFIX_DIR"
 
 echo "CONFIGURE_FLAGS = ${CONFIGURE_FLAGS}"
