@@ -21,7 +21,9 @@ namespace ELF{
 #endif
 
 // DQ (4/21/2009): This header file contains the definitions of the IR nodes.
-#include "sage3.h"
+// tps : avoid detection" header files are scanned whether they include sage3basic.h for .h and .hh
+#include "sage3basic.hhh"
+//#include "sage3.h"
 
 // DQ (3/22/2009): This is already included in sage3.h"
 // #include "roseInternal.h"

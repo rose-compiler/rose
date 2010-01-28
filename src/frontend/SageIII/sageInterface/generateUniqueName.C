@@ -1,4 +1,4 @@
-#include "sage3.h"
+#include "sage3basic.h"
 
 // DQ (10/14/2006): Added supporting help functions
 #include "transformationSupport.h"

@@ -1,5 +1,8 @@
 // tps (01/14/2010) : Switching from rose.h to sage3. Added buildMangledNameMap, buildReplacementMap, fixupTraversal, replaceExpressionWithStatement
 //#include "rose.h"
+#include "sage3basic.h"
+#include "markLhsValues.h"
+#include "fixupNames.h"
 #include "buildMangledNameMap.h" 
 #include "buildReplacementMap.h" 
 #include "fixupTraversal.h"

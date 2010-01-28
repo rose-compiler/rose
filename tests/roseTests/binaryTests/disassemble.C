@@ -87,7 +87,7 @@ main(int argc, char *argv[])
     char **new_argv = (char**)calloc(argc+2, sizeof(char*));
     int new_argc=0;
     new_argv[new_argc++] = argv[0];
-    new_argv[new_argc++] = "-rose:read_executable_file_format_only";
+    new_argv[new_argc++] = strdup("-rose:read_executable_file_format_only");
     for (int i=1; i<argc; i++) {
         if (!strncmp(argv[i], "--search-", 9) || !strncmp(argv[i], "--no-search-", 12)) {
             fprintf(stderr, "%s: search-related switches have been moved into ROSE's -rose:disassembler_search switch\n", argv[0]);

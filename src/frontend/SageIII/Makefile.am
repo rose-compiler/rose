@@ -57,7 +57,7 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 # are called preproc.o (from here and from EDG).
 EXTRA_DIST = CMakeLists.txt preproc-c.ll docs rtiHelpers.h attributeListMap.h \
              advanced_preprocessing_hooks.h rose_attributes_list.h dwarfSupport.h \
-             omplexer.cc ompparser.cc ompparser.h
+             omplexer.cc ompparser.cc ompparser.h sage3basic.hhh
 CLEANFILES = haveRosettaGeneratedSource
 
 DISTCLEANFILES = preproc-c.cc ompparser.cc ompparser.h omplexer.cc
@@ -180,8 +180,8 @@ roseh:
 #	DQ (2/10/2009): Rush for the off switch on precompiled header files, comment out to skip use of PCH.
 #       TPS (23 Feb 2009): Hardcoded -fpic and -DPIC for now because 
 #       for some reason it is used by most files although not specified on configure
-	@echo "  COMPILE rose.h.gch"
-	@$(CXX)  -fPIC -DPIC $(CXXFLAGS) $(CFLAGS) $(CPPFLAGS) -g -o rose.h.gch $(top_srcdir)/src/rose.h -I$(top_builddir) $(ROSE_INCLUDES) 
+	@echo "  COMPILE sage3basic.h.gch"
+	@$(CXX)  -fPIC -DPIC $(CXXFLAGS) $(CFLAGS) $(CPPFLAGS) -g -o sage3basic.h.gch $(top_srcdir)/src/frontend/SageIII/sage3basic.h -I$(top_builddir) $(ROSE_INCLUDES) 
 endif
 else
 # default, do nothing.
@@ -201,7 +201,7 @@ include_HEADERS = \
    fixupCopy.h \
    general_token_defs.h rtiHelpers.h \
    OmpAttribute.h omp.h dwarfSupport.h \
-   omp_lib_kinds.h omp_lib.h
+   omp_lib_kinds.h omp_lib.h sage3basic.hhh
 
 # DQ (4/5/2009): Moved rose_paths.h to src/util (where the source file is located).
 nodist_include_HEADERS = \
@@ -230,11 +230,11 @@ clean-local:
 	rm -rf Cxx_Grammar* AST_FILE_IO.C StorageClasses.C
 	rm -rf AST_FILE_IO.h StorageClasses.h AstQueryMemoryPool.h
 	rm -rf generated_abstractcppgrammar.atg
-	rm -f rose.h.gch
+	rm -f sage3basic.h.gch
 
 distclean-local:
 	rm -rf Templates.DB
-	rm -f rose.h.gch
+	rm -f sage3basic.h.gch
 
 removeHashLineDirectivesFromGeneratedCode:
 	cp Cxx_Grammar.h  Cxx_Grammar.h.withLineDirectives
