@@ -222,20 +222,20 @@ echo "Starting configure step to use ROSE to compile ROSE: CONFIGURE_PREFIX_DIR 
 # ../configure ${CONFIGURE_FLAGS}
 # export path=${CONFIGURE_PREFIX_DIR}
 
-echo "Make sure that roseAnalysis is in place."
-ls -l ${CONFIGURE_PREFIX_DIR}/bin/roseAnalysis
+echo "Make sure that testAnalysis is in place."
+ls -l ${CONFIGURE_PREFIX_DIR}/bin/testAnalysis
 
-echo "Put roseAnalysis is in the default path."
+echo "Put testAnalysis is in the default path."
 export PATH="${CONFIGURE_PREFIX_DIR}/bin:$PATH"
 
-echo "Make sure that roseAnalysis is in the default path."
-which roseAnalysis
+echo "Make sure that testAnalysis is in the default path."
+which testAnalysis
 
-echo "Calling roseAnalysis to make sure it works."
-roseAnalysis --help
+echo "Calling testAnalysis to make sure it works."
+testAnalysis --help
 
 echo "Calling configure to build compile tree to build ROSE using ROSE."
-../configure CXX=roseAnalysis ${CONFIGURE_FLAGS}
+../configure CXX=testAnalysis ${CONFIGURE_FLAGS}
 echo "Done with configure step to use ROSE to compile ROSE"
 
 cd src
