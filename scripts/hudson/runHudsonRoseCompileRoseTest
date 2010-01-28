@@ -245,7 +245,7 @@ pwd
 
 echo "Test compile step of ROSE compiling ROSE"
 
-# make -j8
+make -j4
 sleep 5
 
 if [ $? -ne 0 ]  ; then
