@@ -31,6 +31,7 @@ true_l2.c
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
 ifstmt.C \
+iterator2.C \
 iteratorloop.C
 
 # the code which can not yet be parallelized now
