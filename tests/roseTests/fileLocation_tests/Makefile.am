@@ -631,7 +631,7 @@ testFileLocation: fileLocation
 
 check-local:
 #	@$(MAKE) testStatementPosition
-#	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "Development tests."
 	@echo "*****************************************************************************************************"
 	@echo "****** ROSE/tests/roseTests/fileLocation_tests: make check rule complete (terminated normally) ******"

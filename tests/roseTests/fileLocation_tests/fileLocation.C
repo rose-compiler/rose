@@ -34,7 +34,7 @@ isLink( const string & name )
      char c_version[PATH_MAX];
      ROSE_ASSERT (fileNameWithPath.size() + 1 < PATH_MAX);
 
-     while (fileNameWithPath != "/")
+     while (fileNameWithPath != "/" && fileNameWithPath != ".")
         {
           strcpy(c_version, fileNameWithPath.c_str());
 
@@ -254,7 +254,8 @@ visitorTraversal::visit(SgNode* n)
             // string sourceDir = "/home/dquinlan/ROSE/roseCompileTree-g++4.2.2/developersScratchSpace/Dan/fileLocation_tests";
 
             // This causes the path edit distance to be: 4
-               string sourceDir = "/home/dquinlan/ROSE/svn-rose";
+               //string sourceDir = "/home/dquinlan/ROSE/svn-rose";
+				string sourceDir = "/home/hou1/rose/rose";
 
             // This causes the path edit distance to be: 0
             // string sourceDir = "/home/dquinlan/ROSE";
