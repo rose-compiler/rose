@@ -22,7 +22,9 @@ TESTCODES_REQUIRED_TO_PASS = \
 test_CplusplusMacro_Cpp.C \
 test2001_01.C \
 test2001_02.C \
-test2001_03.C \
+test2001_03.C 
+
+OTHER_TEST_CODES = \
 test2001_04.C \
 test2001_05.C \
 test2001_06.C \
