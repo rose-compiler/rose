@@ -14,6 +14,7 @@ SUBDIRS = \
      CloneDetection \
      DatalogAnalysis \
      DocumentationGenerator \
+     OpenMP_Analysis \
      OpenMP_Translator \
      BabelPreprocessor \
      FiniteStateModelChecker \
