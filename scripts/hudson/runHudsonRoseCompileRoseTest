@@ -154,8 +154,8 @@ start_time_make_seconds="$(date +%s)"
 
 echo "Test compile step"
 
-# make -j8
-sleep 5
+make -j8
+# sleep 5
 
 if [ $? -ne 0 ]  ; then
      echo "fatal error during 'make'  , aborting..."
@@ -194,8 +194,8 @@ echo "Done with make check step"
 echo "Starting make install step (so we can save a installed copy for secondary tests)"
 start_time_make_distcheck_seconds="$(date +%s)"
 
-# make -j8 install
-sleep 5
+make -j8 install
+# sleep 5
 echo "Done with make install step (so we can save a installed copy for secondary tests)"
 
 end_time_make_distcheck_seconds="$(date +%s)"
