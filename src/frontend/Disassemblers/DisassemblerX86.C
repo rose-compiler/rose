@@ -1,9 +1,18 @@
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "Assembler.h"
+#include "AssemblerX86.h"
+#include "unparseAsm.h"
+#include "Disassembler.h"
+#include "sageBuilderAsm.h"
+#include "DisassemblerX86.h"
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
+#include <sstream>
 
 #include "integerOps.h"
+#include "findConstants.h"
 
 /* See header file for full documentation. */
 
@@ -35,45 +44,177 @@
  * SgAsmx86Instruction methods
  *========================================================================================================================*/
 
-
-Disassembler::AddressSet
-SgAsmx86Instruction::get_successors() {
-    Disassembler::AddressSet retval;
-    rose_addr_t va;
-
-    /* call, jmp, ja, jae, jb, jbe, jcxz, jecxz, jrcxz, je, jg, jge, jl, jle, jne, jno, jns, jo,
-     * jpe, jpo, js, loop, loopnz, loopz */
-    if (x86GetKnownBranchTarget(this, va/*out*/))
-        retval.insert(va);
-
-    /* Fall through address. */
-    switch (get_kind()) {
-        case x86_unknown_instruction:
-        case x86_ret:
-        case x86_iret:
-        case x86_farcall:
-        case x86_farjmp:
-        case x86_hlt:
-        case x86_jmp:
-        case x86_int1:
-        case x86_int3:
-        case x86_into:
-        case x86_retf:
-        case x86_rsm:
-        case x86_ud2:
-            break;
-        default:
-            retval.insert(get_address() + get_raw_bytes().size());
-            break;
-    }
-    return retval;
-}
-
 bool
 SgAsmx86Instruction::terminatesBasicBlock() {
     if (get_kind()==x86_unknown_instruction)
         return true;
     return x86InstructionIsControlTransfer(this);
+}
+
+bool
+SgAsmx86Instruction::is_function_call(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target)
+{
+    if (insns.size()==0)
+        return false;
+    SgAsmx86Instruction *last = isSgAsmx86Instruction(insns.back());
+    if (!last)
+        return false;
+    if (last->get_kind()!=x86_call && last->get_kind()!=x86_farcall)
+        return false;
+    rose_addr_t tmp;
+    if (x86GetKnownBranchTarget(last, tmp))
+        *target = tmp; /* "target" must not be modified if we don't know the target address. */
+    return true;
+}
+
+Disassembler::AddressSet
+SgAsmx86Instruction::get_successors(bool *complete) {
+    Disassembler::AddressSet retval;
+    *complete = true; /*assume true and prove otherwise*/
+
+    switch (get_kind()) {
+        case x86_call:
+        case x86_farcall:
+        case x86_jmp:
+        case x86_farjmp: {
+            /* Unconditional branch to operand-specified address */
+            rose_addr_t va;
+            if (x86GetKnownBranchTarget(this, va/*out*/)) {
+                retval.insert(va);
+            } else {
+                *complete = false;
+            }
+            break;
+        }
+
+        case x86_ja:
+        case x86_jae:
+        case x86_jb:
+        case x86_jbe:
+        case x86_jcxz:
+        case x86_jecxz:
+        case x86_jrcxz:
+        case x86_je:
+        case x86_jg:
+        case x86_jge:
+        case x86_jl:
+        case x86_jle:
+        case x86_jne:
+        case x86_jno:
+        case x86_jns:
+        case x86_jo:
+        case x86_jpe:
+        case x86_jpo:
+        case x86_js:
+        case x86_loop:
+        case x86_loopnz:
+        case x86_loopz: {
+            /* Conditional branches to operand-specified address */
+            rose_addr_t va;
+            if (x86GetKnownBranchTarget(this, va/*out*/)) {
+                retval.insert(va);
+            } else {
+                *complete = false;
+            }
+            retval.insert(get_address() + get_raw_bytes().size());
+            break;
+        }
+
+        case x86_ret:
+        case x86_iret:
+        case x86_int1:
+        case x86_int3:
+        case x86_into:
+        case x86_rsm:
+        case x86_ud2:
+        case x86_retf: {
+            /* Unconditional branch to run-time specified address */
+            *complete = false;
+            break;
+        }
+
+        case x86_hlt: {
+            /* Instructions having no successor. */
+            break;
+        }
+
+        case x86_unknown_instruction: {
+            /* Instructions having unknown successors */
+            *complete = false;
+        }
+
+        default: {
+            /* Instructions that always fall through to the next instruction */
+            retval.insert(get_address() + get_raw_bytes().size());
+            break;
+        }
+    }
+    return retval;
+}
+
+/* Used by get_successors() for basic blocks. Override superclass method so that they don't try to traverse the AST, which
+ * hasn't been created yet. */
+class BlockSuccessorsPolicy: public FindConstantsPolicy {
+public:
+    void startInstruction(SgAsmInstruction* insn) {
+        addr = insn->get_address();
+        newIp = number<32>(addr);
+        if (rsets.find(addr)==rsets.end())
+            rsets[addr].setToBottom();
+        currentRset = rsets[addr];
+        currentInstruction = isSgAsmx86Instruction(insn);
+    }
+};
+
+/* "this" is only used to select the virtual function */
+Disassembler::AddressSet
+SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>& insns, bool *complete)
+{
+    Disassembler::AddressSet successors = SgAsmInstruction::get_successors(insns, complete);
+
+    /* If we couldn't determine all the successors, or a cursory analysis couldn't narrow it down to a single successor then
+     * we'll do a more thorough analysis now. In the case where the cursory analysis returned a complete set containing two
+     * successors, a thorough analysis might be able to narrow it down to a single successor. */
+    if (!*complete || successors.size()>1) {
+        typedef X86InstructionSemantics<BlockSuccessorsPolicy, XVariablePtr> Semantics;
+        try {
+            BlockSuccessorsPolicy policy;
+            Semantics semantics(policy);
+            for (size_t i=0; i<insns.size(); i++) {
+                SgAsmx86Instruction* insn = isSgAsmx86Instruction(insns[i]);
+                semantics.processInstruction(insn);
+#if 0
+                std::ostringstream s;
+                s << "Analysis for " <<unparseInstructionWithAddress(insn) <<std::endl
+                  <<policy.currentRset
+                  <<"    ip = " <<policy.readIP() <<"\n";
+                fputs(s.str().c_str(), stderr);
+#endif
+            }
+            XVariablePtr<32> newip = policy.readIP();
+            if (newip->get().name==0) {
+                successors.clear();
+                successors.insert(newip->get().offset);
+                *complete = true; /*this is the complete set of successors*/
+            }
+        } catch(const Semantics::Exception& e) {
+            /* Abandon entire basic block if we hit an instruction that's not implemented. */
+#if 0
+            fprintf(stderr, "semantic analysis failed: %s\n", e.mesg.c_str());
+#endif
+        }
+    }
+
+    /* Assume that a CALL instruction eventually executes a RET that causes execution to resume at the address following the
+     * CALL. This is true 99% of the time. */
+    {
+        ROSE_ASSERT(insns.size()>0);
+        SgAsmx86Instruction *last_insn = isSgAsmx86Instruction(insns.back());
+        ROSE_ASSERT(last_insn!=NULL);
+        if (last_insn->get_kind()==x86_call || last_insn->get_kind()==x86_farcall)
+            successors.insert(last_insn->get_address() + last_insn->get_raw_bytes().size());
+    }
+    return successors;
 }
 
 
@@ -148,7 +289,8 @@ DisassemblerX86::disassembleOne(const MemoryMap *map, rose_addr_t start_va, Addr
 
     /* Note successors if necesssary */
     if (successors) {
-        AddressSet suc2 = insn->get_successors();
+        bool complete;
+        AddressSet suc2 = insn->get_successors(&complete);
         successors->insert(suc2.begin(), suc2.end());
     }
 
@@ -162,9 +304,6 @@ DisassemblerX86::make_unknown_instruction(const Exception &e)
     insn->set_raw_bytes(e.bytes);
     return insn;
 }
-
-
-
 
 /*========================================================================================================================
  * Methods for reading bytes of the instruction.  These keep track of how much has been read, which in turn is used by
@@ -847,7 +986,18 @@ DisassemblerX86::getImmJz()
         val = IntegerOps::signExtend<32, 64>((uint64_t)val2);
     }
     uint64_t target = ip + insnbufat + val;
-    SgAsmValueExpression *retval = SageBuilderAsm::makeQWordValue(target);
+    SgAsmValueExpression *retval = NULL;
+    switch (insnSize) {
+        case x86_insnsize_16:
+            retval = SageBuilderAsm::makeWordValue(target);
+            break;
+        case x86_insnsize_32:
+            retval = SageBuilderAsm::makeDWordValue(target);
+            break;
+        default:
+            retval = SageBuilderAsm::makeQWordValue(target);
+            break;
+    }
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(bit_size);
     return retval;
@@ -887,7 +1037,18 @@ DisassemblerX86::getImmJb()
     size_t bit_offset = 8*insnbufat;
     uint8_t val = getByte();
     uint64_t target = ip + insnbufat + IntegerOps::signExtend<8, 64>((uint64_t)val);
-    SgAsmValueExpression *retval = SageBuilderAsm::makeQWordValue(target);
+    SgAsmValueExpression *retval=NULL;
+    switch (insnSize) {
+        case x86_insnsize_16:
+            retval = SageBuilderAsm::makeWordValue(target);
+            break;
+        case x86_insnsize_32:
+            retval = SageBuilderAsm::makeDWordValue(target);
+            break;
+        default:
+            retval = SageBuilderAsm::makeQWordValue(target);
+            break;
+    }
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(8);
     return retval;

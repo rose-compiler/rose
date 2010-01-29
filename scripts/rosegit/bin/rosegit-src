@@ -6,10 +6,8 @@
 #     ls $(rosegit-src)
 #     ln -s $(rosegit-src)/*.bin .
 
-
-mydir=${0%/*}
-source $mydir/rosegit-functions.sh || exit 1
-(rosegit_tester_preamble 2>&1 |grep -v configuring) >&2  # strip a specific error message, but show any others
+source rosegit-functions.sh || exit 1
+(rosegit_preamble 2>&1 |grep -v configuring) >&2  # strip a specific error message, but show any others
 
 cwd=$(pwd)
-echo "$ROSE_SRC/${cwd#$ROSE_BLD}"
+echo "$ROSEGIT_SRC${cwd#$ROSEGIT_BLD}"

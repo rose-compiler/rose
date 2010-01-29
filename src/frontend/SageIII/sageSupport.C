@@ -1,11 +1,25 @@
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+//#include "astMergeAPI.h"
 #include "rose_paths.h"
+//#include "setup.h"
+#include "astPostProcessing.h"
 #include <sys/stat.h>
+
+#include "omp_lowering.h"
+#include "attachPreprocessingInfo.h"
+#include "astMergeAPI.h"
+//#include "sageSupport.h"
+
+#include "binaryLoader.h"
+#include "Partitioner.h"
+#include "sageBuilder.h"
 
 #ifdef _MSC_VER
 #pragma message ("WARNING: wait.h header file not available in MSVC.")
 #else
 #include <sys/wait.h>
+#include "PHPFrontend.h"
 #endif
 
 #ifdef _MSC_VER
@@ -249,14 +263,17 @@ outputTypeOfFileAndExit( const string & name )
 // code in ROSETTA.  These functions don't need to be generated since
 // there implementation is not as dependent upon the IR as other functions
 // (e.g. IR node member functions).
+//
+// Switches taking a second parameter need to be added to CommandlineProcessing::isOptionTakingSecondParameter().
 
 bool
 CommandlineProcessing::isOptionWithParameter ( vector<string> & argv, string optionPrefix, string option, string & optionParameter, bool removeOption )
    {
   // I could not make this work cleanly with valgrind withouth allocatting memory twice
-     string localString;
+     string localString ="";
 
-  // printf ("Calling sla for string! removeOption = %s \n",removeOption ? "true" : "false");
+     //   printf ("Calling sla for string! removeOption = %s \n",removeOption ? "true" : "false");
+     //printf ("   argv %d    optionPrefix %s  option %s   localString  %s \n",argv.size(), optionPrefix.c_str(), option.c_str() , localString.c_str() );
      int optionCount = sla(argv, optionPrefix, "($)^", option, &localString, removeOption ? 1 : -1);
   // printf ("DONE: Calling sla for string! optionCount = %d localString = %s \n",optionCount,localString.c_str());
 
@@ -410,7 +427,12 @@ SgProject::processCommandLine(const vector<string>& input_argv)
         }
 
   // Build the empty STL lists
+#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
      p_fileList.clear();
+#else
+     ROSE_ASSERT(p_fileList_ptr != NULL);
+     p_fileList_ptr->get_listOfFiles().clear();
+#endif
 
   // return value for calls to SLA
      int optionCount = 0;
@@ -1704,25 +1726,29 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_skip_unparse_asm_commands(true);
         }
 
-  // DQ (8/26/2008): support for optional more agressive mode of disassembly of binary from all 
-  // executable segments instead of just section based.
-  //
-     if ( CommandlineProcessing::isOption(argv,"-rose:","(aggressive)",true) == true )
-        {
-          printf ("option -rose:aggressive found (not handled internally) \n");
+  // RPM (12/29/2009): Disassembler aggressiveness.
+     if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "disassembler_search", stringParameter, true)) {
+         try {
+             unsigned heuristics = get_disassemblerSearchHeuristics();
+             heuristics = Disassembler::parse_switches(stringParameter, heuristics);
+             set_disassemblerSearchHeuristics(heuristics);
+         } catch(const Disassembler::Exception &e) {
+             fprintf(stderr, "%s in \"-rose:disassembler_search\" switch\n", e.mesg.c_str());
+             ROSE_ASSERT(!"error parsing -rose:disassembler_search");
+         }
+     }
 
-       // DQ (10/12/2008): This was previously commented out, I think it need 
-       // to be available even if exactly what it means may still be in flux.
-       // set_aggressive(true);
-          SgBinaryComposite* binary = isSgBinaryComposite(this);
-          if (binary != NULL)
-             {
-               binary->set_aggressive(true);
-             }
-
-       // DQ (10/12/2008): I am less clear if we want to have more than one mechanism in place!
-       // Disassembler::aggressive_mode = true;
-        }
+  // RPM (1/4/2010): Partitioner function search methods
+     if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "partitioner_search", stringParameter, true)) {
+         try {
+             unsigned heuristics = get_partitionerSearchHeuristics();
+             heuristics = Partitioner::parse_switches(stringParameter, heuristics);
+             set_partitionerSearchHeuristics(heuristics);
+         } catch(const std::string &e) {
+             fprintf(stderr, "%s in \"-rose:partitioner_search\" switch\n", e.c_str());
+             ROSE_ASSERT(!"error parsing -rose:partitioner_search");
+         }
+     }
 
   //
   // internal testing option (for internal use only, these may disappear at some point)
@@ -2107,6 +2133,8 @@ SgFile::processBackendSpecificCommandLineOptions ( const vector<string>& argvOri
    }
 
 
+/* This function suffers from the same problems as CommandlineProcessing::isExecutableFilename(), namely that the list of
+ * magic numbers used here needs to be kept in sync with changes to the binary parsers. */
 bool
 isBinaryExecutableFile ( string sourceFilename )
    {
@@ -2143,7 +2171,6 @@ isBinaryExecutableFile ( string sourceFilename )
 
       return returnValue;
     }
-
 
 bool
 isLibraryArchiveFile ( string sourceFilename )
@@ -2532,6 +2559,11 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
                               bool isBinaryExecutable = isBinaryExecutableFile(sourceFilename);
                               bool isLibraryArchive   = isLibraryArchiveFile(sourceFilename);
 
+                           // If -rose:binary was specified and the relatively simple-minded checks of isBinaryExecutableFile()
+                           // and isLibararyArchiveFile() both failed to detect anything, then assume this is an executable.
+                              if (!isBinaryExecutable && !isLibraryArchive)
+                                  isBinaryExecutable = true;
+                              
                            // printf ("isBinaryExecutable = %s isLibraryArchive = %s \n",isBinaryExecutable ? "true" : "false",isLibraryArchive ? "true" : "false");
                               if (isBinaryExecutable == true || isLibraryArchive == true)
                                  {
@@ -3726,10 +3758,6 @@ SgBinaryComposite::SgBinaryComposite ( vector<string> & argv ,  SgProject* proje
   // DQ (2/3/2009): This data member has disappeared (in favor of a list).
   // p_binaryFile = NULL;
 
-  // Assume a binary generated from a compiler for now since this 
-  // is easier, the more aggressive modes are still in development.
-     p_aggressive = false;
-
   // printf ("In the SgBinaryComposite constructor \n");
 
   // This constructor actually makes the call to EDG to build the AST (via callFrontEnd()).
@@ -4016,6 +4044,12 @@ CommandlineProcessing::initExecutableFileSuffixList ( )
    }
 
 // DQ (1/16/2008): This function was moved from the commandling_processing.C file to support the debugging specific to binary analysis
+/* This function not only looks at the file name, but also checks that the file exists, can be opened for reading, and has
+ * specific values for its first two bytes. Checking the first two bytes here means that each time we add support for a new
+ * magic number in the binary parsers we have to remember to update this list also.  Another problem is that the binary
+ * parsers understand a variety of methods for neutering malicious binaries -- transforming them in ways that make them
+ * unrecognized by the operating system on which they're intended to run (and thus unrecongizable also by this function).
+ * Furthermore, CommandlineProcessing::isBinaryExecutableFile() contains similar magic number checking. [RPM 2010-01-15] */
 bool
 CommandlineProcessing::isExecutableFilename ( string name )
    {
@@ -4182,6 +4216,9 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           //AS(02/20/08):  When used with -M or -MM, -MF specifies a file to write 
           //the dependencies to. Need to tell ROSE to ignore that output paramater
           argument == "-MF" ||
+
+          argument == "-rose:disassembler_search" ||
+          argument == "-rose:partitioner_search" ||
           false)
         {
           result = true;
@@ -4279,20 +4316,14 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
              {
             // printf ("In CommandlineProcessing::generateSourceFilenames(): Look for file names:  argv[%d] = %s length = %zu \n",counter,(*i).c_str(),(*i).size());
 
-            // bool foundSourceFile = false;
-
-            // printf ("isExecutableFilename(%s) = %s \n",(*i).c_str(),isExecutableFilename(*i) ? "true" : "false");
-            // if ( isSourceFilename(*i) == false && isObjectFilename(*i) == false && isValidFileWithExecutableFileSuffixes(*i) == true )
-            // if ( isSourceFilename(*i) == false && isObjectFilename(*i) == false && isExecutableFilename(*i) == true )
-               if ( isSourceFilename(*i) == false && ((isObjectFilename(*i) == false) || (binaryMode == true)) && isExecutableFilename(*i) == true )
-                  {
-                 // printf ("This is an executable file: *i = %s \n",(*i).c_str());
-                 // executableFileList.push_back(*i);
-                    if(isSourceCodeCompiler == false || binaryMode == true)
-                      sourceFileList.push_back(*i);
-                    goto incrementPosition;
-
-
+                 if (!isSourceFilename(*i) &&
+                     (binaryMode || !isObjectFilename(*i)) &&
+                     (binaryMode || isExecutableFilename(*i))) {
+                     // printf ("This is an executable file: *i = %s \n",(*i).c_str());
+                     // executableFileList.push_back(*i);
+                     if(isSourceCodeCompiler == false || binaryMode == true)
+                         sourceFileList.push_back(*i);
+                     goto incrementPosition;
                   }
 
             // PC (4/27/2006): Support for custom source file suffixes
@@ -6028,11 +6059,12 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // argcArgvList.pop_front();
      argcArgvList.erase(argcArgvList.begin());
 
+#if 0
+  // DQ (1/24/2010): Moved this inside of the true branch below.
      SgProject* project = isSgProject(this->get_parent());
      ROSE_ASSERT (project != NULL);
      Rose_STL_Container<string> sourceFilenames = project->get_sourceFileNameList();
 
-#if 0
      printf ("sourceFilenames.size() = %zu sourceFilenames = %s \n",sourceFilenames.size(),StringUtility::listToString(sourceFilenames).c_str());
 #endif
 
@@ -6041,6 +6073,14 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // if (get_skip_unparse() == true && get_skipfinalCompileStep() == false)
      if (get_skip_unparse() == false)
         {
+       // DQ (1/24/2010): Now that we have directory support, the parent of a SgFile does not have to be a SgProject.
+       // SgProject* project = isSgProject(this->get_parent())
+          SgProject* project = TransformationSupport::getProject(this);
+          ROSE_ASSERT (project != NULL);
+          Rose_STL_Container<string> sourceFilenames = project->get_sourceFileNameList();
+#if 0
+          printf ("sourceFilenames.size() = %zu sourceFilenames = %s \n",sourceFilenames.size(),StringUtility::listToString(sourceFilenames).c_str());
+#endif
           for (Rose_STL_Container<string>::iterator i = sourceFilenames.begin(); i != sourceFilenames.end(); i++)
              {
 #if 0
@@ -6055,7 +6095,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                if (usesAbsolutePath == false)
                   {
                     string targetSourceFileToRemove = StringUtility::getAbsolutePathFromRelativePath(*i);
-                 // printf ("Converting source file to absolute path to search for it and remove it! targetSourceFileToRemove = %s \n",targetSourceFileToRemove.c_str());
+                  printf ("Converting source file to absolute path to search for it and remove it! targetSourceFileToRemove = %s \n",targetSourceFileToRemove.c_str());
                     argcArgvList.remove(targetSourceFileToRemove);
                   }
                  else
@@ -6179,26 +6219,27 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // is in the current directory (likely a generated file itself; e.g. swig or ROSE applied recursively, etc.)).
   // printf ("oldFileNamePathOnly.length() = %d \n",oldFileNamePathOnly.length());
      if (oldFileNamePathOnly.empty() == false)
-     {
-#if 1       
-// Liao, 5/15/2009
-// the input source file's path has to be the first one to be searched for header!
-// This is required since one of the SPEC CPU 2006 benchmarks: gobmk relies on this to be compiled.
-        vector<string>::iterator iter; 
-        // find the very first -Ixxx option's position
-        for (iter = compilerNameString.begin();iter!=compilerNameString.end(); iter++) 
         {
-          string cur_string =*iter;
-          string::size_type pos = cur_string.find("-I",0);
-          if (pos==0)
-            break;
-        }
-        // insert before the position
-        compilerNameString.insert(iter, std::string("-I") + oldFileNamePathOnly); 
+#if 1       
+       // Liao, 5/15/2009
+       // the input source file's path has to be the first one to be searched for header!
+       // This is required since one of the SPEC CPU 2006 benchmarks: gobmk relies on this to be compiled.
+          vector<string>::iterator iter;
+       // find the very first -Ixxx option's position
+          for (iter = compilerNameString.begin(); iter != compilerNameString.end(); iter++) 
+             {
+               string cur_string =*iter;
+               string::size_type pos = cur_string.find("-I",0);
+               if (pos==0)
+                    break;
+             }
+
+       // insert before the position
+          compilerNameString.insert(iter, std::string("-I") + oldFileNamePathOnly); 
 #else        
-        compilerNameString.push_back(std::string("-I") + oldFileNamePathOnly);
+          compilerNameString.push_back(std::string("-I") + oldFileNamePathOnly);
 #endif
-     }
+        }
 
   // DQ (4/20/2006): This allows the ROSE translator to be just a wrapper for the backend (vendor) compiler.
   // compilerNameString += get_unparse_output_filename();
@@ -6229,19 +6270,22 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                compilerNameString.push_back(currentDirectory + "/" + objectFileName);
              }
         }
-        else // Liao 11/19/2009, changed to support linking multiple source files within one command line
-          // We change the compilation mode for each individual file to compile-only even
-          // when the original command line is to generate the final executable.
-          // We generate the final executable at the SgProject level from object files of each source file
+       else
         {
-//          cout<<"turn on compilation only at the file compilation level"<<endl;
+       // Liao 11/19/2009, changed to support linking multiple source files within one command line
+       // We change the compilation mode for each individual file to compile-only even
+       // when the original command line is to generate the final executable.
+       // We generate the final executable at the SgProject level from object files of each source file
+
+       // cout<<"turn on compilation only at the file compilation level"<<endl;
           compilerNameString.push_back("-c");
-          // For compile+link mode, -o is used for the final executable, if it exists
-          // We make -o objectfile explicit 
+       // For compile+link mode, -o is used for the final executable, if it exists
+       // We make -o objectfile explicit 
           std::string objectFileName = generateOutputFileName();
           compilerNameString.push_back("-o");
           compilerNameString.push_back(currentDirectory + "/" + objectFileName);
         }
+
 #if 0
      printf ("At base of buildCompilerCommandLineOptions: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
 #endif
@@ -6250,8 +6294,9 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      ROSE_ASSERT (false);
 #endif
 
-#if 0 // moved to the linking phase function of SgProject
-     // Liao, 9/23/2009, optional linker flags to support OpenMP lowering targeting GOMP
+#if 0
+  // moved to the linking phase function of SgProject
+  // Liao, 9/23/2009, optional linker flags to support OpenMP lowering targeting GOMP
      if (get_openmp_lowering())
      {
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY       
@@ -6280,7 +6325,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        std::string str = *iter;
        cout<<"\t"<<str<<endl;
       }
-#endif      
+#endif
+
      return compilerNameString;
    } // end of SgFile::buildCompilerCommandLineOptions()
 
@@ -6626,7 +6672,10 @@ SgFile::isPrelinkPhase() const
      if (get_parent() != NULL)
         {
           ROSE_ASSERT ( get_parent() != NULL );
-          SgProject* project = isSgProject(get_parent());
+
+       // DQ (1/24/2010): Now that we have directory support, the parent of a SgFile does not have to be a SgProject.
+       // SgProject* project = isSgProject(get_parent());
+          SgProject* project = TransformationSupport::getProject(this);
 
           ROSE_ASSERT ( project != NULL );
           returnValue = project->get_prelink();
@@ -6643,31 +6692,43 @@ SgFile::isPrelinkPhase() const
 int
 SgProject::link ( std::string linkerName )
    {
-     // Liao, 11/20/2009
-     // translator test1.o will have ZERO SgFile attached with SgProject
-     // Special handling for this case
-     if (numberOfFiles()== 0)
-     {
-       if (get_verbose() >0)
-         cout<<"SgProject::link may encountering an object file ..."<<endl;
-    }
-    else // normal cases that rose translators will actually do something about the input files
-         // and we have SgFile for each of the files.
-     //if ((numberOfFiles()== 0) || get_compileOnly() || get_file(0).get_skipfinalCompileStep() 
-     if ( get_compileOnly() || get_file(0).get_skipfinalCompileStep() 
-         ||get_file(0).get_skip_unparse())
-     {
-       if (get_verbose() >0)
-         cout<<"Skipping SgProject::link ..."<<endl;
-       return 0;
-     }
-                    
+  // DQ (1/25/2010): We have to now test for both numberOfFiles() and numberOfDirectories(),
+  // or perhaps define a more simple function to use more directly.
+  // Liao, 11/20/2009
+  // translator test1.o will have ZERO SgFile attached with SgProject
+  // Special handling for this case
+  // if (numberOfFiles() == 0)
+     if (numberOfFiles() == 0 && numberOfDirectories() == 0)
+        {
+          if (get_verbose() >0)
+               cout << "SgProject::link may encountering an object file ..." << endl;
+
+       // DQ (1/24/2010): support for directories not in place yet.
+          if (numberOfDirectories() > 0)
+             {
+               printf ("Directory support for linking not implemented... (unclear what this means...)\n");
+               return 0;
+             }
+        }
+       else
+        {
+       // normal cases that rose translators will actually do something about the input files
+       // and we have SgFile for each of the files.
+       // if ((numberOfFiles()== 0) || get_compileOnly() || get_file(0).get_skipfinalCompileStep() 
+          if ( get_compileOnly() || get_file(0).get_skipfinalCompileStep() ||get_file(0).get_skip_unparse())
+             {
+               if (get_verbose() > 0)
+                    cout << "Skipping SgProject::link ..." << endl;
+               return 0;
+             }
+        }
+
   // Compile the output file from the unparsing
-     vector<string> argcArgvList= get_originalCommandLineArgumentList();
+     vector<string> argcArgvList = get_originalCommandLineArgumentList();
 
   // error checking
-    if (numberOfFiles()!= 0) 
-       ROSE_ASSERT (argcArgvList.size() > 1);
+     if (numberOfFiles()!= 0) 
+          ROSE_ASSERT (argcArgvList.size() > 1);
      ROSE_ASSERT(linkerName != "");
 
   // strip out any rose options before passing the command line.
@@ -6690,6 +6751,7 @@ SgProject::link ( std::string linkerName )
        if (usesAbsolutePath == false)
        {
          string targetSourceFileToRemove = StringUtility::getAbsolutePathFromRelativePath(*i);
+		   printf ("Converting source file to absolute path to search for it and remove it! targetSourceFileToRemove = %s \n",targetSourceFileToRemove.c_str());
          argcArgvList.remove(targetSourceFileToRemove);
        }
        else
@@ -6827,7 +6889,7 @@ SgFile::usage ( int status )
           fputs(
 "\n"
 "This ROSE translator provides a means for operating on C, C++, and Fortran\n"
-"source code, as well as on x86 and ARM object code.\n"
+"source code, as well as on x86, ARM, and PowerPC object code.\n"
 "\n"
 "Usage: rose [OPTION]... FILENAME...\n"
 "\n"
@@ -6985,6 +7047,38 @@ SgFile::usage ( int status )
 "                             turn on internal support for cray pointers\n"
 "     -fortran:XXX            pass -XXX to independent semantic analysis\n"
 "                             (useful for turning on specific warnings in front-end)\n"
+"\n"
+"Control Disassembly:\n"
+"     -rose:disassembler_search HOW\n"
+"                             Influences how the disassembler searches for instructions\n"
+"                             to disassemble. HOW is a comma-separated list of search\n"
+"                             specifiers. Each specifier consists of an optional\n"
+"                             qualifier followed by either a word or integer. The\n"
+"                             qualifier indicates whether the search method should be\n"
+"                             added ('+') or removed ('-') from the set. The qualifier\n"
+"                             '=' acts like '+' but first clears the set.  The words\n"
+"                             are the lower-case versions of the Disassembler::SearchHeuristic\n"
+"                             enumerated constants without the leading \"SEARCH_\" (see\n"
+"                             doxygen documentation for the complete list and and their\n"
+"                             meanings).   An integer (decimal, octal, or hexadecimal using\n"
+"                             the usual C notation) can be used to set/clear multiple\n"
+"                             search bits at one time. See doxygen comments for the\n"
+"                             Disassembler::parse_switches class method for full details.\n"
+"     -rose:partitioner_search HOW\n"
+"                             Influences how the partitioner searches for functions.\n"
+"                             HOW is a comma-separated list of search specifiers. Each\n"
+"                             specifier consists of an optional qualifier followed by\n"
+"                             either a word or integer. The qualifier indicates whether\n"
+"                             the search method should be added ('+') or removed ('-')\n"
+"                             from the set. The qualifier '=' acts like '+' but first\n"
+"                             clears the set.  The words are the lower-case versions of\n"
+"                             most of the SgAsmFunctionDeclaration::FunctionReason\n"
+"                             enumerated constants without the leading \"FUNC_\" (see\n"
+"                             doxygen documentation for the complete list and and their\n"
+"                             meanings).   An integer (decimal, octal, or hexadecimal using\n"
+"                             the usual C notation) can be used to set/clear multiple\n"
+"                             search bits at one time. See doxygen comments for the\n"
+"                             Partitioner::parse_switches class method for full details.\n"
 "\n"
 "Control code generation:\n"
 "     -rose:unparse_line_directives\n"

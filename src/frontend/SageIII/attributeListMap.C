@@ -1,4 +1,5 @@
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #include "rose_config.h"
 
 // DQ (11/28/2009): I think this is equivalent to "USE_ROSE"

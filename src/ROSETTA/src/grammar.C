@@ -72,6 +72,9 @@ Grammar::Grammar ( const string& inputGrammarName,
      target_directory = t_directory;
      parentGrammar = NULL;
 
+     // tps (01/05/2010) : added printf for debugging 
+      //printf ("GRAMMAR Constructor values : target_directory : %s   inputParentGrammar %d \n",target_directory.c_str(),inputParentGrammar);
+  
   // We want to set the parent grammar as early as possible since the specification of terminals/nonterminals is
   // dependent upon the the current grammar being a "RootGrammar" (using the isRootGrammar() member function)
   // and the value of the boolean returned from isRootGrammardepends upon the pointer to the parentGrammar being set!
@@ -829,12 +832,17 @@ Grammar::buildNewAndDeleteOperators( Terminal & node, StringUtility::FileWithLin
      string fileExtension = ".C";
      string directoryName = target_directory + sourceCodeDirectoryName();
   // printf ("In buildNewAndDeleteOperators(): directoryName = %s \n",directoryName.c_str());
-
   // This should append the string to the target file.
+
+     // tps (01/04/2010) Debugging output
+       //   printf ("GRAMMAR Grammar::buildNewAndDeleteOperators : target_directory : %s  directoryName %s \n",target_directory.c_str(),directoryName.c_str());
      appendFile ( editString, directoryName, node.getName(), fileExtension );
 #else
      outputFile += editString;
 #endif
+
+
+
 
 #if 1
   // Call this function recursively on the children of this node in the tree
@@ -2012,7 +2020,10 @@ Grammar::buildSourceFiles( Terminal & node, StringUtility::FileWithLineNumbers &
      StringUtility::FileWithLineNumbers sourceBeforeInsertion;
 #if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
   // DQ (12/29/2009): Add this to the top of each file.
-     string sourceHeader = "\n#include \"rose.h\"\nusing namespace std;\n\n";
+//     string sourceHeader = "\n#include \"rose.h\"\nusing namespace std;\n\n";
+	// tps (01/06/2010) : If we include sage3.h instead of rose.h on Windows these files are
+		// currently only 7MB instead of 17MB - still to large though
+	 string sourceHeader = "\n#include \"sage3basic.h\"\nusing namespace std;\n\n";
      sourceBeforeInsertion.push_back(StringUtility::StringWithLineNumber(sourceHeader, "", 1));
 #else
   // StringUtility::FileWithLineNumbers sourceBeforeInsertion = buildHeaderStringBeforeMarker(sourceFileInsertionSeparator, fileName);
@@ -2745,12 +2756,14 @@ Grammar::buildCode ()
   // Now build the source files
 
      // tps (Feb 23 2009): added rose.h since I had to remove it from the .h header files
-     string includeHeaderFileNameROSE = "rose.h";
-     string includeHeaderStringROSE =
-       "// MACHINE GENERATED ROSE SOURCE FILE --- DO NOT MODIFY!\n\n #include \"" + includeHeaderFileNameROSE + "\"\n\n";
+     // tps (01/09/2010) : removed it again to optimize binary sizes
+     //string includeHeaderFileNameROSE = "rose.h";
+     //     string includeHeaderStringROSE =
+     //  "// MACHINE GENERATED ROSE SOURCE FILE --- DO NOT MODIFY!\n\n #include \"" + includeHeaderFileNameROSE + "\"\n\n";
      
-     string includeHeaderFileName = "sage3.h";
-     string includeHeaderString = includeHeaderStringROSE+
+     string includeHeaderFileName = "sage3basic.h";
+     //     string includeHeaderString = includeHeaderStringROSE+
+     string includeHeaderString = 
        "// MACHINE GENERATED SOURCE FILE WITH ROSE --- DO NOT MODIFY!\n\n #include \"" + includeHeaderFileName + "\"\n\n";
      string includeHeaderStringWithoutROSE = 
        "// MACHINE GENERATED SOURCE FILE --- DO NOT MODIFY!\n\n #include \"" + includeHeaderFileName + "\"\n\n";

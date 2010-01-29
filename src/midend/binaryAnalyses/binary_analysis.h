@@ -1,6 +1,6 @@
 #include "integerOps.h"
 #include "x86InstructionSemantics.h"
-
+#include "Partitioner.h"
 
 /*********************************
 * Find root nodes in the graph. A root node is a node with no in edges.

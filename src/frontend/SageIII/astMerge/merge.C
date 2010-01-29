@@ -1,3 +1,16 @@
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "astPostProcessing.h"
+
+#include "collectAssociateNodes.h"
+#include "test_support.h"
+#include "merge_support.h"
+#include "buildMangledNameMap.h"
+#include "buildReplacementMap.h"
+#include "fixupTraversal.h"
+#include "collectAssociateNodes.h"
+#include "test_support.h"
+#include "merge.h"
 
 // This implements the support for merging ASTs. It should merge perfectly
 // if we handled the merging of everthing, but namespaces and some function declarations
@@ -15,7 +28,7 @@
 //    4) variable declarations that use "extern" are mangled the same. e.g 
 //       "int x;" and "extern int x;"
 
-#include "rose.h"
+//#include "rose.h"
 
 // #include "colorTraversal.h"
 // #include "../../../developersScratchSpace/Dan/colorAST_tests/colorTraversal.h"

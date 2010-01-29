@@ -1,5 +1,5 @@
 
-#include <rose.h>
+#include "sage3basic.h"
 
 #include <QRTreeVisitor.h>
 #include <QRMain.h>

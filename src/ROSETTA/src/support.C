@@ -658,7 +658,7 @@ Grammar::setUpSupport ()
   // BaseClass.setDataPrototype               ( "SgBaseClassModifier*", "baseClassModifier", "= NULL",
   //              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
      BaseClass.setDataPrototype               ( "SgBaseClassModifier*", "baseClassModifier", "= NULL",
-                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
+                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
 
      FuncDecl_attr.setFunctionPrototype ( "HEADER_FUNCTION_DECLARATION_ATTRIBUTE", "../Grammar/Support.code");
      ClassDecl_attr.setFunctionPrototype( "HEADER_CLASS_DECLARATION_ATTRIBUTE", "../Grammar/Support.code");
@@ -674,23 +674,30 @@ Grammar::setUpSupport ()
   // Pragma.setDataPrototype  ( "Sg_File_Info*", "file_info", "= NULL",
   //        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
      Pragma.setDataPrototype  ( "Sg_File_Info*", "startOfConstruct", "= NULL",
-                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
      Pragma.setDataPrototype ( "short" , "printed", "= 0",
-                               NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#if 1
+                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (1/3/2006): Added attribute via ROSETTA (changed to pointer to AstAttributeMechanism)
   // Modified implementation to only be at specific IR nodes.
      Pragma.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-     Pragma.setFunctionPrototype      ( "HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
-     Pragma.setFunctionSource         ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
-#endif
+     Pragma.setFunctionPrototype( "HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
+     Pragma.setFunctionSource   ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
+
 
   // DQ (5/6/2005): Build support for directories in addition to files (for support of large projects)
-     Directory.setDataPrototype         ( "SgFileList*", "fileList", "= NULL",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     Directory.setDataPrototype         ( "SgDirectoryList*", "directoryList", "= NULL",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  // DQ (1/20/2010): I would like to avoid links and permissions etc., I hope that such details will 
+  // not be required in the future.
+     Directory.setDataPrototype ( "std::string", "name", "= \"\"",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     Directory.setDataPrototype ( "SgFileList*", "fileList", "= NULL",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // Note that this must be of type: "SgDirectoryList*" since it a pointer to an IR node and not a STL list.
+     Directory.setDataPrototype ( "SgDirectoryList*", "directoryList", "= NULL",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
   // DQ (1/3/2006): Added attribute via ROSETTA (changed to pointer to AstAttributeMechanism)
   // Modified implementation to only be at specific IR nodes.
      Directory.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
@@ -700,11 +707,22 @@ Grammar::setUpSupport ()
 
 
      FileList.setDataPrototype          ( "SgFilePtrList", "listOfFiles", "",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  //             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  //             NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (1/23/2010): Not clear if we should put attributes here, but for now it is OK.
+  // This is presently need to avoid an error in the roseHPCToolkitTests, but there may be 
+  // a better way to avoid that error.
+     FileList.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     FileList.setFunctionPrototype      ( "HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
+     FileList.setFunctionSource         ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
 
   // DQ (5/6/2005): ROSETTA generated the wrong code for this case until it was fixed 5/8/2005 in Cxx_GrammarTreeTraversalSuccessorContainer.C
      DirectoryList.setDataPrototype     ( "SgDirectoryPtrList", "listOfDirectories", "",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  //             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (12/19/2005): Support for explicitly specified qualified names (scope is a shared reference to a SgScopeStatement)
      QualifiedName.setDataPrototype     ( "SgScopeStatement*", "scope", "= NULL",
@@ -1145,16 +1163,16 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "isObjectFile", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (8/26/2008): Adds support for more agressive disassembly of sections that are in
-  // executable segments but may be in non-executable segments.  Segments are sets of sections
-  // and the OS marks pages based on segment settings, not sections settings, so sections
-  // settings can be ignored.  This setting follows the segments setting it selecting executable
-  // sets of sections (segments), instead of section settings which could be ignored. Binaries
-  // built using compilers and intended for debugging follow more rules than arbitrary binaries.
-  // File.setDataPrototype         ( "bool", "aggressive", "= false",
-  //             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     BinaryComposite.setDataPrototype         ( "bool", "aggressive", "= false",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // RPM (12/29/2009): Switch to control how aggressive the disassembler is. It takes a list of words based loosely
+  // on the constants in the Disassembler::SearchHeuristic enum.
+     File.setDataPrototype("unsigned", "disassemblerSearchHeuristics", "= Disassembler::SEARCH_DEFAULT",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // RPM (1/5/2010): Switch to control how the Partitioner looks for functions. It takes a list of words based loosely
+  // on the constants in the SgAsmFunctionDeclaration::FunctionReason enum.
+     File.setDataPrototype("unsigned", "partitionerSearchHeuristics", "= SgAsmFunctionDeclaration::FUNC_DEFAULT",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
 
   // ******************************************************************************
@@ -1409,20 +1427,30 @@ Grammar::setUpSupport ()
   // ************************* Project IR Node ************************
   // ******************************************************************
 
+#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
+  // Old functionality
   // DQ (4/7/2001) Added support for multiple files (changed SgFile* to SgFilePtrListPtr*)
-  // Project.setDataPrototype      ( "SgFile*"  , "file", "= NULL" );
-     Project.setDataPrototype      ( "SgFilePtrList"  , "fileList", "= SgFilePtrList()" ,
-                                     CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  // Project.setDataPrototype ( "SgFile*"  , "file", "= NULL" );
+     Project.setDataPrototype ( "SgFilePtrList"  , "fileList", "= SgFilePtrList()" ,
+                           CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#else
+  // DQ (1/20/2010): Change to provide uniformity in ROSE for how SgFile is handled (just like any other IR node).
+  // This avoids was was previously references that we returned and allows the ROSETTA rules to be
+  // followed that avoid having more than one list or mixing lists with data members.
+  // SgFileList is an IR node and this is a data member pointer of that type.
+     Project.setDataPrototype ( "SgFileList*"  , "fileList_ptr", "= NULL" ,
+                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
 
 #if 0
   // DQ (10/16/2005): Removed because they are not needed except as a local variable in the
   // command line processing function.
      // MK: store the command line data associated with the file (or is it the argv for the whole project?)
      Project.setDataPrototype("int","numberOfCommandLineArguments", "= 0",
-                              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      // MK: store the command line data associated with the file (or is it the argv for the whole project?)
      Project.setDataPrototype("char**","commandLineArgumentList", "= NULL",
-                              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // Project.setDataPrototype("int","defaultNumberOfCommandLineArguments", "= 0",
   //        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1542,13 +1570,13 @@ Grammar::setUpSupport ()
   // Project.setDataPrototype("bool","lookForExcludePaths", "= false",
   //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Project.setDataPrototype("SgStringList","includePathList", "",
-                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Project.setDataPrototype("SgStringList","excludePathList", "",
-                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Project.setDataPrototype("SgStringList","includeFileList", "",
-                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Project.setDataPrototype("SgStringList","excludeFileList", "",
-                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 1
   // DQ (2/4/2009): Moved this to the SgProject since it applies to the command line and all files.
   // DQ (1/9/2008): This permits a file to be marked explicitly as a binary file and avoids
@@ -1562,6 +1590,15 @@ Grammar::setUpSupport ()
   // This permits multiple files to be handled separately in that program analysis which supports it.
      Project.setDataPrototype("std::string","dataBaseFilename", "= \"\"",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+#if 1
+  // DQ (1/20/2010): Added list of directories to the SgProject to represent large scale projects
+  // (as can be useful for code generation).
+  // Note that this is marked as NO_TRAVERSAL because it will otherwise interfere with "SgFilePtrList fileList"
+  // This can be changed later, but it could effect a number of interfaces internally, so don't change it yet.
+     Project.setDataPrototype ("SgDirectoryList*", "directoryList", "= NULL",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

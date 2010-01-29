@@ -20,6 +20,7 @@ class ShowFunctions : public SgSimpleProcessing {
         if (defn) {
             /* Scan through the function's instructions to find the range of addresses for the function. */
             rose_addr_t func_start=~(rose_addr_t)0, func_end=0;
+            size_t ninsns=0, nbytes=0;
             SgAsmStatementPtrList func_stmts = defn->get_statementList();
             for (size_t i=0; i<func_stmts.size(); i++) {
                 SgAsmBlock *bb = isSgAsmBlock(func_stmts[i]);
@@ -28,24 +29,18 @@ class ShowFunctions : public SgSimpleProcessing {
                     for (size_t j=0; j<block_stmts.size(); j++) {
                         SgAsmInstruction *insn = isSgAsmInstruction(block_stmts[j]);
                         if (insn) {
+                            ninsns++;
                             func_start = std::min(func_start, insn->get_address());
                             func_end = std::max(func_end, insn->get_address()+insn->get_raw_bytes().size());
+                            nbytes += insn->get_raw_bytes().size();
                         }
                     }
                 }
             }
 
             /* Reason that this is a function */
-            unsigned r = defn->get_reason();
-            printf("    %3zu 0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64"  ", ++nfuncs, func_start, func_end-func_start, func_end);
-            printf(" %c%c%c%c%c%c%c",
-                   r & SgAsmFunctionDeclaration::FUNC_ENTRY_POINT ? 'E' : '.',
-                   r & SgAsmFunctionDeclaration::FUNC_CALL_TARGET ? 'C' : '.',
-                   r & SgAsmFunctionDeclaration::FUNC_EH_FRAME    ? 'X' : '.',
-                   r & SgAsmFunctionDeclaration::FUNC_SYMBOL      ? 'S' : '.',
-                   r & SgAsmFunctionDeclaration::FUNC_PATTERN     ? 'P' : '.', 
-                   r & SgAsmFunctionDeclaration::FUNC_GRAPH       ? 'G' : '.', 
-                   r & SgAsmFunctionDeclaration::FUNC_USERDEF     ? 'U' : '.');
+            printf("    %3zu 0x%08"PRIx64" 0x%08"PRIx64" %5zu/%-6zu ", ++nfuncs, func_start, func_end, ninsns, nbytes);
+            fputs(defn->reason_str(true).c_str(), stdout);
 
             /* Kind of function */
             switch (defn->get_function_kind()) {
@@ -79,17 +74,16 @@ public:
         delete d;
         d = new MyDisassembler;
         Partitioner *p = new Partitioner;
-        unsigned h = p->get_heuristics();
+        unsigned h = p->get_search();
         h &= ~SgAsmFunctionDeclaration::FUNC_PATTERN;
-        p->set_heuristics(h);
-        p->addFunctionDetector(user_pattern);
+        p->set_search(h);
+        p->add_function_detector(user_pattern);
         d->set_partitioner(p);
         return d;
     }
 private:
     /* Looks for "push bp" (any word size) and makes them the start of functions. */
-    static void user_pattern(SgAsmGenericHeader* hdr, const Disassembler::InstructionMap& insns,
-                             const Partitioner::BasicBlockStarts&, Partitioner::FunctionStarts &func_starts) {
+    static void user_pattern(Partitioner* p, SgAsmGenericHeader* hdr, const Disassembler::InstructionMap& insns) {
         if (hdr) return; /*this function doesn't depend on anything in a file header*/
         for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ii++) {
             rose_addr_t addr = ii->first;
@@ -100,7 +94,7 @@ private:
             SgAsmx86RegisterReferenceExpression *rre = isSgAsmx86RegisterReferenceExpression(operands[0]);
             if (!rre || rre->get_register_class()!=x86_regclass_gpr || rre->get_register_number()!=x86_gpr_bp) continue;
             printf("Marking 0x%08"PRIx64" as the start of a function.\n", addr);
-            func_starts[addr].reason |= SgAsmFunctionDeclaration::FUNC_USERDEF;
+            p->add_function(addr, SgAsmFunctionDeclaration::FUNC_USERDEF);
         }
     }
 };
@@ -121,11 +115,12 @@ main(int argc, char *argv[])
     printf("    Key for reason(s) address is a suspected function:\n");
     printf("      E = entry address         C = call target           X = exception frame\n");
     printf("      S = function symbol       P = instruction pattern   G = interblock branch graph\n");
-    printf("      U = user-def detection\n");
+    printf("      U = user-def detection    N = NOP/Zero padding      D = discontiguous blocks\n");
+    printf("      H = insn sequence head\n");
     printf("\n");
-    printf("    Num    Start      Size       End       Reason    Kind   Name\n");
-    printf("    --- ---------- ---------- ----------   ------- -------- --------------------------------\n");
+    printf("    Num  Low-Addr   End-Addr  Insns/Bytes   Reason      Kind   Name\n");
+    printf("    --- ---------- ---------- ------------ --------- -------- --------------------------------\n");
     ShowFunctions().traverseInputFiles(project, preorder);
-    printf("    --- ---------- ---------- ----------   ------- -------- --------------------------------\n");
+    printf("    --- ---------- ---------- ------------ --------- -------- --------------------------------\n");
     return 0;
 }

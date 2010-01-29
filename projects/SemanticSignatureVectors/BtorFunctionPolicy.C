@@ -21,7 +21,11 @@ std::string btorTranslate(BtorFunctionPolicy& policy, const std::vector<SgAsmx86
   for (size_t i = 0; i < instructions.size(); ++i) {
     SgAsmx86Instruction* insn = isSgAsmx86Instruction(instructions[i]);
     ROSE_ASSERT (insn);
-    t.processInstruction(insn);
+    try {
+        t.processInstruction(insn);
+    } catch (const X86InstructionSemantics<BtorFunctionPolicy, BtorWordType>::Exception &e) {
+        fprintf(stderr, "%s: %s\n", e.mesg.c_str(), unparseInstructionWithAddress(e.insn).c_str());
+    }
   }
   // Name everything so it will be unparsed
   for (size_t i = 0; i < 8; ++i) policy.problem.nameValue(policy.registerMap.gprs[i], std::string("new_e") + gprToString((X86GeneralPurposeRegister)i));

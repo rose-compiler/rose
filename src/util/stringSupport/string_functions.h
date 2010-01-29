@@ -28,8 +28,9 @@ namespace StringUtility
 
      std::string getAbsolutePathFromRelativePath ( const std::string & relativePath, bool printErrorIfAny = false); // Real declaration is below
 
-     struct StringWithLineNumber {
-          std::string str;
+     struct StringWithLineNumber
+        {
+          std::string str;      // DQ (1/23/2010): this name is difficult to trace within the code.
           std::string filename; // Empty string means generated code
           unsigned int line;
 

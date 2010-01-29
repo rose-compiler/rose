@@ -1,5 +1,9 @@
-
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "resetParentPointers.h"
+#include "astPostProcessing.h"
+// tps (01/14/2009): Had to define this locally as it is not part of sage3 but rose.h
+#include "AstDiagnostics.h"
 
 #define DEBUG_PARENT_INITIALIZATION 0
 

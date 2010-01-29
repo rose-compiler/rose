@@ -126,11 +126,11 @@ std::ostream& operator<<(std::ostream& o, const LatticeElement<Len>& e)
 }
 
 /** Counter to generate unique names for XVariables (and thereby, LatticeElements). */
-uint64_t xvarNameCounter = 0;
+extern uint64_t xvarNameCounter;
 
 /** Instruction on which we are currently working. Set by FindConstantsPolicy::startInstruction, cleared by
  *  FindConstantsPolicy::finishInstruction, and accessed by the XVariable constructor. */
-SgAsmx86Instruction* currentInstruction = NULL;
+extern SgAsmx86Instruction* currentInstruction;
 
 template <size_t Len>
 struct XVariable: public Variable { /*Variable defined in flowEquations.h*/
@@ -173,6 +173,21 @@ struct XVariablePtr {
     XVariable<Len>* operator->() const {
         return var;
     }
+    static XVariablePtr bottom() {
+        struct BottomConstraint: public Constraint {
+            XVariablePtr<Len> var;
+            BottomConstraint(XVariablePtr<Len> var)
+                : var(var)
+                {}
+            virtual void run() const {
+                var->set(LatticeElement<Len>::nonconstant(var->myName, var->def));
+            }
+            virtual void markDependencies() {}
+        };
+        XVariablePtr<Len> var = new XVariable<Len>();
+        (new BottomConstraint(var))->activate();
+        return var;
+    }
 };
 
 template <size_t Len>
@@ -195,38 +210,8 @@ struct MemoryWrite {
     }
 };
 
-/** Returns true if the contents of memory location @p a could possibly overlap with @p b. In other words, returns false only
- *  if memory location @p a cannot overlap with memory location @p b. */
-bool mayAlias(const MemoryWrite& a, const MemoryWrite& b) {
-    LatticeElement<32> addr1 = a.address;
-    LatticeElement<32> addr2 = b.address;
-
-    if (addr1.isTop || addr2.isTop)
-        return false;
-
-    /* Two different unknown values or offsets from two different unknown values. */
-    if (addr1.name != addr2.name)
-        return true;
-
-    /* Same unknown base values but inverses (any offset). */
-    if (addr1.name != 0 && addr1.negate != addr2.negate)
-        return true;
-
-    /* If they have the same base values (or are both constant) then check the offsets. The 32-bit casts are purportedly
-     * necessary to wrap propertly, but I'm not sure this will work for addresses (LatticeElements) that have a length other
-     * than 32 bits. [FIXME RPM 2009-02-03]. */
-    uint32_t offsetDiff = (uint32_t)(addr1.offset - addr2.offset);
-    if (offsetDiff < a.len || offsetDiff > (uint32_t)(-b.len))
-        return true;
-
-    return false;
-}
-
-/** Returns true if memory locations @p a and @p b are the same (note that "same" is more strict than "overlap"). */
-bool mustAlias(const MemoryWrite& a, const MemoryWrite& b) {
-    if (!mayAlias(a, b)) return false;
-    return a.address.offset == b.address.offset;
-}
+bool mayAlias(const MemoryWrite&, const MemoryWrite&);
+bool mustAlias(const MemoryWrite&, const MemoryWrite&);
 
 template <size_t From, size_t To>
 XVariablePtr<To> extendByMSB(XVariablePtr<From>);
@@ -322,29 +307,6 @@ struct MemoryVariable: public Variable {
         return mws;
     }
 };
-
-template <size_t Len>
-MemoryVariable* memoryWriteHelper(MemoryVariable* memory, XVariablePtr<32> address, XVariablePtr<Len> data) {
-    struct C: public Constraint {
-        MemoryVariable* memory;
-        XVariablePtr<32> address;
-        XVariablePtr<Len> data;
-        MemoryVariable* memoryOut;
-        virtual void run() const {
-            MemoryWriteSet mws = memory->get();
-            mws.addWrite(address->get(), extendByMSB<Len, 32>(data)->get(), Len / 8);
-            memoryOut->set(mws);
-        }
-        virtual void markDependencies() {addDependency(memory); addDependency(address); addDependency(data);}
-    };
-    C* c = new C();
-    c->memory = memory;
-    c->address = address;
-    c->data = data;
-    c->memoryOut = new MemoryVariable();
-    c->activate();
-    return c->memoryOut;
-}
 
 template <size_t OutputLen>
 struct NullaryConstraint: public Constraint {
@@ -564,22 +526,6 @@ struct TernaryConstraint: public Constraint {
         return result;                                                                                                         \
     }
 
-template <size_t Len>
-XVariablePtr<Len> bottom() {
-    struct BottomConstraint: public Constraint {
-        XVariablePtr<Len> var;
-        BottomConstraint(XVariablePtr<Len> var)
-            : var(var)
-            {}
-        virtual void run() const {
-            var->set(LatticeElement<Len>::nonconstant(var->myName, var->def));
-        }
-        virtual void markDependencies() {}
-    };
-    XVariablePtr<Len> var = new XVariable<Len>();
-    (new BottomConstraint(var))->activate();
-    return var;
-}
 
 template <size_t Len>
 struct MergeConstraint: public Constraint {
@@ -628,11 +574,11 @@ struct RegisterSet {
 
     void setToBottom() {
         for (size_t i = 0; i < 8; ++i)
-            gpr[i] = bottom<32>();
+            gpr[i] = XVariablePtr<32>::bottom();
         for (size_t i = 0; i < 6; ++i)
-            segreg[i] = bottom<16>();
+            segreg[i] = XVariablePtr<16>::bottom();
         for (size_t i = 0; i < 16; ++i)
-            flag[i] = bottom<1>();
+            flag[i] = XVariablePtr<1>::bottom();
         memoryWrites->set(MemoryWriteSet::bottom());
     }
 
@@ -683,54 +629,7 @@ struct RegisterSet {
 };
 
 std::ostream&
-operator<<(std::ostream& o, const RegisterSet& rs)
-{
-    std::string prefix = "    ";
-    for (size_t i = 0; i < 8; ++i)
-        o <<prefix << gprToString((X86GeneralPurposeRegister)i) << " = " << rs.gpr[i] << std::endl;
-    for (size_t i = 0; i < 6; ++i)
-        o <<prefix << segregToString((X86SegmentRegister)i) << " = " << rs.segreg[i] << std::endl;
-    for (size_t i = 0; i < 16; ++i)
-        o <<prefix << flagToString((X86Flag)i) << " = " << rs.flag[i] << std::endl;
-    o <<prefix << "memory = ";
-    if (rs.memoryWrites->get().isTop) {
-        o <<prefix << "<top>\n";
-    } else if (rs.memoryWrites->get().writes.empty()) {
-        o <<"{}\n";
-    } else {
-        o <<"{\n";
-        for (size_t i = 0; i < rs.memoryWrites->get().writes.size(); ++i) {
-            o <<prefix <<"    "
-              <<"size=" <<rs.memoryWrites->get().writes[i].len
-              << "; addr=" <<rs.memoryWrites->get().writes[i].address
-              << "; value=" <<rs.memoryWrites->get().writes[i].data
-              <<"\n";
-        }
-        o <<prefix << "}\n";
-    }
-    return o;
-}
-
-// Only safe when MSBs don't matter (i.e., you can't extract bits from something and then use this to put in zeros -- the
-// original bits will probably appear again)
-template <size_t Len, size_t Len2>
-UNARY_COMPUTATION_SPECIAL(extendByMSB, Len, Len2, {
-        result->set(LatticeElement<Len2>(le1.name, le1.definingInstruction, le1.negate, le1.offset));
-    })
-
-template <size_t From, size_t To, size_t Len>
-UNARY_COMPUTATION_SPECIAL(extract, Len, To - From, {
-        if (From == 0) {
-            result->set(LatticeElement<To - From>(le1.name, le1.definingInstruction, le1.negate, le1.offset));
-            return;
-        }
-        if (le1.name != 0) {
-            result->set(LatticeElement<To - From>::nonconstant(result->myName, result->def));
-            return;
-        }
-        result->set(LatticeElement<To - From>::constant((le1.offset >> From) & (IntegerOps::SHL1<uint64_t, To - From>::value - 1),
-                                                        result->def));
-    })
+operator<<(std::ostream& o, const RegisterSet& rs);
 
 struct FindConstantsPolicy {
     std::map<uint64_t, RegisterSet> rsets;
@@ -796,13 +695,15 @@ struct FindConstantsPolicy {
         return var;
     }
 
-    template <size_t Len1, size_t Len2>
-    BINARY_COMPUTATION(concat, Len1, Len2, Len1 + Len2, {
-            return a | (b << Len1);
+    // Only safe when MSBs don't matter (i.e., you can't extract bits from something and then use this to put in zeros -- the
+    // original bits will probably appear again)
+    template <size_t Len, size_t Len2>
+    static UNARY_COMPUTATION_SPECIAL(extendByMSB, Len, Len2, {
+            result->set(LatticeElement<Len2>(le1.name, le1.definingInstruction, le1.negate, le1.offset));
         })
 
-        template <size_t From, size_t To, size_t Len>
-    UNARY_COMPUTATION_SPECIAL(extract, Len, To - From, {
+    template <size_t From, size_t To, size_t Len>
+    static UNARY_COMPUTATION_SPECIAL(extract, Len, To - From, {
             if (From == 0) {
                 result->set(LatticeElement<To - From>(le1.name, le1.definingInstruction, le1.negate, le1.offset));
                 return;
@@ -811,9 +712,14 @@ struct FindConstantsPolicy {
                 result->set(LatticeElement<To - From>::nonconstant(result->myName, result->def));
                 return;
             }
-            result->set(LatticeElement<To - From>::constant((le1.offset >> From) &
-                                                              (IntegerOps::SHL1<uint64_t, To - From>::value - 1),
+            result->set(LatticeElement<To - From>::constant((le1.offset >> From) & (IntegerOps::SHL1<uint64_t, To - From>::value - 1),
                                                             result->def));
+        })
+
+
+    template <size_t Len1, size_t Len2>
+    BINARY_COMPUTATION(concat, Len1, Len2, Len1 + Len2, {
+            return a | (b << Len1);
         })
 
     XVariablePtr<1> false_() {
@@ -877,10 +783,10 @@ struct FindConstantsPolicy {
                 {}
             virtual void run() const {
                 LatticeElement<Len> res;
-                if (sel->get().name != 0 || sel->get().name == 0 && sel->get().offset == 1) {
+                if (sel->get().name != 0 || (sel->get().name == 0 && sel->get().offset == 1)) {
                     res.merge(ifTrue->get(), result->myName, result->def);
                 }
-                if (sel->get().name != 0 || sel->get().name == 0 && sel->get().offset == 0) {
+                if (sel->get().name != 0 || (sel->get().name == 0 && sel->get().offset == 0)) {
                     res.merge(ifFalse->get(), result->myName, result->def);
                 }
                 result->set(res);
@@ -990,6 +896,7 @@ struct FindConstantsPolicy {
 
     template <size_t Len1, size_t Len2>
     BINARY_COMPUTATION(unsignedDivide, Len1, Len2, Len1, {
+            if (0==b) throw std::string("division by zero");
             return (a / b);
         })
 
@@ -1051,6 +958,29 @@ struct FindConstantsPolicy {
         return c->result;
     }
 
+    template <size_t Len>
+    static MemoryVariable* memoryWriteHelper(MemoryVariable* memory, XVariablePtr<32> address, XVariablePtr<Len> data) {
+        struct C: public Constraint {
+            MemoryVariable* memory;
+            XVariablePtr<32> address;
+            XVariablePtr<Len> data;
+            MemoryVariable* memoryOut;
+            virtual void run() const {
+                MemoryWriteSet mws = memory->get();
+                mws.addWrite(address->get(), extendByMSB<Len, 32>(data)->get(), Len / 8);
+                memoryOut->set(mws);
+            }
+            virtual void markDependencies() {addDependency(memory); addDependency(address); addDependency(data);}
+        };
+        C* c = new C();
+        c->memory = memory;
+        c->address = address;
+        c->data = data;
+        c->memoryOut = new MemoryVariable();
+        c->activate();
+        return c->memoryOut;
+    }
+
     /** Writes @p data at the specified address. */
     template <size_t Len>
     void writeMemory(X86SegmentRegister segreg, XVariablePtr<32> addr, XVariablePtr<Len> data, XVariablePtr<1> cond) {
@@ -1073,7 +1003,11 @@ struct FindConstantsPolicy {
     }
 
     void hlt() {} // FIXME
-    void interrupt(uint8_t num) {} // FIXME
+
+    void interrupt(uint8_t num) {
+        currentRset.setToBottom();
+    }
+
     XVariablePtr<64> rdtsc() { // FIXME
         return number<64>(0);
     }
@@ -1256,6 +1190,80 @@ public:
         };
         (new IC(result, a, b))->activate(); /*invokes the run() method above*/
         return result;
+    }
+};
+
+/** Instruction semantics policy for API-compliant function calls.  The main thing this does differently from
+ *  FindConstantsPolicy is that x86 CALL instructions initialize the register set and memory for the instruction at the next
+ *  address after the CALL assuming that the called function will honor the ABI specification and will return to the address
+ *  following the CALL. */
+class FindConstantsABIPolicy: public FindConstantsPolicy {
+public:
+    /* Returns the function containing the instruction. */
+    SgAsmFunctionDeclaration* find_function(SgAsmInstruction* insn) {
+        SgNode* n=insn;
+        while (n && !isSgAsmFunctionDeclaration(n))
+            n = n->get_parent();
+        return isSgAsmFunctionDeclaration(n);
+    }
+
+    /* Determines if the function contains an instruction at the specified address. */
+    bool function_contains_address(SgAsmFunctionDeclaration* f, rose_addr_t va) {
+        for (size_t i=0; i<f->get_statementList().size(); ++i) {
+            SgAsmBlock* block = isSgAsmBlock(f->get_statementList()[i]);
+            ROSE_ASSERT(block!=NULL);
+            for (size_t j=0; j<block->get_statementList().size(); ++j) {
+                SgAsmInstruction* insn = isSgAsmInstruction(block->get_statementList()[j]);
+                ROSE_ASSERT(insn!=NULL);
+                if (insn->get_address()==va)
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    /* Returns true if the function at the specified address complies with the ABI */
+    bool is_abi_compliant(rose_addr_t) {
+        return true; /* left as an exercise for later ;-) */
+    }
+
+    /* Determines if a CALL instruction in fact calls a function. Malware sometimes uses CALL instructions for unconditional
+     * jumps, in which case the instruction partitioner (Partitioner class) would have placed the call target in the same
+     * function as the CALL instruction (note that recursive calls are to the entry address of the function). */
+    bool is_abi_function_call(SgAsmInstruction* insn_) {
+        SgAsmx86Instruction* insn = isSgAsmx86Instruction(insn_);
+        ROSE_ASSERT(insn!=NULL);
+        if (insn->get_kind()!=x86_call && insn->get_kind()!=x86_farcall)
+            return false;
+        if (newIp->get().name!=0)
+            return true; /*if we don't know the call target then assume it's a function call*/
+        SgAsmFunctionDeclaration *caller = find_function(insn);
+        rose_addr_t callee = newIp->get().offset;
+        if (function_contains_address(caller, callee) && caller->get_entry_va()!=callee)
+            return false; /*intra-function branch*/
+        return is_abi_compliant(callee);
+    }
+
+    /* Augments superclass method so that the instruction following a CALL (provided this is really a function call and not
+     * just an intra-function branch) has a register set whose callee-preserved registers are actually reserved across the
+     * CALL instruction. We also preserve the stack pointer, frame pointer, and all memory. */
+    void finishInstruction(SgAsmInstruction* insn_) {
+        SgAsmx86Instruction* insn = isSgAsmx86Instruction(insn_);
+        ROSE_ASSERT(insn!=NULL);
+        if (is_abi_function_call(insn)) {
+            rose_addr_t call_va = insn->get_address();
+            rose_addr_t next_va = insn->get_address() + insn->get_raw_bytes().size();
+            RegisterSet rset;
+            rset.setToBottom();
+            rset.memoryWrites = rsets[call_va].memoryWrites;
+            rset.gpr[x86_gpr_bx] = rsets[call_va].gpr[x86_gpr_bx];
+            rset.gpr[x86_gpr_di] = rsets[call_va].gpr[x86_gpr_di];
+            rset.gpr[x86_gpr_si] = rsets[call_va].gpr[x86_gpr_si];
+            rset.gpr[x86_gpr_sp] = rsets[call_va].gpr[x86_gpr_sp];
+            rset.gpr[x86_gpr_bp] = rsets[call_va].gpr[x86_gpr_bp];
+            rsets[next_va].mergeIn(rset);
+        }
+        FindConstantsPolicy::finishInstruction(insn);
     }
 };
 

@@ -47,12 +47,17 @@ TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
 PASSING_TEST_Objects = ${TESTCODES:.C=.o}
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
+# VALGRIND_OPTIONS = -v --num-callers=12 --leak-check=yes --error-limit=no --show-reachable=yes
+VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
+# VALGRIND = valgrind $(VALGRIND_OPTIONS)
+VALGRIND =
+
 # A number of tests require the path to the A++ include directory 
 # and a number of other tests require a path to the source directory.
 # Add the dependence upon the source file to trigger recompilation each time the makefile is run!
 # $(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.C)
 $(TEST_Objects): ../../testTranslator
-	../../testTranslator $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
+	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.o=.C)
 
 # This requires a special makefile rule
 test2005_56.o: ../../testTranslator

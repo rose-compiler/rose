@@ -1,7 +1,8 @@
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #include <sstream>
 #include <vector>
-
+#include "sageBuilder.h"
 #include "CFG.h"
 #include <AstInterface_ROSE.h>
 #include "controlFlowGraph.h"

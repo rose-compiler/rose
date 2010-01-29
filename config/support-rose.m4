@@ -99,7 +99,7 @@ fi
 #exit 1
 
 # DQ (12/29/2009): This is part of optional support to reduce the sizes of some of the ROSETTA generated files.
-AC_ARG_ENABLE(smaller-generated-files, AS_HELP_STRING([--enable-smaller-generated-files], [ROSETTA generates smaller files (but more of them so it takes longer to compile)]))
+AC_ARG_ENABLE(smallerGeneratedFiles, AS_HELP_STRING([--enable-smaller-generated-files], [ROSETTA generates smaller files (but more of them so it takes longer to compile)]))
 AM_CONDITIONAL(ROSE_USE_SMALLER_GENERATED_FILES, [test "x$enable_smaller_generated_files" = xyes])
 if test "x$enable_smaller_generated_files" = "xyes"; then
   AC_MSG_WARN([Using optional ROSETTA mechanim to generate numerous but smaller files for the ROSE IR.])
@@ -1452,6 +1452,7 @@ projects/RTED/CppRuntimeSystem/Makefile
 projects/RTED/CppRuntimeSystem/DebuggerQt/Makefile
 projects/taintcheck/Makefile
 projects/C_to_Promela/Makefile
+projects/OpenMP_Analysis/Makefile
 projects/OpenMP_Translator/Makefile
 projects/OpenMP_Translator/includes/Makefile
 projects/OpenMP_Translator/tests/Makefile

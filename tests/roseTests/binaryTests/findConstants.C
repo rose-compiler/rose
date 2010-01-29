@@ -35,7 +35,11 @@ class AnalyzeFunctions : public SgSimpleProcessing {
             for (size_t i=0; i<instructions.size(); i++) {
                 SgAsmx86Instruction *insn = isSgAsmx86Instruction(instructions[i]);
                 ROSE_ASSERT(insn);
-                t.processInstruction(insn);
+                try {
+                    t.processInstruction(insn);
+                } catch (const X86InstructionSemantics<FindConstantsPolicy, XVariablePtr>::Exception &e) {
+                    fprintf(stderr, "%s: %s\n", e.mesg.c_str(), unparseInstructionWithAddress(e.insn).c_str());
+                }
                 RegisterSet rset = policy.currentRset;
                 std::cout <<unparseInstructionWithAddress(insn) <<"\n"
                           <<rset;

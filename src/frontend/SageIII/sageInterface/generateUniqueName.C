@@ -1,4 +1,4 @@
-#include "sage3.h"
+#include "sage3basic.h"
 
 // DQ (10/14/2006): Added supporting help functions
 #include "transformationSupport.h"
@@ -1322,6 +1322,24 @@ SageInterface::generateUniqueName ( SgNode* node, bool ignoreDifferenceBetweenDe
                  // Make the key unique for each file info object!
                  // key = key + StringUtility::numberToString(node);
                     key = key + pragma->get_name();
+                    break;
+                  }
+
+            // DQ (1/23/2010): previously unhandled case ...
+               case V_SgFileList:
+                  {
+                    key = "__file_list_";
+                 // Make the key unique for each SgFileList object!
+                    key = key + StringUtility::numberToString(node);
+                    break;
+                  }
+
+            // DQ (1/23/2010): previously unhandled case ...
+               case V_SgDirectoryList:
+                  {
+                    key = "__directory_list_";
+                 // Make the key unique for each SgDirectoryList object!
+                    key = key + StringUtility::numberToString(node);
                     break;
                   }
 

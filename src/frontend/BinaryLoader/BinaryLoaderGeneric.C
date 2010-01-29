@@ -1,4 +1,8 @@
-#include <rose.h>
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "Loader.h"
+#include "Disassembler.h"
+#include "binaryLoader.h"
 
 #include "BinaryLoaderGeneric.h" // TODO remove
 using std::string;
@@ -432,11 +436,8 @@ bool BinaryLoaderGeneric::disassembleAllLibraries(SgBinaryComposite* binaryFile)
 {
   SgAsmInterpretationPtrList& interps = binaryFile->get_interpretations()->get_interpretations();
   for(size_t i=0; i < interps.size(); ++i){
-    //TODO fix when Dissemble gets fixed
     SgAsmInterpretation* interp = interps[i];
-    const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
-    Disassembler *disassembler = Disassembler::create(headers.front());
-    disassembler->disassemble(interp,NULL,NULL);
+    Disassembler::disassembleInterpretation(interp);
   }
   return true;
 }

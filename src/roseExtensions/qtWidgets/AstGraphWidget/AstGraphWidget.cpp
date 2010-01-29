@@ -1,4 +1,4 @@
-#include "rose.h"
+#include "sage3basic.h"
 #include "AstGraphWidget.h"
 
 #include "SageMimeData.h"

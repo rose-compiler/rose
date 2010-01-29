@@ -15,7 +15,9 @@
  *    if change to in[n]
  *       for all predecessors m of n, w.push(m)
  *****************************************/
-#include "rose.h"
+// tps (1/14/2010) : Switching from rose.h to sage3 changed size from 19,1 MB to 8,8MB
+
+#include "sage3basic.h"
 #include "LivenessAnalysis.h"
 #include "DefUseAnalysis_perFunction.h"
 #include "GlobalVarAnalysis.h"
@@ -702,13 +704,15 @@ FilteredCFGNode<IsDFAFilter> LivenessAnalysis::run(
 		}
 
 		counter++;
-		if (counter == 4000)
+                // Liao 1/27/2010
+                // Increase the upper limit to handle larger input
+		//if (counter == 4000)
+		if (counter == 80000)
 			abort = true;
 
 		if (abort) {
-			cerr
-					<< " \n\n\n>>>>>>>>>>>>>>>>>>>>>>>>>>> ABORTING !! INFINITE EXECUTION ... \n\n"
-					<< endl;
+			cerr << " \n\n\n Maximum iteration count is reached. ABORTING !! INFINITE EXECUTION ... \n\n"
+			     << endl;
 			worklist.clear();
 #if 1
 			// need to fix this, apperently some cases run indefinetly

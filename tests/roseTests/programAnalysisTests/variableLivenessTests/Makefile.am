@@ -34,7 +34,10 @@ EXTRA_DIST = $(TESTCODES) tests
 
 # DQ (7/25/2005): The current changes to the AST break these test programs:
 check-local:
+if USING_GNU_COMPILER
+#	This fails for the Intel icc or icpc compiler (restrict pointers are unparsed differently which causes dif to fail).
 	@$(MAKE) $(TEST_Objects)
+endif
 	@echo "*********************************************************************************************************************"
 	@echo "*** ROSE/tests/roseTests/programAnalysisTests/defUseAnalysisTests: make check rule complete (terminated normally) ***"
 	@echo "*********************************************************************************************************************"

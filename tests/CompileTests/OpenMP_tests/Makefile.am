@@ -23,6 +23,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	critical_orphaned.c \
 	dynamicChunk.c \
 	empty.c \
+	endif.c \
 	nowait.c \
 	expressions.c \
 	falsesharing.c \
@@ -67,6 +68,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	recursive.c \
 	reduction2.c \
 	reduction.c \
+	rice1.c \
 	section.c \
 	set_num_threads.c \
 	single.c \
@@ -91,6 +93,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	variables.c
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
+	classMember.cpp \
 	hello1.cpp \
 	helloNested.cpp \
 	objectPrivate.cpp \
@@ -99,6 +102,7 @@ CXX_TESTCODES_REQUIRED_TO_PASS = \
 	orphanedAtomic.cpp \
 	preprocessingInfo2.cpp \
 	task_link.cpp \
+	task_link2.cpp \
 	task_tree.cpp 
 
 # put macroCalls.c here since it requires -rose:wave, which causes seg fault on 64-bit machine

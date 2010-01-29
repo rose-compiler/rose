@@ -44,7 +44,7 @@ printf("---------(static,5) schedule--------------\n");
 
 #pragma omp single
 printf("---------(dynamic,3) schedule--------------\n");  
-#pragma omp for schedule(dynamic,3) ordered
+#pragma omp for schedule(dynamic,3)
   for (i=lower;i<upper;i+=stride)
   {
     a[i]=i*2;
@@ -52,19 +52,20 @@ printf("---------(dynamic,3) schedule--------------\n");
         i, omp_get_thread_num());
   }
 
+#if 1
 #pragma omp single
 printf("---------(guided) schedule--------------\n");  
-#pragma omp for schedule(guided) nowait
+#pragma omp for schedule(guided) 
   for (i=lower;i<upper;i+=stride)
   {
     a[i]=i*2;
     printf("Iteration %2d is carried out by thread %2d\n",\
         i, omp_get_thread_num());
   }
-
+#endif
 #pragma omp single
-printf("---------(runtime) schedule--------------\n");  
-#pragma omp for schedule(runtime)
+printf("---------(runtime) ordered schedule--------------\n");  
+#pragma omp for schedule(runtime) ordered
   for (i=lower;i<upper;i+=stride)
   {
     a[i]=i*2;

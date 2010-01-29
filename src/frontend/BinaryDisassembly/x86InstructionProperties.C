@@ -1,4 +1,5 @@
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 
 bool x86InstructionIsConditionalFlagControlTransfer(SgAsmx86Instruction* inst) {
   switch (inst->get_kind()) {
@@ -445,6 +446,7 @@ bool x86GetKnownBranchTarget(SgAsmx86Instruction* insn, uint64_t& addr) {
   // Treats far destinations as "unknown"
   switch (insn->get_kind()) {
     case x86_call:
+    case x86_farcall:
     case x86_jmp:
     case x86_ja:
     case x86_jae:

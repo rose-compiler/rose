@@ -6,6 +6,10 @@
 #ifndef ASTSHAREDMEMORYPARALLELPROCESSING_H
 #define ASTSHAREDMEMORYPARALLELPROCESSING_H
 
+// tps (01/08/2010) Added sage3basic since this doesnt compile under gcc4.1.2
+//#include "sage3basic.h"
+//#include "sage3.h"
+
 #include "AstProcessing.h"
 
 // Class containing all the information needed to synchronize parallelizable traversals. All traversals running

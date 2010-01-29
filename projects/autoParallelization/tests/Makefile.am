@@ -11,11 +11,13 @@ firstprivate.c \
 inner_only.c \
 jacobi_seq.c \
 lastprivate.c \
+livenessTest.c \
 matrixmultiply.c \
 outer_only.c \
 output_dep.c \
 output_dep2.c \
 output_dep3.c \
+plusplus.c \
 private.c \
 reduction.c \
 reduction_2.c \
@@ -28,7 +30,9 @@ true_dep_2.c \
 true_l2.c 
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
-ifstmt.C
+ifstmt.C \
+iterator2.C \
+iteratorloop.C
 
 # the code which can not yet be parallelized now
 # Or the needed analyses(def-use, liveness, or dependence analysis) cannot handle them yet
@@ -64,6 +68,9 @@ C_TEST_Objects = ${C_TESTCODES_REQUIRED_TO_PASS:.c=.o}
 #C_TEST_Output = ${C_TESTCODES_REQUIRED_TO_PASS:.c=.out}
 
 CXX_TEST_Objects = ${CXX_TESTCODES_REQUIRED_TO_PASS:.C=.o}
+
+../autoPar:
+	$(MAKE) -C ../. autoPar
 
 $(C_TEST_Objects): ../autoPar $(@:.o=.c)
 	$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.c) | fold >$(@:.o=.out)

@@ -1,10 +1,13 @@
-// #include <merge.h>
-#include "rose.h"
-
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #ifdef _MSC_VER
 #include "buildMangledNameMap.h"
 #endif
-
+#include "buildReplacementMap.h"
+#include "buildMangledNameMap.h"
+#include "fixupTraversal.h"
+#include "collectAssociateNodes.h"
+#include "test_support.h"
 using namespace std;
 
 MangledNameMapTraversal::MangledNameMapTraversal ( MangledNameMapType & m, SetOfNodesType & deleteSet )

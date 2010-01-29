@@ -1,0 +1,125 @@
+
+ERROR REPORT: RTED fails on 4.1.2 64-bit on tux283 (I suspect that -j16 represents too much parallelism).
+This is a parallel build problem that should be fixed before we run on our new Hudson test
+machines.  I have verified that a version of runTest that uses -j8 (as it used to) will 
+pass all the tests.  The RTED "make -j16 check" problem should be easy to test separate 
+from Hudson.
+
+Briefly, I improved the performance of running the Hudson tests by a total of about 10%,
+this was the best that I could do, without modifying ROSE directly.  It seems to
+work best if we let the slower machines (tux269, tux270) have a single Hudson
+executor, and the faster machines (tux282, tux283, and tux284) have 2 Hudson
+executors.  Since Tux268 is the only 32-bit Hudson slave it works best to have
+2 Hudson executors.
+
+Currently it takes 2 hours and 17 minutes to process a git checkin via Hudson.
+
+(1/16/2010) Hudson timings:
+
+These tests ran with only one job executing on each machine.
+
+Minimal:
+    GNU 4.0.4
+       tux269 (-j16)
+         Make           26.7 Minutes
+         Make check     14.0 Minutes
+         Make distcheck 40.6 Minutes
+         Make docs      11.5 Minutes
+         total            95 Minutes 7 seconds
+            Computed time for build and configure: 3.3 Minutes
+
+    GNU 4.1.2 (32-bit)
+       tux268 (-j16)
+         Make           37.2 Minutes
+         Make check     21.6 Minutes
+         Make distcheck 51.3 Minutes
+         Make docs      13.5 Minutes
+         total           126 Minutes 20 seconds
+            Computed time for build and configure: 2.7 Minutes
+
+    GNU 4.1.2 
+       tux284 (-j16)
+         Make           17.7 Minutes
+         Make check     10.3 Minutes
+         Make distcheck 27.5 Minutes
+         Make docs       8.7 Minutes
+         total          65.8 Minutes
+            Computed time for build and configure: 1.6 Minutes
+
+    GNU 4.2.4
+       tux284 (-j16)
+         Make           18.4 Minutes
+         Make check      5.9 Minutes
+         Make distcheck 28.1 Minutes
+         Make docs       8.3 Minutes
+         total            69 Minutes 39 seconds
+            Computed time for build and configure: 8.9 Minutes
+
+    GNU 4.3.2 (note "make check, distcheck, and docs" are not run)
+       tux270 (-j16)
+         Make           27.0 Minutes
+         Make check      n/a Minutes
+         Make distcheck  n/a Minutes
+         Make docs       n/a Minutes
+         total            29 Minutes 30 seconds
+            Computed time for build and configure: 2.5 Minutes
+
+
+Total throughput times for one hudson executor and running -j16 was: 3 hours 20 minutes
+   This included: tux268, 269, 270, 282, 283, 284
+
+Total throughput times for two hudson executors and running -j8 was: 2 hours 17 minutes
+   This included:
+      tux268, 269, 270 (slower machines); running one hudson executor
+      tux282, 283, 284 (faster machines); running two hudson executors
+   By running only a single Hudson executor on the slower machines we 
+   avoid the worst case of to large jobs being run on the slowest machine.
+
+   Note that previous total times for Hudson tests were 2 hours 30 minutes. We get a
+   bit better time (improved 10%) now due to running the more expensive Hudson tests
+   first (reordered the tests to put the "cmake" and "edg" last (however some are
+   always run first so "cmake" and "edg" specific tests still provide quick feedback).
+
+   Note that on tux284, running two jobs at -j8 cause each to take about 118 minutes for
+   the two of them, as opposed to 65-70 minutes each.  So doubling up the jobs on a 
+   single Hudson slave is a little more efficent than running them separately unless Hudson
+   has enough hardware to run them separately using -j16. But it does not make a lot of 
+   difference.
+
+All the machines in the Hudson slave pool were kept busy until we ran out of Hudson tests.
+Here is a list of the first machines to go idle (and the last jobs they ran):
+    Tux270 (after  78 minutes) running 4.0.4 minimal 64-bit
+    Tux283 (after  89 minutes) running 4.2.4 minimal 64-bit
+    Tux269 (after 100 minutes) running 4.1.2 minimal 64-bit
+    Tux282 (after 110 minutes) running 4.0.4 full 64-bit
+    Tux268 (after 135 minutes) running remaining edg builds 32-bit
+    Tux284 (after 136 minutes) running 4.2.4 full 64-bit
+Notice that the 32-bit tests were not the last, so with the current setup (too few slave
+machines) the 32-bit tests are not a bottleneck to the overall time required for a Hudson
+test of a checkin.  It might be that different checkins could change this given the 
+small degree of randomness in the assignment of tests to Hudson slaves (though it seems
+to be consistantly the same; whatever the algorithm is internally within Hudson).
+
+
+General Questions:
+   1) What can we do to improve the performance of Hudson tests?  How much effort is this
+      worth?
+
+   2) Do we really need to build all the documentation for each compiler?
+      Alternatively do we need to build the documentation for both the 
+      minimal build and the full build?  This is the lease parallel part of 
+      the ROSE Hudson tests.
+      DQ: I think that we do need to do this (unfortunately).
+
+   3) Can we make the build of the documentation faster?
+      DQ: Perhaps the division of doxygen processed files into several parts (modules?).
+
+   4) Should we refactor parts of ROSE to make the builds/tests more parallel?
+
+   5) Perhaps all tests of "make check" should be done exclusively by "make distcheck"
+      Does the "make distcheck" rule run the long tests?  Should it?
+
+   6) Since output spew was a problem because any error return codes were being masked 
+      by the use of the unix "tee" command (only for bash, not tcsh), maybe we can
+      alternatively still evaluate output spew based on the output by Hudson.
+

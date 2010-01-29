@@ -1,4 +1,5 @@
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 #include "pre.h"
 
 #include <stdint.h>
@@ -9,10 +10,7 @@
 #include "expressionTreeEqual.h"
 #include "controlFlowGraph.h"
 
-#ifdef _MSC_VER
-// DQ (11/26/2009): This appears to be required for MC VS 9.0 (but not for GNU g++)
 #include "constantFolding.h"
-#endif
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;

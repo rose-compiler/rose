@@ -13,7 +13,9 @@
 // application of itself on the saved constant folded expression trees.
 // So eliminating them fixes this problem at least for now.
 
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "sageBuilder.h"
 #include "constantFolding.h"
 #include <string>
 
