@@ -1,7 +1,7 @@
 #ifndef ROSE_COMMANDLINE_UTILITY_H
 #define ROSE_COMMANDLINE_UTILITY_H
 
-#include "setup.h"
+#include "rosedefs.h"
 
 //Rama (12/22/2006): changing the class to a namespace and removing the "static"ness of the "member" functions
 
