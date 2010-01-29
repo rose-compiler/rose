@@ -245,6 +245,7 @@ echo "Calling configure to build compile tree to build ROSE using ROSE."
 
 echo "Done with configure step to use ROSE to compile ROSE"
 
+echo "Change to src directory."
 cd src
 
 echo "Current directory where we will compile ROSE using ROSE:"
