@@ -1,7 +1,7 @@
 
 #include "rosedefs.h"
 #include "Cxx_GrammarMemoryPoolSupport.h"
-
+#include <fstream>
 #include "AST_FILE_IO.h"
 #include "StorageClasses.h"
 #include <sstream>

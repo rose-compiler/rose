@@ -186,7 +186,7 @@
 
 
 // tps (01/22/2010) :refactored
-#include "setup.h"
+#include "rosedefs.h"
 // Support for preprocessors declarations and comments
 #include "rose_attributes_list.h"
 
