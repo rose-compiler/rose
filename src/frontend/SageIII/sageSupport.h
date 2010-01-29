@@ -1,3 +1,7 @@
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// tps (01/27/2010) : Note this is an old file an should not be used!
+
+
 // DQ (8/19/2004): Moved from ROSE/src/midend/astRewriteMechanism/rewrite.h
 // Added global function for getting the string associated 
 // with an enum (which is defined in global scope)

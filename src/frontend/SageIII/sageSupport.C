@@ -1,5 +1,6 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+//#include "astMergeAPI.h"
 #include "rose_paths.h"
 //#include "setup.h"
 #include "astPostProcessing.h"
@@ -7,7 +8,8 @@
 
 #include "omp_lowering.h"
 #include "attachPreprocessingInfo.h"
-#include "sageSupport.h"
+#include "astMergeAPI.h"
+//#include "sageSupport.h"
 
 #include "binaryLoader.h"
 #include "Partitioner.h"
