@@ -11059,6 +11059,8 @@ SgSwitchStatement::replace_child(SgStatement *target,SgStatement *newstmt,
      return ( StatementReplace(this, p_body, target, newstmt) == true );
    }
 
+#include "sageBuilder.h"
+
 void
 SgSwitchStatement::append_case(SgCaseOptionStmt *& what)
    {

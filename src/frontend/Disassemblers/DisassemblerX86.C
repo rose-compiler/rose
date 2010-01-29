@@ -4,6 +4,7 @@
 #include "AssemblerX86.h"
 #include "unparseAsm.h"
 #include "Disassembler.h"
+#include "sageBuilderAsm.h"
 #include "DisassemblerX86.h"
 
 #define __STDC_FORMAT_MACROS

@@ -3,7 +3,7 @@
 #ifndef ROSE_ASSEMBLER_X86_H
 #define ROSE_ASSEMBLER_X86_H
 
-#include "sage3.h"
+//#include "sage3.h"
 
 /** This class contains methods for assembling x86 instructions (SgAsmx86Instruction).
  *

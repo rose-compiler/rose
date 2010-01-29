@@ -101,6 +101,7 @@ CXX_TESTCODES_REQUIRED_TO_RUN =  \
 	orphanedAtomic.cpp \
 	preprocessingInfo2.cpp \
 	task_link.cpp \
+	task_link2.cpp \
 	task_tree.cpp
 
 ALL_TESTCODES = \

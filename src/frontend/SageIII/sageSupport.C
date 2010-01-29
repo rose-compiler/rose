@@ -1,9 +1,19 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+//#include "astMergeAPI.h"
 #include "rose_paths.h"
+//#include "setup.h"
+#include "astPostProcessing.h"
 #include <sys/stat.h>
+
+#include "omp_lowering.h"
+#include "attachPreprocessingInfo.h"
+#include "astMergeAPI.h"
+//#include "sageSupport.h"
+
 #include "binaryLoader.h"
 #include "Partitioner.h"
+#include "sageBuilder.h"
 
 #ifdef _MSC_VER
 #pragma message ("WARNING: wait.h header file not available in MSVC.")

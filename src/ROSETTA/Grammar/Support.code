@@ -10243,6 +10243,7 @@ SgFile::SgFile ( const SgFile & X )
      ROSE_ASSERT(false);
    }
 
+#include "Disassembler.h"
 
 void
 SgFile::initialization()
@@ -11447,8 +11448,8 @@ SgProject::initialization()
 
   // Initialize pointers to valid opjects with empty lists.
      p_directoryList = new SgDirectoryList();
-
      ROSE_ASSERT(p_directoryList != NULL);
+     p_directoryList->set_parent(this);
    }
 
 // DQ (2/1/2007): Added new operator so that w could depricate the inconsistant usage of 
@@ -11578,6 +11579,10 @@ SgProject::set_file ( SgFile & file )
 #else
      ROSE_ASSERT (p_fileList_ptr != NULL);
      p_fileList_ptr->get_listOfFiles().push_back(&file);
+
+  // DQ (1/25/2010): Set the parent of the file to point to the list (this is a change and may break some code).
+  // But it is consistant within ROSE for how we handle list objects in the IR.
+     file.set_parent(p_fileList_ptr);
 
   // printf ("Exiting since this is not finished. \n");
   // ROSE_ASSERT(false);

@@ -11,7 +11,7 @@
 
 #include <vector>
 #include "roseInternal.h"
-#include "sage3.h"
+//#include "sage3.h"
 
 //! This class allows to use iterators on the AST; it is different to
 //! the AstProcessing classes because no visit function needs to be

@@ -2,8 +2,8 @@
 #define ROSE_AST_QUERY
 
 // tps (01/08/2010) Added sage3basic since this doesnt compile under gcc4.1.2
-#include "sage3basic.h"
-#include "sage3.h"
+//#include "sage3basic.h"
+//#include "sage3.h"
 #include "AstProcessing.h"
 
 #include <functional>

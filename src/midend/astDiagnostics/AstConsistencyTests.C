@@ -4,6 +4,7 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 // tps : needed to define this here as it is defined in rose.h
+#include "markCompilerGenerated.h"
 #include "AstDiagnostics.h"
 #ifndef ASTTESTS_C
 #define ASTTESTS_C
@@ -3496,6 +3497,7 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
 
             // DQ (1/23/2010): Added this case
                case V_SgFileList:
+               case V_SgDirectoryList:
 
             // DQ (10/4/2008): Added this case
                case V_SgRenamePair:
