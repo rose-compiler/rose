@@ -4,6 +4,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # before the subdirectories.
 SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG astTokenStream astHiddenTypeAndDeclarationLists astVisualization
 
+
 # DQ (12/29/2009): This is only used to handle generated code as smaller files.
 SUBDIRS += GENERATED_CODE_DIRECTORY_Cxx_Grammar
 
@@ -11,6 +12,7 @@ SUBDIRS += GENERATED_CODE_DIRECTORY_Cxx_Grammar
 # Graph IR nodes (makes about 25% improvement, I think).
 # ROSE_OPTIMIZATION_LEVEL = -O3
 ROSE_OPTIMIZATION_LEVEL =
+# ROSE_VERBOSE = -rose:verbose 2
 
 # Liao, 3/31/2009, moved the OpenMP parser here
 #Liao, 10/27/2008. I decide to parse OpenMP pragma string here
@@ -20,7 +22,9 @@ AM_YFLAGS = -d
 AM_LFLAGS =
 # avoid unused Flex functions which are automatically generated
 #CXXFLAGS+= -DYY_NO_TOP_STATE -DYY_NO_POP_STATE $(ROSE_OPTIMIZATION_LEVEL)
-CXXFLAGS+= $(ROSE_OPTIMIZATION_LEVEL)
+
+CXXFLAGS+= $(ROSE_OPTIMIZATION_LEVEL) $(ROSE_VERBOSE)
+
 # omplexer.cc needs a header generaetd from ompparser.yy
 omplexer.lo: ompparser.h omplexer.cc
 ompparser.h: ompparser.cc
@@ -34,7 +38,8 @@ all-local: roseh sage.docs
 # INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -I$(top_srcdir)/src/frontend/EDG/EDG_3.3/src $(WAVE_INCLUDES)
 # INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -I$(top_srcdir)/src/frontend/EDG/EDG_3.3/src
 # JJW 6-2-2008: We shouldn't be using anything from EDG outside these two directories
-INCLUDES = $(ROSE_INCLUDES) # -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -I$(top_srcdir)/src/frontend/EDG/EDG_3.3/src
+# INCLUDES = $(ROSE_INCLUDES) # -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -I$(top_srcdir)/src/frontend/EDG/EDG_3.3/src
+INCLUDES = $(ROSE_INCLUDES)
 
 ## The grammar generator (ROSETTA) should use its own template repository
 CXX_TEMPLATE_REPOSITORY_PATH = .
@@ -52,7 +57,7 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 # are called preproc.o (from here and from EDG).
 EXTRA_DIST = CMakeLists.txt preproc-c.ll docs rtiHelpers.h attributeListMap.h \
              advanced_preprocessing_hooks.h rose_attributes_list.h dwarfSupport.h \
-             omplexer.cc ompparser.cc ompparser.h
+             omplexer.cc ompparser.cc ompparser.h sage3basic.hhh
 CLEANFILES = haveRosettaGeneratedSource
 
 DISTCLEANFILES = preproc-c.cc ompparser.cc ompparser.h omplexer.cc
@@ -175,8 +180,8 @@ roseh:
 #	DQ (2/10/2009): Rush for the off switch on precompiled header files, comment out to skip use of PCH.
 #       TPS (23 Feb 2009): Hardcoded -fpic and -DPIC for now because 
 #       for some reason it is used by most files although not specified on configure
-	@echo "  COMPILE rose.h.gch"
-	@$(CXX)  -fPIC -DPIC $(CXXFLAGS) $(CFLAGS) $(CPPFLAGS) -g -o rose.h.gch $(top_srcdir)/src/rose.h -I$(top_builddir) $(ROSE_INCLUDES) 
+	@echo "  COMPILE sage3basic.h.gch"
+	@$(CXX)  -fPIC -DPIC $(CXXFLAGS) $(CFLAGS) $(CPPFLAGS) -g -o sage3basic.h.gch $(top_srcdir)/src/frontend/SageIII/sage3basic.h -I$(top_builddir) $(ROSE_INCLUDES) 
 endif
 else
 # default, do nothing.
@@ -196,7 +201,7 @@ include_HEADERS = \
    fixupCopy.h \
    general_token_defs.h rtiHelpers.h \
    OmpAttribute.h omp.h dwarfSupport.h \
-   omp_lib_kinds.h omp_lib.h
+   omp_lib_kinds.h omp_lib.h sage3basic.hhh
 
 # DQ (4/5/2009): Moved rose_paths.h to src/util (where the source file is located).
 nodist_include_HEADERS = \
@@ -225,11 +230,11 @@ clean-local:
 	rm -rf Cxx_Grammar* AST_FILE_IO.C StorageClasses.C
 	rm -rf AST_FILE_IO.h StorageClasses.h AstQueryMemoryPool.h
 	rm -rf generated_abstractcppgrammar.atg
-	rm -f rose.h.gch
+	rm -f sage3basic.h.gch
 
 distclean-local:
 	rm -rf Templates.DB
-	rm -f rose.h.gch
+	rm -f sage3basic.h.gch
 
 removeHashLineDirectivesFromGeneratedCode:
 	cp Cxx_Grammar.h  Cxx_Grammar.h.withLineDirectives

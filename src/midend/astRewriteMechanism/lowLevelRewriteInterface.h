@@ -1,3 +1,5 @@
+#ifndef __lowlevelrewrite
+#define __lowlevelrewrite
 // class AbsoluteNodeRewrite
 class LowLevelRewrite
    {
@@ -84,6 +86,7 @@ class LowLevelRewrite
 
 
 
+#endif
 
 
 

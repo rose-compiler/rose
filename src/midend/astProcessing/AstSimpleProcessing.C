@@ -9,7 +9,7 @@
 #ifndef ASTSIMPLEPROCESSING_C
 #define ASTSIMPLEPROCESSING_C
 
-#include "sage3.h"
+#include "sage3basic.h"
 
 #include "AstProcessing.h" 
 #include "AstSimpleProcessing.h"

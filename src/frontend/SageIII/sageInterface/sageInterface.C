@@ -1,5 +1,8 @@
 // tps (01/14/2010) : Switching from rose.h to sage3. Added buildMangledNameMap, buildReplacementMap, fixupTraversal, replaceExpressionWithStatement
 //#include "rose.h"
+#include "sage3basic.h"
+#include "markLhsValues.h"
+#include "fixupNames.h"
 #include "buildMangledNameMap.h" 
 #include "buildReplacementMap.h" 
 #include "fixupTraversal.h"
@@ -7166,6 +7169,58 @@ void SageInterface::setPragma(SgPragmaDeclaration* decl, SgPragma *pragma)
    if (haslhs) 
       markLhsValues(target);
   }
+
+// DQ (1/25/2010): Added to simplify handling of directories (e.g. for code generation).
+void SageInterface::moveToSubdirectory ( std::string directoryName, SgFile* file )
+   {
+  // This support makes use of the new SgDirectory IR node.  It causes the unparser to
+  // generate a subdirectory and unparse the file into the subdirectory.  It works
+  // by internally calling the system function "system()" to call "mkdir directoryName"
+  // and then chdir()" to change the current directory.  These steps are handled by the 
+  // unparser.
+
+  // This function just does the transformation to insert a SgDirectory IR node between
+  // the referenced SgFile and it's project (fixing up parents and file lists etc.).
+
+  // Add a directory and unparse the code (to the new directory)
+     SgDirectory* directory = new SgDirectory(directoryName);
+
+     SgFileList* parentFileList = isSgFileList(file->get_parent());
+     ROSE_ASSERT(parentFileList != NULL);
+     directory->set_parent(file->get_parent());
+
+     SgProject* project           = NULL;
+     SgDirectory* parentDirectory = isSgDirectory(parentFileList->get_parent());
+
+     if (parentDirectory != NULL)
+        {
+       // Add a directory to the list in the SgDirectory node.
+          parentDirectory->get_directoryList()->get_listOfDirectories().push_back(directory);
+
+       // Erase the reference to the file in the project's file list.
+       // parentDirectory->get_fileList().erase(find(parentDirectory->get_fileList().begin(),parentDirectory->get_fileList().end(),file));
+        }
+       else
+        {
+          project = isSgProject(parentFileList->get_parent());
+          ROSE_ASSERT(project != NULL);
+
+       // Add a directory to the list in the SgProject node.
+          project->get_directoryList()->get_listOfDirectories().push_back(directory);
+
+       // Erase the reference to the file in the project's file list.
+       // project->get_fileList().erase(find(project->get_fileList().begin(),project->get_fileList().end(),file));
+        }
+
+  // Put the file into the new directory.
+     directory->get_fileList()->get_listOfFiles().push_back(file);
+
+  // Erase the reference to the file in the project's file list.
+     parentFileList->get_listOfFiles().erase(find(parentFileList->get_listOfFiles().begin(),parentFileList->get_listOfFiles().end(),file));
+
+     file->set_parent(directory);
+}
+
 
 //------------------------- AST repair----------------------------
 //----------------------------------------------------------------

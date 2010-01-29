@@ -57,14 +57,14 @@ functions/variables.
 #define yytext Rose_Fortran_fixed_format_text
 #define yylex Rose_Fortran_fixed_format_lex 
 
-
+#include "sage3basic.h"
 #include <iostream>
 #include <stdio.h>
 #include <ctype.h>
 #include <string>
 #include <list>
 
-#include "rose.h"
+
 
 using namespace std;
 

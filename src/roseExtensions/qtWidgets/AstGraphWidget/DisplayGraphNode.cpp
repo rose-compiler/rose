@@ -1,4 +1,4 @@
-#include "rose.h"
+#include "sage3basic.h"
 #include "DisplayGraphNode.h"
 #include "DisplayEdge.h"
 

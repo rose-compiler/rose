@@ -6,7 +6,7 @@
 #ifndef ASTDOTGENERATION_C
 #define ASTDOTGENERATION_C
 
-#include "sage3.h"
+#include "sage3basic.h"
 #include "AstDOTGeneration.h"
 #include "AstConsistencyTests.h"
 
