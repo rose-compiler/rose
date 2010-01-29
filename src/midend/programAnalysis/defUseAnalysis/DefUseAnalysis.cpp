@@ -3,9 +3,9 @@
  * DefUse Analysis Definition
  * created by tps in Feb 2007
  *****************************************/
+// tps : Switching from rose.h to sage3 changed size from 18,5 MB to 8,2MB
 
-
-#include "rose.h"
+#include "sage3basic.h"
 #include "DefUseAnalysis.h"
 #include "DefUseAnalysis_perFunction.h"
 #include "GlobalVarAnalysis.h"

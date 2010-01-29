@@ -56,12 +56,9 @@ add_library( midend_static STATIC ${midend_src}  )
 add_dependencies( midend_static ROSETTA midend_processing midend_util midend_pa midend_pt midend_loopproc midend_binary )
 
 # tps (12/17/2009) : Experiments to create (small) dynamic libraries.
-# The following libraries could not be build.
+# The following libraries require dllexport and dllimport in WINDOWS!
 #add_library( midend_shared SHARED ${midend_src}  )
 #add_dependencies( midend_shared ROSETTA midend_processing midend_util midend_pa midend_pt midend_loopproc midend_binary )
-
-#add_library( midend_module MODULE ${midend_src}  )
-#add_dependencies( midend_module ROSETTA midend_processing midend_util midend_pa midend_pt midend_loopproc midend_binary )
 
 target_link_libraries(midend_static 
      midend_processing midend_util midend_pa midend_pt midend_loopproc midend_binary

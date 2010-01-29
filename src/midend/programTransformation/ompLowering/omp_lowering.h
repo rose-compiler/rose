@@ -1,3 +1,6 @@
+#include "astQuery.h"
+//#include "sage3basic.h"
+
 /*!
  * Translation (directive lowering) support for OpenMP 3.0 C/C++
  *
@@ -12,8 +15,8 @@ namespace OmpSupport
   //! The type of target runtime libraries (not yet in use)
   // We support both Omni and GCC OpenMP runtime libraries
   enum omp_rtl_enum {
-    e_omni = 0,
-    e_gcc,
+    e_gomp,
+    e_omni,
     e_last_rtl
   };
 
@@ -25,11 +28,12 @@ namespace OmpSupport
   //! The top level interface to translate OpenMP directives
   void lower_omp(SgSourceFile*);
 
+
   //! Insert #include "xxx.h", the interface of a runtime library to the compiler
   void insertRTLHeaders(SgSourceFile*);
 
-  //! Only needed for Omni
-  // int insertRTLinitAndCleanCode(SgProject* project); 
+  //! Insert runtime init and terminate routines to main() entry
+  void insertRTLinitAndCleanCode(SgSourceFile* ); 
 
   //! A driver to traverse AST trees and invoke individual translators for OpenMP constructs, (not in use)
   //! Postorder is preferred. 
@@ -73,7 +77,7 @@ namespace OmpSupport
 
  //! A helper function to generate implicit or explicit task for either omp parallel or omp task
  // It calls the ROSE AST outliner internally. 
- SgFunctionDeclaration* generatedOutlinedTask(SgNode* node, std::string& wrapper_name, std::set<SgVariableSymbol*>& syms, std::set<SgInitializedName*>& readOnlyVars);
+ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_name, std::set<SgVariableSymbol*>& syms, std::set<SgInitializedName*>& readOnlyVars);
  
   //! Translate OpenMP variables associated with an OpenMP pragma, such as private, firstprivate, lastprivate, reduction, etc. bb1 is the translation generated code block in which the variable handling statements will be inserted. Original loop upper bound is needed for implementing lastprivate (check if it is the last iteration) 
   void transOmpVariables(SgStatement * ompStmt, SgBasicBlock* bb1, SgExpression* orig_loop_upper = NULL);

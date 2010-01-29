@@ -1,6 +1,6 @@
-
-#include "rose.h"
-
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "checkIsModifiedFlag.h"
 using namespace std;
 
 /** Clears the p_isModified bit for @p node and all children, recursively. Returns true iff node or one of its descendants had

@@ -4,7 +4,9 @@
 #ifndef ASTSHAREDMEMORYPARALLELPROCESSING_C
 #define ASTSHAREDMEMORYPARALLELPROCESSING_C
 
-#include "sage3.h"
+// tps (01/08/2010) Added sage3basic since this doesnt compile under gcc4.1.2
+//#include "sage3basic.h"
+//#include "sage3.h"
 
 // DQ (3/20/2009): Trying to fix error on Cygwin platform.
 #ifdef _MSC_VER

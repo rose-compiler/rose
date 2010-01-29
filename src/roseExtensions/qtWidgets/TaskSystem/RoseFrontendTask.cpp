@@ -1,6 +1,6 @@
 
-#include "rose.h"
-
+#include "sage3basic.h"
+#include "sageBuilder.h"
 #include "RoseFrontendTask.h"
 #include "CompilerOutputWidget.h"
 

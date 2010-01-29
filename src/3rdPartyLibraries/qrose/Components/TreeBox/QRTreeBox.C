@@ -3,7 +3,7 @@
  *   jgfc@doc.ic.ac.uk                                                     *
  ***************************************************************************/
 
-#include <rose.h>
+#include "sage3basic.h"
 
 #include <QRTreeBox.h>
 #include <QRListViewItem.h>

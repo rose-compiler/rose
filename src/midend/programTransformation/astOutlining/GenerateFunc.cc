@@ -8,7 +8,9 @@
  *  routines for use in an empirical tuning application. Such routines
  *  can be isolated into their own, dynamically shareable modules.
  */
-#include <rose.h>
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "sageBuilder.h"
 #include <iostream>
 #include <string>
 #include <sstream>

@@ -1,5 +1,6 @@
+// tps (1/14/2010) : Switching from rose.h to sage3 changed size from 18,5 MB to 8,1MB
 
-#include "rose.h"
+#include "sage3basic.h"
 #include "dfaToDot.h"
 #include "DFAFilter.h"
 #include "LivenessAnalysis.h"

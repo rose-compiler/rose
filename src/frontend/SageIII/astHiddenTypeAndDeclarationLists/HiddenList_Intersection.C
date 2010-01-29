@@ -1,8 +1,11 @@
 // Implementation of the Hidden List Intersection Procedure
 // Robert Preissl
 // Last modified : April 16, 2007
-
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
+#include "HiddenList.h"
+#include "HiddenList_Intersection.h"
+#include "HiddenList_Output.h"
 
 // DQ (5/8/2007): These are now in the rose.h header file
 // #include "DEBUG_HiddenList_Intersection.h"

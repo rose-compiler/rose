@@ -1,6 +1,7 @@
 /* Generic Binary Files (SgAsmGenericFile and associated classes). */
 
-#include "rose.h"
+// tps (01/14/2010) : Switching from rose.h to sage3.
+#include "sage3basic.h"
 
 #define __STDC_FORMAT_MACROS
 #include <boost/math/common_factor.hpp>
@@ -39,8 +40,8 @@ SgAsmGenericFile::parse(std::string fileName)
     set_name(fileName);
 #ifdef _MSC_VER
 #pragma message ("WARNING: MSVS des not support Linux open() function.")
-	printf ("ERROR: MSVS des not support Linux open() function.");
-	ROSE_ASSERT(false);
+    printf ("ERROR: MSVS des not support Linux open() function.");
+    ROSE_ASSERT(false);
 #else
     p_fd = open(fileName.c_str(), O_RDONLY);
 #endif
@@ -48,33 +49,35 @@ SgAsmGenericFile::parse(std::string fileName)
         std::string mesg = "Could not open binary file";
         throw FormatError(mesg + ": " + strerror(errno));
     }
+    size_t nbytes = p_sb.st_size;
 
-#if 1           /* see also, SgAsmGenericFile::~SgAsmGenericFile() */
     /* To be more portable across operating systems, read the file into memory rather than mapping it. */
-    unsigned char *mapped = (unsigned char*)malloc(p_sb.st_size);
+    unsigned char *mapped = new unsigned char[nbytes];
     if (!mapped)
         throw FormatError("Could not allocate memory for binary file");
 #ifdef _MSC_VER
 #pragma message ("WARNING: MSVS des not support Linux read() function.")
-	printf ("ERROR: MSVS des not support Linux read() function.");
-	ROSE_ASSERT(false);
+    printf ("ERROR: MSVS des not support Linux read() function.");
+    ROSE_ASSERT(false);
     ssize_t nread = 0;
 #else
-    ssize_t nread = read(p_fd, mapped, p_sb.st_size);
+    ssize_t nread = read(p_fd, mapped, nbytes);
 #endif
-    if (nread!=p_sb.st_size)
+    if (nread<0 || (size_t)nread!=nbytes)
         throw FormatError("Could not read entire binary file");
-#else
-    /* Map the file into memory so we don't have to read it explicitly */
-    unsigned char *mapped = (unsigned char*)mmap(NULL, p_sb.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE, p_fd, 0);
-    if (!mapped) {
-        std::string mesg = "Could not mmap binary file";
-        throw FormatError(mesg + ": " + strerror(errno));
-    }
-#endif
 
+    /* Decode the memory if necessary */
+    DataConverter *dc = get_data_converter();
+    if (dc) {
+        unsigned char *new_mapped = dc->decode(mapped, &nbytes);
+        if (new_mapped!=mapped) {
+            delete[] mapped;
+            mapped = new_mapped;
+        }
+    }
+    
     /* Make file contents available through an STL vector without actually reading the file */
-    p_data = SgFileContentList(mapped, p_sb.st_size);
+    p_data = SgFileContentList(mapped, nbytes);
     return this;
 }
 
@@ -91,17 +94,11 @@ SgAsmGenericFile::~SgAsmGenericFile()
     
     /* Unmap and close */
     unsigned char *mapped = p_data.pool();
-    if (mapped && p_data.size()>0) {
-#if 1           /* see also, SgAsmGenericFile::parse() */
-        free(mapped);
-#else
-        munmap(mapped, p_data.size());
-#endif
-    }
+    if (mapped && p_data.size()>0)
+        delete[] mapped;
     p_data.clear();
 
-    if ( p_fd >= 0 )
-	{
+    if ( p_fd >= 0 ) {
 #ifdef _MSC_VER
 #pragma message ("WARNING: MSVS des not support Linux close() function.")
         printf ("ERROR: MSVS des not support Linux close() function.");
@@ -109,7 +106,7 @@ SgAsmGenericFile::~SgAsmGenericFile()
 #else
         close(p_fd);
 #endif
-	}
+    }
 
  // Delete the pointers to the IR nodes containing the STL lists
     delete p_headers;
@@ -759,7 +756,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
 {
     ROSE_ASSERT(s!=NULL);
     ROSE_ASSERT(s->get_file()==this);
-    ROSE_ASSERT(space & (ADDRSP_FILE|ADDRSP_MEMORY) != 0);
+    ROSE_ASSERT((space & (ADDRSP_FILE|ADDRSP_MEMORY)) != 0);
 
     const bool debug = false;
     static size_t ncalls=0;
@@ -1083,6 +1080,8 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
 void
 SgAsmGenericFile::dump(FILE *f) const
 {
+    fprintf(f, "Encoding: %s\n", get_data_converter() ? get_data_converter()->name().c_str() : "none");
+
     SgAsmGenericSectionPtrList sections = get_sections();
     if (sections.size()==0) {
         fprintf(f, "No sections defined for file.\n");
@@ -1215,14 +1214,14 @@ SgAsmGenericFile::fill_holes()
 
     /* Create the sections representing the holes */
     for (ExtentMap::iterator i=holes.begin(); i!=holes.end(); ++i) {
-      	SgAsmGenericSection *hole = new SgAsmGenericSection(this, NULL);
+        SgAsmGenericSection *hole = new SgAsmGenericSection(this, NULL);
         hole->set_offset((*i).first);
         hole->set_size((*i).second);
         hole->parse();
-      	hole->set_synthesized(true);
-      	hole->set_name(new SgAsmBasicString("hole"));
-      	hole->set_purpose(SgAsmGenericSection::SP_UNSPECIFIED);
-      	add_hole(hole);
+        hole->set_synthesized(true);
+        hole->set_name(new SgAsmBasicString("hole"));
+        hole->set_purpose(SgAsmGenericSection::SP_UNSPECIFIED);
+        add_hole(hole);
     }
 }
 

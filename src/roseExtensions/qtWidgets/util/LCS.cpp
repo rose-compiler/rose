@@ -1,4 +1,4 @@
-#include "rose.h"
+#include "sage3basic.h"
 #include "LCS.h"
 
 #include <boost/algorithm/string.hpp>
