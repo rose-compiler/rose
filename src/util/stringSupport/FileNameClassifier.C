@@ -28,6 +28,10 @@
 #include <sys/utsname.h>
 #endif
 
+// CH (1/29/2010): Needed for boost::filesystem::exists(...)
+#include "boost/filesystem.hpp"
+
+
 using namespace std;
 
 namespace StringUtility
@@ -331,6 +335,13 @@ namespace StringUtility
     classifyFileName(const string& fileName,
                      const string& appPathConst, OSType os)
     {
+		// First, check if this file exists. Filename may be changed 
+		// into an illegal one by #line directive
+		if(!boost::filesystem::exists(fileName))
+			return FileNameClassification(FILENAME_LOCATION_NOT_EXIST,
+                                          FILENAME_LIBRARY_UNKNOWN,
+                                          0);
+
         string appPath = appPathConst;
 
         // Consider all non-absolute paths to be application code
