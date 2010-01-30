@@ -34,6 +34,9 @@ isLink( const string & name )
      char c_version[PATH_MAX];
      ROSE_ASSERT (fileNameWithPath.size() + 1 < PATH_MAX);
 
+  // DQ (1/29/2010): Since this is a problem, escape the loop when we iterate too long!
+  // A better fix is required, but this tests if this is the essential propblem.
+     int count = 0;
      while (fileNameWithPath != "/")
         {
           strcpy(c_version, fileNameWithPath.c_str());
@@ -44,6 +47,15 @@ isLink( const string & name )
        // printf ("directoryName = %s \n",directoryName.c_str());
 
           fileNameWithPath = directoryName;
+
+       // DQ (1/29/2010): Since this is a problem, escape the loop when we iterate too long!
+       // A better fix is required, but this tests if this is the essential propblem.
+          count++;
+          if (count > 1000)
+             {
+               printf ("ERROR: loop count in isLink exceeds %d \n",count);
+               break;
+             }
         }
 
 
@@ -213,14 +225,14 @@ display ( const StringUtility::FileNameLibrary & X, const string & label = "" )
      string classification = "";
      switch (X)
         {
-          case FILENAME_LIBRARY_UNKNOWN: classification = "unknown"; break;
-          case FILENAME_LIBRARY_USER:    classification    = "user";    break;
-          case FILENAME_LIBRARY_C:       classification = "library"; break;
-          case FILENAME_LIBRARY_STDCXX:       classification = "library STDCXX"; break;
-          case FILENAME_LIBRARY_LINUX:       classification = "library LINUX"; break;
-          case FILENAME_LIBRARY_GCC:       classification = "library GCC"; break;
-          case FILENAME_LIBRARY_BOOST:       classification = "library BOOST"; break;
-          case FILENAME_LIBRARY_ROSE:       classification = "library ROSE"; break;
+          case FILENAME_LIBRARY_UNKNOWN: classification = "unknown";        break;
+          case FILENAME_LIBRARY_USER:    classification = "user";           break;
+          case FILENAME_LIBRARY_C:       classification = "library";        break;
+          case FILENAME_LIBRARY_STDCXX:  classification = "library STDCXX"; break;
+          case FILENAME_LIBRARY_LINUX:   classification = "library LINUX";  break;
+          case FILENAME_LIBRARY_GCC:     classification = "library GCC";    break;
+          case FILENAME_LIBRARY_BOOST:   classification = "library BOOST";  break;
+          case FILENAME_LIBRARY_ROSE:    classification = "library ROSE";   break;
 
           default:
              {
@@ -254,7 +266,7 @@ visitorTraversal::visit(SgNode* n)
             // string sourceDir = "/home/dquinlan/ROSE/roseCompileTree-g++4.2.2/developersScratchSpace/Dan/fileLocation_tests";
 
             // This causes the path edit distance to be: 4
-               string sourceDir = "/home/dquinlan/ROSE/svn-rose";
+               string sourceDir = "/home/dquinlan/ROSE/git-dq-main-rc";
 
             // This causes the path edit distance to be: 0
             // string sourceDir = "/home/dquinlan/ROSE";

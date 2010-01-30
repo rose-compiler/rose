@@ -55,8 +55,19 @@ which in the case of the cmake branch would be
 
 ########## Building a Branch for a development team member ################
 
-     git branch matt master
-     git push origin matt
+X     git branch matt master
+X     git push origin matt
+
+  New instructions:
+      git checkout master
+      git pull
+
+    < must edit /casc/overture/ROSE/git/ROSE.git/hooks/pre-receive 
+      file (bottom) to uncomment access control. >
+
+      git push origin master:refs/heads/dj-main-test
+
+    < change back the file: /casc/overture/ROSE/git/ROSE.git/hooks/pre-receive >
 
 
 ############## WE DESCRIBE HOW TO CREATE A NEW BRANCH  ####################
