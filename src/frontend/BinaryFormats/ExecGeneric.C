@@ -6,6 +6,7 @@
 #include "checkIsModifiedFlag.h"
 #include "Loader.h"
 #include <algorithm>
+#include <fstream>
 
 #ifdef _MSC_VER
 // DQ (11/27/2009): This header file is not available using MSVS (Windows).
