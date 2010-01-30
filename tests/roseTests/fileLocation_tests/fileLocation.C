@@ -90,7 +90,7 @@ isLink( const string & name )
           unlink(fn);
         }
 #else
-     printf ("testing for link: nake = %s \n",name.c_str());
+  // printf ("testing for link: nake = %s \n",name.c_str());
 
      if (lstat(name.c_str(), &info) != 0)
         {
@@ -98,6 +98,8 @@ isLink( const string & name )
         }
        else
         {
+#if 0
+       // DQ (1/30/2010): Skip the display of output (too much for testing).
           puts("lstat() returned:");
           printf("  inode:   %d\n",   (int) info.st_ino);
           printf(" dev id:   %d\n",   (int) info.st_dev);
@@ -105,6 +107,7 @@ isLink( const string & name )
           printf("  links:   %zu\n",        info.st_nlink);
           printf("    uid:   %d\n",   (int) info.st_uid);
           printf("    gid:   %d\n",   (int) info.st_gid);
+#endif
         }
 #endif
 
@@ -140,7 +143,10 @@ islinkOrPartOfLinkedDirectory( const string & fileName )
        // string directoryName = dirname(name.c_str());
           string directoryName = dirname(c_version);
 
+#if 0
+       // DQ (1/30/2010): Skip the display of output (too much for testing).
           printf ("directoryName = %s \n",directoryName.c_str());
+#endif
 
           fileNameWithPath = directoryName;
 
@@ -259,7 +265,10 @@ visitorTraversal::visit(SgNode* n)
        // Skip the case of compiler generated Sg_File_Info objects.
           if (previousFilename != filename && filename != "compilerGenerated")
              {
+#if 0
+            // DQ (1/30/2010): Skip the display of output (too much for testing).
                printf ("\n\nfilename = %s statement = %s \n",filename.c_str(),n->class_name().c_str());
+#endif
 
                FileNameClassification classification;
 #if 1
@@ -281,13 +290,15 @@ visitorTraversal::visit(SgNode* n)
                FileNameLocation fileTypeClassification = classification.getLocation();
                FileNameLibrary  libraryClassification  = classification.getLibrary();
                int pathEditDistance = classification.getDistanceFromSourceDirectory();
-               
+
+#if 0
+            // DQ (1/30/2010): Skip the display of output (too much for testing).
                printf ("fileTypeClassification = %d \n",fileTypeClassification);
                display(fileTypeClassification,"Display fileTypeClassification");
                printf ("libraryClassification  = %d \n",libraryClassification);
                display(libraryClassification,"Display libraryClassification");
                printf ("pathEditDistance       = %d \n",pathEditDistance);
-
+#endif
                ROSE_ASSERT(isLink(filename) == false);
              }
 

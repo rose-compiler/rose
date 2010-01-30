@@ -625,8 +625,8 @@ ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0
 # $(TEST_Objects): preprocessor $(srcdir)/$(@:.o=.C)
 $(TEST_Objects): fileLocation
 #	$(VALGRIND) ./statements $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir)/../Cxx_tests -c $(srcdir)/../Cxx_tests/$(@:.o=.C)
-	echo "Copy the file to the local build tree so that the tview program can access it with the generated .highlight file ..."
-	cp $(srcdir)/../../CompileTests/Cxx_tests/$(@:.o=.C) $(@:.o=.C)
+#	@echo "Copy the file to the local build tree so that the tview program can access it with the generated .highlight file ..."
+	@cp $(srcdir)/../../CompileTests/Cxx_tests/$(@:.o=.C) $(@:.o=.C)
 	$(VALGRIND) ./fileLocation $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir)/../../CompileTests/Cxx_tests -c $(@:.o=.C)
 
 # This was a bug specific to the normalization of source file names to absolute paths
@@ -649,6 +649,7 @@ distclean-local:
 
 clean-local:
 	rm -rf *.o *.ps *.dot rose_*.C rose_*.c core *.int.c a.out *.highlight test*_*.C
+	rm -f lexPhase2003_01.C inputForLoopLocator.C math.C
 
 cleandata:
 	rm -f *.ti *.ii rose_*.C rose_*.c *.dot test*.o rose_*.o
