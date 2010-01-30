@@ -35,9 +35,10 @@ isLink( const string & name )
      ROSE_ASSERT (fileNameWithPath.size() + 1 < PATH_MAX);
 
   // DQ (1/29/2010): Since this is a problem, escape the loop when we iterate too long!
-  // A better fix is required, but this tests if this is the essential propblem.
+  // A better fix is required, but this tests if this is the essential problem.
      int count = 0;
-     while (fileNameWithPath != "/")
+  // while (fileNameWithPath != "/")
+     while (fileNameWithPath != "/" && fileNameWithPath != ".")
         {
           strcpy(c_version, fileNameWithPath.c_str());
 
@@ -90,11 +91,16 @@ isLink( const string & name )
           unlink(fn);
         }
 #else
-  // printf ("testing for link: nake = %s \n",name.c_str());
+
+#if 0
+  // DQ (1/30/2010): Skip the display of output (too much for testing).
+     printf ("testing for link: name = %s \n",name.c_str());
+#endif
 
      if (lstat(name.c_str(), &info) != 0)
         {
-          perror("lstat() error");
+       // perror("lstat() error");
+          printf("lstat() error for name = %s \n",name.c_str());
         }
        else
         {
@@ -107,12 +113,17 @@ isLink( const string & name )
           printf("  links:   %zu\n",        info.st_nlink);
           printf("    uid:   %d\n",   (int) info.st_uid);
           printf("    gid:   %d\n",   (int) info.st_gid);
+
+          printf ("S_ISLNK(info.mode) = %s \n",S_ISLNK(info.st_mode) ? "true" : "false");
 #endif
         }
 #endif
 
   // The minimum is to have a single link for a normal file.
-     bool isALink = info.st_nlink > 1;
+  // bool isALink = info.st_nlink > 1;
+
+  // DQ (1/30/2010): Ignore info.st_nlink, the only reliable way to check this is to use the PPOSIX macro (S_ISLNK).
+     bool isALink = S_ISLNK(info.st_mode);
 
      return isALink;
    }
@@ -126,7 +137,7 @@ islinkOrPartOfLinkedDirectory( const string & fileName )
   // have to check each part of the whole absolute path to see if a link was used.
   // This detail make this function more complicated.
 
-     struct stat info;
+  // struct stat info;
 
      string fileNameWithPath = fileName;
      char c_version[PATH_MAX];
@@ -153,6 +164,13 @@ islinkOrPartOfLinkedDirectory( const string & fileName )
           directoryIsLink = isLink(directoryName);
         }
 
+#if 0
+     if (directoryIsLink == true)
+        {
+          printf ("This file is classified as a link because it is in a linked directory \n");
+        }
+#endif
+
      if (directoryIsLink == false)
         {
           fileIsLink = isLink(fileName);
@@ -163,12 +181,14 @@ islinkOrPartOfLinkedDirectory( const string & fileName )
           fileIsLink = true;
         }
 
+#if 0
+     if (fileIsLink == true)
+        {
+          printf ("This file is classified as a link \n");
+        }
+#endif
+
      return fileIsLink;
-
-  // The minimum is to have a single link for a normal file.
-     bool isALink = info.st_nlink > 1;
-
-     return isALink;
    }
 
 
@@ -299,7 +319,20 @@ visitorTraversal::visit(SgNode* n)
                display(libraryClassification,"Display libraryClassification");
                printf ("pathEditDistance       = %d \n",pathEditDistance);
 #endif
-               ROSE_ASSERT(isLink(filename) == false);
+
+#if 0
+            // DQ (1/30/2010): Skip the display of output (too much for testing).
+
+            // Some of our tests explicitly build a link and this tests that it is correctly identified as a link.
+            // printf ("isLink(StringUtility::stripPathFromFileName(filename)) = %s \n",isLink(StringUtility::stripPathFromFileName(filename)) ? "true" : "false");
+
+            // ROSE_ASSERT(isLink(filename) == false);
+               printf ("isLink(filename) = %s \n",isLink(filename) ? "true" : "false");
+
+            // DQ (1/30/2010): Added this test.
+            // ROSE_ASSERT(islinkOrPartOfLinkedDirectory(filename) == false);
+               printf ("islinkOrPartOfLinkedDirectory(filename) = %s \n",islinkOrPartOfLinkedDirectory(filename) ? "true" : "false");
+#endif
              }
 
           previousFilename = filename;

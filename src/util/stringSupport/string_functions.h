@@ -163,9 +163,9 @@ namespace StringUtility
            // int isSameName ( const std::string& s1, const std::string& s2 );
 
            // char* stringDuplicate ( const char* tempString );
-	   std::string copyEdit ( const std::string& inputString, const std::string& oldToken, const std::string& newToken );
-	   FileWithLineNumbers copyEdit ( const FileWithLineNumbers& inputString, const std::string& oldToken, const std::string& newToken );
-	   FileWithLineNumbers copyEdit ( const FileWithLineNumbers& inputString, const std::string& oldToken, const FileWithLineNumbers& newToken );
+          std::string copyEdit ( const std::string& inputString, const std::string& oldToken, const std::string& newToken );
+          FileWithLineNumbers copyEdit ( const FileWithLineNumbers& inputString, const std::string& oldToken, const std::string& newToken );
+          FileWithLineNumbers copyEdit ( const FileWithLineNumbers& inputString, const std::string& oldToken, const FileWithLineNumbers& newToken );
        //  bool isContainedIn ( const char* longString, const char* shortString );
            inline bool isContainedIn ( const std::string & longString, const std::string & shortString ) {
 	     return longString.find(shortString) != std::string::npos;
