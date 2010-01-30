@@ -10,6 +10,8 @@
 // DQ (4/21/2009): Andreas needs to add a comment about what this is for...
 #define BOOST_WAVE_PREPROCESS_PRAGMA_BODY 1
 
+#include "rosedefs.h"
+
 #if 0
 // Forward references to namespaces used in the binary execuable file format support.
 namespace Exec{
@@ -183,8 +185,6 @@ namespace ELF{
 
 
 
-// Endian access wrappers in src/frontend/SageIII/sageInterface
-#include "endianWrappers.h"
 
 // ABI struct layout and similar helpers in src/frontend/SageIII/sageInterface
 #include "abiStuff.h"
@@ -231,6 +231,9 @@ namespace ELF{
 
 // DQ (4/20/2009): Added support to optionally get more information out about new delete operators.
 // #define COMPILE_DEBUG_STATEMENTS 1
+
+// Endian access wrappers in src/frontend/SageIII/sageInterface
+//#include "endianWrappers.h"
 
 // ifndef ROSE_H
 #endif
