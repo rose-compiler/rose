@@ -6,8 +6,13 @@ HEADER_NODE_PREDECLARATION_START
 // tps (01/27/10): Added essential files..
 //#include "sage3basic.h"
 #include "rosedefs.h"
+#ifdef _MSC_VER
+#include <cliext/hash_map>
+#else
 #include <ext/hash_map>
+#endif
 #include "Cxx_Grammar.h"
+
 
 class PreprocessingInfo;
 class AstRegExAttribute;
