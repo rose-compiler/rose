@@ -1,4 +1,4 @@
-// This code tests the classification of files.
+// This code test the classification of files.
 // Files are classified at either unknown, user, 
 // or system (system includes system libaries).
 
@@ -17,12 +17,23 @@
 
 #include <libgen.h>             /* basename(), dirame()               */
 
+// CH (1/29/2010): Needed for boost::filesystem::exists(...)
+#include "boost/filesystem.hpp"
+
 using namespace std;
 using namespace StringUtility;
 
 bool
 isLink( const string & name )
    {
+	// First, check if this file exists
+	if(!boost::filesystem::exist(name))
+	{
+		printf("The file \"%s\" does not exist!\n", name.c_str());
+		return false;
+	}
+
+
   // In oorder to evaluate if this is a link we can't just check the file directly, 
   // since the file might be part of a directory that is linked.  So we have to
   // have to check each part of the whole absolute path to see if a link was used.
@@ -41,7 +52,7 @@ isLink( const string & name )
        // string directoryName = dirname(name.c_str());
           string directoryName = dirname(c_version);
 
-       // printf ("directoryName = %s \n",directoryName.c_str());
+          printf ("directoryName = %s \n",directoryName.c_str());
 
           fileNameWithPath = directoryName;
         }
@@ -90,7 +101,7 @@ isLink( const string & name )
           printf("  inode:   %d\n",   (int) info.st_ino);
           printf(" dev id:   %d\n",   (int) info.st_dev);
           printf("   mode:   %08x\n",       info.st_mode);
-          printf("  links:   %zu\n",        info.st_nlink);
+          printf("  links:   %d\n",         info.st_nlink);
           printf("    uid:   %d\n",   (int) info.st_uid);
           printf("    gid:   %d\n",   (int) info.st_gid);
         }
@@ -193,6 +204,7 @@ display ( const StringUtility::FileNameLocation & X, const string & label = "" )
           case FILENAME_LOCATION_UNKNOWN: classification = "unknown"; break;
           case FILENAME_LOCATION_USER: classification    = "user";    break;
           case FILENAME_LOCATION_LIBRARY: classification = "library"; break;
+          case FILENAME_LOCATION_NOT_EXIST: classification = "not exist"; break;
 
           default:
              {
