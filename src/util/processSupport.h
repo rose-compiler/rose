@@ -19,6 +19,7 @@ int pcloseFromVector(FILE* f);
  #endif
 #endif
 
+
 // introducing class rose_excepction
 // this class gets thrown by ROSE_ABORT
 class rose_exception

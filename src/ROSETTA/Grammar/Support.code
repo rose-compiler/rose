@@ -1605,7 +1605,7 @@ $CLASSNAME::attribute()
      if (p_attribute == NULL)
         {
           printf ("Error: p_attribute == NULL  (node = %s) \n",class_name().c_str());
-          ROSE_ASSERT(false);
+          assert(false);
         }
 
      return *p_attribute;
@@ -1618,7 +1618,7 @@ $CLASSNAME::addNewAttribute( std::string s, AstAttribute* a )
      if (get_attributeMechanism() == NULL)
         {
           set_attributeMechanism( new AstAttributeMechanism() );
-          ROSE_ASSERT(get_attributeMechanism() != NULL);
+          assert(get_attributeMechanism() != NULL);
         }
      get_attributeMechanism()->add(s,a);
    }
@@ -1629,7 +1629,7 @@ $CLASSNAME::setAttribute( std::string s, AstAttribute* a )
      if (get_attributeMechanism() == NULL)
         {
           set_attributeMechanism( new AstAttributeMechanism() );
-          ROSE_ASSERT(get_attributeMechanism() != NULL);
+          assert(get_attributeMechanism() != NULL);
         }
      get_attributeMechanism()->set(s,a);
    }
@@ -1637,10 +1637,10 @@ $CLASSNAME::setAttribute( std::string s, AstAttribute* a )
 AstAttribute*
 $CLASSNAME::getAttribute(std::string s) const
    {
-     //ROSE_ASSERT(get_attributeMechanism() != NULL); // Liao, bug 130 6/4/2008
+     //assert(get_attributeMechanism() != NULL); // Liao, bug 130 6/4/2008
      if (attributeExists(s)==false) return NULL;
      AstAttribute* returnValue = get_attributeMechanism()->operator[](s);
-     ROSE_ASSERT(returnValue != NULL);
+     assert(returnValue != NULL);
      return returnValue;
    }
 
@@ -1648,14 +1648,14 @@ void
 $CLASSNAME::updateAttribute( std::string s, AstAttribute* a )
    {
   // formerly called: replace
-     ROSE_ASSERT(get_attributeMechanism() != NULL);
+     assert(get_attributeMechanism() != NULL);
      get_attributeMechanism()->replace(s,a);
    }
 
 void
 $CLASSNAME::removeAttribute(std::string s)
    {
-     ROSE_ASSERT(get_attributeMechanism() != NULL);
+     assert(get_attributeMechanism() != NULL);
      get_attributeMechanism()->remove(s);
 
   // DQ (1/2/2006): If we have no more attributes then remove the attribute container
@@ -1707,21 +1707,21 @@ SgModifier::operator= ( const SgModifier & X )
 bool
 SgModifier::checkBit ( unsigned int bit, const SgBitVector & bitVector ) const 
    {
-     ROSE_ASSERT (bit < bitVector.size());
+     assert (bit < bitVector.size());
      return bitVector[bit];
    }
 
 void
 SgModifier::setBit ( unsigned int bit, SgBitVector & bitVector ) const
    {
-     ROSE_ASSERT (bit < bitVector.size());
+     assert (bit < bitVector.size());
      bitVector[bit] = true;
    }
 
 void
 SgModifier::unsetBit ( unsigned int bit, SgBitVector & bitVector ) const
    {
-     ROSE_ASSERT (bit < bitVector.size());
+     assert (bit < bitVector.size());
      bitVector[bit] = false;
    }
 
@@ -3161,7 +3161,7 @@ template<class _Kty> inline size_t hash_value(const _Kty& _Keyval);
 inline size_t hash_value(const SgName & _Keyval)
    {
      printf ("In custom hash_value function \n");
-     ROSE_ASSERT(false);
+     assert(false);
 
      return 0;
    }
@@ -5292,7 +5292,7 @@ SgSymbolTable::SgSymbolTable()
 #else
      p_table = new BaseHashType(symbolTableSize);
 #endif
-     ROSE_ASSERT (p_table != NULL);
+     assert (p_table != NULL);
    }
 
 // DQ (2/19/2007): I have put it back into use as a way of 
@@ -5315,7 +5315,7 @@ SgSymbolTable::SgSymbolTable(int symbolTableSize)
 #else
      p_table = new BaseHashType(symbolTableSize);
 #endif
-     ROSE_ASSERT (p_table != NULL);
+     assert (p_table != NULL);
    }
 
 std::ostream & operator<< ( std::ostream & os, const rose_hash_multimap::iterator & rhm_it )
@@ -5349,7 +5349,7 @@ SgSymbolTable::get_name( const SgNode* node) const
                  else
                   {
                  // name = StringUtility::numberToString(labelStatement->get_numeric_label()->get_name());
-                    ROSE_ASSERT(labelStatement->get_numeric_label() != NULL);
+                    assert(labelStatement->get_numeric_label() != NULL);
                     name = labelStatement->get_numeric_label()->get_name();
                   }
                break;
@@ -5477,7 +5477,7 @@ SgSymbolTable::get_name( const SgNode* node) const
           default:
              {
                printf ("SgSymbolTable::get_name(SgNode*) undefined for %s \n",node->class_name().c_str());
-               ROSE_ASSERT(false);
+               assert(false);
              }
         }
 
@@ -5493,13 +5493,13 @@ void
 SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
    {
   // DQ (2/14/2007): Added assertion!
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
 
   // DQ (2/19/2007): Added additional assertion!
-     ROSE_ASSERT (p_table != NULL);
+     assert (p_table != NULL);
 
   // DQ (2/14/2007): Added assertion!
-     ROSE_ASSERT (sp != NULL);
+     assert (sp != NULL);
 
 #if 0
   // This outputs a message for every use of the insert function (for non function type symbols) useful for tracing through bugs
@@ -5518,7 +5518,7 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
              {
                printf ("Error (sp->get_symbol_basis() == NULL): name = %s sp = %p = %s \n",nm.str(),sp,sp->class_name().c_str());
              }
-          ROSE_ASSERT(sp->get_symbol_basis() != NULL);
+          assert(sp->get_symbol_basis() != NULL);
 #if 0
        // This outputs a message for every use of the insert function (for non function type symbols) useful for tracing through bugs
           printf ("In SgSymbolTable::insert(%s,%p) into SgSymbolTable = %p = %s of scope = %p = %s sp = %p = %s sp->get_symbol_basis() = %p = %s \n",
@@ -5529,17 +5529,17 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
 #endif
 
   // DQ (3/10/2007): This is a simpler assertion equivalent to the one above but without generating any error output 
-     ROSE_ASSERT(isSgFunctionTypeSymbol(sp) != NULL || sp->get_symbol_basis() != NULL);
+     assert(isSgFunctionTypeSymbol(sp) != NULL || sp->get_symbol_basis() != NULL);
 
   // DQ (3/10/2007): Test for if the symbol exists
-     ROSE_ASSERT (p_symbolSet.find(sp) == p_symbolSet.end());
+     assert (p_symbolSet.find(sp) == p_symbolSet.end());
 
 #if 0
   // #if SYMBOL_TABLE_ERROR_CHECKING
   // DQ (2/19/2007): These is no need to do both of these since exists(sp) is more complete test!
   // DQ (2/25/2007): except that it is helpful to know which one fails.
-     ROSE_ASSERT(exists(nm,sp) == false);
-     ROSE_ASSERT(exists(sp)    == false);
+     assert(exists(nm,sp) == false);
+     assert(exists(sp)    == false);
 
   // DQ (2/14/2007): error checking (make sure that no two symbols are represented by the same basis declaration). 
   // But skip such tests on the SgFunctionTypeSymbol (only used for the function type table)
@@ -5549,14 +5549,14 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
           map<SgNode*, rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator > existingSymbolBasisDeclarations;
 
           SgNode* sp_associatedDeclaration = sp->get_symbol_basis();
-          ROSE_ASSERT(sp_associatedDeclaration != NULL);
+          assert(sp_associatedDeclaration != NULL);
 
           rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator i = get_table()->begin();
           while (i != get_table()->end())
              {
             // test if symbol is in set
                SgNode* associatedDeclaration = i->second->get_symbol_basis();
-               ROSE_ASSERT(associatedDeclaration != NULL);
+               assert(associatedDeclaration != NULL);
 
             // Check if this declaration has previously been used with another symbol!
                if (existingSymbolBasisDeclarations.find( sp_associatedDeclaration ) == existingSymbolBasisDeclarations.end())
@@ -5568,7 +5568,7 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
                  else
                   {
                     printf ("Error in symbol table located in parent = %p = %s \n",get_parent(),get_parent()->class_name().c_str());
-                    ROSE_ASSERT(get_parent() != NULL);
+                    assert(get_parent() != NULL);
                     get_parent()->get_file_info()->display("Error in symbol table");
 
                     string associatedDeclarationName = SageInterface::get_name(sp_associatedDeclaration);
@@ -5583,7 +5583,7 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
                     printf ("existingSymbolBasisDeclarations[sp_associatedDeclaration]->first = %s second = %p \n",
                          existingSymbolBasisDeclarations[sp_associatedDeclaration]->first.str(),
                          existingSymbolBasisDeclarations[sp_associatedDeclaration]->second);
-                    ROSE_ASSERT(false);
+                    assert(false);
                   }
 
                i++;
@@ -5612,9 +5612,9 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
 #if 0
   // #if SYMBOL_TABLE_ERROR_CHECKING
   // Error checking
-     ROSE_ASSERT(exists(nm)    == true);
-     ROSE_ASSERT(exists(nm,sp) == true);
-     ROSE_ASSERT(exists(sp)    == true);
+     assert(exists(nm)    == true);
+     assert(exists(nm,sp) == true);
+     assert(exists(sp)    == true);
 #endif
 
 #if 0
@@ -5624,11 +5624,11 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
         {
           printf ("Warning: symbol name does not match name used to input associated symbol into symbol table! sp = %p = %s nm = \"%s\" sp->get_name() = \"%s\" \n",sp,sp->class_name().c_str(),nm.str(),sp->get_name().str());
 
-          ROSE_ASSERT(sp->get_symbol_basis() != NULL);
-          ROSE_ASSERT(sp->get_symbol_basis()->get_file_info() != NULL);
+          assert(sp->get_symbol_basis() != NULL);
+          assert(sp->get_symbol_basis()->get_file_info() != NULL);
 
           sp->get_symbol_basis()->get_file_info()->display("Error in source: debug");
-          ROSE_ASSERT(false);
+          assert(false);
         }
 #endif
 
@@ -5642,8 +5642,8 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
        // printf ("In loop: p_iterator->second = %p = %s statement = %p = %s \n",p_iterator->second,p_iterator->second->class_name().c_str(),statement,statement->class_name().c_str());
        // SgNode* symbolBasis = p_iterator->second->get_symbol_basis();
           SgSymbol* symbolFromTable = statement->get_symbol_from_symbol_table();
-          ROSE_ASSERT(symbolFromTable != NULL);
-          ROSE_ASSERT(symbolFromTable == sp);
+          assert(symbolFromTable != NULL);
+          assert(symbolFromTable == sp);
         }
        else
         {
@@ -5653,13 +5653,13 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
             // printf ("In loop: p_iterator->second = %p = %s statement = %p = %s \n",p_iterator->second,p_iterator->second->class_name().c_str(),statement,statement->class_name().c_str());
             // SgNode* symbolBasis = p_iterator->second->get_symbol_basis();
                SgSymbol* symbolFromTable = initializedName->get_symbol_from_symbol_table();
-               ROSE_ASSERT(symbolFromTable != NULL);
-               ROSE_ASSERT(symbolFromTable == sp);
+               assert(symbolFromTable != NULL);
+               assert(symbolFromTable == sp);
              }
             else
              {
                printf ("Unknown symbol_base for input symbol sp = %p = %s sp->get_symbol_basis() = %p = %s \n",sp,sp->class_name().c_str(),sp->get_symbol_basis(),sp->get_symbol_basis()->class_name().c_str());
-               ROSE_ASSERT(false);
+               assert(false);
              }
         }
 #endif
@@ -5683,7 +5683,7 @@ SgSymbolTable::remove_function_type( const SgName & name )
 
   // This is non-destructive (does not delete the symbol, only removes it from the symbol table).
 
-     ROSE_ASSERT (p_table != NULL);
+     assert (p_table != NULL);
 
 #ifdef _MSC_VER
   // DQ (11/29/2009): MSVC requires a different use of nonstandard.
@@ -5695,7 +5695,7 @@ SgSymbolTable::remove_function_type( const SgName & name )
 #endif
      while (it != get_table()->end() && (*it).first == name)
         {
-          ROSE_ASSERT(it->second->variantT() == V_SgFunctionTypeSymbol);
+          assert(it->second->variantT() == V_SgFunctionTypeSymbol);
 
           deleteList.push_back(it);
           it++;
@@ -5731,8 +5731,8 @@ SgSymbolTable::remove_function_type( const SgName & name )
 SgSymbol*
 SgSymbolTable::find( const SgInitializedName* initializedName)
    {
-     ROSE_ASSERT(p_table != NULL);
-     ROSE_ASSERT(initializedName != NULL);
+     assert(p_table != NULL);
+     assert(initializedName != NULL);
 
   // printf ("Inside of SgSymbolTable::find( const SgInitializedName* ): initializedName = %p = %s \n",initializedName,SageInterface::get_name(initializedName).c_str());
 
@@ -5748,11 +5748,11 @@ SgSymbolTable::find( const SgInitializedName* initializedName)
   // Iterate through the matching symbols in the multimap
      while (p_iterator != p_table->end() && (*p_iterator).first == name)
         {
-          ROSE_ASSERT(p_iterator->second != NULL);
+          assert(p_iterator->second != NULL);
           SgNode* symbolBasis = p_iterator->second->get_symbol_basis();
        // printf ("In loop: p_iterator->second = %p symbolBasis = %p initializedName = %p \n",p_iterator->second,symbolBasis,initializedName);
        // printf ("In loop: symbolBasis->variantT() = %d statement->variantT() = %d \n",symbolBasis->variantT(),initializedName->variantT());
-          ROSE_ASSERT(symbolBasis != NULL);
+          assert(symbolBasis != NULL);
           if (isSgInitializedName(symbolBasis) != NULL)
              {
             // printf ("found a SgInitializedName \n");
@@ -5784,8 +5784,8 @@ SgSymbolTable::find( const SgInitializedName* initializedName)
 SgSymbol*
 SgSymbolTable::find( const SgFunctionType* functionType)
    {
-     ROSE_ASSERT(p_table != NULL);
-     ROSE_ASSERT(functionType != NULL);
+     assert(p_table != NULL);
+     assert(functionType != NULL);
 
   // printf ("Inside of SgSymbolTable::find( const SgFunctionType* ): functionType = %p = %s \n",functionType,SageInterface::get_name(functionType).c_str());
 
@@ -5814,8 +5814,8 @@ SgSymbolTable::find( const SgFunctionType* functionType)
 SgSymbol*
 SgSymbolTable::find( const SgStatement* statement)
    {
-     ROSE_ASSERT(p_table != NULL);
-     ROSE_ASSERT(statement != NULL);
+     assert(p_table != NULL);
+     assert(statement != NULL);
 
 #if 0
      printf ("Inside of SgSymbolTable::find( const SgStatement* ): statement = %p = %s = %s \n",statement,statement->class_name().c_str(),SageInterface::get_name(statement).c_str());
@@ -5835,7 +5835,7 @@ SgSymbolTable::find( const SgStatement* statement)
   // Once we have p_iterator set via the name we don't typically have more than one iteration
      while (p_iterator != p_table->end() && (*p_iterator).first == name)
         {
-          ROSE_ASSERT(p_iterator->second != NULL);
+          assert(p_iterator->second != NULL);
 #if 0
           printf ("In loop: p_iterator->second = %p statement = %p \n",p_iterator->second,statement);
           printf ("In loop: p_iterator->second = %p = %s statement = %p = %s \n",p_iterator->second,p_iterator->second->class_name().c_str(),statement,statement->class_name().c_str());
@@ -5848,7 +5848,7 @@ SgSymbolTable::find( const SgStatement* statement)
                symbolBasis->variantT(),Cxx_GrammarTerminalNames[symbolBasis->variantT()].name.c_str(),
                statement->variantT(),Cxx_GrammarTerminalNames[statement->variantT()].name.c_str());
 #endif
-          ROSE_ASSERT(symbolBasis != NULL);
+          assert(symbolBasis != NULL);
 
           if (symbolBasis->variantT() == statement->variantT())
              {
@@ -5898,12 +5898,12 @@ SgSymbolTable::remove( const SgSymbol* symbol )
 
   // This is non-destructive (does not delete the symbol, only removes it from the symbol table).
 
-     ROSE_ASSERT (p_table != NULL);
+     assert (p_table != NULL);
 
 #if 1
   // #if SYMBOL_TABLE_ERROR_CHECKING
   // This is an expensive linear time search of the symbol table!
-     ROSE_ASSERT(exists(symbol) == true);
+     assert(exists(symbol) == true);
 #endif
 
   // This is a virtual function call
@@ -5911,7 +5911,7 @@ SgSymbolTable::remove( const SgSymbol* symbol )
 #if 0
   // printf ("In SgSymbolTable::remove(SgSymbol* symbol = %p = %s = %s) from SgSymbolTable = %p \n",symbol,symbol->class_name().c_str(),SageInterface::get_name(symbol).c_str(),this);
      SgNode* symbolBasis = symbol->get_symbol_basis();
-     ROSE_ASSERT(symbolBasis != NULL);
+     assert(symbolBasis != NULL);
      printf ("In SgSymbolTable::remove(SgSymbol* symbol = %p = %s = %s) symbol_basis = %p = %s = %s from SgSymbolTable = %p \n",
           symbol,symbol->class_name().c_str(),SageInterface::get_name(symbol).c_str(),
           symbolBasis,symbolBasis->class_name().c_str(),SageInterface::get_name(symbolBasis).c_str(),this);
@@ -5943,7 +5943,7 @@ SgSymbolTable::remove( const SgSymbol* symbol )
 
        // DQ (2/19/2007): Added assertion to exit on error!  Enforcing this allows us to
        // make sure that the complexity is not linear in the size of the symbol table!
-          ROSE_ASSERT(false);
+          assert(false);
 
           rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator i = get_table()->begin();
           while ( (i != get_table()->end()) && (elementToDelete == get_table()->end()) )
@@ -5968,7 +5968,7 @@ SgSymbolTable::remove( const SgSymbol* symbol )
                     printf ("declarationStatement = %p = %s \n",declarationStatement,declarationStatement->class_name().c_str());
                     declarationStatement->get_startOfConstruct()->display("location of problem: debug");
                   }
-               ROSE_ASSERT(false);
+               assert(false);
              }
         }
 #endif
@@ -5979,10 +5979,10 @@ SgSymbolTable::remove( const SgSymbol* symbol )
      if (elementToDelete == get_table()->end())
         {
           printf ("Error: could not find symbol = %p name = %s in symbol table (failed to find symbol pointer under any name) \n",symbol,name.str());
-          ROSE_ASSERT(false);
+          assert(false);
         }
 #endif
-     ROSE_ASSERT(elementToDelete != get_table()->end());
+     assert(elementToDelete != get_table()->end());
 
   // DQ (5/9/2007): Moved to after the call to "p_symbolSet.erase(elementToDelete->second);"
   // get_table()->erase(elementToDelete);
@@ -6021,7 +6021,7 @@ SgSymbolTable::remove( const SgSymbol* symbol )
 void
 SgSymbolTable::remove_function( const SgName & name )
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
 
      list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
      p_iterator = p_table->find(name);
@@ -6052,7 +6052,7 @@ SgSymbolTable::remove_function( const SgName & name )
 void
 SgSymbolTable::remove_class( const SgName & name )
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
 
      list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
      p_iterator = p_table->find(name);
@@ -6086,7 +6086,7 @@ SgSymbolTable::remove_class( const SgName & name )
 void
 SgSymbolTable::remove_enum( const SgName & name )
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
 
      list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
      p_iterator = p_table->find(name);
@@ -6118,9 +6118,9 @@ void
 SgSymbolTable::remove_label( const SgName & name )
    {
      printf ("Error: not implemented yet! \n");
-     ROSE_ASSERT(false);
+     assert(false);
 
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
 
      list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
      p_iterator = p_table->find(name);
@@ -6152,9 +6152,9 @@ void
 SgSymbolTable::remove_var( const SgName & name )
    {
      printf ("Error: not implemented yet! \n");
-     ROSE_ASSERT(false);
+     assert(false);
 
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
 
      list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
      p_iterator = p_table->find(name);
@@ -6186,9 +6186,9 @@ void
 SgSymbolTable::remove_function_type( const SgName & name )
    {
      printf ("Error: not implemented yet! \n");
-     ROSE_ASSERT(false);
+     assert(false);
 
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
 
      list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
      p_iterator = p_table->find(name);
@@ -6220,9 +6220,9 @@ void
 SgSymbolTable::remove_namespace( const SgName & name )
    {
      printf ("Error: not implemented yet! \n");
-     ROSE_ASSERT(false);
+     assert(false);
 
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
 
      list<rose_hash::hash_multimap<const SgName, SgSymbol*, hash_Name, eqstr>::iterator> deleteList;
      p_iterator = p_table->find(name);
@@ -6260,7 +6260,7 @@ SgSymbolTable::remove_namespace( const SgName & name )
 int
 SgSymbolTable::find(const SgName & nm, SgSymbol *sp)
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
 
   // if(!p_table)
   //      return NULL;
@@ -6286,7 +6286,7 @@ SgSymbolTable::find(const SgName & nm, SgSymbol *sp)
 bool
 SgSymbolTable::exists ( const SgName & nm ) const
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      return p_table->find(nm) != p_table->end();
    }
 
@@ -6298,14 +6298,14 @@ SgSymbolTable::exists ( const SgSymbol *sp ) const
 // DQ (2/19/2007): Make sure that this sort of expensive symbol table is not called if SYMBOL_TABLE_ERROR_CHECKING  is not active
 #if SYMBOL_TABLE_ERROR_CHECKING == 0
      printf ("Error: Expensive symbol table tests being called while SYMBOL_TABLE_ERROR_CHECKING == 0 \n");
-     ROSE_ASSERT(false);
+     assert(false);
 #endif
 
 
   // This is the more expensive implementation but more useful for error checking!
      bool returnValue = false;
 
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      hash_iterator i = p_table->begin();
      while ( returnValue == false && i != p_table->end() )
         {
@@ -6374,7 +6374,7 @@ SgSymbolTable::findany(const SgName &nm)
 SgSymbol*
 SgSymbolTable::find_any(const SgName &nm)
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if(p_table)
         {
        // DQ (5/22/2006): Made this a local variable
@@ -6395,7 +6395,7 @@ SgSymbolTable::find_any(const SgName &nm)
 SgTypedefSymbol*
 SgSymbolTable::find_typedef(const SgName &nm)
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if(p_table)
         {
           p_iterator=p_table->find(nm);
@@ -6419,7 +6419,7 @@ SgSymbolTable::find_typedef(const SgName &nm)
 SgEnumSymbol*
 SgSymbolTable::find_enum(const SgName &nm)
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if(p_table != NULL)
         {
           p_iterator=p_table->find(nm);
@@ -6443,7 +6443,7 @@ SgSymbolTable::find_enum(const SgName &nm)
 SgEnumFieldSymbol*
 SgSymbolTable::find_enum_field(const SgName &nm)
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if(p_table)
         {
           p_iterator=p_table->find(nm);
@@ -6472,8 +6472,8 @@ SgSymbolTable::findvar(const SgName &nm)
 SgVariableSymbol*
 SgSymbolTable::find_variable(const SgName &nm)
    {
-     ROSE_ASSERT(this != NULL);
-     ROSE_ASSERT(p_table != NULL);
+     assert(this != NULL);
+     assert(p_table != NULL);
 
      p_iterator = p_table->find(nm);
 
@@ -6529,7 +6529,7 @@ SgSymbolTable::findclass(const SgName &nm)
 SgClassSymbol*
 SgSymbolTable::find_class(const SgName &nm)
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
 
      p_iterator = p_table->find(nm);
 
@@ -6584,7 +6584,7 @@ SgSymbolTable::findfunctype(const SgName &nm)
 SgFunctionTypeSymbol*
 SgSymbolTable::find_function_type(const SgName &nm)
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      SgFunctionTypeSymbol* returnFunctionType = NULL;
 
      hash_iterator i = p_table->find(nm);
@@ -6602,7 +6602,7 @@ SgSymbolTable::find_function_type(const SgName &nm)
 SgLabelSymbol*
 SgSymbolTable::find_label(const SgName &nm)
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if (p_table)
         {
           p_iterator = p_table->find(nm);
@@ -6626,7 +6626,7 @@ SgSymbolTable::find_label(const SgName &nm)
 SgNamespaceSymbol* 
 SgSymbolTable::find_namespace ( const SgName & nm )
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if (p_table)
         {
           p_iterator = p_table->find(nm);
@@ -6657,7 +6657,7 @@ SgSymbolTable::find_function (const SgName &nm, const SgType* t)
    {
   // AS (083006): cleaned up logic so that the function only have one return statement.
      SgFunctionSymbol *s = NULL;
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if(p_table)
         {
        // AJ (10/21/2004): Adjusted implementation to use new STL hash map interface
@@ -6691,7 +6691,7 @@ SgSymbolTable::findfunc(const SgName &nm)
 SgFunctionSymbol*
 SgSymbolTable::find_function(const SgName &nm)
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
 
   // First look through only the local (non-aliased) symbols.
 
@@ -6721,12 +6721,12 @@ SgSymbolTable::find_function(const SgName &nm)
                     p_name    = nm;
                     p_no_name = false;
                     SgRenameSymbol* renameSymbol = isSgRenameSymbol(p_iterator->second);
-                    ROSE_ASSERT(renameSymbol != NULL);
+                    assert(renameSymbol != NULL);
 
                  // DQ (10/11/2008): Moved SgRenameSymbol to be derived from SgFunctionSymbol.
                  // SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(renameSymbol->get_original_symbol());
                     SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(renameSymbol);
-                    ROSE_ASSERT(functionSymbol != NULL);
+                    assert(functionSymbol != NULL);
                     return functionSymbol;
                   }
              }
@@ -6750,7 +6750,7 @@ SgSymbolTable::find_function(const SgName &nm)
             // printf ("Looking for functionSymbol = %p \n",functionSymbol);
 
             // DQ (10/10/2008): The current problem is that this is NULL when the base of an aliased symbol is a SgRenameSymbol.
-            // ROSE_ASSERT(functionSymbol != NULL);
+            // assert(functionSymbol != NULL);
 
                if ( functionSymbol != NULL )
                   {
@@ -6770,7 +6770,7 @@ SgSymbolTable::find_function(const SgName &nm)
 SgTemplateSymbol*
 SgSymbolTable::find_template(const SgName &nm)
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if(p_table)
         {
           p_iterator = p_table->find(nm);
@@ -6815,7 +6815,7 @@ SgSymbolTable::findfirstany()
 SgSymbol*
 SgSymbolTable::find_any()
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if(p_table)
         {
           p_iterator = p_table->begin();
@@ -6837,7 +6837,7 @@ SgSymbolTable::findfirstvar()
 SgVariableSymbol*
 SgSymbolTable::find_variable()
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if(p_table)
         {
           p_iterator = p_table->begin();
@@ -6864,7 +6864,7 @@ SgSymbolTable::findfirstclass()
 SgClassSymbol*
 SgSymbolTable::find_class()
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if (p_table)
         {
           p_iterator = p_table->begin();
@@ -6891,7 +6891,7 @@ SgSymbolTable::findfirstfunction()
 SgFunctionSymbol*
 SgSymbolTable::find_function()
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if(p_table)
         {
           p_iterator = p_table->begin();
@@ -6917,7 +6917,7 @@ SgSymbolTable::find_function()
 SgFunctionSymbol*
 SgSymbolTable::find_function_type()
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if(p_table)
         {
           p_iterator = p_table->begin();
@@ -6939,7 +6939,7 @@ SgSymbolTable::find_function_type()
 SgTypedefSymbol*
 SgSymbolTable::find_typedef()
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if (p_table)
         {
           p_iterator = p_table->begin();
@@ -6960,7 +6960,7 @@ SgSymbolTable::find_typedef()
 SgEnumSymbol*
 SgSymbolTable::find_enum()
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if (p_table)
         {
           p_iterator = p_table->begin();
@@ -6981,7 +6981,7 @@ SgSymbolTable::find_enum()
 SgEnumFieldSymbol*
 SgSymbolTable::find_enum_field()
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if (p_table)
         {
           p_iterator = p_table->begin();
@@ -7002,7 +7002,7 @@ SgSymbolTable::find_enum_field()
 SgLabelSymbol*
 SgSymbolTable::find_label()
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if (p_table)
         {
           p_iterator = p_table->begin();
@@ -7023,7 +7023,7 @@ SgSymbolTable::find_label()
 SgNamespaceSymbol*
 SgSymbolTable::find_namespace()
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if (p_table)
         {
           p_iterator = p_table->begin();
@@ -7044,7 +7044,7 @@ SgSymbolTable::find_namespace()
 SgTemplateSymbol*
 SgSymbolTable::find_template()
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if (p_table)
         {
           p_iterator = p_table->begin();
@@ -7088,7 +7088,7 @@ SgSymbolTable::nextany()
 SgSymbol*
 SgSymbolTable::next_any()
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if(p_table)
         {
           p_iterator++;
@@ -7114,7 +7114,7 @@ SgSymbolTable::nextvar()
 SgVariableSymbol*
 SgSymbolTable::next_variable()
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if (p_table != NULL)
         {
           p_iterator++;
@@ -7140,7 +7140,7 @@ SgSymbolTable::nextclass()
 SgClassSymbol*
 SgSymbolTable::next_class()
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if(p_table)
         {
           p_iterator++; // go to next one
@@ -7166,7 +7166,7 @@ SgSymbolTable::nextfunc()
 SgFunctionSymbol*
 SgSymbolTable::next_function()
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if(p_table)
         {
           p_iterator++;
@@ -7186,7 +7186,7 @@ SgSymbolTable::next_function()
 SgTypedefSymbol*
 SgSymbolTable::next_typedef()
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if (p_table != NULL)
         {
           p_iterator++;
@@ -7208,7 +7208,7 @@ SgSymbolTable::next_typedef()
 SgEnumSymbol*
 SgSymbolTable::next_enum()
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if(p_table)
         {
           p_iterator++;
@@ -7229,7 +7229,7 @@ SgSymbolTable::next_enum()
 SgEnumFieldSymbol*
 SgSymbolTable::next_enum_field()
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if(p_table)
         {
           p_iterator++;
@@ -7249,7 +7249,7 @@ SgSymbolTable::next_enum_field()
 SgLabelSymbol*
 SgSymbolTable::next_label()
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if (p_table != NULL)
         {
           p_iterator++;
@@ -7269,7 +7269,7 @@ SgSymbolTable::next_label()
 SgNamespaceSymbol*
 SgSymbolTable::next_namespace()
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if (p_table != NULL)
         {
           p_iterator++;
@@ -7289,7 +7289,7 @@ SgSymbolTable::next_namespace()
 SgTemplateSymbol*
 SgSymbolTable::next_template()
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if (p_table != NULL)
         {
           p_iterator++;
@@ -7313,7 +7313,7 @@ SgSymbolTable::next_template()
 SgSymbol*
 SgSymbolTable::operator[](const SgName & nm)
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if (p_table != NULL)
         {
        // AJ (10/21/2004): Adjusted implementation to use new STL hash map interface
@@ -7331,7 +7331,7 @@ SgSymbolTable::operator[](const SgName & nm)
 int
 SgSymbolTable::size() const
    {
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      return p_table->size();
    }
 
@@ -7340,7 +7340,7 @@ int
 SgSymbolTable::count(const SgName &nm) const
    {
   // DQ (1/30/2007): assertion added
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      return p_table->count(nm);
    }
 
@@ -7359,14 +7359,14 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
   // DQ (2/16/2006): This is a SgScopeStatement except for the SgSymbolTable used in the global function type symbol table
   // SgScopeStatement* parentNode = isSgScopeStatement(get_parent());
      SgNode* parentNode = get_parent();
-     ROSE_ASSERT(parentNode != NULL);
+     assert(parentNode != NULL);
      printf ("Symbol table has parent = %p = %s \n",parentNode,parentNode->class_name().c_str());
 
   // DQ (6/23/2005): It is not a problem for the global function table to not have a name!
   //   else
-  //      ROSE_ASSERT (p_name.str() == NULL);
+  //      assert (p_name.str() == NULL);
 
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
      if (p_table != NULL)
         {
        // AJ (10/21/2004): Adjusted implementation to use new STL hash map interface
@@ -7379,17 +7379,17 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
             // DQ: removed SgName casting operator to char*
             // cout << "[" << idx << "] " << (*i).first;
             // cout << "[" << idx << "] " << (*i).first.str();
-               ROSE_ASSERT ( isSgSymbol( (*i).second ) != NULL );
+               assert ( isSgSymbol( (*i).second ) != NULL );
 
             // printf ("Symbol number: %d (pair.first (SgName) = %s) pair.second (SgSymbol) sage_class_name() = %s \n",
             //      idx,(*i).first.str(),(*i).second->sage_class_name());
 
                SgSymbol* symbol = isSgSymbol((*i).second);
-               ROSE_ASSERT ( symbol != NULL );
+               assert ( symbol != NULL );
                SgType* type = symbol->get_type();
 
             // DQ (5/7/2004): modified to allow for get_type() to return NULL
-            // ROSE_ASSERT ( type != NULL );
+            // assert ( type != NULL );
 
                SgNamedType* namedType = isSgNamedType(type);
                SgName nameOfType;
@@ -7442,7 +7442,7 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                SgNode* symbolBasis = i->second->get_symbol_basis();
                if (symbolBasis != NULL)
                   {
-                    ROSE_ASSERT(symbolBasis != NULL);
+                    assert(symbolBasis != NULL);
 
                     if (outputSymbolInfo == true)
                        {
@@ -7463,13 +7463,13 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
 
                SgName mangledName;
                SgSymbol* symbolFromTable = (*i).second;
-               ROSE_ASSERT(symbolFromTable != NULL);
+               assert(symbolFromTable != NULL);
                switch(symbolFromTable->variantT())
                   {
                     case V_SgFunctionSymbol:
                        {
                          SgFunctionSymbol* symbol = isSgFunctionSymbol(symbolFromTable);
-                         ROSE_ASSERT(symbol != NULL);
+                         assert(symbol != NULL);
                          SgFunctionDeclaration* functionDeclaration = symbol->get_declaration();
                          mangledName = functionDeclaration->get_mangled_name();
                          break;
@@ -7477,7 +7477,7 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                     case V_SgMemberFunctionSymbol:
                        {
                          SgMemberFunctionSymbol* symbol = isSgMemberFunctionSymbol(symbolFromTable);
-                         ROSE_ASSERT(symbol != NULL);
+                         assert(symbol != NULL);
                          SgFunctionDeclaration* functionDeclaration = symbol->get_declaration();
                          mangledName = functionDeclaration->get_mangled_name();
                          break;
@@ -7485,7 +7485,7 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                     case V_SgClassSymbol:
                        {
                          SgClassSymbol* symbol = isSgClassSymbol(symbolFromTable);
-                         ROSE_ASSERT(symbol != NULL);
+                         assert(symbol != NULL);
                          SgClassDeclaration* classDeclaration = symbol->get_declaration();
                          mangledName = classDeclaration->get_mangled_name();
                          break;
@@ -7493,7 +7493,7 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                     case V_SgEnumFieldSymbol:
                        {
                          SgEnumFieldSymbol* symbol = isSgEnumFieldSymbol(symbolFromTable);
-                         ROSE_ASSERT(symbol != NULL);
+                         assert(symbol != NULL);
                          SgInitializedName* enumFieldName = symbol->get_declaration();
                          mangledName = enumFieldName->get_mangled_name();
                          break;
@@ -7501,7 +7501,7 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                     case V_SgEnumSymbol:
                        {
                          SgEnumSymbol* symbol = isSgEnumSymbol(symbolFromTable);
-                         ROSE_ASSERT(symbol != NULL);
+                         assert(symbol != NULL);
                          SgEnumDeclaration* enumDeclaration = symbol->get_declaration();
                          mangledName = enumDeclaration->get_mangled_name();
                          break;
@@ -7509,7 +7509,7 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                     case V_SgFunctionTypeSymbol:
                        {
                          SgFunctionTypeSymbol* symbol = isSgFunctionTypeSymbol(symbolFromTable);
-                         ROSE_ASSERT(symbol != NULL);
+                         assert(symbol != NULL);
                          mangledName = symbol->get_name();
                          printf ("A SgFunctionTypeSymbol also has a pointer to a SgType = %p \n",symbol->get_type());
                          break;
@@ -7517,14 +7517,14 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                     case V_SgLabelSymbol:
                        {
                          SgLabelSymbol* symbol = isSgLabelSymbol(symbolFromTable);
-                         ROSE_ASSERT(symbol != NULL);
+                         assert(symbol != NULL);
                          SgLabelStatement* labelStatement = symbol->get_declaration();
 
                       // DQ (12/24/2007): Modified to reflect new implementation for Fortran numeric labels.
                       // mangledName = labelStatement->get_label();
                          if (labelStatement == NULL)
                             {
-                              ROSE_ASSERT(symbol->get_numeric_label_value() >= 0);
+                              assert(symbol->get_numeric_label_value() >= 0);
                               mangledName = StringUtility::numberToString(symbol->get_numeric_label_value());
                             }
                            else
@@ -7536,7 +7536,7 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                     case V_SgNamespaceSymbol:
                        {
                          SgNamespaceSymbol* symbol = isSgNamespaceSymbol(symbolFromTable);
-                         ROSE_ASSERT(symbol != NULL);
+                         assert(symbol != NULL);
 #if 0
                          SgNamespaceDeclarationStatement* namespaceDeclaration = symbol->get_declaration();
                          mangledName = namespaceDeclaration->get_mangled_name();
@@ -7560,7 +7560,7 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                     case V_SgTemplateSymbol:
                        {
                          SgTemplateSymbol* symbol = isSgTemplateSymbol(symbolFromTable);
-                         ROSE_ASSERT(symbol != NULL);
+                         assert(symbol != NULL);
                          SgTemplateDeclaration* templateDeclaration = symbol->get_declaration();
                          mangledName = templateDeclaration->get_mangled_name();
                          break;
@@ -7568,7 +7568,7 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                     case V_SgTypedefSymbol:
                        {
                          SgTypedefSymbol* symbol = isSgTypedefSymbol(symbolFromTable);
-                         ROSE_ASSERT(symbol != NULL);
+                         assert(symbol != NULL);
                          SgTypedefDeclaration* typedefDeclaration = symbol->get_declaration();
                          mangledName = typedefDeclaration->get_mangled_name();
                          break;
@@ -7576,7 +7576,7 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                     case V_SgVariableSymbol:
                        {
                          SgVariableSymbol* symbol = isSgVariableSymbol(symbolFromTable);
-                         ROSE_ASSERT(symbol != NULL);
+                         assert(symbol != NULL);
                          SgInitializedName* initializedName = symbol->get_declaration();
                          mangledName = initializedName->get_mangled_name();
                          break;
@@ -7584,7 +7584,7 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                     case V_SgAliasSymbol:
                        {
                          SgAliasSymbol* symbol = isSgAliasSymbol(symbolFromTable);
-                         ROSE_ASSERT(symbol != NULL);
+                         assert(symbol != NULL);
                          mangledName = symbol->get_name();
                          break;
                        }
@@ -7595,7 +7595,7 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                          printf ("Error: SgSymbol not handled (%s) \n",symbolFromTable->class_name().c_str());
 
                       // DQ (6/8/2007): Make this case fail so we can detect this error.
-                         ROSE_ASSERT(false);
+                         assert(false);
                        }
                   }
 
@@ -7629,7 +7629,7 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
         {
        // DQ (6/27/2005): I think this is an error (we should always have a valid symbol table)
           printf ("Pointer to symbol table is NULL \n");
-          ROSE_ASSERT(false);
+          assert(false);
         }
    }
 
@@ -7640,7 +7640,7 @@ SgSymbolTable::get_symbols() const
   // DQ (2/15/2007): generate a set of SgNode* so that we can use them for set difference against the delete list in AST merge.
      set<SgNode*> returnSet;
 
-     ROSE_ASSERT(p_table != NULL);
+     assert(p_table != NULL);
 #ifdef _MSC_VER
      rose_hash::hash_multimap<SgName, SgSymbol*>::iterator i = get_table()->begin();
 #else
@@ -7648,7 +7648,7 @@ SgSymbolTable::get_symbols() const
 #endif
      while (i != p_table->end())
         {
-          ROSE_ASSERT(i->second != NULL);
+          assert(i->second != NULL);
           returnSet.insert(i->second);
 
           i++;
@@ -7673,7 +7673,7 @@ SgBaseClass::post_construction_initialization()
   // class declarations in ROSETTA, I was unable make this SgBaseClassModifier a 
   // data member and was forced to handle it as a pointer).
      p_baseClassModifier = new SgBaseClassModifier();
-     ROSE_ASSERT ( p_baseClassModifier != NULL);
+     assert ( p_baseClassModifier != NULL);
    }
 
 #if 0
@@ -7696,9 +7696,9 @@ SgBaseClass::SgBaseClass(const SgBaseClass& X)
   // DQ: initialize all values
      p_isDirectBaseClass = 0;
 
-     ROSE_ASSERT ( X.p_baseClassModifier != NULL);
+     assert ( X.p_baseClassModifier != NULL);
      p_baseClassModifier = new SgBaseClassModifier( *(X.p_baseClassModifier) );
-     ROSE_ASSERT ( p_baseClassModifier != NULL);
+     assert ( p_baseClassModifier != NULL);
    }
 
 #if 0
@@ -7723,8 +7723,8 @@ SgBaseClass::operator= (const SgBaseClass & X)
   // DQ (6/21/2005): Renamed to make this more clear
      p_isDirectBaseClass  = X.p_isDirectBaseClass;
 
-     ROSE_ASSERT (p_baseClassModifier   != NULL);
-     ROSE_ASSERT (X.p_baseClassModifier != NULL);
+     assert (p_baseClassModifier   != NULL);
+     assert (X.p_baseClassModifier != NULL);
      *p_baseClassModifier = *X.p_baseClassModifier;
 
      return *this;
@@ -7760,7 +7760,7 @@ SgBaseClass::operator< (const SgBaseClass&) const
 SgBaseClassModifier & 
 SgBaseClass::get_baseClassModifier()
    {
-     ROSE_ASSERT ( p_baseClassModifier != NULL);
+     assert ( p_baseClassModifier != NULL);
      return *p_baseClassModifier;
    }
  
@@ -7793,8 +7793,8 @@ SOURCE_INITIALIZED_NAME_START
 SgSymbol*
 SgInitializedName::get_symbol_from_symbol_table() const
    {
-     ROSE_ASSERT(get_scope() != NULL);
-     ROSE_ASSERT(get_scope()->get_symbol_table() != NULL);
+     assert(get_scope() != NULL);
+     assert(get_scope()->get_symbol_table() != NULL);
      return get_scope()->get_symbol_table()->find(this);
    }
 
@@ -7807,7 +7807,7 @@ SgInitializedName::search_for_symbol_from_symbol_table() const
           symbol = p_prev_decl_item->get_symbol_from_symbol_table();
      else
           symbol = get_symbol_from_symbol_table();
-     ROSE_ASSERT(symbol != NULL);
+     assert(symbol != NULL);
      return symbol;
    }
 
@@ -7845,8 +7845,8 @@ SgInitializedName::set_file_info(Sg_File_Info* X)
 SgStorageModifier &
 SgInitializedName::get_storageModifier()
    {
-     ROSE_ASSERT (this != NULL);
-     ROSE_ASSERT (p_storageModifier != NULL);
+     assert (this != NULL);
+     assert (p_storageModifier != NULL);
      return *p_storageModifier;
    }
 
@@ -7864,7 +7864,7 @@ SgInitializedName::get_qualified_name() const
 
   // The semantics of get_scope is that it can never be NULL (SgGlobal returns itself as its scope!)
      SgScopeStatement* scope = get_scope();
-     ROSE_ASSERT(scope != NULL);
+     assert(scope != NULL);
 
      returnName = SgName::assembleQualifiedName(scope->get_qualified_name(),get_name());
 
@@ -7882,7 +7882,7 @@ SgInitializedName::post_construction_initialization()
   // printf ("In SgInitializedName::post_construction_initialization() this = %p \n",this);
 
      p_storageModifier = new SgStorageModifier();
-     ROSE_ASSERT (p_storageModifier != NULL);
+     assert (p_storageModifier != NULL);
      p_storageModifier->setDefault();
 
   // DQ (6/20/2006): Set the parent of the SgStorageModifier
@@ -8001,9 +8001,9 @@ SgInitializedName::SgInitializedName (const SgInitializedName& ptr)
 
   // DQ (12/17/2006): See if we can enforce this!
   // p_startOfConstruct = (ptr.p_startOfConstruct != NULL) ? new Sg_File_Info(*ptr.p_startOfConstruct) : NULL;
-     ROSE_ASSERT(ptr.p_startOfConstruct != NULL);
+     assert(ptr.p_startOfConstruct != NULL);
      p_startOfConstruct = new Sg_File_Info(*ptr.p_startOfConstruct);
-     ROSE_ASSERT(p_startOfConstruct != NULL);
+     assert(p_startOfConstruct != NULL);
 
   // DQ (12/17/2006): Fixup the parent of the new or borrowed Sg_File_Info object.
      p_startOfConstruct->set_parent(this);
@@ -8015,9 +8015,9 @@ SgInitializedName::SgInitializedName (const SgInitializedName& ptr)
      p_preinitialization = ptr.p_preinitialization;
 
   // DQ (4/28/2004): Added storage modifier support (replacing the old interface)
-     ROSE_ASSERT (ptr.p_storageModifier != NULL);
+     assert (ptr.p_storageModifier != NULL);
      p_storageModifier = new SgStorageModifier ( *(ptr.p_storageModifier) );
-     ROSE_ASSERT (p_storageModifier != NULL);
+     assert (p_storageModifier != NULL);
 
   // DQ (6/20/2006): Set the parent of the SgStorageModifier
      p_storageModifier->set_parent(this);
@@ -8047,7 +8047,7 @@ SgInitializedName::SgInitializedName (const SgInitializedName& ptr)
 SgInitializedName&
 SgInitializedName::operator= (const SgInitializedName& ptr) 
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
 
   /* check they are not the same name */
      if (this != &ptr)
@@ -8072,10 +8072,10 @@ SgInitializedName::operator= (const SgInitializedName& ptr)
             // DQ (12/22/2006): Interestingly, the inliner is dependent upon this working this way!  We should maybe look into this later.
                p_initptr->set_parent(this);
 #endif
-               ROSE_ASSERT(p_initptr->get_parent() != NULL);
+               assert(p_initptr->get_parent() != NULL);
 
             // printf ("Exiting as a test! operator= \n");
-            // ROSE_ASSERT(false);
+            // assert(false);
              }
 
        // p_prev_itemptr   = ptr.p_prev_itemptr;
@@ -8087,13 +8087,13 @@ SgInitializedName::operator= (const SgInitializedName& ptr)
        // p_fileInfo       = ptr.p_fileInfo;
 
        // DQ (6/23/2006): Added assertion to detect errors
-       // ROSE_ASSERT(ptr.p_file_info != NULL);
+       // assert(ptr.p_file_info != NULL);
        // p_file_info      = (ptr.p_file_info != NULL) ? new Sg_File_Info(*ptr.p_file_info) : NULL;
-       // ROSE_ASSERT(p_file_info != NULL);
-          ROSE_ASSERT(ptr.p_startOfConstruct != NULL);
+       // assert(p_file_info != NULL);
+          assert(ptr.p_startOfConstruct != NULL);
        // p_startOfConstruct = (ptr.p_startOfConstruct != NULL) ? new Sg_File_Info(*ptr.p_startOfConstruct) : NULL;
           p_startOfConstruct = new Sg_File_Info(*ptr.p_startOfConstruct);
-          ROSE_ASSERT(p_startOfConstruct != NULL);
+          assert(p_startOfConstruct != NULL);
 
        // DQ (12/17/2006): Fixup the parent of the new or borrowed Sg_File_Info object.
           p_startOfConstruct->set_parent(this);
@@ -8104,7 +8104,7 @@ SgInitializedName::operator= (const SgInitializedName& ptr)
        // DQ (3/1/2005): Added to avoid valgrind warning about uninitialized use
           p_preinitialization = ptr.p_preinitialization;
 
-          ROSE_ASSERT (p_storageModifier != NULL);
+          assert (p_storageModifier != NULL);
           *p_storageModifier = *(ptr.p_storageModifier);
 
        // DQ (4/10/2006): Removed in favor of implementation at SgNode using
@@ -8133,8 +8133,8 @@ SgInitializedName::operator= (const SgInitializedName& ptr)
           printf ("SgInitializedName::operator=(): Attempt to copy self to self \n");
         }
 
-  // ROSE_ASSERT(p_file_info != NULL);
-     ROSE_ASSERT(p_startOfConstruct != NULL);
+  // assert(p_file_info != NULL);
+     assert(p_startOfConstruct != NULL);
 
      return *this;
    }
@@ -8194,17 +8194,17 @@ SgInitializedName::set_name(SgName new_name)
      while((node!=NULL) && ( isSgScopeStatement(node)==NULL))
           node = node->get_parent();
 
-     ROSE_ASSERT(node!=NULL);
+     assert(node!=NULL);
 
      SgScopeStatement * scope_stmt = isSgScopeStatement(node);
 
-     ROSE_ASSERT(scope_stmt != NULL);
-     ROSE_ASSERT(scope_stmt->get_symbol_table() != NULL);
-     ROSE_ASSERT(scope_stmt->get_symbol_table()->get_table() != NULL);
+     assert(scope_stmt != NULL);
+     assert(scope_stmt->get_symbol_table() != NULL);
+     assert(scope_stmt->get_symbol_table()->get_table() != NULL);
 
      SgDeclarationStatement * parent_declaration = get_declaration();
 
-     ROSE_ASSERT(parent_declaration != NULL);
+     assert(parent_declaration != NULL);
 
   // Find the symbols associated with p_name 
      std::pair<SgSymbolTable::hash_iterator,SgSymbolTable::hash_iterator> pair_it = 
@@ -8275,14 +8275,14 @@ SgInitializedName::set_name(SgName new_name)
 SgType*
 SgInitializedName::get_type() const
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      return p_typeptr;
    }
 
 void
 SgInitializedName::set_type(SgType *t)
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      p_typeptr = t;
    }
 
@@ -8292,7 +8292,7 @@ SgInitializedName::get_initializer() const
   // DQ (12/17/2006): These should be able to be generated by ROSETTA!
   // The semantics of p_is_initializer appears to not be required.
 
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      if (p_is_initializer)
           return p_initptr;
        else
@@ -8305,7 +8305,7 @@ SgInitializedName::set_initializer(SgInitializer* i)
   // DQ (12/17/2006): These should be able to be generated by ROSETTA!
   // The semantics of p_is_initializer appears to not be required.
 
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      p_initptr        = i;
      p_is_initializer = 1;
    }
@@ -8352,7 +8352,7 @@ SgInitializedName::get_mangled_name (void) const
                printf ("SgInitializedName = %p = %s \n",this,get_name().str());
                get_file_info()->display("Error scope of SgInitializedName == NULL");
              }
-          ROSE_ASSERT (scope != NULL);
+          assert (scope != NULL);
 
           SgName qual_name = mangleQualifiers (scope);
 
@@ -8380,7 +8380,7 @@ SgInitializedName::get_mangled_name (void) const
         {
           printf ("Error in SgInitializedName::get_mangled_name(void): zero length mangled name generated (see if this is realistic)\n");
           SgScopeStatement* scope = get_scope ();
-          ROSE_ASSERT (scope);
+          assert (scope);
           printf ("  Surrounding scope is '%s'\n", scope->sage_class_name ());
           const SgDeclarationStatement* decl = get_declaration ();
           printf ("  Decl is '%s'\n", decl ? decl->sage_class_name () : "(none)");
@@ -8390,7 +8390,7 @@ SgInitializedName::get_mangled_name (void) const
           printf ("  Parent(decl) is '%s'\n", par ? par->sage_class_name () : "(none)");
 
        // DQ (2/21/2007): I think this is OK for un-named function parameters, leave as a warning for now!.
-       // ROSE_ASSERT(false);
+       // assert(false);
        }
 
      return mangled_name;
@@ -8403,7 +8403,7 @@ SgInitializedName::get_declaration() const
    {
   // DQ (6/13/2005): This function assumes that the parents have been set!
   // so it should not be used in the EDG/Sage translation!
-  // ROSE_ASSERT(get_parent() != NULL);
+  // assert(get_parent() != NULL);
 
 #if 1
   // DQ (6/21/2006): Return to using this version of the code
@@ -8413,7 +8413,7 @@ SgInitializedName::get_declaration() const
           SgDeclarationStatement* d = isSgDeclarationStatement(r);
 
        // DQ (6/21/2005): I think this should always be true!
-       // ROSE_ASSERT(d != NULL);
+       // assert(d != NULL);
 
           if (d != NULL) {
                return d;
@@ -8436,7 +8436,7 @@ SgInitializedName::get_definition() const
   // and we return a SgVariableDefinition
 
   // DQ (6/21/2005): Is this always true? NO!
-  // ROSE_ASSERT(isSgVariableDefinition(get_declptr()) != NULL);
+  // assert(isSgVariableDefinition(get_declptr()) != NULL);
 
      return get_declptr(); 
    }
@@ -8469,7 +8469,7 @@ SgInitializedName::set_definition(SgDeclarationStatement * def)
 bool
 SgInitializedName::checkBit ( unsigned int bit ) const
    {
-     ROSE_ASSERT (bit < e_last_gnu_variable_attribute);
+     assert (bit < e_last_gnu_variable_attribute);
   // return p_gnu_attribute_modifierVector[bit];
      return (p_gnu_attribute_modifierVector[bit] == true);
    }
@@ -8477,14 +8477,14 @@ SgInitializedName::checkBit ( unsigned int bit ) const
 void
 SgInitializedName::setBit ( unsigned int bit )
    {
-     ROSE_ASSERT (bit < e_last_gnu_variable_attribute);
+     assert (bit < e_last_gnu_variable_attribute);
      p_gnu_attribute_modifierVector[bit] = true;
    }
 
 void
 SgInitializedName::unsetBit ( unsigned int bit )
    {
-     ROSE_ASSERT (bit < e_last_gnu_variable_attribute);
+     assert (bit < e_last_gnu_variable_attribute);
      p_gnu_attribute_modifierVector[bit] = false;
    }
 
@@ -8546,7 +8546,7 @@ SgName::SgName()
 unsigned int
 SgName::get_length() const
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      return p_char.size();
    }
 
@@ -8563,14 +8563,14 @@ SgName::SgName(const SgName& n): p_char(n.p_char) {}
 int
 SgName::operator!=(const SgName& n1) const 
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      return p_char != n1.p_char;
    }
 
 int
 SgName::operator==(const SgName& n1) const
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
 
      return p_char == n1.p_char;
    }
@@ -8578,7 +8578,7 @@ SgName::operator==(const SgName& n1) const
 int
 SgName::operator<(const SgName& n1) const
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
 
      return p_char < n1.p_char;
    }
@@ -8586,14 +8586,14 @@ SgName::operator<(const SgName& n1) const
 bool
 SgName::is_null(void) const
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      return p_char.empty();
    }
 
 void
 SgName::replace_space(char t)
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
 
      int len = p_char.size();
      for(int i=0; i < len; i++)
@@ -8612,7 +8612,7 @@ SgName::replace_space(char t)
 SgName&
 SgName::operator<<(const std::string& str)
    {
-     ROSE_ASSERT (this != NULL);
+     assert (this != NULL);
 
      p_char += str;
      return *this;
@@ -8629,7 +8629,7 @@ SgName::itoname(int val)
 SgName&
 SgName::operator<<(int val)
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
 
      SgName str = itoname(val);
      p_char += str.p_char;
@@ -8639,7 +8639,7 @@ SgName::operator<<(int val)
 SgName&
 SgName::operator=(const SgName& n1)
    { 
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      this->p_char = n1.p_char;
      return *this;
    }
@@ -8647,7 +8647,7 @@ SgName::operator=(const SgName& n1)
 SgName&
 SgName::tail(int n) // keep string after n
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      p_char = (unsigned int)n >= p_char.size() ? "" : p_char.substr(n);
      return *this;
    }
@@ -8655,34 +8655,34 @@ SgName::tail(int n) // keep string after n
 SgName&
 SgName::head(int n) // keep first n chars
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      p_char = (unsigned int)n >= p_char.size() ? p_char : p_char.substr(0, n);
      return *this;
    }
 
 const char* SgName::str() const {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
   return p_char.c_str();
 }
 
 std::string&
 SgName::getString()
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      return p_char;
    }
 
 const std::string&
 SgName::getString() const
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      return p_char;
    }
 
 
 void SgName::display( const std::string& label ) const
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
 
      std::cout << label << ": " << p_char << "\n";
    }
@@ -8698,7 +8698,7 @@ operator+(const SgName & n1, const SgName & n2)
 SgName & 
 SgName::operator+= (const SgName & n1)
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      p_char += n1.p_char;
      return *this;
    }
@@ -8712,7 +8712,7 @@ SgName::assembleQualifiedName(const SgName & scopeQualifiedName, const SgName & 
   // returnName = scope->get_qualified_name() << "::" << get_name().str();
 
   // DQ (9/9/2004): We can't assert this since "" evaluates to is_null() being true!
-  // ROSE_ASSERT(scopeQualifiedName.is_null() == false);
+  // assert(scopeQualifiedName.is_null() == false);
 
      SgName returnName;
   // DQ (9/9/2004): So these are redundent tests! (which was pleasant news to me!)
@@ -8744,7 +8744,7 @@ SgName::assembleQualifiedName(const SgName & scopeQualifiedName, const SgName & 
         }
 
   // returnName = scopeQualifiedName << "::" << localName.str();
-  // ROSE_ASSERT(returnName.is_null() == false);
+  // assert(returnName.is_null() == false);
       
      return returnName;
    }
@@ -8841,7 +8841,7 @@ std::map<int, std::string> Sg_File_Info::p_fileidtoname_map;
 bool
 Sg_File_Info::ok() const
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
 
   // DQ (10/22/2007): Are these reasonable constraints when #line n "" are used?
      bool lineNumberOK      = p_line > 0;
@@ -8876,10 +8876,10 @@ Sg_File_Info::updateSourcePosition ( Sg_File_Info* update )
   // useful than the assignment operator for updating information and is used in the file:
   // fixupSourcePositionInformation.C.
 
-     ROSE_ASSERT(update != NULL);
+     assert(update != NULL);
 
   // Must have matching file name (only have to compare file_id's)
-     ROSE_ASSERT(p_file_id == update->p_file_id);
+     assert(p_file_id == update->p_file_id);
 
   // Update only the line number and column number after verifying that the filenames are the same.
      p_line = update->p_line;
@@ -8892,13 +8892,13 @@ Sg_File_Info::updateSourcePosition ( Sg_File_Info* update )
 Sg_File_Info* Sg_File_Info::generateDefaultFileInfo()
    {
      Sg_File_Info* returnValue = new Sg_File_Info("NULL_FILE",0,0);
-     ROSE_ASSERT(returnValue != NULL);
+     assert(returnValue != NULL);
 
   // DQ (6/7/2007): This causes "NULL_FILE" filenames to be introduced into the AST.
   // Gergo pointed out this problems and removing such entries will simplify the tests
   // that are done in the traverseInputFile traversal.
   // printf ("Sg_File_Info::generateDefaultFileInfo(): This function is depricated and is an error to call! \n");
-  // ROSE_ASSERT(false);
+  // assert(false);
 
   // printf ("Calling Sg_File_Info::generateDefaultFileInfo(): returnValue = %p \n",returnValue);
 
@@ -9043,7 +9043,7 @@ operator>  ( const Sg_File_Info & X, const Sg_File_Info & Y )
         }
 
   // printf ("Sorry operator> (const Sg_File_Info & X, const Sg_File_Info & Y) not implemented! \n");
-  // ROSE_ASSERT(false);
+  // assert(false);
   // return true;
 
      return result;
@@ -9077,7 +9077,7 @@ operator<  ( const Sg_File_Info & X, const Sg_File_Info & Y )
         }
 
   // printf ("Sorry operator< (const Sg_File_Info & X, const Sg_File_Info & Y) not implemented! \n");
-  // ROSE_ASSERT(false);
+  // assert(false);
   // return true;
 
      return result;
@@ -9104,7 +9104,7 @@ operator>= ( const Sg_File_Info & X, const Sg_File_Info & Y )
         }
 
   // printf ("Sorry operator>= (const Sg_File_Info & X, const Sg_File_Info & Y) not implemented! \n");
-  // ROSE_ASSERT(false);
+  // assert(false);
   // return true;
 
      return result;
@@ -9131,7 +9131,7 @@ operator<= ( const Sg_File_Info & X, const Sg_File_Info & Y )
         }
 
   // printf ("Sorry operator<= (const Sg_File_Info & X, const Sg_File_Info & Y) not implemented! \n");
-  // ROSE_ASSERT(false);
+  // assert(false);
   // return true;
 
      return result;
@@ -9140,7 +9140,7 @@ operator<= ( const Sg_File_Info & X, const Sg_File_Info & Y )
 void
 Sg_File_Info::display( const std::string label ) const
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
 
      printf ("Inside of Sg_File_Info::display(%s) \n",label.c_str());
      printf ("     isTransformation                      = %s \n",isTransformation()    == true ? "true (part of a transformation)" : "false");
@@ -9178,7 +9178,7 @@ Sg_File_Info::display( const std::string label ) const
 string
 Sg_File_Info::displayString(const std::string & label ) const
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
 
      std::string s;
      s += std::string("Inside of Sg_File_Info::displayString(") + label + std::string (") \n");
@@ -9225,7 +9225,7 @@ Sg_File_Info::display_static_data( const std::string label )
 
 Sg_File_Info::Sg_File_Info ()
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
 
   // Default constructor used for making copies of subtrees
      p_line                   = 0;
@@ -9249,7 +9249,7 @@ Sg_File_Info::Sg_File_Info ()
 Sg_File_Info::Sg_File_Info ( const std::string & filename, int line, int col )
    : p_line(line), p_col(col)
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
 
   // DQ (10/22/2007): Fixed to permit "" to be a valid filename
   // DQ (5/11/2006): Allow "NULL_FILE" as a name (used within ROSE) to map to the NULL_FILE_ID 
@@ -9267,7 +9267,7 @@ Sg_File_Info::Sg_File_Info ( const std::string & filename, int line, int col )
 
      p_classificationBitField = 0;
 
-     ROSE_ASSERT (p_col >= 0);
+     assert (p_col >= 0);
 
 #if 0
      printf ("Sg_File_Info constructor(const std::string,int,int) = %p \n",this);
@@ -9288,9 +9288,9 @@ Sg_File_Info::Sg_File_Info(const Sg_File_Info & X)
      p_classificationBitField(X.p_classificationBitField),
      p_fileIDsToUnparse(X.p_fileIDsToUnparse)
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
 
-     ROSE_ASSERT (p_col >= 0);
+     assert (p_col >= 0);
 
 #if 0
      printf ("Sg_File_Info copy constructor(const Sg_File_Info) = %p \n",this);
@@ -9306,7 +9306,7 @@ Sg_File_Info::Sg_File_Info(const Sg_File_Info & X)
 Sg_File_Info::Sg_File_Info ( const char* filename, int line, int col )
    : p_line(line), p_col(col) // , p_isPartOfTransformation(false)
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
 
      if (!filename) {
           p_file_id = NULL_FILE_ID;
@@ -9323,7 +9323,7 @@ Sg_File_Info::Sg_File_Info ( const char* filename, int line, int col )
         {
           printf ("Error p_col = %d \n",p_col);
         }
-     ROSE_ASSERT (p_col >= 0);
+     assert (p_col >= 0);
 
   // Provide a common function called for initialization support.
      post_construction_initialization();
@@ -9338,9 +9338,9 @@ Sg_File_Info::Sg_File_Info( int file_id, int line, int column )
      p_col(column),
      p_classificationBitField(0)
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
 
-     ROSE_ASSERT (p_col >= 0);
+     assert (p_col >= 0);
 
   // Provide a common function called for initialization support.
      post_construction_initialization();
@@ -9349,11 +9349,11 @@ Sg_File_Info::Sg_File_Info( int file_id, int line, int column )
 void
 Sg_File_Info::post_construction_initialization()
    {
-     ROSE_ASSERT (this != NULL);
+     assert (this != NULL);
   // JJW 10-26-2007 ensure that this object is not on the stack
      preventConstructionOnStack(this);
 
-  // ROSE_ASSERT(this != (Sg_File_Info*) 0x5231b0);
+  // assert(this != (Sg_File_Info*) 0x5231b0);
    }
 
 
@@ -9454,7 +9454,7 @@ void
 // Sg_File_Info::set_filename(const char* filename)
 Sg_File_Info::set_filenameString ( const std::string & filename )
    {
-     ROSE_ASSERT (this != NULL);
+     assert (this != NULL);
 
      if (p_nametofileid_map.count(filename) == 0)
         {
@@ -9473,11 +9473,11 @@ Sg_File_Info::set_filenameString ( const std::string & filename )
   // string filenameString  = filename;
   // if (filenameString.substr(0,targetSubstring.size()) != targetSubstring)
   //      printf ("@@@@@@@@@@@@@@@@@@@@ In Sg_File_Info::Sg_File_Info(string,int,int): filename = %s @@@@@@@@@@@@@@@@@@@@\n",filenameString.c_str());
-  // ROSE_ASSERT(filenameString.substr(0,targetSubstring.size()) == targetSubstring);
+  // assert(filenameString.substr(0,targetSubstring.size()) == targetSubstring);
 
   // Detect use of AST Rewrite intermediate files (need to make sure they get absolute paths)
   // string targetSubstring2 = "rose_";
-  // ROSE_ASSERT(filenameString.substr(0,targetSubstring2.size()) != targetSubstring2);
+  // assert(filenameString.substr(0,targetSubstring2.size()) != targetSubstring2);
    }
 
 void
@@ -9487,14 +9487,14 @@ Sg_File_Info::set_filename(const char* filename)
    {
   // DQ (9/5/2006): Modified implementation
   // set_filename(filename.c_str());
-     ROSE_ASSERT(filename != NULL);
+     assert(filename != NULL);
      set_filenameString(filename);
    }
 
 const std::string &
 Sg_File_Info::get_filenameString() const
    {
-     ROSE_ASSERT (this != NULL);
+     assert (this != NULL);
   // return p_filename;
 
      const std::string* returnString = NULL;
@@ -9545,7 +9545,7 @@ Sg_File_Info::get_filenameString() const
              }
         }
 
-     ROSE_ASSERT (returnString != NULL);
+     assert (returnString != NULL);
      return *returnString;
    }
 
@@ -9562,7 +9562,7 @@ Sg_File_Info::get_filename() const
 string
 Sg_File_Info::get_raw_filename() const
    {
-     ROSE_ASSERT (this != NULL);
+     assert (this != NULL);
 
   // return whatever name is in the map
      return getFilenameFromID(p_file_id);
@@ -9571,14 +9571,14 @@ Sg_File_Info::get_raw_filename() const
 void
 Sg_File_Info::set_line(int line)
    {
-     ROSE_ASSERT (this != NULL);
+     assert (this != NULL);
      p_line = line;
    }
 
 int
 Sg_File_Info::get_line() const
    { 
-     ROSE_ASSERT (this != NULL);
+     assert (this != NULL);
   // return p_line;
   // const int undefinedValue = INT_MAX-1;
      const int undefinedValue = 0;
@@ -9607,22 +9607,22 @@ Sg_File_Info::get_line() const
              }
         }
 
-     ROSE_ASSERT (returnValue >= 0);
+     assert (returnValue >= 0);
      return returnValue;
    }
 
 int
 Sg_File_Info::get_raw_line() const
    { 
-     ROSE_ASSERT (this != NULL);
+     assert (this != NULL);
      return p_line;
    }
 
 int
 Sg_File_Info::get_col() const
    {
-     ROSE_ASSERT (this != NULL);
-     ROSE_ASSERT (p_col >= 0);
+     assert (this != NULL);
+     assert (p_col >= 0);
   // return p_col;
 
   // const int undefinedValue = INT_MAX-1;
@@ -9648,15 +9648,15 @@ Sg_File_Info::get_col() const
              }
         }
 
-     ROSE_ASSERT (returnValue >= 0);
+     assert (returnValue >= 0);
      return returnValue;
    }
 
 int
 Sg_File_Info::get_raw_col() const
    {
-     ROSE_ASSERT (this != NULL);
-     ROSE_ASSERT (p_col >= 0);
+     assert (this != NULL);
+     assert (p_col >= 0);
      return p_col;
    }
 
@@ -9664,7 +9664,7 @@ Sg_File_Info::get_raw_col() const
 void
 Sg_File_Info::set_isPartOfTransformation( bool isPartOfTransformation )
    {
-     ROSE_ASSERT (this != NULL);
+     assert (this != NULL);
   // p_isPartOfTransformation = isPartOfTransformation;
 
      if (isPartOfTransformation == true)
@@ -9677,7 +9677,7 @@ Sg_File_Info::set_isPartOfTransformation( bool isPartOfTransformation )
 bool
 Sg_File_Info::get_isPartOfTransformation()
    {
-     ROSE_ASSERT (this != NULL);
+     assert (this != NULL);
   // return p_isPartOfTransformation;
      return isTransformation();
    }
@@ -9694,16 +9694,16 @@ Sg_File_Info::deregister_node(SgLocatedNode* node)
 void
 Sg_File_Info::set_col( int n )
    {
-     ROSE_ASSERT (this != NULL);
+     assert (this != NULL);
      p_col = n;
-     ROSE_ASSERT (p_col >= 0);
+     assert (p_col >= 0);
    }
 
 #if 0
 int
 Sg_File_Info::getCurrentLine () const
    { 
-     ROSE_ASSERT (this != NULL);
+     assert (this != NULL);
      printf ("This is a depricated function: char* Sg_File_Info::getCurrentLine() const \n");
      return p_cur_line;
    }
@@ -9711,7 +9711,7 @@ Sg_File_Info::getCurrentLine () const
 std::string
 Sg_File_Info::getCurrentFilename () const
    {
-     ROSE_ASSERT (this != NULL);
+     assert (this != NULL);
      printf ("This is a depricated function: char* Sg_File_Info::getCurrentFilename() const \n");
      return p_cur_file;
    }
@@ -9720,7 +9720,7 @@ Sg_File_Info::getCurrentFilename () const
 bool
 Sg_File_Info::hasPositionInSource() const
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
 
   // DQ (1/11/2006): Modified to not use the output function which mixed 
   // concepts of compiler generated with output (deprecated function).
@@ -9744,9 +9744,9 @@ Sg_File_Info::isSameFile(SgFile* file) const
   // testing if two file info objects represent the same file (an integer equality test instead of string comparision).
   // File names are particularly long (since they include full path), so this will allow us to save a lot of space.
 
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
 
-     ROSE_ASSERT(file != NULL);
+     assert(file != NULL);
 
   // MK (7/22/05) : removing use of p_filename in favor of p_file_id
   // Generate names of the files 
@@ -9758,13 +9758,13 @@ Sg_File_Info::isSameFile(SgFile* file) const
      */
 #if 0
      SgScopeStatement * globalScope = (SgScopeStatement *)(file->get_root());
-     ROSE_ASSERT(globalScope != NULL);
+     assert(globalScope != NULL);
      Sg_File_Info* fileInfo = globalScope->get_file_info();
 #else
   // DQ (9/5/2008): Use the local Sg_File_Info instead of the one on the root (which is only available for a SgSourceFile)
      Sg_File_Info* fileInfo = file->get_startOfConstruct();
 #endif
-     ROSE_ASSERT(fileInfo != NULL);
+     assert(fileInfo != NULL);
 
   // DQ (10/27/2007): Make this consistant with new semantics of get_file_id() 
   // bool result = (p_file_id == fileInfo->get_file_id());
@@ -9776,7 +9776,7 @@ Sg_File_Info::isSameFile(SgFile* file) const
 bool
 Sg_File_Info::isSameFile(Sg_File_Info* fileInfo) const
    {
-     ROSE_ASSERT(fileInfo != NULL);
+     assert(fileInfo != NULL);
 
   // DQ (10/27/2007): Make this consistant with new semantics of get_file_id() 
   // bool result = (p_file_id == fileInfo->get_file_id());
@@ -9798,42 +9798,42 @@ Sg_File_Info::isSameFile(const Sg_File_Info & fileInfo) const
 bool
 Sg_File_Info::isTransformation() const
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      return (p_classificationBitField & e_transformation);
    }
 
 void
 Sg_File_Info::setTransformation()
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      p_classificationBitField |= e_transformation;
    }
 
 void
 Sg_File_Info::unsetTransformation()
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      p_classificationBitField &= ~e_transformation;
    }
 
 bool
 Sg_File_Info::isCompilerGenerated() const
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      return (p_classificationBitField & e_compiler_generated);
    }
 
 void
 Sg_File_Info::setCompilerGenerated()
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      p_classificationBitField |= e_compiler_generated;
    }
 
 void
 Sg_File_Info::unsetCompilerGenerated()
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      p_classificationBitField &= ~e_compiler_generated;
    }
 
@@ -9842,7 +9842,7 @@ bool
 Sg_File_Info::isCompilerGeneratedNodeToBeUnparsed() const
    {
   // Make sure that both bits are set!
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      return (p_classificationBitField & e_output_in_code_generation);
 
 #if 0
@@ -9854,7 +9854,7 @@ Sg_File_Info::isCompilerGeneratedNodeToBeUnparsed() const
 
   // error checking: if e_compiler_generated_node_to_be_unparsed then also e_compiler_generated
      if (result == true)
-          ROSE_ASSERT(isCompilerGenerated() == true);
+          assert(isCompilerGenerated() == true);
 
      return result;
 #endif
@@ -9865,14 +9865,14 @@ Sg_File_Info::setCompilerGeneratedNodeToBeUnparsed()
    {
   // Make sure that both bits are set!
   // setCompilerGenerated();
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      p_classificationBitField |= e_output_in_code_generation;
    }
 
 void
 Sg_File_Info::unsetCompilerGeneratedNodeToBeUnparsed()
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      p_classificationBitField &= ~e_output_in_code_generation; 
    }
 
@@ -9880,7 +9880,7 @@ bool
 Sg_File_Info::isOutputInCodeGeneration() const
    {
   // Make sure that both bits are set!
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      return (p_classificationBitField & e_output_in_code_generation);
    }
 
@@ -9889,21 +9889,21 @@ Sg_File_Info::setOutputInCodeGeneration()
    {
   // Make sure that both bits are set!
   // setCompilerGenerated();
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      p_classificationBitField |= e_output_in_code_generation;
    }
 
 void
 Sg_File_Info::unsetOutputInCodeGeneration()
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      p_classificationBitField &= ~e_output_in_code_generation;
    }
 
 bool
 Sg_File_Info::isShared() const
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      return (p_classificationBitField & e_shared);
    }
 
@@ -9911,7 +9911,7 @@ void
 Sg_File_Info::setShared()
    {
   // MK (8/3/05) : We always want to unparse the current file (this is a performance issue)
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
 
   // DQ (10/27/2007): Make sure this is a valid file that we are trying to share.
   // I am unclear as to how important this is.
@@ -9933,7 +9933,7 @@ Sg_File_Info::setShared()
 void
 Sg_File_Info::unsetShared()
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      p_classificationBitField &= ~e_shared;
 
   // MK (8/2/05) : Initialize the fileid set
@@ -9943,84 +9943,84 @@ Sg_File_Info::unsetShared()
 bool
 Sg_File_Info::isFrontendSpecific() const
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      return (p_classificationBitField & e_frontend_specific);
    }
 
 void
 Sg_File_Info::setFrontendSpecific()
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      p_classificationBitField |= e_frontend_specific;
    }
 
 void
 Sg_File_Info::unsetFrontendSpecific()
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      p_classificationBitField &= ~e_frontend_specific;
    }
 
 bool
 Sg_File_Info::isSourcePositionUnavailableInFrontend() const
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      return (p_classificationBitField & e_source_position_unavailable_in_frontend);
    }
 
 void
 Sg_File_Info::setSourcePositionUnavailableInFrontend()
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      p_classificationBitField |= e_source_position_unavailable_in_frontend;
    }
 
 void
 Sg_File_Info::unsetSourcePositionUnavailableInFrontend()
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      p_classificationBitField &= ~e_source_position_unavailable_in_frontend;
    }
 
 bool
 Sg_File_Info::isCommentOrDirective() const
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      return (p_classificationBitField & e_comment_or_directive);
    }
 
 void
 Sg_File_Info::setCommentOrDirective()
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      p_classificationBitField |= e_comment_or_directive;
    }
 
 void
 Sg_File_Info::unsetCommentOrDirective()
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      p_classificationBitField &= ~e_comment_or_directive;
    }
 
 bool
 Sg_File_Info::isToken() const
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      return (p_classificationBitField & e_token);
    }
 
 void
 Sg_File_Info::setToken()
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      p_classificationBitField |= e_token;
    }
 
 void
 Sg_File_Info::unsetToken()
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      p_classificationBitField &= ~e_token;
    }
 
@@ -10028,28 +10028,28 @@ Sg_File_Info::unsetToken()
 void
 Sg_File_Info::addFileToUnparse(int file_id)
    { 
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      p_fileIDsToUnparse.push_back(file_id);
    }
 
 bool
 Sg_File_Info::shouldUnparse(int file_id)
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      return std::find(p_fileIDsToUnparse.begin(), p_fileIDsToUnparse.end(), file_id) != p_fileIDsToUnparse.end();
    }
 
 unsigned int
 Sg_File_Info::get_classificationBitField(void) const
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      return p_classificationBitField;
    }
 
 void
 Sg_File_Info::set_classificationBitField( unsigned int bitflags )
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      p_classificationBitField = bitflags;
    }
 
@@ -10091,7 +10091,7 @@ Sg_File_Info::getFilenameFromID(int id)
              {
             // name = "compilerGenerated";
                printf ("The concept of COMPILER_GENERATED and OUTPUT are now decoupled, so make this an error \n");
-               ROSE_ASSERT(false);
+               assert(false);
                break;
              }
           case BAD_FILE_ID:
@@ -10105,7 +10105,7 @@ Sg_File_Info::getFilenameFromID(int id)
           default:
              {
             // assert that the id is present in the map (else error)
-            // ROSE_ASSERT(p_fileidtoname_map.count(id) != 0);
+            // assert(p_fileidtoname_map.count(id) != 0);
                bool failure = (p_fileidtoname_map.count(id) == 0);
                if (failure == true)
                   {
@@ -10117,7 +10117,7 @@ Sg_File_Info::getFilenameFromID(int id)
                  // std::cout << p_fileidtoname_map[id] << std::endl;
                  // printf ("Error: bad id number for file id (id = %d) \n",id);
                   }
-               ROSE_ASSERT(failure == false);
+               assert(failure == false);
 
             // get the filename from the map using the valid id
                name = &p_fileidtoname_map[id];
@@ -10152,7 +10152,7 @@ SOURCE_APPLICATION_FILE_START
 int SgFile::buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine )
    {
      printf ("Base class of virtual function, SgFile::buildAST(), called by mistake! \n");
-     ROSE_ASSERT(false);
+     assert(false);
      // tps (12/11/2009): Windows error : needs a return value
      return 0;
    }
@@ -10165,7 +10165,7 @@ bool
 SgFile::get_binary_only (void) const
    {
      SgProject* project = isSgProject(get_parent());
-     ROSE_ASSERT(project != NULL);
+     assert(project != NULL);
      return project->get_binary_only();
    }
 #endif
@@ -10191,18 +10191,18 @@ SgFile::getFileName () const
    {
   // Get the filename from the Sage III file object
 
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
 
-  // ROSE_ASSERT(get_fileInfo() != NULL);
+  // assert(get_fileInfo() != NULL);
 #if 0
   // DQ (9/4/2008): Moved the global scope to the new SgSourceFile IR node.
      SgScopeStatement *globalScope = (SgScopeStatement *)(&(root()));
-     ROSE_ASSERT (globalScope != NULL);
+     assert (globalScope != NULL);
      Sg_File_Info* fileInfo = globalScope->get_file_info();
 #else
      Sg_File_Info* fileInfo = p_startOfConstruct;
 #endif
-     ROSE_ASSERT (fileInfo != NULL);
+     assert (fileInfo != NULL);
      std::string fileName = fileInfo->get_filenameString();
      return fileName;
    }
@@ -10221,7 +10221,7 @@ SgFile::SgFile ( int & argc, char** & argv , SgProject* project )
 // : p_numberOfCommandLineArguments(argc) , p_commandLineArgumentList(NULL)
    {
   // This constructor actually makes the call to EDG to build the AST (via callFrontEnd()).
-     ROSE_ASSERT (argv && argc >= 0);
+     assert (argv && argc >= 0);
 
   // Note use of pointer arithmetic in the computation of "argv + argc", this is standard STL fair.
      doSetupForConstructor(vector<string>(argv, argv + argc),  project);
@@ -10240,7 +10240,7 @@ SgFile::SgFile ( vector<string> & argv ,  SgProject* project )
 SgFile::SgFile ( const SgFile & X )
    {
      printf ("Error: calling private copy constructor! \n");
-     ROSE_ASSERT(false);
+     assert(false);
    }
 
 #include "Disassembler.h"
@@ -10248,7 +10248,7 @@ SgFile::SgFile ( const SgFile & X )
 void
 SgFile::initialization()
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
 
   // This should use a Sg_File_Info with the correct name (maybe this 
   // should be initialized by "callFrontEnd()")
@@ -10269,17 +10269,17 @@ SgFile::initialization()
 #if 0
   // DQ (12/23/2008): Build this later when we have a valid filename.
      Sg_File_Info* fileInfo = new Sg_File_Info("",1,1);
-     ROSE_ASSERT(fileInfo != NULL);
+     assert(fileInfo != NULL);
 
   // set_file_info(fileInfo);
      set_startOfConstruct(fileInfo);
      fileInfo->set_parent(this);
-     ROSE_ASSERT(get_startOfConstruct() != NULL);
-     ROSE_ASSERT(get_file_info() != NULL);
+     assert(get_startOfConstruct() != NULL);
+     assert(get_file_info() != NULL);
 #endif
 
   // DQ (9/4/2008): This is now part of the SgSourceFile
-  // ROSE_ASSERT (p_root == NULL);
+  // assert (p_root == NULL);
 
 
 #if 0
@@ -10293,21 +10293,21 @@ SgFile::initialization()
        // enforce that the filename is always an absolute path (starting with "/").
        // Sg_File_Info* globalScopeFileInfo = new Sg_File_Info("SgGlobal::SgGlobal",0,0);
           Sg_File_Info* globalScopeFileInfo = new Sg_File_Info("",0,0);
-          ROSE_ASSERT (globalScopeFileInfo != NULL);
+          assert (globalScopeFileInfo != NULL);
 
           printf ("@@@@@@@@ In SgFile::initialization(): Building SgGlobal (with empty filename) @@@@@@@@@ \n");
 
           sourceFile->set_globalScope( new SgGlobal( globalScopeFileInfo ) );
-          ROSE_ASSERT (sourceFile->get_globalScope() != NULL);
+          assert (sourceFile->get_globalScope() != NULL);
 
        // DQ (2/15/2006): Set the parent of the SgGlobal IR node
           sourceFile->get_globalScope()->set_parent(this);
 
        // DQ (8/21/2008): Set the end of the global scope (even if it is updated later)
        // printf ("In SgFile::initialization(): p_root->get_endOfConstruct() = %p \n",p_root->get_endOfConstruct());
-          ROSE_ASSERT(sourceFile->get_globalScope()->get_endOfConstruct() == NULL);
+          assert(sourceFile->get_globalScope()->get_endOfConstruct() == NULL);
           sourceFile->get_globalScope()->set_endOfConstruct(new Sg_File_Info("",0,0));
-          ROSE_ASSERT(sourceFile->get_globalScope()->get_endOfConstruct() != NULL);
+          assert(sourceFile->get_globalScope()->get_endOfConstruct() != NULL);
         }
 #endif
 
@@ -10511,8 +10511,8 @@ X aggressive
 
   // At construction this is a NULL pointer, it is updated later after construction of the AST.
      p_preprocessorDirectivesAndCommentsList = NULL; // new ROSEAttributesListContainer();
-  // ROSE_ASSERT (p_preprocessorDirectivesAndCommentsList != NULL);
-     ROSE_ASSERT (p_preprocessorDirectivesAndCommentsList == NULL);
+  // assert (p_preprocessorDirectivesAndCommentsList != NULL);
+     assert (p_preprocessorDirectivesAndCommentsList == NULL);
 
   // DQ (4/10/2006): Removed in favor of implementation at SgNode using
   // a pointer and the interface represented directly at the SgNode
@@ -10614,7 +10614,7 @@ SgGlobal*
 SgFile::get_globalScope() const
    {
   // This variable name will be changed in the future (to globalScope)
-     ROSE_ASSERT(p_root != NULL);
+     assert(p_root != NULL);
      return p_root;
    }
 #endif
@@ -10625,7 +10625,7 @@ SgGlobal*
 SgSourceFile::get_root() const
    {
   // This variable name will be changed in the future (to globalScope)
-     ROSE_ASSERT(p_globalScope != NULL);
+     assert(p_globalScope != NULL);
      return p_globalScope;
    }
 #endif
@@ -10635,16 +10635,16 @@ SgFile::compileOutput ( int fileNameIndex, const std::string& compilerName )
    {
   // Compile the output file from the unparing
      vector<string> argv = get_originalCommandLineArgumentList();
-     ROSE_ASSERT(!argv.empty());
+     assert(!argv.empty());
    
   // DQ (4/21/2006): I think we can now assert this! This is an unused function parameter!
-     ROSE_ASSERT(fileNameIndex == 0);
+     assert(fileNameIndex == 0);
 
   // DQ (1/17/2006): test this
-  // ROSE_ASSERT(get_fileInfo() != NULL);
+  // assert(get_fileInfo() != NULL);
 
   // error checking
-     ROSE_ASSERT (argv.size() > 1);
+     assert (argv.size() > 1);
 
   // BP : 10/31/2001, strip out any rose options before passing the command line.
      stripRoseCommandLineOptions( argv );
@@ -10744,7 +10744,7 @@ SgFile::get_project()
      SgNode* parent = get_parent();
 
   // DQ (7/12/2005): The parent is NULL if we have only built a single file (e.g. within the rewrite mechanism)
-  // ROSE_ASSERT(parent != NULL);
+  // assert(parent != NULL);
 
      SgProject* project = NULL;
 
@@ -10756,10 +10756,10 @@ SgFile::get_project()
           while ( project == NULL && parent->get_parent() != NULL )
              {
                parent = parent->get_parent();
-               ROSE_ASSERT(parent != NULL);
+               assert(parent != NULL);
                project = isSgProject(parent);
              }
-          ROSE_ASSERT ( project != NULL );
+          assert ( project != NULL );
         }
 
      return project;
@@ -10783,12 +10783,12 @@ SgFile::getWorkingDirectory ()
 #ifdef _MSC_VER
 #pragma message ("WARNING: support for Linux getcwd() unavailable in Microsoft Visual Studio.")
 	 printf ("Error: support for Linux getcwd() unavailable in Microsoft Visual Studio.");
-	 ROSE_ASSERT(false);
+	 assert(false);
      char* returnString = NULL;
 #else
      char* returnString = getcwd(currentDirectory,maxPathNameLength - 1);
 #endif
-     ROSE_ASSERT (returnString != NULL);
+     assert (returnString != NULL);
      currentDirectory[maxPathNameLength - 1] = 0; // Just in case
 
   // The semantics of the getcwd is that these shuld be the same (see if they are)
@@ -10821,7 +10821,7 @@ SgFile::getSourceDirectory ()
 #endif
 
      string sourceFile = get_sourceFileNameWithPath();
-     ROSE_ASSERT(sourceFile.empty() == false);
+     assert(sourceFile.empty() == false);
      return StringUtility::getPathFromFileName(sourceFile);
    }
 
@@ -10844,7 +10844,7 @@ SgFile::generateOutputFileName() const
      std::string objectFileName;
 
   // DQ (1/17/2006): test this
-  // ROSE_ASSERT(get_fileInfo() != NULL);
+  // assert(get_fileInfo() != NULL);
 
 #if 0
      printf ("sourceFileName = %s \n",sourceFileName.c_str());
@@ -10856,17 +10856,17 @@ SgFile::generateOutputFileName() const
 
   // DQ (8/12/2007): I think this was part of the prelinker which is not no longer used!
   // printf ("isPrelinkPhase() = %s \n",isPrelinkPhase() ? "true" : "false");
-     ROSE_ASSERT(isPrelinkPhase() == false);
+     assert(isPrelinkPhase() == false);
 
      if (isPrelinkPhase() == true)
         {
        // test for leading "rose_" prefix in name (it should be present)
-          ROSE_ASSERT(baseFileName.find("rose_") == 0);
+          assert(baseFileName.find("rose_") == 0);
        // and remove it since we want the unmodified file name to be used as a name of the object file!
           baseFileName.erase(0,5);
 
        // test for leading "rose_" prefix in name (it should NOT be present now)
-          ROSE_ASSERT(baseFileName.find("rose_") == std::string::npos);
+          assert(baseFileName.find("rose_") == std::string::npos);
         }
 #else
 
@@ -10911,7 +10911,7 @@ SgFile::unparse ( UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparse
 
   // Not clear if we can or should eliminate this function.
   // printf ("This SgFile::unparse() function should no longer be called (I think)! \n");
-  // ROSE_ASSERT(false);
+  // assert(false);
 
   // Call the unparser mechanism
   // DQ (1/24/2010): Moved the extern declaration for unparseFile() to be local to this function (better code design).
@@ -10928,17 +10928,17 @@ SgFile::display ( const std::string & label ) const
      printf ("\nIn SgFile::display(%s) \n",label.c_str());
 
   // DQ (1/17/2006): test this
-  // ROSE_ASSERT(get_fileInfo() != NULL);
+  // assert(get_fileInfo() != NULL);
 #if 0
   // DQ (9/4/2008): Moved p_root to SgSourceFile
      printf ("     p_root is %s pointer \n",(p_root != NULL) ? "VALID" : "NULL");
-     ROSE_ASSERT (p_root != NULL);
+     assert (p_root != NULL);
 #endif
 
   // printf ("Output the SgFile::p_file_info object = %p \n",get_file_info());
   // get_file_info()->display("Called from SgFile::display");
      printf ("Output the SgFile::p_startOfConstruct object = %p \n",get_startOfConstruct());
-     ROSE_ASSERT (get_startOfConstruct() != NULL);
+     assert (get_startOfConstruct() != NULL);
      get_startOfConstruct()->display("Called from SgFile::display");
 
      printf ("     p_verbose                              = %s (value=%d) \n",                      (p_verbose > 1) ? "true" : "false",p_verbose);
@@ -10973,7 +10973,7 @@ SgFile::display ( const std::string & label ) const
           default:
              {
                printf ("Error: default reached p_inputFormat = %d \n",p_inputFormat);
-               ROSE_ASSERT(false);
+               assert(false);
              }
         }
 
@@ -10989,7 +10989,7 @@ SgFile::display ( const std::string & label ) const
           default:
              {
                printf ("Error: default reached p_outputFormat = %d \n",p_outputFormat);
-               ROSE_ASSERT(false);
+               assert(false);
              }
         }
 
@@ -11005,7 +11005,7 @@ SgFile::display ( const std::string & label ) const
           default:
              {
                printf ("Error: default reached p_backendCompileFormat = %d \n",p_backendCompileFormat);
-               ROSE_ASSERT(false);
+               assert(false);
              }
         }
 
@@ -11042,7 +11042,7 @@ SgFile::display ( const std::string & label ) const
           default:
              {
                printf ("Error: default reached p_outputFormat = %d \n",p_outputFormat);
-               ROSE_ASSERT(false);
+               assert(false);
              }
         }
 
@@ -11187,26 +11187,26 @@ SgSourceFile::SgSourceFile ()
    {
   // Default constructor
 
-     ROSE_ASSERT (p_root == NULL);
+     assert (p_root == NULL);
 
   // DQ (9/4/2008): Setup of global scope moved from SgFile to SgSourceFile
   // DQ (8/31/2006): Generate a NULL_FILE (instead of SgFile::SgFile) so that we can 
   // enforce that the filename is always an absolute path (starting with "/").
   // Sg_File_Info* globalScopeFileInfo = new Sg_File_Info("SgGlobal::SgGlobal",0,0);
      Sg_File_Info* globalScopeFileInfo = new Sg_File_Info("",0,0);
-     ROSE_ASSERT (globalScopeFileInfo != NULL);
+     assert (globalScopeFileInfo != NULL);
 
      p_root = new SgGlobal( globalScopeFileInfo );
-     ROSE_ASSERT (p_root != NULL);
+     assert (p_root != NULL);
 
   // DQ (2/15/2006): Set the parent of the SgGlobal IR node
      p_root->set_parent(this);
 
   // DQ (8/21/2008): Set the end of the global scope (even if it is updated later)
   // printf ("In SgFile::initialization(): p_root->get_endOfConstruct() = %p \n",p_root->get_endOfConstruct());
-     ROSE_ASSERT(p_root->get_endOfConstruct() == NULL);
+     assert(p_root->get_endOfConstruct() == NULL);
      p_root->set_endOfConstruct(new Sg_File_Info("",0,0));
-     ROSE_ASSERT(p_root->get_endOfConstruct() != NULL);
+     assert(p_root->get_endOfConstruct() != NULL);
    }
 #endif
 
@@ -11217,21 +11217,21 @@ SOURCE_APPLICATION_BINARY_FILE_START
 const SgAsmGenericFile* 
 SgBinaryComposite::get_binaryFile() const
    {
-     ROSE_ASSERT(p_genericFileList->get_files().size() == 1);
+     assert(p_genericFileList->get_files().size() == 1);
      return p_genericFileList->get_files()[0];
    }
 
 SgAsmGenericFile*
 SgBinaryComposite::get_binaryFile()
    {
-     ROSE_ASSERT(p_genericFileList->get_files().size() == 1);
+     assert(p_genericFileList->get_files().size() == 1);
      return p_genericFileList->get_files()[0];
    }
 
 void
 SgBinaryComposite::set_binaryFile( SgAsmGenericFile* file )
    {
-     ROSE_ASSERT(p_genericFileList->get_files().empty() == true);
+     assert(p_genericFileList->get_files().empty() == true);
      p_genericFileList->get_files().push_back(file);
    }
 
@@ -11257,7 +11257,7 @@ SgDirectory::numberOfFiles() const
 #if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
      return -1;
 #else
-     ROSE_ASSERT(p_fileList != NULL);
+     assert(p_fileList != NULL);
      return p_fileList->get_listOfFiles().size();
 #endif
    }
@@ -11268,7 +11268,7 @@ SgDirectory::get_file(int i) const
 #if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
      return NULL;
 #else
-     ROSE_ASSERT(p_fileList != NULL);
+     assert(p_fileList != NULL);
      return p_fileList->get_listOfFiles()[i];
 #endif
    }
@@ -11276,14 +11276,14 @@ SgDirectory::get_file(int i) const
 int
 SgDirectory::numberOfDirectories() const
    {
-     ROSE_ASSERT(p_directoryList != NULL);
+     assert(p_directoryList != NULL);
      return p_directoryList->get_listOfDirectories().size();
    }
 
 SgDirectory*
 SgDirectory::get_directory(int i) const
    {
-     ROSE_ASSERT(p_directoryList != NULL);
+     assert(p_directoryList != NULL);
      return p_directoryList->get_listOfDirectories()[i];
    }
 
@@ -11291,15 +11291,15 @@ void
 SgDirectory::post_construction_initialization()
    {
   // Make sure these data members start out as NULL.
-     ROSE_ASSERT(p_fileList == NULL);
-     ROSE_ASSERT(p_directoryList == NULL);
+     assert(p_fileList == NULL);
+     assert(p_directoryList == NULL);
 
   // Initialize pointers to valid opjects with empty lists.
      p_fileList      = new SgFileList();
      p_directoryList = new SgDirectoryList();
 
-     ROSE_ASSERT(p_fileList != NULL);
-     ROSE_ASSERT(p_directoryList != NULL);
+     assert(p_fileList != NULL);
+     assert(p_directoryList != NULL);
 
      p_fileList->set_parent(this);
      p_directoryList->set_parent(this);
@@ -11396,7 +11396,7 @@ SgProject::initialization()
 #else
   // Initialize to IR node
      p_fileList_ptr = new SgFileList();
-     ROSE_ASSERT(p_fileList_ptr != NULL);
+     assert(p_fileList_ptr != NULL);
 
      p_fileList_ptr->set_parent(this);
 #endif
@@ -11426,7 +11426,7 @@ SgProject::initialization()
      if (p_verbose > 0)
         {
           printf ("Note: Verbose was already set to non-zero value = %d (valid range is 0...10) \n",p_verbose);
-          ROSE_ASSERT(p_verbose <= 10);
+          assert(p_verbose <= 10);
         }
        else
         {
@@ -11444,11 +11444,11 @@ SgProject::initialization()
 
   // DQ (1/20/2010): Added support for the project to have directory structure
   // (usefult for large scale code generation).
-     ROSE_ASSERT(p_directoryList == NULL);
+     assert(p_directoryList == NULL);
 
   // Initialize pointers to valid opjects with empty lists.
      p_directoryList = new SgDirectoryList();
-     ROSE_ASSERT(p_directoryList != NULL);
+     assert(p_directoryList != NULL);
      p_directoryList->set_parent(this);
    }
 
@@ -11460,11 +11460,11 @@ SgProject::operator[]( unsigned int i )
 
   // Since we use an STL vector internally we can use the vector::operator[] directly.
 #if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
-     ROSE_ASSERT(i < get_fileList().size());
+     assert(i < get_fileList().size());
      return p_fileList[i];
 #else
-     ROSE_ASSERT(p_fileList_ptr != NULL);
-     ROSE_ASSERT(i < (unsigned)numberOfFiles());
+     assert(p_fileList_ptr != NULL);
+     assert(i < (unsigned)numberOfFiles());
      return p_fileList_ptr->get_listOfFiles()[i];
 #endif
    }
@@ -11503,14 +11503,14 @@ SgProject::parse()
 SgFilePtrList &
 SgProject::get_fileList() const
    {
-     ROSE_ASSERT (this != NULL);
+     assert (this != NULL);
      return p_fileList_ptr->get_listOfFiles();
    }
 
 void
 SgProject::set_fileList( SgFilePtrList & fileList )
    {
-     ROSE_ASSERT (this != NULL);
+     assert (this != NULL);
      set_isModified(true);
 
      p_fileList_ptr->get_listOfFiles() = fileList;
@@ -11522,18 +11522,18 @@ int
 SgProject::numberOfFiles() const
    {
   // This function does not return a meaningful result until all the files have been processed
-  // ROSE_ASSERT (p_fileList != NULL);
+  // assert (p_fileList != NULL);
 
 #if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
      int returnValue = p_fileList.size();
 #else
-     ROSE_ASSERT (p_fileList_ptr != NULL);
+     assert (p_fileList_ptr != NULL);
      int returnValue = p_fileList_ptr->get_listOfFiles().size();
 #endif
-  // ROSE_ASSERT ( returnValue > 0 );
+  // assert ( returnValue > 0 );
 
   // Seems like a good upper bound for now!
-  // ROSE_ASSERT ( returnValue < 100 );
+  // assert ( returnValue < 100 );
 
      return returnValue;
    }
@@ -11541,7 +11541,7 @@ SgProject::numberOfFiles() const
 int
 SgProject::numberOfDirectories() const
    {
-     ROSE_ASSERT (p_directoryList != NULL);
+     assert (p_directoryList != NULL);
      int returnValue = p_directoryList->get_listOfDirectories().size();
 
      return returnValue;
@@ -11551,20 +11551,20 @@ SgFile &
 SgProject::get_file ( int i ) const
    {
   // error checking
-     ROSE_ASSERT (i >= 0);
-     ROSE_ASSERT (i < numberOfFiles());
+     assert (i >= 0);
+     assert (i < numberOfFiles());
 
 #if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
      SgFile* targetFile = p_fileList[i];
 #else
-     ROSE_ASSERT (p_fileList_ptr != NULL);
+     assert (p_fileList_ptr != NULL);
      SgFile* targetFile = p_fileList_ptr->get_listOfFiles()[i];
   // SgFile* targetFile = NULL;
 
   // printf ("Exiting since this is not finished. \n");
-  // ROSE_ASSERT(false);
+  // assert(false);
 #endif
-     ROSE_ASSERT (targetFile != NULL);
+     assert (targetFile != NULL);
 
      return *targetFile;
    }
@@ -11572,12 +11572,12 @@ SgProject::get_file ( int i ) const
 void
 SgProject::set_file ( SgFile & file )
    {
-  // ROSE_ASSERT (p_fileList != NULL);
+  // assert (p_fileList != NULL);
 
 #if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
      p_fileList.push_back(&file);
 #else
-     ROSE_ASSERT (p_fileList_ptr != NULL);
+     assert (p_fileList_ptr != NULL);
      p_fileList_ptr->get_listOfFiles().push_back(&file);
 
   // DQ (1/25/2010): Set the parent of the file to point to the list (this is a change and may break some code).
@@ -11585,10 +11585,10 @@ SgProject::set_file ( SgFile & file )
      file.set_parent(p_fileList_ptr);
 
   // printf ("Exiting since this is not finished. \n");
-  // ROSE_ASSERT(false);
+  // assert(false);
 #endif
 
-     ROSE_ASSERT (numberOfFiles() > 0);
+     assert (numberOfFiles() > 0);
    }
 
 void
@@ -11922,21 +11922,21 @@ SgProject::display ( const std::string & label ) const
 const SgStringList &
 SgProject::get_includePathList () const
    {
-     ROSE_ASSERT (this != NULL);
+     assert (this != NULL);
      return p_includePathList;
    }
 
 SgStringList &
 SgProject::get_includePathList ()
    {
-     ROSE_ASSERT (this != NULL);
+     assert (this != NULL);
      return p_includePathList;
    }
 
 void
 SgProject::set_includePathList ( const SgStringList & includePathList )
    {
-     ROSE_ASSERT (this != NULL);
+     assert (this != NULL);
      set_isModified(true);
      
      p_includePathList = includePathList;
@@ -11946,21 +11946,21 @@ SgProject::set_includePathList ( const SgStringList & includePathList )
 const SgStringList &
 SgProject::get_excludePathList () const
    {
-     ROSE_ASSERT (this != NULL);
+     assert (this != NULL);
      return p_excludePathList;
    }
 
 SgStringList &
 SgProject::get_excludePathList ()
    {
-     ROSE_ASSERT (this != NULL);
+     assert (this != NULL);
      return p_excludePathList;
    }
 
 void
 SgProject::set_excludePathList ( const SgStringList & excludePathList )
    {
-     ROSE_ASSERT (this != NULL);
+     assert (this != NULL);
      set_isModified(true);
      
      p_excludePathList = excludePathList;
@@ -11969,21 +11969,21 @@ SgProject::set_excludePathList ( const SgStringList & excludePathList )
 const SgStringList &
 SgProject::get_includeFileList () const
    {
-     ROSE_ASSERT (this != NULL);
+     assert (this != NULL);
      return p_includeFileList;
    }
 
 SgStringList &
 SgProject::get_includeFileList ()
    {
-     ROSE_ASSERT (this != NULL);
+     assert (this != NULL);
      return p_includeFileList;
    }
 
 void
 SgProject::set_includeFileList ( const SgStringList & includeFileList )
    {
-     ROSE_ASSERT (this != NULL);
+     assert (this != NULL);
      set_isModified(true);
      
      p_includeFileList = includeFileList;
@@ -11993,21 +11993,21 @@ SgProject::set_includeFileList ( const SgStringList & includeFileList )
 const SgStringList &
 SgProject::get_excludeFileList () const
    {
-     ROSE_ASSERT (this != NULL);
+     assert (this != NULL);
      return p_excludeFileList;
    }
 
 SgStringList &
 SgProject::get_excludeFileList ()
    {
-     ROSE_ASSERT (this != NULL);
+     assert (this != NULL);
      return p_excludeFileList;
    }
 
 void
 SgProject::set_excludeFileList ( const SgStringList & excludeFileList )
    {
-     ROSE_ASSERT (this != NULL);
+     assert (this != NULL);
      set_isModified(true);
      
      p_excludeFileList = excludeFileList;
@@ -12083,8 +12083,8 @@ SgUnparse_Info::SgUnparse_Info (  )
 
   // printf ("p_unparse_attribute.size() = %zu \n",p_unparse_attribute.size());
   // printf ("SgNO_UNPARSE_INFO.p_unparse_attribute.size() = %zu \n",SgNO_UNPARSE_INFO.p_unparse_attribute.size());
-     ROSE_ASSERT (p_unparse_attribute.size() == UNPARSE_TYPE_LAST);
-  // ROSE_ASSERT (SgNO_UNPARSE_INFO.p_unparse_attribute.size() == UNPARSE_TYPE_LAST);
+     assert (p_unparse_attribute.size() == UNPARSE_TYPE_LAST);
+  // assert (SgNO_UNPARSE_INFO.p_unparse_attribute.size() == UNPARSE_TYPE_LAST);
 
   // Test the isSgUnparse_Info() function since it has been problematic
      assert(isSgUnparse_Info(this) != NULL);
@@ -12096,7 +12096,7 @@ getSgVariant ( int variant )
    {
   // Return a string associated with the input variant!
   // check to make sure we have the correct variant and a valid string
-     ROSE_ASSERT(variant == $GRAMMAR_NAMETerminalNames[variant].variant);
+     assert(variant == $GRAMMAR_NAMETerminalNames[variant].variant);
 
      return $GRAMMAR_NAMETerminalNames[variant].name;
    }
@@ -12104,12 +12104,12 @@ getSgVariant ( int variant )
 SgUnparse_Info::SgUnparse_Info ( const SgUnparse_Info & X )
    : SgSupport()
    {
-     ROSE_ASSERT (X.p_unparse_attribute.size() == UNPARSE_TYPE_LAST);
+     assert (X.p_unparse_attribute.size() == UNPARSE_TYPE_LAST);
 
      *this = X;
 
-     ROSE_ASSERT (p_unparse_attribute.size() == UNPARSE_TYPE_LAST);
-  // ROSE_ASSERT (SgNO_UNPARSE_INFO.p_unparse_attribute.size() == UNPARSE_TYPE_LAST);
+     assert (p_unparse_attribute.size() == UNPARSE_TYPE_LAST);
+  // assert (SgNO_UNPARSE_INFO.p_unparse_attribute.size() == UNPARSE_TYPE_LAST);
    }
 
 SgUnparse_Info & SgUnparse_Info::operator= ( const SgUnparse_Info & X )
@@ -12130,9 +12130,9 @@ SgUnparse_Info & SgUnparse_Info::operator= ( const SgUnparse_Info & X )
   // of generated code (unparsing).
      p_outputCodeGenerationFormatDelimiters = X.p_outputCodeGenerationFormatDelimiters;
 
-     ROSE_ASSERT (X.p_unparse_attribute.size() == UNPARSE_TYPE_LAST);
-     ROSE_ASSERT (p_unparse_attribute.size()   == UNPARSE_TYPE_LAST);
-  // ROSE_ASSERT (SgNO_UNPARSE_INFO.p_unparse_attribute.size() == UNPARSE_TYPE_LAST);
+     assert (X.p_unparse_attribute.size() == UNPARSE_TYPE_LAST);
+     assert (p_unparse_attribute.size()   == UNPARSE_TYPE_LAST);
+  // assert (SgNO_UNPARSE_INFO.p_unparse_attribute.size() == UNPARSE_TYPE_LAST);
 
   // DQ (10/10/2006): Added support for qualified name lists.
      p_qualifiedNameList = X.p_qualifiedNameList;
@@ -12156,10 +12156,10 @@ SgUnparse_Info::checkBit(unparse_type_num bit) const
   //      returnValue = true;
   // return returnValue;
 
-     ROSE_ASSERT (this != NULL);
-     ROSE_ASSERT (bit > 0);
-     ROSE_ASSERT (bit < UNPARSE_TYPE_LAST);
-     ROSE_ASSERT (p_unparse_attribute.size() == UNPARSE_TYPE_LAST);
+     assert (this != NULL);
+     assert (bit > 0);
+     assert (bit < UNPARSE_TYPE_LAST);
+     assert (p_unparse_attribute.size() == UNPARSE_TYPE_LAST);
 
      return p_unparse_attribute[bit];
    }
@@ -12169,10 +12169,10 @@ SgUnparse_Info::setBit(unparse_type_num bit)
    { 
   // p_unparse_attribute |= bit; 
 
-     ROSE_ASSERT (this != NULL);
-     ROSE_ASSERT (bit > 0);
-     ROSE_ASSERT (bit < UNPARSE_TYPE_LAST);
-     ROSE_ASSERT (p_unparse_attribute.size() == UNPARSE_TYPE_LAST);
+     assert (this != NULL);
+     assert (bit > 0);
+     assert (bit < UNPARSE_TYPE_LAST);
+     assert (p_unparse_attribute.size() == UNPARSE_TYPE_LAST);
 
      p_unparse_attribute[bit] = true;
    }
@@ -12182,10 +12182,10 @@ SgUnparse_Info::unsetBit(unparse_type_num bit)
    { 
   // p_unparse_attribute &= ~bit;
 
-     ROSE_ASSERT (this != NULL);
-     ROSE_ASSERT (bit > 0);
-     ROSE_ASSERT (bit < UNPARSE_TYPE_LAST);
-     ROSE_ASSERT (p_unparse_attribute.size() == UNPARSE_TYPE_LAST);
+     assert (this != NULL);
+     assert (bit > 0);
+     assert (bit < UNPARSE_TYPE_LAST);
+     assert (p_unparse_attribute.size() == UNPARSE_TYPE_LAST);
 
      p_unparse_attribute[bit] = false;
    }
@@ -12196,7 +12196,7 @@ SgUnparse_Info::post_construction_initialization()
   // DQ (11/4/2003): Modified initialization from "0" to "NULL"
   // and "" for non-integer values
 
-     ROSE_ASSERT (this != NULL);
+     assert (this != NULL);
 
   // Clear all bit flags
   // p_unparse_attribute = b_enum_defaultValue;
@@ -12204,7 +12204,7 @@ SgUnparse_Info::post_construction_initialization()
         {
           p_unparse_attribute.push_back(false);
         }
-     ROSE_ASSERT (p_unparse_attribute.size() > 0);
+     assert (p_unparse_attribute.size() > 0);
 
      p_access_attribute  = a_unset_access;
      p_nested_expression = false;
@@ -13003,7 +13003,7 @@ SgUnparse_Info::display ( const std::string & label ) const
                break;
           default:
                printf ("Error: default reached in switch \n");
-               ROSE_ASSERT(false);
+               assert(false);
         }
 
   // DQ (1/26/2006): Modified to handle 64 bit machines
@@ -13091,7 +13091,7 @@ SgUnparse_Info::displayString ( const std::string & label ) const
                break;
           default:
                printf("Error: default reached in switch \n");
-               ROSE_ASSERT(false);
+               assert(false);
         }
 
      returnString += std::string("p_structureTagProcessingList.size() = ") + 
@@ -13335,7 +13335,7 @@ SgTemplateArgument::SgTemplateArgument ( SgTemplateDeclaration* argument, bool e
 
   // DQ (8/24/2006): Set the parent ???  (make sure it is not already set!)
   // This is likely a shared IR node, so we don't want to set the parent here!
-  // ROSE_ASSERT(argument->get_parent() == NULL);
+  // assert(argument->get_parent() == NULL);
   // argument->set_parent(this);
 #if PRINT_DEVELOPER_WARNINGS
      printf ("Skipping setting of parent on SgTemplateDeclaration in SgTemplateArgument \n");
@@ -13352,7 +13352,7 @@ SgTemplateArgument::get_mangled_name (void) const
           case SgTemplateArgument::type_argument:
              {
                const SgType* type = get_type();
-               ROSE_ASSERT (type != NULL);
+               assert (type != NULL);
                SgName mangled_type = type->get_mangled();
                mangled_name << mangled_type.str();
                break;
@@ -13361,7 +13361,7 @@ SgTemplateArgument::get_mangled_name (void) const
           case SgTemplateArgument::nontype_argument:
              {
                const SgExpression* expr = get_expression();
-               ROSE_ASSERT(expr != NULL);
+               assert(expr != NULL);
                mangled_name << mangleExpression(expr);
                break;
              }
@@ -13369,7 +13369,7 @@ SgTemplateArgument::get_mangled_name (void) const
           case SgTemplateArgument::template_template_argument:
              {
                const SgTemplateDeclaration* templateDeclaration = get_templateDeclaration();
-               ROSE_ASSERT (templateDeclaration != NULL);
+               assert (templateDeclaration != NULL);
 
             // DQ (8/24/2006): This is not yet implemented, we can't handle this as a expression!
             // mangled_name << mangleExpression (templateDeclaration);
@@ -13382,14 +13382,14 @@ SgTemplateArgument::get_mangled_name (void) const
 #if PRINT_DEVELOPER_WARNINGS
                printf ("Mangling of template template argument to template type not well tested yet mangled name = %s \n",mangled_templateDeclaration.str());
 #endif
-            // ROSE_ASSERT(false);
+            // assert(false);
                break;
              }
 
           default:
         //! \todo Find out when "unknown template argument" case occurs.
                mangled_name << "UNKNOWN";
-               ROSE_ASSERT (false);
+               assert (false);
                break;
         }
 
@@ -13422,7 +13422,7 @@ SgTemplateArgument::get_scope () const
              {
                templateInstantiation->get_startOfConstruct()->display("Error in SgTemplateArgument::get_scope()");
              }
-          ROSE_ASSERT(parentNode->get_parent() != NULL);
+          assert(parentNode->get_parent() != NULL);
        // ROSE_ABORT();
           return NULL;
         }
@@ -13437,7 +13437,7 @@ SgTemplateArgument::get_scope () const
 
   // Make sure we have a SgStatement node
      const SgScopeStatement* scopeStatement = isSgScopeStatement(parentNode);
-     ROSE_ASSERT (scopeStatement != NULL);
+     assert (scopeStatement != NULL);
 
   // return statement;
      return const_cast<SgScopeStatement*>(scopeStatement);
@@ -13454,11 +13454,11 @@ SgTemplateArgument::get_scope () const
           case SgTemplateArgument::type_argument:
              {
                const SgType* type = get_type();
-               ROSE_ASSERT (type != NULL);
+               assert (type != NULL);
                const SgNamedType* namedType = isSgNamedType(type);
                if (namedType != NULL)
                   {
-                    ROSE_ASSERT(namedType->get_declaration() != NULL);
+                    assert(namedType->get_declaration() != NULL);
                     scope = namedType->get_declaration()->get_scope();
                   }
                break;
@@ -13468,7 +13468,7 @@ SgTemplateArgument::get_scope () const
              {
             // Not clear if the scope should be defined here!
                const SgExpression* expr = get_expression();
-               ROSE_ASSERT(expr != NULL);
+               assert(expr != NULL);
                scope = NULL;
                break;
              }
@@ -13476,7 +13476,7 @@ SgTemplateArgument::get_scope () const
           case SgTemplateArgument::template_template_argument:
              {
                const SgTemplateDeclaration* templateDeclaration = get_templateDeclaration();
-               ROSE_ASSERT (templateDeclaration != NULL);
+               assert (templateDeclaration != NULL);
 
                scope = templateDeclaration->get_scope();
                break;
@@ -13485,7 +13485,7 @@ SgTemplateArgument::get_scope () const
           default:
              {
                printf ("Error in SgTemplateArgument::get_scope(): default reached! \n");
-               ROSE_ASSERT (false);
+               assert (false);
                break;
              }
         }
@@ -13516,7 +13516,7 @@ int SgGraphNode::p_index_counter = 0;
 void
 SgGraphNode::append_properties( int addr, const std::string & prop )
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
   /* implemented directly until we can fix how the statementList is built */
      p_properties[addr] = prop;
    }
@@ -13583,7 +13583,7 @@ int SgGraph::p_index_counter = 0;
 void
 SgGraph::append_properties( int addr, const std::string & prop )
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
   /* implemented directly until we can fix how the statementList is built */
      p_properties[addr] = prop;
    }
@@ -13591,7 +13591,7 @@ SgGraph::append_properties( int addr, const std::string & prop )
 int 
 SgGraph::hashCode( const char* p, int len) const // hash a character array
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
      unsigned int h = 0;
      for (int i=0; i < len; i++)
         {
@@ -13608,7 +13608,7 @@ SgGraph::hashCode( const char* p, int len) const // hash a character array
 void
 SgGraph::post_construction_initialization()
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
 
 
   // Setup an internal graph_id
@@ -13749,7 +13749,7 @@ SOURCE_INCIDENCE_DIRECTED_GRAPH_START
 void
 SgIncidenceDirectedGraph::post_construction_initialization()
    {
-     ROSE_ASSERT(this != NULL);
+     assert(this != NULL);
 
    }
 
@@ -13799,14 +13799,14 @@ SgIncidenceDirectedGraph::getSuccessors(SgGraphNode* node, std::vector <SgGraphN
   it1 = iter.first;
   it2 = iter.second;
   //  cerr << " >>>>>>>>>>>>>>> Outedges for node " << node->get_index() << endl;
-  ROSE_ASSERT(node);
+  assert(node);
   for (;it1!=it2; ++it1) {
     SgDirectedGraphEdge* edge = isSgDirectedGraphEdge(it1->second);
     //    cerr << "            are : " << edge->get_index() << endl;
-    ROSE_ASSERT(edge);
+    assert(edge);
     if (edge) {
       SgGraphNode* target = isSgGraphNode(edge->get_to());
-      ROSE_ASSERT(target);
+      assert(target);
       if (target) {
 	    string type_n = getProperty(SgGraph::type, edge);
 	    if (type_n==RoseBin_support::ToString(SgGraph::cfg))
@@ -13816,7 +13816,7 @@ SgIncidenceDirectedGraph::getSuccessors(SgGraphNode* node, std::vector <SgGraphN
       }
     } else {
       printf("This is not a DirectedGraphEdge.\n");
-      ROSE_ASSERT(edge);
+      assert(edge);
     }
   }
 }
@@ -13874,8 +13874,8 @@ SgIncidenceDirectedGraph::checkIfDirectedGraphEdgeExists(SgGraphNode* src, SgGra
     return false;
   if (trg==NULL)
     return false;
-  //  ROSE_ASSERT(src);
-  //ROSE_ASSERT(src->get_index());
+  //  assert(src);
+  //assert(src->get_index());
     
   //  SgGraphEdgeList* gedges = get_edgesOut();
   rose_graph_integer_edge_hash_multimap edges = get_node_index_to_edge_multimap_edgesOut();
