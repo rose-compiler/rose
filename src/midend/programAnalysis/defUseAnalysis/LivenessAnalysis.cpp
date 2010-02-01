@@ -704,13 +704,15 @@ FilteredCFGNode<IsDFAFilter> LivenessAnalysis::run(
 		}
 
 		counter++;
-		if (counter == 4000)
+                // Liao 1/27/2010
+                // Increase the upper limit to handle larger input
+		//if (counter == 4000)
+		if (counter == 80000)
 			abort = true;
 
 		if (abort) {
-			cerr
-					<< " \n\n\n>>>>>>>>>>>>>>>>>>>>>>>>>>> ABORTING !! INFINITE EXECUTION ... \n\n"
-					<< endl;
+			cerr << " \n\n\n Maximum iteration count is reached. ABORTING !! INFINITE EXECUTION ... \n\n"
+			     << endl;
 			worklist.clear();
 #if 1
 			// need to fix this, apperently some cases run indefinetly

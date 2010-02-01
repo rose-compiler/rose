@@ -3,6 +3,7 @@
 #include "sage3basic.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
+#include "checkIsModifiedFlag.h"
 #include "Loader.h"
 #include <algorithm>
 
@@ -158,6 +159,9 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
 
     /* If any section is the target of a function symbol then mark that section as containing code even if that section is not
      * memory mapped with execute permission. */
+
+#ifndef USE_ROSE
+ // DQ (1/27/2010): This is a problem for ROSE compiling this file.
     struct: public AstSimpleProcessing {
         void visit(SgNode *node) {
             SgAsmGenericSymbol *symbol = isSgAsmGenericSymbol(node);
@@ -169,6 +173,7 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
         }
     } t1;
     t1.traverse(ef, preorder);
-    
+#endif
+
     return ef;
 }

@@ -7,7 +7,7 @@
 #include <set>
 #include "DOTGeneration.h"
 #include "roseInternal.h"
-#include "sage3.h"
+//#include "sage3.h"
 
 class AstDOTGeneration : public DOTGeneration<SgNode*>
    {

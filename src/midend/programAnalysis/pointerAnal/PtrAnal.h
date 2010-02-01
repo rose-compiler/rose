@@ -1,6 +1,6 @@
 #ifndef PTR_ANAL_H
 #define PTR_ANAL_H
-#include "sage3.h"
+//#include "sage3.h"
 #include <ProcessAstTree.h>
 #include <AstInterface.h>
 #include <StmtInfoCollect.h>

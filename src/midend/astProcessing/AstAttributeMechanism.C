@@ -4,7 +4,7 @@
 //#include "rose.h"
 #endif
 
-#include "sage3.h"
+#include "sage3basic.h"
 #include "roseInternal.h"
 
 #include "AstAttributeMechanism.h"
