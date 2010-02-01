@@ -52,6 +52,7 @@
 // are searching for a better solution.
 #include "rose_paths.h"
 
+
 // DQ (5/30/2004): Added to permit warnings to be placed in the source code so that
 // issues can be addressed later but called out during development (and eliminated
 // from the final released version of the source code).
