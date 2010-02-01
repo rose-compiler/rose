@@ -320,6 +320,12 @@ sub postorder {
 # MAIN PROGRAM
 ###############################################################################################################################
 
+# Make sure we're using Git version 1.6.4 or later (we need the "git submodule foreach" command with the ability to pass
+# the submodule name to the script.
+my @gvers = `git --version` =~ /(\d+)\.(\d+)\.(\d+)/;
+die "$arg0: requires Git version 1.6.4 or later\n"
+  unless $gvers[0]>1 || ($gvers[0]==1 && ($gvers[1]>6 || ($gvers[1]==6 && $gvers[2]>=4)));
+
 my %cmds = (branch      => \&do_branch,
             checkout    => \&do_checkout,
             clone       => \&do_clone,
