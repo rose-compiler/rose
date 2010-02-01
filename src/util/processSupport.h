@@ -11,13 +11,18 @@ FILE* popenReadFromVector(const std::vector<std::string>& argv);
 // Assumes there is only one child process
 int pcloseFromVector(FILE* f);
 
+#if _MSC_VER
+#define ROSE_ASSERT assert
+#endif
+
 #ifndef ROSE_ASSERT
  #ifndef NDEBUG
   #define ROSE_ASSERT assert
  #else // We use assert(false) equivalents so often for "should not get here", but we don't want nontrivial side effects in asserts to be run when assert is disabled
-  #define ROSE_ASSERT(x) do {if (__builtin_constant_p(x)) {if (x) {} else (std::abort)();}} while (0)
+  #define ROSE_ASSERT(exp) do {if (__builtin_constant_p(exp)) {if (exp) {} else (std::abort)();}} while (0)
  #endif
 #endif
+ 
 
 
 // introducing class rose_excepction
