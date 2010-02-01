@@ -1,7 +1,7 @@
 #ifndef ROSE_SAGE_INTERFACE
 #define ROSE_SAGE_INTERFACE
 
-#include "sage3basic.h"
+#include "sage3basic.hhh"
 #include <stdint.h>
 
 
