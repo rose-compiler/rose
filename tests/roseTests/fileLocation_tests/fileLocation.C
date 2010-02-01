@@ -34,6 +34,10 @@ isLink( const string & name )
      char c_version[PATH_MAX];
      ROSE_ASSERT (fileNameWithPath.size() + 1 < PATH_MAX);
 
+  // DQ (1/29/2010): Since this is a problem, escape the loop when we iterate too long!
+  // A better fix is required, but this tests if this is the essential problem.
+     int count = 0;
+  // while (fileNameWithPath != "/")
      while (fileNameWithPath != "/" && fileNameWithPath != ".")
         {
           strcpy(c_version, fileNameWithPath.c_str());
@@ -44,6 +48,15 @@ isLink( const string & name )
        // printf ("directoryName = %s \n",directoryName.c_str());
 
           fileNameWithPath = directoryName;
+
+       // DQ (1/29/2010): Since this is a problem, escape the loop when we iterate too long!
+       // A better fix is required, but this tests if this is the essential propblem.
+          count++;
+          if (count > 1000)
+             {
+               printf ("ERROR: loop count in isLink exceeds %d \n",count);
+               break;
+             }
         }
 
 
@@ -78,14 +91,21 @@ isLink( const string & name )
           unlink(fn);
         }
 #else
-     printf ("testing for link: nake = %s \n",name.c_str());
+
+#if 0
+  // DQ (1/30/2010): Skip the display of output (too much for testing).
+     printf ("testing for link: name = %s \n",name.c_str());
+#endif
 
      if (lstat(name.c_str(), &info) != 0)
         {
-          perror("lstat() error");
+       // perror("lstat() error");
+          printf("lstat() error for name = %s \n",name.c_str());
         }
        else
         {
+#if 0
+       // DQ (1/30/2010): Skip the display of output (too much for testing).
           puts("lstat() returned:");
           printf("  inode:   %d\n",   (int) info.st_ino);
           printf(" dev id:   %d\n",   (int) info.st_dev);
@@ -93,11 +113,17 @@ isLink( const string & name )
           printf("  links:   %zu\n",        info.st_nlink);
           printf("    uid:   %d\n",   (int) info.st_uid);
           printf("    gid:   %d\n",   (int) info.st_gid);
+
+          printf ("S_ISLNK(info.mode) = %s \n",S_ISLNK(info.st_mode) ? "true" : "false");
+#endif
         }
 #endif
 
   // The minimum is to have a single link for a normal file.
-     bool isALink = info.st_nlink > 1;
+  // bool isALink = info.st_nlink > 1;
+
+  // DQ (1/30/2010): Ignore info.st_nlink, the only reliable way to check this is to use the PPOSIX macro (S_ISLNK).
+     bool isALink = S_ISLNK(info.st_mode);
 
      return isALink;
    }
@@ -111,7 +137,7 @@ islinkOrPartOfLinkedDirectory( const string & fileName )
   // have to check each part of the whole absolute path to see if a link was used.
   // This detail make this function more complicated.
 
-     struct stat info;
+  // struct stat info;
 
      string fileNameWithPath = fileName;
      char c_version[PATH_MAX];
@@ -128,12 +154,22 @@ islinkOrPartOfLinkedDirectory( const string & fileName )
        // string directoryName = dirname(name.c_str());
           string directoryName = dirname(c_version);
 
+#if 0
+       // DQ (1/30/2010): Skip the display of output (too much for testing).
           printf ("directoryName = %s \n",directoryName.c_str());
+#endif
 
           fileNameWithPath = directoryName;
 
           directoryIsLink = isLink(directoryName);
         }
+
+#if 0
+     if (directoryIsLink == true)
+        {
+          printf ("This file is classified as a link because it is in a linked directory \n");
+        }
+#endif
 
      if (directoryIsLink == false)
         {
@@ -145,12 +181,14 @@ islinkOrPartOfLinkedDirectory( const string & fileName )
           fileIsLink = true;
         }
 
+#if 0
+     if (fileIsLink == true)
+        {
+          printf ("This file is classified as a link \n");
+        }
+#endif
+
      return fileIsLink;
-
-  // The minimum is to have a single link for a normal file.
-     bool isALink = info.st_nlink > 1;
-
-     return isALink;
    }
 
 
@@ -213,14 +251,14 @@ display ( const StringUtility::FileNameLibrary & X, const string & label = "" )
      string classification = "";
      switch (X)
         {
-          case FILENAME_LIBRARY_UNKNOWN: classification = "unknown"; break;
-          case FILENAME_LIBRARY_USER:    classification    = "user";    break;
-          case FILENAME_LIBRARY_C:       classification = "library"; break;
-          case FILENAME_LIBRARY_STDCXX:       classification = "library STDCXX"; break;
-          case FILENAME_LIBRARY_LINUX:       classification = "library LINUX"; break;
-          case FILENAME_LIBRARY_GCC:       classification = "library GCC"; break;
-          case FILENAME_LIBRARY_BOOST:       classification = "library BOOST"; break;
-          case FILENAME_LIBRARY_ROSE:       classification = "library ROSE"; break;
+          case FILENAME_LIBRARY_UNKNOWN: classification = "unknown";        break;
+          case FILENAME_LIBRARY_USER:    classification = "user";           break;
+          case FILENAME_LIBRARY_C:       classification = "library";        break;
+          case FILENAME_LIBRARY_STDCXX:  classification = "library STDCXX"; break;
+          case FILENAME_LIBRARY_LINUX:   classification = "library LINUX";  break;
+          case FILENAME_LIBRARY_GCC:     classification = "library GCC";    break;
+          case FILENAME_LIBRARY_BOOST:   classification = "library BOOST";  break;
+          case FILENAME_LIBRARY_ROSE:    classification = "library ROSE";   break;
 
           default:
              {
@@ -247,7 +285,10 @@ visitorTraversal::visit(SgNode* n)
        // Skip the case of compiler generated Sg_File_Info objects.
           if (previousFilename != filename && filename != "compilerGenerated")
              {
+#if 0
+            // DQ (1/30/2010): Skip the display of output (too much for testing).
                printf ("\n\nfilename = %s statement = %s \n",filename.c_str(),n->class_name().c_str());
+#endif
 
                FileNameClassification classification;
 #if 1
@@ -256,7 +297,6 @@ visitorTraversal::visit(SgNode* n)
             // This causes the path edit distance to be: 4
                //string sourceDir = "/home/dquinlan/ROSE/svn-rose";
 				string sourceDir = "/home/hou1/rose/rose";
-
             // This causes the path edit distance to be: 0
             // string sourceDir = "/home/dquinlan/ROSE";
 
@@ -270,14 +310,29 @@ visitorTraversal::visit(SgNode* n)
                FileNameLocation fileTypeClassification = classification.getLocation();
                FileNameLibrary  libraryClassification  = classification.getLibrary();
                int pathEditDistance = classification.getDistanceFromSourceDirectory();
-               
+
+#if 0
+            // DQ (1/30/2010): Skip the display of output (too much for testing).
                printf ("fileTypeClassification = %d \n",fileTypeClassification);
                display(fileTypeClassification,"Display fileTypeClassification");
                printf ("libraryClassification  = %d \n",libraryClassification);
                display(libraryClassification,"Display libraryClassification");
                printf ("pathEditDistance       = %d \n",pathEditDistance);
+#endif
 
-               ROSE_ASSERT(isLink(filename) == false);
+#if 0
+            // DQ (1/30/2010): Skip the display of output (too much for testing).
+
+            // Some of our tests explicitly build a link and this tests that it is correctly identified as a link.
+            // printf ("isLink(StringUtility::stripPathFromFileName(filename)) = %s \n",isLink(StringUtility::stripPathFromFileName(filename)) ? "true" : "false");
+
+            // ROSE_ASSERT(isLink(filename) == false);
+               printf ("isLink(filename) = %s \n",isLink(filename) ? "true" : "false");
+
+            // DQ (1/30/2010): Added this test.
+            // ROSE_ASSERT(islinkOrPartOfLinkedDirectory(filename) == false);
+               printf ("islinkOrPartOfLinkedDirectory(filename) = %s \n",islinkOrPartOfLinkedDirectory(filename) ? "true" : "false");
+#endif
              }
 
           previousFilename = filename;

@@ -1,19 +1,5 @@
 
-Information on git-svn usage:
-   http://maymay.net/blog/2009/02/24/how-to-use-git-svn-as-the-only-subversion-client-youll-need/
-
-The Video:
-   http://www.youtube.com/watch?v=4XpnKHJAok8
-
-
-Commands used one to setup and maintain GIT and not used by users afterward:
-   Command to use git-svn support (checkes out a git-based SVN repository):
-      git svn clone file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE ROSE
-
-   To update git repository from SVN use (from in the git repository):
-      git svn fetch
-
-
+#################### Sources of information on git ####################
 
 We will try to give you a fast introduction to git, but you should also consider looking up these documents
   http://*www.*kernel.org/pub/software/scm/git/docs/gittutorial.html
@@ -55,8 +41,19 @@ which in the case of the cmake branch would be
 
 ########## Building a Branch for a development team member ################
 
-     git branch matt master
-     git push origin matt
+X     git branch matt master
+X     git push origin matt
+
+  New instructions:
+      git checkout master
+      git pull
+
+    < must edit /casc/overture/ROSE/git/ROSE.git/hooks/pre-receive 
+      file (bottom) to uncomment access control. >
+
+      git push origin master:refs/heads/dj-main-test
+
+    < change back the file: /casc/overture/ROSE/git/ROSE.git/hooks/pre-receive >
 
 
 ############## WE DESCRIBE HOW TO CREATE A NEW BRANCH  ####################
