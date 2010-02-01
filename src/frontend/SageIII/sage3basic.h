@@ -80,6 +80,7 @@
 
 //#include <cstdlib> // For abort()
 #include <algorithm>
+#include <fstream>
 
 // DQ (9/24/2004): Try again to remove use of set parent side effect in EDG/Sage III connection! This works!!!
 #define REMOVE_SET_PARENT_FUNCTION
@@ -186,7 +187,7 @@
 
 
 // tps (01/22/2010) :refactored
-#include "setup.h"
+#include "rosedefs.h"
 // Support for preprocessors declarations and comments
 #include "rose_attributes_list.h"
 
