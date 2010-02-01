@@ -22,11 +22,14 @@ if ROSE_BUILD_OS_IS_CYGWIN
 else
 
 # Liao, 6/27/2009 skip the test if PCH is not used
-if ROSE_PCH 
+# tps (02/01/2010) : Changed it back. It is important that this test is being executed at all times.
+# We need to follow our programming guidelines that we put in place and this test enforces it. This test
+# should not take more than 5 seconds and is only run in the top directory
+#if ROSE_PCH 
 PROJECT_SOURCE_CODE_TESTS = detect_roseh detect_rosec
-else  
-PROJECT_SOURCE_CODE_TESTS = 
-endif
+#else  
+#PROJECT_SOURCE_CODE_TESTS = 
+#endif
 
 endif
 
