@@ -1,5 +1,8 @@
 // tps (01/14/2010) : Switching from rose.h to sage3. Added buildMangledNameMap, buildReplacementMap, fixupTraversal, replaceExpressionWithStatement
 //#include "rose.h"
+#include "sage3basic.h"
+#include "markLhsValues.h"
+#include "fixupNames.h"
 #include "buildMangledNameMap.h" 
 #include "buildReplacementMap.h" 
 #include "fixupTraversal.h"
@@ -5498,7 +5501,13 @@ bool SageInterface::normalizeForLoopInitDeclaration(SgForStatement* loop)
       if (isSgAssignInitializer(initor))
       {
         lbast = isSgAssignInitializer(initor)->get_operand();
+      } else 
+      { //SgConstructorInitializer etc.
+        // other complex declaration statements, such as Decomposition::Iterator ditr(&decomp) should be skipped
+        // they cause a loop to be non-canonical.
+        return false; 
       }
+
       // add a new statement like int i; and insert it to the enclosing function
       // There are multiple choices about where to insert this statement: 
       //  global scope: max name pollution, 

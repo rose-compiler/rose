@@ -93,6 +93,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	variables.c
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
+	classMember.cpp \
 	hello1.cpp \
 	helloNested.cpp \
 	objectPrivate.cpp \
@@ -101,6 +102,7 @@ CXX_TESTCODES_REQUIRED_TO_PASS = \
 	orphanedAtomic.cpp \
 	preprocessingInfo2.cpp \
 	task_link.cpp \
+	task_link2.cpp \
 	task_tree.cpp 
 
 # put macroCalls.c here since it requires -rose:wave, which causes seg fault on 64-bit machine

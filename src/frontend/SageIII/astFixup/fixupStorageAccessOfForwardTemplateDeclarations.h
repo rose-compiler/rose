@@ -1,3 +1,5 @@
+#ifndef __fixupStorageAccess
+#define  __fixupStorageAccess
 // DQ (5/20/2005):
 /*! \brief Fixup the storage access of all compiler-generated forward declarations (non-defining declarations) 
            to match that of the defining declaration.
@@ -35,3 +37,4 @@ class FixupStorageAccessOfForwardTemplateDeclarations : public SgSimpleProcessin
    };
 
 
+#endif

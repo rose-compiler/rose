@@ -7,7 +7,7 @@
  *  $Id: collect.cc,v 1.1 2008/01/08 02:56:43 dquinlan Exp $
  */
 
-#include "rose.h"
+#include "sage3basic.h"
 
 #include "rosehpct/sage/sage.hh"
 #include "rosehpct/util/general.hh"

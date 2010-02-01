@@ -6,6 +6,7 @@
 using namespace std;
 using namespace VirtualCFG;
 
+//! start from a CFG node 'n', collect all other CFG nodes which can be reached from 'n'
 void getReachableNodes(CFGNode n, set<CFGNode>& s) {
   if (s.find(n) != s.end()) return; // n is already in s
   s.insert(n);

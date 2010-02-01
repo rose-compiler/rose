@@ -7,18 +7,18 @@
 # x) update rosecompiler.org website
 # 
 # Liao 12/15/2009
+# Last update 1/28/2010, migrate to hudson-rose
 
-# set up 32-bit environment
+# set up 64-bit environment
 #--------------------------------------
 set +e
 source /usr/apps/qt/4.5.1/setup.sh  # this causes the script to abort if set +e is not used
 
 export JAVA_HOME=/usr/apps/java/jdk1.6.0_11
-export BOOST_ROOT="/home/liao6/opt/boost_1_35_0"
-export LD_LIBRARY_PATH="/usr/apps/java/jdk1.6.0_11/lib:${JAVA_HOME}/jre/lib/i386/server:$LD_LIBRARY_PATH"
+export BOOST_ROOT=/export/tmp.hudson-rose/opt/boost_1_40_0-inst
+export LD_LIBRARY_PATH="/usr/apps/java/jdk1.6.0_11/lib:${JAVA_HOME}/jre/lib/amd64/server:$LD_LIBRARY_PATH"
 export LD_LIBRARY_PATH="${BOOST_ROOT}/lib:${LD_LIBRARY_PATH}"
-#export PATH="$JAVA_HOME/bin:/home/liao6/opt/git-1.6.5.2/bin:/usr/apps/automake/1.9.6/bin:$PATH:/home/liao6/opt/ghc-6.10.4/bin"
-export PATH="$JAVA_HOME/bin:/home/liao6/opt/git-1.6.5.2/bin:/usr/apps/automake/1.9.6/bin:$PATH"
+export PATH="$JAVA_HOME/bin:/export/tmp.hudson-rose/opt/git-1.6.5.2-inst/bin:/usr/apps/automake/1.9.6/bin:$PATH"
 PROCESS_NUM=8
 
 # sometimes, we want to skip the time consuming part
@@ -120,7 +120,7 @@ fi
 
 # --------- update external svn repository
 # this script can tolerate redundant update (trying to update the same package more than once is OK)
-/home/liao6/rose/scripts/hudson/importRoseGitDistributionToSVN $ROSE_SOURCE_PATH $ROSE_BUILD_PATH
+/home/hudson-rose/releaseScripts/importRoseGitDistributionToSVN $ROSE_SOURCE_PATH $ROSE_BUILD_PATH
 
 if [ $? -ne 0 ]; then
   echo "Error in importRoseGitDistributionToSVN, aborting ...."

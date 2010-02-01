@@ -67,9 +67,6 @@ test -f $ROSE_BUILD_PATH/$ROSE_DIST_NO_EDG_PACKAGE_NAME || exit 1
 # Let's try the lightweight release first!!
 EDG_BIN_COUNT=0
 
-#The local directory with the scripts for our regression tests
-SCRIPT_TOP=/home/liao6/rose/scripts
-
 #----------real execution ----------------------
 #----------get revision no etc ----------------------
 # x. grab package name, version no, and revision no from 
@@ -202,7 +199,7 @@ fi
 #-------------------- the actual uploading!!!---------------------
 # call the upload script 
 # VERSION_NO, REVISION_NO, FULL_PACKAGE_NAME
-${SCRIPT_TOP}/hudson/finalUploadFilePackages.sh ${VERSION_NO} ${REVISION_NO} ${FULL_PACKAGE_NAME} 
+/home/hudson-rose/releaseScripts/finalUploadFilePackages.sh ${VERSION_NO} ${REVISION_NO} ${FULL_PACKAGE_NAME} 
 if [ $? -ne 0 ]; then
    echo "Fatal error: cannot upload the distribution package!"
    exit 1
