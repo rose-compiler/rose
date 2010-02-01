@@ -19,7 +19,7 @@
 #endif
 typedef uint64_t rose_addr_t; /* address and size (file and memory) */
 #define ROSE_DEPRECATED_FUNCTION 
-#define __builtin_constant_p (exp) (0)
+//#define __builtin_constant_p (exp) (0)
 
 #include "roseInternal.h"
 
