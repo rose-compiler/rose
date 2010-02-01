@@ -58,12 +58,17 @@ Loader::find_loader(SgAsmGenericHeader *header)
 MemoryMap *
 Loader::map_all_sections(MemoryMap *map, const SgAsmGenericSectionPtrList &sections, bool allow_overmap)
 {
+#ifdef USE_ROSE
+   return NULL;
+#else
+ // DQ (1/27/2010): This is a problem for ROSE.
     struct: public Selector {
         Contribution contributes(SgAsmGenericSection *section) {
             return CONTRIBUTE_ADD; /*alignment might weed out non-mapped sections*/
         }
     } s1;
     return create_map(map, sections, &s1, allow_overmap);
+#endif
 }
 
 /* Returns a map of code-containing sections. A code-containing section is any section that is mapped with execute permission or
@@ -71,6 +76,10 @@ Loader::map_all_sections(MemoryMap *map, const SgAsmGenericSectionPtrList &secti
 MemoryMap *
 Loader::map_code_sections(MemoryMap *map, const SgAsmGenericSectionPtrList &sections, bool allow_overmap)
 {
+#ifdef USE_ROSE
+   return NULL;
+#else
+ // DQ (1/27/2010): This is a problem for ROSE.
     struct: public Selector {
         Contribution contributes(SgAsmGenericSection *section) {
             if (section->get_contains_code()) {
@@ -85,6 +94,7 @@ Loader::map_code_sections(MemoryMap *map, const SgAsmGenericSectionPtrList &sect
         }
     } s1;
     return create_map(map, sections, &s1, allow_overmap);
+#endif
 }
 
 /* Returns a map of executable sections. Any mapped section that isn't executable is subtracted from the mapping.
@@ -94,6 +104,10 @@ Loader::map_code_sections(MemoryMap *map, const SgAsmGenericSectionPtrList &sect
 MemoryMap *
 Loader::map_executable_sections(MemoryMap *map, const SgAsmGenericSectionPtrList &sections, bool allow_overmap)
 {
+#ifdef USE_ROSE
+   return NULL;
+#else
+ // DQ (1/27/2010): This is a problem for ROSE.
     struct: public Selector {
         Contribution contributes(SgAsmGenericSection *section) {
             if (!section->is_mapped()) {
@@ -106,6 +120,7 @@ Loader::map_executable_sections(MemoryMap *map, const SgAsmGenericSectionPtrList
         }
     } s1;
     return create_map(map, sections, &s1, allow_overmap);
+#endif
 }
 
 /* Returns a map of executable sections. Any section that is not writable is removed from the mapping.
@@ -115,6 +130,10 @@ Loader::map_executable_sections(MemoryMap *map, const SgAsmGenericSectionPtrList
 MemoryMap *
 Loader::map_writable_sections(MemoryMap *map, const SgAsmGenericSectionPtrList &sections, bool allow_overmap)
 {
+#ifdef USE_ROSE
+   return NULL;
+#else
+ // DQ (1/27/2010): This is a problem for ROSE.
     struct: public Selector {
         Contribution contributes(SgAsmGenericSection *section) {
             if (!section->is_mapped()) {
@@ -127,6 +146,7 @@ Loader::map_writable_sections(MemoryMap *map, const SgAsmGenericSectionPtrList &
         }
     } s1;
     return create_map(map, sections, &s1, allow_overmap);
+#endif
 }
 
 /* Align section addresses and sizes */
