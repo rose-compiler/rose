@@ -2020,7 +2020,6 @@ Grammar::buildSourceFiles( Terminal & node, StringUtility::FileWithLineNumbers &
      StringUtility::FileWithLineNumbers sourceBeforeInsertion;
 #if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
   // DQ (12/29/2009): Add this to the top of each file.
-//     string sourceHeader = "\n#include \"rose.h\"\nusing namespace std;\n\n";
 	// tps (01/06/2010) : If we include sage3.h instead of rose.h on Windows these files are
 		// currently only 7MB instead of 17MB - still to large though
 	 string sourceHeader = "#include \"sage3basic.h\"   // sage3 from grammar.C \nusing namespace std;\n\n";

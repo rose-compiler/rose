@@ -15,7 +15,6 @@
 #include <stdlib.h>
 
 // We need to separate the construction of the code for ROSE from the ROSE code
-// include "rose.h"
 // #include FSTREAM_HEADER_FILE
 #include <fstream>
 #include <sys/types.h>
