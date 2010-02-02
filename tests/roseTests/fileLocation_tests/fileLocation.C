@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <stdio.h>
+#include <set>
 
 #include <libgen.h>             /* basename(), dirame()               */
 
@@ -27,11 +28,11 @@ bool
 isLink( const string & name )
    {
 	// First, check if this file exists
-	if(!boost::filesystem::exist(name))
-	{
-		printf("The file \"%s\" does not exist!\n", name.c_str());
-		return false;
-	}
+     if(!boost::filesystem::exists(name))
+     {
+          printf("The file \"%s\" does not exist!\n", name.c_str());
+          return false;
+     }
 
 
   // In oorder to evaluate if this is a link we can't just check the file directly, 
@@ -56,7 +57,7 @@ isLink( const string & name )
        // string directoryName = dirname(name.c_str());
           string directoryName = dirname(c_version);
 
-          printf ("directoryName = %s \n",directoryName.c_str());
+          //printf ("directoryName = %s \n",directoryName.c_str());
 
           fileNameWithPath = directoryName;
 
@@ -208,6 +209,9 @@ class visitorTraversal : public AstSimpleProcessing
    {
      string previousFilename;
 
+     // CH (2/1/2010): The better way to avoid repeated filenames is to build a filanames set
+     std::set<string> previousFilenames;
+
      public:
           virtual void visit(SgNode* n);
    };
@@ -265,8 +269,9 @@ display ( const StringUtility::FileNameLibrary & X, const string & label = "" )
         {
           case FILENAME_LIBRARY_UNKNOWN: classification = "unknown";        break;
           case FILENAME_LIBRARY_USER:    classification = "user";           break;
-          case FILENAME_LIBRARY_C:       classification = "library";        break;
+          case FILENAME_LIBRARY_C:       classification = "library C";      break;
           case FILENAME_LIBRARY_STDCXX:  classification = "library STDCXX"; break;
+	  case FILENAME_LIBRARY_STL:     classification = "library STL";    break;
           case FILENAME_LIBRARY_LINUX:   classification = "library LINUX";  break;
           case FILENAME_LIBRARY_GCC:     classification = "library GCC";    break;
           case FILENAME_LIBRARY_BOOST:   classification = "library BOOST";  break;
@@ -294,8 +299,13 @@ visitorTraversal::visit(SgNode* n)
         {
           string filename = statement->get_file_info()->get_filename();
 
+	  // CH (2/1/2010): Get the real filename (not a symlink)
+	  if(boost::filesystem::exists(filename))
+	     filename = canonicalize_file_name(filename.c_str());
+
        // Skip the case of compiler generated Sg_File_Info objects.
-          if (previousFilename != filename && filename != "compilerGenerated")
+          //if (previousFilename != filename && filename != "compilerGenerated")
+          if (previousFilenames.count(filename) == 0 && filename != "compilerGenerated")
              {
 #if 0
             // DQ (1/30/2010): Skip the display of output (too much for testing).
@@ -323,8 +333,11 @@ visitorTraversal::visit(SgNode* n)
                FileNameLibrary  libraryClassification  = classification.getLibrary();
                int pathEditDistance = classification.getDistanceFromSourceDirectory();
 
-#if 0
+#if 1
             // DQ (1/30/2010): Skip the display of output (too much for testing).
+	       printf ("\n\nfilename: %s\n", filename.c_str());
+	       printf ("IsLink: %s\n", boost::filesystem::symbolic_link_exists(filename.c_str()) ? "true" : "false");
+	       printf ("Real name: %s\n", canonicalize_file_name(filename.c_str()));
                printf ("fileTypeClassification = %d \n",fileTypeClassification);
                display(fileTypeClassification,"Display fileTypeClassification");
                printf ("libraryClassification  = %d \n",libraryClassification);
@@ -332,22 +345,24 @@ visitorTraversal::visit(SgNode* n)
                printf ("pathEditDistance       = %d \n",pathEditDistance);
 #endif
 
-#if 0
+#if 1
             // DQ (1/30/2010): Skip the display of output (too much for testing).
 
             // Some of our tests explicitly build a link and this tests that it is correctly identified as a link.
             // printf ("isLink(StringUtility::stripPathFromFileName(filename)) = %s \n",isLink(StringUtility::stripPathFromFileName(filename)) ? "true" : "false");
 
             // ROSE_ASSERT(isLink(filename) == false);
-               printf ("isLink(filename) = %s \n",isLink(filename) ? "true" : "false");
+	       bool lk = isLink(filename);
+               printf ("isLink(filename) = %s \n",lk ? "true" : "false");
 
             // DQ (1/30/2010): Added this test.
             // ROSE_ASSERT(islinkOrPartOfLinkedDirectory(filename) == false);
-               printf ("islinkOrPartOfLinkedDirectory(filename) = %s \n",islinkOrPartOfLinkedDirectory(filename) ? "true" : "false");
+             //  printf ("islinkOrPartOfLinkedDirectory(filename) = %s \n",islinkOrPartOfLinkedDirectory(filename) ? "true" : "false");
 #endif
+	       previousFilenames.insert(filename);
              }
 
-          previousFilename = filename;
+          //previousFilename = filename;
         }
    }
 

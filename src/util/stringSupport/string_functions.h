@@ -260,6 +260,7 @@ namespace StringUtility
                                   FILENAME_LIBRARY_USER,
                                   FILENAME_LIBRARY_C,
                                   FILENAME_LIBRARY_STDCXX,
+				  FILENAME_LIBRARY_STL,
                                   FILENAME_LIBRARY_LINUX,
                                   FILENAME_LIBRARY_GCC,
                                   FILENAME_LIBRARY_BOOST,
