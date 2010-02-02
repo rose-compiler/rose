@@ -17,8 +17,8 @@
 // #ifndef FALSE
 //    #define FALSE false
 // #endif
-
-#if 1
+#include "fileoffsetbits.h"
+#if 0
 // DQ (3/12/2006): This is included here as specified in the Autoconf manual (using <> instead of "")
 // We have also abandoned the ifdef HAVE_CONFIG_H cpp conditional use of rose_config.h as well.
 // This is placed here in sage3.h instead of in rose.h because it needs to always be seen even 
