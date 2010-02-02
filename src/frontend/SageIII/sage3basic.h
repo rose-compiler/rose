@@ -17,7 +17,8 @@
 // #ifndef FALSE
 //    #define FALSE false
 // #endif
-
+#include "fileoffsetbits.h"
+#if 0
 // DQ (3/12/2006): This is included here as specified in the Autoconf manual (using <> instead of "")
 // We have also abandoned the ifdef HAVE_CONFIG_H cpp conditional use of rose_config.h as well.
 // This is placed here in sage3.h instead of in rose.h because it needs to always be seen even 
@@ -38,6 +39,7 @@
 // Use of _FILE_OFFSET_BITS macro is required on 32-bit systems to controling size of "struct stat"
 #if !(defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
 #error "The _FILE_OFFSET_BITS macro should be set before any sys/stat.h is included by any other header file!"
+#endif
 #endif
 
 // DQ (4/21/2009): Note that this header file will include the STL string header file 

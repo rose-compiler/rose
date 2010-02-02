@@ -1,6 +1,7 @@
 #ifndef __rosedefs
 #define __rosedefs
 
+
 #include "stdio.h"
 #include <cassert>
 #include <cstdio>
