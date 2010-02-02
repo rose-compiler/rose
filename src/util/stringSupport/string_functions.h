@@ -40,14 +40,15 @@ namespace StringUtility
         };
 
 #ifndef USE_ROSE
-  typedef std::vector<StringWithLineNumber> FileWithLineNumbers;
+     typedef std::vector<StringWithLineNumber> FileWithLineNumbers;
 #else
   // workaround of bug 315, separating definitions for a namespace
   // Liao, 2/16/2009
-}
+   }
+
 namespace StringUtility
-{
-  typedef std::vector<StringUtility::StringWithLineNumber> FileWithLineNumbers;
+   {
+     typedef std::vector<StringUtility::StringWithLineNumber> FileWithLineNumbers;
 #endif
 
 	 inline std::ostream& operator<<(std::ostream& os, const StringWithLineNumber& s) {
@@ -163,9 +164,9 @@ namespace StringUtility
            // int isSameName ( const std::string& s1, const std::string& s2 );
 
            // char* stringDuplicate ( const char* tempString );
-	   std::string copyEdit ( const std::string& inputString, const std::string& oldToken, const std::string& newToken );
-	   FileWithLineNumbers copyEdit ( const FileWithLineNumbers& inputString, const std::string& oldToken, const std::string& newToken );
-	   FileWithLineNumbers copyEdit ( const FileWithLineNumbers& inputString, const std::string& oldToken, const FileWithLineNumbers& newToken );
+          std::string copyEdit ( const std::string& inputString, const std::string& oldToken, const std::string& newToken );
+          FileWithLineNumbers copyEdit ( const FileWithLineNumbers& inputString, const std::string& oldToken, const std::string& newToken );
+          FileWithLineNumbers copyEdit ( const FileWithLineNumbers& inputString, const std::string& oldToken, const FileWithLineNumbers& newToken );
        //  bool isContainedIn ( const char* longString, const char* shortString );
            inline bool isContainedIn ( const std::string & longString, const std::string & shortString ) {
 	     return longString.find(shortString) != std::string::npos;
