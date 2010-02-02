@@ -3,9 +3,7 @@
 #ifndef __ROSETTA_GRAMMAR_H__
 #define __ROSETTA_GRAMMAR_H__
 
-// DQ (3/12/2006): We want to remove config.h from being placed in every source file
-#include <rose_config.h>
-
+#include "rosedefs.h"
 // DQ (3/22/2009): Added MSVS support for ROSE.
 #include "rose_msvc.h"
 
