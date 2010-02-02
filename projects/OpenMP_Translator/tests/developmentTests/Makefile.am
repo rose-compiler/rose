@@ -79,6 +79,8 @@ PASSING_TEST_Executables = ${TEST_Objects:.o=.out}
 
 check_PROGRAMS = $(PASSING_TEST_Executables)
 LDADD = -L$(OMNI_RUNTIME_LIBRARY_PATH) -lompc -lpthread -lm
+#LDADD = -L$(OMNI_RUNTIME_LIBRARY_PATH) -lompc -ltlog -lpthread -lm
+#LDADD = $(OMNI_RUNTIME_LIBRARY_PATH)/libompc.a $(OMNI_RUNTIME_LIBRARY_PATH)/libtlog.a -lpthread -lm
 TESTS = $(check_PROGRAMS)
 else  # otherwise just generate object files
 check-local:
