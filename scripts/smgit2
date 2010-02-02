@@ -230,6 +230,34 @@ sub do_checkout {
   execute sub {switch_to_branch $branch}, submodules;
 }
 
+sub rewrite_submodule_configs {
+  local $_;
+  my @content; # rewritten content of .git/config file.
+  open CONF, ".git/config" or die "$arg0: .git/config: $!";
+  my($sectype,$secname,$origin_url); # set when we encounter a "[...]" line.
+  while (<CONF>) {
+    if (/^\s*\[\s*(\w+)\s+"(.*)"\s*\]/) {
+      ($sectype,$secname) = ($1,$2);
+    } elsif (my($key,$val) = /^\s*(\w+)\s*=\s*(.*?)\s*$/) {
+      if ($key eq "url" && $sectype eq "remote" && $secname eq "origin") {
+	$origin_url = $val;
+      } elsif ($key eq "url" && $sectype eq "submodule") {
+	die unless $origin_url;
+	my($base) = $val =~ /([^\/]+)$/;
+	my($path) = $origin_url =~ /^(.*)\//;
+	$_ = "\t$key = $path/$base\n";
+	print "$arg0: using $path/$base for submodule at $secname\n";
+      }
+    }
+    push @content, $_;
+  }
+  close CONF;
+  system "cp .git/config .git/config~"; #ignore status
+  open CONF, ">.git/config" or die "$arg0: .git/config: $!\n";
+  print CONF join "", @content;
+  close CONF;
+}
+
 # Run a "clone" command. Arguments are the same as the real Git "clone" command.  This is the only command we
 # support that's run *outside* the git repository. It does the following:
 #    (1) git clone ....
@@ -245,8 +273,7 @@ sub do_clone {
   my $gitdir = $1;
   chdir $gitdir or die "$arg0: cannot find Git repository at $gitdir: $!\n";
   git "submodule init" or die;
-  print "Press ENTER to edit your config file and check the submodule URLs: "; scalar <STDIN>;
-  system($ENV{EDITOR}||"vi", ".git/config") and die;
+  rewrite_submodule_configs;
   print "$arg0: updating submodules...\n";
   git "submodule update" or
     die "$arg0: submodule update failed.  Fix your .git/config file and run \"git submodule update\" by hand.\n";
@@ -319,6 +346,12 @@ sub postorder {
 ###############################################################################################################################
 # MAIN PROGRAM
 ###############################################################################################################################
+
+# Make sure we're using Git version 1.6.4 or later (we need the "git submodule foreach" command with the ability to pass
+# the submodule name to the script.
+my @gvers = `git --version` =~ /(\d+)\.(\d+)\.(\d+)/;
+die "$arg0: requires Git version 1.6.4 or later\n"
+  unless $gvers[0]>1 || ($gvers[0]==1 && ($gvers[1]>6 || ($gvers[1]==6 && $gvers[2]>=4)));
 
 my %cmds = (branch      => \&do_branch,
             checkout    => \&do_checkout,
