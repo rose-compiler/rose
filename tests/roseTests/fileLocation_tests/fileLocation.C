@@ -318,9 +318,9 @@ visitorTraversal::visit(SgNode* n)
 
             // This causes the path edit distance to be: 4
                //string sourceDir = "/home/dquinlan/ROSE/svn-rose";
-				string sourceDir = "/home/hou1/rose/rose";
+	//			string sourceDir = "/home/hou1/rose/rose";
             // This causes the path edit distance to be: 0
-            // string sourceDir = "/home/dquinlan/ROSE";
+               string sourceDir = "/home/dquinlan/ROSE";
 
                classification = classifyFileName(filename,sourceDir);
 #else
@@ -336,8 +336,6 @@ visitorTraversal::visit(SgNode* n)
 #if 1
             // DQ (1/30/2010): Skip the display of output (too much for testing).
 	       printf ("\n\nfilename: %s\n", filename.c_str());
-	       printf ("IsLink: %s\n", boost::filesystem::symbolic_link_exists(filename.c_str()) ? "true" : "false");
-	       printf ("Real name: %s\n", canonicalize_file_name(filename.c_str()));
                printf ("fileTypeClassification = %d \n",fileTypeClassification);
                display(fileTypeClassification,"Display fileTypeClassification");
                printf ("libraryClassification  = %d \n",libraryClassification);
