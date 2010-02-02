@@ -393,9 +393,9 @@ namespace OmpSupport
     // .....
     string result;
     result = "XOMP_loop_";
-    //TODO Handled ordered,Omni does not support ordered clause
-//    if (isOrdered)
-//      result +="ordered_";
+    //Handled ordered
+    if (isOrdered)
+        result +="ordered_";
     result += toString(s_kind);  
     result += "_init"; 
     return result;
@@ -1578,8 +1578,11 @@ static void insertOmpLastprivateCopyBackStmts(SgStatement* ompStmt, vector <SgSt
   // We use the 2nd method only for now for simplicity and portability
 static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator_enum r_operator, vector <SgStatement* >& end_stmt_list,  SgBasicBlock* bb1, SgInitializedName* orig_var, SgVariableDeclaration* local_decl)
 {
-
+#ifdef ENABLE_XOMP
+  SgExprStatement* atomic_start_stmt = buildFunctionCallStmt("XOMP_atomic_start", buildVoidType(), NULL, bb1); 
+#else  
   SgExprStatement* atomic_start_stmt = buildFunctionCallStmt("GOMP_atomic_start", buildVoidType(), NULL, bb1); 
+#endif  
   end_stmt_list.push_back(atomic_start_stmt);   
   SgExpression* r_exp = NULL;
   switch (r_operator) 
@@ -1625,7 +1628,11 @@ static void insertOmpReductionCopyBackStmts (SgOmpClause::omp_reduction_operator
     }
     SgStatement* reduction_stmt = buildAssignStatement(buildVarRefExp(orig_var, bb1), r_exp);
     end_stmt_list.push_back(reduction_stmt);   
+#ifdef ENABLE_XOMP
+    SgExprStatement* atomic_end_stmt = buildFunctionCallStmt("XOMP_atomic_end", buildVoidType(), NULL, bb1);  
+#else    
     SgExprStatement* atomic_end_stmt = buildFunctionCallStmt("GOMP_atomic_end", buildVoidType(), NULL, bb1);  
+#endif    
     end_stmt_list.push_back(atomic_end_stmt);   
   }
 
