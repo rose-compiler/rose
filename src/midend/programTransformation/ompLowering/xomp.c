@@ -132,9 +132,27 @@ void XOMP_loop_static_init(int lower, int upper, int stride, int chunk_size)
 #ifdef GCC_GOMP_OPENMP_LIB_PATH  
   // empty operation for gomp
 #else   
-  _ompc_static_sched_init (lower, upper, stride, chunk_size);
+   _ompc_static_sched_init (lower, upper, stride, chunk_size);
 #endif    
 }
+
+// scheduler initialization, only meaningful used for OMNI
+void XOMP_loop_ordered_static_init(int lower, int upper, int stride, int chunk_size)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+  // empty operation for gomp
+#else   
+   // used for the ordered clause
+   // void _ompc_init_ordered(int lb,int step)
+   _ompc_init_ordered (lower, upper);
+   if (chunk_size ==0)
+     chunk_size =1 ; //TODO calculate the default static chunk size here
+                      // Omni actually has another simpler way to support ordered default scheduling
+                      // we use ordered static scheduling to have a uniform translation as the one supporting GOMP
+   _ompc_static_sched_init (lower, upper, stride, chunk_size);
+#endif    
+}
+
 
 void XOMP_loop_dynamic_init(int lower, int upper, int stride, int chunk_size)
 {
@@ -143,6 +161,23 @@ void XOMP_loop_dynamic_init(int lower, int upper, int stride, int chunk_size)
   _ompc_dynamic_sched_init (lower, upper, stride, chunk_size);
 #endif    
 }
+
+// scheduler initialization, only meaningful used for OMNI
+void XOMP_loop_ordered_dynamic_init(int lower, int upper, int stride, int chunk_size)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+  // empty operation for gomp
+#else   
+   // used for the ordered clause
+   // void _ompc_init_ordered(int lb,int step)
+   _ompc_init_ordered (lower, upper);
+   if (chunk_size ==0)
+     chunk_size =1 ; 
+   _ompc_dynamic_sched_init (lower, upper, stride, chunk_size);
+#endif    
+}
+
+
 void XOMP_loop_guided_init(int lower, int upper, int stride, int chunk_size)
 {
 
@@ -151,6 +186,21 @@ void XOMP_loop_guided_init(int lower, int upper, int stride, int chunk_size)
   _ompc_guided_sched_init (lower, upper, stride, chunk_size);
 #endif    
 }
+// scheduler initialization, only meaningful used for OMNI
+void XOMP_loop_ordered_guided_init(int lower, int upper, int stride, int chunk_size)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+  // empty operation for gomp
+#else   
+   // used for the ordered clause
+   // void _ompc_init_ordered(int lb,int step)
+   _ompc_init_ordered (lower, upper);
+   if (chunk_size ==0)
+     chunk_size =1 ; 
+   _ompc_guided_sched_init (lower, upper, stride, chunk_size);
+#endif    
+}
+
 
 void XOMP_loop_runtime_init(int lower, int upper, int stride)
 {
@@ -159,6 +209,19 @@ void XOMP_loop_runtime_init(int lower, int upper, int stride)
   _ompc_runtime_sched_init (lower, upper, stride);
 #endif    
 }
+// scheduler initialization, only meaningful used for OMNI
+void XOMP_loop_ordered_runtime_init(int lower, int upper, int stride)
+{
+#ifdef GCC_GOMP_OPENMP_LIB_PATH  
+  // empty operation for gomp
+#else   
+   // used for the ordered clause
+   // void _ompc_init_ordered(int lb,int step)
+   _ompc_init_ordered (lower, upper);
+   _ompc_runtime_sched_init (lower, upper, stride);
+#endif    
+}
+
 
 // if (start), 
 bool XOMP_loop_static_start (long start, long end, long incr, long chunk_size,long *istart, long *iend)
@@ -204,6 +267,7 @@ bool XOMP_loop_ordered_static_start (long start, long end, long incr, long chunk
 #ifdef GCC_GOMP_OPENMP_LIB_PATH  
   return GOMP_loop_ordered_static_start (start, end, incr, chunk_size, istart, iend);
 #else   
+  return _ompc_static_sched_next (istart, iend); 
 #endif    
 }
 
@@ -212,6 +276,7 @@ bool XOMP_loop_ordered_dynamic_start (long start, long end, long incr, long chun
 #ifdef GCC_GOMP_OPENMP_LIB_PATH  
   return GOMP_loop_ordered_dynamic_start (start, end, incr, chunk_size, istart, iend);
 #else   
+  return _ompc_dynamic_sched_next (istart, iend); 
 #endif    
 }
 
@@ -220,6 +285,7 @@ bool XOMP_loop_ordered_guided_start (long start, long end, long incr, long chunk
 #ifdef GCC_GOMP_OPENMP_LIB_PATH  
   return GOMP_loop_ordered_guided_start (start, end, incr, chunk_size, istart, iend);
 #else   
+  return _ompc_guided_sched_next (istart, iend); 
 #endif    
 }
 
@@ -278,7 +344,8 @@ bool XOMP_loop_ordered_static_next (long *a, long * b)
   bool rt = GOMP_loop_ordered_static_next (a, b);
 //  printf ("debug xomp: a =%d, b = %d \n",*a, *b);
   return rt;
-#else   
+#else 
+  return _ompc_static_sched_next (a,b);
 #endif    
 }
 
@@ -287,6 +354,7 @@ bool XOMP_loop_ordered_dynamic_next (long * a, long * b)
 #ifdef GCC_GOMP_OPENMP_LIB_PATH  
  return GOMP_loop_ordered_dynamic_next (a, b);
 #else   
+  return _ompc_dynamic_sched_next (a,b);
 #endif    
 }
 bool XOMP_loop_ordered_guided_next (long *a, long *b)
@@ -294,6 +362,7 @@ bool XOMP_loop_ordered_guided_next (long *a, long *b)
 #ifdef GCC_GOMP_OPENMP_LIB_PATH  
  return GOMP_loop_ordered_guided_next (a, b);
 #else   
+  return _ompc_guided_sched_next (a,b);
 #endif    
 }
 bool XOMP_loop_ordered_runtime_next (long *a, long *b)
@@ -301,6 +370,7 @@ bool XOMP_loop_ordered_runtime_next (long *a, long *b)
 #ifdef GCC_GOMP_OPENMP_LIB_PATH  
  return GOMP_loop_ordered_runtime_next (a, b);
 #else   
+  return _ompc_runtime_sched_next (a,b);
 #endif    
 }
 
