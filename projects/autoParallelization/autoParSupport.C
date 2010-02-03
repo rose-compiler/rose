@@ -3,12 +3,15 @@
 
 #include <iterator> // ostream_iterator
 #include <algorithm> // for set union, intersection etc.
+#include <fstream>
+#include <iostream>
 
 using namespace std;
 // Everything should go into the name space here!!
 namespace AutoParallelization
 {
   bool enable_debug;
+  bool enable_patch;
   DFAnalysis * defuse = NULL;
   LivenessAnalysis* liv = NULL;
 
@@ -21,6 +24,15 @@ namespace AutoParallelization
     }
     else
       enable_debug= false;
+
+    if (CommandlineProcessing::isOption (argvList,"-rose:autopar:","enable_patch",true))
+    {
+      cout<<"Enabling generating patch files for auto parallelization ..."<<endl;
+      enable_patch= true;
+    }
+    else
+      enable_patch= false;
+
 
     //Save -debugdep, -annot file .. etc, 
     // used internally in ReadAnnotation and Loop transformation
@@ -41,6 +53,7 @@ namespace AutoParallelization
     {
       cout<<"Auto parallelization-specific options"<<endl;
       cout<<"\t-rose:autopar:enable_debug          run automatic parallelization in a debugging mode"<<endl;
+      cout<<"\t-rose:autopar:enable_patch          additionally generate patch files for translations"<<endl;
       cout<<"\t-annot filename                     specify annotation file for semantics of abstractions"<<endl;
       cout<<"\t-dumpannot                          dump annotation file content"<<endl;
       cout <<"---------------------------------------------------------------"<<endl;
@@ -1103,6 +1116,42 @@ namespace AutoParallelization
       delete omp_attribute;
     }
     return isParallelizable;
+  }
+
+  // Generate a normal patch file representing the addition of OpenMP pragmas
+  // An example patch file may contain:
+  // diff -ar /home/liao6/desktop/keywords/patch/project1/sub1/file3.c rose_file3.c
+  // 0a1
+  // > #include <omp.h>
+  // 4a5
+  // > #pragma omp parallel for
+  // This is called only after checking if sfile uses OpenMP
+  void generatePatchFile(SgSourceFile* sfile)
+  {
+    ROSE_ASSERT (sfile != NULL);
+    std::string filename =  sfile->get_file_info()->get_filenameString();
+    std::string diff_header = "diff -ar "+ filename; 
+    // this output file name can be any file name, we just choose rose_file.c
+    string ofilename= "rose_"+StringUtility::stripPathFromFileName(filename); 
+    diff_header += " "+ ofilename+"\n";
+    
+    //debug only
+    //cout<<"diff_header\n"<<diff_header<<endl;
+
+     //always insert omp.h 
+     string patchContent="0a1\n> #include <omp.h>\n";
+
+    // now accumulate diff text for each OmpAttribute
+    Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(sfile, V_SgStatement);
+    for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
+    {
+      patchContent += OmpSupport::generateDiffTextFromOmpAttribute (*i);
+    }
+
+    //cout<<"patch content is\n"<<patchContent<<endl;
+   string patch_file_name = StringUtility::stripPathFromFileName(filename)+".patch";
+   ofstream patchFile (patch_file_name.c_str(), ios::out);
+   patchFile <<diff_header << patchContent ;
   }
 
 } // end namespace
