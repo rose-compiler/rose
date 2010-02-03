@@ -270,7 +270,7 @@ int main(int argc, char *argv[]) {
     char **tmp_argv = (char**)calloc(argc+2, sizeof(*argv));
     memcpy(tmp_argv+1, argv, argc*sizeof(*argv));
     tmp_argv[0] = argv[0];
-    tmp_argv[1] = "-rose:read_executable_file_format_only";
+    tmp_argv[1] = strdup("-rose:read_executable_file_format_only");
     SgProject *project = frontend(argc+1, tmp_argv);
 
     /* Locate relevant parts of the files */
