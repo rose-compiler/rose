@@ -3,10 +3,7 @@
 #ifndef ROSE_H
 #define ROSE_H
 
-#ifdef _MSC_VER
-#pragma message("Compiling rose.h - this should happen just once (within midend project.). \n") 
-#endif
-
+#include "sage3basic.hhh"
 // DQ (4/21/2009): Andreas needs to add a comment about what this is for...
 #define BOOST_WAVE_PREPROCESS_PRAGMA_BODY 1
 
@@ -24,7 +21,7 @@ namespace ELF{
 
 // DQ (4/21/2009): This header file contains the definitions of the IR nodes.
 // tps : avoid detection" header files are scanned whether they include sage3basic.h for .h and .hh
-#include "sage3basic.hhh"
+
 //#include "sage3.h"
 
 // DQ (3/22/2009): This is already included in sage3.h"
