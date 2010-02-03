@@ -134,8 +134,9 @@ sub switch_to_branch {
     return;
   } elsif ($refs{"refs/remotes/origin/$branch"} eq $HEAD) {
     if ($refs{"refs/heads/$branch"}) {
-      if (merge_base("refs/heads/$branch", "refs/remotes/origin/$branch") eq $HEAD) {
+      if (merge_base("refs/heads/$branch", "refs/remotes/origin/$branch") eq $refs{"refs/heads/$branch"}) {
         # Remote branch matches HEAD and local branch can be fast-forwarded.
+	git "checkout", $branch or die "$arg0: could not check out $branch";
         git "merge", "refs/remotes/origin/$branch" or die "$arg0: could not merge origin/$branch";
         return;
       }
