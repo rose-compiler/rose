@@ -1,3 +1,6 @@
+
+#ifndef __removeInit
+#define __removeInit
 #include "AstNodePtrs.h"
 
 // [MS]: required because we use the STL find algorithm
@@ -46,3 +49,4 @@ class DeleteEmptyOperatorNodes : public AstNodePtrs
           virtual void visitWithAstNodePointersList(SgNode* node, AstNodePointersList l);
    };
 
+#endif

@@ -1,9 +1,19 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+//#include "astMergeAPI.h"
 #include "rose_paths.h"
+//#include "setup.h"
+#include "astPostProcessing.h"
 #include <sys/stat.h>
+
+#include "omp_lowering.h"
+#include "attachPreprocessingInfo.h"
+#include "astMergeAPI.h"
+//#include "sageSupport.h"
+
 #include "binaryLoader.h"
 #include "Partitioner.h"
+#include "sageBuilder.h"
 
 #ifdef _MSC_VER
 #pragma message ("WARNING: wait.h header file not available in MSVC.")
@@ -2823,13 +2833,17 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
   // DQ (12/29/2008): Added support for EDG version 4.0 (constains design changes that break a number of things in the pre-version 4.0 work)
 #ifdef ROSE_USE_EDG_VERSION_4
+  // DQ (2/1/2010): I think this needs to reference the source tree (to pickup src/frontend/CxxFrontend/EDG/EDG_4.0/lib/predefined_macros.txt).
   // DQ (12/21/2009): The locaion of the EDG directory has been changed now that it is a submodule in our git repository.
   // commandLine.push_back(findRoseSupportPathFromBuild("src/frontend/CxxFrontend/EDG_4.0/lib", "share"));
-     commandLine.push_back(findRoseSupportPathFromBuild("src/frontend/CxxFrontend/EDG/EDG_4.0/lib", "share"));
+  // commandLine.push_back(findRoseSupportPathFromBuild("src/frontend/CxxFrontend/EDG/EDG_4.0/lib", "share"));
+     commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_4.0/lib", "share"));
 #else
+  // DQ (2/1/2010): I think this needs to reference the source tree (to pickup src/frontend/CxxFrontend/EDG/EDG_4.0/lib/predefined_macros.txt).
   // DQ (12/21/2009): The locaion of the EDG directory has been changed now that it is a submodule in our git repository.
   // commandLine.push_back(findRoseSupportPathFromBuild("src/frontend/CxxFrontend/EDG_3.10/lib", "share"));
-     commandLine.push_back(findRoseSupportPathFromBuild("src/frontend/CxxFrontend/EDG/EDG_3.10/lib", "share"));
+  // commandLine.push_back(findRoseSupportPathFromBuild("src/frontend/CxxFrontend/EDG/EDG_3.10/lib", "share"));
+     commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_3.10/lib", "share"));
 #endif
 #endif
 

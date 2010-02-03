@@ -1,5 +1,8 @@
 // tps (01/14/2010) : Switching from rose.h to sage3. Added buildMangledNameMap, buildReplacementMap, fixupTraversal, replaceExpressionWithStatement
 //#include "rose.h"
+#include "sage3basic.h"
+#include "markLhsValues.h"
+#include "fixupNames.h"
 #include "buildMangledNameMap.h" 
 #include "buildReplacementMap.h" 
 #include "fixupTraversal.h"
@@ -5498,7 +5501,13 @@ bool SageInterface::normalizeForLoopInitDeclaration(SgForStatement* loop)
       if (isSgAssignInitializer(initor))
       {
         lbast = isSgAssignInitializer(initor)->get_operand();
+      } else 
+      { //SgConstructorInitializer etc.
+        // other complex declaration statements, such as Decomposition::Iterator ditr(&decomp) should be skipped
+        // they cause a loop to be non-canonical.
+        return false; 
       }
+
       // add a new statement like int i; and insert it to the enclosing function
       // There are multiple choices about where to insert this statement: 
       //  global scope: max name pollution, 
@@ -6863,14 +6872,15 @@ void SageInterface::setPragma(SgPragmaDeclaration* decl, SgPragma *pragma)
 //! SageInterface::appendStatement()
 //TODO should we ensureBasicBlockAsScope(scope) ? like ensureBasicBlockAsParent(targetStmt);
 //It might be well legal to append the first and only statement in a scope!
-  void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
+void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
   {
-   if (scope == NULL)
-      scope = SageBuilder::topScopeStack();
-    ROSE_ASSERT(stmt);
-    ROSE_ASSERT(scope != NULL);
+     if (scope == NULL)
+          scope = SageBuilder::topScopeStack();
 
-    #if 0
+     ROSE_ASSERT(stmt  != NULL);
+     ROSE_ASSERT(scope != NULL);
+
+#if 0
        //  case 3:
       // stmt may be copied from a variable declaration of another scope, symbol is missing
       //       after copying, no scope for the intialized name.
@@ -6892,7 +6902,18 @@ void SageInterface::setPragma(SgPragmaDeclaration* decl, SgPragma *pragma)
 	 } // end if scope
 	}// end for
       }
-    #endif
+#endif
+
+#if 0
+  // DQ (2/2/2010): This fails in the projects/OpenMP_Translator "make check" tests.
+  // DQ (1/2/2010): Introducing test that are enforced at lower levels to catch errors as early as possible.
+     SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(stmt);
+     if (declarationStatement != NULL)
+        {
+          ROSE_ASSERT(declarationStatement->get_firstNondefiningDeclaration() != NULL);
+          ROSE_ASSERT(declarationStatement->get_definingDeclaration() != NULL);
+        }
+#endif
     
     //catch-all for statement fixup 
    // Must fix it before insert it into the scope, 
@@ -7217,12 +7238,15 @@ void SageInterface::moveToSubdirectory ( std::string directoryName, SgFile* file
 //----------------------------------------------------------------
   void SageInterface::fixStructDeclaration(SgClassDeclaration* structDecl, SgScopeStatement* scope)
   {
-    ROSE_ASSERT(structDecl);
-    ROSE_ASSERT(scope);
+    ROSE_ASSERT(structDecl != NULL);
+    ROSE_ASSERT(scope != NULL);
     SgClassDeclaration* nondefdecl = isSgClassDeclaration(structDecl->get_firstNondefiningDeclaration());
-    ROSE_ASSERT(nondefdecl);
+    ROSE_ASSERT(nondefdecl != NULL);
+
+    ROSE_ASSERT(structDecl->get_definingDeclaration() != NULL);
     SgClassDeclaration* defdecl = isSgClassDeclaration(structDecl->get_definingDeclaration());
-      ROSE_ASSERT(defdecl);
+    ROSE_ASSERT(defdecl != NULL);
+
     // Liao, 9/2/2009
     // fixup missing scope when bottomup AST building is used
     if (structDecl->get_scope() == NULL)
@@ -7248,6 +7272,8 @@ void SageInterface::moveToSubdirectory ( std::string directoryName, SgFile* file
       mysymbol = new SgClassSymbol(nondefdecl);
       ROSE_ASSERT(mysymbol);
       scope->insert_symbol(name, mysymbol);
+
+      ROSE_ASSERT(defdecl != NULL);
       defdecl->set_scope(scope);
       nondefdecl->set_scope(scope);
 
@@ -7261,6 +7287,8 @@ void SageInterface::moveToSubdirectory ( std::string directoryName, SgFile* file
       nondefdecl->set_type(SgClassType::createType(nondefdecl));
     }
     ROSE_ASSERT (nondefdecl->get_type() != NULL);
+
+    ROSE_ASSERT(defdecl != NULL);
     if (defdecl->get_type()!= nondefdecl->get_type())
     {
       if (defdecl->get_type()) 
@@ -7270,6 +7298,7 @@ void SageInterface::moveToSubdirectory ( std::string directoryName, SgFile* file
     ROSE_ASSERT (defdecl->get_type() != NULL);
     ROSE_ASSERT (defdecl->get_type() == nondefdecl->get_type());
   }
+
   void SageInterface::fixClassDeclaration(SgClassDeclaration* classDecl, SgScopeStatement* scope)
   {
     fixStructDeclaration(classDecl,scope);
@@ -7426,7 +7455,17 @@ void SageInterface::fixStatement(SgStatement* stmt, SgScopeStatement* scope)
   if (isSgVariableDeclaration(stmt))
       fixVariableDeclaration(isSgVariableDeclaration(stmt), scope);
   else if (isStructDeclaration(stmt))
-      fixStructDeclaration(isSgClassDeclaration(stmt),scope);
+  {
+  // DQ (1/2/2010): Enforce some rules as early as possible.
+  // fixStructDeclaration(isSgClassDeclaration(stmt),scope);
+     SgClassDeclaration* classDeclaration = isSgClassDeclaration(stmt);
+     ROSE_ASSERT(classDeclaration != NULL);
+#if 0
+     ROSE_ASSERT(classDeclaration->get_firstNondefiningDeclaration() != NULL);
+     ROSE_ASSERT(classDeclaration->get_definingDeclaration() != NULL);
+#endif
+     fixStructDeclaration(classDeclaration,scope);
+  }
   else if (isSgClassDeclaration(stmt))
       fixClassDeclaration(isSgClassDeclaration(stmt),scope);
   else if (isSgLabelStatement(stmt)) 

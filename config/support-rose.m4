@@ -1452,6 +1452,7 @@ projects/RTED/CppRuntimeSystem/Makefile
 projects/RTED/CppRuntimeSystem/DebuggerQt/Makefile
 projects/taintcheck/Makefile
 projects/C_to_Promela/Makefile
+projects/OpenMP_Analysis/Makefile
 projects/OpenMP_Translator/Makefile
 projects/OpenMP_Translator/includes/Makefile
 projects/OpenMP_Translator/tests/Makefile
@@ -1539,6 +1540,7 @@ tests/CompileTests/hiddenTypeAndDeclarationListTests/Makefile
 tests/CompileTests/sizeofOperation_tests/Makefile
 tests/CompileTests/MicrosoftWindows_tests/Makefile
 tests/CompileTests/nameQualificationAndTypeElaboration_tests/Makefile
+tests/CompileTests/NewEDGInterface_C_tests/Makefile
 tests/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
 tests/CompilerOptionsTests/preinclude_tests/Makefile
 tests/CompilerOptionsTests/tokenStream_tests/Makefile

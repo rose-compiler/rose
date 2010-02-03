@@ -40,7 +40,15 @@ extern void XOMP_loop_dynamic_init(int lower, int upper, int stride, int chunk_s
 extern void XOMP_loop_guided_init(int lower, int upper, int stride, int chunk_size);
 extern void XOMP_loop_runtime_init(int lower, int upper, int stride);
 
+//ordered case
+extern void XOMP_loop_ordered_static_init(int lower, int upper, int stride, int chunk_size);
+extern void XOMP_loop_ordered_dynamic_init(int lower, int upper, int stride, int chunk_size);
+extern void XOMP_loop_ordered_guided_init(int lower, int upper, int stride, int chunk_size);
+extern void XOMP_loop_ordered_runtime_init(int lower, int upper, int stride);
+
+
 // if (start), 
+// mostly used because of gomp, omni will just call  XOMP_loop_xxx_next();
 extern bool XOMP_loop_static_start (long, long, long, long, long *, long *);
 extern bool XOMP_loop_dynamic_start (long, long, long, long, long *, long *);
 extern bool XOMP_loop_guided_start (long, long, long, long, long *, long *);
@@ -62,6 +70,7 @@ extern bool XOMP_loop_ordered_dynamic_next (long *, long *);
 extern bool XOMP_loop_ordered_guided_next (long *, long *);
 extern bool XOMP_loop_ordered_runtime_next (long *, long *);
 
+//--------------end of  loop functions 
 
 extern void XOMP_barrier (void);
 extern void XOMP_critical_start (void** data); 

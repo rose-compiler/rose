@@ -26,7 +26,8 @@ REVISION_NO=$2
 FULL_PACKAGE_NAME=$3
 
 # ls ~/.mozilla/firefox/ to find out your firefox id
-FIREFOXID=58zvv6td.default
+FIREFOXID=ytwyty99.default
+#FIREFOXID=58zvv6td.default
 
 # try to grab existing session id
 SESSION=`sed -n '/^outreach\.scidac\.gov\t.*\tsession_ser\t/p' < $HOME/.mozilla/firefox/$FIREFOXID/cookies.txt | cut -f 7`
@@ -37,7 +38,7 @@ SESSION=`sed -n '/^outreach\.scidac\.gov\t.*\tsession_ser\t/p' < $HOME/.mozilla/
 #if [ "x$SESSION" = "x" ]; then 
    echo "No session for outreach.scidac is found. Trying to log in..."
    # a script trying to log in and redirect output to $HOME/curl.log 
-   $HOME/release/scidac-login.sh
+   /home/liao6/release/scidac-login.sh
    SESSION=`grep 'Set-Cookie' $HOME/curl.log | cut -d' ' -f 3 | cut -d'=' -f 2 | cut -d';' -f 1`
    echo "outreach.scidac.gov	FALSE	/	FALSE	1228246200	session_ser	$SESSION">>$HOME/.mozilla/firefox/$FIREFOXID/cookies.txt
 #fi

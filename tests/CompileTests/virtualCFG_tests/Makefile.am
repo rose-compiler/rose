@@ -1,8 +1,11 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES)
+bin_PROGRAMS = generateVirtualCFG
 
-bin_PROGRAMS = testVirtualCFG
+generateVirtualCFG_SOURCES = generateVirtualCFG.C
+
+noinst_PROGRAMS = testVirtualCFG
 
 testVirtualCFG_SOURCES = testVirtualCFG.C
 
@@ -512,6 +515,6 @@ check-local: check-cxx check-c check-c99 check-fortran
 	@echo "******************************************************************************************************"
 
 clean-local:
-	rm -f *.o *.temp.c *-o *.mod graph.dot
+	rm -f *.o *.temp.c *-o *.mod *.dot
 	rm -rf QMTest
 
