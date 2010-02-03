@@ -2763,7 +2763,7 @@ Grammar::buildCode ()
      string includeHeaderFileName = "sage3basic.h";
      //     string includeHeaderString = includeHeaderStringROSE+
      string includeHeaderString = 
-       "// MACHINE GENERATED SOURCE FILE WITH ROSE --- DO NOT MODIFY!\n\n #include \"" + includeHeaderFileName + "\"\n\n";
+       "// MACHINE GENERATED SOURCE FILE WITH ROSE (Grammar.C)--- DO NOT MODIFY!\n\n#include \"" + includeHeaderFileName + "\"\n\n";
      string includeHeaderStringWithoutROSE = 
        "// MACHINE GENERATED SOURCE FILE --- DO NOT MODIFY!\n\n #include \"" + includeHeaderFileName + "\"\n\n";
 
@@ -2771,7 +2771,10 @@ Grammar::buildCode ()
   // to provde greater parallelism to the make -jn parallel make feature.
   // JH (01/09/2006)
   // string includeHeaderAstFileIO ="#include \"astFileIO/AST_FILE_IO.h\"\n\n";
-     string includeHeaderAstFileIO ="#include \"AST_FILE_IO.h\"\n\n";
+     string includeSage3 ="#include \"Cxx_Grammar.h\"\n\n";
+     includeHeaderString += includeSage3;
+
+	 string includeHeaderAstFileIO ="#include \"AST_FILE_IO.h\"\n\n";
      includeHeaderString += includeHeaderAstFileIO;
 
 #if 0
