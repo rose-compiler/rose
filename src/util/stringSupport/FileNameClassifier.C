@@ -224,7 +224,7 @@ namespace StringUtility
 				         NULL };
 
 	// CH (2/2/2010): Standard C++ header files (include new C++ 0x header files)
-	const char * STDCXX_INCLUDES[] = { 
+	const char * GLIBCXX_INCLUDES[] = { 
 					 "algorithm",
 					 "bitset",
 					 "cassert",
@@ -273,7 +273,7 @@ namespace StringUtility
 	                                 "vector",
 				         NULL };
 
-	const char * CXX0X_NEW_INCLUDES[] = {
+	const char * GLIBCXX0X_INCLUDES[] = {
 					 "array",
 					 "random",
 					 "regex",
@@ -324,7 +324,8 @@ namespace StringUtility
                 return FILENAME_LIBRARY_BOOST;
             }
             if (fileName.find("rose.h") != string::npos ||
-		fileName.find("include-staging") != string::npos)
+		fileName.find("include-staging/g++_HEADERS") != string::npos ||
+		fileName.find("include-staging/gcc_HEADERS") != string::npos)
             {
                 return FILENAME_LIBRARY_ROSE;
             }
@@ -350,7 +351,7 @@ namespace StringUtility
 
 	    if (fileName.find("c++") != string::npos)
 	    {
-		const char ** substr = STDCXX_INCLUDES;
+		const char ** substr = GLIBCXX_INCLUDES;
 		while (*substr != NULL)
 		{
 		    if (endsWith(fileName, *substr))
@@ -365,7 +366,7 @@ namespace StringUtility
 	        while (p.has_parent_path())
 	        {
 		    p = p.parent_path();
-		    const char ** substr = STDCXX_INCLUDES;
+		    const char ** substr = GLIBCXX_INCLUDES;
 		    bool isCxxHeader = true;
 		    while (*substr != NULL)
 		    {
@@ -517,8 +518,12 @@ namespace StringUtility
         // then return that it's part of the application/user code
         if (startsWith(fileName, appPath))
         {
+	    FileNameLibrary fileLib = classifyLibrary(fileName);
+	    if (fileLib == FILENAME_LIBRARY_UNKNOWN)
+		fileLib = FILENAME_LIBRARY_USER;
+
             return FileNameClassification(FILENAME_LOCATION_USER,
-                                          FILENAME_LIBRARY_USER,
+                                          fileLib,
                                           0);
         }
 
