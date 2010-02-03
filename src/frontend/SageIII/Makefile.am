@@ -57,7 +57,7 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 # are called preproc.o (from here and from EDG).
 EXTRA_DIST = CMakeLists.txt preproc-c.ll docs rtiHelpers.h attributeListMap.h \
              advanced_preprocessing_hooks.h rose_attributes_list.h dwarfSupport.h \
-             omplexer.cc ompparser.cc ompparser.h sage3basic.hhh
+             omplexer.cc ompparser.cc ompparser.h sage3basic.hhh fileoffsetbits.h
 CLEANFILES = haveRosettaGeneratedSource
 
 DISTCLEANFILES = preproc-c.cc ompparser.cc ompparser.h omplexer.cc
