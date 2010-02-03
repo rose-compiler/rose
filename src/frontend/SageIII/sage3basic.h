@@ -7,41 +7,7 @@
 #ifndef SAGE3_CLASSES_BASIC__H
 #define SAGE3_CLASSES_BASIC__H
 
-// DQ (3/30/2006): Currently we have TRUE and FALSE through out the ROSE source code.
-// it might be better to change this to "true" and "false" instead, but until then
-// we have to define these (early in the compilation).
-// JJW (8/26/2008): Removing these
-// #ifndef TRUE
-//    #define TRUE true
-// #endif
-// #ifndef FALSE
-//    #define FALSE false
-// #endif
-
 #include "fileoffsetbits.h"
-
-// DQ (3/12/2006): This is included here as specified in the Autoconf manual (using <> instead of "")
-// We have also abandoned the ifdef HAVE_CONFIG_H cpp conditional use of rose_config.h as well.
-// This is placed here in sage3.h instead of in rose.h because it needs to always be seen even 
-// by internal ROSE files that only include sage3.h.
-
-#if 0
-// DQ (4/21/2009): Error checking to avoid difficult to debug ODR violations on 32-bit systems.
-#if defined(_SYS_STAT_H)
-#warning "sys/stat.h should not have been included before the _FILE_OFFSET_BITS macro is set! (use rose.h first...)"
-#endif
-
-// DQ (4/21/2009): This must be included before rose_paths.h since that 
-// header includes the STL string header which will include sys/stat.h first.
-// Force 64-bit file offsets in struct stat
-#define _FILE_OFFSET_BITS 64
-
-// DQ (4/21/2009): This must be set before sys/stat.h is included by any other header file.
-// Use of _FILE_OFFSET_BITS macro is required on 32-bit systems to controling size of "struct stat"
-#if !(defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
-#error "The _FILE_OFFSET_BITS macro should be set before any sys/stat.h is included by any other header file!"
-#endif
-#endif
 
 // DQ (4/21/2009): Note that this header file will include the STL string header file 
 // which will include sys/stat.h, so the _FILE_OFFSET_BITS macro must be already set 

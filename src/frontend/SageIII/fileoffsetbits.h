@@ -1,5 +1,10 @@
 #ifndef __fileoffsetbits
 #define __fileoffsetbits
+// DQ (3/12/2006): This is included here as specified in the Autoconf manual (using <> instead of "")
+// We have also abandoned the ifdef HAVE_CONFIG_H cpp conditional use of rose_config.h as well.
+// This is placed here in sage3.h instead of in rose.h because it needs to always be seen even 
+// by internal ROSE files that only include sage3.h.
+
 #include <rose_config.h>
 // DQ (4/21/2009): Error checking to avoid difficult to debug ODR violations on 32-bit systems.
 #if defined(_SYS_STAT_H)
