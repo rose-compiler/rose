@@ -14,8 +14,8 @@ SUBDIRS = \
      boost_tests virtualCFG_tests uninitializedField_tests \
      A++Tests OvertureCode P++Tests A++Code ElsaTestCases \
      ExpressionTemplateExample_tests hiddenTypeAndDeclarationListTests \
-     sizeofOperation_tests MicrosoftWindows_tests nameQualificationAndTypeElaboration_tests
-
+     sizeofOperation_tests MicrosoftWindows_tests nameQualificationAndTypeElaboration_tests \
+     NewEDGInterface_C_tests
 
 # DQ (12/5/2007): Removed because this takes a long time (about 1 minute)
 # A++Code 

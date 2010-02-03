@@ -75,8 +75,10 @@ $(TESTCODES_REQUIRED_TO_PASS)
 # QMTest allows both passing and failing tests.
 ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) \
-$(TESTCODES_REQUIRED_TO_RUN) \
 $(TESTCODE_CURRENTLY_FAILING)
+
+# DQ (2/1/2010): Temporarily removed for testing.
+# $(TESTCODES_REQUIRED_TO_RUN) 
 
 # File option to accumulate performance information about the compilation
 # PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/C_ROSE_PERFORMANCE_DATA.csv
@@ -87,9 +89,9 @@ PASSING_TEST_Objects = ${TESTCODES:.c=.o}
 TEST_Objects = ${ALL_TESTCODES:.c=.o}
 TEST_Exe_Objects = ${TESTCODES_REQUIRED_TO_RUN:.c=.o}
 
-PASSING_TEST_Executables =  ${TEST_Exe_Objects:.o=.out}
-check_PROGRAMS = $(PASSING_TEST_Executables)
-TESTS= $(check_PROGRAMS) caller.out 
+# PASSING_TEST_Executables =  ${TEST_Exe_Objects:.o=.out}
+# check_PROGRAMS = $(PASSING_TEST_Executables)
+# TESTS= $(check_PROGRAMS) caller.out 
 
 testTranslator=../../testTranslator
 
@@ -98,8 +100,10 @@ testTranslator=../../testTranslator
 $(TEST_Objects): ../../testTranslator
 	$(testTranslator) $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.c)
 
+# This is a redundant test with it also being in the list TESTCODES_REQUIRED_TO_PASS (above).
 test2005_168.o: $(srcdir)/test2005_168.c
 	$(testTranslator) $(ROSE_FLAGS) -I$(top_srcdir)/src/util/commandlineProcessing -c $(srcdir)/test2005_168.c
+
 # Liao 11/19/2009
 # Custom tests to test rose translators as a linker (generating the final executables) for multiple files
 # simplest case: generate .o with -c
