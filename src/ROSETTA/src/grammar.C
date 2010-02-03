@@ -2771,11 +2771,19 @@ Grammar::buildCode ()
   // to provde greater parallelism to the make -jn parallel make feature.
   // JH (01/09/2006)
   // string includeHeaderAstFileIO ="#include \"astFileIO/AST_FILE_IO.h\"\n\n";
-     string includeSage3 ="#include \"Cxx_Grammar.h\"\n\n";
-     includeHeaderString += includeSage3;
+   //  string includeSage3 ="#include \"Cxx_Grammar.h\"\n\n";
+   //  includeHeaderString += includeSage3;
 
 	 string includeHeaderAstFileIO ="#include \"AST_FILE_IO.h\"\n\n";
      includeHeaderString += includeHeaderAstFileIO;
+
+	 string defines1 ="#if _MSC_VER\n";
+	 string defines2 ="#define USE_CPP_NEW_DELETE_OPERATORS 0\n";
+	 string defines3 ="#endif\n\n";
+     includeHeaderString += defines1;
+     includeHeaderString += defines2;
+     includeHeaderString += defines3;
+
 
 #if 0
   // DQ (12/28/2009): This is already in rose_msvc.h (moved from the generated code for Cxx_Grammar.h).
