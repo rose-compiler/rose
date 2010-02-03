@@ -393,6 +393,9 @@ install tree). For Boost versions 1.39 or greater:
            Note that that {\tt ./bjam install} (without the {\tt --libdir} option) will
            install the include files into the prefix directory, but not install the libs
            into the lib directory.
+     \item {\bf Important:} In running configure to build ROSE it is sometimes also required to use the 
+           {\tt --with-boost-libdir=BOOST\_INSTALL/lib} in addition to the {\tt --with-boost=BOOST\_INSTALL}
+           mentioned imediately below.
 \end{enumerate}
 
 Use the BOOST\_INSTALL directory on the configure line for ROSE using: {\tt --with-boost=BOOST\_INSTALL}.

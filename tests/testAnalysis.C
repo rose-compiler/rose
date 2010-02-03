@@ -3,22 +3,6 @@
 
 #include "rose.h"
 
-#ifndef USE_ROSE
-class IdentifyFunctionDefinitionsInHeaders : public AstSimpleProcessing
-   {
-     public:
-          void visit(SgNode *node)
-             {
-               SgFunctionDefinition *functionDefinition = isSgFunctionDefinition(node);
-               if (functionDefinition != NULL)
-                  {
-                 // Check if this is in a header file
-                    std::string filename = functionDefinition->get_file_info()->get_filename();
-                  }
-             }
-   };
-#endif
-
 int
 main( int argc, char * argv[] )
    {
@@ -27,12 +11,6 @@ main( int argc, char * argv[] )
 
      SgProject* project = frontend(argc,argv);
      AstTests::runAllTests(project);
-
-#ifndef USE_ROSE
-  // Test headers for use of function definitions
-     IdentifyFunctionDefinitionsInHeaders t;
-     t.traverse(project, preorder);
-#endif
 
   // Output statistics about how ROSE was used...
      if (project->get_verbose() > 1)
