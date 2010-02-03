@@ -7,7 +7,6 @@ SUBDIRS = util ROSETTA frontend midend backend roseSupport \
 # is run then we only need a single directory
 INCLUDES = -Winvalid-pch $(ROSE_INCLUDES) 
 
-
 # DQ (7/23/2008): New handling of EDG builds a single library instead of two.
 # Binary distributions of ROSE store the binary for EDG related code in the source tree.
 # JJW (8/3/2008): See src/frontend/CxxFrontend/Makefile.am.forBinaryEDG for
