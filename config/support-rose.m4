@@ -149,22 +149,40 @@ echo "edg_minor_version_number = $edg_minor_version_number"
 
 if test "x$edg_major_version_number" = "x3"; then
    echo "Recognized an accepted major version number."
+   if test "x$edg_minor_version_number" = "x3"; then
+      echo "Recognized an accepted minor version number."
+   else
+      if test "x$edg_minor_version_number" = "x10"; then
+         echo "Recognized an accepted minor version number."
+      else
+         echo "ERROR: Could not identify the EDG minor version number."
+         exit 1
+      fi
+      enable_new_edg_interface=yes
+      AC_DEFINE([ROSE_USE_NEW_EDG_INTERFACE], [], [Whether to use the new interface to EDG])
+   fi
 else
    if test "x$edg_major_version_number" = "x4"; then
       echo "Recognized an accepted major version number."
+      if test "x$edg_minor_version_number" = "x0"; then
+         echo "Recognized an accepted minor version number."
+      else
+         if test "x$edg_minor_version_number" = "x1"; then
+            echo "Recognized an accepted minor version number."
+
+            echo "Error: Note that EDG 4.1 is not yet supported in ROSE (should be available soon)."
+            exit 1
+         else
+            echo "ERROR: Could not identify the EDG minor version number."
+            exit 1
+         fi
+      fi
+      enable_new_edg_interface=yes
+      enable_edg_version4=yes
+      AC_DEFINE([ROSE_USE_NEW_EDG_INTERFACE], [], [Whether to use the new interface to EDG])
+      AC_DEFINE([ROSE_USE_EDG_VERSION_4], [], [Whether to use the new EDG version 4.x])
    else
       echo "ERROR: Could not identify the EDG major version number."
-      exit 1
-   fi
-fi
-
-if test "x$edg_minor_version_number" = "x3" -o "x$edg_minor_version_number" = "x10"; then
-   echo "Recognized an accepted minor version number."
-else
-   if test "x$edg_minor_version_number" = "x0" -o "x$edg_minor_version_number" = "x1"; then
-      echo "Recognized an accepted minor version number."
-   else
-      echo "ERROR: Could not identify the EDG minor version number."
       exit 1
    fi
 fi
@@ -178,6 +196,10 @@ ROSE_EDG_MINOR_VERSION_NUMBER=$edg_minor_version_number
 AC_SUBST(ROSE_EDG_MAJOR_VERSION_NUMBER)
 AC_SUBST(ROSE_EDG_MINOR_VERSION_NUMBER)
 
+# DQ (2/3/2010): I would like to not have to use these and use the new 
+# ROSE_EDG_MAJOR_VERSION_NUMBER and ROSE_EDG_MINOR_VERSION_NUMBER instead.
+AM_CONDITIONAL(ROSE_USE_NEW_EDG_INTERFACE, [test "x$enable_new_edg_interface" = xyes])
+# AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4, [test "x$enable_edg_version4" = xyes])
 
 # DQ (1/4/2009) Added support for optional GNU language extensions in new EDG/ROSE interface.
 # This value will be substituted into EDG/4.0/src/rose_lang_feat.h in the future (not used at present!)
