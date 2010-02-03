@@ -7,7 +7,7 @@ HEADER_NODE_PREDECLARATION_START
 //#include "sage3basic.h"
 #include "setup.h"
 #ifdef _MSC_VER
-#include <cliext/hash_map>
+//#include <cliext/hash_map>
 #else
 #include <ext/hash_map>
 #endif

@@ -178,16 +178,16 @@
 
 
 //#endif
-
+#if 1
 #ifdef _MSC_VER
 // DQ (11/4/2009): MS Visual Studio version of hash_multimap
-#include <cliext/hash_map>
+//#include <cliext/hash_map>
 #else
 // DQ (11/4/2009): Use the GNU depricated stuff (what works in ROSE at the moment)
 // tps (01/25/2010) : deprecated - does not work in setup.h
 #include <ext/hash_map>
 #endif
-
+#endif
 
 // tps (01/22/2010) :refactored
 #include "rosedefs.h"
