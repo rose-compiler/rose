@@ -1,7 +1,9 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 release_binary_compatibility_signature=$(shell ${top_srcdir}/scripts/bincompat-sig)
-BINARY_EDG_DIRNAME=roseBinaryEDG-${build_triplet_without_redhat}-${GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX}-${release_binary_compatibility_signature}
+# BINARY_EDG_DIRNAME=roseBinaryEDG-${build_triplet_without_redhat}-${GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX}-${release_binary_compatibility_signature}
+BINARY_EDG_DIRNAME=roseBinaryEDG-@ROSE_EDG_MAJOR_VERSION_NUMBER@-@ROSE_EDG_MINOR_VERSION_NUMBER@-${build_triplet_without_redhat}-${GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX}-${release_binary_compatibility_signature}
+
 BINARY_EDG_TARBALL_STAGING_PATH=/usr/casc/overture/ROSE/git/ROSE_EDG_Binaries-staging
 BINARY_EDG_TARBALL_DISTRIBUTION_PATH=/usr/casc/overture/ROSE/git/ROSE_EDG_Binaries
 BINARY_EDG_TARBALL_URL=file://$(BINARY_EDG_TARBALL_DISTRIBUTION_PATH)

@@ -128,6 +128,57 @@ if test "x$enable_edg_version4" = "xyes"; then
   AC_DEFINE([ROSE_USE_EDG_VERSION_4], [], [Whether to use the new EDG version 4.x])
 fi
 
+AC_ARG_ENABLE(edg-version,
+[--enable-edg_version   major.minor version number for EDG (e.g. 3.3, 3.10, 4.0, 4.1).],
+[ echo "Setting up EDG version"
+])
+
+# AM_CONDITIONAL(DOT_TO_GML_TRANSLATOR,test "$enable_dot2gml_translator" = yes)
+echo "enable_edg_version = $enable_edg_version"
+if test "x$enable_edg_version" = "x"; then
+   echo "Default version of EDG used (3.3)"
+   edg_major_version_number=3
+   edg_minor_version_number=3
+else
+   edg_major_version_number=`echo $enable_edg_version | cut -d\. -f1`
+   edg_minor_version_number=`echo $enable_edg_version | cut -d\. -f2`
+fi
+
+echo "edg_major_version_number = $edg_major_version_number"
+echo "edg_minor_version_number = $edg_minor_version_number"
+
+if test "x$edg_major_version_number" = "x3"; then
+   echo "Recognized an accepted major version number."
+else
+   if test "x$edg_major_version_number" = "x4"; then
+      echo "Recognized an accepted major version number."
+   else
+      echo "ERROR: Could not identify the EDG major version number."
+      exit 1
+   fi
+fi
+
+if test "x$edg_minor_version_number" = "x3" -o "x$edg_minor_version_number" = "x10"; then
+   echo "Recognized an accepted minor version number."
+else
+   if test "x$edg_minor_version_number" = "x0" -o "x$edg_minor_version_number" = "x1"; then
+      echo "Recognized an accepted minor version number."
+   else
+      echo "ERROR: Could not identify the EDG minor version number."
+      exit 1
+   fi
+fi
+
+AC_DEFINE_UNQUOTED([ROSE_EDG_MAJOR_VERSION_NUMBER], $edg_major_version_number , [EDG major version number])
+AC_DEFINE_UNQUOTED([ROSE_EDG_MINOR_VERSION_NUMBER], $edg_minor_version_number , [EDG minor version number])
+
+ROSE_EDG_MAJOR_VERSION_NUMBER=$edg_major_version_number
+ROSE_EDG_MINOR_VERSION_NUMBER=$edg_minor_version_number
+
+AC_SUBST(ROSE_EDG_MAJOR_VERSION_NUMBER)
+AC_SUBST(ROSE_EDG_MINOR_VERSION_NUMBER)
+
+
 # DQ (1/4/2009) Added support for optional GNU language extensions in new EDG/ROSE interface.
 # This value will be substituted into EDG/4.0/src/rose_lang_feat.h in the future (not used at present!)
 AC_ARG_ENABLE(gnu-extensions, AS_HELP_STRING([--enable-gnu-extensions], [Enable internal support in ROSE for GNU language extensions]))

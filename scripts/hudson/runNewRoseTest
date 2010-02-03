@@ -176,6 +176,7 @@ echo "Starting configure step"
 echo "Done with configure step"
 
 if test $ROSE_TEST_BUILD_STYLE = edg ; then
+   echo "Building the EDG binary"
 	make -j8 upload_edg_binary && \
 	make -Csrc/frontend/CxxFrontend deploy_tarballs
       if [ $? -ne 0 ]  ; then
