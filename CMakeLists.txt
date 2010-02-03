@@ -1,7 +1,6 @@
 # Please be careful about where to put your tests and variable settings
 # The order matters!!
 
-
 #----- put platform independent settings in this section-----------------
 cmake_minimum_required(VERSION 2.6)
 project (ROSE CXX C)

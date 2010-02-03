@@ -28,7 +28,7 @@ This example is part of the ROSE-svn, you can find it at \c projects/RoseQt/AstV
 
     This is all the code to get the example running:
     \code
-    #include "rose.h"
+    #include "sage3basic.h"
     #include "ui_MyWidget.h"
 
     #include <QApplication>

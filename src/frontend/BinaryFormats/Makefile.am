@@ -20,14 +20,13 @@ noinst_LTLIBRARIES = libroseBinaryFormats.la
 libroseBinaryFormats_la_DEPENDENCIES =
 libroseBinaryFormats_la_SOURCES = \
    $(INTEL_PIN_SUPPORT) \
-   DataConversion.C ExecGeneric.C ExtentMap.C Hexdump.C Interpretation.C MemoryMap.C Rva.C \
+   DataConversion.C ExtentMap.C Hexdump.C Interpretation.C MemoryMap.C Rva.C \
    GenericDynamicLinking.C GenericFile.C GenericFormat.C GenericHeader.C GenericSection.C GenericString.C \
-   PeExport.C PeFileHeader.C PeImport.C PeSection.C PeSectionTable.C PeStringTable.C PeSymbolTable.C \
+   PeExport.C PeFileHeader.C PeImport.C PeSection.C PeStringTable.C PeSymbolTable.C \
    ElfDynamicLinking.C ElfErrorFrame.C ElfFileHeader.C ElfNote.C ElfRelocation.C ElfSection.C ElfSectionTable.C \
    ElfSegmentTable.C ElfStringTable.C ElfSymbolTable.C ElfSymbolVersion.C \
-   Loader.C LoaderELF.C LoaderELFObj.C LoaderPE.C \
-   ExecDOS.C ExecNE.C ExecLE.C
-
+   LoaderELFObj.C LoaderPE.C ExecDOS.C ExecNE.C ExecLE.C \
+   ExecGeneric.C PeSectionTable.C Loader.C LoaderELF.C
 
 include_HEADERS = DataConversion.h IntelPinSupport.h Loader.h LoaderELF.h LoaderELFObj.h LoaderPE.h MemoryMap.h
 

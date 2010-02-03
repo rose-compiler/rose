@@ -2,6 +2,8 @@
 // test cases are put into tests/roseTests/astInterfaceTests
 // Last modified, by Liao, Jan 10, 2008
 #include "sage3basic.h"
+#include "roseAdapter.h"
+#include "markLhsValues.h"
 #include "sageBuilder.h"
 #include <fstream>
 #include <boost/algorithm/string/trim.hpp>
@@ -198,6 +200,7 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
   if (name != "") { // Anonymous bit fields should not have symbols
     fixVariableDeclaration(varDecl,scope);
   }
+
   SgInitializedName *initName = varDecl->get_decl_item (name);   
   ROSE_ASSERT(initName); 
   ROSE_ASSERT((initName->get_declptr())!=NULL);
@@ -210,6 +213,13 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
   setOneSourcePositionNull(variableDefinition_original);
 #endif
   setOneSourcePositionNull(varDecl);
+
+#if 0
+// DQ (1/2/2010): Set the defining declaration to itself.
+  if (varDecl->get_definingDeclaration() == NULL)
+       varDecl->set_definingDeclaration(varDecl);
+#endif
+
   return varDecl;
 }
 
@@ -235,6 +245,10 @@ SageBuilder::buildTypedefDeclaration(const std::string& name, SgType* base_type,
 {
   SgTypedefDeclaration* type_decl = buildTypedefDeclaration_nfi(name, base_type, scope);
   setOneSourcePositionForTransformation(type_decl);
+
+// DQ (1/2/2010): Set the defining declaration to itself.
+// type_decl->set_definingDeclaration(type_decl);
+
   return type_decl;
 }
 
@@ -289,6 +303,12 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
     type_decl->set_definingDeclaration(def_type_decl);
     setOneSourcePositionNull(def_type_decl);
   }
+
+#if 0
+// DQ (1/2/2010): Set the defining declaration to itself.
+  if (type_decl->get_definingDeclaration() == NULL)
+       type_decl->set_definingDeclaration(type_decl);
+#endif
 
   return type_decl;
 }

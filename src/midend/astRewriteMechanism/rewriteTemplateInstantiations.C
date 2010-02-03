@@ -1,4 +1,5 @@
-#include "rose.h"
+#include "sage3basic.h"
+#include "astPostProcessing.h"
 #include "rewriteTemplateImpl.h"
 
 template class MidLevelRewrite<MidLevelInterfaceNodeCollection>;
