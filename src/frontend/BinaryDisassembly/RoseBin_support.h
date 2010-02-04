@@ -7,7 +7,7 @@
 
 #ifndef __RoseBin_support__
 #define __RoseBin_support__
-
+#include <iomanip>
 #include <stdio.h>
 #include <iostream>
 #include <sstream>
