@@ -10,7 +10,9 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 bin_PROGRAMS  = testStrings filenameSupport testFileNameClassifier directorySupport
 
 testFileNameClassifier_SOURCES = testFileNameClassifier.C
-testFileNameClassifier_LDADD   = $(top_builddir)/src/util/stringSupport/libRoseStringSupport.la
+#testFileNameClassifier_LDADD   = $(top_builddir)/src/util/stringSupport/libRoseStringSupport.la
+testFileNameClassifier_LDADD   = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 
 testStrings_SOURCES = testStrings.C
 testStrings_LDADD   = $(top_builddir)/src/util/stringSupport/libRoseStringSupport.la

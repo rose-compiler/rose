@@ -1,4 +1,11 @@
 
+##################### How to use smgit2 #####################
+
+git pull not as well supported as git fetch and get merge used directly:
+   smgit2 fetch
+   smgit2 merge origin/master
+
+
 #################### Sources of information on git ####################
 
 We will try to give you a fast introduction to git, but you should also consider looking up these documents
