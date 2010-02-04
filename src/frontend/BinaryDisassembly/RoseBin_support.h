@@ -5,6 +5,7 @@
  * Decription : supporting functions for RoseBin
  ****************************************************/
 
+
 #ifndef __RoseBin_support__
 #define __RoseBin_support__
 #include <iomanip>
