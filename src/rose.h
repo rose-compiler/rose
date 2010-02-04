@@ -46,10 +46,7 @@ namespace ELF{
 
 // DQ (6/3/2007): added internal support for AST visualization
 // // #include "astVisualization/wholeAST_API.h"
-//#ifndef _MSC_VER
-// tps (11/23/2009) : Commented out right now to make progress in Windows
 #include "wholeAST_API.h"
-//#endif 
 // DQ (10/18/2003) Why is this commented out (what is it)
 //#include "AgProcessing.h"
 
@@ -57,11 +54,8 @@ namespace ELF{
 // which has not defined yet (circular reference in the header files)
 // #include "AstRestructure.h"
 
-//#ifndef _MSC_VER
-// tps (11/23/2009) : Commented out right now to make progress in Windows
 #include "rewrite.h"
 #include "roseTranslators.h"
-//#endif
 
 // this is a temporary fix (will become obsolete)
 #include "AstClearVisitFlags.h"
@@ -71,10 +65,7 @@ namespace ELF{
 // #include "AstMerge.h"
 
 // DQ (5/26/2007): Use the new AST merge mechanism.
-// #ifndef _MSC_VER
-// tps (11/23/2009) : Commented out right now to make progress in Windows
 #include "merge.h"
-// #endif
 // JH (01/18/2006): adding the include file for the AST file I/O (by Jochen)
 #ifndef _MSC_VER
 // tps (11/23/2009) : Commented out right now to make progress in Windows
@@ -93,44 +84,30 @@ namespace ELF{
 #include "AstAttributeDOT.h"
 
 // DQ (3/11/2006): Jeremiah Willcock's inliner
-//#ifndef _MSC_VER
-// tps (11/23/2009) : Commented out right now to make progress in Windows
 #include "inliner.h"
-//#endif
 
 // DQ (3/18/2006): Jeremiah Willcock's partial redundancy elimination (PRE)
-// #ifndef _MSC_VER
-// tps (11/23/2009) : Commented out right now to make progress in Windows
 #include "pre.h"
-// #endif
 // DQ (4/8/2006): Constant folding of the AST (cleans out redundant
 // constant expresion trees save in translation from the frontend).
 // Required to be run before PRE!
-// #ifndef _MSC_VER
-// tps (11/23/2009) : Commented out right now to make progress in Windows
 #include "constantFolding.h"
-// #endif
 
 // DQ (5/8/2007): Added Robert Preissl's support for hidden type and declartion lists.
-//#ifndef _MSC_VER
-// tps (11/23/2009) : Commented out right now to make progress in Windows
 #include "HiddenList.h"
 #include "HiddenList_Output.h"
 #include "HiddenList_Intersection.h"
-//#endif
 
 // DQ (1/25/2008): Added cfgToDot.h as suggested by Jeremiah
 #include "cfgToDot.h"
 
 // DQ (1/24/2008): Add these here to permit simple and uniform support of binaries.
 // File in src/frontend/BinaryDisassembly
-// #ifndef _MSC_VER
-// tps (11/23/2009) : Commented out right now to make progress in Windows
 #include "RoseBin_support.h"
 #ifdef HASH_ROSE_USE_BINARYSQL
   #include "RoseBin.h"
 #endif
-// #endif
+
 
 #include "DataConversion.h"
 #include "Loader.h"
@@ -138,9 +115,6 @@ namespace ELF{
 #include "LoaderELFObj.h"
 #include "LoaderPE.h"
 // Files in src/frontend/ExecFormats
-// #ifndef _MSC_VER
-// tps (11/23/2009) : Commented out right now to make progress in Windows
-//#error "Do not execute this"
 #include "MemoryMap.h"
 
 #include "RoseBin_abstract.h"
@@ -152,7 +126,6 @@ namespace ELF{
 #include "RoseBin_ControlFlowAnalysis.h"
 #include "RoseBin_DataFlowAnalysis.h"
 #include "RoseBin_CallGraphAnalysis.h"
-// #endif
 
 #include "AST_BIN_Traversal.h"
 
