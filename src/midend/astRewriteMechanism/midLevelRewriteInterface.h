@@ -1,4 +1,4 @@
-
+#include <stack>
 // Note: CODE IMPROVEMENT IDEA
 //      We could specify an additional template argument here and permit the Enum values 
 //      to be defined within the MidLevelRewrite class and avoid the awkward use of class 

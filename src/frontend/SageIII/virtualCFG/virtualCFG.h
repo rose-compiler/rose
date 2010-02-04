@@ -1,10 +1,27 @@
 #ifndef VIRTUAL_CFG_H
 #define VIRTUAL_CFG_H
 
+
+
+
 //! FIXME: The CFG support for Fortran is still buggy -- if Fortran is
 //! re-enabled in the test suite, there are edge mismatches indicating that the
 //! CFG's in and out edge sets are not consistent.  The CFG is not recommended
 //! for use on Fortran code.
+class SgNode;
+class SgExpression;
+class SgInitializedName;
+class SgLabelSymbol;
+class SgLabelRefExp;
+class SgStatement;
+
+SgStatement* isSgStatement(SgNode* node);
+const SgStatement* isSgStatement(const SgNode* node);
+SgExpression* isSgExpression(SgNode* node);
+const SgExpression* isSgExpression(const SgNode* node);
+SgInitializedName* isSgInitializedName(SgNode* node);
+const SgInitializedName* isSgInitializedName(const SgNode* node);
+
 
 namespace VirtualCFG {
 
