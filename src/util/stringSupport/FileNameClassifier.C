@@ -331,12 +331,23 @@ namespace StringUtility
             }
 
 	    path p = fileName;
+
+	    // tps (01/01/2010 : has_parent_path not supported in BOOST 1.37 !!
+#if 0
 	    while (p.has_parent_path())
 	    {
 		p = p.parent_path();
 		if(exists(p / path("rose.h")))
 		    return FILENAME_LIBRARY_ROSE;
 	    }
+#endif
+	    while (p.has_branch_path())
+	    {
+		p = p.branch_path();
+		if(exists(p / path("rose.h")))
+		    return FILENAME_LIBRARY_ROSE;
+	    }
+
 
 	    if (fileName.find("c++") != string::npos)
 	    {
@@ -363,9 +374,16 @@ namespace StringUtility
 	    if (fileName.find("c++") != string::npos)
 	    {
 	        path p = fileName;
+	    // tps (01/01/2010 : has_parent_path not supported in BOOST 1.37 !!
+#if 0
 	        while (p.has_parent_path())
 	        {
 		    p = p.parent_path();
+#endif
+	        while (p.has_branch_path())
+	        {
+		    p = p.branch_path();
+
 		    const char ** substr = GLIBCXX_INCLUDES;
 		    bool isCxxHeader = true;
 		    while (*substr != NULL)
