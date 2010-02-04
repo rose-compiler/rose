@@ -2765,7 +2765,7 @@ Grammar::buildCode ()
      string includeHeaderString = 
        "// MACHINE GENERATED SOURCE FILE WITH ROSE (Grammar.C)--- DO NOT MODIFY!\n\n#include \"" + includeHeaderFileName + "\"\n\n";
      string includeHeaderStringWithoutROSE = 
-       "// MACHINE GENERATED SOURCE FILE --- DO NOT MODIFY!\n\n #include \"" + includeHeaderFileName + "\"\n\n";
+       "// MACHINE GENERATED SOURCE FILE --- DO NOT MODIFY! (Grammar.C) \n\n #include \"" + includeHeaderFileName + "\"\n\n";
 
   // DQ (10/18/2007): These have been moved to the src/frontend/SageIII directory
   // to provde greater parallelism to the make -jn parallel make feature.
