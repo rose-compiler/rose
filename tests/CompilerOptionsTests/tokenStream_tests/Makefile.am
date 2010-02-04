@@ -4,7 +4,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # These are C testcodes targeting aspects of C that might not be a subset of C++ #
 ##################################################################################
 
-if ROSE_USE_BOOST_WAVE
+# if ROSE_USE_BOOST_WAVE
 
 INCLUDES = $(ROSE_INCLUDES)
 
@@ -72,7 +72,7 @@ check-local:
 	@echo "****** ROSE/tests/CompilerOptionsTests/tokenStream_tests: make check rule complete (terminated normally) ******"
 	@echo "***************************************************************************************************************"
 
-endif
+# endif
 
 clean-local:
 	rm -f *.o rose_*.[cC] *.dot test200?_*.[cC]
