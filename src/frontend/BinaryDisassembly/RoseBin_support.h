@@ -14,6 +14,7 @@
 // #include "rose.h"
 #include "stdint.h"
 
+
 #include "RoseBin_IDAPRO_exprTree.h"
 
 #ifdef _MSC_VER
