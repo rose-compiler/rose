@@ -28,6 +28,10 @@
 #include <sys/utsname.h>
 #endif
 
+// CH (1/29/2010): Needed for boost::filesystem::exists(...)
+#include "boost/filesystem.hpp"
+
+
 using namespace std;
 
 namespace StringUtility
@@ -202,6 +206,84 @@ namespace StringUtility
                                          "xlocale.h",
                                          NULL };
 
+	const char * STL_INCLUDES[] = {
+					 "algorithm",
+					 "bitset",
+					 "complex",
+				    	 "deque",
+			 		 "functional",
+					 "list",
+				  	 "map",
+					 "numeric",
+					 "queue",
+	    				 "set",
+					 "stack",
+				       	 "utility",
+					 "valarray",
+	                                 "vector",
+				         NULL };
+
+	// CH (2/2/2010): Standard C++ header files (include new C++ 0x header files)
+	const char * GLIBCXX_INCLUDES[] = { 
+					 "algorithm",
+					 "bitset",
+					 "cassert",
+					 "cctype",
+					 "cerrno",
+					 "climits",
+					 "clocale",
+					 "cmath",
+					 "complex",
+					 "csetjmp",
+					 "csignal",
+					 "cstdarg",
+					 "cstddef",
+					 "cstdio",
+					 "cstdlib",
+					 "cstring",
+					 "ctime",
+				    	 "deque",
+					 "exception",
+					 "fstream",
+			 		 "functional",
+					 "iomanip",
+					 "ios",
+					 "iosfwd",
+					 "iostream",
+					 "istream",
+					 "iterator",
+					 "limits",
+					 "list",
+					 "locale",
+				  	 "map",
+					 "memory",
+					 "new",
+					 "numeric",
+					 "ostream",
+					 "queue",
+	    				 "set",
+					 "sstream",
+					 "stack",
+					 "stdexcept",
+					 "streambuf",
+					 "string",
+					 "typeinfo",
+				       	 "utility",
+					 "valarray",
+	                                 "vector",
+				         NULL };
+
+	const char * GLIBCXX0X_INCLUDES[] = {
+					 "array",
+					 "random",
+					 "regex",
+					 "tuple",
+					 "type_traits",
+					 "unordered_map",
+					 "unordered_set",
+					 NULL };
+
+
         bool
         charListMatches(const char** clist,
                         const string& prefix,
@@ -223,6 +305,8 @@ namespace StringUtility
         FileNameLibrary
         classifyLibrary(const string& fileName)
         {
+	    using namespace boost::filesystem;
+
             if (charListMatches(LINUX_INCLUDES, "include/", fileName))
             {
                 return FILENAME_LIBRARY_LINUX;
@@ -239,10 +323,66 @@ namespace StringUtility
             {
                 return FILENAME_LIBRARY_BOOST;
             }
-            if (fileName.find("rose.h") != string::npos)
+            if (fileName.find("rose.h") != string::npos ||
+		fileName.find("include-staging/g++_HEADERS") != string::npos ||
+		fileName.find("include-staging/gcc_HEADERS") != string::npos)
             {
                 return FILENAME_LIBRARY_ROSE;
             }
+
+	    path p = fileName;
+	    while (p.has_parent_path())
+	    {
+		p = p.parent_path();
+		if(exists(p / path("rose.h")))
+		    return FILENAME_LIBRARY_ROSE;
+	    }
+
+	    if (fileName.find("c++") != string::npos)
+	    {
+		const char ** substr = STL_INCLUDES;
+		while (*substr != NULL)
+		{
+		    if (endsWith(fileName, *substr))
+			return FILENAME_LIBRARY_STL;
+		    ++substr;
+		}
+	    }
+
+	    if (fileName.find("c++") != string::npos)
+	    {
+		const char ** substr = GLIBCXX_INCLUDES;
+		while (*substr != NULL)
+		{
+		    if (endsWith(fileName, *substr))
+			return FILENAME_LIBRARY_STDCXX;
+		    ++substr;
+		}
+	    }
+
+	    if (fileName.find("c++") != string::npos)
+	    {
+	        path p = fileName;
+	        while (p.has_parent_path())
+	        {
+		    p = p.parent_path();
+		    const char ** substr = GLIBCXX_INCLUDES;
+		    bool isCxxHeader = true;
+		    while (*substr != NULL)
+		    {
+			if (!exists(p / path(*substr)))
+			{
+			    isCxxHeader = false;
+			    break;
+			}
+			++substr;
+		    }
+		    if(isCxxHeader)
+		        return FILENAME_LIBRARY_STDCXX;
+	        }
+	    }
+
+	    /* 
             if (fileName.find("c++") != string::npos &&
                 (endsWith(fileName, "list") ||
                  endsWith(fileName, "map") ||
@@ -250,8 +390,10 @@ namespace StringUtility
                  endsWith(fileName, "vector") ||
                  endsWith(fileName, "string")))
             {
-                return FILENAME_LIBRARY_STDCXX;
+                //return FILENAME_LIBRARY_STDCXX;
             }
+	    */
+
             return FILENAME_LIBRARY_UNKNOWN;
         }
     } // end unnamed namespace for file location definitions
@@ -331,6 +473,13 @@ namespace StringUtility
     classifyFileName(const string& fileName,
                      const string& appPathConst, OSType os)
     {
+	// First, check if this file exists. Filename may be changed 
+	// into an illegal one by #line directive
+	if(!boost::filesystem::exists(fileName))
+		return FileNameClassification(FILENAME_LOCATION_NOT_EXIST,
+                                          FILENAME_LIBRARY_UNKNOWN,
+                                          0);
+
         string appPath = appPathConst;
 
         // Consider all non-absolute paths to be application code
@@ -369,8 +518,12 @@ namespace StringUtility
         // then return that it's part of the application/user code
         if (startsWith(fileName, appPath))
         {
+	    FileNameLibrary fileLib = classifyLibrary(fileName);
+	    if (fileLib == FILENAME_LIBRARY_UNKNOWN)
+		fileLib = FILENAME_LIBRARY_USER;
+
             return FileNameClassification(FILENAME_LOCATION_USER,
-                                          FILENAME_LIBRARY_USER,
+                                          fileLib,
                                           0);
         }
 
