@@ -6,7 +6,7 @@
 
 #ifndef SAGE3_CLASSES_BASIC__H
 #define SAGE3_CLASSES_BASIC__H
-
+#include <semaphore.h>
 #include "fileoffsetbits.h"
 
 // DQ (4/21/2009): Note that this header file will include the STL string header file 

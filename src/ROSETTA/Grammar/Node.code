@@ -140,7 +140,8 @@ struct HexdumpFormat {
 #define NELMTS(X)       (sizeof(X)/sizeof((X)[0]))      /* number of elements in a static-sized array */
 #define DUMP_FIELD_WIDTH        64                      /* min columns to use for member names in dump() functions */
 #include <semaphore.h>
-
+#ifndef _MSC_VER
+// mutex does not work on Windows
 class mutex
    {
   // This class was added by Valentin David (summer of 2007) as part of support for Stratego using a Java interface.
@@ -164,7 +165,7 @@ class mutex
                sem_post(&mut);
              }
    };
-
+#endif
 //! Declarations to be placed at the top of the header file for this grammar
 /*! The typedefs simplify the resulting generated code.  Note that the use of STL
     for the list types requires the use of an additional typedef to a pointer of that
