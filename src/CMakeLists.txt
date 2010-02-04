@@ -229,7 +229,7 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
 # ${EDG_SAGE_Connection_SRC}
 )
 
-add_library(rose STATIC ${rose_LIB_SRCS} )
+add_library(rose SHARED ${rose_LIB_SRCS} )
 #ROSE neeeds ${ROSETTA_HEADERS} and ${ROSETTA_SRC} to be build
 add_dependencies(rose ROSETTA OMPPARSER ROSE_PREPROCESSOR rose_rosetta ) 
 
