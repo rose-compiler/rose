@@ -1,10 +1,10 @@
 #ifndef ROSE_SAGE_INTERFACE
 #define ROSE_SAGE_INTERFACE
 
+#include "sage3basic.hhh"
 #include <stdint.h>
 
 
-//#include "sage3.h"
 SgFile* determineFileType ( std::vector<std::string> argv, int nextErrorCode, SgProject* project );
 
 #include "rewrite.h"
