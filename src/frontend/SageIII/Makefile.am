@@ -4,7 +4,6 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # before the subdirectories.
 SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG astTokenStream astHiddenTypeAndDeclarationLists astVisualization
 
-
 # DQ (12/29/2009): This is only used to handle generated code as smaller files.
 SUBDIRS += GENERATED_CODE_DIRECTORY_Cxx_Grammar
 
