@@ -15,3 +15,11 @@ void foo(void)
   num_threads = omp_get_num_threads();
 }
 
+void sort_par (int size)
+{
+#pragma omp parallel
+#pragma omp single nowait
+#pragma omp task untied
+         sort_par(size);
+}
+

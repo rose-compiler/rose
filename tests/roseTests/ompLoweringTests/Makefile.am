@@ -14,6 +14,8 @@ OMNI_PATH = @omni_omp_runtime_support_path@
 # They will be compiled only, not executed.
 C_TESTCODES_REQUIRED_TO_COMPILE = \
         dynamicChunk.c \
+	endif.c \
+	endif3.c \
 	lastprivateOrphaned.c \
         master.c \
         nowait.c \
@@ -130,7 +132,7 @@ TESTCODE_CURRENTLY_FAILING = \
         copyprivate2.c \
         copyprivate3.c \
         critical_dead.c \
-	endif.c \
+	endif2.c \
         expressions.c \
         macroCalls.c \
         parallelsections.c \

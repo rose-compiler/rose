@@ -10330,6 +10330,13 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
 
      ROSE_ASSERT(sourceBlock->get_symbol_table() != NULL);
      sourceBlock->set_symbol_table(NULL);
+     // Liao 2/4/2009
+     // Finally , move preprocessing information attached inside the source block to the target block
+     // Outliner uses this function to move a code block to the outlined function.
+     // This will ensure that a trailing #endif (which is attached inside the source block) will be moved
+     // to the target block to match #if (which is attached
+     // before some statement moved to the target block)
+     moveUpPreprocessingInfo (targetBlock, sourceBlock, PreprocessingInfo::inside); 
    }
 
 

@@ -1072,6 +1072,9 @@ SgFunctionDeclaration* generateOutlinedTask(SgNode* node, std::string& wrapper_n
     SgExprStatement* func_call_stmt2 = buildFunctionCallStmt("GOMP_atomic_end", buildVoidType(), NULL, scope);
 #endif
     insertStatementBefore(body, func_call_stmt1);
+    // this is actually sensitive to the type of preprocessing Info
+    // In most cases, we want to move up them (such as #ifdef etc)
+    moveUpPreprocessingInfo (func_call_stmt1, body, PreprocessingInfo::before); 
     insertStatementAfter(body, func_call_stmt2);
   }
 
