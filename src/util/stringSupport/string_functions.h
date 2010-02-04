@@ -244,10 +244,12 @@ namespace StringUtility
 
            /* Files can be classified as being in one of three
             * locations: We don't know if it's user or system It is a
-            * user (application) file It is a system library */
+            * user (application) file It is a system library This file
+            * does not exist */
            enum FileNameLocation { FILENAME_LOCATION_UNKNOWN, 
                                    FILENAME_LOCATION_USER,    
-                                   FILENAME_LOCATION_LIBRARY };
+                                   FILENAME_LOCATION_LIBRARY,
+                                   FILENAME_LOCATION_NOT_EXIST };
            
            /* Files can be classified as being part of one of these
             * libraries: Unknown, it isn't a library - it's part of
@@ -258,6 +260,7 @@ namespace StringUtility
                                   FILENAME_LIBRARY_USER,
                                   FILENAME_LIBRARY_C,
                                   FILENAME_LIBRARY_STDCXX,
+				  FILENAME_LIBRARY_STL,
                                   FILENAME_LIBRARY_LINUX,
                                   FILENAME_LIBRARY_GCC,
                                   FILENAME_LIBRARY_BOOST,
