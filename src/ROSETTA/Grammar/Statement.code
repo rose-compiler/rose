@@ -5305,7 +5305,6 @@ SOURCE_GLOBAL_STATEMENT_PARSER_START
 // the overloaded parse functions for each grammar share the names that are unique to that grammar only.
 // thus we prefix the parse member function name with "Sg".
 
-// include <rose.h>
 
 SgNode*
 Sgparse ( $PARENT_GRAMMARS_PREFIX_Global* Xptr )
@@ -8302,7 +8301,6 @@ SOURCE_FUNCTION_DECLARATION_STATEMENT_PARSER_START
 // the overloaded parse functions for each grammar share the names that are unique to that grammar only.
 // thus we prefix the parse member function name with "Sg".
 
-// include <rose.h>
 
 SgNode*
 Sgparse ( $PARENT_GRAMMARS_PREFIX_FunctionDeclaration* Xptr )
@@ -8571,7 +8569,6 @@ SOURCE_FUNCTION_DEFINTION_STATEMENT_PARSER_START
 // the overloaded parse functions for each grammar share the names that are unique to that grammar only.
 // thus we prefix the parse member function name with "Sg".
 
-// include <rose.h>
 
 SgNode*
 Sgparse ( $PARENT_GRAMMARS_PREFIX_FunctionDefinition* Xptr )

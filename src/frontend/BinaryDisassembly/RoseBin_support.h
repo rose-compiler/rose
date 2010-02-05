@@ -5,14 +5,16 @@
  * Decription : supporting functions for RoseBin
  ****************************************************/
 
+
 #ifndef __RoseBin_support__
 #define __RoseBin_support__
-
+#include <iomanip>
 #include <stdio.h>
 #include <iostream>
 #include <sstream>
 // #include "rose.h"
 #include "stdint.h"
+
 
 #include "RoseBin_IDAPRO_exprTree.h"
 

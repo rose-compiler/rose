@@ -15,11 +15,6 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST = CMakeLists.txt
 
-
-# I don't think it will make any difference if we are using EDG 3.10 or 4.0
-# if ROSE_USE_EDG_VERSION_4
-# endif
-
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
 test_CplusplusMacro_C.C \
 test2001_02.C \

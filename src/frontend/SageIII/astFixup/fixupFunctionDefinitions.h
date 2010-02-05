@@ -3,6 +3,8 @@
 
     \implementation This was a problem compiling KULL, but I could not reproduce it in a test code!
  */
+#ifndef __fixupFuncDefinition
+#define  __fixupFuncDefinition
 void fixupFunctionDefinitions ( SgNode* node );
 
 class FixupFunctionDefinitions : public AstSimpleProcessing
@@ -15,3 +17,4 @@ class FixupFunctionDefinitions : public AstSimpleProcessing
           void visit ( SgNode* node );
    };
 
+#endif

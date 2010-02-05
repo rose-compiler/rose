@@ -547,6 +547,12 @@ struct X86InstructionSemantics {
 
     /* Virtual so that we can subclass X86InstructionSemantics and have an opportunity to override the translation of any
      * instruction. */
+#if _MSC_VER
+	// tps (02/01/2010) : fixme : Commented this out for Windows - there is a problem with the try:
+	// error C2590: 'translate' : only a constructor can have a base/member initializer list
+    virtual void translate(SgAsmx86Instruction* insn)  {
+	}
+#else
     virtual void translate(SgAsmx86Instruction* insn) try {
         policy.writeIP(number<32>((unsigned int)(insn->get_address() + insn->get_raw_bytes().size())));
         X86InstructionKind kind = insn->get_kind();
@@ -2449,6 +2455,7 @@ struct X86InstructionSemantics {
     } catch(...) {
         throw Exception("instruction translation failed", insn);
     }
+#endif
 
     void processInstruction(SgAsmx86Instruction* insn) {
         ROSE_ASSERT(insn);

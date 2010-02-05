@@ -24,6 +24,8 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	dynamicChunk.c \
 	empty.c \
 	endif.c \
+	endif2.c \
+	endif3.c \
 	nowait.c \
 	expressions.c \
 	falsesharing.c \
@@ -72,6 +74,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	section.c \
 	set_num_threads.c \
 	single.c \
+	single2.c \
 	single_copyprivate.c \
 	sizeof.c \
 	spmd1.c \
@@ -107,6 +110,7 @@ CXX_TESTCODES_REQUIRED_TO_PASS = \
 
 # put macroCalls.c here since it requires -rose:wave, which causes seg fault on 64-bit machine
 TESTCODE_CURRENTLY_FAILING = \
+	linebreak.c \
 	macroCalls.c 
 
 ROSE_FLAGS = -rose:openmp:ast_only --edg:no_warnings -w -rose:verbose 0 --edg:restrict #-rose:wave

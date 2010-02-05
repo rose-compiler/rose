@@ -5,6 +5,8 @@
 
 // DQ (3/12/2006): We want to remove config.h from being placed in every source file
 #include <rose_config.h>
+#include "fileoffsetbits.h"
+
 
 // DQ (3/22/2009): Added MSVS support for ROSE.
 #include "rose_msvc.h"
@@ -15,7 +17,6 @@
 #include <stdlib.h>
 
 // We need to separate the construction of the code for ROSE from the ROSE code
-// include "rose.h"
 // #include FSTREAM_HEADER_FILE
 #include <fstream>
 #include <sys/types.h>
