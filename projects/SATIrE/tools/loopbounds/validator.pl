@@ -104,6 +104,13 @@ assertions(y, y, y, Statement, AssertedStatement) :-
 				     basic_block([Count|Stmts], DA1, AI1, FI1),
 				     DA, AI, FI),
 		       CounterAssert], DA, AI, FI).
+%FIXME
+%  var_decl(unsigned_int, '__bound', 0, ..., CounterDecl),
+%  var_ref_exp('__bound', unsigned_int, Counter),
+%  plusplus_expr_stmt(Counter, ..., Count),
+%  build_expr_stmt(assert((Counter =< Higher) && (Counter >= Lower)), 
+%                  ..., CounterAssert),
+
 
 assertions(y, y, y, Statement, AssertedStatement) :-
   Statement = while_stmt(Test, basic_block(Stmts, DA1, AI1, FI1), DA, AI, FI),
@@ -118,6 +125,21 @@ assertions(y, y, y, Statement, AssertedStatement) :-
 		       while_stmt(Test,
 				  basic_block([Count|Stmts], DA1, AI1, FI1),
 				  DA, AI, FI),
+				   CounterAssert], DA, AI, FI).
+
+assertions(y, y, y, Statement, AssertedStatement) :-
+  Statement = do_while_stmt(basic_block(Stmts, DA1, AI1, FI1), Test, DA, AI, FI),
+  get_annot(Stmts, wcet_trusted_loopbound(N), _),
+
+  C = xxyyzzyy,
+  counter_decl(C, FI1, CounterDecl),
+  counter_inc(C, FI1, Count),
+  counter_assert(C, N, FI1, CounterAssert),
+  
+  AssertedStatement = basic_block([CounterDecl,
+		       do_while_stmt(basic_block([Count|Stmts], DA1, AI1, FI1),
+				     Test,
+				     DA, AI, FI),
 				   CounterAssert], DA, AI, FI).
 
 

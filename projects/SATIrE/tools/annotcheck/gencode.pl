@@ -103,7 +103,7 @@ code_visit(Info, _InfoInner, _InfoPost,
 	   function_definition(basic_block(Stmts, BAn, BAi, BFi), An, Ai, Fi),
 	   function_definition(basic_block(NewStmts, BAn, BAi, BFi), An, Ai, Fi)) :-
   %gtrace, % todo: markers-scopes
-  Info = info(markers(Ms), scopes(Ss)),
+  Info = info(markers(_Ms), scopes(Ss)),
   maplist(wrap_wcet_scope(Ss), Ss, WSs),
   maplist(code_for_term(_), WSs, Scopes),
   append(Scopes, Stmts, NewStmts).
@@ -275,55 +275,59 @@ assert_expr(Expr, Assertion) :-
 
 %code_for_term(wcet_constraint(), ).
 
-% prolog_to_cxx(PrologExpr, CxxExpr)
-prolog_to_cxx(IntVal,
+% build_expr(PrologExpr, CxxExpr)
+build_expr(IntVal,
 	      int_val(null, value_annotation(IntVal, PPI), AI, FI)) :-
   number(IntVal),
   default_values(PPI, _DA, AI, FI).
 
-prolog_to_cxx(Var,
-	      var_ref_exp(var_ref_exp_annotation(VarType, Var, default, null, PPI), AI, FI)) :-
+var_ref_exp(Name, unsigned_int,
+	    var_ref_exp(var_ref_exp_annotation(VarType, Name, default, null, PPI), AI, FI)) :-
   VarType = type_unsigned_int,
-  atom(Var),
+  atom(Name),
   default_values(PPI, _DA, AI, FI).
 
 prolog_to_cxx(PExp1 =< PExp2, BinOp) :-
   cxx_binop(PExp1, PExp2, less_or_equal_op, BinOp).
 
-prolog_to_cxx(PExp1 >= PExp2, BinOp) :-
-  cxx_binop(PExp1, PExp2, greater_or_equal_op, BinOp).
 
-prolog_to_cxx(PExp1 < PExp2, BinOp) :-
-  cxx_binop(PExp1, PExp2, less_than_op, BinOp).
+build_expr(PExp1 =< PExp2, BinOp) :-
+  build_binop(PExp1, PExp2, less_or_equal_op, BinOp).
 
-prolog_to_cxx(PExp1 > PExp2, BinOp) :-
-  cxx_binop(PExp1, PExp2, greater_than_op, BinOp).
+build_expr(PExp1 >= PExp2, BinOp) :-
+  build_binop(PExp1, PExp2, greater_or_equal_op, BinOp).
 
-prolog_to_cxx(PExp1 && PExp2, BinOp) :-
-  cxx_binop(PExp1, PExp2, and_op, BinOp).
+build_expr(PExp1 < PExp2, BinOp) :-
+  build_binop(PExp1, PExp2, less_than_op, BinOp).
 
-prolog_to_cxx(PExp1 + PExp2, BinOp) :-
-  cxx_binop(PExp1, PExp2, add_op, BinOp).
+build_expr(PExp1 > PExp2, BinOp) :-
+  build_binop(PExp1, PExp2, greater_than_op, BinOp).
 
-prolog_to_cxx(PExp1 - PExp2, BinOp) :-
-  cxx_binop(PExp1, PExp2, subtract_op, BinOp).
+build_expr(PExp1 && PExp2, BinOp) :-
+  build_binop(PExp1, PExp2, and_op, BinOp).
 
-prolog_to_cxx(PExp1 * PExp2, BinOp) :-
-  cxx_binop(PExp1, PExp2, multiply_op, BinOp).
+build_expr(PExp1 + PExp2, BinOp) :-
+  build_binop(PExp1, PExp2, add_op, BinOp).
 
-prolog_to_cxx(PExp1 / PExp2, BinOp) :-
-  cxx_binop(PExp1, PExp2, divide_op, BinOp).
+build_expr(PExp1 - PExp2, BinOp) :-
+  build_binop(PExp1, PExp2, subtract_op, BinOp).
+
+build_expr(PExp1 * PExp2, BinOp) :-
+  build_binop(PExp1, PExp2, multiply_op, BinOp).
+
+build_expr(PExp1 / PExp2, BinOp) :-
+  build_binop(PExp1, PExp2, divide_op, BinOp).
 
 
-prolog_to_cxx(_, _) :- trace.
+build_expr(_, _) :- trace.
 
-cxx_binop(PExp1, PExp2, Op, BinOp) :-
+build_binop(PExp1, PExp2, Op, BinOp) :-
   VarType = type_unsigned_int,
   TypeAn = binary_op_annotation(VarType, PPI),
   BinOp =.. [Op, CExp1, CExp2, TypeAn, AI, FI],
   default_values(PPI, _DA, AI, FI),
-  prolog_to_cxx(PExp1, CExp1),
-  prolog_to_cxx(PExp2, CExp2).
+  build_expr(PExp1, CExp1),
+  build_expr(PExp2, CExp2).
 
 
 %-----------------------------------------------------------------------

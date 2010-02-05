@@ -48,17 +48,20 @@ PROBLEM Interval_Analysis
 
 TRANSFER
 
-FunctionEntry(_), _: 
+FunctionEntry(name), _: 
+  let result = 
   if @ != bot then
     @
   else
-    bot //top
+    bot // -- top
+  ; in // -- println("entering function ", val-aststring(name)) 
+       result
   ;
 
 ExprStatement(exp), _:
   if @ != bot then
     let state = eval(exp, @, context)!2!2 ; in
-      // --print("\neval => ") print(state) print("\n") 
+      // -- println("\neval => ", state) 
       state
   else
     bot
@@ -196,7 +199,7 @@ eval :: Expression, itvl_State, ContextInfo -> itvl_IntervalStatePair;
 eval(_, bot, _) = bot;
 eval(_, top, _) = top;
 eval(exp, state, context) =  
-  // --print("eval(") print(exp) print(",") print(state) print(")\n")
+  // -- println("eval(", exp, ",", state)
   let s <= state; in
 
   case exp of 
@@ -235,12 +238,12 @@ eval(exp, state, context) =
         unary(unary_get_child(exp), exp, state, context)
       else if is_binary(exp) then
         let r = binary(binary_get_left_child(exp), binary_get_right_child(exp),
-          exp, state, context); in r // --print("BINARY <----") print(r) print("\n") r
+          exp, state, context); in r // --print("BINARY <----", r, "\n") r
       else if is_value(exp) then
         (value_interval(exp), state)
     else case exp of
       VarRefExp(name)       =>  // --print("###is_VARREF") 
-                                // --print(val-aststring(name)) print("\n") 
+                                // --print(val-aststring(name), "\n") 
                                 let id = varref_varid(exp); in
                                 if is_tmpvarid(id) then
                                     let s2 = s\[id -> top]; in
@@ -326,8 +329,8 @@ binary(left, right, exp, state, context) =
       let constp = (l1=l2) && (r1=r2);
           pointerp = is_pointer_type(expr_type(left))
                   || is_pointer_type(expr_type(right)); in
-      // --print("evalbin(") print(exp) print(";;; ") print(llifted) print(", ")
-      // --                                           print(rlifted) print(")\n")
+      // -- println("evalbin(", exp, ";;; ", llifted, ", ", rlifted, ")")
+      
       case exp of
         EqualityOp(_, _) =>
           if !pointerp && constp then (duplift(bool_int(l1=r1)), ls) else
@@ -359,16 +362,25 @@ binary(left, right, exp, state, context) =
           if !pointerp && r1 >  l2 then (duplift(0), ls) else
           dontknow  ;
 
-        MultiplyOp(_, _)=> (ltup(mini(l1*r1, l1*r2), maxi(l2*r1, l2*r2)), ls);
+
+        MultiplyOp(_, _)=> (ltup(mini(mini(l1*r1, l1*r2), 
+                                      mini(l2*r1, l2*r2)),
+                                 maxi(maxi(l1*r1, l1*r2), 
+                                      maxi(l2*r1, l2*r2))), 
+                                     ls);
         DivideOp(_, _)  => if r1 != 0 && r2 != 0 then
-                              (ltup(mini(l1/r1, l1/r2),
-                                    maxi(l2/r1, l2/r2)), ls)
+                              (ltup(mini(mini(l1/r1, l1/r2), 
+                                         mini(l2/r1, l2/r2)),
+                                    maxi(maxi(l1/r1, l1/r2), 
+                                         maxi(l2/r1, l2/r2))), ls)
                            else
                               dontknow;
         IntegerDivideOp(_, _)
                         => if r1 != 0 && r2 != 0 then
-                              (ltup(mini(l1/r1, l1/r2),
-                                    maxi(l2/r1, l2/r2)), ls)
+                              (ltup(mini(mini(l1/r1, l1/r2), 
+                                         mini(l2/r1, l2/r2)),
+                                    maxi(maxi(l1/r1, l1/r2), 
+                                         maxi(l2/r1, l2/r2))), ls)
                            else
                               dontknow;
         ModOp(_, _)     => (ltup(0, r2), ls);
@@ -387,7 +399,7 @@ binary(left, right, exp, state, context) =
                        else dontknow ;
 
         ScopeOp(_, _)       => (ltup(r1, r2), ls);
-        _ => print("**WARNING: unsupported binary: ") print(exp) print("\n")
+        _ => println("**WARNING: unsupported binary: ", exp)
              (top, lift([-> top]));
       endcase
      ;
@@ -395,7 +407,7 @@ binary(left, right, exp, state, context) =
 
 unary :: Expression, Expression, itvl_State, ContextInfo -> itvl_IntervalStatePair;
 unary(child, exp, state, context) = 
-  // --print("UNARY(") print(exp) print(")\n")
+  // --print("UNARY(", exp, ")\n")
   let ee = eval(child, state, context); in
   let er = ee!1!2; es = ee!2!2; in
     // -- if child node is a dereference expression, consult pointer analysis
@@ -407,7 +419,7 @@ unary(child, exp, state, context) =
                              if is_array_type(expr_type(exp)) then
                                (top, es)
                              else
-                               (merged_var_values(es, syms), es);
+                                (merged_var_values(es, syms), es);
       // -- special handling for additive unary operators
       MinusMinusOp(_) => if unary_is_prefix(exp) then
                             updatestate(es, child,
@@ -449,7 +461,7 @@ unary(child, exp, state, context) =
           AddressOfOp(_)  => (top, es);
           BitComplementOp(_) => (complement(e1, e2), es);
 
-          _ => print("unsupported unary: ") print(exp) print("\n")
+          _ => println("unsupported unary: ", exp)
                (top, lift([-> top]));
         endcase;
     endcase
@@ -488,7 +500,7 @@ updatestate(state, exp, bot, context) =
 // -- referenced by expression exp (if any). Yields a pair of the value
 // -- and the new state.
 updatestate(state, exp, value, context) = 
-// --print("updatestate(") print(state) print(", ") print(exp) print(", ") print(value) print(")\n") 
+// -- print("updatestate(", state, ", ", exp, ", ", value, ")\n") 
   let s <= state; in 
   let newstate =
     case exp of
@@ -523,7 +535,7 @@ updatestate(state, exp, value, context) =
                        exp, " :: ", expr_asttext(exp))
                state;
     endcase;
-  in // --print("\n=> ") print(state) print("\n") 
+  in // --print("\n=> ", state, "\n") 
      (value, newstate);
 
 weak_update :: itvl_fState, *VariableSymbolNT, itvl_Interval -> itvl_fState;
@@ -649,16 +661,18 @@ constrain_array_index(s, _, _) = s;
 
 branch :: Expression, itvl_State, bool, bool, ContextInfo -> itvl_State;
 branch(exp, state, edge, isLoopBody, context) =
-  // -- print("branching... exp: ") print(exp) 
-  // -- print("\tstate: ") print(state) 
-  // -- print("\tedge: ") print(edge)  
-  // -- print("\n")
+  // --println("branching... exp: ", exp, "\tstate: ", state, "\tedge: ", edge)
 
   let pair = eval(exp, state, context); in
   let c = interval_to_bool(pair!1!2); 
           newstate = pair!2!2; in
-  // -- println("pair = ", pair, ", c = ", c, ", newstate = ", newstate)
-  if (c = top || (isLoopBody && value_interval(exp) = top)) then
+  // --println("pair = ", pair, ", c = ", c, ", newstate = ", newstate)
+  if (isLoopBody && c != top && drop(c) = false && edge = true) then
+    // -- Finished loop
+    // --print("bot\n") 
+    // --print("Never\n") 
+    top
+  else if (c = top || (isLoopBody && value_interval(exp) = top)) then
     // -- We don't know for sure which edge will be taken, or this is a loop
     // -- condition. Given our widening operator, we must always look at the
     // -- effects of loop conditions and "pre-widen" information on loop
@@ -667,12 +681,14 @@ branch(exp, state, edge, isLoopBody, context) =
     // --print("c=top\n") 
     // --print("Maybe\n") 
     branch_condition_effects(exp, state, newstate, edge, isLoopBody, context)
+    // --; in println(">>>> ", result) result
   else if c = bot then 
-    // --print("FIXME c=bot\n")
+    // -- Ignore this branch anyway 
+    // --print("c=bot\n")
     state
   else if drop(c) = edge then  
     // -- This edge will ALWAYS be taken
-    // -- print(newstate) print("\n") 
+    // -- println(newstate) 
     // -- print("Always\n") 
     newstate
   else 
@@ -681,7 +697,6 @@ branch(exp, state, edge, isLoopBody, context) =
     // --print("Never\n") 
     bot
     ;
-
 
 branch_condition_effects :: Expression, itvl_State, itvl_State, bool, bool,
                             ContextInfo -> itvl_State;
@@ -905,9 +920,9 @@ comb(top, _) = top;
 comb(a, b) =
   let res = lift(crunch(drop(a), drop(b), combi)); // -- a glb b
   in
-  // --print("comb a: ") print(a) print("\n")
-  // --print("comb b: ") print(b) print("\n")
-  // --print("result: ") print(res) print("\n\n")
+  // --println("comb a: ", a)
+  // --println("comb b: ", b)
+  // --println("result: ", res, "\n")
   res;
 
 combi((a1, a2), (b1, b2)) = 
@@ -958,12 +973,11 @@ second_if_present(a, b) =
  // -- should this also check for b != bot?
     if b != top then b else a;
 
-// -- for lifted integers, we use top as +infty and bot as -infty
-// -- GB: this is not true anymore! -infty is top as well.
+// -- for lifted integers, we use top as +infty and -infty
 min(a, top) = top;
 min(top, a) = top;
-min(a, bot) = a; /*bot;*/
-min(bot, b) = b; /*bot;*/
+min(a, bot) = a;
+min(bot, b) = b;
 min(a, b) = if drop(a) < drop(b) then a else b ;
 
 // -- all glory to polymorphism (... and the hypnotoad!)
@@ -1056,8 +1070,8 @@ wide(a, b) = lift(crunch(drop(a), drop(b), widen));
 
 widen((top, top), b) = b;
 widen((a1, a2), (b1, b2)) =
-  ( if a1=b1 then a1 else /*top*/ min(a1, b1) ,
-    if a2=b2 then a2 else /*top*/ max(a1, b1)  );
+  ( if a1=b1 then a1 else top /* clamp(shrink(min(a1, b1))) */ ,
+    if a2=b2 then a2 else top /* clamp(embiggen(max(a1, b1))) */  );
 
 //widen((a1, a2), (b1, b2)) = let v1 <= b1 ;
 //                                v2 <= b2 ; in 
@@ -1065,9 +1079,32 @@ widen((a1, a2), (b1, b2)) =
 //                              if v2-v1 > 10 then top else b2 ) ;
 
 
-eq(a, b)   = //print("eq a: ") print(a) print("\n")
-             //print("eq b: ") print(b) print("\n\n")
+eq(a, b)   = //println("eq a: ", a)
+             //println("eq b: ", b, "\n")
              (a = b);
+
+// -- Let too small/large values diverge to ±infty
+shrink(bot) = bot;
+shrink(top) = top;
+shrink(a)   = let aa = drop(a); in 
+              if aa = 0 
+              then lift(0) 
+              else if aa > 0 
+                   then lift(aa / 2)
+                   else lift(aa * 2);
+
+embiggen(bot)= bot;
+embiggen(top)= top;
+embiggen(a)  = let aa <= a; in 
+               if aa = 0 
+               then lift(0) 
+               else if aa < 0
+                    then lift(aa / 2)
+                    else lift(aa * 2) ;
+ 
+clamp(bot)  = bot;
+clamp(top)  = top; 
+clamp(a)    = let aa <= a; in if aa < -1048576 || aa > 1048576 then top else a;
 
 // -- isglobalprogramvar: any global variable in the original program
 isglobalprogramvar(var) = varmember(var, globals);
