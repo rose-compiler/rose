@@ -2020,10 +2020,9 @@ Grammar::buildSourceFiles( Terminal & node, StringUtility::FileWithLineNumbers &
      StringUtility::FileWithLineNumbers sourceBeforeInsertion;
 #if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
   // DQ (12/29/2009): Add this to the top of each file.
-//     string sourceHeader = "\n#include \"rose.h\"\nusing namespace std;\n\n";
 	// tps (01/06/2010) : If we include sage3.h instead of rose.h on Windows these files are
 		// currently only 7MB instead of 17MB - still to large though
-	 string sourceHeader = "\n#include \"sage3basic.h\"\nusing namespace std;\n\n";
+	 string sourceHeader = "#include \"sage3basic.h\"   // sage3 from grammar.C \nusing namespace std;\n\n";
      sourceBeforeInsertion.push_back(StringUtility::StringWithLineNumber(sourceHeader, "", 1));
 #else
   // StringUtility::FileWithLineNumbers sourceBeforeInsertion = buildHeaderStringBeforeMarker(sourceFileInsertionSeparator, fileName);
@@ -2764,16 +2763,27 @@ Grammar::buildCode ()
      string includeHeaderFileName = "sage3basic.h";
      //     string includeHeaderString = includeHeaderStringROSE+
      string includeHeaderString = 
-       "// MACHINE GENERATED SOURCE FILE WITH ROSE --- DO NOT MODIFY!\n\n #include \"" + includeHeaderFileName + "\"\n\n";
+       "// MACHINE GENERATED SOURCE FILE WITH ROSE (Grammar.C)--- DO NOT MODIFY!\n\n#include \"" + includeHeaderFileName + "\"\n\n";
      string includeHeaderStringWithoutROSE = 
-       "// MACHINE GENERATED SOURCE FILE --- DO NOT MODIFY!\n\n #include \"" + includeHeaderFileName + "\"\n\n";
+       "// MACHINE GENERATED SOURCE FILE --- DO NOT MODIFY! (Grammar.C) \n\n #include \"" + includeHeaderFileName + "\"\n\n";
 
   // DQ (10/18/2007): These have been moved to the src/frontend/SageIII directory
   // to provde greater parallelism to the make -jn parallel make feature.
   // JH (01/09/2006)
   // string includeHeaderAstFileIO ="#include \"astFileIO/AST_FILE_IO.h\"\n\n";
-     string includeHeaderAstFileIO ="#include \"AST_FILE_IO.h\"\n\n";
+   //  string includeSage3 ="#include \"Cxx_Grammar.h\"\n\n";
+   //  includeHeaderString += includeSage3;
+
+	 string includeHeaderAstFileIO ="#include \"AST_FILE_IO.h\"\n\n";
      includeHeaderString += includeHeaderAstFileIO;
+
+	 string defines1 ="#if _MSC_VER\n";
+	 string defines2 ="#define USE_CPP_NEW_DELETE_OPERATORS 0\n";
+	 string defines3 ="#endif\n\n";
+     includeHeaderString += defines1;
+     includeHeaderString += defines2;
+     includeHeaderString += defines3;
+
 
 #if 0
   // DQ (12/28/2009): This is already in rose_msvc.h (moved from the generated code for Cxx_Grammar.h).

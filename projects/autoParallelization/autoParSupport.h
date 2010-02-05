@@ -37,6 +37,7 @@ namespace AutoParallelization
   extern DFAnalysis * defuse;
   extern LivenessAnalysis* liv;
   extern bool enable_debug; 
+  extern bool enable_patch; // an option to control the generation of patch files
 
   // Conduct necessary analyses on the project, can be called multiple times during program transformations. 
   bool initialize_analysis(SgProject* project=NULL,bool debug=false);
@@ -82,6 +83,9 @@ namespace AutoParallelization
 #endif
   //Parallelize an input loop at its outermost loop level, return true if successful
   bool ParallelizeOutermostLoop(SgNode* loop, ArrayInterface* array_interface, ArrayAnnotation* annot);
+
+  //! Generate patch files for the introduced OpenMP pragmas (represented as OmpAttribute)
+  void generatePatchFile(SgSourceFile* sfile);
 
 } //end namespace
 

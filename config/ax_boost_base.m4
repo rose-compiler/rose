@@ -78,6 +78,15 @@ if test "x$want_boost" = "xyes"; then
 	AC_MSG_CHECKING(for boostlib >= $boost_lib_version_req)
 	succeeded=no
 
+ # DQ (2/4/2010): Added to support setting Automake conditionals for boost versions.
+ # export boost_lib_version_req_major
+ # export boost_lib_version_req_minor
+ # export boost_lib_version_req_sub_minor
+
+ # echo "In ax boost base macro: boost_lib_version_req_major     = $boost_lib_version_req_major"
+ # echo "In ax boost base macro: boost_lib_version_req_minor     = $boost_lib_version_req_minor"
+ # echo "In ax boost base macro: boost_lib_version_req_sub_minor = $boost_lib_version_req_sub_minor"
+
 	dnl first we check the system location for boost libraries
 	dnl this location ist chosen if boost libraries are installed with the --layout=system option
 	dnl or if you install boost with RPM
@@ -229,6 +238,11 @@ if test "x$want_boost" = "xyes"; then
 	       	])
 		AC_LANG_POP([C++])
 	fi
+
+ # DQ (2/4/2010): Added to get version information for what we are using.
+ # echo "Boost version being used is: $_version"
+ # rose_boost_version_number=$_version
+ # export rose_boost_version_number
 
 	if test "$succeeded" != "yes" ; then
 		if test "$_version" = "0" ; then

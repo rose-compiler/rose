@@ -1,6 +1,7 @@
 /* Tests ability to build a new executable from scratch */
-#include "rose.h"
-
+//#include "fileoffsetbits.h"
+#include "sage3basic.h"
+#include "Loader.h"
 int
 main() 
 {
