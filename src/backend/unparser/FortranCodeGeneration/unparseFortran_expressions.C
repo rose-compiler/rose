@@ -1195,12 +1195,15 @@ FortranCodeGeneration_locatedNode::unparseVarRef(SgExpression* expr, SgUnparse_I
           SgClassDefinition* cdef = isSgClassDefinition(vd->get_parent());
           if (cdef != NULL)
              {
+#ifndef _MSC_VER
+				 // tps (02/02/2010): Does not work for some reason under Windows: SgClassDeclaration unknown.
                SgClassDeclaration* cdecl = isSgClassDeclaration(cdef->get_declaration());
                if (cdecl != NULL && vd->get_declarationModifier().get_storageModifier().isStatic()) 
                   {
                     curprint(cdecl->get_qualified_name().str());
                     curprint("::");
                   }
+#endif
              }
         }
   

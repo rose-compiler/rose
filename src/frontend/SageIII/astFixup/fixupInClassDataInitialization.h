@@ -4,6 +4,8 @@
 // is being handled here rather than allowing the unparser to modifiy the AST.
 /*! \brief Handles not standard in-class initialization used in EDG and GNU g++ (but supported differently)
  */
+#ifndef __fixupClassData
+#define __fixupClassData
 void fixupInClassDataInitialization( SgNode* node );
 
 /*! \brief Modified const double variable initialized in-class to be static const double with initializer.
@@ -17,4 +19,6 @@ class FixupInClassDataInitialization : public SgSimpleProcessing
       //! Required traversal function
           void visit (SgNode* node);
    };
+
+#endif
 
