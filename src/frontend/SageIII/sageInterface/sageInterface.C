@@ -8003,6 +8003,19 @@ SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfFor(SgForStatement* fs)
     return isSgBasicBlock(b);
   }
 
+SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfOmpBodyStmt(SgOmpBodyStatement* fs) 
+{
+  SgStatement* b = fs->get_body();
+  if (!isSgBasicBlock(b)) {
+    b = SageBuilder::buildBasicBlock(b);
+    fs->set_body(b);
+    b->set_parent(fs);
+  }
+  ROSE_ASSERT (isSgBasicBlock(b));
+  return isSgBasicBlock(b);
+}
+
+
   SgStatement* SageInterface::ensureBasicBlockAsParent(SgStatement* s) {
   //SgBasicBlock* ensureBasicBlockAsParent(SgStatement* s) {
     ROSE_ASSERT(s);
@@ -8053,6 +8066,11 @@ SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfFor(SgForStatement* fs)
 	break;
       }
       default: {
+        if (isSgOmpBodyStatement(p))
+        {
+          return ensureBasicBlockAsBodyOfOmpBodyStmt (isSgOmpBodyStatement(p));
+        }
+        else
         // Liao, 7/3/2008 We allow other conditions to fall through, 
         // they are legal parents with list of statements as children. 
         //cerr << "Unhandled parent block:"<< p->class_name() << endl;
@@ -10312,6 +10330,13 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
 
      ROSE_ASSERT(sourceBlock->get_symbol_table() != NULL);
      sourceBlock->set_symbol_table(NULL);
+     // Liao 2/4/2009
+     // Finally , move preprocessing information attached inside the source block to the target block
+     // Outliner uses this function to move a code block to the outlined function.
+     // This will ensure that a trailing #endif (which is attached inside the source block) will be moved
+     // to the target block to match #if (which is attached
+     // before some statement moved to the target block)
+     moveUpPreprocessingInfo (targetBlock, sourceBlock, PreprocessingInfo::inside); 
    }
 
 

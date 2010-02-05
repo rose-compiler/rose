@@ -11,7 +11,8 @@
 #include <stdio.h>
 #include <assert.h>
 #include <iostream>
-#include "rose.h" // Sage Interface and Builders
+#include "sage3basic.h" // Sage Interface and Builders
+#include "sageBuilder.h"
 #include "OmpAttribute.h"
 using namespace OmpSupport;
 

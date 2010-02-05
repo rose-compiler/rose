@@ -6,39 +6,8 @@
 
 #ifndef SAGE3_CLASSES_BASIC__H
 #define SAGE3_CLASSES_BASIC__H
-
-// DQ (3/30/2006): Currently we have TRUE and FALSE through out the ROSE source code.
-// it might be better to change this to "true" and "false" instead, but until then
-// we have to define these (early in the compilation).
-// JJW (8/26/2008): Removing these
-// #ifndef TRUE
-//    #define TRUE true
-// #endif
-// #ifndef FALSE
-//    #define FALSE false
-// #endif
-
-// DQ (3/12/2006): This is included here as specified in the Autoconf manual (using <> instead of "")
-// We have also abandoned the ifdef HAVE_CONFIG_H cpp conditional use of rose_config.h as well.
-// This is placed here in sage3.h instead of in rose.h because it needs to always be seen even 
-// by internal ROSE files that only include sage3.h.
-#include <rose_config.h>
-
-// DQ (4/21/2009): Error checking to avoid difficult to debug ODR violations on 32-bit systems.
-#if defined(_SYS_STAT_H)
-#warning "sys/stat.h should not have been included before the _FILE_OFFSET_BITS macro is set! (use rose.h first...)"
-#endif
-
-// DQ (4/21/2009): This must be included before rose_paths.h since that 
-// header includes the STL string header which will include sys/stat.h first.
-// Force 64-bit file offsets in struct stat
-#define _FILE_OFFSET_BITS 64
-
-// DQ (4/21/2009): This must be set before sys/stat.h is included by any other header file.
-// Use of _FILE_OFFSET_BITS macro is required on 32-bit systems to controling size of "struct stat"
-#if !(defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
-#error "The _FILE_OFFSET_BITS macro should be set before any sys/stat.h is included by any other header file!"
-#endif
+#include <semaphore.h>
+#include "fileoffsetbits.h"
 
 // DQ (4/21/2009): Note that this header file will include the STL string header file 
 // which will include sys/stat.h, so the _FILE_OFFSET_BITS macro must be already set 
@@ -51,6 +20,7 @@
 // DQ (8/25/2008): Turn this back on since it breaks ROSE for everyone else.  We 
 // are searching for a better solution.
 #include "rose_paths.h"
+
 
 // DQ (5/30/2004): Added to permit warnings to be placed in the source code so that
 // issues can be addressed later but called out during development (and eliminated
@@ -80,6 +50,7 @@
 
 //#include <cstdlib> // For abort()
 #include <algorithm>
+#include <fstream>
 
 // DQ (9/24/2004): Try again to remove use of set parent side effect in EDG/Sage III connection! This works!!!
 #define REMOVE_SET_PARENT_FUNCTION
@@ -174,19 +145,19 @@
 
 
 //#endif
-
+#if 1
 #ifdef _MSC_VER
 // DQ (11/4/2009): MS Visual Studio version of hash_multimap
-#include <cliext/hash_map>
+//#include <cliext/hash_map>
 #else
 // DQ (11/4/2009): Use the GNU depricated stuff (what works in ROSE at the moment)
 // tps (01/25/2010) : deprecated - does not work in setup.h
 #include <ext/hash_map>
 #endif
-
+#endif
 
 // tps (01/22/2010) :refactored
-#include "setup.h"
+#include "rosedefs.h"
 // Support for preprocessors declarations and comments
 #include "rose_attributes_list.h"
 
