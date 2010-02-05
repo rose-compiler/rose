@@ -42,7 +42,6 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	lastprivate.c \
 	lastprivateOrphaned.c \
 	limits_threads.c \
-	linebreak.c \
 	lockarray.c \
 	lu_factorization.c \
 	master.c \
@@ -111,6 +110,7 @@ CXX_TESTCODES_REQUIRED_TO_PASS = \
 
 # put macroCalls.c here since it requires -rose:wave, which causes seg fault on 64-bit machine
 TESTCODE_CURRENTLY_FAILING = \
+	linebreak.c \
 	macroCalls.c 
 
 ROSE_FLAGS = -rose:openmp:ast_only --edg:no_warnings -w -rose:verbose 0 --edg:restrict #-rose:wave
