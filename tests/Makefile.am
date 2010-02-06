@@ -102,8 +102,6 @@ check-local: test
 # Make clean rule
 clean-local: myCleanRule
 
-compile: testTranslator testCodeGeneration testAnalysis
-
 myCleanRule:
 	rm -f testLinkFileAnalysisExecutable testLinkFileCodeGenerationExecutable testLinkFileTranslatorExecutable
 	rm -f testExecutableFileAnalysisExecutable testExecutableFileCodeGenerationExecutable testExecutableFileTranslatorExecutable
