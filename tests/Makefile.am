@@ -50,7 +50,8 @@ check-local: testObjectFile testLinkFile testCppFile testExecutableFile
 	@echo "****** ROSE/tests: make check rule complete (terminated normally) ******"
 	@echo "************************************************************************"
 
-
+clean-local:
+	rm -f a.out
 
 
 
