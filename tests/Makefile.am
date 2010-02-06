@@ -30,29 +30,84 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST = CMakeLists.txt inputFile.C tests.tex
 
-testObjectFile: testAnalysis
-	./testAnalysis $(INCLUDES) -c $(srcdir)/inputFile.C -o alt_inputFile.o
+# ********************************
+# *******  Analysis Tests  *******
+# ********************************
+testObjectFileAnalysis: testAnalysis
+	./testAnalysis $(INCLUDES) -c $(srcdir)/inputFile.C -o alt_Analysis_inputFile.o
 
-testLinkFile: testObjectFile
+testLinkFileAnalysis: testObjectFileAnalysis
 #	./testAnalysis $(INCLUDES) alt_inputFile.o -o alt_inputFile
-	./testAnalysis $(INCLUDES) alt_inputFile.o
+	./testAnalysis $(INCLUDES) alt_Analysis_inputFile.o -o testLinkFileAnalysisExecutable
 
-testCppFile: testAnalysis
+testCppFileAnalysis: testAnalysis
 	./testAnalysis -E $(INCLUDES) $(srcdir)/inputFile.C
 
-testExecutableFile: testAnalysis
-	./testAnalysis $(INCLUDES) $(srcdir)/inputFile.C
+testExecutableFileAnalysis: testAnalysis
+	cp $(srcdir)/inputFile.C inputFileAnalysis.C
+	./testAnalysis $(INCLUDES) inputFileAnalysis.C -o testExecutableFileAnalysisExecutable
 
-test: testObjectFile testLinkFile testCppFile testExecutableFile
+test_testAnalysis: testObjectFileAnalysis testLinkFileAnalysis testCppFileAnalysis testExecutableFileAnalysis
 
-check-local: testObjectFile testLinkFile testCppFile testExecutableFile
+
+# ****************************************
+# *******  Code Generation Tests  ********
+# ****************************************
+testObjectFileCodeGeneration: testCodeGeneration
+	./testCodeGeneration $(INCLUDES) -c $(srcdir)/inputFile.C -o alt_CodeGeneration_inputFile.o
+
+testLinkFileCodeGeneration: testObjectFileCodeGeneration
+	./testCodeGeneration $(INCLUDES) alt_CodeGeneration_inputFile.o -o testLinkFileCodeGenerationExecutable
+
+testCppFileCodeGeneration: testCodeGeneration
+	./testCodeGeneration -E $(INCLUDES) $(srcdir)/inputFile.C
+
+testExecutableFileCodeGeneration: testCodeGeneration
+	cp $(srcdir)/inputFile.C inputFileCodeGeneration.C
+	./testCodeGeneration $(INCLUDES) inputFileCodeGeneration.C -o testExecutableFileCodeGenerationExecutable
+
+test_testCodeGeneration: testObjectFileCodeGeneration testLinkFileCodeGeneration testCppFileCodeGeneration testExecutableFileCodeGeneration
+
+
+# **********************************
+# *******  Translator Tests  *******
+# **********************************
+testObjectFileTranslator: testTranslator
+	./testTranslator $(INCLUDES) -c $(srcdir)/inputFile.C -o alt_Translator_inputFile.o
+
+testLinkFileTranslator: testObjectFileTranslator
+	./testTranslator $(INCLUDES) alt_Translator_inputFile.o -o testLinkFileTranslatorExecutable
+
+testCppFileTranslator: testTranslator
+	./testTranslator -E $(INCLUDES) $(srcdir)/inputFile.C
+
+testExecutableFileTranslator: testTranslator
+	cp $(srcdir)/inputFile.C inputFileTranslator.C
+	./testTranslator $(INCLUDES) inputFileTranslator.C -o testExecutableFileTranslatorExecutable
+
+test_testTranslator: testObjectFileTranslator testLinkFileTranslator testCppFileTranslator testExecutableFileTranslator
+
+
+# Rule to run all the example translator tests
+test: test_testAnalysis test_testCodeGeneration test_testTranslator
+
+
+# Make check rule
+check-local: test
 	@echo "************************************************************************"
 	@echo "****** ROSE/tests: make check rule complete (terminated normally) ******"
 	@echo "************************************************************************"
 
-clean-local:
-	rm -f a.out
 
+# Make clean rule
+clean-local: myCleanRule
+
+compile: testTranslator testCodeGeneration testAnalysis
+
+myCleanRule:
+	rm -f testLinkFileAnalysisExecutable testLinkFileCodeGenerationExecutable testLinkFileTranslatorExecutable
+	rm -f testExecutableFileAnalysisExecutable testExecutableFileCodeGenerationExecutable testExecutableFileTranslatorExecutable
+	rm -f rose_*.C inputFileTranslator.C inputFileCodeGeneration.C inputFileAnalysis.C
 
 
 
