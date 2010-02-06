@@ -3,8 +3,9 @@
 #Never run this on a branch that has additional changes to master as it is Hudson that guarantees that what is on master is tested 
 #and ready for distribution.
 
+# DQ (2/5/2010): Added /usr/local/bin/ so that wget would be available.
 # This script only runs on the MAC OSX machine (ninjai).
-export PATH=$PATH:/Users/dquinlan/local/git-install/bin
+export PATH=$PATH:/Users/dquinlan/local/git-install/bin:/usr/local/bin/
 
 if test -f .git/config; then
    echo "Verified that this is a git repository."

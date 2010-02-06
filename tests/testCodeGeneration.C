@@ -9,7 +9,6 @@ int main( int argc, char * argv[] )
   // AST consistency tests (optional for users, but this enforces more of our tests)
      AstTests::runAllTests(project);
 
-  // regenerate the source code and call the vendor 
-  // compiler, only backend error code is reported.
-     return backend(project);
+  // regenerate the source code and call the vendor compiler, only backend error code is reported.
+     return backendGeneratesSourceCodeButCompilesUsingOriginalInputFile(project);
    }

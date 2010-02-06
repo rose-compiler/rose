@@ -1,42 +1,28 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# Temporarily remove the performance tests since they don't yet compile properly
-# SUBDIRS = CompileTests RunTests PerformanceTests
-# SUBDIRS = CompileTests RunTests @optional_PERFORMANCE_subdirs@
-# if ROSE_PERFORMANCE_TESTS
-#      SUBDIRS = CompileTests RunTests PerformanceTests
-# else
-#      SUBDIRS = CompileTests RunTests
-# endif
-
 SUBDIRS = CompileTests roseTests RunTests PerformanceTests CompilerOptionsTests translatorTests
 
-# CompileTests
+# Three phases (levels) of test programs:
+#  Phase 1) Analysis only, compiles the original code
+#  Phase 2) Analysis and code generation, compiles the original code
+#  Phase 3) analysis, code generation, and compiling the generated code
+bin_PROGRAMS = testAnalysis testCodeGeneration testTranslator
 
-# This allows us to make distributions that could exclude the PerformanceTests directory
-# I don't know if this is a good idea but it also allows us to test ROSE without the
-# PerformanceTests directory as well.
-# DIST_SUBDIRS = $(SUBDIRS)
-
-# DQ (1/7/2004): Relocation of ROSE/src/rose.C to ROSE/tests/testTranslator.C
-# Build rose.C test translator in this directory since it is only used for tests
-# of the included test codes.  This code has been moved from the ROSE/src/rose.C
-# to ROSE/tests/testTranslator.C as part of the directory reorganization.
-# The change was required because of the dependences of ROSE/src/rose.C upon
-# libraries that had not yet been built.  There was no order in which the
-# parent directories could be visited to build all the libraries require before 
-# the ROSE/src directory was processed.
-bin_PROGRAMS = testTranslator testAnalysis
-
-# This tests the ability to read and regnerate the input application and compile it using the backend compiler.
-testTranslator_SOURCES = testTranslator.C
-
-# This tests only the ability to read application, not regenerate the source code and compile it using the backend compiler.
+# Phase 1 tests code:
+# This is used in specialized tests outside of ROSE testing for analysis only of large projects.
+# This tests only the ability to read the application, not regenerate the source code and compile it using the backend compiler.
 # This test code is used for the testing of ROSE compiling ROSE to support analysis using Compass.
 testAnalysis_SOURCES = testAnalysis.C
 
-# Use the names of the libraries as the list of dependences
-#testTranslator_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
+# Phase 2 tests code:
+# This is used in specialized tests outside of ROSE testing (e.g. intermediate testing of ROSE compiling large projects).
+# This test the ability to read the application and generate the source code, but uses the original source code 
+# with the backend compiler to generate object files or executables.
+testCodeGeneration_SOURCES = testCodeGeneration.C
+
+# Phase 3 tests code (used in all internal tests of ROSE; regression tests):
+# This tests the ability to read and regnerate the input application and compile it using the backend compiler.
+testTranslator_SOURCES = testTranslator.C
 
 # Use names set in ROSE/config/Makefile.for.ROSE.includes.and.libs
 INCLUDES = $(ROSE_INCLUDES)
@@ -57,7 +43,9 @@ testCppFile: testAnalysis
 testExecutableFile: testAnalysis
 	./testAnalysis $(INCLUDES) $(srcdir)/inputFile.C
 
-check-local:
+test: testObjectFile testLinkFile testCppFile testExecutableFile
+
+check-local: testObjectFile testLinkFile testCppFile testExecutableFile
 	@echo "************************************************************************"
 	@echo "****** ROSE/tests: make check rule complete (terminated normally) ******"
 	@echo "************************************************************************"
