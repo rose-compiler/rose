@@ -28,7 +28,7 @@ testTranslator_SOURCES = testTranslator.C
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-EXTRA_DIST = CMakeLists.txt tests.tex
+EXTRA_DIST = CMakeLists.txt inputFile.C tests.tex
 
 testObjectFile: testAnalysis
 	./testAnalysis $(INCLUDES) -c $(srcdir)/inputFile.C -o alt_inputFile.o
