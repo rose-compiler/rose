@@ -7,7 +7,12 @@ include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 # they generate data that is subsequently used in the generated 
 # ROSE documentation (examples, input codes, and generated output).
 # SUBDIRS = config src projects tests tutorial exampleTranslators docs developersScratchSpace tools proposals scripts
-SUBDIRS = libltdl config src projects tests tutorial exampleTranslators docs tools scripts demo binaries
+# SUBDIRS = libltdl config src projects tests tutorial exampleTranslators docs tools scripts demo binaries
+
+# DQ (2/6/2010): changed the order of tests, the projects directory now follows the tests directory.
+# This was something that was discussed in email previously with the group.  Thei point is to have the
+# first tests run by make check be the most relevant tests (e.g. can we compile C++ code).
+SUBDIRS = libltdl config src tests projects tutorial exampleTranslators docs tools scripts demo binaries
 
 
 ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I /usr/share/aclocal
