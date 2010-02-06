@@ -17,6 +17,7 @@ C_TESTCODES_REQUIRED_TO_COMPILE = \
 	endif.c \
 	endif3.c \
 	lastprivateOrphaned.c \
+	linebreak.c \
         master.c \
         nowait.c \
         ompfor5.c \
