@@ -4636,6 +4636,7 @@ HEADER_APPLICATION_PROJECT_START
        // DQ: bool values on the SgFile nodes which can be queried on the SgProject
        // nodes (must be the same across all SgFile nodes in the project).
           bool get_skip_transformation (void) const;
+          bool get_skip_unparse (void) const;
           bool get_useBackendOnly (void) const;
 
           bool get_C_only (void) const;
@@ -11674,6 +11675,19 @@ SgProject::get_skip_transformation (void) const
           returnSkipTransformation = returnSkipTransformation && (bool) file.get_skip_transformation();
         }
      return returnSkipTransformation;
+   }
+
+bool
+SgProject::get_skip_unparse (void) const
+   {
+  // look at how the files are set
+     bool returnSkipUnparse = (numberOfFiles() > 0) ? true : false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          returnSkipUnparse = returnSkipUnparse && (bool) file.get_skip_unparse();
+        }
+     return returnSkipUnparse;
    }
 
 bool

@@ -478,7 +478,13 @@ backendGeneratesSourceCodeButCompilesUsingOriginalInputFile ( SgProject* project
   // then generate object files or executables from the original code 
   // (e.g for analysis).
 
-     project->unparse();
+  // This instance of complexity is why this needs to be a separate backend function.
+  // Note that file->get_skip_unparse() will be false when the "-E" option, and
+  // the unparse() function will properly assert that it should be true.
+     if (project->get_skip_unparse() == false)
+        {
+          project->unparse();
+        }
 
      return backendCompilesUsingOriginalInputFile(project);
    }
