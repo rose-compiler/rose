@@ -6,17 +6,23 @@
 #include "DataStructures.h"
 #include "RtedTransformation.h"
 
+// DQ (2/7/2010): Testing use of ROE to compile ROSE.
+#ifndef USE_ROSE
+
 #include <sys/types.h>
 #include <dirent.h>
 #include <errno.h>
+
 #include <vector>
 #include <set>
 #include <iostream>
 
 #include <sys/stat.h>
+
 #include "boost/filesystem/operations.hpp"
 
 #include <unistd.h>
+
 
 using namespace boost;
 using namespace std;
@@ -223,3 +229,4 @@ int main(int argc, char** argv) {
   return 0;
 }
 
+#endif

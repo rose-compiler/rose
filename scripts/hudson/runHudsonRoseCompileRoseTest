@@ -154,7 +154,7 @@ start_time_make_seconds="$(date +%s)"
 
 echo "Test compile step"
 
-make -j8
+make -j16
 # sleep 5
 
 if [ $? -ne 0 ]  ; then
@@ -227,20 +227,24 @@ echo "Starting configure step to use ROSE to compile ROSE: CONFIGURE_PREFIX_DIR 
 # ../configure ${CONFIGURE_FLAGS}
 # export path=${CONFIGURE_PREFIX_DIR}
 
-echo "Make sure that testAnalysis is in place."
-ls -l ${CONFIGURE_PREFIX_DIR}/bin/testAnalysis
+echo "Make sure that testTranslator is in place."
+ls -l ${CONFIGURE_PREFIX_DIR}/bin/testTranslator
 
-echo "Put testAnalysis is in the default path."
+echo "Put testTranslator is in the default path."
 export PATH="${CONFIGURE_PREFIX_DIR}/bin:$PATH"
 
 echo "Put boost libs into LD_LIBRARY_PATH."
 export LD_LIBRARY_PATH="/home/hudson-rose/tmp/opt/boost_1_37_0.gxx-4.2.4/lib:$LD_LIBRARY_PATH"
 
-echo "Make sure that testAnalysis is in the default path."
-which testAnalysis
+echo "LD_LIBRARY_PATH = $LD_LIBRARY_PATH"
+
+echo "Make sure that testTranslator is in the default path."
+which testTranslator
 
 echo "Calling testAnalysis to make sure it works."
-testAnalysis --help
+testTranslator --help
+
+uname -a
 
 echo "Calling configure to build compile tree to build ROSE using ROSE."
 

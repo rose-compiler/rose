@@ -227,20 +227,20 @@ echo "Starting configure step to use ROSE to compile ROSE: CONFIGURE_PREFIX_DIR 
 # ../configure ${CONFIGURE_FLAGS}
 # export path=${CONFIGURE_PREFIX_DIR}
 
-echo "Make sure that testAnalysis is in place."
-ls -l ${CONFIGURE_PREFIX_DIR}/bin/testAnalysis
+echo "Make sure that testCodeGeneration is in place."
+ls -l ${CONFIGURE_PREFIX_DIR}/bin/testCodeGeneration
 
-echo "Put testAnalysis is in the default path."
+echo "Put testCodeGeneration is in the default path."
 export PATH="${CONFIGURE_PREFIX_DIR}/bin:$PATH"
 
 echo "Put boost libs into LD_LIBRARY_PATH."
 export LD_LIBRARY_PATH="/home/hudson-rose/tmp/opt/boost_1_37_0.gxx-4.2.4/lib:$LD_LIBRARY_PATH"
 
 echo "Make sure that testAnalysis is in the default path."
-which testAnalysis
+which testCodeGeneration
 
 echo "Calling testAnalysis to make sure it works."
-testAnalysis --help
+testCodeGeneration --help
 
 echo "Calling configure to build compile tree to build ROSE using ROSE."
 
