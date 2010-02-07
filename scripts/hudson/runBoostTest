@@ -308,9 +308,9 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
 
    start_time_make_distcheck_seconds="$(date +%s)"
 
- # FIXME
-   make -j8 distcheck
- # sleep 5
+ # DQ (2/6/2010): Removed call to "make distcheck", pointless for Boost testing.
+ # make -j8 distcheck
+   sleep 5
 
    if [ $? -ne 0 ]  ; then
         echo "fatal error during 'make distcheck'  , aborting..."
@@ -352,9 +352,9 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" \); then
 
    start_time_make_docs_seconds="$(date +%s)"
 
- # FIXME
-   make -j8 docs
- # sleep 5
+ # DQ (2/6/2010): Removed call to "make docs", pointless for Boost testing.
+ # make -j8 docs
+   sleep 5
 
    if [ $? -ne 0 ]  ; then
         echo "fatal error during 'make docs'  , aborting..."
