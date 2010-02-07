@@ -319,14 +319,7 @@ if test \! \( "x$ROSE_TEST_GCC_VERSION" = "x4.3.2" -o "x$ROSE_TEST_GCC_VERSION" 
 
    echo "Done with make distcheck step"
 
- # DQ (1/17/2010): Added install so we can have a frequently updated install tree upon which to base secondary 
- # tests (e.g. internal software developed but not distributed with ROSE because it is not mature enough).
- # This also test the install rull, but it is alos run and tested using "make installcheck" as part of the 
- # make distcheck" rule just run (before this step).  This "make install" rule runs in a few seconds and is
- # not a bottleneck to the Hudson tests.
-   echo "Starting make install step (so we can save a installed copy for secondary tests)"
-   make -j8 install
-   echo "Done with make install step (so we can save a installed copy for secondary tests)"
+ # DQ (2/6/2010): Removed call to "make install"
 
    end_time_make_distcheck_seconds="$(date +%s)"
    elapsed_make_distcheck_time_seconds="$(expr $end_time_make_distcheck_seconds - $start_time_make_distcheck_seconds)"
