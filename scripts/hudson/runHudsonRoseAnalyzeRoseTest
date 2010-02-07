@@ -244,9 +244,11 @@ testAnalysis --help
 
 echo "Calling configure to build compile tree to build ROSE using ROSE."
 
+# DQ (2/6/2010): Separate tests confirm that we don't need to exclude the java and Fortran support from analysis via ROSE.
 # DQ (1/28/2010): Simplify the testing initially by skipping the Java support and Fortran support.
 # ../configure CXX=testAnalysis ${CONFIGURE_FLAGS}
-../configure CXX=testAnalysis --with-boost=/home/hudson-rose/tmp/opt/boost_1_37_0.gxx-4.2.4 --without-java
+# ../configure CXX=testAnalysis --with-boost=/home/hudson-rose/tmp/opt/boost_1_37_0.gxx-4.2.4 --without-java
+../configure CXX=testAnalysis --with-boost=/home/hudson-rose/tmp/opt/boost_1_37_0.gxx-4.2.4
 
 echo "Done with configure step to use ROSE to compile ROSE"
 
