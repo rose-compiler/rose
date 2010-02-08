@@ -337,7 +337,7 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
 
 
 int
-backendUsingOriginalInputFile ( SgProject* project )
+backendCompilesUsingOriginalInputFile ( SgProject* project )
    {
   // DQ (8/24/2009):
   // To work with existing makefile systems, we want to force an object file to be generated.
@@ -460,6 +460,33 @@ backendUsingOriginalInputFile ( SgProject* project )
         }
 
      return finalCombinedExitStatus;
+   }
+
+
+
+int
+backendGeneratesSourceCodeButCompilesUsingOriginalInputFile ( SgProject* project )
+   {
+  // DQ (2/6/2010): This function is a step between calling the backend()
+  // and calling backendCompilesUsingOriginalInputFile().  It it used
+  // the test the generation of the source code, but not the compilation of
+  // it using the backend (vendor) compiler.  This is used to test ROSE.
+
+  // Users are likely to either want to use backend() to generate the source 
+  // code for there project and it compiled (e.g. for optimization) or call
+  // backendCompilesUsingOriginalInputFile() to process the input code and
+  // then generate object files or executables from the original code 
+  // (e.g for analysis).
+
+  // This instance of complexity is why this needs to be a separate backend function.
+  // Note that file->get_skip_unparse() will be false when the "-E" option, and
+  // the unparse() function will properly assert that it should be true.
+     if (project->get_skip_unparse() == false)
+        {
+          project->unparse();
+        }
+
+     return backendCompilesUsingOriginalInputFile(project);
    }
 
 

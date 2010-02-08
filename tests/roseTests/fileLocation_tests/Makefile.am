@@ -23,6 +23,7 @@ test_CplusplusMacro_Cpp.C \
 test2001_01.C \
 test2001_02.C \
 test2001_03.C \
+test2001_04.C \
 test2001_05.C \
 test2001_06.C \
 test2001_07.C \
@@ -31,8 +32,6 @@ test2001_09.C \
 test2001_10.C \
 test2001_11.C 
 
-# test2001_04.C
-
 # This is only supposed to be a cross section of codes.
 # LONG_LIST_TESTCODES_REQUIRED_TO_PASS =
 TESTCODES_REQUIRED_TO_PASS = \
@@ -40,6 +39,7 @@ test_CplusplusMacro_Cpp.C \
 test2001_01.C \
 test2001_02.C \
 test2001_03.C \
+test2001_04.C \
 test2001_05.C \
 test2001_06.C \
 test2001_07.C \
@@ -152,6 +152,7 @@ test2004_55.C \
 test2004_56.C \
 test2004_58.C \
 test2004_59.C \
+test2004_60.C \
 test2004_61.C \
 test2004_62.C \
 test2004_63.C \
@@ -409,6 +410,7 @@ test2005_160.C \
 test2005_161.C \
 test2005_162.C \
 test2005_163.C \
+test2005_164.C \
 test2005_165.C \
 test2005_166.C \
 test2005_167.C \
@@ -587,7 +589,6 @@ math.C \
 inputForLoopLocator.C
 
 # This fails but is being fixed by Cong.
-# test2001_04.C
 # test2004_60.C
 # test2005_164.C
 # test2005_188.C
@@ -663,4 +664,4 @@ cleandata:
 
 
 
-EXTRA_DIST = CMakeLists.txt
+EXTRA_DIST = CMakeLists.txt input_fileLocationRose.C
