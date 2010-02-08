@@ -272,9 +272,7 @@ sub git {
       push @$output, $_;
     }
     close F or return;
-  }
-
-  if ($cmd) {
+  } elsif ($cmd) {
     system $cmd and return;
   } else {
     system @cmd and return;
@@ -283,10 +281,10 @@ sub git {
 }
 
 # Wrappers around git commands that return a single line. Return undef on failure rather than die.
-sub git1 { my @output; git \@output, {quiet=>1}, @_; return $output[0] }
-sub rev_parse { git1 "rev-parse", "-q", "--verify", ($_[0]||"HEAD") }
-sub symbolic_ref { git1 "symbolic-ref", "-q", ($_[0]||"HEAD") }
-sub merge_base { git1 "merge-base", @_ }
+sub git1 { my @output; git \@output, @_; return $output[0] }
+sub rev_parse { git1 {quiet=>1}, "rev-parse", "-q", "--verify", ($_[0]||"HEAD") }
+sub symbolic_ref { git1 {quiet=>1}, "symbolic-ref", "-q", ($_[0]||"HEAD") }
+sub merge_base { git1 {quiet=>1}, "merge-base", @_ }
 
 
 # Try to find a branch that matches the current (possibly detached) HEAD, and switch to it.
@@ -385,7 +383,7 @@ sub do_branch {
 
     execute sub {
       my($path) = @_;
-      my($rev) = git1 {cd=>".."}, "rev-parse $head_sha1:$path" or die;
+      my($rev) = git1 {cd=>".."}, "rev-parse", "$head_sha1:$path" or die;
       my(@gitargs) = ($newbranch, $rev);
       unshift @gitargs, "--track" if $track;
       unshift @gitargs, "--no-track" if defined($track) && !$track;
@@ -422,7 +420,7 @@ sub do_checkout {
     if ($path eq ".") {
       push @gitargs, $startpoint;
     } else {
-      my($sha1) = git1 {cd=>".."}, "rev-parse $startpoint:$path" or die;
+      my($sha1) = git1 {cd=>".."}, "rev-parse", "$startpoint:$path" or die;
       push @gitargs, $sha1;
     }
     git "checkout", @gitargs or die;
@@ -551,7 +549,7 @@ sub do_merge {
     my($path) = @_;
     my($rev) = $remote;
     if ($path ne ".") {
-      $rev = git1 {cd=>".."}, "rev-parse $remote:$path" or die;
+      $rev = git1 {cd=>".."}, "rev-parse", "$remote:$path" or die;
     }
     my @gitargs;
     push @gitargs, "--no-commit" if $path eq ".";
