@@ -154,7 +154,7 @@ start_time_make_seconds="$(date +%s)"
 
 echo "Test compile step"
 
-make -j8
+make -j16
 # sleep 5
 
 if [ $? -ne 0 ]  ; then
