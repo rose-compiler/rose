@@ -7,30 +7,132 @@ it just executes the given command in each submodule directory and then
 in the top-level ROSE repository. It can be invoked from any directory
 under ROSE (either in the ROSE repository or one of the submodules).
 
-A few git commands get special handling by this script:
-   clone          Takes the same arguments and switches as for Git
-                  but also initializes and updates submodules. The
-                  user is given a chance to change the URLs for the
-                  submodules before they're updated if the --edit
-                  switch is specified.
+SPECIAL COMMANDS
 
-   checkout       Checks out a branch in the main repo and all
-                  submodules, taking the same arguments and switches
-                  as for Git.  If the "-b" switch is specified then
-                  the branch is created in the same way as the "branch"
-                  command described below.
+A few git commands get special handling by this script in order to
+restrict their functionality or to extend it to do something more
+useful in an environment with submodules.
 
-   branch         Lists, creates, or deletes branches taking the
-                  same arguments and switches as Git.  When creating
-                  a new branch the specified branch head (if any)
-                  is the one defined in the main ROSE repository.
-                  The head of the new branch in the submodules will
-                  be chosen according to the commit registered in
-                  the branch head of the main ROSE repository.
+   clone        After cloning the main repository, it initializes
+                submodules, gives the user a chance to change
+                their URLs (if the --edit switch is given), and
+                then updates the submodules.
+
+                These switches are supported: --edit (not a Git
+                switch, but controls whether the user is given
+                a chance to modify submodule URLs), --quiet,
+                --verbose, --no-hardlinks, --branch, --templates,
+                and --upload-pack.
+
+                The following switches don't make sense in this
+                environment: --shared, --reference, --no-checkout,
+                --bare, --mirror, --origin, --depth.  The switch
+                --recursive is not accepted since the behavior is
+                to always recurse into submodules.
+
+   checkout     Checks out the specified branch (after optionally
+                creating it) in the main repo and then updates all
+                submodules. Furthermore, if a submodule has a
+                suitable branch, that branch will be checked out in
+                the submodule. See CHOOSING SUBMODULE BRANCHES for
+                details.
+
+                These switches are supported: --quiet, -b, --track,
+                --no-track, and -l.
+
+                The following switches don't make sense in this
+                environment: --force, --ours, --theirs, --merge,
+                --conflict, and --patch.
+
+   branch       Lists, creates, deletes or renames branches in the
+                main repository and all submodules.  When creating
+                a new branch the specified branch head (if any)
+                is the one defined in the main ROSE repository. The
+                head of the new branch in the submodules will be
+                chosen according to the commit registered in the
+                branch head of the main ROSE repository.  In other
+                words, in the main repository "newbranch" will
+                point to the same commit as "base", while in the
+                submodule, "newbranch" will be created to point to
+                the commit that is referenced by the submodule
+                directory in the "base" commit of the main repository.
+
+                   $ smgit branch newbranch base
+
+                All git-branch switches are supported, namely: -d, -D,
+                -l, -f, -m, -M, --color, -r, -a, --verbose, --abbrev,
+                --track, --contains, --merged, and --no-merged.
+
+   commit       Commits changes that are staged for committal, first
+                in the submodules and then in the main repository,
+                using a single commit message.
+
+                These switches are supported: --all, --reuse-message,
+                --reedit-message, --reset-author, --file, --author,
+                --message, --templates, --signoff, --no-verify,
+                --cleanup, --edit, --untracked-files, --verbose,
+                and --quiet.
+
+                These switches are not supported since they either
+                don't make sense in this environment or are difficult
+                to implement: --allow-empty, --amend, and --dry-run.
+
+   merge        Merges one branch into another by first merging in
+                the main repositor (ignoring conflicts for the time
+                being), then merging in the submodules, then adding
+                new submodule versions to the main repository, then
+                committing the changes in the main repository if
+                necessary and possible.
+
+                These switches are supported to varying degrees: --ff,
+                --no-ff, --log, --no-log, --stat, --no-stat, -n,
+                --ff-only, --quiet, --verbose, and -m.
+
+                These switches are not supported: --commit, --no-commit,
+                --squash and --no-squash. The default is that merges are
+                always committed.
+
+CHOOSING SUBMODULE BRANCHES
+
+When a branch is checked out in the main repository, we update the
+submodules so their heads are pointing to the commit specified in the
+main repository.  Furthermore, if a submodule has a suitable branch,
+we check out that branch in the submodule rather than leaving the head
+in a detached state.  If the parent's branch name is B and the parent
+is pointing to submodule commit C, then here's how the branch is
+chosen in a submodule:
+
+   1. If the submodule has a branch named B that is pointing to
+      commit C, then we check out branch B.
+
+   2. Otherwise, if the submodule has a branch named origin/B
+      that points to commit C, we do one of the following if
+      their preconditions are met:
+
+         A. If the submodule has no branch named B then
+            branch B is created as a tracking branch of
+            origin/B and is checked out.
+
+         B. If branch B exists and can be fast forwarded to
+            origin/B then we check out B and fast forward
+            to origin/B.
+
+   3. Otherwise, if the submodule has any local or remote branch
+      that points to commit C we arbitrarily choose one.  If the
+      chosen branch is a local branch we use case 1 above, otherwise
+      we use case 2 above.
+
+   4. Otherwise, the head of the submodule remains in a detached
+      state.
+
+OTHER COMMANDS
 
 All other commands are identical to Git and are executed first in
 the submodules and then in the main ROSE repository.
+
+These global switches are not supported:
 EOF
+$help =~ s/\n$//s;
 
 use Cwd;
 use File::Temp 'tempfile';
@@ -139,13 +241,21 @@ sub refs {
 }
 
 # Run arbitrary git command in CWD and optionally return all stdout as an array of chomped lines. Returns true
-# on success, false on failure.
+# on success, false on failure.  The command should be an array, one argument per element. Note that under certain
+# circumstances the array will be converted to a space-separated string and passed to the shell (this happens when
+# we're grabbing output to return or we specify a working directory).
 sub git {
   my($output) = shift @_ if 'ARRAY' eq ref $_[0];
   my($opts) = 'HASH' eq ref $_[0] ? shift @_ : {};
   my(@cmd,$cmd) = ("git", @_);
 
-  $cmd = "(cd $opts->{cd} && " . join(" ", @cmd) . ")" if $opts->{cd};
+  my $convert_to_string = sub { join " ", map {"'$_'"} @_ };
+
+  if ($opts->{cd}) {
+    $cmd ||= &{$convert_to_string}(@cmd);
+    $cmd = "(cd '$opts->{cd}' && $cmd)";
+  }
+
   unless ($opts->{quiet}) {
     if ($cmd ne "") {
       print "+ $cmd\n";
@@ -155,13 +265,17 @@ sub git {
   }
 
   if ($output) {
-    $cmd = join " ", @cmd if $cmd eq "";
+    $cmd ||= &{$convert_to_string}(@cmd);
     open F, "-|", $cmd or return;
     while (<F>) {
       chomp;
       push @$output, $_;
     }
     close F or return;
+  }
+
+  if ($cmd) {
+    system $cmd and return;
   } else {
     system @cmd and return;
   }
@@ -169,10 +283,10 @@ sub git {
 }
 
 # Wrappers around git commands that return a single line. Return undef on failure rather than die.
-sub git1 { my @output; git \@output, @_; return $output[0] }
-sub rev_parse { git1 {quiet=>1}, "rev-parse -q --verify", ($_[0]||"HEAD") }
-sub symbolic_ref { git1 {quiet=>1}, "symbolic-ref -q", ($_[0]||"HEAD") }
-sub merge_base { git1 {quiet=>1}, "merge-base", @_ }
+sub git1 { my @output; git \@output, {quiet=>1}, @_; return $output[0] }
+sub rev_parse { git1 "rev-parse", "-q", "--verify", ($_[0]||"HEAD") }
+sub symbolic_ref { git1 "symbolic-ref", "-q", ($_[0]||"HEAD") }
+sub merge_base { git1 "merge-base", @_ }
 
 
 # Try to find a branch that matches the current (possibly detached) HEAD, and switch to it.
@@ -290,7 +404,7 @@ sub do_branch {
 sub do_checkout {
   my($quiet,$mkbranch,$track,$create_reflog) = (1);
   GetOptionsFromArray(\@_,
-		      "q|quiet!"=>\$quiet, "f|force"=>\&unsupported, ours=>\&unsupported, theirs=>\&unsupported,
+		      "q|quiet"=>\$quiet, "f|force"=>\&unsupported, ours=>\&unsupported, theirs=>\&unsupported,
 		      "b=s"=>\$mkbranch, "t|track!"=>\$track, l=>\$create_reflog,
 		      "m|merge"=>\&unsupported, "conflict=s"=>\&unsupported, "p|patch"=>\&unsupported)
     or exit 1;
@@ -369,7 +483,6 @@ sub do_clone {
 }
 
 # Commits changes in the main ROSE repo and in the submodules.
-# FIXME: Some of Git's commit switches are not handled here; the "-a" and "-m" switches are the only ones that are.
 sub do_commit {
   my($all,$reuse,$reedit,$reset_author,$msgfile,$author,$message,$template,$signoff,$no_verify,$cleanup,$edit);
   my($untracked,$verbose,$quiet);
@@ -494,10 +607,10 @@ my %cmds = (branch      => \&do_branch,
             checkout    => \&do_checkout,
             clone       => \&do_clone,
             commit      => \&do_commit,
-            help        => sub {execute ["git", "help", @_]}, # no need to execute in submodules
+            help        => sub {execute sub {git "help", @ARGV}}, # no need to execute in submodules
             merge       => \&do_merge,
            );
 
 my $cmd = shift @ARGV;
-usage if $cmd =~ /^-/ || !$cmd;
+usage if $cmd =~ /^-/ || !$cmd || ($cmd eq "help" && 0==@ARGV);
 $cmds{$cmd} ? &{$cmds{$cmd}}(@ARGV) : postorder $cmd, @ARGV;
