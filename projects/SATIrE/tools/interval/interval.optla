@@ -368,19 +368,15 @@ binary(left, right, exp, state, context) =
                                  maxi(maxi(l1*r1, l1*r2), 
                                       maxi(l2*r1, l2*r2))), 
                                      ls);
-        DivideOp(_, _)  => if r1 != 0 && r2 != 0 then
-                              (ltup(mini(mini(l1/r1, l1/r2), 
-                                         mini(l2/r1, l2/r2)),
-                                    maxi(maxi(l1/r1, l1/r2), 
-                                         maxi(l2/r1, l2/r2))), ls)
+        DivideOp(_, _)  => if r1 <= 0 && r2 >= 0 then
+                               let x = maxi(maxi(abs(l1),abs(l2)),maxi(abs(r1),abs(r2)));
+                               in (ltup(-x, x), ls)
                            else
                               dontknow;
         IntegerDivideOp(_, _)
-                        => if r1 != 0 && r2 != 0 then
-                              (ltup(mini(mini(l1/r1, l1/r2), 
-                                         mini(l2/r1, l2/r2)),
-                                    maxi(maxi(l1/r1, l1/r2), 
-                                         maxi(l2/r1, l2/r2))), ls)
+                        => if r1 <= 0 && r2 >= 0 then
+                               let x = maxi(maxi(abs(l1),abs(l2)),maxi(abs(r1),abs(r2)));
+                               in (ltup(-x, x), ls)
                            else
                               dontknow;
         ModOp(_, _)     => (ltup(0, r2), ls);
@@ -620,11 +616,15 @@ op_assign_effects(state, exp, llifted, rlifted, context) =
           l1 <= llifted!1!2; l2 <= llifted!2!2;
       in case exp of
         MultAssignOp(_, _)  =>
-            updatestate(state, left, ltup(mini(l1*r1, l1*r2),
-                                          maxi(l2*r1, l2*r2)), context);
+            updatestate(state, left, ltup(mini(mini(l1*r1, l1*r2), 
+                                               mini(l2*r1, l2*r2)),
+                                          maxi(maxi(l1*r1, l1*r2), 
+                                               maxi(l2*r1, l2*r2))), context);
         DivAssignOp(_, _)   =>
-            updatestate(state, left, ltup(mini(l1/r1, l1/r2),
-                                          maxi(l2/r1, l2/r2)), context);
+                  if r1 <= 0 && r2 >= 0 then
+                      let x = maxi(maxi(abs(l1),abs(l2)),maxi(abs(r1),abs(r2)));
+                      in updatestate(state, left, ltup(-x, x), context)
+                  else updatestate(state, left, top, context);
         ModAssignOp(_, _)   =>
             updatestate(state, left, ltup(0, r2), context);
         LshiftAssignOp(_, _)=>
