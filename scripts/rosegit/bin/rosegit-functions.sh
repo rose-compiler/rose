@@ -227,6 +227,7 @@ rosegit_show_environment () {
     echo "Source tree:       $ROSEGIT_SRC"
     echo "Build tree:        $ROSEGIT_BLD"
     [ "$ROSEGIT_SRC" != "$ROSE_SRC" ] && echo "ROSE source tree:  $ROSE_SRC"
+    echo "Current HEAD:      $(git rev-parse HEAD)"
     echo "Software:"
     echo "    $(make --version |head -n1)"
     echo "    $(gcc --version |head -n1)"
