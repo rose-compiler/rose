@@ -576,7 +576,9 @@ sub do_merge {
     execute sub {
       my @gitargs;
       push @gitargs, "-F", ".git/MERGE_MSG" if -f ".git/MERGE_MSG";
-      git "commit", @gitargs or die;
+      if (commit_has_effect) {
+	git "commit", @gitargs or die;
+      }
     } or die "Fix conflicts, add to cache, and rerun $arg0 merge command (or commit manually).\n";
   }
 }
