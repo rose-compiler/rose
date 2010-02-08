@@ -34,8 +34,9 @@
 
 using namespace std;
 
-namespace StringUtility
-{
+// DQ (2/8/2010): I don't like namespaces used to define functions (too unclear).
+// namespace StringUtility
+// {
 
     namespace
     {
@@ -302,32 +303,32 @@ namespace StringUtility
             return false;
         }
 
-        FileNameLibrary
-        classifyLibrary(const string& fileName)
+StringUtility::FileNameLibrary
+     classifyLibrary(const string& fileName)
         {
-	    using namespace boost::filesystem;
+            using namespace boost::filesystem;
 
             if (charListMatches(LINUX_INCLUDES, "include/", fileName))
             {
-                return FILENAME_LIBRARY_LINUX;
+                return StringUtility::FILENAME_LIBRARY_LINUX;
             }
             if (charListMatches(GLIBC_INCLUDES, "include/", fileName))
             {
-                return FILENAME_LIBRARY_C;
+                return StringUtility::FILENAME_LIBRARY_C;
             }
             if (fileName.find("lib/gcc") != string::npos)
             {
-                return FILENAME_LIBRARY_GCC;
+                return StringUtility::FILENAME_LIBRARY_GCC;
             }
             if (fileName.find("boost") != string::npos)
             {
-                return FILENAME_LIBRARY_BOOST;
+                return StringUtility::FILENAME_LIBRARY_BOOST;
             }
             if (fileName.find("rose.h") != string::npos ||
-		fileName.find("include-staging/g++_HEADERS") != string::npos ||
-		fileName.find("include-staging/gcc_HEADERS") != string::npos)
+                fileName.find("include-staging/g++_HEADERS") != string::npos ||
+                fileName.find("include-staging/gcc_HEADERS") != string::npos)
             {
-                return FILENAME_LIBRARY_ROSE;
+                return StringUtility::FILENAME_LIBRARY_ROSE;
             }
 
 	    path p = fileName;
@@ -345,17 +346,15 @@ namespace StringUtility
 	    {
 		p = p.branch_path();
 		if(exists(p / path("rose.h")))
-		    return FILENAME_LIBRARY_ROSE;
+		    return StringUtility::FILENAME_LIBRARY_ROSE;
 	    }
-
-
 	    if (fileName.find("c++") != string::npos)
 	    {
 		const char ** substr = STL_INCLUDES;
 		while (*substr != NULL)
 		{
 		    if (endsWith(fileName, *substr))
-			return FILENAME_LIBRARY_STL;
+			return StringUtility::FILENAME_LIBRARY_STL;
 		    ++substr;
 		}
 	    }
@@ -366,7 +365,7 @@ namespace StringUtility
 		while (*substr != NULL)
 		{
 		    if (endsWith(fileName, *substr))
-			return FILENAME_LIBRARY_STDCXX;
+			return StringUtility::FILENAME_LIBRARY_STDCXX;
 		    ++substr;
 		}
 	    }
@@ -396,7 +395,7 @@ namespace StringUtility
 			++substr;
 		    }
 		    if(isCxxHeader)
-		        return FILENAME_LIBRARY_STDCXX;
+		        return StringUtility::FILENAME_LIBRARY_STDCXX;
 	        }
 	    }
 
@@ -412,12 +411,12 @@ namespace StringUtility
             }
 	    */
 
-            return FILENAME_LIBRARY_UNKNOWN;
+            return StringUtility::FILENAME_LIBRARY_UNKNOWN;
         }
-    } // end unnamed namespace for file location definitions
+   } // end unnamed namespace for file location definitions
 
     int
-    directoryDistance(const string& left, const string& right)
+StringUtility::directoryDistance(const string& left, const string& right)
     {
         vector<string> lvec;
         splitStringIntoStrings(left, '/', lvec);
@@ -440,8 +439,8 @@ namespace StringUtility
         return distance(l, lvec.end()) + distance(r, rvec.end());
     }
 
-    OSType
-    getOSType()
+StringUtility::OSType
+StringUtility::getOSType()
     {
 #if ROSE_MICROSOFT_OS
         string sysname;
@@ -466,7 +465,7 @@ namespace StringUtility
     }
 
     void
-    homeDir(string& dir)
+StringUtility::homeDir(string& dir)
     {
         const char* home = getenv("HOME");
 #ifdef _MSC_VER
@@ -478,8 +477,8 @@ namespace StringUtility
 
 	// Update FileNameInfo class with details about where the
     // file comes from and what library it might be a part of
-    FileNameClassification
-    classifyFileName(const string& fileName,
+StringUtility::FileNameClassification
+StringUtility::classifyFileName(const string& fileName,
                      const string& appPath)
     {
         return classifyFileName(fileName, appPath, getOSType());
@@ -487,8 +486,8 @@ namespace StringUtility
 
 	// Internal function to above public interface, this version
 	// is exposed just for testing purposes
-    FileNameClassification
-    classifyFileName(const string& fileName,
+StringUtility::FileNameClassification
+StringUtility::classifyFileName(const string& fileName,
                      const string& appPathConst, OSType os)
     {
 	// First, check if this file exists. Filename may be changed 
@@ -596,21 +595,23 @@ namespace StringUtility
                                                                "gcc",
                                                                "boost",
                                                                "rose" };    
-
-    const string
-    FileNameClassification::getLibraryName() const
+const string
+StringUtility::FileNameClassification::getLibraryName() const
     {
         ROSE_ASSERT(this);
         ROSE_ASSERT(library >= 0 && library < (int)FILENAME_NAMES_SIZE);
         return FILENAME_NAMES[library];
     }
 
-    const string
-    stripDotsFromHeaderFileName(const string& name)
-    {
-        if (name.empty() || (name[0] != '.' && name[0] != ' '))
-            return name;
-        return name.substr(name.find(" ") + 1);
-    }
+const string
+StringUtility::stripDotsFromHeaderFileName(const string& name)
+   {
+     if (name.empty() || (name[0] != '.' && name[0] != ' '))
+          return name;
+     return name.substr(name.find(" ") + 1);
+   }
 
-} // end namespace StringUtility
+ // end namespace StringUtility
+// }
+
+

@@ -81,7 +81,7 @@ dnl predefined by a specific compiler
   # Or support "roseAnalysis" as a backend which generates object files from the original source code.
   # DQ (1/28/2010): Added testAnalysis since this is the name of the executable build in ROSE/tests 
   # directory and used by ROSE to compile ROSE in the automated Hudson tests.
-    roseTranslator|roseCodeGeneration|roseAnalysis|testAnalysis)
+    roseTranslator|testTranslator|roseCodeGeneration|testCodeGeneration|roseAnalysis|testAnalysis)
            # macroString=" -D__GNUG__=$BACKEND_GCC_MAJOR -D__GNUC__=$BACKEND_GCC_MAJOR -D__GNUC_MINOR__=$BACKEND_GCC_MINOR -D__GNUC_PATCHLEVEL__=$BACKEND_GCC_PATCHLEVEL -D_GNU_SOURCE --preinclude rose_edg_macros_and_functions_required_for_gnu.h "
            # macroString="{\"-D__GNUG__=$BACKEND_GCC_MAJOR\", \"-D__GNUC__=$BACKEND_GCC_MAJOR\", \"-D__GNUC_MINOR__=$BACKEND_GCC_MINOR\", \"-D__GNUC_PATCHLEVEL__=$BACKEND_GCC_PATCHLEVEL\", \"-D_GNU_SOURCE\""
            # if test x$enable_new_edg_interface = xyes; then
@@ -111,8 +111,8 @@ dnl predefined by a specific compiler
              macroString="${macroString}}"
 
              compilerVendorName=GNU
-             echo "Support for ROSE roseTranslator|roseCodeGeneration|roseAnalysis|testAnalysis as a backend for compiling ROSE generated code \"$BACKEND_CXX_COMPILER\" ";
-             echo "Support for ROSE roseTranslator|roseCodeGeneration|roseAnalysis|testAnalysis as a backend for compiling ROSE generated code \"$macroString\" ";
+             echo "Support for ROSE roseTranslator|testTranslator|roseCodeGeneration|testCodeGeneration|roseAnalysis|testAnalysis as a backend for compiling ROSE generated code \"$BACKEND_CXX_COMPILER\" ";
+             echo "Support for ROSE roseTranslator|testTranslator|roseCodeGeneration|testCodeGeneration|roseAnalysis|testAnalysis as a backend for compiling ROSE generated code \"$macroString\" ";
              ;;
 
     *)
@@ -134,11 +134,10 @@ dnl predefined by a specific compiler
   AM_CONDITIONAL(USING_GNU_COMPILER,test "x$compilerVendorName" = xGNU)
 
 # DQ (1/27/2010): Setup automake conditionals so that we can optionally skip files in ROSE that don't compile.
-  AM_CONDITIONAL(ROSE_USING_ROSE,test "x$compilerName" = xroseTranslator || test "x$compilerName" = xroseAnalysis || test "x$compilerName" = xroseCodeGeneration || test "x$compilerName" = xtestAnalysis)
-  AM_CONDITIONAL(ROSE_USING_ROSE_TRANSLATOR,test "x$compilerName" = xroseTranslator)
-  AM_CONDITIONAL(ROSE_USING_ROSE_CODE_GENERATION,test "x$compilerName" = xroseCodeGeneration)
-  AM_CONDITIONAL(ROSE_USING_ROSE_ANALYSIS,test "x$compilerName" = xroseAnalysis)
-  AM_CONDITIONAL(ROSE_USING_ROSE_ANALYSIS,test "x$compilerName" = xtestAnalysis)
+  AM_CONDITIONAL(ROSE_USING_ROSE,test "x$compilerName" = xroseTranslator || test "x$compilerName" = xtestTranslator || test "x$compilerName" = xroseCodeGeneration || test "x$compilerName" = xtestCodeGeneration || test "x$compilerName" = xroseAnalysis || test "x$compilerName" = xtestAnalysis)
+  AM_CONDITIONAL(ROSE_USING_ROSE_TRANSLATOR,test "x$compilerName" = xroseTranslator || test "x$compilerName" = xtestTranslator)
+  AM_CONDITIONAL(ROSE_USING_ROSE_CODE_GENERATION,test "x$compilerName" = xroseCodeGeneration || test "x$compilerName" = xtestCodeGeneration)
+  AM_CONDITIONAL(ROSE_USING_ROSE_ANALYSIS,test "x$compilerName" = xroseAnalysis || test "x$compilerName" = xtestAnalysis)
 
   if test "x$compilerVendorName" = xIntel; then
    # using_intel_compiler=true
