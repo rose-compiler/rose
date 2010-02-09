@@ -2,7 +2,7 @@
 // -- vim: syntax=fula
 // -- ------------------------------------------------------------------------
 // -- Authors: Gergo Barany, 2006/2009 (original constprop/points-to info)
-// --          Adrian Prantl, 2008-2009 (interval extensions)
+// --          Adrian Prantl, 2008-2010 (interval extensions)
 // --          
 // -- Contact: adrian@complang.tuwien.ac.at
 // --
@@ -193,6 +193,9 @@ SUPPORT
 
 dup(a) = (a, a);
 duplift(a) = dup(lift(a));
+
+// -- create a "lifted tuple"
+ltup :: snum,snum -> itvl_Interval;
 ltup(a,b) = (lift(a), lift(b));
 
 eval :: Expression, itvl_State, ContextInfo -> itvl_IntervalStatePair;
@@ -363,28 +366,15 @@ binary(left, right, exp, state, context) =
           dontknow  ;
 
 
-        MultiplyOp(_, _)=> (ltup(mini(mini(l1*r1, l1*r2), 
-                                      mini(l2*r1, l2*r2)),
-                                 maxi(maxi(l1*r1, l1*r2), 
-                                      maxi(l2*r1, l2*r2))), 
-                                     ls);
-        DivideOp(_, _)  => if r1 <= 0 && r2 >= 0 then
-                               let x = maxi(maxi(abs(l1),abs(l2)),maxi(abs(r1),abs(r2)));
-                               in (ltup(-x, x), ls)
-                           else
-                              dontknow;
-        IntegerDivideOp(_, _)
-                        => if r1 <= 0 && r2 >= 0 then
-                               let x = maxi(maxi(abs(l1),abs(l2)),maxi(abs(r1),abs(r2)));
-                               in (ltup(-x, x), ls)
-                           else
-                              dontknow;
-        ModOp(_, _)     => (ltup(0, r2), ls);
-        LshiftOp(_, _)  => (ltup(l1<<unum(r1), l2<<unum(r2)), ls);
-        RshiftOp(_, _)  => (ltup(l1>>unum(r1), l2>>unum(r2)), ls);
-        BitAndOp(_, _)  => (and(l1, l2, r1, r2), ls);
-        BitOrOp(_, _)   => (ltup(l1 | r1, l2 | r2), ls);
-        BitXorOp(_, _)  => (xor(l1, l2, r1, r2), ls);
+        MultiplyOp(_, _)=> (multiply(l1,l2,r1,r2), ls);
+        DivideOp(_, _)  => dontknow;
+        IntegerDivideOp(_, _) => (divide(l1,l2,r1,r2), ls);
+        ModOp(_, _)     => (modulo(l1,l2,r1,r2), ls);
+        LshiftOp(_, _)  => (lshift(l1,l2,r1,r2), ls);
+        RshiftOp(_, _)  => (rshift(l1,l2,r1,r2), ls);
+        BitAndOp(_, _)  => (and(l1,l2,r1,r2), ls);
+        BitOrOp(_, _)   => (or(l1,l2,r1,r2), ls);
+        BitXorOp(_, _)  => (xor(l1,l2,r1,r2), ls);
 
         AndOp(_, _) => if constp then
                         (duplift(bool_int((l1 != 0) && (r1 != 0))), ls)
@@ -616,23 +606,17 @@ op_assign_effects(state, exp, llifted, rlifted, context) =
           l1 <= llifted!1!2; l2 <= llifted!2!2;
       in case exp of
         MultAssignOp(_, _)  =>
-            updatestate(state, left, ltup(mini(mini(l1*r1, l1*r2), 
-                                               mini(l2*r1, l2*r2)),
-                                          maxi(maxi(l1*r1, l1*r2), 
-                                               maxi(l2*r1, l2*r2))), context);
+            updatestate(state, left, multiply(l1, l2, r1, r2), context);
         DivAssignOp(_, _)   =>
-                  if r1 <= 0 && r2 >= 0 then
-                      let x = maxi(maxi(abs(l1),abs(l2)),maxi(abs(r1),abs(r2)));
-                      in updatestate(state, left, ltup(-x, x), context)
-                  else updatestate(state, left, top, context);
+            updatestate(state, left, divide(l1, l2, r1, r2), context);
         ModAssignOp(_, _)   =>
-            updatestate(state, left, ltup(0, r2), context);
+            updatestate(state, left, modulo(l1, l2, r1, r2), context);
         LshiftAssignOp(_, _)=>
-            updatestate(state, left, ltup(l1<<unum(r1), l2<<unum(r2)), context);
+            updatestate(state, left, lshift(l1, l2, r1, r2), context);
         RshiftAssignOp(_, _)=>
-            updatestate(state, left, ltup(l1>>unum(r2), l2>>unum(r1)), context);
+            updatestate(state, left, rshift(l1, l2, r1, r2), context);
         IorAssignOp(_, _)   =>
-            updatestate(state, left, ltup(l1 | r1, l2 | r2), context);
+            updatestate(state, left, or(l1, l2, r1, r2), context);
         AndAssignOp(_, _)   =>
             updatestate(state, left, and(l1, l2, r1, r2), context);
         XorAssignOp(_, _)   =>
@@ -1006,23 +990,83 @@ liftminus(a, b) = let aa <= a; bb <= b; in lift(aa - bb);
 liftplus :: cp_Const, cp_Const -> cp_Const;
 liftplus(a, b) = let aa <= a; bb <= b; in lift(aa + bb);
 
-// -- Lots of auxiliary bitwise functions.
-xor(a1, a2, b1, b2) =
- // -- If the sign bit is set on both intervals, the xor's result will be
- // -- non-negative. Otherwise, the lower limit is -inf.
-    if (a2 & b2) < 0 then
-        ltup(lowest_power_of_2(a1 | b1), next_higher_power_of_2(a2 | b2) - 1)
-    else
-        ltup(1 << unum(31), next_higher_power_of_2(a2 | b2) - 1);
+// -- Lots of auxiliary interval arithmetic functions.
 
-and(a1, a2, b1, b2) =
- // -- If the sign bit is not set on *both* intervals, the and's result will
- // -- be non-negative. We make wild guesses regarding the limits.
- // -- Otherwise, the result is negative, and we don't even try to be clever.
-    if a2 >= 0 || b2 >= 0 then
-        ltup(0, (1 << unum(31)) - 1)
-    else
-        ltup(1 << unum(31), -1);
+plus(a1,a2,b1,b2)  = ltup(a1+b1, a2+b2);
+minus(a1,a2,b1,b2) = ltup(a1-b2, a2-b1);
+multiply(a1,a2,b1,b2) = ltup(mini(mini(a1*b1, a1*b2), mini(a2*b1, a2*b2)),
+                             maxi(maxi(a1*b1, a1*b2), maxi(a2*b1, a2*b2)))
+;
+// -- Integer division /
+divide(a1,a2,b1,b2) = 
+    let x = maxi(maxi(abs(a1), abs(b1)),
+                 maxi(abs(a2), abs(b2)));
+    in ltup(-x, x)
+;
+
+// -- Modulo %
+modulo(a1,a2,b1,b2) = 
+    let bmax = maxi(abs(b1), abs(b2));
+    in if strict_equal_sign(a1,a2,b1,b2) then
+           if b1 > 0 then ltup(0, bmax -1)
+           else ltup(1-bmax, 0)
+       else ltup(1-bmax, bmax-1)
+;
+
+// -- Bitwise shift left <<
+lshift(a1,a2,b1,b2) = if a1<0 || b1<0 then top
+                      else ltup(a1 << unum(b1), a2 << unum(b2))
+;
+
+// -- Bitwise shift right >>
+// -- according to ISO C99 right-shift of a negative number is compiler-specific
+rshift(a1,a2,b1,b2) = if a1<0 || b1<0 then top
+                      else ltup(a1 >> unum(b2), a2 >> unum(b1))
+;
+
+// -- Bitwise and &
+and(a1,a2,b1,b2) =
+    if (a1=0 && a2=0) || (b1=0 && b2=0)
+    then ltup(0,0)
+    else or(a1,a2,b1,b2)
+;
+
+// -- Bitwise shift or |
+or(a1, a2, b1, b2) =
+    let x = next_higher_power_of_2(maxi(maxi(abs(a1), abs(b1)),
+                                        maxi(abs(a2), abs(b2))));
+    in if strict_positive(a1, a2, b1, b2) then
+           ltup(0, x-1) 
+       else ltup(-x,x-1)
+;
+
+// -- Bitwise shift xor ^
+xor(a1, a2, b1, b2) =
+    let amax = maxi(abs(a1), abs(a2));
+        bmax = maxi(abs(b1), abs(b2)); in
+    let x = next_higher_power_of_2(amax | bmax);
+    in if strict_equal_sign(a1, a2, b1, b2) then
+           ltup(0, x-1)
+       else ltup(-x,x-1)
+;
+
+// -- xor(a1, a2, b1, b2) =
+// -- // -- If the sign bit is set on both intervals, the xor's result will be
+// -- // -- non-negative. Otherwise, the lower limit is -inf.
+// --    if (a2 & b2) < 0 then
+// --        ltup(lowest_power_of_2(a1 | b1), next_higher_power_of_2(a2 | b2) - 1)
+// --    else
+// --        ltup(1 << unum(31), next_higher_power_of_2(a2 | b2) - 1);
+// -- 
+// -- and(a1, a2, b1, b2) =
+// -- // WRONG!
+// -- // -- If the sign bit is not set on *both* intervals, the and's result will
+// -- // -- be non-negative. We make wild guesses regarding the limits.
+// -- // -- Otherwise, the result is negative, and we don't even try to be clever.
+// --    if a2 >= 0 || b2 >= 0 then
+// --        ltup(0, (1 << unum(31)) - 1)
+// --    else
+// --        ltup(1 << unum(31), -1);
 
 complement(a1, a2) =
  // -- If the sign bit is set on the interval, the complement's sign bit is
@@ -1031,6 +1075,16 @@ complement(a1, a2) =
         ltup(0, (1 << unum(31)) - 1)
     else
         ltup(1 << unum(31), (1 << unum(31)) - 1);
+
+// -- return True if all values in both intervals have the same sign
+strict_equal_sign(a1,a2,b1,b2) =
+    (a1 > 0 && a2 > 0 && b1 > 0 && b2 > 0) ||
+    (a1 < 0 && a2 < 0 && b1 < 0 && b2 < 0)
+;
+
+strict_positive(a1,a2,b1,b2) = (a1 > 0 && a2 > 0 && b1 > 0 && b2 > 0);
+strict_negative(a1,a2,b1,b2) = (a1 < 0 && a2 < 0 && b1 < 0 && b2 < 0);
+
 
 lowest_bit :: snum -> unum;
 lowest_bit(0) = unum(0);
