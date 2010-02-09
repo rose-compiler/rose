@@ -147,6 +147,10 @@ test2009_46.C \
 test2009_47.C \
 test2010_01.C \
 test2010_02.C \
+test2010_03.C \
+test2010_04.C \
+test2010_05.C \
+test2010_06.C \
 longFile.C \
 certSignalExample.C
 
