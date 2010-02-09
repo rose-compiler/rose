@@ -622,14 +622,14 @@ public:
 	ComplexType(std::string name) { _name=name; }
 	ComplexType(std::string name,Type* type) { _name=name; push_back(type); }
 	bool isEqual(Type* other0) {
-           if(ComplexType* other=dynamic_cast<ComplexType*>(other0))
+	  if(ComplexType* other=dynamic_cast<ComplexType*>(other0)) {
 	     if(!(_name==other->_name && size()==other->size()))
 	     	return false;
 	     else
 	        for(std::vector<Type*>::iterator i=begin(),j=other->begin(); i!=end() && j!=other->end();i++,j++)
 	     	  if(!(*i)->isEqual(*j))
 		    return false;
-           else
+	  } else
              return false;
      	   return true;
 	}
