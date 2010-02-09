@@ -294,30 +294,43 @@ sub merge_base { git1 {quiet=>1}, "merge-base", @_ }
 #   (4) Otherwise, leave things as they are
 sub switch_to_branch {
   my($branch) = @_;
+  my($verbose) = 0; # set to 1 for debugging
   my $HEAD = rev_parse or die;
   my %refs = map {@$_} refs; # hash indexed by ref name
-  if ($refs{"refs/heads/$branch"} eq $HEAD) {
-    # Local branch exists and matches $HEAD, so use it.
-    git "checkout", "--quiet", $branch or die "$0: could not checkout $branch";
-    return;
-  } elsif ($refs{"refs/remotes/origin/$branch"} eq $HEAD) {
-    if ($refs{"refs/heads/$branch"}) {
-      if (merge_base("refs/heads/$branch", "refs/remotes/origin/$branch") eq $refs{"refs/heads/$branch"}) {
-        # Remote branch matches HEAD and local branch can be fast-forwarded.
-	git "checkout", "--quiet", $branch or die "$arg0: could not check out $branch";
-        git "merge", "refs/remotes/origin/$branch" or die "$arg0: could not merge origin/$branch";
-        return;
+
+  print "$arg0: switch_to_branch($branch) HEAD=$HEAD\n" if $verbose;
+
+  # List of candidate branches to try, in the order we want to try them: $branch, origin/$branch, local branches, remote branches
+  my @candidates;
+  push @candidates, "refs/heads/$branch" if $refs{"refs/heads/$branch"} eq $HEAD;
+  push @candidates, "refs/heads/remotes/origin/$branch" if $refs{"refs/heads/remotes/origin/$branch"} eq $HEAD;
+  push @candidates, grep {m(^refs/heads/) && $refs{$_} eq $HEAD} sort keys %refs;
+  push @candidates, grep {m(^refs/remotes/origin/) && $refs{$_} eq $HEAD} sort keys %refs;
+
+  for my $full (@candidates) {
+    print "  trying branch=$full ", $refs{$full}, "\n" if $verbose;
+    my($base) = $full =~ /([^\/]*)$/;
+
+    if ($full =~ m(^refs/remotes/origin/)) {
+      if ($refs{"refs/heads/$base"}) {
+	if (merge_base("refs/heads/$base", $full) eq $refs{"refs/heads/$base"}) {
+	  # Remote branch matches HEAD and local branch can be fast-forwarded.
+	  git "checkout", "--quiet", $base or die "$arg0: could not check out $base";
+	  git "merge", $full or die "$arg0: could not merge $full";
+	  return;
+	}
+      } else {
+	# Remote branch ($full) matches head and local branch ($base) does not exist; create it.
+	git "checkout", "--quiet", "-b", $base, $full or die;
+	return;
       }
-    } elsif ($branch) {
-      # Remote branch matches head and local branch does not exist; create it.
-      git "checkout", "--quiet", "-b", $branch, "refs/remotes/origin/$branch" or die;
+    } else {
+      # $full is a local branch that matches $HEAD, so use it.
+      git "checkout", "--quiet", $base or die "$arg0: could not checkout $base";
       return;
     }
   }
-
-  # Choose any other local or remote branch that points to HEAD
-  ($branch) = map {/([^\/]+)$/} grep {m(^refs/(heads|remotes/origin)/) && $refs{$_} eq $HEAD} keys %refs;
-  switch_to_branch($branch) if $branch;
+  print "  head is detached (no suitable branch found)\n" if $verbose;
 }
 
 # Execute the supplied code for each submodule. The list of submodules are the same format as returned by &submodules.
