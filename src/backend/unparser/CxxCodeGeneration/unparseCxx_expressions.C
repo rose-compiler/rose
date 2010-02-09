@@ -1870,10 +1870,10 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
      string func_name = mfunc_ref->get_symbol()->get_name().str();
 
 #if 0
-     printf ("func_name before processing to extract operator substring = %s \n",func_name);
+     printf ("func_name before processing to extract operator substring = %s \n",func_name.c_str());
 
      printf ("unp->opt.get_overload_opt()                            = %s \n",(unp->opt.get_overload_opt() == true) ? "true" : "false");
-     printf ("strncmp(func_name, \"operator\", 8)                 = %d \n",strncmp(func_name, "operator", 8));
+     printf ("strncmp(func_name, \"operator\", 8)                 = %d \n",strncmp(func_name.c_str(), "operator", 8));
      printf ("print_colons                                      = %s \n",(print_colons == true) ? "true" : "false");
      printf ("mfd->get_specialFunctionModifier().isConversion() = %s \n",(mfd->get_specialFunctionModifier().isConversion() == true) ? "true" : "false");
 #endif
@@ -1889,8 +1889,9 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
         {
           func_name = func_name.substr(8);
         }
-
-  // printf ("func_name after processing to extract operator substring = %s (diff = %d) \n",func_name,diff);
+#if 0
+     printf ("func_name after processing to extract operator substring = %s \n",func_name.c_str());
+#endif
 
      if( func_name == "[]" ) 
         {
@@ -2002,12 +2003,16 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
                        }
                       else
                        {
-                         curprint ( func_name);
+                      // DQ (2/9/2010): Fix for test2010_03.C
+                      // curprint (func_name);
+                         curprint (string(" ") + func_name + " ");
                        }
                   }
                  else
                   {
-                    curprint ( func_name);
+                 // DQ (2/9/2010): This does not fix test2010_03.C, but defines a uniform handling as in the fix above.
+                 // curprint (func_name);
+                    curprint (string(" ") + func_name + " ");
                   }
 
 #if 0
