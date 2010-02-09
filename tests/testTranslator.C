@@ -9,6 +9,18 @@ int main( int argc, char * argv[] )
   // AST consistency tests (optional for users, but this enforces more of our tests)
      AstTests::runAllTests(project);
 
+#if 1
+  // Output an optional graph of the AST (just the tree, when active)
+     generateDOT ( *project );
+#endif
+
+#if 0
+  // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
+     const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 8000;
+     generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);
+#endif
+
+
   // regenerate the source code and call the vendor 
   // compiler, only backend error code is reported.
      return backend(project);

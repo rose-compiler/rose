@@ -135,5 +135,5 @@ check-local:
 	@echo "***********************************************************************************************"
 
 clean-local:
-	rm -f a.out *.o rose_*.[cC] roseTestProgram.C
+	rm -f a.out *.o rose_*.[cC] roseTestProgram.C *.dot
 	rm -rf QMTest

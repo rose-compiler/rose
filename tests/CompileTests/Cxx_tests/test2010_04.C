@@ -102,6 +102,7 @@ private:
 /* Frightening order-of-operations change */
 void bug2(int *locDom, globalID div, int mod)
 {
+// globalID startElem = locDom[0]*div + ((locDom[0] < mod) ? locDom[0] : mod) ;
    globalID startElem = locDom[0]*div + ((locDom[0] < mod) ? locDom[0] : mod) ;
 }
 

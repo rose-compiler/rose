@@ -3111,8 +3111,28 @@ void Unparse_ExprStmt::unparseExprCond(SgExpression* expr, SgUnparse_Info& info)
      ROSE_ASSERT(expr_cond != NULL);
   /* code inserted from specification */
 
-     int toplevel_expression = !info.get_nested_expression();
+#if 0
+     printf ("In unparseExprCond(): info.get_nested_expression() = %d \n",info.get_nested_expression());
+#endif
+
+  // int toplevel_expression = !info.get_nested_expression();
+     bool toplevel_expression = (info.get_nested_expression() == 0);
+
+  // DQ (2/9/2010): Added code to reset if we are in a top level expression (see test2010_04.C).
+  // Detecting the nesting level is not enough since the SgDotExp does not set this.  So check the parents.
+     SgNode* parentNode = expr->get_parent();
+  // printf ("parentNode = %p = %s \n",parentNode,parentNode->class_name().c_str());
+     if (isSgExprListExp(parentNode) != NULL && toplevel_expression == true)
+        {
+       // printf ("Resetting toplevel_expression to false \n");
+          toplevel_expression = false;
+        }
+
      info.set_nested_expression();
+
+#if 0
+     printf ("In unparseExprCond(): toplevel_expression = %d \n",toplevel_expression);
+#endif
 
 #if 0
   // DQ (10/25/2004): Not clear what this is about???
