@@ -313,7 +313,7 @@ touch stamp-h.in  || : exit 1
 touch stamp-h1.in || : exit 1
 
 # Add some dynamically-generated targets that run tests on various sample binaries.
-(cd $ROSE_DISTRIBUTION && ./scripts/sample_binary_rules.pl)
+(cd $ROSE_DISTRIBUTION && ./scripts/sample_binary_rules.pl) || exit 1
 
 # Do the same steps in libltdl
 # (cd libltdl && aclocal && automake --add-missing && autoconf)
