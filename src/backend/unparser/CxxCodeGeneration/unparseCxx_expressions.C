@@ -1518,7 +1518,7 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
      printf ("In Unparse_ExprStmt::unparseVarRef(): SgInitializedName scope = %p qualified name = %s \n",theName->get_scope(),theName->get_scope()->get_qualified_name().str());
 #endif
 
-#if 1
+#if 0
   // DQ (2/8/2010): Debugging code.
      var_ref->get_startOfConstruct()->display("Inside of unparseVarRef");
 #endif
@@ -1883,11 +1883,11 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
   // check that this an operator overloading function and that colons were not printed
   // if (!unp->opt.get_overload_opt() && !strncmp(func_name, "operator", 8) && !print_colons)
      if (!unp->opt.get_overload_opt() &&
-	 func_name.size() >= 8 && func_name.substr(0, 8) == "operator" && 
+          func_name.size() >= 8 && func_name.substr(0, 8) == "operator" && 
          !print_colons && 
          !mfd->get_specialFunctionModifier().isConversion())
         {
-	  func_name = func_name.substr(8);
+          func_name = func_name.substr(8);
         }
 
   // printf ("func_name after processing to extract operator substring = %s (diff = %d) \n",func_name,diff);
