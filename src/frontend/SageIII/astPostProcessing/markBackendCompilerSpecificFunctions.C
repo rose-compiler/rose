@@ -47,6 +47,7 @@ MarkBackendSpecificFunctionsAsCompilerGenerated::MarkBackendSpecificFunctionsAsC
                          string rawFileName         = node->get_file_info()->get_raw_filename();
                          string filenameWithoutPath = StringUtility::stripPathFromFileName(rawFileName);
 
+#ifndef USE_ROSE
                       // DQ (3/6/2006): Note that SgGlobal will not have an associated 
                       // filename and so will not trigger the targetFile to be set.
                       // printf ("targetFileName      = %s \n",targetFileName.c_str());
@@ -56,6 +57,7 @@ MarkBackendSpecificFunctionsAsCompilerGenerated::MarkBackendSpecificFunctionsAsC
                               targetFileInfo = new Sg_File_Info(rawFileName.c_str());
                               ROSE_ASSERT(targetFileInfo != NULL);
                             }
+#endif
                        }
 
                   }

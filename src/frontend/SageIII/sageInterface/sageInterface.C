@@ -41,7 +41,7 @@ using namespace std;
 using namespace SageBuilder;
 
 int SageInterface::gensym_counter = 0;
- 
+
 // DQ: 09/23/03
 // We require a global function for getting the string associated 
 // with the definition of a variant (which is a global enum).
@@ -2904,6 +2904,8 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
    }
 
 
+// #ifndef USE_ROSE
+
 void
 SageInterface::fixupReferencesToSymbols( const SgScopeStatement* this_scope,  SgScopeStatement* copy_scope, SgCopyHelp & help )
    {
@@ -3051,6 +3053,9 @@ SageInterface::fixupReferencesToSymbols( const SgScopeStatement* this_scope,  Sg
 #endif
    }
 
+// #endif
+
+#ifndef USE_ROSE
 
 std::vector<SgFile*>
 SageInterface::generateFileList()
@@ -3086,6 +3091,10 @@ SageInterface::generateFileList()
      ROSE_ASSERT(fileTraversal.fileList.empty() == false);
      return fileTraversal.fileList;
    }
+
+#endif
+
+// #ifndef USE_ROSE
 
 // This function uses a memory pool traversal specific to the SgProject IR nodes
 SgProject*
@@ -3315,6 +3324,8 @@ bool SageInterface::is_mixed_Fortran_and_C_and_Cxx_language()
      return is_Fortran_language() && is_C_language() && is_Cxx_language();
    }
 
+// #endif
+
 // DQ (10/5/2006): Added support for faster (non-quadratic) computation of unique 
 // labels for scopes in a function (as required for name mangling).
 void
@@ -3329,6 +3340,8 @@ SageInterface::clearScopeNumbers( SgFunctionDefinition* functionDefinition )
      ROSE_ASSERT(scopeMap.empty() == true);
      ROSE_ASSERT(functionDefinition->get_scope_number_list().empty() == true);
    }
+
+#ifndef USE_ROSE
 
 // DQ (10/5/2006): Added support for faster (non-quadratic) computation of unique 
 // labels for scopes in a function (as required for name mangling).
@@ -3383,6 +3396,9 @@ SageInterface::resetScopeNumbers( SgFunctionDefinition* functionDefinition )
        traversal.traverse(functionDefinition, preorder);
    }
 
+#endif
+
+#ifndef USE_ROSE
 
 #if 0
 // DQ (6/26/2007): These are removed and the support is added to SgNode to support a single mangled name cache.
@@ -3574,6 +3590,10 @@ SageInterface::addMangledNameToCache( SgNode* astNode, const std::string & oldMa
      return mangledName;
    }
 
+
+// #endif
+
+#ifndef USE_ROSE
 
 bool
 SageInterface::declarationPreceedsDefinition ( SgDeclarationStatement* nonDefiningDeclaration, SgDeclarationStatement* definingDeclaration )
@@ -3917,6 +3937,9 @@ SageInterface::functionCallExpressionPreceedsDeclarationWhichAssociatesScope ( S
      return returnResult;
    }
 
+#endif
+
+// #ifndef USE_ROSE
 
 string
 SageInterface::generateProjectName( const SgProject* project, bool supressSuffix )
@@ -3992,6 +4015,10 @@ SageInterface::generateProjectName( const SgProject* project, bool supressSuffix
 
      return projectName;
    }
+
+// #endif
+
+// #ifndef USE_ROSE
 
 SgFunctionSymbol*
 SageInterface::lookupFunctionSymbolInParentScopes(const SgName & functionName, SgScopeStatement* currentScope )
@@ -4948,6 +4975,7 @@ SgInitializer* SageInterface::getInitializerOfExpression(SgExpression* n) {
   return isSgInitializer(n);
 }
 
+#ifndef USE_ROSE
 // Get all symbols used in a given expression
 vector<SgVariableSymbol*> SageInterface::getSymbolsUsedInExpression(SgExpression* expr) {
  class GetSymbolsUsedInExpressionVisitor: public AstSimpleProcessing {
@@ -4964,6 +4992,7 @@ vector<SgVariableSymbol*> SageInterface::getSymbolsUsedInExpression(SgExpression
   vis.traverse(expr, preorder);
   return vis.symbols;
 }
+#endif
 
 SgFunctionDefinition* SageInterface::getEnclosingProcedure(SgNode* n, bool includingSelf)
 {
@@ -5002,6 +5031,10 @@ SageInterface::getEnclosingFunctionDeclaration (SgNode * astNode,bool includingS
   else return isSgFunctionDeclaration(astnode);
 #endif 
 }
+
+// #endif
+
+// #ifndef USE_ROSE
 
  SgGlobal* SageInterface::getGlobalScope( const SgNode* astNode)
  {
@@ -5056,6 +5089,8 @@ void SageInterface::removeStatement(SgStatement* stmt)
   LowLevelRewrite::remove(stmt);
 }
 
+
+#ifndef USE_ROSE
 //! Deep delete a sub AST tree. It uses postorder traversal to delete each child node.
 void SageInterface::deepDelete(SgNode* root)
 {
@@ -5066,6 +5101,7 @@ void SageInterface::deepDelete(SgNode* root)
     };
   Visitor().traverse(root, postorder);
 }
+#endif
 
 //! Replace a statement with another
 void SageInterface::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt, bool movePreprocessinInfo/* = false*/)
@@ -5266,6 +5302,7 @@ bool SageInterface::isEqualToIntConst(SgExpression* e, int value) {
   return result;
 }
 
+#ifndef USE_ROSE
 //-----------------------------------------------
 // Remove original expression trees from expressions, so you can change
 // the value and have it unparsed correctly.
@@ -5281,7 +5318,7 @@ void SageInterface::removeAllOriginalExpressionTrees(SgNode* top) {
   };
   Visitor().traverse(top, preorder);
 }
-
+#endif
 
 SgSwitchStatement* SageInterface::findEnclosingSwitch(SgStatement* s) {
   while (s && !isSgSwitchStatement(s)) {
@@ -5322,6 +5359,7 @@ SgScopeStatement* SageInterface::findEnclosingLoop(SgStatement* s, const std::st
   return NULL;
 }
 
+#ifndef USE_ROSE
 void SageInterface::removeJumpsToNextStatement(SgNode* top)
 {
  class RemoveJumpsToNextStatementVisitor: public AstSimpleProcessing {
@@ -5358,6 +5396,7 @@ void SageInterface::removeJumpsToNextStatement(SgNode* top)
   RemoveJumpsToNextStatementVisitor().traverse(top, postorder);
 
 }
+#endif
 
 // special purpose remove for AST transformation/optimization from astInliner, don't use it otherwise. 
 void SageInterface::myRemoveStatement(SgStatement* stmt) {
@@ -5381,6 +5420,7 @@ void SageInterface::myRemoveStatement(SgStatement* stmt) {
 }
 
 
+#ifndef USE_ROSE
 // Remove all unused labels in a section of code.
 void SageInterface::removeUnusedLabels(SgNode* top) {
 
@@ -5418,7 +5458,7 @@ class FindUsedAndAllLabelsVisitor: public AstSimpleProcessing {
     myRemoveStatement(*i);
   }
 }
-
+#endif
 
   SgStatement* SageInterface::getLoopBody(SgScopeStatement* loopStmt) {
     if (isSgWhileStmt(loopStmt)) return isSgWhileStmt(loopStmt)->get_body();
@@ -5869,6 +5909,10 @@ static size_t myfactorial (size_t n)
     result*=i;
   return result;  
 }
+
+#endif
+
+#ifndef USE_ROSE
 
 //! A helper function to return a permutation order for n elements based on a lexicographical order number
 std::vector<size_t> getPermutationOrder( size_t n, size_t lexicoOrder)
@@ -11145,3 +11189,4 @@ void SageInterface::constantFolding(SgNode* r)
   ConstantFolding::constantFoldingOptimization(r,false);
 }
 
+#endif
