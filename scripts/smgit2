@@ -349,6 +349,18 @@ sub execute {
   }
 }
 
+# Executes a command in every submodule and then the top ROSE repo regardless of whether any command fails. Exits
+# nonzero if any command exited with nonzero status.
+sub postorder {
+  my @args = @_; # for closures
+  my $exit;
+  for my $sm (submodules, undef) {
+    eval { execute sub {git @args}, $sm };
+    $exit ||= $@;
+  }
+  exit 1 if $exit;
+}
+
 # Saves the commit message in a temporary file and returns its name.
 sub save_commit_message {
   my($commit) = @_;
@@ -549,10 +561,11 @@ sub do_merge {
   my(@args) = @_;
   my($unused,$allow_ff,$log,$diffstat,$ff_only,$quiet,$verbose,$message);
   GetOptionsFromArray(\@_,
-		      "commit!"=>\&unsupported, "ff!"=>\$allow_ff, "log!"=>\$log, "stat!"=>\$diffstat,
-		      "n"=>sub {$diffstat=0}, "squash"=>\&unsupported, "no-squash"=>\$unused,
-		      "ff-only"=>\$ff_only, "s|strategy"=>\&unsupported, "q|quiet"=>\$quiet,
-		      "v|verbose"=>\$verbose, "m=s"=>\$message) or exit 1;
+		      "no-commit"=>\&unsupported, "commit"=>\$unused, "ff!"=>\$allow_ff,
+		      "log!"=>\$log, "stat!"=>\$diffstat, "n"=>sub {$diffstat=0},
+		      "squash"=>\&unsupported, "no-squash"=>\$unused, "ff-only"=>\$ff_only,
+		      "s|strategy"=>\&unsupported, "q|quiet"=>\$quiet, "v|verbose"=>\$verbose,
+		      "m=s"=>\$message) or exit 1;
   die "$arg0: merge: incorrect usage\n" unless @_;
   die "$arg0: merge: octopuses are not allowed\n" if @_>1;
   my $remote = $_[0];
@@ -594,16 +607,74 @@ sub do_merge {
   }
 }
 
-# Executes a command in every submodule and then the top ROSE repo regardless of whether any command fails. Exits
-# nonzero if any command exited with nonzero status.
-sub postorder {
-  my @args = @_; # for closures
-  my $exit;
-  for my $sm (submodules, undef) {
-    eval { execute sub {git @args}, $sm };
-    $exit ||= $@;
+# Similar to git-pull: essentially a fetch and merge.
+sub do_pull {
+  my($allow_ff,$log,$diffstat,$unused,$ff_only,$quiet,$verbose,$all,$append,$force,$keep,$tags,$upload_pack);
+  GetOptionsFromArray(\@_,
+		      "no-commit"=>\&unsupported, "commit"=>\$unused, "ff!"=>\$allow_ff,
+		      "log!"=>\$log, "stat!"=>\$diffstat, "n"=>sub {$diffstat=0},
+		      "squash"=>\&unsupported, "no-squash"=>\$unused, "ff-only"=>\$ff_only,
+		      "s|strategy=s"=>\&unsupported, "q|quiet"=>\$quiet, "v|verbose"=>\$verbose,
+		      "rebase!"=>\&unsupported,
+		      "all"=>\$all, "a|append"=>\$append, "depth"=>\&unsupported, "f|force"=>\$force,
+		      "k|keep"=>\$keep, "t|tags!"=>\$tags, "u|update-head-ok"=>\&unsupported,
+		      "upload-pack=s"=>\$upload_pack) or exit 1;
+  die "$arg0: pull: incorrect usage\n" unless @_ <= 2;
+  my($repo,$refspec) = @_;
+
+  # Fetch
+  my @fargs;
+  push @fargs, "--all" if $all;
+  push @fargs, "--append" if $append;
+  push @fargs, "--force" if $force;
+  push @fargs, "--keep" if $keep;
+  push @fargs, "--tags" if $tags;
+  push @fargs, "--no-tags" if !$tags && defined $tags;
+  push @fargs, "--upload-pack", $upload_pack if $upload_pack;
+  push @fargs, $repo if defined $repo;
+  push @fargs, $refspec if defined $refspec;
+  postorder "fetch", @fargs; # exits on failure
+
+  # What to merge?  We're basically reimplementing a good chunk of the git-pull logic here. Unfortunately we can't
+  # use git-pull directly because we need to be careful of the order we merge the submodules -- see do_merge() for details.
+  my($branch) = symbolic_ref =~ m(refs/heads/([^\/]+)$);
+  die "$arg0: not on any branch" unless $branch;
+  $repo ||= git1({quiet=>1}, "config", "--get", "branch.$branch.remote") || "origin";
+  $refspec ||= git1({quiet=>1}, "config", "--get", "branch.$branch.merge");
+  my $mergefrom;
+  if ($refspec =~ /:(.*)/) {
+    $mergefrom = $1;
+    $mergefrom = undef if $mergefrom =~ /\*$/;
+  } elsif ($refspec =~ m(refs/heads/(.*))) {
+    $mergefrom = "refs/remotes/$repo/$branch";
   }
-  exit 1 if $exit;
+
+  # Debugging
+  print "$arg0-pull: info: branch=$branch\n";
+  print "$arg0-pull: info: repo=$repo\n";
+  print "$arg0-pull: info: refspec=$refspec\n";
+  print "$arg0-pull: info: mergefrom=$mergefrom\n";
+
+  # Merge
+  if ($mergefrom) {
+    my @margs;
+    push @margs, "--ff" if $allow_ff;
+    push @margs, "--no-ff" if !$allow_ff && defined $allow_ff;
+    push @margs, "--log" if $log;
+    push @margs, "--no-log" if !$log && defined $log;
+    push @margs, "--stat" if $diffstat;
+    push @margs, "--no-stat" if !$diffstat && defined $diffstat;
+    push @margs, "--ff-only" if $ff_only;
+    push @margs, "--quiet" if $quiet;
+    push @margs, "--verbose" if $verbose;
+    print "$arg0-pull: does the following command look suitable?\n";
+    print "    git merge", (map {" $_"} @margs), " $mergefrom\n";
+    print "ENTER to continue; Control-C to abort... ";
+    scalar <STDIN>;
+    do_merge(@margs,$mergefrom);
+  } else {
+    print "$arg0-pull: nothing to merge\n";
+  }
 }
 
 ###############################################################################################################################
@@ -622,6 +693,7 @@ my %cmds = (branch      => \&do_branch,
             commit      => \&do_commit,
             help        => sub {execute sub {git "help", @ARGV}}, # no need to execute in submodules
             merge       => \&do_merge,
+	    pull        => \&do_pull,
            );
 
 my $cmd = shift @ARGV;
