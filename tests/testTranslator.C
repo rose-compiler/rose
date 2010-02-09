@@ -9,7 +9,7 @@ int main( int argc, char * argv[] )
   // AST consistency tests (optional for users, but this enforces more of our tests)
      AstTests::runAllTests(project);
 
-#if 1
+#if 0
   // Output an optional graph of the AST (just the tree, when active)
      generateDOT ( *project );
 #endif
