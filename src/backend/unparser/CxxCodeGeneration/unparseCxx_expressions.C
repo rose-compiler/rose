@@ -1518,7 +1518,7 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
      printf ("In Unparse_ExprStmt::unparseVarRef(): SgInitializedName scope = %p qualified name = %s \n",theName->get_scope(),theName->get_scope()->get_qualified_name().str());
 #endif
 
-#if 0
+#if 1
   // DQ (2/8/2010): Debugging code.
      var_ref->get_startOfConstruct()->display("Inside of unparseVarRef");
 #endif
