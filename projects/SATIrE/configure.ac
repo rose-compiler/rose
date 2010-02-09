@@ -165,7 +165,7 @@ AC_SUBST(have_swi_prolog)
 
 # Check for CBMC model checker (optional)
 #-----------------------------------
-CBMC=`which cbmc-2-9-i686-linux`
+CBMC=`which cbmc-3-0-i686-linux`
 CBMCHOME=`dirname $CBMC`/..
 
 AC_ARG_WITH([cbmc],
