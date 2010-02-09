@@ -3612,10 +3612,10 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
   bool outputParenthisis = false;
 
 #if 0
-  // printf ("con_init->get_need_name()        = %s \n",(con_init->get_need_name() == true) ? "true" : "false");
-  // printf ("con_init->get_is_explicit_cast() = %s \n",(con_init->get_is_explicit_cast() == true) ? "true" : "false");
-  curprint ( "\n /* con_init->get_need_name()        = %s " + (con_init->get_need_name() ? "true" : "false") + " */ \n");
-  curprint ( "\n /* con_init->get_is_explicit_cast() = %s " + (con_init->get_is_explicit_cast() ? "true" : "false") + " */ \n");
+     printf ("In unparseConInit(): con_init->get_need_name()        = %s \n",(con_init->get_need_name() == true) ? "true" : "false");
+     printf ("In unparseConInit(): con_init->get_is_explicit_cast() = %s \n",(con_init->get_is_explicit_cast() == true) ? "true" : "false");
+     curprint ( string("\n /* con_init->get_need_name()        = ") + (con_init->get_need_name() ? "true" : "false") + " */ \n");
+     curprint ( string("\n /* con_init->get_is_explicit_cast() = ") + (con_init->get_is_explicit_cast() ? "true" : "false") + " */ \n");
 #endif
 
   // DQ (3/17/2005): Ignoring ned_name in favor of is_explicit_cast!
