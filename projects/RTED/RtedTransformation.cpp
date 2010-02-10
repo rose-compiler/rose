@@ -1,6 +1,11 @@
 #include <rose.h>
+
+// DQ (2/9/2010): Testing use of ROE to compile ROSE.
+#ifndef USE_ROSE
+
 #include <string>
 #include <set>
+
 #include <boost/foreach.hpp>
 #include "RtedSymbols.h"
 #include "DataStructures.h"
@@ -635,5 +640,7 @@ void RtedTransformation::visit(SgNode* n) {
   // ******************** DETECT functions in input program  *********************************************************************
 
 }
+
+#endif
 
 // vim:et sta ts=2 sw=2:

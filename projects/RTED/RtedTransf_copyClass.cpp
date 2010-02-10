@@ -1,4 +1,8 @@
 #include <rose.h>
+
+// DQ (2/9/2010): Testing use of ROE to compile ROSE.
+#ifndef USE_ROSE
+
 #include <string>
 #include <set>
 #include <boost/foreach.hpp>
@@ -222,3 +226,6 @@ SgClassDeclaration* RtedTransformation::instrumentClassDeclarationIntoTopOfAllSo
   }
   return cd_copy;
 }
+
+#endif
+

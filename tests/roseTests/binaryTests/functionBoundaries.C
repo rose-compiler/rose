@@ -69,6 +69,8 @@ public:
      * super class, so we use the can_disassemble() method from the super class.  If the super class says it can disassemble a
      * particular binary header then we can also disassemble that same header. */
     virtual Disassembler *can_disassemble(SgAsmGenericHeader *hdr) const {
+// DQ (2/9/2010): Comment out this problematic construct for now when compiling ROSE with ROSE.
+#ifndef CXX_IS_ROSE_ANALYSIS
         Disassembler *d = DisassemblerX86::can_disassemble(hdr);
         if (!d) return NULL;
         delete d;
@@ -80,6 +82,9 @@ public:
         p->add_function_detector(user_pattern);
         d->set_partitioner(p);
         return d;
+#else
+        return NULL;
+#endif
     }
 private:
     /* Looks for "push bp" (any word size) and makes them the start of functions. */
