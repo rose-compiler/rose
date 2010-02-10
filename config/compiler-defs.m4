@@ -139,6 +139,28 @@ dnl predefined by a specific compiler
   AM_CONDITIONAL(ROSE_USING_ROSE_CODE_GENERATION,test "x$compilerName" = xroseCodeGeneration || test "x$compilerName" = xtestCodeGeneration)
   AM_CONDITIONAL(ROSE_USING_ROSE_ANALYSIS,test "x$compilerName" = xroseAnalysis || test "x$compilerName" = xtestAnalysis)
 
+  echo "compilerName = $compilerName"
+  if test "x$compilerName" = xroseAnalysis || test "x$compilerName" = xtestAnalysis; then
+     echo "Found the ROSE analysis tool being used as compiler for ROSE source code."
+     AC_DEFINE([CXX_IS_ROSE_ANALYSIS],[1],[Is this the ROSE Analizer (part of tests to compile ROSE for analysis only using ROSE).])
+  fi
+
+  if test "x$compilerName" = xroseCodeGeneration || test "x$compilerName" = xtestCodeGeneration; then
+     echo "Found the ROSE code generation tool being used as compiler for ROSE source code."
+     AC_DEFINE([CXX_IS_ROSE_CODE_GENERATION],[1],[Is this the ROSE Code Generator (part of tests to compile ROSE and generate code using ROSE).])
+     AC_DEFINE([CXX_IS_ROSE_ANALYSIS],[1],[Is this the ROSE Analizer (part of tests to compile ROSE for analysis only using ROSE).])
+  fi
+
+  if test "x$compilerName" = xroseTranslator || test "x$compilerName" = xtestTranslator; then
+     echo "Found the ROSE translator tool being used as compiler for ROSE source code."
+     AC_DEFINE([CXX_IS_ROSE_TRANSLATOR],[1],[Is this the ROSE translator (part of tests to compile ROSE using ROSE).])
+     AC_DEFINE([CXX_IS_ROSE_CODE_GENERATION],[1],[Is this the ROSE Code Generator (part of tests to compile ROSE and generate code using ROSE).])
+     AC_DEFINE([CXX_IS_ROSE_ANALYSIS],[1],[Is this the ROSE Analizer (part of tests to compile ROSE for analysis only using ROSE).])
+  fi
+
+# echo "Exiting after recognition of ROSE analizer, code generator, or translator."
+# exit 1;
+
   if test "x$compilerVendorName" = xIntel; then
    # using_intel_compiler=true
      AC_DEFINE([CXX_IS_INTEL_COMPILER],[1],[Is this an Intel compiler being used to compile ROSE.])

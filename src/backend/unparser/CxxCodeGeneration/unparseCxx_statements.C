@@ -522,6 +522,10 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
 #endif
 
 #if 0
+  printf ("In unparseLanguageSpecificStatement(): file = %s line = %d \n",stmt->get_startOfConstruct()->get_filenameString().c_str(),stmt->get_startOfConstruct()->get_line());
+#endif
+
+#if 0
   // Debugging support
   SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(stmt);
   if (declarationStatement != NULL)
