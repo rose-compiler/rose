@@ -136,6 +136,7 @@ check-local:
 	@$(MAKE) testBuildUsingNoPath
 	@$(MAKE) testBuildUsingRelativePath
 	@$(MAKE) testBuildUsingAbsolutePath
+	@$(MAKE) test2010_07.o
 	@echo "Tests of C++."
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "***********************************************************************************************"
