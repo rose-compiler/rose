@@ -15,6 +15,8 @@ int pcloseFromVector(FILE* f);
 #define ROSE_ASSERT assert
 #endif
 
+// #warning "Is the assert macro seen?"
+
 #ifndef ROSE_ASSERT
  #ifndef NDEBUG
   #define ROSE_ASSERT assert
