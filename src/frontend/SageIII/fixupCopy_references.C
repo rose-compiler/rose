@@ -58,6 +58,7 @@ SgLocatedNode::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
 
   // printf ("Inside of SgLocatedNode::fixupCopy_references() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
 
+#ifndef CXX_IS_ROSE_CODE_GENERATION
   // Fixup references in SgStatements and SgExpressions
   // Define a traversal to update the references to symbols (per statement)
      class Traversal : public AstSimpleProcessing
@@ -211,6 +212,7 @@ SgLocatedNode::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
 
   // DQ (10/24/2007): New test.
      ROSE_ASSERT(copyLocatedNode->variantT() == this->variantT());
+#endif
 
 #if DEBUG_FIXUP_COPY
      printf ("Leaving SgLocatedNode::fixupCopy_references() \n\n");

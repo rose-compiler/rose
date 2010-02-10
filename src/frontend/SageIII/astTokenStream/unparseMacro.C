@@ -144,9 +144,10 @@ namespace UnparseMacro {
 
   bool matchMacroToSubtrees(SgNode* searchTree, PreprocessingInfo* macroCall, std::vector<SgNode*>& matchingSubtree)
   {
-
-    using namespace std;
     bool macroMatchesSubtrees = true;
+
+#ifndef CXX_IS_ROSE_CODE_GENERATION
+    using namespace std;
 
     //Find topmost nodes
     bool find_all = false;
@@ -202,7 +203,7 @@ did_removal:
 
     }
 
-
+#endif
 
     //Do some fancy check to see if macro really matches either a subtree or a set of subtrees
 
