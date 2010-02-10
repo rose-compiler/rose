@@ -306,7 +306,7 @@ using namespace std;
 	    }
 
 	StringUtility::FileNameLibrary
-	    StringUtility::classifyLibrary(const string& fileName)
+	    classifyLibrary(const string& fileName)
 	    {
 		using namespace boost::filesystem;
 
