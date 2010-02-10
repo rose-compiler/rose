@@ -1,5 +1,9 @@
 // vim:et sta sw=4 ts=4:
 #include <rose.h>
+
+// DQ (2/9/2010): Testing use of ROE to compile ROSE.
+#ifndef USE_ROSE
+
 #include <string>
 #include "RtedSymbols.h"
 #include "DataStructures.h"
@@ -1206,7 +1210,7 @@ void RtedTransformation::visit_isArrayExprListExp(SgNode* n) {
   }
 }
 
-
+#endif
 
 
 
