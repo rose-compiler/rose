@@ -7,6 +7,10 @@
 #include "sageBuilder.h"
 #include "OmpAttribute.h"
 #include <algorithm>
+#include <sstream>
+#include <iostream>
+#include <string>
+
 using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
@@ -877,6 +881,68 @@ namespace OmpSupport{
       }
     } // if (attlist)
  }
+
+  //! Generate a diff text for the OpenMP attribute attached to a node
+  //This is essentially a workaround to generate a translation as a patch
+  std::string generateDiffTextFromOmpAttribute(SgNode* sg_node)
+  {
+    std::string rtxt;
+
+    SgStatement* cur_stmt = isSgStatement(sg_node);
+    ROSE_ASSERT(cur_stmt != NULL);
+    // For C/C++, only one OmpAttribute could be attached to each SgNOde
+    // since C/C++ have scopes for each of them
+    // They cannot be used together in one scope?
+    // But we prepare the worst: it may be allowed?
+    OmpAttributeList* attlist = getOmpAttributeList(sg_node);
+    if(attlist)
+    {
+      // No need to duplicate a pragma for an existing OpenMP pragma
+      if (isSgPragmaDeclaration(cur_stmt))
+	return rtxt;
+      // Should only insert the pragma statement
+      // if there is no existing OpenMP pragma with the same attribute
+      SgStatement* prev_stmt = SageInterface::getPreviousStatement(cur_stmt);
+      if (prev_stmt)
+      {
+	SgPragmaDeclaration * prev_pragma = isSgPragmaDeclaration(prev_stmt);
+	if (prev_pragma)
+	{
+	  OmpAttributeList* prev_attlist= getOmpAttributeList(prev_pragma);
+	  if (attlist == prev_attlist)
+	    return rtxt;
+	}
+      }
+
+      // Now we are safe to generate a diff text chunk, such as
+      // 4a5
+      // > #pragma omp parallel for
+      std::vector<OmpAttribute*>::reverse_iterator riter;
+      for (riter=attlist->ompAttriList.rbegin(); riter !=attlist->ompAttriList.rend();riter++)
+      {
+        if (riter == attlist->ompAttriList.rbegin() )
+        {
+          SgLocatedNode * lnode = isSgLocatedNode(sg_node);
+          ROSE_ASSERT (lnode != NULL);
+          int line_no = lnode->get_file_info()->get_line();
+          std::ostringstream os ;
+          os<< (line_no -1);
+          rtxt = os.str()+"a";
+          std::ostringstream os2 ;
+          os2<< line_no;
+          rtxt = rtxt + os2.str()+"\n";
+        }
+	OmpAttribute* att = *riter; //getOmpAttribute(sg_node);
+	if (att->getOmpDirectiveType() ==e_for ||att->getOmpDirectiveType() ==e_parallel_for)
+	  ROSE_ASSERT(isSgForStatement(cur_stmt) != NULL);
+
+	string pragma_str= att->toOpenMPString();
+	rtxt += "> #pragma omp "+ pragma_str + "\n";
+      }
+    } // if (attlist)
+    return rtxt;
+ }
+
 
 
 } //end namespace OmpSupport

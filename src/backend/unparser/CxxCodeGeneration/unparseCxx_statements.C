@@ -3881,7 +3881,20 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                       // curprint ( string(" = "));
                          if ( constructor != NULL && isSgForInitStatement(stmt->get_parent()) != NULL )
                             {
+                           // DQ (2/9/2010): Previous code had this commented out to fix test2009_40.C.
                            // curprint (" = ");
+
+                           // DQ (2/9/2010): See test2010_05.C
+                              if (constructor->get_need_name() == true && constructor->get_is_explicit_cast() == true )
+                                 {
+                                // This is the syntax: class X = X(arg)
+                                   curprint (" = ");
+                                 }
+                                else
+                                 {
+                                // This is the alternative syntax: class X(arg)
+                                // So don't output a "="
+                                 }
                             }
                            else
                             {

@@ -1,10 +1,10 @@
 #ifndef ROSE_SAGE_INTERFACE
 #define ROSE_SAGE_INTERFACE
 
+#include "sage3basic.hhh"
 #include <stdint.h>
 
 
-//#include "sage3.h"
 SgFile* determineFileType ( std::vector<std::string> argv, int nextErrorCode, SgProject* project );
 
 #include "rewrite.h"
@@ -1293,6 +1293,8 @@ SgBasicBlock* ensureBasicBlockAsTrueBodyOfIf(SgIfStmt* ifs);
 //! Check if the false body of a 'if' statement is a SgBasicBlock, create one if not. 
 SgBasicBlock* ensureBasicBlockAsFalseBodyOfIf(SgIfStmt* ifs);
 SgBasicBlock* ensureBasicBlockAsBodyOfCatch(SgCatchOptionStmt* cos);
+//! Check if the body of a SgOmpBodyStatement is a SgBasicBlock, create one if not
+SgBasicBlock* ensureBasicBlockAsBodyOfOmpBodyStmt(SgOmpBodyStatement* ompbodyStmt);
 //! A wrapper of all ensureBasicBlockAs*() above to ensure the parent of s is a scopestatement with list of statements as children, otherwise generate a SgBasicBlock in between. Return s's parent.
 SgStatement* ensureBasicBlockAsParent(SgStatement* s);
 //SgBasicBlock* ensureBasicBlockAsParent(SgStatement* s);

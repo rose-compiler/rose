@@ -1,4 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+
+# DQ (2/6/2010): I don't understand why this is required in every Makefile.am through out ROSE.
 include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 
 # When debugging latex documentation skip using the --interaction=batchmode option
