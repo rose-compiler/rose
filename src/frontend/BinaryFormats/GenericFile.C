@@ -1,6 +1,7 @@
 /* Generic Binary Files (SgAsmGenericFile and associated classes). */
 
 // tps (01/14/2010) : Switching from rose.h to sage3.
+//#include "fileoffsetbits.h"
 #include "sage3basic.h"
 
 #define __STDC_FORMAT_MACROS
@@ -20,6 +21,7 @@ SgAsmGenericFile::ctor()
     ROSE_ASSERT(p_holes == NULL);
     ROSE_ASSERT(p_truncate_zeros == false);
 
+    // tps (02/01/2010) : This assert fails on a 32bit machine :   GenericFile.C:23: void SgAsmGenericFile::ctor(): Assertion `p_headers == __null' failed.
     ROSE_ASSERT(p_headers == NULL);
     p_headers  = new SgAsmGenericHeaderList();
     ROSE_ASSERT(p_headers != NULL);

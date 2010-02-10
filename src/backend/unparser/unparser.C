@@ -12,6 +12,10 @@
 #include "unparser.h"
 
 #include "unparseAsm.h"
+#include <string.h>
+#if _MSC_VER
+#include <direct.h>
+#endif
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>

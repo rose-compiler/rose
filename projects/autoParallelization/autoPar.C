@@ -44,8 +44,6 @@ main (int argc, char *argv[])
      SgDeclarationStatementPtrList& declList = root->get_declarations ();
      bool hasOpenMP= false; // flag to indicate if omp.h is needed in this file
 
-      
-
     //For each function body in the scope
      for (SgDeclarationStatementPtrList::iterator p = declList.begin(); p != declList.end(); ++p) 
      {
@@ -109,7 +107,11 @@ main (int argc, char *argv[])
       } // end for-loop for declarations
      // insert omp.h if needed
      if (hasOpenMP)
+     {
        SageInterface::insertHeader("omp.h",PreprocessingInfo::after,false,root);
+       if (enable_patch)
+         generatePatchFile(sfile); 
+     }
    } //end for-loop of files
 
   // Qing's loop normalization is not robust enough to pass all tests

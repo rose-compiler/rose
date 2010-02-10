@@ -4,6 +4,9 @@
 # Set the path to the compiler specific version of Boost.
 # export ROSE_TEST_BOOST_PATH=${ROSE_TEST_BOOST_PATH}-gnu_${ROSE_TEST_GCC_VERSION}/lib
 
+# DQ (2/7/2010): Force the same version to be used as will be used with ROSE (testing).
+export ROSE_TEST_BOOST_PATH=/home/hudson-rose/tmp/opt/boost_1_37_0.gxx-4.2.4
+
 export LD_LIBRARY_PATH="${ROSE_TEST_BOOST_PATH}/lib:$LD_LIBRARY_PATH"
 
 echo "*******************************************************************"
@@ -154,7 +157,7 @@ start_time_make_seconds="$(date +%s)"
 
 echo "Test compile step"
 
-make -j8
+make -j16
 # sleep 5
 
 if [ $? -ne 0 ]  ; then
@@ -227,26 +230,30 @@ echo "Starting configure step to use ROSE to compile ROSE: CONFIGURE_PREFIX_DIR 
 # ../configure ${CONFIGURE_FLAGS}
 # export path=${CONFIGURE_PREFIX_DIR}
 
-echo "Make sure that testAnalysis is in place."
-ls -l ${CONFIGURE_PREFIX_DIR}/bin/testAnalysis
+echo "Make sure that testTranslator is in place."
+ls -l ${CONFIGURE_PREFIX_DIR}/bin/testTranslator
 
-echo "Put testAnalysis is in the default path."
+echo "Put testTranslator is in the default path."
 export PATH="${CONFIGURE_PREFIX_DIR}/bin:$PATH"
 
 echo "Put boost libs into LD_LIBRARY_PATH."
 export LD_LIBRARY_PATH="/home/hudson-rose/tmp/opt/boost_1_37_0.gxx-4.2.4/lib:$LD_LIBRARY_PATH"
 
-echo "Make sure that testAnalysis is in the default path."
-which testAnalysis
+echo "LD_LIBRARY_PATH = $LD_LIBRARY_PATH"
+
+echo "Make sure that testTranslator is in the default path."
+which testTranslator
 
 echo "Calling testAnalysis to make sure it works."
-testAnalysis --help
+testTranslator --help
+
+uname -a
 
 echo "Calling configure to build compile tree to build ROSE using ROSE."
 
 # DQ (1/28/2010): Simplify the testing initially by skipping the Java support and Fortran support.
 # ../configure CXX=testAnalysis ${CONFIGURE_FLAGS}
-../configure CXX=testAnalysis --with-boost=/home/hudson-rose/tmp/opt/boost_1_37_0.gxx-4.2.4 --without-java
+../configure CXX=testTranslator --with-boost=/home/hudson-rose/tmp/opt/boost_1_37_0.gxx-4.2.4 --without-java
 
 echo "Done with configure step to use ROSE to compile ROSE"
 

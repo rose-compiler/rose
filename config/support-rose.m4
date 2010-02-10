@@ -112,21 +112,95 @@ fi
 
 
 # JJW: This needs to be early as things like C++ header editing are not done for the new interface
-AC_ARG_ENABLE(new-edg-interface, AS_HELP_STRING([--enable-new-edg-interface], [Enable new (experimental) translator from EDG ASTs to Sage ASTs]))
-AM_CONDITIONAL(ROSE_USE_NEW_EDG_INTERFACE, [test "x$enable_new_edg_interface" = xyes])
-if test "x$enable_new_edg_interface" = "xyes"; then
-  AC_MSG_WARN([Using newest version of interface to translate EDG to ROSE (experimental)!])
-  AC_DEFINE([ROSE_USE_NEW_EDG_INTERFACE], [], [Whether to use the new interface to EDG])
-fi
+# AC_ARG_ENABLE(new-edg-interface, AS_HELP_STRING([--enable-new-edg-interface], [Enable new (experimental) translator from EDG ASTs to Sage ASTs]))
+# AM_CONDITIONAL(ROSE_USE_NEW_EDG_INTERFACE, [test "x$enable_new_edg_interface" = xyes])
+# if test "x$enable_new_edg_interface" = "xyes"; then
+#   AC_MSG_WARN([Using newest version of interface to translate EDG to ROSE (experimental)!])
+#   AC_DEFINE([ROSE_USE_NEW_EDG_INTERFACE], [], [Whether to use the new interface to EDG])
+# fi
 
 # DQ (12/29/2008): the default is new EDG interface is 3.10, this option permits the use
 # of the newer EDG 4.0 interface (which breaks some existing work).
-AC_ARG_ENABLE(edg-version4, AS_HELP_STRING([--enable-edg-version4], [Enable newest EDG version 4 (requires --enable-new-edg-interface option)]))
-AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4, [test "x$enable_edg_version4" = xyes])
-if test "x$enable_edg_version4" = "xyes"; then
-  AC_MSG_WARN([Using newest EDG version 4.x (requires new interface) to translate EDG to ROSE (experimental)!])
-  AC_DEFINE([ROSE_USE_EDG_VERSION_4], [], [Whether to use the new EDG version 4.x])
+# AC_ARG_ENABLE(edg-version4, AS_HELP_STRING([--enable-edg-version4], [Enable newest EDG version 4 (requires --enable-new-edg-interface option)]))
+# AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4, [test "x$enable_edg_version4" = xyes])
+# if test "x$enable_edg_version4" = "xyes"; then
+#   AC_MSG_WARN([Using newest EDG version 4.x (requires new interface) to translate EDG to ROSE (experimental)!])
+#   AC_DEFINE([ROSE_USE_EDG_VERSION_4], [], [Whether to use the new EDG version 4.x])
+# fi
+
+# DQ (2/2/2010): New code to control use of different versions of EDG with ROSE.
+AC_ARG_ENABLE(edg-version,
+[--enable-edg_version   major.minor version number for EDG (e.g. 3.3, 3.10, 4.0, 4.1).],
+[ echo "Setting up EDG version"
+])
+
+# AM_CONDITIONAL(DOT_TO_GML_TRANSLATOR,test "$enable_dot2gml_translator" = yes)
+echo "enable_edg_version = $enable_edg_version"
+if test "x$enable_edg_version" = "x"; then
+   echo "Default version of EDG used (3.3)"
+   edg_major_version_number=3
+   edg_minor_version_number=3
+else
+   edg_major_version_number=`echo $enable_edg_version | cut -d\. -f1`
+   edg_minor_version_number=`echo $enable_edg_version | cut -d\. -f2`
 fi
+
+echo "edg_major_version_number = $edg_major_version_number"
+echo "edg_minor_version_number = $edg_minor_version_number"
+
+if test "x$edg_major_version_number" = "x3"; then
+   echo "Recognized an accepted major version number."
+   if test "x$edg_minor_version_number" = "x3"; then
+      echo "Recognized an accepted minor version number."
+   else
+      if test "x$edg_minor_version_number" = "x10"; then
+         echo "Recognized an accepted minor version number."
+      else
+         echo "ERROR: Could not identify the EDG minor version number."
+         exit 1
+      fi
+      enable_new_edg_interface=yes
+      AC_DEFINE([ROSE_USE_NEW_EDG_INTERFACE], [], [Whether to use the new interface to EDG])
+   fi
+else
+   if test "x$edg_major_version_number" = "x4"; then
+      echo "Recognized an accepted major version number."
+      if test "x$edg_minor_version_number" = "x0"; then
+         echo "Recognized an accepted minor version number."
+      else
+         if test "x$edg_minor_version_number" = "x1"; then
+            echo "Recognized an accepted minor version number."
+
+            echo "Error: Note that EDG 4.1 is not yet supported in ROSE (should be available soon)."
+            exit 1
+         else
+            echo "ERROR: Could not identify the EDG minor version number."
+            exit 1
+         fi
+      fi
+      enable_new_edg_interface=yes
+      enable_edg_version4=yes
+      AC_DEFINE([ROSE_USE_NEW_EDG_INTERFACE], [], [Whether to use the new interface to EDG])
+      AC_DEFINE([ROSE_USE_EDG_VERSION_4], [], [Whether to use the new EDG version 4.x])
+   else
+      echo "ERROR: Could not identify the EDG major version number."
+      exit 1
+   fi
+fi
+
+AC_DEFINE_UNQUOTED([ROSE_EDG_MAJOR_VERSION_NUMBER], $edg_major_version_number , [EDG major version number])
+AC_DEFINE_UNQUOTED([ROSE_EDG_MINOR_VERSION_NUMBER], $edg_minor_version_number , [EDG minor version number])
+
+ROSE_EDG_MAJOR_VERSION_NUMBER=$edg_major_version_number
+ROSE_EDG_MINOR_VERSION_NUMBER=$edg_minor_version_number
+
+AC_SUBST(ROSE_EDG_MAJOR_VERSION_NUMBER)
+AC_SUBST(ROSE_EDG_MINOR_VERSION_NUMBER)
+
+# DQ (2/3/2010): I would like to not have to use these and use the new 
+# ROSE_EDG_MAJOR_VERSION_NUMBER and ROSE_EDG_MINOR_VERSION_NUMBER instead.
+AM_CONDITIONAL(ROSE_USE_NEW_EDG_INTERFACE, [test "x$enable_new_edg_interface" = xyes])
+# AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4, [test "x$enable_edg_version4" = xyes])
 
 # DQ (1/4/2009) Added support for optional GNU language extensions in new EDG/ROSE interface.
 # This value will be substituted into EDG/4.0/src/rose_lang_feat.h in the future (not used at present!)
@@ -213,6 +287,27 @@ AC_SUBST(ROSE_HOME)
 AC_LANG(C++)
 AX_BOOST_BASE([1.35.0], [], [echo "Boost 1.35.0 or above is required for ROSE" 1>&2; exit 1])
 AC_SUBST(ac_boost_path) dnl Hack using an internal variable from AX_BOOST_BASE -- this path should only be used to set --with-boost in distcheck
+
+# Requested boost version
+echo "boost_lib_version_req_major     = $boost_lib_version_req_major"
+echo "boost_lib_version_req_minor     = $boost_lib_version_req_minor"
+echo "boost_lib_version_req_sub_minor = $boost_lib_version_req_sub_minor"
+
+# Actual boost version
+echo "Boost version being used is: $_version"
+
+# Define macros for conditional compilation of parts of ROSE based on version of boost
+# (this ONLY happens for the tests in tests/CompilerOptionsTests/testWave)
+# we don't want conditional compilation or code in ROSE based on version numbers of Boost.
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_35,test "x$_version" = "x1.35")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_36,test "x$_version" = "x1.36")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_37,test "x$_version" = "x1.37")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_38,test "x$_version" = "x1.38")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_39,test "x$_version" = "x1.39")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_40,test "x$_version" = "x1.40")
+
+# echo "Exiting as a test."
+# exit 1
 
 # DQ (12/22/2008): Fix boost configure to handle OS with older version of Boost that will
 # not work with ROSE, and use the newer version specified by the user on the configure line.

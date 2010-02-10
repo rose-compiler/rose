@@ -1,7 +1,7 @@
-
-#include "sage3basic.h"
+//#include "sage3basic.h" // file_IO
+#include "rosedefs.h"
 #include "Cxx_GrammarMemoryPoolSupport.h"
-
+#include <fstream>
 #include "AST_FILE_IO.h"
 #include "StorageClasses.h"
 #include <sstream>

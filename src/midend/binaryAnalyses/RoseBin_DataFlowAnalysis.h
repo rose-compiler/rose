@@ -74,7 +74,7 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
   RoseBin_DataFlowAnalysis(SgAsmNode* global, bool forward, RoseBin_abstract*
 			   ,GraphAlgorithms* algo):RoseBin_FlowAnalysis(global,algo) {
 #ifdef _MSC_VER
-#define __builtin_constant_p(exp) (0)
+//#define __builtin_constant_p(exp) (0)
 #endif
     ROSE_ASSERT(algo);
     typeNode="DFG";

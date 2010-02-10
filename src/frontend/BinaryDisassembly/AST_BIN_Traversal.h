@@ -3,6 +3,7 @@
 
 #include "RoseBin_support.h"
 #include "unparseAsm.h"
+#include <fstream>
 
 class AST_BIN_Traversal
   : public AstSimpleProcessing {

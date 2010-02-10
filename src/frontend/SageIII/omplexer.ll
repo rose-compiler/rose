@@ -23,6 +23,10 @@ Liao 12/10/2009 */
 static const char* ompparserinput = NULL;
 static std::string gExpressionString;
 
+/* pass user specified string to buf, indicate the size using 'result', 
+   and shift the current position pointer of user input afterwards 
+   to prepare next round of token recognition!!
+*/
 #define YY_INPUT(buf, result, max_size) { \
 		if (*ompparserinput == '\0') result = 0; \
 		else { strncpy(buf, ompparserinput, max_size); \
@@ -109,8 +113,9 @@ copyin          { return ( COPYIN ); }
 ">="		{ return (GE_OP2);}
 "=="		{ return (EQ_OP2);}
 "!="		{ return (NE_OP2);}
+"\\"          { /*printf("found a backslash\n"); This does not work properly but can be ignored*/}
 
-{newline}       { return (NEWLINE); }
+{newline}       { /* printf("found a new line\n"); */ /* return (NEWLINE); We ignore NEWLINE since we only care about the pragma string , We relax the syntax check by allowing it as part of line continuation */ }
 
 <EXPR>.         { int c = yytext[0];
 		  int parenCount = 1;
@@ -145,13 +150,15 @@ identifier      { return (IDENTIFIER); /*not in use for now*/ }
 %%
 
 
-// yy_push_state can't be called outside of this file, provide a wrapper
+/* yy_push_state can't be called outside of this file, provide a wrapper */
 extern void omp_parse_expr() {
 	yy_push_state(EXPR);
 }
 
+/* entry point invoked by callers to start scanning for a string */
 extern void omp_lexer_init(const char* str) {
   ompparserinput = str;
+  /* We have omp_ suffix for all flex functions */
   omp_restart(omp_in);
 }
 
