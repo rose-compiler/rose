@@ -1556,7 +1556,7 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
         {
        // DQ (2/10/2010): For some reason, "__PRETTY_FUNCTION__" is replaced with "__assert_fail" by EDG?
        // But only when the assert comes from a struct (see test2010_07.C).
-          printf ("Warning: work around substitution of __PRETTY_FUNCTION__ for __assert_fail \n");
+       // printf ("Warning: work around substitution of __PRETTY_FUNCTION__ for __assert_fail \n");
           curprint ("__PRETTY_FUNCTION__");
         }
        else
