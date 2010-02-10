@@ -293,7 +293,10 @@ binary(left, right, exp, state, context) =
   // -- Factored out handling of op-assign operators.
   if is_op_assign(exp) then
     op_assign_effects(ls, exp, llifted, rlifted, context)
-  else case exp of
+  else 
+      let lr1 = rlifted!1!2; lr2 = rlifted!2!2;
+          ll1 = llifted!1!2; ll2 = llifted!2!2; in      
+      case exp of
     // -- If this is a plain assignment operation, update the state without
     // -- regard for the old value of the lhs.
     AssignOp(_, _) => // --println("ASSIGNOP: ", left, "=", rr!1!2, " in state ", rr!2!2, " ...")
@@ -317,13 +320,19 @@ binary(left, right, exp, state, context) =
       in  // println("arr ", exp, " result: ", result)
           result;
 
-    // -- special handling for additive operators
-    AddOp(_, _)      => ((liftplus(llifted!1!2, rlifted!1!2),
-                          liftplus(llifted!2!2, rlifted!2!2)), ls);
-    SubtractOp(_, _) => ((liftminus(llifted!1!2, rlifted!2!2),
-                          liftminus(llifted!2!2, rlifted!1!2)), ls);
+    // -- arithmetic binary operators w/o bad checking
+    AddOp(_, _)      => (plus(ll1,ll2,lr1,lr2), ls);
+    SubtractOp(_, _) => (minus(ll1,ll2,lr1,lr2), ls);
+    MultiplyOp(_, _) => (multiply(ll1,ll2,lr1,lr2), ls);
+    IntegerDivideOp(_, _) => (divide(ll1,ll2,lr1,lr2), ls);
+    ModOp(_, _)     => (modulo(ll1,ll2,lr1,lr2), ls);
+    LshiftOp(_, _)  => (lshift(ll1,ll2,lr1,lr2), ls);
+    RshiftOp(_, _)  => (rshift(ll1,ll2,lr1,lr2), ls);
+    BitAndOp(_, _)  => (and(ll1,ll2,lr1,lr2), ls);
+    BitOrOp(_, _)   => (or(ll1,ll2,lr1,lr2), ls);
+    BitXorOp(_, _)  => (xor(ll1,ll2,lr1,lr2), ls);
 
-    // -- plain arithmetic, logical, comparison operators
+    // -- other arithmetic, logical, comparison operators
     _ => 
       if bad(rlifted) then dontknow else
       if bad(llifted) then dontknow else
@@ -365,17 +374,6 @@ binary(left, right, exp, state, context) =
           if !pointerp && r1 >  l2 then (duplift(0), ls) else
           dontknow  ;
 
-
-        MultiplyOp(_, _)=> (multiply(l1,l2,r1,r2), ls);
-        DivideOp(_, _)  => dontknow;
-        IntegerDivideOp(_, _) => (divide(l1,l2,r1,r2), ls);
-        ModOp(_, _)     => (modulo(l1,l2,r1,r2), ls);
-        LshiftOp(_, _)  => (lshift(l1,l2,r1,r2), ls);
-        RshiftOp(_, _)  => (rshift(l1,l2,r1,r2), ls);
-        BitAndOp(_, _)  => (and(l1,l2,r1,r2), ls);
-        BitOrOp(_, _)   => (or(l1,l2,r1,r2), ls);
-        BitXorOp(_, _)  => (xor(l1,l2,r1,r2), ls);
-
         AndOp(_, _) => if constp then
                         (duplift(bool_int((l1 != 0) && (r1 != 0))), ls)
                        else dontknow ;
@@ -383,6 +381,8 @@ binary(left, right, exp, state, context) =
         OrOp(_, _)  => if constp then
                         (duplift(bool_int((l1 != 0) || (r1 != 0))), ls)
                        else dontknow ;
+
+        DivideOp(_, _)  => dontknow;
 
         ScopeOp(_, _)       => (ltup(r1, r2), ls);
         _ => println("**WARNING: unsupported binary: ", exp)
@@ -583,46 +583,25 @@ is_op_assign(_) = false;
 op_assign_effects :: itvl_State, Expression, itvl_Interval, itvl_Interval,
                      ContextInfo -> itvl_IntervalStatePair;
 op_assign_effects(state, exp, llifted, rlifted, context) =
-  let left = binary_get_left_child(exp); in
+  let left = binary_get_left_child(exp); 
+      lr1 = rlifted!1!2; lr2 = rlifted!2!2;
+      ll1 = llifted!1!2; ll2 = llifted!2!2; 
+  in
   case exp of
   // -- We have special lifted arithmetic for + and -, which means that we
   // -- can be more precise here than if we required all four involved
   // -- values to be known.
-    PlusAssignOp(_, _)  =>
-        updatestate(state, left,
-                    (liftplus(llifted!1!2, rlifted!1!2),
-                     liftplus(llifted!2!2, rlifted!2!2)),
-                    context);
-    MinusAssignOp(_, _) =>
-        updatestate(state, left,
-                    (liftminus(llifted!1!2, rlifted!2!2),
-                     liftminus(llifted!2!2, rlifted!1!2)),
-                    context);
-    _ =>
-    if bad(llifted) || bad(rlifted) then
-      updatestate(state, left, top, context)
-    else
-      let r1 <= rlifted!1!2; r2 <= rlifted!2!2;
-          l1 <= llifted!1!2; l2 <= llifted!2!2;
-      in case exp of
-        MultAssignOp(_, _)  =>
-            updatestate(state, left, multiply(l1, l2, r1, r2), context);
-        DivAssignOp(_, _)   =>
-            updatestate(state, left, divide(l1, l2, r1, r2), context);
-        ModAssignOp(_, _)   =>
-            updatestate(state, left, modulo(l1, l2, r1, r2), context);
-        LshiftAssignOp(_, _)=>
-            updatestate(state, left, lshift(l1, l2, r1, r2), context);
-        RshiftAssignOp(_, _)=>
-            updatestate(state, left, rshift(l1, l2, r1, r2), context);
-        IorAssignOp(_, _)   =>
-            updatestate(state, left, or(l1, l2, r1, r2), context);
-        AndAssignOp(_, _)   =>
-            updatestate(state, left, and(l1, l2, r1, r2), context);
-        XorAssignOp(_, _)   =>
-            updatestate(state, left, xor(l1, l2, r1, r2), context);
-        _ => error("unexpected assign-op expression");
-      endcase;
+    PlusAssignOp(_, _)  => updatestate(state, left,  plus(ll1,ll2,lr1,lr2), context);
+    MinusAssignOp(_, _) => updatestate(state, left, minus(ll1,ll2,lr1,lr2), context);
+    MultAssignOp(_, _)  => updatestate(state, left, multiply(ll1,ll2,lr1,lr2), context);
+    DivAssignOp(_, _)   => updatestate(state, left, divide(ll1,ll2,lr1,lr2), context);
+    ModAssignOp(_, _)   => updatestate(state, left, modulo(ll1,ll2,lr1,lr2), context);
+    LshiftAssignOp(_, _)=> updatestate(state, left, lshift(ll1,ll2,lr1,lr2), context);
+    RshiftAssignOp(_, _)=> updatestate(state, left, rshift(ll1,ll2,lr1,lr2), context);
+    IorAssignOp(_, _)   => updatestate(state, left,  or(ll1,ll2,lr1,lr2), context);
+    AndAssignOp(_, _)   => updatestate(state, left, and(ll1,ll2,lr1,lr2), context);
+    XorAssignOp(_, _)   => updatestate(state, left, xor(ll1,ll2,lr1,lr2), context);
+    _ => error("unexpected assign-op expression");
   endcase;
 
 // -- constrain_array_index: If an array with a known size is indexed with a
@@ -991,48 +970,91 @@ liftplus :: cp_Const, cp_Const -> cp_Const;
 liftplus(a, b) = let aa <= a; bb <= b; in lift(aa + bb);
 
 // -- Lots of auxiliary interval arithmetic functions.
+// -- ------------------------------------------------
+// -- General comments: 
+// -- * If the general case is precise enough, there is no need to
+// --   implement a special rule for the neutral element.
+// --
+// -- * The zero divisor, on the other hand, can also neutralize TOP.
+// --
+// -- {{{ http://www.emacswiki.org/cgi-bin/wiki/FoldingMode }}}
+plus(la1,la2,lb1,lb2)  =  (liftplus(la1,lb1), liftplus(la2,lb2));
+minus(la1,la2,lb1,lb2) = (liftminus(la1,lb2), liftminus(la2,lb1));
 
-plus(a1,a2,b1,b2)  = ltup(a1+b1, a2+b2);
-minus(a1,a2,b1,b2) = ltup(a1-b2, a2-b1);
-multiply(a1,a2,b1,b2) = ltup(mini(mini(a1*b1, a1*b2), mini(a2*b1, a2*b2)),
-                             maxi(maxi(a1*b1, a1*b2), maxi(a2*b1, a2*b2)))
+multiply(lift(0),lift(0),_,_) = duplift(0); // -- zero divisor
+multiply(_,_,lift(0),lift(0)) = duplift(0);
+multiply(la1,la2,lb1,lb2) = 
+    (let a1<=la1; a2<=la2; b1<=lb1; b2<=lb2; in lift(mini(mini(a1*b1, a1*b2), mini(a2*b1, a2*b2))),
+     let a1<=la1; a2<=la2; b1<=lb1; b2<=lb2; in lift(maxi(maxi(a1*b1, a1*b2), maxi(a2*b1, a2*b2))))
 ;
 // -- Integer division /
-divide(a1,a2,b1,b2) = 
+// -- neutral element, still more precise than what follows
+divide(la1,la2,lift(1),lift(1)) = (la1,la2); 
+divide(la1,la2,lb1,lb2) = 
+//{{{
+    if bad((la1,la2)) || bad((lb1,lb2)) then top else 
+        let a1=drop(la1); a2=drop(la2); b1=drop(lb1); b2=drop(lb2); in
+//}}}
     let x = maxi(maxi(abs(a1), abs(b1)),
                  maxi(abs(a2), abs(b2)));
     in ltup(-x, x)
 ;
 
 // -- Modulo %
-modulo(a1,a2,b1,b2) = 
-    let bmax = maxi(abs(b1), abs(b2));
-    in if strict_equal_sign(a1,a2,b1,b2) then
-           if b1 > 0 then ltup(0, bmax -1)
-           else ltup(1-bmax, 0)
-       else ltup(1-bmax, bmax-1)
+modulo(la1,la2,lb1,lb2) = 
+//{{{
+    if bad((la1,la2)) || bad((lb1,lb2)) then top else 
+        let a1=drop(la1); a2=drop(la2); b1=drop(lb1); b2=drop(lb2); in
+//}}}
+   let bmax = maxi(abs(b1), abs(b2));
+   in if strict_equal_sign(a1,a2,b1,b2) then
+          if b1 > 0 then ltup(0, bmax -1)
+          else ltup(1-bmax, 0)
+      else ltup(1-bmax, bmax-1)
 ;
 
 // -- Bitwise shift left <<
-lshift(a1,a2,b1,b2) = if a1<0 || b1<0 then top
-                      else ltup(a1 << unum(b1), a2 << unum(b2))
+lshift(la1,la2,lb1,lb2) = 
+//{{{
+    if bad((la1,la2)) || bad((lb1,lb2)) then top else 
+        let a1=drop(la1); a2=drop(la2); b1=drop(lb1); b2=drop(lb2); in
+//}}}
+    if a1<0 || b1<0 then top
+    else ltup(a1 << unum(b1), a2 << unum(b2))
 ;
 
 // -- Bitwise shift right >>
 // -- according to ISO C99 right-shift of a negative number is compiler-specific
-rshift(a1,a2,b1,b2) = if a1<0 || b1<0 then top
-                      else ltup(a1 >> unum(b2), a2 >> unum(b1))
+rshift(la1,la2,lb1,lb2) = 
+//{{{
+    if bad((la1,la2)) || bad((lb1,lb2)) then top else 
+        let a1=drop(la1); a2=drop(la2); b1=drop(lb1); b2=drop(lb2); in
+//}}}
+    if a1<0 || b1<0 then top
+    else ltup(a1 >> unum(b2), a2 >> unum(b1))
 ;
 
 // -- Bitwise and &
-and(a1,a2,b1,b2) =
+and(la1,la2,lift(0),lift(0)) = (la1,la2);
+and(lift(0),lift(0),lb1,lb2) = (lb1,lb2);
+and(la1,la2,lb1,lb2) =
+//{{{
+    if bad((la1,la2)) || bad((lb1,lb2)) then top else 
+        let a1=drop(la1); a2=drop(la2); b1=drop(lb1); b2=drop(lb2); in
+//}}}
     if (a1=0 && a2=0) || (b1=0 && b2=0)
     then ltup(0,0)
-    else or(a1,a2,b1,b2)
+    else or(la1,la2,lb1,lb2)
 ;
 
 // -- Bitwise shift or |
-or(a1, a2, b1, b2) =
+or(la1,la2,lift(-1),lift(-1)) = duplift(-1);
+or(lift(-1),lift(-1),lb1,lb2) = duplift(-1);
+or(la1, la2, lb1, lb2) =
+//{{{
+    if bad((la1,la2)) || bad((lb1,lb2)) then top else 
+        let a1=drop(la1); a2=drop(la2); b1=drop(lb1); b2=drop(lb2); in
+//}}}
     let x = next_higher_power_of_2(maxi(maxi(abs(a1), abs(b1)),
                                         maxi(abs(a2), abs(b2))));
     in if strict_positive(a1, a2, b1, b2) then
@@ -1041,13 +1063,20 @@ or(a1, a2, b1, b2) =
 ;
 
 // -- Bitwise shift xor ^
-xor(a1, a2, b1, b2) =
-    let amax = maxi(abs(a1), abs(a2));
-        bmax = maxi(abs(b1), abs(b2)); in
-    let x = next_higher_power_of_2(amax | bmax);
-    in if strict_equal_sign(a1, a2, b1, b2) then
-           ltup(0, x-1)
-       else ltup(-x,x-1)
+xor(la1, la2, lb1, lb2) =
+//{{{
+    if bad((la1,la2)) || bad((lb1,lb2)) then top else 
+        let a1=drop(la1); a2=drop(la2); b1=drop(lb1); b2=drop(lb2); in
+//}}}
+    if a1=a2 && a2=b1 && b1=b2 then 
+        ltup(0,0)
+    else
+        let amax = maxi(abs(a1), abs(a2));
+            bmax = maxi(abs(b1), abs(b2)); in
+        let x = next_higher_power_of_2(amax | bmax);
+        in if strict_equal_sign(a1, a2, b1, b2) then
+               ltup(0, x-1)
+           else ltup(-x,x-1)
 ;
 
 // -- xor(a1, a2, b1, b2) =
@@ -1059,7 +1088,6 @@ xor(a1, a2, b1, b2) =
 // --        ltup(1 << unum(31), next_higher_power_of_2(a2 | b2) - 1);
 // -- 
 // -- and(a1, a2, b1, b2) =
-// -- // WRONG!
 // -- // -- If the sign bit is not set on *both* intervals, the and's result will
 // -- // -- be non-negative. We make wild guesses regarding the limits.
 // -- // -- Otherwise, the result is negative, and we don't even try to be clever.
