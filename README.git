@@ -5,6 +5,16 @@ git pull not as well supported as git fetch and get merge used directly:
    smgit2 fetch
    smgit2 merge origin/master
 
+Alternative to smgit2 to checkin:
+   cd to EDG dir
+   git commit -a -m " "
+   git push origin/<YOUR BRANCH>
+   cd ..
+ # NOTE: do not use: "git add EDG/"
+   git add EDG
+   cd TOPDIR
+   git commit -a -m " "
+   git push origin/<YOUR BRANCH>
 
 #################### Sources of information on git ####################
 

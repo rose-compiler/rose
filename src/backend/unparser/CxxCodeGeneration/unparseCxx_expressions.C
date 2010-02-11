@@ -1513,7 +1513,7 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
      ROSE_ASSERT(theName != NULL);
 
 #if 0
-     printf ("In Unparse_ExprStmt::unparseVarRef(): SgInitializedName* theName = %p \n",theName);
+     printf ("In Unparse_ExprStmt::unparseVarRef(): SgInitializedName* theName = %p = %s \n",theName,theName->get_name().str());
      printf ("In Unparse_ExprStmt::unparseVarRef(): SgInitializedName scope = %p = %s \n",theName->get_scope(),theName->get_scope()->class_name().c_str());
      printf ("In Unparse_ExprStmt::unparseVarRef(): SgInitializedName scope = %p qualified name = %s \n",theName->get_scope(),theName->get_scope()->get_qualified_name().str());
 #endif
@@ -1527,7 +1527,15 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
   // SgScopeStatement* declarationScope = theName->get_scope();
   // ROSE_ASSERT(declarationScope != NULL);
   // SgUnparse_Info ninfo(info);
-     SgName nameQualifier = unp->u_name->generateNameQualifier(theName,info);
+
+  // DQ (2/10/2010): Don't search for the name "__assert_fail", this is part of macro expansion of the assert macro and will not be found.
+  // SgName nameQualifier = unp->u_name->generateNameQualifier(theName,info);
+     SgName nameQualifier;
+     if (theName->get_name() != "__assert_fail")
+        {
+          nameQualifier = unp->u_name->generateNameQualifier(theName,info);
+        }
+
 #if 0
      if (nameQualifier.is_null() == false)
         {
@@ -1541,9 +1549,20 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
           curprint ( nameQualifier.str());
         }
 #endif
-     curprint (  var_ref->get_symbol()->get_name().str());
 
-
+  // DQ (2/10/2010): This is a strange problem demonstrated only by test2010_07.C.
+  // curprint (  var_ref->get_symbol()->get_name().str());
+     if (theName->get_name() == "__assert_fail")
+        {
+       // DQ (2/10/2010): For some reason, "__PRETTY_FUNCTION__" is replaced with "__assert_fail" by EDG?
+       // But only when the assert comes from a struct (see test2010_07.C).
+       // printf ("Warning: work around substitution of __PRETTY_FUNCTION__ for __assert_fail \n");
+          curprint ("__PRETTY_FUNCTION__");
+        }
+       else
+        {
+          curprint (var_ref->get_symbol()->get_name().str());
+        }
 
 // DQ (1/7/2007): This is now OLD CODE!
 #if 0
