@@ -22,6 +22,7 @@ private.c \
 reduction.c \
 reduction_2.c \
 reduction_fake.c \
+regression01.c \
 scalar_privatization.c \
 shared.c \
 plusPlusOp.c \
