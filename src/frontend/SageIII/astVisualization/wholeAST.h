@@ -47,7 +47,7 @@ class CustomAstDOTGenerationNodeType
              : target(node), labelString(label), optionString(options)
              {
 #ifdef _MSC_VER
-#define __builtin_constant_p(exp) (0)
+//#define __builtin_constant_p(exp) (0)
 #endif
                ROSE_ASSERT(node != NULL);
                ROSE_ASSERT(labelString.size() < 4000);

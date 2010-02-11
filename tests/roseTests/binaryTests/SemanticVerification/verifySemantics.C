@@ -921,6 +921,7 @@ private:
     std::ostream *trace_file;
 };
 
+
 /* Prints values of all registers */
 static void dump_registers(FILE *f, const RegisterSet &rs) {
     for (size_t i=0; i<NELMTS(x86_reg_names); i++) {
@@ -990,7 +991,11 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Starting executable...\n");
     uint64_t nprocessed = 0, nerrors = 0;
     Verifier verifier(&dbg);
+
+#ifndef USE_ROSE
     X86InstructionSemantics<Verifier, VerifierValue> semantics(verifier);
+#endif
+
     dbg.cont(); /* Advance to the first breakpoint. */
 
     /* Each time we hit a breakpoint, find the instruction at that address and run it through the verifier. */
@@ -1013,6 +1018,8 @@ int main(int argc, char *argv[]) {
 
         /* Process instruction semantics. */
         std::ostringstream trace;
+
+#ifndef USE_ROSE
         try {
             verifier.trace(&trace);
             semantics.processInstruction(insn_x86);
@@ -1028,6 +1035,7 @@ int main(int argc, char *argv[]) {
         } catch (const X86InstructionSemantics<Verifier, VerifierValue>::Exception &e) {
             fprintf(stderr, "%s: %s\n", e.mesg.c_str(), unparseInstructionWithAddress(e.insn).c_str());
         }
+#endif
 
         /* Single step to cause the instruction to be executed remotely. Then compare our state with the remote state. */
         dbg.step();
@@ -1046,5 +1054,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
+
     exit(1); /*FIXME*/
 }
+

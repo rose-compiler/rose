@@ -1,4 +1,8 @@
 #include <rose.h>
+
+// DQ (2/9/2010): Testing use of ROE to compile ROSE.
+#ifndef USE_ROSE
+
 #include <string>
 #include "RtedSymbols.h"
 #include "DataStructures.h"
@@ -71,3 +75,6 @@ void RtedTransformation::visit_delete( SgDeleteExp* del ) {
   // FIXME 2: this is wrong if delete is overloaded
   frees.push_back( del );
 }
+
+#endif
+

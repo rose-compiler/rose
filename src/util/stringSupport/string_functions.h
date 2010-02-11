@@ -244,10 +244,12 @@ namespace StringUtility
 
            /* Files can be classified as being in one of three
             * locations: We don't know if it's user or system It is a
-            * user (application) file It is a system library */
+            * user (application) file It is a system library This file
+            * does not exist */
            enum FileNameLocation { FILENAME_LOCATION_UNKNOWN, 
                                    FILENAME_LOCATION_USER,    
-                                   FILENAME_LOCATION_LIBRARY };
+                                   FILENAME_LOCATION_LIBRARY,
+                                   FILENAME_LOCATION_NOT_EXIST };
            
            /* Files can be classified as being part of one of these
             * libraries: Unknown, it isn't a library - it's part of
@@ -258,6 +260,7 @@ namespace StringUtility
                                   FILENAME_LIBRARY_USER,
                                   FILENAME_LIBRARY_C,
                                   FILENAME_LIBRARY_STDCXX,
+				  FILENAME_LIBRARY_STL,
                                   FILENAME_LIBRARY_LINUX,
                                   FILENAME_LIBRARY_GCC,
                                   FILENAME_LIBRARY_BOOST,
@@ -340,6 +343,26 @@ namespace StringUtility
        	    * is part of the source code or some system library */
            FileNameClassification classifyFileName(const std::string& fileName,
                                                    const std::string& appPath,
+						   OSType os);
+
+           /* Given a fileName and an appPath that is a path to some
+       	    * application's source code directory, and a collection 
+	    * of library paths, return a FileNameClassification
+	    * indicating whether the fileName is part of the source 
+	    * code or some system library and automatically determine 
+	    * the operating system from the host uname */
+           FileNameClassification classifyFileName(const std::string& fileName,
+                                                   const std::string& appPath,
+						   const std::vector<std::string>& libPathCollection);
+
+           /* Given a fileName and an appPath that is a path to some
+       	    * application's source code directory, and a collection 
+	    * of library paths, return a FileNameClassification
+	    * indicating whether the fileName is part of the source 
+	    * code or some system library */ 
+           FileNameClassification classifyFileName(const std::string& fileName,
+                                                   const std::string& appPath,
+						   const std::vector<std::string>& libPathCollection,
                                                    OSType os);
 
            /* Remove leading dots plus a space from a header file name

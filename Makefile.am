@@ -7,7 +7,12 @@ include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 # they generate data that is subsequently used in the generated 
 # ROSE documentation (examples, input codes, and generated output).
 # SUBDIRS = config src projects tests tutorial exampleTranslators docs developersScratchSpace tools proposals scripts
-SUBDIRS = libltdl config src projects tests tutorial exampleTranslators docs tools scripts demo binaries
+# SUBDIRS = libltdl config src projects tests tutorial exampleTranslators docs tools scripts demo binaries
+
+# DQ (2/6/2010): changed the order of tests, the projects directory now follows the tests directory.
+# This was something that was discussed in email previously with the group.  Thei point is to have the
+# first tests run by make check be the most relevant tests (e.g. can we compile C++ code).
+SUBDIRS = libltdl config src tests projects tutorial exampleTranslators docs tools scripts demo binaries
 
 
 ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I /usr/share/aclocal
@@ -22,6 +27,7 @@ if ROSE_BUILD_OS_IS_CYGWIN
 else
 
 # Liao, 6/27/2009 skip the test if PCH is not used
+# tps (02/01/2010) : We should check this all the time... I leave it for now
 if ROSE_PCH 
 PROJECT_SOURCE_CODE_TESTS = detect_roseh detect_rosec
 else  
@@ -44,7 +50,7 @@ detect_roseh:
 	@echo "***** the first header file in a source file is sage3basic.h (if used)   ********************"
 	@echo "***************************************************************************************"
 	@echo Testing for sage3basic.h and rose.h and sage3.h in header files...
-	@if test `find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.h" -o -name "*.hh" \) -exec grep -H "#include \"sage3basic.h\"\|#include <sage3basic.h>\|#include \"rose.h\"\|#include <rose.h>\|#include \"sage3.h\"\|#include <sage3.h>" {} \; |  grep -v "//#include \"sage3basic.h\"\|//#include <sage3basic.h>\|//#include \"rose.h\"\|//#include <rose.h>\|//#include \"sage3.h\"\|//#include <sage3.h>" | grep -v "// #include \"sage3basic.h\"\|// #include <sage3basic.h>\|// #include \"rose.h\"\|// #include <rose.h>\|// #include \"sage3.h\"\|// #include <sage3.h>" | wc | awk '{print \$$1}'` -eq 0; then echo "sage3basic.h or rose.h or sage3.h header check passed."; else echo "header files exist that include sage3basic.h or rose.h or sage3.h"; find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.h" -o -name "*.hh" \) -exec grep -H "#include \"sage3basic.h\"\|#include <sage3basic.h>\|#include \"rose.h\"\|#include <rose.h>\|#include \"sage3.h\"\|#include <sage3.h>" {} \; | grep -v "//#include \"sage3basic.h\"\|//#include <sage3basic.h>\|//#include \"rose.h\"\|//#include <rose.h>\|//#include \"sage3.h\"\|//#include <sage3.h>" | grep -v "// #include \"sage3basic.h\"\|// #include <sage3basic.h>\|// #include \"rose.h\"\|// #include <rose.h>\|// #include \"sage3.h\"\|// #include <sage3.h>" ; exit 1; fi
+	@if test `find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.h" -o -name "*.hh" -o -name "*.code2" -o -name "*.macro" \) -exec grep -H "#include \"sage3basic.h\"\|#include <sage3basic.h>\|#include \"rose.h\"\|#include <rose.h>\|#include \"sage3.h\"\|#include <sage3.h>" {} \; |  grep -v "//#include \"sage3basic.h\"\|//#include <sage3basic.h>\|//#include \"rose.h\"\|//#include <rose.h>\|//#include \"sage3.h\"\|//#include <sage3.h>" | grep -v "// #include \"sage3basic.h\"\|// #include <sage3basic.h>\|// #include \"rose.h\"\|// #include <rose.h>\|// #include \"sage3.h\"\|// #include <sage3.h>" | wc | awk '{print \$$1}'` -eq 0; then echo "sage3basic.h or rose.h or sage3.h header check passed."; else echo "header files exist that include sage3basic.h or rose.h or sage3.h"; find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.h" -o -name "*.hh" -o -name "*.code" -o -name "*.macro" \) -exec grep -H "#include \"sage3basic.h\"\|#include <sage3basic.h>\|#include \"rose.h\"\|#include <rose.h>\|#include \"sage3.h\"\|#include <sage3.h>" {} \; | grep -v "//#include \"sage3basic.h\"\|//#include <sage3basic.h>\|//#include \"rose.h\"\|//#include <rose.h>\|//#include \"sage3.h\"\|//#include <sage3.h>" | grep -v "// #include \"sage3basic.h\"\|// #include <sage3basic.h>\|// #include \"rose.h\"\|// #include <rose.h>\|// #include \"sage3.h\"\|// #include <sage3.h>" ; exit 1; fi
 #	@echo Testing for sage3.h in header files...
 #	@if test `find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.h" -o -name "*.hh" \) -exec grep -H "#include \"sage3.h\"\|#include <sage3.h>" {} \; |  grep -v "//#include \"sage3.h\"\|//#include <sage3.h>" | grep -v "// #include \"sage3.h\"\|// #include <sage3.h>" | wc | awk '{print \$$1}'` -eq 0; then echo "sage3.h header check passed."; else echo "header files exist that include sage3.h"; find $(top_srcdir) \( -type d -exec test -d "{}/include-staging" \; -prune \) -o -type f \( -name "*.h" -o -name "*.hh" \) -exec grep -H "#include \"sage3.h\"\|#include <sage3.h>" {} \; | grep -v "//#include \"sage3.h\"\|//#include <sage3.h>" | grep -v "// #include \"sage3.h\"\|// #include <sage3.h>" ; exit 1; fi
 #	@echo Testing for rose.h in header files...
@@ -261,3 +267,20 @@ CheckinCounts:
 	@echo "*****************************************************"
 	cd $(top_srcdir); git shortlog -s -n
 	@echo "*****************************************************"
+
+ProblemAreas:
+	echo "Directories where ROSE does not analyze code for some ROSE source files."
+	grep -r ROSE_USING_ROSE_ANALYSIS $(top_srcdir) | grep Makefile.am
+	echo "Directories where ROSE does not generate code for some ROSE source files."
+	grep -r ROSE_USING_ROSE_CODE_GENERATION $(top_srcdir) | grep Makefile.am
+	echo "Directories where ROSE does not translate (compile) code for some ROSE source files."
+	grep -r ROSE_USING_ROSE_TRANSLATE $(top_srcdir) | grep Makefile.am
+	echo "Files where ROSE does not analyze some amount of code (test of USE_ROSE in each ROSE source file)."
+	grep -rl USE_ROSE $(top_srcdir) | grep "\.C"
+	echo "Files where ROSE does not analyze some amount of code (test of CXX_IS_ROSE_ANALYSIS in each ROSE source file)."
+	grep -rl CXX_IS_ROSE_ANALYSIS $(top_srcdir) | grep "\.C"
+	echo "Files where ROSE does not analyze some amount of code (test of CXX_IS_ROSE_CODE_GENERATION in each ROSE source file)."
+	grep -rl CXX_IS_ROSE_CODE_GENERATION $(top_srcdir) | grep "\.C"
+	echo "Files where ROSE does not analyze some amount of code (test of CXX_IS_ROSE_TRANSLATOR in each ROSE source file)."
+	grep -rl CXX_IS_ROSE_TRANSLATOR $(top_srcdir) | grep "\.C"
+

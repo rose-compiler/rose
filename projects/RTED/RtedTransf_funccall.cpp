@@ -1,4 +1,8 @@
 #include <rose.h>
+
+// DQ (2/9/2010): Testing use of ROE to compile ROSE.
+#ifndef USE_ROSE
+
 #include <string>
 #include <boost/foreach.hpp>
 #include "RtedSymbols.h"
@@ -705,3 +709,5 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
 		}
 	  }
 }
+
+#endif

@@ -3,7 +3,8 @@
 
     All specializations that are located in the source file shoud be output in the code generation.
  */
-
+#ifndef __markTemplateSpecializationsForOutput
+#define __markTemplateSpecializationsForOutput
 void markTemplateSpecializationsForOutput( SgNode* node );
 
 //! Inherited attribute required for MarkTemplateSpecializationsForOutput class.
@@ -33,3 +34,4 @@ class MarkTemplateSpecializationsForOutput
                evaluateInheritedAttribute ( SgNode* node, MarkTemplateSpecializationsForOutputInheritedAttribute inheritedAttribute );
    };
 
+#endif

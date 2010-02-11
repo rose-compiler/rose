@@ -1,5 +1,5 @@
 HEADER_MEMORY_POOL_SUPPORT_START
-
+#include <semaphore.h>
 // DQ (9/21/2005): Static variables supporting memory pools
 /*! \brief \b FOR \b INTERNAL \b USE Number of objects allocated within each block of objects forming a memory pool for this IR node.
 
@@ -17,7 +17,10 @@ extern $CLASSNAME* $CLASSNAME_Current_Link;              // = NULL;
 
 /*! \brief \b FOR \b INTERNAL \b USE Support for thereaded synchronization of memory allocation/deallocation. 
 */
+#ifndef _MSC_VER
+// mutex does not work on Windows
 extern mutex $CLASSNAME_allocation_mutex;
+#endif
 
 // DQ (12/15/2005): This is Jochen's implementation of the memory allocation pools.
 // This is was one of the things on the todo list (above).

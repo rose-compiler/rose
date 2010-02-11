@@ -35,7 +35,15 @@ int backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp = NULL, U
 // DQ (8/24/2009): This backend calls the backend compiler using the original input source file list.
 // This is useful as a test code for testing ROSE for use on projects that target Compass or any
 // other analysis only tool using ROSE. Called in tests/testAnalysis.C for example.
-int backendUsingOriginalInputFile ( SgProject* project );
+int backendCompilesUsingOriginalInputFile ( SgProject* project );
+
+// DQ (2/6/2010): This backend forces all code to be generated but still uses the beakend vendor 
+// compiler to compile the original code.  This is a step between backendUsingOriginalInputFile(),
+// which does not generate code; and backend() which generated code and compiles it.  The use of
+// this backend permits an intermediate test of robustness where the code that we generate might
+// be generated incorrectly (usually with missing name qualification as required for a specific 
+// backend (vendor) compiler).
+int backendGeneratesSourceCodeButCompilesUsingOriginalInputFile ( SgProject* project );
 
 //QY: new back end that performs only source-to-source translations 
 // of the original file. Furthermore, statements are copied from 

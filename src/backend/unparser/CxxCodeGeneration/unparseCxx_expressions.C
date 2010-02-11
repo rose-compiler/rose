@@ -1513,16 +1513,29 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
      ROSE_ASSERT(theName != NULL);
 
 #if 0
-     printf ("In Unparse_ExprStmt::unparseVarRef(): SgInitializedName* theName = %p \n",theName);
+     printf ("In Unparse_ExprStmt::unparseVarRef(): SgInitializedName* theName = %p = %s \n",theName,theName->get_name().str());
      printf ("In Unparse_ExprStmt::unparseVarRef(): SgInitializedName scope = %p = %s \n",theName->get_scope(),theName->get_scope()->class_name().c_str());
      printf ("In Unparse_ExprStmt::unparseVarRef(): SgInitializedName scope = %p qualified name = %s \n",theName->get_scope(),theName->get_scope()->get_qualified_name().str());
+#endif
+
+#if 0
+  // DQ (2/8/2010): Debugging code.
+     var_ref->get_startOfConstruct()->display("Inside of unparseVarRef");
 #endif
 
   // DQ (1/7/2007): Much simpler version of code!
   // SgScopeStatement* declarationScope = theName->get_scope();
   // ROSE_ASSERT(declarationScope != NULL);
   // SgUnparse_Info ninfo(info);
-     SgName nameQualifier = unp->u_name->generateNameQualifier(theName,info);
+
+  // DQ (2/10/2010): Don't search for the name "__assert_fail", this is part of macro expansion of the assert macro and will not be found.
+  // SgName nameQualifier = unp->u_name->generateNameQualifier(theName,info);
+     SgName nameQualifier;
+     if (theName->get_name() != "__assert_fail")
+        {
+          nameQualifier = unp->u_name->generateNameQualifier(theName,info);
+        }
+
 #if 0
      if (nameQualifier.is_null() == false)
         {
@@ -1536,9 +1549,20 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
           curprint ( nameQualifier.str());
         }
 #endif
-     curprint (  var_ref->get_symbol()->get_name().str());
 
-
+  // DQ (2/10/2010): This is a strange problem demonstrated only by test2010_07.C.
+  // curprint (  var_ref->get_symbol()->get_name().str());
+     if (theName->get_name() == "__assert_fail")
+        {
+       // DQ (2/10/2010): For some reason, "__PRETTY_FUNCTION__" is replaced with "__assert_fail" by EDG?
+       // But only when the assert comes from a struct (see test2010_07.C).
+       // printf ("Warning: work around substitution of __PRETTY_FUNCTION__ for __assert_fail \n");
+          curprint ("__PRETTY_FUNCTION__");
+        }
+       else
+        {
+          curprint (var_ref->get_symbol()->get_name().str());
+        }
 
 // DQ (1/7/2007): This is now OLD CODE!
 #if 0
@@ -1865,10 +1889,10 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
      string func_name = mfunc_ref->get_symbol()->get_name().str();
 
 #if 0
-     printf ("func_name before processing to extract operator substring = %s \n",func_name);
+     printf ("func_name before processing to extract operator substring = %s \n",func_name.c_str());
 
      printf ("unp->opt.get_overload_opt()                            = %s \n",(unp->opt.get_overload_opt() == true) ? "true" : "false");
-     printf ("strncmp(func_name, \"operator\", 8)                 = %d \n",strncmp(func_name, "operator", 8));
+     printf ("strncmp(func_name, \"operator\", 8)                 = %d \n",strncmp(func_name.c_str(), "operator", 8));
      printf ("print_colons                                      = %s \n",(print_colons == true) ? "true" : "false");
      printf ("mfd->get_specialFunctionModifier().isConversion() = %s \n",(mfd->get_specialFunctionModifier().isConversion() == true) ? "true" : "false");
 #endif
@@ -1878,14 +1902,15 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
   // check that this an operator overloading function and that colons were not printed
   // if (!unp->opt.get_overload_opt() && !strncmp(func_name, "operator", 8) && !print_colons)
      if (!unp->opt.get_overload_opt() &&
-	 func_name.size() >= 8 && func_name.substr(0, 8) == "operator" && 
+          func_name.size() >= 8 && func_name.substr(0, 8) == "operator" && 
          !print_colons && 
          !mfd->get_specialFunctionModifier().isConversion())
         {
-	  func_name = func_name.substr(8);
+          func_name = func_name.substr(8);
         }
-
-  // printf ("func_name after processing to extract operator substring = %s (diff = %d) \n",func_name,diff);
+#if 0
+     printf ("func_name after processing to extract operator substring = %s \n",func_name.c_str());
+#endif
 
      if( func_name == "[]" ) 
         {
@@ -1997,12 +2022,16 @@ Unparse_ExprStmt::unparseMFuncRef ( SgExpression* expr, SgUnparse_Info& info )
                        }
                       else
                        {
-                         curprint ( func_name);
+                      // DQ (2/9/2010): Fix for test2010_03.C
+                      // curprint (func_name);
+                         curprint (string(" ") + func_name + " ");
                        }
                   }
                  else
                   {
-                    curprint ( func_name);
+                 // DQ (2/9/2010): This does not fix test2010_03.C, but defines a uniform handling as in the fix above.
+                 // curprint (func_name);
+                    curprint (string(" ") + func_name + " ");
                   }
 
 #if 0
@@ -3101,8 +3130,28 @@ void Unparse_ExprStmt::unparseExprCond(SgExpression* expr, SgUnparse_Info& info)
      ROSE_ASSERT(expr_cond != NULL);
   /* code inserted from specification */
 
-     int toplevel_expression = !info.get_nested_expression();
+#if 0
+     printf ("In unparseExprCond(): info.get_nested_expression() = %d \n",info.get_nested_expression());
+#endif
+
+  // int toplevel_expression = !info.get_nested_expression();
+     bool toplevel_expression = (info.get_nested_expression() == 0);
+
+  // DQ (2/9/2010): Added code to reset if we are in a top level expression (see test2010_04.C).
+  // Detecting the nesting level is not enough since the SgDotExp does not set this.  So check the parents.
+     SgNode* parentNode = expr->get_parent();
+  // printf ("parentNode = %p = %s \n",parentNode,parentNode->class_name().c_str());
+     if (isSgExprListExp(parentNode) != NULL && toplevel_expression == true)
+        {
+       // printf ("Resetting toplevel_expression to false \n");
+          toplevel_expression = false;
+        }
+
      info.set_nested_expression();
+
+#if 0
+     printf ("In unparseExprCond(): toplevel_expression = %d \n",toplevel_expression);
+#endif
 
 #if 0
   // DQ (10/25/2004): Not clear what this is about???
@@ -3582,10 +3631,10 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
   bool outputParenthisis = false;
 
 #if 0
-  // printf ("con_init->get_need_name()        = %s \n",(con_init->get_need_name() == true) ? "true" : "false");
-  // printf ("con_init->get_is_explicit_cast() = %s \n",(con_init->get_is_explicit_cast() == true) ? "true" : "false");
-  curprint ( "\n /* con_init->get_need_name()        = %s " + (con_init->get_need_name() ? "true" : "false") + " */ \n");
-  curprint ( "\n /* con_init->get_is_explicit_cast() = %s " + (con_init->get_is_explicit_cast() ? "true" : "false") + " */ \n");
+     printf ("In unparseConInit(): con_init->get_need_name()        = %s \n",(con_init->get_need_name() == true) ? "true" : "false");
+     printf ("In unparseConInit(): con_init->get_is_explicit_cast() = %s \n",(con_init->get_is_explicit_cast() == true) ? "true" : "false");
+     curprint ( string("\n /* con_init->get_need_name()        = ") + (con_init->get_need_name() ? "true" : "false") + " */ \n");
+     curprint ( string("\n /* con_init->get_is_explicit_cast() = ") + (con_init->get_is_explicit_cast() ? "true" : "false") + " */ \n");
 #endif
 
   // DQ (3/17/2005): Ignoring ned_name in favor of is_explicit_cast!

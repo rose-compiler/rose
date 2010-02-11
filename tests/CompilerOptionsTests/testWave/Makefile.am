@@ -29,8 +29,10 @@ TESTCODES_REQUIRED_TO_PASS = \
      test8.c \
      test9.c \
      test10.c \
-     test11.C \
-     testR1.C
+     test11.C
+
+# DQ (2/4/2010): This test code needs to be checked into the ROSE git repository.
+#     testR1.C
 
 
 TESTCODE_CURRENTLY_FAILING = 
@@ -68,17 +70,18 @@ $(TEST_Rewrap): testRewrapping $(srcdir)/$(@:.o=.C)
 	rm -f $(@:.c=.o)
 
 
-test:
+check-local:
 	@echo "************************************************************************************************"
 	@echo "*** ROSE/tests/CompilerOptionsTests/testWave: make check rule start                          ***"
 	@echo "************************************************************************************************"
+if ROSE_USING_BOOST_VERSION_1_35
+#	It is not helpful to have Boost version dependent tests in ROSE.
 	@$(MAKE) $(PASSING_TEST_Objects)
+endif
 	@echo "************************************************************************************************"
 	@echo "*** ROSE/tests/CompilerOptionsTests/testWave: make check rule complete (terminated normally) ***"
 	@echo "************************************************************************************************"
 
-
-check-local:
 
 CLEANFILES = 
 

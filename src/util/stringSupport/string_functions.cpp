@@ -31,6 +31,7 @@
 #endif
 #include <iostream>              /* std::cerr */
 #include <sstream>              /* std::ostringstream */
+#include <fstream>
 
 #include "string_functions.h"
 

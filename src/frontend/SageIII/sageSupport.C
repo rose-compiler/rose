@@ -2842,8 +2842,8 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // DQ (2/1/2010): I think this needs to reference the source tree (to pickup src/frontend/CxxFrontend/EDG/EDG_4.0/lib/predefined_macros.txt).
   // DQ (12/21/2009): The locaion of the EDG directory has been changed now that it is a submodule in our git repository.
   // commandLine.push_back(findRoseSupportPathFromBuild("src/frontend/CxxFrontend/EDG_3.10/lib", "share"));
-  // commandLine.push_back(findRoseSupportPathFromBuild("src/frontend/CxxFrontend/EDG/EDG_3.10/lib", "share"));
-     commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_3.10/lib", "share"));
+     commandLine.push_back(findRoseSupportPathFromBuild("src/frontend/CxxFrontend/EDG/EDG_3.10/lib", "share"));
+  // commandLine.push_back(findRoseSupportPathFromSource("src/frontend/CxxFrontend/EDG/EDG_3.10/lib", "share"));
 #endif
 #endif
 
@@ -7754,6 +7754,8 @@ void attachOmpAttributeInfo(SgSourceFile *sageFilePtr)
 	  //cout<<"sage_gen_be.C:23758 debug:\n"<<pragmaString<<endl;
 	  //attribute->print();//debug only for now
 	  addOmpAttribute(attribute,pragmaDeclaration);
+          //cout<<"debug: attachOmpAttributeInfo() for a pragma:"<<pragmaString<<"at address:"<<pragmaDeclaration<<endl;
+          //cout<<"file info for it is:"<<pragmaDeclaration->get_file_info()->get_filename()<<endl;
 	  // We attach the attribute redundantly on affected loops also
 	  // for easier loop handling later on in autoTuning's outlining step (reproducing lost pragmas)
 	  if (attribute->getOmpDirectiveType() ==e_for ||attribute->getOmpDirectiveType() ==e_parallel_for)
@@ -8309,6 +8311,7 @@ SgOmpBodyStatement * buildOmpBodyStatement(OmpAttribute* att)
       break;
    case e_task:
       result = new SgOmpTaskStatement(NULL, body); 
+     // cout<<"Debug:sageSupport.C Found an OmpAttribute from a task pragma"<<endl;
       break;
     default:
       {
@@ -8516,7 +8519,7 @@ void replaceOmpPragmaWithOmpStatement(SgPragmaDeclaration* pdecl, SgStatement* o
   replaceStatement(pdecl, ompstmt);
 }
 
-// Convert omp_pragma_list to SgOmpxxx nodes
+//! Convert omp_pragma_list to SgOmpxxx nodes
 void convert_OpenMP_pragma_to_AST (SgSourceFile *sageFilePtr)
 {
   list<SgPragmaDeclaration* >::reverse_iterator iter; // bottom up handling for nested cases
@@ -8528,8 +8531,22 @@ void convert_OpenMP_pragma_to_AST (SgSourceFile *sageFilePtr)
     // We have to check if the pragma declaration's file information matches the current file being processed
     // Otherwise we will process the same pragma declaration multiple times!!
     SgPragmaDeclaration* decl = *iter; 
-    if (decl->get_file_info()->get_filename()!= sageFilePtr->get_file_info()->get_filename())
+    // Liao, 2/8/2010
+    // Some pragmas are set to "transformation generated" when we fix scopes for some pragma under single statement block
+    // e.g if ()
+    //      #pragma
+    //        do_sth()
+    //  will be changed to
+    //     if ()
+    //     {
+    //       #pragma
+    //        do_sth()
+    //     }
+    // So we process a pragma if it is either within the same file or marked as transformation
+    if (decl->get_file_info()->get_filename()!= sageFilePtr->get_file_info()->get_filename()
+        && !(decl->get_file_info()->isTransformation()))
       continue;
+    //cout<<"debug: convert_OpenMP_pragma_to_AST() handling pragma at "<<decl<<endl;  
     OmpAttributeList* oattlist= getOmpAttributeList(decl);
     ROSE_ASSERT (oattlist != NULL) ;
     vector <OmpAttribute* > ompattlist = oattlist->ompAttriList;
