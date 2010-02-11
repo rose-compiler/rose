@@ -267,3 +267,20 @@ CheckinCounts:
 	@echo "*****************************************************"
 	cd $(top_srcdir); git shortlog -s -n
 	@echo "*****************************************************"
+
+ProblemAreas:
+	echo "Directories where ROSE does not analyze code for some ROSE source files."
+	grep -r ROSE_USING_ROSE_ANALYSIS $(top_srcdir) | grep Makefile.am
+	echo "Directories where ROSE does not generate code for some ROSE source files."
+	grep -r ROSE_USING_ROSE_CODE_GENERATION $(top_srcdir) | grep Makefile.am
+	echo "Directories where ROSE does not translate (compile) code for some ROSE source files."
+	grep -r ROSE_USING_ROSE_TRANSLATE $(top_srcdir) | grep Makefile.am
+	echo "Files where ROSE does not analyze some amount of code (test of USE_ROSE in each ROSE source file)."
+	grep -rl USE_ROSE $(top_srcdir) | grep "\.C"
+	echo "Files where ROSE does not analyze some amount of code (test of CXX_IS_ROSE_ANALYSIS in each ROSE source file)."
+	grep -rl CXX_IS_ROSE_ANALYSIS $(top_srcdir) | grep "\.C"
+	echo "Files where ROSE does not analyze some amount of code (test of CXX_IS_ROSE_CODE_GENERATION in each ROSE source file)."
+	grep -rl CXX_IS_ROSE_CODE_GENERATION $(top_srcdir) | grep "\.C"
+	echo "Files where ROSE does not analyze some amount of code (test of CXX_IS_ROSE_TRANSLATOR in each ROSE source file)."
+	grep -rl CXX_IS_ROSE_TRANSLATOR $(top_srcdir) | grep "\.C"
+
