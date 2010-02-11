@@ -14,7 +14,8 @@
 // back-end vendor compiler, so this is important for classification of system files
 // used in processing software using ROSE.
 
-
+// DQ (2/11/2010): Added so that we can detect what compiler is being used to compile this file.
+#include "rose_config.h"
 
 // DQ (3/22/2009): Added MSVS support for ROSE.
 #include "rose_msvc.h"
@@ -308,6 +309,7 @@ using namespace std;
 	StringUtility::FileNameLibrary
 	    classifyLibrary(const string& fileName)
 	    {
+#ifndef CXX_IS_ROSE_CODE_GENERATION
 		using namespace boost::filesystem;
 
 		if (charListMatches(LINUX_INCLUDES, "include/", fileName))
@@ -379,7 +381,7 @@ using namespace std;
 		    }
 		}
 		*/
-
+#endif
 		return StringUtility::FILENAME_LIBRARY_UNKNOWN;
 	    }
     } // end unnamed namespace for file location definitions
