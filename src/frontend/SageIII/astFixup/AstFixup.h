@@ -14,6 +14,9 @@
 #include "fixupEnumValues.h"
 #include "fixupFriendTemplateDeclarations.h"
 
+// Defined in AstFixup.C
+void removeEmptyElses(SgNode* top);
+
 // endif for ifndef AST_FIX_UP_H
 #endif
 

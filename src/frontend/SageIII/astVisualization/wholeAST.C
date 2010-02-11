@@ -2039,7 +2039,9 @@ class SimpleColorFilesInheritedAttribute
        // Default constructor
           SimpleColorFilesInheritedAttribute () : sharedSubTree(false)
              {
+#ifndef CXX_IS_ROSE_CODE_GENERATION
                ROSE_ASSERT(currentNodeOptions.size() < 4000);
+#endif
              }
 
       //! Specific constructors are required

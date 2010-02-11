@@ -3,6 +3,8 @@
 
     This file contains all declarations for the StorageClasses used for the ast file IO.
 */
+class SgProject;
+
 
 class AstSpecificDataManagingClass 
   {
