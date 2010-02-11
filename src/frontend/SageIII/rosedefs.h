@@ -25,6 +25,8 @@
 typedef uint64_t rose_addr_t; /* address and size (file and memory) */
 #define ROSE_DEPRECATED_FUNCTION 
 
+// DQ (2/10/2010): Added assert.h (not clear where else it is included).
+#include "assert.h"
 
 #include "roseInternal.h"
 
