@@ -2144,6 +2144,7 @@ Unparse_ExprStmt::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
      int wrap = unp->u_sage->cur_get_linewrap();
      unp->u_sage->cur_get_linewrap();
 
+#ifndef CXX_IS_ROSE_CODE_GENERATION
 #if 0
   // const char* targetString = "ROSE-TRANSFORMATION-MACRO:";
      const char* targetString = "ROSE-MACRO-EXPRESSION:";
@@ -2190,6 +2191,7 @@ Unparse_ExprStmt::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
                curprint ( "L");
           curprint ( "\"" + str_val->get_value() + "\"");
         }
+#endif
 #endif
      unp->u_sage->cur_set_linewrap(wrap);
 
@@ -3426,6 +3428,7 @@ Unparse_ExprStmt::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
   // printf ("In Unparse_ExprStmt::unparseNewOp \n");
   // curprint ( "\n /* In Unparse_ExprStmt::unparseNewOp */ \n";
 
+#ifndef CXX_IS_ROSE_CODE_GENERATION
      SgNewExp* new_op = isSgNewExp(expr);
      ROSE_ASSERT(new_op != NULL);
   /* code inserted from specification */
@@ -3502,6 +3505,7 @@ Unparse_ExprStmt::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
 
   // curprint ( "\n /* Leaving Unparse_ExprStmt::unparseNewOp */ \n";
   // printf ("Leaving Unparse_ExprStmt::unparseNewOp \n");
+#endif
    }
 
 void
