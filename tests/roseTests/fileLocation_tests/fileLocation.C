@@ -318,11 +318,14 @@ visitorTraversal::visit(SgNode* n)
 
             // This causes the path edit distance to be: 4
                //string sourceDir = "/home/dquinlan/ROSE/svn-rose";
-				string sourceDir = "/home/hou1/";
+				string sourceDir = "/home/hou1/opt/rose";
+				vector<string> libs;
+				libs.push_back("/home/hou1/opt");
+				libs.push_back("/nfs/apps");
             // This causes the path edit distance to be: 0
                //string sourceDir = "/home/dquinlan/ROSE";
 
-               classification = classifyFileName(filename,sourceDir);
+               classification = classifyFileName(filename,sourceDir,libs);
 #else
                string home = "/home/dquinlan/";
                string sourceDir = home + "ROSE/svn-rose/";
