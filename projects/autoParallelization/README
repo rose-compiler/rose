@@ -2,4 +2,7 @@ A project to automatically insert OpenMP directives based on
 * dependence analysis
 * liveness analysis
 * source code annotation
+
 Liao
+Last modified 2/11/2010
+
