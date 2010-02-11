@@ -287,6 +287,8 @@ echo "Elapsed time for Hudson test (total minutes): $elapsed_hudson_time_minutes
 echo "Elapsed time for Hudson test (total seconds): $elapsed_hudson_time_seconds"
 echo "***********************************************************************************************"
 
+# Output a list of current problem areas in ROSE where we have skipped some code.
+make ProblemAreas
 
 # Output the date and time of day at the end of the test (helpful for debugging).
 end_date=`date`
