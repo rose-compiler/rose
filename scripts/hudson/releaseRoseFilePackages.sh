@@ -1,4 +1,4 @@
-#!/bin/sh -vx
+#!/bin/sh
 
 # This is a script to automatically release/upload a ROSE package to
 # SciDAC Outreach Center
@@ -199,7 +199,7 @@ fi
 #-------------------- the actual uploading!!!---------------------
 # call the upload script 
 # VERSION_NO, REVISION_NO, FULL_PACKAGE_NAME
-/home/hudson-rose/releaseScripts/finalUploadFilePackages.sh ${VERSION_NO} ${REVISION_NO} ${FULL_PACKAGE_NAME} 
+${ROSE_SOURCE_PATH}/scripts/hudson/finalUploadFilePackages.sh ${VERSION_NO} ${REVISION_NO} ${FULL_PACKAGE_NAME} 
 if [ $? -ne 0 ]; then
    echo "Fatal error: cannot upload the distribution package!"
    exit 1
