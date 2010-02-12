@@ -106,6 +106,15 @@ InheritedAttributeForNamespacesAndClassTraversal NamespacesAndClassTraversal :: 
 
         TimingPerformance::time_type startTimeCommonCase;
 
+#if 0
+     // DQ (2/9/2010): Debugging code for ROSE compiling ROSE.
+        if (isSgStatement(n) != NULL)
+           {
+             SgStatement* stmt = isSgStatement(n);
+             printf ("In NamespacesAndClassTraversal::evaluateInheritedAttribute(): file = %s line = %d \n",stmt->get_startOfConstruct()->get_filenameString().c_str(),stmt->get_startOfConstruct()->get_line());
+           }
+#endif
+
          // Robert Preissl, June 20 2007: ad Occurence of using directives (and decl.) in the source-code relative to other declarations.
         if(isSgUsingDirectiveStatement(n) || isSgUsingDeclarationStatement(n)) {
 

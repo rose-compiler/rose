@@ -281,6 +281,6 @@ ProblemAreas:
 	grep -rl CXX_IS_ROSE_ANALYSIS $(top_srcdir) | grep "\.C"
 	echo "Files where ROSE does not analyze some amount of code (test of CXX_IS_ROSE_CODE_GENERATION in each ROSE source file)."
 	grep -rl CXX_IS_ROSE_CODE_GENERATION $(top_srcdir) | grep "\.C"
-	echo "Files where ROSE does not analyze some amount of code (test of CXX_IS_ROSE_TRANSLATOR in each ROSE source file)."
-	grep -rl CXX_IS_ROSE_TRANSLATOR $(top_srcdir) | grep "\.C"
+#	echo "Files where ROSE does not analyze some amount of code (test of CXX_IS_ROSE_TRANSLATOR in each ROSE source file)."
+#	grep -rl CXX_IS_ROSE_TRANSLATOR $(top_srcdir) | grep "\.C"
 

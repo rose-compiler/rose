@@ -75,6 +75,10 @@ test2010_07.o: ../../testTranslator
 	echo "Running boost specific test."
 	../../testTranslator $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_07.C -o test2010_07.o
 
+test2010_08.o: ../../testTranslator
+	echo "Running boost specific test."
+	../../testTranslator $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_08.C -o test2010_08.o
+
 cpp_test2010_07: ../../testTranslator
 	echo "Running boost specific test."
 	g++ -E -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_07.C

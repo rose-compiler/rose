@@ -3503,6 +3503,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          SgStringVal *stringValueExpression = isSgStringVal(assignInitializer->get_operand());
                          if (stringValueExpression != NULL)
                             {
+#ifndef CXX_IS_ROSE_CODE_GENERATION
                            // DQ (3/25/2006): Finally we can use the C++ string class
                               string targetString = "ROSE-MACRO-CALL:";
                               int targetStringLength = targetString.size();
@@ -3517,6 +3518,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                                    curprint ( string("\n" ) + remainingString + "\n");
                                    return;
                                  }
+#endif
                             }
                        }
                   }
