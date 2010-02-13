@@ -88,6 +88,8 @@ rose_doall_vector2.C: ../autoPar doall_vector2.C
 rose_Stress2.cc: ../autoPar Stress2.cc
 	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c -annot $(srcdir)/clibfunc.annot $(srcdir)/Stress2.cc
 
+test_diff: ../autoPar $(top_srcdir)/tests/CompileTests/OpenMP_tests/jacobi.c
+	$(VALGRIND) ../autoPar $(ROSE_FLAGS) -rose:autopar:enable_diff -c $(top_srcdir)/tests/CompileTests/OpenMP_tests/jacobi.c
 
 check-local:
 	@echo "Test for ROSE automatic parallelization."
