@@ -17,9 +17,10 @@ using namespace SageBuilder;
 
 namespace OmpSupport{
   //! A builder for OmpAttribute
-  OmpAttribute* buildOmpAttribute(omp_construct_enum directive_type, SgNode* node)
+  OmpAttribute* buildOmpAttribute(omp_construct_enum directive_type, SgNode* node, bool userDefined)
   {
     OmpAttribute* result = new OmpAttribute(directive_type,node);
+    result->isUserDefined = userDefined; 
     ROSE_ASSERT(result);
     return result;
   }
@@ -30,32 +31,24 @@ namespace OmpSupport{
   {
     ROSE_ASSERT(node);
     ROSE_ASSERT(ompattribute);
-#if 0
-    //  OmpAttribute* old_att = getOmpAttribute(node);
-    // if (old_att)
-    //  return;
-    //Add restrictions on the node following some special pragmas
-    if (ompattribute->getOmpDirectiveType() ==e_for ||
-        ompattribute->getOmpDirectiveType() ==e_parallel_for)
-    {
-      ROSE_ASSERT(isSgStatement(node) != NULL);
-      SgForStatement* forstmt = isSgForStatement(getNextStatement(isSgStatement(node))); 
-      if (forstmt !=NULL)
-      {
-        ROSE_ASSERT(isSgForStatement(getNextStatement(isSgStatement(node))) != NULL);
-        // We attach the attribute redundantly for easier loop handling later on in autoTuning
-        // 3/12/2009
-        // Cannot do this: considert loop 1, loop2: loop 2 would be marked during parallelizing loop1!!
-        // should do this at the call site of parsing OpenMP
-        getNextStatement(isSgStatement(node))->addNewAttribute("OmpAttribute",ompattribute);
-      }
-    }
-#endif 
-    OmpAttributeList* cur_list =  getOmpAttributeList(node);
+   OmpAttributeList* cur_list =  getOmpAttributeList(node);
     if (!cur_list)
     {
       cur_list = new OmpAttributeList();
       node->addNewAttribute("OmpAttributeList",cur_list);
+    // cout<<"OmpSupport::addOmpAttribute() tries to the first one attribute to "<<endl;
+      SgLocatedNode * lnode = isSgLocatedNode(node);
+      ROSE_ASSERT (lnode != NULL);
+    //  cout<<" memory address: "<<lnode<<endl;
+    //  cout<<lnode->get_file_info()->get_filename()<<"@" <<lnode->get_file_info()->get_line()<<endl;
+    }
+    else
+    {
+     // cout<<"Warning: OmpSupport::addOmpAttribute() tries to add more than one attribute to "<<endl;
+      SgLocatedNode * lnode = isSgLocatedNode(node);
+      ROSE_ASSERT (lnode != NULL);
+     // cout<<" memory address: "<<lnode<<endl;
+     // cout<<lnode->get_file_info()->get_filename()<<"@" <<lnode->get_file_info()->get_line()<<endl;
     }
     //TODO avoid duplicated ompattributes for the same OpenMP directive
     cur_list->ompAttriList.push_back(ompattribute);
