@@ -1252,19 +1252,19 @@ namespace AutoParallelization
            if (isUserDefined)
            {
              cout<<file_info->get_filename()<<":"<<file_info->get_line()<<endl;
-             cout<<"user define pragma:"<<endl;
+             cout<<"user defined      :";
              cout<<user_pragma_str<<endl;
              cout<<"--------"<<endl;
-             cout<<"compiler generated pragma:"<<endl;
+             cout<<"compiler generated:";
              cout<<compiler_pragma_str<<endl;
              }
            else
            {
-             cout<<"user define pragma:"<<endl;
+             cout<<"user defined      :";
              cout<<user_pragma_str<<endl;
              cout<<"--------"<<endl;
              cout<<file_info->get_filename()<<":"<<file_info->get_line()<<endl;
-             cout<<"compiler generated pragma:"<<endl;
+             cout<<"compiler generated:";
              cout<<compiler_pragma_str<<endl;
            }
            cout<<">>>>>>>>"<<endl<<endl;
