@@ -441,7 +441,7 @@ check-local:
 	@echo "*******************************************************************************************"
 
 clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files pass[1-9] pass1[0-9] pass2[0-9] rose_*.C *.ti *.binary *.C.pdf test1 test200?_??
+	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files pass[1-9] pass1[0-9] pass2[0-9] rose_*.C *.ti *.binary *.C.pdf test1 test200?_*
 
 distclean-local:
 	rm -rf Templates.DB 
