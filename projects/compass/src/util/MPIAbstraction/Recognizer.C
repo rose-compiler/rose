@@ -7,6 +7,9 @@
  */
 #include "rose.h"
 #include <fstream>
+
+#ifndef CXX_IS_ROSE_CODE_GENERATION
+
 #include "Recognizer.h"
 
 // ========================================================================
@@ -43,6 +46,8 @@ namespace MPIAbstraction
     C_API::readSigs (infile, &mpi_sigs_);
   }
 } // namespace MPIAbstraction
+
+#endif
 
 // ========================================================================
 // eof

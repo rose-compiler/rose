@@ -268,6 +268,8 @@ CheckinCounts:
 	cd $(top_srcdir); git shortlog -s -n
 	@echo "*****************************************************"
 
+# DQ (2/12/2010): Report the areas of ROSE where we have skipped some tests of ROSE 
+# either doing analysis, code generation, or translation of the ROSE source code.
 ProblemAreas:
 	echo "Directories where ROSE does not analyze code for some ROSE source files."
 	grep -r ROSE_USING_ROSE_ANALYSIS $(top_srcdir) | grep Makefile.am
@@ -284,3 +286,7 @@ ProblemAreas:
 #	echo "Files where ROSE does not analyze some amount of code (test of CXX_IS_ROSE_TRANSLATOR in each ROSE source file)."
 #	grep -rl CXX_IS_ROSE_TRANSLATOR $(top_srcdir) | grep "\.C"
 
+
+# Report the version number of the ROSE translator built.
+PrintRoseTranslatorVersion: $(top_builddir)/tests/testAnalysis
+	$(top_builddir)/tests/testAnalysis --version
