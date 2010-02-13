@@ -1,4 +1,4 @@
-#!/bin/bash -vx
+#!/bin/bash
 # A hudson-friendly script to 
 # x) build a distribution package off the internal git repository's
 # master branch, 
@@ -120,7 +120,7 @@ fi
 
 # --------- update external svn repository
 # this script can tolerate redundant update (trying to update the same package more than once is OK)
-/home/hudson-rose/releaseScripts/importRoseGitDistributionToSVN $ROSE_SOURCE_PATH $ROSE_BUILD_PATH
+$ROSE_SOURCE_PATH/scripts/hudson/importRoseGitDistributionToSVN $ROSE_SOURCE_PATH $ROSE_BUILD_PATH
 
 if [ $? -ne 0 ]; then
   echo "Error in importRoseGitDistributionToSVN, aborting ...."
