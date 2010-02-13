@@ -277,6 +277,10 @@ echo "Elapsed time for Hudson test (total minutes): $elapsed_hudson_time_minutes
 echo "Elapsed time for Hudson test (total seconds): $elapsed_hudson_time_seconds"
 echo "***********************************************************************************************"
 
+# DQ (2/12/2010): Added the ROSE version number to the base of the output
+echo "Version numbers of ROSE and the different parts of ROSE."
+make PrintRoseTranslatorVersion
+
 # Output the date and time of day at the end of the test (helpful for debugging).
 end_date=`date`
 echo ""

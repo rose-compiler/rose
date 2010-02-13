@@ -406,6 +406,10 @@ echo "**************************************************************************
 #echo "Executing runTest for ROSE Project on: $machine_name start_time = $start_time end_time = $end_time"
 #echo "**************************************************************************************************"
 
+# DQ (2/12/2010): Added the ROSE version number to the base of the output
+echo "Version numbers of ROSE and the different parts of ROSE."
+make PrintRoseTranslatorVersion
+
 # Output the date and time of day at the end of the test (helpful for debugging).
 end_date=`date`
 echo ""

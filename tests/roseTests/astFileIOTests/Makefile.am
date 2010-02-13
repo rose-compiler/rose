@@ -387,6 +387,9 @@ EXTRA_TESTCODES = \
 # These codes are DESIGNED to fail in the inlining
 # fail1.C fail2.C
 
+# DQ (2/13/2010): Optionally make this a longer test.
+TESTCODES += $(EXTRA_TESTCODES)
+
 # Build the list of object files
 TEST_Objects = ${TESTCODES:.C=.o}
 
@@ -405,7 +408,8 @@ TESTCODE_INCLUDES =
 $(TEST_Objects): astFileIO astFileRead $(TESTCODES)
 #	@echo "QY:skipping test code using $(TEST_TRANSLATOR) ..."
 #	@echo "Compiling test code using $(TEST_TRANSLATOR) ..."
-	$(VALGRIND) $(TEST_TRANSLATOR) $(srcdir)/$(@:.o=.C) -o $(@:.o=)
+#	$(VALGRIND) $(TEST_TRANSLATOR) $(srcdir)/$(@:.o=.C) -o $(@:.o=)
+	$(VALGRIND) $(TEST_TRANSLATOR) $(srcdir)/../../CompileTests/Cxx_tests/$(@:.o=.C) -o $(@:.o=)
 #	@echo "Running resulting executable ..."
 #	./$(@:.o=)
 
@@ -437,7 +441,7 @@ check-local:
 	@echo "*******************************************************************************************"
 
 clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files pass[1-9] pass1[0-9] pass2[0-9] rose_*.C *.ti *.binary *.C.pdf test1 test200?_??
+	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files pass[1-9] pass1[0-9] pass2[0-9] rose_*.C *.ti *.binary *.C.pdf test1 test200?_*
 
 distclean-local:
 	rm -rf Templates.DB 
