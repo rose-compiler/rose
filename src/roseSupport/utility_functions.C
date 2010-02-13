@@ -42,12 +42,28 @@ const int roseTargetCacheLineSize = 32;
 #define OUTPUT_TO_FILE true
 #define DEBUG_COPY_EDIT false
 
+// DQ (2/12/2010): When we have a mechanism to get the version number of OFP, put it here.
+std::string ofpVersionString()
+   {
+  // Need to make sure that ROSE can get a version number independent of Fortran support 
+  // being installed or include information in the return string when OFP is not installed.
+     return "unknown";
+   }
+
 // DQ (11/1/2009): replaced "version()" with separate "version_number()" and "version_message()" functions.
 std::string version_message()
    {
   // returns a string with the version message for ROSE.
   // return "\nROSE (pre-release alpha version: " + version_number() + ") \n";
-     return "ROSE (pre-release beta version: " + version_number() + ")";
+
+  // DQ (2/12/2010): Added EDG version number to make our versioning more clear.
+  // return "ROSE (pre-release beta version: " + version_number() + ")";
+     extern string edgVersionString();
+     extern string ofpVersionString();
+  // return "ROSE (pre-release beta version: " + version_number() + " using EDG C/C++ front-end version " + edgVersionString() + ")";
+     return "ROSE (pre-release beta version: " + version_number() + ")"
+          "\n   --- using EDG C/C++ front-end version: " + edgVersionString() +
+          "\n   --- using OFP Fortran parser version: " + ofpVersionString();
    }
 
 // DQ (11/1/2009): replaced "version()" with separate "version_number()" and "version_message()" functions.
