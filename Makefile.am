@@ -102,6 +102,9 @@ bincompat-sig: cleanSig
 clean-local:
 	rm -rf Templates.DB ii_files ti_files *.csv
 
+# Not sure if this should be part of the clean-local rule.
+# chmod -R +rwx rose-0.9.5a; rm -rf rose-0.9.5a
+
 # DQ (9/8/2006): Modified to remove backend specific header files
 uninstall-local:
 	rm -rf $(DESTDIR)$(includedir)/*_HEADERS
