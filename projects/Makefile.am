@@ -27,7 +27,6 @@ SUBDIRS = \
      MPICodeMotion \
      javaport \
      haskellport \
-     palette \
      reverseComputation \
      DistributedMemoryAnalysisCompass \
      assemblyToSourceAst \
@@ -47,6 +46,11 @@ SUBDIRS = \
 if !ROSE_USING_ROSE_CODE_GENERATION
    SUBDIRS += compass
 endif
+
+# DQ (2/13/2010): This appears to have a dependence on compass, but I don't know why!
+# All projects should be independent of each other so that they should be able to be
+# compiled in any order.
+SUBDIRS += palette
 
 # Disable the use of the interpreter except on GNU 4.2
 # interpreter
