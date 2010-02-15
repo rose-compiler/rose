@@ -69,6 +69,8 @@ using namespace std;
 // DQ (11/30/2008): Refactored this code out of the simpler function to isolate 
 // the Wave specific handling.  
 
+#ifndef  CXX_IS_ROSE_CODE_GENERATION
+
 
 AttachPreprocessingInfoTreeTrav::AttachPreprocessingInfoTreeTrav( SgSourceFile* file, bool includeDirectivesAndCommentsFromAllFiles )
    {
@@ -1318,3 +1320,5 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
      return returnSynthesizeAttribute;
    }
 
+// ifndef  CXX_IS_ROSE_CODE_GENERATION
+#endif 
