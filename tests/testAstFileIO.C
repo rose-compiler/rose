@@ -1,11 +1,5 @@
-                                                                                  
-//#define                 OUTLINE_DEBUG                                                                                                   
 #include "rose.h"
  
-#include <unistd.h>
-#include "AstPerformance.h"
-
-// DQ (1/1/2006): This is OK if not declared in a header file
 using namespace std;
 
 int
@@ -16,37 +10,23 @@ main ( int argc, char * argv[] )
      SgProject* project_test = project_identity;
      ROSE_ASSERT (project_identity != NULL);
 
+     int status = 0;
+
      printf ("project_identity->get_outputFileName() = %s \n",project_identity->get_outputFileName().c_str());
 
-#if 1    
+#if 1
      backend(project_identity);
      std::string fileName =  project_identity->get_outputFileName() ;
 #endif
 #if 1
      std::string moving = "mv rose_" + fileName + ".C rose_" + fileName + "_identity.C" ;
- 
-     system ( moving.c_str() );
+
+     status = system ( moving.c_str() );
+     ROSE_ASSERT(status == 0);
 #endif
 
 #if 0
      AST_FILE_IO::printListOfPoolSizes() ;
-#endif
-
-#if 1
-  // DQ (12/12/2009): Allow output only when run in verbose mode to limit spew in testing.
-     if (SgProject::get_verbose() > 0)
-        {
-          AST_FILE_IO::printListOfPoolSizes() ;
-
-          int memoryUsageSize = memoryUsage();
-          printf ("Alternative output from memoryUsage() = %d \n",memoryUsageSize);
-
-          printf ("Calling AstNodeStatistics::traversalStatistics(project_test) \n");
-          std::cout << AstNodeStatistics::traversalStatistics(project_test);
-
-          printf ("Calling AstNodeStatistics::IRnodeUsageStatistics \n");
-          std::cout << AstNodeStatistics::IRnodeUsageStatistics();
-        }
 #endif
 
 #if 1
@@ -58,19 +38,7 @@ main ( int argc, char * argv[] )
 #if 1
   // DQ (12/12/2009): Allow output only when run in verbose mode to limit spew in testing.
      if (SgProject::get_verbose() > 0)
-        {
           AST_FILE_IO::printListOfPoolSizes() ;
-#if 0
-          int memoryUsageSize = memoryUsage();
-          printf ("Alternative output from memoryUsage() = %d \n",memoryUsageSize);
-
-          printf ("Calling AstNodeStatistics::traversalStatistics(project_test) \n");
-          std::cout << AstNodeStatistics::traversalStatistics(project_test);
-
-          printf ("Calling AstNodeStatistics::IRnodeUsageStatistics \n");
-          std::cout << AstNodeStatistics::IRnodeUsageStatistics();
-#endif
-        }
 #endif
 
 

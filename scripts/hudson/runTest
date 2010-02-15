@@ -43,8 +43,17 @@ if test "x$ROSE_TEST_GCC_VERSION" != "x4.1.2" ; then
 		. $GCCROOT/setup.sh
 		set -ex
 	else
+    # This is the case for g++ 3.4.6 (since there is no uniform existence of a setup.sh file).
+      echo "Handling case of no $GCCROOT/setup.sh file."
 		export PATH="$GCCROOT/bin:$PATH"
-		export LD_LIBRARY_PATH="$GCCROOT/lib:$LD_LIBRARY_PATH"
+
+    # DQ (2/15/2010): For 64-bit this has to be setup to use lib64 explicitly
+    # export LD_LIBRARY_PATH="$GCCROOT/lib:$LD_LIBRARY_PATH"
+      if test "$MACHINE" = "i686" ; then
+         export LD_LIBRARY_PATH="$GCCROOT/lib:$LD_LIBRARY_PATH"
+      else
+         export LD_LIBRARY_PATH="$GCCROOT/lib64:$GCCROOT/lib:$LD_LIBRARY_PATH"
+      fi
 	fi
 fi
 

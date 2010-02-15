@@ -405,7 +405,8 @@ READ_TRANSLATOR = ./astFileRead $(ROSE_FLAGS)
 TESTCODE_INCLUDES =
 
 # DQ (7/12/2004): Modified to run with make -j4 options
-$(TEST_Objects): astFileIO astFileRead $(TESTCODES)
+# $(TEST_Objects): astFileIO astFileRead $(TESTCODES)
+$(TEST_Objects): astFileIO astFileRead
 #	@echo "QY:skipping test code using $(TEST_TRANSLATOR) ..."
 #	@echo "Compiling test code using $(TEST_TRANSLATOR) ..."
 #	$(VALGRIND) $(TEST_TRANSLATOR) $(srcdir)/$(@:.o=.C) -o $(@:.o=)
@@ -413,7 +414,8 @@ $(TEST_Objects): astFileIO astFileRead $(TESTCODES)
 #	@echo "Running resulting executable ..."
 #	./$(@:.o=)
 
-EXTRA_DIST = $(TESTCODES) test2001_05.h
+# EXTRA_DIST = $(TESTCODES) test2001_05.h
+EXTRA_DIST = 
 
 # This tests the reading of a collection of binary files (build by running $(MAKE) $(TEST_Objects)
 test-read: test2001_01.binary test2001_02.binary test2001_03.binary
@@ -430,7 +432,10 @@ largeFileTest: astFileIO
 	./astFileIO -rose:verbose 0 -c $(srcdir)/test2005_36.C -o test2005_36
 
 largestFileTest: astFileIO
-	./astFileIO -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) -c $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C -o Cxx_Grammar
+	./astFileIO -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C -o Cxx_Grammar
+
+locForRoseFile:
+	g++ -E -I$(top_builddir) $(ROSE_INCLUDES) -c $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C | wc -l
 
 check-local:
 	$(MAKE) $(TEST_Objects)
