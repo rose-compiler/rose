@@ -42,12 +42,28 @@ const int roseTargetCacheLineSize = 32;
 #define OUTPUT_TO_FILE true
 #define DEBUG_COPY_EDIT false
 
+// DQ (2/12/2010): When we have a mechanism to get the version number of OFP, put it here.
+std::string ofpVersionString()
+   {
+  // Need to make sure that ROSE can get a version number independent of Fortran support 
+  // being installed or include information in the return string when OFP is not installed.
+     return "unknown";
+   }
+
 // DQ (11/1/2009): replaced "version()" with separate "version_number()" and "version_message()" functions.
 std::string version_message()
    {
   // returns a string with the version message for ROSE.
   // return "\nROSE (pre-release alpha version: " + version_number() + ") \n";
-     return "ROSE (pre-release beta version: " + version_number() + ")";
+
+  // DQ (2/12/2010): Added EDG version number to make our versioning more clear.
+  // return "ROSE (pre-release beta version: " + version_number() + ")";
+     extern string edgVersionString();
+     extern string ofpVersionString();
+  // return "ROSE (pre-release beta version: " + version_number() + " using EDG C/C++ front-end version " + edgVersionString() + ")";
+     return "ROSE (pre-release beta version: " + version_number() + ")"
+          "\n   --- using EDG C/C++ front-end version: " + edgVersionString() +
+          "\n   --- using OFP Fortran parser version: " + ofpVersionString();
    }
 
 // DQ (11/1/2009): replaced "version()" with separate "version_number()" and "version_message()" functions.
@@ -337,7 +353,7 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
 
 
 int
-backendUsingOriginalInputFile ( SgProject* project )
+backendCompilesUsingOriginalInputFile ( SgProject* project )
    {
   // DQ (8/24/2009):
   // To work with existing makefile systems, we want to force an object file to be generated.
@@ -460,6 +476,33 @@ backendUsingOriginalInputFile ( SgProject* project )
         }
 
      return finalCombinedExitStatus;
+   }
+
+
+
+int
+backendGeneratesSourceCodeButCompilesUsingOriginalInputFile ( SgProject* project )
+   {
+  // DQ (2/6/2010): This function is a step between calling the backend()
+  // and calling backendCompilesUsingOriginalInputFile().  It it used
+  // the test the generation of the source code, but not the compilation of
+  // it using the backend (vendor) compiler.  This is used to test ROSE.
+
+  // Users are likely to either want to use backend() to generate the source 
+  // code for there project and it compiled (e.g. for optimization) or call
+  // backendCompilesUsingOriginalInputFile() to process the input code and
+  // then generate object files or executables from the original code 
+  // (e.g for analysis).
+
+  // This instance of complexity is why this needs to be a separate backend function.
+  // Note that file->get_skip_unparse() will be false when the "-E" option, and
+  // the unparse() function will properly assert that it should be true.
+     if (project->get_skip_unparse() == false)
+        {
+          project->unparse();
+        }
+
+     return backendCompilesUsingOriginalInputFile(project);
    }
 
 

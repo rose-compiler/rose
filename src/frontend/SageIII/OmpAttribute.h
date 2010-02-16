@@ -170,6 +170,9 @@ namespace OmpSupport
   void generatePragmaFromOmpAttribute(SgNode* sg_node); 
   //TODO this is duplicated from autoParallization project's generatedOpenMPPragmas() 
   // We should remove this duplicate once autopar is moved into rose/src 
+  
+  //! Generate diff text from OmpAttribute attached to a statement
+  std::string generateDiffTextFromOmpAttribute(SgNode* sg_node);
 
   //------------------------------------------------------------------
   // By default, the persistent attribute attached to an OpenMP pragma node in SAGE III AST

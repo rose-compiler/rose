@@ -1,4 +1,3 @@
-
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 #include "sageBuilder.h"
@@ -238,6 +237,7 @@ SgAssignInitializer* splitExpression(SgExpression* from, string newName) {
 // Convert something like "int a = foo();" into "int a; a = foo();"
 SgAssignOp* convertInitializerIntoAssignment(SgAssignInitializer* init)
    {
+#ifndef CXX_IS_ROSE_CODE_GENERATION
      using namespace SageBuilder;
      assert (SageInterface::isDefaultConstructible(init->get_operand_i()->get_type()));
      SgStatement* stmt = getStatementOfExpression(init);
@@ -297,6 +297,9 @@ SgAssignOp* convertInitializerIntoAssignment(SgAssignInitializer* init)
 
   // AstPostProcessing(assign_stmt);
      return isSgAssignOp(assign_stmt->get_expression());
+#else
+     return NULL;
+#endif
    }
 
 // Rewrites a while or for loop so that the official test is changed to
@@ -311,6 +314,7 @@ SgAssignOp* convertInitializerIntoAssignment(SgAssignInitializer* init)
 // "do body; while (test);" becomes:
 // "do {body; bool temp = test; if (!temp) break;} while (true);"
 void pushTestIntoBody(SgScopeStatement* loopStmt) {
+#ifndef CXX_IS_ROSE_CODE_GENERATION
   using namespace SageBuilder;
   AstPostProcessing(loopStmt);
   SgBasicBlock* new_body = buildBasicBlock();
@@ -354,5 +358,6 @@ void pushTestIntoBody(SgScopeStatement* loopStmt) {
   AstPostProcessing(loopStmt);
   SageInterface::setLoopCondition(loopStmt, buildExprStatement(buildBoolValExp(true)));
   AstPostProcessing(loopStmt);
+#endif
 }
 
