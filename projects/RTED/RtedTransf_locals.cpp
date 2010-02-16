@@ -1,4 +1,8 @@
 #include <rose.h>
+
+// DQ (2/9/2010): Testing use of ROE to compile ROSE.
+#ifndef USE_ROSE
+
 #include <string>
 #include "RtedSymbols.h"
 #include "DataStructures.h"
@@ -160,3 +164,5 @@ RtedTransformation::scope_name( SgNode* stmt) {
       }
     }
 }
+
+#endif

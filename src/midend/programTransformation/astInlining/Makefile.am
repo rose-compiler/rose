@@ -2,12 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES)
 
-libastinliningSources = \
-   inliner.C inlinerSupport.C isPotentiallyModified.C \
-   replaceExpressionWithStatement.C 
-
-# lib_LTLIBRARIES = libastinlining.a
-# libastinlining_a_SOURCES  = $(libastinliningSources)
+libastinliningSources = inliner.C inlinerSupport.C isPotentiallyModified.C replaceExpressionWithStatement.C 
 
 noinst_LTLIBRARIES = libastinlining.la
 libastinlining_la_SOURCES = $(libastinliningSources)

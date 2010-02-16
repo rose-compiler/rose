@@ -1,4 +1,4 @@
-#!/bin/bash -vx
+#!/bin/bash
 # A hudson-friendly script to 
 # x) build a distribution package off the internal git repository's
 # master branch, 
@@ -92,7 +92,9 @@ if [ $SKIP_COMPILATION -ne 1 ]; then
   ../configure --with-boost=${BOOST_ROOT} --with-CXX_DEBUG=-g --with-qt=/usr/apps/qt/4.5.1 --with-roseQt --prefix=$HOME/.hudson/tempInstall
   
   make -j${PROCESS_NUM} && \
-  make dist -j${PROCESS_NUM} DOT_SVNREV=-$PSEUDO_REV_NUM
+  make check -j${PROCESS_NUM} && \
+  make dist -j${PROCESS_NUM} DOT_SVNREV=-$PSEUDO_REV_NUM && \
+  make distcheck -j${PROCESS_NUM}
 fi
 
 if [ $? -ne 0  ]  ; then
@@ -101,7 +103,7 @@ if [ $? -ne 0  ]  ; then
 fi
 
 # ---------update external file packages
-/home/hudson-rose/releaseScripts/releaseRoseFilePackages.sh $ROSE_SOURCE_PATH $ROSE_BUILD_PATH
+${ROSE_SOURCE_PATH}/scripts/hudson/releaseRoseFilePackages.sh $ROSE_SOURCE_PATH $ROSE_BUILD_PATH
 
 # --------- update external svn repository
 # this script can tolerate redundant update (trying to update the same package more than once is OK)

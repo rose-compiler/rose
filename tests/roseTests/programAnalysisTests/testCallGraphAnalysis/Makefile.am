@@ -21,7 +21,13 @@ testCG_SOURCES = CG.C
 classHierarchyTestGen_SOURCES = ClassHierarchyTestGen.cpp
 classHierarchyTestGen_LDADD = $(ROSE_LIBS)
 
-virtualFctsTester_SOURCES = VirtualFctsTester.cpp
+# DQ (2/10/2010): ROSE currently fails to generate code for this file (it does however compile for analysis only).
+# virtualFctsTester_SOURCES = VirtualFctsTester.cpp
+virtualFctsTester_SOURCES =
+if !ROSE_USING_ROSE_CODE_GENERATION
+   virtualFctsTester_SOURCES += VirtualFctsTester.cpp
+endif
+
 virtualFctsTester_LDADD   = $(ROSE_LIBS)
 
 # testCallGraph_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)

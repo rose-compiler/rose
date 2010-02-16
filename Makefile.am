@@ -7,7 +7,12 @@ include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 # they generate data that is subsequently used in the generated 
 # ROSE documentation (examples, input codes, and generated output).
 # SUBDIRS = config src projects tests tutorial exampleTranslators docs developersScratchSpace tools proposals scripts
-SUBDIRS = libltdl config src projects tests tutorial exampleTranslators docs tools scripts demo binaries
+# SUBDIRS = libltdl config src projects tests tutorial exampleTranslators docs tools scripts demo binaries
+
+# DQ (2/6/2010): changed the order of tests, the projects directory now follows the tests directory.
+# This was something that was discussed in email previously with the group.  Thei point is to have the
+# first tests run by make check be the most relevant tests (e.g. can we compile C++ code).
+SUBDIRS = libltdl config src tests projects tutorial exampleTranslators docs tools scripts demo binaries
 
 
 ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I /usr/share/aclocal
@@ -96,6 +101,9 @@ bincompat-sig: cleanSig
 #   tests may have created template repositories here.
 clean-local:
 	rm -rf Templates.DB ii_files ti_files *.csv
+
+# Not sure if this should be part of the clean-local rule.
+# chmod -R +rwx rose-0.9.5a; rm -rf rose-0.9.5a
 
 # DQ (9/8/2006): Modified to remove backend specific header files
 uninstall-local:
@@ -262,3 +270,26 @@ CheckinCounts:
 	@echo "*****************************************************"
 	cd $(top_srcdir); git shortlog -s -n
 	@echo "*****************************************************"
+
+# DQ (2/12/2010): Report the areas of ROSE where we have skipped some tests of ROSE 
+# either doing analysis, code generation, or translation of the ROSE source code.
+ProblemAreas:
+	echo "Directories where ROSE does not analyze code for some ROSE source files."
+	grep -r ROSE_USING_ROSE_ANALYSIS $(top_srcdir) | grep Makefile.am
+	echo "Directories where ROSE does not generate code for some ROSE source files."
+	grep -r ROSE_USING_ROSE_CODE_GENERATION $(top_srcdir) | grep Makefile.am
+	echo "Directories where ROSE does not translate (compile) code for some ROSE source files."
+	grep -r ROSE_USING_ROSE_TRANSLATE $(top_srcdir) | grep Makefile.am
+	echo "Files where ROSE does not analyze some amount of code (test of USE_ROSE in each ROSE source file)."
+	grep -rl USE_ROSE $(top_srcdir) | grep "\.C"
+	echo "Files where ROSE does not analyze some amount of code (test of CXX_IS_ROSE_ANALYSIS in each ROSE source file)."
+	grep -rl CXX_IS_ROSE_ANALYSIS $(top_srcdir) | grep "\.C"
+	echo "Files where ROSE does not analyze some amount of code (test of CXX_IS_ROSE_CODE_GENERATION in each ROSE source file)."
+	grep -rl CXX_IS_ROSE_CODE_GENERATION $(top_srcdir) | grep "\.C"
+#	echo "Files where ROSE does not analyze some amount of code (test of CXX_IS_ROSE_TRANSLATOR in each ROSE source file)."
+#	grep -rl CXX_IS_ROSE_TRANSLATOR $(top_srcdir) | grep "\.C"
+
+
+# Report the version number of the ROSE translator built.
+PrintRoseTranslatorVersion: $(top_builddir)/tests/testAnalysis
+	$(top_builddir)/tests/testAnalysis --version

@@ -1,17 +1,13 @@
-#!/bin/sh -x
+#!/bin/sh
 #
 # This script tries to upload a distribution package to the Scidac Outreach center web site
-# The assumption is that the machine running this script has a firefox browser with 
-# saved session which has already logged into the website. 
-# So we don't need put user account/password into this script
-# 
-# It will be called by another script: makeAndReleaseROSE.sh
 #
 # Use:
 #  ./thisScript.sh 0.9.4a 2927 /home/liao6/daily-test-rose/release/upload/rose-0.9.4a-source-with-EDG-binary-2927.tar.gz
 #
 # by Jeremiah, 10/14/2008
 # Modified by Liao, 11.25.2008
+# Last updated: Liao, 2/8/2010
 
 if [ $# -lt 3 ]
 then
@@ -25,59 +21,36 @@ VERSION_NO=$1
 REVISION_NO=$2
 FULL_PACKAGE_NAME=$3
 
-# ls ~/.mozilla/firefox/ to find out your firefox id
-FIREFOXID=ytwyty99.default
-#FIREFOXID=58zvv6td.default
+# We now always use curl to login.
+# we no longer relies on firefox's session ID to detect login status
+# a script trying to log in and redirect output to curl.log 
+/home/hudson-rose/releaseScripts/scidac-login.sh
 
-# try to grab existing session id
-SESSION=`sed -n '/^outreach\.scidac\.gov\t.*\tsession_ser\t/p' < $HOME/.mozilla/firefox/$FIREFOXID/cookies.txt | cut -f 7`
-
-# if failed, try to login automatically
-# and add the session into cookies
-# Changed to use auto-login no matter what. 
-#if [ "x$SESSION" = "x" ]; then 
-   echo "No session for outreach.scidac is found. Trying to log in..."
-   # a script trying to log in and redirect output to $HOME/curl.log 
-   /home/liao6/release/scidac-login.sh
-   SESSION=`grep 'Set-Cookie' $HOME/curl.log | cut -d' ' -f 3 | cut -d'=' -f 2 | cut -d';' -f 1`
-   echo "outreach.scidac.gov	FALSE	/	FALSE	1228246200	session_ser	$SESSION">>$HOME/.mozilla/firefox/$FIREFOXID/cookies.txt
-#fi
-
-# debug here
-# exit
+SESSION=`grep 'Set-Cookie' /home/hudson-rose/releaseScripts/curl.log | cut -d' ' -f 3 | cut -d'=' -f 2 | cut -d';' -f 1`
 
 if [ "x$SESSION" = "x" ]; then 
    echo "Fatal Cannot get session for outreach.scidac is found. Aborting..."
    exit 1
+else
+   echo "SESSION is $SESSION"
 fi
 
-# This needs to match the browser you used to log in to Outreach; find it from http://browserspy.dk/useragent.php
-# this is also set in scidac-login.sh now, 7/30/2009, Liao
-USERAGENT='Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5'
-#USERAGENT='Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.12) Gecko/2009070610 Firefox/3.0.12'
-#USERAGENT='Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.8.1.18) Gecko/20081029 Firefox/2.0.0.18'
-# The actual content to be filled into the web form
-
-#RELEASENAME="0.9.3a-multiplatform-2484"
-
-RELEASENAME="${VERSION_NO}-multiplatform-${REVISION_NO}"
+# This is no longer critical, we can send any Mozilla string, Liao, 2/8/2010
+USERAGENT='Mozilla/5.0 (X11; U; Linux x86_64; en-US; rv:1.9.0.16) Gecko/2009120307 Red Hat/3.0.16-1.el5_4 Firefox/3.0.16'
 RELEASEDATE=`date '+%F %H:%M'`
-
-#FILENAME="/home/liao6/daily-test-rose/20081014_120001/build/rose-0.9.3a-source-with-EDG-binary-2484.tar.gz"
+RELEASENAME="${VERSION_NO}-multiplatform-${REVISION_NO}"
 TYPEID=5020 # Source .tar.gz
 PROCESSORID=8000 # any processor type
-# PROCESSORID=9999 # other
 
 echo $RELEASEDATE
 echo $SESSION
 
-#exit 0
-
 # explanations for options
-# -A user agent string
+# -A user agent string, can be Mozilla/5.0 or any other string
 # -F form "name=content"
-# -b cookie "name=data"
+# -b cookie "name=data", we use it to send cookie value set by loging script
 # -v verbose
+# @$filename: @ means the following string is a file name to be read the data from
 curl \
   -v \
   -b "session_ser=$SESSION" \
@@ -93,3 +66,4 @@ curl \
   -F "submit=Release+File" \
   -A "$USERAGENT" \
   'https://outreach.scidac.gov/frs/admin/qrs.php?group_id=24'
+

@@ -170,8 +170,8 @@ visit(SgNode* node)
 
   if (!init) return;
 
-  //std::cerr << "Found malloc ... " << std::endl;
-  // traverse cfg within this function and find malloc with same init
+  //std::cerr << "Found malloc or calloc ... " << std::endl;
+  // traverse cfg within this function and find free with same init
   // if not found trigger error
   vector<FilteredCFGNode<IsDFAFilter> > worklist;
   vector<FilteredCFGNode<IsDFAFilter> > visited;

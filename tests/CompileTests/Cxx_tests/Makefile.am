@@ -63,6 +63,26 @@ $(TEST_Objects): ../../testTranslator
 test2005_56.o: ../../testTranslator
 	../../testTranslator $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -c $(srcdir)/test2005_56.C -o test2005_56.o
 
+test2010_01.o: ../../testTranslator
+	echo "Running boost specific test."
+	../../testTranslator $(ROSE_FLAGS) $(ROSE_INCLUDES) -c $(srcdir)/test2010_01.C -o test2010_01.o
+
+test2010_02.o: ../../testTranslator
+	echo "Running boost specific test."
+	../../testTranslator $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_02.C -o test2010_02.o
+
+test2010_07.o: ../../testTranslator
+	echo "Running boost specific test."
+	../../testTranslator $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_07.C -o test2010_07.o
+
+test2010_08.o: ../../testTranslator
+	echo "Running boost specific test."
+	../../testTranslator $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_08.C -o test2010_08.o
+
+cpp_test2010_07: ../../testTranslator
+	echo "Running boost specific test."
+	g++ -E -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/test2010_07.C
+
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
 
@@ -120,6 +140,7 @@ check-local:
 	@$(MAKE) testBuildUsingNoPath
 	@$(MAKE) testBuildUsingRelativePath
 	@$(MAKE) testBuildUsingAbsolutePath
+	@$(MAKE) test2010_07.o
 	@echo "Tests of C++."
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "***********************************************************************************************"
@@ -127,5 +148,5 @@ check-local:
 	@echo "***********************************************************************************************"
 
 clean-local:
-	rm -f a.out *.o rose_*.[cC] roseTestProgram.C
+	rm -f a.out *.o rose_*.[cC] roseTestProgram.C *.dot
 	rm -rf QMTest

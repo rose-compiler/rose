@@ -7,38 +7,142 @@ it just executes the given command in each submodule directory and then
 in the top-level ROSE repository. It can be invoked from any directory
 under ROSE (either in the ROSE repository or one of the submodules).
 
-A few git commands get special handling by this script:
-   clone          Takes the same arguments and switches as for Git
-                  but also initializes and updates submodules. The
-                  user is given a chance to change the URLs for the
-                  submodules before they're updated.
+SPECIAL COMMANDS
 
-   checkout       Checks out a branch in the main repo and all
-                  submodules, taking the same arguments and switches
-                  as for Git.  If the "-b" switch is specified then
-                  the branch is created in the same way as the "branch"
-                  command described below.
+A few git commands get special handling by this script in order to
+restrict their functionality or to extend it to do something more
+useful in an environment with submodules.
 
-   branch         Lists, creates, or deletes branches taking the
-                  same arguments and switches as Git.  When creating
-                  a new branch the specified branch head (if any)
-                  is the one defined in the main ROSE repository.
-                  The head of the new branch in the submodules will
-                  be chosen according to the commit registered in
-                  the branch head of the main ROSE repository.
+   clone        After cloning the main repository, it initializes
+                submodules, gives the user a chance to change
+                their URLs (if the --edit switch is given), and
+                then updates the submodules.
+
+                These switches are supported: --edit (not a Git
+                switch, but controls whether the user is given
+                a chance to modify submodule URLs), --quiet,
+                --verbose, --no-hardlinks, --branch, --templates,
+                and --upload-pack.
+
+                The following switches don't make sense in this
+                environment: --shared, --reference, --no-checkout,
+                --bare, --mirror, --origin, --depth.  The switch
+                --recursive is not accepted since the behavior is
+                to always recurse into submodules.
+
+   checkout     Checks out the specified branch (after optionally
+                creating it) in the main repo and then updates all
+                submodules. Furthermore, if a submodule has a
+                suitable branch, that branch will be checked out in
+                the submodule. See CHOOSING SUBMODULE BRANCHES for
+                details.
+
+                These switches are supported: --quiet, -b, --track,
+                --no-track, and -l.
+
+                The following switches don't make sense in this
+                environment: --force, --ours, --theirs, --merge,
+                --conflict, and --patch.
+
+   branch       Lists, creates, deletes or renames branches in the
+                main repository and all submodules.  When creating
+                a new branch the specified branch head (if any)
+                is the one defined in the main ROSE repository. The
+                head of the new branch in the submodules will be
+                chosen according to the commit registered in the
+                branch head of the main ROSE repository.  In other
+                words, in the main repository "newbranch" will
+                point to the same commit as "base", while in the
+                submodule, "newbranch" will be created to point to
+                the commit that is referenced by the submodule
+                directory in the "base" commit of the main repository.
+
+                   $ smgit branch newbranch base
+
+                All git-branch switches are supported, namely: -d, -D,
+                -l, -f, -m, -M, --color, -r, -a, --verbose, --abbrev,
+                --track, --contains, --merged, and --no-merged.
+
+   commit       Commits changes that are staged for committal, first
+                in the submodules and then in the main repository,
+                using a single commit message.
+
+                These switches are supported: --all, --reuse-message,
+                --reedit-message, --reset-author, --file, --author,
+                --message, --templates, --signoff, --no-verify,
+                --cleanup, --edit, --untracked-files, --verbose,
+                and --quiet.
+
+                These switches are not supported since they either
+                don't make sense in this environment or are difficult
+                to implement: --allow-empty, --amend, and --dry-run.
+
+   merge        Merges one branch into another by first merging in
+                the main repositor (ignoring conflicts for the time
+                being), then merging in the submodules, then adding
+                new submodule versions to the main repository, then
+                committing the changes in the main repository if
+                necessary and possible.
+
+                These switches are supported to varying degrees: --ff,
+                --no-ff, --log, --no-log, --stat, --no-stat, -n,
+                --ff-only, --quiet, --verbose, and -m.
+
+                These switches are not supported: --commit, --no-commit,
+                --squash and --no-squash. The default is that merges are
+                always committed.
+
+CHOOSING SUBMODULE BRANCHES
+
+When a branch is checked out in the main repository, we update the
+submodules so their heads are pointing to the commit specified in the
+main repository.  Furthermore, if a submodule has a suitable branch,
+we check out that branch in the submodule rather than leaving the head
+in a detached state.  If the parent's branch name is B and the parent
+is pointing to submodule commit C, then here's how the branch is
+chosen in a submodule:
+
+   1. If the submodule has a branch named B that is pointing to
+      commit C, then we check out branch B.
+
+   2. Otherwise, if the submodule has a branch named origin/B
+      that points to commit C, we do one of the following if
+      their preconditions are met:
+
+         A. If the submodule has no branch named B then
+            branch B is created as a tracking branch of
+            origin/B and is checked out.
+
+         B. If branch B exists and can be fast forwarded to
+            origin/B then we check out B and fast forward
+            to origin/B.
+
+   3. Otherwise, if the submodule has any local or remote branch
+      that points to commit C we arbitrarily choose one.  If the
+      chosen branch is a local branch we use case 1 above, otherwise
+      we use case 2 above.
+
+   4. Otherwise, the head of the submodule remains in a detached
+      state.
+
+OTHER COMMANDS
 
 All other commands are identical to Git and are executed first in
 the submodules and then in the main ROSE repository.
+
+These global switches are not supported:
 EOF
+$help =~ s/\n$//s;
 
 use Cwd;
 use File::Temp 'tempfile';
-use Getopt::Std;
+use Getopt::Long 'GetOptionsFromArray';
+use Term::ReadLine;
 use strict;
 
 my($arg0) = $0 =~ /([^\/]+)$/; # just the base name of this script
 
-sub TOP {undef}
+Getopt::Long::Configure(qw/no_permute bundling/);
 
 # Print usage message and exit
 sub usage {
@@ -50,6 +154,13 @@ sub usage {
   }
   close GIT;
   exit 1;
+}
+
+# Prints message from GetOptions about an unsupported switch.
+sub unsupported {
+  my($switch) = "-$_[0]";
+  $switch = "-$switch" if length $switch > 2;
+  die "$arg0: unsupported switch: $switch\n";
 }
 
 # Returns true if specified directory looks like it's the top of ROSE
@@ -73,6 +184,44 @@ sub top_of_rose {
   die "$arg0: cannot find top of ROSE source tree (cwd=@{[getcwd]})";
 }
 
+# Rewrite the .git/config file for submodule URLs
+sub rewrite_submodule_configs {
+  my($edit) = @_;
+  local $_;
+  my @content; # rewritten content of .git/config file.
+  open CONF, ".git/config" or die "$arg0: .git/config: $!";
+  my($sectype,$secname,$origin_url); # set when we encounter a "[...]" line.
+  while (<CONF>) {
+    if (/^\s*\[\s*(\w+)\s+"(.*)"\s*\]/) {
+      ($sectype,$secname) = ($1,$2);
+    } elsif (my($key,$val) = /^\s*(\w+)\s*=\s*(.*?)\s*$/) {
+      if ($key eq "url" && $sectype eq "remote" && $secname eq "origin") {
+	$origin_url = $val;
+	$origin_url =~ s/\/+$//;
+      } elsif ($key eq "url" && $sectype eq "submodule") {
+	die unless $origin_url;
+	my($base) = $val =~ /([^\/]+)$/;
+	my($path) = $origin_url =~ /^(.*)\//;
+	my($url) = "$path/$base";
+	if ($edit) {
+	  print "Submodule $secname\n    Default: $url\n";
+	  my($term) = Term::ReadLine->new($arg0);
+	  $term->addhistory($url);
+	  my($response) = $term->readline("  New Value: ");
+	  $url = $response if $response ne "";
+	}
+	$_ = "\t$key = $url\n";
+      }
+    }
+    push @content, $_;
+  }
+  close CONF;
+  system "cp .git/config .git/config~"; #ignore status
+  open CONF, ">.git/config" or die "$arg0: .git/config: $!\n";
+  print CONF join "", @content;
+  close CONF;
+}
+
 # Returns submodule info. Each return value is an array ref with two elements: the path of the submodule with respect
 # to the supermodule, and the SHA1 as recorded in the supermodule.
 sub submodules {
@@ -92,31 +241,50 @@ sub refs {
 }
 
 # Run arbitrary git command in CWD and optionally return all stdout as an array of chomped lines. Returns true
-# on success, false on failure.
+# on success, false on failure.  The command should be an array, one argument per element. Note that under certain
+# circumstances the array will be converted to a space-separated string and passed to the shell (this happens when
+# we're grabbing output to return or we specify a working directory).
 sub git {
   my($output) = shift @_ if 'ARRAY' eq ref $_[0];
-  my($opts) = shift @_ if 'HASH' eq ref $_[0];
-  my($cmd) = join " ", "git", @_;
-  $cmd = "(cd $opts->{cd} && $cmd)" if $opts->{cd};
-  print "+ $cmd\n";
+  my($opts) = 'HASH' eq ref $_[0] ? shift @_ : {};
+  my(@cmd,$cmd) = ("git", @_);
+
+  my $convert_to_string = sub { join " ", map {"'$_'"} @_ };
+
+  if ($opts->{cd}) {
+    $cmd ||= &{$convert_to_string}(@cmd);
+    $cmd = "(cd '$opts->{cd}' && $cmd)";
+  }
+
+  unless ($opts->{quiet}) {
+    if ($cmd ne "") {
+      print "+ $cmd\n";
+    } else {
+      print "+", (map {" $_"} @cmd), "\n";
+    }
+  }
+
   if ($output) {
+    $cmd ||= &{$convert_to_string}(@cmd);
     open F, "-|", $cmd or return;
     while (<F>) {
       chomp;
       push @$output, $_;
     }
     close F or return;
-  } else {
+  } elsif ($cmd) {
     system $cmd and return;
+  } else {
+    system @cmd and return;
   }
   return 1;
 }
 
 # Wrappers around git commands that return a single line. Return undef on failure rather than die.
 sub git1 { my @output; git \@output, @_; return $output[0] }
-sub rev_parse { git1 "rev-parse -q --verify", ($_[0]||"HEAD") }
-sub symbolic_ref { git1 "symbolic-ref -q", ($_[0]||"HEAD") }
-sub merge_base { git1 "merge-base", @_ }
+sub rev_parse { git1 {quiet=>1}, "rev-parse", "-q", "--verify", ($_[0]||"HEAD") }
+sub symbolic_ref { git1 {quiet=>1}, "symbolic-ref", "-q", ($_[0]||"HEAD") }
+sub merge_base { git1 {quiet=>1}, "merge-base", @_ }
 
 
 # Try to find a branch that matches the current (possibly detached) HEAD, and switch to it.
@@ -126,45 +294,71 @@ sub merge_base { git1 "merge-base", @_ }
 #   (4) Otherwise, leave things as they are
 sub switch_to_branch {
   my($branch) = @_;
+  my($verbose) = 0; # set to 1 for debugging
   my $HEAD = rev_parse or die;
   my %refs = map {@$_} refs; # hash indexed by ref name
-  if ($refs{"refs/heads/$branch"} eq $HEAD) {
-    # Local branch exists and matches $HEAD, so use it.
-    git "checkout", $branch or die "$0: could not checkout $branch";
-    return;
-  } elsif ($refs{"refs/remotes/origin/$branch"} eq $HEAD) {
-    if ($refs{"refs/heads/$branch"}) {
-      if (merge_base("refs/heads/$branch", "refs/remotes/origin/$branch") eq $HEAD) {
-        # Remote branch matches HEAD and local branch can be fast-forwarded.
-        git "merge", "refs/remotes/origin/$branch" or die "$arg0: could not merge origin/$branch";
-        return;
+
+  print "$arg0: switch_to_branch($branch) HEAD=$HEAD\n" if $verbose;
+
+  # List of candidate branches to try, in the order we want to try them: $branch, origin/$branch, local branches, remote branches
+  my @candidates;
+  push @candidates, "refs/heads/$branch" if $refs{"refs/heads/$branch"} eq $HEAD;
+  push @candidates, "refs/heads/remotes/origin/$branch" if $refs{"refs/heads/remotes/origin/$branch"} eq $HEAD;
+  push @candidates, grep {m(^refs/heads/) && $refs{$_} eq $HEAD} sort keys %refs;
+  push @candidates, grep {m(^refs/remotes/origin/) && $refs{$_} eq $HEAD} sort keys %refs;
+
+  for my $full (@candidates) {
+    print "  trying branch=$full ", $refs{$full}, "\n" if $verbose;
+    my($base) = $full =~ /([^\/]*)$/;
+
+    if ($full =~ m(^refs/remotes/origin/)) {
+      if ($refs{"refs/heads/$base"}) {
+	if (merge_base("refs/heads/$base", $full) eq $refs{"refs/heads/$base"}) {
+	  # Remote branch matches HEAD and local branch can be fast-forwarded.
+	  git "checkout", "--quiet", $base or die "$arg0: could not check out $base";
+	  git "merge", $full or die "$arg0: could not merge $full";
+	  return;
+	}
+      } else {
+	# Remote branch ($full) matches head and local branch ($base) does not exist; create it.
+	git "checkout", "--quiet", "-b", $base, $full or die;
+	return;
       }
-    } elsif ($branch) {
-      # Remote branch matches head and local branch does not exist; create it.
-      git "checkout", "-b", $branch, "refs/remotes/origin/$branch" or die;
+    } else {
+      # $full is a local branch that matches $HEAD, so use it.
+      git "checkout", "--quiet", $base or die "$arg0: could not checkout $base";
       return;
     }
   }
-
-  # Choose any other local or remote branch that points to HEAD
-  ($branch) = map {/([^\/]+)$/} grep {m(^refs/(heads|remotes/origin)/) && $refs{$_} eq $HEAD} keys %refs;
-  switch_to_branch($branch) if $branch;
+  print "  head is detached (no suitable branch found)\n" if $verbose;
 }
 
 # Execute the supplied code for each submodule. The list of submodules are the same format as returned by &submodules.
-# To execute code in the top-level ROSE repo use undef (or an empty @modules).  The $code can be either a CODE reference,
-# a shell string, or an array of shell strings passed to system().  CODE is called with two args: the sha1 and the path;
-# shells are invoked with $sha1 and $path environment variables and die if they fail. All code is run with its CWD at the
-# top of the module.
+# To execute code in the top-level ROSE repo use undef (or an empty @modules).  CODE is called with two args: the sha1 and
+# the path. All code is run with its CWD at the top of the module.
+my($prev_path);
 sub execute {
   my($code,@modules) = @_;
   push @modules, undef unless @modules;
   for my $module (@modules) {
     my($path,$sha1) = $module ? @$module : (".","HEAD");
-    print "==== In ROSE $path ====\n";
+    print "==== In ROSE $path ====\n" unless $path eq $prev_path;
+    $prev_path = $path;
     chdir(top_of_rose . "/$path") or die "$arg0: cannot chdir: $!";
     &{$code}($path,$sha1);
   }
+}
+
+# Executes a command in every submodule and then the top ROSE repo regardless of whether any command fails. Exits
+# nonzero if any command exited with nonzero status.
+sub postorder {
+  my @args = @_; # for closures
+  my $exit;
+  for my $sm (submodules, undef) {
+    eval { execute sub {git @args}, $sm };
+    $exit ||= $@;
+  }
+  exit 1 if $exit;
 }
 
 # Saves the commit message in a temporary file and returns its name.
@@ -195,67 +389,72 @@ sub commit_has_effect {
 # If we're creating a new branch then also create a new branch in the submodules.  Otherwise just have Git run
 # the specified command at the top of the ROSE repo and then in each submodule.
 sub do_branch {
-  my @args = @_;
-  execute sub {git "branch", @args or die};
+  my(@allargs) = @_;
+  my($delete,$create_reflog,$force,$move,$color,$remote,$all,$verbose,$abbrev,$track,$contains,$merged,$no_merged);
+  GetOptionsFromArray(\@_,
+		      d=>\$delete, D=>sub{$delete=2}, l=>\$create_reflog, f=>\$force, m=>\$move, M=>sub{$move=2},
+		      "color!"=>\$color, r=>\$remote, a=>\$all, "v|verbose"=>sub{++$verbose}, "abbrev=i"=>\$abbrev,
+		      "t|track!"=>\$track, "contains=s"=>\$contains, "merged:s"=>\$merged, "no-merged:s"=>\$no_merged)
+    or exit 1;
 
-  my @switches;
-  push @switches, shift while $_[0]=~/^-/;
-  if (grep {/^(-[ravMmDd]+|--color|--no-color|--abbrev.*|--no-abbrev|--(no-)?merged|--contains)$/} @switches ) {
-    execute sub {git "branch", @args or die}, submodules;
-  } elsif (@_) {
+  execute sub {git "branch", @allargs or die};
+
+  if ($delete || $move) {
+    execute sub {git "branch", @allargs or die}, submodules;
+  } elsif (@_>=1) {
+    # branch creation
     my($newbranch,$branchhead) = ($_[0], $_[1]||"HEAD");
+    my($head_sha1) = rev_parse $branchhead;
+
     execute sub {
       my($path) = @_;
-      my($rev) = git1 {cd=>".."}, "rev-parse $branchhead:$path" or die;
-      git "branch $newbranch $rev" or die;
+      my($rev) = git1 {cd=>".."}, "rev-parse", "$head_sha1:$path" or die;
+      my(@gitargs) = ($newbranch, $rev);
+      unshift @gitargs, "--track" if $track;
+      unshift @gitargs, "--no-track" if defined($track) && !$track;
+      unshift @gitargs, "-l" if $create_reflog;
+      unshift @gitargs, "-f" if $force;
+      git "branch", @gitargs or die;
     }, submodules;
   } else {
-    execute sub {git "branch", @args or die}, submodules;
+    # branch query
+    execute sub {git "branch", @allargs or die}, submodules;
   }
 }
 
 # A checkout with the "-b" switch also create similar branches in the submodules.  Regardless of presence of "-b",
 # we also run "git submodule update". Otherwise just run the git command in the top of the ROSE repo.
 sub do_checkout {
-  my(@args) = @_; # for closures
-  my($create) = (join " ", @args) =~ /-b\s+(\S+)/;  # argument after "-b" switch, in which case $_[-1] is the branch head
-  execute sub {git "checkout", @args or die};
-  execute sub {
-    my($path) = @_;
-    my($rev) = git1 {cd=>".."}, "rev-parse $args[-1]:$path" or die;
-    git "branch $create $rev";
-  }, submodules if $create;
-  execute sub {git "submodule update" or die};
-  my($branch) = $create || $_[-1];
-  execute sub {switch_to_branch $branch}, submodules;
-}
+  my($quiet,$mkbranch,$track,$create_reflog) = (1);
+  GetOptionsFromArray(\@_,
+		      "q|quiet"=>\$quiet, "f|force"=>\&unsupported, ours=>\&unsupported, theirs=>\&unsupported,
+		      "b=s"=>\$mkbranch, "t|track!"=>\$track, l=>\$create_reflog,
+		      "m|merge"=>\&unsupported, "conflict=s"=>\&unsupported, "p|patch"=>\&unsupported)
+    or exit 1;
+  die "$arg0: incorrect usage\n" unless @_<=1;
+  my($startpoint) = @_>0 ? $_[0] : "HEAD";
 
-sub rewrite_submodule_configs {
-  local $_;
-  my @content; # rewritten content of .git/config file.
-  open CONF, ".git/config" or die "$arg0: .git/config: $!";
-  my($sectype,$secname,$origin_url); # set when we encounter a "[...]" line.
-  while (<CONF>) {
-    if (/^\s*\[\s*(\w+)\s+"(.*)"\s*\]/) {
-      ($sectype,$secname) = ($1,$2);
-    } elsif (my($key,$val) = /^\s*(\w+)\s*=\s*(.*?)\s*$/) {
-      if ($key eq "url" && $sectype eq "remote" && $secname eq "origin") {
-	$origin_url = $val;
-      } elsif ($key eq "url" && $sectype eq "submodule") {
-	die unless $origin_url;
-	my($base) = $val =~ /([^\/]+)$/;
-	my($path) = $origin_url =~ /^(.*)\//;
-	$_ = "\t$key = $path/$base\n";
-	print "$arg0: using $path/$base for submodule at $secname\n";
-      }
+  my $checkout = sub {
+    my($path) = @_;
+    my(@gitargs);
+    push @gitargs, "--quiet" if $quiet;
+    push @gitargs, "-b", $mkbranch if $mkbranch;
+    push @gitargs, "--no-track" if !$track && defined $track;
+    push @gitargs, "--track" if $track;
+    push @gitargs, "-l" if $create_reflog;
+    if ($path eq ".") {
+      push @gitargs, $startpoint;
+    } else {
+      my($sha1) = git1 {cd=>".."}, "rev-parse", "$startpoint:$path" or die;
+      push @gitargs, $sha1;
     }
-    push @content, $_;
-  }
-  close CONF;
-  system "cp .git/config .git/config~"; #ignore status
-  open CONF, ">.git/config" or die "$arg0: .git/config: $!\n";
-  print CONF join "", @content;
-  close CONF;
+    git "checkout", @gitargs or die;
+  };
+
+  execute $checkout;
+  execute $checkout, submodules if $mkbranch;
+  execute sub {git "submodule", "--quiet", "update", "--no-fetch" or die};
+  execute sub {switch_to_branch($mkbranch||$startpoint)}, submodules;
 }
 
 # Run a "clone" command. Arguments are the same as the real Git "clone" command.  This is the only command we
@@ -265,47 +464,91 @@ sub rewrite_submodule_configs {
 #    (3) $EDITOR .git/config # give user chance to edit submodule URLs before submodule update
 #    (4) git submodule update
 sub do_clone {
-  die "$arg0: --quiet not allowed" if grep {$_ eq "--quiet"} @_;
-  open GIT, "-|", "git clone @{[join ' ', @_]}" or die "$arg0: git clone failed";
+  my($edit,$local,$no_hardlinks,$quiet,$verbose,$branch,$upload_pack,$template,$recursive);
+  GetOptionsFromArray(\@_, "edit"=>\$edit, # not a git-clone switch
+		      "l|local"=>\$local, "no-hardlinks"=>\$no_hardlinks, "shared"=>\&unsupported,
+		      "reference"=>\&unsupported, "q|quiet"=>\$quiet, "v|verbose"=>\$verbose,
+		      "n|no-checkout"=>\&unsupported, "bare"=>\&unsupported, "mirror"=>\&unsupported,
+		      "o|origin"=>\&unsupported, "b|branch=s"=>\$branch, "u|upload-pack=s"=>\$upload_pack,
+		      "template=s"=>\$template, "depth"=>\&unsupported, "recursive"=>\$recursive)
+    or exit 1;
+  die "$arg0: clone: incorrect usage\n" if $@>2;
+  my($repo,$dir) = @_;
+
+  # supermodule clone
+  my @gitargs;
+  push @gitargs, "--local" if $local;
+  push @gitargs, "--no-hardlinks" if $no_hardlinks;
+  push @gitargs, "--verbose" if $verbose; # do not pass "--quiet"
+  push @gitargs, "--branch", $branch if $branch;
+  push @gitargs, "--upload-pack", $upload_pack if $upload_pack;
+  push @gitargs, "--template", $template if $template;
+  push @gitargs, $repo;
+  push @gitargs, $dir if $dir;
+  open GIT, "-|", "git clone @{[join ' ', @gitargs]}" or die "$arg0: git clone failed";
   my($dirline) = <GIT>;
   close GIT or die "$arg0: git clone failed";
+
+  # Find the local repository
   die "$arg0: where's the local repository?!?" unless $dirline =~ /^Initialized empty Git repository in\s+(.*?)\/.git\/?$/;
-  my $gitdir = $1;
-  chdir $gitdir or die "$arg0: cannot find Git repository at $gitdir: $!\n";
-  git "submodule init" or die;
-  rewrite_submodule_configs;
-  print "$arg0: updating submodules...\n";
-  git "submodule update" or
+  $dir = $1;
+  chdir $dir or die "$arg0: cannot find Git repository at $dir: $!\n";
+
+  # set up and clone submodules
+  git "submodule", "--quiet", "init" or die;
+  rewrite_submodule_configs($edit);
+  git "submodule", "update" or
     die "$arg0: submodule update failed.  Fix your .git/config file and run \"git submodule update\" by hand.\n";
+
+  # Switch to a branch of the submodule
   execute sub {switch_to_branch symbolic_ref}, submodules;
+  print "Repository cloned to $dir\n";
 }
 
 # Commits changes in the main ROSE repo and in the submodules.
-# FIXME: Some of Git's commit switches are not handled here; the "-a" and "-m" switches are the only ones that are.
 sub do_commit {
-  my(%opt,$msgfile);
-  getopts('avm:', \%opt);
-  $opt{a}=1 if exists $opt{a};
+  my($all,$reuse,$reedit,$reset_author,$msgfile,$author,$message,$template,$signoff,$no_verify,$cleanup,$edit);
+  my($untracked,$verbose,$quiet);
+  GetOptionsFromArray(\@_,
+		      "a|all"=>\$all, "C|reuse-message=s"=>\$reuse, "c|reedit-message=s"=>\$reedit,
+		      "reset-author"=>\$reset_author, "F|file=s"=>\$msgfile, "author=s"=>\$author,
+		      "m|message=s"=>\$message, "t|template=s"=>\$template, "s|signoff"=>\$signoff,
+		      "n|no-verify"=>\$no_verify, "allow-empty"=>\&unsupported, "cleanup=s"=>\$cleanup,
+		      "e|edit"=>\$edit, "amend"=>\&unsupported, "i|include"=>\&unsupported, "o|only"=>\&unsupported,
+		      "u|untracked-files=s"=>\$untracked, "v|verbose"=>\$verbose, "q|quiet"=>\$quiet,
+		      "dry-run"=>\&unsupported) or exit 1;
+  die "$arg0: commit: incorrect usage\n" if @_;
+
   my $git_commit = sub {
     my($path,$sha1) = @_;
-    unless (commit_has_effect($opt{a})) {
+    unless (commit_has_effect($all)) {
       print "Nothing to commit.\n";
       return;
     }
-    my @cmd;
+    my @gitargs;
+    push @gitargs, "--all" if $all;
+    push @gitargs, "--reuse-message", $reuse if $reuse && $path eq ".";
+    push @gitargs, "--reedit-message", $reedit if $reedit && $path eq ".";
     if ($msgfile) {
-      push @cmd, "-F", $msgfile;
-    } elsif ($opt{m}) {
-      push @cmd, "-m", $opt{m};
+      push @gitargs, "--file", $msgfile;
+    } elsif ($message) {
+      push @gitargs, "--message", $message;
     }
-    push @cmd, "-a" if exists $opt{a};
-    push @cmd, "-v" if exists $opt{v};
-    git "commit", @cmd or die "$arg0: cannot commit in submodule $path\n";
+    push @gitargs, "--template", $template if $template;
+    push @gitargs, "--signoff" if $signoff;
+    push @gitargs, "--no-verify" if $no_verify;
+    push @gitargs, "--cleanup", $cleanup if $cleanup;
+    push @gitargs, "--edit" if $edit;
+    push @gitargs, "--untracked-files", $untracked if $untracked;
+    push @gitargs, "--verbose" if $verbose;
+    push @gitargs, "--quiet" if $quiet;
+    git "commit", @gitargs or die "$arg0: commit failed\n";
     $msgfile = save_commit_message("HEAD"); #remember mesg so we don't have to retype it
   };
-  execute $git_commit, submodules; # commit in submodules
+
+  execute $git_commit, submodules;                          # commit in submodules
   execute sub {git "add", map {$_->[0]} submodules or die}; # add submodule paths in top of ROSE
-  execute $git_commit, undef;   # commit in top of ROSE
+  execute $git_commit, undef;                               # commit in top of ROSE
   unlink $msgfile;
 }
 
@@ -315,32 +558,123 @@ sub do_commit {
 #       (3) Add new submodule versions to supermodule, probably fixing most conflicts
 #       (4) Commit the merge from step 1, checking for and failing if conflicts remain
 sub do_merge {
-  my($remote) = pop @_;
-  my(@switches) = @_;
-  execute sub { git "merge", "--no-commit", @switches, $remote } unless -f "@{[top_of_rose]}/.git/MERGE_HEAD";
-  execute sub {
+  my(@args) = @_;
+  my($unused,$allow_ff,$log,$diffstat,$ff_only,$quiet,$verbose,$message);
+  GetOptionsFromArray(\@_,
+		      "no-commit"=>\&unsupported, "commit"=>\$unused, "ff!"=>\$allow_ff,
+		      "log!"=>\$log, "stat!"=>\$diffstat, "n"=>sub {$diffstat=0},
+		      "squash"=>\&unsupported, "no-squash"=>\$unused, "ff-only"=>\$ff_only,
+		      "s|strategy"=>\&unsupported, "q|quiet"=>\$quiet, "v|verbose"=>\$verbose,
+		      "m=s"=>\$message) or exit 1;
+  die "$arg0: merge: incorrect usage\n" unless @_;
+  die "$arg0: merge: octopuses are not allowed\n" if @_>1;
+  my $remote = $_[0];
+
+  # Merge (but do not commit) in the supermodule, ignoring conflicts for now.
+  my $merge = sub {
     my($path) = @_;
-    my($rev) = git1 {cd=>".."}, "rev-parse $remote:$path" or die;
-    git "merge $rev" or
-      die "Fix conflicts and commit in submodule $path, then run $arg0 merge command again.\n";
-  }, submodules;
-  execute sub {git "add", map {$_->[0]} submodules or die}; # add submodules, probably fixing conflicts
+    my($rev) = $remote;
+    if ($path ne ".") {
+      $rev = git1 {cd=>".."}, "rev-parse", "$remote:$path" or die;
+    }
+    my @gitargs;
+    push @gitargs, "--no-commit" if $path eq ".";
+    push @gitargs, "--ff" if $allow_ff;
+    push @gitargs, "--no-ff" if !$allow_ff && defined $allow_ff;
+    push @gitargs, "--log" if $log;
+    push @gitargs, "--no-log" if !$log && defined $log;
+    push @gitargs, "--stat" if $diffstat;
+    push @gitargs, "--no-stat" if !$diffstat && defined $diffstat;
+    push @gitargs, "--ff-only" if $ff_only;
+    push @gitargs, "--quiet" if $quiet;
+    push @gitargs, "--verbose" if $verbose;
+    my $ok = git "merge", @gitargs, $rev;
+    die "$arg0: merge failed\n" unless $ok || $path eq ".";
+  };
+
+  execute $merge unless -f "@{[top_of_rose]}/.git/MERGE_HEAD";
+  execute $merge, submodules;
+  execute sub {git "add", map {$_->[0]} submodules or die};
+
   if (commit_has_effect) {
-    execute sub {git "commit -F .git/MERGE_MSG" or die} or
-      die "Fix conflicts, add to cache, and rerun $arg0 merge command (or commit manually).\n";
+    execute sub {
+      my @gitargs;
+      push @gitargs, "-F", ".git/MERGE_MSG" if -f ".git/MERGE_MSG";
+      if (commit_has_effect) {
+	git "commit", @gitargs or die;
+      }
+    } or die "Fix conflicts, add to cache, and rerun $arg0 merge command (or commit manually).\n";
   }
 }
 
-# Executes a command in every submodule and then the top ROSE repo regardless of whether any command fails. Exits
-# nonzero if any command exited with nonzero status.
-sub postorder {
-  my @args = @_; # for closures
-  my $exit;
-  for my $sm (submodules, undef) {
-    eval { execute sub {git @args}, $sm };
-    $exit ||= $@;
+# Similar to git-pull: essentially a fetch and merge.
+sub do_pull {
+  my($allow_ff,$log,$diffstat,$unused,$ff_only,$quiet,$verbose,$all,$append,$force,$keep,$tags,$upload_pack);
+  GetOptionsFromArray(\@_,
+		      "no-commit"=>\&unsupported, "commit"=>\$unused, "ff!"=>\$allow_ff,
+		      "log!"=>\$log, "stat!"=>\$diffstat, "n"=>sub {$diffstat=0},
+		      "squash"=>\&unsupported, "no-squash"=>\$unused, "ff-only"=>\$ff_only,
+		      "s|strategy=s"=>\&unsupported, "q|quiet"=>\$quiet, "v|verbose"=>\$verbose,
+		      "rebase!"=>\&unsupported,
+		      "all"=>\$all, "a|append"=>\$append, "depth"=>\&unsupported, "f|force"=>\$force,
+		      "k|keep"=>\$keep, "t|tags!"=>\$tags, "u|update-head-ok"=>\&unsupported,
+		      "upload-pack=s"=>\$upload_pack) or exit 1;
+  die "$arg0: pull: incorrect usage\n" unless @_ <= 2;
+  my($repo,$refspec) = @_;
+
+  # Fetch
+  my @fargs;
+  push @fargs, "--all" if $all;
+  push @fargs, "--append" if $append;
+  push @fargs, "--force" if $force;
+  push @fargs, "--keep" if $keep;
+  push @fargs, "--tags" if $tags;
+  push @fargs, "--no-tags" if !$tags && defined $tags;
+  push @fargs, "--upload-pack", $upload_pack if $upload_pack;
+  push @fargs, $repo if defined $repo;
+  push @fargs, $refspec if defined $refspec;
+  postorder "fetch", @fargs; # exits on failure
+
+  # What to merge?  We're basically reimplementing a good chunk of the git-pull logic here. Unfortunately we can't
+  # use git-pull directly because we need to be careful of the order we merge the submodules -- see do_merge() for details.
+  my($branch) = symbolic_ref =~ m(refs/heads/([^\/]+)$);
+  die "$arg0: not on any branch" unless $branch;
+  $repo ||= git1({quiet=>1}, "config", "--get", "branch.$branch.remote") || "origin";
+  $refspec ||= git1({quiet=>1}, "config", "--get", "branch.$branch.merge");
+  my $mergefrom;
+  if ($refspec =~ /:(.*)/) {
+    $mergefrom = $1;
+    $mergefrom = undef if $mergefrom =~ /\*$/;
+  } elsif ($refspec =~ m(refs/heads/(.*))) {
+    $mergefrom = "refs/remotes/$repo/$branch";
   }
-  exit 1 if $exit;
+
+  # Debugging
+  print "$arg0-pull: info: branch=$branch\n";
+  print "$arg0-pull: info: repo=$repo\n";
+  print "$arg0-pull: info: refspec=$refspec\n";
+  print "$arg0-pull: info: mergefrom=$mergefrom\n";
+
+  # Merge
+  if ($mergefrom) {
+    my @margs;
+    push @margs, "--ff" if $allow_ff;
+    push @margs, "--no-ff" if !$allow_ff && defined $allow_ff;
+    push @margs, "--log" if $log;
+    push @margs, "--no-log" if !$log && defined $log;
+    push @margs, "--stat" if $diffstat;
+    push @margs, "--no-stat" if !$diffstat && defined $diffstat;
+    push @margs, "--ff-only" if $ff_only;
+    push @margs, "--quiet" if $quiet;
+    push @margs, "--verbose" if $verbose;
+    print "$arg0-pull: does the following command look suitable?\n";
+    print "    git merge", (map {" $_"} @margs), " $mergefrom\n";
+    print "ENTER to continue; Control-C to abort... ";
+    scalar <STDIN>;
+    do_merge(@margs,$mergefrom);
+  } else {
+    print "$arg0-pull: nothing to merge\n";
+  }
 }
 
 ###############################################################################################################################
@@ -357,10 +691,11 @@ my %cmds = (branch      => \&do_branch,
             checkout    => \&do_checkout,
             clone       => \&do_clone,
             commit      => \&do_commit,
-            help        => sub {execute ["git", "help", @_]}, # no need to execute in submodules
+            help        => sub {execute sub {git "help", @ARGV}}, # no need to execute in submodules
             merge       => \&do_merge,
+	    pull        => \&do_pull,
            );
 
 my $cmd = shift @ARGV;
-usage if $cmd =~ /^-/ || !$cmd;
+usage if $cmd =~ /^-/ || !$cmd || ($cmd eq "help" && 0==@ARGV);
 $cmds{$cmd} ? &{$cmds{$cmd}}(@ARGV) : postorder $cmd, @ARGV;

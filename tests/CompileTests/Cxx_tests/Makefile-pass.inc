@@ -672,6 +672,10 @@ test2009_39.C \
 test2009_40.C \
 test2009_41.C \
 test2009_42.C \
+test2010_03.C \
+test2010_04.C \
+test2010_05.C \
+test2010_06.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \

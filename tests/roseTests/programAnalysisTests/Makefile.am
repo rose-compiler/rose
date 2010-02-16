@@ -27,7 +27,13 @@ steensgaardTest1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 steensgaardTest2_SOURCES = steensgaardTest2.C
 steensgaardTest2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-CFGTest_SOURCES = CFGTest.C
+# DQ (2/10/2010): ROSE currently fails to generate code for this file (it does however compile for analysis only).
+# CFGTest_SOURCES = CFGTest.C
+CFGTest_SOURCES =
+if !ROSE_USING_ROSE_CODE_GENERATION
+     CFGTest_SOURCES += CFGTest.C
+endif
+
 CFGTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 DataFlowTest_SOURCES = DataFlowTest.C

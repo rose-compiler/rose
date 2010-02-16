@@ -8,7 +8,7 @@ distributedScripts = \
      check-dist-file dotgenLetter  generateDirectoryGraph \
      libtoolcp                     buildExampleRoseWorkspaceScript.sh \
      dotgenLetterPDF               dotgenLetterPNG \
-     nmiBuildAndTestFarm  \
+     nmiBuildAndTestFarm           sample_binary_rules.pl \
      bincompat-sig Error.pm Git.pm
 
 # scripts put into the distribution

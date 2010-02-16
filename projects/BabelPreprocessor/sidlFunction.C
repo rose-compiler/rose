@@ -258,7 +258,8 @@ SIDL_TreeTraversal::isOverloaded ( SgClassDefinition* classDefinition, string fu
 	//determine which arguments differ
 	if(numberOfOverloadedFunctionNames > 1)
 	{
-#ifndef __INTEL_COMPILER
+// #ifndef __INTEL_COMPILER
+#if !defined(__INTEL_COMPILER) && !defined(USE_ROSE)
    // DQ (6/26/2006): The declaration of arguments uses a GNU extension when we can not support on other compilers.
 		vector<SgType*> arguments[numberOfOverloadedFunctionNames];
 		
