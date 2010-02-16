@@ -11,7 +11,10 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_1],
 # application using ROSE might require.
 # *********************************************************************
 
-AMTAR ?= $(TAR)
+# DQ (2/11/2010): Jeremiah reported this as bad syntax, I think he is correct.
+# I'm not sure how this made it into this file.
+# AMTAR ?= $(TAR)
+AMTAR = $(TAR)
 
 # DQ (9/9/2009): Added output to test values of am__tar and am__untar (fails on nmi:x86_sles_9).
 echo "Defined: am__tar   = $am__tar"
@@ -1315,6 +1318,7 @@ src/frontend/CxxFrontend/EDG/EDG_4.0/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.0/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.0/lib/Makefile
 src/frontend/CxxFrontend/EDG/EDG_SAGE_Connection/Makefile
+src/frontend/CxxFrontend/EDG/edgRose/Makefile
 ])], [])
 
 

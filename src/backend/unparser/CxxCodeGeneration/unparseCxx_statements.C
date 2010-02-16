@@ -17,6 +17,8 @@
 #include "sage3basic.h"
 #include "unparser.h"
 
+#define ROSE_TRACK_PROGRESS_OF_ROSE_COMPILING_ROSE 0
+
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
@@ -521,7 +523,7 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
       + " */\n ");
 #endif
 
-#if 0
+#if ROSE_TRACK_PROGRESS_OF_ROSE_COMPILING_ROSE
   printf ("In unparseLanguageSpecificStatement(): file = %s line = %d \n",stmt->get_startOfConstruct()->get_filenameString().c_str(),stmt->get_startOfConstruct()->get_line());
 #endif
 
@@ -3503,6 +3505,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          SgStringVal *stringValueExpression = isSgStringVal(assignInitializer->get_operand());
                          if (stringValueExpression != NULL)
                             {
+#ifndef CXX_IS_ROSE_CODE_GENERATION
                            // DQ (3/25/2006): Finally we can use the C++ string class
                               string targetString = "ROSE-MACRO-CALL:";
                               int targetStringLength = targetString.size();
@@ -3517,6 +3520,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                                    curprint ( string("\n" ) + remainingString + "\n");
                                    return;
                                  }
+#endif
                             }
                        }
                   }
