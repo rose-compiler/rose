@@ -302,5 +302,5 @@ else
 endif
 
 clean-local:
-	rm -f *.o rose_*.[cC]
+	rm -f *.o rose_*.[cC] test_*.[cC]
 	rm -rf QMTest

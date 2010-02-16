@@ -393,7 +393,7 @@ sub do_branch {
   my($delete,$create_reflog,$force,$move,$color,$remote,$all,$verbose,$abbrev,$track,$contains,$merged,$no_merged);
   GetOptionsFromArray(\@_,
 		      d=>\$delete, D=>sub{$delete=2}, l=>\$create_reflog, f=>\$force, m=>\$move, M=>sub{$move=2},
-		      "color!"=>\$color, r=>\$remote, a=>\$all, "v|verbose+"=>\$verbose, "abbrev=i"=>\$abbrev,
+		      "color!"=>\$color, r=>\$remote, a=>\$all, "v|verbose"=>sub{++$verbose}, "abbrev=i"=>\$abbrev,
 		      "t|track!"=>\$track, "contains=s"=>\$contains, "merged:s"=>\$merged, "no-merged:s"=>\$no_merged)
     or exit 1;
 

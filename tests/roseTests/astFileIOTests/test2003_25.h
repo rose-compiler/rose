@@ -1,2 +1,0 @@
-// forward reference
-struct XYZ;

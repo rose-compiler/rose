@@ -1,5 +1,4 @@
-#!/bin/bash -x
-#!/bin/bash -v
+#!/bin/bash
 #
 # This script locates a distribution package in a ROSE test directory.
 #  examines the package and imports it as a vendor drop into an external repository.
@@ -221,7 +220,7 @@ rm -rf ${ROSE_DIST_DIR}/src/frontend/CxxFrontend/roseBinaryEDG-*.tar.gz
 
 # Now we can upload the package
 #--------------------------------------------------------
-${ROSE_SRC}/scripts/svn_load_dirs.1.4.5.pl -no_user_input ${REMOTE_SVN_REPOS} trunk ${ROSE_DIST_DIR}
+${ROSE_SRC}/scripts/svn_load_dirs.1.4.5.pl -svn_username liaoch -no_user_input ${REMOTE_SVN_REPOS} trunk ${ROSE_DIST_DIR}
 
 if [ $? -ne 0 ]; then
    echo "Error: svn_load_dirs finishes abnormally!"

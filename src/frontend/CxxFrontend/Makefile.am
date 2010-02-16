@@ -99,7 +99,8 @@ upload_edg_binary:
 	   cp $(BINARY_EDG_DIRNAME).tar.gz $(BINARY_EDG_TARBALL_STAGING_PATH) ;  \
 	fi
 
-
+clean-local:
+	rm -rf roseBinaryEDG-3-3-*.tar.gz
 
 else 
 #------------------- no EDG sources

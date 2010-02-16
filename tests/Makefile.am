@@ -6,7 +6,7 @@ SUBDIRS = CompileTests roseTests RunTests PerformanceTests CompilerOptionsTests 
 #  Phase 1) Analysis only, compiles the original code
 #  Phase 2) Analysis and code generation, compiles the original code
 #  Phase 3) analysis, code generation, and compiling the generated code
-bin_PROGRAMS = testAnalysis testCodeGeneration testTranslator
+bin_PROGRAMS = testAnalysis testCodeGeneration testTranslator testAstFileIO
 
 # Phase 1 tests code:
 # This is used in specialized tests outside of ROSE testing for analysis only of large projects.
@@ -23,6 +23,11 @@ testCodeGeneration_SOURCES = testCodeGeneration.C
 # Phase 3 tests code (used in all internal tests of ROSE; regression tests):
 # This tests the ability to read and regnerate the input application and compile it using the backend compiler.
 testTranslator_SOURCES = testTranslator.C
+
+# This tests the ability to generate a compressed binary file representation of the AST.
+# This is a special format of the ROSE AST build for performance File I/O (to address the
+# requirements of large scale applications and their analysis).
+testAstFileIO_SOURCES = testAstFileIO.C
 
 # Use names set in ROSE/config/Makefile.for.ROSE.includes.and.libs
 INCLUDES = $(ROSE_INCLUDES)
@@ -88,8 +93,18 @@ testExecutableFileTranslator: testTranslator
 test_testTranslator: testObjectFileTranslator testLinkFileTranslator testCppFileTranslator testExecutableFileTranslator
 
 
+# ************************************
+# *******  AST File I/O Tests  *******
+# ************************************
+testObjectFileFileAstFileIO: testAstFileIO
+	cp $(srcdir)/inputFile.C alt_AstFileIO_inputFile.C
+	./testAstFileIO $(INCLUDES) -c alt_AstFileIO_inputFile.C -o alt_AstFileIO_inputFile
+
+test_testAstFileIO: testObjectFileFileAstFileIO
+
+
 # Rule to run all the example translator tests
-test: test_testAnalysis test_testCodeGeneration test_testTranslator
+test: test_testAnalysis test_testCodeGeneration test_testTranslator test_testAstFileIO
 
 
 # Make check rule
@@ -106,7 +121,7 @@ myCleanRule:
 	rm -f testLinkFileAnalysisExecutable testLinkFileCodeGenerationExecutable testLinkFileTranslatorExecutable
 	rm -f testExecutableFileAnalysisExecutable testExecutableFileCodeGenerationExecutable testExecutableFileTranslatorExecutable
 	rm -f rose_*.C inputFileTranslator.C inputFileCodeGeneration.C inputFileAnalysis.C
-
+	rm -f alt_AstFileIO_inputFile*
 
 
 
