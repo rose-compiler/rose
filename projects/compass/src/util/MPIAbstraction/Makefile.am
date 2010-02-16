@@ -19,8 +19,10 @@ libMPIAbstraction_la_SOURCES = Recognizer.C Recognizer.h
 
 noinst_PROGRAMS = testMPIAbstraction
 
-LDADD = libMPIAbstraction.la ../C-API/libC-API.la \
-  $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+LDADD = $(ROSE_LIBS_WITH_PATH) \
+    libMPIAbstraction.la ../C-API/libC-API.la 
+#LDADD = libMPIAbstraction.la ../C-API/libC-API.la \
+#  $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 testMPIAbstraction_SOURCES = testMPIAbstraction.C
 

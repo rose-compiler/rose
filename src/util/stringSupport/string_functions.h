@@ -4,6 +4,7 @@
 // Move this to rose.h or a build a rose_utility.h file later
 #include "commandline_processing.h"
 #include <vector>
+#include <map>
 #include <string>
 #include <sstream>
 #include <stdint.h>
@@ -256,6 +257,7 @@ namespace StringUtility
             * the user application, or any of the libraries that the
             * enum values imply, this list will likely be added to
             * over time */
+	   /* 
            enum FileNameLibrary { FILENAME_LIBRARY_UNKNOWN,
                                   FILENAME_LIBRARY_USER,
                                   FILENAME_LIBRARY_C,
@@ -265,6 +267,20 @@ namespace StringUtility
                                   FILENAME_LIBRARY_GCC,
                                   FILENAME_LIBRARY_BOOST,
                                   FILENAME_LIBRARY_ROSE };
+				  */
+
+	   static const std::string FILENAME_LIBRARY_UNKNOWN = "Unknown";
+	   static const std::string FILENAME_LIBRARY_USER = "User";
+	   static const std::string FILENAME_LIBRARY_C = "C";
+	   static const std::string FILENAME_LIBRARY_STDCXX = "C++";
+	   static const std::string FILENAME_LIBRARY_STL = "STL";
+	   static const std::string FILENAME_LIBRARY_LINUX = "Linux";
+	   static const std::string FILENAME_LIBRARY_GCC = "GCC";
+	   static const std::string FILENAME_LIBRARY_BOOST = "Boost";
+	   static const std::string FILENAME_LIBRARY_ROSE = "Rose";
+
+	   // CH (2/16/2010): Use this typedef to avoid following changes
+	   typedef std::string FileNameLibrary;
 
            /* This is the return type of classifyFileName, which
             * provides all the details it infers */
@@ -272,18 +288,21 @@ namespace StringUtility
            {
            private:
                FileNameLocation location;
+
+	       // CH (2/12/2010): Change 'library' type from enum to string to let user set it
                FileNameLibrary library;
+	       
                int distance;
 
            public:
                FileNameClassification(FileNameLocation loc,
-                                      FileNameLibrary lib,
+                                      const FileNameLibrary& lib,
                                       int dist) : location(loc),
                                                   library(lib),
                                                   distance(dist)
                    {}
                FileNameClassification() : location(FILENAME_LOCATION_UNKNOWN),
-                                          library(FILENAME_LIBRARY_UNKNOWN),
+                                          library("Unknown"),
                                           distance(0)
                    {}
 
@@ -325,7 +344,8 @@ namespace StringUtility
 
                /* Return a string name for the library indicated by
                 * getLibrary() */
-               const std::string getLibraryName() const;
+               std::string getLibraryName() const
+		   { return library; }
            };
 
            /* Given a fileName and an appPath that is a path to some
@@ -353,7 +373,7 @@ namespace StringUtility
 	    * the operating system from the host uname */
            FileNameClassification classifyFileName(const std::string& fileName,
                                                    const std::string& appPath,
-						   const std::vector<std::string>& libPathCollection);
+						   const std::map<std::string, std::string>& libPathCollection);
 
            /* Given a fileName and an appPath that is a path to some
        	    * application's source code directory, and a collection 
@@ -362,7 +382,7 @@ namespace StringUtility
 	    * code or some system library */ 
            FileNameClassification classifyFileName(const std::string& fileName,
                                                    const std::string& appPath,
-						   const std::vector<std::string>& libPathCollection,
+						   const std::map<std::string, std::string>& libPathCollection,
                                                    OSType os);
 
            /* Remove leading dots plus a space from a header file name
