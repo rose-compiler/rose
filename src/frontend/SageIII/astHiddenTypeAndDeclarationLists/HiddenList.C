@@ -15,6 +15,7 @@
 // #include "HiddenList_Output.h"
 // #include "HiddenList_Intersection.h"
 
+#define ROSE_TRACK_PROGRESS_OF_ROSE_COMPILING_ROSE 0
 
 using namespace std;
 
@@ -470,7 +471,7 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
         TimingPerformance::time_type startTime;
         TimingPerformance::startTimer(startTime);
 
-#if 0
+#if ROSE_TRACK_PROGRESS_OF_ROSE_COMPILING_ROSE
      // DQ (2/9/2010): Debugging code for ROSE compiling ROSE.
         if (isSgStatement(n) != NULL)
            {
