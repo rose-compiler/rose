@@ -1177,9 +1177,11 @@ namespace AutoParallelization
         else 
           attributeTable[oa] = true; // tag it as being processed
        std::string user_pragma_str, compiler_pragma_str;   
+       OmpAttribute* user_attr = NULL, * compiler_attr =NULL;
        // user defined, try to grab a compiler generated attributed attached to the affected loop, etc.
         if (isUserDefined)
         {
+          user_attr = oa; 
           user_pragma_str  = oa->toOpenMPString();
           SgStatement* next_stmt = SageInterface::getNextStatement(stmt);
           // TODO we currently only auto-generate pragmas for loops, 
@@ -1209,6 +1211,7 @@ namespace AutoParallelization
                   } 
                //ROSE_ASSERT (ompattlist2.size() == 1) ; 
                compiler_pragma_str = theone->toOpenMPString(); 
+               compiler_attr = theone;
                attributeTable[theone] = true; // tag the counterpart as processed also
              }
           }
@@ -1217,6 +1220,7 @@ namespace AutoParallelization
         else
         {
           compiler_pragma_str = oa->toOpenMPString();
+          compiler_attr = oa; 
           SgStatement* prev_stmt = SageInterface::getPreviousStatement(stmt);
           if (prev_stmt)
           {
@@ -1230,6 +1234,7 @@ namespace AutoParallelization
                 // there should be only one omp attribute attached to pragma
                 ROSE_ASSERT (ompattlist2.size() == 1) ;
                 user_pragma_str = ompattlist2[0]->toOpenMPString();
+                user_attr = ompattlist2[0];
                 attributeTable[ompattlist2[0]] = true; // tag the counterpart as processed also
               }
             }
@@ -1246,7 +1251,8 @@ namespace AutoParallelization
           user_pragma_str = "#pragma omp "+user_pragma_str;
         if (compiler_pragma_str.size()!=0)
           compiler_pragma_str = "#pragma omp "+compiler_pragma_str;
-        if (user_pragma_str != compiler_pragma_str)
+        //if (user_pragma_str != compiler_pragma_str)
+        if (!isEquivalentOmpAttribute(user_attr, compiler_attr))
          {
             cout<<"<<<<<<<<"<<endl;
            if (isUserDefined)

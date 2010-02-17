@@ -53,6 +53,123 @@ namespace OmpSupport{
     //TODO avoid duplicated ompattributes for the same OpenMP directive
     cur_list->ompAttriList.push_back(ompattribute);
   }
+  //! Check if two OmpAttributes are semantically equivalent to each other 
+  // It should tolerate different order of variables within variable lists
+  bool isEquivalentOmpAttribute (OmpAttribute* a1, OmpAttribute* a2)
+  {
+    // Arguments check
+    // We allow NULL parameters
+    //ROSE_ASSERT (a1 != NULL); 
+    //ROSE_ASSERT (a2 != NULL); 
+    if (a1 == a2) // could be both NULL
+    {
+      cout<<"Warning: isEquivalentOmpAttribute() tries to compare an OmpAttribute to itself."<<endl;
+      return true;
+    }  
+    else
+    {
+      // One of them is NULL, definitely not equivalent
+      if ((a1 == NULL ) || (a2 == NULL))
+        return false;
+    }
+    // now none of them is NULL
+    //check directive type
+    if (a1->getOmpDirectiveType()!= a2->getOmpDirectiveType())
+      return false;
+    
+    // check clauses
+    vector <omp_construct_enum> clauseList1 = a1->getClauses(); 
+    vector <omp_construct_enum> clauseList2 = a2->getClauses(); 
+       // check clause types
+    sort (clauseList1.begin(), clauseList1.end());
+    sort (clauseList2.begin(), clauseList2.end());
+    if (!equal(clauseList1.begin(), clauseList1.end(), clauseList2.begin()))
+      return false;
+      // For each clause, further check the following ...
+    for (size_t i = 0; i < clauseList1.size(); i++)
+    {
+      // check variable list associated with each clause
+      std::vector<std::pair<std::string,SgNode* > > varList1  = a1->getVariableList(clauseList1[i]);
+      std::vector<std::pair<std::string,SgNode* > > varList2  = a2->getVariableList(clauseList2[i]);
+      sort (varList1.begin(), varList1.end());
+      sort (varList2.begin(), varList2.end());
+#if 0      
+      // debug here
+      cout<<"var list 1"<<endl; 
+      for (std::vector<std::pair<std::string,SgNode* > >::iterator i1 = varList1.begin();
+          i1 != varList1.end(); i1++)
+      {
+        cout<<"string = "<<(*i1).first<<" SgNode* = " <<(*i1).second <<endl;
+      }
+      cout<<"var list 2"<<endl; 
+      for (std::vector<std::pair<std::string,SgNode* > >::iterator i2 = varList2.begin();
+          i2 != varList2.end(); i2++)
+      {
+        cout<<"string = "<<(*i2).first<<" SgNode* = " <<(*i2).second <<endl;
+      }
+#endif 
+      // The assumption here is variable name and SgInitializedName are used as pairs
+      // names and SgInitializedNames should be unique for each variable
+      if (!equal(varList1.begin(), varList1.end(), varList2.begin()))
+        return false;
+
+      // check expressions associated with each clause
+      // This is tricky, we need a SageInterface function to do this: TODO
+      // right now, we only compare the unparsed text of expression for simplicity
+      std::pair<std::string, SgExpression*> exp1 = a1->getExpression(clauseList1[i]);
+      std::pair<std::string, SgExpression*> exp2 = a2->getExpression(clauseList2[i]);
+     
+      //do nothing if both are NULL, this is the equal case
+      if (!(exp1.second== NULL && exp2.second == NULL ))
+      {
+        // if both expressions exist
+        if (exp1.second && exp2.second)
+        {
+          if (exp1.second->unparseToString() != exp2.second->unparseToString())
+            return false;
+        }
+        else
+         // if only one of the expressions exist
+         // must be different
+          return false;
+      }  
+    }
+
+    //Similar handling for reduction clauses of different reduction operator
+    // TODO need to check if the omp type is one of reduction types
+    vector <omp_construct_enum> reductionList1 = a1->getReductionOperators(); 
+    vector <omp_construct_enum> reductionList2 = a2->getReductionOperators(); 
+    sort (reductionList1.begin(), reductionList1.end());
+    sort (reductionList2.begin(), reductionList2.end());
+    if (!equal(reductionList1.begin(), reductionList1.end(), reductionList2.begin()))
+      return false;
+    for (size_t i = 0; i < reductionList1.size(); i++)
+    {
+      // check variable list associated with each reduction clause
+      std::vector<std::pair<std::string,SgNode* > > varList1  = a1->getVariableList(reductionList1[i]);
+      std::vector<std::pair<std::string,SgNode* > > varList2  = a2->getVariableList(reductionList2[i]);
+      sort (varList1.begin(), varList1.end());
+      sort (varList2.begin(), varList2.end());
+      // The assumption here is variable name and SgInitializedName are used as pairs
+      // names and SgInitializedNames should be unique for each variable
+      if (!equal(varList1.begin(), varList1.end(), varList2.begin()))
+        return false;
+    }
+
+    // other misc things
+    if (a1->hasClause(e_default)) 
+      if (a1->getDefaultValue() != a2->getDefaultValue()) 
+        return false;
+    if (a1->hasClause(e_schedule))  
+      if (a1->getScheduleKind() != a2->getScheduleKind())  
+        return false;
+    if (a1->getOmpDirectiveType() == e_critical)    
+      if (a1->isNamedCritical())  
+        if (a1->getCriticalName() != a2->getCriticalName())  
+          return false;
+    // all things are checked to be equal, return true
+    return true; 
+  }
 
   //! Get OmpAttribute from a SgNode
   OmpAttributeList* getOmpAttributeList(SgNode* node)
@@ -202,6 +319,9 @@ namespace OmpSupport{
 
   enum omp_construct_enum OmpAttribute::getDefaultValue()
   {
+    // It does not make sense to get the default value
+    // if there is no default clause
+    ROSE_ASSERT(hasClause(e_default));
     return default_scope;
   }
 
@@ -828,6 +948,7 @@ namespace OmpSupport{
     hasName = false;
     pinfo = NULL;
 
+    default_scope = e_unknown;
     schedule_kind = e_schedule_none;
     wrapperCount=0;
   }
