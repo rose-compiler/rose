@@ -102,6 +102,9 @@ bincompat-sig: cleanSig
 clean-local:
 	rm -rf Templates.DB ii_files ti_files *.csv
 
+# Not sure if this should be part of the clean-local rule.
+# chmod -R +rwx rose-0.9.5a; rm -rf rose-0.9.5a
+
 # DQ (9/8/2006): Modified to remove backend specific header files
 uninstall-local:
 	rm -rf $(DESTDIR)$(includedir)/*_HEADERS
@@ -268,6 +271,8 @@ CheckinCounts:
 	cd $(top_srcdir); git shortlog -s -n
 	@echo "*****************************************************"
 
+# DQ (2/12/2010): Report the areas of ROSE where we have skipped some tests of ROSE 
+# either doing analysis, code generation, or translation of the ROSE source code.
 ProblemAreas:
 	echo "Directories where ROSE does not analyze code for some ROSE source files."
 	grep -r ROSE_USING_ROSE_ANALYSIS $(top_srcdir) | grep Makefile.am
@@ -284,3 +289,7 @@ ProblemAreas:
 #	echo "Files where ROSE does not analyze some amount of code (test of CXX_IS_ROSE_TRANSLATOR in each ROSE source file)."
 #	grep -rl CXX_IS_ROSE_TRANSLATOR $(top_srcdir) | grep "\.C"
 
+
+# Report the version number of the ROSE translator built.
+PrintRoseTranslatorVersion: $(top_builddir)/tests/testAnalysis
+	$(top_builddir)/tests/testAnalysis --version
