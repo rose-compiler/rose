@@ -47,6 +47,20 @@ headerTarget_HEADERS = AsmToSourceMapper.h\
                        StreamRedirector.h
 
 
+include_HEADERS = AsmToSourceMapper.h\
+                       AstDisplayInfo.h\
+                       AstFilters.h\
+                       ItemModelHelper.h\
+                       LCS.h\
+                       MetricAttributeCollector.h\
+                       MetricBgDelegate.h\
+                       QRoseComponentProxy.h\
+                       RoseGraphicsView.h\
+                       RoseTreeView.h\
+                       SageMimeData.h\
+                       SgNodeUtil.h\
+                       StreamRedirector.h
+
 endif
 
 EXTRA_DIST = CMakeLists.txt MetricBgDelegateConfig.ui \

@@ -387,6 +387,9 @@ EXTRA_TESTCODES = \
 # These codes are DESIGNED to fail in the inlining
 # fail1.C fail2.C
 
+# DQ (2/13/2010): Optionally make this a longer test.
+TESTCODES += $(EXTRA_TESTCODES)
+
 # Build the list of object files
 TEST_Objects = ${TESTCODES:.C=.o}
 
@@ -402,14 +405,17 @@ READ_TRANSLATOR = ./astFileRead $(ROSE_FLAGS)
 TESTCODE_INCLUDES =
 
 # DQ (7/12/2004): Modified to run with make -j4 options
-$(TEST_Objects): astFileIO astFileRead $(TESTCODES)
+# $(TEST_Objects): astFileIO astFileRead $(TESTCODES)
+$(TEST_Objects): astFileIO astFileRead
 #	@echo "QY:skipping test code using $(TEST_TRANSLATOR) ..."
 #	@echo "Compiling test code using $(TEST_TRANSLATOR) ..."
-	$(VALGRIND) $(TEST_TRANSLATOR) $(srcdir)/$(@:.o=.C) -o $(@:.o=)
+#	$(VALGRIND) $(TEST_TRANSLATOR) $(srcdir)/$(@:.o=.C) -o $(@:.o=)
+	$(VALGRIND) $(TEST_TRANSLATOR) $(srcdir)/../../CompileTests/Cxx_tests/$(@:.o=.C) -o $(@:.o=)
 #	@echo "Running resulting executable ..."
 #	./$(@:.o=)
 
-EXTRA_DIST = $(TESTCODES) test2001_05.h
+# EXTRA_DIST = $(TESTCODES) test2001_05.h
+EXTRA_DIST = 
 
 # This tests the reading of a collection of binary files (build by running $(MAKE) $(TEST_Objects)
 test-read: test2001_01.binary test2001_02.binary test2001_03.binary
@@ -426,7 +432,10 @@ largeFileTest: astFileIO
 	./astFileIO -rose:verbose 0 -c $(srcdir)/test2005_36.C -o test2005_36
 
 largestFileTest: astFileIO
-	./astFileIO -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) -c $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C -o Cxx_Grammar
+	./astFileIO -rose:verbose 2 -I$(top_builddir) $(ROSE_INCLUDES) -c $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C -o Cxx_Grammar
+
+locForRoseFile:
+	g++ -E -I$(top_builddir) $(ROSE_INCLUDES) -c $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C | wc -l
 
 check-local:
 	$(MAKE) $(TEST_Objects)
@@ -437,7 +446,7 @@ check-local:
 	@echo "*******************************************************************************************"
 
 clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files pass[1-9] pass1[0-9] pass2[0-9] rose_*.C *.ti *.binary *.C.pdf test1 test200?_??
+	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files pass[1-9] pass1[0-9] pass2[0-9] rose_*.C *.ti *.binary *.C.pdf test1 test200?_*
 
 distclean-local:
 	rm -rf Templates.DB 

@@ -115,6 +115,13 @@ libsage3Sources = \
    dwarfSupport.C \
    rose_graph_support.C
 
+# DQ (2/15/2010): This fails in Hudson tests of ROSE compiling ROSE for code generation, but I can't 
+# get it to fail in my own tests.  Skip it for now and see if there are more of these cases.
+# attachPreprocessingInfo.C
+# if !ROSE_USING_ROSE_CODE_GENERATION
+#    libsage3Sources += attachPreprocessingInfo.C
+# endif
+
 # $(GENERATED_SOURCE) is handled separately
 
 # DQ (5/27/2007): Files moved or removed

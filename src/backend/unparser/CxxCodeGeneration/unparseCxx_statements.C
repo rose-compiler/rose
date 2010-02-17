@@ -17,6 +17,8 @@
 #include "sage3basic.h"
 #include "unparser.h"
 
+#define ROSE_TRACK_PROGRESS_OF_ROSE_COMPILING_ROSE 0
+
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
@@ -521,7 +523,7 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
       + " */\n ");
 #endif
 
-#if 0
+#if ROSE_TRACK_PROGRESS_OF_ROSE_COMPILING_ROSE
   printf ("In unparseLanguageSpecificStatement(): file = %s line = %d \n",stmt->get_startOfConstruct()->get_filenameString().c_str(),stmt->get_startOfConstruct()->get_line());
 #endif
 
