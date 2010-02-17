@@ -20,7 +20,11 @@ headerTarget_HEADERS = ItemTreeModel.h\
                        ItemTreeNode.h
 
 
+include_HEADERS = ItemTreeModel.h
+
 endif
+
+
 
 EXTRA_DIST = CMakeLists.txt 
 

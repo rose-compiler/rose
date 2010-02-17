@@ -96,6 +96,8 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr,  std::map<std::string,ROSEAtt
 void
 attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& attributeMapForAllFiles)
    {
+#ifndef  CXX_IS_ROSE_CODE_GENERATION
+
 #ifdef _MSC_VER
 #pragma message ("WARNING: Wave support not ported to Windows MSVC.")
 	   printf ("ERROR: Wave support not ported to Windows MSVC. \n");
@@ -574,6 +576,9 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
 // endif for ifdef _MSC_VER
 #endif
 
+// endif for ifndef  CXX_IS_ROSE_CODE_GENERATION
+#endif
+
 #if 0
      printf ("Ending at base of attachPreprocessingInfoUsingWave(SgSourceFile*) \n");
      ROSE_ABORT();
@@ -594,6 +599,7 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
           sageFilePtr->get_wave() ? "true" : "false",sageFilePtr,sageFilePtr->get_sourceFileNameWithPath().c_str());
 #endif
 
+#ifndef  CXX_IS_ROSE_CODE_GENERATION
      // DQ (7/6/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST Comment and CPP Directive Processing (not using Wave):");
 
@@ -630,6 +636,9 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
      {
        tt.traverseWithinFile(sageFilePtr,inh);
      }
+
+// endif for ifndef  CXX_IS_ROSE_CODE_GENERATION
+#endif
 
 
 #if 0
