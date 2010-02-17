@@ -162,6 +162,9 @@ namespace OmpSupport
   //! Add OmpAttribute to a SgNode
   void addOmpAttribute(OmpAttribute* ompattribute, SgNode* node);
 
+  //! Check if two OmpAttributes are semantically equivalent to each other 
+  bool isEquivalentOmpAttribute (OmpAttribute* a1, OmpAttribute* a2);
+  
   class OmpAttributeList;
   //! Get OmpAttribute from a SgNode, return NULL if not found
   OmpAttributeList* getOmpAttributeList(SgNode* node);
