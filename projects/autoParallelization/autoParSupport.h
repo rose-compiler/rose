@@ -38,6 +38,7 @@ namespace AutoParallelization
   extern LivenessAnalysis* liv;
   extern bool enable_debug; 
   extern bool enable_patch; // an option to control the generation of patch files
+  extern bool enable_diff; // an option to compare user-defined OpenMP pragmas to compiler generated ones.
 
   // Conduct necessary analyses on the project, can be called multiple times during program transformations. 
   bool initialize_analysis(SgProject* project=NULL,bool debug=false);
@@ -87,6 +88,8 @@ namespace AutoParallelization
   //! Generate patch files for the introduced OpenMP pragmas (represented as OmpAttribute)
   void generatePatchFile(SgSourceFile* sfile);
 
+  //! Output the difference between user-defined OpenMP and compiler-generated OpenMP
+  void diffUserDefinedAndCompilerGeneratedOpenMP(SgSourceFile* sfile);
 } //end namespace
 
 #endif //auto_par_support_INCLUDED
