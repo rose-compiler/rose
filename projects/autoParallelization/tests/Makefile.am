@@ -38,6 +38,7 @@ iteratorloop.C
 # the code which can not yet be parallelized now
 # Or the needed analyses(def-use, liveness, or dependence analysis) cannot handle them yet
 TESTCODE_CURRENTLY_FAILING = \
+class_member.C \
 iterator1.C \
 iterator_const1.C \
 list1.C \
