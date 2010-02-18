@@ -261,6 +261,7 @@ CodeGenOP( AstInterface &fa, const AstNodePtr& a1, const AstNodePtr& a2) const
     return fa.CreateBinaryOP(AstInterface::BOP_PLUS, a1, a2); 
  }
 
+//! Evaluate a symbolic expression and return the resulting value
 SymbolicVal SymbolicValGenerator ::
 GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
 {
