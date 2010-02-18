@@ -7756,6 +7756,9 @@ void attachOmpAttributeInfo(SgSourceFile *sageFilePtr)
 	  addOmpAttribute(attribute,pragmaDeclaration);
           //cout<<"debug: attachOmpAttributeInfo() for a pragma:"<<pragmaString<<"at address:"<<pragmaDeclaration<<endl;
           //cout<<"file info for it is:"<<pragmaDeclaration->get_file_info()->get_filename()<<endl;
+          
+#if 1 // Liao, 2/12/2010, this could be a bad idea. It causes trouble in comparing 
+        //user-defined and compiler-generated OmpAttribute.
 	  // We attach the attribute redundantly on affected loops also
 	  // for easier loop handling later on in autoTuning's outlining step (reproducing lost pragmas)
 	  if (attribute->getOmpDirectiveType() ==e_for ||attribute->getOmpDirectiveType() ==e_parallel_for)
@@ -7765,7 +7768,8 @@ void attachOmpAttributeInfo(SgSourceFile *sageFilePtr)
 	    //forstmt->addNewAttribute("OmpAttribute",attribute);
 	    addOmpAttribute(attribute,forstmt);
 	  }
-	}
+#endif
+        }
       }
     }// end for
   }

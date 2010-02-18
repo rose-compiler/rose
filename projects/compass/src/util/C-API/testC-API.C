@@ -68,9 +68,9 @@ private:
 
 int
 main (int argc, char* argv[])
-{
+{  
   vector<string> argvList(argv, argv + argc);
-
+  
   string api_file;
   if (!isOptionWithParameter (argvList, "--", "api", api_file, true)
       || api_file.empty ())

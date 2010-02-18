@@ -1168,19 +1168,19 @@ OmpSupport::OmpAttribute* omp_fortran_parse(SgNode* locNode, const char* str)
     // the default trail check is on for those simple directives since a space a like is needed after them
     if (ofs_match_substr("atomic"))
     {
-      ompattribute = buildOmpAttribute(e_atomic, c_sgnode);
+      ompattribute = buildOmpAttribute(e_atomic, c_sgnode, true);
       // nothing further
     }
     // !$omp barrier 
     else if (ofs_match_substr("barrier"))
     {
-      ompattribute = buildOmpAttribute(e_barrier, c_sgnode);
+      ompattribute = buildOmpAttribute(e_barrier, c_sgnode, true);
       // nothing further
     }
     // !$omp critical
     else if (ofs_match_substr("critical",false))
     {
-      ompattribute = buildOmpAttribute(e_critical, c_sgnode);
+      ompattribute = buildOmpAttribute(e_critical, c_sgnode, true);
       char namebuffer[OFS_MAX_LEN];
       if (ofs_match_name_in_parenthesis(namebuffer))
       {
@@ -1190,7 +1190,7 @@ OmpSupport::OmpAttribute* omp_fortran_parse(SgNode* locNode, const char* str)
     // !$omp do
     else if (ofs_match_substr("do"))
     {
-      ompattribute = buildOmpAttribute(e_do, c_sgnode);
+      ompattribute = buildOmpAttribute(e_do, c_sgnode, true);
       ofs_match_omp_clauses(BV_OMP_DO_CLAUSES);
     }
     // !$omp end critical/do/master/ordered/ parallel [do|sections|workshare|]
@@ -1203,7 +1203,7 @@ OmpSupport::OmpAttribute* omp_fortran_parse(SgNode* locNode, const char* str)
       //$$omp end critical 
       if (ofs_match_substr("critical",false))
       {
-        ompattribute = buildOmpAttribute(e_end_critical, c_sgnode);
+        ompattribute = buildOmpAttribute(e_end_critical, c_sgnode, true);
         char namebuffer[OFS_MAX_LEN];
         if (ofs_match_name_in_parenthesis(namebuffer))
         {
@@ -1213,19 +1213,19 @@ OmpSupport::OmpAttribute* omp_fortran_parse(SgNode* locNode, const char* str)
       //!$omp end do
       else if (ofs_match_substr("do")) 
       {
-        ompattribute = buildOmpAttribute(e_end_do, c_sgnode);
+        ompattribute = buildOmpAttribute(e_end_do, c_sgnode, true);
         ofs_match_omp_clauses(BV_CLAUSE_NOWAIT);
       }  
       //!$omp end master
       else if (ofs_match_substr("master"))
       {
-        ompattribute = buildOmpAttribute(e_end_master, c_sgnode);
+        ompattribute = buildOmpAttribute(e_end_master, c_sgnode, true);
         // nothing further
       } 
       //!$omp end ordered
       else  if (ofs_match_substr("ordered"))
       {
-        ompattribute = buildOmpAttribute(e_end_ordered, c_sgnode);
+        ompattribute = buildOmpAttribute(e_end_ordered, c_sgnode, true);
         // nothing further
       } 
       else  if (ofs_match_substr("parallel", false))
@@ -1234,50 +1234,50 @@ OmpSupport::OmpAttribute* omp_fortran_parse(SgNode* locNode, const char* str)
         ofs_skip_whitespace();// additional space etc.
         if (ofs_match_substr("do"))
         {
-          ompattribute = buildOmpAttribute(e_end_parallel_do, c_sgnode);
+          ompattribute = buildOmpAttribute(e_end_parallel_do, c_sgnode, true);
           // nothing further, nowait cannot be used with end parallel 
         } 
         //!$omp end parallel sections
         else  if (ofs_match_substr("sections"))
         {
-          ompattribute = buildOmpAttribute(e_end_parallel_sections, c_sgnode);
+          ompattribute = buildOmpAttribute(e_end_parallel_sections, c_sgnode, true);
           // nothing further, nowait cannot be used with end parallel 
         } 
         //!$omp end parallel workshare
         else  if (ofs_match_substr("workshare"))
         {
-          ompattribute = buildOmpAttribute(e_end_parallel_workshare, c_sgnode);
+          ompattribute = buildOmpAttribute(e_end_parallel_workshare, c_sgnode, true);
           // nothing further, nowait cannot be used with end parallel 
         } 
         else
           //!$omp end parallel
         {
-          ompattribute = buildOmpAttribute(e_end_parallel, c_sgnode);
+          ompattribute = buildOmpAttribute(e_end_parallel, c_sgnode, true);
           // nothing further
         }
       }
       //!$omp end sections
       else if (ofs_match_substr("sections"))
       {
-        ompattribute = buildOmpAttribute(e_end_sections, c_sgnode);
+        ompattribute = buildOmpAttribute(e_end_sections, c_sgnode, true);
         ofs_match_omp_clauses(BV_CLAUSE_NOWAIT);
       }
       //!$omp end single 
       else if (ofs_match_substr("single"))
       {
-        ompattribute = buildOmpAttribute(e_end_single, c_sgnode);
+        ompattribute = buildOmpAttribute(e_end_single, c_sgnode, true);
         ofs_match_omp_clauses(BV_CLAUSE_NOWAIT|BV_CLAUSE_COPYPRIVATE);
       }
       //!$omp end task
       else if (ofs_match_substr("task"))
       {
-        ompattribute = buildOmpAttribute(e_end_task, c_sgnode);
+        ompattribute = buildOmpAttribute(e_end_task, c_sgnode, true);
         // nothing further
       }
       //!$omp end workshare
       else if (ofs_match_substr("workshare"))
       {
-        ompattribute = buildOmpAttribute(e_end_workshare, c_sgnode);
+        ompattribute = buildOmpAttribute(e_end_workshare, c_sgnode, true);
         ofs_match_omp_clauses(BV_CLAUSE_NOWAIT);
       }
       else
@@ -1289,7 +1289,7 @@ OmpSupport::OmpAttribute* omp_fortran_parse(SgNode* locNode, const char* str)
     // !$omp flush 
     else if (ofs_match_substr("flush"))
     {
-      ompattribute = buildOmpAttribute(e_flush, c_sgnode);
+      ompattribute = buildOmpAttribute(e_flush, c_sgnode, true);
       omptype = e_flush;
       //optional (varlist)
       if (ofs_match_char('('))
@@ -1303,13 +1303,13 @@ OmpSupport::OmpAttribute* omp_fortran_parse(SgNode* locNode, const char* str)
     // !$omp master
     else if (ofs_match_substr("master"))
     {
-      ompattribute = buildOmpAttribute(e_master, c_sgnode);
+      ompattribute = buildOmpAttribute(e_master, c_sgnode, true);
       // nothing further
     }
     // !$omp ordered
     else if (ofs_match_substr("ordered"))
     { // note the difference between ordered directive and ordered clause here
-      ompattribute = buildOmpAttribute(e_ordered_directive, c_sgnode);
+      ompattribute = buildOmpAttribute(e_ordered_directive, c_sgnode, true);
       // nothing further
     }
     else
@@ -1319,62 +1319,62 @@ OmpSupport::OmpAttribute* omp_fortran_parse(SgNode* locNode, const char* str)
         // !$omp parallel do
         if (ofs_match_substr("do"))
         {
-          ompattribute = buildOmpAttribute(e_parallel_do, c_sgnode);
+          ompattribute = buildOmpAttribute(e_parallel_do, c_sgnode, true);
           ofs_match_omp_clauses(BV_OMP_PARALLEL_CLAUSES|BV_OMP_DO_CLAUSES);
         }
         //!$omp parallel sections	
         else if (ofs_match_substr("sections"))
         {
-          ompattribute = buildOmpAttribute(e_parallel_sections,c_sgnode);
+          ompattribute = buildOmpAttribute(e_parallel_sections,c_sgnode, true);
           ofs_match_omp_clauses(BV_OMP_PARALLEL_CLAUSES|BV_OMP_SECTIONS_CLAUSES);
         }
         //!$omp parallel workshare
         else if (ofs_match_substr("workshare")) 
         {
-          ompattribute = buildOmpAttribute(e_parallel_workshare,c_sgnode);
+          ompattribute = buildOmpAttribute(e_parallel_workshare,c_sgnode, true);
           ofs_match_omp_clauses(BV_OMP_PARALLEL_CLAUSES);
         }
         else  
           //!$omp parallel , must be the last to be checked.
         {
-          ompattribute = buildOmpAttribute(e_parallel,c_sgnode);
+          ompattribute = buildOmpAttribute(e_parallel,c_sgnode, true);
           ofs_match_omp_clauses(BV_OMP_PARALLEL_CLAUSES);
         }
       } // end if parallel ..
     // !$omp sections
       else if (ofs_match_substr("sections"))
       {
-        ompattribute = buildOmpAttribute(e_sections, c_sgnode);
+        ompattribute = buildOmpAttribute(e_sections, c_sgnode, true);
         ofs_match_omp_clauses(BV_OMP_SECTIONS_CLAUSES);
       }
     //!$omp section
       else if (ofs_match_substr("section"))
       {
-        ompattribute = buildOmpAttribute(e_section, c_sgnode);
+        ompattribute = buildOmpAttribute(e_section, c_sgnode, true);
         //nothing further
       }
     //!$omp single
       else if (ofs_match_substr("single"))
       {
-        ompattribute = buildOmpAttribute(e_single, c_sgnode);
+        ompattribute = buildOmpAttribute(e_single, c_sgnode, true);
         ofs_match_omp_clauses(BV_CLAUSE_PRIVATE|BV_CLAUSE_FIRSTPRIVATE);
       }
     //!$omp task
       else if (ofs_match_substr("task"))
       {
-        ompattribute = buildOmpAttribute(e_task, c_sgnode);
+        ompattribute = buildOmpAttribute(e_task, c_sgnode, true);
         ofs_match_omp_clauses(BV_OMP_TASK_CLAUSES);
       }
     //!$omp taskwait
       else if (ofs_match_substr("taskwait"))
       {
-        ompattribute = buildOmpAttribute(e_taskwait, c_sgnode);
+        ompattribute = buildOmpAttribute(e_taskwait, c_sgnode, true);
         //nothing further
       }
     //!$omp threadprivate
       else if (ofs_match_substr("threadprivate",false))
       {
-        ompattribute = buildOmpAttribute(e_threadprivate, c_sgnode);
+        ompattribute = buildOmpAttribute(e_threadprivate, c_sgnode, true);
         //TODO (list) variables, or common blocks
         omptype = e_threadprivate;
         //optional (varlist)
@@ -1389,7 +1389,7 @@ OmpSupport::OmpAttribute* omp_fortran_parse(SgNode* locNode, const char* str)
     //!$omp workshare
       else if (ofs_match_substr("workshare"))
       {
-        ompattribute = buildOmpAttribute(e_workshare, c_sgnode);
+        ompattribute = buildOmpAttribute(e_workshare, c_sgnode, true);
         //nothing further
       }
       else

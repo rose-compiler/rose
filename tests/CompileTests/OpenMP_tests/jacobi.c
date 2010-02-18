@@ -247,4 +247,3 @@ void error_check ( )
   printf("Solution Error :%E \n",error);
 }
 
-

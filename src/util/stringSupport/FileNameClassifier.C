@@ -21,6 +21,7 @@
 #include "rose_msvc.h"
 
 #include <algorithm>
+#include <map>
 #include "string_functions.h"
 // DQ (3/22/2009): Windows does not have this header.
 #if ROSE_MICROSOFT_OS
@@ -29,9 +30,17 @@
 #include <sys/utsname.h>
 #endif
 
+#include <boost/foreach.hpp>
+
 // CH (1/29/2010): Needed for boost::filesystem::exists(...)
 #include <boost/filesystem.hpp>
-#include <boost/foreach.hpp>
+
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 103600
+#  define BOOST_HAS_BRANCH_PATH has_parent_path
+#else
+#  define BOOST_HAS_BRANCH_PATH has_branch_path
+#endif
 
 using namespace std;
 
@@ -348,7 +357,7 @@ using namespace std;
 		}
 
 		path p = fileName;
-		while (p.has_branch_path())
+		while (p.BOOST_HAS_BRANCH_PATH())
 		{
 		    p = p.branch_path();
 		    if(exists(p / path("rose.h")))
@@ -452,7 +461,7 @@ StringUtility::homeDir(string& dir)
 	StringUtility::classifyFileName(const string& fileName,
 		const string& appPath)
 	{
-	    return classifyFileName(fileName, appPath, vector<string>(), getOSType());
+	    return classifyFileName(fileName, appPath, std::map<string, string>(), getOSType());
 	}
 
     StringUtility::FileNameClassification
@@ -460,34 +469,44 @@ StringUtility::homeDir(string& dir)
 		const string& appPath,
 		OSType os)
 	{
-	    return classifyFileName(fileName, appPath, vector<string>(), os);
+	    return classifyFileName(fileName, appPath, std::map<string, string>(), os);
 	}
 
     StringUtility::FileNameClassification
 	StringUtility::classifyFileName(const string& filename,
 		const string& appPath,
-		const vector<string>& libPathCollection)
+		const std::map<string, string>& libPathCollection)
 	{
 	    return classifyFileName(filename, appPath, libPathCollection, getOSType());
 	}
 
     // Internal function to above public interface, this version
-    // is exposed just for testing purposes
+    // is exposed just for testing purposes 
     StringUtility::FileNameClassification
 	StringUtility::classifyFileName(const string& fileName,
 		const string& appPathConst,
-		const vector<string>& libPathCollection,
+		const std::map<string, string>& libPathCollection,
 		OSType os)
 	{
 	    // First, check if this file exists. Filename may be changed 
 	    // into an illegal one by #line directive
 	    if(!boost::filesystem::exists(fileName))
 		return FileNameClassification(FILENAME_LOCATION_NOT_EXIST,
-			FILENAME_LIBRARY_UNKNOWN,
+			"Unknown",
 			0);
 
 	    string appPath = appPathConst;
-	    vector<string> libPaths(libPathCollection);
+
+	    for(std::map<string, string>::const_iterator it = libPathCollection.begin();
+		it != libPathCollection.end(); ++it)	
+	    {
+		if (startsWith(fileName, it->first))
+		{
+		    return FileNameClassification(FILENAME_LOCATION_LIBRARY,
+			    it->second,
+			    directoryDistance(fileName, appPath));
+		}
+	    }
 
 	    // Consider all non-absolute paths to be application code
 	    if (os == OS_TYPE_WINDOWS)
@@ -497,18 +516,12 @@ StringUtility::homeDir(string& dir)
 		if (appPath.empty() || *(appPath.end() - 1) != '\\')
 		    appPath += '\\';
 
-		BOOST_FOREACH(string& libPath, libPaths)
-		{
-		    if (libPath.empty() || *(libPath.end() - 1) != '\\')
-			libPath += '\\';
-		}
-
 		// Tricky for Windows, make sure it doesn't just start
 		// with a drive letter
 		if (fileName.length() < 2 || fileName[1] != ':')
 		{
 		    return FileNameClassification(FILENAME_LOCATION_USER,
-			    FILENAME_LIBRARY_USER,
+			    "User", //FILENAME_LIBRARY_USER,
 			    0);
 		}
 	    }
@@ -519,16 +532,10 @@ StringUtility::homeDir(string& dir)
 		if (appPath.empty() || *(appPath.end() - 1) != '/')
 		    appPath += '/';
 
-		BOOST_FOREACH(string& libPath, libPaths)
-		{
-		    if (libPath.empty() || *(libPath.end() - 1) != '/')
-			libPath += '/';
-		}
-
 		if (!startsWith(fileName, "/"))
 		{
 		    return FileNameClassification(FILENAME_LOCATION_USER,
-			    FILENAME_LIBRARY_USER,
+			    "User", //FILENAME_LIBRARY_USER,
 			    0);
 		}
 	    }
@@ -538,26 +545,16 @@ StringUtility::homeDir(string& dir)
 	    if (startsWith(fileName, appPath))
 	    {
 		return FileNameClassification(FILENAME_LOCATION_USER,
-			FILENAME_LIBRARY_USER,
+			"User", //FILENAME_LIBRARY_USER,
 			0);
 	    }
 
 	    FileNameLibrary filenameLib = classifyLibrary(fileName);
-	    if (filenameLib != FILENAME_LIBRARY_UNKNOWN)
+	    if (filenameLib != StringUtility::FILENAME_LIBRARY_UNKNOWN)
 	    {
 		return FileNameClassification(FILENAME_LOCATION_LIBRARY,
 			filenameLib,
 			directoryDistance(fileName, appPath));
-	    }
-
-	    BOOST_FOREACH(const string& libPath, libPaths)
-	    {
-		if (startsWith(fileName, libPath))
-		{
-		    return FileNameClassification(FILENAME_LOCATION_LIBRARY,
-			    classifyLibrary(fileName),
-			    directoryDistance(fileName, appPath));
-		}
 	    }
 
 	    if (os == OS_TYPE_LINUX)
@@ -596,10 +593,11 @@ StringUtility::homeDir(string& dir)
 		}
 	    }
 	    return FileNameClassification(FILENAME_LOCATION_UNKNOWN,
-		    FILENAME_LIBRARY_UNKNOWN,
+		    "Unknown", //FILENAME_LIBRARY_UNKNOWN,
 		    directoryDistance(fileName, appPath));
 	}
 
+/* 
     // Possible return values for FileNameClassification::getLibraryName
     // Corresponds 1-to-1 to FileNameLibrary enum in the header file
     static const size_t FILENAME_NAMES_SIZE = 8;
@@ -618,6 +616,7 @@ StringUtility::FileNameClassification::getLibraryName() const
         ROSE_ASSERT(library >= 0 && library < (int)FILENAME_NAMES_SIZE);
         return FILENAME_NAMES[library];
     }
+*/
 
 const string
 StringUtility::stripDotsFromHeaderFileName(const string& name)
