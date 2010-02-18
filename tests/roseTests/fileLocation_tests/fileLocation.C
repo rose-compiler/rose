@@ -263,6 +263,8 @@ display ( const StringUtility::FileNameLocation & X, const string & label = "" )
 void
 display ( const StringUtility::FileNameLibrary & X, const string & label = "" )
    {
+       // Since FileNameLibrary is changed to string type, just print it out.
+       /* 
      printf ("In display(FileNameLibrary): label = %s \n",label.c_str());
      string classification = "";
      switch (X)
@@ -285,6 +287,8 @@ display ( const StringUtility::FileNameLibrary & X, const string & label = "" )
         }
 
      printf ("library classification = %s \n",classification.c_str());
+     */
+       printf("library classification = %s \n", X.c_str());
 
   // return classification;
    }
@@ -319,9 +323,9 @@ visitorTraversal::visit(SgNode* n)
             // This causes the path edit distance to be: 4
                //string sourceDir = "/home/dquinlan/ROSE/svn-rose";
 				string sourceDir = "/home/hou1/opt/rose";
-				vector<string> libs;
-				libs.push_back("/home/hou1/opt");
-				libs.push_back("/nfs/apps");
+				map<string, string> libs;
+				libs["/home/hou1/opt/rose"] = "MyRose";
+				libs["/home/hou1/opt/boost"] = "MyBoost";
             // This causes the path edit distance to be: 0
                //string sourceDir = "/home/dquinlan/ROSE";
 
@@ -341,8 +345,8 @@ visitorTraversal::visit(SgNode* n)
 	       printf ("\n\nfilename: %s\n", filename.c_str());
                printf ("fileTypeClassification = %d \n",fileTypeClassification);
                display(fileTypeClassification,"Display fileTypeClassification");
-               printf ("libraryClassification  = %d \n",libraryClassification);
-               display(libraryClassification,"Display libraryClassification");
+               printf ("libraryClassification  = %s \n",libraryClassification.c_str());
+               //display(libraryClassification,"Display libraryClassification");
                printf ("pathEditDistance       = %d \n",pathEditDistance);
 #endif
 
