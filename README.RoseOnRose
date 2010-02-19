@@ -1,0 +1,27 @@
+
+In using ROSE to compile the ROSE source code
+there are three leves of tests:
+   1) Analysis
+   2) Code Generation
+   3) Translation
+   4) Running executable built from ROSE compiling ROSE on the ROSE test suite.
+
+We are at a stage of maturity within the ROSE project that we regularly do steps 
+1 and 2 for all of the source code in ROSE (not just the src directory).
+This is a huge accomplishment for us, but it is hardely the end.
+
+Note on how to debug ROSE compiling ROSE:
+   1) For analysis there are no special steps.
+   2) For code generation it is helpful to monitor
+      the progress of the code generation via uncommenting 
+      some code.  I use this macro to control this:
+         #define ROSE_TRACK_PROGRESS_OF_ROSE_COMPILING_ROSE 0
+
+      There are three files where it is used, and it must be
+      set at the top of all three files if full tracking is used:
+      a) The unparser: 
+         src/backend/unparser/CxxCodeGeneration/unparseCxx_statements.C
+      b) The name qualification support (both files):
+         src/frontend/SageIII/astHiddenTypeAndDeclarationLists/HiddenList.C
+         src/frontend/SageIII/astHiddenTypeAndDeclarationLists/NamespacesAndClassTraversal.C
+
