@@ -102,9 +102,15 @@ testObjectFileFileAstFileIO: testAstFileIO
 
 test_testAstFileIO: testObjectFileFileAstFileIO
 
+# Reported failure from Tristan
+testSimpleLinkFileTranslator: testTranslator
+	cp $(srcdir)/inputFile.C inputSimpleLinkFileTranslator.C
+	./testTranslator inputSimpleLinkFileTranslator.C -lm
+
+
 
 # Rule to run all the example translator tests
-test: test_testAnalysis test_testCodeGeneration test_testTranslator test_testAstFileIO
+test: test_testAnalysis test_testCodeGeneration test_testTranslator test_testAstFileIO testSimpleLinkFileTranslator
 
 
 # Make check rule
@@ -120,8 +126,8 @@ clean-local: myCleanRule
 myCleanRule:
 	rm -f testLinkFileAnalysisExecutable testLinkFileCodeGenerationExecutable testLinkFileTranslatorExecutable
 	rm -f testExecutableFileAnalysisExecutable testExecutableFileCodeGenerationExecutable testExecutableFileTranslatorExecutable
-	rm -f rose_*.C inputFileTranslator.C inputFileCodeGeneration.C inputFileAnalysis.C
-	rm -f alt_AstFileIO_inputFile*
+	rm -f rose_*.C inputFileTranslator.C inputFileCodeGeneration.C inputFileAnalysis.C inputSimpleLinkFileTranslator.C
+	rm -f alt_AstFileIO_inputFile* a.out
 
 
 

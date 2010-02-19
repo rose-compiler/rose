@@ -6147,17 +6147,20 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                ROSE_ASSERT(objectNameSpecified == false);
                objectNameSpecified = true;
              }
-
+        }
+     Rose_STL_Container<string> tempArgcArgv;
+     for (Rose_STL_Container<string>::iterator i = argcArgvList.begin(); i != argcArgvList.end(); i++)
+        {
           // Liao, 11/19/2009
           // We now only handles compilation for SgFile::compileOutput(), 
           // so we need to remove linking related flags such as '-lxx' from the original command line
           // Otherwise gcc will complain:  -lm: linker input file unused because linking not done
-          if (i->substr(0,2) == "-l") 
+          if(i->substr(0,2) != "-l") 
           {
-            argcArgvList.erase(find(argcArgvList.begin(),argcArgvList.end(),*i));
+            tempArgcArgv.push_back(*i);
           }
         }
-
+     argcArgvList.swap(tempArgcArgv);
   // DQ (4/14/2005): Fixup quoted strings in args fix "-DTEST_STRING_MACRO="Thu Apr 14 08:18:33 PDT 2005" 
   // to be -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\"  This is a problem in the compilation of
   // a Kull file (version.cc), when the backend is specified as /usr/apps/kull/tools/mpig++-3.4.1.  The

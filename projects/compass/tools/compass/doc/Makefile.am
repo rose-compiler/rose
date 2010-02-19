@@ -19,6 +19,7 @@ docs: compass.tex compassCheckerDocs.tex
 	done ;\
 	'
 	@rm -f Makefile.*
+#	pdflatex compass.tex 
 	pdflatex --interaction=batchmode compass.tex 
 	pdflatex --interaction=batchmode compass.tex
 # pointless file moving	??
