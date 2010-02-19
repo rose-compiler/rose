@@ -1154,10 +1154,10 @@ namespace AutoParallelization
     // A table to store processed attributes
     std::map <OmpAttribute*, bool> attributeTable; 
     Rose_STL_Container <SgNode* > nodeList = NodeQuery::querySubTree(sfile, V_SgStatement);
-    for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
+    for (Rose_STL_Container<SgNode *>::iterator i1 = nodeList.begin(); i1 != nodeList.end(); i1++)
     {
       bool isUserDefined = false; 
-      SgStatement * stmt = isSgStatement(*i);
+      SgStatement * stmt = isSgStatement(*i1);
       ROSE_ASSERT (stmt != NULL);
 
       OmpAttributeList* oattlist= getOmpAttributeList(stmt);
@@ -1168,10 +1168,10 @@ namespace AutoParallelization
 
       vector <OmpAttribute* > ompattlist = oattlist->ompAttriList;
       ROSE_ASSERT (ompattlist.size() != 0) ;
-      vector <OmpAttribute* >::iterator i = ompattlist.begin();
-      for (; i!=ompattlist.end(); i++)
+      vector <OmpAttribute* >::iterator i2 = ompattlist.begin();
+      for (; i2!=ompattlist.end(); i2++)
       {
-        OmpAttribute* oa = *i;
+        OmpAttribute* oa = *i2;
         if (attributeTable[oa])
            continue; // processed already , used as one of the pair being compared
         else 
@@ -1198,14 +1198,14 @@ namespace AutoParallelization
                  //cout<<"Warning: found a loop attached with multiple OmpAttribute s"<<endl;
                  //cout<<"memory address:"<<next_stmt<<endl;
                 // cout<<next_stmt->get_file_info()->get_line()<<endl;
-                  vector <OmpAttribute* >::iterator i = ompattlist2.begin();
+                  vector <OmpAttribute* >::iterator i3 = ompattlist2.begin();
                   OmpAttribute* theone = NULL;
-                  for (; i!=ompattlist2.end(); i++)
+                  for (; i3!=ompattlist2.end(); i3++)
                   {
-                    //cout<<(*i)->toOpenMPString()<<endl;
-                    if (!(*i)->get_isUserDefined())
+                    //cout<<(*i3)->toOpenMPString()<<endl;
+                    if (!(*i3)->get_isUserDefined())
                     {
-                      theone = *i;
+                      theone = *i3;
                       break;
                     }
                   } 
