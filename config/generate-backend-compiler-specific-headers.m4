@@ -41,6 +41,7 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
 
    chmod u+x "${srcdir}/$ROSE_HOME/config/dirincludes"
 
+
  # Include the directory with the subdirectories of header files
    if test "x$enable_new_edg_interface" = "xyes"; then
      includeString="{`${srcdir}/config/get_compiler_header_dirs ${BACKEND_CXX_COMPILER} | while read dir; do echo -n \\\"$dir\\\",\ ; done` \"/usr/include\"}"
