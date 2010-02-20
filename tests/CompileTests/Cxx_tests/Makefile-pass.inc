@@ -286,7 +286,6 @@ test2005_51.C \
 test2005_52.C \
 test2005_53.C \
 test2005_55.C \
-test2005_56.C \
 test2005_57.C \
 test2005_58.C \
 test2005_59.C \

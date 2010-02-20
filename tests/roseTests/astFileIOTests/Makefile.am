@@ -22,7 +22,10 @@ astFileRead_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 # astFileIO_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-TESTCODES = \
+include $(srcdir)/../../CompileTests/Cxx_tests/Makefile-pass.inc
+
+
+XXX_TESTCODES = \
           test2001_01.C \
           test2001_02.C \
           test2001_03.C \
@@ -34,7 +37,7 @@ TESTCODES = \
           test2001_10.C
 
 # Reduce the number of tests here since they don't test many different parts of the File I/O mechanism.
-EXTRA_TESTCODES = \
+XXX_EXTRA_TESTCODES = \
           test2001_14.C \
           test2001_15.C \
           test2001_17.C \
@@ -388,7 +391,10 @@ EXTRA_TESTCODES = \
 # fail1.C fail2.C
 
 # DQ (2/13/2010): Optionally make this a longer test.
-TESTCODES += $(EXTRA_TESTCODES)
+# TESTCODES += $(EXTRA_TESTCODES)
+
+# DQ (2/20/2010): Use the standard list of test codes (if possible)
+TESTCODES = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS)
 
 # Build the list of object files
 TEST_Objects = ${TESTCODES:.C=.o}
@@ -400,7 +406,8 @@ VALGRIND =
 ROSE_FLAGS = -rose:verbose 0
 # TEST_TRANSLATOR = $(top_builddir)/tests/roseTests/astFileIOTests/astFileIO $(ROSE_FLAGS)
 # READ_TRANSLATOR = $(top_builddir)/tests/roseTests/astFileIOTests/astFileRead $(ROSE_FLAGS)
-TEST_TRANSLATOR = ./astFileIO $(ROSE_FLAGS)
+# TEST_TRANSLATOR = ./astFileIO $(ROSE_FLAGS)
+TEST_TRANSLATOR = $(top_builddir)/tests/testAstFileIO $(ROSE_FLAGS)
 READ_TRANSLATOR = ./astFileRead $(ROSE_FLAGS)
 TESTCODE_INCLUDES =
 
@@ -410,7 +417,7 @@ $(TEST_Objects): astFileIO astFileRead
 #	@echo "QY:skipping test code using $(TEST_TRANSLATOR) ..."
 #	@echo "Compiling test code using $(TEST_TRANSLATOR) ..."
 #	$(VALGRIND) $(TEST_TRANSLATOR) $(srcdir)/$(@:.o=.C) -o $(@:.o=)
-	$(VALGRIND) $(TEST_TRANSLATOR) $(srcdir)/../../CompileTests/Cxx_tests/$(@:.o=.C) -o $(@:.o=)
+	$(VALGRIND) $(TEST_TRANSLATOR) -I$(srcdir)/../../CompileTests/Cxx_tests $(srcdir)/../../CompileTests/Cxx_tests/$(@:.o=.C) -o $(@:.o=)
 #	@echo "Running resulting executable ..."
 #	./$(@:.o=)
 
@@ -447,6 +454,7 @@ check-local:
 
 clean-local:
 	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files pass[1-9] pass1[0-9] pass2[0-9] rose_*.C *.ti *.binary *.C.pdf test1 test200?_*
+	rm -rf test_int_lexemes  test_int_lexemes_donot_pass  test_simple_int  test_wchars  X Cxx_Grammar
 
 distclean-local:
 	rm -rf Templates.DB 
