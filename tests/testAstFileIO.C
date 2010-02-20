@@ -21,14 +21,19 @@ main ( int argc, char * argv[] )
 
      int status = 0;
 
-     printf ("project_identity->get_outputFileName() = %s \n",project_identity->get_outputFileName().c_str());
+  // DQ (2/20/2010): Autoconf configure tests can't hae I/O like this...
+  // printf ("project_identity->get_outputFileName() = %s \n",project_identity->get_outputFileName().c_str());
+  // printf ("Writing the initial file to disk... \n");
 
-     printf ("Writing the initial file to disk... \n");
-     backend(project_identity);
-     string fileName =  project_identity->get_outputFileName() ;
+  // backend(project_identity);
+     backendGeneratesSourceCodeButCompilesUsingOriginalInputFile(project_identity);
 
+  // We need this to avoid some cases that are common in configure tests but it not halded for the AST file I/O.
+     if (project_identity->get_compileOnly() == true && project_identity->get_Cxx_only() == true && project_identity->get_outputFileName() != "a.out")
+        {
+     string fileName = project_identity->get_outputFileName();
   // Save the generated source file to be the original file (to be used to compare against later).
-     string moving = "mv rose_" + fileName + ".C rose_" + fileName + "_identity.C" ;
+     string moving = "mv rose_" + fileName + ".C rose_" + fileName + "_identity.C";
      status = system ( moving.c_str() );
      ROSE_ASSERT(status == 0);
 
@@ -98,6 +103,7 @@ main ( int argc, char * argv[] )
           exit ( -1 );
         }
 #endif
+        }
 
      return 0;
    }                                                                                                                                                                                                     
