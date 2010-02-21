@@ -100,6 +100,7 @@ check-local:
 clean-local:
 	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files pass[1-9] pass1[0-9] pass2[0-9] rose_*.C *.ti *.binary *.C.pdf test1 test200?_*
 	rm -rf test_int_lexemes  test_int_lexemes_donot_pass  test_simple_int  test_wchars  X Cxx_Grammar
+	rm -f *.C_identity inputBug317  inputBug327  inputForLoopLocator  lexPhase2003_01  math  test2010_03  test2010_04  test2010_05  test2010_06  test_CplusplusMacro_Cpp
 
 distclean-local:
 	rm -rf Templates.DB 
