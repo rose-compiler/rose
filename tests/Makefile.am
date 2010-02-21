@@ -128,6 +128,7 @@ myCleanRule:
 	rm -f testExecutableFileAnalysisExecutable testExecutableFileCodeGenerationExecutable testExecutableFileTranslatorExecutable
 	rm -f rose_*.C inputFileTranslator.C inputFileCodeGeneration.C inputFileAnalysis.C inputSimpleLinkFileTranslator.C inputFileAstFileIO.C
 	rm -f alt_AstFileIO_inputFile* a.out *.dot *.binary
+	rm -f *.C_identity 
 
 
 
