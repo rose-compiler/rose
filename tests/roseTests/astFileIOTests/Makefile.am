@@ -44,7 +44,9 @@ VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=80 --leak-check=no --error-l
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
 VALGRIND =
 
-ROSE_FLAGS = -rose:verbose 0
+# ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0
+ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 -rose:skip_unparse_asm_commands
+
 # TEST_TRANSLATOR = $(top_builddir)/tests/roseTests/astFileIOTests/astFileIO $(ROSE_FLAGS)
 # READ_TRANSLATOR = $(top_builddir)/tests/roseTests/astFileIOTests/astFileRead $(ROSE_FLAGS)
 # TEST_TRANSLATOR = ./astFileIO $(ROSE_FLAGS)
@@ -58,7 +60,7 @@ $(TEST_Objects): astFileIO astFileRead
 #	@echo "QY:skipping test code using $(TEST_TRANSLATOR) ..."
 #	@echo "Compiling test code using $(TEST_TRANSLATOR) ..."
 #	$(VALGRIND) $(TEST_TRANSLATOR) $(srcdir)/$(@:.o=.C) -o $(@:.o=)
-	$(VALGRIND) $(TEST_TRANSLATOR) -I$(srcdir)/../../CompileTests/Cxx_tests $(srcdir)/../../CompileTests/Cxx_tests/$(@:.o=.C) -o $(@:.o=)
+	$(VALGRIND) $(TEST_TRANSLATOR) -I$(srcdir)/../../CompileTests/Cxx_tests -c $(srcdir)/../../CompileTests/Cxx_tests/$(@:.o=.C) -o $(@:.o=)
 #	@echo "Running resulting executable ..."
 #	./$(@:.o=)
 
@@ -66,8 +68,9 @@ $(TEST_Objects): astFileIO astFileRead
 EXTRA_DIST = 
 
 # This tests the reading of a collection of binary files (build by running $(MAKE) $(TEST_Objects)
-test-read: test2001_01.binary test2001_02.binary test2001_03.binary
-	./astFileRead test2001_01 test2001_02 test2001_03
+# test-read: test2001_01.binary test2001_02.binary test2001_03.binary
+test-read: rose_test2001_01.C.binary rose_test2001_02.C.binary rose_test2001_03.C.binary
+	./astFileRead rose_test2001_01.C rose_test2001_02.C rose_test2001_03.C
 
 # This tests the compression of the AST internally, a step that makes it contiguious in 
 # memory by copying it to intermediate storage and then rebuilding it from scratch.

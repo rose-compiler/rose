@@ -23,6 +23,10 @@ class X
 
 X<int> x;
 
+// DQ (2/20/2010): This is a error for g++ 4.x compilers (at least g++ 4.2).
+#if (__GNUC__ == 4)
+template <>
+#endif
 void X<int>::foo()
    {
    }

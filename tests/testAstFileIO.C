@@ -8,6 +8,8 @@
 //   7) Compares the initial source frile with the second source file using diff.
 
 #include "rose.h"
+
+#define DEBUG_FILE_IO 0
  
 using namespace std;
 
@@ -26,14 +28,37 @@ main ( int argc, char * argv[] )
   // printf ("Writing the initial file to disk... \n");
 
   // backend(project_identity);
-     backendGeneratesSourceCodeButCompilesUsingOriginalInputFile(project_identity);
+  // backendGeneratesSourceCodeButCompilesUsingOriginalInputFile(project_identity);
+
+#if DEBUG_FILE_IO
+     printf ("project_identity->get_compileOnly()    = %s \n",project_identity->get_compileOnly() ? "true" : "false");
+     printf ("project_identity->get_Cxx_only()       = %s \n",project_identity->get_Cxx_only() ? "true" : "false");
+     printf ("project_identity->get_outputFileName() = %s \n",project_identity->get_outputFileName().c_str());
+#endif
 
   // We need this to avoid some cases that are common in configure tests but it not halded for the AST file I/O.
-     if (project_identity->get_compileOnly() == true && project_identity->get_Cxx_only() == true && project_identity->get_outputFileName() != "a.out")
+  // if (project_identity->get_Cxx_only() == true && project_identity->get_outputFileName() != "a.out")
+  // if (project_identity->get_compileOnly() == true && project_identity->get_Cxx_only() == true && project_identity->get_outputFileName() != "a.out")
+     if (project_identity->get_compileOnly() == true && project_identity->get_Cxx_only() == true)
         {
-     string fileName = project_identity->get_outputFileName();
+       // Debugging support.
+       // project_identity->display("testAstFileIO");
+
+          status = backendGeneratesSourceCodeButCompilesUsingOriginalInputFile(project_identity);
+          ROSE_ASSERT(status == 0);
+
+          ROSE_ASSERT(project_identity->numberOfFiles() == 1);
+          SgFile* file = project_identity->operator[](0);
+          ROSE_ASSERT(file != NULL);
+
+  // string fileName = project_identity->get_outputFileName();
+     string fileName = file->get_unparse_output_filename();
+
   // Save the generated source file to be the original file (to be used to compare against later).
-     string moving = "mv rose_" + fileName + ".C rose_" + fileName + "_identity.C";
+  // string moving = "mv rose_" + fileName + ".C rose_" + fileName + "_identity.C";
+     string moving = "mv " + fileName + " " + fileName + "_identity";
+  // printf ("moving = %s \n",moving.c_str());
+
      status = system ( moving.c_str() );
      ROSE_ASSERT(status == 0);
 
@@ -42,7 +67,9 @@ main ( int argc, char * argv[] )
      AST_FILE_IO::printListOfPoolSizes() ;
 #endif
 
+#if DEBUG_FILE_IO
      printf ("Calling File I/O initialization... \n");
+#endif
      AST_FILE_IO::startUp( project_test ) ;
 
   // DQ (12/12/2009): Allow output only when run in verbose mode to limit spew in testing.
@@ -55,14 +82,20 @@ main ( int argc, char * argv[] )
      AST_FILE_IO::compressAstInMemoryPool();
 #endif
 
+#if DEBUG_FILE_IO
      printf ("Writing the AST to disk... \n");
+#endif
      AST_FILE_IO::writeASTToFile ( fileName + ".binary" );
 
   // delete the memroy pools and prepare them for reading back the ast the file IO
+#if DEBUG_FILE_IO
      printf ("Clear existing memory pools... \n");
+#endif
      AST_FILE_IO::clearAllMemoryPools( );
 
+#if DEBUG_FILE_IO
      printf ("Read in the AST from disk... \n");
+#endif
      project_test = (SgProject*) (AST_FILE_IO :: readASTFromFile ( fileName + ".binary" ) );
 
   // AST_FILE_IO::printListOfPoolSizes();
@@ -86,24 +119,42 @@ main ( int argc, char * argv[] )
      cout << "done " << endl;
 #endif
 
+#if DEBUG_FILE_IO
      printf ("Writing the second (generated source file from AST read from disk)... \n");
+#endif
   // backend(project_test);
-     backendGeneratesSourceCodeButCompilesUsingOriginalInputFile(project_test);
+     status = backendGeneratesSourceCodeButCompilesUsingOriginalInputFile(project_test);
+     ROSE_ASSERT(status == 0);
 
 #if 1
+#if DEBUG_FILE_IO
      printf ("Test initial source file against second source file using diff... \n");
-     string diff = "diff  rose_"+ fileName + ".C rose_" + fileName + "_identity.C" ;  
-     if ( system ( diff.c_str() ) == 0 ) 
+#endif
+  // string diff = "diff  rose_"+ fileName + ".C rose_" + fileName + "_identity.C" ;  
+     string diff = "diff "+ fileName + " " + fileName + "_identity";
+     status = system ( diff.c_str() );
+#if DEBUG_FILE_IO
+     if ( status == 0 ) 
         {
           cout << "!!!!!!!!!!!!!  files are identical !!!!!!!!!!!!"   << endl;
         }
        else 
         {
           cout << "********* Problem: Files seem not to match ****"   << endl;
-          exit ( -1 );
+       // exit ( -1 );
         }
 #endif
+#endif
+        }
+       else
+        {
+       // return backendGeneratesSourceCodeButCompilesUsingOriginalInputFile(project_identity);
+#if DEBUG_FILE_IO
+          printf ("***** Calling backend without any File IO testing ***** \n");
+#endif
+          status = backendCompilesUsingOriginalInputFile(project_identity);
         }
 
-     return 0;
+  // return 0;
+     return status;
    }                                                                                                                                                                                                     

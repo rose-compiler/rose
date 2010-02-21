@@ -23,6 +23,9 @@ extern int APP_Global_Array_Base;
 
 #define SERIAL_APP
 
+// DQ (2/20/2010): GNU appears to require this.
+class SerialArray_Domain_Type{};
+
 // *************************************************************
 // This class is a base class for the Range and Index classes
 // *************************************************************
@@ -248,19 +251,15 @@ class Internal_Index
 
      public:
 #if defined(PPP) || defined(SERIAL_APP)
-        Internal_Index getLocalPart 
-	   ( const SerialArray_Domain_Type & X , int Axis ) const;
+        Internal_Index getLocalPart ( const SerialArray_Domain_Type & X , int Axis ) const;
 
      // Internally arrays of pointers to Index objects are initialized and we have to
      // avoid taking the address of the member function's returned value.
-        Internal_Index* getPointerToLocalPart 
-	   ( const SerialArray_Domain_Type & X , int Axis ) const;
+        Internal_Index* getPointerToLocalPart ( const SerialArray_Domain_Type & X , int Axis ) const;
 
      private:
      // used internally in the getLocalPart and getPointerToLocalPart member functions
-        void getLocalPartData 
-	   ( const SerialArray_Domain_Type & X , int Axis, 
-             int & Output_Base, int & Output_Count, int & Output_Stride ) const;
+        void getLocalPartData ( const SerialArray_Domain_Type & X , int Axis, int & Output_Base, int & Output_Count, int & Output_Stride ) const;
 
      public:
         void adjustBase  ( int x );

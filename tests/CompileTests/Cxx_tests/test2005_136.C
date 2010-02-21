@@ -42,11 +42,14 @@ template <> int X<int>::foo()
 
 // Template Instantiation Directive
 // This works because "A" has a member function "increment"
+// DQ (2/20/2010): This is a error for g++ 4.x compilers (at least g++ 4.2).
+#if (__GNUC__ == 3)
 template X<A>;
 
 // Template Instantiation Directive
 // This would fail if the specialization is not output properly
 template X<int>;
+#endif
 
 // Error: currently fails to generate code for prototype before use.
 //        There is an instantiation of the class X<A> (specialization)

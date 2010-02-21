@@ -1910,7 +1910,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
    }
 
 void
-SgFile::stripRoseCommandLineOptions ( vector<string>& argv )
+SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
    {
   // Strip out the rose specific commandline options
   // the assume all other arguments are to be passed onto the C or C++ compiler
@@ -1918,15 +1918,16 @@ SgFile::stripRoseCommandLineOptions ( vector<string>& argv )
      int optionCount = 0;
   // int i = 0;
 
-#if ROSE_INTERNAL_DEBUG
+// #if ROSE_INTERNAL_DEBUG
+#if 1
   // printf ("ROSE_DEBUG = %d \n",ROSE_DEBUG);
   // printf ("get_verbose() = %s value = %d \n",(get_verbose() > 1) ? "true" : "false",get_verbose());
 
-     if ( (ROSE_DEBUG >= 1) || (get_verbose() > 2 ))
+     if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
         {
-          printf ("In stripRoseCommandLineOptions: List ALL arguments: argc = %zu \n",argv.size());
+          printf ("In stripRoseCommandLineOptions (TOP): List ALL arguments: argc = %zu \n",argv.size());
           for (size_t i=0; i < argv.size(); i++)
-               printf ("     argv[%d] = %s \n",i,argv[i]);
+             printf ("     argv[%zu] = %s \n",i,argv[i].c_str());
         }
 #endif
 
@@ -2051,6 +2052,15 @@ SgFile::stripRoseCommandLineOptions ( vector<string>& argv )
 
   // DQ (2/5/2009): Remove use of "-rose:binary" to prevent it being passed on.
      optionCount = sla(argv, "-rose:", "($)", "(binary|binary_only)",1);
+
+#if 1
+     if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
+        {
+          printf ("In stripRoseCommandLineOptions (BOTTOM): List ALL arguments: argc = %zu \n",argv.size());
+          for (size_t i=0; i < argv.size(); i++)
+             printf ("     argv[%zu] = %s \n",i,argv[i].c_str());
+        }
+#endif
    }
 
 void
@@ -2072,6 +2082,10 @@ SgFile::stripEdgCommandLineOptions ( vector<string> & argv )
      CommandlineProcessing::removeArgs (argv,"--edg:");
      CommandlineProcessing::removeArgsWithParameters (argv,"-edg_parameter:");
      CommandlineProcessing::removeArgsWithParameters (argv,"--edg_parameter:");
+
+  // DQ (2/20/2010): Remove this option when building the command line for the vendore compiler.
+     int optionCount = 0;
+     optionCount = sla(argv, "--edg:", "($)", "(no_warnings)",1);
 
 #if 0
      Rose_STL_Container<string> l = CommandlineProcessing::generateArgListFromArgcArgv (argc,argv);
