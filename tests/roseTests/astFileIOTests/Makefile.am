@@ -72,6 +72,7 @@ EXTRA_DIST =
 test-read: rose_test2001_01.C.binary rose_test2001_02.C.binary rose_test2001_03.C.binary
 	./astFileRead rose_test2001_01.C rose_test2001_02.C rose_test2001_03.C
 
+
 # This tests the compression of the AST internally, a step that makes it contiguious in 
 # memory by copying it to intermediate storage and then rebuilding it from scratch.
 # Putting the AST into blocks of contiguious storage is what the binary file I/O mechanis fast.
