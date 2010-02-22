@@ -207,7 +207,7 @@ add_library(rose_MSTL STATIC ${MSTL_SRC} ${virtualCFG_SRC} ${rose_support_src} )
 add_dependencies(rose_MSTL ROSETTA OMPPARSER ROSE_PREPROCESSOR  ) 
 
 
-set(rose_rosetta_LIB_SRCS 
+set(ROSE_ROSETTA_LIB_SRCS 
  ${ROSETTA_SRC} 
  ${EDG_SAGE_Connection_SRC}
 )
@@ -216,11 +216,11 @@ set(rose_sage3_SRCS
     ${sage3_SRC}
 )
 
-add_library(rose_rosetta STATIC ${rose_rosetta_LIB_SRCS} )
-add_dependencies(rose_rosetta ROSETTA OMPPARSER ROSE_PREPROCESSOR  ) 
+add_library(ROSE_ROSETTA STATIC ${ROSE_ROSETTA_LIB_SRCS} )
+add_dependencies(ROSE_ROSETTA ROSETTA OMPPARSER ROSE_PREPROCESSOR  ) 
 
 #add_library(rose_sage3 STATIC ${rose_sage3_SRCS} )
-#add_dependencies(rose_sage3 ROSETTA OMPPARSER ROSE_PREPROCESSOR rose_MSTL rose_rosetta ) 
+#add_dependencies(rose_sage3 ROSETTA OMPPARSER ROSE_PREPROCESSOR rose_MSTL ROSE_ROSETTA ) 
 
 ########### next target ###############
 set(rose_LIB_SRCS dummyCppFileForLibrose.C 
@@ -231,7 +231,7 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
 
 add_library(rose SHARED ${rose_LIB_SRCS} )
 #ROSE neeeds ${ROSETTA_HEADERS} and ${ROSETTA_SRC} to be build
-add_dependencies(rose ROSETTA OMPPARSER ROSE_PREPROCESSOR rose_rosetta ) 
+add_dependencies(rose ROSETTA OMPPARSER ROSE_PREPROCESSOR ROSE_ROSETTA ) 
 
 
 if ( enable-smaller-generated-files )
@@ -240,7 +240,7 @@ set(ROSE_TARGET_LINK
    libgeneratedIR 
    PHP_FRONTEND_LIB 
    rose_MSTL 
- rose_rosetta 
+ ROSE_ROSETTA 
 # rose_sage3
    libastMerge edg33 libsageInterface libastTokenStream libastHiddenTypeAndDeclarationLists
    libastVisualization roseDisassemblers roseBinaryFormats 
@@ -254,7 +254,7 @@ else ( enable-smaller-generated-files )
 set(ROSE_TARGET_LINK 
    PHP_FRONTEND_LIB 
    rose_MSTL 
- rose_rosetta 
+ ROSE_ROSETTA 
 #rose_sage3
    libastMerge edg33 libsageInterface libastTokenStream libastHiddenTypeAndDeclarationLists
    libastVisualization roseDisassemblers roseBinaryFormats 

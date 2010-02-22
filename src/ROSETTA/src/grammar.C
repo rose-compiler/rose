@@ -2251,11 +2251,12 @@ Grammar::buildForwardDeclarations ()
      returnString.push_back(StringUtility::StringWithLineNumber("\n\n// Forward declaration of \"<classname> is<classname> (SgNode* n)\" friend functions.\n", "" /* "<unknown>" */, 1));
      returnString.push_back(StringUtility::StringWithLineNumber("// GNU g++ 4.1.0 requires these be declared outside of the class (because the friend declaration in the class is not enough).\n\n", "" /* "<unknown>" */, 2));
 
+     returnString.push_back(StringUtility::StringWithLineNumber("\n\n#include \"rosedll.h\"\n", "" /* "<unknown>" */, 1));
      for (unsigned int i=0; i < terminalList.size(); i++)
         {
           string className = terminalList[i]->name;
-	  returnString.push_back(StringUtility::StringWithLineNumber(className + "* is" + className + "(SgNode* node);", "" /* "<downcast function for " + className + ">" */, 1));
-	  returnString.push_back(StringUtility::StringWithLineNumber("const " + className + "* is" + className + "(const SgNode* node);", "" /* "<downcast function for " + className + ">" */, 2));
+	  returnString.push_back(StringUtility::StringWithLineNumber("ROSE_ROSETTA_API "+className + "* is" + className + "(SgNode* node);", "" /* "<downcast function for " + className + ">" */, 1));
+	  returnString.push_back(StringUtility::StringWithLineNumber("ROSE_ROSETTA_API const " + className + "* is" + className + "(const SgNode* node);", "" /* "<downcast function for " + className + ">" */, 2));
         }
 
   // printf ("In Grammar::buildForwardDeclarations (): returnString = \n%s\n",returnString.c_str());
