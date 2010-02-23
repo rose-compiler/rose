@@ -207,7 +207,7 @@ include_HEADERS = \
    fixupCopy.h \
    general_token_defs.h rtiHelpers.h \
    OmpAttribute.h omp.h dwarfSupport.h \
-   omp_lib_kinds.h omp_lib.h sage3basic.hhh rosedefs.h  fileoffsetbits.h
+   omp_lib_kinds.h omp_lib.h sage3basic.hhh rosedefs.h  fileoffsetbits.h rosedll.h
 
 # DQ (4/5/2009): Moved rose_paths.h to src/util (where the source file is located).
 nodist_include_HEADERS = \
