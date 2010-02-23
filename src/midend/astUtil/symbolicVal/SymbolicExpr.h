@@ -46,7 +46,8 @@ class SymbolicTerm
                return v;
             return ApplyBinOP( op, v, SymbolicConst(time1,time2));
           }
-
+  //! Liao 2/19/2009 , access function to v directly. Used for debugging mostly       
+  SymbolicVal GetV(); // { return v; } // gdb sometimes cannot evaluate inlined functions
   bool IsTop() const { return  !v.IsNIL() && time1 == 0; } 
   bool CombineWith( const SymbolicTerm &that)  ;
   bool operator == (const SymbolicTerm& that) const;
