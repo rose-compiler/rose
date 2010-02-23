@@ -383,7 +383,9 @@ visitorTraversal::visit(SgNode* n)
 void DeleteArg(vector<string>& args, const string& arg)
 {
     vector<string>::iterator it = find(args.begin(), args.end(), arg);
-    args.erase(it+1);
+    if (it == args.end()) return;
+    if (it+1 != args.end())
+	args.erase(it+1);
     args.erase(it);
 }
 
@@ -403,7 +405,9 @@ int main(int argc, char * argv[])
 	;
 
     variables_map vm;
-    store(parse_command_line(argc, argv, desc), vm);
+    parsed_options parsed = 
+	command_line_parser(argc, argv).options(desc).allow_unregistered().run();
+    store(parsed, vm);
     notify(vm);    
 
     map<string, string> libs;
