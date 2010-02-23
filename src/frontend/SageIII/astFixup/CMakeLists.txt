@@ -9,7 +9,13 @@ add_library( astFixup ${astFixup_SRC} )
 add_dependencies( astFixup ROSETTA )
 ########### install files ###############
 
-install(FILES  AstFixup.h       fixupFunctionDefinitions.h       fixupStorageAccessOfForwardTemplateDeclarations.h       removeInitializedNamePtr.h       fixupforGnuBackendCompiler.h       fixupInClassDataInitialization.h       fixupTemplateDeclarations.h       fixupSourcePositionInformation.h       fixupEnumValues.h       fixupFriendTemplateDeclarations.h DESTINATION ${INCLUDE_INSTALL_DIR})
+install(FILES  AstFixup.h fixupFunctionDefinitions.h
+    fixupStorageAccessOfForwardTemplateDeclarations.h removeInitializedNamePtr.h
+    fixupforGnuBackendCompiler.h fixupInClassDataInitialization.h
+    fixupTemplateDeclarations.h fixupSourcePositionInformation.h
+    fixupEnumValues.h fixupFriendTemplateDeclarations.h
+    fixupPrettyFunction.h fixupPrettyFunction.h 
+    DESTINATION ${INCLUDE_INSTALL_DIR})
 
 
 

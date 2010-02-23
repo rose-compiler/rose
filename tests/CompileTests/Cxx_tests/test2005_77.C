@@ -18,8 +18,13 @@ class A
 
 int x2_global_variable;
 
+
+// DQ (2/20/2010): This is a error for g++ 4.x compilers (at least g++ 4.2).
+#if (__GNUC__ == 3)
 // Template instantiation directives
 template A<int>;
+#endif
+
 
 int main()
 {

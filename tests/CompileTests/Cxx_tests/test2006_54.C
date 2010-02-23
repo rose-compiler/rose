@@ -39,7 +39,9 @@ template <typename T>
 class A_T
 {
 public:
-  int foo (T x) { return (int)x; }
+// DQ (2/20/2010): changed "int" to "long" for 64-bit machines (avoids cast error with g++ 4.2 compiler).
+// int foo (T x) { return (int)x; }
+  long foo (T x) { return (long)x; }
 };
 
 template class A_T<int>;

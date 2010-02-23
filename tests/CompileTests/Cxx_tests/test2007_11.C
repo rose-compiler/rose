@@ -83,6 +83,10 @@ void foo()
           case 3:
           case 4:
           default:
+// DQ (2/20/2010): This is a error for g++ 4.x compilers (at least g++ 4.2).
+#if (__GNUC__ >= 3)
+             0;
+#endif
         }
 
   // Case: switch(x) { case 1:{ break; } case 2: break; case 3: case4: default:{} }
