@@ -69,11 +69,28 @@ class ValGetBound : public SymbolicVisitor
        for (SymbolicFunction::const_iterator p = v.args_begin();
             p != v.args_end(); ++p ){
           SymbolicVal cur = *p;
-          SymbolicVal n = GetRepl(cur);
-          if (cur != n) {
-             change = true;
+          // Liao 2/22/2010
+          // For member access functions such as this->member
+          // They are represented as / (this, member) for a symbolic expression
+          // with / as the function op name, and  'this' and 'member' as arguments
+          // In this case, it does not make much sense to calculate the bound of 'this'
+          // Even worse, some assertion may fail later on when trying to compare 'this' to
+          // 'member', as seen by one of Jeff Keaser's bug reports.
+          // As a result, I decide to skip 'this' in this case
+          if ((v.GetOp()=="/") && (cur.toString()=="this")) 
+          {
+            //std::cout<<"SymbolicBound.C: found a this.member access, skipping it for bound analysis for this .. "<<std::endl;
+            //change = false; // this may overwrite previous value
+            args.push_back(cur);
           }
-          args.push_back( n);
+          else
+          {
+            SymbolicVal n = GetRepl(cur);
+            if (cur != n) {
+              change = true;
+            }
+            args.push_back( n);
+          }
        }
        if (change) 
           result.lb = result.ub = v.cloneFunction(args);
