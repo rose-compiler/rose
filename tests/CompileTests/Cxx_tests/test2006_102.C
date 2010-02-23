@@ -25,10 +25,20 @@ void foo() {
 
    switch(x); // error in ROSE
 
+// DQ (2/20/2010): This is a error for g++ 4.x compilers (at least g++ 4.2).
+#if (__GNUC__ >= 3)
+   switch(x) { case 0: case 1234567890: 0; }
+#else
    switch(x) { case 0: case 1234567890: }
+#endif
    switch(x) { case 0: ; }
    switch(x) { case 0: break; }
+// DQ (2/20/2010): This is a error for g++ 4.x compilers (at least g++ 4.2).
+#if (__GNUC__ >= 3)
+   switch(x) { case 0: default: 0; }
+#else
    switch(x) { case 0: default: }
+#endif
    switch(x) { case 0: default: break; }
 
    if (0);

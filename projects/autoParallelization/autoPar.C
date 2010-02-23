@@ -5,7 +5,7 @@
  * Output: parallelized C/C++ code using OpenMP
  *
  * Algorithm:
- *   Read in array abstraction files 
+ *   Read in semantics specification (formerly array abstraction) files 
  *   Collect all loops with canonical forms
  *     x. Conduct loop normalization
  *     x. Call dependence analysis from Qing's loop transformations
@@ -28,6 +28,10 @@ main (int argc, char *argv[])
   vector<string> argvList(argv, argv+argc);
   //Processing debugging and annotation options
   autopar_command_processing(argvList);
+  // enable parsing user-defined pragma if enable_diff is true
+  // -rose:openmp:parse_only
+  if (enable_diff)
+    argvList.push_back("-rose:openmp:parse_only");
   SgProject *project = frontend (argvList);
   ROSE_ASSERT (project != NULL);
   //Prepare liveness analysis etc.
@@ -106,12 +110,15 @@ main (int argc, char *argv[])
 	}// end for loops
       } // end for-loop for declarations
      // insert omp.h if needed
-     if (hasOpenMP)
+     if (hasOpenMP && !enable_diff)
      {
        SageInterface::insertHeader("omp.h",PreprocessingInfo::after,false,root);
        if (enable_patch)
          generatePatchFile(sfile); 
      }
+     // compare user-defined and compiler-generated OmpAttributes
+     if (enable_diff)
+       diffUserDefinedAndCompilerGeneratedOpenMP(sfile); 
    } //end for-loop of files
 
   // Qing's loop normalization is not robust enough to pass all tests

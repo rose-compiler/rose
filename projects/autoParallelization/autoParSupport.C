@@ -5,13 +5,16 @@
 #include <algorithm> // for set union, intersection etc.
 #include <fstream>
 #include <iostream>
+#include <map>
 
 using namespace std;
+using namespace OmpSupport;
 // Everything should go into the name space here!!
 namespace AutoParallelization
 {
   bool enable_debug;
   bool enable_patch;
+  bool enable_diff;
   DFAnalysis * defuse = NULL;
   LivenessAnalysis* liv = NULL;
 
@@ -33,6 +36,13 @@ namespace AutoParallelization
     else
       enable_patch= false;
 
+    if (CommandlineProcessing::isOption (argvList,"-rose:autopar:","enable_diff",true))
+    {
+      cout<<"Enabling compare user defined OpenMP pragmas to auto parallelization generated ones ..."<<endl;
+      enable_diff = true;
+    }
+    else
+      enable_diff = false;
 
     //Save -debugdep, -annot file .. etc, 
     // used internally in ReadAnnotation and Loop transformation
@@ -230,8 +240,8 @@ namespace AutoParallelization
       {
         SgNode* firstnode= edge.target().getNode();
         liveIns0 = liv->getIn(firstnode);
-	if (enable_debug)
-         cout<<"Live-in variables for loop:"<<endl;
+        if (enable_debug)
+          cout<<"Live-in variables for loop:"<<endl;
         for (std::vector<SgInitializedName*>::iterator iter = liveIns0.begin();
             iter!=liveIns0.end(); iter++)
         {
@@ -240,8 +250,8 @@ namespace AutoParallelization
           {
             liveIns.push_back(*iter);
             //          remove1.push_back(*iter);
-	    if (enable_debug)
-                cout<< name->get_qualified_name().getString()<<endl;
+            if (enable_debug)
+              cout<< name->get_qualified_name().getString()<<endl;
           }
         }
       }
@@ -250,7 +260,7 @@ namespace AutoParallelization
       {
         SgNode* firstnode= edge.target().getNode();
         liveOuts0 = liv->getIn(firstnode);
-	if (enable_debug)
+        if (enable_debug)
           cout<<"Live-out variables for loop:"<<endl;
         for (std::vector<SgInitializedName*>::iterator iter = liveOuts0.begin();
             iter!=liveOuts0.end(); iter++)
@@ -258,7 +268,7 @@ namespace AutoParallelization
           SgInitializedName* name = *iter;
           if ((SageInterface::isScalarType(name->get_type()))&&(name!=invarname))
           {
-	    if (enable_debug)
+            if (enable_debug)
               cout<< name->get_qualified_name().getString()<<endl;
             liveOuts.push_back(*iter);
             //          remove2.push_back(*iter);
@@ -567,26 +577,26 @@ namespace AutoParallelization
     for(std::vector<SgInitializedName*>::iterator iter =invariantVars.begin();
         iter!=invariantVars.end(); iter++)
       privateVars.push_back(*iter);
-   if(enable_debug)
-     cout<<"Debug dump private:"<<endl;
-     for (std::vector<SgInitializedName*>::iterator iter = privateVars.begin(); iter!= privateVars.end();iter++) 
-     {
-       attribute->addVariable(OmpSupport::e_private ,(*iter)->get_name().getString(), *iter);
+    if(enable_debug)
+      cout<<"Debug dump private:"<<endl;
+    for (std::vector<SgInitializedName*>::iterator iter = privateVars.begin(); iter!= privateVars.end();iter++) 
+    {
+      attribute->addVariable(OmpSupport::e_private ,(*iter)->get_name().getString(), *iter);
 
       if(enable_debug)
         cout<<(*iter)<<" "<<(*iter)->get_qualified_name().getString()<<endl;
-     }
+    }
     //lastprivate: 
     set_difference(liveOuts.begin(), liveOuts.end(), liveIns.begin(), liveIns.end(),
         inserter(lastprivateVars, lastprivateVars.begin()));
 
-      if(enable_debug)
-    cout<<"Debug dump lastprivate:"<<endl;
+    if(enable_debug)
+      cout<<"Debug dump lastprivate:"<<endl;
     for (std::vector<SgInitializedName*>::iterator iter = lastprivateVars.begin(); iter!= lastprivateVars.end();iter++) 
     {
       attribute->addVariable(OmpSupport::e_lastprivate ,(*iter)->get_name().getString(), *iter);
       if(enable_debug)
-      cout<<(*iter)<<" "<<(*iter)->get_qualified_name().getString()<<endl;
+        cout<<(*iter)<<" "<<(*iter)->get_qualified_name().getString()<<endl;
     }
     // reduction recognition
     // Some 'bad' examples have reduction variables which are not used after the loop
@@ -608,8 +618,8 @@ namespace AutoParallelization
         inserter(temp2, temp2.begin()));
     set_difference(temp2.begin(), temp2.end(), liveOuts.begin(),liveOuts.end(),
         inserter(firstprivateVars, firstprivateVars.begin()));
-      if(enable_debug)
-         cout<<"Debug dump firstprivate:"<<endl;
+    if(enable_debug)
+      cout<<"Debug dump firstprivate:"<<endl;
     for (std::vector<SgInitializedName*>::iterator iter = firstprivateVars.begin(); iter!= firstprivateVars.end();iter++) 
     {
       attribute->addVariable(OmpSupport::e_firstprivate ,(*iter)->get_name().getString(), *iter);
@@ -670,7 +680,7 @@ namespace AutoParallelization
         // referenced once only
         if (var_references[initname].size()==1) 
         {
-         if(enable_debug)
+          if(enable_debug)
             cout<<"Debug: A candidate used once:"<<initname->get_name().getString()<<endl;
           SgVarRefExp* ref_exp = *(var_references[initname].begin());
           SgStatement* stmt = SageInterface::getEnclosingStatement(ref_exp); 
@@ -750,7 +760,7 @@ namespace AutoParallelization
         // referenced twice within a same statement
         else if (var_references[initname].size()==2)
         {
-         if(enable_debug)
+          if(enable_debug)
             cout<<"Debug: A candidate used twice:"<<initname->get_name().getString()<<endl;
           SgVarRefExp* ref_exp1 = *(var_references[initname].begin());
           SgVarRefExp* ref_exp2 = *(++var_references[initname].begin());
@@ -1019,45 +1029,6 @@ namespace AutoParallelization
     } // end of iterate dependence graph 
   }// end DependenceElimination()
 
-#if 0 // refactored into the OmpSupport namespace
-
-  //Generate and insert #pragma omp parallel for based on OmpAttribute
-  //This phase is deliberately separated from building and attaching OmpAttribute
-  void generatedOpenMPPragmas(SgNode* sg_node)
-  {
-    SgStatement* cur_stmt = isSgStatement(sg_node);
-    ROSE_ASSERT(cur_stmt != NULL);
-    OmpSupport::OmpAttribute* att = OmpSupport::getOmpAttribute(sg_node); 
-    if(att)
-    {  
-      // No need to duplicate a pragma for an existing OpenMP pragma
-      if (isSgPragmaDeclaration(cur_stmt)) 
-        return;
-      // Should only insert the pragma statement 
-      // if there is no existing OpenMP pragma with the same attribute
-      SgStatement* prev_stmt = SageInterface::getPreviousStatement(cur_stmt); 
-      if (prev_stmt)
-      {
-        SgPragmaDeclaration * prev_pragma = isSgPragmaDeclaration(prev_stmt);
-        if (prev_pragma)
-        {
-          OmpSupport::OmpAttribute* prev_att= OmpSupport::getOmpAttribute(prev_pragma);
-          if (att == prev_att)
-            return;
-        }
-      }  
-      // Now we are safe to append the pragma
-      if (att->getOmpDirectiveType() ==OmpSupport::e_for ||att->getOmpDirectiveType() ==OmpSupport::e_parallel_for)
-        ROSE_ASSERT(isSgForStatement(cur_stmt) != NULL);
-
-      string pragma_str= att->toOpenMPString();
-      if (enable_debug)
-        cout<<"\n Parallelizing a loop at line:" <<sg_node->get_file_info()->get_line()<<endl;
-      SgPragmaDeclaration * pragma = SageBuilder::buildPragmaDeclaration(pragma_str); 
-      SageInterface::insertStatementBefore(cur_stmt, pragma);
-    } // if (att)
-  }
-#endif
   bool ParallelizeOutermostLoop(SgNode* loop, ArrayInterface* array_interface, ArrayAnnotation* annot)
   {
     ROSE_ASSERT(loop&& array_interface && annot);
@@ -1077,7 +1048,8 @@ namespace AutoParallelization
     // This step is done before DependenceElimination(), so the irrelevant
     // dependencies associated with the autoscoped variabled can be
     // eliminated.
-    OmpSupport::OmpAttribute* omp_attribute = new OmpSupport::OmpAttribute();
+    //OmpSupport::OmpAttribute* omp_attribute = new OmpSupport::OmpAttribute();
+    OmpSupport::OmpAttribute* omp_attribute = buildOmpAttribute(e_unknown, NULL, false);
     ROSE_ASSERT(omp_attribute != NULL);
     AutoScoping(sg_node, omp_attribute,depgraph);
 
@@ -1106,10 +1078,15 @@ namespace AutoParallelization
     {
       //= OmpSupport::buildOmpAttribute(OmpSupport::e_parallel_for,sg_node);
       omp_attribute->setOmpDirectiveType(OmpSupport::e_parallel_for);
+      //cout<<"debug autoParSupport.C attaching att to sg_node "<<sg_node<<endl;
+      //cout<<"at line "<<isSgLocatedNode(sg_node)->get_file_info()->get_line()<<endl;
       OmpSupport::addOmpAttribute(omp_attribute,sg_node);
       // 6. Generate and insert #pragma omp parallel for 
-     // generatedOpenMPPragmas(sg_node);
-      OmpSupport::generatePragmaFromOmpAttribute(sg_node);
+      // Liao, 2/12/2010
+      // In the enable_diff mode, we don't want to generate pragmas from compiler-generated OmpAttribute.
+      // Comparing OmpAttributes from both sources is enough
+      if (! enable_diff) 
+        OmpSupport::generatePragmaFromOmpAttribute(sg_node);
     }
     else
     {
@@ -1134,12 +1111,12 @@ namespace AutoParallelization
     // this output file name can be any file name, we just choose rose_file.c
     string ofilename= "rose_"+StringUtility::stripPathFromFileName(filename); 
     diff_header += " "+ ofilename+"\n";
-    
+
     //debug only
     //cout<<"diff_header\n"<<diff_header<<endl;
 
-     //always insert omp.h 
-     string patchContent="0a1\n> #include <omp.h>\n";
+    //always insert omp.h 
+    string patchContent="0a1\n> #include <omp.h>\n";
 
     // now accumulate diff text for each OmpAttribute
     Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(sfile, V_SgStatement);
@@ -1149,9 +1126,159 @@ namespace AutoParallelization
     }
 
     //cout<<"patch content is\n"<<patchContent<<endl;
-   string patch_file_name = StringUtility::stripPathFromFileName(filename)+".patch";
-   ofstream patchFile (patch_file_name.c_str(), ios::out);
-   patchFile <<diff_header << patchContent ;
+    string patch_file_name = StringUtility::stripPathFromFileName(filename)+".patch";
+    ofstream patchFile (patch_file_name.c_str(), ios::out);
+    patchFile <<diff_header << patchContent ;
   }
+  //! Output the difference between user-defined OpenMP and compiler-generated OpenMP
+  /*
+   AST layout for a loop with both user-defined and compiler-introduced OmpAttribute
+       SgPragmaDeclaration .. OmpAttribute 
+       SgForStatement    .. OmpAttribute
+
+    Algorithm
+    * for each OmpAttribute, if it is not processed
+      check if it is processed:  map [attribute, processedFlag]
+    ** if it is attached to pragma: then it is user defined
+        search for a possible autoPar generated OmpAttributes
+            find affected statement,
+             if it is a loop, find possible attached OmpAttributes, mark it as processed
+            diff the output:
+    ** if attached to loop:  autoPar generated
+        search for a possible user defined attributes
+          find preceding pragma--> attrbiute
+        diff them
+   */
+  void diffUserDefinedAndCompilerGeneratedOpenMP(SgSourceFile* sfile)
+  {
+    // A table to store processed attributes
+    std::map <OmpAttribute*, bool> attributeTable; 
+    Rose_STL_Container <SgNode* > nodeList = NodeQuery::querySubTree(sfile, V_SgStatement);
+    for (Rose_STL_Container<SgNode *>::iterator i1 = nodeList.begin(); i1 != nodeList.end(); i1++)
+    {
+      bool isUserDefined = false; 
+      SgStatement * stmt = isSgStatement(*i1);
+      ROSE_ASSERT (stmt != NULL);
+
+      OmpAttributeList* oattlist= getOmpAttributeList(stmt);
+      if (oattlist == NULL) continue ;
+      // we attach user-defined OmpAttribute to SgPragmaDeclaration
+      if (isSgPragmaDeclaration(stmt))
+        isUserDefined = true;
+
+      vector <OmpAttribute* > ompattlist = oattlist->ompAttriList;
+      ROSE_ASSERT (ompattlist.size() != 0) ;
+      vector <OmpAttribute* >::iterator i2 = ompattlist.begin();
+      for (; i2!=ompattlist.end(); i2++)
+      {
+        OmpAttribute* oa = *i2;
+        if (attributeTable[oa])
+           continue; // processed already , used as one of the pair being compared
+        else 
+          attributeTable[oa] = true; // tag it as being processed
+       std::string user_pragma_str, compiler_pragma_str;   
+       OmpAttribute* user_attr = NULL, * compiler_attr =NULL;
+       // user defined, try to grab a compiler generated attributed attached to the affected loop, etc.
+        if (isUserDefined)
+        {
+          user_attr = oa; 
+          user_pragma_str  = oa->toOpenMPString();
+          SgStatement* next_stmt = SageInterface::getNextStatement(stmt);
+          // TODO we currently only auto-generate pragmas for loops, 
+          // we should extend the type to others later on
+          if (next_stmt &&isSgForStatement(next_stmt) )
+          {
+             OmpAttributeList* next_attlist = getOmpAttributeList (next_stmt);
+             if (next_attlist!= NULL)
+             {
+               vector <OmpAttribute* > ompattlist2 = next_attlist->ompAttriList;
+               // there should could be more than one OmpAttribute attached 
+               // To facilitate outlining a loop with user defined pragma, we redundantly attach OmpAttribute
+               // to both the pragma and the affected loop
+                 //cout<<"Warning: found a loop attached with multiple OmpAttribute s"<<endl;
+                 //cout<<"memory address:"<<next_stmt<<endl;
+                // cout<<next_stmt->get_file_info()->get_line()<<endl;
+                  vector <OmpAttribute* >::iterator i3 = ompattlist2.begin();
+                  OmpAttribute* theone = NULL;
+                  for (; i3!=ompattlist2.end(); i3++)
+                  {
+                    //cout<<(*i3)->toOpenMPString()<<endl;
+                    if (!(*i3)->get_isUserDefined())
+                    {
+                      theone = *i3;
+                      break;
+                    }
+                  } 
+               //ROSE_ASSERT (ompattlist2.size() == 1) ; 
+               compiler_pragma_str = theone->toOpenMPString(); 
+               compiler_attr = theone;
+               attributeTable[theone] = true; // tag the counterpart as processed also
+             }
+          }
+        }
+        // compiler-generated attribute, find a possible user-introduced pragma if it exists
+        else
+        {
+          compiler_pragma_str = oa->toOpenMPString();
+          compiler_attr = oa; 
+          SgStatement* prev_stmt = SageInterface::getPreviousStatement(stmt);
+          if (prev_stmt)
+          {
+            SgPragmaDeclaration * prev_pragma = isSgPragmaDeclaration(prev_stmt);
+            if (prev_pragma)
+            {
+              OmpAttributeList* prev_attlist= getOmpAttributeList(prev_pragma);
+              if (prev_attlist)
+              {
+                vector <OmpAttribute* > ompattlist2 = prev_attlist->ompAttriList;
+                // there should be only one omp attribute attached to pragma
+                ROSE_ASSERT (ompattlist2.size() == 1) ;
+                user_pragma_str = ompattlist2[0]->toOpenMPString();
+                user_attr = ompattlist2[0];
+                attributeTable[ompattlist2[0]] = true; // tag the counterpart as processed also
+              }
+            }
+          }
+        }
+        // diff them and report the difference
+        //  <<<<<<<<
+        //  user defined pragma
+        //  --------
+        //  compiler generated pragma
+        //  >>>>>>>>
+        Sg_File_Info * file_info = stmt->get_file_info();  
+        if (user_pragma_str.size()!=0)
+          user_pragma_str = "#pragma omp "+user_pragma_str;
+        if (compiler_pragma_str.size()!=0)
+          compiler_pragma_str = "#pragma omp "+compiler_pragma_str;
+        //if (user_pragma_str != compiler_pragma_str)
+        if (!isEquivalentOmpAttribute(user_attr, compiler_attr))
+         {
+            cout<<"<<<<<<<<"<<endl;
+           if (isUserDefined)
+           {
+             cout<<file_info->get_filename()<<":"<<file_info->get_line()<<endl;
+             cout<<"user defined      :";
+             cout<<user_pragma_str<<endl;
+             cout<<"--------"<<endl;
+             cout<<"compiler generated:";
+             cout<<compiler_pragma_str<<endl;
+             }
+           else
+           {
+             cout<<"user defined      :";
+             cout<<user_pragma_str<<endl;
+             cout<<"--------"<<endl;
+             cout<<file_info->get_filename()<<":"<<file_info->get_line()<<endl;
+             cout<<"compiler generated:";
+             cout<<compiler_pragma_str<<endl;
+           }
+           cout<<">>>>>>>>"<<endl<<endl;
+         } 
+      } // end for omp attribute within a att list   
+
+    } // end for (stmt)
+
+  } //end diffUserDefinedAndCompilerGeneratedOpenMP()
 
 } // end namespace

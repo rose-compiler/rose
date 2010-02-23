@@ -15,10 +15,20 @@ class Y
 
           const double x;
           static const double y;
+
+       // DQ (2/20/2010): Fixed this to compile with g++ 4.x
+#ifdef USE_ROSE
           const double pi = 3.141592653589793238462643383279; // Pi to 30 places
+#else
+          const double pi; // = 3.141592653589793238462643383279; // Pi to 30 places
+#endif
 
+       // DQ (2/20/2010): Fixed this to compile with g++ 4.x
+#ifdef USE_ROSE
           Y() : x(3.14) {}
-
+#else
+          Y() : x(3.14), pi(3.14) {}
+#endif
        // End of class definition!
    };
 
@@ -36,7 +46,14 @@ void foo()
   // floating point constants as well (which is non-standard C++).
   // Since we are close this is likely worth fixing.
      Y y,*yptr;
+
+// DQ (2/20/2010): Fixed this to compile with g++ 4.x
+#ifdef USE_ROSE
      double var1 = Y::pi;     // This works
+#else
+     double var1 = y.pi;     // This works
+#endif
+
      double var2 = y.pi;      // This does not work presently
      double var3 = yptr->pi;  // This does not work presently
    }

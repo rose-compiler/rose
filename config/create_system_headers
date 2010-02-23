@@ -57,8 +57,10 @@ process_headers()
   changesNeededForThisDir=`find "$src_dir/." \( -name complex -o -name c++config.h \) -a -type f -a -print 2>/dev/null | wc -l`
   echo "$src_dir needs $changesNeededForThisDir change(s)"
   if test $changesNeededForThisDir -eq 0; then
-    echo "$src_dir does not need any changes -- symlinking"
-    ln -s "$src_dir" "$target_dir"
+    echo "$src_dir does not need any changes"
+    target_dir=$src_dir
+    target_base_dir=$src_base_dir
+    target_parent_dir=$src_parent_dir
   else
     echo "$src_dir needs to be copied and modified"
     find "$src_dir/." -type d -a -print | sed -n "s|^${src_dir}\\(.*\\)\$|mkdir -p '$target_dir/\\1'|p" | sh -s

@@ -42,7 +42,12 @@ int main()
   // This was reported in test2007_01.C but is isolated into a separate test code (address operator is dropped or never generated).
      int foo::*v = &foo::bar;
 
+// DQ (2/20/2010): This is a error for g++ 4.x compilers (at least g++ 4.2).
+#if (__GNUC__ >= 3)
+     PMF member_function_pointer; // = foo::member_function;
+#else
      PMF member_function_pointer = foo::member_function;
+#endif
 
      PF global_function_pointer = global_function;
 

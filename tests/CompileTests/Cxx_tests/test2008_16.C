@@ -15,8 +15,12 @@ foo()
 	  long number = 0;
 	  unsigned position = 0;
 
+// DQ (2/20/2010): This is a error for g++ 4.x compilers (at least g++ 4.2).
+#if (__GNUC__ >= 3)
+#else
   // This will be unparsed as: asm volatile ("bsr %1, %0" : "=r" (position) : "r" (number));
      asm ("bsr %1, %0" : "=r" (position) : "r" (number));
+#endif
 
 #if 0
 // Skip testing on 64 bit systems for now!
@@ -32,8 +36,14 @@ foo()
   // asm("nop" : "=r" (position) : "r" (number));
   // asm("bsrl %1, %0" : : "=r" (position), "r" (number)); // result with RECORD_RAW_ASM_OPERAND_DESCRIPTIONS == TRUE
   // asm("bsrl %1, %0" : "=r" (position) : "r" (number)); 
+
+// DQ (2/20/2010): This is a error for g++ 4.x compilers (at least g++ 4.2).
+#if (__GNUC__ >= 3)
+#else
      asm("bsrl %1, %0" : "=r" (position) : "r" (number));
      asm("bsrl %1, %0" : "=r" (position) : "r" (number));
+#endif
+
 #endif
 
 #else

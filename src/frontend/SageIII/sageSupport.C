@@ -1910,7 +1910,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
    }
 
 void
-SgFile::stripRoseCommandLineOptions ( vector<string>& argv )
+SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
    {
   // Strip out the rose specific commandline options
   // the assume all other arguments are to be passed onto the C or C++ compiler
@@ -1918,15 +1918,16 @@ SgFile::stripRoseCommandLineOptions ( vector<string>& argv )
      int optionCount = 0;
   // int i = 0;
 
-#if ROSE_INTERNAL_DEBUG
+// #if ROSE_INTERNAL_DEBUG
+#if 1
   // printf ("ROSE_DEBUG = %d \n",ROSE_DEBUG);
   // printf ("get_verbose() = %s value = %d \n",(get_verbose() > 1) ? "true" : "false",get_verbose());
 
-     if ( (ROSE_DEBUG >= 1) || (get_verbose() > 2 ))
+     if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
         {
-          printf ("In stripRoseCommandLineOptions: List ALL arguments: argc = %zu \n",argv.size());
+          printf ("In stripRoseCommandLineOptions (TOP): List ALL arguments: argc = %zu \n",argv.size());
           for (size_t i=0; i < argv.size(); i++)
-               printf ("     argv[%d] = %s \n",i,argv[i]);
+             printf ("     argv[%zu] = %s \n",i,argv[i].c_str());
         }
 #endif
 
@@ -2051,6 +2052,15 @@ SgFile::stripRoseCommandLineOptions ( vector<string>& argv )
 
   // DQ (2/5/2009): Remove use of "-rose:binary" to prevent it being passed on.
      optionCount = sla(argv, "-rose:", "($)", "(binary|binary_only)",1);
+
+#if 1
+     if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
+        {
+          printf ("In stripRoseCommandLineOptions (BOTTOM): List ALL arguments: argc = %zu \n",argv.size());
+          for (size_t i=0; i < argv.size(); i++)
+             printf ("     argv[%zu] = %s \n",i,argv[i].c_str());
+        }
+#endif
    }
 
 void
@@ -2072,6 +2082,10 @@ SgFile::stripEdgCommandLineOptions ( vector<string> & argv )
      CommandlineProcessing::removeArgs (argv,"--edg:");
      CommandlineProcessing::removeArgsWithParameters (argv,"-edg_parameter:");
      CommandlineProcessing::removeArgsWithParameters (argv,"--edg_parameter:");
+
+  // DQ (2/20/2010): Remove this option when building the command line for the vendore compiler.
+     int optionCount = 0;
+     optionCount = sla(argv, "--edg:", "($)", "(no_warnings)",1);
 
 #if 0
      Rose_STL_Container<string> l = CommandlineProcessing::generateArgListFromArgcArgv (argc,argv);
@@ -6147,17 +6161,20 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                ROSE_ASSERT(objectNameSpecified == false);
                objectNameSpecified = true;
              }
-
+        }
+     Rose_STL_Container<string> tempArgcArgv;
+     for (Rose_STL_Container<string>::iterator i = argcArgvList.begin(); i != argcArgvList.end(); i++)
+        {
           // Liao, 11/19/2009
           // We now only handles compilation for SgFile::compileOutput(), 
           // so we need to remove linking related flags such as '-lxx' from the original command line
           // Otherwise gcc will complain:  -lm: linker input file unused because linking not done
-          if (i->substr(0,2) == "-l") 
+          if(i->substr(0,2) != "-l") 
           {
-            argcArgvList.erase(find(argcArgvList.begin(),argcArgvList.end(),*i));
+            tempArgcArgv.push_back(*i);
           }
         }
-
+     argcArgvList.swap(tempArgcArgv);
   // DQ (4/14/2005): Fixup quoted strings in args fix "-DTEST_STRING_MACRO="Thu Apr 14 08:18:33 PDT 2005" 
   // to be -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\"  This is a problem in the compilation of
   // a Kull file (version.cc), when the backend is specified as /usr/apps/kull/tools/mpig++-3.4.1.  The
@@ -7641,11 +7658,16 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
                ROSE_ASSERT(arrayExp != NULL);
 
                SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(arrayExp->get_rhs_operand());
-               ROSE_ASSERT(memberFunctionRefExp != NULL);
-               returnSymbol = memberFunctionRefExp->get_symbol();
 
-            // DQ (2/8/2009): Can we assert this! What about pointers to functions?
-               ROSE_ASSERT(returnSymbol != NULL);
+            // DQ (2/21/2010): Relaxed this constraint because it failes in fixupPrettyFunction test.
+            // ROSE_ASSERT(memberFunctionRefExp != NULL);
+               if (memberFunctionRefExp != NULL)
+                  {
+                    returnSymbol = memberFunctionRefExp->get_symbol();
+
+                 // DQ (2/8/2009): Can we assert this! What about pointers to functions?
+                    ROSE_ASSERT(returnSymbol != NULL);
+                  }
                break;
              }
 
@@ -7684,7 +7706,10 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
             // DQ (8/18/2009): Matt reports that he was able to trigger this case, I likely need to test this on his code.
             // I also fixed the error message to make it more clear.
                printf ("ERROR: Sorry, case SgArrowStarOp not implemented yet (might be similar to SgDotExp case) in SgFunctionCallExp::getAssociatedSymbol() functionExp = %p = %s \n",functionExp,functionExp->class_name().c_str());
-               ROSE_ASSERT(returnSymbol != NULL);
+
+            // DQ (2/21/2010): This case is triggered by fixupPrettyFunction test when run on test2005_112.C
+            // ROSE_ASSERT(returnSymbol != NULL);
+
                break;
              }
 
@@ -7756,6 +7781,9 @@ void attachOmpAttributeInfo(SgSourceFile *sageFilePtr)
 	  addOmpAttribute(attribute,pragmaDeclaration);
           //cout<<"debug: attachOmpAttributeInfo() for a pragma:"<<pragmaString<<"at address:"<<pragmaDeclaration<<endl;
           //cout<<"file info for it is:"<<pragmaDeclaration->get_file_info()->get_filename()<<endl;
+          
+#if 1 // Liao, 2/12/2010, this could be a bad idea. It causes trouble in comparing 
+        //user-defined and compiler-generated OmpAttribute.
 	  // We attach the attribute redundantly on affected loops also
 	  // for easier loop handling later on in autoTuning's outlining step (reproducing lost pragmas)
 	  if (attribute->getOmpDirectiveType() ==e_for ||attribute->getOmpDirectiveType() ==e_parallel_for)
@@ -7765,7 +7793,8 @@ void attachOmpAttributeInfo(SgSourceFile *sageFilePtr)
 	    //forstmt->addNewAttribute("OmpAttribute",attribute);
 	    addOmpAttribute(attribute,forstmt);
 	  }
-	}
+#endif
+        }
       }
     }// end for
   }

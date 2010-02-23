@@ -72,8 +72,11 @@ class Y
        // const double pi = 3.141592653589793238462643383279; // Pi to 30 places
        // Code that we should generate so that we can compile with g++
        // static const double pi = 3.141592653589793238462643383279; // Pi to 30 places
-
+#ifdef USE_ROSE
           STORAGE const double pi = 3.141592653589793238462643383279; // Pi to 30 places
+#else
+          double pi; // = 3.141592653589793238462643383279; // Pi to 30 places
+#endif
    };
 
 
@@ -84,7 +87,11 @@ void foo()
      const double gamma        = 7.89;
      const int    integerConst = 42;
 
+#ifdef USE_ROSE
      double var1  = X::pi;
+#else
+     double var1  = x.pi;
+#endif
      double var2  = x.e;
      double var3  = gamma;
      int    var4  = integerConst;
@@ -104,7 +111,11 @@ void foo()
   // floating point constants as well (which is non-standard C++).
   // Since we are close this is likely worth fixing.
      Y y,*yptr;
+#ifdef USE_ROSE
      double var11 = Y::pi;     // This works
+#else
+     double var11 = y.pi;     // This works
+#endif
      double var12 = y.pi;      // This does not work presently
      double var13 = yptr->pi;  // This does not work presently
    }

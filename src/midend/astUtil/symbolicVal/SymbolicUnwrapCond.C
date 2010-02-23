@@ -10,19 +10,22 @@ struct VarRestr
   bool IsNIL() const { return rel == REL_UNKNOWN; }
 };
 
+// Evaluate conditional symbolic expression, similar to a=b?1:0
 class UnwrapCond : public SymbolicVisitor
 {
   SymbolicVar pivot;
   SymbolicVal left, right;
   CompareRel rel;
   bool succ;
-
+  // unwrap condition based on a symbolic value
   void VisitVar( const SymbolicVar& v)
-    { if (pivot == v) {
+    { 
+      if (pivot == v) {
         left = 1;
         succ = true;
       }
     }
+  // apply on a symbolic expression  
   void VisitExpr( const  SymbolicExpr& v) 
    { 
      //SymbolicVal cur = left; // so that when left is overwritten v is still valid
