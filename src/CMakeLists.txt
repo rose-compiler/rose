@@ -120,6 +120,7 @@ set( astFixup_SRC
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astFixup/fixupSourcePositionInformation.C 
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astFixup/fixupEnumValues.C 
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astFixup/fixupFriendTemplateDeclarations.C
+     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astFixup/fixupPrettyFunction.C 
    )
 
 set( sage3_SRC
