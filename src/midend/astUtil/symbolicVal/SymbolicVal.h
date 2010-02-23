@@ -14,6 +14,7 @@ class SymbolicVar;
 class SymbolicFunction;
 class SymbolicExpr;
 class SymbolicAstWrap;
+
 class SymbolicVisitor
 {
  protected:
@@ -31,7 +32,8 @@ class SymbolicVisitor
 typedef enum {VAL_BASE = 0, VAL_CONST = 1, VAL_VAR = 2, VAL_AST = 4, 
               VAL_FUNCTION = 8, VAL_EXPR = 16}
       SymbolicValType;
-//! Supported operators for symbollic expressions: *, +, -, max(), power(^)      
+
+//! Supported operators for symbolic expressions: *, +, -, max(), power(^)      
 typedef enum { SYMOP_NIL = 0, SYMOP_MULTIPLY=1, SYMOP_PLUS = 2,
                SYMOP_MIN=3, SYMOP_MAX=4, SYMOP_POW = 5} SymOpType;
 
