@@ -41,11 +41,12 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
 
    chmod u+x "${srcdir}/$ROSE_HOME/config/dirincludes"
 
+
  # Include the directory with the subdirectories of header files
    if test "x$enable_new_edg_interface" = "xyes"; then
      includeString="{`${srcdir}/config/get_compiler_header_dirs ${BACKEND_CXX_COMPILER} | while read dir; do echo -n \\\"$dir\\\",\ ; done` \"/usr/include\"}"
    else
-     includeString="{\"${BACKEND_CXX_COMPILER}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${BACKEND_CXX_COMPILER}_HEADERS"`, \"/usr/include\"}"
+     includeString="{\"${BACKEND_CXX_COMPILER}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${BACKEND_CXX_COMPILER}_HEADERS"`, `${srcdir}/config/get_compiler_header_dirs ${BACKEND_CXX_COMPILER} | while read dir; do echo -n \\\"$dir\\\",\ ; done` \"/usr/include\"}"
    fi
 
    echo "includeString = $includeString"
@@ -106,7 +107,7 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
    if test "x$enable_new_edg_interface" = "xyes"; then
      includeString="{`${srcdir}/config/get_compiler_header_dirs ${BACKEND_C_COMPILER} | while read dir; do echo -n \\\"$dir\\\",\ ; done` \"/usr/include\"}"
    else
-     includeString="{\"${BACKEND_C_COMPILER}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${BACKEND_C_COMPILER}_HEADERS"`, \"/usr/include\"}"
+     includeString="{\"${BACKEND_C_COMPILER}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${BACKEND_C_COMPILER}_HEADERS"`, `${srcdir}/config/get_compiler_header_dirs ${BACKEND_C_COMPILER} | while read dir; do echo -n \\\"$dir\\\",\ ; done` \"/usr/include\"}"
    fi
 
    echo "includeString = $includeString"

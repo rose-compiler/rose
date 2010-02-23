@@ -126,7 +126,7 @@ openmp_directive
 
 parallel_directive
 		: /* # pragma */ OMP PARALLEL
-		  { ompattribute = buildOmpAttribute(e_parallel,gNode);
+		  { ompattribute = buildOmpAttribute(e_parallel,gNode,true);
 		    omptype = e_parallel; 
 		  }
 		  parallel_clause_optseq 
@@ -171,7 +171,7 @@ unique_parallel_clause
 
 for_directive	: /* # pragma */ OMP FOR
 		   { 
-                   ompattribute = buildOmpAttribute(e_for,gNode); 
+                   ompattribute = buildOmpAttribute(e_for,gNode,true); 
                    }
 		   for_clause_optseq
 		;
@@ -232,7 +232,7 @@ schedule_kind	: STATIC  { $$ = e_schedule_static; }
 
 sections_directive
 		: /* # pragma */ OMP SECTIONS
-		  { ompattribute = buildOmpAttribute(e_sections,gNode); }
+		  { ompattribute = buildOmpAttribute(e_sections,gNode, true); }
 		  sections_clause_optseq
 		;
 
@@ -258,11 +258,11 @@ sections_clause	: data_privatization_clause
 
 section_directive
 		: /* # pragma */  OMP SECTION
-		  { ompattribute = buildOmpAttribute(e_section,gNode); }
+		  { ompattribute = buildOmpAttribute(e_section,gNode,true); }
 		;
 
 single_directive: /* # pragma */ OMP SINGLE
-		  { ompattribute = buildOmpAttribute(e_single,gNode); 
+		  { ompattribute = buildOmpAttribute(e_single,gNode,true); 
 		    omptype = e_single; }
 	           single_clause_optseq
 		;
@@ -291,7 +291,7 @@ unique_single_clause : COPYPRIVATE
 			'(' variable_list ')'
 
 task_directive: /* #pragma */ OMP TASK 
-                 {ompattribute = buildOmpAttribute(e_task,gNode);
+                 {ompattribute = buildOmpAttribute(e_task,gNode,true);
 		  omptype = e_task; }
 		task_clause_optseq
 		;
@@ -321,7 +321,7 @@ unique_task_clause : IF
 		;
 parallel_for_directive
 		: /* # pragma */ OMP PARALLEL FOR
-		  { ompattribute = buildOmpAttribute(e_parallel_for,gNode); }
+		  { ompattribute = buildOmpAttribute(e_parallel_for,gNode, true); }
 		  parallel_for_clauseoptseq
 		;
 
@@ -349,7 +349,7 @@ parallel_for_clause
 
 parallel_sections_directive
 		: /* # pragma */ OMP PARALLEL SECTIONS
-		  { ompattribute =buildOmpAttribute(e_parallel_sections,gNode); 
+		  { ompattribute =buildOmpAttribute(e_parallel_sections,gNode, true); 
 		    omptype = e_parallel_sections; }
 		  parallel_sections_clause_optseq
 		;
@@ -376,13 +376,13 @@ parallel_sections_clause
 		;
 
 master_directive: /* # pragma */ OMP MASTER
-		  { ompattribute = buildOmpAttribute(e_master, gNode);}
+		  { ompattribute = buildOmpAttribute(e_master, gNode, true);}
 		;
 
 critical_directive
 		: /* # pragma */ OMP CRITICAL
 		  {
-                  ompattribute = buildOmpAttribute(e_critical, gNode); 
+                  ompattribute = buildOmpAttribute(e_critical, gNode, true); 
                   }
 		  region_phraseopt
 		;
@@ -403,19 +403,19 @@ region_phrase	: '(' ID_EXPRESSION ')'
 
 barrier_directive
 		: /* # pragma */ OMP BARRIER
-		 { ompattribute = buildOmpAttribute(e_barrier,gNode); }
+		 { ompattribute = buildOmpAttribute(e_barrier,gNode, true); }
 		;
 
 taskwait_directive : /* #pragma */ OMP TASKWAIT
-		  { ompattribute = buildOmpAttribute(e_taskwait, gNode); } 
+		  { ompattribute = buildOmpAttribute(e_taskwait, gNode, true); } 
 		;
 
 atomic_directive: /* # pragma */ OMP ATOMIC
-		  { ompattribute = buildOmpAttribute(e_atomic,gNode); }
+		  { ompattribute = buildOmpAttribute(e_atomic,gNode, true); }
 		;
 
 flush_directive	: /* # pragma */ OMP FLUSH
-		 { ompattribute = buildOmpAttribute(e_flush,gNode);
+		 { ompattribute = buildOmpAttribute(e_flush,gNode, true);
 	           omptype = e_flush; }
 		flush_varsopt
 		;
@@ -429,12 +429,12 @@ flush_vars	: '(' variable_list ')'
 
 ordered_directive
 		: /* # pragma */ OMP ORDERED
-		  { ompattribute = buildOmpAttribute(e_ordered_directive,gNode); }
+		  { ompattribute = buildOmpAttribute(e_ordered_directive,gNode, true); }
 		;
 
 threadprivate_directive
 		: /* # pragma */ OMP THREADPRIVATE
-		  { ompattribute = buildOmpAttribute(e_threadprivate,gNode); 
+		  { ompattribute = buildOmpAttribute(e_threadprivate,gNode, true); 
                     omptype = e_threadprivate; }
 		 '(' variable_list ')'
 		;

@@ -437,6 +437,11 @@ backendCompilesUsingOriginalInputFile ( SgProject* project )
         }
 
      SgStringList originalCommandLineArgumentList = project->get_originalCommandLineArgumentList();
+
+  // DQ (2/20/2010): Added filtering of options that should not be passed to the vendor compiler.
+     SgFile::stripRoseCommandLineOptions(originalCommandLineArgumentList);
+     SgFile::stripEdgCommandLineOptions(originalCommandLineArgumentList);
+
      SgStringList::iterator it = originalCommandLineArgumentList.begin();
 
   // Iterate past the name of the compiler being called (arg[0]).

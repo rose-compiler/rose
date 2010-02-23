@@ -22,11 +22,4 @@ include_HEADERS = \
    CountRefHandle.h  general.h           ObserveObject.h     StreamIO.h  
 
 
-
-
-
-
-
-
-
 EXTRA_DIST = CMakeLists.txt
