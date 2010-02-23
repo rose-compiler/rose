@@ -2764,9 +2764,12 @@ Grammar::buildCode ()
      string includeHeaderFileName = "sage3basic.h";
      //     string includeHeaderString = includeHeaderStringROSE+
      string includeHeaderString = 
-       "// MACHINE GENERATED SOURCE FILE WITH ROSE (Grammar.C)--- DO NOT MODIFY!\n\n#include \"" + includeHeaderFileName + "\"\n\n";
+       "// MACHINE GENERATED SOURCE FILE WITH ROSE (Grammar.h)--- DO NOT MODIFY!\n\n#include \"" + includeHeaderFileName + "\"\n\n";
      string includeHeaderStringWithoutROSE = 
-       "// MACHINE GENERATED SOURCE FILE --- DO NOT MODIFY! (Grammar.C) \n\n #include \"" + includeHeaderFileName + "\"\n\n";
+       "// MACHINE GENERATED SOURCE FILE --- DO NOT MODIFY! (Grammar.C) \n\n";
+     //#include \"" + includeHeaderFileName + "\"\n\n";
+     //tps (2/23/2010)
+     // we cannot add this because in this way we would include sage3basic.h in a header file, which is not allowed for precompiled headers
 
   // DQ (10/18/2007): These have been moved to the src/frontend/SageIII directory
   // to provde greater parallelism to the make -jn parallel make feature.
