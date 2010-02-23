@@ -19,8 +19,13 @@ bool SymbolicTerm::CombineWith( const SymbolicTerm &that)
 bool SymbolicTerm::operator == (const SymbolicTerm& that) const
      { return time1 == that.time1 && time2 == that.time2 && v == that.v; }
 bool SymbolicTerm::operator == (const SymbolicVal &that) const
-    { return time1 == 1 && time2 == 1 && v == that; }
+    { 
+      //debug here
+      //std::cout<<"SymbolicExpr.C: debug operator == "<<v.toString()<<std::endl;
+      return time1 == 1 && time2 == 1 && v == that; }
 
+//! Liao 2/19/2009 , access function to v directly. Used for debugging mostly       
+  SymbolicVal SymbolicTerm::GetV() { return v; }
 class SymbolicTermMerge : public LatticeElemMerge<SymbolicTerm>
 {
   OPApplicator& op;
