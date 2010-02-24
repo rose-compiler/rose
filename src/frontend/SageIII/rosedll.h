@@ -1,6 +1,9 @@
 #ifndef __ROSEDLL__
 #define __ROSEDLL__
 
+// For Linux, ROSE_ROSETTA_API is defined as ROSE_HELPER_DLL_IMPORT
+// which is always empty space
+
 // Generic helper definitions for shared library support
 #if defined _WIN32 || defined __CYGWIN__
   #define ROSE_HELPER_DLL_IMPORT __declspec(dllimport)
@@ -8,7 +11,8 @@
   #define ROSE_HELPER_DLL_LOCAL
 #else
   #if __GNUC__ >= 4
-    #define ROSE_HELPER_DLL_IMPORT __attribute__ ((visibility("default")))
+//#define ROSE_HELPER_DLL_IMPORT __attribute__ ((visibility("default")))
+    #define ROSE_HELPER_DLL_IMPORT 
     #define ROSE_HELPER_DLL_EXPORT __attribute__ ((visibility("default")))
     #define ROSE_HELPER_DLL_LOCAL  __attribute__ ((visibility("hidden")))
   #else
@@ -33,8 +37,6 @@
 //  #define ROSE_ROSETTA_LOCAL
 //  #warning "ROSE_ROSETTA_API : NULL"
 //#endif // ROSE_ROSETTA_DLL
-
-
 
 #endif
 
