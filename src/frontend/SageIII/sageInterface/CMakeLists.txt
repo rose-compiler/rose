@@ -3,18 +3,8 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 
 ########### next target ###############
-set( libsageInterface_SRC  
-     sageInterface.C 
-     sageInterface_asm.C 
-     sageInterface_type.C 
-     generateUniqueName.C 
-     sageBuilder.C 
-     sageBuilderAsm.C 
-     abiStuff.C
-   )
-
-add_library( libsageInterface STATIC ${libsageInterface_SRC}  )
-add_dependencies( libsageInterface ROSETTA )
+#add_library( libsageInterface STATIC ${libsageInterface_SRC}  )
+#add_dependencies( libsageInterface ROSETTA )
 
 ########### install files ###############
 
