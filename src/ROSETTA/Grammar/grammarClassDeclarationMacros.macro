@@ -13,7 +13,7 @@
 $PREDECLARATIONS
 
 // Class Definition for $CLASSNAME
-class ROSE_ROSETTA_API $CLASSNAME  $BASECLASS
+class ROSE_DLL_API $CLASSNAME  $BASECLASS
    {
      public:
 

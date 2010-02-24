@@ -234,15 +234,10 @@ add_library(rose SHARED ${rose_LIB_SRCS} )
 #ROSE neeeds ${ROSETTA_HEADERS} and ${ROSETTA_SRC} to be build
 add_dependencies(rose ROSETTA OMPPARSER ROSE_PREPROCESSOR ROSE_ROSETTA ) 
 
-
-if ( enable-smaller-generated-files )
-# tps (12/14/2009) : Created a variable for the dependend libraries. Make sure that order is correct.
-set(ROSE_TARGET_LINK 
-   libgeneratedIR 
+set(LINK_FILES
    PHP_FRONTEND_LIB 
    rose_MSTL 
- ROSE_ROSETTA 
-# rose_sage3
+   ROSE_ROSETTA 
    libastMerge edg33 libsageInterface libastTokenStream libastHiddenTypeAndDeclarationLists
    libastVisualization roseDisassemblers roseBinaryFormats 
    midend_static 
@@ -250,18 +245,16 @@ set(ROSE_TARGET_LINK
    libastHiddenTypeAndDeclarationLists roseAsmUnparser libastPostProcessing libhpdf rose_util_lib roseBinaryLoader
 )
 
+if ( enable-smaller-generated-files )
+set(ROSE_TARGET_LINK 
+   libgeneratedIR 
+   ${LINK_FILES}
+)
+
 else ( enable-smaller-generated-files )
 # tps (12/14/2009) : Created a variable for the dependend libraries. Make sure that order is correct.
 set(ROSE_TARGET_LINK 
-   PHP_FRONTEND_LIB 
-   rose_MSTL 
- ROSE_ROSETTA 
-#rose_sage3
-   libastMerge edg33 libsageInterface libastTokenStream libastHiddenTypeAndDeclarationLists
-   libastVisualization roseDisassemblers roseBinaryFormats 
-   midend_static 
-   unparser astFixup binary_frontend
-   libastHiddenTypeAndDeclarationLists roseAsmUnparser libastPostProcessing libhpdf rose_util_lib roseBinaryLoader
+   ${LINK_FILES}
 )
 
 endif ( enable-smaller-generated-files )
