@@ -1,4 +1,5 @@
-//#include "sage3basic.h" // file_IO
+// tps : need to include sage3basic.h -- took it out from the header file because precompiled headers cannot be included in header files
+#include "sage3basic.h" // file_IO
 #include "rosedefs.h"
 #include "Cxx_GrammarMemoryPoolSupport.h"
 #include <fstream>
