@@ -1,8 +1,12 @@
 #ifndef __ROSEDLL__
 #define __ROSEDLL__
 
+// tps (02/24/2010)
 // For Linux, ROSE_ROSETTA_API is defined as ROSE_HELPER_DLL_IMPORT
 // which is always empty space
+// Actually, the default is empty space: ROSE_ROSETTA_EXPORTS is only defined
+// when using cmake. If not used, ROSE_ROSETTA_API = ROSE_HELPER_DLL_IMPORT = EMPTY SPACE
+
 
 // Generic helper definitions for shared library support
 #if defined _WIN32 || defined __CYGWIN__
