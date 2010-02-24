@@ -28,6 +28,8 @@ libC_API_la_SOURCES = $(C_API_SRCS) $(C_API_HDRS)
 
 noinst_PROGRAMS = testC-API
 
+# CH (2/22/2010): put $(ROSE_LIBS_WITH_PATH) ahead to avoid the linker to find boost libraries in usr/lib first
+# this problem still need to be solved in the future
 LDADD = $(ROSE_LIBS_WITH_PATH) ../../compassSupport/libCompass.la libC-API.la
 #LDADD = ../../compassSupport/libCompass.la libC-API.la $(ROSE_LIBS_WITH_PATH)
 #LDADD = ../../compassSupport/libCompass.la libC-API.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
