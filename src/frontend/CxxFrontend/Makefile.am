@@ -93,10 +93,17 @@ $(BINARY_EDG_DIRNAME).tar.gz: EDG/libroseEDG.la
 binary_edg_tarball: $(BINARY_EDG_DIRNAME).tar.gz
 
 #upload tarball to a central location
+# 2/25/2010
+#  Liao, This two-stage logic is really unnecessary, making EDG binary tarball and store
+#  them into a single place should be sufficient. It is the release script's job
+#  to check if all desired binaries are available. 
+#  Otherwise we have to constantly update the list of GCC versions in this Makefile.
+#  Directly put generated EDG binary files into the distribution path
 upload_edg_binary: 
 	if [ \! -e $(BINARY_EDG_TARBALL_STAGING_PATH)/$(BINARY_EDG_DIRNAME).tar.gz ] ; then \
 	   $(MAKE) binary_edg_tarball && \
-	   cp $(BINARY_EDG_DIRNAME).tar.gz $(BINARY_EDG_TARBALL_STAGING_PATH) ;  \
+	   cp $(BINARY_EDG_DIRNAME).tar.gz $(BINARY_EDG_TARBALL_STAGING_PATH) &&  \
+	   cp $(BINARY_EDG_DIRNAME).tar.gz $(BINARY_EDG_TARBALL_DISTRIBUTION_PATH) 
 	fi
 
 clean-local:
