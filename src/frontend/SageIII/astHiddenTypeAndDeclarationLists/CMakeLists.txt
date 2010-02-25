@@ -6,7 +6,7 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 
 #add_library( libastHiddenTypeAndDeclarationLists STATIC ${libastHiddenTypeAndDeclarationLists_SRC}  )
-#add_dependencies( libastHiddenTypeAndDeclarationLists ROSETTA )
+#astHiddenTypeAndDecladd_dependencies( libastHiddenTypeAndDeclarationLists ROSETTA )
 
 ########### install files ###############
 

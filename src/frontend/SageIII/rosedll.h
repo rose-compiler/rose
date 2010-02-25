@@ -15,10 +15,10 @@
   #define ROSE_DLL_HELPER_DLL_LOCAL
 #else
   #if __GNUC__ >= 4
-//    #define ROSE_DLL_HELPER_DLL_IMPORT __attribute__ ((visibility("default")))
-    #define ROSE_DLL_HELPER_DLL_IMPORT 
-//    #define ROSE_DLL_HELPER_DLL_EXPORT __attribute__ ((visibility("default")))
-    #define ROSE_DLL_HELPER_DLL_EXPORT 
+    #define ROSE_DLL_HELPER_DLL_IMPORT __attribute__ ((visibility("default")))
+//    #define ROSE_DLL_HELPER_DLL_IMPORT 
+    #define ROSE_DLL_HELPER_DLL_EXPORT __attribute__ ((visibility("default")))
+//    #define ROSE_DLL_HELPER_DLL_EXPORT 
     #define ROSE_DLL_HELPER_DLL_LOCAL  __attribute__ ((visibility("hidden")))
   #else
     #define ROSE_DLL_HELPER_DLL_IMPORT
