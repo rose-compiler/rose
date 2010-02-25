@@ -1,6 +1,7 @@
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Ddisc_union=union" )
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ddisc_union=union" )
 
+
 #include_directories( ${ROSE_INCLUDES} )
 include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} ${Boost_INCLUDE_DIRS} )
 
