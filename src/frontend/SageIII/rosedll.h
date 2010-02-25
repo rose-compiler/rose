@@ -39,5 +39,12 @@
   #endif // ROSE_DLL_DLL_EXPORTS
   #define ROSE_DLL_LOCAL ROSE_DLL_HELPER_DLL_LOCAL
 
+// undef ROSE_ROSETTA_API if rose analyses itself. 
+#if CXX_IS_ROSE_ANALYSIS
+  #undef ROSE_ROSETTA_API
+  #define ROSE_ROSETTA_API
+#endif 
+
+
 #endif
 
