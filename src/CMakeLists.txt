@@ -783,8 +783,9 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
  ${midend_loopproc_src}
  ${libastPostProcessing_SRC}
  ${binaryFrontend_SRC}
- ${AST_REWRITE_SRC}
+# ${AST_REWRITE_SRC}
 )
+# commented out AST_REWRITE as it does not compile under Windows: error C2244: 'MidLevelRewrite<ASTNodeCollection>::AST_FragmentIdentificationTraversal::evaluateSynthesizedAttribute' : unable to match function definition to an existing declaration
 
 add_library(ROSE_DLL SHARED ${rose_LIB_SRCS} )
 add_dependencies(ROSE_DLL ROSETTA OMPPARSER ROSE_PREPROCESSOR edg33 libhpdf) 
