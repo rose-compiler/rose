@@ -4581,8 +4581,10 @@ void SageInterface::changeContinuesToGotos(SgStatement* stmt, SgLabelStatement* 
         {
           SgGotoStatement* gotoStatement = SageBuilder::buildGotoStatement(label);
        // printf ("Building gotoStatement #1 = %p \n",gotoStatement);
+		  #ifndef _MSC_VER
           LowLevelRewrite::replace(*i, make_unit_list( gotoStatement ) );
-        }
+#endif
+	 }
    }
 
 // Add a step statement to the end of a loop body
@@ -5086,7 +5088,9 @@ SgStatement* SageInterface::getEnclosingStatement(SgNode* n) {
 void SageInterface::removeStatement(SgStatement* stmt)
 {
   ROSE_ASSERT(stmt);
+#ifndef _MSC_VER
   LowLevelRewrite::remove(stmt);
+#endif
 }
 
 

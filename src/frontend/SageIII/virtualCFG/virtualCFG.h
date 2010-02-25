@@ -15,7 +15,7 @@ class SgLabelSymbol;
 class SgLabelRefExp;
 class SgStatement;
 
-#if 0
+#ifndef _MSC_VER
 SgStatement* isSgStatement(SgNode* node);
 const SgStatement* isSgStatement(const SgNode* node);
 SgExpression* isSgExpression(SgNode* node);
