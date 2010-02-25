@@ -2255,8 +2255,8 @@ Grammar::buildForwardDeclarations ()
      for (unsigned int i=0; i < terminalList.size(); i++)
         {
           string className = terminalList[i]->name;
-	  returnString.push_back(StringUtility::StringWithLineNumber("ROSE_ROSETTA_API "+className + "* is" + className + "(SgNode* node);", "" /* "<downcast function for " + className + ">" */, 1));
-	  returnString.push_back(StringUtility::StringWithLineNumber("ROSE_ROSETTA_API const " + className + "* is" + className + "(const SgNode* node);", "" /* "<downcast function for " + className + ">" */, 2));
+	  returnString.push_back(StringUtility::StringWithLineNumber("ROSE_DLL_API "+className + "* is" + className + "(SgNode* node);", "" /* "<downcast function for " + className + ">" */, 1));
+	  returnString.push_back(StringUtility::StringWithLineNumber("ROSE_DLL_API const " + className + "* is" + className + "(const SgNode* node);", "" /* "<downcast function for " + className + ">" */, 2));
         }
 
   // printf ("In Grammar::buildForwardDeclarations (): returnString = \n%s\n",returnString.c_str());
