@@ -786,20 +786,11 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
  ${AST_REWRITE_SRC}
 )
 
-add_library(rose SHARED ${rose_LIB_SRCS} )
-#ROSE neeeds ${ROSETTA_HEADERS} and ${ROSETTA_SRC} to be build
-add_dependencies(rose ROSETTA OMPPARSER ROSE_PREPROCESSOR ROSE_ROSETTA ) 
+add_library(ROSE_DLL SHARED ${rose_LIB_SRCS} )
+add_dependencies(ROSE_DLL ROSETTA OMPPARSER ROSE_PREPROCESSOR ROSE_ROSETTA edg33 libhpdf) 
 
 # tps : independant Components : ROSE, libhpdf
 set(LINK_FILES
-#   libsageInterface 
-# libastTokenStream 
-#   libastHiddenTypeAndDeclarationLists
-#   libastVisualization 
-#   midend_static 
-#   binary_frontend
-#   libastPostProcessing  
-# rose_util_lib 
    edg33
 #   PHP_FRONTEND_LIB 
    libhpdf
@@ -823,11 +814,11 @@ endif ( enable-smaller-generated-files )
 #Liao, link static libraries into the shared librose library
 #target_link_libraries(rose ${libastMerge}) # library name are global, should not use ${}
 # we need to double check if this solution will be portable on different platforms
-target_link_libraries(rose ${ROSE_TARGET_LINK}
+target_link_libraries(ROSE_DLL ${ROSE_TARGET_LINK}
  )
 
-set_target_properties(rose PROPERTIES VERSION 1.0.0 SOVERSION 1)
-install(TARGETS rose ${INSTALL_TARGETS_DEFAULT_ARGS})
+set_target_properties(ROSE_DLL PROPERTIES VERSION 1.0.0 SOVERSION 1)
+install(TARGETS ROSE_DLL ${INSTALL_TARGETS_DEFAULT_ARGS})
 
 ########### next target ###############
 
@@ -836,7 +827,7 @@ set(testSharedRoseLib_SRCS testRoseLib.C)
 add_executable(testSharedRoseLib ${testSharedRoseLib_SRCS}  )
 
 
-target_link_libraries(testSharedRoseLib ${KDE4_KDECORE_LIBS} rose ${link_with_libraries} ${Boost_LIBRARIES}
+target_link_libraries(testSharedRoseLib ${KDE4_KDECORE_LIBS} ROSE_DLL edg33 ${link_with_libraries} ${Boost_LIBRARIES}
 					${ROSE_TARGET_LINK}
     )
 
