@@ -4,8 +4,8 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} ${Boost_
 
 ########### next target ###############
 
-add_library(PHP_FRONTEND_LIB STATIC ${phpFrontend_SRC} )
-add_dependencies(PHP_FRONTEND_LIB ROSETTA  ) 
+#add_library(PHP_FRONTEND_LIB STATIC ${phpFrontend_SRC} )
+#add_dependencies(PHP_FRONTEND_LIB ROSETTA  ) 
 
 ########### install files ###############
 

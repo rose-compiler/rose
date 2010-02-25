@@ -48,8 +48,7 @@ file( APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C "/* the numeric value 
 install(FILES  setup.h processSupport.h rose_paths.h DESTINATION ${INCLUDE_INSTALL_DIR})
 #set( graphs DGBaseGraphImpl.C SCCAnalysis.C  TransAnalysis.C  TypedFusion.C )
 
-#add_library( roseutil SHARED ${graphs} )
-add_library(rose_util_lib STATIC ${rose_util_src}    )
+#add_library(rose_util_lib STATIC ${rose_util_src}    )
 
 #original Makefile.am contents follow:
 

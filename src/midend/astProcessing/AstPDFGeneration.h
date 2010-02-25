@@ -4,7 +4,7 @@
 #ifndef ASTPDFGENERATION_H
 #define ASTPDFGENERATION_H
 
-class AstPDFGeneration {
+class ROSE_DLL_API AstPDFGeneration {
 public:
   AstPDFGeneration() {}
   void generate(std::string filename, SgNode* node);
