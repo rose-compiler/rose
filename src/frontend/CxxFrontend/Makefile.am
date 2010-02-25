@@ -102,8 +102,8 @@ binary_edg_tarball: $(BINARY_EDG_DIRNAME).tar.gz
 upload_edg_binary: 
 	if [ \! -e $(BINARY_EDG_TARBALL_STAGING_PATH)/$(BINARY_EDG_DIRNAME).tar.gz ] ; then \
 	   $(MAKE) binary_edg_tarball && \
-	   cp $(BINARY_EDG_DIRNAME).tar.gz $(BINARY_EDG_TARBALL_STAGING_PATH) &&  \
-	   cp $(BINARY_EDG_DIRNAME).tar.gz $(BINARY_EDG_TARBALL_DISTRIBUTION_PATH) 
+	   cp $(BINARY_EDG_DIRNAME).tar.gz $(BINARY_EDG_TARBALL_STAGING_PATH) && \
+	   cp $(BINARY_EDG_DIRNAME).tar.gz $(BINARY_EDG_TARBALL_DISTRIBUTION_PATH); \
 	fi
 
 clean-local:
