@@ -787,7 +787,7 @@ set(rose_LIB_SRCS dummyCppFileForLibrose.C
 )
 
 add_library(ROSE_DLL SHARED ${rose_LIB_SRCS} )
-add_dependencies(ROSE_DLL ROSETTA OMPPARSER ROSE_PREPROCESSOR ROSE_ROSETTA edg33 libhpdf) 
+add_dependencies(ROSE_DLL ROSETTA OMPPARSER ROSE_PREPROCESSOR edg33 libhpdf) 
 
 # tps : independant Components : ROSE, libhpdf
 set(LINK_FILES
