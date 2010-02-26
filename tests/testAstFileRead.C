@@ -168,16 +168,13 @@ main ( int argc, char * argv[] )
        // DQ (2/24/2010): This is a significant bottleneck to the performance on large codes since it is n^2 in the size of the AST.
           AstTests::runAllTests(ast->getRootOfAst());
 #endif
-
+#if 0
+       // To read and merge the separate AST files, we don't have to call the backend.
           backend(ast->getRootOfAst());
-#if 1
+#endif
           if (globalProject == NULL)
              {
                globalProject = ast->getRootOfAst();
-#if 0
-               globalFunctionTypeTable = SgNode::get_globalFunctionTypeTable();
-               printf ("In loop reading AST files: globalFunctionTypeTable = %p \n",globalFunctionTypeTable);
-#endif
              }
             else
              {
@@ -185,21 +182,13 @@ main ( int argc, char * argv[] )
                SgFile*    localFile    = (*localProject)[0];
                ROSE_ASSERT(localProject->numberOfFiles() == 1);
 
-#if 0
-               SgFunctionTypeTable* localFunctionTypeTable = SgNode::get_globalFunctionTypeTable();
-               printf ("In loop reading AST files: localFunctionTypeTable = %p \n",localFunctionTypeTable);
-            // ROSE_ASSERT(localFunctionTypeTable != globalFunctionTypeTable);
-#endif
             // Add the file to the global project. This also sets the parent of the input file. Is this a side-effect that we want?
                globalProject->set_file(*localFile);
-#if 0
+#if 1
                printf ("globalProject = %p numberOfFiles() = %d \n",globalProject,globalProject->numberOfFiles());
-
-//             localFile->set_parent(project);
+#endif
 //             delete localProject;
-#endif
              }
-#endif
         }
 
 #if 0
@@ -209,7 +198,7 @@ main ( int argc, char * argv[] )
         }
 #endif
 
-#if 1
+#if 0
   // DQ (2/24/2010): Better to run this once at the end to avoid a significant bottleneck to the 
   // performance on large codes (it is n^2 in the size of the AST if run for each file separately).
      AstTests::runAllTests(ast->getRootOfAst());
@@ -223,14 +212,14 @@ main ( int argc, char * argv[] )
 
   // printf ("Before processing via DOT: globalProject = %p numberOfFiles() = %d \n",globalProject,globalProject->numberOfFiles());
 
-#if 1
+#if 0
   // Output an optional graph of the AST (just the tree, when active). Note that we need to multiple file version 
   // of this with includes so that we can present a single SgProject rooted AST with multiple SgFile objects.
   // generateDOT ( *globalProject );
      generateDOT_withIncludes ( *globalProject, "aggregatedAST.dot" );
 #endif
 
-#if 1
+#if 0
   // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
      const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 8000;
      generateAstGraph(globalProject,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);
