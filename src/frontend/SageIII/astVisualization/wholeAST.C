@@ -1369,6 +1369,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                     SgProject* project = isSgProject(node);
                     additionalNodeOptions = "shape=ellipse,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=3,color=\"blue\",fillcolor=pink,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     labelWithSourceCode = string("\\n  ") + project->get_outputFileName() + "  ";
+                    labelWithSourceCode += string("\\n  ") + StringUtility::numberToString(project) + "  ";
                  // printf ("########## SgProject = %s \n",project->get_outputFileName().c_str());
                     break;
                   }
@@ -1380,6 +1381,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                     SgFile* file = isSgFile(node);
                     additionalNodeOptions = "shape=ellipse,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"blue\",fillcolor=pink,fontname=\"7x13bold\",fontcolor=black,style=filled";
                     labelWithSourceCode = string("\\n  ") + file->get_sourceFileNameWithPath() + "  ";
+                    labelWithSourceCode += string("\\n  ") + StringUtility::numberToString(file) + "  ";
                  // printf ("########## SgFile = %s \n",file->get_sourceFileNameWithPath().c_str());
                     ROSE_ASSERT(SgNode::get_globalFunctionTypeTable() != NULL);
                  // printf ("     SgNode::SgFunctionTypeTable = %p size = %ld \n",SgNode::get_globalFunctionTypeTable(),SgNode::get_globalFunctionTypeTable()->get_function_type_table()->size());
