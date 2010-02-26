@@ -19,6 +19,8 @@ void AstPostProcessing (SgNode* node)
   // DQ (7/7/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST post-processing:");
 
+  // printf ("Inside of AstPostProcessing(node = %p) \n",node);
+
   // DQ (3/17/2007): This should be empty
      if (SgNode::get_globalMangledNameMap().size() != 0)
         {
@@ -423,7 +425,7 @@ void postProcessingSupport (SgNode* node)
           SgFilePtrList &files = project->get_fileList();
           for (SgFilePtrList::iterator fileI = files.begin(); fileI != files.end(); ++fileI)
              {
-               if (sourceFile = isSgSourceFile(*fileI))
+               if ( (sourceFile = isSgSourceFile(*fileI)) )
                   {
                     SgGlobal* globalScope = sourceFile->get_globalScope();
                     ROSE_ASSERT(globalScope != NULL);
