@@ -51,16 +51,17 @@ main ( int argc, char * argv[] )
           SgFile* file = project_identity->operator[](0);
           ROSE_ASSERT(file != NULL);
 
-  // string fileName = project_identity->get_outputFileName();
-     string fileName = file->get_unparse_output_filename();
+       // string fileName = project_identity->get_outputFileName();
+          string fileName      = file->get_unparse_output_filename();
+          string inputFileName = file->get_sourceFileNameWithoutPath();
 
-  // Save the generated source file to be the original file (to be used to compare against later).
-  // string moving = "mv rose_" + fileName + ".C rose_" + fileName + "_identity.C";
-     string moving = "mv " + fileName + " " + fileName + "_identity";
-  // printf ("moving = %s \n",moving.c_str());
+       // Save the generated source file to be the original file (to be used to compare against later).
+       // string moving = "mv rose_" + fileName + ".C rose_" + fileName + "_identity.C";
+          string moving = "mv " + fileName + " " + fileName + "_identity";
+       // printf ("moving = %s \n",moving.c_str());
 
-     status = system ( moving.c_str() );
-     ROSE_ASSERT(status == 0);
+          status = system ( moving.c_str() );
+          ROSE_ASSERT(status == 0);
 
 #if 0
   // Debugging information
@@ -85,7 +86,7 @@ main ( int argc, char * argv[] )
 #if DEBUG_FILE_IO
      printf ("Writing the AST to disk... \n");
 #endif
-     AST_FILE_IO::writeASTToFile ( fileName + ".binary" );
+     AST_FILE_IO::writeASTToFile ( inputFileName + ".binary" );
 
   // delete the memroy pools and prepare them for reading back the ast the file IO
 #if DEBUG_FILE_IO
@@ -96,7 +97,7 @@ main ( int argc, char * argv[] )
 #if DEBUG_FILE_IO
      printf ("Read in the AST from disk... \n");
 #endif
-     project_test = (SgProject*) (AST_FILE_IO :: readASTFromFile ( fileName + ".binary" ) );
+     project_test = (SgProject*) (AST_FILE_IO :: readASTFromFile ( inputFileName + ".binary" ) );
 
   // AST_FILE_IO::printListOfPoolSizes();
 

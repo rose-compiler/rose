@@ -41,8 +41,8 @@
 
 // undef ROSE_ROSETTA_API if rose analyses itself. 
 #if CXX_IS_ROSE_ANALYSIS
-  #undef ROSE_ROSETTA_API
-  #define ROSE_ROSETTA_API
+  #undef ROSE_DLL_API
+  #define ROSE_DLL_API
 #endif 
 
 
