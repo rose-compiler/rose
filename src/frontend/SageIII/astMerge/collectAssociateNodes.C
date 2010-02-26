@@ -440,6 +440,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                     printf ("functionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->get_name().str());
                     printf ("Location of problem function declaration: \n");
                     functionDeclaration->get_startOfConstruct()->display("Location of problem function declaration: debug");
+                    printf ("SgNode::get_globalFunctionTypeTable() = %p get_function_type_table()->size() = %d \n",SgNode::get_globalFunctionTypeTable(),SgNode::get_globalFunctionTypeTable()->get_function_type_table()->size());
 #endif
                     ROSE_ASSERT(functionDeclaration->get_startOfConstruct()->isCompilerGenerated() == true);
                   }

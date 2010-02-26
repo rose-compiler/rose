@@ -9,7 +9,6 @@ include_directories(${CMAKE_SOURCE_DIR}/src/util/support ${KDE4_INCLUDES} ${KDE4
 
 install(FILES  BaseGraphCreate.h  GraphScope.h     VirtualGraphCreate.h     TransAnalysis.h    GraphGroup.h   MultiGraphCreate.h     TypedFusion.h DGBaseGraphImpl.h  GraphAccess.h GraphUtils.h    GraphUpdate.h    SCCAnalysis.h GraphDotOutput.h GraphIO.h     MultiGraphObserve.h DESTINATION ${INCLUDE_INSTALL_DIR})
 
-set( graphs DGBaseGraphImpl.C SCCAnalysis.C  TransAnalysis.C  TypedFusion.C GLOBAL )
 
 #original Makefile.am contents follow:
 
