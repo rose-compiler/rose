@@ -4175,6 +4175,18 @@ HEADER_FILE_INFORMATION_START
           friend bool operator>= ( const Sg_File_Info & X, const Sg_File_Info & Y );
           friend bool operator<= ( const Sg_File_Info & X, const Sg_File_Info & Y );
 
+        // DQ (2/23/2010): Added static access function for static data members (ROSETTA generates only not statuc access functions).
+       //! Access function for static datamember fileidtoname_map.
+          static std::map<int, std::string> & get_fileidtoname_map();
+       //! Access function for map of file names.
+          static void set_fileidtoname_map(std::map<int, std::string> & X);
+
+        // DQ (2/23/2010): Added static access function for static data members (ROSETTA generates only not statuc access functions).
+       //! Access function for static datamember nametofileid_map.
+         static std::map<std::string, int> & get_nametofileid_map();
+       //! Access function for map of file names.
+         static void set_nametofileid_map(std::map<std::string,int> & X);
+
        // MK (7/22/05) This enum is used by the file id mechanism
        /*! \brief Enum to hold previously common default values for filename used by the default and static SgNULL_File constructors.
 
@@ -10143,6 +10155,34 @@ Sg_File_Info::getIDFromFilename( std::string filename )
 #endif
 
      return p_nametofileid_map[filename];
+   }
+
+// DQ (2/24/2010): These are static access functions where previously the ROSETTA generated ones were not static functions.
+std::map<int, std::string> & 
+Sg_File_Info::get_fileidtoname_map()
+   {
+     return p_fileidtoname_map;
+   }
+
+// DQ (2/24/2010): These are static access functions where previously the ROSETTA generated ones were not static functions.
+void
+Sg_File_Info::set_fileidtoname_map(std::map<int, std::string> & X)
+   {
+     p_fileidtoname_map = X;
+   }
+
+// DQ (2/24/2010): These are static access functions where previously the ROSETTA generated ones were not static functions.
+std::map<std::string, int> &
+Sg_File_Info::get_nametofileid_map()
+   {
+     return p_nametofileid_map;
+   }
+
+// DQ (2/24/2010): These are static access functions where previously the ROSETTA generated ones were not static functions.
+void
+Sg_File_Info::set_nametofileid_map(std::map<std::string,int> & X)
+   {
+     p_nametofileid_map = X;
    }
 
 SOURCE_FILE_INFORMATION_END

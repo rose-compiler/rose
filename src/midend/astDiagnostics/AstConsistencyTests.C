@@ -173,6 +173,8 @@ AstTests::runAllTests(SgProject* sageProject)
   // ROSE_Performance::TimingPerformance("AST Consistency Tests");
      TimingPerformance timer ("AST Consistency Tests:");
 
+  // printf ("Inside of AstTests::runAllTests(sageProject = %p) \n",sageProject);
+
   // printf ("Exiting at top of AstTests::runAllTests() \n");
   // ROSE_ASSERT(false);
 
