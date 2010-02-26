@@ -4,12 +4,9 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 ########### next target ###############
 
-set( libastTokenStream_SRC
-     createMap.C  doCompleteMapping.C  linearizeAST.C unparseMacro.C
-   )
 
-add_library( libastTokenStream STATIC ${libastTokenStream_SRC}  )
-add_dependencies( libastTokenStream ROSETTA )
+#add_library( libastTokenStream STATIC ${libastTokenStream_SRC}  )
+#add_dependencies( libastTokenStream ROSETTA )
 
 ########### install files ###############
 

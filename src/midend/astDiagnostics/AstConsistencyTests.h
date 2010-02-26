@@ -8,6 +8,7 @@
 // #include IOSTREAM_HEADER_FILE
 #include <iostream>
 
+#include "rosedll.h"
 #include "AstStatistics.h"
 // #include "AstPDFGeneration.h"
 #include "AstTextAttributesHandling.h"
@@ -45,7 +46,7 @@ class TestAstProperties : public AstBottomUpProcessing<TestAstPropertiesSA>
           TestAstPropertiesSA evaluateSynthesizedAttribute(SgNode* node, SubTreeSynthesizedAttributes l);
    };
 
-class AstTests 
+class ROSE_DLL_API AstTests 
    {
      public:
        // some handy string functions used when testing the RTI information of a SgNode

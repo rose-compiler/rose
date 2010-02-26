@@ -4,12 +4,9 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 ########### next target ###############
 
-set( roseAsmUnparser_SRC 
-     unparseX86Asm.C unparseArmAsm.C unparsePowerpcAsm.C unparseAsm.C
-   )
 
-add_library(  roseAsmUnparser STATIC ${roseAsmUnparser_SRC} )
-add_dependencies( roseAsmUnparser ROSETTA )
+#add_library(  roseAsmUnparser STATIC ${roseAsmUnparser_SRC} )
+#add_dependencies( roseAsmUnparser ROSETTA )
 ########### install files ###############
 
 # tps: (11/25/2009): This seems wrong

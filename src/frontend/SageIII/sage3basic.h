@@ -8,6 +8,7 @@
 #define SAGE3_CLASSES_BASIC__H
 #include <semaphore.h>
 #include "fileoffsetbits.h"
+#include "rosedll.h"
 
 // DQ (4/21/2009): Note that this header file will include the STL string header file 
 // which will include sys/stat.h, so the _FILE_OFFSET_BITS macro must be already set 
