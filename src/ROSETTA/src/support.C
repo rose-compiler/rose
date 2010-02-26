@@ -1775,10 +1775,15 @@ Specifiers that can have only one value (implemented with a protected enum varia
   //                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File_Info.setPostdeclarationString   ("HEADER_UNPARSE_POSTDECLARATION", "../Grammar/Support.code");
 
+  // DQ (2/23/2010): Added static access function for static data members (ROSETTA generates only not statuc access functions).
+  // File_Info.setDataPrototype("static std::map<int, std::string>","fileidtoname_map","",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // File_Info.setDataPrototype("static std::map<std::string, int>","nametofileid_map","",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File_Info.setDataPrototype("static std::map<int, std::string>","fileidtoname_map","",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File_Info.setDataPrototype("static std::map<std::string, int>","nametofileid_map","",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // File_Info.setDataPrototype("static int","max_file_id","",
   //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
