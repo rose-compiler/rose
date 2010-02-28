@@ -6,7 +6,9 @@
 
 // DQ (11/28/2009): I think this is equivalent to "USE_ROSE"
 // #if CAN_NOT_COMPILE_WITH_ROSE != true
-#if (CAN_NOT_COMPILE_WITH_ROSE == 0)
+// #if (CAN_NOT_COMPILE_WITH_ROSE == 0)
+#ifndef USE_ROSE
+
 token_container wave_tokenStream;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -40,23 +42,52 @@ using namespace std;
 // a file and rebuild it!
 unsigned int PreprocessingInfo::packed_size () const
    {
+  // This function computes the size of the packed representation of this classes data members.
+
      ROSE_ASSERT(this != NULL);
 
-     return
-       sizeof (file_info) +
-    // sizeof (lineNumber) +
-    // sizeof (columnNumber) +
-       sizeof (numberOfLines) +
-       sizeof (whatSortOfDirective) +
-       sizeof (relativePosition) +
-       sizeof (unsigned int) +  // string size
-       internalString.size();
-  // and the stuff of macros ...
+     unsigned int packedSize = sizeof (file_info) +
+  /* string size and string */ sizeof (unsigned int) + internalString.size() +
+                               sizeof (numberOfLines) +
+                               sizeof (whatSortOfDirective) +
+                               sizeof (relativePosition) +
+                               sizeof (lineNumberForCompilerGeneratedLinemarker) +
+  /* string size and string */ sizeof (unsigned int) + filenameForCompilerGeneratedLinemarker.size() +
+  /* string size and string */ sizeof (unsigned int) + optionalflagsForCompilerGeneratedLinemarker.size();
+
+  // This is part of Wave support in ROSE.
+#ifndef USE_ROSE
+  // Add in the four pointers required for the Wave support.
+  // Until we add the support to save all the Wave data into 
+  // the AST file we would have to reprocess the relevant 
+  // file to store this.
+     packedSize += sizeof (tokenStream) +
+                   sizeof (macroDef) +
+                   sizeof (macroCall) +
+                   sizeof (includeDirective);
+#endif
+
+  // Debugging information.  What can we assert about the packedSize vs. the sizeof(PreprocessingInfo)?
+  // If there is anything, then it might make for a simple test here.  However, there does not appear to
+  // be any relationship since the sizeof(PreprocessingInfo) does not account for the sizes of internal 
+  // strings used.
+  // printf ("In PreprocessingInfo::packed_size(): packedSize = %u sizeof(PreprocessingInfo) = %zu \n",packedSize,sizeof(PreprocessingInfo));
+
+  // I think that because we have to save additional information the packedSize will 
+  // be a little larger than the sizeof(PreprocessingInfo).  So assert this as a test.
+  // Unfortunately it is not always true!
+  // ROSE_ASSERT(packedSize >= sizeof(PreprocessingInfo));
+
+     return packedSize;
    }
+
+
 // JH (01/03/2006) This pack methods might cause memory leaks. Think of deleting them after stored to file ...
 char* PreprocessingInfo::packed()  const
    {
      ROSE_ASSERT(this != NULL);
+
+  // printf ("Inside of PreprocessingInfo::packed() internalString = %s \n",internalString.c_str());
 
      const char* saveString  = internalString.c_str();
      unsigned int stringSize = internalString.size();
@@ -68,8 +99,12 @@ char* PreprocessingInfo::packed()  const
 
   // printf ("Error, need to get the info out of the SgFileInfo object! \n");
   // ROSE_ASSERT(false);
+
+  // DQ (2/28/2010): We do want to write out the data value for this since it has been
+  // converted to a global index value in the AST file I/O.
      memcpy (storePointer , (char*)(&file_info), sizeof(file_info) );
      storePointer += sizeof(file_info);
+
   // memcpy (storePointer , (char*)(&lineNumber), sizeof(lineNumber) );
   // storePointer += sizeof(lineNumber);
   // memcpy (storePointer , (char*)(&columnNumber), sizeof(columnNumber) );
@@ -84,23 +119,43 @@ char* PreprocessingInfo::packed()  const
      memcpy (storePointer , (char*)(&stringSize), sizeof(stringSize) );
      storePointer +=  sizeof(stringSize);
      memcpy (storePointer , saveString, stringSize );
+
+  // printf ("Inside of PreprocessingInfo::packed(): Note some Fortran specific data members are not packed yet (also all the Wave data is not packed). \n");
+
 #if 0
-     std::cout << "  packed data in PrerocessingInfo ... " << std::endl;
+     cout << "  packed data in PrerocessingInfo ... " << endl;
 #endif
 
+  // DQ (2/28/2010): Some assertion checking that will be done later in the unparser.
+  // printf ("In PreprocessingInfo::packed(): getTypeOfDirective() = %d \n",getTypeOfDirective());
+     ROSE_ASSERT (getTypeOfDirective() != PreprocessingInfo::CpreprocessorUnknownDeclaration);
 
      return returnData;
    }
+
 // JH (01/03/2006) This unpack method wors conremplary to packed ...
 void PreprocessingInfo::unpacked( char* storePointer )
    {
      ROSE_ASSERT(this != NULL);
+#if 0
+     printf ("Inside of PreprocessingInfo::unpacked() \n");
+     printf ("Before overwriting memory: Calling display on unpacked Sg_File_Info object file_info = %p \n",file_info);
+     file_info->display("In PreprocessingInfo::unpacked()");
+     printf ("DONE: Before overwriting memory: Calling display on unpacked Sg_File_Info object \n");
+#endif
 
-  //    std::cout << " in PreprocessingInfo::unpacked ... " << std::endl;
+  // std::cout << " in PreprocessingInfo::unpacked ... " << std::endl;
   // printf ("Error, need to build a new SgFileInfo object! \n");
   // ROSE_ASSERT(false);
+#if 0
+  // DQ (2/28/2010): This is a pointer to an IR node and they are handled using global index values 
+  // that are mapped back to pointer values after reading. This will trash a properly set value!
      memcpy ( (char*)(&file_info), storePointer, sizeof(file_info) );
+#endif
+
+  // DQ (2/28/2010): But jump over the file_info data member so that all ther other data members will be unpacked properly.
      storePointer += sizeof(file_info);
+
   // memcpy ( (char*)(&lineNumber), storePointer, sizeof(lineNumber) );
   // storePointer += sizeof(lineNumber);
   // memcpy ( (char*)(&columnNumber), storePointer, sizeof(columnNumber) );
@@ -116,25 +171,36 @@ void PreprocessingInfo::unpacked( char* storePointer )
      memcpy ( (char*)(&stringSize), storePointer, sizeof(stringSize) );
      storePointer +=  sizeof(stringSize);
 #if 0
-     std::cout << " getting in trouble at String ... " << std::endl;
+     cout << " getting in trouble at String ... " << endl;
 #endif
-     internalString = std::string ( storePointer, stringSize );
+     internalString = string ( storePointer, stringSize );
 #if 0
-     std::cout << " but survived " << std::endl;
+     cout << " but survived " << endl;
+#endif
+
+#if 0
+     printf ("In PreprocessingInfo::unpacked(%p) internalString = %s \n",storePointer,internalString.c_str());
+     printf ("Calling display on unpacked Sg_File_Info object file_info = %p \n",file_info);
+     file_info->display("In PreprocessingInfo::unpacked()");
+     printf ("DONE: Calling display on unpacked Sg_File_Info object \n");
 #endif
 
 // DQ (11/29/2009): MSVC does not understnad use of "true" in macros.
 // #if CAN_NOT_COMPILE_WITH_ROSE != true
-#if (CAN_NOT_COMPILE_WITH_ROSE == 0)
-
-  // DQ and AS (6/23/2006): and the stuff of macros ...
-  // AS add macro definition
-     macroDef = NULL;
-  // AS add macro call
-     macroCall = NULL;
-
-     tokenStream = NULL;
+// #if (CAN_NOT_COMPILE_WITH_ROSE == 0)
+#ifndef USE_ROSE
+  // DQ and AS (6/23/2006): and the stuff of Wave specific macro support ...
+     tokenStream      = NULL;
+     macroDef         = NULL;
+     macroCall        = NULL;
+     includeDirective = NULL;
 #endif     
+
+  // DQ (2/28/2010): Some assertion checking that will be done later in the unparser.
+  // This test helps debug if any of the data members are set at an offset to there 
+  // proper positions.
+  // printf ("In PreprocessingInfo::unpacked(): getTypeOfDirective() = %d \n",getTypeOfDirective());
+     ROSE_ASSERT (getTypeOfDirective() != PreprocessingInfo::CpreprocessorUnknownDeclaration);
    }
 
 
@@ -144,48 +210,66 @@ void PreprocessingInfo::unpacked( char* storePointer )
 
 // DQ (11/29/2009): MSVC does not understnad use of "true" in macros.
 // #if CAN_NOT_COMPILE_WITH_ROSE != true
-#if (CAN_NOT_COMPILE_WITH_ROSE == 0)
+// #if (CAN_NOT_COMPILE_WITH_ROSE == 0)
+#ifndef USE_ROSE
+// AS(012006) Added to support macros
+PreprocessingInfo::rose_macro_call*
+PreprocessingInfo::get_macro_call()
+   { 
+     return macroCall;
+   } 
 
 // AS(012006) Added to support macros
-PreprocessingInfo::rose_macro_call* PreprocessingInfo::get_macro_call(){ return macroCall; } 
-// AS(012006) Added to support macros
-PreprocessingInfo::rose_macro_definition* PreprocessingInfo::get_macro_def(){ return macroDef; } 
+PreprocessingInfo::rose_macro_definition*
+PreprocessingInfo::get_macro_def()
+   {
+     return macroDef;
+   } 
 
 //AS(060706) Added support for include directive
-PreprocessingInfo::rose_include_directive* PreprocessingInfo::get_include_directive(){ return includeDirective; } 
+PreprocessingInfo::rose_include_directive*
+PreprocessingInfo::get_include_directive()
+   {
+     return includeDirective;
+   } 
 
-const token_container* PreprocessingInfo::get_token_stream(){ return tokenStream; } 
+const token_container*
+PreprocessingInfo::get_token_stream()
+   {
+     return tokenStream;
+   } 
 
-void PreprocessingInfo::push_back_token_stream(token_type tok){ 
-  tokenStream->push_back(tok);
+void PreprocessingInfo::push_back_token_stream(token_type tok)
+   {
+     tokenStream->push_back(tok);
 #ifdef _MSC_VER
 #pragma message ("WARNING: Use of Wave commented out.")
-  printf ("Error: use of wave commented out.\n");
-  ROSE_ASSERT(false);
+     printf ("Error: use of wave commented out.\n");
+     ROSE_ASSERT(false);
 #else
-  internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str()) ;
+     internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str()) ;
 #endif
-  } 
+   } 
 
-void PreprocessingInfo::push_front_token_stream(token_type tok){ 
-  tokenStream->insert(tokenStream->begin(),tok);
+void PreprocessingInfo::push_front_token_stream(token_type tok)
+   {
+     tokenStream->insert(tokenStream->begin(),tok);
 #ifdef _MSC_VER
 #pragma message ("WARNING: Use of Wave commented out.")
-  printf ("Error: use of wave commented out.\n");
-  ROSE_ASSERT(false);
+     printf ("Error: use of wave commented out.\n");
+     ROSE_ASSERT(false);
 #else
-  internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str());
+     internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str());
 #endif
-  } 
+  }
 
 
 // AS(012006) Added to support macros
 PreprocessingInfo::PreprocessingInfo(token_container tokCont, DirectiveType typeOfDirective, RelativePositionType relPos) 
    : whatSortOfDirective(typeOfDirective), relativePosition(relPos)
    {
-
-  //ROSE_ASSERT(false);
-  //implement the position information
+  // ROSE_ASSERT(false);
+  // implement the position information
      tokenStream = new token_container();
 
      int lineNo = tokCont[0].get_position().get_line(); 
@@ -214,10 +298,17 @@ PreprocessingInfo::PreprocessingInfo(token_container tokCont, DirectiveType type
 
    }
 
-//AS(012006) Added to support macros
+// AS(012006) Added to support macros
 PreprocessingInfo::PreprocessingInfo(rose_macro_call* mcall, RelativePositionType relPos) 
-   : macroCall(mcall), relativePosition(relPos)
+// DQ (2/28/2010): Removed preinitialization list to avoid compiler warnings about the order 
+// of the initializations.  These are due to a reordering of the data members in the class
+// so that we can get the AST File I/O working.
+// : macroCall(mcall), relativePosition(relPos)
    {
+  // DQ (2/28/2010): Removed preinitialization list and moved data member initialization to here.
+     macroCall        = mcall;
+     relativePosition = relPos;
+
      tokenStream = new token_container();
 	  
      whatSortOfDirective = PreprocessingInfo::CMacroCall;
@@ -275,8 +366,15 @@ PreprocessingInfo::PreprocessingInfo(rose_macro_call* mcall, RelativePositionTyp
    }
 
 PreprocessingInfo::PreprocessingInfo(rose_macro_definition* mdef, RelativePositionType relPos) 
-   : macroDef(mdef), relativePosition(relPos)
+// DQ (2/28/2010): Removed preinitialization list to avoid compiler warnings about the order 
+// of the initializations.  These are due to a reordering of the data members in the class
+// so that we can get the AST File I/O working.
+// : macroDef(mdef), relativePosition(relPos)
    {
+  // DQ (2/28/2010): Removed preinitialization list and moved data member initialization to here.
+     macroDef        = mdef;
+     relativePosition = relPos;
+
      tokenStream = new token_container();
 
      whatSortOfDirective = PreprocessingInfo::CpreprocessorDefineDeclaration;
@@ -354,8 +452,15 @@ PreprocessingInfo::PreprocessingInfo(rose_macro_definition* mdef, RelativePositi
 
 
 PreprocessingInfo::PreprocessingInfo(rose_include_directive* inclDir, RelativePositionType relPos) 
-   : includeDirective(inclDir), relativePosition(relPos)
+// DQ (2/28/2010): Removed preinitialization list to avoid compiler warnings about the order 
+// of the initializations.  These are due to a reordering of the data members in the class
+// so that we can get the AST File I/O working.
+// : includeDirective(inclDir), relativePosition(relPos)
    {
+  // DQ (2/28/2010): Removed preinitialization list and moved data member initialization to here.
+     includeDirective = inclDir;
+     relativePosition = relPos;
+
      tokenStream = new token_container();
 
      whatSortOfDirective = PreprocessingInfo::CpreprocessorIncludeDeclaration;
@@ -381,7 +486,6 @@ PreprocessingInfo::PreprocessingInfo(rose_include_directive* inclDir, RelativePo
      columnNumber   = colNo;
 #endif
      internalString = std::string(inclDir->directive.get_value().c_str()) ;
-
    }
 
 
