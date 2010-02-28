@@ -6,7 +6,7 @@ SUBDIRS = CompileTests roseTests RunTests PerformanceTests CompilerOptionsTests 
 #  Phase 1) Analysis only, compiles the original code
 #  Phase 2) Analysis and code generation, compiles the original code
 #  Phase 3) analysis, code generation, and compiling the generated code
-bin_PROGRAMS = testAnalysis testCodeGeneration testTranslator testAstFileIO testAstFileRead
+bin_PROGRAMS = testAnalysis testCodeGeneration testTranslator testAstFileIO testAstFileRead parallelASTMerge
 
 # Phase 1 tests code:
 # This is used in specialized tests outside of ROSE testing for analysis only of large projects.
@@ -31,6 +31,9 @@ testAstFileIO_SOURCES = testAstFileIO.C
 
 # This tests the ability to read one or more of the binary AST files generated from the AST write.
 testAstFileRead_SOURCES = testAstFileRead.C
+
+# This test the parallel merge of AST files using Cong's threaded implmentation of the merge infrastructure.
+parallelASTMerge_SOURCES = parallelASTMerge.C
 
 # Use names set in ROSE/config/Makefile.for.ROSE.includes.and.libs
 INCLUDES = $(ROSE_INCLUDES)
@@ -111,7 +114,7 @@ test_testAstFileIO: testObjectFileFileAstFileIO
 testAstRead: testAstFileRead testAstFileIO
 	cp $(srcdir)/inputFile.C alt_AstFileRead_inputFile.C
 	./testAstFileIO -c alt_AstFileRead_inputFile.C -o alt_AstFileRead_inputFile
-	./testAstFileRead alt_AstFileRead_inputFile.C
+	./testAstFileRead alt_AstFileRead_inputFile.C outputFileName_XXX
 
 test_testAstFileIO: testObjectFileFileAstFileIO
 

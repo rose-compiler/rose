@@ -13,6 +13,48 @@
  
 using namespace std;
 
+void testAST( SgProject* project )
+   {
+     class Traversal : public SgSimpleProcessing
+        {
+          public:
+               Traversal() {}
+               void visit ( SgNode* n )
+                  {
+                    SgLocatedNode* locatedNode = isSgLocatedNode(n); 
+                    if (locatedNode != NULL)
+                       {
+                         AttachedPreprocessingInfoType* comments = locatedNode->getAttachedPreprocessingInfo();
+
+                         if (comments != NULL)
+                            {
+                              printf ("Found attached comments (at %p of type: %s): \n",locatedNode,locatedNode->sage_class_name());
+                              AttachedPreprocessingInfoType::iterator i;
+                              for (i = comments->begin(); i != comments->end(); i++)
+                                 {
+                                   ROSE_ASSERT ( (*i) != NULL );
+                                   printf ("          Attached Comment (relativePosition=%s): %s\n",
+                                        ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
+                                        (*i)->getString().c_str());
+#if 1
+                                // This does not appear to be a valid object when read in from an AST file.
+                                   printf ("Comment/Directive getNumberOfLines = %d getColumnNumberOfEndOfString = %d \n",(*i)->getNumberOfLines(),(*i)->getColumnNumberOfEndOfString());
+#endif
+#if 0
+                                // This does not appear to be a valid object when read in from an AST file.
+                                   (*i)->get_file_info()->display("comment/directive location");
+#endif
+                                 }
+                            }
+                       }
+                  }
+        };
+
+     Traversal counter;
+     counter.traverse(project,preorder);
+   }
+
+
 int
 main ( int argc, char * argv[] )
    {
@@ -63,15 +105,26 @@ main ( int argc, char * argv[] )
           status = system ( moving.c_str() );
           ROSE_ASSERT(status == 0);
 
+          printf ("BEFORE WRITING AST: Size of AST = %d \n",numberOfNodes());
+
+       // testAST(project_test);
+
 #if 0
   // Debugging information
      AST_FILE_IO::printListOfPoolSizes() ;
 #endif
 
+#if 0
+  // DQ (2/26/2010): Output an example of the value of p_freepointer for debugging.
+     printf ("project_test->get_freepointer()  = %p \n",project_test->get_freepointer());
+  // printf ("AST_FILE_IO::vectorOfASTs.size() = %zu \n",AST_FILE_IO::vectorOfASTs.size());
+     AST_FILE_IO::display("Before writing the AST");
+#endif
+
 #if DEBUG_FILE_IO
      printf ("Calling File I/O initialization... \n");
 #endif
-     AST_FILE_IO::startUp( project_test ) ;
+     AST_FILE_IO::startUp( project_test );
 
   // DQ (12/12/2009): Allow output only when run in verbose mode to limit spew in testing.
      if (SgProject::get_verbose() > 0)
@@ -83,20 +136,20 @@ main ( int argc, char * argv[] )
      AST_FILE_IO::compressAstInMemoryPool();
 #endif
 
-#if DEBUG_FILE_IO
+// #if DEBUG_FILE_IO
      printf ("Writing the AST to disk... \n");
-#endif
+// #endif
      AST_FILE_IO::writeASTToFile ( inputFileName + ".binary" );
 
   // delete the memroy pools and prepare them for reading back the ast the file IO
-#if DEBUG_FILE_IO
+// #if DEBUG_FILE_IO
      printf ("Clear existing memory pools... \n");
-#endif
+// #endif
      AST_FILE_IO::clearAllMemoryPools( );
 
-#if DEBUG_FILE_IO
+// #if DEBUG_FILE_IO
      printf ("Read in the AST from disk... \n");
-#endif
+// #endif
      project_test = (SgProject*) (AST_FILE_IO :: readASTFromFile ( inputFileName + ".binary" ) );
 
   // AST_FILE_IO::printListOfPoolSizes();
@@ -119,6 +172,10 @@ main ( int argc, char * argv[] )
      AstTests::runAllTests(project_test);
      cout << "done " << endl;
 #endif
+
+     printf ("AFTER READING AST: Size of AST = %d \n",numberOfNodes());
+
+  // testAST(project_test);
 
 #if DEBUG_FILE_IO
      printf ("Writing the second (generated source file from AST read from disk)... \n");

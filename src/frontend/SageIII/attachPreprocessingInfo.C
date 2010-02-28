@@ -14,7 +14,8 @@ typedef std::vector<std::list<token_type> > token_container_container;
 // DQ (11/28/2009): I think this is equivalent to "USE_ROSE"
 // DQ (11/28/2008): What does this evaluate to???  Does this mix C++ constants with CPP values (does this make sense? Is "true" defined?)
 // #if CAN_NOT_COMPILE_WITH_ROSE != true
-#if !CAN_NOT_COMPILE_WITH_ROSE
+// #if !CAN_NOT_COMPILE_WITH_ROSE
+#ifndef USE_ROSE
 
 ///////////////////////////////////////////////////////////////////////////////
 //  Include Wave itself
@@ -531,11 +532,9 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
         {
           std::string filename2 = it_files->first;
 
-          Sg_File_Info* sourceFileInfo = sageFilePtr->get_file_info();
-          int sourceFileNameId = (sageFilePtr->get_requires_C_preprocessor() == true) ? 
-            Sg_File_Info::getIDFromFilename(filename2) : 
-            sourceFileInfo->get_file_id();
           /*
+          Sg_File_Info* sourceFileInfo = sageFilePtr->get_file_info();
+          int sourceFileNameId = (sageFilePtr->get_requires_C_preprocessor() == true) ? Sg_File_Info::getIDFromFilename(filename2) : sourceFileInfo->get_file_id();
           int sourceFileNameId = (sageFilePtr->get_requires_C_preprocessor() == true) ? 
             Sg_File_Info::getIDFromFilename(sageFilePtr->generate_C_preprocessor_intermediate_filename(filename2)) : 
             sourceFileInfo->get_file_id();
