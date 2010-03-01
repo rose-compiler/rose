@@ -451,12 +451,6 @@ int main(int argc, char * argv[])
 	DeleteArg(args, "--lib-path-name");
     }
 
-    pair<string, string> sp;
-    BOOST_FOREACH(sp, libs)
-    {
-	cout << sp.first << ' ' << sp.second << endl;
-    }
-
     SgProject *project = frontend (args);
 
     visitorTraversal myvisitor;
