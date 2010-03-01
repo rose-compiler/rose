@@ -242,11 +242,13 @@ did_removal:
 
           if( isSgExpression(macroNode) == NULL )
           {
+#ifndef USE_ROSE
+         // If we are using ROSE to compile ROSE source code then the Wave support is not present.
             PreprocessingInfo::rose_macro_call* macroCall = curPreproc->get_macro_call();
 
             if(macroCall->expanded_macro.size() > 0 && boost::wave::token_id(macroCall->expanded_macro.back()) != boost::wave::T_COLON)
               replacementString +=";";
-
+#endif
           }
 
           std::cout << "Doing line replacement " << macroNode->unparseToString() << " with " << replacementString << std::endl;
