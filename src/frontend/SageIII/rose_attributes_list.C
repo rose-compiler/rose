@@ -7,7 +7,7 @@
 // DQ (11/28/2009): I think this is equivalent to "USE_ROSE"
 // #if CAN_NOT_COMPILE_WITH_ROSE != true
 // #if (CAN_NOT_COMPILE_WITH_ROSE == 0)
-#ifndef USE_ROSE
+// #ifndef USE_ROSE
 
 token_container wave_tokenStream;
 
@@ -25,7 +25,7 @@ token_container wave_tokenStream;
 
 // #include <boost/wave/grammars/cpp_xpression_grammar.hpp> //as_string
 
-#endif 
+// #endif 
 
 
 //AS(01/04/07) Global map of filenames to PreprocessingInfo*'s as it is inefficient
@@ -56,7 +56,7 @@ unsigned int PreprocessingInfo::packed_size () const
   /* string size and string */ sizeof (unsigned int) + optionalflagsForCompilerGeneratedLinemarker.size();
 
   // This is part of Wave support in ROSE.
-#ifndef USE_ROSE
+// #ifndef USE_ROSE
   // Add in the four pointers required for the Wave support.
   // Until we add the support to save all the Wave data into 
   // the AST file we would have to reprocess the relevant 
@@ -65,7 +65,7 @@ unsigned int PreprocessingInfo::packed_size () const
                    sizeof (macroDef) +
                    sizeof (macroCall) +
                    sizeof (includeDirective);
-#endif
+// #endif
 
   // Debugging information.  What can we assert about the packedSize vs. the sizeof(PreprocessingInfo)?
   // If there is anything, then it might make for a simple test here.  However, there does not appear to
@@ -188,13 +188,13 @@ void PreprocessingInfo::unpacked( char* storePointer )
 // DQ (11/29/2009): MSVC does not understnad use of "true" in macros.
 // #if CAN_NOT_COMPILE_WITH_ROSE != true
 // #if (CAN_NOT_COMPILE_WITH_ROSE == 0)
-#ifndef USE_ROSE
+// #ifndef USE_ROSE
   // DQ and AS (6/23/2006): and the stuff of Wave specific macro support ...
      tokenStream      = NULL;
      macroDef         = NULL;
      macroCall        = NULL;
      includeDirective = NULL;
-#endif     
+// #endif     
 
   // DQ (2/28/2010): Some assertion checking that will be done later in the unparser.
   // This test helps debug if any of the data members are set at an offset to there 
