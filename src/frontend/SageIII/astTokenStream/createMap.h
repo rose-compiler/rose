@@ -8,11 +8,11 @@ class createMap
      private:
           std::vector<SgNode*>& linearizedAST;
 
-#ifndef USE_ROSE
+// #ifndef USE_ROSE
        // If we are using ROSE to compile ROSE source code then the Wave support is not present.
        // token_container is a std::vector<token_type>
           token_container& tokenStream;
-#endif
+// #endif
 
       // The map is of a SgScopeStatment in the AST to a pair<int,int>.
       //The pairs' int values is relative to the tokenStream which you can
@@ -33,13 +33,13 @@ class createMap
 
      public:
 
-#ifndef USE_ROSE
+// #ifndef USE_ROSE
        // If we are using ROSE to compile ROSE source code then the Wave support is not present.
           createMap(std::vector<SgNode*>& linAST, token_container& tokStream);
 
        // get the token stream provided in the constructor
           token_container& get_tokenStream();
-#endif
+// #endif
        // get the linearized AST provided in the constructor
           std::vector<SgNode*>&               get_linearizedAST();
 
