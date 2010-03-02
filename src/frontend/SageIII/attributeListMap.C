@@ -4,7 +4,8 @@
 
 // DQ (11/28/2009): I think this is equivalent to "USE_ROSE"
 // #if CAN_NOT_COMPILE_WITH_ROSE != true
-#if (CAN_NOT_COMPILE_WITH_ROSE == 0)
+// #if (CAN_NOT_COMPILE_WITH_ROSE == 0)
+#ifndef USE_ROSE
 
 #include "attributeListMap.h"
 
