@@ -72,8 +72,10 @@ class StorageClassMemoryManagement
   // return the amount of the data stored or to be stored
      long getSizeOfData() const;
 
+  // DQ (2/27/2010): Changed name to something easier to find with grep.
   // print data that is stored, only used for debugging
-     void print () const;
+  // void print () const;
+     void displayStorageClassData () const;
   
   // method for writing the memoryBlockList to disk. 
      static void writeToFile(std::ostream& out);
@@ -206,7 +208,8 @@ class EasyStorage <CONTAINER<std::string> >
     public:
      EasyStorage() {}
      void storeDataInEasyStorageClass(const CONTAINER<std::string>& data_);
-     void print() ;
+  // void print() ;
+     void displayEasyStorageData ();
      CONTAINER<std::string> rebuildDataStoredInEasyStorageClass()  const;
      static void arrangeMemoryPoolInOneBlock() ;
      static void deleteMemoryPool() ;
@@ -227,7 +230,8 @@ class EasyStorage <std::list<std::string> >
     public:
      EasyStorage() {}
      void storeDataInEasyStorageClass(const std::list<std::string>& data_);
-     void print() ;
+  // void print() ;
+     void displayEasyStorageData ();
      std::list<std::string> rebuildDataStoredInEasyStorageClass()  const;
      static void arrangeMemoryPoolInOneBlock() ;
      static void deleteMemoryPool() ;
@@ -250,7 +254,10 @@ class EasyStorage <std::vector<std::string> >
     public:
      EasyStorage() {}
      void storeDataInEasyStorageClass(const std::vector<std::string>& data_);
-     void print() ;
+
+  // void print();
+     void displayEasyStorageData ();
+         
      std::vector<std::string> rebuildDataStoredInEasyStorageClass()  const;
      static void arrangeMemoryPoolInOneBlock() ;
      static void deleteMemoryPool() ;
@@ -611,7 +618,8 @@ class EasyStorage <CONTAINER<PreprocessingInfo*> >
     public:
      EasyStorage() {}
      void storeDataInEasyStorageClass(const CONTAINER<PreprocessingInfo*>& data_);
-     void print() ;
+  // void print() ;
+     void displayEasyStorageData ();
      CONTAINER<PreprocessingInfo*> rebuildDataStoredInEasyStorageClass() const ;
      static void arrangeMemoryPoolInOneBlock() ;
      static void deleteMemoryPool() ;
@@ -631,7 +639,8 @@ class EasyStorage <std::vector<PreprocessingInfo*> >
     public:
      EasyStorage() {}
      void storeDataInEasyStorageClass(const std::vector<PreprocessingInfo*>& data_);
-     void print() ;
+  // void print() ;
+     void displayEasyStorageData ();
      std::vector<PreprocessingInfo*> rebuildDataStoredInEasyStorageClass() const ;
      static void arrangeMemoryPoolInOneBlock() ;
      static void deleteMemoryPool() ;
@@ -651,7 +660,8 @@ class EasyStorage <AttachedPreprocessingInfoType*>
     public:
      EasyStorage() {}
      void storeDataInEasyStorageClass(AttachedPreprocessingInfoType* data_);
-     void print() ;
+  // void print() ;
+     void displayEasyStorageData ();
      AttachedPreprocessingInfoType* rebuildDataStoredInEasyStorageClass() const ;
      static void arrangeMemoryPoolInOneBlock() ;
      static void deleteMemoryPool() ;
