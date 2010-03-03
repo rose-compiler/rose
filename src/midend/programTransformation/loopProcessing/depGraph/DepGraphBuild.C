@@ -167,8 +167,16 @@ void BuildAstTreeDepGraph :: TranslateCtrlDeps(LoopTransformInterface &fa)
          for (DepInfoConstIterator depIter2 = 
                      graph->GetDepInfoIteratorImpl(e2, DEPTYPE_DATA);
               ! depIter2.ReachEnd(); depIter2++)  {
+           // Liao, 3/2/2010,  a workaround for assertion failure TODO need a more elegant fix
+           if (depIter2.Current().cols() == cd.rows())
+           {
              DepInfo tmpd = depIter2.Current() * cd;
              graph->CreateEdgeImpl(n2,n1, tmpd);
+           }
+           else
+           {
+             //std::cout<<"Warning: found a control dependence pair with cols() != rows()."<<std::endl;
+           }
          }
        }
     }
