@@ -1743,7 +1743,7 @@ SgNullExpression* SageBuilder::buildNullExpression() {
   return e;
 }
 
-SgAssignInitializer * SageBuilder::buildAssignInitializer(SgExpression * operand_i /*= NULL*/, SgType * expression_type /* = UNLL */)
+SgAssignInitializer * SageBuilder::buildAssignInitializer(SgExpression * operand_i /*= NULL*/, SgType * expression_type /* = NULL */)
 {
   SgAssignInitializer* result = new SgAssignInitializer(operand_i, expression_type);
   ROSE_ASSERT(result);   
