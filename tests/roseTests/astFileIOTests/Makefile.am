@@ -130,6 +130,10 @@ ALT2_TEST_MEDIUM_LIST_EXTRA = \
 test2004_04.C   test2004_109.C  test2004_122.C  test2004_137.C  test2004_150.C  test2004_164.C  test2004_33.C  test2004_50.C  test2004_67.C  test2004_82.C  test2004_98.C
 
 ALT_TEST_MEDIUM_LIST_EXTRA = \
+test2004_01.C   test2004_106.C  test2004_11.C   test2004_134.C  test2004_148.C  test2004_161.C  test2004_30.C  test2004_47.C  test2004_63.C  test2004_79.C  test2004_95.C \
+test2004_02.C   test2004_107.C  test2004_120.C  test2004_135.C  test2004_149.C  test2004_162.C  test2004_31.C  test2004_48.C  test2004_64.C  test2004_80.C  test2004_96.C \
+test2004_03.C   test2004_108.C  test2004_121.C  test2004_136.C  test2004_14.C   test2004_163.C  test2004_32.C  test2004_49.C  test2004_65.C  test2004_81.C  test2004_97.C \
+test2004_04.C   test2004_109.C  test2004_122.C  test2004_137.C  test2004_150.C  test2004_164.C  test2004_33.C  test2004_50.C  test2004_67.C  test2004_82.C  test2004_98.C \
 test2004_05.C   test2004_10.C   test2004_123.C  test2004_138.C  test2004_151.C  test2004_16.C   test2004_34.C  test2004_51.C  test2004_68.C  test2004_83.C  test2004_99.C \
 test2004_06.C   test2004_110.C  test2004_124.C  test2004_139.C  test2004_152.C  test2004_17.C   test2004_35.C  test2004_52.C  test2004_69.C  test2004_84.C \
 test2004_07.C   test2004_111.C  test2004_125.C  test2004_13.C   test2004_153.C  test2004_18.C   test2004_36.C  test2004_53.C  test2004_70.C  test2004_85.C \
@@ -143,7 +147,7 @@ test2004_104.C  test2004_118.C  test2004_132.C  test2004_146.C  test2004_15.C   
 test2004_105.C  test2004_119.C  test2004_133.C  test2004_147.C  test2004_160.C  test2004_29.C   test2004_45.C  test2004_62.C  test2004_78.C  test2004_94.C
 
 # This make s a much larger test.
-TEST_MEDIUM_LIST += $(TEST_MEDIUM_LIST_EXTRA)
+TEST_MEDIUM_LIST += $(ALT_TEST_MEDIUM_LIST_EXTRA)
 
 TEST_MEDIUM_LIST_BINARIES = $(TEST_MEDIUM_LIST:.C=.o)
 
@@ -159,14 +163,22 @@ test-read-large: $(TEST_LARGE_LIST_BINARIES)
 	$(READ_TRANSLATOR) $(TEST_Binaries:.C.binary=.C)
 
 
+failingTest:
+	../../../tests/testAstFileRead test2004_106.C test2004_01.C test2003_38.C test2003_36.C test2003_32.C test2003_28.C test2003_24.C test2003_21.C test2003_19.C test2003_17.C test2003_13.C temp_output.C
+
 testParallelMerge: parallelMerge
 	mkdir data
 	mkdir temp
 	parallelMerge
 
 
-
-
+# DQ (3/1/2010): This is the sart of a general command to process all the
+# binaries in a directory structure.
+ls_generatedBinaries:
+#	ls -l `find $(top_builddir)/src -name "*.C.binary" -print`
+#	cd $(top_builddir)/src; ls -l `find . -name "*.C.binary" -print`
+#	cd $(top_builddir); du -a * | grep "C.binary"
+	find $(top_builddir) -name "*.C.binary" -print
 
 ls_binaries:
 	ls $(TEST_Binaries)
@@ -201,7 +213,7 @@ check-local:
 	$(MAKE) $(TEST_Objects)
 	$(MAKE) test-read
 	$(MAKE) test-read-short
-	$(MAKE) test-read-medium
+#	$(MAKE) test-read-medium
 	@echo ""
 	@echo "*******************************************************************************************"
 	@echo "*** ROSE/tests/roseTests/astFileIOTests: make check rule complete (terminated normally) ***"
@@ -211,6 +223,9 @@ clean-local:
 	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files pass[1-9] pass1[0-9] pass2[0-9] rose_*.C *.ti *.binary *.C.pdf test1 test200?_*
 	rm -rf test_int_lexemes  test_int_lexemes_donot_pass  test_simple_int  test_wchars  X Cxx_Grammar
 	rm -f *.dot *.C_identity inputBug317  inputBug327  inputForLoopLocator  lexPhase2003_01  math  test2010_03  test2010_04  test2010_05  test2010_06  test_CplusplusMacro_Cpp
+#	Remove some generated files by the parallel merge.
+	rm -f *.txt
+	rm -rf tmp? data
 
 distclean-local:
 	rm -rf Templates.DB 
