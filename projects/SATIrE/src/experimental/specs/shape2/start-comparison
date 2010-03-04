@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ANALYSIS_ARGS=" --pag-memsize-mb=2000 --pag-memsize-grow=30 --callstringlength=1 --shape-gc $@"
+ANALYSIS_ARGS=" --pag-memsize-mb=600 --pag-memsize-grow=30 --callstringlength=1 --shape-gc $@"
 
 outputdir=comparison0
 i=0

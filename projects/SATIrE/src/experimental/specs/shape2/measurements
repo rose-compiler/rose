@@ -116,7 +116,7 @@ dollar='$'
 tab='\\t'
 
 # write data rows to $report
-find tests/benchmark -type f -name \*.C | sort | while IFS= read -r testcase; do
+find -L tests/benchmark -type f -name \*.C | sort | while IFS= read -r testcase; do
   for col in ${output_fields_per_row}; do
     eval echo -ne "${dollar}${col}${tab}" >> $outputdir/$report
   done
