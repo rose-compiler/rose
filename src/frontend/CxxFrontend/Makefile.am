@@ -16,7 +16,7 @@ EXTERNAL_BINARY_EDG_TARBALL_URL=http://www.rosecompiler.org/edg_binaries
 
 AUTO_ARCHS = i686-pc-linux-gnu x86_64-pc-linux-gnu
 ALL_ARCHS = $(AUTO_ARCHS) i686-apple-darwin
-STD_GNU_COMPILERS = GNU-4.0 GNU-4.1 GNU-4.2 GNU-4.3
+STD_GNU_COMPILERS = GNU-4.0 GNU-4.1 GNU-4.2 GNU-4.3 GNU-4.4
 COMPILERS_i686_pc_linux_gnu = $(STD_GNU_COMPILERS)
 COMPILERS_x86_64_pc_linux_gnu = $(STD_GNU_COMPILERS)
 COMPILERS_i686_apple_darwin = GNU-4.0
@@ -99,11 +99,13 @@ binary_edg_tarball: $(BINARY_EDG_DIRNAME).tar.gz
 #  to check if all desired binaries are available. 
 #  Otherwise we have to constantly update the list of GCC versions in this Makefile.
 #  Directly put generated EDG binary files into the distribution path
+#
+#	if [ \! -e $(BINARY_EDG_TARBALL_STAGING_PATH)/$(BINARY_EDG_DIRNAME).tar.gz ] ; then \ #
 upload_edg_binary: 
-	if [ \! -e $(BINARY_EDG_TARBALL_STAGING_PATH)/$(BINARY_EDG_DIRNAME).tar.gz ] ; then \
+	if [ \! -e $(BINARY_EDG_TARBALL_DISTRIBUTION_PATH)/$(BINARY_EDG_DIRNAME).tar.gz ] ; then \
 	   $(MAKE) binary_edg_tarball && \
 	   cp $(BINARY_EDG_DIRNAME).tar.gz $(BINARY_EDG_TARBALL_STAGING_PATH) && \
-	   cp $(BINARY_EDG_DIRNAME).tar.gz $(BINARY_EDG_TARBALL_DISTRIBUTION_PATH); \
+	   cp $(BINARY_EDG_DIRNAME).tar.gz $(BINARY_EDG_TARBALL_DISTRIBUTION_PATH) ;\
 	fi
 
 clean-local:
