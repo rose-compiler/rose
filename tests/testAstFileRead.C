@@ -166,8 +166,9 @@ main ( int argc, char * argv[] )
   // cout  << endl << "Here we call the AST_FILE_IO :: readASTFromFile ..." << endl;
      for (int i= 0; i < numFiles; ++i)
         {
-       // cout  << "Here we read .... " << fileNames[i] << endl;
+          cout  << "Here we will read .... " << fileNames[i] << endl;
           AST_FILE_IO :: readASTFromFile ( fileNames[i] + ".binary" );
+          cout  << "Here we just read .... " << fileNames[i] << endl;
 
           currentNumberOfNodes = Sg_File_Info::numberOfNodes();
 
@@ -219,7 +220,7 @@ main ( int argc, char * argv[] )
 
        // testAST(ast->getRootOfAst());
 
-#if 1
+#if 0
        // DQ (2/24/2010): This is a significant bottleneck to the performance on large codes since it is n^2 in the size of the AST.
           AstTests::runAllTests(ast->getRootOfAst());
 #endif
