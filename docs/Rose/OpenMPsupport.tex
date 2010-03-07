@@ -134,8 +134,8 @@ Please refer to the ROSE Web Reference\footnote{\url{http://www.rosecompiler.org
 \section{Translating OpenMP Directives}
 Using a command line like \textit{identityTranslator -rose:openmp:lower inputcode.c},
 ROSE can translate OpenMP 3.0 programs into multithreaded code targeting
-the GCC GOMP OpenMP runtime library\footnote{The translation supports C
-now. We are working on the C++ and Fortran support.}.
+the GCC GOMP OpenMP runtime library\footnote{The translation supports C and
+C++ now. We are working on the Fortran support.}.
 If the path to GOMP (preferably the one shipped with GCC 4.3 or above for OpenMP task support) is specified (using a configure option \textit{--with-gomp\_omp\_runtime\_library=/home/liao6/opt/gcc-svn/lib/}),
 the generated multithreaded code can be automatically linked to the GOMP library to generate final executables after compilation. 
 
@@ -259,6 +259,45 @@ Note the handling of shared, and reduction variables during the translation.
 \caption{Translation of a complex parallel region}
 \label{Manual:omp:preduction-trans}
 \end{figure}
+
+\clearpage
+Translation of an OpenMP parallel region within a C++ class member function is demonstrated in
+Figure~\ref{Manual:omp:classMember-trans} for an input code shown in
+Figure~\ref{Manual:omp:classMember}. 
+Note the generation of an outlined function using C-bindings and the
+declaration as a friend function within the original class. 
+
+\lstset{language=C,basicstyle=\scriptsize}
+\begin{figure}[htbp]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/memberFunction.cpp}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopSourceDirectory/tests/CompileTests/OpenMP_tests/memberFunction.cpp}
+    \end{htmlonly}
+  }
+}
+\caption{Example of a parallel region within a class member function}
+\label{Manual:omp:classMember}
+\end{figure}
+
+\begin{figure}[htbp]
+{\indent
+  {\mySmallFontSize
+    \begin{latexonly}
+    \lstinputlisting{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_memberFunction.cpp}
+    \end{latexonly}
+    \begin{htmlonly}
+    \verbatiminput{\TopBuildDirectory/tests/roseTests/ompLoweringTests/rose_memberFunction.cpp}
+    \end{htmlonly}
+  }
+}
+\caption{Translation of a parallel region within a class member function}
+\label{Manual:omp:classMember-trans}
+\end{figure}
+
 
 %-------------------------------------------------------------
 \clearpage

@@ -216,11 +216,13 @@ visualization, traversal, query, and debugging.}
 %}
 
 \input{identityTranslator}
-\input{scopeInformation}
 \input{ASTGraphGenerator}
 \input{wholeGraphAST}
 \input{AST_PDF_Generator}
 \input{traversal}
+% the chapter talking about scope uses AST traversal
+% So I moved it after the traversal chapter.  Liao 3/3/2010
+\input{scopeInformation}
 \input{queryLibraryExample}
 \input{astFileIO}
 \input{debuggingSupport}

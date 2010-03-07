@@ -237,6 +237,7 @@ clean-local:
 	rm -rf AST_FILE_IO.h StorageClasses.h AstQueryMemoryPool.h
 	rm -rf generated_abstractcppgrammar.atg
 	rm -f sage3basic.h.gch
+	rm -f *.binary
 
 distclean-local:
 	rm -rf Templates.DB
