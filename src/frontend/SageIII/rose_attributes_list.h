@@ -28,7 +28,7 @@
 // which is set for all ROSE translators when they compile any code.
 // DQ (12/22/2008): I would appreciate it if this were a better name...
 // #if !CAN_NOT_COMPILE_WITH_ROSE 
-#ifndef USE_ROSE
+// #ifndef USE_ROSE
 #if _MSC_VER < 1600  // 1600 == VC++ 10.0
 #include <boost/preprocessor/iteration/iterate.hpp> // Liao, 7/10/2009, required by GCC 4.4.0 for a #define line of BOOST_PP_ITERATION_DEPTH
 #include <boost/wave/cpplexer/cpp_lex_token.hpp>    // token class
@@ -41,7 +41,7 @@
 
 #endif
 
-#endif
+// #endif
 
 //template boost::wave::cpplexer::impl::token_data<std::string, boost::wave::util::file_position_type>::delete(std::size_t) ; 
 // DQ (10/16/2002): Required for compiling with SUN 5.2 C++ compiler
@@ -69,14 +69,14 @@ class Sg_File_Info;
 class SgFile;
 
 // #if !CAN_NOT_COMPILE_WITH_ROSE 
-#ifndef USE_ROSE
+// #ifndef USE_ROSE
 
 typedef boost::wave::cpplexer::lex_token<> token_type;
 typedef std::vector<token_type>            token_container;
 typedef std::list<token_type>              token_list_container;
 typedef std::vector<std::list<token_type> >       token_container_container;
 
-#endif
+// #endif
 
 //! For preprocessing information including source comments, #include , #if, #define, etc
 class  PreprocessingInfo
@@ -202,9 +202,9 @@ class  PreprocessingInfo
           std::string filenameForCompilerGeneratedLinemarker;
           std::string optionalflagsForCompilerGeneratedLinemarker;
 
-  // This is part of Wave support in ROSE.
+// This is part of Wave support in ROSE.
 // #if !CAN_NOT_COMPILE_WITH_ROSE 
-#ifndef USE_ROSE
+// #ifndef USE_ROSE
      public:
 /*
        // AS using the lexer_token from boost_wave in order to store structures
@@ -277,7 +277,7 @@ class  PreprocessingInfo
           rose_include_directive* includeDirective;
 
 // #endif for Wave specific data not compiled when USE_ROSE is defined.
-#endif
+// #endif
 
   // member functions
      public:
@@ -285,15 +285,15 @@ class  PreprocessingInfo
           PreprocessingInfo();
 
 // #if !CAN_NOT_COMPILE_WITH_ROSE 
-#ifndef USE_ROSE
+// #ifndef USE_ROSE
        // AS (112105) Added constructors to support macros
           PreprocessingInfo(token_container, DirectiveType, RelativePositionType); 
           PreprocessingInfo(rose_macro_call*, RelativePositionType); 
           PreprocessingInfo(rose_macro_definition*, RelativePositionType); 
           PreprocessingInfo(token_type, token_list_container, bool, DirectiveType,RelativePositionType); 
           PreprocessingInfo(rose_include_directive*, RelativePositionType);
-#endif
-          
+// #endif
+
        // This constructor is called from the C++ code generated from the lex file (preproc.lex)
        // PreprocessingInfo(DirectiveType, const char *inputStringPointer, int line_no , int col_no,
        //                   int nol, RelativePositionType relPos, bool copiedFlag, bool unparsedFlag) ROSE_DEPRECATED_FUNCTION;
@@ -365,7 +365,7 @@ class  PreprocessingInfo
           void set_optionalflagsForCompilerGeneratedLinemarker( std::string x );
 
 // #if !CAN_NOT_COMPILE_WITH_ROSE 
-#ifndef USE_ROSE
+// #ifndef USE_ROSE
   // Wave specific member functions.
      public:
        // Access functions to get the macro call or macro definition.
@@ -380,7 +380,7 @@ class  PreprocessingInfo
           void push_back_token_stream(token_type tok);
 
 // #endif for Wave specific data not compiled when USE_ROSE is defined.
-#endif
+// #endif
    };
 
 // DQ (10/15/2002) Changed list element from "PreprocessingInfo" to 
@@ -520,10 +520,10 @@ class ROSEAttributesListContainer
 
 
 // #if !CAN_NOT_COMPILE_WITH_ROSE 
-#ifndef USE_ROSE
+// #ifndef USE_ROSE
 
 extern token_container wave_tokenStream;
 
-#endif
+// #endif
 
 #endif
