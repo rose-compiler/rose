@@ -1857,6 +1857,15 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
      curprint ( string("{"));
      unp->cur.format(basic_stmt, info, FORMAT_AFTER_BASIC_BLOCK1);
 
+     if (basic_stmt->get_asm_function_body().empty() == false)
+        {
+       // This is an asm function body.
+          curprint (basic_stmt->get_asm_function_body());
+
+       // Make sure this is a function definition.
+          ROSE_ASSERT(isSgFunctionDefinition(basic_stmt->get_parent()) != NULL);
+        }
+
   // DQ (1/9/2007): This is useful for understanding which blocks are marked as compiler generated.
   // curprint ( string(" /* block compiler generated = " + (basic_stmt->get_startOfConstruct()->isCompilerGenerated() ? "true" : "false") + " */ \n ";
 
@@ -2375,8 +2384,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
       }
     }
-     
- 
+
 #if 0
      printf ("funcdecl_stmt = %p = %s \n",funcdecl_stmt,funcdecl_stmt->get_name().str());
      funcdecl_stmt->get_startOfConstruct()->display("Inside of unparseFuncDeclStmt()");
@@ -2492,6 +2500,14 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
        // any function declaration!
           ninfo.set_SkipClassDefinition();
           ninfo.set_SkipEnumDefinition();
+
+       // DQ (3/4/2010): Added support for asm functions (see test2010_12.C).
+          SgStorageModifier & storage = funcdecl_stmt->get_declarationModifier().get_storageModifier();
+       // printf ("storage.isAsm() = %s \n",storage.isAsm() ? "true" : "false");
+          if (storage.isAsm() == true)
+             {
+               curprint( "asm ");
+             }
 
           unp->u_sage->printSpecifier(funcdecl_stmt, ninfo);
 

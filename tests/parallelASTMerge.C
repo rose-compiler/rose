@@ -1,7 +1,13 @@
+// DQ (3/4/2010): Include this so that we can use the CXX_IS_ROSE_AST_FILE_IO macro
+#include "rose_config.h"
+
 #include <vector>
 #include <string>
+
 #include <iostream>
+
 #include <boost/thread.hpp>
+
 #include <fstream>
 #include <algorithm>
 #include <climits>
@@ -10,9 +16,10 @@
 #include <boost/progress.hpp>
 #include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
-//#include <rose.h>
+// #include <rose.h>
 
 using namespace std;
+
 using namespace boost;
 
 
@@ -99,11 +106,14 @@ class AstStorage
 
     void GenerateOutput(const string& output) 
     {
+// DQ (3/4/2010): This source file does not appear to compile with the AST File I/O (which is kind of ironic).
+#ifndef CXX_IS_ROSE_AST_FILE_IO
 	using namespace boost::filesystem;
 	if (exists(output))
 	    remove(output);
 	copy_file(astFiles_.top() + ".binary", output);
 	Clear();
+#endif
     }
 
     void Clear()
@@ -195,8 +205,8 @@ void MergeAstFiles(const vector<string>& astFiles, const string& output, int nth
     int n = astFiles.size() / nthread;
     if (n < 2) n = 2; 
     vector<int> nfile(nthread, n);
-    for (int i = 0; i < astFiles.size() - n * nthread; ++i)
-	nfile[i]++;
+//  for (int i = 0; i < astFiles.size() - n * nthread; ++i)
+//       nfile[i]++;
 
     boost::thread_group thrds;
 
@@ -213,32 +223,33 @@ void MergeAstFiles(const vector<string>& astFiles, const string& output, int nth
 }
 
 int main ( int argc, char * argv[] )
-{
-    assert(argc >= 0);
-    if (argc == 0)
-    {
-	printf ("Error: This AST file reader requires the name of a binary AST file. \n");
-	assert(false);
-    }
+   {
+     assert(argc >= 0);
+     if (argc == 0)
+        {
+          printf ("Error: This AST file reader requires the name of a binary AST file. \n");
+          assert(false);
+        }
 
-    int numFiles = argc - 1;
-    std::vector<std::string> fileNames;
-    for (int i= 0; i < numFiles; ++i)
-    {
-	fileNames.push_back(argv[i+1]) ;
-    }
+     int numFiles = argc - 1;
+     std::vector<std::string> fileNames;
+     for (int i= 0; i < numFiles; ++i)
+        {
+          fileNames.push_back(argv[i+1]);
+        }
 
-    string output = "output.txt";
+     string output = "output.txt";
 
-    ofstream ifs("timer.txt");
-    for (int i = 6; i < 10; i += 1)
-    {
-	XTimer t;
-	string output = "output" + lexical_cast<string>(i);
-	output = "output" + lexical_cast<string>(i) + ".txt";
-	MergeAstFiles(fileNames, output, i);
-	ifs << i << " : " << t.elapsed() << endl;
-    }
-}
+     ofstream ifs("timer.txt");
+     for (int i = 5; i < 6; i += 1)
+        {
+          XTimer t;
+          string output = "output" + lexical_cast<string>(i);
+          output = "output" + lexical_cast<string>(i) + ".txt";
+          MergeAstFiles(fileNames, output, i);
+          ifs << i << " : " << t.elapsed() << endl;
+        }
 
+     return 0;
+   }
 

@@ -5,17 +5,20 @@
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
+// #ifndef USE_ROSE
 // Local typedefs used in this file only...
 typedef boost::wave::cpplexer::lex_token<>  token_type;
 typedef std::vector<token_type>             token_container;
 typedef std::list<token_type>               token_list_container;
 typedef std::vector<std::list<token_type> > token_container_container;
+// #endif
 
 // DQ (11/28/2009): I think this is equivalent to "USE_ROSE"
 // DQ (11/28/2008): What does this evaluate to???  Does this mix C++ constants with CPP values (does this make sense? Is "true" defined?)
 // #if CAN_NOT_COMPILE_WITH_ROSE != true
 // #if !CAN_NOT_COMPILE_WITH_ROSE
 #ifndef USE_ROSE
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 //  Include Wave itself
@@ -31,7 +34,6 @@ typedef std::vector<std::list<token_type> > token_container_container;
 
 #include "advanced_preprocessing_hooks.h"
 #include "attributeListMap.h"
-#endif
 
 //Include files to get the current path
 #include <unistd.h>

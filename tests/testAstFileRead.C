@@ -166,8 +166,9 @@ main ( int argc, char * argv[] )
   // cout  << endl << "Here we call the AST_FILE_IO :: readASTFromFile ..." << endl;
      for (int i= 0; i < numFiles; ++i)
         {
-        // cout  << "Here we read .... " << fileNames[i] << endl;
+          cout  << "Here we will read .... " << fileNames[i] << endl;
           AST_FILE_IO :: readASTFromFile ( fileNames[i] + ".binary" );
+          cout  << "Here we just read .... " << fileNames[i] << endl;
 
           currentNumberOfNodes = Sg_File_Info::numberOfNodes();
 
@@ -235,7 +236,9 @@ main ( int argc, char * argv[] )
              {
                SgProject* localProject = ast->getRootOfAst();
                SgFile*    localFile    = (*localProject)[0];
-               // ROSE_ASSERT(localProject->numberOfFiles() == 1);
+
+            // DQ (3/1/2010): Merged files that are reread will have more than one SgFile object.
+            // ROSE_ASSERT(localProject->numberOfFiles() == 1);
 
             // Add the file to the global project. This also sets the parent of the input file. Is this a side-effect that we want?
                globalProject->set_file(*localFile);
@@ -289,7 +292,7 @@ main ( int argc, char * argv[] )
   // printf ("AST_FILE_IO::vectorOfASTs.size() = %zu \n",AST_FILE_IO::vectorOfASTs.size());
   // AST_FILE_IO::display("Before writing the merged AST (before resetValidAstAfterWriting())");
 
-     //string mergedFileName = "mergedFile.C";
+  // string mergedFileName = "mergedFile.C";
      string mergedFileName = outputFileName;
      printf ("mergedFileName = %s numberOfNodes() = %d \n",mergedFileName.c_str(),numberOfNodes());
 
@@ -310,7 +313,7 @@ main ( int argc, char * argv[] )
 
   // printf ("Before processing via DOT: globalProject = %p numberOfFiles() = %d \n",globalProject,globalProject->numberOfFiles());
 
-#if 1
+#if 0
   // Output an optional graph of the AST (just the tree, when active). Note that we need to multiple file version 
   // of this with includes so that we can present a single SgProject rooted AST with multiple SgFile objects.
   // generateDOT ( *globalProject );

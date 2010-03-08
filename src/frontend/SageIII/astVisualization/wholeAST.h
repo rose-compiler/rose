@@ -215,6 +215,10 @@ class CustomMemoryPoolDOTGeneration
              int m_variableDeclaration; /*variableDeclarationFilter()*/
 
              int m_variableDefinition; /*variableDefinitionFilter()*/
+
+          // DQ (3/2/2010): Added option to turn off all filtering.
+             int m_noFilter;            /* no filtering */
+
              //! Default constructor
              s_Filter_Flags ();
              //! Constructor from command line options
