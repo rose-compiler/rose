@@ -619,8 +619,15 @@ Grammar::setUpStatements ()
      BasicBlock.editSubstitute       ( "LIST_ELEMENT_DATA_TYPE", "SgStatement*" );
      BasicBlock.setDataPrototype    ( "SgStatementPtrList", "statements", "",
 				      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
   // DQ (12/4/2004): Now we automate the generation of the destructors
   // BasicBlock.setAutomaticGenerationOfDestructor(false);
+
+  // DQ (3/4/2010): Added support for asm functions in ROSE.  This is support is required for 
+  // handling embedded code. When used the SgBasicBlock can only appear in a SgFunctionDefinition
+  // and can contain any string (only meaningful if they are assembly instructions).
+     BasicBlock.setDataPrototype ( "std::string", "asm_function_body", "= \"\"",
+				      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      IfStmt.setFunctionPrototype ( "HEADER_IF_STATEMENT", "../Grammar/Statement.code" );
      IfStmt.setDataPrototype ( "SgStatement*",  "conditional", "= NULL",

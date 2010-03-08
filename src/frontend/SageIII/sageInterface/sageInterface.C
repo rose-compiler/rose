@@ -7706,7 +7706,8 @@ void SageInterface::replaceMacroCallsWithExpandedStrings(SgPragmaDeclaration* ta
 {
   // This is part of Wave support in ROSE.
 // #if CAN_NOT_COMPILE_WITH_ROSE != true
-#if CAN_NOT_COMPILE_WITH_ROSE == 0
+// #if CAN_NOT_COMPILE_WITH_ROSE == 0
+#ifndef USE_ROSE
   ROSE_ASSERT(target != NULL);
   AttachedPreprocessingInfoType *info=  target->getAttachedPreprocessingInfo ();
   if (info == NULL) return;

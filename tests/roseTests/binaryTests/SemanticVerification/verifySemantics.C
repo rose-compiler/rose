@@ -136,7 +136,7 @@ private:
 
         struct sockaddr_in addr;
         addr.sin_family = AF_INET;
-        addr.sin_port = htons(port);
+        addr.sin_port = my_htons(port);
         assert(he->h_length==sizeof(addr.sin_addr.s_addr));
         memcpy(&addr.sin_addr.s_addr, he->h_addr, he->h_length);
 
@@ -145,6 +145,19 @@ private:
         if (connect(server, (struct sockaddr*)&addr, sizeof addr)<0) {
             fprintf(stderr, "cannot connect to server at %s:%hd: %s\n", hostname.c_str(), port, strerror(errno));
             exit(1);
+        }
+    }
+
+    /** Replacement for system's htons(). Calling htons() on OSX gives an error "'exp' was not declared in this scope" even
+     *  though we've included <netinet/in.h>. Therefore we write our own version here. Furthermore, OSX apparently doesn't
+     *  define __BYTE_ORDER in <sys/param.h> so we have to figure it out ourselves. */
+    static short my_htons(short n) {
+        static unsigned u = 1;
+        if (*((char*)&u)) {
+            /* Little endian */
+            return (((unsigned short)n & 0x00ff)<<8) | (((unsigned short)n & 0xff00)>>8);
+        } else {
+            return n;
         }
     }
 
@@ -354,7 +367,7 @@ public:
             if (v1!=v2) {
                 char buf[256];
                 int w = x86_reg_size[i]/4;
-                sprintf(buf, "%s%s:  0x%0*"PRIx64" (simulated) != 0x%0*"PRIx64" (actual)", prefix, x86_reg_str[i], w, v1, w, v2);
+                sprintf(buf, "%s%s:  0x%0*lx (simulated) != 0x%0*lx (actual)", prefix, x86_reg_str[i], w, v1, w, v2);
                 mesg = mesg + (mesg=="" ? "" : "\n") + buf;
             }
         }

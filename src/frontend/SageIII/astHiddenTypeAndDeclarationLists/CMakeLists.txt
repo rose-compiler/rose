@@ -4,12 +4,9 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 ########### next target ###############
 
-set( libastHiddenTypeAndDeclarationLists_SRC      
-     HiddenList.C  HiddenList_Intersection.C HiddenList_Output.C NamespacesAndClassTraversal.C
-   )
 
-add_library( libastHiddenTypeAndDeclarationLists STATIC ${libastHiddenTypeAndDeclarationLists_SRC}  )
-add_dependencies( libastHiddenTypeAndDeclarationLists ROSETTA )
+#add_library( libastHiddenTypeAndDeclarationLists STATIC ${libastHiddenTypeAndDeclarationLists_SRC}  )
+#astHiddenTypeAndDecladd_dependencies( libastHiddenTypeAndDeclarationLists ROSETTA )
 
 ########### install files ###############
 

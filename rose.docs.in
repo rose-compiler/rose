@@ -9,9 +9,9 @@
 
 \image html compass_rose.gif
 
-\authors LLNL Staff: \b Dan \b Quinlan \n
-         LLNL Post-doc: \b Thomas \b Panas, \b Chunhua \b Liao, \b Jeremiah \b Willcock \n
-         Associate Professors (former LLNL postdocs still active on ROSE project):
+\authors LLNL Staff: \b Dan \b Quinlan, \b Thomas \b Panas \n
+         LLNL Post-doc: \b Chunhua \b Liao \n
+         Former LLNL Post-docs (most of them are still active on ROSE project): \b Jeremiah \b Willcock,
             \b Markus \b Schordan, \b Qing \b Yi, and \b Rich \b Vuduc \n
          Student Interns at LLNL: 
            Gergo Barany (Technical University of Vienna),
@@ -70,7 +70,7 @@ one million lines of code in size).
      about the ROSE project. Built in 2005, it has been slow to evolve since we wanted to 
      keep a low profile as long as possible while we focused on robustness issues within
      the ROSE project and infrastructure. \n
-     <a href="http://www.llnl.gov/casc/rose"> ROSE Web Site </a> \n
+     <a href="http://www.roseCompiler.org"> ROSE Web Site </a> \n
 
 \subsection dummyA ROSE User Manual Documentation
      The ROSE User Manual can be found at (link to LaTeX document): \n

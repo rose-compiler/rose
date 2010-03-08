@@ -4,12 +4,6 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 ########### next target ###############
 
-  set(rose_diagnostics_src
-      ${CMAKE_SOURCE_DIR}/src/midend/astDiagnostics/AstConsistencyTests.C 
-      ${CMAKE_SOURCE_DIR}/src/midend/astDiagnostics/AstWarnings.C
-      ${CMAKE_SOURCE_DIR}/src/midend/astDiagnostics/AstStatistics.C 
-      ${CMAKE_SOURCE_DIR}/src/midend/astDiagnostics/AstPerformance.C
-     )
 
 #  add_library(rose_diagnostics ${rose_diagnostics_src}  )
 

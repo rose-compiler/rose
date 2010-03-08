@@ -1,17 +1,24 @@
-\chapter{AST Graph Generator}
+\chapter{Simple AST Graph Generator}
 \label{Tutorial:chapterASTGraphGenerator}
 
 \paragraph{What To Learn From This Example}
-This example shows how to generate and visualize the AST from any input program.
+This example shows how to generate and visualize a simplified AST (filtered
+out symbol tables and others for simplicity) from any input program.
 Each node of the graph in figure~\ref{tutorial:exampleOutputCodeGraph} shows
 a node of the Intermediate Representation (IR).  Each edge shows the connection
 of the IR nodes in memory. The generated graph shows the connection of different 
 IR nodes to form the AST.  The generation of such graphs is appropriate for small 
-input programs, chapter~\ref{Tutorial:chapterASTPDFGenerator} shows a mechanism 
+input programs, chapter~\ref{Tutorial:chapter_AST_PDF_Generator} shows a mechanism 
 using PDF files that is more appropriate to larger programs (e.g. 100K lines of code).
 More information about generation of specialized AST graphs can be found in 
 \ref{Tutorial:chapterGeneralASTGraphGeneration} and custom graph generation in
 \ref{Tutorial:chapterCustomGraphs}.
+
+Note that a similar utility program named \textit{dotGenerator} already exists within
+ROSE/exampleTranslators/DOTGenerator . 
+%(and includes a utility to output an alternative PDF representation (suitable for larger ASTs) as well). 
+It is also installed to \textit{ROSE\_INS/bin}.  
+
 
 \begin{figure}[!h]
 {\indent
@@ -44,9 +51,7 @@ code which is processed to generate a graph of the AST, generating a
 {\tt dot} file.   The {\tt dot} file is then processed
 using {\tt dot} to generate a postscript file~\ref{tutorial:exampleOutputCodeGraph}
 (within the {\tt Makefile}).
-Note that a similar utility program already exists within ROSE/exampleTranslators
-(and includes a utility to output an alternative PDF representation 
-(suitable for larger ASTs) as well).  Figure~\ref{tutorial:exampleOutputCodeGraph}
+Figure~\ref{tutorial:exampleOutputCodeGraph}
 (\TutorialExampleBuildDirectory/test.ps) can be found in the compile 
 tree (in the tutorial directory) and viewed directly using ghostview 
 or any postscript viewer to see more detail.
@@ -100,7 +105,7 @@ data members in the classes representing the IR nodes.
 
 
 
-
+%------------------------------------------------------------------------
 \chapter{AST Whole Graph Generator}
 \label{Tutorial:chapterASTWholeGraphGenerator}
 
@@ -114,16 +119,24 @@ a node of the Intermediate Representation (IR).  Each edge shows the connection
 of the IR nodes in memory. The generated graph shows the connection of different 
 IR nodes to form the AST and its additional attributes (e.g types, modifiers, etc).  
 The generation of such graphs is appropriate for very small 
-input programs, chapter~\ref{Tutorial:chapterASTPDFGenerator} shows a mechanism 
+input programs, chapter~\ref{Tutorial:chapter_AST_PDF_Generator} shows a mechanism 
 using PDF files that is more appropriate to larger programs (e.g. 100K lines of code).
 More information about generation of specialized AST graphs can be found in 
 \ref{Tutorial:chapterGeneralASTGraphGeneration} and custom graph generation in
 \ref{Tutorial:chapterCustomGraphs}.
 
+Again, a utility program, called
+\textit{dotGeneratorWholeASTGraph} is provided within ROSE to generate
+detailed dot graph for input code. It is available from
+\textit{ROSE\_BUILD/exampleTranslators/DOTGenerator} or
+\textit{ROSE\_INS/bin}. A set of options is available to further customize
+what types of AST nodes to be shown or hidden. Please consult the screen output of
+\textit{dotGeneratorWholeASTGraph -help} for details.
+
    {\em Viewing these dot files is best done using:} {\bf zgrviewer} at 
 {\tt http://zvtm.sourceforge.net/zgrviewer.html}.  This tool permits zooming
 in and out and viewing isolated parts of even very large graphs. {\bf Zgrviewer} permits 
-a more natural way of understanding the AST and its additioan IR nodes than the 
+a more natural way of understanding the AST and its additional IR nodes than the 
 pdf file displayed in these pages.  The few lines of code used to generate the
 graphs can be used on any input code to better understand how the AST represents
 different languages and their constructs.

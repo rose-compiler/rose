@@ -99,6 +99,7 @@ CXX_TESTCODES_REQUIRED_TO_COMPILE =
 CXX_TESTCODES_REQUIRED_TO_RUN =  \
 	hello1.cpp \
 	helloNested.cpp \
+	memberFunction.cpp \
 	objectPrivate.cpp \
 	objectFirstPrivate.cpp \
 	objectLastprivate.cpp \

@@ -146,7 +146,7 @@ isLink( const string & name )
 }
 
 
-    bool
+bool
 islinkOrPartOfLinkedDirectory( const string & fileName )
 {
     // In oorder to evaluate if this is a link we can't just check the file directly, 
@@ -303,8 +303,7 @@ display ( const StringUtility::FileNameLibrary & X, const string & label = "" )
 }
 
 
-
-    void 
+void 
 visitorTraversal::visit(SgNode* n)
 {
     SgStatement* statement = isSgStatement(n);
@@ -314,7 +313,7 @@ visitorTraversal::visit(SgNode* n)
 
 	// CH (2/1/2010): Get the real filename (not a symlink)
 	if(boost::filesystem::exists(filename))
-	    filename = canonicalize_file_name(filename.c_str());
+	    filename = realpath(filename.c_str(), NULL);
 
 	// Skip the case of compiler generated Sg_File_Info objects.
 	//if (previousFilename != filename && filename != "compilerGenerated")
@@ -392,6 +391,10 @@ void DeleteArg(vector<string>& args, const string& arg)
 int main(int argc, char * argv[])
 {
     vector<string> args(argv, argv+argc);
+    map<string, string> libs;
+    string app_path;
+
+#ifndef CXX_IS_ROSE_ANALYSIS
 
     using namespace boost::program_options;
     // Declare the supported options.
@@ -409,9 +412,6 @@ int main(int argc, char * argv[])
 	command_line_parser(argc, argv).options(desc).allow_unregistered().run();
     store(parsed, vm);
     notify(vm);    
-
-    map<string, string> libs;
-    string app_path;
 
     if (vm.count("help")) {
 	cout << desc << "\n";
@@ -451,6 +451,13 @@ int main(int argc, char * argv[])
 	DeleteArg(args, "--lib-path-name");
     }
 
+    pair<string, string> sp;
+    BOOST_FOREACH(sp, libs)
+    {
+	cout << sp.first << ' ' << sp.second << endl;
+    }
+#endif // CXX_IS_ROSE_ANALYSIS
+
     SgProject *project = frontend (args);
 
     visitorTraversal myvisitor;
@@ -460,5 +467,4 @@ int main(int argc, char * argv[])
 
     return backend(project);
 }
-
 
