@@ -589,15 +589,20 @@ RoseToTerm::getValueExpSpecific(SgValueExp* astNode) {
     val = new PrologInt(n->get_value());
   } else if (SgUnsignedLongLongIntVal* n = dynamic_cast<SgUnsignedLongLongIntVal*>(astNode)) {
     val = new PrologInt(n->get_value());
-  } else if(SgEnumVal* n = dynamic_cast<SgEnumVal*>(astNode)) { /*FIXME*/
+  } else if(SgEnumVal* n = dynamic_cast<SgEnumVal*>(astNode)) {
     /* value*/
-    val = new PrologInt(n->get_value()); 
+    // val = new PrologInt(n->get_value()); 
     /* name of value*/
-    val = new PrologAtom(n->get_name().getString());
+    // val = new PrologAtom(n->get_name().getString());
     /* name of declaration*/
     SgEnumType *type = isSgEnumDeclaration(n->get_declaration())->get_type();
     ROSE_ASSERT(type != NULL);
-    val = getEnumTypeSpecific(type);
+    // val = getEnumTypeSpecific(type);
+    return new PrologCompTerm("value_annotation",
+                              new PrologInt(n->get_value()),
+                              new PrologAtom(n->get_name().getString()),
+                              getEnumTypeSpecific(type),
+                              PPI(astNode));
   }
   /* float types */
   else if (SgFloatVal* n = dynamic_cast<SgFloatVal*>(astNode)) {
