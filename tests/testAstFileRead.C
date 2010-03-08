@@ -166,7 +166,7 @@ main ( int argc, char * argv[] )
   // cout  << endl << "Here we call the AST_FILE_IO :: readASTFromFile ..." << endl;
      for (int i= 0; i < numFiles; ++i)
         {
-       // cout  << "Here we read .... " << fileNames[i] << endl;
+        // cout  << "Here we read .... " << fileNames[i] << endl;
           AST_FILE_IO :: readASTFromFile ( fileNames[i] + ".binary" );
 
           currentNumberOfNodes = Sg_File_Info::numberOfNodes();
@@ -179,7 +179,7 @@ main ( int argc, char * argv[] )
        // Some of this information has to be setup after we call AST_FILE_IO::setStaticDataOfAst() for each AST.
        // AstFileSpecificInfo* astFileSpecificInformation = new AstFileSpecificInfo(SgNode::get_globalFunctionTypeTable(),previousNumberOfNodes,currentNumberOfNodes,Sg_File_Info::get_fileidtoname_map(),Sg_File_Info::get_nametofileid_map());
           AstFileSpecificInfo* astFileSpecificInformation = new AstFileSpecificInfo(previousNumberOfNodes,currentNumberOfNodes-1);
-          ROSE_ASSERT(astFileSpecificInformation != NULL);
+          ROSE_ASSERT(astFileSpecificInformation != NULL);  
           AstFileInfoArray.push_back(astFileSpecificInformation);
 
        // Track the positions of the base and bound of the Sg_File_Info list in the memory pool.
@@ -235,7 +235,7 @@ main ( int argc, char * argv[] )
              {
                SgProject* localProject = ast->getRootOfAst();
                SgFile*    localFile    = (*localProject)[0];
-               ROSE_ASSERT(localProject->numberOfFiles() == 1);
+               // ROSE_ASSERT(localProject->numberOfFiles() == 1);
 
             // Add the file to the global project. This also sets the parent of the input file. Is this a side-effect that we want?
                globalProject->set_file(*localFile);
@@ -258,7 +258,7 @@ main ( int argc, char * argv[] )
 #if 1
   // DQ (2/24/2010): Better to run this once at the end to avoid a significant bottleneck to the 
   // performance on large codes (it is n^2 in the size of the AST if run for each file separately).
-     AstTests::runAllTests(ast->getRootOfAst());
+     //AstTests::runAllTests(ast->getRootOfAst());
 #endif
 
   // Merge the function tables from each AST.
@@ -289,7 +289,8 @@ main ( int argc, char * argv[] )
   // printf ("AST_FILE_IO::vectorOfASTs.size() = %zu \n",AST_FILE_IO::vectorOfASTs.size());
   // AST_FILE_IO::display("Before writing the merged AST (before resetValidAstAfterWriting())");
 
-     string mergedFileName = "mergedFile.C";
+     //string mergedFileName = "mergedFile.C";
+     string mergedFileName = outputFileName;
      printf ("mergedFileName = %s numberOfNodes() = %d \n",mergedFileName.c_str(),numberOfNodes());
 
      printf ("Calling AST_FILE_IO::reset() \n");
