@@ -10,5 +10,6 @@ while [ -e $outputdir ]; do
 done
 mkdir $outputdir
 
-./measurements-vs $outputdir _srw-sg_nnh-sgs_nokeep_tail_aliases  --var-delete-tempvars --var-aliases-common-tail "$ANALYSIS_ARGS"
+./measurements-vs $outputdir _srw-sg_nnh-sgs_tail_aliases  --var-delete-tempvars --var-aliases-common-tail "$ANALYSIS_ARGS"
+./measurements-vs $outputdir _srw-sg_nnh-sgs_notail_aliases  --var-delete-tempvars --var-aliases-no-common-tail "$ANALYSIS_ARGS"
 

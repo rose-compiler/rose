@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# runs srw and nnh on all testcases in tests/comparison/
+# runs srw and nnh on all testcases in $TESTDIR
 # that end with .C
 # for each testcase these characteristics are recorded:
 #   - time for analysis [sec]
@@ -20,6 +20,9 @@
 # srw is always run with: --var-alias-from-summary-graph
 # nnh is always run with: --var-alias-from-graphset
 #
+
+#TESTDIR=tests/comparison
+TESTDIR=tests/sas2010
 
 cmdline="$0 $@"
 outputdir=$1
@@ -124,7 +127,7 @@ dollar='$'
 tab='\\t'
 
 # write data rows to $report
-find -L tests/comparison -type f -name \*.C | sort | while IFS= read -r testcase; do
+find -L $TESTDIR -type f -name \*.C | sort | while IFS= read -r testcase; do
   for col in ${output_fields_per_row}; do
     eval echo -ne "${dollar}${col}${tab}" >> $outputdir/$report
   done
