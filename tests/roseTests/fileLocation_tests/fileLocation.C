@@ -313,7 +313,11 @@ visitorTraversal::visit(SgNode* n)
 
 	// CH (2/1/2010): Get the real filename (not a symlink)
 	if(boost::filesystem::exists(filename))
-	    filename = canonicalize_file_name(filename.c_str());
+      {
+     // DQ (3/8/2010): canonicalize_file_name() is not available on MAC OSX.
+     // filename = canonicalize_file_name(filename.c_str());
+        filename = realpath(filename.c_str(),NULL);
+      }
 
 	// Skip the case of compiler generated Sg_File_Info objects.
 	//if (previousFilename != filename && filename != "compilerGenerated")
