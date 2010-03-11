@@ -22,7 +22,7 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIde
 # name of a file that is created when the test is successful (unsuccessful results are usually saved in *.result.tmp), the later
 # is a phony target.
 noinst_PROGRAMS = execFormatsTest testBinCFG testBinCG testElfStrtab testElfByteOrder testElfWordSize testElfSchulz \
-		testElfConstruct testPeConstruct shiftResizeSection findConstants disassemble testEtherInsns \
+		testElfConstruct testPeConstruct shiftResizeSection findConstants disassemble disassembleBuffer testEtherInsns \
 		expandCoreDump functionBoundaries findConstantsABI rot13
 
 # Parses an executable to produce a dump file (*.dump), an assembly file (rose_*.s), and a new executable created by unparsing
@@ -85,6 +85,10 @@ findConstantsABI_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 # Disassembles an executable according to various command-line switches.
 disassemble_SOURCES = disassemble.C
 disassemble_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+# Disassemble a file containing bare instructions
+disassembleBuffer_SOURCES = disassembleBuffer.C
+disassembleBuffer_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 testEtherInsns_SOURCES = testEtherInsns.C
 testEtherInsns_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
@@ -160,7 +164,11 @@ demo_disassemble: disassemble demo_findConstantsABI
 	./disassemble -rose:disassembler_search following,immediate,words,allbytes,unused,nonexe,deadend,unknown $(BINARY_SAMPLES)/i686-test1.O0.bin
 	@echo "output has been dumped to i686-test1.O0.bin.dump"
 
-demo_testBinCFG: testBinCFG demo_disassemble
+demo_disassembleBuffer: disassembleBuffer demo_disassemble
+	@echo; echo; echo "Demo for $<"; echo
+	./disassembleBuffer $(BINARY_SAMPLES)/buffer2.raw 0x8048310
+
+demo_testBinCFG: testBinCFG demo_disassembleBuffer
 	: no demo yet for testBinCFG
 
 demo_expandCoreDump: expandCoreDump demo_testBinCFG
@@ -325,6 +333,13 @@ test_disassemble.result: disassemble
 #	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_disassemble.ans >>$@.tmp 2>&1; \
 #	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
 #	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
+
+test_disassembleBuffer.result: disassembleBuffer
+	@echo "  TESTING $@"
+	@$(VALGRIND) ./disassembleBuffer $(BINARY_SAMPLES)/buffer2.raw 0x8048310 >test_disassembleBuffer.ans 2>$@.tmp; \
+	 [ $$? -eq 0 ] && diff -u {$(srcdir),.}/test_disassembleBuffer.ans >>$@.tmp 2>&1; \
+	 if [ $$? -eq 0 ]; then mv $@.tmp $@; \
+	 else sed 's/^/$@> /' <$@.tmp; exit 1; fi
 
 # disassemble will exit non-zero if the assembly doesn't result in an encoding identical to the original
 # We're using the buffer2.bin from projects/BinQ for now because it's 64-bit; the one in our own srcdir is 32-bit and
