@@ -112,7 +112,7 @@ int dfi_write_ShapeGraph_fp(FILE *fp, char *name, int n_graphs,  char *attrib, o
         
         fprintf(fp, "    node: { /*heap node*/ \n");
         fprintf(fp, "      title: \"%s-sg%d", name, n_graphs);
-        o_Node_print_fp(fp, node);
+        dfi_write_Node_fp(fp, node);
         fprintf(fp, "\"\n");
         fprintf(fp, "      label: \"");
         dfi_write_Node_fp(fp, node);
@@ -150,9 +150,9 @@ int dfi_write_ShapeGraph_fp(FILE *fp, char *name, int n_graphs,  char *attrib, o
 
     // all stack edges
     while (!o_StackEdgeList_is_empty(stack_edges)) {
-        o_StackEdge    edge = o_StackEdgeList_head(stack_edges);
-        o_VariableId    var = o_StackEdge_select_1(edge);
-        o_Node    vars = o_StackEdge_select_2(edge);
+        o_StackEdge edge = o_StackEdgeList_head(stack_edges);
+        o_VariableId var = o_StackEdge_select_1(edge);
+        o_Node      vars = o_StackEdge_select_2(edge);
 
         stack_edges = o_StackEdgeList_tail(stack_edges);
         fprintf(fp, "    edge: { /*stackedge*/\n");
@@ -160,7 +160,7 @@ int dfi_write_ShapeGraph_fp(FILE *fp, char *name, int n_graphs,  char *attrib, o
         o_VariableId_print_fp(fp, var);
         fprintf(fp, "\"\n");
         fprintf(fp, "      targetname: \"%s-sg%d", name, n_graphs);
-        o_Node_print_fp(fp, vars);
+        dfi_write_Node_fp(fp, vars);
         fprintf(fp, "\"\n");
         fprintf(fp, "    }\n\n");
     }
@@ -175,10 +175,10 @@ int dfi_write_ShapeGraph_fp(FILE *fp, char *name, int n_graphs,  char *attrib, o
         heap_edges = o_HeapEdgeList_tail(heap_edges);
         fprintf(fp, "    edge: { /*heapedge*/\n");
         fprintf(fp, "      sourcename: \"%s-sg%d", name, n_graphs);
-        o_Node_print_fp(fp, node1);
+        dfi_write_Node_fp(fp, node1);
         fprintf(fp, "\"\n");
         fprintf(fp, "      targetname: \"%s-sg%d", name, n_graphs);
-        o_Node_print_fp(fp, node2);
+        dfi_write_Node_fp(fp, node2);
         fprintf(fp, "\"\n");
         fprintf(fp, "      label: \"");
         o_VariableId_print_fp(fp, var);

@@ -424,7 +424,12 @@ rec_is_same_node(alias_type, summary_is_shared, a_sels, a:a_rest, b_sels, b:b_re
 // (*(a->b)).c->d yield
 // [a,b,c,d]
 selectors_visited_by_expr::Expression->VarList;
-selectors_visited_by_expr(e) = rec_selectors_visited_by_expr(e, expr_depth(e));
+selectors_visited_by_expr(e) =
+  let list = rec_selectors_visited_by_expr(e, expr_depth(e)); in
+  //let dummy = print("for expression: ") print(e) print("\n") false; in
+  //let dummy = print("we found: ") print(list) print("\n\n") false; in
+  // a->n1->n2->n3->n4 == [a,n1,n2,n3,n4]
+  list;
 
 rec_selectors_visited_by_expr::Expression,snum->VarList;
 rec_selectors_visited_by_expr(_, -1) = []; // intentionally -1, topmost case in iteration
@@ -441,7 +446,11 @@ rec_selectors_visited_by_expr(e, e_cursor) =
 // returns list of all heapnodes on a path given by the expression
 // [node(n), node(n-1), node(n-2), ..., node(0)]
 nodes_visited_by_expr::Expression,ShapeGraph,Node->NodeList;
-nodes_visited_by_expr(e,g,null) = rec_nodes_visited_by_expr(e, expr_depth(e),g,[],null);
+nodes_visited_by_expr(e,g,null) =
+  let nodes = rec_nodes_visited_by_expr(e, expr_depth(e),g,[],null); in
+  //let dummy = print("for expr: ") print(e) print("\n") false; in
+  //let dummy = print("found nd: ") print(nodes) print("\n\n\n") false; in
+  nodes;
 
 rec_nodes_visited_by_expr::Expression,snum,ShapeGraph,NodeList,Node->NodeList;
 rec_nodes_visited_by_expr(_,       -1, _, trail,    _) = trail; // intentionally -1, beyond topmost case in iteration
@@ -494,7 +503,8 @@ is_may_alias_summarygraph(a,b,((S,H),IS) as g) =
       rest_b = tl(sels_b); in
   if var_exists(var_a,g) && var_exists(var_b,g) then
     //let dummy = println("0: found vars ", var_a, " , ", var_b) false; in
-    hcd_foreach_lhs_stackedge(stackedgelist_by_var(var_a,S), rest_a, stackedgelist_by_var(var_b,S), rest_b, g)
+    hcd_foreach_lhs_stackedge(stackedgelist_by_var(var_a,S), rest_a,
+                              stackedgelist_by_var(var_b,S), rest_b, g)
   else
     //let dummy = println("0: not found vars ", var_a, " , ", var_b) false; in
     false

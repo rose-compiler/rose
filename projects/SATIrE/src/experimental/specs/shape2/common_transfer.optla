@@ -45,7 +45,6 @@ ReturnAssignment(VariableSymbol(_) as sym_ret,VariableSymbol(_) as sym_tmp),_:
 
 
 
-stmt,edge: @;
 
 //ExprStatement(_),_: @;
 //ScopeStatement(WhileStmt(exprExprStatement)),_: @;
@@ -55,3 +54,4 @@ stmt,edge: @;
 //stmt,edge:
 //  print("error ") print(stmt_asttext(stmt)) print(",") print(edge) print(" -- ") error("unhandled statement,edge pair");
 
+stmt,edge: @;
