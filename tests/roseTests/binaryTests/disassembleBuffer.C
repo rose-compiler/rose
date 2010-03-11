@@ -10,7 +10,9 @@
 
 #include "rose.h"
 
+#define __STDC_FORMAT_MACROS
 #include <fcntl.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/mman.h>
@@ -52,7 +54,8 @@ public:
     SgAsmBlock* partition(const Disassembler::InstructionMap& insns, rose_addr_t entry_va, const std::string& name) {
         clear();
         add_instructions(insns);
-        add_function(entry_va, SgAsmFunctionDeclaration::FUNC_ENTRY_POINT, name);
+        add_function(entry_va, SgAsmFunctionDeclaration::FUNC_USERDEF, name);
+        analyze_cfg();
         return build_ast();
     }
 };
@@ -82,17 +85,32 @@ main(int argc, char* argv[])
     SgAsmGenericFile *file = new SgAsmGenericFile();
 
     /* In order to disassemble, we need a Disassembler object.  The most convenient way to do this is to ask the Disassembler
-     * class to create a disassembler from its list of known disassembler subclasses.  We need to provide a information about
+     * class to create a disassembler from its list of known disassembler subclasses.  We need to provide information about
      * what kind of instructions will be disassembled, which is done through the instruction set architecutre (InsSetArchecture)
      * data member of an SgAsmGenericHeader object. Fortunately, the SgAsmPEFileHeader subclass' constructor fills in
      * reasonable values for the instruction set (i.e., 32-bit x86). */
     SgAsmPEFileHeader *pe = new SgAsmPEFileHeader(file);
     Disassembler *d = Disassembler::create(pe);
+    d->set_search(Disassembler::SEARCH_FOLLOWING | Disassembler::SEARCH_DEADEND);
     
-    /* Disassemble. The two null arguments can be used to obtain information about successor addresses (where the recursive
-     * disassembly attempted to disassemble something outside the memory map) and failures (addresses and error messages where
-     * disassembly failed. */
-    Disassembler::InstructionMap insns = d->disassembleBuffer(&mm, vaddr, NULL, NULL);
+    /* Disassemble the mapped buffer. The last two arguments are optional, but we show how to use them here. */
+    Disassembler::BadMap errors;
+    Disassembler::AddressSet successors;
+    Disassembler::InstructionMap insns = d->disassembleBuffer(&mm, vaddr, &successors, &errors);
+
+    /* Report about any disassembly errors. */
+    for (Disassembler::BadMap::iterator ei=errors.begin(); ei!=errors.end(); ++ei)
+        printf("Error at 0x%08"PRIx64": %s\n", ei->second.ip, ei->second.mesg.c_str());
+
+    /* Report which additional addresses the disassembler would like to have seen. */
+    fputs("Successors:", stdout);
+    if (!successors.empty()) {
+        for (Disassembler::AddressSet::iterator si=successors.begin(); si!=successors.end(); ++si)
+            printf(" 0x%08"PRIx64, *si);
+        fputc('\n', stdout);
+    } else {
+        fputs(" buffer is self contained.\n", stdout);
+    }
 
     /* A partitioner can reorganize the instructions into an AST if you desire.  This is necessary if you plan to use any
      * ROSE's analysis or output functions since they operate exclusively on the tree representation. */
