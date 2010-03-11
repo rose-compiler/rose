@@ -54,12 +54,12 @@ function run_analysis {
   echo "$binary" | grep nnh99 > /dev/null 2>&1 && ANALYSIS_NAME=nnh99
 
   if [ $ANALYSIS_NAME = 'srw98' ]; then
-    cmd="$cmd --var-alias-from-summary-graph"
+    zusatz=" --var-alias-from-summary-graph"
   else
-    cmd="$cmd --var-alias-from-graphset"
+    zusatz=" --var-alias-from-graphset"
   fi
 
-  cmd="$binary $OPTIONS $testcase"
+  cmd="$binary $zusatz $OPTIONS $testcase"
   echo -n $cmd
   time $cmd > $outputdir/tmp_output$setting 2>&1
   rc=$?
