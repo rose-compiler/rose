@@ -5,129 +5,6 @@
 #include "jni_token_funcs.h"
 #include "FortranParserAction.h"
 
-void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_name(JNIEnv *env, jobject this, jobject jarg_0)
-{
-	Token_t *carg_0 = NULL;
-
-#ifdef DEBUG
-	printf("hello from %s\n", "name");
-#endif
-
-	if(jarg_0 != NULL)
-		carg_0 = convert_Java_token(env, jarg_0);
-
-	c_action_name(carg_0);
-
-	if(carg_0 != NULL)
-		register_token(carg_0);
-}
-
-void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_format(JNIEnv *env, jobject this)
-{
-
-#ifdef DEBUG
-	printf("hello from %s\n", "format");
-#endif
-
-
-	c_action_format();
-
-}
-
-void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_substring(JNIEnv *env, jobject this, jboolean jarg_0)
-{
-	int carg_0;
-
-#ifdef DEBUG
-	printf("hello from %s\n", "substring");
-#endif
-
-	carg_0 = (int)jarg_0;
-
-	c_action_substring(carg_0);
-
-}
-
-void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_rename(JNIEnv *env, jobject this, jobject jarg_0, jobject jarg_1, jobject jarg_2, jobject jarg_3, jobject jarg_4, jobject jarg_5)
-{
-	Token_t *carg_0 = NULL;
-	Token_t *carg_1 = NULL;
-	Token_t *carg_2 = NULL;
-	Token_t *carg_3 = NULL;
-	Token_t *carg_4 = NULL;
-	Token_t *carg_5 = NULL;
-
-#ifdef DEBUG
-	printf("hello from %s\n", "rename");
-#endif
-
-	if(jarg_0 != NULL)
-		carg_0 = convert_Java_token(env, jarg_0);
-	if(jarg_1 != NULL)
-		carg_1 = convert_Java_token(env, jarg_1);
-	if(jarg_2 != NULL)
-		carg_2 = convert_Java_token(env, jarg_2);
-	if(jarg_3 != NULL)
-		carg_3 = convert_Java_token(env, jarg_3);
-	if(jarg_4 != NULL)
-		carg_4 = convert_Java_token(env, jarg_4);
-	if(jarg_5 != NULL)
-		carg_5 = convert_Java_token(env, jarg_5);
-
-	c_action_rename(carg_0, carg_1, carg_2, carg_3, carg_4, carg_5);
-
-	if(carg_0 != NULL)
-		register_token(carg_0);
-	if(carg_1 != NULL)
-		register_token(carg_1);
-	if(carg_2 != NULL)
-		register_token(carg_2);
-	if(carg_3 != NULL)
-		register_token(carg_3);
-	if(carg_4 != NULL)
-		register_token(carg_4);
-	if(carg_5 != NULL)
-		register_token(carg_5);
-}
-
-void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_prefix(JNIEnv *env, jobject this, jint jarg_0)
-{
-	int carg_0;
-
-#ifdef DEBUG
-	printf("hello from %s\n", "prefix");
-#endif
-
-	carg_0 = (int)jarg_0;
-
-	c_action_prefix(carg_0);
-
-}
-
-void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_expr(JNIEnv *env, jobject this)
-{
-
-#ifdef DEBUG
-	printf("hello from %s\n", "expr");
-#endif
-
-
-	c_action_expr();
-
-}
-
-void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_block(JNIEnv *env, jobject this)
-{
-
-#ifdef DEBUG
-	printf("hello from %s\n", "block");
-#endif
-
-
-	c_action_block();
-
-}
-
 void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_cleanUp(JNIEnv *env, jobject this)
 {
 
@@ -428,23 +305,6 @@ void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_extended_1intrinsic_1o
 
 	c_action_extended_intrinsic_op();
 
-}
-
-void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_label(JNIEnv *env, jobject this, jobject jarg_0)
-{
-	Token_t *carg_0 = NULL;
-
-#ifdef DEBUG
-	printf("hello from %s\n", "label");
-#endif
-
-	if(jarg_0 != NULL)
-		carg_0 = convert_Java_token(env, jarg_0);
-
-	c_action_label(carg_0);
-
-	if(carg_0 != NULL)
-		register_token(carg_0);
 }
 
 void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_label_1list_1_1begin(JNIEnv *env, jobject this)
@@ -1801,25 +1661,6 @@ void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_enumerator_1def_1stmt(
 		register_token(carg_1);
 	if(carg_2 != NULL)
 		register_token(carg_2);
-}
-
-void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_enumerator(JNIEnv *env, jobject this, jobject jarg_0, jboolean jarg_1)
-{
-	Token_t *carg_0 = NULL;
-	int carg_1;
-
-#ifdef DEBUG
-	printf("hello from %s\n", "enumerator");
-#endif
-
-	if(jarg_0 != NULL)
-		carg_0 = convert_Java_token(env, jarg_0);
-	carg_1 = (int)jarg_1;
-
-	c_action_enumerator(carg_0, carg_1);
-
-	if(carg_0 != NULL)
-		register_token(carg_0);
 }
 
 void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_enumerator_1list_1_1begin(JNIEnv *env, jobject this)
@@ -3622,18 +3463,6 @@ void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_common_1block_1object(
 
 	if(carg_0 != NULL)
 		register_token(carg_0);
-}
-
-void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_variable(JNIEnv *env, jobject this)
-{
-
-#ifdef DEBUG
-	printf("hello from %s\n", "variable");
-#endif
-
-
-	c_action_variable();
-
 }
 
 void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_designator(JNIEnv *env, jobject this, jboolean jarg_0)
@@ -5783,18 +5612,6 @@ void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_association(JNIEnv *en
 		register_token(carg_0);
 }
 
-void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_selector(JNIEnv *env, jobject this)
-{
-
-#ifdef DEBUG
-	printf("hello from %s\n", "selector");
-#endif
-
-
-	c_action_selector();
-
-}
-
 void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_end_1associate_1stmt(JNIEnv *env, jobject this, jobject jarg_0, jobject jarg_1, jobject jarg_2, jobject jarg_3, jobject jarg_4)
 {
 	Token_t *carg_0 = NULL;
@@ -6555,6 +6372,117 @@ void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_stop_1code(JNIEnv *env
 
 	if(carg_0 != NULL)
 		register_token(carg_0);
+}
+
+void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_allstop_1stmt(JNIEnv *env, jobject this, jobject jarg_0, jobject jarg_1, jobject jarg_2, jobject jarg_3, jboolean jarg_4)
+{
+	Token_t *carg_0 = NULL;
+	Token_t *carg_1 = NULL;
+	Token_t *carg_2 = NULL;
+	Token_t *carg_3 = NULL;
+	int carg_4;
+
+#ifdef DEBUG
+	printf("hello from %s\n", "allstop_stmt");
+#endif
+
+	if(jarg_0 != NULL)
+		carg_0 = convert_Java_token(env, jarg_0);
+	if(jarg_1 != NULL)
+		carg_1 = convert_Java_token(env, jarg_1);
+	if(jarg_2 != NULL)
+		carg_2 = convert_Java_token(env, jarg_2);
+	if(jarg_3 != NULL)
+		carg_3 = convert_Java_token(env, jarg_3);
+	carg_4 = (int)jarg_4;
+
+	c_action_allstop_stmt(carg_0, carg_1, carg_2, carg_3, carg_4);
+
+	if(carg_0 != NULL)
+		register_token(carg_0);
+	if(carg_1 != NULL)
+		register_token(carg_1);
+	if(carg_2 != NULL)
+		register_token(carg_2);
+	if(carg_3 != NULL)
+		register_token(carg_3);
+}
+
+void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_sync_1all_1stmt(JNIEnv *env, jobject this, jobject jarg_0, jobject jarg_1, jobject jarg_2, jobject jarg_3, jboolean jarg_4)
+{
+	Token_t *carg_0 = NULL;
+	Token_t *carg_1 = NULL;
+	Token_t *carg_2 = NULL;
+	Token_t *carg_3 = NULL;
+	int carg_4;
+
+#ifdef DEBUG
+	printf("hello from %s\n", "sync_all_stmt");
+#endif
+
+	if(jarg_0 != NULL)
+		carg_0 = convert_Java_token(env, jarg_0);
+	if(jarg_1 != NULL)
+		carg_1 = convert_Java_token(env, jarg_1);
+	if(jarg_2 != NULL)
+		carg_2 = convert_Java_token(env, jarg_2);
+	if(jarg_3 != NULL)
+		carg_3 = convert_Java_token(env, jarg_3);
+	carg_4 = (int)jarg_4;
+
+	c_action_sync_all_stmt(carg_0, carg_1, carg_2, carg_3, carg_4);
+
+	if(carg_0 != NULL)
+		register_token(carg_0);
+	if(carg_1 != NULL)
+		register_token(carg_1);
+	if(carg_2 != NULL)
+		register_token(carg_2);
+	if(carg_3 != NULL)
+		register_token(carg_3);
+}
+
+void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_sync_1stat(JNIEnv *env, jobject this, jobject jarg_0)
+{
+	Token_t *carg_0 = NULL;
+
+#ifdef DEBUG
+	printf("hello from %s\n", "sync_stat");
+#endif
+
+	if(jarg_0 != NULL)
+		carg_0 = convert_Java_token(env, jarg_0);
+
+	c_action_sync_stat(carg_0);
+
+	if(carg_0 != NULL)
+		register_token(carg_0);
+}
+
+void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_sync_1stat_1list_1_1begin(JNIEnv *env, jobject this)
+{
+
+#ifdef DEBUG
+	printf("hello from %s\n", "sync_stat_list__begin");
+#endif
+
+
+	c_action_sync_stat_list__begin();
+
+}
+
+void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_sync_1stat_1list(JNIEnv *env, jobject this, jint jarg_0)
+{
+	int carg_0;
+
+#ifdef DEBUG
+	printf("hello from %s\n", "sync_stat_list");
+#endif
+
+	carg_0 = (int)jarg_0;
+
+	c_action_sync_stat_list(carg_0);
+
 }
 
 void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_scalar_1char_1constant(JNIEnv *env, jobject this)
@@ -7802,15 +7730,21 @@ void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_rename_1list(JNIEnv *e
 
 }
 
-void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_only(JNIEnv *env, jobject this)
+void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_only(JNIEnv *env, jobject this, jboolean jarg_0, jboolean jarg_1, jboolean jarg_2)
 {
+	int carg_0;
+	int carg_1;
+	int carg_2;
 
 #ifdef DEBUG
 	printf("hello from %s\n", "only");
 #endif
 
+	carg_0 = (int)jarg_0;
+	carg_1 = (int)jarg_1;
+	carg_2 = (int)jarg_2;
 
-	c_action_only();
+	c_action_only(carg_0, carg_1, carg_2);
 
 }
 
@@ -8579,25 +8513,6 @@ void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_t_1prefix_1spec(JNIEnv
 		register_token(carg_0);
 }
 
-void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_suffix(JNIEnv *env, jobject this, jobject jarg_0, jboolean jarg_1)
-{
-	Token_t *carg_0 = NULL;
-	int carg_1;
-
-#ifdef DEBUG
-	printf("hello from %s\n", "suffix");
-#endif
-
-	if(jarg_0 != NULL)
-		carg_0 = convert_Java_token(env, jarg_0);
-	carg_1 = (int)jarg_1;
-
-	c_action_suffix(carg_0, carg_1);
-
-	if(carg_0 != NULL)
-		register_token(carg_0);
-}
-
 void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_result_1name(JNIEnv *env, jobject this)
 {
 
@@ -8940,15 +8855,228 @@ void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_start_1of_1file(JNIEnv
 	(*env)->ReleaseStringUTFChars(env, jarg_0, carg_0);
 }
 
-void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_end_1of_1file(JNIEnv *env, jobject this)
+void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_end_1of_1file(JNIEnv *env, jobject this, jstring jarg_0)
 {
+	const char *carg_0 = NULL;
 
 #ifdef DEBUG
 	printf("hello from %s\n", "end_of_file");
 #endif
 
+	if(jarg_0 != NULL)
+	{
+		if(env == NULL)
+		{
+			fprintf(stderr, "env is NULL!\n");
+			exit(1);
+		}
+		carg_0 = (*env)->GetStringUTFChars(env, jarg_0, NULL);
+	}
 
-	c_action_end_of_file();
+	c_action_end_of_file(carg_0);
+
+	(*env)->ReleaseStringUTFChars(env, jarg_0, carg_0);
+}
+
+void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_name(JNIEnv *env, jobject this, jobject jarg_0)
+{
+	Token_t *carg_0 = NULL;
+
+#ifdef DEBUG
+	printf("hello from %s\n", "name");
+#endif
+
+	if(jarg_0 != NULL)
+		carg_0 = convert_Java_token(env, jarg_0);
+
+	c_action_name(carg_0);
+
+	if(carg_0 != NULL)
+		register_token(carg_0);
+}
+
+void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_substring(JNIEnv *env, jobject this, jboolean jarg_0)
+{
+	int carg_0;
+
+#ifdef DEBUG
+	printf("hello from %s\n", "substring");
+#endif
+
+	carg_0 = (int)jarg_0;
+
+	c_action_substring(carg_0);
+
+}
+
+void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_format(JNIEnv *env, jobject this)
+{
+
+#ifdef DEBUG
+	printf("hello from %s\n", "format");
+#endif
+
+
+	c_action_format();
+
+}
+
+void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_rename(JNIEnv *env, jobject this, jobject jarg_0, jobject jarg_1, jobject jarg_2, jobject jarg_3, jobject jarg_4, jobject jarg_5)
+{
+	Token_t *carg_0 = NULL;
+	Token_t *carg_1 = NULL;
+	Token_t *carg_2 = NULL;
+	Token_t *carg_3 = NULL;
+	Token_t *carg_4 = NULL;
+	Token_t *carg_5 = NULL;
+
+#ifdef DEBUG
+	printf("hello from %s\n", "rename");
+#endif
+
+	if(jarg_0 != NULL)
+		carg_0 = convert_Java_token(env, jarg_0);
+	if(jarg_1 != NULL)
+		carg_1 = convert_Java_token(env, jarg_1);
+	if(jarg_2 != NULL)
+		carg_2 = convert_Java_token(env, jarg_2);
+	if(jarg_3 != NULL)
+		carg_3 = convert_Java_token(env, jarg_3);
+	if(jarg_4 != NULL)
+		carg_4 = convert_Java_token(env, jarg_4);
+	if(jarg_5 != NULL)
+		carg_5 = convert_Java_token(env, jarg_5);
+
+	c_action_rename(carg_0, carg_1, carg_2, carg_3, carg_4, carg_5);
+
+	if(carg_0 != NULL)
+		register_token(carg_0);
+	if(carg_1 != NULL)
+		register_token(carg_1);
+	if(carg_2 != NULL)
+		register_token(carg_2);
+	if(carg_3 != NULL)
+		register_token(carg_3);
+	if(carg_4 != NULL)
+		register_token(carg_4);
+	if(carg_5 != NULL)
+		register_token(carg_5);
+}
+
+void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_prefix(JNIEnv *env, jobject this, jint jarg_0)
+{
+	int carg_0;
+
+#ifdef DEBUG
+	printf("hello from %s\n", "prefix");
+#endif
+
+	carg_0 = (int)jarg_0;
+
+	c_action_prefix(carg_0);
+
+}
+
+void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_label(JNIEnv *env, jobject this, jobject jarg_0)
+{
+	Token_t *carg_0 = NULL;
+
+#ifdef DEBUG
+	printf("hello from %s\n", "label");
+#endif
+
+	if(jarg_0 != NULL)
+		carg_0 = convert_Java_token(env, jarg_0);
+
+	c_action_label(carg_0);
+
+	if(carg_0 != NULL)
+		register_token(carg_0);
+}
+
+void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_expr(JNIEnv *env, jobject this)
+{
+
+#ifdef DEBUG
+	printf("hello from %s\n", "expr");
+#endif
+
+
+	c_action_expr();
+
+}
+
+void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_block(JNIEnv *env, jobject this)
+{
+
+#ifdef DEBUG
+	printf("hello from %s\n", "block");
+#endif
+
+
+	c_action_block();
+
+}
+
+void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_selector(JNIEnv *env, jobject this)
+{
+
+#ifdef DEBUG
+	printf("hello from %s\n", "selector");
+#endif
+
+
+	c_action_selector();
+
+}
+
+void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_enumerator(JNIEnv *env, jobject this, jobject jarg_0, jboolean jarg_1)
+{
+	Token_t *carg_0 = NULL;
+	int carg_1;
+
+#ifdef DEBUG
+	printf("hello from %s\n", "enumerator");
+#endif
+
+	if(jarg_0 != NULL)
+		carg_0 = convert_Java_token(env, jarg_0);
+	carg_1 = (int)jarg_1;
+
+	c_action_enumerator(carg_0, carg_1);
+
+	if(carg_0 != NULL)
+		register_token(carg_0);
+}
+
+void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_suffix(JNIEnv *env, jobject this, jobject jarg_0, jboolean jarg_1)
+{
+	Token_t *carg_0 = NULL;
+	int carg_1;
+
+#ifdef DEBUG
+	printf("hello from %s\n", "suffix");
+#endif
+
+	if(jarg_0 != NULL)
+		carg_0 = convert_Java_token(env, jarg_0);
+	carg_1 = (int)jarg_1;
+
+	c_action_suffix(carg_0, carg_1);
+
+	if(carg_0 != NULL)
+		register_token(carg_0);
+}
+
+void Java_fortran_ofp_parser_c_jni_FortranParserActionJNI_variable(JNIEnv *env, jobject this)
+{
+
+#ifdef DEBUG
+	printf("hello from %s\n", "variable");
+#endif
+
+
+	c_action_variable();
 
 }
 

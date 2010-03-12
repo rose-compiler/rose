@@ -16,6 +16,7 @@
  *******************************************************************************/
 
 #include "sage3basic.h"
+// #include "rose.h"
 #include "fortran_support.h"
 
 // FMZ
@@ -11362,6 +11363,82 @@ void c_action_stop_code(Token_t * digitString)
         }
    }
 
+/*
+ * R856-F08 allstop-stmt
+ *   is ALL STOP [ stop-code ]
+ *   :	(label)? T_ALL T_STOP (stop_code)? T_EOS
+ *
+ * @param label Optional statement label
+ * @param allKeyword T_ALL token.
+ * @param stopKeyword T_STOP token.
+ * @param eos T_EOS token.
+ * @param hasStopCode True if the stop-code is present, false otherwise
+ *
+ * New v0.7.2
+ */
+void c_action_allstop_stmt(Token_t * label, Token_t * allKeyword,
+                           Token_t * stopKeyword, Token_t * eos, ofp_bool hasStopCode)
+{
+   printf ("In c_action_allstop_stmt() - this function needs to be implemented.\n");
+}
+
+/*
+ * R858-F08 sync-all-stmt
+ *   is SYNC ALL [([ sync-stat-list ])]
+ *   :	(label)? T_SYNC T_ALL (sync_stat_list)? T_EOS
+ *
+ * @param label Optional statement label
+ * @param syncKeyword T_SYNC token.
+ * @param allKeyword T_ALL token.
+ * @param eos T_EOS token.
+ * @param hasStopCode True if the sync-stat-list is present, false otherwise
+ *
+ * New v0.7.2
+ */
+void c_action_sync_all_stmt(Token_t * label, Token_t * syncKeyword,
+                            Token_t * allKeyword, Token_t * eos, ofp_bool hasStopCode)
+{
+   printf ("In c_action_sync_all_stmt() - this function needs to be implemented.\n");
+}
+
+/*
+ * R859-F08 sync-stat
+ *   is STAT = stat-variable
+ *   or ERRMSG = errmsg-variable
+ *   :	T_IDENT			// {'STAT','ERRMSG'} are variables}
+ *		T_EQUALS expr   // expr is a stat-variable or an errmsg-variable
+ *
+ * @param syncStat Identifier representing {'STAT','ERRMSG'}
+ *
+ * New v0.7.2
+ */
+void c_action_sync_stat(Token_t * syncStat)
+{
+   printf ("In c_action_sync_stat() - this function needs to be implemented.\n");
+}
+
+/*
+ * sync_stat_list__begin - helper function, see R859-F08 sync-stat
+ *
+ * New v0.7.2
+ */
+void c_action_sync_stat_list__begin()
+{
+   printf ("In c_action_sync_stat_list__begin() - this function needs to be implemented.\n");
+}
+
+/*
+ * sync_stat_list - helper function, see R859-F08 sync-stat
+ *   :    sync_stat ( T_COMMA sync_stat )*
+ * 
+ * @param count The number of items in the list.
+ *
+ * New v0.7.2
+ */
+void c_action_sync_stat_list(int count)
+{
+   printf ("In c_action_sync_stat_list() - this function needs to be implemented.\n");
+}
 
 /**
  * Unknown rule.
@@ -14961,9 +15038,20 @@ void c_action_rename_list(int count)
  * R1112
  * only
  *
+ *   : generic-spec
+ *   | only-use-name
+ *   | rename
+ *
+ * @param hasGenericSpec True if has a generic spec.
+ * @param hasRename True if has a rename
+ * @param hasOnlyUseName True if has an only use name
+ *
+ * Modified v0.7.2 (new arguments added)
  */
-void c_action_only()
+void c_action_only(ofp_bool hasGenericSpec, ofp_bool hasRename, ofp_bool hasOnlyUseName)
    {
+  //  - boolean hasGenericSpec, boolean hasRename, boolean hasOnlyUseName
+
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_only() \n");
 
@@ -16760,6 +16848,11 @@ void c_action_end_of_stmt(Token_t * eos)
   // ROSE_ASSERT(astNodeStack.empty() == true);
    }
 
+/*
+ * start_of_file
+ *
+ * @param filename The name of the file
+ */
 void c_action_start_of_file(const char *filename)
    {
   // New function to support Fortran include mechanism
@@ -16868,7 +16961,14 @@ void c_action_start_of_file(const char *filename)
      astIncludeStack.push_back(filenameString);
    }
 
-void c_action_end_of_file()
+/*
+ * end_of_file
+ *
+ * @param filename The name of the file
+ *
+ * Modified v0.7.2 (new argument added)
+ */
+void c_action_end_of_file(const char * filename)
    {
   // New function to support Fortran include mechanism
 
