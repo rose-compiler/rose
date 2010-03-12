@@ -723,7 +723,11 @@ fi
 # Call supporting macro for the Java path required by the Open Fortran Parser (for Fortran 2003 support)
 # Use our classpath in case the user's is messed up
 AS_SET_CATFILE([ABSOLUTE_SRCDIR], [`pwd`], [${srcdir}])
-CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-2.7.7.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.0.1.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-runtime-3.0.1.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/stringtemplate-3.1b1.jar:.
+
+# DQ (3/11/2010): Updating to new Fortran OFP version 0.7.2 with Craig.
+# CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-2.7.7.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.0.1.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-runtime-3.0.1.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/stringtemplate-3.1b1.jar:.
+CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/fortran-parser/lib/OpenFortranParser-0.7.2.jar:.
+
 export CLASSPATH
 AC_SUBST(CLASSPATH)
 ROSE_SUPPORT_JAVA # This macro uses JAVA_HOME
