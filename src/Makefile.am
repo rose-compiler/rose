@@ -122,6 +122,9 @@ lib_LTLIBRARIES = librose.la
 
 if ROSE_USE_OPEN_FORTRAN_PARSER
    JAVA_JVM_FLAGS = $(JAVA_JVM_LINK)
+
+OpenFortranParser-${OFP_VERSION}.jar:
+	cd ${top_builddir}/src/3rdPartyLibraries/fortran-parser; $(MAKE) get_jar_file
 endif
 
 librose_la_SOURCES = dummyCppFileForLibrose.C
@@ -137,6 +140,10 @@ librose_la_LIBADD = $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB_QT) -lm $(RT_LIB
 librose_la_LDFLAGS = -no-undefined
 #librose_la_LDFLAGS = $(ROSE_DWARF_LIBS_WITH_PATH)
 librose_la_DEPENDENCIES = $(libroseLibraries)
+
+if ROSE_USE_OPEN_FORTRAN_PARSER
+librose_la_DEPENDENCIES += OpenFortranParser-${OFP_VERSION}.jar
+endif
 
 # Build list of all required libraries so that they can be built in parallel
 # REQUIRED_LIBS = $(libdir)/libedg.la
