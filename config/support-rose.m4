@@ -796,8 +796,13 @@ if test "x$ofp_major_version_number" = "x0"; then
       if test "x$ofp_patch_version_number" = "x2"; then
          echo "Recognized an accepted patch version number."
       else
-         echo "ERROR: Could not identify the OFP patch version number."
-         exit 1
+         if test "x$ofp_patch_version_number" = "x1"; then
+            echo "Recognized an accepted patch version number ONLY for testing."
+         else
+            echo "ERROR: Could not identify the OFP patch version number."
+            exit 1
+         fi
+       # exit 1
       fi
    else
       if test "x$ofp_minor_version_number" = "x8"; then
