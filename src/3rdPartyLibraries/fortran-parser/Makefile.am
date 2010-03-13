@@ -32,3 +32,6 @@ get_new_jar_file:
 
 EXTRA_DIST = CMakeLists.txt
 
+clean-local:
+	rm -f OpenFortranParser-${OFP_VERSION}.jar
+
