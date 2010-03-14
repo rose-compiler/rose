@@ -144,12 +144,17 @@ extract_rose_required_ofp_source_files: get_jar_file
 	   echo "building $$f file"; \
       if test -e fortran/ofp/parser/c/$$f; then \
          echo "Using OFP source file fortran/ofp/parser/c/$$f from version $(OFP_VERSION) found in OpenFortranParser-${OFP_VERSION}.jar file."; \
-         mv fortran/ofp/parser/c/$$f $$f; \
+         cp fortran/ofp/parser/c/$$f $$f; \
       else \
          echo "Warning: fortran/ofp/parser/c/$$f is not found in jar file."; \
          if test "x$(OFP_VERSION)" = "x0.7.2"; then \
             echo "Using OFP source file fortran/ofp/parser/c/$$f from version $(OFP_VERSION) distributed with ROSE."; \
-            cp ${srcdir}/$$f $$f; \
+            if test -e $$f; then \
+               echo "Note: OFP source file $$f is already present."; \
+            else \
+               echo "Copying OFP source file $$f from source tree to build tree."; \
+               cp ${srcdir}/$$f $$f; \
+            fi; \
          else \
             echo "Error: can't use default (version 0.7.2) OFP source file $$f with OpenFortranParser-${OFP_VERSION}.jar file."; \
             exit 1; \
