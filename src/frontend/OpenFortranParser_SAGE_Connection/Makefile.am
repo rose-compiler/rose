@@ -55,6 +55,21 @@ libfortran_ofp_parser_c_jni_FortranParserActionJNI_la_SOURCES = FortranParserAct
 include_HEADERS = rose_fortran_token_maps.h  rose_token_defs.h fortran_support.h jserver.h ofp.h FortranModuleInfo.h FortranParserState.h
 
 # DQ (3/13/2010): Extract the required OFP source files needed for ROSE Fortran support.
+# OFP_SOURCE_FILES = FortranParserAction.h c_actions_jni.c token.h token.c ActionEnums.h jni_token_funcs.h jni_token_funcs.c
+OFP_SOURCE_FILES = \
+   ${top_builddir}/src/3rdPartyLibraries/fortran-parser/FortranParserAction.h \
+   ${top_builddir}/src/3rdPartyLibraries/fortran-parser/c_actions_jni.c \
+   ${top_builddir}/src/3rdPartyLibraries/fortran-parser/token.h \
+   ${top_builddir}/src/3rdPartyLibraries/fortran-parser/token.c \
+   ${top_builddir}/src/3rdPartyLibraries/fortran-parser/ActionEnums.h \
+   ${top_builddir}/src/3rdPartyLibraries/fortran-parser/jni_token_funcs.h \
+   ${top_builddir}/src/3rdPartyLibraries/fortran-parser/jni_token_funcs.c
+
+# DQ (3/13/2010): The OFP files are extracted when we build the sageSupport.C file
+# (well before buildign the files here).  We don't want to specify the rules twice 
+# since that is a problem for the "make distcheck" rule.
+# FortranParserActionROSE.C: $(OFP_SOURCE_FILES)
+# $(OFP_SOURCE_FILES): extract_rose_required_ofp_source_files
 FortranParserActionROSE.C: extract_rose_required_ofp_source_files
 
 extract_rose_required_ofp_source_files:
