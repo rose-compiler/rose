@@ -31,8 +31,8 @@ class AST_FILE_IO
        static SgNode* getPointerFromGlobalIndex ( unsigned long globalIndex ); 
        static std::vector<AstData*> vectorOfASTs ;
        static AstData *actualRebuildAst; 
-     public:
 
+     public:
     // sets up the lost of pool sizes that contain valid entries 
        static void startUp ( SgProject* root ); 
 
@@ -73,6 +73,12 @@ class AST_FILE_IO
        template <class TYPE>
        static void registerAttribute ( ); 
        static const std::map <std::string, CONSTRUCTOR>& getRegisteredAttributes ();
+
+    // DQ (2/27/2010): Reset the AST File I/O data structures to permit writing a file after the reading and merging of files.
+       static void reset();
+
+    // DQ (2/27/2010): Show what the values are for debugging (e.g. write after read).
+       static void display(const std::string & label);
    };
 
 

@@ -8,20 +8,6 @@ extern "C" {
 #include "token.h"
 typedef int ofp_bool;
 
-void c_action_name(Token_t *carg_0);
-
-void c_action_format();
-
-void c_action_substring(ofp_bool carg_0);
-
-void c_action_rename(Token_t *carg_0, Token_t *carg_1, Token_t *carg_2, Token_t *carg_3, Token_t *carg_4, Token_t *carg_5);
-
-void c_action_prefix(int carg_0);
-
-void c_action_expr();
-
-void c_action_block();
-
 void c_action_generic_name_list__begin();
 
 void c_action_generic_name_list(int carg_0);
@@ -63,8 +49,6 @@ void c_action_intrinsic_operator();
 void c_action_defined_operator(Token_t *carg_0, ofp_bool carg_1);
 
 void c_action_extended_intrinsic_op();
-
-void c_action_label(Token_t *carg_0);
 
 void c_action_label_list__begin();
 
@@ -211,8 +195,6 @@ void c_action_enum_def(int carg_0);
 void c_action_enum_def_stmt(Token_t *carg_0, Token_t *carg_1, Token_t *carg_2, Token_t *carg_3, Token_t *carg_4);
 
 void c_action_enumerator_def_stmt(Token_t *carg_0, Token_t *carg_1, Token_t *carg_2);
-
-void c_action_enumerator(Token_t *carg_0, ofp_bool carg_1);
 
 void c_action_enumerator_list__begin();
 
@@ -423,8 +405,6 @@ void c_action_common_block_object_list__begin();
 void c_action_common_block_object_list(int carg_0);
 
 void c_action_common_block_object(Token_t *carg_0, ofp_bool carg_1);
-
-void c_action_variable();
 
 void c_action_designator(ofp_bool carg_0);
 
@@ -676,8 +656,6 @@ void c_action_association_list(int carg_0);
 
 void c_action_association(Token_t *carg_0);
 
-void c_action_selector();
-
 void c_action_end_associate_stmt(Token_t *carg_0, Token_t *carg_1, Token_t *carg_2, Token_t *carg_3, Token_t *carg_4);
 
 void c_action_select_type_construct();
@@ -731,6 +709,16 @@ void c_action_continue_stmt(Token_t *carg_0, Token_t *carg_1, Token_t *carg_2);
 void c_action_stop_stmt(Token_t *carg_0, Token_t *carg_1, Token_t *carg_2, ofp_bool carg_3);
 
 void c_action_stop_code(Token_t *carg_0);
+
+void c_action_allstop_stmt(Token_t *carg_0, Token_t *carg_1, Token_t *carg_2, Token_t *carg_3, ofp_bool carg_4);
+
+void c_action_sync_all_stmt(Token_t *carg_0, Token_t *carg_1, Token_t *carg_2, Token_t *carg_3, ofp_bool carg_4);
+
+void c_action_sync_stat(Token_t *carg_0);
+
+void c_action_sync_stat_list__begin();
+
+void c_action_sync_stat_list(int carg_0);
 
 void c_action_scalar_char_constant();
 
@@ -868,7 +856,7 @@ void c_action_rename_list__begin();
 
 void c_action_rename_list(int carg_0);
 
-void c_action_only();
+void c_action_only(ofp_bool carg_0, ofp_bool carg_1, ofp_bool carg_2);
 
 void c_action_only_list__begin();
 
@@ -946,8 +934,6 @@ void c_action_prefix_spec(ofp_bool carg_0);
 
 void c_action_t_prefix_spec(Token_t *carg_0);
 
-void c_action_suffix(Token_t *carg_0, ofp_bool carg_1);
-
 void c_action_result_name();
 
 void c_action_end_function_stmt(Token_t *carg_0, Token_t *carg_1, Token_t *carg_2, Token_t *carg_3, Token_t *carg_4);
@@ -976,9 +962,33 @@ void c_action_end_of_stmt(Token_t *carg_0);
 
 void c_action_start_of_file(const char *carg_0);
 
-void c_action_end_of_file();
+void c_action_end_of_file(const char *carg_0);
 
 void c_action_cleanUp();
+
+void c_action_name(Token_t *carg_0);
+
+void c_action_substring(ofp_bool carg_0);
+
+void c_action_format();
+
+void c_action_rename(Token_t *carg_0, Token_t *carg_1, Token_t *carg_2, Token_t *carg_3, Token_t *carg_4, Token_t *carg_5);
+
+void c_action_prefix(int carg_0);
+
+void c_action_label(Token_t *carg_0);
+
+void c_action_expr();
+
+void c_action_block();
+
+void c_action_selector();
+
+void c_action_enumerator(Token_t *carg_0, ofp_bool carg_1);
+
+void c_action_suffix(Token_t *carg_0, ofp_bool carg_1);
+
+void c_action_variable();
 
 #ifdef __cplusplus
 }

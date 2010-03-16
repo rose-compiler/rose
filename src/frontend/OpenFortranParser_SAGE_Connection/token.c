@@ -65,18 +65,22 @@ extern "C" {
 
   void free_token_list()
   {
-	 int i;
+     int i;
 
-	 for(i = 0; i < num_tokens; i++)
-		if(token_list[i] != NULL)
-		  free_token(token_list[i]);
+     for (i = 0; i < num_tokens; i++) {
+        if (token_list[i] != NULL) {
+           free_token(token_list[i]);
+        }
+     }
 
-         if (num_tokens > 0) {
-           free(token_list);
-           token_list = NULL;
-         }
+     if (token_list != NULL) {
+        num_tokens = 0;
+        token_list_size = 0;
+        free(token_list);
+        token_list = NULL;
+     }
 
-	 return;
+     return;
   }
 
   void register_token(Token_t *tmp_token)

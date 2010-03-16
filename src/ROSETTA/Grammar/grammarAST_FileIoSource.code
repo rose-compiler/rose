@@ -275,7 +275,10 @@ $REPLACE_COMPRESSASTINMEMEORYPOOL
 void
 AST_FILE_IO :: resetValidAstAfterWriting ( )
    {
-#if 0
+     printf ("Inside of AST_FILE_IO::resetValidAstAfterWriting() \n");
+
+// DQ (2/26/2010): Test this uncommented.
+#if 1
 $REPLACE_RESETVALIDASTAFTERWRITING
 #endif
      freepointersOfCurrentAstAreSetToGlobalIndices = false;
@@ -299,17 +302,36 @@ AST_FILE_IO :: areFreepointersContainingGlobalIndices ( )
      break with an assert.
 */
 unsigned long
-AST_FILE_IO :: getGlobalIndexFromSgClassPointer ( SgNode* pointer )
+AST_FILE_IO::getGlobalIndexFromSgClassPointer ( SgNode* pointer )
   {
      unsigned long globalIndex = 0;
      if ( pointer != NULL )
         {
 #if FILE_IO_EXTRA_CHECK
           assert ( freepointersOfCurrentAstAreSetToGlobalIndices == true );
+#if 0
+       // Debugging code
+          printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): pointer = %p \n",pointer);
+          printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): pointer = %p = %s \n",pointer,pointer->class_name().c_str());
+          printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): pointer->p_freepointer = %p \n",pointer->p_freepointer);
+          printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): AST_FileIO::IS_VALID_POINTER() = %p \n",AST_FileIO::IS_VALID_POINTER());
+          printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): pointer = %p = %s \n",pointer,pointer->class_name().c_str());
+#endif
           assert ( pointer->p_freepointer != AST_FileIO::IS_VALID_POINTER() );
 #endif
-          globalIndex = (unsigned long) (pointer->p_freepointer) ;
+
+          globalIndex = (unsigned long) (pointer->p_freepointer);
+
 #if FILE_IO_EXTRA_CHECK
+          if (globalIndex == 0)
+             {
+               printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): globalIndex = %lu \n",globalIndex);
+               printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): pointer = %p \n",pointer);
+               printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): pointer = %p = %s \n",pointer,pointer->class_name().c_str());
+               printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): pointer->p_freepointer = %p \n",pointer->p_freepointer);
+               printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): AST_FileIO::IS_VALID_POINTER() = %p \n",AST_FileIO::IS_VALID_POINTER());
+               printf ("In AST_FILE_IO::getGlobalIndexFromSgClassPointer(): pointer = %p = %s \n",pointer,pointer->class_name().c_str());
+             }
           assert (  0 < globalIndex );
           assert ( AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()) <= globalIndex );
           assert ( globalIndex < AST_FILE_IO::getAccumulatedPoolSizeOfNewAst(pointer->variantT()+1) );
@@ -746,3 +768,69 @@ AST_FILE_IO :: readASTFromString ( const std::string& s )
     std::istringstream inFile(s);
     return AST_FILE_IO::readASTFromStream(inFile);
   }
+
+
+// DQ (2/27/2010): Reset the AST File I/O data structures to permit writing a file after the reading and merging of files.
+void
+AST_FILE_IO::reset()
+   {
+  // This function reset the static data in AST_FILE_IO so that files read can 
+  // be written out again (e.g. after a merge of reading multiple files).
+
+     freepointersOfCurrentAstAreSetToGlobalIndices = false;
+
+     for (int i = 0; i < V_SgNumVariants; i++)
+        {
+       // listOfMemoryPoolSizes[i] = 0;
+        }
+
+     registeredAttributes.clear();
+
+     for (size_t i = 0; i < vectorOfASTs.size(); i++)
+        {
+          vectorOfASTs[i] = NULL;
+        }
+     vectorOfASTs.clear();
+
+     actualRebuildAst = NULL;
+   }
+
+
+// DQ (2/27/2010): Show what the values are for debugging (e.g. write after read).
+void
+AST_FILE_IO::display(const std::string & label)
+   {
+  // This function is useful for viewing the static (private) data member in the AST_FILE_IO class.
+
+     printf ("In AST_FILE_IO::display (label = %s) \n",label.c_str());
+
+     printf ("freepointersOfCurrentAstAreSetToGlobalIndices = %s \n",freepointersOfCurrentAstAreSetToGlobalIndices ? "true" : "false");
+
+     int numberOfDifferentIRnodes = 0;
+     for (int i = 0; i < V_SgNumVariants; i++)
+        {
+          if (listOfMemoryPoolSizes[i] > 0)
+             {
+               printf ("listOfMemoryPoolSizes [%s] = %lu \n",roseGlobalVariantNameList[i],listOfMemoryPoolSizes[i]);
+               numberOfDifferentIRnodes++;
+             }
+        }
+     printf ("Number of different types of IR nodes = %d \n",numberOfDifferentIRnodes);
+
+     printf ("registeredAttributes.size() = %zu \n",registeredAttributes.size());
+     for (std::map <std::string,CONSTRUCTOR>::iterator i = registeredAttributes.begin(); i != registeredAttributes.end(); i++)
+        {
+       // This is a map of strings to function pointers (registered pack and unpack functions).
+          printf ("i->first = %s  i->second = member function \n",i->first.c_str());
+        }
+
+     printf ("vectorOfASTs.size() = %zu \n",vectorOfASTs.size());
+     for (size_t i = 0; i < vectorOfASTs.size(); i++)
+        {
+       // This is a map of strings to function pointers (registered pack and unpack functions).
+          printf ("vectorOfASTs[%zu] = %p \n",i,vectorOfASTs[i]);
+        }
+
+     printf ("actualRebuildAst = %p \n",actualRebuildAst);
+   }
+

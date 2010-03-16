@@ -6,6 +6,50 @@
 
 using namespace std;
 
+void testAST( SgProject* project )
+   {
+     class Traversal : public SgSimpleProcessing
+        {
+          public:
+               Traversal() {}
+               void visit ( SgNode* n )
+                  {
+                    SgLocatedNode* locatedNode = isSgLocatedNode(n); 
+                    if (locatedNode != NULL)
+                       {
+                         AttachedPreprocessingInfoType* comments = locatedNode->getAttachedPreprocessingInfo();
+
+                         if (comments != NULL)
+                            {
+                              printf ("Found attached comments (at %p of type: %s): \n",locatedNode,locatedNode->sage_class_name());
+                              AttachedPreprocessingInfoType::iterator i;
+                              for (i = comments->begin(); i != comments->end(); i++)
+                                 {
+                                   ROSE_ASSERT ( (*i) != NULL );
+                                   printf ("          Attached Comment (relativePosition=%s): %s\n",
+                                        ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
+                                        (*i)->getString().c_str());
+#if 1
+                                // This does not appear to be a valid object when read in from an AST file.
+                                   printf ("Comment/Directive getNumberOfLines = %d getColumnNumberOfEndOfString = %d \n",(*i)->getNumberOfLines(),(*i)->getColumnNumberOfEndOfString());
+#endif
+#if 1
+                                // This does not appear to be a valid object when read in from an AST file.
+                                   (*i)->get_file_info()->display("comment/directive location");
+#endif
+                                 }
+                            }
+                       }
+                  }
+        };
+
+     Traversal counter;
+     counter.traverse(project,preorder);
+   }
+
+
+
+
 class AstFileSpecificInfo
    {
      public:
@@ -71,10 +115,11 @@ void mergeStaticASTFileInformation(vector<AstFileSpecificInfo*> & AstFileInfoArr
 int
 main ( int argc, char * argv[] )
    {
-     ROSE_ASSERT(argc >= 0);
-     if (argc == 0)
+  // DQ (2/26/2010): Use the last name as the output file name for the generated AST (written back out).
+     ROSE_ASSERT(argc > 1);
+     if (argc <= 1)
         {
-          printf ("Error: This AST file reader requires the name of a binary AST file. \n");
+          printf ("Error: This AST file reader requires the name of a binary AST file AND the output filename for the merged binary AST file. \n");
           ROSE_ASSERT(false);
         }
 
@@ -84,12 +129,20 @@ main ( int argc, char * argv[] )
   // ROSE_ASSERT(isSgFunctionTypeTable(SgNode::get_globalFunctionTypeTable()) != NULL);
 #endif
 
-     int numFiles = argc - 1;
-     std::vector<std::string> fileNames;
+     int numFiles = argc - 2;
+     vector<std::string> fileNames;
      for (int i= 0; i < numFiles; ++i)
         {
-          fileNames.push_back(argv[i+1]) ;
+          fileNames.push_back(argv[i+1]);
         }
+
+     string outputFileName = argv[argc-1];
+     printf ("Number of file = %zu Output filename = %s \n",fileNames.size(),outputFileName.c_str());
+
+#if 0
+     printf ("Exiting after test of output name specification. \n");
+     ROSE_ASSERT(false);
+#endif
 
 #if 0
      cout << "################ In astFileRead.C ############## " << endl;
@@ -113,8 +166,9 @@ main ( int argc, char * argv[] )
   // cout  << endl << "Here we call the AST_FILE_IO :: readASTFromFile ..." << endl;
      for (int i= 0; i < numFiles; ++i)
         {
-       // cout  << "Here we read .... " << fileNames[i] << endl;
+          cout  << "Here we will read .... " << fileNames[i] << endl;
           AST_FILE_IO :: readASTFromFile ( fileNames[i] + ".binary" );
+          cout  << "Here we just read .... " << fileNames[i] << endl;
 
           currentNumberOfNodes = Sg_File_Info::numberOfNodes();
 
@@ -164,43 +218,38 @@ main ( int argc, char * argv[] )
        // fileidtoname_mapArray.push_back(Sg_File_Info::get_fileidtoname_map());
        // nametofileid_mapArray.push_back(Sg_File_Info::get_nametofileid_map());
 
+       // testAST(ast->getRootOfAst());
+
 #if 0
        // DQ (2/24/2010): This is a significant bottleneck to the performance on large codes since it is n^2 in the size of the AST.
           AstTests::runAllTests(ast->getRootOfAst());
 #endif
-
+#if 0
+       // To read and merge the separate AST files, we don't have to call the backend.
           backend(ast->getRootOfAst());
-#if 1
+#endif
           if (globalProject == NULL)
              {
                globalProject = ast->getRootOfAst();
-#if 0
-               globalFunctionTypeTable = SgNode::get_globalFunctionTypeTable();
-               printf ("In loop reading AST files: globalFunctionTypeTable = %p \n",globalFunctionTypeTable);
-#endif
              }
             else
              {
                SgProject* localProject = ast->getRootOfAst();
                SgFile*    localFile    = (*localProject)[0];
-               ROSE_ASSERT(localProject->numberOfFiles() == 1);
 
-#if 0
-               SgFunctionTypeTable* localFunctionTypeTable = SgNode::get_globalFunctionTypeTable();
-               printf ("In loop reading AST files: localFunctionTypeTable = %p \n",localFunctionTypeTable);
-            // ROSE_ASSERT(localFunctionTypeTable != globalFunctionTypeTable);
-#endif
+            // DQ (3/1/2010): Merged files that are reread will have more than one SgFile object.
+            // ROSE_ASSERT(localProject->numberOfFiles() == 1);
+
             // Add the file to the global project. This also sets the parent of the input file. Is this a side-effect that we want?
                globalProject->set_file(*localFile);
-#if 0
+#if 1
                printf ("globalProject = %p numberOfFiles() = %d \n",globalProject,globalProject->numberOfFiles());
-
-//             localFile->set_parent(project);
+#endif
 //             delete localProject;
-#endif
              }
-#endif
         }
+
+     printf ("Size of AST = %d \n",numberOfNodes());
 
 #if 0
      for (int i= 0; i < numFiles; ++i)
@@ -221,16 +270,57 @@ main ( int argc, char * argv[] )
 
      mergeStaticASTFileInformation(AstFileInfoArray);
 
-  // printf ("Before processing via DOT: globalProject = %p numberOfFiles() = %d \n",globalProject,globalProject->numberOfFiles());
+     printf ("Size of AST (after merge) = %d \n",numberOfNodes());
+
+#if 0
+  // Output an example of the value of p_freepointer.
+     printf ("AST_FILE_IO::areFreepointersContainingGlobalIndices() = %s \n",AST_FILE_IO::areFreepointersContainingGlobalIndices() ? "treu" : "false");
+     printf ("BEFORE resetValidAstAfterWriting(): globalProject->get_freepointer() = %p \n",globalProject->get_freepointer());
+  // AST_FILE_IO :: resetValidAstAfterWriting();
+     printf ("AFTER resetValidAstAfterWriting(): globalProject->get_freepointer() = %p \n",globalProject->get_freepointer());
+
+  // Initialization for file I/O.
+  // AST_FILE_IO::clearAllMemoryPools();
+#endif
+
+  // Custom test of AST (for problems that appears to be specific to writing out the merged AST).
+  // testAST(globalProject);
 
 #if 1
+  // DQ (2/26/2010): Output an example of the value of p_freepointer for debugging.
+  // printf ("globalProject->get_freepointer()  = %p \n",globalProject->get_freepointer());
+  // printf ("AST_FILE_IO::vectorOfASTs.size() = %zu \n",AST_FILE_IO::vectorOfASTs.size());
+  // AST_FILE_IO::display("Before writing the merged AST (before resetValidAstAfterWriting())");
+
+  // string mergedFileName = "mergedFile.C";
+     string mergedFileName = outputFileName;
+     printf ("mergedFileName = %s numberOfNodes() = %d \n",mergedFileName.c_str(),numberOfNodes());
+
+     printf ("Calling AST_FILE_IO::reset() \n");
+     AST_FILE_IO::reset();
+
+  // printf ("Calling AST_FILE_IO::resetValidAstAfterWriting() \n");
+  // AST_FILE_IO::resetValidAstAfterWriting();
+  // AST_FILE_IO::display("Before writing the merged AST");
+
+  // Now write out the merged AST.
+     printf ("Calling AST_FILE_IO::startUp()... \n");
+     AST_FILE_IO::startUp(globalProject);
+
+     printf ("Writing the AST to disk... \n");
+     AST_FILE_IO::writeASTToFile ( mergedFileName + ".binary" );
+#endif
+
+  // printf ("Before processing via DOT: globalProject = %p numberOfFiles() = %d \n",globalProject,globalProject->numberOfFiles());
+
+#if 0
   // Output an optional graph of the AST (just the tree, when active). Note that we need to multiple file version 
   // of this with includes so that we can present a single SgProject rooted AST with multiple SgFile objects.
   // generateDOT ( *globalProject );
      generateDOT_withIncludes ( *globalProject, "aggregatedAST.dot" );
 #endif
 
-#if 1
+#if 0
   // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
      const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 8000;
      generateAstGraph(globalProject,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);

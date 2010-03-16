@@ -199,10 +199,11 @@ long StorageClassMemoryManagement<TYPE> :: getSizeOfData() const
    {
      return sizeOfData;
    }
-                                                                                                                                                                                                                          
+
 // print data that is stored, only used for debugging 
 template <class TYPE> 
-void StorageClassMemoryManagement<TYPE> :: print () const
+// void StorageClassMemoryManagement<TYPE> :: print () const
+void StorageClassMemoryManagement<TYPE>::displayStorageClassData() const
    {
   // DQ (8/24/2006): Fixed to avoid compiler warning.
   // for (unsigned long i = 0; i < getSizeOfData(); ++i)
@@ -215,7 +216,6 @@ void StorageClassMemoryManagement<TYPE> :: print () const
           std::cout << memoryBlockList[(positionInStaticMemoryPool+i-offset)/blockSize][offset];
         }
    }
-                                                                                                                                                                                                                          
 
 /* method for writing the memoryBlockList to disk. Only the amount of the data and the static
    data gets stored. The plain data (positionInStaticMemoryPool, sizeOfData) is stored by the
@@ -253,7 +253,6 @@ void StorageClassMemoryManagement<TYPE> :: writeToFile(std::ostream& outputFileS
         }
    }
 
-                                                                                                                                                                                                                          
 /* reading the data from a file. Since we read first the total amount of datai ( stored in
    filledUpTo ), the memory pool is created in the manner, that is has only one memory block
    with filledUpTo size, i.e. memoryBlockSize is set to filledUpTo. Reasons for this
@@ -862,7 +861,8 @@ void EasyStorage <CONTAINER<std::string> > :: storeDataInEasyStorageClass(const 
 
 
 template <template <class A> class CONTAINER >
-void EasyStorage <CONTAINER<std::string> > ::  print()
+// void EasyStorage <CONTAINER<std::string> > ::  print()
+void EasyStorage <CONTAINER<std::string> >::displayEasyStorageData()
    {
 #if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
      assert ( Base::memoryBlockList != NULL );
@@ -987,7 +987,8 @@ void EasyStorage <Rose_STL_Container<std::string> > :: storeDataInEasyStorageCla
    }
 
 
-void EasyStorage <Rose_STL_Container<std::string> > ::  print()
+// void EasyStorage <Rose_STL_Container<std::string> >::print()
+void EasyStorage <Rose_STL_Container<std::string> >::displayEasyStorageData()
    {
 #if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
      assert ( Base::memoryBlockList != NULL );
@@ -1001,7 +1002,9 @@ void EasyStorage <Rose_STL_Container<std::string> > ::  print()
 #if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
           assert ( Base::memoryBlockList[(Base::positionInStaticMemoryPool+i-offset)/Base::blockSize] != NULL );
 #endif
-          Base::memoryBlockList[(Base::positionInStaticMemoryPool+i-offset)/Base::blockSize][offset].print();
+       // Base::memoryBlockList[(Base::positionInStaticMemoryPool+i-offset)/Base::blockSize][offset].print();
+       // Base::memoryBlockList[(Base::positionInStaticMemoryPool+i-offset)/Base::blockSize][offset].displayEasyStorageData();
+          Base::memoryBlockList[(Base::positionInStaticMemoryPool+i-offset)/Base::blockSize][offset].displayStorageClassData();
           std::cout << std::endl;
         }
    }
@@ -1512,12 +1515,16 @@ void EasyStorage <AstAttributeMechanism*> :: readFromFile (std::istream& inputFi
    **      Implementations for EasyStorage <PreprocessingInfo*>                          **
    ****************************************************************************************
 */
-void EasyStorage<PreprocessingInfo*> :: storeDataInEasyStorageClass(PreprocessingInfo* info)
+void EasyStorage<PreprocessingInfo*>::storeDataInEasyStorageClass(PreprocessingInfo* info)
    {
   // JH (04/21/2006): Adding the storing of the Sg_File_Info pointer
   // fileInfoIndex = AST_FILE_IO::getGlobalIndexFromSgClassPointer(info->getFile_Info());
      ROSE_ASSERT(info != NULL);
      ROSE_ASSERT(info->get_file_info() != NULL);
+
+  // printf ("In EasyStorage<PreprocessingInfo*>::storeDataInEasyStorageClass(): info->get_file_info() = %p \n",info->get_file_info());
+  // printf ("In EasyStorage<PreprocessingInfo*>::storeDataInEasyStorageClass(): info->get_file_info()->get_freepointer() = %p \n",info->get_file_info()->get_freepointer());
+
      fileInfoIndex = AST_FILE_IO::getGlobalIndexFromSgClassPointer(info->get_file_info());
   // printf ("Saving fileInfoIndex = %d \n",fileInfoIndex);
 
@@ -1555,24 +1562,34 @@ void EasyStorage<PreprocessingInfo*> :: storeDataInEasyStorageClass(Preprocessin
    }
 
 
-PreprocessingInfo* EasyStorage<PreprocessingInfo*> :: rebuildDataStoredInEasyStorageClass() const
+PreprocessingInfo* EasyStorage<PreprocessingInfo*>::rebuildDataStoredInEasyStorageClass() const
    {
-      assert ( this != NULL );
-      PreprocessingInfo* returnInfo  = NULL;
+     assert ( this != NULL );
+     PreprocessingInfo* returnInfo  = NULL;
 #if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
-      assert ( Base::actualBlock <= 1 );
-      assert ( (0 < Base::getSizeOfData() && Base::actual!= NULL) || ( Base::getSizeOfData() <= 0 ) );
+     assert ( Base::actualBlock <= 1 );
+     assert ( (0 < Base::getSizeOfData() && Base::actual!= NULL) || ( Base::getSizeOfData() <= 0 ) );
 #endif
-      if ( 0 < Base::getSizeOfData() )
+     if ( 0 < Base::getSizeOfData() )
          {
         // DQ (4/22/2006): This constructor can not build any IR node or it appears 
-        // that the memory pool will become corupted resulting the a bad AST.
-           returnInfo = new PreprocessingInfo;
+        // that the memory pool will become corrupted resulting the a bad AST.
+           returnInfo = new PreprocessingInfo();
            ROSE_ASSERT(returnInfo != NULL);
         // JH (04/21/2006): Adding the storing of the Sg_File_Info pointer
         // returnInfo->setFile_Info((Sg_File_Info*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex(fileInfoIndex);
-        // printf ("Using fileInfoIndex = %d to get Sg_File_Info object \n",fileInfoIndex);
+        // printf ("Using fileInfoIndex = %zu to get Sg_File_Info object \n",fileInfoIndex);
            returnInfo->set_file_info((Sg_File_Info*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex(fileInfoIndex)));
+#if 0
+           printf ("Check the file Info object just read... \n");
+           printf ("returnInfo = %p \n",returnInfo);
+        // We will be calling the unpacked() functions for attributes later, so at this point the string will be empty.
+           printf ("returnInfo->getString().size() = %zu (ok if empty string: unpacked() functions for attributes called later) \n",returnInfo->getString().size());
+           printf ("returnInfo->getString() = %s (ok if empty string: unpacked() functions for attributes called later) \n",returnInfo->getString().c_str());
+           printf ("returnInfo->get_file_info() = %p \n",returnInfo->get_file_info());
+           printf ("returnInfo->get_file_info()->get_freepointer() = %p \n",returnInfo->get_file_info()->get_freepointer());
+           printf ("returnInfo->get_file_info()->get_freepointer() = %zu \n",(size_t)returnInfo->get_file_info()->get_freepointer());
+#endif
         // if there is any data in the pool at all
            if ( Base::actual != NULL  && 0 < Base::getSizeOfData() )
               {
@@ -1588,7 +1605,8 @@ PreprocessingInfo* EasyStorage<PreprocessingInfo*> :: rebuildDataStoredInEasySto
            ROSE_ASSERT(returnInfo != NULL);
         // returnInfo->display("Reconstructed in AST File I/O");
          }
-      return returnInfo;
+
+     return returnInfo;
    }
 
 void EasyStorage <PreprocessingInfo*> :: arrangeMemoryPoolInOneBlock()
@@ -1831,6 +1849,40 @@ void EasyStorage <std::vector<PreprocessingInfo*> > :: readFromFile (std::istrea
    }
 
 
+// DQ (2/27/2010): Added this function since it was not present (and was not used until I needed it to debug the File I/O).
+// void EasyStorage <AttachedPreprocessingInfoType*>::print()
+void EasyStorage <AttachedPreprocessingInfoType*>::displayEasyStorageData()
+   {
+#if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
+     assert ( Base::memoryBlockList != NULL );
+#endif
+
+     printf ("positionInStaticMemoryPool = %lu \n",positionInStaticMemoryPool);
+     printf ("sizeOfData                 = %ld \n",sizeOfData);
+     printf ("(static) filledUpTo        = %lu \n",filledUpTo);
+     printf ("(static) blockSize         = %lu \n",blockSize);
+     printf ("(static) actualBlock       = %u \n",actualBlock);
+     printf ("(static) blocksAllocated   = %u \n",blocksAllocated);
+     printf ("(static) memoryBlockList   = %p \n",memoryBlockList);
+     printf ("(static) actual            = %p \n",actual);
+
+     printf ("Iterating over the objects in the  Base::memoryBlockList size = %ld \n",Base::getSizeOfData());
+
+  // DQ (8/24/2006): Fixed compiler warning
+  // for (unsigned long i = 0; i < Base::getSizeOfData(); ++i)
+     for (long i = 0; i < Base::getSizeOfData(); ++i)
+        {
+          long offset = (Base::positionInStaticMemoryPool+i)%Base::blockSize;
+#if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
+          assert ( Base::memoryBlockList[(Base::positionInStaticMemoryPool+i-offset)/Base::blockSize] != NULL );
+#endif
+       // Base::memoryBlockList[(Base::positionInStaticMemoryPool+i-offset)/Base::blockSize][offset].print();
+       // Base::memoryBlockList[(Base::positionInStaticMemoryPool+i-offset)/Base::blockSize][offset].displayEasyStorageData();
+          Base::memoryBlockList[(Base::positionInStaticMemoryPool+i-offset)/Base::blockSize][offset].displayStorageClassData();
+          std::cout << std::endl;
+        }
+   }
+
 
 /* special implementation for omitting compiler instantiation errors*/
 void EasyStorage <AttachedPreprocessingInfoType*> :: storeDataInEasyStorageClass(AttachedPreprocessingInfoType* data_)
@@ -1845,7 +1897,12 @@ void EasyStorage <AttachedPreprocessingInfoType*> :: storeDataInEasyStorageClass
        // AttachedPreprocessingInfoType::list<PreprocessingInfo*>::const_iterator copy_ = data_->begin();
        // Rose_STL_Container<PreprocessingInfo*>::const_iterator copy_ = data_->begin();
           AttachedPreprocessingInfoType::const_iterator copy_ = data_->begin();
-          long offset = setPositionAndSizeAndReturnOffset ( data_->size() ) ;
+          long offset = setPositionAndSizeAndReturnOffset ( data_->size() );
+
+       // printf ("In storeDataInEasyStorageClass(): offset = %ld Base::blockSize = %ld Base::memoryBlockList = %p \n",offset,Base::blockSize,Base::memoryBlockList);
+       // Can't call print here! Base::getNewMemoryBlock() needs to be called first.
+       // print();
+
        // if the new data does not fit in the actual block
           if (0 < offset)
              { 
@@ -1870,9 +1927,21 @@ void EasyStorage <AttachedPreprocessingInfoType*> :: storeDataInEasyStorageClass
             // get a new memory block
                Base::actual = Base::getNewMemoryBlock();
              }
+
+       // printf ("In storeDataInEasyStorageClass(): copy the rest of the data offset = %ld \n",offset);
+       // displayEasyStorageData();
+
        // put (the rest of) the data in a new memory block
-         for ( ; copy_ != data_->end(); ++copy_, ++Base::actual )
+          for ( ; copy_ != data_->end(); ++copy_, ++Base::actual )
              {
+#if 0
+            // DQ (2/28/2010): This was helpful in debuggin the packing and unpacking of the PreprocessingInfo attributes.
+               printf ("(*copy_) = %p \n",(*copy_));
+               printf ("(*copy_)->getString() = %s \n",(*copy_)->getString().c_str());
+               printf ("(*copy_)->get_file_info() = %p \n",(*copy_)->get_file_info());
+               printf ("(*copy_)->get_file_info()->get_freepointer() = %p \n",(*copy_)->get_file_info()->get_freepointer());
+               printf ("(*copy_)->get_file_info()->get_freepointer() = %zu \n",(size_t)(*copy_)->get_file_info()->get_freepointer());
+#endif
                Base::actual->storeDataInEasyStorageClass(*copy_);
              }
         }

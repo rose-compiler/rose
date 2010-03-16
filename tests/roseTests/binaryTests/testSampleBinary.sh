@@ -114,6 +114,7 @@ tests="$(egrep ^$sample: $CONFIG)"
 [ -n "$tests" ] || tests="$(egrep '^\*:' $CONFIG)"
 [ -n "$tests" ] || tests="*: $DEFAULT_TESTS"
 tests="${tests##*:}" # strip off the sample name
+tests="${tests%%#*}" # strip off comment, if any
 
 for testname in $tests; do
     if [ -n "$do_cleanup" ]; then
