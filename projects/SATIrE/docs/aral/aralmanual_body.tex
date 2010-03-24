@@ -28,7 +28,7 @@ exchange between program analysis tools.
 
 \chapter{Introduction}
 \label{section:aral}
-The analysis results annotation language is designed to be suitable
+The analysis results annotation language (ARAL) is designed to be suitable
 for annotating flow-sensitive and context-sensitive analysis
 results. It allows to represent computed data of analysis tools, but
 without putting restrictions on the semantics of an analysis. Clearly,
@@ -43,7 +43,7 @@ tuples, maps, and some primitive data types. Additionally each
 analysis information has an Analysis Identifier. This identifier
 allows to associate semantics with the analysis information.
 
-The analysis results annotation language (ARAL) is designed to be a
+ARAL is designed to be a
 general format that allows to exchange analysis information between
 \satire{} and other tools. 
 
@@ -84,7 +84,7 @@ ARAL is a strictly typed language. A data element can only have
 exactly one type and there is no void type. For a proper use of the
 language it is important to be aware of the concept of the mapping
 section and the result section(s). In a result section analysis data
-is reqpresented independent from the intermediate representation on
+is represented independent from the intermediate representation on
 which is was computed. The mapping section defines how the analysis
 information of a result section is associated with locations in a
 source code of a program and similarly, how it is associated with
