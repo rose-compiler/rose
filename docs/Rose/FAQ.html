@@ -40,7 +40,8 @@
 
         <p align="left"> <font size="3" color="#0000ff">I get an "visibility" error using ROSE</font> </p>
 	<p>Using ROSE to parse code in form of : __attribute__((visibility("default")))	will not work right now as we currently support EDG 3.3 and there is no easy way to support this.
-           We are currently porting to EDG 4.0 where this problem will be solved.
+           We are currently porting to EDG 4.0 where this problem will be solved. What can I do? If you try to include mpi.h, try to define OMPI_DECLSPEC to empty space: "#ifndef OMPI_DECLSPEC ".
+	   This should help get around that problem for now. 
         </p>
         <p>
         <p> 
