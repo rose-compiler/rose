@@ -41,7 +41,7 @@
 	       library(astproperties),
 	       library(asttransform),
 	       library(utils),
-	       markers]).
+	       library(markers)]).
 
 % unweaved/5:
 % Info = info(marker_stem(M3_1_12), marker_count(1), [Annot1|..])
@@ -72,20 +72,20 @@ unweaved(Info, Info, Info, Pragma, Replacement) :-
   append(AL, [Annot], AL1),
   assert(annotation_list(AL1)).
 
-% Insert Markers for the ICFG Labels
-unweaved(Info, InfoInner, InfoPost,
-	 basic_block(Stmts, An, Ai, Fi),
-	 basic_block([MarkerPragma|Stmts], An, Ai, Fi)) :-
-  member(Stmt, Stmts),
-  \+ pragma_text(Stmt, wcet_loopbound(_)),
-  analysis_info(Stmt, analysis_info(AI)),
-  member(entry_exit_labels(Id-_), AI),
-  atom_concat(label, Id, Marker),
-  term_to_atom(wcet_marker(Marker), MarkerA),
-  pragma_text(MarkerPragma, MarkerA),
-  update_marker_info(Info, InfoInner, InfoPost,
-		     basic_block(Stmts, An, Ai, Fi), _Marker),
-  !.
+% % Insert Markers for the ICFG Labels
+% unweaved(Info, InfoInner, InfoPost,
+% 	 basic_block(Stmts, An, Ai, Fi),
+% 	 basic_block([MarkerPragma|Stmts], An, Ai, Fi)) :-
+%   member(Stmt, Stmts),
+%   \+ pragma_text(Stmt, wcet_loopbound(_)),
+%   analysis_info(Stmt, analysis_info(AI)),
+%   member(entry_exit_labels(Id-_), AI),
+%   atom_concat(label, Id, Marker),
+%   term_to_atom(wcet_marker(Marker), MarkerA),
+%   pragma_text(MarkerPragma, MarkerA),
+%   update_marker_info(Info, InfoInner, InfoPost,
+% 		     basic_block(Stmts, An, Ai, Fi), _Marker),
+%   !.
 
 
 unweaved(Info, InfoInner, InfoPost, Node, Node) :- 

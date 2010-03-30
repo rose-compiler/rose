@@ -75,7 +75,8 @@ nobase_dist_data_DATA = \
   termite/astproperties.pl  termite/loops.pl \
   termite/asttransform.pl   termite/utils.pl \
   termite/astwalk.pl        termite/callgraph.pl \
-  termite/termlint.pl       termite/termite_spec.pl 
+  termite/termlint.pl       termite/termite_spec.pl \
+  termite/markers.pl
 
 else # -----------------------------------------------------------------
 

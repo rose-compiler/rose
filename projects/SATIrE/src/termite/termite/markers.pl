@@ -1,9 +1,7 @@
 #!/usr/bin/pl -t testrun -f
 % -*- mode: prolog; truncate-lines: true; -*-
 
-:- module(markers,
-	  [update_marker_info/5
-	   ]).
+:- module(markers, [update_marker_info/5]).
 
 %-----------------------------------------------------------------------
 /** <module> Properties of abstract syntax trees

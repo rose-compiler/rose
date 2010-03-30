@@ -41,7 +41,7 @@
 	       library(astproperties),
 	       library(asttransform),
 	       library(utils),
-	       markers]).
+	       library(markers)]).
 
 % weaved/5:
 % Info = info(marker_stem(M3_1_12), marker_count(1), ...)

@@ -61,6 +61,7 @@ SRCFILES= \
   $(TERMITE_DIR)/callgraph.pl \
   $(TERMITE_DIR)/utils.pl \
   $(TERMITE_DIR)/loops.pl \
+  $(TERMITE_DIR)/markers.pl \
   $(top_srcdir)/tools/loopbounds/loopbounds.pl \
   $(TERMITE_DIR)/termlint.pl
 

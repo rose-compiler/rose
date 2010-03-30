@@ -57,6 +57,7 @@ GNU General Public License for more details.
 	       library(asttransform),
 	       library(astproperties),
 	       library(loops),
+	       library(markers),
 	       library(utils)]).
 :- use_module([while2for,comefrom]).
 :- use_module(library(assoc)),
@@ -759,6 +760,25 @@ pragma_fixup(I, I, I, Pragma, FixedPragma) :-
 
 pragma_fixup(I, I, I, T, T).
 
+
+% Insert Markers for the ICFG Labels
+marker_fixup(Info, InfoInner, InfoPost,
+	 basic_block(Stmts, An, Ai, Fi),
+	 basic_block([MarkerPragma|Stmts], An, Ai, Fi)) :-
+  member(Stmt, Stmts),
+  \+ pragma_text(Stmt, wcet_loopbound(_)),
+  analysis_info(Stmt, analysis_info(AI)),
+  member(entry_exit_labels(Id-_), AI),
+  atom_concat(label, Id, Marker),
+  term_to_atom(wcet_marker(Marker), MarkerA),
+  pragma_text(MarkerPragma, MarkerA),
+  update_marker_info(Info, InfoInner, InfoPost,
+		     basic_block(Stmts, An, Ai, Fi), _Marker),
+  !.
+
+marker_fixup(Info, InfoInner, InfoPost, Node, Node) :- 
+  update_marker_info(Info, InfoInner, InfoPost, Node, _Marker).
+
 %-----------------------------------------------------------------------
 % MAIN
 %-----------------------------------------------------------------------
@@ -785,8 +805,11 @@ annot(Input, Output) :-
 
   % Pragma Terms->Atoms
   transformed_with(X4, pragma_fixup, _, _, X5), !,
-  
-  X5 = Output.
+
+  % Insert Markers for the ICFG Labels
+  transformed_with(X5, marker_fixup, info(marker_stem('m'), marker_count(1)), _, X6), !,
+
+  X6 = Output.
 
 main :-
   catch((

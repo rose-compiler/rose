@@ -33,7 +33,7 @@ GNU General Public License for more details.
 	       library(asttransform),
 	       library(loops),
 	       library(utils),
-	       markers]).
+	       library(markers)]).
 
 % Before doing anything else, set up handling to halt if warnings or errors
 % are encountered.
