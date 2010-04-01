@@ -14,7 +14,7 @@
   #define ROSE_DLL_HELPER_DLL_EXPORT __declspec(dllexport)
   #define ROSE_DLL_HELPER_DLL_LOCAL
 #else
-  #if __GNUC__ >= 4
+#if __GNUC__ >= 4 && !defined(USE_ROSE)
     #define ROSE_DLL_HELPER_DLL_IMPORT __attribute__ ((visibility("default")))
 //    #define ROSE_DLL_HELPER_DLL_IMPORT 
     #define ROSE_DLL_HELPER_DLL_EXPORT __attribute__ ((visibility("default")))

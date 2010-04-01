@@ -646,7 +646,7 @@ AM_CONDITIONAL(ROSE_USE_GCC_OMP,test ! "$with_gcc_omp" = no)
 
 # JJW and TP (3-17-2008) -- added MPI support
 AC_ARG_WITH(mpi,
-[--with-mpi                    Configure option to have MPI-based tools built.],
+[--with-mpi                    Use this option ONLY if you inted to traverse the AST in parallel using MPI.],
 [ echo "Setting up optional MPI-based tools"
 ])
 AM_CONDITIONAL(ROSE_MPI,test "$with_mpi" = yes)

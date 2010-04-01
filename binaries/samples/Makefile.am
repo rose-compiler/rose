@@ -11,6 +11,7 @@ EXTRA_DIST = CMakeLists.txt                     \
     bgl-helloworld-mpicc                        \
     bgl-helloworld-mpixlc                       \
     buffer2.bin                                 \
+    buffer2.raw					\
     buffer2.rot13                               \
     exefmt.exe                                  \
     fnord.i386                                  \
