@@ -25,6 +25,10 @@
  *
  *  Once all functions are detected and basic blocks are created and assigned to the functions, the AST can be created by
  *  calling build_ast().
+ *
+ *  The tests/roseTests/binaryTests/disassembleBuffer.C file is an example of how a Partitioner can be specialized to generate
+ *  an AST from an Disassembler::InstructionMap that was produced from a buffer containing the raw machine instructions for a
+ *  single function.
  */
 class Partitioner {
 protected:

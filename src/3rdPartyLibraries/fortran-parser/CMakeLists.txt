@@ -4,7 +4,9 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 ########### install files ###############
 
-install(FILES  OpenFortranParser.jar DESTINATION ${INCLUDE_INSTALL_DIR} )
+# DQ (3/11/2010): Updating to new Fortran OFP version 0.7.2 with Craig.
+# install(FILES  OpenFortranParser.jar DESTINATION ${INCLUDE_INSTALL_DIR} )
+install(FILES  lib/OpenFortranParser-0.7.2.jar DESTINATION ${INCLUDE_INSTALL_DIR} )
 
 
 

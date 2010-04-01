@@ -224,16 +224,14 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
 }
 
 SgVariableDeclaration*
-SageBuilder::buildVariableDeclaration \
- (const std::string & name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
+SageBuilder::buildVariableDeclaration(const std::string & name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
 {
   SgName name2(name);
   return buildVariableDeclaration(name2,type, varInit,scope);
 }
 
 SgVariableDeclaration*
-SageBuilder::buildVariableDeclaration \
- (const char* name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
+SageBuilder::buildVariableDeclaration(const char* name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
 {
   SgName name2(name);
   return buildVariableDeclaration(name2,type, varInit,scope);
@@ -834,8 +832,7 @@ SgMemberFunctionDeclaration* SageBuilder::buildDefiningMemberFunctionDeclaration
 
 template <class actualFunction>
 actualFunction *
-SageBuilder::buildDefiningFunctionDeclaration_T \
-(const SgName & name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope)
+SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope)
 //	(const SgName & name, SgType* return_type, SgScopeStatement* scope=NULL)
 {
   if (scope == NULL)
@@ -871,8 +868,7 @@ SageBuilder::buildDefiningFunctionDeclaration_T \
     func = new actualFunction(name,func_type,NULL);
     ROSE_ASSERT(func);
 
-    func->set_firstNondefiningDeclaration\
-	(func_symbol->get_declaration()->get_firstNondefiningDeclaration());
+    func->set_firstNondefiningDeclaration(func_symbol->get_declaration()->get_firstNondefiningDeclaration());
 
     // fix up defining declarations before current statement
     func_symbol->get_declaration()->set_definingDeclaration(func);
@@ -914,12 +910,10 @@ SageBuilder::buildDefiningFunctionDeclaration_T \
 }
 
 SgFunctionDeclaration *
-SageBuilder::buildDefiningFunctionDeclaration \
-(const SgName & name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope)
-//	(const SgName & name, SgType* return_type, SgScopeStatement* scope=NULL)
+SageBuilder::buildDefiningFunctionDeclaration(const SgName& name, SgType* return_type, SgFunctionParameterList* paralist,
+                                              SgScopeStatement* scope)
 {
-  SgFunctionDeclaration * func= buildDefiningFunctionDeclaration_T<SgFunctionDeclaration> \
- (name,return_type,paralist,scope);
+  SgFunctionDeclaration * func= buildDefiningFunctionDeclaration_T<SgFunctionDeclaration>(name,return_type,paralist,scope);
   return func;
 }
 
@@ -945,16 +939,14 @@ SageBuilder::buildProcedureHeaderStatement(const char* name, SgType* return_type
 }
 
 SgFunctionDeclaration *
-SageBuilder::buildDefiningFunctionDeclaration \
-(const std::string & name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope)
+SageBuilder::buildDefiningFunctionDeclaration(const std::string & name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope)
 {
   SgName sg_name(name);
   return buildDefiningFunctionDeclaration(sg_name,return_type, paralist,scope);
 }
 
 SgFunctionDeclaration *
-SageBuilder::buildDefiningFunctionDeclaration \
-(const char* name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope)
+SageBuilder::buildDefiningFunctionDeclaration(const char* name, SgType* return_type, SgFunctionParameterList * paralist,SgScopeStatement* scope)
 {
   SgName sg_name(name);
   return buildDefiningFunctionDeclaration(sg_name,return_type, paralist,scope);

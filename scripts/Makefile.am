@@ -9,7 +9,7 @@ distributedScripts = \
      libtoolcp                     buildExampleRoseWorkspaceScript.sh \
      dotgenLetterPDF               dotgenLetterPNG \
      nmiBuildAndTestFarm           sample_binary_rules.pl \
-     bincompat-sig Error.pm Git.pm
+     bincompat-sig Error.pm Git.pm checkForInvalidSourceFiles.sh checkForInvalidHeaders.sh
 
 # scripts put into the distribution
 EXTRA_DIST = CMakeLists.txt README $(distributedScripts) buildExampleRoseWorkspaceDirectory hudson
