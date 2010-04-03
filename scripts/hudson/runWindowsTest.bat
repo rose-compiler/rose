@@ -17,7 +17,6 @@ flex.exe --version
 @echo Testing cmake.exe
 cmake.exe --version
 
-cd ../..
 @echo Current Dir : %CD%
 
 @echo -----------------------------
