@@ -14,6 +14,7 @@ include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 # first tests run by make check be the most relevant tests (e.g. can we compile C++ code).
 SUBDIRS = libltdl config src tests projects tutorial exampleTranslators docs tools scripts demo binaries
 
+
 ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I /usr/share/aclocal
 
 # Force rose.docs to be make by default 
