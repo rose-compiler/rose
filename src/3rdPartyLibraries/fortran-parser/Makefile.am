@@ -205,5 +205,5 @@ EXTRA_DIST = CMakeLists.txt $(OFP_SOURCE_FILES_WITHOUT_PATHS)
 
 clean-local:
 	rm -f OpenFortranParser-${OFP_VERSION}.jar FortranParserAction.h c_actions_jni.c
-	rm -f token.c token.h ActionEnums.h jni_token_funcs.h jni_token_funcs.c
+	rm -f token.c token.h ActionEnums.h jni_token_funcs.h jni_token_funcs.c IFortranParserAction.java
 
