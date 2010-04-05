@@ -9,8 +9,12 @@ dist_java_DATA = OpenFortranParser-${OFP_VERSION}.jar
 endif
 
 # Location of jar file on Open Fortran Parser web site changes from day to day...
+# To get the current setting, dowload the file from the web (e.g. using Firefox) and then click on the
+# entry in the "download window" to select the download link, copy the link into the macro below.
+# Later this needs to be setup via configure (if there is not better solution).
 # EXTERNAL_OFP_JAR_FILE_URL=http://hivelocity.dl.sourceforge.net/project/fortran-parser/OpenFortranParser/version_${OFP_VERSION}
-EXTERNAL_OFP_JAR_FILE_URL=http://iweb.dl.sourceforge.net/project/fortran-parser/OpenFortranParser/version_${OFP_VERSION}
+# EXTERNAL_OFP_JAR_FILE_URL=http://iweb.dl.sourceforge.net/project/fortran-parser/OpenFortranParser/version_${OFP_VERSION}
+EXTERNAL_OFP_JAR_FILE_URL=http://cdnetworks-us-2.dl.sourceforge.net/project/fortran-parser/OpenFortranParser/version_${OFP_VERSION}
 
 # OFP_JAR_FILE_DISTRIBUTION_PATH=lib
 # %.jar:
@@ -44,7 +48,7 @@ get_jar_file:
 TEST_OFP_VERSION=0.8.0
 TEST_EXTERNAL_OFP_JAR_FILE_URL=http://hivelocity.dl.sourceforge.net/project/fortran-parser/OpenFortranParser/version_${TEST_OFP_VERSION}
 
-get_new_jar_file:
+OLD_get_new_jar_file:
 	test -e OpenFortranParser-${TEST_OFP_VERSION}.jar || \
      (test -e ${srcdir}/OpenFortranParser-${TEST_OFP_VERSION}.jar && cp ${srcdir}/OpenFortranParser-${TEST_OFP_VERSION}.jar .) || \
      wget --no-check-certificate ${TEST_EXTERNAL_OFP_JAR_FILE_URL}/OpenFortranParser-${TEST_OFP_VERSION}.jar
@@ -132,8 +136,25 @@ OLD_extract_rose_required_ofp_source_files: get_jar_file
 
 # DQ (4/4/2010): This needs to be an explicit path list for each file since some are all located in different subdirectories.
 # OFP_SOURCE_FILES = FortranParserAction.h c_actions_jni.c token.h token.c ActionEnums.h jni_token_funcs.h jni_token_funcs.c
-OFP_SOURCE_FILES = fortran/ofp/parser/c/FortranParserAction.h fortran/ofp/parser/c/jni/c_actions_jni.c fortran/ofp/parser/c/token.h fortran/ofp/parser/c/token.c fortran/ofp/parser/c/ActionEnums.h fortran/ofp/parser/c/jni/jni_token_funcs.h fortran/ofp/parser/c/jni/jni_token_funcs.c
-OFP_SOURCE_FILES_WITHOUT_PATHS = FortranParserAction.h c_actions_jni.c token.h token.c ActionEnums.h jni_token_funcs.h jni_token_funcs.c
+OFP_SOURCE_FILES = \
+   fortran/ofp/parser/c/FortranParserAction.h \
+   fortran/ofp/parser/c/jni/c_actions_jni.c \
+   fortran/ofp/parser/c/token.h \
+   fortran/ofp/parser/c/token.c \
+   fortran/ofp/parser/c/ActionEnums.h \
+   fortran/ofp/parser/c/jni/jni_token_funcs.h \
+   fortran/ofp/parser/c/jni/jni_token_funcs.c \
+   fortran/ofp/parser/c/jni/IFortranParserAction.java
+
+OFP_SOURCE_FILES_WITHOUT_PATHS = \
+   FortranParserAction.h \
+   c_actions_jni.c \
+   token.h \
+   token.c \
+   ActionEnums.h \
+   jni_token_funcs.h \
+   jni_token_funcs.c \
+   IFortranParserAction.java
 
 extract_rose_required_ofp_source_files: get_jar_file
 	@if test -e OpenFortranParser-${OFP_VERSION}.jar; then \

@@ -724,13 +724,6 @@ fi
 # Use our classpath in case the user's is messed up
 AS_SET_CATFILE([ABSOLUTE_SRCDIR], [`pwd`], [${srcdir}])
 
-# DQ (3/11/2010): Updating to new Fortran OFP version 0.7.2 with Craig.
-# CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-2.7.7.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.0.1.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-runtime-3.0.1.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/stringtemplate-3.1b1.jar:.
-# CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/fortran-parser/lib/OpenFortranParser-0.7.2.jar:.
-CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.7.2.jar:.
-
-export CLASSPATH
-AC_SUBST(CLASSPATH)
 ROSE_SUPPORT_JAVA # This macro uses JAVA_HOME
 
 OPEN_FORTRAN_PARSER_PATH="${ac_top_builddir}/src/3rdPartyLibraries/fortran-parser" # For the one rule that uses it
@@ -837,6 +830,22 @@ AC_SUBST(ROSE_OFP_PATCH_VERSION_NUMBER)
 
 # echo "Testing OFP version number specification..."
 # exit 1
+
+# DQ (4/5/2010): Moved the specification of CLASSPATH to after the specification 
+# of OFP version number so that we can use it to set the class path.
+# DQ (3/11/2010): Updating to new Fortran OFP version 0.7.2 with Craig.
+# CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-2.7.7.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.0.1.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-runtime-3.0.1.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/stringtemplate-3.1b1.jar:.
+# CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/fortran-parser/lib/OpenFortranParser-0.7.2.jar:.
+# CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.7.2.jar:.
+# CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-${ROSE_OFP_MAJOR_VERSION_NUMBER}.${ROSE_OFP_MINOR_VERSION_NUMBER}.${ROSE_OFP_PATCH_VERSION_NUMBER}.jar:.
+CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}${OPEN_FORTRAN_PARSER_PATH}/OpenFortranParser-${ROSE_OFP_MAJOR_VERSION_NUMBER}.${ROSE_OFP_MINOR_VERSION_NUMBER}.${ROSE_OFP_PATCH_VERSION_NUMBER}.jar:.
+
+export CLASSPATH
+AC_SUBST(CLASSPATH)
+# ROSE_SUPPORT_JAVA # This macro uses JAVA_HOME
+
+AC_DEFINE_UNQUOTED([ROSE_OFP_CLASSPATH], $CLASSPATH , [OFP class path for Jave Virtual Machine])
+# AC_DEFINE([ROSE_OFP_CLASSPATH], $CLASSPATH , [OFP class path for Jave Virtual Machine])
 
 AC_PROG_SWIG(1.3.31)
 SWIG_ENABLE_CXX

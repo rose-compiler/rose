@@ -146,7 +146,9 @@ get_env()
 {
    return (get_jvmEnv())->env;
 }
-     
+
+// DQ (4/5/2010): Centralize the specification of the class path.
+extern string global_build_classpath();
 
 //static void 
 void 
@@ -159,7 +161,7 @@ jserver_start(JvmT* je)
   // char *classpathEnvVar = NULL;
   // char *classpath;
 
-#if 1
+#if 0
      string classpath = "-Djava.class.path=";
   // DQ (3/11/2010): Updating to new Fortran OFP version 0.7.2 with Craig.
   // classpath += findRoseSupportPathFromBuild("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser.jar", "lib/OpenFortranParser.jar") + ":";
@@ -171,12 +173,23 @@ jserver_start(JvmT* je)
 
   // DQ (3/12/2010): Moved OpenFortranParser-0.7.2.jar to fortran-parser from fortran-parser/lib
   // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/fortran-parser/lib/OpenFortranParser-0.7.2.jar", "lib/OpenFortranParser-0.7.2.jar") + ":";
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
+     classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.8.0.jar", "OpenFortranParser-0.8.0.jar") + ":";
+#else
+   #if ROSE_OFP_MINOR_VERSION_NUMBER == 7 & ROSE_OFP_PATCH_VERSION_NUMBER == 2
      classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.7.2.jar", "OpenFortranParser-0.7.2.jar") + ":";
+   #else
+     printf ("Error: Unknown version of OFP \n");
+     ROSE_ASSERT(false);
+   #endif
+#endif
+
      classpath += ".";
 #else
   // DQ (3/12/2010): We can't use this since we don't include the ROSE header files 
   // (however, this might simplify the design).
-     string classpath = SgSourceFile::build_classpath();
+  // string classpath = SgSourceFile::build_classpath();
+     string classpath = global_build_classpath();
 #endif
 
 #if 0
