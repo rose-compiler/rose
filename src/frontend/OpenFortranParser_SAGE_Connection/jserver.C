@@ -241,11 +241,12 @@ jserver_start(JvmT* je)
      jvm_args.options[0].optionString = strdup(classpath.c_str());
      jvm_args.ignoreUnrecognized = JNI_FALSE;
 
-     // JNI_CreateJavaVM(&jvm, (void **)&env, &jvm_args);
+  // JNI_CreateJavaVM(&jvm, (void **)&env, &jvm_args);
+  // handleExceptionMaybe(jvm, env);
+
+  // printf ("Create and load the Java VM: Calling JNI_CreateJavaVM(); \n");
      
-     //handleExceptionMaybe(jvm, env);
-     
-     /* Create and load the Java VM.  */
+  /* Create and load the Java VM.  */
      res = JNI_CreateJavaVM(&(je->jvm), (void **)&(je->env), &jvm_args);
 
      if (res<0 || je->jvm==NULL || je->env==NULL)
