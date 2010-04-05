@@ -133,6 +133,7 @@ OLD_extract_rose_required_ofp_source_files: get_jar_file
 # DQ (4/4/2010): This needs to be an explicit path list for each file since some are all located in different subdirectories.
 # OFP_SOURCE_FILES = FortranParserAction.h c_actions_jni.c token.h token.c ActionEnums.h jni_token_funcs.h jni_token_funcs.c
 OFP_SOURCE_FILES = fortran/ofp/parser/c/FortranParserAction.h fortran/ofp/parser/c/jni/c_actions_jni.c fortran/ofp/parser/c/token.h fortran/ofp/parser/c/token.c fortran/ofp/parser/c/ActionEnums.h fortran/ofp/parser/c/jni/jni_token_funcs.h fortran/ofp/parser/c/jni/jni_token_funcs.c
+OFP_SOURCE_FILES_WITHOUT_PATHS = FortranParserAction.h c_actions_jni.c token.h token.c ActionEnums.h jni_token_funcs.h jni_token_funcs.c
 
 extract_rose_required_ofp_source_files: get_jar_file
 	@if test -e OpenFortranParser-${OFP_VERSION}.jar; then \
@@ -178,7 +179,7 @@ extract_rose_required_ofp_source_files: get_jar_file
 # We distribute the default version of the OFP jar file (version 0.7.2)
 # OpenFortranParser-0.7.2.jar but this is handled using the dist_java_DATA 
 # automake variable.
-EXTRA_DIST = CMakeLists.txt $(OFP_SOURCE_FILES)
+EXTRA_DIST = CMakeLists.txt $(OFP_SOURCE_FILES_WITHOUT_PATHS)
 
 clean-local:
 	rm -f OpenFortranParser-${OFP_VERSION}.jar FortranParserAction.h c_actions_jni.c
