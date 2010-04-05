@@ -4880,8 +4880,53 @@ SgFile::secondaryPassOverSourceFile()
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 // DQ (9/30/2008): Refactored the setup of the class path for Java and OFP.
 string
+global_build_classpath()
+   {
+  // This function builds the class path for use with Java and the cal to the OFP.
+     string classpath = "-Djava.class.path=";
+  // DQ (3/11/2010): Updating to new Fortran OFP version 0.7.2 with Craig.
+  // classpath += findRoseSupportPathFromBuild("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser.jar", "lib/OpenFortranParser.jar") + ":";
+  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-2.7.7.jar", "lib/antlr-2.7.7.jar") + ":";
+  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-3.0.1.jar", "lib/antlr-3.0.1.jar") + ":";
+  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-runtime-3.0.1.jar", "lib/antlr-runtime-3.0.1.jar") + ":";
+  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/stringtemplate-3.1b1.jar", "lib/stringtemplate-3.1b1.jar") + ":";
+     classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar", "lib/antlr-3.2.jar") + ":";
+
+  // string ofp_jar_file_name = string("OpenFortranParser-") + ROSE_OFP_MAJOR_VERSION_NUMBER + "." + ROSE_OFP_MINOR_VERSION_NUMBER + "." + ROSE_OFP_PATCH_VERSION_NUMBER + ".jar");
+     string ofp_jar_file_name = string("OpenFortranParser-") + StringUtility::numberToString(ROSE_OFP_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_OFP_MINOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_OFP_PATCH_VERSION_NUMBER) + string(".jar");
+     string ofp_class_path = "src/3rdPartyLibraries/fortran-parser/" + ofp_jar_file_name;
+  // classpath += findRoseSupportPathFromSource(ofp_class_path, ofp_jar_file_name) + ":";
+     classpath += findRoseSupportPathFromBuild(ofp_class_path, ofp_jar_file_name) + ":";
+
+#if 0
+  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/fortran-parser/lib/OpenFortranParser-0.7.2.jar", "lib/OpenFortranParser-0.7.2.jar") + ":";
+  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.7.2.jar", "OpenFortranParser-0.7.2.jar") + ":";
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
+     classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.8.0.jar", "OpenFortranParser-0.8.0.jar") + ":";
+#else
+   #if ROSE_OFP_MINOR_VERSION_NUMBER == 7 & ROSE_OFP_PATCH_VERSION_NUMBER == 2
+     classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.7.2.jar", "OpenFortranParser-0.7.2.jar") + ":";
+   #else
+     printf ("Error: Unknown version of OFP \n");
+     ROSE_ASSERT(false);
+   #endif
+#endif
+#endif
+
+     classpath += ".";
+
+     if (SgProject::get_verbose() > 1)
+        {
+          printf ("In global_build_classpath(): classpath = %s \n",classpath.c_str());
+        }
+
+     return classpath;
+   }
+
+string
 SgSourceFile::build_classpath()
    {
+#if 0
 #if 1
   // This function builds the class path for use with Java and the cal to the OFP.
      string classpath = "-Djava.class.path=";
@@ -4894,7 +4939,18 @@ SgSourceFile::build_classpath()
      classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar", "lib/antlr-3.2.jar") + ":";
 
   // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/fortran-parser/lib/OpenFortranParser-0.7.2.jar", "lib/OpenFortranParser-0.7.2.jar") + ":";
+  // classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.7.2.jar", "OpenFortranParser-0.7.2.jar") + ":";
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
+     classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.8.0.jar", "OpenFortranParser-0.8.0.jar") + ":";
+#else
+   #if ROSE_OFP_MINOR_VERSION_NUMBER == 7 & ROSE_OFP_PATCH_VERSION_NUMBER == 2
      classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.7.2.jar", "OpenFortranParser-0.7.2.jar") + ":";
+   #else
+     printf ("Error: Unknown version of OFP \n");
+     ROSE_ASSERT(false);
+   #endif
+#endif
+
      classpath += ".";
 
      return classpath;
@@ -4907,6 +4963,9 @@ SgSourceFile::build_classpath()
   // DQ (11/30/2009): MSVC requires a return stmt from a non-void function (an error, not a warning).
      return "error in SgSourceFile::build_classpath()";
 #endif
+#endif
+
+     return global_build_classpath();
    }
 
 int
