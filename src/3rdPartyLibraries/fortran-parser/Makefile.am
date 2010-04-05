@@ -177,9 +177,9 @@ extract_rose_required_ofp_source_files: get_jar_file
          if test "x$(OFP_VERSION)" = "x0.7.2"; then \
             echo "Using OFP source file $$f from version $(OFP_VERSION) distributed with ROSE."; \
             if test -e $$filename; then \
-               echo "Note: OFP source file $filename_without_path is already present."; \
+               echo "Note: OFP source file $$filename is already present."; \
             else \
-               echo "Copying OFP source file $filename from source tree to build tree."; \
+               echo "Copying OFP source file $$filename from source tree to build tree."; \
                cp ${srcdir}/$$filename $$filename; \
             fi; \
          else \
@@ -201,6 +201,7 @@ extract_rose_required_ofp_source_files: get_jar_file
 # OpenFortranParser-0.7.2.jar but this is handled using the dist_java_DATA 
 # automake variable.
 EXTRA_DIST = CMakeLists.txt $(OFP_SOURCE_FILES_WITHOUT_PATHS)
+# EXTRA_DIST = CMakeLists.txt
 
 clean-local:
 	rm -f OpenFortranParser-${OFP_VERSION}.jar FortranParserAction.h c_actions_jni.c
