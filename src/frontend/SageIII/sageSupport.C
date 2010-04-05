@@ -3660,6 +3660,11 @@ SgProject::parse(const vector<string>& argv)
                    *   "jserver_finish()" will dostroy the Java VM if it is running.
                    */
 
+                    if (SgProject::get_verbose() > 1)
+                       {
+                         printf ("Calling Open Fortran Parser: jserver_init() \n");
+                       }
+
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
                     jserver_init();
 #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
@@ -4819,6 +4824,7 @@ SgFile::secondaryPassOverSourceFile()
 #if 1
             // Debugging code (eliminate use of CPP directives from source file so that we
             // can debug the insertion of linemarkers from first phase of CPP processing.
+            // printf ("In SgFile::secondaryPassOverSourceFile(): requiresCPP = %s \n",requiresCPP ? "true" : "false");
                if (requiresCPP == false)
                   {
                     attachPreprocessingInfo(sourceFile);
@@ -4830,9 +4836,8 @@ SgFile::secondaryPassOverSourceFile()
                attachPreprocessingInfo(sourceFile);
 #endif
 
-	       // Liao, 3/31/2009 Handle OpenMP here to see macro calls within directives
-	       processOpenMP(sourceFile);
-
+            // Liao, 3/31/2009 Handle OpenMP here to see macro calls within directives
+               processOpenMP(sourceFile);
 
             // Reset the saved state (might not really be required at this point).
                if (requiresCPP == true)
@@ -8664,43 +8669,79 @@ void convert_OpenMP_pragma_to_AST (SgSourceFile *sageFilePtr)
 }
 
 void build_OpenMP_AST(SgSourceFile *sageFilePtr)
-{
+   {
   // build AST for OpenMP directives and clauses 
   // by converting OmpAttributeList to SgOmpxxx Nodes 
-  if (sageFilePtr->get_Fortran_only()||sageFilePtr->get_F77_only()||sageFilePtr->get_F90_only()||
-      sageFilePtr->get_F95_only() || sageFilePtr->get_F2003_only())
-  {
-   
-    printf("AST construction for Fortran OpenMP is not yet implemented. \n");
-    assert(false);
-  } //end if (fortran)
-  else// for  C/C++ pragma's OmpAttributeList --> SgOmpxxx nodes
-  {
-    convert_OpenMP_pragma_to_AST( sageFilePtr);
-  }
-}
+     if (sageFilePtr->get_Fortran_only()||sageFilePtr->get_F77_only()||sageFilePtr->get_F90_only()||
+         sageFilePtr->get_F95_only() || sageFilePtr->get_F2003_only())
+        {
+          printf("AST construction for Fortran OpenMP is not yet implemented. \n");
+          assert(false);
+       // end if (fortran)
+        }
+       else
+        {
+       // for  C/C++ pragma's OmpAttributeList --> SgOmpxxx nodes
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling convert_OpenMP_pragma_to_AST() \n");
+             }
+     
+          convert_OpenMP_pragma_to_AST( sageFilePtr);
+        }
+   }
+
 // Liao, 5/31/2009 an entry point for OpenMP related processing
 // including parsing, AST construction, and later on tranlation
 void processOpenMP(SgSourceFile *sageFilePtr)
-{
-  ROSE_ASSERT(sageFilePtr != NULL);
-  if (sageFilePtr->get_openmp() == false)
-    return;
+   {
+  // DQ (4/4/2010): This function processes both C/C++ and Fortran code.
+  // As a result of the Fortran processing some OMP pragmas will cause
+  // transformation (e.g. declaration of private variables will add variables
+  // to the local scope).  So this function has side-effects for all languages.
+
+     if (SgProject::get_verbose() > 1)
+        {
+          printf ("Processing OpenMP directives \n");
+        }
+
+     ROSE_ASSERT(sageFilePtr != NULL);
+     if (sageFilePtr->get_openmp() == false)
+        {
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Skipping calls to lower OpenMP sageFilePtr->get_openmp() = %s \n",sageFilePtr->get_openmp() ? "true" : "false");
+             }
+          return;
+        }
+     
   // parse OpenMP directives and attach OmpAttributeList to relevant SgNode
-  attachOmpAttributeInfo(sageFilePtr);
+     attachOmpAttributeInfo(sageFilePtr);
 
   // stop here if only OpenMP parsing is requested
-  if (sageFilePtr->get_openmp_parse_only())
-    return;
+     if (sageFilePtr->get_openmp_parse_only())
+        {
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Skipping calls to lower OpenMP sageFilePtr->get_openmp_parse_only() = %s \n",sageFilePtr->get_openmp_parse_only() ? "true" : "false");
+             }
+          return;
+        }
 
-  //Build OpenMP AST nodes based on parsing results
-  build_OpenMP_AST(sageFilePtr);
+  // Build OpenMP AST nodes based on parsing results
+     build_OpenMP_AST(sageFilePtr);
 
   // stop here if only OpenMP AST construction is requested
-  if (sageFilePtr->get_openmp_ast_only())
-    return;
+     if (sageFilePtr->get_openmp_ast_only())
+        {
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Skipping calls to lower OpenMP sageFilePtr->get_openmp_ast_only() = %s \n",sageFilePtr->get_openmp_ast_only() ? "true" : "false");
+             }
+          return;
+        }
 
-  lower_omp(sageFilePtr); 
-}
+     lower_omp(sageFilePtr);
+   }
 
 

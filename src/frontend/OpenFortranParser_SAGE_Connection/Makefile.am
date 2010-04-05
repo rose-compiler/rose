@@ -44,7 +44,16 @@ if ROSE_USE_OPEN_FORTRAN_PARSER
 
 # DQ (3/13/2010): Moved OFP specific files to 3rdPartyLibraries/fortran-parser
 # libfortran_ofp_parser_c_jni_FortranParserActionJNI_la_SOURCES = FortranParserActionROSE.C token.c jni_token_funcs.c c_actions_jni.c
-libfortran_ofp_parser_c_jni_FortranParserActionJNI_la_SOURCES = FortranParserActionROSE.C
+# libfortran_ofp_parser_c_jni_FortranParserActionJNI_la_SOURCES = FortranParserActionROSE.C
+
+# DQ (4/4/2010): Copied token.c jni_token_funcs.c c_actions_jni.c to make the fortran suppirt work.
+# Need to look into this so that we are sure we are using the correct versions of OFP files.
+# tux281.llnl.gov{dquinlan}91: cp token.c /home/dquinlan/ROSE/git-dq-main-rc/src/frontend/OpenFortranParser_SAGE_Connection
+# tux281.llnl.gov{dquinlan}92: cp jni_token_funcs.c /home/dquinlan/ROSE/git-dq-main-rc/src/frontend/OpenFortranParser_SAGE_Connection
+# tux281.llnl.gov{dquinlan}93: cp c_actions_jni.c  /home/dquinlan/ROSE/git-dq-main-rc/src/frontend/OpenFortranParser_SAGE_Connection
+# libfortran_ofp_parser_c_jni_FortranParserActionJNI_la_SOURCES = FortranParserActionROSE.C token.c jni_token_funcs.c c_actions_jni.c
+OFP_DIR = $(top_builddir)/src/3rdPartyLibraries/fortran-parser
+libfortran_ofp_parser_c_jni_FortranParserActionJNI_la_SOURCES = FortranParserActionROSE.C $(OFP_DIR)/token.c $(OFP_DIR)/jni_token_funcs.c $(OFP_DIR)/c_actions_jni.c
 
 # To support the Open Fortran Parser we need to build a shared library with a specific name and which will have
 # all of the c_action() function implementations.  The name to match is: XXX libparser_java_FortranParserActionJNI.so
@@ -56,21 +65,31 @@ include_HEADERS = rose_fortran_token_maps.h  rose_token_defs.h fortran_support.h
 
 # DQ (3/13/2010): Extract the required OFP source files needed for ROSE Fortran support.
 # OFP_SOURCE_FILES = FortranParserAction.h c_actions_jni.c token.h token.c ActionEnums.h jni_token_funcs.h jni_token_funcs.c
+# OFP_SOURCE_FILES = \
+#    ${top_builddir}/src/3rdPartyLibraries/fortran-parser/FortranParserAction.h \
+#    ${top_builddir}/src/3rdPartyLibraries/fortran-parser/c_actions_jni.c \
+#    ${top_builddir}/src/3rdPartyLibraries/fortran-parser/token.h \
+#    ${top_builddir}/src/3rdPartyLibraries/fortran-parser/token.c \
+#    ${top_builddir}/src/3rdPartyLibraries/fortran-parser/ActionEnums.h \
+#    ${top_builddir}/src/3rdPartyLibraries/fortran-parser/jni_token_funcs.h \
+#    ${top_builddir}/src/3rdPartyLibraries/fortran-parser/jni_token_funcs.c
 OFP_SOURCE_FILES = \
-   ${top_builddir}/src/3rdPartyLibraries/fortran-parser/FortranParserAction.h \
-   ${top_builddir}/src/3rdPartyLibraries/fortran-parser/c_actions_jni.c \
-   ${top_builddir}/src/3rdPartyLibraries/fortran-parser/token.h \
-   ${top_builddir}/src/3rdPartyLibraries/fortran-parser/token.c \
-   ${top_builddir}/src/3rdPartyLibraries/fortran-parser/ActionEnums.h \
-   ${top_builddir}/src/3rdPartyLibraries/fortran-parser/jni_token_funcs.h \
-   ${top_builddir}/src/3rdPartyLibraries/fortran-parser/jni_token_funcs.c
+   $(OFP_DIR)/FortranParserAction.h \
+   $(OFP_DIR)/c_actions_jni.c \
+   $(OFP_DIR)/token.h \
+   $(OFP_DIR)/token.c \
+   $(OFP_DIR)/ActionEnums.h \
+   $(OFP_DIR)/jni_token_funcs.h \
+   $(OFP_DIR)/jni_token_funcs.c
 
 # DQ (3/13/2010): The OFP files are extracted when we build the sageSupport.C file
 # (well before buildign the files here).  We don't want to specify the rules twice 
 # since that is a problem for the "make distcheck" rule.
 # FortranParserActionROSE.C: $(OFP_SOURCE_FILES)
 # $(OFP_SOURCE_FILES): extract_rose_required_ofp_source_files
-FortranParserActionROSE.C: extract_rose_required_ofp_source_files
+# FortranParserActionROSE.C: extract_rose_required_ofp_source_files
+$(OFP_SOURCE_FILES): extract_rose_required_ofp_source_files
+FortranParserActionROSE.C: $(OFP_DIR)/token.h $(OFP_DIR)/ActionEnums.h $(OFP_DIR)/jni_token_funcs.h
 
 extract_rose_required_ofp_source_files:
 	cd ${top_builddir}/src/3rdPartyLibraries/fortran-parser; $(MAKE) extract_rose_required_ofp_source_files
