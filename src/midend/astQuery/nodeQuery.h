@@ -196,7 +196,7 @@ namespace NodeQuery
    * either all the nodes in a subTree or the children of the node 'subTree'.
    *******************************************************************************************/
   template<typename NodeFunctional>
-  typename NodeFunctional::result_type ROSE_DLL_API
+  typename NodeFunctional::result_type 
    querySubTree ( SgNode * subTree, 
              NodeFunctional pred, AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::AllNodes)
      {
