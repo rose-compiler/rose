@@ -81,7 +81,7 @@ Return: The number of value found.  If pname is not a list, the number of
 
 // These are C language specific files
 #include <strings.h>
-#include <unistd.h>
+//#include <unistd.h>
 
 // DQ (12/11/2007): Some versions of gnu require this (for example, gnu 4.1.2).
 #include <assert.h>

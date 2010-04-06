@@ -10,7 +10,7 @@
 #include "attributeListMap.h"
 
 // Include files to get the current path
-#include <unistd.h>
+//#include <unistd.h>
 
 #ifdef _MSC_VER
 #pragma message ("WARNING: param.h header file not available in MSVC.")
