@@ -8,7 +8,6 @@
 #include <errno.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 
 static const char *trace_prefix = "    ";
@@ -150,19 +149,16 @@ private:
     }
 
     /** Replacement for system's htons(). Calling htons() on OSX gives an error "'exp' was not declared in this scope" even
-     *  though we've included <netinet/in.h>. Therefore we write our own version here. */
+     *  though we've included <netinet/in.h>. Therefore we write our own version here. Furthermore, OSX apparently doesn't
+     *  define __BYTE_ORDER in <sys/param.h> so we have to figure it out ourselves. */
     static short my_htons(short n) {
-#ifdef __BYTE_ORDER
-#  if __BYTE_ORDER == __LITTLE_ENDIAN
-        return (((unsigned short)n & 0x00ff)<<8) | (((unsigned short)n & 0xff00)>>8);
-#  elif __BYTE_ORDER == __BIG_ENDIAN
-        return n;
-#  else
-#    error "unknown byte order"
-#  endif
-#else
-#  error "unknown byte order"
-#endif
+        static unsigned u = 1;
+        if (*((char*)&u)) {
+            /* Little endian */
+            return (((unsigned short)n & 0x00ff)<<8) | (((unsigned short)n & 0xff00)>>8);
+        } else {
+            return n;
+        }
     }
 
     /** Sends zero-argument command to the server */

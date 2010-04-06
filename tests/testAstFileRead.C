@@ -112,6 +112,44 @@ SgFunctionTypeTable* mergeFunctionTypeSymbolTables ( vector<SgFunctionTypeTable*
 void mergeStaticASTFileInformation(vector<AstFileSpecificInfo*> & AstFileInfoArray);
 
 
+
+class TestFreepointerInMemoryPool : public ROSE_VisitTraversal
+   {
+  // DQ (3/7/2010): 
+
+     public:
+         static void test();
+
+      //! visit function required for traversal
+          void visit ( SgNode* node );
+   };
+
+void
+TestFreepointerInMemoryPool::visit(SgNode * node)
+   {
+      if (node->get_freepointer() == AST_FileIO::IS_VALID_POINTER())
+        {
+          SgNode* parent = node->get_parent();
+          string parentName = parent != NULL ? node->class_name() : "null";
+
+          printf ("Node does not have valid freepointer node = %p = %s (parent = %p = %s)\n",node,node->class_name().c_str(),parent,parentName.c_str());
+       // if (isSgType(node) != NULL)
+       //      printf ("Node does not have valid freepointer node = %p = %s (parent = %p = %s)\n",node,node->class_name().c_str(),parent,parentName.c_str());
+        }
+      ROSE_ASSERT(node->get_freepointer() == AST_FileIO::IS_VALID_POINTER());
+
+   }
+
+void
+TestFreepointerInMemoryPool::test()
+   {
+     printf ("Inside of TestFreepointerInMemoryPool::test() \n");
+     TestFreepointerInMemoryPool t;
+     t.traverseMemoryPool();
+     printf ("DONE: Inside of TestFreepointerInMemoryPool::test() \n");
+   }
+
+
 int
 main ( int argc, char * argv[] )
    {
@@ -128,6 +166,9 @@ main ( int argc, char * argv[] )
      printf ("Before reading AST files: SgNode::get_globalFunctionTypeTable() = %p \n",SgNode::get_globalFunctionTypeTable());
   // ROSE_ASSERT(isSgFunctionTypeTable(SgNode::get_globalFunctionTypeTable()) != NULL);
 #endif
+
+  // Internal debugging support (e.g. new and delete operators).
+     ROSE_DEBUG = 2;
 
      int numFiles = argc - 2;
      vector<std::string> fileNames;
@@ -166,13 +207,21 @@ main ( int argc, char * argv[] )
   // cout  << endl << "Here we call the AST_FILE_IO :: readASTFromFile ..." << endl;
      for (int i= 0; i < numFiles; ++i)
         {
-       // cout  << "Here we read .... " << fileNames[i] << endl;
+          cout  << "Here we will read .... " << fileNames[i] << endl;
           AST_FILE_IO :: readASTFromFile ( fileNames[i] + ".binary" );
+          cout  << "Here we just read .... " << fileNames[i] << endl;
 
           currentNumberOfNodes = Sg_File_Info::numberOfNodes();
 
           printf ("file #%d = %s AST size = %d memory usage = %d Sg_File_Info::numberOfNodes() = %d \n",i,fileNames[i].c_str(),numberOfNodes(),memoryUsage(),currentNumberOfNodes);
+
+          TestFreepointerInMemoryPool::test();
+
 #if 0
+       // DQ (2/24/2010): This is a significant bottleneck to the performance on large codes since it is n^2 in the size of the AST.
+          AstTests::runAllTests(ast->getRootOfAst());
+#endif
+#if 1
           printf ("In loop reading AST files: SgNode::get_globalFunctionTypeTable() = %p \n",SgNode::get_globalFunctionTypeTable());
           printf ("file #%d AST Sg_File_Info::numberOfNodes() = %d \n",i,currentNumberOfNodes);
 #endif
@@ -199,6 +248,8 @@ main ( int argc, char * argv[] )
           ast = AST_FILE_IO::getAst(i);
           AST_FILE_IO::setStaticDataOfAst(ast);
 
+       // TestFreepointerInMemoryPool::test();
+
 #if 0
           printf ("In loop reading AST files: SgNode::get_globalFunctionTypeTable() = %p \n",SgNode::get_globalFunctionTypeTable());
           printf ("In loop reading AST files: Sg_File_Info::get_fileidtoname_map() = %p size() = %zu \n",&Sg_File_Info::get_fileidtoname_map(),Sg_File_Info::get_fileidtoname_map().size());
@@ -219,7 +270,9 @@ main ( int argc, char * argv[] )
 
        // testAST(ast->getRootOfAst());
 
-#if 0
+#if 1
+       // TestFreepointerInMemoryPool::test();
+
        // DQ (2/24/2010): This is a significant bottleneck to the performance on large codes since it is n^2 in the size of the AST.
           AstTests::runAllTests(ast->getRootOfAst());
 #endif
@@ -235,7 +288,9 @@ main ( int argc, char * argv[] )
              {
                SgProject* localProject = ast->getRootOfAst();
                SgFile*    localFile    = (*localProject)[0];
-               ROSE_ASSERT(localProject->numberOfFiles() == 1);
+
+            // DQ (3/1/2010): Merged files that are reread will have more than one SgFile object.
+            // ROSE_ASSERT(localProject->numberOfFiles() == 1);
 
             // Add the file to the global project. This also sets the parent of the input file. Is this a side-effect that we want?
                globalProject->set_file(*localFile);
@@ -255,7 +310,9 @@ main ( int argc, char * argv[] )
         }
 #endif
 
-#if 1
+#if 0
+  // DQ (3/7/2010): It may be that we have to process the merged static data before we can expect 
+  // to pass this test.
   // DQ (2/24/2010): Better to run this once at the end to avoid a significant bottleneck to the 
   // performance on large codes (it is n^2 in the size of the AST if run for each file separately).
      AstTests::runAllTests(ast->getRootOfAst());
@@ -268,6 +325,12 @@ main ( int argc, char * argv[] )
      mergeStaticASTFileInformation(AstFileInfoArray);
 
      printf ("Size of AST (after merge) = %d \n",numberOfNodes());
+
+#if 1
+  // DQ (2/24/2010): Better to run this once at the end to avoid a significant bottleneck to the 
+  // performance on large codes (it is n^2 in the size of the AST if run for each file separately).
+     AstTests::runAllTests(ast->getRootOfAst());
+#endif
 
 #if 0
   // Output an example of the value of p_freepointer.
@@ -289,7 +352,8 @@ main ( int argc, char * argv[] )
   // printf ("AST_FILE_IO::vectorOfASTs.size() = %zu \n",AST_FILE_IO::vectorOfASTs.size());
   // AST_FILE_IO::display("Before writing the merged AST (before resetValidAstAfterWriting())");
 
-     string mergedFileName = "mergedFile.C";
+  // string mergedFileName = "mergedFile.C";
+     string mergedFileName = outputFileName;
      printf ("mergedFileName = %s numberOfNodes() = %d \n",mergedFileName.c_str(),numberOfNodes());
 
      printf ("Calling AST_FILE_IO::reset() \n");
@@ -309,7 +373,7 @@ main ( int argc, char * argv[] )
 
   // printf ("Before processing via DOT: globalProject = %p numberOfFiles() = %d \n",globalProject,globalProject->numberOfFiles());
 
-#if 1
+#if 0
   // Output an optional graph of the AST (just the tree, when active). Note that we need to multiple file version 
   // of this with includes so that we can present a single SgProject rooted AST with multiple SgFile objects.
   // generateDOT ( *globalProject );
@@ -468,7 +532,9 @@ SgFunctionTypeTable* mergeFunctionTypeSymbolTables ( vector<SgFunctionTypeTable*
                  // These are redundant symbols, but likely something in the AST points to them so be careful.
 
                  // This function type is already in the global function type table, so there is nothing to do (later we can delete it to save space)
-                 // printf ("Symbol already in global table: i->first = %s \n",i->first.str());
+#if 0
+                    printf ("Symbol already in global table: i->first = %s \n",i->first.str());
+#endif
                   }
 
                i++;

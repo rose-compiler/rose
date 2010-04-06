@@ -5,7 +5,8 @@
 This example demonstrates a mechanism for generating a visualization
 of the AST using pdf files.  A pdf file is generated and can be viewed 
 using {\tt acroread}.  The format is suitable for much larger input 
-programs than the example shown in chapter~\ref{Tutorial:chapter_AST_Graph_Generator}.
+programs than the example shown in previous chapters using dot
+format~\ref{Tutorial:chapterASTWholeGraphGenerator}.
 This mechanism can support the visualization of input files around 100K 
 lines of code.
 
@@ -69,6 +70,12 @@ Figure~\ref{Tutorial:exampleInputCode_ASTGraphGenerator} shows an input
 code which is processed to generate a graph of the AST, generating a 
 {\tt pdf} file.   The {\tt pdf} file is then processed
 using {\tt acroread} to generate a GUI for viewing the AST.
+
+A standalone utility tool, called \textit{pdfGenerator} is provided within
+ROSE. It is available from
+\textit{ROSE\_BUILD/exampleTranslators/PDFGenerator} or
+\textit{ROSE\_INS/bin}. Users can use it to generate AST in a pdf format
+from an input code.
 
    Figure~\ref{tutorial:exampleOutputCodePDF} displays on the left hand side the individual
 C++ nodes in ROSE's intermediate representation (IR).  The page on the right hand side

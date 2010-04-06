@@ -581,11 +581,17 @@ PreprocessingInfo::PreprocessingInfo (
   // that the parent being NULL is not meaningful in the AST consistancy tests).
      file_info->setCommentOrDirective();
 
+  // DQ (3/7/2010): Switch this is a SgTypeDefault since one of these are referenced in the 
+  // generated rose_edg_required_macros_and_functions.h which means that it will always be 
+  // formally in the AST.  This may fix (or help fix) a bug in the AST file I/O where nodes
+  // not properly connected to the AST don't appear to get there global index and freepointer 
+  // set properly.
   // DQ (6/13/2007): Set the parent to a shared type for now so that it is at least set to a non-null value
   // This can if we like to used as a signature for Sg_File_Info nodes that are associated with comments and directives.
   // file_info->set_parent(file_info);
   // file_info->set_parent(SgTypeShort::get_builtin_type());
-     file_info->set_parent(SgTypeLongLong::createType());
+  // file_info->set_parent(SgTypeLongLong::createType());
+     file_info->set_parent(SgTypeDefault::createType());
 
   // DQ (4/15/2007): Temp code to trace common position in unparsing.
   // internalString = inputString;
