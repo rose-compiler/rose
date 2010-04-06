@@ -272,7 +272,7 @@ namespace AstQueryNamespace
    * the criteria specified in and returned by the predicate in the second argument.
    ********************************************************************************/
 template<typename NodeFunctional>
-    typename NodeFunctional::result_type ROSE_DLL_API
+    typename NodeFunctional::result_type 
     querySubTree(SgNode* node, NodeFunctional nodeFunc, AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::AllNodes,
         t_traverseOrder treeTraversalOrder = preorder)
     {
@@ -329,7 +329,7 @@ template<typename NodeFunctional>
    * the criteria specified in and returned by the function pointer in the second argument.
    ********************************************************************************/
   template <class _Arg, class _Result> 
-    ROSE_DLL_API _Result querySubTree ( SgNode * subTree,
+     _Result querySubTree ( SgNode * subTree,
         _Result (*__x)(SgNode*,_Arg), _Arg x_arg,
         AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::AllNodes ){
       return querySubTree(subTree,std::bind2nd(std::ptr_fun(__x),x_arg),defineQueryType);
@@ -344,7 +344,7 @@ template<typename NodeFunctional>
    * the criteria specified in and returned by the function pointer in the second argument.
    ********************************************************************************/
   template <class _Result> 
-    ROSE_DLL_API _Result querySubTree ( SgNode * subTree,
+     _Result querySubTree ( SgNode * subTree,
         _Result (*__x)(SgNode*),
         AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::AllNodes ){
       return querySubTree(subTree,std::ptr_fun(__x),defineQueryType);
