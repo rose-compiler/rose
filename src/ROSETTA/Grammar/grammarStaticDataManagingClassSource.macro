@@ -20,9 +20,12 @@
 #include "AST_FILE_IO.h"
 #include "Cxx_GrammarMemoryPoolSupport.h"
 #include "StorageClasses.h"
+
+// DQ (3/7/2010): Added to support debugging.
+#include "AstDiagnostics.h"
+
 #include "StorageClassMemoryManagement.C"
 #include "SourcesOfIRNodesAstFileIOSupport.C"
-
 
 
 SgProject* 

@@ -242,6 +242,19 @@ F03_TESTCODES_REQUIRED_TO_PASS = \
      test2007_174.f03 \
      test2007_176.f03
 
+# DQ (4/3/2010): Added test code used in Fortran OpenMP tests.
+OPENMP_TESTS_F77_TESTCODES_REQUIRED_TO_PASS = \
+     jacobi.f \
+     default.f \
+     flush.f \
+     exmpaleA221f.f \
+     exampleA251f.f \
+     schedule.f \
+     testNewOFP.f
+
+F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS += $(OPENMP_TESTS_F77_TESTCODES_REQUIRED_TO_PASS)
+
+
 if !ROSE_USING_GFORTRAN_VERSION_4_1
    F03_TESTCODES_REQUIRED_TO_PASS += test2007_43.f03
 endif

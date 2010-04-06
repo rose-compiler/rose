@@ -37,10 +37,12 @@ Current problems:
 
 
 
+For new windows server tux270-0:
+rdesktop tux270-0
+<click other users>
+<enter login and password: e.g. "the-lab\quinlan1" and "PAC".
 
-
-
-
+What is needed to use ROSE is in the C:ROSE directory.
 
 
 
