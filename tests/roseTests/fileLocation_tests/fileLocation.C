@@ -340,7 +340,8 @@ visitorTraversal::visit(SgNode* n)
 
             // This causes the path edit distance to be: 4
                //string sourceDir = "/home/dquinlan/ROSE/svn-rose";
-				string sourceDir = "/home/hou1/rose";
+				//string sourceDir = "/home/hou1/rose";
+				string sourceDir = "/home";
 				map<string, string> libs;
 				libs["/home/hou1/opt/rose"] = "MyRose";
 				libs["/home/hou1/opt/boost"] = "MyBoost";
