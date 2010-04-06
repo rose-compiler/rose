@@ -260,6 +260,24 @@ display ( const StringUtility::FileNameLocation & X, const string & label = "" )
   // return classification;
    }
 
+string
+getName(const StringUtility::FileNameLocation & X)
+{
+     switch (X)
+        {
+          case FILENAME_LOCATION_UNKNOWN: return "unknown"; 
+          case FILENAME_LOCATION_USER: return "user"; 
+          case FILENAME_LOCATION_LIBRARY: return "library";
+          case FILENAME_LOCATION_NOT_EXIST: return "not exist";
+
+          default:
+             {
+               ROSE_ASSERT(false);
+             }
+        }
+     return "unknown";
+}
+
 void
 display ( const StringUtility::FileNameLibrary & X, const string & label = "" )
    {
@@ -305,7 +323,7 @@ visitorTraversal::visit(SgNode* n)
 
 	  // CH (2/1/2010): Get the real filename (not a symlink)
 	  if(boost::filesystem::exists(filename))
-	     filename = canonicalize_file_name(filename.c_str());
+	     filename = realpath(filename.c_str(), NULL);
 
        // Skip the case of compiler generated Sg_File_Info objects.
           //if (previousFilename != filename && filename != "compilerGenerated")
@@ -322,7 +340,7 @@ visitorTraversal::visit(SgNode* n)
 
             // This causes the path edit distance to be: 4
                //string sourceDir = "/home/dquinlan/ROSE/svn-rose";
-				string sourceDir = "/home/hou1/opt/rose";
+				string sourceDir = "/home/hou1/rose";
 				map<string, string> libs;
 				libs["/home/hou1/opt/rose"] = "MyRose";
 				libs["/home/hou1/opt/boost"] = "MyBoost";
@@ -339,6 +357,20 @@ visitorTraversal::visit(SgNode* n)
                FileNameLocation fileTypeClassification = classification.getLocation();
                FileNameLibrary  libraryClassification  = classification.getLibrary();
                int pathEditDistance = classification.getDistanceFromSourceDirectory();
+
+#if 1
+	       if (fileTypeClassification == FILENAME_LOCATION_UNKNOWN)
+	       {
+		   cerr << "filename: " << filename << " is classified as UNKNOWN!!!" << endl;
+		   ROSE_ASSERT(false);
+		   //exit(0);
+	       }
+	       else
+	       {
+		   cout << "filename: " << filename << " " << getName(fileTypeClassification) 
+		      << " " << libraryClassification << endl; 
+	       }
+#endif
 
 #if 0
             // DQ (1/30/2010): Skip the display of output (too much for testing).
@@ -357,8 +389,8 @@ visitorTraversal::visit(SgNode* n)
             // printf ("isLink(StringUtility::stripPathFromFileName(filename)) = %s \n",isLink(StringUtility::stripPathFromFileName(filename)) ? "true" : "false");
 
             // ROSE_ASSERT(isLink(filename) == false);
-	       bool lk = isLink(filename);
-               printf ("isLink(filename) = %s \n",lk ? "true" : "false");
+	       //bool lk = isLink(filename);
+               //printf ("isLink(filename) = %s \n",lk ? "true" : "false");
 
             // DQ (1/30/2010): Added this test.
             // ROSE_ASSERT(islinkOrPartOfLinkedDirectory(filename) == false);
