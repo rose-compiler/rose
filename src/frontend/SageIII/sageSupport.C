@@ -5248,7 +5248,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
   // Build the classpath list for Java support.
      const string classpath = build_classpath();
 
-  // This is part of debugging output to call OFP and output ehe list of parser actions that WOULD be called.
+  // This is part of debugging output to call OFP and output the list of parser actions that WOULD be called.
   // printf ("get_output_parser_actions() = %s \n",get_output_parser_actions() ? "true" : "false");
      if (get_output_parser_actions() == true)
         {
@@ -5304,6 +5304,9 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 #endif
              }
 #else
+
+#error "REMOVE THIS CODE"
+
        // This fails, I think because we can't call the openFortranParser_main twice. 
        // DQ (11/30/2008):  Does the work by Rice fix this now?
           int openFortranParser_dump_argc    = 0;
@@ -5354,13 +5357,16 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                ROSE_ASSERT(false);
              }
 #else
+
+#error "REMOVE THIS CODE"
+
        // This fails, I think because we can't call the openFortranParser_main twice.
           int openFortranParser_only_argc    = 0;
           char** openFortranParser_only_argv = NULL;
           CommandlineProcessing::generateArgcArgvFromList(OFPCommandLine,openFortranParser_only_argc,openFortranParser_only_argv);
           frontendErrorLevel = openFortranParser_main (openFortranParser_only_argc, openFortranParser_only_argv);
 #endif
-          printf ("Exiting after parsing... (get_exit_after_parser() == true) \n");
+          printf ("Exiting after parsing fortran (OFP) ... (get_exit_after_parser() == true) \n");
           exit(0);
        }
                     
@@ -5680,8 +5686,7 @@ SgSourceFile::processCppLinemarkers()
      ROSE_ASSERT(false);
 #endif
    }
- 
- 
+
 int
 SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputCommandLine )
    {
