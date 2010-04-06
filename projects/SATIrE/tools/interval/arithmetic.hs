@@ -15,11 +15,22 @@ times (al,ah) (bl,bh) = (min (min (al*bl) (al*bh)) (min (ah*bl) (ah*bh)),
 --                    else max 1 bl
 --          bmaxneg = if bh < 0 then bh
 --                    else max (-1) bl
-divide (al,ah) (bl,bh) = (-x, x)
-                         where x = max (max (abs al) (abs bl))
-                                       (max (abs ah) (abs bh))
+
+-- divide (al,ah) (bl,bh) = (-x, x)
+--                          where x = max (max (abs al) (abs bl))
+--                                        (max (abs ah) (abs bh))
+
+divide (al,ah) (bl,bh) = if bh < 0 then 
+                             (min (min (al `safediv` bh) (ah `safediv` bl)) (ah `safediv` bh),
+                              max (al `safediv` bl) (al `safediv` bh))
+                         else if bl > 0 then
+                             (min (al `safediv` bh) (al `safediv` bl),
+                              max (max (ah `safediv` bh) (al `safediv` bh)) (ah `safediv` bl))
+                         else dontknow
+
+
 modulo a b@(bl,bh) = let bmax = max (abs bl) (abs bh)
-                     in if strict_equal_sign a b then
+                     in if strict_same_sign a b then
                             if bl > 0 then (0, bmax -1)
                             else (1-bmax, 0)
                     else (1-bmax, bmax-1)
@@ -31,9 +42,20 @@ lshift (al,ah) (bl,bh) = if al<0 || bl<0 then dontknow
 rshift (al,ah) (bl,bh) = if al<0 || bl<0 then dontknow
                          else (al `shiftR` bh, ah `shiftR` bl)
 
-bitand a@(al,ah) b@(bl,bh) = if (al==0 && ah==0) || (bl==0 && bh==0) 
-                             then (0, 0)
-                             else bitor a b
+-- 011100101  111011000 
+-- 000001000  101110000 
+bitand :: (Int, Int) -> (Int, Int) -> (Int, Int)
+--bitand a@(al,ah) b@(bl,bh) = if (al==0 && ah==0) || (bl==0 && bh==0) 
+--                             then (0, 0)
+--                             else bitor a b
+
+
+bitand a@(al,ah) b@(bl,bh) = if strict_positive a b then
+                                  (0, max ah bh)
+                             else if strict_negative a b then
+                                    (-x,0)
+                                  else (-x, max ah bh)
+                             where x = next_higher_power_of_2 $ abs $ min al bl
 
 bitor a@(al,ah) b@(bl,bh) =  let x = next_higher_power_of_2 
                                        (max (max (abs al) (abs bl))
@@ -45,17 +67,17 @@ bitor a@(al,ah) b@(bl,bh) =  let x = next_higher_power_of_2
 bitxor a@(al,ah) b@(bl,bh) = let amax = max (abs al) (abs ah)
                                  bmax = max (abs bl) (abs bh)
                                  x = next_higher_power_of_2(amax .|. bmax)
-                             in if strict_equal_sign a b then
+                             in if strict_same_sign a b then
                                     (0, x-1)
                              else (-x,x-1)
 
 dontknow = (1-(2^63), 2^63-1)
 -- return True if all values in both intervals have the same sign
-strict_equal_sign (al,ah) (bl,bh) = (al > 0 && ah > 0 && bl > 0 && bh > 0) ||
-                                    (al < 0 && ah < 0 && bl < 0 && bh < 0)
+strict_same_sign (al,ah) (bl,bh) = (al > 0 && ah > 0 && bl > 0 && bh > 0) ||
+                                   (al < 0 && ah < 0 && bl < 0 && bh < 0)
 
-strict_positive (al,ah) (bl,bh) = (al > 0 && ah > 0 && bl > 0 && bh > 0)
-strict_negative (al,ah) (bl,bh) = (al < 0 && ah < 0 && bl < 0 && bh < 0)
+strict_positive (al,ah) (bl,bh) = (al > 0 && bl > 0)
+strict_negative (al,ah) (bl,bh) = (ah < 0 && bh < 0)
 
 lowest_bit(0) = 0
 lowest_bit(n) =
@@ -71,6 +93,7 @@ highest_bit(n) =
 lowest_power_of_2(0) = 0;
 lowest_power_of_2(n) = (1 `shiftL` (lowest_bit(n) - 1))
 
+next_higher_power_of_2 :: Int -> Int
 next_higher_power_of_2(0) = 0;
 next_higher_power_of_2(n) = (1 `shiftL` highest_bit(n))
 
@@ -83,17 +106,18 @@ safemod a 0 = 0 -- ignore modide by zero
 safemod a b = a `mod` b
 
 test (f,op,name) a@(al,ah) b@(bl,bh) =
-    foldl1 (&&) $ 
-           map check [(ai,bi, ai `op` bi) | ai <- [al..ah], bi <- [bl..bh]]
-    where min = fst (f a b)
-          max = snd (f a b)
-          check (i,j,x) = if min <= x && max >= x 
-                    then True
-                    else error $ 
-                             "bug! "++(show a)++name++(show b)
-                             ++" = "++(show (min,max))
-                             ++"\n\tCounterexample: "++(show i)++name++(show j)
-                             ++" = "++(show (i `op` j))
+      [al,ah,bl,bh,min,max,(100*(minimum results-min)) `safediv` min, (100*(max-maximum results)) `safediv` max]-- ++results
+    where 
+      results = map check [(ai,bi, ai `op` bi) | ai <- [al..ah], bi <- [bl..bh]]
+      min = fst (f a b)
+      max = snd (f a b)
+      check (i,j,x) = if min <= x && max >= x 
+                      then x
+                      else error $ 
+                               "bug! "++(show a)++name++(show b)
+                               ++" = "++(show (min,max))
+                               ++"\n\tCounterexample: "++(show i)++name++(show j)
+                               ++" = "++(show (i `op` j))
 
 r = runtest
 runtest = let -- We need to take at least one arbitrary +/- and the
@@ -114,4 +138,4 @@ runtest = let -- We need to take at least one arbitrary +/- and the
                      (bitxor,xor," `xor` ")
                     ]
           in
-            foldl1 (&&) [test f a b | f <- ops, a <- tuples, b <- tuples]
+            [(op,test f a b) | f@(_,_,op) <- [(divide,(safediv)," / ")], a <- tuples, b <- tuples]

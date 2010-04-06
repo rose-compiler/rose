@@ -1,4 +1,4 @@
-// -- -*- haskell -*- (Fake Emacs mode for syntax highlighting)
+// -- -*- haskell; folding-mode -*- (Fake Emacs mode for syntax highlighting)
 // -- vim: syntax=fula
 // -- ------------------------------------------------------------------------
 // -- Authors: Gergo Barany, 2006/2009 (original constprop/points-to info)
@@ -1035,8 +1035,8 @@ rshift(la1,la2,lb1,lb2) =
 ;
 
 // -- Bitwise and &
-and(la1,la2,lift(0),lift(0)) = (la1,la2);
-and(lift(0),lift(0),lb1,lb2) = (lb1,lb2);
+and(la1,la2,lift(-1),lift(-1)) = (la1,la2);
+and(lift(-1),lift(-1),lb1,lb2) = (lb1,lb2);
 and(la1,la2,lb1,lb2) =
 //{{{
     if bad((la1,la2)) || bad((lb1,lb2)) then top else 
