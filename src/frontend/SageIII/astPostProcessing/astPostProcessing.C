@@ -400,6 +400,10 @@ void postProcessingSupport (SgNode* node)
   // This also will fixup C++ using declarations.
      fixupFortranUseDeclarations(node);
 
+  // DQ (3/7/2010): Identify the fragments of the AST that are disconnected.
+  // Moved from astConsistancy tests (since it deletes nodes not connected to the AST).
+  // TestForDisconnectedAST::test(node);
+
   // DQ (5/22/2005): Nearly all AST fixup should be done before this closing step
   // QY: check the isModified flag
   // CheckIsModifiedFlagSupport(node); 
@@ -410,8 +414,11 @@ void postProcessingSupport (SgNode* node)
   // DQ (3/17/2007): This should be empty
   // ROSE_ASSERT(SgNode::get_globalMangledNameMap().size() == 0);
 
-#if 1
+  // This is used for both of the fillowing tests.
      SgSourceFile* sourceFile = isSgSourceFile(node);
+
+#if 1
+  // DQ (9/11/2009): Added support for numbering of statements required to support name qualification.
      if (sourceFile != NULL)
         {
        // DQ (9/11/2009): Added support for numbering of statements required to support name qualification.
@@ -420,21 +427,63 @@ void postProcessingSupport (SgNode* node)
           ROSE_ASSERT(globalScope != NULL);
           globalScope->buildStatementNumbering();
         }
-     else if (SgProject* project = isSgProject(node))
+       else 
         {
-          SgFilePtrList &files = project->get_fileList();
-          for (SgFilePtrList::iterator fileI = files.begin(); fileI != files.end(); ++fileI)
+          if (SgProject* project = isSgProject(node))
              {
-               if ( (sourceFile = isSgSourceFile(*fileI)) )
+               SgFilePtrList &files = project->get_fileList();
+               for (SgFilePtrList::iterator fileI = files.begin(); fileI != files.end(); ++fileI)
                   {
-                    SgGlobal* globalScope = sourceFile->get_globalScope();
-                    ROSE_ASSERT(globalScope != NULL);
-                    globalScope->buildStatementNumbering();
+                    if ( (sourceFile = isSgSourceFile(*fileI)) )
+                       {
+                         SgGlobal* globalScope = sourceFile->get_globalScope();
+                         ROSE_ASSERT(globalScope != NULL);
+                         globalScope->buildStatementNumbering();
+                       }
                   }
              }
         }
-
 #endif
+
+  // DQ (4/4/2010): check that the global scope has statements.
+  // This was an error for Fortran and it appeared that everything
+  // was working when it was not.  It appeared because of a strange
+  // error between versions of the OFP support files.  So as a 
+  // way to avoid this in the future, we issue a warning for Fortran
+  // code that has no statements in the global scope.  It can still
+  // be a valid Fortran code (containing only comments).  but this
+  // should help avoid our test codes appearing to work when they 
+  // don't (in the future). For C/C++ files there should always be
+  // something in the global scope (because or ROSE defined functions), 
+  // so this test should not be a problem.
+     if (sourceFile != NULL)
+        {
+          SgGlobal* globalScope = sourceFile->get_globalScope();
+          ROSE_ASSERT(globalScope != NULL);
+          if (globalScope->get_declarations().empty() == true)
+             {
+               printf ("WARNING: no statements in global scope for file = %s \n",sourceFile->getFileName().c_str());
+             }
+        }
+       else 
+        {
+          if (SgProject* project = isSgProject(node))
+             {
+               SgFilePtrList &files = project->get_fileList();
+               for (SgFilePtrList::iterator fileI = files.begin(); fileI != files.end(); ++fileI)
+                  {
+                    if ( (sourceFile = isSgSourceFile(*fileI)) )
+                       {
+                         SgGlobal* globalScope = sourceFile->get_globalScope();
+                         ROSE_ASSERT(globalScope != NULL);
+                         if (globalScope->get_declarations().empty() == true)
+                            {
+                              printf ("WARNING: no statements in global scope for file = %s \n",(*fileI)->getFileName().c_str());
+                            }
+                       }
+                  }
+             }
+        }
 
      if ( SgProject::get_verbose() >= AST_POST_PROCESSING_VERBOSE_LEVEL )
         cout << "/* AST Postprocessing finished */" << endl;

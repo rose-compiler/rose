@@ -129,7 +129,11 @@ void c_action_generic_name_list_part(Token_t * ident)
  * @param numImportStmts  Number of import statements.
  * @param numDeclConstructs  Number of declaration constructs.
  */
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
+void c_action_specification_part(int numUseStmts, int numImportStmts, int numImplStmts, int numDeclConstructs)
+#else
 void c_action_specification_part(int numUseStmts, int numImportStmts, int numDeclConstructs)
+#endif
    {
   // Not clear what to do here, no IR nodes really need to be built.
 
@@ -137,7 +141,13 @@ void c_action_specification_part(int numUseStmts, int numImportStmts, int numDec
   // (see test2008_30.f03)
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        {
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
+           printf ("In c_action_specification_part: numUseStmts = %d numImportStmts = %d numImplStmts = %d numDeclConstructs = %d \n",numUseStmts,numImportStmts,numImplStmts,numDeclConstructs);
+#else
           printf ("In c_action_specification_part: numUseStmts = %d numImportStmts = %d numDeclConstructs = %d \n",numUseStmts,numImportStmts,numDeclConstructs);
+#endif
+        }
 
   // We have got to this point and not had to build a containing main function then we will not
   // likely be any further before we process an action statement (not declaration statement).
@@ -1689,6 +1699,8 @@ static const int ComponentAttrSpec_len=ComponentAttrSpecBase+6;
                break;
              }
 
+#if ROSE_OFP_MINOR_VERSION_NUMBER == 7
+       // DQ (4/5/2010): These have been removed from OFP 0.8.0
           case ComponentAttrSpec_dimension_paren:
              {
                if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
@@ -1702,7 +1714,7 @@ static const int ComponentAttrSpec_len=ComponentAttrSpecBase+6;
                     printf ("found a ComponentAttrSpec_dimension_bracket spec \n");
                break;
              }
-
+#endif
           case ComponentAttrSpec_allocatable:
              {
                if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
@@ -1844,7 +1856,13 @@ void c_action_component_decl(Token_t * id,
   // astNameStack.push_front(id);
      astNameStack.push_back(id);
 #else
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
+  // void c_action_entity_decl(Token_t * id, ofp_bool hasArraySpec, ofp_bool hasCoarraySpec, ofp_bool hasCharLength)
+     printf ("Warning: calling c_action_entity_decl() with new and unknown OFP 0.8.0 specific options \n");
+     c_action_entity_decl(id,false,false,false,false);
+#else
      c_action_entity_decl(id);
+#endif
 #endif
 
 #endif
@@ -3244,7 +3262,11 @@ static const int AttrSpec_DEFERRED=AttrSpecBase+23;
  *			( T_LBRACKET co_array_spec T_RBRACKET )?
  *			( T_ASTERISK char_length )? ( initialization )? 
  */
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
+void c_action_entity_decl(Token_t * id, ofp_bool hasArraySpec, ofp_bool hasCoarraySpec, ofp_bool hasCharLength, ofp_bool unknown_bool)
+#else
 void c_action_entity_decl(Token_t * id)
+#endif
    {
   // Push the entities onto the list at the top of the stack
      ROSE_ASSERT(id != NULL);
@@ -4186,10 +4208,21 @@ void c_action_access_id_list(int count)
  * @param count Number of allocatable declarations.
  */
 // void c_action_allocatable_stmt(Token_t * label, int count)
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
+// void allocatable_stmt(Token label, Token keyword, Token eos);
+void c_action_allocatable_stmt(Token_t* label, Token_t* keyword, Token_t* eos)
+#else
 void c_action_allocatable_stmt(Token_t * label, Token_t * keyword, Token_t * eos, int count)
+#endif
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        {
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
+          printf ("In c_action_allocatable_stmt() label = %p = %s keyword = %p = %s \n",label,label != NULL ? label->text : "NULL",keyword,keyword != NULL ? keyword->text : "NULL");
+#else
           printf ("In c_action_allocatable_stmt() label = %p = %s keyword = %p = %s count = %d \n",label,label != NULL ? label->text : "NULL",keyword,keyword != NULL ? keyword->text : "NULL",count);
+#endif
+        }
 
   // An AttributeSpecification statement can be the first statement in a program
   // (see test2007_147.f, the original Fortran I code from the IBM 704 Fortran Manual).
@@ -4704,6 +4737,29 @@ void c_action_data_implied_do(Token_t *id, ofp_bool hasThirdExpr)
 #endif
    }
 
+// DQ (4/5/2010): Added F08 support specific to OFP 0.8.0
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
+   /** R527-F08 list
+    * allocatable_decl_list
+    *   :   allocatable_decl ( T_COMMA allocatable_decl )*
+    * 
+    * @param count The number of items in the list.
+    */
+// public abstract void allocatable_decl_list__begin();
+// public abstract void allocatable_decl_list(int count);
+void c_action_allocatable_decl_list__begin()
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_allocatable_decl_list__begin() \n");
+   }
+
+void c_action_allocatable_decl_list(int count)
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_allocatable_decl_list(): count = %d \n",count);
+   }
+#endif
+
 /**
  * R528
  * data_i_do_object
@@ -5029,11 +5085,25 @@ void c_action_dimension_stmt(Token_t * label, Token_t * keyword, Token_t * eos, 
  * @param hasArraySpec True if has an array spec.
  * @param hasCoArraySpec True if has a co array spec.
  */
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
+ // public abstract void codimension_decl(Token coarrayName, Token lbracket, Token rbracket);
+// void c_action_dimension_decl(Token_t *id, Token_t *lbracket, Token_t *rbracket)
+void c_action_dimension_decl(Token_t *id)
+#else
 void c_action_dimension_decl(Token_t *id, ofp_bool hasArraySpec, ofp_bool hasCoArraySpec)
+#endif
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        {
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
+       // printf ("In R544-F2008 (extracted from R535-F2003) c_action_dimension_decl(): id = %p = %s lbracket = %p = %s rbracket = %p = %s \n",
+       //          id,id != NULL ? id->text : "NULL",lbracket,lbracket != NULL ? lbracket->text : "NULL",rbracket,rbracket != NULL ? rbracket->text : "NULL");
+          printf ("In R544-F2008 (extracted from R535-F2003) c_action_dimension_decl(): id = %p = %s \n",id,id != NULL ? id->text : "NULL");
+#else
           printf ("In R544-F2008 (extracted from R535-F2003) c_action_dimension_decl(): id = %p = %s hasArraySpec = %s hasCoArraySpec = %s \n",
-               id,id != NULL ? id->text : "NULL",hasArraySpec ? "true" : "false",hasCoArraySpec ? "true" : "false");
+                   id,id != NULL ? id->text : "NULL",hasArraySpec ? "true" : "false",hasCoArraySpec ? "true" : "false");
+#endif
+        }
 
   // A dimension statement can be the first statement in a problem.
      build_implicit_program_statement_if_required();
@@ -5463,10 +5533,21 @@ void c_action_saved_entity(Token_t *id, ofp_bool isCommonBlockName)
  * @param count The number of target declarations.
  */
 // void c_action_target_stmt(Token_t * label, int count)
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
+void c_action_target_stmt(Token_t * label, Token_t * keyword, Token_t * eos)
+#else
 void c_action_target_stmt(Token_t * label, Token_t * keyword, Token_t * eos, int count)
+#endif
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        {
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
+          printf ("In c_action_target_stmt(): keyword = %p = %s \n",keyword,keyword != NULL ? keyword->text : "NULL");
+#else
           printf ("In c_action_target_stmt(): keyword = %p = %s count = %d \n",keyword,keyword != NULL ? keyword->text : "NULL",count);
+#endif
+        }
+      
 
   // An AttributeSpecification statement can be the first statement in a program
   // (see test2007_147.f, the original Fortran I code from the IBM 704 Fortran Manual).
@@ -6042,6 +6123,28 @@ void c_action_common_stmt(Token_t *label, Token_t *commonKeyword, Token_t *eos, 
      outputState("At BOTTOM of R557 c_action_common_stmt()");
 #endif
    }
+
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
+/** R557-F08 list
+ * target_decl_list
+ *   :   target_decl ( T_COMMA target_decl )*
+ * 
+ * @param count The number of items in the list.
+*/
+// public abstract void target_decl_list__begin();
+// public abstract void target_decl_list(int count);
+void c_action_target_decl_list__begin()
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_target_decl_list__begin() \n");
+   }
+   
+void c_action_target_decl_list(int count)
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_target_decl_list(): count = %d \n",count);
+   }
+#endif
 
 /** R557
  * common_block_name
@@ -10671,7 +10774,11 @@ void c_action_label_do_stmt(Token_t *label, Token_t *id, Token_t *doKeyword, Tok
  * @param hasOptExpr Flag specifying if optional expression was given.  
  * This only applies for alternative 2 of the rule.
  */
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
+void c_action_loop_control(Token_t * whileKeyword, int doConstructType, ofp_bool hasOptExpr)
+#else
 void c_action_loop_control(Token_t * whileKeyword, ofp_bool hasOptExpr)
+#endif
    {
   // This is the case of a "DO WHILE" (this rule communicates the "WHILE" part)
   // However, we trigger the construction of a SgWhileStmt IR node instead of a 
@@ -10680,7 +10787,13 @@ void c_action_loop_control(Token_t * whileKeyword, ofp_bool hasOptExpr)
   // I would like to avoid.
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        {
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
+          printf ("In c_action_loop_control(): whileKeyword = %p = %s doConstructType = %d hasOptExpr = %s \n",whileKeyword,whileKeyword != NULL ? whileKeyword->text : "NULL",doConstructType,hasOptExpr ? "true" : "false");
+#else
           printf ("In c_action_loop_control(): whileKeyword = %p = %s hasOptExpr = %s \n",whileKeyword,whileKeyword != NULL ? whileKeyword->text : "NULL",hasOptExpr ? "true" : "false");
+#endif
+        }
    }
 
 /**
@@ -14544,10 +14657,20 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
 
 // DQ (2/18/2008): New version of OFP does not have function parameters for this function.
 // void c_action_module_subprogram_part(Token_t* containsKeyword, Token_t* eos)
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
+void c_action_module_subprogram_part(int count)
+#else
 void c_action_module_subprogram_part()
+#endif
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+        {
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
+          printf ("In c_action_module_subprogram_part(): count = %d \n",count);
+#else
           printf ("In c_action_module_subprogram_part(): \n");
+#endif
+        }
      
   // ROSE_ASSERT(containsKeyword != NULL);
 
@@ -17025,7 +17148,13 @@ void c_action_enumerator(Token_t *carg_0, ofp_bool carg_1){}
 void c_action_final_binding(Token_t *carg_0){}
 void c_action_forall_body_construct(){}
 void c_action_forall_construct(){}
+
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
+void c_action_image_selector(Token_t *leftBracket,Token_t *rightBracket){}
+#else
 void c_action_image_selector(int carg_0){}
+#endif
+
 void c_action_inquire_spec(Token_t *carg_0){}
 void c_action_pointer_object(){}
 void c_action_proc_interface(Token_t *carg_0){}
@@ -17037,6 +17166,14 @@ void c_action_structure_constructor(Token_t *carg_0){}
 void c_action_type_param_attr_spec(Token_t *carg_0){}
 void c_action_type_spec(){}
 void c_action_vector_subscript(){}
+
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
+// DQ (4/5/2010): Added new functions for OFP 0.8.0
+void c_action_rice_image_selector(Token_t *carg_0) {};
+void c_action_rice_allocate_coarray_spec(int carg_0, Token_t *carg_1){};
+void c_action_rice_co_with_team_stmt(Token_t *carg_0, Token_t *carg_1){};
+void c_action_rice_end_with_team_stmt(Token_t *carg_0, Token_t *carg_1, Token_t *carg_2){};
+#endif
 
 #ifdef __cplusplus
 } /* End extern C. */
