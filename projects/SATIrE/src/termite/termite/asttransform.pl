@@ -773,11 +773,16 @@ needs_semicolon(enum_declaration(_,_,_,_)).
 needs_comma(initialized_name(_,_,_,_)).
 
 %% replace_types(+InitializedNames, +FuncDecl, -InitializedNames1) is det.
-% Replace the instatiated types with the original types from the
+% Replace the instantiated types with the original types from the
 % function declaration.
 %
 % Needed during unparsing.
 replace_types([], function_type(_, _, []), []) :- !.
+replace_types([I|Is],
+	      function_type(ReturnT, NumParams, []), % Typeless K&R declaration
+	      [I|Js]) :- !,
+  replace_types(Is, function_type(ReturnT, NumParams, []), Js).
+  
 replace_types([I|Is],
 	      function_type(ReturnT, NumParams, [Type|Ts]),
 	      [J|Js]) :- !,
