@@ -169,21 +169,22 @@ We wish to thanks Scott McPeak for the use of his rather large collection of
 tests that he uses within Elsa (about 1000 test codes that test many corners of
 the C, C99, and C++ language).
 
+\commentout{
 \subsubsection{Application Codes}
    ROSE will be released after tests are complete on approximately 10 separate 
 one-million-line application codes:
 \begin{enumerate}
-   \item KULL \\
-          This is an important application at LLNL.
-   \item ALE3D \\
-          This is an important application at LLNL.
-   \item ARES \\
-          This is an important application at LLNL.
-   \item CHOMBO \\
-          This is an Adaptive Mesh Refinement (AMR) library at Lawrence Berkeley National Laboratory.
-   \item DiffPack \\
-          This is a numerical library originally developed at University of Oslo, Norway.
-          The developers have been substantial collaborators to the ROSE project.
+%  \item KULL \\
+%         This is an important application at LLNL.
+%  \item ALE3D \\
+%         This is an important application at LLNL.
+%  \item ARES \\
+%         This is an important application at LLNL.
+%  \item CHOMBO \\
+%         This is an Adaptive Mesh Refinement (AMR) library at Lawrence Berkeley National Laboratory.
+%  \item DiffPack \\
+%         This is a numerical library originally developed at University of Oslo, Norway.
+%         The developers have been substantial collaborators to the ROSE project.
    \item ROSE \\
           The compilation of compiler project (ROSE) with itself is a milestone 
           for any compiler project.  ROSE can be used to compile the ROSE source
@@ -192,15 +193,16 @@ one-million-line application codes:
           This is an internal DOE library that supports Overset Grid applications.
           It is well in excess of one million lines of code. It includes 
           the A++/P++ library and other libraries upon which it depends.
-   \item CHROMA \\
-          This is an Molecular Dynamics application developed at University of Illinois at
-    Urbana-Champaign (UIUC). This is not really a one million line code, I think, but 
-    Overture more than makes up the difference.
+%  \item CHROMA \\
+%         This is an Molecular Dynamics application developed at University of Illinois at
+%   Urbana-Champaign (UIUC). This is not really a one million line code, I think, but 
+%   Overture more than makes up the difference.
 \end{enumerate}
 
 The first six are mostly done, in the sense that there are about 10 bugs
 that have been isolated which appear to be the only remaining
 problems.  I am working on these bugs, but some are non-trivial (read {\em hard}).
+}
 
 \subsubsection{Plum Hall C and C++ Compiler Test Suite}
    This is a commercial C and C++ compiler test suit that was purchased

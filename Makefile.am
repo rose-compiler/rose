@@ -160,6 +160,9 @@ if ENABLE_JAVAPORT
    DISTCHECK_CONFIGURE_FLAGS += --with-javaport
 endif
 
+# DQ (4/5/2010): Use the same version of OFP as specified on the original configure command line.
+DISTCHECK_CONFIGURE_FLAGS += --enable-ofp-version=@ROSE_OFP_MAJOR_VERSION_NUMBER@.@ROSE_OFP_MINOR_VERSION_NUMBER@.@ROSE_OFP_PATCH_VERSION_NUMBER@
+
 # DQ (4/22/2005): To make clear when binaries are in the distribution as 
 # opposed to EDG source code we rename the final generated distribution.
 # JJW (8/3/2008): This is only used for source distributions now --

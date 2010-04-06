@@ -40,6 +40,11 @@ all-local: roseh sage.docs
 # INCLUDES = $(ROSE_INCLUDES) # -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -I$(top_srcdir)/src/frontend/EDG/EDG_3.3/src
 INCLUDES = $(ROSE_INCLUDES)
 
+# DQ (3/13/2010): sageSupport.C requires the OFP fortran source files to be made available.
+if ROSE_USE_OPEN_FORTRAN_PARSER
+   INCLUDES += -I${top_builddir}/src/3rdPartyLibraries/fortran-parser
+endif
+
 ## The grammar generator (ROSETTA) should use its own template repository
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
@@ -219,6 +224,14 @@ nodist_include_HEADERS = \
    astFileIO/AstSpecificDataManagingClass.h
 
 BUILT_SOURCES = $(GENERATED_SOURCE) ompparser.cc ompparser.h omplexer.cc
+
+
+# DQ (3/13/2010): Extract the required OFP source files needed for ROSE Fortran support (in sageSupport.C).
+sageSupport.C: extract_rose_required_ofp_source_files
+
+extract_rose_required_ofp_source_files:
+	cd ${top_builddir}/src/3rdPartyLibraries/fortran-parser; $(MAKE) extract_rose_required_ofp_source_files
+
 
 # DQ (9/9/2007): Put C++_include_files.h back into place
 # since it is a convinient mechanism to handle included headers 
