@@ -3,7 +3,7 @@
 #define MATRIX_TMPL_H
 
 #include <assert.h>
-//#include <unistd.h>
+#include <unistd.h>
 
 template <class Mat, class T>
 class SubMatrix {
