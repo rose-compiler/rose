@@ -73,10 +73,14 @@ AST_FILE_IO :: startUp( SgProject* root )
   // DQ (4/22/2006): Added timer information for AST File I/O
      TimingPerformance nested_timer ("AST_FILE_IO::startUp() FILE_IO_EXTRA_CHECK:");
 
-     // std::cout << "Starting check, that all IRNodes are in the memory pools ... " << std::flush;
+     if ( SgProject::get_verbose() > 0 )
+          std::cout << "Starting check, that all IRNodes are in the memory pools ... " << std::flush;
+
      AST_FileIO::MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal;
      memoryCheckingTraversal.traverseMemoryPool();
-     // std::cout << "  done ! " << std::endl;
+
+     if ( SgProject::get_verbose() > 0 )
+          std::cout << "  done ! " << std::endl;
      }
 #endif
 
@@ -594,7 +598,7 @@ void
 AST_FILE_IO :: writeASTToFile ( std::string fileName )
   {
   // DQ (4/22/2006): Added timer information for AST File I/O
-     TimingPerformance timer ("AST_FILE_IO::readASTFromFile():");
+     TimingPerformance timer ("AST_FILE_IO::writeASTToFile():");
  
      std::ofstream out;
      out.open ( fileName.c_str(), std::ios::out | std::ios::binary );
@@ -640,27 +644,52 @@ AST_FILE_IO :: readASTFromStream ( std::istream& inFile )
      REGISTER_ATTRIBUTE_FOR_FILE_IO(AstAttribute) ;
 
   // 1. Read the accumulatedPoolSizesOfNewAst 
-     // std::cout << "Here we start the reading of the AST specific data ... " << std::endl;
+     if ( SgProject::get_verbose() > 0 )
+          std::cout << "Here we start the reading of the AST specific data ... " << std::endl;
 
-     // std::cout << " Allocating AstDataStorageClass ... " << std::endl;
+     if ( SgProject::get_verbose() > 0 )
+          std::cout << " Allocating AstDataStorageClass ... " << std::endl;
      AstDataStorageClass staticTemp;
      
+     if ( SgProject::get_verbose() > 0 )
+          std::cout << " Checking the ast via pool entries -- before AstDataStorageClass::readEasyStorageDataFromFile() .... " << std::endl;
+
+     AST_FileIO::MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal_A;
+     memoryCheckingTraversal_A.traverseMemoryPool();
+
+     if ( SgProject::get_verbose() > 0 )
+          std::cout << " DONE: Checking the ast via pool entries -- before AstDataStorageClass::readEasyStorageDataFromFile() .... " << std::endl;
+
      {
   // DQ (4/22/2006): Added timer information for AST File I/O
-     TimingPerformance nested_timer ("AST_FILE_IO::readASTFromFile() raw file read:");
+     TimingPerformance nested_timer ("AST_FILE_IO::readASTFromStream() raw file read:");
 
-     // std::cout << " Reading the data from file ... " << std::endl;
+     if ( SgProject::get_verbose() > 0 )
+          std::cout << " Reading the data from file ... " << std::endl;
+
      inFile.read ( (char*)(&staticTemp) , sizeof(AstDataStorageClass) );
      assert (inFile);
-     // std::cout << " Reading the static (EasyStorage) data from file ... " << std::endl;
+
+     if ( SgProject::get_verbose() > 0 )
+          std::cout << " Reading the static (EasyStorage) data from file ... " << std::endl;
+
      AstDataStorageClass::readEasyStorageDataFromFile(inFile);
      }
      
+     if ( SgProject::get_verbose() > 0 )
+          std::cout << " Checking the ast via pool entries -- after AstDataStorageClass::readEasyStorageDataFromFile() .... " << std::endl;
+
+     AST_FileIO::MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal_B;
+     memoryCheckingTraversal_B.traverseMemoryPool();
+
+     if ( SgProject::get_verbose() > 0 )
+          std::cout << " DONE: Checking the ast via pool entries -- after AstDataStorageClass::readEasyStorageDataFromFile() .... " << std::endl;
+
   // 1.a Introducing a marker to check the right position in the file     
 
      {
   // DQ (4/22/2006): Added timer information for AST File I/O
-     TimingPerformance nested_timer ("AST_FILE_IO::readASTFromFile() raw file (marker) read:");
+     TimingPerformance nested_timer ("AST_FILE_IO::readASTFromStream() raw file (marker) read:");
 
      std::string markString = "#########";
      char* markChar = new char [markString.size()+1];
@@ -674,28 +703,84 @@ AST_FILE_IO :: readASTFromStream ( std::istream& inFile )
      delete [] markChar;
      }
      
+     if ( SgProject::get_verbose() > 0 )
+          std::cout << " Checking the ast via pool entries -- after marker read .... " << std::endl;
+
+     AST_FileIO::MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal_C;
+     memoryCheckingTraversal_C.traverseMemoryPool();
+
+     if ( SgProject::get_verbose() > 0 )
+          std::cout << " DONE: Checking the ast via pool entries -- after marker read .... " << std::endl;
+
   // 2. Initialize the StorageClass and read
 
      {
   // DQ (4/22/2006): Added timer information for AST File I/O
-     TimingPerformance nested_timer ("AST_FILE_IO::readASTFromFile() rebuild AST (part 1):");
+     TimingPerformance nested_timer ("AST_FILE_IO::readASTFromStream() rebuild AST (part 1):");
 
-     // std::cout << " Initializing the actualRebuildAST with staticTemp ... " << std::endl;
+     if ( SgProject::get_verbose() > 0 )
+          std::cout << " Initializing the actualRebuildAST with staticTemp ... " << std::endl;
+
      actualRebuildAst = new AstData(staticTemp);
   // extendMemoryPoolsForRebuildingAST();
+
+  // The call to the constructor calls "extendMemoryPoolsForRebuildingAST()" which used valid pointers
+  // to reference the extended memory blocks where the new AST extends beyond the current memory block.
+  // This means that freepointer values at the end of a sequence of memroy blocks will have values
+  // that are not equal to "AST_FileIO::IS_VALID_POINTER()", thus causing warnings to be spewed
+  // from the "MemoryCheckingTraversalForAstFileIO" tests (which I have added more of lately).
+  // It seems that calling "new AstData(staticTemp)" is not meant to be done where part of the AST was 
+  // read from a file??? Also the frepointer value of the next to last block in the memory block list
+  // appears to be lost after the call to "extendMemoryPoolsForRebuildingAST()".
+
+  // The problem is that when freepointers are converted to "AST_FileIO::IS_VALID_POINTER()", the last
+  // block in the chain is lost. since it points to an entry that is not allocated and thus not used.
+  // The freepointers, and/or the extension of the memory pools overwrites the last block in the chain.
+  // But I don't yet see exactly why!!!
+
+  // One thing to test is if the new operators are working properly (or used) when the "AST_FileIO::IS_VALID_POINTER()"
+  // values are in place in the AST.  Seems like it would be an error. to mix an AST read fron disk with
+  // and AST that has been extended via "extendMemoryPoolsForRebuildingAST()".
+
+  // I think the problem is in the converstion of freepointer values back to correct values after having
+  // been set as "AST_FileIO::IS_VALID_POINTER()" (particularly when the "AST_FileIO::IS_VALID_POINTER()"
+  // value has been over written.
+
+     if ( SgProject::get_verbose() > 0 )
+          std::cout << " Checking the ast via pool entries -- after actualRebuildAst = new AstData() .... " << std::endl;
+
+     AST_FileIO::MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal_D;
+     memoryCheckingTraversal_D.traverseMemoryPool();
+
+     if ( SgProject::get_verbose() > 0 )
+          std::cout << " DONE: Checking the ast via pool entries -- after actualRebuildAst = new AstData() .... " << std::endl;
+
   // 3. 
      if (AST_FILE_IO::vectorOfASTs.size()==1)
-       { 
-         // std::cout << "setting the static data of an AST, but only for the first AST in a pool ... " << std::flush;
-         actualRebuildAst->setStaticDataMembersOfIRNodes();
-     // std::cout << "done" << std::endl;
-       }
+        { 
+          if ( SgProject::get_verbose() > 0 )
+               std::cout << "setting the static data of an AST, but only for the first AST in a pool ... " << std::flush;
+
+          actualRebuildAst->setStaticDataMembersOfIRNodes();
+
+          if ( SgProject::get_verbose() > 0 )
+               std::cout << "done" << std::endl;
+        }
      AstDataStorageClass::deleteStaticDataOfEasyStorageClasses();
      }
 
+     if ( SgProject::get_verbose() > 0 )
+          std::cout << " Checking the ast via pool entries -- after AstDataStorageClass::deleteStaticDataOfEasyStorageClasses() .... " << std::endl;
+
+     AST_FileIO::MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal_E;
+     memoryCheckingTraversal_E.traverseMemoryPool();
+
+     if ( SgProject::get_verbose() > 0 )
+          std::cout << " DONE: Checking the ast via pool entries -- after AstDataStorageClass::deleteStaticDataOfEasyStorageClasses() .... " << std::endl;
+
      {
   // DQ (4/22/2006): Added timer information for AST File I/O
-     TimingPerformance nested_timer ("AST_FILE_IO::readASTFromFile() rebuild AST (part 2):");
+     TimingPerformance nested_timer ("AST_FILE_IO::readASTFromStream() rebuild AST (part 2):");
 
      unsigned long sizeOfActualPool = 0;
      long storageClassIndex = 0 ;
@@ -707,7 +792,7 @@ $REPLACE_READASTFROMFILE
 
      {
   // DQ (4/22/2006): Added timer information for AST File I/O
-     TimingPerformance nested_timer ("AST_FILE_IO::readASTFromFile() rebuild AST (part 3):");
+     TimingPerformance nested_timer ("AST_FILE_IO::readASTFromStream() rebuild AST (part 3):");
 
      for ( int i = 0; i < totalNumberOfIRNodes; ++i)
         {
@@ -730,9 +815,11 @@ $REPLACE_READASTFROMFILE
      
 #if FILE_IO_EXTRA_CHECK
   // DQ (4/22/2006): Added timer information for AST File I/O
-     TimingPerformance nested_timer ("AST_FILE_IO::readASTFromFile() FILE_IO_EXTRA_CHECK:");
+     TimingPerformance nested_timer ("AST_FILE_IO::readASTFromStream() FILE_IO_EXTRA_CHECK:");
 
-     // std::cout << " Checking the ast via pool entries .... " << std::endl;
+     if ( SgProject::get_verbose() > 0 )
+          std::cout << " Checking the ast via pool entries .... " << std::endl;
+
      AST_FileIO::MemoryCheckingTraversalForAstFileIO memoryCheckingTraversal;
      memoryCheckingTraversal.traverseMemoryPool();
 #endif

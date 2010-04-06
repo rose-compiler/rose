@@ -4,14 +4,14 @@
 #include <algorithm>
 using namespace std;
 
-#ifndef USE_ROSE
+// #ifndef USE_ROSE
 // If we are using ROSE to compile ROSE source code then the Wave support is not present.
 createMap::createMap(std::vector<SgNode*>& linAST, token_container& tokStream)
    : linearizedAST(linAST), tokenStream(tokStream)
    {
      buildMaps();
    }
-#endif
+// #endif
 
 
 void

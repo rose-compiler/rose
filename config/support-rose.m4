@@ -646,7 +646,7 @@ AM_CONDITIONAL(ROSE_USE_GCC_OMP,test ! "$with_gcc_omp" = no)
 
 # JJW and TP (3-17-2008) -- added MPI support
 AC_ARG_WITH(mpi,
-[--with-mpi                    Configure option to have MPI-based tools built.],
+[--with-mpi                    Use this option ONLY if you inted to traverse the AST in parallel using MPI.],
 [ echo "Setting up optional MPI-based tools"
 ])
 AM_CONDITIONAL(ROSE_MPI,test "$with_mpi" = yes)
@@ -723,9 +723,7 @@ fi
 # Call supporting macro for the Java path required by the Open Fortran Parser (for Fortran 2003 support)
 # Use our classpath in case the user's is messed up
 AS_SET_CATFILE([ABSOLUTE_SRCDIR], [`pwd`], [${srcdir}])
-CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-2.7.7.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.0.1.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-runtime-3.0.1.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/stringtemplate-3.1b1.jar:.
-export CLASSPATH
-AC_SUBST(CLASSPATH)
+
 ROSE_SUPPORT_JAVA # This macro uses JAVA_HOME
 
 OPEN_FORTRAN_PARSER_PATH="${ac_top_builddir}/src/3rdPartyLibraries/fortran-parser" # For the one rule that uses it
@@ -760,6 +758,94 @@ else
 fi
 AM_CONDITIONAL(ROSE_USE_OPEN_FORTRAN_PARSER, [test "x$ofp_enabled" = "xyes"])
 AC_SUBST(GFORTRAN_PATH)
+
+
+# DQ (2/2/2010): New code to control use of different versions of OFP within ROSE.
+AC_ARG_ENABLE(ofp-version,
+[--enable-ofp_version   major.minor.patch version number for OFP (e.g. 0.7.2, 0.8.0, ...).],
+[ echo "Setting up OFP version"
+])
+
+echo "enable_ofp_version = $enable_ofp_version"
+if test "x$enable_ofp_version" = "x"; then
+   echo "Default version of OFP used (0.7.2)"
+   ofp_major_version_number=0
+   ofp_minor_version_number=7
+   ofp_patch_version_number=2
+else
+   ofp_major_version_number=`echo $enable_ofp_version | cut -d\. -f1`
+   ofp_minor_version_number=`echo $enable_ofp_version | cut -d\. -f2`
+   ofp_patch_version_number=`echo $enable_ofp_version | cut -d\. -f3`
+fi
+
+echo "ofp_major_version_number = $ofp_major_version_number"
+echo "ofp_minor_version_number = $ofp_minor_version_number"
+echo "ofp_patch_version_number = $ofp_patch_version_number"
+
+if test "x$ofp_major_version_number" = "x0"; then
+   echo "Recognized an accepted major version number."
+   if test "x$ofp_minor_version_number" = "x7"; then
+      echo "Recognized an accepted minor version number."
+      if test "x$ofp_patch_version_number" = "x2"; then
+         echo "Recognized an accepted patch version number."
+      else
+         if test "x$ofp_patch_version_number" = "x1"; then
+            echo "Recognized an accepted patch version number ONLY for testing."
+         else
+            echo "ERROR: Could not identify the OFP patch version number."
+            exit 1
+         fi
+       # exit 1
+      fi
+   else
+      if test "x$ofp_minor_version_number" = "x8"; then
+#     We accept any patch level with minor version number 8 releases. 
+         echo "Recognized an accepted minor version number using ofp_patch_version_number = $ofp_patch_version_number."
+      else
+         echo "ERROR: Could not identify the OFP minor version number."
+         exit 1
+      fi
+   fi
+else
+   if test "x$ofp_major_version_number" = "x1"; then
+      echo "Recognized an accepted major version number (but this is not supported yet)."
+      exit 1
+   else
+      echo "ERROR: Could not identify the OFP major version number."
+      exit 1
+   fi
+fi
+
+AC_DEFINE_UNQUOTED([ROSE_OFP_MAJOR_VERSION_NUMBER], $ofp_major_version_number , [OFP major version number])
+AC_DEFINE_UNQUOTED([ROSE_OFP_MINOR_VERSION_NUMBER], $ofp_minor_version_number , [OFP minor version number])
+AC_DEFINE_UNQUOTED([ROSE_OFP_PATCH_VERSION_NUMBER], $ofp_patch_version_number , [OFP patch version number])
+
+ROSE_OFP_MAJOR_VERSION_NUMBER=$ofp_major_version_number
+ROSE_OFP_MINOR_VERSION_NUMBER=$ofp_minor_version_number
+ROSE_OFP_PATCH_VERSION_NUMBER=$ofp_patch_version_number
+
+AC_SUBST(ROSE_OFP_MAJOR_VERSION_NUMBER)
+AC_SUBST(ROSE_OFP_MINOR_VERSION_NUMBER)
+AC_SUBST(ROSE_OFP_PATCH_VERSION_NUMBER)
+
+# echo "Testing OFP version number specification..."
+# exit 1
+
+# DQ (4/5/2010): Moved the specification of CLASSPATH to after the specification 
+# of OFP version number so that we can use it to set the class path.
+# DQ (3/11/2010): Updating to new Fortran OFP version 0.7.2 with Craig.
+# CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-2.7.7.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.0.1.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-runtime-3.0.1.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/stringtemplate-3.1b1.jar:.
+# CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/fortran-parser/lib/OpenFortranParser-0.7.2.jar:.
+# CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.7.2.jar:.
+# CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-${ROSE_OFP_MAJOR_VERSION_NUMBER}.${ROSE_OFP_MINOR_VERSION_NUMBER}.${ROSE_OFP_PATCH_VERSION_NUMBER}.jar:.
+CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:${ABSOLUTE_SRCDIR}${OPEN_FORTRAN_PARSER_PATH}/OpenFortranParser-${ROSE_OFP_MAJOR_VERSION_NUMBER}.${ROSE_OFP_MINOR_VERSION_NUMBER}.${ROSE_OFP_PATCH_VERSION_NUMBER}.jar:.
+
+export CLASSPATH
+AC_SUBST(CLASSPATH)
+# ROSE_SUPPORT_JAVA # This macro uses JAVA_HOME
+
+AC_DEFINE_UNQUOTED([ROSE_OFP_CLASSPATH], $CLASSPATH , [OFP class path for Jave Virtual Machine])
+# AC_DEFINE([ROSE_OFP_CLASSPATH], $CLASSPATH , [OFP class path for Jave Virtual Machine])
 
 AC_PROG_SWIG(1.3.31)
 SWIG_ENABLE_CXX
